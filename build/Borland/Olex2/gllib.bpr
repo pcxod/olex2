@@ -1,0 +1,173 @@
+<?xml version='1.0' encoding='utf-8' ?>
+<!-- C++Builder XML Project -->
+<PROJECT>
+  <MACROS>
+    <VERSION value="BCB.06.00"/>
+    <PROJECT value="lib\gllib.lib"/>
+    <OBJFILES value="build\dframe.obj build\gdrawobject.obj build\glbackground.obj 
+      build\glbase.obj build\glbitmap.obj build\glclipplane.obj 
+      build\glconsole.obj build\glcursor.obj build\glfont.obj build\glgroup.obj 
+      build\gllight.obj build\gllightmodel.obj build\glmaterial.obj 
+      build\glmouse.obj build\glmouselistener.obj build\globj.obj 
+      build\gloption.obj build\glprimitive.obj build\glrender.obj 
+      build\glscene.obj build\gltext.obj build\gltextbox.obj build\gltexture.obj 
+      build\gpcollection.obj build\styles.obj build\xfader.obj"/>
+    <RESFILES value=""/>
+    <DEFFILE value=""/>
+    <RESDEPEN value="$(RESFILES)"/>
+    <LIBFILES value=""/>
+    <LIBRARIES value=""/>
+    <PACKAGES value=""/>
+    <PATHCPP value=".;..\..\..\glib"/>
+    <PATHPAS value=".;"/>
+    <PATHRC value=".;"/>
+    <PATHASM value=".;"/>
+    <LINKER value="TLib"/>
+    <USERDEFINES value="_DEBUG;_UNICODE;"/>
+    <SYSDEFINES value="NO_STRICT"/>
+    <MAINSOURCE value="gllib.bpf"/>
+    <INCLUDEPATH value="&quot;C:\Program Files\Borland\CBuilder6\Projects&quot;;..\..\..\glib;$(BCB)\include;$(BCB)\include\vcl;..\..\..\sdl;E:\wxWidgets-2.8.7\include;E:\wxWidgets-2.8.7\lib\bcc_lib\mswud;..\..\..\repository"/>
+    <LIBPATH value="&quot;C:\Program Files\Borland\CBuilder6\Projects&quot;;..\..\..\glib;$(BCB)\lib\obj;$(BCB)\lib"/>
+    <WARNINGS value="-w-par"/>
+    <LISTFILE value=""/>
+    <OTHERFILES value=""/>
+  </MACROS>
+  <OPTIONS>
+    <CFLAG1 value="-Od -H=$(BCB)\lib\vcl60.csm -Hc -Vx -Ve -ff -X- -r- -a8 -6 -b -d -k -y -v 
+      -vi- -c -tW -tWM"/>
+    <PFLAGS value="-N2build -N0build -$YD -$W -$O- -$A8 -v -JPHNE -M"/>
+    <AFLAGS value="/mx /w2 /zi"/>
+    <LFLAGS value="/P256 /C"/>
+    <OTHERFILES value=""/>
+  </OPTIONS>
+  <LINKER>
+    <ALLOBJ value="$(OBJFILES)"/>
+    <ALLLIB value=""/>
+    <OTHERFILES value=""/>
+  </LINKER>
+  <FILELIST>
+      <FILE FILENAME="gllib.bpf" FORMNAME="" UNITNAME="gllib" CONTAINERID="BPF" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\glib\dframe.cpp" FORMNAME="" UNITNAME="dframe.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\glib\gdrawobject.cpp" FORMNAME="" UNITNAME="gdrawobject.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\glib\glbackground.cpp" FORMNAME="" UNITNAME="glbackground.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\glib\glbase.cpp" FORMNAME="" UNITNAME="glbase.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\glib\glbitmap.cpp" FORMNAME="" UNITNAME="glbitmap.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\glib\glclipplane.cpp" FORMNAME="" UNITNAME="glclipplane.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\glib\glconsole.cpp" FORMNAME="" UNITNAME="glconsole.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\glib\glcursor.cpp" FORMNAME="" UNITNAME="glcursor.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\glib\glfont.cpp" FORMNAME="" UNITNAME="glfont.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\glib\glgroup.cpp" FORMNAME="" UNITNAME="glgroup.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\glib\gllight.cpp" FORMNAME="" UNITNAME="gllight.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\glib\gllightmodel.cpp" FORMNAME="" UNITNAME="gllightmodel.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\glib\glmaterial.cpp" FORMNAME="" UNITNAME="glmaterial.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\glib\glmouse.cpp" FORMNAME="" UNITNAME="glmouse.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\glib\glmouselistener.cpp" FORMNAME="" UNITNAME="glmouselistener.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\glib\globj.cpp" FORMNAME="" UNITNAME="globj.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\glib\gloption.cpp" FORMNAME="" UNITNAME="gloption.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\glib\glprimitive.cpp" FORMNAME="" UNITNAME="glprimitive.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\glib\glrender.cpp" FORMNAME="" UNITNAME="glrender.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\glib\glscene.cpp" FORMNAME="" UNITNAME="glscene.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\glib\gltext.cpp" FORMNAME="" UNITNAME="gltext.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\glib\gltextbox.cpp" FORMNAME="" UNITNAME="gltextbox.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\glib\gltexture.cpp" FORMNAME="" UNITNAME="gltexture.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\glib\gpcollection.cpp" FORMNAME="" UNITNAME="gpcollection.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\glib\styles.cpp" FORMNAME="" UNITNAME="styles.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\glib\xfader.cpp" FORMNAME="" UNITNAME="xfader" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+  </FILELIST>
+  <BUILDTOOLS>
+  </BUILDTOOLS>
+
+  <IDEOPTIONS>
+[Version Info]
+IncludeVerInfo=0
+AutoIncBuild=0
+MajorVer=1
+MinorVer=0
+Release=0
+Build=0
+Debug=0
+PreRelease=0
+Special=0
+Private=0
+DLL=0
+Locale=2057
+CodePage=1252
+
+[Version Info Keys]
+CompanyName=
+FileDescription=
+FileVersion=1.0.0.0
+InternalName=
+LegalCopyright=
+LegalTrademarks=
+OriginalFilename=
+ProductName=
+ProductVersion=1.0.0.0
+Comments=
+
+[HistoryLists\hlIncludePath]
+Count=11
+Item0=C:\Program Files\Borland\CBuilder6\Projects;..\..\..\glib;$(BCB)\include;$(BCB)\include\vcl;..\..\..\sdl;E:\wxWidgets-2.8.7\include;E:\wxWidgets-2.8.7\lib\bcc_lib\mswd;..\..\..\repository
+Item1=C:\Program Files\Borland\CBuilder6\Projects;..\..\..\glib;$(BCB)\include;$(BCB)\include\vcl;..\..\..\sdl;E:\wxWidgets-2.8.7\include;E:\wxWidgets-2.8.7\lib\bcc_lib\mswud;..\..\..\repository
+Item2=C:\Program Files\Borland\CBuilder6\Projects;..\..\..\glib;$(BCB)\include;$(BCB)\include\vcl;..\..\..\sdl;E:\wxWidgets-2.8.3\include;E:\wxWidgets-2.8.3\lib\bcc_lib\mswd;..\..\..\repository
+Item3=C:\Program Files\Borland\CBuilder6\Projects;..\..\..\glib;$(BCB)\include;$(BCB)\include\vcl;..\..\..\sdl;E:\wxWidgets-2.8.3\include;E:\wxWidgets-2.8.3\lib\bcc_lib\mswud;..\..\..\repository
+Item4=C:\Program Files\Borland\CBuilder6\Projects;..\..\..\glib;$(BCB)\include;$(BCB)\include\vcl;..\..\..\sdl;E:\wxWidgets-2.8.3\include;E:\wxWidgets-2.8.3\lib\bcc_lib\mswd
+Item5=..\..\..\glib;$(BCB)\include;$(BCB)\include\vcl;..\..\..\sdl;E:\wxWidgets-2.8.3\include;E:\wxWidgets-2.8.3\lib\bcc_lib\mswd
+Item6=..\..\..\glib;$(BCB)\include;$(BCB)\include\vcl;..\..\..\sdl;E:\wxWidgets-2.8.4\include;E:\wxWidgets-2.8.4\lib\bcc_lib\mswd
+Item7=..\..\..\glib;$(BCB)\include;$(BCB)\include\vcl;..\..\..\sdl;E:\wxWidgets-2.8.3\include;E:\wxWidgets-2.8.3\lib\bcc_lib\mswd;..\..\..\repository;c:\python25\include
+Item8=..\..\..\glib;$(BCB)\include;$(BCB)\include\vcl;..\..\..\sdl;E:\wxWidgets-2.8.3\include
+Item9=..\..\..\glib;$(BCB)\include;$(BCB)\include\vcl;..\..\..\sdl
+Item10=..\..\..\glib;$(BCB)\include;$(BCB)\include\vcl
+
+[HistoryLists\hlLibraryPath]
+Count=2
+Item0=C:\Program Files\Borland\CBuilder6\Projects;..\..\..\glib;$(BCB)\lib\obj;$(BCB)\lib
+Item1=..\..\..\glib;$(BCB)\lib\obj;$(BCB)\lib
+
+[HistoryLists\hlDebugSourcePath]
+Count=1
+Item0=$(BCB)\source\vcl
+
+[HistoryLists\hlConditionals]
+Count=3
+Item0=_DEBUG;
+Item1=_DEBUG;_UNICODE
+Item2=_DEBUG
+
+[HistoryLists\hlIntOutputDir]
+Count=1
+Item0=build
+
+[HistoryLists\hlFinalOutputDir]
+Count=2
+Item0=lib\
+Item1=lib
+
+[HistoryLists\hlTlibPageSize]
+Count=4
+Item0=0x0100
+Item1=0x0080
+Item2=0x0040
+Item3=0x0010
+
+[Debugging]
+DebugSourceDirs=$(BCB)\source\vcl
+
+[Parameters]
+RunParams=
+Launcher=
+UseLauncher=0
+DebugCWD=
+HostApplication=
+RemoteHost=
+RemotePath=
+RemoteLauncher=
+RemoteCWD=
+RemoteDebug=0
+
+[Compiler]
+ShowInfoMsgs=0
+LinkDebugVcl=0
+LinkCGLIB=0
+  </IDEOPTIONS>
+</PROJECT>
