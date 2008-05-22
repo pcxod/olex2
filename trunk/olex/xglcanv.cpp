@@ -1,0 +1,218 @@
+//----------------------------------------------------------------------------//
+// GlCanvas implementation
+// (c) Oleg V. Dolomanov, 2004
+//----------------------------------------------------------------------------//
+
+#ifdef __BORLANDC__
+#pragma hdrstop
+#endif
+
+#include "xglcanv.h"
+#include "mainform.h"
+#include "glgroup.h"
+
+//----------------------------------------------------------------------------//
+// TGlCanvas function bodies
+//----------------------------------------------------------------------------//
+
+IMPLEMENT_CLASS(TGlCanvas, wxGLCanvas)
+
+BEGIN_EVENT_TABLE(TGlCanvas, wxGLCanvas)
+  EVT_SIZE(TGlCanvas::OnSize)
+  EVT_PAINT(TGlCanvas::OnPaint)
+  EVT_ERASE_BACKGROUND(TGlCanvas::OnEraseBackground)
+
+  EVT_LEFT_UP(TGlCanvas::OnMouseUp)
+  EVT_RIGHT_UP(TGlCanvas::OnMouseUp)
+  EVT_LEFT_DOWN(TGlCanvas::OnMouseDown)
+  EVT_RIGHT_DOWN(TGlCanvas::OnMouseDown)
+  EVT_MOTION(TGlCanvas::OnMouseMove)
+  EVT_MOUSE_EVENTS(TGlCanvas::OnMouse)
+  EVT_LEFT_DCLICK(TGlCanvas::OnMouseDblClick)
+
+  EVT_KEY_UP(TGlCanvas::OnKeyUp)
+  EVT_CHAR(TGlCanvas::OnChar)
+  EVT_KEY_DOWN(TGlCanvas::OnKeyDown)
+
+END_EVENT_TABLE()
+//..............................................................................
+TGlCanvas::TGlCanvas(TMainForm *parent, wxWindowID id,
+    const wxPoint& pos, const wxSize& size, long style, const wxString& name):
+#ifdef __WXX11__
+  wxGLCanvas(parent, (wxGLCanvas*)NULL, id, pos, size, style|wxFULL_REPAINT_ON_RESIZE, name )  {
+  Context = NULL;
+#else
+  wxGLCanvas(parent, id, (int*) NULL, pos, size, style|wxFULL_REPAINT_ON_RESIZE, name )  {
+  Context = new wxGLContext( this, NULL);
+#ifdef __WIN32__ // on GTK the context initialisation is delayed
+  Context->SetCurrent(*this);
+#endif
+#endif
+  FXApp = NULL;
+  FLeftMouseDown = FRightMouseDown = false;
+  FParent = parent;
+}
+//..............................................................................
+TGlCanvas::~TGlCanvas(){
+  if( Context != NULL )
+    delete Context; 
+}
+//..............................................................................
+void TGlCanvas::Render()  {
+#ifndef __WXMOTIF__
+#ifdef __WXX11__  // context is null
+  SetCurrent();
+#else
+  Context->SetCurrent(*this); 
+#endif
+#endif
+
+  /* init OpenGL once, but after SetCurrent */
+  if( FXApp != NULL )  FXApp->Draw();
+  glFlush();
+  SwapBuffers();
+}
+//..............................................................................
+void TGlCanvas::OnPaint( wxPaintEvent& event )  {
+  wxPaintDC dc(this);
+  Render();
+}
+//..............................................................................
+void TGlCanvas::OnSize(wxSizeEvent& event)  {
+  // this is also necessary to update the context on some platforms
+  wxGLCanvas::OnSize(event);
+  // this causes many problems with GTK, as BadMatch ...
+//  if( IsShown() )
+//    Context->SetCurrent(*this); 
+}
+//..............................................................................
+void TGlCanvas::OnEraseBackground(wxEraseEvent& event)
+{   } // Do nothing, to avoid flashing.
+//..............................................................................
+void TGlCanvas::InitGL()  {
+  if( FXApp != NULL )  FXApp->Init();
+}
+ //..............................................................................
+void TGlCanvas::OnMouseDown(wxMouseEvent& me)  {
+  short Fl = 0, Btn = 0;
+  if( me.m_altDown )      Fl |= sssAlt;
+  if( me.m_shiftDown )    Fl |= sssShift;
+  if( me.m_controlDown )  Fl |= sssCtrl;
+  if( me.ButtonDown(1) )    Btn = smbLeft;
+  if( me.ButtonDown(2) )    Btn = smbMiddle;
+  if( me.ButtonDown(3) )    Btn = smbRight;
+
+  FXApp->MouseDown(me.m_x, me.m_y, Fl, Btn);
+  if( me.ButtonDown(1) )  FLeftMouseDown = true;
+  if( me.ButtonDown(3) )  FRightMouseDown = true;
+  FMX = me.m_x;
+  FMY = me.m_y;
+  SetFocus();
+  me.Skip();
+}
+//..............................................................................
+void TGlCanvas::OnMouseUp(wxMouseEvent& me)
+{
+  me.Skip();
+  short Fl = 0, Btn = 0;
+  if( me.m_altDown )      Fl |= sssAlt;
+  if( me.m_shiftDown )    Fl |= sssShift;
+  if( me.m_controlDown )  Fl |= sssCtrl;
+  if( me.ButtonDown(1) )    Btn = smbLeft;
+  if( me.ButtonDown(2) )    Btn = smbMiddle;
+  if( me.ButtonDown(3) )    Btn = smbRight;
+
+  int left = 0, top = 0;
+  GetPosition(&left, &top);
+
+  if( (abs(me.m_x-FMX) <= 4) && (abs(me.m_y-FMY) <= 4) &&
+    (FRightMouseDown) && !Fl )
+  {
+//    FMY += (wxSystemSettings::GetMetric(wxSYS_MENU_Y)*FParent->pmMenu->GetMenuItemCount());
+    FXApp->ResetMouseState();  // reset mouse state
+    if( FRightMouseDown )
+    {
+      FXApp->MouseUp(me.m_x, me.m_y, Fl, Btn);
+      AGDrawObject *G = FXApp->SelectObject(me.m_x, me.m_y);
+      TGlGroup *GlG = FXApp->FindObjectGroup(G);
+      bool Handled = false;
+      if( G )
+      {
+        if( !GlG )  FParent->ObjectUnderMouse(G);
+        else        FParent->ObjectUnderMouse(GlG);
+        if( FParent->CurrentPopupMenu() )
+        {
+          FParent->PopupMenu(FParent->CurrentPopupMenu(), FMX+left, FMY+top);
+          Handled = true;
+        }
+        if( !Handled )
+        { FParent->PopupMenu(FParent->DefaultPopup(), FMX+left, FMY+top); };
+      }
+      else
+      {
+        FParent->PopupMenu(FParent->GeneralPopup(), FMX+left, FMY+top);
+      }
+    }
+    SetFocus();
+    FRightMouseDown = false;
+    FLeftMouseDown = false;
+    return;
+  }
+  if( FParent->OnMouseUp(me.m_x, me.m_y, Fl, Btn) )
+  {
+    FXApp->ResetMouseState();
+    FXApp->Draw();
+  }
+  else
+  {
+    if( FXApp->MouseUp(me.m_x, me.m_y, Fl, Btn) )  FXApp->Draw();
+  }
+  FRightMouseDown = false;
+  FLeftMouseDown = false;
+}
+//..............................................................................
+void TGlCanvas::OnMouseMove(wxMouseEvent& me)  {
+  me.Skip();
+  short Fl = 0;
+  if( me.m_altDown )      Fl |= sssAlt;
+  if( me.m_shiftDown )    Fl |= sssShift;
+  if( me.m_controlDown )  Fl |= sssCtrl;
+
+  if( !FLeftMouseDown && !FRightMouseDown )  FParent->OnMouseMove(me.m_x, me.m_y);
+  if( FXApp != NULL && FXApp->MouseMove(me.m_x, me.m_y, Fl) )  // check if a handler for the event is found
+    FXApp->Draw();
+}
+//..............................................................................
+void TGlCanvas::OnMouseDblClick(wxMouseEvent& me)  {
+  short Fl = 0, Btn = 0;
+  if( me.m_altDown )      Fl |= sssAlt;
+  if( me.m_shiftDown )    Fl |= sssShift;
+  if( me.m_controlDown )  Fl |= sssCtrl;
+  if( me.ButtonDown(1) )    Btn = smbLeft;
+  if( me.ButtonDown(2) )    Btn = smbMiddle;
+  if( me.ButtonDown(3) )    Btn = smbRight;
+
+  if( FXApp != NULL && !FXApp->DblClick() )
+    FParent->OnMouseDblClick( me.m_x, me.m_y, Fl, Btn );
+  FRightMouseDown = false;
+}
+//..............................................................................
+void TGlCanvas::OnMouse(wxMouseEvent& me)  {
+  if( me.IsPageScroll() )  return;
+  me.Skip();
+}
+//..............................................................................
+void TGlCanvas::OnKeyDown(wxKeyEvent& m)
+{
+  FParent->OnKeyDown(m);
+}
+//..............................................................................
+void TGlCanvas::OnKeyUp(wxKeyEvent& m)
+{
+  FParent->OnKeyUp(m);
+}
+void TGlCanvas::OnChar(wxKeyEvent& m)
+{
+  FParent->OnChar(m);
+}
+//..............................................................................

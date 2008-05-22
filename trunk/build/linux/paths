@@ -1,0 +1,13 @@
+#!/bin/bash
+bin_dir=~/olex
+if [ ! -z $1 ] 
+then
+  bin_dir=$1
+fi
+if [ ! -d "$bin_dir" ]
+then
+  echo "Invalid folder $bin_dir"
+  exit 1
+fi
+export PATH=$bin_dir/bin:$PATH
+export LD_LIBRARY_PATH=$bin_dir/lib:$LD_LIBRARY_PATH

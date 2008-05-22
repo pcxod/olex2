@@ -1,0 +1,181 @@
+//----------------------------------------------------------------------------//
+// TGlGroup - a group of drawing objects
+// (c) Oleg V. Dolomanov, 2004
+//----------------------------------------------------------------------------//
+
+#ifdef __BORLANDC__
+#pragma hdrstop
+#endif
+
+#include "glgroup.h"
+#include "glrender.h"
+#include "gpcollection.h"
+#include "styles.h"
+
+UseGlNamespace()
+//..............................................................................
+//..............................................................................
+
+TGlGroup::TGlGroup(const olxstr& collectionName, TGlRender *P) :
+  AGDrawObject(collectionName)  {
+
+  FGlM = NULL;
+  Flags |= sgdoGroup;
+  AGDrawObject::FParent = P;
+  DefaultColor = true;
+}
+//..............................................................................
+void TGlGroup::Create(const olxstr& cName)  {
+  if( cName.Length() != 0)  SetCollectionName(cName);
+
+//  TGPCollection *GPC = FParent->FindCollection( GetCollectionName() );
+//  if( !GPC )     GPC = FParent->NewCollection( GetCollectionName() );
+//  else  {
+//    GPC->AddObject(this);
+//    return;
+//  }
+//  TGraphicsStyle *GS = GPC->Style();
+
+  TGraphicsStyle *GS = FParent->Styles()->NewStyle( GetCollectionName() );
+
+  FGlM = const_cast<TGlMaterial*>(GS->Material("mat"));
+  DefaultColor = FGlM->Mark();
+  if( FGlM->Mark() )  {
+    if( ParentGroup() != NULL )  {
+      FGlM->SetFlags( sglmAmbientF|sglmDiffuseF|sglmSpecularF|sglmShininessF );
+      FGlM->ShininessF = 128;
+      FGlM->AmbientF = 0xff0fff0f;
+      FGlM->DiffuseF = 0xff00f0ff;
+    }
+    else  {
+      FGlM->SetFlags( sglmAmbientF|sglmDiffuseF|sglmSpecularF|sglmShininessF|
+                      sglmAmbientB|sglmDiffuseB|sglmSpecularB|sglmShininessB|sglmTransparent );
+      FGlM->ShininessF = 128;
+      FGlM->AmbientF = 0x7f00ff00;
+      FGlM->DiffuseF = 0x7f0000ff;
+      FGlM->ShininessB = 128;
+      FGlM->AmbientB = 0x7f00ff00;
+      FGlM->DiffuseB = 0x7f0000ff;
+    }
+  }
+}
+//..............................................................................
+TGlGroup::~TGlGroup()  {
+  if( ParentGroup() != NULL )
+    ParentGroup()->Remove( (AGDrawObject*)this);
+  Clear();
+}
+//..............................................................................
+void TGlGroup::Clear()  {
+  for( int i=0; i < FObjects.Count(); i++ )
+    Object(i)->ParentGroup(NULL);
+  FObjects.Clear();
+}
+//..............................................................................
+void TGlGroup::Remove(AGDrawObject *G)  {
+  FObjects.Remove(G);
+}
+//..............................................................................
+void TGlGroup::RemoveDeleted()  {
+  AGDrawObject *GO;
+  for( int i=0; i < FObjects.Count(); i++ )  {
+    GO = Object(i);
+    if( GO->Deleted() )  {
+      GO->ParentGroup(NULL);
+      GO->Selected(false);
+      FObjects[i] = NULL;
+    }
+  }
+  FObjects.Pack();
+}
+//..............................................................................
+bool TGlGroup::Contains(AGDrawObject *G)  {
+  return  (FObjects.IndexOf(G) == -1) ? false : true;
+}
+//..............................................................................
+bool TGlGroup::Add(AGDrawObject *G)  {
+  if( G == this )
+    throw TInvalidArgumentException(__OlxSourceInfo, "cannot add itself");
+  TGlGroup *GlG = Parent()->FindObjectGroup(G);
+  if( GlG != NULL )  G = GlG;
+  int i = FObjects.IndexOf(G);
+  if( i == -1 )  {
+    FObjects.Add(G);
+    G->ParentGroup(this);
+    return true;
+  }
+  else  {
+    FObjects.Delete(i);
+    G->ParentGroup(NULL);
+    return false;
+  }
+}
+//..............................................................................
+void TGlGroup::Visible(bool On)  {
+  for( int i=0; i < FObjects.Count(); i++ )
+    Object(i)->Visible(On); 
+}
+//..............................................................................
+void TGlGroup::Selected(bool On)  {
+  for( int i=0; i < FObjects.Count(); i++ )
+    Object(i)->Selected(On);
+  AGDrawObject::Selected(On);
+}
+//..............................................................................
+void TGlGroup::InitMaterial() const {
+  if( ParentGroup() != NULL )
+    ParentGroup()->InitMaterial();
+  else
+    FGlM->Init();
+}
+//..............................................................................
+void TGlGroup::Draw(bool SelectPrimitives, bool SelectObjects) const  {
+  int pc;
+  AGDrawObject *G;
+  TGlPrimitive *GlP;
+//  if( SelectObjects )     glLoadName(this->Tag());
+  if( !SelectPrimitives && !SelectObjects )
+      InitMaterial();
+
+  for( int i=0; i < FObjects.Count(); i++ )  {
+    G = Object(i);
+    if( !G->Visible() )  continue;
+    if( G->Deleted() )  continue;
+    if( G->Group() )    { G->Draw();  continue; }
+    pc = G->Primitives()->PrimitiveCount();
+    for( int j=0; j < pc; j++ )  {
+      GlP = G->Primitives()->Primitive(j);
+      if( SelectObjects )     glLoadName(G->GetTag());
+      if( SelectPrimitives )  glLoadName(GlP->GetTag());
+      glPushMatrix();
+      if( G->Orient(GlP) )
+      { glPopMatrix();  continue; }
+      GlP->Draw();
+      glPopMatrix();
+    }
+  }
+}
+//..............................................................................
+bool TGlGroup::OnMouseDown(const IEObject *Sender, const TMouseData *Data)  {
+  for( int i=0; i < FObjects.Count(); i++ )
+    Object(i)->OnMouseDown(Sender, Data);
+  return true;
+}
+//..............................................................................
+bool TGlGroup::OnMouseUp(const IEObject *Sender, const TMouseData *Data)  {
+  for( int i=0; i < FObjects.Count(); i++ )
+    Object(i)->OnMouseUp(Sender, Data);
+  return true;
+}
+//..............................................................................
+bool TGlGroup::OnMouseMove(const IEObject *Sender, const TMouseData *Data)  {
+  for( int i=0; i < FObjects.Count(); i++ )
+    Object(i)->OnMouseMove(Sender, Data);
+  return true;
+}
+//..............................................................................
+void TGlGroup::GlM(const TGlMaterial& G)  {
+  *FGlM = G;
+}
+//..............................................................................
+

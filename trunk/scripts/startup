@@ -1,0 +1,18 @@
+#!/bin/sh
+
+# The location of cctbx library files (.so)
+if [ -n "$LD_LIBRARY_PATH" ]; then
+  LD_LIBRARY_PATH="/usr/local/cctbx/cctbx_build/lib:$LD_LIBRARY_PATH"
+  export LD_LIBRARY_PATH
+else
+  LD_LIBRARY_PATH="/usr/local/cctbx/cctbx_build/lib"
+  export LD_LIBRARY_PATH
+fi
+# Now the path is set run olex2
+PATH="$PATH:$HOME/olex/bin:$HOME/olex"
+export PATH
+
+$HOME/olex/unirun $HOME/olex/
+$HOME/olex/olex2 &
+
+

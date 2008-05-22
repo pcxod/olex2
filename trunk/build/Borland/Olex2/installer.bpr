@@ -1,0 +1,161 @@
+<?xml version='1.0' encoding='utf-8' ?>
+<!-- C++Builder XML Project -->
+<PROJECT>
+  <MACROS>
+    <VERSION value="BCB.06.00"/>
+    <PROJECT value="exe\installer.exe"/>
+    <OBJFILES value="build\installer.obj build\licence.obj build\main.obj build\shellutil.obj 
+      build\unzip.obj build\winhttpfs.obj build\filesystem.obj build\url.obj 
+      build\frame1.obj"/>
+    <RESFILES value="..\..\..\installer\installer.res"/>
+    <DEFFILE value=""/>
+    <RESDEPEN value="$(RESFILES) ..\..\..\installer\licence.dfm ..\..\..\installer\main.dfm 
+      frame1.dfm"/>
+    <LIBFILES value="lib\sdl.lib"/>
+    <LIBRARIES value="rtl.lib vcl.lib"/>
+    <SPARELIBS value="vcl.lib rtl.lib"/>
+    <PACKAGES value="vcl.bpi rtl.bpi vclx.bpi bcbsmp.bpi dbrtl.bpi adortl.bpi vcldb.bpi 
+      qrpt.bpi bdertl.bpi vcldbx.bpi dsnap.bpi cds.bpi bdecds.bpi teeui.bpi 
+      teedb.bpi tee.bpi teeqr.bpi ibxpress.bpi visualclx.bpi visualdbclx.bpi 
+      vclie.bpi xmlrtl.bpi inet.bpi inetdbbde.bpi inetdbxpress.bpi inetdb.bpi 
+      nmfast.bpi bcbie.bpi soaprtl.bpi dclocx.bpi dbexpress.bpi dbxcds.bpi 
+      indy.bpi bcb2kaxserver.bpi"/>
+    <PATHCPP value=".;..\..\..\installer;..\..\..\repository"/>
+    <PATHPAS value=".;"/>
+    <PATHRC value=".;"/>
+    <PATHASM value=".;"/>
+    <DEBUGLIBPATH value="$(BCB)\lib\debug"/>
+    <RELEASELIBPATH value="$(BCB)\lib\release"/>
+    <LINKER value="ilink32"/>
+    <USERDEFINES value="_DEBUG"/>
+    <SYSDEFINES value="NO_STRICT"/>
+    <MAINSOURCE value="installer.cpp"/>
+    <INCLUDEPATH value="&quot;C:\Program Files\Borland\CBuilder6\Projects&quot;;..\..\..\repository;..\..\..\installer;..\..\..\sdl;$(BCB)\include;$(BCB)\include\vcl"/>
+    <LIBPATH value="&quot;C:\Program Files\Borland\CBuilder6\Projects&quot;;..\..\..\repository;..\..\..\..\repository;..\..\..\installer;..\..\repository;..\..;Test\olex_installer;$(BCB)\lib\obj;$(BCB)\lib"/>
+    <WARNINGS value="-w-par"/>
+    <OTHERFILES value=""/>
+  </MACROS>
+  <OPTIONS>
+    <CFLAG1 value="-Od -H=$(BCB)\lib\vcl60.csm -Hc -Vx -Ve -ff -X- -r- -a8 -6 -b -d -k -y -v 
+      -vi- -c -tW -tWM"/>
+    <PFLAGS value="-N2build -N0build -$Y+ -$W -$O- -$A8 -v -JPHNE -M"/>
+    <RFLAGS value=""/>
+    <AFLAGS value="/mx /w2 /zi"/>
+    <LFLAGS value="-Ibuild -D&quot;&quot; -aa -Tpe -x -Gn -v"/>
+    <OTHERFILES value=""/>
+  </OPTIONS>
+  <LINKER>
+    <ALLOBJ value="c0w32.obj sysinit.obj $(OBJFILES)"/>
+    <ALLRES value="$(RESFILES)"/>
+    <ALLLIB value="$(LIBFILES) $(LIBRARIES) import32.lib cp32mt.lib"/>
+    <OTHERFILES value=""/>
+  </LINKER>
+  <FILELIST>
+      <FILE FILENAME="..\..\..\installer\installer.cpp" FORMNAME="" UNITNAME="installer.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\installer\licence.cpp" FORMNAME="dlgLicence" UNITNAME="licence" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\installer\main.cpp" FORMNAME="fMain" UNITNAME="main" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\installer\installer.res" FORMNAME="" UNITNAME="installer.res" CONTAINERID="ResTool" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\repository\shellutil.cpp" FORMNAME="" UNITNAME="shellutil.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\repository\unzip.cpp" FORMNAME="" UNITNAME="unzip.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\repository\winhttpfs.cpp" FORMNAME="" UNITNAME="winhttpfs.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\repository\filesystem.cpp" FORMNAME="" UNITNAME="filesystem.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="lib\sdl.lib" FORMNAME="" UNITNAME="sdl.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\repository\url.cpp" FORMNAME="" UNITNAME="url" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="frame1.cpp" FORMNAME="frMain" UNITNAME="frame1" CONTAINERID="CCompiler" DESIGNCLASS="TFrame" LOCALCOMMAND=""/>
+  </FILELIST>
+  <BUILDTOOLS>
+  </BUILDTOOLS>
+
+  <IDEOPTIONS>
+[Version Info]
+IncludeVerInfo=0
+AutoIncBuild=1
+MajorVer=1
+MinorVer=0
+Release=0
+Build=7
+Debug=0
+PreRelease=1
+Special=0
+Private=0
+DLL=0
+Locale=2057
+CodePage=1252
+
+[Version Info Keys]
+CompanyName=University of Durham
+FileDescription=Olex Installer
+FileVersion=1.0.0.7
+InternalName=installer
+LegalCopyright=(c) Oleg Dolomanov &amp; Horst Puschmann
+LegalTrademarks=
+OriginalFilename=installer.exe
+ProductName=Olex Installer
+ProductVersion=1.0.0.0
+Comments=
+
+[Excluded Packages]
+c:\program files\borland\cbuilder6\Bin\dclite60.bpl=Borland Integrated Translation Environment
+
+[HistoryLists\hlIncludePath]
+Count=12
+Item0=C:\Program Files\Borland\CBuilder6\Projects;..\..\..\repository;..\..\..\installer;..\..\..\sdl;$(BCB)\include;$(BCB)\include\vcl
+Item1=C:\Program Files\Borland\CBuilder6\Projects;..\..\..\..\repository;..\..\..\repository;..\..\..\installer;..\..\..\sdl;$(BCB)\include;$(BCB)\include\vcl
+Item2=..\..\..\..\repository;..\..\..\repository;..\..\..\installer;..\..\..\sdl;$(BCB)\include;$(BCB)\include\vcl
+Item3=..\..\..\repository;..\..\..\installer;..\..\..\sdl;$(BCB)\include;$(BCB)\include\vcl
+Item4=..\..\..\repository;..\..\..\installer;..\sdl;..\..\..\..\repository;..\..\..\..\installer;$(BCB)\include;$(BCB)\include\vcl
+Item5=..\..\..\repository;..\..\..\installer;..\..\..\..\sdl;..\..\..\..\repository;..\..\..\..\installer;$(BCB)\include;$(BCB)\include\vcl
+Item6=..\..\..\..\sdl;..\..\..\..\repository;..\..\..\..\installer;$(BCB)\include;$(BCB)\include\vcl
+Item7=..\..\..\repository;..\..\..\..\repository;..\..\..\installer;..\..\repository;..\..;Test\olex_installer;$(BCB)\include;$(BCB)\include\vcl;C:\Program Files\Borland\CBuilder6\Projects\X-Net\sdl
+Item8=..\..\repository;..\..;Test\olex_installer;$(BCB)\include;$(BCB)\include\vcl;C:\Program Files\Borland\CBuilder6\Projects\X-Net\sdl
+Item9=..\..\repository;..\..;Test\olex_installer;$(BCB)\include;$(BCB)\include\vcl;C:\Program Files\Borland\CBuilder6\Projects\repository;C:\Program Files\Borland\CBuilder6\Projects\X-Net\sdl
+Item10=..\..;Test\olex_installer;$(BCB)\include;$(BCB)\include\vcl;C:\Program Files\Borland\CBuilder6\Projects\repository;C:\Program Files\Borland\CBuilder6\Projects\X-Net\sdl
+Item11=..\..\repository;..\..;Test\olex_installer;$(BCB)\include;$(BCB)\include\vcl
+
+[HistoryLists\hlLibraryPath]
+Count=3
+Item0=C:\Program Files\Borland\CBuilder6\Projects;..\..\..\repository;..\..\..\..\repository;..\..\..\installer;..\..\repository;..\..;Test\olex_installer;$(BCB)\lib\obj;$(BCB)\lib
+Item1=..\..\..\repository;..\..\..\..\repository;..\..\..\installer;..\..\repository;..\..;Test\olex_installer;$(BCB)\lib\obj;$(BCB)\lib
+Item2=..\..\repository;..\..;Test\olex_installer;$(BCB)\lib\obj;$(BCB)\lib
+
+[HistoryLists\hlDebugSourcePath]
+Count=1
+Item0=$(BCB)\source\vcl
+
+[HistoryLists\hlConditionals]
+Count=4
+Item0=_DEBUG
+Item1=__HTTPFS__;_DEBUG
+Item2=__HTTPFS__
+Item3=_DEBUG;__HTTPFS__
+
+[HistoryLists\hlIntOutputDir]
+Count=1
+Item0=build
+
+[HistoryLists\hlFinalOutputDir]
+Count=2
+Item0=exe\
+Item1=exe
+
+[Debugging]
+DebugSourceDirs=$(BCB)\source\vcl
+
+[Parameters]
+RunParams=
+Launcher=
+UseLauncher=0
+DebugCWD=
+HostApplication=
+RemoteHost=
+RemotePath=
+RemoteLauncher=
+RemoteCWD=
+RemoteDebug=0
+
+[Compiler]
+ShowInfoMsgs=0
+LinkDebugVcl=0
+LinkCGLIB=0
+  </IDEOPTIONS>
+</PROJECT>
