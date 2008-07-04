@@ -63,6 +63,11 @@ public:
     for( int i=0; i < list.Count(); i++ )
       Add( list[i] );
   }
+  TTStrList(int count)  {
+    Strings.SetCapacity( count );
+    for( int i=0; i < count; i++ )
+      Add( EmptyString );
+  }
   // creates a list with strtok entries in it
   TTStrList(const SC& string, const SC& sep)  {
     Strtok(string, sep);

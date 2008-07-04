@@ -421,9 +421,13 @@ public:
 class TSpinCtrl: public wxSpinCtrl, public IEObject  {
 private:
   TActionQList *FActions;
+  int Value;
 protected:
   void SpinChangeEvent(wxSpinEvent& event);
   void TextChangeEvent(wxCommandEvent& event);
+  void LeaveEvent(wxFocusEvent& event);
+  void EnterEvent(wxFocusEvent& event);
+  void EnterPressedEvent(wxCommandEvent& event);
   olxstr OnChangeStr, Data;
 public:
   TSpinCtrl(wxWindow *Parent);
@@ -433,7 +437,10 @@ public:
   DefPropC(olxstr, Data) // data associated with the object
 
   inline int GetValue() const {  return wxSpinCtrl::GetValue(); }
-  inline void SetValue(int v) { wxSpinCtrl::SetValue(v); }
+  inline void SetValue(int v) { 
+    Value = v;
+    wxSpinCtrl::SetValue(v); 
+  }
 
   TActionQueue *OnChange;
 

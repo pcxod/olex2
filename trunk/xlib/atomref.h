@@ -99,7 +99,7 @@ public:
     }
     //
     int resi_ind = Expression.IndexOf('_');
-    olxstr resi_name( resi_ind == -1 ? EmptyString : Expression.SubStringFrom(resi_ind+1) );
+    olxstr resi_name = (resi_ind == -1 ? EmptyString : Expression.SubStringFrom(resi_ind+1));
     // check if it is just an equivalent position
     const TMatrixD* eqiv = NULL;
     int eqiv_ind = resi_name.IndexOf('$');
@@ -125,7 +125,7 @@ public:
       if( residues.IsEmpty() )  throw TInvalidArgumentException(__OlxSourceInfo, olxstr("invalid residue class/number: ") << resi_name);
     }
     if( Expression.CharAt(0) == '$' )  {  // sfac type
-      olxstr sfac( (resi_ind == -1) ? Expression.SubStringFrom(1) : Expression.SubString(1, resi_ind-1) );
+      olxstr sfac = ((resi_ind == -1) ? Expression.SubStringFrom(1) : Expression.SubString(1, resi_ind-1));
       TBasicAtomInfo* bai = au.GetAtomsInfo()->FindAtomInfoBySymbol(sfac);
       if( bai == NULL )  throw TInvalidArgumentException(__OlxSourceInfo, olxstr("sfac=") << sfac);
       for( int i=0; i < residues.Count(); i++ )  {
@@ -137,7 +137,7 @@ public:
       }
     }
     else  {  // just an atom
-      olxstr aname( (resi_ind == -1) ? Expression : Expression.SubStringTo(resi_ind) );
+      olxstr aname = ( (resi_ind == -1) ? Expression : Expression.SubStringTo(resi_ind) );
       for( int i=0; i < residues.Count(); i++ )  {
         if( residues[i] == NULL )  continue;
         for( int j=0; j < residues[i]->Count(); j++ )  {

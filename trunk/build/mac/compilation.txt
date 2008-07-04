@@ -1,0 +1,23 @@
+wxWidgets:
+
+./configure --with-gtk --with-opengl --enable-odcombobox --enable-unicode
+
+make
+
+su
+make install
+ldconfig
+
+Python
+
+./configure
+make
+su
+make install
+ldconfig
+
+download PIL: http://www.pythonware.com/products/pil/#pil116
+su
+python setup.py install
+
+copy "python build folder"/libpython2.5.a to the olex/build/linux folder

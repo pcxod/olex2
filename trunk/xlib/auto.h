@@ -12,6 +12,7 @@
 #include "atominfo.h"
 #include "xfiles.h"
 #include "tptrlist.h"
+#include "library.h"
 
 BeginXlibNamespace()
 class TAutoDB;
@@ -227,7 +228,6 @@ private:
 protected:
   void ProcessNodes( TAutoDBIdObject* currentFile, TNetwork& net );
   TAutoDBNet* BuildSearchNet( TNetwork& net, TSAtomPList& cas );
-  bool AnalyseNet(TNetwork& net, TAtomTypePermutator& permutator, double& Uiso);
   //............................................................................
   TAutoDBNode* LocateNode(int index) {
     for( int i=0; i < Nodes.Count(); i++ )  {
@@ -277,17 +277,34 @@ protected:
 private:
   TDoubleList Uisos;
   olxstr LastFileName;
+  int BAIDelta; // maximim element promotion
+  double URatio; // ratio beyond which search for element promotion
 public:
   /* the instance must be created with Replcate to aoid any problems.
    It will be deleted by this object
   */
-  TAutoDB(TXFile& xfile);
+  TAutoDB(TXFile& xfile, ALibraryContainer& lc);
   virtual ~TAutoDB();
 
   void ProcessFolder(const olxstr& folder);
   void SaveToStream( IDataOutputStream& output ) const;
   void LoadFromStream( IDataInputStream& input );
-  bool AnalyseStructure(const olxstr& LastFileName, TLattice& latt, TAtomTypePermutator& permutator);
+  // strcutre to store analysis statistics
+  struct AnalysisStat {
+    int AtomTypeChanges, ConfidentAtomTypes, SNAtomTypeAssignments;
+    bool FormulaConstrained, AtomDeltaConstrained;
+    AnalysisStat()  {
+      AtomTypeChanges = ConfidentAtomTypes = SNAtomTypeAssignments = 0;
+      FormulaConstrained = AtomDeltaConstrained;
+    }
+  };
+protected:
+  void AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator, 
+    double& Uiso, AnalysisStat& stat, TBAIPList* proposed_atoms = NULL);
+public:
+  void AnalyseStructure(const olxstr& LastFileName, TLattice& latt, 
+    TAtomTypePermutator* permutator, AnalysisStat& stat, TBAIPList* proposed_atoms = NULL);
+
   inline const TDoubleList& GetUisos()  const  {  return Uisos;  }
   inline const olxstr& GetLastFileName() const {  return LastFileName;  }
   void AnalyseNode(TSAtom& sa, TStrList& report);
@@ -296,6 +313,8 @@ public:
   inline TAutoDBIdObject& Reference(int i) {  return LocateFile(i);  }
 //  inline TAutoDBFolder& Folder(int i)      {  return Folders.Object(i);  }
   inline TAutoDBNode* Node(int i)          {  return LocateNode(i);  }
+  DefPropP(int, BAIDelta)
+  DefPropP(double, URatio)
 
   template <class NodeClass>
     struct THitStruct {
@@ -370,6 +389,10 @@ protected:
       return new TAnalyseNetNodeTask(Nodes, Network, Guesses);
     }
   };
+//  these are protected, but exposed in the constructor
+  void LibBAIDelta(const TStrObjList& Params, TMacroError& E);
+  void LibURatio(const TStrObjList& Params, TMacroError& E);
+  class TLibrary*  ExportLibrary(const olxstr& name=EmptyString);
 };
 
 class  TAtomTypePermutator {

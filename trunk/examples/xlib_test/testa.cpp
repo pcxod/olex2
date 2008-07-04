@@ -24,6 +24,10 @@
 #include <iostream>
 
 void ExportSymmLib();
+void ExportSymmLibA();
+void ExportSymmLibB();  // MSVC crashes on this code...
+void ExportSymmLibC();
+void ExportBAI(TAtomsInfo& ais);
 
 
 
@@ -71,6 +75,9 @@ int main(int argc, char* argv[])  {
         printf("\n%s", me.GetInfo().c_str() );
     }
     //ExportSymmLib();
+    //ExportSymmLibA();
+    ExportBAI( *XApp.AtomsInfo() );
+    //ExportSymmLibC();
   }
   catch( TExceptionBase& exc )  {
     printf("An exception occured: %s\n", EsdlObjectName(exc).c_str() );
@@ -238,6 +245,70 @@ void CodeGen(TMatrixD& m, const olxstr& d_type, const olxstr&var_type, const olx
   if( zmixed )  out.Add( "    v[2] = a2;" );
   out.Add("  }");
 }
+int CodeGen(TSpaceGroup& sg, TStrList& out)  {
+  TMatrixDList ml;
+  sg.GetMatrices(ml, mattAll);
+  out.Add("  template <class TT, class AT> static inline void DoGeneratePos(const TT& v, AT& res)  {");
+  for( int i=0; i < ml.Count(); i++ )  {
+    TMatrixD& m = ml[i];
+    for( int j=0; j < 3; j++ )  {
+      olxstr& str = out.Add("    res[") << i << "][" << j << "] = ";
+      bool added = false;
+      for( int k=0; k < 3; k++ )  {
+        if( m[j][k] != 0 )  {
+          str << ((m[j][k] > 0) ? (added ? (olxstr("+v[") << k << ']') : (olxstr("v[") << k << ']')) : (olxstr("-v[") << k << ']'));
+          added = true;
+        }
+      }
+      if( m[j][3] != 0 )  {
+        int v = Round(m[j][3]*12), base = 12;
+        int denom = esdl::gcd(v, base);
+        if( denom != 1 )  {
+          v /= denom;
+          base /= denom;
+        }
+        str << '+' << v << "./" << base;
+      }
+      str << ';';
+    }
+  }
+  out.Add("  }");
+  out.Add("  template <class TT, class AT, class SAT> static inline void DoGenerateHkl(TT& v, AT& res, SAT& phase)  {");
+  for( int i=0; i < ml.Count(); i++ )  {
+    TMatrixD& m = ml[i];
+    for( int j=0; j < 3; j++ )  {
+      olxstr& str = out.Add("    res[") << i << "][" << j << "] = ";
+      bool added = false;
+      for( int k=0; k < 3; k++ )  {
+        if( m[k][j] != 0 )  {  // transposed form for hkl
+          str << ((m[k][j] > 0) ? (added ? (olxstr("+v[") << k << ']') : (olxstr("v[") << k << ']')) : (olxstr("-v[") << k << ']'));
+          added = true;
+        }
+      }
+      str << ';';
+    }
+    olxstr& str = out.Add("    phase[") << i << "] = ";
+    bool added = false;
+    for( int j=0; j < 3; j++ )  {
+      if( m[j][3] != 0 )  {  // transposed form for hkl
+        int v = Round(m[j][3]*12), base = 12;
+        int denom = esdl::gcd(v, base);
+        if( denom != 1 )  {
+          v /= denom;
+          base /= denom;
+        }
+        olxstr mult(v);  mult << "./"  << base;
+        str << ((m[j][3] > 0) ? (added ? (olxstr("+v[") << j << ']') : (olxstr("v[") << j << ']')) : (olxstr("-v[") << j << ']'));
+        str << '*' << mult;
+        added = true;
+      }
+    }
+    if( !added )  str << " 0";
+    str << ';';
+  }
+  out.Add("  }");
+  return ml.Count();
+}
 
 void ExportSymmLib()  {
   TSymmLib& sl = *TSymmLib::GetInstance();
@@ -357,3 +428,94 @@ void ExportSymmLib()  {
   sgout1.SaveToFile("e:/tmp/sgout.cpp");
 }
             
+void ExportSymmLibA()  {
+  TSymmLib& sl = *TSymmLib::GetInstance();
+  TStrList out;
+  for( int i=0; i < sl.SGCount(); i++ )  {
+    TSpaceGroup& sg = sl.GetGroup(i);
+    out.Add("//") << sg.GetName() << " #" << sg.GetNumber() << " axis:" << sg.GetAxis();
+    out.Add("class TSpaceGroup_") << i << " : public ISGGroup  {";
+    out.Add("public: ");
+    int mc = CodeGen(sg, out);
+    out.Add("  virtual inline void GeneratePos(const TVectorD& v, TArrayList<TVectorD>& res) const {  DoGeneratePos(v,res);  }");
+    out.Add("  virtual inline void GeneratePos(const TVectorD& v, TArrayList<TVPointD>& res) const {  DoGeneratePos(v,res);  }");
+    out.Add("  virtual inline int GetSize() const {  return ") << mc << ";  }";
+    out.Add("};");
+  }
+  out.SaveToFile("e:/tmp/sgoutx.h");
+}
+
+void ExportBAI(TAtomsInfo& ais)  {
+  TStrList out;
+  char bf[10];
+  for( int i=0; i < ais.Count(); i++ )  {
+    TBasicAtomInfo& bai = ais.GetAtomInfo(i);
+    out.Add("    bai = &Data.AddNew();");
+    out.Add("    bai->SetSymbol(\"") << bai.GetSymbol() << "\");";
+    out.Add("    bai->SetName(\"") << bai.GetName() << "\");";
+    out.Add("    bai->SetMr(") << bai.GetMr() << ");";
+    sprintf(bf, "0x%X", bai.GetDefColor());
+    out.Add("    bai->SetDefColor(") << bf << ");";
+    out.Add("    bai->SetRad(") << bai.GetRad() << ");";
+    out.Add("    bai->SetRad1(") << bai.GetRad1() << ");";
+    out.Add("    bai->SetRad2(") << bai.GetRad2() << ");";
+    out.Add("    bai->SetIndex(") << bai.GetIndex() << ");";
+    for( int j=0; j < bai.IsotopeCount(); j++ )  {
+      out.Add("      ai = &bai->NewIsotope();");
+      out.Add("      ai->SetMr(") << bai.GetIsotope(j).GetMr() << ");";
+      out.Add("      ai->SetW(") << bai.GetIsotope(j).GetW() << ");";
+    }
+  }
+  out.SaveToFile("e:/tmp/baiout.h");
+}
+struct SGSM {
+  double m[3];
+};
+struct SG  {
+  char* name, *full_name, *hall_symbol, *axis;
+  int number, latt;
+  char* matrices;
+};
+void ExportSymmLibC()  {
+  TSymmLib& sl = *TSymmLib::GetInstance();
+  TStrList out;
+  out.Add("olx_SGDef olx_SG[") << sl.SGCount() << "]={";
+  for( int i=0; i < sl.SGCount(); i++ )  {
+    TSpaceGroup& sg = sl.GetGroup(i);
+    olxstr& s = out.Add("{\"") << sg.GetName() << "\", \"" << sg.GetFullName() << 
+      "\", \"" << sg.GetHallSymbol().Trim(' ') << "\", \"" << sg.GetAxis() << "\", " << sg.GetNumber() << 
+      ", " << sg.GetLattice().GetLatt()*( sg.IsCentrosymmetric() ? 1 : -1) << ", \"";
+    for( int j=0; j < sg.MatrixCount(); j++ )  {
+      s << TSymmParser::MatrixToSymm(sg.GetMatrix(j));
+      if( (j+1) < sg.MatrixCount() ) s << ';';
+      else s << '"';
+    }
+    if( sg.MatrixCount() == 0 )  s << '"';
+    if( (i+1) < sl.SGCount() ) 
+      s << "}, ";
+    else
+      s << "}};";
+  }
+  out.SaveToFile("e:/tmp/sgoutsx.h");
+}
+void ExportSymmLibB()  {
+  TSymmLib& sl = *TSymmLib::GetInstance();
+  TStrList out;
+  for( int i=0; i < sl.SGCount(); i++ )  {
+    TSpaceGroup& sg = sl.GetGroup(i);
+
+    out.Add("  sg = new TSpaceGroup(\"") << sg.GetName() << "\", \"" << sg.GetFullName() << 
+      "\", \"" << sg.GetHallSymbol().Trim(' ') << "\", \"" << sg.GetAxis() << "\", " << sg.GetNumber() << 
+      ", GetLattice(" << abs(sg.GetLattice().GetLatt()-1) << "), " << 
+      sg.IsCentrosymmetric() << ");";
+    for( int j=0; j < sg.MatrixCount(); j++ )  {
+      TMatrixD& m = sg.GetMatrix(j);
+      out.Add("    sg->AddMatrix(") << m[0][0] << ", " << m[0][1] << ", " << m[0][2] << ", " <<
+        m[1][0] << ", " << m[1][1] << ", " << m[1][2] << ", " <<
+        m[2][0] << ", " << m[2][1] << ", " << m[2][2] << ", " <<
+        m[0][3] << ", " << m[1][3] << ", " << m[2][3] << ");";
+    }
+    out.Add("  SpaceGroups.Add(\"") << sg.GetName() << "\", sg);";
+  }
+  out.SaveToFile("e:/tmp/sgouts.h");
+}

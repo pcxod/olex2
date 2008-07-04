@@ -96,7 +96,7 @@
 
 enum
 {
-  ID_HtmlPanel,  // view menu
+  ID_HtmlPanel=1,  // view menu
 
   ID_StrGenerate,  // structure menu
 
@@ -469,8 +469,6 @@ void TMainForm::XApp( TGXApp *XA)  {
 
   this_InitMacroD(Fmol, EmptyString, fpNone|psFileLoaded,
 "Shows all fragments (as opposite to uniq)");
-  this_InitMacroD(Fuse, "f-remove symmetry equivalents from asymmetric unit", fpNone|psFileLoaded,
-"Shows asymmetric unit of the structure");
   this_InitMacroD(Clear, EmptyString, fpNone,
 "Clears console buffer (text)");
 
@@ -587,11 +585,6 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual accupancy\
   this_InitMacro(Scene, s, fpNone|fpOne );
 
   this_InitMacro(SyncBC, , fpNone );
-  this_InitMacro(Cif2Doc, , fpNone|fpOne|psFileLoaded );
-  this_InitMacro(Cif2Tab, , fpAny|psFileLoaded );
-  this_InitMacroD(CifMerge, "", (fpAny^fpNone)|psFileLoaded,
-  "Merges loaded or provided as first argument cif with other cif(s)" );
-  this_InitMacro(CifExtract, , fpTwo|psFileLoaded );
 
   this_InitMacro(IF, , fpAny );
   this_InitMacro(Basis, , fpNone|fpOne );
@@ -615,15 +608,11 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual accupancy\
   this_InitMacro(CalcChn, , fpNone|fpOne );
   this_InitMacro(CalcMass, , fpNone|fpOne );
 
-  this_InitMacroD(Envi, "q-adds Q-peaks to the list&;h-adds hydrogen atoms to the list&;cs-leaves selection unchanged",
-  fpNone|fpOne|fpTwo,
-"This macro prints environment of any particular atom. Default search radius is 2.7A." );
   this_InitMacro(Focus, , fpNone );
   this_InitMacro(Refresh, , fpNone );
   this_InitMacroD(Move,"cs-leaves selection unchanged&;c-copy moved atom", fpNone|fpTwo,
   "moves two atoms as close to each other as possible; if no atoms given, moves all fragments\
   as close to the cell center as possible" );
-  this_InitMacro(Compaq, a, fpNone );
 
   this_InitMacro(ShowH, , fpNone|fpTwo|psFileLoaded );
   this_InitMacro(Fvar, , (fpAny^fpNone)|psCheckFileTypeIns );
@@ -676,7 +665,7 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual accupancy\
   this_InitMacro(Free, , fpAny^(fpNone|fpOne) );
   this_InitMacro(Fix, , fpAny^(fpNone|fpOne) );
 
-  this_InitMacro(Grad, i, fpNone|fpOne|fpFour );
+  this_InitMacro(Grad, i&;p, fpNone|fpOne|fpFour );
   this_InitMacro(Split, , fpAny|psCheckFileTypeIns );
   this_InitMacro(ShowP, , fpAny );
 
@@ -780,19 +769,13 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual accupancy\
 "Adds a new user defined object to the graphical scene" );
   this_InitMacroD(DelObject, EmptyString, fpOne,
 "Deletes graphical object by name" );
-#ifdef __OD_BUILD__
-  this_InitMacroD(ValidateAuto, EmptyString, fpAny|psFileLoaded,
-"Compares current model with the cif file and write the report to provided file (appending)" );
-  this_InitMacroD(Clean, "npd-does not change atom types of NPD atoms&;f-does not run 'fuse' after the completion", fpNone,
-"Tidies up current model" );
-  this_InitMacroD(AtomInfo, "", fpAny,
-"Internal procedure" );
-#endif // __OD_BUILD__
+
   this_InitMacroD(OnRefine, EmptyString, fpAny,
 "Internal procedure" );
   this_InitMacroD(TestMT, EmptyString, fpAny,
 "Testing multithreading" );
-  this_InitMacroD(SetFont, EmptyString, fpAny^(fpNone|fpOne),
+  this_InitMacroD(SetFont, "ps-point size&;w-weight[normal,light,bold]&;u-underlined", 
+    fpAny^(fpNone|fpOne),
 "Sets font for specified control" );
   this_InitMacroD(EditMaterial, EmptyString, fpOne,
 "Brighs up material properties dialog for specified object" );
@@ -812,16 +795,12 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual accupancy\
   this_InitMacroD(SGE, EmptyString, fpNone|fpOne|psFileLoaded, "Extended spacegroup determination. Internal use" );
   this_InitMacroD(Flush, EmptyString, fpNone|fpOne, "Flushes log streams" );
   this_InitMacroD(ShowSymm, EmptyString, fpNone|fpOne, "Shows symmetry elements of the unitcell" );
-  this_InitMacroD(Texm, EmptyString, fpOne, "Runs subsequent commands stored in a text file" );
+  this_InitMacroD(Textm, EmptyString, fpOne, "Runs subsequent commands stored in a text file" );
+  this_InitMacroD(TestStat, EmptyString, fpOne, "Test: runs statistical tests on structures in current folder. Expects a file name" );
+  this_InitMacroD(ExportFont, EmptyString, fpTwo, "" );
+  this_InitMacroD(ImportFont, EmptyString, fpThree, "" );
   // FUNCTIONS _________________________________________________________________
 
-  this_InitFuncD(FileName, fpNone|fpOne,
-"If no arguments provided, returns file name of currently loaded file, for one\
- argument returns extracted file name");
-  this_InitFunc(FileExt, fpNone|fpOne);
-  this_InitFunc(FilePath, fpNone|fpOne);
-  this_InitFunc(FileFull, fpNone);
-  this_InitFunc(FileDrive, fpNone|fpOne);
   this_InitFunc(FileLast, fpNone|fpOne);
   this_InitFunc(FileSave, fpThree);
   this_InitFunc(FileOpen, fpThree);
@@ -838,8 +817,6 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual accupancy\
   this_InitFuncD(SSM, fpNone|fpOne,
 "Return current structure solution method, TREF or PATT currently. If current method is unknown\
  and an argument is provided, that argument is returned");
-  this_InitFunc(HKLSrc, fpNone|fpOne|psCheckFileTypeIns);
-  this_InitFunc(BaseDir, fpNone);
   this_InitFunc(DataDir, fpNone);
   this_InitFuncD(Cif, fpOne|psCheckFileTypeCif,
 "Returns instruction value (all data after the instruction). In case the instruction\
@@ -875,7 +852,7 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual accupancy\
 
   this_InitFunc(Cursor, fpNone|fpOne|fpTwo);
   this_InitFunc(RGB, fpThree|fpFour);
-  this_InitFunc(Color, fpNone|fpOne);
+  this_InitFunc(Color, fpNone|fpOne|fpTwo);
 
   this_InitFunc(Lst, fpOne|psFileLoaded);
   this_InitFunc(Zoom, fpNone|fpOne);
@@ -894,8 +871,6 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual accupancy\
   this_InitFunc(IsPluginInstalled, fpOne);
   this_InitFunc(ValidatePlugin, fpOne);
 
-  this_InitFunc(IsFileLoaded, fpNone);
-  this_InitFunc(IsFileType, fpOne);
   // number of lines, caption, def value
   this_InitFunc(GetUserInput, fpThree);
 
@@ -919,10 +894,7 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual accupancy\
 
   this_InitFuncD(StrDir, fpNone|psFileLoaded, "Returns location of the folder, where\
   Olex stores structure related data" );
-#ifdef __OD_BUILD__
-  this_InitFuncD(TestAuto, fpAny|psFileLoaded, "Test current structure agains databse.\
-  Returns true if any atom type changed" );
-#endif
+
   this_InitFuncD(ChooseFont, fpNone|fpOne, "Brigns up a font dialog. If font\
   information provided, initialises the dialog with that font" );
   this_InitFuncD(GetFont, fpOne, "Returns specified font" );
@@ -932,7 +904,9 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual accupancy\
 
   this_InitFuncD(GetMouseX, fpNone, "Returns current mouse X position" );
   this_InitFuncD(GetMouseY, fpNone, "Returns current mouse Y position" );
-  this_InitFuncD(IsWindows, fpNone, "Returns true if current system is windows" );
+  this_InitFuncD(IsOS, fpOne, "Returns true if current system Windows [win], Linux/GTK [linux], Mac [mac]" );
+  this_InitFuncD(ExtraZoom, fpNone|fpOne, "Sets/reads current extra zoom (default zoom correction)" );
+  this_InitFuncD(HasGUI, fpNone, "Returns if true if Olex2 is built with GUI" );
 
   Library.AttachLibrary( TEFile::ExportLibrary() );
   //Library.AttachLibrary( olxstr::ExportLibrary("str") );
@@ -1154,11 +1128,11 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual accupancy\
     TBasicApp::GetLog().Error("Could not create log file!");
   }
 
-  TBasicApp::GetLog().OnInfo->Add(this, ID_INFO);
-  TBasicApp::GetLog().OnWarning->Add(this, ID_WARNING);
-  TBasicApp::GetLog().OnError->Add(this, ID_ERROR);
-  TBasicApp::GetLog().OnException->Add(this, ID_EXCEPTION);
-  FXApp->OnObjectsDestroy->Add(this, ID_XOBJECTSDESTROY);
+  TBasicApp::GetLog().OnInfo->Add(this, ID_INFO, msiEnter);
+  TBasicApp::GetLog().OnWarning->Add(this, ID_WARNING, msiEnter);
+  TBasicApp::GetLog().OnError->Add(this, ID_ERROR, msiEnter);
+  TBasicApp::GetLog().OnException->Add(this, ID_EXCEPTION, msiEnter);
+  FXApp->OnObjectsDestroy->Add(this, ID_XOBJECTSDESTROY, msiEnter);
 
   LoadVFS(plGlobal);
 
@@ -1206,14 +1180,15 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual accupancy\
   TBasicApp::GetInstance()->OnTimer->Add(this, ID_TIMER);
   // synchronise if value is different in settings file...
   miHtmlPanel->Check( !FHtmlMinimized );
-#ifdef __WIN32__
+#if defined(__WIN32__) || defined(__MAC__)
   StartupInit();
 #endif
 }
 //..............................................................................
 void TMainForm::StartupInit()  {
+  if( StartupInitialised )  return;
   StartupInitialised = true;
-  wxFont Font(10, wxMODERN, wxNORMAL, wxNORMAL);
+  wxFont Font(10, wxMODERN, wxNORMAL, wxNORMAL);//|wxFONTFLAG_ANTIALIASED);
   // create 4 fonts
   
   TGlFont *fnt = FXApp->GetRender().Scene()->CreateFont("Console", &Font, NULL, true, true);
@@ -1266,9 +1241,6 @@ void TMainForm::StartupInit()  {
 
   FInfoBox->SetHeight(FXApp->GetRender().Scene()->Font(2)->TextHeight(EmptyString));
   
-  CifDictionaryFile = CifTemplatesDir + "cifindex.dat";
-  CifTablesFile     = CifTemplatesDir + "tables.xlt";
-
   ProcessXPMacro(olxstr("showwindow help ") << HelpWindowVisible, MacroError);
   ProcessXPMacro(olxstr("showwindow info ") << InfoWindowVisible, MacroError);
   ProcessXPMacro(olxstr("showwindow cmdline ") << CmdLineVisible, MacroError);
@@ -1276,7 +1248,6 @@ void TMainForm::StartupInit()  {
   ProcessXPMacro("reload help", MacroError);
 
   FTimer->Start(15);
-
   if( FGlCanvas != NULL )  FGlCanvas->XApp(FXApp);
 
   if( TEFile::FileExists(FXApp->BaseDir() + "settings.xld") )  {
@@ -1536,8 +1507,6 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
   TdlgPrimitive *Primitives;
   TStrList Ps;
   olxstr TmpStr;
-  wxFontData fnt_data;
-  wxFont Fnt;
 
   switch( event.GetId() )  {
     case ID_GraphicsHide:
@@ -1976,7 +1945,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
     if( Data != NULL && EsdlInstanceOf(*Data, TKeyEvent) )
       this->OnKeyDown( ((TKeyEvent*)Data)->GetEvent() );
   }
-  else if( MsgId == ID_INFO || MsgId == ID_WARNING || MsgId == ID_ERROR || MsgId == ID_EXCEPTION )  {
+  else if( MsgId == ID_INFO || MsgId == ID_WARNING || MsgId == ID_ERROR || MsgId == ID_EXCEPTION && (MsgSubId == msiEnter))  {
     if( Data != NULL )  {
       TGlMaterial *glm = NULL;
       if( MsgId == ID_INFO )           glm = &InfoFontColor;
@@ -2587,7 +2556,7 @@ void TMainForm::SaveSettings(const olxstr &FN)  {
   I->AddField("Styles", StylesDir);
   I->AddField("SceneP", SParamDir);
   I->AddField("Current", CurrentDir);
-  I->AddField("CifTemplates", CifTemplatesDir);
+  I->AddField("CifTemplates", FXApp->GetCifTemplatesDir());
 
   I = DF.Root().AddItem("HTML");
   I->AddField("Minimized", FHtmlMinimized);
@@ -2617,7 +2586,9 @@ void TMainForm::SaveSettings(const olxstr &FN)  {
   I->AddField("BgColor", FBgColor.ToString());
   I->AddField("WhiteOn", (FXApp->GetRender().LightModel.ClearColor().GetRGB() == 0xffffffff) );
   I->AddField("Gradient", FXApp->GetRender().Background()->Visible() );
+  I->AddField("GradientPicture", GradientPicture );
   I->AddField("language", Dictionary.GetCurrentLanguage() );
+  I->AddField("ExtraZoom", FXApp->GetExtraZoom() );
 
   I = DF.Root().AddItem("Recent_files");
   for( int i=0; i < olx_min(FRecentFilesToShow, FRecentFiles.Count()); i++ )
@@ -2649,9 +2620,10 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
   StylesDir = I->GetFieldValue("Styles");
   SParamDir = I->GetFieldValue("SceneP");
   CurrentDir = I->GetFieldValue("Current");
-  CifTemplatesDir = I->GetFieldValue("CifTemplates", EmptyString);
+  olxstr CifTemplatesDir( I->GetFieldValue("CifTemplates", EmptyString) );
   if( !CifTemplatesDir.Length() )
     CifTemplatesDir = TutorialDir + "CIF/";
+  FXApp->SetCifTemplatesDir( CifTemplatesDir );
   // to fix old folder location at the basedir ... 
   if( !TEFile::FileExists(CifTemplatesDir) )
     CifTemplatesDir = TutorialDir + "CIF/";
@@ -2734,15 +2706,17 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
   if( TEFile::FileExists( DictionaryFile ) )  {
       Dictionary.SetCurrentLanguage(DictionaryFile, I->GetFieldValue("language", EmptyString) );
   }
+  FXApp->SetExtraZoom( I->GetFieldValue("ExtraZoom", "1.25").ToDouble() );
 
   olxstr T( I->GetFieldValue("BgColor") );
   if( !T.IsEmpty() )  FBgColor.FromString(T);
   bool whiteOn =  I->GetFieldValue("WhiteOn", FalseString).ToBool();
-  FXApp->GetRender().LightModel.ClearColor() =  whiteOn ? 0xffffffff : FBgColor;
+  FXApp->GetRender().LightModel.ClearColor() =  whiteOn ? 0xffffffff : FBgColor.GetRGB();
 
   T = I->GetFieldValue("Gradient", EmptyString);
-  if( !T.IsEmpty() )
-    ProcessXPMacro(olxstr("grad ") << T, MacroError);
+  GradientPicture = I->GetFieldValue("GradientPicture", EmptyString);
+  if( !T.IsEmpty() ) 
+    ProcessXPMacro(olxstr("grad ") << T << " -p=\'" << GradientPicture << '\'', MacroError);
 
   I = DF.Root().FindItem("Stored_params");
   if( I )  {
@@ -2761,7 +2735,7 @@ void TMainForm::LoadScene(TDataItem *Root, TGlLightModel *FLM)  {
   TDataFile F;
   TDataItem *I;
   olxstr FntData;
-  wxFont Font;
+  wxFont Font(10, wxMODERN, wxNORMAL, wxNORMAL);//|wxFONTFLAG_ANTIALIASED);
   if( !FLM )  FLM = &(FXApp->GetRender().LightModel);
   I = Root->FindItem("Scene_Properties");
   if( I == NULL )  {
@@ -3192,7 +3166,7 @@ bool TMainForm::CheckState(const unsigned short state, const olxstr& stateData)
 void TMainForm::OnInternalIdle()  {
   if( Destroying )  return;
   FParent->Yield();
-#ifndef __WIN32__
+#if !defined(__WIN32__)  
   if( !StartupInitialised )  StartupInit();
 #endif
   TBasicApp::GetInstance()->OnIdle->Execute((AEventsDispatcher*)this, NULL);
@@ -3226,6 +3200,9 @@ void TMainForm::OnInternalIdle()  {
     TEFile::ChangeDir( curd );
   }
   wxFrame::OnInternalIdle();
+#ifdef __MAC__  // duno why otherwise it takes 100% of CPU time...
+  wxMilliSleep(15);
+#endif  
   return;
 }
 //..............................................................................
@@ -3239,12 +3216,12 @@ void TMainForm::SetUserCursor( const olxstr& param, const olxstr& mode )  {
   Pen.SetColour( *wxRED );
   memDC.SetPen( Pen );
   wxFont Font = memDC.GetFont();
-#ifdef __WIN32__
+  Font.SetFamily( wxSWISS );
+#if defined(__WIN32__)
   Font.SetPointSize( 10 );
 #else
   Font.SetPointSize( 10 );
 #endif
-  Font.SetFamily( wxSWISS );
 
   memDC.SetFont( Font );
   memDC.SelectObject( bmp );
@@ -3346,14 +3323,11 @@ void TMainForm::AnalyseError( TMacroError& error )  {
   }
 }
 //..............................................................................
-bool TMainForm::ProcessEvent( wxEvent& evt )
-{
+bool TMainForm::ProcessEvent( wxEvent& evt )  {
 //  if( evt.GetId() ==
-  if( evt.GetEventType() == wxEVT_COMMAND_MENU_SELECTED &&
-      AccMenus.ValueExists( evt.GetId() )  )
-  {
-    olxstr macro = AccMenus.GetValue(evt.GetId())->GetCommand();
-    if( macro.Length() )  {
+  if( evt.GetEventType() == wxEVT_COMMAND_MENU_SELECTED && AccMenus.ValueExists( evt.GetId() )  )  {
+    olxstr macro( AccMenus.GetValue(evt.GetId())->GetCommand() );
+    if( !macro.IsEmpty() )  {
       TStrList sl;
       bool checked = AccMenus.GetValue(evt.GetId())->IsChecked();
       sl.Strtok( macro, ">>");
@@ -3448,7 +3422,7 @@ bool TMainForm::OnMouseDblClick(int x, int y, short Flags, short Buttons)  {
 }
 //..............................................................................
 bool TMainForm::Show( bool v )  {
-  bool res = wxWindow::Show(v);
+  bool res = wxFrame::Show(v);
   if( res )  {
     FXApp->SetMainFormVisible( v );
     FGlCanvas->SetFocus();
@@ -3486,13 +3460,6 @@ void TMainForm::TranslateString(olxstr& phrase)  {
 }
 //..............................................................................
 //..............................................................................
-//..............................................................................
-olxstr TMainForm::CifResolve(const olxstr& func)  {
-  olxstr f( func );
-  if( TGlXApp::GetMainForm()->ProcessMacroFunc(f) )
-    return f;
-  return olxstr("Funcion ") << func << " failed";
-}
 //..............................................................................
 bool TMainForm::registerCallbackFunc(const olxstr& cbEvent, ABasicFunction* fn)  {
   CallbackFuncs.Add(cbEvent, fn);

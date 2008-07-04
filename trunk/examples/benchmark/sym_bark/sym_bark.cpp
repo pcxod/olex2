@@ -21,14 +21,22 @@
 #include <iostream>
 #include "simple_math.h"
 
+class ISGGroup {
+public:
+  virtual inline void GeneratePos(const TVectorD& v, TArrayList<TVectorD>& res) const  = 0;
+  virtual inline void GeneratePos(const TVectorD& v, TArrayList<TVPointD>& res) const  = 0;
+  virtual inline int GetSize() const = 0;
+};
+#include "sgx.h"
+
 using namespace std;
 
 
-
-
 int main(int argc, char* argv[])  {
-  const int olc = 100000, ilc = 5000;
+  const int olc = 4000000, ilc = 48;
   double v[3];
+  TSpaceGroup_458 sgx;
+  ISGGroup& sgxi = sgx;
   double m[3][3] = { {-1.0, 0.0, 0.0}, {1.0,0.0,-1.0}, {0.0, 0.0, -1.0}};
   double **nm = new double*[3];  nm[0] = new double[3];  nm[1] = new double[3];  nm[2] = new double[3];  
   nm[0][0] = -1;  nm[0][1] = nm[0][2] = 0;
@@ -130,8 +138,18 @@ int main(int argc, char* argv[])  {
   st = TETime::msNow() - st;
   cout << st << "ms\n";
 
+  cout << "Using SGX\n";
+  TVPointD test_v(1,3,2);
+  TArrayList< TVPointD > res(48);
+  st = TETime::msNow();
+  for( int i=0; i < olc; i++ )  {
+    sgxi.GeneratePos(test_v, res);
+  }
+  st = TETime::msNow() - st;
+  cout << st << "ms\n";
+
   cin.get();
-  cout << v[0] << ';' << v[1] << ';' << v[2];
+  cout << v[0] << ';' << v[1] << ';' << v[2] << res[0][0];
   delete [] nm[0];
   delete [] nm[1];
   delete [] nm[2];

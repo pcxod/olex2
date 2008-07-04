@@ -19,6 +19,8 @@
 TXApp::TXApp(const olxstr &basedir) : TBasicApp(basedir), Library(EmptyString, this)  {
   try  {
     FAtomsInfo = new TAtomsInfo( BaseDir() + "ptablex.dat" );
+    if( TSymmLib::GetInstance() == NULL )
+      TEGC::AddP( new TSymmLib(BaseDir() + "symmlib.xld") );
   }
   catch( const TIOExceptionBase &exc )  {
     throw TFunctionFailedException(__OlxSourceInfo, exc);
@@ -30,6 +32,8 @@ TXApp::TXApp(const olxstr &basedir) : TBasicApp(basedir), Library(EmptyString, t
   DefineState( psCheckFileTypeCif, "CIF file is expected");
   DefineState( psCheckFileTypeP4P, "P4P file is expected");
   DefineState( psCheckFileTypeCRS, "CRS file is expected");
+  
+  CifTemplatesDir = BaseDir() + "etc/CIF/";
 
   XLibMacros::Export(Library);
 }
@@ -89,9 +93,6 @@ void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F)  {
   XFile().UpdateAsymmUnit();
   TAsymmUnit& au = XFile().GetAsymmUnit();
   const TMatrixD& hkl2c = au.GetHklToCartesian();
-  TMatrixD abc2xyz( au.GetCellToCartesian()), xyz2abc( au.GetCartesianToCell());
-  abc2xyz.Transpose();
-  xyz2abc.Transpose();
   // space group matrix list
   TSpaceGroup* sg = TSymmLib::GetInstance()->FindSG(au);
   if( sg == NULL )
@@ -99,21 +100,7 @@ void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F)  {
   TMatrixDList ml, allm;
   sg->GetMatrices(ml, mattAll);
 
-  allm.SetCapacity(ml.Count()*2);
-  // prepare list of M and Mt for ellispoids calculations
-  for( int i=0; i < ml.Count(); i++ )  {
-    TMatrixD& m  = allm.AddNew(3,3);
-    TMatrixD& mt = allm.AddNew(3,3);
-    for( int j=0; j < 3; j++ )
-      for( int k=0; k < 3; k++ )
-        mt[k][j] = m[j][k]  = ml[i][j][k];
-//    m  = abc2xyz*m*xyz2abc;
-//    for( int j=0; j < 3; j++ )
-//      for( int k=0; k < 3; k++ )
-//        mt[k][j] = m[j][k];
-  }
   TVectorD quad(6);
-  TMatrixD ElpM(3,3), SymM(3,3);
   const static double EQ_PI = 8*QRT(M_PI);
   const static double T_PI = 2*M_PI;
   const static double TQ_PI = 2*QRT(M_PI);
@@ -130,7 +117,7 @@ void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F)  {
   TScattererLib scat_lib(9);
   TPtrList<TBasicAtomInfo> bais;
   TPtrList<TCAtom> alist;
-  double *Ucifs = new double[6*ml.Count()*au.AtomCount() + 1];
+  double *Ucifs = new double[6*au.AtomCount() + 1];
   TTypeList< AnAssociation2<TLibScatterer*, double> > scatterers;
   for( int i=0; i < au.AtomCount(); i++ )  {
     TCAtom& ca = au.GetAtom(i);
@@ -150,30 +137,19 @@ void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F)  {
       bais.Add( &ca.GetAtomInfo() );
     }
     ca.SetTag(ind);
+    ind = alist.Count()*6;
     alist.Add(&ca); 
     TEllipsoid* elp = ca.GetEllipsoid();
     if( elp != NULL )  {
       elp->GetQuad(quad);
-      au.UcartToUcif(quad);
-      SymM[0][0] = quad[0];  SymM[1][1] = quad[1];  SymM[2][2] = quad[2];
-      SymM[1][2] = SymM[2][1] = quad[3];
-      SymM[0][2] = SymM[2][0] = quad[4];
-      SymM[0][1] = SymM[1][0] = quad[5];
-      int ind = (alist.Count()-1)*ml.Count()*6;
-      for( int j=0; j < allm.Count(); j+=2 )  {
-        ElpM = allm[j]*SymM*allm[j+1];
-        quad[0] = ElpM[0][0];  quad[1] = ElpM[1][1];  quad[2] = ElpM[2][2];
-        quad[3] = ElpM[1][2];  quad[4] = ElpM[0][2];  quad[5] = ElpM[0][1];
-        for( int k=0; k < 6; k++ )  {
-          Ucifs[ind+k] = quad[k];
-          Ucifs[ind+k] *= BM[k];
-          Ucifs[ind+k] *= -TQ_PI;
-        }
-        ind += 6;
+      au.UcifToUcart(quad);
+      for( int k=0; k < 6; k++ )  {
+        Ucifs[ind+k] = quad[k];
+        Ucifs[ind+k] *= BM[k];
+        Ucifs[ind+k] *= -TQ_PI;
       }
     }
     else  {
-      const int ind = (alist.Count()-1)*ml.Count()*6;
       if( ca.GetAtomInfo() == iHydrogenIndex && ca.GetUisoVar() < 0 )  {
         int ai = ca.GetAfixAtomId();
         if( ai == -1 )  {
@@ -189,7 +165,7 @@ void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F)  {
     }
   }
   
-  TVPointD hkl;
+  TVPointD hkl, crd;
   for( int i=0; i < refs.Count(); i++ )  {
     const TReflection& ref = refs[i];
     ref.MulHkl(hkl, hkl2c);
@@ -198,11 +174,11 @@ void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F)  {
       scatterers[j].B() = scatterers[j].GetA()->Calc_sq(d_s2);
     double a = 0, b = 0;
     for( int j=0; j < alist.Count(); j++ )  {
-      const TVPointD& crd = alist[j]->GetCCenter();
+      crd = alist[j]->GetCCenter();
       double la=0, lb=0;
       for( int k=0; k < ml.Count(); k++ )  {
         const TMatrixD& mt = ml[k];
-        ref.MulHklT(hkl, mt);
+        ref.MulHkl(hkl, mt);
         double tv =  hkl[0]*mt[0][3];  // scattering vector + phase shift
                tv += hkl[1]*mt[1][3];
                tv += hkl[2]*mt[2][3];
@@ -213,7 +189,7 @@ void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F)  {
         double ca, sa;
         SinCos(tv, &sa, &ca);
         if( alist[j]->GetEllipsoid() != NULL )  {
-          double* Q = &Ucifs[(j*ml.Count()+k)*6];  // pick up the correct ellipsoid
+          double* Q = &Ucifs[j*6];  // pick up the correct ellipsoid
           double B = (Q[0]*hkl[0]*hkl[0] + Q[1]*hkl[1]*hkl[1] + Q[2]*hkl[2]*hkl[2] + 
             2*Q[3]*hkl[1]*hkl[2] + 2*Q[4]*hkl[0]*hkl[2] + 2*Q[5]*hkl[0]*hkl[1]);
           B = exp( B );
@@ -227,7 +203,7 @@ void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F)  {
       }
       double scv = scatterers[ alist[j]->GetTag() ].GetB();
       if( alist[j]->GetEllipsoid() == NULL )  {
-        scv *= exp( Ucifs[j*ml.Count()*6]*d_s2 );
+        scv *= exp( Ucifs[j*6]*d_s2 );
       }
       scv *= alist[j]->GetOccp();
       a += scv * la;
@@ -239,4 +215,175 @@ void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F)  {
   delete [] Ucifs;
   au.InitAtomIds();
 }
+//..............................................................................
+void TXApp::NameHydrogens(TSAtom& SA, TUndoData* ud, bool CheckLabel)  {
+  TNameUndo* nu = static_cast<TNameUndo*>(ud);
+  olxstr Labl;
+  int hcount=0, allH = 0, processedH = 0;
+  olxstr Name( SA.GetLabel().SubStringFrom( SA.GetAtomInfo().GetSymbol().Length() ) );
+  TCAtom* CA;
+  for( int i=0; i < SA.NodeCount(); i++ )  {
+    const TSAtom& sa = SA.Node(i);
+    if( !sa.IsDeleted() && sa.GetAtomInfo() == iHydrogenIndex )
+      allH ++;
+  }
 
+  for( int i=0; i < SA.NodeCount(); i++ )  {
+    TSAtom& SA1 = SA.Node(i);
+    if( SA1.IsDeleted() )  continue;
+    if( SA1.GetAtomInfo().GetIndex() == iHydrogenIndex )  {
+      Labl = SA1.GetAtomInfo().GetSymbol() + Name;
+      // the suffix matters only for multiple hydrogen atoms attached
+      if( allH > 1 )  {
+        if( Labl.Length() >= 4 )  Labl.SetLength(3);
+        Labl << (char)('a' + hcount);
+      }
+      if(  CheckLabel )  {
+        while( (CA = XFile().GetAsymmUnit().FindCAtom(Labl)) != NULL )  {
+          if( CA == &SA1.CAtom() || CA->IsDeleted() )  break;
+          hcount++;
+          Labl = SA1.GetAtomInfo().GetSymbol()+Name;
+          if( Labl.Length() >= 4 )  Labl.SetLength(3);
+          Labl << (char)('a' + hcount);
+        }
+      }
+      if( SA1.GetLabel() != Labl )  {
+        if( nu != NULL )  nu->AddAtom(SA1, SA1.GetLabel() );
+        SA1.CAtom().Label() = Labl;
+      }
+      hcount++;
+      processedH++;
+      if( processedH >= allH )  break;
+    }
+  }
+}
+//..............................................................................
+void TXApp::undoName(TUndoData *data)  {
+  TNameUndo *undo = static_cast<TNameUndo*>(data);
+  TSAtomPList sal;
+  for( int i=0; i < undo->AtomCount(); i++ )  {
+    TBasicAtomInfo* bai = FAtomsInfo->FindAtomInfoEx( undo->GetLabel(i) );
+    if( undo->GetAtom(i).GetAtomInfo() != *bai )
+      sal.Add( &undo->GetAtom(i) );
+    undo->GetAtom(i).SetLabel( undo->GetLabel(i) );
+  }
+}
+//..............................................................................
+TUndoData* TXApp::FixHL()  {
+  TNameUndo *undo = new TNameUndo( new TUndoActionImpl<TXApp>(this, &TXApp::undoName));
+  for( int i=0; i < XFile().GetLattice().AtomCount(); i++ )  {
+    TSAtom& sa = XFile().GetLattice().GetAtom(i);
+    if( sa.IsDeleted() || (sa.GetAtomInfo() == iQPeakIndex) || (sa.GetAtomInfo() == iHydrogenIndex)  )
+      continue;
+    NameHydrogens(sa, undo, false);
+  }
+  for( int i=0; i < XFile().GetLattice().AtomCount(); i++ )  {
+    TSAtom& sa = XFile().GetLattice().GetAtom(i);
+    if( sa.IsDeleted() || (sa.GetAtomInfo() == iQPeakIndex) || (sa.GetAtomInfo() == iHydrogenIndex)  )
+      continue;
+    NameHydrogens(sa, undo, true);
+  }
+  return undo;
+}
+//..............................................................................
+bool RingsEq(const TSAtomPList& r1, const TSAtomPList& r2 )  {
+  for( int i=0; i < r1.Count(); i++ )  {
+    bool found = false;
+    for( int j=0; j < r2.Count(); j++ )  {
+      if( r2[j]->GetLatId() == r1[i]->GetLatId() )  {
+        found = true;
+        break;
+      }
+    }
+    if( !found )
+      return false;
+  }
+  return true;
+}
+void TXApp::FindRings(const olxstr& Condition, TTypeList<TSAtomPList>& rings)  {
+  TPtrList<TBasicAtomInfo> ring;
+  // external ring connectivity
+  TTypeList< TPtrList<TBasicAtomInfo> > extRing;
+  TStrList toks;
+  olxstr symbol, count;
+  for( int i=0; i < Condition.Length(); i++ )  {
+    if( Condition[i] <= 'Z' && Condition[i] >= 'A' )  {
+      if( !symbol.IsEmpty() )  {
+        if( !count.IsEmpty() )  {
+          int c = count.ToInt();
+          for( int j=0; j < c; j++ )
+            toks.Add( symbol );
+        }
+        else
+          toks.Add( symbol );
+      }
+      symbol = Condition[i];
+      count = EmptyString;
+    }
+    else if( Condition[i] <= 'z' && Condition[i] >= 'a' )  {
+      symbol << Condition[i];
+      count  = EmptyString;
+    }
+    else if( Condition[i] <= '9' && Condition[i] >= '0' )  {
+      count << Condition[i];
+    }
+  }
+  if( !symbol.IsEmpty() )  {
+    if( !count.IsEmpty() )  {
+      int c = count.ToInt();
+      for( int j=0; j < c; j++ )
+        toks.Add( symbol );
+    }
+    else
+      toks.Add( symbol );
+  }
+
+  if( toks.Count() < 3 )  return;
+
+  for( int i=0; i < toks.Count(); i++ )  {
+    TBasicAtomInfo* bai = FAtomsInfo->FindAtomInfoBySymbol( toks[i] );
+    if( bai == NULL )
+      throw TInvalidArgumentException(__OlxSourceInfo, olxstr("Unknown element: ") << toks.String(i) );
+    ring.Add( bai );
+  }
+
+  for( int i=0; i < XFile().GetLattice().FragmentCount(); i++ )  {
+    XFile().GetLattice().GetFragment(i).FindRings(ring, rings);
+  }
+
+  for( int i=0; i < rings.Count(); i++ )  {
+    if( rings.IsNull(i) )  continue;
+    for( int j= i+1; j < rings.Count(); j++ ) {
+      if( rings.IsNull(j) )  continue;
+      if( RingsEq( rings[i], rings[j]) )
+        rings.NullItem(j);
+    }
+  }
+  rings.Pack();
+}
+//..............................................................................
+bool TXApp::FindSAtoms(const olxstr& condition, TSAtomPList& res)  {
+  if( !condition.IsEmpty() )  {
+    TAtomReference ar(condition);      
+    TCAtomGroup ag;
+    int atomAGroup;
+    ar.Expand(XFile().GetAsymmUnit(), ag, EmptyString, atomAGroup);
+    res.SetCapacity( ag.Count() );
+    for( int i=0; i < XFile().GetAsymmUnit().AtomCount(); i++ )
+      XFile().GetAsymmUnit().GetAtom(i).SetTag(0);
+    for( int i=0; i < ag.Count(); i++ )
+      ag[i].GetAtom()->SetTag(1);
+    for( int i=0; i < XFile().GetLattice().AtomCount(); i++ )  {
+      TSAtom* sa = &XFile().GetLattice().GetAtom(i);
+      if( sa->CAtom().GetTag() == 1 )
+        res.Add( sa );
+    }
+  }
+  else  {
+    res.SetCapacity( XFile().GetLattice().AtomCount() );
+    for( int i=0; i < XFile().GetLattice().AtomCount(); i++ )
+      res.Add( &XFile().GetLattice().GetAtom(i) );
+  }
+  return !res.IsEmpty();
+}
+//..............................................................................

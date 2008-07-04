@@ -26,6 +26,9 @@ public:
   virtual ~TwxGlScene();
 
   TGlFont* CreateFont(const olxstr& name, void *WXFont, TGlFont *Replace=NULL, bool Bmp=true, bool FixedW=true); // takes wxFont*
+  virtual void ExportFont(const olxstr& name, const olxstr& fileName);
+  virtual TGlFont* ImportFont(const olxstr& Name, const olxstr& fileName, short Size, 
+    bool FixedWidth, TGlFont *Replace=NULL);
   void Destroy();
 
   void StartSelect(int x, int y, GLuint *Bf);

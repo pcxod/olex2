@@ -164,6 +164,7 @@ template <class TaskClass>
       }
       return true;
     }
+    TTypeList<TaskClass>& GetTasks()  {  return Tasks;  }
   };
 
 EndEsdlNamespace()

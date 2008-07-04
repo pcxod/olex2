@@ -4,6 +4,7 @@
 //#include "estring.h"
 #include "elist.h"
 #include "estrlist.h"
+#include "tptrlist.h"
 
 BeginChemNamespace()
 
@@ -79,6 +80,7 @@ public:
 
   olxstr StrRepr() const;
 };
+typedef TPtrList<TBasicAtomInfo> TBAIPList;
 //---------------------------------------------------------------------------
 class TAtomsInfo: public IEObject  {
 private:
@@ -87,7 +89,8 @@ private:
   // and will not know how to treat BRH, but BRh
   void ParseSimpleElementStr(const olxstr& str, TStrList& toks) const;
 public:
-  TAtomsInfo(const olxstr& filename);
+  // 21.06.2008, table translated into the code, so the fileName is not used
+  TAtomsInfo(const olxstr& filename=EmptyString);
   virtual ~TAtomsInfo();
   inline int Count()  const  {  return Data.Count();  }
   void SaveToFile(const olxstr& fileName) const;

@@ -5,8 +5,9 @@
 #ifndef bindingH
 #define bindingH
 
-#include "ebase.h"
-#include "syntaxp.h"
+#include "xatom.h"
+#include "xbond.h"
+#include "sparser.h"
 //---------------------------------------------------------------------------
 template <class U>
   class TXAtomPropertyEvaluator: public TPropertyEvaluator<TXAtom*, U>

@@ -48,7 +48,7 @@ void TXGlLabels::Create(const olxstr& cName)  {
 
   TGlMaterial* GlM = const_cast<TGlMaterial*>(GPC->Style()->Material("Text"));
   if( GlM->Mark() )
-    *GlM = Font()->Material();
+    *GlM = Font()->GetMaterial();
   GlP = GPC->NewPrimitive("Text");
   GlP->SetProperties(GlM);
   GlP->Type(sgloText);
@@ -190,7 +190,9 @@ bool TXGlLabels::Orient(TGlPrimitive *P)  {
     V += FParent->GetBasis().GetCenter();
     V *= FParent->GetBasis().GetMatrix();
     glRasterPos3d(V[0]+0.15, V[1]+0.15, V[2]+5);
+//    V[0] += 0.45;  V[1] += 0.45;  V[2] += 5;
     P->Draw();
+//    Fnt->DrawGlText(V, Tmp, false);
   }
   OGlM->Init();
   return true;

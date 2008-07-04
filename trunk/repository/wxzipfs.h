@@ -1,6 +1,12 @@
 #ifndef wxzipfsH
 #define wxzipfsH
 
+#ifdef __WXWIDGETS__
+
+#include <wx/zipstrm.h>
+#include <wx/mstream.h>
+#include <wx/wfstream.h>
+
 #include "filesystem.h"
 #include "fsext.h"
 
@@ -52,4 +58,5 @@ public:
   virtual bool ChangeDir(const olxstr& DN)   {  throw TNotImplementedException(__OlxSourceInfo);  }
 };
 
+#endif  // __WXWIDGETS__
 #endif  

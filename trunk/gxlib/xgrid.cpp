@@ -22,8 +22,9 @@
 
 #include "library.h"
 
-#undef _DEBUG
-#include "pyext.h"
+#ifndef _NO_PYTHON
+  #include "pyext.h"
+#endif
 
   TXGrid* TXGrid::Instance = NULL;
 
@@ -146,8 +147,9 @@ TXGrid::TXGrid(const olxstr& collectionName, TGXApp* xapp) :
   Instance = this;
   Mode3D = false;
   PolygonMode = GL_FILL;
+#ifndef _NO_PYTHON
   PythonExt::GetInstance()->Register( &TXGrid::PyInit );
-
+#endif
   XApp = xapp;
   Move2D(false);
   Moveable(false);
@@ -388,7 +390,7 @@ bool TXGrid::Orient(TGlPrimitive *GlP)  {
 
   if( TextIndex == -1 )  {
     TextIndex = FParent->GetTextureManager().Add2DTexture("Plane", 0, MaxDim, MaxDim, 0, GL_RGB, TextData);
-    TGlTexture* tex = FParent->GetTextureManager().GetTexture(TextIndex);
+    TGlTexture* tex = FParent->GetTextureManager().FindTexture(TextIndex);
     tex->SetEnvMode( tpeDecal );
     tex->SetSCrdWrapping( tpCrdClamp );
     tex->SetTCrdWrapping( tpCrdClamp );
@@ -400,7 +402,7 @@ bool TXGrid::Orient(TGlPrimitive *GlP)  {
   else
     FParent->GetTextureManager().
       Replace2DTexture(*FParent->GetTextureManager().
-      GetTexture(TextIndex), 0, MaxDim, MaxDim, 0, GL_RGB, TextData);
+      FindTexture(TextIndex), 0, MaxDim, MaxDim, 0, GL_RGB, TextData);
 
   GlP->Data()[0][0] = p1[0];
   GlP->Data()[1][0] = p1[1];
@@ -687,6 +689,14 @@ void TXGrid::LibIsvalid(const TStrObjList& Params, TMacroError& E)  {
   E.SetRetVal( ED != NULL );
 }
 //..............................................................................
+void TXGrid::LibGetMin(const TStrObjList& Params, TMacroError& E)  {
+  E.SetRetVal( MinVal );
+}
+//..............................................................................
+void TXGrid::LibGetMax(const TStrObjList& Params, TMacroError& E)  {
+  E.SetRetVal( MaxVal );
+}
+//..............................................................................
 void TXGrid::LibPolygonMode(const TStrObjList& Params, TMacroError& E)  {
   if( Params.IsEmpty() )  {
     if( PolygonMode == GL_FILL )  E.SetRetVal<olxstr>("fill");
@@ -705,6 +715,10 @@ void TXGrid::LibPolygonMode(const TStrObjList& Params, TMacroError& E)  {
 //..............................................................................
 TLibrary*  TXGrid::ExportLibrary(const olxstr& name)  {
   TLibrary* lib = new TLibrary(name.IsEmpty() ? olxstr("xgrid") : name);
+  lib->RegisterFunction<TXGrid>( new TFunction<TXGrid>(this,  &TXGrid::LibGetMin, "GetMin",
+    fpNone, "Returns minimum value of the map") );
+  lib->RegisterFunction<TXGrid>( new TFunction<TXGrid>(this,  &TXGrid::LibGetMax, "GetMax",
+    fpNone, "Returns maximum value of the map") );
   lib->RegisterFunction<TXGrid>( new TFunction<TXGrid>(this,  &TXGrid::LibDrawStyle3D, "3D",
     fpNone|fpOne, "Returns/sets 3D drawing style") );
   lib->RegisterFunction<TXGrid>( new TFunction<TXGrid>(this,  &TXGrid::LibScale, "Scale",
@@ -723,7 +737,7 @@ TLibrary*  TXGrid::ExportLibrary(const olxstr& name)  {
 //..............................................................................
 //..............................................................................
 
-
+#ifndef _NO_PYTHON
 PyObject* pySetValue(PyObject* self, PyObject* args)  {
   int i, j, k;
   float val;
@@ -778,3 +792,4 @@ static PyMethodDef XGRID_Methods[] = {
 void TXGrid::PyInit()  {
   Py_InitModule( "olex_xgrid", XGRID_Methods );
 }
+#endif // _NO_PYTHON

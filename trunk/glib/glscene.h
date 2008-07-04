@@ -29,7 +29,9 @@ public:
   /* takes whatever appropriate; any other way? */
   virtual TGlFont* CreateFont(const olxstr& name, void *Data,
     TGlFont *Replace=NULL, bool Bmp=true, bool FixedW=true) = 0;
-
+  virtual void ExportFont(const olxstr& name, const olxstr& fileName) {  return;  }
+  virtual TGlFont* ImportFont(const olxstr& Name, const olxstr& fileName, short Size, 
+    bool FixedWidth, TGlFont *Replace=NULL)     {  return NULL;  }
   virtual void Destroy();
 
   virtual void StartSelect(int x, int y, GLuint *Bf);

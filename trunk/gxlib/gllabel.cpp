@@ -59,7 +59,7 @@ void TXGlLabel::Create(const olxstr& cName)  {
 
   GlM = const_cast<TGlMaterial*>(GS->Material("Text"));
   if( GlM->Mark() )
-    *GlM = Font()->Material();
+    *GlM = Font()->GetMaterial();
 
   GlP = GPC->NewPrimitive("Text");
   GlP->SetProperties(GlM);

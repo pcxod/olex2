@@ -205,7 +205,7 @@ void TGlPrimitive::Draw()  {
   if( GlClipPlanes() )  GlClipPlanes()->Enable(true);
   TGlTexture* currentTexture = NULL;
   if( FTexture != -1 )  {
-    TGlTexture* tex = FParentRender->GetTextureManager().GetTexture( FTexture );
+    TGlTexture* tex = FParentRender->GetTextureManager().FindTexture( FTexture );
     currentTexture = new TGlTexture();
     tex->ReadCurrent( *currentTexture );
     tex->SetCurrent();
@@ -215,6 +215,8 @@ void TGlPrimitive::Draw()  {
     if( FString == NULL )   return;
     if( FFont == NULL )     return;
     int fontbase = Font()->FontBase();
+//    double raster_pos[4];
+//    glGetDoublev(GL_CURRENT_RASTER_POSITION, raster_pos);
     /* each character of different colour */
     int StrLen = FString->Length();
     if( FData.Elements() == StrLen )  {
@@ -225,8 +227,11 @@ void TGlPrimitive::Draw()  {
       }
     }
     else  {  /* all characters of the same colour */
-      for( int i=0; i < StrLen; i++ )
+      for( int i=0; i < StrLen; i++ )  {
         glCallList( fontbase + FString->CharAt(i) );
+//        raster_pos[0] += Font()->MaxWidth();  
+//        glRasterPos3d(raster_pos[0], raster_pos[1], raster_pos[2]);
+      }
       //switch( olxstr::CharSize )  {
       //  case 1:
       //    glCallLists(StrLen, GL_UNSIGNED_BYTE, FString->raw_str() );
@@ -254,7 +259,8 @@ void TGlPrimitive::Draw()  {
       for( int i=0; i < FData.Elements(); i++ )  {
         glEnable(GL_COLOR_MATERIAL);
         int Cl = (int)FData[3][i];
-        glColor4b(  GetRValue(Cl), GetGValue(Cl), GetBValue(Cl), GetAValue(Cl));
+        glColor4d(  (double)GetRValue(Cl)/255, (double)GetGValue(Cl)/255, 
+          (double)GetBValue(Cl)/255, (double)GetAValue(Cl)/255);
         glVertex3d( FData[0][i], FData[1][i], FData[2][i] );
       }
       glEnd();
@@ -282,10 +288,8 @@ void TGlPrimitive::Draw()  {
       for( int i=0; i < FData.Elements(); i++ )  {
         if( !(i%2) )  {
           int Cl = (int)FData[3][i];
-          glColor4d(  (double)GetRValue(Cl)/255,
-                    (double)GetGValue(Cl)/255,
-                    (double)GetBValue(Cl)/255,
-                    1);
+          glColor4d(  (double)GetRValue(Cl)/255, (double)GetGValue(Cl)/255, 
+            (double)GetBValue(Cl)/255, (double)GetAValue(Cl)/255);
         }
         glVertex3d(FData[0][i], FData[1][i], FData[2][i]);
       }
@@ -326,10 +330,8 @@ void TGlPrimitive::Draw()  {
       glBegin(GL_LINE_LOOP);
       for( int i=0; i < FData.Elements(); i++ )  {
         int Cl = (unsigned int)(FData[3][i]);
-        glColor4d(  (double)GetRValue(Cl)/255,
-                    (double)GetGValue(Cl)/255,
-                    (double)GetBValue(Cl)/255,
-                    (double)GetAValue(Cl)/255);
+        glColor4d(  (double)GetRValue(Cl)/255, (double)GetGValue(Cl)/255, 
+          (double)GetBValue(Cl)/255, (double)GetAValue(Cl)/255);
         glVertex3d(FData[0][i], FData[1][i], FData[2][i]);
       }
       glEnd();
@@ -354,13 +356,14 @@ void TGlPrimitive::Draw()  {
       glBegin(GL_QUADS);
       if( FTexture != -1 )  {
         for( int i=0; i < FData.Elements(); i++ )  {
-          glVertex3d(FData[0][i], FData[1][i], FData[2][i]);
           glTexCoord2d( FData[3][i], FData[4][i] );
+          glVertex3d(FData[0][i], FData[1][i], FData[2][i]);
         }
       }
       else  {
-       for( int i=0; i < FData.Elements(); i++ )
-         glVertex3d(FData[0][i], FData[1][i], FData[2][i]);
+        for( int i=0; i < FData.Elements(); i++ )  {
+          glVertex3d(FData[0][i], FData[1][i], FData[2][i]);
+        }
       }
       glEnd();
     }
@@ -372,10 +375,8 @@ void TGlPrimitive::Draw()  {
       glBegin(GL_QUADS);
       for( int i=0; i < FData.Elements(); i++ )  {
         int Cl = (int)(FData[3][i]);
-        glColor4d(  (double)GetRValue(Cl)/255,
-                    (double)GetGValue(Cl)/255,
-                    (double)GetBValue(Cl)/255,
-                    (double)GetAValue(Cl)/255);
+        glColor4d(  (double)GetRValue(Cl)/255, (double)GetGValue(Cl)/255, 
+          (double)GetBValue(Cl)/255, (double)GetAValue(Cl)/255);
         glVertex3d(FData[0][i], FData[1][i], FData[2][i]);
       }
       glEnd();
@@ -387,14 +388,22 @@ void TGlPrimitive::Draw()  {
       glEnable(GL_COLOR_MATERIAL);
       glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
       glBegin(GL_QUADS);
-      for( int i=0; i < FData.Elements(); i++ )  {
-        int Cl = (int)(FData[3][i]);
-        glColor4d(  (double)GetRValue(Cl)/255,
-                    (double)GetGValue(Cl)/255,
-                    (double)GetBValue(Cl)/255,
-                    (double)GetAValue(Cl)/255);
-        glVertex3d(FData[0][i], FData[1][i], FData[2][i]);
-        glTexCoord2d( FData[4][i], FData[5][i] );
+      if( FTexture != -1 )  {
+        for( int i=0; i < FData.Elements(); i++ )  {
+          int Cl = (int)(FData[3][i]);
+          glColor4d(  (double)GetRValue(Cl)/255, (double)GetGValue(Cl)/255, 
+            (double)GetBValue(Cl)/255, (double)GetAValue(Cl)/255);
+          glTexCoord2d( FData[4][i], FData[5][i] );
+          glVertex3d(FData[0][i], FData[1][i], FData[2][i]);
+        }
+      }
+      else  {
+        for( int i=0; i < FData.Elements(); i++ )  {
+          int Cl = (int)(FData[3][i]);
+          glColor4d(  (double)GetRValue(Cl)/255, (double)GetGValue(Cl)/255, 
+            (double)GetBValue(Cl)/255, (double)GetAValue(Cl)/255);
+          glVertex3d(FData[0][i], FData[1][i], FData[2][i]);
+        }
       }
       glEnd();
       glPopAttrib();
@@ -415,10 +424,8 @@ void TGlPrimitive::Draw()  {
       glBegin(GL_POLYGON);
       for( int i=0; i < FData.Elements(); i++ )  {
         int Cl = (int)(FData[3][i]);
-        glColor4d(  (double)GetRValue(Cl)/255,
-                    (double)GetGValue(Cl)/255,
-                    (double)GetBValue(Cl)/255,
-                    (double)GetAValue(Cl)/255);
+        glColor4d(  (double)GetRValue(Cl)/255, (double)GetGValue(Cl)/255, 
+          (double)GetBValue(Cl)/255, (double)GetAValue(Cl)/255);
         glVertex3d(FData[0][i], FData[1][i], FData[2][i]);
       }
       glDisable(GL_COLOR_MATERIAL);

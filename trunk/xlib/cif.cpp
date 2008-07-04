@@ -1595,7 +1595,7 @@ bool TCif::CreateTable(TDataItem *TD, TTTable<TStrList> &Table, TMatrixDList& Sy
     else  LT = NULL;
   }
   if( LT == NULL )  {
-    TBasicApp::GetLog().Error(olxstr("Cannot find loop for table definition"));
+    TBasicApp::GetLog().Info(olxstr("Could not find loop for table definition: ") << TD->GetName());
     return false;
   }
   Table.Assign(*LT);

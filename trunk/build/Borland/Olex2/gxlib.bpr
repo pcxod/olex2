@@ -21,17 +21,17 @@
     <PATHRC value=".;"/>
     <PATHASM value=".;"/>
     <LINKER value="TLib"/>
-    <USERDEFINES value="__WXWIDGETS__;__WXDEBUG__;_DEBUG;_UNICODE;"/>
+    <USERDEFINES value="__WXWIDGETS__;_DEBUG"/>
     <SYSDEFINES value="NO_STRICT"/>
     <MAINSOURCE value="gxlib.bpf"/>
-    <INCLUDEPATH value="&quot;C:\Program Files\Borland\CBuilder6\Projects&quot;;..\..\..\gxlib;..\..\..\sdl;..\..\..\glib;..\..\..\xlib;$(BCB)\include;E:\wxWidgets-2.8.7\include;E:\wxWidgets-2.8.7\lib\bcc_lib\mswud;c:\python25\include;..\..\..\repository"/>
+    <INCLUDEPATH value="&quot;C:\Program Files\Borland\CBuilder6\Projects&quot;;..\..\..\gxlib;..\..\..\sdl;..\..\..\glib;..\..\..\xlib;$(BCB)\include;E:\wxWidgets-2.8.7\include;E:\wxWidgets-2.8.7\lib\bcc_lib\mswd;c:\python25\include;..\..\..\repository"/>
     <LIBPATH value="&quot;C:\Program Files\Borland\CBuilder6\Projects&quot;;..\..\..\gxlib;$(BCB)\lib\obj;$(BCB)\lib"/>
     <WARNINGS value="-w-par"/>
     <LISTFILE value=""/>
     <OTHERFILES value=""/>
   </MACROS>
   <OPTIONS>
-    <CFLAG1 value="-Od -H=$(BCB)\lib\vcl60.csm -Hc -Vx -Ve -ff -X- -r- -a8 -6 -b -k -y -v 
+    <CFLAG1 value="-Od -H=$(BCB)\lib\vcl60.csm -Hc -Vx -Ve -ff -X- -r- -a8 -6 -b -d -k -y -v 
       -vi- -c -tW -tWM"/>
     <PFLAGS value="-N2build -N0build -$YD -$W -$O- -$A8 -v -JPHNE -M"/>
     <AFLAGS value="/mx /w2 /zi"/>
@@ -122,13 +122,15 @@ Count=1
 Item0=$(BCB)\source\vcl
 
 [HistoryLists\hlConditionals]
-Count=6
-Item0=__WXWIDGETS__;__WXDEBUG__;_DEBUG;
-Item1=__WXWIDGETS__;__WXDEBUG__;_DEBUG;_UNICODE
-Item2=__WXWIDGETS__;__WXDEBUG__;_DEBUG
-Item3=__WXWIDGETS__;__WXDEBUG__
-Item4=__WXWIDGETS__
-Item5=_DEBUG
+Count=8
+Item0=__WXWIDGETS__;_DEBUG
+Item1=__WXWIDGETS__;__WXDEBUG__;_DEBUG
+Item2=__WXWIDGETS__;__WXDEBUG__;_DEBUG;_UNICODE;
+Item3=__WXWIDGETS__;__WXDEBUG__;_DEBUG;
+Item4=__WXWIDGETS__;__WXDEBUG__;_DEBUG;_UNICODE
+Item5=__WXWIDGETS__;__WXDEBUG__
+Item6=__WXWIDGETS__
+Item7=_DEBUG
 
 [HistoryLists\hlIntOutputDir]
 Count=1

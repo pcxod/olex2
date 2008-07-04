@@ -283,8 +283,7 @@ public:
     GLint TextureType = GL_TEXTURE_1D;
     if( (SetParams & tp2D) != 0 )  TextureType = GL_TEXTURE_2D;
 
-    if( (SetParams & tpEnabled) != 0 )
-    {
+    if( (SetParams & tpEnabled) != 0 )  {
       glEnable( TextureType );
       glBindTexture(TextureType, Id);
     }
@@ -353,8 +352,8 @@ public:
     else  
       throw TInvalidArgumentException(__OlxSourceInfo, olxstr("format=") << (int)format);
     TGlTexture* tex = new TGlTexture(texId, tpt2D, name);
-    Textures.Add(Textures.Count() + 1, tex);
-    return Textures.Count();
+    Textures.Add(texId, tex);
+    return texId;
   }
   /* replaces data for a particular texture */
   void Replace2DTexture(TGlTexture& tex, GLint level, GLsizei width, GLsizei height, GLint border,
@@ -388,13 +387,13 @@ public:
     unsigned int texId = 0;
     glGenTextures(1, (GLuint*)&texId);
     TGlTexture* tex = new TGlTexture(texId, tpt1D, name);
-    Textures.Add(Textures.Count() + 1, tex);
-    return Textures.Count();
+    Textures.Add(texId, tex);
+    return texId;
   }
   
   //int CloneTexture( int )
   //inline int GetTextureIndex( const TGlTexture& tex) const {  return Textures.}
-  inline TGlTexture* GetTexture(int textureIndex)  {
+  inline TGlTexture* FindTexture(int textureIndex)  {
     int index = Textures.IndexOfComparable( textureIndex );
     return Textures.GetObject(index);
   }

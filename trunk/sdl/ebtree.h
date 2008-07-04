@@ -110,10 +110,8 @@ public:
 
   static TBTreeTraverser< BTree<C,O> > Traverser;
 };
-#ifndef __BORLANDC__
-  template <typename C, typename O>
-TBTreeTraverser< BTree<C,O> > BTree<C,O>::Traverser;
-#endif
+template <typename C, typename O>
+  TBTreeTraverser< BTree<C,O> > BTree<C,O>::Traverser;
 
 template <typename C, typename O>  class BTree2 {
 public:
@@ -144,18 +142,18 @@ public:
   inline int Count()            const {  return _Count;  }
 
   O& Add(const C& x, const C& y, const O& val)  {
-    YEntry* insertPX = NULL;
-    XEntry* insertPY = NULL;
-    XTree** rx = Tree.Find(x, &insertPX);
-    if( rx == NULL )  rx = &Tree.Add(x, new XTree(), insertPX );
-    O* ry = (*rx)->Find(y, &insertPY);
-    if( ry == NULL )  ry = &(*rx)->Add(y, val, insertPY);
+    YEntry* insertPY = NULL;
+    XEntry* insertPX = NULL;
+    XTree** rx = Tree.Find(y, &insertPY);
+    if( rx == NULL )  rx = &Tree.Add(y, new XTree(), insertPY );
+    O* ry = (*rx)->Find(x, &insertPX);
+    if( ry == NULL )  ry = &(*rx)->Add(x, val, insertPX);
     _Count++;
     return *ry;
   }
   O* Find(const C& x, const C& y) {
-    XTree** rx = Tree.Find(x);
-    return (rx == NULL) ? NULL : (*rx)->Find(y);
+    XTree** rx = Tree.Find(y);
+    return (rx == NULL) ? NULL : (*rx)->Find(x);
   }
   class Tree2Traverser {
     template <class Traverser> class InternalTraverser  {
@@ -166,24 +164,107 @@ public:
         return item->val->Traverser.Traverse(*item->val, trav);
       }
     };
+    template <class Traverser> class InternalFullTraverser  {
+      Traverser& trav;
+    public:
+      InternalFullTraverser(Traverser& t) : trav(t)  {}
+      bool OnItem(const YEntry* item)  {
+        trav.SetY( item->key );
+        return item->val->Traverser.Traverse(*item->val, trav);
+      }
+    };
   public:
   template <class Trav>
     bool Traverse(const BTree2<C,O>& tree, Trav& traverser)  {
-#ifdef __BORLANDC__
-       return true;
-#else
       InternalTraverser<Trav> t(traverser);
       return tree.Tree.Traverser.Traverse(tree.Tree, t);
-#endif
+    }
+  template <class Trav>
+    bool FullTraverse(const BTree2<C,O>& tree, Trav& traverser)  {
+      InternalFullTraverser<Trav> t(traverser);
+      return tree.Tree.Traverser.Traverse(tree.Tree, t);
     }
   };
   static Tree2Traverser Traverser;
 };
 
-#ifndef __BORLANDC__
 template <typename C, typename O>
   typename BTree2<C,O>::Tree2Traverser BTree2<C,O>::Traverser;
-#endif
+
+template <typename C, typename O>  class BTree3 {
+public:
+  typedef BTree2<C, O> XYTree;
+  typedef BTree<C,XYTree*> ZTree;
+  typedef typename XYTree::YEntry XYEntry;
+  typedef typename ZTree::Entry ZEntry;
+private:
+  int _Count;
+protected:
+  ZTree Tree;
+public:
+  BTree3() : _Count(0) {  }
+  ~BTree3()  {  Clear();  }
+//___________________________________________________________________
+  bool OnItem(const ZEntry* item)  {
+    delete const_cast<ZEntry*>(item)->val;
+    return true;
+  }
+//___________________________________________________________________
+  void Clear()  {
+    Tree.Traverser.Traverse(Tree, *this);
+    Tree.Clear();
+    _Count = 0;
+  }
+  
+  inline const ZEntry* GetRoot() const {  return Tree.GetRoot();  }
+  inline int Count()            const {  return _Count;  }
+
+  O& Add(const C& x, const C& y, const C& z, const O& val)  {
+    ZEntry* insertPZ = NULL;
+    XYTree** xy = Tree.Find(z, &insertPZ);
+    if( xy == NULL )  xy = &Tree.Add(z, new XYTree(), insertPZ );
+    _Count++;
+    return (*xy)->Add(x, y, val);
+  }
+  O* Find(const C& x, const C& y, const C& z) {
+    XYTree** xy = Tree.Find(z);
+    return (xy == NULL) ? NULL : (*xy)->Find(x, y);
+  }
+  class Tree3Traverser {
+    template <class Traverser> class InternalTraverser  {
+      Traverser& trav;
+    public:
+      InternalTraverser(Traverser& t) : trav(t)  {}
+      bool OnItem(const ZEntry* item)  {
+        return item->val->Traverser.Traverse(*item->val, trav);
+      }
+    };
+    template <class Traverser> class InternalFullTraverser  {
+      Traverser& trav;
+    public:
+      InternalFullTraverser(Traverser& t) : trav(t)  {}
+      bool OnItem(const ZEntry* item)  {
+        trav.SetZ(item->key);
+        return item->val->Traverser.FullTraverse(*item->val, trav);
+      }
+    };
+  public:
+  template <class Trav>
+    bool Traverse(const BTree3<C,O>& tree, Trav& traverser)  {
+      InternalTraverser<Trav> t(traverser);
+      return tree.Tree.Traverser.Traverse(tree.Tree, t);
+    }
+  template <class Trav>
+    bool FullTraverse(const BTree3<C,O>& tree, Trav& traverser)  {
+      InternalFullTraverser<Trav> t(traverser);
+      return tree.Tree.Traverser.Traverse(tree.Tree, t);
+    }
+  };
+  static Tree3Traverser Traverser;
+};
+
+template <typename C, typename O>
+  typename BTree3<C,O>::Tree3Traverser BTree3<C,O>::Traverser;
 
 EndEsdlNamespace()
 #endif

@@ -15,7 +15,7 @@
       build\tls.obj build\scat_it.obj build\srestraint.obj build\auto.obj 
       build\pdb.obj build\symmtest.obj build\xapp.obj build\graphsr.obj 
       build\brushhkl.obj build\sg.obj build\xmacro.obj build\wilson.obj 
-      build\testsymm.obj"/>
+      build\testsymm.obj build\imp_auto.obj"/>
     <RESFILES value=""/>
     <DEFFILE value=""/>
     <RESDEPEN value="$(RESFILES)"/>
@@ -96,6 +96,7 @@
       <FILE FILENAME="..\..\..\xlib\xmacro.cpp" FORMNAME="" UNITNAME="xmacro" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\xlib\macro\wilson.cpp" FORMNAME="" UNITNAME="wilson" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\xlib\macro\testsymm.cpp" FORMNAME="" UNITNAME="testsymm" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\macro\imp_auto.cpp" FORMNAME="" UNITNAME="imp_auto" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
   </FILELIST>
   <BUILDTOOLS>
   </BUILDTOOLS>

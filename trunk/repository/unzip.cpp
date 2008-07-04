@@ -2122,7 +2122,7 @@ z_streamp z)
 // Copyright (C) 1995-1998 Mark Adler
 // For conditions of distribution and use, see copyright notice in zlib.h
 
-// @(#) $Id: unzip.cpp,v 1.1 2008/03/18 04:30:40 pcxod Exp $
+// @(#) $Id: unzip.cpp,v 1.1 2007/11/28 17:46:39 pcxod Exp $
 
 
 
@@ -2229,7 +2229,7 @@ char zdecode(unsigned long *keys, char c)
 // Copyright (C) 1995-1998 Mark Adler
 // For conditions of distribution and use, see copyright notice in zlib.h
 
-// @(#) $Id: unzip.cpp,v 1.1 2008/03/18 04:30:40 pcxod Exp $
+// @(#) $Id: unzip.cpp,v 1.1 2007/11/28 17:46:39 pcxod Exp $
 
 
 #define BASE 65521L // largest prime smaller than 65536
@@ -2274,7 +2274,7 @@ uLong adler32(uLong adler, const Byte *buf, uInt len)
 // zutil.c -- target dependent utility functions for the compression library
 // Copyright (C) 1995-1998 Jean-loup Gailly.
 // For conditions of distribution and use, see copyright notice in zlib.h
-// @(#) $Id: unzip.cpp,v 1.1 2008/03/18 04:30:40 pcxod Exp $
+// @(#) $Id: unzip.cpp,v 1.1 2007/11/28 17:46:39 pcxod Exp $
 
 
 

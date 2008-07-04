@@ -28,7 +28,7 @@ TGlBitmap::TGlBitmap(const olxstr& collectionName, TGlRender *Render,
   TextureId = Render->GetTextureManager().Add2DTexture(GetCollectionName(), 0, width, height, 0,
                          format, RGB);
 
-  TGlTexture* tex = Render->GetTextureManager().GetTexture(TextureId);
+  TGlTexture* tex = Render->GetTextureManager().FindTexture(TextureId);
   tex->SetEnvMode( tpeDecal );
   tex->SetSCrdWrapping( tpCrdClamp );
   tex->SetTCrdWrapping( tpCrdClamp );
@@ -43,7 +43,7 @@ void TGlBitmap::Create(const olxstr& cName)  {
   TGPCollection *GPC;
   TGraphicsStyle *GS;
 
-  TGlTexture* tex = FParent->GetTextureManager().GetTexture(TextureId);
+  TGlTexture* tex = FParent->GetTextureManager().FindTexture(TextureId);
 
   TGlMaterial *GlM;
   olxstr Name = EsdlObjectName(*this) + tex->GetName();
@@ -74,17 +74,17 @@ void TGlBitmap::Create(const olxstr& cName)  {
   GlP->Type(sgloQuads);
   GlP->Data().Resize(5, 4);
   // texture coordinates
-  GlP->Data()[3][0] = 0;  GlP->Data()[4][0] = 0;
-  GlP->Data()[3][1] = 1;  GlP->Data()[4][1] = 0;
-  GlP->Data()[3][2] = 1;  GlP->Data()[4][2] = 1;
-  GlP->Data()[3][3] = 0;  GlP->Data()[4][3] = 1;
+  GlP->Data()[3][0] = 0;  GlP->Data()[4][0] = 1;
+  GlP->Data()[3][1] = 0;  GlP->Data()[4][1] = 0;
+  GlP->Data()[3][2] = 1;  GlP->Data()[4][2] = 0;
+  GlP->Data()[3][3] = 1;  GlP->Data()[4][3] = 1;
 }
 
 TGlBitmap::~TGlBitmap()  {
 }
 
 void TGlBitmap::ReplaceData(int width, int height, unsigned char* RGB, GLenum format) {
-  TGlTexture* tex = FParent->GetTextureManager().GetTexture(TextureId);
+  TGlTexture* tex = FParent->GetTextureManager().FindTexture(TextureId);
   FParent->GetTextureManager().Replace2DTexture(*tex, 0, width, height, 0,
                          format, RGB);
 }

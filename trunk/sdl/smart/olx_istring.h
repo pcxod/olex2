@@ -27,7 +27,17 @@
   #define olx_strcmpn  strncmp
   #define olx_strcmpni strncasecmp
   #define olx_wcscmpn  wcsncmp
-  #define olx_wcscmpni wcsncasecmp
+  #if defined(__MAC__)
+    static int olx_wcscmpni(const wchar_t* s1, const wchar_t* s2, size_t len)  {
+	  for( size_t i=0; i < len; i++ )  {
+	    int diff = towupper(s1[i]) - towupper(s2[i]); 
+	    if( diff != 0 )  return diff; 
+	  }
+	  return 0;
+	} 
+  #else
+    #define olx_wcscmpni wcsncasecmp
+  #endif
 #endif
 
 #include "olx_wstring.h"
@@ -324,6 +334,7 @@ public:
   }
   static inline int o_memcmpi(const char* wht, const char* with, size_t len) {
     return olx_strcmpni(wht, with, len);
+
   }
   static inline int o_memcmpi(const wchar_t* wht, const wchar_t* with, size_t len) {
     return olx_wcscmpni(wht, with, len);

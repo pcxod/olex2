@@ -132,11 +132,8 @@ void TXFile::LoadFromFile(const olxstr & FN) {
 void TXFile::UpdateAsymmUnit()  {
   //TLattice *L = GetLattice();
   TBasicCFile *LL = GetLastLoader();
-  LL->GetAsymmUnit().ExpandExyz(); // should not have a any 'new' atoms
   GetLattice().UpdateAsymmUnit();
-  TCAtomPList* NewAtoms = GetAsymmUnit().ExpandExyz();
-  if( NewAtoms == NULL )
-    NewAtoms = new TCAtomPList;
+  TCAtomPList* NewAtoms = new TCAtomPList;
   LL->GetAsymmUnit().ClearResidues();
   for( int i=0; i < GetAsymmUnit().ResidueCount(); i++ )  {
     TAsymmUnit::TResidue& resi = GetAsymmUnit().GetResidue(i);
@@ -219,8 +216,6 @@ void TXFile::SaveToFile(const olxstr & FN, bool Sort)  {
     Cause = exc.Replicate();
   }
   TBasicApp::GetInstance()->ActionQueue("XFILESAVE")->Exit(this);
-  GetAsymmUnit().CollapseExyz();
-  if( LL == Loader )  LL->GetAsymmUnit().CollapseExyz();
   if( Cause != NULL )  {
     throw TFunctionFailedException(__OlxSourceInfo, Cause);
   }

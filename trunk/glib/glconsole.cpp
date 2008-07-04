@@ -91,7 +91,7 @@ void TGlConsole::Create(const olxstr& cName)  {
 
   TGlMaterial* GlM = const_cast<TGlMaterial*>(GS->Material("Text"));
   if( GlM->Mark() )
-    *GlM = Font()->Material();
+    *GlM = Font()->GetMaterial();
 
   GlP = GPC->NewPrimitive("Text");
   GlP->SetProperties(GlM);
@@ -109,6 +109,9 @@ bool TGlConsole::Orient(TGlPrimitive *P)  {
   static olxstr stString;
   TGlFont *Fnt = Font();
   if( !Fnt )  return true;
+
+//  Fnt->DrawGlText( TVPointD(0,0,0), "HELLW_O", true);
+
   P->Font(Fnt);
 
   if( FParent->GetWidth() < 100 )  return true;

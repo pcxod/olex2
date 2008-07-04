@@ -57,6 +57,24 @@ TDataItem& TDataItem::Root()  {
   return *P;
 }
 //..............................................................................
+TEStrBuffer& TDataItem::writeFullName(TEStrBuffer& bf)  {
+  if( GetParent() == NULL )  {
+    bf << Name;
+  }
+  else  {
+    TPtrList<TDataItem> tmp;
+    TDataItem *P = GetParent();
+    while( P->GetParent() != NULL )  {
+      tmp.Add(P);
+      P = P->GetParent();
+    }
+    for( int i=tmp.Count()-1; i >= 0; i-- )
+      bf << tmp[i]->GetName() << '.';
+    bf << Name;
+  }
+  return bf;
+}
+//..............................................................................
 olxstr TDataItem::GetFullName()  {
   if( GetParent() == NULL )
     return Name;
@@ -411,7 +429,7 @@ void TDataItem::SaveToStrBuffer(TEStrBuffer &Data)  {
   }
   for( int i=0; i < ic; i++ )  {
     if( Item(i).GetParent() != this )  {  // dot operator
-      Data << Item(i).GetFullName() << ' ';
+      Item(i).writeFullName(Data) << ' ';
     }
   }
   for( int i=0; i < ic; i++ )  {

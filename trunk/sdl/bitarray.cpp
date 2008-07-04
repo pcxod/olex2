@@ -9,7 +9,7 @@
 
 UseEsdlNamespace()
 
-const int IntBitSize = sizeof(int)*8;
+const int TEBitArray::IntBitSize = sizeof(uint32_t)*8;
 
 TEBitArray::TEBitArray()  {  FData = NULL;  FCount = FIntCount = 0;  }
 //..............................................................................
@@ -21,20 +21,24 @@ TEBitArray::TEBitArray(int size)  {
 TEBitArray::TEBitArray( const TEBitArray& arr)  {
   FCount = arr.FCount;
   FIntCount = arr.FIntCount;
-  FData = new int [FIntCount];
-  for( int i=0; i < FIntCount; i++ )  FData[i] = arr.FData[i];
+  FData = new uint32_t [FIntCount];
+  memcpy(FData, arr.FData, FIntCount*sizeof(uint32_t));
 }
 //..............................................................................
-TEBitArray::~TEBitArray()  {
-  delete [] FData;
+TEBitArray::TEBitArray(const char* data, size_t size)  {
+  FData = NULL;
+  SetSize( size*8 );
+  memcpy(FData, data, size);
 }
+//..............................................................................
+TEBitArray::~TEBitArray()  {  delete [] FData;  }
 //..............................................................................
 TEBitArray& TEBitArray::operator = (const TEBitArray& arr )  {
   Clear();
   FCount = arr.FCount;
   FIntCount = arr.FIntCount;
-  FData = new int [FIntCount];
-  for( int i=0; i < FIntCount; i++ )  FData[i] = arr.FData[i];
+  FData = new uint32_t [FIntCount];
+  memcpy(FData, arr.FData, FIntCount*sizeof(uint32_t));
   return *this;
 }
 //..............................................................................
@@ -42,8 +46,8 @@ void TEBitArray::SetSize(int newSize)  {
   if( FData )  delete [] FData;
   FCount = newSize;
   FIntCount = newSize/IntBitSize + 1;
-  FData = new int [FIntCount];
-  for( int i=0; i < FIntCount; i++ )  FData[i] = 0;
+  FData = new uint32_t [FIntCount];
+  memset(FData, 0, FIntCount*sizeof(uint32_t) );
 }
 //..............................................................................
 void TEBitArray::Clear()  {
@@ -54,33 +58,24 @@ void TEBitArray::Clear()  {
   FCount = FIntCount = 0;
 }
 //..............................................................................
-bool TEBitArray::Get(int index) const  {
-  int intIndex = index/IntBitSize;
-  int bitIndex = 1 << index%IntBitSize;
-
-  TIndexOutOfRangeException::ValidateRange(__OlxSourceInfo, intIndex, 0, FIntCount);
-
-  return (FData[intIndex] & bitIndex) != 0;
+void TEBitArray::operator << (IInputStream& in)  {
+  Clear();
+  in.Read(&FCount, sizeof(FCount));
+  FIntCount = FCount/IntBitSize + 1;
+  FData = new uint32_t [FIntCount];
+  in.Read(FData, FIntCount*sizeof(uint32_t));
 }
 //..............................................................................
-void TEBitArray::Set(int index, bool v)  {
-  int intIndex = index/IntBitSize;
-  int bitIndex = 1 << index%IntBitSize;
-
-  TIndexOutOfRangeException::ValidateRange(__OlxSourceInfo, intIndex, 0, FIntCount);
-
-  if( !v )  {
-    if( FData[intIndex] & bitIndex )
-      FData[intIndex] ^= bitIndex;
-  }
-  else
-    FData[intIndex] |= bitIndex;
+void TEBitArray::operator >> (IOutputStream& out) const  {
+  out.Write(&FCount, sizeof(FCount) );
+  if( FCount != 0 )
+    out.Write(FData, FIntCount*sizeof(uint32_t));
 }
 //..............................................................................
 bool TEBitArray::operator == (const TEBitArray& arr )  const  {
   if( arr.Count() != Count() )  return false;
-  for( int i=0; i < Count(); i++ )
-    if( Get(i) != arr.Get(i) )  return false;
+  for( int i=0; i < FIntCount; i++ )
+    if( FData[i] != arr.FData[i] )  return false;
   return true;
 }
 //..............................................................................

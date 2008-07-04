@@ -99,16 +99,7 @@ void TAsymmUnit::ClearRestraints()  {
 }
 //..............................................................................
 void TAsymmUnit::ClearExyz() {
-  if( ExyzGroups != NULL )  {
-    CollapseExyz();
-    for( int i=0; i < ExyzGroups->Count(); i++ )  {
-      TCAtomPList& Xyz = ExyzGroup(i);
-      // atom at pos 0 is in the asymm unit
-      for( int j=1; j < Xyz.Count(); j++ )
-        delete Xyz[j];
-    }
-    ExyzGroups->Clear();
-  }
+  if( ExyzGroups != NULL ) ExyzGroups->Clear();
 }
 //..............................................................................
 void TAsymmUnit::Assign(const TAsymmUnit& C)  {
@@ -156,17 +147,8 @@ void TAsymmUnit::Assign(const TAsymmUnit& C)  {
     for(int i=0; i < C.ExyzGroupCount(); i++ )  {
       TCAtomPList& Xyz = C.ExyzGroup(i);
       TCAtomPList& thisXyz = ExyzGroups->AddNew();
-      for( int j=0; j < Xyz.Count(); j++ )  {
-        if( j == 0 )  {
-          thisXyz.Add(&GetAtom(Xyz[j]->GetId()));
-          continue;
-        }
-        TCAtom* CA = new TCAtom(this);
-        thisXyz.Add(CA);
-        CA->Assign( *Xyz[j] );
-        if( Xyz[j]->GetEllipsoid() )
-          CA->AssignEllps( &GetEllp(Xyz[j]->GetEllipsoid()->GetId()) );
-      }
+      for( int j=0; j < Xyz.Count(); j++ )
+        thisXyz.Add(&GetAtom(Xyz[j]->GetId()));
     }
   }
 
@@ -684,73 +666,12 @@ void TAsymmUnit::AddExyz(const TCAtomPList& cAtoms)  {
   TCAtomPList& Xyz = ExyzGroups->AddNew();
   for( int i=0; i < cAtoms.Count(); i++ )  {
     Xyz.Add(cAtoms[i]);
-    if( i != 0 )  {
-      CAtoms[ cAtoms[i]->GetId() ] = NULL;
-      cAtoms[i]->SetExyz(-1);
-    }
+    cAtoms[i]->SetSharedSiteId(ExyzGroups->Count()-1);
   }
-  PackAtoms();
-  for(int i=0; i < AtomCount(); i++ )
-    GetAtom(i).SetId(i);
 }
 //..............................................................................
 void TAsymmUnit::AddNewExyz(const TStrList& cAtoms)  {
   throw TNotImplementedException(__OlxSourceInfo);
-}
-//..............................................................................
-void TAsymmUnit::SwapExyz(TCAtom* A, TBasicAtomInfo *NewType)  {
-  bool done = false;
-  for( int i=0; i < ExyzGroupCount(); i++ )  {
-    TCAtomPList& Xyz = ExyzGroup(i);
-    if( Xyz[0] == A )  {
-      for( int j=1; j < Xyz.Count(); j++ )  {
-        if( Xyz[j]->GetAtomInfo().GetIndex() == NewType->GetIndex() )  {
-          CAtoms[A->GetId()] = Xyz[j];
-          Xyz[j] = A;
-          done = true;
-          break;
-        }
-      }
-      break;
-    }
-  }
-  if( !done )
-    throw TFunctionFailedException(__OlxSourceInfo, "could not find specified type");
-}
-//..............................................................................
-TCAtomPList* TAsymmUnit::ExpandExyz()  {
-  TCAtomPList* NewAtoms = new TCAtomPList;
-  for( int i=0; i < ExyzGroupCount(); i++ )  {
-    TCAtomPList& Xyz = ExyzGroup(i);
-    for( int j=1; j < Xyz.Count(); j++ ) {
-      // check if already expanded
-      if( Xyz[j]->GetExyz() != -1 )  continue;
-      Xyz[j]->SetFragmentId( Xyz[0]->GetFragmentId() );
-      Xyz[j]->SetExyz(i+1);
-      Xyz[j]->SetId( AtomCount() );
-      CAtoms.Add( Xyz[j] );
-      if( Xyz[j]->GetLoaderId() == -1 )
-        NewAtoms->Add( Xyz[j] );
-    }
-  }
-  if( NewAtoms->Count() ) return NewAtoms;
-  delete NewAtoms;
-  return NULL;
-}
-//..............................................................................
-void TAsymmUnit::CollapseExyz()  {
-  for( int i=0; i < ExyzGroupCount(); i++ )  {
-    TCAtomPList& Xyz = ExyzGroup(i);
-    for( int j=1; j < Xyz.Count(); j++ )  {
-      // check if already collapsed
-      if( Xyz[j]->GetExyz() == -1 )  continue;
-      Xyz[j]->SetExyz(-1);
-      CAtoms[ Xyz[j]->GetId() ] = NULL;
-    }
-  }
-  PackAtoms();
-  for(int i=0; i < AtomCount(); i++ )
-    GetAtom(i).SetId(i);
 }
 //..............................................................................
 void TAsymmUnit::ChangeSpaceGroup(const TSpaceGroup& sg)  {
@@ -838,6 +759,20 @@ void TAsymmUnit::UcartToUcif(TVectorD& v)  {
   v[3] = M[1][2];  v[4] = M[0][2];  v[5] = M[0][1];
 }
 //..............................................................................
+double TAsymmUnit::CalcCellVolume()  const  {
+  double cosa = cos( FAngles[0].GetV()*M_PI/180 ),
+         cosb = cos( FAngles[1].GetV()*M_PI/180 ),
+         cosg = cos( FAngles[2].GetV()*M_PI/180 );
+  return  FAxes[0].GetV()*
+          FAxes[1].GetV()*
+          FAxes[2].GetV()*sqrt( (1-cosa*cosa-cosb*cosb-cosg*cosg) + 2*(cosa*cosb*cosg));
+}
+double TAsymmUnit::EstimateZ(int atomCount) const  {
+  double auv = CalcCellVolume()/(TUnitCell::GetMatrixMultiplier(GetLatt())*(MatrixCount()+1));
+  int zp = Round(auv/(18.6*atomCount));
+  return olx_max((TUnitCell::GetMatrixMultiplier(GetLatt())*(MatrixCount()+1) * zp), 1);
+}
+//..............................................................................
 //..............................................................................
 //..............................................................................
 //..............................................................................
@@ -913,8 +848,16 @@ void TAsymmUnit::LibGetCell(const TStrObjList& Params, TMacroError& E)  {
   E.SetRetVal( V.ToString() );
 }
 //..............................................................................
+void TAsymmUnit::LibGetVolume(const TStrObjList& Params, TMacroError& E)  {
+  double v = CalcCellVolume()/Lattice->GetUnitCell().MatrixCount();
+  E.SetRetVal( v );
+}
+//..............................................................................
+void TAsymmUnit::LibGetCellVolume(const TStrObjList& Params, TMacroError& E)  {
+  E.SetRetVal( CalcCellVolume() );
+}
+//..............................................................................
 void TAsymmUnit::LibGetSymm(const TStrObjList& Params, TMacroError& E)  {
-
   if( TSymmLib::GetInstance() == NULL )  {
     E.ProcessingError(__OlxSrcInfo, "Symmetry librray is not initialised" );
     return;
@@ -1091,6 +1034,16 @@ void TAsymmUnit::LibSetZ(const TStrObjList& Params, TMacroError& E)  {
   if( Z <= 0 )  Z = 1;
 }
 //..............................................................................
+void TAsymmUnit::LibGetZprime(const TStrObjList& Params, TMacroError& E)  {
+  E.SetRetVal( 1 );
+}
+//..............................................................................
+void TAsymmUnit::LibSetZprime(const TStrObjList& Params, TMacroError& E)  {
+  double zp = Params[0].ToDouble();
+  Z = Round(TUnitCell::GetMatrixMultiplier(Latt)*MatrixCount()*zp);
+  if( Z <= 0 ) Z = 1;
+}
+//..............................................................................
 
 TLibrary* TAsymmUnit::ExportLibrary(const olxstr& name) {
 
@@ -1118,6 +1071,10 @@ TLibrary* TAsymmUnit::ExportLibrary(const olxstr& name) {
 "Returns a single number Uiso or (U11+U22+U33)/3") );
   lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,  &TAsymmUnit::LibGetCell, "GetCell", fpNone,
 "Returns six comma separated values for a, b, c and alpha, beta, gamma") );
+  lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,  &TAsymmUnit::LibGetVolume, "GetVolume", fpNone,
+"Returns volume of the unit cell divided by the number of symmetry elements") );
+  lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,  &TAsymmUnit::LibGetCellVolume, "GetCellVolume", fpNone,
+"Returns volume of the unit cell") );
   lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,  &TAsymmUnit::LibSetAtomCrd, "SetAtomCrd", fpFour,
 "Sets atom coordinates to specified values, first parameters is the atom ID") );
   lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,  &TAsymmUnit::LibSetAtomU, "SetAtomU", fpSeven | fpTwo,
@@ -1138,6 +1095,10 @@ TLibrary* TAsymmUnit::ExportLibrary(const olxstr& name) {
 "Returns current Z"  ) );
   lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,  &TAsymmUnit::LibSetZ, "SetZ", fpOne,
 "Sets current Z. Does not update content or whatsoever"  ) );
+  lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,  &TAsymmUnit::LibGetZprime, "GetZprime", fpNone,
+"Returns current Z divided byt the number of matrices of current spacegroup"  ) );
+  lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,  &TAsymmUnit::LibSetZprime, "SetZprime", fpOne,
+"Sets Z' for the structure"  ) );
   return lib;
 }
 //..............................................................................

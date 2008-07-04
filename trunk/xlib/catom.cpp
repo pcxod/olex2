@@ -30,12 +30,11 @@ TCAtom::TCAtom(TAsymmUnit *Parent)  {
   FEllipsoid = NULL;
   Uiso = caDefIso;
   LoaderId = -1;
-  AfixAtomId = FragmentId = -1;
+  SharedSiteId = AfixAtomId = FragmentId = -1;
   CanBeGrown = Deleted = false;
   FAttachedAtoms = NULL;
   FAttachedAtomsI = NULL;
   Degeneracy = 1;
-  Exyz = -1;
   FFixedValues.Resize(10);
   HAttached = false;
   Sortable = true;
@@ -103,6 +102,7 @@ void TCAtom::Assign(const TCAtom& S)  {
   SetQPeak( S.GetQPeak() );
   SetResiId( S.GetResiId() );
   SetSameId( S.GetSameId() );
+  SetSharedSiteId( S.GetSharedSiteId() );
   FEllipsoid = S.GetEllipsoid();
   SetUiso( S.GetUiso() );
   SetUisoVar( S.GetUisoVar() );
@@ -134,7 +134,6 @@ void TCAtom::Assign(const TCAtom& S)  {
     if( FAttachedAtoms )  {  delete FAttachedAtoms;  FAttachedAtoms = NULL;  }
   }
   */
-  Exyz = S.GetExyz();
   Hfix = S.GetHfix();
   FFixedValues = S.GetFixedValues();
 }

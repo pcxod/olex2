@@ -65,6 +65,7 @@
 
 #include "library.h"
 #include "bapp.h"
+#include "log.h"
 
 #ifndef MAX_PATH
   #define MAX_PATH 1024
@@ -96,7 +97,7 @@ bool TEFile::TFileNameMask::DoesMatch(const olxstr& str)  const {
 
   int off = 0, start = 0, end = str.Length();
   if( mask[0] != '*' )  {
-    olxstr& tmp = toks.String(0);
+    olxstr& tmp = toks[0];
     if( tmp.Length() > str.Length() )  return false;
     for( int i=0; i < tmp.Length(); i++ )
      if( !(tmp[i] == '?' || tmp[i] == str[i]) )  return false;
@@ -747,6 +748,11 @@ void TEFile::CheckFileExists(const olxstr& location, const olxstr& fileName)  {
     throw TFileDoesNotExistException(location, fileName);
 }
 //..............................................................................
+bool TEFile::Rename(const olxstr& from, const olxstr& to, bool overwrite)  {
+  if( FileExists(to) && ! overwrite )  return false;
+  return rename( from.c_str(), to.c_str() ) != -1;
+}
+//..............................................................................
 void TEFile::Copy(const olxstr& From, const olxstr& To, bool overwrite )  {
   if( TEFile::FileExists(To) && !overwrite )  return;
   // need to check that the files are not the same though...
@@ -788,9 +794,10 @@ olxstr TEFile::Which(const olxstr& filename)  {
   if( path == NULL )  return EmptyString;
   TStrList toks(path, OLX_ENVI_PATH_DEL);
   for( int i=0; i < toks.Count(); i++ )  {
-    TEFile::AddTrailingBackslashI(toks.String(i)) << filename;
-    if( TEFile::FileExists(toks.String(i)) )
-      return toks.String(i);
+    TEFile::AddTrailingBackslashI(toks[i]) << filename;
+    if( TEFile::FileExists(toks[i]) )
+      return toks[i];
+//    TBasicApp::GetLog() << toks[i] << '\n';
   }
   return EmptyString;
 }
@@ -800,36 +807,40 @@ olxstr TEFile::Which(const olxstr& filename)  {
 ////////////////////////////////////////////////////////////////////////////////
 
 void FileExists(const TStrObjList& Params, TMacroError& E)  {
-  E.SetRetVal( TEFile::FileExists( Params.String(0) ) );
+  E.SetRetVal( TEFile::FileExists( Params[0] ) );
 }
 
 void FileName(const TStrObjList& Params, TMacroError& E)  {
-  E.SetRetVal( TEFile::ExtractFileName( Params.String(0) ) );
+  E.SetRetVal( TEFile::ExtractFileName( Params[0] ) );
 }
 
 void FilePath(const TStrObjList& Params, TMacroError& E)  {
-  E.SetRetVal( TEFile::ExtractFilePath( Params.String(0) ) );
+  E.SetRetVal( TEFile::ExtractFilePath( Params[0] ) );
 }
 
 void FileDrive(const TStrObjList& Params, TMacroError& E)  {
-  E.SetRetVal( TEFile::ExtractFileDrive( Params.String(0) ) );
+  E.SetRetVal( TEFile::ExtractFileDrive( Params[0] ) );
 }
 
 void FileExt(const TStrObjList& Params, TMacroError& E)  {
-  E.SetRetVal( TEFile::ExtractFileExt( Params.String(0) ) );
+  E.SetRetVal( TEFile::ExtractFileExt( Params[0] ) );
 }
 
 void ChangeFileExt(const TStrObjList& Params, TMacroError& E)  {
-  E.SetRetVal( TEFile::ChangeFileExt( Params.String(0), Params.String(1) ) );
+  E.SetRetVal( TEFile::ChangeFileExt( Params[0], Params[1] ) );
 }
 
 void Copy(const TStrObjList& Params, TMacroError& E)  {
-  TEFile::Copy( Params.String(0), Params.String(1) );
-  E.SetRetVal( Params.String(1) );
+  TEFile::Copy( Params[0], Params[1] );
+  E.SetRetVal( Params[1] );
+}
+
+void Rename(const TStrObjList& Params, TMacroError& E)  {
+  E.SetRetVal( TEFile::Rename( Params[0], Params[1] ) );
 }
 
 void Delete(const TStrObjList& Params, TMacroError& E)  {
-  E.SetRetVal( TEFile::DelFile(Params.String(0)) );
+  E.SetRetVal( TEFile::DelFile(Params[0]) );
 }
 
 void CurDir(const TStrObjList& Params, TMacroError& E)  {
@@ -837,36 +848,36 @@ void CurDir(const TStrObjList& Params, TMacroError& E)  {
 }
 
 void ChDir(const TStrObjList& Params, TMacroError& E)  {
-  E.SetRetVal( TEFile::ChangeDir(Params.String(0)) );
+  E.SetRetVal( TEFile::ChangeDir(Params[0]) );
 }
 
 void MkDir(const TStrObjList& Params, TMacroError& E)  {
-  E.SetRetVal( TEFile::MakeDir(Params.String(0)) );
+  E.SetRetVal( TEFile::MakeDir(Params[0]) );
 }
 
 void OSPath(const TStrObjList& Params, TMacroError& E)  {
-  E.SetRetVal( TEFile::OSPath(Params.String(0)) );
+  E.SetRetVal( TEFile::OSPath(Params[0]) );
 }
 
 void Which(const TStrObjList& Params, TMacroError& E)  {
-  E.SetRetVal( TEFile::Which(Params.String(0)) );
+  E.SetRetVal( TEFile::Which(Params[0]) );
 }
 
 void Age(const TStrObjList& Params, TMacroError& E)  {
-  TEFile::CheckFileExists(__OlxSourceInfo, Params.String(0));
-  time_t v = TEFile::FileAge( Params.String(0) );
+  TEFile::CheckFileExists(__OlxSourceInfo, Params[0]);
+  time_t v = TEFile::FileAge( Params[0] );
   if( Params.Count() == 1 )
     E.SetRetVal( TETime::FormatDateTime(v) );
   else
-    E.SetRetVal( TETime::FormatDateTime(Params.String(1), v) );
+    E.SetRetVal( TETime::FormatDateTime(Params[1], v) );
 }
 
 void ListDirForGUI(const TStrObjList& Params, TMacroError& E)  {
-  TEFile::CheckFileExists(__OlxSourceInfo, Params.String(0));
+  TEFile::CheckFileExists(__OlxSourceInfo, Params[0]);
   olxstr cd( TEFile::CurrentDir() );
-  olxstr dn( Params.String(0) );
+  olxstr dn( Params[0] );
   TEFile::AddTrailingBackslashI(dn);
-  TEFile::ChangeDir( Params.String(0) );
+  TEFile::ChangeDir( Params[0] );
   short attrib = sefFile;
   if( Params.Count() == 3 )  {
     if( Params.String(2).Comparei("fd") == 0 )
@@ -876,7 +887,7 @@ void ListDirForGUI(const TStrObjList& Params, TMacroError& E)  {
   }
   TStrList output;
   olxstr tmp;
-  TEFile::ListCurrentDir( output, Params.String(1), attrib );
+  TEFile::ListCurrentDir( output, Params[1], attrib );
   TEFile::ChangeDir( cd );
   output.QSort(false);
   for(int i=0; i < output.Count(); i++ )  {
@@ -906,6 +917,8 @@ TLibrary*  TEFile::ExportLibrary(const olxstr& name)
 "Copies file provieded as first argument into the file provided as second argument") );
   lib->RegisterStaticFunction( new TStaticFunction( ::Delete, "Delete", fpOne,
 "Deletes specified file") );
+  lib->RegisterStaticFunction( new TStaticFunction( ::Rename, "Rename", fpTwo,
+"Renames specified file") );
   lib->RegisterStaticFunction( new TStaticFunction( ::CurDir, "CurDir", fpNone,
 "Returns current folder") );
   lib->RegisterStaticFunction( new TStaticFunction( ::ChDir, "ChDir", fpOne,

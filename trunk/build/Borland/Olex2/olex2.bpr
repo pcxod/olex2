@@ -5,14 +5,14 @@
     <VERSION value="BCB.06.00"/>
     <PROJECT value="exe\olex2.exe"/>
     <OBJFILES value="build\cmdline.obj build\ctrls.obj build\dgenopt.obj build\dgrad.obj 
-      build\edit.obj build\fsext.obj build\htmlext.obj build\imagep.obj 
-      build\mainform.obj build\matprop.obj build\obase.obj build\primtvs.obj 
-      build\eprocess.obj build\ptable.obj build\scenep.obj 
-      build\updateoptions.obj build\xglapp.obj build\xglcanv.obj 
-      build\xpprocs.obj build\eaccell.obj build\filesystem.obj build\httpex.obj 
-      build\pyext.obj build\shellutil.obj build\url.obj build\wxhttpfs.obj 
-      build\integration.obj build\IsoSurface.obj build\olxvar.obj 
-      build\imp_auto.obj build\langdict.obj"/>
+      build\edit.obj build\htmlext.obj build\imagep.obj build\mainform.obj 
+      build\matprop.obj build\obase.obj build\primtvs.obj build\ptable.obj 
+      build\scenep.obj build\updateoptions.obj build\xglapp.obj 
+      build\xglcanv.obj build\xpprocs.obj build\eaccell.obj build\filesystem.obj 
+      build\httpex.obj build\pyext.obj build\shellutil.obj build\url.obj 
+      build\wxhttpfs.obj build\integration.obj build\IsoSurface.obj 
+      build\imp_auto.obj build\langdict.obj build\fsext.obj build\eprocess.obj 
+      build\olxvar.obj"/>
     <RESFILES value="..\..\..\olex\olex2.res"/>
     <DEFFILE value=""/>
     <RESDEPEN value="$(RESFILES)"/>
@@ -43,7 +43,7 @@
     <USERDEFINES value=";__WINDOWS__;__WXMSW__;__WXWIDGETS__;__WXDEBUG__;__OD_BUILD__;_DEBUG;_UNICODE;"/>
     <SYSDEFINES value="NO_STRICT;_NO_VCL"/>
     <MAINSOURCE value="olex2.bpf"/>
-    <INCLUDEPATH value="..\..\..\olex\macro;..\..\..\olex;..\..\..\sdl;&quot;C:\Program Files\Borland\CBuilder6\Projects&quot;;..\..\..\repository;..\..\..\glib;..\..\..\xlib;..\..\..\gxlib;..\..;$(BCB)\include;$(BCB)\include\vcl;E:\wxWidgets-2.8.7\include;E:\wxWidgets-2.8.7\lib\bcc_lib\mswud;C:\Python25\include"/>
+    <INCLUDEPATH value="..\..\..\olex\macro;..\..\..\olex;..\..\..\sdl;&quot;C:\Program Files\Borland\CBuilder6\Projects&quot;;..\..\..\repository;..\..\..\glib;..\..\..\xlib;..\..\..\gxlib;..\..;$(BCB)\include;$(BCB)\include\vcl;E:\wxWidgets-2.8.7\include;E:\wxWidgets-2.8.7\lib\bcc_lib\mswd;C:\Python25\include"/>
     <LIBPATH value="..\..\..\xlib;..\..\..\olex\macro;&quot;C:\Program Files\Borland\CBuilder6\Projects&quot;;..\..\..\repository;..\..\..\olex;..\..;$(BCB)\Projects\Lib;$(BCB)\lib\obj;$(BCB)\lib;&quot;E:\wxWidgets-2.8.7\lib\bcc_lib&quot;"/>
     <WARNINGS value="-w8092 -w8091 -wucp -wstv -w-par -wnod -wnak -wdef -wamb"/>
     <OTHERFILES value=""/>
@@ -70,14 +70,12 @@
       <FILE FILENAME="..\..\..\olex\dgenopt.cpp" FORMNAME="" UNITNAME="dgenopt.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\olex\dgrad.cpp" FORMNAME="" UNITNAME="dgrad.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\olex\edit.cpp" FORMNAME="" UNITNAME="edit.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
-      <FILE FILENAME="..\..\..\olex\fsext.cpp" FORMNAME="" UNITNAME="fsext.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\olex\htmlext.cpp" FORMNAME="" UNITNAME="htmlext.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\olex\imagep.cpp" FORMNAME="" UNITNAME="imagep.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\olex\mainform.cpp" FORMNAME="" UNITNAME="mainform.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\olex\matprop.cpp" FORMNAME="" UNITNAME="matprop.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\olex\obase.cpp" FORMNAME="" UNITNAME="obase.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\olex\primtvs.cpp" FORMNAME="" UNITNAME="primtvs.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
-      <FILE FILENAME="..\..\..\olex\eprocess.cpp" FORMNAME="" UNITNAME="eprocess" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\olex\ptable.cpp" FORMNAME="" UNITNAME="ptable.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\olex\scenep.cpp" FORMNAME="" UNITNAME="scenep.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\olex\updateoptions.cpp" FORMNAME="" UNITNAME="updateoptions.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
@@ -101,7 +99,6 @@
       <FILE FILENAME="lib\alglib.lib" FORMNAME="" UNITNAME="alglib.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\repository\integration.cpp" FORMNAME="" UNITNAME="integration" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\repository\IsoSurface.cpp" FORMNAME="" UNITNAME="IsoSurface" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
-      <FILE FILENAME="..\..\..\olex\olxvar.cpp" FORMNAME="" UNITNAME="olxvar" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\olex\macro\imp_auto.cpp" FORMNAME="" UNITNAME="imp_auto" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\olex\langdict.cpp" FORMNAME="" UNITNAME="langdict" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="E:\wxWidgets-2.8.3\lib\bcc_lib\wxzlibd.lib" FORMNAME="" UNITNAME="wxzlibd.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
@@ -111,6 +108,9 @@
       <FILE FILENAME="E:\wxWidgets-2.8.7\lib\bcc_lib\wxmsw28ud.lib" FORMNAME="" UNITNAME="wxmsw28ud.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="E:\wxWidgets-2.8.7\lib\bcc_lib\wxmsw28ud_gl.lib" FORMNAME="" UNITNAME="wxmsw28ud_gl.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="E:\wxWidgets-2.8.7\lib\bcc_lib\wxmsw28ud_html.lib" FORMNAME="" UNITNAME="wxmsw28ud_html.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\repository\fsext.cpp" FORMNAME="" UNITNAME="fsext" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\repository\eprocess.cpp" FORMNAME="" UNITNAME="eprocess" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\repository\olxvar.cpp" FORMNAME="" UNITNAME="olxvar" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
   </FILELIST>
   <BUILDTOOLS>
   </BUILDTOOLS>
@@ -145,8 +145,8 @@ Comments=
 
 [HistoryLists\hlIncludePath]
 Count=30
-Item0=..\..\..\olex\macro;..\..\..\olex;..\..\..\sdl;C:\Program Files\Borland\CBuilder6\Projects;..\..\..\repository;..\..\..\glib;..\..\..\xlib;..\..\..\gxlib;..\..;$(BCB)\include;$(BCB)\include\vcl;E:\wxWidgets-2.8.7\include;E:\wxWidgets-2.8.7\lib\bcc_lib\mswud;C:\Python25\include
-Item1=..\..\..\olex\macro;..\..\..\olex;..\..\..\sdl;C:\Program Files\Borland\CBuilder6\Projects;..\..\..\repository;..\..\..\glib;..\..\..\xlib;..\..\..\gxlib;..\..;$(BCB)\include;$(BCB)\include\vcl;E:\wxWidgets-2.8.7\include;E:\wxWidgets-2.8.7\lib\bcc_lib\mswd;C:\Python25\include
+Item0=..\..\..\olex\macro;..\..\..\olex;..\..\..\sdl;C:\Program Files\Borland\CBuilder6\Projects;..\..\..\repository;..\..\..\glib;..\..\..\xlib;..\..\..\gxlib;..\..;$(BCB)\include;$(BCB)\include\vcl;E:\wxWidgets-2.8.7\include;E:\wxWidgets-2.8.7\lib\bcc_lib\mswd;C:\Python25\include
+Item1=..\..\..\olex\macro;..\..\..\olex;..\..\..\sdl;C:\Program Files\Borland\CBuilder6\Projects;..\..\..\repository;..\..\..\glib;..\..\..\xlib;..\..\..\gxlib;..\..;$(BCB)\include;$(BCB)\include\vcl;E:\wxWidgets-2.8.7\include;E:\wxWidgets-2.8.7\lib\bcc_lib\mswud;C:\Python25\include
 Item2=..\..\..\olex\macro;..\..\..\olex;..\..\..\sdl;C:\Program Files\Borland\CBuilder6\Projects;..\..\..\repository;..\..\..\glib;..\..\..\xlib;..\..\..\gxlib;..\..;$(BCB)\include;$(BCB)\include\vcl;E:\wxWidgets-2.8.3\include;E:\wxWidgets-2.8.3\include\wx;E:\wxWidgets-2.8.3\lib\bcc_lib\mswud;C:\Python25\include
 Item3=..\..\..\olex\macro;..\..\..\olex;..\..\..\sdl;C:\Program Files\Borland\CBuilder6\Projects;..\..\..\repository;..\..\..\glib;..\..\..\xlib;..\..\..\gxlib;..\..;$(BCB)\include;$(BCB)\include\vcl;E:\wxWidgets-2.8.3\include;E:\wxWidgets-2.8.3\include\wx;E:\wxWidgets-2.8.3\lib\bcc_lib\mswd;C:\Python25\include
 Item4=..\..\..\olex\macro;..\..\..\olex;..\..\..\sdl;C:\Program Files\Borland\CBuilder6\Projects;..\..\..\repository;..\..\..\glib;..\..\..\xlib;..\..\..\gxlib;..\..;$(BCB)\include;$(BCB)\include\vcl;E:\wxWidgets-2.8.7\include;E:\wxWidgets-2.8.7\include\wx;E:\wxWidgets-2.8.7\lib\bcc_lib\mswud;C:\Python25\include
