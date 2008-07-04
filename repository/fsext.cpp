@@ -1,6 +1,8 @@
 //---------------------------------------------------------------------------
 #ifdef __BORLANDC__
 #pragma hdrstop
+#include <windows.h>
+#include <winbase.h>
 #endif
 
 #include "fsext.h"
@@ -8,7 +10,11 @@
 #include "etime.h"
 #include "egc.h"
 #include "eutf8.h"
+
+#ifndef _NO_PYTHON
 #include "pyext.h"
+#endif
+
 #include "wxzipfs.h"
 
   const int16_t TFileHandlerManager::FVersion = 0x0001;
@@ -48,7 +54,9 @@ TMemoryBlock *TFileHandlerManager::GetMemoryBlock( const olxstr &FN )  {
 }
 //..............................................................................
 TFileHandlerManager::TFileHandlerManager()  {  
+#ifndef _NO_PYTHON
   PythonExt::GetInstance()->Register( &TFileHandlerManager::PyInit );
+#endif
 }
 //..............................................................................
 TFileHandlerManager::~TFileHandlerManager()  {  _Clear();  }
@@ -59,12 +67,15 @@ void TFileHandlerManager::_Clear()  {
     delete FMemoryBlocks.Object(i);
   }
   FMemoryBlocks.Clear();
+#ifdef __WXWIDGETS__
   for( int i=0; i < FZipFiles.Count(); i++ )
     delete FZipFiles.Object(i);
   FZipFiles.Clear();
+#endif
 }
 //..............................................................................
 IDataInputStream *TFileHandlerManager::_GetInputStream(const olxstr &FN)  {
+#ifdef __WXWIDGETS__
   if( TZipWrapper::IsZipFile(FN) )  {
     TZipEntry ze;
     TZipWrapper::SplitZipUrl(FN, ze);
@@ -76,15 +87,19 @@ IDataInputStream *TFileHandlerManager::_GetInputStream(const olxstr &FN)  {
     return zw->OpenEntry( ze.EntryName );
   }
   else  {
+#endif
     TMemoryBlock *mb = GetMemoryBlock( FN );
     if( mb == NULL )  return NULL;
     TEMemoryStream *ms = new TEMemoryStream;
     ms->Write( mb->Buffer, mb->Length );
     ms->SetPosition( 0 );
     return ms;
+#ifdef __WXWIDGETS__
   }
+#endif
 }
 //..............................................................................
+#ifdef __WXWIDGETS__
 wxFSFile *TFileHandlerManager::_GetFSFileHandler( const olxstr &FN )  {
   static wxString st(wxT("OCTET")), es;
   if( TZipWrapper::IsZipFile(FN) )  {
@@ -103,6 +118,7 @@ wxFSFile *TFileHandlerManager::_GetFSFileHandler( const olxstr &FN )  {
     return mb == NULL ? NULL : new wxFSFile( new wxMemoryInputStream(mb->Buffer, mb->Length), es, st, es, wxDateTime((time_t)0));
   }
 }
+#endif
 //..............................................................................
 void TFileHandlerManager::_SaveToStream(IDataOutputStream& os, short persistenceMask)  {
   os.Write( FSignature, TFileHandlerManager_FSignatureLength );
@@ -194,10 +210,12 @@ IDataInputStream *TFileHandlerManager::GetInputStream(const olxstr &FN)  {
   return FHandler->_GetInputStream( LocateFile(FN) );
 }
 //..............................................................................
+#ifdef __WXWIDGETS__
 wxFSFile *TFileHandlerManager::GetFSFileHandler( const olxstr &FN )  {
   if( FHandler == NULL )  FHandler = new TFileHandlerManager;
   return FHandler->_GetFSFileHandler( LocateFile(FN) );
 }
+#endif
 //..............................................................................
 void TFileHandlerManager::Clear(short persistenceMask)  {
   if( FHandler != NULL )  {
@@ -320,6 +338,7 @@ TLibrary* TFileHandlerManager::ExportLibrary(const olxstr& name)  {
 //..............................................................................
 //..............................................................................
 //..............................................................................
+#ifndef _NO_PYTHON
 PyObject* pyExists(PyObject* self, PyObject* args)  {
   olxstr fn;
   PythonExt::ParseTuple(args, "w", &fn);
@@ -384,3 +403,4 @@ static PyMethodDef OLEXFS_Methods[] = {
 void TFileHandlerManager::PyInit()  {
   Py_InitModule( "olex_fs", OLEXFS_Methods );
 }
+#endif //_NO_PYTHON

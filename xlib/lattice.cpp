@@ -244,7 +244,7 @@ void TLattice::Init()  {
   GetUnitCell().InitMatrices();
   InitBody();
   TEStrBuffer tmp;
-  int eqc = GetUnitCell().FindSymmEq(tmp, true, false, false); // find and not remove
+  int eqc = GetUnitCell().FindSymmEq(tmp, 0.01, true, false, false); // find and not remove
   GetAsymmUnit().SetContainsEquivalents( eqc != 0 );
 
 /*  // decode fixed Uiso parameters
@@ -288,7 +288,7 @@ void  TLattice::Uniq(bool remEqv)  {
   ClearMatrices();
   if( GetAsymmUnit().DoesContainEquivalents() && remEqv )  {
     TEStrBuffer Msg;
-    GetUnitCell().FindSymmEq(Msg, false, false, true);
+    GetUnitCell().FindSymmEq(Msg, 0.01, false, false, true);
     //TBasicApp::GetLog()->CriticalInfo(olxstr("Symmetrical counterparts were removed for: ") << Msg.ToString() );
     GetAsymmUnit().SetContainsEquivalents(false);
   }
@@ -762,7 +762,7 @@ void TLattice::UpdateAsymmUnit()  {
     delete (TEList*)AUAtoms[i];
   TEStrBuffer Rep;
   if( GetAsymmUnit().DoesContainEquivalents() )
-    AsymmUnit->SetContainsEquivalents( UnitCell->FindSymmEq(Rep, false, false, false) != 0 );
+    AsymmUnit->SetContainsEquivalents( UnitCell->FindSymmEq(Rep, 0.01, false, false, false) != 0 );
 }
 //..............................................................................
 void TLattice::ListAsymmUnit(TSAtomPList& L, TCAtomPList* Template, bool IncludeQ)  {

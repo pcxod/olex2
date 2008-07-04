@@ -1,9 +1,13 @@
 #ifdef __BORLANDC__
   #pragma hdrstop
+  #include <windows.h>
+  #include <winbase.h>
 #endif
 
-#include "wx/wx.h"
-#include "wx/thread.h"
+#ifdef __WXWIDGETS__
+  #include "wx/wx.h"
+  #include "wx/thread.h"
+#endif
 
 #include "pyext.h"
 
@@ -395,6 +399,7 @@ PyObject* PythonExt::GetProfileInfo()  {
 //..............................................................................
 //..............................................................................
 //..............................................................................
+#ifdef __WXWIDGETS__
 class TRunThread: public wxThread  {
   olxstr ScriptName;
   int RetCode;
@@ -410,27 +415,32 @@ public:
 
   int GetRetCode()  const  {  return RetCode;  }
 };
+#endif // __WXWIDGETS__
 
 int PythonExt::RunPython( const olxstr& script, bool inThread )  {
   CheckInitialised();
+#ifdef __WXWIDGETS__
   if( inThread )  {
     TRunThread* rf = new TRunThread( script );
     rf->Create();
-Py_BEGIN_ALLOW_THREADS
+    Py_BEGIN_ALLOW_THREADS
     rf->Run();
     while( rf->IsRunning() )  {
       rf->Yield();
       rf->Sleep(30);
       wxTheApp->Dispatch();
     }
-Py_END_ALLOW_THREADS
+    Py_END_ALLOW_THREADS
     int res = rf->GetRetCode();
     delete rf;
     return res;
   }
   else  {
+#endif
     return PyRun_SimpleString( script.c_str() );
+#ifdef __WXWIDGETS__
   }
+#endif
 }
 //..............................................................................
 //..............................................................................

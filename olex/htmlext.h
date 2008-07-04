@@ -212,7 +212,7 @@ protected:
       int ind = Objects.IndexOf(cname);
       return (ind == -1) ? NULL : Objects.Object(ind);
     }
-    TSStrStrList<olxstr,false>* DefineControl(const olxstr& name, const type_info& type);
+    TSStrStrList<olxstr,false>* DefineControl(const olxstr& name, const std::type_info& type);
     void SaveState();
     void RestoreState();
     void SaveToFile(const olxstr& fn);
@@ -254,6 +254,7 @@ protected:
 
   DefFunc(SaveData)
   DefFunc(LoadData)
+  DefFunc(GetItemState)
 
   olxstr GetObjectValue(const IEObject *Object);
   const olxstr& GetObjectData(const IEObject *Object);

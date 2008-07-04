@@ -23,10 +23,10 @@
     <PATHRC value=".;"/>
     <PATHASM value=".;"/>
     <LINKER value="TLib"/>
-    <USERDEFINES value="_DEBUG;_UNICODE;"/>
+    <USERDEFINES value="_DEBUG"/>
     <SYSDEFINES value="NO_STRICT"/>
     <MAINSOURCE value="gllib.bpf"/>
-    <INCLUDEPATH value="&quot;C:\Program Files\Borland\CBuilder6\Projects&quot;;..\..\..\glib;$(BCB)\include;$(BCB)\include\vcl;..\..\..\sdl;E:\wxWidgets-2.8.7\include;E:\wxWidgets-2.8.7\lib\bcc_lib\mswud;..\..\..\repository"/>
+    <INCLUDEPATH value="&quot;C:\Program Files\Borland\CBuilder6\Projects&quot;;..\..\..\glib;$(BCB)\include;$(BCB)\include\vcl;..\..\..\sdl;E:\wxWidgets-2.8.7\include;E:\wxWidgets-2.8.7\lib\bcc_lib\mswd;..\..\..\repository"/>
     <LIBPATH value="&quot;C:\Program Files\Borland\CBuilder6\Projects&quot;;..\..\..\glib;$(BCB)\lib\obj;$(BCB)\lib"/>
     <WARNINGS value="-w-par"/>
     <LISTFILE value=""/>
@@ -129,10 +129,11 @@ Count=1
 Item0=$(BCB)\source\vcl
 
 [HistoryLists\hlConditionals]
-Count=3
-Item0=_DEBUG;
-Item1=_DEBUG;_UNICODE
-Item2=_DEBUG
+Count=4
+Item0=_DEBUG
+Item1=_DEBUG;_UNICODE;
+Item2=_DEBUG;
+Item3=_DEBUG;_UNICODE
 
 [HistoryLists\hlIntOutputDir]
 Count=1
@@ -169,5 +170,10 @@ RemoteDebug=0
 ShowInfoMsgs=0
 LinkDebugVcl=0
 LinkCGLIB=0
+
+[Language]
+ActiveLang=
+ProjectLang=
+RootDir=
   </IDEOPTIONS>
 </PROJECT>

@@ -23,7 +23,7 @@ private:
   olxstr FLabel;    // atom's label
   int     Id;       // c_atoms id; this is also used to identify if TSAtoms are the same
   int     LoaderId; // id of the atom in the asymmertic unit of the loader
-  int     ResiId, SameId;   // residue and SADI ID
+  int     ResiId, SameId, SharedSiteId;   // residue and SADI ID
   double  Occp;     // occupancy and its variable
   double  Uiso, QPeak;    // isotropic thermal parameter; use it when Ellipsoid = NULL
   int     FragmentId;   // this is used in asymmetric unit sort and initialised in TLatice::InitBody()
@@ -31,7 +31,7 @@ private:
   TEVPointD  FCCenter;   // atom center in cell coordinates
   TVectorD FEllpsE;   // errors for the values six values from INS file
   TVectorD  FFixedValues;  // at least five values (x,y,z, Occ, Uiso), may be 10, (x,y,z, Occ, Uij)
-  short Part, Afix, Degeneracy, Exyz,
+  short Part, Afix, Degeneracy, 
         Hfix; // hfix is only an of the "interface" use; HFIX istructions are parsed
   int AfixAtomId;   // this is used to fix afixes after sorting
   bool Deleted, 
@@ -85,10 +85,10 @@ public:
   DefPropP(int, SameId)
   DefPropP(int, FragmentId)
   DefPropP(int, AfixAtomId)
-
+  DefPropP(int, SharedSiteId)
+  inline bool IsSiteShared() const {  return SharedSiteId != -1;  }
 //  short   Frag;    // fragment index
   DefPropP(short, Degeneracy)
-  DefPropP(short, Exyz)
   DefPropP(short, Part)
   DefPropP(short, Afix)
   DefPropP(short, Hfix)

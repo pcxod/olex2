@@ -1,6 +1,10 @@
 #ifdef __BORLANDC__
   #pragma hdrstop
+  #include <windows.h>
+  #include <winbase.h>
 #endif
+
+#ifdef __WXWIDGETS__
 
 #include "wxzipfs.h"
 #include "efile.h"
@@ -138,3 +142,4 @@ IDataInputStream* TwxZipFileSystem::OpenFile(const olxstr& Source)  {
 }
 //..............................................................................
 
+#endif // __WXWIDGETS__

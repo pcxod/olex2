@@ -153,8 +153,7 @@ TAG_HANDLER_PROC(tag)  {
   tag.ScanParam(wxT("TYPE"), _StrFormat_, Bf);
   olxstr TagName(Bf), ObjectName, Value, Data, strValign, Tmp, Label;
 
-  int ax=100,
-      ay=20;
+  int ax=100, ay=20;
   int fl = 0,
       valign = wxHTML_ALIGN_CENTER;
   IEObject* CreatedObject = NULL;
@@ -188,9 +187,8 @@ TAG_HANDLER_PROC(tag)  {
       ay = Tmp.ToInt();
   }
 
-  if( ax == 0 )  ax = 25;
-  if( ay == 0 )  ay = 25;
-
+  if( ax == 0 )  ax = 30;
+  if( ay == 0 )  ay = 20;
   if( tag.HasParam(wxT("FLOAT")) ) fl = ax;
 
   ObjectName = tag.GetParam(wxT("NAME")).c_str();
@@ -361,7 +359,11 @@ TAG_HANDLER_PROC(tag)  {
     CreatedObject = Box;
     CreatedWindow = Box;
     Box->WI.SetWidth(ax);
-    Box->WI.SetHeight(ay);
+#ifdef __MAC__    
+    Box->WI.SetHeight( olx_max(ay, Box->GetCharHeight()+10) );
+#else
+    Box->WI.SetHeight( ay );
+#endif    
     Box->SetText(Value);
     if( tag.HasParam(wxT("ITEMS")) )  {
       olxstr Items = tag.GetParam(wxT("ITEMS")).c_str();
@@ -613,18 +615,22 @@ TAG_HANDLER_PROC(tag)  {
         if( !bgc.IsEmpty() )  {
           wxColor bgCl = wxColor( uiStr(bgc) );
           Box->SetBackgroundColour( bgCl );
-          if( Box->GetPopupControl() != NULL )
-            Box->GetPopupControl()->GetControl()->SetBackgroundColour( bgCl );
           if( Box->GetTextCtrl() != NULL )
             Box->GetTextCtrl()->SetBackgroundColour( bgCl );
+#ifndef __MAC__          
+          if( Box->GetPopupControl() != NULL && Box->GetPopupControl()->GetControl() != NULL )
+            Box->GetPopupControl()->GetControl()->SetBackgroundColour( bgCl );
+#endif
         }
         if( !fgc.IsEmpty() )  {
           wxColor fgCl = wxColor( uiStr(bgc) );
           Box->SetForegroundColour( fgCl );
-          if( Box->GetPopupControl() != NULL )
-            Box->GetPopupControl()->GetControl()->SetForegroundColour( fgCl );
           if( Box->GetTextCtrl() != NULL )
             Box->GetTextCtrl()->SetForegroundColour( fgCl );
+#ifndef __MAC__          
+          if( Box->GetPopupControl() != NULL && Box->GetPopupControl()->GetControl() != NULL)
+            Box->GetPopupControl()->GetControl()->SetForegroundColour( fgCl );
+#endif
         }
       }
       else  {
@@ -954,6 +960,7 @@ THtml::THtml(wxWindow *Parent, ALibraryContainer* LC):
     this_InitFuncD(GetFontName, fpNone, "Returns current font name");
     this_InitFuncD(GetBorders, fpNone, "Returns borders width between HTML content and window boundaries");
     this_InitFuncD(SetFocus, fpOne,    "Sets input focus to the specified HTML control");
+    this_InitFuncD(GetItemState, fpOne|fpTwo, "Returns item state of provided switch");
   }
 }
 //..............................................................................
@@ -1177,9 +1184,9 @@ bool THtml::ProcessPageLoadRequest()  {
   FPageLoadRequested = false;
   bool res = false;
   if( !FPageRequested.IsEmpty() )
-    LoadPage( uiStr(FPageRequested) );
+    res = LoadPage( uiStr(FPageRequested) );
   else
-    UpdatePage();
+    res = UpdatePage();
   FPageRequested  = EmptyString;
   return res;
 }
@@ -1254,6 +1261,18 @@ bool THtml::UpdatePage()  {
   else
     Path = FWebFolder;
 
+  // locate currently focused control
+  olxstr focusedControlName;
+  wxWindow* focusedControl = FindFocus();
+  if( focusedControl != NULL )  {
+    for( int i=0; i < FObjects.Count(); i++ )  {
+      if( FObjects.Object(i).GetB() == focusedControl )  {
+        focusedControlName = FObjects.GetComparable(i);
+        break;
+      }
+    }
+  }
+
   olxstr oldPath( TEFile::CurrentDir() );
 
   TEFile::ChangeDir(FWebFolder);
@@ -1278,8 +1297,10 @@ bool THtml::UpdatePage()  {
   wxHtmlWindow::Thaw();
   for( int i=0; i < FObjects.Count(); i++ )  {
     if( FObjects.GetObject(i).GetB() != NULL )  {
-      // this i the only way to not show the bloody control at (0,0)!
+      // this i the only way to not show the bloody control at (0,0) on windows!
+#ifndef __MAC__
       FObjects.Object(i).B()->Move(2000, 2000);
+#endif      
       FObjects.Object(i).B()->Show(true);
     }
   }
@@ -1296,7 +1317,8 @@ bool THtml::UpdatePage()  {
     if( w != TGlXApp::GetMainForm()->GetHtmlPanelWidth() ) // scrollbar appeared?
       TGlXApp::GetMainForm()->OnResize();
   }
-
+  if( FocusedControl.IsEmpty() )  
+    FocusedControl = focusedControlName;
   if( !FocusedControl.IsEmpty() )  {
     int ind = FObjects.IndexOf( FocusedControl );
     FocusedControl = EmptyString;
@@ -1306,12 +1328,20 @@ bool THtml::UpdatePage()  {
         ((TTextEdit*)wnd)->SetSelection(-1,-1);
       else if( EsdlInstanceOf(*wnd, TComboBox) )  {
         TComboBox* cb = (TComboBox*)wnd;
-        cb->GetTextCtrl()->SetSelection(-1, -1);
-        wnd = cb->GetTextCtrl();
+        if( cb->GetTextCtrl() != NULL )  {
+          cb->GetTextCtrl()->SetSelection(-1, -1);
+          wnd = cb->GetTextCtrl();
+        }
+      }
+      else if( EsdlInstanceOf(*wnd, TSpinCtrl) )  {
+        TSpinCtrl* sc = (TSpinCtrl*)wnd;
+        olxstr sv(sc->GetValue());
+        sc->SetSelection(sv.Length(),-1);
       }
       wnd->SetFocus();
     }
   }
+
   return true;
 }
 //..............................................................................
@@ -1615,7 +1645,7 @@ void THtml::macItemState(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   THtmlSwitch *rootSwitch = html->Root();
   TIntList states;
   TPtrList<THtmlSwitch> Switches;
-  olxstr itemName = Cmds[0];
+  olxstr itemName( Cmds[0] );
   for( int i=1; i < Cmds.Count(); i++ )  {
     Switches.Clear();
     if( itemName.FirstIndexOf('*') == -1 )  {
@@ -1671,6 +1701,22 @@ void THtml::macItemState(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   }
   html->UpdatePage();
   return;
+}
+//..............................................................................
+void THtml::funGetItemState(const TStrObjList &Params, TMacroError &E)  {
+  THtml *html = (Params.Count() == 2) ? TGlXApp::GetMainForm()->GetHtml(Params[0]) : this;
+  if( html == NULL )  {
+    E.ProcessingError(__OlxSrcInfo, "undefined html window");
+    return;
+  }
+  olxstr itemName( (Params.Count() == 1) ? Params[0] : Params[1] );
+  THtmlSwitch *rootSwitch = html->Root();
+  THtmlSwitch* sw = rootSwitch->FindSwitch(itemName);
+  if( sw == NULL )  {
+    E.ProcessingError(__OlxSrcInfo, "could not locate specified switch: ") << itemName;
+    return;
+  }
+  E.SetRetVal( sw->FileIndex() );
 }
 //..............................................................................
 void THtml::SetShowTooltips(bool v)  {
@@ -1840,9 +1886,21 @@ void THtml::funGetValue(const TStrObjList &Params, TMacroError &E)  {
 void THtml::SetObjectValue(IEObject *Obj, const olxstr& Value)  {
   if( EsdlInstanceOf(*Obj, TTextEdit) )       ((_xl_Controls::TTextEdit*)Obj)->SetText(Value);
   else if( EsdlInstanceOf(*Obj, TCheckBox) )  ((_xl_Controls::TCheckBox*)Obj)->SetCaption(Value);
-  else if( EsdlInstanceOf(*Obj, TTrackBar) )  ((_xl_Controls::TTrackBar*)Obj)->SetValue(Value.ToInt());
-  else if( EsdlInstanceOf(*Obj, TSpinCtrl) )  ((_xl_Controls::TSpinCtrl*)Obj)->SetValue(Value.ToInt());
-  else if( EsdlInstanceOf(*Obj, TButton) )    ((_xl_Controls::TButton*)Obj)->SetCaption(Value);
+  else if( EsdlInstanceOf(*Obj, TTrackBar) )  {
+    int si = Value.IndexOf(',');
+    if( si == -1 )
+      ((_xl_Controls::TTrackBar*)Obj)->SetValue(Value.ToInt());
+    else
+      ((_xl_Controls::TTrackBar*)Obj)->SetRange( Value.SubStringTo(si).ToInt(), Value.SubStringFrom(si+1).ToInt() );
+  }
+  else if( EsdlInstanceOf(*Obj, TSpinCtrl) )  {
+    int si = Value.IndexOf(',');
+    if( si == -1 )
+      ((_xl_Controls::TSpinCtrl*)Obj)->SetValue(Value.ToInt());
+    else
+      ((_xl_Controls::TSpinCtrl*)Obj)->SetRange( Value.SubStringTo(si).ToInt(), Value.SubStringFrom(si+1).ToInt() );
+  }
+  else if( EsdlInstanceOf(*Obj, TButton) )    ((_xl_Controls::TButton*)Obj)->SetLabel(Value.u_str());
   else if( EsdlInstanceOf(*Obj, TComboBox) )  {
     ((_xl_Controls::TComboBox*)Obj)->SetText(Value);
     ((_xl_Controls::TComboBox*)Obj)->Update();
@@ -1867,7 +1925,17 @@ void THtml::funSetValue(const TStrObjList &Params, TMacroError &E)  {
       E.ProcessingError(__OlxSrcInfo,  "object definition does not accept value for: ") << Params[0];
       return;
     }
-    props->Item("val") = Params[1];
+    if( props->Item("type") == EsdlClassName(TTrackBar) || props->Item("type") == EsdlClassName(TSpinCtrl) )  {
+      int si = Params[1].IndexOf(',');
+      if( si == -1 )
+        props->Item("val") = Params[1];
+      else  {
+        props->Item("min") = Params[1].SubStringTo(si);
+        props->Item("max") = Params[1].SubStringFrom(si+1);
+      }
+    }
+    else
+      props->Item("val") = Params[1];
   }
   else  {
     SetObjectValue(Obj, Params[1]);
@@ -1997,10 +2065,15 @@ bool THtml::GetObjectState(const IEObject *Obj)  {
 void THtml::funGetState(const TStrObjList &Params, TMacroError &E)  {
   const IEObject *Obj = FindObject(Params[0]);
   if( Obj == NULL )  {
-    E.ProcessingError(__OlxSrcInfo, "wrong html object name: ")  << Params[0];
-    return;
+    TSStrStrList<olxstr,false>* props = ObjectsState.FindProperties(Params[0]);
+    if( props == NULL )  {
+      E.ProcessingError(__OlxSrcInfo,  "wrong html object name: ") << Params[0];
+      return;
+    }
+    E.SetRetVal( props->Item("checked") );
   }
-  E.SetRetVal( GetObjectState(Obj) );
+  else
+    E.SetRetVal( GetObjectState(Obj) );
 }
 //..............................................................................
 void THtml::funGetLabel(const TStrObjList &Params, TMacroError &E)  {
@@ -2082,10 +2155,19 @@ void THtml::funSetFocus(const TStrObjList &Params, TMacroError &E)  {
 void THtml::funSetState(const TStrObjList &Params, TMacroError &E)  {
   IEObject *Obj = FindObject(Params[0]);
   if( Obj == NULL )  {
-    E.ProcessingError(__OlxSrcInfo, "wrong html object name: ")  << Params[0];
-    return;
+    TSStrStrList<olxstr,false>* props = ObjectsState.FindProperties(Params[0]);
+    if( props == NULL )  {
+      E.ProcessingError(__OlxSrcInfo,  "wrong html object name: ") << Params[0];
+      return;
+    }
+    if( props->IndexOfComparable("checked") == -1 )  {
+      E.ProcessingError(__OlxSrcInfo,  "object definition does have state for: ") << Params[0];
+      return;
+    }
+    props->Item("checked") = Params[1];
   }
-  SetObjectState(Obj, Params[1].ToBool());
+  else
+    SetObjectState(Obj, Params[1].ToBool());
 }
 //..............................................................................
 void THtml::funSetItems(const TStrObjList &Params, TMacroError &E)  {
@@ -2284,12 +2366,24 @@ void THtml::TObjectsState::RestoreState()  {
     else if( EsdlInstanceOf(*obj, TButton) )    {  
       _xl_Controls::TButton* bt = (_xl_Controls::TButton*)obj;
       bt->SetCaption( props["val"] );
+      bt->OnDown->SetEnabled(false);
+      bt->OnUp->SetEnabled(false);
+      bt->OnClick->SetEnabled(false);
       bt->SetDown( props["down"].ToBool() );
+      bt->OnDown->SetEnabled(true);
+      bt->OnUp->SetEnabled(true);
+      bt->OnClick->SetEnabled(true);
     }
     else if( EsdlInstanceOf(*obj, TBmpButton) )    {  
       _xl_Controls::TBmpButton* bt = (_xl_Controls::TBmpButton*)obj;  
       bt->SetSource( props["val"] );
+      bt->OnDown->SetEnabled(false);
+      bt->OnUp->SetEnabled(false);
+      bt->OnClick->SetEnabled(false);
       bt->SetDown( props["down"].ToBool() );
+      bt->OnDown->SetEnabled(true);
+      bt->OnUp->SetEnabled(true);
+      bt->OnClick->SetEnabled(true);
     }
     else if( EsdlInstanceOf(*obj, TComboBox) )  {  
       _xl_Controls::TComboBox* cb = (_xl_Controls::TComboBox*)obj;  
@@ -2313,9 +2407,33 @@ void THtml::TObjectsState::RestoreState()  {
     else //?
       ;
     // restoring the control colours, it is generic 
-    if( win != NULL )  {
-      win->SetForegroundColour( wxColor( props["fg"].u_str() ) );
-      win->SetBackgroundColour( wxColor( props["bg"].u_str() ) );
+    if( win != NULL && false )  {
+      olxstr bg(props["bg"]), fg(props["fg"]);
+      TGlXApp::GetMainForm()->ProcessMacroFunc( bg );
+      TGlXApp::GetMainForm()->ProcessMacroFunc( fg );
+      if( EsdlInstanceOf(*win, TComboBox) )  {
+        TComboBox* Box = (TComboBox*)win;
+        if( !fg.IsEmpty() )  {
+          wxColor fgCl = wxColor( fg.u_str() );
+          Box->SetForegroundColour( fgCl );
+          if( Box->GetPopupControl() != NULL )
+            Box->GetPopupControl()->GetControl()->SetForegroundColour( fgCl );
+          if( Box->GetTextCtrl() != NULL )
+            Box->GetTextCtrl()->SetForegroundColour( fgCl );
+        }
+        if( !bg.IsEmpty() )  {
+          wxColor bgCl = wxColor( bg.u_str() );
+          Box->SetBackgroundColour( bgCl );
+          if( Box->GetPopupControl() != NULL )
+            Box->GetPopupControl()->GetControl()->SetBackgroundColour( bgCl );
+          if( Box->GetTextCtrl() != NULL )
+            Box->GetTextCtrl()->SetBackgroundColour( bgCl );
+        }
+      }  
+      else  {
+        if( !fg.IsEmpty() )  win->SetForegroundColour( wxColor( fg.u_str() ) );
+        if( !bg.IsEmpty() )  win->SetBackgroundColour( wxColor( bg.u_str() ) );
+      }
     }
   }
 }
@@ -2327,7 +2445,7 @@ bool THtml::TObjectsState::LoadFromFile(const olxstr& fn)  {
   return true;
 }
 //..............................................................................
-TSStrStrList<olxstr,false>* THtml::TObjectsState::DefineControl(const olxstr& name, const type_info& type) {
+TSStrStrList<olxstr,false>* THtml::TObjectsState::DefineControl(const olxstr& name, const std::type_info& type) {
   int ind = Objects.IndexOf( name );
   if( ind != -1 )
     throw TFunctionFailedException(__OlxSourceInfo, "object already exists");

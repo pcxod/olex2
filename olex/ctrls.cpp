@@ -66,7 +66,7 @@ END_EVENT_TABLE()
 //..............................................................................
 TComboBox::TComboBox(wxWindow *Parent, bool ReadOnly, const wxSize& sz) :
   wxOwnerDrawnComboBox(Parent, -1, wxString(), wxDefaultPosition, sz, 0, NULL,
-  wxCB_DROPDOWN|(ReadOnly?wxCB_READONLY:0)), WI(this)
+  wxCB_DROPDOWN|(ReadOnly?wxCB_READONLY:0)|wxTE_PROCESS_ENTER), WI(this)
 {
   if( Parent->IsFrozen() )  Hide();
 
@@ -210,9 +210,10 @@ void TComboBox::OnDrawBg(wxDC& dc, const wxRect& rect, int item, int flags) cons
 // TMainFrame implementation
 //----------------------------------------------------------------------------//
 TMainFrame::TMainFrame(const wxString& title, const wxPoint& pos, const wxSize& size, const wxString &ClassName)
-: wxFrame((wxFrame *)NULL, -1, title, pos, size,
-  wxCAPTION | wxRESIZE_BORDER | wxSYSTEM_MENU | wxMAXIMIZE | wxMINIMIZE_BOX | wxMAXIMIZE_BOX | wxCLOSE_BOX,
-  ClassName), WI(this)
+: wxFrame((wxFrame*)NULL, wxID_ANY, title, pos, size, wxDEFAULT_FRAME_STYLE),
+//: wxFrame((wxFrame *)NULL, 1, title, pos, size,
+//  wxCAPTION | wxRESIZE_BORDER | wxSYSTEM_MENU | wxMAXIMIZE | wxMINIMIZE_BOX | wxMAXIMIZE_BOX | wxCLOSE_BOX, ClassName),
+  WI(this)
 {
 }
 TMainFrame::~TMainFrame()  {
@@ -699,6 +700,9 @@ void TListBox::AddItems(const TStrList &items)  {
 BEGIN_EVENT_TABLE(TSpinCtrl, wxSpinCtrl)
   EVT_TEXT(-1, TSpinCtrl::TextChangeEvent)
   EVT_SPIN(-1, TSpinCtrl::SpinChangeEvent)
+  EVT_TEXT_ENTER(-1, TSpinCtrl::EnterPressedEvent)
+  EVT_KILL_FOCUS(TSpinCtrl::LeaveEvent)
+  EVT_SET_FOCUS(TSpinCtrl::EnterEvent)
 END_EVENT_TABLE()
 //..............................................................................
 TSpinCtrl::TSpinCtrl(wxWindow *Parent): wxSpinCtrl(Parent), WI(this)  {
@@ -712,14 +716,37 @@ TSpinCtrl::~TSpinCtrl() {
 }
 //..............................................................................
 void TSpinCtrl::SpinChangeEvent(wxSpinEvent& event)  {
-  return;  // nobody is interested in it?
+  int val = GetValue();
+  if( val == Value ) return;
+  Value = val;
   StartEvtProcessing()
     OnChange->Execute(this, &TEGC::New<olxstr>(GetOnChangeStr()));
   EndEvtProcessing()
 }
 //..............................................................................
 void TSpinCtrl::TextChangeEvent(wxCommandEvent& event)  {
+  int val = GetValue();
+  if( val == Value ) return;
+  Value = val;
   if( !Data.IsEmpty() )  TOlxVars::SetVar(Data, GetValue());
+  StartEvtProcessing()
+   OnChange->Execute(this, &TEGC::New<olxstr>(GetOnChangeStr()));
+  EndEvtProcessing()
+}
+void TSpinCtrl::LeaveEvent(wxFocusEvent& event)  {
+  int val = GetValue();
+  if( val == Value ) return;
+  Value = val;
+  StartEvtProcessing()
+   OnChange->Execute(this, &TEGC::New<olxstr>(GetOnChangeStr()));
+  EndEvtProcessing()
+}
+void TSpinCtrl::EnterEvent(wxFocusEvent& event)  {
+}
+void TSpinCtrl::EnterPressedEvent(wxCommandEvent& event)  {
+  int val = GetValue();
+  if( val == Value ) return;
+  Value = val;
   StartEvtProcessing()
    OnChange->Execute(this, &TEGC::New<olxstr>(GetOnChangeStr()));
   EndEvtProcessing()

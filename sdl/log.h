@@ -70,23 +70,27 @@ public:
   }
 //..............................................................................
   void Info(const olxstr &msg)  {
-    if( !OnInfo->Execute(this, &TEGC::New<olxstr>(msg)) )
+    if( !OnInfo->Enter(this, &TEGC::New<olxstr>(msg)) )
       Add(msg);
+    OnInfo->Exit(this, NULL);
   }
 //..............................................................................
   void Warning(const olxstr &msg)  {
-    if( !OnWarning->Execute(this, &TEGC::New<olxstr>(msg)) )
+    if( !OnWarning->Enter(this, &TEGC::New<olxstr>(msg)) )
       Add(msg);
+    OnWarning->Exit(this, NULL);
   }
 //..............................................................................
   void Error(const olxstr &msg)  {
-    if( !OnError->Execute(this, &TEGC::New<olxstr>(msg)) )
+    if( !OnError->Enter(this, &TEGC::New<olxstr>(msg)) )
       Add(msg);
+    OnError->Exit(this, NULL);
   }
 //..............................................................................
   void Exception(const olxstr &msg)  {
-    if( !OnException->Execute(this, &TEGC::New<olxstr>(msg)) )
+    if( !OnException->Enter(this, &TEGC::New<olxstr>(msg)) )
       Add(msg);
+    OnException->Exit(this, NULL);
   }
 //..............................................................................
   virtual void Flush()  {

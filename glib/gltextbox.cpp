@@ -76,7 +76,7 @@ void TGlTextBox::Create(const olxstr& cName)  {
   GlM = const_cast<TGlMaterial*>(GS->Material("Text"));
   if( GlM->Mark() )  {
     if( FontIndex == -1 )  FontIndex = 0;
-    *GlM = Font()->Material();
+    *GlM = Font()->GetMaterial();
   }
   GlP = GPC->NewPrimitive("Text");
   GlP->SetProperties(GlM);

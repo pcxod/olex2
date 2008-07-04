@@ -4,6 +4,8 @@
 #include "glbase.h"
 #include "gdrawobject.h"
 #include "gloption.h"
+#include "glprimitive.h"
+#include "gltexture.h"
 
 BeginGlNamespace()
 
@@ -11,6 +13,7 @@ class TGlBackground: public AGDrawObject  {
   TGlOption  FColors[4];
   bool FCeiling;
   TGlPrimitive *FPrimitive;
+  TGlTexture* Texture;
 public:
   TGlBackground(const olxstr& collectionName, TGlRender *Render, bool Ceiling);
   virtual ~TGlBackground(){  return; };
@@ -19,6 +22,8 @@ public:
   bool GetDimensions(TVPointD &Max, TVPointD &Min){  return false;};
   bool Ceiling(){  return FCeiling;  }
   TGlPrimitive *Primitive(){  return FPrimitive;  }
+  void SetTexture(TGlTexture* glt);
+  TGlTexture* GetTexture() const {  return Texture;  }
 
   void LT(const TGlOption& v);
   void RT(const TGlOption& v);

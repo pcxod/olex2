@@ -119,7 +119,7 @@ protected:
   TDataFile FHelpFile, FMacroFile, FPluginFile;
   TDataItem *FHelpItem, *FMacroItem, *FPluginItem;
 
-  olxstr DictionaryFile;
+  olxstr DictionaryFile, GradientPicture;
   TLangDict Dictionary;
 
   TGlConsole *FGlConsole;
@@ -231,7 +231,6 @@ private:
   DefMacro(Uniq)
   DefMacro(Group)
   DefMacro(Fmol)
-  DefMacro(Fuse)
   DefMacro(Clear)
   DefMacro(Cell)
   DefMacro(Rota)
@@ -284,12 +283,6 @@ private:
   DefMacro(Scene)
   DefMacro(SyncBC)
   DefMacro(LstFS)  // prints out the content of the virtual file system
-  // is used to resolve external to cif values, like olex functions
-  static olxstr CifResolve(const olxstr& func);
-  DefMacro(Cif2Doc)
-  DefMacro(Cif2Tab)
-  DefMacro(CifMerge)
-  DefMacro(CifExtract)
 
   DefMacro(IF)
   DefMacro(Basis)
@@ -311,7 +304,6 @@ private:
 
   DefMacro(CalcChn)
   DefMacro(CalcMass)
-  DefMacro(Envi)
 
   DefMacro(Label)
 
@@ -319,7 +311,6 @@ private:
   DefMacro(Refresh)
 
   DefMacro(Move)
-  DefMacro(Compaq)
 
   DefMacro(ShowH)
 
@@ -445,11 +436,7 @@ private:
   DefMacro(ViewLattice)
   DefMacro(AddObject)
   DefMacro(DelObject)
-#ifdef __OD_BUILD__
-  DefMacro(ValidateAuto)
-  DefMacro(Clean)
-  DefMacro(AtomInfo)
-#endif
+
   DefMacro(OnRefine)
   DefMacro(TestMT)
   DefMacro(SetFont)
@@ -462,20 +449,16 @@ private:
   DefMacro(SGE)
   DefMacro(Flush)
   DefMacro(ShowSymm)
-  DefMacro(Texm)
+  DefMacro(Textm)
+  DefMacro(TestStat)
+  DefMacro(ExportFont)
+  DefMacro(ImportFont)
 ////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////FUNCTIONS/////////////////////////////////////////
-  DefFunc(FileName)
-  DefFunc(FileExt)
-  DefFunc(FilePath)
-  DefFunc(FileFull)
-  DefFunc(FileDrive)
   DefFunc(FileLast)
   DefFunc(FileSave)
   DefFunc(FileOpen)
   DefFunc(ChooseDir)
-  DefFunc(IsFileLoaded)
-  DefFunc(IsFileType)
 
   DefFunc(Cell)
   DefFunc(Title)
@@ -485,8 +468,6 @@ private:
   DefFunc(Crs)
   DefFunc(LSM)
   DefFunc(SSM)
-  DefFunc(HKLSrc)
-  DefFunc(BaseDir)
   DefFunc(DataDir)
   DefFunc(Strcat)
   DefFunc(Strcmp)
@@ -538,16 +519,15 @@ private:
   DefFunc(ChooseElement)
   DefFunc(SfacList)
   DefFunc(StrDir)
-#ifdef __OD_BUILD__
-  DefFunc(TestAuto)
-#endif  
   DefFunc(ChooseFont)
   DefFunc(GetFont)
   DefFunc(ChooseMaterial)
   DefFunc(GetMaterial)
   DefFunc(GetMouseX)
   DefFunc(GetMouseY)
-  DefFunc(IsWindows)
+  DefFunc(IsOS)
+  DefFunc(ExtraZoom)
+  DefFunc(HasGUI)
 
   TUndoStack *FUndoStack;
 //..............................................................................
@@ -574,9 +554,6 @@ public:
     DefSceneP,        // default scene parameters file
     DataDir,
     TutorialDir,
-    CifTemplatesDir,
-    CifDictionaryFile,
-    CifTablesFile,
     PluginFile;
   TGlMaterial HelpFontColorCmd, HelpFontColorTxt,
               ExecFontColor, InfoFontColor,

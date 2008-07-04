@@ -24,6 +24,7 @@ TGlBackground::TGlBackground(const olxstr& collectionName, TGlRender *Render, bo
   AGDrawObject::Parent(Render);
   FCeiling = ceiling;
   Groupable(false);
+  Texture = NULL;
 }
 //..............................................................................
 void TGlBackground::Create(const olxstr& cName)
@@ -54,8 +55,20 @@ void TGlBackground::Create(const olxstr& cName)
   FPrimitive = GlP = GPC->NewPrimitive("Plane");
   GlP->SetProperties(&GlM);
   GlP->Type(sgloQuads);
-  GlP->Data().Resize(4, 4);
+  GlP->Data().Resize(6, 4);
+  // texture coordinates
+  GlP->Data()[4][0] = 1;  GlP->Data()[5][0] = 1;
+  GlP->Data()[4][1] = 0;  GlP->Data()[5][1] = 1;
+  GlP->Data()[4][2] = 0;  GlP->Data()[5][2] = 0;
+  GlP->Data()[4][3] = 1;  GlP->Data()[5][3] = 0;
+  if( Texture != NULL )
+    GlP->Texture( Texture->GetId() );
   Orient(GlP);
+}
+//..............................................................................
+void TGlBackground::SetTexture(TGlTexture* tx)  {  
+  Texture = tx;
+  FPrimitive->Texture( (tx != NULL) ? tx->GetId() : -1 );  
 }
 //..............................................................................
 bool TGlBackground::Orient(TGlPrimitive *P)  {

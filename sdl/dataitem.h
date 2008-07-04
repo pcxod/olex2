@@ -11,6 +11,8 @@
 
 BeginEsdlNamespace()
 
+class TEStrBuffer;
+
 class TDataItem: public AReferencible  {
   TStrPObjList<olxstr,TDataItem*> Items;
   TStrStrList  Fields;
@@ -31,6 +33,7 @@ protected:
   void AddItem(TDataItem& Item);
   olxstr* FieldPtr(const olxstr &Name);
   inline void SetParent(TDataItem* p)  {  Parent = p;  }
+  TEStrBuffer& writeFullName(TEStrBuffer& bf);
 public:
   TDataItem(TDataItem *Parent, const olxstr& Name);
   virtual ~TDataItem();
@@ -39,7 +42,7 @@ public:
   void ResolveFields(TStrList* Log); // resolves referenced fields
   int LoadFromString( int start, olxstr &Data, TStrList* Log);
   void SaveToString(olxstr &Data);
-  void SaveToStrBuffer(class TEStrBuffer &Data);
+  void SaveToStrBuffer(TEStrBuffer &Data);
 
   void AddItem(const olxstr &Name, const olxstr &Data);
   void AddContent(TDataItem& DI);
@@ -56,6 +59,7 @@ public:
   TDataItem* FindItem(const olxstr &Name)   const {  return Items.FindObject(Name);  }
 
   TDataItem& Item(int index)                   {  return *Items.Object(index); }
+  const TDataItem& GetItem(int index)    const {  return *Items.Object(index); }
   void FindSimilarItems(const olxstr& StartsFrom, TPtrList<TDataItem>& List);
   inline int ItemCount() const                  {  return Items.Count(); }
   bool ItemExists(const olxstr &Name);

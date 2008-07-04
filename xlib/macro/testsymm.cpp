@@ -77,7 +77,7 @@ void XLibMacros::macTestSymm(TStrObjList &Cmds, const TParamList &Options, TMacr
   TAsymmUnit& au = XApp.XFile().GetAsymmUnit();
   TSymmTest st(uc);
   XApp.GetLog() << ( olxstr("\nCenter of gravity: ") << st.GetGravityCenter().ToString() << '\n');
-  double tol = Options.FindValue('e', "0.01").ToDouble();
+  double tol = Options.FindValue('e', "0.04").ToDouble();
   double confth = 75; // %
   TPtrList<TSpaceGroup> sglist;
   TTypeList<TBravaisLatticeRef> bravtypes;
@@ -163,7 +163,7 @@ void XLibMacros::macTestSymm(TStrObjList &Cmds, const TParamList &Options, TMacr
           if( i != 0 && !NormalisevectorView(trans) )  match = 0;  //delete
           if( i != 0 )
             translations.AddCCopy( trans );
-          XApp.GetLog() << ( olxstr(st.GetResults()[j].Count())  << '\t' << trans.ToString() );
+          XApp.GetLog() << ( olxstr(st.GetResults()[j].Count())  << '\t' << trans.ToString() ) << '\n';
         }
       }
 

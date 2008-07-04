@@ -58,6 +58,7 @@ void TActionQueue::Add(AEventsDispatcher *D, int MsgId, short MsgSubId)  {
 }
 //..............................................................................
 bool TActionQueue::Enter(const IEObject *Sender, const IEObject *Data)  {
+  if( (!HandlerCount() && !DispatcherCount()) || !IsEnabled() ) return false;
   for( int i=0; i < HandlerCount(); i++ )  {
     if( Handlers[i]->IsEnabled() )
       if( Handlers[i]->Enter(Sender, Data) && FExecuteOnce )
@@ -74,6 +75,7 @@ bool TActionQueue::Enter(const IEObject *Sender, const IEObject *Data)  {
 }
 //..............................................................................
 void TActionQueue::UpdateData(const IEObject *Sender, const IEObject *Data)  {
+  if( (!HandlerCount() && !DispatcherCount()) || !IsEnabled() ) return;
   for( int i=0; i < Handlers.Count(); i++ )  {
     if( Handlers[i]->IsEnabled() )
       Handlers[i]->UpdateData(Sender, Data);
@@ -87,6 +89,7 @@ void TActionQueue::UpdateData(const IEObject *Sender, const IEObject *Data)  {
 }
 //..............................................................................
 bool TActionQueue::Exit(const IEObject *Sender, const IEObject *Data)  {
+  if( (!HandlerCount() && !DispatcherCount()) || !IsEnabled() ) return false;
   for( int i=0; i < Handlers.Count(); i++ )  {
     if( Handlers[i]->IsEnabled() )
       if( Handlers[i]->Exit(Sender, Data) && FExecuteOnce )

@@ -6,6 +6,7 @@
 #include "library.h"
 #include "reflection.h"
 #include "ecomplex.h"
+#include "undo.h"
 
 // program state and some other special checks for functions
 const unsigned int   psFileLoaded        = 0x00010000,
@@ -13,12 +14,27 @@ const unsigned int   psFileLoaded        = 0x00010000,
                      psCheckFileTypeCif  = 0x00040000,
                      psCheckFileTypeP4P  = 0x00080000,
                      psCheckFileTypeCRS  = 0x00100000;
+
+class TNameUndo : public TUndoData  {
+  TTypeList< AnAssociation2<TSAtom*, olxstr> >  Data;
+public:
+  TNameUndo(IUndoAction* action) : TUndoData(action)  {  }
+
+  void AddAtom( TSAtom& A, const olxstr& newName )  {
+    Data.AddNew( &A, newName );
+  }
+  inline int AtomCount()                   const {  return Data.Count();  }
+  inline TSAtom& GetAtom(int i)            const {  return  *Data[i].GetA();  }
+  inline const olxstr& GetLabel(int i)   const {  return  Data[i].GetB();  }
+};
+
                      
 class TXApp : public TBasicApp, public ALibraryContainer  {
 protected:
   TXFile *FXFile;
   TAtomsInfo* FAtomsInfo;
   TLibrary Library;
+  olxstr CifTemplatesDir;  // the folder with CIF templates/data
 protected:
   virtual bool CheckProgramState(unsigned int specialCheck);
 public:
@@ -26,6 +42,8 @@ public:
   virtual ~TXApp();
   inline TAtomsInfo* AtomsInfo() {  return FAtomsInfo; }
   inline TXFile& XFile()         {  return *FXFile; }
+  
+  DefPropC(olxstr, CifTemplatesDir)
 
   virtual class TLibrary&  GetLibrary()  {  return Library;  }
 
@@ -49,6 +67,14 @@ public:
   }
   // calculates structure factors for current structure, F.Count must be greater or equal to the ref.Count
   void CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F);
+
+  /* function undoes renaming atoms */
+  void undoName(TUndoData *data);
+  void NameHydrogens(TSAtom& a, TUndoData* ud, bool CheckLabel);
+  // fixes hydrogen atom labels
+  TUndoData* FixHL();
+  void FindRings(const olxstr& Condition, TTypeList<TSAtomPList>& rings);
+  bool FindSAtoms(const olxstr& condition, TSAtomPList& res);
 };
 
 

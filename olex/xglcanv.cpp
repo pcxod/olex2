@@ -38,7 +38,7 @@ END_EVENT_TABLE()
 //..............................................................................
 TGlCanvas::TGlCanvas(TMainForm *parent, wxWindowID id,
     const wxPoint& pos, const wxSize& size, long style, const wxString& name):
-#ifdef __WXX11__
+#if defined(__WXX11__) || defined(__MAC__)
   wxGLCanvas(parent, (wxGLCanvas*)NULL, id, pos, size, style|wxFULL_REPAINT_ON_RESIZE, name )  {
   Context = NULL;
 #else
@@ -59,16 +59,18 @@ TGlCanvas::~TGlCanvas(){
 }
 //..............................................................................
 void TGlCanvas::Render()  {
-#ifndef __WXMOTIF__
-#ifdef __WXX11__  // context is null
+#if !defined(__WXMOTIF__) && !defined(__WIN32__) && !defined(__WXGTK__)
+  if( !GetContext() ) return;
+#endif
+#if defined(__WXX11__) || defined(__MAC__)  // context is null
   SetCurrent();
 #else
   Context->SetCurrent(*this); 
 #endif
-#endif
 
   /* init OpenGL once, but after SetCurrent */
-  if( FXApp != NULL )  FXApp->Draw();
+  if( FXApp == NULL )  return;
+  FXApp->Draw();
   glFlush();
   SwapBuffers();
 }

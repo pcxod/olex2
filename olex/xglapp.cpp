@@ -104,7 +104,6 @@ public:
 // TGlApp function bodies
 //----------------------------------------------------------------------------//
 //..............................................................................
-IMPLEMENT_APP(TGlXApp)
 BEGIN_EVENT_TABLE(TGlXApp, wxApp)
     EVT_IDLE(TGlXApp::OnIdle)
 END_EVENT_TABLE()
@@ -135,7 +134,7 @@ bool TGlXApp::OnInit()  {
   glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);
   */
 
-  MainForm->GlCanvas(new TGlCanvas(MainForm, -1, wTop, wSize, 0, wxT("GL_CANVAS") ) );
+  MainForm->GlCanvas(new TGlCanvas(MainForm, wxID_ANY, wTop, wxDefaultSize, 0, wxT("GL_CANVAS") ) );
   // cratea an instance of the XApplication
   olxstr BaseDir = argv[0], Tmp;
   if( !TEFile::IsAbsolutePath(BaseDir) )
@@ -143,9 +142,9 @@ bool TGlXApp::OnInit()  {
   try  {
    //asm{  int 3 }
     #if defined __APPLE__ && defined __MACH__
-      BaseDir = TEFile::ExtractFilePath(BaseDir);
-      BaseDir = TEFile::ParentDir(BaseDir);
-      BaseDir += "Resources/";
+//      BaseDir = TEFile::ExtractFilePath(BaseDir);
+//      BaseDir = TEFile::ParentDir(BaseDir);
+//      BaseDir << "Resources/";
     #endif
     XApp = new TGXApp( BaseDir );
     //XApp = new TGXApp( TEFile::UNCFileName(BaseDir) );
@@ -168,7 +167,6 @@ bool TGlXApp::OnInit()  {
       i--;
     }
   }
-//  wxMessageBox(argv[0],  "About", wxOK | wxICON_INFORMATION, NULL);
   TProgress *P = new TProgress;
   XApp->OnProgress->Add(P);
 
@@ -188,10 +186,8 @@ bool TGlXApp::OnInit()  {
   XApp->RegisterXFileFormat(new TPdb(XApp->AtomsInfo()), "pdb");
   XApp->RegisterXFileFormat(new TXDMas(XApp->AtomsInfo()), "mas");
 
-
   // set backgrownd color of the GlRender
   XApp->ClearColor(0x3f3f3f);
-  SetTopWindow(MainForm);
   MainForm->SetToolTip(wxT("\n")); // force multiline ttoltips with (&#10;)
   try  {
     MainForm->XApp(XApp);  // his sets XApp for the canvas as well
@@ -202,9 +198,10 @@ bool TGlXApp::OnInit()  {
     ::wxMessageBox( uiStr(out.Text('\n')) += wxT('\n'),
       uiStrT("Exception: ") += uiStrT(EsdlObjectNameT(exc)), wxOK|wxICON_ERROR);
   }
-  MainForm->Show(TRUE);
+  SetTopWindow(MainForm);
+  MainForm->Show(true);
   MainForm->Maximize(true);
-  return TRUE;
+  return true;
 }
 //..............................................................................
 int TGlXApp::OnExit()  {
@@ -227,3 +224,4 @@ void TGlXApp::OnIdle(wxIdleEvent& event)  {
 }
 //..............................................................................
 
+IMPLEMENT_APP(TGlXApp)

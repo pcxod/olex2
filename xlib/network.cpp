@@ -47,7 +47,7 @@ void TNetwork::SortNodes()  {
 }
 //..............................................................................
 void TNetwork::TDisassembleTaskRemoveSymmEq::Run(long index)  {
-  //TSAtom* A1 = Atoms[index];
+  if( Atoms[index]->CAtom().IsSiteShared() )  return;
   if( (Atoms[index]->GetTag() & 0x0002) != 0 )  return;
   for( int i=index+1; i < Atoms.Count(); i++ )  {
     if( fabs(Distances[0][index] - Distances[0][i]) > 0.01 )  return;

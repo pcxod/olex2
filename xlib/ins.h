@@ -30,8 +30,8 @@ private:
   TVectorD FVars; // contains variables, used for calculation right UNIT
   TVectorD FWght;    // could be up to six parameters
   TVectorD FWght1;   // could be up to six parameters
-  short    Iterations,    // number of refinement cycles
-           Plan;    // number of Q-peaks from fourier
+  TVectorI FLS;      // up to four params
+  TVectorD FPLAN;    // up to three params
   olxstr HKLF,
            RefinementMethod,  // L.S. or CGLS
            SolutionMethod;
@@ -54,9 +54,14 @@ public:
 
   DefPropC(olxstr, RefinementMethod)
   DefPropC(olxstr, SolutionMethod)
-  DefPropP(short, Iterations)
-  DefPropP(short, Plan)
   DefPropB(LoadQPeaks)
+  
+  int GetIterations() const  {  return FLS[0];  }
+  int GetPlan()       const  {  return Round(FPLAN[0]);  }
+  const TVectorI& GetLSV() {  return FLS;  }
+  void SetIterations( int v) {  FLS[0] = v;  }
+  void SetPlan(int v)        {  FPLAN[0] = v;  }
+  const TVectorD& GetPlanV() {  return FPLAN;  }
 
   inline TVectorD& Wght()   {  return FWght;  }
   inline TVectorD& Wght1()  {  return FWght1;  }

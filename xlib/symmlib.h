@@ -74,6 +74,9 @@ public:
   TSpaceGroup&     GetPointGroup()       const {  return *PointGroup;  }
 
   bool operator == (const TAsymmUnit& AU) const;
+  bool operator == (const TMatrixDList& matrices) const;
+  // compares m.R and summs (delta(m.t))^2 into st;
+  bool Compare(const TMatrixDList& matrices, double& st) const;
 
   bool EqualsExpandedSG(const TAsymmUnit& AU) const;
 
@@ -81,6 +84,10 @@ public:
   bool IsSubElement( TSpaceGroup* symme )  const;
 
   void AddMatrix(const TMatrixD& m);
+  void AddMatrix(double xx, double xy, double xz, 
+                 double yx, double yy, double yz, 
+                 double zx, double zy, double zz,
+                 double tx, double ty, double tz);
   inline int MatrixCount()               const {  return Matrices.Count();  };
   inline TMatrixD& GetMatrix(int i)      const {  return Matrices[i];  }
   inline int GetNumber()                 const {  return Number;  }
@@ -162,10 +169,12 @@ class TSymmLib: public IEObject  {
   void InitRelations();
   static TSymmLib* Instance;
 public:
-  TSymmLib(const olxstr& FN);
+  // 21.06.2008, the file name is not used
+  TSymmLib(const olxstr& FN=EmptyString);
   virtual ~TSymmLib();
 
   TSpaceGroup* FindSG(const TAsymmUnit& AU) const;
+  TSpaceGroup* FindSG(const TMatrixDList& expanded_matrices) const;
   TSpaceGroup* FindExpandedSG(const TAsymmUnit& AU) const;
   int FindBravaisLattices(TAsymmUnit& AU, TTypeList<TBravaisLatticeRef>& res) const;
   // finds all space groups of specified point group

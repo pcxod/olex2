@@ -7,18 +7,19 @@ if [ $1 = "olex" ]
 then
   src=../../../..
   cd olex
-  gcc $src/$1/$2.cpp `wx-config --cxxflags  --unicode --toolkit=gtk2` `python-config --includes` -I$src/alglib -I$src/sdl -I$src/xlib -I$src/glib -I$src/gxlib -I$src/repository -I$src/olex -S -D__WXWIDGETS__ -D_UNICODE -D__OD_BUILD__ -fexceptions -O3 -combine
+  gcc $src/$1/$2.cpp `wx-config --cxxflags  --unicode --toolkit=gtk2` `python-config --includes` -I$src/alglib -I$src/sdl -I$src/xlib -I$src/glib -I$src/gxlib -I$src/repository -I$src/olex -S -D__WXWIDGETS__ -D_UNICODE -fexceptions -combine -O3
   cd ../..
   ./link olex
 elif [ $1 = "unirun" ]
 then
   src=../../../..
   cd unirun
-  gcc $src/$1/$2.cpp `wx-config --cxxflags  --unicode --toolkit=gtk2` `python-config --includes` -I$src/alglib -I$src/sdl -I$src/xlib -I$src/glib -I$src/gxlib -I$src/repository -I$src/olex -S -D__WXWIDGETS__ -D_UNICODE -D__OD_BUILD__ -fexceptions -O3 -combine
+  gcc $src/$1/$2.cpp `wx-config --cxxflags  --unicode --toolkit=gtk2` `python-config --includes` -I$src/alglib -I$src/sdl -I$src/xlib -I$src/glib -I$src/gxlib -I$src/repository -I$src/olex -S -D__WXWIDGETS__ -D_UNICODE -fexceptions -combine -O3
   cd ../..
   ./link unirun
 else
-  gcc $src/$1/$2.cpp `wx-config --cxxflags  --unicode --toolkit=gtk2` `python-config --includes` -I$src/alglib -I$src/sdl -I$src/xlib -I$src/glib -I$src/gxlib -I$src/repository -I$src/olex -S -D__WXWIDGETS__ -D_UNICODE -D__OD_BUILD__ -fexceptions -O3 -combine
+  src=../../..
+  gcc $src/$1/$2.cpp `wx-config --cxxflags  --unicode --toolkit=gtk2` `python-config --includes` -I$src/alglib -I$src/sdl -I$src/xlib -I$src/glib -I$src/gxlib -I$src/repository -I$src/olex -S -D__WXWIDGETS__ -D_UNICODE -fexceptions -combine -O3
   cd ..
   ./link
 fi

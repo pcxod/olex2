@@ -283,6 +283,78 @@
 				Name="VCPostBuildEventTool"
 			/>
 		</Configuration>
+		<Configuration
+			Name="Unicode-release-static|Win32"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
+			ConfigurationType="4"
+			CharacterSet="1"
+			ManagedExtensions="0"
+			WholeProgramOptimization="1"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="3"
+				InlineFunctionExpansion="2"
+				EnableIntrinsicFunctions="true"
+				FavorSizeOrSpeed="1"
+				AdditionalIncludeDirectories="..\..\..\alglib;..\..\..\sdl;..\..\..\repository;..\..\..\xlib"
+				PreprocessorDefinitions="_UNICODE;"
+				StringPooling="true"
+				MinimalRebuild="false"
+				BasicRuntimeChecks="0"
+				RuntimeLibrary="0"
+				BufferSecurityCheck="false"
+				FloatingPointModel="2"
+				UsePrecompiledHeader="0"
+				BrowseInformation="0"
+				WarningLevel="3"
+				DebugInformationFormat="0"
+				CallingConvention="0"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLibrarianTool"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+			/>
+		</Configuration>
 	</Configurations>
 	<References>
 		<AssemblyReference
@@ -369,6 +441,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\xlib\macro\imp_auto.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\xlib\ins.cpp"
 				>
 			</File>
@@ -414,6 +490,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\xlib\scat_it.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\xlib\seval.cpp"
 				>
 			</File>
 			<File
@@ -603,6 +683,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\xlib\seval.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\xlib\sgtest.h"
 				>
 			</File>
@@ -616,6 +700,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\xlib\symmparser.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\xlib\symmtest.h"
 				>
 			</File>
 			<File

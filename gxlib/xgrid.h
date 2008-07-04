@@ -99,11 +99,14 @@ public:
   void LibDrawStyle3D(const TStrObjList& Params, TMacroError& E);
   void LibScale(const TStrObjList& Params, TMacroError& E);
   void LibSize(const TStrObjList& Params, TMacroError& E);
+  void LibGetMin(const TStrObjList& Params, TMacroError& E);
+  void LibGetMax(const TStrObjList& Params, TMacroError& E);
   void LibPolygonMode(const TStrObjList& Params, TMacroError& E);
   void LibIsvalid(const TStrObjList& Params, TMacroError& E);
   class TLibrary*  ExportLibrary(const olxstr& name=EmptyString);
-
+#ifndef _NO_PYTHON
   static void PyInit();
+#endif  
 };
 
 EndGxlNamespace()

@@ -39,7 +39,7 @@ public:
   // returns the number of symmetrical equivalents present within the atoms
   // in this case Msg will be initialised with a message, set remove to false
   //to leave equivalents, otherwise they will be removed from the content
-  int FindSymmEq(TEStrBuffer &Msg, bool Initialize, bool remove, bool markDeleted) const;
+  int FindSymmEq(TEStrBuffer &Msg, double tol, bool Initialize, bool remove, bool markDeleted) const;
 
   // the funciton searches a matrix which moves "atom" to "to" so that the
   // distance between them is shortest and return the matrix, which if not NULL
@@ -56,6 +56,10 @@ public:
   TMatrixDList* GetBinding(const TCAtom& toA, const TCAtom& fromA,
     const TVPointD& to, const TVPointD& from, bool IncludeI, bool IncludeHBonds) const;
 
+  double FindClosestDistance(const class TCAtom& to, const TCAtom& atom) const;
+  // finds all atoms and their ccordinates inside the sphere of radius R
+  void FindInRange(const TCAtom& atom, double R, 
+    TArrayList< AnAssociation2<TCAtom const*, TVPointD> >& res) const;
   // finds all atoms (+symm attached) and Q-peaks, if specfied
   void GetAtomEnviList(TSAtom& atom, TAtomEnvi& envi, bool IncludeQ = false) const;
   // finds only q-peaks in the environment of specified atom
@@ -87,14 +91,15 @@ protected:
     const TMatrixDList& Matrices;
     TStrList& Report;
     bool Initialise;
+    double tolerance;
     TAsymmUnit* AU;
     TLattice* Latt;
   public:
     TSearchSymmEqTask(TPtrList<TCAtom>& atoms, const TMatrixDList& matrices, TStrList& report,
-                      bool initialise);
+                      double tol, bool initialise);
     void Run(long ind);
     TSearchSymmEqTask* Replicate() const  {
-      return new TSearchSymmEqTask(Atoms, Matrices, Report, Initialise);
+      return new TSearchSymmEqTask(Atoms, Matrices, Report, tolerance, Initialise);
     }
   };
 };

@@ -96,8 +96,6 @@ public:  // residue class implementation
       }
   };
 protected:
-  TCAtomPList& ExyzGroup(size_t i) const {  return ExyzGroups->Item(i);  }
-  int ExyzGroupCount()             const {  return ExyzGroups == NULL ?  0 : ExyzGroups->Count();  }
   void ClearExyz();
   TPtrList<TResidue> Residues;
   TResidue MainResidue;
@@ -124,16 +122,17 @@ public:
   inline TEVPointD&  Angles()               {  return FAngles;  }
   inline const TVPointD& GetRAxes()   const {  return RAxes;  }
   inline const TVPointD& GetRAngles() const {  return RAngles;  }
+  double CalcCellVolume() const;
+  // estimates Z=Z'*sg.multiplicity according to 18.6A rule
+  double EstimateZ(int atomCount) const;
   DefPropP(short, Z)
   DefPropP(short, Latt)
   inline olxstr& CellSymmetry()            {  return FCellSymmetry ;  }
 
   void AddExyz(const TCAtomPList& cAtoms);
   void AddNewExyz(const TStrList& cAtoms);
-  void SwapExyz(TCAtom* A, TBasicAtomInfo *NewType);
-  // adds all Exyz atoms to the atoms list and returns a list of newly created atoms
-  TCAtomPList* ExpandExyz();
-  void CollapseExyz();
+  TCAtomPList& ExyzGroup(size_t i) const {  return ExyzGroups->Item(i);  }
+  int ExyzGroupCount()             const {  return ExyzGroups == NULL ?  0 : ExyzGroups->Count();  }
 
   const TMatrixD& GetCellToCartesian() const {  return *Cell2Cartesian; }
   const TMatrixD& GetCartesianToCell() const {  return *Cartesian2Cell; }
@@ -308,6 +307,8 @@ public:
   void LibGetAtomType(const TStrObjList& Params, TMacroError& E);
   void LibGetPeak(const TStrObjList& Params, TMacroError& E);
   void LibGetCell(const TStrObjList& Params, TMacroError& E);
+  void LibGetVolume(const TStrObjList& Params, TMacroError& E);
+  void LibGetCellVolume(const TStrObjList& Params, TMacroError& E);
   void LibSetAtomCrd(const TStrObjList& Params, TMacroError& E);
   void LibSetAtomLabel(const TStrObjList& Params, TMacroError& E);
   // retruns label if +-num is used
@@ -319,6 +320,8 @@ public:
   void LibGetSymm(const TStrObjList& Params, TMacroError& E);
   void LibGetZ(const TStrObjList& Params, TMacroError& E);
   void LibSetZ(const TStrObjList& Params, TMacroError& E);
+  void LibGetZprime(const TStrObjList& Params, TMacroError& E);
+  void LibSetZprime(const TStrObjList& Params, TMacroError& E);
   class TLibrary*  ExportLibrary(const olxstr& name=EmptyString);
 };
 

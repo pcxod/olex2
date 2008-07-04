@@ -9,8 +9,9 @@ MAKE = $(ROOT)\bin\make.exe -$(MAKEFLAGS) -f$**
 DCC = $(ROOT)\bin\dcc32.exe $**
 BRCC = $(ROOT)\bin\brcc32.exe $**
 #------------------------------------------------------------------------------
-PROJECTS = sdl.lib alglib.lib gllib.lib xlib.lib gxlib.lib olex2.exe launch.exe \
-  installer.exe autorun.exe
+PROJECTS = sdl.lib alglib.lib gllib.lib xlib.lib gxlib.lib gxlib_npy.lib \
+  olex2.exe launch.exe installer.exe autorun.exe olex2v.dll olex2vt.exe \
+  Olex2xProj.ocx olex2vj.dll
 #------------------------------------------------------------------------------
 default: $(PROJECTS)
 #------------------------------------------------------------------------------
@@ -49,6 +50,26 @@ alglib.lib: alglib.bpr
 
 autorun.exe: autorun.bpr
   $(ROOT)\bin\bpr2mak $**
+  $(ROOT)\bin\make -$(MAKEFLAGS) -f$*.mak
+
+olex2v.dll: olex2v.bpr
+  $(ROOT)\bin\bpr2mak $**
+  $(ROOT)\bin\make -$(MAKEFLAGS) -f$*.mak
+
+olex2vt.exe: ..\..\..\olex2v-test\olex2vt.bpr
+  $(ROOT)\bin\bpr2mak $**
+  $(ROOT)\bin\make -$(MAKEFLAGS) -f$*.mak
+
+Olex2xProj.ocx: ..\..\..\olex2-tl\Olex2xProj.bpr
+  $(ROOT)\bin\bpr2mak $**
+  $(ROOT)\bin\make -$(MAKEFLAGS) -f$*.mak
+
+olex2vj.dll: olex2vj.bpr
+  $(ROOT)\bin\bpr2mak $**
+  $(ROOT)\bin\make -$(MAKEFLAGS) -f$*.mak
+
+gxlib_npy.lib: gxlib_npy.bpr
+  $(ROOT)\bin\bpr2mak -t$(ROOT)\bin\deflib.bmk $**
   $(ROOT)\bin\make -$(MAKEFLAGS) -f$*.mak
 
 

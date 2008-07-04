@@ -34,11 +34,11 @@
 //----------------------------------------------------------------------------//
 // TIns function bodies
 //----------------------------------------------------------------------------//
-TIns::TIns(TAtomsInfo *S) : TBasicCFile(S)  {
+TIns::TIns(TAtomsInfo *S) : TBasicCFile(S), FPLAN(1), FLS(1)  {
   Radiation = 0.71073f;
   HKLF = 4;
-  Iterations = 0;
-  Plan = -1;
+  FLS[0] = 0;
+  FPLAN[0] = 0;  
   LoadQPeaks = true;
 }
 //..............................................................................
@@ -56,8 +56,8 @@ void TIns::Clear()  {
   FWght.Resize(0);
   FWght1.Resize(0);
   FHKLSource = EmptyString;
-  Iterations = 0;
-  Plan = -1;
+  FLS.Resize(1);   FLS[0] = 0;
+  FPLAN.Resize(1); FPLAN[0] = 0;  
   Sfac = EmptyString;
   Unit = EmptyString;
   Error = 0;
@@ -147,20 +147,13 @@ void TIns::LoadFromStrings(const TStrList& InsFile)  {
       HKLF = Toks.Text(' ', 1);
       Afix = Part = 0;
     }
-    else if( Tmp1=="L.S." && (Toks.Count() > 1) )  {
-      if( Iterations == 0 )  {
-        Iterations = (short)Toks[1].ToInt();
-        SetRefinementMethod("L.S.");
-      }
+    else if( Tmp1=="L.S." || Tmp1 == "CGLS" )  {
+      Toks.Delete(0);
+      AddIns(Tmp1, Toks);
     }
-    else if( Tmp1=="CGLS" && (Toks.Count() > 1) )  {
-      if( Iterations == 0 )  {
-        Iterations = (short)Toks[1].ToInt();
-        SetRefinementMethod("CGLS");
-      }
-    }
-    else if( Tmp1=="PLAN" && (Toks.Count() > 1) )  {
-      Plan = (short)Toks[1].ToInt();
+    else if( Tmp1=="PLAN"  )  {
+      Toks.Delete(0);
+      AddIns(Tmp1, Toks);
     }
     else if( Tmp1=="LATT" && (Toks.Count() > 1))  {
       GetAsymmUnit().SetLatt( (short)Toks[1].ToInt() );
@@ -460,6 +453,27 @@ bool TIns::AddIns(const olxstr &Name, const TStrList& params)  {
     FWght1 = FWght;
     return true;
   }
+  if( Name.Comparei("L.S.") == 0 || Name.Comparei("CGLS") == 0 )  {  
+    SetRefinementMethod(Name);
+    FLS.Resize( params.IsEmpty() ? 1 : params.Count() );
+    if( params.IsEmpty() )  
+      FLS[0] = 0;  
+    else  {
+      for( int i=0; i < params.Count(); i++ )
+        FLS[i] = params[i].ToInt();
+    }
+    return true;
+  }
+  if( Name.Comparei("PLAN") == 0 )  {  
+    FPLAN.Resize( params.IsEmpty() ? 1 : params.Count() );
+    if( params.IsEmpty() )  
+      FPLAN[0] = 0;  
+    else  {
+      for( int i=0; i < params.Count(); i++ )
+        FPLAN[i] = params[i].ToDouble();
+    }
+    return true;
+  }
 
   // check for uniqueness
   for( int i=0; i < Ins.Count(); i++ )  {
@@ -588,29 +602,37 @@ void TIns::SaveToRefine(const olxstr& FileName, const olxstr& sMethod, const olx
   olxstr Tmp, Tmp1;
 
   UpdateParams();
-  Tmp = "TITL ";  Tmp << GetTitle();  SL.Add(Tmp);
+  SL.Add("TITL ") << GetTitle();
 
-  if( comments.Length() )  {
-    Tmp = "REM ";  Tmp << comments;  SL.Add(Tmp);
+  if( !comments.IsEmpty() ) 
+    SL.Add("REM ") << comments;
+// try to estimate Z'
+  TTypeList< AnAssociation2<int,TBasicAtomInfo*> > sl;
+  TStrList sfac(GetSfac(), ' ');
+  TStrList unit(GetUnit(), ' ');
+  int ac = 0;
+  for( int i=0; i < sfac.Count(); i++ )  {
+    int cnt = unit[i].ToInt();
+    TBasicAtomInfo* bai = GetAtomsInfo().FindAtomInfoBySymbol(sfac[i]);
+    if( *bai == iHydrogenIndex )  continue;
+    sl.AddNew( cnt, bai );
+    ac += cnt;
   }
+  
+  FAsymmUnit->SetZ( FAsymmUnit->EstimateZ(ac/FAsymmUnit->GetZ()) );
+//
 
   SL.Add( CellToString() );
   SL.Add( ZerrToString() );
 
-  Tmp = "LATT "; Tmp << GetAsymmUnit().GetLatt(); SL.Add(Tmp);
+  SL.Add("LATT ") << GetAsymmUnit().GetLatt();
   if( GetAsymmUnit().MatrixCount() == 1 )  {
-    if( !GetAsymmUnit().GetMatrix(0).IsE() )  {
-      Tmp = "SYMM ";
-      Tmp << TSymmParser::MatrixToSymm( GetAsymmUnit().GetMatrix(0) );
-      SL.Add(Tmp);
-    }
+    if( !GetAsymmUnit().GetMatrix(0).IsE() ) 
+      SL.Add("SYMM ") << TSymmParser::MatrixToSymm( GetAsymmUnit().GetMatrix(0) );
   }
   else  {
-    for( int i=0; i < GetAsymmUnit().MatrixCount(); i++ )  {
-      Tmp = "SYMM ";
-      Tmp << TSymmParser::MatrixToSymm( GetAsymmUnit().GetMatrix(i) );
-      SL.Add(Tmp);
-    }
+    for( int i=0; i < GetAsymmUnit().MatrixCount(); i++ ) 
+      SL.Add("SYMM ") << TSymmParser::MatrixToSymm( GetAsymmUnit().GetMatrix(i) );
   }
   SfacIndex = SL.Count();  SL.Add(EmptyString);
   UnitIndex = SL.Count();  SL.Add(EmptyString);
@@ -636,7 +658,7 @@ void TIns::SaveToRefine(const olxstr& FileName, const olxstr& sMethod, const olx
 
   SL.AddList(mtoks);
   SL.Add(EmptyString);
-  SL.Add(olxstr("HKLF ") << HKLF);
+  SL.Add("HKLF ") << HKLF;
   SL.String(UnitIndex) = olxstr("UNIT ") << Unit;
   SaveSfac( SL, SfacIndex );
   SL.Add("END");
@@ -725,8 +747,12 @@ void TIns::SaveToStrings(TStrList& SL)  {
   SaveRestraints(SL, NULL, NULL, NULL);
 
   if( !GetRefinementMethod().IsEmpty() )  {
-    SL.Add( GetRefinementMethod() ) << ' ' << Iterations;
-    SL.Add("PLAN ") << Plan;
+    olxstr& rm = SL.Add( GetRefinementMethod() );
+    for( int i=0; i < FLS.Count(); i++ )
+      rm << ' ' << FLS[i];
+    olxstr& pn = SL.Add("PLAN ");
+    for( int i=0; i < FPLAN.Count(); i++ )
+      pn << ' ' << ((i < 1) ? Round(FPLAN[i]) : FPLAN[i]);
   }
 
   // copy "unknown" instructions except rems
@@ -734,7 +760,8 @@ void TIns::SaveToStrings(TStrList& SL)  {
     TInsList* L = Ins.Object(i);
     // skip rems and print them at the end
     if( Ins[i].StartsFrom("REM") )  continue;
-    HypernateIns(Ins[i]+' ', L->IsEmpty() ? EmptyString : L->Text(' ') , SL);
+    olxstr tmp = L->IsEmpty() ? EmptyString : L->Text(' ');
+    HypernateIns(Ins[i]+' ', tmp , SL);
   }
 
   SaveHklSrc(SL);
@@ -809,7 +836,8 @@ void TIns::SaveToStrings(TStrList& SL)  {
   for( int i=0; i < Ins.Count(); i++ )  {
     TInsList* L = Ins.Object(i);
     if( !Ins[i].StartsFrom("REM") )  continue;
-    HypernateIns(Ins.String(i)+' ', L->IsEmpty() ? EmptyString : L->Text(' '), SL);
+    olxstr tmp = L->IsEmpty() ? EmptyString : L->Text(' ');
+    HypernateIns(Ins.String(i)+' ', tmp, SL);
   }
 }
 //..............................................................................
@@ -1063,17 +1091,17 @@ void TIns::SavePattSolution(const olxstr& FileName, const TTypeList<TPattAtom>& 
 
   SL.Add(Tmp1);
 
-  Tmp = GetRefinementMethod(); Tmp << ' ' << Iterations;  SL.Add(Tmp);
-  Tmp = "PLAN "; Tmp << Plan;  SL.Add(Tmp);
+  SL.Add( GetRefinementMethod() ) << ' ' << GetIterations();
+  SL.Add( "PLAN " ) << GetPlan();
 
   // copy "unknown" instructions except rems
   for( int i=0; i < Ins.Count(); i++ )  {
     L = Ins.Object(i);
     // skip rems and print them at the end
-    if( Ins.String(i).StartsFrom("REM") )  continue;
+    if( Ins[i].StartsFrom("REM") )  continue;
     Tmp = EmptyString;
     if( L->Count() )  Tmp << L->Text(' ');
-    HypernateIns(Ins.String(i)+' ', Tmp, SL);
+    HypernateIns(Ins[i]+' ', Tmp, SL);
   }
 
   SaveHklSrc(SL);

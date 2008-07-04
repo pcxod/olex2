@@ -105,6 +105,8 @@ public:
   static bool IsAbsolutePath(const olxstr &Path);
   // copies a file, use overwrite option to modify the behaviour
   static void Copy(const olxstr& From, const olxstr& to, bool overwrite = true);
+  // renames a file, if the file with 'to' name exists, behaves according to the overwrite flag
+  static bool Rename(const olxstr& from, const olxstr& to, bool overwrite = true);
   /*works for windows only, for other operation systems return LocalFN*/
   static olxstr UNCFileName(const olxstr &LocalFN);
   /* return absolute path as a relative to another path

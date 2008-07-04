@@ -138,6 +138,7 @@ protected:
   void ClearGroups();
 
   float FProbFactor;
+  double ExtraZoom;  // the default is 1, Calculated Zoom is multiplid by this number
 public:
   TGXApp(const olxstr & FileName);
   // FileNAme - argv[0]
@@ -178,6 +179,7 @@ public:
   }
   TGlPrimitive *SelectPrimitive(int x, int y)  {  return FGlRender->SelectPrimitive(x, y); }
   void Orient(const TVectorD &V)        {  FGlRender->OrientBasis(V);  Draw(); }
+  DefPropP(double, ExtraZoom)
 //..............................................................................
 // TXApp interface
   inline TDUnitCell& DUnitCell() {  return *FDUnitCell; }
@@ -207,6 +209,7 @@ public:
   void GroupSelection(const olxstr& name) {  GetRender().GroupSelection(name);  Draw(); }
   void UnGroupSelection()                   {  GetRender().UnGroupSelection(); Draw(); }
   void UnGroup(TGlGroup *G)                 {  GetRender().UnGroup(G); Draw(); }
+  olxstr GetSelectionInfo();
 
   TGlBitmap* CreateGlBitmap(const olxstr& name,
     int left, int top, int width, int height, unsigned char* RGBa, unsigned int format);
@@ -323,7 +326,6 @@ public:
 protected:
   void CheckQBonds(TXAtom& Atom);
 public:
-  void NameHydrogens(TXAtom& XA, TUndoData* ud, bool CheckLabels);
   void ClearSelectionCopy();
   void RestoreSelection();
 protected:
@@ -335,8 +337,6 @@ public:
   TUndoData* Name(const olxstr &From, const olxstr &To, bool CheckLabels, bool ClearSelection);
   TUndoData* Name(TXAtom& Atom, const olxstr &Name, bool CheckLabels);
   TUndoData* ChangeSuffix(const TXAtomPList& xatoms, const olxstr &To, bool CheckLabels);
-  // fixes hydrogen atom labels
-  TUndoData* FixHL();
 
   void InfoList(const olxstr &Atoms, TStrList &Info);
 
@@ -445,8 +445,6 @@ public:     void CalcProbFactor(float Prob);
 
   void XAtomDS2XBondDS(const olxstr &Source);  // copies material properties from atoms
   void SynchroniseBonds( TXAtomPList& XAtoms );
-  // exceptions is a list of TBAsicAtomInfo of the atoms to avoid
-  void EnviList(TXAtom& A, TStrList &L, const TPtrList<TBasicAtomInfo>& Exceptions, double R = 0);
   double CalcVolume(const TSStrPObjList<olxstr,double, true> *volumes, olxstr &report);
 //..............................................................................
   static TGXApp& GetInstance()  {

@@ -5,6 +5,7 @@
 //#include "estring.h"
 #include "exception.h"
 #include "ptypes.h"
+#include "estack.h"
 
 //---------------------------------------------------------------------------
 BeginEsdlNamespace()
@@ -23,6 +24,7 @@ class TMacroError: public IEObject  {
   bool DeleteObject;
   olxstr ErrorInfo, Location;
   IEObject* RetValue;
+  TEStack<olxstr>* Stack;
 public:
   TMacroError();
   virtual ~TMacroError()  {
@@ -42,6 +44,7 @@ public:
     if( DeleteObject )  delete RetValue;
     DeleteObject = false;
     RetValue = (IEObject*)NULL;
+    Stack = NULL;
   }
 
   void ProcessingException(const ABasicFunction& caller, const TExceptionBase& exc);
@@ -60,6 +63,9 @@ public:
 
   inline bool HasRetVal()     const {  return RetValue != NULL;  }
   inline IEObject* RetObj()  const  {  return RetValue;  }
+  
+  TEStack<olxstr>* GetStack() const {  return Stack;  }
+  void SetStack(TEStack<olxstr>& stack)  {  Stack = &stack;  }
 
   // the type is validated
   template <class EObj>

@@ -58,6 +58,26 @@ public:
   virtual inline size_t Write(const wchar_t* bf, size_t size)   { return IDataOutputStream::Write( TUtf8::Encode(bf, size) );  }
   virtual inline size_t Writenl(const wchar_t* bf, size_t size) { return IDataOutputStream::Writenl( TUtf8::Encode(bf, size) );  }
 
+  static void ReadLines(IInputStream& io, TWStrList& list, bool CheckHeader=true)  {
+    if( io.GetSize() >= 3 )  {
+      uint32_t header = 0;
+      io.Read(&header, 3);
+      if( header != TUtf8::FileSignature )  {
+        if( CheckHeader )
+          throw TFunctionFailedException(__OlxSourceInfo, "invalid UTF8 stream");
+        else
+          io.SetPosition(0);
+      }
+    }
+    int fl = io.GetSize() - io.GetPosition();
+    char * bf = new char [fl+1];
+    io.Read(bf, fl);
+    list.Strtok( TUtf8::Decode(bf, fl), '\n');
+    delete [] bf;
+    for(int i=0; i < list.Count(); i++ )
+      if( list[i].EndsWith('\r') )  
+        list[i].SetLength( list[i].Length() -1 );
+  }
   static void ReadLines(const olxstr& fn, TWStrList& list, bool CheckHeader=true)  {
     TUtf8File file(fn, "rb", CheckHeader);
     int fl = file.Length() - file.GetPosition();
@@ -77,6 +97,22 @@ public:
     for( int i=0; i < list.Count(); i++ )
       if( i+1 < list.Count() )  file.Writenl( list[i] );
       else                      file.Write( list[i] );
+  }
+  template <class T>
+  static void WriteLines(IDataOutputStream& out, const TTStrList<WString,T>& list, bool WriteHeader=true)  {
+    if( WriteHeader )
+      out.Write( &TUtf8::FileSignature, 3);
+    for( int i=0; i < list.Count(); i++ )
+      if( i+1 < list.Count() )  out.Writenl( list[i] );
+      else                      out.Write( list[i] );
+  }
+  template <class T>
+  static void WriteLines(IDataOutputStream& out, const TTStrList<CString,T>& list, bool WriteHeader=false)  {
+    if( WriteHeader )
+      out.Write( &TUtf8::FileSignature, 3);
+    for( int i=0; i < list.Count(); i++ )
+      if( i+1 < list.Count() )  out.Writenl( list[i] );
+      else                      out.Write( list[i] );
   }
   template <class T>
   static void WriteLines(const olxstr& fn, const TTStrList<CString,T>& list, bool WriteHeader=false)  {

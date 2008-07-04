@@ -1,13 +1,11 @@
 #ifndef fsextH
 #define fsextH
 
-#include <wx/mstream.h>
-#include "efile.h"
+#ifdef __WXWIDGETS__
+  #include <wx/filesys.h>
+#endif
 
-#include "wx/zipstrm.h"
-#include "wx/image.h"
-#include "wx/wfstream.h"
-#include "wx/filesys.h"
+#include "efile.h"
 #include "library.h"
 
 class TZipWrapper;
@@ -25,7 +23,9 @@ struct TMemoryBlock  {
 };
 /*____________________________________________________________________________*/
 class TFileHandlerManager : public IEObject  {
+#ifdef __WXWIDGETS__
   TSStrPObjList<olxstr,TZipWrapper*, false> FZipFiles;
+#endif
   TSStrPObjList<olxstr,TMemoryBlock*, false> FMemoryBlocks;
   static const int16_t FVersion;
   static const char FSignature[];
@@ -39,7 +39,9 @@ protected:
   static TStrList BaseDirs;
   void _Clear();
   IDataInputStream *_GetInputStream(const olxstr &FN);
+#ifdef __WXWIDGETS__
   wxFSFile *_GetFSFileHandler( const olxstr &FN );
+#endif
   void _AddMemoryBlock(const olxstr& name, char *bf, int length, short persistenceId);
   static olxstr LocateFile( const olxstr& fn );
   void _SaveToStream(IDataOutputStream& os, short persistenceMask);
@@ -49,7 +51,9 @@ protected:
   }
 public:
   static IDataInputStream *GetInputStream(const olxstr &FN);
+#ifdef __WXWIDGETS__
   static wxFSFile *GetFSFileHandler( const olxstr &FN );
+#endif
   static void Clear(short persistenceMask = ~0);
   static void AddBaseDir(const olxstr& bd);
   static void AddMemoryBlock(const olxstr& name, char *bf, int length, short persistenceId);
@@ -68,6 +72,9 @@ public:
   void LibExists(const TStrObjList& Params, TMacroError& E);
   static TLibrary*  ExportLibrary(const olxstr& name=EmptyString);
 protected:
+#ifndef _NO_PYTHON
   static void PyInit();
+#endif
+
 };
 #endif
