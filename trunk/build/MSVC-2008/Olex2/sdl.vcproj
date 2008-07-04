@@ -44,6 +44,7 @@
 				Optimization="2"
 				PreprocessorDefinitions="WIN32;"
 				StringPooling="true"
+				MinimalRebuild="true"
 				BasicRuntimeChecks="0"
 				RuntimeLibrary="3"
 				StructMemberAlignment="5"
@@ -51,7 +52,8 @@
 				FloatingPointModel="2"
 				FloatingPointExceptions="false"
 				UsePrecompiledHeader="0"
-				WarningLevel="3"
+				BrowseInformation="1"
+				WarningLevel="2"
 				DebugInformationFormat="3"
 			/>
 			<Tool
@@ -86,7 +88,7 @@
 			Name="Release|Win32"
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
-			ConfigurationType="2"
+			ConfigurationType="4"
 			CharacterSet="1"
 			ManagedExtensions="1"
 			WholeProgramOptimization="1"
@@ -110,7 +112,7 @@
 				Name="VCCLCompilerTool"
 				PreprocessorDefinitions="WIN32;NDEBUG"
 				RuntimeLibrary="2"
-				UsePrecompiledHeader="2"
+				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				DebugInformationFormat="3"
 			/>
@@ -124,19 +126,10 @@
 				Name="VCPreLinkEventTool"
 			/>
 			<Tool
-				Name="VCLinkerTool"
-				AdditionalDependencies="$(NoInherit)"
-				LinkIncremental="1"
-				GenerateDebugInformation="true"
-				RandomizedBaseAddress="1"
-				DataExecutionPrevention="0"
-				TargetMachine="1"
+				Name="VCLibrarianTool"
 			/>
 			<Tool
 				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCManifestTool"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -146,9 +139,6 @@
 			/>
 			<Tool
 				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCAppVerifierTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -187,12 +177,12 @@
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
-				StructMemberAlignment="5"
+				StructMemberAlignment="0"
 				FloatingPointModel="2"
 				FloatingPointExceptions="false"
 				UsePrecompiledHeader="0"
 				BrowseInformation="1"
-				WarningLevel="3"
+				WarningLevel="2"
 				DebugInformationFormat="3"
 			/>
 			<Tool
@@ -251,7 +241,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="2"
-				EnableIntrinsicFunctions="false"
+				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
 				PreprocessorDefinitions="_UNICODE"
 				StringPooling="true"
@@ -259,6 +249,80 @@
 				BasicRuntimeChecks="0"
 				RuntimeLibrary="2"
 				StructMemberAlignment="5"
+				BufferSecurityCheck="false"
+				FloatingPointModel="2"
+				FloatingPointExceptions="false"
+				UsePrecompiledHeader="0"
+				BrowseInformation="0"
+				WarningLevel="3"
+				DebugInformationFormat="0"
+				CallingConvention="0"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLibrarianTool"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+			/>
+		</Configuration>
+		<Configuration
+			Name="Unicode-release-static|Win32"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
+			ConfigurationType="4"
+			CharacterSet="1"
+			ManagedExtensions="0"
+			WholeProgramOptimization="1"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="3"
+				InlineFunctionExpansion="2"
+				EnableIntrinsicFunctions="true"
+				FavorSizeOrSpeed="1"
+				PreprocessorDefinitions="_UNICODE"
+				StringPooling="true"
+				MinimalRebuild="false"
+				BasicRuntimeChecks="0"
+				RuntimeLibrary="0"
+				StructMemberAlignment="5"
+				BufferSecurityCheck="false"
 				FloatingPointModel="2"
 				FloatingPointExceptions="false"
 				UsePrecompiledHeader="0"
@@ -376,10 +440,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\sdl\ematrix.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\sdl\ememstream.cpp"
 				>
 			</File>
@@ -388,15 +448,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\sdl\estack.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\sdl\estrlist.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\sdl\etable.cpp"
 				>
 			</File>
 			<File
@@ -405,18 +457,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\sdl\eutf8.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\sdl\evalue.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\sdl\evector.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\sdl\evpoint.cpp"
 				>
 			</File>
 			<File
@@ -441,10 +481,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\sdl\log.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\sdl\macro.cpp"
 				>
 			</File>
 			<File
@@ -477,6 +513,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\sdl\settingsfile.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\sdl\sparser.cpp"
 				>
 			</File>
 			<File
@@ -539,10 +579,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\sdl\ecast.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\sdl\edatastream.h"
 				>
 			</File>
 			<File
@@ -674,6 +710,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\sdl\macrolib.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\sdl\smart\olx_cstring.h"
 				>
 			</File>
@@ -707,6 +747,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\sdl\sls.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\sdl\sparser.h"
 				>
 			</File>
 			<File

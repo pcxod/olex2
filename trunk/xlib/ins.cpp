@@ -619,7 +619,7 @@ void TIns::SaveToRefine(const olxstr& FileName, const olxstr& sMethod, const olx
     ac += cnt;
   }
   
-  FAsymmUnit->SetZ( FAsymmUnit->EstimateZ(ac/FAsymmUnit->GetZ()) );
+  FAsymmUnit->SetZ( Round(FAsymmUnit->EstimateZ(ac/FAsymmUnit->GetZ())) );
 //
 
   SL.Add( CellToString() );
