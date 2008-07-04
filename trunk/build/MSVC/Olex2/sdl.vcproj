@@ -436,10 +436,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\sdl\ematrix.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\sdl\ememstream.cpp"
 				>
 			</File>
@@ -448,15 +444,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\sdl\estack.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\sdl\estrlist.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\sdl\etable.cpp"
 				>
 			</File>
 			<File
@@ -465,18 +453,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\sdl\eutf8.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\sdl\evalue.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\sdl\evector.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\sdl\evpoint.cpp"
 				>
 			</File>
 			<File
@@ -501,10 +477,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\sdl\log.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\sdl\macro.cpp"
 				>
 			</File>
 			<File
