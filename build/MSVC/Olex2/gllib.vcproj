@@ -444,10 +444,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\glib\globj.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\glib\gloption.cpp"
 				>
 			</File>
@@ -469,10 +465,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\glib\gltextbox.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\glib\gltexture.cpp"
 				>
 			</File>
 			<File
