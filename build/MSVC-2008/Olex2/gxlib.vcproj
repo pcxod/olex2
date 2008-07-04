@@ -292,6 +292,148 @@
 				Name="VCPostBuildEventTool"
 			/>
 		</Configuration>
+		<Configuration
+			Name="Unicode-release-no-python|Win32"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)\lib"
+			IntermediateDirectory="$(ConfigurationName)"
+			ConfigurationType="4"
+			CharacterSet="1"
+			ManagedExtensions="0"
+			WholeProgramOptimization="1"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="2"
+				InlineFunctionExpansion="2"
+				EnableIntrinsicFunctions="false"
+				FavorSizeOrSpeed="1"
+				AdditionalIncludeDirectories="&quot;E:\wxWidgets-2.8.7\lib\vc_lib\mswud&quot;;&quot;E:\wxWidgets-2.8.7\include&quot;;..\..\..\glib;..\..\..\xlib;..\..\..\repository;C:\Python25\include;..\..\..\sdl"
+				PreprocessorDefinitions="__WXWIDGETS__;_UNICODE;_NO_PYTHON"
+				StringPooling="true"
+				MinimalRebuild="false"
+				BasicRuntimeChecks="0"
+				RuntimeLibrary="0"
+				FloatingPointModel="2"
+				UsePrecompiledHeader="0"
+				BrowseInformation="0"
+				WarningLevel="3"
+				DebugInformationFormat="0"
+				CallingConvention="0"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLibrarianTool"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+			/>
+		</Configuration>
+		<Configuration
+			Name="Unicode-release-static|Win32"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
+			ConfigurationType="4"
+			CharacterSet="1"
+			ManagedExtensions="0"
+			WholeProgramOptimization="1"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="3"
+				InlineFunctionExpansion="2"
+				EnableIntrinsicFunctions="true"
+				FavorSizeOrSpeed="1"
+				AdditionalIncludeDirectories="&quot;E:\wxWidgets-2.8.7\lib\vc_lib\mswud&quot;;&quot;E:\wxWidgets-2.8.7\include&quot;;..\..\..\glib;..\..\..\xlib;..\..\..\repository;C:\Python25\include;..\..\..\sdl"
+				PreprocessorDefinitions="__WXWIDGETS__;_UNICODE"
+				StringPooling="true"
+				MinimalRebuild="false"
+				BasicRuntimeChecks="0"
+				RuntimeLibrary="0"
+				FloatingPointModel="2"
+				UsePrecompiledHeader="0"
+				BrowseInformation="0"
+				WarningLevel="3"
+				DebugInformationFormat="0"
+				CallingConvention="0"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLibrarianTool"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+			/>
+		</Configuration>
 	</Configurations>
 	<References>
 		<AssemblyReference
@@ -345,10 +487,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\gxlib\syntaxp.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\gxlib\wglscene.cpp"
 				>
 			</File>
@@ -365,6 +503,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\gxlib\xeval.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\gxlib\xgrid.cpp"
 				>
 				<FileConfiguration
@@ -378,6 +520,24 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Unicode-release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="3"
+						BasicRuntimeChecks="0"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Unicode-release-no-python|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="3"
+						BasicRuntimeChecks="0"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Unicode-release-static|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -445,10 +605,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\gxlib\syntaxp.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\gxlib\wglscene.h"
 				>
 			</File>
@@ -466,6 +622,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\gxlib\xbond.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\gxlib\xeval.h"
 				>
 			</File>
 			<File

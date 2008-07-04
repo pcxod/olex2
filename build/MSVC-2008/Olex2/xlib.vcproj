@@ -45,11 +45,13 @@
 				AdditionalIncludeDirectories="..\..\..\alglib;..\..\..\sdl;..\..\..\repository;..\..\..\xlib"
 				PreprocessorDefinitions="WIN32;"
 				StringPooling="true"
+				MinimalRebuild="true"
 				BasicRuntimeChecks="0"
 				RuntimeLibrary="3"
 				EnableEnhancedInstructionSet="2"
 				UsePrecompiledHeader="0"
-				WarningLevel="3"
+				BrowseInformation="1"
+				WarningLevel="2"
 				DebugInformationFormat="3"
 			/>
 			<Tool
@@ -84,7 +86,7 @@
 			Name="Release|Win32"
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
-			ConfigurationType="2"
+			ConfigurationType="4"
 			CharacterSet="1"
 			ManagedExtensions="1"
 			WholeProgramOptimization="1"
@@ -106,9 +108,10 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				AdditionalIncludeDirectories="..\..\..\xlib;..\..\..\alglib;..\..\..\repository;..\..\..\sdl"
 				PreprocessorDefinitions="WIN32;NDEBUG"
 				RuntimeLibrary="2"
-				UsePrecompiledHeader="2"
+				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				DebugInformationFormat="3"
 			/>
@@ -122,19 +125,10 @@
 				Name="VCPreLinkEventTool"
 			/>
 			<Tool
-				Name="VCLinkerTool"
-				AdditionalDependencies="$(NoInherit)"
-				LinkIncremental="1"
-				GenerateDebugInformation="true"
-				RandomizedBaseAddress="1"
-				DataExecutionPrevention="0"
-				TargetMachine="1"
+				Name="VCLibrarianTool"
 			/>
 			<Tool
 				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCManifestTool"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -144,9 +138,6 @@
 			/>
 			<Tool
 				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCAppVerifierTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -186,10 +177,11 @@
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
+				StructMemberAlignment="0"
 				FloatingPointModel="2"
 				UsePrecompiledHeader="0"
 				BrowseInformation="1"
-				WarningLevel="3"
+				WarningLevel="2"
 				DebugInformationFormat="3"
 			/>
 			<Tool
@@ -248,7 +240,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="2"
-				EnableIntrinsicFunctions="false"
+				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
 				AdditionalIncludeDirectories="..\..\..\alglib;..\..\..\sdl;..\..\..\repository;..\..\..\xlib"
 				PreprocessorDefinitions="_UNICODE;"
@@ -256,6 +248,79 @@
 				MinimalRebuild="false"
 				BasicRuntimeChecks="0"
 				RuntimeLibrary="2"
+				BufferSecurityCheck="false"
+				FloatingPointModel="2"
+				UsePrecompiledHeader="0"
+				BrowseInformation="0"
+				WarningLevel="3"
+				DebugInformationFormat="0"
+				CallingConvention="0"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLibrarianTool"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+			/>
+		</Configuration>
+		<Configuration
+			Name="Unicode-release-static|Win32"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
+			ConfigurationType="4"
+			CharacterSet="1"
+			ManagedExtensions="0"
+			WholeProgramOptimization="1"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="3"
+				InlineFunctionExpansion="2"
+				EnableIntrinsicFunctions="true"
+				FavorSizeOrSpeed="1"
+				AdditionalIncludeDirectories="..\..\..\alglib;..\..\..\sdl;..\..\..\repository;..\..\..\xlib"
+				PreprocessorDefinitions="_UNICODE;"
+				StringPooling="true"
+				MinimalRebuild="false"
+				BasicRuntimeChecks="0"
+				RuntimeLibrary="0"
+				BufferSecurityCheck="false"
 				FloatingPointModel="2"
 				UsePrecompiledHeader="0"
 				BrowseInformation="0"
@@ -364,6 +429,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\xlib\fastsymm.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\xlib\macro\graphsr.cpp"
 				>
 			</File>
@@ -373,6 +442,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\xlib\idistribution.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\xlib\macro\imp_auto.cpp"
 				>
 			</File>
 			<File
@@ -421,6 +494,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\xlib\scat_it.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\xlib\seval.cpp"
 				>
 			</File>
 			<File
@@ -514,6 +591,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\xlib\atomref.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\xlib\catom.h"
 				>
 			</File>
@@ -551,6 +632,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\xlib\exlib.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\xlib\fastsymm.h"
 				>
 			</File>
 			<File
@@ -602,6 +687,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\xlib\seval.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\xlib\sgtest.h"
 				>
 			</File>
@@ -615,6 +704,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\xlib\symmparser.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\xlib\symmtest.h"
 				>
 			</File>
 			<File

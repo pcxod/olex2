@@ -74,7 +74,7 @@ void TEBitArray::operator >> (IOutputStream& out) const  {
 //..............................................................................
 bool TEBitArray::operator == (const TEBitArray& arr )  const  {
   if( arr.Count() != Count() )  return false;
-  for( int i=0; i < FIntCount; i++ )
+  for( uint32_t i=0; i < FIntCount; i++ )
     if( FData[i] != arr.FData[i] )  return false;
   return true;
 }
