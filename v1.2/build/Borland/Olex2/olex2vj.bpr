@@ -1,0 +1,186 @@
+<?xml version='1.0' encoding='utf-8' ?>
+<!-- C++Builder XML Project -->
+<PROJECT>
+  <MACROS>
+    <VERSION value="BCB.06.00"/>
+    <PROJECT value="dll\olex2vj.dll"/>
+    <OBJFILES value="build\fsext.obj build\integration.obj build\olxvar.obj 
+      build\IsoSurface.obj build\wxzipfs.obj build\olex2vji.obj"/>
+    <RESFILES value="olex2vj.res"/>
+    <DEFFILE value=""/>
+    <RESDEPEN value="$(RESFILES)"/>
+    <LIBFILES value="lib\xlib.lib lib\alglib.lib lib\gllib.lib lib\sdl.lib 
+      E:\wxWidgets-2.8.7\lib\bcc_lib\wxzlibd.lib 
+      E:\wxWidgets-2.8.7\lib\bcc_lib\wxexpatd.lib 
+      E:\wxWidgets-2.8.7\lib\bcc_lib\wxjpegd.lib 
+      E:\wxWidgets-2.8.7\lib\bcc_lib\wxmsw28d.lib 
+      E:\wxWidgets-2.8.7\lib\bcc_lib\wxmsw28d_gl.lib 
+      E:\wxWidgets-2.8.7\lib\bcc_lib\wxpngd.lib 
+      E:\wxWidgets-2.8.7\lib\bcc_lib\wxregexd.lib 
+      E:\wxWidgets-2.8.7\lib\bcc_lib\wxtiffd.lib lib\gxlib_npy.lib"/>
+    <LIBRARIES value=""/>
+    <SPARELIBS value=""/>
+    <PACKAGES value="vcl.bpi rtl.bpi vclx.bpi bcbsmp.bpi dbrtl.bpi adortl.bpi vcldb.bpi 
+      qrpt.bpi bdertl.bpi vcldbx.bpi dsnap.bpi cds.bpi bdecds.bpi teeui.bpi 
+      teedb.bpi tee.bpi teeqr.bpi ibxpress.bpi visualclx.bpi visualdbclx.bpi 
+      vclie.bpi xmlrtl.bpi inet.bpi inetdbbde.bpi inetdbxpress.bpi inetdb.bpi 
+      nmfast.bpi bcbie.bpi soaprtl.bpi dclocx.bpi dbexpress.bpi dbxcds.bpi 
+      indy.bpi bcb2kaxserver.bpi"/>
+    <PATHCPP value=".;..\..\..\repository;..\..\..\olex2v"/>
+    <PATHPAS value=".;"/>
+    <PATHRC value=".;"/>
+    <PATHASM value=".;"/>
+    <DEBUGLIBPATH value="$(BCB)\lib\debug"/>
+    <RELEASELIBPATH value="$(BCB)\lib\release"/>
+    <LINKER value="ilink32"/>
+    <USERDEFINES value="__WXWIDGETS__;DEBUG;_NO_PYTHON"/>
+    <SYSDEFINES value="NO_STRICT;_NO_VCL"/>
+    <MAINSOURCE value="olex2vj.bpf"/>
+    <INCLUDEPATH value="..\..\..\sdl;..\..\..\olex2v;..\..\..\repository;..\..\..\glib;..\..\..\xlib;..\..\..\gxlib;..\..;$(BCB)\include;$(BCB)\include\vcl;E:\wxWidgets-2.8.7\include;E:\wxWidgets-2.8.7\lib\bcc_lib\mswd;C:\Python25\include;&quot;C:\Program Files\Java\jdk1.6.0_06\include&quot;;&quot;C:\Program Files\Java\jdk1.6.0\include&quot;"/>
+    <LIBPATH value="..\..\..\repository;..\..\..\olex2v;$(BCB)\lib\obj;$(BCB)\lib"/>
+    <WARNINGS value="-w-par"/>
+    <OTHERFILES value=""/>
+  </MACROS>
+  <OPTIONS>
+    <CFLAG1 value="-WD -Od -H=$(BCB)\lib\vcl60.csm -Hc -Vx -Ve -ff -X- -r- -a8 -6 -b- -k- -y 
+      -v -vi- -tWD -tWM -c"/>
+    <PFLAGS value="-N2build -N0build -$YD -$W -$O- -$A8 -v -JPHNE -M"/>
+    <RFLAGS value=""/>
+    <AFLAGS value="/mx /w2 /zd"/>
+    <LFLAGS value="-ldll -Ibuild -D&quot;&quot; -aa -Tpd -x -Gn -Gi"/>
+    <OTHERFILES value=""/>
+  </OPTIONS>
+  <LINKER>
+    <ALLOBJ value="c0d32.obj $(OBJFILES)"/>
+    <ALLRES value="$(RESFILES)"/>
+    <ALLLIB value="$(LIBFILES) $(LIBRARIES) import32.lib cw32mt.lib"/>
+    <OTHERFILES value=""/>
+  </LINKER>
+  <FILELIST>
+      <FILE FILENAME="olex2vj.res" FORMNAME="" UNITNAME="olex2v.res" CONTAINERID="ResTool" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="olex2vj.bpf" FORMNAME="" UNITNAME="olex2v" CONTAINERID="BPF" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="lib\xlib.lib" FORMNAME="" UNITNAME="xlib.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="lib\alglib.lib" FORMNAME="" UNITNAME="alglib.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="lib\gllib.lib" FORMNAME="" UNITNAME="gllib.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="lib\sdl.lib" FORMNAME="" UNITNAME="sdl.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\repository\fsext.cpp" FORMNAME="" UNITNAME="fsext.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\repository\integration.cpp" FORMNAME="" UNITNAME="integration.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\repository\olxvar.cpp" FORMNAME="" UNITNAME="olxvar.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\repository\IsoSurface.cpp" FORMNAME="" UNITNAME="IsoSurface" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="E:\wxWidgets-2.8.7\lib\bcc_lib\wxzlibd.lib" FORMNAME="" UNITNAME="wxzlibd.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="E:\wxWidgets-2.8.7\lib\bcc_lib\wxexpatd.lib" FORMNAME="" UNITNAME="wxexpatd.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="E:\wxWidgets-2.8.7\lib\bcc_lib\wxjpegd.lib" FORMNAME="" UNITNAME="wxjpegd.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="E:\wxWidgets-2.8.7\lib\bcc_lib\wxmsw28d.lib" FORMNAME="" UNITNAME="wxmsw28d.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="E:\wxWidgets-2.8.7\lib\bcc_lib\wxmsw28d_gl.lib" FORMNAME="" UNITNAME="wxmsw28d_gl.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="E:\wxWidgets-2.8.7\lib\bcc_lib\wxpngd.lib" FORMNAME="" UNITNAME="wxpngd.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="E:\wxWidgets-2.8.7\lib\bcc_lib\wxregexd.lib" FORMNAME="" UNITNAME="wxregexd.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="E:\wxWidgets-2.8.7\lib\bcc_lib\wxtiffd.lib" FORMNAME="" UNITNAME="wxtiffd.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\repository\wxzipfs.cpp" FORMNAME="" UNITNAME="wxzipfs" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\olex2v\olex2vji.cpp" FORMNAME="" UNITNAME="olex2vji" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="lib\gxlib_npy.lib" FORMNAME="" UNITNAME="gxlib_npy.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
+  </FILELIST>
+  <BUILDTOOLS>
+  </BUILDTOOLS>
+
+  <IDEOPTIONS>
+[Version Info]
+IncludeVerInfo=0
+AutoIncBuild=0
+MajorVer=1
+MinorVer=0
+Release=0
+Build=0
+Debug=0
+PreRelease=0
+Special=0
+Private=0
+DLL=0
+Locale=2057
+CodePage=1252
+
+[Version Info Keys]
+CompanyName=
+FileDescription=
+FileVersion=1.0.0.0
+InternalName=
+LegalCopyright=
+LegalTrademarks=
+OriginalFilename=
+ProductName=
+ProductVersion=1.0.0.0
+Comments=
+
+[HistoryLists\hlIncludePath]
+Count=8
+Item0=..\..\..\sdl;..\..\..\olex2v;..\..\..\repository;..\..\..\glib;..\..\..\xlib;..\..\..\gxlib;..\..;$(BCB)\include;$(BCB)\include\vcl;E:\wxWidgets-2.8.7\include;E:\wxWidgets-2.8.7\lib\bcc_lib\mswd;C:\Python25\include;C:\Program Files\Java\jdk1.6.0_06\include;C:\Program Files\Java\jdk1.6.0\include
+Item1=..\..\..\sdl;..\..\..\olex2v;..\..\..\repository;..\..\..\glib;..\..\..\xlib;..\..\..\gxlib;..\..;$(BCB)\include;$(BCB)\include\vcl;E:\wxWidgets-2.8.7\include;E:\wxWidgets-2.8.7\lib\bcc_lib\mswd;C:\Python25\include;C:\Program Files\Java\jdk1.6.0_06\include
+Item2=..\..\..\sdl;..\..\..\olex2v;..\..\..\repository;..\..\..\glib;..\..\..\xlib;..\..\..\gxlib;..\..;$(BCB)\include;$(BCB)\include\vcl;E:\wxWidgets-2.8.7\include;E:\wxWidgets-2.8.7\lib\bcc_lib\mswd;C:\Python25\include
+Item3=..\..\..\sdl;..\..\..\olex2v;..\..\..\repository;..\..\..\glib;..\..\..\xlib;..\..\..\gxlib;..\..;$(BCB)\include;$(BCB)\include\vcl;C:\Python25\include;E:\wxWidgets-2.8.7\include;E:\wxWidgets-2.8.7\lib\bcc_lib\mswd
+Item4=..\..\..\olex2v;..\..\..\repository;..\..\..\glib;..\..\..\xlib;..\..\..\gxlib;..\..;$(BCB)\include;$(BCB)\include\vcl;E:\wxWidgets-2.8.7\include;E:\wxWidgets-2.8.7\lib\bcc_lib\mswd;C:\Python25\include;..\..\..\sdl
+Item5=..\..\..\olex2v;..\..\..\olex2vFiles\Borland\CBuilder6\Projects;..\..\..\repository;..\..\..\glib;..\..\..\xlib;..\..\..\gxlib;..\..;$(BCB)\include;$(BCB)\include\vcl;E:\wxWidgets-2.8.7\include;E:\wxWidgets-2.8.7\lib\bcc_lib\mswd;C:\Python25\include
+Item6=..\..\..\olex2vFiles\Borland\CBuilder6\Projects;..\..\..\repository;..\..\..\glib;..\..\..\xlib;..\..\..\gxlib;..\..;$(BCB)\include;$(BCB)\include\vcl;E:\wxWidgets-2.8.7\include;E:\wxWidgets-2.8.7\lib\bcc_lib\mswd;C:\Python25\include
+Item7=..\..\..\olex2v;$(BCB)\include;$(BCB)\include\vcl
+
+[HistoryLists\hlLibraryPath]
+Count=2
+Item0=..\..\..\repository;..\..\..\olex2v;$(BCB)\lib\obj;$(BCB)\lib
+Item1=..\..\..\olex2v;$(BCB)\lib\obj;$(BCB)\lib
+
+[HistoryLists\hlDebugSourcePath]
+Count=1
+Item0=$(BCB)\source\vcl
+
+[HistoryLists\hlConditionals]
+Count=6
+Item0=__WXWIDGETS__;DEBUG;_NO_PYTHON
+Item1=__WXWIDGETS__;DEBUG;
+Item2=__WINDOWS__;__WXMSW__;__WXWIDGETS__;__WXDEBUG___DEBUG;
+Item3=_DEBUG;__WXWIDGETS__
+Item4=_DEBUG;wxUSE_GUI
+Item5=_DEBUG
+
+[HistoryLists\hlIntOutputDir]
+Count=2
+Item0=build
+Item1=obj
+
+[HistoryLists\hlFinalOutputDir]
+Count=2
+Item0=dll\
+Item1=dll
+
+[HistoryLists\hIBPIOutputDir]
+Count=1
+Item0=dll
+
+[Debugging]
+DebugSourceDirs=$(BCB)\source\vcl
+
+[Parameters]
+RunParams=
+Launcher=
+UseLauncher=0
+DebugCWD=
+HostApplication=E:\SVN\v1.1u\build\Borland\Olex2\olex2vt.exe
+RemoteHost=
+RemotePath=
+RemoteLauncher=
+RemoteCWD=
+RemoteDebug=0
+
+[Compiler]
+ShowInfoMsgs=0
+LinkDebugVcl=0
+LinkCGLIB=0
+
+[Language]
+ActiveLang=
+ProjectLang=
+RootDir=
+
+[Linker]
+LibPrefix=
+LibSuffix=
+LibVersion=
+  </IDEOPTIONS>
+</PROJECT>

@@ -1,0 +1,4 @@
+proxy=PROXY
+repository=http://dimas.dur.ac.uk/olex-distro-test/update
+update=Always
+
