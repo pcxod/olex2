@@ -29,6 +29,7 @@ TGlFont::TGlFont(const olxstr& name) {
   Textures = NULL;
   ClearData();
   Name = name;
+  PointSize = 0;
 }
 //..............................................................................
 TGlFont::~TGlFont()  {

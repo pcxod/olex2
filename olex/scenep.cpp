@@ -320,7 +320,7 @@ bool TdlgSceneProps::Execute(const IEObject *Sender, const IEObject *Data)  {
     wxFontDialog fD(this, fnt_data);
     if( fD.ShowModal() == wxID_OK )  {
       wxFont fnt = fD.GetFontData().GetChosenFont();
-      FXApp->GetRender().Scene()->CreateFont(EmptyString, &fnt, glF, true, glF->FixedWidth() );
+      FXApp->GetRender().Scene()->CreateFont(glF->GetName(), fnt.GetNativeFontInfoDesc().c_str() );
       Color = fD.GetFontData().GetColour();
       XColor[0] = (float)Color.Red()/255;
       XColor[1] = (float)Color.Green()/255;

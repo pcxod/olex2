@@ -406,8 +406,8 @@ void TdlgMatProp::OnEditFont(wxCommandEvent& event)  {
   wxFontDialog fD(this, fnt_data);
   if( fD.ShowModal() == wxID_OK )  {
     Fnt = fD.GetFontData().GetChosenFont();
-    FXApp->GetRender().Scene()->CreateFont(EmptyString, &Fnt,
-      GPCollection->Primitive(FCurrentMaterial)->Font(), true, Fnt.IsFixedWidth() );
+    FXApp->GetRender().Scene()->CreateFont(GPCollection->Primitive(FCurrentMaterial)->Font()->GetName(), 
+      Fnt.GetNativeFontInfoDesc().c_str());
   }
 }
 //..............................................................................

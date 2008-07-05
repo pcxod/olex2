@@ -1191,28 +1191,28 @@ void TMainForm::StartupInit()  {
   wxFont Font(10, wxMODERN, wxNORMAL, wxNORMAL);//|wxFONTFLAG_ANTIALIASED);
   // create 4 fonts
   
-  TGlFont *fnt = FXApp->GetRender().Scene()->CreateFont("Console", &Font, NULL, true, true);
+  TGlFont *fnt = FXApp->GetRender().Scene()->CreateFont("Console", Font.GetNativeFontInfoDesc().c_str());
   fnt->Material().SetFlags(sglmAmbientF|sglmEmissionF|sglmIdentityDraw);
   fnt->Material().AmbientF = 0x7fff7f;
   fnt->Material().EmissionF = 0x1f2f1f;
 
-  fnt = FXApp->GetRender().Scene()->CreateFont("Help", &Font, NULL, true, true);
+  fnt = FXApp->GetRender().Scene()->CreateFont("Help", Font.GetNativeFontInfoDesc().c_str());
   fnt->Material().SetFlags(sglmAmbientF|sglmIdentityDraw);
   fnt->Material().AmbientF = 0x7fff7f;
 
-  fnt = FXApp->GetRender().Scene()->CreateFont("Notes", &Font, NULL, true, true);
+  fnt = FXApp->GetRender().Scene()->CreateFont("Notes", Font.GetNativeFontInfoDesc().c_str());
   fnt->Material().SetFlags(sglmAmbientF|sglmIdentityDraw);
   fnt->Material().AmbientF = 0x7fff7f;
 
-  fnt = FXApp->GetRender().Scene()->CreateFont("Labels", &Font, NULL, true, false);
+  fnt = FXApp->GetRender().Scene()->CreateFont("Labels", Font.GetNativeFontInfoDesc().c_str());
   fnt->Material().SetFlags(sglmAmbientF|sglmIdentityDraw);
   fnt->Material().AmbientF = 0x7fff7f;
 
-  fnt = FXApp->GetRender().Scene()->CreateFont("Picture_labels", &Font, NULL, true, false);
+  fnt = FXApp->GetRender().Scene()->CreateFont("Picture_labels", Font.GetNativeFontInfoDesc().c_str());
   fnt->Material().SetFlags(sglmAmbientF|sglmIdentityDraw);
   fnt->Material().AmbientF = 0x7fff7f;
 
-  fnt = FXApp->GetRender().Scene()->CreateFont("Tooltip", &Font, NULL, true, false);
+  fnt = FXApp->GetRender().Scene()->CreateFont("Tooltip", Font.GetNativeFontInfoDesc().c_str());
   fnt->Material().SetFlags(sglmAmbientF|sglmIdentityDraw);
   fnt->Material().AmbientF = 0x7fff7f;
 
@@ -2735,7 +2735,6 @@ void TMainForm::LoadScene(TDataItem *Root, TGlLightModel *FLM)  {
   TDataFile F;
   TDataItem *I;
   olxstr FntData;
-  wxFont Font(10, wxMODERN, wxNORMAL, wxNORMAL);//|wxFONTFLAG_ANTIALIASED);
   if( !FLM )  FLM = &(FXApp->GetRender().LightModel);
   I = Root->FindItem("Scene_Properties");
   if( I == NULL )  {
@@ -2749,9 +2748,7 @@ void TMainForm::LoadScene(TDataItem *Root, TGlLightModel *FLM)  {
   if( I == NULL )  return;
   for( int i=0; i < I->ItemCount(); i++ )  {
     TDataItem& fi = I->Item(i);
-    ((wxFontBase&)Font).SetNativeFontInfo( uiStr(fi.GetFieldValue("id")) );
-    FXApp->GetRender().Scene()->CreateFont(fi.GetName(), &Font,
-      FXApp->GetRender().Scene()->Font(i), true, fi.GetFieldValue("FixedWidth").ToBool() );
+    FXApp->GetRender().Scene()->CreateFont(fi.GetName(), fi.GetFieldValue("id") );
   }
   I = Root->FindItem("Materials");
   if( I != NULL )  {
@@ -2788,7 +2785,6 @@ void TMainForm::SaveScene(TDataItem *Root, TGlLightModel *FLM)  {
   for( int i=0; i < FXApp->GetRender().Scene()->FontCount(); i++ )  {
     TDataItem* fi = I->AddItem( FXApp->GetRender().Scene()->Font(i)->GetName());
     fi->AddField("id", FXApp->GetRender().Scene()->Font(i)->IdString() );
-    fi->AddField("FixedWidth", FXApp->GetRender().Scene()->Font(i)->FixedWidth() );
   }
 
   I = Root->AddItem("Materials");

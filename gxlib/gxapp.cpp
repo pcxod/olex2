@@ -22,7 +22,7 @@
 #include "globj.h"
 #include "gxapp.h"
 #include "log.h"
-#include "wglscene.h"
+//#include "wglscene.h"
 #include "xeval.h"
 
 #include "network.h"
@@ -196,7 +196,7 @@ TGXApp::TGXApp(const olxstr &FileName):TXApp(FileName)  {
   FStructureVisible = FQPeaksVisible = FHydrogensVisible =  FHBondsVisible = true;
   XGrowPointsVisible = FXGrowLinesVisible = FQPeakBondsVisible = false;
 
-  TwxGlScene *GlScene = new TwxGlScene;
+  TwxGlScene *GlScene = new TwxGlScene( BaseDir() + "etc/Fonts/" );
   FGrowMode = gmCovalent;
 //  TWGlScene *GlScene = new TWGlScene;
 //  TGlScene *GlScene = new TGlScene;
@@ -2375,7 +2375,7 @@ void TGXApp::BeginDrawBitmap(double resolution)  {
     ((wxFontBase&)font).SetNativeFontInfo( glF->IdString().u_str() );
     FontSizes.Add( font.GetPointSize() );
     font.SetPointSize(font.GetPointSize()*FPictureResolution);
-    glS->CreateFont(EmptyString, &font, glF, true, glF->FixedWidth());
+    glS->CreateFont(glF->GetName(), font.GetNativeFontInfoDesc().c_str());
   }
   // store groups && visibility
   StoreGroups();
@@ -2401,7 +2401,7 @@ void TGXApp::FinishDrawBitmap()
     glF = glS->Font(i);
     ((wxFontBase&)font).SetNativeFontInfo( glF->IdString().u_str() );
     font.SetPointSize( FontSizes[i] );
-    glS->CreateFont(EmptyString, &font, glF, true, glF->FixedWidth());
+    glS->CreateFont(glF->GetName(), font.GetNativeFontInfoDesc().c_str());
   }
 
   CreateObjects( false, false );
