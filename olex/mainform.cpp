@@ -707,7 +707,7 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual accupancy\
 
   this_InitMacro(UpdateOptions, , fpNone );
   this_InitMacro(Reload, , fpOne );
-  this_InitMacro(StoreParam, , fpTwo );
+  this_InitMacro(StoreParam, , fpTwo|fpThree );
   this_InitMacro(SelBack, a&;o&;x, fpNone );
 
   this_InitMacro(CreateBitmap, r, fpTwo );
@@ -798,7 +798,7 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual accupancy\
   this_InitMacroD(Textm, EmptyString, fpOne, "Runs subsequent commands stored in a text file" );
   this_InitMacroD(TestStat, EmptyString, fpOne, "Test: runs statistical tests on structures in current folder. Expects a file name" );
   this_InitMacroD(ExportFont, EmptyString, fpTwo, "" );
-  this_InitMacroD(ImportFont, EmptyString, fpThree, "" );
+  this_InitMacroD(ImportFont, EmptyString, fpTwo, "" );
   // FUNCTIONS _________________________________________________________________
 
   this_InitFunc(FileLast, fpNone|fpOne);

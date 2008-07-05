@@ -152,7 +152,6 @@ public:
 // drawing data and functions
 private:
   double FPictureResolution;
-  TDoubleList FontSizes;
   TSStrPObjList<olxstr,void*, false> FIndividualCollections;
 public:
   void Quality(const short v);

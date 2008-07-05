@@ -1104,7 +1104,7 @@ void TMainForm::macPict(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 
   if( Cmds.Count() == 2 )  res = Cmds[1].ToDouble();
   if( res <= 0 )  res = 2;
-  if( res >= 10 )  res = 5;
+  if( res >= 10 )  res = 10;
 
   int vpLeft = FXApp->GetRender().GetLeft(),
       vpTop = FXApp->GetRender().GetTop(),
@@ -1291,18 +1291,8 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   FGlConsole->Visible(false);
   FXApp->GetRender().OnDraw->SetEnabled( false );
   TDoubleList FontSizes;
-  if( res > 1 )  {
-    AGlScene *glS = FXApp->GetRender().Scene();
-    wxFont font;
-    TGlFont *glF;
-    for( int i=0; i < glS->FontCount(); i++ )  {
-      glF = glS->Font(i);
-      ((wxFontBase&)font).SetNativeFontInfo( uiStr(glF->IdString()));
-      FontSizes.Add( font.GetPointSize() );
-      font.SetPointSize(font.GetPointSize()*res);
-      glS->CreateFont(glF->GetName(), font.GetNativeFontInfoDesc().c_str());
-    }
-  }
+  if( res > 1 )  
+    FXApp->GetRender().Scene()->ScaleFonts(res);
   char *imageLayer = new char [(BmpWidth*3+extraBytes)*ScrHeight];
   int ires = res;
   if( ires == 0 )  res = 1;
@@ -1329,17 +1319,8 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 
   FXApp->GetRender().OnDraw->SetEnabled( true );
   FGlConsole->Visible(true);
-  if( res > 1 )  {
-    AGlScene *glS = FXApp->GetRender().Scene();
-    wxFont font;
-    TGlFont *glF;
-    for( int i=0; i < glS->FontCount(); i++ )  {
-      glF = glS->Font(i);
-      ((wxFontBase&)font).SetNativeFontInfo( uiStr(glF->IdString()));
-      font.SetPointSize( FontSizes[i] );
-      glS->CreateFont(glF->GetName(), font.GetNativeFontInfoDesc().c_str());
-    }
-  }
+  if( res > 1 ) 
+    FXApp->GetRender().Scene()->RestoreFontScale();
   // end drawing etc
   FXApp->GetRender().LookAt(0,0,1);
   FXApp->GetRender().SetView();
@@ -5702,7 +5683,8 @@ void TMainForm::macStoreParam(TStrObjList &Cmds, const TParamList &Options, TMac
     StoredParams.Add( Cmds[0], Cmds[1] );
   else
     StoredParams.Object(ind) = Cmds[1];
-  SaveSettings(DataDir + FLastSettingsFile);
+  if( Cmds.Count() == 3 && Cmds[2].ToBool() )
+    SaveSettings(DataDir + FLastSettingsFile);
 }
 //..............................................................................
 void TMainForm::macCreateBitmap(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {

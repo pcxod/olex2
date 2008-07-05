@@ -2366,17 +2366,7 @@ void TGXApp::BeginDrawBitmap(double resolution)  {
   FPictureResolution = resolution;
   FLabels->Clear();
 
-  AGlScene *glS = GetRender().Scene();
-  wxFont font;
-  TGlFont *glF;
-  FontSizes.Clear();
-  for( int i=0; i < glS->FontCount(); i++ )  {
-    glF = glS->Font(i);
-    ((wxFontBase&)font).SetNativeFontInfo( glF->IdString().u_str() );
-    FontSizes.Add( font.GetPointSize() );
-    font.SetPointSize(font.GetPointSize()*FPictureResolution);
-    glS->CreateFont(glF->GetName(), font.GetNativeFontInfoDesc().c_str());
-  }
+  GetRender().Scene()->ScaleFonts(resolution);
   // store groups && visibility
   StoreGroups();
   StoreVisibility();
@@ -2390,20 +2380,9 @@ void TGXApp::BeginDrawBitmap(double resolution)  {
   RestoreVisibility();
 }
 //..............................................................................
-void TGXApp::FinishDrawBitmap()
-{
+void TGXApp::FinishDrawBitmap()  {
   FLabels->Clear();
-
-  AGlScene *glS = GetRender().Scene();
-  wxFont font;
-  TGlFont *glF;
-  for( int i=0; i < glS->FontCount(); i++ )  {
-    glF = glS->Font(i);
-    ((wxFontBase&)font).SetNativeFontInfo( glF->IdString().u_str() );
-    font.SetPointSize( FontSizes[i] );
-    glS->CreateFont(glF->GetName(), font.GetNativeFontInfoDesc().c_str());
-  }
-
+  GetRender().Scene()->RestoreFontScale();
   CreateObjects( false, false );
   for( int i=0; i < XLabels.Count(); i++ )  XLabels[i].Create();
   // restore visibility && clean up the memory
