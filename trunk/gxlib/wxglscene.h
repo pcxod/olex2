@@ -23,6 +23,7 @@ class TwxGlScene: public AGlScene  {
 private:
   olxstr FontsFolder;
   TIntList FontSizes;
+  static const olxstr OlexFontId;
 protected:
   //olxstr ComposeIdString();
 public:

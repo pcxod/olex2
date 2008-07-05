@@ -52,6 +52,8 @@ TZipWrapper::~TZipWrapper()  {
     delete [] mb->Buffer;
     delete mb;
   }
+  for( int i=0; i < FEntries.Count(); i++ )
+    delete FEntries.Object(i);
   if( FInputStream )  delete FInputStream;
   if( FFileInputStream )  delete FFileInputStream;
 }
