@@ -360,7 +360,7 @@ public:
 
 class TXFactoryRegister : public TSFactoryRegister {
 public:
-  TXFactoryRegister::TXFactoryRegister()  {
+  TXFactoryRegister()  {
     TTBasicAtomInfoEvaluatorFactory *tTBasicAtomInfoEvaluatorFactory = new TTBasicAtomInfoEvaluatorFactory(this);
     Factories.Add("TTBasicAtomInfoEvaluatorFactory", tTBasicAtomInfoEvaluatorFactory);
     FactoryMap.Add("bai", tTBasicAtomInfoEvaluatorFactory);
