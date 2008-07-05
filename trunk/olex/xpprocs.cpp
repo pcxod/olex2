@@ -122,6 +122,7 @@
 
 #include "ecast.h"
 #include "atomref.h"
+#include "wxglscene.h"
 
 using namespace _xl_Controls;
 
@@ -1299,7 +1300,7 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       ((wxFontBase&)font).SetNativeFontInfo( uiStr(glF->IdString()));
       FontSizes.Add( font.GetPointSize() );
       font.SetPointSize(font.GetPointSize()*res);
-      glS->CreateFont(EmptyString, &font, glF, true, glF->FixedWidth());
+      glS->CreateFont(glF->GetName(), font.GetNativeFontInfoDesc().c_str());
     }
   }
   char *imageLayer = new char [(BmpWidth*3+extraBytes)*ScrHeight];
@@ -1336,7 +1337,7 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       glF = glS->Font(i);
       ((wxFontBase&)font).SetNativeFontInfo( uiStr(glF->IdString()));
       font.SetPointSize( FontSizes[i] );
-      glS->CreateFont(EmptyString, &font, glF, true, glF->FixedWidth());
+      glS->CreateFont(glF->GetName(), font.GetNativeFontInfoDesc().c_str());
     }
   }
   // end drawing etc
@@ -7974,7 +7975,7 @@ void TMainForm::macSetFont(TStrObjList &Cmds, const TParamList &Options, TMacroE
       return;
     }
   }
-  ascene->CreateFont(EmptyString, &Fnt, glf, true, Fnt.IsFixedWidth() );
+  ascene->CreateFont(glf->GetName(), Fnt.GetNativeFontInfoDesc().c_str());
 }
 
 //..............................................................................
@@ -9138,15 +9139,20 @@ void TMainForm::macTestStat(TStrObjList &Cmds, const TParamList &Options, TMacro
 }
 //..............................................................................
 void TMainForm::macExportFont(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  FXApp->GetRender().Scene()->ExportFont(Cmds[0], Cmds[1]);
+  TwxGlScene* wxs = dynamic_cast<TwxGlScene*>(FXApp->GetRender().Scene());
+  if( wxs == NULL )  {
+    E.ProcessingError(__OlxSrcInfo, "invalid scene object");
+    return;
+  }
+  wxs->ExportFont(Cmds[0], Cmds[1]);
 }
 //..............................................................................
 void TMainForm::macImportFont(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  AGlScene* ascene = FXApp->GetRender().Scene();
-  TGlFont* glf = ascene->FindFont( Cmds[0] );
+  TwxGlScene* wxs = dynamic_cast<TwxGlScene*>(FXApp->GetRender().Scene());
+  TGlFont* glf = wxs->FindFont( Cmds[0] );
   if( glf == NULL )  {
     E.ProcessingError(__OlxSrcInfo, olxstr("undefined font ") << Cmds[0]);
     return;
   }
-  FXApp->GetRender().Scene()->ImportFont(Cmds[0], Cmds[1], Cmds[2].ToInt(), true, glf);
+  wxs->ImportFont(Cmds[0], Cmds[1]);
 }

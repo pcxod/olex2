@@ -21,10 +21,16 @@ struct TFontCharSize  {
 };
 
 class TGlFont: public IEObject  {
+public:
+  static const short fntFixedWidth = 0x0001,
+                     fntIntalic    = 0x0002,
+                     fntBold       = 0x0004,
+                     fntBmp        = 0x0008,  // create bitmap font
+                     fntTexture    = 0x0010;  // create texture font
   int FFontBase;
   TPtrList<TFontCharSize> CharSizes;
   GLuint* Textures;
-  uint16_t FFlags;
+  uint16_t FFlags, PointSize;
   uint16_t FMaxWidth, FMaxHeight,
         FLeftmost, FTopmost,
         FCharOffset, TextureHeight, TextureWidth;
@@ -38,6 +44,8 @@ public:
   void ClearData(); // must be called to reset all data
   inline uint16_t MaxWidth() const {  return FMaxWidth;  }
   inline uint16_t MaxHeight() const {  return FMaxHeight;  }
+  
+  DefPropP(uint16_t, PointSize)
 
   int TextWidth(const olxstr &Text);
   int MaxTextLength(int width);

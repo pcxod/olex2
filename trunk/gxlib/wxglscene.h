@@ -20,15 +20,25 @@
 BeginGxlNamespace()
 
 class TwxGlScene: public AGlScene  {
+private:
+  olxstr FontsFolder;
+  TIntList FontSizes;
 protected:
+  //olxstr ComposeIdString();
 public:
-  TwxGlScene();
+  TwxGlScene(const olxstr& fontsFolder);
   virtual ~TwxGlScene();
 
-  TGlFont* CreateFont(const olxstr& name, void *WXFont, TGlFont *Replace=NULL, bool Bmp=true, bool FixedW=true); // takes wxFont*
-  virtual void ExportFont(const olxstr& name, const olxstr& fileName);
-  virtual TGlFont* ImportFont(const olxstr& Name, const olxstr& fileName, short Size, 
-    bool FixedWidth, TGlFont *Replace=NULL);
+  TGlFont* CreateFont(const olxstr& name, const olxstr& fntDescription, short Flags=TGlFont::fntBmp);
+  // font names are seperated by the '&' char
+  void ExportFont(const olxstr& name, const olxstr& fileName);
+  // imports font from a file, if the font Name exists, replaces it
+  TGlFont* ImportFont(const olxstr& Name, const olxstr& fntDescription,  
+    short Flags=TGlFont::fntBmp);
+  // used to scale font when drawing on a scaled surface
+  virtual void ScaleFonts(double scale);
+  // restores the font sizes after a call to the ScaleFonts
+  virtual void RestoreFontScale();
   void Destroy();
 
   void StartSelect(int x, int y, GLuint *Bf);
