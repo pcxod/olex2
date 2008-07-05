@@ -399,10 +399,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\glib\glbase.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\glib\glbitmap.cpp"
 				>
 			</File>
