@@ -399,7 +399,7 @@ void TdlgMatProp::OnPaste(wxCommandEvent& event)  {
 }
 //..............................................................................
 void TdlgMatProp::OnEditFont(wxCommandEvent& event)  {
-  FXApp->GetRender().Scene()->ShowFontDialog( *GPCollection->Primitive(FCurrentMaterial)->Font() );
+  FXApp->GetRender().Scene()->ShowFontDialog( GPCollection->Primitive(FCurrentMaterial)->Font() );
 }
 //..............................................................................
 

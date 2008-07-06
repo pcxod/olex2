@@ -7925,61 +7925,40 @@ void TMainForm::macTestMT(TStrObjList &Cmds, const TParamList &Options, TMacroEr
 }
 //..............................................................................
 void TMainForm::macSetFont(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  AGlScene* ascene = FXApp->GetRender().Scene();
-  TGlFont* glf = ascene->FindFont( Cmds[0] );
+  TwxGlScene* scene = (TwxGlScene*)FXApp->GetRender().Scene();
+  TGlFont* glf = scene->FindFont( Cmds[0] );
   if( glf == NULL )  {
     E.ProcessingError(__OlxSrcInfo, olxstr("undefined font ") << Cmds[0]);
     return;
   }
-  wxFont Fnt;
-  Fnt.SetNativeFontInfo( Cmds[1].u_str() );
+  TwxGlScene::MetaFont mf(Cmds[1]);
   olxstr ps(Options.FindValue("ps"));
   if( !ps.IsEmpty() )  {
     if( ps.CharAt(0) == '+' || ps.CharAt(0) == '-' )
-      Fnt.SetPointSize( Fnt.GetPointSize() + ps.ToInt() );
+      mf.SetSize( mf.GetSize() + ps.ToInt() );
     else 
-      Fnt.SetPointSize( ps.ToInt() );
+      mf.SetSize( ps.ToInt() );
   }
-  Fnt.SetUnderlined( Options.FindValue("u", Fnt.GetUnderlined()).ToBool() );
-  if( Options.Contains("w") )  {
-    olxstr weight( Options.FindValue("w") );
-    if( weight.Comparei("bold") == 0 )
-      Fnt.SetWeight( wxFONTWEIGHT_BOLD );
-    else if( weight.Comparei("light") == 0 )
-      Fnt.SetWeight( wxFONTWEIGHT_LIGHT );
-    else if( weight.Comparei("normal") == 0 )
-      Fnt.SetWeight( wxFONTWEIGHT_NORMAL );
-    else  {
-      E.ProcessingError(__OlxSourceInfo, "undefined font weiht");
-      return;
-    }
-  }
-  ascene->CreateFont(glf->GetName(), Fnt.GetNativeFontInfoDesc().c_str());
+  if( Options.Contains('i') )  mf.SetItalic( true );
+  if( Options.Contains('b') )  mf.SetBold( true );
+  scene->CreateFont(glf->GetName(), mf.GetIdString() );
 }
 
 //..............................................................................
 void TMainForm::funChooseFont(const TStrObjList &Params, TMacroError &E)  {
-  wxFontData fnt_data;
-  if( Params.Count() != 0 )  {
-    wxFont Fnt;
-    Fnt.SetNativeFontInfo( uiStr(Params[0]) );
-    fnt_data.SetInitialFont(Fnt);
-  }
-  wxFontDialog fD(this, fnt_data);
-  if( fD.ShowModal() == wxID_OK )  {
-    wxFont fnt = fD.GetFontData().GetChosenFont();
-    olxstr rv( fnt.GetNativeFontInfoDesc().c_str() );
-    E.SetRetVal( rv );
-  }
-  else  {
+  olxstr fntId(EmptyString);
+  if( !Params.IsEmpty() && (Params[0].Comparei("olex2") == 0) )
+    fntId = TwxGlScene::MetaFont::BuildOlexFontId("olex2.fnt", 12, true, false, false);
+  olxstr rv( FXApp->GetRender().Scene()->ShowFontDialog(NULL, fntId) );
+  if( rv.IsEmpty() )  {
     E.ProcessingError(__OlxSrcInfo, "operation canceled");
     return;
   }
+  E.SetRetVal( rv );
 }
 //..............................................................................
 void TMainForm::funGetFont(const TStrObjList &Params, TMacroError &E)  {
-  AGlScene* ascene = FXApp->GetRender().Scene();
-  TGlFont* glf = ascene->FindFont( Params[0] );
+  TGlFont* glf = FXApp->GetRender().Scene()->FindFont( Params[0] );
   if( glf == NULL )  {
     E.ProcessingError(__OlxSrcInfo, olxstr("undefined font ") << Params[0]);
     return;

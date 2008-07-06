@@ -39,7 +39,8 @@ public:
   virtual void ScaleFonts(double scale);
   // restores the font sizes after a call to the ScaleFonts
   virtual void RestoreFontScale();
-  virtual bool ShowFontDialog(TGlFont& glf);
+  
+  virtual olxstr ShowFontDialog(TGlFont* glf=NULL, const olxstr& fontDesc=EmptyString);
 
   void Destroy();
 
@@ -49,7 +50,24 @@ public:
   void StartDraw();
   void EndDraw();
 
-  static const olxstr OlexFontId;
+  class MetaFont {
+    bool Bold, Italic, Fixed, Underlined;
+    short Size;
+    olxstr OriginalId, FileName;
+  public:
+    MetaFont(const olxstr& fontId);
+    olxstr GetIdString() const;
+    olxstr GetFileIdString() const;
+    void SetIdString(const olxstr& idstr);
+    static bool IsOlexFont(const olxstr& fntId) {  return fntId.IsEmpty()? false : fntId.CharAt(0) == '#';  }
+    static olxstr BuildOlexFontId(const olxstr& fileName, short size, bool fixed, bool bold, bool italic);
+    DefPropC(olxstr, FileName)
+    DefPropB(Bold)
+    DefPropB(Fixed)
+    DefPropB(Italic)
+    inline bool IsUnderlined() const {  return Underlined; }
+    DefPropP(short, Size)
+  };
 };
 
 EndGxlNamespace()

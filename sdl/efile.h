@@ -87,7 +87,9 @@ public:
   static olxstr ExtractFileName(const olxstr &F);
   static olxstr ChangeFileExt(const olxstr &F, const olxstr &Extension);
   static bool ListCurrentDirEx(TFileList &Out, const olxstr &Mask, const unsigned short searchFlags);
+  static bool ListDirEx(const olxstr& dir, TFileList &Out, const olxstr &Mask, const unsigned short searchFlags);
   static bool ListCurrentDir(TStrList& Out, const olxstr &Mask, const unsigned short searchFlags);
+  static bool ListDir(const olxstr& dir, TStrList& Out, const olxstr &Mask, const unsigned short searchFlags);
   static bool ChangeDir(const olxstr &To);
   static bool MakeDir(const olxstr &Name);
   // the function forces the creation of all dirs upto the last one

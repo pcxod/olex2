@@ -308,7 +308,7 @@ bool TdlgSceneProps::Execute(const IEObject *Sender, const IEObject *Data)  {
   if( (TButton*)Sender == tbEditFont )  {
     int sel = cbFonts->GetSelection();
     if( sel == -1 )  return false;
-    FXApp->GetRender().Scene()->ShowFontDialog( *(TGlFont*)cbFonts->GetObject(sel) );
+    FXApp->GetRender().Scene()->ShowFontDialog( (TGlFont*)cbFonts->GetObject(sel) );
   }
 
   return true;
