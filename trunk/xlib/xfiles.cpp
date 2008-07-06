@@ -82,8 +82,8 @@ TXFile::TXFile(TAtomsInfo *S)  {
   AtomsInfo = S;
   FLattice = new TLattice(S);
   FAsymmUnit = &GetLattice().GetAsymmUnit();
-  TBasicApp::GetInstance()->NewActionQueue("XFILELOAD");
-  TBasicApp::GetInstance()->NewActionQueue("XFILESAVE");
+  OnFileLoad = &TBasicApp::GetInstance()->NewActionQueue("XFILELOAD");
+  OnFileSave = &TBasicApp::GetInstance()->NewActionQueue("XFILESAVE");
   FLastLoader = NULL;
 }
 //..............................................................................
@@ -121,11 +121,11 @@ void TXFile::LoadFromFile(const olxstr & FN) {
   Loader->LoadFromFile(FN);
 
   FFileName = FN;
-  TBasicApp::GetInstance()->ActionQueue("XFILELOAD")->Enter(this);
+  OnFileLoad->Enter(this);
   GetLattice().Clear(true);
   GetAsymmUnit().Assign(Loader->GetAsymmUnit());
   GetLattice().Init();
-  TBasicApp::GetInstance()->ActionQueue("XFILELOAD")->Exit(this);
+  OnFileLoad->Exit(this);
   FLastLoader = Loader;
 }
 //..............................................................................
@@ -206,7 +206,7 @@ void TXFile::SaveToFile(const olxstr & FN, bool Sort)  {
     UpdateAsymmUnit();
   }
   if( Sort )  Loader->GetAsymmUnit().Sort();
-  TBasicApp::GetInstance()->ActionQueue("XFILESAVE")->Enter(this);
+  OnFileSave->Enter(this);
   IEObject* Cause = NULL;
   try  {
     Loader->SaveToFile(FN);
@@ -215,7 +215,7 @@ void TXFile::SaveToFile(const olxstr & FN, bool Sort)  {
   catch( const TExceptionBase &exc )  {
     Cause = exc.Replicate();
   }
-  TBasicApp::GetInstance()->ActionQueue("XFILESAVE")->Exit(this);
+  OnFileSave->Exit(this);
   if( Cause != NULL )  {
     throw TFunctionFailedException(__OlxSourceInfo, Cause);
   }
@@ -231,17 +231,16 @@ IEObject* TXFile::Replicate() const  {
 }
 //..............................................................................
 void TXFile::EndUpdate()  {
-  TBasicApp::GetInstance()->ActionQueue("XFILELOAD")->Enter(this);
+  OnFileLoad->Enter(this);
   // we keep the asymmunit but clear the unitcell
   GetLattice().Clear(false);
   GetLattice().GetUnitCell().Clear();
   GetLattice().Init();
-  TBasicApp::GetInstance()->ActionQueue("XFILELOAD")->Exit(this);
+  OnFileLoad->Exit(this);
 }
-
-
-
-
+//..............................................................................
+//..............................................................................
+//..............................................................................
 void TXFile::LibGetFormula(const TStrObjList& Params, TMacroError& E)  {
   if( GetLastLoader() == NULL )  {
     E.ProcessingError(__OlxSrcInfo, "no file is loaded");

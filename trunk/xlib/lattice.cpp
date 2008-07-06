@@ -41,9 +41,8 @@ TLattice::TLattice(TAtomsInfo *Info)  {
   Network     = new TNetwork(this, NULL);
   Delta    = 0.5f;
   DeltaI    = 1.2f;
-  TBasicApp::GetInstance()->NewActionQueue("STRGEN");
-  TBasicApp::GetInstance()->NewActionQueue("STRUNIQ");
-  TBasicApp::GetInstance()->NewActionQueue("ATOMADD");
+  OnStructureGrow = &TBasicApp::GetInstance()->NewActionQueue("STRGEN");
+  OnStructureUniq = &TBasicApp::GetInstance()->NewActionQueue("STRUNIQ");
 }
 //..............................................................................
 TLattice::~TLattice()  {
@@ -280,7 +279,7 @@ void TLattice::Init()  {
 }
 //..............................................................................
 void  TLattice::Uniq(bool remEqv)  {
-  TBasicApp::GetInstance()->ActionQueue("STRUNIQ")->Enter(this);
+  OnStructureUniq->Enter(this);
 
 //  UpdateAsymmUnit();  // need to cal it here, the call in ListAsymmUnit
   // will not be executed as Atoms->Count() = 0
@@ -294,7 +293,7 @@ void  TLattice::Uniq(bool remEqv)  {
   }
   InitBody();
   Generated = false;
-  TBasicApp::GetInstance()->ActionQueue("STRUNIQ")->Exit(this);
+  OnStructureUniq->Exit(this);
 }
 //..............................................................................
 void TLattice::GenerateAtoms(const TSAtomPList& atoms, TSAtomPList& result, const TMatrixDPList& matrices)  {
@@ -321,12 +320,12 @@ void TLattice::GenerateAtoms(const TSAtomPList& atoms, TSAtomPList& result, cons
 }
 //..............................................................................
 void TLattice::GenerateWholeContent(TCAtomPList* Template)  {
-  TBasicApp::GetInstance()->ActionQueue("STRGEN")->Enter(this);
+  OnStructureGrow->Enter(this);
 //  ClearAtoms();
 //  ListAsymmUnit(*Atoms(), Template);
   Generated = false; // force the procedure
   Generate(Template, false, true);
-  TBasicApp::GetInstance()->ActionQueue("STRGEN")->Exit(this);
+  OnStructureGrow->Exit(this);
 }
 //..............................................................................
 void  TLattice::Generate(TCAtomPList* Template, bool ClearCont, bool IncludeQ)  {
@@ -377,9 +376,9 @@ void TLattice::Generate(const TVPointD& MFrom, const TVPointD& MTo, TCAtomPList*
   VFrom[0] = Round(MFrom[0]-1); VFrom[1] = Round(MFrom[1]-1); VFrom[2] = Round(MFrom[2]-1);
 
   GenerateMatrices(VFrom, VTo, MFrom, MTo);
-  TBasicApp::GetInstance()->ActionQueue("STRGEN")->Enter(this);
+  OnStructureGrow->Enter(this);
   Generate(Template, ClearCont, IncludeQ);
-  TBasicApp::GetInstance()->ActionQueue("STRGEN")->Exit(this);
+  OnStructureGrow->Exit(this);
 }
 //..............................................................................
 bool TLattice::IsExpandable(TSAtom& A) const {
@@ -399,7 +398,7 @@ void TLattice::DoGrow(const TSAtomPList& atoms, bool GrowShell, TCAtomPList* Tem
   TMatrixDList *BindingMatrices;
 
   TTypeList<int> *ToGrow;
-  TBasicApp::GetInstance()->ActionQueue("STRGEN")->Enter(this);
+  OnStructureGrow->Enter(this);
   for(int i=0; i < atoms.Count(); i++ )  {
     SA = atoms[i];
     SA->SetGrown(true);
@@ -467,7 +466,7 @@ void TLattice::DoGrow(const TSAtomPList& atoms, bool GrowShell, TCAtomPList* Tem
   Disassemble();
 
   Generated = true;
-  TBasicApp::GetInstance()->ActionQueue("STRGEN")->Exit(this);
+  OnStructureGrow->Exit(this);
 }
 //..............................................................................
 void TLattice::GrowFragments(bool GrowShells, TCAtomPList* Template)  {
@@ -520,7 +519,7 @@ void TLattice::GrowAtom(int FragId, const TMatrixD& transform)  {
     Matrices.Add( M );
   }
 
-  TBasicApp::GetInstance()->ActionQueue("STRGEN")->Enter(this);
+  OnStructureGrow->Enter(this);
 
   for( int i=0; i < GetAsymmUnit().AtomCount(); i++ )  {
     if( GetAsymmUnit().GetAtom(i).IsDeleted() )  continue;
@@ -540,7 +539,7 @@ void TLattice::GrowAtom(int FragId, const TMatrixD& transform)  {
   Disassemble();
 
   Generated = true;
-  TBasicApp::GetInstance()->ActionQueue("STRGEN")->Exit(this);
+  OnStructureGrow->Exit(this);
 }
 //..............................................................................
 void TLattice::GrowAtoms(const TSAtomPList& atoms, const TMatrixDList& matrices)  {
@@ -564,7 +563,7 @@ void TLattice::GrowAtoms(const TSAtomPList& atoms, const TMatrixDList& matrices)
     }
   }
 
-  TBasicApp::GetInstance()->ActionQueue("STRGEN")->Enter(this);
+  OnStructureGrow->Enter(this);
   Atoms.SetCapacity( Atoms.Count() + atoms.Count()*addedMatrices.Count() );
   for( int i=0; i < addedMatrices.Count(); i++ )  {
     for( int j=0; j < atoms.Count(); j++ )  {
@@ -584,7 +583,7 @@ void TLattice::GrowAtoms(const TSAtomPList& atoms, const TMatrixDList& matrices)
   Disassemble();
 
   Generated = true;
-  TBasicApp::GetInstance()->ActionQueue("STRGEN")->Exit(this);
+  OnStructureGrow->Exit(this);
 }
 //..............................................................................
 void TLattice::Grow(const TMatrixD& transform)  {
@@ -604,7 +603,7 @@ void TLattice::Grow(const TMatrixD& transform)  {
     Matrices.Add( M );
   }
 
-  TBasicApp::GetInstance()->ActionQueue("STRGEN")->Enter(this);
+  OnStructureGrow->Enter(this);
   Atoms.SetCapacity( Atoms.Count() + GetAsymmUnit().AtomCount() );
   for( int i=0; i < GetAsymmUnit().AtomCount(); i++ )  {
     if( GetAsymmUnit().GetAtom(i).IsDeleted() )  continue;
@@ -622,7 +621,7 @@ void TLattice::Grow(const TMatrixD& transform)  {
   Disassemble();
 
   Generated = true;
-  TBasicApp::GetInstance()->ActionQueue("STRGEN")->Exit(this);
+  OnStructureGrow->Exit(this);
 }
 //..............................................................................
 TSAtom* TLattice::FindSAtom(const olxstr &Label) const {
@@ -903,7 +902,7 @@ void TLattice::MoveFragmentG(const TVPointD& to, TSAtom& fragAtom)  {
 /* restore atom centres if were changed by some other procedure */
     RestoreCoordinates();
     Generated = true;
-    TBasicApp::GetInstance()->ActionQueue("STRGEN")->Enter(this);
+    OnStructureGrow->Enter(this);
     Matrices.Add(m);
     for(int i=0; i < fragAtom.GetNetwork().NodeCount(); i++ )  {
       TSAtom& SA = fragAtom.GetNetwork().Node(i);
@@ -923,7 +922,7 @@ void TLattice::MoveFragmentG(const TVPointD& to, TSAtom& fragAtom)  {
 
     Disassemble();
 
-    TBasicApp::GetInstance()->ActionQueue("STRGEN")->Exit(this);
+    OnStructureGrow->Exit(this);
   }
   else
   {
@@ -939,7 +938,7 @@ void TLattice::MoveFragmentG(TSAtom& to, TSAtom& fragAtom)
 /* restore atom centres if were changed by some other procedure */
     RestoreCoordinates();
     Generated = true;
-    TBasicApp::GetInstance()->ActionQueue("STRGEN")->Enter(this);
+    OnStructureGrow->Enter(this);
     Matrices.Add(m);
     TSAtomPList atoms;
     if( to.CAtom().GetFragmentId() == fragAtom.CAtom().GetFragmentId() )
@@ -966,7 +965,7 @@ void TLattice::MoveFragmentG(TSAtom& to, TSAtom& fragAtom)
 
     Disassemble();
 
-    TBasicApp::GetInstance()->ActionQueue("STRGEN")->Exit(this);
+    OnStructureGrow->Exit(this);
   }
   else
   {
@@ -977,7 +976,7 @@ void TLattice::MoveFragmentG(TSAtom& to, TSAtom& fragAtom)
 void TLattice::MoveToCenter()  {
   if( Generated )  {
     TBasicApp::GetLog().Error("Please note that asymetric unit will not be updated: the structure is grown");
-    TBasicApp::GetInstance()->ActionQueue("STRGEN")->Enter(this);
+    OnStructureGrow->Enter(this);
   }
 
   TMatrixD abc2xyz( GetAsymmUnit().GetCellToCartesian()),
@@ -1034,7 +1033,7 @@ void TLattice::MoveToCenter()  {
   else  {
     RestoreCoordinates();
     Disassemble();
-    TBasicApp::GetInstance()->ActionQueue("STRGEN")->Exit(this);
+    OnStructureGrow->Exit(this);
   }
 }
 //..............................................................................
@@ -1043,7 +1042,7 @@ void TLattice::Compaq()  {
   if( Generated )  {
     TBasicApp::GetLog().Error("Please note that asymetric unit will not be updated: the structure is grown");
     RestoreCoordinates();
-    TBasicApp::GetInstance()->ActionQueue("STRGEN")->Enter(this);
+    OnStructureGrow->Enter(this);
   }
   TVPointD molCenter, acenter;
   TVPointD offset;
@@ -1116,7 +1115,7 @@ void TLattice::Compaq()  {
   if( !Generated )  Uniq();
   else  {
     Disassemble();
-    TBasicApp::GetInstance()->ActionQueue("STRGEN")->Exit(this);
+    OnStructureGrow->Exit(this);
   }
 }
 //..............................................................................
@@ -1681,10 +1680,10 @@ void TLattice::SetAnis( const TCAtomPList& atoms, bool anis )  {
          atoms[i]->UpdateEllp( ee );
     }
   }
-  TBasicApp::GetInstance()->ActionQueue("STRUNIQ")->Enter(this);
+  OnStructureUniq->Enter(this);
   GetUnitCell().ClearEllipsoids();
   Init();
-  TBasicApp::GetInstance()->ActionQueue("STRUNIQ")->Exit(this);
+  OnStructureUniq->Exit(this);
 }
 //..............................................................................
 //..............................................................................
