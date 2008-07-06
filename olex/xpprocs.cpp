@@ -1063,17 +1063,14 @@ void TMainForm::macIF(TStrObjList &Cmds, const TParamList &Options, TMacroError 
   }
 }
 //..............................................................................
-void TMainForm::macBasis(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)
-{
+void TMainForm::macBasis(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
 // the events are handled in void TMainForm::CellVChange()
-  if( !Cmds.Count() )
-  {
+  if( Cmds.IsEmpty() )  {
 //    TStateChange sc(prsBasisVis, !FXApp->BasisVisible());
     FXApp->SetBasisVisible( !FXApp->IsBasisVisible() );
 //    OnStateChange->Execute((AEventsDispatcher*)this, &sc);
   }
-  else
-  {
+  else  {
     bool status = Cmds[0].ToBool();
 //    TStateChange sc(prsBasisVis, status );
     FXApp->SetBasisVisible( status );

@@ -19,9 +19,6 @@
 #include "efile.h"
 #include "bitarray.h"
 
-#include "wx/zipstrm.h"
-#include "wx/wfstream.h"
-
 //#include "ft2build.h"  
 //#include FT_FREETYPE_H
 //#include FT_GLYPH_H
@@ -30,9 +27,72 @@
 //---------------------------------------------------------------------------
 #if defined(__WXWIDGETS__)
 
+#include "wx/zipstrm.h"
+#include "wx/wfstream.h"
+
+#include "wx/fontdlg.h"
+#include "wx/dialog.h"
+#include "wx/combobox.h"
+#include "wx/checkbox.h"
+
 const int TwxGlScene_LastFontSize = 72;
 const int TwxGlScene_MaxFontSize = 36;
 const int TwxGlScene_MinFontSize = 10;
+
+class dlgEditOlexFont: public wxDialog  {
+protected:
+  wxCheckBox* cbFixed, *cbBold, *cbItalic;
+  wxComboBox* cbSize;
+public:
+  dlgEditOlexFont(const olxstr& fntId) : wxDialog(NULL, -1, wxT("Olex2 Font") )  {
+    olxstr fontId(fntId.SubStringFrom(TwxGlScene::OlexFontId.Length()) );
+    wxBoxSizer *ASizer = new wxBoxSizer( wxHORIZONTAL );
+    cbSize = new wxComboBox(this, -1, fontId.SubStringFrom(4).u_str());
+      ASizer->Add( cbSize, 0, wxALL, 5);
+    cbFixed = new wxCheckBox(this, -1, wxT("Fixed width"));
+    cbFixed->SetValue( fontId.CharAt(0) == 'f' );
+      ASizer->Add( cbFixed, 0, wxALL, 5);
+
+    wxBoxSizer *BSizer = new wxBoxSizer( wxHORIZONTAL );
+    cbBold = new wxCheckBox(this, -1, wxT("Bold"));
+    cbBold->SetValue( fontId.IndexOf('b') != -1 );
+      BSizer->Add( cbBold, 0, wxALL, 5);
+    cbItalic = new wxCheckBox(this, -1, wxT("Italic"));
+    cbItalic->SetValue( fontId.IndexOf('i') != -1 );
+      BSizer->Add( cbItalic, 0, wxALL, 5);
+
+    wxBoxSizer *ButtonsSizer = new wxBoxSizer( wxHORIZONTAL );
+    ButtonsSizer->Add( new wxButton( this, wxID_OK, wxT("OK") ), 0, wxALL, 1);
+    ButtonsSizer->Add( new wxButton( this, wxID_CANCEL, wxT("Cancel") ), 0, wxALL, 1);
+    ButtonsSizer->Add( new wxButton( this, wxID_HELP, wxT("Help") ),     0, wxALL, 1);
+
+    wxBoxSizer *TopSizer = new wxBoxSizer( wxVERTICAL );
+    TopSizer->Add( ASizer,     0, wxALL, 1);
+    TopSizer->Add( BSizer,     0, wxALL, 1);
+    TopSizer->Add( ButtonsSizer,     0, wxALL, 1);
+
+    TopSizer->SetSizeHints( this );   // set size hints to honour minimum size
+    SetSizer(TopSizer);
+    Center();
+  }
+  olxstr GetIdString() const {
+    olxstr prefix( TwxGlScene::OlexFontId );
+    prefix << (cbFixed->IsChecked() ? "f" : "n" );
+    if( cbItalic->IsChecked() )  {
+      prefix << "i";
+      if( cbBold->IsChecked() )
+        prefix << "b";
+    }
+    else if( cbBold->IsChecked() )
+      prefix << "rb";
+    else
+      prefix << "r";
+    prefix.Format(4, true, '_');
+    return prefix << cbSize->GetValue().c_str();
+  }
+
+};
+
 
 const olxstr TwxGlScene::OlexFontId("#olex2.fnt:");
 
@@ -392,5 +452,29 @@ void TwxGlScene::RestoreFontScale()  {
   FontSizes.Clear();
 }
 //..............................................................................
+bool TwxGlScene::ShowFontDialog(TGlFont& glf)  {
+  bool res = false;
+  if( glf.IdString().StartsFrom(OlexFontId) )  {
+    dlgEditOlexFont* dlg = new dlgEditOlexFont( glf.IdString() );
+    if( dlg->ShowModal() == wxID_OK )  {
+      CreateFont( glf.GetName(), dlg->GetIdString() );
+      res = true;
+    }
+    dlg->Destroy();
+  }
+  else  {
+    wxFontData fnt_data;
+    wxFont Fnt;
+    Fnt.SetNativeFontInfo( glf.IdString().u_str() );
+    fnt_data.SetInitialFont(Fnt);
+    wxFontDialog fD(NULL, fnt_data);
+    if( fD.ShowModal() == wxID_OK )  {
+      Fnt = fD.GetFontData().GetChosenFont();
+      CreateFont(glf.GetName(), Fnt.GetNativeFontInfoDesc().c_str());
+      res = true;
+    }
+  }
+  return res;
+}
 #endif // __WXWIDGETS__
 

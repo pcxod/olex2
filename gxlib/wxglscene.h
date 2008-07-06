@@ -23,7 +23,6 @@ class TwxGlScene: public AGlScene  {
 private:
   olxstr FontsFolder;
   TIntList FontSizes;
-  static const olxstr OlexFontId;
 protected:
   //olxstr ComposeIdString();
 public:
@@ -40,6 +39,8 @@ public:
   virtual void ScaleFonts(double scale);
   // restores the font sizes after a call to the ScaleFonts
   virtual void RestoreFontScale();
+  virtual bool ShowFontDialog(TGlFont& glf);
+
   void Destroy();
 
   void StartSelect(int x, int y, GLuint *Bf);
@@ -47,6 +48,8 @@ public:
 
   void StartDraw();
   void EndDraw();
+
+  static const olxstr OlexFontId;
 };
 
 EndGxlNamespace()

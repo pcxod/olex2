@@ -399,16 +399,7 @@ void TdlgMatProp::OnPaste(wxCommandEvent& event)  {
 }
 //..............................................................................
 void TdlgMatProp::OnEditFont(wxCommandEvent& event)  {
-  wxFontData fnt_data;
-  wxFont Fnt;
-  Fnt.SetNativeFontInfo( uiStr(GPCollection->Primitive(FCurrentMaterial)->Font()->IdString()) );
-  fnt_data.SetInitialFont(Fnt);
-  wxFontDialog fD(this, fnt_data);
-  if( fD.ShowModal() == wxID_OK )  {
-    Fnt = fD.GetFontData().GetChosenFont();
-    FXApp->GetRender().Scene()->CreateFont(GPCollection->Primitive(FCurrentMaterial)->Font()->GetName(), 
-      Fnt.GetNativeFontInfoDesc().c_str());
-  }
+  FXApp->GetRender().Scene()->ShowFontDialog( *GPCollection->Primitive(FCurrentMaterial)->Font() );
 }
 //..............................................................................
 
