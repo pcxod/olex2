@@ -9,9 +9,8 @@
 
 UseEsdlNamespace()
 
-const int TEBitArray::IntBitSize = sizeof(uint32_t)*8;
 
-TEBitArray::TEBitArray()  {  FData = NULL;  FCount = FIntCount = 0;  }
+TEBitArray::TEBitArray()  {  FData = NULL;  FCount = FCharCount = 0;  }
 //..............................................................................
 TEBitArray::TEBitArray(int size)  {
   FData = NULL;
@@ -20,15 +19,26 @@ TEBitArray::TEBitArray(int size)  {
 //..............................................................................
 TEBitArray::TEBitArray( const TEBitArray& arr)  {
   FCount = arr.FCount;
-  FIntCount = arr.FIntCount;
-  FData = new uint32_t [FIntCount];
-  memcpy(FData, arr.FData, FIntCount*sizeof(uint32_t));
+  FCharCount = arr.FCharCount;
+  if( arr.FData != NULL )  {
+    FData = new unsigned char [FCharCount];
+    memcpy(FData, arr.FData, FCharCount);
+  }
+  else
+    FData = NULL;
 }
 //..............................................................................
-TEBitArray::TEBitArray(const char* data, size_t size)  {
-  FData = NULL;
-  SetSize( size*8 );
-  memcpy(FData, data, size);
+TEBitArray::TEBitArray(unsigned char* data, size_t size, bool own)  {
+  if( own )  {
+    FData = data;
+    FCharCount = size;
+    FCount = size*8;
+  }
+  else  {
+    FData = NULL;
+    SetSize( size*8 );
+    memcpy(FData, data, size);
+  }
 }
 //..............................................................................
 TEBitArray::~TEBitArray()  {  delete [] FData;  }
@@ -36,18 +46,20 @@ TEBitArray::~TEBitArray()  {  delete [] FData;  }
 TEBitArray& TEBitArray::operator = (const TEBitArray& arr )  {
   Clear();
   FCount = arr.FCount;
-  FIntCount = arr.FIntCount;
-  FData = new uint32_t [FIntCount];
-  memcpy(FData, arr.FData, FIntCount*sizeof(uint32_t));
+  FCharCount = arr.FCharCount;
+  if( arr.FData != NULL )  {
+    FData = new unsigned char [FCharCount];
+    memcpy(FData, arr.FData, FCharCount);
+  }
   return *this;
 }
 //..............................................................................
 void TEBitArray::SetSize(int newSize)  {
   if( FData )  delete [] FData;
   FCount = newSize;
-  FIntCount = newSize/IntBitSize + 1;
-  FData = new uint32_t [FIntCount];
-  memset(FData, 0, FIntCount*sizeof(uint32_t) );
+  FCharCount = newSize/8 + 1;
+  FData = new unsigned char [FCharCount];
+  memset(FData, 0, FCharCount );
 }
 //..............................................................................
 void TEBitArray::Clear()  {
@@ -55,26 +67,33 @@ void TEBitArray::Clear()  {
     delete [] FData;
     FData = NULL;
   }
-  FCount = FIntCount = 0;
+  FCount = FCharCount = 0;
+}
+//..............................................................................
+void TEBitArray::SetAll(bool v)  {
+  if( FData == NULL )  return;
+  memset(FData, v ? 0xff : 0, FCharCount );
 }
 //..............................................................................
 void TEBitArray::operator << (IInputStream& in)  {
   Clear();
   in.Read(&FCount, sizeof(FCount));
-  FIntCount = FCount/IntBitSize + 1;
-  FData = new uint32_t [FIntCount];
-  in.Read(FData, FIntCount*sizeof(uint32_t));
+  if( FCount != 0 )  {
+    FCharCount = FCount/8 + 1;
+    FData = new unsigned char [FCharCount];
+    in.Read(FData, FCharCount);
+  }
 }
 //..............................................................................
 void TEBitArray::operator >> (IOutputStream& out) const  {
   out.Write(&FCount, sizeof(FCount) );
   if( FCount != 0 )
-    out.Write(FData, FIntCount*sizeof(uint32_t));
+    out.Write(FData, FCharCount);
 }
 //..............................................................................
 bool TEBitArray::operator == (const TEBitArray& arr )  const  {
   if( arr.Count() != Count() )  return false;
-  for( uint32_t i=0; i < FIntCount; i++ )
+  for( uint32_t i=0; i < FCharCount; i++ )
     if( FData[i] != arr.FData[i] )  return false;
   return true;
 }

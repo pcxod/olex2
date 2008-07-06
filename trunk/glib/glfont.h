@@ -5,6 +5,7 @@
 #include "glmaterial.h"
 #include "elist.h"
 #include "datastream.h"
+#include "bitarray.h"
 
 BeginGlNamespace()
 // font attributes
@@ -37,6 +38,7 @@ public:
   TGlMaterial FMaterial;
 protected:
   olxstr FIdString, Name;
+  bool AnalyseBitArray(const TEBitArray& ba, size_t Char, int width, int height);
 public:
   TGlFont(const olxstr& name);
   virtual ~TGlFont();
@@ -52,7 +54,9 @@ public:
   int TextHeight(const olxstr &Text=EmptyString);
   bool CharFromRGBArray(size_t Char, unsigned char *RGBData, int width, int height);
 
-  void CreateGlyphs(bool FixedWidth, short Width, short Height);
+  void CreateGlyphsFromRGBArray(bool FixedWidth, short Width, short Height);
+  // much faster version
+  void CreateGlyphs(const TEBitArray& ba, bool FixedWidth, short Width, short Height);
 
   void CreateTextures(short Width, short Height);
   inline bool HasTExtures() const {  return Textures != NULL;  }

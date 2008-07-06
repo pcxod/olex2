@@ -610,6 +610,22 @@ bool TEFile::ListCurrentDir(TStrList &Out, const olxstr &Mask, const unsigned sh
 }
 #endif
 //..............................................................................
+bool TEFile::ListDirEx(const olxstr& dir, TFileList &Out, const olxstr &Mask, const unsigned short sF)  {
+  olxstr cd( TEFile::CurrentDir() );
+  TEFile::ChangeDir(dir);
+  bool res = ListCurrentDirEx(Out, Mask, sF);
+  TEFile::ChangeDir(cd);
+  return res;
+}
+//..............................................................................
+bool TEFile::ListDir(const olxstr& dir, TStrList &Out, const olxstr &Mask, const unsigned short sF)  {
+  olxstr cd( TEFile::CurrentDir() );
+  TEFile::ChangeDir(dir);
+  bool res = ListCurrentDir(Out, Mask, sF);
+  TEFile::ChangeDir(cd);
+  return res;
+}
+//..............................................................................
 bool TEFile::SetFileTimes(const olxstr& fileName, long AccTime, long ModTime)  {
   struct UTIMBUF tb;
   tb.actime = AccTime;

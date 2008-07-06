@@ -774,8 +774,7 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual accupancy\
 "Internal procedure" );
   this_InitMacroD(TestMT, EmptyString, fpAny,
 "Testing multithreading" );
-  this_InitMacroD(SetFont, "ps-point size&;w-weight[normal,light,bold]&;u-underlined", 
-    fpAny^(fpNone|fpOne),
+  this_InitMacroD(SetFont, "ps-point size&;b-bold&;i-italic", fpAny^(fpNone|fpOne),
 "Sets font for specified control" );
   this_InitMacroD(EditMaterial, EmptyString, fpOne,
 "Brighs up material properties dialog for specified object" );

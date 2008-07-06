@@ -152,7 +152,7 @@ bool TGlFont::CharFromRGBArray(size_t Char, unsigned char *RGBData, int width, i
   }
 }
 //..............................................................................
-void TGlFont::CreateGlyphs(bool FW, short Width, short Height)  {
+void TGlFont::CreateGlyphsFromRGBArray(bool FW, short Width, short Height)  {
   if( Width < FMaxWidth || Width < 0 ||
       Height < FMaxHeight || Height < 0 ||
       FMaxWidth <=0 || FMaxHeight <=0 )
@@ -200,10 +200,100 @@ void TGlFont::CreateGlyphs(bool FW, short Width, short Height)  {
 
       glEndList();
       cs->Top = 0;                 cs->Left = 0;
-      cs->Right = FCharOffset*5;   cs->Top = FMaxHeight;
+      cs->Right = FCharOffset*5;   cs->Bottom = FMaxHeight;
     }
   }
   delete [] BmpData;
+}
+//..............................................................................
+bool TGlFont::AnalyseBitArray(const TEBitArray& ba, size_t Char, int width, int height)  {
+  TFontCharSize *cs = CharSizes[Char];
+  int Leftmost = -1, Rightmost = -1, Bottommost=-1, Topmost = -1;
+  const int off = width*height*Char;
+  unsigned char background = 0;
+  for( int i=0; i < width; i++ )  {
+    for( int j=0; j < height; j++ )  {
+      if( ba[off+j*width+i] )  {  Leftmost = i;  break;  }
+    }
+    if( Leftmost >= 0 )  break;
+  }
+  for( int i=width-1; i >=0; i-- )  {
+    for( int j=0; j < height; j++ )  {
+      if( ba[off+j*width+i] )  {  Rightmost = i;  break;  }
+    }
+    if( Rightmost >= 0 )  break;
+  }
+  for( int i=0; i < height; i++ )  {
+    for( int j=0; j < width; j++ )  {
+      if( ba[off+i*width+j] )  {  Topmost = i;  break;  }
+    }
+    if( Topmost >= 0 )  break;
+  }
+  for( int i=height-1; i >=0; i-- )  {
+    for( int j=0; j < width; j++ )  {
+      if( ba[off+i*width+j] )  {  Bottommost = i;  break;  }
+    }
+    if( Bottommost >= 0 )  break;
+  }
+  cs->Top = Topmost;
+  cs->Left = Leftmost;
+  cs->Right = Rightmost;
+  cs->Bottom = Bottommost;
+  cs->Background = background;
+  cs->Data  = NULL;
+  if( Topmost >=0 && Leftmost >=0 && Rightmost >=0 && Bottommost >=0 )  {
+    int ind = Bottommost;
+    if( ind > FMaxHeight )  FMaxHeight = ind;
+    ind = Rightmost - Leftmost;
+    if( ind > FMaxWidth )   FMaxWidth  = ind;
+    if( Leftmost < FLeftmost )  FLeftmost = Leftmost;
+    if( Topmost < FTopmost )  FTopmost = Topmost;
+    return true;
+  }
+  return false;
+}
+//..............................................................................
+void TGlFont::CreateGlyphs(const TEBitArray& ba, bool fixedWidth, short w, short h)  {
+  for( int i=0; i < 256; i++ )
+    AnalyseBitArray(ba, i, w, h);
+  SetBit(fixedWidth, FFlags, sglfFixedWidth);
+
+  int BWidth = (FMaxWidth/8+1)*8;
+  int BHeight = FMaxHeight+1;
+  glPixelStorei(GL_UNPACK_ALIGNMENT, 1);  // byte alignment
+  unsigned char* bf = new unsigned char[BWidth*BHeight];
+  for( int i=0; i < 256; i++ )  {
+    TFontCharSize* cs = CharSize(i);
+    const int off = i*w*h;
+    memset(bf, 0, BWidth*BHeight);
+    if( cs->Left > 0 || cs->Bottom > 0 )  {  // check if bitmap is not empty
+      for( int j=cs->Left; j <= cs->Right; j++ )  {
+        for( int k=cs->Top; k <= cs->Bottom; k++ )  {
+          int ind = off + k*w + j;
+          if( ba[ind] ) 
+            bf[((BHeight-k)*BWidth + (j+FLeftmost))/8] |= (0x01 << (7-(j+FLeftmost)%8));
+        }
+      }
+      glNewList(FFontBase +i, GL_COMPILE_AND_EXECUTE);
+      if( fixedWidth )
+        glBitmap(BWidth, BHeight, 0.0, 0.0, (float)(FMaxWidth), 0.0, bf);
+      else
+        glBitmap(BWidth, BHeight, 0.0, 0.0, (float)(cs->Right + FCharOffset), 0.0, bf);
+      glEndList();
+    }
+    else  {  // an empty character as a space char
+      glNewList(FFontBase +i, GL_COMPILE_AND_EXECUTE);
+      if( fixedWidth )
+        glBitmap(BWidth, BHeight, 0.0, 0.0, (float)(FMaxWidth), 0.0, bf);
+      else
+        glBitmap(olx_min(BWidth, FCharOffset*3), BHeight, 0.0, 0.0, 
+           (float)(olx_min(BWidth, FCharOffset*3)+FCharOffset), 0.0, bf);
+      glEndList();
+      cs->Top = 0;                 cs->Left = 0;
+      cs->Right = FCharOffset*5;   cs->Bottom = FMaxHeight;
+    }
+  }
+  delete [] bf;
 }
 //..............................................................................
 //void TGlFont::CreateGlyphs(bool FW, short Width, short Height)  {

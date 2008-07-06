@@ -33,7 +33,11 @@ public:
   // restores the font sizes after a call to the ScaleFonts
   virtual void RestoreFontScale() = 0;
   virtual void Destroy();
-  virtual bool ShowFontDialog(TGlFont& glf) = 0;
+  /* if the font is provided, it is replaced upon successful dialog.showmodal, otherwise
+  it works as font chooser (default font-fontDescription). Returned string is the font Id string, 
+  or empty string if the dialog is canceled  */
+  virtual olxstr ShowFontDialog(TGlFont* glf = NULL, 
+    const olxstr& fontDescription = EmptyString) = 0;
   virtual void StartSelect(int x, int y, GLuint *Bf);
   virtual void EndSelect();
 
