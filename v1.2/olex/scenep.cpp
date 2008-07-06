@@ -308,25 +308,7 @@ bool TdlgSceneProps::Execute(const IEObject *Sender, const IEObject *Data)  {
   if( (TButton*)Sender == tbEditFont )  {
     int sel = cbFonts->GetSelection();
     if( sel == -1 )  return false;
-    TGlFont* glF = (TGlFont*)cbFonts->GetObject(sel);
-    wxFontData fnt_data;
-    wxFont Fnt;
-    Fnt.SetNativeFontInfo( uiStr(glF->IdString()));
-    wxColor Color( (int)glF->Material().AmbientF[0]*255,
-                   (int)glF->Material().AmbientF[1]*255,
-                   (int)glF->Material().AmbientF[2]*255);
-    fnt_data.SetInitialFont(Fnt);
-    fnt_data.SetColour(Color);
-    wxFontDialog fD(this, fnt_data);
-    if( fD.ShowModal() == wxID_OK )  {
-      wxFont fnt = fD.GetFontData().GetChosenFont();
-      FXApp->GetRender().Scene()->CreateFont(glF->GetName(), fnt.GetNativeFontInfoDesc().c_str() );
-      Color = fD.GetFontData().GetColour();
-      XColor[0] = (float)Color.Red()/255;
-      XColor[1] = (float)Color.Green()/255;
-      XColor[2] = (float)Color.Blue()/255;
-     glF->Material().AmbientF = XColor;
-    }
+    FXApp->GetRender().Scene()->ShowFontDialog( *(TGlFont*)cbFonts->GetObject(sel) );
   }
 
   return true;

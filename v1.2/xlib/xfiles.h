@@ -34,9 +34,10 @@ protected:
   TBasicCFile *FLastLoader;
   class TAsymmUnit *FAsymmUnit; // just a pointer to FLAttice->AsymmUnit
 public:
-
   TXFile(TAtomsInfo *S);
   virtual ~TXFile();
+
+  TActionQueue* OnFileLoad, *OnFileSave;
 
   TAtomsInfo& GetAtomsInfo()                 const {  return *AtomsInfo;  }
   inline TLattice& GetLattice()              const {  return *FLattice;  }

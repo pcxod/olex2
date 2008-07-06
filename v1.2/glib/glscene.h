@@ -33,7 +33,7 @@ public:
   // restores the font sizes after a call to the ScaleFonts
   virtual void RestoreFontScale() = 0;
   virtual void Destroy();
-
+  virtual bool ShowFontDialog(TGlFont& glf) = 0;
   virtual void StartSelect(int x, int y, GLuint *Bf);
   virtual void EndSelect();
 

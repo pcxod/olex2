@@ -225,9 +225,9 @@ TGXApp::TGXApp(const olxstr &FileName):TXApp(FileName)  {
   FXGrid = new TXGrid("XGrid", this);
 
   xappXFileLoad *P = new xappXFileLoad(this);
-  Actions().FindQueue("XFILELOAD")->Add(P);
-  Actions().FindQueue("STRGEN")->Add(P);
-  Actions().FindQueue("STRUNIQ")->Add(P);
+  XFile().GetLattice().OnStructureGrow->Add(P);
+  XFile().GetLattice().OnStructureUniq->Add(P);
+  XFile().OnFileLoad->Add(P);
 
   OnGraphicsVisible = &NewActionQueue("GRVISIBLE");
   OnFragmentVisible = &NewActionQueue("FRVISIBLE");

@@ -61,6 +61,8 @@ public:
   TLattice(TAtomsInfo *Info);
   virtual ~TLattice();
 
+  TActionQueue* OnStructureGrow, *OnStructureUniq;
+
   // this is does not have any usefull data - just for functions call!!!
   inline TNetwork& GetNetwork()  const  {  return *Network; }
 
