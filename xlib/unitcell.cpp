@@ -832,7 +832,8 @@ void TUnitCell::GenereteAtomCoordinates(TTypeList< AnAssociation2<TVPointD,TCAto
   list.Pack();
 }
 //..............................................................................
-void TUnitCell::BuildStructureMap( TArray3D<short>& map, double delta )  {
+void TUnitCell::BuildStructureMap( TArray3D<short>& map, double delta, short val, 
+                                  long* structurePoints )  {
 
   TTypeList< AnAssociation2<TVPointD,TCAtom*> > allAtoms;
   TVPointD center, center1;
@@ -891,7 +892,7 @@ void TUnitCell::BuildStructureMap( TArray3D<short>& map, double delta )  {
             if( center[m] < 0 )        center[m] += dim[m];
             if( center[m] >= dim[m] )  center[m] -= dim[m];
           }
-          map.Data[(int)center[0]][(int)center[1]][(int)center[2]] = 1;
+          map.Data[(int)center[0]][(int)center[1]][(int)center[2]] = val;
           // 2.-++
           center = center1;
           center[0] -= j;  center[1] += k;  center[2] += l;
@@ -899,7 +900,7 @@ void TUnitCell::BuildStructureMap( TArray3D<short>& map, double delta )  {
             if( center[m] < 0 )        center[m] += dim[m];
             if( center[m] >= dim[m] )  center[m] -= dim[m];
           }
-          map.Data[(int)center[0]][(int)center[1]][(int)center[2]] = 1;
+          map.Data[(int)center[0]][(int)center[1]][(int)center[2]] = val;
           // 3.+-+
           center = center1;
           center[0] += j;  center[1] -= k;  center[2] += l;
@@ -907,7 +908,7 @@ void TUnitCell::BuildStructureMap( TArray3D<short>& map, double delta )  {
             if( center[m] < 0 )        center[m] += dim[m];
             if( center[m] >= dim[m] )  center[m] -= dim[m];
           }
-          map.Data[(int)center[0]][(int)center[1]][(int)center[2]] = 1;
+          map.Data[(int)center[0]][(int)center[1]][(int)center[2]] = val;
           // 4.++-
           center = center1;
           center[0] += j;  center[1] += k;  center[2] -= l;
@@ -915,7 +916,7 @@ void TUnitCell::BuildStructureMap( TArray3D<short>& map, double delta )  {
             if( center[m] < 0 )        center[m] += dim[m];
             if( center[m] >= dim[m] )  center[m] -= dim[m];
           }
-          map.Data[(int)center[0]][(int)center[1]][(int)center[2]] = 1;
+          map.Data[(int)center[0]][(int)center[1]][(int)center[2]] = val;
           // 5.--+
           center = center1;
           center[0] -= j;  center[1] -= k;  center[2] += l;
@@ -923,7 +924,7 @@ void TUnitCell::BuildStructureMap( TArray3D<short>& map, double delta )  {
             if( center[m] < 0 )        center[m] += dim[m];
             if( center[m] >= dim[m] )  center[m] -= dim[m];
           }
-          map.Data[(int)center[0]][(int)center[1]][(int)center[2]] = 1;
+          map.Data[(int)center[0]][(int)center[1]][(int)center[2]] = val;
           // 6.-+-
           center = center1;
           center[0] -= j;  center[1] += k;  center[2] -= l;
@@ -931,7 +932,7 @@ void TUnitCell::BuildStructureMap( TArray3D<short>& map, double delta )  {
             if( center[m] < 0 )        center[m] += dim[m];
             if( center[m] >= dim[m] )  center[m] -= dim[m];
           }
-          map.Data[(int)center[0]][(int)center[1]][(int)center[2]] = 1;
+          map.Data[(int)center[0]][(int)center[1]][(int)center[2]] = val;
           // 7.+--
           center = center1;
           center[0] += j;  center[1] -= k;  center[2] -= l;
@@ -939,7 +940,7 @@ void TUnitCell::BuildStructureMap( TArray3D<short>& map, double delta )  {
             if( center[m] < 0 )        center[m] += dim[m];
             if( center[m] >= dim[m] )  center[m] -= dim[m];
           }
-          map.Data[(int)center[0]][(int)center[1]][(int)center[2]] = 1;
+          map.Data[(int)center[0]][(int)center[1]][(int)center[2]] = val;
           // 8.---
           center = center1;
           center[0] -= j;  center[1] -= k;  center[2] -= l;
@@ -947,11 +948,23 @@ void TUnitCell::BuildStructureMap( TArray3D<short>& map, double delta )  {
             if( center[m] < 0 )        center[m] += dim[m];
             if( center[m] >= dim[m] )  center[m] -= dim[m];
           }
-          map.Data[(int)center[0]][(int)center[1]][(int)center[2]] = 1;
+          map.Data[(int)center[0]][(int)center[1]][(int)center[2]] = val;
         }
       }
     }
   }
+  if( structurePoints != NULL )  {
+  long sp = 0;
+  int mapX = map.Length1(), mapY = map.Length2(), mapZ = map.Length3();
+  for(int i=0; i < mapX; i++ )
+    for(int j=0; j < mapY; j++ )
+      for(int k=0; k < mapZ; k++ )
+        if( map.Data[i][j][k] == val )  {
+          sp ++;
+        }
+    *structurePoints = sp;
+  }
+
   for( int i=0; i < scatterers.Count(); i++ )
     delete scatterers.Object(i);
 }

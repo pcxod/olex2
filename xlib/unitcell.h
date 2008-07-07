@@ -75,9 +75,10 @@ public:
   static int GetMatrixMultiplier(short Latt);
   /* This function creates a map of the unit cell with provided partioning.
   It uses Van-der-Waals atomic radii and adds delta to it. The grid points
-  belonging to atoms have value '1', the others - '0'
+  belonging to atoms have value 'value', the others - '0'
+  Returns the number of grid points occupied by the structure to structurePoinst if no NULL
   */
-  void BuildStructureMap( TArray3D<short>& map, double delta );
+  void BuildStructureMap( TArray3D<short>& map, double delta, short value, long* structurePoints );
   void GenereteAtomCoordinates(TTypeList< AnAssociation2<TVPointD,TCAtom*> >& list, bool IncludeH) const;
   // returns true if the atom overlaps with another atom in the unit cell
   bool DoesOverlap(const TCAtom& ca, double R) const;

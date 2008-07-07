@@ -4512,63 +4512,14 @@ bool InvestigateVoid(int x, int y, int z, TArray3D<short>& map, T3DIndexList& po
 void TMainForm::macCalcVoid(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   double surfdis = Options.FindValue("d", "0.25").ToDouble();
   bool invert = Options.Contains("i");
-  int MaxLevel = 0;
   int mapX = 100, mapY = 100, mapZ = 100;
   FXApp->XGrid().InitGrid(mapX, mapY, mapZ);
   double mapVol = mapX*mapY*mapZ;
   TArray3D<short> map(0, mapX-1, 0, mapY-1, 0, mapZ-1);
   short*** D = map.Data;
-  FXApp->XFile().GetLattice().GetUnitCell().BuildStructureMap(map, surfdis);
-  double vol = FXApp->XFile().GetLattice().GetUnitCell().CalcVolume();
   long structureGridPoints = 0;
-  for(int i=0; i < mapX; i++ )
-    for(int j=0; j < mapY; j++ )
-      for(int k=0; k < mapZ; k++ )
-        if( D[i][j][k] != 0 )  {
-          D[i][j][k] = -101;
-          structureGridPoints ++;
-        }
-  int level = 0;
-  while( true )  {
-    bool levelUsed = false;
-    for(int i=0; i < mapX; i++ )  {
-      for(int j=0; j < mapY; j++ )  {
-        for(int k=0; k < mapZ; k++ )  {
-          // neigbouring points analysis
-          bool inside = true;
-          for(int ii = -1; ii <= 1; ii++)  {
-            for(int jj = -1; jj <= 1; jj++)  {
-              for(int kk = -1; kk <= 1; kk++)  {
-                int iind = i+ii, jind = j+jj, kind = k+kk;
-                // index "rotation" step
-                if( iind < 0 )  iind += mapX;
-                if( jind < 0 )  jind += mapY;
-                if( kind < 0 )  kind += mapZ;
-                if( iind >= mapX )  iind -= mapX;
-                if( jind >= mapY )  jind -= mapY;
-                if( kind >= mapZ )  kind -= mapZ;
-                // main condition
-                if( D[iind][jind][kind] < level )  {
-                  inside = false;
-                  break;
-                }
-              }
-              if( !inside )  break;
-            }
-            if( !inside )  break;
-          }
-          if( inside )  {
-            D[i][j][k] = level + 1;
-            levelUsed = true;
-            MaxLevel = level;
-          }
-        }
-      }
-    }
-    if( !levelUsed ) // reached the last point
-      break;
-    level ++;
-  }
+  int MaxLevel = FXApp->CalcVoid(map, surfdis, -101, &structureGridPoints);
+  double vol = FXApp->XFile().GetLattice().GetUnitCell().CalcVolume();
   TBasicApp::GetLog() << ( olxstr("Cell volume (A^3) ") << olxstr::FormatFloat(3, vol) << '\n');
   TBasicApp::GetLog() << ( olxstr("Max level reached ") << MaxLevel << '\n');
   TBasicApp::GetLog() << ( olxstr("Largest spherical void is (A^3) ") << olxstr::FormatFloat(3, MaxLevel*MaxLevel*MaxLevel*4*M_PI/(3*mapVol)*vol) << '\n');
@@ -8462,9 +8413,9 @@ void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMa
     }
   }
 // init map
-  const int mapX = (int)au.Axes()[0].GetV()*10,
-			mapY = (int)au.Axes()[1].GetV()*10,
-			mapZ = (int)au.Axes()[2].GetV()*10;
+  const int mapX = (int)au.Axes()[0].GetV()*5,
+			mapY = (int)au.Axes()[1].GetV()*5,
+			mapZ = (int)au.Axes()[2].GetV()*5;
 //  const int mapX =100, mapY = 100, mapZ = 10;
   FXApp->XGrid().InitGrid(mapX, mapY, mapZ);
   FXApp->XGrid().SetMaxHole(0.49);
