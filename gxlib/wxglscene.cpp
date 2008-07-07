@@ -44,7 +44,7 @@ protected:
   wxComboBox* cbSize, *cbFileName;
 public:
   dlgEditOlexFont(const olxstr& fntId, const TStrList& fntFiles) : 
-      wxDialog(NULL, -1, wxT("Olex2 Font") )  {
+      wxDialog(NULL, -1, wxT("Olex2 Font"), wxDefaultPosition )  {
 
     TwxGlScene::MetaFont mf(fntId);
     wxBoxSizer *AASizer = new wxBoxSizer( wxHORIZONTAL );
