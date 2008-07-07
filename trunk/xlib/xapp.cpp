@@ -15,6 +15,7 @@
 #include "xmacro.h"
 #include "symmlib.h"
 #include "sr_fft.h"
+#include "unitcell.h"
 
 TXApp::TXApp(const olxstr &basedir) : TBasicApp(basedir), Library(EmptyString, this)  {
   try  {
@@ -385,5 +386,53 @@ bool TXApp::FindSAtoms(const olxstr& condition, TSAtomPList& res)  {
       res.Add( &XFile().GetLattice().GetAtom(i) );
   }
   return !res.IsEmpty();
+}
+//..............................................................................
+short TXApp::CalcVoid(TArray3D<short>& map, double extraR, short val, long* structurePoints)  {
+  short*** D = map.Data;
+  XFile().GetLattice().GetUnitCell().BuildStructureMap(map, extraR, val, structurePoints);
+  int mapX = map.Length1(), mapY = map.Length2(), mapZ = map.Length3();
+  int level = 0, MaxLevel = 0;
+  while( true )  {
+    bool levelUsed = false;
+    for(int i=0; i < mapX; i++ )  {
+      for(int j=0; j < mapY; j++ )  {
+        for(int k=0; k < mapZ; k++ )  {
+          // neigbouring points analysis
+          bool inside = true;
+          for(int ii = -1; ii <= 1; ii++)  {
+            for(int jj = -1; jj <= 1; jj++)  {
+              for(int kk = -1; kk <= 1; kk++)  {
+                int iind = i+ii, jind = j+jj, kind = k+kk;
+                // index "rotation" step
+                if( iind < 0 )  iind += mapX;
+                if( jind < 0 )  jind += mapY;
+                if( kind < 0 )  kind += mapZ;
+                if( iind >= mapX )  iind -= mapX;
+                if( jind >= mapY )  jind -= mapY;
+                if( kind >= mapZ )  kind -= mapZ;
+                // main condition
+                if( D[iind][jind][kind] < level )  {
+                  inside = false;
+                  break;
+                }
+              }
+              if( !inside )  break;
+            }
+            if( !inside )  break;
+          }
+          if( inside )  {
+            D[i][j][k] = level + 1;
+            levelUsed = true;
+            MaxLevel = level;
+          }
+        }
+      }
+    }
+    if( !levelUsed ) // reached the last point
+      break;
+    level ++;
+  }
+  return MaxLevel;
 }
 //..............................................................................

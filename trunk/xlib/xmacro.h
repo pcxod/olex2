@@ -19,6 +19,7 @@ class XLibMacros  {
   static DefMacro(Envi)
   static DefMacro(AddSE)
   static DefMacro(Fuse)
+  static DefMacro(VoidE)
 
   static void MergePublTableData(TCifLoopTable& to, TCifLoopTable& from); // helper function
   static olxstr CifResolve(const olxstr& func);

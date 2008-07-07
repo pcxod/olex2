@@ -212,8 +212,8 @@ public:
     olxstr Str( Res.Format(4, false, ' ') );
     Res = K;  Str << Res.Format(4, false, ' ');
     Res = L;  Str << Res.Format(4, false, ' ');
-    Res = olxstr::FormatFloat(3, I);  Str << Res.Format(8, false, ' ');
-    Res = olxstr::FormatFloat(3, S);  Str << Res.Format(8, false, ' ');
+    Res = olxstr::FormatFloat(2, I);  Str << Res.Format(8, false, ' ');
+    Res = olxstr::FormatFloat(2, S);  Str << Res.Format(8, false, ' ');
     if( Flag != NoFlagSet )  {
       Res = Flag;  Str << Res.Format(4, false, ' '); 
     }
