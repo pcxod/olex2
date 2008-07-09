@@ -236,8 +236,10 @@ public:
               TBasicApp::GetLog().Exception( ex.GetException()->GetError() );
               continue;
             }
-            if( sr.GetListType() == rltBonds && (agroup.Count() == 0 || (agroup.Count()%2)!=0 ) )
-              throw TInvalidArgumentException(__OlxSourceInfo, "wrong restraint parameters list");
+            if( sr.GetListType() == rltBonds && (agroup.Count() == 0 || (agroup.Count()%2)!=0 ) )  {
+              TBasicApp::GetLog().Error( olxstr("Wrong restraint parameters list: ") << SL[i] );
+              continue;
+            }
             if( Toks[0].Comparei("FLAT") == 0 )  {  // a secial case again...
               TSimpleRestraint* sr1 = &sr;
               for( int j=0; j < agroup.Count(); j += atomAGroup )  {

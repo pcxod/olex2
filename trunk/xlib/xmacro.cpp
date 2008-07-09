@@ -153,23 +153,44 @@ void XLibMacros::macAddSE(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     E.ProcessingError(__OlxSrcInfo, "Could not identify current space group");
     return;
   }
-  if( sg->IsCentrosymmetric() )  {
+  if( sg->IsCentrosymmetric() && Cmds.Count() == 1 )  {
     E.ProcessingError(__OlxSrcInfo, "Centrosymmetric space group");
     return;
   }
-  TMatrixDList ml;
-  sg->GetMatrices(ml, mattAll);
-  ml.SetCapacity( ml.Count()*2 );
-  int mc = ml.Count();
-  for( int i=0; i < mc; i++ )  {
-    ml.AddCCopy(ml[i]);
-    ml[i+mc] *= -1;
-  }
-  for( int i=0; i < TSymmLib::GetInstance()->SGCount(); i++ )  {
-    if( TSymmLib::GetInstance()->GetGroup(i) == ml )  {
-      xapp.GetLog() << "found " << TSymmLib::GetInstance()->GetGroup(i).GetName() << '\n';
-      sg = &TSymmLib::GetInstance()->GetGroup(i);
+  if( Cmds.Count() == 1 )  {
+    TMatrixDList ml;
+    sg->GetMatrices(ml, mattAll);
+    ml.SetCapacity( ml.Count()*2 );
+    int mc = ml.Count();
+    for( int i=0; i < mc; i++ )  {
+      ml.AddCCopy(ml[i]);
+      ml[i+mc] *= -1;
     }
+    for( int i=0; i < TSymmLib::GetInstance()->SGCount(); i++ )  {
+      if( TSymmLib::GetInstance()->GetGroup(i) == ml )  {
+        xapp.GetLog() << "found " << TSymmLib::GetInstance()->GetGroup(i).GetName() << '\n';
+        sg = &TSymmLib::GetInstance()->GetGroup(i);
+      }
+    }
+  }
+  else if( Cmds.Count() ==2 )  {
+    TSAtomPList atoms;
+    TMatrixD m(3,4);
+    xapp.FindSAtoms(EmptyString, atoms);
+    for( int i=0; i < au.AtomCount(); i++ )  {
+      for( int j=i+1; j < au.AtomCount(); j++ )  {
+        if( au.GetAtom(j).IsDeleted() )  continue;
+        double d = uc.FindClosestDistance(au.GetAtom(i), au.GetAtom(j));
+        if( d < 0.5 )  {
+          au.GetAtom(i).SetDeleted(true);
+          break;
+        }
+      }
+    }
+    latt.Init();
+    latt.Compaq();
+    latt.CompaqAll();
+    return;
   }
   TSymmTest st(uc);
   TMatrixD m(3,4);
@@ -214,8 +235,12 @@ void XLibMacros::macAddSE(TStrObjList &Cmds, const TParamList &Options, TMacroEr
         }
       }
     }
+//    latt.OnStructureGrow->SetEnabled(false);
+//    latt.OnStructureUniq->SetEnabled(false);
     latt.Init();
     latt.Compaq();
+//    latt.OnStructureGrow->SetEnabled(true);
+//    latt.OnStructureUniq->SetEnabled(true);
     latt.CompaqAll();
   }
   else  {

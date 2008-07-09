@@ -119,7 +119,7 @@ void TAsymmUnit::Assign(const TAsymmUnit& C)  {
 
   for( int i=0; i < C.Residues.Count(); i++ )  {
     TResidue* resi = C.Residues[i];
-    NewResidue( resi->GetClassName(), resi->GetNumber() ); 
+    NewResidue( resi->GetClassName(), resi->GetNumber(), resi->GetAlias() ); 
   }
   for( int i = 0; i < C.AtomCount(); i++ )  {
     TCAtom& CA = this->NewAtom();
