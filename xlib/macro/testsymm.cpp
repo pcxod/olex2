@@ -134,13 +134,7 @@ void XLibMacros::macTestSymm(TStrObjList &Cmds, const TParamList &Options, TMacr
     }
     if( st.GetResults().Count() > 0 )  {
       int ind = st.GetResults().Count()-1;
-      double match = st.GetResults()[ind].Count()*200/st.AtomCount();
-      if( i== 0 && match > 125 && tol > 1e-4 )  {
-        XApp.GetLog() << "Adjusting accuracy ..." << '\n';
-        i--;
-        tol /= 4;
-        continue;
-      }
+      double match = st.GetResults()[ind].Count()*400/((st.AtomCount()-2)*st.AtomCount());
       trans = st.GetResults()[ind].Center;
       NormalisevectorView(trans);
       if( i == 0 )  {

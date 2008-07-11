@@ -51,6 +51,7 @@ void TIns::Clear()  {
   for( int i=0; i < Ins.Count(); i++ )
     delete Ins.Object(i);
   Ins.Clear();
+  Skipped.Clear();
   FTitle = EmptyString;
   FVars.Resize(0);
   FWght.Resize(0);
@@ -272,7 +273,19 @@ void TIns::LoadFromStrings(const TStrList& InsFile)  {
       End = true;  
       CurrResi = &GetAsymmUnit().GetResidue(-1);
     }
-    else if( Tmp1 == "REM" )     {  Ins.Add(Tmp);  }
+    else if( Tmp1 == "REM" )     {  
+      if( Toks.Count() > 1 && Toks[1].Comparei("olex2.stop_parsing") == 0 )  {
+        while( i < InsFile.Count() )  {
+          Skipped.Add( InsFile[i] );
+          if( InsFile[i].StartsFromi("REM") && InsFile[i].IndexOf("olex2.resume_parsing") != -1 ) 
+            break;
+          i++;
+        }
+      }
+      else
+        Ins.Add(Tmp);
+      continue;
+    }
     // atom sgould have at least 7 parameters
     else if( Toks.Count() < 6 )  {  Ins.Add(Tmp);  }
     else {
@@ -294,6 +307,8 @@ void TIns::LoadFromStrings(const TStrList& InsFile)  {
           Ins.Add(Tmp);
           continue;
       }
+      if( !CellFound )
+        throw TFunctionFailedException(__OlxSourceInfo, "uninitialised cell");
       atom = ParseAtom(Toks, partOccu, CurrResi );
       atom->SetPart(Part);
       atom->SetAfix(Afix);
@@ -333,9 +348,9 @@ void TIns::LoadFromStrings(const TStrList& InsFile)  {
   Ins.Pack();
 
   for( int i =0; i < Ins.Count(); i++ )  {
-    Param = new TInsList(Ins.String(i), ' ');
+    Param = new TInsList(Ins[i], ' ');
     Ins.Object(i) = Param;
-    Ins.String(i) = Param->String(0);
+    Ins[i] = Param->String(0);
     // special treatment of HFIX instructions
     if( !Param->String(0).Comparei("HFIX") && Param->Count() > 2 ) {
       int iv = Param->String(1).ToInt();
@@ -763,6 +778,8 @@ void TIns::SaveToStrings(TStrList& SL)  {
     olxstr tmp = L->IsEmpty() ? EmptyString : L->Text(' ');
     HypernateIns(Ins[i]+' ', tmp , SL);
   }
+  SL << Skipped;
+//  for( int i=0; i < Skipepd.Count(); i++ )
 
   SaveHklSrc(SL);
 

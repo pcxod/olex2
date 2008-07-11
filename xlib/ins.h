@@ -22,6 +22,7 @@ BeginXlibNamespace()
 class TIns: public TBasicCFile  {
 private:
   TStrPObjList< olxstr, TInsList* > Ins;  // instructions
+  TStrList Skipped;
   olxstr Unit, Sfac;
   void HypernateIns(const olxstr &InsName, const olxstr &Ins, TStrList &Res);
   void HypernateIns(const olxstr &Ins, TStrList &Res);
