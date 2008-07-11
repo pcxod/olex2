@@ -77,6 +77,7 @@ public:  // residue class implementation
         Atoms.Add( ca );
         ca->SetResiId( Id );
       }
+      inline void SetCapacity(int c)  {  Atoms.SetCapacity(c);  }
       bool IsEmpty() const {
         for( int i=0; i < Atoms.Count(); i++ )
           if( !Atoms[i]->IsDeleted() )  return false;
@@ -85,6 +86,7 @@ public:  // residue class implementation
       // this assumes that atoms and their Ids of the Parent already assigned 
       const TResidue& operator = (const TResidue& res)  {
         Atoms.Clear();
+        Atoms.SetCapacity(res.Count() );
         for( int i=0; i < res.Count(); i++ )  {
           if( res[i].GetId() >= 0 && res[i].GetId() < Parent.AtomCount() )
             AddAtom( &Parent.GetAtom( res[i].GetId() ) );
@@ -167,7 +169,7 @@ public:
   inline TResidue* PrevResidue(const TResidue& r) const {  
     return (r.GetId() == -1) ? NULL : ((r.GetId() == 0) ? &const_cast<TAsymmUnit*>(this)->MainResidue : Residues[r.GetId()-1]);  
   }
-  void ClearResidues();
+  void ClearResidues(bool moveToMain);
   void AssignResidues(const TAsymmUnit& au);
   // if a number is provided, seraches by Number otherwise - by ClassName
   void FindResidues(const olxstr& resi, TPtrList<TResidue>& list);

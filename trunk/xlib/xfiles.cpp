@@ -134,7 +134,7 @@ void TXFile::UpdateAsymmUnit()  {
   TBasicCFile *LL = GetLastLoader();
   GetLattice().UpdateAsymmUnit();
   TCAtomPList* NewAtoms = new TCAtomPList;
-  LL->GetAsymmUnit().ClearResidues();
+  LL->GetAsymmUnit().ClearResidues(false);
   for( int i=0; i < GetAsymmUnit().ResidueCount(); i++ )  {
     TAsymmUnit::TResidue& resi = GetAsymmUnit().GetResidue(i);
     LL->GetAsymmUnit().NewResidue(resi.GetClassName(), resi.GetNumber(), resi.GetAlias() );

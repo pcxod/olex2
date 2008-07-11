@@ -299,19 +299,22 @@ void TAsymmUnit::FindResidues(const olxstr& resi, TPtrList<TAsymmUnit::TResidue>
   }
 }
 //..............................................................................
-void TAsymmUnit::ClearResidues()  {
+void TAsymmUnit::ClearResidues(bool moveToMain)  {
   for( int i=0;  i < Residues.Count(); i++ )
     delete Residues[i];
   Residues.Clear();
   MainResidue.Clear();
-  for( int i=0; i < CAtoms.Count(); i++ )  {
-    CAtoms[i]->SetResiId(-1);
-    MainResidue.AddAtom(CAtoms[i]);
+  if( moveToMain)  {
+    MainResidue.SetCapacity(CAtoms.Count());
+    for( int i=0; i < CAtoms.Count(); i++ )  {
+      CAtoms[i]->SetResiId(-1);
+      MainResidue.AddAtom(CAtoms[i]);
+    }
   }
 }
 //..............................................................................
 void TAsymmUnit::AssignResidues(const TAsymmUnit& au)  {
-  ClearResidues();
+  ClearResidues(false);
   MainResidue = au.MainResidue;
   for( int i=0; i < au.Residues.Count(); i++ )  {
     TResidue* resi = au.Residues[i];
@@ -535,7 +538,8 @@ olxstr TAsymmUnit::CheckLabel(const TCAtom* ca, const olxstr &Label, char a, cha
     for( int i=0; i < resi.Count(); i++ )  {
       TCAtom& atom = resi[i];
       if( atom.GetPart() != ca->GetPart() )  continue;
-      if( !atom.IsDeleted() && (atom.Label().Comparei(Label) == 0) )  {
+      if( !atom.IsDeleted() && (atom.Label().Comparei(Label) == 0) && 
+        (atom.GetLoaderId() != ca->GetLoaderId()) )  {
         LB = atom.GetAtomInfo().GetSymbol();
         if( LB.Length() == 2 )  LB[0] = LB.o_toupper(LB[0]);
         LB << a << b;
