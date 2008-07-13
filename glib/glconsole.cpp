@@ -579,6 +579,10 @@ size_t TGlConsole::Write(const olxstr& str)  {
     if( str[i] == '\n' )  {
       FBuffer.Add(EmptyString);
     }
+    else if( str[i] == '\r' )  {
+      if( !FBuffer.IsEmpty() )
+      FBuffer.Last().String() = EmptyString;
+    }
     else if( str[i] == '\t') {
       int count = 8-FBuffer.Last().String().Length()%8;
       if( count > 0 )

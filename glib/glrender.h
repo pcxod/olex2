@@ -285,7 +285,7 @@ public:
   /* the functions set current view for drawinf large picture x, y- curent quadraterial,
    res - required resolution; to be used in conjunction with GetPixels
   */
-  void LookAt(int x, int y, short res);
+  void LookAt(double x, double y, short res);
 
   static TGraphicsStyles* GetStyles();
 

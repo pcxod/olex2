@@ -215,8 +215,6 @@ void TGlPrimitive::Draw()  {
     if( FString == NULL )   return;
     if( FFont == NULL )     return;
     int fontbase = Font()->FontBase();
-//    double raster_pos[4];
-//    glGetDoublev(GL_CURRENT_RASTER_POSITION, raster_pos);
     /* each character of different colour */
     int StrLen = FString->Length();
     if( FData.Elements() == StrLen )  {

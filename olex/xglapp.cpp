@@ -23,6 +23,7 @@
 #include "pdb.h"
 #include "xdmas.h"
 #include "datafile.h"
+#include "wxzipfs.h"
 
 #include "efile.h"
 #ifndef __WIN32__
@@ -58,7 +59,10 @@ public:
     return false;
   }
   bool Execute(const IEObject *Sender, const IEObject *Data)  {
+    return false; // not good for now...
     if( !EsdlInstanceOf(*Data, TOnProgress) )
+      return false;
+    if( Sender != NULL && EsdlInstanceOf(*Data, TwxZipFileSystem) )
       return false;
     IEObject* p_d = const_cast<IEObject*>(Data);
     TOnProgress *A = dynamic_cast<TOnProgress*>(p_d);

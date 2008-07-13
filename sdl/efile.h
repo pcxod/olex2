@@ -74,7 +74,7 @@ public:
   virtual void SetPosition(size_t p);
   virtual size_t GetPosition() const;
 
-  inline const olxstr& Name()  const  {  return FName; }
+  inline const olxstr& GetName()  const  {  return FName; }
   bool Delete();
 
   static bool FileExists(const olxstr &F);
@@ -121,7 +121,8 @@ public:
     if the filename is absolute returns it straight away
   */
   static olxstr Which(const olxstr& filename);
-
+  // returns a new object created with new using tmpnam
+  static TEFile* TmpFile(const olxstr& templ);
   // function is based on utime
   static bool SetFileTimes(const olxstr& fileName, long AccTime, long ModTime);
   // function is based on stat;

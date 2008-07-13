@@ -49,7 +49,7 @@ public:
   
   DefPropP(uint16_t, PointSize)
 
-  int TextWidth(const olxstr &Text);
+  int TextWidth(const olxstr &Text, int cnt=-1);
   int MaxTextLength(int width);
   int TextHeight(const olxstr &Text=EmptyString);
   bool CharFromRGBArray(size_t Char, unsigned char *RGBData, int width, int height);
@@ -59,7 +59,7 @@ public:
   void CreateGlyphs(const TEBitArray& ba, bool FixedWidth, short Width, short Height);
 
   void CreateTextures(short Width, short Height);
-  inline bool HasTExtures() const {  return Textures != NULL;  }
+  inline bool HasTextures() const {  return Textures != NULL;  }
   inline TFontCharSize* CharSize(size_t Char)  { return CharSizes[(unsigned)Char];  }
 
   inline bool FixedWidth()  const {  return  (FFlags & sglfFixedWidth) == sglfFixedWidth; }
@@ -67,6 +67,8 @@ public:
   inline void CharOffset(short v) { FCharOffset = v; }
   inline int FontBase() const     {  return FFontBase; }
   void DrawGlText(const TVPointD& from, const olxstr& text, bool FixedWidth);
+  // draws text safely, e.g. checks if raster positions are valid
+  void DrawTextSafe(const TVPointD& from, double scale, const olxstr& text);
   void IdString(const olxstr &Str)              {  FIdString = Str; }
   inline const olxstr& IdString()         const {  return FIdString; }
   inline const olxstr& GetName()          const {  return Name; }

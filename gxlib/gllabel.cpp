@@ -83,9 +83,14 @@ bool TXGlLabel::Orient(TGlPrimitive *P)  {
     T = Basis.GetCenter();
     T += FParent->GetBasis().GetCenter();
     T *= FParent->GetBasis().GetMatrix();
-    glRasterPos3d(T[0]-OffsetX*Scale, T[1]-OffsetY*Scale, T[2]+5);
-    P->String(&FLabel);
-    P->Font(Font());
+    T[0] -= OffsetX*Scale;
+    T[1] -= OffsetY*Scale;
+    T[2] += 5;
+    Font()->DrawTextSafe(T, Scale*Parent()->GetViewZoom(), FLabel);
+//    glRasterPos3d(T[0], T[1], T[2]);
+//    P->String(&FLabel);
+//    P->Font(Font());
+    return true;
   }
   else  {
     double xinc = OffsetX*Scale;

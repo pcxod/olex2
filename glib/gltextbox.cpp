@@ -109,12 +109,14 @@ bool TGlTextBox::Orient(TGlPrimitive *P)  {
       T[0] = GlLeft;
       T[1] = GlTop - (i+1)*LineInc;
       T *= Scale;
+      T[2] = Z;  
       GlM = FBuffer.Object(i);
       if( GlM ) GlM->Init();
-      glRasterPos3d(T[0], T[1], Z);
-      stString = FBuffer.String(i);
-      P->String( &stString );
-      P->Draw();
+      Fnt->DrawTextSafe(T, Scale*FParent->GetViewZoom(), FBuffer[i] ); 
+//      glRasterPos3d(T[0], T[1], Z);
+//      stString = FBuffer.String(i);
+//      P->String( &stString );
+//      P->Draw();
     }
     return true;
   }
