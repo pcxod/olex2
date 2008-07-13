@@ -917,12 +917,12 @@ void TGlRender::RemoveCollections(const TPtrList<TGPCollection>& Colls)  {
   }
 }
 //..............................................................................
-void TGlRender::LookAt(int x, int y, short res)  {
+void TGlRender::LookAt(double x, double y, short res)  {
   FViewZoom = (float)(1.0/res);
-  FProjectionLeft = (float)((double)x/(double)res - 0.5);
-  FProjectionRight = (float)((double)(x+1)/(double)res - 0.5);
-  FProjectionTop = (float)((double)y/(double)res - 0.5);
-  FProjectionBottom = (float)((double)(y+1)/(double)res - 0.5);
+  FProjectionLeft = (float)(x/(double)res - 0.5);
+  FProjectionRight = (float)((x+1)/(double)res - 0.5);
+  FProjectionTop = (float)(y/(double)res - 0.5);
+  FProjectionBottom = (float)((y+1)/(double)res - 0.5);
   SetChanged(true);
 }
 //..............................................................................

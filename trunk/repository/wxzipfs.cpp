@@ -15,13 +15,16 @@ olxstr TZipWrapper::ZipUrlSignature = "@zip:";
 //---------------------------------------------------------------------------
 //..............................................................................
 TMemoryBlock* TZipWrapper::GetMemoryBlock(const olxstr &EM)  {
-  olxstr entryName = TEFile::UnixPath(EM);
-  TMemoryBlock * mb = FMemoryBlocks[entryName];
+  olxstr entryName( TEFile::UnixPath(EM) );
+  TMemoryBlock * mb = NULL;
+  if( UseCache )
+    mb = FMemoryBlocks[entryName];
+
   if( mb == NULL )  {
     wxZipEntry *entry = FEntries[TEFile::UnixPath(entryName)];
     if( !entry )  return NULL;
     if( !FInputStream->OpenEntry(*entry) )  return NULL;
-    if( FInputStream->GetLength() <=0 )  {  FInputStream->CloseEntry();  return NULL;  }
+    //if( FInputStream->GetLength() <=0 )  {  FInputStream->CloseEntry();  return NULL;  }
 
     mb = new TMemoryBlock;
     mb->Length = FInputStream->GetLength();
@@ -29,17 +32,18 @@ TMemoryBlock* TZipWrapper::GetMemoryBlock(const olxstr &EM)  {
     mb->DateTime = entry->GetDateTime().GetTicks();
     FInputStream->Read( mb->Buffer, FInputStream->GetLength());
     FInputStream->CloseEntry();
-    FMemoryBlocks.Add( entryName, mb );
+    if( UseCache )
+      FMemoryBlocks.Add( entryName, mb );
   }
   return mb;
 }
 //..............................................................................
-TZipWrapper::TZipWrapper(const olxstr &zipName)  {
+TZipWrapper::TZipWrapper(const olxstr &zipName, bool useCache)  {
   FInputStream = NULL;
-  FFileInputStream = NULL;
+  UseCache = useCache;
+  //FFileInputStream = NULL;
   if( !TEFile::FileExists( zipName )  )  return;
-  FFileInputStream = new wxFileInputStream( zipName.u_str() );
-  FInputStream = new wxZipInputStream( *FFileInputStream );
+  FInputStream = new wxZipInputStream( new wxFileInputStream( zipName.u_str() ) );
   wxZipEntry *entry;
   while( (entry = FInputStream->GetNextEntry() ) != NULL )
     FEntries.Add( TEFile::UnixPath(entry->GetName().c_str()), entry );
@@ -54,23 +58,34 @@ TZipWrapper::~TZipWrapper()  {
   }
   for( int i=0; i < FEntries.Count(); i++ )
     delete FEntries.Object(i);
-  if( FInputStream )  delete FInputStream;
-  if( FFileInputStream )  delete FFileInputStream;
+  if( FInputStream != NULL )  delete FInputStream;
+//  if( FFileInputStream )  delete FFileInputStream;
 }
 //..............................................................................
 IDataInputStream* TZipWrapper::OpenEntry(const olxstr &EN)  {
   TMemoryBlock * mb = GetMemoryBlock(EN);
   if( mb == NULL )  return NULL;
-
   TEMemoryStream *ms = new TEMemoryStream();
   ms->Write( mb->Buffer, mb->Length );
   ms->SetPosition(0);
+  if( !UseCache )  {
+    delete [] mb->Buffer;
+    delete mb;
+  }
   return ms;
 }
 //..............................................................................
 wxInputStream* TZipWrapper::OpenWxEntry(const olxstr &EN)  {
   TMemoryBlock * mb = GetMemoryBlock(EN);
-  return mb == NULL ? NULL : new wxMemoryInputStream(mb->Buffer, mb->Length);
+  if( mb != NULL )  {
+    wxMemoryInputStream* rv = new wxMemoryInputStream(mb->Buffer, mb->Length);
+    if( !UseCache )  {
+      delete mb->Buffer;
+      delete mb;
+    }
+    return rv;
+  }
+  return NULL;
 }
 //..............................................................................
 bool TZipWrapper::IsValidFileName(const olxstr &FN)  {
@@ -123,7 +138,8 @@ olxstr TZipWrapper::ComposeFileName(const olxstr &ZipFileNameA, const olxstr &FN
 /*____________________________________________________________________________*/
 
 
-TwxZipFileSystem::TwxZipFileSystem(const olxstr& zip_name) : zip(zip_name) { }
+TwxZipFileSystem::TwxZipFileSystem(const olxstr& zip_name, bool UseCache) : 
+  zip(zip_name, UseCache) { }
 //..............................................................................
 IDataInputStream* TwxZipFileSystem::OpenFile(const olxstr& Source)  {
   TOnProgress Progress;

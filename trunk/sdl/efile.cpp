@@ -764,6 +764,18 @@ void TEFile::CheckFileExists(const olxstr& location, const olxstr& fileName)  {
     throw TFileDoesNotExistException(location, fileName);
 }
 //..............................................................................
+TEFile* TEFile::TmpFile(const olxstr& templ)  {
+  char* str = templ.IsEmpty() ? NULL : new char[templ.Length()];
+  char* tn = tmpnam( str );
+  if( tn == NULL )  {
+    if( str != NULL ) delete [] str;
+    throw TFunctionFailedException(__OlxSourceInfo, "could not create temporray file");
+  }
+  TEFile* rv = new TEFile(tn, "w+b");
+  if( str != NULL ) delete [] str;
+  return rv;
+}
+//..............................................................................
 bool TEFile::Rename(const olxstr& from, const olxstr& to, bool overwrite)  {
   if( FileExists(to) && ! overwrite )  return false;
   return rename( from.c_str(), to.c_str() ) != -1;

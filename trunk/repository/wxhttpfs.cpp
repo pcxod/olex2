@@ -8,8 +8,18 @@
 #include "efile.h"
 #include "ememstream.h"
 
+TwxHttpFileSystem::~TwxHttpFileSystem()  {  
+  if( ZipFS != NULL )  delete ZipFS;
+  for( int i=0; i < TmpFiles.Count(); i++ )
+    TEFile::DelFile(TmpFiles[i]);
+}
+//.........................................................................................
 IInputStream* TwxHttpFileSystem::OpenFile(const olxstr& Source)  {
   olxstr o_src(TEFile::UnixPath(Source));
+  olxstr zip_name = Source.SubStringFrom( Url.GetPath().Length()+1 );
+  if( ZipFS != NULL && ZipFS->FileExists(zip_name) != 0 )  {
+    return ZipFS->OpenFile(zip_name);
+  }
   TOnProgress Progress;
   Progress.SetMax(1);
   Progress.SetPos(0);
@@ -35,16 +45,16 @@ IInputStream* TwxHttpFileSystem::OpenFile(const olxstr& Source)  {
     return NULL;
   }
   TEMemoryStream* ms = new TEMemoryStream();
-  char* bf = new char[1024];
+  char* bf = new char[1024*64];
   try {
-    is->Read(bf, 1024);
+    is->Read(bf, 1024*64);
     while( is->LastRead() != 0 )  {
       ms->Write( bf, is->LastRead() );
       if( Progress.GetMax() > 0 )  {
         Progress.SetPos( ms->GetPosition() );
         TBasicApp::GetInstance()->OnProgress->Execute(this, &Progress);
       }
-      is->Read(bf, 1024);
+      is->Read(bf, 1024*64);
     }
     ms->SetPosition(0);
     Progress.SetAction("Download complete");
@@ -63,5 +73,70 @@ IInputStream* TwxHttpFileSystem::OpenFile(const olxstr& Source)  {
   delete [] bf;
   return ms;  
 }
+//.........................................................................................
+wxInputStream* TwxHttpFileSystem::wxOpenFile(const olxstr& Source)  {
+  olxstr o_src(TEFile::UnixPath(Source));
+  wxInputStream* is = NULL;
+  try  {
+    olxstr src;
+    if( Url.HasProxy() )
+      src << Url.GetFullHost();
+    src << o_src;
+    src.Replace(' ', "%20");
+    is = Http.GetInputStream( src.u_str() );
+  }
+  catch( ... )  {   return NULL;  }
+  if( is == NULL )  {
+    throw TFunctionFailedException(__OlxSourceInfo, olxstr("NULL handle for '") << o_src << '\'');
+    return NULL;
+  }
+  return is;  
+}
+//.........................................................................................
+olxstr TwxHttpFileSystem::SaveFile(const olxstr& Source, bool Delete)  {
+  TOnProgress Progress;
+  Progress.SetMax(1);
+  Progress.SetPos(0);
+  Progress.SetAction(olxstr("Downloading ") << Source );
+  TBasicApp::GetInstance()->OnProgress->Enter(this, &Progress);
+  olxstr o_src(TEFile::UnixPath(Source));
+  wxInputStream* is = NULL;
+  try  {
+    olxstr src;
+    if( Url.HasProxy() )
+      src << Url.GetFullHost();
+    src << o_src;
+    src.Replace(' ', "%20");
+    is = Http.GetInputStream( src.u_str() );
+    if( is != NULL )  {
+      Progress.SetMax( is->GetLength() );
+      TBasicApp::GetInstance()->OnProgress->Execute(this, &Progress);
+    }
+  }
+  catch( ... )  {   return NULL;  }
+  if( is == NULL )  {
+    throw TFunctionFailedException(__OlxSourceInfo, olxstr("NULL handle for '") << o_src << '\'');
+    return NULL;
+  }
+  TEFile* tf = TEFile::TmpFile(EmptyString);
+  char* bf = new char [1024*64];
+  is->Read(bf, 1024*64);
+  while( is->LastRead() != 0 )  {
+    tf->Write(bf, is->LastRead());
+    Progress.SetPos( tf->GetPosition() );
+    TBasicApp::GetInstance()->OnProgress->Execute(this, &Progress);
+    is->Read(bf, 1024*64);
+  }
+  Progress.SetAction("Download complete");
+  Progress.SetPos( 0 );
+  TBasicApp::GetInstance()->OnProgress->Exit(this, &Progress);
 
+  delete [] bf;
+  olxstr rv(tf->GetName());
+  delete tf;
+  if( Delete )
+    TmpFiles.Add(rv);
+  return rv;  
+}
+//.........................................................................................
 

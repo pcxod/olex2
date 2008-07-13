@@ -4,21 +4,32 @@
 #include "httpex.h"
 #include "filesystem.h"
 #include "url.h"
+#include "wxzipfs.h"
 //---------------------------------------------------------------------------
 class TwxHttpFileSystem: public AFileSystem, public IEObject  {
   TUrl Url;
   THttp Http;
+  TStrList TmpFiles;
+  TwxZipFileSystem* ZipFS;
 public:
-  TwxHttpFileSystem(const TUrl& url) : Url(url) {
+  TwxHttpFileSystem(const TUrl& url, TwxZipFileSystem* zipFS=NULL) : Url(url) {
+    ZipFS = zipFS;
     if( !Http.Connect( (url.HasProxy() ? url.GetProxy().GetHost() : url.GetHost()).u_str(), 
                        url.HasProxy() ? url.GetProxy().GetPort() : url.GetPort() ) )  {
       throw TFunctionFailedException(__OlxSourceInfo, "connection failed");
     }
     SetBase( olxstr('/') << url.GetPath() );
   }
-  virtual ~TwxHttpFileSystem()  {  }
-
+  virtual ~TwxHttpFileSystem();
+  // saves stream to a temprray file and returs its name, deletes the file on exit if specified
+  olxstr SaveFile(const olxstr& fn, bool Delete=true);
+  // zip is as primary source of the files, if a file is not in the zip - Url is used
+  void SetZipFS( TwxZipFileSystem* zipFS )  {
+    if( ZipFS != NULL )  delete ZipFS;
+      ZipFS = zipFS;
+  }
   virtual IInputStream* OpenFile(const olxstr& Source);
+  virtual wxInputStream* wxOpenFile(const olxstr& Source);
   virtual bool FileExists(const olxstr& DN)  {  return true;  }
 
   virtual bool DelFile(const olxstr& FN)     {  throw TNotImplementedException(__OlxSourceInfo);    }

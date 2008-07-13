@@ -107,10 +107,11 @@ bool TGlText::Orient(TGlPrimitive *P)
 //    T *= Scale;
 //    T *= FParent->Basis().Matrix();
 //  }
-  if( P->Params()[0] < 0 )  // bitmap
-  {
+  if( P->Params()[0] < 0 )  {  // bitmap
     if( IsStaticPos() )  T *= Scale;
-    glRasterPos2d(T[0], T[1]);
+    Fnt->DrawTextSafe(T, Scale*FParent->GetViewZoom(), Text);
+    //glRasterPos2d(T[0], T[1]);
+    return true;
   }
   else  // ttf
     Parent()->GlTranslate(T);

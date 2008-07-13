@@ -1239,7 +1239,131 @@ void TMainForm::macPict(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 }
 //..............................................................................
 void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  #ifdef __WIN32__
+  short res = 2;
+
+  if( Cmds.Count() == 2 )  res = Cmds[1].ToInt();
+  if( res <= 0 )  res = 2;
+  if( res > 10 )  res = 10;
+
+  int orgHeight = FXApp->GetRender().GetHeight(),
+      orgWidth  = FXApp->GetRender().GetWidth();
+  int ScrHeight = (orgHeight/(res*2)-1)*res*2,
+      ScrWidth  = (orgWidth/(res*2)-1)*res*2;
+  int BmpHeight = ScrHeight*res, BmpWidth = ScrWidth*res;
+
+  FXApp->Quality(qaPict);
+
+  FXApp->GetRender().Resize(ScrWidth, ScrHeight); 
+
+  const int bmpSize = BmpHeight*BmpWidth*3;
+  char* bmpData = (char*)malloc(bmpSize);
+  FGlConsole->Visible(false);
+  FXApp->GetRender().OnDraw->SetEnabled( false );
+  if( res > 1 )  FXApp->GetRender().Scene()->ScaleFonts(res);
+  for( int i=0; i < res; i++ )  {
+    for( int j=0; j < res; j++ )  {
+      FXApp->GetRender().LookAt(j, i, res);
+      FXApp->GetRender().Draw();
+      char *PP = FXApp->GetRender().GetPixels(false, 1);
+      int mj = j*ScrWidth;
+      int mi = i*ScrHeight;
+      for(int k=0; k < ScrWidth; k++ )  {
+        for(int l=0; l < ScrHeight; l++ )  {
+          int indexA = (l*ScrWidth + k)*3;
+//          int indexB = (i*BmpWidth*ScrHeight + l*BmpWidth + j*ScrWidth + k)*3;
+//          int indexB = bmpSize - (i*BmpWidth*ScrHeight + l*BmpWidth + (BmpWidth-(j*ScrWidth + k - 1)) - 1)*3;
+          int indexB = bmpSize - (BmpWidth*(mi + l + 1) - mj - k)*3;
+          bmpData[indexB] = PP[indexA];
+          bmpData[indexB+1] = PP[indexA+1];
+          bmpData[indexB+2] = PP[indexA+2];
+        }
+      }
+      delete [] PP;
+    }
+  }
+  // x
+  for( double i=0; i < res; i++ )  {
+    for( double j=0.5; j < res-1; j++ )  {
+      FXApp->GetRender().LookAt(j, i, res);
+      FXApp->GetRender().Draw();
+      char *PP = FXApp->GetRender().GetPixels(false, 1);
+      int mj = j*ScrWidth;
+      int mi = i*ScrHeight;
+      for(int k=ScrWidth*0.25; k <= ScrWidth*0.75; k++ )  {
+        for(int l=ScrHeight*0.25; l < ScrHeight; l++ )  {
+          int indexA = (l*ScrWidth + k)*3;
+          int indexB = bmpSize - (BmpWidth*(mi + l + 1) - mj - k)*3;
+          bmpData[indexB] = PP[indexA];
+          bmpData[indexB+1] = PP[indexA+1];
+          bmpData[indexB+2] = PP[indexA+2];
+        }
+      }
+      delete [] PP;
+    }
+  }
+  // y
+  for( double i=0.5; i < res-1; i++ )  {
+    for( double j=0; j < res; j++ )  {
+      FXApp->GetRender().LookAt(j, i, res);
+      FXApp->GetRender().Draw();
+      char *PP = FXApp->GetRender().GetPixels(false, 1);
+      int mj = j*ScrWidth;
+      int mi = i*ScrHeight;
+      for(int k=ScrWidth*0.25; k < ScrWidth; k++ )  {
+        for(int l=0.25*ScrHeight; l <= ScrHeight*0.75; l++ )  {
+          int indexA = (l*ScrWidth + k)*3;
+          int indexB = bmpSize - (BmpWidth*(mi + l + 1) - mj - k)*3;
+          bmpData[indexB] = PP[indexA];
+          bmpData[indexB+1] = PP[indexA+1];
+          bmpData[indexB+2] = PP[indexA+2];
+        }
+      }
+      delete [] PP;
+    }
+  }
+  // x,y
+  for( double i=0.5; i < res-1; i++ )  {
+    for( double j=0.5; j < res-1; j++ )  {
+      FXApp->GetRender().LookAt(j, i, res);
+      FXApp->GetRender().Draw();
+      char *PP = FXApp->GetRender().GetPixels(false, 1);
+      int mj = j*ScrWidth;
+      int mi = i*ScrHeight;
+      for(int k=0.25*ScrWidth; k <= ScrWidth*0.75; k++ )  {
+        for(int l=0.25*ScrHeight; l <= ScrHeight*0.75; l++ )  {
+          int indexA = (l*ScrWidth + k)*3;
+          int indexB = bmpSize - (BmpWidth*(mi + l + 1) - mj - k)*3;
+          bmpData[indexB] = PP[indexA];
+          bmpData[indexB+1] = PP[indexA+1];
+          bmpData[indexB+2] = PP[indexA+2];
+        }
+      }
+      delete [] PP;
+    }
+  }
+
+  FXApp->Quality(qaMedium);
+
+  FXApp->GetRender().OnDraw->SetEnabled( true );
+  FGlConsole->Visible(true);
+  if( res > 1 ) 
+    FXApp->GetRender().Scene()->RestoreFontScale();
+  // end drawing etc
+  FXApp->GetRender().Resize(orgWidth, orgHeight); 
+  FXApp->GetRender().LookAt(0,0,1);
+  FXApp->GetRender().SetView();
+  FXApp->Draw();
+  olxstr bmpFN;
+  if( FXApp->XFile().GetLastLoader() )
+    bmpFN = TEFile::ExtractFilePath(FXApp->XFile().GetFileName()) << TEFile::ExtractFileName( Cmds[0] );
+  else
+    bmpFN = Cmds[0];
+  wxImage image;
+  image.SetData((unsigned char*)bmpData, BmpWidth, BmpHeight ); 
+//  image.Mirror(false).SaveFile( bmpFN.u_str() );
+  image.SaveFile( bmpFN.u_str() );
+  
+#ifdef __WIN32x__
   short bits = 24, extraBytes;
   float res = 2;
 
@@ -1287,7 +1411,6 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 
   FGlConsole->Visible(false);
   FXApp->GetRender().OnDraw->SetEnabled( false );
-  TDoubleList FontSizes;
   if( res > 1 )  
     FXApp->GetRender().Scene()->ScaleFonts(res);
   char *imageLayer = new char [(BmpWidth*3+extraBytes)*ScrHeight];
@@ -1334,7 +1457,7 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     return;
   }
   image.SaveFile( uiStr(bmpFN) );
-#else  // just make a snapshot then
+#elif defined(RUBISH) // just make a snapshot then
   FGlConsole->Visible(false);
   FXApp->Draw();
   FGlConsole->Visible(true);
@@ -6044,34 +6167,54 @@ void TMainForm::macAddLabel(TStrObjList &Cmds, const TParamList &Options, TMacro
       bool Execute(const IEObject *Sender, const IEObject *Data)  {
         if( !EsdlInstanceOf(*Data, olxstr) )  return false;
         olxstr cpath = olxstr::CommonString(BaseDir, *(const olxstr*)Data);
-        TBasicApp::GetLog() << ( olxstr("Downloading /~/") << ((olxstr*)Data)->SubStringFrom(cpath.Length()) << '\n' );
+        TBasicApp::GetLog() << ( olxstr("\rDownloading /~/") << ((olxstr*)Data)->SubStringFrom(cpath.Length()) );
         xa->Draw();
+        wxTheApp->Dispatch();
         return true;
       }
   };
+class TDownloadProgress: public AActionHandler  {
+    TGXApp* xa;
+public:
+  TDownloadProgress(TGXApp& xapp) : xa(&xapp) {  }
+  bool Enter(const IEObject *Sender, const IEObject *Data)  {
+    if( Data != NULL && EsdlInstanceOf(*Data, TOnProgress) )
+      TBasicApp::GetLog() <<  ((TOnProgress*)Data)->GetAction() << '\n';
+    return true;
+  }
+  bool Exit(const IEObject *Sender, const IEObject *Data)  {
+    TBasicApp::GetLog() <<  "\nDone\n";
+    return true;
+  }
+  bool Execute(const IEObject *Sender, const IEObject *Data)  {
+    if( !EsdlInstanceOf(*Data, TOnProgress) )
+      return false;
+    IEObject* p_d = const_cast<IEObject*>(Data);
+    TOnProgress *A = dynamic_cast<TOnProgress*>(p_d);
+    if( A->GetPos() <= 0 )  return false;
+    if( A->GetMax() <= 0 )
+      TBasicApp::GetLog() <<  (olxstr("\r") << A->GetPos()/1024 << "Kb");
+    else
+      TBasicApp::GetLog() <<  (olxstr("\r") << A->GetPos()*100/A->GetMax() << '%');
+    xa->Draw();
+    wxTheApp->Dispatch();
+    return true;
+  }
+};
 //
 void TMainForm::macInstallPlugin(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   if( !FPluginItem->ItemExists(Cmds[0]) )  {
     TStateChange sc(prsPluginInstalled, true);
-
-    olxstr SettingsFile( TBasicApp::GetInstance()->BaseDir() + "usettings.dat" );
-    TSettingsFile settings;
-    if( TEFile::FileExists(SettingsFile) )  {
-      olxstr Proxy, Repository;
-
-      settings.LoadSettings( SettingsFile );
-      if( settings.ParamExists("proxy") )        Proxy = settings.ParamValue("proxy");
-      if( settings.ParamExists("repository") )   Repository = settings.ParamValue("repository");
-
-      if( Repository.Length() && !Repository.EndsWith('/') )  Repository << '/';
-
-      TUrl url(Repository);
-      if( !Proxy.IsEmpty() )  url.SetProxy(Proxy);
-
-      TwxHttpFileSystem httpFS( url );
+    olxstr local_file( Options.FindValue("l", EmptyString) );
+    if( !local_file.IsEmpty() )  {
+      if( !TEFile::FileExists(local_file) )  {
+        E.ProcessingError(__OlxSrcInfo, "cannot find plugin archive");
+        return;
+      }
+      TwxZipFileSystem zipFS( local_file, false );
       TOSFileSystem osFS;
       osFS.SetBase( TBasicApp::GetInstance()->BaseDir() );
-      TFSIndex fsIndex( httpFS );
+      TFSIndex fsIndex( zipFS );
       TStrList properties;
       properties.Add(Cmds[0]);
       TOnSync* progressListener = new TOnSync(*FXApp, TBasicApp::GetInstance()->BaseDir() );
@@ -6095,7 +6238,61 @@ void TMainForm::macInstallPlugin(TStrObjList &Cmds, const TParamList &Options, T
       FXApp->Draw();
     }
     else  {
-      TBasicApp::GetLog() << ("Could not locate usettings.dat file\n");
+      olxstr SettingsFile( TBasicApp::GetInstance()->BaseDir() + "usettings.dat" );
+      TSettingsFile settings;
+      if( TEFile::FileExists(SettingsFile) )  {
+        olxstr Proxy, Repository;
+
+        settings.LoadSettings( SettingsFile );
+        if( settings.ParamExists("proxy") )        Proxy = settings.ParamValue("proxy");
+        if( settings.ParamExists("repository") )   Repository = settings.ParamValue("repository");
+
+        if( Repository.Length() && !Repository.EndsWith('/') )  Repository << '/';
+
+        TUrl url(Repository);
+        if( !Proxy.IsEmpty() )  url.SetProxy( TUrl(Proxy) );
+        TwxHttpFileSystem httpFS( url );
+        // plugin- = 7
+        olxstr zip_fn( olxstr("/") << TEFile::UnixPath(TEFile::ParentDir(url.GetPath())) <<
+          Cmds[0].SubStringFrom(7) << ".zip" );
+        olxstr local_fn;
+        TDownloadProgress* dp = new TDownloadProgress(*FXApp);
+        TBasicApp::GetInstance()->OnProgress->Add( dp );
+        try  { local_fn = httpFS.SaveFile( zip_fn );  }
+        catch( ... )  {  }
+        TBasicApp::GetInstance()->OnProgress->Remove(dp);
+        delete dp;
+        if( !local_fn.IsEmpty() )  {
+          httpFS.SetZipFS( new TwxZipFileSystem(local_fn, false) );
+        }
+        TOSFileSystem osFS;
+        osFS.SetBase( TBasicApp::GetInstance()->BaseDir() );
+        TFSIndex fsIndex( httpFS );
+        TStrList properties;
+        properties.Add(Cmds[0]);
+        TOnSync* progressListener = new TOnSync(*FXApp, TBasicApp::GetInstance()->BaseDir() );
+        osFS.OnAdoptFile->Add( progressListener );
+
+        IEObject* Cause = NULL;
+        try  {  fsIndex.Synchronise(osFS, properties);  }
+        catch( const TExceptionBase& exc )  {
+          Cause = exc.Replicate();
+        }
+        osFS.OnAdoptFile->Remove( progressListener );
+        delete progressListener;
+        if( Cause )
+          throw TFunctionFailedException(__OlxSourceInfo, Cause);
+
+        FPluginItem->AddItem( Cmds[0] );
+        OnStateChange->Execute((AEventsDispatcher*)this, &sc);
+
+        FPluginFile.SaveToXLFile( PluginFile );
+        TBasicApp::GetLog() << ("\rInstallation complete\n");
+        FXApp->Draw();
+      }
+      else  {
+        TBasicApp::GetLog() << ("Could not locate usettings.dat file\n");
+      }
     }
   }
   else  {
@@ -6144,8 +6341,9 @@ void TMainForm::macSignPlugin(TStrObjList &Cmds, const TParamList &Options, TMac
             if( FoldersToDelete[i]->IsEmpty() )  {
               olxstr path = FoldersToDelete[i]->GetFileSystem().GetBase() + FoldersToDelete[i]->GetFullName(),
               cpath = path.CommonString(path, BaseDir);
-              TBasicApp::GetLog() << ( olxstr("Deleting folder /~/") << path.SubStringFrom(cpath.Length()) << '\n' );
+              TBasicApp::GetLog() << ( olxstr("\rDeleting folder /~/") << path.SubStringFrom(cpath.Length()) );
               xa->Draw();
+              wxTheApp->Dispatch();
               TEFile::DelDir( path );
               deleted = true;
               FoldersToDelete[i]->GetParent()->Remove( *FoldersToDelete[i] );
@@ -6160,7 +6358,9 @@ void TMainForm::macSignPlugin(TStrObjList &Cmds, const TParamList &Options, TMac
         if( it.HasProperty(Property) )  {
           olxstr path = it.GetFileSystem().GetBase() + it.GetFullName(),
                    cpath = path.CommonString(path, BaseDir);
-          TBasicApp::GetLog() << ( olxstr("Deleting /~/") << path.SubStringFrom(cpath.Length()) << '\n' );
+          TBasicApp::GetLog() << ( olxstr("\rDeleting /~/") << path.SubStringFrom(cpath.Length()) );
+          xa->Draw();
+          wxTheApp->Dispatch();
           TEFile::DelFile( path );
           ToDelete.Add( &it );
         }
@@ -6188,7 +6388,7 @@ void TMainForm::macUninstallPlugin(TStrObjList &Cmds, const TParamList &Options,
       TFSItem::Traverser.Traverse<TFSTraverser>(fsIndex.GetRoot(), *trav );
       delete trav;
       fsIndex.SaveIndex( indexFile );
-      TBasicApp::GetLog() << ("Uninstallation complete\n");
+      TBasicApp::GetLog() << "\rUninstallation complete\n";
       FXApp->Draw();
     }
   }
@@ -7580,7 +7780,7 @@ void TMainForm::macIT(TStrObjList &Cmds, const TParamList &Options, TMacroError 
 void TMainForm::macStartLogging(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   bool clear = Options.Contains("c");
   if( clear )  {
-    olxstr fn = ActiveLogFile->Name();
+    olxstr fn = ActiveLogFile->GetName();
     if( ActiveLogFile != NULL )  {
       ActiveLogFile->Delete();
       delete ActiveLogFile;

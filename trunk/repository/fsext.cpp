@@ -81,7 +81,7 @@ IDataInputStream *TFileHandlerManager::_GetInputStream(const olxstr &FN)  {
     TZipWrapper::SplitZipUrl(FN, ze);
     TZipWrapper *zw = FZipFiles[ze.ZipName];
     if( zw == NULL )  {
-      zw = new TZipWrapper( ze.ZipName );
+      zw = new TZipWrapper( ze.ZipName, true );
       FZipFiles.Add( ze.ZipName, zw );
     }
     return zw->OpenEntry( ze.EntryName );
@@ -107,7 +107,7 @@ wxFSFile *TFileHandlerManager::_GetFSFileHandler( const olxstr &FN )  {
     TZipWrapper::SplitZipUrl(FN, ze);
     TZipWrapper *zw = FZipFiles[ze.ZipName];
     if( zw == NULL )  {
-      zw = new TZipWrapper( ze.ZipName );
+      zw = new TZipWrapper( ze.ZipName, true );
       FZipFiles.Add( ze.ZipName, zw );
     }
     wxInputStream *wxIS = zw->OpenWxEntry( ze.EntryName );

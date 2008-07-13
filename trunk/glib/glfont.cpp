@@ -59,11 +59,11 @@ void TGlFont::ClearData()  {
   //}
 }
 //..............................................................................
-int TGlFont::TextWidth(const olxstr &Text)  {
+int TGlFont::TextWidth(const olxstr &Text, int cnt)  {
   if( FixedWidth() )  {
-    return Text.Length()*(FMaxWidth);
+    return (cnt == -1) ? Text.Length()*(FMaxWidth) : cnt*FMaxWidth;
   }
-  int w = 0, tl = Text.Length();
+  int w = 0, tl = (cnt == -1) ? Text.Length() : olx_min(cnt, Text.Length());
   for( int i=0; i < tl; i++ )  {
     TFontCharSize* cs = CharSize(Text[i]);
     if( i < (tl-1) )  w += (cs->Right + FCharOffset);
@@ -199,8 +199,10 @@ void TGlFont::CreateGlyphsFromRGBArray(bool FW, short Width, short Height)  {
            (float)(olx_min(BWidth*8, FCharOffset*5)+FCharOffset), 0.0, BmpData);
 
       glEndList();
-      cs->Top = 0;                 cs->Left = 0;
-      cs->Right = FCharOffset*5;   cs->Bottom = FMaxHeight;
+      cs->Top = 0;                 
+      cs->Left = 0;
+      cs->Right = olx_min(BWidth*8, FCharOffset*5);   
+      cs->Bottom = FMaxHeight;
     }
   }
   delete [] BmpData;
@@ -289,8 +291,10 @@ void TGlFont::CreateGlyphs(const TEBitArray& ba, bool fixedWidth, short w, short
         glBitmap(olx_min(BWidth, FCharOffset*3), BHeight, 0.0, 0.0, 
            (float)(olx_min(BWidth, FCharOffset*3)+FCharOffset), 0.0, bf);
       glEndList();
-      cs->Top = 0;                 cs->Left = 0;
-      cs->Right = FCharOffset*5;   cs->Bottom = FMaxHeight;
+      cs->Top = 0;                 
+      cs->Left = 0;
+      cs->Right = olx_min(BWidth, FCharOffset*3);   
+      cs->Bottom = FMaxHeight;
     }
   }
   delete [] bf;
@@ -480,3 +484,20 @@ void TGlFont::SetMaterial(const TGlMaterial& m)  {
     glTexImage2D(GL_TEXTURE_2D, 0, 4, TextureWidth, TextureHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, BmpData);
   }
 }
+//..............................................................................
+void TGlFont::DrawTextSafe(const TVPointD& from, double scale, const olxstr& text)  {
+  int i=0;
+  double p[2] = {from[0], from[1]};
+  GLboolean raster_valid;
+  glRasterPos3d(p[0], p[1], from[2]);
+  glGetBooleanv(GL_CURRENT_RASTER_POSITION_VALID, &raster_valid);
+  while( !raster_valid && i < text.Length() )  {
+     p[0] += (double)FMaxWidth*scale;  
+     glRasterPos3d(p[0], p[1], from[2]);
+     glGetBooleanv(GL_CURRENT_RASTER_POSITION_VALID, &raster_valid);
+     i++;
+   }
+  for( ; i < text.Length(); i++ ) 
+    glCallList( FFontBase + text.CharAt(i) );
+}
+//..............................................................................

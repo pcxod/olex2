@@ -154,8 +154,7 @@ void TXFile::UpdateAsymmUnit()  {
           CA.SetDeleted(true);  break;
         }
         CA.Assign(CA1);
-        if( CA1.GetResiId() != -1 )  // main residue
-          LL->GetAsymmUnit().GetResidue(CA1.GetResiId()).AddAtom(&CA);
+        LL->GetAsymmUnit().GetResidue(CA1.GetResiId()).AddAtom(&CA);
         break;
       }
     }

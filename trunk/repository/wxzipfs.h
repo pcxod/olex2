@@ -17,15 +17,16 @@ struct TZipEntry  {
 //---------------------------------------------------------------------------
 class TZipWrapper  {
   wxZipInputStream *FInputStream;
-  wxFileInputStream *FFileInputStream;
+//  wxFileInputStream *FFileInputStream;
   TSStrPObjList<olxstr,wxZipEntry*, false> FEntries;
   TSStrPObjList<olxstr,TMemoryBlock*, false> FMemoryBlocks;
 protected:
   TMemoryBlock* GetMemoryBlock(const olxstr &EM);
+  bool UseCache;
 public:
   static olxstr ZipUrlSignature;
 
-  TZipWrapper(const olxstr &zipName);
+  TZipWrapper(const olxstr &zipName, bool useCache);
 
   ~TZipWrapper();
   IDataInputStream* OpenEntry(const olxstr &EN);
@@ -33,6 +34,7 @@ public:
   inline int Count()               const {  return FEntries.Count();  }
   inline const olxstr& Name(int i) const {  return FEntries.GetString(i);  }
   inline time_t Timestamp(int i)   const {  return FEntries.GetObject(i)->GetDateTime().GetTicks();  } 
+  inline bool FileExists(const olxstr& fn) const {  return FEntries[TEFile::UnixPath(fn)] != NULL;  }
 
   static bool IsValidFileName(const olxstr &FN);
   static bool IsZipFile(const olxstr &FN);
@@ -43,13 +45,13 @@ public:
 };
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class TwxZipFileSystem: public AFileSystem, public IEObject  {
-TZipWrapper zip;
+  TZipWrapper zip;
 public:
-  TwxZipFileSystem(const olxstr& filename);
+  TwxZipFileSystem(const olxstr& filename, bool UseCache);
   virtual ~TwxZipFileSystem() {}
 
   virtual IDataInputStream* OpenFile(const olxstr& zip_name);
-  virtual bool FileExists(const olxstr& DN)  {  return true;  }
+  virtual bool FileExists(const olxstr& DN)  {  return zip.FileExists(DN);  }
 
   virtual bool DelFile(const olxstr& FN)     {  throw TNotImplementedException(__OlxSourceInfo);    }
   virtual bool DelDir(const olxstr& DN)      {  throw TNotImplementedException(__OlxSourceInfo);     }

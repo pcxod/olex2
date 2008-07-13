@@ -447,7 +447,7 @@ void TMainForm::XApp( TGXApp *XA)  {
   fpOne|fpTwo,
 "Outputs a picture. Output file name is required, if a second numerical parameter is\
  provided, it is considered to be image resolution in range [0.1-10].");
-  this_InitMacroD(Picta, EmptyString, fpOne|fpTwo,
+  this_InitMacroD(Picta, "pq-picture quality", fpOne|fpTwo,
 "A faster, but ditis version of pict. Not stable on some graphics cards");
   this_InitMacroD(Echo, EmptyString, fpAny,
 "Prints provided string, functions are evaluated before printing");
@@ -718,7 +718,7 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual accupancy\
   this_InitMacro(Export, ,fpNone|fpOne|psCheckFileTypeCif );
   this_InitMacro(FixHL, ,fpNone );
 
-  this_InitMacro(InstallPlugin, ,fpOne );
+  this_InitMacro(InstallPlugin,"l-local installation from a zip file, which must contains index.ind" ,fpOne );
   this_InitMacro(SignPlugin, ,fpAny^(fpOne|fpNone) );
   this_InitMacro(UninstallPlugin, ,fpOne );
   this_InitMacro(UpdateFile, f,fpOne );

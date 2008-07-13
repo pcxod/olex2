@@ -121,7 +121,6 @@ template <typename T>
         }
         return written;
       }
-
       // returns the number read elements
       inline size_t Read( T* arr, size_t offset, size_t count)  const  {
         size_t read = count;
