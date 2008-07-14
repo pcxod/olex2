@@ -373,6 +373,9 @@ void TXFile::LibSaveSolution(const TStrObjList& Params, TMacroError& E)  {
   TIns ins(AtomsInfo);
   ins.GetAsymmUnit().Assign( *FAsymmUnit );
   ins.AddIns("FMAP 2");
+  ins.SetRefinementMethod("L.S.");
+  ins.SetIterations(4);
+  ins.SetPlan(20);
   ins.SetSfac( oins->GetSfac());
   ins.SetUnit( oins->GetUnit() );
   ins.SaveToFile( Params[0] );

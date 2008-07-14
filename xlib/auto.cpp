@@ -1084,6 +1084,8 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
       sn->Node(i).SetId(2);
     else if ( guesses[i].list2->Count() != 0 )
       sn->Node(i).SetId(1);
+    else
+      sn->Node(i).SetId(0);
     // otherwise it is zero
   }
   for(int i=0; i < guesses.Count(); i++ )  {
@@ -1177,7 +1179,6 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
               " to " << l_bai->GetSymbol() );
         stat.AtomTypeChanges++;
         stat.SNAtomTypeAssignments++;
-        break;
       }
     }
   }
