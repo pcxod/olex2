@@ -1241,7 +1241,7 @@ void TMainForm::macPict(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 //..............................................................................
 void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   short res = 2;
-  wxProgressDialog progress(wxT("Rendering..."), wxT("Pass 1 out of 4"), 4, this, wxPD_AUTO_HIDE); 
+  //wxProgressDialog progress(wxT("Rendering..."), wxT("Pass 1 out of 4"), 5, this, wxPD_AUTO_HIDE); 
   if( Cmds.Count() == 2 )  res = Cmds[1].ToInt();
   if( res <= 0 )  res = 2;
   if( res > 10 )  res = 10;
@@ -1282,7 +1282,7 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       delete [] PP;
     }
   }
-  progress.Update(2, wxT("Pass 2 out of 4"));
+  //progress.Update(2, wxT("Pass 2 out of 4"));
   // x
   for( double i=0; i < res; i++ )  {
     for( double j=0.5; j < res-1; j++ )  {
@@ -1304,7 +1304,7 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     }
   }
   // y
-  progress.Update(3, wxT("Pass 3 out of 4"));
+  //progress.Update(3, wxT("Pass 3 out of 4"));
   for( double i=0.5; i < res-1; i++ )  {
     for( double j=0; j < res; j++ )  {
       FXApp->GetRender().LookAt(j, i, res);
@@ -1325,7 +1325,7 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     }
   }
   // x,y
-  progress.Update(3, wxT("Pass 4 out of 4"));
+  //progress.Update(3, wxT("Pass 4 out of 4"));
   for( double i=0.5; i < res-1; i++ )  {
     for( double j=0.5; j < res-1; j++ )  {
       FXApp->GetRender().LookAt(j, i, res);
@@ -1346,7 +1346,7 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     }
   }
 
-  progress.Update(3, wxT("Saving piture..."));
+  //progress.Update(4, wxT("Saving piture..."));
 
   FXApp->Quality(qaMedium);
 
@@ -1368,7 +1368,7 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   image.SetData((unsigned char*)bmpData, BmpWidth, BmpHeight ); 
 //  image.Mirror(false).SaveFile( bmpFN.u_str() );
   image.SaveFile( bmpFN.u_str() );
-  progress.Update(4, wxT("Done"));
+  //progress.Update(4, wxT("Done"));
   
 #ifdef __WIN32x__
   short bits = 24, extraBytes;
