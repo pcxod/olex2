@@ -10,11 +10,11 @@
 // ************************************************************************ //
 
 // C++ TLBWRTR : $Revision:   1.151.1.0.1.27  $
-// File generated on 02/07/2008 14:59:29 from Type Library described below.
+// File generated on 15/07/2008 14:30:58 from Type Library described below.
 
 // ************************************************************************  //
-// Type Lib: E:\SVN\Olex2\v1.1u\olex2-tl\Olex2xProj.tlb (1)
-// LIBID: {26802BBD-54FD-47A7-BF4B-DACFC711B6ED}
+// Type Lib: E:\SVN\srcf-svn\trunk\olex2-tl\Olex2xProj.tlb (1)
+// LIBID: {66CAB689-0D37-4220-BAA7-F76B7828EB98}
 // LCID: 0
 // Helpfile: 
 // HelpString: Olex2xProj Library

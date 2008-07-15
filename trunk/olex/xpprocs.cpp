@@ -102,7 +102,10 @@
 
 #include "msgbox.h"
 
-#include "ebtree.h"
+#ifndef __BORLANDC__
+  #include "ebtree.h"
+#endif
+
 #include "dusero.h"
 //#include "gl2ps.h"
 
@@ -1846,10 +1849,12 @@ void TMainForm::macInfo(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 //..............................................................................
 void TMainForm::macHelp(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   if( FHelpItem == NULL )  {  // just print out built in functions if any
+    if( Cmds.IsEmpty() )
+      return;
     PostCmdHelp(Cmds[0], true);
     return;
   }
-  if( !Cmds.Count() )  {
+  if( Cmds.IsEmpty() )  {
     if( !Options.Count() )  {
       int period=6;
       olxstr Tmp;
@@ -7166,6 +7171,7 @@ void TMainForm::funStrDir(const TStrObjList& Params, TMacroError &E) {
 }
 //..............................................................................
 
+#ifndef __BORLANDC__
 class Test_BTreeTraverser {
   int Y, Z;
   bool ZSet, YSet;
@@ -7175,24 +7181,24 @@ public:
   void SetY(int v)  {  Y = v;  YSet = true;  }
   bool OnItem(const BTree<int,int>::Entry* en)  {
     if( ZSet && YSet )  {
-      TBasicApp::GetLog() << (olxstr("pair ") << '{' << en->key << ',' << Y << ',' 
+      TBasicApp::GetLog() << (olxstr("pair ") << '{' << en->key << ',' << Y << ','
         << Z << '}' << '=' << en->val << '\n');
     }
     else if( YSet )  {
-      TBasicApp::GetLog() << (olxstr("pair ") << '{' << en->key << ',' << Y << '}' 
+      TBasicApp::GetLog() << (olxstr("pair ") << '{' << en->key << ',' << Y << '}'
         << '=' << en->val << '\n');
     }
-    else 
-      TBasicApp::GetLog() << (olxstr("pair ") << '{' << en->key << '}' 
+    else
+      TBasicApp::GetLog() << (olxstr("pair ") << '{' << en->key << '}'
         << '=' << en->val << '\n');
     ZSet = YSet = false;
     return true;
   }
 };
-
+#endif
 void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   if( !Cmds.IsEmpty() )  {
-    TAtomReference ar(Cmds.Text(' '));      
+    TAtomReference ar(Cmds.Text(' '));
     TCAtomGroup ag;
     int atomAGroup;
     olxstr unp(ar.Expand(FXApp->XFile().GetAsymmUnit(), ag, EmptyString, atomAGroup));
@@ -7202,6 +7208,7 @@ void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     TBasicApp::GetLog() << "\nUnprocessed instructions " << (unp.IsEmpty() ? olxstr("none") : unp) << '\n';
     return;
   }
+#ifndef __BORLANDC__
   BTree<int, int> tree;
   tree.Add(0,0);
   tree.Add(-1,-10);
@@ -7226,7 +7233,6 @@ void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   tv = tree.Find(-1);
   tv = tree.Find(-2);
   tv = tree.Find(-3);
-#ifndef __BORLANC__
   Test_BTreeTraverser tt;
   tree.Traverser.Traverse(tree, tt);
 

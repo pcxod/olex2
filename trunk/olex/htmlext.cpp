@@ -961,6 +961,7 @@ THtml::THtml(wxWindow *Parent, ALibraryContainer* LC):
     this_InitFuncD(GetBorders, fpNone, "Returns borders width between HTML content and window boundaries");
     this_InitFuncD(SetFocus, fpOne,    "Sets input focus to the specified HTML control");
     this_InitFuncD(GetItemState, fpOne|fpTwo, "Returns item state of provided switch");
+    this_InitFuncD(IsItem, fpOne, "Returns true if specified switch exists");
   }
 }
 //..............................................................................
@@ -1717,6 +1718,18 @@ void THtml::funGetItemState(const TStrObjList &Params, TMacroError &E)  {
     return;
   }
   E.SetRetVal( sw->FileIndex() );
+}
+//..............................................................................
+void THtml::funIsItem(const TStrObjList &Params, TMacroError &E)  {
+  THtml *html = (Params.Count() == 2) ? TGlXApp::GetMainForm()->GetHtml(Params[0]) : this;
+  if( html == NULL )  {
+    E.ProcessingError(__OlxSrcInfo, "undefined html window");
+    return;
+  }
+  olxstr itemName( (Params.Count() == 1) ? Params[0] : Params[1] );
+  THtmlSwitch *rootSwitch = html->Root();
+  THtmlSwitch* sw = rootSwitch->FindSwitch(itemName);
+  E.SetRetVal( sw == NULL ? false : true );
 }
 //..............................................................................
 void THtml::SetShowTooltips(bool v)  {

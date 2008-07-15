@@ -5,12 +5,11 @@
     <VERSION value="BCB.06.00"/>
     <PROJECT value="lib\gllib.lib"/>
     <OBJFILES value="build\dframe.obj build\gdrawobject.obj build\glbackground.obj 
-      build\glbase.obj build\glbitmap.obj build\glclipplane.obj 
-      build\glconsole.obj build\glcursor.obj build\glfont.obj build\glgroup.obj 
-      build\gllight.obj build\gllightmodel.obj build\glmaterial.obj 
-      build\glmouse.obj build\glmouselistener.obj build\globj.obj 
-      build\gloption.obj build\glprimitive.obj build\glrender.obj 
-      build\glscene.obj build\gltext.obj build\gltextbox.obj build\gltexture.obj 
+      build\glbitmap.obj build\glclipplane.obj build\glconsole.obj 
+      build\glcursor.obj build\glfont.obj build\glgroup.obj build\gllight.obj 
+      build\gllightmodel.obj build\glmaterial.obj build\glmouse.obj 
+      build\glmouselistener.obj build\gloption.obj build\glprimitive.obj 
+      build\glrender.obj build\glscene.obj build\gltext.obj build\gltextbox.obj 
       build\gpcollection.obj build\styles.obj build\xfader.obj"/>
     <RESFILES value=""/>
     <DEFFILE value=""/>
@@ -50,7 +49,6 @@
       <FILE FILENAME="..\..\..\glib\dframe.cpp" FORMNAME="" UNITNAME="dframe.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\glib\gdrawobject.cpp" FORMNAME="" UNITNAME="gdrawobject.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\glib\glbackground.cpp" FORMNAME="" UNITNAME="glbackground.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
-      <FILE FILENAME="..\..\..\glib\glbase.cpp" FORMNAME="" UNITNAME="glbase.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\glib\glbitmap.cpp" FORMNAME="" UNITNAME="glbitmap.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\glib\glclipplane.cpp" FORMNAME="" UNITNAME="glclipplane.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\glib\glconsole.cpp" FORMNAME="" UNITNAME="glconsole.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
@@ -62,14 +60,12 @@
       <FILE FILENAME="..\..\..\glib\glmaterial.cpp" FORMNAME="" UNITNAME="glmaterial.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\glib\glmouse.cpp" FORMNAME="" UNITNAME="glmouse.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\glib\glmouselistener.cpp" FORMNAME="" UNITNAME="glmouselistener.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
-      <FILE FILENAME="..\..\..\glib\globj.cpp" FORMNAME="" UNITNAME="globj.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\glib\gloption.cpp" FORMNAME="" UNITNAME="gloption.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\glib\glprimitive.cpp" FORMNAME="" UNITNAME="glprimitive.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\glib\glrender.cpp" FORMNAME="" UNITNAME="glrender.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\glib\glscene.cpp" FORMNAME="" UNITNAME="glscene.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\glib\gltext.cpp" FORMNAME="" UNITNAME="gltext.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\glib\gltextbox.cpp" FORMNAME="" UNITNAME="gltextbox.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
-      <FILE FILENAME="..\..\..\glib\gltexture.cpp" FORMNAME="" UNITNAME="gltexture.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\glib\gpcollection.cpp" FORMNAME="" UNITNAME="gpcollection.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\glib\styles.cpp" FORMNAME="" UNITNAME="styles.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\glib\xfader.cpp" FORMNAME="" UNITNAME="xfader" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>

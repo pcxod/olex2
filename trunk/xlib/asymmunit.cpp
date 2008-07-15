@@ -945,6 +945,12 @@ void TAsymmUnit::LibGetAtomOccu(const TStrObjList& Params, TMacroError& E)  {
   E.SetRetVal( GetAtom(index).GetOccp() );
 }
 //..............................................................................
+void TAsymmUnit::LibGetAtomAfix(const TStrObjList& Params, TMacroError& E)  {
+  int index = Params[0].ToInt();
+  if( index < 0 || index >= AtomCount() )  throw TIndexOutOfRangeException(__OlxSourceInfo, index, 0, AtomCount());
+  E.SetRetVal( GetAtom(index).GetAfix() );
+}
+//..............................................................................
 void TAsymmUnit::LibIsPeak(const TStrObjList& Params, TMacroError& E)  {
   if( Params[0].IsNumber() )  {
     int index = Params[0].ToInt();

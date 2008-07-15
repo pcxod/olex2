@@ -307,6 +307,7 @@ public:
   void LibGetAtomOccu(const TStrObjList& Params, TMacroError& E);
   void LibGetAtomName(const TStrObjList& Params, TMacroError& E);
   void LibGetAtomType(const TStrObjList& Params, TMacroError& E);
+  void LibGetAtomAfix(const TStrObjList& Params, TMacroError& E);
   void LibGetPeak(const TStrObjList& Params, TMacroError& E);
   void LibGetCell(const TStrObjList& Params, TMacroError& E);
   void LibGetVolume(const TStrObjList& Params, TMacroError& E);

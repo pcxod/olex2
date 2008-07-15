@@ -200,6 +200,7 @@ void TIns::LoadFromStrings(const TStrList& InsFile)  {
           }
         }
       }
+      Sfac = Sfac.Trim(' ');
     }
     else if( Tmp1 == "UNIT" )  {  // can look like an atom !
       Unit = Toks.Text(' ', 1);
@@ -307,8 +308,10 @@ void TIns::LoadFromStrings(const TStrList& InsFile)  {
           Ins.Add(Tmp);
           continue;
       }
-      if( !CellFound )
+      if( !CellFound )  {
+        Clear();
         throw TFunctionFailedException(__OlxSourceInfo, "uninitialised cell");
+      }
       atom = ParseAtom(Toks, partOccu, CurrResi );
       atom->SetPart(Part);
       atom->SetAfix(Afix);
@@ -328,6 +331,10 @@ void TIns::LoadFromStrings(const TStrList& InsFile)  {
       if( atom->GetAtomInfo() != iQPeakIndex )  // the use sfac
         atom->AtomInfo( BasicAtoms.Object(Toks[1].ToInt()-1) );
     }
+  }
+  if( GetSfac().CharCount(' ') != GetUnit().CharCount(' ') )  {
+    Clear();
+    throw TFunctionFailedException(__OlxSourceInfo, "mismatching SFAC/UNIT");
   }
   TMatrixD sm(3,4);
   for( int i=0; i < Symm.Count(); i++ )  {
@@ -414,7 +421,7 @@ void TIns::LoadFromStrings(const TStrList& InsFile)  {
       }
     }
   }
-  if( !CellFound )  {
+  if( !CellFound )  {  // in case there are no atoms
     Clear();
     throw TInvalidArgumentException(__OlxSourceInfo, "empty CELL");
   }
@@ -625,6 +632,8 @@ void TIns::SaveToRefine(const olxstr& FileName, const olxstr& sMethod, const olx
   TTypeList< AnAssociation2<int,TBasicAtomInfo*> > sl;
   TStrList sfac(GetSfac(), ' ');
   TStrList unit(GetUnit(), ' ');
+  if( sfac.Count() != unit.Count() )
+    throw TFunctionFailedException(__OlxSourceInfo, "SFAC does not match UNIT");
   int ac = 0;
   for( int i=0; i < sfac.Count(); i++ )  {
     int cnt = unit[i].ToInt();

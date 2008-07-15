@@ -7,14 +7,13 @@
     <OBJFILES value="build\actions.obj build\arrays.obj build\bapp.obj build\bitarray.obj 
       build\datafile.obj build\dataitem.obj build\ebase.obj build\ebasis.obj 
       build\ecast.obj build\efile.obj build\egraph.obj build\elist.obj 
-      build\emath.obj build\ematrix.obj build\ememstream.obj build\erange.obj 
-      build\estack.obj build\estrlist.obj build\etable.obj build\etime.obj 
-      build\evalue.obj build\evector.obj build\evpoint.obj build\exception.obj 
-      build\function.obj build\groupobj.obj build\library.obj build\log.obj 
-      build\macro.obj build\macroerror.obj build\paramlist.obj build\poly.obj 
-      build\settingsfile.obj build\undo.obj build\vpoint.obj build\egc.obj 
-      build\ipbase.obj build\outstream.obj build\olx_cstring.obj 
-      build\olx_wstring.obj build\ostring.obj build\eutf8.obj build\istream.obj"/>
+      build\emath.obj build\ememstream.obj build\erange.obj build\estrlist.obj 
+      build\etime.obj build\exception.obj build\function.obj build\groupobj.obj 
+      build\library.obj build\log.obj build\macro.obj build\macroerror.obj 
+      build\paramlist.obj build\poly.obj build\settingsfile.obj build\undo.obj 
+      build\vpoint.obj build\egc.obj build\ipbase.obj build\outstream.obj 
+      build\olx_cstring.obj build\olx_wstring.obj build\ostring.obj 
+      build\eutf8.obj build\istream.obj"/>
     <RESFILES value=""/>
     <DEFFILE value=""/>
     <RESDEPEN value="$(RESFILES)"/>
@@ -63,16 +62,10 @@
       <FILE FILENAME="..\..\..\sdl\egraph.cpp" FORMNAME="" UNITNAME="egraph.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\sdl\elist.cpp" FORMNAME="" UNITNAME="elist.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\sdl\emath.cpp" FORMNAME="" UNITNAME="emath.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
-      <FILE FILENAME="..\..\..\sdl\ematrix.cpp" FORMNAME="" UNITNAME="ematrix.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\sdl\ememstream.cpp" FORMNAME="" UNITNAME="ememstream.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\sdl\erange.cpp" FORMNAME="" UNITNAME="erange.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
-      <FILE FILENAME="..\..\..\sdl\estack.cpp" FORMNAME="" UNITNAME="estack.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\sdl\estrlist.cpp" FORMNAME="" UNITNAME="estrlist.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
-      <FILE FILENAME="..\..\..\sdl\etable.cpp" FORMNAME="" UNITNAME="etable.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\sdl\etime.cpp" FORMNAME="" UNITNAME="etime.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
-      <FILE FILENAME="..\..\..\sdl\evalue.cpp" FORMNAME="" UNITNAME="evalue.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
-      <FILE FILENAME="..\..\..\sdl\evector.cpp" FORMNAME="" UNITNAME="evector.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
-      <FILE FILENAME="..\..\..\sdl\evpoint.cpp" FORMNAME="" UNITNAME="evpoint.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\sdl\exception.cpp" FORMNAME="" UNITNAME="exception.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\sdl\function.cpp" FORMNAME="" UNITNAME="function.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\sdl\groupobj.cpp" FORMNAME="" UNITNAME="groupobj.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
