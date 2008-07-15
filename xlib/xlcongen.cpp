@@ -53,10 +53,16 @@ bool TXlConGen::FixAtom( TAtomEnvi& envi, const short Group, const TBasicAtomInf
         break;
       case fgOH2:
         if( CreatedAtoms.Count() == 2 )  {
-          sr = &au.SimilarDistances().AddNew();
+          sr = &au.RestrainedDistances().AddNew();
           sr->SetEsd(0.02);
+          sr->SetValue(0.85);
           sr->AddAtomPair(envi.GetBase().CAtom(), NULL, *CreatedAtoms[0], NULL);
           sr->AddAtomPair(envi.GetBase().CAtom(), NULL, *CreatedAtoms[1], NULL);
+
+          sr = &au.RestrainedAngles().AddNew();
+          sr->SetEsd(0.04);
+          sr->SetValue(1.39);
+          sr->AddAtomPair(*CreatedAtoms[1], NULL, *CreatedAtoms[0], NULL);
 
           if( envi.Count() == 1 )  {
             sr = &au.SimilarDistances().AddNew();

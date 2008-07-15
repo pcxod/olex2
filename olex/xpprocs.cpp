@@ -4755,9 +4755,39 @@ void TMainForm::macAppendHkl(TStrObjList &Cmds, const TParamList &Options, TMacr
   throw TNotImplementedException(__OlxSourceInfo);
 }
 //..............................................................................
-void TMainForm::macExcludeHkl(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)
-{
-  throw TNotImplementedException(__OlxSourceInfo);
+void TMainForm::macExcludeHkl(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  TIntList h, k, l;
+  TStrList toks( Options.FindValue('h', EmptyString), ';');
+  for( int i=0; i < toks.Count(); i++ )
+    h.Add( toks[i].ToInt() );
+  toks.Clear();
+  toks.Strtok( Options.FindValue('k', EmptyString), ';');
+  for( int i=0; i < toks.Count(); i++ )
+    k.Add( toks[i].ToInt() );
+  toks.Clear();
+  toks.Strtok( Options.FindValue('l', EmptyString), ';');
+  for( int i=0; i < toks.Count(); i++ )
+    l.Add( toks[i].ToInt() );
+
+  olxstr hklSrc (FXApp->XFile().GetLastLoader()->GetHKLSource() );
+  if( hklSrc.IsEmpty() )
+    hklSrc = TEFile::ChangeFileExt( FXApp->XFile().GetLastLoader()->GetFileName(), "hkl");
+  if( !TEFile::FileExists( hklSrc ) )  {
+    E.ProcessingError(__OlxSrcInfo, "could not find hkl file: ") << hklSrc;
+    return;
+  }
+
+  THklFile Hkl;
+  Hkl.LoadFromFile( hklSrc );
+  for( int i=0; i < Hkl.RefCount(); i++ )  {
+    if( Hkl[i].GetTag() > 0 )  {
+      if( h.IndexOf( Hkl[i].GetH() ) != -1 ||
+          k.IndexOf( Hkl[i].GetK() ) != -1 ||
+          l.IndexOf( Hkl[i].GetL() ) != -1 )
+        Hkl[i].SetTag( -Hkl[i].GetTag() );
+    }
+  }
+  Hkl.SaveToFile( hklSrc );
 }
 //..............................................................................
 void TMainForm::macDirection(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
@@ -5751,7 +5781,8 @@ void TMainForm::funSG(const TStrObjList &Cmds, TMacroError &E)  {
     E.SetRetVal( Tmp );
   }
   else  {
-    E.ProcessingError(__OlxSrcInfo, "could not find space group for the file" );
+    E.SetRetVal( NAString );
+//    E.ProcessingError(__OlxSrcInfo, "could not find space group for the file" );
     return;
   }
 }
