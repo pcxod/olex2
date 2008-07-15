@@ -232,7 +232,14 @@ void TUnitCell::TSearchSymmEqTask::Run(long ind)  {
         if( Atoms[i]->GetFragmentId() == Atoms[ind]->GetFragmentId() )  continue;
         AU->CellToCartesian(Vec);
         double Dis = Vec.Length();
-        if( Latt->GetNetwork().HBondExists(*Atoms[ind], *Atoms[i], Dis) )  {
+        if( Latt->GetNetwork().CBondExists(*Atoms[ind], *Atoms[i], Dis) )  {
+          Atoms[ind]->SetCanBeGrown(true);
+          if( Atoms[ind]->IsAttachedTo( *Atoms[i] ) )  continue;
+          Atoms[ind]->AttachAtom( Atoms[i] );
+          Atoms[i]->SetCanBeGrown(true);
+          Atoms[i]->AttachAtom(Atoms[ind]);
+        }
+        else if( Latt->GetNetwork().HBondExists(*Atoms[ind], *Atoms[i], Dis) )  {
           Atoms[ind]->AttachAtomI( Atoms[i] );
           Atoms[i]->AttachAtomI( Atoms[ind] );
         }

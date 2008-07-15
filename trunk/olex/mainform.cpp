@@ -677,7 +677,7 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual accupancy\
   // not implemented
   this_InitMacro(AppendHkl, , fpAny );
   // not implemented
-  this_InitMacro(ExcludeHkl, , fpAny );
+  this_InitMacro(ExcludeHkl,h&;k&;l , fpAny );
 
   this_InitMacro(Direction, , fpNone );
 
@@ -2800,8 +2800,8 @@ void TMainForm::SaveScene(TDataItem *Root, TGlLightModel *FLM)  {
 }
 //..............................................................................
 void TMainForm::UpdateRecentFile(const olxstr FN)  {
-  TEList Items;
-  int index = FRecentFiles.IndexOf(FN), i;
+  TPtrList<wxMenuItem> Items;
+  int index = FRecentFiles.IndexOf(FN);
   wxMenuItem *mi=NULL;
   if( index == -1 )  {
     if( (FRecentFiles.Count()+1) < FRecentFilesToShow )  {
@@ -2817,26 +2817,23 @@ void TMainForm::UpdateRecentFile(const olxstr FN)  {
     FRecentFiles.Insert(0, FN);
     FRecentFiles.Object(0) = mi;
   }
-  for( i=0; i < FRecentFiles.Count(); i++ )
-  { Items.Add(FRecentFiles.Object(i)); }
-  for( i=0; i < FRecentFiles.Count(); i++ )  // put items in the right position
-  {
-    mi = (wxMenuItem*)Items[i];
+  for( int i=0; i < FRecentFiles.Count(); i++ )
+    Items.Add( FRecentFiles.Object(i) ); 
+  for( int i=0; i < FRecentFiles.Count(); i++ )  {  // put items in the right position
+    mi = Items[i];
     if( mi )
       FRecentFiles.Object(mi->GetId()-ID_FILE0) = mi;
   }
-  for( i=0; i < FRecentFiles.Count(); i++ )  // change item captions
-  {
-    mi = (wxMenuItem*)FRecentFiles.Object(i);
+  for( int i=0; i < FRecentFiles.Count(); i++ )  {  // change item captions
+    mi = FRecentFiles.Object(i);
     if( mi )
       mi->SetText( uiStr(TEFile::ExtractFileName(FRecentFiles[i]))) ;
   }
-  for( i=1; i < FRecentFiles.Count(); i++ )  // check currebt item
-  {
-    mi = (wxMenuItem*)FRecentFiles.Object(i);
+  for( int i=1; i < FRecentFiles.Count(); i++ )  {  // check currebt item
+    mi = FRecentFiles.Object(i);
     if( mi )  mi->Check( false );
   }
-  ((wxMenuItem*)FRecentFiles.Object(0))->Check( true );
+  FRecentFiles.Object(0)->Check( true );
   if( FRecentFiles.Count() >= FRecentFilesToShow )
     FRecentFiles.SetCount(FRecentFilesToShow);
 }
