@@ -110,6 +110,7 @@ public:
 
   static TBTreeTraverser< BTree<C,O> > Traverser;
 };
+
 template <typename C, typename O>
   TBTreeTraverser< BTree<C,O> > BTree<C,O>::Traverser;
 

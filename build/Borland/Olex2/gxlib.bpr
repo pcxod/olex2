@@ -5,11 +5,10 @@
     <VERSION value="BCB.06.00"/>
     <PROJECT value="lib\gxlib.lib"/>
     <OBJFILES value="build\binding.obj build\dbasis.obj build\dunitcell.obj build\gllabel.obj 
-      build\gllabels.obj build\syntaxp.obj build\wglscene.obj 
-      build\wxglscene.obj build\gxapp.obj build\xatom.obj build\xbond.obj 
-      build\xgrid.obj build\xgrowline.obj build\xgrowpoint.obj build\xline.obj 
-      build\xplane.obj build\xreflection.obj build\xrestraint.obj 
-      build\xlattice.obj"/>
+      build\gllabels.obj build\wxglscene.obj build\gxapp.obj build\xatom.obj 
+      build\xbond.obj build\xgrid.obj build\xgrowline.obj build\xgrowpoint.obj 
+      build\xline.obj build\xplane.obj build\xreflection.obj 
+      build\xrestraint.obj build\xlattice.obj build\xeval.obj"/>
     <RESFILES value=""/>
     <DEFFILE value=""/>
     <RESDEPEN value="$(RESFILES)"/>
@@ -50,8 +49,6 @@
       <FILE FILENAME="..\..\..\gxlib\dunitcell.cpp" FORMNAME="" UNITNAME="dunitcell.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\gxlib\gllabel.cpp" FORMNAME="" UNITNAME="gllabel.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\gxlib\gllabels.cpp" FORMNAME="" UNITNAME="gllabels.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
-      <FILE FILENAME="..\..\..\gxlib\syntaxp.cpp" FORMNAME="" UNITNAME="syntaxp.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
-      <FILE FILENAME="..\..\..\gxlib\wglscene.cpp" FORMNAME="" UNITNAME="wglscene.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\gxlib\wxglscene.cpp" FORMNAME="" UNITNAME="wxglscene.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\gxlib\gxapp.cpp" FORMNAME="" UNITNAME="gxapp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\gxlib\xatom.cpp" FORMNAME="" UNITNAME="xatom.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
@@ -64,6 +61,7 @@
       <FILE FILENAME="..\..\..\gxlib\xreflection.cpp" FORMNAME="" UNITNAME="xreflection.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\gxlib\xrestraint.cpp" FORMNAME="" UNITNAME="xrestraint" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\gxlib\xlattice.cpp" FORMNAME="" UNITNAME="xlattice" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\gxlib\xeval.cpp" FORMNAME="" UNITNAME="xeval" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
   </FILELIST>
   <BUILDTOOLS>
   </BUILDTOOLS>

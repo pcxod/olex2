@@ -92,7 +92,7 @@ void TLangDict::SetCurrentLanguage(const olxstr& fileName, const olxstr& lang)  
 #ifdef _UNICODE
     wc_bf.SetCapacity(toks[CurrentLanguageIndex].Length());
     int c = utf8.MB2WC( wc_bf.Data(), toks[CurrentLanguageIndex].c_str(), wc_bf.GetCapacity());
-     Records.Add( toks[0], new olxstr(wc_bf.Data(), c) );
+     Records.Add( toks[0], new olxstr((const olxch *)wc_bf.Data(), c) );
 #else
     wc_bf.SetCapacity(toks[CurrentLanguageIndex].Length());
     c_bf.SetCapacity(toks[CurrentLanguageIndex].Length());

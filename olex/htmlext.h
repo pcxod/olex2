@@ -255,6 +255,7 @@ protected:
   DefFunc(SaveData)
   DefFunc(LoadData)
   DefFunc(GetItemState)
+  DefFunc(IsItem)
 
   olxstr GetObjectValue(const IEObject *Object);
   const olxstr& GetObjectData(const IEObject *Object);

@@ -60,7 +60,7 @@ bool TWinProcess::InitStreams()  {
 
   if( !CreatePipe(&TmpOutRead, &OutWrite, &sa, 0)) // Create a child stdout pipe
     return false;
-
+  
    // Create a duplicate of the stdout write handle for the std
   if( !DuplicateHandle( GetCurrentProcess(), OutWrite, GetCurrentProcess(),
                           &ErrWrite,0, true, DUPLICATE_SAME_ACCESS))
@@ -88,6 +88,8 @@ bool TWinProcess::InitStreams()  {
   CloseHandle(TmpOutRead);  TmpOutRead = NULL;
   CloseHandle(TmpInWrite);  TmpInWrite = NULL;
 
+  SetHandleInformation( OutRead, HANDLE_FLAG_INHERIT, 0);
+  SetHandleInformation( InWrite, HANDLE_FLAG_INHERIT, 0);
   return true;
 }
 //..............................................................................
@@ -128,12 +130,13 @@ bool TWinProcess::Execute(const olxstr & Cmd, short Flags)  {
 
   // Launch the child process.
   if( !CreateProcess( NULL, (LPTSTR)Cmd.u_str(), NULL, NULL,   true,
-                      CREATE_NEW_CONSOLE, NULL, NULL, &si, &ProcessInfo))
+                      CREATE_NEW_CONSOLE|CREATE_SEPARATE_WOW_VDM, NULL, NULL, &si, &ProcessInfo))
   {
     CloseStreams();
     return false;
   }
-  CloseHandle(ProcessInfo.hThread); // Close any unuseful handles
+  CloseHandle(ProcessInfo.hThread);  // Close any unuseful handles
+
   ProcessId = ProcessInfo.dwProcessId;
   // Child is launched. Close the parents copy of those pipe
   // handles that only the child should have open.
