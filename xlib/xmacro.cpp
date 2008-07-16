@@ -797,7 +797,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
       cd->String = true;
     }
     if( !Cif->ParamExists("_symmetry_space_group_name_H-M") )
-      Cif->AddParam("_symmetry_space_group_name_H-M", sg->GetName(), true);
+      Cif->AddParam("_symmetry_space_group_name_H-M", sg->GetFullName(), true);
     else  {
       TCifData* cd = Cif->FindParam("_symmetry_space_group_name_H-M");
       if( cd->Data->IsEmpty() )
