@@ -34,11 +34,9 @@
 //----------------------------------------------------------------------------//
 // TIns function bodies
 //----------------------------------------------------------------------------//
-TIns::TIns(TAtomsInfo *S) : TBasicCFile(S), FPLAN(1), FLS(1)  {
+TIns::TIns(TAtomsInfo *S) : TBasicCFile(S)  {
   Radiation = 0.71073f;
   HKLF = 4;
-  FLS[0] = 0;
-  FPLAN[0] = 0;  
   LoadQPeaks = true;
 }
 //..............................................................................
@@ -57,8 +55,8 @@ void TIns::Clear()  {
   FWght.Resize(0);
   FWght1.Resize(0);
   FHKLSource = EmptyString;
-  FLS.Resize(1);   FLS[0] = 0;
-  FPLAN.Resize(1); FPLAN[0] = 0;  
+  FLS.Resize(0);
+  FPLAN.Resize(0);
   Sfac = EmptyString;
   Unit = EmptyString;
   Error = 0;
@@ -477,23 +475,15 @@ bool TIns::AddIns(const olxstr &Name, const TStrList& params)  {
   }
   if( Name.Comparei("L.S.") == 0 || Name.Comparei("CGLS") == 0 )  {  
     SetRefinementMethod(Name);
-    FLS.Resize( params.IsEmpty() ? 1 : params.Count() );
-    if( params.IsEmpty() )  
-      FLS[0] = 0;  
-    else  {
-      for( int i=0; i < params.Count(); i++ )
-        FLS[i] = params[i].ToInt();
-    }
+    FLS.Resize( params.Count() );
+    for( int i=0; i < params.Count(); i++ )
+      FLS[i] = params[i].ToInt();
     return true;
   }
   if( Name.Comparei("PLAN") == 0 )  {  
-    FPLAN.Resize( params.IsEmpty() ? 1 : params.Count() );
-    if( params.IsEmpty() )  
-      FPLAN[0] = 0;  
-    else  {
-      for( int i=0; i < params.Count(); i++ )
-        FPLAN[i] = params[i].ToDouble();
-    }
+    FPLAN.Resize( params.Count() );
+    for( int i=0; i < params.Count(); i++ )
+      FPLAN[i] = params[i].ToDouble();
     return true;
   }
 
@@ -771,12 +761,16 @@ void TIns::SaveToStrings(TStrList& SL)  {
   SaveRestraints(SL, NULL, NULL, NULL);
 
   if( !GetRefinementMethod().IsEmpty() )  {
-    olxstr& rm = SL.Add( GetRefinementMethod() );
-    for( int i=0; i < FLS.Count(); i++ )
-      rm << ' ' << FLS[i];
-    olxstr& pn = SL.Add("PLAN ");
-    for( int i=0; i < FPLAN.Count(); i++ )
-      pn << ' ' << ((i < 1) ? Round(FPLAN[i]) : FPLAN[i]);
+    if( FLS.Count() != 0 )  {
+      olxstr& rm = SL.Add( GetRefinementMethod() );
+      for( int i=0; i < FLS.Count(); i++ )
+        rm << ' ' << FLS[i];
+    }
+    if( FPLAN.Count() != 0 )  {
+      olxstr& pn = SL.Add("PLAN ");
+      for( int i=0; i < FPLAN.Count(); i++ )
+        pn << ' ' << ((i < 1) ? Round(FPLAN[i]) : FPLAN[i]);
+    }
   }
 
   // copy "unknown" instructions except rems

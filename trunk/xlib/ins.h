@@ -57,11 +57,25 @@ public:
   DefPropC(olxstr, SolutionMethod)
   DefPropB(LoadQPeaks)
   
-  int GetIterations() const  {  return FLS[0];  }
-  int GetPlan()       const  {  return Round(FPLAN[0]);  }
+  int GetIterations() const  {  
+    if( FLS.Count() == 0 )
+      throw TFunctionFailedException(__OlxSourceInfo, "undefined number of iterations");
+    return FLS[0];  
+  }
+  int GetPlan()       const  {  
+    if( FPLAN.Count() == 0 )
+      throw TFunctionFailedException(__OlxSourceInfo, "undefined number of Fourier peaks");
+    return Round(FPLAN[0]);  
+  }
   const TVectorI& GetLSV() {  return FLS;  }
-  void SetIterations( int v) {  FLS[0] = v;  }
-  void SetPlan(int v)        {  FPLAN[0] = v;  }
+  void SetIterations( int v ) {  
+    if( FLS.Count() == 0 ) FLS.Resize(1);
+    FLS[0] = v;  
+  }
+  void SetPlan(int v)        {  
+    if( FPLAN.Count() == 0 )  FPLAN.Resize(1);
+    FPLAN[0] = v;  
+  }
   const TVectorD& GetPlanV() {  return FPLAN;  }
 
   inline TVectorD& Wght()   {  return FWght;  }

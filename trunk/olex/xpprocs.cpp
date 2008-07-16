@@ -259,11 +259,11 @@ void TMainForm::funIns(const TStrObjList& Params, TMacroError &E)  {
       tmp << I->GetLSV()[i];
       if( (i+1) < I->GetLSV().Count() )  tmp << ' ';
     }
-    E.SetRetVal( tmp );
+    E.SetRetVal( I->GetLSV().Count() == 0 ? NAString : tmp );
     return;
   }
   if( Params[0].Comparei("ls") == 0 )  {
-    E.SetRetVal( I->GetIterations() );
+    E.SetRetVal( I->GetLSV().Count() == 0 ? NAString : olxstr(I->GetIterations()) );
     return;
   }
   if( Params[0].Comparei("plan") == 0)  {
@@ -271,11 +271,11 @@ void TMainForm::funIns(const TStrObjList& Params, TMacroError &E)  {
       tmp << ((i < 1) ? Round(I->GetPlanV()[i]) : I->GetPlanV()[i]);
       if( (i+1) < I->GetPlanV().Count() )  tmp << ' ';
     }
-    E.SetRetVal( tmp );
+    E.SetRetVal( I->GetPlanV().Count() == 0 ? NAString : tmp );
     return;
   }
   if( Params[0].Comparei("qnum") == 0)  {
-    E.SetRetVal( I->GetPlan() );
+    E.SetRetVal( I->GetPlanV().Count() == 0 ? NAString : olxstr(I->GetPlan()) );
     return;
   }
   if( !I->InsExists(Params[0]) )  {
@@ -2347,7 +2347,7 @@ void TMainForm::macLS(TStrObjList &Cmds, const TParamList &Options, TMacroError 
       break;
     }
   }
-  if( Cmds.Count() )
+  if( !Cmds.IsEmpty() )
     iF->SetRefinementMethod( Cmds[0] );
 }
 //..............................................................................
