@@ -41,9 +41,8 @@ TCAtom::TCAtom(TAsymmUnit *Parent)  {
 }
 //..............................................................................
 TCAtom::~TCAtom()  {
-  if( FAttachedAtoms )  delete FAttachedAtoms;
-  if( FAttachedAtomsI )  delete FAttachedAtomsI;
-  return;
+  if( FAttachedAtoms != NULL )  delete FAttachedAtoms;
+  if( FAttachedAtomsI != NULL )  delete FAttachedAtomsI;
 }
 //..............................................................................
 bool TCAtom::SetLabel(const olxstr &L)  {

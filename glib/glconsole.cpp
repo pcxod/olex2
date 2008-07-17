@@ -378,6 +378,9 @@ void TGlConsole::PrintText(const olxstr &S, TGlMaterial *M, bool Hypernate)  {
     if( M != NULL )  {  GlM = new TGlMaterial;  *GlM = *M;  }
     if( !FBuffer.IsEmpty() && FBuffer.LastStr().IsEmpty() )  {
       FBuffer.Last().String() = Tmp;
+      /* this line is added after memory leak analysis by Compuware DevPartner 8.2 trial */
+      if( FBuffer.Last().Object() != NULL )
+        delete FBuffer.Last().Object();
       FBuffer.Last().Object() = GlM;
     }
     else

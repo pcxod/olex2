@@ -758,6 +758,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\sdl\talist.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\sdl\tptrlist.h"
 				>
 			</File>

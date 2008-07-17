@@ -60,6 +60,16 @@ public:
   inline bool IsAttachedTo(TCAtom& CA) const {
     return FAttachedAtoms == NULL ? false : FAttachedAtoms->IndexOf(&CA) != -1;
   }
+  inline void ClearAttachedAtoms()  {
+    if( FAttachedAtoms != NULL )  {
+      delete FAttachedAtoms;
+      FAttachedAtoms = NULL; 
+    }
+    if( FAttachedAtomsI != NULL )  {
+      delete FAttachedAtomsI;
+      FAttachedAtomsI = NULL; 
+    }
+  }
 
   inline int AttachedAtomICount()      const {
     return FAttachedAtomsI == NULL ? 0 : FAttachedAtomsI->Count();

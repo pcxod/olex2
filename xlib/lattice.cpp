@@ -243,7 +243,7 @@ void TLattice::Init()  {
   GetUnitCell().InitMatrices();
   InitBody();
   TEStrBuffer tmp;
-  int eqc = GetUnitCell().FindSymmEq(tmp, 0.01, true, false, false); // find and not remove
+  int eqc = GetUnitCell().FindSymmEq(tmp, 0.1, true, false, false); // find and not remove
   GetAsymmUnit().SetContainsEquivalents( eqc != 0 );
 
 /*  // decode fixed Uiso parameters
@@ -287,11 +287,14 @@ void  TLattice::Uniq(bool remEqv)  {
   ClearMatrices();
   if( GetAsymmUnit().DoesContainEquivalents() && remEqv )  {
     TEStrBuffer Msg;
-    GetUnitCell().FindSymmEq(Msg, 0.01, false, false, true);
+    GetUnitCell().FindSymmEq(Msg, 0.1, true, false, true);
     //TBasicApp::GetLog()->CriticalInfo(olxstr("Symmetrical counterparts were removed for: ") << Msg.ToString() );
     GetAsymmUnit().SetContainsEquivalents(false);
+    Init();
   }
-  InitBody();
+  else  {
+    InitBody();
+  }
   Generated = false;
   OnStructureUniq->Exit(this);
 }
@@ -761,7 +764,7 @@ void TLattice::UpdateAsymmUnit()  {
     delete (TEList*)AUAtoms[i];
   TEStrBuffer Rep;
   if( GetAsymmUnit().DoesContainEquivalents() )
-    AsymmUnit->SetContainsEquivalents( UnitCell->FindSymmEq(Rep, 0.01, false, false, false) != 0 );
+    AsymmUnit->SetContainsEquivalents( UnitCell->FindSymmEq(Rep, 0.1, false, false, false) != 0 );
 }
 //..............................................................................
 void TLattice::ListAsymmUnit(TSAtomPList& L, TCAtomPList* Template, bool IncludeQ)  {
@@ -1067,8 +1070,10 @@ void TLattice::Compaq()  {
       for( int k=0; k < frag->NodeCount(); k++ )  {
         if( frag->Node(k).CAtom().IsAttachedTo( fa.CAtom() ) )  {
           m = GetUnitCell().GetClosest(fa.CCenter(), frag->Node(k).CCenter(), true);
+          if( m != NULL )  break;
         }
       }
+      if( m != NULL )  break;
     }
     if( m == NULL )  {
       molCenter[0] = 0;  molCenter[1] = 0;  molCenter[2] = 0;
@@ -1141,8 +1146,10 @@ void TLattice::CompaqAll()  {
         for( int l=0; l < Fragments[j]->NodeCount(); l++ )  {
           if( Fragments[j]->Node(l).CAtom().IsAttachedTo( fa.CAtom() ) )  {
             m = GetUnitCell().GetClosest(fa.CCenter(), Fragments[j]->Node(l).CCenter(), true);
+            if( m != NULL )  break;
           }
         }
+        if( m != NULL )  break;
       }
 
       if( m == NULL )  continue;

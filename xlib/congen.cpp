@@ -161,10 +161,13 @@ void AConstraintGenerator::GenerateAtom( TCAtomPList& created, TAtomEnvi& envi,
       break;
     case fgCH1:
       for( int i=0; i < envi.Count(); i++ )  {
-        if( envi.GetCrd(i).DistanceTo( envi.GetBase().Center() ) > 1.95 )
+        if( envi.GetCrd(i).DistanceTo( envi.GetBase().Center() ) > 1.95 &&
+          envi.GetBAI(i) != 34 ) // bromine
           continue;
-        Vec1 += envi.GetCrd(i);
-        Vec1 -= envi.GetBase().Center();
+        Vec2 = envi.GetCrd(i);
+        Vec2 -= envi.GetBase().Center();
+        Vec2.Normalise();
+        Vec1 += Vec2;
       }
       Vec1.Normalise();
       Vec1 *= -0.96;
@@ -419,8 +422,11 @@ void AConstraintGenerator::GenerateAtom( TCAtomPList& created, TAtomEnvi& envi,
       if( envi.Count() == 4 ||  envi.Count() == 5 )  {
         bool create = true;
         for( int i=0; i < envi.Count(); i++ )  {
+          Vec2 = envi.GetCrd(i);
+          Vec2 -= envi.GetBase().Center();
+          Vec2.Normalise();
           Vec1 += envi.GetCrd(i);
-          Vec1 -= envi.GetBase().Center();
+          Vec1 += Vec2;
 //          if( !(envi.GetBAI(i).GetIndex() == iCarbonIndex ||
 //                envi.GetBAI(i).GetIndex() == iBoronIndex) )  {
 //            create = false;

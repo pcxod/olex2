@@ -1073,6 +1073,8 @@ TLibrary* TAsymmUnit::ExportLibrary(const olxstr& name) {
 "Returns atom type (element)"  ) );
   lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,  &TAsymmUnit::LibGetAtomOccu, "GetAtomOccu", fpOne,
 "Returns atom occupancy"  ) );
+  lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,  &TAsymmUnit::LibGetAtomAfix, "GetAtomAfix", fpOne,
+"Returns atom AFIX"  ) );
   lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,  &TAsymmUnit::LibGetPeak, "GetPeak", fpOne,
 "Returns peak intensity"  ) );
   lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,  &TAsymmUnit::LibGetAtomU, "GetAtomU", fpOne,
