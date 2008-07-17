@@ -923,8 +923,8 @@ THtml::THtml(wxWindow *Parent, ALibraryContainer* LC):
     InitMacroA( *THtml::Library, THtml, HtmlLoad, Load, , fpOne|fpTwo );
     InitMacro( LC->GetLibrary(), THtml, HtmlLoad, , fpOne|fpTwo );
 
-    InitMacroA( *THtml::Library, THtml, HtmlDump, Dump, , fpOne );
-    InitMacro( LC->GetLibrary(), THtml, HtmlDump, , fpOne );
+    InitMacroA( *THtml::Library, THtml, HtmlDump, Dump, , fpOne|fpTwo );
+    InitMacro( LC->GetLibrary(), THtml, HtmlDump, , fpOne|fpTwo );
 
     InitMacroA( *THtml::Library, THtml, Tooltips, Tooltips, , fpNone|fpOne|fpTwo );
     InitMacroA( LC->GetLibrary(), THtml, Tooltips, Htmltt, , fpNone|fpOne|fpTwo );
@@ -1762,55 +1762,64 @@ void THtml::macTooltips(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   }
 }
 //..............................................................................
-void THtml::macUpdateHtml(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  if( Cmds.IsEmpty() )  {  this->UpdatePage();  return;  }
-  THtml* html = TGlXApp::GetMainForm()->GetHtml( Cmds[0] );
-  if( html )  html->UpdatePage();
+void THtml::macUpdateHtml(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  THtml *html = (Cmds.Count() == 1) ? TGlXApp::GetMainForm()->GetHtml(Cmds[0]) : this;
+  if( html == NULL )  {
+    E.ProcessingError(__OlxSrcInfo, "undefined html window");
+    return;
+  }
+  html->UpdatePage();
 }
 //..............................................................................
 void THtml::macSetFonts(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   this->SetFonts(Cmds[0], Cmds[1]);
 }
 //..............................................................................
-void THtml::macSetBorders(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  if( Cmds.Count() == 1 )
-    this->SetBorders(Cmds[0].ToInt());
-  else if( Cmds.Count() == 2 )  {
-    THtml* html = TGlXApp::GetMainForm()->GetHtml( Cmds.String(0) );
-    if( html )  html->SetBorders( Cmds[1].ToInt() );
-  }
-}
-//..............................................................................
-void THtml::macHtmlHome(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  if( Cmds.IsEmpty() )  {
-    LoadPage( uiStr(GetHomePage()) );
+void THtml::macSetBorders(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  THtml *html = (Cmds.Count() == 1) ? TGlXApp::GetMainForm()->GetHtml(Cmds[0]) : this;
+  if( html == NULL )  {
+    E.ProcessingError(__OlxSrcInfo, "undefined html window");
     return;
   }
-  THtml* html = TGlXApp::GetMainForm()->GetHtml( Cmds.String(0) );
-  if( html != NULL )  html->LoadPage( uiStr(html->GetHomePage()) );
+  html->SetBorders( Cmds[1].ToInt() );
 }
 //..............................................................................
-void THtml::macHtmlReload(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  if( Cmds.IsEmpty() )  {
-    ReloadPage();
+void THtml::macHtmlHome(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  THtml *html = (Cmds.Count() == 1) ? TGlXApp::GetMainForm()->GetHtml(Cmds[0]) : this;
+  if( html == NULL )  {
+    E.ProcessingError(__OlxSrcInfo, "undefined html window");
     return;
   }
-  THtml* html = TGlXApp::GetMainForm()->GetHtml( Cmds.String(0) );
-  if( html != NULL )  html->ReloadPage();
+  html->LoadPage( html->GetHomePage().u_str() );
+}
+//..............................................................................
+void THtml::macHtmlReload(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  THtml *html = (Cmds.Count() == 1) ? TGlXApp::GetMainForm()->GetHtml(Cmds[0]) : this;
+  if( html == NULL )  {
+    E.ProcessingError(__OlxSrcInfo, "undefined html window");
+    return;
+  }
+  html->ReloadPage();
 }
 //..............................................................................
 void THtml::macHtmlLoad(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  if( Cmds.Count() == 1 )  this->LoadPage( uiStr(Cmds[0]) );
-  else if( Cmds.Count() == 2 )  {
-    THtml* html = TGlXApp::GetMainForm()->GetHtml( Cmds[0] );
-    if( html != NULL )  html->LoadPage( uiStr(Cmds[1]) );
+  THtml *html = (Cmds.Count() == 2) ? TGlXApp::GetMainForm()->GetHtml(Cmds[0]) : this;
+  if( html == NULL )  {
+    E.ProcessingError(__OlxSrcInfo, "undefined html window");
+    return;
   }
+  html->LoadPage( Cmds.Last().String().u_str() );
 }
 //..............................................................................
 void THtml::macHtmlDump(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  THtml *html = (Cmds.Count() == 2) ? TGlXApp::GetMainForm()->GetHtml(Cmds[0]) : this;
+  if( html == NULL )  {
+    E.ProcessingError(__OlxSrcInfo, "undefined html window");
+    return;
+  }
   TStrList SL;
-  this->Root()->ToStrings( SL );
-  TUtf8File::WriteLines(Cmds[0], SL);
+  html->Root()->ToStrings( SL );
+  TUtf8File::WriteLines(Cmds.Last().String(), SL);
 }
 //..............................................................................
 void THtml::macDefineControl(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
