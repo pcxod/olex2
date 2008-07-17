@@ -678,8 +678,8 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual accupancy\
   this_InitMacroD(AppendHkl, "h&;k&;l&;c", fpAny, "moves reflection back into the refinement list\
  See excludeHkl for more details" );
   // not implemented
-  this_InitMacroD(ExcludeHkl, "h-semicolumnt separated list of indexes&;k&;l&;c-use provided indexes in any reflection\
- The default is in any one reflection" , fpAny, "excludes reflections with give indexes\
+  this_InitMacroD(ExcludeHkl, "h-semicolumnt separated list of indexes&;k&;l&;c-true/false to use provided\
+ indexes in any reflection. The default is in any one reflection" , fpAny, "excludes reflections with give indexes\
  from the hkl file -h=1;2 : all reflections where h=1 or 2. " );
 
   this_InitMacro(Direction, , fpNone );
@@ -1415,15 +1415,38 @@ void TMainForm::OnAbout(wxCommandEvent& WXUNUSED(event))  {
 void TMainForm::OnFileOpen(wxCommandEvent& event)  {
   if( event.GetId() >= ID_FILE0 && event.GetId() <= (ID_FILE0+9) )  {
     wxMenuItem *mi = FRecentFiles.Object(event.GetId() - ID_FILE0);
-    ProcessXPMacro(olxstr("reap \'") << FRecentFiles[event.GetId() - ID_FILE0] << '\'', MacroError);
-    mi->Check( MacroError.IsSuccessful() );
+    if( TEFile::ExtractFileExt(FRecentFiles[event.GetId() - ID_FILE0]).IsEmpty() )  {
+      olxstr fn( TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), EmptyString) );
+      TEFile::OSPathI(fn);
+      if( fn != FRecentFiles[event.GetId() - ID_FILE0] )  {
+        olxstr ins_fn( TEFile::ChangeFileExt(FRecentFiles[event.GetId() - ID_FILE0], "ins") );
+        olxstr res_fn( TEFile::ChangeFileExt(FRecentFiles[event.GetId() - ID_FILE0], "res") );
+        if( TEFile::FileExists(ins_fn) && TEFile::FileExists(res_fn) )  {
+          if( TEFile::FileAge(ins_fn) > TEFile::FileAge(res_fn) )
+            fn = ins_fn;
+          else
+            fn = res_fn;
+        }
+        else if( TEFile::FileExists(res_fn) )
+          fn = res_fn;
+        else if( TEFile::FileExists(ins_fn) )
+          fn = ins_fn;
+        else  {
+          FXApp->GetLog().Error("Could not locate ins/res file");
+          return;
+        }
+      }
+      else  // just reopen
+        fn = FXApp->XFile().GetFileName();
+      ProcessXPMacro(olxstr("reap \'") << fn << '\'', MacroError);
+    }
+    else
+      ProcessXPMacro(olxstr("reap \'") << FRecentFiles[event.GetId() - ID_FILE0] << '\'', MacroError);
   }
 }
 //..............................................................................
-void TMainForm::OnDrawStyleChange(wxCommandEvent& event)
-{
-  switch( event.GetId() )
-  {
+void TMainForm::OnDrawStyleChange(wxCommandEvent& event)  {
+  switch( event.GetId() )  {
     case ID_DSBS: ProcessXPMacro("pers", MacroError);  break;
     case ID_DSES: ProcessXPMacro("telp", MacroError);  break;
     case ID_DSSP: ProcessXPMacro("sfil", MacroError);  break;
@@ -1439,11 +1462,9 @@ void TMainForm::OnDrawStyleChange(wxCommandEvent& event)
     break;
   }
 }
-void TMainForm::OnViewAlong(wxCommandEvent& event)
-{
+void TMainForm::OnViewAlong(wxCommandEvent& event) {
   TMatrixD M = FXApp->XFile().GetCell2Cartesian();
-  switch( event.GetId() )
-  {
+  switch( event.GetId() )  {
     case ID_View100:  ProcessXPMacro("matr 1", MacroError);  break;
     case ID_View010:  ProcessXPMacro("matr 2", MacroError);  break;
     case ID_View001:  ProcessXPMacro("matr 3", MacroError);  break;
@@ -1457,7 +1478,7 @@ void TMainForm::OnViewAlong(wxCommandEvent& event)
 void TMainForm::OnAtomOccuChange(wxCommandEvent& event)  {
   TXAtom *XA = (TXAtom*)FObjectUnderMouse;
   if( XA == NULL )  return;
-  olxstr Tmp = "occu ";
+  olxstr Tmp("occu ");
   if( XA->Selected() )  Tmp << "sel";
   else                  Tmp << XA->Atom().GetLabel();
   Tmp << ' ';
@@ -2677,15 +2698,22 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
     MenuFile->AppendSeparator();
     wxMenuItem *mi;
     int i=0;
+    TStrList uniqNames;
     olxstr T = I->GetFieldValue( olxstr("file") << i);
-    while( T.Length() )  {
-      MenuFile->AppendCheckItem(ID_FILE0+i, uiStr(TEFile::ExtractFileName(T)));
-      mi = MenuFile->FindItemByPosition(MenuFile->GetMenuItemCount()-1);
-      mi->Check(false);
-      FRecentFiles.Add(T, mi);
+    while( !T.IsEmpty() )  {
+      if( T.EndsWithi(".ins") || T.EndsWithi(".res") )  {
+        T = TEFile::ChangeFileExt(T, EmptyString);
+      }
+      TEFile::OSPathI(T);
+      if( uniqNames.IndexOf(T) == -1 )
+        uniqNames.Add(T);
       i++;
       T = I->GetFieldValue(olxstr("file") << i);
-      if( i >= FRecentFilesToShow )  break;
+    }
+    for( int j=0; j < olx_min(uniqNames.Count(), FRecentFilesToShow); j++ )  {
+      MenuFile->AppendCheckItem(ID_FILE0+j, uniqNames[j].u_str());
+      mi = MenuFile->FindItemByPosition(MenuFile->GetMenuItemCount()-1);
+      FRecentFiles.Add(uniqNames[j], mi);
     }
   }
   if( TEFile::FileExists(DefSceneP) )  {
@@ -2802,8 +2830,11 @@ void TMainForm::SaveScene(TDataItem *Root, TGlLightModel *FLM)  {
   ExceptionFontColor.ToDataItem(I->AddItem("Exception"));
 }
 //..............................................................................
-void TMainForm::UpdateRecentFile(const olxstr FN)  {
+void TMainForm::UpdateRecentFile(const olxstr& fn)  {
   TPtrList<wxMenuItem> Items;
+  olxstr FN( (fn.EndsWithi(".ins") || fn.EndsWithi(".res")) ? 
+    TEFile::ChangeFileExt(fn, EmptyString) : fn );
+  TEFile::OSPathI(FN);
   int index = FRecentFiles.IndexOf(FN);
   wxMenuItem *mi=NULL;
   if( index == -1 )  {
@@ -2824,17 +2855,14 @@ void TMainForm::UpdateRecentFile(const olxstr FN)  {
     Items.Add( FRecentFiles.Object(i) ); 
   for( int i=0; i < FRecentFiles.Count(); i++ )  {  // put items in the right position
     mi = Items[i];
-    if( mi )
-      FRecentFiles.Object(mi->GetId()-ID_FILE0) = mi;
+    if( mi != NULL )  FRecentFiles.Object(mi->GetId()-ID_FILE0) = mi;
   }
   for( int i=0; i < FRecentFiles.Count(); i++ )  {  // change item captions
     mi = FRecentFiles.Object(i);
-    if( mi )
-      mi->SetText( uiStr(TEFile::ExtractFileName(FRecentFiles[i]))) ;
-  }
-  for( int i=1; i < FRecentFiles.Count(); i++ )  {  // check currebt item
-    mi = FRecentFiles.Object(i);
-    if( mi )  mi->Check( false );
+    if( mi != NULL )  {
+      mi->SetText( FRecentFiles[i].u_str() ) ;
+      mi->Check(false);
+    }
   }
   FRecentFiles.Object(0)->Check( true );
   if( FRecentFiles.Count() >= FRecentFilesToShow )

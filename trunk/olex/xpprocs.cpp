@@ -4752,7 +4752,7 @@ void TMainForm::macExtractHkl(TStrObjList &Cmds, const TParamList &Options, TMac
 //..............................................................................
 void TMainForm::macAppendHkl(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   TIntList h, k, l;
-  bool combine = !Options.Contains("c");
+  bool combine = Options.FindValue("c", TrueString).ToBool();
   TStrList toks( Options.FindValue('h', EmptyString), ';');
   for( int i=0; i < toks.Count(); i++ )
     h.Add( toks[i].ToInt() );
@@ -4803,7 +4803,7 @@ void TMainForm::macAppendHkl(TStrObjList &Cmds, const TParamList &Options, TMacr
 //..............................................................................
 void TMainForm::macExcludeHkl(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   TIntList h, k, l;
-  bool combine = !Options.Contains("c");
+  bool combine = Options.FindValue("c", TrueString).ToBool();
   TStrList toks( Options.FindValue('h', EmptyString), ';');
   for( int i=0; i < toks.Count(); i++ )
     h.Add( toks[i].ToInt() );

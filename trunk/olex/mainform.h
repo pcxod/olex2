@@ -583,7 +583,7 @@ private:
 
   TStrPObjList<olxstr,wxMenuItem*> FRecentFiles;
   short FRecentFilesToShow;
-  void UpdateRecentFile(const olxstr FN);
+  void UpdateRecentFile(const olxstr& FN);
   TGlOption FBgColor;
   THtml* FHtml;
   class TCmdLine* FCmdLine;
