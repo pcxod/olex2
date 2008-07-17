@@ -677,7 +677,9 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual accupancy\
   // not implemented
   this_InitMacro(AppendHkl, , fpAny );
   // not implemented
-  this_InitMacro(ExcludeHkl,h&;k&;l , fpAny );
+  this_InitMacroD(ExcludeHkl, "h-semicolumnt separated list of indexes&;k&;l&;c-use provided indexes in any reflection\
+ The default is in any one reflection" , fpAny, "excludes reflections with give indexes\
+ from the hkl file -h=1;2 : all reflections where h=1 or 2. " );
 
   this_InitMacro(Direction, , fpNone );
 
@@ -788,7 +790,7 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual accupancy\
   difference map&;abs-calculates modulus of the electron density&;tomc-calculates 2Fo-Fc\
   map&;obs-calculates observer emap&;calc-calculates calculated emap&;scale-scle to use\
   for difference maps, corrently available simple(s) sum(Fo^2)/sum(Fc^2) for Fo^2/sigme > 3)\
-  and regression(r)", fpNone|psFileLoaded,
+  and regression(r)&;r-resolution in Angstrems", fpNone|psFileLoaded,
 "Calculates fourier map" );
   this_InitMacroD(TestBinding, EmptyString, fpNone, "Internal tests" );
   this_InitMacroD(SGE, EmptyString, fpNone|fpOne|psFileLoaded, "Extended spacegroup determination. Internal use" );
