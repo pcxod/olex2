@@ -79,7 +79,57 @@ public:
   Returns the number of grid points occupied by the structure to structurePoinst if no NULL
   */
   void BuildStructureMap( TArray3D<short>& map, double delta, short value, long* structurePoints );
-  void GenereteAtomCoordinates(TTypeList< AnAssociation2<TVPointD,TCAtom*> >& list, bool IncludeH) const;
+protected:
+  // helper function, association should be AnAssociation2+<TVPointD,TCAtom*,+>
+  template <class Association> 
+    static int AtomsSortByDistance(const Association& A1, const Association& A2)  {
+      double d = A1.GetA().QLength() - A2.GetA().QLength();
+      if( d < 0 )  return -1;
+      if( d > 0 )  return 1;
+      return 0;
+    }
+public:
+  // association should be AnAssociation2+<TVPointD,TCAtom*,+>
+  template <class Association> 
+  void GenereteAtomCoordinates(TTypeList<Association>& list, bool IncludeH) const  {
+    TVPointD center;
+    list.SetCapacity(Lattice->GetAsymmUnit().AtomCount()*Matrices.Count());
+    for( int i=0; i < Lattice->GetAsymmUnit().AtomCount(); i++ )  {
+      TCAtom& ca = Lattice->GetAsymmUnit().GetAtom(i);
+      if( ca.GetAtomInfo() == iQPeakIndex || ca.IsDeleted() )  continue;
+      if( !IncludeH && ca.GetAtomInfo() == iHydrogenIndex )    continue;
+      for( int j=0; j < Matrices.Count(); j++ )  {
+        center = ca.GetCCenter();
+        center = Matrices[j] * center;
+        center[0] += Matrices[j][0][3];  center[1] += Matrices[j][1][3];  center[2] += Matrices[j][2][3];
+        for( int k=0; k < 3; k++ )  {
+          while( center[k] < 0 )  center[k] += 1;
+          while( center[k] > 1 )  center[k] -= 1;
+        }
+        list.AddNew(center, &ca);
+      }
+    }
+    // create a list of unique atoms
+    float* distances = new float[ list.Count()+1 ];
+    list.QuickSorter.SortSF( list, AtomsSortByDistance);
+    for( int i=0; i < list.Count(); i++ )
+      distances[i] = (float)list[i].GetA().Length();
+
+    for( int i=0; i < list.Count(); i++ )  {
+      if( list.IsNull(i) )  continue;
+      for( int j=i+1; j < list.Count(); j++ )  {
+        if( list.IsNull(j) )  continue;
+        if( (distances[j] - distances[i]) > 0.01 )  break;
+        double d = list[i].GetA().QDistanceTo( list[j].GetA() );
+        if( d < 0.00001 )  {
+          list.NullItem(j);
+          continue;
+        }
+      }
+    }
+    delete [] distances;
+    list.Pack();
+  }
   // returns true if the atom overlaps with another atom in the unit cell
   bool DoesOverlap(const TCAtom& ca, double R) const;
   // finds an atom at given position

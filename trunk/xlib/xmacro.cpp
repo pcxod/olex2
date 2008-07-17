@@ -83,6 +83,8 @@ void XLibMacros::Export(TLibrary& lib)  {
 //_________________________________________________________________________________________________________________________
   xlib_InitMacro(VoidE, "", fpNone|psFileLoaded, "calculates number of electrons in the voids area" );
 //_________________________________________________________________________________________________________________________
+  xlib_InitMacro(ChangeSG, "", fpOne|fpFour|psFileLoaded, "[shift] SG Changes space group of current structure" );
+//_________________________________________________________________________________________________________________________
 //_________________________________________________________________________________________________________________________
 //_________________________________________________________________________________________________________________________
 
@@ -1149,6 +1151,90 @@ void XLibMacros::macVoidE(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     delete [] sin_cosZ;
   }
 }
+
+//..............................................................................
+void XLibMacros::macChangeSG(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  TXApp& xapp = TXApp::GetInstance();
+  
+  TLattice& latt = xapp.XFile().GetLattice();
+  TUnitCell& uc = latt.GetUnitCell();
+  TAsymmUnit& au = latt.GetAsymmUnit();
+  if( au.AtomCount() == 0 )  {
+    E.ProcessingError(__OlxSrcInfo, "Empty asymmetric unit");
+    return;
+  }
+  TSpaceGroup* sg = TSymmLib::GetInstance()->FindGroup(Cmds.Last().String());
+  if( sg == NULL )  {
+    E.ProcessingError(__OlxSrcInfo, "Could not identify current space group");
+    return;
+  }
+  TMatrixDList ml;
+  sg->GetMatrices(ml, mattAll );
+  TTypeList< AnAssociation3<TVPointD,TCAtom*, int> > list;
+  uc.GenereteAtomCoordinates(list, true);
+  if( Cmds.Count() == 4 )  {
+    TVPointD trans( Cmds[0].ToDouble(), Cmds[1].ToDouble(), Cmds[2].ToDouble());
+    for( int i=0; i < list.Count(); i++ )  {
+      list[i].A() += trans;
+      list[i].SetC(1);
+    }
+  }
+  else   {
+    for( int i=0; i < list.Count(); i++ )  { 
+      list[i].SetC(1);
+    }
+  }
+  TVPointD v;
+  for( int i=0; i < list.Count(); i++ )  {
+    if( list[i].GetC() == 0 )  continue;
+    for( int j=i+1; j < list.Count(); j++ )  {
+      if( list[j].GetC() == 0 )  continue;
+      for( int k=1; k < ml.Count(); k++ )  {
+        v = ml[k] * list[i].GetA();
+        v[0] += ml[k][0][3];  v[1] += ml[k][1][3];  v[2] += ml[k][2][3];
+        v -= list[j].GetA();
+        v[0] -= Round(v[0]);  v[1] -= Round(v[1]);  v[2] -= Round(v[2]);
+        au.CellToCartesian(v);
+        if( v.QLength() < 0.01 )  {
+          list[i].C() ++;
+          list[j].SetC(0);
+        }
+      }
+    }
+  }
+  for( int i=0; i < au.AtomCount(); i++ )
+    au.GetAtom(i).SetTag(0);
+  TCAtomPList newAtoms;
+  for( int i=0; i < list.Count(); i++ )  {
+    if( list[i].GetC() == 0 )  continue;
+    TCAtom* ca;
+    if( list[i].GetB()->GetTag() > 0 )  {
+      ca = &au.NewAtom();
+      ca->Assign( *list[i].GetB() );
+      ca->SetLoaderId(liNewAtom);
+    }
+    else  {
+      ca = list[i].GetB();
+      ca->SetTag( ca->GetTag() + 1 );
+    }
+    ca->CCenter() = list[i].GetA();
+    ca->AssignEllps(NULL);
+  }
+  for( int i=0; i < au.AtomCount(); i++ )  {
+    if( au.GetAtom(i).GetTag() == 0 )
+      au.GetAtom(i).SetDeleted(true);
+  }
+  au.InitAtomIds();
+  au.ChangeSpaceGroup(*sg);
+  xapp.XFile().GetLastLoader()->GetAsymmUnit().ChangeSpaceGroup(*sg);
+  latt.Init();
+  latt.Compaq();
+  latt.CompaqAll();
+}
+//..............................................................................
+
+
+
 
 #ifdef __BORLANC__
   #pragma package(smart_init)

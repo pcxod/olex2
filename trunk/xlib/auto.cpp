@@ -1282,12 +1282,13 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
         TBasicApp::GetLog().Info( tmp );
       }
     }
+  }
+  for( int i=0; i < sn->Count(); i++ )  {
+    delete sn->Node(i).Center();
     delete guesses[i].list1;
     delete guesses[i].list2;
     delete guesses[i].list3;
   }
-  for( int i=0; i < sn->Count(); i++ )
-    delete sn->Node(i).Center();
   delete sn;
 }
 //..............................................................................

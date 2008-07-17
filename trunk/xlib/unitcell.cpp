@@ -88,6 +88,7 @@ void  TUnitCell::InitMatrices()  {
   TVPointD Vec, Vec1, Vec2;
   TEVPointD EP;
   TEStrBuffer Tmp;
+  Matrices.Clear();
   // check if the E matrix is in the list
   for( int i=0;  i < GetLattice().GetAsymmUnit().MatrixCount(); i++ )  {
     const TMatrixD& m = GetLattice().GetAsymmUnit().GetMatrix(i);
@@ -232,14 +233,7 @@ void TUnitCell::TSearchSymmEqTask::Run(long ind)  {
         if( Atoms[i]->GetFragmentId() == Atoms[ind]->GetFragmentId() )  continue;
         AU->CellToCartesian(Vec);
         double Dis = Vec.Length();
-        if( Latt->GetNetwork().CBondExists(*Atoms[ind], *Atoms[i], Dis) )  {
-          Atoms[ind]->SetCanBeGrown(true);
-          if( Atoms[ind]->IsAttachedTo( *Atoms[i] ) )  continue;
-          Atoms[ind]->AttachAtom( Atoms[i] );
-          Atoms[i]->SetCanBeGrown(true);
-          Atoms[i]->AttachAtom(Atoms[ind]);
-        }
-        else if( Latt->GetNetwork().HBondExists(*Atoms[ind], *Atoms[i], Dis) )  {
+        if( Latt->GetNetwork().HBondExists(*Atoms[ind], *Atoms[i], Dis) )  {
           Atoms[ind]->AttachAtomI( Atoms[i] );
           Atoms[i]->AttachAtomI( Atoms[ind] );
         }
@@ -292,6 +286,8 @@ int TUnitCell::FindSymmEq(TEStrBuffer &Msg, double tol, bool Initialise, bool re
     if( A1.IsDeleted() )  continue;
     ACA.Add( &A1 );
     A1.SetTag(0);
+    if( Initialise )
+      A1.ClearAttachedAtoms();
   }
   // searching for symmetrical equivalents; the search could be optimised by
   // removing the translational equivalents in the firts order; however the task is not
@@ -380,9 +376,9 @@ double TUnitCell::FindClosestDistance(const class TCAtom& a_from, const TCAtom& 
   GetLattice().GetAsymmUnit().CellToCartesian(V1);
   double minD = V1.Length();
   for( int i=0; i < MatrixCount(); i++ )  {
-    const TMatrixD* matr = &GetMatrix(i);
-    V1 = *matr * from;
-    V1[0] += matr->Data(0)[3];  V1[1] += matr->Data(1)[3];  V1[2] += matr->Data(2)[3];
+    const TMatrixD& matr = GetMatrix(i);
+    V1 = matr * from;
+    V1[0] += matr[0][3];  V1[1] += matr[1][3];  V1[2] += matr[2][3];
     V1 -=to;
     V1[0] -= Round(V1[0]);  // find closest distance
     V1[1] -= Round(V1[1]);
@@ -790,53 +786,6 @@ TCAtom* TUnitCell::FindCAtom(const TVPointD& center) const  {
     }
   }
   return NULL;
-}
-//..............................................................................
-// helper function to sort atoms
-static int AtomsSortByDistance(const AnAssociation2<TVPointD, TCAtom*>& A1, const AnAssociation2<TVPointD, TCAtom*>& A2)  {
-  double d = A1.GetA().Length() - A2.GetA().Length();
-  if( d < 0 )  return -1;
-  if( d > 0 )  return 1;
-  return 0;
-}
-//..............................................................................
-void TUnitCell::GenereteAtomCoordinates(TTypeList< AnAssociation2<TVPointD,TCAtom*> >& list, bool IncludeH) const {
-  TVPointD center;
-  for( int i=0; i < Lattice->GetAsymmUnit().AtomCount(); i++ )  {
-    TCAtom& ca = Lattice->GetAsymmUnit().GetAtom(i);
-    if( ca.GetAtomInfo() == iQPeakIndex || ca.IsDeleted() )  continue;
-    if( !IncludeH && ca.GetAtomInfo() == iHydrogenIndex )    continue;
-    for( int j=0; j < Matrices.Count(); j++ )  {
-      center = ca.GetCCenter();
-      center = Matrices[j] * center;
-      center[0] += Matrices[j][0][3];  center[1] += Matrices[j][1][3];  center[2] += Matrices[j][2][3];
-      for( int k=0; k < 3; k++ )  {
-        while( center[k] < 0 )  center[k] += 1;
-        while( center[k] > 1 )  center[k] -= 1;
-      }
-      list.AddNew(center, &ca);
-    }
-  }
-  // create a list of unique atoms
-  float* distances = new float[ list.Count()+1 ];
-  list.QuickSorter.SortSF( list, AtomsSortByDistance);
-  for( int i=0; i < list.Count(); i++ )
-    distances[i] = (float)list[i].GetA().Length();
-
-  for( int i=0; i < list.Count(); i++ )  {
-   if( list.IsNull(i) )  continue;
-    for( int j=i+1; j < list.Count(); j++ )  {
-     if( list.IsNull(j) )  continue;
-      if( (distances[j] - distances[i]) > 0.01 )  break;
-        double d = list[i].GetA().QDistanceTo( list[j].GetA() );
-        if( d < 0.00001 )  {
-          list.NullItem(j);
-          continue;
-        }
-    }
-  }
-  delete [] distances;
-  list.Pack();
 }
 //..............................................................................
 void TUnitCell::BuildStructureMap( TArray3D<short>& map, double delta, short val, 

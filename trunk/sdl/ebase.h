@@ -190,6 +190,7 @@ template <class Ac, class Bc> class AnAssociation2  {
   Bc b;
 public:
   AnAssociation2()  {  ;  }
+  AnAssociation2( const Ac& a )  {  this->a = a;  }
   AnAssociation2( const Ac& a, const Bc& b )  {
     this->a = a;
     this->b = b;
@@ -219,6 +220,11 @@ template <class Ac, class Bc, class Cc> class AnAssociation3  {
   Cc c;
 public:
   AnAssociation3()  {  ;  }
+  AnAssociation3( const Ac& a )  {  this->a = a;  }
+  AnAssociation3( const Ac& a, const Bc& b )  {
+    this->a = a;
+    this->b = b;
+  }
   AnAssociation3( const Ac& a, const Bc& b, const Cc& c )  {
     this->a = a;
     this->b = b;
@@ -255,6 +261,16 @@ template <class Ac, class Bc, class Cc, class Dc> class AnAssociation4  {
   Dc d;
 public:
   AnAssociation4()  {  ;  }
+  AnAssociation4( const Ac& a )  {  this->a = a;  }
+  AnAssociation4( const Ac& a, const Bc& b )  {
+    this->a = a;
+    this->b = b;
+  }
+  AnAssociation4( const Ac& a, const Bc& b, const Cc& c )  {
+    this->a = a;
+    this->b = b;
+    this->c = c;
+  }
   AnAssociation4( const Ac& a, const Bc& b, const Cc& c, const Dc& d )  {
     this->a = a;
     this->b = b;
