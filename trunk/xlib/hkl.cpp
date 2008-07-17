@@ -337,6 +337,8 @@ bool THklFile::SaveToFile(const olxstr& FN, const TRefPList& refs, bool Append) 
   else  {
     TEFile out(FN, "w+b");
     TReflection NullRef(0, 0, 0, 0, 0);
+    if( refs[0]->GetFlag() != NoFlagSet )
+      NullRef.SetFlag(0);
     for( int i=0; i < refs.Count(); i++ )  {
       if( refs[i]->GetTag() > 0 )  
         out.Writenl( CString(refs[i]->ToString()) );
