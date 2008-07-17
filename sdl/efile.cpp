@@ -43,7 +43,7 @@
   #define OLX_PATH_DEL '\\'
   #define OLX_ENVI_PATH_DEL ';'
   #define OLX_OS_PATH(A)  TEFile::WinPath( (A) )
-
+  #define OLX_OS_PATHI(A) TEFile::WinPathI( (A) )
 #else
   #include <unistd.h>
   #include <stdlib.h>
@@ -56,6 +56,7 @@
   #define OLX_PATH_DEL '/'
   #define OLX_ENVI_PATH_DEL ':'
   #define OLX_OS_PATH(A)  TEFile::UnixPath( (A) )
+  #define OLX_OS_PATHI(A) TEFile::UnixPathI( (A) )
   #define UTIMBUF utimbuf
 #endif
 
@@ -687,6 +688,10 @@ bool TEFile::MakeDir(const olxstr& Name)  {
 //..............................................................................
 olxstr TEFile::OSPath(const olxstr &F)  {
   return OLX_OS_PATH(F);
+}
+//..............................................................................
+olxstr& TEFile::OSPathI(olxstr &F)  {
+  return OLX_OS_PATHI(F);
 }
 //..............................................................................
 olxstr TEFile::WinPath(const olxstr &F)  {

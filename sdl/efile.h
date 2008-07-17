@@ -96,6 +96,7 @@ public:
   static bool MakeDirs(const olxstr &Name);
   static olxstr CurrentDir();
   static olxstr OSPath(const olxstr &F);
+  static olxstr& OSPathI(olxstr &F);
   static olxstr WinPath(const olxstr &F);
   static olxstr UnixPath(const olxstr &F);
   static olxstr& WinPathI(olxstr &F);
