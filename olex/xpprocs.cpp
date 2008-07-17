@@ -4757,6 +4757,7 @@ void TMainForm::macAppendHkl(TStrObjList &Cmds, const TParamList &Options, TMacr
 //..............................................................................
 void TMainForm::macExcludeHkl(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   TIntList h, k, l;
+  bool combine = !Options.Contains("c");
   TStrList toks( Options.FindValue('h', EmptyString), ';');
   for( int i=0; i < toks.Count(); i++ )
     h.Add( toks[i].ToInt() );
@@ -4783,12 +4784,24 @@ void TMainForm::macExcludeHkl(TStrObjList &Cmds, const TParamList &Options, TMac
 
   THklFile Hkl;
   Hkl.LoadFromFile( hklSrc );
-  for( int i=0; i < Hkl.RefCount(); i++ )  {
-    if( Hkl[i].GetTag() > 0 )  {
-      if( !h.IsEmpty() && h.IndexOf( Hkl[i].GetH() ) == -1) continue;
-      if( !k.IsEmpty() && k.IndexOf( Hkl[i].GetK() ) == -1) continue;
-      if( !l.IsEmpty() && l.IndexOf( Hkl[i].GetL() ) == -1) continue;
-      Hkl[i].SetTag( -Hkl[i].GetTag() );
+  if( combine )  {
+    for( int i=0; i < Hkl.RefCount(); i++ )  {
+      if( Hkl[i].GetTag() > 0 )  {
+        if( !h.IsEmpty() && h.IndexOf( Hkl[i].GetH() ) == -1) continue;
+        if( !k.IsEmpty() && k.IndexOf( Hkl[i].GetK() ) == -1) continue;
+        if( !l.IsEmpty() && l.IndexOf( Hkl[i].GetL() ) == -1) continue;
+        Hkl[i].SetTag( -Hkl[i].GetTag() );
+      }
+    }
+  }
+  else  {
+    for( int i=0; i < Hkl.RefCount(); i++ )  {
+      if( Hkl[i].GetTag() > 0 )  {
+        if( h.IndexOf( Hkl[i].GetH() ) != -1 ||
+            k.IndexOf( Hkl[i].GetK() ) != -1 ||
+            l.IndexOf( Hkl[i].GetL() ) != -1 )
+          Hkl[i].SetTag( -Hkl[i].GetTag() );
+      }
     }
   }
   Hkl.SaveToFile( hklSrc );
@@ -8499,6 +8512,9 @@ void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMa
 // scale type
   static const short stSimple     = 0x0001,
                      stRegression = 0x0002;
+  double resolution = Options.FindValue("r", "0.25").ToDouble();
+  if( resolution < 0.1 )  resolution = 0.1;
+  resolution = 1./resolution;
   TRefList refs;
   TArrayList<TEComplex<double> > F;
   TAsymmUnit& au = FXApp->XFile().GetAsymmUnit();
@@ -8661,9 +8677,9 @@ void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMa
     }
   }
 // init map
-  const int mapX = (int)au.Axes()[0].GetV()*5,
-			mapY = (int)au.Axes()[1].GetV()*5,
-			mapZ = (int)au.Axes()[2].GetV()*5;
+  const int mapX = (int)au.Axes()[0].GetV()*resolution,
+			mapY = (int)au.Axes()[1].GetV()*resolution,
+			mapZ = (int)au.Axes()[2].GetV()*resolution;
 //  const int mapX =100, mapY = 100, mapZ = 10;
   FXApp->XGrid().InitGrid(mapX, mapY, mapZ);
   FXApp->XGrid().SetMaxHole(0.49);
