@@ -19,7 +19,8 @@ public:
   virtual bool LoadFromXLFile(const olxstr& DataFile, TStrList* Log=NULL);
   virtual void SaveToXLFile(const olxstr& DataFile);
   virtual void Include(TStrList* Log);
-  inline TDataItem& Root()             {  return *FRoot; }
+  inline TDataItem& Root()          {  return *FRoot; }
+  const olxstr& GetFileName() const {  return FileName;  }
 };
 
 EndEsdlNamespace()
