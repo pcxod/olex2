@@ -98,6 +98,8 @@ class TOlex: public AEventsDispatcher, public olex::IOlexProcessor  {
   TEMacroLib Macros;
   TSAtomPList Selection;
   HANDLE conin, conout;
+  TDataFile PluginFile;
+  TDataItem* Plugins;
   CONSOLE_SCREEN_BUFFER_INFO TextAttrib;
   static unsigned long _stdcall TimerThreadRun(void* _instance) {
     while( true )  {
@@ -240,7 +242,16 @@ public:
     this_InitFuncD(Not, fpOne, "" );
     this_InitFuncD(HasGUI, fpNone, "" );
     this_InitFuncD(Sel, fpNone, "" );
-
+    
+    olxstr pluginsFile( XApp.BaseDir() + "plugins.xld" );
+    Plugins = NULL;
+    if( TEFile::FileExists( pluginsFile ) )  {
+      PluginFile.LoadFromXLFile( pluginsFile, NULL );
+      Plugins = PluginFile.Root().FindItem("Plugin");
+    }
+    else  
+      Plugins = PluginFile.Root().AddItem("Plugin");
+  
     olxstr macroFile( XApp.BaseDir() );
     macroFile << "macrox.xld";
     if( TEFile::FileExists(macroFile) )  {
@@ -937,7 +948,7 @@ public:
   }
   //..............................................................................
   void funIsPluginInstalled(const TStrObjList& Params, TMacroError &E) {
-    E.SetRetVal( true );
+    E.SetRetVal( Plugins->ItemExists(Params[0]) );
   }
   //..............................................................................
   void funCurrentLanguageEncoding(const TStrObjList& Params, TMacroError &E) {
