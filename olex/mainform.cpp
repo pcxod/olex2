@@ -675,7 +675,8 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual accupancy\
   this_InitMacro(ViewHkl, , fpNone|fpOne );
   this_InitMacro(ExtractHkl, , fpOne|psFileLoaded );
   // not implemented
-  this_InitMacro(AppendHkl, , fpAny );
+  this_InitMacroD(AppendHkl, "h&;k&;l&;c", fpAny, "moves reflection back into the refinement list\
+ See excludeHkl for more details" );
   // not implemented
   this_InitMacroD(ExcludeHkl, "h-semicolumnt separated list of indexes&;k&;l&;c-use provided indexes in any reflection\
  The default is in any one reflection" , fpAny, "excludes reflections with give indexes\

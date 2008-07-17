@@ -4750,9 +4750,55 @@ void TMainForm::macExtractHkl(TStrObjList &Cmds, const TParamList &Options, TMac
   THklFile::SaveToFile(Cmds[0], Refs, true);
 }
 //..............................................................................
-void TMainForm::macAppendHkl(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)
-{
-  throw TNotImplementedException(__OlxSourceInfo);
+void TMainForm::macAppendHkl(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  TIntList h, k, l;
+  bool combine = !Options.Contains("c");
+  TStrList toks( Options.FindValue('h', EmptyString), ';');
+  for( int i=0; i < toks.Count(); i++ )
+    h.Add( toks[i].ToInt() );
+  toks.Clear();
+  toks.Strtok( Options.FindValue('k', EmptyString), ';');
+  for( int i=0; i < toks.Count(); i++ )
+    k.Add( toks[i].ToInt() );
+  toks.Clear();
+  toks.Strtok( Options.FindValue('l', EmptyString), ';');
+  for( int i=0; i < toks.Count(); i++ )
+    l.Add( toks[i].ToInt() );
+
+  olxstr hklSrc( FXApp->LocateHklFile() );
+  if( !TEFile::FileExists( hklSrc ) )  {
+    E.ProcessingError(__OlxSrcInfo, "could not find hkl file: ") << hklSrc;
+    return;
+  }
+  THklFile Hkl;
+  Hkl.LoadFromFile( hklSrc );
+  if( Options.IsEmpty() )  {
+    for( int i=0; i < Hkl.RefCount(); i++ )  {
+      if( Hkl[i].GetTag() < 0 )
+        Hkl[i].SetTag( -Hkl[i].GetTag() );
+    }
+  }
+  else if( combine )  {
+    for( int i=0; i < Hkl.RefCount(); i++ )  {
+      if( Hkl[i].GetTag() < 0 )  {
+        if( !h.IsEmpty() && h.IndexOf( Hkl[i].GetH() ) == -1) continue;
+        if( !k.IsEmpty() && k.IndexOf( Hkl[i].GetK() ) == -1) continue;
+        if( !l.IsEmpty() && l.IndexOf( Hkl[i].GetL() ) == -1) continue;
+        Hkl[i].SetTag( -Hkl[i].GetTag() );
+      }
+    }
+  }
+  else  {
+    for( int i=0; i < Hkl.RefCount(); i++ )  {
+      if( Hkl[i].GetTag() < 0 )  {
+        if( h.IndexOf( Hkl[i].GetH() ) != -1 ||
+            k.IndexOf( Hkl[i].GetK() ) != -1 ||
+            l.IndexOf( Hkl[i].GetL() ) != -1 )
+          Hkl[i].SetTag( -Hkl[i].GetTag() );
+      }
+    }
+  }
+  Hkl.SaveToFile( hklSrc );
 }
 //..............................................................................
 void TMainForm::macExcludeHkl(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
@@ -4770,9 +4816,7 @@ void TMainForm::macExcludeHkl(TStrObjList &Cmds, const TParamList &Options, TMac
   for( int i=0; i < toks.Count(); i++ )
     l.Add( toks[i].ToInt() );
 
-  olxstr hklSrc (FXApp->XFile().GetLastLoader()->GetHKLSource() );
-  if( hklSrc.IsEmpty() )
-    hklSrc = TEFile::ChangeFileExt( FXApp->XFile().GetLastLoader()->GetFileName(), "hkl");
+  olxstr hklSrc( FXApp->LocateHklFile() );
   if( !TEFile::FileExists( hklSrc ) )  {
     E.ProcessingError(__OlxSrcInfo, "could not find hkl file: ") << hklSrc;
     return;
