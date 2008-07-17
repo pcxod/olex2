@@ -4776,15 +4776,19 @@ void TMainForm::macExcludeHkl(TStrObjList &Cmds, const TParamList &Options, TMac
     E.ProcessingError(__OlxSrcInfo, "could not find hkl file: ") << hklSrc;
     return;
   }
+  if( h.IsEmpty() && k.IsEmpty() && l.IsEmpty() )  {
+    E.ProcessingError(__OlxSrcInfo, "please provide a condition");
+    return;
+  }
 
   THklFile Hkl;
   Hkl.LoadFromFile( hklSrc );
   for( int i=0; i < Hkl.RefCount(); i++ )  {
     if( Hkl[i].GetTag() > 0 )  {
-      if( h.IndexOf( Hkl[i].GetH() ) != -1 ||
-          k.IndexOf( Hkl[i].GetK() ) != -1 ||
-          l.IndexOf( Hkl[i].GetL() ) != -1 )
-        Hkl[i].SetTag( -Hkl[i].GetTag() );
+      if( !h.IsEmpty() && h.IndexOf( Hkl[i].GetH() ) == -1) continue;
+      if( !k.IsEmpty() && k.IndexOf( Hkl[i].GetK() ) == -1) continue;
+      if( !l.IsEmpty() && l.IndexOf( Hkl[i].GetL() ) == -1) continue;
+      Hkl[i].SetTag( -Hkl[i].GetTag() );
     }
   }
   Hkl.SaveToFile( hklSrc );

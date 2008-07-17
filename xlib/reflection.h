@@ -208,16 +208,25 @@ public:
 //..............................................................................
   // returns a string: h k l ...
   TIString ToString() const  {
-    olxstr Res(H);
-    olxstr Str( Res.Format(4, false, ' ') );
-    Res = K;  Str << Res.Format(4, false, ' ');
-    Res = L;  Str << Res.Format(4, false, ' ');
-    Res = olxstr::FormatFloat(2, I);  Str << Res.Format(8, false, ' ');
-    Res = olxstr::FormatFloat(2, S);  Str << Res.Format(8, false, ' ');
-    if( Flag != NoFlagSet )  {
-      Res = Flag;  Str << Res.Format(4, false, ' '); 
-    }
-    return Str;
+    char bf[128];
+#ifdef _MSC_VER
+    if( Flag == NoFlagSet )  sprintf_s(bf, 128, "%4i%4i%4i%8.2lf%8.2lf", H, K, L, I, S);
+    else                     sprintf_s(bf, 128, "%4i%4i%4i%8.2lf%8.2lf%4i", H, K, L, I, S, Flag);
+#else
+    if( Flag == NoFlagSet )  sprintf(bf, "%4i%4i%4i%8.2lf%8.2lf", H, K, L, I, S);
+    else                     sprintf(bf, "%4i%4i%4i%8.2lf%8.2lf%4i", H, K, L, I, S, Flag);
+#endif
+    //olxstr Res(H);
+    //olxstr Str( Res.Format(4, false, ' ') );
+    //Res = K;  Str << Res.Format(4, false, ' ');
+    //Res = L;  Str << Res.Format(4, false, ' ');
+    //Res = olxstr::FormatFloat(2, I);  Str << Res.Format(8, false, ' ');
+    //Res = olxstr::FormatFloat(2, S);  Str << Res.Format(8, false, ' ');
+    //if( Flag != NoFlagSet )  {
+    //  Res = Flag;  Str << Res.Format(4, false, ' '); 
+    //}
+    //return Str;
+    return olxstr(bf);
   }
 //..............................................................................
   // return a string like: tag. h k l ...
