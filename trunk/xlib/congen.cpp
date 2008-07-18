@@ -46,8 +46,9 @@ void AConstraintGenerator::GenerateAtom( TCAtomPList& created, TAtomEnvi& envi,
   M.E();
   M1.E();
   // idialised triangle in XY plane
-  TVPointD PlaneN, Z(0,0,1), RotVec, Vec1, Vec2;
+  TVPointD PlaneN, Z(0,0,1), RotVec, Vec1, Vec2, Vec3;
   double ca;
+  bool AnglesEqual;
 
   TAtomEnvi NEnvi;
   TSAtom* NA;
@@ -160,19 +161,46 @@ void AConstraintGenerator::GenerateAtom( TCAtomPList& created, TAtomEnvi& envi,
       }
       break;
     case fgCH1:
-      for( int i=0; i < envi.Count(); i++ )  {
-        if( envi.GetCrd(i).DistanceTo( envi.GetBase().Center() ) > 1.95 &&
-          envi.GetBAI(i) != 34 ) // bromine
-          continue;
-        Vec2 = envi.GetCrd(i);
-        Vec2 -= envi.GetBase().Center();
-        Vec2.Normalise();
-        Vec1 += Vec2;
+      AnglesEqual = (envi.Count() == 3);  // proposed by Luc, see Afix 1 in shelxl
+      if( envi.Count() == 3 )  {
+        for( int i=0; i < envi.Count(); i++ )  {
+          if( envi.GetCrd(i).DistanceTo( envi.GetBase().Center() ) > 1.95 &&
+            envi.GetBAI(i) != 34 )  {  // bromine
+            AnglesEqual = false;
+            break;
+          }
+        }
+        if( AnglesEqual )  {  
+          Vec1 = (envi.GetCrd(0)-envi.GetBase().Center());
+          Vec1.Normalise();
+          Vec2 = (envi.GetCrd(1)-envi.GetBase().Center());
+          Vec2.Normalise();
+          Vec3 = (envi.GetCrd(2)-envi.GetBase().Center());
+          Vec3.Normalise();
+          Vec1 -= Vec2;
+          Vec3 -= Vec2;
+          Vec3 = Vec1.XProdVec(Vec3);
+          Vec3.Normalise();
+          Vec3 *= 0.96;
+          crds.AddNew(Vec3);
+          crds[0] += envi.GetBase().Center();
+        }
       }
-      Vec1.Normalise();
-      Vec1 *= -0.96;
-      crds.AddNew(Vec1);
-      crds[0] += envi.GetBase().Center();
+      if( !AnglesEqual )  {
+        for( int i=0; i < envi.Count(); i++ )  {
+          if( envi.GetCrd(i).DistanceTo( envi.GetBase().Center() ) > 1.95 &&
+            envi.GetBAI(i) != 34 ) // bromine
+            continue;
+          Vec2 = envi.GetCrd(i);
+          Vec2 -= envi.GetBase().Center();
+          Vec2.Normalise();
+          Vec1 += Vec2;
+        }
+        Vec1.Normalise();
+        Vec1 *= -0.96;
+        crds.AddNew(Vec1);
+        crds[0] += envi.GetBase().Center();
+      }
       break;
     case fgOH3:
       break;

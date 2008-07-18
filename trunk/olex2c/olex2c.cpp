@@ -81,7 +81,8 @@ enum  {
   ID_INFO,
   ID_ERROR,
   ID_WARNING,
-  ID_EXCEPTION
+  ID_EXCEPTION,
+  ID_STRUCTURECHANGED
 };
 
 class TOlex: public AEventsDispatcher, public olex::IOlexProcessor  {
@@ -192,6 +193,9 @@ public:
     XApp.XFile().RegisterFileFormat(new TCRSFile(), "crs");
     XApp.XFile().RegisterFileFormat(new TPdb(XApp.AtomsInfo()), "pdb");
     XApp.XFile().RegisterFileFormat(new TXDMas(XApp.AtomsInfo()), "mas");
+    XApp.XFile().GetLattice().OnStructureUniq->Add(this, ID_STRUCTURECHANGED);
+    XApp.XFile().GetLattice().OnStructureGrow->Add(this, ID_STRUCTURECHANGED);
+    XApp.XFile().OnFileLoad->Add(this, ID_STRUCTURECHANGED);
 
     this_InitMacroD(IF, "", fpAny, "if...");
     this_InitMacroD(Exec, "s&;o&;d", fpAny^fpNone, "exec" );
@@ -426,6 +430,8 @@ public:
         SetConsoleTextAttribute(conout, TextAttrib.wAttributes);
       }
     }
+    else if( MsgId == ID_STRUCTURECHANGED )
+      Selection.Clear();
     return res;
   }
   ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1103,7 +1109,6 @@ public:
   //..............................................................................
   void macReap(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
     Lst.Clear();
-    Selection.Clear();
     XApp.XFile().LoadFromFile( Cmds[0] );
     olxstr lstfn( TEFile::ChangeFileExt(Cmds[0], "lst") );
     if( TEFile::FileExists(lstfn) )
@@ -1190,6 +1195,10 @@ public:
     TCAtomPList catoms;
     if( !LocateAtoms(Cmds, atoms, true) )  return;
     TListCaster::POP(atoms, catoms);
+    for( int i=0; i < catoms.Count(); i++ )
+      if( catoms[i]->GetAtomInfo() == iHydrogenIndex )
+        catoms[i] = NULL;
+    catoms.Pack();
     XApp.XFile().GetLattice().SetAnis(catoms, true);
   }
   //..............................................................................

@@ -1,4 +1,4 @@
-	//----------------------------------------------------------------------------//
+//----------------------------------------------------------------------------//
 // main frame of the application
 // (c) Oleg V. Dolomanov, 2004
 //----------------------------------------------------------------------------//
@@ -536,10 +536,9 @@ void TMainForm::funColor(const TStrObjList& Params, TMacroError &E)  {
       E.SetRetVal( olxstr(bf) );
       delete [] bf;
     }
-
   }
   else
-    E.ProcessingError(__OlxSrcInfo, "operation canceled" );
+    E.ProcessingError(__OlxSrcInfo, EmptyString);
 }
 //..............................................................................
 void TMainForm::funLst(const TStrObjList &Cmds, TMacroError &E)  {
@@ -5220,10 +5219,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     /* with some compilations Borland would bring program into an incorrect state
      if the NonExistenFile exception is thrown from XFile ... (MSVC is fine thought)
     */
-    if( !TEFile::FileExists(FN) )  {
-      Error.ProcessingError(__OlxSrcInfo, olxstr("Nonexisting file: ") << FN );
-      return;
-    }
+    if( !TEFile::FileExists(FN) )  return;
     if( OverlayXFile )  {
       TXFile& xf = FXApp->NewOverlayedXFile();
       xf.LoadFromFile( FN );
@@ -5443,7 +5439,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     return;
   }
   else  {
-    Error.ProcessingError(__OlxSrcInfo, "no file name is given" );
+    Error.ProcessingError(__OlxSrcInfo, EmptyString );
     return;
   }
 }
@@ -5649,8 +5645,8 @@ void TMainForm::macCreateMenu(TStrObjList &Cmds, const TParamList &Options, TMac
     if( menuName == '#' )  menu->AppendSeparator();
     else  {
       int insindex;
-      if( (insindex=menu->FindItem( uiStr(menuName) )) != -1 )
-        throw TFunctionFailedException(__OlxSourceInfo, "duplicated name");
+      if( (insindex=menu->FindItem( menuName.u_str() )) != -1 )
+        throw TFunctionFailedException(__OlxSourceInfo, olxstr("duplicated name: ") << menuName);
       if( Cmds.Count() == 3 )  {
         if( insindex == -1 )  insindex = 0;
 
@@ -7244,7 +7240,7 @@ void TMainForm::funChooseElement(const TStrObjList& Params, TMacroError &E) {
   if( Dlg->ShowModal() == wxID_OK )
     E.SetRetVal( Dlg->Selected()->GetSymbol() );
   else
-    E.SetRetVal( EmptyString );
+    E.ProcessingError(__OlxSrcInfo, EmptyString );
   Dlg->Destroy();
 }
 //..............................................................................
@@ -7256,6 +7252,8 @@ void TMainForm::funChooseDir(const TStrObjList& Params, TMacroError &E) {
   wxDirDialog dlg( this, uiStr(title), uiStr(defPath) );
   if( dlg.ShowModal() == wxID_OK )
     E.SetRetVal<olxstr>( dlg.GetPath().c_str() );
+  else
+    E.ProcessingError(__OlxSrcInfo, EmptyString);
 }
 //..............................................................................
 void TMainForm::funStrDir(const TStrObjList& Params, TMacroError &E) {
@@ -8206,10 +8204,6 @@ void TMainForm::funChooseFont(const TStrObjList &Params, TMacroError &E)  {
   if( !Params.IsEmpty() && (Params[0].Comparei("olex2") == 0) )
     fntId = TwxGlScene::MetaFont::BuildOlexFontId("olex2.fnt", 12, true, false, false);
   olxstr rv( FXApp->GetRender().Scene()->ShowFontDialog(NULL, fntId) );
-  if( rv.IsEmpty() )  {
-    E.ProcessingError(__OlxSrcInfo, "operation canceled");
-    return;
-  }
   E.SetRetVal( rv );
 }
 //..............................................................................
@@ -8251,7 +8245,6 @@ void TMainForm::macEditMaterial(TStrObjList &Cmds, const TParamList &Options, TM
       *mat = MatProp->GetCurrent();
   }
   MatProp->Destroy();
-
 }
 //..............................................................................
 void TMainForm::macSetMaterial(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
@@ -8299,8 +8292,7 @@ void TMainForm::funChooseMaterial(const TStrObjList &Params, TMacroError &E)  {
   if( MatProp->ShowModal() == wxID_OK )
     E.SetRetVal( MatProp->GetCurrent().ToString() );
   else
-    E.ProcessingError(__OlxSrcInfo, "operation canceled");
-
+    E.ProcessingError(__OlxSrcInfo, EmptyString);
   MatProp->Destroy();
 }
 //..............................................................................
