@@ -1792,7 +1792,10 @@ void TMainForm::OnFragmentShowOnly(wxCommandEvent& event)  {
 //..............................................................................
 bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, const IEObject *Data)  {
   bool res = true, Silent = (FMode & mSilent) != 0, Draw=false;
-  if( Destroying )  return false;
+  if( Destroying )  {
+    FMode = 0;  // to release waitfor 
+    return false;
+  }
   if( MsgId == ID_GLDRAW )  {
     if( !FBitmapDraw )  
       FGlCanvas->SwapBuffers();
@@ -1827,8 +1830,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
       }
       //FTimer->OnTimer->Enabled = true;
     }
-    if( (FMode & mListen) != 0 )  {
-      if( !TEFile::FileExists(FListenFile) )  return true;
+    if( (FMode & mListen) != 0 && TEFile::FileExists(FListenFile) )  {
       static time_t FileMT = wxFileModificationTime( uiStr(FListenFile));
       time_t FileT = wxFileModificationTime( uiStr(FListenFile));
       if( FileMT != FileT )  {
@@ -3335,7 +3337,7 @@ void TMainForm::AnalyseError( TMacroError& error )  {
     if( error.IsProcessingException() )  {
       TBasicApp::GetLog().Exception(olxstr(error.GetLocation()) << ": " <<  error.GetInfo());
     }
-    else if( error.IsProcessingError() )  {
+    else if( error.IsProcessingError() && !error.GetInfo().IsEmpty() )  {
       TBasicApp::GetLog().Error(olxstr(error.GetLocation()) << ": " <<  error.GetInfo());
     }
     else if( error.IsInvalidOption() )

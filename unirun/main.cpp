@@ -90,7 +90,7 @@ bool UpdateInstallationH( const TUrl& url, const TStrList& properties )  {
 bool UpdateInstallationZ( const olxstr& zip_name, const TStrList& properties )  {
   try  {
     TOSFileSystem DestFS; // local file system
-    TwxZipFileSystem SrcFS(zip_name);
+    TwxZipFileSystem SrcFS(zip_name, false);
 
     DestFS.SetBase( TBasicApp::GetInstance()->BaseDir() );
     olxstr tmp = DestFS.GetBase();
