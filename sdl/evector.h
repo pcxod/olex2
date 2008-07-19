@@ -300,6 +300,7 @@ public:
 
   void Resize(int newsize)  {
     if( Fn == newsize )    return;
+    if( newsize == 0 )  {  Fn = 0;  return;  }
     if( FData != NULL )  {
       int uc = (newsize < Fn) ? newsize : Fn;
       VecType *ND = new VecType[newsize];

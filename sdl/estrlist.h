@@ -404,8 +404,9 @@ public:
 template <class SC, class OC, class GC>  class TTOStringList:  public TTStrList<SC,GC>  {
   //TTypeList< TEStrListData<T> > Strings;
 public:
-  // creates nempty list
+  // creates empty list
   TTOStringList()  {  }
+  TTOStringList(int count) : TTStrList<SC,GC>(count)  {    }
   // copy constructor
   template <class SC1, class T1>
     TTOStringList(const TTStrList<SC1,T1>& list)  {
@@ -503,6 +504,10 @@ template <class SC, typename OC>  class TStrPObjList:
    public TTOStringList<SC,OC,TPrimitiveStrListData<SC,OC> >  {
 public:
   TStrPObjList()  {}
+  TStrPObjList(int count) : TTOStringList<SC,OC,TPrimitiveStrListData<SC,OC> >(count)  { 
+    for( int i=0; i < Count(); i++ )
+      Object(i) = NULL;
+  }
 
   template <class SC1, class T1> TStrPObjList(const TTStrList<SC1,T1>& list) : 
     TTOStringList<SC,OC,TPrimitiveStrListData<SC,OC> >(list)  {}

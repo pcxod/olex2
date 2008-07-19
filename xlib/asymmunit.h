@@ -208,17 +208,17 @@ public:
   /* removes NULL atoms (from the call to Null Atom) */
   void PackAtoms();
   inline TCAtom& GetAtom(size_t i)     const {  return *CAtoms[i];  }
-  inline int AtomCount()            const { return CAtoms.Count();};
-  inline int CentroidCount()        const {  return Centroids.Count(); }
+  inline int AtomCount()               const { return CAtoms.Count();};
+  inline int CentroidCount()           const {  return Centroids.Count(); }
   inline TCAtom& GetCentroid(size_t i) const {  return *Centroids[i]; }
   void InitAtomIds(); // initialises atom ids if any were added or removed
 
-  inline int MatrixCount()       const  {  return Matrices.Count();  }
+  inline int MatrixCount()                   const {  return Matrices.Count();  }
   inline const TMatrixD& GetMatrix(size_t i) const {  return Matrices[i];  }
+  void ClearMatrices()                             {  Matrices.Clear();  }
   void AddMatrix(const TMatrixD& a);
-  // note that the AsymUnit deletes the matrices in the destructor
 
-  inline int EllpCount()            const {  return Ellipsoids.Count(); }
+  inline int EllpCount()               const {  return Ellipsoids.Count(); }
   inline TEllipsoid& GetEllp(size_t i) const {  return *Ellipsoids[i]; }
   void NullEllp(size_t i);
   void PackEllp();

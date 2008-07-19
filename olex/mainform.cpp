@@ -3361,7 +3361,10 @@ bool TMainForm::ProcessEvent( wxEvent& evt )  {
       sl.Strtok( macro, ">>");
       for( int i=0; i < sl.Count(); i++ )  {
         ProcessXPMacro( sl.String(i), MacroError );
-        if( !MacroError.IsSuccessful() )  break;
+        if( !MacroError.IsSuccessful() )  {
+          AnalyseError(MacroError);
+          break;
+        }
       }
       // restore state if failed
       if( !MacroError.IsSuccessful() && AccMenus.GetValue(evt.GetId())->IsCheckable() )

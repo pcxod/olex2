@@ -2369,10 +2369,9 @@ void TMainForm::macPlan(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   IF->SetPlan( plan );
 }
 //..............................................................................
-void TMainForm::macOmit(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)
-{
+void TMainForm::macOmit(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   TIns *IF = (TIns*)FXApp->XFile().GetLastLoader();
-  IF->AddIns("omit", Cmds );
+  IF->AddIns("OMIT", Cmds );
 }
 //..............................................................................
 void TMainForm::macExec(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
@@ -2851,26 +2850,9 @@ void TMainForm::macAddIns(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   FXApp->XFile().UpdateAsymmUnit();
 
   TIns * Ins = (TIns*)FXApp->XFile().GetLastLoader();
-  olxstr InsName;
   // check for long instructions
-  if( Cmds.Count() == 1 )  {
-    int spindex = Cmds[0].IndexOf(' ');
-    if( spindex != -1 )  {
-      InsName = Cmds[0].SubStringTo(spindex).Trim(' ');
-      Cmds[0].Delete(0, spindex+1);
-    }
-    else  {
-      InsName = Cmds[0];
-      Cmds.Delete(0);
-    }
-  }
-  else  {
-    InsName = Cmds[0];
-    Cmds.Delete(0);
-  }
-
-  if( !Ins->AddIns(InsName, Cmds) )  {
-    Error.ProcessingError(__OlxSrcInfo, "could not add instruction" );
+  if( !Ins->AddIns(TStrList(Cmds)) )  {
+    Error.ProcessingError(__OlxSrcInfo, olxstr("could not add instruction: ") << Cmds.Text(' ') );
     return;
   }
   // synchronise instruction params
@@ -4477,53 +4459,16 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options, TMacro
 void TMainForm::macEditIns(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   TIns *Ins = (TIns*)FXApp->XFile().GetLastLoader();
   TStrList SL;
-  TStrPObjList<olxstr, TStrList* > RemovedIns;
-  olxstr Tmp;
-  // go through instructions
-  SL.Add("# instructions not processed by Olex2");
-  for(int i=0; i < Ins->InsCount(); i++ )  {
-    Tmp = Ins->InsName(i);  
-    Tmp << ' ' << Ins->InsParams(i).Text(' ');
-    SL.Add(Tmp);
-  }
-  SL.Add(EmptyString);
-  Tmp = "WGHT";
-  for( int i=0; i < Ins->Wght().Count(); i++ )
-    Tmp << ' ' << Ins->Wght()[i];
-  SL.Add(Tmp);
-  olxstr& rm = SL.Add( Ins->GetRefinementMethod() );
-  for( int i=0; i < Ins->GetLSV().Count(); i++ )
-    rm << ' ' << Ins->GetLSV()[i];
-  olxstr& pn = SL.Add( "PLAN" );
-  for( int i=0; i < Ins->GetPlanV().Count(); i++ )
-    pn << ' ' << ((i < 1) ? Round(Ins->GetPlanV()[i]) : Ins->GetPlanV()[i]);
-  SL.Add("HKLF ") << Ins->Hklf();
-  SL.Add("# instructions processed by Olex2");
   FXApp->XFile().UpdateAsymmUnit();  // synchronise au's
-  Ins->SaveRestraints(SL, NULL, NULL, NULL);
-
+  Ins->SaveHeader(SL);
   TdlgEdit *dlg = new TdlgEdit(this, true);
   dlg->SetText( SL.Text('\n') );
   try  {
     if( dlg->ShowModal() == wxID_OK )  {
       SL.Clear();
       SL.Strtok( dlg->GetText(), '\n' );
-      Ins->ClearIns();
-      Ins->GetAsymmUnit().ClearRestraints();
-      FXApp->XFile().GetAsymmUnit().ClearRestraints();
-      SL.CombineLines('=');
-      Ins->ParseRestraints(SL, &FXApp->XFile().GetAsymmUnit());
-      for( int i=0; i < SL.Count(); i++ )  {
-        SL[i] = SL[i].Trim(' ');
-        if( !SL[i].IsEmpty() && SL[i].CharAt(0) != '#' )  
-          Ins->AddIns( SL[i] );
-      }
-      // synchronisation for new instructions
-      FXApp->XFile().UpdateAsymmUnit();
-      // update instruction parameters
-      Ins->UpdateParams();
-      // emulate loading a new file
-      FXApp->XFile().EndUpdate();
+      Ins->ParseHeader(SL);
+      FXApp->XFile().LastLoaderChanged();
     }
     else  {
     }

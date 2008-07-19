@@ -114,6 +114,15 @@ TBasicCFile *TXFile::FindFormat(const olxstr &Ext)  {
   return FileFormats.Object(i);
 }
 //..............................................................................
+void TXFile::LastLoaderChanged() {
+  if( FLastLoader == NULL )  return;
+  OnFileLoad->Enter(this);
+  GetLattice().Clear(true);
+  GetAsymmUnit().Assign(FLastLoader->GetAsymmUnit());
+  GetLattice().Init();
+  OnFileLoad->Exit(this);
+}
+//..............................................................................
 void TXFile::LoadFromFile(const olxstr & FN) {
   olxstr Ext = TEFile::ExtractFileExt(FN);
   // this thows an exception if the file format loader does not exist
@@ -262,16 +271,19 @@ void TXFile::LibGetFormula(const TStrObjList& Params, TMacroError& E)  {
     GetAsymmUnit().SummFormula(sl, as, us, false);
   }
   bool list = false, html = false;
-  if( Params.Count() != 0 )  {
+  int digits = -1;
+  if( Params.Count() > 0 )  {
     if( Params.String(0).Comparei("list") == 0 )
       list = true;
     else if( Params.String(0).Comparei("html") == 0 )
       html = true;
   }
+  if( Params.Count() == 2 )
+    digits = Params[1].ToInt();
 
   TCStrList atoms(as, ' '),
            units(us, ' ');
-  olxstr rv;
+  olxstr rv, tmp;
   int len = olx_min( atoms.Count(), units.Count() );
   for( int i=0; i < len; i++) {
     rv << atoms[i].SubStringTo(1).UpperCase();
@@ -280,15 +292,16 @@ void TXFile::LibGetFormula(const TStrObjList& Params, TMacroError& E)  {
       rv << ':';
 
     bool subAdded = false;
-    double dv = units.String(i).ToDouble();
+    double dv = units[i].ToDouble()/GetAsymmUnit().GetZ();
+    tmp = (digits > 0) ? olxstr::FormatFloat(digits, dv) : dv;
     if( html )  {
       if( dv/GetAsymmUnit().GetZ() != 1 )  {
-        rv << "<sub>" << dv/GetAsymmUnit().GetZ();
+        rv << "<sub>" << tmp;
         subAdded = true;
       }
     }
     else
-      rv << dv/GetAsymmUnit().GetZ();
+      rv << tmp;
 
     if( rv.EndsWith(".0") ) //
       rv.SetLength( rv.Length() -2 );
@@ -384,7 +397,7 @@ void TXFile::LibSaveSolution(const TStrObjList& Params, TMacroError& E)  {
 TLibrary*  TXFile::ExportLibrary(const olxstr& name)  {
   TLibrary* lib = new TLibrary(name.IsEmpty() ? olxstr("xf") : name );
   lib->RegisterFunction<TXFile>(
-    new TFunction<TXFile>(this,  &TXFile::LibGetFormula, "GetFormula", fpNone|fpOne,
+    new TFunction<TXFile>(this,  &TXFile::LibGetFormula, "GetFormula", fpNone|fpOne|fpTwo,
 "Returns a string for content of the asymmetric unit. Takes single or none parameters.\
  If parameter equals 'html' and html formatted string is returned, for 'list' parameter\
  a string like 'C:26,N:45' is returned. If no parameter is specified, just formula is returned") );

@@ -124,8 +124,6 @@ void TAsymmUnit::Assign(const TAsymmUnit& C)  {
   for( int i = 0; i < C.AtomCount(); i++ )  {
     TCAtom& CA = this->NewAtom();
     CA.Assign( C.GetAtom(i) );
-    if( C.GetAtom(i).GetEllipsoid() != NULL )
-      CA.AssignEllps( &GetEllp( C.GetAtom(i).GetEllipsoid()->GetId() ) );
     CA.SetId(i);
     if( C.GetAtom(i).GetResiId() != -1 )  // main residue
       GetResidue(C.GetAtom(i).GetResiId()).AddAtom(&CA);

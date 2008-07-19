@@ -27,7 +27,7 @@ TCAtom::TCAtom(TAsymmUnit *Parent)  {
   SetResiId(-1);  // default residue is unnamed one
   SetSameId(-1);
   FParent = Parent;
-  FEllipsoid = NULL;
+  EllpId = -1;
   Uiso = caDefIso;
   LoaderId = -1;
   SharedSiteId = AfixAtomId = FragmentId = -1;
@@ -102,7 +102,7 @@ void TCAtom::Assign(const TCAtom& S)  {
   SetResiId( S.GetResiId() );
   SetSameId( S.GetSameId() );
   SetSharedSiteId( S.GetSharedSiteId() );
-  FEllipsoid = S.GetEllipsoid();
+  EllpId = S.EllpId;
   SetUiso( S.GetUiso() );
   SetUisoVar( S.GetUisoVar() );
   FLabel   = S.FLabel;
@@ -137,23 +137,26 @@ void TCAtom::Assign(const TCAtom& S)  {
   FFixedValues = S.GetFixedValues();
 }
 //..............................................................................
-TAtomsInfo *TCAtom::AtomsInfo() const {  return FParent->GetAtomsInfo(); }
+TAtomsInfo* TCAtom::AtomsInfo() const {  return FParent->GetAtomsInfo(); }
 //..............................................................................
+TEllipsoid* TCAtom::GetEllipsoid() const {  return EllpId == -1 ? NULL : &FParent->GetEllp(EllpId);  }
+//..............................................................................
+void TCAtom::AssignEllps(TEllipsoid* NV) {  NV == NULL ? EllpId = -1 : EllpId = NV->GetId();  }
 //..............................................................................
 void TCAtom::UpdateEllp( const TVectorD &Quad)  {
-  if( FEllipsoid == NULL )
-    FEllipsoid = &FParent->NewEllp(Quad);
+  if( EllpId == -1 )
+    EllpId = FParent->NewEllp(Quad).GetId();
   else
-    FEllipsoid->Initialise(Quad);
+    FParent->GetEllp(EllpId).Initialise(Quad);
 }
 //..............................................................................
 void TCAtom::UpdateEllp(const TEllipsoid &NV ) {
   TVectorD Q;
   NV.GetQuad(Q);
-  if( !FEllipsoid )
-    FEllipsoid = &FParent->NewEllp(Q);
+  if( EllpId == -1 )
+    EllpId = FParent->NewEllp(Q).GetId();
   else
-    FEllipsoid->Initialise(Q);
+    FParent->GetEllp(EllpId).Initialise(Q);
 }
 //..............................................................................
 void DigitStrtok(const olxstr &str, TStrPObjList<olxstr,bool> &chars)  {
