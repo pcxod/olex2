@@ -60,6 +60,7 @@ public:
   inline const TMatrixD& GetCartesian2Cell() const {  return GetLattice().GetAsymmUnit().GetCartesianToCell(); }
 
   void EndUpdate();
+  void LastLoaderChanged();  // performs complete reinitialisation
 
   void LibGetFormula(const TStrObjList& Params, TMacroError& E);
   void LibSetFormula(const TStrObjList& Params, TMacroError& E);

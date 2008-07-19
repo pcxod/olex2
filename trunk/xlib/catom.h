@@ -15,6 +15,7 @@ BeginXlibNamespace()
 //  bool Refinable;
 //};
 
+class TEllipsoid;
 
 class TCAtom: public ACollectionItem  {
 private:
@@ -23,11 +24,10 @@ private:
   olxstr FLabel;    // atom's label
   int     Id;       // c_atoms id; this is also used to identify if TSAtoms are the same
   int     LoaderId; // id of the atom in the asymmertic unit of the loader
-  int     ResiId, SameId, SharedSiteId;   // residue and SADI ID
+  int     ResiId, SameId, SharedSiteId, EllpId;   // residue and SADI ID
   double  Occp;     // occupancy and its variable
   double  Uiso, QPeak;    // isotropic thermal parameter; use it when Ellipsoid = NULL
   int     FragmentId;   // this is used in asymmetric unit sort and initialised in TLatice::InitBody()
-  class TEllipsoid *FEllipsoid;
   TEVPointD  FCCenter;   // atom center in cell coordinates
   TVectorD FEllpsE;   // errors for the values six values from INS file
   TVectorD  FFixedValues;  // at least five values (x,y,z, Occ, Uiso), may be 10, (x,y,z, Occ, Uij)
@@ -120,10 +120,10 @@ public:
   inline const TVectorD& GetFixedValues() const {  return FFixedValues;  }
 
 
-  inline TEllipsoid* GetEllipsoid()    const {  return FEllipsoid; }
+  TEllipsoid* GetEllipsoid() const;
   void UpdateEllp( const TVectorD &Quad);
   void UpdateEllp( const TEllipsoid& NV);
-  inline void AssignEllps( TEllipsoid *NV)   {  FEllipsoid = NV; }
+  void AssignEllps(TEllipsoid *NV);
 
   inline TVectorD& EllpE()                   {  return FEllpsE;  }
   inline TEVPointD& CCenter()                {  return FCCenter;  }

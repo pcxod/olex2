@@ -38,12 +38,16 @@ private:
            SolutionMethod;
   double   Radiation;
 protected:
-  void SaveSfac(TStrList& list, int pos);
-  TCAtom* ParseAtom(TStrList& toks, double partOccu, TAsymmUnit::TResidue* resi, TCAtom* atom = NULL);
-  olxstr AtomToString(TCAtom* CA, int SfacIndex);
-  olxstr CellToString();
-  olxstr ZerrToString();
-  void SaveHklSrc(TStrList& SL);
+  void _SaveSfac(TStrList& list, int pos);
+  TCAtom* _ParseAtom(TStrList& toks, double partOccu, TAsymmUnit::TResidue* resi, TCAtom* atom = NULL);
+  olxstr _AtomToString(TCAtom* CA, int SfacIndex);
+  olxstr _CellToString();
+  olxstr _ZerrToString();
+  void _SaveFVar(TStrList& SL);
+  void _SaveHklSrc(TStrList& SL);
+  void _SaveRefMethod(TStrList& SL);
+  // initialises the unparsed instruction list
+  void _FinishParsing();
 public:
   TIns(TAtomsInfo *S);
   virtual ~TIns();
@@ -108,8 +112,7 @@ public:
   */
   bool SaveAtomsToStrings(const TCAtomPList& CAtoms, TStrList& SL, TSimpleRestraintPList* processed);
   void SaveRestraints(TStrList& SL, const TCAtomPList* atoms, TSimpleRestraintPList* processed, TAsymmUnit* au);
-  template <class SC, class T>
-    void ParseRestraints(TTStrList<SC,T>& SL, TAsymmUnit* au)  {
+  template <class StrLst> void ParseRestraints(StrLst& SL, TAsymmUnit* au)  {
       if( au == NULL )  au = &GetAsymmUnit();
       TStrList Toks;
       olxstr resi;
@@ -255,7 +258,7 @@ public:
               TBasicApp::GetLog().Error( olxstr("Wrong restraint parameters list: ") << SL[i] );
               continue;
             }
-            if( Toks[0].Comparei("FLAT") == 0 )  {  // a secial case again...
+            if( Toks[0].Comparei("FLAT") == 0 )  {  // a special case again...
               TSimpleRestraint* sr1 = &sr;
               for( int j=0; j < agroup.Count(); j += atomAGroup )  {
                 for( int k=0; k < atomAGroup; k++ )
@@ -276,6 +279,74 @@ public:
         }
       }
     }
+//..............................................................................
+  /* parses a single line instruction, which does not depend on context (as SYMM) 
+    this is used internally by ParseIns and AddIns    */
+    template <class StrLst> bool _ParseIns(const StrLst& Toks)  {
+      if( Toks[0].Comparei("FVAR") == 0 )  {
+        int VC = FVars.Count();
+        FVars.Resize(VC+Toks.Count()-1);  // if the instruction is too long - can be dublicated
+        for( int j=1; j < Toks.Count(); j++ )
+          FVars[VC+j-1] = Toks[j].ToDouble();
+      }
+      else if( Toks[0].Comparei("WGHT") == 0 )  {
+        if( FWght.Count() != 0 )  {
+          FWght1.Resize(Toks.Count()-1);
+          for( int j=1; j < Toks.Count(); j++ )
+            FWght1[j-1] = Toks[j].ToDouble();
+        }
+        else  {
+          FWght.Resize(Toks.Count()-1);
+          for( int j=1; j < Toks.Count(); j++ )
+            FWght[j-1] = Toks[j].ToDouble();
+        }
+        FWght1 = FWght;
+      }
+      else if( Toks[0].Comparei("TITL") == 0 )
+        FTitle = Toks.Text(' ', 1);
+      else if( Toks[0].Comparei("HKLF") == 0 && (Toks.Count() > 1) )
+        HKLF = Toks.Text(' ', 1);
+      else if( Toks[0].Comparei("L.S.") == 0  || Toks[0].Comparei("CGLS") == 0 )  {
+        SetRefinementMethod(Toks[0]);
+        FLS.Resize( Toks.Count() - 1 );
+        for( int i=1; i < Toks.Count(); i++ )
+          FLS[i-1] = Toks[i].ToInt();
+      }
+      else if( Toks[0].Comparei("PLAN") == 0  )  {
+        FPLAN.Resize( Toks.Count() - 1 );
+        for( int i=1; i < Toks.Count(); i++ )
+          FPLAN[i-1] = Toks[i].ToDouble();
+      }
+      else if( Toks[0].Comparei("LATT") == 0 && (Toks.Count() > 1))
+        GetAsymmUnit().SetLatt( (short)Toks[1].ToInt() );
+      else if( Toks[0].Comparei("UNIT") == 0 )  // can look like an atom !
+        Unit = Toks.Text(' ', 1);
+      else if( Toks[0].Comparei("ZERR") == 0 )  {
+        if( Toks.Count() == 8 )  {
+          GetAsymmUnit().SetZ( (short)Toks[1].ToInt() );
+          GetAsymmUnit().Axes().Value(0).E() = Toks[2].ToDouble();
+          GetAsymmUnit().Axes().Value(1).E() = Toks[3].ToDouble();
+          GetAsymmUnit().Axes().Value(2).E() = Toks[4].ToDouble();
+          GetAsymmUnit().Angles().Value(0).E() = Toks[5].ToDouble();
+          GetAsymmUnit().Angles().Value(1).E() = Toks[6].ToDouble();
+          GetAsymmUnit().Angles().Value(2).E() = Toks[7].ToDouble();
+          int j = 0;
+          if( GetAsymmUnit().Axes()[0].GetE() != 0 )  {  Error += GetAsymmUnit().Axes()[0].GetE()/GetAsymmUnit().Axes()[0].GetV(); j++; }
+          if( GetAsymmUnit().Axes()[1].GetE() != 0 )  {  Error += GetAsymmUnit().Axes()[1].GetE()/GetAsymmUnit().Axes()[1].GetV(); j++; }
+          if( GetAsymmUnit().Axes()[2].GetE() != 0 )  {  Error += GetAsymmUnit().Axes()[2].GetE()/GetAsymmUnit().Axes()[2].GetV(); j++; }
+          if( GetAsymmUnit().Angles()[0].GetE() != 0 ){  Error += GetAsymmUnit().Angles()[0].GetE()/GetAsymmUnit().Angles()[0].GetV(); j++; }
+          if( GetAsymmUnit().Angles()[1].GetE() != 0 ){  Error += GetAsymmUnit().Angles()[1].GetE()/GetAsymmUnit().Angles()[1].GetV(); j++; }
+          if( GetAsymmUnit().Angles()[2].GetE() != 0 ){  Error += GetAsymmUnit().Angles()[2].GetE()/GetAsymmUnit().Angles()[2].GetV(); j++; }
+          if( j != 0 )
+            Error /= j;
+        }
+        else
+          throw TInvalidArgumentException(__OlxSourceInfo, "ZERR");
+      }
+      else
+        return false;
+      return true;
+    }
 
   virtual void SaveToStrings(TStrList& Strings);
   virtual void LoadFromStrings(const TStrList& Strings);
@@ -284,7 +355,31 @@ public:
   TInsList* FindIns(const olxstr &Name);
   void ClearIns();
   bool AddIns(const olxstr& Name);
-  bool AddIns(const olxstr& Name, const TStrList& Params);
+  // the instruction name is Toks[0]
+  bool AddIns(const TStrList& Params, bool CheckUniq=true);
+  // a convinience method
+  template <class StrLst> bool AddIns(const olxstr& name, const StrLst& Params, bool CheckUniq=true)  {
+    TStrList lst(Params);
+    lst.Insert(0, name);
+    return AddIns(lst, CheckUniq);
+  }
+protected:
+  struct ParseResults {
+    TStrList Symm;
+    TStrPObjList<olxstr, TBasicAtomInfo*>  BasicAtoms;  // SFAC container
+    bool CellFound;
+    ParseResults()  {
+      CellFound = false;
+    }
+  };
+  // index will be automatically imcremented if more then one line is parsed
+  bool ParseIns(const TStrList& ins, const TStrList& toks, ParseResults& res, int& index);
+public:
+  // spits out all instructions, including CELL, FVAR, etc
+  void SaveHeader(TStrList& out, int* SfacIndex=NULL, int* UnitIndex=NULL);
+  // Parses all instructions, exclusing atoms, throws if fails
+  void ParseHeader(const TStrList& in);
+
   void AddVar(float val);
   bool InsExists(const olxstr &Name);
   inline int InsCount()  const                {  return Ins.Count();  }
