@@ -3,7 +3,7 @@
 
 #include "xbase.h"
 #include "atominfo.h"
-#include "ematrix.h"
+#include "symmat.h"
 #include "evpoint.h"
 #include "typelist.h"
 #include "tptrlist.h"
@@ -28,9 +28,9 @@ private:
   double  Occp;     // occupancy and its variable
   double  Uiso, QPeak;    // isotropic thermal parameter; use it when Ellipsoid = NULL
   int     FragmentId;   // this is used in asymmetric unit sort and initialised in TLatice::InitBody()
-  TEVPointD  FCCenter;   // atom center in cell coordinates
-  TVectorD FEllpsE;   // errors for the values six values from INS file
-  TVectorD  FFixedValues;  // at least five values (x,y,z, Occ, Uiso), may be 10, (x,y,z, Occ, Uij)
+  vec3d Center, Esd;  // fractional coordinates and esds
+  evecd FEllpsE;   // errors for the values six values from INS file
+  evecd FFixedValues;  // at least five values (x,y,z, Occ, Uiso), may be 10, (x,y,z, Occ, Uij)
   short Part, Afix, Degeneracy, 
         Hfix; // hfix is only an of the "interface" use; HFIX istructions are parsed
   int AfixAtomId;   // this is used to fix afixes after sorting
@@ -116,18 +116,20 @@ public:
   inline double GetOccpVar()           const {  return FFixedValues[3]; }
   inline void SetOccpVar( double v)          {  FFixedValues[3] = v; }
 
-  inline TVectorD& FixedValues()                {  return FFixedValues;  }
-  inline const TVectorD& GetFixedValues() const {  return FFixedValues;  }
+  inline evecd& FixedValues()                {  return FFixedValues;  }
+  inline const evecd& GetFixedValues() const {  return FFixedValues;  }
 
 
   TEllipsoid* GetEllipsoid() const;
-  void UpdateEllp( const TVectorD &Quad);
+  void UpdateEllp( const evecd& Quad);
   void UpdateEllp( const TEllipsoid& NV);
   void AssignEllps(TEllipsoid *NV);
 
-  inline TVectorD& EllpE()                   {  return FEllpsE;  }
-  inline TEVPointD& CCenter()                {  return FCCenter;  }
-  inline const TEVPointD& GetCCenter() const {  return FCCenter;  }
+  inline evecd& EllpE()               {  return FEllpsE;  }
+  inline vec3d& ccrd()                {  return Center;  }
+  inline vec3d const& ccrd()    const {  return Center;  }
+  inline vec3d& ccrdEsd()             {  return Esd;  }
+  inline vec3d const& ccrdEsd() const {  return Esd;  }
 
   static int CompareAtomLabels(const olxstr& S, const olxstr& S1);
   static const short CrdFixedValuesOffset,
@@ -155,24 +157,22 @@ public:
 class TCAtomPCenterComparator  {
 public:
   static int Compare(TCAtom* a1, TCAtom* a2)  {
-    TVPointD v1(a1->CCenter()), v2(a2->CCenter());
-    double p = v1.Length() - v2.Length();
+    double p = a1->ccrd().QLength() - a2->ccrd().QLength();
     if( p < 0 )  return -1;
-    if( p > 0 ) return 1;
-    return 0;
+    return (p > 0) ? 1 : 0;
   }
 };
 //..............................................................................
 class TGroupCAtom  {
   TCAtom* Atom;
-  const TMatrixD* Matrix;
+  const symmd* Matrix;
   olxstr Name;
 public:
   TGroupCAtom() : Atom(NULL), Matrix(NULL)  {  }
-  TGroupCAtom(TCAtom* a, const TMatrixD* m=NULL) : Atom(a), Matrix(m)  { }
-  TGroupCAtom(const olxstr& name, TCAtom* a, const TMatrixD* m=NULL) : Name(name), Atom(a), Matrix(m)  { }
+  TGroupCAtom(TCAtom* a, const symmd* m=NULL) : Atom(a), Matrix(m)  { }
+  TGroupCAtom(const olxstr& name, TCAtom* a, const symmd* m=NULL) : Name(name), Atom(a), Matrix(m)  { }
   DefPropP(TCAtom*, Atom)
-  inline const TMatrixD* GetMatrix() const {  return Matrix;  }
+  inline const symmd* GetMatrix() const {  return Matrix;  }
   DefPropC(olxstr, Name)
   olxstr GetFullLabel() const;
 };

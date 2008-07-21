@@ -6,45 +6,44 @@
 #define ebasisH
 
 #include "ebase.h"
-#include "ematrix.h"
-#include "vpoint.h"
+#include "threex3.h"
 
 BeginEsdlNamespace()
 
-class TEBasis: public IEObject
-{
+class TEBasis: public IEObject  {
 protected:
-  float *FMData, *FMDataT;  // matrix to call OpenGlDirectly
-  double    FRX, FRY, FRZ, // the rotaion angles
+  float FMData[16], FMDataT[16];  // matrix to call OpenGlDirectly
+  double   FRX, FRY, FRZ, // the rotaion angles
            FZoom;       // zoom
-  TMatrixD  FMatrix;
+  mat3d  FMatrix;
   void CopyMatrix();
-  TVPointD   FCenter;
+  vec3d   FCenter;
 public:
   TEBasis();
   TEBasis(const TEBasis &B);
   virtual ~TEBasis();
 
   const TEBasis& operator  = (const TEBasis &B);
-
-  void SetCenter( const TVPointD &V );
-  void SetCenter( const TVectorD &V );
-  inline const TVPointD& GetCenter() const {  return FCenter; }
+  template <class VC> void SetCenter( const VC& V )  {
+    FCenter[0] = V[0];  FCenter[1] = V[1];  FCenter[2] = V[2];
+    FMDataT[12] = FMData[12] = (float)V[0];
+    FMDataT[13] = FMData[13] = (float)V[1];
+    FMDataT[14] = FMData[14] = (float)V[2];
+  }
+  inline const vec3d& GetCenter() const {  return FCenter; }
   inline void NullCenter()  {  FCenter.Null(); }
 
   // orientation matrix in 4x4 opengl format
   inline const float* GetMData()     const {  return FMData; }  
   // transposed orientation matrix in 4x4 opengl format
   inline const float* GetMDataT()    const {  return FMDataT; }  // transposed orientation matrix
-  inline const TMatrixD& GetMatrix() const {  return FMatrix; }
+  inline const mat3d& GetMatrix() const {  return FMatrix; }
 
   inline double GetZoom()   const {  return FZoom; }
 //  inline void SetZoom(double v)   {  FZoom = v; }
   void SetZoom(double v);
 
-  template <class T> void Matrix(const TMatrix<T> &M)  {
-    if( M.Elements() < 3 || M.Vectors() < 3 )  
-      throw TInvalidArgumentException(__OlxSourceInfo, "Matrix[3][3] is expected");
+  template <class MC> void SetMatrix(const MC& M)  {
     for( int i=0; i < 3; i++ )
       for( int j=0; j < 3; j++ )
         FMatrix[i][j] = M[i][j];
@@ -65,11 +64,12 @@ public:
   }
 
   // rotation around an arbitrary vector
-  template <class T> void  Rotate(const TVPoint<T>& V, double angle)  {
+  template <class VC> void  Rotate(const VC& V, double angle)  {
     double ca = 1 - cos(angle), sa = sin(angle);
-    TVPoint<T> N;  N = V;
+    vec3d N(V);
     N.Normalise();
-    TMatrixD M(3,3);  M.E();
+    mat3d M;  
+    M.I();
     M[0][0] = (N[0]*N[0]-1)*ca + 1;
     M[0][1] = N[0]*N[1]*ca - N[2]*sa;
     M[0][2] = N[0]*N[2]*ca + N[1]*sa;
@@ -81,16 +81,12 @@ public:
     M[2][2] = (N[2]*N[2]-1)*ca + 1;
 
     FMatrix *= M;
-    CopyMatrix();  }
-
-
-  template <class T> void Translate( const TVector<T> &V)  {
-    FCenter += V;
-    FMData[12] += (float)V[0];  FMData[13] += (float)V[1];  FMData[14] += (float)V[2];  
+    CopyMatrix();  
   }
 
-  template <class T> void Translate( const TVPoint<T> &V)  {
-    FCenter += (TVector<T>)V;
+
+  template <class VC> void Translate( const VC& V)  {
+    FCenter[0] += V[0];  FCenter[1] += V[1];  FCenter[2] += V[2];
     FMData[12] += (float)V[0];  FMData[13] += (float)V[1];  FMData[14] += (float)V[2];  
   }
 
@@ -99,17 +95,15 @@ public:
   void  TranslateZ( double z);
   void  Reset();
   void  ResetAngles()  {  FRX = FRY = FRZ = 0;  };
-  template <class T> void Orient(const TVector<T>& normal)  {
-    TVPoint<T> X, Y, Z, CX;
-    Z = normal;
+  template <class VC> void OrientNormal(const VC& normal)  {
+    vec3d X, Y, Z(normal), CX;
     X[0] = Z[1];
     X[1] = -Z[0];
     if( fabs(X.Length()) < 1e-10 )  {
       X[0] = 0;
       X[1] = Z[2];
       X[2] = -Z[1];
-      if( fabs(X.Length()) < 1e-10 )
-      {
+      if( fabs(X.Length()) < 1e-10 )  {
         X[0] = Z[2];
         X[1] = 0;
         X[2] = -Z[0];
@@ -123,15 +117,15 @@ public:
     X.Normalise();
     Y.Normalise();
     Z.Normalise();
-    Orient(X,Y,Z);  }
+    Orient(X,Y,Z);  
+  }
 
   /* the matrix is being transposed by default to emulate normal rotation in OpneGl
    if it is not transposed, the rotation happens around current X, Y & Z axis
    however the rotation around screen X, Y, Z is prefered
   */
-  template <class T> void Orient(const TVector<T> &X, const TVector<T> &Y, const TVector<T> &Z, bool Transpose=true)  {
-    if( Transpose )
-    {
+  template <class VC> void Orient(const VC& X, const VC& Y, const VC& Z, bool Transpose=true)  {
+    if( Transpose )  {
       FMatrix[0][0] = X[0];  FMatrix[0][1] = Y[0];  FMatrix[0][2] = Z[0];
       FMatrix[1][0] = X[1];  FMatrix[1][1] = Y[1];  FMatrix[1][2] = Z[1];
       FMatrix[2][0] = X[2];  FMatrix[2][1] = Y[2];  FMatrix[2][2] = Z[2];
@@ -142,25 +136,25 @@ public:
       FMatrix[1][0] = Y[0];  FMatrix[1][1] = Y[1];  FMatrix[1][2] = Y[2];
       FMatrix[2][0] = Z[0];  FMatrix[2][1] = Z[1];  FMatrix[2][2] = Z[2];
     }
-    CopyMatrix();  }
+    CopyMatrix();  
+  }
 
-  template <class T> void Orient(const TMatrix<T> &M, bool Transpose=true)  {
+  template <class MC> void Orient(const MC& M, bool Transpose=true)  {
     double zm = GetZoom();
     Reset();
-    if( Transpose )
-    {
+    if( Transpose )  {
       for( int i=0; i < 3; i++ )
         for( int j=0; j < 3; j++ )
           FMatrix[i][j] = M[i][j];
     }
-    else
-    {
+    else  {
       for( int i=0; i < 3; i++ )
         for( int j=0; j < 3; j++ )
           FMatrix[j][i] = M[i][j];
     }
     SetZoom(zm);
-    CopyMatrix();  }
+    CopyMatrix();  
+  }
 
   double    DistanceTo (TEBasis &B)  const {  return FCenter.DistanceTo(B.FCenter);  }
 

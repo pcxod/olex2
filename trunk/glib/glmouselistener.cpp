@@ -33,20 +33,17 @@ bool TGlMouseListener::OnMouseDown(const IEObject *Sender, const TMouseData *Dat
   return true;
 }
 //..............................................................................
-bool TGlMouseListener::OnMouseUp(const IEObject *Sender, const TMouseData *Data)
-{
+bool TGlMouseListener::OnMouseUp(const IEObject *Sender, const TMouseData *Data)  {
   return false;
 }
 //..............................................................................
-bool TGlMouseListener::OnMouseMove(const IEObject *Sender, const TMouseData *Data)
-{
+bool TGlMouseListener::OnMouseMove(const IEObject *Sender, const TMouseData *Data)  {
   int dx = Data->X - SX, dy = SY - Data->Y;
   bool res = false;
-  if( (Data->Button == smbLeft) && (Data->Shift == sssShift) )  // move
-  {
+  if( (Data->Button == smbLeft) && (Data->Shift == sssShift) )  {  // move
     if( !Moveable() )  {  SX = Data->X;  SY = Data->Y;  return res;}
     if( !Move2D() ) {  // move in 3D
-      TVPointD T;
+      vec3d T;
       double v = FParent->GetScale();
       if( Data->Shift & sssCtrl )
       { T[2] = (float)(dx+dy)*v;  }
@@ -63,11 +60,13 @@ bool TGlMouseListener::OnMouseMove(const IEObject *Sender, const TMouseData *Dat
       res = true;
     }
   }
-  if( (Data->Button == smbLeft) && (!Data->Shift || (Data->Shift & sssCtrl)))  // rotate
-  {
-    if( !Roteable() )  {  SX = Data->X;  SY = Data->Y;  return res;}
-    if( Data->Shift == sssCtrl )
-    {
+  if( (Data->Button == smbLeft) && (!Data->Shift || (Data->Shift & sssCtrl)))  { // rotate
+    if( !Roteable() )  {  
+      SX = Data->X;  
+      SY = Data->Y;  
+      return res;
+    }
+    if( Data->Shift == sssCtrl )  {
       double RZ = Basis.GetRZ();
       if( SX > FParent->GetWidth()/2 ) RZ -= (double)dy/FRotationDiv;
       else                          RZ += (double)dy/FRotationDiv;
@@ -78,8 +77,7 @@ bool TGlMouseListener::OnMouseMove(const IEObject *Sender, const TMouseData *Dat
       Basis.RotateZ(RZ);
       res = true;
     }
-    if( !Data->Shift )  // rotate XY
-    {
+    if( !Data->Shift )  {// rotate XY
       double RX;
       double RY;
       RX = Basis.GetRX() + (double)(dy)/FRotationDiv;
@@ -93,8 +91,7 @@ bool TGlMouseListener::OnMouseMove(const IEObject *Sender, const TMouseData *Dat
       res = true;
     }
   }
-  if( (Data->Button & smbRight) && (!Data->Shift) )  // zoom
-  {
+  if( (Data->Button & smbRight) && (!Data->Shift) )  {  // zoom
     if( !Zoomable() )  {
       SX = Data->X;
       SY = Data->Y;

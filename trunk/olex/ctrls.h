@@ -117,19 +117,19 @@ class TMenuItem: public wxMenuItem,  public AActionHandler  {
   TActionQueue *FActionQueue;
   TActionQList *FActions;
   olxstr FDependMode, Command, OnModeChangeCmd;
-  short Type;
+  short DependentOn;
 public:
   TMenuItem(const short type, int id, TMenu* parent=NULL, const olxstr &Name=EmptyString);
   virtual ~TMenuItem();
-  void ActionQueue(TActionQueue* q, const olxstr& dependMode);
+  void ActionQueue(TActionQueue* q, const olxstr& dependMode, short dependentOn);
   bool Execute(const IEObject *Sender, const IEObject *Data);
-
+  // updates checked status
+  void ValidateState(); 
   DefPropC(olxstr, Command)
 
-  inline short GetType()  const  {  return Type;  }
-
   TActionQueue *OnModeChange;
-
+  static const short ModeDependent  = 1,
+                     StateDependent = 2;
   DECLARE_CLASS(TMenuItem)
 };
 //----------------------------------------------------------------------------//

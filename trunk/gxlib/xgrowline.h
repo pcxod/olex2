@@ -11,15 +11,15 @@ BeginGxlNamespace()
 class TXGrowLine : public TXBond  {
   TSAtom *FSAtom;
   TCAtom *FCAtom;
-  TMatrixD Transform;
-  TVPointD  FEdge, FBase;
+  symmd Transform;
+  vec3d  FEdge, FBase;
 public:
   TXGrowLine(const olxstr& collectionName, TSAtom *A,
-               TCAtom* CA, const TMatrixD& transform, TGlRender *Render);
+               TCAtom* CA, const symmd& transform, TGlRender *Render);
   void Create(const olxstr& cName = EmptyString);
   virtual ~TXGrowLine();
 
-  bool GetDimensions(TVPointD &Max, TVPointD &Min){  return false; };
+  bool GetDimensions(vec3d &Max, vec3d &Min){  return false; };
 
   bool OnMouseDown(const IEObject *Sender, const TMouseData *Data){  return true; }
   bool OnMouseUp(const IEObject *Sender, const TMouseData *Data){  return false; }
@@ -33,7 +33,7 @@ public:
 
   TSAtom *SAtom()      const {  return FSAtom;  }
   TCAtom *CAtom()      const {  return FCAtom;  }
-  const TMatrixD& GetTransform()  const {  return Transform;  }
+  const symmd& GetTransform()  const {  return Transform;  }
 };
 
 EndGxlNamespace()

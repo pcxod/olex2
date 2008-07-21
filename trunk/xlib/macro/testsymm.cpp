@@ -8,10 +8,10 @@
 #include "symmlib.h"
 
 //..............................................................................
-bool NormalisevectorView(TVectorD& v ) {
+bool NormalisevectorView(vec3d& v ) {
   double tol = 0.05;
   bool res = true;
-  for( int j=0; j < v.Count(); j++ )  {
+  for( int j=0; j < 3; j++ )  {
     if( v[j] < tol )  v[j] = 0;
     else if( (1-v[j]) < tol )  v[j] = 0;
     else if( fabs(9./12-v[j]) < tol )  v[j] = 9./12;
@@ -26,25 +26,23 @@ bool NormalisevectorView(TVectorD& v ) {
   return res;
 }
 //..............................................................................
-void ElimateSGFromList(TPtrList<TSpaceGroup>& sglist, TMatrixD& symm, TVPointDList& trans, bool present)  {
-  TMatrixDList sgm;
-  TVPointD diff, nm;
+void ElimateSGFromList(TPtrList<TSpaceGroup>& sglist, symmd& symm, vec3d_list& trans, bool present)  {
+  symmd_list sgm;
+  vec3d diff, nm;
   for( int i=0; i < sglist.Count(); i++ )  {
     bool found = false;
     sgm.Clear();
     sglist[i]->GetMatrices(sgm, mattAll);
     for( int j=0; j < sgm.Count(); j++ )  {
-      TMatrixD& m = sgm[j];
-      if( m[0][0] == symm[0][0] && m[0][1] == symm[0][1] && m[0][2] == symm[0][2] &&
-          m[1][0] == symm[1][0] && m[1][1] == symm[1][1] && m[1][2] == symm[1][2] &&
-          m[2][0] == symm[2][0] && m[2][1] == symm[2][1] && m[2][2] == symm[2][2] )  {
+      symmd& m = sgm[j];
+      if( m.r == symm.r )  {
         if( trans.Count() == 0 )  {  found = true;  break;  }
         for( int k=0; k < trans.Count(); k++ )  {
           for( int l=0; l < 3; l++ )  {
             if( trans[k][l] > 0.51 )  trans[k][l] = 1.0 - trans[k][l];
-            while( m[l][3] < 0 )  m[l][3] += 1;
-            if( m[l][3] > 0.51 )   nm[l] = 1.0 - m[l][3];
-            else nm[l] = m[l][3];
+            while( m.t[l] < 0 )  m.t[l] += 1;
+            if( m.t[l] > 0.51 )  nm[l] = 1.0 - m.t[l];
+            else nm[l] = m.t[l];
             diff[l] = nm[l] - trans[k][l];
             while( diff[l] < 0 )  diff[l] += 1;
             if( diff[l] < 0.01 )  diff[l] = 0;
@@ -95,24 +93,24 @@ void XLibMacros::macTestSymm(TStrObjList &Cmds, const TParamList &Options, TMacr
       sglist.Add( &TSymmLib::GetInstance()->GetGroup(i) );
   }
 
-  TMatrixDList presentSymm;
-  TTOStringList<olxstr, TMatrixD, TObjectStrListData<olxstr,TMatrixD> > toTest;
-  TMatrixD a(3,4), r3(3,4), r4(3,4), r6(3,4), res(3,4);
-  TMatrixD nxx(3,4), xnx(3,4), xxn(3,4);
-  TMatrixD xr2x(3,4), r2xx(3,4), xxr2(3,4);
-  TVPointD trans, itrans;
-  TVPointDList translations;
-  a.E();
-  xr2x.E();  xr2x[1][1] = -1;
-  r2xx.E();  r2xx[0][0] = -1;
-  xxr2.E();  xxr2[2][2] = -1;
-  r3[0][1] = -1;  r3[1][0] = 1; r3[1][1] = -1; r3[2][2] = 1;
-  r4[0][1] = -1;  r4[1][0] = 1; r4[2][2] = 1;
-  r6[0][0] = 1;  r6[0][1] = -1; r6[1][0] = 1; r6[2][2] = 1;
+  symmd_list presentSymm;
+  TTOStringList<olxstr, symmd, TObjectStrListData<olxstr,symmd> > toTest;
+  symmd a, r3, r4, r6, res;
+  symmd nxx, xnx, xxn;
+  symmd xr2x, r2xx, xxr2;
+  vec3d trans, itrans;
+  vec3d_list translations;
+  a.r.I();
+  xr2x.r.I();  xr2x.r[1][1] = -1;
+  r2xx.r.I();  r2xx.r[0][0] = -1;
+  xxr2.r.I();  xxr2.r[2][2] = -1;
+  r3.r[0][1] = -1;  r3.r[1][0] = 1;  r3.r[1][1] = -1; r3.r[2][2] = 1;
+  r4.r[0][1] = -1;  r4.r[1][0] = 1;  r4.r[2][2] = 1;
+  r6.r[0][0] = 1;   r6.r[0][1] = -1; r6.r[1][0] = 1;  r6.r[2][2] = 1;
 
-  nxx.E();   nxx[1][1] = nxx[2][2] = -1;
-  xnx.E();   xnx[0][0] = xnx[2][2] = -1;
-  xxn.E();   xxn[0][0] = xxn[1][1] = -1;
+  nxx.r.I();   nxx.r[1][1] = nxx.r[2][2] = -1;
+  xnx.r.I();   xnx.r[0][0] = xnx.r[2][2] = -1;
+  xxn.r.I();   xxn.r[0][0] = xxn.r[1][1] = -1;
 
   toTest.Add( "Inversion", a);
   toTest.Add( "n--", nxx);

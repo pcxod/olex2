@@ -88,7 +88,7 @@ template <class TaskClass>
       return true;
     }                                                
   protected:
-    void CalculateRatios(TVectorI& res, long ListSize, const short TaskType)  {
+    void CalculateRatios(eveci& res, long ListSize, const short TaskType)  {
       const short mt = olx_min(4, TBasicApp::GetInstance()->GetMaxThreadCount());
       res.Resize( mt );  // max 4 threads to support
       if( TaskType == tLinearTask )  {
@@ -132,7 +132,7 @@ template <class TaskClass>
           task.Run(i);
         return;
       }
-      TVectorI ratios;
+      eveci ratios;
       CalculateRatios(ratios, ListSize, TaskType);
       long startIndex = 0;
       TaskClass* taskInstance = &task;

@@ -19,17 +19,15 @@
 #include "styles.h"
 
 
-TDUnitCell::TDUnitCell(const olxstr& collectionName, TGlRender *Render) :
-  AGDrawObject(collectionName), CellToCartesian(3,3), HklToCartesian(3,3)
-{
+TDUnitCell::TDUnitCell(const olxstr& collectionName, TGlRender *Render) : AGDrawObject(collectionName) {
   FParent = Render;
   Groupable(false);
   FReciprical = false;
   FGlP = NULL;
   // FCenter[0] == M_PI - the object is not initialised
   FOldCenter[0] = FOldCenter[1] = FOldCenter[2] = 100;
-  CellToCartesian.E();
-  HklToCartesian.E();
+  CellToCartesian.I();
+  HklToCartesian.I();
 }
 //...........................................................................
 void TDUnitCell::ResetCentres()  {
@@ -37,7 +35,7 @@ void TDUnitCell::ResetCentres()  {
   FOldCenter[0] = FOldCenter[1] = FOldCenter[2] = 100;
 }
 //...........................................................................
-void TDUnitCell::Init(const TVectorD& cell)  {
+void TDUnitCell::Init(const double cell[6])  {
   if( cell[0] == 0 )  return;
   double cG = cos(cell[5]/180*M_PI),
          cB = cos(cell[4]/180*M_PI),
@@ -56,7 +54,7 @@ void TDUnitCell::Init(const TVectorD& cell)  {
          cs = cell[0]*cell[1]*sG/V
          ;
   // cell to cartesian transformation matrix
-  CellToCartesian.E();
+  CellToCartesian.I();
   CellToCartesian[0][0] = cell[0];
   CellToCartesian[1][0] = cell[1]*cG;
   CellToCartesian[2][0] = cell[2]*cB;
@@ -66,10 +64,7 @@ void TDUnitCell::Init(const TVectorD& cell)  {
 
   CellToCartesian[2][2] = 1./cs;
 
-  TVPointD v0, v1, v2;
-  v0 = CellToCartesian[0];
-  v1 = CellToCartesian[1];
-  v2 = CellToCartesian[2];
+  vec3d v0(CellToCartesian[0]), v1(CellToCartesian[1]), v2(CellToCartesian[2]);
 
   HklToCartesian[0] = v1.XProdVec(v2);
   HklToCartesian[1] = v2.XProdVec(v0);
@@ -81,12 +76,12 @@ void TDUnitCell::Init(const TVectorD& cell)  {
 //...........................................................................
 void TDUnitCell::Reciprical(bool v )  {
   if( !FGlP )  return;
-  TMatrixD M;
+  mat3d M;
   if( v )  {
     FOldCenter = FCenter;
     M = HklToCartesian;
     //M.Transpose();
-    TVPointD scaleV(1, 1, 1);
+    vec3d scaleV(1, 1, 1);
     scaleV = M*scaleV;
     double scale = olx_max(scaleV[2],  olx_max(scaleV[0], scaleV[1]) );
     // with this scale it will cover 10 reflections
@@ -222,9 +217,9 @@ void TDUnitCell::Create(const olxstr& cName)  {
 bool TDUnitCell::Orient(TGlPrimitive *P)  {
   if( P->Type() == sgloText )  {
     olxstr Str;
-    TVPointD T;
+    vec3d T;
     double tr = 0.3;
-    TVPointD Center( FParent->GetBasis().GetCenter() );
+    vec3d Center( FParent->GetBasis().GetCenter() );
     Center += FCenter;
     T += tr;
     T += Center;
@@ -268,7 +263,7 @@ bool TDUnitCell::Orient(TGlPrimitive *P)  {
   const TMatrixD& n = FAU->GetCartesianToCell();
   TMatrixD rm(3,3), rm1(3,3);
    glDisable(GL_CULL_FACE);
-   TVPointD v, p;
+   vec3d v, p;
    p = n[2];
    p.Normalise();
    p *= 0.5;

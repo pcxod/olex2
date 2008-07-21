@@ -40,9 +40,6 @@ TAsymmUnit::TAsymmUnit(TLattice *L, TAtomsInfo *AI) :
   {
   AtomsInfo = AI;
   Lattice   = L;
-  Cartesian2Cell = new TMatrixD(3,3);
-  Cell2Cartesian = new TMatrixD(3,3);
-  Hkl2Cartesian = new TMatrixD(3,3);
   Latt = -1;
   Z = 1;
   ContainsEquivalents = false;
@@ -51,9 +48,6 @@ TAsymmUnit::TAsymmUnit(TLattice *L, TAtomsInfo *AI) :
 //..............................................................................
 TAsymmUnit::~TAsymmUnit() {
   Clear();
-  delete Cartesian2Cell;
-  delete Cell2Cartesian;
-  delete Hkl2Cartesian;
   if( ExyzGroups != NULL)
     delete ExyzGroups;
 }
@@ -129,9 +123,9 @@ void TAsymmUnit::Assign(const TAsymmUnit& C)  {
       GetResidue(C.GetAtom(i).GetResiId()).AddAtom(&CA);
   }
   // copy matrices
-  *Cartesian2Cell = C.GetCartesianToCell();
-  *Cell2Cartesian = C.GetCellToCartesian();
-  *Hkl2Cartesian =  C.GetHklToCartesian();
+  Cartesian2Cell = C.GetCartesianToCell();
+  Cell2Cartesian = C.GetCellToCartesian();
+  Hkl2Cartesian =  C.GetHklToCartesian();
   UcifToUxyz     = C.UcifToUxyz;
   UxyzToUcif     = C.UxyzToUcif;
   UcifToUxyzT    = C.UcifToUxyzT;
@@ -168,7 +162,7 @@ void TAsymmUnit::Assign(const TAsymmUnit& C)  {
   rSAME.Assign(*this, C.rSAME);
 
   for( int i=0; i < C.UsedSymm.Count(); i++ )
-    UsedSymm.AddCCopy( C.UsedSymm[i] );
+    UsedSymm.Add( C.UsedSymm[i] );
 }
 //..............................................................................
 void  TAsymmUnit::InitMatrices()  {
@@ -192,57 +186,51 @@ void  TAsymmUnit::InitMatrices()  {
          cs = FAxes[0].GetV()*FAxes[1].GetV()*sG/V
          ;
   // cartesian to cell transformation matrix
-  Cartesian2Cell->E();
-  Cartesian2Cell->Data(0)[0] =  1./FAxes[0].GetV();
-  Cartesian2Cell->Data(1)[0] = -cG/(sG*FAxes[0].GetV());
-  Cartesian2Cell->Data(2)[0] = as*cBs;
+  Cartesian2Cell.Null();
+  Cartesian2Cell[0][0] =  1./FAxes[0].GetV();
+  Cartesian2Cell[1][0] = -cG/(sG*FAxes[0].GetV());
+  Cartesian2Cell[2][0] = as*cBs;
 
-  Cartesian2Cell->Data(1)[1] = 1./(sG*FAxes[1].GetV());
-  Cartesian2Cell->Data(2)[1] = bs*cAs;
+  Cartesian2Cell[1][1] = 1./(sG*FAxes[1].GetV());
+  Cartesian2Cell[2][1] = bs*cAs;
 
-  Cartesian2Cell->Data(2)[2] = cs;
+  Cartesian2Cell[2][2] = cs;
 
   // cell to cartesian transformation matrix
-  Cell2Cartesian->E();
-  Cell2Cartesian->Data(0)[0] = FAxes[0].GetV();
-  Cell2Cartesian->Data(1)[0] = FAxes[1].GetV()*cG;
-  Cell2Cartesian->Data(2)[0] = FAxes[2].GetV()*cB;
+  Cell2Cartesian.Null();
+  Cell2Cartesian[0][0] = FAxes[0].GetV();
+  Cell2Cartesian[1][0] = FAxes[1].GetV()*cG;
+  Cell2Cartesian[2][0] = FAxes[2].GetV()*cB;
 
-  Cell2Cartesian->Data(1)[1] = FAxes[1].GetV()*sG;
-  Cell2Cartesian->Data(2)[1] = -FAxes[2].GetV()*(cB*cG-cA)/sG;
+  Cell2Cartesian[1][1] = FAxes[1].GetV()*sG;
+  Cell2Cartesian[2][1] = -FAxes[2].GetV()*(cB*cG-cA)/sG;
 
-  Cell2Cartesian->Data(2)[2] = 1./cs;
+  Cell2Cartesian[2][2] = 1./cs;
 
   // init hkl to cartesian transformation matrix
 //  TMatrixD m( *Cartesian2Cell );
-  TMatrixD m( *Cell2Cartesian );
-  TVPointD v1, v2, v3;
-  v1 = m[0];
-  v2 = m[1];
-  v3 = m[2];
+  mat3d m( Cell2Cartesian );
+  vec3d v1(m[0]), v2(m[1]), v3(m[2]);
 
-  Hkl2Cartesian->Data(0) = v2.XProdVec(v3);
-  Hkl2Cartesian->Data(1) = v3.XProdVec(v1);
-  Hkl2Cartesian->Data(2) = v1.XProdVec(v2);
-  Hkl2Cartesian->Data(0) /= V;
-  Hkl2Cartesian->Data(1) /= V;
-  Hkl2Cartesian->Data(2) /= V;
+  Hkl2Cartesian[0] = v2.XProdVec(v3)/V;
+  Hkl2Cartesian[1] = v3.XProdVec(v1)/V;
+  Hkl2Cartesian[2] = v1.XProdVec(v2)/V;
 
 // init Uaniso traformation matices
   m.Null();
-  m[0][0] = Hkl2Cartesian->Data(0).Length();
-  m[1][1] = Hkl2Cartesian->Data(1).Length();
-  m[2][2] = Hkl2Cartesian->Data(2).Length();
+  m[0][0] = Hkl2Cartesian[0].Length();
+  m[1][1] = Hkl2Cartesian[1].Length();
+  m[2][2] = Hkl2Cartesian[2].Length();
 
-  UcifToUxyz = *Cell2Cartesian * m;
+  UcifToUxyz = Cell2Cartesian * m;
   UcifToUxyzT = UcifToUxyz;
   UcifToUxyz.Transpose();
 
-  m[0][0] = 1./Hkl2Cartesian->Data(0).Length();
-  m[1][1] = 1./Hkl2Cartesian->Data(1).Length();
-  m[2][2] = 1./Hkl2Cartesian->Data(2).Length();
+  m[0][0] = 1./Hkl2Cartesian[0].Length();
+  m[1][1] = 1./Hkl2Cartesian[1].Length();
+  m[2][2] = 1./Hkl2Cartesian[2].Length();
 
-  UxyzToUcif = m* *Cartesian2Cell;
+  UxyzToUcif = m*Cartesian2Cell;
   UxyzToUcifT = UxyzToUcif;
   UxyzToUcif.Transpose();
 }
@@ -329,17 +317,15 @@ TCAtom& TAsymmUnit::NewAtom(TResidue* resi)  {
   return *A;
 }
 //..............................................................................
-TCAtom& TAsymmUnit::NewCentroid(const TVPointD &CCenter)  {
-  TVPointD  CC;
+TCAtom& TAsymmUnit::NewCentroid(const vec3d& CCenter)  {
   for( int i=0; i < CentroidCount(); i++ )  {
-    CC = Centroids[i]->CCenter();
-    if( (CC-CCenter).Length() < 0.01 ) // already exists
+    if( (Centroids[i]->ccrd()-CCenter).QLength() < 0.001 ) // already exists
       return *Centroids[i];
   }
   TCAtom *A = new TCAtom(this);
   olxstr Label("Cnt");
   Label << CentroidCount();
-  A->CCenter() = CCenter;
+  A->ccrd() = CCenter;
   A->SetId( Centroids.Count() );
   A->SetLoaderId( liCentroid );
   Centroids.Add(A);
@@ -388,7 +374,7 @@ void TAsymmUnit::PackAtoms()  {
   InitAtomIds();
 }
 //..............................................................................
-TEllipsoid& TAsymmUnit::NewEllp(const TVectorD &Q)  {
+TEllipsoid& TAsymmUnit::NewEllp(const evecd& Q)  {
   TEllipsoid *E = new TEllipsoid(Q);
   Ellipsoids.Add(E);
   E->SetId( Ellipsoids.Count()-1 );
@@ -402,7 +388,7 @@ TEllipsoid& TAsymmUnit::NewEllp() {
   return *E;
 }
 //..............................................................................
-void TAsymmUnit::PackEllp() {
+void TAsymmUnit::PackEllps() {
   Ellipsoids.Pack();
   for( int i=0; i < Ellipsoids.Count(); i++ )
     Ellipsoids[i]->SetId(i);
@@ -415,15 +401,14 @@ void TAsymmUnit::NullEllp(size_t i)  {
   }
 }
 //..............................................................................
-TVPointD TAsymmUnit::GetOCenter(bool IncludeQ, bool IncludeH) const {
-  TVPointD P, v;
+vec3d TAsymmUnit::GetOCenter(bool IncludeQ, bool IncludeH) const {
+  vec3d P;
   int ac = 0;
   for( int i=0; i < AtomCount(); i++ )  {
     if( CAtoms[i]->IsDeleted() )  continue;
     if( !IncludeQ && CAtoms[i]->GetAtomInfo() == iQPeakIndex )  continue;
     if( !IncludeH && CAtoms[i]->GetAtomInfo() == iHydrogenIndex )  continue;
-    v = CAtoms[i]->CCenter();
-    P += v;
+    P += CAtoms[i]->ccrd();
     ac++;
   }
 
@@ -482,7 +467,7 @@ olxstr TAsymmUnit::SummFormula(const olxstr &Sep, bool MultiplyZ) const  {
   // searching for the identity matrix
   bool Uniq = true;
   for( int i=0; i < MatrixCount(); i++ )
-    if( GetMatrix(i).IsE() )  {
+    if( GetMatrix(i).r.IsI() )  {
       Uniq = false;  break;
     }
   if( Uniq )  matrixInc ++;
@@ -524,9 +509,9 @@ double TAsymmUnit::MolWeight() const  {
   return Mw;
 }
 //..............................................................................
-void TAsymmUnit::AddMatrix(const TMatrixD& a)  {
-  if( a.IsE() )  Matrices.InsertCCopy(0, a);
-  else           Matrices.AddCCopy(a);
+void TAsymmUnit::AddMatrix(const symmd& a)  {
+  if( a.r.IsI() )  Matrices.InsertCCopy(0, a);
+  else             Matrices.AddCCopy(a);
 }
 //..............................................................................
 olxstr TAsymmUnit::CheckLabel(const TCAtom* ca, const olxstr &Label, char a, char b, char c) const  {
@@ -694,13 +679,11 @@ void TAsymmUnit::AddNewSfac(const olxstr& label,
   SfacData.Add( label, new TLibScatterer(a1,a2,a3,a4,b1,b2,b3,b4,c) );
 }
 //..............................................................................
-const TMatrixD& TAsymmUnit::AddUsedSymm(const TMatrixD& matr)  {
-  if( matr.Vectors() != 3 || matr.Elements() != 4 )
-    throw TInvalidArgumentException(__OlxSourceInfo, "matrix must be 3x4");
+const symmd& TAsymmUnit::AddUsedSymm(const symmd& matr)  {
   int ind = UsedSymm.IndexOf(matr);
-  TMatrixD* rv = NULL;
+  symmd* rv = NULL;
   if( ind == -1 )  {
-    rv = &UsedSymm.Add( *(new TMatrixD(matr)) );
+    rv = &UsedSymm.Add( *(new symmd(matr)) );
     rv->SetTag(1);
   }
   else  {
@@ -710,7 +693,7 @@ const TMatrixD& TAsymmUnit::AddUsedSymm(const TMatrixD& matr)  {
   return *rv;
 }
 //..............................................................................
-void TAsymmUnit::RemUsedSymm(const TMatrixD& matr)  {
+void TAsymmUnit::RemUsedSymm(const symmd& matr)  {
   int ind = UsedSymm.IndexOf(matr);
   if( ind == -1 )
     throw TInvalidArgumentException(__OlxSourceInfo, "matrix is not in the list");
@@ -731,12 +714,12 @@ double TAsymmUnit::FindRestrainedDistance(const TCAtom& a1, const TCAtom& a2)  {
   return -1;
 }
 //..............................................................................
-void TAsymmUnit::OnCAtomCrdChange( TCAtom* ca, const TMatrixD& matr )  {
+void TAsymmUnit::OnCAtomCrdChange( TCAtom* ca, const symmd& matr )  {
   throw TNotImplementedException(__OlxSourceInfo);
 }
 //..............................................................................
-void TAsymmUnit::UcifToUcart(TVectorD& v)  { // silly expansion of Q-form ...
-  TMatrixD M(3,3);
+void TAsymmUnit::UcifToUcart(evecd& v)  { // silly expansion of Q-form ...
+  mat3d M;
   M[0][0] = v[0];  M[1][1] = v[1];  M[2][2] = v[2];
   M[1][2] = M[2][1] = v[3];
   M[0][2] = M[2][0] = v[4];
@@ -748,8 +731,8 @@ void TAsymmUnit::UcifToUcart(TVectorD& v)  { // silly expansion of Q-form ...
   v[3] = M[1][2];  v[4] = M[0][2];  v[5] = M[0][1];
 }
 //..............................................................................
-void TAsymmUnit::UcartToUcif(TVectorD& v)  {
-  TMatrixD M(3,3);
+void TAsymmUnit::UcartToUcif(evecd& v)  {
+  mat3d M;
   M[0][0] = v[0];  M[1][1] = v[1];  M[2][2] = v[2];
   M[1][2] = M[2][1] = v[3];
   M[0][2] = M[2][0] = v[4];
@@ -789,9 +772,7 @@ void TAsymmUnit::LibGetAtomCount(const TStrObjList& Params, TMacroError& E)  {
 void TAsymmUnit::LibGetAtomCrd(const TStrObjList& Params, TMacroError& E)  {
   int index = Params[0].ToInt();
   if( index < 0 || index >= AtomCount() )  throw TIndexOutOfRangeException(__OlxSourceInfo, index, 0, AtomCount());
-  TVPointD V;
-  V = GetAtom(index).CCenter();
-  E.SetRetVal( V.ToString() );
+  E.SetRetVal( GetAtom(index).ccrd().ToString() );
 }
 //..............................................................................
 void TAsymmUnit::LibGetAtomName(const TStrObjList& Params, TMacroError& E)  {
@@ -824,7 +805,7 @@ void TAsymmUnit::LibGetPeak(const TStrObjList& Params, TMacroError& E)  {
 void TAsymmUnit::LibGetAtomU(const TStrObjList& Params, TMacroError& E)  {
   int index = Params[0].ToInt();
   if( index < 0 || index >= AtomCount() )  throw TIndexOutOfRangeException(__OlxSourceInfo, index, 0, AtomCount());
-  TVectorD V(1);
+  evecd V(6);
   if( GetAtom(index).GetEllipsoid() == NULL )  {
     // TODO: a special condition - the atom is isotropic, but a user wishes it to be
     // anisotropic - six values a, a, a, 0, 0, 0 have to be passed
@@ -844,7 +825,7 @@ void TAsymmUnit::LibGetAtomUiso(const TStrObjList& Params, TMacroError& E)  {
 }
 //..............................................................................
 void TAsymmUnit::LibGetCell(const TStrObjList& Params, TMacroError& E)  {
-  TVectorD V(6);
+  evecd V(6);
   V[0] = FAxes[0].GetV();    V[1] = FAxes[1].GetV();    V[2] = FAxes[2].GetV();
   V[3] = FAngles[0].GetV();  V[4] = FAngles[1].GetV();  V[5] = FAngles[2].GetV();
   E.SetRetVal( V.ToString() );
@@ -876,9 +857,9 @@ void TAsymmUnit::LibSetAtomCrd(const TStrObjList& Params, TMacroError& E)  {
   int index = Params[0].ToInt();
   if( index < 0 || index >= AtomCount() )  throw TIndexOutOfRangeException(__OlxSourceInfo, index, 0, AtomCount());
   TCAtom& ca = GetAtom(index);
-  ca.CCenter().Value(0).V() = Params[1].ToDouble();
-  ca.CCenter().Value(1).V() = Params[2].ToDouble();
-  ca.CCenter().Value(2).V() = Params[3].ToDouble();
+  ca.ccrd()[0] = Params[1].ToDouble();
+  ca.ccrd()[1] = Params[2].ToDouble();
+  ca.ccrd()[2] = Params[3].ToDouble();
   if( ca.GetAtomInfo() == iQPeakIndex && Lattice != NULL )  {
     if( Lattice->GetUnitCell().DoesOverlap( ca, 0.3 ) )  {
       DelAtom( index );
@@ -968,7 +949,7 @@ void TAsymmUnit::LibSetAtomU(const TStrObjList& Params, TMacroError& E)  {
   int index = Params[0].ToInt();
   if( index < 0 || index >= AtomCount() )  throw TIndexOutOfRangeException(__OlxSourceInfo, index, 0, AtomCount());
   if( (GetAtom(index).GetEllipsoid() != NULL) && (Params.Count() == 7) )  {
-    TVectorD V(6);
+    evecd V(6);
     V[0] = Params[1].ToDouble();
     V[1] = Params[2].ToDouble();
     V[2] = Params[3].ToDouble();

@@ -45,7 +45,7 @@ public:
   void Selected(bool On);
 
   bool Orient(TGlPrimitive *P);
-  bool GetDimensions(TVPointD &Max, TVPointD &Min){  return false;};
+  bool GetDimensions(vec3d &Max, vec3d &Min){  return false;};
   void AddAtom(class TXAtom *A);
   void MarkLabel(TXAtom *A, bool v);
 

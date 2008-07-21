@@ -70,15 +70,15 @@ void TAttachedNode::SaveToStream( IDataOutputStream& output ) const  {
 //..............................................................................
 //..............................................................................
 //..............................................................................
-TVPointD TAutoDBNode::SortCenter;
+vec3d TAutoDBNode::SortCenter;
 
-static const TVPointD ZAxis(0,0,1);
+static const vec3d ZAxis(0,0,1);
 
 int TAutoDBNode::SortMetricsFunc(const TAttachedNode& a, const TAttachedNode& b )  {
   double diff = TAutoDBNode::SortCenter.DistanceTo(b.GetCenter()) -
                 TAutoDBNode::SortCenter.DistanceTo(a.GetCenter());
 /*  if( fabs(diff) < 0.001 )  {
-    TVPointD ap(a.GetCenter()), bp(b.GetCenter());
+    vec3d ap(a.crd()), bp(b.crd());
     ap -= TAutoDBNode::SortCenter;
     bp -= TAutoDBNode::SortCenter;
     double ca = ZAxis.CAngle( ap );
@@ -96,8 +96,8 @@ int TAutoDBNode::SortMetricsFunc(const TAttachedNode& a, const TAttachedNode& b 
   if( diff > 0 )  return 1;
   return 0;
 }
-int TAutoDBNode::SortCAtomsFunc(const AnAssociation2<TCAtom*, TVPointD>& a,
-                                const AnAssociation2<TCAtom*, TVPointD>& b )  {
+int TAutoDBNode::SortCAtomsFunc(const AnAssociation2<TCAtom*, vec3d>& a,
+                                const AnAssociation2<TCAtom*, vec3d>& b )  {
   double diff = TAutoDBNode::SortCenter.DistanceTo(b.GetB()) -
                 TAutoDBNode::SortCenter.DistanceTo(a.GetB());
   if( diff < 0 )  return -1;
@@ -105,27 +105,27 @@ int TAutoDBNode::SortCAtomsFunc(const AnAssociation2<TCAtom*, TVPointD>& a,
   return 0;
 }
 
-TAutoDBNode::TAutoDBNode(TSAtom& sa, TTypeList<AnAssociation2<TCAtom*, TVPointD> >* atoms)  {
+TAutoDBNode::TAutoDBNode(TSAtom& sa, TTypeList<AnAssociation2<TCAtom*, vec3d> >* atoms)  {
   //AppendedCount = 1;
   BasicAtomInfo = &sa.GetAtomInfo();
-  Center = sa.GetCenter();
+  Center = sa.crd();
   for( int i=0; i < sa.NodeCount(); i++ )  {
     if( sa.Node(i).IsDeleted() )  continue;
     if( sa.Node(i).GetAtomInfo() != iHydrogenIndex && sa.Node(i).GetAtomInfo() != iDeuteriumIndex )  {
-      AttachedNodes.Add( *(new TAttachedNode(&sa.Node(i).GetAtomInfo(), sa.Node(i).Center())) );
+      AttachedNodes.Add( *(new TAttachedNode(&sa.Node(i).GetAtomInfo(), sa.Node(i).crd())) );
       if( atoms != NULL )  {
-        atoms->AddNew<TCAtom*, TVPointD>(&sa.Node(i).CAtom(), sa.Node(i).Center());
+        atoms->AddNew<TCAtom*, vec3d>(&sa.Node(i).CAtom(), sa.Node(i).crd());
       }
     }
   }
-  TVPointD a, b;
-  TVPointDList TransformedCrds;
+  vec3d a, b;
+  vec3d_list TransformedCrds;
   TLattice& latt = sa.GetNetwork().GetLattice();
   for( int i=0; i < sa.CAtom().AttachedAtomCount(); i++ )  {
     if( sa.CAtom().GetAttachedAtom(i).GetAtomInfo() == iHydrogenIndex ||
         sa.CAtom().GetAttachedAtom(i).GetAtomInfo() == iDeuteriumIndex )  continue;
-    a = sa.CAtom().GetAttachedAtom(i).GetCCenter();
-    TMatrixDList* transforms = latt.GetUnitCell().GetInRange(sa.CCenter(), a,
+    a = sa.CAtom().GetAttachedAtom(i).ccrd();
+    symmd_list* transforms = latt.GetUnitCell().GetInRange(sa.ccrd(), a,
                                sa.GetAtomInfo().GetRad1() +
                                sa.CAtom().GetAttachedAtom(i).GetAtomInfo().GetRad1() +
                                latt.GetDelta(),
@@ -136,14 +136,13 @@ TAutoDBNode::TAutoDBNode(TSAtom& sa, TTypeList<AnAssociation2<TCAtom*, TVPointD>
     }
     TransformedCrds.Clear();
     for( int j=0; j < transforms->Count(); j++ )  {
-      TMatrixD& transform = transforms->Item(j);
+      symmd& transform = transforms->Item(j);
       a = transform * a;
-      a[0] += transform[0][3];  a[1] += transform[1][3];  a[2] += transform[2][3];
       latt.GetAsymmUnit().CellToCartesian(a);
-      if( a.QDistanceTo( sa.Center() ) > 0.01 )  {
+      if( a.QDistanceTo( sa.crd() ) > 0.01 )  {
         bool found = false;
         for( int k=0; k < sa.NodeCount(); k++ )  {
-          if( a.QDistanceTo( sa.Node(k).GetCenter() ) < 0.01 )  {
+          if( a.QDistanceTo( sa.Node(k).crd() ) < 0.01 )  {
             found = true;
             break;
           }
@@ -151,7 +150,7 @@ TAutoDBNode::TAutoDBNode(TSAtom& sa, TTypeList<AnAssociation2<TCAtom*, TVPointD>
         if( !found )
           TransformedCrds.AddCCopy( a );
       }
-      a = sa.CAtom().GetAttachedAtom(i).GetCCenter();
+      a = sa.CAtom().GetAttachedAtom(i).ccrd();
     }
     for( int j=0; j < TransformedCrds.Count(); j++ )  {
       if( TransformedCrds.IsNull(j) )  continue;
@@ -167,12 +166,12 @@ TAutoDBNode::TAutoDBNode(TSAtom& sa, TTypeList<AnAssociation2<TCAtom*, TVPointD>
     for( int j=0; j < TransformedCrds.Count(); j++ )  {
       AttachedNodes.Add( *(new TAttachedNode(&sa.CAtom().GetAttachedAtom(i).GetAtomInfo(), TransformedCrds[j])) );
       if( atoms != NULL )  {
-        atoms->AddNew<TCAtom*, TVPointD>(&sa.CAtom().GetAttachedAtom(i), TransformedCrds[j]);
+        atoms->AddNew<TCAtom*, vec3d>(&sa.CAtom().GetAttachedAtom(i), TransformedCrds[j]);
       }
     }
     delete transforms;
   }
-  TAutoDBNode::SortCenter = sa.Center();
+  TAutoDBNode::SortCenter = sa.crd();
   AttachedNodes.QuickSorter.SortSF(AttachedNodes, SortMetricsFunc);
   if( atoms != NULL )
     atoms->QuickSorter.SortSF(*atoms, SortCAtomsFunc);
@@ -192,7 +191,7 @@ void TAutoDBNode::_PreCalc()  {
 }
 //..............................................................................
 double TAutoDBNode::CalcAngle(int i, int j)  const {
-  TVPointD a(AttachedNodes[i].GetCenter()),
+  vec3d a(AttachedNodes[i].GetCenter()),
            b(AttachedNodes[j].GetCenter());
   a -= Center;
   b -= Center;
@@ -614,7 +613,7 @@ void TAutoDB::ProcessFolder(const olxstr& folder)  {
 struct TTmpNetData  {
   TSAtom* Atom;
   TAutoDBNode* Node;
-  TTypeList<AnAssociation2<TCAtom*, TVPointD> >* neighbours;
+  TTypeList<AnAssociation2<TCAtom*, vec3d> >* neighbours;
 };
 void TAutoDB::ProcessNodes( TAutoDBIdObject* currentFile, TNetwork& net )  {
   if( net.NodeCount() == 0 )  return;
@@ -628,7 +627,7 @@ void TAutoDB::ProcessNodes( TAutoDBIdObject* currentFile, TNetwork& net )  {
        net.Node(i).GetAtomInfo() != iDeuteriumIndex ) {
 
       netItem = new TTmpNetData;
-      netItem->neighbours = new TTypeList<AnAssociation2<TCAtom*, TVPointD> >;
+      netItem->neighbours = new TTypeList<AnAssociation2<TCAtom*, vec3d> >;
       netItem->Atom = &net.Node(i);
       TAutoDBNode* dbn = new TAutoDBNode( net.Node(i), netItem->neighbours );
       // instead of MaxConnectivity we use Nodes.Count() to comply with db format
@@ -703,7 +702,7 @@ TAutoDBNet* TAutoDB::BuildSearchNet( TNetwork& net, TSAtomPList& cas )  {
        net.Node(i).GetAtomInfo() != iDeuteriumIndex ) {
 
       netItem = new TTmpNetData;
-      netItem->neighbours = new TTypeList<AnAssociation2<TCAtom*, TVPointD> >;
+      netItem->neighbours = new TTypeList<AnAssociation2<TCAtom*, vec3d> >;
       netItem->Atom = &net.Node(i);
       TAutoDBNode* dbn = new TAutoDBNode( net.Node(i), netItem->neighbours );
       if( dbn->NodeCount() < 1 || dbn->NodeCount() > 12 )  {
@@ -1324,14 +1323,14 @@ void TAutoDB::ValidateResult(const olxstr& fileName, const TLattice& latt, TStrL
   }
   report.Add( olxstr("Current space group is ") << sga->GetName() );
   // have to locate possible translation using 'hard' method
-  TTypeList< AnAssociation2<TVPointD,TCAtom*> > alist, blist;
+  TTypeList< AnAssociation2<vec3d,TCAtom*> > alist, blist;
   TTypeList< TSymmTestData > vlist;
   latt.GetUnitCell().GenereteAtomCoordinates(alist, false);
   XFile.GetUnitCell().GenereteAtomCoordinates(blist, false);
-  TMatrixD mI(3,4);
-  mI.E();
+  symmd mI;
+  mI.r.I();
   TSymmTest::TestDependency(alist, blist, vlist, mI, 0.01);
-  TVPointD thisCenter, atomCenter;
+  vec3d thisCenter, atomCenter;
   if( vlist.Count() != 0 )  {
     TBasicApp::GetLog().Info( vlist[vlist.Count()-1].Count() );
     if( vlist[vlist.Count()-1].Count() > (alist.Count()*0.75) )  {
@@ -1351,7 +1350,7 @@ void TAutoDB::ValidateResult(const olxstr& fileName, const TLattice& latt, TStrL
   for( int i=0; i < au.AtomCount(); i++ )  {
     if( au.GetAtom(i).GetAtomInfo() == iQPeakIndex || au.GetAtom(i).GetAtomInfo() == iHydrogenIndex )
       continue;
-    atomCenter = au.GetAtom(i).GetCCenter();
+    atomCenter = au.GetAtom(i).ccrd();
     atomCenter -= thisCenter;
     TCAtom* ca = XFile.GetUnitCell().FindCAtom( atomCenter );
     if( ca == NULL )  {
@@ -1421,7 +1420,7 @@ void TAtomTypePermutator::InitAtom(TAutoDB::TGuessCount& guess)  {
     }
     if( pm == NULL )  {
       pm = &Atoms.AddNew();
-      pm->AtomCenter = guess.atom->GetCCenter();
+      pm->AtomCenter = guess.atom->ccrd();
       pm->Atom = guess.atom;
     }
     else  {  // check if converged

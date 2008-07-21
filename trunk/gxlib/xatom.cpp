@@ -291,9 +291,9 @@ short TXAtom::LegendLevel(const olxstr& legend)  {
 bool TXAtom::Orient(TGlPrimitive *GlP) {
 //  static double qr = 2*caDefIso;
 
-  float x = (float)(Basis.GetCenter()[0] + FAtom->GetCenter()[0]);
-  float y = (float)(Basis.GetCenter()[1] + FAtom->GetCenter()[1]);
-  float z = (float)(Basis.GetCenter()[2] + FAtom->GetCenter()[2]);
+  float x = (float)(Basis.GetCenter()[0] + FAtom->crd()[0]);
+  float y = (float)(Basis.GetCenter()[1] + FAtom->crd()[1]);
+  float z = (float)(Basis.GetCenter()[2] + FAtom->crd()[2]);
 
   FParent->GlTranslate(x, y, z);
 //  if( FAtom->GetAtomInfo() == iHydrogenIndex )  {
@@ -325,10 +325,10 @@ bool TXAtom::Orient(TGlPrimitive *GlP) {
   return false;
 }
 //..............................................................................
-bool TXAtom::GetDimensions(TVPointD &Max, TVPointD &Min)  {
+bool TXAtom::GetDimensions(vec3d &Max, vec3d &Min)  {
   double dZ = FAtom->GetAtomInfo().GetRad2();
-  Max = FAtom->Center();
-  Min = FAtom->Center();
+  Max = FAtom->crd();
+  Min = FAtom->crd();
   Max += dZ;
   Min -= dZ;
   return true;
@@ -575,15 +575,15 @@ void TXAtom::CreateStaticPrimitives()  {
   }
   GlPRim->StartList();
   GlPRim->CallList(GlPRD2);
-  GlPRim->GlTranslate(0, 0, (float)DiskS);    GlPRim->CallList(GlPRD1);
-  GlPRim->GlTranslate(0, 0, (float)(-DiskS) );    
+  FParent->GlTranslate(0, 0, (float)DiskS);    GlPRim->CallList(GlPRD1);
+  FParent->GlTranslate(0, 0, (float)(-DiskS) );    
   FParent->GlRotate(90, 1, 0, 0);
   GlPRim->CallList(GlPRD2);
-  GlPRim->GlTranslate(0, 0, (float)DiskS);    GlPRim->CallList(GlPRD1);
-  GlPRim->GlTranslate(0, 0, (float)(-DiskS) );    
+  FParent->GlTranslate(0, 0, (float)DiskS);    GlPRim->CallList(GlPRD1);
+  FParent->GlTranslate(0, 0, (float)(-DiskS) );    
   FParent->GlRotate(90, 0, 1, 0);
   GlPRim->CallList(GlPRD2);
-  GlPRim->GlTranslate(0, 0, (float)DiskS);    GlPRim->CallList(GlPRD1);
+  FParent->GlTranslate(0, 0, (float)DiskS);    GlPRim->CallList(GlPRD1);
   GlPRim->EndList();
   GlPRim->Params().Resize(4+1);  // inner radius, outer radius, Quality, offset
   GlPRim->Params()[0] = DiskIR;

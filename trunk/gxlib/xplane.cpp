@@ -28,7 +28,7 @@ void TXPlane::Create(const olxstr& cName)
   TGlMaterial GlM, GlM1;
   TEList PSort;
   TPlaneSort *PS;
-  TVPointD Center;
+  vec3d Center;
   GPC = FParent->NewCollection( GetCollectionName() );
   GPC->AddObject(this);
 
@@ -59,20 +59,19 @@ void TXPlane::Create(const olxstr& cName)
   if( !FRectangular )  {
     for( int i=0; i < PSort.Count(); i++ )  {
       PS = (TPlaneSort*)PSort.Item(i);
-      GlP->Data()[0][i] = PS->Crd->Data(0)-Center[0];
-      GlP->Data()[1][i] = PS->Crd->Data(1)-Center[1];
-      GlP->Data()[2][i] = -FPlane->Z(PS->Crd->Data(0), PS->Crd->Data(1))-Center[2];
+      GlP->Data()[0][i] = (*PS->Crd)[0]-Center[0];
+      GlP->Data()[1][i] = (*PS->Crd)[1]-Center[1];
+      GlP->Data()[2][i] = -FPlane->Z((*PS->Crd)[0], (*PS->Crd)[1])-Center[2];
       delete PS;
     }
   }
-  else
-  {
+  else  {
     double maxX=-1000, maxY=-1000, minX=1000, minY=1000;
     double x, y;
     for( int i=0; i < PSort.Count(); i++ )  {
       PS = (TPlaneSort*)PSort.Item(i);
-      x = PS->Crd->Data(0)-Center[0];
-      y = PS->Crd->Data(1)-Center[1];
+      x = (*PS->Crd)[0]-Center[0];
+      y = (*PS->Crd)[1]-Center[1];
       if( x < minX )  minX = x;
       if( x > maxX )  maxX = x;
       if( y < minY )  minY = y;
@@ -101,9 +100,8 @@ void TXPlane::Create(const olxstr& cName)
 TXPlane::~TXPlane()
 {  ;  }
 //..............................................................................
-bool TXPlane::Orient(TGlPrimitive *P)
-{
-  P->GlTranslate(FPlane->Center());
+bool TXPlane::Orient(TGlPrimitive *P)  {
+  FParent->GlTranslate(FPlane->Center());
   return false;
 }
 //..............................................................................

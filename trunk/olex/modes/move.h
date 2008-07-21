@@ -3,7 +3,7 @@
 
 class TMoveMode : public AMode  {
   bool Copy;
-  TVPointD Center;
+  vec3d Center;
 protected:
 public:
   TMoveMode(int id) : AMode(id)  {}
@@ -14,7 +14,7 @@ public:
     TXAtomPList Atoms;
     TGlXApp::GetGXApp()->FindXAtoms(Cmds.Text(' '), Atoms, true);
     for( int i=0; i < Atoms.Count(); i++ )
-      Center += Atoms[i]->Atom().CCenter();
+      Center += Atoms[i]->Atom().ccrd();
 
     if( Atoms.Count() != 0 )  Center /= Atoms.Count();
 

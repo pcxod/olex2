@@ -52,15 +52,14 @@ void TDFrame::Create(const olxstr& cName)
   FPrimitive->Params()[0] = 1;              // line width
 }
 //..............................................................................
-bool TDFrame::OnMouseDown(const IEObject *Sender, const TMouseData *Data)
-{
+bool TDFrame::OnMouseDown(const IEObject *Sender, const TMouseData *Data)  {
   if( !FPrimitive ) return false;
   double Scale = FRender->GetScale();
   int hW = FRender->GetWidth()/2 + FRender->GetLeft(),
       hH = FRender->GetHeight()/2 - FRender->GetTop();
   // the translation is currently disabled, so, just null it
-  Translation.Null(); // = FRender->Basis().Center();
-  Translation *= FRender->GetBasis().GetMatrix();
+//  Translation.Null(); // = FRender->Basis().Center();
+//  Translation *= FRender->GetBasis().GetMatrix();
 
   FPrimitive->Data()[0][0] = (-hW + Data->X)*Scale - Translation[0];
   FPrimitive->Data()[1][0] = (+hH - Data->Y)*Scale - Translation[1];

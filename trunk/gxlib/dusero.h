@@ -2,20 +2,21 @@
 #define duserobjH
 #include "gxbase.h"
 #include "glmouselistener.h"
+#include "ematrix.h"
 
 BeginGxlNamespace()
 
 class TDUserObj: public TGlMouseListener  {
   short Type;
-  TMatrixD* Data;
+  ematd* Data;
 public:
-  TDUserObj(short type, TMatrixD* data, const olxstr& collectionName, TGlRender *Render);
+  TDUserObj(short type, ematd* data, const olxstr& collectionName, TGlRender *Render);
   virtual ~TDUserObj()  {  
     if( Data != NULL )  delete Data;
   }
   void Create(const olxstr& cName = EmptyString);
   bool Orient(TGlPrimitive *P);
-  bool GetDimensions(TVPointD &Max, TVPointD &Min){  return false;  }
+  bool GetDimensions(vec3d &Max, vec3d &Min){  return false;  }
 };
 
 

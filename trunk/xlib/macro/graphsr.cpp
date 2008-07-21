@@ -83,8 +83,8 @@ void XLibMacros::macGraphSR(TStrObjList &Cmds, const TParamList &Options, TMacro
   outputFileName = TEFile::ChangeFileExt(outputFileName, "csv");
 
   TAsymmUnit& au = C->GetAsymmUnit();
-  const TMatrixD& hkl2c = au.GetHklToCartesian();
-  TVPointD hkl;
+  const mat3d& hkl2c = au.GetHklToCartesian();
+  vec3d hkl;
   TPtrList<TGraphRSBin> bins;
 
   TTypeList<TGraphRSRef> refs;
@@ -152,18 +152,18 @@ void XLibMacros::macGraphSR(TStrObjList &Cmds, const TParamList &Options, TMacro
     TTTable<TStrList> tab(binData.Count(), 3);
     tab.ColName(0) = "sin(theta)/lambda";
     tab.ColName(1) = "Sum(Fo)/Sum(Fc)";
-    TMatrixD points(2, binData.Count() );
-    TVectorD line(5);
+    ematd points(2, binData.Count() );
+    evecd line(5);
     for(int i=0; i < binData.Count(); i++ )  {
       points[0][i] = binData[i].GetA();
       points[1][i] = binData[i].GetB();
     }
-    double rms = TMatrixD::PLSQ(points, line, 3);
+    double rms = ematd::PLSQ(points, line, 3);
     
     for(int i=0; i < binData.Count(); i++ )  {
       tab[i][0] = olxstr::FormatFloat(3, binData[i].GetA());
       tab[i][1] = olxstr::FormatFloat(3, binData[i].GetB());
-      double pv = TVectorD::PolynomValue(line, binData[i].GetA());
+      double pv = evecd::PolynomValue(line, binData[i].GetA());
       tab[i][2] = olxstr::FormatFloat(3, pv);
       output.Add( olxstr(binData[i].GetA(), 50) << ',' << binData[i].GetB() << ',' << pv );
     }

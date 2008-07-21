@@ -27,7 +27,7 @@ TXReflection::TXReflection(const olxstr& collectionName, THklFile& HklFile,
   FParent = P;
   FReflection = &R;
   // scaling has to be optimised, but as it is for now
-  TVPointD v(R.GetH(), R.GetK(), R.GetL()), scaleV;
+  vec3d v(R.GetH(), R.GetK(), R.GetL()), scaleV;
   scaleV[0] = scaleV[1] = scaleV[2] = 0.3;
   v = au->GetHklToCartesian()*v;
   scaleV = (au->GetHklToCartesian())*scaleV;
@@ -137,7 +137,7 @@ bool TXReflection::Orient(TGlPrimitive *GlP)
   return false;
 }
 //..............................................................................
-bool TXReflection::GetDimensions(TVPointD &Max, TVPointD &Min)
+bool TXReflection::GetDimensions(vec3d &Max, vec3d &Min)
 {
   Min = FCenter;
   Max = FCenter;

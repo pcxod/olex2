@@ -11,7 +11,7 @@ BeginGxlNamespace()
 class TXReflection: public AGDrawObject  {
 private:
   TReflection *FReflection;
-  TVPointD FCenter;
+  vec3d FCenter;
 public:
   TXReflection(const olxstr& collectionName, THklFile& HklFile,
                  TReflection& R, TAsymmUnit* au, TGlRender *Render);
@@ -19,10 +19,10 @@ public:
   void Create(const olxstr& cName = EmptyString);
 
   TReflection *Reflection()   {  return FReflection; }
-  TVPointD& Center()    {  return FCenter;  }
+  vec3d& Center()    {  return FCenter;  }
 
   bool Orient(TGlPrimitive *P);
-  bool GetDimensions(TVPointD &Max, TVPointD &Min);
+  bool GetDimensions(vec3d &Max, vec3d &Min);
 
   bool OnMouseDown(const IEObject *Sender, const TMouseData *Data){  return true; }
   bool OnMouseUp(const IEObject *Sender, const TMouseData *Data){  return false; }

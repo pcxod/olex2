@@ -21,7 +21,7 @@ TSPlane::TSPlane(TNetwork* Parent):TSObject(Parent)  {
 //..............................................................................
 TSPlane::~TSPlane()  {  }
 //..............................................................................
-void TSPlane::AddCrd(const TVPointD& C)  {
+void TSPlane::AddCrd(const vec3d& C)  {
   FCenter.Null();
   Crds.AddCCopy(C);
   for( int i=0; i < Crds.Count(); i++ )
@@ -31,11 +31,11 @@ void TSPlane::AddCrd(const TVPointD& C)  {
 //..............................................................................
 double TSPlane::CalcRMS(const TSAtomPList& atoms)  {
   if( atoms.Count() < 3 )  return 0;
-  TMatrixD m(3,3);
-  TVectorD p(3), s(3), Z(3);
+  mat3d m;
+  vec3d p, s, Z;
 
   for( int i=0; i < atoms.Count(); i++ )  {
-    const TVPointD& P = atoms[i]->GetCenter();
+    const vec3d& P = atoms[i]->crd();
     m[0][0] += (P[0]*P[0]);
     m[0][1] += (P[0]*P[1]);
     m[0][2] += (P[0]);
@@ -52,7 +52,7 @@ double TSPlane::CalcRMS(const TSAtomPList& atoms)  {
 
   m[2][0] = m[0][2];
   m[2][1] = m[1][2];
-  TMatrixD::GauseSolve(m, p, s);
+  mat3d::GauseSolve(m, p, s);
 
   Z[0] = s[0];
   Z[1] = s[1];
@@ -60,17 +60,17 @@ double TSPlane::CalcRMS(const TSAtomPList& atoms)  {
   double d = s[2]/Z.Length(), rms=0;
   Z.Normalise();
   for( int i=0; i < atoms.Count(); i++ )  {
-    const TVPointD& P = atoms[i]->GetCenter();
+    const vec3d& P = atoms[i]->crd();
     rms += QRT(P[2]*Z[2] + (P[0]*Z[0] + P[1]*Z[1] + d));
   }
   if( rms <= 0 )  return 0;
   return sqrt(rms/atoms.Count());
 }
 //..............................................................................
-void TSPlane::CalcPlane(const TTypeList< AnAssociation2<TVPointD, double> >& Points, TVectorD &Params)  {
+void TSPlane::CalcPlane(const TTypeList< AnAssociation2<vec3d, double> >& Points, vec3d& Params)  {
   if( Points.Count() < 3 )  return;
-  TMatrixD m(3,3);
-  TVectorD p(3), s(3), P(3);
+  mat3d m;
+  vec3d p, s, P;
 
   for( int i=0; i < Points.Count(); i++ )  {
     P = Points[i].GetA();
@@ -90,20 +90,20 @@ void TSPlane::CalcPlane(const TTypeList< AnAssociation2<TVPointD, double> >& Poi
 
   m[2][0] = m[0][2];
   m[2][1] = m[1][2];
-  TMatrixD::GauseSolve(m, p, s);
+  mat3d::GauseSolve(m, p, s);
   Params = s;
 }
 //..............................................................................
-double TSPlane::DistanceTo(const TVPointD& Crd) const {
+double TSPlane::DistanceTo(const vec3d& Crd) const {
   return Crd[2]*FNormal[2] + (Crd[0]*FNormal[0] + Crd[1]*FNormal[1] + FDistance);
 }
 //..............................................................................
 double TSPlane::DistanceTo(const TSAtom& A) const  {
-  return DistanceTo(A.GetCenter());
+  return DistanceTo(A.crd());
 }
 //..............................................................................
-double TSPlane::Angle( const TVPointD &A,  const TVPointD &B) const  {
-  TVPointD V;
+double TSPlane::Angle( const vec3d &A,  const vec3d &B) const  {
+  vec3d V;
   V = B-A;
   double ca = FNormal.CAngle(V), angle;
   angle = acos(ca)*180/M_PI;
@@ -111,11 +111,11 @@ double TSPlane::Angle( const TVPointD &A,  const TVPointD &B) const  {
 }
 //..............................................................................
 double TSPlane::Angle(const TSBond& Bd) const  {
-  return Angle(Bd.GetA().GetCenter(), Bd.GetB().GetCenter());
+  return Angle(Bd.GetA().crd(), Bd.GetB().crd());
 }
 //..............................................................................
 double TSPlane::Angle(const TSPlane& P) const  {
-  TVPointD A;
+  vec3d A;
   return Angle(A, P.GetNormal());
 }
 //..............................................................................

@@ -6,7 +6,6 @@
 #include <math.h>
 #include "ebase.h"
 #include "exception.h"
-#include "vpoint.h"
 
 BeginEsdlNamespace()
 //---------------------------------------------------------------------------
@@ -32,13 +31,11 @@ template <class A, class B>
     else       V &= ~Bit;
   }
 
-template <class T>
-  T TetrahedronVolume(const TVPoint<T>& A, const TVPoint<T>& B,
-                            const TVPoint<T>& C,const TVPoint<T>& D )  {
-    TVPoint<T> a,b,n;
-    T d, caS, sa;
-    a = A - B;
-    b = C - B;
+template <class VC>
+  double TetrahedronVolume(const VC& A, const VC& B,
+                           const VC& C,const VC& D )  {
+    VC a(A-B),b(C-B),n;
+    double d, caS, sa;
     caS = a.CAngle(b);
     if( fabs(caS) > 0.9999 )  return 0;
     sa = sqrt( 1- caS*caS);
@@ -56,8 +53,8 @@ extern unsigned int gcd(unsigned int u, unsigned int v);
 //extern void SetBit( const bool Set, short &V, const short Bit );
 
 // creates a 3D rotation matrix aroung rv vector, providin cosine of the rotation angle
-template <typename MC>
-void CreateRotationMatrix(TMatrix<MC>& rm, const TVector<MC>& rv, double ca)  {
+template <class MC, class VC>
+void CreateRotationMatrix(MC& rm, const VC& rv, double ca)  {
   double sa;
   if( fabs(ca) > 0.001 )  sa = sqrt(1-ca*ca);
   else                    sa = 0;

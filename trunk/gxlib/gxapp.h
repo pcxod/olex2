@@ -90,7 +90,7 @@ class TGXApp : public TXApp, AEventsDispatcher  {
   TTypeListExt<TXGrowPoint, IEObject> XGrowPoints;
   TTypeListExt<TXGrowLine, IEObject> XGrowLines;
   olxstr AtomsToGrow;
-  TMatrixDList UsedTransforms;
+  symmd_list UsedTransforms;
   TTypeListExt<TXReflection, IEObject> XReflections;
   TPtrList<TGlBitmap> GlBitmaps;
   TTypeListExt<TXGlLabel, IEObject> XLabels;
@@ -177,7 +177,6 @@ public:
     return FGlRender->SelectObject(x, y, depth);
   }
   TGlPrimitive *SelectPrimitive(int x, int y)  {  return FGlRender->SelectPrimitive(x, y); }
-  void Orient(const TVectorD &V)        {  FGlRender->OrientBasis(V);  Draw(); }
   DefPropP(double, ExtraZoom)
 //..............................................................................
 // TXApp interface
@@ -195,7 +194,7 @@ public:
   TXFile& NewOverlayedXFile();
   void DeleteOverlayedXFile(int index);
 
-  void Select(const TVPointD& From, const TVPointD& To );
+  void Select(const vec3d& From, const vec3d& To );
   void SelectAll(bool Select)  {
     if( !Select )  BackupSelection();
     GetRender().SelectAll(Select);
@@ -220,7 +219,7 @@ public:
 
   bool ShowGrid(bool v, const olxstr& FN=EmptyString);
   bool GridVisible()  const;
-  void SetGridDepth(const TVectorD& crd);
+  void SetGridDepth(const vec3d& crd);
 
 
 protected:
@@ -261,7 +260,7 @@ public:
   {  FXFile->RegisterFileFormat(Parser, ext); }
   void LoadXFile(const olxstr &fn);
   void SaveXFile(const olxstr &fn, bool Sort)  {  FXFile->SaveToFile(fn, Sort); }
-  void Generate( const TVPointD &From, const TVPointD &To,
+  void Generate( const vec3d &From, const vec3d &To,
     TCAtomPList* Template, bool ClearPrevCont, bool IncludeQ)
   {    FXFile->GetLattice().Generate(From, To, Template, ClearPrevCont, IncludeQ);  }
   void Uniq(bool remEqs=false)  {    FXFile->GetLattice().Uniq(remEqs);  }
@@ -274,10 +273,10 @@ public:
   void ChangeAtomType( TXAtom *A, const olxstr &Element);
   bool AtomExpandable(TXAtom *XA);
   void GrowWhole(TCAtomPList* Template=NULL){  FXFile->GetLattice().GenerateWholeContent(Template); }
-  void Grow(const TXAtomPList& atoms, const TMatrixDList& matrices);
+  void Grow(const TXAtomPList& atoms, const symmd_list& matrices);
 
   void MoveFragment(TXAtom* to, TXAtom* fragAtom, bool copy);
-  void MoveFragment(const TVPointD& to, TXAtom* fragAtom, bool copy);
+  void MoveFragment(const vec3d& to, TXAtom* fragAtom, bool copy);
   void MoveToCenter();
   void Compaq(bool AtomicLevel);
   void HydrogensVisible(bool v);
@@ -359,11 +358,11 @@ public:     void CalcProbFactor(float Prob);
   void ClearPlanes();
   TXPlane *XPlane(const olxstr &PlaneName);
 
-  TXLine& AddLine(const olxstr& Name, const TVPointD& base, const TVPointD& edge);
-  TXGlLabel *AddLabel(const olxstr& Name, const TVPointD& center, const olxstr &T);
+  TXLine& AddLine(const olxstr& Name, const vec3d& base, const vec3d& edge);
+  TXGlLabel *AddLabel(const olxstr& Name, const vec3d& center, const olxstr &T);
   AGDrawObject* FindLooseObject(const olxstr& Name);
 
-  TXLattice& AddLattice(const olxstr& Name, const TMatrixD& basis);
+  TXLattice& AddLattice(const olxstr& Name, const mat3d& basis);
 
   TXAtom *AddCentroid(TXAtomPList& Atoms);
   TXAtom* AddAtom(TXAtom* templ=NULL);
@@ -414,8 +413,8 @@ public:     void CalcProbFactor(float Prob);
   inline bool IsGraphicsVisible( AGDrawObject *G ) const {  return G->Visible(); }
   TUndoData* SetGraphicsVisible( AGDrawObject *G, bool v );
   void InvertFragments(const TXAtomPList& NetworkAtoms);
-  void MoveFragments(const TXAtomPList& NetworkAtoms, const TVectorD& v);
-  void TransformFragments(const TXAtomPList& NetworkAtoms, const TMatrixD& m);
+  void MoveFragments(const TXAtomPList& NetworkAtoms, const vec3d& v);
+  void TransformFragments(const TXAtomPList& NetworkAtoms, const symmd& m);
 
   void FragmentsVisible(const TNetPList& Networks, bool V);
   int InvertFragmentsList(const TNetPList& SelectedFragments, TNetPList& Result);

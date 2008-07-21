@@ -56,7 +56,7 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
     return;
   }
   THklFile Hkl;
-  TVPointD hkl;
+  vec3d hkl;
   Hkl.LoadFromFile(HklFN);
 
   olxstr outputFileName;
@@ -67,7 +67,7 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
   outputFileName = TEFile::ChangeFileExt(outputFileName, "csv");
 
   TAsymmUnit& au = XApp.XFile().GetAsymmUnit();
-  const TMatrixD& hkl2c = au.GetHklToCartesian();
+  const mat3d& hkl2c = au.GetHklToCartesian();
 
   TSpaceGroup* sg = TSymmLib::GetInstance()->FindSG(au);
   if( sg == NULL )  {
@@ -75,7 +75,7 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
     return;
   }
 
-  TMatrixDList ml;
+  symmd_list ml;
   sg->GetMatrices(ml, mattAll^mattIdentity);
 //  if( !sg->IsCentrosymmetric() )  // merge friedel pairs
 //  {
@@ -87,7 +87,7 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
 
   TRefList Refs;
   THklFile::MergeStats st = Hkl.SimpleMerge(ml, Refs);
-  ml.AddNew(3,4).E();  // add the identity matrix
+  ml.AddNew().r.I();  // add the identity matrix
   TPtrList<TWilsonBin> bins;
   TTypeList<TWilsonRef> refs;
   refs.SetCapacity(Refs.Count());
@@ -189,8 +189,8 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
     TTTable<TStrList> tab(binData.Count(), 2);
     tab.ColName(0) = "sin(theta)/lambda";
     tab.ColName(1) = "ln(<Fo2>)/(Fexp2)";
-    TMatrixD points(2, binData.Count() );
-    TVectorD line(2);
+    ematd points(2, binData.Count() );
+    evecd line(2);
     for(int i=0; i < binData.Count(); i++ )  {
       points[0][i] = binData[i].GetB();
       points[1][i] = binData[i].GetA();
@@ -198,7 +198,7 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
       tab[i][1] = olxstr::FormatFloat(3, points[1][i]);
       output.Add( olxstr(points[1][i]) << ',' << points[0][i]);
     }
-    double rms = TMatrixD::PLSQ(points, line, 1);
+    double rms = ematd::PLSQ(points, line, 1);
     olxstr &l = header.Add("Trendline y = ") << line[1] << "*x ";
     if( line[0] > 0 )
       l << '+';

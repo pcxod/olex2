@@ -4,7 +4,6 @@
 #define dfameH
 #include "glbase.h"
 #include "gdrawobject.h"
-#include "vpoint.h"
 #include "actions.h"
 
 BeginGlNamespace()
@@ -12,21 +11,21 @@ BeginGlNamespace()
 // this class is passed a aparameter to the OSelect handlers
 class TSelectionInfo: public IEObject  {
 public:
-  TVPointD From, To;
+  vec3d From, To;
 };
 
 class TDFrame: public AGDrawObject  {
 protected:
   class TGlRender *FRender;
   class TGlPrimitive *FPrimitive;
-  TVPointD Translation;
+  vec3d Translation;
   TActionQList *FActions;
 public:
   TDFrame(const olxstr& collectionName, TGlRender *Render);
   virtual ~TDFrame();
   void Create(const olxstr& cName = EmptyString);
   bool Orient(TGlPrimitive *P);
-  bool GetDimensions(TVPointD &Max, TVPointD &Min){  return false;};
+  bool GetDimensions(vec3d &Max, vec3d &Min){  return false;};
 
   bool OnMouseDown(const IEObject *Sender, const TMouseData *Data);
   bool OnMouseUp(const IEObject *Sender, const TMouseData *Data);

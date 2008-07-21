@@ -27,11 +27,11 @@ void TXyz::Clear()
 //..............................................................................
 void TXyz::SaveToStrings(TStrList& Strings)  {
   olxstr Tmp, Tmp1;
-  TVPointD V;
+  vec3d V;
   for( int i=0; i < GetAsymmUnit().AtomCount(); i++ )  {
     TCAtom& CA = GetAsymmUnit().GetAtom(i);
     if( CA.IsDeleted() )  continue;
-    V = CA.CCenter();
+    V = CA.ccrd();
     GetAsymmUnit().CellToCartesian(V);
     Tmp = CA.GetAtomInfo().GetSymbol();
     Tmp << ' ';
@@ -49,15 +49,15 @@ void TXyz::LoadFromStrings(const TStrList& Strings)  {
   Clear();
 
   olxstr Tmp;
-  TVPointD StrCenter;
+  vec3d StrCenter;
   FTitle = "OLEX: imported from XYZ";
 
-  GetAsymmUnit().Axes().Value(0) = 1;
-  GetAsymmUnit().Axes().Value(1) = 1;
-  GetAsymmUnit().Axes().Value(2) = 1;
-  GetAsymmUnit().Angles().Value(0) = 90;
-  GetAsymmUnit().Angles().Value(1) = 90;
-  GetAsymmUnit().Angles().Value(2) = 90;
+  GetAsymmUnit().Axes()[0] = 1;
+  GetAsymmUnit().Axes()[1] = 1;
+  GetAsymmUnit().Axes()[1] = 1;
+  GetAsymmUnit().Angles()[0] = 90;
+  GetAsymmUnit().Angles()[1] = 90;
+  GetAsymmUnit().Angles()[2] = 90;
   GetAsymmUnit().InitMatrices();
   double Ax, Ay, Az;
   TStrList toks;
@@ -72,9 +72,9 @@ void TXyz::LoadFromStrings(const TStrList& Strings)  {
     Az = toks.String(3).ToDouble();
     if( AtomsInfo->IsAtom(toks.String(0)) )  {
       TCAtom& CA = GetAsymmUnit().NewAtom();
-      CA.CCenter().Value(0).V() = Ax;
-      CA.CCenter().Value(1).V() = Ay;
-      CA.CCenter().Value(2).V() = Az;
+      CA.ccrd()[0] = Ax;
+      CA.ccrd()[1] = Ay;
+      CA.ccrd()[2] = Az;
       CA.SetLabel( (toks.String(0) + GetAsymmUnit().AtomCount()+1) );
       CA.SetLoaderId(GetAsymmUnit().AtomCount()-1);
     }

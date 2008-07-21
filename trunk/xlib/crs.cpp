@@ -7,7 +7,7 @@
 
 #include "symmlib.h"
 
-TCRSFile::TCRSFile():TBasicCFile(NULL)  {
+TCRSFile::TCRSFile() : TBasicCFile(NULL)  {
   Radiation = 0.71;
   SGInitialised = false;
 }
@@ -86,11 +86,11 @@ void TCRSFile::LoadFromStrings(const TStrList& Strings)  {
       toks.Clear();
       toks.Strtok( Tmp.SubStringFrom( fcId.Length() ), ' ');
       if( toks.Count() == 4 )  {
-        TVectorD& v = Faces.AddNew(4);
-        v[0] = toks.String(0).ToDouble();
-        v[1] = toks.String(1).ToDouble();
-        v[2] = toks.String(2).ToDouble();
-        v[3] = toks.String(3).ToDouble();
+        evecd& v = Faces.AddNew(4);
+        v[0] = toks[0].ToDouble();
+        v[1] = toks[1].ToDouble();
+        v[2] = toks[2].ToDouble();
+        v[3] = toks[3].ToDouble();
       }
     }
   }
@@ -100,23 +100,23 @@ void TCRSFile::LoadFromStrings(const TStrList& Strings)  {
   toks.Strtok( Cell, ' ');
   if( toks.Count() >= 7 )  {
     Radiation = toks[0].ToDouble();
-    GetAsymmUnit().Axes().Value(0).V() = toks[1].ToDouble();
-    GetAsymmUnit().Axes().Value(1).V() = toks[2].ToDouble();
-    GetAsymmUnit().Axes().Value(2).V() = toks[3].ToDouble();
-    GetAsymmUnit().Angles().Value(0).V() = toks[4].ToDouble();
-    GetAsymmUnit().Angles().Value(1).V() = toks[5].ToDouble();
-    GetAsymmUnit().Angles().Value(2).V() = toks[6].ToDouble();
+    GetAsymmUnit().Axes()[0].V() = toks[1].ToDouble();
+    GetAsymmUnit().Axes()[1].V() = toks[2].ToDouble();
+    GetAsymmUnit().Axes()[2].V() = toks[3].ToDouble();
+    GetAsymmUnit().Angles()[0].V() = toks[4].ToDouble();
+    GetAsymmUnit().Angles()[1].V() = toks[5].ToDouble();
+    GetAsymmUnit().Angles()[2].V() = toks[6].ToDouble();
   }
   toks.Clear();
   toks.Strtok( Zerr, ' ');
   if( toks.Count() >= 7 )  {
     GetAsymmUnit().SetZ( toks[0].ToInt() );
-    GetAsymmUnit().Axes().Value(0).E() = toks[1].ToDouble();
-    GetAsymmUnit().Axes().Value(1).E() = toks[2].ToDouble();
-    GetAsymmUnit().Axes().Value(2).E() = toks[3].ToDouble();
-    GetAsymmUnit().Angles().Value(0).E() = toks[4].ToDouble();
-    GetAsymmUnit().Angles().Value(1).E() = toks[5].ToDouble();
-    GetAsymmUnit().Angles().Value(2).E() = toks[6].ToDouble();
+    GetAsymmUnit().Axes()[0].E() = toks[1].ToDouble();
+    GetAsymmUnit().Axes()[1].E() = toks[2].ToDouble();
+    GetAsymmUnit().Axes()[2].E() = toks[3].ToDouble();
+    GetAsymmUnit().Angles()[0].E() = toks[4].ToDouble();
+    GetAsymmUnit().Angles()[1].E() = toks[5].ToDouble();
+    GetAsymmUnit().Angles()[2].E() = toks[6].ToDouble();
   }
 
   Sg.DeleteChars(' ');

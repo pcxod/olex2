@@ -11,14 +11,13 @@
 #include "ebase.h"
 #include "datafile.h"
 #include "evalue.h"
-#include "vpoint.h"
+#include "ematrix.h"
 
 BeginEsdlNamespace()
 
 template <typename> class TEVPoint;
 //---------------------------------------------------------------------------
-template <class EType> class TEVPoint: public IEObject
-{
+template <class EType> class TEVPoint: public IEObject  {
 private:
   TEValue<EType> FValues[3];
 public:
@@ -28,14 +27,6 @@ public:
   }
 
   TEVPoint()  {  }
-
-  TEValue<EType> DistanceTo(const TVPoint<EType> &p)  const {
-    TEValue<EType> V;
-    V = (FValues[0]-p[0])*(FValues[0]-p[0]) +
-        (FValues[1]-p[1])*(FValues[1]-p[1]) +
-        (FValues[2]-p[2])*(FValues[2]-p[2]);  
-    return V.SelfSqrt();
-  }
 
   TEValue<EType> DistanceTo(const TEVPoint &p)  const {
     TEValue<EType> V;
@@ -73,12 +64,16 @@ public:
     return *this;
   }
 
-  inline const TEValue<EType>& operator [](int offset) const {
+  inline TEValue<EType> const& operator [](int offset) const {
     return FValues[offset];
   }
-
-  TEValue<EType>&   Value(int offset)  {
+  inline TEValue<EType>& operator [](int offset) {
     return FValues[offset];
+  }
+  // convinience function for any vector, array types
+  template <class VC> TEVPoint& Assign(const VC& vec)  {
+    FValues[0].V() = vec[0];  FValues[1].V() = vec[1];  FValues[2].V() = vec[2];
+    return *this;
   }
 
   template <class AType>
@@ -93,13 +88,6 @@ public:
     FValues[0] = S[0];  FValues[1] = S[1];  FValues[2] = S[2];
     return S;
   }
-
-  template <class AType>
-    const TVPoint<AType>&  operator  = (const TVPoint<AType>& S)  {
-      FValues[0].V() = S[0];  FValues[1].V() = S[1];  FValues[2].V() = S[2];
-      FValues[0].E() = 0;     FValues[1].E() = 0;     FValues[2].E() = 0;
-      return S;
-    }
 
   TEVPoint operator  + (EType a ) const  {
     TEVPoint<EType> V;
@@ -155,65 +143,6 @@ public:
     return *this;
   }
 
-  template <class AType>
-    TEVPoint operator  + (const TVPoint<AType>& a) const  {
-      TEVPoint<EType> V;
-      V = *this;
-      return (V += a);
-    }
-
-  template <class AType>
-    TEVPoint operator  - (const TVPoint<AType>& a) const  {
-      TEVPoint<EType> V;
-      V = *this;
-      return (V -= a);
-    }
-
-  template <class AType>
-    TEVPoint operator  * (const TVPoint<AType>& a) const  {
-      TEVPoint<EType> V;
-      V = *this;
-      return (V *= a);
-    }
-
-  template <class AType>
-    TEVPoint operator  / (const TVPoint<AType>& a) const  {
-      TEVPoint<EType> V;
-      V = *this;
-      return (V /= a);
-    }
-
-  template <class AType>
-    TEVPoint& operator  += (const TVPoint<AType>& a)  {
-      FValues[0].V() += a[0];
-      FValues[1].V() += a[1];
-      FValues[2].V() += a[2];
-      return *this;
-    }
-
-  template <class AType>
-    TEVPoint& operator  -= (const TVPoint<AType>& a)  {
-      FValues[0].V() -= a[0];
-      FValues[1].V() -= a[1];
-      FValues[2].V() -= a[2];
-      return *this;
-    }
-
-  template <class AType>
-    TEVPoint& operator  *= (const TVPoint<AType>& a)  {
-      FValues[0].V() *= a[0];
-      FValues[1].V() *= a[1];
-      FValues[2].V() *= a[2];
-      return *this;
-    }
-
-  template <class AType>
-    TEVPoint& operator  /= (const TVPoint<AType>& a)  {
-      FValues[0].V() /= a[0];
-      FValues[1].V() /= a[1];
-      FValues[2].V() /= a[2];
-      return *this;
-    }
 
 
   template <class AType>

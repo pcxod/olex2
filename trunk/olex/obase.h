@@ -86,8 +86,8 @@ public:
   TModeChange(const unsigned short mode, bool status) : FStatus(status), Mode(mode) {}
   ~TModeChange()  {  }
   bool GetStatus() const {  return FStatus;  }
-  bool CheckStatus( const olxstr& mode, const olxstr& modeData=EmptyString )  const;
-  bool CheckStatus( unsigned short mode, const olxstr& modeData=EmptyString )  const;
+  static bool CheckStatus( const olxstr& mode, const olxstr& modeData=EmptyString );
+  static bool CheckStatus( unsigned short mode, const olxstr& modeData=EmptyString );
 };
 //..............................................................................
 class TStateChange: public IEObject  {
@@ -95,8 +95,8 @@ class TStateChange: public IEObject  {
   unsigned short State;
 public:
   TStateChange(unsigned short state, bool status);
-  bool CheckStatus(const olxstr& stateName, const olxstr& stateData=EmptyString) const;
-  bool CheckStatus(unsigned short state, const olxstr& stateData=EmptyString) const;
+  static bool CheckStatus(const olxstr& stateName, const olxstr& stateData=EmptyString);
+  static bool CheckStatus(unsigned short state, const olxstr& stateData=EmptyString);
 
   static unsigned short DecodeState( const olxstr& mode );
 };

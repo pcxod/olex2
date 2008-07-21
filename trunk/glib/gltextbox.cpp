@@ -86,7 +86,7 @@ void TGlTextBox::Create(const olxstr& cName)  {
 //..............................................................................
 bool TGlTextBox::Orient(TGlPrimitive *P)  {
   static olxstr stString;
-/*  TVPointD Trans;
+/*  vec3d Trans;
   Trans = FParent->Basis().Center();
   Trans *= FParent->Basis().Matrix();
   FParent->GlTranslate(-Trans[0], -Trans[1], -Trans[2] );*/
@@ -103,7 +103,7 @@ bool TGlTextBox::Orient(TGlPrimitive *P)  {
     double GlLeft = ((double)Left - (double)FParent->GetWidth()/2 + Basis.GetCenter()[0]) + 0.1;
     double GlTop = ((double)FParent->GetHeight()/2 - (Top-Basis.GetCenter()[1]))*FParent->GetExtraZoom() + 0.1;
     double LineInc = (th*LineSpacing)*FParent->GetViewZoom();
-    TVPointD T;
+    vec3d T;
     TGlMaterial *GlM;
     for(int i=0; i < FBuffer.Count() ; i++ )  {
       T[0] = GlLeft;
@@ -207,8 +207,7 @@ bool TGlTextBox::OnMouseUp(const IEObject *Sender, const TMouseData *Data)  {
   SetLeft( (int)(Left + Basis.GetCenter()[0]) );
   SetTop( (int)(Top - Basis.GetCenter()[1]) );
 
-  TVPointD Null;
-  Basis.SetCenter(Null);
+  Basis.NullCenter();
 
   return TGlMouseListener::OnMouseUp(Sender, Data);
 }

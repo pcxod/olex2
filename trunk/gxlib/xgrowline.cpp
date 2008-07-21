@@ -19,22 +19,18 @@
 // TXGrowLine function bodies
 //----------------------------------------------------------------------------//
 TXGrowLine::TXGrowLine(const olxstr& collectionName, TSAtom *A, TCAtom* CA,
-                         const TMatrixD& transform, TGlRender *Render) :
+                         const symmd& transform, TGlRender *Render) :
   TXBond(collectionName, *(TSBond*)NULL, Render)
 {
-  TVPointD C;
   AGDrawObject::Groupable(false);
-  C = CA->CCenter();
-  C = transform * C;
-  C[0] += transform[0][3];  C[1] += transform[1][3];  C[2] += transform[2][3];
-
+  vec3d C = transform * CA->ccrd();
   A->CAtom().GetParent()->CellToCartesian(C);
 
-  FBase = A->Center();
+  FBase = A->crd();
   FEdge = C;
 
   C -= FBase;
-  if( C.Length() != 0 )  {
+  if( !C.IsNull() )  {
     Params()[3] = C.Length();
     C.Normalise();
     Params()[0] = (float)(acos(C[2])*180/M_PI);
@@ -62,7 +58,7 @@ bool TXGrowLine::Orient(TGlPrimitive *GlP)
   static olxstr Length;
   if( GlP->Type() == sgloText )  {
     Length = olxstr::FormatFloat(3, Params()[3]);
-    TVPointD V;
+    vec3d V;
     V = (FEdge+FBase)/2;
     V += FParent->GetBasis().GetCenter();
     V = FParent->GetBasis().GetMatrix()*V;

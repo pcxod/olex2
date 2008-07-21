@@ -57,6 +57,12 @@ public:
 
   inline int Count()  const  {  return Fn;  }
 
+  template <class VC> void Assign(const VC& v, int size)  {
+    Resize(size);
+    for( int i=0; i < size; i++ )
+      FData[i] = v[i];
+  }
+
   void Null()  {  // setmem would be an alternative ...
     for( int i=0; i < Fn; i++)
       FData[i] = 0;
@@ -354,17 +360,17 @@ public:
 //------------------------------------------------------------------------------
 
 
-  typedef TVector<float> TVectorF;
-  typedef TVector<double> TVectorD;
-  typedef TVector<int> TVectorI;
+  typedef TVector<float> evecf;
+  typedef TVector<double> evecd;
+  typedef TVector<int> eveci;
 
-  typedef TTypeList<TVectorI> TVectorIList;
-  typedef TTypeList<TVectorF> TVectorFList;
-  typedef TTypeList<TVectorD> TVectorDList;
+  typedef TTypeList<eveci> eveci_list;
+  typedef TTypeList<evecf> evecf_list;
+  typedef TTypeList<evecd> evecd_list;
 
-  typedef TPtrList<TVectorI> TVectorIPList;
-  typedef TPtrList<TVectorF> TVectorFPList;
-  typedef TPtrList<TVectorD> TVectorDPList;
+  typedef TPtrList<eveci> eveci_plist;
+  typedef TPtrList<evecf> evecf_plist;
+  typedef TPtrList<evecd> evecd_plist;
 
 EndEsdlNamespace()
 #endif

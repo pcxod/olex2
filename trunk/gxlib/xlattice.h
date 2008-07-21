@@ -1,7 +1,6 @@
 #ifndef xlatticeH
 #define xlatticeH
 #include "gxbase.h"
-#include "vpoint.h"
 #include "glmouselistener.h"
 //#include "arrays.h"
 
@@ -13,16 +12,16 @@ class TXLattice: public TGlMouseListener  {
   bool Fixed;
   short Size;
   class TGlPrimitive* Lines;
-  TMatrixD LatticeBasis;
+  mat3d LatticeBasis;
 public:
   TXLattice(const olxstr& collectionName, TGlRender *Render);
   virtual ~TXLattice();
   void Create(const olxstr& cName = EmptyString);
 
   bool Orient(TGlPrimitive *P);
-  bool GetDimensions(TVPointD &Max, TVPointD &Min);
+  bool GetDimensions(vec3d& Max, vec3d& Min);
 
-  DefPropC(TMatrixD, LatticeBasis)
+  DefPropC(mat3d, LatticeBasis)
 
   inline bool IsFixed()  const {  return Fixed;  }
   void SetFixed(bool v );

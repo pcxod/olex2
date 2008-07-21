@@ -28,11 +28,11 @@ private:
   void HypernateIns(const olxstr &Ins, TStrList &Res);
   double   Error;    // mean error of cell parameters. Can be used for estimation of other lengths
   bool     LoadQPeaks;// true if Q-peaks should be loaded
-  TVectorD FVars; // contains variables, used for calculation right UNIT
-  TVectorD FWght;    // could be up to six parameters
-  TVectorD FWght1;   // could be up to six parameters
-  TVectorI FLS;      // up to four params
-  TVectorD FPLAN;    // up to three params
+  evecd FVars; // contains variables, used for calculation right UNIT
+  evecd FWght;    // could be up to six parameters
+  evecd FWght1;   // could be up to six parameters
+  eveci FLS;      // up to four params
+  evecd FPLAN;    // up to three params
   olxstr HKLF,
            RefinementMethod,  // L.S. or CGLS
            SolutionMethod;
@@ -71,7 +71,7 @@ public:
       throw TFunctionFailedException(__OlxSourceInfo, "undefined number of Fourier peaks");
     return Round(FPLAN[0]);  
   }
-  const TVectorI& GetLSV() {  return FLS;  }
+  const eveci& GetLSV() const {  return FLS;  }
   void SetIterations( int v ) {  
     if( FLS.Count() == 0 ) FLS.Resize(1);
     FLS[0] = v;  
@@ -80,12 +80,12 @@ public:
     if( FPLAN.Count() == 0 )  FPLAN.Resize(1);
     FPLAN[0] = v;  
   }
-  const TVectorD& GetPlanV() {  return FPLAN;  }
+  const evecd& GetPlanV() const {  return FPLAN;  }
 
-  inline TVectorD& Wght()   {  return FWght;  }
-  inline TVectorD& Wght1()  {  return FWght1;  }
-  inline TVectorD& Vars()   {  return FVars;  }
-  inline olxstr& Hklf()     { return HKLF;  }
+  inline evecd& Wght()   {  return FWght;  }
+  inline evecd& Wght1()  {  return FWght1;  }
+  inline evecd& Vars()   {  return FVars;  }
+  inline olxstr& Hklf()  { return HKLF;  }
 
   /* olex does not use this - they are just for a record, however they can be changed
     using fixunit command to take the actual values from the asymmetric unit
@@ -144,7 +144,7 @@ public:
               olxstr("A number is expected, \'") << Tmp << "\' is provided");
             Toks.Delete(0);
             Toks.Delete(0);
-            TMatrixD* SymM = new TMatrixD(3,4);
+            symmd* SymM = new symmd;
             TSymmParser::SymmToMatrix(Toks.Text(EmptyString), *SymM);
             au->AddUsedSymm(*SymM);
             au->AddUsedSymm( *SymM );
@@ -324,12 +324,12 @@ public:
       else if( Toks[0].Comparei("ZERR") == 0 )  {
         if( Toks.Count() == 8 )  {
           GetAsymmUnit().SetZ( (short)Toks[1].ToInt() );
-          GetAsymmUnit().Axes().Value(0).E() = Toks[2].ToDouble();
-          GetAsymmUnit().Axes().Value(1).E() = Toks[3].ToDouble();
-          GetAsymmUnit().Axes().Value(2).E() = Toks[4].ToDouble();
-          GetAsymmUnit().Angles().Value(0).E() = Toks[5].ToDouble();
-          GetAsymmUnit().Angles().Value(1).E() = Toks[6].ToDouble();
-          GetAsymmUnit().Angles().Value(2).E() = Toks[7].ToDouble();
+          GetAsymmUnit().Axes()[0].E() = Toks[2].ToDouble();
+          GetAsymmUnit().Axes()[1].E() = Toks[3].ToDouble();
+          GetAsymmUnit().Axes()[2].E() = Toks[4].ToDouble();
+          GetAsymmUnit().Angles()[0].E() = Toks[5].ToDouble();
+          GetAsymmUnit().Angles()[1].E() = Toks[6].ToDouble();
+          GetAsymmUnit().Angles()[2].E() = Toks[7].ToDouble();
           int j = 0;
           if( GetAsymmUnit().Axes()[0].GetE() != 0 )  {  Error += GetAsymmUnit().Axes()[0].GetE()/GetAsymmUnit().Axes()[0].GetV(); j++; }
           if( GetAsymmUnit().Axes()[1].GetE() != 0 )  {  Error += GetAsymmUnit().Axes()[1].GetE()/GetAsymmUnit().Axes()[1].GetV(); j++; }

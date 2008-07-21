@@ -11,21 +11,15 @@
 UseEsdlNamespace()
 // TBasis function bodies
 //----------------------------------------------------------------------------//
-TEBasis::TEBasis():FMatrix(3, 3)  {
-  FMData = new float [16];
-  FMDataT = new float [16];
+TEBasis::TEBasis() {
   Reset();
 }
 //..............................................................................
 TEBasis::TEBasis(const TEBasis &B)  {
-  FMData = new float [16];
-  FMDataT = new float [16];
   *this = B;
 }
 //..............................................................................
 TEBasis::~TEBasis()  {
-  delete [] FMData;
-  delete [] FMDataT;
   return;
 }
 //..............................................................................
@@ -59,39 +53,24 @@ const TEBasis& TEBasis::operator  = (const TEBasis &B)  {
 }
 //..............................................................................
 void  TEBasis::Reset()  {
-  FMatrix.E();
+  FMatrix.I();
   FRX = FRY = FRZ = 0;
   FCenter.Null();
   FZoom = 1;
   CopyMatrix();
 }
 //..............................................................................
-void TEBasis::SetCenter( const TVPointD &V )  {
-  FCenter = V;
-  FMData[12] = (float)V[0];
-  FMData[13] = (float)V[1];
-  FMData[14] = (float)V[2];
-}
+void  TEBasis::TranslateX(double x){  FCenter[0] += x; FMData[12] += (float)x; };
 //..............................................................................
-void TEBasis::SetCenter( const TVectorD &V )  {
-  FCenter = V;
-  FMData[12] = (float)V[0];
-  FMData[13] = (float)V[1];
-  FMData[14] = (float)V[2];
-}
+void  TEBasis::TranslateY(double y){  FCenter[1] += y; FMData[13] += (float)y; };
 //..............................................................................
-void  TEBasis::TranslateX( double x){  FCenter[0] += x; FMData[12] += (float)x; };
+void  TEBasis::TranslateZ(double z){  FCenter[2] += z; FMData[14] += (float)z; };
 //..............................................................................
-void  TEBasis::TranslateY( double y){  FCenter[1] += y; FMData[13] += (float)y; };
-//..............................................................................
-void  TEBasis::TranslateZ( double z){  FCenter[2] += z; FMData[14] += (float)z; };
-//..............................................................................
-void  TEBasis::RotateX( double A)
-{
+void  TEBasis::RotateX( double A)  {
   if( FRX == A )    return;
   double RA = A-FRX;
   FRX = A;
-  TMatrixD M(3,3);  M.E();
+  mat3d M;  M.I();
   M[1][1] = cos(M_PI*RA/180);;
   M[1][2] = -sin(M_PI*RA/180);
   M[2][1] = -M[1][2];
@@ -105,7 +84,7 @@ void  TEBasis::RotateY( double A)
   if( FRY == A )    return;
   double RA = A-FRY;
   FRY = A;
-  TMatrixD M(3,3);  M.E();
+  mat3d M;  M.I();
   M[0][0] = cos(M_PI*RA/180);;
   M[0][2] = -sin(M_PI*RA/180);
   M[2][0] = -M[0][2];
@@ -119,7 +98,7 @@ void  TEBasis::RotateZ( double A)
   if( FRZ == A )    return;
   double RA = A-FRZ;
   FRZ = A;
-  TMatrixD M(3,3);  M.E();
+  mat3d M;  M.I();
   M[0][0] = cos(M_PI*RA/180);;
   M[0][1] = -sin(M_PI*RA/180);
   M[1][0] = -M[0][1];
@@ -128,8 +107,7 @@ void  TEBasis::RotateZ( double A)
   CopyMatrix();
 }
 //..............................................................................
-void TEBasis::ToDataItem(TDataItem *Item) const
-{
+void TEBasis::ToDataItem(TDataItem *Item) const  {
   TDataItem *matr = Item->AddItem("matrix");
   matr->AddField("xx", FMatrix[0][0]);
   matr->AddField("xy", FMatrix[0][1]);

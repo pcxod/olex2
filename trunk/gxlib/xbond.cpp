@@ -35,10 +35,9 @@ TXBond::TXBond(const olxstr& collectionName, TSBond& B, TGlRender *R) :
   FDrawStyle = 0x0001;
   Params().Resize(5);
   FBond = &B;
-  TVectorD C;
   if( &B != NULL )  {
-    C = B.GetB().GetCenter() - B.GetA().GetCenter();
-    if( !C.Length() )  Params().Null();
+    vec3d C( B.GetB().crd() - B.GetA().crd() );
+    if( C.IsNull() )  Params().Null();
     else  {
       Params()[3] = C.Length();
       C.Normalise();
@@ -54,9 +53,8 @@ TXBond::TXBond(const olxstr& collectionName, TSBond& B, TGlRender *R) :
 }
 //..............................................................................
 void TXBond::BondUpdated()  {
-  TVectorD C;
-  C = FBond->GetB().GetCenter() - FBond->GetA().GetCenter();
-  if( !C.Length() )  Params().Null();
+  vec3d C( FBond->GetB().crd() - FBond->GetA().crd() );
+  if( C.IsNull() )  Params().Null();
   else  {
     Params()[3] = C.Length();
     C.Normalise();
@@ -144,7 +142,7 @@ TXBond::~TXBond()  {
 }
 //..............................................................................
 bool TXBond::Orient(TGlPrimitive *GlP)  {
-  FParent->GlTranslate( FBond->GetA().GetCenter() );
+  FParent->GlTranslate( FBond->GetA().crd() );
   FParent->GlRotate((float)Params()[0], (float)Params()[1], (float)Params()[2], 0.0);
   FParent->GlScale((float)Params()[4], (float)Params()[4], (float)Params()[3]);
   return false;
@@ -227,7 +225,7 @@ void TXBond::CreateStaticPrimitives()  {
   GlPRC1->Compile();
 
   GlP->StartList();
-  GlP->GlTranslate(0, 0, 1);
+  FParent->GlTranslate(0, 0, 1);
   GlP->CallList(GlPRC1);
   GlP->EndList();
 
@@ -260,7 +258,7 @@ void TXBond::CreateStaticPrimitives()  {
   GlPRC1->Compile();
 
   GlP->StartList();
-  GlP->GlTranslate(0, 0, 0.5);
+  FParent->GlTranslate(0, 0, 0.5);
   GlP->CallList(GlPRC1);
   GlP->EndList();
 
@@ -292,7 +290,7 @@ void TXBond::CreateStaticPrimitives()  {
   GlPRC1->Compile();
 
   GlP->StartList();
-  GlP->GlTranslate(0, 0, 0.5);
+  FParent->GlTranslate(0, 0, 0.5);
   GlP->CallList(GlPRC1);
   GlP->EndList();
   GlP->Params().Resize(GlP->Params().Count()+1);  //
@@ -356,9 +354,9 @@ void TXBond::CreateStaticPrimitives()  {
     if( i != 0 )
       GlP->CallList(GlPRD2);
     GlP->CallList(GlPRC1);
-    GlP->GlTranslate(0, 0, CL);
+    FParent->GlTranslate(0, 0, CL);
     GlP->CallList(GlPRD1);
-    GlP->GlTranslate(0, 0, CL);
+    FParent->GlTranslate(0, 0, CL);
   }
   GlP->EndList();
   GlP->Params().Resize(GlP->Params().Count()+1);  //
@@ -370,14 +368,14 @@ void TXBond::CreateStaticPrimitives()  {
     FStaticObjects.Add("Bottom stipple cone", GlP);
   }
   GlP->StartList();
-  GlP->GlTranslate(0, 0, CL/2);
+  FParent->GlTranslate(0, 0, CL/2);
   for( int i=0; i < ConeStipples/2; i++ )  {
     if( i != 0 )
       GlP->CallList(GlPRD2);
     GlP->CallList(GlPRC1);
-    GlP->GlTranslate(0, 0, CL);
+    FParent->GlTranslate(0, 0, CL);
     GlP->CallList(GlPRD1);
-    GlP->GlTranslate(0, 0, CL);
+    FParent->GlTranslate(0, 0, CL);
   }
   GlP->EndList();
   GlP->Params().Resize(GlP->Params().Count()+1);  //
@@ -389,13 +387,13 @@ void TXBond::CreateStaticPrimitives()  {
     FStaticObjects.Add("Top stipple cone", GlP);
   }
   GlP->StartList();
-  GlP->GlTranslate(0, 0, (float)(0.5 + CL/2));
+  FParent->GlTranslate(0, 0, (float)(0.5 + CL/2));
   for( int i=0; i < ConeStipples/2; i++ )  {
     GlP->CallList(GlPRD2);
     GlP->CallList(GlPRC1);
-    GlP->GlTranslate(0, 0, CL);
+    FParent->GlTranslate(0, 0, CL);
     GlP->CallList(GlPRD1);
-    GlP->GlTranslate(0, 0, CL);
+    FParent->GlTranslate(0, 0, CL);
   }
   GlP->EndList();
   GlP->Params().Resize(GlP->Params().Count()+1);  //
@@ -415,7 +413,7 @@ void TXBond::CreateStaticPrimitives()  {
 
   GlP->StartList();
   for( int i=0; i < 12; i++ )  {
-    GlP->GlTranslate(0, 0, CL);
+    FParent->GlTranslate(0, 0, CL);
     GlP->CallList(GlPRC1);
   }
   GlP->EndList();

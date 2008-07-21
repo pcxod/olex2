@@ -50,7 +50,7 @@ public:
   inline double Radius()        {  return Params()[4]; }
 
   bool Orient(TGlPrimitive *P);
-  bool GetDimensions(TVPointD &Max, TVPointD &Min){  return false; };
+  bool GetDimensions(vec3d &Max, vec3d &Min){  return false; };
 
   void ListParams(TStrList &List, TGlPrimitive *Primitive);
   // for parameters of a specific primitive

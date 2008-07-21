@@ -110,7 +110,7 @@ bool TGlConsole::Orient(TGlPrimitive *P)  {
   TGlFont *Fnt = Font();
   if( !Fnt )  return true;
 
-//  Fnt->DrawGlText( TVPointD(0,0,0), "HELLW_O", true);
+//  Fnt->DrawGlText( vec3d(0,0,0), "HELLW_O", true);
 
   P->Font(Fnt);
 
@@ -122,7 +122,7 @@ bool TGlConsole::Orient(TGlPrimitive *P)  {
   double MaxZ = -FParent->GetMaxRasterZ();
   MaxZ += 0.02;
 
-  TVPointD T;
+  vec3d T;
 
   TGlMaterial *OGlM = (TGlMaterial*)P->GetProperties();
   TGlOption CC, Ambient;
@@ -492,7 +492,7 @@ void TGlConsole::UpdateCursorPosition(bool InitCmds)  {
   int th = Fnt->TextHeight(EmptyString);
   LineInc = (th*(1+FLineSpacing))*FParent->GetViewZoom();
   double Scale = FParent->GetScale();
-  TVPointD T;
+  vec3d T;
   // update cursor position ...
   if( Cmds.Count() != 0 )   {
     T[0] = GlLeft;

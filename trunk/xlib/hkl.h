@@ -15,7 +15,7 @@ class THklFile: public IEObject  {
   TRefPList Refs;
   TArray3D< TRefPList* > *Hkl3D;
 protected:
-  TVPoint<int> MaxHkl, MinHkl;
+  vec3i MaxHkl, MinHkl;
   double MaxI, MaxIS, MinI, MinIS;
   // the function must be caled before the reflection is added to the list, as
   // it needs to initialise the starting values of min and max
@@ -42,12 +42,12 @@ public:
   inline TReflection& operator [](int i) const {  return *Refs[i];  }
   inline int RefCount() const                  {  return Refs.Count();  }
 
-  inline const TVectorI& GetMaxHkl()  const {  return MaxHkl;  }
-  inline const TVectorI& GetMinHkl()  const {  return MinHkl;  }
-  inline double GetMaxI()             const { return MaxI;  }
-  inline double GetMaxIS()            const { return MaxIS;  }
-  inline double GetMinI()             const { return MinI;  }
-  inline double GetMinIS()            const { return MinIS;  }
+  inline const vec3i& GetMaxHkl()  const {  return MaxHkl;  }
+  inline const vec3i& GetMinHkl()  const {  return MinHkl;  }
+  inline double GetMaxI()          const { return MaxI;  }
+  inline double GetMaxIS()         const { return MaxIS;  }
+  inline double GetMinI()          const { return MinI;  }
+  inline double GetMinIS()         const { return MinIS;  }
 
   void Clear();
   inline void Sort()  {  Refs.QuickSorter.SortSF(Refs, HklCmp);  }
@@ -98,7 +98,7 @@ public:
  The refturned value is Rint = Sum(|F^2-F^2mean|)/Sum(|F^2|)
 */
 template <class RefListMerger>
-  MergeStats Merge(TMatrixDList& ml, TRefList& output)  {
+  MergeStats Merge(symmd_list& ml, TRefList& output)  {
     MergeStats stats;
     // replicate reflections, to leave this object as it is
     TRefPList refs, toMerge;  // list of replicated reflections
@@ -116,8 +116,8 @@ template <class RefListMerger>
       bool found = true;
       for( int j=0; j < 3; j++ )  {
         for( int k=0; k < 3; k++ )  {
-          if( j == k && ml[i][j][k] != -1 )  {  found = false;  break;  }
-          if( j != k && ml[i][j][k] != 0 )   {  found = false;  break;  }
+          if( j == k && ml[i].r[j][k] != -1 )  {  found = false;  break;  }
+          if( j != k && ml[i].r[j][k] != 0 )   {  found = false;  break;  }
         }
         if( !found )  break;
       }
@@ -188,7 +188,7 @@ template <class RefListMerger>
     stats.UniqueReflections = output.Count();
     return stats;
   }
-  inline MergeStats SimpleMerge(TMatrixDList& ml, TRefList& output)  {
+  inline MergeStats SimpleMerge(symmd_list& ml, TRefList& output)  {
     return  Merge<TSimpleMerger>(ml, output);
   }
 //..............................................................................

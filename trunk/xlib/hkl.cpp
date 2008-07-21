@@ -109,12 +109,12 @@ bool THklFile::LoadFromFile(const olxstr& FN, TIns* ins)  {
             if( toks.Count() != 8 )
               throw TFunctionFailedException(__OlxSourceInfo, "invalid CELL format");
             ins->SetRadiation( toks[1].ToDouble() );
-            ins->GetAsymmUnit().Axes().Value(0) = toks[2];
-            ins->GetAsymmUnit().Axes().Value(1) = toks[3];
-            ins->GetAsymmUnit().Axes().Value(2) = toks[4];
-            ins->GetAsymmUnit().Angles().Value(0) = toks[5];
-            ins->GetAsymmUnit().Angles().Value(1) = toks[6];
-            ins->GetAsymmUnit().Angles().Value(2) = toks[7];
+            ins->GetAsymmUnit().Axes()[0] = toks[2];
+            ins->GetAsymmUnit().Axes()[1] = toks[3];
+            ins->GetAsymmUnit().Axes()[2] = toks[4];
+            ins->GetAsymmUnit().Angles()[0] = toks[5];
+            ins->GetAsymmUnit().Angles()[1] = toks[6];
+            ins->GetAsymmUnit().Angles()[2] = toks[7];
             cell_found = true;
           }
           else if( line.StartFromi("SFAC") )  {
@@ -244,18 +244,18 @@ void THklFile::AllRefs(const TReflection& R, const TAsymmUnit& AU, TRefPList& Re
   TSpaceGroup* sg = TSymmLib::GetInstance()->FindSG(AU);
   if( sg == NULL )
     throw TFunctionFailedException(__OlxSourceInfo, "Undefined space group");
-  TMatrixDList ml;
+  symmd_list ml;
 
   sg->GetMatrices(ml, mattAll);
 
   if( !sg->IsCentrosymmetric() )  {
-    TMatrixD& m = ml.AddNew(3,3);
-    m.E();
-    m *= -1;
+    symmd& m = ml.AddNew();
+    m.r.I();
+    m.r *= -1;
   }
 
-  TVectorD hklv(3);
-  TVectorDList ri;
+  vec3d hklv;
+  vec3d_list ri;
 
   for( int i=0; i < ml.Count(); i++ )  {
     R.MulHkl(hklv, ml[i]);
@@ -352,19 +352,20 @@ bool THklFile::SaveToFile(const olxstr& FN, const TRefPList& refs, bool Append) 
 }
 //..............................................................................
 THklFile::MergeStats THklFile::Merge(const TSpaceGroup& sg, bool MergeInverse, TRefList& output)  {
-  TMatrixDList ml;
+  symmd_list ml;
   sg.GetMatrices(ml, mattAll^mattIdentity);
   if( MergeInverse )  {
-    TMatrixD& im = ml.AddNew(3,4);
-    im[0][0] = im[1][1] = im[2][2] = -1;
+    symmd& im = ml.AddNew();
+    im.r.I();
+    im.r *= -1;
   }
   return Merge<TSimpleMerger>(ml, output);
 }
 //..............................................................................
 void THklFile::AnalyseReflections( const TSpaceGroup& sg )  {
-  TMatrixDList ml;
+  symmd_list ml;
   sg.GetMatrices(ml, mattAll ^ (mattInversion|mattIdentity) );
-  TVectorD hklv(3);
+  vec3d hklv;
   for( int i=0; i < RefCount(); i++ )  {
     Refs[i]->SetCentric(false);
     Refs[i]->SetDegeneracy(1);

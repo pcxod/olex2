@@ -4,8 +4,7 @@
 #include "xbase.h"
 
 #include "atominfo.h"
-#include "vpoint.h"
-#include "ematrix.h"
+#include "symmat.h"
 #include "typelist.h"
 #include "tptrlist.h"
 #include "catom.h"
@@ -13,13 +12,13 @@
 BeginXlibNamespace()
 
 class TAtomEnvi  {
-  TTypeList< AnAssociation3<TCAtom*, TMatrixD, TVPointD> >  Envi;
+  TTypeList< AnAssociation3<TCAtom*, symmd, vec3d> >  Envi;
   TSAtom* Base;
 public:
   TAtomEnvi()  {  Base = NULL;  }
   virtual ~TAtomEnvi()  {  }
 
-  void Add( TCAtom& ca, const TMatrixD& matr, const TVPointD& crd )  {
+  void Add( TCAtom& ca, const symmd& matr, const vec3d& crd )  {
     Envi.AddNew(&ca, matr, crd);
   }
 
@@ -33,8 +32,8 @@ public:
   inline const olxstr& GetLabel(int ind)  const {  return Envi[ind].A()->Label();  }
   inline TBasicAtomInfo& GetBAI(int ind)          {  return Envi[ind].A()->GetAtomInfo();  }
   inline TCAtom& GetCAtom(int ind)          const {  return *Envi[ind].A();  }
-  inline const TVPointD& GetCrd(int ind)    const {  return Envi[ind].GetC();  }
-  inline const TMatrixD& GetMatrix(int ind) const {  return Envi[ind].GetB();  }
+  inline const vec3d& GetCrd(int ind)    const {  return Envi[ind].GetC();  }
+  inline const symmd& GetMatrix(int ind) const {  return Envi[ind].GetB();  }
 
   void Exclude(TCAtom& ca )  {
     for( int i=0; i < Envi.Count(); i++ )

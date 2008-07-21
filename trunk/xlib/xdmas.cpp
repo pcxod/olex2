@@ -12,7 +12,7 @@ void TXDMas::LoadFromStrings(const TStrList& Strings)  {
   TStrList crds, toks, symm;
   crds.LoadFromFile( crdfn );
   bool CellFound = false, LattFound = false;
-  TVectorD QE(6);
+  evecd QE(6);
 
   for( int i=0; i < Strings.Count(); i++ )  {
     if( Strings[i].StartFromi("CELLSD") )  {
@@ -21,12 +21,12 @@ void TXDMas::LoadFromStrings(const TStrList& Strings)  {
       if( toks.Count() < 7 )  
         throw TFunctionFailedException(__OlxSourceInfo, "inlvaid CELLSD instruction");
 
-      GetAsymmUnit().Axes().Value(0).E() = toks[1].ToDouble();
-      GetAsymmUnit().Axes().Value(1).E() = toks[2].ToDouble();
-      GetAsymmUnit().Axes().Value(2).E() = toks[3].ToDouble();
-      GetAsymmUnit().Angles().Value(0).E() = toks[4].ToDouble();
-      GetAsymmUnit().Angles().Value(1).E() = toks[5].ToDouble();
-      GetAsymmUnit().Angles().Value(2).E() = toks[6].ToDouble();
+      GetAsymmUnit().Axes()[0].E() = toks[1].ToDouble();
+      GetAsymmUnit().Axes()[1].E() = toks[2].ToDouble();
+      GetAsymmUnit().Axes()[2].E() = toks[3].ToDouble();
+      GetAsymmUnit().Angles()[0].E() = toks[4].ToDouble();
+      GetAsymmUnit().Angles()[1].E() = toks[5].ToDouble();
+      GetAsymmUnit().Angles()[2].E() = toks[6].ToDouble();
       int j = 0;
       if( GetAsymmUnit().Axes()[0].GetE() != 0 )  {  Error += GetAsymmUnit().Axes()[0].GetE()/GetAsymmUnit().Axes()[0].GetV(); j++; }
       if( GetAsymmUnit().Axes()[1].GetE() != 0 )  {  Error += GetAsymmUnit().Axes()[1].GetE()/GetAsymmUnit().Axes()[1].GetV(); j++; }
@@ -41,12 +41,12 @@ void TXDMas::LoadFromStrings(const TStrList& Strings)  {
       toks.Strtok( Strings[i], ' ');
       if( toks.Count() < 7 )  
         throw TFunctionFailedException(__OlxSourceInfo, "inlvaid CELL instruction");
-      GetAsymmUnit().Axes().Value(0) = toks[1];
-      GetAsymmUnit().Axes().Value(1) = toks[2];
-      GetAsymmUnit().Axes().Value(2) = toks[3];
-      GetAsymmUnit().Angles().Value(0) = toks[4];
-      GetAsymmUnit().Angles().Value(1) = toks[5];
-      GetAsymmUnit().Angles().Value(2) = toks[6];
+      GetAsymmUnit().Axes()[0] = toks[1];
+      GetAsymmUnit().Axes()[1] = toks[2];
+      GetAsymmUnit().Axes()[2] = toks[3];
+      GetAsymmUnit().Angles()[0] = toks[4];
+      GetAsymmUnit().Angles()[1] = toks[5];
+      GetAsymmUnit().Angles()[2] = toks[6];
       CellFound = true;
       GetAsymmUnit().InitMatrices();
     }
@@ -80,7 +80,7 @@ void TXDMas::LoadFromStrings(const TStrList& Strings)  {
   if( !CellFound || !LattFound )
     throw TFunctionFailedException(__OlxSourceInfo, "CELL or LATT are missing");
 
-  TMatrixD sm(3,4);
+  symmd sm;
   for( int i=0; i < symm.Count(); i++ )  {
     if( TSymmParser::SymmToMatrix(symm[i], sm) )
       GetAsymmUnit().AddMatrix(sm);
@@ -97,13 +97,13 @@ void TXDMas::LoadFromStrings(const TStrList& Strings)  {
         toks[0].DeleteChars(')');
         toks[0].DeleteChars('(');
         atom.SetLabel( toks[0].Length() > 4 ? toks[0].SubStringTo(4) : toks[0] );
-        atom.CCenter().Value(0) = toks.String(12);
-        atom.CCenter().Value(1) = toks.String(13);
-        atom.CCenter().Value(2) = toks.String(14);
+        atom.ccrd()[0] = toks[12].ToDouble();
+        atom.ccrd()[1] = toks[13].ToDouble();
+        atom.ccrd()[2] = toks[14].ToDouble();
         // initialise uncertanties using average cell error
-        atom.CCenter().Value(0).E() = (float)fabs(atom.CCenter()[0].GetV()*Error);
-        atom.CCenter().Value(1).E() = (float)fabs(atom.CCenter()[1].GetV()*Error);
-        atom.CCenter().Value(2).E() = (float)fabs(atom.CCenter()[2].GetV()*Error);
+        atom.ccrdEsd()[0] = fabs(atom.ccrd()[0]*Error);
+        atom.ccrdEsd()[1] = fabs(atom.ccrd()[1]*Error);
+        atom.ccrdEsd()[2] = fabs(atom.ccrd()[2]*Error);
         if( (i+1) < crds.Count() && crds[i+1].IndexOf('(') == -1 )  {
           toks.Clear();
           toks.Strtok( crds[i+1], ' ');

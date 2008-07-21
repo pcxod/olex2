@@ -232,7 +232,7 @@ void TCifLoop::UpdateTable()  {
 //----------------------------------------------------------------------------//
 // TCifValue function bodies
 //----------------------------------------------------------------------------//
-olxstr TCifValue::FormatTranslation(const TVPointD& v)  {
+olxstr TCifValue::FormatTranslation(const vec3d& v)  {
   olxstr retVal = (5.0-v[0]);
   retVal << (5.0-v[1]);
   retVal << (5.0-v[2]);
@@ -737,15 +737,15 @@ void TCif::Initialize()  {
   olxstr Param;
   TCifLoop *ALoop, *Loop;
   TCAtom *A;
-  TVectorD QE(6); // quadratic form of ellipsoid
+  evecd QE(6); // quadratic form of ellipsoid
   TEValueD EValue;
-  GetAsymmUnit().Axes().Value(0) = GetSParam("_cell_length_a");
-  GetAsymmUnit().Axes().Value(1) = GetSParam("_cell_length_b");
-  GetAsymmUnit().Axes().Value(2) = GetSParam("_cell_length_c");
+  GetAsymmUnit().Axes()[0] = GetSParam("_cell_length_a");
+  GetAsymmUnit().Axes()[1] = GetSParam("_cell_length_b");
+  GetAsymmUnit().Axes()[2] = GetSParam("_cell_length_c");
 
-  GetAsymmUnit().Angles().Value(0) = GetSParam("_cell_angle_alpha");
-  GetAsymmUnit().Angles().Value(1) = GetSParam("_cell_angle_beta");
-  GetAsymmUnit().Angles().Value(2) = GetSParam("_cell_angle_gamma");
+  GetAsymmUnit().Angles()[0] = GetSParam("_cell_angle_alpha");
+  GetAsymmUnit().Angles()[1] = GetSParam("_cell_angle_beta");
+  GetAsymmUnit().Angles()[2] = GetSParam("_cell_angle_gamma");
 
   // check if the ci file contains valid parameters
   double fv =  GetAsymmUnit().Axes()[0].GetV() * GetAsymmUnit().Axes()[1].GetV() * GetAsymmUnit().Axes()[2].GetV() *
@@ -760,7 +760,7 @@ void TCif::Initialize()  {
     int sindex = Loop->Table().ColIndex("_symmetry_equiv_pos_as_xyz");
     if( sindex >= 0 )  {
       for( int i=0; i < Loop->Table().RowCount(); i++ )  {
-        TMatrixD Matrix(3,4);
+        symmd Matrix;
         if( TSymmParser::SymmToMatrix(Loop->Table()[i].String(sindex), Matrix) )  {
           GetAsymmUnit().AddMatrix(Matrix);
         }
@@ -795,9 +795,12 @@ void TCif::Initialize()  {
     A->SetLoaderId(GetAsymmUnit().AtomCount()-1);
     A->SetLabel( ALoop->Table()[i].String(ALabel) );
     A->AtomInfo( AtomsInfo->FindAtomInfoBySymbol(ALoop->Table()[i].String(ASymbol)) );
-    A->CCenter().Value(0) = ALoop->Table()[i].String(ACx);
-    A->CCenter().Value(1) = ALoop->Table()[i].String(ACy);
-    A->CCenter().Value(2) = ALoop->Table()[i].String(ACz);
+    EValue = ALoop->Table()[i].String(ACx);
+    A->ccrd()[0] = EValue.GetV();  A->ccrdEsd()[0] = EValue.GetE();
+    EValue = ALoop->Table()[i].String(ACy);
+    A->ccrd()[1] = EValue.GetV();  A->ccrdEsd()[1] = EValue.GetE();
+    EValue = ALoop->Table()[i].String(ACz);
+    A->ccrd()[2] = EValue.GetV();  A->ccrdEsd()[2] = EValue.GetE();
     if( ACUiso >= 0 )    {
       EValue = ALoop->Table()[i].String(ACUiso);
       A->EllpE().Resize(1);
@@ -868,9 +871,9 @@ void TCif::Initialize()  {
     if( A ) cv->AddAtom()
     A->LoaderId(GetAsymmUnit().AtomCount()-1);
     A->Label( Row->String(ALabel));
-    A->CCenter().Value(0) = Row->String(ACx);
-    A->CCenter().Value(1) = Row->String(ACy);
-    A->CCenter().Value(2) = Row->String(ACz);
+    A->ccrd().Value(0) = Row->String(ACx);
+    A->ccrd().Value(1) = Row->String(ACy);
+    A->ccrd().Value(2) = Row->String(ACz);
     if( ACUiso >= 0 )
     {
       EValue = Row->String(ACUiso);
@@ -942,7 +945,7 @@ bool TCif::Adopt(TXFile *XF)  {
   TCAtom *A;
   TCifLoopData *LoopData;
   TEValueD EValue;
-  TVectorD QE;  // quadratic form of s thermal ellipsoid
+  evecd QE;  // quadratic form of s thermal ellipsoid
   bool AddUTable=false;
 
   GetAsymmUnit().Assign( XF->GetAsymmUnit() );
@@ -974,7 +977,7 @@ bool TCif::Adopt(TXFile *XF)  {
   Table = &Loop->Table();
   Table->AddCol("_symmetry_equiv_pos_as_xyz");
 
-  TMatrixDList matrices;
+  symmd_list matrices;
   sg->GetMatrices(matrices, mattAll);
 
   for( int i=0; i < matrices.Count(); i++ )  {
@@ -1018,12 +1021,16 @@ bool TCif::Adopt(TXFile *XF)  {
       LoopData = new TCifLoopData;  Row->Object(0) = LoopData;  LoopData->CA = A;
     Row->String(1) = A->GetAtomInfo().GetSymbol();
       LoopData = new TCifLoopData;  Row->Object(1) = LoopData;
-    Row->String(2) = A->CCenter()[0].ToCStr();
+    EValue.V() = A->ccrd()[0];  EValue.E() = A->ccrdEsd()[0];
+      Row->String(2) = EValue.ToCStr();
       LoopData = new TCifLoopData;  Row->Object(2) = LoopData;
-    Row->String(3) = A->CCenter()[1].ToCStr();
+    EValue.V() = A->ccrd()[1];  EValue.E() = A->ccrdEsd()[1];
+      Row->String(3) = EValue.ToCStr();
       LoopData = new TCifLoopData;  Row->Object(3) = LoopData;
-    Row->String(4) = A->CCenter()[2].ToCStr();
+    EValue.V() = A->ccrd()[2];  EValue.E() = A->ccrdEsd()[2];
+      Row->String(4) = EValue.ToCStr();
       LoopData = new TCifLoopData;  Row->Object(4) = LoopData;
+      
     if( A->GetEllipsoid() != NULL )  {
       A->GetEllipsoid()->GetQuad(QE);
       GetAsymmUnit().UcartToUcif(QE);
@@ -1375,7 +1382,7 @@ olxstr TLinkedLoopTable::SymmCodeToSymm(TCif *Cif, const olxstr &Code)  {
   TStrList Toks(Code, '_');
   TCifLoopTable* LT;
   int isymm;
-  TMatrixD mSymm(3,4);
+  symmd mSymm;
   LT = &SL->Table();
   if( Toks.Count() == 1 )  {
     isymm = Toks[0].ToInt()-1;
@@ -1388,9 +1395,9 @@ olxstr TLinkedLoopTable::SymmCodeToSymm(TCif *Cif, const olxstr &Code)  {
   if( isymm < 0 || isymm >= LT->RowCount() )  return Symm;
   if( Toks.String(1).Length() != 3 )  return Symm;
   TSymmParser::SymmToMatrix(LT->Row(isymm)->String(0), mSymm);
-  mSymm[0][3] += (int)(Toks.String(1)[0]-'5');
-  mSymm[1][3] += (int)(Toks.String(1)[1]-'5');
-  mSymm[2][3] += (int)(Toks.String(1)[2]-'5');
+  mSymm.t[0] += (int)(Toks.String(1)[0]-'5');
+  mSymm.t[1] += (int)(Toks.String(1)[1]-'5');
+  mSymm.t[2] += (int)(Toks.String(1)[2]-'5');
   Symm = TSymmParser::MatrixToSymm(mSymm);
   return Symm;
 }
@@ -1555,7 +1562,7 @@ void TCif::MultValue(olxstr &Val, const olxstr &N)  {
     Val << '(' << E << ')';
 }
 //..............................................................................
-bool TCif::CreateTable(TDataItem *TD, TTTable<TStrList> &Table, TMatrixDList& SymmList)  {
+bool TCif::CreateTable(TDataItem *TD, TTTable<TStrList> &Table, symmd_list& SymmList)  {
   TCifLoop *Loop;
   int defcnt, RowDeleted=0, ColDeleted=0;
   olxstr Tmp, Val;
@@ -1563,8 +1570,8 @@ bool TCif::CreateTable(TDataItem *TD, TTTable<TStrList> &Table, TMatrixDList& Sy
   TDataItem *DI;
   bool AddRow;
   TStrList Toks;
-  TMatrixDList AllSymmList;
-  TMatrixD SymmMatr;
+  symmd_list AllSymmList;
+  symmd SymmMatr;
 
   int sindex = -1;
   TCifLoop* SymmLoop = FindLoop("_symmetry_equiv_pos");
@@ -1574,7 +1581,7 @@ bool TCif::CreateTable(TDataItem *TD, TTTable<TStrList> &Table, TMatrixDList& Sy
     sindex = SymmLoop->Table().ColIndex("_symmetry_equiv_pos_as_xyz");
     TCifLoopTable* Table = &SymmLoop->Table();
     for( int i=0; i < Table->RowCount(); i++ )  {
-      TMatrixD& Matrix = AllSymmList.AddNew(3,4);
+      symmd& Matrix = AllSymmList.AddNew();
         if( !TSymmParser::SymmToMatrix(Table->Row(i)->String(sindex), Matrix) )
           throw TFunctionFailedException(__OlxSourceInfo, "could not process symmetry matrix");
     }

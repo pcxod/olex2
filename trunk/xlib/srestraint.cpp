@@ -26,21 +26,17 @@ void TSimpleRestraint::AddAtoms(const TCAtomGroup& atoms)  {
     InvolvedAtoms.AddNew( atoms[i].GetAtom(), atoms[i].GetMatrix() );
 }
 //..............................................................................
-void TSimpleRestraint::AddAtom(TCAtom& aa, const TMatrixD* ma)  {
-  const TMatrixD* tm = NULL;
+void TSimpleRestraint::AddAtom(TCAtom& aa, const symmd* ma)  {
+  const symmd* tm = NULL;
   if( ma != NULL )  {
-    if( !(ma->Data(0)[0] == 1 && ma->Data(0)[1] == 0 && ma->Data(0)[2] == 0 &&
-          ma->Data(1)[0] == 0 && ma->Data(1)[1] == 1 && ma->Data(1)[2] == 0 &&
-          ma->Data(2)[0] == 0 && ma->Data(2)[1] == 0 && ma->Data(2)[2] == 1 &&
-          ma->Data(0)[3] == 0 && ma->Data(1)[3] == 0 && ma->Data(2)[3] == 0) )  {
+    if( !ma->r.IsI() || ma->t.QLength() != 0 ) 
       tm = &aa.GetParent()->AddUsedSymm( *ma );
-    }
   }
   InvolvedAtoms.AddNew( &aa, tm );
 }
 //..............................................................................
-void TSimpleRestraint::AddAtomPair(TCAtom& aa, const TMatrixD* ma,
-                                   TCAtom& ab, const TMatrixD* mb)  {
+void TSimpleRestraint::AddAtomPair(TCAtom& aa, const symmd* ma,
+                                   TCAtom& ab, const symmd* mb)  {
   AddAtom(aa, ma);
   AddAtom(ab, mb);
 }
@@ -142,7 +138,7 @@ void TSimpleRestraint::Assign(TAsymmUnit& tau, const TSimpleRestraint& sr)  {
   }
 }
 //..............................................................................
-bool TSimpleRestraint::AtomsEqual(TCAtom* a1, const TMatrixD* m1, TCAtom* a2, const TMatrixD* m2)  {
+bool TSimpleRestraint::AtomsEqual(TCAtom* a1, const symmd* m1, TCAtom* a2, const symmd* m2)  {
   if( a1 == a2 )  {
     if( (m1 == NULL && m2 == NULL) ||
         ((m1 != NULL && m2 != NULL)  &&
@@ -183,7 +179,7 @@ void TSimpleRestraint::Substruct( TSimpleRestraint& sr )  {
   }
 }
 //..............................................................................
-void TSimpleRestraint::OnCAtomCrdChange( TCAtom* ca, const TMatrixD& matr )  {
+void TSimpleRestraint::OnCAtomCrdChange( TCAtom* ca, const symmd& matr )  {
   throw TNotImplementedException(__OlxSourceInfo);
 }
 //..............................................................................
@@ -233,7 +229,7 @@ void TSRestraintList::ValidateRestraint( TSimpleRestraint& sr )  {
   }
 }
 //..............................................................................
-void TSRestraintList::OnCAtomCrdChange( TCAtom* ca, const TMatrixD& matr )  {
+void TSRestraintList::OnCAtomCrdChange( TCAtom* ca, const symmd& matr )  {
   throw TNotImplementedException(__OlxSourceInfo);
 }
 //..............................................................................

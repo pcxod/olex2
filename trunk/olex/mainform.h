@@ -571,9 +571,9 @@ private:
        DrawSceneTimer;  // this is set for onTimer to check when the scene has to be drawn
 
   double FRotationIncrement, FRotationAngle;
-  TVPointD FRotationVector;
+  vec3d FRotationVector;
   
-  TVPointD FFadeVector; // stores: current position, end and increment
+  vec3d FFadeVector; // stores: current position, end and increment
   
   olxstr FListenFile;
 

@@ -71,7 +71,7 @@ void AGDrawObject::LibGetName(const TStrObjList& Params, TMacroError& E)  {
   E.SetRetVal<olxstr>( CollectionName );
 }
 //..............................................................................
-void AGDrawObject::ExportLibrary(class TLibrary& lib)  {
+void AGDrawObject::ExportLibrary(TLibrary& lib)  {
   lib.RegisterFunction<AGDrawObject>( new TFunction<AGDrawObject>(this,  &AGDrawObject::LibVisible,
   "Visible", fpNone|fpOne, "Changes/returns object visiblity") );
   lib.RegisterFunction<AGDrawObject>( new TFunction<AGDrawObject>(this,  &AGDrawObject::LibIsGrouped,

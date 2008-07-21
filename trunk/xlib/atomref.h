@@ -101,7 +101,7 @@ public:
     int resi_ind = Expression.IndexOf('_');
     olxstr resi_name = (resi_ind == -1 ? EmptyString : Expression.SubStringFrom(resi_ind+1));
     // check if it is just an equivalent position
-    const TMatrixD* eqiv = NULL;
+    const symmd* eqiv = NULL;
     int eqiv_ind = resi_name.IndexOf('$');
     if( eqiv_ind != -1 )  {
       olxstr str_eqiv( resi_name.SubStringFrom(eqiv_ind+1) );

@@ -21,7 +21,7 @@ TSAtom::~TSAtom()  {  }
 //..............................................................................
 void  TSAtom::CAtom(TCAtom& S)  {
   FCAtom    = &S;
-  FCCenter  = S.CCenter();
+  FCCenter  = S.ccrd();
   if( Network != NULL )
     Network->GetLattice().GetAsymmUnit().CellToCartesian(FCCenter, FCenter);
   FEllipsoid = S.GetEllipsoid();
@@ -34,8 +34,8 @@ void TSAtom::AtomInfo(TBasicAtomInfo *AI)  {
 void  TSAtom::Assign(TSAtom *S)  {
   TSObject::Assign(S);
   FEllipsoid = S->GetEllipsoid();
-  FCenter    = S->Center();
-  FCCenter   = S->CCenter();
+  FCenter    = S->crd();
+  FCCenter   = S->ccrd();
   FCAtom     = &S->CAtom();
   Grown     = S->IsGrown();
   Matrices.Assign(S->Matrices);

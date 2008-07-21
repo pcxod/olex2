@@ -28,22 +28,21 @@ const short  rtChiv = 0x0001,
              rtEadp = 0x0400;
 
 class TRestraintAtom {
-
   TCAtom* Atom;
-  TMatrixD* Symm;
+  symmd* Symm;
 public:
   TRestraintAtom(TCAtom* A)  {  Atom = A; Symm = NULL;  }
-  TRestraintAtom(TCAtom* A, TMatrixD* M)  {
+  TRestraintAtom(TCAtom* A, symmd* M)  {
     Atom = A;
     if( M != NULL )
-      Symm = new TMatrixD( *M );
+      Symm = new symmd( *M );
     else
       Symm = NULL;
   }
   TRestraintAtom(const TRestraintAtom& ra)  {
     Atom = ra.GetAtom();
     if( ra.GetSymm() != NULL )
-      Symm = new TMatrixD( *ra.GetSymm() );
+      Symm = new symmd( *ra.GetSymm() );
     else
       Symm = NULL;
   }
@@ -52,11 +51,11 @@ public:
   }
 
   inline TCAtom*   GetAtom() const {  return Atom;  }
-  inline TMatrixD* GetSymm() const {  return Symm;  }
+  inline symmd* GetSymm()    const {  return Symm;  }
   inline void SetAtom(TCAtom* a)   {  Atom = a;  }
-  void SetSymm(TMatrixD* m)   {
+  void SetSymm(symmd* m)   {
     if( Symm != NULL )  delete Symm;
-    if( m != NULL)  Symm = new TMatrixD( *m );
+    if( m != NULL)  Symm = new symmd( *m );
     else
       Symm = NULL;
   }
@@ -73,8 +72,8 @@ public:
       Atoms.AddNew<TRestraintAtom>( ag[i] );
     return *this;
   }
-  TRestraintAtom& AddAtom(TCAtom* CA, TMatrixD* Symm = NULL )  {
-    return Atoms.AddNew<TCAtom*,TMatrixD*>(CA, Symm);
+  TRestraintAtom& AddAtom(TCAtom* CA, symmd* Symm = NULL )  {
+    return Atoms.AddNew<TCAtom*,symmd*>(CA, Symm);
   }
   inline int Count() const {  return Atoms.Count();  }
   TRestraintAtom& operator[] (int i)  const {  return Atoms[i];  }
@@ -137,7 +136,7 @@ class TEquivAtomParams : public  TRAtomGroup {
 */
 class TDisorderPart : public  TRAtomGroup {
   int OverriddenParams;
-  TVectorD ParamValues;
+  evecd ParamValues;
 public:
 
 };
@@ -164,8 +163,8 @@ public:
 class TRestraintDistance : public ARestraintParam  {
 public:
   virtual double GetValue() const  {
-    TVPointD v1, v2;
-    v1 = GetAtom(0).GetAtom()->CCenter();  
+    vec3d v1, v2;
+    v1 = GetAtom(0).GetAtom()->ccrd();  
     if( GetAtom(0).GetSymm() )  {
        v1 *= *GetAtom(0).GetSymm();
        v1[0] += GetAtom(0).GetSymm()->Data(0)[3];
@@ -173,7 +172,7 @@ public:
        v1[2] += GetAtom(0).GetSymm()->Data(2)[3];
     }  
     
-    v2 = GetAtom(1).GetAtom()->CCenter();  
+    v2 = GetAtom(1).GetAtom()->ccrd();  
     if( GetAtom(1).GetSymm() )  {
        v2 *= *GetAtom(1).GetSymm();
        v2[0] += GetAtom(1).GetSymm()->Data(0)[3];
@@ -189,8 +188,8 @@ public:
 class TRestraintAngle : public ARestraintParam  {
 public:
   virtual double GetValue() const  {
-    TVPointD v1, v2, v0;
-    v1 = GetAtom(0).GetAtom()->CCenter();  
+    vec3d v1, v2, v0;
+    v1 = GetAtom(0).GetAtom()->ccrd();  
     if( GetAtom(0).GetSymm() )  {
        v1 *= *GetAtom(0).GetSymm();
        v1[0] += GetAtom(0).GetSymm()->Data(0)[3];
@@ -198,7 +197,7 @@ public:
        v1[2] += GetAtom(0).GetSymm()->Data(2)[3];
     }  
     
-    v0 = GetAtom(1).GetAtom()->CCenter();  
+    v0 = GetAtom(1).GetAtom()->ccrd();  
     if( GetAtom(1).GetSymm() )  {
        v0 *= *GetAtom(1).GetSymm();
        v0[0] += GetAtom(1).GetSymm()->Data(0)[3];
@@ -206,7 +205,7 @@ public:
        v0[2] += GetAtom(1).GetSymm()->Data(2)[3];
     }  
 
-    v2 = GetAtom(2).GetAtom()->CCenter();  
+    v2 = GetAtom(2).GetAtom()->ccrd();  
     if( GetAtom(2).GetSymm() )  {
        v2 *= *GetAtom(2).GetSymm();
        v2[0] += GetAtom(2).GetSymm()->Data(0)[3];
@@ -226,9 +225,9 @@ public:
 class TRestraintTAngle : public ARestraintParam  {
 public:
   virtual double GetValue() const  {
-    TVPointD v1, v01, v2, v02;
-    TVPointD B, D;
-    v1 = GetAtom(0).GetAtom()->CCenter();  
+    vec3d v1, v01, v2, v02;
+    vec3d B, D;
+    v1 = GetAtom(0).GetAtom()->ccrd();  
     if( GetAtom(0).GetSymm() )  {
        v1 *= *GetAtom(0).GetSymm();
        v1[0] += GetAtom(0).GetSymm()->Data(0)[3];
@@ -236,7 +235,7 @@ public:
        v1[2] += GetAtom(0).GetSymm()->Data(2)[3];
     }  
     
-    v01 = GetAtom(1).GetAtom()->CCenter();  
+    v01 = GetAtom(1).GetAtom()->ccrd();  
     if( GetAtom(1).GetSymm() )  {
        v01 *= *GetAtom(1).GetSymm();
        v01[0] += GetAtom(1).GetSymm()->Data(0)[3];
@@ -244,7 +243,7 @@ public:
        v01[2] += GetAtom(1).GetSymm()->Data(2)[3];
     }  
 
-    v02 = GetAtom(2).GetAtom()->CCenter();  
+    v02 = GetAtom(2).GetAtom()->ccrd();  
     if( GetAtom(2).GetSymm() )  {
        v02 *= *GetAtom(2).GetSymm();
        v02[0] += GetAtom(2).GetSymm()->Data(0)[3];
@@ -252,7 +251,7 @@ public:
        v02[2] += GetAtom(2).GetSymm()->Data(2)[3];
     }  
 
-    v2 = GetAtom(3).GetAtom()->CCenter();  
+    v2 = GetAtom(3).GetAtom()->ccrd();  
     if( GetAtom(3).GetSymm() )  {
        v2 *= *GetAtom(3).GetSymm();
        v2[0] += GetAtom(3).GetSymm()->Data(0)[3];

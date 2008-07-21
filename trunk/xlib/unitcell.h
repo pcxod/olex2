@@ -3,8 +3,7 @@
 
 #include "xbase.h"
 #include "elist.h"
-#include "ematrix.h"
-#include "vpoint.h"
+#include "symmat.h"
 #include "envilist.h"
 #include "ellipsoid.h"
 #include "estrbuffer.h"
@@ -15,7 +14,7 @@ BeginXlibNamespace()
 class TUnitCell: public IEObject  {
   TNetwork*  Network;  // for internal use only
 private:
-  TMatrixDList Matrices;  // list of unique matrices; FMatrices + centering
+  symmd_list Matrices;  // list of unique matrices; FMatrices + centering
   TArrayList<TEllpPList> Ellipsoids;  // i - atoms index, j - matrix index 
   class TLattice*  Lattice;    // parent lattice
 public:
@@ -26,8 +25,8 @@ public:
   inline TLattice& GetLattice()    const {  return *Lattice;  }
   void Clear();
 
-  inline int MatrixCount()                const {  return Matrices.Count();  }
-  inline const TMatrixD& GetMatrix(int i) const {  return Matrices[i];  }
+  inline int MatrixCount()             const {  return Matrices.Count();  }
+  inline const symmd& GetMatrix(int i) const {  return Matrices[i];  }
 
   const TEllipsoid& GetEllipsoid(int MatrixId, int AUId) const;
   void AddEllipsoid(); // adds a new row to ellipsoids, intialised with NULLs
@@ -44,22 +43,22 @@ public:
   // the funciton searches a matrix which moves "atom" to "to" so that the
   // distance between them is shortest and return the matrix, which if not NULL
   // has to be deleted with delete
-  TMatrixD* GetClosest(const class TCAtom& to, const TCAtom& atom, bool ConsiderOriginal) const;
+  symmd* GetClosest(const class TCAtom& to, const TCAtom& atom, bool ConsiderOriginal) const;
 
-  TMatrixD* GetClosest(const TVPointD& to, const TVPointD& from, bool ConsiderOriginal) const;
+  symmd* GetClosest(const vec3d& to, const vec3d& from, bool ConsiderOriginal) const;
 
-  TMatrixDList* GetInRange(const TVPointD& to, const TVPointD& from, double R, bool IncludeI) const;
+  symmd_list* GetInRange(const vec3d& to, const vec3d& from, double R, bool IncludeI) const;
 
   // returns a list of all closest (in all directions) matrices
-  TMatrixDList* GetInRangeEx(const TVPointD& to, const TVPointD& from, float R, bool IncludeI, const TMatrixDList& ToSkip) const;
+  symmd_list* GetInRangeEx(const vec3d& to, const vec3d& from, float R, bool IncludeI, const symmd_list& ToSkip) const;
   // returns a list of all biding matrices
-  TMatrixDList* GetBinding(const TCAtom& toA, const TCAtom& fromA,
-    const TVPointD& to, const TVPointD& from, bool IncludeI, bool IncludeHBonds) const;
+  symmd_list* GetBinding(const TCAtom& toA, const TCAtom& fromA,
+    const vec3d& to, const vec3d& from, bool IncludeI, bool IncludeHBonds) const;
 
   double FindClosestDistance(const class TCAtom& to, const TCAtom& atom) const;
   // finds all atoms and their ccordinates inside the sphere of radius R
   void FindInRange(const TCAtom& atom, double R, 
-    TArrayList< AnAssociation2<TCAtom const*, TVPointD> >& res) const;
+    TArrayList< AnAssociation2<TCAtom const*, vec3d> >& res) const;
   // finds all atoms (+symm attached) and Q-peaks, if specfied
   void GetAtomEnviList(TSAtom& atom, TAtomEnvi& envi, bool IncludeQ = false) const;
   // finds only q-peaks in the environment of specified atom
@@ -80,7 +79,7 @@ public:
   */
   void BuildStructureMap( TArray3D<short>& map, double delta, short value, long* structurePoints );
 protected:
-  // helper function, association should be AnAssociation2+<TVPointD,TCAtom*,+>
+  // helper function, association should be AnAssociation2+<vec3d,TCAtom*,+>
   template <class Association> 
     static int AtomsSortByDistance(const Association& A1, const Association& A2)  {
       double d = A1.GetA().QLength() - A2.GetA().QLength();
@@ -89,19 +88,17 @@ protected:
       return 0;
     }
 public:
-  // association should be AnAssociation2+<TVPointD,TCAtom*,+>
+  // association should be AnAssociation2+<vec3d,TCAtom*,+>
   template <class Association> 
   void GenereteAtomCoordinates(TTypeList<Association>& list, bool IncludeH) const  {
-    TVPointD center;
+    vec3d center;
     list.SetCapacity(Lattice->GetAsymmUnit().AtomCount()*Matrices.Count());
     for( int i=0; i < Lattice->GetAsymmUnit().AtomCount(); i++ )  {
       TCAtom& ca = Lattice->GetAsymmUnit().GetAtom(i);
       if( ca.GetAtomInfo() == iQPeakIndex || ca.IsDeleted() )  continue;
       if( !IncludeH && ca.GetAtomInfo() == iHydrogenIndex )    continue;
       for( int j=0; j < Matrices.Count(); j++ )  {
-        center = ca.GetCCenter();
-        center = Matrices[j] * center;
-        center[0] += Matrices[j][0][3];  center[1] += Matrices[j][1][3];  center[2] += Matrices[j][2][3];
+        center = Matrices[j] * ca.ccrd();
         for( int k=0; k < 3; k++ )  {
           while( center[k] < 0 )  center[k] += 1;
           while( center[k] > 1 )  center[k] -= 1;
@@ -133,20 +130,20 @@ public:
   // returns true if the atom overlaps with another atom in the unit cell
   bool DoesOverlap(const TCAtom& ca, double R) const;
   // finds an atom at given position
-  TCAtom* FindCAtom(const TVPointD& center) const;
+  TCAtom* FindCAtom(const vec3d& center) const;
   /* finds an atom within delta of the given position, ! the position is updated to the closest match found */
-  TCAtom* FindOverlappingAtom(TVPointD& position, double delta) const;
+  TCAtom* FindOverlappingAtom(vec3d& position, double delta) const;
 protected:
   class TSearchSymmEqTask  {
     TPtrList<TCAtom>& Atoms;
-    const TMatrixDList& Matrices;
+    const symmd_list& Matrices;
     TStrList& Report;
     bool Initialise;
     double tolerance;
     TAsymmUnit* AU;
     TLattice* Latt;
   public:
-    TSearchSymmEqTask(TPtrList<TCAtom>& atoms, const TMatrixDList& matrices, TStrList& report,
+    TSearchSymmEqTask(TPtrList<TCAtom>& atoms, const symmd_list& matrices, TStrList& report,
                       double tol, bool initialise);
     void Run(long ind);
     TSearchSymmEqTask* Replicate() const  {

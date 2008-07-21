@@ -19,7 +19,7 @@
 #include "styles.h"
 
 
-TDUserObj::TDUserObj(short type, TMatrixD* data, const olxstr& collectionName, TGlRender *Render) :
+TDUserObj::TDUserObj(short type, ematd* data, const olxstr& collectionName, TGlRender *Render) :
   TGlMouseListener(collectionName, Render), Type(type), Data(data)
 {
   Groupable(false);

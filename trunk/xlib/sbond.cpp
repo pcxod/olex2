@@ -44,6 +44,6 @@ void TSBond::OnAtomSet()  {
   }
 }
 //..............................................................................
-double TSBond::Length(){  return (double)FA->Center().DistanceTo(FB->Center()); }
+double TSBond::Length(){  return (double)FA->crd().DistanceTo(FB->crd()); }
 //..............................................................................
 

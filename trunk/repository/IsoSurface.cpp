@@ -485,9 +485,9 @@ template <class T> void CIsoSurface<T>::RenameVerticesAndTriangles()  {
     ta.pointID[0] = IsoPoints.Get(ta.pointID[0]).newID;
     ta.pointID[1] = IsoPoints.Get(ta.pointID[1]).newID;
     ta.pointID[2] = IsoPoints.Get(ta.pointID[2]).newID;
-    const TVPointF& v1 = Vertices[ ta.pointID[0] ];
-    const TVPointF& v2 = Vertices[ ta.pointID[1] ];
-    const TVPointF& v3 = Vertices[ ta.pointID[2] ];
+    const vec3d& v1 = Vertices[ ta.pointID[0] ];
+    const vec3d& v2 = Vertices[ ta.pointID[1] ];
+    const vec3d& v3 = Vertices[ ta.pointID[2] ];
     double d = v1.DistanceTo( v2 );
     if( d < 0.01 || d > DimmX/2 )
       continue;
@@ -510,7 +510,7 @@ template <class T> void CIsoSurface<T>::RenameVerticesAndTriangles()  {
 template <class T> void CIsoSurface<T>::CalculateNormals()  {
   Normals.SetCount( Vertices.Count() );
   // Calculate normals.
-  TVPointD vec1, vec2, normal;
+  vec3d vec1, vec2, normal;
   for( int i = 0; i < Triangles.Count(); i++ ) {
     int id0 = Triangles[i].pointID[0];
     int id1 = Triangles[i].pointID[1];

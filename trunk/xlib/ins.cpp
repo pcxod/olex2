@@ -183,7 +183,7 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
     Clear();
     throw TFunctionFailedException(__OlxSourceInfo, "mismatching SFAC/UNIT");
   }
-  TMatrixD sm(3,4);
+  symmd sm;
   for( int i=0; i < pr.Symm.Count(); i++ )  {
     if( TSymmParser::SymmToMatrix(pr.Symm[i], sm) )
       GetAsymmUnit().AddMatrix(sm);
@@ -259,12 +259,12 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseResults& res
   else if( !res.CellFound && Toks[0].Comparei("CELL") == 0 )  {
     if( Toks.Count() == 8 )  {
       SetRadiation( Toks[1].ToDouble() );
-      GetAsymmUnit().Axes().Value(0) = Toks[2];
-      GetAsymmUnit().Axes().Value(1) = Toks[3];
-      GetAsymmUnit().Axes().Value(2) = Toks[4];
-      GetAsymmUnit().Angles().Value(0) = Toks[5];
-      GetAsymmUnit().Angles().Value(1) = Toks[6];
-      GetAsymmUnit().Angles().Value(2) = Toks[7];
+      GetAsymmUnit().Axes()[0] = Toks[2];
+      GetAsymmUnit().Axes()[1] = Toks[3];
+      GetAsymmUnit().Axes()[2] = Toks[4];
+      GetAsymmUnit().Angles()[0] = Toks[5];
+      GetAsymmUnit().Angles()[1] = Toks[6];
+      GetAsymmUnit().Angles()[2] = Toks[7];
       if( &res != NULL )  res.CellFound = true;
       GetAsymmUnit().InitMatrices();
     }
@@ -529,7 +529,7 @@ void TIns::SaveToRefine(const olxstr& FileName, const olxstr& sMethod, const olx
 
   SL.Add("LATT ") << GetAsymmUnit().GetLatt();
   if( GetAsymmUnit().MatrixCount() == 1 )  {
-    if( !GetAsymmUnit().GetMatrix(0).IsE() ) 
+    if( !GetAsymmUnit().GetMatrix(0).r.IsI() ) 
       SL.Add("SYMM ") << TSymmParser::MatrixToSymm( GetAsymmUnit().GetMatrix(0) );
   }
   else  {
@@ -597,7 +597,7 @@ void TIns::_SaveSfac(TStrList& list, int pos)  {
 //..............................................................................
 void TIns::SaveToStrings(TStrList& SL)  {
   int UnitIndex, SfacIndex;
-  TVectorD QE;  // quadratic form of s thermal ellipsoid
+  evecd QE;  // quadratic form of s thermal ellipsoid
   olxstr Tmp;
   TBasicAtomInfo *BAI;
   for( int i=-1; i < GetAsymmUnit().ResidueCount(); i++ )  {
@@ -762,7 +762,7 @@ void TIns::UpdateAtomsFromStrings(TCAtomPList& CAtoms, TStrList& SL, TStrList& I
   TCAtom *atom;
   int iv, Part=0, Afix=0, atomCount = 0;
   double partOccu = 0;
-  TVectorD QE(6);  // quadratic form of ellipsoid
+  evecd QE(6);  // quadratic form of ellipsoid
   TAsymmUnit::TResidue* resi = NULL;
   SL.CombineLines('=');
   FVars.Resize(0);
@@ -903,7 +903,7 @@ void TIns::SavePattSolution(const olxstr& FileName, const TTypeList<TPattAtom>& 
 
   Tmp = "LATT "; Tmp << GetAsymmUnit().GetLatt(); SL.Add(Tmp);
   if( GetAsymmUnit().MatrixCount() == 1 )  {
-    if( !GetAsymmUnit().GetMatrix(0).IsE() )  {
+    if( !GetAsymmUnit().GetMatrix(0).r.IsI() )  {
       Tmp = "SYMM ";
       Tmp << TSymmParser::MatrixToSymm( GetAsymmUnit().GetMatrix(0) );
       SL.Add(Tmp);
@@ -977,24 +977,24 @@ void TIns::SavePattSolution(const olxstr& FileName, const TTypeList<TPattAtom>& 
 //..............................................................................
 TCAtom* TIns::_ParseAtom(TStrList& Toks, double partOccu, TAsymmUnit::TResidue* resi, TCAtom* atom)  {
   int iv;
-  TVectorD QE(6);
+  evecd QE(6);
   if( atom == NULL )  {
     atom = &GetAsymmUnit().NewAtom(resi);
     atom->SetLoaderId(GetAsymmUnit().AtomCount()-1);
   }
-  atom->CCenter().Value(0) = Toks.String(2);
-  atom->CCenter().Value(1) = Toks.String(3);
-  atom->CCenter().Value(2) = Toks.String(4);
+  atom->ccrd()[0] = Toks[2].ToDouble();
+  atom->ccrd()[1] = Toks[3].ToDouble();
+  atom->ccrd()[2] = Toks[4].ToDouble();
   for( int j=0; j < 3; j ++ )  {
-    if( fabs(atom->CCenter().Value(j).GetV()) >= 5 )  {
-      atom->CCenter().Value(j).V() -= 10;
+    if( fabs(atom->ccrd()[j]) >= 5 )  {
+      atom->ccrd()[j] -= 10;
       atom->FixedValues()[ TCAtom::CrdFixedValuesOffset + j ] = 10;
     }
   }
   // initialise uncertanties using average cell error
-  atom->CCenter().Value(0).E() = (float)fabs(atom->CCenter()[0].GetV()*Error);
-  atom->CCenter().Value(1).E() = (float)fabs(atom->CCenter()[1].GetV()*Error);
-  atom->CCenter().Value(2).E() = (float)fabs(atom->CCenter()[2].GetV()*Error);
+  atom->ccrdEsd()[0] = fabs(atom->ccrd()[0]*Error);
+  atom->ccrdEsd()[1] = fabs(atom->ccrd()[1]*Error);
+  atom->ccrdEsd()[2] = fabs(atom->ccrd()[2]*Error);
   if( partOccu != 0 )
     atom->SetOccp( partOccu );
   else
@@ -1019,12 +1019,12 @@ TCAtom* TIns::_ParseAtom(TStrList& Toks, double partOccu, TAsymmUnit::TResidue* 
   }
   if( Toks.Count() == 12 )  {  // full ellipsoid
     atom->EllpE().Resize(6);
-    QE[0] = Toks.String(6).ToDouble();
-    QE[1] = Toks.String(7).ToDouble();
-    QE[2] = Toks.String(8).ToDouble();
-    QE[3] = Toks.String(9).ToDouble();
-    QE[4] = Toks.String(10).ToDouble();
-    QE[5] = Toks.String(11).ToDouble();
+    QE[0] = Toks[6].ToDouble();
+    QE[1] = Toks[7].ToDouble();
+    QE[2] = Toks[8].ToDouble();
+    QE[3] = Toks[9].ToDouble();
+    QE[4] = Toks[10].ToDouble();
+    QE[5] = Toks[11].ToDouble();
 
     for( int j=0; j < 6; j ++ )  {
       if( fabs(QE[j]) > 10 )  {
@@ -1076,13 +1076,13 @@ TCAtom* TIns::_ParseAtom(TStrList& Toks, double partOccu, TAsymmUnit::TResidue* 
 //..............................................................................
 olxstr TIns::_AtomToString(TCAtom* CA, int SfacIndex)  {
   double v;
-  TVectorD QE(6);   // quadratic form of ellipsoid
+  evecd QE(6);   // quadratic form of ellipsoid
   olxstr Tmp = CA->Label();
   Tmp.Format(6, true, ' ');
   Tmp << SfacIndex;
   Tmp.Format(Tmp.Length()+4, true, ' ');
   for( int j=0; j < 3; j++ )  {
-    v = CA->CCenter()[j].GetV();
+    v = CA->ccrd()[j];
     v += CA->FixedValues()[TCAtom::CrdFixedValuesOffset + j];
     Tmp << olxstr::FormatFloat(-5, v ) << ' ';
   }
@@ -1181,9 +1181,8 @@ bool ProcessRestraint(const TCAtomPList* atoms, TSimpleRestraint& sr)  {
   return false;
 }
 
-void StoreUsedSymIndex(TIntList& il, const TMatrixD* m, TAsymmUnit* au)  {
+void StoreUsedSymIndex(TIntList& il, const symmd* m, TAsymmUnit* au)  {
   if( m == NULL )  return;
-
   int ind = au->UsedSymmIndex( *m );
   if( il.IndexOf(ind) == -1 )
     il.Add(ind);
@@ -1356,7 +1355,7 @@ void TIns::SaveHeader(TStrList& SL, int* SfacIndex, int* UnitIndex)  {
 
   SL.Add("LATT ") << GetAsymmUnit().GetLatt();
   if( GetAsymmUnit().MatrixCount() == 1 )  {
-    if( !GetAsymmUnit().GetMatrix(0).IsE() )
+    if( !GetAsymmUnit().GetMatrix(0).r.IsI() )
       SL.Add("SYMM ") << TSymmParser::MatrixToSymm( GetAsymmUnit().GetMatrix(0) );
   }
   else  {
@@ -1447,7 +1446,7 @@ void TIns::ParseHeader(const TStrList& in)  {
     else
       Ins.Add(in[i]);
   }
-  TMatrixD sm(3,4);
+  symmd sm;
   for( int i=0; i < pr.Symm.Count(); i++ )  {
     if( TSymmParser::SymmToMatrix(pr.Symm[i], sm) )
       GetAsymmUnit().AddMatrix(sm);

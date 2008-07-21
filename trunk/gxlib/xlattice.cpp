@@ -63,11 +63,11 @@ void TXLattice::Create(const olxstr& cName)  {
 bool TXLattice::Orient(TGlPrimitive *P)  {
   if( Fixed )  {
 
-    TVPointD c = Parent()->GetBasis().GetCenter();
+    vec3d c = Parent()->GetBasis().GetCenter();
     c *= -1;
     Parent()->GlTranslate( c );
 
-    TMatrixD m = Parent()->GetBasis().GetMatrix();
+    mat3d m (Parent()->GetBasis().GetMatrix());
     m.Transpose();
     m = Basis.GetMatrix() * m;
     Parent()->GlOrient(  m );
@@ -77,7 +77,7 @@ bool TXLattice::Orient(TGlPrimitive *P)  {
   else  {
     Parent()->GlTranslate( Basis.GetCenter() );
   }
-  TVPointD vec;
+  vec3d vec;
   if( P->Type() == sgloLines )  {
     glPointSize(5);
     glBegin(GL_POINTS);
@@ -95,7 +95,7 @@ bool TXLattice::Orient(TGlPrimitive *P)  {
   return true;
 }
 //..............................................................................
-bool TXLattice::GetDimensions(TVPointD &Max, TVPointD &Min)  {
+bool TXLattice::GetDimensions(vec3d &Max, vec3d &Min)  {
   return false;
 }
 //..............................................................................
@@ -123,12 +123,12 @@ void TXLattice::SetSize(short v)  {
 //..............................................................................
 void TXLattice::SetFixed(bool v )  {
   if( v )  {
-    TVPointD c = Basis.GetCenter();
+    vec3d c = Basis.GetCenter();
     Basis.Orient( Parent()->GetBasis().GetMatrix() );
     Basis.SetCenter(c);
   }
   else  {
-    TVPointD c = Basis.GetCenter();
+    vec3d c = Basis.GetCenter();
     Basis.Reset();
     Basis.SetCenter(c);
   }

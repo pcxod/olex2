@@ -282,7 +282,7 @@ void TGXApp::CreateXRefs()  {
     throw TFunctionFailedException(__OlxSourceInfo, "could not locate sapce group");
   THklFile::MergeStats ms = FHklFile->Merge( *sg, false, refs);
 
-  TVPointD Center;
+  vec3d Center;
   for( int i=0; i < refs.Count(); i++ )  {
     TXReflection* xr = new TXReflection("XReflection", *FHklFile, refs[i],
       &FXFile->GetAsymmUnit(), FGlRender);
@@ -314,7 +314,7 @@ void TGXApp::CreateObjects(bool SyncBonds, bool centerModel)  {
   int64_t st = TETime::msNow();
   GetLog().Info("Start xobject creation");
 
-  TVPointD glMax, glMin, glCenter;
+  vec3d glMax, glMin, glCenter;
   glMax = FGlRender->MaxDim();
   glMin = FGlRender->MinDim();
   glCenter = FGlRender->GetBasis().GetCenter();
@@ -393,7 +393,7 @@ void TGXApp::CreateObjects(bool SyncBonds, bool centerModel)  {
     if( P.IsDeleted() )  XP.Deleted(true);
     XP.Create();
   }
-  TVectorD cell(6);
+  double cell[6];
   cell[0] = XFile().GetAsymmUnit().Axes()[0].GetV();
   cell[1] = XFile().GetAsymmUnit().Axes()[1].GetV();
   cell[2] = XFile().GetAsymmUnit().Axes()[2].GetV();
@@ -447,14 +447,14 @@ void TGXApp::CreateObjects(bool SyncBonds, bool centerModel)  {
 void TGXApp::CenterModel()  {
   int ac;
   double aan = 0;
-  TVPointD Center;
+  vec3d Center;
   ac = FXFile->GetLattice().AtomCount();
   if( !ac )  return;
 
   for( int i=0; i < ac; i++ )  {
     TSAtom& A = FXFile->GetLattice().GetAtom(i);
     if( !A.IsDeleted() )  {
-      Center += A.Center()*A.CAtom().GetOccp();
+      Center += A.crd()*A.CAtom().GetOccp();
       aan += A.CAtom().GetOccp();
     }
   }
@@ -463,8 +463,8 @@ void TGXApp::CenterModel()  {
 
   Center *= -1;
   FGlRender->Basis()->SetCenter( Center );
-  TVPointD max = FGlRender->MaxDim();
-  TVPointD min = FGlRender->MinDim();
+  vec3d max = FGlRender->MaxDim();
+  vec3d min = FGlRender->MinDim();
   max -= Center;
   min -= Center;
   FGlRender->ClearMinMax();
@@ -473,7 +473,7 @@ void TGXApp::CenterModel()  {
 //..............................................................................
 void TGXApp::CenterView()  {
   int aan = 0;
-  TVPointD Center,
+  vec3d Center,
            maX(-100, -100, -100),
            miN(100, 100, 100);
   if( FXFile->GetLattice().AtomCount() == 0 )  return;
@@ -481,12 +481,12 @@ void TGXApp::CenterView()  {
     TXAtom& XA = XAtoms[i];
     if( !XA.Deleted() && XA.Visible() )  {
       for( int j=0; j < 3; j++ )  {
-        if( XA.Atom().Center()[j] > maX[j] )
-          maX[j] = XA.Atom().Center()[j];
-        if( XA.Atom().Center()[j] < miN[j] )
-          miN[j] = XA.Atom().Center()[j];
+        if( XA.Atom().crd()[j] > maX[j] )
+          maX[j] = XA.Atom().crd()[j];
+        if( XA.Atom().crd()[j] < miN[j] )
+          miN[j] = XA.Atom().crd()[j];
       }
-      Center += XA.Atom().Center();
+      Center += XA.Atom().crd();
       aan ++;
     }
   }
@@ -585,7 +585,7 @@ void TGXApp::BangTable(TXAtom *XA, TTTable<TStrList>& Table)
   TSAtom* A = &XA->Atom();
   float angle;
   TSBond *B, *B1;
-  TVPointD V, V1;
+  vec3d V, V1;
   Table.Resize(A->BondCount(), A->BondCount());
 
   Table.ColName(0) = A->GetLabel();
@@ -602,10 +602,9 @@ void TGXApp::BangTable(TXAtom *XA, TTTable<TStrList>& Table)
       if( i == j )  { Table[i].String(j+1) = '-'; continue; }
       if( i <= j )  { Table[i].String(j+1) = '-'; continue; }
 
-      V = B->Another(*A).Center() - A->Center();
-      V1 = B1->Another(*A).Center() - A->Center();
-      if( V.Length() && V1.Length() )
-      {
+      V = B->Another(*A).crd() - A->crd();
+      V1 = B1->Another(*A).crd() - A->crd();
+      if( V.QLength()*V1.QLength() != 0 )  {
         angle = V.CAngle(V1);
         angle = acos(angle)*180/M_PI;
         Table.Row(i)->String(j+1) = olxstr::FormatFloat(3, angle);
@@ -620,7 +619,7 @@ void TGXApp::BangList(TXAtom *XA, TStrList &L)  {
   float angle;
   TSAtom* A = &XA->Atom();
   olxstr T;
-  TVPointD V, V1;
+  vec3d V, V1;
   for( int i=0; i < A->BondCount(); i++ )  {
     TSBond& B = A->Bond(i);
     T = A->GetLabel();  T << '-'  << B.Another(*A).GetLabel();
@@ -634,8 +633,8 @@ void TGXApp::BangList(TXAtom *XA, TStrList &L)  {
 
       T = B.Another(*A).GetLabel();  T << '-' << A->GetLabel() << '-';
       T << B1.Another(*A).GetLabel() << ": ";
-      V = B.Another(*A).Center() - A->Center();
-      V1 = B1.Another(*A).Center() - A->Center();
+      V = B.Another(*A).crd() - A->crd();
+      V1 = B1.Another(*A).crd() - A->crd();
       if( V.Length() && V1.Length() )  {
         angle = V.CAngle(V1);
         angle = acos(angle)*180/M_PI;
@@ -664,11 +663,11 @@ float TGXApp::Tang( TSBond *B1, TSBond *B2, TSBond *Middle, olxstr *Sequence )
   A3 = &Middle->B();
   A1 = &B1->Another(*A2);
   A4 = &B2->Another(*A3);
-  TVPointD A, B, C, D, E, F;
-  A = A1->Center() - A2->Center();
-  B = A3->Center() - A2->Center();
-  C = A2->Center() - A3->Center();
-  D = A4->Center() - A3->Center();
+  vec3d A, B, C, D, E, F;
+  A = A1->crd() - A2->crd();
+  B = A3->crd() - A2->crd();
+  C = A2->crd() - A3->crd();
+  D = A4->crd() - A3->crd();
 
   E = A.XProdVec(B);
   F = C.XProdVec(D);
@@ -728,54 +727,54 @@ olxstr TGXApp::GetSelectionInfo()  {
     if( EsdlInstanceOf(*Sel->Object(0), TXAtom) &&
       EsdlInstanceOf(*Sel->Object(1), TXAtom) )  {
         rv = "Distance: ";
-        v = ((TXAtom*)Sel->Object(0))->Atom().Center().DistanceTo(
-          ((TXAtom*)Sel->Object(1))->Atom().Center());
+        v = ((TXAtom*)Sel->Object(0))->Atom().crd().DistanceTo(
+          ((TXAtom*)Sel->Object(1))->Atom().crd());
         rv << olxstr::FormatFloat(3, v);
     }
     else if( EsdlInstanceOf(*Sel->Object(0), TXBond) &&
       EsdlInstanceOf(*Sel->Object(1), TXBond) )  {
         rv = "Angle (bond-bond): ";
-        TVPointD V, V1;
+        vec3d V, V1;
         TXBond* A = (TXBond*)Sel->Object(0), *B =(TXBond*)Sel->Object(1);
-        V = A->Bond().A().Center() - A->Bond().B().Center();
-        V1 = B->Bond().A().Center() - B->Bond().B().Center();
+        V = A->Bond().A().crd() - A->Bond().B().crd();
+        V1 = B->Bond().A().crd() - B->Bond().B().crd();
         v = V.CAngle(V1);  v = acos(v)*180/M_PI;
         rv << olxstr::FormatFloat(3, v) << " (" << olxstr::FormatFloat(3, 180-v) << ')';
         double distances[4];
         int minInd;
-        distances[0] = A->Bond().A().Center().DistanceTo( B->Bond().A().Center() );
-        distances[1] = A->Bond().A().Center().DistanceTo( B->Bond().B().Center() );
-        distances[2] = A->Bond().B().Center().DistanceTo( B->Bond().A().Center() );
-        distances[3] = A->Bond().B().Center().DistanceTo( B->Bond().B().Center() );
+        distances[0] = A->Bond().A().crd().DistanceTo( B->Bond().A().crd() );
+        distances[1] = A->Bond().A().crd().DistanceTo( B->Bond().B().crd() );
+        distances[2] = A->Bond().B().crd().DistanceTo( B->Bond().A().crd() );
+        distances[3] = A->Bond().B().crd().DistanceTo( B->Bond().B().crd() );
 
-        TVectorD::ArrayMin(&distances[0], minInd, 4);
+        evecd::ArrayMin(&distances[0], minInd, 4);
         // check if the adjastent bonds
         if( fabs(distances[minInd]) < 0.01 )  return rv;
-        TVPointD V2, V3, V4, V5;
+        vec3d V2, V3, V4, V5;
         switch( minInd )  {
           case 0:
-            V = A->Bond().B().Center() - A->Bond().A().Center();
-            V1 = B->Bond().A().Center() - A->Bond().A().Center();
-            V2 = B->Bond().B().Center() - B->Bond().A().Center();
-            V3 = A->Bond().A().Center() - B->Bond().A().Center();
+            V = A->Bond().B().crd() - A->Bond().A().crd();
+            V1 = B->Bond().A().crd() - A->Bond().A().crd();
+            V2 = B->Bond().B().crd() - B->Bond().A().crd();
+            V3 = A->Bond().A().crd() - B->Bond().A().crd();
             break;
           case 1:
-            V = A->Bond().B().Center() - A->Bond().A().Center();
-            V1 = B->Bond().B().Center() - A->Bond().A().Center();
-            V2 = B->Bond().A().Center() - B->Bond().B().Center();
-            V3 = A->Bond().A().Center() - B->Bond().B().Center();
+            V = A->Bond().B().crd() - A->Bond().A().crd();
+            V1 = B->Bond().B().crd() - A->Bond().A().crd();
+            V2 = B->Bond().A().crd() - B->Bond().B().crd();
+            V3 = A->Bond().A().crd() - B->Bond().B().crd();
             break;
           case 2:
-            V = A->Bond().A().Center() - A->Bond().B().Center();
-            V1 = B->Bond().A().Center() - A->Bond().B().Center();
-            V2 = B->Bond().B().Center() - B->Bond().A().Center();
-            V3 = A->Bond().B().Center() - B->Bond().A().Center();
+            V = A->Bond().A().crd() - A->Bond().B().crd();
+            V1 = B->Bond().A().crd() - A->Bond().B().crd();
+            V2 = B->Bond().B().crd() - B->Bond().A().crd();
+            V3 = A->Bond().B().crd() - B->Bond().A().crd();
             break;
           case 3:
-            V = A->Bond().A().Center() - A->Bond().B().Center();
-            V1 = B->Bond().B().Center() - A->Bond().B().Center();
-            V2 = B->Bond().A().Center() - B->Bond().B().Center();
-            V3 = A->Bond().B().Center() - B->Bond().B().Center();
+            V = A->Bond().A().crd() - A->Bond().B().crd();
+            V1 = B->Bond().B().crd() - A->Bond().B().crd();
+            V2 = B->Bond().A().crd() - B->Bond().B().crd();
+            V3 = A->Bond().B().crd() - B->Bond().B().crd();
             break;
         }
         V4 = V.XProdVec(V1);
@@ -792,7 +791,7 @@ olxstr TGXApp::GetSelectionInfo()  {
         v = ((TXPlane*)Sel->Object(0))->Plane().DistanceTo(((TXAtom*)Sel->Object(1))->Atom());
         rv << olxstr::FormatFloat(3, v);
         rv << "\nDistance (plane centroid-atom): ";
-        v = ((TXPlane*)Sel->Object(0))->Plane().Center().DistanceTo(((TXAtom*)Sel->Object(1))->Atom().Center());
+        v = ((TXPlane*)Sel->Object(0))->Plane().Center().DistanceTo(((TXAtom*)Sel->Object(1))->Atom().crd());
         rv << olxstr::FormatFloat(3, v);
     }
     else if( EsdlInstanceOf(*Sel->Object(0), TXAtom) &&
@@ -801,7 +800,7 @@ olxstr TGXApp::GetSelectionInfo()  {
         v = ((TXPlane*)Sel->Object(1))->Plane().DistanceTo(((TXAtom*)Sel->Object(0))->Atom());
         rv << olxstr::FormatFloat(3, v);
         rv << "\nDistance (plane centroid-atom): ";
-        v = ((TXPlane*)Sel->Object(1))->Plane().Center().DistanceTo(((TXAtom*)Sel->Object(0))->Atom().Center());
+        v = ((TXPlane*)Sel->Object(1))->Plane().Center().DistanceTo(((TXAtom*)Sel->Object(0))->Atom().crd());
         rv << olxstr::FormatFloat(3, v);
     }
     else if( EsdlInstanceOf(*Sel->Object(0), TXBond) &&
@@ -831,9 +830,9 @@ olxstr TGXApp::GetSelectionInfo()  {
       EsdlInstanceOf(*Sel->Object(1), TXAtom) &&
       EsdlInstanceOf(*Sel->Object(2), TXAtom) )  {
         rv = "Angle: ";
-        TVPointD V, V1;
-        V = ((TXAtom*)Sel->Object(0))->Atom().Center() - ((TXAtom*)Sel->Object(1))->Atom().Center();
-        V1 = ((TXAtom*)Sel->Object(2))->Atom().Center() - ((TXAtom*)Sel->Object(1))->Atom().Center();
+        vec3d V, V1;
+        V = ((TXAtom*)Sel->Object(0))->Atom().crd() - ((TXAtom*)Sel->Object(1))->Atom().crd();
+        V1 = ((TXAtom*)Sel->Object(2))->Atom().crd() - ((TXAtom*)Sel->Object(1))->Atom().crd();
         v = V.CAngle(V1);  v = acos(v)*180/M_PI;
         rv << olxstr::FormatFloat(3, v);
     }
@@ -843,11 +842,11 @@ olxstr TGXApp::GetSelectionInfo()  {
       EsdlInstanceOf(*Sel->Object(1), TXAtom) &&
       EsdlInstanceOf(*Sel->Object(2), TXAtom) &&
       EsdlInstanceOf(*Sel->Object(3), TXAtom) )  {
-        TVPointD V1, V2, V3, V4;
-        V1 = ((TXAtom*)Sel->Object(0))->Atom().Center() - ((TXAtom*)Sel->Object(1))->Atom().Center();
-        V2 = ((TXAtom*)Sel->Object(2))->Atom().Center() - ((TXAtom*)Sel->Object(1))->Atom().Center();
-        V3 = ((TXAtom*)Sel->Object(3))->Atom().Center() - ((TXAtom*)Sel->Object(2))->Atom().Center();
-        V4 = ((TXAtom*)Sel->Object(1))->Atom().Center() - ((TXAtom*)Sel->Object(2))->Atom().Center();
+        vec3d V1, V2, V3, V4;
+        V1 = ((TXAtom*)Sel->Object(0))->Atom().crd() - ((TXAtom*)Sel->Object(1))->Atom().crd();
+        V2 = ((TXAtom*)Sel->Object(2))->Atom().crd() - ((TXAtom*)Sel->Object(1))->Atom().crd();
+        V3 = ((TXAtom*)Sel->Object(3))->Atom().crd() - ((TXAtom*)Sel->Object(2))->Atom().crd();
+        V4 = ((TXAtom*)Sel->Object(1))->Atom().crd() - ((TXAtom*)Sel->Object(2))->Atom().crd();
 
         V1 = V1.XProdVec(V2);
         V3 = V3.XProdVec(V4);
@@ -887,20 +886,20 @@ void TGXApp::ChangeAtomType( TXAtom *A, const olxstr &Element)  {
 }
 //..............................................................................
 void TGXApp::InvertFragments(const TXAtomPList& NetworkAtoms)  {
-  TMatrixD m(3,3);
-  m.E();
-  m *= -1;
+  symmd m;
+  m.r.I();
+  m.r *= -1;
   TransformFragments(NetworkAtoms, m);
 }
 //..............................................................................
-void TGXApp::MoveFragments(const TXAtomPList& NetworkAtoms, const TVectorD& v)  {
-  TMatrixD m(3,4);
-  m.E();
-  m[0][3] = v[0];  m[1][3] = v[1];  m[2][3] = v[2];
+void TGXApp::MoveFragments(const TXAtomPList& NetworkAtoms, const vec3d& v)  {
+  symmd m;
+  m.r.I();
+  m.t = v;
   TransformFragments(NetworkAtoms, m);
 }
 //..............................................................................
-void TGXApp::TransformFragments(const TXAtomPList& NetworkAtoms, const TMatrixD& m)  {
+void TGXApp::TransformFragments(const TXAtomPList& NetworkAtoms, const symmd& m)  {
   TSAtomPList SAtoms;
   TListCaster::POP(NetworkAtoms, SAtoms);
   XFile().GetLattice().TransformFragments(SAtoms, m);
@@ -978,12 +977,12 @@ void TGXApp::AllVisible(bool V)  {
   Draw();
 }
 //..............................................................................
-void TGXApp::Select(const TVPointD& From, const TVPointD& To )  {
-  TVPointD Cnt, Cnt1, AC;
+void TGXApp::Select(const vec3d& From, const vec3d& To )  {
+  vec3d Cnt, Cnt1, AC;
   for( int i=0; i < XAtoms.Count(); i++ )  {
     TXAtom& XA = XAtoms[i];
     if( XA.Visible() )  {
-      AC = XA.Atom().Center();
+      AC = XA.Atom().crd();
       AC += GetRender().GetBasis().GetCenter();
       Cnt = AC * GetRender().GetBasis().GetMatrix();
       if( Cnt[0] < To[0] && Cnt[1] < To[1] &&
@@ -997,9 +996,9 @@ void TGXApp::Select(const TVPointD& From, const TVPointD& To )  {
   for(int i=0; i < XBonds.Count(); i++ )  {
     TXBond& B = XBonds[i];
     if( B.Visible() )  {
-      AC = B.Bond().A().Center();  AC += GetRender().GetBasis().GetCenter();
+      AC = B.Bond().A().crd();  AC += GetRender().GetBasis().GetCenter();
       Cnt  = AC * GetRender().GetBasis().GetMatrix();
-      AC = B.Bond().B().Center();  AC += GetRender().GetBasis().GetCenter();
+      AC = B.Bond().B().crd();  AC += GetRender().GetBasis().GetCenter();
       Cnt1 = AC * GetRender().GetBasis().GetMatrix();
       if( Cnt[0] < To[0] && Cnt[1] < To[1] && Cnt[0] > From[0] && Cnt[1] > From[1] &&
           Cnt1[0] < To[0] && Cnt1[1] < To[1] && Cnt1[0] > From[0] && Cnt1[1] > From[1] )  {
@@ -1126,7 +1125,7 @@ void TGXApp::GrowAtom(TXAtom *XA, bool Shell, TCAtomPList* Template)  {
   FXFile->GetLattice().GrowAtom(XA->Atom(), Shell, Template);
 }
 //..............................................................................
-void TGXApp::Grow(const TXAtomPList& atoms, const TMatrixDList& matrices)  {
+void TGXApp::Grow(const TXAtomPList& atoms, const symmd_list& matrices)  {
   TSAtomPList satoms;
   TListCaster::POP(atoms, satoms);
   FXFile->GetLattice().GrowAtoms( satoms, matrices);
@@ -1461,9 +1460,9 @@ void TGXApp::InfoList(const olxstr &Atoms, TStrList &Info)  {
     TSAtom& A = AtomsList[i]->Atom();
     Table[i][0] = A.GetLabel();
     Table[i][1] = A.GetAtomInfo().GetSymbol();
-    Table[i][2] = olxstr::FormatFloat(3, A.CCenter()[0]);
-    Table[i][3] = olxstr::FormatFloat(3, A.CCenter()[1]);
-    Table[i][4] = olxstr::FormatFloat(3, A.CCenter()[2]);
+    Table[i][2] = olxstr::FormatFloat(3, A.ccrd()[0]);
+    Table[i][3] = olxstr::FormatFloat(3, A.ccrd()[1]);
+    Table[i][4] = olxstr::FormatFloat(3, A.ccrd()[2]);
     Table[i][5] = olxstr::FormatFloat(3, A.CAtom().GetUiso());
     if( A.CAtom().GetQPeak() != -1 )
       Table[i][6] = olxstr::FormatFloat(3, A.CAtom().GetQPeak());
@@ -1473,7 +1472,7 @@ void TGXApp::InfoList(const olxstr &Atoms, TStrList &Info)  {
   Table.CreateTXTList(Info, "Atom information", true, true, ' ');
 }
 //..............................................................................
-TXGlLabel *TGXApp::AddLabel(const olxstr& Name, const TVPointD& center, const olxstr& T)  {
+TXGlLabel *TGXApp::AddLabel(const olxstr& Name, const vec3d& center, const olxstr& T)  {
   TXGlLabel* gl = new TXGlLabel(Name, FGlRender);
   gl->FontIndex( FLabels->FontIndex() );
   gl->SetLabel( T );
@@ -1483,7 +1482,7 @@ TXGlLabel *TGXApp::AddLabel(const olxstr& Name, const TVPointD& center, const ol
   return gl;
 }
 //..............................................................................
-TXLine& TGXApp::AddLine(const olxstr& Name, const TVPointD& base, const TVPointD& edge)  {
+TXLine& TGXApp::AddLine(const olxstr& Name, const vec3d& base, const vec3d& edge)  {
   TXLine *XL = new TXLine(Name, base, edge, FGlRender);
   XL->Create();
   LooseObjects.Add( XL );
@@ -1556,9 +1555,9 @@ TXAtom * TGXApp::AddCentroid(TXAtomPList& Atoms)  {
 }
 //..............................................................................
 TXAtom* TGXApp::AddAtom(TXAtom* templ)  {
-  TVPointD center;
+  vec3d center;
   if( templ != NULL )
-    center = templ->Atom().CAtom().CCenter();
+    center = templ->Atom().CAtom().ccrd();
   TSAtom *A = XFile().GetLattice().NewAtom( center );
   if( A != NULL )  {
     olxstr colName;
@@ -2403,10 +2402,10 @@ TXGlLabel* TGXApp::CreateLabel(TXAtom *A, int FontIndex)  {
   TXGlLabel& L = XLabels.AddNew( "PLabels", FGlRender );
   L.FontIndex( FontIndex );
   L.SetLabel(A->Atom().GetLabel());
-  L.Basis.SetCenter( A->Atom().Center() );
-  L.Basis.GetCenter()[0] += 0.15;
-  L.Basis.GetCenter()[1] += 0.15;
-  L.Basis.GetCenter()[2] += 0.15;
+  L.Basis.SetCenter( A->Atom().crd() );
+  L.Basis.TranslateX(0.15);
+  L.Basis.TranslateY(0.15);
+  L.Basis.TranslateZ(0.15);
   L.Create();
   return &L;
 }
@@ -2437,7 +2436,7 @@ void TGXApp::MoveFragment(TXAtom* to, TXAtom* fragAtom, bool copy)  {
     FXFile->GetLattice().MoveFragment(to->Atom(), fragAtom->Atom());
 }
 //..............................................................................
-void TGXApp::MoveFragment(const TVPointD& to, TXAtom* fragAtom, bool copy)  {
+void TGXApp::MoveFragment(const vec3d& to, TXAtom* fragAtom, bool copy)  {
   if( copy )
     FXFile->GetLattice().MoveFragmentG(to, fragAtom->Atom());
   else
@@ -2622,7 +2621,7 @@ void TGXApp::HklVisible(bool v)  {
   FDUnitCell->Reciprical(v);
 }
 //..............................................................................
-void TGXApp::SetGridDepth(const TVectorD& crd)  {
+void TGXApp::SetGridDepth(const vec3d& crd)  {
   FXGrid->SetDepth( crd );
 }
 //..............................................................................
@@ -2822,13 +2821,13 @@ void TGXApp::SetPackMode(short v, const olxstr& atoms)  {
 void TGXApp::CreateXGrowPoints()  {
   if( XGrowPoints.Count() != 0 )  return;
   // remove the identity matrix 
-  TMatrixDPList matrices;
-  TMatrixD I(3,4);
-  I[0][0] = 1;  I[1][1] = 1;  I[2][2] = 1;
+  symmd_plist matrices;
+  symmd I;
+  I.r.I();
   UsedTransforms.AddCCopy(I);
 
-  TVPointD VFrom, VTo;
-  TVPointD MFrom(-1.5, -1.5, -1.5), MTo(2, 2, 2);
+  vec3d VFrom, VTo;
+  vec3d MFrom(-1.5, -1.5, -1.5), MTo(2, 2, 2);
 
   VTo[0] = Round(MTo[0]+1);     VTo[1] = Round(MTo[1]+1);     VTo[2] = Round(MTo[2]+1);
   VFrom[0] = Round(MFrom[0]-1); VFrom[1] = Round(MFrom[1]-1); VFrom[2] = Round(MFrom[2]-1);
@@ -2837,16 +2836,16 @@ void TGXApp::CreateXGrowPoints()  {
 
   VFrom = XFile().GetAsymmUnit().GetOCenter(false, false);
   for( int i=0; i < matrices.Count(); i++ )  {
-    if( UsedTransforms.IndexOf( *matrices[i] ) != -1 )
+    if( UsedTransforms.IndexOf( *matrices[i] ) != -1 )  {
+      delete matrices[i];
       continue;
-    VTo = VFrom;
-    VTo *= *matrices[i];
-    VTo[0] += matrices[i]->Data(0)[3];
-    VTo[1] += matrices[i]->Data(1)[3];
-    VTo[2] += matrices[i]->Data(2)[3];
+    }
+    VTo = VFrom * matrices[i]->r;
+    VTo += matrices[i]->t;
     XFile().GetAsymmUnit().CellToCartesian( VTo );
     TXGrowPoint& gp = XGrowPoints.AddNew(EmptyString, VTo, *matrices[i], FGlRender );
     gp.Create("GrowPoint");
+    delete matrices[i];
   }
 }
 //..............................................................................
@@ -2895,10 +2894,10 @@ void TGXApp::CreateXGrowLines()  {
     }
   }
 
-  TVPointD cnt;
+  vec3d cnt;
   TPtrList<TCAtom> AttachedAtoms;
-  TVPointD cc;
-  TTypeList<TVPointD> TransformedCrds;
+  vec3d cc;
+  TTypeList<vec3d> TransformedCrds;
   for( int i=0; i < AtomsToProcess.Count(); i++ )  {
     TSAtom* A = AtomsToProcess[i];
     if( A->IsDeleted() )  continue;
@@ -2919,21 +2918,21 @@ void TGXApp::CreateXGrowLines()  {
     if( AttachedAtoms.IsEmpty() )  continue;
     for( int j=0; j < AttachedAtoms.Count(); j++ )  {
       TCAtom *aa = AttachedAtoms[j];
-      cc = aa->CCenter();
-      TMatrixDList *transforms;
+      cc = aa->ccrd();
+      symmd_list *transforms;
       if( FGrowMode & gmSameAtoms )  {
-//        transforms = FXFile->GetLattice().GetUnitCell()->Getclosest(A->CCenter(), cc, false );
-        transforms = FXFile->GetLattice().GetUnitCell().GetInRangeEx(A->CCenter(), cc,
+//        transforms = FXFile->GetLattice().GetUnitCell()->Getclosest(A->ccrd(), cc, false );
+        transforms = FXFile->GetLattice().GetUnitCell().GetInRangeEx(A->ccrd(), cc,
                              A->GetAtomInfo().GetRad1() + aa->GetAtomInfo().GetRad1() + 15,
                              false, UsedTransforms );
       }
       else if( FGrowMode & gmSInteractions )  {
-        transforms = FXFile->GetLattice().GetUnitCell().GetInRange(A->CCenter(), cc,
+        transforms = FXFile->GetLattice().GetUnitCell().GetInRange(A->ccrd(), cc,
                              A->GetAtomInfo().GetRad1() + aa->GetAtomInfo().GetRad1() + FXFile->GetLattice().GetDeltaI(),
                              false );
       }
       else  {
-        transforms = FXFile->GetLattice().GetUnitCell().GetInRange(A->CCenter(), cc,
+        transforms = FXFile->GetLattice().GetUnitCell().GetInRange(A->ccrd(), cc,
                              A->GetAtomInfo().GetRad1() + aa->GetAtomInfo().GetRad1() + FXFile->GetLattice().GetDelta(),
                              false );
       }
@@ -2941,31 +2940,29 @@ void TGXApp::CreateXGrowLines()  {
       // remove identity transforms
       TransformedCrds.Clear();
       for( int k=0; k < transforms->Count(); k++ )  {
-        TMatrixD& transform = transforms->Item(k);
-        cc *= transform;
-        cc[0] += transform[0][3];
-        cc[1] += transform[1][3];
-        cc[2] += transform[2][3];
+        symmd& transform = transforms->Item(k);
+        cc *= transform.r;
+        cc += transform.t;
         XFile().GetAsymmUnit().CellToCartesian(cc);
         TransformedCrds.AddCCopy( cc );
-        if( cc.QDistanceTo( A->Center() ) < 0.01 )  {
+        if( cc.QDistanceTo( A->crd() ) < 0.01 )  {
           transforms->NullItem(k);
         }
-        cc = aa->CCenter();
+        cc = aa->ccrd();
       }
       transforms->Pack();
       for( int k=0; k < transforms->Count(); k++ )  {
         for( int l = 0; l < A->NodeCount(); l++ )  {
           TSAtom *sa = &A->Node(l);
           if( sa->CAtom().GetLoaderId() == aa->GetLoaderId() )  {
-            if( TransformedCrds[k].QDistanceTo( sa->Center() ) < 0.01 )  {
+            if( TransformedCrds[k].QDistanceTo( sa->crd() ) < 0.01 )  {
               transforms->Delete(k);
             }
           }
         }
       }
       for( int k=0; k < transforms->Count(); k++ )  {
-        TMatrixD& transform = transforms->Item(k);
+        symmd& transform = transforms->Item(k);
         TXGrowLine& gl = XGrowLines.AddNew(EmptyString, A, aa, transform, FGlRender );
 
         if( (A->GetAtomInfo() == iQPeakIndex || aa->GetAtomInfo() == iQPeakIndex ) && !QPeakBondsVisible() )
@@ -2973,7 +2970,7 @@ void TGXApp::CreateXGrowLines()  {
         if( (A->GetAtomInfo() == iHydrogenIndex || aa->GetAtomInfo() == iHydrogenIndex) && !HBondsVisible() )
           gl.Visible(false);
 
-        float dist = TransformedCrds[k].DistanceTo( A->Center() );
+        double dist = TransformedCrds[k].DistanceTo( A->crd() );
         if( dist < (A->GetAtomInfo().GetRad1() + aa->GetAtomInfo().GetRad1() + FXFile->GetLattice().GetDelta()) )
           gl.Create("COV");
         else
@@ -3060,7 +3057,7 @@ void TGXApp::UpdateBonds()  {
   }
 }
 //..............................................................................
-TXLattice& TGXApp::AddLattice(const olxstr& Name, const TMatrixD& basis)  {
+TXLattice& TGXApp::AddLattice(const olxstr& Name, const mat3d& basis)  {
   TXLattice *XL = new TXLattice(Name, FGlRender);
   XL->SetLatticeBasis(basis);
   XL->Create();

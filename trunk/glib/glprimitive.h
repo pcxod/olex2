@@ -6,7 +6,6 @@
 #include "groupobj.h"
 #include "glclipplane.h"
 #include "ematrix.h"
-#include "vpoint.h"
 #include "ebasis.h"
 
 BeginGlNamespace()
@@ -28,8 +27,7 @@ const short sgloPoints    = 1,
             sgloMacro     = 14,
             sgloCommandList = 15;
 
-class AEvaluator // a prototype for the calculation of expressions
-{
+class AEvaluator  { // a prototype for the calculation of expressions
   int FMinX, FMaxX, FMinY, FMaxY;
 public:
   virtual void Eval(double X, double Y, double &Z, int &Color) = 0;
@@ -46,8 +44,7 @@ public:
 
 };
 
-class TGlPrimitive: public AGroupObject
-{
+class TGlPrimitive: public AGroupObject  {
   class TGlRender *FParentRender;
   olxstr  FName;
 protected:
@@ -67,7 +64,7 @@ protected:
   */
   void CreateQuadric();
   /* the data and parameters of the primitive */
-  TMatrixD FData;
+  ematd FData;
   /* Params:
    Disk: inner radius, outer radius, slices, loops
    DiskSlice: inner radius, outer radius, slices, loops, start angle, sweep angle
@@ -76,7 +73,7 @@ protected:
    Text(4): [0]<0 - bitmap font, [0] > 0 - ttf, [1]-zoom x, [2]-zoom y, [3]-zoom z
    note that the String must be initialised with a pointer to a proper string
   */
-  TVectorD FParams;
+  evecd FParams;
   int FId, FTexture, FQuadricDrawStyle, FQuadricNormals, FQuadricOrientation;
 public:
   TGlPrimitive(TObjectGroup *ParentG, TGlRender *ParentR);
@@ -100,8 +97,8 @@ public:
   int QuadricOrientation() const    {  return FQuadricOrientation;  }
   void QuadricOrientation(int v)    {  FQuadricOrientation = v;  }
 
-  TMatrixD& Data()    {  return FData;  }
-  TVectorD& Params()  {  return FParams;  }
+  inline ematd& Data()    {  return FData;  }
+  inline evecd& Params()  {  return FParams;  }
 
   /* fills the list woth parameter names */
   virtual void ListParams(TStrList &List);
@@ -130,15 +127,6 @@ public:
   void Name(const olxstr &name) {  FName = name; }
 
   AGOProperties * SetProperties( const AGOProperties *C);
-  // commandList interface
-  void GlTranslate( float _x, float _y, float _z);
-
-  template <class T> void GlTranslate( const TVPoint<T>& trans)  {
-    FParentRender->GlTranslate(trans);
-  }
-
-  void GlRotate( float Angle, float _x, float _y, float _z);
-  void GlOrient(const float *m);
   void CallList(TGlPrimitive *GlP);
   void CallList( int i )          {  glCallList(i); };
   void StartList();

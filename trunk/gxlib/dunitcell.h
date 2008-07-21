@@ -1,29 +1,29 @@
 #ifndef dunitcellH
 #define dunitcellH
 #include "gxbase.h"
-#include "vpoint.h"
+#include "threex3.h"
 #include "gdrawobject.h"
 
 BeginGxlNamespace()
 
 class TDUnitCell: public AGDrawObject  {
   bool FReciprical;
-  TVPointD FCenter, FOldCenter;
+  vec3d FCenter, FOldCenter;
   TGlPrimitive *FGlP;
-  TMatrixD CellToCartesian, HklToCartesian;
+  mat3d CellToCartesian, HklToCartesian;
 public:
   TDUnitCell(const olxstr& collectionName, TGlRender *Render);
   virtual ~TDUnitCell() {  }
-  void Init(const TVectorD& cell_params);
+  void Init(const double cell_params[6]);
   void Create(const olxstr& cName = EmptyString);
   bool Orient(TGlPrimitive *P);
-  bool GetDimensions(TVPointD &Max, TVPointD &Min){  return false;  }
+  bool GetDimensions(vec3d &Max, vec3d &Min){  return false;  }
 
   inline bool IsReciprical()  const {  return FReciprical;  }
   void Reciprical(bool v );
-  inline TVPointD& Center()         {  return FCenter;  }
-  inline const TMatrixD& GetCellToCartesian() const {  return CellToCartesian;  }
-  inline const TMatrixD& GetHklToCartesian()  const {  return HklToCartesian;  }
+  inline vec3d& Center()         {  return FCenter;  }
+  inline const mat3d& GetCellToCartesian() const {  return CellToCartesian;  }
+  inline const mat3d& GetHklToCartesian()  const {  return HklToCartesian;  }
   void ResetCentres();
 };
 

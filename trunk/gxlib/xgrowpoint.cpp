@@ -14,8 +14,8 @@
 //----------------------------------------------------------------------------//
 // TXGrowLine function bodies
 //----------------------------------------------------------------------------//
-TXGrowPoint::TXGrowPoint(const olxstr& collectionName, const TVPointD& center,
-                         const TMatrixD& transform, TGlRender *Render) :
+TXGrowPoint::TXGrowPoint(const olxstr& collectionName, const vec3d& center,
+                         const symmd& transform, TGlRender *Render) :
   AGDrawObject(collectionName)  {
   AGDrawObject::Groupable(false);
   FParent = Render;
@@ -84,7 +84,7 @@ void TXGrowPoint::SetRadius(float V)  {
   Params()[0] = V;
 }
 //..............................................................................
-bool TXGrowPoint::GetDimensions(TVPointD &Max, TVPointD &Min)  {
+bool TXGrowPoint::GetDimensions(vec3d &Max, vec3d &Min)  {
   if( Center[0] > Max[0] )  Max[0] = Center[0];
   if( Center[1] > Max[1] )  Max[1] = Center[1];
   if( Center[2] > Max[2] )  Max[2] = Center[2];

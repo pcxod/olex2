@@ -10,9 +10,9 @@ BeginXlibNamespace()
   typedef TTypeList< AnAssociation2<int,int> > TIntPairList;
 
 struct TSymmTestData  {
-  TVPointD Center;
+  vec3d Center;
   TIntPairList Atoms;
-  TSymmTestData(const TVPointD& v, int i, int j )  {
+  TSymmTestData(const vec3d& v, int i, int j )  {
     Center = v;
     Atoms.AddNew<int, int>(i, j);
   }
@@ -20,16 +20,16 @@ struct TSymmTestData  {
 };
 
 class TSymmTest : public IEObject {
-  TTypeList< AnAssociation2<TVPointD,TCAtom*> > Atoms;
-  TVPointD GCenter;
+  TTypeList< AnAssociation2<vec3d,TCAtom*> > Atoms;
+  vec3d GCenter;
   TTypeList< TSymmTestData > Vecs;
 
 protected:
   static inline int VecsCmpByCount( const TSymmTestData& a , const TSymmTestData& b )  {
     return a.Count() - b.Count();
   }
-  static inline int VecsCmpByRadius( const AnAssociation3<TVPointD,int,int>& a ,
-                                     const AnAssociation3<TVPointD,int,int>& b )  {
+  static inline int VecsCmpByRadius( const AnAssociation3<vec3d,int,int>& a ,
+                                     const AnAssociation3<vec3d,int,int>& b )  {
     double v = a.GetA().QLength() - b.GetA().QLength();
     //double v = a.GetA().QDistanceTo( b.GetA() );
     if( v < 0 )  return -1;
@@ -46,71 +46,67 @@ public:
       GCenter /= Atoms.Count();
   }
 
-  inline const TVPointD GetGravityCenter()  const  {  return GCenter;  }
+  inline const vec3d GetGravityCenter()  const  {  return GCenter;  }
   inline const  TTypeList< TSymmTestData >& GetResults() const  {  return Vecs;  }
 
   inline const int AtomCount() const  {  return Atoms.Count();  }
-  void Push(const TVPointD& t)  {
+  void Push(const vec3d& t)  {
     for( int i=0; i < Atoms.Count(); i++ )
       Atoms[i].A() += t; 
   }
 
-  bool EvaluateMatrix(int rowIndex, const TVectorD& trans, TMatrixD& res)  {
-    if( rowIndex < 0 || rowIndex >= Vecs.Count() )
-      throw TInvalidArgumentException(__OlxSourceInfo, "row index");
+  //bool EvaluateMatrix(int rowIndex, const vec3d& trans, symmd& res)  {
+  //  if( rowIndex < 0 || rowIndex >= Vecs.Count() )
+  //    throw TInvalidArgumentException(__OlxSourceInfo, "row index");
 
-    res.Resize(3,4);
-    res.Null();
+  //  res.Null();
 
-    const TIntPairList& Row = Vecs[rowIndex].Atoms;
+  //  const TIntPairList& Row = Vecs[rowIndex].Atoms;
 
-    if( Row.Count() >= 4 )  {
-      TMatrixD gs(4,4), lm(Row.Count(), 4), lmt(4, Row.Count());
-      TVectorD b(Row.Count()), gr(4), sol(4);
-      TVPointD cent;
-      for( int i=0; i < Row.Count(); i++ )  {
-        cent = Atoms[Row[i].GetB()].GetA();
-        cent -= trans;
-        for( int j=0; j < 3; j++ )  {
-          if( cent[j] > 0.5 )  cent[j] -= 1;
-          lm[i][j] = cent[j];
-          lmt[j][i] = cent[j];
-        }
-        lm[i][3] = 1;
-        lmt[3][i] = 1;
-      }
-      for(int i=0; i < 3; i++ )  {
-        for( int j=0; j < Row.Count(); j++ )  {
-          b[j] = Atoms[Row[j].GetA()].GetA()[i] - trans[i];
-          if( b[j] > 0.5 )  b[j] -= 1;
-        }
+  //  if( Row.Count() >= 4 )  {
+  //    TMatrixD gs(4,4), lm(Row.Count(), 4), lmt(4, Row.Count());
+  //    TVectorD b(Row.Count()), gr(4), sol(4);
+  //    vec3d cent;
+  //    for( int i=0; i < Row.Count(); i++ )  {
+  //      cent = Atoms[Row[i].GetB()].GetA();
+  //      cent -= trans;
+  //      for( int j=0; j < 3; j++ )  {
+  //        if( cent[j] > 0.5 )  cent[j] -= 1;
+  //        lm[i][j] = cent[j];
+  //        lmt[j][i] = cent[j];
+  //      }
+  //      lm[i][3] = 1;
+  //      lmt[3][i] = 1;
+  //    }
+  //    for(int i=0; i < 3; i++ )  {
+  //      for( int j=0; j < Row.Count(); j++ )  {
+  //        b[j] = Atoms[Row[j].GetA()].GetA()[i] - trans[i];
+  //        if( b[j] > 0.5 )  b[j] -= 1;
+  //      }
 
-        gs = lmt * lm;
-        gr = lmt * b;
+  //      gs = lmt * lm;
+  //      gr = lmt * b;
 
-        TMatrixD::GauseSolve(gs, gr, sol);
-        res[i] = sol;
-        sol.Null();
-      }
-      return true;
-    }
-    return false;
-  }
+  //      TMatrixD::GauseSolve(gs, gr, sol);
+  //      res[i] = sol;
+  //      sol.Null();
+  //    }
+  //    return true;
+  //  }
+  //  return false;
+  //}
 
-  void TestMatrix(const TMatrixD& matr, double tol)  {
-    TTypeList< AnAssociation3<TVPointD,int,int> > tmpVecs;
+  void TestMatrix(const symmd& matr, double tol)  {
+    TTypeList< AnAssociation3<vec3d,int,int> > tmpVecs;
     Vecs.Clear();
     Vecs.SetCapacity( (Atoms.Count()*Atoms.Count()-1)/2+1 );
     tmpVecs.SetCapacity( (Atoms.Count()*Atoms.Count()-1)/2+1 );
-    TVPointD a, b;
+    vec3d a, b;
     for( int i=0; i < Atoms.Count(); i++ )  {
       for( int j=i+1; j < Atoms.Count(); j++ )  {
         a = Atoms[i].GetA();
         b = Atoms[j].GetA();
         b = matr * b;
-        b[0] += matr[0][3];
-        b[1] += matr[1][3];
-        b[2] += matr[2][3];
         a += b;
         for( int k=0; k < 3; k++ )  {
           a[k] -= Round(a[k]);
@@ -118,7 +114,7 @@ public:
           if( a[k] < tol )  a[k] = 0;
           else if( (1-a[k]) < tol )  a[k] = 0;
         }
-        tmpVecs.AddNew<TVPointD,int,int>(a, i, j);
+        tmpVecs.AddNew<vec3d,int,int>(a, i, j);
       }
     }
 
@@ -165,23 +161,20 @@ public:
     delete [] radii;
     Vecs.QuickSorter.SortSF(Vecs,VecsCmpByCount);
   }
-  static void TestDependency(const TTypeList< AnAssociation2<TVPointD,TCAtom*> >& lista,
-                             const TTypeList< AnAssociation2<TVPointD,TCAtom*> >& listb,
+  static void TestDependency(const TTypeList< AnAssociation2<vec3d,TCAtom*> >& lista,
+                             const TTypeList< AnAssociation2<vec3d,TCAtom*> >& listb,
                              TTypeList< TSymmTestData >& Vecs,
-                             const TMatrixD& matr, double tol)  {
-    TTypeList< AnAssociation3<TVPointD,int,int> > tmpVecs;
+                             const symmd& matr, double tol)  {
+    TTypeList< AnAssociation3<vec3d,int,int> > tmpVecs;
     Vecs.Clear();
     Vecs.SetCapacity( lista.Count()*listb.Count()+1 );
     tmpVecs.SetCapacity( lista.Count()*listb.Count()+1 );
-    TVPointD a, b;
+    vec3d a, b;
     for( int i=0; i < lista.Count(); i++ )  {
       for( int j=0; j < listb.Count(); j++ )  {
         a = lista[i].GetA();
         b = listb[j].GetA();
         b = matr * b;
-        b[0] += matr[0][3];
-        b[1] += matr[1][3];
-        b[2] += matr[2][3];
         a += b;
         for( int k=0; k < 3; k++ )  {
           a[k] -= Round(a[k]);
@@ -189,7 +182,7 @@ public:
           if( a[k] < tol )  a[k] = 0;
           else if( (1-a[k]) < tol )  a[k] = 0;
         }
-        tmpVecs.AddNew<TVPointD,int,int>(a, i, j);
+        tmpVecs.AddNew<vec3d,int,int>(a, i, j);
       }
     }
 

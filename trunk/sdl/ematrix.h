@@ -69,6 +69,12 @@ public:
 
   virtual ~TMatrix()  {  Clear();  }
 
+  template <class MC> void Assign(const MC& M, int width, int height)  {
+    Resize(width, height);
+    for( int i=0; i < width; i++ )
+      for(int j=0; j < height; j++ )
+        FData[j][i] = M[j][i];
+  }
   //  void GetData(VType *Data[]) const;
   // the function is used to obtain a copy of the matrix in an array
   // be sure that the dimensions of the array are greater or equal to
@@ -607,13 +613,13 @@ public:
 };
 //------------------------------------------------------------------------------
 
-  typedef TMatrix<float> TMatrixF;
-  typedef TMatrix<double> TMatrixD;
+  typedef TMatrix<float> ematf;
+  typedef TMatrix<double> ematd;
 
-  typedef TTypeList<TMatrixF> TMatrixFList;
-  typedef TTypeList<TMatrixD> TMatrixDList;
-  typedef TPtrList<TMatrixF> TMatrixFPList;
-  typedef TPtrList<TMatrixD> TMatrixDPList;
+  typedef TTypeList<ematf> ematf_list;
+  typedef TTypeList<ematd> ematd_list;
+  typedef TPtrList<ematf> ematf_plist;
+  typedef TPtrList<ematd> ematd_plist;
 
 EndEsdlNamespace()
 #endif
