@@ -1931,16 +1931,18 @@ void TMainForm::macMatr(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       mat3d M;
       if( FXApp->HklVisible() )  M = FXApp->XFile().GetAsymmUnit().GetHklToCartesian();
       else                       M = FXApp->XFile().GetAsymmUnit().GetCellToCartesian();
-      if( Cmds[0] == "100" || Cmds[0] == "1" ) { FXApp->GetRender().Basis()->OrientNormal( M[0] ); return; }
-      if( Cmds[0] == "010" || Cmds[0] == "2"  ){ FXApp->GetRender().Basis()->OrientNormal( M[1] ); return; }
-      if( Cmds[0] == "001" || Cmds[0] == "3"  ){ FXApp->GetRender().Basis()->OrientNormal( M[2] ); return; }
-
-      if( Cmds[0] == "110" ){ FXApp->GetRender().Basis()->OrientNormal( M[0] + M[1] ); return; }
-      if( Cmds[0] == "101" ){ FXApp->GetRender().Basis()->OrientNormal( M[0] + M[2] ); return; }
-      if( Cmds[0] == "011" ){ FXApp->GetRender().Basis()->OrientNormal( M[1] + M[2] ); return; }
-      if( Cmds[0] == "111" ){ FXApp->GetRender().Basis()->OrientNormal( M[0] + M[1] + M[2] ); return; }
-
-      Error.ProcessingError(__OlxSrcInfo, "undefined arguments" );
+      if( Cmds[0] == "100" || Cmds[0] == "1" ) FXApp->GetRender().Basis()->OrientNormal( M[0] );
+      else if( Cmds[0] == "010" || Cmds[0] == "2"  ) FXApp->GetRender().Basis()->OrientNormal( M[1] );
+      else if( Cmds[0] == "001" || Cmds[0] == "3"  ) FXApp->GetRender().Basis()->OrientNormal( M[2] );
+      else if( Cmds[0] == "110" )  FXApp->GetRender().Basis()->OrientNormal( M[0] + M[1] );
+      else if( Cmds[0] == "101" )  FXApp->GetRender().Basis()->OrientNormal( M[0] + M[2] );
+      else if( Cmds[0] == "011" )  FXApp->GetRender().Basis()->OrientNormal( M[1] + M[2] );
+      else if( Cmds[0] == "111" )  FXApp->GetRender().Basis()->OrientNormal( M[0] + M[1] + M[2] );
+      else  {
+        Error.ProcessingError(__OlxSrcInfo, "undefined arguments" );
+        return;
+      }
+      FXApp->Draw();
       return;
     }
     if( Cmds.Count() == 9 )  {
@@ -1959,6 +1961,7 @@ void TMainForm::macMatr(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       M[1].Normalise();
       M[2].Normalise();
       FXApp->GetRender().Basis()->SetMatrix(M);
+      FXApp->Draw();
       return;
     }
     Error.ProcessingError(__OlxSrcInfo, "wrong arguments" );
@@ -1996,6 +1999,7 @@ void TMainForm::macLine(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   vec3d V( Atoms[0]->Atom().crd() - Atoms[1]->Atom().crd() );
   FXApp->GetRender().Basis()->OrientNormal(V);
   FXApp->AddLine(name, Atoms[0]->Atom().crd(), Atoms[1]->Atom().crd());
+  FXApp->Draw();
 }
 //..............................................................................
 void TMainForm::macMpln(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
