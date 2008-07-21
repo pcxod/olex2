@@ -322,7 +322,7 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
     sgTab.Row(i)->String(5) = sortedSATestResults.GetObject(i)->GetA()->GetObject()->GetLaueClass().GetBareName();
     if( PresentElements.Count() )  {
       int ElementFound = 0;
-      symmd_list sgMl;
+      smatd_list sgMl;
       for( int j=0; j < PresentElements.Count(); j++ )  {
         if( !PresentElements[j] )  continue;
         sgMl.Clear();

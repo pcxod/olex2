@@ -22,7 +22,7 @@ short TSymmParser::IsAxis(const char* axes, const olxstr& p){
 }
 //..............................................................................
 // Transforms standard SYMM operation (INS, CIF files) to matrix
-bool  TSymmParser::SymmToMatrix(const olxstr& S, symmd& M)  {
+bool  TSymmParser::SymmToMatrix(const olxstr& S, smatd& M)  {
   olxstr p, p1, opr;
   static const char Axes[3] = {'x','y','z'};
   double ratio;
@@ -138,7 +138,7 @@ olxstr FormatFloatX(double f)  {
   else
     return olxstr( (int)(w*r+r1) ) << '/' << (int)(r1+w1);
 }
-olxstr TSymmParser::MatrixToSymm(const symmd& M)  {
+olxstr TSymmParser::MatrixToSymm(const smatd& M)  {
   olxstr T, T1, T2;
   char Axis[] = {'X','Y','Z'};
   for( int j=0; j < 3; j ++ )  {
@@ -172,11 +172,11 @@ olxstr TSymmParser::MatrixToSymm(const symmd& M)  {
   return T;
 }
 //..............................................................................
-symmd TSymmParser::SymmCodeToMatrixU(const TUnitCell& UC, const olxstr &Code)  {
+smatd TSymmParser::SymmCodeToMatrixU(const TUnitCell& UC, const olxstr &Code)  {
   olxstr Tmp;
   TStrList Toks(Code, '_');
   int isymm;
-  symmd mSymm;
+  smatd mSymm;
   if( Toks.Count() == 1 )  {
     isymm = Toks[0].ToInt()-1;
     if( isymm < 0 || isymm >= UC.MatrixCount() )
@@ -208,11 +208,11 @@ symmd TSymmParser::SymmCodeToMatrixU(const TUnitCell& UC, const olxstr &Code)  {
   return mSymm;
 }
 //..............................................................................
-symmd TSymmParser::SymmCodeToMatrixA(const TAsymmUnit& AU, const olxstr &Code)  {
+smatd TSymmParser::SymmCodeToMatrixA(const TAsymmUnit& AU, const olxstr &Code)  {
   olxstr Tmp;
   TStrList Toks(Code, '_');
   int isymm;
-  symmd mSymm;
+  smatd mSymm;
   if( Toks.Count() == 1 )  {
     isymm = Toks.String(0).ToInt()-1;
     if( isymm < 0 || isymm >= AU.MatrixCount() )
@@ -244,11 +244,11 @@ symmd TSymmParser::SymmCodeToMatrixA(const TAsymmUnit& AU, const olxstr &Code)  
   return mSymm;
 }
 //..............................................................................
-symmd TSymmParser::SymmCodeToMatrix(const symmd_list& ml, const olxstr &Code)  {
+smatd TSymmParser::SymmCodeToMatrix(const smatd_list& ml, const olxstr &Code)  {
   olxstr Tmp;
   TStrList Toks(Code, '_');
   int isymm;
-  symmd mSymm;
+  smatd mSymm;
   if( Toks.Count() == 1 )  {
     isymm = Toks[0].ToInt()-1;
     if( isymm < 0 || isymm >= ml.Count() )
@@ -283,8 +283,8 @@ symmd TSymmParser::SymmCodeToMatrix(const symmd_list& ml, const olxstr &Code)  {
 }
 //..............................................................................
 // this needs to be of very high performance
-olxstr TSymmParser::MatrixToSymmCode(const TUnitCell& UC, const symmd& M)  {
-  const symmd& m = UC.GetMatrix( M.GetTag() );
+olxstr TSymmParser::MatrixToSymmCode(const TUnitCell& UC, const smatd& M)  {
+  const smatd& m = UC.GetMatrix( M.GetTag() );
   vec3i Trans( m.t - M.t);
   int baseVal = 5;
   if( (abs(Trans[0]) > 4) || (abs(Trans[1]) > 4) || (abs(Trans[1]) > 4) )
@@ -299,7 +299,7 @@ olxstr TSymmParser::MatrixToSymmCode(const TUnitCell& UC, const symmd& M)  {
   return olxstr(bf);
 }
 //..............................................................................
-olxstr TSymmParser::MatrixToSymmCode(const symmd_list& ml, const symmd& M)  {
+olxstr TSymmParser::MatrixToSymmCode(const smatd_list& ml, const smatd& M)  {
   vec3i Trans( ml[M.GetTag()].t - M.t );
   int baseVal = 5;
   if( (abs(Trans[0]) > 4) || (abs(Trans[1]) > 4) || (abs(Trans[1]) > 4) )

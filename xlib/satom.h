@@ -13,7 +13,7 @@ BeginXlibNamespace()
 
 class TSAtom : public TBasicNode<TSAtom, class TSBond>  {
 private:
-  symmd_plist Matrices;
+  smatd_plist Matrices;
   // a list of pointers to matrices used for generation of atom
   class TCAtom*  FCAtom;       // basic crystallographic information
 //  int FTag; // override TCollectioItem and TGDrawObject tags
@@ -44,8 +44,8 @@ public:
   inline const olxstr& GetLabel() const       {  return FCAtom->GetLabel(); }
 
   inline int MatrixCount() const         {  return Matrices.Count();  }
-  inline const symmd& GetMatrix(int i) const {  return *Matrices[i];  }
-  inline void AddMatrix(symmd* M)            {  Matrices.Add(M);  }
+  inline const smatd& GetMatrix(int i) const {  return *Matrices[i];  }
+  inline void AddMatrix(smatd* M)            {  Matrices.Add(M);  }
   inline void AddMatrices(TSAtom *A)         {  Matrices.AddList(A->Matrices); }
 
   void ChangeType(const olxstr& Type);

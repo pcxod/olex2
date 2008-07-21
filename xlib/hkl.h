@@ -98,7 +98,7 @@ public:
  The refturned value is Rint = Sum(|F^2-F^2mean|)/Sum(|F^2|)
 */
 template <class RefListMerger>
-  MergeStats Merge(symmd_list& ml, TRefList& output)  {
+  MergeStats Merge(smatd_list& ml, TRefList& output)  {
     MergeStats stats;
     // replicate reflections, to leave this object as it is
     TRefPList refs, toMerge;  // list of replicated reflections
@@ -188,7 +188,7 @@ template <class RefListMerger>
     stats.UniqueReflections = output.Count();
     return stats;
   }
-  inline MergeStats SimpleMerge(symmd_list& ml, TRefList& output)  {
+  inline MergeStats SimpleMerge(smatd_list& ml, TRefList& output)  {
     return  Merge<TSimpleMerger>(ml, output);
   }
 //..............................................................................

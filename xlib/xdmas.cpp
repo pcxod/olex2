@@ -80,7 +80,7 @@ void TXDMas::LoadFromStrings(const TStrList& Strings)  {
   if( !CellFound || !LattFound )
     throw TFunctionFailedException(__OlxSourceInfo, "CELL or LATT are missing");
 
-  symmd sm;
+  smatd sm;
   for( int i=0; i < symm.Count(); i++ )  {
     if( TSymmParser::SymmToMatrix(symm[i], sm) )
       GetAsymmUnit().AddMatrix(sm);

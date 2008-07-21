@@ -55,7 +55,7 @@ public:
       Atoms[i].A() += t; 
   }
 
-  //bool EvaluateMatrix(int rowIndex, const vec3d& trans, symmd& res)  {
+  //bool EvaluateMatrix(int rowIndex, const vec3d& trans, smatd& res)  {
   //  if( rowIndex < 0 || rowIndex >= Vecs.Count() )
   //    throw TInvalidArgumentException(__OlxSourceInfo, "row index");
 
@@ -96,7 +96,7 @@ public:
   //  return false;
   //}
 
-  void TestMatrix(const symmd& matr, double tol)  {
+  void TestMatrix(const smatd& matr, double tol)  {
     TTypeList< AnAssociation3<vec3d,int,int> > tmpVecs;
     Vecs.Clear();
     Vecs.SetCapacity( (Atoms.Count()*Atoms.Count()-1)/2+1 );
@@ -164,7 +164,7 @@ public:
   static void TestDependency(const TTypeList< AnAssociation2<vec3d,TCAtom*> >& lista,
                              const TTypeList< AnAssociation2<vec3d,TCAtom*> >& listb,
                              TTypeList< TSymmTestData >& Vecs,
-                             const symmd& matr, double tol)  {
+                             const smatd& matr, double tol)  {
     TTypeList< AnAssociation3<vec3d,int,int> > tmpVecs;
     Vecs.Clear();
     Vecs.SetCapacity( lista.Count()*listb.Count()+1 );

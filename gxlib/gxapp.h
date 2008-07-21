@@ -90,7 +90,7 @@ class TGXApp : public TXApp, AEventsDispatcher  {
   TTypeListExt<TXGrowPoint, IEObject> XGrowPoints;
   TTypeListExt<TXGrowLine, IEObject> XGrowLines;
   olxstr AtomsToGrow;
-  symmd_list UsedTransforms;
+  smatd_list UsedTransforms;
   TTypeListExt<TXReflection, IEObject> XReflections;
   TPtrList<TGlBitmap> GlBitmaps;
   TTypeListExt<TXGlLabel, IEObject> XLabels;
@@ -273,7 +273,7 @@ public:
   void ChangeAtomType( TXAtom *A, const olxstr &Element);
   bool AtomExpandable(TXAtom *XA);
   void GrowWhole(TCAtomPList* Template=NULL){  FXFile->GetLattice().GenerateWholeContent(Template); }
-  void Grow(const TXAtomPList& atoms, const symmd_list& matrices);
+  void Grow(const TXAtomPList& atoms, const smatd_list& matrices);
 
   void MoveFragment(TXAtom* to, TXAtom* fragAtom, bool copy);
   void MoveFragment(const vec3d& to, TXAtom* fragAtom, bool copy);
@@ -414,7 +414,7 @@ public:     void CalcProbFactor(float Prob);
   TUndoData* SetGraphicsVisible( AGDrawObject *G, bool v );
   void InvertFragments(const TXAtomPList& NetworkAtoms);
   void MoveFragments(const TXAtomPList& NetworkAtoms, const vec3d& v);
-  void TransformFragments(const TXAtomPList& NetworkAtoms, const symmd& m);
+  void TransformFragments(const TXAtomPList& NetworkAtoms, const smatd& m);
 
   void FragmentsVisible(const TNetPList& Networks, bool V);
   int InvertFragmentsList(const TNetPList& SelectedFragments, TNetPList& Result);

@@ -297,8 +297,9 @@ void TXFile::LibGetFormula(const TStrObjList& Params, TMacroError& E)  {
     bool subAdded = false;
     double dv = units[i].ToDouble()/GetAsymmUnit().GetZ();
     tmp = (digits > 0) ? olxstr::FormatFloat(digits, dv) : dv;
+    tmp.TrimFloat();
     if( html )  {
-      if( dv/GetAsymmUnit().GetZ() != 1 )  {
+      if( fabs(dv-1) > 0.01 && fabs(dv) > 0.01 )  {
         rv << "<sub>" << tmp;
         subAdded = true;
       }
@@ -306,8 +307,6 @@ void TXFile::LibGetFormula(const TStrObjList& Params, TMacroError& E)  {
     else
       rv << tmp;
 
-    if( rv.EndsWith(".0") ) //
-      rv.SetLength( rv.Length() -2 );
     if( (i+1) < len )  {
       if( list )
         rv << ',';

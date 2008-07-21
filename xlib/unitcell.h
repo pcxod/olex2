@@ -14,7 +14,7 @@ BeginXlibNamespace()
 class TUnitCell: public IEObject  {
   TNetwork*  Network;  // for internal use only
 private:
-  symmd_list Matrices;  // list of unique matrices; FMatrices + centering
+  smatd_list Matrices;  // list of unique matrices; FMatrices + centering
   TArrayList<TEllpPList> Ellipsoids;  // i - atoms index, j - matrix index 
   class TLattice*  Lattice;    // parent lattice
 public:
@@ -26,7 +26,7 @@ public:
   void Clear();
 
   inline int MatrixCount()             const {  return Matrices.Count();  }
-  inline const symmd& GetMatrix(int i) const {  return Matrices[i];  }
+  inline const smatd& GetMatrix(int i) const {  return Matrices[i];  }
 
   const TEllipsoid& GetEllipsoid(int MatrixId, int AUId) const;
   void AddEllipsoid(); // adds a new row to ellipsoids, intialised with NULLs
@@ -43,16 +43,16 @@ public:
   // the funciton searches a matrix which moves "atom" to "to" so that the
   // distance between them is shortest and return the matrix, which if not NULL
   // has to be deleted with delete
-  symmd* GetClosest(const class TCAtom& to, const TCAtom& atom, bool ConsiderOriginal) const;
+  smatd* GetClosest(const class TCAtom& to, const TCAtom& atom, bool ConsiderOriginal) const;
 
-  symmd* GetClosest(const vec3d& to, const vec3d& from, bool ConsiderOriginal) const;
+  smatd* GetClosest(const vec3d& to, const vec3d& from, bool ConsiderOriginal) const;
 
-  symmd_list* GetInRange(const vec3d& to, const vec3d& from, double R, bool IncludeI) const;
+  smatd_list* GetInRange(const vec3d& to, const vec3d& from, double R, bool IncludeI) const;
 
   // returns a list of all closest (in all directions) matrices
-  symmd_list* GetInRangeEx(const vec3d& to, const vec3d& from, float R, bool IncludeI, const symmd_list& ToSkip) const;
+  smatd_list* GetInRangeEx(const vec3d& to, const vec3d& from, float R, bool IncludeI, const smatd_list& ToSkip) const;
   // returns a list of all biding matrices
-  symmd_list* GetBinding(const TCAtom& toA, const TCAtom& fromA,
+  smatd_list* GetBinding(const TCAtom& toA, const TCAtom& fromA,
     const vec3d& to, const vec3d& from, bool IncludeI, bool IncludeHBonds) const;
 
   double FindClosestDistance(const class TCAtom& to, const TCAtom& atom) const;
@@ -136,14 +136,14 @@ public:
 protected:
   class TSearchSymmEqTask  {
     TPtrList<TCAtom>& Atoms;
-    const symmd_list& Matrices;
+    const smatd_list& Matrices;
     TStrList& Report;
     bool Initialise;
     double tolerance;
     TAsymmUnit* AU;
     TLattice* Latt;
   public:
-    TSearchSymmEqTask(TPtrList<TCAtom>& atoms, const symmd_list& matrices, TStrList& report,
+    TSearchSymmEqTask(TPtrList<TCAtom>& atoms, const smatd_list& matrices, TStrList& report,
                       double tol, bool initialise);
     void Run(long ind);
     TSearchSymmEqTask* Replicate() const  {

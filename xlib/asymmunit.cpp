@@ -162,7 +162,7 @@ void TAsymmUnit::Assign(const TAsymmUnit& C)  {
   rSAME.Assign(*this, C.rSAME);
 
   for( int i=0; i < C.UsedSymm.Count(); i++ )
-    UsedSymm.Add( C.UsedSymm[i] );
+    UsedSymm.AddCCopy( C.UsedSymm[i] );
 }
 //..............................................................................
 void  TAsymmUnit::InitMatrices()  {
@@ -509,7 +509,7 @@ double TAsymmUnit::MolWeight() const  {
   return Mw;
 }
 //..............................................................................
-void TAsymmUnit::AddMatrix(const symmd& a)  {
+void TAsymmUnit::AddMatrix(const smatd& a)  {
   if( a.r.IsI() )  Matrices.InsertCCopy(0, a);
   else             Matrices.AddCCopy(a);
 }
@@ -679,11 +679,11 @@ void TAsymmUnit::AddNewSfac(const olxstr& label,
   SfacData.Add( label, new TLibScatterer(a1,a2,a3,a4,b1,b2,b3,b4,c) );
 }
 //..............................................................................
-const symmd& TAsymmUnit::AddUsedSymm(const symmd& matr)  {
+const smatd& TAsymmUnit::AddUsedSymm(const smatd& matr)  {
   int ind = UsedSymm.IndexOf(matr);
-  symmd* rv = NULL;
+  smatd* rv = NULL;
   if( ind == -1 )  {
-    rv = &UsedSymm.Add( *(new symmd(matr)) );
+    rv = &UsedSymm.Add( *(new smatd(matr)) );
     rv->SetTag(1);
   }
   else  {
@@ -693,7 +693,7 @@ const symmd& TAsymmUnit::AddUsedSymm(const symmd& matr)  {
   return *rv;
 }
 //..............................................................................
-void TAsymmUnit::RemUsedSymm(const symmd& matr)  {
+void TAsymmUnit::RemUsedSymm(const smatd& matr)  {
   int ind = UsedSymm.IndexOf(matr);
   if( ind == -1 )
     throw TInvalidArgumentException(__OlxSourceInfo, "matrix is not in the list");
@@ -714,7 +714,7 @@ double TAsymmUnit::FindRestrainedDistance(const TCAtom& a1, const TCAtom& a2)  {
   return -1;
 }
 //..............................................................................
-void TAsymmUnit::OnCAtomCrdChange( TCAtom* ca, const symmd& matr )  {
+void TAsymmUnit::OnCAtomCrdChange( TCAtom* ca, const smatd& matr )  {
   throw TNotImplementedException(__OlxSourceInfo);
 }
 //..............................................................................

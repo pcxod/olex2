@@ -160,7 +160,7 @@ void XLibMacros::macAddSE(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     return;
   }
   if( Cmds.Count() == 1 )  {
-    symmd_list ml;
+    smatd_list ml;
     sg->GetMatrices(ml, mattAll);
     ml.SetCapacity( ml.Count()*2 );
     int mc = ml.Count();
@@ -194,7 +194,7 @@ void XLibMacros::macAddSE(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     return;
   }
   TSymmTest st(uc);
-  symmd m;
+  smatd m;
   m.r.I();
   double tol = 0.1;
   st.TestMatrix(m, tol);
@@ -281,8 +281,8 @@ void XLibMacros::macEnvi(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   TLattice& latt = TXApp::GetInstance().XFile().GetLattice();
   TAsymmUnit& au = latt.GetAsymmUnit();
   vec3d V;
-  symmd_list* L;
-  TArrayList< AnAssociation3<TCAtom*, vec3d, symmd> > rowData;
+  smatd_list* L;
+  TArrayList< AnAssociation3<TCAtom*, vec3d, smatd> > rowData;
   TCAtomPList allAtoms;
 
   for( int i=0; i < au.AtomCount(); i++ )  {
@@ -305,12 +305,12 @@ void XLibMacros::macEnvi(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       L = latt.GetUnitCell().GetInRange(SA.ccrd(), allAtoms[i]->ccrd(), r, true);
     if( L->Count() != 0 )  {
       for( int j=0; j < L->Count(); j++ )  {
-        const symmd& m = L->Item(j);
+        const smatd& m = L->Item(j);
         V = m * allAtoms[i]->ccrd() - SA.ccrd();
         au.CellToCartesian(V);
         if( V.Length() == 0 )  // symmetrical equivalent?
           continue;
-        rowData.Add( AnAssociation3<TCAtom*, vec3d, symmd>(allAtoms[i], V, m) );
+        rowData.Add( AnAssociation3<TCAtom*, vec3d, smatd>(allAtoms[i], V, m) );
       }
     }
     delete L;
@@ -320,7 +320,7 @@ void XLibMacros::macEnvi(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   table.ColName(1) = "SYMM";
   rowData.BubleSorter.Sort<XLibMacros::TEnviComparator>(rowData);
   for( int i=0; i < rowData.Count(); i++ )  {
-    const AnAssociation3<TCAtom*, vec3d, symmd>& rd = rowData[i];
+    const AnAssociation3<TCAtom*, vec3d, smatd>& rd = rowData[i];
     table.RowName(i) = rd.GetA()->GetLabel();
     table.ColName(i+2) = table.RowName(i);
     if( rd.GetC().r.IsI() && rd.GetC().t.IsNull() )
@@ -331,7 +331,7 @@ void XLibMacros::macEnvi(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     for( int j=0; j < rowData.Count(); j++ )  {
       if( i == j )  { table[i][j+2] = '-'; continue; }
       if( i < j )   { table[i][j+2] = '-'; continue; }
-      const AnAssociation3<TCAtom*, vec3d, symmd>& rd1 = rowData[j];
+      const AnAssociation3<TCAtom*, vec3d, smatd>& rd1 = rowData[j];
       if( rd.GetB().Length() != 0 && rd1.GetB().Length() != 0 )  {
         double angle = rd.GetB().CAngle(rd1.GetB());
         angle = acos(angle)*180/M_PI;
@@ -362,7 +362,7 @@ void XLibMacros::funRemoveSE(const TStrObjList &Params, TMacroError &E)  {
       E.SetRetVal( sg->GetName() );
       return;
     }
-    symmd_list ml;
+    smatd_list ml;
     sg->GetMatrices(ml, mattAll^mattInversion);
     TPSTypeList<double, TSpaceGroup*> sglist;
     for( int i=0; i < TSymmLib::GetInstance()->SGCount(); i++ )  {
@@ -591,7 +591,7 @@ void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options, TMacro
 
   olxstr RF = TEFile::ExtractFilePath(Cif->GetFileName()) + "tables.html", Tmp;
   Root = DF.Root().FindItemCI("Cif_Tables");
-  symmd_list SymmList;
+  smatd_list SymmList;
   for( int i=0; i < Cmds.Count(); i++ )  {
     TD = NULL;
     if( Cmds[i].IsNumber() )  {
@@ -795,9 +795,9 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
     else  {
       TCifData* cd = Cif->FindParam("_symmetry_space_group_name_H-M");
       if( cd->Data->IsEmpty() )
-        cd->Data->Add( sg->GetName() );
+        cd->Data->Add( sg->GetFullName() );
       else
-        cd->Data->String(0) = sg->GetName();
+        cd->Data->String(0) = sg->GetFullName();
       cd->String = true;
     }
     if( !Cif->ParamExists("_symmetry_space_group_name_Hall") )
@@ -880,7 +880,7 @@ void XLibMacros::macVoidE(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     E.ProcessingError(__OlxSrcInfo, "could not locate space group");
     return;
   }
-  symmd_list ml;
+  smatd_list ml;
   sg->GetMatrices(ml, mattAll^mattInversion);
   for( int i=0; i < au.AtomCount(); i++ )  {
     TCAtom& ca = au.GetAtom(i);
@@ -1160,7 +1160,7 @@ void XLibMacros::macChangeSG(TStrObjList &Cmds, const TParamList &Options, TMacr
     E.ProcessingError(__OlxSrcInfo, "Could not identify given space group");
     return;
   }
-  symmd_list ml;
+  smatd_list ml;
   sg->GetMatrices(ml, mattAll );
   TTypeList< AnAssociation3<vec3d,TCAtom*, int> > list;
   uc.GenereteAtomCoordinates(list, true);

@@ -59,7 +59,7 @@ void TSGTest::MergeTest(const TPtrList<TSpaceGroup>& sgList,  TTypeList<TSGStats
   typedef TTypeList<SGAss>  SGList;
   TTypeList< MatrixAss > UniqMatricesNT;
   SGList SGHitsNT;
-  symmd_list sgMl;
+  smatd_list sgMl;
   vec3d hklv;
   TArray3D<TReflection*>& Hkl3D = *Hkl3DArray;
 
@@ -71,7 +71,7 @@ void TSGTest::MergeTest(const TPtrList<TSpaceGroup>& sgList,  TTypeList<TSGStats
     sgMl.Clear();
     sg.GetMatrices( sgMl, mattAll );
     for( int j=0; j < sgMl.Count(); j++ )  {
-      symmd& m = sgMl[j];
+      smatd& m = sgMl[j];
       bool uniq = true;
       for( int k=0; k < UniqMatricesNT.Count(); k++ )  {
         if( *UniqMatricesNT[k].GetA() == m.r )  {
@@ -368,11 +368,11 @@ void TSGTest::WeakRefTest(const TPtrList<TSpaceGroup>& sgList, TTypeList<TElemen
 
   typedef AnAssociation4<TSpaceGroup*, TwoDoublesInt*, TwoDoublesInt*, int> SGAss;
   typedef TPtrList<SGAss>  SGpList;
-  typedef AnAssociation2<symmd*, SGpList*> MatrixAss;
+  typedef AnAssociation2<smatd*, SGpList*> MatrixAss;
   typedef TTypeList<SGAss>  SGList;
   TTypeList< MatrixAss > UniqMatrices;
   SGList SGHits;
-  symmd_list sgMl;
+  smatd_list sgMl;
   vec3d hklv;
 
   for( int i=0; i < sgList.Count(); i++ )  {
@@ -382,7 +382,7 @@ void TSGTest::WeakRefTest(const TPtrList<TSpaceGroup>& sgList, TTypeList<TElemen
                     &sg, new TwoDoublesInt(0.0,0.0,0), new TwoDoublesInt(0.0,0.0,0), 0 );
     sg.GetMatrices( sgMl, mattAll);
     for( int j=0; j < sgMl.Count(); j++ )  {
-      symmd& m = sgMl[j];
+      smatd& m = sgMl[j];
       // skip -I matrix
       if( m.r[0][0] == -1 && m.r[1][1] == -1 && m.r[2][2] == -1 &&
           m.r[0][1] == 0 && m.r[0][2] == 0 &&
@@ -413,14 +413,14 @@ void TSGTest::WeakRefTest(const TPtrList<TSpaceGroup>& sgList, TTypeList<TElemen
         SGpList* l = new SGpList();
         l->Add(&sgv);
         sgv.D() ++;
-        UniqMatrices.AddNew<symmd*,SGpList*>(new symmd(m), l);
+        UniqMatrices.AddNew<smatd*,SGpList*>(new smatd(m), l);
       }
     }
     sgMl.Clear();
   }
   // collect statistrics for the matrices and the spacegroups
   for( int i=0; i < UniqMatrices.Count(); i++ )  {
-    symmd& m = *UniqMatrices[i].GetA();
+    smatd& m = *UniqMatrices[i].GetA();
     for( int j=0; j < Hkl.RefCount(); j++ )  {
       if(  Hkl[j].IsSymmetric(m)  )  {
         double len = Hkl[j].PhaseShift(m);

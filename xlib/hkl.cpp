@@ -244,12 +244,12 @@ void THklFile::AllRefs(const TReflection& R, const TAsymmUnit& AU, TRefPList& Re
   TSpaceGroup* sg = TSymmLib::GetInstance()->FindSG(AU);
   if( sg == NULL )
     throw TFunctionFailedException(__OlxSourceInfo, "Undefined space group");
-  symmd_list ml;
+  smatd_list ml;
 
   sg->GetMatrices(ml, mattAll);
 
   if( !sg->IsCentrosymmetric() )  {
-    symmd& m = ml.AddNew();
+    smatd& m = ml.AddNew();
     m.r.I();
     m.r *= -1;
   }
@@ -352,10 +352,10 @@ bool THklFile::SaveToFile(const olxstr& FN, const TRefPList& refs, bool Append) 
 }
 //..............................................................................
 THklFile::MergeStats THklFile::Merge(const TSpaceGroup& sg, bool MergeInverse, TRefList& output)  {
-  symmd_list ml;
+  smatd_list ml;
   sg.GetMatrices(ml, mattAll^mattIdentity);
   if( MergeInverse )  {
-    symmd& im = ml.AddNew();
+    smatd& im = ml.AddNew();
     im.r.I();
     im.r *= -1;
   }
@@ -363,7 +363,7 @@ THklFile::MergeStats THklFile::Merge(const TSpaceGroup& sg, bool MergeInverse, T
 }
 //..............................................................................
 void THklFile::AnalyseReflections( const TSpaceGroup& sg )  {
-  symmd_list ml;
+  smatd_list ml;
   sg.GetMatrices(ml, mattAll ^ (mattInversion|mattIdentity) );
   vec3d hklv;
   for( int i=0; i < RefCount(); i++ )  {

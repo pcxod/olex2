@@ -9,11 +9,11 @@
 BeginGxlNamespace()
 
 class TXGrowPoint : public AGDrawObject  {
-  symmd Transform;
+  smatd Transform;
   vec3d Center;
 public:
   TXGrowPoint(const olxstr& collectionName,
-               const vec3d& center, const symmd& transform, TGlRender *Render);
+               const vec3d& center, const smatd& transform, TGlRender *Render);
   void Create(const olxstr& cName = EmptyString);
   virtual ~TXGrowPoint();
 
@@ -28,7 +28,7 @@ public:
   inline double Radius() {  return Params()[0]; }
 
   const vec3d& GetCenter()     const {  return Center;  }
-  const symmd& GetTransform() const {  return Transform;  }
+  const smatd& GetTransform() const {  return Transform;  }
 };
 
 EndGxlNamespace()

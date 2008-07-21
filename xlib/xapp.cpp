@@ -98,7 +98,7 @@ void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F)  {
   TSpaceGroup* sg = TSymmLib::GetInstance()->FindSG(au);
   if( sg == NULL )
     throw TFunctionFailedException(__OlxSourceInfo, "unknown spacegroup");
-  symmd_list ml, allm;
+  smatd_list ml, allm;
   sg->GetMatrices(ml, mattAll);
 
   evecd quad(6);
@@ -178,7 +178,7 @@ void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F)  {
       crd = alist[j]->ccrd();
       double la=0, lb=0;
       for( int k=0; k < ml.Count(); k++ )  {
-        const symmd& mt = ml[k];
+        const smatd& mt = ml[k];
         ref.MulHkl(hkl, mt);
         double tv =  hkl[0]*(mt.t[0]+crd[0]);  // scattering vector + phase shift
                tv += hkl[1]*(mt.t[1]+crd[1]);
