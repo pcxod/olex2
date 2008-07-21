@@ -22,7 +22,7 @@ class TXGrid: public TGlMouseListener  {
   //TVectorDList AllPoints;
   TArray3D<float>* ED;
   CIsoSurface<float>* IS;
-  TVPointD GridStranslation;
+  vec3d GridStranslation;
   char *TextData;
   //TGlPrimitive *FPrimitive;
   class TGXApp * XApp;
@@ -37,8 +37,8 @@ class TXGrid: public TGlMouseListener  {
   bool Mode3D;
   TGlPrimitive* glpP, *glpN;
   // these will keep the negative surface, the Isosurface - the positive
-  TArrayList<TVPointF> vertices;
-  TArrayList<TVPointF> normals;
+  TArrayList<vec3f> vertices;
+  TArrayList<vec3f> normals;
   TArrayList<IsoTriangle> triangles;
   bool GridMoved;
 protected:
@@ -77,13 +77,13 @@ public:
   void Create(const olxstr& cName = EmptyString);
 
   bool Orient(TGlPrimitive *P);
-  bool GetDimensions(TVPointD &Max, TVPointD &Min);
+  bool GetDimensions(vec3d &Max, vec3d &Min);
 
   void SetScale(float v);
   inline double GetScale()  const {  return Scale;  }
   
   void SetDepth(float v);
-  void SetDepth(const TVectorD& v);
+  void SetDepth(const vec3d& v);
 
   DefPropP(float, MinHole)
   DefPropP(float, MaxHole)

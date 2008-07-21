@@ -76,6 +76,7 @@ TModes::TModes() {
 AMode* TModes::SetMode(const olxstr& name)  {
   AModeFactory* mf = Modes[name];
   if( CurrentMode != NULL )  delete CurrentMode;
+  CurrentMode = NULL;  // mf->New Calls other functions, validating currnet mode...
   CurrentMode = (mf == NULL) ? NULL : mf->New();
   return CurrentMode;
 }
@@ -93,10 +94,10 @@ unsigned short TModes::DecodeMode( const olxstr& mode )  {
   return Instance->Modes.IndexOfComparable(mode) + 1;  // -1 +1 = 0 = mmNone
 }
 //..............................................................................
-bool TModeChange::CheckStatus( const olxstr& mode, const olxstr& modeData )  const  {
+bool TModeChange::CheckStatus( const olxstr& mode, const olxstr& modeData )  {
   return CheckStatus(TModes::DecodeMode(mode), modeData);
 }
-bool TModeChange::CheckStatus( unsigned short mode, const olxstr& modeData )  const  {
+bool TModeChange::CheckStatus( unsigned short mode, const olxstr& modeData ) {
   return TGlXApp::GetMainForm()->CheckMode( mode, modeData );
 }
 
@@ -143,11 +144,11 @@ unsigned short TStateChange::DecodeState( const olxstr& mode )  {
   return prsNone;
 }
 //..............................................................................
-bool TStateChange::CheckStatus(const olxstr& stateName, const olxstr& stateData) const {
+bool TStateChange::CheckStatus(const olxstr& stateName, const olxstr& stateData) {
   return CheckStatus(TStateChange::DecodeState(stateName), stateData);
 }
 //..............................................................................
-bool TStateChange::CheckStatus(unsigned short state, const olxstr& stateData) const {
+bool TStateChange::CheckStatus(unsigned short state, const olxstr& stateData) {
   return TGlXApp::GetMainForm()->CheckState( state, stateData );
 }
 

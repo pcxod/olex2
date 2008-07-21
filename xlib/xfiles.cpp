@@ -144,6 +144,9 @@ void TXFile::UpdateAsymmUnit()  {
   GetLattice().UpdateAsymmUnit();
   TCAtomPList* NewAtoms = new TCAtomPList;
   LL->GetAsymmUnit().ClearResidues(false);
+  LL->GetAsymmUnit().ClearEllps();
+  for( int i=0; i < GetAsymmUnit().EllpCount(); i++ )
+    LL->GetAsymmUnit().NewEllp() = GetAsymmUnit().GetEllp(i);
   for( int i=0; i < GetAsymmUnit().ResidueCount(); i++ )  {
     TAsymmUnit::TResidue& resi = GetAsymmUnit().GetResidue(i);
     LL->GetAsymmUnit().NewResidue(resi.GetClassName(), resi.GetNumber(), resi.GetAlias() );

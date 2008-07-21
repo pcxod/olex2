@@ -36,7 +36,7 @@ TNetwork::~TNetwork()  {
 //..............................................................................
 // sorts atoms according to the distcance from {0,0,0}
 int AtomsSortByDistance(const TSAtom* A, const TSAtom* A1)  {
-  double d = A->GetCenter().Length() - A1->GetCenter().Length();
+  double d = A->crd().QLength() - A1->crd().QLength();
   if( d < 0 )  return -1;
   if( d > 0 )  return 1;
   return 0;
@@ -51,7 +51,7 @@ void TNetwork::TDisassembleTaskRemoveSymmEq::Run(long index)  {
   if( (Atoms[index]->GetTag() & 0x0002) != 0 )  return;
   for( int i=index+1; i < Atoms.Count(); i++ )  {
     if( fabs(Distances[0][index] - Distances[0][i]) > 0.01 )  return;
-    if( Atoms[index]->Center().QDistanceTo( Atoms[i]->Center() ) < 0.0001 )  {
+    if( Atoms[index]->crd().QDistanceTo( Atoms[i]->crd() ) < 0.0001 )  {
       Atoms[index]->AddMatrices(Atoms[i]);
       Atoms[i]->SetTag(2);            // specify that the node has to be deleted
     }
@@ -68,7 +68,7 @@ void TNetwork::TDisassembleTaskCheckConnectivity::Run(long index)  {
     if( (Distances[3][i] - Distances[3][index]) > dcMaxCBLength ||
         (Distances[3][i] - Distances[3][index]) < -dcMaxCBLength )  continue;
 
-    double D = Atoms[index]->GetCenter().QDistanceTo( Atoms[i]->GetCenter());
+    double D = Atoms[index]->crd().QDistanceTo( Atoms[i]->crd());
     double D1 = (double)(Atoms[index]->GetAtomInfo().GetRad1() + Atoms[i]->GetAtomInfo().GetRad1() + Delta);
     D1 *= D1;
     if(  D < D1 )  {
@@ -97,7 +97,7 @@ void TNetwork::Disassemble(TSAtomPList& Atoms, TNetPList& Frags, TSBondPList* In
   Atoms.QuickSorter.SortSF(Atoms, AtomsSortByDistance);
   Distances[0] = new double[ Atoms.Count() ];  // distsnaces from {0,0,0} to an atom
   for( int i = 0; i < Atoms.Count(); i++ )  {
-    Distances[0][i] = Atoms[i]->Center().Length();
+    Distances[0][i] = Atoms[i]->crd().Length();
     Atoms[i]->SetTag(1);
     Atoms[i]->SetNetId(-1);
   }
@@ -128,10 +128,10 @@ void TNetwork::Disassemble(TSAtomPList& Atoms, TNetPList& Frags, TSBondPList* In
   Distances[3] = new double[ Atoms.Count() ];
   for( int i = 0; i < Atoms.Count() ; i++ )  {  // recalculate distances and remove some function calls
     TSAtom* A = Atoms[i];
-    Distances[0][i] = A->Center().Length();
-    Distances[1][i] = A->Center()[0];
-    Distances[2][i] = A->Center()[1];
-    Distances[3][i] = A->Center()[2];
+    Distances[0][i] = A->crd().Length();
+    Distances[1][i] = A->crd()[0];
+    Distances[2][i] = A->crd()[1];
+    Distances[3][i] = A->crd()[2];
   }
   int64_t st = TETime::msNow();
   TBasicApp::GetLog().Info( olxstr("Starting search of connectivity") );
@@ -236,7 +236,7 @@ void TNetwork::THBondSearchTask::Run(long ind)  {
       }
       if( connected )  continue;
 
-      double D = A1->GetCenter().DistanceTo( Atoms[i]->GetCenter() );
+      double D = A1->crd().DistanceTo( Atoms[i]->crd() );
       if(  D < (A1->GetAtomInfo().GetRad1() + Atoms[i]->GetAtomInfo().GetRad1() + Delta) )  {
          if( (A1->CAtom().GetPart() == Atoms[i]->CAtom().GetPart()) ||
               A1->CAtom().GetPart() == 0 || Atoms[i]->CAtom().GetPart() == 0 )  {
@@ -251,7 +251,7 @@ void TNetwork::THBondSearchTask::Run(long ind)  {
       }
     }
     else  {
-      double D = A1->GetCenter().DistanceTo( Atoms[i]->GetCenter() );
+      double D = A1->crd().DistanceTo( Atoms[i]->crd() );
       if(  D < (A1->GetAtomInfo().GetRad1() + Atoms[i]->GetAtomInfo().GetRad1() + Delta) )  {
         if( (A1->CAtom().GetPart() == Atoms[i]->CAtom().GetPart()) ||
              A1->CAtom().GetPart() == 0 || Atoms[i]->CAtom().GetPart() == 0 )  {
@@ -545,25 +545,25 @@ void TNetwork::FindRings( const TPtrList<TBasicAtomInfo>& ringContent,
 }
 //..............................................................................
 bool TNetwork::IsRingRegular(const TSAtomPList& ring)  {
-  TVPointD cent;
+  vec3d cent;
   for( int i=0; i < ring.Count(); i++ )
-    cent += ring[i]->GetCenter();
+    cent += ring[i]->crd();
   cent /= ring.Count();
   double avAng = 2*M_PI/ring.Count(), avDis = 0;
   for( int i=0; i < ring.Count(); i++ )
-    avDis += cent.DistanceTo( ring[i]->GetCenter() );
+    avDis += cent.DistanceTo( ring[i]->crd() );
   avDis /= ring.Count();
   for( int i=0; i < ring.Count(); i++ )  {
-    double d = cent.DistanceTo( ring[i]->GetCenter() );
+    double d = cent.DistanceTo( ring[i]->crd() );
     if( fabs(d-avDis) > 0.2 )  return false;
   }
-  TVPointD a, b;
+  vec3d a, b;
   for( int i=0; i < ring.Count(); i++ )  {
-    a = ring[i]->GetCenter();
+    a = ring[i]->crd();
     if( (i+1) == ring.Count() )
-      b = ring[0]->GetCenter();
+      b = ring[0]->crd();
     else
-      b = ring[i+1]->GetCenter();
+      b = ring[i+1]->crd();
     a -= cent;
     b -= cent;
     double ca = a.CAngle(b);
@@ -577,40 +577,40 @@ bool TNetwork::IsRingRegular(const TSAtomPList& ring)  {
 //..............................................................................
 // quaternion method, Acta A45 (1989), 208
 double TNetwork::FindAlignmentMatrix(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atoms,
-                         TMatrixD& res, bool TryInversion)  {
-  TMatrixD evm(4,4), ev(4,4);
-  TVPointD centA, centB, v;
+                         symmd& res, bool TryInversion)  {
+  ematd evm(4,4), ev(4,4);
+  vec3d centA, centB, v;
   TAsymmUnit& au = atoms[0].GetA()->GetNetwork().GetLattice().GetAsymmUnit();
   for( int i=0; i < atoms.Count(); i++ )  {
-    centB += atoms[i].GetB()->Center();
+    centB += atoms[i].GetB()->crd();
     if( TryInversion )  {
-      v = atoms[i].GetA()->CCenter();
+      v = atoms[i].GetA()->ccrd();
       v *= -1;
       au.CellToCartesian(v);
       centA += v;
     }
     else
-      centA += atoms[i].GetA()->Center();
+      centA += atoms[i].GetA()->crd();
   }
   centA /= atoms.Count();
   centB /= atoms.Count();
 
   for( int i=0; i < atoms.Count(); i++ )  {
     if( TryInversion )  {
-      v = atoms[i].GetA()->CCenter();
+      v = atoms[i].GetA()->ccrd();
       v *= -1;
       au.CellToCartesian(v);
     }
     else
-      v = atoms[i].GetA()->Center();
+      v = atoms[i].GetA()->crd();
     v -= centA;
 
-    double xm = v[0] - (atoms[i].GetB()->Center()[0]-centB[0]),
-           xp = v[0] + (atoms[i].GetB()->Center()[0]-centB[0]),
-           yp = v[1] + (atoms[i].GetB()->Center()[1]-centB[1]),
-           ym = v[1] - (atoms[i].GetB()->Center()[1]-centB[1]),
-           zm = v[2] - (atoms[i].GetB()->Center()[2]-centB[2]),
-           zp = v[2] + (atoms[i].GetB()->Center()[2]-centB[2]);
+    double xm = v[0] - (atoms[i].GetB()->crd()[0]-centB[0]),
+           xp = v[0] + (atoms[i].GetB()->crd()[0]-centB[0]),
+           yp = v[1] + (atoms[i].GetB()->crd()[1]-centB[1]),
+           ym = v[1] - (atoms[i].GetB()->crd()[1]-centB[1]),
+           zm = v[2] - (atoms[i].GetB()->crd()[2]-centB[2]),
+           zp = v[2] + (atoms[i].GetB()->crd()[2]-centB[2]);
     evm[0][0] += (QRT(xm) + QRT(ym) + QRT(zm));
       evm[0][1] += (yp*zm - ym*zp);
       evm[0][2] += (xm*zp - xp*zm);
@@ -630,7 +630,7 @@ double TNetwork::FindAlignmentMatrix(const TTypeList< AnAssociation2<TSAtom*,TSA
   }
 
   ev.E();
-  TMatrixD::EigenValues(evm, ev);
+  ematd::EigenValues(evm, ev);
   double minVal = 1000;
   int minInd = -1;
   for(int i=0; i < 4; i++ )  {
@@ -640,35 +640,34 @@ double TNetwork::FindAlignmentMatrix(const TTypeList< AnAssociation2<TSAtom*,TSA
     }
   }
   if( minInd < 0 )  return -1;
-  res.Resize(3,4);
-  TVectorD& qt = ev[minInd];
-  res[0][0] = QRT(qt[0]) + QRT(qt[1]) - QRT(qt[2]) - QRT(qt[3]);
-  res[0][1] = 2*(qt[1]*qt[2] + qt[0]*qt[3]);
-  res[0][2] = 2*(qt[1]*qt[3] - qt[0]*qt[2]);
-  res[0][3] = (centB[0]);// - centA[0]);
+  const evecd& qt = ev[minInd];
+  res.r[0][0] = QRT(qt[0]) + QRT(qt[1]) - QRT(qt[2]) - QRT(qt[3]);
+  res.r[0][1] = 2*(qt[1]*qt[2] + qt[0]*qt[3]);
+  res.r[0][2] = 2*(qt[1]*qt[3] - qt[0]*qt[2]);
+  res.t[0] = (centB[0]);// - centA[0]);
 
-  res[1][0] = 2*(qt[1]*qt[2] - qt[0]*qt[3]);
-  res[1][1] = QRT(qt[0]) + QRT(qt[2]) - QRT(qt[1]) - QRT(qt[3]);
-  res[1][2] = 2*(qt[2]*qt[3] + qt[0]*qt[1]);
-  res[1][3] = (centB[1]);// + centA[1]);
+  res.r[1][0] = 2*(qt[1]*qt[2] - qt[0]*qt[3]);
+  res.r[1][1] = QRT(qt[0]) + QRT(qt[2]) - QRT(qt[1]) - QRT(qt[3]);
+  res.r[1][2] = 2*(qt[2]*qt[3] + qt[0]*qt[1]);
+  res.t[1] = (centB[1]);// + centA[1]);
 
-  res[2][0] = 2*(qt[1]*qt[3] + qt[0]*qt[2]);
-  res[2][1] = 2*(qt[2]*qt[3] - qt[0]*qt[1]);
-  res[2][2] = QRT(qt[0]) + QRT(qt[3]) - QRT(qt[1]) - QRT(qt[2]);
-  res[2][3] = (centB[2]);// - centA[2]);
+  res.r[2][0] = 2*(qt[1]*qt[3] + qt[0]*qt[2]);
+  res.r[2][1] = 2*(qt[2]*qt[3] - qt[0]*qt[1]);
+  res.r[2][2] = QRT(qt[0]) + QRT(qt[3]) - QRT(qt[1]) - QRT(qt[2]);
+  res.t[2] = (centB[2]);// - centA[2]);
   double rs = 0;
   for( int i=0; i < atoms.Count(); i++ )  {
     if( TryInversion )  {
-      v = atoms[i].GetA()->CCenter();
+      v = atoms[i].GetA()->ccrd();
       v *= -1;
       au.CellToCartesian(v);
     }
     else
-      v = atoms[i].GetA()->Center();
+      v = atoms[i].GetA()->crd();
     v -= centA;
-    v *= res;
+    v *= res.r;
     v += centB;
-    rs += v.DistanceTo( atoms[i].GetB()->Center() );
+    rs += v.DistanceTo( atoms[i].GetB()->crd() );
   }
   rs /= atoms.Count();
   return rs;
@@ -677,29 +676,29 @@ double TNetwork::FindAlignmentMatrix(const TTypeList< AnAssociation2<TSAtom*,TSA
 }
 //..............................................................................
 void TNetwork::DoAlignAtoms(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& satomp,
-                            const TSAtomPList& atomsToTransform, const TMatrixD& S, bool Inverted)  {
-  TVPointD acent, mcent, v;
+                            const TSAtomPList& atomsToTransform, const symmd& S, bool Inverted)  {
+  vec3d acent, mcent, v;
   TAsymmUnit& au = satomp[0].GetA()->GetNetwork().GetLattice().GetAsymmUnit();
   if( Inverted )  {
     for( int i=0; i < atomsToTransform.Count(); i++ )  {
-      //atomsToTransform[i]->CCenter() *= -1;
-      v = atomsToTransform[i]->CCenter();
+      //atomsToTransform[i]->ccrd() *= -1;
+      v = atomsToTransform[i]->ccrd();
       v *= -1;
       au.CellToCartesian(v);
-      atomsToTransform[i]->Center() = v;
+      atomsToTransform[i]->crd() = v;
     }
   }
 
   for(int i=0; i < satomp.Count(); i++ )  {
-    mcent += satomp[i].GetA()->Center();
+    mcent += satomp[i].GetA()->crd();
   }
   mcent /= satomp.Count();
   for( int i=0; i < atomsToTransform.Count(); i++ )  {
-    acent = atomsToTransform[i]->Center();
+    acent = atomsToTransform[i]->crd();
     acent -= mcent;
-    acent *= S;
-    acent[0] += S[0][3];  acent[1] += S[1][3];  acent[2] += S[2][3];
-    atomsToTransform[i]->Center() = acent;
+    acent *= S.r;
+    acent += S.t;
+    atomsToTransform[i]->crd() = acent;
   }
 }
 //..............................................................................

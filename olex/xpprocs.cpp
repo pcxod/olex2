@@ -411,9 +411,9 @@ void TMainForm::funCrd(const TStrObjList& Params, TMacroError &E) {
     E.ProcessingError(__OlxSrcInfo, "could not find any atoms" );
     return;
   }
-  TVPointD center;
+  vec3d center;
   for( int i=0; i < Atoms.Count(); i++ )
-    center += Atoms[i]->Atom().Center();
+    center += Atoms[i]->Atom().crd();
 
   center /= Atoms.Count();
   olxstr tmp = olxstr::FormatFloat(3, center[0]);
@@ -428,9 +428,9 @@ void TMainForm::funCCrd(const TStrObjList& Params, TMacroError &E)  {
     E.ProcessingError(__OlxSrcInfo, "no atoms provided" );
     return;
   }
-  TVPointD ccenter;
+  vec3d ccenter;
   for( int i=0; i < Atoms.Count(); i++ )
-    ccenter += Atoms[i]->Atom().CCenter();
+    ccenter += Atoms[i]->Atom().ccrd();
 
   ccenter /= Atoms.Count();
   olxstr tmp= olxstr::FormatFloat(3, ccenter[0]);
@@ -1728,8 +1728,8 @@ void TMainForm::macExit(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 }
 //..............................................................................
 void TMainForm::macPack(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  TVPointD From( -1.0, -1.0, -1.0);
-  TVPointD To( 1.5, 1.5, 1.5);
+  vec3d From( -1.0, -1.0, -1.0);
+  vec3d To( 1.5, 1.5, 1.5);
 
   int number_count = 0;
   for( int i=0; i < Cmds.Count(); i++ )
@@ -1827,9 +1827,9 @@ void TMainForm::macSetEnv(TStrObjList &Cmds, const TParamList &Options, TMacroEr
 void TMainForm::macActivate(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   TXPlane *XP = FXApp->XPlane(Cmds[0]);
   if( XP != NULL )  {
-    TVPointD V;
+    vec3d V;
     V = XP->Plane().Normal();
-    FXApp->Orient(V);
+    FXApp->GetRender().Basis()->OrientNormal(V);
   }
   else  {
     Error.ProcessingError(__OlxSrcInfo, "could not find specified plane: ") << Cmds[0];
@@ -1915,8 +1915,7 @@ void TMainForm::macHelp(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 //..............................................................................
 void TMainForm::macMatr(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   if( Cmds.IsEmpty() )  {
-    TMatrixD Matr(3,3);
-    Matr = FXApp->GetRender().GetBasis().GetMatrix();
+    const mat3d& Matr = FXApp->GetRender().GetBasis().GetMatrix();
     olxstr Tmp;
     for(int i=0; i < 3; i++ )  {
       Tmp = EmptyString;
@@ -1929,23 +1928,23 @@ void TMainForm::macMatr(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   }
   else  {
     if( Cmds.Count() == 1 )  {
-      TMatrixD M;
+      mat3d M;
       if( FXApp->HklVisible() )  M = FXApp->XFile().GetAsymmUnit().GetHklToCartesian();
-      else                       M = FXApp->XFile().GetCell2Cartesian();
-      if( Cmds[0] == "100" || Cmds[0] == "1" ){ FXApp->Orient( M[0] ); return; }
-      if( Cmds[0] == "010" || Cmds[0] == "2"  ){ FXApp->Orient( M[1] ); return; }
-      if( Cmds[0] == "001" || Cmds[0] == "3"  ){ FXApp->Orient( M[2] ); return; }
+      else                       M = FXApp->XFile().GetAsymmUnit().GetCellToCartesian();
+      if( Cmds[0] == "100" || Cmds[0] == "1" ) { FXApp->GetRender().Basis()->OrientNormal( M[0] ); return; }
+      if( Cmds[0] == "010" || Cmds[0] == "2"  ){ FXApp->GetRender().Basis()->OrientNormal( M[1] ); return; }
+      if( Cmds[0] == "001" || Cmds[0] == "3"  ){ FXApp->GetRender().Basis()->OrientNormal( M[2] ); return; }
 
-      if( Cmds[0] == "110" ){ FXApp->Orient( M[0] + M[1] ); return; }
-      if( Cmds[0] == "101" ){ FXApp->Orient( M[0] + M[2] ); return; }
-      if( Cmds[0] == "011" ){ FXApp->Orient( M[1] + M[2] ); return; }
-      if( Cmds[0] == "111" ){ FXApp->Orient( M[0] + M[1] + M[2] ); return; }
+      if( Cmds[0] == "110" ){ FXApp->GetRender().Basis()->OrientNormal( M[0] + M[1] ); return; }
+      if( Cmds[0] == "101" ){ FXApp->GetRender().Basis()->OrientNormal( M[0] + M[2] ); return; }
+      if( Cmds[0] == "011" ){ FXApp->GetRender().Basis()->OrientNormal( M[1] + M[2] ); return; }
+      if( Cmds[0] == "111" ){ FXApp->GetRender().Basis()->OrientNormal( M[0] + M[1] + M[2] ); return; }
 
       Error.ProcessingError(__OlxSrcInfo, "undefined arguments" );
       return;
     }
     if( Cmds.Count() == 9 )  {
-      TMatrixD M(3,3);
+      mat3d M;
       M[0][0] = Cmds[0].ToDouble();
       M[0][1] = Cmds[1].ToDouble();
       M[0][2] = Cmds[2].ToDouble();
@@ -1959,7 +1958,7 @@ void TMainForm::macMatr(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       M[0].Normalise();
       M[1].Normalise();
       M[2].Normalise();
-      FXApp->GetRender().Basis()->Matrix(M);
+      FXApp->GetRender().Basis()->SetMatrix(M);
       return;
     }
     Error.ProcessingError(__OlxSrcInfo, "wrong arguments" );
@@ -1983,7 +1982,6 @@ void TMainForm::macQual(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 }
 //..............................................................................
 void TMainForm::macLine(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  TVPointD V;
   TXAtomPList Atoms;
   olxstr name;
   if( Cmds.Count() == 3 )  {
@@ -1995,9 +1993,9 @@ void TMainForm::macLine(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     Error.ProcessingError(__OlxSrcInfo, "a [name] and two atoms are expected" );
     return;
   }
-  V = Atoms[0]->Atom().Center() - Atoms[1]->Atom().Center();
-  FXApp->Orient(V);
-  FXApp->AddLine(name, Atoms[0]->Atom().Center(), Atoms[1]->Atom().Center());
+  vec3d V( Atoms[0]->Atom().crd() - Atoms[1]->Atom().crd() );
+  FXApp->GetRender().Basis()->OrientNormal(V);
+  FXApp->AddLine(name, Atoms[0]->Atom().crd(), Atoms[1]->Atom().crd());
 }
 //..............................................................................
 void TMainForm::macMpln(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
@@ -2021,7 +2019,7 @@ void TMainForm::macMpln(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       FXApp->FindXAtoms( EmptyString, Atoms );
       plane = FXApp->TmpPlane(NULL, weightExtent);
       if( plane != NULL )  {
-        FXApp->Orient( plane->Normal() );
+        FXApp->GetRender().Basis()->OrientNormal( plane->Normal() );
         planeName = "All atoms";
       }
     }
@@ -2045,7 +2043,7 @@ void TMainForm::macMpln(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     if( orientOnly )  {
       plane = FXApp->TmpPlane(&Atoms, weightExtent);
       if( plane != NULL )  {
-        FXApp->Orient( plane->Normal() );
+        FXApp->GetRender().Basis()->OrientNormal( plane->Normal() );
       }
     }
     else  {
@@ -2077,9 +2075,9 @@ void TMainForm::macMpln(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     TBasicApp::GetLog() << ( Output );
     TBasicApp::GetLog() << ( olxstr("Summ deviation: ") << olxstr::FormatFloat(3, summ) << '\n');
 
-    TVPointD center;
+    vec3d center;
     for( int i=0; i < Atoms.Count(); i++ )
-      center += Atoms[i]->Atom().Center();
+      center += Atoms[i]->Atom().crd();
     center /= Atoms.Count();
     FXApp->SetGridDepth(center);
   }
@@ -2847,7 +2845,7 @@ void TMainForm::macOccu(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 //..............................................................................
 void TMainForm::macAddIns(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   // synchronise atom names
-  FXApp->XFile().UpdateAsymmUnit();
+  //FXApp->XFile().UpdateAsymmUnit();
 
   TIns * Ins = (TIns*)FXApp->XFile().GetLastLoader();
   // check for long instructions
@@ -3649,12 +3647,12 @@ void TMainForm::macSadi(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       if( SA.GetAtomInfo() == iQPeakIndex )  continue;
       sr1->AddAtomPair(XA->Atom().CAtom(), &XA->Atom().GetMatrix(0), SA.CAtom(), &SA.GetMatrix(0));
       if( td == 0 )  // need this one to remove opposite atoms from restraint
-        td = XA->Atom().GetCenter().DistanceTo( SA.GetCenter() ) * 2;
+        td = XA->Atom().crd().DistanceTo( SA.crd() ) * 2;
       for( int j=i+1; j < XA->Atom().NodeCount(); j++ )  {
         TSAtom& SA1 = XA->Atom().Node(j);
         if( SA1.IsDeleted() )  continue;
         if( SA1.GetAtomInfo() == iQPeakIndex )  continue;
-        double d = SA.GetCenter().DistanceTo( SA1.GetCenter() ) ;
+        double d = SA.crd().DistanceTo( SA1.crd() ) ;
         if( d/td > 0.85 )  continue;
         sr->AddAtomPair(SA.CAtom(), &SA.GetMatrix(0), SA1.CAtom(), &SA1.GetMatrix(0));
         if( sr->AtomCount() >= 12 )  {
@@ -4256,13 +4254,13 @@ void TMainForm::macSplit(TStrObjList &Cmds, const TParamList &Options, TMacroErr
         CA1.SetLoaderId(liNewAtom);
         CA1.SetPart(1);
         ProcessedAtoms.Add( &CA1 );
-        CA1.CCenter() = SpA->PositionA;
+        CA1.ccrd() = SpA->PositionA;
         CA1.Label() = lbl+'a';
         TCAtom& CA2 = FXApp->XFile().GetAsymmUnit().NewAtom();
         CA2.Assign(*CA);
         CA2.SetLoaderId(liNewAtom);
         CA2.SetPart(2);
-        CA2.CCenter() = SpA->PositionB;
+        CA2.ccrd() = SpA->PositionB;
         CA2.Label() = lbl+'b';
         CA->SetDeleted(true);
         ProcessedAtoms.Add( &CA2 );
@@ -4270,7 +4268,7 @@ void TMainForm::macSplit(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       }
     }
     if( !found )  {
-      TVPointD direction;
+      vec3d direction;
       float Length = 0;
       lbl = CA->Label();
       if( CA->GetEllipsoid()->GetSX() > CA->GetEllipsoid()->GetSY() )  {
@@ -4301,14 +4299,14 @@ void TMainForm::macSplit(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       CA1->Assign(*CA);
       CA1->SetLoaderId(liNewAtom);
       CA1->SetPart(1);
-      CA1->CCenter() += direction;
+      CA1->ccrd() += direction;
       CA1->Label() = FXApp->XFile().GetAsymmUnit().CheckLabel(CA1, lbl+'a');
       ProcessedAtoms.Add( CA1 );
       CA1 = &FXApp->XFile().GetAsymmUnit().NewAtom();
       CA1->Assign(*CA);
       CA1->SetLoaderId(liNewAtom);
       CA1->SetPart(2);
-      CA1->CCenter() -= direction;
+      CA1->ccrd() -= direction;
       CA1->Label() = FXApp->XFile().GetAsymmUnit().CheckLabel(CA1, lbl+'b');
       ProcessedAtoms.Add( CA1 );
       CA->SetDeleted(true);
@@ -4715,11 +4713,14 @@ void TMainForm::macAppendHkl(TStrObjList &Cmds, const TParamList &Options, TMacr
     return;
   }
   THklFile Hkl;
+  int c = 0;
   Hkl.LoadFromFile( hklSrc );
   if( Options.IsEmpty() )  {
     for( int i=0; i < Hkl.RefCount(); i++ )  {
-      if( Hkl[i].GetTag() < 0 )
+      if( Hkl[i].GetTag() < 0 )  {
         Hkl[i].SetTag( -Hkl[i].GetTag() );
+        c++;
+      }
     }
   }
   else if( combine )  {
@@ -4729,6 +4730,7 @@ void TMainForm::macAppendHkl(TStrObjList &Cmds, const TParamList &Options, TMacr
         if( !k.IsEmpty() && k.IndexOf( Hkl[i].GetK() ) == -1) continue;
         if( !l.IsEmpty() && l.IndexOf( Hkl[i].GetL() ) == -1) continue;
         Hkl[i].SetTag( -Hkl[i].GetTag() );
+        c++;
       }
     }
   }
@@ -4737,12 +4739,15 @@ void TMainForm::macAppendHkl(TStrObjList &Cmds, const TParamList &Options, TMacr
       if( Hkl[i].GetTag() < 0 )  {
         if( h.IndexOf( Hkl[i].GetH() ) != -1 ||
             k.IndexOf( Hkl[i].GetK() ) != -1 ||
-            l.IndexOf( Hkl[i].GetL() ) != -1 )
+            l.IndexOf( Hkl[i].GetL() ) != -1 )  {
           Hkl[i].SetTag( -Hkl[i].GetTag() );
+          c++;
+        }
       }
     }
   }
   Hkl.SaveToFile( hklSrc );
+  FXApp->GetLog() << c << " reflections appended\n";
 }
 //..............................................................................
 void TMainForm::macExcludeHkl(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
@@ -4771,6 +4776,7 @@ void TMainForm::macExcludeHkl(TStrObjList &Cmds, const TParamList &Options, TMac
   }
 
   THklFile Hkl;
+  int c = 0;
   Hkl.LoadFromFile( hklSrc );
   if( combine )  {
     for( int i=0; i < Hkl.RefCount(); i++ )  {
@@ -4779,6 +4785,7 @@ void TMainForm::macExcludeHkl(TStrObjList &Cmds, const TParamList &Options, TMac
         if( !k.IsEmpty() && k.IndexOf( Hkl[i].GetK() ) == -1) continue;
         if( !l.IsEmpty() && l.IndexOf( Hkl[i].GetL() ) == -1) continue;
         Hkl[i].SetTag( -Hkl[i].GetTag() );
+        c++;
       }
     }
   }
@@ -4787,23 +4794,24 @@ void TMainForm::macExcludeHkl(TStrObjList &Cmds, const TParamList &Options, TMac
       if( Hkl[i].GetTag() > 0 )  {
         if( h.IndexOf( Hkl[i].GetH() ) != -1 ||
             k.IndexOf( Hkl[i].GetK() ) != -1 ||
-            l.IndexOf( Hkl[i].GetL() ) != -1 )
+            l.IndexOf( Hkl[i].GetL() ) != -1 )  {
           Hkl[i].SetTag( -Hkl[i].GetTag() );
+          c++;
+        }
       }
     }
   }
   Hkl.SaveToFile( hklSrc );
+  FXApp->GetLog() << c << " reflections excluded\n";
 }
 //..............................................................................
 void TMainForm::macDirection(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  TVPointD Z;
-  TMatrixD Basis;
-
-  Basis =  FXApp->GetRender().GetBasis().GetMatrix();
+  vec3d Z;
+  mat3d Basis =  FXApp->GetRender().GetBasis().GetMatrix();
   olxstr Tmp;
   if( FXApp->XFile().GetLastLoader() )  {
-    TMatrixD cellM(3,3), M(3,3), m;
-    TVPointD N(0, 0, 1);
+    mat3d cellM, M, m;
+    vec3d N(0, 0, 1);
     TAsymmUnit &au = FXApp->XFile().GetAsymmUnit();
     if( FXApp->HklVisible() ) m = au.GetHklToCartesian();
     else                      m = au.GetCellToCartesian();
@@ -4819,7 +4827,7 @@ void TMainForm::macDirection(TStrObjList &Cmds, const TParamList &Options, TMacr
     Z = cellM[1];    M[1] = Z;
     Z = cellM[2];    M[2] = Z;
     Z.Null();
-    TMatrixD::GauseSolve(M, N, Z);
+    mat3d::GauseSolve(M, N, Z);
     Z.Normalise();
     if( FXApp->HklVisible() )  {
       Tmp =  "Direction: (";
@@ -4847,8 +4855,8 @@ void TMainForm::macDirection(TStrObjList &Cmds, const TParamList &Options, TMacr
              olxstr::FormatFloat(3, Z[2]) << "*C)";
       TBasicApp::GetLog() << (Tmp << '\n');
       const char *Dir[] = {"000", "100", "010", "001", "110", "101", "011", "111"};
-      TTypeList<TVPointD > Points;
-      TVPointD D;
+      TTypeList<vec3d > Points;
+      vec3d D;
       cellM.Transpose();
       Z.Null();                          Points.AddCCopy(Z);
       Z = cellM[0];                      Points.AddCCopy(Z);
@@ -4923,7 +4931,7 @@ void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError
         if( (j+i) >= Atoms.Count() )  break;
         XA = Atoms.Item(i+j);
         Tmp << XA->Atom().GetLabel();
-        if( !XA->Atom().GetMatrix(0).IsE() )  {
+        if( !XA->Atom().GetMatrix(0).r.IsI() )  {
           Tmp << '.' << TSymmParser::MatrixToSymmCode(FXApp->XFile().GetLattice().GetUnitCell(), XA->Atom().GetMatrix(0));
           Tmp.Format((j+1)*14, true, ' ');
         }
@@ -4961,8 +4969,8 @@ void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError
       if( EsdlInstanceOf(*Sel->Object(0), TXAtom) &&
           EsdlInstanceOf(*Sel->Object(1), TXAtom) )  {
         Tmp = "Distance: ";
-        v = ((TXAtom*)Sel->Object(0))->Atom().Center().DistanceTo(
-              ((TXAtom*)Sel->Object(1))->Atom().Center());
+        v = ((TXAtom*)Sel->Object(0))->Atom().crd().DistanceTo(
+              ((TXAtom*)Sel->Object(1))->Atom().crd());
         Tmp << olxstr::FormatFloat(3, v);
         TBasicApp::GetLog() << (Tmp << '\n');
         return;
@@ -4970,10 +4978,10 @@ void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError
       if( EsdlInstanceOf(*Sel->Object(0), TXBond) &&
           EsdlInstanceOf(*Sel->Object(1), TXBond) )  {
         Tmp = "Angle (bond-bond): ";
-        TVPointD V, V1;
+        vec3d V, V1;
         TXBond* A = (TXBond*)Sel->Object(0), *B =(TXBond*)Sel->Object(1);
-        V = A->Bond().A().Center() - A->Bond().B().Center();
-        V1 = B->Bond().A().Center() - B->Bond().B().Center();
+        V = A->Bond().A().crd() - A->Bond().B().crd();
+        V1 = B->Bond().A().crd() - B->Bond().B().crd();
         v = V.CAngle(V1);  v = acos(v)*180/M_PI;
         Tmp << olxstr::FormatFloat(3, v) << " (" <<
                olxstr::FormatFloat(3, 180-v) << ')';
@@ -4982,39 +4990,39 @@ void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError
         Tmp = "Torsion angle (bond-bond, away from closest atoms): ";
         double distances[4];
         int minInd;
-        distances[0] = A->Bond().A().Center().DistanceTo( B->Bond().A().Center() );
-        distances[1] = A->Bond().A().Center().DistanceTo( B->Bond().B().Center() );
-        distances[2] = A->Bond().B().Center().DistanceTo( B->Bond().A().Center() );
-        distances[3] = A->Bond().B().Center().DistanceTo( B->Bond().B().Center() );
+        distances[0] = A->Bond().A().crd().DistanceTo( B->Bond().A().crd() );
+        distances[1] = A->Bond().A().crd().DistanceTo( B->Bond().B().crd() );
+        distances[2] = A->Bond().B().crd().DistanceTo( B->Bond().A().crd() );
+        distances[3] = A->Bond().B().crd().DistanceTo( B->Bond().B().crd() );
 
-        TVectorD::ArrayMin(&distances[0], minInd, 4);
+        evecd::ArrayMin(&distances[0], minInd, 4);
         // ceck if the adjustent bonds
         if( fabs(distances[minInd]) < 0.01 )  return;
-        TVPointD V2, V3, V4, V5;
+        vec3d V2, V3, V4, V5;
         switch( minInd )  {
           case 0:
-            V = A->Bond().B().Center() - A->Bond().A().Center();
-            V1 = B->Bond().A().Center() - A->Bond().A().Center();
-            V2 = B->Bond().B().Center() - B->Bond().A().Center();
-            V3 = A->Bond().A().Center() - B->Bond().A().Center();
+            V = A->Bond().B().crd() - A->Bond().A().crd();
+            V1 = B->Bond().A().crd() - A->Bond().A().crd();
+            V2 = B->Bond().B().crd() - B->Bond().A().crd();
+            V3 = A->Bond().A().crd() - B->Bond().A().crd();
             break;
           case 1:
-            V = A->Bond().B().Center() - A->Bond().A().Center();
-            V1 = B->Bond().B().Center() - A->Bond().A().Center();
-            V2 = B->Bond().A().Center() - B->Bond().B().Center();
-            V3 = A->Bond().A().Center() - B->Bond().B().Center();
+            V = A->Bond().B().crd() - A->Bond().A().crd();
+            V1 = B->Bond().B().crd() - A->Bond().A().crd();
+            V2 = B->Bond().A().crd() - B->Bond().B().crd();
+            V3 = A->Bond().A().crd() - B->Bond().B().crd();
             break;
           case 2:
-            V = A->Bond().A().Center() - A->Bond().B().Center();
-            V1 = B->Bond().A().Center() - A->Bond().B().Center();
-            V2 = B->Bond().B().Center() - B->Bond().A().Center();
-            V3 = A->Bond().B().Center() - B->Bond().A().Center();
+            V = A->Bond().A().crd() - A->Bond().B().crd();
+            V1 = B->Bond().A().crd() - A->Bond().B().crd();
+            V2 = B->Bond().B().crd() - B->Bond().A().crd();
+            V3 = A->Bond().B().crd() - B->Bond().A().crd();
             break;
           case 3:
-            V = A->Bond().A().Center() - A->Bond().B().Center();
-            V1 = B->Bond().B().Center() - A->Bond().B().Center();
-            V2 = B->Bond().A().Center() - B->Bond().B().Center();
-            V3 = A->Bond().B().Center() - B->Bond().B().Center();
+            V = A->Bond().A().crd() - A->Bond().B().crd();
+            V1 = B->Bond().B().crd() - A->Bond().B().crd();
+            V2 = B->Bond().A().crd() - B->Bond().B().crd();
+            V3 = A->Bond().B().crd() - B->Bond().B().crd();
             break;
         }
         V4 = V.XProdVec(V1);
@@ -5031,7 +5039,7 @@ void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError
         v = ((TXPlane*)Sel->Object(0))->Plane().DistanceTo(((TXAtom*)Sel->Object(1))->Atom());
         TBasicApp::GetLog() << ( Tmp << olxstr::FormatFloat(3, v) << '\n');
         Tmp = "Distance (plane centroid-atom): ";
-        v = ((TXPlane*)Sel->Object(0))->Plane().Center().DistanceTo(((TXAtom*)Sel->Object(1))->Atom().Center());
+        v = ((TXPlane*)Sel->Object(0))->Plane().Center().DistanceTo(((TXAtom*)Sel->Object(1))->Atom().crd());
         TBasicApp::GetLog() << ( Tmp << olxstr::FormatFloat(3, v) << '\n');
         return;
       }
@@ -5041,7 +5049,7 @@ void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError
         v = ((TXPlane*)Sel->Object(1))->Plane().DistanceTo(((TXAtom*)Sel->Object(0))->Atom());
         TBasicApp::GetLog() << ( Tmp << olxstr::FormatFloat(3, v) << '\n');
         Tmp = "Distance (plane centroid-atom): ";
-        v = ((TXPlane*)Sel->Object(1))->Plane().Center().DistanceTo(((TXAtom*)Sel->Object(0))->Atom().Center());
+        v = ((TXPlane*)Sel->Object(1))->Plane().Center().DistanceTo(((TXAtom*)Sel->Object(0))->Atom().crd());
         TBasicApp::GetLog() << ( Tmp << olxstr::FormatFloat(3, v) << '\n');
         return;
       }
@@ -5075,9 +5083,9 @@ void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError
           EsdlInstanceOf(*Sel->Object(1), TXAtom) &&
           EsdlInstanceOf(*Sel->Object(2), TXAtom) )  {
         Tmp = "Angle: ";
-        TVPointD V, V1;
-        V = ((TXAtom*)Sel->Object(0))->Atom().Center() - ((TXAtom*)Sel->Object(1))->Atom().Center();
-        V1 = ((TXAtom*)Sel->Object(2))->Atom().Center() - ((TXAtom*)Sel->Object(1))->Atom().Center();
+        vec3d V, V1;
+        V = ((TXAtom*)Sel->Object(0))->Atom().crd() - ((TXAtom*)Sel->Object(1))->Atom().crd();
+        V1 = ((TXAtom*)Sel->Object(2))->Atom().crd() - ((TXAtom*)Sel->Object(1))->Atom().crd();
         v = V.CAngle(V1);  v = acos(v)*180/M_PI;
         TBasicApp::GetLog() << ( Tmp << olxstr::FormatFloat(3, v) << '\n');
         return;
@@ -5089,11 +5097,11 @@ void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError
           EsdlInstanceOf(*Sel->Object(2), TXAtom) &&
           EsdlInstanceOf(*Sel->Object(3), TXAtom) )  {
         Tmp = "Torsion angle: ";
-        TVPointD V1, V2, V3, V4;
-        V1 = ((TXAtom*)Sel->Object(0))->Atom().Center() - ((TXAtom*)Sel->Object(1))->Atom().Center();
-        V2 = ((TXAtom*)Sel->Object(2))->Atom().Center() - ((TXAtom*)Sel->Object(1))->Atom().Center();
-        V3 = ((TXAtom*)Sel->Object(3))->Atom().Center() - ((TXAtom*)Sel->Object(2))->Atom().Center();
-        V4 = ((TXAtom*)Sel->Object(1))->Atom().Center() - ((TXAtom*)Sel->Object(2))->Atom().Center();
+        vec3d V1, V2, V3, V4;
+        V1 = ((TXAtom*)Sel->Object(0))->Atom().crd() - ((TXAtom*)Sel->Object(1))->Atom().crd();
+        V2 = ((TXAtom*)Sel->Object(2))->Atom().crd() - ((TXAtom*)Sel->Object(1))->Atom().crd();
+        V3 = ((TXAtom*)Sel->Object(3))->Atom().crd() - ((TXAtom*)Sel->Object(2))->Atom().crd();
+        V4 = ((TXAtom*)Sel->Object(1))->Atom().crd() - ((TXAtom*)Sel->Object(2))->Atom().crd();
 
         V1 = V1.XProdVec(V2);
         V3 = V3.XProdVec(V4);
@@ -5489,8 +5497,7 @@ void TMainForm::funEval(const TStrObjList& Params, TMacroError &E)  {
   {  E.SetRetVal( S.Evaluate() );  }
 }
 //..............................................................................
-void TMainForm::macCreateMenu(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)
-{
+void TMainForm::macCreateMenu(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   int ind = Cmds[0].LastIndexOf(';');
   if( ind == -1 )  
     throw TInvalidArgumentException(__OlxSourceInfo, "menu name");
@@ -5523,10 +5530,8 @@ void TMainForm::macCreateMenu(TStrObjList &Cmds, const TParamList &Options, TMac
     if( ! menu )  mi = 0;
     else          mi = toks.Count() - 1 - mi;
 
-    for( int i=mi; i < toks.Count(); i++ )
-    {
-      if( (i+1) == toks.Count() )
-      {
+    for( int i=mi; i < toks.Count(); i++ )  {
+      if( (i+1) == toks.Count() )  {
         int accell = AccMenus.GetLastId();
         if( !accell ) accell = 1000;
         else          accell++;
@@ -5537,8 +5542,8 @@ void TMainForm::macCreateMenu(TStrObjList &Cmds, const TParamList &Options, TMac
           if( itemType == mtSeparator )  menu->InsertSeparator(insindex);
           else {
             TMenuItem* item = new TMenuItem(itemType, accell, menu, toks[i]);
-            if( modeDependent.Length() )  item->ActionQueue( OnModeChange, modeDependent );
-            if( stateDependent.Length() )  item->ActionQueue( OnStateChange, stateDependent );
+            if( modeDependent.Length() )  item->ActionQueue( OnModeChange, modeDependent, TMenuItem::ModeDependent );
+            if( stateDependent.Length() )  item->ActionQueue( OnStateChange, stateDependent, TMenuItem::StateDependent );
             if( Cmds.Count() > 1 )  item->SetCommand( Cmds[1] );
             menu->Insert(insindex, item );
             AccMenus.AddAccell(accell, item );
@@ -5548,21 +5553,18 @@ void TMainForm::macCreateMenu(TStrObjList &Cmds, const TParamList &Options, TMac
           if( itemType == mtSeparator )  menu->AppendSeparator();
           else {
             TMenuItem* item = new TMenuItem(itemType, accell, menu, toks[i]);
-            if( modeDependent.Length() )  item->ActionQueue( OnModeChange, modeDependent );
-            if( stateDependent.Length() )  item->ActionQueue( OnStateChange, stateDependent );
+            if( !modeDependent.IsEmpty() )  item->ActionQueue( OnModeChange, modeDependent, TMenuItem::ModeDependent );
+            if( !stateDependent.IsEmpty() )  item->ActionQueue( OnStateChange, stateDependent, TMenuItem::StateDependent );
             if( Cmds.Count() > 1 )  item->SetCommand( Cmds[1] );
             menu->Append( item );
             AccMenus.AddAccell(accell, item );
           }
         }
       }
-      else
-      {
+      else  {
         TMenu* smenu = new TMenu();
-        if( !menu )
-        {
-          if( Cmds.Count() == 3 )
-          {
+        if( !menu )  {
+          if( Cmds.Count() == 3 )  {
             int insindex = MenuBar->FindMenu( uiStr(Cmds[2]) );
             if( insindex == -1 )  insindex = 0;
             MenuBar->Insert( insindex, smenu, uiStr(toks[i]) );
@@ -5599,8 +5601,8 @@ void TMainForm::macCreateMenu(TStrObjList &Cmds, const TParamList &Options, TMac
         else  {
           TMenuItem* item = new TMenuItem(itemType, accell, menu, menuName);
           if( Cmds.Count() > 1 )  item->SetCommand( Cmds[1] );
-          if( modeDependent.Length() )  item->ActionQueue( OnModeChange, modeDependent );
-          if( stateDependent.Length() )  item->ActionQueue( OnStateChange, stateDependent );
+          if( !modeDependent.IsEmpty() )  item->ActionQueue( OnModeChange, modeDependent, TMenuItem::ModeDependent );
+          if( !stateDependent.IsEmpty() )  item->ActionQueue( OnStateChange, stateDependent, TMenuItem::StateDependent );
           menu->Insert(insindex, item );
           AccMenus.AddAccell(accell, item );  }
         }
@@ -5608,8 +5610,8 @@ void TMainForm::macCreateMenu(TStrObjList &Cmds, const TParamList &Options, TMac
         if( itemType == mtSeparator )  menu->AppendSeparator();
         else  {
           TMenuItem* item = new TMenuItem(itemType, accell, menu, menuName);
-          if( modeDependent.Length() )  item->ActionQueue( OnModeChange, modeDependent );
-          if( stateDependent.Length() )  item->ActionQueue( OnStateChange, stateDependent );
+          if( !modeDependent.IsEmpty() )  item->ActionQueue( OnModeChange, modeDependent, TMenuItem::ModeDependent );
+          if( !stateDependent.IsEmpty() )  item->ActionQueue( OnStateChange, stateDependent, TMenuItem::StateDependent );
           if( Cmds.Count() > 1 )  item->SetCommand( Cmds[1] );
           menu->Append( item );
           AccMenus.AddAccell(accell, item );
@@ -5619,11 +5621,9 @@ void TMainForm::macCreateMenu(TStrObjList &Cmds, const TParamList &Options, TMac
   }
 }
 //..............................................................................
-void TMainForm::macDeleteMenu(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)
-{
+void TMainForm::macDeleteMenu(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   TMenu* menu = Menus[Cmds[0]];
-  if( !menu )
-  {
+  if( menu == NULL )  {
     int ind = Cmds[0].LastIndexOf(';');
     if( ind == -1 )  return;
     olxstr menuName = Cmds[0].SubStringTo( ind );
@@ -6126,7 +6126,7 @@ void TMainForm::macSGInfo(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     return;
   }
   TPtrList<TSpaceGroup> AllGroups;
-  TMatrixDList SGMatrices;
+  symmd_list SGMatrices;
 
   TBasicApp::GetLog() << ( sg->IsCentrosymmetric() ? "Centrosymmetric" : "Non centrocymmetric") << '\n';
   TBasicApp::GetLog() << ( olxstr("Hall symbol: ") << sg->GetHallSymbol() << '\n');
@@ -6196,7 +6196,7 @@ void TMainForm::macAddLabel(TStrObjList &Cmds, const TParamList &Options, TMacro
     label = Cmds[4];
   }
   FXApp->AddLabel( name, 
-                   TVPointD(x, y, z),
+                   vec3d(x, y, z),
                    label);
 }
 //..............................................................................
@@ -6212,7 +6212,7 @@ void TMainForm::macAddLabel(TStrObjList &Cmds, const TParamList &Options, TMacro
       bool Execute(const IEObject *Sender, const IEObject *Data)  {
         if( !EsdlInstanceOf(*Data, olxstr) )  return false;
         olxstr cpath = olxstr::CommonString(BaseDir, *(const olxstr*)Data);
-        TBasicApp::GetLog() << ( olxstr("\rDownloading /~/") << ((olxstr*)Data)->SubStringFrom(cpath.Length()) );
+        TBasicApp::GetLog() << ( olxstr("\rInstalling /~/") << ((olxstr*)Data)->SubStringFrom(cpath.Length()) );
         xa->Draw();
         wxTheApp->Dispatch();
         return true;
@@ -6497,12 +6497,12 @@ void TMainForm::macNextSolution(TStrObjList &Cmds, const TParamList &Options, TM
 //..............................................................................
 //..............................................................................
 double MatchAtomPairsQT(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atoms,
-                        TMatrixD& res, bool InversionPossible, bool& InversionUsed)  {
+                        symmd& res, bool InversionPossible, bool& InversionUsed)  {
   if( atoms.Count() < 4 )  return -1;
   double rms = TNetwork::FindAlignmentMatrix(atoms, res, false), rms1;
   InversionUsed = false;
   if( InversionPossible )  {
-    TMatrixD lr(3,4);
+    symmd lr;
     rms1 = TNetwork::FindAlignmentMatrix(atoms, lr, true);
     if( (rms1 < rms && rms1 >= 0) || (rms < 0 && rms1 >= 0) )  {
       res = lr;
@@ -6519,29 +6519,29 @@ double MatchAtomPairsQT(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atom
   return rms;
 }
 //..............................................................................
-void MatchAtomPairsULS(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atoms, TMatrixD& res)  {
-  TMatrixD gs(4,4), lm(atoms.Count(), 4), lmt(4, atoms.Count());
-  TVectorD gr(4), sol(4), b( atoms.Count() );
-  res.Resize(3,4);
-  for( int i=0; i < atoms.Count(); i++ )  {
-    for( int j=0; j < 3; j++ )  {
-      lm[i][j] = atoms[i].GetA()->Center()[j];
-      lmt[j][i] = lm[i][j];
-    }
-    lm[i][3] = 1;
-    lmt[3][i] = 1;
-  }
-  for( int i=0; i < 3; i++ )  {
-    for( int j=0; j < atoms.Count(); j++ )  {
-      b[j] = atoms[j].GetB()->Center()[i];
-    }
-    gs = lmt * lm;
-    gr = lmt * b;
-    TMatrixD::GauseSolve(gs, gr, sol);
-    res[i] = sol;
-    sol.Null();
-  }
-}
+//void MatchAtomPairsULS(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atoms, symmd& res)  {
+//  TMatrixD gs(4,4), lm(atoms.Count(), 4), lmt(4, atoms.Count());
+//  TVectorD gr(4), sol(4), b( atoms.Count() );
+//  res.Resize(3,4);
+//  for( int i=0; i < atoms.Count(); i++ )  {
+//    for( int j=0; j < 3; j++ )  {
+//      lm[i][j] = atoms[i].GetA()->Center()[j];
+//      lmt[j][i] = lm[i][j];
+//    }
+//    lm[i][3] = 1;
+//    lmt[3][i] = 1;
+//  }
+//  for( int i=0; i < 3; i++ )  {
+//    for( int j=0; j < atoms.Count(); j++ )  {
+//      b[j] = atoms[j].GetB()->Center()[i];
+//    }
+//    gs = lmt * lm;
+//    gr = lmt * b;
+//    TMatrixD::GauseSolve(gs, gr, sol);
+//    res[i] = sol;
+//    sol.Null();
+//  }
+//}
 //..............................................................................
 void TMainForm::CallMatchCallbacks(TNetwork& netA, TNetwork& netB, double RMS)  {
   olxstr arg;
@@ -6611,11 +6611,11 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options, TMacroErr
           for(int i=0; i < res.Count(); i++ )
             netB.Node( res[i].GetB()).SetLabel( netA.Node( res[i].GetA()).GetLabel() + suffix );
         }
-        TMatrixD S(3,4);
+        symmd S;
         double rms = MatchAtomPairsQT( satomp, S, false, Inverted);
         TBasicApp::GetLog() << ("Transformation matrix:\n");
         for( int i=0; i < 3; i++ )
-          TBasicApp::GetLog() << S[i].ToString() << '\n' ;
+          TBasicApp::GetLog() << S.r[i].ToString() << ' ' << S.t[i] << '\n' ;
         // execute callback function
         CallMatchCallbacks(netA, netB, rms);
         // ends execute callback
@@ -6673,7 +6673,7 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options, TMacroErr
           atomsToTransform.Add( &atoms[i]->Atom() );
         }
       }
-      TMatrixD S(3,4);
+      symmd S;
       double rms = MatchAtomPairsQT( satomp, S, false, Inverted);
       TNetwork::DoAlignAtoms(satomp, atomsToTransform, S, Inverted);
       FXApp->UpdateBonds();
@@ -6688,7 +6688,7 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     TTypeList< AnAssociation2<int, int> > res;
     TTypeList< AnAssociation2<TSAtom*,TSAtom*> > satomp;
     TSAtomPList atomsToTransform;
-    TMatrixD S(3,4);
+    symmd S;
     for( int i=0; i < nets.Count(); i++ )  {
       if( i > 0 )  TryInvert = false;
       for( int j=i+1; j < nets.Count(); j++ )  {
@@ -6796,12 +6796,12 @@ void TMainForm::macDelOFile(TStrObjList &Cmds, const TParamList &Options, TMacro
 //..............................................................................
 
 class TTetrahedron  {
-  TVPointDList Points;
+  vec3d_list Points;
   olxstr Name;
   double Volume;
 protected:
   double CalcVolume()  {
-    TVPointD a,b,n;
+    vec3d a,b,n;
     double d, caS, sa;
     a = Points[1] - Points[0];
     b = Points[2] - Points[0];
@@ -6819,13 +6819,13 @@ public:
     Name = name;
     Volume = -1;
   }
-  void AddPoint( const TVPointD& p )  {
+  void AddPoint( const vec3d& p )  {
     Points.AddNew( p );
     if( Points.Count() == 4 )
       Volume = CalcVolume();
   }
   const olxstr& GetName() const  {  return Name;  }
-  const TVPointD& operator [] (int i)  const  {  return Points[i];  }
+  const vec3d& operator [] (int i)  const  {  return Points[i];  }
 
   double GetVolume()  const  {  return Volume;  }
 };
@@ -6862,10 +6862,10 @@ void TMainForm::macCalcVol(TStrObjList &Cmds, const TParamList &Options, TMacroE
       << atoms[1]->GetLabel() << '-'
       << atoms[2]->GetLabel() << '-'
       << atoms[3]->GetLabel()               );
-    th.AddPoint( atoms[0]->Center() );
-    th.AddPoint( atoms[1]->Center() );
-    th.AddPoint( atoms[2]->Center() );
-    th.AddPoint( atoms[3]->Center() );
+    th.AddPoint( atoms[0]->crd() );
+    th.AddPoint( atoms[1]->crd() );
+    th.AddPoint( atoms[2]->crd() );
+    th.AddPoint( atoms[3]->crd() );
   }
   else  {
     for( int i=0; i < atoms.Count(); i++ ) {
@@ -6875,10 +6875,10 @@ void TMainForm::macCalcVol(TStrObjList &Cmds, const TParamList &Options, TMacroE
                  << atoms[i]->GetLabel() << '-'
                  << atoms[j]->GetLabel() << '-'
                  << atoms[k]->GetLabel()               );
-          th.AddPoint( xa->Atom().Center() );
-          th.AddPoint( atoms[i]->Center() );
-          th.AddPoint( atoms[j]->Center() );
-          th.AddPoint( atoms[k]->Center() );
+          th.AddPoint( xa->Atom().crd() );
+          th.AddPoint( atoms[i]->crd() );
+          th.AddPoint( atoms[j]->crd() );
+          th.AddPoint( atoms[k]->crd() );
         }
       }
     }
@@ -6963,7 +6963,7 @@ void TMainForm::macHklStat(TStrObjList &Cmds, const TParamList &Options, TMacroE
 
   THklFile Hkl;
   Hkl.LoadFromFile( hklSrc );
-  TVectorDList con;
+  evecd_list con;
 
   for( int i=0; i < Cons.Count(); i++ )  {
     int obi = Cons[i].FirstIndexOf('[');
@@ -7575,7 +7575,7 @@ void TMainForm::macInv(TStrObjList &Cmds, const TParamList &Options, TMacroError
 }
 //..............................................................................
 void TMainForm::macPush(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  TVPointD pnt;
+  vec3d pnt;
   int pc = 0;
   for( int i=0; i < Cmds.Count(); i++ )  {
     if( Cmds[i].IsNumber() )  {
@@ -7738,27 +7738,24 @@ void TMainForm::macLstSymm(TStrObjList &Cmds, const TParamList &Options, TMacroE
 //..............................................................................
 void TMainForm::macSgen(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   TXAtomPList Atoms;
-  TMatrixDList symm;
-  TMatrixD* matr;
+  symmd_list symm;
+  symmd matr;
   for( int i=0; i < Cmds.Count(); i++ )  {
     bool validSymm = true;
-    matr = new TMatrixD(3,4);
-    try  {  TSymmParser::SymmToMatrix( Cmds[i], *matr );  }
+    try  {  TSymmParser::SymmToMatrix( Cmds[i], matr );  }
     catch( TExceptionBase& )  {
       validSymm = false;
     }
     if( !validSymm )  {
       try  {
-        *matr = TSymmParser::SymmCodeToMatrixU(FXApp->XFile().GetLattice().GetUnitCell(), Cmds[i] );
+        matr = TSymmParser::SymmCodeToMatrixU(FXApp->XFile().GetLattice().GetUnitCell(), Cmds[i] );
         validSymm = true;
       }
       catch( TExceptionBase& )  {    }
     }
-    if( !validSymm )
-      delete matr;
-    else  {
+    if( validSymm )  {
       Cmds.Delete(i);
-      symm.Add( *matr );
+      symm.AddCCopy( matr );
       i--;
     }
   }
@@ -7781,19 +7778,19 @@ void TMainForm::macIT(TStrObjList &Cmds, const TParamList &Options, TMacroError 
 
   bool orient = Options.Contains("o");
 
-  TMatrixD I(3,3), Iv(3,3);
-  Iv.E();
-  TVPointD cent, c;
+  mat3d I, Iv;
+  Iv.I();
+  vec3d cent, c;
   for( int i=0; i < xatoms.Count(); i++ )  {
     TSAtom& a = xatoms[i]->Atom();
     if( a.GetAtomInfo() == iQPeakIndex )  continue;
-    cent += a.Center();
+    cent += a.crd();
   }
   cent /= xatoms.Count();
   for( int i=0; i < xatoms.Count(); i++ )  {
     TSAtom& a = xatoms[i]->Atom();
     if( a.GetAtomInfo() == iQPeakIndex )  continue;
-    c = a.Center();
+    c = a.crd();
     c -= cent;
     double w = a.GetAtomInfo().GetMr()*a.CAtom().GetOccp();
     I[0][0] += w*( QRT(c[1]) + QRT(c[2]));
@@ -7809,7 +7806,7 @@ void TMainForm::macIT(TStrObjList &Cmds, const TParamList &Options, TMacroError 
   TBasicApp::GetLog() << ("Inertion tensor:\n");
   for( int i=0; i < 3; i++ )
     TBasicApp::GetLog() << I[i].ToString() << '\n';
-  TMatrixD::EigenValues(I, Iv);
+  mat3d::EigenValues(I, Iv);
   TBasicApp::GetLog() << ( olxstr("Ixx =  ") << olxstr::FormatFloat(3, I[0][0]) <<
                                  "  Iyy = "  << olxstr::FormatFloat(3, I[1][1]) <<
                                  "  Izz = "  << olxstr::FormatFloat(3, I[2][2]) << '\n'  );
@@ -7818,7 +7815,7 @@ void TMainForm::macIT(TStrObjList &Cmds, const TParamList &Options, TMacroError 
     TBasicApp::GetLog() << Iv[i].ToString() << '\n';
 
   if( orient )  {
-    TVPointD t =  FXApp->GetRender().GetBasis().GetCenter();
+    vec3d t =  FXApp->GetRender().GetBasis().GetCenter();
      FXApp->GetRender().Basis()->Orient( Iv, false );
      FXApp->GetRender().Basis()->SetCenter(t);
   }
@@ -7871,11 +7868,10 @@ void TMainForm::macViewLattice(TStrObjList &Cmds, const TParamList &Options, TMa
   return;
 }
 //..............................................................................
-void main_GenerateCrd(const TVPointDList& p, const TMatrixDList& sm, TVPointDList& res) {
-  TVPointD v, t;
+void main_GenerateCrd(const vec3d_list& p, const symmd_list& sm, vec3d_list& res) {
+  vec3d v, t;
   for( int i=0; i < sm.Count(); i++ )  {
     v = sm[i] * p[0];
-    v[0] += sm[i][0][3];  v[1] += sm[i][1][3];  v[2] += sm[i][2][3];
     t.Null();
     for( int j=0; j < 3; j++ )  {
       while( v[j] > 1.01 )  {  v[j] -= 1;  t[j] -= 1;  }
@@ -7892,7 +7888,6 @@ void main_GenerateCrd(const TVPointDList& p, const TMatrixDList& sm, TVPointDLis
       res.AddCCopy(v);
       for( int j=1; j < p.Count(); j++ )  {
         v = sm[i] * p[j];
-        v[0] += sm[i][0][3];  v[1] += sm[i][1][3];  v[2] += sm[i][2][3];
         v += t;
         res.AddCCopy(v);
       }
@@ -7952,7 +7947,7 @@ void TMainForm::macAddObject(TStrObjList &Cmds, const TParamList &Options, TMacr
       throw TFunctionFailedException(__OlxSourceInfo, exc);
     }
     TDUnitCell* duc = new TDUnitCell(olxstr("cell") << (UserCells.Count()+1), &FXApp->GetRender() );
-    TVectorD cell(6);
+    double cell[6];
     cell[0] = bcf->GetAsymmUnit().Axes()[0].GetV();
     cell[1] = bcf->GetAsymmUnit().Axes()[1].GetV();
     cell[2] = bcf->GetAsymmUnit().Axes()[2].GetV();
@@ -7986,10 +7981,10 @@ void TMainForm::macAddObject(TStrObjList &Cmds, const TParamList &Options, TMacr
       Error.ProcessingError(__OlxSrcInfo, "invalid unit cell reference" );
       return;
     }
-    TMatrixDList ml;
+    symmd_list ml;
     sg->GetMatrices( ml, mattAll );
-    TVPointDList p, allPoints;
-    TVPointD v;
+    vec3d_list p, allPoints;
+    vec3d v;
 
     if( Cmds[0].Comparei("sphere") == 0 )  {
       if( (Cmds.Count()-3)%3 != 0 )  {
@@ -7999,7 +7994,7 @@ void TMainForm::macAddObject(TStrObjList &Cmds, const TParamList &Options, TMacr
       for( int i=3; i < Cmds.Count(); i+= 3 ) 
         p.AddNew(Cmds[i].ToDouble(), Cmds[i+1].ToDouble(), Cmds[i+2].ToDouble());
       main_GenerateCrd(p, ml, allPoints);
-      TMatrixD& data = *(new TMatrixD(3, allPoints.Count()));
+      ematd& data = *(new ematd(3, allPoints.Count()));
       for( int i=0; i < allPoints.Count(); i++ )  {
         v = allPoints[i] * uc->GetCellToCartesian();
         data[0][i] = v[0];  data[1][i] = v[1]; data[2][i] = v[2];
@@ -8018,7 +8013,7 @@ void TMainForm::macAddObject(TStrObjList &Cmds, const TParamList &Options, TMacr
         p.AddNew(Cmds[i+3].ToDouble(), Cmds[i+4].ToDouble(), Cmds[i+5].ToDouble());
       }
       main_GenerateCrd(p, ml, allPoints);
-      TMatrixD& data = *(new TMatrixD(3, allPoints.Count() ));
+      ematd& data = *(new ematd(3, allPoints.Count() ));
       for( int i=0; i < allPoints.Count(); i++ )  {
         v = allPoints[i] * uc->GetCellToCartesian();
         data[0][i] = v[0];  data[1][i] = v[1]; data[2][i] = v[2];
@@ -8039,7 +8034,7 @@ void TMainForm::macAddObject(TStrObjList &Cmds, const TParamList &Options, TMacr
         p.AddNew(Cmds[i+9].ToDouble(), Cmds[i+10].ToDouble(), Cmds[i+11].ToDouble());
       }
       main_GenerateCrd(p, ml, allPoints);
-      TMatrixD& data = *(new TMatrixD(3, allPoints.Count() ));
+      ematd& data = *(new ematd(3, allPoints.Count() ));
       for( int i=0; i < allPoints.Count(); i++ )  {
         v = allPoints[i] * uc->GetCellToCartesian();
         data[0][i] = v[0];  data[1][i] = v[1]; data[2][i] = v[2];
@@ -8302,7 +8297,7 @@ void TMainForm::macCalcPatt(TStrObjList &Cmds, const TParamList &Options, TMacro
     E.ProcessingError(__OlxSrcInfo, "could not locate sapce group");
     return;
   }
-  TMatrixDList ml;
+  symmd_list ml;
   sg->GetMatrices(ml, mattAll);
   olxstr hklFileName = FXApp->LocateHklFile();
   if( !TEFile::FileExists(hklFileName) )  {
@@ -8322,7 +8317,7 @@ void TMainForm::macCalcPatt(TStrObjList &Cmds, const TParamList &Options, TMacro
   int minH = 100,  minK = 100,  minL = 100;
   int maxH = -100, maxK = -100, maxL = -100;
 
-  TVPointD hkl;
+  vec3d hkl;
   TArrayList<Main_StrFPatt> AllF(refs.Count()*ml.Count());
   int index = 0;
   for( int i=0; i < refs.Count(); i++ )  {
@@ -8338,7 +8333,7 @@ void TMainForm::macCalcPatt(TStrObjList &Cmds, const TParamList &Options, TMacro
       AllF[index].h = hkl[0];
       AllF[index].k = hkl[1];
       AllF[index].l = hkl[2];
-      AllF[index].ps = hkl[0]*ml[j][0][3] + hkl[1]*ml[j][1][3] + hkl[2]*ml[j][2][3];
+      AllF[index].ps = hkl[0]*ml[j].t[0] + hkl[1]*ml[j].t[1] + hkl[2]*ml[j].t[2];
       AllF[index].v = sqrt(refs[i].GetI());
       AllF[index].v *= TEComplex<double>::polar(1, 2*M_PI*AllF[index].ps);
     }
@@ -8506,7 +8501,7 @@ void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMa
     E.ProcessingError(__OlxSrcInfo, "could not locate sapce group");
     return;
   }
-  TMatrixDList ml;
+  symmd_list ml;
   sg->GetMatrices(ml, mattAll);
   bool diff_map = Options.Contains("diff"); // Fo-Fc
   bool tomc_map = Options.Contains("tomc"); // 2Fo-Fc
@@ -8594,8 +8589,8 @@ void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMa
     FXApp->CalcSF(refs, F);
     if( diff_map || tomc_map || obs_map )  {
       // find a linear scale between F
-      TMatrixD points(2, F.Count() );
-      TVectorD line(2);
+      ematd points(2, F.Count() );
+      evecd line(2);
       double sF2o = 0, sF2c = 0;
       for( int i=0; i < F.Count(); i++ )  {
         points[0][i] = sqrt(refs[i].GetI());
@@ -8605,7 +8600,7 @@ void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMa
         sF2c += F[i].qmod();
       }
       double simple_scale = sqrt(sF2o/sF2c);
-      double rms = TMatrixD::PLSQ(points, line, 1);
+      double rms = ematd::PLSQ(points, line, 1);
       TBasicApp::GetLog() << olxstr("Trendline scale: ") << line.ToString() << '\n';
       TBasicApp::GetLog() << olxstr("Simple scale: ") << olxstr::FormatFloat(3,simple_scale) << '\n';
       
@@ -8636,7 +8631,7 @@ void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMa
   int minH = 100,  minK = 100,  minL = 100;
   int maxH = -100, maxK = -100, maxL = -100;
 
-  TVPointD hkl;
+  vec3d hkl;
   TArrayList<Main_StrF> AllF(refs.Count()*ml.Count());
   int index = 0;
   for( int i=0; i < refs.Count(); i++ )  {
@@ -8652,7 +8647,7 @@ void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMa
       AllF[index].h = hkl[0];
       AllF[index].k = hkl[1];
       AllF[index].l = hkl[2];
-      AllF[index].ps = hkl[0]*ml[j][0][3] + hkl[1]*ml[j][1][3] + hkl[2]*ml[j][2][3];
+      AllF[index].ps = hkl[0]*ml[j].t[0] + hkl[1]*ml[j].t[1] + hkl[2]*ml[j].t[2];
       AllF[index].v = F[i];
       AllF[index].v *= TEComplex<double>::polar(1, 2*M_PI*AllF[index].ps);
     }
@@ -9029,14 +9024,13 @@ void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options, TMa
   Py_InitModule4( "TestClass", Test_Methods, "doc", tc, 0 );
 }
 //..............................................................................
-double Main_FindClosestDistance(const TMatrixDList& ml, TVPointD& o_from, const TCAtom& a_to) {
-  TVPointD V1, V2, from(o_from), to(a_to.GetCCenter());
+double Main_FindClosestDistance(const symmd_list& ml, vec3d& o_from, const TCAtom& a_to) {
+  vec3d V1, V2, from(o_from), to(a_to.ccrd());
   V2 = from-to;
   a_to.GetParent()->CellToCartesian(V2);
-  double minD = V2.Length();
+  double minD = V2.QLength();
   for( int i=0; i < ml.Count(); i++ )  {
     V1 = ml[i] * from;
-    V1[0] += ml[i][0][3];  V1[1] += ml[i][1][3];  V1[2] += ml[i][2][3];
     V2 = V1;
     V2 -=to;
     int iv = Round(V2[0]);
@@ -9046,19 +9040,19 @@ double Main_FindClosestDistance(const TMatrixDList& ml, TVPointD& o_from, const 
     iv = Round(V2[2]);
     V2[2] -= iv;  V1[2] -= iv;
     a_to.GetParent()->CellToCartesian(V2);
-    double D = V2.Length();
+    double D = V2.QLength();
     if( D < minD )  {
       minD = D;
       o_from = V1;
     }
   }
-  return minD;
+  return sqrt(minD);
 }
 class TestDistanceAnalysisIteration {
   TCif cif;
   const TStrList& files;
   TAsymmUnit& au;
-  TMatrixDList ml;
+  symmd_list ml;
 public:
   TPSTypeList<int, int> XYZ, XY, XZ, YZ, XX, YY, ZZ;  // length, occurence 
 
@@ -9083,7 +9077,7 @@ public:
     int cc = 0;
     ml.Clear();
     sg->GetMatrices(ml, mattAll);
-    TVPointD diff;
+    vec3d diff;
     for( int j=0; j < au.AtomCount(); j++ )  {
       TCAtom& a1 = au.GetAtom(j);
       if( a1.GetId() == -1 )  continue;
@@ -9093,7 +9087,7 @@ public:
         if( a2.GetId() == -1 )  continue;
         cc ++;
         if( a2.GetAtomInfo() == iHydrogenIndex )  continue;
-        TVPointD from(a1.GetCCenter()), to(a2.GetCCenter());
+        vec3d from(a1.ccrd()), to(a2.ccrd());
         int d = Round(Main_FindClosestDistance(ml, from, a2)*100);
         if( d < 1 )  {  // symm eq
           a2.SetId(-1);
@@ -9158,9 +9152,9 @@ void TMainForm::macTestStat(TStrObjList &Cmds, const TParamList &Options, TMacro
   TAsymmUnit& au = cif.GetAsymmUnit();
 
   TPSTypeList<TBasicAtomInfo*, double*> atomTypes;
-  TVPointD v1;
+  vec3d v1;
   double tmp_data[601];
-  TMatrixDList ml;
+  symmd_list ml;
   for( int i=0; i < files.Count(); i++ )  {
     TBasicApp::GetLog() << files[i] << '\n';  
     try { cif.LoadFromFile(files[i]);  }
@@ -9185,17 +9179,15 @@ void TMainForm::macTestStat(TStrObjList &Cmds, const TParamList &Options, TMacro
         memset(data, 0, sizeof(double)*600);
         atomTypes.Add( &a1.GetAtomInfo(), data);
       }
-      TVPointD from(a1.GetCCenter());
+      vec3d from(a1.ccrd());
       for( int k=j+1; k < au.AtomCount(); k++ )  {
         TCAtom& a2 = au.GetAtom(k);
         if( a2.GetId() == -1 )  continue;
         if( a2.GetAtomInfo() == iHydrogenIndex )  continue;
-        TVPointD to(a2.GetCCenter());
+        vec3d to(a2.ccrd());
         memset(tmp_data, 0, sizeof(double)*600);
         for( int l=0; l < ml.Count(); l++ )  {
-          v1 = ml[l] * to;
-          v1[0] += ml[l][0][3];  v1[1] += ml[l][1][3];  v1[2] += ml[l][2][3];
-          v1 -= from;
+          v1 = ml[l] * to - from;
           v1[0] -= Round(v1[0]);  v1[1] -= Round(v1[1]);  v1[2] -= Round(v1[2]);
           au.CellToCartesian(v1);
           double d = v1.Length();

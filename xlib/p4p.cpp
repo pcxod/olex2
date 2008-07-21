@@ -81,22 +81,22 @@ void TP4PFile::LoadFromStrings(const TStrList& Strings)  {
   params.Clear();
   params.Strtok( Cell, ' ');
   if( params.Count() >= 6 )  {
-    GetAsymmUnit().Axes().Value(0).V() = params.String(0).ToDouble();
-    GetAsymmUnit().Axes().Value(1).V() = params.String(1).ToDouble();
-    GetAsymmUnit().Axes().Value(2).V() = params.String(2).ToDouble();
-    GetAsymmUnit().Angles().Value(0).V() = params.String(3).ToDouble();
-    GetAsymmUnit().Angles().Value(1).V() = params.String(4).ToDouble();
-    GetAsymmUnit().Angles().Value(2).V() = params.String(5).ToDouble();
+    GetAsymmUnit().Axes()[0].V() = params.String(0).ToDouble();
+    GetAsymmUnit().Axes()[1].V() = params.String(1).ToDouble();
+    GetAsymmUnit().Axes()[2].V() = params.String(2).ToDouble();
+    GetAsymmUnit().Angles()[0].V() = params.String(3).ToDouble();
+    GetAsymmUnit().Angles()[1].V() = params.String(4).ToDouble();
+    GetAsymmUnit().Angles()[2].V() = params.String(5).ToDouble();
   }
   params.Clear();
   params.Strtok( CellSd, ' ');
   if( params.Count() >= 6 )  {
-    GetAsymmUnit().Axes().Value(0).E() = params.String(0).ToDouble();
-    GetAsymmUnit().Axes().Value(1).E() = params.String(1).ToDouble();
-    GetAsymmUnit().Axes().Value(2).E() = params.String(2).ToDouble();
-    GetAsymmUnit().Angles().Value(0).E() = params.String(3).ToDouble();
-    GetAsymmUnit().Angles().Value(1).E() = params.String(4).ToDouble();
-    GetAsymmUnit().Angles().Value(2).E() = params.String(5).ToDouble();
+    GetAsymmUnit().Axes()[0].E() = params.String(0).ToDouble();
+    GetAsymmUnit().Axes()[1].E() = params.String(1).ToDouble();
+    GetAsymmUnit().Axes()[2].E() = params.String(2).ToDouble();
+    GetAsymmUnit().Angles()[0].E() = params.String(3).ToDouble();
+    GetAsymmUnit().Angles()[1].E() = params.String(4).ToDouble();
+    GetAsymmUnit().Angles()[2].E() = params.String(5).ToDouble();
   }
   params.Clear();
   params.Strtok( Size, ' ');

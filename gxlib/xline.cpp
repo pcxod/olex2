@@ -17,15 +17,13 @@
 //----------------------------------------------------------------------------//
 // TXLine function bodies
 //----------------------------------------------------------------------------//
-TXLine::TXLine(const olxstr& collectionName, const TVPointD& base, const TVPointD& edge, TGlRender *Render): 
+TXLine::TXLine(const olxstr& collectionName, const vec3d& base, const vec3d& edge, TGlRender *Render): 
   TXBond(collectionName, *(TSBond*)NULL, Render)
 {
-  TVectorD C;
   FBase = base;
   FEdge = edge;
-  C = FEdge - FBase;
-  if( C.Length() )
-  {
+  vec3d C( FEdge - FBase);
+  if( !C.IsNull() )  {
     Params()[3] = C.Length();
     C.Normalise();
     Params()[0] = (float)(acos(C[2])*180/M_PI);
@@ -63,7 +61,7 @@ bool TXLine::Orient(TGlPrimitive *GlP)
   Length = olxstr::FormatFloat(3, Params()[3]);
   if( GlP->Type() == sgloText )
   {
-    TVPointD V;
+    vec3d V;
     V = (FEdge+FBase)/2;
     V += FParent->GetBasis().GetCenter();
     V = FParent->GetBasis().GetMatrix()*V;

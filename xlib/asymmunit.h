@@ -5,7 +5,8 @@
 #include "atominfo.h"
 #include "elist.h"
 #include "ematrix.h"
-#include "vpoint.h"
+#include "threex3.h"
+
 #include "evpoint.h"
 #include "macroerror.h"
 
@@ -20,14 +21,14 @@ BeginXlibNamespace()
 
 class TAsymmUnit: public IEObject  {
   TCAtomPList CAtoms;      // list of TCAtoms
-  TMatrixDList  Matrices;  // list of matrices (excluding ones after centering)
+  symmd_list  Matrices;  // list of matrices (excluding ones after centering)
   TEllpPList Ellipsoids;
   TAtomsInfo *AtomsInfo;
-  TMatrixD *Cell2Cartesian,  // transformation from cell crd to cartesian
-           *Cartesian2Cell;  // transformation from cartesian crd to cell
-  TMatrixD UcifToUxyz,  UxyzToUcif,
+  mat3d Cell2Cartesian,  // transformation from cell crd to cartesian
+        Cartesian2Cell;  // transformation from cartesian crd to cell
+  mat3d UcifToUxyz,  UxyzToUcif,
            UcifToUxyzT, UxyzToUcifT;
-  TMatrixD *Hkl2Cartesian;  // transformation from HKL crd to cartesian
+  mat3d Hkl2Cartesian;  // transformation from HKL crd to cartesian
   TCAtomPList Centroids;
   double            MaxQPeak,
                     MinQPeak;
@@ -38,8 +39,8 @@ class TAsymmUnit: public IEObject  {
   olxstr           FCellSymmetry;
   TEVPointD  FAxes;    // axes with errors
   TEVPointD  FAngles;    // angles + errors
-  TVPointD   RAxes;     // reciprical axes
-  TVPointD   RAngles;    // reciprical angles
+  vec3d   RAxes;     // reciprical axes
+  vec3d   RAngles;    // reciprical angles
   TTypeList<TCAtomPList>*  ExyzGroups;
   TCSTypeList<olxstr, TLibScatterer*> SfacData;  // label + params
   // this list holds the list of all atoms which are not deleted
@@ -102,7 +103,7 @@ protected:
   TPtrList<TResidue> Residues;
   TResidue MainResidue;
   // in INS file is EQUV command
-  TMatrixDList UsedSymm;
+  symmd_list UsedSymm;
   TSRestraintList rDfix,  // restrained distances (DFIX)
                   rAfix,  // restrained angles (DANG)
                   rDsim,  // similar distances (SADI)
@@ -122,8 +123,8 @@ public:
   inline TLattice& GetLattice()       const {  return *Lattice;  }
   inline TEVPointD&  Axes()                 {  return FAxes;  }
   inline TEVPointD&  Angles()               {  return FAngles;  }
-  inline const TVPointD& GetRAxes()   const {  return RAxes;  }
-  inline const TVPointD& GetRAngles() const {  return RAngles;  }
+  inline const vec3d& GetRAxes()   const {  return RAxes;  }
+  inline const vec3d& GetRAngles() const {  return RAngles;  }
   double CalcCellVolume() const;
   // estimates Z=Z'*sg.multiplicity according to 18.6A rule
   double EstimateZ(int atomCount) const;
@@ -136,22 +137,25 @@ public:
   TCAtomPList& ExyzGroup(size_t i) const {  return ExyzGroups->Item(i);  }
   int ExyzGroupCount()             const {  return ExyzGroups == NULL ?  0 : ExyzGroups->Count();  }
 
-  const TMatrixD& GetCellToCartesian() const {  return *Cell2Cartesian; }
-  const TMatrixD& GetCartesianToCell() const {  return *Cartesian2Cell; }
-  const TMatrixD& GetHklToCartesian()  const {  return *Hkl2Cartesian; }
-  inline void CellToCartesian( const TVPointD &Cell, TVPointD &Cartesian) const  {
-    Cartesian = Cell * (*Cell2Cartesian);
+  const mat3d& GetCellToCartesian() const {  return Cell2Cartesian; }
+  const mat3d& GetCartesianToCell() const {  return Cartesian2Cell; }
+  const mat3d& GetHklToCartesian()  const {  return Hkl2Cartesian; }
+  template <class VC>
+  inline void CellToCartesian(const VC& Cell, VC& Cartesian) const  {
+    Cartesian = Cell * Cell2Cartesian;
   }
-  inline void CellToCartesian( TVPointD &Cartesian) const {
-    Cartesian *= (*Cell2Cartesian);
+  template <class VC>
+  inline void CellToCartesian(VC& Cartesian) const {
+    Cartesian *= Cell2Cartesian;
   }
-  inline void CartesianToCell( TVPointD &Cell)      const {
-    Cell *= (*Cartesian2Cell);
+  template <class VC>
+  inline void CartesianToCell(VC& Cell)      const {
+    Cell *= Cartesian2Cell;
   }
 
   // J App Cryst 2002, 35, 477-480
-  void UcifToUcart(TVectorD& v);
-  void UcartToUcif(TVectorD& v);
+  void UcifToUcart(evecd& v);
+  void UcartToUcif(evecd& v);
 
   void Assign( const TAsymmUnit& C);
   void ChangeSpaceGroup(const class TSpaceGroup& sg);
@@ -176,7 +180,7 @@ public:
   //creates a new atom and puts it into the list
   TCAtom& NewAtom(TResidue* resi = NULL);
   //creates a new atom and puts it into the list
-  TCAtom& NewCentroid(const TVPointD &CCenter);
+  TCAtom& NewCentroid(const vec3d &CCenter);
   //returns an atom by label; if the label is not unique, returns the first found
   TCAtom* FindCAtom(const olxstr &Label, TResidue* resi = NULL) const;
   //returns an atom by LoaderId
@@ -214,19 +218,26 @@ public:
   void InitAtomIds(); // initialises atom ids if any were added or removed
 
   inline int MatrixCount()                   const {  return Matrices.Count();  }
-  inline const TMatrixD& GetMatrix(size_t i) const {  return Matrices[i];  }
+  inline const symmd& GetMatrix(size_t i) const {  return Matrices[i];  }
   void ClearMatrices()                             {  Matrices.Clear();  }
-  void AddMatrix(const TMatrixD& a);
+  void AddMatrix(const symmd& a);
 
   inline int EllpCount()               const {  return Ellipsoids.Count(); }
   inline TEllipsoid& GetEllp(size_t i) const {  return *Ellipsoids[i]; }
   void NullEllp(size_t i);
-  void PackEllp();
+  void ClearEllps()  {
+    for( int i=0; i < Ellipsoids.Count(); i++ )
+      delete Ellipsoids[i];
+    for( int i=0; i < CAtoms.Count(); i++ )
+      CAtoms[i]->AssignEllps(NULL);
+    Ellipsoids.Clear();
+  }
+  void PackEllps();
   // Q - six values representing quadratic form of a thermal ellipsoid
-  TEllipsoid& NewEllp(const TVectorD &Q);
+  TEllipsoid& NewEllp(const evecd& Q);
   TEllipsoid& NewEllp();  // initialisation performed manually !
 
-  TVPointD GetOCenter(bool IncludeQ, bool IncludeH) const;
+  vec3d GetOCenter(bool IncludeQ, bool IncludeH) const;
   /* returns summarised formula of the asymmetric unit, use MutiplyZ to multiply the
      content by Z
   */
@@ -253,11 +264,11 @@ public:
   inline double GetMaxQPeak()    const {  return MaxQPeak;  }
   inline double GetMinQPeak()    const {  return MinQPeak;  }
 
-  const TMatrixD& AddUsedSymm(const TMatrixD& matr);
-  void RemUsedSymm(const TMatrixD& matr);
+  const symmd& AddUsedSymm(const symmd& matr);
+  void RemUsedSymm(const symmd& matr);
   inline int UsedSymmCount()     const {  return UsedSymm.Count();  }
-  inline const TMatrixD& GetUsedSymm(size_t ind)  {  return UsedSymm[ind];  }
-  inline int UsedSymmIndex(const TMatrixD& matr)  const {  return UsedSymm.IndexOf(matr);  }
+  inline const symmd& GetUsedSymm(size_t ind)  {  return UsedSymm[ind];  }
+  inline int UsedSymmIndex(const symmd& matr)  const {  return UsedSymm.IndexOf(matr);  }
   inline void ClearUsedSymm()          {  UsedSymm.Clear();  }
 
 
@@ -265,7 +276,7 @@ public:
     coordinates of atoms are called. This is to handle restraints in a correct
     way
   */
-  void OnCAtomCrdChange( TCAtom* ca, const TMatrixD& matr );
+  void OnCAtomCrdChange( TCAtom* ca, const symmd& matr );
   // clears restraints and constraints
   void ClearRestraints();
   // DFIX equivalent

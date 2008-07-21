@@ -85,70 +85,70 @@ int TUnitCell::GetMatrixMultiplier(short Latt)  {
 void  TUnitCell::InitMatrices()  {
   int ac;
   TCAtom *A1;
-  TVPointD Vec, Vec1, Vec2;
+  vec3d Vec, Vec1, Vec2;
   TEVPointD EP;
   TEStrBuffer Tmp;
   Matrices.Clear();
   // check if the E matrix is in the list
   for( int i=0;  i < GetLattice().GetAsymmUnit().MatrixCount(); i++ )  {
-    const TMatrixD& m = GetLattice().GetAsymmUnit().GetMatrix(i);
-    if( m.IsE() )  continue;  // will need to insert the identity matrix at position 0
+    const symmd& m = GetLattice().GetAsymmUnit().GetMatrix(i);
+    if( m.r.IsI() )  continue;  // will need to insert the identity matrix at position 0
     Matrices.AddNew( m );
   }
 
-  TMatrixD* M = new TMatrixD(3,4);  // insert the identity matrix at position 0
-  M->E();
+  symmd* M = new symmd;  // insert the identity matrix at position 0
+  M->r.I();
   Matrices.Insert(0, *M);  // I Matrix
 
   for( int i=0; i < Matrices.Count(); i++ )  {
-    TMatrixD& m = Matrices[i];
+    symmd& m = Matrices[i];
     switch( abs(GetLattice().GetAsymmUnit().GetLatt()) )  {
       case 1: break;
       case 2:      // Body Centered (I)
-        M = new TMatrixD(m);
-        M->Data(0)[3] += 0.5f;  M->Data(1)[3] += 0.5f;  M->Data(2)[3] += 0.5f;
+        M = new symmd(m);
+        M->t[0] += 0.5f;     M->t[1] += 0.5f;     M->t[2] += 0.5f;
         Matrices.Insert(i+1, *M);
         i++;
         break;
       case 3:      // R Centered
-        M = new TMatrixD(m);
-        M->Data(0)[3] += (2./3.);  M->Data(1)[3] += (1./3.);  M->Data(2)[3] += (1./3.);
+        M = new symmd(m);
+        M->t[0] += (2./3.);  M->t[1] += (1./3.);  M->t[2] += (1./3.);
         Matrices.Insert(i+1, *M);
         i++;
-        M = new TMatrixD(m);
-        M->Data(0)[3] += (1./3.);  M->Data(1)[3] += (2./3.);  M->Data(2)[3] += (2./3.);
+        M = new symmd(m);
+        M->t[0] += (1./3.);  M->t[1] += (2./3.);  M->t[2] += (2./3.);
         Matrices.Insert(i+1, *M);
         i++;
         break;
       case 4:      // Face Centered (F)
-        M = new TMatrixD(m);
-        M->Data(0)[3] += 0.0;    M->Data(1)[3] += 0.5;  M->Data(2)[3] += 0.5;
+        M = new symmd(m);
+        M->t[0] += 0.0;    M->t[1] += 0.5;  M->t[2] += 0.5;
         Matrices.Insert(i+1, *M);
         i++;
-        M = new TMatrixD(m);
-        M->Data(0)[3] += 0.5;  M->Data(1)[3] += 0;    M->Data(2)[3] += 0.5;
+        M = new symmd(m);
+        M->t[0] += 0.5;  M->t[1] += 0;    M->t[2] += 0.5;
         Matrices.Insert(i+1, *M);
         i++;
-        M = new TMatrixD(m);
-        M->Data(0)[3] += 0.5;  M->Data(1)[3] += 0.5;  M->Data(2)[3] += 0;
+        M = new symmd(m);
+        M->t[0] += 0.5;  M->t[1] += 0.5;  M->t[2] += 0;
         Matrices.Insert(i+1, *M);
         i++;
         break;
       case 5:      // A Centered (A)
-        M = new TMatrixD(m);
-        M->Data(0)[3] += 0;    M->Data(1)[3] += 0.5;  M->Data(2)[3] += 0.5;
+        M = new symmd(m);
+        M->t[0] += 0;    M->t[1] += 0.5;  M->t[2] += 0.5;
         Matrices.Insert(i+1, *M);
         i++;
         break;
       case 6:      // B Centered (B)
-        M = new TMatrixD(m);
-        M->Data(0)[3] += 0.5;  M->Data(1)[3] += 0;    M->Data(2)[3] += 0.5;
+        M = new symmd(m);
+        M->t[0] += 0.5;  M->t[1] += 0;    M->t[2] += 0.5;
         Matrices.Insert(i+1, *M);
         i++;
         break;
       case 7:      // C Centered (C);
-        M = new TMatrixD(m);
-        M->Data(0)[3] += 0.5;  M->Data(1)[3] += 0.5;  M->Data(2)[3] += 0;
+        M = new symmd(m);
+        M->t[0] += 0.5;  M->t[1] += 0.5;  M->t[2] += 0;
         Matrices.Insert(i+1, *M);
         i++;
         break;
@@ -158,7 +158,7 @@ void  TUnitCell::InitMatrices()  {
   }
   if( GetLattice().GetAsymmUnit().GetLatt() > 0 )  {
     for( int i=0; i < Matrices.Count(); i++ )  {
-      M = new TMatrixD(Matrices[i]);
+      M = new symmd(Matrices[i]);
       *M *= -1;
       Matrices.Insert(i+1, *M);
       i++;
@@ -167,8 +167,8 @@ void  TUnitCell::InitMatrices()  {
 
   ac = GetLattice().GetAsymmUnit().AtomCount();
 
-  TMatrixD abc2xyz( GetLattice().GetAsymmUnit().GetCellToCartesian()),
-           xyz2abc( GetLattice().GetAsymmUnit().GetCartesianToCell()), NM(3,3);
+  mat3d abc2xyz( GetLattice().GetAsymmUnit().GetCellToCartesian()),
+           xyz2abc( GetLattice().GetAsymmUnit().GetCartesianToCell());
   abc2xyz.Transpose();
   xyz2abc.Transpose();
 
@@ -183,15 +183,11 @@ void  TUnitCell::InitMatrices()  {
   for( int i=0; i < ac; i++ )  {
     A1 = &GetLattice().GetAsymmUnit().GetAtom(i);
     for( int j=0; j < Matrices.Count(); j++ )  {
-      for( int k=0; k < 3; k++ )
-        for( int l=0; l < 3; l++ )
-          NM[k][l] = Matrices[j][k][l];
       if( A1->GetEllipsoid() != NULL )  {
-        NM = abc2xyz*NM*xyz2abc;
         E = new TEllipsoid;
         E->SetId( j*ac+A1->GetId() );
         *E = *A1->GetEllipsoid();
-        E->MultMatrix(NM);
+        E->MultMatrix( abc2xyz*Matrices[j].r*xyz2abc );
         Ellipsoids[i][j] = E;
       }
     }
@@ -205,7 +201,7 @@ const TEllipsoid& TUnitCell::GetEllipsoid(int MatrixId, int AUId) const  {
 }
 //..............................................................................
 TUnitCell::TSearchSymmEqTask::TSearchSymmEqTask(TPtrList<TCAtom>& atoms,
-  const TMatrixDList& matrices, TStrList& report, double tol, bool initialise) :
+  const symmd_list& matrices, TStrList& report, double tol, bool initialise) :
                   Atoms(atoms), Matrices(matrices), Report(report), tolerance(tol)  {
   Initialise = initialise;
   AU = atoms[0]->GetParent();
@@ -213,16 +209,12 @@ TUnitCell::TSearchSymmEqTask::TSearchSymmEqTask(TPtrList<TCAtom>& atoms,
 }
 //..............................................................................
 void TUnitCell::TSearchSymmEqTask::Run(long ind)  {
-  TVPointD Vec, Vec1;
+  vec3d Vec, Vec1;
   for( int i=ind; i < Atoms.Count(); i++ )  {
     if( Atoms[i]->GetTag() == -1 )  continue;
     for( int j=0; j < Matrices.Count(); j++ )  {
-      Vec1 = Atoms[i]->CCenter();
-      Vec1 = Matrices[j] * Vec1;
-      Vec1[0] += Matrices[j][0][3];
-      Vec1[1] += Matrices[j][1][3];
-      Vec1[2] += Matrices[j][2][3];
-      Vec = Atoms[ind]->CCenter();
+      Vec1 = Matrices[j] * Atoms[i]->ccrd();
+      Vec = Atoms[ind]->ccrd();
       Vec -= Vec1;
       int iLx = Round(Vec[0]);  Vec[0] -= iLx;
       int iLy = Round(Vec[1]);  Vec[1] -= iLy;
@@ -317,112 +309,101 @@ int TUnitCell::FindSymmEq(TEStrBuffer &Msg, double tol, bool Initialise, bool re
   return report.Count();
 }
 //..............................................................................
-TMatrixD* TUnitCell::GetClosest(const TCAtom& to, const TCAtom& atom, bool ConsiderOriginal) const  {
-  TVPointD V1, V2;
-  V1 = to.GetCCenter();
-  V2 = atom.GetCCenter();
-  return GetClosest(V1, V2, ConsiderOriginal);
+symmd* TUnitCell::GetClosest(const TCAtom& to, const TCAtom& atom, bool ConsiderOriginal) const  {
+  return GetClosest(to.ccrd(), atom.ccrd(), ConsiderOriginal);
 }
 //..............................................................................
-TMatrixD* TUnitCell::GetClosest(const TVPointD& to, const TVPointD& from, bool ConsiderOriginal) const  {
-  const TMatrixD* minMatr = NULL;
-  TVPointD V1, V2;
-  int ix, iy, iz, minix, miniy, miniz;
-  double D, minD=1000;
+symmd* TUnitCell::GetClosest(const vec3d& to, const vec3d& from, bool ConsiderOriginal) const  {
+  const symmd* minMatr = NULL;
+  vec3d V1;
+  int minix, miniy, miniz;
+  double minD=1000;
   if( ConsiderOriginal )  {
-    V2 = from-to;
-    GetLattice().GetAsymmUnit().CellToCartesian(V2);
-    minD = V2.Length();
+    V1 = from-to;
+    GetLattice().GetAsymmUnit().CellToCartesian(V1);
+    minD = V1.QLength();
   }
-  for( int i=0; i < MatrixCount(); i++ )  {
-    const TMatrixD* matr = &GetMatrix(i);
-
-    V1 = *matr * from;
-    V1[0] += matr->Data(0)[3];  V1[1] += matr->Data(1)[3];  V1[2] += matr->Data(2)[3];
-    V2 = V1;
-    V2 -=to;
-    ix = Round(V2[0]);  V2[0] -= (ix);  // find closest distance
-    iy = Round(V2[1]);  V2[1] -= (iy);
-    iz = Round(V2[2]);  V2[2] -= (iz);
+  for( int i=0; i < Matrices.Count(); i++ )  {
+    const symmd& matr = Matrices[i];
+    V1 = matr * from;
+    V1 -= to;
+    int ix = Round(V1[0]);  V1[0] -= (ix);  // find closest distance
+    int iy = Round(V1[1]);  V1[1] -= (iy);
+    int iz = Round(V1[2]);  V1[2] -= (iz);
     // check for identity matrix
     if( !i && !ix && !iy && !iz )  continue;
-    GetLattice().GetAsymmUnit().CellToCartesian(V2);
-    D = V2.Length();
+    GetLattice().GetAsymmUnit().CellToCartesian(V1);
+    double D = V1.QLength();
     if( D < minD )  {
       minD = D;
-      minMatr = matr;
+      minMatr = &matr;
       minix = ix;  miniy = iy; miniz = iz;
     }
     else  {
       if( D == minD && minMatr == NULL )  {
-        minMatr = matr;
+        minMatr = &matr;
         minix = ix;  miniy = iy; miniz = iz;
       }
     }
   }
   if( minMatr != NULL)  {
-    TMatrixD* retVal = new TMatrixD(*minMatr);
-    retVal->Data(0)[3] -= minix;
-    retVal->Data(1)[3] -= miniy;
-    retVal->Data(2)[3] -= miniz;
+    symmd* retVal = new symmd(*minMatr);
+    retVal->t[0] -= minix;
+    retVal->t[1] -= miniy;
+    retVal->t[2] -= miniz;
     return retVal;
   }
   return NULL;
 }
 //..............................................................................
 double TUnitCell::FindClosestDistance(const class TCAtom& a_from, const TCAtom& a_to) const  {
-  TVPointD V1, from(a_from.GetCCenter()), to(a_to.GetCCenter());
+  vec3d V1, from(a_from.ccrd()), to(a_to.ccrd());
   V1 = from-to;
   GetLattice().GetAsymmUnit().CellToCartesian(V1);
-  double minD = V1.Length();
+  double minD = V1.QLength();
   for( int i=0; i < MatrixCount(); i++ )  {
-    const TMatrixD& matr = GetMatrix(i);
-    V1 = matr * from;
-    V1[0] += matr[0][3];  V1[1] += matr[1][3];  V1[2] += matr[2][3];
-    V1 -=to;
+    const symmd& matr = GetMatrix(i);
+    V1 = matr * from - to;
     V1[0] -= Round(V1[0]);  // find closest distance
     V1[1] -= Round(V1[1]);
     V1[2] -= Round(V1[2]);
     GetLattice().GetAsymmUnit().CellToCartesian(V1);
-    double D = V1.Length();
+    double D = V1.QLength();
     if( D < minD )  
       minD = D;
   }
-  return minD;
+  return sqrt(minD);
 }
 //..............................................................................
-TMatrixDList* TUnitCell::GetBinding(const TCAtom& toA, const TCAtom& fromA,
-    const TVPointD& to, const TVPointD& from, bool IncludeI, bool IncludeHBonds) const  {
-  TMatrixD* newMatr;
-  TMatrixDList* retVal = new TMatrixDList();
-  TVPointD V1, V2;
+symmd_list* TUnitCell::GetBinding(const TCAtom& toA, const TCAtom& fromA,
+    const vec3d& to, const vec3d& from, bool IncludeI, bool IncludeHBonds) const  {
+  symmd* newMatr;
+  symmd_list* retVal = new symmd_list;
+  vec3d V1;
 
   for( int i=0; i < MatrixCount(); i++ )  {
-    const TMatrixD& matr = GetMatrix(i);
-    V1 = matr * from;
-    V1[0] += matr[0][3];  V1[1] += matr[1][3]; V1[2] += matr[2][3];
-    V2 = V1;
-    V2 -= to;
-    int ix = Round(V2[0]);  V2[0] -= (ix);
-    int iy = Round(V2[1]);  V2[1] -= (iy);
-    int iz = Round(V2[2]);  V2[2] -= (iz);
+    const symmd& matr = GetMatrix(i);
+    V1 = matr * from - to;
+    int ix = Round(V1[0]);  V1[0] -= (ix);
+    int iy = Round(V1[1]);  V1[1] -= (iy);
+    int iz = Round(V1[2]);  V1[2] -= (iz);
     // check for identity matrix
     if( !IncludeI )  if( !i && !ix && !iy && !iz )  continue;
-    GetLattice().GetAsymmUnit().CellToCartesian(V2);
-    double D = V2.Length();
+    GetLattice().GetAsymmUnit().CellToCartesian(V1);
+    double D = V1.Length();
     if( GetLattice().GetNetwork().CBondExists(toA, fromA, D) )  {
-      newMatr = new TMatrixD(matr);
-      newMatr->Data(0)[3] -= ix;
-      newMatr->Data(1)[3] -= iy;
-      newMatr->Data(2)[3] -= iz;
+      newMatr = new symmd(matr);
+      newMatr->t[0] -= ix;
+      newMatr->t[1] -= iy;
+      newMatr->t[2] -= iz;
       retVal->Add(*newMatr);
     }
-    else  if( IncludeHBonds )  {
+    else if( IncludeHBonds )  {
       if( GetLattice().GetNetwork().HBondExists(toA, fromA, D) )  {
-        newMatr = new TMatrixD(matr);
-        newMatr->Data(0)[3] -= ix;
-        newMatr->Data(1)[3] -= iy;
-        newMatr->Data(2)[3] -= iz;
+        newMatr = new symmd(matr);
+        newMatr->t[0] -= ix;
+        newMatr->t[1] -= iy;
+        newMatr->t[2] -= iz;
         retVal->Add(*newMatr);
       }
     }
@@ -430,15 +411,14 @@ TMatrixDList* TUnitCell::GetBinding(const TCAtom& toA, const TCAtom& fromA,
   return retVal;
 }
 //..............................................................................
-TMatrixDList* TUnitCell::GetInRange(const TVPointD& to, const TVPointD& from, double R, bool IncludeI) const  {
-  TMatrixDList* retVal = new TMatrixDList();
-  TMatrixD* retMatr;
-  TVPointD V1;
+symmd_list* TUnitCell::GetInRange(const vec3d& to, const vec3d& from, double R, bool IncludeI) const  {
+  symmd_list* retVal = new symmd_list;
+  symmd* retMatr;
+  vec3d V1;
   R *= R;
   for( int i=0; i < MatrixCount(); i++ )  {
-    const TMatrixD& matr = GetMatrix(i);
+    const symmd& matr = GetMatrix(i);
     V1 = matr * from;
-    V1[0] += matr[0][3];  V1[1] += matr[1][3];  V1[2] += matr[2][3];
     V1 -= to;
     int ix = Round(V1[0]);  V1[0] -= ix;
     int iy = Round(V1[1]);  V1[1] -= iy;
@@ -449,10 +429,10 @@ TMatrixDList* TUnitCell::GetInRange(const TVPointD& to, const TVPointD& from, do
     GetLattice().GetAsymmUnit().CellToCartesian(V1);
     double D = V1.QLength();
     if( D < R )  {
-      retMatr = new TMatrixD(matr);
-      retMatr->Data(0)[3] -= ix;
-      retMatr->Data(1)[3] -= iy;
-      retMatr->Data(2)[3] -= iz;
+      retMatr = new symmd(matr);
+      retMatr->t[0] -= ix;
+      retMatr->t[1] -= iy;
+      retMatr->t[2] -= iz;
       retVal->Add(*retMatr);
     }
   }
@@ -460,63 +440,57 @@ TMatrixDList* TUnitCell::GetInRange(const TVPointD& to, const TVPointD& from, do
 }
 //..............................................................................
 void TUnitCell::FindInRange(const TCAtom& atom, double R, 
-                            TArrayList< AnAssociation2<TCAtom const*,TVPointD> >& res) const {
+                            TArrayList< AnAssociation2<TCAtom const*,vec3d> >& res) const {
 
   const TAsymmUnit& au = GetLattice().GetAsymmUnit();
-  TVPointD to( atom.GetCCenter() ), from;
-  TVPointD V1;
+  vec3d to( atom.ccrd() );
+  vec3d V1;
   R *= R;
   for( int i=0; i < au.AtomCount(); i++ )  {
     const TCAtom& a = au.GetAtom(i);
     if( a.IsDeleted() )  continue;
-    from = a.GetCCenter();
     for( int j=0; j < MatrixCount(); j++ )  {
-      const TMatrixD& matr = GetMatrix(j);
-      V1 = matr * from;
-      V1[0] += matr[0][3];  V1[1] += matr[1][3];  V1[2] += matr[2][3];
-      V1 -= to;
+      const symmd& matr = GetMatrix(j);
+      V1 = matr * a.ccrd() - to;
       V1[0] -= Round(V1[0]);  // find closest distance
       V1[1] -= Round(V1[1]);
       V1[2] -= Round(V1[2]);
       GetLattice().GetAsymmUnit().CellToCartesian(V1);
       double D = V1.QLength();
       if( D < R && D > 0.01 )  {
-        res.Add( AnAssociation2<TCAtom const*, TVPointD>(&a, V1) );
+        res.Add( AnAssociation2<TCAtom const*, vec3d>(&a, V1) );
       }
     }
   }
 }
 //..............................................................................
-TMatrixDList* TUnitCell::GetInRangeEx(const TVPointD& to, const TVPointD& from, 
-                                       float R, bool IncludeI, const TMatrixDList& ToSkip) const  {
-  TMatrixDList* retVal = new TMatrixDList();
-  TMatrixD* retMatr;
-  TVPointD V1, V2, V3;
+symmd_list* TUnitCell::GetInRangeEx(const vec3d& to, const vec3d& from, 
+                                       float R, bool IncludeI, const symmd_list& ToSkip) const  {
+  symmd_list* retVal = new symmd_list;
+  symmd* retMatr;
+  vec3d V1, V2;
   R *= R;
   for( int i=0; i < MatrixCount(); i++ )  {
-    const TMatrixD& matr = GetMatrix(i);
-    V1 = matr * from;
-    V1[0] += matr[0][3];  V1[1] += matr[1][3];  V1[2] += matr[2][3];
-    V2 = V1;
-    V2 -= to;
-    int ix = Round(V2[0]);  V2[0] -= (ix);
-    int iy = Round(V2[1]);  V2[1] -= (iy);
-    int iz = Round(V2[2]);  V2[2] -= (iz);
+    const symmd& matr = GetMatrix(i);
+    V1 = matr * from - to;
+    int ix = Round(V1[0]);  V1[0] -= ix;
+    int iy = Round(V1[1]);  V1[1] -= iy;
+    int iz = Round(V1[2]);  V1[2] -= iz;
     for( int j=0; j < 3; j++ )  {
       for( int k=-1; k <= 1; k++ )  {
-        V3 = V2;
-        V3[j] += k;
+        V2 = V1;
+        V2[j] += k;
       // check for identity matrix
         if( !IncludeI && !i & !k )
           if( !ix && !iy && !iz )  continue;
-        GetLattice().GetAsymmUnit().CellToCartesian(V3);
-        double D = V3.QLength();
+        GetLattice().GetAsymmUnit().CellToCartesian(V2);
+        double D = V2.QLength();
         if( D < R )  {
-          retMatr = new TMatrixD(matr);
-          retMatr->Data(0)[3] -= ix;
-          retMatr->Data(1)[3] -= iy;
-          retMatr->Data(2)[3] -= iz;
-          retMatr->Data(j)[3] += k;
+          retMatr = new symmd(matr);
+          retMatr->t[0] -= ix;
+          retMatr->t[1] -= iy;
+          retMatr->t[2] -= iz;
+          retMatr->t[j] += k;
           if( ToSkip.IndexOf( *retMatr ) != -1 )  {
             delete retMatr;
             continue;
@@ -535,27 +509,24 @@ void TUnitCell::GetAtomEnviList(TSAtom& atom, TAtomEnvi& envi, bool IncludeQ )  
 
   envi.SetBase( atom );
 
-  TMatrixD I(3,4);
-  I.E();
+  symmd I;
+  I.r.I();
 
   for( int i=0; i < atom.NodeCount(); i++ )  {
     TSAtom& A = atom.Node(i);
     if( A.IsDeleted() ) continue;
     if( !IncludeQ && A.GetAtomInfo() == iQPeakIndex )  continue;
-    envi.Add( A.CAtom(), I, A.Center() );
+    envi.Add( A.CAtom(), I, A.crd() );
   }
-  TVPointD v;
+  vec3d v;
   for( int i=0; i < atom.CAtom().AttachedAtomCount(); i++ )  {
     TCAtom& A = atom.CAtom().GetAttachedAtom(i);
     if( !IncludeQ && A.GetAtomInfo() == iQPeakIndex )  continue;
 
-    v = A.CCenter();
-    TMatrixD* m = GetClosest( atom.CCenter(), v, false );
+    symmd* m = GetClosest( atom.ccrd(), A.ccrd(), false );
     if( m == NULL )
       throw TFunctionFailedException(__OlxSourceInfo, "Could not find symmetry generated atom");
-    v = A.CCenter();
-    v = *m * v;
-    v[0] += m->Data(0)[3];  v[1] += m->Data(1)[3];  v[2] += m->Data(2)[3];
+    v = *m * A.ccrd();
     this->GetLattice().GetAsymmUnit().CellToCartesian(v);
     // make sure that atoms on center of symmetry are not counted twice
     bool Add = true;
@@ -577,29 +548,24 @@ void TUnitCell::GetAtomQEnviList(TSAtom& atom, TAtomEnvi& envi)  {
 
   envi.SetBase( atom );
 
-  TMatrixD I(3,4);
-  I.E();
+  symmd I;
+  I.r.I();
 
   for( int i=0; i < atom.NodeCount(); i++ )  {
     TSAtom& A = atom.Node(i);
     if( A.IsDeleted() ) continue;
     if( A.GetAtomInfo() == iQPeakIndex )
-      envi.Add( A.CAtom(), I, A.Center() );
+      envi.Add( A.CAtom(), I, A.crd() );
   }
-  TVPointD v;
+  vec3d v;
   for( int i=0; i < atom.CAtom().AttachedAtomCount(); i++ )  {
     TCAtom& A = atom.CAtom().GetAttachedAtom(i);
     if( A.GetAtomInfo() != iQPeakIndex )  continue;
 
-    v = A.CCenter();
-    TMatrixD* m = GetClosest( atom.CCenter(), v, false );
+    symmd* m = GetClosest( atom.ccrd(), A.ccrd(), false );
     if( m == NULL )
       throw TFunctionFailedException(__OlxSourceInfo, "Could not find symmetry generated atom");
-    v = A.CCenter();
-    v = *m * v;
-    v[0] += m->Data(0)[3];
-    v[1] += m->Data(1)[3];
-    v[2] += m->Data(2)[3];
+    v = *m * A.ccrd();
     GetLattice().GetAsymmUnit().CellToCartesian(v);
     // make sure that atoms on center of symmetry are not counted twice
     bool Add = true;
@@ -621,12 +587,12 @@ void TUnitCell::GetAtomPossibleHBonds(const TAtomEnvi& ae, TAtomEnvi& envi)  {
 
   envi.SetBase( ae.GetBase() );
 
-  TMatrixD I(3,4);
-  I.E();
+  symmd I;
+  I.r.I();
 
   TAsymmUnit& au = GetLattice().GetAsymmUnit();
 
-  TVPointD v, v1, v2;
+  vec3d v, v1, v2;
   for( int i=0; i < au.AtomCount(); i++ )  {
     TCAtom& A = au.GetAtom(i);
     if( A.GetAtomInfo() == iQPeakIndex || A.IsDeleted() )  continue;
@@ -636,23 +602,18 @@ void TUnitCell::GetAtomPossibleHBonds(const TAtomEnvi& ae, TAtomEnvi& envi)  {
     if( !( A.GetAtomInfo() == iOxygenIndex ||
            A.GetAtomInfo() == iNitrogenIndex) )  continue;
 
-    v = A.CCenter();
-    TMatrixDList& ms = *GetInRange( ae.GetBase().CCenter(), v, 2.9, considerI );
+    symmd_list& ms = *GetInRange( ae.GetBase().ccrd(), A.ccrd(), 2.9, considerI );
     if( &ms == NULL )  continue;
 
     for( int j=0; j < ms.Count(); j++ )  {
-      v = A.CCenter();
-      v = ms[j] * v;
-      v[0] += ms[j][0][3];
-      v[1] += ms[j][1][3];
-      v[2] += ms[j][2][3];
+      v = ms[j] * A.ccrd();
       au.CellToCartesian(v);
-      double d = v.DistanceTo( ae.GetBase().Center() );
+      double d = v.DistanceTo( ae.GetBase().crd() );
       if(  d < 2 || d > 2.9 )  continue;
 
       if( ae.Count() == 1 )  {
-        v1 = ae.GetCrd(0);  v1 -= ae.GetBase().Center();
-        v2 = v;             v2 -= ae.GetBase().Center();
+        v1 = ae.GetCrd(0);  v1 -= ae.GetBase().crd();
+        v2 = v;             v2 -= ae.GetBase().crd();
         // 89 - 130 degrees
         d = v1.CAngle(v2);
         if( d > 0.01 || d < -0.64 )  continue;
@@ -676,7 +637,7 @@ void TUnitCell::GetAtomPossibleHBonds(const TAtomEnvi& ae, TAtomEnvi& envi)  {
 }
 //..............................................................................
 bool TUnitCell::DoesOverlap(const TCAtom& ca, double R) const  {
-  TVPointD V1, V2, to(ca.GetCCenter());
+  vec3d V1, V2;
   TCAtomPList atoms;
   atoms.SetCapacity( GetLattice().GetAsymmUnit().AtomCount() );
   for( int i=0; i < GetLattice().GetAsymmUnit().AtomCount(); i++ )  {
@@ -685,14 +646,12 @@ bool TUnitCell::DoesOverlap(const TCAtom& ca, double R) const  {
   }
 
   for( int i=0; i < MatrixCount(); i++ )  {
-    const TMatrixD& matr = GetMatrix(i);
-    V1 = matr * to;
-    V1[0] += matr[0][3];  V1[1] += matr[1][3];  V1[2] += matr[2][3];
+    const symmd& matr = GetMatrix(i);
+    V1 = matr * ca.ccrd();
     for( int j=0; j < atoms.Count(); j++ )  {
       if( atoms[j]->GetLoaderId() == ca.GetLoaderId() )  
         continue;
-      V2 = atoms[j]->GetCCenter();
-      V2 -= V1;
+      V2 = atoms[j]->ccrd() - V1;
       V2[0] -= Round(V2[0]);  // find closest distance
       V2[1] -= Round(V2[1]);
       V2[2] -= Round(V2[2]);
@@ -705,21 +664,19 @@ bool TUnitCell::DoesOverlap(const TCAtom& ca, double R) const  {
   return false;
 }
 //..............................................................................
-TCAtom* TUnitCell::FindOverlappingAtom(TVPointD& pos, double delta) const  {
-  TVPointD V1, V2, nearest(pos);
+TCAtom* TUnitCell::FindOverlappingAtom(vec3d& pos, double delta) const  {
+  vec3d V1, V2, nearest(pos);
   double minD = 1000;
   delta *= delta;
   const TAsymmUnit& au = GetLattice().GetAsymmUnit();
 
   for( int i=0; i < MatrixCount(); i++ )  {
-    const TMatrixD& matr = GetMatrix(i);
+    const symmd& matr = GetMatrix(i);
     V1 = matr * pos;
-    V1[0] += matr[0][3];  V1[1] += matr[1][3];  V1[2] += matr[2][3];
     for( int j=0; j < au.AtomCount(); j++ )  {
       const TCAtom& ca = au.GetAtom(j);
       if( ca.IsDeleted() )  continue;
-      V2 = ca.GetCCenter();
-      V2 -= V1;
+      V2 = ca.ccrd() - V1;
       if( ca.GetAtomInfo() == iQPeakIndex )  {
         for( int k=0; k < 3; k ++ )  { // find closest distance
           V2[k] -= Round(V2[k]);
@@ -740,11 +697,11 @@ TCAtom* TUnitCell::FindOverlappingAtom(TVPointD& pos, double delta) const  {
           }
           if( V2[k] < 0.05 )  {
             V2[k] = 0;
-            nearest[k] = ca.GetCCenter()[k].GetV();
+            nearest[k] = ca.ccrd()[k];
           }
           else if( V2[k] > 0.95 )  {
             V2[k] = 0;
-            nearest[k] = ca.GetCCenter()[k].GetV();
+            nearest[k] = ca.ccrd()[k];
           }
         }
       }
@@ -761,19 +718,16 @@ TCAtom* TUnitCell::FindOverlappingAtom(TVPointD& pos, double delta) const  {
   return NULL;
 }
 //..............................................................................
-TCAtom* TUnitCell::FindCAtom(const TVPointD& center) const  {
-  TVPointD Vec;
+TCAtom* TUnitCell::FindCAtom(const vec3d& center) const  {
+  vec3d Vec;
   const TAsymmUnit& au = GetLattice().GetAsymmUnit();
   for( int i=0; i < au.AtomCount(); i++ )  {
     const TCAtom& A = au.GetAtom(i);
     if( A.IsDeleted() )  continue;
     for( int j=0; j < MatrixCount(); j ++ )  {
-      const TMatrixD& M = Matrices[j];
-      Vec = A.GetCCenter();
-      Vec = M * Vec;
-      Vec -= center;
+      const symmd& M = Matrices[j];
+      Vec = M * A.ccrd() - center;
       for( int l=0; l < 3; l++ )  {
-        Vec[l] += M[l][3];
         Vec[l] -= Round(Vec[l]);
         if( Vec[l] < 0 )  Vec[l] += 1;
         if( Vec[l] < 0.01 )  Vec[l] = 0;
@@ -791,8 +745,8 @@ TCAtom* TUnitCell::FindCAtom(const TVPointD& center) const  {
 void TUnitCell::BuildStructureMap( TArray3D<short>& map, double delta, short val, 
                                   long* structurePoints )  {
 
-  TTypeList< AnAssociation2<TVPointD,TCAtom*> > allAtoms;
-  TVPointD center, center1;
+  TTypeList< AnAssociation2<vec3d,TCAtom*> > allAtoms;
+  vec3d center, center1;
   GenereteAtomCoordinates( allAtoms, true );
   
   double da = map.Length1(),

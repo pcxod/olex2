@@ -56,8 +56,6 @@ public:
   void LoadFromFile(const olxstr & FN);
   void SaveToFile(const olxstr & FN, bool Sort);
   inline const olxstr& GetFileName()       const {  return FFileName; }
-  inline const TMatrixD& GetCell2Cartesian() const {  return GetLattice().GetAsymmUnit().GetCellToCartesian(); }
-  inline const TMatrixD& GetCartesian2Cell() const {  return GetLattice().GetAsymmUnit().GetCartesianToCell(); }
 
   void EndUpdate();
   void LastLoaderChanged();  // performs complete reinitialisation

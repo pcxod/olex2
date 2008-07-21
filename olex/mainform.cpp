@@ -199,7 +199,7 @@ class TAtomModeUndo : public TUndoData {
   TXAtom* Atom;
   double Occu, Uiso;
   int Part;
-  TVectorD FixedValues;
+  evecd FixedValues;
 public:
   TAtomModeUndo(IUndoAction* action, TXAtom* XA) : TUndoData(action)  {
     Atom = XA;
@@ -212,7 +212,7 @@ public:
   inline double GetUiso()  const {  return Uiso;  }
   inline double GetOccu() const  {  return Occu;  }
   inline int GetPart()    const  {  return Part;  }
-  inline const TVectorD& GetFixedValues()  const  {  return FixedValues;  }
+  inline const evecd& GetFixedValues()  const  {  return FixedValues;  }
   
 };
 
@@ -1463,7 +1463,6 @@ void TMainForm::OnDrawStyleChange(wxCommandEvent& event)  {
   }
 }
 void TMainForm::OnViewAlong(wxCommandEvent& event) {
-  TMatrixD M = FXApp->XFile().GetCell2Cartesian();
   switch( event.GetId() )  {
     case ID_View100:  ProcessXPMacro("matr 1", MacroError);  break;
     case ID_View010:  ProcessXPMacro("matr 2", MacroError);  break;
@@ -3082,8 +3081,8 @@ bool TMainForm::OnMouseUp(int x, int y, short Flags, short Buttons)  {
   // HKL "grid snap on mouse release
   if( FXApp->XFile().GetLastLoader() && FXApp->HklVisible() && false )
   {
-    TMatrixD cellM, M(3,3);
-    TVPointD N(0, 0, 1), Z;
+    mat3d cellM, M;
+    vec3d N(0, 0, 1), Z;
     TAsymmUnit *au = &FXApp->XFile().GetAsymmUnit();
     cellM = au->GetHklToCartesian();
     cellM *= FXApp->GetRender().GetBasis().GetMatrix();
@@ -3097,7 +3096,7 @@ bool TMainForm::OnMouseUp(int x, int y, short Flags, short Buttons)  {
       Tmp << Z.ToString();
       TBasicApp::GetLog() << Tmp;
     Z.Null();
-    TMatrixD::GauseSolve(M, N, Z);
+    mat3d::GauseSolve(M, N, Z);
     Z.Normalise();
     double H = Z[0]*Z[0];
     double K = Z[1]*Z[1];
@@ -3107,8 +3106,7 @@ bool TMainForm::OnMouseUp(int x, int y, short Flags, short Buttons)  {
     if( L > 0.07 )  L = 1./L;
     int iH = Round(H), iK = Round(K), iL = Round(L);
     double diff = sqrt(fabs(H + K + L - iH - iK - iL)/(H + K + L));
-    if( diff < 0.25 )
-    {
+    if( diff < 0.25 )  {
       cellM = au->GetHklToCartesian();
       Z.Null();
       if( iH ) Z += (cellM[0]/sqrt((double)iH));
@@ -3124,7 +3122,7 @@ bool TMainForm::OnMouseUp(int x, int y, short Flags, short Buttons)  {
         double ca = N.CAngle(Z);
         if( ca < -1 )  ca = -1;
         if( ca > 1 )   ca = 1;
-        TVPointD V = Z.XProdVec(N);
+        vec3d V = Z.XProdVec(N);
         FXApp->GetRender().Basis()->Rotate(V, acos(ca));
       N = FXApp->GetRender().GetBasis().GetMatrix()[2];
       Tmp="got: ";
@@ -3367,8 +3365,8 @@ bool TMainForm::ProcessEvent( wxEvent& evt )  {
         }
       }
       // restore state if failed
-      if( !MacroError.IsSuccessful() && AccMenus.GetValue(evt.GetId())->IsCheckable() )
-        AccMenus.GetValue(evt.GetId())->Check( checked );
+      if( AccMenus.GetValue(evt.GetId())->IsCheckable() )
+        AccMenus.GetValue(evt.GetId())->ValidateState();
 
       FXApp->Draw();
       return true;

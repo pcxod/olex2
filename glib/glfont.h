@@ -6,6 +6,7 @@
 #include "elist.h"
 #include "datastream.h"
 #include "bitarray.h"
+#include "threex3.h"
 
 BeginGlNamespace()
 // font attributes
@@ -66,9 +67,9 @@ public:
   inline short CharOffset() const {  return FCharOffset; }
   inline void CharOffset(short v) { FCharOffset = v; }
   inline int FontBase() const     {  return FFontBase; }
-  void DrawGlText(const TVPointD& from, const olxstr& text, bool FixedWidth);
+  void DrawGlText(const vec3d& from, const olxstr& text, bool FixedWidth);
   // draws text safely, e.g. checks if raster positions are valid
-  void DrawTextSafe(const TVPointD& from, double scale, const olxstr& text);
+  void DrawTextSafe(const vec3d& from, double scale, const olxstr& text);
   void IdString(const olxstr &Str)              {  FIdString = Str; }
   inline const olxstr& IdString()         const {  return FIdString; }
   inline const olxstr& GetName()          const {  return Name; }

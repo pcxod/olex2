@@ -55,13 +55,12 @@ void TSGTest::MergeTest(const TPtrList<TSpaceGroup>& sgList,  TTypeList<TSGStats
 
   typedef AnAssociation4<TSpaceGroup*, TwoDoublesInt*, TwoDoublesInt*, int> SGAss;
   typedef TPtrList<SGAss>  SGpList;
-  typedef AnAssociation2<TMatrixD*, SGpList*> MatrixAss;
+  typedef AnAssociation2<mat3d*, SGpList*> MatrixAss;
   typedef TTypeList<SGAss>  SGList;
   TTypeList< MatrixAss > UniqMatricesNT;
   SGList SGHitsNT;
-  TMatrixDList sgMl;
-  TMatrixD tbtM(3,3);
-  TVPointD hklv;
+  symmd_list sgMl;
+  vec3d hklv;
   TArray3D<TReflection*>& Hkl3D = *Hkl3DArray;
 
   for( int i=0; i < sgList.Count(); i++ )  {
@@ -72,14 +71,10 @@ void TSGTest::MergeTest(const TPtrList<TSpaceGroup>& sgList,  TTypeList<TSGStats
     sgMl.Clear();
     sg.GetMatrices( sgMl, mattAll );
     for( int j=0; j < sgMl.Count(); j++ )  {
-      TMatrixD& m = sgMl[j];
-    // create a list of matrices (3x3) without translation
-      tbtM[0][0] = m[0][0];  tbtM[0][1] = m[0][1];  tbtM[0][2] = m[0][2];
-      tbtM[1][0] = m[1][0];  tbtM[1][1] = m[1][1];  tbtM[1][2] = m[1][2];
-      tbtM[2][0] = m[2][0];  tbtM[2][1] = m[2][1];  tbtM[2][2] = m[2][2];
+      symmd& m = sgMl[j];
       bool uniq = true;
       for( int k=0; k < UniqMatricesNT.Count(); k++ )  {
-        if( *UniqMatricesNT[k].GetA() == tbtM )  {
+        if( *UniqMatricesNT[k].GetA() == m.r )  {
           uniq = false;
           UniqMatricesNT[k].GetB()->Add( &sgvNT );
           sgvNT.D() ++;
@@ -90,12 +85,12 @@ void TSGTest::MergeTest(const TPtrList<TSpaceGroup>& sgList,  TTypeList<TSGStats
         SGpList* l = new SGpList();
         sgvNT.D() ++;
         l->Add(&sgvNT);
-        UniqMatricesNT.AddNew<TMatrixD*,SGpList*>(new TMatrixD(tbtM), l);
+        UniqMatricesNT.AddNew<mat3d*,SGpList*>(new mat3d(m.r), l);
       }
     }
   }
   for( int i=0; i < UniqMatricesNT.Count(); i++ )  {
-    TMatrixD& m = *UniqMatricesNT[i].GetA();
+    mat3d& m = *UniqMatricesNT[i].GetA();
     for( int j=0; j < Hkl.RefCount(); j++ )  {
       if( Hkl[j].GetI() < AverageI )  continue;
 
@@ -373,12 +368,12 @@ void TSGTest::WeakRefTest(const TPtrList<TSpaceGroup>& sgList, TTypeList<TElemen
 
   typedef AnAssociation4<TSpaceGroup*, TwoDoublesInt*, TwoDoublesInt*, int> SGAss;
   typedef TPtrList<SGAss>  SGpList;
-  typedef AnAssociation2<TMatrixD*, SGpList*> MatrixAss;
+  typedef AnAssociation2<symmd*, SGpList*> MatrixAss;
   typedef TTypeList<SGAss>  SGList;
   TTypeList< MatrixAss > UniqMatrices;
   SGList SGHits;
-  TMatrixDList sgMl;
-  TVPointD hklv;
+  symmd_list sgMl;
+  vec3d hklv;
 
   for( int i=0; i < sgList.Count(); i++ )  {
     TSpaceGroup& sg = *sgList[i];
@@ -387,24 +382,23 @@ void TSGTest::WeakRefTest(const TPtrList<TSpaceGroup>& sgList, TTypeList<TElemen
                     &sg, new TwoDoublesInt(0.0,0.0,0), new TwoDoublesInt(0.0,0.0,0), 0 );
     sg.GetMatrices( sgMl, mattAll);
     for( int j=0; j < sgMl.Count(); j++ )  {
-      TMatrixD& m = sgMl[j];
+      symmd& m = sgMl[j];
       // skip -I matrix
-      if( m[0][0] == -1 && m[1][1] == -1 && m[2][2] == -1 &&
-          m[0][1] == 0 && m[0][2] == 0 &&
-          m[1][0] == 0 && m[1][2] == 0 &&
-          m[2][0] == 0 && m[2][1] == 0 )
+      if( m.r[0][0] == -1 && m.r[1][1] == -1 && m.r[2][2] == -1 &&
+          m.r[0][1] == 0 && m.r[0][2] == 0 &&
+          m.r[1][0] == 0 && m.r[1][2] == 0 &&
+          m.r[2][0] == 0 && m.r[2][1] == 0 )
         continue;
-      int iv = (int)m[0][3];  m[0][3] = fabs( m[0][3] - iv );
-          iv = (int)m[1][3];  m[1][3] = fabs( m[1][3] - iv );
-          iv = (int)m[2][3];  m[2][3] = fabs( m[2][3] - iv );
+      int iv = (int)m.t[0];  m.t[0] = fabs( m.t[0] - iv );
+          iv = (int)m.t[1];  m.t[1] = fabs( m.t[1] - iv );
+          iv = (int)m.t[2];  m.t[2] = fabs( m.t[2] - iv );
       // mtrix should have a translation
-      if( m[0][3] == 0 &&  m[1][3] == 0 && m[2][3] == 0 )
+      if( m.t[0] == 0 &&  m.t[1] == 0 && m.t[2] == 0 )
         continue;
 
-
-      if( m[0][3] > 0.5 )  m[0][3] = 1 - m[0][3];
-      if( m[1][3] > 0.5 )  m[1][3] = 1 - m[1][3];
-      if( m[2][3] > 0.5 )  m[2][3] = 1 - m[2][3];
+      if( m.t[0] > 0.5 )  m.t[0] = 1 - m.t[0];
+      if( m.t[1] > 0.5 )  m.t[1] = 1 - m.t[1];
+      if( m.t[2] > 0.5 )  m.t[2] = 1 - m.t[2];
 
       bool uniq = true;
       for( int k=0; k < UniqMatrices.Count(); k++ )  {
@@ -419,14 +413,14 @@ void TSGTest::WeakRefTest(const TPtrList<TSpaceGroup>& sgList, TTypeList<TElemen
         SGpList* l = new SGpList();
         l->Add(&sgv);
         sgv.D() ++;
-        UniqMatrices.AddNew<TMatrixD*,SGpList*>(new TMatrixD(m), l);
+        UniqMatrices.AddNew<symmd*,SGpList*>(new symmd(m), l);
       }
     }
     sgMl.Clear();
   }
   // collect statistrics for the matrices and the spacegroups
   for( int i=0; i < UniqMatrices.Count(); i++ )  {
-    TMatrixD& m = *UniqMatrices[i].GetA();
+    symmd& m = *UniqMatrices[i].GetA();
     for( int j=0; j < Hkl.RefCount(); j++ )  {
       if(  Hkl[j].IsSymmetric(m)  )  {
         double len = Hkl[j].PhaseShift(m);

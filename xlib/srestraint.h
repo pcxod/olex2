@@ -20,16 +20,16 @@ class TSimpleRestraint : public IEObject  {
   bool AllNonHAtoms;
   short ListType;
   TCAtomGroup InvolvedAtoms;
-  bool AtomsEqual(TCAtom* a1, const TMatrixD* m1, TCAtom* a2, const TMatrixD* m2);
+  bool AtomsEqual(TCAtom* a1, const symmd* m1, TCAtom* a2, const symmd* m2);
   class TSRestraintList* Parent;
 public:
   TSimpleRestraint(TSRestraintList* parent, const short listType);
 
   virtual ~TSimpleRestraint();
   void AddAtoms(const TCAtomGroup& atoms);
-  void AddAtom(TCAtom& aa, const TMatrixD* ma);
-  void AddAtomPair(TCAtom& aa, const TMatrixD* ma,
-                   TCAtom& ab, const TMatrixD* mb);
+  void AddAtom(TCAtom& aa, const symmd* ma);
+  void AddAtomPair(TCAtom& aa, const symmd* ma,
+                   TCAtom& ab, const symmd* mb);
 
   inline TSRestraintList* GetParent()  {  return Parent;  }
 
@@ -38,7 +38,7 @@ public:
   void Validate();
   void Clear();
 
-  void OnCAtomCrdChange( TCAtom* ca, const TMatrixD& matr );
+  void OnCAtomCrdChange( TCAtom* ca, const symmd& matr );
 
   // removes dublicated information depending on the list type
   void Substruct( TSimpleRestraint& sr);
@@ -73,7 +73,7 @@ public:
   void Release(TSimpleRestraint& sr);
   inline void Restore(TSimpleRestraint& sr)  {  Restraints.Add(sr);  }
 
-  void OnCAtomCrdChange( TCAtom* ca, const TMatrixD& matr );
+  void OnCAtomCrdChange( TCAtom* ca, const symmd& matr );
   
   void Assign(TAsymmUnit& au, const TSRestraintList& rl);
   inline void Clear()  {  Restraints.Clear();  }

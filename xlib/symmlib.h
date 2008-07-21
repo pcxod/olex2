@@ -20,7 +20,7 @@ class TBravaisLattice;
 class TSymmElement;
 
 class TCLattice  {
-  TTypeList<TVPointD> Vectors;
+  TTypeList<vec3d> Vectors;
   TPtrList<TBravaisLattice> BravaisLattices;
   olxstr Name, Symbol;
   int Latt;
@@ -28,7 +28,7 @@ public:
   TCLattice(int Latt);
   virtual ~TCLattice()  {  }
   inline int VectorCount()  const          {  return Vectors.Count();  }
-  inline TVPointD&  GetVector(int i) const {  return Vectors[i];  }
+  inline vec3d&  GetVector(int i) const {  return Vectors[i];  }
   inline const olxstr& GetName() const   {  return Name; }
   inline const olxstr& GetSymbol() const {  return Symbol; }
 
@@ -54,7 +54,7 @@ public:
 };
 
 class TSpaceGroup  {
-  TMatrixDList Matrices;
+  symmd_list Matrices;
   olxstr Name, FullName, Axis, HallSymbol;
   int Number;
   TCLattice *Latt;
@@ -74,23 +74,23 @@ public:
   TSpaceGroup&     GetPointGroup()       const {  return *PointGroup;  }
 
   bool operator == (const TAsymmUnit& AU) const;
-  bool operator == (const TMatrixDList& matrices) const;
+  bool operator == (const symmd_list& matrices) const;
   // compares m.R and summs (delta(m.t))^2 into st;
-  bool Compare(const TMatrixDList& matrices, double& st) const;
+  bool Compare(const symmd_list& matrices, double& st) const;
 
   bool EqualsExpandedSG(const TAsymmUnit& AU) const;
 
   bool EqualsWithoutTranslation (const TSpaceGroup& sg) const;
   bool IsSubElement( TSpaceGroup* symme )  const;
 
-  void AddMatrix(const TMatrixD& m);
+  void AddMatrix(const symmd& m);
   void AddMatrix(double xx, double xy, double xz, 
                  double yx, double yy, double yz, 
                  double zx, double zy, double zz,
                  double tx, double ty, double tz);
-  inline int MatrixCount()               const {  return Matrices.Count();  };
-  inline TMatrixD& GetMatrix(int i)      const {  return Matrices[i];  }
-  inline int GetNumber()                 const {  return Number;  }
+  inline int MatrixCount()             const {  return Matrices.Count();  };
+  inline symmd& GetMatrix(int i)       const {  return Matrices[i];  }
+  inline int GetNumber()               const {  return Number;  }
   inline const olxstr& GetName()       const {  return Name;  }
   inline olxstr GetBareName()          const {  return Name.SubStringFrom(1);  }
   inline const olxstr& GetFullName()   const {  return FullName;  }
@@ -102,29 +102,29 @@ public:
   // retruns true if any matrix of the SG has a nonzero translation
   inline bool HasTranslations()          const {  return Translations;  }
 
-  void GetMatrices(TMatrixDList& matrices, short Flags) const;
+  void GetMatrices(symmd_list& matrices, short Flags) const;
   // fills a list of uniq transformations (3,3) without translation and returns
   // the number of added matrices; the list is created from a call to GetMatrices(list, flag)
-  int GetUniqMatrices(TMatrixDList& matrices, short Flags) const;
+  int GetUniqMatrices(symmd_list& matrices, short Flags) const;
 
   // this function finds a symmetry element in a list of matrices
-  static bool ContainsElement( const TMatrixDList& matrices, TSymmElement* symme);
+  static bool ContainsElement( const symmd_list& matrices, TSymmElement* symme);
   // this function is used to assign point groups to the space group
   bool ContainsElement(TSymmElement* symme);
   bool ContainsGroup(TSpaceGroup* symme);
 };
 
 class TSymmElement  {
-  TTypeList<TMatrixD> Matrices;
+  symmd_list Matrices;
   olxstr Name;
 public:
   TSymmElement(const olxstr& name, TSpaceGroup* sg);
   TSymmElement(const olxstr& name)  {  Name = name;  }
   virtual ~TSymmElement()  {  }
 
-  inline TSymmElement& AddMatrix(const TMatrixD& m)  {  Matrices.AddCCopy(m);  return *this;  }
+  inline TSymmElement& AddMatrix(const symmd& m)  {  Matrices.AddCCopy(m);  return *this;  }
   inline int  MatrixCount()  const  {  return Matrices.Count();  }
-  TMatrixD&  GetMatrix(int i) const  {  return Matrices[i];  }
+  symmd&  GetMatrix(int i) const  {  return Matrices[i];  }
   const olxstr& GetName()  const   {  return Name;  }
 };
 
@@ -174,7 +174,7 @@ public:
   virtual ~TSymmLib();
 
   TSpaceGroup* FindSG(const TAsymmUnit& AU) const;
-  TSpaceGroup* FindSG(const TMatrixDList& expanded_matrices) const;
+  TSpaceGroup* FindSG(const symmd_list& expanded_matrices) const;
   TSpaceGroup* FindExpandedSG(const TAsymmUnit& AU) const;
   int FindBravaisLattices(TAsymmUnit& AU, TTypeList<TBravaisLatticeRef>& res) const;
   // finds all space groups of specified point group

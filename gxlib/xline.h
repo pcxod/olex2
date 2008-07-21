@@ -7,16 +7,16 @@
 BeginGxlNamespace()
 
 class TXLine: public TXBond  {
-  TVPointD FBase, FEdge;
+  vec3d FBase, FEdge;
 public:
-  TXLine(const olxstr& collectionName, const TVPointD& base, const TVPointD& edge, TGlRender *Render);
+  TXLine(const olxstr& collectionName, const vec3d& base, const vec3d& edge, TGlRender *Render);
   void Create(const olxstr& cName=EmptyString);
   virtual ~TXLine();
 
-  TVPointD&  Base()  {  return FBase;  }
-  TVPointD&  Edge()  {  return FEdge;  }
+  vec3d&  Base()  {  return FBase;  }
+  vec3d&  Edge()  {  return FEdge;  }
 
-  bool GetDimensions(TVPointD &Max, TVPointD &Min){  return false; };
+  bool GetDimensions(vec3d &Max, vec3d &Min){  return false; };
 
   bool OnMouseDown(const IEObject *Sender, const TMouseData *Data){  return true; };
   bool OnMouseUp(const IEObject *Sender, const TMouseData *Data){  return false; };

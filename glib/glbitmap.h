@@ -33,7 +33,7 @@ public:
   int GetTop()  const;
 
   virtual bool Orient(TGlPrimitive *P);
-  virtual bool GetDimensions(TVPointD &Max, TVPointD &Min);
+  virtual bool GetDimensions(vec3d &Max, vec3d &Min);
 };
 
 EndGlNamespace()

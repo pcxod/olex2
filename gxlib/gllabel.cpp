@@ -77,7 +77,7 @@ void TXGlLabel::SetLabel(const olxstr& L)   {
 }
 //..............................................................................
 bool TXGlLabel::Orient(TGlPrimitive *P)  {
-  TVPointD T;
+  vec3d T;
   double Scale = Parent()->GetScale();
   if( P->Type() == sgloText )  {
     T = Basis.GetCenter();

@@ -420,7 +420,7 @@ void TGlFont::CreateTextures(short Width, short Height)  {
   delete [] BmpData;
 }
 //..............................................................................
-void TGlFont::DrawGlText(const TVPointD& from, const olxstr& text, bool FixedW)  {
+void TGlFont::DrawGlText(const vec3d& from, const olxstr& text, bool FixedW)  {
   if( Textures == NULL || text.IsEmpty() )  return;
   glEnable( GL_TEXTURE_2D );
 
@@ -485,7 +485,7 @@ void TGlFont::SetMaterial(const TGlMaterial& m)  {
   }
 }
 //..............................................................................
-void TGlFont::DrawTextSafe(const TVPointD& from, double scale, const olxstr& text)  {
+void TGlFont::DrawTextSafe(const vec3d& from, double scale, const olxstr& text)  {
   int i=0;
   double p[2] = {from[0], from[1]};
   GLboolean raster_valid;

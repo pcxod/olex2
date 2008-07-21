@@ -3,7 +3,6 @@
 #include "glbase.h"
 #include "glrender.h"
 #include "evector.h"
-#include "vpoint.h"
 #include "emath.h"
 
 #include "macroerror.h"
@@ -30,7 +29,7 @@ protected:
 //  friend class TGlRender;
   class TGPCollection *FPrimitives;
   class TGlRender *FParent;   // initialised owhen the collection is assigned
-  TVectorD FParams;
+  evecd FParams;
   olxstr CollectionName;
   inline void SetCollectionName(const olxstr& nn)  {  CollectionName = nn;  }
 public:
@@ -43,13 +42,13 @@ public:
 
   inline const olxstr& GetCollectionName()  const  {  return CollectionName;  }
 
-  inline TVectorD& Params()           {  return FParams;  }
+  inline evecd& Params()           {  return FParams;  }
 
   inline TGlRender *Parent()  const  {  return FParent;}
   inline void Parent(TGlRender *P)   {  FParent = P;}
   virtual bool Orient(class TGlPrimitive *P) = 0;
 //  inline virtual void OrientAfterDraw(TGlPrimitive *P){  return; };
-  virtual bool GetDimensions(TVPointD &Max, TVPointD &Min)=0;
+  virtual bool GetDimensions(vec3d &Max, vec3d &Min)=0;
   // mouse handlers, any object receives mouse down/up events; write appropriate
   //handlers to handle mouse; if the object returns true OnMouseDown, it receives
   //OnMouseMove as well; Objects must not change values of the Data!

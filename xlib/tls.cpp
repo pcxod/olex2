@@ -48,19 +48,19 @@ TLS::TLS(const TSAtomPList &atoms, const double *const cellParameters)
 						- cos(gamma)*cos(gamma) + 2*cos(alpha)*cos(beta)*cos(gamma));
 
 	{
-		TMatrixD temp(3,3);
+		ematd temp(3,3);
 		temp.E();
 		RtoLaxes = temp; //intialise as identity for calcUij
 	}
 
 	//Use an atom as origin (reducing numerical errors on distances)
 	TSAtom* anAtom = atoms[0]; //can be any atom or point; Recommend near rigid body
-	origin = anAtom->Center(); //in Cartesian
+	origin.Assign(anAtom->crd(), 3); //in Cartesian
 
 
 	// ADP 'Scaling' matrix (transfroming U^ij(Ang) to 2Pi^2 beta^ij(frac))
 	{
-		TMatrixD adpScaleTemp(3,3); //scales ADPs from Ang to fraction of Xtal cell
+		ematd adpScaleTemp(3,3); //scales ADPs from Ang to fraction of Xtal cell
 		adpScaleTemp[0][0] = b*c*sin(alpha)/cellVolume;
 		adpScaleTemp[1][1] = a*c*sin(beta)/cellVolume;
 		adpScaleTemp[2][2] = a*b*sin(gamma)/cellVolume;
@@ -75,11 +75,11 @@ TLS::TLS(const TSAtomPList &atoms, const double *const cellParameters)
 
 	 //initialise Transformations Rcart and Rcell
 	{
-		const TMatrixD &Rc  = anAtom->CAtom().GetParent()->GetCellToCartesian(),
+		const mat3d& Rc  = anAtom->CAtom().GetParent()->GetCellToCartesian(),
 					   &Rcc = anAtom->CAtom().GetParent()->GetCartesianToCell();
 		//4x4 matrix for no good reason (Oleg's fault! :-)	)
 		//change to 3x3, Oleg defn returns transpose
-		TMatrixD RcellTemp (3,3),
+		ematd RcellTemp (3,3),
 				 RcartTemp (3,3);
 		for ( int p = 0; p < 3; p++ ){
 			for ( int q = 0; q < 3; q++){
@@ -113,12 +113,12 @@ TLS::TLS(const TSAtomPList &atoms, const double *const cellParameters)
 	calcUijEllipse (atoms, newElps); //Initialise newElps to TLS for atoms
 	FigOfMerit (atoms, newElps); //Independant of coordinates, calculated with Uij in cartesian
 	
-	TVectorD rho(3); //Origin shift
+	evecd rho(3); //Origin shift
 	symS(rho); //Shift origin so S becomes symmetric
 	printTLS();
 
 	{
-		TMatrixD splitAxes(3,3), Tmatrix(3,3), Smatrix(3,3);
+		ematd splitAxes(3,3), Tmatrix(3,3), Smatrix(3,3);
 		diagS(splitAxes,Tmatrix,Smatrix);
 		Tmatrix.Print();
 		Smatrix.Print();
@@ -137,7 +137,7 @@ const void TLS::printTLS(){
 }
 void TLS::UijErrors(const TSAtomPList &atoms){
 // Unit weights  - should be replaced by VcV matrix when available
-	TMatrixD temp (6*atoms.Count(), 6*atoms.Count() );
+	ematd temp (6*atoms.Count(), 6*atoms.Count() );
 	for( int i= 0; i< (6*atoms.Count() ) ; i++)
 		for(short j=0; j<(6*atoms.Count() ); j++)
 			temp[i][j] = 10000.0; //weight = 1/sigma^2, sigma =0.01 Ang. 
@@ -158,7 +158,7 @@ void TLS::UijErrors(const TSAtomPList &atoms){
 	&err_beta = cellParameters[10]*M_PI/180,
 	&err_gamma = cellParameters[11]*M_PI/180;
 
-	TMatrixD errors(3);
+	ematd errors(3);
 	errors[0] = err_a;errors[1] = err_b;errors[2] = err_c;
 	errors =  Rcart*errors; //Errors on Cart. cell axes to 1st order (errors on angles are 2nd order)
 	std::cout << "\nErrors: " << errors[0] << ", "
@@ -166,10 +166,10 @@ void TLS::UijErrors(const TSAtomPList &atoms){
 	Rcart.Print();*/
 }
 
-void TLS::createDM(TMatrixD &designM, TVectorD &UijC , const TSAtomPList &atoms )
+void TLS::createDM(ematd &designM, evecd &UijC , const TSAtomPList &atoms )
 {
-	TMatrixD dm( 6*atoms.Count(),TLSfreeParameters );	//TLS (6n x 21) design matrix
-	TVectorD UijColumn(6*atoms.Count());	//6n vector of 'observed' Uij
+	ematd dm( 6*atoms.Count(),TLSfreeParameters );	//TLS (6n x 21) design matrix
+	evecd UijColumn(6*atoms.Count());	//6n vector of 'observed' Uij
 
 	for( int i=0; i < atoms.Count(); i++ )  {  
 		// for each atom calculate design matrix (dm) and UijColumn 'observed' (Uobs)
@@ -181,9 +181,9 @@ void TLS::createDM(TMatrixD &designM, TVectorD &UijC , const TSAtomPList &atoms 
 			throw TInvalidArgumentException(__OlxSourceInfo, "Isotropic atom: invalid TLS input"); 
 		
 		//Atom coords wrt origin, Cartesian axes
-		double x = (theAtom->Center()[0] - origin[0]) ;
-		double y = (theAtom->Center()[1] - origin[1]) ;
-		double z = (theAtom->Center()[2] - origin[2]) ;
+		double x = (theAtom->crd()[0] - origin[0]) ;
+		double y = (theAtom->crd()[1] - origin[1]) ;
+		double z = (theAtom->crd()[2] - origin[2]) ;
 
 		//Creating design matrix for SVD
 		//U11
@@ -251,9 +251,9 @@ void TLS::createDM(TMatrixD &designM, TVectorD &UijC , const TSAtomPList &atoms 
 						(4) Create column of Cartesian Uij elements
 		*/
 
-		TVectorD quad(6);						//ellipse quadratic 
+		evecd quad(6);						//ellipse quadratic 
 		 		 
-		TMatrixD UijCart(3,3);					// Uij wrt Cartesian axes
+		ematd UijCart(3,3);					// Uij wrt Cartesian axes
 		theAtom->GetEllipsoid()->GetQuad( quad ); //ADP wrt xtal frame
 		quadToCart(quad, UijCart);
 
@@ -279,7 +279,7 @@ void TLS::createDM(TMatrixD &designM, TVectorD &UijC , const TSAtomPList &atoms 
 } 
 
 
-bool TLS::calcTLS (const TMatrixD &designM, const TVectorD &UijC)
+bool TLS::calcTLS (const ematd &designM, const evecd &UijC)
 {
 	// Uses SVD.
 	// Finds TLS wrt origin and frame used in design matrix and Uij.
@@ -330,11 +330,11 @@ bool TLS::calcTLS (const TMatrixD &designM, const TVectorD &UijC)
 		wOutput, uOutput, vtOutput);
 
 	{//Calculate variance-covariance matrix before further changes to w, vt
-		TVectorD w(nColumns);
+		evecd w(nColumns);
 		for (int j = 0; j<nColumns; j++)
 			w[j] = wOutput(j+1);
 
-		TMatrixD V(nColumns,nColumns);
+		ematd V(nColumns,nColumns);
 		for (int j = 0; j<nColumns; j++){
 			for (int k = 0; k<nColumns; k++){
 				V[j][k] = vtOutput(k+1,j+1);
@@ -347,7 +347,7 @@ bool TLS::calcTLS (const TMatrixD &designM, const TVectorD &UijC)
   /***************************************************************************/
 	// Compute tls elements from decomposition matrices
 
-	TVectorD tlsElements(TLSfreeParameters); // = v* 1/w * u^transpose . UijColumn(vector)
+	evecd tlsElements(TLSfreeParameters); // = v* 1/w * u^transpose . UijColumn(vector)
 	/* Order: (t11, t12,t22,t13,t23,t33,s11,s12,s13,l11,s21,s22,s33,l12,l22,s31,s32,s33,l13,l23,l33) */
 
 	
@@ -397,9 +397,9 @@ bool TLS::calcTLS (const TMatrixD &designM, const TVectorD &UijC)
 		}
 	}
 
-	TMatrixD Tmatrix(3,3);		 //TLS  matrices
-	TMatrixD Lmatrix(3,3);		 
-	TMatrixD Smatrix(3,3);		
+	ematd Tmatrix(3,3);		 //TLS  matrices
+	ematd Lmatrix(3,3);		 
+	ematd Smatrix(3,3);		
 
 	Tmatrix[0][0] =					tlsElements[0];
 	Tmatrix[1][0] = Tmatrix[0][1] = tlsElements[1];
@@ -442,7 +442,7 @@ void TLS::RotateLaxes(){
 	//Rotates TLS tensors to L principle axes and records
 	//rotation matrix, RtoLaxes.
 
-	TMatrixD rotate_to_L_axes(3,3);	
+	ematd rotate_to_L_axes(3,3);	
 	rotate_to_L_axes.E();
 	Lmat.EigenValues(Lmat,rotate_to_L_axes); //diagonalise Lmatrix
 
@@ -474,7 +474,7 @@ void TLS::calcL_VcV(){
 // VcV_L = sum_(m,n,p,q) d L_Laxes(i,i) / d L_cart(m,n) * d L_Laxes(j,j) / d L_cart(p,q) *VcVLCart(mn,pq)
 
 	//compute VcV_L_cart from TLS_VcV_cart  
-	TMatrixD VcV(6,6); //order: l11,l22,l33,l23,l13,l12 (shelx)
+	ematd VcV(6,6); //order: l11,l22,l33,l23,l13,l12 (shelx)
 	for(short i=0; i<6; i++){
 		for(short j=0; j<6; j++){
 			short p,q;
@@ -492,10 +492,10 @@ void TLS::calcL_VcV(){
 		}
 	}
 
-	TMatrixD diff(3,6);
+	ematd diff(3,6);
 	//differiential matrix,diff[i][j] dL_laxes[i][i]/dLcartesian[j], j= 11,22,33,32,31,21 (shelx)
 	for(short i=0; i<3; i++){  //ith eigenvalue
-			TMatrixD temp(3,3);
+			ematd temp(3,3);
 			for(short m=0; m<3; m++){
 				for(short n=m; n<3; n++){ //symmetric - only calc 6 elements
 					temp[m][n] = RtoLaxes[i][m]*RtoLaxes[i][n] ; 
@@ -509,7 +509,7 @@ void TLS::calcL_VcV(){
 			diff[i][5]= temp[0][1];
 	}	
 
-	TMatrixD VcVtemp(3,3); //Not 6x6: Only 3 diagonal L_Laxes values
+	ematd VcVtemp(3,3); //Not 6x6: Only 3 diagonal L_Laxes values
 	for(short i=0; i<3; i++){
 		for(short j=0; j<3; j++){ // for Covariance [L(i,i),L(j,j)]
 			for(short m=0; m<6; m++){
@@ -535,21 +535,21 @@ void TLS::calcUijEllipse (const TSAtomPList &atoms, TEllpList &Ellipsoids) {
 		TSAtom* theAtom = atoms[i];
 		//Atom coords wrt origin, as fraction of unit cell axes
 
-		TVectorD position(3);
+		evecd position(3);
 		for (int ii = 0; ii < 3 ; ii++)
-			position[ii] = (theAtom->Center()[ii]); // wrt Cartesian
+			position[ii] = (theAtom->crd()[ii]); // wrt Cartesian
 		
 		position =  RtoLaxes * position;  // = R.x in Olex, position wrt Laxes
 		
-		TMatrixD UtlsLaxes(3,3); 
+		ematd UtlsLaxes(3,3); 
 		calcUijCart(UtlsLaxes,position);
 
-		TMatrixD RtoLaxesInv = RtoLaxes;  //inverse
+		ematd RtoLaxesInv = RtoLaxes;  //inverse
 		inverse3x3(RtoLaxesInv);
-		TMatrixD RtoLaxesInvT = RtoLaxesInv; //inverse Transposed
+		ematd RtoLaxesInvT = RtoLaxesInv; //inverse Transposed
 		RtoLaxesInvT.Transpose();
 		
-		TMatrixD UtlsCell(3,3);
+		ematd UtlsCell(3,3);
 		UtlsCell = adpScaleInv * Rcart *RtoLaxesInv * UtlsLaxes 
 			* RtoLaxesInvT* RcartT * adpScaleInv ; // intially RtoLaxesInv = 1 before TLS matrixes are rotated
 		
@@ -560,7 +560,7 @@ void TLS::calcUijEllipse (const TSAtomPList &atoms, TEllpList &Ellipsoids) {
 		*/
 
 		//Add to ellipse list
-		TVectorD vec(6);
+		evecd vec(6);
 		vec[0]=	UtlsCell[0][0];
 		vec[1]=	UtlsCell[1][1];
 		vec[2]=	UtlsCell[2][2];
@@ -580,7 +580,7 @@ void TLS::calcUijEllipse (const TSAtomPList &atoms, TEllpList &Ellipsoids) {
 
 
 
-void TLS::calcUijCart (TMatrixD &Uij,const TVectorD &position){
+void TLS::calcUijCart (ematd &Uij,const evecd &position){
 	// Calculates Uij from atom position wrt ANY Cartesian frame,
 	// (position must be wrt same axes as current TLS tensors
 	// uses current TLS tensors and origin
@@ -599,13 +599,13 @@ void TLS::calcUijCart (TMatrixD &Uij,const TVectorD &position){
 				<< origin[2] ;
 				*/
 
-	TMatrixD Atls(3,3);
+	ematd Atls(3,3);
 	Atls[0][1] = z; Atls[1][0] = -z;
 	Atls[0][2] = -y; Atls[2][0] = y;
 	Atls[1][2] = x; Atls[2][1] = -x;
 	//Atls.Print(); //A wrt initial cartesian cell
 
-	TMatrixD AtlsT = Atls;
+	ematd AtlsT = Atls;
 	//std::cout << "Atls in cartesian:\n" ;
 	//Atls.Print();
 	AtlsT.Transpose();
@@ -613,10 +613,10 @@ void TLS::calcUijCart (TMatrixD &Uij,const TVectorD &position){
 	//Atls.Print();
 	Uij = Tmat + Atls*Smat + SmatT*AtlsT + Atls*Lmat*AtlsT;
 }
-void TLS::calcTLS_VcV(TVectorD &w, TMatrixD &v){
+void TLS::calcTLS_VcV(evecd &w, ematd &v){
 	//takes references to SVD matrix, w ,V
 	//calculates Variance-covariance of output vector (TLS elements)
-	TMatrixD VcV(TLSfreeParameters,TLSfreeParameters);
+	ematd VcV(TLSfreeParameters,TLSfreeParameters);
 	for (int j = 0; j < TLSfreeParameters; j++){
 		for (int k = 0; k < TLSfreeParameters; k++){
 			for (int i = 0; i < TLSfreeParameters; i++){
@@ -631,7 +631,7 @@ void TLS::calcTLS_VcV(TVectorD &w, TMatrixD &v){
 	//VcV.Print();
 	TLS_VcV = VcV;
 }
-void TLS::inverse3x3(TMatrixD &theMatrix) {
+void TLS::inverse3x3(ematd &theMatrix) {
 	// Only valid for 3x3 matrix
 	if (theMatrix.Elements() != 3 || theMatrix.Vectors() !=3)
 		throw TFunctionFailedException(__OlxSourceInfo, 
@@ -671,9 +671,9 @@ void TLS::FigOfMerit(const TSAtomPList &atoms, const TEllpList Elps){
 	// R2 = Sqrt[ sum {weight_Uobs (Uobs - Utls)^2} / sum{weigh_Uobs Uobs^2}  ]
 	// Sqrt[chi^2] = Sqrt[ sum {weight_Uobs (Uobs - Utls)^2}/ n ], n dof
 
-	TVectorD quad(6);
-	TMatrixD UijCart(3,3);
-	TVectorD diff (6* atoms.Count() ) ;
+	evecd quad(6);
+	ematd UijCart(3,3);
+	evecd diff (6* atoms.Count() ) ;
 	for (short i =0; i < atoms.Count(); i++){
 			Elps[i].GetQuad(quad);
 			quadToCart(quad, UijCart);
@@ -714,17 +714,17 @@ void TLS::FigOfMerit(const TSAtomPList &atoms, const TEllpList Elps){
 
 	R2 = sqrt( R2/sumUobsSq ) ;
 
-	TVectorD FoMtemp(3);
+	evecd FoMtemp(3);
 	FoMtemp[0] = R1;
 	FoMtemp[1] = R2;
 	FoMtemp[2] = sqrt( chiSq );
 	FoM = FoMtemp;
 }
 
-void TLS::quadToCart(const TVectorD &quad, TMatrixD &UijCart){
+void TLS::quadToCart(const evecd &quad, ematd &UijCart){
 	// Converts Uij quadratic wrt the crystal frame, to the Cartesian frame
 
-	TMatrixD UijCell(3,3);
+	ematd UijCell(3,3);
 	UijCell[0][0] = quad[0];
 	UijCell[0][1] = UijCell[1][0] = quad[5];
 	UijCell[0][2] = UijCell[2][0] = quad[4];
@@ -732,13 +732,13 @@ void TLS::quadToCart(const TVectorD &quad, TMatrixD &UijCart){
 	UijCell[1][2] = UijCell[2][1] = quad[3];
 	UijCell[2][2] = quad[2];
 
-	TMatrixD RcellT = Rcell; 
+	ematd RcellT = Rcell; 
 	RcellT.Transpose();
 	UijCart = Rcell * adpScale * UijCell * adpScale * RcellT;
 }
 
-void TLS::symS(TVectorD &rhoOut){
-	TVectorD rho(3); //shifts of origin
+void TLS::symS(evecd &rhoOut){
+	evecd rho(3); //shifts of origin
 	
 	for(int i =0; i<3; i++){
 		int j,k;
@@ -750,12 +750,12 @@ void TLS::symS(TVectorD &rhoOut){
 	}
 	rhoOut = rho;
 
-	TMatrixD P(3,3);
+	ematd P(3,3);
 	P[0][1] = rho[2]; P[1][0]=-rho[2];
 	P[1][2] = rho[0]; P[2][1]=-rho[0];
 	P[2][0] = rho[1]; P[0][2]=-rho[1];
 	P.Print();
-	TMatrixD Pt = P;
+	ematd Pt = P;
 	Pt.Transpose();
 
 	Tmat = Tmat + P*Smat + SmatT*Pt + P*Lmat*Pt;
@@ -766,7 +766,7 @@ void TLS::symS(TVectorD &rhoOut){
 	origin = origin + rho; //Origin wrt L axes
 }
 
-void TLS::diagS(TMatrixD &split, TMatrixD &Tmatrix, TMatrixD &Smatrix){
+void TLS::diagS(ematd &split, ematd &Tmatrix, ematd &Smatrix){
 	// Calc split of L-principle axes
 	short ep;
 	for (short i=0; i<3; i++){
@@ -779,7 +779,7 @@ void TLS::diagS(TMatrixD &split, TMatrixD &Tmatrix, TMatrixD &Smatrix){
 		}
 	}
 	// Calc change to T matrix
-	TMatrixD temp(3,3);
+	ematd temp(3,3);
 	for (short i=0; i<3; i++){
 		for(short j=0; j<3 ; j++){
 			for (short k =0; k <3; k++){
@@ -829,10 +829,10 @@ void TLS::epsil(const short &i, const short &j,const short &k, short &ep){
 			"epsilon_i,j,k not permutation of 0,1,2"); 
 	}
 void TLS::BondCorrect(TSAtom *atom1, TSAtom* atom2, double &bondlength,double &error){
-	TVectorD vec(3);
-	vec = atom1->Center();
-	TVectorD vec2(3);
-	vec2 = atom2->Center(); 
+	evecd vec(3);
+	vec.Assign(atom1->crd(), 3);
+	evecd vec2(3);
+	vec2.Assign(atom2->crd(), 3); 
 	vec = vec - vec2; //bond wrt Cartesian axes
 	vec = RtoLaxes * vec; //bond wrt L axes
 	bondlength = 0;
@@ -848,7 +848,7 @@ void TLS::BondCorrect(TSAtom *atom1, TSAtom* atom2, double &bondlength,double &e
 							+ vec[2]*(Lmat[1][1]+Lmat[0][0])/2;
 
 	error = 0. ; //Propagate error from error on L
-	TVectorD dBdL(3); //derivative: d BondCorrection / d L[i][i], i = 1,2,3
+	evecd dBdL(3); //derivative: d BondCorrection / d L[i][i], i = 1,2,3
 	dBdL[0] = (1./2.)* ( vec[1] + vec[2] );
 	dBdL[1] = (1./2.)* ( vec[0] + vec[2] );
 	dBdL[2] = (1./2.)* ( vec[1] + vec[0] );
@@ -860,23 +860,23 @@ void TLS::BondCorrect(TSAtom *atom1, TSAtom* atom2, double &bondlength,double &e
 	error = sqrt(error );
 }
 void TLS::extrapolate(TSAtom *atom, TEllpList &Elps) {
-	TVectorD position(3);
+	evecd position(3);
 	for (int ii = 0; ii < 3 ; ii++)
-		position[ii] = (atom->Center()[ii]); // wrt Cartesian
+		position[ii] = (atom->crd()[ii]); // wrt Cartesian
 		
 	position =  RtoLaxes * position;  // = R.x in Olex, position wrt Laxes
 	
-	TMatrixD UtlsLaxes(3,3); 
+	ematd UtlsLaxes(3,3); 
 	calcUijCart(UtlsLaxes,position); 
 
-	TMatrixD RtoLaxesInv = RtoLaxes;  //inverse
+	ematd RtoLaxesInv = RtoLaxes;  //inverse
 	RtoLaxesInv.Transpose(); //inverse of Orthog matrix is the transpose
 	
-	TMatrixD UtlsCell(3,3);
+	ematd UtlsCell(3,3);
 	UtlsCell = adpScaleInv * Rcart *RtoLaxesInv * UtlsLaxes * RtoLaxes* RcartT * adpScaleInv ; 
 
 	//Add to ellipse list
-	TVectorD vec(6);
+	evecd vec(6);
 	vec[0]=	UtlsCell[0][0];
 	vec[1]=	UtlsCell[1][1];
 	vec[2]=	UtlsCell[2][2];

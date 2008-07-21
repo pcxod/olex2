@@ -14,41 +14,42 @@
 //----------------------------------------------------------------------------//
 // TEllipsoid function bodies
 //----------------------------------------------------------------------------//
-TEllipsoid::TEllipsoid():Matrix(3,3)  {
-  Matrix.E();
+TEllipsoid::TEllipsoid()  {
+  Matrix.I();
   SX = SY = SZ = 0;
-  for( int i=0; i < 6; i++ )    FQuad[i] = 0;
+  for( int i=0; i < 6; i++ )    
+    FQuad[i] = 0;
   FNPD = false;
 }
 //..............................................................................
-TEllipsoid::TEllipsoid(const TVectorD &Q):Matrix(3,3)  {
-  Matrix.E();
+TEllipsoid::TEllipsoid(const evecd& Q) {
+  Matrix.I();
   Initialise(Q);
 }
 //..............................................................................
 TEllipsoid::~TEllipsoid(){  return;  }
 //..............................................................................
-void TEllipsoid::GetQuad(TVectorD &V) const  {
+void TEllipsoid::GetQuad(evecd& V) const  {
   V.Resize(6);
   for( int i=0; i < 6; i++ )  V[i] = FQuad[i];
 }
 //..............................................................................
-void TEllipsoid::Initialise(const TVectorD &Q)  {
+void TEllipsoid::Initialise(const evecd& Q)  {
   for( int i=0; i < 6; i++ )
     FQuad[i] = Q[i];
   Initialise();
 }
 //..............................................................................
 void TEllipsoid::Initialise()  {
-  TMatrixD M(3,3), E(3,3);
+  mat3d M, E;
   // expand quadratic form
   M[0][0] = FQuad[0];  M[1][1] = FQuad[1];  M[2][2] = FQuad[2];
   M[1][2] = M[2][1] = FQuad[3];
   M[0][2] = M[2][0] = FQuad[4];
   M[0][1] = M[1][0] = FQuad[5];
-  E.E();
+  E.I();
   // cala eigen values and vectors
-  TMatrixD::EigenValues(M, E);
+  mat3d::EigenValues(M, E);
   if( (M[0][0] <= 0) || (M[1][1] <= 0) || (M[2][2] <= 0) )
     FNPD = true;
   else  {
@@ -75,23 +76,22 @@ void TEllipsoid::operator = (const TEllipsoid&E )  {
 }
 //..............................................................................
 /* to get the quadratic for MatrixT*Matr(SX^2,SY^2,SZ^2)*Matrix*/
-void TEllipsoid::MultMatrix(const TMatrixD &Matr)  {
+void TEllipsoid::MultMatrix(const mat3d& Matr)  {
   if( FNPD )  return;
-  TMatrixD N(3,3), M(Matr);
+  mat3d N, M( mat3d::Transpose(Matr) );
   // do trasformation of the eigen vecytors
   // get a new quadractic form
   N[0][0] = FQuad[0];  N[1][1] = FQuad[1];  N[2][2] = FQuad[2];
   N[1][2] = N[2][1] = FQuad[3];
   N[0][2] = N[2][0] = FQuad[4];
   N[0][1] = N[1][0] = FQuad[5];
-  M.Transpose();
   N = Matr*N*M;
   // store new quadratic form
   FQuad[0] = N[0][0];  FQuad[1] = N[1][1];  FQuad[2] = N[2][2];
   FQuad[3] = N[1][2];  FQuad[4] = N[0][2];  FQuad[5] = N[0][1];
   // get eigne values/vectors
-  M.E();  // identity matrix
-  TMatrixD::EigenValues(N, M);
+  M.I();  // identity matrix
+  mat3d::EigenValues(N, M);
   // assign new eigen values
 
   if( (N[0][0] <= 0) || (N[1][1] <= 0) || (N[2][2] <= 0) )
@@ -109,7 +109,7 @@ void TEllipsoid::MultMatrix(const TMatrixD &Matr)  {
 }
 //..............................................................................
 olxstr TEllipsoid::UcifToUcart( TAsymmUnit& au )  {
-  TMatrixD N(3,3), M(3,3), A(3,3), At(3,3);
+  mat3d N, M, A, At;
 
   A = au.GetCellToCartesian();
   At = A;
@@ -133,7 +133,7 @@ olxstr TEllipsoid::UcifToUcart( TAsymmUnit& au )  {
 }
 //..............................................................................
 olxstr TEllipsoid::UcartToUcif( TAsymmUnit& au )  {
-  TMatrixD N(3,3), M(3,3), A(3,3), At(3,3);
+  mat3d N, M, A, At;
 
   A = au.GetCartesianToCell();
   At = A;

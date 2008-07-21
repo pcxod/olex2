@@ -93,15 +93,15 @@ void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F)  {
   // initialise newly created atoms
   XFile().UpdateAsymmUnit();
   TAsymmUnit& au = XFile().GetAsymmUnit();
-  const TMatrixD& hkl2c = au.GetHklToCartesian();
+  const mat3d& hkl2c = au.GetHklToCartesian();
   // space group matrix list
   TSpaceGroup* sg = TSymmLib::GetInstance()->FindSG(au);
   if( sg == NULL )
     throw TFunctionFailedException(__OlxSourceInfo, "unknown spacegroup");
-  TMatrixDList ml, allm;
+  symmd_list ml, allm;
   sg->GetMatrices(ml, mattAll);
 
-  TVectorD quad(6);
+  evecd quad(6);
   const static double EQ_PI = 8*QRT(M_PI);
   const static double T_PI = 2*M_PI;
   const static double TQ_PI = 2*QRT(M_PI);
@@ -166,7 +166,7 @@ void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F)  {
     }
   }
   
-  TVPointD hkl, crd;
+  vec3d hkl, crd;
   for( int i=0; i < refs.Count(); i++ )  {
     const TReflection& ref = refs[i];
     ref.MulHkl(hkl, hkl2c);
@@ -175,17 +175,14 @@ void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F)  {
       scatterers[j].B() = scatterers[j].GetA()->Calc_sq(d_s2);
     double a = 0, b = 0;
     for( int j=0; j < alist.Count(); j++ )  {
-      crd = alist[j]->GetCCenter();
+      crd = alist[j]->ccrd();
       double la=0, lb=0;
       for( int k=0; k < ml.Count(); k++ )  {
-        const TMatrixD& mt = ml[k];
+        const symmd& mt = ml[k];
         ref.MulHkl(hkl, mt);
-        double tv =  hkl[0]*mt[0][3];  // scattering vector + phase shift
-               tv += hkl[1]*mt[1][3];
-               tv += hkl[2]*mt[2][3];
-               tv += hkl[0]*crd[0];
-               tv += hkl[1]*crd[1];
-               tv += hkl[2]*crd[2];
+        double tv =  hkl[0]*(mt.t[0]+crd[0]);  // scattering vector + phase shift
+               tv += hkl[1]*(mt.t[1]+crd[1]);
+               tv += hkl[2]*(mt.t[2]+crd[2]);
         tv *= T_PI;
         double ca, sa;
         SinCos(tv, &sa, &ca);

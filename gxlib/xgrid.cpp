@@ -318,17 +318,16 @@ bool TXGrid::Orient(TGlPrimitive *GlP)  {
 
   if( IS != NULL && Mode3D && (IS->TriangleList().Count() > 25 || triangles.Count() > 25) )  {
     if( GlP != glpP && GlP != glpN )  return true;
-    const TArrayList<TVPointF>& verts( (GlP == glpP) ? IS->VertexList() : vertices );
-    const TArrayList<TVPointF>& norms( (GlP == glpP) ? IS->NormalList() : normals );
+    const TArrayList<vec3f>& verts( (GlP == glpP) ? IS->VertexList() : vertices );
+    const TArrayList<vec3f>& norms( (GlP == glpP) ? IS->NormalList() : normals );
     const TArrayList<IsoTriangle>& trians(  (GlP == glpP) ? IS->TriangleList() : triangles );
-    TVPointF trans;
     glPolygonMode(GL_FRONT_AND_BACK, PolygonMode);
     glBegin(GL_TRIANGLES);
     for( int i=0; i < trians.Count(); i++ )  {
       for( int j=0; j < 3; j++ )  {
-        const TVPointF& nr = norms[trians[i].pointID[j]];
+        const vec3f& nr = norms[trians[i].pointID[j]];
         glNormal3f( nr[0], nr[1], nr[2] );
-        const TVPointF& p = verts[trians[i].pointID[j]];
+        const vec3f& p = verts[trians[i].pointID[j]];
         glVertex3f(p[0], p[1], p[2]);
       }
     }
@@ -338,11 +337,11 @@ bool TXGrid::Orient(TGlPrimitive *GlP)  {
   }
   if( GlP == glpP || GlP == glpN )  return true;
 
-  const TMatrixD& bm = Parent()->GetBasis().GetMatrix();
-  const TMatrixD& c2c =  XApp->XFile().GetCartesian2Cell();
+  const mat3d& bm = Parent()->GetBasis().GetMatrix();
+  const mat3d& c2c =  XApp->XFile().GetAsymmUnit().GetCartesianToCell();
 
   double R, G, B;
-  static TVPointD p, p1, p2, p3, p4;
+  static vec3d p, p1, p2, p3, p4;
   float hh = (float)MaxDim/2, val;
 
   p1[0] = -hh/Size;  p1[1] = -hh/Size;
@@ -427,7 +426,7 @@ bool TXGrid::Orient(TGlPrimitive *GlP)  {
   return false;
 }
 //..............................................................................
-bool TXGrid::GetDimensions(TVPointD &Max, TVPointD &Min)  {
+bool TXGrid::GetDimensions(vec3d &Max, vec3d &Min)  {
 //  Min = FCenter;
 //  Max = FCenter;
   return false;
@@ -497,7 +496,7 @@ bool TXGrid::LoadFromFile(const olxstr& GridFile)  {
   }
 
   // set default depth to center of the asymmetric unit
-  TVectorD v( XApp->XFile().GetAsymmUnit().GetOCenter(true, true) );
+  vec3d v( XApp->XFile().GetAsymmUnit().GetOCenter(true, true) );
   v = XApp->XFile().GetAsymmUnit().GetCellToCartesian() * v;
   SetDepth( v );
   return true;
@@ -527,8 +526,8 @@ void TXGrid::SetScale(float v)  {
 //..............................................................................
 void TXGrid::SetDepth(float v)  {  Depth = v;  }
 //..............................................................................
-void TXGrid::SetDepth(const TVectorD& v)  {
-  TVectorD p(v);
+void TXGrid::SetDepth(const vec3d& v)  {
+  vec3d p(v);
   p += Parent()->GetBasis().GetCenter();
   p = Parent()->GetBasis().GetMatrix()*p;
   SetDepth( (float)p[2] );
@@ -585,11 +584,11 @@ bool TXGrid::OnMouseMove(const IEObject *Sender, const TMouseData *Data)  {
 //..............................................................................
 
 void TXGrid::RescaleSurface()  {
-  const TMatrixD c2ca =  XApp->XFile().GetCell2Cartesian();
+  const mat3d& c2ca =  XApp->XFile().GetAsymmUnit().GetCellToCartesian();
 
-  TArrayList<TVPointF>& verts = IS->VertexList();
+  TArrayList<vec3f>& verts = IS->VertexList();
   for( int i=0; i < verts.Count(); i++ )  {
-    TVPointF& p = verts[i];
+    vec3f& p = verts[i];
     p[0] /= MaxX;
     p[1] /= MaxY;
     p[2] /= MaxZ;
@@ -597,7 +596,7 @@ void TXGrid::RescaleSurface()  {
     p *= c2ca;
   }
   for( int i=0; i < vertices.Count(); i++ )  {
-    TVPointF& p = vertices[i];
+    vec3f& p = vertices[i];
     p[0] /= MaxX;
     p[1] /= MaxY;
     p[2] /= MaxZ;
@@ -619,12 +618,12 @@ void TXGrid::InitIso(bool v)  {
       if( IS != NULL )  delete IS;
       GridMoved = true;
       const TLattice& latt = XApp->XFile().GetLattice();
-      TVPointD cnt;
+      vec3d cnt;
       int ac = 0;
       for( int i=0; i < latt.AtomCount(); i++ )  {
         const TSAtom& a = latt.GetAtom(i);
         if( a.IsDeleted() || a.GetAtomInfo() == iQPeakIndex )  continue;
-        cnt += a.GetCCenter();
+        cnt += a.ccrd();
         ac ++;
       }
       if( ac != 0 )  cnt /= ac;

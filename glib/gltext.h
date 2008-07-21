@@ -31,7 +31,7 @@ public:
   inline float GetWidth(){  return Width; }
   void SetWidth(float W);  // sets width of the text
   bool Orient(TGlPrimitive *P);
-  bool GetDimensions(TVPointD &Max, TVPointD &Min){  return false;};
+  bool GetDimensions(vec3d &Max, vec3d &Min){  return false;};
 
   inline bool IsStaticPos() const {  return (TextFlags & gltStaticPos) == gltStaticPos; };
   virtual void SetStaticPos(bool On);

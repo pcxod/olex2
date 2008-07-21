@@ -19,7 +19,7 @@ public:
   virtual ~TGlBackground(){  return; };
   void Create(const olxstr& cName = EmptyString);
   bool Orient(TGlPrimitive *P);
-  bool GetDimensions(TVPointD &Max, TVPointD &Min){  return false;};
+  bool GetDimensions(vec3d &Max, vec3d &Min){  return false;};
   bool Ceiling(){  return FCeiling;  }
   TGlPrimitive *Primitive(){  return FPrimitive;  }
   void SetTexture(TGlTexture* glt);

@@ -14,7 +14,7 @@
 
 #include "arrays.h"
 #include "estlist.h"
-#include "vpoint.h"
+#include "threex3.h"
 
 struct IsoTriangle {
   int pointID[3];
@@ -42,9 +42,9 @@ public:
   // Deletes the isosurface.
   void DeleteSurface();
 
-  inline TArrayList<TVPointF>& NormalList()      {  return Normals;  }
+  inline TArrayList<vec3f>& NormalList()         {  return Normals;  }
   inline TArrayList<IsoTriangle>& TriangleList() {  return Triangles;  }
-  inline TArrayList<TVPointF>& VertexList()      {  return Vertices;  }
+  inline TArrayList<vec3f>& VertexList()         {  return Vertices;  }
 
 protected:
 ////////////////////////////////////////////////////////////////////////
@@ -115,7 +115,7 @@ protected:
       Data.Clear();
       Count = 0;
     }
-    void GetVertices(TArrayList<TVPointF>& v) {  // an upper estimate
+    void GetVertices(TArrayList<vec3f>& v) {  // an upper estimate
       v.SetCount(Count);
       int ind = 0;
       for( int i=0; i < Data.Count(); i++ )  {
@@ -127,7 +127,7 @@ protected:
             for(int l=0; l < 3; l++ )  {
               if( p.ps[l].initialised )  {
                 p.ps[l].newID = ind;
-                TVPointF& fp = v[ind];
+                vec3f& fp = v[ind];
                 fp[0] = p.ps[l].x;
                 fp[1] = p.ps[l].y;
                 fp[2] = p.ps[l].z;
@@ -198,9 +198,9 @@ protected:
 ///////////////////////////////////////////////////////////////////////////////////
   const int DimmX, DimmY, DimmZ, ZSlice;
   // The normals.
-  TArrayList<TVPointF> Normals;
+  TArrayList<vec3f> Normals;
   // The vertices
-  TArrayList<TVPointF> Vertices;
+  TArrayList<vec3f> Vertices;
   // List of POINT3Ds which form the isosurface.
   T4DIndex IsoPoints;
 

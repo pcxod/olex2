@@ -27,8 +27,7 @@ void TMol::Clear()  {
 //..............................................................................
 olxstr TMol::MOLAtom(TCAtom& A)  {
   olxstr Tmp, Tmp1;
-  TVPointD V;
-  V = A.CCenter();
+  vec3d V = A.ccrd();
   GetAsymmUnit().CellToCartesian(V);
   Tmp1 = olxstr::FormatFloat(4, V[0] );
   Tmp1.Format(10, false, ' ');
@@ -87,15 +86,15 @@ void TMol::LoadFromStrings(const TStrList& Strings)  {
   Clear();
 
   olxstr Tmp1, Tmp, Msg;
-  TVPointD StrCenter;
+  vec3d StrCenter;
   FTitle = "OLEX: imported from MDL MOL";
 
-  GetAsymmUnit().Axes().Value(0) = 1;
-  GetAsymmUnit().Axes().Value(1) = 1;
-  GetAsymmUnit().Axes().Value(2) = 1;
-  GetAsymmUnit().Angles().Value(0) = 90;
-  GetAsymmUnit().Angles().Value(1) = 90;
-  GetAsymmUnit().Angles().Value(2) = 90;
+  GetAsymmUnit().Axes()[0] = 1;
+  GetAsymmUnit().Axes()[1] = 1;
+  GetAsymmUnit().Axes()[2] = 1;
+  GetAsymmUnit().Angles()[0] = 90;
+  GetAsymmUnit().Angles()[1] = 90;
+  GetAsymmUnit().Angles()[2] = 90;
   GetAsymmUnit().InitMatrices();
   bool AtomsCycle = false, BondsCycle = false;
   int AC=0, BC=0, ai1, ai2;
@@ -111,9 +110,9 @@ void TMol::LoadFromStrings(const TStrList& Strings)  {
       Tmp1 = Tmp.SubString(31, 3).Trim(' ');
       if( AtomsInfo->IsAtom(Tmp1) )  {
         TCAtom& CA = GetAsymmUnit().NewAtom();
-        CA.CCenter().Value(0).V() = Ax;
-        CA.CCenter().Value(1).V() = Ay;
-        CA.CCenter().Value(2).V() = Az;
+        CA.ccrd()[0] = Ax;
+        CA.ccrd()[1] = Ay;
+        CA.ccrd()[2] = Az;
         CA.SetLabel( (Tmp1 + GetAsymmUnit().AtomCount()+1) );
         CA.SetLoaderId(GetAsymmUnit().AtomCount()-1);
       }

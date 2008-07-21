@@ -177,7 +177,7 @@ void TGlRender::ClearMinMax()  {
   CalculatedZoom = -1;
 }
 //..............................................................................
-void TGlRender::UpdateMaxMin( const TVPointD &Max, const TVPointD &Min)  {
+void TGlRender::UpdateMaxMin( const vec3d &Max, const vec3d &Min)  {
   if( Max[0] > FMaxV[0] )  FMaxV[0] = Max[0];
   if( Max[1] > FMaxV[1] )  FMaxV[1] = Max[1];
   if( Max[2] > FMaxV[2] )  FMaxV[2] = Max[2];
@@ -851,7 +851,7 @@ void TGlRender::OnSetProperties(const TGlMaterial *P)  {  // tracks transluent a
 void TGlRender::AddGObject(AGDrawObject *G)  {
   FGObjects.Add(G);
   if( FSceneComplete || !G->Visible() )  return;
-  TVPointD MaxV, MinV;
+  vec3d MaxV, MinV;
   if( G->GetDimensions(MaxV, MinV) )  {
     UpdateMaxMin(MaxV, MinV);
     SetChanged( true );

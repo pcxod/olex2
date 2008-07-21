@@ -29,7 +29,7 @@ typedef TTypeList< AnAssociation2<double, double> > TFixedValueList;
 
 class AConstraintGenerator : public IEObject{
 protected:
-  void DoGenerateAtom( TCAtomPList& created, TAsymmUnit& au, TVPointDList& Crds, const olxstr& StartingName);
+  void DoGenerateAtom( TCAtomPList& created, TAsymmUnit& au, vec3d_list& Crds, const olxstr& StartingName);
   void GenerateAtom( TCAtomPList& created, TAtomEnvi& envi, const short Group, const TBasicAtomInfo& atomType, TAtomEnvi* pivoting = NULL);
 public:
   virtual bool FixParam(const short paramMask, TStrList& res, const TCAtomPList& atoms, const TFixedValueList& values) = 0;

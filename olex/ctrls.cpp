@@ -328,6 +328,7 @@ TMenuItem::TMenuItem(const short type, int id, TMenu* parent, const olxstr& Name
   OnModeChange = &FActions->NewQueue("ONMODECHANGE");
   FActionQueue = NULL;
   SetToDelete(false);  // see TButton for details
+  DependentOn = 0;
 }
 //..............................................................................
 TMenuItem::~TMenuItem()  {
@@ -335,7 +336,7 @@ TMenuItem::~TMenuItem()  {
   delete FActions;
 }
 //..............................................................................
-void TMenuItem::ActionQueue(TActionQueue* q, const olxstr& dependMode)  {
+void TMenuItem::ActionQueue(TActionQueue* q, const olxstr& dependMode, short dependentOn)  {
   int cmdind = dependMode.FirstIndexOf(';');
   if( cmdind != -1 )  {
     FDependMode = dependMode.SubStringTo(cmdind);
@@ -343,9 +344,18 @@ void TMenuItem::ActionQueue(TActionQueue* q, const olxstr& dependMode)  {
   }
   else
     FDependMode = dependMode;
-
+  DependentOn = dependentOn;
   FActionQueue = q;
   FActionQueue->Add( this );
+}
+//..............................................................................
+void TMenuItem::ValidateState()  {
+  if( DependentOn != 0 && IsCheckable() && !FDependMode.IsEmpty() )  {  
+    if( DependentOn == ModeDependent )
+      Check( TModeChange::CheckStatus(FDependMode, OnModeChangeCmd) );
+    else if( DependentOn == StateDependent )
+      Check( TStateChange::CheckStatus(FDependMode, OnModeChangeCmd) );
+  }
 }
 //..............................................................................
 bool TMenuItem::Execute(const IEObject *Sender, const IEObject *Data)  {

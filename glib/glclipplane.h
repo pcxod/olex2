@@ -10,7 +10,7 @@
 BeginGlNamespace()
 
 class TGlClipPlane  {
-  TVectorD FEq;
+  evecd FEq;
   bool FEnabled;
   class TGlClipPlanes *FParent;
   int FId;  // GL_CLIPPLANE_i
@@ -19,7 +19,7 @@ public:
   ~TGlClipPlane();
   inline bool Enabled() const     {  return FEnabled; }
   void Enabled(bool v);
-  inline TVectorD& Equation()     {  return FEq; }
+  inline evecd& Equation()        {  return FEq; }
   inline TGlClipPlanes *Parent()  {  return FParent; }
   inline int Id() const           {  return FId; }
 };

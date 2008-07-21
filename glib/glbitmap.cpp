@@ -108,7 +108,7 @@ bool TGlBitmap::Orient(TGlPrimitive *P)  {
   return false;
 }
 
-bool TGlBitmap::GetDimensions(TVPointD &Max, TVPointD &Min)  {
+bool TGlBitmap::GetDimensions(vec3d &Max, vec3d &Min)  {
   return false;
 }
 

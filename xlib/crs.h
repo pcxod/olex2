@@ -7,7 +7,7 @@
 BeginXlibNamespace()
 
 class TCRSFile : public TBasicCFile  {
-  TVectorDList Faces;
+  evecd_list Faces;
   double Radiation;
   olxstr Sfac, Unit;
   bool SGInitialised;
@@ -23,7 +23,7 @@ public:
   inline const olxstr& GetUnit()  const  {  return Unit;  }
 
   inline int FacesCount()  const  {  return Faces.Count();  }
-  inline const TVectorD& GetFace(int i)  const  {  return Faces[i];  }
+  inline const evecd& GetFace(int i)  const  {  return Faces[i];  }
 
   virtual void SaveToStrings(TStrList& Strings);
   virtual void LoadFromStrings(const TStrList& Strings);

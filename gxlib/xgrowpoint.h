@@ -9,15 +9,15 @@
 BeginGxlNamespace()
 
 class TXGrowPoint : public AGDrawObject  {
-  TMatrixD Transform;
-  TVPointD Center;
+  symmd Transform;
+  vec3d Center;
 public:
   TXGrowPoint(const olxstr& collectionName,
-               const TVPointD& center, const TMatrixD& transform, TGlRender *Render);
+               const vec3d& center, const symmd& transform, TGlRender *Render);
   void Create(const olxstr& cName = EmptyString);
   virtual ~TXGrowPoint();
 
-  bool GetDimensions(TVPointD &Max, TVPointD &Min);
+  bool GetDimensions(vec3d &Max, vec3d &Min);
 
   bool OnMouseDown(const IEObject *Sender, const TMouseData *Data){  return true; }
   bool OnMouseUp(const IEObject *Sender, const TMouseData *Data){  return false; }
@@ -27,8 +27,8 @@ public:
   void SetRadius(float V);
   inline double Radius() {  return Params()[0]; }
 
-  const TVPointD& GetCenter()     const {  return Center;  }
-  const TMatrixD& GetTransform() const {  return Transform;  }
+  const vec3d& GetCenter()     const {  return Center;  }
+  const symmd& GetTransform() const {  return Transform;  }
 };
 
 EndGxlNamespace()

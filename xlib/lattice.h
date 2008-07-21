@@ -3,8 +3,7 @@
 
 #include "xbase.h"
 #include "elist.h"
-#include "vpoint.h"
-#include "ematrix.h"
+#include "symmat.h"
 #include "atominfo.h"
 #include "catom.h"
 #include "satom.h"
@@ -13,6 +12,7 @@
 #include "network.h"
 
 #include "macroerror.h"
+#include "library.h"
 
 BeginXlibNamespace()
 
@@ -20,12 +20,12 @@ class TLattice: public IEObject  {
 private:
   TNetwork* Network;  // for internal use only
 private:
-  int GenerateMatrices(const TVPointD& VFrom, const TVPointD& VTo,
-        const TVPointD& MFrom, const TVPointD& MTo);
+  int GenerateMatrices(const vec3d& VFrom, const vec3d& VTo,
+        const vec3d& MFrom, const vec3d& MTo);
   // generates matrices in volume {VFrom, VTo} and leaves only matrices, which
   //transform the center of gravity of the asymmertic unit within {MFrom, MTo} volume
   // useually VFrom = Round(MFrom), VTo = Round(VFrom)
-  TMatrixDPList Matrices;    // list of all matrices
+  symmd_plist Matrices;    // list of all matrices
   TSAtomPList  Atoms;      // list of all atoms
   TSBondPList  Bonds;      // list of all nework nodes; some of them are equal to Atoms
   TNetPList    Fragments;
@@ -34,7 +34,7 @@ protected:
   bool Generated;
   TAtomsInfo* AtomsInfo;  // a pointer only
   void Generate(TCAtomPList* Template, bool ClearCont, bool IncludeQ);  // generates atoms using current matrices list
-  void GenerateAtoms( const TSAtomPList& atoms, TSAtomPList& result, const TMatrixDPList& matrices);
+  void GenerateAtoms( const TSAtomPList& atoms, TSAtomPList& result, const symmd_plist& matrices);
   void ClearFragments();
   void ClearAtoms();
   void ClearMatrices();
@@ -70,22 +70,22 @@ public:
   void Uniq(bool removeSymmEquivalents = false);
   void Init();
   // generates atoms within specified volume
-  void Generate(const TVPointD& MFrom, const TVPointD& MTo, TCAtomPList* Template,
+  void Generate(const vec3d& MFrom, const vec3d& MTo, TCAtomPList* Template,
     bool ClearCont, bool IncludeQ);
   // checks if the data alreade have been generated
   inline bool IsGenerated() const  {  return Generated;  }
 
   // generates matrices so that the center of asymmetric unit is inisde the specified volume
-  int GenerateMatrices(TMatrixDPList& Result, const TVPointD& VFrom, const TVPointD& VTo,
-        const TVPointD& MFrom, const TVPointD& MTo);
+  int GenerateMatrices(symmd_plist& Result, const vec3d& VFrom, const vec3d& VTo,
+        const vec3d& MFrom, const vec3d& MTo);
 
   void GrowFragments(bool GrowShells, TCAtomPList* Template);
   void GrowAtoms(const TSAtomPList& Atoms, bool GrowShells, TCAtomPList* Template);
-  void GrowAtoms(const TSAtomPList& Atoms, const TMatrixDList& matrices);
+  void GrowAtoms(const TSAtomPList& Atoms, const symmd_list& matrices);
   void GrowAtom(TSAtom& A, bool GrowShells, TCAtomPList* Template);
   /* grow a fragment using particular matrix */
-  void GrowAtom(int FragId, const TMatrixD& transform);
-  void Grow(const TMatrixD& transform);
+  void GrowAtom(int FragId, const symmd& transform);
+  void Grow(const symmd& transform);
   void GenerateWholeContent(TCAtomPList* Template); // generates content using current matrices
   bool IsExpandable(TSAtom& A) const;
 
@@ -93,7 +93,7 @@ public:
   inline TNetwork& GetFragment(int i)       const {  return *Fragments[i];  }
 
   inline int MatrixCount()                  const {  return Matrices.Count();  }
-  const TMatrixD& GetMatrix(int i)          const {  return *Matrices[i];  }
+  const symmd& GetMatrix(int i)             const {  return *Matrices[i];  }
 
   inline int AtomCount()                    const {  return Atoms.Count();  }
   inline TSAtom& GetAtom(int i)             const {  return *Atoms[i];  }
@@ -108,7 +108,7 @@ public:
 
   TSPlane* TmpPlane(const TSAtomPList& Atoms, int weightExtent=0); //the plane must be deleted by the caller !
   TSAtom* NewCentroid(const TSAtomPList& Atoms);
-  TSAtom* NewAtom(const TVPointD& center);
+  TSAtom* NewAtom(const vec3d& center);
 
   void SetAnis( const TCAtomPList& atoms, bool anis );
 
@@ -117,15 +117,15 @@ public:
   inline TAsymmUnit& GetAsymmUnit()         const {  return *AsymmUnit; }
   void UpdateAsymmUnit();
 
-  void MoveFragment(const TVPointD& to, TSAtom& fragAtom);
+  void MoveFragment(const vec3d& to, TSAtom& fragAtom);
   void MoveFragment(TSAtom& to, TSAtom& fragAtom);
   void MoveToCenter();
-  void MoveFragmentG(const TVPointD& to, TSAtom& fragAtom);
+  void MoveFragmentG(const vec3d& to, TSAtom& fragAtom);
   void MoveFragmentG(TSAtom& to, TSAtom& fragAtom);
   void MoveToCenterG();
   void Compaq();
   void CompaqAll();
-  void TransformFragments(const TSAtomPList& fragAtoms, const TMatrixD& transform);
+  void TransformFragments(const TSAtomPList& fragAtoms, const symmd& transform);
 
   // beware - only pointers are compared
   inline bool operator == (const TLattice& l)  const  {  return this == &l;  }
@@ -148,7 +148,7 @@ public:
 
   void LibGetFragmentCount(const TStrObjList& Params, TMacroError& E);
   void LibGetFragmentAtoms(const TStrObjList& Params, TMacroError& E);
-  class TLibrary*  ExportLibrary(const olxstr& name=EmptyString);
+  TLibrary*  ExportLibrary(const olxstr& name=EmptyString);
 };
 
 EndXlibNamespace()

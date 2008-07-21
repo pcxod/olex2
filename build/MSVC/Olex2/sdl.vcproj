@@ -519,10 +519,6 @@
 				RelativePath="..\..\..\sdl\undo.cpp"
 				>
 			</File>
-			<File
-				RelativePath="..\..\..\sdl\vpoint.cpp"
-				>
-			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -762,6 +758,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\sdl\threex3.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\sdl\tptrlist.h"
 				>
 			</File>
@@ -775,10 +775,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\sdl\utf8file.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\sdl\vpoint.h"
 				>
 			</File>
 		</Filter>

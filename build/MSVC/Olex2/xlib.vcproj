@@ -695,6 +695,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\xlib\symmat.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\xlib\symmlib.h"
 				>
 			</File>

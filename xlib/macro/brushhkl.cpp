@@ -25,8 +25,8 @@ struct HklBrushRef  {
     }
     return res;
   }
-  void Standardise(const TMatrixDList &ml, bool CheckInversion)  {
-    TVPoint<int> hklv;
+  void Standardise(const symmd_list &ml, bool CheckInversion)  {
+    vec3i hklv;
     for(int i=0; i < ml.Count(); i++ )  {
       ref->MulHkl(hklv, ml[i]);
       if( (hklv[2] > L) ||        // sdandardise then ...
@@ -72,10 +72,10 @@ void XLibMacros::macBrushHkl(TStrObjList &Cmds, const TParamList &Options, TMacr
   }
   bool useFriedelLaw = Options.Contains("f");
 
-  TMatrixDList ml;
+  symmd_list ml;
   sg->GetMatrices(ml, mattAll^mattIdentity);
   if( !sg->IsCentrosymmetric() && useFriedelLaw )  {
-    TMatrixD I(3,4);  I.E();  I *= -1;
+    symmd I;  I.r.I();  I.r *= -1;
     ml.InsertCCopy(0, I);  // merge wil searhc for it ...
   }
 

@@ -2,7 +2,7 @@
 #define lstH
 
 #include "xbase.h"
-#include "vpoint.h"
+#include "symmat.h"
 #include "bitarray.h"
 #include "estrlist.h"
 
@@ -17,7 +17,7 @@ struct TLstRef  {
 
 struct TLstSplitAtom  {
   olxstr AtomName;
-  TVPointD PositionA, PositionB;
+  vec3d PositionA, PositionB;
 };
 
 struct TTrefTry  {
@@ -28,7 +28,7 @@ struct TTrefTry  {
 
 class TPattAtom {
   olxstr Name;
-  TVPointD Crd;
+  vec3d Crd;
   double Occup;
 public:
   TPattAtom()  {  Occup = 0;  }
@@ -45,7 +45,7 @@ public:
   }
 
   inline const olxstr& GetName() const {  return Name;  }
-  inline TVPointD& GetCrd()              {  return Crd;   }
+  inline vec3d& GetCrd()              {  return Crd;   }
   inline double GetOccup()  const        {  return Occup; }
 
   inline void SetName(const olxstr& n)  { Name = n;   }

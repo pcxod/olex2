@@ -35,7 +35,7 @@ public:
   bool OnMouseMove(const IEObject *Sender, const TMouseData *Data);
 
   inline bool Orient(TGlPrimitive *P){  return false; };
-  inline bool GetDimensions(TVPointD &Max, TVPointD &Min){  return false;  }
+  inline bool GetDimensions(vec3d &Max, vec3d &Min){  return false;  }
 
   inline bool Visible()  const {  return AGDrawObject::Visible();  }
   inline bool Selected() const {  return AGDrawObject::Selected();  }

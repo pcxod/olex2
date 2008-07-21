@@ -19,7 +19,7 @@ public:
   }
   ~TSplitMode() {
     TXAtomPList Atoms;
-    TVPointD c;
+    vec3d c;
     TIns *Ins = (TIns*)TGlXApp::GetGXApp()->XFile().GetLastLoader();
     Ins->AddVar(0.5);
     int Var = Ins->Vars().Count()*10+1;
@@ -27,12 +27,12 @@ public:
     for( int i=0; i < Atoms.Count(); i++ )  {
       Atoms[i]->Moveable(false);
       // summ the translations
-      Atoms[i]->Atom().Center() += Atoms[i]->Basis.GetCenter();
+      Atoms[i]->Atom().crd() += Atoms[i]->Basis.GetCenter();
       Atoms[i]->Basis.NullCenter();
-      c = Atoms[i]->Atom().Center();
+      c = Atoms[i]->Atom().crd();
       TGlXApp::GetGXApp()->XFile().GetAsymmUnit().CartesianToCell(c);
-      Atoms[i]->Atom().CCenter() = c;
-      Atoms[i]->Atom().CAtom().CCenter() = c;
+      Atoms[i]->Atom().ccrd() = c;
+      Atoms[i]->Atom().CAtom().ccrd() = c;
     }
     for( int i=0; i < SplitAtoms.Count(); i++ )  {
       SplitAtoms[i].A()->Atom().CAtom().SetOccpVar( Var );
@@ -59,13 +59,13 @@ public:
       if( split )  {
         TXAtom* xa = TGlXApp::GetGXApp()->AddAtom( XA );
         if( xa != NULL )  {
-          TVPointD c;
+          vec3d c;
           xa->Moveable(true);
           SplitAtoms.AddNew(XA, xa);
-          xa->Atom().Center() += 0.5;
-          c = xa->Atom().Center();
+          xa->Atom().crd() += 0.5;
+          c = xa->Atom().crd();
           TGlXApp::GetGXApp()->XFile().GetAsymmUnit().CartesianToCell(c);
-          xa->Atom().CAtom().CCenter() = c;
+          xa->Atom().CAtom().ccrd() = c;
           xa->Atom().CAtom().Label() = TGlXApp::GetGXApp()->XFile().GetAsymmUnit().CheckLabel(&xa->Atom().CAtom(), XA->Atom().GetLabel()+'b');
         }
       }

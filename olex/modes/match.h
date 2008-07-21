@@ -98,10 +98,9 @@ void TMatchMode::FitAtoms()  {
   }
 
   if( AtomsToMatch.Count() == 2 )  {
-    TVPointD orgn = AtomsToMatch[1]->Atom().Center();
     for( int i=0; i < atomsB.Count(); i++ )  {
-      atomsB[i]->Center() -= orgn;
-      atomsB[i]->Center() += AtomsToMatch[0]->Atom().Center();
+      atomsB[i]->crd() -= AtomsToMatch[1]->Atom().crd();
+      atomsB[i]->crd() += AtomsToMatch[0]->Atom().crd();
     }
     TNetPList na;
     TNetPList nb;
@@ -130,38 +129,38 @@ void TMatchMode::FitAtoms()  {
     TGlXApp::GetGXApp()->CenterView();
   }
   if( AtomsToMatch.Count() == 4 )  {
-    TVPointD orgn = AtomsToMatch[0]->Atom().Center();
-    TVPointD vec1 = AtomsToMatch[2]->Atom().Center();
+    vec3d orgn = AtomsToMatch[0]->Atom().crd();
+    vec3d vec1 = AtomsToMatch[2]->Atom().crd();
              vec1 -= orgn;
-    TVPointD vec2 = AtomsToMatch[3]->Atom().Center();
+    vec3d vec2 = AtomsToMatch[3]->Atom().crd();
              vec2 -= orgn;
-    TVPointD rv = vec1.XProdVec( vec2 );
+    vec3d rv = vec1.XProdVec( vec2 );
     rv.Normalise();
     double ca = vec1.CAngle( vec2 );
-    TMatrixD rm(3,3);
+    mat3d rm;
     CreateRotationMatrix(rm, rv, ca);
 
     for( int i=0; i < atomsB.Count(); i++ )
-      atomsB[i]->Center() = rm * atomsB[i]->Center();
+      atomsB[i]->crd() = rm * atomsB[i]->crd();
 
-    orgn = AtomsToMatch[1]->Atom().Center();
+    orgn = AtomsToMatch[1]->Atom().crd();
     for( int i=0; i < atomsB.Count(); i++ )  {
-      atomsB[i]->Center() -= orgn;
-      atomsB[i]->Center() += AtomsToMatch[0]->Atom().Center();
+      atomsB[i]->crd() -= orgn;
+      atomsB[i]->crd() += AtomsToMatch[0]->Atom().crd();
     }
     TGlXApp::GetGXApp()->UpdateBonds();
     TGlXApp::GetGXApp()->CenterView();
     //FXApp->CreateObjects();
   }
   if( AtomsToMatch.Count() == 6 )  {
-    TVPointD rv = AtomsToMatch[0]->Atom().Center();
-             rv -= AtomsToMatch[2]->Atom().Center();
+    vec3d rv = AtomsToMatch[0]->Atom().crd();
+             rv -= AtomsToMatch[2]->Atom().crd();
     rv.Normalise();
 
-    TVPointD v1 = AtomsToMatch[4]->Atom().Center();
-             v1 -= AtomsToMatch[2]->Atom().Center();
-    TVPointD v2 = AtomsToMatch[5]->Atom().Center();
-             v2 -= AtomsToMatch[2]->Atom().Center();
+    vec3d v1 = AtomsToMatch[4]->Atom().crd();
+             v1 -= AtomsToMatch[2]->Atom().crd();
+    vec3d v2 = AtomsToMatch[5]->Atom().crd();
+             v2 -= AtomsToMatch[2]->Atom().crd();
     v1 = rv.XProdVec(v1);
     v2 = rv.XProdVec(v2);
 
@@ -174,7 +173,7 @@ void TMatchMode::FitAtoms()  {
 
     double t = 1-ca;
 
-    TMatrixD rm(3,3);
+    mat3d rm;
     rm[0][0] = t*rv[0]*rv[0] + ca;
     rm[0][1] = t*rv[0]*rv[1] + sa*rv[2];
     rm[0][2] = t*rv[0]*rv[2] - sa*rv[1];
@@ -187,13 +186,13 @@ void TMatchMode::FitAtoms()  {
     rm[2][1] = t*rv[1]*rv[2] - sa*rv[0];
     rm[2][2] = t*rv[2]*rv[2] + ca;
 
+    for( int i=0; i < atomsB.Count(); i++ ) 
+      atomsB[i]->crd() = rm * atomsB[i]->crd();
+
+    vec3d orgn = AtomsToMatch[1]->Atom().crd();
     for( int i=0; i < atomsB.Count(); i++ )  {
-      atomsB[i]->Center() = rm * atomsB[i]->Center();
-    }
-    TVectorD orgn = AtomsToMatch[1]->Atom().Center();
-    for( int i=0; i < atomsB.Count(); i++ )  {
-      atomsB[i]->Center() -= orgn;
-      atomsB[i]->Center() += AtomsToMatch[0]->Atom().Center();
+      atomsB[i]->crd() -= orgn;
+      atomsB[i]->crd() += AtomsToMatch[0]->Atom().crd();
     }
     TGlXApp::GetGXApp()->UpdateBonds();
     TGlXApp::GetGXApp()->CenterView();

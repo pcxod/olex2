@@ -113,7 +113,8 @@ void TCAtom::Assign(const TCAtom& S)  {
   FragmentId = S.GetFragmentId();
   AfixAtomId = S.GetAfixAtomId();
   FEllpsE  = S.FEllpsE;
-  FCCenter = S.GetCCenter();
+  Center = S.Center;
+  Esd = S.Esd;
   SetDeleted( S.IsDeleted() );
   SetSortable( S.IsSortable() );
   SetCanBeGrown( S.GetCanBeGrown() );
@@ -143,7 +144,7 @@ TEllipsoid* TCAtom::GetEllipsoid() const {  return EllpId == -1 ? NULL : &FParen
 //..............................................................................
 void TCAtom::AssignEllps(TEllipsoid* NV) {  NV == NULL ? EllpId = -1 : EllpId = NV->GetId();  }
 //..............................................................................
-void TCAtom::UpdateEllp( const TVectorD &Quad)  {
+void TCAtom::UpdateEllp( const evecd& Quad)  {
   if( EllpId == -1 )
     EllpId = FParent->NewEllp(Quad).GetId();
   else
@@ -151,7 +152,7 @@ void TCAtom::UpdateEllp( const TVectorD &Quad)  {
 }
 //..............................................................................
 void TCAtom::UpdateEllp(const TEllipsoid &NV ) {
-  TVectorD Q;
+  evecd Q(6);
   NV.GetQuad(Q);
   if( EllpId == -1 )
     EllpId = FParent->NewEllp(Q).GetId();

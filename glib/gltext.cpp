@@ -99,7 +99,7 @@ bool TGlText::Orient(TGlPrimitive *P)
   TGlFont *Fnt = Font();
   if( !Fnt )  return false;
   P->Font(Fnt);
-  static TVPointD T;
+  static vec3d T;
   double Scale = FParent->GetScale();
   T = Basis.GetCenter();
 //  if( StaticPos() )

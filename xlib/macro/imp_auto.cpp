@@ -218,7 +218,7 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   // end qpeak analysis
 
   // distance analysis
-  TTypeList<AnAssociation2<TCAtom*, TVPointD> > neighbours;
+  TTypeList<AnAssociation2<TCAtom*, vec3d> > neighbours;
   TLattice& latt = xapp.XFile().GetLattice();
   // qpeaks first
   TSAtomPList QPeaks;
@@ -462,7 +462,7 @@ void XLibMacros::funVSS(const TStrObjList &Cmds, TMacroError &Error)  {
         if( au.GetAtom(i).GetAtomInfo() == iQPeakIndex ) 
           au.GetAtom(i).SetDeleted(true);
       }
-      TArrayList< AnAssociation2<TCAtom const*, TVPointD> > res;
+      TArrayList< AnAssociation2<TCAtom const*, vec3d> > res;
       for( int i=0; i < au.AtomCount(); i++ )  {
         if( au.GetAtom(i).IsDeleted() )  continue;
         uc.FindInRange( au.GetAtom(i), au.GetAtom(i).GetAtomInfo().GetRad1()+1.3, res);

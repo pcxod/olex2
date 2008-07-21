@@ -25,11 +25,11 @@ void TPdb::SaveToStrings(TStrList& Strings)  {
 void TPdb::LoadFromStrings(const TStrList& Strings)  {
   Clear();
 
-  TVectorD QE(6);
-  TVPointD crd;
+  evecd QE(6);
+  vec3d crd;
 
   olxstr Tmp1, Tmp, Msg;
-  TVPointD StrCenter;
+  vec3d StrCenter;
   TStrList toks;
   TIntList CrystF;
   CrystF.Add(6);
@@ -90,12 +90,12 @@ void TPdb::LoadFromStrings(const TStrList& Strings)  {
       toks.StrtokF( Strings[i], CrystF);
       if( toks.Count() < 7 )  
         throw TFunctionFailedException(__OlxSourceInfo, "parsing failed");
-      GetAsymmUnit().Axes().Value(0) = toks[1].ToDouble();
-      GetAsymmUnit().Axes().Value(1) = toks[2].ToDouble();
-      GetAsymmUnit().Axes().Value(2) = toks[3].ToDouble();
-      GetAsymmUnit().Angles().Value(0) = toks[4].ToDouble();
-      GetAsymmUnit().Angles().Value(1) = toks[5].ToDouble();
-      GetAsymmUnit().Angles().Value(2) = toks[6].ToDouble();
+      GetAsymmUnit().Axes()[0] = toks[1].ToDouble();
+      GetAsymmUnit().Axes()[1] = toks[2].ToDouble();
+      GetAsymmUnit().Axes()[2] = toks[3].ToDouble();
+      GetAsymmUnit().Angles()[0] = toks[4].ToDouble();
+      GetAsymmUnit().Angles()[1] = toks[5].ToDouble();
+      GetAsymmUnit().Angles()[2] = toks[6].ToDouble();
       GetAsymmUnit().InitMatrices();
     }
     else if( Tmp == "ATOM" )  {
@@ -109,7 +109,7 @@ void TPdb::LoadFromStrings(const TStrList& Strings)  {
       crd[2] = toks[12].ToDouble();
 
       GetAsymmUnit().CartesianToCell(crd);
-      CA.CCenter() = crd;
+      CA.ccrd() = crd;
       Tmp = toks[3].Trim(' ');
       if( Tmp == "CA" )
         Tmp = "C";

@@ -3,10 +3,9 @@
 
 #include "xbase.h"
 #include "elist.h"
-#include "vpoint.h"
 #include "atominfo.h"
 #include "catom.h"
-#include "ematrix.h"
+#include "symmat.h"
 #include "typelist.h"
 #include "tptrlist.h"
 
@@ -14,13 +13,13 @@ BeginXlibNamespace()
 
 class TSAtom : public TBasicNode<TSAtom, class TSBond>  {
 private:
-  TMatrixDPList Matrices;
+  symmd_plist Matrices;
   // a list of pointers to matrices used for generation of atom
   class TCAtom*  FCAtom;       // basic crystallographic information
 //  int FTag; // override TCollectioItem and TGDrawObject tags
   const class TEllipsoid*  FEllipsoid;   // a pointer to TEllipse object
-  TVPointD  FCCenter;     // atom center in cell coordinates
-  TVPointD  FCenter;          // atom center in cartesian coordinates
+  vec3d  FCCenter;     // atom center in cell coordinates
+  vec3d  FCenter;          // atom center in cartesian coordinates
 protected:
   bool Deleted, Grown;
 public:
@@ -45,18 +44,18 @@ public:
   inline const olxstr& GetLabel() const       {  return FCAtom->GetLabel(); }
 
   inline int MatrixCount() const         {  return Matrices.Count();  }
-  inline const TMatrixD& GetMatrix(int i) const {  return *Matrices[i];  }
-  inline void AddMatrix(TMatrixD* M)            {  Matrices.Add(M);  }
-  inline void AddMatrices(TSAtom *A)            {  Matrices.AddList(A->Matrices); }
+  inline const symmd& GetMatrix(int i) const {  return *Matrices[i];  }
+  inline void AddMatrix(symmd* M)            {  Matrices.Add(M);  }
+  inline void AddMatrices(TSAtom *A)         {  Matrices.AddList(A->Matrices); }
 
   void ChangeType(const olxstr& Type);
 
   inline const TEllipsoid* GetEllipsoid() const {  return FEllipsoid;  }
   inline void SetEllipsoid(const TEllipsoid* v) {  FEllipsoid = v;  }
-  inline TVPointD&  CCenter()            {  return FCCenter;  }
-  inline TVPointD&  Center()             {  return FCenter;  }
-  inline const TVPointD&  GetCCenter()  const {  return FCCenter;  }
-  inline const TVPointD&  GetCenter()   const {  return FCenter;  }
+  inline vec3d&  ccrd()             {  return FCCenter;  }
+  inline vec3d&  crd()              {  return FCenter;  }
+  inline vec3d const&  ccrd() const {  return FCCenter;  }
+  inline vec3d const&  crd()  const {  return FCenter;  }
 };
   typedef TTypeList<TSAtom> TSAtomList;
   typedef TPtrList<TSAtom> TSAtomPList;

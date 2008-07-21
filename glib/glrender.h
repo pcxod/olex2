@@ -7,11 +7,12 @@
 #include "groupobj.h"
 #include "typelist.h"
 #include "gloption.h"
-#include "vpoint.h"
 #include "gllightmodel.h"
 #include "glmaterial.h"
 #include "ebasis.h"
 #include "actions.h"
+#include "threex3.h"
+#include "library.h"
 
 #include "tptrlist.h"
 #include "talist.h"
@@ -68,7 +69,7 @@ class TGlRender : public IEObject  {
 protected:
   void DrawObjects( bool SelectPrimitives, bool SelectObjects);
 
-  TVPointD FMaxV, FMinV;
+  vec3d FMaxV, FMinV;
   bool Changed;
   TEBasis *FBasis;
   class AGlScene *FScene; // system dependent staff
@@ -107,7 +108,8 @@ public:
   inline TEBasis* Basis()              const {  return FBasis; }
   inline const TEBasis& GetBasis()     const {  return *FBasis; }
   inline void SetBasis( const TEBasis &B)    {  *FBasis = B; }
-  inline void Translate(const TVectorD &V)   {  FBasis->Translate(V); };
+  template <class VC>
+    inline void Translate(const VC& V)       {  FBasis->Translate(V); };
   inline void TranslateX(double V)           {  FBasis->TranslateX(V);  }
   inline void TranslateY(double V)           {  FBasis->TranslateY(V);  }
   inline void TranslateZ(double V)           {  FBasis->TranslateZ(V);  }
@@ -117,9 +119,7 @@ public:
   inline double GetZoom()              const {  return FBasis->GetZoom(); }
   inline void  SetZoom(double V)             {  FBasis->SetZoom(V); }
   inline void ResetBasis()                   {  FBasis->Reset(); }
-  inline void OrientBasis(const TVectorD &V) {  FBasis->Orient(V); }
-  inline void OrientBasis(const TMatrixD &V) {  FBasis->Orient(V); }
-
+  
   TGlLightModel LightModel;
   // register your handler to swap buffers etc
   TActionQueue *OnDraw, *BeforeDraw;
@@ -171,10 +171,10 @@ public:
   //dinates to internal coordinates of OpenGl Scene like follow: if an object has to
   //follow mouse pointer, then the change in coordinates should be x = x0+MouseX*GetScale()
   //y = y0+MouseY*GetScale()
-  void UpdateMaxMin( const TVPointD &Max, const TVPointD &Min);
+  void UpdateMaxMin( const vec3d &Max, const vec3d &Min);
   void ClearMinMax();
-  const TVPointD& MaxDim() const { return FMaxV; }
-  const TVPointD& MinDim() const { return FMinV; }
+  const vec3d& MaxDim() const { return FMaxV; }
+  const vec3d& MinDim() const { return FMinV; }
   // Scene.Initialise must be called before to initialise drawing
   // contexts
   inline int GetWidth()  const {  return FWidth;  }
@@ -246,7 +246,7 @@ public:
   // GL interface
   // is used to orient the object (if anisotropic); the function should use
   // provided SetOrientation function
-  template <class T> void GlOrient( const TMatrix<T> &m )  {
+  template <class MC> void GlOrient(const MC& m )  {
     float Bf[4][4];
     Bf[0][0] = (float)m[0][0];  Bf[0][1] = (float)m[0][1];  Bf[0][2] = (float)m[0][2];  Bf[0][3] = 0;
     Bf[1][0] = (float)m[1][0];  Bf[1][1] = (float)m[1][1];  Bf[1][2] = (float)m[1][2];  Bf[1][3] = 0;
@@ -268,7 +268,7 @@ public:
     glRotatef(Angle, _x, _y, _z);
   }
 
-  template <class T> inline void GlTranslate(const TVector<T>& trans) const {
+  template <class VC> inline void GlTranslate(const VC& trans) const {
     glTranslatef((float)trans[0], (float)trans[1], (float)trans[2]);
   }
 
@@ -293,7 +293,7 @@ public:
   void LibFog(TStrObjList &Cmds, const TParamList &Options, TMacroError &E);
   void LibPerspective(TStrObjList &Cmds, const TParamList &Options, TMacroError &E);
   void LibZoom(TStrObjList &Cmds, const TParamList &Options, TMacroError &E);
-  class TLibrary*  ExportLibrary(const olxstr& name=EmptyString);
+  TLibrary*  ExportLibrary(const olxstr& name=EmptyString);
 };
 
 

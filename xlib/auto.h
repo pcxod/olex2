@@ -71,9 +71,9 @@ public:
 ////////////////////////////////////////////////////////////////////////////////
 class TAttachedNode  {
   TBasicAtomInfo* BasicAtomInfo;
-  TVPointD FCenter;
+  vec3d FCenter;
 public:
-  TAttachedNode( TBasicAtomInfo* bai, const TVPointD& c)  {
+  TAttachedNode( TBasicAtomInfo* bai, const vec3d& c)  {
     BasicAtomInfo = bai;
     FCenter = c;
   }
@@ -83,34 +83,34 @@ public:
   }
   void SaveToStream( IDataOutputStream& output ) const;
   inline void SetAtomInfo(TBasicAtomInfo* ai)      {  BasicAtomInfo = ai;  }
-  inline void SetCenter(const TVPointD& c)         {  FCenter = c;  }
+  inline void SetCenter(const vec3d& c)            {  FCenter = c;  }
   inline const TBasicAtomInfo& GetAtomInfo() const {  return *BasicAtomInfo;  }
   inline TBasicAtomInfo* BAI()               const {  return BasicAtomInfo;  }
-  inline const TVPointD& GetCenter()         const {  return FCenter;  }
-  inline TVPointD& Center()                        {  return FCenter;  }
+  inline const vec3d& GetCenter()         const {  return FCenter;  }
+  inline vec3d& Center()                        {  return FCenter;  }
 };
 
 ////////////////////////////////////////////////////////////////////////////////
 class TAutoDBNode  {
   TTypeList<TAttachedNode> AttachedNodes;
   TBasicAtomInfo* BasicAtomInfo;
-  TVPointD Center;
+  vec3d Center;
 //  int AppendedCount,
   int32_t Id;
   // runtime information
   // this is the "index"
   TTypeList< AnAssociation2<TAutoDBNet*,int> > Parents;
-  TVectorD Params; // pre-calculated parameters
+  evecd Params; // pre-calculated parameters
   void _PreCalc();
   inline double CalcDistance(int i)  const {  return AttachedNodes[i].GetCenter().DistanceTo(Center);  }
   double CalcAngle(int i, int j)  const;
 protected:
   static int SortMetricsFunc(const TAttachedNode& a, const TAttachedNode& b );
-  static int SortCAtomsFunc(const AnAssociation2<TCAtom*, TVPointD>& a,
-                            const AnAssociation2<TCAtom*, TVPointD>& b );
-  static TVPointD SortCenter;
+  static int SortCAtomsFunc(const AnAssociation2<TCAtom*, vec3d>& a,
+                            const AnAssociation2<TCAtom*, vec3d>& b );
+  static vec3d SortCenter;
 public:
-  TAutoDBNode(TSAtom& sa, TTypeList<AnAssociation2<TCAtom*, TVPointD> >* atoms);
+  TAutoDBNode(TSAtom& sa, TTypeList<AnAssociation2<TCAtom*, vec3d> >* atoms);
   TAutoDBNode(IDataInputStream& in)  {  LoadFromStream(in);  }
 
   const olxstr& ToString() const;
@@ -398,7 +398,7 @@ protected:
 class  TAtomTypePermutator {
 public:
   struct TPermutation  {
-    TVPointD AtomCenter;
+    vec3d AtomCenter;
     TCAtom* Atom;
     TTypeList< AnAssociation3<TBasicAtomInfo*,double, double> > Tries;
   };

@@ -33,15 +33,15 @@ public:
           }
         }
         if( aa != NULL )  {
-          TVPointD v(XA->Atom().Center());
-          v -= aa->Center();
+          vec3d v(XA->Atom().crd());
+          v -= aa->crd();
           v.Normalise();
           v *= BondLength;
-          v += aa->Center();
-          XA->Atom().Center() = v;
+          v += aa->crd();
+          XA->Atom().crd() = v;
           TGlXApp::GetGXApp()->XFile().GetAsymmUnit().CartesianToCell(v);
-          XA->Atom().CCenter() = v;
-          XA->Atom().CAtom().CCenter() = v;
+          XA->Atom().ccrd() = v;
+          XA->Atom().CAtom().ccrd() = v;
           TGlXApp::GetGXApp()->MarkLabel(XA, true);
         }
       }

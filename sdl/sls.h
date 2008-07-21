@@ -13,18 +13,18 @@ public:
   typedef double (*OneArgFunc)(double);
   typedef double (*TwoArgFunc)(double, double);
   typedef double (*ThreeArgFunc)(double, double, double);
-  typedef double (*VecArgFunc)(const TVectorD&);
+  typedef double (*VecArgFunc)(const evecd&);
 
   /*data is matrix [x y], where y = func(x), dervs is the lis of partial derivatives
     by all parameters; func is the function; The return value is R factor of the form:
        Sum( |Y-Ycalc| )/ SQRT( Sum( Y^2 ) ); Thefunction must use the solution to calculate
        the values
    */
-  static double LS1D(const TMatrixD& data, TVectorD& solutions,
+  static double LS1D(const ematd& data, evecd& solutions,
               const TTypeList<OneArgFunc>& dervs,
               OneArgFunc func)  {
-    TMatrixD a( dervs.Count(), dervs.Count() );
-    TVectorD r( dervs.Count() ), increments(dervs.Count());
+    ematd a( dervs.Count(), dervs.Count() );
+    evecd r( dervs.Count() ), increments(dervs.Count());
     for(int j=0; j < dervs.Count(); j++ )  {
       for( int i=0; i< dervs.Count(); i++ )  {
         for( int k=0; k < data.Vectors();k++ )
@@ -33,7 +33,7 @@ public:
      for(int k=0; k < data.Vectors(); k++ )
        r[j] += dervs[j](data[k][0]) * ( data[k][1]-func(data[k][0]) );
     }
-    TMatrixD::GauseSolve(a, r, increments);
+    ematd::GauseSolve(a, r, increments);
     for( int i=0; i < dervs.Count(); i++ )
       solutions += increments[i];
 
@@ -50,11 +50,11 @@ public:
        Sum( |Z-Zcalc| )/ SQRT( Sum( Z^2 ) ); Thefunction must use the solution to calculate
        the values
    */
-  static double LS2D(const TMatrixD& data, TVectorD& solutions,
+  static double LS2D(const ematd& data, evecd& solutions,
               const TTypeList<TwoArgFunc>& dervs,
               TwoArgFunc func)  {
-    TMatrixD a( dervs.Count(), dervs.Count() );
-    TVectorD r( dervs.Count() ), increments(dervs.Count());
+    ematd a( dervs.Count(), dervs.Count() );
+    evecd r( dervs.Count() ), increments(dervs.Count());
     for(int j=0; j < dervs.Count(); j++ )  {
       for( int i=0; i< dervs.Count(); i++ )  {
         for( int k=0; k< data.Vectors();k++ )
@@ -63,7 +63,7 @@ public:
      for(int k=0; k < data.Vectors(); k++ )
        r[j] += dervs[j](data[k][0], data[k][1]) * ( data[k][2]-func(data[k][0], data[k][1]) );
     }
-    TMatrixD::GauseSolve(a, r, increments);
+    ematd::GauseSolve(a, r, increments);
     for( int i=0; i < dervs.Count(); i++ )
       solutions += increments[i];
 
@@ -80,11 +80,11 @@ public:
        Sum( |V-Vcalc| )/ SQRT( Sum( V^2 ) ); Thefunction must use the solution to calculate
        the values
    */
-  static double LS3D(const TMatrixD& data, TVectorD& solutions,
+  static double LS3D(const ematd& data, evecd& solutions,
               const TTypeList<ThreeArgFunc>& dervs,
               ThreeArgFunc func)  {
-    TMatrixD a( dervs.Count(), dervs.Count() );
-    TVectorD r( dervs.Count() ), increments(dervs.Count());
+    ematd a( dervs.Count(), dervs.Count() );
+    evecd r( dervs.Count() ), increments(dervs.Count());
     for(int j=0; j < dervs.Count(); j++ )  {
       for( int i=0; i< dervs.Count(); i++ )  {
         for( int k=0; k< data.Vectors(); k++ )  {
@@ -94,7 +94,7 @@ public:
      for(int k=0; k < data.Vectors(); k++ )
        r[j] += dervs[j](data[k][0], data[k][1], data[k][2]) * ( data[k][3]-func(data[k][0], data[k][1], data[k][2]) );
     }
-    TMatrixD::GauseSolve(a, r, increments);
+    ematd::GauseSolve(a, r, increments);
     for( int i=0; i < dervs.Count(); i++ )
       solutions += increments[i];
 
@@ -111,11 +111,11 @@ public:
        Sum( |V-Vcalc| )/ SQRT( Sum( V^2 ) ); Thefunction must use the solution to calculate
        the values
    */
-  static double LSND(const TMatrixD& data, TVectorD& solutions,
+  static double LSND(const ematd& data, evecd& solutions,
               const TTypeList<VecArgFunc>& dervs,
               VecArgFunc func)  {
-    TMatrixD a( dervs.Count(), dervs.Count() );
-    TVectorD r( dervs.Count() ), increments(dervs.Count());
+    ematd a( dervs.Count(), dervs.Count() );
+    evecd r( dervs.Count() ), increments(dervs.Count());
     for(int j=0; j < dervs.Count(); j++ )  {
       for( int i=0; i< dervs.Count(); i++ )  {
         for( int k=0; k< data.Vectors(); k++ )  {
@@ -125,7 +125,7 @@ public:
      for(int k=0; k < data.Vectors(); k++ )
        r[j] += dervs[j](data[k]) * ( data[k][data.Elements()-1]-func(data[k]) );
     }
-    TMatrixD::GauseSolve(a, r, increments);
+    ematd::GauseSolve(a, r, increments);
     for( int i=0; i < dervs.Count(); i++ )
       solutions[i] = increments[i];
 

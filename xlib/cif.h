@@ -62,17 +62,17 @@ public:
 
 //---------------------------------------------------------------------------
 class TCifValue : public IEObject  {
-  TTypeList<TVPointD> MatrixTranslations;
+  TTypeList<vec3d> MatrixTranslations;
   TIntList MatrixIndexes;
   TCAtomPList   Atoms;
   TEValueD Value;
 protected:
-  olxstr FormatTranslation(const TVPointD& v);
+  olxstr FormatTranslation(const vec3d& v);
 public:
   TCifValue()  {  ;  }
   virtual ~TCifValue()  { ;  }
 
-  void AddAtom(TCAtom& A, const TVPointD& Translation, int SymmIndex = 0 )  {
+  void AddAtom(TCAtom& A, const vec3d& Translation, int SymmIndex = 0 )  {
     Atoms.Add(&A);
     MatrixIndexes.Add( SymmIndex );
     MatrixTranslations.AddCCopy( Translation );
@@ -190,7 +190,7 @@ public:
     char Close,
     olxstr (*ResolveExternal)(const olxstr& valueName) = NULL,
     bool DoubleTheta = true);
-  bool CreateTable(TDataItem *TableDefinitions, TTTable<TStrList>& Table, TMatrixDList& SymmList);
+  bool CreateTable(TDataItem *TableDefinitions, TTTable<TStrList>& Table, symmd_list& SymmList);
   void Group();
   const TCifDataManager& GetDataManager()  const  {  return DataManager;  }
 

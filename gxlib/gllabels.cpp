@@ -71,7 +71,7 @@ bool TXGlLabels::Orient(TGlPrimitive *P)  {
   if( !Fnt )  return true;
 
   TXAtom *XA;
-  TVPointD V;
+  vec3d V;
   bool currentGlM, matInited = false;
   olxstr Tmp;
   P->Font(Fnt);
@@ -186,7 +186,7 @@ bool TXGlLabels::Orient(TGlPrimitive *P)  {
         }
       }
     }
-    V = XA->Atom().Center();
+    V = XA->Atom().crd();
     V += FParent->GetBasis().GetCenter();
     V *= FParent->GetBasis().GetMatrix();
     glRasterPos3d(V[0]+0.15, V[1]+0.15, V[2]+5);
