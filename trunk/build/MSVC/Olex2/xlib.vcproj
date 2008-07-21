@@ -591,6 +591,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\xlib\auto.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\xlib\catom.h"
 				>
 			</File>

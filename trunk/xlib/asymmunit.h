@@ -21,7 +21,7 @@ BeginXlibNamespace()
 
 class TAsymmUnit: public IEObject  {
   TCAtomPList CAtoms;      // list of TCAtoms
-  symmd_list  Matrices;  // list of matrices (excluding ones after centering)
+  smatd_list  Matrices;  // list of matrices (excluding ones after centering)
   TEllpPList Ellipsoids;
   TAtomsInfo *AtomsInfo;
   mat3d Cell2Cartesian,  // transformation from cell crd to cartesian
@@ -103,7 +103,7 @@ protected:
   TPtrList<TResidue> Residues;
   TResidue MainResidue;
   // in INS file is EQUV command
-  symmd_list UsedSymm;
+  smatd_list UsedSymm;
   TSRestraintList rDfix,  // restrained distances (DFIX)
                   rAfix,  // restrained angles (DANG)
                   rDsim,  // similar distances (SADI)
@@ -218,9 +218,9 @@ public:
   void InitAtomIds(); // initialises atom ids if any were added or removed
 
   inline int MatrixCount()                   const {  return Matrices.Count();  }
-  inline const symmd& GetMatrix(size_t i) const {  return Matrices[i];  }
+  inline const smatd& GetMatrix(size_t i) const {  return Matrices[i];  }
   void ClearMatrices()                             {  Matrices.Clear();  }
-  void AddMatrix(const symmd& a);
+  void AddMatrix(const smatd& a);
 
   inline int EllpCount()               const {  return Ellipsoids.Count(); }
   inline TEllipsoid& GetEllp(size_t i) const {  return *Ellipsoids[i]; }
@@ -264,11 +264,11 @@ public:
   inline double GetMaxQPeak()    const {  return MaxQPeak;  }
   inline double GetMinQPeak()    const {  return MinQPeak;  }
 
-  const symmd& AddUsedSymm(const symmd& matr);
-  void RemUsedSymm(const symmd& matr);
+  const smatd& AddUsedSymm(const smatd& matr);
+  void RemUsedSymm(const smatd& matr);
   inline int UsedSymmCount()     const {  return UsedSymm.Count();  }
-  inline const symmd& GetUsedSymm(size_t ind)  {  return UsedSymm[ind];  }
-  inline int UsedSymmIndex(const symmd& matr)  const {  return UsedSymm.IndexOf(matr);  }
+  inline const smatd& GetUsedSymm(size_t ind)  {  return UsedSymm[ind];  }
+  inline int UsedSymmIndex(const smatd& matr)  const {  return UsedSymm.IndexOf(matr);  }
   inline void ClearUsedSymm()          {  UsedSymm.Clear();  }
 
 
@@ -276,7 +276,7 @@ public:
     coordinates of atoms are called. This is to handle restraints in a correct
     way
   */
-  void OnCAtomCrdChange( TCAtom* ca, const symmd& matr );
+  void OnCAtomCrdChange( TCAtom* ca, const smatd& matr );
   // clears restraints and constraints
   void ClearRestraints();
   // DFIX equivalent

@@ -15,7 +15,7 @@
 // TXGrowLine function bodies
 //----------------------------------------------------------------------------//
 TXGrowPoint::TXGrowPoint(const olxstr& collectionName, const vec3d& center,
-                         const symmd& transform, TGlRender *Render) :
+                         const smatd& transform, TGlRender *Render) :
   AGDrawObject(collectionName)  {
   AGDrawObject::Groupable(false);
   FParent = Render;

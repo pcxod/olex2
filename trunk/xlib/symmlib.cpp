@@ -588,7 +588,7 @@ TSpaceGroup::TSpaceGroup(const olxstr& Name, const olxstr& FullName, const olxst
   Translations = false;
 }
 //..............................................................................
-void TSpaceGroup::AddMatrix(const symmd& m)   {
+void TSpaceGroup::AddMatrix(const smatd& m)   {
   Matrices.AddCCopy(m);
   if( !Translations )  {
     if( m.t[0] != 0 || m.t[1] != 0 || m.t[2] != 0 )
@@ -600,7 +600,7 @@ void TSpaceGroup::AddMatrix(double xx, double xy, double xz,
                  double yx, double yy, double yz, 
                  double zx, double zy, double zz,
                  double tx, double ty, double tz)  {
-  symmd& m = Matrices.AddNew();
+  smatd& m = Matrices.AddNew();
   m.r[0][0] = xx;  m.r[0][1] = xy;  m.r[0][2] = xz;  m.t[0] = tx;
   m.r[1][0] = yx;  m.r[1][1] = yy;  m.r[1][2] = yz;  m.t[1] = ty;
   m.r[2][0] = zx;  m.r[2][1] = zy;  m.r[2][2] = zz;  m.t[2] = tz;
@@ -616,9 +616,9 @@ bool TSpaceGroup::ContainsElement(TSymmElement* symme)  {
 
   for( int i=0; i  < symme->MatrixCount(); i++ )  {
     bool found = false;
-    symmd& m = symme->GetMatrix(i);
+    smatd& m = symme->GetMatrix(i);
     for( int j=0; j  < MatrixCount(); j++ )  {
-      symmd& m1 = Matrices[j];
+      smatd& m1 = Matrices[j];
       if( m1.GetTag() )  continue;
       bool equal = true;
       for( int k=0; k < 3; k++ )  {
@@ -647,9 +647,9 @@ bool TSpaceGroup::ContainsGroup(TSpaceGroup* symme)  {
 
   for( int i=0; i  < symme->MatrixCount(); i++ )  {
     bool found = false;
-    symmd& m = symme->GetMatrix(i);
+    smatd& m = symme->GetMatrix(i);
     for( int j=0; j  < MatrixCount(); j++ )  {
-      symmd& m1 = Matrices[j];
+      smatd& m1 = Matrices[j];
       if( m1.GetTag() )  continue;
       bool equal = true;
       for( int k=0; k < 3; k++ )  {
@@ -671,15 +671,15 @@ bool TSpaceGroup::ContainsGroup(TSpaceGroup* symme)  {
   return true;
 }
 //..............................................................................
-bool TSpaceGroup::ContainsElement( const symmd_list& matrices, TSymmElement* symme) {
+bool TSpaceGroup::ContainsElement( const smatd_list& matrices, TSymmElement* symme) {
   if( matrices.Count() < symme->MatrixCount() )  return false;
   for( int i=0; i  < matrices.Count(); i++ )  matrices[i].SetTag(0);
 
   for( int i=0; i  < symme->MatrixCount(); i++ )  {
     bool found = false;
-    symmd& m = symme->GetMatrix(i);
+    smatd& m = symme->GetMatrix(i);
     for( int j=0; j  < matrices.Count(); j++ )  {
-      symmd& m1 = matrices[j];
+      smatd& m1 = matrices[j];
       if( m1.GetTag() )  continue;
       bool equal = true;
 //      for( int k=0; k < 3; k++ )  {
@@ -723,9 +723,9 @@ bool TSpaceGroup::IsSubElement( TSpaceGroup* symme )  const  {
 
   for( int i=0; i  < symme->MatrixCount(); i++ )  {
     bool found = false;
-    symmd& m = symme->GetMatrix(i);
+    smatd& m = symme->GetMatrix(i);
     for( int j=0; j  < MatrixCount(); j++ )  {
-      symmd& m1 = Matrices[j];
+      smatd& m1 = Matrices[j];
       if( m1.GetTag() )  continue;
       bool equal = true;
       int matrixElements = 0;
@@ -781,9 +781,9 @@ bool TSpaceGroup::EqualsWithoutTranslation (const TSpaceGroup& sg) const  {
 
   for( int i=0; i  < mc; i++ )  {
     found = false;
-    symmd& m = sg.GetMatrix(i);
+    smatd& m = sg.GetMatrix(i);
     for( int j=0; j  < mc; j++ )  {
-      symmd& m1 = Matrices[j];
+      smatd& m1 = Matrices[j];
       if( m1.GetTag() )  continue;
       bool equal = true;
       int signChanges = 0;
@@ -812,11 +812,11 @@ bool TSpaceGroup::EqualsWithoutTranslation (const TSpaceGroup& sg) const  {
   return true;
 }
 //..............................................................................
-bool TSpaceGroup::Compare(const symmd_list& matrices, double& st) const  {
+bool TSpaceGroup::Compare(const smatd_list& matrices, double& st) const  {
   int mc = (MatrixCount()+1+Latt->VectorCount());
   if( IsCentrosymmetric() )  mc *= 2;
   if( mc != matrices.Count() )  return false;
-  symmd_list tm;
+  smatd_list tm;
   tm.SetCapacity(mc);
   this->GetMatrices(tm, mattAll);
   vec3d translation;
@@ -824,9 +824,9 @@ bool TSpaceGroup::Compare(const symmd_list& matrices, double& st) const  {
     tm[i].SetTag(0);
   for( int i=0; i  < mc; i++ )  {
     bool found = false;
-    const symmd& m = matrices[i];
+    const smatd& m = matrices[i];
     for( int j=0; j  < mc; j++ )  {
-      symmd& m1 = tm[j];
+      smatd& m1 = tm[j];
       if( m1.GetTag() == 1 )  continue;
       bool equal = true;
       int matrixElements = 0;
@@ -857,11 +857,11 @@ bool TSpaceGroup::Compare(const symmd_list& matrices, double& st) const  {
   return true;
 }
 //..............................................................................
-bool TSpaceGroup::operator == (const symmd_list& matrices) const  {
+bool TSpaceGroup::operator == (const smatd_list& matrices) const  {
   int mc = (MatrixCount()+1+Latt->VectorCount());
   if( IsCentrosymmetric() )  mc *= 2;
   if( mc != matrices.Count() )  return false;
-  symmd_list tm;
+  smatd_list tm;
   tm.SetCapacity(mc);
   this->GetMatrices(tm, mattAll);
   vec3d translation;
@@ -869,9 +869,9 @@ bool TSpaceGroup::operator == (const symmd_list& matrices) const  {
     tm[i].SetTag(0);
   for( int i=0; i  < mc; i++ )  {
     bool found = false;
-    const symmd& m = matrices[i];
+    const smatd& m = matrices[i];
     for( int j=0; j  < mc; j++ )  {
-      symmd& m1 = tm[j];
+      smatd& m1 = tm[j];
       if( m1.GetTag() == 1 )  continue;
       bool equal = true;
       int matrixElements = 0;
@@ -917,9 +917,9 @@ bool TSpaceGroup::operator == (const TAsymmUnit& AU) const {
 
   for( int i=0; i  < mc; i++ )  {
     found = false;
-    const symmd& m = AU.GetMatrix(i);
+    const smatd& m = AU.GetMatrix(i);
     for( int j=0; j  < mc; j++ )  {
-      symmd& m1 = Matrices[j];
+      smatd& m1 = Matrices[j];
       if( m1.GetTag() )  continue;
       bool equal = true;
       int matrixElements = 0;
@@ -991,7 +991,7 @@ bool TSpaceGroup::operator == (const TAsymmUnit& AU) const {
 bool TSpaceGroup::EqualsExpandedSG(const TAsymmUnit& AU) const  {
   if( MatrixCount() > AU.MatrixCount() )  return false;
   
-  symmd_list allMatrices;
+  smatd_list allMatrices;
   GetMatrices(allMatrices, mattAll );
 
   if( allMatrices.Count() != AU.MatrixCount() )  return false;
@@ -1002,9 +1002,9 @@ bool TSpaceGroup::EqualsExpandedSG(const TAsymmUnit& AU) const  {
 
   for( int i=0; i  < allMatrices.Count(); i++ )  {
     found = false;
-    const symmd& m = AU.GetMatrix(i);
+    const smatd& m = AU.GetMatrix(i);
     for( int j=0; j  < allMatrices.Count(); j++ )  {
-      symmd& m1 = allMatrices[j];
+      smatd& m1 = allMatrices[j];
       if( m1.GetTag() )  continue;
       bool equal = true;
       for( int k=0; k < 3; k++ )  {
@@ -1034,8 +1034,8 @@ bool TSpaceGroup::EqualsExpandedSG(const TAsymmUnit& AU) const  {
   return true;
 }
 //..............................................................................
-int TSpaceGroup::GetUniqMatrices(symmd_list& matrices, short Flags) const  {
-  symmd_list allm;
+int TSpaceGroup::GetUniqMatrices(smatd_list& matrices, short Flags) const  {
+  smatd_list allm;
   int c = 0;
   GetMatrices( allm, Flags );
   for( int i=0; i < allm.Count(); i++ )  {
@@ -1047,23 +1047,23 @@ int TSpaceGroup::GetUniqMatrices(symmd_list& matrices, short Flags) const  {
   return c;
 }
 //..............................................................................
-void TSpaceGroup::GetMatrices(symmd_list& matrices, short Flags) const {
-  symmd *m, *m1;
+void TSpaceGroup::GetMatrices(smatd_list& matrices, short Flags) const {
+  smatd *m, *m1;
   for( int i=-1; i < MatrixCount(); i++ )  {
     m = NULL;
     if( i < 0 && ((Flags & mattIdentity) == mattIdentity) )  {
-      m = new symmd;
+      m = new smatd;
       m->r.I();
     }
     else  {
       if( i == -1 )  continue;
       if( (Flags & mattTranslation) == mattTranslation && (Flags & mattCentering) == 0 )  {
-        symmd& mt = Matrices[i];
+        smatd& mt = Matrices[i];
         if( mt.t[0] != 0 || mt.t[1] != 0 || mt.t[2] != 0 )  continue;
-          m = new symmd( mt );
+          m = new smatd( mt );
       }
       else
-        m = new symmd( Matrices[i] );
+        m = new smatd( Matrices[i] );
     }
 
     if( !m )  continue;
@@ -1073,7 +1073,7 @@ void TSpaceGroup::GetMatrices(symmd_list& matrices, short Flags) const {
       for( int j=0; j < Latt->VectorCount(); j++ )  {
         vec3d& v = Latt->GetVector(j);
         if( (Flags & mattTranslation) == 0 )  {
-          symmd& mt = Matrices[i];
+          smatd& mt = Matrices[i];
           double dv = mt.t[0] - v[0];
           int    iv = (int)dv;  dv -= iv;
           if( fabs(dv) < 0.01 || fabs(dv) > 0.99 )  dv = 0;
@@ -1087,7 +1087,7 @@ void TSpaceGroup::GetMatrices(symmd_list& matrices, short Flags) const {
           if( fabs(dv) < 0.01 || fabs(dv) > 0.99 )  dv = 0;
           if( dv != 0 )  continue;
         }
-        m1 = new symmd(*m);
+        m1 = new smatd(*m);
 
         m1->t[0] += v[0];
         int iv = (int)m1->t[0];
@@ -1109,13 +1109,13 @@ void TSpaceGroup::GetMatrices(symmd_list& matrices, short Flags) const {
   }
   if( CentroSymmetric && ((Flags & mattInversion) == mattInversion) )  {
     for( int i=0; i < matrices.Count(); i++ )  {
-      m = new symmd( matrices[i] );
+      m = new smatd( matrices[i] );
       m->r *= -1;
       matrices.Insert(i+1, *m);
       i++;
     }
     if( (Flags & mattIdentity) != mattIdentity )  {
-      m = new symmd;
+      m = new smatd;
       m->r.I();
       m->r *= -1;
       matrices.Insert(0, *m);
@@ -1174,7 +1174,7 @@ TSymmLib::TSymmLib(const olxstr& FN)  {
 //    }
 //  }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
-  symmd M;
+  smatd M;
   int sgc = sizeof(olx_SGLib)/sizeof(olx_SGLib[0]);
   TStrList toks;
   for( int i=0; i < sgc; i++ )  {
@@ -1280,7 +1280,7 @@ TSymmLib::TSymmLib(const olxstr& FN)  {
 //  SymmetryElements.AddNew<olxstr, TSpaceGroup*>("--m", FindGroup("P11m") );
 
   // xonstructing glide d planes
-  symmd dMatt;
+  smatd dMatt;
   TSymmElement& d1 = SymmetryElements.AddNew<olxstr>("d--");
   dMatt.r[0][0] = -1;  dMatt.r[1][1] = 1;  dMatt.r[2][2] = 1;
   dMatt.t[0] = 0;      dMatt.t[1] = dMatt.t[2] = 1./4.;

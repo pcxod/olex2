@@ -14,19 +14,38 @@
 #include "log.h"
 #include "symmparser.h"
 #include "atomref.h"
-#undef AddAtom
+#include "asymmunit.h"
+#ifdef AdAtom
+  #undef AddAtom
+#endif
+
 BeginXlibNamespace()
 
   typedef TStrPObjList<olxstr,TCAtom*> TInsList;
 
 class TIns: public TBasicCFile  {
+  // parsing context state and varables
+  struct ParseContext {
+    TStrList Symm;
+    TStrPObjList<olxstr, TBasicAtomInfo*>  BasicAtoms;  // SFAC container
+    bool CellFound;
+    int Afix, Part;
+    double PartOccu;
+    TAsymmUnit::TResidue* Resi;
+    ParseContext()  {
+      CellFound = false;
+      PartOccu = 0;
+      Afix = Part = 0;
+      Resi = NULL;
+    }
+  };
 private:
   TStrPObjList< olxstr, TInsList* > Ins;  // instructions
   TStrList Skipped;
   olxstr Unit, Sfac;
   void HypernateIns(const olxstr &InsName, const olxstr &Ins, TStrList &Res);
   void HypernateIns(const olxstr &Ins, TStrList &Res);
-  double   Error;    // mean error of cell parameters. Can be used for estimation of other lengths
+  double   Error, R1;    // mean error of cell parameters. Can be used for estimation of other lengths
   bool     LoadQPeaks;// true if Q-peaks should be loaded
   evecd FVars; // contains variables, used for calculation right UNIT
   evecd FWght;    // could be up to six parameters
@@ -39,11 +58,12 @@ private:
   double   Radiation;
 protected:
   void _SaveSfac(TStrList& list, int pos);
-  TCAtom* _ParseAtom(TStrList& toks, double partOccu, TAsymmUnit::TResidue* resi, TCAtom* atom = NULL);
+  TCAtom* _ParseAtom(TStrList& toks, ParseContext& cx, TCAtom* atom = NULL);
   olxstr _AtomToString(TCAtom* CA, int SfacIndex);
   olxstr _CellToString();
   olxstr _ZerrToString();
   void _SaveFVar(TStrList& SL);
+  void _SaveSymm(TStrList& SL);
   void _SaveHklSrc(TStrList& SL);
   void _SaveRefMethod(TStrList& SL);
   // initialises the unparsed instruction list
@@ -86,6 +106,8 @@ public:
   inline evecd& Wght1()  {  return FWght1;  }
   inline evecd& Vars()   {  return FVars;  }
   inline olxstr& Hklf()  { return HKLF;  }
+  // this is -1 if not in the file like REM R1 = ...
+  inline double GetR1() const {  return R1;  }
 
   /* olex does not use this - they are just for a record, however they can be changed
     using fixunit command to take the actual values from the asymmetric unit
@@ -144,7 +166,7 @@ public:
               olxstr("A number is expected, \'") << Tmp << "\' is provided");
             Toks.Delete(0);
             Toks.Delete(0);
-            symmd* SymM = new symmd;
+            smatd* SymM = new smatd;
             TSymmParser::SymmToMatrix(Toks.Text(EmptyString), *SymM);
             au->AddUsedSymm(*SymM);
             au->AddUsedSymm( *SymM );
@@ -364,16 +386,8 @@ public:
     return AddIns(lst, CheckUniq);
   }
 protected:
-  struct ParseResults {
-    TStrList Symm;
-    TStrPObjList<olxstr, TBasicAtomInfo*>  BasicAtoms;  // SFAC container
-    bool CellFound;
-    ParseResults()  {
-      CellFound = false;
-    }
-  };
   // index will be automatically imcremented if more then one line is parsed
-  bool ParseIns(const TStrList& ins, const TStrList& toks, ParseResults& res, int& index);
+  bool ParseIns(const TStrList& ins, const TStrList& toks, ParseContext& cx, int& index);
 public:
   // spits out all instructions, including CELL, FVAR, etc
   void SaveHeader(TStrList& out, int* SfacIndex=NULL, int* UnitIndex=NULL);

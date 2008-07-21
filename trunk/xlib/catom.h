@@ -165,14 +165,14 @@ public:
 //..............................................................................
 class TGroupCAtom  {
   TCAtom* Atom;
-  const symmd* Matrix;
+  const smatd* Matrix;
   olxstr Name;
 public:
   TGroupCAtom() : Atom(NULL), Matrix(NULL)  {  }
-  TGroupCAtom(TCAtom* a, const symmd* m=NULL) : Atom(a), Matrix(m)  { }
-  TGroupCAtom(const olxstr& name, TCAtom* a, const symmd* m=NULL) : Name(name), Atom(a), Matrix(m)  { }
+  TGroupCAtom(TCAtom* a, const smatd* m=NULL) : Atom(a), Matrix(m)  { }
+  TGroupCAtom(const olxstr& name, TCAtom* a, const smatd* m=NULL) : Name(name), Atom(a), Matrix(m)  { }
   DefPropP(TCAtom*, Atom)
-  inline const symmd* GetMatrix() const {  return Matrix;  }
+  inline const smatd* GetMatrix() const {  return Matrix;  }
   DefPropC(olxstr, Name)
   olxstr GetFullLabel() const;
 };

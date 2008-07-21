@@ -26,15 +26,15 @@ bool NormalisevectorView(vec3d& v ) {
   return res;
 }
 //..............................................................................
-void ElimateSGFromList(TPtrList<TSpaceGroup>& sglist, symmd& symm, vec3d_list& trans, bool present)  {
-  symmd_list sgm;
+void ElimateSGFromList(TPtrList<TSpaceGroup>& sglist, smatd& symm, vec3d_list& trans, bool present)  {
+  smatd_list sgm;
   vec3d diff, nm;
   for( int i=0; i < sglist.Count(); i++ )  {
     bool found = false;
     sgm.Clear();
     sglist[i]->GetMatrices(sgm, mattAll);
     for( int j=0; j < sgm.Count(); j++ )  {
-      symmd& m = sgm[j];
+      smatd& m = sgm[j];
       if( m.r == symm.r )  {
         if( trans.Count() == 0 )  {  found = true;  break;  }
         for( int k=0; k < trans.Count(); k++ )  {
@@ -93,11 +93,11 @@ void XLibMacros::macTestSymm(TStrObjList &Cmds, const TParamList &Options, TMacr
       sglist.Add( &TSymmLib::GetInstance()->GetGroup(i) );
   }
 
-  symmd_list presentSymm;
-  TTOStringList<olxstr, symmd, TObjectStrListData<olxstr,symmd> > toTest;
-  symmd a, r3, r4, r6, res;
-  symmd nxx, xnx, xxn;
-  symmd xr2x, r2xx, xxr2;
+  smatd_list presentSymm;
+  TTOStringList<olxstr, smatd, TObjectStrListData<olxstr,smatd> > toTest;
+  smatd a, r3, r4, r6, res;
+  smatd nxx, xnx, xxn;
+  smatd xr2x, r2xx, xxr2;
   vec3d trans, itrans;
   vec3d_list translations;
   a.r.I();

@@ -19,7 +19,7 @@
 // TXGrowLine function bodies
 //----------------------------------------------------------------------------//
 TXGrowLine::TXGrowLine(const olxstr& collectionName, TSAtom *A, TCAtom* CA,
-                         const symmd& transform, TGlRender *Render) :
+                         const smatd& transform, TGlRender *Render) :
   TXBond(collectionName, *(TSBond*)NULL, Render)
 {
   AGDrawObject::Groupable(false);

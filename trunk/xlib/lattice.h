@@ -25,7 +25,7 @@ private:
   // generates matrices in volume {VFrom, VTo} and leaves only matrices, which
   //transform the center of gravity of the asymmertic unit within {MFrom, MTo} volume
   // useually VFrom = Round(MFrom), VTo = Round(VFrom)
-  symmd_plist Matrices;    // list of all matrices
+  smatd_plist Matrices;    // list of all matrices
   TSAtomPList  Atoms;      // list of all atoms
   TSBondPList  Bonds;      // list of all nework nodes; some of them are equal to Atoms
   TNetPList    Fragments;
@@ -34,7 +34,7 @@ protected:
   bool Generated;
   TAtomsInfo* AtomsInfo;  // a pointer only
   void Generate(TCAtomPList* Template, bool ClearCont, bool IncludeQ);  // generates atoms using current matrices list
-  void GenerateAtoms( const TSAtomPList& atoms, TSAtomPList& result, const symmd_plist& matrices);
+  void GenerateAtoms( const TSAtomPList& atoms, TSAtomPList& result, const smatd_plist& matrices);
   void ClearFragments();
   void ClearAtoms();
   void ClearMatrices();
@@ -76,16 +76,16 @@ public:
   inline bool IsGenerated() const  {  return Generated;  }
 
   // generates matrices so that the center of asymmetric unit is inisde the specified volume
-  int GenerateMatrices(symmd_plist& Result, const vec3d& VFrom, const vec3d& VTo,
+  int GenerateMatrices(smatd_plist& Result, const vec3d& VFrom, const vec3d& VTo,
         const vec3d& MFrom, const vec3d& MTo);
 
   void GrowFragments(bool GrowShells, TCAtomPList* Template);
   void GrowAtoms(const TSAtomPList& Atoms, bool GrowShells, TCAtomPList* Template);
-  void GrowAtoms(const TSAtomPList& Atoms, const symmd_list& matrices);
+  void GrowAtoms(const TSAtomPList& Atoms, const smatd_list& matrices);
   void GrowAtom(TSAtom& A, bool GrowShells, TCAtomPList* Template);
   /* grow a fragment using particular matrix */
-  void GrowAtom(int FragId, const symmd& transform);
-  void Grow(const symmd& transform);
+  void GrowAtom(int FragId, const smatd& transform);
+  void Grow(const smatd& transform);
   void GenerateWholeContent(TCAtomPList* Template); // generates content using current matrices
   bool IsExpandable(TSAtom& A) const;
 
@@ -93,7 +93,7 @@ public:
   inline TNetwork& GetFragment(int i)       const {  return *Fragments[i];  }
 
   inline int MatrixCount()                  const {  return Matrices.Count();  }
-  const symmd& GetMatrix(int i)             const {  return *Matrices[i];  }
+  const smatd& GetMatrix(int i)             const {  return *Matrices[i];  }
 
   inline int AtomCount()                    const {  return Atoms.Count();  }
   inline TSAtom& GetAtom(int i)             const {  return *Atoms[i];  }
@@ -125,7 +125,7 @@ public:
   void MoveToCenterG();
   void Compaq();
   void CompaqAll();
-  void TransformFragments(const TSAtomPList& fragAtoms, const symmd& transform);
+  void TransformFragments(const TSAtomPList& fragAtoms, const smatd& transform);
 
   // beware - only pointers are compared
   inline bool operator == (const TLattice& l)  const  {  return this == &l;  }

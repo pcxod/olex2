@@ -20,16 +20,24 @@ class TSimpleRestraint : public IEObject  {
   bool AllNonHAtoms;
   short ListType;
   TCAtomGroup InvolvedAtoms;
-  bool AtomsEqual(TCAtom* a1, const symmd* m1, TCAtom* a2, const symmd* m2);
+  inline bool AtomsEqual(TCAtom* a1, const smatd* m1, TCAtom* a2, const smatd* m2)  {
+    if( a1 == a2 )  {
+      if( (m1 == NULL && m2 == NULL) || ((m1 != NULL && m2 != NULL)  &&
+        (*m1 == *m2) ) )  {
+          return true;
+      }
+    }
+    return false;
+  }
   class TSRestraintList* Parent;
 public:
   TSimpleRestraint(TSRestraintList* parent, const short listType);
 
   virtual ~TSimpleRestraint();
   void AddAtoms(const TCAtomGroup& atoms);
-  void AddAtom(TCAtom& aa, const symmd* ma);
-  void AddAtomPair(TCAtom& aa, const symmd* ma,
-                   TCAtom& ab, const symmd* mb);
+  void AddAtom(TCAtom& aa, const smatd* ma);
+  void AddAtomPair(TCAtom& aa, const smatd* ma,
+                   TCAtom& ab, const smatd* mb);
 
   inline TSRestraintList* GetParent()  {  return Parent;  }
 
@@ -38,7 +46,7 @@ public:
   void Validate();
   void Clear();
 
-  void OnCAtomCrdChange( TCAtom* ca, const symmd& matr );
+  void OnCAtomCrdChange( TCAtom* ca, const smatd& matr );
 
   // removes dublicated information depending on the list type
   void Substruct( TSimpleRestraint& sr);
@@ -73,7 +81,7 @@ public:
   void Release(TSimpleRestraint& sr);
   inline void Restore(TSimpleRestraint& sr)  {  Restraints.Add(sr);  }
 
-  void OnCAtomCrdChange( TCAtom* ca, const symmd& matr );
+  void OnCAtomCrdChange( TCAtom* ca, const smatd& matr );
   
   void Assign(TAsymmUnit& au, const TSRestraintList& rl);
   inline void Clear()  {  Restraints.Clear();  }
@@ -81,6 +89,23 @@ public:
   inline TSimpleRestraint& operator [] (int i){  return Restraints[i];  }
   inline short GetRestraintListType()  const  {  return RestraintListType;  }
 };
+
+//
+//class TSameGroups  {
+//  TTypeList< TArrayList< AnAssociation2<TCAtom*, smatd const*> > >  atoms;
+//};
+//
+///* AFIX m=5 (d=1.42, pentagon), 
+//  6(d=1.39, hexagon),
+//  7(similar to 6),
+//  10 (Cp*, 5 ring atoms (d=1.42), follwed by 5 Me (d=1.63) in cyclic order)
+//  11 - ntaphtalene group (d=1.39), figure 0f 8 starting from alpha C
+//  */
+//class TRidgidGroup  {
+//  TGroupCAtom Pivot;
+//  TCAtomGroup DependentAtoms;
+//  short ShelxId;
+//};
 
 typedef TTypeList<TSimpleRestraint> TSimpleRestraintList;
 typedef TPtrList<TSimpleRestraint> TSimpleRestraintPList;

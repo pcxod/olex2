@@ -886,20 +886,20 @@ void TGXApp::ChangeAtomType( TXAtom *A, const olxstr &Element)  {
 }
 //..............................................................................
 void TGXApp::InvertFragments(const TXAtomPList& NetworkAtoms)  {
-  symmd m;
+  smatd m;
   m.r.I();
   m.r *= -1;
   TransformFragments(NetworkAtoms, m);
 }
 //..............................................................................
 void TGXApp::MoveFragments(const TXAtomPList& NetworkAtoms, const vec3d& v)  {
-  symmd m;
+  smatd m;
   m.r.I();
   m.t = v;
   TransformFragments(NetworkAtoms, m);
 }
 //..............................................................................
-void TGXApp::TransformFragments(const TXAtomPList& NetworkAtoms, const symmd& m)  {
+void TGXApp::TransformFragments(const TXAtomPList& NetworkAtoms, const smatd& m)  {
   TSAtomPList SAtoms;
   TListCaster::POP(NetworkAtoms, SAtoms);
   XFile().GetLattice().TransformFragments(SAtoms, m);
@@ -1125,7 +1125,7 @@ void TGXApp::GrowAtom(TXAtom *XA, bool Shell, TCAtomPList* Template)  {
   FXFile->GetLattice().GrowAtom(XA->Atom(), Shell, Template);
 }
 //..............................................................................
-void TGXApp::Grow(const TXAtomPList& atoms, const symmd_list& matrices)  {
+void TGXApp::Grow(const TXAtomPList& atoms, const smatd_list& matrices)  {
   TSAtomPList satoms;
   TListCaster::POP(atoms, satoms);
   FXFile->GetLattice().GrowAtoms( satoms, matrices);
@@ -2821,8 +2821,8 @@ void TGXApp::SetPackMode(short v, const olxstr& atoms)  {
 void TGXApp::CreateXGrowPoints()  {
   if( XGrowPoints.Count() != 0 )  return;
   // remove the identity matrix 
-  symmd_plist matrices;
-  symmd I;
+  smatd_plist matrices;
+  smatd I;
   I.r.I();
   UsedTransforms.AddCCopy(I);
 
@@ -2919,7 +2919,7 @@ void TGXApp::CreateXGrowLines()  {
     for( int j=0; j < AttachedAtoms.Count(); j++ )  {
       TCAtom *aa = AttachedAtoms[j];
       cc = aa->ccrd();
-      symmd_list *transforms;
+      smatd_list *transforms;
       if( FGrowMode & gmSameAtoms )  {
 //        transforms = FXFile->GetLattice().GetUnitCell()->Getclosest(A->ccrd(), cc, false );
         transforms = FXFile->GetLattice().GetUnitCell().GetInRangeEx(A->ccrd(), cc,
@@ -2940,7 +2940,7 @@ void TGXApp::CreateXGrowLines()  {
       // remove identity transforms
       TransformedCrds.Clear();
       for( int k=0; k < transforms->Count(); k++ )  {
-        symmd& transform = transforms->Item(k);
+        smatd& transform = transforms->Item(k);
         cc *= transform.r;
         cc += transform.t;
         XFile().GetAsymmUnit().CellToCartesian(cc);
@@ -2962,7 +2962,7 @@ void TGXApp::CreateXGrowLines()  {
         }
       }
       for( int k=0; k < transforms->Count(); k++ )  {
-        symmd& transform = transforms->Item(k);
+        smatd& transform = transforms->Item(k);
         TXGrowLine& gl = XGrowLines.AddNew(EmptyString, A, aa, transform, FGlRender );
 
         if( (A->GetAtomInfo() == iQPeakIndex || aa->GetAtomInfo() == iQPeakIndex ) && !QPeakBondsVisible() )

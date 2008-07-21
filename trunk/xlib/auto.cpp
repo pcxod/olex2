@@ -125,7 +125,7 @@ TAutoDBNode::TAutoDBNode(TSAtom& sa, TTypeList<AnAssociation2<TCAtom*, vec3d> >*
     if( sa.CAtom().GetAttachedAtom(i).GetAtomInfo() == iHydrogenIndex ||
         sa.CAtom().GetAttachedAtom(i).GetAtomInfo() == iDeuteriumIndex )  continue;
     a = sa.CAtom().GetAttachedAtom(i).ccrd();
-    symmd_list* transforms = latt.GetUnitCell().GetInRange(sa.ccrd(), a,
+    smatd_list* transforms = latt.GetUnitCell().GetInRange(sa.ccrd(), a,
                                sa.GetAtomInfo().GetRad1() +
                                sa.CAtom().GetAttachedAtom(i).GetAtomInfo().GetRad1() +
                                latt.GetDelta(),
@@ -136,7 +136,7 @@ TAutoDBNode::TAutoDBNode(TSAtom& sa, TTypeList<AnAssociation2<TCAtom*, vec3d> >*
     }
     TransformedCrds.Clear();
     for( int j=0; j < transforms->Count(); j++ )  {
-      symmd& transform = transforms->Item(j);
+      smatd& transform = transforms->Item(j);
       a = transform * a;
       latt.GetAsymmUnit().CellToCartesian(a);
       if( a.QDistanceTo( sa.crd() ) > 0.01 )  {
@@ -195,6 +195,10 @@ double TAutoDBNode::CalcAngle(int i, int j)  const {
            b(AttachedNodes[j].GetCenter());
   a -= Center;
   b -= Center;
+  if( a.QLength()*b.QLength() == 0 )  {
+    TBasicApp::GetLog().Error( olxstr("Overlapping atoms enountered") );
+    return 0;
+  }
   double ca = a.CAngle(b);
   if( ca < -1 )  ca = -1;
   if( ca > 1 )  ca = 1;
@@ -1327,7 +1331,7 @@ void TAutoDB::ValidateResult(const olxstr& fileName, const TLattice& latt, TStrL
   TTypeList< TSymmTestData > vlist;
   latt.GetUnitCell().GenereteAtomCoordinates(alist, false);
   XFile.GetUnitCell().GenereteAtomCoordinates(blist, false);
-  symmd mI;
+  smatd mI;
   mI.r.I();
   TSymmTest::TestDependency(alist, blist, vlist, mI, 0.01);
   vec3d thisCenter, atomCenter;

@@ -11,11 +11,11 @@ BeginGxlNamespace()
 class TXGrowLine : public TXBond  {
   TSAtom *FSAtom;
   TCAtom *FCAtom;
-  symmd Transform;
+  smatd Transform;
   vec3d  FEdge, FBase;
 public:
   TXGrowLine(const olxstr& collectionName, TSAtom *A,
-               TCAtom* CA, const symmd& transform, TGlRender *Render);
+               TCAtom* CA, const smatd& transform, TGlRender *Render);
   void Create(const olxstr& cName = EmptyString);
   virtual ~TXGrowLine();
 
@@ -33,7 +33,7 @@ public:
 
   TSAtom *SAtom()      const {  return FSAtom;  }
   TCAtom *CAtom()      const {  return FCAtom;  }
-  const symmd& GetTransform()  const {  return Transform;  }
+  const smatd& GetTransform()  const {  return Transform;  }
 };
 
 EndGxlNamespace()

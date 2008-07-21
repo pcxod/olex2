@@ -190,7 +190,7 @@ public:
     char Close,
     olxstr (*ResolveExternal)(const olxstr& valueName) = NULL,
     bool DoubleTheta = true);
-  bool CreateTable(TDataItem *TableDefinitions, TTTable<TStrList>& Table, symmd_list& SymmList);
+  bool CreateTable(TDataItem *TableDefinitions, TTTable<TStrList>& Table, smatd_list& SymmList);
   void Group();
   const TCifDataManager& GetDataManager()  const  {  return DataManager;  }
 

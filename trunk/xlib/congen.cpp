@@ -171,19 +171,19 @@ void AConstraintGenerator::GenerateAtom( TCAtomPList& created, TAtomEnvi& envi,
           }
         }
         if( AnglesEqual )  {  
-          Vec1 = (envi.GetCrd(0)-envi.GetBase().crd());
-          Vec1.Normalise();
-          Vec2 = (envi.GetCrd(1)-envi.GetBase().crd());
-          Vec2.Normalise();
-          Vec3 = (envi.GetCrd(2)-envi.GetBase().crd());
-          Vec3.Normalise();
+          Vec1 = (envi.GetCrd(0)-envi.GetBase().crd()).Normalise();
+          Vec2 = (envi.GetCrd(1)-envi.GetBase().crd()).Normalise();
+          Vec3 = (envi.GetCrd(2)-envi.GetBase().crd()).Normalise();
+          crds.AddNew( (Vec1+Vec2+Vec3).Normalise() );
           Vec1 -= Vec2;
           Vec3 -= Vec2;
           Vec3 = Vec1.XProdVec(Vec3);
           Vec3.Normalise();
-          Vec3 *= 0.96;
-          crds.AddNew(Vec3);
-          crds[0] += envi.GetBase().crd();
+          if( crds[0].CAngle(Vec3) < 0 )
+            Vec3 *= 0.96;
+          else
+            Vec3 *= -0.96;
+          crds[0] = (Vec3 += envi.GetBase().crd());
         }
       }
       if( !AnglesEqual )  {
@@ -450,11 +450,7 @@ void AConstraintGenerator::GenerateAtom( TCAtomPList& created, TAtomEnvi& envi,
       if( envi.Count() == 4 ||  envi.Count() == 5 )  {
         bool create = true;
         for( int i=0; i < envi.Count(); i++ )  {
-          Vec2 = envi.GetCrd(i);
-          Vec2 -= envi.GetBase().crd();
-          Vec2.Normalise();
-          Vec1 += envi.GetCrd(i);
-          Vec1 += Vec2;
+          Vec1 += (envi.GetCrd(i)-envi.GetBase().crd()).Normalise();
 //          if( !(envi.GetBAI(i).GetIndex() == iCarbonIndex ||
 //                envi.GetBAI(i).GetIndex() == iBoronIndex) )  {
 //            create = false;

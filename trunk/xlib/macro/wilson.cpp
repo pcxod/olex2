@@ -75,7 +75,7 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
     return;
   }
 
-  symmd_list ml;
+  smatd_list ml;
   sg->GetMatrices(ml, mattAll^mattIdentity);
 //  if( !sg->IsCentrosymmetric() )  // merge friedel pairs
 //  {

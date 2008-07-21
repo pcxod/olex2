@@ -278,6 +278,10 @@ void TMainForm::funIns(const TStrObjList& Params, TMacroError &E)  {
     E.SetRetVal( I->GetPlanV().Count() == 0 ? NAString : olxstr(I->GetPlan()) );
     return;
   }
+  if( Params[0].Comparei("R1") == 0)  {
+    E.SetRetVal( I->GetR1() < 0 ? NAString : olxstr(I->GetR1()) );
+    return;
+  }
   if( !I->InsExists(Params[0]) )  {
     E.SetRetVal( NAString );
     return;
@@ -3896,8 +3900,7 @@ void TMainForm::macMode(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   ChangingMode = false;
 }
 //..............................................................................
-void TMainForm::macReset(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)
-{
+void TMainForm::macReset(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
   if( !(FXApp->CheckFileType<TIns>() ||
         FXApp->CheckFileType<TP4PFile>() ||
         FXApp->CheckFileType<TCRSFile>()  )  )  return;
@@ -3927,7 +3930,7 @@ void TMainForm::macReset(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     }
     Ins->Adopt( &FXApp->XFile() );
   }
-  if( content.Length() )  Ins->SetSfacUnit( content );
+  if( !content.IsEmpty() )  Ins->SetSfacUnit( content );
   if( Ins->GetSfac().Length() == 0)  {
     content = "getuserinput(1, \'Please, enter structure composition\', \'C1\')";
     ProcessMacroFunc(content);
@@ -6130,7 +6133,7 @@ void TMainForm::macSGInfo(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     return;
   }
   TPtrList<TSpaceGroup> AllGroups;
-  symmd_list SGMatrices;
+  smatd_list SGMatrices;
 
   TBasicApp::GetLog() << ( sg->IsCentrosymmetric() ? "Centrosymmetric" : "Non centrocymmetric") << '\n';
   TBasicApp::GetLog() << ( olxstr("Hall symbol: ") << sg->GetHallSymbol() << '\n');
@@ -6501,12 +6504,12 @@ void TMainForm::macNextSolution(TStrObjList &Cmds, const TParamList &Options, TM
 //..............................................................................
 //..............................................................................
 double MatchAtomPairsQT(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atoms,
-                        symmd& res, bool InversionPossible, bool& InversionUsed)  {
+                        smatd& res, bool InversionPossible, bool& InversionUsed)  {
   if( atoms.Count() < 4 )  return -1;
   double rms = TNetwork::FindAlignmentMatrix(atoms, res, false), rms1;
   InversionUsed = false;
   if( InversionPossible )  {
-    symmd lr;
+    smatd lr;
     rms1 = TNetwork::FindAlignmentMatrix(atoms, lr, true);
     if( (rms1 < rms && rms1 >= 0) || (rms < 0 && rms1 >= 0) )  {
       res = lr;
@@ -6523,7 +6526,7 @@ double MatchAtomPairsQT(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atom
   return rms;
 }
 //..............................................................................
-//void MatchAtomPairsULS(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atoms, symmd& res)  {
+//void MatchAtomPairsULS(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atoms, smatd& res)  {
 //  TMatrixD gs(4,4), lm(atoms.Count(), 4), lmt(4, atoms.Count());
 //  TVectorD gr(4), sol(4), b( atoms.Count() );
 //  res.Resize(3,4);
@@ -6615,7 +6618,7 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options, TMacroErr
           for(int i=0; i < res.Count(); i++ )
             netB.Node( res[i].GetB()).SetLabel( netA.Node( res[i].GetA()).GetLabel() + suffix );
         }
-        symmd S;
+        smatd S;
         double rms = MatchAtomPairsQT( satomp, S, false, Inverted);
         TBasicApp::GetLog() << ("Transformation matrix:\n");
         for( int i=0; i < 3; i++ )
@@ -6677,7 +6680,7 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options, TMacroErr
           atomsToTransform.Add( &atoms[i]->Atom() );
         }
       }
-      symmd S;
+      smatd S;
       double rms = MatchAtomPairsQT( satomp, S, false, Inverted);
       TNetwork::DoAlignAtoms(satomp, atomsToTransform, S, Inverted);
       FXApp->UpdateBonds();
@@ -6692,7 +6695,7 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     TTypeList< AnAssociation2<int, int> > res;
     TTypeList< AnAssociation2<TSAtom*,TSAtom*> > satomp;
     TSAtomPList atomsToTransform;
-    symmd S;
+    smatd S;
     for( int i=0; i < nets.Count(); i++ )  {
       if( i > 0 )  TryInvert = false;
       for( int j=i+1; j < nets.Count(); j++ )  {
@@ -7236,6 +7239,15 @@ public:
 };
 #endif
 void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+  olxstr fn( FXApp->XFile().GetFileName() );
+  for( int i=0; i < 250; i++ )  {
+    ProcessXPMacro(olxstr("@reap '") << fn << '\'', Error);
+    Dispatch(ID_TIMER, msiEnter, (AEventsDispatcher*)this, NULL);
+    FHtml->Update();
+    FXApp->Draw();
+    wxTheApp->Dispatch();
+  }
+  return;
   if( !Cmds.IsEmpty() )  {
     TAtomReference ar(Cmds.Text(' '));
     TCAtomGroup ag;
@@ -7742,8 +7754,8 @@ void TMainForm::macLstSymm(TStrObjList &Cmds, const TParamList &Options, TMacroE
 //..............................................................................
 void TMainForm::macSgen(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   TXAtomPList Atoms;
-  symmd_list symm;
-  symmd matr;
+  smatd_list symm;
+  smatd matr;
   for( int i=0; i < Cmds.Count(); i++ )  {
     bool validSymm = true;
     try  {  TSymmParser::SymmToMatrix( Cmds[i], matr );  }
@@ -7872,7 +7884,7 @@ void TMainForm::macViewLattice(TStrObjList &Cmds, const TParamList &Options, TMa
   return;
 }
 //..............................................................................
-void main_GenerateCrd(const vec3d_list& p, const symmd_list& sm, vec3d_list& res) {
+void main_GenerateCrd(const vec3d_list& p, const smatd_list& sm, vec3d_list& res) {
   vec3d v, t;
   for( int i=0; i < sm.Count(); i++ )  {
     v = sm[i] * p[0];
@@ -7985,7 +7997,7 @@ void TMainForm::macAddObject(TStrObjList &Cmds, const TParamList &Options, TMacr
       Error.ProcessingError(__OlxSrcInfo, "invalid unit cell reference" );
       return;
     }
-    symmd_list ml;
+    smatd_list ml;
     sg->GetMatrices( ml, mattAll );
     vec3d_list p, allPoints;
     vec3d v;
@@ -8301,7 +8313,7 @@ void TMainForm::macCalcPatt(TStrObjList &Cmds, const TParamList &Options, TMacro
     E.ProcessingError(__OlxSrcInfo, "could not locate sapce group");
     return;
   }
-  symmd_list ml;
+  smatd_list ml;
   sg->GetMatrices(ml, mattAll);
   olxstr hklFileName = FXApp->LocateHklFile();
   if( !TEFile::FileExists(hklFileName) )  {
@@ -8505,7 +8517,7 @@ void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMa
     E.ProcessingError(__OlxSrcInfo, "could not locate sapce group");
     return;
   }
-  symmd_list ml;
+  smatd_list ml;
   sg->GetMatrices(ml, mattAll);
   bool diff_map = Options.Contains("diff"); // Fo-Fc
   bool tomc_map = Options.Contains("tomc"); // 2Fo-Fc
@@ -9028,7 +9040,7 @@ void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options, TMa
   Py_InitModule4( "TestClass", Test_Methods, "doc", tc, 0 );
 }
 //..............................................................................
-double Main_FindClosestDistance(const symmd_list& ml, vec3d& o_from, const TCAtom& a_to) {
+double Main_FindClosestDistance(const smatd_list& ml, vec3d& o_from, const TCAtom& a_to) {
   vec3d V1, V2, from(o_from), to(a_to.ccrd());
   V2 = from-to;
   a_to.GetParent()->CellToCartesian(V2);
@@ -9056,7 +9068,7 @@ class TestDistanceAnalysisIteration {
   TCif cif;
   const TStrList& files;
   TAsymmUnit& au;
-  symmd_list ml;
+  smatd_list ml;
 public:
   TPSTypeList<int, int> XYZ, XY, XZ, YZ, XX, YY, ZZ;  // length, occurence 
 
@@ -9158,7 +9170,7 @@ void TMainForm::macTestStat(TStrObjList &Cmds, const TParamList &Options, TMacro
   TPSTypeList<TBasicAtomInfo*, double*> atomTypes;
   vec3d v1;
   double tmp_data[601];
-  symmd_list ml;
+  smatd_list ml;
   for( int i=0; i < files.Count(); i++ )  {
     TBasicApp::GetLog() << files[i] << '\n';  
     try { cif.LoadFromFile(files[i]);  }

@@ -117,11 +117,11 @@ int TLattice::GenerateMatrices(const vec3d& VFrom, const vec3d& VTo,
   return MatrixCount();
 }
 //..............................................................................
-int TLattice::GenerateMatrices(symmd_plist& Result,
+int TLattice::GenerateMatrices(smatd_plist& Result,
      const vec3d& VFrom, const vec3d& VTo,
      const vec3d& MFrom, const vec3d& MTo)  {
   olxstr Tmp;
-  symmd *M, *M1;
+  smatd *M, *M1;
   int mstart = Result.Count();
   vec3d Center, C;
   Center = GetAsymmUnit().GetOCenter(true, false);
@@ -135,7 +135,7 @@ int TLattice::GenerateMatrices(symmd_plist& Result,
     for( int j=(int)VFrom[0]; j <= (int)VTo[0]; j++ )
       for( int k=(int)VFrom[1]; k <= (int)VTo[1]; k++ )
       for( int l=(int)VFrom[2]; l <= (int)VTo[2]; l++ )  {
-        M = new symmd(GetUnitCell().GetMatrix(i));
+        M = new smatd(GetUnitCell().GetMatrix(i));
         M->SetTag(i);  // set Tag to identify the matrix (and ellipsoids) in the UnitCell
         M->t[0] += j;
         M->t[1] += k;
@@ -189,7 +189,7 @@ void TLattice::InitBody()  {
   TNetwork *Frag;
   int conIndex;
 
-  symmd *M = new symmd; // create identity matrix
+  smatd *M = new smatd; // create identity matrix
   *M = GetUnitCell().GetMatrix(0);
   M->SetTag(0);
   Matrices.Add( M );
@@ -296,12 +296,12 @@ void  TLattice::Uniq(bool remEqv)  {
   OnStructureUniq->Exit(this);
 }
 //..............................................................................
-void TLattice::GenerateAtoms(const TSAtomPList& atoms, TSAtomPList& result, const symmd_plist& matrices)  {
+void TLattice::GenerateAtoms(const TSAtomPList& atoms, TSAtomPList& result, const smatd_plist& matrices)  {
   if( !atoms.Count() )  return;
 
 //  result->SetCount(mc*ac);
   for(int i=0; i < matrices.Count(); i++ )  {
-    symmd* M = matrices[i];
+    smatd* M = matrices[i];
     for(int j=0; j < atoms.Count(); j++ )  {
       if( atoms[j]->IsDeleted() )  continue;
       TSAtom* A = new TSAtom( Network );
@@ -392,7 +392,7 @@ void TLattice::DoGrow(const TSAtomPList& atoms, bool GrowShell, TCAtomPList* Tem
   int currentCount = MatrixCount();
   // the fragmens to grow by a particular matrix
   TEList Fragments2Grow;
-  symmd_list *BindingMatrices;
+  smatd_list *BindingMatrices;
 
   TTypeList<int> *ToGrow;
   OnStructureGrow->Enter(this);
@@ -406,7 +406,7 @@ void TLattice::DoGrow(const TSAtomPList& atoms, bool GrowShell, TCAtomPList* Tem
       BindingMatrices = GetUnitCell().GetBinding(CA, CA1, SA->ccrd(), V, false, false);
       if( BindingMatrices->Count() )  {
         for( int k=0; k < BindingMatrices->Count(); k++ )  {
-          symmd& M = BindingMatrices->Item(k);
+          smatd& M = BindingMatrices->Item(k);
           found = false;
           for( l=0; l < MatrixCount(); l++ )  {
             if( *Matrices[l] == M )  {
@@ -414,7 +414,7 @@ void TLattice::DoGrow(const TSAtomPList& atoms, bool GrowShell, TCAtomPList* Tem
             }
           }
           if( !found )  {
-            Matrices.Add( new symmd(M) );
+            Matrices.Add( new smatd(M) );
             ToGrow = new TTypeList<int>;
             ToGrow->AddACopy( CA1.GetFragmentId() );
             Fragments2Grow.Add(ToGrow);
@@ -437,7 +437,7 @@ void TLattice::DoGrow(const TSAtomPList& atoms, bool GrowShell, TCAtomPList* Tem
     }
   }
   for(int i = currentCount; i < MatrixCount(); i++ )  {
-    symmd* M = Matrices[i];
+    smatd* M = Matrices[i];
     ToGrow = (TTypeList<int>*)Fragments2Grow[i-currentCount];
     for(int j=0; j < GetAsymmUnit().AtomCount(); j++ )  {
       for(int k=0; k < ToGrow->Count(); k++ )  {
@@ -496,8 +496,8 @@ void TLattice::GrowAtom(TSAtom& Atom, bool GrowShells, TCAtomPList* Template)  {
   DoGrow(atoms, GrowShells, Template);
 }
 //..............................................................................
-void TLattice::GrowAtom(int FragId, const symmd& transform)  {
-  symmd *M;
+void TLattice::GrowAtom(int FragId, const smatd& transform)  {
+  smatd *M;
   // check if the matix is unique
   bool found = false;
   for( int i=0; i < Matrices.Count(); i++ )  {
@@ -508,7 +508,7 @@ void TLattice::GrowAtom(int FragId, const symmd& transform)  {
     }
   }
   if( !found )  {
-    M = new symmd( transform );
+    M = new smatd( transform );
     M->SetTag( transform.GetTag() );
     Matrices.Add( M );
   }
@@ -533,9 +533,9 @@ void TLattice::GrowAtom(int FragId, const symmd& transform)  {
   OnStructureGrow->Exit(this);
 }
 //..............................................................................
-void TLattice::GrowAtoms(const TSAtomPList& atoms, const symmd_list& matrices)  {
-  symmd *M;
-  symmd_plist addedMatrices;
+void TLattice::GrowAtoms(const TSAtomPList& atoms, const smatd_list& matrices)  {
+  smatd *M;
+  smatd_plist addedMatrices;
   // check if the matices is unique
   for( int i=0; i < matrices.Count(); i++ )  {
     bool found = false;
@@ -546,7 +546,7 @@ void TLattice::GrowAtoms(const TSAtomPList& atoms, const symmd_list& matrices)  
       }
     }
     if( !found )  {
-      M = new symmd( matrices[i] );
+      M = new smatd( matrices[i] );
       // we do not know abou the origin of this matrix ...
       M->SetTag( 0 );
       Matrices.Add( M );
@@ -574,8 +574,8 @@ void TLattice::GrowAtoms(const TSAtomPList& atoms, const symmd_list& matrices)  
   OnStructureGrow->Exit(this);
 }
 //..............................................................................
-void TLattice::Grow(const symmd& transform)  {
-  symmd *M;
+void TLattice::Grow(const smatd& transform)  {
+  smatd *M;
   // check if the matix is unique
   bool found = false;
   for( int i=0; i < Matrices.Count(); i++ )  {
@@ -586,7 +586,7 @@ void TLattice::Grow(const symmd& transform)  {
     }
   }
   if( !found )  {
-    M = new symmd( transform );
+    M = new smatd( transform );
     M->SetTag( transform.GetTag() );
     Matrices.Add( M );
   }
@@ -801,7 +801,7 @@ void TLattice::MoveFragment(const vec3d& to, TSAtom& fragAtom)  {
 
   vec3d from;
   from = fragAtom.ccrd();
-  symmd* m = GetUnitCell().GetClosest(to, from, true);
+  smatd* m = GetUnitCell().GetClosest(to, from, true);
   if( m != NULL )  {
     for(int i=0; i < fragAtom.GetNetwork().NodeCount(); i++ )  {
       TSAtom& SA = fragAtom.GetNetwork().Node(i);
@@ -829,7 +829,7 @@ void TLattice::MoveFragment(TSAtom& to, TSAtom& fragAtom)  {
   abc2xyz.Transpose();
   xyz2abc.Transpose();
 
-  symmd* m = GetUnitCell().GetClosest(to.CAtom(), fragAtom.CAtom(), true);
+  smatd* m = GetUnitCell().GetClosest(to.CAtom(), fragAtom.CAtom(), true);
   if( m != NULL )  {
     if( to.CAtom().GetFragmentId() == fragAtom.CAtom().GetFragmentId() )  {
       fragAtom.CAtom().ccrd() = *m * fragAtom.CAtom().ccrd();
@@ -857,7 +857,7 @@ void TLattice::MoveFragment(TSAtom& to, TSAtom& fragAtom)  {
 void TLattice::MoveFragmentG(const vec3d& to, TSAtom& fragAtom)  {
   vec3d from;
   from = fragAtom.ccrd();
-  symmd* m = GetUnitCell().GetClosest(to, from, true);
+  smatd* m = GetUnitCell().GetClosest(to, from, true);
   vec3d offset;
   if( m != NULL )  {
 /* restore atom centres if were changed by some other procedure */
@@ -889,7 +889,7 @@ void TLattice::MoveFragmentG(const vec3d& to, TSAtom& fragAtom)  {
 }
 //..............................................................................
 void TLattice::MoveFragmentG(TSAtom& to, TSAtom& fragAtom)  {
-  symmd* m = GetUnitCell().GetClosest(to.ccrd(), fragAtom.ccrd(), true);
+  smatd* m = GetUnitCell().GetClosest(to.ccrd(), fragAtom.ccrd(), true);
   vec3d offset;
   if( m != NULL )  {
 /* restore atom centres if were changed by some other procedure */
@@ -940,7 +940,7 @@ void TLattice::MoveToCenter()  {
 
   vec3d molCenter;
   vec3d cnt, err;
-  symmd* m;
+  smatd* m;
   for( int i=0; i < Fragments.Count(); i++ )  {
     TNetwork* frag = Fragments[i];
     molCenter.Null();
@@ -983,7 +983,7 @@ void TLattice::Compaq()  {
     OnStructureGrow->Enter(this);
   }
   vec3d molCenter, acenter;
-  symmd* m;
+  smatd* m;
 
   mat3d abc2xyz( GetAsymmUnit().GetCellToCartesian()),
            xyz2abc( GetAsymmUnit().GetCartesianToCell());
@@ -1056,7 +1056,7 @@ void TLattice::CompaqAll()  {
   abc2xyz.Transpose();
   xyz2abc.Transpose();
 
-  symmd* m;
+  smatd* m;
   for( int i=0; i < Fragments.Count(); i++ )  {
     for( int j=i+1; j < Fragments.Count(); j++ )  {
       m = NULL;
@@ -1086,7 +1086,7 @@ void TLattice::CompaqAll()  {
   Uniq();
 }
 //..............................................................................
-void TLattice::TransformFragments(const TSAtomPList& fragAtoms, const symmd& transform)  {
+void TLattice::TransformFragments(const TSAtomPList& fragAtoms, const smatd& transform)  {
   if( Generated )  {
     TBasicApp::GetLog().Error("Cannot perform this operation on grown structure");
     return;

@@ -577,7 +577,7 @@ bool TNetwork::IsRingRegular(const TSAtomPList& ring)  {
 //..............................................................................
 // quaternion method, Acta A45 (1989), 208
 double TNetwork::FindAlignmentMatrix(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atoms,
-                         symmd& res, bool TryInversion)  {
+                         smatd& res, bool TryInversion)  {
   ematd evm(4,4), ev(4,4);
   vec3d centA, centB, v;
   TAsymmUnit& au = atoms[0].GetA()->GetNetwork().GetLattice().GetAsymmUnit();
@@ -676,7 +676,7 @@ double TNetwork::FindAlignmentMatrix(const TTypeList< AnAssociation2<TSAtom*,TSA
 }
 //..............................................................................
 void TNetwork::DoAlignAtoms(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& satomp,
-                            const TSAtomPList& atomsToTransform, const symmd& S, bool Inverted)  {
+                            const TSAtomPList& atomsToTransform, const smatd& S, bool Inverted)  {
   vec3d acent, mcent, v;
   TAsymmUnit& au = satomp[0].GetA()->GetNetwork().GetLattice().GetAsymmUnit();
   if( Inverted )  {

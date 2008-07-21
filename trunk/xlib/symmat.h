@@ -34,8 +34,8 @@ public:
   inline int DecTag() {  return --Tag;  }
 };
 
-typedef TSymmMat<double>   symmd;
-typedef TPtrList<symmd>    symmd_plist;
-typedef TTypeList<symmd>  symmd_list;
+typedef TSymmMat<double>   smatd;
+typedef TPtrList<smatd>    smatd_plist;
+typedef TTypeList<smatd>   smatd_list;
 
 #endif

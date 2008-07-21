@@ -78,14 +78,14 @@ public:
     res[2] = (H*mat[2][0] + K*mat[2][1] + L*mat[2][2]);
   }
   template <class CC>
-  void MulHkl(TVector3<CC>& res, const symmd& mat) const {
+  void MulHkl(TVector3<CC>& res, const smatd& mat) const {
     res[0] = (CC)(H*mat.r[0][0] + K*mat.r[1][0] + L*mat.r[2][0]);
     res[1] = (CC)(H*mat.r[0][1] + K*mat.r[1][1] + L*mat.r[2][1]);
     res[2] = (CC)(H*mat.r[0][2] + K*mat.r[1][2] + L*mat.r[2][2]);
   }
   // generates symmetry equivalent miller index and stores it in res, uses transposed matrix
   template <class CC>
-  void MulHklT(TVector3<CC>& res, const symmd& mat) const {
+  void MulHklT(TVector3<CC>& res, const smatd& mat) const {
     res[0] = (CC)(H*mat.r[0][0] + K*mat.r[0][1] + L*mat.r[0][2]);
     res[1] = (CC)(H*mat.r[1][0] + K*mat.r[1][1] + L*mat.r[1][2]);
     res[2] = (CC)(H*mat.r[2][0] + K*mat.r[2][1] + L*mat.r[2][2]);
@@ -94,7 +94,7 @@ public:
   /* replaces hkl with standard hkl accroding to provieded matrices, calculates
    reflection multiplicity and if it is centric or systematically absent
   */
-  void Standardise(const symmd_list &ml, bool CheckInversion)  {
+  void Standardise(const smatd_list &ml, bool CheckInversion)  {
     vec3i hklv;
     for(int i=0; i < ml.Count(); i++ )  {
       MulHkl(hklv, ml[i]);
@@ -121,12 +121,12 @@ public:
     }
   }
 //..............................................................................
-  inline double PhaseShift(const symmd& m) const {
+  inline double PhaseShift(const smatd& m) const {
     return H*m.t[0] +  K*m.t[1] + L*m.t[2];
   }
 //..............................................................................
   /* analyses if this reflection is centric, systematically absent and its multiplicity */
-  void Analyse(const symmd_list &ml)  {
+  void Analyse(const smatd_list &ml)  {
     vec3i hklv;
     Multiplicity = 1;
     Centric = false;
@@ -147,12 +147,12 @@ public:
     }
   }
 //..............................................................................
-  inline bool IsSymmetric(const symmd& m) const {
+  inline bool IsSymmetric(const smatd& m) const {
     vec3i hklv;
     MulHkl(hklv, m);
     return EqHkl(hklv);
   }
-  static bool IsSymmetric(const TReflection& r, const symmd_list& ml)  {
+  static bool IsSymmetric(const TReflection& r, const smatd_list& ml)  {
     vec3i hklv;
     for( int i=0; i < ml.Count(); i++ )  {
       r.MulHkl(hklv, ml[i]);
@@ -161,12 +161,12 @@ public:
     return false;
   }
 //..............................................................................
-  inline bool IsCentrosymmetric(const symmd& m) const {
+  inline bool IsCentrosymmetric(const smatd& m) const {
     vec3i hklv;
     MulHkl(hklv, m);
     return EqNegHkl(hklv);
   }
-  inline static bool IsCentrosymmetric(const TReflection& r, const symmd_list &ml)  {
+  inline static bool IsCentrosymmetric(const TReflection& r, const smatd_list &ml)  {
     vec3i hklv;
     for( int i=0; i < ml.Count(); i++ )  {
       r.MulHkl(hklv, ml[i]);
@@ -175,7 +175,7 @@ public:
     return false;
   }
 //..............................................................................
-  static bool IsSystematicallyAbsent(const TReflection& r, const symmd_list &ml)  {
+  static bool IsSystematicallyAbsent(const TReflection& r, const smatd_list &ml)  {
     for( int i=0; i < ml.Count(); i++ )  {
       if( r.IsSymmetric(ml[i]) )  {
         double l = r.PhaseShift(ml[i]);

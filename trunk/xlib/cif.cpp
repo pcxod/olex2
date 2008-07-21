@@ -760,7 +760,7 @@ void TCif::Initialize()  {
     int sindex = Loop->Table().ColIndex("_symmetry_equiv_pos_as_xyz");
     if( sindex >= 0 )  {
       for( int i=0; i < Loop->Table().RowCount(); i++ )  {
-        symmd Matrix;
+        smatd Matrix;
         if( TSymmParser::SymmToMatrix(Loop->Table()[i].String(sindex), Matrix) )  {
           GetAsymmUnit().AddMatrix(Matrix);
         }
@@ -977,7 +977,7 @@ bool TCif::Adopt(TXFile *XF)  {
   Table = &Loop->Table();
   Table->AddCol("_symmetry_equiv_pos_as_xyz");
 
-  symmd_list matrices;
+  smatd_list matrices;
   sg->GetMatrices(matrices, mattAll);
 
   for( int i=0; i < matrices.Count(); i++ )  {
@@ -1382,7 +1382,7 @@ olxstr TLinkedLoopTable::SymmCodeToSymm(TCif *Cif, const olxstr &Code)  {
   TStrList Toks(Code, '_');
   TCifLoopTable* LT;
   int isymm;
-  symmd mSymm;
+  smatd mSymm;
   LT = &SL->Table();
   if( Toks.Count() == 1 )  {
     isymm = Toks[0].ToInt()-1;
@@ -1562,7 +1562,7 @@ void TCif::MultValue(olxstr &Val, const olxstr &N)  {
     Val << '(' << E << ')';
 }
 //..............................................................................
-bool TCif::CreateTable(TDataItem *TD, TTTable<TStrList> &Table, symmd_list& SymmList)  {
+bool TCif::CreateTable(TDataItem *TD, TTTable<TStrList> &Table, smatd_list& SymmList)  {
   TCifLoop *Loop;
   int defcnt, RowDeleted=0, ColDeleted=0;
   olxstr Tmp, Val;
@@ -1570,8 +1570,8 @@ bool TCif::CreateTable(TDataItem *TD, TTTable<TStrList> &Table, symmd_list& Symm
   TDataItem *DI;
   bool AddRow;
   TStrList Toks;
-  symmd_list AllSymmList;
-  symmd SymmMatr;
+  smatd_list AllSymmList;
+  smatd SymmMatr;
 
   int sindex = -1;
   TCifLoop* SymmLoop = FindLoop("_symmetry_equiv_pos");
@@ -1581,7 +1581,7 @@ bool TCif::CreateTable(TDataItem *TD, TTTable<TStrList> &Table, symmd_list& Symm
     sindex = SymmLoop->Table().ColIndex("_symmetry_equiv_pos_as_xyz");
     TCifLoopTable* Table = &SymmLoop->Table();
     for( int i=0; i < Table->RowCount(); i++ )  {
-      symmd& Matrix = AllSymmList.AddNew();
+      smatd& Matrix = AllSymmList.AddNew();
         if( !TSymmParser::SymmToMatrix(Table->Row(i)->String(sindex), Matrix) )
           throw TFunctionFailedException(__OlxSourceInfo, "could not process symmetry matrix");
     }

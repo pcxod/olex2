@@ -29,20 +29,20 @@ const short  rtChiv = 0x0001,
 
 class TRestraintAtom {
   TCAtom* Atom;
-  symmd* Symm;
+  smatd* Symm;
 public:
   TRestraintAtom(TCAtom* A)  {  Atom = A; Symm = NULL;  }
-  TRestraintAtom(TCAtom* A, symmd* M)  {
+  TRestraintAtom(TCAtom* A, smatd* M)  {
     Atom = A;
     if( M != NULL )
-      Symm = new symmd( *M );
+      Symm = new smatd( *M );
     else
       Symm = NULL;
   }
   TRestraintAtom(const TRestraintAtom& ra)  {
     Atom = ra.GetAtom();
     if( ra.GetSymm() != NULL )
-      Symm = new symmd( *ra.GetSymm() );
+      Symm = new smatd( *ra.GetSymm() );
     else
       Symm = NULL;
   }
@@ -51,11 +51,11 @@ public:
   }
 
   inline TCAtom*   GetAtom() const {  return Atom;  }
-  inline symmd* GetSymm()    const {  return Symm;  }
+  inline smatd* GetSymm()    const {  return Symm;  }
   inline void SetAtom(TCAtom* a)   {  Atom = a;  }
-  void SetSymm(symmd* m)   {
+  void SetSymm(smatd* m)   {
     if( Symm != NULL )  delete Symm;
-    if( m != NULL)  Symm = new symmd( *m );
+    if( m != NULL)  Symm = new smatd( *m );
     else
       Symm = NULL;
   }
@@ -72,8 +72,8 @@ public:
       Atoms.AddNew<TRestraintAtom>( ag[i] );
     return *this;
   }
-  TRestraintAtom& AddAtom(TCAtom* CA, symmd* Symm = NULL )  {
-    return Atoms.AddNew<TCAtom*,symmd*>(CA, Symm);
+  TRestraintAtom& AddAtom(TCAtom* CA, smatd* Symm = NULL )  {
+    return Atoms.AddNew<TCAtom*,smatd*>(CA, Symm);
   }
   inline int Count() const {  return Atoms.Count();  }
   TRestraintAtom& operator[] (int i)  const {  return Atoms[i];  }

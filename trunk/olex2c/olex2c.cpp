@@ -1150,9 +1150,9 @@ public:
     for(int i = 0; i < atoms.Count(); i++ )  {
       Table[i][0] = atoms[i]->GetLabel();
       Table[i][1] = atoms[i]->GetAtomInfo().GetSymbol();
-      Table[i][2] = olxstr::FormatFloat(3, atoms[i]->ccrd()[0].GetV());
-      Table[i][3] = olxstr::FormatFloat(3, atoms[i]->ccrd()[1].GetV());
-      Table[i][4] = olxstr::FormatFloat(3, atoms[i]->ccrd()[2].GetV());
+      Table[i][2] = olxstr::FormatFloat(3, atoms[i]->ccrd()[0]);
+      Table[i][3] = olxstr::FormatFloat(3, atoms[i]->ccrd()[1]);
+      Table[i][4] = olxstr::FormatFloat(3, atoms[i]->ccrd()[2]);
       Table[i][5] = olxstr::FormatFloat(3, atoms[i]->GetUiso());
       if( atoms[i]->GetQPeak() != -1 )
         Table[i][6] = olxstr::FormatFloat(3, atoms[i]->GetQPeak());
