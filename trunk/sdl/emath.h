@@ -51,7 +51,10 @@ template <class VC>
 extern unsigned int gcd(unsigned int u, unsigned int v);
 
 //extern void SetBit( const bool Set, short &V, const short Bit );
-
+//returns volume of a sphere of radius r
+inline double SphereVol(double r)  {  return 4.*M_PI/3.0*r*r*r;  }
+//returns radius of a sphere of volume v
+inline double SphereRad(double v)   {  return pow(v*3.0/(4.0*M_PI), 1./3.);  }
 // creates a 3D rotation matrix aroung rv vector, providin cosine of the rotation angle
 template <class MC, class VC>
 void CreateRotationMatrix(MC& rm, const VC& rv, double ca)  {
