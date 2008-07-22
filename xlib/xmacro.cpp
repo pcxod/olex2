@@ -43,7 +43,8 @@ void XLibMacros::Export(TLibrary& lib)  {
   xlib_InitMacro(GraphSR, "b-number of bins", fpNone|fpOne|psFileLoaded,
 "Prints a scale vs resolution graph for current file (fcf file must exist in current folder)");
 //_________________________________________________________________________________________________________________________
-  xlib_InitMacro(Wilson, "b-number of bins", fpNone|fpOne|psFileLoaded, "Prints Wilson plot data");
+  xlib_InitMacro(Wilson, "b-number of bins&;p-uses linear vins for picture, otherwise uses spherical bins", 
+    fpNone|fpOne|psFileLoaded, "Prints Wilson plot data");
 //_________________________________________________________________________________________________________________________
   xlib_InitMacro(TestSymm, "e-tolerance limit", fpNone|psFileLoaded, "Tests current \
   structure for missing symmetry");

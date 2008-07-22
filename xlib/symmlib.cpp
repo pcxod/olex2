@@ -1059,14 +1059,14 @@ void TSpaceGroup::GetMatrices(smatd_list& matrices, short Flags) const {
       if( i == -1 )  continue;
       if( (Flags & mattTranslation) == mattTranslation && (Flags & mattCentering) == 0 )  {
         smatd& mt = Matrices[i];
-        if( mt.t[0] != 0 || mt.t[1] != 0 || mt.t[2] != 0 )  continue;
+        if( !mt.t.IsNull() )  continue;
           m = new smatd( mt );
       }
       else
         m = new smatd( Matrices[i] );
     }
 
-    if( !m )  continue;
+    if( m == NULL )  continue;
 
     matrices.Add(*m);
     if( (Flags & mattCentering) == mattCentering )  {

@@ -1935,21 +1935,19 @@ void TMainForm::macMatr(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       mat3d M;
       if( FXApp->HklVisible() )  M = FXApp->XFile().GetAsymmUnit().GetHklToCartesian();
       else                       M = FXApp->XFile().GetAsymmUnit().GetCellToCartesian();
-      if( Cmds[0] == "100" || Cmds[0] == "1" ) FXApp->GetRender().Basis()->OrientNormal( M[0] );
-      else if( Cmds[0] == "010" || Cmds[0] == "2"  ) FXApp->GetRender().Basis()->OrientNormal( M[1] );
-      else if( Cmds[0] == "001" || Cmds[0] == "3"  ) FXApp->GetRender().Basis()->OrientNormal( M[2] );
-      else if( Cmds[0] == "110" )  FXApp->GetRender().Basis()->OrientNormal( M[0] + M[1] );
-      else if( Cmds[0] == "101" )  FXApp->GetRender().Basis()->OrientNormal( M[0] + M[2] );
-      else if( Cmds[0] == "011" )  FXApp->GetRender().Basis()->OrientNormal( M[1] + M[2] );
-      else if( Cmds[0] == "111" )  FXApp->GetRender().Basis()->OrientNormal( M[0] + M[1] + M[2] );
+      if( Cmds[0] == "100"      || Cmds[0] == "1" )  FXApp->GetRender().Basis()->OrientNormal( M[0] );
+      else if( Cmds[0] == "010" || Cmds[0] == "2" )  FXApp->GetRender().Basis()->OrientNormal( M[1] );
+      else if( Cmds[0] == "001" || Cmds[0] == "3" )  FXApp->GetRender().Basis()->OrientNormal( M[2] );
+      else if( Cmds[0] == "110" )                    FXApp->GetRender().Basis()->OrientNormal( M[0] + M[1] );
+      else if( Cmds[0] == "101" )                    FXApp->GetRender().Basis()->OrientNormal( M[0] + M[2] );
+      else if( Cmds[0] == "011" )                    FXApp->GetRender().Basis()->OrientNormal( M[1] + M[2] );
+      else if( Cmds[0] == "111" )                    FXApp->GetRender().Basis()->OrientNormal( M[0] + M[1] + M[2] );
       else  {
         Error.ProcessingError(__OlxSrcInfo, "undefined arguments" );
         return;
       }
-      FXApp->Draw();
-      return;
     }
-    if( Cmds.Count() == 9 )  {
+    else if( Cmds.Count() == 9 )  {
       mat3d M;
       M[0][0] = Cmds[0].ToDouble();
       M[0][1] = Cmds[1].ToDouble();
@@ -1965,11 +1963,12 @@ void TMainForm::macMatr(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       M[1].Normalise();
       M[2].Normalise();
       FXApp->GetRender().Basis()->SetMatrix(M);
-      FXApp->Draw();
+    }
+    else  {
+      Error.ProcessingError(__OlxSrcInfo, "wrong arguments" );
       return;
     }
-    Error.ProcessingError(__OlxSrcInfo, "wrong arguments" );
-    return;
+    FXApp->Draw();
   }
 }
 //..............................................................................

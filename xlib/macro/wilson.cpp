@@ -6,6 +6,7 @@
 #include "symmlib.h"
 
 #include "etable.h"
+#include "emath.h"
 
 
 //..............................................................................
@@ -50,7 +51,6 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
   TXApp &XApp = TXApp::GetInstance();
 
   olxstr HklFN( XApp.LocateHklFile() );
-  if( HklFN.IsEmpty() )  HklFN = TEFile::ChangeFileExt(XApp.XFile().GetFileName(), "hkl");
   if( !TEFile::FileExists(HklFN) )  {
     E.ProcessingError(__OlxSrcInfo, "could not locate the HKL file" );
     return;
@@ -63,8 +63,8 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
   if( Cmds.Count() != 0 )
     outputFileName = Cmds[0];
   else
-    outputFileName << "wilson";
-  outputFileName = TEFile::ChangeFileExt(outputFileName, "csv");
+    outputFileName << XApp.XFile().GetFileName();
+  outputFileName = TEFile::ChangeFileExt(outputFileName, "wilson.csv");
 
   TAsymmUnit& au = XApp.XFile().GetAsymmUnit();
   const mat3d& hkl2c = au.GetHklToCartesian();
@@ -75,20 +75,9 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
     return;
   }
 
-  smatd_list ml;
-  sg->GetMatrices(ml, mattAll^mattIdentity);
-//  if( !sg->IsCentrosymmetric() )  // merge friedel pairs
-//  {
-//    TMatrixD I(3,4);
-//    I.E();
-//    I *= -1;
-//    ml.InsertCCopy(0, I);  // merge wil searhc for it ...
-//  }
-
   TRefList Refs;
-  THklFile::MergeStats st = Hkl.SimpleMerge(ml, Refs);
-  ml.AddNew().r.I();  // add the identity matrix
-  TPtrList<TWilsonBin> bins;
+  THklFile::MergeStats st = Hkl.Merge(*sg, true, Refs);
+  TTypeList<TWilsonBin> bins;
   TTypeList<TWilsonRef> refs;
   refs.SetCapacity(Refs.Count());
 
@@ -119,49 +108,58 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
       scatterers[i].B() *= au.GetZ();
   }
 
-  double AvI = 0;
-  const double T_PI = 2*M_PI;
   for( int i=0; i < Refs.Count(); i++ )  {
-    AvI += Refs[i].GetI();
     Refs[i].MulHkl(hkl, hkl2c);
     TWilsonRef& ref = refs.AddNew();
     ref.ds = hkl.QLength()*0.25;
-    ref.Fo2 = Refs[i].GetI();
-
-    double fe = 0;
+    ref.Fo2 = Refs[i].GetI() * Refs[i].GetDegeneracy();
     for( int j=0; j < scatterers.Count(); j++)  {
       double v = scatterers[j].GetA()->Calc_sq(ref.ds);
-      fe += v*v*scatterers[j].GetB();
+      ref.Fe2 += v*v*scatterers[j].GetB();
     }
-    ref.Fe2 = fe;// * Refs[i].GetDegeneracy();
   }
 
-  AvI /= Refs.Count();
-//  scatterers.Clear();
-
-  olxstr strBinsCnt( Options.FindValue("b") );
-  int binsCnt = strBinsCnt.IsEmpty() ? 10 : strBinsCnt.ToInt();
+  int binsCnt = Options.FindValue("b", "10").ToInt();
+  bool picture = Options.Contains("p");
   if( binsCnt <= 0 ) binsCnt = 10;
 
   refs.QuickSorter.SortSF(refs, TWilsonRef::SortByDs);
 
-  double minds=refs[0].ds, maxds=refs.Last().ds;
-  double step = (maxds-minds)/binsCnt,
-         hstep = step/2;
-  for( int i=0; i < binsCnt; i++ )  {
-    bins.Add( new TWilsonBin( minds + i*step, minds+(i+1)*step ) );
-    if( (i+1) < binsCnt )
-      bins.Add( new TWilsonBin( minds + (i+1)*step - hstep, minds+(i+1)*step + hstep ) );
+  double minds=refs[0].ds, maxds=refs.Last().ds, dsR = maxds-minds;
+  if( ! picture )  {  /// use spherical bins
+    double Vtot = SphereVol(dsR), Vstep = Vtot/binsCnt, 
+      Vstart = SphereVol(minds),
+      Vhstep = Vstep/2;
+    for( int i=0; i < binsCnt; i++ )  {
+      double sds = SphereRad(Vstart);
+      double eds = SphereRad(Vstart+Vstep);
+      bins.AddNew(sds, eds);
+      if( (i+1) < binsCnt )  {  // add intermediate, overlapping bin for smoothing
+        sds = SphereRad(Vstart+Vhstep);
+        eds = SphereRad(Vstart+Vhstep+Vstep);
+        bins.AddNew(sds, eds);
+      }
+      Vstart += Vstep;
+    }
+  }
+  else  {
+    double step = (maxds-minds)/binsCnt,
+      hstep = step/2;
+    for( int i=0; i < binsCnt; i++ )  {
+      bins.AddNew( minds + i*step, minds+(i+1)*step );
+      if( (i+1) < binsCnt )
+        bins.AddNew(minds + (i+1)*step - hstep, minds+(i+1)*step + hstep );
+    }
   }
 
   for( int i=0; i < refs.Count(); i++ )  {
     const TWilsonRef& ref = refs[i];
     for( int j=0; j < bins.Count(); j++ )  {
-      if( ref.ds < bins[j]->Maxds && ref.ds >= bins[j]->Minds )  {
-        bins[j]->Count ++;
-        bins[j]->SFo2 += ref.Fo2;
-        bins[j]->SFe2 += ref.Fe2;
-        bins[j]->Sds += ref.ds;
+      if( ref.ds < bins[j].Maxds && ref.ds > bins[j].Minds )  {
+        bins[j].Count ++;
+        bins[j].SFo2 += ref.Fo2;
+        bins[j].SFe2 += ref.Fe2;
+        bins[j].Sds += ref.ds;
       }
     }
   }
@@ -170,20 +168,11 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
   TTypeList< AnAssociation2<double,double> > binData;
 
   for( int i=0; i < bins.Count(); i++ )  {
-    if( bins[i]->Count == 0 )  continue;
-    bins[i]->SFo2 /= bins[i]->Count;
-    bins[i]->SFe2 /= bins[i]->Count;
-    bins[i]->Sds /= bins[i]->Count;
-
-    //double fo = 0;
-    //for( int j=0; j < scatterers.Count(); j++)  {
-    //  double v = scatterers[j].GetA()->Calc_sq(bins[i]->Sds);
-    //  fo += v*v*scatterers[j].GetB();
-    //}
-
-    //bins[i]->SFe2 = fo;
-    binData.AddNew( log(bins[i]->SFo2/bins[i]->SFe2), bins[i]->Sds );
-    delete bins[i];
+    if( bins[i].Count == 0 )  continue;
+    bins[i].SFo2 /= bins[i].Count;
+    bins[i].SFe2 /= bins[i].Count;
+    bins[i].Sds /= bins[i].Count;
+    binData.AddNew( log(bins[i].SFo2/bins[i].SFe2), bins[i].Sds );
   }
   if( binData.Count() != 0 )  {
     TTTable<TStrList> tab(binData.Count(), 2);
@@ -209,8 +198,6 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
       scat << bais[i]->GetSymbol() << scatterers[i].GetB() << ' ';
     tab.CreateTXTList(header, olxstr("Graph data for ") << scat, false, false, EmptyString);
     XApp.GetLog() << header;
-    TCStrList(output).SaveToFile( outputFileName ) ;
-    XApp.GetLog() << ( outputFileName << " file was created\n" );
     double K = exp(line[0]), B = -line[1]/2;
     double E2 = 0, SE2 = 0;
     int iE2GT2 = 0;
@@ -226,8 +213,19 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
                                                  << " K = " << olxstr::FormatFloat(3,K) << '\n' );
     XApp.GetLog() << ( olxstr("<|E*E-1|> = ") << olxstr::FormatFloat(3,E2)
                                                    << "  [0.736 <- centro  +> 0.968]" << '\n' );
-    XApp.GetLog() << ( olxstr("%|E| > 2 = ") << olxstr::FormatFloat(3,(double)iE2GT2*100/refs.Count() )
+    XApp.GetLog() << ( olxstr("%|E| > 2 = ") << olxstr::FormatFloat(3,(double)iE2GT2*100/refs.Count())
                                                    << "  [1.800 <- centro  +> 4.600]" << '\n' );
+    output.Add("#Title = Wilson plot");
+    output.Add("#x_label = sin(theta)/lambda");
+    output.Add("#y_label = ln(<Fo2>)/(Fexp2)");
+    output.Add("#B = ") << olxstr::FormatFloat(3,B);
+    output.Add("#K = ") << olxstr::FormatFloat(3,K);
+    output.Add("#<|E*E-1|> = ") << olxstr::FormatFloat(3,E2);
+    output.Add("#%|E| > 2 = ") << olxstr::FormatFloat(3,(double)iE2GT2*100/refs.Count());
+
+    TCStrList(output).SaveToFile( outputFileName ) ;
+    XApp.GetLog() << ( outputFileName << " file was created\n" );
+
     if( E2 -(0.968+0.736)/2 < 0 )
       E.SetRetVal<bool>( false );
     else

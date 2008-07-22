@@ -354,12 +354,17 @@ bool THklFile::SaveToFile(const olxstr& FN, const TRefPList& refs, bool Append) 
 THklFile::MergeStats THklFile::Merge(const TSpaceGroup& sg, bool MergeInverse, TRefList& output)  {
   smatd_list ml;
   sg.GetMatrices(ml, mattAll^mattIdentity);
-  if( MergeInverse )  {
+  if( MergeInverse && !sg.IsCentrosymmetric() )  {
     smatd& im = ml.AddNew();
     im.r.I();
     im.r *= -1;
   }
-  return Merge<TSimpleMerger>(ml, output);
+  THklFile::MergeStats rv = Merge<TSimpleMerger>(ml, output);
+  if( MergeInverse && !sg.IsCentrosymmetric() )
+    ml.Delete( ml.Count()-1 );
+  for( int i=0; i < output.Count(); i++ )
+    output[i].Analyse(ml);
+  return rv;
 }
 //..............................................................................
 void THklFile::AnalyseReflections( const TSpaceGroup& sg )  {
