@@ -66,17 +66,36 @@ struct XDependency;
 struct XLinearEquation;
 class XScatterer;
 class XSite;
+class XScattererGroup;
+// for the rigid groups
+class IRefinementModel {
+public:
+  virtual int GetFragmentSize(int FragId) = 0;
+  virtual int ScattererCount() const = 0;
+  virtual XScatterer& GetScatterer(int i) = 0;
+  virtual XScatterer* FindScattererByName(const olxstr& name) = 0;
+  virtual XScattererGroup* FindResidueByNumber(int Number) = 0;
+  virtual void FindResiduesByClass(const olxstr& clazz, TPtrList<XScattererGroup>& res) = 0;
+};
+// for the refinables
+class IRefinableOwner {
+public:
+  virtual ~IRefinableOwner() {  }
+  virtual int Count() const = 0;
+  virtual olxstr& GetName(int i) const = 0;
+};
 //
 struct XRefinable {
   double Value, Esd;
   bool Refinable;
   XLinearEquation* Equation;
-  XSite* Scatterer;
+  IRefinableOwner* Owner;
   olxstr Name;
   XRefinable(const olxstr& name = EmptyString) : 
-    Name(name), Value(0), Esd(0), Refinable(false), Dependency(NULL)  {  }
+    Name(name), Value(0), Esd(0), Refinable(false), Dependency(NULL), Owner(NULL)  {  }
   inline bool IsDependent()      const {  return Equation != NULL;  }
 };
+//
 struct XEquationMameber {
   double Ratio;
   XRefinable* Refinable;
@@ -93,16 +112,17 @@ struct XLinearEquation {
   XLinearEquation(double val, double sig) : value(val), Sigma(sig) {}
 };
 // thremal displacement parameter
-struct XTDP  {
+class XTDP : public IRefinableOwner {
+public:
   XRefinable Uani[6]; 
   enum Uind { U11=0, U22, U33, U23, U13, U12 };
   XTDP() {
-    Uani[0].Name = "U11";
-    Uani[1].Name = "U22";
-    Uani[2].Name = "U33";
-    Uani[3].Name = "U23";
-    Uani[4].Name = "U13";
-    Uani[5].Name = "U12";
+    Uani[0].Name = "U11";  Uani[0].Owner = this;
+    Uani[1].Name = "U22";  Uani[1].Owner = this;
+    Uani[2].Name = "U33";  Uani[2].Owner = this;
+    Uani[3].Name = "U23";  Uani[3].Owner = this;
+    Uani[4].Name = "U13";  Uani[4].Owner = this;
+    Uani[5].Name = "U12";  Uani[5].Owner = this;
   }
   void SetAniso(bool v)  {
     Uani[0].Name = v ? "U11" : "Uiso";
@@ -112,24 +132,18 @@ struct XTDP  {
     return (Uani[0].Value+Uani[1].Value+Uani[2].Value)/3;
   }
   bool IsAniso() const {  return Uani[0].Length() == 2;  }
+  TPtrList<XScatterer> Scatterers;  // list of scatterers sharing the TDP
+  // IRefinableOwner implementation
+  virtual int Count()            const {  return Scatterers.Count();  }
+  virtual olxstr& GetName(int i) const {  return Scatterers[i]->Label;  }
 };
-class XScatterer  {
+//
+class XSite : public IRefinableOwner{
 public:
-  XScatterer(const olxstr& label, TBasicInfo* type) : 
-      Label(label), Type(type), Ocupancy("Occupansy") {
-  }
-  XRefinable Occupancy;
-  XTDP* TDP;  // might beshared by several scatterers
-  olxstr Label;
-  TBasicAtomInfo* Type;
-};
-
-class XSite {
-public:
-  XSite() {
-    Crd[0].Name = "X";
-    Crd[1].Name = "Y";
-    Crd[2].Name = "Z";
+  XSite() : SiteOccupancy(1) {
+    Crd[0].Name = "X";  Crd[0].Owner = this;
+    Crd[1].Name = "Y";  Crd[1].Owner = this;
+    Crd[2].Name = "Z";  Crd[2].Owner = this;
   }
   inline double const& Crd(int i)       const {  return Crd[i].Value;  }
   inline double& Crd(int i)                   {  return Crd[i].Value;  }
@@ -147,11 +161,55 @@ public:
     return rv << " and " << Scatterers.Last()->Label;
   }
 
-
   XRefinable Crd[3]; // fractional crds
-  TPtrList<XScatterer> Scatterers;
+  TPtrList<XScatterer> Scatterers; // list of scatterers sharing the site
   double SiteOccupancy;  // crystallographic occupancy
+  // IRefinableOwner implementation
+  virtual int Count()            const {  return Scatterers.Count();  }
+  virtual olxstr& GetName(int i) const {  return Scatterers[i]->Label;  }
 };
+
+class XScatterer : public IRefinableOwner {
+public:
+  XScatterer(const olxstr& label, TBasicInfo* type) : 
+      Label(label), Type(type), Ocupancy("Occupancy") {
+        Occupancy.Owner = this;
+  }
+  XRefinable Occupancy;
+  XSite* Site; // might be shared by several scatterers
+  XTDP* TDP;   // might be shared by several scatterers
+  olxstr Label;
+  int Id;      // must be synchronised with the position in the list
+  TBasicAtomInfo* Type;
+  XScattererGroup* Owner;
+  // IRefinableOwner implementation
+  virtual int Count()            const {  return 1;  }
+  virtual olxstr& GetName(int i) const {  return Label;  }
+};
+
+class XScattererGroup {
+  IRefinementModel& Parent;
+public:
+  XScattererGroup(IRefinementModel& parent, const olxstr& cl=EmptyString, int number = 0, 
+    const olxstr& alias=EmptyString) : Parent(parent), ClassName(cl), Number(number), Alias(alias) {  }
+  XScatterer& operator [] (int i)             {  return *Scatterers[i]; }
+  XScatterer const& operator [] (int i) const {  return *Scatterers[i]; }
+  XScattererGroup& operator = (const XScattererGroup& res)  {
+    Scatterers.Clear();
+    Scatterers.SetCapacity(res.Count() );
+    for( int i=0; i < res.Scatterers.Count(); i++ )  {
+      Scatterers.Add( &Parent.GetScatterer(res[i].Id) );
+    }
+    this->ClassName = res.ClassName;
+    this->Number = res.Number;
+    this->Alias = res.Alias;
+    return *this;
+  }
+  olxstr ClassName, Alias;
+  int Number;
+  TPtrList<XScatterer> Scatterers;
+};
+//
 // FRAG reference data implementation
 class XFrag {
   mat3d Cell2Cartesian;
@@ -200,23 +258,23 @@ public:
 class AAtomList  {
 protected:
   virtual bool GetExplicit() const = 0; 
-  virtual void DoExpand(TAsymmUnit& parent, TAymmUnit::TResidue* resi, TCAtomGroup& ag) = 0;
+  virtual void DoExpand(IRefinementModel& parent, XScattererGroup* resi, TCAtomGroup& ag) = 0;
 public:
-  AAtomList(TAsymmUnit& p)  {  }
+  AAtomList()  {  }
   virtual ~AAtomList() {}
-  bool IsExplicit() const { return GetExplicit();  }
-  bool IsExpandable() const {  return !GetExplicit();  }
-  void Expand(TAsymmUnit& parent, TCAtomGroup& ag)  {  DoExpand(parent, ag);  }  
+  inline bool IsExplicit()   const { return GetExplicit();  }
+  inline bool IsExpandable() const {  return !GetExplicit();  }
+  inline void Expand(IRefinementModel& parent, TCAtomGroup& ag)  {  DoExpand(parent, ag);  }  
 };
 /* explicit atoms list represent a set of atoms, referenced explicetely by name, residue name
 or symmetry equivalent, the list is can be evaluated at the creation time */
 class TExplicitAtomList : public AAtomList {
   TCAtomGroup atoms;
 protected:
-  virtual void DoExpand(TAsymmUnit& parent, TAymmUnit::TResidue* resi, TCAtomGroup& ag)  {  ag = atoms;  }
+  virtual void DoExpand(IRefinementModel& parent, XScattererGroup* resi, TCAtomGroup& ag)  {  ag = atoms;  }
   virtual boll GetExplicit() const {  return true;  }
 public:
-  TExplicitAtomList(TAsymmUnit& parent, const olxstr& exp) : AAtomList()  { 
+  TExplicitAtomList(IRefinementModel& parent, const olxstr& exp) : AAtomList()  { 
     TAtomReference ar(exp);
     ar._Expand(Parent, atoms, NULL);
   }
@@ -227,7 +285,7 @@ public:
 class TExpandableAtomList : public AAtomList {
   TStrPObjList<olxstr, TGroupCAtom*> atoms;
 protected:
-  virtual void DoExpand(TAsymmUnit& parent, TAymmUnit::TResidue* resi, TCAtomGroup& ag)  {
+  virtual void DoExpand(IRefinementModel& parent, XScattererGroup* resi, TCAtomGroup& ag)  {
     for( int i=0; i < atoms.Count(); i++ )  {
       if( atoms.Object(i) != NULL ) 
         atoms[i] = atoms.Object(i)->GetFullLabel();
@@ -237,7 +295,7 @@ protected:
   }
   virtual bool GetExplicit() const {  return false;  }
 public:
-  TExpandableAtomList(TAsymmUnit& parent, const olxstr& expression) : atoms(expression, ' ')  {
+  TExpandableAtomList(IRefinementModel& parent, const olxstr& expression) : atoms(expression, ' ')  {
     for( int i=0; i < atoms.Count(); i++ )  {
       if( atoms[i].CharAt(0) == '$' )  //SFAC
         continue;
@@ -304,11 +362,6 @@ public:
   void Expand(TAsymmUnit& parent, TArrayList<ARestraint>& rl)  {  DoExpand(parent, rl);  }  
 };
 
-class IRefinementModelContainer {
-public:
-  virtual int GetFragmentSize(int FragId) = 0;
-};
-
 class ARigidGroup : public ARestraint {
   TCAtomPList Atoms;
   RigidGroup RigidGroup_Code;
@@ -317,7 +370,7 @@ protected:
   int AtomCount;
   double DefD;
 public:
-  ARigidGroup(IRefinementModelContainer& container, RigidGroup code, 
+  ARigidGroup(IRefinementModel& container, RigidGroup code, 
     RefinementType rt, double d = -1) : RigidGrope_Code(code), RefinementType_Code(rt), DefD(d)  {
     switch( code )  {
       case RigidGroup::SP31:
@@ -381,11 +434,33 @@ public:
       throw TInvalidArgumentException(__OlxSourceInfo, "too many atoms in the ridgid group");
   }
 };
+/* number of scatterers might be greater than the numbre of thermal displacement
+parameters or sites, since the latter can be shared
+*/
+class XModel : public IRefinementModel {
+public:
+  virtual int ScattererCount() const {  return Scatterers.Count();  }
+  virtual XScatterer& GetScatterer(int i)  {  return Scatterers[i];  }
+  virtual XScatterer* FindScattererByName(const olxstr& name) {
+    return SortedScatterers[name];
+  }
+  virtual XScattererGroup* FindResidueByNumber(int Number) {
+    return Rsidues[Number];
+  }
+  virtual void FindResiduesByClass(const olxstr& clazz, TPtrList<XScattererGroup>& res) {
+    for( int i=0; i < Residues.Count(); i++ )
+      if( Residues.Object(i)->ClassName.Comparei(clazz) == 0 )
+        res.Add( Residues.Object(i);
+  }
 
-class XModel  {
   double Scale;  // global Fo/Fc scale
-  TArrayList<XScatterer> Scatterers;
-  TArrayList<Sites> Sites;
+  TTypeList<XScatterer> Scatterers;
+  TTypeList<Sites> Sites;
+  TTypeList<XTDP> TDPs;
+  // a list of all residues with key - number
+  TPSTypeList<int, XScattererGroup*> Residues;
+  // a list of all scattererers for quick access by label
+  TSStrPObjList<olxstr, XScatterer, false> SortedScatterers;
   TPSTypeList<int, XFrag*> References;
 };
 
