@@ -127,16 +127,20 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
 
   double minds=refs[0].ds, maxds=refs.Last().ds, dsR = maxds-minds;
   if( ! picture )  {  /// use spherical bins
-    double Vtot = SphereVol(dsR), Vstep = Vtot/binsCnt, 
-      Vstart = SphereVol(minds),
+    double Vtot = SphereVol(sqrt(maxds)), Vstep = Vtot/binsCnt, 
+      Vstart = SphereVol(sqrt(minds)),
       Vhstep = Vstep/2;
     for( int i=0; i < binsCnt; i++ )  {
       double sds = SphereRad(Vstart);
+      sds *= sds;
       double eds = SphereRad(Vstart+Vstep);
+      eds *= eds;
       bins.AddNew(sds, eds);
       if( (i+1) < binsCnt )  {  // add intermediate, overlapping bin for smoothing
         sds = SphereRad(Vstart+Vhstep);
+        sds *= sds;
         eds = SphereRad(Vstart+Vhstep+Vstep);
+        eds *= eds;
         bins.AddNew(sds, eds);
       }
       Vstart += Vstep;

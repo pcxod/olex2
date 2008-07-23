@@ -4798,9 +4798,9 @@ void TMainForm::macExcludeHkl(TStrObjList &Cmds, const TParamList &Options, TMac
   else  {
     for( int i=0; i < Hkl.RefCount(); i++ )  {
       if( Hkl[i].GetTag() > 0 )  {
-        if( h.IndexOf( Hkl[i].GetH() ) != -1 ||
-            k.IndexOf( Hkl[i].GetK() ) != -1 ||
-            l.IndexOf( Hkl[i].GetL() ) != -1 )  {
+        if( (!h.IsEmpty() && h.IndexOf( Hkl[i].GetH() ) != -1) ||
+            (!k.IsEmpty() && k.IndexOf( Hkl[i].GetK() ) != -1) ||
+            (!l.IsEmpty() && l.IndexOf( Hkl[i].GetL() ) != -1) )  {
           Hkl[i].SetTag( -Hkl[i].GetTag() );
           c++;
         }

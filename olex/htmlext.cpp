@@ -1776,12 +1776,12 @@ void THtml::macSetFonts(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 }
 //..............................................................................
 void THtml::macSetBorders(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  THtml *html = (Cmds.Count() == 1) ? TGlXApp::GetMainForm()->GetHtml(Cmds[0]) : this;
+  THtml *html = (Cmds.Count() == 2) ? TGlXApp::GetMainForm()->GetHtml(Cmds[0]) : this;
   if( html == NULL )  {
     E.ProcessingError(__OlxSrcInfo, "undefined html window");
     return;
   }
-  html->SetBorders( Cmds[1].ToInt() );
+  html->SetBorders( Cmds.Last().String().ToInt() );
 }
 //..............................................................................
 void THtml::macHtmlHome(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
