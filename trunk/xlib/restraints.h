@@ -6,6 +6,7 @@
 #include "asymmunit.h"
 #include "catom.h"
 #include "estrlist.h"
+#include "estlist.h"
 
 BeginXlibNamespace()
 
@@ -52,40 +53,148 @@ enum RigidGroup {
 
 // refinemnt attributes
 enum RefinementType {
-  AllFixed         = 1,  // all fixed
-  RefineCrd        = 2,  // all but coordinates fixed
+  Refine_none      = 1,  // all fixed
+  Refine_crd       = 2,  // all but coordinates fixed
   Riding_d_fixed   = 3,  // riging ridgid group
   Riding_d_free    = 4,  // riding 'breathing'
   Ridgid_d_fixed   = 6,  // rotaiting, with bonds fixed
   Rotating_d_fixed = 7,  // rotaiting, with bonds fixed
   Rotating_d_free  = 8,  // rotating, with bond refined
   Ridgid_d_free    = 9   // rotating, with bond refined
-}; 
+};
+struct XDependency;
+struct XLinearEquation;
+class XScatterer;
+class XSite;
 //
-
 struct XRefinable {
-  double Value;
+  double Value, Esd;
   bool Refinable;
-  ARefinable() : Value(0), Refinable(false)  {  }
+  XLinearEquation* Equation;
+  XSite* Scatterer;
+  olxstr Name;
+  XRefinable(const olxstr& name = EmptyString) : 
+    Name(name), Value(0), Esd(0), Refinable(false), Dependency(NULL)  {  }
+  inline bool IsDependent()      const {  return Equation != NULL;  }
 };
-
-struct XScatterer  {
-  TBasicAtomInfo* Type;
-  XRefinable Occupancy;
-  XRefinable Uiso;
+struct XEquationMameber {
+  double Ratio;
+  XRefinable* Refinable;
+  XEquationMameber() : Ratio(1), Refinable(NULL) {}
+  XEquationMameber(double ratio, XRefinable* refinable) :
+    Ratio(ratio), Refinable(refinable) {  }
+};
+/* SUMP, +- free var, dependent Uiso 
+  if there is only one member, that member Ratio has to be used
+*/
+struct XLinearEquation {
+  double Value, Sigma;
+  TArrayList<XRefinable> Members; 
+  XLinearEquation(double val, double sig) : value(val), Sigma(sig) {}
+};
+// thremal displacement parameter
+struct XTDP  {
   XRefinable Uani[6]; 
+  enum Uind { U11=0, U22, U33, U23, U13, U12 };
+  XTDP() {
+    Uani[0].Name = "U11";
+    Uani[1].Name = "U22";
+    Uani[2].Name = "U33";
+    Uani[3].Name = "U23";
+    Uani[4].Name = "U13";
+    Uani[5].Name = "U12";
+  }
+  void SetAniso(bool v)  {
+    Uani[0].Name = v ? "U11" : "Uiso";
+  }
+  double GetUisoVal() const {
+    if( !IsAniso() )  return Uani[0].Value;
+    return (Uani[0].Value+Uani[1].Value+Uani[2].Value)/3;
+  }
+  bool IsAniso() const {  return Uani[0].Length() == 2;  }
+};
+class XScatterer  {
+public:
+  XScatterer(const olxstr& label, TBasicInfo* type) : 
+      Label(label), Type(type), Ocupancy("Occupansy") {
+  }
+  XRefinable Occupancy;
+  XTDP* TDP;  // might beshared by several scatterers
+  olxstr Label;
+  TBasicAtomInfo* Type;
 };
 
-struct XSite {
-  olxstr Label;
+class XSite {
+public:
+  XSite() {
+    Crd[0].Name = "X";
+    Crd[1].Name = "Y";
+    Crd[2].Name = "Z";
+  }
+  inline double const& Crd(int i)       const {  return Crd[i].Value;  }
+  inline double& Crd(int i)                   {  return Crd[i].Value;  }
+  inline double const& Esd(int i)       const {  return Crd[i].Esd;  }
+  inline double& Esd(int i)                   {  return Crd[i].Esd;  }
+  inline vec3d CrdAsVec()               const {  return vec3d(Crd[0].Value, Crd[1].Value, Crd[2].Value);  }
+  inline SetCrd(const vec3d& v)               {  Crd[0].Value = v[0];  Crd[1].Value = v[1];  Crd[2].Value = v[2];  }
+  inline SetCrd(double x, double y, double z) {  Crd[0].Value = x;  Crd[1].Value = y;  Crd[2].Value = z;  }
+  inline bool IsShared()                const {  return Scatterers.Count() > 1;  }
+  olxstr GetLabel()  {
+    if( Scattrerers.IsEmpty() )  return EmptyString;
+    olxstr rv(Scatterers[0]->Label);
+    for( int i=1; i < Scatterers.Count() - 1; i++ )
+      rv << "," << Scatterers[i]->Label;
+    return rv << " and " << Scatterers.Last()->Label;
+  }
+
+
   XRefinable Crd[3]; // fractional crds
   TPtrList<XScatterer> Scatterers;
   double SiteOccupancy;  // crystallographic occupancy
 };
+// FRAG reference data implementation
+class XFrag {
+  mat3d Cell2Cartesian;
+  TTypeList<XFragAtom> Atoms;
+  struct XFragAtom {
+    vec3d Crd;
+    TBasicAtomInfo* Type; // though ignored in shelx, can be used for validation
+    olxstr Label;
+    XFragAtom(const olxstr& label, TBasicAtomInfo* bai, const vec3d& crd) :
+      Label(label), Type(bai), Crd(crd)  {  } 
+  };
+  bool Cartesian;
+public:
+  XFrag(double cell[6])  {
+    if( cell[0] == cell[1] && cell[1] == cell[2] && cell[2] == 1 &&
+      cell[3] == cell[4] && cell[4] == cell[5] && cell[5] == 90 ) {
+      Cartesian = true;
+    }
+    else  {
+      Cartesian = false;
+      double cG = cos(cell[5]/180*M_PI),
+        cB = cos(cell[4]/180*M_PI),
+        cA = cos(cell[3]/180*M_PI),
+        sG = sin(cell[5]/180*M_PI),
+        sB = sin(cell[4]/180*M_PI),
+        sA = sin(cell[3]/180*M_PI);
+      double cs = sG/(cell[2]*sqrt( (1-cA*cA-cB*cB-cG*cG) + 2*(cA*cB*cG)));
 
-class XModel  {
-  TArrayList<XScatterer> Scatterers;
-  TArrayList<Sites> Sites;
+      Cell2Cartesian[0][0] = cell[0];
+      Cell2Cartesian[1][0] = cell[1]*cG;
+      Cell2Cartesian[2][0] = cell[2]*cB;
+      Cell2Cartesian[1][1] = cell[1]*sG;
+      Cell2Cartesian[2][1] = -cell[2]*(cB*cG-cA)/sG;
+      Cell2Cartesian[2][2] = 1./cs;
+    }
+  }
+  inline int Count()                    const {  return Atoms.Count();  }
+  inline vec3d GetCrd(int i)            const {  return Cartesian ? Atoms[i].Crd : Atoms[i].Crd*FragToCartesian;  }
+  inline TBasicAtomInfo* GetType(int i) const { return Atoms[i].Type;  }
+  inline const olxstr& GetLabel(int i)  const {  return Atoms[i].Label;  }
+  inline void AddAtom(const olxstr& label, TBasicAtomInfo* bai, vec3d crd)  {
+    Atoms.AddNew(labels, bai, crd);
+  }
 };
 
 class AAtomList  {
@@ -273,6 +382,12 @@ public:
   }
 };
 
+class XModel  {
+  double Scale;  // global Fo/Fc scale
+  TArrayList<XScatterer> Scatterers;
+  TArrayList<Sites> Sites;
+  TPSTypeList<int, XFrag*> References;
+};
 
 class TRefinementModel {
 };
