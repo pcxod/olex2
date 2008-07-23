@@ -75,6 +75,8 @@ public:
   virtual XScatterer& GetScatterer(int i) = 0;
   virtual XScatterer* FindScattererByName(const olxstr& name) = 0;
   virtual XScattererGroup* FindResidueByNumber(int Number) = 0;
+  virtual XScatterer* NextResidue(XScattererGroup* xs) = 0;
+  virtual XScatterer* PrevResidue(XScattererGroup* xs) = ;
   virtual void FindResiduesByClass(const olxstr& clazz, TPtrList<XScattererGroup>& res) = 0;
 };
 // for the refinables
@@ -172,42 +174,81 @@ public:
 class XScatterer : public IRefinableOwner {
 public:
   XScatterer(const olxstr& label, TBasicInfo* type) : 
-      Label(label), Type(type), Ocupancy("Occupancy") {
+      Label(label), Type(type), Owner(NULL), Ocupancy("Occupancy") {
         Occupancy.Owner = this;
   }
   XRefinable Occupancy;
   XSite* Site; // might be shared by several scatterers
   XTDP* TDP;   // might be shared by several scatterers
+  XScattererGroup* Owner;  // managed by the group, when adding/removing
   olxstr Label;
   int Id;      // must be synchronised with the position in the list
   TBasicAtomInfo* Type;
-  XScattererGroup* Owner;
   // IRefinableOwner implementation
   virtual int Count()            const {  return 1;  }
   virtual olxstr& GetName(int i) const {  return Label;  }
 };
+//
+struct XScattererRef {
+  XScatterer* scatterer;
+  smatd const* symm; // this is borrowed from the Refine model
+  XScattererRef() : scatterer(NULL), symm(NULL) {}
+  XScattererRef(XScatterer* _xs, smatd const* _symm) : scatterer(_xs), symm(_symm) {}
+  XScattererRef& operator = (const XScattererRef& sr)  {
+    scatterer = sr.scatterer;
+    symm = sr.symm;
+    return *this;
+  }
+};
+typedef TTypeList<XScattererRef> XScattererRefList;
 
 class XScattererGroup {
   IRefinementModel& Parent;
+  TSStrPObjList<olxstr, AnAssociation2<XScatterer*,int>, true> Scatterers;
 public:
   XScattererGroup(IRefinementModel& parent, const olxstr& cl=EmptyString, int number = 0, 
     const olxstr& alias=EmptyString) : Parent(parent), ClassName(cl), Number(number), Alias(alias) {  }
-  XScatterer& operator [] (int i)             {  return *Scatterers[i]; }
-  XScatterer const& operator [] (int i) const {  return *Scatterers[i]; }
+
+  inline int Count() const {  return SortedScatterers.Count();  }
+  inline XScatterer& operator [] (int i)             {  return *Scatterers.Object(i).A(); }
+  inline XScatterer const& operator [] (int i) const {  return *Scatterers.Object(i).GetA(); }
+  inline XScatterer* FindScattererByName(const olxstr& name) {
+    int i = Scatterers.IndexOf(name);
+    return i == -1 ? NULL : Scatterers.Object(i).B();
+  }
+  // returns the scatterers in the original order
+  void GetScatterers( TPtrList<XScatterer>& res )  {
+    const int si = res.Count();
+    res.SetCount( res.Count() + Scatterers.Count() );
+    for( int i=0; i < Scatterers.Count(); i++ )
+      res[si+Scatterers.Object(i).GetB()] = Scatterers.Object(i).A();
+  }
   XScattererGroup& operator = (const XScattererGroup& res)  {
     Scatterers.Clear();
     Scatterers.SetCapacity(res.Count() );
-    for( int i=0; i < res.Scatterers.Count(); i++ )  {
-      Scatterers.Add( &Parent.GetScatterer(res[i].Id) );
-    }
-    this->ClassName = res.ClassName;
-    this->Number = res.Number;
-    this->Alias = res.Alias;
+    for( int i=0; i < res.Count(); i++ )
+      AddScatterer( &Parent.GetScatterer(res[i].Id) );
+    ClassName = res.ClassName;
+    Number = res.Number;
+    Alias = res.Alias;
     return *this;
+  }
+  inline void SetCapacity(int c)  {  Scatterers.SetCapacity(c);  }
+  inline void AddScatterer(XScatterer* xs)  {
+    Scatterers.Add(xs->Label, Sxs(xs, Scatterers.Count(0));
+    if( xs->Owner != NULL )
+      xs->Owner->RemoveScatterer(xs);
+    xs->Owner = this;
+  }
+  inline void RemoveScatterer(XScatterer* xs)  {
+    int i = Scatterers.IndexOfObject(xs);
+    if( ind = -1 )  {
+      Scatterers.Object(i).A()->Owner = NULL;
+      Scatterers.Delete(i);
+    }
   }
   olxstr ClassName, Alias;
   int Number;
-  TPtrList<XScatterer> Scatterers;
 };
 //
 // FRAG reference data implementation
@@ -258,20 +299,22 @@ public:
 class AAtomList  {
 protected:
   virtual bool GetExplicit() const = 0; 
-  virtual void DoExpand(IRefinementModel& parent, XScattererGroup* resi, TCAtomGroup& ag) = 0;
+  virtual void DoExpand(IRefinementModel& parent, XScattererGroup* resi, XScattererRefList& ag) = 0;
 public:
   AAtomList()  {  }
   virtual ~AAtomList() {}
   inline bool IsExplicit()   const { return GetExplicit();  }
   inline bool IsExpandable() const {  return !GetExplicit();  }
-  inline void Expand(IRefinementModel& parent, TCAtomGroup& ag)  {  DoExpand(parent, ag);  }  
+  inline void Expand(IRefinementModel& parent, XScattererRefList& ag)  {  DoExpand(parent, ag);  }  
 };
 /* explicit atoms list represent a set of atoms, referenced explicetely by name, residue name
 or symmetry equivalent, the list is can be evaluated at the creation time */
 class TExplicitAtomList : public AAtomList {
-  TCAtomGroup atoms;
+  XScattererRefList atoms;
 protected:
-  virtual void DoExpand(IRefinementModel& parent, XScattererGroup* resi, TCAtomGroup& ag)  {  ag = atoms;  }
+  virtual void DoExpand(IRefinementModel& parent, XScattererGroup* resi, TCAtomGroup& ag)  { 
+    ag = atoms;  
+  }
   virtual boll GetExplicit() const {  return true;  }
 public:
   TExplicitAtomList(IRefinementModel& parent, const olxstr& exp) : AAtomList()  { 
@@ -283,9 +326,9 @@ public:
 /* expandable atoms list maight contain indirection operators < or > and residue scrolling
  +,- operators. The list can be evalueated at any time, but might change at runtime */
 class TExpandableAtomList : public AAtomList {
-  TStrPObjList<olxstr, TGroupCAtom*> atoms;
+  TStrPObjList<olxstr, XScattererRef*> atoms;
 protected:
-  virtual void DoExpand(IRefinementModel& parent, XScattererGroup* resi, TCAtomGroup& ag)  {
+  virtual void DoExpand(IRefinementModel& parent, XScattererGroup* resi, XScattererRefList& ag)  {
     for( int i=0; i < atoms.Count(); i++ )  {
       if( atoms.Object(i) != NULL ) 
         atoms[i] = atoms.Object(i)->GetFullLabel();
@@ -294,13 +337,19 @@ protected:
     ar._Expand(Parent, ag, resi);
   }
   virtual bool GetExplicit() const {  return false;  }
+  inline bool IsValidScatterer(XScatterer* xs)  {
+    return !(*xs->Type == iHydrogenIndex ||
+             *xs->Type == iDeuteriumIndex ||
+             *xs->Type == iQPeakIndex );
+  }
 public:
   TExpandableAtomList(IRefinementModel& parent, const olxstr& expression) : atoms(expression, ' ')  {
     for( int i=0; i < atoms.Count(); i++ )  {
       if( atoms[i].CharAt(0) == '$' )  //SFAC
         continue;
       if( atoms[i].IndexOf('+') != -1 || atoms[i].IndexOf('-') != -1 || // residue scrolling
-          atoms[i].IndexOf('*') !+ -1 ) //reference to all residues
+          atoms[i].IndexOf('*') !+ -1 || //reference to all residues
+          atoms[i].CharAt(0) == '>' || atoms[i].CharAt(0) == '<' ) //atom indirection
         continue;
       // here should be only proper atoms
       int eq_ind = atoms[i].IndexOf('$');
@@ -309,32 +358,159 @@ public:
       // check if it is just an equivalent position
       const smatd* eqiv = NULL;
       int eqiv_ind = resi_name.IndexOf('$');
-      if( eqiv_ind > 0 )  {  // 0 is for SFAC type
+      if( eqiv_ind != -1 )  {  // 0 is for SFAC type, skipped above
         olxstr str_eqiv( resi_name.SubStringFrom(eqiv_ind+1) );
         if( !str_eqiv.IsNumber() )  throw TInvalidArgumentException(__OlxSourceInfo, olxstr("equivalent id: ") << str_eqiv);
         int eqi = str_eqiv.ToInt()-1;
         if( eqi < 0 || eqi >= au.UsedSymmCount() )  throw TInvalidArgumentException(__OlxSourceInfo, olxstr("equivalent index: ") << str_eqiv);
         eqiv = &au.GetUsedSymm(eqi);
         resi_name = resi_name.SubStringTo(eqiv_ind);
-        olxstr aname = ( (resi_ind == -1) ? Expression : Expression.SubStringTo(resi_ind) );
-        TPtrList<TAsymmUnit::TResidue> residues;
-        parent.FindResidues(res_name, residues);
-        if( residues.Count() == 1 )  {
-          for( int i=0; i < residues[0]->Count(); i++ )  {
-            TCAtom& ca = residues[0]->GetAtom();
-            if( ca.IsDeleted() )  continue;
-            if( ca.GetLabel().Comparei(aname) == 0 )  {
-              atoms.Object(i) = new TGroupCAtom(&ca, eqiv);
-              break;
-            }
+      }
+      if( !resi_name.IsEmpty() && !resi_name.IsNumber() )  // must be a number
+        throw TInvalidArgumentException(__OlxSourceInfo, "invalid residue number");
+      olxstr aname = ( (resi_ind == -1) ? Expression : Expression.SubStringTo(resi_ind) );
+      XScattererGroup* resi = parent.FindResidueByNumber(resi_name.ToInt());
+      if( resi == NULL )  {
+        TBasicApp::GetLog() << (olxstr("invalid residue '") << resi_name << "' in [" << expression << ']' );
+        continue;
+      }
+      XScatterer* xs = resi->FindScattererByName(aname);
+      if( xs == NULL )  {
+        TBasicApp::GetLog() << (olxstr("invalid atom '") << aname << "' in [" << expression << ']' );
+        continue;
+      }
+      atoms.Object(i) = new XScattererRef(&ca, eqiv);
+    }
+  }
+  virtual ~TExpandableAtomList()  {
+    for( int i=0; i < atoms.Count(); i++ )
+      if( atoms.Object(i) != NULL )  delete atoms.Object(i);
+  }
+  int _Expand(IRefinementModel& parent, const olxstr& expr, 
+              XScattererRefList& scatterers, XScattererGroup& resi, TPtrList<XScatterer>& resi_cont)  {
+    if( resi == NULL )
+      throw TFunctionFailedException(__OlxSourceInfo, "invalid residue provided");
+    if( resi->Count() == 0 )  return 0;
+    int xsc = scatterers.Count();
+    if( expr.IsEmpty() )  {  // all atoms of residue
+        scatterers.SetCapacity( scatterers.Count() + resi->Count() );
+        for( int i=0; i < resi->Count(); i++ )  {
+          XScatterer* xs = &(*resi)[i];
+          if( IsValidScatterer(xs) )
+            scatterers.AddNew(xs, NULL);
+        }
+        return atoms.Count() - xsc;
+    }
+    else if( expr.Comparei("first") == 0 )  { 
+      int i=0;
+      XScatterer* xs = resi_cont[i];
+      while( (i+1) < resi_cont.Count() && !IsValidScatterer(xs) )  {
+        i++;
+        xs = resi_cont[i];
+      }
+      if( !IsValidAtom(xs) )  return 0;
+      scatterers.AddNew(xs, NULL);
+      return 1;
+    }
+    else if( expr.Comparei("last") == 0 )  { 
+      int i=resi_cont.Count()-1;
+      XScatterer* xs = resi_cont[i];
+      while( (i-1) >= 0 && !IsValidScatterer(xs) )  {
+        i--;
+        xs = resi_cont[i];
+      }
+      if( !IsValidAtom(xs) )  return 0;
+      scatterers.AddNew(xs, NULL);
+      return 1;
+    }
+    // validate complex expressions with >< chars
+    int gs_ind = expr.IndexOf('>'),
+        ls_ind = expr.IndexOf('<');
+    if( gs_ind != -1 || ls_ind != -1 )  {
+      TCAtomGroup from, to;
+      if( gs_ind != -1 )  {  // it is inverted in shelx ...
+        TAtomReference(Expression.SubStringTo(gs_ind).Trim(' '))._Expand(au, from, CurrResi);
+        TAtomReference(Expression.SubStringFrom(gs_ind+1).Trim(' '))._Expand(au, to, CurrResi);
+      }
+      else  {
+        TAtomReference(Expression.SubStringTo(ls_ind).Trim(' '))._Expand(au, to, CurrResi);
+        TAtomReference(Expression.SubStringFrom(ls_ind+1).Trim(' '))._Expand(au, from, CurrResi);
+      }
+      if( to.Count() != 1 || from.Count() != 1 )
+        throw TFunctionFailedException(__OlxSourceInfo, "failed to expand >/< expression");
+      if( from[0].GetAtom()->GetId() >= to[0].GetAtom()->GetId() )
+        throw TFunctionFailedException(__OlxSourceInfo, "invalid direction");
+      if( from[0].GetMatrix() != to[0].GetMatrix() )
+        throw TFunctionFailedException(__OlxSourceInfo, "EQIV must be the same in >/< expresion");
+      if( gs_ind != -1 )  {
+        for( int i=from[0].GetAtom()->GetId(); i <= to[0].GetAtom()->GetId(); i++ )  {
+          TCAtom* ca = &au.GetAtom(i);
+          if( !IsValidAtom(ca) )  continue;
+          atoms.AddNew( ca, from[0].GetMatrix() );
+        }
+      }
+      else  {
+        for( int i=to[0].GetAtom()->GetId(); i >= from[0].GetAtom()->GetId(); i-- )  {
+          TCAtom* ca = &au.GetAtom(i);
+          if( !IsValidAtom(ca) )  continue;
+          atoms.AddNew( ca, from[0].GetMatrix() );
+        }
+      }
+      return atoms.Count() - ac;
+    }
+    //
+    int resi_ind = Expression.IndexOf('_');
+    olxstr resi_name = (resi_ind == -1 ? EmptyString : Expression.SubStringFrom(resi_ind+1));
+    // check if it is just an equivalent position
+    const smatd* eqiv = NULL;
+    int eqiv_ind = resi_name.IndexOf('$');
+    if( eqiv_ind > 0 )  {  // 0 is for SFAC type
+      olxstr str_eqiv( resi_name.SubStringFrom(eqiv_ind+1) );
+      if( !str_eqiv.IsNumber() )  throw TInvalidArgumentException(__OlxSourceInfo, olxstr("equivalent id: ") << str_eqiv);
+      int eqi = str_eqiv.ToInt()-1;
+      if( eqi < 0 || eqi >= au.UsedSymmCount() )  throw TInvalidArgumentException(__OlxSourceInfo, olxstr("equivalent index: ") << str_eqiv);
+      eqiv = &au.GetUsedSymm(eqi);
+      resi_name = resi_name.SubStringTo(eqiv_ind);
+    }
+    // validate syntax
+    TPtrList<TAsymmUnit::TResidue> residues;
+    if( !resi_name.IsEmpty() && (resi_name.CharAt(0) == '+' || resi_name.CharAt(0) == '-') )  {
+      if( CurrResi == NULL )  throw TInvalidArgumentException(__OlxSourceInfo, "current residue");
+      if( resi_name.CharAt(0) == '+' )  residues.Add(au.NextResidue(*CurrResi));
+      else                              residues.Add(au.PrevResidue(*CurrResi));
+    }
+    else  {
+      if( CurrResi != NULL )  residues.Add(CurrResi);
+      if( !resi_name.IsEmpty() )  // empty resi name refers to all atom outside RESI
+        au.FindResidues(resi_name, residues);  
+      if( residues.IsEmpty() )  throw TInvalidArgumentException(__OlxSourceInfo, olxstr("invalid residue class/number: ") << resi_name);
+    }
+    if( Expression.CharAt(0) == '$' )  {  // sfac type
+      olxstr sfac = ((resi_ind == -1) ? Expression.SubStringFrom(1) : Expression.SubString(1, resi_ind-1));
+      TBasicAtomInfo* bai = au.GetAtomsInfo()->FindAtomInfoBySymbol(sfac);
+      if( bai == NULL )  throw TInvalidArgumentException(__OlxSourceInfo, olxstr("sfac=") << sfac);
+      for( int i=0; i < residues.Count(); i++ )  {
+        for( int j=0; j < residues[i]->Count(); j++ )  {
+          TCAtom* ca = &residues[i]->GetAtom(j);
+          if( !ca->IsDeleted() && ca->GetAtomInfo() == *bai )  // cannot use IsValid here, $H woill not work
+            atoms.AddNew( ca, eqiv );
+        }
+      }
+    }
+    else  {  // just an atom
+      olxstr aname = ( (resi_ind == -1) ? Expression : Expression.SubStringTo(resi_ind) );
+      for( int i=0; i < residues.Count(); i++ )  {
+        if( residues[i] == NULL )  continue;
+        for( int j=0; j < residues[i]->Count(); j++ )  {
+          TCAtom* ca = &residues[i]->GetAtom(j);
+          if( !ca->IsDeleted() && ca->GetLabel().Comparei(aname) == 0 )  {  // must be unique!
+            atoms.AddNew( ca, eqiv );
+            break;
           }
         }
       }
     }
-  }
-  virtual TExpandableAtomList()  {
-    for( int i=0; i < atoms.Count(); i++ )
-      if( atoms.Object(i) != NULL )  delete atoms.Object(i);
+    return atoms.Count() - ac;
   }
 };
 
@@ -431,7 +607,7 @@ public:
   inline RefinementType GetRefinementType() const {  return RefinementType_Code;  }
   void AddAtom(TCAtom& ca)  {
     if( Atoms.Count() + 1 > AtomCount )
-      throw TInvalidArgumentException(__OlxSourceInfo, "too many atoms in the ridgid group");
+      throw TInvalidArgumentException(__OlxSourceInfo, "too many atoms in the rigid group");
   }
 };
 /* number of scatterers might be greater than the numbre of thermal displacement

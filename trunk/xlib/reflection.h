@@ -211,7 +211,7 @@ public:
   inline void SetDegeneracy(short v)     {  Multiplicity = v;  }
   inline void IncDegeneracy()            {  Multiplicity++;  }
 //..............................................................................
-  inline short GetFlag()           const {  return Flag;  }
+  inline int GetFlag()           const {  return Flag;  }
   inline void SetFlag(short v)           {  Flag = v;  }
 //..............................................................................
   inline double GetI()             const {  return I;  }
