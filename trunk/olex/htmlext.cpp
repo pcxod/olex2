@@ -937,6 +937,8 @@ THtml::THtml(wxWindow *Parent, ALibraryContainer* LC):
     InitMacroD( *THtml::Library, THtml, DefineControl, 
       "v-value&;i-tems&;c-checked/down&;bg-background color&;fg-foreground color;&;min-min value&;max-max value", 
       fpTwo, "Defines a managed control properties");
+    InitMacroD( *THtml::Library, THtml, Hide, EmptyString, 
+      fpOne, "Hides an Html popup window");
 
     this_InitFuncD(GetValue, fpOne, "Returns value of specified object");
     this_InitFuncD(GetData, fpOne, "Returns data associated with specified object");
@@ -1809,6 +1811,15 @@ void THtml::macHtmlLoad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     return;
   }
   html->LoadPage( Cmds.Last().String().u_str() );
+}
+//..............................................................................
+void THtml::macHide(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  THtml *html = TGlXApp::GetMainForm()->GetHtml(Cmds[0]);
+  if( html == NULL )  {
+    E.ProcessingError(__OlxSrcInfo, "undefined html window");
+    return;
+  }
+  html->GetParent()->Show(false);
 }
 //..............................................................................
 void THtml::macHtmlDump(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {

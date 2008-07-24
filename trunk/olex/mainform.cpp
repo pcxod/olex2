@@ -2051,10 +2051,6 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
         processed = true;
       }
     }
-    if( !processed )  {
-      ProcessXPMacro( olxstr("htmlpanelvisible ") << FHtmlMinimized, MacroError);
-      if( !FHtmlMinimized ) FHtml->ReloadPage();
-    }
   }
   else if( MsgId == ID_PROCESSTERMINATE )  SetProcess(NULL);
   else if( MsgId == ID_TEXTPOST )  {
