@@ -735,11 +735,19 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\xlib\xexp_parser.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\xlib\xfiles.h"
 				>
 			</File>
 			<File
 				RelativePath="..\..\..\xlib\xlcongen.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\xlib\xscatlist.h"
 				>
 			</File>
 			<File
