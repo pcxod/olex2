@@ -1938,7 +1938,9 @@ TAtomsInfo::TAtomsInfo(const olxstr &filename)  {
   Instance = this;
 }
 //..............................................................................
-TAtomsInfo::~TAtomsInfo()  {  }
+TAtomsInfo::~TAtomsInfo()  {  
+  Instance = NULL;
+}
 //..............................................................................
 void TAtomsInfo::SaveToFile(const olxstr &filename) const  {
   TCStrList L;

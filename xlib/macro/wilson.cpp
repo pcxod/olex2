@@ -232,7 +232,7 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
       << ((line[1] < 0) ? " " : "+") << olxstr::FormatFloat(3,line[0]) );
     output.Add("#B = ") << olxstr::FormatFloat(3,B);
     output.Add("#K = ") << olxstr::FormatFloat(3,1./K);
-    output.Add("#<|E*E-1|> = ") << olxstr::FormatFloat(3,E2);
+    output.Add("#<|E^2-1|> = ") << olxstr::FormatFloat(3,E2);
     output.Add("#%|E| > 2 = ") << olxstr::FormatFloat(3,(double)iE2GT2*100/refs.Count());
 
     TCStrList(output).SaveToFile( outputFileName ) ;
