@@ -219,11 +219,17 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
                                                    << "  [0.736 <- centro  +> 0.968]" << '\n' );
     XApp.GetLog() << ( olxstr("%|E| > 2 = ") << olxstr::FormatFloat(3,(double)iE2GT2*100/refs.Count())
                                                    << "  [1.800 <- centro  +> 4.600]" << '\n' );
+    for(int i=0; i < binData.Count(); i++ )  {
+      points[1][i] = binData[i].GetB();
+      points[0][i] = binData[i].GetA();
+    }
+    rms = ematd::PLSQ(points, line, 1);
+
     output.Add("#Title = Wilson plot");
     output.Add("#y_label = sin^2(theta)/lambda^2");
     output.Add("#x_label = ln(<Fo2>)/(Fexp2)");
-    output.Add(olxstr("#y = ") << olxstr::FormatFloat(3,1./line[1]) << "*x" 
-      << ((line[1] < 0) ? " " : "+") << olxstr::FormatFloat(3,1./line[0]) );
+    output.Add(olxstr("#y = ") << olxstr::FormatFloat(3,line[1]) << "*x" 
+      << ((line[1] < 0) ? " " : "+") << olxstr::FormatFloat(3,line[0]) );
     output.Add("#B = ") << olxstr::FormatFloat(3,B);
     output.Add("#K = ") << olxstr::FormatFloat(3,1./K);
     output.Add("#<|E*E-1|> = ") << olxstr::FormatFloat(3,E2);

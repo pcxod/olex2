@@ -29,8 +29,10 @@ int Colors[]={
           0x800000,
           0x00ffff,
           0x0000ff,
-          0x000000};
+          0x000000
+};
 
+TAtomsInfo* TAtomsInfo::Instance = NULL;
 //---------------------------------------------------------------------------
 // TBasicAtomInfo function bodies
 //---------------------------------------------------------------------------
@@ -1933,6 +1935,7 @@ TAtomsInfo::TAtomsInfo(const olxstr &filename)  {
       ai->SetMr(2.014102);
       ai->SetW(0.000115);
   }
+  Instance = this;
 }
 //..............................................................................
 TAtomsInfo::~TAtomsInfo()  {  }
