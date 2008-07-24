@@ -257,6 +257,7 @@ protected:
   DefFunc(LoadData)
   DefFunc(GetItemState)
   DefFunc(IsItem)
+  DefFunc(IsPopup)
 
   olxstr GetObjectValue(const IEObject *Object);
   const olxstr& GetObjectData(const IEObject *Object);

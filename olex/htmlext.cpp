@@ -964,6 +964,7 @@ THtml::THtml(wxWindow *Parent, ALibraryContainer* LC):
     this_InitFuncD(SetFocus, fpOne,    "Sets input focus to the specified HTML control");
     this_InitFuncD(GetItemState, fpOne|fpTwo, "Returns item state of provided switch");
     this_InitFuncD(IsItem, fpOne, "Returns true if specified switch exists");
+    this_InitFuncD(IsPopup, fpOne, "Returns true if specified popup window exists and visible");
   }
 }
 //..............................................................................
@@ -1722,6 +1723,11 @@ void THtml::funGetItemState(const TStrObjList &Params, TMacroError &E)  {
   E.SetRetVal( sw->FileIndex() );
 }
 //..............................................................................
+void THtml::funIsPopup(const TStrObjList& Params, TMacroError &E)  {
+  THtml *html = TGlXApp::GetMainForm()->GetHtml(Params[0]);
+  E.SetRetVal( html != NULL && html->GetParent()->IsShown() ); 
+}
+//..............................................................................
 void THtml::funIsItem(const TStrObjList &Params, TMacroError &E)  {
   THtml *html = (Params.Count() == 2) ? TGlXApp::GetMainForm()->GetHtml(Params[0]) : this;
   if( html == NULL )  {
@@ -1816,7 +1822,7 @@ void THtml::macHtmlLoad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 void THtml::macHide(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   THtml *html = TGlXApp::GetMainForm()->GetHtml(Cmds[0]);
   if( html == NULL )  {
-    E.ProcessingError(__OlxSrcInfo, "undefined html window");
+    //E.ProcessingError(__OlxSrcInfo, "undefined html window");
     return;
   }
   html->GetParent()->Show(false);

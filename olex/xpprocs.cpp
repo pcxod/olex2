@@ -5446,7 +5446,7 @@ void TMainForm::macPopup(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   TopSizer->Add(html1, 0, wxALL, 1);
   TopSizer->SetSizeHints( dlg );   // set size hints to honour minimum size
   dlg->SetSizer(TopSizer);
-
+  dlg->Fit();
   pd = new TPopupData;
   pd->Dialog = dlg;
   pd->Html = html1;
