@@ -9,6 +9,8 @@ OLEX crystallographic model, (c) O Dolomanov, 2008
 #include "symmat.h"
 #include "scat_it.h"
 #include "atominfo.h"
+#include "bapp.h"
+#include "log.h"
 
 BeginXlibNamespace()
 // hydrogen treatment and other rigid groups, m in shelx AFXI
@@ -59,12 +61,13 @@ public:
   virtual XScatterer& GetScatterer(int i) = 0;
   virtual XScatterer* FindScattererByName(const olxstr& name) = 0;
   virtual XResidue* FindResidueByNumber(int Number) = 0;
-  virtual XResidue* NextResidue(XResidue* xs) = 0;
-  virtual XResidue* PrevResidue(XResidue* xs) = 0;
+  virtual XResidue* NextResidue(const XResidue& xs) = 0;
+  virtual XResidue* PrevResidue(const XResidue& xs) = 0;
   virtual void FindResiduesByClass(const olxstr& clazz, TPtrList<XResidue>& res) = 0;
   virtual void FindResidues(const olxstr& name, TPtrList<XResidue>& res) = 0;
   virtual int UsedSymmCount() const = 0;
   virtual const smatd* GetUsedSymm(int i) const = 0;
+  virtual int UsedSymmIndex(const smatd& symm) const = 0;
 };
 // for the refinables
 class IRefinableOwner {
@@ -111,6 +114,7 @@ public:
   XSite* Site; // might be shared by several scatterers
   XTDP* TDP;   // might be shared by several scatterers
   XResidue* Owner;  // managed by the group, when adding/removing
+//  IRefinementModel* Parent;
   olxstr Label;
   int Id;      // must be synchronised with the position in the list
   TBasicAtomInfo* Type;
@@ -184,11 +188,11 @@ struct XScattererRef {
     symm = sr.symm;
     return *this;
   }
+  olxstr GetLabel() const;
 };
 typedef TTypeList<XScattererRef> XScattererRefList;
 
 class XResidue {
-  IRefinementModel& Parent;
   TSStrPObjList<olxstr, AnAssociation2<XScatterer*,int>, true> Scatterers;
 public:
   XResidue(IRefinementModel& parent, const olxstr& cl=EmptyString, int number = 0, 
@@ -237,6 +241,7 @@ public:
       Scatterers.Delete(ind);
     }
   }
+  IRefinementModel& Parent;
   olxstr ClassName, Alias;
   int Number;
 };
@@ -287,16 +292,16 @@ public:
   }
 };
 
-class AParamAtomList  {
+class AScattererParamList  {
 protected:
   virtual bool GetExplicit() const = 0; 
-  virtual void DoExpand(IRefinementModel& parent, XResidue& resi, XScattererRefList& ag) = 0;
+  virtual void DoExpand(IRefinementModel& parent, XResidue* resi, XScattererRefList& ag) = 0;
 public:
-  AParamAtomList()  {  }
-  virtual ~AParamAtomList() {}
+  AScattererParamList()  {  }
+  virtual ~AScattererParamList() {}
   inline bool IsExplicit()   const { return GetExplicit();  }
   inline bool IsExpandable() const {  return !GetExplicit();  }
-  inline void Expand(IRefinementModel& parent, XResidue& cres, XScattererRefList& ag)  {  
+  inline void Expand(IRefinementModel& parent, XResidue* cres, XScattererRefList& ag)  {  
     DoExpand(parent, cres, ag);  
   }  
 };

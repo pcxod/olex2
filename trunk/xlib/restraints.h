@@ -2,6 +2,7 @@
 #define restraintsH
 
 #include "xmodel.h"
+#include "xscatlist.h"
 #include "estrlist.h"
 #include "estlist.h"
 
@@ -26,23 +27,124 @@ const short  rtChiv = 0x0001,
              rtDfix = 0x0100,
              rtExyz = 0x0200,
              rtEadp = 0x0400;
-
+const short
+  shelxr_Distance = 1,
+  shelxr_Angle    = 2,
+  shelxr_Volume   = 3,
+  shelxr_Complex  = 4;
 
 
 class ARestraint  {
-  olxstr ResiName;
-  virtual bool GetExplicit() const = 0; 
-  virtual void DoExpand(IRefinementModel& parent, TArrayList<ARestraint>& rl) = 0;
+protected:
+  XResidue* Resi;
+  TPtrList<AScattererParamList> Allocated;
+  inline AScattererParamList* AllocateList(const olxstr& scatterers) {  
+    return Allocated.Add( XParamAtomListFactory::New(Parent, scatterers) );  
+  }
 public:
-  ARestraint() {  }
-  bool IsExplicit() const { return GetExplicit();  }
-  bool IsExpandable() const {  return !GetExplicit();  }
-  void Expand(IRefinementModel& parent, TArrayList<ARestraint>& rl)  {  DoExpand(parent, rl);  }  
+  ARestraint(IRefinementModel& parent) : Parent(parent) {  }
+  virtual ~ARestraint() {
+    for( int i=0; i < Allocated.Count(); i++ )
+      delete Allocated[i];
+  }
+  IRefinementModel& Parent;
 };
 
-class XSameDistanceRestraint : public ARestraint {
-  
+class Restraint_Same : public ARestraint {
+public:
+  Restraint_Same(IRefinementModel& parent, 
+                 const double defs[5], double s1=-1, double s2=-1) : 
+                   ARestraint(parent), S1(s1), S2(s2)  {
+    if( S1 == -1 )  S1 = defs[0];
+    if( S2 == -1 )  S2 = S1*2;
+  }
+
+  AScattererParamList* ReferenceAtoms;
+  TPtrList<AScattererParamList> Dependent;
+  double S1, S2;
 };
+
+class Restraint_Sadi : public ARestraint {
+public:
+  Restraint_Sadi(IRefinementModel& parent, 
+                 const double defs[5], double s1=-1) : 
+                   ARestraint(parent), S1(s1)  {
+    if( S1 == -1 )  S1 = defs[0];
+  }
+  double S1;
+  AScattererParamList* Scattereres;
+};
+
+class Restraint_Chiv : public ARestraint {
+public:
+  Restraint_Chiv(IRefinementModel& parent, 
+                 const double defs[5], double v = 0, double s1=-1) : 
+                   ARestraint(parent), V(v), S1(s1)  {
+    if( S1 == -1 )  S1 = defs[1];
+  }
+  double V, S1;
+  AScattererParamList* Scattereres;
+};
+
+class Restraint_Flat : public ARestraint {
+public:
+  Restraint_Flat(IRefinementModel& parent,
+                 const double defs[5], double s1=-1) : 
+                   ARestraint(parent), S1(s1)  {
+    if( S1 == -1 )  S1 = defs[1];
+  }
+  double S1;
+  AScattererParamList* Scattereres;
+};
+
+class Restraint_Delu : public ARestraint {
+public:
+  Restraint_Delu(IRefinementModel& parent, 
+                 const double defs[5], double s1=-1, double s2=-1) : 
+                   ARestraint(parent), S1(s1), S2(s2)  {
+    if( S1 == -1 )  S1 = defs[3];
+    if( S2 == -1 )  S2 = S1;
+  }
+  double S1, S2;
+  AScattererParamList* Scattereres;
+};
+
+class Restraint_Simu : public ARestraint {
+public:
+  Restraint_Simu(IRefinementModel& parent, 
+                 const double defs[5], double s1=-1, double s2=-1, double dmax = 1.7) : 
+                   ARestraint(parent), S1(s1), S2(s2), Dmax(dmax)  {
+    if( S1 == -1 )  S1 = defs[0];
+    if( S2 == -1 )  S2 = S1*2;
+  }
+  double S1, S2, Dmax;
+  AScattererParamList* Scattereres;
+};
+
+class Restraint_Isor : public ARestraint {
+public:
+  Restraint_Isor(IRefinementModel& parent, 
+                 const double defs[5], double s1=-1, double s2=-1) : 
+                   ARestraint(parent), S1(s1), S2(s2) {
+    if( S1 == -1 )  S1 = defs[1];
+    if( S2 == -1 )  S2 = S1*2;
+  }
+  double S1, S2;
+  AScattererParamList* Scattereres;
+};
+
+class Restraint_Ncsy : public ARestraint {
+public:
+  Restraint_Ncsy(IRefinementModel& parent, 
+                 const double defs[5], double s1=-1, double s2=-1) : 
+                   ARestraint(parent), S1(s1), S2(s2) {
+    if( S1 == -1 )  S1 = defs[1];
+    if( S2 == -1 )  S2 = S1*5;
+  }
+  double S1, S2;
+  AScattererParamList* Scattereres;
+};
+
 
 class XRigidGroup : public ARestraint {
   XScattererPList Scatterers;
@@ -53,8 +155,8 @@ protected:
   double D1, D2;
 public:
   XRigidGroup(IRefinementModel& container, short code, 
-              short rt, double d1 = -1, double d2 = -1) : 
-               RigidGroup_Code(code), RefinementType_Code(rt), D1(d1), D2(d2)  {
+              short rt, double d1 = -1, double d2 = -1) : ARestraint(container),
+                RigidGroup_Code(code), RefinementType_Code(rt), D1(d1), D2(d2)  {
     if( code == rg_SP31)
       AtomCount = 1;
     else if( code == rg_SP32 )
