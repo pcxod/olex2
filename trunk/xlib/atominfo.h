@@ -1,8 +1,6 @@
 #ifndef atominfoH
 #define atominfoH
 #include "chembase.h"
-//#include "estring.h"
-#include "elist.h"
 #include "estrlist.h"
 #include "tptrlist.h"
 
@@ -88,6 +86,7 @@ private:
   // parses a string like BRhClO intp B, Rh, Cl and O; works for capitalised symbols only
   // and will not know how to treat BRH, but BRh
   void ParseSimpleElementStr(const olxstr& str, TStrList& toks) const;
+  static TAtomsInfo* Instance;
 public:
   // 21.06.2008, table translated into the code, so the fileName is not used
   TAtomsInfo(const olxstr& filename=EmptyString);
@@ -108,6 +107,11 @@ public:
     count
   */
   void ParseElementString(const olxstr& su, TTypeList<AnAssociation2<olxstr, int> >& res) const;
+  inline static TAtomsInfo* GetInstance() {
+    if( Instance == NULL )
+      throw TFunctionFailedException(__OlxSourceInfo, "object is not initialised");
+    return Instance;
+  }
 };
 
 EndChemNamespace()
