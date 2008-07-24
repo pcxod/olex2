@@ -23,12 +23,11 @@ TdlgPrimitive::TdlgPrimitive(TStrList *L, int mask, TMainForm *P) :
   ButtonsSizer->Add( new wxButton( this, wxID_CANCEL, wxT("Cancel") ), 0, wxALL, 1);
   ButtonsSizer->Add( new wxButton( this, wxID_HELP, wxT("Help") ),     0, wxALL, 1);
 
-  int i, off;
+  int off;
   FPList = L;
   wxSize DefS(150, 21);
   wxCheckBox *Box;
-  for(i=0; i < L->Count(); i++ )
-  {
+  for( int i=0; i < L->Count(); i++ )  {
     Box = new wxCheckBox(this, -1, uiStr(L->String(i)), wxDefaultPosition, DefS);
     TopSizer->Add( Box,     0, wxALL, 1);
     FBoxes.Add(Box);

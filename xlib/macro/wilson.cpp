@@ -180,7 +180,7 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
   }
   if( binData.Count() != 0 )  {
     TTTable<TStrList> tab(binData.Count(), 2);
-    tab.ColName(0) = "sin(theta)/lambda";
+    tab.ColName(0) = "sin^2(theta)/lambda^2";
     tab.ColName(1) = "ln(<Fo2>)/(Fexp2)";
     ematd points(2, binData.Count() );
     evecd line(2);
@@ -214,16 +214,18 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
     }
     E2 /= Refs.Count();
     XApp.GetLog() << ( olxstr("From Wilson plot: B = ") << olxstr::FormatFloat(3,B)
-                                                 << " K = " << olxstr::FormatFloat(3,K) << '\n' );
+                                                 << " K = " << olxstr::FormatFloat(3,1./K) << '\n' );
     XApp.GetLog() << ( olxstr("<|E*E-1|> = ") << olxstr::FormatFloat(3,E2)
                                                    << "  [0.736 <- centro  +> 0.968]" << '\n' );
     XApp.GetLog() << ( olxstr("%|E| > 2 = ") << olxstr::FormatFloat(3,(double)iE2GT2*100/refs.Count())
                                                    << "  [1.800 <- centro  +> 4.600]" << '\n' );
     output.Add("#Title = Wilson plot");
-    output.Add("#x_label = sin(theta)/lambda");
-    output.Add("#y_label = ln(<Fo2>)/(Fexp2)");
+    output.Add("#y_label = sin^2(theta)/lambda^2");
+    output.Add("#x_label = ln(<Fo2>)/(Fexp2)");
+    output.Add(olxstr("#y = ") << olxstr::FormatFloat(3,1./line[1]) << "*x" 
+      << ((line[1] < 0) ? " " : "+") << olxstr::FormatFloat(3,1./line[0]) );
     output.Add("#B = ") << olxstr::FormatFloat(3,B);
-    output.Add("#K = ") << olxstr::FormatFloat(3,K);
+    output.Add("#K = ") << olxstr::FormatFloat(3,1./K);
     output.Add("#<|E*E-1|> = ") << olxstr::FormatFloat(3,E2);
     output.Add("#%|E| > 2 = ") << olxstr::FormatFloat(3,(double)iE2GT2*100/refs.Count());
 

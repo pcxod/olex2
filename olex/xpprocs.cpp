@@ -5404,18 +5404,14 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 }
 //..............................................................................
 void TMainForm::macPopup(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  int width = 100, height = 200, x=0, y=0;
-  olxstr border, title, onDblClick;
-  int iBorder = 0;
-  for( int i=0; i < Options.Count(); i++ )  {
-    if( !Options.GetName(i).Comparei("w") )  {  width = Options.GetValue(i).ToInt(); continue;  }
-    if( !Options.GetName(i).Comparei("h") )  {  height = Options.GetValue(i).ToInt(); continue;  }
-    if( !Options.GetName(i).Comparei("t") )  {  title = Options.GetValue(i); continue;  }
-    if( !Options.GetName(i).Comparei("b") )  {  border = Options.GetValue(i); continue;  }
-    if( !Options.GetName(i).Comparei("x") )  {  x = Options.GetValue(i).ToInt(); continue;  }
-    if( !Options.GetName(i).Comparei("y") )  {  y = Options.GetValue(i).ToInt(); continue;  }
-    if( !Options.GetName(i).Comparei("d") )  {  onDblClick = Options.GetValue(i); continue;  }
-  }
+  int width = Options.FindValue("w", "100").ToInt(), 
+    height = Options.FindValue("h", "200").ToInt(), 
+    x = Options.FindValue("x", "0").ToInt(), 
+    y = Options.FindValue("y", "0").ToInt();
+  olxstr border = Options.FindValue("b"), 
+    title = Options.FindValue("t"), 
+    onDblClick = Options.FindValue("d");
+  int iBorder = wxNO_BORDER;
   for( int i=0; i < border.Length(); i++ )  {
     if( border.CharAt(i) == 't' )  {  iBorder |= wxCAPTION;        continue;  }
     if( border.CharAt(i) == 'r' )  {  iBorder |= wxRESIZE_BORDER;  continue;  }
@@ -5425,7 +5421,7 @@ void TMainForm::macPopup(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     if( border.CharAt(i) == 'i' )  {  iBorder |= wxMINIMIZE_BOX;  iBorder |= wxSYSTEM_MENU; continue;  }
     if( border.CharAt(i) == 'p' )  {  iBorder |= wxSTAY_ON_TOP;   continue;  }
   }
-  iBorder |= wxNO_BORDER;
+  //iBorder |= wxNO_BORDER;
   // check if the popup already exists
   TPopupData *pd = GetPopup( Cmds[0] );
   if( pd != NULL )  {
@@ -5438,12 +5434,18 @@ void TMainForm::macPopup(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     return;
   }
 
-  wxDialog *dlg = new wxDialog(this, -1, uiStr(title), wxPoint(x,y), wxSize(width, height),
+  wxDialog *dlg = new wxDialog(this, -1, title.u_str(), wxPoint(x,y), wxSize(width, height),
     iBorder, wxT("htmlPopupWindow") );
   THtml *html1 = new THtml(dlg, FXApp);
   html1->WebFolder( TutorialDir );
   html1->SetHomePage( TutorialDir + Cmds[1] );
   html1->Movable(true);
+  dlg->GetClientSize(&width, &height);
+  html1->SetSize(width, height);
+  wxBoxSizer *TopSizer = new wxBoxSizer( wxVERTICAL );
+  TopSizer->Add(html1, 0, wxALL, 1);
+  TopSizer->SetSizeHints( dlg );   // set size hints to honour minimum size
+  dlg->SetSizer(TopSizer);
 
   pd = new TPopupData;
   pd->Dialog = dlg;
@@ -5463,8 +5465,6 @@ void TMainForm::macPopup(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   html1->OnKey->Add(this, ID_HTMLKEY);
   html1->OnDblClick->Add(this, ID_HTMLDBLCLICK);
   html1->OnCmd->Add(this, ID_HTMLCMD);
-  dlg->GetClientSize(&width, &height);
-  html1->SetSize(width, height);
   dlg->Show();
 }
 //..............................................................................

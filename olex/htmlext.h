@@ -233,6 +233,7 @@ protected:
   DefMacro(SetFonts)
   DefMacro(SetBorders)
   DefMacro(DefineControl)
+  DefMacro(Hide)
 
   DefFunc(GetValue)
   DefFunc(GetData)

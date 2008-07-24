@@ -436,8 +436,10 @@ public:
         TAtomReference(Expression.SubStringTo(ls_ind).Trim(' '))._Expand(au, to, CurrResi);
         TAtomReference(Expression.SubStringFrom(ls_ind+1).Trim(' '))._Expand(au, from, CurrResi);
       }
-      if( to.Count() != 1 || from.Count() != 1 )
-        throw TFunctionFailedException(__OlxSourceInfo, "failed to expand >/< expression");
+      if( from.Count() != 1 )
+        throw TFunctionFailedException(__OlxSourceInfo, "failed to expand >/< expression: invalid 'from'");
+      if( to.Count() != 1)
+        throw TFunctionFailedException(__OlxSourceInfo, "failed to expand >/< expression: invalid 'to'");
       if( from[0].GetAtom()->GetId() >= to[0].GetAtom()->GetId() )
         throw TFunctionFailedException(__OlxSourceInfo, "invalid direction");
       if( from[0].GetMatrix() != to[0].GetMatrix() )
