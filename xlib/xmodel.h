@@ -164,6 +164,7 @@ public:
   inline bool IsShared()                const {  return Scatterers.Count() > 1;  }
   olxstr GetLabel()  {
     if( Scatterers.IsEmpty() )  return EmptyString;
+    if( Scatterers.Count() == 1 )  return Scatterers[0]->Label;
     olxstr rv(Scatterers[0]->Label);
     for( int i=1; i < Scatterers.Count() - 1; i++ )
       rv << "," << Scatterers[i]->Label;

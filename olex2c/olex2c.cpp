@@ -4,6 +4,7 @@
 #include <iostream>
 #include <windows.h>
 #include <conio.h>
+#include <process.h>
 
 using namespace std;
 
@@ -148,6 +149,7 @@ class TOlex: public AEventsDispatcher, public olex::IOlexProcessor  {
   }
 public:
   TOlex( const olxstr& basedir) : XApp(basedir), Macros(*this) {
+    OlexInstance = this;
     XApp.GetLog().AddStream( new TOutStream(), true );
     XApp.GetLog().OnInfo->Add(this, ID_INFO);
     XApp.GetLog().OnWarning->Add(this, ID_WARNING);
@@ -164,7 +166,7 @@ public:
 
     unsigned long thread_id;
     TimerThreadHandle = CreateThread(NULL, 0, TimerThreadRun, this, 0, &thread_id);
-    conin = CreateFile(L"CONIN$", GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL); 
+    conin = CreateFile(L"CONIN$", GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL); 
     conout  = CreateFile(L"CONOUT$", GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
     GetConsoleScreenBufferInfo(conout, &TextAttrib); 
     DataDir = TShellUtil::GetSpecialFolderLocation(fiAppData);
@@ -284,6 +286,7 @@ public:
     PythonExt::Finilise();
     CloseHandle(conin);
     CloseHandle(conout);
+    OlexInstance = NULL;
   }
   HANDLE GetConin()  {  return conin;  }
   HANDLE GetConout() {  return conout;  }
@@ -398,6 +401,16 @@ public:
   bool Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, const IEObject *Data=NULL)  {
     bool res = true;
     if( MsgId == ID_TIMER )  {
+      if( XApp.XFile().GetLastLoader() != NULL )  {
+        olxstr sfn( TEFile::ExtractFilePath(XApp.XFile().GetFileName()) + "autochem.stop");
+        if( TEFile::FileExists(sfn) )  {
+          XApp.Sleep(100);
+          TEFile::DelFile(sfn);
+//          TOlex::~TOlex();
+          TerminateSignal = true;
+//          exit(0);
+        }
+      }
       TBasicApp::GetInstance()->OnTimer->SetEnabled( false );
       // execute tasks ...
       // end tasks ...
@@ -1310,7 +1323,11 @@ public:
     }
   }
   static void PyInit();
+  static bool TerminateSignal;
+  static TOlex* OlexInstance;
 };
+bool TOlex::TerminateSignal = false;
+TOlex* TOlex::OlexInstance;
 ////////////////////////////////////////////////////////////////////////////////////////
 PyObject* pyVarValue(PyObject* self, PyObject* args)  {
   olxstr varName;
@@ -1481,6 +1498,20 @@ static PyMethodDef CORE_Methods[] = {
 
 void TOlex::PyInit()  {  Py_InitModule( "olex_core", CORE_Methods );  }
 
+class TTerminationListener : public AActionHandler {
+public:
+  virtual bool Execute(const IEObject *Sender, const IEObject *Data=NULL)  {  
+    if( TOlex::TerminateSignal )  {
+      TBasicApp::GetLog() << "terminate\n";
+      exit(0);
+      DWORD w=0;
+      WriteConsole(TOlex::OlexInstance->GetConin(),
+        L"\n", 1, &w, NULL); 
+    }
+    return false; 
+  }
+};
+
 int main(int argc, char* argv[])  {
 	TOlex olex(argv[0]);
   SetConsoleTitle(L"Olex2 Console");
@@ -1488,11 +1519,21 @@ int main(int argc, char* argv[])  {
   cout << "Welcome to Olex2 console\n";
   cout << "Compilation information: " << __DATE__ << ' ' << __TIME__ << '\n';
   cout << ">>";
+  if( argc > 1 )  {
+    olxstr arg_ext( TEFile::ExtractFileExt(argv[1]) );
+    if( arg_ext.Comparei("autochem") == 0 )  {
+      TStrList in;
+      in.LoadFromFile(argv[1]); 
+
+    }
+  }
   char _cmd[512];
   olxstr cmd;
+  TBasicApp::GetInstance()->OnTimer->Add( new TTerminationListener );
   while( true )  {
     TBasicApp::GetInstance()->OnIdle->Execute(NULL);
     cin.getline(_cmd, 512);
+    if( olex.TerminateSignal )  break;
     cmd = _cmd;
     if( cmd.Comparei("quit") == 0 )  break;
     else  {
