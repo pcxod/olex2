@@ -565,10 +565,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\xlib\xmodel.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\xlib\xyz.cpp"
 				>
 			</File>
@@ -744,6 +740,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\xlib\xlcongen.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\xlib\xmodel.h"
 				>
 			</File>
 			<File

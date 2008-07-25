@@ -59,6 +59,9 @@ public:
       }
       Py_DECREF(result);
     }
+    if( PyErr_Occurred() )  {
+      PyErr_Print();
+    }
     OnCallLeave();
   }
 };
@@ -91,7 +94,9 @@ public:
     PyObject* result = PyObject_CallObject(PyFunction, arglist);
     if( arglist != NULL )  Py_DECREF(arglist);
     if( result != NULL )   Py_DECREF(result);
-
+    if( PyErr_Occurred() )  {
+      PyErr_Print();
+    }
     OnCallLeave();
   }
 };
