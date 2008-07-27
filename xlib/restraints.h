@@ -6,6 +6,8 @@
 #include "estrlist.h"
 #include "estlist.h"
 
+#include "indexlst.h"
+
 BeginXlibNamespace()
 
 const short  rpCrdX = 0x0001,
@@ -42,7 +44,7 @@ protected:
     return Allocated.Add( XParamAtomListFactory::New(Parent, scatterers) );  
   }
 public:
-  ARestraint(IRefinementModel& parent) : Parent(parent) {  }
+  ARestraint(IRefinementModel& parent) : Parent(parent), Resi(NULL) {  }
   virtual ~ARestraint() {
     for( int i=0; i < Allocated.Count(); i++ )
       delete Allocated[i];
@@ -58,10 +60,44 @@ public:
     if( S1 == -1 )  S1 = defs[0];
     if( S2 == -1 )  S2 = S1*2;
   }
+  void Init(const olxstr& scatterers)  {
+    ReferenceAtoms = AllocateList(scatterers);
+  }
+  void AddDependent(const olxstr& scatterers)  {
+    Dependent.Add( AllocateList(scatterers) );
+  }
 
   AScattererParamList* ReferenceAtoms;
   TPtrList<AScattererParamList> Dependent;
   double S1, S2;
+};
+
+class Restraint_Dfix : public ARestraint {
+public:
+  Restraint_Dfix(IRefinementModel& parent, 
+                 const double defs[5], double v, double s1=-1) : 
+                   ARestraint(parent), S1(s1)  {
+    if( S1 == -1 )  S1 = defs[0];
+  }
+  void Init(const olxstr& scatterers)  {
+    Scatterers = AllocateList(scatterers);
+  }
+  double v, S1;
+  AScattererParamList* Scatterers;
+};
+
+class Restraint_Dang : public ARestraint {
+public:
+  Restraint_Dang(IRefinementModel& parent, 
+                 const double defs[5], double v, double s1=-1) : 
+                   ARestraint(parent), S1(s1)  {
+    if( S1 == -1 )  S1 = defs[0]*2;
+  }
+  void Init(const olxstr& scatterers)  {
+    Scatterers = AllocateList(scatterers);
+  }
+  double v, S1;
+  AScattererParamList* Scatterers;
 };
 
 class Restraint_Sadi : public ARestraint {
@@ -71,8 +107,11 @@ public:
                    ARestraint(parent), S1(s1)  {
     if( S1 == -1 )  S1 = defs[0];
   }
+  void Init(const olxstr& scatterers)  {
+    Scatterers = AllocateList(scatterers);
+  }
   double S1;
-  AScattererParamList* Scattereres;
+  AScattererParamList* Scatterers;
 };
 
 class Restraint_Chiv : public ARestraint {
@@ -82,8 +121,11 @@ public:
                    ARestraint(parent), V(v), S1(s1)  {
     if( S1 == -1 )  S1 = defs[1];
   }
+  void Init(const olxstr& scatterers)  {
+    Scatterers = AllocateList(scatterers);
+  }
   double V, S1;
-  AScattererParamList* Scattereres;
+  AScattererParamList* Scatterers;
 };
 
 class Restraint_Flat : public ARestraint {
@@ -93,8 +135,11 @@ public:
                    ARestraint(parent), S1(s1)  {
     if( S1 == -1 )  S1 = defs[1];
   }
+  void Init(const olxstr& scatterers)  {
+    Scatterers = AllocateList(scatterers);
+  }
   double S1;
-  AScattererParamList* Scattereres;
+  AScattererParamList* Scatterers;
 };
 
 class Restraint_Delu : public ARestraint {
@@ -105,8 +150,11 @@ public:
     if( S1 == -1 )  S1 = defs[3];
     if( S2 == -1 )  S2 = S1;
   }
+  void Init(const olxstr& scatterers)  {
+    Scatterers = AllocateList(scatterers);
+  }
   double S1, S2;
-  AScattererParamList* Scattereres;
+  AScattererParamList* Scatterers;
 };
 
 class Restraint_Simu : public ARestraint {
@@ -117,8 +165,11 @@ public:
     if( S1 == -1 )  S1 = defs[0];
     if( S2 == -1 )  S2 = S1*2;
   }
+  void Init(const olxstr& scatterers)  {
+    Scatterers = AllocateList(scatterers);
+  }
   double S1, S2, Dmax;
-  AScattererParamList* Scattereres;
+  AScattererParamList* Scatterers;
 };
 
 class Restraint_Isor : public ARestraint {
@@ -129,8 +180,11 @@ public:
     if( S1 == -1 )  S1 = defs[1];
     if( S2 == -1 )  S2 = S1*2;
   }
+  void Init(const olxstr& scatterers)  {
+    Scatterers = AllocateList(scatterers);
+  }
   double S1, S2;
-  AScattererParamList* Scattereres;
+  AScattererParamList* Scatterers;
 };
 
 class Restraint_Ncsy : public ARestraint {
@@ -141,8 +195,11 @@ public:
     if( S1 == -1 )  S1 = defs[1];
     if( S2 == -1 )  S2 = S1*5;
   }
+  void Init(const olxstr& scatterers)  {
+    Scatterers = AllocateList(scatterers);
+  }
   double S1, S2;
-  AScattererParamList* Scattereres;
+  AScattererParamList* Scatterers;
 };
 
 
@@ -199,7 +256,7 @@ public:
     else if( code == rg_BH )
       AtomCount = 1;  
     else
-      AtomCount = container.GetFragmentSize(code); 
+      AtomCount = container.GetReferenceSize(code); 
   }
   inline short GetGroupType()          const {  return RigidGroup_Code;  }
   inline short GetRefinementType() const {  return RefinementType_Code;  }
@@ -213,34 +270,104 @@ public:
 parameters or sites, since the latter can be shared
 */
 class XModel : public IRefinementModel {
+  smatd_list UsedSymm;
 public:
-  virtual int ScattererCount() const {  return Scatterers.Count();  }
+  XModel() {
+    Residues.Add(0, new XResidue(*this) );  // default residue
+    Scale = 1;
+  }
+  virtual ~XModel() {
+  }
+  virtual int GetReferenceSize(int FragId) {  return References[FragId]->Count();  }
+  inline int referenceCount() const        {  return References.Count();  }
+
+  virtual int ScattererCount() const       {  return Scatterers.Count();  }
   virtual XScatterer& GetScatterer(int i)  {  return Scatterers[i];  }
   virtual XScatterer* FindScattererByName(const olxstr& name) {
-    return SortedScatterers[name];
+    return Scatterers.FindByKey(name);
   }
-  virtual XResidue* FindResidueByNumber(int Number) {
-    return Residues[Number];
+
+  virtual inline XResidue* FindResidueByNumber(int Number) {
+    return Residues.FindByKey(Number);
   }
   virtual void FindResiduesByClass(const olxstr& clazz, TPtrList<XResidue>& res) {
     for( int i=0; i < Residues.Count(); i++ )
-      if( Residues.Object(i)->ClassName.Comparei(clazz) == 0 )
-        res.Add( Residues.Object(i) );
+      if( Residues[i].ClassName.Comparei(clazz) == 0 )
+        res.Add( &Residues[i] );
   }
-
+  virtual XResidue* NextResidue(const XResidue& xs) {
+    return (xs.Id+1) == Residues.Count() ? NULL : &Residues[xs.Id+1];
+  }
+  virtual XResidue* PrevResidue(const XResidue& xs) {
+    return (xs.Id == 0) ? NULL : &Residues[xs.Id-1];
+  }
+  XResidue* NewResidue(const olxstr& clazzName, int Number, const olxstr& alias=EmptyString) {
+    XResidue* xr = new XResidue(*this, clazzName, Number, alias);
+    xr->Id = Residues.Count();
+    return &Residues.Add(Number, xr);
+  }
+  virtual void FindResidues(const olxstr& name, TPtrList<XResidue>& res) {
+    if( name.IsEmpty() ) {
+      res.Add( &Residues[0] );
+      return;
+    }
+    FindResiduesByClass(name, res);
+  }
+  const smatd& AddUsedSymm(const smatd& matr) {
+    int ind = UsedSymm.IndexOf(matr);
+    smatd* rv = NULL;
+    if( ind == -1 )  {
+      rv = &UsedSymm.Add( *(new smatd(matr)) );
+      rv->SetTag(1);
+    }
+    else  {
+      UsedSymm[ind].IncTag();
+      rv = &UsedSymm[ind];
+    }
+    return *rv;
+  }
+  void RemUsedSymm(const smatd& matr) {
+    int ind = UsedSymm.IndexOf(matr);
+    if( ind == -1 )
+      throw TInvalidArgumentException(__OlxSourceInfo, "matrix is not in the list");
+    UsedSymm[ind].DecTag();
+    if( UsedSymm[ind].GetTag() == 0 )
+      UsedSymm.Delete(ind);
+  }
+  virtual inline int UsedSymmCount() const {  
+    return UsedSymm.Count();  
+  }
+  virtual inline const smatd* GetUsedSymm(int ind) const {  
+    return &UsedSymm[ind];  
+  }
+  virtual inline int UsedSymmIndex(const smatd& matr)  const {  
+    return UsedSymm.IndexOf(matr);  
+  }
+  inline void ClearUsedSymm()          {  UsedSymm.Clear();  }
+  
   double Scale;  // global Fo/Fc scale
-  TTypeList<XScatterer> Scatterers;
   TTypeList<XSite> Sites;
   TTypeList<XTDP> TDPs;
   // a list of all residues with key - number
-  TPSTypeList<int, XResidue*> Residues;
+  TIndexList<int, XResidue> Residues;
   // a list of all scattererers for quick access by label
-  TSStrPObjList<olxstr, XScatterer*, false> SortedScatterers;
+  TIndexList<olxstr, XScatterer> Scatterers;
   TPSTypeList<int, XFrag*> References;
+  TTypeList<XRigidGroup> RigidGroups;
+  TTypeList<XLinearEquation> LinearEquations;
+
+  TTypeList<Restraint_Ncsy> NCSY;
+  TTypeList<Restraint_Isor> ISOR;
+  TTypeList<Restraint_Simu> SIMU;
+  TTypeList<Restraint_Delu> DELU;
+  TTypeList<Restraint_Flat> FLAT;
+  TTypeList<Restraint_Chiv> CHIV;
+  TTypeList<Restraint_Sadi> SADI;
+  TTypeList<Restraint_Dfix> DFIX;
+  TTypeList<Restraint_Dang> DANG;
+  TTypeList<Restraint_Same> SAME;
 };
 
-class TRefinementModel {
-};
 
 /*
 

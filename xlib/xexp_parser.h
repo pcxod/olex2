@@ -121,8 +121,12 @@ public:
     TPtrList<XResidue> residues;
     if( resi == NULL )  
       throw TInvalidArgumentException(__OlxSourceInfo, "invalid residue for +/- referencing");
-    if( !resi_name.IsEmpty() && (resi_name.CharAt(0) == '+' || resi_name.CharAt(0) == '-') )
-      residues.Add( (resi_name.CharAt(0) == '+') ? rm.NextResidue(*resi) : rm.PrevResidue(*resi));
+    if( !resi_name.IsEmpty() && (resi_name.CharAt(0) == '+' || resi_name.CharAt(0) == '-') )  {
+      XResidue* r = (resi_name.CharAt(0) == '+') ? rm.NextResidue(*resi) : rm.PrevResidue(*resi);
+      if( r == NULL ) // cannot scroll
+        return 0;
+      residues.Add( r );
+    }
     else  {
       if( resi != NULL )  residues.Add(resi);
       if( !resi_name.IsEmpty() )  // empty resi name refers to all atom outside RESI

@@ -55,9 +55,9 @@ int main(int argc, char* argv[])  {
     for( int i=0; i < XApp.XFile().GetAsymmUnit().AtomCount(); i++ )  {
       TCAtom &ca = XApp.XFile().GetAsymmUnit().GetAtom(i);
       printf("%s \t %f \t %f \t %f\n", ca.Label().c_str(),
-        ca.CCenter().Value(0).GetV(),
-        ca.CCenter().Value(1).GetV(),
-        ca.CCenter().Value(2).GetV() );
+        ca.ccrd()[0],
+        ca.ccrd()[1],
+        ca.ccrd()[2] );
     }
     TSpaceGroup* sg = sl.FindSG( XApp.XFile().GetAsymmUnit() );
     if( sg != NULL )  {
@@ -92,7 +92,7 @@ const short mxX = 0x001,
             mxY = 0x002,
             mxZ = 0x004;
 
-olxstr ProcessRow(const TVectorD& vec, const olxstr& var_type, int ind)  {
+olxstr ProcessRow(const vec3d& vec, const olxstr& var_type, int ind)  {
   olxstr rv("    ");
   rv << var_type << " a" << ind << " = ";
   if( vec[0] == 1 )
@@ -112,7 +112,7 @@ olxstr ProcessRow(const TVectorD& vec, const olxstr& var_type, int ind)  {
   rv << ';';
  return rv;
 }
-olxstr ProcessRowInPlace(const TVectorD& vec, int ind)  {
+olxstr ProcessRowInPlace(const vec3d& vec, int ind)  {
   olxstr rv("    v[");
   rv << ind << "] = ";
   if( vec[0] == 1 )
@@ -132,50 +132,44 @@ olxstr ProcessRowInPlace(const TVectorD& vec, int ind)  {
   rv << ';';
  return rv;
 }
-olxstr GenName(const TMatrixD& m)  {
+olxstr GenName(const smatd& m)  {
   olxstr rv;
   for( int i=0; i < 3; i++ )  {
     for( int j=0; j < 3; j++ )  {
-      if( m[i][j] == -1 )  rv << 0; 
-      else if( m[i][j] == 0 )  rv << 1;
-      else if( m[i][j] == 1 )  rv << 2;
+      if( m.r[i][j] == -1 )  rv << 0; 
+      else if( m.r[i][j] == 0 )  rv << 1;
+      else if( m.r[i][j] == 1 )  rv << 2;
     }
   }
   return rv;
  }
-bool IsDiagonale(const TMatrixD& m )  {
+bool IsDiagonale(const smatd& m )  {
   for( int i=0; i < 3; i++ )  {
     for( int j=0; j < 3; j++ )  {
-      if( i != j && m[i][j] != 0 )  return false;
+      if( i != j && m.r[i][j] != 0 )  return false;
     }
   }
   return true;
 }
-void copymatr(TMatrixD& dest, const TMatrixD& src, bool transpose)  {
-  if( !transpose )  {
-  for( int i=0; i < 3; i++ )
-    for( int j=0; j < 3; j++ )
-      dest[i][j] = src[i][j];
-  }
-  else  {
-    for( int i=0; i < 3; i++ )
-      for( int j=0; j < 3; j++ )
-        dest[j][i] = src[i][j];
-  }
+void copymatr(smatd& dest, const smatd& src, bool transpose)  {
+  if( !transpose )
+    dest.r = src.r;
+  else 
+    dest.r = src.r.Transpose(src.r);
 }
-void CodeGen(TMatrixD& m, const olxstr& d_type, const olxstr&var_type, const olxstr& Suffix, TStrList& out)  {
+void CodeGen(smatd& m, const olxstr& d_type, const olxstr&var_type, const olxstr& Suffix, TStrList& out)  {
   out.Add("  static inline void Mult") << Suffix << '(' << d_type << " v)  {";
-  if( m.IsE() )  {
+  if( m.r.IsI() )  {
     out.Last().String() << "  }";
     return;
   }
   if( IsDiagonale(m) )  {
     out.Add( EmptyString );
-    if( m[0][0] == -1 )
+    if( m.r[0][0] == -1 )
       out.Last().String() << "    v[0] = -v[0];";
-    if( m[1][1] == -1 )
+    if( m.r[1][1] == -1 )
       out.Last().String() << "    v[1] = -v[1];";
-    if( m[2][2] == -1 )
+    if( m.r[2][2] == -1 )
       out.Last().String() << "    v[2] = -v[2];";
     out.Add("  }");
     return;
@@ -183,62 +177,62 @@ void CodeGen(TMatrixD& m, const olxstr& d_type, const olxstr&var_type, const olx
   bool xmixed = false, ymixed = false, zmixed = false;
   bool xymixed = false, xzmixed = false, yzmixed = false;
   bool yxmixed = false, zxmixed = false, zymixed = false;
-  if( m[0][1] != 0 || m[0][2] != 0 )  {
-    if( m[0][1] != 0 )  xymixed = true;
-    if( m[0][2] != 0 )  xzmixed = true;
+  if( m.r[0][1] != 0 || m.r[0][2] != 0 )  {
+    if( m.r[0][1] != 0 )  xymixed = true;
+    if( m.r[0][2] != 0 )  xzmixed = true;
     xmixed = true;
   }
-  if( m[1][0] != 0 || m[1][2] != 0 )  {
-    if( m[1][0] != 0 )  yxmixed = true;
-    if( m[1][2] != 0 )  yzmixed = true;
+  if( m.r[1][0] != 0 || m.r[1][2] != 0 )  {
+    if( m.r[1][0] != 0 )  yxmixed = true;
+    if( m.r[1][2] != 0 )  yzmixed = true;
     ymixed = true;
   }
-  if( m[2][0] != 0 || m[2][1] != 0 )  {
-    if( m[2][0] != 0 )  zxmixed = true;
-    if( m[2][1] != 0 )  zymixed = true;
+  if( m.r[2][0] != 0 || m.r[2][1] != 0 )  {
+    if( m.r[2][0] != 0 )  zxmixed = true;
+    if( m.r[2][1] != 0 )  zymixed = true;
     zmixed = true;
   }
 
   if( !xmixed )  {
-    if( m[0][0] == -1 )  {
+    if( m.r[0][0] == -1 )  {
       out << "    v[0] = -v[0];";
-      if( yxmixed )  m[1][0] *= -1;
-      if( zxmixed )  m[2][0] *= -1;
+      if( yxmixed )  m.r[1][0] *= -1;
+      if( zxmixed )  m.r[2][0] *= -1;
     }
   }
   else  {
     if( (xymixed || xzmixed) && (!xzmixed & !yxmixed && !zxmixed) )  {
-      out.Add( ProcessRowInPlace(m[0], 0) );
+      out.Add( ProcessRowInPlace(m.r[0], 0) );
       xmixed = false;
     }
     else 
-      out.Add( ProcessRow(m[0], var_type, 0) );
+      out.Add( ProcessRow(m.r[0], var_type, 0) );
   }
   if( !ymixed )  {
-    if( m[1][1] == -1 )  {
+    if( m.r[1][1] == -1 )  {
       out << "    v[1] = -v[1];";
-      if( zymixed )  m[2][1] *= -1;
+      if( zymixed )  m.r[2][1] *= -1;
     }
   }
   else  {
     if( (yxmixed || yzmixed) && (!zymixed) )  {
-      out.Add( ProcessRowInPlace(m[1], 1) );
+      out.Add( ProcessRowInPlace(m.r[1], 1) );
       ymixed = false;
     }
     else 
-      out.Add( ProcessRow(m[1], var_type, 1) );
+      out.Add( ProcessRow(m.r[1], var_type, 1) );
   }
   if( !zmixed )  {
-    if( m[2][2] == -1 )
+    if( m.r[2][2] == -1 )
       out << "    v[2] = -v[2];";
   }
   else  {
     if( zymixed || zxmixed )  {
-      out.Add( ProcessRowInPlace(m[2], 2) );
+      out.Add( ProcessRowInPlace(m.r[2], 2) );
       zmixed = false;
     }
     else
-      out.Add( ProcessRow(m[2], var_type, 2) );
+      out.Add( ProcessRow(m.r[2], var_type, 2) );
   }
   if( xmixed )  out.Add( "    v[0] = a0;" );
   if( ymixed )  out.Add( "    v[1] = a1;" );
@@ -246,22 +240,22 @@ void CodeGen(TMatrixD& m, const olxstr& d_type, const olxstr&var_type, const olx
   out.Add("  }");
 }
 int CodeGen(TSpaceGroup& sg, TStrList& out)  {
-  TMatrixDList ml;
+  smatd_list ml;
   sg.GetMatrices(ml, mattAll);
   out.Add("  template <class TT, class AT> static inline void DoGeneratePos(const TT& v, AT& res)  {");
   for( int i=0; i < ml.Count(); i++ )  {
-    TMatrixD& m = ml[i];
+    smatd& m = ml[i];
     for( int j=0; j < 3; j++ )  {
       olxstr& str = out.Add("    res[") << i << "][" << j << "] = ";
       bool added = false;
       for( int k=0; k < 3; k++ )  {
-        if( m[j][k] != 0 )  {
-          str << ((m[j][k] > 0) ? (added ? (olxstr("+v[") << k << ']') : (olxstr("v[") << k << ']')) : (olxstr("-v[") << k << ']'));
+        if( m.r[j][k] != 0 )  {
+          str << ((m.r[j][k] > 0) ? (added ? (olxstr("+v[") << k << ']') : (olxstr("v[") << k << ']')) : (olxstr("-v[") << k << ']'));
           added = true;
         }
       }
-      if( m[j][3] != 0 )  {
-        int v = Round(m[j][3]*12), base = 12;
+      if( m.t[j] != 0 )  {
+        int v = Round(m.t[j]*12), base = 12;
         int denom = esdl::gcd(v, base);
         if( denom != 1 )  {
           v /= denom;
@@ -275,13 +269,13 @@ int CodeGen(TSpaceGroup& sg, TStrList& out)  {
   out.Add("  }");
   out.Add("  template <class TT, class AT, class SAT> static inline void DoGenerateHkl(TT& v, AT& res, SAT& phase)  {");
   for( int i=0; i < ml.Count(); i++ )  {
-    TMatrixD& m = ml[i];
+    smatd& m = ml[i];
     for( int j=0; j < 3; j++ )  {
       olxstr& str = out.Add("    res[") << i << "][" << j << "] = ";
       bool added = false;
       for( int k=0; k < 3; k++ )  {
-        if( m[k][j] != 0 )  {  // transposed form for hkl
-          str << ((m[k][j] > 0) ? (added ? (olxstr("+v[") << k << ']') : (olxstr("v[") << k << ']')) : (olxstr("-v[") << k << ']'));
+        if( m.r[k][j] != 0 )  {  // transposed form for hkl
+          str << ((m.r[k][j] > 0) ? (added ? (olxstr("+v[") << k << ']') : (olxstr("v[") << k << ']')) : (olxstr("-v[") << k << ']'));
           added = true;
         }
       }
@@ -290,15 +284,15 @@ int CodeGen(TSpaceGroup& sg, TStrList& out)  {
     olxstr& str = out.Add("    phase[") << i << "] = ";
     bool added = false;
     for( int j=0; j < 3; j++ )  {
-      if( m[j][3] != 0 )  {  // transposed form for hkl
-        int v = Round(m[j][3]*12), base = 12;
+      if( m.t[j] != 0 )  {  // transposed form for hkl
+        int v = Round(m.t[j]*12), base = 12;
         int denom = esdl::gcd(v, base);
         if( denom != 1 )  {
           v /= denom;
           base /= denom;
         }
         olxstr mult(v);  mult << "./"  << base;
-        str << ((m[j][3] > 0) ? (added ? (olxstr("+v[") << j << ']') : (olxstr("v[") << j << ']')) : (olxstr("-v[") << j << ']'));
+        str << ((m.t[j] > 0) ? (added ? (olxstr("+v[") << j << ']') : (olxstr("v[") << j << ']')) : (olxstr("-v[") << j << ']'));
         str << '*' << mult;
         added = true;
       }
@@ -312,7 +306,7 @@ int CodeGen(TSpaceGroup& sg, TStrList& out)  {
 
 void ExportSymmLib()  {
   TSymmLib& sl = *TSymmLib::GetInstance();
-  TMatrixDList ml, uniqm;
+  smatd_list ml, uniqm;
   TStrList sgout, sgout1;
   olxstr matrname;
   sgout.Add("  TIntList mind(256);");
@@ -327,18 +321,9 @@ void ExportSymmLib()  {
     sgout.Add("  list.Add(\"") << sg.GetName() << "\", fs);";
     for( int j=0; j < ml.Count(); j ++ )  {
       bool uniq = true;
-      TMatrixD& m = ml[j];
+      smatd& m = ml[j];
       for( int k=0; k < uniqm.Count(); k++ )  {
-        const TMatrixD& n = uniqm[k];
-        if( m[0][0] == n[0][0] &&
-            m[0][1] == n[0][1] &&
-            m[0][2] == n[0][2] &&
-            m[1][0] == n[1][0] &&
-            m[1][1] == n[1][1] &&
-            m[1][2] == n[1][2] &&
-            m[2][0] == n[2][0] &&
-            m[2][1] == n[2][1] &&
-            m[2][2] == n[2][2] )  {
+        if( m.r == uniqm[k].r )  {
           uniq = false;
           m.SetTag(k);
           break;
@@ -376,11 +361,9 @@ void ExportSymmLib()  {
   sgout1.Add("  FastSymm::IA MultIA[") << uniqm.Count() << "], MultIAT[" << uniqm.Count() << "];";
   TStrList out;
   out.Add("struct FastMatrices {");
-  TMatrixD matr(3,3);
+  smatd matr;
   for( int i=0; i < uniqm.Count(); i++ )  {
-    uniqm[i][0][3] = 0;
-    uniqm[i][1][3] = 0;
-    uniqm[i][2][3] = 0;
+    uniqm[i].t.Null();
     matrname = GenName(uniqm[i]);
     out.Add("// ")  << TSymmParser::MatrixToSymm(uniqm[i]);
     copymatr(matr, uniqm[i], false);
@@ -437,8 +420,8 @@ void ExportSymmLibA()  {
     out.Add("class TSpaceGroup_") << i << " : public ISGGroup  {";
     out.Add("public: ");
     int mc = CodeGen(sg, out);
-    out.Add("  virtual inline void GeneratePos(const TVectorD& v, TArrayList<TVectorD>& res) const {  DoGeneratePos(v,res);  }");
-    out.Add("  virtual inline void GeneratePos(const TVectorD& v, TArrayList<TVPointD>& res) const {  DoGeneratePos(v,res);  }");
+    out.Add("  virtual inline void GeneratePos(const evecd& v, TArrayList<evecd>& res) const {  DoGeneratePos(v,res);  }");
+    out.Add("  virtual inline void GeneratePos(const evecd& v, TArrayList<TVPointD>& res) const {  DoGeneratePos(v,res);  }");
     out.Add("  virtual inline int GetSize() const {  return ") << mc << ";  }";
     out.Add("};");
   }
@@ -509,11 +492,11 @@ void ExportSymmLibB()  {
       ", GetLattice(" << abs(sg.GetLattice().GetLatt()-1) << "), " << 
       sg.IsCentrosymmetric() << ");";
     for( int j=0; j < sg.MatrixCount(); j++ )  {
-      TMatrixD& m = sg.GetMatrix(j);
-      out.Add("    sg->AddMatrix(") << m[0][0] << ", " << m[0][1] << ", " << m[0][2] << ", " <<
-        m[1][0] << ", " << m[1][1] << ", " << m[1][2] << ", " <<
-        m[2][0] << ", " << m[2][1] << ", " << m[2][2] << ", " <<
-        m[0][3] << ", " << m[1][3] << ", " << m[2][3] << ");";
+      smatd& m = sg.GetMatrix(j);
+      out.Add("    sg->AddMatrix(") << m.r[0][0] << ", " << m.r[0][1] << ", " << m.r[0][2] << ", " <<
+        m.r[1][0] << ", " << m.r[1][1] << ", " << m.r[1][2] << ", " <<
+        m.r[2][0] << ", " << m.r[2][1] << ", " << m.r[2][2] << ", " <<
+        m.t[0]    << ", " << m.t[1]    << ", " << m.t[2] << ");";
     }
     out.Add("  SpaceGroups.Add(\"") << sg.GetName() << "\", sg);";
   }
