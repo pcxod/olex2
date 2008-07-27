@@ -56,7 +56,7 @@ typedef TPtrList<XScatterer> XScattererPList;
 // for the rigid groups
 class IRefinementModel {
 public:
-  virtual int GetFragmentSize(int FragId) = 0;
+  virtual int GetReferenceSize(int FragId) = 0;
   virtual int ScattererCount() const = 0;
   virtual XScatterer& GetScatterer(int i) = 0;
   virtual XScatterer* FindScattererByName(const olxstr& name) = 0;
@@ -64,6 +64,7 @@ public:
   virtual XResidue* NextResidue(const XResidue& xs) = 0;
   virtual XResidue* PrevResidue(const XResidue& xs) = 0;
   virtual void FindResiduesByClass(const olxstr& clazz, TPtrList<XResidue>& res) = 0;
+  // finds residue by class name, if name is empty - adds the default residue
   virtual void FindResidues(const olxstr& name, TPtrList<XResidue>& res) = 0;
   virtual int UsedSymmCount() const = 0;
   virtual const smatd* GetUsedSymm(int i) const = 0;
@@ -80,28 +81,33 @@ public:
 struct XRefinable {
   double Value, Esd;
   bool Refinable;
-  XLinearEquation* Equation;
+  TPtrList<XLinearEquation> Equations;
   IRefinableOwner* Owner;
   olxstr Name;
   XRefinable(const olxstr& name = EmptyString) : 
-    Name(name), Value(0), Esd(0), Refinable(false), Equation(NULL), Owner(NULL)  {  }
-  inline bool IsDependent()      const {  return Equation != NULL;  }
+    Name(name), Value(0), Esd(0), Refinable(false), Owner(NULL)  {  }
+  inline bool IsDependent()      const {  return !Equations.IsEmpty();  }
 };
 //
-struct XEquationMameber {
+struct XEquationMember {
   double Ratio;
   XRefinable* Refinable;
-  XEquationMameber() : Ratio(1), Refinable(NULL) {}
-  XEquationMameber(double ratio, XRefinable* refinable) :
+  XEquationMember() : Ratio(1), Refinable(NULL) {}
+  XEquationMember(double ratio, XRefinable* refinable) :
     Ratio(ratio), Refinable(refinable) {  }
 };
 /* SUMP, +- free var, dependent Uiso 
   if there is only one member, that member Ratio has to be used
 */
 struct XLinearEquation {
-  double Value, Sigma;
-  TArrayList<XRefinable> Members; 
+  XRefinable& Add(XRefinable& member, double ratio)  {
+    Members.Add( *(new XEquationMember(ratio, &member)) );
+    member.Equations.Add(this);
+    return member;
+  }
   XLinearEquation(double val, double sig) : Value(val), Sigma(sig) {}
+  double Value, Sigma;
+  TTypeList<XEquationMember> Members; 
 };
 //
 class XScatterer : public IRefinableOwner {
@@ -244,7 +250,7 @@ public:
   }
   IRefinementModel& Parent;
   olxstr ClassName, Alias;
-  int Number;
+  int Number, Id;
 };
 //
 // FRAG reference data implementation

@@ -686,6 +686,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\sdl\indexlst.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\sdl\istream.h"
 				>
 			</File>

@@ -78,9 +78,9 @@ int __cdecl main(int argc, char* argv[])
 
         TSAtom &ca = xf.GetLattice().GetAtom(i);
         printf("%s \t %f \t %f \t %f\n", ca.GetLabel().c_str(),
-          ca.CCenter()[0],
-          ca.CCenter()[1],
-          ca.CCenter()[2]);
+          ca.ccrd()[0],
+          ca.ccrd()[1],
+          ca.ccrd()[2]);
 
       }
     }
@@ -100,14 +100,14 @@ int __cdecl main(int argc, char* argv[])
 
 
   for(int i = 0 ; i <atomList.Count(); i++){
-    TVectorD quad(6);
-    TMatrixD UijCell(3,3);
+    evecd quad(6);
+    ematd UijCell(3,3);
 
     std::cout << "\n-----------------------------\n\nAtom " 
           << i << "\nUij matrix from refinement";
-    TMatrixD Uij(3,3);
+    ematd Uij(3,3);
     {
-      TVectorD quad(6);
+      evecd quad(6);
     
       TSAtom *anAtom = atomList[i];
       anAtom->GetEllipsoid()->GetQuad(quad);
@@ -135,7 +135,7 @@ int __cdecl main(int argc, char* argv[])
     
     
     {
-      TVectorD quad(6);
+      evecd quad(6);
       tls.GetElpList()[i].GetQuad(quad); // .GetMatrix().Print();      
       Uij[0][0] = quad[0];
       Uij[0][1] = Uij[1][0] = quad[5];

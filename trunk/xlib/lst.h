@@ -5,6 +5,7 @@
 #include "symmat.h"
 #include "bitarray.h"
 #include "estrlist.h"
+#include "elist.h"
 
 BeginXlibNamespace()
 

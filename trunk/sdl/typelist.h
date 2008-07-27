@@ -1,55 +1,49 @@
 //---------------------------------------------------------------------------
 #ifndef typelistH
 #define typelistH
-#include "elist.h"
 #include "esort.h"
 #include "etraverse.h"
 #include "exception.h"
 #include "talist.h"
+#include "tptrlist.h"
 
 BeginEsdlNamespace()
 
 template <class T, class DestructCast> class TTypeListExt : public IEObject  {
 private:
   // initialisation function
-  void init(size_t size)  {
-    FList = new TEList(size);
-  }
-  inline T& Alloc(size_t i)  {  return *(T*)( FList->Item(i) = new T() );  }
+  inline T& Alloc(size_t i)  {  return *(T*)( List[i] = new T() );  }
 protected:
-  TEList* FList;
+  TPtrList<T> List;
 public:
   // creates a new empty objects
-  TTypeListExt()  {  init(0);  }
+  TTypeListExt() {  }
   // allocates size elements (can be accessed diretly)
-  TTypeListExt(int size)  {  init(size);  }
+  TTypeListExt(int size) : List(size)  {  }
 //..............................................................................
-  /* copy constuctor - creates new copies of the objest, be careful as the assignement
-   operator must exist for nonpointer objects */
-  TTypeListExt( const TTypeListExt& list )  {
-   init( list.Count() );
+  /* copy constuctor - creates new copies of the objest, be careful as the copy
+   constructor must exist for nonpointer objects */
+  TTypeListExt( const TTypeListExt& list ) : List(list.Count())  {
     for( int i=0; i < list.Count(); i++ )
-      Alloc(i) =  list[i];
+      List[i] =  new T(list[i]);
   }
 //..............................................................................
   /* copies values from an array of size elements  */
-  TTypeListExt( size_t size, const T* array )  {
-   init( size );
-    for( int i=0; i < FList->Count(); i++ )
+  TTypeListExt( size_t size, const T* array ) : List(size)  {
+    for( int i=0; i < size; i++ )
       Alloc(i) =  array[i];
   }
 //..............................................................................
   //destructor - beware t40: error: expecthe objects are deleted!
   virtual ~TTypeListExt()  {
     Clear();
-    delete FList;
   }
 //..............................................................................
   //deletes the objects and clears the list
   void Clear()  {
-    for( int i=0; i < FList->Count(); i++ )
-      delete (DestructCast*)FList->Item(i);
-    FList->Clear();
+    for( int i=0; i < List.Count(); i++ )
+      delete (DestructCast*)List[i];
+    List.Clear();
   }
 //..............................................................................
 /*  virtual IEObject* Replicate() const  {
@@ -63,11 +57,11 @@ public:
   /* copy constuctor - creates new copies of the objest, be careful as the assignement
    operator must exist  */
   void AddList( const TTypeListExt& list )  {
-    FList->SetCapacity( list.Count() + FList->Count() );
+    List.SetCapacity( list.Count() + List.Count() );
     for( int i=0; i < list.Count(); i++ )  {
       T* o = new T();
       *o = list[i];
-      FList->Add(o);
+      List.Add(o);
     }
   }
 //..............................................................................
@@ -75,13 +69,13 @@ public:
 //  TEList& c_list() { return *FList;  }
 //..............................................................................
   //adds a new object ito the list - will be deleted
-  inline T& Add(T& Obj)  {  FList->Add(&Obj);  return Obj;  }
+  inline T& Add(T& Obj)  {  return *List.Add(&Obj);  }
 //..............................................................................
   //sets the list item to an object, which will be deleted
   inline T& Set(size_t index, T& Obj)  {
-    if( FList->Item(index) != NULL )
-      delete (DestructCast*)FList->Item(index);
-    return *(T*)(FList->Item(index) = &Obj);
+    if( List[index] != NULL )
+      delete (DestructCast*)List[index];
+    return *(T*)(List[index] = &Obj);
   }
 //..............................................................................
   // adds a copy of the object with default constructor  "assigned copy"
@@ -89,8 +83,8 @@ public:
 //..............................................................................
   //sets the listitem to an new object copied by the assignement operator
   inline const T& SetACopy(size_t index, const T& Obj)  {
-    if( FList->Item(index) != NULL )
-      delete (DestructCast*)FList->Item(index);
+    if( List[index] != NULL )
+      delete (DestructCast*)List[index];
     return (Alloc(index) = Obj);
   }
 //..............................................................................
@@ -99,9 +93,9 @@ public:
 //..............................................................................
   //sets the listitem to an new object copied by the copy constructor
   inline const T& SetCCopy(size_t index, const T& Obj)  {
-    if( FList->Item(index) != NULL )
-      delete (DestructCast*)FList->Item(index);
-    return *(T*)( FList->Item(index) = new T(Obj) );
+    if( List[index] != NULL )
+      delete (DestructCast*)List[index];
+    return *(T*)( List[index] = new T(Obj) );
   }
 //..............................................................................
 //..............................................................................
@@ -109,154 +103,148 @@ public:
   inline const T& InsertACopy(size_t index, const T& Obj)  {  return (InsertNew(index) = Obj);  }
 //..............................................................................
   // insert anobject into thelist; the object will be deleted
-  inline const T& Insert(size_t index, T& Obj)  {  FList->Insert(index, &Obj);  return Obj;  }
+  inline const T& Insert(size_t index, T& Obj)  {  return *List.Insert(index, &Obj);  }
 //..............................................................................
   // copy constructor created copy is inserted
   inline const T& InsertCCopy(size_t index, const T& Obj)  {  return InsertNew<T>(index, Obj);  }
 //..............................................................................
   //inerts a new object at specified position
-  inline T& InsertNew(size_t index)  {  T* o = new T();  FList->Insert(index, o);  return *o;  }
+  inline T& InsertNew(size_t index)  {  return *List.Insert(index, new T());  }
 //..............................................................................
   template<class AC>
     inline T& InsertNew( size_t index, const AC& arg )  {
-      T* o = new T(arg);  FList->Insert(index, o);  return *o;  }
+      return *List.Insert(index, new T(arg));  }
 //..............................................................................
   template<class FAC, class SAC>
     inline T& InsertNew( size_t index, const FAC& arg1, const SAC& arg2 )  {
-      T* o = new T(arg1, arg2);  FList->Insert(index, o);  return *o;  }
+      return *List.Insert(index, new T(arg1, arg2));  }
 //..............................................................................
   template<class FAC, class SAC, class TAC>
     inline T& InsertNew( size_t index, const FAC& arg1, const SAC& arg2, const TAC& arg3)  {
-      T* o = new T(arg1, arg2, arg2);  FList->Insert(index, o);  return *o;  }
+      return *List.Insert(index, new T(arg1, arg2, arg2));  }
 //..............................................................................
   template<class FAC, class SAC, class TAC, class FrAC>
     inline T& InsertNew( size_t index, const FAC& arg1, const SAC& arg2, const TAC& arg3, const FrAC& arg4)  {
-      T* o = new T(arg1, arg2, arg2, arg4);  FList->Insert(index, o);  return *o;  }
+      return *List.Insert(index, new T(arg1, arg2, arg2, arg4));  }
 //..............................................................................
   template<class FAC, class SAC, class TAC, class FrAC, class FvAC>
     inline T& InsertNew( size_t index, const FAC& arg1, const SAC& arg2, const TAC& arg3, const FrAC& arg4, const FvAC& arg5)  {
-      T* o = new T(arg1, arg2, arg2, arg4, arg5);  FList->Insert(index, o);  return *o;  }
+      return *List.Insert(index, new T(arg1, arg2, arg2, arg4, arg5));  }
 //..............................................................................
-  inline T& AddNew()  {  T* o = new T();  FList->Add(o);  return *o;  }
+  inline T& AddNew()  {  return *List.Add(new T());  }
 //..............................................................................
   template<class AC>
     inline T& AddNew( const AC& arg )  {
-      T* o = new T(arg);  FList->Add(o);  return *o;  }
+      return *List.Add(new T(arg));  }
 //..............................................................................
   template<class FAC, class SAC>
     inline T& AddNew( const FAC& arg1, const SAC& arg2 )  {
-      T* o = new T(arg1, arg2);  FList->Add(o);  return *o;  }
+      return *List.Add(new T(arg1, arg2));  }
 //..............................................................................
   template<class FAC, class SAC, class TAC>
     inline T& AddNew( const FAC& arg1, const SAC& arg2, const TAC& arg3 )  {
-      T* o = new T(arg1, arg2, arg3);  FList->Add(o);  return *o;  }
+      return *List.Add(new T(arg1, arg2, arg3));  }
 //..............................................................................
   template<class FAC, class SAC, class TAC, class FrAC>
     inline T& AddNew( const FAC& arg1, const SAC& arg2, const TAC& arg3, const FrAC& arg4)  {
-      T* o = new T(arg1, arg2, arg3, arg4);  FList->Add(o);  return *o;  }
+      return *List.Add(new T(arg1, arg2, arg3, arg4));  }
 //..............................................................................
   template<class FAC, class SAC, class TAC, class FrAC, class FvAC>
     inline T& AddNew( const FAC& arg1, const SAC& arg2, const TAC& arg3, const FrAC& arg4, const FvAC& arg5)  {
-      T* o = new T(arg1, arg2, arg3, arg4, arg5);  FList->Add(o);  return *o;  }
+      return *List.Add(new T(arg1, arg2, arg3, arg4, arg5));  }
 //..............................................................................
   inline T& operator [] (size_t index) const {
 #ifdef _OLX_DEBUG
-    T*& v = (T*&)FList->Item(index);
+    T*& v = List[index];
     if( v == NULL )
       throw TFunctionFailedException(__OlxSourceInfo, "cannot dereference a NULL pointer");
     return *v;
 #else
-    return *(T*)FList->Item(index);
+    return *List[index];
 #endif
   }
 //..............................................................................
   inline T& Item(size_t index) const  {
 #ifdef _OLX_DEBUG
-    T*& v = (T*&)FList->Item(index);
+    T*& v = List[index];
     if( v == NULL )
       throw TFunctionFailedException(__OlxSourceInfo, "cannot dereference a NULL pointer");
     return *v;
 #else
-    return *(T*)FList->Item(index);
+    return *List[index];
 #endif
   }
 //..............................................................................
   inline T& Last() const  {
 #ifdef _OLX_DEBUG
-    T*& v = (T*&)FList->Last();
+    T*& v = List.Last();
     if( v == NULL )
       throw TFunctionFailedException(__OlxSourceInfo, "cannot dereference a NULL pointer");
     return *v;
 #else
-    return *(T*)FList->Last();
+    return *List.Last();
 #endif
   }
 //..............................................................................
-  inline bool IsNull(size_t index) const  {  return FList->Item(index) == NULL;  }
+  inline bool IsNull(size_t index) const  {  return List[index] == NULL;  }
 //..............................................................................
   // beware that poiter assignement will not work with syntaxes above, use this function instead!
   inline void NullItem(size_t index) const  {
-    T* v = (T*)FList->Item(index);
+    T* v = List[index];
     if( v != NULL )  {  // check if not deleted yet
       delete (DestructCast*)v;
-      FList->Item(index) = NULL;
+      List[index] = NULL;
     }
   }
 //..............................................................................
-  /* copy - creates new copies of the objest, be careful as the assignement
-   operator must exist  */
+  /* copy - creates new copies of the objest, be careful as the copy constructor
+   must exist  */
   const TTypeListExt& operator = ( const TTypeListExt& list )  {
-    Clear();
-    init( list.Count() );
-    for( int i=0; i < list.Count(); i++ )  {
-      T* o = new T();
-      *o = list[i];
-      FList->Item(i) =  o;
-    }
+    for( int i=0; i < List.Count(); i++ )
+      delete (DestructCast*)List[i];
+    List.SetCount( list.Count() );
+    for( int i=0; i < list.Count(); i++ ) 
+      List[i] =  new T(list[i]);
     return list;
   }
 //..............................................................................
-  inline void SetCapacity(size_t v)  {  FList->SetCapacity(v);  }
+  inline void SetCapacity(size_t v)   {  List.SetCapacity(v);  }
 //..............................................................................
-  inline void SetIncrement(size_t v)  {  FList->SetIncrement(v);  }
+  inline void SetIncrement(size_t v)  {  List.SetIncrement(v);  }
 //..............................................................................
   void Delete(size_t index)  {
-    T* v = (T*)FList->Item(index);
     // check if already deleted
-    if( v == NULL )  return;
-    delete (DestructCast*)v;
-    FList->Delete(index);
+    if( List[index] == NULL )  return;
+    delete (DestructCast*)List[index];
+    List.Delete(index);
   }
 //..............................................................................
   void DeleteRange(size_t from, size_t to)  {
     for( int i=from; i < to; i++ )  {
-      T* v = (T*)FList->Item(i);
-      if( v != NULL )  {  // check if not deleted yet
-        delete (DestructCast*)v;
-        FList->Item(i) = NULL;
+      if( List[i] != NULL )  {  // check if not deleted yet
+        delete (DestructCast*)List[i];
+        List[i] = NULL;
       }
     }
-    FList->Pack();
+    List.Pack();
   }
 //..............................................................................
   void Shrink(size_t newSize)  {
-    if( !(newSize >=0 && newSize < (size_t)FList->Count()) )  return;
-    for( int i=newSize; i < FList->Count(); i++ )  {
-      T* v = (T*)FList->Item(i);
-      if( v != NULL )
-        delete (DestructCast*)v;
-    }
-    FList->SetCount( newSize );
+    if( !(newSize >=0 && newSize < (size_t)List.Count()) )  return;
+    for( int i=newSize; i < List.Count(); i++ )
+      if( List[i] != NULL )
+        delete (DestructCast*)List[i];
+    List.SetCount( newSize );
   }
 //..............................................................................
   // the memory has to be delalocated by calling process
   T& Release(size_t index)  {
-    T*& v = (T*&)FList->Item(index);
+    T*& v = List[index];
 #ifdef _OLX_DEBUG
     if( v == NULL )
       throw TFunctionFailedException(__OlxSourceInfo, "cannot dereference a NULL pointer");
 #endif
-    FList->Delete(index);
+    List.Delete(index);
     return *v;
   }
 //..............................................................................
@@ -275,34 +263,29 @@ public:
     if( Count() != indexes.Count() )
       throw TFunctionFailedException(__OlxSourceInfo, "size mismatch");
 #endif
-      // allocate the list of NULLs
-      TEList* nl = new TEList( Count() );
-      for(int i=0; i < Count(); i++ )  {
-        nl->Item(i) = FList->Item( indexes[i] );
-      }
-      delete FList;
-      FList = nl;
-    }
+    List.Rearrange(indexes);
+  }
 //..............................................................................
   // cyclic shift to the left
-  inline void ShiftL(int cnt)  {  FList->ShiftL(cnt);  }
+  inline void ShiftL(int cnt)  {  List.ShiftL(cnt);  }
 //..............................................................................
   // cyclic shift to the right
-  inline void ShiftR(int cnt)  {  FList->ShiftR(cnt);  }
+  inline void ShiftR(int cnt)  {  List.ShiftR(cnt);  }
 //..............................................................................
-  inline void Swap(size_t i, size_t j)  {  FList->Swap(i, j);  }
+  inline void Swap(size_t i, size_t j)  {  List.Swap(i, j);  }
 //..............................................................................
-  inline void Move(size_t from, size_t to)  {  FList->Move(from, to);  }
+  inline void Move(size_t from, size_t to)  {  List.Move(from, to);  }
 //..............................................................................
-  inline void Pack()  {  FList->Pack();  }
+  inline void Pack()  {  List.Pack();  }
 //..............................................................................
-  inline int Count()    const {  return FList->Count();  }
+  inline int Count()    const {  return List.Count();  }
 //..............................................................................
-  inline bool IsEmpty() const {  return FList->IsEmpty();  }
+  inline bool IsEmpty() const {  return List.IsEmpty();  }
 //..............................................................................
+  // the comparison operator is used
   int IndexOf(const T& val) const  {
-    for( int i=0; i < FList->Count(); i++ )
-      if( *(T*)FList->Item(i) == val )  return i;
+    for( int i=0; i < List.Count(); i++ )
+      if( *List[i] == val )  return i;
     return -1;
   }
 
