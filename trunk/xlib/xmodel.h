@@ -11,6 +11,7 @@ OLEX crystallographic model, (c) O Dolomanov, 2008
 #include "atominfo.h"
 #include "bapp.h"
 #include "log.h"
+#include "indexlst.h"
 
 BeginXlibNamespace()
 // hydrogen treatment and other rigid groups, m in shelx AFXI
@@ -91,19 +92,18 @@ struct XRefinable {
 //
 struct XEquationMember {
   double Ratio;
-  XRefinable* Refinable;
-  XEquationMember() : Ratio(1), Refinable(NULL) {}
-  XEquationMember(double ratio, XRefinable* refinable) :
+  XRefinable& Refinable;
+  XEquationMember(double ratio, XRefinable& refinable) :
     Ratio(ratio), Refinable(refinable) {  }
 };
 /* SUMP, +- free var, dependent Uiso 
   if there is only one member, that member Ratio has to be used
 */
 struct XLinearEquation {
-  XRefinable& Add(XRefinable& member, double ratio)  {
-    Members.Add( *(new XEquationMember(ratio, &member)) );
+  XEquationMember& Add(double ratio, XRefinable& member)  {
+    XEquationMember& rv = Members.Add( *(new XEquationMember(ratio, member)) );
     member.Equations.Add(this);
-    return member;
+    return rv;
   }
   XLinearEquation(double val, double sig) : Value(val), Sigma(sig) {}
   double Value, Sigma;
@@ -111,14 +111,19 @@ struct XLinearEquation {
 };
 //
 class XScatterer : public IRefinableOwner {
-public:
-  XScatterer(const olxstr& label, TBasicAtomInfo* type) : 
-      Label(label), Type(type), Owner(NULL), Occupancy("Occupancy") {
-        Occupancy.Owner = this;
-  }
-  XRefinable Occupancy;
   XSite* Site; // might be shared by several scatterers
   XTDP* TDP;   // might be shared by several scatterers
+public:
+  XScatterer(const olxstr& label, TBasicAtomInfo* type) : 
+             Label(label), Type(type), Owner(NULL), Site(NULL), 
+               TDP(NULL), Occupancy("Occupancy"), Id(-1) {
+        Occupancy.Owner = this;
+  }
+  inline XSite* GetSite() const {  return Site;  }
+  inline XTDP*  GetTDP()  const {  return TDP;  }
+  XSite& SetSite(XSite& site);
+  XTDP&  SetTDP(XTDP& tdp);
+  XRefinable Occupancy;
   XResidue* Owner;  // managed by the group, when adding/removing
 //  IRefinementModel* Parent;
   olxstr Label;
@@ -157,10 +162,10 @@ public:
 //
 class XSite : public IRefinableOwner{
 public:
-  XSite() : SiteOccupancy(1) {
-    Crd[0].Name = "X";  Crd[0].Owner = this;
-    Crd[1].Name = "Y";  Crd[1].Owner = this;
-    Crd[2].Name = "Z";  Crd[2].Owner = this;
+  XSite(const vec3d& crd) : SiteOccupancy(1) {
+    Crd[0].Name = "X";  Crd[0].Owner = this;  Crd[0].Value = crd[0];
+    Crd[1].Name = "Y";  Crd[1].Owner = this;  Crd[1].Value = crd[1];
+    Crd[2].Name = "Z";  Crd[2].Owner = this;  Crd[2].Value = crd[2];
   }
   inline double const& Esd(int i)       const {  return Crd[i].Esd;  }
   inline double& Esd(int i)                   {  return Crd[i].Esd;  }
@@ -198,53 +203,40 @@ struct XScattererRef {
   olxstr GetLabel() const;
 };
 typedef TTypeList<XScattererRef> XScattererRefList;
-
+/* We cannot use indexes here, as scatterer labels might change at runtime */
 class XResidue {
-  TSStrPObjList<olxstr, AnAssociation2<XScatterer*,int>, true> Scatterers;
+  TPtrList<XScatterer> Scatterers;
 public:
   XResidue(IRefinementModel& parent, const olxstr& cl=EmptyString, int number = 0, 
     const olxstr& alias=EmptyString) : Parent(parent), ClassName(cl), Number(number), Alias(alias) {  }
 
   inline int Count() const {  return Scatterers.Count();  }
-  inline XScatterer& operator [] (int i)             {  return *Scatterers.Object(i).A(); }
-  inline XScatterer const& operator [] (int i) const {  return *Scatterers.GetObject(i).GetA(); }
+  inline XScatterer& operator [] (int i)             {  return *Scatterers[i]; }
+  inline XScatterer const& operator [] (int i) const {  return *Scatterers[i]; }
   inline XScatterer* FindScattererByName(const olxstr& name) {
-    int i = Scatterers.IndexOf(name);
-    return i == -1 ? NULL : Scatterers.Object(i).A();
-  }
-  // returns the scatterers in the original order
-  void GetScatterers( TPtrList<XScatterer>& res )  {
-    const int si = res.Count();
-    res.SetCount( res.Count() + Scatterers.Count() );
     for( int i=0; i < Scatterers.Count(); i++ )
-      res[si+Scatterers.Object(i).GetB()] = Scatterers.Object(i).A();
+      if( Scatterers[i]->Label.Comparei(name) )  return Scatterers[i];
+    return NULL;
   }
+  inline int IndexOf(XScatterer* xs) const {  return Scatterers.IndexOf(xs);  }
   XResidue& operator = (const XResidue& res)  {
-    Scatterers.Clear();
-    Scatterers.SetCapacity(res.Count() );
-    for( int i=0; i < res.Count(); i++ )
-      AddScatterer( &Parent.GetScatterer(res[i].Id) );
+    Scatterers = res.Scatterers;
     ClassName = res.ClassName;
     Number = res.Number;
     Alias = res.Alias;
     return *this;
   }
-  inline void SetCapacity(int c)  {  Scatterers.SetCapacity(c);  }
+  inline XResidue& SetCapacity(int c)  {  Scatterers.SetCapacity(c);  return *this;  }
   inline void AddScatterer(XScatterer* xs)  {
-    Scatterers.Add(xs->Label, AnAssociation2<XScatterer*,int>(xs, Scatterers.Count()) );
     if( xs->Owner != NULL )
       xs->Owner->RemoveScatterer(xs);
     xs->Owner = this;
+    Scatterers.Add(xs);
   }
   inline void RemoveScatterer(XScatterer* xs)  {
-    int ind = -1;
-    for( int i=0; i < Scatterers.Count(); i++ )
-      if( Scatterers.GetObject(i).GetA() == xs )  {
-        ind = i;
-        break;
-      }
-    if( ind = -1 )  {
-      Scatterers.Object(ind).A()->Owner = NULL;
+    int ind = Scatterers.IndexOf(xs);
+    if( ind != -1 )  {
+      Scatterers[ind]->Owner = NULL;
       Scatterers.Delete(ind);
     }
   }

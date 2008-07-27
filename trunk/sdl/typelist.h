@@ -71,6 +71,9 @@ public:
   //adds a new object ito the list - will be deleted
   inline T& Add(T& Obj)  {  return *List.Add(&Obj);  }
 //..............................................................................
+  //adds a new object ito the list - will be deleted
+  inline T& Add(T* Obj)  {  return *List.Add(Obj);  }
+//..............................................................................
   //sets the list item to an object, which will be deleted
   inline T& Set(size_t index, T& Obj)  {
     if( List[index] != NULL )

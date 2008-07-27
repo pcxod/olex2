@@ -8,6 +8,11 @@ BeginXlibNamespace()
 class TShelxAtomListParser : public IEObject  {
   olxstr Expression;
 protected:
+  inline bool IsValidScatterer(XScatterer& xs)  {
+    return !(*xs.Type == iHydrogenIndex ||
+             *xs.Type == iDeuteriumIndex ||
+             *xs.Type == iQPeakIndex );
+  }
   inline bool IsValidScatterer(XScatterer* xs)  {
     return !(*xs->Type == iHydrogenIndex ||
              *xs->Type == iDeuteriumIndex ||
@@ -18,34 +23,33 @@ public:
   const olxstr& GetExpression() const {  return Expression;  }
   int _Expand( IRefinementModel& rm, 
                XScattererRefList& out,              // destination
-               XResidue* resi,               // current residue, updated if different
-               const TPtrList<XScatterer>& resi_cont)  {  // odered residue content
+               XResidue* resi)   {                // current residue, updated if different
     int ac = out.Count();
     if( Expression.IsEmpty() )  {  // all atoms of the residue
-      out.SetCapacity( out.Count() + resi_cont.Count() );
-      for( int i=0; i < resi_cont.Count(); i++ )  {
-        if( IsValidScatterer( resi_cont[i]) )
-          out.AddNew( resi_cont[i], (smatd*)NULL );
+      out.SetCapacity( out.Count() + resi->Count() );
+      for( int i=0; i < resi->Count(); i++ )  {
+        if( IsValidScatterer( (*resi)[i]) )
+          out.AddNew( &(*resi)[i], (smatd*)NULL );
       }
       return out.Count() - ac;
     }
     else if( Expression.Comparei("first") == 0 )  { 
       int i=0;
-      XScatterer* xs = resi_cont[i];
-      while( (i+1) < resi_cont.Count() && !IsValidScatterer(xs) )  {
+      XScatterer* xs = &(*resi)[i];
+      while( (i+1) < resi->Count() && !IsValidScatterer(xs) )  {
         i++;
-        xs = resi_cont[i];
+        xs = &(*resi)[i];
       }
       if( !IsValidScatterer(xs) )  return 0;
       out.AddNew(xs, (smatd*)NULL);
       return 1;
     }
     else if( Expression.Comparei("last") == 0 )  { 
-      int i=resi_cont.Count()-1;
-      XScatterer* xs = resi_cont[i];
+      int i = resi->Count()-1;
+      XScatterer* xs = &(*resi)[i];
       while( (i-1) >= 0 && !IsValidScatterer(xs) )  {
         i--;
-        xs = resi_cont[i];
+        xs = &(*resi)[i];
       }
       if( !IsValidScatterer(xs) )  return 0;
       out.AddNew(xs, (smatd*)NULL);
@@ -57,12 +61,12 @@ public:
     if( gs_ind != -1 || ls_ind != -1 )  {
       XScattererRefList from, to;
       if( gs_ind != -1 )  {  // it is inverted in shelx ...
-        TShelxAtomListParser(Expression.SubStringTo(gs_ind).Trim(' '))._Expand(rm, from, resi, resi_cont);
-        TShelxAtomListParser(Expression.SubStringFrom(gs_ind+1).Trim(' '))._Expand(rm, to, resi, resi_cont);
+        TShelxAtomListParser(Expression.SubStringTo(gs_ind).Trim(' '))._Expand(rm, from, resi);
+        TShelxAtomListParser(Expression.SubStringFrom(gs_ind+1).Trim(' '))._Expand(rm, to, resi);
       }
       else  {
-        TShelxAtomListParser(Expression.SubStringTo(ls_ind).Trim(' '))._Expand(rm, from, resi, resi_cont);
-        TShelxAtomListParser(Expression.SubStringFrom(ls_ind+1).Trim(' '))._Expand(rm, to, resi, resi_cont);
+        TShelxAtomListParser(Expression.SubStringTo(ls_ind).Trim(' '))._Expand(rm, from, resi);
+        TShelxAtomListParser(Expression.SubStringFrom(ls_ind+1).Trim(' '))._Expand(rm, to, resi);
       }
       if( to.Count() != 1 || from.Count() != 1 )
         throw TFunctionFailedException(__OlxSourceInfo, "failed to expand >/< expression");
@@ -70,35 +74,25 @@ public:
         throw TFunctionFailedException(__OlxSourceInfo, "EQIV must be the same in >/< expresion");
       if( from[0].scatterer->Owner != to[0].scatterer->Owner )
         throw TFunctionFailedException(__OlxSourceInfo, "RESI must be the same in >/< expresion");
-
-      TPtrList<XScatterer> const* resi_scat = &resi_cont;
-      if( from[0].scatterer->Owner != resi )  {
-        resi_scat = new TPtrList<XScatterer>;
-        from[0].scatterer->Owner->GetScatterers(*const_cast<TPtrList<XScatterer>*>(resi_scat));
-      }
-      int from_ind = resi_scat->IndexOf(from[0].scatterer);
-      int to_ind = resi_scat->IndexOf(to[0].scatterer);
-
-      if( (from_ind >= to_ind && gs_ind != -1) || (from_ind <= to_ind && ls_ind != -1) )  {
-        if( from[0].scatterer->Owner != resi )  
-          delete resi_scat;
+      
+      XResidue* cr = from[0].scatterer->Owner;
+      int from_ind = cr->IndexOf(from[0].scatterer);
+      int to_ind = cr->IndexOf(to[0].scatterer);
+      if( (from_ind >= to_ind && gs_ind != -1) || (from_ind <= to_ind && ls_ind != -1) )
         throw TInvalidArgumentException(__OlxSourceInfo, "invalid direction in >/< expression");
-      }
 
       if( gs_ind != -1 )  {
         for( int i=from_ind; i <= to_ind; i++ )  {
-          if( !IsValidScatterer( (*resi_scat)[i] ) )  continue;
-          out.AddNew( (*resi_scat)[i], from[0].symm );
+          if( !IsValidScatterer( (*cr)[i] ) )  continue;
+          out.AddNew( &(*cr)[i], from[0].symm );
         }
       }
       else  {
         for( int i=from_ind; i >= to_ind; i-- )  {
-          if( !IsValidScatterer( (*resi_scat)[i] ) )  continue;
-          out.AddNew( (*resi_scat)[i], from[0].symm );
+          if( !IsValidScatterer( (*cr)[i] ) )  continue;
+          out.AddNew( &(*cr)[i], from[0].symm );
         }
       }
-      if( from[0].scatterer->Owner != resi )  
-        delete resi_scat;
       return out.Count() - ac;
     }
     //
@@ -171,13 +165,10 @@ public:
     TPtrList<XResidue> residues;
     rm.FindResidues(DefResi, residues);  // empty resi name refers to all atom outside RESI
     TStrList toks(nexp, ' ');
-    TPtrList<XScatterer> resi_cont;
     int xsc = 0;
     for( int i=0; i < residues.Count(); i++ )  {
-      resi_cont.Clear();
-      residues[i]->GetScatterers(resi_cont);
       for( int j=0; j < toks.Count(); j++ )  {
-        int fc = TShelxAtomListParser(toks[j])._Expand(rm, out, residues[i], resi_cont);
+        int fc = TShelxAtomListParser(toks[j])._Expand(rm, out, residues[i]);
         if( atomAGroup == 0 )
           atomAGroup = fc;
         else if( atomAGroup != fc )
@@ -199,11 +190,9 @@ public:
       nexp << exp.CharAt(i);
     }
     TStrList toks(nexp, ' ');
-    TPtrList<XScatterer> resi_cont;
-    resi->GetScatterers(resi_cont);
     int xsc = 0;
     for( int j=0; j < toks.Count(); j++ )
-      xsc += TShelxAtomListParser(toks[j])._Expand(rm, out, resi, resi_cont);
+      xsc += TShelxAtomListParser(toks[j])._Expand(rm, out, resi);
     return xsc;
   }
 };

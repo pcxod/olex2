@@ -565,6 +565,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\xlib\xmodel.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\xlib\xyz.cpp"
 				>
 			</File>

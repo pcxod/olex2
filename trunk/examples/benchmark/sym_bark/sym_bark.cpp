@@ -28,10 +28,20 @@ using namespace std;
 
 int main(int argc, char* argv[])  {
   XModel xm;
+  TAtomsInfo ai;
   double defs [] = {0.02, 0.1, 0.01, 0.04, 1};
   xm.CHIV.Add( *(new Restraint_Chiv(xm, defs, 0)) );
-  xm.Scatterers.Add("C1", new XScatterer("C1", NULL) );
-  xm.LinearEquations.Add( xm.Scatterers[0].Occupancy, -1.5);
+  xm.Scatterers.Add( new XScatterer("C1", &ai.GetAtomInfo(iCarbonIndex)) );
+  xm.Scatterers.Add( new XScatterer("H1", &ai.GetAtomInfo(iHydrogenIndex)) );
+  xm.Sites.AddNew( vec3d(0, 0, 0) );
+  xm.Sites.AddNew( vec3d(0.5, 0.5, 0.5) );
+  xm.Scatterers[0].SetSite( xm.Sites[0] );
+  xm.Scatterers[1].SetSite( xm.Sites[1] );
+  xm.Scatterers[1].Occupancy.Refinable = false;
+  XLinearEquation& eq = xm.LinearEquations.AddNew( 0, 0);
+  // occu(H1) = 1.5 occu(C1)
+  eq.Add(1, xm.Scatterers[1].Occupancy);
+  eq.Add(-1.5, xm.Scatterers[0].Occupancy);
   return 0;
 }
 
