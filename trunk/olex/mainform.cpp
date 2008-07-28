@@ -1223,7 +1223,7 @@ void TMainForm::StartupInit()  {
   FGlConsole->SetFontIndex(0);
   FHelpWindow->SetFontIndex(1);
   FInfoBox->SetFontIndex( 2 );
-  GlTooltip->SetFontIndex( 4 );
+  GlTooltip->SetFontIndex( 5 );
 
   FXApp->Init(); // initialise the gl
 
