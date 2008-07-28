@@ -4,9 +4,11 @@
 
 #include "glrender.h"
 #include "gdrawobject.h"
+#include "glprimitive.h"
 #include "styles.h"
 
 #include "sbond.h"
+#include "talist.h"
 
 
 BeginGxlNamespace()
@@ -28,7 +30,7 @@ protected:
   void GetDefSphereMaterial(TGlMaterial &M);
   void GetDefRimMaterial(TGlMaterial &M);
   //TEStringList* FindPrimitiveParams(TGlPrimitive *P);
-  static TEList FPrimitiveParams;
+  static TArrayList<TGlPrimitiveParams> FPrimitiveParams;
   static void ValidateBondParams();
   static TGraphicsStyle *FBondParams;
   static TXBondStylesClear *FXBondStylesClear;

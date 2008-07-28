@@ -172,14 +172,11 @@ void TDUnitCell::Reciprical(bool v )  {
 }
 
 void TDUnitCell::Create(const olxstr& cName)  {
-  if( cName.Length() != 0 )  SetCollectionName(cName);
+  if( !cName.IsEmpty() )  SetCollectionName(cName);
   olxstr NewL;
-  TGlMaterial GlM;
-  const TGlMaterial *SGlM;
-  GlM.SetFlags(sglmAmbientF);
-  GlM.AmbientF = 0;
+  TGlMaterial *SGlM;
   TGPCollection* GPC = FParent->CollectionX( GetCollectionName(), NewL);
-  if( !GPC )
+  if( GPC == NULL )
     GPC = FParent->NewCollection(NewL);
   else  {
     if( GPC->PrimitiveCount() )  {
@@ -191,26 +188,26 @@ void TDUnitCell::Create(const olxstr& cName)  {
   GPC->AddObject(this);
 
   FGlP = GPC->NewPrimitive("Lines");
-  SGlM = GS->Material("Lines");
-  if( !SGlM->Mark() )  FGlP->SetProperties(SGlM);
-  else  {
-    GlM.SetIdentityDraw(false);
-    GlM.SetTransparent(false);
-    FGlP->SetProperties(&GlM);
+  SGlM = const_cast<TGlMaterial*>(GS->Material("Lines"));
+  if( SGlM->Mark() )  {
+    SGlM->SetFlags(sglmAmbientF);
+    SGlM->AmbientF = 0;
   }
+  FGlP->SetProperties(SGlM);
 
   FGlP->Type(sgloLines);
   FGlP->Data().Resize(3, 24);
   Reciprical(FReciprical);
 
   TGlPrimitive* GlP = GPC->NewPrimitive("Label");  // labels
-  SGlM = GS->Material("Label");
-  if( !SGlM->Mark() )  GlP->SetProperties(SGlM);
-  else  {
-    GlM.SetIdentityDraw(true);
-    GlM.SetTransparent(false);
-    GlP->SetProperties(&GlM);
+  SGlM = const_cast<TGlMaterial*>(GS->Material("Label"));
+  if( SGlM->Mark() )  {
+    SGlM->SetFlags(sglmAmbientF);
+    SGlM->AmbientF = 0xff00ff;
+    SGlM->SetIdentityDraw(true);
   }
+  GlP->SetProperties(SGlM);
+
   GlP->Type(sgloText);
   GlP->Font( Parent()->Scene()->DefFont() );
 }

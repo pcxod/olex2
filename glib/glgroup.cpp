@@ -26,7 +26,7 @@ TGlGroup::TGlGroup(const olxstr& collectionName, TGlRender *P) :
 }
 //..............................................................................
 void TGlGroup::Create(const olxstr& cName)  {
-  if( cName.Length() != 0)  SetCollectionName(cName);
+  if( !cName.IsEmpty() != 0)  SetCollectionName(cName);
 
 //  TGPCollection *GPC = FParent->FindCollection( GetCollectionName() );
 //  if( !GPC )     GPC = FParent->NewCollection( GetCollectionName() );
@@ -68,7 +68,7 @@ TGlGroup::~TGlGroup()  {
 //..............................................................................
 void TGlGroup::Clear()  {
   for( int i=0; i < FObjects.Count(); i++ )
-    Object(i)->ParentGroup(NULL);
+    FObjects[i]->ParentGroup(NULL);
   FObjects.Clear();
 }
 //..............................................................................
@@ -77,20 +77,14 @@ void TGlGroup::Remove(AGDrawObject *G)  {
 }
 //..............................................................................
 void TGlGroup::RemoveDeleted()  {
-  AGDrawObject *GO;
   for( int i=0; i < FObjects.Count(); i++ )  {
-    GO = Object(i);
-    if( GO->Deleted() )  {
-      GO->ParentGroup(NULL);
-      GO->Selected(false);
+    if( FObjects[i]->Deleted() )  {
+      FObjects[i]->ParentGroup(NULL);
+      FObjects[i]->Selected(false);
       FObjects[i] = NULL;
     }
   }
   FObjects.Pack();
-}
-//..............................................................................
-bool TGlGroup::Contains(AGDrawObject *G)  {
-  return  (FObjects.IndexOf(G) == -1) ? false : true;
 }
 //..............................................................................
 bool TGlGroup::Add(AGDrawObject *G)  {
@@ -113,12 +107,12 @@ bool TGlGroup::Add(AGDrawObject *G)  {
 //..............................................................................
 void TGlGroup::Visible(bool On)  {
   for( int i=0; i < FObjects.Count(); i++ )
-    Object(i)->Visible(On); 
+    FObjects[i]->Visible(On); 
 }
 //..............................................................................
 void TGlGroup::Selected(bool On)  {
   for( int i=0; i < FObjects.Count(); i++ )
-    Object(i)->Selected(On);
+    FObjects[i]->Selected(On);
   AGDrawObject::Selected(On);
 }
 //..............................................................................
@@ -130,26 +124,22 @@ void TGlGroup::InitMaterial() const {
 }
 //..............................................................................
 void TGlGroup::Draw(bool SelectPrimitives, bool SelectObjects) const  {
-  int pc;
-  AGDrawObject *G;
-  TGlPrimitive *GlP;
 //  if( SelectObjects )     glLoadName(this->Tag());
   if( !SelectPrimitives && !SelectObjects )
       InitMaterial();
 
   for( int i=0; i < FObjects.Count(); i++ )  {
-    G = Object(i);
+    AGDrawObject* G = FObjects[i];
     if( !G->Visible() )  continue;
     if( G->Deleted() )  continue;
     if( G->Group() )    { G->Draw();  continue; }
-    pc = G->Primitives()->PrimitiveCount();
+    int pc = G->Primitives()->PrimitiveCount();
     for( int j=0; j < pc; j++ )  {
-      GlP = G->Primitives()->Primitive(j);
+      TGlPrimitive* GlP = G->Primitives()->Primitive(j);
       if( SelectObjects )     glLoadName(G->GetTag());
       if( SelectPrimitives )  glLoadName(GlP->GetTag());
       glPushMatrix();
-      if( G->Orient(GlP) )
-      { glPopMatrix();  continue; }
+      if( G->Orient(GlP) )  {  glPopMatrix();  continue;  }
       GlP->Draw();
       glPopMatrix();
     }
@@ -158,19 +148,19 @@ void TGlGroup::Draw(bool SelectPrimitives, bool SelectObjects) const  {
 //..............................................................................
 bool TGlGroup::OnMouseDown(const IEObject *Sender, const TMouseData *Data)  {
   for( int i=0; i < FObjects.Count(); i++ )
-    Object(i)->OnMouseDown(Sender, Data);
+    FObjects[i]->OnMouseDown(Sender, Data);
   return true;
 }
 //..............................................................................
 bool TGlGroup::OnMouseUp(const IEObject *Sender, const TMouseData *Data)  {
   for( int i=0; i < FObjects.Count(); i++ )
-    Object(i)->OnMouseUp(Sender, Data);
+    FObjects[i]->OnMouseUp(Sender, Data);
   return true;
 }
 //..............................................................................
 bool TGlGroup::OnMouseMove(const IEObject *Sender, const TMouseData *Data)  {
   for( int i=0; i < FObjects.Count(); i++ )
-    Object(i)->OnMouseMove(Sender, Data);
+    FObjects[i]->OnMouseMove(Sender, Data);
   return true;
 }
 //..............................................................................

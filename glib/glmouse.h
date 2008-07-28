@@ -75,6 +75,8 @@ public:
   void SetHandler( const short Button, const short Shift, MMoveHandler MH);
   // is set by handlers
   void Action( short A) {  FAction = A; }
+
+  bool SelectionEnabled;
 };
 
 // default behaviour to mouse events

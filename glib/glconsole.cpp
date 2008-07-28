@@ -494,7 +494,7 @@ void TGlConsole::UpdateCursorPosition(bool InitCmds)  {
   double Scale = FParent->GetScale();
   vec3d T;
   // update cursor position ...
-  if( Cmds.Count() != 0 )   {
+  if( !Cmds.IsEmpty() )   {
     T[0] = GlLeft;
     int dxp = StringPosition(), i;
     for( i=0; i < Cmds.Count(); i++ )  {
@@ -508,7 +508,7 @@ void TGlConsole::UpdateCursorPosition(bool InitCmds)  {
       T[0] += Fnt->TextWidth( Cmds[i].SubStringTo( Cmds[i].Length() + dxp ) );
     else
       T[0] += Fnt->TextWidth(Cmds[i]);
-
+    T[0] -= Fnt->MaxWidth()/2;  // move the cursor half a char left
     T *= Scale;
     FCursor->SetPosition(T[0], T[1]);
     FCursor->FontIndex( FontIndex );

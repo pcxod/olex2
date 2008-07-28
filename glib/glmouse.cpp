@@ -35,6 +35,7 @@ TGlMouse::TGlMouse(TGlRender *Parent, TDFrame *Frame)  {
   Handler = NULL;
   MData = new TMouseData;
   FDFrame = Frame;
+  SelectionEnabled = true;
 }
 //..............................................................................
 TGlMouse::~TGlMouse()  {
@@ -102,28 +103,28 @@ bool TGlMouse::MouseDown(int x, int y, short Shift, short button)  {
   FButtonDown = true;
   MData->Button = button; MData->Shift = Shift;
   MData->DownX = x;       MData->DownY = y;
-  //if( Shift == sssCtrl )
-  {    Handler = FParent->SelectObject(x, y);  }
-  //else {  Handler = NULL;}
-  if( Handler )  {
-    if( Handler->Selected() )
-    {   PColl = FParent->Selection();    }
-    else  {
-      PColl = FParent->FindObjectGroup(Handler);
-      if( FParent->Selection()->Contains(PColl) ) PColl = FParent->Selection();
+  if( SelectionEnabled )  {
+    Handler = FParent->SelectObject(x, y);
+    if( Handler )  {
+      if( Handler->Selected() )
+        PColl = FParent->Selection();
+      else  {
+        PColl = FParent->FindObjectGroup(Handler);
+        if( FParent->Selection()->Contains(PColl) ) PColl = FParent->Selection();
+      }
+      if( PColl )  {
+        PColl->OnMouseDown(this, MData);
+      }
+      else  {
+        if( !Handler->OnMouseDown(this, MData) )
+          Handler = NULL;
+      }
     }
-    if( PColl )  {
-      PColl->OnMouseDown(this, MData);
+    if( !Handler && Shift == sssShift )  {
+      Handler = FDFrame;
+      //    FParent->UpdateGlImage();
+      Handler->OnMouseDown(this, MData);
     }
-    else  {
-      if( !Handler->OnMouseDown(this, MData) )
-      Handler = NULL;
-    }
-  }
-  if( !Handler && Shift == sssShift )  {
-    Handler = FDFrame;
-//    FParent->UpdateGlImage();
-    Handler->OnMouseDown(this, MData);
   }
   FSX = x;
   FSY = y;

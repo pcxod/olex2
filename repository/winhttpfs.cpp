@@ -163,7 +163,7 @@ IDataInputStream* TWinHttpFileSystem::OpenFile(const olxstr& Source)  {
         File.Read(Buffer, parts);
         File1->Write(Buffer, parts);
       }
-      TmpFiles.Add( File1->Name() );
+      TmpFiles.Add( File1->GetName() );
     }
     File.Delete();
     File1->Seek(0, SEEK_SET);

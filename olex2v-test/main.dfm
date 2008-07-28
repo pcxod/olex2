@@ -1,6 +1,6 @@
 object Form1: TForm1
-  Left = 195
-  Top = 103
+  Left = 249
+  Top = 182
   Width = 777
   Height = 583
   Caption = 'Form1'
@@ -43,13 +43,45 @@ object Form1: TForm1
         OnClick = Listen1Click
       end
     end
+    object DrawStyle1: TMenuItem
+      Caption = 'Draw Style'
+      object Telp1: TMenuItem
+        Caption = 'Telp'
+        OnClick = Telp1Click
+      end
+      object Pers1: TMenuItem
+        Caption = 'Pers'
+        OnClick = Pers1Click
+      end
+      object Sfil1: TMenuItem
+        Caption = 'Sfil'
+        OnClick = Sfil1Click
+      end
+    end
     object View1: TMenuItem
-      Caption = 'View'
+      Caption = 'Labels'
       object miLabels: TMenuItem
         Caption = 'Labels'
-        RadioItem = True
         ShortCut = 114
         OnClick = miLabelsClick
+      end
+      object miH: TMenuItem
+        Caption = 'H-Atoms'
+        GroupIndex = 1
+        OnClick = miHClick
+      end
+      object miQ: TMenuItem
+        Caption = 'Q-Atoms'
+        GroupIndex = 2
+        OnClick = miQClick
+      end
+    end
+    object View2: TMenuItem
+      Caption = 'View'
+      object miCell: TMenuItem
+        Caption = 'Cell'
+        RadioItem = True
+        OnClick = miCellClick
       end
     end
   end

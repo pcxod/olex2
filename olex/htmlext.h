@@ -14,6 +14,7 @@
 
 class THtmlFunc;
 class THtmlLink;
+class THtmlSwitch;
 class THtmlImageCell;
 
 class THtmlImageCell : public wxHtmlCell, public IEObject  {
@@ -87,61 +88,6 @@ public:
   virtual void ToStrings(TStrList &List)=0;
 };
 
-class THtmlSwitch: public AHtmlObject {
-protected:
-  olxstr FName, FFileName;
-  short FFileIndex;  // the file index
-  TStrList  FFiles;
-  TStrPObjList<olxstr,AHtmlObject*> FStrings;  // represents current content of the switch
-  TParamList FParams;   // parameters to be replaced with their values param=ll use #param
-  TEList *FSwitches; // a list of subitems
-  TEList *FFuncs; // a list of functions
-  TEList *FLinks; // a list of links
-  THtmlSwitch *FParent;
-protected:
-  bool FUpdateSwitch;
-public:
-  THtmlSwitch(THtml *ParentHtml, THtmlSwitch *ParentSwitch);
-  virtual ~THtmlSwitch();
-  void Clear();
-
-  const olxstr&  Name() const {  return FName; }
-  void Name(const olxstr& N) {  FName = N; }
-  inline short FileIndex() const {  return FFileIndex; }
-  void  FileIndex(short ind);
-  void UpdateFileIndex();
-  inline int FileCount() const {  return FFiles.Count(); }
-  const olxstr &File(int ind) const {  return FFiles.String(ind); }
-  void ClearFiles()  {  FFiles.Clear(); }
-  void AddFile(const olxstr &FN){ FFiles.Add(FN); }
-
-  TStrPObjList<olxstr,AHtmlObject*>& Strings()  {  return FStrings; }
-  inline int SwitchCount() const {  return FSwitches->Count(); }
-  THtmlSwitch* Switch(int ind){  return (THtmlSwitch*)FSwitches->Item(ind); }
-  THtmlSwitch*  FindSwitch(const olxstr &IName);
-  int FindSimilar(const olxstr& start, const olxstr& end, TPtrList<THtmlSwitch>& ret);
-  THtmlSwitch* NewSwitch();
-
-  void AddParam(const olxstr& name, const olxstr& value){  FParams.AddParam(name, value);  };
-  void AddParam(const olxstr& nameEqVal)  {  FParams.FromString(nameEqVal, '=');  };
-  TParamList& Params()  {  return FParams;  }
-
-  THtmlFunc* NewFunc();
-  inline int FuncCount() const {  return FFuncs->Count(); }
-  THtmlFunc *Func(int ind){  return (THtmlFunc*)FFuncs->Item(ind); }
-
-  THtmlLink* NewLink();
-  inline int LinkCount() const {  return FLinks->Count(); }
-  THtmlLink *Link(int ind){  return (THtmlLink*)FLinks->Item(ind); }
-
-  inline bool UpdateSwitch() const {  return FUpdateSwitch; };
-  void UpdateSwitch(bool V){  FUpdateSwitch = V; };
-
-  void ToStrings(TStrList &List);
-  bool ToFile();
-
-};
-
 class THtmlFunc: public AHtmlObject  {
 protected:
   olxstr FFunc;
@@ -170,6 +116,60 @@ public:
   void FileName(const olxstr& N) {  FFileName = N; }
 
   void ToStrings(TStrList &List);
+};
+
+class THtmlSwitch: public AHtmlObject {
+protected:
+  olxstr FName, FFileName;
+  short FFileIndex;  // the file index
+  TStrList  FFiles;
+  TStrPObjList<olxstr,AHtmlObject*> FStrings;  // represents current content of the switch
+  TParamList FParams;   // parameters to be replaced with their values param=ll use #param
+  TTypeList<THtmlSwitch> FSwitches; // a list of subitems
+  TTypeList<THtmlFunc> FFuncs; // a list of functions
+  TTypeList<THtmlLink> FLinks; // a list of links
+  THtmlSwitch *FParent;
+protected:
+  bool FUpdateSwitch;
+public:
+  THtmlSwitch(THtml *ParentHtml, THtmlSwitch *ParentSwitch);
+  virtual ~THtmlSwitch();
+  void Clear();
+
+  const olxstr&  Name() const {  return FName; }
+  void Name(const olxstr& N) {  FName = N; }
+  inline short FileIndex() const {  return FFileIndex; }
+  void  FileIndex(short ind);
+  void UpdateFileIndex();
+  inline int FileCount() const {  return FFiles.Count(); }
+  const olxstr &File(int ind) const {  return FFiles.String(ind); }
+  void ClearFiles()  {  FFiles.Clear(); }
+  void AddFile(const olxstr &FN){ FFiles.Add(FN); }
+
+  TStrPObjList<olxstr,AHtmlObject*>& Strings()  {  return FStrings; }
+  inline int SwitchCount() const {  return FSwitches.Count(); }
+  inline THtmlSwitch& Switch(int ind)  {  return FSwitches[ind]; }
+  THtmlSwitch*  FindSwitch(const olxstr &IName);
+  int FindSimilar(const olxstr& start, const olxstr& end, TPtrList<THtmlSwitch>& ret);
+  THtmlSwitch& NewSwitch();
+
+  void AddParam(const olxstr& name, const olxstr& value){  FParams.AddParam(name, value);  };
+  void AddParam(const olxstr& nameEqVal)  {  FParams.FromString(nameEqVal, '=');  };
+  inline TParamList& Params()  {  return FParams;  }
+
+  THtmlFunc& NewFunc();
+  inline int FuncCount() const {  return FFuncs.Count(); }
+  inline THtmlFunc& Func(int ind){  return FFuncs[ind]; }
+
+  THtmlLink& NewLink();
+  inline int LinkCount() const {  return FLinks.Count(); }
+  inline THtmlLink& Link(int ind)  {  return FLinks[ind]; }
+
+  inline bool UpdateSwitch() const {  return FUpdateSwitch; };
+  void UpdateSwitch(bool V){  FUpdateSwitch = V; };
+
+  void ToStrings(TStrList &List);
+  bool ToFile();
 };
 
 class THtml: public wxHtmlWindow, public IEObject  {

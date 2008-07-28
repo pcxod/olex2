@@ -82,7 +82,7 @@ PyObject* TOlxPyVar::GetObjVal()  {
 }
 //..............................................................................
 void TOlxPyVar::Set(PyObject* obj)  {
-  if( obj == NULL && obj == Py_None )  {
+  if( Obj == NULL && obj == Py_None )  {
     PyErr_SetObject(PyExc_TypeError, PythonExt::BuildString("A valid object is expected"));
     return;
 //    throw TInvalidArgumentException(__OlxSourceInfo, "A valid object is expected");

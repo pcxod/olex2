@@ -23,7 +23,7 @@ bool TXBondStylesClear::Exit(const IEObject *Sender, const IEObject *Data)
 // TXBond function bodies
 //----------------------------------------------------------------------------//
 TStrPObjList<olxstr,TGlPrimitive*> TXBond::FStaticObjects;
-TEList  TXBond::FPrimitiveParams;
+TArrayList<TGlPrimitiveParams>  TXBond::FPrimitiveParams;
 TGraphicsStyle* TXBond::FBondParams=NULL;
 TXBondStylesClear *TXBond::FXBondStylesClear=NULL;
 //..............................................................................
@@ -133,13 +133,7 @@ void TXBond::Create(const olxstr& cName)  {
   return;
 }
 //..............................................................................
-TXBond::~TXBond()  {
-  if( FPrimitiveParams.Count() != 0 )  {
-    for( int i=0; i < FPrimitiveParams.Count(); i++ )
-      delete (TGlPrimitiveParams*)FPrimitiveParams[i];
-    FPrimitiveParams.Clear();
-  }
-}
+TXBond::~TXBond()  {  }
 //..............................................................................
 bool TXBond::Orient(TGlPrimitive *GlP)  {
   FParent->GlTranslate( FBond->GetA().crd() );

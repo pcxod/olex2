@@ -1272,6 +1272,56 @@ public:
     }
   }
   //..............................................................................
+  void macSGE(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+    TPtrList<TSpaceGroup> sgs;
+    TSpaceGroup* sg = NULL;
+    bool cntro = false;
+    E.SetRetVal(&sgs);
+    Macros.ProcessMacro( "SG", E );
+    E.SetRetVal<bool>(false);
+    if( sgs.Count() == 0 )  {
+      TBasicApp::GetLog().Error( "Could not find any suitable spacegroup. Terminating ... " );
+      return;
+    }
+    else if( sgs.Count() == 1 )  {
+      sg = sgs[0];
+      TBasicApp::GetLog() << "Univocal spacegroup choice: " << sg->GetName() << '\n';
+    }
+    else  {
+      E.Reset();
+      Macros.ProcessMacro("Wilson", E);
+      bool centro = E.GetRetVal().ToBool();
+      TBasicApp::GetLog() << "Searching for centrosymmetric group: " << centro << '\n';
+      for( int i=0; i < sgs.Count(); i++ )  {
+        if( centro )  {
+          if( sgs[i]->IsCentrosymmetric() )  {
+            sg = sgs[i];
+            break;
+          }
+        }
+        else  {
+          if( !sgs[i]->IsCentrosymmetric() )  {
+            sg = sgs[i];
+            break;
+          }
+        }
+      }
+      if( sg == NULL )  {  // no match to centre of symmetry found
+        sg = sgs[0];
+        TBasicApp::GetLog() << "Could not match, choosing: " << sg->GetName() << '\n';
+      }
+      else  {
+        TBasicApp::GetLog() << "Chosen: " << sg->GetName() << '\n';
+      }
+    }
+    olxstr fn( Cmds.IsEmpty() ? TEFile::ChangeFileExt(XApp.XFile().GetFileName(), "ins") : Cmds[0] );
+    executeMacro(olxstr("reset -s=") << sg->GetName() << " -f='" << fn << '\'');
+    if( E.IsSuccessful() )  {
+      executeMacro(olxstr("reap '") << fn << '\'');
+      E.SetRetVal<bool>(E.IsSuccessful());
+    }
+  }
+  //..............................................................................
   void macFile(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
     olxstr Tmp;
     XApp.XFile().UpdateAsymmUnit();
@@ -1522,9 +1572,8 @@ int main(int argc, char* argv[])  {
   if( argc > 1 )  {
     olxstr arg_ext( TEFile::ExtractFileExt(argv[1]) );
     if( arg_ext.Comparei("autochem") == 0 )  {
-      TStrList in;
-      in.LoadFromFile(argv[1]); 
-
+      olxstr sf ( TEFile::ChangeFileExt(argv[1], EmptyString) );
+      olex.executeMacro( olxstr("start_autochem '") << sf << '\'' );
     }
   }
   char _cmd[512];
