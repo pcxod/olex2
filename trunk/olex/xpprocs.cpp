@@ -1812,11 +1812,12 @@ void TMainForm::macLabels(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   }
   if( lmode == 0 )  {
     lmode |= lmLabels;
+    lmode |= lmQPeak;
     FXApp->LabelsMode(lmode);
     FXApp->LabelsVisible( !FXApp->LabelsVisible() );
   }
   else  {
-    FXApp->LabelsMode(lmode);
+    FXApp->LabelsMode(lmode |= lmQPeak );
     FXApp->LabelsVisible(true);
   }
 }
@@ -8134,6 +8135,7 @@ void TMainForm::macTestMT(TStrObjList &Cmds, const TParamList &Options, TMacroEr
 }
 //..............................................................................
 void TMainForm::macSetFont(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  if( Cmds[1].IsEmpty() )  return;
   TwxGlScene* scene = (TwxGlScene*)FXApp->GetRender().Scene();
   TGlFont* glf = scene->FindFont( Cmds[0] );
   if( glf == NULL )  {

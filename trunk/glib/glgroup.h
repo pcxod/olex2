@@ -4,11 +4,12 @@
 #define glgroupH
 #include "glbase.h"
 #include "gdrawobject.h"
+#include "tptrlist.h"
 
 BeginGlNamespace()
 
 class TGlGroup: public AGDrawObject {
-  class TEList FObjects;   // a list of grouped objects
+  TPtrList<AGDrawObject> FObjects;   // a list of grouped objects
   class TGlMaterial *FGlM;
   bool DefaultColor;
 protected:
@@ -26,9 +27,9 @@ public:
   void Remove(AGDrawObject *G);
   void RemoveDeleted();
 
-  bool Contains(AGDrawObject *G);
+  inline bool Contains(AGDrawObject *G) const {  return  (FObjects.IndexOf(G) == -1) ? false : true;  }
   inline int Count()                 const {  return FObjects.Count(); }
-  inline AGDrawObject *Object(int i) const {  return (AGDrawObject*)FObjects[i]; }
+  inline AGDrawObject *Object(int i) const {  return FObjects[i]; }
 
   bool OnMouseDown(const IEObject *Sender, const class TMouseData *Data);
   bool OnMouseUp(const IEObject *Sender, const TMouseData *Data);

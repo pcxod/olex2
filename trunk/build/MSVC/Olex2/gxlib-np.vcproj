@@ -484,10 +484,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\gxlib\wglscene.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\gxlib\wxglscene.cpp"
 				>
 			</File>
@@ -600,6 +596,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\gxlib\gxapp.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\gxlib\gxbase.h"
 				>
 			</File>
@@ -609,10 +609,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\gxlib\wxglscene.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\gxlib\xapp.h"
 				>
 			</File>
 			<File

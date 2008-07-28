@@ -1,6 +1,7 @@
 //---------------------------------------------------------------------------
 
 #include <vcl.h>
+#include <sys/stat.h>
 #pragma hdrstop
 
 #include "main.h"
@@ -10,10 +11,14 @@
 #pragma resource "*.dfm"
 TForm1 *Form1;
 //---------------------------------------------------------------------------
-__fastcall TForm1::TForm1(TComponent* Owner) : TForm(Owner)  {}
+__fastcall TForm1::TForm1(TComponent* Owner) : TForm(Owner)  {
+  dc = NULL;
+}
 //---------------------------------------------------------------------------
 __fastcall TForm1::~TForm1() {
   olxv_Finalize();
+  if( dc != NULL )
+    ReleaseDC(Handle, dc);
 //  DragAcceptFiles(Handle, TRUE);
 }
 //---------------------------------------------------------------------------
@@ -23,8 +28,8 @@ void __fastcall TForm1::FormPaint(TObject *Sender)
 }
 //---------------------------------------------------------------------------
 void __fastcall TForm1::FormShow(TObject *Sender)  {
-  HDC hdc = GetDC(Handle);
-  olxv_Initialize(hdc, Width, Height );
+  dc = GetDC(Handle);
+  olxv_Initialize(dc, Width, Height );
 }
 //---------------------------------------------------------------------------
 void __fastcall TForm1::FormMouseDown(TObject *Sender, TMouseButton Button,
@@ -90,18 +95,68 @@ void __fastcall TForm1::tTimerTimer(TObject *Sender)  {
   if( FileExists( FileName ) )  {
     int fa = FileAge(FileName);
     if( fa != age )  {
-      olxv_OnFileChanged(FileName.c_str());
-      Refresh();
-      age = fa;
+      struct stat st;
+      if( stat( FileName.c_str(), &st ) == 0 && (st.st_mode & S_IREAD) != 0 )  {
+        olxv_OnFileChanged(FileName.c_str());
+        Refresh();
+        age = fa;
+      }
     }
   }
+}
+//---------------------------------------------------------------------------
+void TForm1::CheckLabels()  {
+  short t = miLabels->Checked ? olxv_LabelsAll : 0;
+  if( miH->Checked )  t |= olxv_LabelsH;
+  else                t &= ~olxv_LabelsH;
+  if( miQ->Checked )  t |= olxv_LabelsQ;
+  else                t &= ~olxv_LabelsQ;
+
+  olxv_ShowLabels(t);
+
+  olxv_OnPaint();
 }
 //---------------------------------------------------------------------------
 
 void __fastcall TForm1::miLabelsClick(TObject *Sender)  {
   miLabels->Checked = !miLabels->Checked;
-  olxv_ShowLabels(miLabels->Checked);
+  CheckLabels();
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::Telp1Click(TObject *Sender)  {
+  olxv_DrawStyle( olxv_DrawStyleTelp );
   olxv_OnPaint();
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::Pers1Click(TObject *Sender)  {
+  olxv_DrawStyle( olxv_DrawStylePers );
+  olxv_OnPaint();
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::Sfil1Click(TObject *Sender)  {
+  olxv_DrawStyle( olxv_DrawStyleSfil );
+  olxv_OnPaint();
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::miHClick(TObject *Sender)  {
+  miH->Checked = !miH->Checked;
+  CheckLabels();
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::miQClick(TObject *Sender)  {
+  miQ->Checked = !miQ->Checked;
+  CheckLabels();
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::miCellClick(TObject *Sender)  {
+  miCell->Checked = !miCell->Checked;   
+  olxv_ShowCell( miCell->Checked );
 }
 //---------------------------------------------------------------------------
 

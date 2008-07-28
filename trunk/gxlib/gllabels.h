@@ -22,10 +22,10 @@ const short lmLabels   = 0x0001,  // atom label
             lmUisR     = 0x0040,  // Uiso for riding atoms (negative)
             lmAOcc     = 0x0080,  // actuall occupancy (as read from ins )
             lmHydr     = 0x0100,  // include hydrogens
-            lmFixed    = 0x0200;  // fixed values
+            lmQPeak    = 0x0200,  // include Q-peaks
+            lmFixed    = 0x0400;  // fixed values
 
-class TXGlLabels: public AGDrawObject
-{
+class TXGlLabels: public AGDrawObject  {
   TEList *FAtoms;
   short  FFontIndex;
   TGlMaterial FMarkMaterial;

@@ -30,8 +30,8 @@ public:
 //..............................................................................
   /* copies values from an array of size elements  */
   TTypeListExt( size_t size, const T* array ) : List(size)  {
-    for( int i=0; i < size; i++ )
-      Alloc(i) =  array[i];
+    for( size_t i=0; i < size; i++ )
+      List[i] = new T(array[i]);
   }
 //..............................................................................
   //destructor - beware t40: error: expecthe objects are deleted!

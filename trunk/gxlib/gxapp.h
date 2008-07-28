@@ -394,12 +394,9 @@ public:     void CalcProbFactor(float Prob);
   bool MouseMove(int x, int y, short Shift)  {
     return FGlMouse->MouseMove(x, y, Shift);
   }
-  bool DblClick()  {
-    return FGlMouse->DblClick();
-  }
-  void ResetMouseState()  {
-    FGlMouse->ResetMouseState();
-  }
+  bool DblClick()                {  return FGlMouse->DblClick();  }
+  void ResetMouseState()         {  FGlMouse->ResetMouseState();  }
+  void EnableSelection( bool v)  {  FGlMouse->SelectionEnabled = v;  }
 //..............................................................................
 // actions
   TActionQueue  *OnGraphicsVisible;

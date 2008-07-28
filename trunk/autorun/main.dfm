@@ -9152,11 +9152,12 @@ object fMain: TfMain
     OnClick = ExitClick
   end
   object rbInstall: TRadioButton
-    Left = 252
-    Top = 180
+    Left = 253
+    Top = 164
     Width = 161
     Height = 17
     Caption = 'Install Olex2'
+    Checked = True
     Font.Charset = ANSI_CHARSET
     Font.Color = clGray
     Font.Height = -19
@@ -9164,10 +9165,11 @@ object fMain: TfMain
     Font.Style = [fsBold]
     ParentFont = False
     TabOrder = 2
+    TabStop = True
   end
   object rbWebsite: TRadioButton
     Left = 253
-    Top = 217
+    Top = 203
     Width = 225
     Height = 29
     Caption = 'Go to www.olex2.org'
@@ -9185,7 +9187,6 @@ object fMain: TfMain
     Width = 225
     Height = 17
     Caption = 'Run Olex2 from CD'
-    Checked = True
     Font.Charset = ANSI_CHARSET
     Font.Color = clGray
     Font.Height = -19
@@ -9193,6 +9194,6 @@ object fMain: TfMain
     Font.Style = [fsBold]
     ParentFont = False
     TabOrder = 4
-    TabStop = True
+    Visible = False
   end
 end

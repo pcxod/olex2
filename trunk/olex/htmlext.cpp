@@ -664,27 +664,18 @@ THtmlSwitch::THtmlSwitch(THtml *ParentHtml, THtmlSwitch *ParentSwitch):AHtmlObje
 {
   FParentHtml = ParentHtml;
   FParent = ParentSwitch;
-  FSwitches = new TEList;
-  FFuncs = new TEList;
-  FLinks = new TEList;
   FUpdateSwitch = true;
   FFileIndex = 0;
 }
 //..............................................................................
 THtmlSwitch::~THtmlSwitch()  {
   Clear();
-  delete FSwitches;
-  delete FFuncs;
-  delete FLinks;
 }
 //..............................................................................
 void THtmlSwitch::Clear()  {
-  for( int i=0; i < SwitchCount(); i++ )  delete Switch(i);
-  FSwitches->Clear();
-  for( int i=0; i < FuncCount(); i++ )  delete Func(i);
-  FFuncs->Clear();
-  for( int i=0; i < LinkCount(); i++ )  delete Link(i);
-  FLinks->Clear();
+  FSwitches.Clear();
+  FFuncs.Clear();
+  FLinks.Clear();
   FStrings.Clear();
   //FParams.Clear();
 }
@@ -708,16 +699,15 @@ void THtmlSwitch::UpdateFileIndex()  {
   delete is;
   FParentHtml->CheckForSwitches(*this, TZipWrapper::IsZipFile(FN) );
   for( int i=0; i < SwitchCount(); i++ )
-    Switch(i)->UpdateFileIndex();
+    FSwitches[i].UpdateFileIndex();
 }
 //..............................................................................
 bool THtmlSwitch::ToFile()  {
-  if( !SwitchCount() )  return true;
-  if( !FFileName.Length() )  return true;
-  AHtmlObject *HO;
+  if( FSwitches.IsEmpty() )  return true;
+  if( FFileName.IsEmpty() )  return true;
   for( int i=0; i < FStrings.Count(); i++ )  {
     if( FStrings.Object(i) )  {
-      HO = FStrings.Object(i);
+      AHtmlObject* HO = FStrings.Object(i);
       if( EsdlInstanceOf(*HO, THtmlSwitch) )  {
         FParentHtml->UpdateSwitchState(*(THtmlSwitch*)HO, FStrings.String(i));
         ((THtmlSwitch*)HO)->ToFile();
@@ -728,38 +718,32 @@ bool THtmlSwitch::ToFile()  {
   return true;
 }
 //..............................................................................
-THtmlFunc* THtmlSwitch::NewFunc()  {
-  THtmlFunc *F = new THtmlFunc(FParentHtml, this);
-  FFuncs->Add(F);
-  return F;
+THtmlFunc& THtmlSwitch::NewFunc()  {
+  return FFuncs.AddNew(FParentHtml, this);
 }
 //..............................................................................
-THtmlSwitch* THtmlSwitch::NewSwitch()  {
-  THtmlSwitch *Sw = new THtmlSwitch(FParentHtml, this);
-  FSwitches->Add(Sw);
-  return Sw;
+THtmlSwitch& THtmlSwitch::NewSwitch()  {
+  return FSwitches.AddNew(FParentHtml, this);
 }
 //..............................................................................
-THtmlLink* THtmlSwitch::NewLink()  {
-  THtmlLink *Lk = new THtmlLink(FParentHtml, this);
-  FLinks->Add(Lk);
-  return Lk;
+THtmlLink& THtmlSwitch::NewLink()  {
+  return FLinks.AddNew(FParentHtml, this);
 }
 //..............................................................................
 int THtmlSwitch::FindSimilar(const olxstr& start, const olxstr& end, TPtrList<THtmlSwitch>& ret)  {
   int cnt = 0;
-  for( int i=0; i < SwitchCount(); i++ )  {
-    THtmlSwitch* I = Switch(i);
+  for( int i=0; i < FSwitches.Count(); i++ )  {
+    THtmlSwitch& I = FSwitches[i];
     if( end.IsEmpty() )  {
-      if( I->Name().StartsFrom(start) )  {
-        ret.Add( I );
-        cnt += (I->FindSimilar(start, end, ret) + 1);
+      if( I.Name().StartsFrom(start) )  {
+        ret.Add( &I );
+        cnt += (I.FindSimilar(start, end, ret) + 1);
       }
     }
     else {
-      if( I->Name().StartsFrom(start) &&  I->Name().EndsWith(end) )  {
-        ret.Add( I );
-        cnt += (I->FindSimilar(start, end, ret) + 1);
+      if( I.Name().StartsFrom(start) &&  I.Name().EndsWith(end) )  {
+        ret.Add( &I );
+        cnt += (I.FindSimilar(start, end, ret) + 1);
       }
     }
   }
@@ -768,12 +752,11 @@ int THtmlSwitch::FindSimilar(const olxstr& start, const olxstr& end, TPtrList<TH
 //..............................................................................
 THtmlSwitch*  THtmlSwitch::FindSwitch(const olxstr &IName)  {
   THtmlSwitch *I, *Res;
-  for( int i=0; i < SwitchCount(); i++ )  {
-    I = Switch(i);
-    if( I->Name().Comparei(IName) == 0 )
-      return I;
+  for( int i=0; i < FSwitches.Count(); i++ )  {
+    if( FSwitches[i].Name().Comparei(IName) == 0 )
+      return &FSwitches[i];
     else  {
-      Res = I->FindSwitch(IName);
+      Res = FSwitches[i].FindSwitch(IName);
       if( Res != NULL ) return Res;
     }
   }
@@ -1062,9 +1045,6 @@ void THtml::CheckForSwitches(THtmlSwitch &Sender, bool izZip)  {
            Tag2 = "<!-- #cmd ",
            Tag3 = "<!-- #link ",
            Tag4 = "<!-- #includeif ";
-  THtmlSwitch *Sw;
-  THtmlFunc *Fn;
-  THtmlLink *Lk;
   olxstr Tmp;
   for( int i=0; i < Lst.Count(); i++ )  {
     // TRANSLATION START
@@ -1092,7 +1072,7 @@ void THtml::CheckForSwitches(THtmlSwitch &Sender, bool izZip)  {
         else  continue;
         Toks.Delete(0);
       }
-      Sw = Sender.NewSwitch();
+      THtmlSwitch* Sw = &Sender.NewSwitch();
       Lst.Object(i) = Sw;
       Sw->Name(Toks[0]);
       Toks.Delete(0);
@@ -1150,7 +1130,7 @@ void THtml::CheckForSwitches(THtmlSwitch &Sender, bool izZip)  {
       Tmp = Lst[i].SubStringFrom(Tag1.Length());
       Toks.Strtok(Tmp, ' '); // extract item name
       if( Toks.Count() < 3 )  continue;
-      Sw = FRoot->FindSwitch(Toks.String(0));
+      THtmlSwitch* Sw = FRoot->FindSwitch(Toks[0]);
       if( Sw == NULL )  {
         TBasicApp::GetLog().Error(olxstr("THtml::CheckForSwitches: Unresolved: ") << Toks.String(0));
         continue;
@@ -1162,7 +1142,7 @@ void THtml::CheckForSwitches(THtmlSwitch &Sender, bool izZip)  {
       Tmp = Lst[i].SubStringFrom(Tag2.Length());
       Toks.Strtok(Tmp, ' '); // extract item name
       if( Toks.Count() < 2 )  continue;
-      Fn = Sender.NewFunc();
+      THtmlFunc* Fn = &Sender.NewFunc();
       Lst.Object(i) = Fn;
       Fn->Func(Toks.String(0));
 //      if( OnCmd->Execute(this, &(Toks.String(0))) )
@@ -1174,7 +1154,7 @@ void THtml::CheckForSwitches(THtmlSwitch &Sender, bool izZip)  {
       Toks.Strtok(Tmp, ' '); // extract file name
       if( Toks.Count() < 2 )  continue;
       Toks.Delete(Toks.Count()-1);  // delete --!>
-      Lk = Sender.NewLink();
+      THtmlLink* Lk = &Sender.NewLink();
       Lst.Object(i) = Lk;
       Lk->FileName(Toks.Text(' '));
 //      if( OnCmd->Execute(this, &(Toks.String(0))) )
@@ -1282,7 +1262,7 @@ bool THtml::UpdatePage()  {
   TEFile::ChangeDir(FWebFolder);
 
   for( int i=0; i < FRoot->SwitchCount(); i++ )  // reload switches
-    FRoot->Switch(i)->UpdateFileIndex();
+    FRoot->Switch(i).UpdateFileIndex();
 
   TStrList Res;
 //  Res.Add( "<meta http-equiv='Content-Type' content='text/html; charset=") <<
@@ -1663,7 +1643,7 @@ void THtml::macItemState(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     else  {
       if( itemName == "*" )  {
         for( int j=0; j < rootSwitch->SwitchCount(); j++ )
-          Switches.Add( rootSwitch->Switch(j) );
+          Switches.Add( &rootSwitch->Switch(j) );
       }
       else  {
         int sindex = itemName.FirstIndexOf('*');

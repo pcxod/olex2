@@ -531,6 +531,8 @@ void TwxGlScene::MetaFont::SetIdString(const olxstr& idstr)  {
   }
   else  {
     wxFont f(idstr.u_str());
+    if( !f.IsOk() )
+      throw TFunctionFailedException(__OlxSourceInfo, "invalid font ID");
     Fixed = f.IsFixedWidth();
     Italic = (f.GetStyle() == wxFONTSTYLE_ITALIC);
     Bold = (f.GetWeight() == wxFONTWEIGHT_BOLD);

@@ -509,6 +509,7 @@
 						Name="VCCLCompilerTool"
 						Optimization="0"
 						BasicRuntimeChecks="3"
+						ObjectFile="$(IntDir)\"
 					/>
 				</FileConfiguration>
 				<FileConfiguration

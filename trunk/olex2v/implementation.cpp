@@ -6,6 +6,8 @@
 #include "olxvar.h"
 //#include "wx/fontmap.h"
 #include "wx/font.h"
+#include "wx/settings.h"
+#include "wx/wx.h"
 
 #include "xatom.h"
 #include "xbond.h"
@@ -47,9 +49,7 @@ TOlexViewer::TOlexViewer(HDC windowDC, int w, int h) : WindowDC(windowDC) {
   glClearColor(0.5, 0.5, 0, 0);
   OnSize(w, h);
   wxFont Font(*wxNORMAL_FONT);//|wxFONTFLAG_ANTIALIASED);
-//  wxFont Font(10, wxMODERN, wxNORMAL, wxNORMAL);//|wxFONTFLAG_ANTIALIASED);
-  // create 4 fonts
-  TGlFont *fnt = GXApp->GetRender().Scene()->CreateFont("Labels", &Font, NULL, true, true);
+  TGlFont *fnt = GXApp->GetRender().Scene()->CreateFont("Labels", Font.GetNativeFontInfoDesc().c_str());
   fnt->Material().SetFlags(sglmAmbientF|sglmEmissionF|sglmIdentityDraw);
   fnt->Material().AmbientF = 0x7fff7f;
   fnt->Material().EmissionF = 0x1f2f1f;
@@ -68,6 +68,8 @@ TOlexViewer::TOlexViewer(HDC windowDC, int w, int h) : WindowDC(windowDC) {
   GXApp->LabelsVisible(false);
   GXApp->LabelsMode(lmLabels);
   GXApp->CalcProbFactor(50);
+  GXApp->EnableSelection(false);
+  DefDS = olxv_DrawStyleTelp;
 }
 TOlexViewer::~TOlexViewer()  {
   Instance = NULL;
@@ -77,6 +79,8 @@ TOlexViewer::~TOlexViewer()  {
     wglDeleteContext(GlContext);
   }
   TOlxVars::Finalise();
+  wxStockGDI::DeleteAll();
+  // there is still a static font variable left from wxWidgest, duno how to reach it cleanly...
 }
 void TOlexViewer::OnPaint()  {
 //  OnSize(Width, Height);
@@ -117,6 +121,7 @@ void TOlexViewer::OnFileChanged(const char* fileName)  {
     GXApp->LoadXFile(fileName);
     GXApp->SetAtomDrawingStyle(adsEllipsoid);
     GXApp->Uniq();
+    DrawStyle( DefDS );
   }
   catch(...)  {}
 }
@@ -142,8 +147,53 @@ olxstr TOlexViewer::GetObjectLabelAt(int x, int y)  {
 olxstr TOlexViewer::GetSelectionInfo()  {
   return GXApp->GetSelectionInfo();
 }
-void TOlexViewer::ShowLabels(bool v)  {
-  GXApp->LabelsVisible(v);
+void TOlexViewer::ShowLabels(unsigned short type)  {
+  short t = type == 0 ? 0 : lmLabels;
+  if( (type & olxv_LabelsH) != 0 )  t |= lmHydr;
+  if( (type & olxv_LabelsQ) != 0 )  t |= lmQPeak;
+  if( t == 0 )
+    GXApp->LabelsVisible(false);
+  else  {
+    GXApp->LabelsMode(t);
+    GXApp->LabelsVisible(true);
+  }
+}
+void TOlexViewer::ShowQPeaks(short what)  {
+  GXApp->QPeaksVisible((what & olxv_ShowQAtoms) != 0);
+  GXApp->QPeaksVisible((what & olxv_ShowQBonds) != 0);
+}
+void TOlexViewer::ShowCell(bool v)  {
+  GXApp->SetCellVisible(v);
+}
+void TOlexViewer::DrawStyle(short style)  {
+  if( style == olxv_DrawStylePers )  {
+    GXApp->AtomRad("pers");
+    TXAtom::DefSphMask(1);
+    TXAtom::DefDS(adsSphere);
+    TXBond::DefMask(48);
+    GXApp->UpdateAtomPrimitives(1);
+    GXApp->SetAtomDrawingStyle(adsSphere);
+    DefDS = style;
+  }
+  else if( style == olxv_DrawStyleTelp )  {
+    GXApp->AtomRad("isot");
+    TXAtom::DefElpMask(5);
+    TXAtom::DefDS(adsEllipsoid);
+    TXBond::DefMask(48);
+    GXApp->CalcProbFactor(50);
+    GXApp->UpdateAtomPrimitives(5);
+    GXApp->SetAtomDrawingStyle(adsEllipsoid);
+    DefDS = style;
+  }
+  else if( style == olxv_DrawStyleSfil )  {
+    GXApp->AtomRad("sfil");
+    TXAtom::DefSphMask(1);
+    TXAtom::DefDS(adsSphere);
+    TXBond::DefMask(48);
+    GXApp->UpdateAtomPrimitives(1);
+    GXApp->SetAtomDrawingStyle(adsSphere);
+    DefDS = style;
+  }
 }
 
 bool TOlexViewer::executeMacro(const olxstr& cmdLine)  {
@@ -206,8 +256,17 @@ const char* olxv_GetObjectLabelAt(int x, int y)  {
 const char* olxv_GetSelectionInfo()  {
   return (TOlexViewer::Instance != NULL) ? TOlexViewer::Instance->GetSelectionInfo().c_str() : "";
 }
-void olxv_ShowLabels(bool v)  {
-  if( TOlexViewer::Instance != NULL ) TOlexViewer::Instance->ShowLabels(v);
+void olxv_ShowLabels(unsigned short type)  {
+  if( TOlexViewer::Instance != NULL )  TOlexViewer::Instance->ShowLabels(type);
+}
+void olxv_ShowQPeaks(short what)  {
+  if( TOlexViewer::Instance != NULL )  TOlexViewer::Instance->ShowQPeaks(what);
+}
+void olxv_ShowCell(bool v)  {
+  if( TOlexViewer::Instance != NULL )  TOlexViewer::Instance->ShowCell(v);
+}
+void olxv_DrawStyle(short style)  {
+  if( TOlexViewer::Instance != NULL )  TOlexViewer::Instance->DrawStyle(style);
 }
 
 BOOL APIENTRY DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved)  {

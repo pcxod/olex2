@@ -172,15 +172,14 @@ olxstr TFSItem::GetFullName() const  {
 // an alernative implementation can be done with olxstr::Insert ... to be considered
   TFSItem *FI = const_cast<TFSItem*>(this);
   olxstr Tmp;
-  TEList L;
-  while( FI )  {
+  TPtrList<TFSItem> L;
+  while( FI != NULL )  {
     L.Add(FI);
     FI = FI->GetParent();
     if( !FI->GetParent() )  break;  //ROOT
   }
   for( int i=L.Count()-1; i >= 0; i-- )  {
-    FI = (TFSItem*)L.Item(i);
-    Tmp << FI->GetName();
+    Tmp << L[i]->GetName();
     if( i > 0 )  Tmp << '\\';
   }
   return Tmp;

@@ -805,7 +805,7 @@ void TAsymmUnit::LibGetPeak(const TStrObjList& Params, TMacroError& E)  {
 void TAsymmUnit::LibGetAtomU(const TStrObjList& Params, TMacroError& E)  {
   int index = Params[0].ToInt();
   if( index < 0 || index >= AtomCount() )  throw TIndexOutOfRangeException(__OlxSourceInfo, index, 0, AtomCount());
-  evecd V(6);
+  evecd V(1);
   if( GetAtom(index).GetEllipsoid() == NULL )  {
     // TODO: a special condition - the atom is isotropic, but a user wishes it to be
     // anisotropic - six values a, a, a, 0, 0, 0 have to be passed

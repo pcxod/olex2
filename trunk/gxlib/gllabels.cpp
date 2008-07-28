@@ -81,6 +81,7 @@ bool TXGlLabels::Orient(TGlPrimitive *P)  {
     XA = Atom(i);
     if( XA->Deleted() || (!XA->Visible()))  continue;
     if( !(FMode & lmHydr) && (XA->Atom().GetAtomInfo() == iHydrogenIndex ) )  continue;
+    if( !(FMode & lmQPeak) && (XA->Atom().GetAtomInfo() == iQPeakIndex ) )  continue;
     Tmp  = EmptyString;
     if( FMode & lmLabels )  {
       Tmp << XA->Atom().GetLabel();
