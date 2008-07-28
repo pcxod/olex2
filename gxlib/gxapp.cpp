@@ -48,6 +48,9 @@
 #define ConeStipple  6.0
 #define LineStipple  0xf0f0
 
+// on Linux it is defined as something..
+#undef QLength
+
 int CompareStr(const olxstr &Str, const olxstr &Str1, bool IC) {
   int minl = olx_min(Str1.Length(), Str.Length());
   int diff1;

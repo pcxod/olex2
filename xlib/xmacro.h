@@ -3,6 +3,8 @@
 #include "library.h"
 #include "xapp.h"
 #include "cif.h"
+// on Linux its is defined as something...
+#undef QLength
 
 //simply a macro registry
 
@@ -66,4 +68,3 @@ protected:
 };
 //---------------------------------------------------------------------------
 #endif
- 
