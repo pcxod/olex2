@@ -8,6 +8,8 @@
 #include "ellipsoid.h"
 #include "estrbuffer.h"
 #include "arrays.h"
+#include "lattice.h"
+#include "asymmunit.h"
 
 BeginXlibNamespace()
 

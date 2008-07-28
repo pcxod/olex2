@@ -1,6 +1,0 @@
-gcc ../../alglib/*.cpp ../../sdl/*.cpp ../../sdl/smart/*.cpp ../../xlib/*.cpp ../../xlib/macro/*.cpp ../../glib/*.cpp ../../gxlib/*.cpp `wx-config --cxxflags --unicode  --toolkit=x11` `python-config --includes` -I../../sdl -I../../xlib -I../../glib -I../../gxlib -I../../alglib -I../../repository -S -D__WXWIDGETS__ -D_UNICODE -fexceptions -g
-
-gcc ../../repository/filesystem.cpp ../../repository/shellutil.cpp ../../repository/httpex.cpp ../../repository/url.cpp ../../repository/wxhttpfs.cpp ../../repository/pyext.cpp ../../repository/integration.cpp  ../../repository/IsoSurface.cpp `wx-config --cxxflags --unicode  --toolkit=x11` `python-config --includes` -I../../sdl -I../../xlib -I../../glib -I../../gxlib -I../../repository -I../../olex -S -D__WXWIDGETS__ -D_UNICODE -fexceptions -g
-
-
-gcc ../../olex/*.cpp `wx-config --cxxflags --unicode --toolkit=x11` `python-config --includes` -I../../sdl -I../../xlib -I../../glib -I../../gxlib -I../../repository -S -D__WXWIDGETS__ -D_UNICODE -fexceptions -g

@@ -43,7 +43,7 @@ public:
     return l;
   }
   template <class AT> T XProdVal (const TVector3<AT>& v) const {
-    AType cang = CAngle(v);
+    T cang = CAngle(v);
     return sqrt(QLength()*v.QLength()*(1-cang*cang));
   }
   template <class AT> inline TVector3<T> XProdVec (const TVector3<AT>& v) const  {
@@ -264,10 +264,18 @@ public:
     return *this;
   }
 
-  template <class AT> inline void operator *= (AT v) {
+  template <class AT> inline TMatrix33<T>& operator *= (AT v) {
     data[0][0] *= v;  data[0][1] *= v;  data[0][2] *= v;
     data[1][0] *= v;  data[1][1] *= v;  data[1][2] *= v;
     data[2][0] *= v;  data[2][1] *= v;  data[2][2] *= v;
+	return *this;
+  }
+
+  template <class AT> inline TMatrix33<T>& operator /= (AT v) {
+    data[0][0] /= v;  data[0][1] /= v;  data[0][2] /= v;
+    data[1][0] /= v;  data[1][1] /= v;  data[1][2] /= v;
+    data[2][0] /= v;  data[2][1] /= v;  data[2][2] /= v;
+	return *this;
   }
 
   inline T Determinant() const {
@@ -276,15 +284,15 @@ public:
            data[0][2]*(data[1][0]*data[2][1] - data[1][1]*data[2][1]);
   }
   inline TMatrix33<T> Inverse()  const {
-    return TMatrix33<T>( data[2][2]*data[1][1] - data[2][1]*data[1][2],
-                       -(data[2][2]*data[0][1] - data[2][1]*data[0][2]),
-                         data[1][2]*data[0][1] - data[1][1]*data[0][2],
-                       -(data[2][2]data[1][0] - data[2][1]*data[1][2]),
-                         data[2][2]*data[0][0] - data[2][0]*data[0][2],
-                       -(data[1][2]*data[0][0] - data[1][0]*data[0][2]),
-                         data[2][1]*data[1][0] - data[2][0]*data[1][1],
-                       -(data[2][1]*data[0][0] - data[2][0]*data[0][1]),
-                         data[1][1]*data[0][0] - data[1][0]*data[0][1])/Determinant();
+	return TMatrix33( data[2][2]*data[1][1] - data[2][1]*data[1][2],
+			          data[2][1]*data[0][2] - data[2][2]*data[0][1],
+			          data[1][2]*data[0][1] - data[1][1]*data[0][2],
+			          data[2][1]*data[1][2] - data[2][2]*data[1][0],
+					  data[2][2]*data[0][0] - data[2][0]*data[0][2],
+					  data[1][0]*data[0][2] - data[1][2]*data[0][0],
+					  data[2][1]*data[1][0] - data[2][0]*data[1][1],
+					  data[2][0]*data[0][1] - data[2][1]*data[0][0],
+					  data[1][1]*data[0][0] - data[1][0]*data[0][1])/=Determinant();
   }
   template <class AT> TVector3<AT>  operator * (const TVector3<AT>& a) const  {
     return TVector3<AT>( a[0]*data[0][0] + a[1]*data[0][1] + a[2]*data[0][2],
