@@ -281,8 +281,3 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
   */
   }
 }
-
-
-
-
-

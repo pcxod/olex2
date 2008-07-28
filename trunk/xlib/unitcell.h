@@ -10,6 +10,8 @@
 #include "arrays.h"
 #include "lattice.h"
 #include "asymmunit.h"
+// on Linux its is defined as something...
+#undef QLength
 
 BeginXlibNamespace()
 

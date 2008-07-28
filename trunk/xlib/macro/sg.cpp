@@ -463,5 +463,3 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
   }
 */
 }
-
- 

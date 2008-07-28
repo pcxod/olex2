@@ -1,5 +1,5 @@
 /* XPM */
-static char *mainicon_xpm[] = {
+static const char *mainicon_xpm[] = {
 "32 32 255 2 0 0",
 "   c #000000",
 "!  c #312F30",

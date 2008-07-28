@@ -18,9 +18,9 @@
   TSymmLib* TSymmLib::Instance = NULL;
 
 struct olx_SGDef  {
-  char* name, *full_name, *hall_symbol, *axis;
+  const char* name, *full_name, *hall_symbol, *axis;
   int number, latt;
-  char* matrices;
+  const char* matrices;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

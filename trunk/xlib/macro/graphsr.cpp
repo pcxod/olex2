@@ -186,5 +186,3 @@ void XLibMacros::macGraphSR(TStrObjList &Cmds, const TParamList &Options, TMacro
     XApp.GetLog() << (outputFileName << " file was created\n" );
   }
 }
-
-

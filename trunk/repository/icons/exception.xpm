@@ -1,5 +1,5 @@
 /* XPM */
-static char *exception_xpm[] = {
+static const char *exception_xpm[] = {
 "32 32 6 1 0 0",
 "  c #000000",
 "! c #800000",
