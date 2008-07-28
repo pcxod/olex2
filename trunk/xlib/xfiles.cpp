@@ -297,7 +297,8 @@ void TXFile::LibGetFormula(const TStrObjList& Params, TMacroError& E)  {
     bool subAdded = false;
     double dv = units[i].ToDouble()/GetAsymmUnit().GetZ();
     tmp = (digits > 0) ? olxstr::FormatFloat(digits, dv) : dv;
-    tmp.TrimFloat();
+    if( tmp.IndexOf('.') != -1 )
+      tmp.TrimFloat();
     if( html )  {
       if( fabs(dv-1) > 0.01 && fabs(dv) > 0.01 )  {
         rv << "<sub>" << tmp;
