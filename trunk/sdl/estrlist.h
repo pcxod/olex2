@@ -505,8 +505,8 @@ template <class SC, typename OC>  class TStrPObjList:
 public:
   TStrPObjList()  {}
   TStrPObjList(int count) : TTOStringList<SC,OC,TPrimitiveStrListData<SC,OC> >(count)  { 
-    for( int i=0; i < Count(); i++ )
-      Object(i) = NULL;
+    for( int i=0; i < TTOStringList<SC,OC,TPrimitiveStrListData<SC,OC> >::Count(); i++ )
+      TTOStringList<SC,OC,TPrimitiveStrListData<SC,OC> >::Object(i) = NULL;
   }
 
   template <class SC1, class T1> TStrPObjList(const TTStrList<SC1,T1>& list) : 
