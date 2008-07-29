@@ -205,8 +205,8 @@ bool TGlXApp::OnInit()  {
       uiStrT("Exception: ") += uiStrT(EsdlObjectNameT(exc)), wxOK|wxICON_ERROR);
   }
   SetTopWindow(MainForm);
-  MainForm->Show(true);
   MainForm->Maximize(true);
+  MainForm->Show(true);
   return true;
 }
 //..............................................................................

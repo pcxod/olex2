@@ -1,5 +1,5 @@
 #!/bin/bash
-bin_dir=/work/olex2-f8
+bin_dir=~/olex
 if [ ! -z $1 ] && [ -d $1 ] 
 then
   bin_dir=$1

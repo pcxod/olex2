@@ -3447,7 +3447,11 @@ bool TMainForm::OnMouseDblClick(int x, int y, short Flags, short Buttons)  {
 }
 //..............................................................................
 bool TMainForm::Show( bool v )  {
+#ifdef __WXGTK__
+  bool res = wxWindow::Show(v);
+#else
   bool res = wxFrame::Show(v);
+#endif
   if( res )  {
     FXApp->SetMainFormVisible( v );
     FGlCanvas->SetFocus();
