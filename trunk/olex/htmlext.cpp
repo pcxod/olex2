@@ -1388,7 +1388,7 @@ void THtml::OnCellMouseHover(wxHtmlCell *Cell, wxCoord x, wxCoord y)  {
 #endif
   }
   else
-    SetToolTip(wxT(""));
+    SetToolTip(NULL);
 }
 //..............................................................................
 //..............................................................................

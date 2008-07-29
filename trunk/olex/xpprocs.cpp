@@ -5412,7 +5412,7 @@ void TMainForm::macPopup(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   olxstr border = Options.FindValue("b"), 
     title = Options.FindValue("t"), 
     onDblClick = Options.FindValue("d");
-  int iBorder = wxNO_BORDER;
+  int iBorder = 0;
   for( int i=0; i < border.Length(); i++ )  {
     if( border.CharAt(i) == 't' )  {  iBorder |= wxCAPTION;        continue;  }
     if( border.CharAt(i) == 'r' )  {  iBorder |= wxRESIZE_BORDER;  continue;  }
@@ -5422,7 +5422,8 @@ void TMainForm::macPopup(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     if( border.CharAt(i) == 'i' )  {  iBorder |= wxMINIMIZE_BOX;  iBorder |= wxSYSTEM_MENU; continue;  }
     if( border.CharAt(i) == 'p' )  {  iBorder |= wxSTAY_ON_TOP;   continue;  }
   }
-  //iBorder |= wxNO_BORDER;
+  if( iBorder == 0 )
+    iBorder = wxNO_BORDER;
   // check if the popup already exists
   TPopupData *pd = GetPopup( Cmds[0] );
   if( pd != NULL )  {
