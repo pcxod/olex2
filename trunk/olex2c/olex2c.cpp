@@ -75,7 +75,7 @@ enum {
   Library.RegisterFunction( new TFunction<TOlex>(this, &TOlex::fun##funcName, #funcName, argc, desc))
 
 static const olxstr ProcessOutputCBName("procout");
-
+static const olxstr NAString("n/a");
 enum  {
   ID_PROCESSTERMINATE = 1,
   ID_TIMER,
@@ -527,7 +527,7 @@ public:
       if( TOlxVars::GetVarWrapper(i) != NULL )
         tab[i][2] = TOlxVars::GetVarWrapper(i)->ob_refcnt;
       else
-        tab[i][2] = "n/a";
+        tab[i][2] = NAString;
     }
     TStrList Output;
     tab.CreateTXTList(Output, "Variables list", true, true, ' ');
@@ -712,7 +712,7 @@ public:
   //..............................................................................
   void funLst(const TStrObjList &Cmds, TMacroError &E)  {
     if( !Lst.IsLoaded() )  {
-      E.SetRetVal<olxstr>( "n/a" );
+      E.SetRetVal<olxstr>( NAString );
     }
     else if( !Cmds[0].Comparei("rint") )
       E.SetRetVal( Lst.Rint() );
@@ -741,7 +741,7 @@ public:
     else if( !Cmds[0].Comparei("hole") )
       E.SetRetVal( Lst.Hole() );
     else
-      E.SetRetVal<olxstr>( "n/a" );
+      E.SetRetVal<olxstr>( NAString );
   }
   //..............................................................................
   void macAddIns(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
@@ -1014,6 +1014,7 @@ public:
   //..............................................................................
   void funIns(const TStrObjList& Params, TMacroError &E)  {
     TIns *I = (TIns*)XApp.XFile().GetLastLoader();
+
     olxstr tmp;
     if( Params[0].Comparei("weight") == 0 || Params[0].Comparei("wght") == 0 )  {
       for( int j=0; j < I->Wght().Count(); j++ )  {
@@ -1023,7 +1024,7 @@ public:
       E.SetRetVal( tmp );
       return;
     }
-    if( Params[0].Comparei("weight1") == 0 )  {
+    if( !Params[0].Comparei("weight1") )  {
       for( int j=0; j < I->Wght1().Count(); j++ )  {
         tmp << I->Wght1()[j];
         if( (j+1) < I->Wght1().Count() )  tmp << ' ';
@@ -1036,11 +1037,11 @@ public:
         tmp << I->GetLSV()[i];
         if( (i+1) < I->GetLSV().Count() )  tmp << ' ';
       }
-      E.SetRetVal( tmp );
+      E.SetRetVal( I->GetLSV().Count() == 0 ? NAString : tmp );
       return;
     }
     if( Params[0].Comparei("ls") == 0 )  {
-      E.SetRetVal( I->GetIterations() );
+      E.SetRetVal( I->GetLSV().Count() == 0 ? NAString : olxstr(I->GetIterations()) );
       return;
     }
     if( Params[0].Comparei("plan") == 0)  {
@@ -1048,18 +1049,23 @@ public:
         tmp << ((i < 1) ? Round(I->GetPlanV()[i]) : I->GetPlanV()[i]);
         if( (i+1) < I->GetPlanV().Count() )  tmp << ' ';
       }
-      E.SetRetVal( tmp );
+      E.SetRetVal( I->GetPlanV().Count() == 0 ? NAString : tmp );
       return;
     }
     if( Params[0].Comparei("qnum") == 0)  {
-      E.SetRetVal( I->GetPlan() );
+      E.SetRetVal( I->GetPlanV().Count() == 0 ? NAString : olxstr(I->GetPlan()) );
+      return;
+    }
+    if( Params[0].Comparei("R1") == 0)  {
+      E.SetRetVal( I->GetR1() < 0 ? NAString : olxstr(I->GetR1()) );
       return;
     }
     if( !I->InsExists(Params[0]) )  {
-      E.SetRetVal<olxstr>( "n/a" );
+      E.SetRetVal( NAString );
       return;
     }
-    TInsList* insv = I->FindIns( Params[0] );
+
+  TInsList* insv = I->FindIns( Params[0] );
     E.SetRetVal( (insv != NULL) ? insv->Text(' ') : EmptyString );
   }
   //..............................................................................
