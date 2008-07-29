@@ -161,7 +161,7 @@ bool ExtractZip(TWinHttpFileSystem& repos, const olxstr& zipName, const olxstr& 
     //Application->MessageBoxA("Could not locate the olex distribution", "Zip file fetching error", MB_OK|MB_ICONERROR);
     return false;
   }
-  olxstr zipfn( zipf->Name() );
+  olxstr zipfn( zipf->GetName() );
   delete zipf;
   HZIP hz = OpenZip(zipfn.c_str(), NULL);
   ZIPENTRY ze;
@@ -274,7 +274,7 @@ void __fastcall TfMain::bbInstallClick(TObject *Sender)  {
         Application->MessageBoxA("Could not locate the olex distribution", "Zip file fetching error", MB_OK|MB_ICONERROR);
         return;
       }
-      olxstr zipName( zipf->Name() );
+      olxstr zipName( zipf->GetName() );
       delete zipf;
       // the file gets deleted with the FS ... have to hurry!
       if( !DoInstall( zipName, installPath ) )

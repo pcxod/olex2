@@ -321,8 +321,8 @@ public:
           FWght.Resize(Toks.Count()-1);
           for( int j=1; j < Toks.Count(); j++ )
             FWght[j-1] = Toks[j].ToDouble();
+          FWght1 = FWght;
         }
-        FWght1 = FWght;
       }
       else if( Toks[0].Comparei("TITL") == 0 )
         FTitle = Toks.Text(' ', 1);
