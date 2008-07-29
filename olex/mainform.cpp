@@ -2641,15 +2641,20 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
   if( I == NULL )
     return;
   StylesDir = I->GetFieldValue("Styles");
+    executeFunction(StylesDir, StylesDir);
   SParamDir = I->GetFieldValue("SceneP");
+    executeFunction(SParamDir, SParamDir);
   CurrentDir = I->GetFieldValue("Current");
+    executeFunction(CurrentDir, CurrentDir);
   olxstr CifTemplatesDir( I->GetFieldValue("CifTemplates", EmptyString) );
-  if( !CifTemplatesDir.Length() )
+  if( CifTemplatesDir.IsEmpty() )
     CifTemplatesDir = TutorialDir + "CIF/";
-  FXApp->SetCifTemplatesDir( CifTemplatesDir );
+  else
+    executeFunction(CifTemplatesDir, CifTemplatesDir);
   // to fix old folder location at the basedir ... 
   if( !TEFile::FileExists(CifTemplatesDir) )
     CifTemplatesDir = TutorialDir + "CIF/";
+  FXApp->SetCifTemplatesDir( CifTemplatesDir );
 
   I = DF.Root().FindItem("HTML");
   if( I != NULL )  {
@@ -2708,6 +2713,7 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
       T = I->GetFieldValue(olxstr("file") << i);
     }
     for( int j=0; j < olx_min(uniqNames.Count(), FRecentFilesToShow); j++ )  {
+      executeFunction(uniqNames[j], uniqNames[j]);
       MenuFile->AppendCheckItem(ID_FILE0+j, uniqNames[j].u_str());
       mi = MenuFile->FindItemByPosition(MenuFile->GetMenuItemCount()-1);
       FRecentFiles.Add(uniqNames[j], mi);
