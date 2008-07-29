@@ -1932,7 +1932,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
         else if( EsdlInstanceOf( *G, TXGrowPoint) )  {
           Tip = TSymmParser::MatrixToSymm( ((TXGrowPoint*)G)->GetTransform() );
         }
-#ifdef __WIN32__
+#if defined (__WIN32__)
         FGlCanvas->SetToolTip( Tip.u_str());
         SetToolTip( Tip.u_str());
 #else
@@ -3053,7 +3053,7 @@ void TMainForm::OnMouseMove(int x, int y)  {
     MouseMoveTimeElapsed = 0;
     MousePositionX = x;
     MousePositionY = y;
-#ifdef __WIN32__
+#if defined (__WIN32__)
     FGlCanvas->SetToolTip(wxT(""));
 #else
     if( GlTooltip != NULL )  GlTooltip->Visible(false);

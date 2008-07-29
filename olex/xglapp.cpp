@@ -192,7 +192,9 @@ bool TGlXApp::OnInit()  {
 
   // set backgrownd color of the GlRender
   XApp->ClearColor(0x3f3f3f);
+#ifdef __WIN32__  // on LInux they are multiline by default...
   MainForm->SetToolTip(wxT("\n")); // force multiline ttoltips with (&#10;)
+#endif
   try  {
     MainForm->XApp(XApp);  // his sets XApp for the canvas as well
   }
