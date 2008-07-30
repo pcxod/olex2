@@ -11,9 +11,8 @@
       build\etime.obj build\exception.obj build\function.obj build\groupobj.obj 
       build\library.obj build\log.obj build\macro.obj build\macroerror.obj 
       build\paramlist.obj build\poly.obj build\settingsfile.obj build\undo.obj 
-      build\vpoint.obj build\egc.obj build\ipbase.obj build\outstream.obj 
-      build\olx_cstring.obj build\olx_wstring.obj build\ostring.obj 
-      build\eutf8.obj build\istream.obj"/>
+      build\egc.obj build\ipbase.obj build\outstream.obj build\olx_cstring.obj 
+      build\olx_wstring.obj build\ostring.obj build\eutf8.obj build\istream.obj"/>
     <RESFILES value=""/>
     <DEFFILE value=""/>
     <RESDEPEN value="$(RESFILES)"/>
@@ -35,8 +34,8 @@
     <OTHERFILES value=""/>
   </MACROS>
   <OPTIONS>
-    <CFLAG1 value="-Od -H=$(BCB)\lib\vcl60.csm -Hc -Vx -Ve -ff -X- -r- -a8 -6 -b -d -k -y -v 
-      -vi- -c -tW -tWM"/>
+    <CFLAG1 value="-Od -H=$(BCB)\lib\vcl60.csm -Hc -Q -Vx -Ve -ff -X- -r- -a8 -6 -b -d -k -y 
+      -v -vi- -c -tW -tWM"/>
     <PFLAGS value="-N2build -N0build -$YD -$W -$O- -$A8 -v -JPHNE -M"/>
     <AFLAGS value="/mx /w2 /zi"/>
     <LFLAGS value="/P256 /C"/>
@@ -77,7 +76,6 @@
       <FILE FILENAME="..\..\..\sdl\poly.cpp" FORMNAME="" UNITNAME="poly.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\sdl\settingsfile.cpp" FORMNAME="" UNITNAME="settingsfile.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\sdl\undo.cpp" FORMNAME="" UNITNAME="undo.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
-      <FILE FILENAME="..\..\..\sdl\vpoint.cpp" FORMNAME="" UNITNAME="vpoint.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\sdl\egc.cpp" FORMNAME="" UNITNAME="egc" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\sdl\ipbase.cpp" FORMNAME="" UNITNAME="ipbase" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\sdl\outstream.cpp" FORMNAME="" UNITNAME="outstream" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
