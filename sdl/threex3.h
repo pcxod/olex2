@@ -263,14 +263,21 @@ public:
     data[2][0] = (T)v[2][0];  data[2][1] = (T)v[2][1];  data[2][2] = (T)v[2][2];
     return *this;
   }
-
+#ifndef __BORLANDC__ // relaly annoying - would use same for the Matrix33!
   template <class AT> inline TMatrix33<T>& operator *= (AT v) {
     data[0][0] *= v;  data[0][1] *= v;  data[0][2] *= v;
     data[1][0] *= v;  data[1][1] *= v;  data[1][2] *= v;
     data[2][0] *= v;  data[2][1] *= v;  data[2][2] *= v;
 	return *this;
   }
-
+#else
+  inline TMatrix33<T>& operator *= (double v) {
+    data[0][0] *= v;  data[0][1] *= v;  data[0][2] *= v;
+    data[1][0] *= v;  data[1][1] *= v;  data[1][2] *= v;
+    data[2][0] *= v;  data[2][1] *= v;  data[2][2] *= v;
+	return *this;
+  }
+#endif
   template <class AT> inline TMatrix33<T>& operator /= (AT v) {
     data[0][0] /= v;  data[0][1] /= v;  data[0][2] /= v;
     data[1][0] /= v;  data[1][1] /= v;  data[1][2] /= v;

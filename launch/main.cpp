@@ -242,9 +242,8 @@ bool TdlgMain::UpdateInstallationH( const TUrl& url, const TStrList& properties 
   }
   catch( TExceptionBase& exc )  {
     TStrList out;
-    exc.GetException()->GetStackTrace(out);
-    Application->MessageBox(out.Text('\n').u_str(),
-      "Update failed", MB_OK|MB_ICONERROR);
+    Application->MessageBox("Please make sure that your computer is online",
+      "Scheduled update failed", MB_OK|MB_ICONINFORMATION);
     return false;
   }
 }

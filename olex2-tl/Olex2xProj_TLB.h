@@ -10,11 +10,11 @@
 // ************************************************************************ //
 
 // C++ TLBWRTR : $Revision:   1.151.1.0.1.27  $
-// File generated on 15/07/2008 14:30:58 from Type Library described below.
+// File generated on 30/07/2008 11:59:55 from Type Library described below.
 
 // ************************************************************************  //
-// Type Lib: E:\SVN\srcf-svn\trunk\olex2-tl\Olex2xProj.tlb (1)
-// LIBID: {66CAB689-0D37-4220-BAA7-F76B7828EB98}
+// Type Lib: C:\Documents and Settings\Oleg\Desktop\sourceforge-svn\trunk\olex2-tl\Olex2xProj.tlb (1)
+// LIBID: {CC5032B2-BBC7-4440-ACC8-05E56E841525}
 // LCID: 0
 // Helpfile: 
 // HelpString: Olex2xProj Library
@@ -70,7 +70,7 @@ namespace Olex2xproj_tlb
 //   DISPInterfaces     : DIID_xxxx                                       
 //   Non-DISP interfaces: IID_xxxx                                        
 // *********************************************************************//
-extern "C" const __declspec(selectany) GUID LIBID_Olex2xProj = {0x66CAB689, 0x0D37, 0x4220,{ 0xBA, 0xA7, 0xF7,0x6B, 0x78, 0x28,0xEB, 0x98} };
+extern "C" const __declspec(selectany) GUID LIBID_Olex2xProj = {0xCC5032B2, 0xBBC7, 0x4440,{ 0xAC, 0xC8, 0x05,0xE5, 0x6E, 0x84,0x15, 0x25} };
 };     // namespace Olex2xproj_tlb
 
 #if !defined(NO_IMPLICIT_NAMESPACE_USE)
