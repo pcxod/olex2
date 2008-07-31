@@ -192,6 +192,10 @@
 				RelativePath=".\sym_bark.cpp"
 				>
 			</File>
+			<File
+				RelativePath="..\..\..\xlib\xins.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -200,6 +204,10 @@
 			>
 			<File
 				RelativePath=".\simple_math.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\xlib\xins.h"
 				>
 			</File>
 		</Filter>

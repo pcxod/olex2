@@ -7,6 +7,7 @@
 #include "estlist.h"
 
 #include "indexlst.h"
+#include <stdarg.h>
 
 BeginXlibNamespace()
 
@@ -43,6 +44,23 @@ protected:
   inline AScattererParamList* AllocateList(const olxstr& scatterers) {  
     return Allocated.Add( XParamAtomListFactory::New(Parent, scatterers) );  
   }
+  int ParseArgs(const TStrList& toks, int count, ...)  {
+    va_list arglist;
+    va_start( arglist, count );
+    int cnt = 0;
+    for( int i=0; i < count; i++ )  {
+      if( toks.Count() < cnt )  break;
+      double& d = *va_arg(arglist, double*);
+      if( toks[count].IsNumber() )  {
+        d = toks[count].ToDouble();
+        count++;
+      }
+      else 
+        break;
+    }
+    va_end( arglist );
+    return count;
+  }
 public:
   ARestraint(IRefinementModel& parent) : Parent(parent), Resi(NULL) {  }
   virtual ~ARestraint() {
@@ -77,13 +95,20 @@ class Restraint_Dfix : public ARestraint {
 public:
   Restraint_Dfix(IRefinementModel& parent, 
                  const double defs[5], double v, double s1=-1) : 
-                   ARestraint(parent), S1(s1), Scatterers(NULL)  {
+                   ARestraint(parent), V(v), S1(s1), Scatterers(NULL)  {
     if( S1 == -1 )  S1 = defs[0];
+  }
+  Restraint_Dfix(IRefinementModel& parent,  const double defs[5], const TStrList& toks) : ARestraint(parent)  {
+    int cnt = ParseArgs(toks, 2, &V, &S1);
+    if( cnt < 1 )
+      throw TInvalidArgumentException(__OlxSourceInfo, "required parameter 'length' is missing");
+    if( cnt < 2 )  S1 = defs[0];
+    Init( toks.Text(cnt) );
   }
   void Init(const olxstr& scatterers)  {
     Scatterers = AllocateList(scatterers);
   }
-  double v, S1;
+  double V, S1;
   AScattererParamList* Scatterers;
 };
 
@@ -91,13 +116,20 @@ class Restraint_Dang : public ARestraint {
 public:
   Restraint_Dang(IRefinementModel& parent, 
                  const double defs[5], double v, double s1=-1) : 
-                   ARestraint(parent), S1(s1), Scatterers(NULL)  {
+                   ARestraint(parent), V(v), S1(s1), Scatterers(NULL)  {
     if( S1 == -1 )  S1 = defs[0]*2;
+  }
+  Restraint_Dang(IRefinementModel& parent,  const double defs[5], const TStrList& toks) : ARestraint(parent)  {
+    int cnt = ParseArgs(toks, 2, &V, &S1);
+    if( cnt < 1 )
+      throw TInvalidArgumentException(__OlxSourceInfo, "required parameter 'length' is missing");
+    if( cnt < 2 )  S1 = defs[0]*2;
+    Init( toks.Text(cnt) );
   }
   void Init(const olxstr& scatterers)  {
     Scatterers = AllocateList(scatterers);
   }
-  double v, S1;
+  double V, S1;
   AScattererParamList* Scatterers;
 };
 
@@ -107,6 +139,11 @@ public:
                  const double defs[5], double s1=-1) : 
                    ARestraint(parent), S1(s1), Scatterers(NULL)  {
     if( S1 == -1 )  S1 = defs[0];
+  }
+  Restraint_Sadi(IRefinementModel& parent,  const double defs[5], const TStrList& toks) : ARestraint(parent)  {
+    int cnt = ParseArgs(toks, 1, &S1);
+    if( cnt < 1 )  S1 = defs[0];
+    Init( toks.Text(cnt) );
   }
   void Init(const olxstr& scatterers)  {
     Scatterers = AllocateList(scatterers);
@@ -122,6 +159,13 @@ public:
                    ARestraint(parent), V(v), S1(s1), Scatterers(NULL)  {
     if( S1 == -1 )  S1 = defs[1];
   }
+  Restraint_Chiv(IRefinementModel& parent,  const double defs[5], const TStrList& toks) : ARestraint(parent) {
+    int cnt = ParseArgs(toks, 2, &V, &S1);
+    if( cnt < 1 )
+      throw TInvalidArgumentException(__OlxSourceInfo, "required parameter 'length' is missing");
+    if( cnt < 2 )  S1 = defs[1];
+    Init( toks.Text(cnt) );
+  }
   void Init(const olxstr& scatterers)  {
     Scatterers = AllocateList(scatterers);
   }
@@ -136,6 +180,11 @@ public:
                    ARestraint(parent), S1(s1), Scatterers(NULL)  {
     if( S1 == -1 )  S1 = defs[1];
   }
+  Restraint_Flat(IRefinementModel& parent,  const double defs[5], const TStrList& toks) : ARestraint(parent) {
+    int cnt = ParseArgs(toks, 1, &S1);
+    if( cnt < 1 )  S1 = defs[1];
+    Init( toks.Text(cnt) );
+  }
   void Init(const olxstr& scatterers)  {
     Scatterers = AllocateList(scatterers);
   }
@@ -148,8 +197,14 @@ public:
   Restraint_Delu(IRefinementModel& parent, 
                  const double defs[5], double s1=-1, double s2=-1) : 
                    ARestraint(parent), S1(s1), S2(s2), Scatterers(NULL)  {
-    if( S1 == -1 )  S1 = defs[3];
+    if( S1 == -1 )  S1 = defs[2];
     if( S2 == -1 )  S2 = S1;
+  }
+  Restraint_Delu(IRefinementModel& parent,  const double defs[5], const TStrList& toks) : ARestraint(parent) {
+    int cnt = ParseArgs(toks, 2, &S1, &S2);
+    if( cnt < 1 )  S1 = defs[2];
+    if( cnt < 2 )  S2 = S1;
+    Init( toks.Text(cnt) );
   }
   void Init(const olxstr& scatterers)  {
     Scatterers = AllocateList(scatterers);
@@ -163,8 +218,14 @@ public:
   Restraint_Simu(IRefinementModel& parent, 
                  const double defs[5], double s1=-1, double s2=-1, double dmax = 1.7) : 
                    ARestraint(parent), S1(s1), S2(s2), Dmax(dmax), Scatterers(NULL)  {
-    if( S1 == -1 )  S1 = defs[0];
+    if( S1 == -1 )  S1 = defs[3];
     if( S2 == -1 )  S2 = S1*2;
+  }
+  Restraint_Simu(IRefinementModel& parent,  const double defs[5], const TStrList& toks) : ARestraint(parent) {
+    int cnt = ParseArgs(toks, 2, &S1, &S2);
+    if( cnt < 1 )  S1 = defs[3];
+    if( cnt < 2 )  S2 = S1*2;
+    Init( toks.Text(cnt) );
   }
   void Init(const olxstr& scatterers)  {
     Scatterers = AllocateList(scatterers);
@@ -181,6 +242,12 @@ public:
     if( S1 == -1 )  S1 = defs[1];
     if( S2 == -1 )  S2 = S1*2;
   }
+  Restraint_Isor(IRefinementModel& parent,  const double defs[5], const TStrList& toks) : ARestraint(parent) {
+    int cnt = ParseArgs(toks, 2, &S1, &S2);
+    if( cnt < 1 )  S1 = defs[1];
+    if( cnt < 2 )  S2 = S1*2;
+    Init( toks.Text(cnt) );
+  }
   void Init(const olxstr& scatterers)  {
     Scatterers = AllocateList(scatterers);
   }
@@ -196,6 +263,12 @@ public:
     if( S1 == -1 )  S1 = defs[1];
     if( S2 == -1 )  S2 = S1*5;
   }
+  Restraint_Ncsy(IRefinementModel& parent,  const double defs[5], const TStrList& toks) : ARestraint(parent) {
+    int cnt = ParseArgs(toks, 2, &S1, &S2);
+    if( cnt < 1 )  S1 = defs[1];
+    if( cnt < 2 )  S2 = S1*5;
+    Init( toks.Text(cnt) );
+  }
   void Init(const olxstr& scatterers)  {
     Scatterers = AllocateList(scatterers);
   }
@@ -205,66 +278,74 @@ public:
 
 
 class XRigidGroup : public ARestraint {
-  XScattererPList Scatterers;
+  XSitePList Sites;
   short RigidGroup_Code;
   short RefinementType_Code;
+  XSite* Pivot;
 protected:
-  int AtomCount;
+  int SiteCount;
   double D1, D2;
 public:
   XRigidGroup(IRefinementModel& container, short code, 
               short rt, double d1 = -1, double d2 = -1) : ARestraint(container),
-                RigidGroup_Code(code), RefinementType_Code(rt), D1(d1), D2(d2)  {
+                RigidGroup_Code(code), RefinementType_Code(rt), D1(d1), D2(d2), Pivot(NULL)  {
     if( code == rg_SP31)
-      AtomCount = 1;
+      SiteCount = 1;
     else if( code == rg_SP32 )
-      AtomCount = 2;
+      SiteCount = 2;
     else if( code == rg_SP33 )
-      AtomCount = 3;
+      SiteCount = 3;
     else if( code == rg_SP21 )
-      AtomCount = 1;
+      SiteCount = 1;
     else if( code == rg_Pentagon )  {
-      AtomCount = 5;
+      SiteCount = 5;
       if( D1 == -1 )  D1 = 1.42;
     }
     else if( code == rg_Hexagon_135 )  {
-      AtomCount = 6;
+      SiteCount = 6;
       if( D1 == -1 )  D1 = 1.39;
     }
     else if( code == rg_Hexagon_any )  {
-      AtomCount = 6;
+      SiteCount = 6;
       if( D1 == -1 )  D1 = 1.39;
     }
     else if( code == rg_O1_auto )
-      AtomCount = 1;
+      SiteCount = 1;
     else if( code == rg_SP22 )
-      AtomCount = 2;
+      SiteCount = 2;
     else if( code == rg_Cp_star )  {
-      AtomCount = 10;
+      SiteCount = 10;
       if( D1 == -1 )  D1 = 1.42;
       if( D2 == -1 )  D2 = 1.63;  // Me-Cp sidtance
     }
     else if ( code == rg_Naphthalene )  {
-      AtomCount = 10;
+      SiteCount = 10;
       if( D1 == -1 )  D1 = 1.39;
     }
     else if( code == rg_SP33_disorder )
-      AtomCount = 6;  
+      SiteCount = 6;  
     else if( code == rg_SP33_fourier )
-      AtomCount = 3;  
+      SiteCount = 3;  
     else if( code == rg_O1_fourier )
-      AtomCount = 1;  
+      SiteCount = 1;  
     else if( code == rg_BH )
-      AtomCount = 1;  
+      SiteCount = 1;  
     else
-      AtomCount = container.GetReferenceSize(code); 
+      SiteCount = container.GetReferenceSize(code); 
   }
-  inline short GetGroupType()          const {  return RigidGroup_Code;  }
+  inline short GetGroupType()      const {  return RigidGroup_Code;  }
   inline short GetRefinementType() const {  return RefinementType_Code;  }
-  void AddScatterer(XScatterer* xs)  {
-    if( Scatterers.Count() + 1 > AtomCount )
+  DefPropP(XSite*, Pivot)
+  void AddSite(XSite* xs)  {
+    if( Sites.Count() + 1 > SiteCount )
       throw TInvalidArgumentException(__OlxSourceInfo, "too many atoms in the rigid group");
-    Scatterers.Add(xs);
+    Sites.Add(xs);
+  }
+  inline int Count()                      const {  return Sites.Count();  }
+  inline XSite* operator [] (int i)             {  return Sites[i];  }
+  inline const XSite* operator [] (int i) const {  return Sites[i];  }
+  inline bool IsValid()                   const {  
+    return (Pivot==NULL) ? Sites.Count() == SiteCount : Sites.Count() == SiteCount-1;  
   }
 };
 /* number of scatterers might be greater than the numbre of thermal displacement
@@ -276,6 +357,7 @@ public:
   XModel() {
     Residues.Add( new XResidue(*this) );  // default residue
     Scale = 1;
+    WaveLength = 0.71073;
   }
   virtual ~XModel() {
   }
@@ -351,8 +433,14 @@ public:
     return UsedSymm.IndexOf(matr);  
   }
   inline void ClearUsedSymm()          {  UsedSymm.Clear();  }
+
+  void ShareSite(const TStrList& scatterers)  {
+  }
+  void ShareTDP(const TStrList& scatterers)  {
+  }
   
-  double Scale;  // global Fo/Fc scale
+  double Scale, WaveLength;  // global Fo/Fc scale
+  XCell Cell;
   TTypeList<XSite> Sites;
   TTypeList<XTDP> TDPs;
   // a list of all residues with key - number

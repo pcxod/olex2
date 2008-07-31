@@ -15,7 +15,7 @@ protected:
   }
   virtual bool GetExplicit() const {  return true;  }
 public:
-  XExplicitScattererList(IRefinementModel& parent, const olxstr& exp)  { 
+  XExplicitScattererList(IRefinementModel& parent, const olxstr& exp) : AScattererParamList(exp)  { 
     TShelxAtomListParser(exp).Expand(parent, atoms, NULL);
   }
 };
@@ -35,7 +35,8 @@ protected:
   }
   virtual bool GetExplicit() const {  return false;  }
 public:
-  XExpandableScattererList(IRefinementModel& parent, const olxstr& expression) : atoms(expression, ' ')  {
+  XExpandableScattererList(IRefinementModel& parent, const olxstr& expression) :
+       AScattererParamList(expression), atoms(expression, ' ')  {
     for( int i=0; i < atoms.Count(); i++ )  {
       if( atoms[i].CharAt(0) == '$' )  //SFAC
         continue;
@@ -79,6 +80,14 @@ public:
   virtual ~XExpandableScattererList()  {
     for( int i=0; i < atoms.Count(); i++ )
       if( atoms.Object(i) != NULL )  delete atoms.Object(i);
+  }
+  virtual const olxstr& StrRepr() const {  
+    for( int i=0; i < atoms.Count(); i++ )  {
+      if( atoms.Object(i) != NULL ) 
+        atoms[i] = atoms.Object(i)->GetLabel();
+    }
+    Expression = atoms.Text(' ');
+    return Expression;
   }
 };
 
