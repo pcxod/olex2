@@ -26,6 +26,13 @@
 
 using namespace std;
 
+void ParseShelxIns(TStrList& ins)  {
+  ins.CombineLines('=');
+  for( int i=0; i < ins.Count(); i++ )  {
+    
+  }
+}
+
 int main(int argc, char* argv[])  {
   XModel xm;
   TAtomsInfo ai;
@@ -38,7 +45,7 @@ int main(int argc, char* argv[])  {
   xm.Scatterers[0].SetSite( xm.Sites[0] );
   xm.Scatterers[1].SetSite( xm.Sites[1] );
   xm.Scatterers[1].Occupancy.Refinable = false;
-  XLinearEquation& eq = xm.LinearEquations.AddNew( 0, 0);
+  XLinearEquation& eq = xm.LinearEquations.AddNew(0, 0);
   // occu(H1) = 1.5 occu(C1)
   eq.Add(1, xm.Scatterers[1].Occupancy);
   eq.Add(-1.5, xm.Scatterers[0].Occupancy);

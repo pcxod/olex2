@@ -216,10 +216,16 @@ public:
     data[2][0] = bf[6];  data[2][1] = bf[7];  data[2][2] = bf[8];
     return *this;
   }
-  template <class AT> inline static TMatrix33<AT> Transpose (const TMatrix33<AT>& v) {
-    return TMatrix33<AT>(v[0][0], v[1][0], v[2][0], 
+  inline static TMatrix33 Transpose (const TMatrix33& v) {
+    return TMatrix33<T>(v[0][0], v[1][0], v[2][0], 
                          v[0][1], v[1][1], v[2][1], 
                          v[0][3], v[2][1], v[2][2]);
+  }
+  template <class AT> inline static TMatrix33<AT>& Transpose (const TMatrix33& src, TMatrix33<AT>& dest) {
+    dest[0][0] = src[0][0];  dest[0][1] = src[1][0];  dest[0][2] = src[2][0];
+    dest[1][0] = src[0][1];  dest[1][1] = src[1][1];  dest[1][2] = src[2][1];
+    dest[2][0] = src[0][2];  dest[2][1] = src[1][2];  dest[2][2] = src[2][2];
+    return dest;
   }
   inline TMatrix33<T>& Transpose() {
     T v = data[0][1];  data[0][1] = data[1][0];  data[1][0] = v; 
