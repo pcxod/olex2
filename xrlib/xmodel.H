@@ -48,10 +48,11 @@ const short
 
 struct XDependency;
 struct XLinearEquation;
-class XTDP;
+class ATDP;
 class XScatterer;
 class XSite;
 class XResidue;
+class XDisorderedGroup;
 
 typedef TPtrList<XScatterer> XScattererPList;
 typedef TPtrList<XSite> XSitePList;
@@ -80,16 +81,24 @@ public:
   virtual const olxstr& GetName(int i) const = 0;
 };
 //
-struct XRefinable {
+class XRefinable {
+protected:
+  IRefinableOwner* Owner;
+public:
+  XRefinable(const olxstr& name = EmptyString) : 
+    Name(name), Value(0), Esd(0), Refinable(false), Owner(NULL)  {  }
+  XRefinable(IRefinableOwner* owner, const olxstr& name = EmptyString) : 
+    Name(name), Value(0), Esd(0), Refinable(false), Owner(owner)  {  }
+  inline bool IsDependent()      const {  return !Equations.IsEmpty();  }
+  virtual void SetOwner(IRefinableOwner* sender, IRefinableOwner* owner) {  Owner = owner;  }
+  virtual IRefinableOwner* GetOwner() const {  return Owner;  }
+  // public data
   double Value, Esd;
   bool Refinable;
   TPtrList<XLinearEquation> Equations;
-  IRefinableOwner* Owner;
   olxstr Name;
-  XRefinable(const olxstr& name = EmptyString) : 
-    Name(name), Value(0), Esd(0), Refinable(false), Owner(NULL)  {  }
-  inline bool IsDependent()      const {  return !Equations.IsEmpty();  }
 };
+//
 //
 struct XEquationMember {
   double Ratio;
@@ -113,19 +122,23 @@ struct XLinearEquation {
 //
 class XScatterer : public IRefinableOwner {
   XSite* Site; // might be shared by several scatterers
-  XTDP* TDP;   // might be shared by several scatterers
+  ATDP* TDP;   // might be shared by several scatterers
 public:
   XScatterer(const olxstr& label, TBasicAtomInfo* type) : 
-             Label(label), Type(type), Owner(NULL), Site(NULL), 
-               TDP(NULL), Occupancy("Occupancy"), Id(-1) {
-        Occupancy.Owner = this;
-  }
+             Label(label), Type(type), Residue(NULL), Site(NULL), 
+               TDP(NULL), Occupancy(NULL), Id(-1) {  }
   inline XSite* GetSite() const {  return Site;  }
-  inline XTDP*  GetTDP()  const {  return TDP;  }
+  inline ATDP*  GetTDP()  const {  return TDP;  }
   XSite& SetSite(XSite& site);
-  XTDP&  SetTDP(XTDP& tdp);
-  XRefinable Occupancy;
-  XResidue* Owner;  // managed by the group, when adding/removing
+  ATDP&  SetTDP(ATDP& tdp);
+  XRefinable& AllocateOccupancy()  {
+    if( Occupancy != NULL )
+      Occupancy->SetOwner(this, NULL);
+    Occupancy = new XRefinable(this, "Occupancy");
+    return *Occupancy;
+  }
+  XRefinable* Occupancy; // could be the XRefinable or the XDisorderedGroup
+  XResidue* Residue;  // managed by the XResidue, when adding/removing
 //  IRefinementModel* Parent;
   olxstr Label;
   int Id;      // must be synchronised with the position in the list
@@ -135,26 +148,14 @@ public:
   virtual const olxstr& GetName(int i) const {  return Label;  }
 };
 // thremal displacement parameter
-class XTDP : public IRefinableOwner {
+class ATDP : public IRefinableOwner {
 public:
-  XRefinable Uani[6]; 
-  enum Uind { U11=0, U22, U33, U23, U13, U12 };
-  XTDP() {
-    Uani[0].Name = "U11";  Uani[0].Owner = this;
-    Uani[1].Name = "U22";  Uani[1].Owner = this;
-    Uani[2].Name = "U33";  Uani[2].Owner = this;
-    Uani[3].Name = "U23";  Uani[3].Owner = this;
-    Uani[4].Name = "U13";  Uani[4].Owner = this;
-    Uani[5].Name = "U12";  Uani[5].Owner = this;
-  }
-  void SetAniso(bool v)  {
-    Uani[0].Name = v ? "U11" : "Uiso";
-  }
-  double GetUisoVal() const {
-    if( !IsAniso() )  return Uani[0].Value;
-    return (Uani[0].Value+Uani[1].Value+Uani[2].Value)/3;
-  }
-  bool IsAniso() const {  return Uani[0].Name.Length() == 2;  }
+  virtual double GetUisoVal() const = 0;
+  virtual bool IsAniso() const = 0;
+  virtual ATDP& GetInstance() = 0;
+  virtual void SetRefinable(bool v) = 0;
+  virtual bool IsRefinable() const = 0;
+  virtual bool IsProxy() const = 0;
   TPtrList<XScatterer> Scatterers;  // list of scatterers sharing the TDP
   // IRefinableOwner implementation
   virtual int Count()            const {  return Scatterers.Count();  }
@@ -164,9 +165,9 @@ public:
 class XSite : public IRefinableOwner{
 public:
   XSite(const vec3d& crd) : SiteOccupancy(1) {
-    Crd[0].Name = "X";  Crd[0].Owner = this;  Crd[0].Value = crd[0];
-    Crd[1].Name = "Y";  Crd[1].Owner = this;  Crd[1].Value = crd[1];
-    Crd[2].Name = "Z";  Crd[2].Owner = this;  Crd[2].Value = crd[2];
+    Crd[0].Name = "X";  Crd[0].SetOwner(this, this);  Crd[0].Value = crd[0];
+    Crd[1].Name = "Y";  Crd[1].SetOwner(this, this);  Crd[1].Value = crd[1];
+    Crd[2].Name = "Z";  Crd[2].SetOwner(this, this);  Crd[2].Value = crd[2];
   }
   inline double const& Esd(int i)       const {  return Crd[i].Esd;  }
   inline double& Esd(int i)                   {  return Crd[i].Esd;  }
@@ -229,21 +230,49 @@ public:
   }
   inline XResidue& SetCapacity(int c)  {  Scatterers.SetCapacity(c);  return *this;  }
   inline void AddScatterer(XScatterer* xs)  {
-    if( xs->Owner != NULL )
-      xs->Owner->RemoveScatterer(xs);
-    xs->Owner = this;
+    if( xs->Residue != NULL )
+      xs->Residue->RemoveScatterer(xs);
+    xs->Residue = this;
     Scatterers.Add(xs);
   }
   inline void RemoveScatterer(XScatterer* xs)  {
     int ind = Scatterers.IndexOf(xs);
     if( ind != -1 )  {
-      Scatterers[ind]->Owner = NULL;
+      Scatterers[ind]->Residue = NULL;
       Scatterers.Delete(ind);
     }
   }
   IRefinementModel& Parent;
   olxstr ClassName, Alias;
   int Number, Id;
+};
+//
+class XDisorderedGroup : public XRefinable, public IRefinableOwner {
+public:
+  XDisorderedGroup() : XRefinable("Occupancy")  {
+    XRefinable::Owner = this;
+  }
+  TPtrList<XScatterer> Scatterers; // list of scatterers in the group
+  void AddScatterer(XScatterer* xs)  {
+    if( xs->Occupancy != NULL ) 
+      xs->Occupancy->SetOwner(xs, NULL);
+    xs->Occupancy = this;
+  }
+  XScatterer* RemoveScatterer(XScatterer* xs)  {
+    Scatterers.Remove(xs);
+    xs->Occupancy = NULL;
+    return xs;
+  }
+  virtual void SetOwner(IRefinableOwner* sender, IRefinableOwner* owner) {  
+    if( owner == NULL )  
+      Scatterers.Remove((XScatterer*)sender);
+    else
+      Scatterers.Add( (XScatterer*)owner);
+  }
+  virtual IRefinableOwner* GetOwner() const {  return XRefinable::Owner;  }
+  // IRefinableOwner implementation
+  virtual int Count()            const {  return Scatterers.Count();  }
+  virtual const olxstr& GetName(int i) const {  return Scatterers[i]->Label;  }
 };
 //
 struct XCell {

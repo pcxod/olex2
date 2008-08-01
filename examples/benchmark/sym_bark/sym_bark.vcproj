@@ -40,7 +40,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\..\..\xlib;..\..\..\sdl"
+				AdditionalIncludeDirectories="..\..\..\xlib;..\..\..\sdl;..\..\..\xrlib"
 				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -189,11 +189,23 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
+				RelativePath="..\..\..\xrlib\restraints.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\sym_bark.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\xlib\xins.cpp"
+				RelativePath="..\..\..\xrlib\xins.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\xrlib\xmodel.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\xrlib\xparam.cpp"
 				>
 			</File>
 		</Filter>
@@ -203,11 +215,15 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
+				RelativePath="..\..\..\xrlib\restraints.h"
+				>
+			</File>
+			<File
 				RelativePath=".\simple_math.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\xlib\xins.h"
+				RelativePath="..\..\..\xrlib\xtdp.h"
 				>
 			</File>
 		</Filter>

@@ -43,12 +43,13 @@ int main(int argc, char* argv[])  {
   xm.Sites.AddNew( vec3d(0, 0, 0) );
   xm.Sites.AddNew( vec3d(0.5, 0.5, 0.5) );
   xm.Scatterers[0].SetSite( xm.Sites[0] );
+  xm.Scatterers[0].AllocateOccupancy().Value = 1;
   xm.Scatterers[1].SetSite( xm.Sites[1] );
-  xm.Scatterers[1].Occupancy.Refinable = false;
+  xm.Scatterers[1].Occupancy->Refinable = false;
   XLinearEquation& eq = xm.LinearEquations.AddNew(0, 0);
   // occu(H1) = 1.5 occu(C1)
-  eq.Add(1, xm.Scatterers[1].Occupancy);
-  eq.Add(-1.5, xm.Scatterers[0].Occupancy);
+  eq.Add(1, *xm.Scatterers[1].Occupancy);
+  eq.Add(-1.5, *xm.Scatterers[0].Occupancy);
   return 0;
 }
 

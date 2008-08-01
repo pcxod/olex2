@@ -477,10 +477,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\xlib\restraints.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\xlib\satom.cpp"
 				>
 			</File>
@@ -562,10 +558,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\xlib\xmacro.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\xlib\xmodel.cpp"
 				>
 			</File>
 			<File
@@ -675,10 +667,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\xlib\restraints.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\xlib\satom.h"
 				>
 			</File>
@@ -735,23 +723,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\xlib\xexp_parser.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\xlib\xfiles.h"
 				>
 			</File>
 			<File
 				RelativePath="..\..\..\xlib\xlcongen.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\xlib\xmodel.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\xlib\xscatlist.h"
 				>
 			</File>
 			<File
