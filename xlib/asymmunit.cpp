@@ -389,9 +389,19 @@ TEllipsoid& TAsymmUnit::NewEllp() {
 }
 //..............................................................................
 void TAsymmUnit::PackEllps() {
+  int removed = 0;
+  for( int i=0; i < Ellipsoids.Count(); i++ )  {
+    if( Ellipsoids[i] == NULL )  {
+      for( int j=0; j < CAtoms.Count(); j++ )  {
+        if( CAtoms[j]->GetEllpId() > i )
+          CAtoms[j]->SetEllpId( CAtoms[j]->GetEllpId() - 1 );
+      }
+      removed++;
+    }
+    else
+      Ellipsoids[i]->SetId(i-removed);
+  }
   Ellipsoids.Pack();
-  for( int i=0; i < Ellipsoids.Count(); i++ )
-    Ellipsoids[i]->SetId(i);
 }
 //..............................................................................
 void TAsymmUnit::NullEllp(size_t i)  {

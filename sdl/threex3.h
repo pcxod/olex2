@@ -42,14 +42,37 @@ public:
     if( l < -1 )  l = -1;
     return l;
   }
-  template <class AT> T XProdVal (const TVector3<AT>& v) const {
-    T cang = CAngle(v);
-    return sqrt(QLength()*v.QLength()*(1-cang*cang));
+  template <class AT> inline T DotProd(const TVector3<AT>& v) const {
+    return data[0]*v[0] + data[1]*v[1] + data[2]*v[2];
   }
-  template <class AT> inline TVector3<T> XProdVec (const TVector3<AT>& v) const  {
+  // ax(bxc) = b(a.c) - c(a.b)
+  static inline TVector3<T> TripleProd(const TVector3<T>& a, const TVector3<T>& b, const TVector3<T>& c)  {
+    double p1 = a.DotProd(c), p2 = a.DotProd(b);
+    return TVector3<T>( b[0]*p1 - c[0]*p2, b[1]*p1 - c[1]*p2, b[2]*p1 - c[2]*p2);
+  }
+  // a*b*sin = a*b*(1-cos^2) = a*b - DotProd^2
+  template <class AT> inline T XProdVal (const TVector3<AT>& v) const {
+    T dp = DotProd(v); 
+    return sqrt(QLength()*v.QLength()) - dp*dp;
+  }
+  template <class AT> inline TVector3<T> XProdVec(const TVector3<AT>& v) const  {
     return TVector3<T>( data[1]*v[2] - data[2]*v[1], 
                         data[2]*v[0] - data[0]*v[2], 
                         data[0]*v[1] - data[1]*v[0] );
+  }
+  /* returns a normal to vector through a point (vector with same origin as this vector)
+  N = this*cos(this,point)*point.length/this.length = this*DotProd(this, point)/this.QLength
+  */
+  template <class AT> inline TVector3<T> Normal(const TVector3<AT>& point) const {
+    T m = QLength();
+    if( m == 0 )  throw TDivException(__OlxSourceInfo);
+    m = DotProd(point)/m;
+    return TVector3<T>(point[0]-data[0]*m, point[1]-data[1]*m, point[2]-data[2]*m);  
+  }
+  // returns a reflection of this vector from a plane represented by normal
+  template <class AT> inline TVector3<T> Reflect(const TVector3<AT>& normal) const {
+    T m = DotProd(normal)*2;
+    return TVector3<T>(data[0] - normal[0]*m, data[1] - normal[1]*m, data[2] - normal[2]*m);  
   }
   inline TVector3<T>& Normalise()  {
     T l = Length();
@@ -72,10 +95,6 @@ public:
     data[0] = (T)v[0];  data[1] = (T)v[1];  data[2] = (T)v[2];  
     return *this;
   }
-//  template <class AT> inline TVector3<T>& operator = (const TEVPoint<AT>& v)  {
-//    data[0] = v[0].GetV();  data[1] = v[1].GetV();  data[2] = v[2].GetV();  
-//    return *this;
-//  }
   template <class AT> inline TVector3<T>& operator += (const TVector3<AT>& v)  {
     data[0] += (T)v[0];  data[1] += (T)v[1];  data[2] += (T)v[2];  
     return *this;

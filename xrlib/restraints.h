@@ -368,7 +368,7 @@ public:
   virtual XScatterer& GetScatterer(int i)  {  return Scatterers[i];  }
   virtual XScatterer* FindScattererByName(const olxstr& name) {
     for( int i=0; i < Scatterers.Count(); i++ )
-      if( Scatterers[i].Label.Comparei(name) == 0 )
+      if( Scatterers[i].HasLabel(name) == 0 )
         return &Scatterers[i];
     return NULL;
   }
