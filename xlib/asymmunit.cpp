@@ -393,7 +393,7 @@ void TAsymmUnit::PackEllps() {
   for( int i=0; i < Ellipsoids.Count(); i++ )  {
     if( Ellipsoids[i] == NULL )  {
       for( int j=0; j < CAtoms.Count(); j++ )  {
-        if( CAtoms[j]->GetEllpId() > i )
+        if( CAtoms[j]->GetEllpId() > (i-removed) )
           CAtoms[j]->SetEllpId( CAtoms[j]->GetEllpId() - 1 );
       }
       removed++;
