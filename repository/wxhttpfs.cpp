@@ -113,10 +113,10 @@ olxstr TwxHttpFileSystem::SaveFile(const olxstr& Source, bool Delete)  {
       TBasicApp::GetInstance()->OnProgress->Execute(this, &Progress);
     }
   }
-  catch( ... )  {   return NULL;  }
+  catch( ... )  {   return EmptyString;  }
   if( is == NULL )  {
     throw TFunctionFailedException(__OlxSourceInfo, olxstr("NULL handle for '") << o_src << '\'');
-    return NULL;
+    return EmptyString;
   }
   TEFile* tf = TEFile::TmpFile(EmptyString);
   char* bf = new char [1024*64];
