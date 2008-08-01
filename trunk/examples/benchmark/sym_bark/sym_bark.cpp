@@ -38,8 +38,8 @@ int main(int argc, char* argv[])  {
   TAtomsInfo ai;
   double defs [] = {0.02, 0.1, 0.01, 0.04, 1};
   xm.CHIV.Add( *(new Restraint_Chiv(xm, defs, 0)) );
-  xm.Scatterers.Add( new XScatterer("C1", &ai.GetAtomInfo(iCarbonIndex)) );
-  xm.Scatterers.Add( new XScatterer("H1", &ai.GetAtomInfo(iHydrogenIndex)) );
+  xm.Scatterers.Add( new XScatterer() ).AddScatterer("C1", &ai.GetAtomInfo(iCarbonIndex), 1);
+  xm.Scatterers.Add( new XScatterer ).AddScatterer("H1", &ai.GetAtomInfo(iHydrogenIndex), 1 );
   xm.Sites.AddNew( vec3d(0, 0, 0) );
   xm.Sites.AddNew( vec3d(0.5, 0.5, 0.5) );
   xm.Scatterers[0].SetSite( xm.Sites[0] );

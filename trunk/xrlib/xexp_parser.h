@@ -9,14 +9,14 @@ class TShelxAtomListParser : public IEObject  {
   olxstr Expression;
 protected:
   inline bool IsValidScatterer(XScatterer& xs)  {
-    return !(*xs.Type == iHydrogenIndex ||
-             *xs.Type == iDeuteriumIndex ||
-             *xs.Type == iQPeakIndex );
+    return !(xs.IsType(iHydrogenIndex) ||
+             xs.IsType(iDeuteriumIndex) ||
+             xs.IsType(iQPeakIndex) );
   }
   inline bool IsValidScatterer(XScatterer* xs)  {
-    return !(*xs->Type == iHydrogenIndex ||
-             *xs->Type == iDeuteriumIndex ||
-             *xs->Type == iQPeakIndex );
+    return !(xs->IsType(iHydrogenIndex) ||
+             xs->IsType(iDeuteriumIndex) ||
+             xs->IsType(iQPeakIndex) );
   }
 public:
   TShelxAtomListParser(const olxstr& expression) : Expression(expression)  {  }
@@ -135,7 +135,7 @@ public:
         throw TInvalidArgumentException(__OlxSourceInfo, olxstr("sfac=") << sfac);
       for( int i=0; i < residues.Count(); i++ )  {
         for( int j=0; j < residues[i]->Count(); j++ )  {
-          if( *(*residues[i])[j].Type == *bai )  // cannot use IsValid here, $H will not work
+          if( (*residues[i])[j].HasType(*bai) )  // cannot use IsValid here, $H will not work
             out.AddNew( &(*residues[i])[j], eqiv );
         }
       }

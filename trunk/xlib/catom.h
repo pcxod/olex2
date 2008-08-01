@@ -93,6 +93,7 @@ public:
   DefPropP(int, LoaderId)
   DefPropP(int, ResiId)
   DefPropP(int, SameId)
+  DefPropP(int, EllpId)
   DefPropP(int, FragmentId)
   DefPropP(int, AfixAtomId)
   DefPropP(int, SharedSiteId)
