@@ -442,7 +442,7 @@ public:
   double Scale, WaveLength;  // global Fo/Fc scale
   XCell Cell;
   TTypeList<XSite> Sites;
-  TTypeList<XTDP> TDPs;
+  TTypeList<ATDP> TDPs;
   // a list of all residues with key - number
   TTypeList<XResidue> Residues;
   // a list of all scattererers for quick access by label

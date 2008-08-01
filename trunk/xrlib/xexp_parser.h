@@ -72,10 +72,10 @@ public:
         throw TFunctionFailedException(__OlxSourceInfo, "failed to expand >/< expression");
       if( from[0].symm != to[0].symm )
         throw TFunctionFailedException(__OlxSourceInfo, "EQIV must be the same in >/< expresion");
-      if( from[0].scatterer->Owner != to[0].scatterer->Owner )
+      if( from[0].scatterer->Residue != to[0].scatterer->Residue )
         throw TFunctionFailedException(__OlxSourceInfo, "RESI must be the same in >/< expresion");
       
-      XResidue* cr = from[0].scatterer->Owner;
+      XResidue* cr = from[0].scatterer->Residue;
       int from_ind = cr->IndexOf(from[0].scatterer);
       int to_ind = cr->IndexOf(to[0].scatterer);
       if( (from_ind >= to_ind && gs_ind != -1) || (from_ind <= to_ind && ls_ind != -1) )
