@@ -26,6 +26,7 @@ public:
     TGlXApp::GetGXApp()->FindXAtoms(EmptyString, Atoms, false);
     for( int i=0; i < Atoms.Count(); i++ )  {
       Atoms[i]->Moveable(false);
+      Atoms[i]->Roteable(false);
       // summ the translations
       Atoms[i]->Atom().crd() += Atoms[i]->Basis.GetCenter();
       Atoms[i]->Basis.NullCenter();
@@ -61,6 +62,7 @@ public:
         if( xa != NULL )  {
           vec3d c;
           xa->Moveable(true);
+          xa->Roteable(true);
           SplitAtoms.AddNew(XA, xa);
           xa->Atom().crd() += 0.5;
           c = xa->Atom().crd();

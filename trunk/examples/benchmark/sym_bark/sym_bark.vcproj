@@ -197,10 +197,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\xrlib\xins.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\xrlib\xmodel.cpp"
 				>
 			</File>
@@ -220,6 +216,10 @@
 			</File>
 			<File
 				RelativePath=".\simple_math.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\xrlib\xcell.h"
 				>
 			</File>
 			<File

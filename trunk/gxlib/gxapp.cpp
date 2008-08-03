@@ -1571,7 +1571,7 @@ TXAtom* TGXApp::AddAtom(TXAtom* templ)  {
     else  {
       A->CAtom().AtomInfo( &AtomsInfo()->GetAtomInfo(6) );
     }
-    TXAtom& XA = XAtoms.AddNew( *(new TXAtom(colName, *A, FGlRender)) );
+    TXAtom& XA = XAtoms.Add( new TXAtom(colName, *A, FGlRender) );
     XA.Create();
     XA.Params()[0] = (float)A->GetAtomInfo().GetRad();
     return &XA;

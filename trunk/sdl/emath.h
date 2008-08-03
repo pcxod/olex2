@@ -74,6 +74,21 @@ void CreateRotationMatrix(MC& rm, const VC& rv, double ca)  {
   rm[2][1] = t*rv[1]*rv[2] - sa*rv[0];
   rm[2][2] = t*rv[2]*rv[2] + ca;
 }
+template <class MC, class VC>
+void CreateRotationMatrix(MC& rm, const VC& rv, double ca, double sa)  {
+  double t = 1-ca;
+  rm[0][0] = t*rv[0]*rv[0] + ca;
+  rm[0][1] = t*rv[0]*rv[1] + sa*rv[2];
+  rm[0][2] = t*rv[0]*rv[2] - sa*rv[1];
+
+  rm[1][0] = t*rv[0]*rv[1] - sa*rv[2];
+  rm[1][1] = t*rv[1]*rv[1] + ca;
+  rm[1][2] = t*rv[1]*rv[2] + sa*rv[0];
+
+  rm[2][0] = t*rv[0]*rv[2] + sa*rv[1];
+  rm[2][1] = t*rv[1]*rv[2] - sa*rv[0];
+  rm[2][2] = t*rv[2]*rv[2] + ca;
+}
 
 EndEsdlNamespace()
 #endif
