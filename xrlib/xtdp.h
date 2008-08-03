@@ -1,55 +1,85 @@
 #ifndef __olx_tdp
 #define __olx_tdp
-#include "xmodel.h"
-BeginXlibNamespace()
-class XIsotropicTDP : public ATDP {
-public:
-  XRefinable Uiso; 
-  XIsotropicTDP() {
-    Uiso.Name = "Uiso";  Uiso.Owner = this;
-  }
-  virtual double GetUisoVal() const {  return Uiso.Value;  }
-  virtual bool IsAniso()      const {  return false;  }
-  virtual ATDP& GetInstance()       {  return *this;  }
-  virtual void SetRefinable(bool v) {  Uiso.Refinable = v;  }
-  virtual bool IsRefinable()  const {  return Uiso.Refinable;  }
-  virtual bool IsProxy()      const {  return false;  }
-};
+#include "xcell.h"
 
-class XAnisotropicTDP : public ATDP {
+BeginXlibNamespace()
+struct XUani {
+  double quadratic[6], esd[6];
+  bool npd, initialised;
+protected:
+  inline void CalcEigenProperties()  {
+    mat3d q(quadratic[0], quadratic[5], quadratic[4], 
+            quadratic[5], quadratic[1], quadratic[3], 
+            quadratic[4], quadratic[3], quadratic[2]);
+    eigenVectors.I();
+    mat3d::EigenValues(q, eigenVectors);
+    if( q[0][0] <= 0 || q[1][1] <= 0 || q[2][2] <= 0 )
+      npd = true;
+    else  {  // calculate axis lengths
+      eigenValues[0] = sqrt(q[0][0]);  // correspondes 50% ellipsoides
+      eigenValues[0] = sqrt(q[1][1]);
+      eigenValues[0] = sqrt(q[2][2]);
+      npd = false;
+    }
+    initialised = true;
+  }
 public:
-  XRefinable Uani[6]; 
+  vec3d eigenValues;
+  mat3d eigenVectors;
+  bool refinable;
   enum Uind { U11=0, U22, U33, U23, U13, U12 };
-  XAnisotropicTDP() {
-    Uani[0].Name = "U11";  Uani[0].Owner = this;
-    Uani[1].Name = "U22";  Uani[1].Owner = this;
-    Uani[2].Name = "U33";  Uani[2].Owner = this;
-    Uani[3].Name = "U23";  Uani[3].Owner = this;
-    Uani[4].Name = "U13";  Uani[4].Owner = this;
-    Uani[5].Name = "U12";  Uani[5].Owner = this;
+  XUani() : refinable(true), npd(false), initialised(false) {
+    memset(&quadratic[0], 0, sizeof(double)*6);
+    memset(&esd[0], 0, sizeof(double)*6);
   }
-  virtual double GetUisoVal() const {  return (Uani[0].Value+Uani[1].Value+Uani[2].Value)/3;  }
-  virtual bool IsAniso()      const {  return true;  }
-  virtual ATDP& GetInstance()       {  return *this;  }
-  virtual void SetRefinable(bool v) {  
-    Uani[0].Refinable = v;  Uani[1].Refinable = v;  Uani[2].Refinable = v;
-    Uani[3].Refinable = v;  Uani[4].Refinable = v;  Uani[5].Refinable = v;
+  template <class T> inline void SetQuadratic(const T& q)  {
+    quadratic[0] = q[0];  quadratic[1] = q[1];  quadratic[2] = q[2];  
+    quadratic[3] = q[3];  quadratic[4] = q[4];  quadratic[5] = q[5];  
+    CalcEigenProperties();
   }
-  virtual bool IsRefinable()  const {  return Uani[0].Refinable;  }
-  virtual bool IsProxy()      const {  return false;  }
-};
-//Proxy to be used for riding atoms, where Uiso depends on the pivot atom
-class XTDPProxy : public ATDP {
-  ITDP& Instance;
-  double Scale;
-public:
-  XTDPProxy(ITDP& instance, double scale) : Instance(instance), Scale(scale)  {  }
-  virtual double GetUisoVal() const {  return Instance.GetUisoVal()*Scale;  }
-  virtual bool IsAniso()      const {  return Instance.IsAniso();  }
-  virtual ATDP& GetInstance()       {  return Instance;  }
-  virtual void SetRefinable(bool v) {  Instance.SetRefinable(v);  }
-  virtual bool IsRefinable()  const {  return false;  }
-  virtual bool IsProxy()      const {  return true;  }
+  template <class T> void SetEsd(const T& q)  {
+    esd[0] = q[0];  esd[1] = q[1];  esd[2] = q[2];  
+    esd[3] = q[3];  esd[4] = q[4];  esd[5] = q[5];  
+    CalcEigenProperties();
+  }
+  inline XUani& operator *= (const mat3d& m)  {
+    if( !IsValid() )  return *this;
+    mat3d q(quadratic[0], quadratic[5], quadratic[4], 
+            quadratic[5], quadratic[1], quadratic[3], 
+            quadratic[4], quadratic[3], quadratic[2]);
+    mat3d n( m*q*mat3d::Transpose(m) );  // get a new quadractic form
+    // store new quadratic form
+    quadratic[0] = n[0][0];  quadratic[1] = n[1][1];  quadratic[2] = n[2][2];
+    quadratic[3] = n[1][2];  quadratic[4] = n[0][2];  quadratic[5] = n[0][1];
+    CalcEigenProperties();
+    return *this;
+  }
+  inline double GetUisoVal() const {  return (eigenValues[0]+eigenValues[1]+eigenValues[2])/3;  }
+  inline bool IsValid() const {  return (initialised && !npd);  }
+  inline XUani& UcifToUcart(const XCell& cell)  {
+    cell.UcifToUcart(quadratic);
+    return *this;
+  }
+  inline XUani& UcartToUcif(const XCell& cell)  {
+    cell.UcartToUcif(quadratic);
+    return *this;
+  }
+  template <class T> inline void UcifToUcart(const XCell& cell, T& q) const {
+    q[0] = quadratic[0];  q[1] = quadratic[1];  q[2] = quadratic[2];  
+    q[3] = quadratic[3];  q[4] = quadratic[4];  q[5] = quadratic[5];  
+    cell.UcifToUcart(q);
+    return *this;
+  }
+  template <class T>inline void UcartToUcif(const XCell& cell, T& q) const {
+    q[0] = quadratic[0];  q[1] = quadratic[1];  q[2] = quadratic[2];  
+    q[3] = quadratic[3];  q[4] = quadratic[4];  q[5] = quadratic[5];  
+    cell.UcartToUcif(q);
+  }
+  template <class T>inline void GetQuadractic(T& q) const {
+    q[0] = quadratic[0];  q[1] = quadratic[1];  q[2] = quadratic[2];  
+    q[3] = quadratic[3];  q[4] = quadratic[4];  q[5] = quadratic[5];  
+  }
+  inline const double* GetQuadratic() const {  return quadratic;  }
 };
 
 EndXlibNamespace()

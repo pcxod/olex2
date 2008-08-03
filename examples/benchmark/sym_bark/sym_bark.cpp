@@ -22,6 +22,7 @@
 #include "simple_math.h"
 
 #include "restraints.h"
+#include "scat_it.h"
 
 
 using namespace std;
@@ -37,19 +38,18 @@ int main(int argc, char* argv[])  {
   XModel xm;
   TAtomsInfo ai;
   double defs [] = {0.02, 0.1, 0.01, 0.04, 1};
+  TScattererLib scat_lib(9);
   xm.CHIV.Add( *(new Restraint_Chiv(xm, defs, 0)) );
-  xm.Scatterers.Add( new XScatterer() ).AddScatterer("C1", &ai.GetAtomInfo(iCarbonIndex), 1);
-  xm.Scatterers.Add( new XScatterer ).AddScatterer("H1", &ai.GetAtomInfo(iHydrogenIndex), 1 );
-  xm.Sites.AddNew( vec3d(0, 0, 0) );
-  xm.Sites.AddNew( vec3d(0.5, 0.5, 0.5) );
-  xm.Scatterers[0].SetSite( xm.Sites[0] );
-  xm.Scatterers[0].AllocateOccupancy().Value = 1;
-  xm.Scatterers[1].SetSite( xm.Sites[1] );
-  xm.Scatterers[1].Occupancy->Refinable = false;
+  xm.NewScatterer(0.0, 0.0, 0.0).AddScatterer("C1", &ai.GetAtomInfo(iCarbonIndex), 1, scat_lib);
+  xm.NewScatterer(0.5, 0.5, 0.5).AddScatterer("H1", &ai.GetAtomInfo(iHydrogenIndex), 1, scat_lib );
+  xm.Scatterers[0].Occupancy = 1;
+  xm.Scatterers[1].Occupancy.refinable = false;
+  xm.Scatterers[1].TDP.SetUani(NULL, &xm.Scatterers[0], 1.2);
+  double uiso = xm.Scatterers[1].TDP.GetUiso();
   XLinearEquation& eq = xm.LinearEquations.AddNew(0, 0);
   // occu(H1) = 1.5 occu(C1)
-  eq.Add(1, *xm.Scatterers[1].Occupancy);
-  eq.Add(-1.5, *xm.Scatterers[0].Occupancy);
+//  eq.Add(1, *xm.Scatterers[1].Occupancy);
+//  eq.Add(-1.5, *xm.Scatterers[0].Occupancy);
   return 0;
 }
 

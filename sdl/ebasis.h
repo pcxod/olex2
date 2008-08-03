@@ -58,29 +58,16 @@ public:
   void  RotateZ ( double A);
   inline double GetRZ()     const {  return FRZ; }
   // rotation using a matrix
-  template <class T> void  Rotate(const TMatrix<T>& M)  {
+  template <class T> void  Rotate(const T& M)  {
     FMatrix *= M;
     CopyMatrix();  
   }
 
   // rotation around an arbitrary vector
   template <class VC> void  Rotate(const VC& V, double angle)  {
-    double ca = 1 - cos(angle), sa = sin(angle);
-    vec3d N(V);
-    N.Normalise();
-    mat3d M;  
-    M.I();
-    M[0][0] = (N[0]*N[0]-1)*ca + 1;
-    M[0][1] = N[0]*N[1]*ca - N[2]*sa;
-    M[0][2] = N[0]*N[2]*ca + N[1]*sa;
-    M[1][0] = N[1]*N[0]*ca + N[2]*sa;
-    M[1][1] = (N[1]*N[1]-1)*ca + 1;
-    M[1][2] = N[1]*N[2]*ca - N[0]*sa;
-    M[2][0] = N[2]*N[0]*ca - N[1]*sa;
-    M[2][1] = N[2]*N[1]*ca + N[0]*sa;
-    M[2][2] = (N[2]*N[2]-1)*ca + 1;
-
-    FMatrix *= M;
+    mat3d m;  
+    CreateRotationMatrix(m, V, cos(angle), sin(angle) );
+    FMatrix *= m;
     CopyMatrix();  
   }
 

@@ -25,8 +25,7 @@ TGlMouseListener::TGlMouseListener(const olxstr& collectionName, TGlRender *R) :
 //..............................................................................
 TGlMouseListener::~TGlMouseListener()  {  return;  }
 //..............................................................................
-bool TGlMouseListener::OnMouseDown(const IEObject *Sender, const TMouseData *Data)
-{
+bool TGlMouseListener::OnMouseDown(const IEObject *Sender, const TMouseData *Data)  {
 //  if( ! (Data->Button & smbLeft) )  return false;
   SX = Data->DownX;
   SY = Data->DownY;
@@ -67,27 +66,31 @@ bool TGlMouseListener::OnMouseMove(const IEObject *Sender, const TMouseData *Dat
       return res;
     }
     if( Data->Shift == sssCtrl )  {
-      double RZ = Basis.GetRZ();
+      double RZ = 0;
       if( SX > FParent->GetWidth()/2 ) RZ -= (double)dy/FRotationDiv;
-      else                          RZ += (double)dy/FRotationDiv;
+      else                             RZ += (double)dy/FRotationDiv;
       if( SY > FParent->GetHeight()/2 )  RZ -= (double)dx/FRotationDiv;
-      else                            RZ += (double)dx/FRotationDiv;
-      if( RZ > 360 )  RZ = 0;
-      if( RZ < 0 )    RZ = 360;
-      Basis.RotateZ(RZ);
+      else                               RZ += (double)dx/FRotationDiv;
+      //if( RZ > 360 )  RZ = 0;
+      //if( RZ < 0 )    RZ = 360;
+      if( RZ != 0 )
+        Basis.Rotate( FParent->GetBasis().GetMatrix()[2], RZ*M_PI/180);
+//      Basis.RotateZ(RZ);
       res = true;
     }
     if( !Data->Shift )  {// rotate XY
-      double RX;
-      double RY;
-      RX = Basis.GetRX() + (double)(dy)/FRotationDiv;
-      RY = Basis.GetRY() + (double)(dx)/FRotationDiv;
-      if( RX > 360 )  RX = 0;
-      if( RX < 0 )    RX = 360;
-      if( RY > 360 )  RY = 0;
-      if( RY < 0 )    RY = 360;
-      Basis.RotateX(RX);
-      Basis.RotateY(RY);
+      double RX = (double)(dy)/FRotationDiv;
+      double RY = (double)(dx)/FRotationDiv;
+      //if( RX > 360 )  RX = 0;
+      //if( RX < 0 )    RX = 360;
+      //if( RY > 360 )  RY = 0;
+      //if( RY < 0 )    RY = 360;
+      if( RX != 0 )
+        Basis.Rotate( FParent->GetBasis().GetMatrix()[0], RX*M_PI/180);
+      if( RY != 0 )
+        Basis.Rotate( FParent->GetBasis().GetMatrix()[1], RY*M_PI/180);
+//      Basis.RotateX(RX);
+//      Basis.RotateY(RY);
       res = true;
     }
   }

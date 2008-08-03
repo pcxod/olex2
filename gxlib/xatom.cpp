@@ -20,6 +20,8 @@
 #include "unitcell.h"
 #include "lattice.h"
 
+#include "glgroup.h"
+
 //..............................................................................
 bool TXAtomStylesClear::Enter(const IEObject *Sender, const IEObject *Data)
 {  TXAtom::FAtomParams = NULL; return true; }
@@ -48,7 +50,6 @@ TXAtom::TXAtom(const olxstr& collectionName, TSAtom& A, TGlRender *Render) :
   Move2D(false);
   Moveable(false);
   Zoomable(false);
-  
 
   FDrawStyle = adsSphere;
   Params().Resize(2);
@@ -290,12 +291,30 @@ short TXAtom::LegendLevel(const olxstr& legend)  {
 //..............................................................................
 bool TXAtom::Orient(TGlPrimitive *GlP) {
 //  static double qr = 2*caDefIso;
+  vec3d c( Basis.GetCenter() );
+  c += FAtom->crd();
+  if( Roteable() )  {
+    vec3d cr;
+    int ac = 0;
+    TGlGroup* gr = Parent()->Selection();
+    for( int i=0; i < gr->Count(); i++ )  {
+      if( EsdlInstanceOf(*gr->Object(i), TXAtom) )  {
+        cr += ((TXAtom*)gr->Object(i))->FAtom->crd();
+        cr += ((TXAtom*)gr->Object(i))->Basis.GetCenter();
+        ac ++;
+      }
+    }
+    if( ac > 1 )  {
+      cr /= ac;
+      c -= cr;
+      c *= Basis.GetMatrix();
+      c += cr;
+      Atom().crd() = c;
+      Basis.Reset();
+    }
+  }
+  FParent->GlTranslate(c);
 
-  float x = (float)(Basis.GetCenter()[0] + FAtom->crd()[0]);
-  float y = (float)(Basis.GetCenter()[1] + FAtom->crd()[1]);
-  float z = (float)(Basis.GetCenter()[2] + FAtom->crd()[2]);
-
-  FParent->GlTranslate(x, y, z);
 //  if( FAtom->GetAtomInfo() == iHydrogenIndex )  {
 //    float K = (float)(qr*FParams[1]*TelpProb());
 //    Parent()->GlScale(K);

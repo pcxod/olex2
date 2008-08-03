@@ -372,7 +372,9 @@ public:
         return &Scatterers[i];
     return NULL;
   }
-
+  inline XScatterer& NewScatterer(double x, double y, double z)  {
+    return Scatterers.Add( new XScatterer(*this, x, y, z) );
+  }
   virtual inline XResidue* FindResidueByNumber(int Number) {
     for( int i=0; i < Residues.Count(); i++ )
       if( Residues[i].Number == Number )  
@@ -441,8 +443,7 @@ public:
   
   double Scale, WaveLength;  // global Fo/Fc scale
   XCell Cell;
-  TTypeList<XSite> Sites;
-  TTypeList<ATDP> TDPs;
+  TTypeList<XUani> TDPs;
   // a list of all residues with key - number
   TTypeList<XResidue> Residues;
   // a list of all scattererers for quick access by label

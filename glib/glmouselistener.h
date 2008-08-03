@@ -15,8 +15,7 @@ const short  glmlMove2d    = 0x0001,
              glmlZoomable  = 0x0008;
 
 
-class TGlMouseListener: public AGDrawObject
-{
+class TGlMouseListener: public AGDrawObject  {
 protected:
   int SX, SY;
   short Flags;
