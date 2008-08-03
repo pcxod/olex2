@@ -309,8 +309,6 @@ bool TXAtom::Orient(TGlPrimitive *GlP) {
       c -= cr;
       c *= Basis.GetMatrix();
       c += cr;
-      Atom().crd() = c;
-      Basis.Reset();
     }
   }
   FParent->GlTranslate(c);
