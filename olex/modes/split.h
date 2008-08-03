@@ -4,6 +4,32 @@
 class TSplitMode : public AMode  {
   TTypeList< AnAssociation2<TXAtom*, TXAtom*> > SplitAtoms;
 protected:
+  void UpdateSelectionCrds() {
+    TGlGroup* sel = TGlXApp::GetGXApp()->GetRender().Selection();
+    if( sel->Count() > 1 )  {
+      vec3d c, cr;
+      TXAtomPList atoms;
+      for( int i=0; i < sel->Count(); i++ )  {
+        if( EsdlInstanceOf(*sel->Object(i), TXAtom) )  {
+          cr += ((TXAtom*)sel->Object(i))->Basis.GetCenter();
+          cr += ((TXAtom*)sel->Object(i))->Atom().crd();
+          atoms.Add( (TXAtom*)sel->Object(i) );
+        }
+      }
+      if( atoms.Count() > 1 )  {
+        cr /= atoms.Count();
+        for( int i=0; i < atoms.Count(); i++ )  {
+          c = atoms[i]->Atom().crd();
+          c += atoms[i]->Basis.GetCenter();
+          c -= cr;
+          c *= atoms[i]->Basis.GetMatrix();
+          c += cr;
+          atoms[i]->Atom().crd() = c;
+          atoms[i]->Basis.Reset();
+        }
+      }
+    }
+  }
 public:
   TSplitMode(int id) : AMode(id)  {}
   bool Init(TStrObjList &Cmds, const TParamList &Options) {
@@ -23,6 +49,7 @@ public:
     TIns *Ins = (TIns*)TGlXApp::GetGXApp()->XFile().GetLastLoader();
     Ins->AddVar(0.5);
     int Var = Ins->Vars().Count()*10+1;
+    UpdateSelectionCrds();
     TGlXApp::GetGXApp()->FindXAtoms(EmptyString, Atoms, false);
     for( int i=0; i < Atoms.Count(); i++ )  {
       Atoms[i]->Moveable(false);
@@ -71,8 +98,10 @@ public:
           xa->Atom().CAtom().Label() = TGlXApp::GetGXApp()->XFile().GetAsymmUnit().CheckLabel(&xa->Atom().CAtom(), XA->Atom().GetLabel()+'b');
         }
       }
-      else  // do selection then
+      else  {  // do selection then
+        UpdateSelectionCrds();
         TGlXApp::GetGXApp()->GetRender().Select(XA);
+      }
       return true;
     }
     return false;
