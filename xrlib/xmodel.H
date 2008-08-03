@@ -168,12 +168,13 @@ public:
     double scale, uIso;
   public:
     _TDP() : uAni(NULL), uAniOwner(NULL), scale(1), uIso(0.05), refinable(true)  {}
-    inline XUani* SetUani(XUani* _uAni, XScatterer* _uAniOwner = NULL, double _scale=1.0)  {
+    inline XUani& SetUani(XUani* _uAni, XScatterer* _uAniOwner = NULL, double _scale=1.0)  {
       if( _uAniOwner != NULL &&  _uAniOwner->TDP.IsProxy() )
         throw TInvalidArgumentException(__OlxSourceInfo, "creating a proxy TDP to a proxy TDP");
       uAni = (_uAniOwner != NULL) ? NULL : _uAni;
       uAniOwner = _uAniOwner;
       scale = _scale;
+      return *this;
     }
     inline void SetRefinable(bool v )  {
       if( v )  {
@@ -213,6 +214,7 @@ public:
   XScatterer(IRefinementModel& parent, double x, double y, double z) : 
       Parent(parent), Residue(NULL) {  
     Crd.Center[0] = x;  Crd.Center[1] = y;  Crd.Center[2] = z;
+    SiteOccupancy = 1;
   }
   _TDP TDP;  
   _Occupancy Occupancy;
