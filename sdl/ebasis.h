@@ -64,17 +64,18 @@ public:
   }
 
   // rotation around an arbitrary vector
-  template <class VC> void  Rotate(const VC& V, double angle)  {
+  template <class VC> void Rotate(const VC& V, double angle)  {
     mat3d m;  
     CreateRotationMatrix(m, V, cos(angle), sin(angle) );
     FMatrix *= m;
     CopyMatrix();  
   }
 
-
   template <class VC> void Translate( const VC& V)  {
     FCenter[0] += V[0];  FCenter[1] += V[1];  FCenter[2] += V[2];
-    FMData[12] += (float)V[0];  FMData[13] += (float)V[1];  FMData[14] += (float)V[2];  
+    FMDataT[12] += (float)V[0];  FMData[12] += (float)V[0];
+    FMDataT[13] += (float)V[1];  FMData[13] += (float)V[1];
+    FMDataT[14] += (float)V[2];  FMData[14] += (float)V[2];
   }
 
   void  TranslateX( double x);

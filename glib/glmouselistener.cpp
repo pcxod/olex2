@@ -36,6 +36,11 @@ bool TGlMouseListener::OnMouseUp(const IEObject *Sender, const TMouseData *Data)
   return false;
 }
 //..............................................................................
+double& TGlMouseListener_NormaliseAngle(double& v)  {
+  if( v < 0 ) v = 360;
+  if( v > 360 ) v = 0;
+  return v;
+}
 bool TGlMouseListener::OnMouseMove(const IEObject *Sender, const TMouseData *Data)  {
   int dx = Data->X - SX, dy = SY - Data->Y;
   bool res = false;
@@ -66,31 +71,19 @@ bool TGlMouseListener::OnMouseMove(const IEObject *Sender, const TMouseData *Dat
       return res;
     }
     if( Data->Shift == sssCtrl )  {
-      double RZ = 0;
+      double RZ = Basis.GetRZ();
       if( SX > FParent->GetWidth()/2 ) RZ -= (double)dy/FRotationDiv;
       else                             RZ += (double)dy/FRotationDiv;
       if( SY > FParent->GetHeight()/2 )  RZ -= (double)dx/FRotationDiv;
       else                               RZ += (double)dx/FRotationDiv;
-      //if( RZ > 360 )  RZ = 0;
-      //if( RZ < 0 )    RZ = 360;
-      if( RZ != 0 )
-        Basis.Rotate( FParent->GetBasis().GetMatrix()[2], RZ*M_PI/180);
-//      Basis.RotateZ(RZ);
+      Basis.RotateZ( TGlMouseListener_NormaliseAngle(RZ) );
       res = true;
     }
     if( !Data->Shift )  {// rotate XY
-      double RX = (double)(dy)/FRotationDiv;
-      double RY = (double)(dx)/FRotationDiv;
-      //if( RX > 360 )  RX = 0;
-      //if( RX < 0 )    RX = 360;
-      //if( RY > 360 )  RY = 0;
-      //if( RY < 0 )    RY = 360;
-      if( RX != 0 )
-        Basis.Rotate( FParent->GetBasis().GetMatrix()[0], RX*M_PI/180);
-      if( RY != 0 )
-        Basis.Rotate( FParent->GetBasis().GetMatrix()[1], RY*M_PI/180);
-//      Basis.RotateX(RX);
-//      Basis.RotateY(RY);
+      double RX = Basis.GetRX() + (double)(dy)/FRotationDiv;
+      double RY = Basis.GetRY() + (double)(dx)/FRotationDiv;
+      Basis.RotateX( TGlMouseListener_NormaliseAngle(RX) );
+      Basis.RotateY( TGlMouseListener_NormaliseAngle(RY) );
       res = true;
     }
   }
