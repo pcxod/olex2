@@ -68,39 +68,37 @@ void  TEBasis::TranslateZ(double z){  FCenter[2] += z; FMData[14] += (float)z; }
 //..............................................................................
 void  TEBasis::RotateX( double A)  {
   if( FRX == A )    return;
-  double RA = A-FRX;
+  double RA = M_PI*(A-FRX)/180;
   FRX = A;
   mat3d M;  M.I();
-  M[1][1] = cos(M_PI*RA/180);;
-  M[1][2] = -sin(M_PI*RA/180);
+  M[1][1] = cos(RA);
+  M[1][2] = -sin(RA);
   M[2][1] = -M[1][2];
   M[2][2] = M[1][1];
   FMatrix *= M;
   CopyMatrix();
 }
 //..............................................................................
-void  TEBasis::RotateY( double A)
-{
+void  TEBasis::RotateY( double A)  {
   if( FRY == A )    return;
-  double RA = A-FRY;
+  double RA = M_PI*(A-FRY)/180;
   FRY = A;
   mat3d M;  M.I();
-  M[0][0] = cos(M_PI*RA/180);;
-  M[0][2] = -sin(M_PI*RA/180);
+  M[0][0] = cos(RA);
+  M[0][2] = -sin(RA);
   M[2][0] = -M[0][2];
   M[2][2] =  M[0][0];
   FMatrix *= M;
   CopyMatrix();
 }
 //..............................................................................
-void  TEBasis::RotateZ( double A)
-{
+void  TEBasis::RotateZ( double A)  {
   if( FRZ == A )    return;
-  double RA = A-FRZ;
+  double RA = M_PI*(A-FRZ)/180;
   FRZ = A;
   mat3d M;  M.I();
-  M[0][0] = cos(M_PI*RA/180);;
-  M[0][1] = -sin(M_PI*RA/180);
+  M[0][0] = cos(RA);
+  M[0][1] = -sin(RA);
   M[1][0] = -M[0][1];
   M[1][1] =  M[0][0];
   FMatrix *= M;

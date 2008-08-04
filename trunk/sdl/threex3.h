@@ -237,8 +237,8 @@ public:
   }
   inline static TMatrix33 Transpose (const TMatrix33& v) {
     return TMatrix33<T>(v[0][0], v[1][0], v[2][0], 
-                         v[0][1], v[1][1], v[2][1], 
-                         v[0][3], v[2][1], v[2][2]);
+                        v[0][1], v[1][1], v[2][1], 
+                        v[0][2], v[2][1], v[2][2]);
   }
   template <class AT> inline static TMatrix33<AT>& Transpose (const TMatrix33& src, TMatrix33<AT>& dest) {
     dest[0][0] = src[0][0];  dest[0][1] = src[1][0];  dest[0][2] = src[2][0];
