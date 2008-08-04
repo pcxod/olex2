@@ -751,12 +751,11 @@ int THtmlSwitch::FindSimilar(const olxstr& start, const olxstr& end, TPtrList<TH
 }
 //..............................................................................
 THtmlSwitch*  THtmlSwitch::FindSwitch(const olxstr &IName)  {
-  THtmlSwitch *I, *Res;
   for( int i=0; i < FSwitches.Count(); i++ )  {
     if( FSwitches[i].Name().Comparei(IName) == 0 )
       return &FSwitches[i];
     else  {
-      Res = FSwitches[i].FindSwitch(IName);
+      THtmlSwitch* Res = FSwitches[i].FindSwitch(IName);
       if( Res != NULL ) return Res;
     }
   }
