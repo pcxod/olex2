@@ -17,9 +17,7 @@
 
 BeginXlibNamespace()
 
-  typedef TStrPObjList<olxstr,TCAtom*> XShelxInsList;
-
-class XShelxIns: public TBasicCFile  {
+class XShelxIns : public IEObject {
   // parsing context state and varables
   struct ParseContext {
     TStrList Symm;
@@ -39,15 +37,12 @@ class XShelxIns: public TBasicCFile  {
     double Defs[5];
   };
 private:
-  TStrPObjList< olxstr, XShelxInsList* > Ins;  // instructions
   TStrList Skipped;
-  olxstr Unit, Sfac;
+  olxstr Unit, Sfac, Title, HklSrc;
   void HypernateIns(const olxstr &InsName, const olxstr &Ins, TStrList &Res);
   void HypernateIns(const olxstr &Ins, TStrList &Res);
   double   Error, R1;    // mean error of cell parameters. Can be used for estimation of other lengths
   bool     LoadQPeaks;// true if Q-peaks should be loaded
-  evecd FVars; // contains variables, used for calculation right UNIT
-  evecd FWght;    // could be up to six parameters
   evecd FWght1;   // could be up to six parameters
   eveci FLS;      // up to four params
   evecd FPLAN;    // up to three params
@@ -57,8 +52,8 @@ private:
   double   Radiation;
 protected:
   void _SaveSfac(TStrList& list, int pos);
-  TCAtom* _ParseAtom(TStrList& toks, ParseContext& cx, TCAtom* atom = NULL);
-  olxstr _AtomToString(TCAtom* CA, int SfacIndex);
+  XScatterer* _ParseAtom(TStrList& toks, ParseContext& cx, XScatterer* scatterer = NULL);
+  olxstr _ScattererToString(XScatterer* sc, int SfacIndex);
   olxstr _CellToString();
   olxstr _ZerrToString();
   void _SaveFVar(TStrList& SL);
@@ -68,7 +63,7 @@ protected:
   // initialises the unparsed instruction list
   void _FinishParsing();
 public:
-  XShelxIns(TAtomsInfo *S);
+  XShelxIns();
   virtual ~XShelxIns();
 
   void Clear();
@@ -101,9 +96,7 @@ public:
   }
   const evecd& GetPlanV() const {  return FPLAN;  }
 
-  inline evecd& Wght()   {  return FWght;  }
   inline evecd& Wght1()  {  return FWght1;  }
-  inline evecd& Vars()   {  return FVars;  }
   inline olxstr& Hklf()  { return HKLF;  }
   // this is -1 if not in the file like REM R1 = ...
   inline double GetR1() const {  return R1;  }
@@ -127,11 +120,11 @@ public:
    Instructions are initialised with all unrecognised commands
    @retutn error message or an empty string
   */
-  void UpdateAtomsFromStrings(TCAtomPList& CAtoms, TStrList& SL, TStrList& Instructions);
+  void UpdateFromStrings(XScattererPList& CAtoms, TStrList& SL, TStrList& Instructions);
   /* saves some atoms to a plain ins format with no headers etc; to be used with
     UpdateAtomsFromFile
   */
-  bool SaveAtomsToStrings(const TCAtomPList& CAtoms, TStrList& SL, TSimpleRestraintPList* processed);
+  bool SaveAtomsToStrings(const XScattererPList& Scatterers, TStrList& SL, IRefinementModel& rm);
   //void SaveRestraints(TStrList& SL, const TCAtomPList* atoms, TSimpleRestraintPList* processed, TAsymmUnit* au);
   template <class StrLst> void ParseRestraints(StrLst& SL, ParseContext& xc)  {
       TStrList Toks;
@@ -211,26 +204,25 @@ public:
     this is used internally by ParseIns and AddIns    */
     template <class StrLst> bool _ParseIns(const StrLst& Toks, XModel& rm)  {
       if( Toks[0].Comparei("FVAR") == 0 )  {
-        int VC = FVars.Count();
-        FVars.Resize(VC+Toks.Count()-1);  // if the instruction is too long - can be dublicated
-        for( int j=1; j < Toks.Count(); j++ )
-          FVars[VC+j-1] = Toks[j].ToDouble();
+        rm.Variables.SetCapacity(rm.Variables.Count()+Toks.Count());
+        for( int j=0; j < Toks.Count(); j++ )
+          rm.Variables.AddNew(Toks[j].ToDouble(), var_type_None);
       }
       else if( Toks[0].Comparei("WGHT") == 0 )  {
-        if( FWght.Count() != 0 )  {
+        if( rm.Weight.Count() != 0 )  {
           FWght1.Resize(Toks.Count()-1);
           for( int j=1; j < Toks.Count(); j++ )
             FWght1[j-1] = Toks[j].ToDouble();
         }
         else  {
-          FWght.Resize(Toks.Count()-1);
+          rm.Weight.Resize(Toks.Count()-1);
           for( int j=1; j < Toks.Count(); j++ )
-            FWght[j-1] = Toks[j].ToDouble();
-          FWght1 = FWght;
+            rm.Weight[j-1] = Toks[j].ToDouble();
+          FWght1 = rm.Weight;
         }
       }
       else if( Toks[0].Comparei("TITL") == 0 )
-        FTitle = Toks.Text(' ', 1);
+        Title = Toks.Text(' ', 1);
       else if( Toks[0].Comparei("HKLF") == 0 && (Toks.Count() > 1) )
         HKLF = Toks.Text(' ', 1);
       else if( Toks[0].Comparei("L.S.") == 0  || Toks[0].Comparei("CGLS") == 0 )  {
@@ -262,11 +254,9 @@ public:
       return true;
     }
 
-  virtual void SaveToStrings(TStrList& Strings);
-  virtual void LoadFromStrings(const TStrList& Strings);
-  virtual bool Adopt(TXFile *XF);
+  virtual void SaveToStrings(TStrList& Strings, XModel& xm);
+  virtual void LoadFromStrings(const TStrList& Strings, XModel& xm);
 
-  XShelxInsList* FindIns(const olxstr &Name);
   void ClearIns();
   bool AddIns(const olxstr& Name);
   // the instruction name is Toks[0]
@@ -286,16 +276,9 @@ public:
   // Parses all instructions, exclusing atoms, throws if fails
   void ParseHeader(const TStrList& in);
 
-  void AddVar(float val);
-  bool InsExists(const olxstr &Name);
-  inline int InsCount()  const                {  return Ins.Count();  }
-  inline const olxstr& InsName(int i) const {  return Ins.String(i);  }
-  inline const XShelxInsList& InsParams(int i)     {  return *Ins.Object(i); }
-  void DelIns(int i);
   void FixUnit();
-  void DeleteAtom(TCAtom *CA);
 
-  virtual IEObject* Replicate()  const {  return new XShelxIns(AtomsInfo);  }
+  virtual IEObject* Replicate()  const {  return new XShelxIns();  }
 };
 
 EndXlibNamespace()

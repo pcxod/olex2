@@ -43,7 +43,9 @@ int main(int argc, char* argv[])  {
   xm.NewScatterer(0.0, 0.0, 0.0).AddScatterer("C1", &ai.GetAtomInfo(iCarbonIndex), 1, scat_lib);
   xm.NewScatterer(0.5, 0.5, 0.5).AddScatterer("H1", &ai.GetAtomInfo(iHydrogenIndex), 1, scat_lib );
   xm.Scatterers[0].Occupancy = 1;
-  xm.Scatterers[1].Occupancy.refinable = false;
+  XVar& var = xm.Variables.AddNew(0.5);
+  xm.Scatterers[1].Occupancy.options.SetVar( &var );
+  xm.Scatterers[1].Occupancy.options.SetRefinable(false);
   xm.Scatterers[1].TDP.SetUani(NULL, &xm.Scatterers[0], 1.2);
   double uiso = xm.Scatterers[1].TDP.GetUiso();
   XLinearEquation& eq = xm.LinearEquations.AddNew(0, 0);

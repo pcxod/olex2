@@ -36,6 +36,19 @@ const short
   rg_SP11          = 16,
   rg_Refence       = 17; // any after 16
 
+const short  // relation of parameters to variables
+  relation_None          = 0,
+  relation_AsVar         = 1,
+  relation_AsOneMinusVar = 2;
+
+const short  // variable types
+  var_type_None = 0,
+  var_type_X    = 1,
+  var_type_Y    = 2,
+  var_type_Z    = 3,
+  var_type_Sof  = 4,
+  var_type_Uiso = 5;
+
 
 // refinemnt attributes
 const short
@@ -57,7 +70,13 @@ class XDisorderedGroup;
 
 typedef TPtrList<XScatterer> XScattererPList;
 typedef TPtrList<XSite> XSitePList;
-// for the rigid groups
+//
+struct XVar {
+  double value;
+  short type;   // type is required for calculation of derivatives
+  XVar(double v=0, short t=var_type_None) : value(v), type(t)  {}
+};
+// 
 class IRefinementModel {
 public:
   virtual int GetReferenceSize(int FragId) = 0;
@@ -73,61 +92,111 @@ public:
   virtual int UsedSymmCount() const = 0;
   virtual const smatd* GetUsedSymm(int i) const = 0;
   virtual int UsedSymmIndex(const smatd& symm) const = 0;
+  virtual XVar& NewVar(double v, short type) = 0;
+  virtual int VarCount() const = 0;
+  virtual XVar& GetVar(int index) = 0;
 };
-// for the refinables
-class IRefinableOwner {
-public:
-  virtual ~IRefinableOwner() {  }
-  virtual olxstr GetName() const = 0;
-};
-//
-class XRefinable {
-protected:
-  IRefinableOwner* Owner;
-public:
-  XRefinable(const olxstr& name = EmptyString) : 
-    Name(name), Value(0), Esd(0), Refinable(false), Owner(NULL)  {  }
-  XRefinable(IRefinableOwner* owner, const olxstr& name = EmptyString) : 
-    Name(name), Value(0), Esd(0), Refinable(false), Owner(owner)  {  }
-  inline bool IsDependent()      const {  return !Equations.IsEmpty();  }
-  virtual void SetOwner(IRefinableOwner* sender, IRefinableOwner* owner) {  Owner = owner;  }
-  virtual IRefinableOwner* GetOwner() const {  return Owner;  }
-  // public data
-  double Value, Esd;
+template <class Base> class XRefinableOptions {
   bool Refinable;
-  TPtrList<XLinearEquation> Equations;
-  olxstr Name;
+  short Relation; // one of the relation_ consts
+  XVar* Var;
+protected:
+  Base* Owner;
+  void (Base::*OnRefinableChange)(bool v);
+  void (Base::*OnVarChange)(XVar* var);
+  void (Base::*OnRelationChange)(short new_relation);
+public:
+  XRefinableOptions(Base* owner = NULL) : Owner(owner), Refinable(true), Relation(relation_None), 
+    Var(NULL), OnRefinableChange(NULL), OnVarChange(NULL), OnRelationChange(NULL)  {  }
+  XRefinableOptions(const XRefinableOptions& o) : Refinable(o.Refinable), Relation(o.Relation), 
+    Var(o.Var), Owner(o.Owner), OnRefinableChange(o.OnRefinableChange), OnVarChange(o.OnVarChange), 
+    OnRelationChange(o.OnRelationChange) {}
+  // note that Owner will not be copied !!
+  XRefinableOptions<Base>& operator = (const XRefinableOptions<Base>& o)  {
+    Refinable = o.Refinable;
+    Relation = o.Relation;
+    Var = o.Var;
+    OnRefinableChange = o.OnRefinableChange;
+    OnVarChange = o.OnVarChange;
+    OnRelationChange = o.OnRelationChange;
+  }
+  inline XRefinableOptions<Base>& SetRefinable(bool v)  {  
+    Refinable = v;
+    if( Owner != NULL && OnRefinableChange != NULL )  (Owner->*OnRefinableChange)(v);
+    return *this;
+  }
+  inline bool IsRefinable() const {  return Refinable;  }
+  inline XRefinableOptions<Base>& SetVar(XVar* var)  {
+    Var = var;
+    if( Owner != NULL && OnVarChange != NULL ) (Owner->*OnVarChange)(var);
+    return *this;
+  }
+  inline XVar* GetVar() const {  return Var;  }
+  inline XRefinableOptions<Base>& SetRelation(short relation)  {
+    Relation = relation;
+    if( Owner != NULL && OnRelationChange != NULL )  (Owner->*OnRelationChange)(relation);
+    return *this;
+  }
+  inline short GetRelation() const {  return Relation;  }
+
+  friend Base;
 };
-//
 //
 struct XEquationMember {
   double Ratio;
-  XRefinable& Refinable;
-  XEquationMember(double ratio, XRefinable& refinable) :
-    Ratio(ratio), Refinable(refinable) {  }
+  XVar& Var;
+  XEquationMember(double ratio, XVar& var) :
+    Ratio(ratio), Var(var) {  }
 };
-/* SUMP, +- free var, dependent Uiso 
-  if there is only one member, that member Ratio has to be used
-*/
+/* SUMP */
 struct XLinearEquation {
-  XEquationMember& Add(double ratio, XRefinable& member)  {
+  XEquationMember& Add(double ratio, XVar& member)  {
     XEquationMember& rv = Members.Add( *(new XEquationMember(ratio, member)) );
-    member.Equations.Add(this);
     return rv;
   }
-  XLinearEquation(double val, double sig) : Value(val), Sigma(sig) {}
-  double Value, Sigma;
+  XLinearEquation(double val, double sig) : value(val), sigma(sig) {}
+  double value, sigma;
   TTypeList<XEquationMember> Members; 
 };
 //
 /* scatterer is associated with a single TDp and a single site, however, several
 scatterers might be involved. */
-class XScatterer : public IRefinableOwner {
+class XScatterer {
 public:
   struct Scatterer  {
+    struct _Ratio { // internal structure for refinable
+    protected:
+      void OnVarChange(XVar* var)  {
+        if( var != NULL )  {
+          if( var->type == var_type_None )  var->type = var_type_Sof;
+          if( var->type != var_type_Sof )
+            throw TInvalidArgumentException(__OlxSourceInfo, "variable type");
+          if( options.GetRelation() == relation_AsVar )
+            ratio = var->value;
+          else if( options.GetRelation() == relation_AsOneMinusVar )
+            ratio = 1.0 - var->value;
+        }
+      }
+    public:
+      double ratio;
+      XRefinableOptions<_Ratio> options;
+      _Ratio(double r=1) : ratio(r) {  
+        options.Owner = this;
+        options.OnVarChange = &_Ratio::OnVarChange;
+      }
+      _Ratio(const _Ratio& r) : ratio(r.ratio), options(r.options)  {
+        options.Owner = this;
+      }
+      inline operator double& () {  return ratio;  }
+      inline _Ratio& operator = (double r)  {  ratio = r;  return *this;  }
+      inline _Ratio& operator = (const _Ratio& r)  {
+        ratio = r.ratio;
+        options = r.options;
+      }
+    };
     TBasicAtomInfo* type;
     olxstr label;
-    double ratio;
+    _Ratio ratio;
     XScatterer& Owner; 
     double gaussians[9], fp, fdp;
     bool isFromLibrary, 
@@ -155,20 +224,67 @@ public:
       return *this;
     }
   };
-  struct _Crd {
-    vec3d Center, Esd;
-    bool x_refinable, y_refinable, z_refinable;
-    _Crd() : x_refinable(true), y_refinable(true), z_refinable(true) {  }
+  struct _Crd {  // internal structure for refinable
+    vec3d center, esd;
+    XRefinableOptions<_Crd> options[3];
+    _Crd()  {  }
+    _Crd(const _Crd& c) : center(c.center), esd(c.esd)  {
+      options[0] = c.options[0];
+      options[1] = c.options[1];
+      options[2] = c.options[2];
+    }
+    inline operator vec3d& () {  return center;  }
+    inline _Crd& operator = (const vec3d& crd)  {  center = crd;  return *this;  }
+    inline _Crd& operator = (const _Crd& c)  {
+      center = c.center;
+      esd = c.esd;
+      options[0] = c.options[0];
+      options[1] = c.options[1];
+      options[2] = c.options[2];
+    }
   };
   class _TDP {
   protected:
     XUani* uAni;
     XScatterer* uAniOwner;
-    bool refinable;
     double scale, uIso;
+    XRefinableOptions<_TDP> options;
+    void OnVarChange(XVar* var)  {  // accsepts only relation_AsVar
+      if( var == NULL )  {  return;  }
+      else  {
+        if( var->type == var_type_None )  var->type = var_type_Uiso;
+        if( var->type != var_type_Uiso )
+          throw TInvalidArgumentException(__OlxSourceInfo, "variable type");
+        uAni = NULL;
+        uAniOwner = NULL;
+        uIso = var->value;
+      }
+    }
+    void OnRefinableChange(bool v)  {
+      if( v )  {
+        if( uAniOwner != NULL )  {
+          uAniOwner = NULL;
+          options.Refinable = true;
+        }
+        else  {
+          if( uAni != NULL )  uAni->refinable = true;
+          else                options.Refinable = true;
+        }
+      }
+      else  {
+        if( uAniOwner == NULL )  {
+          if( uAni != NULL )  uAni->refinable = false;
+          else                options.Refinable = false;
+        }
+      }
+    }
   public:
-    _TDP() : uAni(NULL), uAniOwner(NULL), scale(1), uIso(0.05), refinable(true)  {}
-    inline XUani& SetUani(XUani* _uAni, XScatterer* _uAniOwner = NULL, double _scale=1.0)  {
+    _TDP() : uAni(NULL), uAniOwner(NULL), scale(1), uIso(0.05)  {
+      options.Owner = this;
+      options.OnVarChange = &_TDP::OnVarChange;
+      options.OnRefinableChange = &_TDP::OnRefinableChange;
+    }
+    inline _TDP& SetUani(XUani* _uAni, XScatterer* _uAniOwner = NULL, double _scale=1.0)  {
       if( _uAniOwner != NULL &&  _uAniOwner->TDP.IsProxy() )
         throw TInvalidArgumentException(__OlxSourceInfo, "creating a proxy TDP to a proxy TDP");
       uAni = (_uAniOwner != NULL) ? NULL : _uAni;
@@ -176,25 +292,8 @@ public:
       scale = _scale;
       return *this;
     }
-    inline void SetRefinable(bool v )  {
-      if( v )  {
-        if( uAniOwner != NULL )  {
-          uAniOwner = NULL;
-          refinable = true;
-        }
-        else  {
-          if( uAni != NULL )  uAni->refinable = true;
-          else                refinable = true;
-        }
-      }
-      else  {
-        if( uAniOwner == NULL )  {
-          if( uAni != NULL )  uAni->refinable = false;
-          else                refinable = false;
-        }
-      }
-    }
-    inline bool IsRefinable()  const {  return uAniOwner != NULL ? false : (uAni != NULL ? uAni->refinable : refinable);  }
+    inline XVar* GetVar() const {  return options.GetVar();  }
+    inline bool IsRefinable()  const {  return uAniOwner != NULL ? false : (uAni != NULL ? uAni->refinable : options.IsRefinable());  }
     inline bool IsAnisotrpic() const {  return uAni != NULL;  }
     inline bool IsProxy()      const {  return uAniOwner != NULL;  }
     inline double GetUiso() const {  
@@ -204,16 +303,46 @@ public:
     }
   };
   struct _Occupancy {
-    bool refinable;
+  protected:
+    void OnRelationChange(short v)  {
+      if( options.Var == NULL )  return;
+      if( v == relation_AsVar )
+        occupancy = options.Var->value;
+      else if( v == relation_AsOneMinusVar )
+        occupancy = 1.0 - options.Var->value;
+    }
+    void OnVarChange(XVar* var)  {
+      if( var != NULL )  {
+        if( var->type == var_type_None )  var->type = var_type_Sof;
+        if( var->type != var_type_Sof )
+          throw TInvalidArgumentException(__OlxSourceInfo, "variable type");
+        OnRelationChange( options.GetRelation() );
+      }
+    }
+  public:
     double occupancy;
-    void operator = (double v)  {  occupancy = v;  }
+    XRefinableOptions<_Occupancy> options;
+    _Occupancy(double o=1) : occupancy(o) {
+      options.Owner = this;
+      options.OnVarChange = &_Occupancy::OnVarChange;
+    }
+    _Occupancy(const _Occupancy& o) : occupancy(o.occupancy), options(o.options) {
+      options.Owner = this;
+    }
+    inline _Occupancy& operator = (const _Occupancy& o)  {
+      occupancy = o.occupancy;
+      options = o.options;  // owners are not copied
+      return *this;
+    }
+    inline _Occupancy& operator = (double v)  {  occupancy = v;  return *this;  }
+    inline operator double& () {  return occupancy;  }
   };
 private:
   TTypeList<XScatterer::Scatterer> Scatterers;
 public:
   XScatterer(IRefinementModel& parent, double x, double y, double z) : 
       Parent(parent), Residue(NULL) {  
-    Crd.Center[0] = x;  Crd.Center[1] = y;  Crd.Center[2] = z;
+    Crd.center[0] = x;  Crd.center[1] = y;  Crd.center[2] = z;
     SiteOccupancy = 1;
   }
   _TDP TDP;  
@@ -264,7 +393,7 @@ public:
   template <class T> inline bool IsType(const T& type) const {
     return (Scatterers.Count() == 1) ? *Scatterers[0].type == type : false;
   }
-  inline const vec3d& GetCrd() const {  return Crd.Center;  }
+  inline const vec3d& GetCrd() const {  return Crd.center;  }
   inline double GetUiso()      const {  return TDP.GetUiso();  }
   XScatterer::_Crd Crd;
 
