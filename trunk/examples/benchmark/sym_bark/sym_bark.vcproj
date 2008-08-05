@@ -197,6 +197,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\xrlib\xins.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\xrlib\xmodel.cpp"
 				>
 			</File>

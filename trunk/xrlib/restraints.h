@@ -11,32 +11,6 @@
 
 BeginXlibNamespace()
 
-const short  rpCrdX = 0x0001,
-             rpCrdY = 0x0002,
-             rpCrdZ = 0x0004,
-             rpCrds = rpCrdX|rpCrdY|rpCrdZ,
-             rpSof  = 0x0008,
-             rpUiso = 0x0010,
-             rpUani = 0x0020;
-
-const short  rtChiv = 0x0001,
-             rtFlat = 0x0002,
-             rtSadi = 0x0004,
-             rtSame = 0x0006,
-             rtIsor = 0x0010,
-             rtDelu = 0x0020,
-             rtSemu = 0x0040,
-             rtDang = 0x0080,
-             rtDfix = 0x0100,
-             rtExyz = 0x0200,
-             rtEadp = 0x0400;
-const short
-  shelxr_Distance = 1,
-  shelxr_Angle    = 2,
-  shelxr_Volume   = 3,
-  shelxr_Complex  = 4;
-
-
 class ARestraint  {
 protected:
   XResidue* Resi;
@@ -78,6 +52,12 @@ public:
                    ARestraint(parent), S1(s1), S2(s2), ReferenceAtoms(NULL)  {
     if( S1 == -1 )  S1 = defs[0];
     if( S2 == -1 )  S2 = S1*2;
+  }
+  Restraint_Same(IRefinementModel& parent,  const double defs[5], const TStrList& toks) : ARestraint(parent)  {
+    int cnt = ParseArgs(toks, 2, &S1, &S2);
+    if( cnt < 1 )  S1 = defs[0];
+    if( cnt < 2 )  S2 = defs[0];
+    Init( toks.Text(cnt) );
   }
   void Init(const olxstr& scatterers)  {
     ReferenceAtoms = AllocateList(scatterers);
@@ -356,13 +336,13 @@ class XModel : public IRefinementModel {
 public:
   XModel() {
     Residues.Add( new XResidue(*this) );  // default residue
-    Scale = 1;
+    Variables.AddNew(1, var_type_None);  // global scale
     WaveLength = 0.71073;
   }
   virtual ~XModel() {
   }
   virtual int GetReferenceSize(int FragId) {  return References[FragId]->Count();  }
-  inline int referenceCount() const        {  return References.Count();  }
+  inline int ReferenceCount() const        {  return References.Count();  }
 
   virtual int ScattererCount() const       {  return Scatterers.Count();  }
   virtual XScatterer& GetScatterer(int i)  {  return Scatterers[i];  }
@@ -440,8 +420,12 @@ public:
   }
   void ShareTDP(const TStrList& scatterers)  {
   }
+  virtual XVar& NewVar(double v, short type) {  return Variables.AddNew(v, type);  }
+  virtual int VarCount() const {  return Variables.Count();  }
+  virtual XVar& GetVar(int index) {  return Variables[index];  }
   
-  double Scale, WaveLength;  // global Fo/Fc scale
+  double WaveLength;  // global Fo/Fc scale is Variables[0]
+  evecd Weight;
   XCell Cell;
   TTypeList<XUani> TDPs;
   // a list of all residues with key - number
@@ -451,6 +435,7 @@ public:
   TPSTypeList<int, XFrag*> References;
   TTypeList<XRigidGroup> RigidGroups;
   TTypeList<XLinearEquation> LinearEquations;
+  TTypeList<XVar> Variables;
 
   TTypeList<Restraint_Ncsy> NCSY;
   TTypeList<Restraint_Isor> ISOR;

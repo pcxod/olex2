@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8.00"
+	Version="9.00"
 	Name="olex2v"
 	ProjectGUID="{2A840EC5-E964-4DB5-B419-1222C3B92DA8}"
 	RootNamespace="olex2v"
+	TargetFrameworkVersion="131072"
 	>
 	<Platforms>
 		<Platform
@@ -59,16 +60,18 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="alglib.lib sdl.lib xlib.lib gllib.lib gxlib.lib wxexpatd.lib wxjpegd.lib wxbase28ud.lib wxbase28ud_net.lib wxmsw28ud_gl.lib wxmsw28ud_richtext.lib wxmsw28ud_html.lib wxmsw28ud_core.lib wxmsw28ud_adv.lib wxpngd.lib wxregexud.lib wxtiffd.lib wxzlibd.lib mapi32.lib glu32.lib user32.lib opengl32.lib gdi32.lib ole32.lib advapi32.lib comdlg32.lib comctl32.lib shell32.lib rpcrt4.lib oleaut32.lib kernel32.lib wsock32.lib"
+				AdditionalDependencies="alglib.lib sdl.lib xlib.lib gllib.lib gxlib-np.lib wxexpatd.lib wxjpegd.lib wxbase28ud.lib wxbase28ud_net.lib wxmsw28ud_gl.lib wxmsw28ud_richtext.lib wxmsw28ud_html.lib wxmsw28ud_core.lib wxmsw28ud_adv.lib wxpngd.lib wxregexud.lib wxtiffd.lib wxzlibd.lib mapi32.lib glu32.lib user32.lib opengl32.lib gdi32.lib ole32.lib advapi32.lib comdlg32.lib comctl32.lib shell32.lib rpcrt4.lib oleaut32.lib kernel32.lib wsock32.lib"
 				AdditionalLibraryDirectories="C:\Python25\libs;&quot;$(SolutionDir)$(ConfigurationName)&quot;;&quot;$(TargetDir)&quot;;&quot;E:\wxWidgets-2.8.7\lib\vc_lib&quot;;&quot;$(SolutionDir)\lib&quot;"
-				GenerateManifest="false"
+				GenerateManifest="true"
 				IgnoreDefaultLibraryNames=""
 				GenerateDebugInformation="true"
 				AssemblyDebug="1"
 				SubSystem="0"
 				EntryPointSymbol=""
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
 				TargetMachine="1"
-				AllowIsolation="false"
+				AllowIsolation="true"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -87,9 +90,6 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -151,6 +151,8 @@
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
 				LinkTimeCodeGeneration="1"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -170,9 +172,6 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -234,6 +233,8 @@
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
 				LinkTimeCodeGeneration="1"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -253,9 +254,6 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"

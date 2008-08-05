@@ -1,7 +1,7 @@
 #ifndef __olx_xcell
 #define __olx_xcell
 #include "xbase.h"
-#include "threex3.h"
+#include "symmat.h"
 
 BeginXlibNamespace()
 struct XCell {
@@ -10,6 +10,8 @@ struct XCell {
   mat3d Cell2Cartesian, Cartesian2Cell, Hkl2Cartesian,
         UcifToUxyz, UcifToUxyzT,
         UxyzToUcif, UxyzToUcifT;
+  smatd_list symm;
+  int latt;
   XCell(const double cell[6]) : 
         a(cell[0]), b(cell[1]), c(cell[2]), alpha(cell[3]), beta(cell[4]), gamma(cell[5]),
         sigA(0), sigB(0), sigC(0), sigAlpha(0), sigBeta(0), sigGamma(0)  {  

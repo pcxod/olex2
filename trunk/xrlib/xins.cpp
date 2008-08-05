@@ -8,21 +8,15 @@
 
 #include <stdlib.h>
 
-#include "ins.h"
+#include "xins.h"
 
 #include "bapp.h"
 #include "log.h"
 
-#include "catom.h"
-#include "ellipsoid.h"
 #include "unitcell.h"
 #include "symmparser.h"
 
 #include "efile.h"
-#include "lst.h"
-#include "p4p.h"
-#include "crs.h"
-#include "cif.h"
 #include "symmlib.h"
 #include "typelist.h"
 #include "egc.h"
@@ -34,8 +28,7 @@
 //----------------------------------------------------------------------------//
 // XShelxIns function bodies
 //----------------------------------------------------------------------------//
-XShelxIns::XShelxIns(TAtomsInfo *S) : TBasicCFile(S)  {
-  Radiation = 0.71073f;
+XShelxIns::XShelxIns() {
   HKLF = 4;
   LoadQPeaks = true;
 }
@@ -45,16 +38,10 @@ XShelxIns::~XShelxIns()  {
 }
 //..............................................................................
 void XShelxIns::Clear()  {
-  GetAsymmUnit().Clear();
-  for( int i=0; i < Ins.Count(); i++ )
-    delete Ins.Object(i);
-  Ins.Clear();
   Skipped.Clear();
-  FTitle = EmptyString;
-  FVars.Resize(0);
-  FWght.Resize(0);
+  Title = EmptyString;
   FWght1.Resize(0);
-  FHKLSource = EmptyString;
+  HklSrc = EmptyString;
   FLS.Resize(0);
   FPLAN.Resize(0);
   Sfac = EmptyString;
@@ -63,15 +50,16 @@ void XShelxIns::Clear()  {
   R1 = -1;
 }
 //..............................................................................
-void XShelxIns::LoadFromStrings(const TStrList& FileContent)  {
+void XShelxIns::LoadFromStrings(const TStrList& FileContent, XModel& xm)  {
   Clear();
-  ParseContext cx;
-  TStrList Toks, InsFile(FileContent);
+  TAtomsInfo* AtomsInfo = TAtomsInfo::GetInstance();
+  ParseContext cx(xm);
+  TStrList Toks, InsFile(FileContent), ins;
   InsFile.CombineLines('=');
   bool   End = false;// true if END instruction reached
   short   SameAtomsLeft=0, SameId=-1;    // atom's PART
   double partOccu = 0;
-  cx.Resi = &GetAsymmUnit().GetResidue(-1);
+  cx.Resi = &xm.Residues[0];
   for( int i=0; i < InsFile.Count(); i++ )
     InsFile[i] = olxstr::DeleteSequencesOf<char>(InsFile[i], ' ');
   for( int i=0; i < InsFile.Count(); i++ )  {
@@ -88,87 +76,53 @@ void XShelxIns::LoadFromStrings(const TStrList& FileContent)  {
     if( Toks.IsEmpty() )  continue;
 
     if( Toks[0].Comparei("SUMP") == 0 )  // can look like an atom !
-      Ins.Add(InsFile[i]);
+      ins.Add(InsFile[i]);
     else if( ParseIns(InsFile, Toks, cx, i) )
       continue;
     else if( Toks[0].StartsFromi("SAME") )  {
-      if( SameAtomsLeft != 0 )
-        throw TFunctionFailedException(__OlxSourceInfo, "previous SAME is incomplete");
-      int resi_ind = Toks[0].IndexOf('_');
-      olxstr resi( (resi_ind != -1) ? Toks[0].SubStringFrom(resi_ind+1) : EmptyString );
-      double esd1=0.02, esd2=0.02;
-      int from_ind = 1;
-      if( Toks.Count() > 1 && Toks[1].IsNumber() )  {
-        esd1 = Toks[1].ToDouble(); 
-        from_ind++;
-      }
-      if( Toks.Count() > 2 && Toks[2].IsNumber() )  {
-        esd2 = Toks[2].ToDouble(); 
-        from_ind++;
-      }
-      TAtomReference ar( Toks.Text(' ', from_ind) );
-      TCAtomGroup ag;
-      int atomAGroup;
-      try  {  ar.Expand( GetAsymmUnit(), ag, resi, atomAGroup);  }
-      catch( const TExceptionBase& ex )  {
-        throw TFunctionFailedException(__OlxSourceInfo, olxstr("invalid SAME instruction :") << ex.GetException()->GetError());
-      }
-      if( ag.IsEmpty() )
-        throw TFunctionFailedException(__OlxSourceInfo, "forward referencing is not enabled for SAME");
-      SameAtomsLeft = ag.Count();
-      for( int j=0; j < ag.Count(); j++ )
-        ag[j].GetAtom()->SetSortable(false);
-      TSimpleRestraint& sr = GetAsymmUnit().SimilarFragments().AddNew();
-      SameId = GetAsymmUnit().SimilarFragments().Count() - 1;
-      sr.AddAtoms(ag);
-      sr.SetEsd(esd1);
-      sr.SetEsd1(esd2);
+      //if( SameAtomsLeft != 0 )
+      //  throw TFunctionFailedException(__OlxSourceInfo, "previous SAME is incomplete");
+      //int resi_ind = Toks[0].IndexOf('_');
+      //olxstr resi( (resi_ind != -1) ? Toks[0].SubStringFrom(resi_ind+1) : EmptyString );
+      //SameAtomsLeft = ag.Count();
+      //Restrains_Same& sr = xm.SAME.AddNew( xm, cx.Defs, Toks);
     }
     else if( Toks[0].Comparei("END") == 0 )     {   //reset RESI to default
       End = true;  
-      cx.Resi = &GetAsymmUnit().GetResidue(-1);
+      cx.Resi = &xm.Residues[0];
     }
     else if( Toks.Count() < 6 )  // atom sgould have at least 7 parameters
-      Ins.Add(InsFile[i]);
+      ins.Add(InsFile[i]);
     else {
       if( olxstr::o_toupper(Toks[0].CharAt(0)) == 'Q' && !End )  {
         if( !LoadQPeaks  )  continue;
       }
       if( End && (olxstr::o_toupper(Toks[0].CharAt(0)) != 'Q') )  continue;
     // is a valid atom
-      if( !AtomsInfo->IsAtom(Toks[0]))  {  Ins.Add(InsFile[i]);  continue;  }
-      if( !Toks[1].IsNumber() )         {  Ins.Add(InsFile[i]);  continue;  }
+      if( !AtomsInfo->IsAtom(Toks[0]))  {  ins.Add(InsFile[i]);  continue;  }
+      if( !Toks[1].IsNumber() )         {  ins.Add(InsFile[i]);  continue;  }
       int index  = Toks[1].ToInt();
       if( index < 1 || index > cx.BasicAtoms.Count() )  {  // wrong index in SFAC
-        Ins.Add(InsFile[i]);
+        ins.Add(InsFile[i]);
         continue;
       }
       // should be four numbers
       if( (!Toks[2].IsNumber()) || (!Toks[3].IsNumber()) ||
         (!Toks[4].IsNumber()) || (!Toks[5].IsNumber()) )  {
-          Ins.Add(InsFile[i]);
+          ins.Add(InsFile[i]);
           continue;
       }
       if( !cx.CellFound )  {
         Clear();
         throw TFunctionFailedException(__OlxSourceInfo, "uninitialised cell");
       }
-      TCAtom* atom = _ParseAtom(Toks, cx );
-      int afix_group = cx.Afix/10;
-      if( afix_group == 5 || afix_group == 6 || afix_group == 7 || 
-        afix_group == 10 || afix_group == 11 || afix_group > 160 )
-        atom->SetSortable(false);
+      XScatterer* sc = _ParseAtom(Toks, cx );
       if( SameAtomsLeft != 0 )  {
         SameAtomsLeft--;
-        atom->SetSortable(false);
       }
       if( SameId != -1 )  {
-        atom->SetSameId(SameId);
         SameId = -1;
       }
-      atom->SetLabel( Toks[0] );
-      if( atom->GetAtomInfo() != iQPeakIndex )  // the use sfac
-        atom->AtomInfo( cx.BasicAtoms.Object(Toks[1].ToInt()-1) );
     }
   }
   if( GetSfac().CharCount(' ') != GetUnit().CharCount(' ') )  {
@@ -178,23 +132,22 @@ void XShelxIns::LoadFromStrings(const TStrList& FileContent)  {
   smatd sm;
   for( int i=0; i < cx.Symm.Count(); i++ )  {
     if( TSymmParser::SymmToMatrix(cx.Symm[i], sm) )
-      GetAsymmUnit().AddMatrix(sm);
+      xm.Cell.symm.AddCCopy(sm);
   }
   // remove dublicated instructtions, rems etc
-  for( int i = 0; i < Ins.Count(); i++ )  {
-    if( Ins.String(i).IsEmpty() )  continue;
-    for( int j = i+1; j < Ins.Count(); j++ )  {
-      if( Ins[i] == Ins[j] )
-        Ins[j] = EmptyString;
+  for( int i = 0; i < ins.Count(); i++ )  {
+    if( ins[i].IsEmpty() )  continue;
+    for( int j = i+1; j < ins.Count(); j++ )  {
+      if( ins[i] == ins[j] )
+        ins[j] = EmptyString;
     }
   }
 
-  Ins.Pack();
-  ParseRestraints(Ins, NULL);
-  Ins.Pack();
+  ins.Pack();
+  ParseRestraints(ins, cx);
+  ins.Pack();
   _FinishParsing();
   // initialise asu data
-  GetAsymmUnit().InitData();
   if( !cx.CellFound )  {  // in case there are no atoms
     Clear();
     throw TInvalidArgumentException(__OlxSourceInfo, "empty CELL");
@@ -204,31 +157,31 @@ void XShelxIns::LoadFromStrings(const TStrList& FileContent)  {
 }
 //..............................................................................
 void XShelxIns::_FinishParsing()  {
-  for( int i =0; i < Ins.Count(); i++ )  {
-    XShelxInsList* Param = new XShelxInsList(Ins[i], ' ');
-    Ins.Object(i) = Param;
-    Ins[i] = Param->String(0);
-    // special treatment of HFIX instructions
-    if( !Param->String(0).Comparei("HFIX") && Param->Count() > 2 ) {
-      int iv = Param->String(1).ToInt();
-      if( iv > 0 )  {
-        for( int j=2; j<Param->Count(); j++ )  {
-          TCAtom* atom = GetAsymmUnit().FindCAtom(Param->String(j));
-          if( atom != NULL )
-            atom->SetHfix(iv);
-        }
-      }
-      continue;
-    }
-    //end
-    Param->Delete(0);
-    for( int j=0; j < Param->Count(); j++ )
-      Param->Object(j) = GetAsymmUnit().FindCAtom(Param->String(j));
-  }
+  //for( int i =0; i < Ins.Count(); i++ )  {
+  //  XShelxInsList* Param = new XShelxInsList(Ins[i], ' ');
+  //  Ins.Object(i) = Param;
+  //  Ins[i] = Param->String(0);
+  //  // special treatment of HFIX instructions
+  //  if( !Param->String(0).Comparei("HFIX") && Param->Count() > 2 ) {
+  //    int iv = Param->String(1).ToInt();
+  //    if( iv > 0 )  {
+  //      for( int j=2; j<Param->Count(); j++ )  {
+  //        TCAtom* atom = GetAsymmUnit().FindCAtom(Param->String(j));
+  //        if( atom != NULL )
+  //          atom->SetHfix(iv);
+  //      }
+  //    }
+  //    continue;
+  //  }
+  //  //end
+  //  Param->Delete(0);
+  //  for( int j=0; j < Param->Count(); j++ )
+  //    Param->Object(j) = GetAsymmUnit().FindCAtom(Param->String(j));
+  //}
 }
 //..............................................................................
 bool XShelxIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx, int& i)  {
-  if( _ParseIns(Toks) )
+  if( _ParseIns(Toks, cx.rm) )
     return true;
   else if( !cx.CellFound && Toks[0].Comparei("CELL") == 0 )  {
     if( Toks.Count() == 8 )  {
@@ -255,9 +208,9 @@ bool XShelxIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext
     if( Toks.Count() < 3 )
       throw TInvalidArgumentException(__OlxSourceInfo, "wrong number of arguments for a residue");
     if( Toks[1].IsNumber() )
-      cx.Resi = &GetAsymmUnit().NewResidue(EmptyString, Toks[1].ToInt(), (Toks.Count() > 2) ? Toks[2] : EmptyString);
+      cx.Resi = &cx.rm.NewResidue(EmptyString, Toks[1].ToInt(), (Toks.Count() > 2) ? Toks[2] : EmptyString);
     else
-      cx.Resi = &GetAsymmUnit().NewResidue(Toks[1], Toks[2].ToInt(), (Toks.Count() > 3) ? Toks[3] : EmptyString);
+      cx.Resi = &cx.rm.NewResidue(Toks[1], Toks[2].ToInt(), (Toks.Count() > 3) ? Toks[3] : EmptyString);
   }
   else if( Toks[0].Comparei("SFAC") == 0 )  {
     bool expandedSfacProcessed = false;
@@ -279,7 +232,7 @@ bool XShelxIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext
         if( cx.BasicAtoms.Last().Object() == NULL )
           throw TFunctionFailedException(__OlxSourceInfo, olxstr("Could not find suitable scatterer for '") << Toks[1] << '\'' );
         expandedSfacProcessed = true;
-        GetAsymmUnit().AddNewSfac( Toks.String(1),
+        cx.rm.NewScatterer( Toks[0],
           Toks[2].ToDouble(), Toks[3].ToDouble(), Toks[4].ToDouble(),
           Toks[5].ToDouble(), Toks[6].ToDouble(), Toks[7].ToDouble(),
           Toks[8].ToDouble(), Toks[9].ToDouble(), Toks[10].ToDouble() );

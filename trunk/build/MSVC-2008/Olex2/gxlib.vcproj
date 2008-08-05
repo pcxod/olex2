@@ -487,10 +487,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\gxlib\wglscene.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\gxlib\wxglscene.cpp"
 				>
 			</File>
@@ -516,6 +512,7 @@
 						Name="VCCLCompilerTool"
 						Optimization="0"
 						BasicRuntimeChecks="3"
+						ObjectFile="$(IntDir)\"
 					/>
 				</FileConfiguration>
 				<FileConfiguration

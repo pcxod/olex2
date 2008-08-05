@@ -481,10 +481,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\xlib\restraints.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\xlib\satom.cpp"
 				>
 			</File>
@@ -569,10 +565,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\xlib\xmodel.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\xlib\xyz.cpp"
 				>
 			</File>
@@ -592,6 +584,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\xlib\atomref.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\xlib\auto.h"
 				>
 			</File>
 			<File
@@ -675,10 +671,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\xlib\restraints.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\xlib\satom.h"
 				>
 			</File>
@@ -696,6 +688,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\xlib\splane.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\xlib\symmat.h"
 				>
 			</File>
 			<File
