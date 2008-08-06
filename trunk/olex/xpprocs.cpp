@@ -4814,28 +4814,17 @@ void TMainForm::macExcludeHkl(TStrObjList &Cmds, const TParamList &Options, TMac
 //..............................................................................
 void TMainForm::macDirection(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   vec3d Z;
-  mat3d Basis =  FXApp->GetRender().GetBasis().GetMatrix();
+  mat3d Basis( FXApp->GetRender().GetBasis().GetMatrix() );
   olxstr Tmp;
   if( FXApp->XFile().GetLastLoader() )  {
-    mat3d cellM, M, m;
-    vec3d N(0, 0, 1);
+    mat3d cellM;
     TAsymmUnit &au = FXApp->XFile().GetAsymmUnit();
-    if( FXApp->HklVisible() ) m = au.GetHklToCartesian();
-    else                      m = au.GetCellToCartesian();
-
-    for( int i=0; i < 3; i++ )
-      for( int j=0; j < 3; j++ )
-        cellM[i][j] = m[i][j];
+    if( FXApp->HklVisible() ) cellM = au.GetHklToCartesian();
+    else                      cellM = au.GetCellToCartesian();
 
     cellM *= Basis;
-    cellM.Transpose();
-    // 4x4 -> 3x3 matrix
-    Z = cellM[0];    M[0] = Z;
-    Z = cellM[1];    M[1] = Z;
-    Z = cellM[2];    M[2] = Z;
-    Z.Null();
-    mat3d::GauseSolve(M, N, Z);
-    Z.Normalise();
+
+    Z = mat3d::CramerSolve(mat3d::Transpose(cellM), vec3d(0, 0, 1)).Normalise();
     if( FXApp->HklVisible() )  {
       Tmp =  "Direction: (";
       Tmp << olxstr::FormatFloat(3, Z[0]) << "*H, " <<
@@ -4862,27 +4851,22 @@ void TMainForm::macDirection(TStrObjList &Cmds, const TParamList &Options, TMacr
              olxstr::FormatFloat(3, Z[2]) << "*C)";
       TBasicApp::GetLog() << (Tmp << '\n');
       const char *Dir[] = {"000", "100", "010", "001", "110", "101", "011", "111"};
-      TTypeList<vec3d > Points;
-      vec3d D;
-      cellM.Transpose();
-      Z.Null();                          Points.AddCCopy(Z);
-      Z = cellM[0];                      Points.AddCCopy(Z);
-      Z = cellM[1];                      Points.AddCCopy(Z);
-      Z = cellM[2];                      Points.AddCCopy(Z);
-      Z = cellM[0] + cellM[1];           Points.AddCCopy(Z);
-      Z = cellM[0] + cellM[2];           Points.AddCCopy(Z);
-      Z = cellM[1] + cellM[2];           Points.AddCCopy(Z);
-      Z = cellM[0] + cellM[1] + cellM[2]; Points.AddCCopy(Z);
+      TTypeList<vec3d> Points;
+      Points.AddCCopy(Z.Null());
+      Points.AddCCopy(cellM[0]);
+      Points.AddCCopy(cellM[1]);
+      Points.AddCCopy(cellM[2]);
+      Points.AddCCopy(cellM[0] + cellM[1]);
+      Points.AddCCopy(cellM[0] + cellM[2]);
+      Points.AddCCopy(cellM[1] + cellM[2]);
+      Points.AddCCopy(cellM[0] + cellM[1] + cellM[2]);
       for( int i=0; i < Points.Count(); i++ )  {
-        N = Points[i];
         for( int j = i+1; j < Points.Count(); j++ )  {
-          Z = Points[j];
-          D = Z - N;
-          D.Normalise();
-          if( fabs( fabs(D[2])-1 ) < 0.02 )  {  // 98 % coincidence
+          Z = (Points[j]-Points[i]).Normalise();
+          if( fabs( fabs(Z[2])-1 ) < 0.02 )  {  // 98 % coincidence
             Tmp = "View along ";
             Tmp << Dir[i] <<  '-' <<  Dir[j] << ' ' <<
-                   '(' << (int)(100.00-fabs(fabs(D[2])-1)*100) <<  '%' << ')';
+                   '(' << (int)(100.00-fabs(fabs(Z[2])-1)*100) <<  '%' << ')';
             TBasicApp::GetLog() << (Tmp << '\n');
           }
         }

@@ -52,7 +52,7 @@ double TSPlane::CalcRMS(const TSAtomPList& atoms)  {
 
   m[2][0] = m[0][2];
   m[2][1] = m[1][2];
-  mat3d::GauseSolve(m, p, s);
+  mat3d::GaussSolve(m, p, s);
 
   Z[0] = s[0];
   Z[1] = s[1];
@@ -90,7 +90,7 @@ void TSPlane::CalcPlane(const TTypeList< AnAssociation2<vec3d, double> >& Points
 
   m[2][0] = m[0][2];
   m[2][1] = m[1][2];
-  mat3d::GauseSolve(m, p, s);
+  mat3d::GaussSolve(m, p, s);
   Params = s;
 }
 //..............................................................................

@@ -22,7 +22,7 @@ protected:
           c = atoms[i]->Atom().crd();
           c += atoms[i]->Basis.GetCenter();
           c -= cr;
-          c = atoms[i]->Basis.GetMatrix() * c;
+          c *= atoms[i]->Basis.GetMatrix();
           c += cr;
           atoms[i]->Atom().crd() = c;
           atoms[i]->Basis.Reset();

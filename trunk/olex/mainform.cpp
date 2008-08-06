@@ -3098,7 +3098,7 @@ bool TMainForm::OnMouseUp(int x, int y, short Flags, short Buttons)  {
       Tmp << Z.ToString();
       TBasicApp::GetLog() << Tmp;
     Z.Null();
-    mat3d::GauseSolve(M, N, Z);
+    mat3d::GaussSolve(M, N, Z);
     Z.Normalise();
     double H = Z[0]*Z[0];
     double K = Z[1]*Z[1];
