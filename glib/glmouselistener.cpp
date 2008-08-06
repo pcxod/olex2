@@ -36,11 +36,6 @@ bool TGlMouseListener::OnMouseUp(const IEObject *Sender, const TMouseData *Data)
   return false;
 }
 //..............................................................................
-double& TGlMouseListener_NormaliseAngle(double& v)  {
-  if( v < 0 ) v = 360;
-  if( v > 360 ) v = 0;
-  return v;
-}
 bool TGlMouseListener::OnMouseMove(const IEObject *Sender, const TMouseData *Data)  {
   int dx = Data->X - SX, dy = SY - Data->Y;
   bool res = false;
@@ -70,20 +65,30 @@ bool TGlMouseListener::OnMouseMove(const IEObject *Sender, const TMouseData *Dat
       SY = Data->Y;  
       return res;
     }
+    /* a not trivial (for some) task, to rotate in current basis as if the ritation
+    happens in on screen (identity) basis; For Z the rotation axis is defined by 
+    {0,0,1} = ra*Current_Basis and so on, this leasd to three linear equations for 
+    three values of the rotation angle...
+    */
+//    mat3d basis( mat3d::Transpose(FParent->GetBasis().GetMatrix()) );
+    mat3d basis( FParent->GetBasis().GetMatrix() );
     if( Data->Shift == sssCtrl )  {
-      double RZ = Basis.GetRZ();
+      double RZ = 0;
       if( SX > FParent->GetWidth()/2 ) RZ -= (double)dy/FRotationDiv;
       else                             RZ += (double)dy/FRotationDiv;
       if( SY > FParent->GetHeight()/2 )  RZ -= (double)dx/FRotationDiv;
       else                               RZ += (double)dx/FRotationDiv;
-      Basis.RotateZ( TGlMouseListener_NormaliseAngle(RZ) );
+      if( RZ != 0 ) 
+        Basis.Rotate(mat3d::CramerSolve(basis, vec3d(0,0,1)), RZ*M_PI/180);
       res = true;
     }
     if( !Data->Shift )  {// rotate XY
-      double RX = Basis.GetRX() + (double)(dy)/FRotationDiv;
-      double RY = Basis.GetRY() + (double)(dx)/FRotationDiv;
-      Basis.RotateX( TGlMouseListener_NormaliseAngle(RX) );
-      Basis.RotateY( TGlMouseListener_NormaliseAngle(RY) );
+      double RX = (double)(dy)/FRotationDiv;
+      double RY = (double)(dx)/FRotationDiv;
+      if( RX != 0 ) 
+        Basis.Rotate(mat3d::CramerSolve(basis, vec3d(1,0,0)), RX*M_PI/180);
+      if( RY != 0 )
+        Basis.Rotate(mat3d::CramerSolve(basis, vec3d(0,1,0)), RY*M_PI/180);
       res = true;
     }
   }

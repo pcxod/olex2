@@ -80,7 +80,7 @@ public:
     *this /= l;
     return *this;
   }
-  inline void Null()  {  data[0] = data[1] = data[2] = 0;  }
+  inline TVector3<T>& Null()  {  data[0] = data[1] = data[2] = 0;  return *this;  }
   inline bool IsNull() const {  return (data[0] == 0 && data[1] == 0 && data[2] == 0) ? true: false;  }
 
   inline bool operator == (const TVector3<T>& v) const {
@@ -311,9 +311,9 @@ public:
   }
 
   inline T Determinant() const {
-    return data[0][0]*(data[1][1]*data[2][2] - data[1][2]*data[2][1]) + 
+    return data[0][0]*(data[1][1]*data[2][2] - data[1][2]*data[2][1]) - 
            data[0][1]*(data[1][0]*data[2][2] - data[1][2]*data[2][0]) +
-           data[0][2]*(data[1][0]*data[2][1] - data[1][1]*data[2][1]);
+           data[0][2]*(data[1][0]*data[2][1] - data[1][1]*data[2][0]);
   }
   inline TMatrix33<T> Inverse()  const {
 	return TMatrix33( data[2][2]*data[1][1] - data[2][1]*data[1][2],
@@ -410,8 +410,25 @@ protected:
     }
   }
 public:
-  // solves a set of equations by the Gauss method {equation arr.b = c }
-  static void GauseSolve(TMatrix33<T>& arr, TVector3<T>& b, TVector3<T>& c) {
+  // solves a set of equations by the Cramer rule {equation arr.c = b }, returns c
+  static TVector3<T> CramerSolve(const TMatrix33<T>& arr, const TVector3<T>& b) {
+    double det = arr.Determinant();
+    if( det == 0 )  throw TDivException(__OlxSourceInfo);
+    // det( {b[0], a12, a13}, {b[1], a22, a23}, {b[2], a32, a33} )/det
+    return TVector3<T>( b[0]*(arr[1][1]*arr[2][2] - arr[1][2]*arr[2][1]) - 
+                        arr[0][1]*(b[1]*arr[2][2] - arr[1][2]*b[2]) +
+                        arr[0][2]*(b[1]*arr[2][1] - arr[1][1]*b[2]),
+    // det( {a11, b[0], a13}, {a21, b[1], a23}, {a31, b[2], a33} )/det
+                        arr[0][0]*(b[1]*arr[2][2] - arr[1][2]*b[2]) - 
+                        b[0]*(arr[1][0]*arr[2][2] - arr[1][2]*arr[2][0]) +
+                        arr[0][2]*(arr[1][0]*b[2] - b[1]*arr[2][0]),
+    // det( {a11, a12, b[0]}, {a21, a22, b[1]}, {a31, a32, b[2]} )/det
+                        arr[0][0]*(arr[1][1]*b[2] - b[1]*arr[2][1]) - 
+                        arr[0][1]*(arr[1][0]*b[2] - b[1]*arr[2][0]) +
+                        b[0]*(arr[1][0]*arr[2][1] - arr[1][1]*arr[2][0]))/det;
+  }
+  // solves a set of equations by the Gauss method {equation arr.c = b ?c }
+  static void GaussSolve(TMatrix33<T>& arr, TVector3<T>& b, TVector3<T>& c) {
     MatrixElementsSort(arr, b );
     for ( int j = 1; j < 3; j++ )
       for( int i = j; i < 3; i++ )  {
