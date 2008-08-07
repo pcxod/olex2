@@ -10,6 +10,7 @@
 
 #include "xplane.h"
 #include "gpcollection.h"
+#include "estlist.h"
 
 //..............................................................................
 TXPlane::TXPlane(const olxstr& collectionName, TSPlane *Plane, TGlRender *Render) :
@@ -20,15 +21,11 @@ TXPlane::TXPlane(const olxstr& collectionName, TSPlane *Plane, TGlRender *Render
   FRectangular = false;
 }
 //..............................................................................
-void TXPlane::Create(const olxstr& cName)
-{
-  if( cName.Length() != 0 )  SetCollectionName(cName);
+void TXPlane::Create(const olxstr& cName)  {
+  if( !cName.IsEmpty() )  SetCollectionName(cName);
   TGlPrimitive *GlP;
   TGPCollection *GPC;
   TGlMaterial GlM, GlM1;
-  TEList PSort;
-  TPlaneSort *PS;
-  vec3d Center;
   GPC = FParent->NewCollection( GetCollectionName() );
   GPC->AddObject(this);
 
@@ -44,51 +41,67 @@ void TXPlane::Create(const olxstr& cName)
   GlP->SetProperties(&GlM);
   GlP->Type(sgloPolygon);
   if( !FRectangular )  GlP->Data().Resize(3, FPlane->CrdCount());
-  else                 GlP->Data().Resize(3, 4);
-  Center = FPlane->Center();
-  for( int i=0; i < FPlane->CrdCount(); i++ )  {
-    PS = new TPlaneSort;
-    PS->V = FPlane->Crd(i);
-    PS->V -= Center;
-    PS->V.Normalise();
-    PS->Crd = &FPlane->Crd(i);
-    PSort.Add(PS);
+  else                 GlP->Data().Resize(3, 5);
+  vec3d Center( FPlane->Center() ), org(FPlane->Crd(0)-FPlane->Center()), vec;
+  TPSTypeList<double, vec3d*> sortedPlane;
+  sortedPlane.Add( 0, &FPlane->Crd(0) );
+
+  for( int i=1; i < FPlane->CrdCount(); i++ )  {
+    vec = FPlane->Crd(i) - Center;
+    double ca = org.CAngle(vec);
+    vec = org.XProdVec(vec);
+    // negative - vec is on the right, positive - on the left
+    double vo = vec.CAngle(FPlane->Normal());
+    if( ca >= 0 )  { // -90 to 90
+       if( vo < 0 )  // -90 to 0 3->4
+         sortedPlane.Add( 3.0 + ca, &FPlane->Crd(i) );
+       else  // 0 to 90 0->1
+         sortedPlane.Add( 1.0 - ca, &FPlane->Crd(i) );
+    }
+    else if( ca > -1 ) {  // 90-270
+       if( vo < 0 )  // 180 to 270 2->3
+         sortedPlane.Add( 3.0 + ca, &FPlane->Crd(i) );
+       else  // 90 to 180 1->2
+         sortedPlane.Add( 1.0 - ca, &FPlane->Crd(i) );
+    }
+    else  {  //-1, special case
+      sortedPlane.Add( 2, &FPlane->Crd(i) );
+    }
   }
 
-  PSort.Sort(PlaneSort);
   if( !FRectangular )  {
-    for( int i=0; i < PSort.Count(); i++ )  {
-      PS = (TPlaneSort*)PSort.Item(i);
-      GlP->Data()[0][i] = (*PS->Crd)[0]-Center[0];
-      GlP->Data()[1][i] = (*PS->Crd)[1]-Center[1];
-      GlP->Data()[2][i] = -FPlane->Z((*PS->Crd)[0], (*PS->Crd)[1])-Center[2];
-      delete PS;
+    for( int i=0; i < sortedPlane.Count(); i++ )  {
+      vec3d* crd = sortedPlane.Object(i);
+      double d = FPlane->DistanceTo(*crd);
+      vec = *crd - FPlane->Normal()*d;
+      vec -= Center;
+      GlP->Data()[0][i] = vec[0];
+      GlP->Data()[1][i] = vec[1];
+      GlP->Data()[2][i] = vec[2];
     }
   }
   else  {
-    double maxX=-1000, maxY=-1000, minX=1000, minY=1000;
-    double x, y;
-    for( int i=0; i < PSort.Count(); i++ )  {
-      PS = (TPlaneSort*)PSort.Item(i);
-      x = (*PS->Crd)[0]-Center[0];
-      y = (*PS->Crd)[1]-Center[1];
-      if( x < minX )  minX = x;
-      if( x > maxX )  maxX = x;
-      if( y < minY )  minY = y;
-      if( y > maxY )  maxY = y;
-      delete PS;
+    vec3d marv;
+    double maxr = 0;
+    for( int i=0; i < sortedPlane.Count(); i++ )  {
+      vec = *sortedPlane.Object(i);
+      double d = FPlane->DistanceTo(vec);
+      vec -= FPlane->Normal()*d;
+      vec -= Center;
+      d = vec.Length();
+      if( d > maxr )  {
+        maxr = d;
+        marv = vec;
+      }
     }
-    GlP->Data()[0][0] = minX;    GlP->Data()[1][0] = minY;
-    GlP->Data()[2][0] = -FPlane->Z(minX + Center[0], minY + Center[1])-Center[2];
-
-    GlP->Data()[0][1] = maxX;    GlP->Data()[1][1] = minY;
-    GlP->Data()[2][1] = -FPlane->Z(maxX + Center[0], minY + Center[1])-Center[2];
-
-    GlP->Data()[0][2] = maxX;    GlP->Data()[1][2] = maxY;
-    GlP->Data()[2][2] = -FPlane->Z(maxX + Center[0], maxY + Center[1])-Center[2];
-
-    GlP->Data()[0][3] = minX;    GlP->Data()[1][3] = maxY;
-    GlP->Data()[2][3] = -FPlane->Z(minX + Center[0], maxY + Center[1])-Center[2];
+    mat3d rm;
+    CreateRotationMatrix(rm, FPlane->Normal(), cos(M_PI*72.0/180) );
+    for( int i=0; i < 5; i++ )  {
+      GlP->Data()[0][i] = marv[0];    
+      GlP->Data()[1][i] = marv[1];
+      GlP->Data()[2][i] = marv[2];
+      marv *= rm;
+    }
   }
   GlP = GPC->NewPrimitive("Centroid");
   GlP->SetProperties(&GlM1);
@@ -103,20 +116,6 @@ TXPlane::~TXPlane()
 bool TXPlane::Orient(TGlPrimitive *P)  {
   FParent->GlTranslate(FPlane->Center());
   return false;
-}
-//..............................................................................
-int TXPlane::PlaneSort(const void *I, const void *I1)
-{
-  // function works with normalised values and calculates 2PI angle
-  // to make comparison
-  double v = acos( ((TPlaneSort*)I)->V[0] );
-  if( ((TPlaneSort*)I)->V[1] < 0 )    v = 2*M_PI-v;
-  double v1 = acos( ((TPlaneSort*)I1)->V[0] );
-  if( ((TPlaneSort*)I1)->V[1] < 0 )    v1 = 2*M_PI-v1;
-  v1 -= v;
-  if( v1 < 0 )  return -1;
-  if( v1 > 0 )  return 1;
-  return 0;
 }
 //..............................................................................
 

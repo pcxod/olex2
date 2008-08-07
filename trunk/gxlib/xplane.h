@@ -9,11 +9,14 @@
 
 BeginGxlNamespace()
 
-class TXPlane: public AGDrawObject
-{
+class TXPlane: public AGDrawObject  {
 private:
   TSPlane *FPlane;
   bool FRectangular;
+  struct PlaneSort  {  // used in sort of plane points
+    vec3d* crd;
+    TSPlane * plane;
+  };
 public:
   TXPlane(const olxstr& collectionName, TSPlane *Plane, TGlRender *Render);
   void Create(const olxstr& cName = EmptyString);
@@ -35,8 +38,6 @@ public:
   /*setting rectangulr after the plane was created does not make any change*/
   void Rectangular(bool v) {  FRectangular = v;  }
   bool Rectangular() {  return FRectangular; }
-  // takes TPlaneSort as arguments
-  static int PlaneSort(const void *I, const void *I1);
 };
 
 EndGxlNamespace()

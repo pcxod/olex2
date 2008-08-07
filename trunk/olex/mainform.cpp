@@ -2110,12 +2110,9 @@ void TMainForm::OnAtom(wxCommandEvent& event)  {
 void TMainForm::OnPlane(wxCommandEvent& event)  {
   TXPlane *XP = (TXPlane*)FObjectUnderMouse;
   if( !XP )  return;
-  olxstr Tmp;
   switch( event.GetId() )  {
     case ID_PlaneActivate:
-    Tmp = "activate ";
-    Tmp << XP->Primitives()->Name();
-    ProcessXPMacro(Tmp, MacroError);
+    ProcessXPMacro(olxstr("activate ") << XP->Primitives()->Name(), MacroError);
     break;
   }
 }

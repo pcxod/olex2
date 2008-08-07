@@ -9,11 +9,6 @@
 
 BeginXlibNamespace()
 
-struct TPlaneSort  {  // used in sort of plane points
-  vec3d V;
-  vec3d *Crd;
-};
-
 class TSPlane:public TSObject  {
 private:
 //  int FTag;
@@ -28,7 +23,8 @@ public:
   DefPropB(Deleted)
 
   inline int CrdCount()              const {  return Crds.Count(); }
-  void AddCrd(const vec3d& Crd);
+  // an association point, weight is provided
+  void Init(const TTypeList< AnAssociation2<vec3d, double> >& Points);
   vec3d& Crd(int i)                     {  return Crds[i]; }
   const vec3d& GetCrd(int i)      const {  return Crds[i]; }
 
@@ -46,7 +42,12 @@ public:
   double Z(double X, double Y) const;
   void D(double v) {  FDistance = v; }
 // static members
-  static void CalcPlane(const TTypeList< AnAssociation2<vec3d, double> >& Points, vec3d& Params);
+  /* calculates the A,B and C for the best plane Ax*By*Cz+D=0, D can be calculated as
+   D = center.DotProd({A,B,C})
+   for the point, weight association
+  */
+  static void CalcPlane(const TTypeList< AnAssociation2<vec3d, double> >& Points, 
+    vec3d& Params, vec3d& center);
   // returns a summ of sqrt( (distances from atoms to the plane)^2) divided by the number of atoms
   static double CalcRMS(const TSAtomPList& atoms);
 };

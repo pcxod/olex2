@@ -665,32 +665,27 @@ TSPlane* TLattice::NewPlane(const TSAtomPList& Atoms, int weightExtent)  {
 TSPlane* TLattice::TmpPlane(const TSAtomPList& atoms, int weightExtent)  {
   if( atoms.Count() < 3 )  return NULL;
   TSPlane *Plane;
-  vec3d Params;
-  vec3d Z;
   //TODO: need to consider occupancy for disordered groups ...
   TTypeList< AnAssociation2<vec3d, double> > Points;
   Points.SetCapacity( atoms.Count() );
 
   if( weightExtent != 0 )  {
-    for(int i=0; i < atoms.Count(); i++ )
-      Points.AddNew(atoms[i]->crd(), pow(atoms[i]->GetAtomInfo().GetMr(), (double)weightExtent) );
+    double swg = 0;
+    for(int i=0; i < atoms.Count(); i++ )  {
+      double wght = pow(atoms[i]->GetAtomInfo().GetMr(), (double)weightExtent);
+      Points.AddNew(atoms[i]->crd(), wght );
+      swg += wght*wght;
+    }
+    for( int i=0; i < Points.Count(); i++ )
+      Points[i].B() /= swg;
   }
   else  {
     for(int i=0; i < atoms.Count(); i++ )
       Points.AddNew(atoms[i]->crd(), 1 );
   }
 
-  TSPlane::CalcPlane(Points, Params);
   Plane = new TSPlane( Network );
-  // plane equation in this case is: Z = Params[0]*X + Params[1]*Y + Params[2];
-  Z[0] = Params[0];
-  Z[1] = Params[1];
-  Z[2] = -1;
-  Plane->D(Params[2]/Z.Length());
-  Z.Normalise();
-  Plane->Normal() = Z;
-  for(int i=0; i < Points.Count(); i++ )
-    Plane->AddCrd( Points[i].GetA() );
+  Plane->Init(Points);
   return Plane;
 }
 //..............................................................................

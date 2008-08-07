@@ -392,7 +392,7 @@ void TGXApp::CreateObjects(bool SyncBonds, bool centerModel)  {
   TBasicApp::GetLog().Info( olxstr("Bonds created in ") << (TETime::msNow()-st) << "ms" );
   for( int i=0; i < FXFile->GetLattice().PlaneCount(); i++ )  {
     TSPlane& P = FXFile->GetLattice().GetPlane(i);
-    TXPlane& XP = XPlanes.AddNew(EsdlClassName(TXPlane) + i, &P, FGlRender);
+    TXPlane& XP = XPlanes.AddNew(olxstr("TXPlane") << i, &P, FGlRender);
     if( P.IsDeleted() )  XP.Deleted(true);
     XP.Create();
   }
@@ -1518,7 +1518,7 @@ TXPlane * TGXApp::AddPlane(TXAtomPList &Atoms, bool Rectangular, int weightExten
 
   TSPlane *S = XFile().GetLattice().NewPlane(SAtoms, weightExtent);
   if( S )  {
-    TXPlane& XP = XPlanes.AddNew(EsdlClassName(TXPlane)+XPlanes.Count(), S, FGlRender);
+    TXPlane& XP = XPlanes.AddNew(olxstr("TXPlane") << XPlanes.Count(), S, FGlRender);
     XP.Rectangular(Rectangular);
     XP.Create();
     return &XP;

@@ -2062,7 +2062,6 @@ void TMainForm::macMpln(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   }
   if( plane != NULL )  {
     int colCount = 3;
-    double summ = 0, v;
     TTTable<TStrList> tab( Atoms.Count()/colCount + (((Atoms.Count()%colCount)==0)?0:1), colCount*2);
     for( int i=0; i < colCount; i++ )  {
       tab.ColName(i*2) = "Label";
@@ -2073,16 +2072,14 @@ void TMainForm::macMpln(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         if( i + j >= Atoms.Count() )
           break;
         tab.Row(i/colCount)->String(j*2) = Atoms[i+j]->Atom().GetLabel();
-        v = plane->DistanceTo(Atoms[i+j]->Atom());
+        double v = plane->DistanceTo(Atoms[i+j]->Atom());
         tab.Row(i/colCount)->String(j*2+1) = olxstr::FormatFloat(3, v );
-        summ += v;
       }
     }
     TStrList Output;
     tab.CreateTXTList(Output, olxstr("Atom-to-plane distances for ") << planeName, true, false, "  | ");
     TBasicApp::GetLog() << ( Output );
-    TBasicApp::GetLog() << ( olxstr("Summ deviation: ") << olxstr::FormatFloat(3, summ) << '\n');
-
+    TBasicApp::GetLog() << ( olxstr("Plane normal: ") << plane->Normal().ToString() << '\n');
     vec3d center;
     for( int i=0; i < Atoms.Count(); i++ )
       center += Atoms[i]->Atom().crd();
