@@ -77,8 +77,12 @@ public:
   inline TVector3<T>& Normalise()  {
     T l = Length();
     if( l == 0 )  throw TDivException(__OlxSourceInfo);
-    *this /= l;
-    return *this;
+    return (*this /= l);
+  }
+  inline TVector3<T>& NormaliseTo(T val)  {
+    T l = Length();
+    if( l == 0 )  throw TDivException(__OlxSourceInfo);
+    return (*this *= (val/l));
   }
   inline TVector3<T>& Null()  {  data[0] = data[1] = data[2] = 0;  return *this;  }
   inline bool IsNull() const {  return (data[0] == 0 && data[1] == 0 && data[2] == 0) ? true: false;  }
