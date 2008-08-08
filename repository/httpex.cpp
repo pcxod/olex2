@@ -36,7 +36,7 @@ THttp::~THttp()  {
 //............................................................................//
 void THttp::ClearHeaders()       {  Headers.Clear();  }
 //............................................................................//
-wxString THttp::GetContentType() {  return uiStr(GetHeader("Content-Type"));  }
+wxString THttp::GetContentType() {  return GetHeader("Content-Type").u_str();  }
 //............................................................................//
 void THttp::SetProxyMode(bool on){  m_proxy_mode = on;  }
 //............................................................................//
@@ -93,7 +93,8 @@ void THttp::SetPostBuffer(const olxstr& post_buf)  {  m_post_buf = post_buf;  }
 void THttp::SendHeaders()  {
   CString buf;
   for( int i=0; i < Headers.Count(); i++ )  {
-    buf = Headers.GetComparable(i);  buf  << ": "  << Headers.GetObject(i) << "\r\n";
+    buf = Headers.GetComparable(i);  
+    buf  << ": "  << Headers.GetObject(i) << "\r\n";
 //    Write( buf.raw_str(), buf.RawLen() );
   }
 }
@@ -256,7 +257,9 @@ public:
 
   THTTPStream(THttp *http) : wxSocketInputStream(*http), m_http(http) {}
   size_t GetSize() const { return m_httpsize; }
-  virtual ~THTTPStream(void) { m_http->Abort(); }
+  virtual ~THTTPStream(void) { 
+    m_http->Abort(); 
+  }
 
 protected:
   size_t OnSysRead(void *buffer, size_t bufsize);
