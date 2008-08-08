@@ -62,7 +62,7 @@ olex : $(OBJ_DIR)$@
 link : $(OBJ_DIR)unirun$@ $(OBJ_DIR)olex$@
 	@echo "Linking unirun and olex"
 	@mkdir $(EXE_DIR); $(CC) $(OBJ_DIR)unirun/*.s $(OBJ_DIR)*.s -o $(EXE_DIR)unirun `wx-config --libs gl,core,html,net,aui --unicode --toolkit=gtk2` `python-config --libs --ldflags` -L. -fexceptions -g -rdynamic -O3
-	$(CC) $(OBJ_DIR)*.s $(OBJ_DIR)olex/*.s -o $(EXE_DIR)olex2 `wx-config --libs gl,core,html,net,aui --unicode --toolkit=gtk2` `python-config --libs --ldflags` -L. -fexceptions -g -rdynamic -O3
+	@$(CC) $(OBJ_DIR)*.s $(OBJ_DIR)olex/*.s -o $(EXE_DIR)olex2 `wx-config --libs gl,core,html,net,aui --unicode --toolkit=gtk2` `python-config --libs --ldflags` -L. -fexceptions -g -rdynamic -O3
 
 # install will allow a user with root/sudo permission to install a central copy of olex2
 install-root:
@@ -92,6 +92,13 @@ install:
 	@sed -i 's|OLEX2PATH|$(OLEX_INS)|g' $(HOME)/Desktop/olex2.desktop;	
 # use sed to alter startup path for different install dir
 	@chmod +x $(HOME)/olex/startup $(HOME)/bin/olex2;
+
+# Update
+# This function just updates the binaries of an existing olex2 install.
+.PHONY : update
+update: 
+	@echo "Updating local directory: " $(HOME)
+	@cp -r $(EXE_DIR)* $(HOME)/olex/;
 
 # clean - remove build and binary
 .PHONY : clean
@@ -124,6 +131,7 @@ help:
 	@echo  '*  unirun          - Build unirun specific files'
 	@echo  '*  link            - Links unirun and olex2 creating binaries'
 	@echo  '   install-root    - Install to /usr/local/ **REQUIRES ROOT**'
+	@echo  '   update          - Update the binaries of an existing install only'
 	@echo  'R  install         - Install all to local folder'
 	@echo  ' '
 	@echo  'Execute "make all" to build all marked with a * '
