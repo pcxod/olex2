@@ -71,7 +71,6 @@ bool UpdateInstallationH( const TUrl& url, const TStrList& properties )  {
   try  {
     TOSFileSystem DestFS; // local file system
     TwxHttpFileSystem SrcFS( url ); // remote FS
-
     DestFS.SetBase( TBasicApp::GetInstance()->BaseDir() );
     olxstr tmp = DestFS.GetBase();
     TEFile::AddTrailingBackslash( tmp );
@@ -112,7 +111,7 @@ void DoRun(const olxstr& basedir);
 
 class MyApp: public wxAppConsole { 
   virtual bool OnInit() { 
-    wxSocketBase::Initialize();
+//    wxSocketBase::Initialize();
     return true; 
   } 
   virtual int OnRun() {  return 0;  } 

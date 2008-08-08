@@ -6,11 +6,6 @@
 
 #include "wx/protocol/protocol.h"
 
-#ifndef uiStr  // ansi string to wxString in unicode
-  #define uiStr(v)  (wxString((v).u_str()))
-  #define uiStrT(v) (wxString(v, wxConvUI))
-#endif
-
 class THttp : public wxProtocol  {
 public:
   THttp();
