@@ -1,8 +1,8 @@
-# $HeadURL: http://www.dimas.dur.ac.uk/repos/olex_src/v1.1u/Makefile $
-# $LastChangedDate: 2008-08-03 22:03:14 +0100 (Sun, 03 Aug 2008) $
-# $LastChangedRevision: 954 $
-# $LastChangedBy: xrayman $
-# $Id: Makefile 954 2008-08-03 21:03:14Z xrayman $
+# $HeadURL$
+# $LastChangedDate$
+# $LastChangedRevision$
+# $LastChangedBy$
+# $Id$
 # #############################################################################
 # Makefile for compiling, linking and install olex2
 # This currently doesn't check the ld paths
@@ -129,7 +129,7 @@ help:
 	@echo  'Execute "make all" to build all marked with a * '
 	@echo	'Recommmended make targets all labelled R'
 	@echo	'Execute "make install" to install to $(OLEX_INS)'
-	@echo  'For further info see the ./README file'
+#	@echo  'For further info see the ./README file'
 
 
 # DONE!
