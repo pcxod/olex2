@@ -1346,8 +1346,10 @@ void TIns::SaveHeader(TStrList& SL, int* SfacIndex, int* UnitIndex)  {
   _SaveSymm(SL);
   if( SfacIndex != NULL )  *SfacIndex = SL.Count();  
   SL.Add("SFAC ") << Sfac;
-  for( int i=0; i < Disp.Count(); i++ )
-    SL.Add("DISP ") << Disp[i];
+  if( SfacIndex == NULL )  {
+    for( int i=0; i < Disp.Count(); i++ )
+      SL.Add("DISP ") << Disp[i];
+  }
   if( UnitIndex != NULL )  *UnitIndex = SL.Count();  
   SL.Add("UNIT ") << Unit;
   for( int i=0; i < GetAsymmUnit().AtomCount(); i++ )  {

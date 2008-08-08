@@ -45,10 +45,14 @@ class TEFile: public IEObject, public IDataInputStream,
                                public IDataOutputStream  {
   FILE *FHandle;
   olxstr FName;
-  //bool Temporary; tmpnam or tmpfile to use
+  bool Temporary; //tmpnam or tmpfile to use
   void CheckHandle() const;
   void Close();  // closes current file
-  bool TextMode;
+protected:
+  TEFile(const olxstr& name, FILE* handle)  {  // a temporray file
+    FName = name;
+    FHandle = handle;
+  }
 public:
   TEFile();
   TEFile(const olxstr &F, const olxstr &Attribs);
