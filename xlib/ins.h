@@ -41,7 +41,8 @@ class TIns: public TBasicCFile  {
   };
 private:
   TStrPObjList< olxstr, TInsList* > Ins;  // instructions
-  TStrList Skipped;
+  TStrList Skipped,
+           Disp;  // this should be treated specially as their position is after SFAC and between UNIT
   olxstr Unit, Sfac;
   void HypernateIns(const olxstr &InsName, const olxstr &Ins, TStrList &Res);
   void HypernateIns(const olxstr &Ins, TStrList &Res);
