@@ -61,6 +61,7 @@ void TIns::Clear()  {
   Unit = EmptyString;
   Error = 0;
   R1 = -1;
+  Disp.Clear();
 }
 //..............................................................................
 void TIns::LoadFromStrings(const TStrList& FileContent)  {
@@ -321,6 +322,9 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx,
       }
     }
     Sfac = Sfac.Trim(' ');
+  }
+  else if( Toks[0].Comparei("DISP") == 0 )     {  
+    Disp.Add( Toks.Text(' ', 1) );
   }
   else if( Toks[0].Comparei("REM") == 0 )     {  
     if( Toks.Count() > 1 )  {
@@ -594,10 +598,12 @@ void TIns::_SaveSfac(TStrList& list, int pos)  {
         LeftOut << ' ' << toks.String(i);
       }
     }
-    if( LeftOut.Length() != 0 )  {
+    if( !LeftOut.IsEmpty() != 0 )  {
       list.Insert(pos, olxstr("SFAC") << LeftOut );
     }
   }
+  for( int i=0; i < Disp.Count(); i++ )
+    list.Insert(++pos, olxstr("DISP ") << Disp[i]);
 }
 //..............................................................................
 void TIns::SaveToStrings(TStrList& SL)  {
@@ -1340,6 +1346,8 @@ void TIns::SaveHeader(TStrList& SL, int* SfacIndex, int* UnitIndex)  {
   _SaveSymm(SL);
   if( SfacIndex != NULL )  *SfacIndex = SL.Count();  
   SL.Add("SFAC ") << Sfac;
+  for( int i=0; i < Disp.Count(); i++ )
+    SL.Add("DISP ") << Disp[i];
   if( UnitIndex != NULL )  *UnitIndex = SL.Count();  
   SL.Add("UNIT ") << Unit;
   for( int i=0; i < GetAsymmUnit().AtomCount(); i++ )  {
@@ -1389,6 +1397,7 @@ void TIns::ParseHeader(const TStrList& in)  {
   FPLAN.Resize(0);
   Sfac = EmptyString;
   Unit = EmptyString;
+  Disp.Clear();
   Error = 0;
   GetAsymmUnit().ClearRestraints();
   GetAsymmUnit().ClearMatrices();

@@ -675,6 +675,90 @@ double TNetwork::FindAlignmentMatrix(const TTypeList< AnAssociation2<TSAtom*,TSA
 //  return sqrt(minVal/atoms.Count());
 }
 //..............................................................................
+double _dlda00(const vec3d& at, const vec3d& to, const smatd& m, double l[6])  {
+  return m.r[0][0]*(m.r[0].DotProd(at)-m.t[0]-to[0]) + 2*m.r[0][0]*l[0] + l[3]*m.r[1][0] + l[4]*m.r[2][0];
+}
+double _dlda01(const vec3d& at, const vec3d& to, const smatd& m, double l[6])  {
+  return m.r[0][1]*(m.r[0].DotProd(at)-m.t[1]-to[1]) + 2*m.r[0][1]*l[0] + l[3]*m.r[1][1] + l[4]*m.r[2][1];
+}
+double _dlda02(const vec3d& at, const vec3d& to, const smatd& m, double l[6])  {
+  return m.r[0][2]*(m.r[0].DotProd(at)-m.t[2]-to[2]) + 2*m.r[0][2]*l[0] + l[3]*m.r[1][2] + l[4]*m.r[2][2];
+}
+double _dlda10(const vec3d& at, const vec3d& to, const smatd& m, double l[6])  {
+  return m.r[1][0]*(m.r[1].DotProd(at)-m.t[0]-to[0]) + 2*m.r[1][0]*l[1] + l[3]*m.r[0][0] + l[6]*m.r[2][0];
+}
+double _dlda11(const vec3d& at, const vec3d& to, const smatd& m, double l[6])  {
+  return m.r[1][1]*(m.r[1].DotProd(at)-m.t[1]-to[1]) + 2*m.r[1][1]*l[1] + l[3]*m.r[0][1] + l[6]*m.r[2][1];
+}
+double _dlda12(const vec3d& at, const vec3d& to, const smatd& m, double l[6])  {
+  return m.r[1][2]*(m.r[1].DotProd(at)-m.t[2]-to[2]) + 2*m.r[1][2]*l[1] + l[3]*m.r[0][2] + l[6]*m.r[2][2];
+}
+double _dlda20(const vec3d& at, const vec3d& to, const smatd& m, double l[6])  {
+  return m.r[2][0]*(m.r[2].DotProd(at)-m.t[0]-to[0]) + 2*m.r[2][0]*l[2] + l[4]*m.r[0][0] + l[6]*m.r[1][0];
+}
+double _dlda21(const vec3d& at, const vec3d& to, const smatd& m, double l[6])  {
+  return m.r[2][1]*(m.r[2].DotProd(at)-m.t[1]-to[1]) + 2*m.r[2][1]*l[2] + l[4]*m.r[0][1] + l[6]*m.r[1][1];
+}
+double _dlda22(const vec3d& at, const vec3d& to, const smatd& m, double l[6])  {
+  return m.r[2][2]*(m.r[2].DotProd(at)-m.t[2]-to[2]) + 2*m.r[2][2]*l[2] + l[4]*m.r[0][2] + l[6]*m.r[1][2];
+}
+double _dldl0(const vec3d& at, const vec3d& to, const smatd& m, double l[6])  {
+  return m.r[0].DotProd(m.r[0])-1;
+}
+double _dldl1(const vec3d& at, const vec3d& to, const smatd& m, double l[6])  {
+  return m.r[1].DotProd(m.r[1])-1;
+}
+double _dldl2(const vec3d& at, const vec3d& to, const smatd& m, double l[6])  {
+  return m.r[2].DotProd(m.r[2])-1;
+}
+double _dldl3(const vec3d& at, const vec3d& to, const smatd& m, double l[6])  {
+  return m.r[0].DotProd(m.r[1]);
+}
+double _dldl4(const vec3d& at, const vec3d& to, const smatd& m, double l[6])  {
+  return m.r[0].DotProd(m.r[2]);
+}
+double _dldl5(const vec3d& at, const vec3d& to, const smatd& m, double l[6])  {
+  return m.r[1].DotProd(m.r[2]);
+}
+double _dldt0(const vec3d& at, const vec3d& to, const smatd& m, double l[6])  {
+  return -2*m.t[0]*(m.r[0].DotProd(at)-m.t[0]-to[0]);
+}
+double _dldt1(const vec3d& at, const vec3d& to, const smatd& m, double l[6])  {
+  return -2*m.t[1]*(m.r[1].DotProd(at)-m.t[1]-to[1]);
+}
+double _dldt2(const vec3d& at, const vec3d& to, const smatd& m, double l[6])  {
+  return -2*m.t[2]*(m.r[2].DotProd(at)-m.t[2]-to[2]);
+}
+double FindAlignmentMatrixX(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atoms,
+                         smatd& res, bool TryInversion)  {
+  ematd J(18,atoms.Count());
+  smatd matr;
+  double lambdas[6] = {0, 0, 0, 0, 0, 0};
+  TNetwork::FindAlignmentMatrix(atoms, matr, true); 
+  for( int i=0; i < atoms.Count(); i++ )  {
+    J[0][i] = _dlda00(atoms[i].GetA()->crd(), atoms[i].GetA()->crd(), matr, lambdas);
+    J[1][i] = _dlda01(atoms[i].GetA()->crd(), atoms[i].GetA()->crd(), matr, lambdas);
+    J[2][i] = _dlda02(atoms[i].GetA()->crd(), atoms[i].GetA()->crd(), matr, lambdas);
+    J[3][i] = _dlda10(atoms[i].GetA()->crd(), atoms[i].GetA()->crd(), matr, lambdas);
+    J[4][i] = _dlda11(atoms[i].GetA()->crd(), atoms[i].GetA()->crd(), matr, lambdas);
+    J[5][i] = _dlda12(atoms[i].GetA()->crd(), atoms[i].GetA()->crd(), matr, lambdas);
+    J[6][i] = _dlda20(atoms[i].GetA()->crd(), atoms[i].GetA()->crd(), matr, lambdas);
+    J[7][i] = _dlda21(atoms[i].GetA()->crd(), atoms[i].GetA()->crd(), matr, lambdas);
+    J[8][i] = _dlda22(atoms[i].GetA()->crd(), atoms[i].GetA()->crd(), matr, lambdas);
+    J[9][i] = _dldl0(atoms[i].GetA()->crd(), atoms[i].GetA()->crd(), matr, lambdas);
+    J[10][i] = _dldl0(atoms[i].GetA()->crd(), atoms[i].GetA()->crd(), matr, lambdas);
+    J[11][i] = _dldl1(atoms[i].GetA()->crd(), atoms[i].GetA()->crd(), matr, lambdas);
+    J[12][i] = _dldl2(atoms[i].GetA()->crd(), atoms[i].GetA()->crd(), matr, lambdas);
+    J[13][i] = _dldl3(atoms[i].GetA()->crd(), atoms[i].GetA()->crd(), matr, lambdas);
+    J[14][i] = _dldl4(atoms[i].GetA()->crd(), atoms[i].GetA()->crd(), matr, lambdas);
+    J[15][i] = _dldl5(atoms[i].GetA()->crd(), atoms[i].GetA()->crd(), matr, lambdas);
+    J[16][i] = _dldt0(atoms[i].GetA()->crd(), atoms[i].GetA()->crd(), matr, lambdas);
+    J[17][i] = _dldt1(atoms[i].GetA()->crd(), atoms[i].GetA()->crd(), matr, lambdas);
+    J[18][i] = _dldt2(atoms[i].GetA()->crd(), atoms[i].GetA()->crd(), matr, lambdas);
+  }
+  return 0;
+}
+//..............................................................................
 void TNetwork::DoAlignAtoms(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& satomp,
                             const TSAtomPList& atomsToTransform, const smatd& S, bool Inverted)  {
   vec3d acent, mcent, v;
