@@ -23,6 +23,7 @@
 
 #include "restraints.h"
 #include "scat_it.h"
+#include "chemdata.h"
 
 
 using namespace std;
@@ -38,10 +39,11 @@ int main(int argc, char* argv[])  {
   XModel xm;
   TAtomsInfo ai;
   double defs [] = {0.02, 0.1, 0.01, 0.04, 1};
-  TScattererLib scat_lib(9);
+  XScattererData& sc_h = xm.NewScattererData("H");
+  XScattererData& sc_c = xm.NewScattererData("C");
   xm.CHIV.Add( *(new Restraint_Chiv(xm, defs, 0)) );
-  xm.NewScatterer(0.0, 0.0, 0.0).AddScatterer("C1", &ai.GetAtomInfo(iCarbonIndex), 1, scat_lib);
-  xm.NewScatterer(0.5, 0.5, 0.5).AddScatterer("H1", &ai.GetAtomInfo(iHydrogenIndex), 1, scat_lib );
+  xm.NewScatterer(0.0, 0.0, 0.0).AddScatterer("C1", &ai.GetAtomInfo(iCarbonIndex), &sc_c, 1);
+  xm.NewScatterer(0.5, 0.5, 0.5).AddScatterer("H1", &ai.GetAtomInfo(iHydrogenIndex), &sc_h, 1);
   xm.Scatterers[0].Occupancy = 1;
   XVar& var = xm.Variables.AddNew(0.5);
   xm.Scatterers[1].Occupancy.options.SetVar( &var );

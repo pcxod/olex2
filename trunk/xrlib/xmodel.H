@@ -12,8 +12,9 @@ OLEX crystallographic model, (c) O Dolomanov, 2008
 #include "bapp.h"
 #include "log.h"
 #include "indexlst.h"
-#include "scat_it.h"
+#include "chemdata.h"
 #include "xtdp.h"
+#include "ecomplex.h"
 
 BeginXlibNamespace()
 // hydrogen treatment and other rigid groups, m in shelx AFXI
@@ -75,6 +76,23 @@ struct XVar {
   double value;
   short type;   // type is required for calculation of derivatives
   XVar(double v=0, short t=var_type_None) : value(v), type(t)  {}
+};
+/* note that b values provided as negative values */
+struct XScattererData {
+  double gaussians[9], fp, fdp, mu, r, wt;
+  cm_Element* source;
+  olxstr label;
+  XScattererData() : fp(0), fdp(0), mu(0), r(0), wt(0), source(NULL)  {  }
+  inline double calc_sq(double sqv) const {
+    return gaussians[0]*exp(gaussians[4]*sqv) + gaussians[1]*exp(gaussians[5]*sqv) + 
+           gaussians[2]*exp(gaussians[6]*sqv) + gaussians[3]*exp(gaussians[7]*sqv) + 
+           gaussians[8];
+  }
+  inline compd calc_sq_anomalous(double sqv) const {
+    return compd(gaussians[0]*exp(gaussians[4]*sqv) + gaussians[1]*exp(gaussians[5]*sqv) + 
+           gaussians[2]*exp(gaussians[6]*sqv) + gaussians[3]*exp(gaussians[7]*sqv) + 
+           gaussians[8] + fp, fdp);
+  }
 };
 // 
 class IRefinementModel {
@@ -197,30 +215,17 @@ public:
     TBasicAtomInfo* type;
     olxstr label;
     _Ratio ratio;
-    XScatterer& Owner; 
-    double gaussians[9], fp, fdp;
-    bool isFromLibrary, 
-      isInitialised;  // will be false for Q-peaks or other elements not in the TScattererLib
-    Scatterer(XScatterer& owner, const olxstr& _label, TBasicAtomInfo* _type, double _ratio) :
-              label(_label), type(_type), ratio(_ratio), Owner(owner)  {  
-      memset(&gaussians[0], 0, 9*sizeof(double));
-      fp = fdp = 0;
-      isInitialised = isFromLibrary = false;
-    }
-    Scatterer( const Scatterer& sc ) : label(sc.label), type(sc.type), ratio(sc.ratio), Owner(sc.Owner)  {
-      memcpy(&gaussians[0], &sc.gaussians[0], 9*sizeof(double)); 
-      fp = sc.fp;  fdp = sc.fdp;
-      isFromLibrary = sc.isFromLibrary;
-      isInitialised = sc.isInitialised;
-    }
+    XScatterer& owner; 
+    XScattererData* sd; // need a pointer for copy operator
+    Scatterer(XScatterer& _owner, const olxstr& _label, TBasicAtomInfo* _type, XScattererData* _sd, double _ratio) :
+      label(_label), type(_type), sd(_sd), ratio(_ratio), owner(_owner)  {  }
+    Scatterer( const Scatterer& sc ) : label(sc.label), type(sc.type), ratio(sc.ratio), 
+      owner(sc.owner), sd(sc.sd)  {  }
     Scatterer& operator = (const Scatterer& sc)  {
       label = sc.label;
       type = sc.type;
       ratio = sc.ratio;
-      memcpy(&gaussians[0], &sc.gaussians[0], 9*sizeof(double)); 
-      fp = sc.fp;  fdp = sc.fdp;
-      isFromLibrary = sc.isFromLibrary;
-      isInitialised = sc.isInitialised;
+      sd = sc.sd;
       return *this;
     }
   };
@@ -344,26 +349,14 @@ public:
       Parent(parent), Residue(NULL) {  
     Crd.center[0] = x;  Crd.center[1] = y;  Crd.center[2] = z;
     SiteOccupancy = 1;
+    Deleted = false;
   }
   _TDP TDP;  
   _Occupancy Occupancy;
   double SiteOccupancy;
-  inline Scatterer& AddScatterer(const olxstr& label, TBasicAtomInfo* type, double ratio, double gaussians[9])  {
-    Scatterer& sc = Scatterers.Add( new Scatterer(*this, label, type, ratio) );
-    memcpy(&sc.gaussians[0], &gaussians[0], sizeof(double)*9);
-    sc.isFromLibrary = false;
-    sc.isInitialised = true;
-    return sc;
-  }
-  inline Scatterer& AddScatterer(const olxstr& label, TBasicAtomInfo* type, double ratio, TScattererLib& scat_lib)  {
-    Scatterer& sc = Scatterers.Add( new Scatterer(*this, label, type, ratio) );
-    TLibScatterer* lib_sc = scat_lib.Find( type->GetSymbol() );
-    if( lib_sc != NULL )  {
-      if( lib_sc->Size() != 9 )
-        throw TInvalidArgumentException(__OlxSourceInfo, "4 Gaussians data is expected");
-      memcpy(&sc.gaussians[0], lib_sc->GetData(), sizeof(double)*9);
-      sc.isInitialised = true;
-    }
+  bool Deleted;
+  inline Scatterer& AddScatterer(const olxstr& label, TBasicAtomInfo* type, XScattererData* sd, double ratio)  {
+    Scatterer& sc = Scatterers.Add( new Scatterer(*this, label, type, sd, ratio) );
     return sc;
   }
   inline int Count()                          const {  return Scatterers.Count();  }

@@ -130,9 +130,10 @@ public:
   template <typename T> inline TWString& operator << (const T &v) {
     return writeType(printFormat(v), v);
   }
-  void TrimFloat()  {
+  TWString& TrimFloat()  {
     while( _Length > 1 && CharAt(_Length-1) == L'0' )  _Length--;
     if( _Length > 0 && CharAt(_Length-1) == L'.'  )  _Length--;
+    return *this;
   }
   inline TWString& operator << (const float &v) {
     writeType(printFormat(v), v);

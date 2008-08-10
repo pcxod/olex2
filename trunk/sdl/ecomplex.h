@@ -147,5 +147,8 @@ public:
 
 };
 
+typedef TEComplex<double> compd;
+typedef TEComplex<float> compf;
+
 EndEsdlNamespace()
 #endif

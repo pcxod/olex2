@@ -28,6 +28,7 @@ void ExportSymmLibA();
 void ExportSymmLibB();  // MSVC crashes on this code...
 void ExportSymmLibC();
 void ExportBAI(TAtomsInfo& ais);
+void ExportBAIA(TAtomsInfo& ais, TScattererLib& scl);
 
 
 
@@ -45,8 +46,10 @@ int main(int argc, char* argv[])  {
     olxstr sampleFolder = TEFile::AbsolutePathTo( bd, "../../../sampleData");
 
     TAtomsInfo ai(dataFolder + "/ptablex.dat");
-    TSymmLib sl( dataFolder + "/symmlib.xld" );
-
+    TScattererLib scl(9);
+    TSymmLib& sl = *TSymmLib::GetInstance();
+    if( &sl == NULL ) 
+      throw TFunctionFailedException(__OlxSourceInfo, "symmlib is not initialised");
     TIns* ins = new TIns(&ai);
     XApp.XFile().RegisterFileFormat( ins, "ins" );
     XApp.XFile().RegisterFileFormat( ins, "res" );
@@ -76,7 +79,8 @@ int main(int argc, char* argv[])  {
     }
     //ExportSymmLib();
     //ExportSymmLibA();
-    ExportBAI( *XApp.AtomsInfo() );
+    //ExportBAI( *XApp.AtomsInfo() );
+    ExportBAIA( *XApp.AtomsInfo(), scl );
     //ExportSymmLibC();
   }
   catch( TExceptionBase& exc )  {
@@ -428,6 +432,66 @@ void ExportSymmLibA()  {
   out.SaveToFile("e:/tmp/sgoutx.h");
 }
 
+struct chem_lib_Neutron_Scattering {
+  compd coh;
+  double xs; 
+  chem_lib_Neutron_Scattering(double _coh_re, double _coh_im, double _xs) :
+  coh(_coh_re, _coh_im), xs(_xs)  {  }
+};
+struct chem_lib_Isotope {  
+  double Mr, W;  
+  const chem_lib_Neutron_Scattering* neutron_scattering;
+};
+struct chem_lib_Anomalous_Henke {  double energy, fp, fdp;  };
+struct chem_lib_Gaussians {  
+  double a1, a2, a3, a4, b1, b2, b3, b4, c;  
+  chem_lib_Gaussians(double _a1, double _a2, double _a3, double _a4, 
+    double _b1, double _b2, double _b3, double _b4, double _c) :
+    a1(_a1), a2(_a2), a3(_a3), a4(_a4), 
+      b1(-_b1), b2(-_b2), b3(-_b3), b4(-_b4), c(_c)  {  }
+
+  inline double calc_sq(double sqv) const {
+    return a1*exp(b1*sqv) + a2*exp(b2*sqv) + a3*exp(b3*sqv) + a4*exp(b4*sqv) + c;
+  }
+};
+
+struct Label_Z_Henke  {
+  const char* label;
+  short z;
+  const chem_lib_Anomalous_Henke* henke;
+};
+
+#include "henke.h"
+
+struct chem_lib_Element {
+  const char* symbol, *name;
+  const chem_lib_Gaussians* gaussians;  // 9 elements = 4 gaussians + const
+  const chem_lib_Isotope* isotopes;
+  const chem_lib_Anomalous_Henke* henke_data; 
+  const chem_lib_Neutron_Scattering* neutron_scattering;
+  unsigned int def_color;
+  short z, isotope_count, henke_count;
+  double r_pers, r_bonding, r_sfil;
+  chem_lib_Element(const char* _symbol, const char* _name, unsigned int _def_color, short _z, 
+    double _r_pers, double _r_bonding, double _r_sfil, const chem_lib_Gaussians* _gaussians, 
+    const chem_lib_Isotope* _isotopes, short _isotope_count, 
+    const chem_lib_Anomalous_Henke* _henke_data, short _henke_count) :
+    symbol(_symbol), name(_name), def_color(_def_color), z(_z), r_pers(_r_pers), 
+    r_bonding(_r_bonding), r_sfil(_r_sfil), gaussians(_gaussians), 
+    isotopes(_isotopes), isotope_count(_isotope_count),
+    henke_data(_henke_data), henke_count(_henke_count){  }
+
+  compd CalcFpFdp(double energy) const  {
+    return compd(0);
+  }
+};
+
+chem_lib_Neutron_Scattering neutron_H(1, 1, 1);
+chem_lib_Gaussians gaussians_H(1, 1, 1, 1, 1, 1, 1, 1, 1);
+chem_lib_Isotope Isotope_H[] = {{1.0,1.0, &neutron_H}, {1,1, &neutron_H}};
+chem_lib_Element Hydrogen("H", "Hydrogen", 6, 1, 0.12, 0.32, 0.82, &gaussians_H, Isotope_H, 2, NULL, 0 );
+chem_lib_Element dd[1] = { Hydrogen };
+
 void ExportBAI(TAtomsInfo& ais)  {
   TStrList out;
   char bf[10];
@@ -450,6 +514,168 @@ void ExportBAI(TAtomsInfo& ais)  {
     }
   }
   out.SaveToFile("e:/tmp/baiout.h");
+}
+
+struct neutron_sc {
+  TBasicAtomInfo* bai;
+  int Z;
+  double occ, coh_re, coh_im, xs;
+  neutron_sc() : Z(0), occ(0), coh_re(0), coh_im(0), xs(0) {}
+};
+void ParseNumberEx(const olxstr& s, double& re, double &im)  {
+  if( s.CharAt(s.Length()-1) == 'i' )  {
+    int im_ind = s.LastIndexOf('-');
+    im = s.SubStringFrom(im_ind, 1).ToDouble();
+    re = s.SubStringTo(im_ind).ToDouble();
+  }
+  else {
+    im = 0;
+    int b_ind = s.FirstIndexOf('(');
+    if( b_ind >= 0 )
+      re = s.ToDouble();
+    else
+      re = s.SubStringTo(b_ind).ToDouble();
+  }
+}
+void ParseNeutron(const TStrList& l, TTypeList<neutron_sc>& res)  {
+  TStrList toks;
+  olxstr str_z;
+  for( int i=1; i < l.Count(); i++ )  {
+    toks.Clear();
+    toks.Strtok(l[i], '\t');
+    for( int j=0; j < toks.Count(); j++ )
+      toks[j] = toks[j].Trim(' ');
+    TBasicAtomInfo* bai = TAtomsInfo::GetInstance()->FindAtomInfoBySymbol(toks[0]);
+    int z = 0;
+    if( bai == 0 )  {
+      int j=0;
+      str_z = EmptyString;
+      while( j < toks[0].Length() && toks[0].CharAt(j) <= '9' && toks[0].CharAt(j) >= '0' )  {
+        str_z << toks[0].CharAt(j);
+        j++;
+      }
+      toks[0] = toks[0].SubStringFrom(j);
+      bai = TAtomsInfo::GetInstance()->FindAtomInfoBySymbol(toks[0]);
+      if( bai == NULL )
+        throw TFunctionFailedException(__OlxSourceInfo, "assert");
+      z = str_z.ToInt();
+    }
+    neutron_sc& r = res.AddNew();
+    r.bai = bai;
+    r.Z = z;
+    if( toks[1].IsNumber() )
+      r.occ = toks[1].ToDouble();
+    ParseNumberEx(toks[2], r.coh_re, r.coh_im);
+    int b_ind = toks[3].FirstIndexOf('(');
+    if( b_ind >= 0 )
+      r.xs = toks[3].SubStringTo(b_ind).ToDouble();
+    else
+      r.xs = toks[3].ToDouble();
+  }
+}
+void ExportBAIA(TAtomsInfo& ais, TScattererLib& scl)  {
+  TStrList out, isotopes, elements, gaussians, henke, neutron, arr;
+  TStrList neutron_l_str;
+  TTypeList<neutron_sc> neutron_l;
+  neutron_l_str.LoadFromFile("e:/tmp/neutron_scatt.txt");
+  ParseNeutron(neutron_l_str, neutron_l);
+  char bf[80], bf1[80];
+  _set_output_format(_TWO_DIGIT_EXPONENT);
+  arr.Add("chem_lib_Element chem_lib_Elements[") << ais.Count() << "] = {";
+  for( int i=0; i < ais.Count(); i++ )  {
+    TBasicAtomInfo& bai = ais.GetAtomInfo(i);
+    TLibScatterer* sc = scl.Find( bai.GetSymbol() );
+    chem_lib_Anomalous_Henke const* henke_data = NULL;
+    int henke_count = 0;
+    neutron_sc* neutron_data = NULL;
+    for( int j =0; HenkeTables[j].label != 0; j++ )  {
+      if( bai.GetSymbol().Comparei( HenkeTables[j].label) == 0 )  {
+        henke_data = HenkeTables[j].henke;
+        for( int k=0; HenkeTables[j].henke[k].energy != 0; k++ )
+          henke_count++;
+        break;
+      }
+    }
+    for( int j=0; j < neutron_l.Count(); j++ )  {
+      if( *neutron_l[j].bai == bai && neutron_l[j].Z == 0 )  {
+        neutron_data = &neutron_l[j];
+        break;
+      }
+    }
+    sprintf(bf, "0x%X", bai.GetDefColor());
+    elements.Add("static chem_lib_Element _chem_lib_element_") << bai.GetSymbol() 
+      << "(\"" << bai.GetSymbol() << "\", \"" << bai.GetName() << "\", " << bf << ", " << (i+1)  <<
+      ", " << bai.GetRad() << ", " << bai.GetRad1() << ", " << bai.GetRad2() << 
+      ((sc != NULL) ? (olxstr(", &_chem_lib_gaussians_") << bai.GetSymbol()) : olxstr(", NULL"))  <<
+      ((bai.IsotopeCount() != 0) ? (olxstr(", _chem_lib_isotope_") << bai.GetSymbol()) : olxstr(", NULL"))
+      << ", " << bai.IsotopeCount() << 
+      ((henke_data != NULL) ? (olxstr(", _chem_lib_henke_") << bai.GetSymbol()) : olxstr(", NULL"))
+      << ", " << henke_count <<
+      ((neutron_data != NULL) ? (olxstr(", &_chem_lib_neutron_") << bai.GetSymbol()) : olxstr(", NULL"))
+      << ");";
+    if( neutron_data != NULL )  {
+      neutron.Add("static const chem_lib_Neutron_Scattering _chem_lib_neutron_") << bai.GetSymbol() << '(' <<
+        neutron_data->coh_re << ", " << neutron_data->coh_im << ", " << neutron_data->xs << ");";
+    }
+    if( bai.IsotopeCount() != 0 )  { 
+      isotopes.Add("static const chem_lib_Isotope _chem_lib_isotope_") << bai.GetSymbol() << "[] = {";
+      for( int j=0; j < bai.IsotopeCount(); j++ )  {
+        neutron_sc* i_n_data = NULL;
+        for( int k=0; k < neutron_l.Count(); k++ )  {
+          if( *neutron_l[k].bai == bai && neutron_l[k].Z == Round(bai.GetIsotope(j).GetMr()) )  {
+            i_n_data = &neutron_l[k];
+            break;
+          }
+        }
+        isotopes.Add("  {") << bai.GetIsotope(j).GetMr() << ", " << bai.GetIsotope(j).GetW() 
+          << ", " <<
+          ( (i_n_data == NULL) ? olxstr("NULL") : (olxstr("&_chem_lib_neutron_") << bai.GetSymbol() << i_n_data->Z) )
+          << '}';
+        if( (j+1) < bai.IsotopeCount() )
+          isotopes.Last().String() << ", ";
+        if( i_n_data != NULL )  {
+          neutron.Add("static const chem_lib_Neutron_Scattering _chem_lib_neutron_") << bai.GetSymbol() << i_n_data->Z << '(' <<
+            i_n_data->coh_re << ", " << i_n_data->coh_im << ", " << i_n_data->xs << ");";
+        }
+      }
+      isotopes.Last().String() << "};";
+    }
+    if( sc != NULL )  {
+      gaussians.Add("static const chem_lib_Gaussians _chem_lib_gaussians_") << bai.GetSymbol() << "(";
+      for( int j=0; j < 9; j++ )  {
+        gaussians.Last().String() << sc->GetData()[j];
+        if( j < 8 )  gaussians.Last().String() << ", ";
+      }
+      gaussians.Last().String() << ");";
+    }
+    if( henke_data != NULL )  {
+      henke.Add("static const chem_lib_Anomalous_Henke _chem_lib_henke_") << bai.GetSymbol() << "[] = {";
+      for( int j=0; j < henke_count; j++ )  {
+        if( henke_data[j].fp == NOVAL )
+          strcpy(bf, "NOVAL");
+        else if( fabs(henke_data[j].fp) < 1e-1 )
+          sprintf(bf, "%.5e", henke_data[j].fp);
+        else
+          sprintf(bf, "%f", henke_data[j].fp);
+        if( henke_data[j].fdp == NOVAL )  
+          strcpy(bf1, "NOVAL");
+        else if( fabs(henke_data[j].fdp) < 1e-1 ) 
+          sprintf(bf1, "%.5e", henke_data[j].fdp);
+        else
+          sprintf(bf1, "%f", henke_data[j].fdp);
+        henke.Add("  {") << henke_data[j].energy << ", " << olxstr(bf).TrimFloat() << ", " << olxstr(bf1).TrimFloat() << '}';
+        if( (j+1) < henke_count )
+          henke.Last().String() << ", ";
+      }
+      henke.Add("};");
+    }
+    arr.Add("  _chem_lib_element_") << bai.GetSymbol();
+    if( (i+1) < ais.Count() )
+      arr.Last().String() << ',';
+  }
+  arr.Add("};");
+  out << neutron << isotopes << gaussians << henke << elements << arr;
+  out.SaveToFile("e:/tmp/baiouta.h");
 }
 struct SGSM {
   double m[3];
@@ -502,3 +728,5 @@ void ExportSymmLibB()  {
   }
   out.SaveToFile("e:/tmp/sgouts.h");
 }
+
+

@@ -1086,6 +1086,11 @@ public:
     return SubString(start, end+1-start );
   }
   //............................................................................
+  inline TTSString& TrimFloat() {
+    T::TrimFloat();
+    return *this;
+  }
+  //............................................................................
   TTSString& Format(size_t count, bool Right, const TTSString &sep)  {
     size_t extra = count-((T::_Length > count) ? count-1 : T::_Length)*sep._Length;
     T::checkBufferForModification(T::_Length + extra);
