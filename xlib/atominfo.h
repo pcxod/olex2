@@ -3,6 +3,7 @@
 #include "chembase.h"
 #include "estrlist.h"
 #include "tptrlist.h"
+#include "ecomplex.h"
 
 BeginChemNamespace()
 
@@ -40,15 +41,19 @@ class TBasicAtomInfo: public ACollectionItem  {
          Rad1,
          Rad2;
   int    DefColor;   // default colour
-  short  Index;    // index of the record in the list; for internal use
+  short  Index, // index of the record in the list; for internal use
+    Z;          // atomic number
   double Summ;
 public:
-  TBasicAtomInfo();
-  virtual ~TBasicAtomInfo();
+  TBasicAtomInfo() : Isotopes(NULL) {}
+  virtual ~TBasicAtomInfo() {  
+    if( Isotopes != NULL ) 
+      delete Isotopes;
+  }
 
   inline int IsotopeCount()  const {  return (Isotopes==NULL) ? 0 : Isotopes->Count(); }
   inline TIsotope& GetIsotope(int index)  const  {  return Isotopes->Item(index);  }
-  TIsotope& NewIsotope();
+  inline TIsotope& NewIsotope() {  return (Isotopes == NULL ? (Isotopes = new TIsotopeList) : Isotopes)->AddNew();  }
 
   inline bool operator == (const TBasicAtomInfo& bai )  const {  return Index == bai.Index;  }
   inline bool operator == (const short index)           const {  return Index == index;  }
@@ -71,7 +76,8 @@ public:
   DefPropP(double, Rad1)
   DefPropP(double, Rad2)
 
-  DefPropP(int, Index)
+  DefPropP(short, Index)
+  DefPropP(short, Z)
   DefPropP(int, DefColor)
 
   DefPropP(double, Summ)

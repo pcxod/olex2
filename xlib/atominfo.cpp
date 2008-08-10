@@ -36,20 +36,7 @@ TAtomsInfo* TAtomsInfo::Instance = NULL;
 //---------------------------------------------------------------------------
 // TBasicAtomInfo function bodies
 //---------------------------------------------------------------------------
-
-TBasicAtomInfo::TBasicAtomInfo()  {
-  Isotopes = NULL;
-}
 //..............................................................................
-TBasicAtomInfo::~TBasicAtomInfo()  {
-  if( Isotopes != NULL )
-    delete Isotopes;
-}
-//..............................................................................
-TIsotope& TBasicAtomInfo::NewIsotope()  {
-  if( Isotopes == NULL )  Isotopes = new TIsotopeList;
-  return Isotopes->AddNew();
-}
 olxstr TBasicAtomInfo::StrRepr() const  {
   olxstr Tmp;
   olxstr Tmp1;
@@ -89,7 +76,7 @@ TAtomsInfo::TAtomsInfo(const olxstr &filename)  {
       Toks.Strtok(List[i], ' ');
       if( Toks.Count() >= 7 )  {
         TBasicAtomInfo& I = Data.AddNew();
-        I.SetSymbol( Toks.String(0) );
+        I.SetSymbol( Toks[0] );
         I.SetMr( Toks[1].ToDouble() );
         I.SetName( Toks[2] );
         color = Toks[3].ToInt();

@@ -28,7 +28,7 @@
 //----------------------------------------------------------------------------//
 // XShelxIns function bodies
 //----------------------------------------------------------------------------//
-XShelxIns::XShelxIns() {
+XShelxIns::XShelxIns(XModel& _xm) : xm(_xm) {
   HKLF = 4;
   LoadQPeaks = true;
 }
@@ -50,10 +50,10 @@ void XShelxIns::Clear()  {
   R1 = -1;
 }
 //..............................................................................
-void XShelxIns::LoadFromStrings(const TStrList& FileContent, XModel& xm)  {
+void XShelxIns::LoadFromStrings(const TStrList& FileContent)  {
   Clear();
   TAtomsInfo* AtomsInfo = TAtomsInfo::GetInstance();
-  ParseContext cx(xm);
+  ParseContext cx;
   TStrList Toks, InsFile(FileContent), ins;
   InsFile.CombineLines('=');
   bool   End = false;// true if END instruction reached
@@ -80,12 +80,7 @@ void XShelxIns::LoadFromStrings(const TStrList& FileContent, XModel& xm)  {
     else if( ParseIns(InsFile, Toks, cx, i) )
       continue;
     else if( Toks[0].StartsFromi("SAME") )  {
-      //if( SameAtomsLeft != 0 )
-      //  throw TFunctionFailedException(__OlxSourceInfo, "previous SAME is incomplete");
-      //int resi_ind = Toks[0].IndexOf('_');
-      //olxstr resi( (resi_ind != -1) ? Toks[0].SubStringFrom(resi_ind+1) : EmptyString );
-      //SameAtomsLeft = ag.Count();
-      //Restrains_Same& sr = xm.SAME.AddNew( xm, cx.Defs, Toks);
+      cx.SameIns = Toks.Text(' ', 1);
     }
     else if( Toks[0].Comparei("END") == 0 )     {   //reset RESI to default
       End = true;  
@@ -117,11 +112,9 @@ void XShelxIns::LoadFromStrings(const TStrList& FileContent, XModel& xm)  {
         throw TFunctionFailedException(__OlxSourceInfo, "uninitialised cell");
       }
       XScatterer* sc = _ParseAtom(Toks, cx );
-      if( SameAtomsLeft != 0 )  {
-        SameAtomsLeft--;
-      }
-      if( SameId != -1 )  {
-        SameId = -1;
+      if( !cx.SameIns.IsEmpty() )  {
+        cx.Same.AddNew(sc, cx.SameIns);
+        cx.SameIns = EmptyString;
       }
     }
   }
@@ -181,13 +174,13 @@ void XShelxIns::_FinishParsing()  {
 }
 //..............................................................................
 bool XShelxIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx, int& i)  {
-  if( _ParseIns(Toks, cx.rm) )
+  if( _ParseIns(Toks) )
     return true;
   else if( !cx.CellFound && Toks[0].Comparei("CELL") == 0 )  {
     if( Toks.Count() == 8 )  {
-      cx.rm.Cell.Init(Toks[2].ToDouble(), Toks[3].ToDouble(), Toks[4].ToDouble(),
-                      Toks[5].ToDouble(),Toks[6].ToDouble(),Toks[7].ToDouble())
-      cx.rm.WaveLength = Toks[1].ToDouble();
+      xm.Cell.Init(Toks[2].ToDouble(), Toks[3].ToDouble(), Toks[4].ToDouble(),
+                      Toks[5].ToDouble(),Toks[6].ToDouble(),Toks[7].ToDouble());
+      xm.WaveLength = Toks[1].ToDouble();
       cx.CellFound = true;
     }
     else  
@@ -208,9 +201,9 @@ bool XShelxIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext
     if( Toks.Count() < 3 )
       throw TInvalidArgumentException(__OlxSourceInfo, "wrong number of arguments for a residue");
     if( Toks[1].IsNumber() )
-      cx.Resi = &cx.rm.NewResidue(EmptyString, Toks[1].ToInt(), (Toks.Count() > 2) ? Toks[2] : EmptyString);
+      cx.Resi = &xm.NewResidue(EmptyString, Toks[1].ToInt(), (Toks.Count() > 2) ? Toks[2] : EmptyString);
     else
-      cx.Resi = &cx.rm.NewResidue(Toks[1], Toks[2].ToInt(), (Toks.Count() > 3) ? Toks[3] : EmptyString);
+      cx.Resi = &xm.NewResidue(Toks[1], Toks[2].ToInt(), (Toks.Count() > 3) ? Toks[3] : EmptyString);
   }
   else if( Toks[0].Comparei("SFAC") == 0 )  {
     bool expandedSfacProcessed = false;
@@ -228,20 +221,22 @@ bool XShelxIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext
         so we keep it as it is to save in the ins file
         */
         Sfac << Toks[1] << ' ';
-        cx.BasicAtoms.Add( Toks[1], AtomsInfo->FindAtomInfoBySymbol(Toks[1]) );
+        cx.BasicAtoms.Add( Toks[1], XElementLib::FindBySymbol(Toks[1]) );
         if( cx.BasicAtoms.Last().Object() == NULL )
           throw TFunctionFailedException(__OlxSourceInfo, olxstr("Could not find suitable scatterer for '") << Toks[1] << '\'' );
         expandedSfacProcessed = true;
-        cx.rm.NewScatterer( Toks[0],
+        xm.NewScattererData( Toks[0],
           Toks[2].ToDouble(), Toks[3].ToDouble(), Toks[4].ToDouble(),
           Toks[5].ToDouble(), Toks[6].ToDouble(), Toks[7].ToDouble(),
-          Toks[8].ToDouble(), Toks[9].ToDouble(), Toks[10].ToDouble() );
+          Toks[8].ToDouble(), Toks[9].ToDouble(), Toks[10].ToDouble(), 
+          Toks[11].ToDouble(), Toks[12].ToDouble(), Toks[13].ToDouble(),
+          Toks[14].ToDouble(), Toks[15].ToDouble());
       }
     }
     if( !expandedSfacProcessed )  {
       for( int j=1; j < Toks.Count(); j++ )  {
-        if( AtomsInfo->IsAtom(Toks[j]) )  {
-          cx.BasicAtoms.Add(Toks[j], AtomsInfo->FindAtomInfoBySymbol(Toks[j]) );
+        if( XElementLib::IsElement(Toks[j]) )  {
+          cx.BasicAtoms.Add(Toks[j], XElementLib::FindBySymbolEx(Toks[j]) );
           if( cx.BasicAtoms.Last().Object() == NULL )
             throw TFunctionFailedException(__OlxSourceInfo, olxstr("Could not find suitable scatterer for '") << Toks[j] << '\'' );
           Sfac << Toks[j] << ' ';
@@ -264,24 +259,24 @@ bool XShelxIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext
         }
       } 
       else if( Toks[1].StartsFromi("<HKL>") )  {
-        FHKLSource = Toks.Text(' ', 1);
-        int index = FHKLSource.FirstIndexOf('>');
-        int iv = FHKLSource.IndexOf("</HKL>");
+        HklSrc = Toks.Text(' ', 1);
+        int index = HklSrc.FirstIndexOf('>');
+        int iv = HklSrc.IndexOf("</HKL>");
         if( iv == -1 )  {
           while( (i+1) < ins.Count() )  {
             i++;
             if( !ins[i].StartsFromi("rem") )  break;
-            FHKLSource << ins[i].SubStringFrom(4);
-            iv = FHKLSource.IndexOf("</HKL>");
+            HklSrc << ins[i].SubStringFrom(4);
+            iv = HklSrc.IndexOf("</HKL>");
             if( iv != -1 )  break;
           }
         }
         if( iv != -1 )  {
-          FHKLSource = FHKLSource.SubString(index+1, iv-index-1);
-          FHKLSource.Replace("%20", ' ');
+          HklSrc = HklSrc.SubString(index+1, iv-index-1);
+          HklSrc.Replace("%20", ' ');
         }
         else
-          FHKLSource = EmptyString;
+          HklSrc = EmptyString;
       }
     }
   }
@@ -291,72 +286,36 @@ bool XShelxIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext
 }
 //..............................................................................
 void XShelxIns::UpdateParams()  {
-  for( int i =0; i < Ins.Count(); i++ )  {
-    for( int j=0; j < Ins.Object(i)->Count(); j++ )  {
-      if( Ins.Object(i)->Object(j) != NULL )
-        Ins.Object(i)->String(j) = Ins.Object(i)->Object(j)->GetLabel();
-    }
-  }
+  //for( int i =0; i < ins.Count(); i++ )  {
+  //  for( int j=0; j < ins.Object(i)->Count(); j++ )  {
+  //    if( ins.Object(i)->Object(j) != NULL )
+  //      Ins.Object(i)->String(j) = Ins.Object(i)->Object(j)->GetLabel();
+  //  }
+  //}
 }
 //..............................................................................
-void XShelxIns::DelIns(int i)  {
-  delete Ins.Object(i);
-  Ins.Delete(i);
-}
+//void XShelxIns::DelIns(int i)  {
+//  delete ins.Object(i);
+//  ins.Delete(i);
+//}
 //..............................................................................
-XShelxInsList* XShelxIns::FindIns(const olxstr &Name)  {
-  int i = Ins.CIIndexOf(Name);
-  return i >= 0 ? Ins.Object(i) : NULL;
-}
+//XShelxInsList* XShelxIns::FindIns(const olxstr &Name)  {
+//  int i = Ins.CIIndexOf(Name);
+//  return i >= 0 ? Ins.Object(i) : NULL;
+//}
+////..............................................................................
+//bool XShelxIns::InsExists(const olxstr &Name)  {
+//  return FindIns(Name) != NULL;
+//}
+////..............................................................................
+//void XShelxIns::AddVar(float val)  {
+//  FVars.Resize(FVars.Count() + 1);
+//  FVars[FVars.Count()-1] = val;
+//}
 //..............................................................................
-bool XShelxIns::InsExists(const olxstr &Name)  {
-  return FindIns(Name) != NULL;
-}
-//..............................................................................
-void XShelxIns::AddVar(float val)  {
-  FVars.Resize(FVars.Count() + 1);
-  FVars[FVars.Count()-1] = val;
-}
-//..............................................................................
-bool XShelxIns::AddIns(const TStrList& toks, bool CheckUniq)  {
+bool XShelxIns::AddIns(const TStrList& toks)  {
   // special instructions
-  if( _ParseIns(toks) )  return true;
-  // check for uniqueness
-  if( CheckUniq )  {
-    for( int i=0; i < Ins.Count(); i++ )  {
-      if( !Ins[i].Comparei(toks[0]) )  {
-        XShelxInsList *ps = Ins.Object(i);
-        if( ps->Count() == (toks.Count()-1) )  {
-          bool unique = false;
-          for( int j=0; j < ps->Count(); j++ )  {
-            if( ps->String(j).Comparei(toks[j+1]) != 0 )  {
-              unique = true;
-              break;
-            }
-          }
-          if( !unique )  
-            return false;
-        }
-      }
-    }
-  }
-  //special treatment of the addins HFIX num atoms instruction
-  if( toks[0].Comparei("HFIX") == 0 && toks.Count() > 2 )  {
-    int hfix = toks[1].ToInt();
-    for( int i=2; i < toks.Count(); i++ )  {
-      TCAtom* ca = GetAsymmUnit().FindCAtom(toks[i]);
-      if( ca != NULL )  ca->SetHfix(hfix);
-    }
-    return true;
-  }
-  XShelxInsList& Params = *(new XShelxInsList(toks.Count()-1));
-  for( int i=1; i < toks.Count(); i++ )  {
-    Params[i-1] = toks[i];
-    Params.Object(i-1) = GetAsymmUnit().FindCAtom(toks[i]);
-  }
-  // end
-  Ins.Add(toks[0], &Params);
-  return true;
+  return _ParseIns(toks);
 }
 //..............................................................................
 void XShelxIns::HypernateIns(const olxstr &InsName, const olxstr &Ins, TStrList &Res)  {
@@ -419,16 +378,15 @@ void XShelxIns::HypernateIns(const olxstr& Ins, TStrList& Res)  {
   }
 }
 //..............................................................................
-void XShelxIns::FixUnit()  {
-  TStrPObjList<olxstr,TBasicAtomInfo*> BasicAtoms;
-  Unit = EmptyString;
-  Sfac = EmptyString;
-  GetAsymmUnit().SummFormula(BasicAtoms, Sfac, Unit);
-}
+//void XShelxIns::FixUnit()  {
+//  TStrPObjList<olxstr,TBasicAtomInfo*> BasicAtoms;
+//  Unit = EmptyString;
+//  Sfac = EmptyString;
+//  GetAsymmUnit().SummFormula(BasicAtoms, Sfac, Unit);
+//}
 //..............................................................................
-void XShelxIns::SaveToRefine(const olxstr& FileName, const olxstr& sMethod, const olxstr& comments)  {
+void XShelxIns::SaveForSolve(const olxstr& FileName, const olxstr& sMethod, const olxstr& comments)  {
   TStrList SL, mtoks;
-  XShelxInsList* L;
   if( sMethod.IsEmpty() )
     mtoks.Add("TREF");
   else  {
@@ -444,12 +402,12 @@ void XShelxIns::SaveToRefine(const olxstr& FileName, const olxstr& sMethod, cons
   olxstr Tmp, Tmp1;
 
   UpdateParams();
-  SL.Add("TITL ") << GetTitle();
+  SL.Add("TITL ") << Title;
 
   if( !comments.IsEmpty() ) 
     SL.Add("REM ") << comments;
 // try to estimate Z'
-  TTypeList< AnAssociation2<int,TBasicAtomInfo*> > sl;
+  TTypeList< AnAssociation2<int,cm_Element*> > sl;
   TStrList sfac(GetSfac(), ' ');
   TStrList unit(GetUnit(), ' ');
   if( sfac.Count() != unit.Count() )
@@ -457,33 +415,23 @@ void XShelxIns::SaveToRefine(const olxstr& FileName, const olxstr& sMethod, cons
   int ac = 0;
   for( int i=0; i < sfac.Count(); i++ )  {
     int cnt = unit[i].ToInt();
-    TBasicAtomInfo* bai = GetAtomsInfo().FindAtomInfoBySymbol(sfac[i]);
-    if( *bai == iHydrogenIndex )  continue;
-    sl.AddNew( cnt, bai );
+    cm_Element* elm = XElementLib::FindBySymbol(sfac[i]);
+    if( *elm == iHydrogenZ )  continue;
+    sl.AddNew( cnt, elm );
     ac += cnt;
   }
   
-  FAsymmUnit->SetZ( Round(FAsymmUnit->EstimateZ(ac/FAsymmUnit->GetZ())) );
-//
+  //FAsymmUnit->SetZ( Round(FAsymmUnit->EstimateZ(ac/FAsymmUnit->GetZ())) );
 
   SL.Add( _CellToString() );
   SL.Add( _ZerrToString() );
   _SaveSymm(SL);
   SfacIndex = SL.Count();  SL.Add(EmptyString);
   UnitIndex = SL.Count();  SL.Add(EmptyString);
-
-  for( int i=0; i < Ins.Count(); i++ )  {  // copy "unknown" instructions
-    L = Ins.Object(i);
-    if( Ins.String(i).Comparei("SIZE") == 0 || Ins.String(i).Comparei("TEMP") == 0 )  {
-      Tmp = EmptyString;
-      if( L->Count() != 0 )  Tmp << L->Text(' ');
-      HypernateIns(Ins.String(i)+' ', Tmp, SL);
-    }
-  }
-
+  SL.Add("TEMP ") << xm.Temperature;
+  SL.Add("SIZE ") << xm.Size[0] << ' ' << xm.Size[1] << ' ' << xm.Size[2];
   _SaveHklSrc(SL);
   _SaveFVar(SL);
-
   SL.AddList(mtoks);
   SL.Add(EmptyString);
   SL.Add("HKLF ") << HKLF;
@@ -498,33 +446,33 @@ void XShelxIns::SaveToRefine(const olxstr& FileName, const olxstr& sMethod, cons
 }
 //..............................................................................
 void XShelxIns::_SaveSfac(TStrList& list, int pos)  {
-  if( GetAsymmUnit().SfacCount() == 0 )
-    list.String(pos) = olxstr("SFAC ") << Sfac;
+  if( xm.Sfac.Count() == 0 )
+    list[pos] = olxstr("SFAC ") << Sfac;
   else  {
     TStrList toks(Sfac, ' '), lines;
     olxstr tmp, LeftOut;
     for( int i=0; i < toks.Count(); i++ )  {
-      TLibScatterer* sd = GetAsymmUnit().FindSfacData( toks.String(i) );
-      if( sd != NULL )  {
+      XScattererData* sd = xm.FindScattererData( toks[i] );
+      if( sd->source == NULL )  {
         tmp = "SFAC ";
-        tmp << toks.String(i);
-        for( int j=0; j < sd->Size(); j++ )
-          tmp << ' ' << sd->GetData()[j];
-
+        tmp << toks[i];
+        for( int j=0; j < 4; j++ )
+          tmp << ' ' << sd->gaussians[j] << ' ' << sd->gaussians[j+4];
+        tmp << ' ' << sd->gaussians[8] << ' ' << sd->fp << ' ' << sd->fdp  <<
+          ' '  << sd->mu << ' ' << sd->r << ' ' << sd->wt; 
         lines.Clear();
         HypernateIns(tmp, lines);
         for( int j=0; j < lines.Count(); j++ )  {
-          list.Insert(pos, lines.String(j) );
+          list.Insert(pos, lines[j] );
           pos++;
         }
       }
       else  {
-        LeftOut << ' ' << toks.String(i);
+        LeftOut << ' ' << toks[i];
       }
     }
-    if( LeftOut.Length() != 0 )  {
+    if( !LeftOut.IsEmpty() )
       list.Insert(pos, olxstr("SFAC") << LeftOut );
-    }
   }
 }
 //..............................................................................
@@ -533,12 +481,12 @@ void XShelxIns::SaveToStrings(TStrList& SL)  {
   evecd QE;  // quadratic form of s thermal ellipsoid
   olxstr Tmp;
   TBasicAtomInfo *BAI;
-  for( int i=-1; i < GetAsymmUnit().ResidueCount(); i++ )  {
-    TAsymmUnit::TResidue& residue = GetAsymmUnit().GetResidue(i);
+  for( int i=0; i < xm.Residues.Count(); i++ )  {
+    XResidue& residue = xm.Residues[i];
     for( int j=0; j < residue.Count(); j++ )  {
-      if( residue[j].IsDeleted() )  continue;
+      if( residue[j].Deleted )  continue;
       for( int k=j+1; k < residue.Count(); k++ )  {
-        if( residue[k].IsDeleted() )  continue;
+        if( residue[k].Deleted )  continue;
         if( residue[j].GetPart() != residue[k].GetPart() )  continue;
         if( residue[j].GetLabel().Comparei(residue[k].GetLabel()) == 0 ) 
           residue[k].Label() = GetAsymmUnit().CheckLabel(&residue[k], residue[k].GetLabel() );
@@ -1020,7 +968,7 @@ olxstr XShelxIns::_AtomToString(TCAtom* CA, int SfacIndex)  {
 //..............................................................................
 olxstr XShelxIns::_CellToString()  {
   olxstr Tmp("CELL ");
-  Tmp << GetRadiation();
+  Tmp << rm.WaveLength;
   Tmp << ' ' << GetAsymmUnit().Axes()[0].GetV() <<
          ' ' << GetAsymmUnit().Axes()[1].GetV() <<
          ' ' << GetAsymmUnit().Axes()[2].GetV() <<

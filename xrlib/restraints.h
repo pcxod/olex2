@@ -7,6 +7,7 @@
 #include "estlist.h"
 
 #include "indexlst.h"
+#include "chemdata.h"
 #include <stdarg.h>
 
 BeginXlibNamespace()
@@ -338,6 +339,7 @@ public:
     Residues.Add( new XResidue(*this) );  // default residue
     Variables.AddNew(1, var_type_None);  // global scale
     WaveLength = 0.71073;
+    Temperature = 298.15;
   }
   virtual ~XModel() {
   }
@@ -424,9 +426,68 @@ public:
   virtual int VarCount() const {  return Variables.Count();  }
   virtual XVar& GetVar(int index) {  return Variables[index];  }
   
-  double WaveLength;  // global Fo/Fc scale is Variables[0]
+  XScattererData& NewScattererData(const olxstr& symbol)  {
+    static const double ev_angstrom  = 6626.0755 * 2.99792458 / 1.60217733;
+    cm_Element* elm = XElementLib::FindBySymbol(symbol);
+    if( elm == NULL )  throw TFunctionFailedException(__OlxSourceInfo, "could not locate element");
+    if( elm->gaussians == NULL )  throw TFunctionFailedException(__OlxSourceInfo, "could not scattering data");
+    XScattererData& rv = Sfac.AddNew();
+    rv.gaussians[0] = elm->gaussians->a1;
+    rv.gaussians[1] = elm->gaussians->a2;
+    rv.gaussians[2] = elm->gaussians->a3;
+    rv.gaussians[3] = elm->gaussians->a4;
+    rv.gaussians[4] = elm->gaussians->b1;
+    rv.gaussians[5] = elm->gaussians->b2;
+    rv.gaussians[6] = elm->gaussians->b3;
+    rv.gaussians[7] = elm->gaussians->b4;
+    rv.gaussians[8] = elm->gaussians->c;
+    if( elm->henke_data != NULL )  {
+      compd fpfdp = elm->CalcFpFdp(ev_angstrom/WaveLength);
+      if( fpfdp.Re() != cm_Anomalous_Henke::Undefined )
+        rv.fp = fpfdp.Re();
+      if( fpfdp.Im() != cm_Anomalous_Henke::Undefined )
+        rv.fdp = fpfdp.Im();
+    }
+    rv.source = elm;
+    rv.label = symbol;
+    return rv;
+  }
+  XScattererData& NewScattererData(const olxstr& label, double gaussians[9], double fp, double fdp)  {
+    XScattererData& rv = Sfac.AddNew();
+    memcpy(&rv.gaussians[0], &gaussians[0], 9*sizeof(double));
+    rv.fp = fp;
+    rv.fdp = fdp;
+    rv.label = label;
+    return rv;
+  }
+
+  XScattererData& NewScattererData(const olxstr& label, 
+    double a1, double b1, double a2, double b2, double a3, double b3, double a4, double b4,
+    double c, double fp, double fdp, double mu, double r, double wt)  {
+    XScattererData& rv = Sfac.AddNew();
+    rv.gaussians[0] = a1;  rv.gaussians[1] = a2;  rv.gaussians[2] = a3;
+    rv.gaussians[3] = a4;  rv.gaussians[4] = b1;  rv.gaussians[5] = b2;
+    rv.gaussians[6] = b3;  rv.gaussians[7] = b4;  rv.gaussians[8] = c;
+    rv.fp = fp;
+    rv.fdp = fdp;
+    rv.mu = mu;
+    rv.r = r;
+    rv.wt = wt;
+    rv.label = label;
+    return rv;
+  }
+  XScattererData* FindScattererData(const olxstr& label)  {
+    for( int i=0; i < Sfac.Count(); i++ )
+      if( Sfac[i].label.Comparei(label) == 0 )
+        return &Sfac[i];
+    return NULL;
+  }
+
+  double WaveLength, Temperature;  // global Fo/Fc scale is Variables[0]
   evecd Weight;
+  vec3d Size;
   XCell Cell;
+
   TTypeList<XUani> TDPs;
   // a list of all residues with key - number
   TTypeList<XResidue> Residues;
@@ -436,6 +497,7 @@ public:
   TTypeList<XRigidGroup> RigidGroups;
   TTypeList<XLinearEquation> LinearEquations;
   TTypeList<XVar> Variables;
+  TTypeList<XScattererData> Sfac;
 
   TTypeList<Restraint_Ncsy> NCSY;
   TTypeList<Restraint_Isor> ISOR;

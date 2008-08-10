@@ -41,7 +41,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="..\..\..\xlib;..\..\..\sdl;..\..\..\xrlib"
-				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE"
+				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;_NO_PYTHON"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -189,15 +189,19 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
+				RelativePath="..\..\..\repository\fsext.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\repository\integration.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\xrlib\restraints.cpp"
 				>
 			</File>
 			<File
 				RelativePath=".\sym_bark.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\xrlib\xins.cpp"
 				>
 			</File>
 			<File

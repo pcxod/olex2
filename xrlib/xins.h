@@ -11,6 +11,7 @@
 #include "symmparser.h"
 #include "xexp_parser.h"
 #include "restraints.h"
+#include "chemdata.h"
 #ifdef AddAtom
   #undef AddAtom
 #endif
@@ -21,13 +22,15 @@ class XShelxIns : public IEObject {
   // parsing context state and varables
   struct ParseContext {
     TStrList Symm;
-    TStrPObjList<olxstr, TBasicAtomInfo*>  BasicAtoms;  // SFAC container
+    TStrPObjList<olxstr, cm_Element*>  BasicAtoms;  // SFAC container
+    // when SameIns is not empty, the next scatterer and that SameIns are added to the list
+    TTypeList< AnAssociation2<XScatterer*, olxstr> > Same;
+    olxstr SameIns;
     bool CellFound;
     int Afix, Part;
     double PartOccu;
     XResidue* Resi;
-    XModel& rm;
-    ParseContext(XModel& xm) : rm(xm)  {
+    ParseContext()  {
       CellFound = false;
       PartOccu = 0;
       Afix = Part = 0;
@@ -49,7 +52,7 @@ private:
   olxstr HKLF,
            RefinementMethod,  // L.S. or CGLS
            SolutionMethod;
-  double   Radiation;
+  XModel& xm;
 protected:
   void _SaveSfac(TStrList& list, int pos);
   XScatterer* _ParseAtom(TStrList& toks, ParseContext& cx, XScatterer* scatterer = NULL);
@@ -63,13 +66,12 @@ protected:
   // initialises the unparsed instruction list
   void _FinishParsing();
 public:
-  XShelxIns();
+  XShelxIns(XModel& model);
   virtual ~XShelxIns();
 
   void Clear();
 
   DefPropP(double, Error)
-  DefPropP(double, Radiation)
 
   DefPropC(olxstr, RefinementMethod)
   DefPropC(olxstr, SolutionMethod)
@@ -111,7 +113,7 @@ public:
 
   /* updates all instructions */
   void UpdateParams();
-  void SaveToRefine(const olxstr& FileName, const olxstr& Method, const olxstr& comments);
+  void SaveForSolve(const olxstr& FileName, const olxstr& Method, const olxstr& comments);
   void SavePattSolution( const olxstr& FileName, const TTypeList<class TPattAtom>& atoms,
                          const olxstr& comments );
   /* reads a file containing just lines of atoms and updates the to the
@@ -124,7 +126,7 @@ public:
   /* saves some atoms to a plain ins format with no headers etc; to be used with
     UpdateAtomsFromFile
   */
-  bool SaveAtomsToStrings(const XScattererPList& Scatterers, TStrList& SL, IRefinementModel& rm);
+  bool SaveAtomsToStrings(const XScattererPList& Scatterers, TStrList& SL);
   //void SaveRestraints(TStrList& SL, const TCAtomPList* atoms, TSimpleRestraintPList* processed, TAsymmUnit* au);
   template <class StrLst> void ParseRestraints(StrLst& SL, ParseContext& xc)  {
       TStrList Toks;
@@ -202,7 +204,7 @@ public:
 //..............................................................................
   /* parses a single line instruction, which does not depend on context (as SYMM) 
     this is used internally by ParseIns and AddIns    */
-    template <class StrLst> bool _ParseIns(const StrLst& Toks, XModel& rm)  {
+    template <class StrLst> bool _ParseIns(const StrLst& Toks)  {
       if( Toks[0].Comparei("FVAR") == 0 )  {
         rm.Variables.SetCapacity(rm.Variables.Count()+Toks.Count());
         for( int j=0; j < Toks.Count(); j++ )
@@ -254,18 +256,18 @@ public:
       return true;
     }
 
-  virtual void SaveToStrings(TStrList& Strings, XModel& xm);
-  virtual void LoadFromStrings(const TStrList& Strings, XModel& xm);
+  virtual void SaveToStrings(TStrList& Strings);
+  virtual void LoadFromStrings(const TStrList& Strings);
 
   void ClearIns();
   bool AddIns(const olxstr& Name);
   // the instruction name is Toks[0]
-  bool AddIns(const TStrList& Params, bool CheckUniq=true);
+  bool AddIns(const TStrList& Params);
   // a convinience method
-  template <class StrLst> bool AddIns(const olxstr& name, const StrLst& Params, bool CheckUniq=true)  {
+  template <class StrLst> bool AddIns(const olxstr& name, const StrLst& Params)  {
     TStrList lst(Params);
     lst.Insert(0, name);
-    return AddIns(lst, CheckUniq);
+    return AddIns(lst);
   }
 protected:
   // index will be automatically imcremented if more then one line is parsed
@@ -278,7 +280,7 @@ public:
 
   void FixUnit();
 
-  virtual IEObject* Replicate()  const {  return new XShelxIns();  }
+  virtual IEObject* Replicate()  const {  return new XShelxIns(xm);  }
 };
 
 EndXlibNamespace()

@@ -119,9 +119,10 @@ public:
   template <typename T> inline TCString& operator << (const T &v) {
     return writeType(printFormat(v), v);
   }
-  void TrimFloat()  {
+  TCString& TrimFloat()  {
     while( _Length > 1 && CharAt(_Length-1) == '0' )  _Length--;
     if( _Length > 0 && CharAt(_Length-1) == '.'  )  _Length--;
+    return *this;
   }
   inline TCString& operator << (const float &v) {
     writeType(printFormat(v), v);

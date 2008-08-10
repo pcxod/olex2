@@ -41,7 +41,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="..\..\..\xlib;..\..\..\sdl"
-				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE"
+				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;_NO_PYTHON"
 				StringPooling="true"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="1"
@@ -192,6 +192,10 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
+				RelativePath="..\..\..\repository\fsext.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\repository\integration.cpp"
 				>
 			</File>
@@ -205,6 +209,10 @@
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
+			<File
+				RelativePath="..\..\xlib_test\henke.h"
+				>
+			</File>
 			<File
 				RelativePath="..\..\..\sdl\threex3.h"
 				>

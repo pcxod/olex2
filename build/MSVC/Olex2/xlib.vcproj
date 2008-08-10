@@ -397,6 +397,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\xlib\chemdata.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\xlib\chnexp.cpp"
 				>
 			</File>
@@ -592,6 +596,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\xlib\chembase.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\xlib\chemdata.h"
 				>
 			</File>
 			<File
