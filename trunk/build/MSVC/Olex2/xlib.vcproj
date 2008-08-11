@@ -399,6 +399,14 @@
 			<File
 				RelativePath="..\..\..\xlib\chemdata.cpp"
 				>
+				<FileConfiguration
+					Name="Unicode|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalOptions="/bigobj"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\..\xlib\chnexp.cpp"
