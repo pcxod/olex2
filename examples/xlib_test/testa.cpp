@@ -23,10 +23,12 @@
 
 #include <iostream>
 
+///////////////////////////////////////////////////////////////////////
 void ExportSymmLib();
 void ExportSymmLibA();
 void ExportSymmLibB();  // MSVC crashes on this code...
 void ExportSymmLibC();
+void ExportSymmLibD();  // new fastsymm output
 void ExportBAI(TAtomsInfo& ais);
 void ExportBAIA(TAtomsInfo& ais, TScattererLib& scl);
 
@@ -65,8 +67,6 @@ int main(int argc, char* argv[])  {
     TSpaceGroup* sg = sl.FindSG( XApp.XFile().GetAsymmUnit() );
     if( sg != NULL )  {
       printf("File space group: %s", sg->GetName().c_str() ); 
-      TFastSymmLib fsl;
-      FastSymm* fs = fsl.FindSymm(sg->GetName() );
     }
     ABasicFunction* sgm = XApp.GetLibrary().FindMacro("SG");
     if( sgm !=  NULL )  {
@@ -80,8 +80,9 @@ int main(int argc, char* argv[])  {
     //ExportSymmLib();
     //ExportSymmLibA();
     //ExportBAI( *XApp.AtomsInfo() );
-    ExportBAIA( *XApp.AtomsInfo(), scl );
+    //ExportBAIA( *XApp.AtomsInfo(), scl );
     //ExportSymmLibC();
+    ExportSymmLibD();
   }
   catch( TExceptionBase& exc )  {
     printf("An exception occured: %s\n", EsdlObjectName(exc).c_str() );
@@ -246,7 +247,7 @@ void CodeGen(smatd& m, const olxstr& d_type, const olxstr&var_type, const olxstr
 int CodeGen(TSpaceGroup& sg, TStrList& out)  {
   smatd_list ml;
   sg.GetMatrices(ml, mattAll);
-  out.Add("  template <class TT, class AT> static inline void DoGeneratePos(const TT& v, AT& res)  {");
+  out.Add("  template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {");
   for( int i=0; i < ml.Count(); i++ )  {
     smatd& m = ml[i];
     for( int j=0; j < 3; j++ )  {
@@ -271,7 +272,7 @@ int CodeGen(TSpaceGroup& sg, TStrList& out)  {
     }
   }
   out.Add("  }");
-  out.Add("  template <class TT, class AT, class SAT> static inline void DoGenerateHkl(TT& v, AT& res, SAT& phase)  {");
+  out.Add("  template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {");
   for( int i=0; i < ml.Count(); i++ )  {
     smatd& m = ml[i];
     for( int j=0; j < 3; j++ )  {
@@ -287,6 +288,7 @@ int CodeGen(TSpaceGroup& sg, TStrList& out)  {
     }
     olxstr& str = out.Add("    phase[") << i << "] = ";
     bool added = false;
+    olxstr m_str[3];
     for( int j=0; j < 3; j++ )  {
       if( m.t[j] != 0 )  {  // transposed form for hkl
         int v = Round(m.t[j]*12), base = 12;
@@ -295,13 +297,77 @@ int CodeGen(TSpaceGroup& sg, TStrList& out)  {
           v /= denom;
           base /= denom;
         }
-        olxstr mult(v);  mult << "./"  << base;
-        str << ((m.t[j] > 0) ? (added ? (olxstr("+v[") << j << ']') : (olxstr("v[") << j << ']')) : (olxstr("-v[") << j << ']'));
-        str << '*' << mult;
-        added = true;
+        m_str[j] << v << "./"  << base;
+      }
+    }
+    if( m_str[0] == m_str[1] && m_str[0] == m_str[2] && !m_str[0].IsEmpty() )  {
+      added = true;
+      if( m_str[0].CharAt(0) == '-' )  
+        str <<  "-(res[#][0]+res[#][1]+res[#][2])*" << m_str[0].SubStringFrom(1);
+      else
+        str <<  "(res[#][0]+res[#][1]+res[#][2])*" << m_str[0];
+    }
+    else if( m_str[0] == m_str[1] && !m_str[0].IsEmpty() )  {
+      added = true;
+      if( m_str[0].CharAt(0) == '-' )  
+        str << "-(res[#][0]+res[#][1])*" << m_str[0].SubStringFrom(1);
+      else
+        str << "(res[#][0]+res[#][1])*" << m_str[0];
+      if( !m_str[2].IsEmpty() )  {
+        if( m_str[2].CharAt(0) == '-' )  
+          str <<  "-res[#][2]*" << m_str[2].SubStringFrom(1);
+        else
+          str <<  "+res[#][2]*" << m_str[2];
+      }
+    }
+    else if( m_str[0] == m_str[2] && !m_str[0].IsEmpty() )  {
+      added = true;
+      if( m_str[0].CharAt(0) == '-' )  
+        str << "-(res[#][0]+res[#][2])*" << m_str[0].SubStringFrom(1);
+      else
+        str << "(res[#][0]+res[#][2])*" << m_str[0];
+      if( !m_str[1].IsEmpty() )  {
+        if( m_str[1].CharAt(0) == '-' )  
+          str <<  "-res[#][1]*" << m_str[1].SubStringFrom(1);
+        else
+          str <<  "+res[#][1]*" << m_str[1];
+      }
+    }
+    else if( m_str[1] == m_str[2] && !m_str[1].IsEmpty() )  {
+      added = true;
+      if( !m_str[0].IsEmpty() )  {
+        if( m_str[0].CharAt(0) == '-' )  
+          str <<  "-res[#][0]*" << m_str[0].SubStringFrom(1);
+        else
+          str <<  "res[#][0]*" << m_str[0];
+      }
+      if( m_str[1].CharAt(0) == '-' )  
+        str << "-(res[#][1]+res[#][2])*" << m_str[1].SubStringFrom(1);
+      else  {
+        if( m_str[0].IsEmpty() )  
+          str << "(res[#][1]+res[#][2])*" << m_str[1];
+        else  
+          str << "+(res[#][1]+res[#][2])*" << m_str[1];
+      }
+    }
+    if( !added && (m.t[0] != 0 || m.t[1] != 0 || m.t[2] != 0) )  {  // generic case
+      for( int j=0; j < 3; j++ )  {
+        if( m.t[j] != 0 )  {  // transposed form for hkl
+          int v = Round(m.t[j]*12), base = 12;
+          int denom = esdl::gcd(v, base);
+          if( denom != 1 )  {
+            v /= denom;
+            base /= denom;
+          }
+          olxstr mult(v);  mult << "./"  << base;
+          str << ((m.t[j] > 0) ? (added ? (olxstr("+res[#][") << j << ']') : (olxstr("res[#][") << j << ']')) : (olxstr("-res[#][") << j << ']'));
+          str << '*' << mult;
+          added = true;
+        }
       }
     }
     if( !added )  str << " 0";
+    else          str.Replace('#', olxstr(i));
     str << ';';
   }
   out.Add("  }");
@@ -727,6 +793,40 @@ void ExportSymmLibB()  {
     out.Add("  SpaceGroups.Add(\"") << sg.GetName() << "\", sg);";
   }
   out.SaveToFile("e:/tmp/sgouts.h");
+}
+
+//#define sg_factory_new(base, clazz, sgName) \
+//  (sgName == "p21") ? (base*)(new clazz<ns_P21>) : \
+//  (sgName == "p31") ? (base*)(new clazz<ns_P31>) : \
+//  (base*)(NULL);
+
+
+void ExportSymmLibD()  {
+  TSymmLib& sl = *TSymmLib::GetInstance();
+  TStrList out, def_out;
+  smatd_list ml;
+  olxstr sg_name;
+  def_out.Add("#define FSymmFactory(base, clazz) base* fs_factory##base(const olxstr& sgName) {\\");
+  for( int i=0; i < sl.SGCount(); i++ )  {
+    sg_name = sl.GetGroup(i).GetName();
+    sg_name.Replace('-', '_');
+    sg_name.Replace('/', '_');
+    sg_name.Replace(':', '_');
+    if( i == 0 )  
+      def_out.Add("  if( sgName == \"") << sl.GetGroup(i).GetName() << "\" ) return new clazz<FastSG_" << sg_name << ">;\\";
+    else
+      def_out.Add("  else if( sgName == \"") << sl.GetGroup(i).GetName() << "\" ) return new clazz<FastSG_" << sg_name << ">;\\";
+    out.Add("struct FastSG_") << sg_name << " {";
+    ml.Clear();
+    sl.GetGroup(i).GetMatrices(ml, mattAll);
+    out.Add(" static const short size=") << ml.Count() << ';'; 
+    CodeGen(sl.GetGroup(i), out);
+    out.Add("};");
+  }
+  def_out.Add("  else return NULL);\\");
+  def_out.Add("}");
+  def_out << out;
+  def_out.SaveToFile("e:/tmp/sgouts_x.h");
 }
 
 
