@@ -28,6 +28,24 @@
 
 using namespace std;
 
+
+class ISF_calc {
+public:
+  virtual void CalcSF() = 0;
+};
+
+template <class sg> class SF_calc : public ISF_calc {
+public:
+  virtual void CalcSF() {
+    vec3d pos;
+    TArrayList<vec3d> rv(sg::size);
+    sg::GenPos(pos, rv);
+  }
+};
+
+DefineFSFactory(ISF_calc,SF_calc)
+
+
 void ParseShelxIns(TStrList& ins)  {
   ins.CombineLines('=');
   for( int i=0; i < ins.Count(); i++ )  {
@@ -36,6 +54,18 @@ void ParseShelxIns(TStrList& ins)  {
 }
 
 int main(int argc, char* argv[])  {
+
+  ISF_calc* sf_calc = fs_factory_ISF_calc("P21/n");
+  if( sf_calc != NULL )  {
+    sf_calc->CalcSF();
+    delete sf_calc;
+    SF_calc<FastSG_P_1> sc;
+    sc.CalcSF();
+    double pos[3] = {0.5, 0.5, 0.5};
+    double rv[FastSG_P_1::size][3];
+    FastSG_P_1::GenPos(pos, rv);
+    cout << rv[0][0] << rv[1][0];
+  }
   XModel xm;
   TAtomsInfo ai;
   double defs [] = {0.02, 0.1, 0.01, 0.04, 1};
