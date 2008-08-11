@@ -4332,7 +4332,8 @@ void TMainForm::macShowP(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   }
   else
     FXApp->ShowPart(parts, true);
-  FXApp->CenterView();
+  if( !Options.Contains('m') )
+    FXApp->CenterView();
 }
 //..............................................................................
 void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {

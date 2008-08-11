@@ -667,7 +667,7 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual accupancy\
 
   this_InitMacro(Grad, i&;p, fpNone|fpOne|fpFour );
   this_InitMacro(Split, , fpAny|psCheckFileTypeIns );
-  this_InitMacro(ShowP, , fpAny );
+  this_InitMacro(ShowP, m-do not modify the display view, fpAny );
 
   this_InitMacro(EditAtom, cs-do not clear the selection,fpAny|psCheckFileTypeIns );
   this_InitMacro(EditIns, , fpNone|psCheckFileTypeIns );
