@@ -2329,11 +2329,9 @@ void TMainForm::macKill(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   }
   else  {
     TXAtomPList Atoms;
-    FXApp->FindXAtoms(Cmds.Text(' '), Atoms);
-    if( !Atoms.Count() )  {
-      Error.ProcessingError(__OlxSrcInfo, "wrong atom name(s)" );
-      return;
-    }
+    FXApp->FindXAtoms(Cmds.Text(' '), Atoms, true, Options.Contains('h'));
+    if( Atoms.IsEmpty() )  return;
+
     FUndoStack->Push( FXApp->DeleteXAtoms(Atoms) );
   }
 }
@@ -8417,6 +8415,35 @@ void TMainForm::funGetMouseX(const TStrObjList &Params, TMacroError &E)  {
 //..............................................................................
 void TMainForm::funGetMouseY(const TStrObjList &Params, TMacroError &E)  {
   E.SetRetVal( ::wxGetMousePosition().y );
+}
+//..............................................................................
+void TMainForm::funGetWindowSize(const TStrObjList &Params, TMacroError &E)  {
+  if( Params.IsEmpty() || Params[0].Comparei('main') == 0 )  {
+    wxRect sz = GetRect();
+    E.SetRetVal( olxstr(sz.x) << ',' << sz.y << ',' << sz.width << ',' << sz.height);
+  }
+  else if( Params[0].Comparei("gl") == 0 ) {
+    wxRect sz = FGlCanvas->GetRect();
+    E.SetRetVal( olxstr(sz.x) << ',' << sz.y << ',' << sz.width << ',' << sz.height);
+  }
+  else if( Params[0].Comparei("html") == 0 ) {
+    wxRect sz = FHtml->GetRect();
+    E.SetRetVal( olxstr(sz.x) << ',' << sz.y << ',' << sz.width << ',' << sz.height);
+  }
+  else if( Params[0].Comparei("main-cs") == 0 ) {
+    if( Params.Count() == 1 )  {
+      int w=0, h=0;
+      GetClientSize(&w, &h);
+      E.SetRetVal( olxstr('0') << ',' << '0' << ',' << w << ',' << h);
+    }
+    else if( Params.Count() == 3 )  {
+      int w=Params[1].ToInt(), h=Params[2].ToInt();
+      ClientToScreen(&w, &h);
+      E.SetRetVal( olxstr(w) << ',' << h);
+    }
+  }
+  else
+    E.ProcessingError(__OlxSrcInfo, "undefined window");
 }
 //..............................................................................
 struct main_peak  { 

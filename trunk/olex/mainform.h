@@ -525,6 +525,7 @@ private:
   DefFunc(GetMaterial)
   DefFunc(GetMouseX)
   DefFunc(GetMouseY)
+  DefFunc(GetWindowSize)
   DefFunc(IsOS)
   DefFunc(ExtraZoom)
   DefFunc(HasGUI)

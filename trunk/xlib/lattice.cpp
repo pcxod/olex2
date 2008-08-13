@@ -28,7 +28,10 @@
 #include "estrbuffer.h"
 
 #undef GetObject
-
+// sorts largest -> smallest
+int TLattice_SortFragments(const TNetwork* n1, const TNetwork* n2)  {
+  return n2->NodeCount() - n1->NodeCount();
+}
 //---------------------------------------------------------------------------
 // TLattice function bodies
 //---------------------------------------------------------------------------
@@ -195,6 +198,7 @@ void TLattice::InitBody()  {
   Matrices.Add( M );
   ListAsymmUnit(Atoms, NULL, true);
   Network->Disassemble(Atoms, Fragments, &Bonds);
+  Fragments.QuickSorter.SortSF(Fragments, TLattice_SortFragments);
   for( int i=0; i < Atoms.Count(); i++ )
     Atoms[i]->SetLatId(i);
   TNetPList::QuickSorter.SortSF(Fragments, CompareNets);
@@ -1116,6 +1120,7 @@ void TLattice::Disassemble()  {
 
   // find bonds & fragments
   Network->Disassemble(Atoms, Fragments, &Bonds);
+  Fragments.QuickSorter.SortSF(Fragments, TLattice_SortFragments);
   // restore latId, as some atoms might been removed ny the network
   for( int i=0; i < Atoms.Count(); i++ )
     Atoms[i]->SetLatId(i);
