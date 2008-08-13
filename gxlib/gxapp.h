@@ -308,7 +308,7 @@ public:
 protected:
   void XAtomsByMask(const olxstr& Name, int Mask, TXAtomPList& List);
   void CAtomsByMask(const olxstr& Name, int Mask, TCAtomPList& List);
-  void XAtomsByType(const TBasicAtomInfo& AI, TXAtomPList& List);
+  void XAtomsByType(const TBasicAtomInfo& AI, TXAtomPList& List, bool FindHidden=false);
   void CAtomsByType(const TBasicAtomInfo& AI, TCAtomPList& List);
   void GetSelectedXAtoms(TXAtomPList& List, bool Clear=true);
   void GetSelectedCAtoms(TCAtomPList& List, bool Clear=true);
@@ -317,7 +317,8 @@ public:
   void GetXAtoms(const olxstr& AtomName, TXAtomPList& res);
   // these two do a command line parsing "sel C1 $N C?? C4 to end"
   void FindCAtoms(const olxstr& Atoms, TCAtomPList& List, bool ClearSelection=true);
-  void FindXAtoms(const olxstr& Atoms, TXAtomPList& List, bool ClearSelection=true);
+  void FindXAtoms(const olxstr& Atoms, TXAtomPList& List, bool ClearSelection=true, 
+    bool FindHidden=false);
   /* the function simply checks if there are any invisible bonds connectd to the
    atom. Normally this happens when a Q-peak is renamed
   */

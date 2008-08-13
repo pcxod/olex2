@@ -1090,9 +1090,10 @@ void TGXApp::CAtomsByType(const TBasicAtomInfo &AI, TCAtomPList& List)  {
   }
 }
 //..............................................................................
-void TGXApp::XAtomsByType(const TBasicAtomInfo &AI, TXAtomPList& List) {
+void TGXApp::XAtomsByType(const TBasicAtomInfo &AI, TXAtomPList& List, bool FindHidden) {
   for( int i=0; i < XAtoms.Count(); i++ )  {
-    if( XAtoms[i].Deleted() || !XAtoms[i].Visible() )  continue;
+    if( XAtoms[i].Deleted() )  continue;
+    if( !FindHidden && !XAtoms[i].Visible() )  continue;
     if( XAtoms[i].Atom().GetAtomInfo() == AI )  {
       List.Add( &XAtoms[i] );
     }
@@ -1185,13 +1186,14 @@ void TGXApp::XAtomsByMask(const olxstr &StrMask, int Mask, TXAtomPList& List)  {
   }
 }
 //..............................................................................
-void TGXApp::FindXAtoms(const olxstr &Atoms, TXAtomPList& List, bool ClearSelection)  {
+void TGXApp::FindXAtoms(const olxstr &Atoms, TXAtomPList& List, bool ClearSelection, bool FindHidden)  {
   int ind, mask;
   TXAtom *XAFrom, *XATo;
   if( Atoms.IsEmpty() )  {  // return all atoms
     List.SetCapacity( List.Count() + XAtoms.Count() );
     for( int i=0; i < XAtoms.Count(); i++ )  {
-      if( XAtoms[i].Deleted() || !XAtoms[i].Visible() ) continue;
+      if( XAtoms[i].Deleted() )  continue; 
+      if( !FindHidden && !XAtoms[i].Visible() ) continue;
       List.Add( &XAtoms[i] );
     }
     return;
@@ -1206,11 +1208,11 @@ void TGXApp::FindXAtoms(const olxstr &Atoms, TXAtomPList& List, bool ClearSelect
       GetSelectedXAtoms(List, ClearSelection);
       continue;
     }
-    if( !Tmp.Comparei("to") || !Tmp.Comparei(">") )  {
-      if( (i+1) < Toks.Count() && List.Count() )  {
+    if( !Tmp.Comparei("to") || !Tmp.Compare(">") )  {
+      if( (i+1) < Toks.Count() && !List.IsEmpty() )  {
         i++;
         XATo = NULL;
-        if( !Toks.String(i).Comparei("end") )  ;
+        if( !Toks[i].Comparei("end") )  ;
         else  {
           XATo = GetXAtom( Toks[i], ClearSelection );
           if( XATo == NULL )
@@ -1219,7 +1221,8 @@ void TGXApp::FindXAtoms(const olxstr &Atoms, TXAtomPList& List, bool ClearSelect
         XAFrom = List[List.Count()-1];
         for( int j=0; j < XAtoms.Count(); j++ )  {
           TXAtom& XA = XAtoms[j];
-          if( XA.Deleted() || !XA.Visible() ) continue;
+          if( XA.Deleted() ) continue;
+          if( !FindHidden && !XA.Visible() )  continue;
           if( XATo != NULL )  {
             if( CompareStr(XA.Atom().GetLabel(), XAFrom->Atom().GetLabel(), true) > 0 &&
                 CompareStr(XA.Atom().GetLabel(), XATo->Atom().GetLabel(), true) < 0 )  List.Add( &XA );
@@ -1234,11 +1237,11 @@ void TGXApp::FindXAtoms(const olxstr &Atoms, TXAtomPList& List, bool ClearSelect
     }
     if( Tmp.CharAt(0) == '$' )  {
       Tmp = Tmp.SubStringFrom(1);
-      if( Tmp.Length() )  {
+      if( !Tmp.IsEmpty() )  {
         BAI = AtomsInfo()->FindAtomInfoBySymbol(Tmp);
         if( BAI == NULL )
           throw TInvalidArgumentException(__OlxSourceInfo, olxstr("atom type=") << Tmp);
-        XAtomsByType(*BAI, List);
+        XAtomsByType(*BAI, List, FindHidden);
       }
       continue;
     }

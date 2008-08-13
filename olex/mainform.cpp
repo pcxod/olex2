@@ -566,7 +566,7 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual accupancy\
   this_InitMacro(AZoom, , fpAny^fpNone );
   this_InitMacro(BRad, , fpOne );
 
-  this_InitMacro(Kill, , fpAny^fpNone );
+  this_InitMacro(Kill, h-kill hidden atoms, fpAny^fpNone );
   this_InitMacroAD(LS, LS, EmptyString, fpOne|fpTwo|psCheckFileTypeIns,
 "Sets refinement method and/or the number of iterations.");
   this_InitMacroD(Plan, EmptyString, fpOne|psCheckFileTypeIns,
@@ -906,6 +906,7 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual accupancy\
 
   this_InitFuncD(GetMouseX, fpNone, "Returns current mouse X position" );
   this_InitFuncD(GetMouseY, fpNone, "Returns current mouse Y position" );
+  this_InitFuncD(GetWindowSize, fpNone|fpOne|fpThree, "Returns size of the requested window, main window by default" );
   this_InitFuncD(IsOS, fpOne, "Returns true if current system Windows [win], Linux/GTK [linux], Mac [mac]" );
   this_InitFuncD(ExtraZoom, fpNone|fpOne, "Sets/reads current extra zoom (default zoom correction)" );
   this_InitFuncD(HasGUI, fpNone, "Returns if true if Olex2 is built with GUI" );
