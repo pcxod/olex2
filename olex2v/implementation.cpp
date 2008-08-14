@@ -12,6 +12,7 @@
 #include "xatom.h"
 #include "xbond.h"
 #include "gllabels.h"
+#include "shellutil.h"
 
 TOlexViewer* TOlexViewer::Instance = NULL;
 
@@ -70,6 +71,21 @@ TOlexViewer::TOlexViewer(HDC windowDC, int w, int h) : WindowDC(windowDC) {
   GXApp->CalcProbFactor(50);
   GXApp->EnableSelection(false);
   DefDS = olxv_DrawStyleTelp;
+  
+  DataDir = TShellUtil::GetSpecialFolderLocation(fiAppData);
+#ifdef __WIN32__
+  #ifdef _UNICODE
+    DataDir << "Olex2u/";
+  #else
+    DataDir << "Olex2/";
+  #endif
+#endif
+
+  if( TEFile::FileExists(DataDir + "default.glsp") )
+    LoadScene(DataDir + "default.glsp");
+  if( TEFile::FileExists(DataDir + "default.glds") )
+    LoadStyle(DataDir + "default.glds");
+  
 }
 TOlexViewer::~TOlexViewer()  {
   Instance = NULL;
@@ -196,6 +212,30 @@ void TOlexViewer::DrawStyle(short style)  {
   }
 }
 
+void TOlexViewer::LoadStyle(const olxstr& _styleFile)  {
+  olxstr styleFile( TEFile::ChangeFileExt(_styleFile, "glds"));
+  try  {
+    if( TEFile::FileExists(styleFile) )  {
+      TDataFile df;
+      df.LoadFromXLFile(styleFile);
+      GXApp->GetRender().Styles()->FromDataItem(df.Root().FindItem("style"));
+      GXApp->CreateObjects( true );
+    }
+  }
+  catch( ... )  {  }  // be quite
+}
+void TOlexViewer::LoadScene(const olxstr& _sceneFile)  {
+  olxstr sceneFile( TEFile::ChangeFileExt(_sceneFile, "glsp"));
+  try  {
+    if( TEFile::FileExists(sceneFile) )  {
+      TDataFile df;
+      df.LoadFromXLFile(sceneFile);
+      GXApp->GetRender().LightModel.FromDataItem(df.Root().FindItem("Scene_Properties"));
+    }
+  }
+  catch( ... )  {  }  // be quite
+}
+
 bool TOlexViewer::executeMacro(const olxstr& cmdLine)  {
   return false;
 }
@@ -267,6 +307,12 @@ void olxv_ShowCell(bool v)  {
 }
 void olxv_DrawStyle(short style)  {
   if( TOlexViewer::Instance != NULL )  TOlexViewer::Instance->DrawStyle(style);
+}
+void olxv_LoadScene(const char* FN)  {
+  if( TOlexViewer::Instance != NULL )  TOlexViewer::Instance->LoadScene(FN);
+}
+void olxv_LoadStyle(const char* FN)  {
+  if( TOlexViewer::Instance != NULL )  TOlexViewer::Instance->LoadStyle(FN);
 }
 
 BOOL APIENTRY DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved)  {

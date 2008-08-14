@@ -212,6 +212,8 @@ TGXApp::TGXApp(const olxstr &FileName):TXApp(FileName)  {
   FDUnitCell->Visible(false);
   FDBasis = new TDBasis("DBasis", FGlRender);
   FDBasis->Visible(false);
+  TXAtom::Init(FGlRender);
+  TXBond::Init(FGlRender);
   FProbFactor = 50;
   ExtraZoom = 1.25;
 

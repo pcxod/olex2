@@ -23,8 +23,10 @@
 #include "glgroup.h"
 
 //..............................................................................
-bool TXAtomStylesClear::Enter(const IEObject *Sender, const IEObject *Data)
-{  TXAtom::FAtomParams = NULL; return true; }
+bool TXAtomStylesClear::Enter(const IEObject *Sender, const IEObject *Data)  {  
+  TXAtom::FAtomParams = NULL; 
+  return true; 
+}
 //..............................................................................
 bool TXAtomStylesClear::Exit(const IEObject *Sender, const IEObject *Data)
 {  TXAtom::ValidateAtomParams(); return true; }
@@ -55,8 +57,7 @@ TXAtom::TXAtom(const olxstr& collectionName, TSAtom& A, TGlRender *Render) :
   Params().Resize(2);
   Params()[0] = 1;
   Params()[1] = 1;
-  if( !FStaticObjects.Count() )  CreateStaticPrimitives();
-  if( !FXAtomStylesClear ) FXAtomStylesClear = new TXAtomStylesClear(Render);
+  if( FStaticObjects.IsEmpty() )  CreateStaticPrimitives();
   // the objects will be automatically deleted by the corresponding action collections
 }
 //..............................................................................
@@ -257,7 +258,7 @@ void TXAtom::Create(const olxstr& cName)  {
 }
 //..............................................................................
 TXAtom::~TXAtom()  {
-  if( FPrimitiveParams.Count() != 0 )  {
+  if( !FPrimitiveParams.IsEmpty() )  {
     for( int i=0; i < FPrimitiveParams.Count(); i++ )
       delete (TGlPrimitiveParams*)FPrimitiveParams[i];
     FPrimitiveParams.Clear();
@@ -633,7 +634,7 @@ void TXAtom::UpdatePrimitives(int32_t Mask)  {
 //float TXAtom::Radius(){  return FParams()[0]; }
 //..............................................................................
 void TXAtom::ValidateAtomParams() {
-  if( !FAtomParams )  {
+  if( FAtomParams == NULL )  {
     FAtomParams =   TGlRender::GetStyles()->Style("AtomParams");
     if( !FAtomParams )  {
       FAtomParams = TGlRender::GetStyles()->NewStyle("AtomParams");
