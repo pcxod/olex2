@@ -48,7 +48,6 @@ TXBond::TXBond(const olxstr& collectionName, TSBond& B, TGlRender *R) :
   }
   Params()[4] = 0.8;
   if( !FStaticObjects.Count() )  CreateStaticPrimitives();
-  if( !FXBondStylesClear )  FXBondStylesClear = new TXBondStylesClear(R);
   // the objects will be automatically deleted by the corresponding action collections
 }
 //..............................................................................

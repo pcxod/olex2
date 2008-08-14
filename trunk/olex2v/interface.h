@@ -53,6 +53,7 @@ class TOlexViewer : public olex::IOlexProcessor {
   int Width, Height;
   TGXApp* GXApp;
   short DefDS;
+  olxstr DataDir;
 public:
   TOlexViewer(HDC windowDC, int w, int h);
   ~TOlexViewer();
@@ -66,6 +67,8 @@ public:
   void ShowQPeaks(short what);
   void ShowCell(bool v);
   void DrawStyle(short style);
+  void LoadStyle(const olxstr& styleFile);
+  void LoadScene(const olxstr& sceneFile);
     virtual bool executeMacro(const olxstr& cmdLine);
     virtual void print(const olxstr& Text, const short MessageType = olex::mtNone);
     virtual bool executeFunction(const olxstr& funcName, olxstr& retValue);
@@ -95,5 +98,7 @@ extern "C" {
   DllExportA void DllExportB olxv_ShowQPeaks(short what /* bonds, atoms, none*/);
   DllExportA void DllExportB olxv_ShowCell(bool v);
   DllExportA void DllExportB olxv_DrawStyle(short style);
+  DllExportA void DllExportB olxv_LoadStyle(const char* FN);
+  DllExportA void DllExportB olxv_LoadScene(const char* FN);
 };  // extern "C"
 #endif

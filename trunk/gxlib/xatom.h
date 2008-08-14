@@ -115,8 +115,12 @@ public:
 
   void UpdatePrimitiveParams(TGlPrimitive *GlP);
   void OnPrimitivesCleared();
-
   void Quality(const short Val);
+
+  static void Init(TGlRender* glr)  {
+    if( FXAtomStylesClear == NULL ) 
+      FXAtomStylesClear = new TXAtomStylesClear(glr);
+  }
 };
 
 EndGxlNamespace()

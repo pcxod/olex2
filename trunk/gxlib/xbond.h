@@ -79,6 +79,11 @@ public:
   void OnPrimitivesCleared();
   void Quality(const short Val);
   void BondUpdated();
+
+  static void Init(TGlRender* glr)  {
+    if( FXBondStylesClear == NULL ) 
+      FXBondStylesClear = new TXBondStylesClear(glr);
+  }
 };
 
 
