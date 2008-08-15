@@ -16,6 +16,7 @@
 #include "symmlib.h"
 #include "sr_fft.h"
 #include "unitcell.h"
+#include "chemdata.h"
 
 TXApp::TXApp(const olxstr &basedir) : TBasicApp(basedir), Library(EmptyString, this)  {
   try  {
@@ -105,56 +106,58 @@ void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F)  {
   const static double EQ_PI = 8*QRT(M_PI);
   const static double T_PI = 2*M_PI;
   const static double TQ_PI = 2*QRT(M_PI);
+  static const double ev_angstrom  = 6626.0755 * 2.99792458 / 1.60217733;
+  double WaveLength = 0.71073;
 
   // the thermal ellipsoid scaling factors
   double BM[6] = {hkl2c[0].Length(), hkl2c[1].Length(), hkl2c[2].Length(), 0, 0, 0};
-  BM[3] = BM[1]*BM[2];
-  BM[4] = BM[0]*BM[2];
-  BM[5] = BM[0]*BM[1];
+  BM[3] = 2*BM[1]*BM[2];
+  BM[4] = 2*BM[0]*BM[2];
+  BM[5] = 2*BM[0]*BM[1];
   BM[0] *= BM[0];
   BM[1] *= BM[1];
   BM[2] *= BM[2];
-
-  TScattererLib scat_lib(9);
+  
+  cm_Element* carb = XElementLib::FindBySymbol("C");
+  compd carb_fpfdp = carb->CalcFpFdp(ev_angstrom/WaveLength);
   TPtrList<TBasicAtomInfo> bais;
   TPtrList<TCAtom> alist;
   double *Ucifs = new double[6*au.AtomCount() + 1];
-  TTypeList< AnAssociation2<TLibScatterer*, double> > scatterers;
+  TTypeList< AnAssociation3<cm_Element*, compd, compd> > scatterers;
   for( int i=0; i < au.AtomCount(); i++ )  {
     TCAtom& ca = au.GetAtom(i);
     if( ca.IsDeleted() || ca.GetAtomInfo() == iQPeakIndex )  continue;
     int ind = bais.IndexOf( &ca.GetAtomInfo() );
     if( ind == -1 )  {
       if( ca.GetAtomInfo() == iDeuteriumIndex ) // treat D as H
-        scatterers.AddNew<TLibScatterer*, double>(scat_lib.Find('H'), 0.0 );
+        scatterers.AddNew<cm_Element*,compd,compd>(XElementLib::FindBySymbol("H"), 0, 0);
       else 
-        scatterers.AddNew<TLibScatterer*, double>(scat_lib.Find(ca.GetAtomInfo().GetSymbol()), 0.0 );
-      
-      ind = scatterers.Count() -1;
-      if( scatterers[ind].GetA() == NULL ) {
+        scatterers.AddNew<cm_Element*,compd,compd>(XElementLib::FindBySymbol(ca.GetAtomInfo().GetSymbol()), 0, 0);
+     
+      if( scatterers.Last().GetA() == NULL ) {
         delete [] Ucifs;
         throw TFunctionFailedException(__OlxSourceInfo, olxstr("could not locate scatterer: ") << ca.GetAtomInfo().GetSymbol() );
       }
       bais.Add( &ca.GetAtomInfo() );
+      scatterers.Last().C() = scatterers.Last().GetA()->CalcFpFdp(ev_angstrom/WaveLength);
+      scatterers.Last().C() -= scatterers.Last().GetA()->z;
+      ind = scatterers.Count() - 1;
     }
     ca.SetTag(ind);
     ind = alist.Count()*6;
     alist.Add(&ca); 
     TEllipsoid* elp = ca.GetEllipsoid();
     if( elp != NULL )  {
-      elp->GetQuad(quad);
-      au.UcifToUcart(quad);
-      for( int k=0; k < 6; k++ )  {
-        Ucifs[ind+k] = quad[k];
-        Ucifs[ind+k] *= BM[k];
-        Ucifs[ind+k] *= -TQ_PI;
-      }
+      elp->GetQuad(quad);  // default is Ucart
+      au.UcartToUcif(quad);
+      for( int k=0; k < 6; k++ )
+        Ucifs[ind+k] = -TQ_PI*quad[k]*BM[k];
     }
     else  {
       if( ca.GetAtomInfo() == iHydrogenIndex && ca.GetUisoVar() < 0 )  {
         int ai = ca.GetAfixAtomId();
         if( ai == -1 )  {
-          delete Ucifs;
+          delete [] Ucifs;
           throw TFunctionFailedException(__OlxSourceInfo, "bad Uiso");
         }
         Ucifs[ind] = fabs(au.GetAtom(ai).GetUiso()*ca.GetUisoVar());
@@ -171,44 +174,42 @@ void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F)  {
     const TReflection& ref = refs[i];
     ref.MulHkl(hkl, hkl2c);
     const double d_s2 = hkl.QLength()*0.25;
-    for( int j=0; j < scatterers.Count(); j++)
-      scatterers[j].B() = scatterers[j].GetA()->Calc_sq(d_s2);
-    double a = 0, b = 0;
+    for( int j=0; j < scatterers.Count(); j++)  {
+      scatterers[j].B() = scatterers[j].GetA()->gaussians->calc_sq(d_s2);
+      //scatterers[j].B() += scatterers[j].GetC();
+    }
+    compd ir;
     for( int j=0; j < alist.Count(); j++ )  {
       crd = alist[j]->ccrd();
-      double la=0, lb=0;
+      compd l;
       for( int k=0; k < ml.Count(); k++ )  {
         const smatd& mt = ml[k];
         ref.MulHkl(hkl, mt);
-        double tv =  hkl[0]*(mt.t[0]+crd[0]);  // scattering vector + phase shift
-               tv += hkl[1]*(mt.t[1]+crd[1]);
-               tv += hkl[2]*(mt.t[2]+crd[2]);
-        tv *= T_PI;
+        double tv =  T_PI*hkl.DotProd(mt.t+crd);  // scattering vector + phase shift
         double ca, sa;
         SinCos(tv, &sa, &ca);
         if( alist[j]->GetEllipsoid() != NULL )  {
           double* Q = &Ucifs[j*6];  // pick up the correct ellipsoid
           double B = (Q[0]*hkl[0]*hkl[0] + Q[1]*hkl[1]*hkl[1] + Q[2]*hkl[2]*hkl[2] + 
-            2*Q[3]*hkl[1]*hkl[2] + 2*Q[4]*hkl[0]*hkl[2] + 2*Q[5]*hkl[0]*hkl[1]);
+            Q[3]*hkl[1]*hkl[2] + Q[4]*hkl[0]*hkl[2] + Q[5]*hkl[0]*hkl[1]);
           B = exp( B );
-          la += B*ca;
-          lb += B*sa;
+          l.Re() += B*ca;
+          l.Im() += B*sa;
         }
         else  {
-          la += ca;
-          lb += sa;
+          l.Re() += ca;
+          l.Im() += sa;
         }
       }
-      double scv = scatterers[ alist[j]->GetTag() ].GetB();
-      if( alist[j]->GetEllipsoid() == NULL )  {
+      compd scv = scatterers[ alist[j]->GetTag() ].GetB();
+      if( alist[j]->GetEllipsoid() == NULL )
         scv *= exp( Ucifs[j*6]*d_s2 );
-      }
+      
       scv *= alist[j]->GetOccp();
-      a += scv * la;
-      b += scv * lb;
+      scv *= l;
+      ir += scv;
     }
-    F[i].Re() = a;
-    F[i].Im() = b;
+    F[i] = ir;
   }
   delete [] Ucifs;
   au.InitAtomIds();
