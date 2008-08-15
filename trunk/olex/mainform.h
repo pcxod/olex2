@@ -555,7 +555,9 @@ public:
     DefSceneP,        // default scene parameters file
     DataDir,
     TutorialDir,
-    PluginFile;
+    PluginFile,
+    BadRefsFile,
+    RefineDataFile;
   TGlMaterial HelpFontColorCmd, HelpFontColorTxt,
               ExecFontColor, InfoFontColor,
               WarningFontColor, ErrorFontColor, ExceptionFontColor;
@@ -598,8 +600,8 @@ private:
 
   bool RecentFilesTable(const olxstr &FN, bool TableDef=true);
   bool QPeaksTable(const olxstr &FN, bool TableDef=true);
-  bool BadReflectionsTable(TLst *Lst, const olxstr &FN, bool TableDef=true);
-  bool RefineDataTable(TLst *Lst, const olxstr &FN, bool TableDef=true);
+  void BadReflectionsTable(bool TableDef=true);
+  void RefineDataTable(bool TableDef=true);
 
   TAccellList<olxstr> AccShortcuts;
   TAccellList<TMenuItem*> AccMenus;

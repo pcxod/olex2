@@ -571,7 +571,7 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual accupancy\
 "Sets refinement method and/or the number of iterations.");
   this_InitMacroD(Plan, EmptyString, fpOne|psCheckFileTypeIns,
 "Sets the number of Fuorier peaks to be found from the difference map");
-  this_InitMacro(Omit, , fpThree | psCheckFileTypeIns);
+  this_InitMacro(Omit, , fpOne|fpThree | psCheckFileTypeIns);
   this_InitMacro(UpdateWght, , fpAny | psCheckFileTypeIns );
 
   this_InitMacro(Exec, s&;o&;d, fpAny^fpNone );
@@ -1110,6 +1110,8 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual accupancy\
   #endif
 #endif
 
+  BadRefsFile = DataDir + "badrefs.htm";
+  RefineDataFile = DataDir + "refinedata.htm";
   DictionaryFile = XA->BaseDir() + "dictionary.txt";
   PluginFile =  XA->BaseDir() + "plugins.xld";
   FHtmlIndexFile = TutorialDir+"index.htm";
@@ -2938,116 +2940,99 @@ bool TMainForm::QPeaksTable(const olxstr &FN, bool TableDef)  {
   return true;
 }
 //..............................................................................
-bool TMainForm::BadReflectionsTable(TLst *Lst, const olxstr &FN, bool TableDef)  {
-  int j = 0, rc = 0;
-  float Threshold = 5;
-  TLstRef *Ref;
+void TMainForm::BadReflectionsTable(bool TableDef)  {
+  if( FXApp->CheckFileType<TIns>() )
+    Lst.SynchroniseOmits( (TIns*)FXApp->XFile().GetLastLoader() );
+
+  int rc = 0;
+  for( int i=0; i < Lst.DRefCount(); i++ )  {
+    if( Lst.DRef(i).Deleted )  continue;
+    rc++;
+  }
   TTTable<TStrList> Table;
   TStrList Output;
-  olxstr Tmp;
-  for( int i=0; i < Lst->DRefCount(); i++ )  {
-    Ref = Lst->DRef(i);
-    if( Ref->DF >= Threshold )  rc++;
-  }
-  if( !rc )  return false;
   Table.Resize(rc, 5);
   Table.ColName(0) = "H";
   Table.ColName(1) = "K";
   Table.ColName(2) = "L";
   Table.ColName(3) = "&Delta;(F<sup>2</sup>)/esd";
-  for( int i=0; i < Lst->DRefCount(); i++ )  {
-    Ref = Lst->DRef(i);
-    if( Ref->DF >= Threshold )  {
-      Table[j].String(0) = Ref->H;
-      Table[j].String(1) = Ref->K;
-      Table[j].String(2) = Ref->L;
-      if( Ref->DF >= 10 )  {
-        Tmp = "<font color=\'red\'>";
-        Tmp << Ref->DF << "</font>";
-      }
-      else
-        Tmp = Ref->DF;
+  rc = 0;
+  for( int i=0; i < Lst.DRefCount(); i++ )  {
+    TLstRef& Ref = Lst.DRef(i);
+    if( Ref.Deleted )  continue;
+    Table[rc][0] = Ref.H;
+    Table[rc][1] = Ref.K;
+    Table[rc][2] = Ref.L;
+    if( Ref.DF >= 10 ) 
+      Table[rc][3] << "<font color=\'red\'>" << Ref.DF << "</font>";
+    else
+      Table[rc][3] = Ref.DF;
 
-      Table[j].String(3) = Tmp;
-      Tmp = "<a href='omit ";
-      Tmp << Ref->H <<  ' ' << Ref->K << ' ' << Ref->L;
-      Tmp << "\'>" << "omit" << "</a>";
-      Table[j].String(4) = Tmp;
-      j++;
-    }
+    Table[rc][4] << "<a href='omit " << Ref.H <<  ' ' << Ref.K << ' ' << Ref.L <<
+      "\'>" << "omit" << "</a>";
+    rc++;
   }
   Table.CreateHTMLList(Output, EmptyString, true, false, TableDef);
-  TUtf8File::WriteLines( FN, Output, false );
-  return true;
+  TUtf8File::WriteLines( BadRefsFile, Output, false );
 }
 //..............................................................................
-bool TMainForm::RefineDataTable(TLst *Lst, const olxstr &FN, bool TableDef)
-{
+void TMainForm::RefineDataTable(bool TableDef)  {
   TTTable<TStrList> Table;
   TStrList Output;
-  olxstr Tmp;
 
   Table.Resize(13, 4);
 
-  Table.Row(0)->String(0) = "R1(Fo > 4sig(Fo))";
-  if( Lst->R1() > 0.1 )
-  { Tmp = "<font color=\'red\'>";   Tmp << Lst->R1() << "</font>";  }
+  Table[0][0] = "R1(Fo > 4sig(Fo))";
+  if( Lst.R1() > 0.1 )
+    Table[0][1] << "<font color=\'red\'>" << Lst.R1() << "</font>";
   else
-  { Tmp = Lst->R1();  }
-  Table[0].String(1) = Tmp;
+    Table[0][1] = Lst.R1();
 
-  Table[0].String(2) = "R1(all data)";
-  if( Lst->R1a() > 0.1 )
-  { Tmp = "<font color=\'red\'>";   Tmp << Lst->R1a() << "</font>";  }
+  Table[0][2] = "R1(all data)";
+  if( Lst.R1a() > 0.1 )
+    Table[0][3] << "<font color=\'red\'>" << Lst.R1a() << "</font>";
   else
-  { Tmp = Lst->R1a();  }
-  Table[0].String(3) = Tmp;
+   Table[0][3] = Lst.R1a();
 
-  Table[0].String(0) = "wR2";
-  if( Lst->wR2() > 0.2 )
-  { Tmp = "<font color=\'red\'>";   Tmp << Lst->wR2() << "</font>";  }
+  Table[1][0] = "wR2";
+  if( Lst.wR2() > 0.2 )
+     Table[1][1] << "<font color=\'red\'>" << Lst.wR2() << "</font>"; 
   else
-  { Tmp = Lst->wR2();  }
-  Table[1].String(1) = Tmp;
+    Table[1][1] = Lst.wR2();
 
-  Table[1].String(2) = "GooF";
-  if( fabs(Lst->S()-1) > 0.5 )
-  { Tmp = "<font color=\'red\'>";   Tmp << Lst->S() << "</font>";  }
+  Table[1][2] = "GooF";
+  if( fabs(Lst.S()-1) > 0.5 )
+    Table[1][3] << "<font color=\'red\'>" << Lst.S() << "</font>";
   else
-  { Tmp = Lst->S();  }
-  Table[1].String(3) = Tmp;
+    Table[1][3] = Lst.S();  
 
-  Table[2].String(0) = "GooF(Restr)";
-  if( fabs(Lst->RS()-1) > 0.5 )
-  { Tmp = "<font color=\'red\'>";   Tmp << Lst->RS() << "</font>";  }
+  Table[2][0] = "GooF(Restr)";
+  if( fabs(Lst.RS()-1) > 0.5 )
+    Table[2][1] << "<font color=\'red\'>" << Lst.RS() << "</font>";
   else
-  { Tmp = Lst->RS();  }
-  Table[2].String(1) = Tmp;
+    Table[2][1] = Lst.RS();
 
-  Table[2].String(2) = "Highest peak";
-  if( Lst->Peak() > 1.5 )
-  { Tmp = "<font color=\'red\'>";   Tmp << Lst->Peak() << "</font>";  }
+  Table[2][2] = "Highest peak";
+  if( Lst.Peak() > 1.5 )
+    Table[2][3] << "<font color=\'red\'>" << Lst.Peak() << "</font>";
   else
-  { Tmp = Lst->Peak();  }
-  Table[2].String(3) = Tmp;
+    Table[2][3] = Lst.Peak(); 
 
-  Table[3].String(0) = "Deepest hole";
-  if( fabs(Lst->Hole()) > 1.5 )
-  { Tmp = "<font color=\'red\'>";   Tmp << Lst->Hole() << "</font>";  }
+  Table[3][0] = "Deepest hole";
+  if( fabs(Lst.Hole()) > 1.5 )
+    Table[3][1] << "<font color=\'red\'>" << Lst.Hole() << "</font>";
   else
-  { Tmp = Lst->Hole();  }
-  Table[3].String(1) = Tmp;
+    Table[3][1] = Lst.Hole();
 
-  Table[3].String(2) = "Params";             Table.Row(3)->String(3) = Lst->Params();
-  Table[4].String(0) = "Refs(total)";        Table.Row(4)->String(1) = Lst->TotalRefs();
-  Table[4].String(2) = "Refs(uni)";          Table.Row(4)->String(3) = Lst->UniqRefs();
-  Table[5].String(0) = "Refs(Fo > 4sig(Fo))";Table.Row(5)->String(1) = Lst->Refs4sig();
-  Table[5].String(2) = "R(int)";             Table.Row(5)->String(3) = Lst->Rint();
-  Table[6].String(0) = "R(sigma)";           Table.Row(6)->String(1) = Lst->Rsigma();
+  Table[3][2] = "Params";             Table[3][3] = Lst.Params();
+  Table[4][0] = "Refs(total)";        Table[4][1] = Lst.TotalRefs();
+  Table[4][2] = "Refs(uni)";          Table[4][3] = Lst.UniqRefs();
+  Table[5][0] = "Refs(Fo > 4sig(Fo))";Table[5][1] = Lst.Refs4sig();
+  Table[5][2] = "R(int)";             Table[5][3] = Lst.Rint();
+  Table[6][0] = "R(sigma)";           Table[6][1] = Lst.Rsigma();
 
   Table.CreateHTMLList(Output, EmptyString, false, false, TableDef);
-  TUtf8File::WriteLines( FN, Output, false );
-  return true;
+  TUtf8File::WriteLines( RefineDataFile, Output, false );
 }
 //..............................................................................
 void TMainForm::OnMouseMove(int x, int y)  {

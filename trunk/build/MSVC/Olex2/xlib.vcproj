@@ -727,6 +727,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\xlib\xapp.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\xlib\xbase.h"
 				>
 			</File>

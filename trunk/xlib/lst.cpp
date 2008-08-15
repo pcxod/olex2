@@ -9,14 +9,15 @@
 #include "lst.h"
 #include "efile.h"
 #include "etable.h"
+#include "ins.h"
 
-int SortTrefTries(const void* I1, const void* I2) {
-  if( ((TTrefTry*)I1)->CFOM < ((TTrefTry*)I2)->CFOM )  return -1;
-  if( ((TTrefTry*)I1)->CFOM > ((TTrefTry*)I2)->CFOM )  return 1;
-  int res = ((TTrefTry*)I1)->Semivariants.Compare( ((TTrefTry*)I2)->Semivariants );
+int SortTrefTries(const TTrefTry& I1, const TTrefTry& I2) {
+  if( I1.CFOM < I2.CFOM )  return -1;
+  if( I1.CFOM > I2.CFOM )  return 1;
+  int res = I1.Semivariants.Compare( I2.Semivariants );
   if( !res )  {
-    if( ((TTrefTry*)I1)->NQual > ((TTrefTry*)I2)->NQual )  return -1;
-    if( ((TTrefTry*)I1)->NQual < ((TTrefTry*)I2)->NQual )  return 1;
+    if( I1.NQual > I2.NQual )  return -1;
+    if( I1.NQual < I2.NQual )  return 1;
     return 0;
   }
   return res;
@@ -26,37 +27,19 @@ int SortTrefTries(const void* I1, const void* I2) {
 // TInsCFile function bodies
 //----------------------------------------------------------------------------//
 TLst::TLst()  {
-  FDRefs = new TEList;
-  FSplitAtoms = new TEList;
-  PattSolutions = TrefTries = NULL;
-
   FR1 = FwR2 = FS = FRS = 0;
   FParams = FTotalRefs = FUniqRefs = 0;
   FPeak = FHole = 0;
   FLoaded = false;
 }
 //..............................................................................
-TLst::~TLst()  {
-  Clear();
-  delete FDRefs;
-  delete FSplitAtoms;
-  if( TrefTries != NULL )  delete TrefTries;
-  if( PattSolutions != NULL )  delete PattSolutions;
-}
+TLst::~TLst()  {  return;  }
 //..............................................................................
 void TLst::Clear()  {
-  for( int i=0; i < DRefCount(); i++ )        delete DRef(i);
-  FDRefs->Clear();
-
-  for( int i=0; i < SplitAtomCount(); i++ )   delete SplitAtom(i);
-  FSplitAtoms->Clear();
-
-  for( int i=0; i < TrefTryCount(); i++ )     delete &TrefTry(i);
-  if( TrefTries )  TrefTries->Clear();
-
-  for( int i=0; i < PattSolutionCount(); i++ ) delete &PattSolution(i);
-  if( PattSolutions )  PattSolutions->Clear();
-
+  FDRefs.Clear();
+  FSplitAtoms.Clear();
+  TrefTries.Clear();
+  PattSolutions.Clear();
   FR1 = FR1a = FwR2 = FS = FRS = FRint = FRsig = 0;
   FParams = FTotalRefs = FUniqRefs = FRefs4sig = 0;
   FPeak = FHole = 0;
@@ -124,7 +107,8 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
             LstRef->L = Toks[2+inc].ToInt();
             LstRef->DF = Toks[5+inc].ToDouble();
             LstRef->Res = Toks[7+inc].ToDouble();
-            FDRefs->Add(LstRef);
+            LstRef->Deleted = false;
+            FDRefs.Add(LstRef);
             Toks.Clear();
             i++;
           }
@@ -140,56 +124,51 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
         while( i < SL.Count() && (SL.String(i).FirstIndexOf("CFOM") == -1) )  {
           Toks.Strtok(SL.String(i), ' ');
           if( Toks.Count() < 7 )  { i++;  continue;  }
-          if( !TrefTries )  TrefTries = new TEList();
-          TTrefTry* trtry = new TTrefTry;
+          TTrefTry& trtry = TrefTries.AddNew();
           int inc = 0, requiredCount = 7;
-          if( Toks.String(0) == '*' )  {  inc ++;  requiredCount++;  }
+          if( Toks[0] == '*' )  {  inc ++;  requiredCount++;  }
           if( Toks.Count() > requiredCount )  {
-            trtry->Try = Toks[0+inc].ToInt();
-            trtry->RAlpha = Toks[1+inc].ToDouble();
-            trtry->NQual = Toks[2+inc].ToDouble();
-            trtry->SigmaM1 = Toks[3+inc].ToDouble();
-            trtry->Mabs = Toks[4+inc].ToDouble();
-            trtry->CFOM = Toks[5+inc].ToDouble();
+            trtry.Try = Toks[0+inc].ToInt();
+            trtry.RAlpha = Toks[1+inc].ToDouble();
+            trtry.NQual = Toks[2+inc].ToDouble();
+            trtry.SigmaM1 = Toks[3+inc].ToDouble();
+            trtry.Mabs = Toks[4+inc].ToDouble();
+            trtry.CFOM = Toks[5+inc].ToDouble();
 
-            trtry->Semivariants.SetSize( (Toks.Count() - 6 - inc) * Toks[inc+6].Length() );
+            trtry.Semivariants.SetSize( (Toks.Count() - 6 - inc) * Toks[inc+6].Length() );
             int bitIndex = 0;
             for( int j= 6 + inc; j < Toks.Count(); j++ )  {
-              if( bitIndex >= trtry->Semivariants.Count() )  break;
+              if( bitIndex >= trtry.Semivariants.Count() )  break;
               for( int k=0; k < Toks[j].Length(); k++ )  {
                 if( Toks[j][k] == '+' )
-                  trtry->Semivariants.Set(bitIndex, true);
+                  trtry.Semivariants.Set(bitIndex, true);
                 bitIndex++;
-                if( bitIndex >= trtry->Semivariants.Count() )  break;
+                if( bitIndex >= trtry.Semivariants.Count() )  break;
               }
             }
-
-            TrefTries->Add(trtry);
             Toks.Clear();
             i++;
           }
         }
-        TrefTries->Sort( SortTrefTries );
+        TrefTries.QuickSorter.SortSF(TrefTries, SortTrefTries );
         TrefT = true;
         continue;
       }
     }
-    if( !PattS )
-    {
+    if( !PattS )  {
       ind = SL.String(i).FirstIndexOf("Solution   1    CFOM =  ");
       if( ind >= 0 )  {
         i += 7;
-        if( !PattSolutions )  PattSolutions = new TEList();
-        TTypeList<TPattAtom>* sol = new TTypeList<TPattAtom>();
-        PattSolutions->Add( sol );
-        while( i < SL.Count() && (SL.String(i).FirstIndexOf("Patterson") == -1) )  {
-          if( SL.String(i).FirstIndexOf("Solution") != -1 )  {
+        TTypeList<TPattAtom>* sol = new TTypeList<TPattAtom>;
+        PattSolutions.Add( sol );
+        while( i < SL.Count() && (SL[i].FirstIndexOf("Patterson") == -1) )  {
+          if( SL[i].FirstIndexOf("Solution") != -1 )  {
             i += 7;
             if( i >= SL.Count() )  break;
             sol = new TTypeList<TPattAtom>();
-            PattSolutions->Add( sol );
+            PattSolutions.Add( sol );
           }
-          Toks.Strtok(SL.String(i), ' ');
+          Toks.Strtok(SL[i], ' ');
           if( Toks.Count() < 6 )  { i++;  continue;  }
           TPattAtom& atom = sol->AddNew();
           atom.SetName( Toks[0] );
@@ -288,7 +267,7 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
             SplitA->PositionB[0] = Toks[12].ToDouble();
             SplitA->PositionB[1] = Toks[13].ToDouble();
             SplitA->PositionB[2] = Toks[14].ToDouble();
-            FSplitAtoms->Add(SplitA);
+            FSplitAtoms.Add(SplitA);
           }
           i++;
         }
@@ -325,42 +304,60 @@ bool TLst::ExportHTML( const short Param, TStrList &Html, bool TableDef)  {
   TTTable<TStrList> Table;
   if( Param == slstReflections )  {
     if( !DRefCount() )  return false;
-    TLstRef *Ref;
     Table.Resize(DRefCount(), 4);
     Table.ColName(0) = "H";
     Table.ColName(1) = "K";
     Table.ColName(2) = "L";
     Table.ColName(3) = "&Delta;(F<sup>2</sup>)/esd";
     for( int i=0; i < DRefCount(); i++ )  {
-      Ref = DRef(i);
-      Table.Row(i)->String(0) = Ref->H;
-      Table.Row(i)->String(1) = Ref->K;
-      Table.Row(i)->String(2) = Ref->L;
-      Table.Row(i)->String(3) = Ref->DF;
+      TLstRef& Ref = DRef(i);
+      if( Ref.Deleted )  continue;
+      Table[i][0] = Ref.H;
+      Table[i][1] = Ref.K;
+      Table[1][2] = Ref.L;
+      Table[i][3] = Ref.DF;
     }
     Table.CreateHTMLList(Html, EmptyString, true, false, TableDef);
     return true;
   }
   if( Param == slslRefineData )  {
     Table.Resize(13, 2);
-    Table.Row(0)->String(0) = "R1 (Fo > 4sig(Fo))"; Table.Row(0)->String(1) = R1();
-    Table.Row(1)->String(0) = "R1 all data";        Table.Row(1)->String(1) = R1a();
-    Table.Row(2)->String(0) = "wR2";                Table.Row(2)->String(1) = wR2();
-    Table.Row(3)->String(0) = "GooF";               Table.Row(3)->String(1) = S();
-    Table.Row(4)->String(0) = "Restrained GooF";    Table.Row(4)->String(1) = RS();
-    Table.Row(5)->String(0) = "Parameters";         Table.Row(5)->String(1) = Params();
-    Table.Row(6)->String(0) = "Highest peak";       Table.Row(6)->String(1) = Peak();
-    Table.Row(7)->String(0) = "Deepest hole";       Table.Row(7)->String(1) = Hole();
-    Table.Row(8)->String(0) = "Total reflections";  Table.Row(8)->String(1) = TotalRefs();
-    Table.Row(9)->String(0) = "Unique reflections"; Table.Row(9)->String(1) = UniqRefs();
-    Table.Row(10)->String(0) = "Reflections with Fo > 4sig(Fo)";   Table.Row(10)->String(1) = UniqRefs();
-    Table.Row(11)->String(0) = "Rint";               Table.Row(11)->String(1) = Rint();
-    Table.Row(12)->String(0) = "Rsigma";               Table.Row(12)->String(1) = Rsigma();
+    Table[0][0] = "R1 (Fo > 4sig(Fo))"; Table[0][1] = R1();
+    Table[1][0] = "R1 all data";        Table[1][1] = R1a();
+    Table[2][0] = "wR2";                Table[2][1] = wR2();
+    Table[3][0] = "GooF";               Table[3][1] = S();
+    Table[4][0] = "Restrained GooF";    Table[4][1] = RS();
+    Table[5][0] = "Parameters";         Table[5][1] = Params();
+    Table[6][0] = "Highest peak";       Table[6][1] = Peak();
+    Table[7][0] = "Deepest hole";       Table[7][1] = Hole();
+    Table[8][0] = "Total reflections";  Table[8][1] = TotalRefs();
+    Table[9][0] = "Unique reflections"; Table[9][1] = UniqRefs();
+    Table[10][0] = "Reflections with Fo > 4sig(Fo)";   Table[10][1] = UniqRefs();
+    Table[11][0] = "Rint";              Table[11][1] = Rint();
+    Table[12][0] = "Rsigma";            Table[12][1] = Rsigma();
     Table.CreateHTMLList(Html, EmptyString, false, false, TableDef);
     return true;
   }
   return false;
 }
 //..............................................................................
+void TLst::SynchroniseOmits(TIns* ins)  {
+  for( int i=0; i < FDRefs.Count(); i++ )  
+    FDRefs[i].Deleted = false;
+  for( int i=0; i < ins->InsCount(); i++ )  {
+    if( ins->InsName(i).Comparei("omit") == 0 )  {
+      const TInsList& ip = ins->InsParams(i);
+      if( ip.Count() != 3 )  continue;
+      vec3d hkl(ip[0].ToInt(), ip[1].ToInt(), ip[2].ToInt());
+      for( int j=0; j < FDRefs.Count(); j++ )  {
+        if( FDRefs[j].H == hkl[0] && FDRefs[j].K == hkl[1] && FDRefs[j].L == hkl[2] )  {
+          FDRefs[j].Deleted = true;
+          break;
+        }
+      }
+    }
+  }
+}
+
 
  

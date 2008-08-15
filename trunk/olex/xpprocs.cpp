@@ -2372,7 +2372,24 @@ void TMainForm::macPlan(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 //..............................................................................
 void TMainForm::macOmit(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   TIns *IF = (TIns*)FXApp->XFile().GetLastLoader();
-  IF->AddIns("OMIT", Cmds );
+  if( Cmds.Count() == 1 )  {
+    if( Cmds[0].IsNumber() )  {
+      double th = Cmds[0].ToDouble();
+      TStrList o(3);
+      for( int i=0; i < Lst.DRefCount(); i++ )  {
+        TLstRef& r = Lst.DRef(i);
+        if( r.DF >= th )  {
+          o[0] = r.H;  o[1] = r.K;  o[2] = r.L;
+          IF->AddIns("OMIT", o, false);
+        }
+      }
+    }
+  }
+  else 
+    IF->AddIns("OMIT", Cmds );
+
+  BadReflectionsTable(false);
+  executeMacro("html.updatehtml");
 }
 //..............................................................................
 void TMainForm::macExec(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
@@ -4022,17 +4039,25 @@ void TMainForm::macLstVar(TStrObjList &Cmds, const TParamList &Options, TMacroEr
 }
 //..............................................................................
 void TMainForm::macDelIns(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  bool isOmit = false;
   TIns *Ins = (TIns*)FXApp->XFile().GetLastLoader();
   if( Cmds[0].IsNumber() )  {
     int insIndex = Cmds[0].ToInt();
+    if( Ins->InsName(insIndex).Comparei("OMIT") == 0 )
+      isOmit = true;
     Ins->DelIns(insIndex);
-    return;
   }
-
-  for( int i=0; i < Ins->InsCount(); i++ )  {
-    if(  !Ins->InsName(i).Comparei(Cmds[0]) )  {
-      Ins->DelIns(i);  i--;  continue;
+  else  {
+    isOmit = (Cmds[0].Comparei("OMIT") == 0);
+    for( int i=0; i < Ins->InsCount(); i++ )  {
+      if( Ins->InsName(i).Comparei(Cmds[0]) == 0 )  {
+        Ins->DelIns(i);  i--;  continue;
+      }
     }
+  }
+  if( isOmit)  {
+    BadReflectionsTable(false);
+    executeMacro("html.updatehtml");
   }
 }
 //..............................................................................
@@ -4235,7 +4260,6 @@ void TMainForm::macGrad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 //..............................................................................
 void TMainForm::macSplit(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
   bool found;
-  TLstSplitAtom *SpA;
   TCAtomPList Atoms;
   olxstr lbl;
   olxstr tmp = Cmds.IsEmpty() ? olxstr("sel") : Cmds.Text(' ');
@@ -4247,22 +4271,22 @@ void TMainForm::macSplit(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     if( CA->GetEllipsoid() == NULL )  continue;
     found = false;
     for( int j=0; j < Lst.SplitAtomCount(); j++ )  {
-      SpA = Lst.SplitAtom(j);
-      if( !SpA->AtomName.Comparei(CA->Label()) )  {
-        lbl = SpA->AtomName;
+      TLstSplitAtom& SpA = Lst.SplitAtom(j);
+      if( !SpA.AtomName.Comparei(CA->Label()) )  {
+        lbl = SpA.AtomName;
         if( lbl.Length() > 3 )  lbl.SetLength(3);
         TCAtom& CA1 = FXApp->XFile().GetAsymmUnit().NewAtom();
         CA1.Assign(*CA);
         CA1.SetLoaderId(liNewAtom);
         CA1.SetPart(1);
         ProcessedAtoms.Add( &CA1 );
-        CA1.ccrd() = SpA->PositionA;
+        CA1.ccrd() = SpA.PositionA;
         CA1.Label() = lbl+'a';
         TCAtom& CA2 = FXApp->XFile().GetAsymmUnit().NewAtom();
         CA2.Assign(*CA);
         CA2.SetLoaderId(liNewAtom);
         CA2.SetPart(2);
-        CA2.ccrd() = SpA->PositionB;
+        CA2.ccrd() = SpA.PositionB;
         CA2.Label() = lbl+'b';
         CA->SetDeleted(true);
         ProcessedAtoms.Add( &CA2 );
@@ -4470,6 +4494,7 @@ void TMainForm::macEditIns(TStrObjList &Cmds, const TParamList &Options, TMacroE
       SL.Strtok( dlg->GetText(), '\n' );
       Ins->ParseHeader(SL);
       FXApp->XFile().LastLoaderChanged();
+      BadReflectionsTable(false);
     }
     else  {
     }
@@ -4502,14 +4527,14 @@ void TMainForm::macEditHkl(TStrObjList &Cmds, const TParamList &Options, TMacroE
     if( Lst.IsLoaded() )  {
       for(int i=0; i < Lst.DRefCount(); i++ )  {
         Tmp = "REM    ";
-        Tmp << Lst.DRef(i)->H << ' ';
-        Tmp << Lst.DRef(i)->K << ' ';
-        Tmp << Lst.DRef(i)->L << ' ';
-        Tmp << "Delta(F^2)/esd=" << Lst.DRef(i)->DF;
-        Tmp << " Resolution=" << Lst.DRef(i)->Res;
+        Tmp << Lst.DRef(i).H << ' ';
+        Tmp << Lst.DRef(i).K << ' ';
+        Tmp << Lst.DRef(i).L << ' ';
+        Tmp << "Delta(F^2)/esd=" << Lst.DRef(i).DF;
+        Tmp << " Resolution=" << Lst.DRef(i).Res;
         SL.Add(Tmp);
         Hkls.Clear();
-        Hkl.AllRefs(Lst.DRef(i)->H, Lst.DRef(i)->K, Lst.DRef(i)->L, FXApp->XFile().GetAsymmUnit(), Hkls);
+        Hkl.AllRefs(Lst.DRef(i).H, Lst.DRef(i).K, Lst.DRef(i).L, FXApp->XFile().GetAsymmUnit(), Hkls);
 
         for( int j=0; j < Hkls.Count(); j++ )
           SL.Add( Hkls[j]->ToNString());
@@ -5310,23 +5335,20 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     olxstr lstFileName = TEFile::ChangeFileExt(FN, "lst");
     if( TEFile::FileExists(lstFileName)  )  {
       Lst.LoadFromFile(lstFileName);
-      if( !BadReflectionsTable(&Lst, DataDir+"badrefs.htm", false) )
-        TEFile::DelFile(DataDir+"badrefs.htm");
-      if( !RefineDataTable(&Lst, DataDir+"refinedata.htm", false) )
-        TEFile::DelFile(DataDir+"refinedata.htm");
+      BadReflectionsTable(false);
+      RefineDataTable(false);
       if( Lst.SplitAtomCount() )  {
-        TLstSplitAtom *SpA;
         TBasicApp::GetLog() << ("The following atom(s) may be split: \n");
         for( int i=0; i < Lst.SplitAtomCount(); i++ )  {
-          SpA = Lst.SplitAtom(i);
-          Tmp = SpA->AtomName;  Tmp.Format(5, true, ' ');
-          Tmp << olxstr::FormatFloat(3, SpA->PositionA[0]);  Tmp.Format(12, true, ' ');
-          Tmp << olxstr::FormatFloat(3, SpA->PositionA[1]);  Tmp.Format(19, true, ' ');
-          Tmp << olxstr::FormatFloat(3, SpA->PositionA[2]);  Tmp.Format(26, true, ' ');
+          TLstSplitAtom& SpA = Lst.SplitAtom(i);
+          Tmp = SpA.AtomName;  Tmp.Format(5, true, ' ');
+          Tmp << olxstr::FormatFloat(3, SpA.PositionA[0]);  Tmp.Format(12, true, ' ');
+          Tmp << olxstr::FormatFloat(3, SpA.PositionA[1]);  Tmp.Format(19, true, ' ');
+          Tmp << olxstr::FormatFloat(3, SpA.PositionA[2]);  Tmp.Format(26, true, ' ');
           Tmp << "& ";
-          Tmp << olxstr::FormatFloat(3, SpA->PositionB[0]);  Tmp.Format(35, true, ' ');
-          Tmp << olxstr::FormatFloat(3, SpA->PositionB[1]);  Tmp.Format(42, true, ' ');
-          Tmp << olxstr::FormatFloat(3, SpA->PositionB[2]);
+          Tmp << olxstr::FormatFloat(3, SpA.PositionB[0]);  Tmp.Format(35, true, ' ');
+          Tmp << olxstr::FormatFloat(3, SpA.PositionB[1]);  Tmp.Format(42, true, ' ');
+          Tmp << olxstr::FormatFloat(3, SpA.PositionB[2]);
           TBasicApp::GetLog() << (Tmp << '\n');
         }
       }
@@ -5370,8 +5392,8 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       }
     }
     else  {
-      TEFile::DelFile(DataDir+"badrefs.htm");
-      TEFile::DelFile(DataDir+"refinedata.htm");
+      TEFile::DelFile(BadRefsFile);
+      TEFile::DelFile(RefineDataFile);
     }
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 //      FXApp->Draw();  // to update the scene just in case...

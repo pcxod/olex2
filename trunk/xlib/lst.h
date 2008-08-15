@@ -5,7 +5,6 @@
 #include "symmat.h"
 #include "bitarray.h"
 #include "estrlist.h"
-#include "elist.h"
 
 BeginXlibNamespace()
 
@@ -14,6 +13,7 @@ const short slstReflections = 1,
 struct TLstRef  {
   short H, K, L;
   double DF, Res;
+  bool Deleted;
 };
 
 struct TLstSplitAtom  {
@@ -54,13 +54,15 @@ public:
 
 };
 
-class TLst: public IEObject
-{
+class TLst: public IEObject  {
 protected:
   double FR1, FR1a, FwR2, FS, FRS, FRint, FRsig;
   int FParams, FTotalRefs, FUniqRefs, FRefs4sig;
   double FPeak, FHole;
-  TEList *FDRefs, *FSplitAtoms, *TrefTries, *PattSolutions;
+  TTypeList<TLstRef> FDRefs;
+  TTypeList<TTrefTry> TrefTries;
+  TTypeList< TTypeList<TPattAtom> > PattSolutions;
+  TTypeList<TLstSplitAtom> FSplitAtoms;
   TTypeList< AnAssociation2<olxstr, olxstr> > ErrorMsgs;
   bool FLoaded;
 public:
@@ -68,21 +70,19 @@ public:
   void Clear();
   virtual ~TLst();
   bool LoadFromFile(const olxstr &FN);
-
+  void SynchroniseOmits(class TIns* ins);
   bool ExportHTML( const short Param, TStrList &Html, bool TableDef=true);
-  inline int DRefCount() const {  return FDRefs->Count(); }
-  inline TLstRef *DRef(int i)  {  return (TLstRef*)FDRefs->Item(i); }
+  inline int DRefCount() const {  return FDRefs.Count(); }
+  inline TLstRef& DRef(int i)  {  return FDRefs[i]; }
+  inline void DelRef(int i)    {  FDRefs.Delete(i);  }
+  inline int SplitAtomCount() const       {  return FSplitAtoms.Count();  }
+  inline TLstSplitAtom& SplitAtom(int i)  {  return FSplitAtoms[i]; }
 
-  inline int SplitAtomCount() const       {  return FSplitAtoms->Count();  }
-  inline TLstSplitAtom* SplitAtom(int i)  {  return (TLstSplitAtom*)FSplitAtoms->Item(i); }
+  inline int TrefTryCount()  const {  return TrefTries.Count(); }
+  inline TTrefTry& TrefTry(int i)  {  return TrefTries[i]; }
 
-  inline int TrefTryCount()  const        {  return (TrefTries!=NULL) ? TrefTries->Count() : 0; }
-  inline TTrefTry& TrefTry(int i)  const  {  return *(TTrefTry*)TrefTries->Item(i); }
-
-  inline int PattSolutionCount()  const   {  return (PattSolutions!=NULL) ? PattSolutions->Count() : 0; }
-  inline TTypeList<TPattAtom>& PattSolution(int i)  const  {
-    return *(TTypeList<TPattAtom>*)PattSolutions->Item(i);
-  }
+  inline int PattSolutionCount()  const {  return PattSolutions.Count(); }
+  inline TTypeList<TPattAtom>& PattSolution(int i) {  return PattSolutions[i];  }
 
   inline bool IsLoaded()     const {  return FLoaded;  }
   inline int ErrMsgCount()   const {  return ErrorMsgs.Count();  }
