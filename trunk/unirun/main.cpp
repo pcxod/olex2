@@ -199,3 +199,4 @@ void DoRun(const olxstr& basedir)  {
     settings.SaveSettings( SettingsFile );
   }
 }
+
