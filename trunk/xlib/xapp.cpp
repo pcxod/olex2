@@ -14,7 +14,6 @@
 
 #include "xmacro.h"
 #include "symmlib.h"
-#include "sr_fft.h"
 #include "unitcell.h"
 #include "chemdata.h"
 

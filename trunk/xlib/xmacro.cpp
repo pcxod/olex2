@@ -21,8 +21,6 @@
 #include "dataitem.h"
 #include "fsext.h"
 
-//#include "ecomplex.h"
-#include "sr_fft.h"
 
 #include <stdarg.h>
 

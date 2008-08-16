@@ -90,5 +90,22 @@ void CreateRotationMatrix(MC& rm, const VC& rv, double ca, double sa)  {
   rm[2][2] = t*rv[2]*rv[2] + ca;
 }
 
+static void SinCos(const double ang, double *sina, double *cosa)  {
+#ifdef __WIN32__
+  _asm  {
+    FLD  ang
+    FSINCOS
+    MOV EAX, [cosa]
+    FSTP  QWORD PTR [EAX]    // cosine
+    MOV EAX, [sina]
+    FSTP  QWORD PTR [EAX]    // sine
+    FWAIT
+  }
+#else
+  *sina = sin(ang);
+  *cosa = cos(ang);
+#endif  
+}
+
 EndEsdlNamespace()
 #endif
