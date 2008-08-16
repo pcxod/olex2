@@ -2378,7 +2378,7 @@ void TMainForm::macOmit(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       TStrList o(3);
       for( int i=0; i < Lst.DRefCount(); i++ )  {
         TLstRef& r = Lst.DRef(i);
-        if( r.DF >= th )  {
+        if( !r.Deleted && r.DF >= th )  {
           o[0] = r.H;  o[1] = r.K;  o[2] = r.L;
           IF->AddIns("OMIT", o, false);
         }

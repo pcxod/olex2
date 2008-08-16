@@ -2944,33 +2944,26 @@ void TMainForm::BadReflectionsTable(bool TableDef)  {
   if( FXApp->CheckFileType<TIns>() )
     Lst.SynchroniseOmits( (TIns*)FXApp->XFile().GetLastLoader() );
 
-  int rc = 0;
-  for( int i=0; i < Lst.DRefCount(); i++ )  {
-    if( Lst.DRef(i).Deleted )  continue;
-    rc++;
-  }
   TTTable<TStrList> Table;
   TStrList Output;
-  Table.Resize(rc, 5);
+  Table.Resize(Lst.DRefCount(), 5);
   Table.ColName(0) = "H";
   Table.ColName(1) = "K";
   Table.ColName(2) = "L";
   Table.ColName(3) = "&Delta;(F<sup>2</sup>)/esd";
-  rc = 0;
   for( int i=0; i < Lst.DRefCount(); i++ )  {
     TLstRef& Ref = Lst.DRef(i);
-    if( Ref.Deleted )  continue;
-    Table[rc][0] = Ref.H;
-    Table[rc][1] = Ref.K;
-    Table[rc][2] = Ref.L;
+    Table[i][0] = Ref.H;
+    Table[i][1] = Ref.K;
+    Table[i][2] = Ref.L;
     if( Ref.DF >= 10 ) 
-      Table[rc][3] << "<font color=\'red\'>" << Ref.DF << "</font>";
+      Table[i][3] << "<font color=\'red\'>" << Ref.DF << "</font>";
     else
-      Table[rc][3] = Ref.DF;
-
-    Table[rc][4] << "<a href='omit " << Ref.H <<  ' ' << Ref.K << ' ' << Ref.L <<
-      "\'>" << "omit" << "</a>";
-    rc++;
+      Table[i][3] = Ref.DF;
+    if( Ref.Deleted )
+      Table[i][4] << "Omitted";
+    else
+      Table[i][4] << "<a href='omit " << Ref.H <<  ' ' << Ref.K << ' ' << Ref.L << "\'>" << "omit" << "</a>";
   }
   Table.CreateHTMLList(Output, EmptyString, true, false, TableDef);
   TUtf8File::WriteLines( BadRefsFile, Output, false );

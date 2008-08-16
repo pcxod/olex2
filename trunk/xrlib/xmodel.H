@@ -362,6 +362,7 @@ public:
   inline int Count()                          const {  return Scatterers.Count();  }
   inline Scatterer& operator [] (int i)             {  return Scatterers[i];  }
   inline const Scatterer& operator [] (int i) const {  return Scatterers[i];  }
+  // Xs is a complex scatterer
   inline bool HasLabel(const olxstr& label)  const  {  return (IndexOfLabel(label) != -1);  }
   inline int IndexOfLabel(const olxstr& label)  const  {
     if( Scatterers.Count() == 1 )
@@ -372,7 +373,7 @@ public:
     return -1;
   }
   // supports TBasicAtomInfo& and int
-  template <class T> inline bool HasType(const T& type)  const  {  return IndexOfScatterer(type);  }
+  template <class T> inline bool HasType(const T& type)  const  {  return IndexOfScatterer(type) != -1;  }
   // supports TBasicAtomInfo& and int
   template <class T> inline int IndexOfType(const T& type)  const  {
     if( Scatterers.Count() == 1 )
