@@ -120,7 +120,6 @@
 
 #include "olxmps.h"
 #include "ecomplex.h"
-#include "sr_fft.h"
 
 #include "olxvar.h"
 
