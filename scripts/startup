@@ -9,10 +9,10 @@ else
   export LD_LIBRARY_PATH
 fi
 # Now the path is set run olex2
-PATH="$PATH:$HOME/olex/bin:$HOME/olex"
+PATH="$PATH:OLEX_BIN:OLEX_INS"
 export PATH
 
-$HOME/olex/unirun $HOME/olex/
-$HOME/olex/olex2 &
+OLEX_INS/unirun OLEX_INS
+OLEX_INS/olex2 &
 
 
