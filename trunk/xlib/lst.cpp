@@ -100,7 +100,7 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
           if( Toks.Count() < 8 )  break;
           int inc = 0, requiredCount = 8 ;
           if( Toks.String(0) == '*' )  {  inc ++;  requiredCount++;  }
-          if( Toks.Count() > requiredCount )  {
+          if( Toks.Count() >= requiredCount )  {
             LstRef = new TLstRef;
             LstRef->H = Toks[0+inc].ToInt();
             LstRef->K = Toks[1+inc].ToInt();
