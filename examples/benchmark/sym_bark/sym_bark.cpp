@@ -62,8 +62,11 @@ int main(int argc, char* argv[])  {
     SF_calc<FastSG_P_1> sc;
     sc.CalcSF();
     double pos[3] = {0.5, 0.5, 0.5};
-    double rv[FastSG_P_1::size][3];
-    FastSG_P_1::GenPos(pos, rv);
+    TArrayList<vec3d> rv(FastSG_P21_n::size);
+    for( int i=0; i < 10; i++ )  {
+      pos[0] += 0.6;
+      FastSG_P21_n::GenPos(pos, rv);
+    }
     cout << rv[0][0] << rv[1][0];
   }
   XModel xm;

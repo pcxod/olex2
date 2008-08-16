@@ -71,9 +71,9 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
   for( int i=0; i < SL.Count(); i++ )  {
     Toks.Clear();
     if( !TRefC )  {
-      ind = SL.String(i).FirstIndexOf("Reflections read,");
+      ind = SL[i].FirstIndexOf("Reflections read,");
       if( ind >= 0 )  {
-        Toks.Strtok(SL.String(i), ' ');
+        Toks.Strtok(SL[i], ' ');
         if( Toks.Count() < 3 )  continue;
         FTotalRefs = Toks[0].ToInt();
         FUniqRefs = FTotalRefs - Toks[5].ToInt(); // uniq = total - rejected
@@ -82,9 +82,9 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
       }
     }
     if( !URefC )  {
-      ind = SL.String(i).FirstIndexOf("Unique reflections,");
+      ind = SL[i].FirstIndexOf("Unique reflections,");
       if( ind >= 0 )  {
-        Toks.Strtok(SL.String(i), ' ');
+        Toks.Strtok(SL[i], ' ');
         if( Toks.Count() < 3 )  continue;
         FUniqRefs = Toks[0].ToInt();
         URefC = true;
@@ -92,11 +92,11 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
       }
     }
     if( !DRef )  {
-      ind = SL.String(i).FirstIndexOf("Disagreeable Reflections");
+      ind = SL[i].FirstIndexOf("Disagreeable Reflections");
       if( ind >= 0 )  {
         i += 4;
-        while( i < SL.Count() && (SL.String(i).FirstIndexOf("Bond") == -1) )  {
-          Toks.Strtok(SL.String(i), ' ');
+        while( i < SL.Count() && (SL[i].FirstIndexOf("Bond") == -1) )  {
+          Toks.Strtok(SL[i], ' ');
           if( Toks.Count() < 8 )  break;
           int inc = 0, requiredCount = 8 ;
           if( Toks.String(0) == '*' )  {  inc ++;  requiredCount++;  }
@@ -118,11 +118,11 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
       }
     }
     if( !TrefT )  {
-      ind = SL.String(i).FirstIndexOf("Try    Ralpha Nqual Sigma-1 M(abs) CFOM   Seminvariants");
+      ind = SL[i].FirstIndexOf("Try    Ralpha Nqual Sigma-1 M(abs) CFOM   Seminvariants");
       if( ind >= 0 )  {
         i += 2;
-        while( i < SL.Count() && (SL.String(i).FirstIndexOf("CFOM") == -1) )  {
-          Toks.Strtok(SL.String(i), ' ');
+        while( i < SL.Count() && (SL[i].FirstIndexOf("CFOM") == -1) )  {
+          Toks.Strtok(SL[i], ' ');
           if( Toks.Count() < 7 )  { i++;  continue;  }
           TTrefTry& trtry = TrefTries.AddNew();
           int inc = 0, requiredCount = 7;
@@ -156,7 +156,7 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
       }
     }
     if( !PattS )  {
-      ind = SL.String(i).FirstIndexOf("Solution   1    CFOM =  ");
+      ind = SL[i].FirstIndexOf("Solution   1    CFOM =  ");
       if( ind >= 0 )  {
         i += 7;
         TTypeList<TPattAtom>* sol = new TTypeList<TPattAtom>;
@@ -184,9 +184,9 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
       }
     }
     if( !RIS )  {
-      ind = SL.String(i).FirstIndexOf("R(int) =");
+      ind = SL[i].FirstIndexOf("R(int) =");
       if( ind >= 0 )  {
-        Toks.Strtok(SL.String(i), ' ');
+        Toks.Strtok(SL[i], ' ');
         if( Toks.Count() < 6 )  continue;
         FRint = Toks[2].ToDouble();
         FRsig = Toks[5].ToDouble();
@@ -195,9 +195,9 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
       }
     }
     if( !HP )  {
-      ind = SL.String(i).FirstIndexOf("Highest peak");
+      ind = SL[i].FirstIndexOf("Highest peak");
       if( ind >= 0 )  {
-        Toks.Strtok(SL.String(i), ' ');
+        Toks.Strtok(SL[i], ' ');
         if( Toks.Count() < 4 )  continue;
         FPeak = Toks[2].ToDouble();
         HP = true;
@@ -205,9 +205,9 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
       }
     }
     if( !DH )  {
-      ind = SL.String(i).FirstIndexOf("Deepest hole");
+      ind = SL[i].FirstIndexOf("Deepest hole");
       if( ind >= 0 )  {
-        Toks.Strtok(SL.String(i), ' ');
+        Toks.Strtok(SL[i], ' ');
         if( Toks.Count() < 4 )  continue;
         FHole = Toks[2].ToDouble();
         DH = true;
@@ -215,19 +215,19 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
       }
     }
     if( !RF )  {
-      ind = SL.String(i).FirstIndexOf("Final Structure Factor");
+      ind = SL[i].FirstIndexOf("Final Structure Factor");
       if( ind >= 0 )  {
         // extract total number of LS parameters
         Toks.Clear();
         i += 2;  if( i >= SL.Count() )  break;
-        Toks.Strtok(SL.String(i), ' ');
+        Toks.Strtok(SL[i], ' ');
         if( Toks.Count() > 5 )  FParams = Toks[6].ToInt();
 
         // extract R1 or 4sigma, R1a for all data and number of refs with Fo > 4sig(Fo)
         Toks.Clear();
-        while( i < SL.Count() && SL.String(i).IndexOf("R1 = ") == -1  ) i++;
+        while( i < SL.Count() && SL[i].IndexOf("R1 = ") == -1  ) i++;
         if( i >= SL.Count() )  break;
-        Toks.Strtok(SL.String(i), ' ');
+        Toks.Strtok(SL[i], ' ');
         if( Toks.Count() > 8 )  {
           FR1 = Toks[2].ToDouble();
           FRefs4sig = Toks[4].ToInt();
@@ -237,7 +237,7 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
         // extract wR2 && Goof && restrained GooF
         Toks.Clear();
         i ++;  if( i >= SL.Count() )  break;
-        Toks.Strtok(SL.String(i), ' ');
+        Toks.Strtok(SL[i], ' ');
         if( Toks.Count() > 11 )  {
           FwR2 = Toks[2].ToDouble();
           FS = Toks[7].ToDouble();
@@ -249,15 +249,15 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
       }
     }
     if( !SA )  {
-      ind = SL.String(i).FirstIndexOf("square atomic displacements");
+      ind = SL[i].FirstIndexOf("square atomic displacements");
       if( ind >= 0 )  {
         i++;  // skip the line breaks
-        while( i < SL.Count() && !SL.String(i).Length() )  i++;
+        while( i < SL.Count() && !SL[i].Length() )  i++;
         /* do the search, the line break is the end of the section */
-        while( i < SL.Count() && SL.String(i).Length() )  {
-          if( SL.String(i).FirstIndexOf("may be split into") >= 0 )  {
+        while( i < SL.Count() && SL[i].Length() )  {
+          if( SL[i].FirstIndexOf("may be split into") >= 0 )  {
             Toks.Clear();
-            Toks.Strtok(SL.String(i), ' ');
+            Toks.Strtok(SL[i], ' ');
             if( Toks.Count() < 15 )  {  i++;  continue;  }
             SplitA = new TLstSplitAtom();
             SplitA->AtomName = Toks[3];
@@ -276,10 +276,10 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
       }
     }
     // errors
-    ind = SL.String(i).FirstIndexOf("**");
+    ind = SL[i].FirstIndexOf("**");
     if( ind >= 0 )  {
-      AnAssociation2<olxstr,olxstr>& msg = ErrorMsgs.AddNew(SL.String(i), "");
-      if( SL.String(i).IndexOf(':') != -1 )
+      AnAssociation2<olxstr,olxstr>& msg = ErrorMsgs.AddNew(SL[i], EmptyString);
+      if( SL[i].IndexOf(':') != -1 )
         continue;
       if( i >= 2 )  {
         if( i > 2 && SL.String(i-3).EndsWith('=') )  {
