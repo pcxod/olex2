@@ -39,7 +39,8 @@ CFLAGS = `wx-config --cxxflags --unicode --toolkit=gtk2` `python-config --includ
 
 # All will compile and link all of olex takes about 10 minutes
 all: obj unirun olex link
-	@echo "Building everything this can take about 10 minutes on a fast PC"
+	@echo "Type make install to install"
+
 # obj will create the obj directory and compile the objects
 obj: $@
 	@echo "Building object libraries, this can take a while"
@@ -66,7 +67,6 @@ link : $(OBJ_DIR)unirun$@ $(OBJ_DIR)olex$@
 	@echo "Linking unirun and olex"
 	@mkdir $(EXE_DIR); $(CC) $(OBJ_DIR)unirun/*.s $(OBJ_DIR)*.s -o $(EXE_DIR)unirun `wx-config --libs gl,core,html,net,aui --unicode --toolkit=gtk2` `python-config --libs --ldflags` -L. -fexceptions -g -rdynamic -O3
 	@$(CC) $(OBJ_DIR)*.s $(OBJ_DIR)olex/*.s -o $(EXE_DIR)olex2 `wx-config --libs gl,core,html,net,aui --unicode --toolkit=gtk2` `python-config --libs --ldflags` -L. -fexceptions -g -rdynamic -O3
-	@echo "Type make install to install"
 
 # install will allow a user with root/sudo permission to install a central copy of olex2
 install-root:
