@@ -2457,7 +2457,7 @@ void TMainForm::OnResize()  {
     FHtml->Freeze();
     int cw, ch;
     if( FHtmlOnLeft )  {
-      FHtml->SetSize(0, 0, FHtmlPanelWidth, h);
+      FHtml->SetSize(0, 0, (int)FHtmlPanelWidth, h);
       FHtml->GetClientSize(&cw, &ch);
       cw = FHtmlWidthFixed ? (int)FHtmlPanelWidth : (int)(w*FHtmlPanelWidth);
       FHtml->SetClientSize(cw, h);
@@ -2466,7 +2466,7 @@ void TMainForm::OnResize()  {
       w -= l;  // new width
     }
     else  {
-      FHtml->SetSize(w-FHtmlPanelWidth, 0, FHtmlPanelWidth, h);
+      FHtml->SetSize((int)(w-FHtmlPanelWidth), 0, (int)FHtmlPanelWidth, h);
       FHtml->GetClientSize(&cw, &ch);
       cw = FHtmlWidthFixed ? (int)FHtmlPanelWidth : (int)(w*FHtmlPanelWidth);
       FHtml->SetClientSize(cw, ch);

@@ -425,13 +425,13 @@ void TwxGlScene::ScaleFonts(double scale)  {
     olxstr fontId;
     if( MetaFont::IsOlexFont(Fonts[i]->IdString()) )  {
       MetaFont mf(Fonts[i]->IdString());
-      mf.SetSize( Fonts[i]->GetPointSize()*scale );
+      mf.SetSize( (short)(Fonts[i]->GetPointSize()*scale) );
       fontId << mf.GetIdString();
     }
     else  {
       wxFont font;
       ((wxFontBase&)font).SetNativeFontInfo( Fonts[i]->IdString().u_str() );
-      font.SetPointSize(font.GetPointSize()*scale);
+      font.SetPointSize((int)(font.GetPointSize()*scale));
       fontId = font.GetNativeFontInfoDesc().c_str();
     }
     CreateFont(Fonts[i]->GetName(), fontId);

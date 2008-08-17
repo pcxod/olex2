@@ -1294,10 +1294,10 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       FXApp->GetRender().LookAt(j, i, res);
       FXApp->GetRender().Draw();
       char *PP = FXApp->GetRender().GetPixels(false, 1);
-      int mj = j*ScrWidth;
-      int mi = i*ScrHeight;
-      for(int k=ScrWidth*0.25; k <= ScrWidth*0.75; k++ )  {
-        for(int l=ScrHeight*0.25; l < ScrHeight; l++ )  {
+      int mj = (int)j*ScrWidth;
+      int mi = (int)i*ScrHeight;
+      for(int k=(int)(ScrWidth*0.25); k <= (int)(ScrWidth*0.75); k++ )  {
+        for(int l=(int)(ScrHeight*0.25); l < ScrHeight; l++ )  {
           int indexA = (l*ScrWidth + k)*3;
           int indexB = bmpSize - (BmpWidth*(mi + l + 1) - mj - k)*3;
           bmpData[indexB] = PP[indexA];
@@ -1315,10 +1315,10 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       FXApp->GetRender().LookAt(j, i, res);
       FXApp->GetRender().Draw();
       char *PP = FXApp->GetRender().GetPixels(false, 1);
-      int mj = j*ScrWidth;
-      int mi = i*ScrHeight;
-      for(int k=ScrWidth*0.25; k < ScrWidth; k++ )  {
-        for(int l=0.25*ScrHeight; l <= ScrHeight*0.75; l++ )  {
+      int mj = (int)(j*ScrWidth);
+      int mi = (int)(i*ScrHeight);
+      for(int k=(int)(ScrWidth*0.25); k < ScrWidth; k++ )  {
+        for(int l=(int)(0.25*ScrHeight); l <= (int)(ScrHeight*0.75); l++ )  {
           int indexA = (l*ScrWidth + k)*3;
           int indexB = bmpSize - (BmpWidth*(mi + l + 1) - mj - k)*3;
           bmpData[indexB] = PP[indexA];
@@ -1336,10 +1336,10 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       FXApp->GetRender().LookAt(j, i, res);
       FXApp->GetRender().Draw();
       char *PP = FXApp->GetRender().GetPixels(false, 1);
-      int mj = j*ScrWidth;
-      int mi = i*ScrHeight;
-      for(int k=0.25*ScrWidth; k <= ScrWidth*0.75; k++ )  {
-        for(int l=0.25*ScrHeight; l <= ScrHeight*0.75; l++ )  {
+      int mj = (int)(j*ScrWidth);
+      int mi = (int)(i*ScrHeight);
+      for(int k=(int)(0.25*ScrWidth); k <= (int)(ScrWidth*0.75); k++ )  {
+        for(int l=(int)(0.25*ScrHeight); l <= (int)(ScrHeight*0.75); l++ )  {
           int indexA = (l*ScrWidth + k)*3;
           int indexB = bmpSize - (BmpWidth*(mi + l + 1) - mj - k)*3;
           bmpData[indexB] = PP[indexA];
@@ -2017,7 +2017,7 @@ void TMainForm::macMpln(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     else if( !Options.GetName(i).Comparei("r") )
       rectangular = true;
     else if( !Options.GetName(i).Comparei("we") )
-      weightExtent = Options.GetValue(i).ToDouble();
+      weightExtent = Options.GetValue(i).ToInt();
   }
   TXAtomPList Atoms;
 
@@ -4636,7 +4636,7 @@ void TMainForm::macCalcVoid(TStrObjList &Cmds, const TParamList &Options, TMacro
   //FGlConsole->PostText( olxstr("0.5A level is ") << minLevel1 );
   structureGridPoints = 0;
   T3DIndexList allPoints;
-  allPoints.SetCapacity( mapVol );
+  allPoints.SetCapacity( (int)mapVol );
   for(int i=0; i < mapX; i++ )  {
     for(int j=0; j < mapY; j++ )  {
       for(int k=0; k < mapZ; k++ )  {
@@ -8343,12 +8343,12 @@ void TMainForm::macCalcPatt(TStrObjList &Cmds, const TParamList &Options, TMacro
     const TReflection& ref = refs[i];
     for( int j=0; j < ml.Count(); j++, index++ )  {
       ref.MulHklT(hkl, ml[j]);
-      if( hkl[0] < minH )  minH = hkl[0];
-      if( hkl[1] < minK )  minK = hkl[1];
-      if( hkl[2] < minL )  minL = hkl[2];
-      if( hkl[0] > maxH )  maxH = hkl[0];
-      if( hkl[1] > maxK )  maxK = hkl[1];
-      if( hkl[2] > maxL )  maxL = hkl[2];
+      if( hkl[0] < minH )  minH = (int)hkl[0];
+      if( hkl[1] < minK )  minK = (int)hkl[1];
+      if( hkl[2] < minL )  minL = (int)hkl[2];
+      if( hkl[0] > maxH )  maxH = (int)hkl[0];
+      if( hkl[1] > maxK )  maxK = (int)hkl[1];
+      if( hkl[2] > maxL )  maxL = (int)hkl[2];
       AllF[index].h = hkl[0];
       AllF[index].k = hkl[1];
       AllF[index].l = hkl[2];
@@ -8686,12 +8686,12 @@ void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMa
     const TReflection& ref = refs[i];
     for( int j=0; j < ml.Count(); j++, index++ )  {
       ref.MulHklT(hkl, ml[j]);
-      if( hkl[0] < minH )  minH = hkl[0];
-      if( hkl[1] < minK )  minK = hkl[1];
-      if( hkl[2] < minL )  minL = hkl[2];
-      if( hkl[0] > maxH )  maxH = hkl[0];
-      if( hkl[1] > maxK )  maxK = hkl[1];
-      if( hkl[2] > maxL )  maxL = hkl[2];
+      if( hkl[0] < minH )  minH = (int)hkl[0];
+      if( hkl[1] < minK )  minK = (int)hkl[1];
+      if( hkl[2] < minL )  minL = (int)hkl[2];
+      if( hkl[0] > maxH )  maxH = (int)hkl[0];
+      if( hkl[1] > maxK )  maxK = (int)hkl[1];
+      if( hkl[2] > maxL )  maxL = (int)hkl[2];
       AllF[index].h = hkl[0];
       AllF[index].k = hkl[1];
       AllF[index].l = hkl[2];
