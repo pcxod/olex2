@@ -67,7 +67,6 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
   SL.LoadFromFile( FN );
   TLstRef *LstRef;
   TLstSplitAtom *SplitA;
-
   for( int i=0; i < SL.Count(); i++ )  {
     Toks.Clear();
     if( !TRefC )  {
@@ -99,7 +98,7 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
           Toks.Strtok(SL[i], ' ');
           if( Toks.Count() < 8 )  break;
           int inc = 0, requiredCount = 8 ;
-          if( Toks.String(0) == '*' )  {  inc ++;  requiredCount++;  }
+          if( Toks[0] == '*' )  {  inc ++;  requiredCount++;  }
           if( Toks.Count() >= requiredCount )  {
             LstRef = new TLstRef;
             LstRef->H = Toks[0+inc].ToInt();
@@ -252,9 +251,9 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
       ind = SL[i].FirstIndexOf("square atomic displacements");
       if( ind >= 0 )  {
         i++;  // skip the line breaks
-        while( i < SL.Count() && !SL[i].Length() )  i++;
+        while( i < SL.Count() && SL[i].IsEmpty() )  i++;
         /* do the search, the line break is the end of the section */
-        while( i < SL.Count() && SL[i].Length() )  {
+        while( i < SL.Count() && !SL[i].IsEmpty() )  {
           if( SL[i].FirstIndexOf("may be split into") >= 0 )  {
             Toks.Clear();
             Toks.Strtok(SL[i], ' ');
@@ -282,7 +281,7 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
       if( SL[i].IndexOf(':') != -1 )
         continue;
       if( i >= 2 )  {
-        if( i > 2 && SL.String(i-3).EndsWith('=') )  {
+        if( i > 2 && SL[i-3].EndsWith('=') )  {
           msg.B() << SL[i-3].SubStringTo( SL[i-3].Length()-1 );
           msg.B() << SL[i-2];
         }
