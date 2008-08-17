@@ -8439,7 +8439,7 @@ void TMainForm::funGetMouseY(const TStrObjList &Params, TMacroError &E)  {
 }
 //..............................................................................
 void TMainForm::funGetWindowSize(const TStrObjList &Params, TMacroError &E)  {
-  if( Params.IsEmpty() || Params[0].Comparei('main') == 0 )  {
+  if( Params.IsEmpty() || Params[0].Comparei("main") == 0 )  {
     wxRect sz = GetRect();
     E.SetRetVal( olxstr(sz.x) << ',' << sz.y << ',' << sz.width << ',' << sz.height);
   }
