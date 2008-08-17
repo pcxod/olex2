@@ -215,7 +215,7 @@ public:
     io.Read(bf, fl);
     bf[fl] = '\0';
     Clear();
-    Strtok(CString(bf, fl), '\n');
+    Strtok(CString(bf, fl), '\n', false); // must preserve the new lines on Linux!!! 2008.08.17
     for(int i=0; i < Count(); i++ )
       if( String(i).EndsWith('\r') )  String(i).SetLength( String(i).Length() -1 );
     delete [] bf;
@@ -302,7 +302,7 @@ public:
     }
     if( fLength < Str.Length() )  Add( Str.SubStringFrom(fLength) );
   }
-  void Strtok( const SC &Str, char Sep )  {
+  void Strtok( const SC &Str, char Sep, bool SkipSequences = true )  {
     olxstr Tmp(Str);
     int ind = Tmp.IndexOf(Sep);
     while( ind != -1 )  {
@@ -312,7 +312,9 @@ public:
         Tmp = EmptyString;
         break;
       }
-      while( ++ind < Tmp.Length() && Tmp.CharAt(ind) == Sep ) ;
+      while( ++ind < Tmp.Length() && Tmp.CharAt(ind) == Sep ) 
+        if( !SkipSequences )
+          Add(EmptyString);
       if( ind >= Tmp.Length() )  {
         Tmp = EmptyString;
         break;
