@@ -67,7 +67,7 @@ public:
   }
 };
 
-bool UpdateInstallationH( const TUrl& url, const TStrList& properties )  {
+bool UpdateInstallationH( const TUrl& url, const TStrList& properties, const TStrList* extensionsToSkip )  {
   try  {
     TOSFileSystem DestFS; // local file system
     TwxHttpFileSystem SrcFS( url ); // remote FS
@@ -76,7 +76,7 @@ bool UpdateInstallationH( const TUrl& url, const TStrList& properties )  {
     TEFile::AddTrailingBackslash( tmp );
     DestFS.SetBase( tmp );
     TFSIndex FI( SrcFS );
-    return FI.Synchronise(DestFS, properties);
+    return FI.Synchronise(DestFS, properties, extensionsToSkip);
   }
   catch( TExceptionBase& exc )  {
     TStrList out;
@@ -133,12 +133,13 @@ void DoRun(const olxstr& basedir)  {
   olxstr SettingsFile( TBasicApp::GetInstance()->BaseDir() + "usettings.dat" );
   TSettingsFile settings;
   if( !TEFile::FileExists(SettingsFile) )  {
-    TBasicApp::GetLog() << "Could not locate settings file" << SettingsFile << '\n';
+    TBasicApp::GetLog() << "Could not locate settings file: " << SettingsFile << '\n';
     return;
   }
   olxstr Proxy, Repository = "http://dimas.dur.ac.uk/olex-distro/update",
            UpdateInterval = "Always";
   int LastUpdate = 0;
+  TStrList extensionsToSkip;
   settings.LoadSettings( SettingsFile );
   if( settings.ParamExists("proxy") )
     Proxy = settings.ParamValue("proxy");
@@ -146,9 +147,10 @@ void DoRun(const olxstr& basedir)  {
     Repository = settings.ParamValue("repository");
   if( settings.ParamExists("update") )
     UpdateInterval = settings.ParamValue("update");
-  if( settings.ParamExists("lastupdate") )  {
+  if( settings.ParamExists("lastupdate") )
     LastUpdate = settings.ParamValue("lastupdate", '0').RadInt<long>();
-  }
+  if( settings.ParamExists("exceptions") )
+    extensionsToSkip.Strtok(settings.ParamValue("exceptions", EmptyString), ';');
   if( TEFile::ExtractFileExt(Repository).Comparei("zip") != 0 )
     if( Repository.Length() && !Repository.EndsWith('/') )
       Repository << '/';
@@ -192,7 +194,7 @@ void DoRun(const olxstr& basedir)  {
     if( !Proxy.IsEmpty() )  url.SetProxy( Proxy );
       
     if( Update )
-      UpdateInstallationH( url, props );
+      UpdateInstallationH( url, props, extensionsToSkip.IsEmpty() ? NULL : &extensionsToSkip );
   }
   if( Update )  { // have to save lastupdate in anyway
     settings.UpdateParam("lastupdate", TETime::EpochTime() );

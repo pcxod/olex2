@@ -82,7 +82,7 @@ public:
   inline TFSItem* GetParent() const {  return Parent; }
 
   void operator >> (TStrList& strings) const;
-  int ReadStrings(int& index, TFSItem* caller, TStrList& strings);
+  int ReadStrings(int& index, TFSItem* caller, TStrList& strings, const TStrList* extensionsToSkip=NULL);
   // removes empty folders recursively
   void ClearEmptyFolders();
   // removes nonexiting files recursively
@@ -156,10 +156,10 @@ protected:
 public:
   TFSIndex(AFileSystem& fs);
   virtual ~TFSIndex();
-  void LoadIndex(const olxstr& IndexFile);
+  void LoadIndex(const olxstr& IndexFile, const TStrList* extensionsToSkip=NULL);
   void SaveIndex(const olxstr& IndexFile);
   // returns the number of updated files
-  int Synchronise(AFileSystem& To, const TStrList& properties);
+  int Synchronise(AFileSystem& To, const TStrList& properties, const TStrList* extensionsToSkip=NULL);
   // returns true if the file is updated (added) and false otherwise
   bool UpdateFile(AFileSystem& To, const olxstr& fileName, bool Force);
   inline TFSItem& GetRoot()  const {  return *Root; }
