@@ -172,7 +172,7 @@ int TFSItem::ReadStrings(int& index, TFSItem* caller, TStrList& strings, const T
     index++;
     if( index < strings.Count() )  {
       if( folder )  {
-        int slevel = item->ReadStrings(index, this, strings);
+        int slevel = item->ReadStrings(index, this, strings, extensionsToSkip);
         if( slevel != level )
           return slevel;
       }
