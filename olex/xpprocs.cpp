@@ -8349,9 +8349,9 @@ void TMainForm::macCalcPatt(TStrObjList &Cmds, const TParamList &Options, TMacro
       if( hkl[0] > maxH )  maxH = (int)hkl[0];
       if( hkl[1] > maxK )  maxK = (int)hkl[1];
       if( hkl[2] > maxL )  maxL = (int)hkl[2];
-      AllF[index].h = hkl[0];
-      AllF[index].k = hkl[1];
-      AllF[index].l = hkl[2];
+      AllF[index].h = (int)hkl[0];
+      AllF[index].k = (int)hkl[1];
+      AllF[index].l = (int)hkl[2];
       AllF[index].ps = hkl[0]*ml[j].t[0] + hkl[1]*ml[j].t[1] + hkl[2]*ml[j].t[2];
       AllF[index].v = sqrt(refs[i].GetI());
       AllF[index].v *= TEComplex<double>::polar(1, 2*M_PI*AllF[index].ps);
@@ -8692,18 +8692,18 @@ void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMa
       if( hkl[0] > maxH )  maxH = (int)hkl[0];
       if( hkl[1] > maxK )  maxK = (int)hkl[1];
       if( hkl[2] > maxL )  maxL = (int)hkl[2];
-      AllF[index].h = hkl[0];
-      AllF[index].k = hkl[1];
-      AllF[index].l = hkl[2];
+      AllF[index].h = (int)hkl[0];
+      AllF[index].k = (int)hkl[1];
+      AllF[index].l = (int)hkl[2];
       AllF[index].ps = hkl[0]*ml[j].t[0] + hkl[1]*ml[j].t[1] + hkl[2]*ml[j].t[2];
       AllF[index].v = F[i];
       AllF[index].v *= TEComplex<double>::polar(1, 2*M_PI*AllF[index].ps);
     }
   }
 // init map
-  const int mapX = (int)au.Axes()[0].GetV()*resolution,
-			mapY = (int)au.Axes()[1].GetV()*resolution,
-			mapZ = (int)au.Axes()[2].GetV()*resolution;
+  const int mapX = (int)(au.Axes()[0].GetV()*resolution),
+			mapY = (int)(au.Axes()[1].GetV()*resolution),
+			mapZ = (int)(au.Axes()[2].GetV()*resolution);
 //  const int mapX =100, mapY = 100, mapZ = 10;
   FXApp->XGrid().InitGrid(mapX, mapY, mapZ);
   FXApp->XGrid().SetMaxHole(0.49);
