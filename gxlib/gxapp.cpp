@@ -2179,7 +2179,7 @@ void TGXApp::XAtomDS2XBondDS(const olxstr &Source)  {
     for( int j=0; j < XB->Primitives()->PrimitiveCount(); j++ )  {
       TGlPrimitive* GlP = XBonds[i].Primitives()->Primitive(j);
       if( GlP->Params().Count() >= 1 )  {
-        dds = GlP->Params().Last();
+        dds = (int)GlP->Params().Last();
         if( dds == ddsDefAtomA )  {  // from atom A
           GlP->SetProperties(GlMA);
           XB->Primitives()->Style()->PrimitiveMaterial(GlP->Name(), GlMA);
