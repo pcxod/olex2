@@ -149,8 +149,10 @@ void DoRun(const olxstr& basedir)  {
     UpdateInterval = settings.ParamValue("update");
   if( settings.ParamExists("lastupdate") )
     LastUpdate = settings.ParamValue("lastupdate", '0').RadInt<long>();
-  if( settings.ParamExists("exceptions") )
+  if( settings.ParamExists("exceptions") )  {
     extensionsToSkip.Strtok(settings.ParamValue("exceptions", EmptyString), ';');
+    TBasicApp::GetLog() << "Skipping the following extensions: " << extensionsToSkip.Text(' ') << '\n';
+  }
   if( TEFile::ExtractFileExt(Repository).Comparei("zip") != 0 )
     if( Repository.Length() && !Repository.EndsWith('/') )
       Repository << '/';
