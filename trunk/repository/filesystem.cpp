@@ -126,33 +126,53 @@ void TFSItem::operator >> (TStrList& S) const  {
     Item(i) >> S;
 }
 //..............................................................................
-int TFSItem::ReadStrings(int& index, TFSItem* caller, TStrList& strings)  {
+int TFSItem::ReadStrings(int& index, TFSItem* caller, TStrList& strings, const TStrList* extensionsToSkip)  {
   TStrList toks, propToks;
   while( (index + 2) <= strings.Count() )  {
-    int level = strings[index].LeadingCharCount( '\t' );
-    TFSItem& item = NewItem( strings[index].Trim('\t') );
-    index++;
-    toks.Strtok( strings.String(index), ',');
-    if( toks.Count() < 2 )
-      throw TInvalidArgumentException(__OlxSourceInfo, "token number");
-    item.SetDateTime( toks[0].Trim('\t').RadInt<long>() );
-    item.SetSize( toks[1].RadInt<long>() );
-    for( int i=2; i < toks.Count(); i++ )  {
-      if( toks[i].StartsFrom('{') && toks[i].EndsWith('}') )  {
-        olxstr tmp = toks[i].SubString(1, toks[i].Length()-2);
-        propToks.Clear();
-        propToks.Strtok(tmp, ';');
-        for( int j=0; j < propToks.Count(); j++ )
-          item.AddProperty( propToks[j] );
+    int level = strings[index].LeadingCharCount( '\t' ), nextlevel = 0;
+    olxstr name = strings[index].Trim('\t'), 
+      ext = TEFile::ExtractFileExt(name);
+    bool skip = false, folder = false;
+    TFSItem* item = NULL;
+    if( (index+2) < strings.Count() )  {
+      nextlevel = strings[index+2].LeadingCharCount('\t');
+      if( nextlevel > level )  
+        folder = true;
+    }
+    if( !folder && extensionsToSkip != NULL && !ext.IsEmpty() )  {
+      for( int i=0; i < extensionsToSkip->Count(); i++ )  {
+        if( (*extensionsToSkip)[i].Comparei(ext) == 0 )  {
+          skip = true;
+          break;
+        }
       }
     }
-    toks.Clear();
+    if( !skip )  {
+      item = &NewItem( name );
+      item->SetFolder(folder);
+      index++;
+      toks.Strtok( strings[index], ',');
+      if( toks.Count() < 2 )
+        throw TInvalidArgumentException(__OlxSourceInfo, "token number");
+      item->SetDateTime( toks[0].Trim('\t').RadInt<long>() );
+      item->SetSize( toks[1].RadInt<long>() );
+      for( int i=2; i < toks.Count(); i++ )  {
+        if( toks[i].StartsFrom('{') && toks[i].EndsWith('}') )  {
+          olxstr tmp = toks[i].SubString(1, toks[i].Length()-2);
+          propToks.Clear();
+          propToks.Strtok(tmp, ';');
+          for( int j=0; j < propToks.Count(); j++ )
+            item->AddProperty( propToks[j] );
+        }
+      }
+      toks.Clear();
+    }
+    else
+      index++;
     index++;
     if( index < strings.Count() )  {
-      int nextlevel = strings.String(index).LeadingCharCount('\t');
-      if( nextlevel > level )  {
-        item.SetFolder( true );
-        int slevel = item.ReadStrings(index, this, strings);
+      if( folder )  {
+        int slevel = item->ReadStrings(index, this, strings);
         if( slevel != level )
           return slevel;
       }
@@ -466,7 +486,7 @@ TFSIndex::~TFSIndex()  {
   delete Root;
 }
 //..............................................................................
-void TFSIndex::LoadIndex(const olxstr& IndexFile)  {
+void TFSIndex::LoadIndex(const olxstr& IndexFile, const TStrList* extensionsToSkip)  {
   GetRoot().Clear();
   if( !GetRoot().GetFileSystem().FileExists(IndexFile) )
     throw TFileDoesNotExistException(__OlxSourceInfo, IndexFile);
@@ -482,7 +502,7 @@ void TFSIndex::LoadIndex(const olxstr& IndexFile)  {
   strings.LoadFromTextStream( *is );
   delete is;
   int index = 0;
-  GetRoot().ReadStrings(index, NULL, strings);
+  GetRoot().ReadStrings(index, NULL, strings, extensionsToSkip);
   Properties.Clear();
   GetRoot().ListUniqueProperties( Properties );
   GetRoot().ClearNonexisting();
@@ -498,13 +518,13 @@ void TFSIndex::SaveIndex(const olxstr &IndexFile)  {
   TCStrList(strings).SaveToFile(IndexFile );
 }
 //..............................................................................
-int TFSIndex::Synchronise(AFileSystem& To, const TStrList& properties)  {
+int TFSIndex::Synchronise(AFileSystem& To, const TStrList& properties, const TStrList* extensionsToSkip)  {
   TFSIndex DestI(To);
   olxstr SrcInd;   SrcInd << GetRoot().GetFileSystem().GetBase() << "index.ind";
   olxstr DestInd;  DestInd << To.GetBase() << "index.ind";
   FilesUpdated = 0;
   try  {
-    LoadIndex(SrcInd);
+    LoadIndex(SrcInd, extensionsToSkip);
     if( To.FileExists(DestInd) )
       DestI.LoadIndex(DestInd);
     FilesUpdated = GetRoot().Synchronize(NULL, DestI.GetRoot(), properties );
