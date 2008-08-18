@@ -538,8 +538,15 @@ void TIns::SaveToRefine(const olxstr& FileName, const olxstr& sMethod, const olx
     sl.AddNew( cnt, bai );
     ac += cnt;
   }
-  
-  FAsymmUnit->SetZ( Round(FAsymmUnit->EstimateZ(ac/FAsymmUnit->GetZ())) );
+  int newZ = Round(FAsymmUnit->EstimateZ(ac/FAsymmUnit->GetZ()));
+  Unit = EmptyString;
+  for( int i=0; i < sfac.Count(); i++ )  {
+    int cnt = unit[i].ToInt();
+    Unit << (double)cnt*newZ/FAsymmUnit->GetZ();
+    if( (i+1) < sfac.Count() )
+      Unit << ' ';
+  }
+  FAsymmUnit->SetZ( newZ );
 //
 
   SL.Add( _CellToString() );
@@ -550,10 +557,10 @@ void TIns::SaveToRefine(const olxstr& FileName, const olxstr& sMethod, const olx
 
   for( int i=0; i < Ins.Count(); i++ )  {  // copy "unknown" instructions
     L = Ins.Object(i);
-    if( Ins.String(i).Comparei("SIZE") == 0 || Ins.String(i).Comparei("TEMP") == 0 )  {
+    if( Ins[i].Comparei("SIZE") == 0 || Ins[i].Comparei("TEMP") == 0 )  {
       Tmp = EmptyString;
       if( L->Count() != 0 )  Tmp << L->Text(' ');
-      HypernateIns(Ins.String(i)+' ', Tmp, SL);
+      HypernateIns(Ins[i]+' ', Tmp, SL);
     }
   }
 
