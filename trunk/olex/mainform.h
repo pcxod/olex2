@@ -362,6 +362,7 @@ private:
   DefMacro(ExtractHkl)
   DefMacro(AppendHkl)
   DefMacro(ExcludeHkl)
+  DefMacro(MergeHkl)
   DefMacro(Direction)
 
   DefMacro(ViewGrid)

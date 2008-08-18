@@ -4504,12 +4504,51 @@ void TMainForm::macEditIns(TStrObjList &Cmds, const TParamList &Options, TMacroE
   dlg->Destroy();
 }
 //..............................................................................
+void TMainForm::macMergeHkl(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  olxstr hklFileName( FXApp->LocateHklFile() );
+  if( !TEFile::FileExists(hklFileName) )  {
+    E.ProcessingError(__OlxSrcInfo, "could not locate hkl file");
+    return;
+  }
+  TAsymmUnit& au = FXApp->XFile().GetAsymmUnit();
+  // space group matrix list
+  TSpaceGroup* sg = TSymmLib::GetInstance()->FindSG(au);
+  if( sg == NULL )  {
+    E.ProcessingError(__OlxSrcInfo, "could not locate sapce group");
+    return;
+  }
+  THklFile Hkl;
+  Hkl.LoadFromFile(hklFileName);
+  double av = 0;
+  for( int i=0; i < Hkl.RefCount(); i++ )
+    av += Hkl[i].GetI() < 0 ? 0 : Hkl[i].GetI();
+  av /= Hkl.RefCount();
+  TRefList refs;
+  THklFile::MergeStats ms = Hkl.Merge( *sg, !Options.Contains("i"), refs);
+  TTTable<TStrList> tab(6, 2);
+  tab[0][0] << "Total reflections"; 
+  tab[0][1] << ms.TotalReflections;
+  tab[1][0] << "Unique reflections"; 
+  tab[1][1] << ms.TotalReflections;
+  tab[2][0] << "Inconsistent equaivalents"; 
+  tab[2][1] << ms.InconsistentEquivalents;
+  tab[3][0] << "Systematic absences removed"; 
+  tab[3][1] << ms.SystematicAbsentcesRemoved;
+  tab[4][0] << "Rint"; 
+  tab[4][1] << ms.Rint;
+  tab[5][0] << "Rsigma"; 
+  tab[5][1] << ms.Rsigma;
+  TStrList Output;
+  tab.CreateTXTList(Output, olxstr("Merging statistics "), true, false, "  ");
+  TBasicApp::GetLog() << Output << '\n';
+  Hkl.SaveToFile( Cmds.IsEmpty() ? hklFileName : Cmds[0], refs);
+}
 //..............................................................................
 void TMainForm::macEditHkl(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   if( !FXApp->CheckFileType<TIns>() )  return;
 
   TIns *Ins = (TIns*)FXApp->XFile().GetLastLoader();
-  olxstr HklFN = Ins->GetHKLSource();
+  olxstr HklFN( FXApp->LocateHklFile() );
   if( !TEFile::FileExists(HklFN) )  {
     E.ProcessingError(__OlxSrcInfo, "could not locate the HKL file" );
     return;
@@ -7241,6 +7280,20 @@ public:
 };
 #endif
 void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+  
+  if( FXApp->XFile().GetLastLoader() != NULL )  {
+    mat3d h2c = mat3d::Transpose(FXApp->XFile().GetAsymmUnit().GetHklToCartesian());
+    TBasicApp::GetLog() << 1./h2c[0][0] << ',' << 1./h2c[1][1] << ',' << 1./h2c[2][2] << '\n';
+    mat3d r, I;
+    r[0][0] = h2c[0].DotProd(h2c[0]);  r[0][1] = h2c[0].DotProd(h2c[1]);  r[0][2] = h2c[0].DotProd(h2c[2]);
+    r[0][1] = r[1][0];                 r[1][1] = h2c[1].DotProd(h2c[1]);  r[1][2] = h2c[1].DotProd(h2c[2]);
+    r[2][0] = r[0][2];                 r[2][1] = r[1][2];                 r[2][2] = h2c[2].DotProd(h2c[2]);
+    
+    mat3d::EigenValues(r, I.I() );
+    TBasicApp::GetLog() << r[0][0] << ',' << r[1][1] << ',' << r[2][2] << '\n';
+    TBasicApp::GetLog() << 1./r[0][0] << ',' << 1./r[1][1] << ',' << 1./r[2][2] << '\n';
+  }
+  
   olxstr fn( FXApp->XFile().GetFileName() );
   for( int i=0; i < 250; i++ )  {
     ProcessXPMacro(olxstr("@reap '") << fn << '\'', Error);
@@ -8620,7 +8673,7 @@ void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMa
     }
   }
   else  {
-    olxstr hklFileName = FXApp->LocateHklFile();
+    olxstr hklFileName( FXApp->LocateHklFile() );
     if( !TEFile::FileExists(hklFileName) )  {
       E.ProcessingError(__OlxSrcInfo, "could not locate hkl file");
       return;

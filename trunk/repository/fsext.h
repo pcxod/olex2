@@ -9,6 +9,7 @@
 #include "library.h"
 
 class TZipWrapper;
+//class TOZPFS;
 struct TMemoryBlock  {
   char * Buffer;
   uint32_t Length;
@@ -25,6 +26,7 @@ struct TMemoryBlock  {
 class TFileHandlerManager : public IEObject  {
 #ifdef __WXWIDGETS__
   TSStrPObjList<olxstr,TZipWrapper*, false> FZipFiles;
+//  TSStrPObjList<olxstr,TOZPFS*, false> FOZPFiles;
 #endif
   TSStrPObjList<olxstr,TMemoryBlock*, false> FMemoryBlocks;
   static const int16_t FVersion;

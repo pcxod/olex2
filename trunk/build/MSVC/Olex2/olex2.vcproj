@@ -650,6 +650,10 @@
 				RelativePath="..\..\..\repository\fftn.h"
 				>
 			</File>
+			<File
+				RelativePath="..\..\..\repository\wxzipfsext.h"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"

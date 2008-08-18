@@ -186,6 +186,10 @@ template <class RefListMerger>
     }
     stats.Rsigma = SS/SI;
     stats.UniqueReflections = output.Count();
+    if( inverseMatIndex != -1 )  {
+      smatd& i = ml.InsertNew(inverseMatIndex);
+      i.r.I() *= -1;
+    }
     return stats;
   }
   inline MergeStats SimpleMerge(smatd_list& ml, TRefList& output)  {
@@ -196,6 +200,8 @@ template <class RefListMerger>
 
   // saves to file a list of reflections
   static bool SaveToFile(const olxstr& FN, const TRefPList& Reflections, bool Append = true);
+  // saves to file a list of reflections
+  static bool SaveToFile(const olxstr& FN, const TRefList& Reflections);
 };
 //---------------------------------------------------------------------------
 
