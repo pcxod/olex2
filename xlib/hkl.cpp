@@ -326,7 +326,7 @@ void THklFile::Append(const THklFile& hkls)  {
 }
 //..............................................................................
 bool THklFile::SaveToFile(const olxstr& FN, const TRefPList& refs, bool Append)  {
-  if( !refs.Count() )  return true;
+  if( refs.IsEmpty() )  return true;
 
   if( Append && TEFile::FileExists(FN) )  {
     THklFile F;
@@ -347,6 +347,25 @@ bool THklFile::SaveToFile(const olxstr& FN, const TRefPList& refs, bool Append) 
     for( int i=0; i < refs.Count(); i++ )  {
       if( refs[i]->GetTag() < 0 )  out.Writenl( CString(refs[i]->ToString()) );
     }
+  }
+  return true;
+}
+//..............................................................................
+bool THklFile::SaveToFile(const olxstr& FN, const TRefList& refs)  {
+  if( refs.IsEmpty() )  return true;
+
+  TEFile out(FN, "w+b");
+  TReflection NullRef(0, 0, 0, 0, 0);
+  if( refs[0].GetFlag() != NoFlagSet )
+    NullRef.SetFlag(0);
+  for( int i=0; i < refs.Count(); i++ )  {
+    if( refs[i].GetTag() > 0 )  
+      out.Writenl( CString(refs[i].ToString()) );
+  }
+  out.Writenl( CString(NullRef.ToString()) );
+  for( int i=0; i < refs.Count(); i++ )  {
+    if( refs[i].GetTag() < 0 )  
+      out.Writenl( CString(refs[i].ToString()) );
   }
   return true;
 }

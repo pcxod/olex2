@@ -674,6 +674,7 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual accupancy\
   this_InitMacro(EditHkl, , fpNone|fpOne|fpThree );
   this_InitMacro(ViewHkl, , fpNone|fpOne );
   this_InitMacro(ExtractHkl, , fpOne|psFileLoaded );
+  this_InitMacro(MergeHkl,f-do not merge Fiedel pairs , fpNone|fpOne|psFileLoaded );
   // not implemented
   this_InitMacroD(AppendHkl, "h&;k&;l&;c", fpAny, "moves reflection back into the refinement list\
  See excludeHkl for more details" );

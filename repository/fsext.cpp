@@ -16,6 +16,7 @@
 #endif
 
 #include "wxzipfs.h"
+//#include "wxzipfsext.h"
 
   const int16_t TFileHandlerManager::FVersion = 0x0001;
   const char TFileHandlerManager::FSignature[]="ODF_"; // olex data file?

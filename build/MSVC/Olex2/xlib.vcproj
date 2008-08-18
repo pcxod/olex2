@@ -679,6 +679,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\xlib\reflection.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\xlib\satom.h"
 				>
 			</File>
