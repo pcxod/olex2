@@ -123,10 +123,10 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
         while( i < SL.Count() && (SL[i].FirstIndexOf("CFOM") == -1) )  {
           Toks.Strtok(SL[i], ' ');
           if( Toks.Count() < 7 )  { i++;  continue;  }
-          TTrefTry& trtry = TrefTries.AddNew();
           int inc = 0, requiredCount = 7;
           if( Toks[0] == '*' )  {  inc ++;  requiredCount++;  }
-          if( Toks.Count() > requiredCount )  {
+          if( Toks.Count() >= requiredCount )  {
+            TTrefTry& trtry = TrefTries.AddNew();
             trtry.Try = Toks[0+inc].ToInt();
             trtry.RAlpha = Toks[1+inc].ToDouble();
             trtry.NQual = Toks[2+inc].ToDouble();

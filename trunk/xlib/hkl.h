@@ -172,7 +172,7 @@ template <class RefListMerger>
     for( int i=0; i < refs.Count(); i++ )
       delete refs[i];
 
-    stats.Rint = Sdiff/SI;
+    stats.Rint = (SI != 0) ? Sdiff/SI : 0.0;
     double SS = 0;
     SI = 0;
     if( inverseMatIndex != -1 )  // all reflection will be cenrtic othewise
@@ -184,7 +184,7 @@ template <class RefListMerger>
       SS += output[i].GetS();
       SI += output[i].GetI();
     }
-    stats.Rsigma = SS/SI;
+    stats.Rsigma = (SI != 0) ? SS/SI : 0.0;
     stats.UniqueReflections = output.Count();
     if( inverseMatIndex != -1 )  {
       smatd& i = ml.InsertNew(inverseMatIndex);

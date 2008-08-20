@@ -7280,7 +7280,8 @@ public:
 };
 #endif
 void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  
+  TEBitArray ba;
+  olxstr rr = ba.FormatString(31);
   if( FXApp->XFile().GetLastLoader() != NULL )  {
     mat3d h2c = mat3d::Transpose(FXApp->XFile().GetAsymmUnit().GetHklToCartesian());
     TBasicApp::GetLog() << 1./h2c[0][0] << ',' << 1./h2c[1][1] << ',' << 1./h2c[2][2] << '\n';
