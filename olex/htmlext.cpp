@@ -1312,7 +1312,7 @@ bool THtml::UpdatePage()  {
       else if( EsdlInstanceOf(*wnd, TComboBox) )  {
         TComboBox* cb = (TComboBox*)wnd;
         if( cb->GetTextCtrl() != NULL )  {
-          cb->GetTextCtrl()->SetSelection(-1, -1);
+          cb->GetTextCtrl()->SetSelection(0, -1);
           wnd = cb->GetTextCtrl();
         }
       }
