@@ -9,14 +9,14 @@ export PATH=/usr/local/bin:$PATH
 if [ -z "$1" ]
 then
   echo linking $bin_dir/exe/unirun ...
-#  gcc ./obj/unirun/*.s ./obj/*.s -o $bin_dir/exe/unirun `wx-config --libs gl,core,html,net,aui --unicode --static` `python-config --libs --ldflags` \
-#  -L/usr/X11R6/lib -fexceptions -g -rdynamic -O3 -lstdc++ -lGL -lGLU \
-#  -dylib_file /System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib:/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib
+  g++ ./obj/unirun/*.s ./obj/*.s -o $bin_dir/exe/unirun -framework IOKit -framework Carbon -framework Cocoa -framework System -framework QuickTime \
+  `wx-config --libs gl,core,html,net,aui,adv --unicode --static` `python-config --includes` \
+  -framework OpenGL -framework AGL -framework Python -lz -lpthread -liconv -O3
 
   echo linking $bin_dir/exe/olex2 ...
   g++ ./obj/olex/*.s ./obj/*.s -o $bin_dir/exe/olex2 -framework IOKit -framework Carbon -framework Cocoa -framework System -framework QuickTime \
   `wx-config --libs gl,core,html,net,aui,adv --unicode --static` `python-config --includes` \
-  -framework OpenGL -framework AGL -framework Python -lz -lpthread -liconv
+  -framework OpenGL -framework AGL -framework Python -lz -lpthread -liconv -O3
 
   if [ ! -f "$bin_dir/exe/paths" ] 
   then
@@ -59,11 +59,13 @@ then
   echo linking $bin_dir/exe/olex2 ...
   g++ ./obj/olex/*.s ./obj/*.s -o $bin_dir/exe/olex2 -framework IOKit -framework Carbon -framework Cocoa -framework System -framework QuickTime \
   `wx-config --libs gl,core,html,net,aui,adv --unicode --static` `python-config --includes` \
-  -framework OpenGL -framework AGL -framework Python -lz -lpthread -liconv
+  -framework OpenGL -framework AGL -framework Python -lz -lpthread -liconv -O3
 elif [ "$1" = "unirun" ]
 then
   echo linking $bin_dir/exe/unirun ...
-  gcc ./obj/unirun/*.s ./obj/*.s -o $bin_dir/exe/unirun `wx-config --libs gl,core,html,net,aui --unicode` `python-config --libs --ldflags` -L. -fexceptions -g -rdynamic -O3
+  g++ ./obj/unirun/*.s ./obj/*.s -o $bin_dir/exe/unirun -framework IOKit -framework Carbon -framework Cocoa -framework System -framework QuickTime \
+  `wx-config --libs gl,core,html,net,aui,adv --unicode --static` `python-config --includes` \
+  -framework OpenGL -framework AGL -framework Python -lz -lpthread -liconv -O3
 else
   echo "Unknown argument"
 fi
