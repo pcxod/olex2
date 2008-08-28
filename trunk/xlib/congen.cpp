@@ -107,15 +107,17 @@ void AConstraintGenerator::GenerateAtom( TCAtomPList& created, TAtomEnvi& envi,
       break;
     case fgCH2:
       if( envi.Count() == 2 )  {
-        RotVec = (envi.GetCrd(0) - envi.GetBase().crd()).Normalise();
-        Vec1 = (envi.GetCrd(1) - envi.GetBase().crd()).Normalise();
-        CreateRotationMatrix(M, RotVec, -0.5 );
-
-        Vec1 = M * Vec1;
-        crds.AddNew(Vec1*0.97 + envi.GetBase().crd());
-
-        Vec1 = M * Vec1;
-        crds.AddNew(Vec1*0.97 + envi.GetBase().crd() );
+				// summ vector
+				Vec1 = ((envi.GetCrd(0) - envi.GetBase().crd()).Normalise() + (envi.GetCrd(1) - envi.GetBase().crd()).Normalise()).Normalise(); 
+				RotVec = (envi.GetCrd(0) - envi.GetBase().crd()).XProdVec( envi.GetCrd(1) - envi.GetBase().crd() ).Normalise(); 
+				CreateRotationMatrix(M, RotVec, cos(M_PI/3), sin(M_PI/3) );
+				crds.AddNew(M*Vec1);
+				CreateRotationMatrix(M, RotVec, cos(-M_PI/3), sin(-M_PI/3) );
+				crds.AddNew(M*Vec1);
+				// final 90 degree rotation
+				CreateRotationMatrix(M, Vec1, 0, 1);
+				crds[0] = (M*crds[0])*-0.97 + envi.GetBase().crd();
+				crds[1] = (M*crds[1])*-0.97 + envi.GetBase().crd();
       }
       else if( envi.Count() == 1 )  {
         NA = envi.GetBase().GetNetwork().GetLattice().FindSAtom( envi.GetLabel(0) );
