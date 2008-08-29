@@ -61,13 +61,13 @@ void TCifLoop::Format(TStrList& Data)  {
   FComments = EmptyString;
   int DL, RowCount, ColCount = FTable.ColCount();
   for( int i=0; i < Data.Count(); i++ )  {
-    if( Data.String(i).IsEmpty() )  continue;
-    if( Data.String(i)[0] == '#' )  {
-      FComments << Data.String(i) << '\n';
+    if( Data[i].IsEmpty() )  continue;
+    if( Data[i].CharAt(0) == '#' )  {
+      FComments << Data[i] << '\n';
       Data.String(i) = EmptyString;
     }
   }
-  D = Data.Text("\\n ");
+  D = Data.Text(" \\n ");
   TStrPObjList<olxstr,TCifLoopData*> Params;
   TCifLoopData *CData=NULL;
   D.DeleteSequencesOf(' ');
@@ -75,20 +75,20 @@ void TCifLoop::Format(TStrList& Data)  {
   DL = D.Length();
   for( int i=0; i < DL; i++ )  {
     Param = EmptyString;
-    Char = D[i];
+    Char = D.CharAt(i);
     if( Char == ' ' ) continue;
     if( Char == '\'' || Char == ';' || Char == '"')  {  // string param
       SepChar = Char;
       Char = 'a';
       while( Char != SepChar )  {
-        Param << D[i];
+	      Param << D.CharAt(i);
         i++;
         if( i >= DL )  {
           Param.Delete(0, 1);
           Params.Add(Param, new TCifLoopData(true) );
           goto end_cyc;
         }
-        Char = D[i];
+        Char = D.CharAt(i);
       }
       Param.Delete(0, 1);
       Params.Add(Param, new TCifLoopData(true));
@@ -96,14 +96,14 @@ void TCifLoop::Format(TStrList& Data)  {
     }
     // normal parameter
     while( (Char != ' ') )  {
-      Param << D[i];
+      Param << D.CharAt(i);
       i++;
       if( i >= DL )  {
         if( !Param.IsEmpty() && Param != "\\n" )
           Params.Add(Param, new TCifLoopData(false));
         goto end_cyc;
       }
-      Char = D[i];
+      Char = D.CharAt(i);
     }
     if( !Param.IsEmpty() && Param != "\\n" )
       Params.Add(Param, new TCifLoopData(false));

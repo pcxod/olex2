@@ -42,7 +42,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="2"
-				AdditionalIncludeDirectories="&quot;E:\wxWidgets-2.8.3\lib\vc_lib\mswd&quot;;&quot;E:\wxWidgets-2.8.3\include&quot;;..\..\..\glib;..\..\..\xlib;..\..\..\repository;C:\Python25\include;..\..\..\sdl"
+				AdditionalIncludeDirectories="&quot;E:\wxWidgets-2.8.7\lib\vc_lib\mswd&quot;;&quot;E:\wxWidgets-2.8.7\include&quot;;..\..\..\glib;..\..\..\xlib;..\..\..\repository;C:\Python25\include;..\..\..\sdl"
 				PreprocessorDefinitions="_DEBUG;__WXWIDGETS__"
 				StringPooling="true"
 				BasicRuntimeChecks="0"
@@ -182,7 +182,7 @@
 				InlineFunctionExpansion="0"
 				EnableIntrinsicFunctions="false"
 				AdditionalIncludeDirectories="&quot;E:\wxWidgets-2.8.7\lib\vc_lib\mswud&quot;;&quot;E:\wxWidgets-2.8.7\include&quot;;..\..\..\glib;..\..\..\xlib;..\..\..\repository;C:\Python25\include;..\..\..\sdl"
-				PreprocessorDefinitions="__WXWIDGETS__;_UNICODE;_NO_PYTHON"
+				PreprocessorDefinitions="__WXWIDGETS__;_UNICODE;_NO_PYTHON;_DEBUG"
 				StringPooling="true"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
