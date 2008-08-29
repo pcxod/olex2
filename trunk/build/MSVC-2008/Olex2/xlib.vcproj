@@ -401,6 +401,18 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\xlib\chemdata.cpp"
+				>
+				<FileConfiguration
+					Name="Unicode|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalOptions="/bigobj"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
 				RelativePath="..\..\..\xlib\chnexp.cpp"
 				>
 			</File>
@@ -426,10 +438,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\xlib\evaln.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\xlib\fastsymm.cpp"
 				>
 			</File>
 			<File
@@ -599,6 +607,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\xlib\chemdata.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\xlib\chnexp.h"
 				>
 			</File>
@@ -671,6 +683,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\xlib\reflection.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\xlib\satom.h"
 				>
 			</File>
@@ -716,6 +732,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\xlib\unitcell.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\xlib\xapp.h"
 				>
 			</File>
 			<File

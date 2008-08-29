@@ -229,7 +229,7 @@
 				AdditionalDependencies="alglib.lib sdl.lib xlib.lib gllib.lib gxlib-np.lib wxexpats.lib wxjpegs.lib wxbase28us.lib wxbase28us_net.lib wxmsw28us_gl.lib wxmsw28us_richtext.lib wxmsw28us_html.lib wxmsw28us_core.lib wxmsw28us_adv.lib wxpngs.lib wxregexus.lib wxtiffs.lib wxzlibs.lib mapi32.lib glu32.lib user32.lib opengl32.lib gdi32.lib ole32.lib advapi32.lib comdlg32.lib comctl32.lib shell32.lib rpcrt4.lib oleaut32.lib kernel32.lib wsock32.lib"
 				AdditionalLibraryDirectories="C:\Python25\libs;&quot;$(SolutionDir)$(ConfigurationName)&quot;;&quot;$(TargetDir)&quot;;&quot;E:\wxWidgets-2.8.7\lib\vc_lib&quot;;&quot;$(SolutionDir)\lib&quot;"
 				GenerateManifest="false"
-				GenerateDebugInformation="true"
+				GenerateDebugInformation="false"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
 				LinkTimeCodeGeneration="1"
@@ -327,6 +327,10 @@
 						ObjectFile="$(IntDir)\olxvar_np.obj"
 					/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\..\repository\shellutil.cpp"
+				>
 			</File>
 		</Filter>
 		<Filter
