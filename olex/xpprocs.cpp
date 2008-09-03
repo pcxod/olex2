@@ -4659,12 +4659,16 @@ void TMainForm::macCalcVoid(TStrObjList &Cmds, const TParamList &Options, TMacro
   FXApp->XGrid().InitGrid(mapX, mapY, mapZ);
   double mapVol = mapX*mapY*mapZ;
   TArray3D<short> map(0, mapX-1, 0, mapY-1, 0, mapZ-1);
+  vec3d voidCenter;
   short*** D = map.Data;
   long structureGridPoints = 0;
-  int MaxLevel = FXApp->CalcVoid(map, surfdis, -101, &structureGridPoints);
+  int MaxLevel = FXApp->CalcVoid(map, surfdis, -101, &structureGridPoints, voidCenter);
   double vol = FXApp->XFile().GetLattice().GetUnitCell().CalcVolume();
   TBasicApp::GetLog() << ( olxstr("Cell volume (A^3) ") << olxstr::FormatFloat(3, vol) << '\n');
   TBasicApp::GetLog() << ( olxstr("Max level reached ") << MaxLevel << '\n');
+  TBasicApp::GetLog() << ( olxstr("  at (") << olxstr::FormatFloat(2, voidCenter[0]) << ", "  <<
+    olxstr::FormatFloat(2, voidCenter[1]) << ", "  <<
+    olxstr::FormatFloat(2, voidCenter[2]) << ")\n");
   TBasicApp::GetLog() << ( olxstr("Largest spherical void is (A^3) ") << olxstr::FormatFloat(3, MaxLevel*MaxLevel*MaxLevel*4*M_PI/(3*mapVol)*vol) << '\n');
   TBasicApp::GetLog() << ( olxstr("Structure occupies (A^3) ") << olxstr::FormatFloat(3, structureGridPoints*vol/mapVol) << '\n');
   int minLevel = Round( pow( 6*mapVol*3/(4*M_PI*vol), 1./3) );
@@ -4723,7 +4727,7 @@ void TMainForm::macCalcVoid(TStrObjList &Cmds, const TParamList &Options, TMacro
     TBasicApp::GetLog() << ( olxstr("Level ") << i << " corresponds to " <<
       olxstr::FormatFloat(3, totalVol*vol/mapVol) << "(A^3)\n" );
   }
-  FXApp->XGrid().InitIso();
+  //FXApp->XGrid().InitIso();
   FXApp->ShowGrid(true, EmptyString);
 }
 //..............................................................................
