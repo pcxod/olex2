@@ -153,16 +153,16 @@ void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F)  {
         Ucifs[ind+k] = -TQ_PI*quad[k]*BM[k];
     }
     else  {
-      if( ca.GetAtomInfo() == iHydrogenIndex && ca.GetUisoVar() < 0 )  {
-        int ai = ca.GetAfixAtomId();
-        if( ai == -1 )  {
-          delete [] Ucifs;
-          throw TFunctionFailedException(__OlxSourceInfo, "bad Uiso");
-        }
-        Ucifs[ind] = fabs(au.GetAtom(ai).GetUiso()*ca.GetUisoVar());
-      }
-      else
-        Ucifs[ind] = ca.GetUiso();
+      //if( ca.GetAtomInfo() == iHydrogenIndex && ca.GetUisoVar() < 0 )  {
+      //  int ai = ca.GetAfixAtomId();
+      //  if( ai == -1 )  {
+      //    delete [] Ucifs;
+      //    throw TFunctionFailedException(__OlxSourceInfo, "bad Uiso");
+      //  }
+      //  Ucifs[ind] = fabs(au.GetAtom(ai).GetUiso()*ca.GetUisoVar());
+      //}
+      //else
+      Ucifs[ind] = ca.GetUiso();
       //Ucifs[ind] *= Ucifs[ind]; 
       Ucifs[ind] *= -EQ_PI;
     }
@@ -385,7 +385,7 @@ bool TXApp::FindSAtoms(const olxstr& condition, TSAtomPList& res)  {
   return !res.IsEmpty();
 }
 //..............................................................................
-short TXApp::CalcVoid(TArray3D<short>& map, double extraR, short val, long* structurePoints)  {
+short TXApp::CalcVoid(TArray3D<short>& map, double extraR, short val, long* structurePoints, vec3d& voidCenter)  {
   short*** D = map.Data;
   XFile().GetLattice().GetUnitCell().BuildStructureMap(map, extraR, val, structurePoints);
   int mapX = map.Length1(), mapY = map.Length2(), mapZ = map.Length3();
@@ -422,6 +422,9 @@ short TXApp::CalcVoid(TArray3D<short>& map, double extraR, short val, long* stru
             D[i][j][k] = level + 1;
             levelUsed = true;
             MaxLevel = level;
+            voidCenter[0] = (double)i/mapX;
+            voidCenter[1] = (double)j/mapY;
+            voidCenter[2] = (double)k/mapZ;
           }
         }
       }

@@ -213,10 +213,10 @@ void TXGrid::Create(const olxstr& cName)  {
   GlP->Type(sgloQuads);
   GlP->Data().Resize(5, 4);
   // texture coordinates
-  GlP->Data()[3][0] = 1;  GlP->Data()[4][0] = 0;
-  GlP->Data()[3][1] = 1;  GlP->Data()[4][1] = 1;
-  GlP->Data()[3][2] = 0;  GlP->Data()[4][2] = 1;
-  GlP->Data()[3][3] = 0;  GlP->Data()[4][3] = 0;
+  GlP->Data()[3][0] = 0;  GlP->Data()[4][0] = 0;
+  GlP->Data()[3][1] = 1;  GlP->Data()[4][1] = 0;
+  GlP->Data()[3][2] = 1;  GlP->Data()[4][2] = 1;
+  GlP->Data()[3][3] = 0;  GlP->Data()[4][3] = 1;
   Info->Create();
   // create dummy primitives
   glpP = GPC->NewPrimitive("+Surface");
@@ -337,29 +337,30 @@ bool TXGrid::Orient(TGlPrimitive *GlP)  {
   }
   if( GlP == glpP || GlP == glpN )  return true;
 
-  const mat3d& bm = Parent()->GetBasis().GetMatrix();
-  const mat3d& c2c =  XApp->XFile().GetAsymmUnit().GetCartesianToCell();
+//  mat3d bm ( mat3d::Transpose(Parent()->GetBasis().GetMatrix()) );
+  mat3d bm( Parent()->GetBasis().GetMatrix() );
+  mat3d c2c(  XApp->XFile().GetAsymmUnit().GetCartesianToCell() );
 
   double R, G, B;
-  static vec3d p, p1, p2, p3, p4;
-  float hh = (float)MaxDim/2, val;
+  vec3d p, p1, p2, p3, p4;
+  const float hh = (float)MaxDim/2;
 
   p1[0] = -hh/Size;  p1[1] = -hh/Size;
   p2[0] = hh/Size;   p2[1] = -hh/Size;
   p3[0] = hh/Size;   p3[1] = hh/Size;
   p4[0] = -hh/Size;  p4[1] = hh/Size;
   p1[2] = p2[2] = p3[2] = p4[2] = Depth;
-  p1 = bm*p1;  p1 -= Parent()->GetBasis().GetCenter();
-  p2 = bm*p2;  p2 -= Parent()->GetBasis().GetCenter();
-  p3 = bm*p3;  p3 -= Parent()->GetBasis().GetCenter();
-  p4 = bm*p4;  p4 -= Parent()->GetBasis().GetCenter();
+  p1 = bm * p1;  p1 -= Parent()->GetBasis().GetCenter();
+  p2 = bm * p2;  p2 -= Parent()->GetBasis().GetCenter();
+  p3 = bm * p3;  p3 -= Parent()->GetBasis().GetCenter();
+  p4 = bm * p4;  p4 -= Parent()->GetBasis().GetCenter();
 
   const int maxX = ED->Length1(),
             maxY = ED->Length2(),
             maxZ = ED->Length3();
 
   for( int i=0; i < MaxDim; i++ )  {
-    for( int j=0; j < MaxDim; j++ )  {  // (i,j,Depth)
+    for( int j=0; j < MaxDim; j++ )  {  // (i,j,Depth)        
       p[0] = (double)(i-hh)/Size;
       p[1] = (double)(j-hh)/Size;
       p[2] = Depth;
@@ -378,9 +379,9 @@ bool TXGrid::Orient(TGlPrimitive *GlP)  {
       while( p[1] >= maxY )  p[1] -= maxY;
       while( p[2] < 0 )     p[2] += maxZ;
       while( p[2] >= maxZ )  p[2] -= maxZ;
-      val = ED->Data[(int)p[0]][(int)p[1]][(int)p[2]];
+      float val = ED->Data[(int)p[0]][(int)p[1]][(int)p[2]];
       CalcColorRGB(val, R, G, B);
-      int off = (i+j*MaxDim)*3; 
+      const int off = (i+j*MaxDim)*3; 
       TextData[off]     = (char)R;
       TextData[off + 1] = (char)G;
       TextData[off + 2] = (char)B;
@@ -614,8 +615,8 @@ void TXGrid::InitIso(bool v)  {
   }
   else  {
     if( ED == NULL )  return;
+    if( IS != NULL )  delete IS;
     if( !GridMoved )  {
-      if( IS != NULL )  delete IS;
       GridMoved = true;
       const TLattice& latt = XApp->XFile().GetLattice();
       vec3d cnt;
