@@ -42,6 +42,14 @@ object Form1: TForm1
         Caption = 'Listen...'
         OnClick = Listen1Click
       end
+      object miClear: TMenuItem
+        Caption = 'Clear'
+        OnClick = miClearClick
+      end
+      object miTest: TMenuItem
+        Caption = 'Test'
+        OnClick = miTestClick
+      end
     end
     object DrawStyle1: TMenuItem
       Caption = 'Draw Style'

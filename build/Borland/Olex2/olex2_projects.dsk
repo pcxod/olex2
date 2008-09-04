@@ -9,22 +9,27 @@ File_6=SourceModule,'E:\SVN\src\v1.1u\olex2-tl\Olex2Impl.cpp',0,1,656,17,670,0,0
 File_7=SourceModule,'E:\SVN\src\v1.1u\olex2-tl\About.cpp',0,1,4,49,19,0,0
 
 [Modules]
-Module0=E:\SVN\srcf-svn\trunk\installer\main.cpp
-Module1=E:\SVN\srcf-svn\trunk\sdl\settingsfile.cpp
-Module2=c:\program files\borland\cbuilder6\include\vcl\dstring.h
-Module3=E:\SVN\srcf-svn\trunk\olex2v-test\main.cpp
-Module4=E:\SVN\srcf-svn\trunk\olex2v\olex2v.h
+Module0=E:\SVN\srcf-svn\trunk\olex2v-test\main.cpp
+Module1=E:\SVN\srcf-svn\trunk\installer\main.cpp
+Module2=E:\SVN\srcf-svn\trunk\olex2v\olex2v.h
+Module3=c:\program files\borland\cbuilder6\include\vcl\dstring.h
+Module4=E:\SVN\srcf-svn\trunk\sdl\settingsfile.cpp
 Module5=E:\wxWidgets-2.8.7\include\wx\wxchar.h
 Count=6
 EditWindowCount=1
 TypeLibWindowCount=1
+
+[E:\SVN\srcf-svn\trunk\olex2v-test\main.cpp]
+ModuleType=SourceModule
+FormState=1
+FormOnTop=0
 
 [E:\SVN\srcf-svn\trunk\installer\main.cpp]
 ModuleType=SourceModule
 FormState=0
 FormOnTop=0
 
-[E:\SVN\srcf-svn\trunk\sdl\settingsfile.cpp]
+[E:\SVN\srcf-svn\trunk\olex2v\olex2v.h]
 ModuleType=SourceModule
 FormState=0
 FormOnTop=0
@@ -34,12 +39,7 @@ ModuleType=SourceModule
 FormState=0
 FormOnTop=0
 
-[E:\SVN\srcf-svn\trunk\olex2v-test\main.cpp]
-ModuleType=SourceModule
-FormState=1
-FormOnTop=0
-
-[E:\SVN\srcf-svn\trunk\olex2v\olex2v.h]
+[E:\SVN\srcf-svn\trunk\sdl\settingsfile.cpp]
 ModuleType=SourceModule
 FormState=0
 FormOnTop=0
@@ -119,7 +119,7 @@ FormOnTop=0
 
 [EditWindow0]
 ViewCount=6
-CurrentView=2
+CurrentView=1
 View0=0
 View1=1
 View2=2
@@ -146,9 +146,9 @@ LeftPanelSize=0
 LeftPanelClients=CodeExplorer@EditWindow0
 LeftPanelData=00000400010000000C000000436F64654578706C6F726572000000000000000000000000000000000001000000000000000000000000FFFFFFFF
 RightPanelSize=0
-BottomPanelSize=151
+BottomPanelSize=0
 BottomPanelClients=MessageView@EditWindow0
-BottomPanelData=000004000000000084030000000000000297000000000000000100000000000000000000000001000000006E0400000000000001000000006E0400000000000001000000006E0400000000000001000000006E04000000000000010000000084030000000000000100000000840300000B0000004D65737361676556696577FFFFFFFF
+BottomPanelData=00000400010000000B0000004D6573736167655669657784030000000000000297000000000000000100000000000000000000000001000000006E0400000000000001000000006E0400000000000001000000006E0400000000000001000000006E04000000000000010000000084030000000000000100000000840300000B0000004D65737361676556696577FFFFFFFF
 
 [View0]
 Module=E:\wxWidgets-2.8.7\include\wx\wxchar.h
@@ -159,9 +159,9 @@ LeftCol=1
 
 [View1]
 Module=E:\SVN\srcf-svn\trunk\olex2v-test\main.cpp
-CursorX=26
-CursorY=27
-TopLine=5
+CursorX=52
+CursorY=171
+TopLine=138
 LeftCol=1
 
 [View2]
@@ -367,7 +367,7 @@ ClassViewDisplayMode=0
 
 [MessageView@EditWindow0]
 Create=1
-Visible=1
+Visible=0
 State=0
 Left=12
 Top=0
@@ -404,5 +404,5 @@ DockClients=ObjectTree,PropertyInspector
 DockSiteData=0000040000000000220300000000000001B6000000000000000100000000A90000000E0000004F626A65637454726565566965770100000000220300001100000050726F7065727479496E73706563746F72FFFFFFFF
 
 [ActiveProject]
-ActiveProject=9
+ActiveProject=12
 

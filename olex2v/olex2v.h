@@ -53,6 +53,7 @@ extern "C" {
   void DllImport olxv_DrawStyle(short style);
   void DllImport olxv_LoadStyle(const char* FN);
   void DllImport olxv_LoadScene(const char* FN);
+  void DllImport olxv_Clear();
 };
 
 #endif

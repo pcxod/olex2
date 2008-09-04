@@ -89,6 +89,7 @@ TOlexViewer::TOlexViewer(HDC windowDC, int w, int h) : WindowDC(windowDC) {
 }
 TOlexViewer::~TOlexViewer()  {
   Instance = NULL;
+  GXApp->OnIdle->Execute(NULL, NULL);
   delete GXApp;
   if( GlContext != NULL )  {
     wglMakeCurrent(WindowDC, NULL); 
@@ -100,6 +101,7 @@ TOlexViewer::~TOlexViewer()  {
 }
 void TOlexViewer::OnPaint()  {
 //  OnSize(Width, Height);
+  GXApp->OnIdle->Execute(NULL, NULL);
   GXApp->Draw();
   GdiFlush();
   glFlush();
@@ -110,7 +112,9 @@ void TOlexViewer::OnSize(int w, int h)  {
   Width = w;
   Height = h;
 }
+//.......................................................................................
 bool TOlexViewer::OnMouse(int x, int y, short MouseEvent, short MouseButton, short ShiftState)  {
+  GXApp->OnIdle->Execute(NULL, NULL);
   bool res = false;
   short btn = 0, shift = 0;
   if( MouseButton & olxv_MouseLeft )   btn |= smbLeft;
@@ -132,8 +136,10 @@ bool TOlexViewer::OnMouse(int x, int y, short MouseEvent, short MouseButton, sho
   }
   return res;
 }
+//.......................................................................................
 void TOlexViewer::OnFileChanged(const char* fileName)  {
   try  {
+    GXApp->OnIdle->Execute(NULL, NULL);
     GXApp->LoadXFile(fileName);
     GXApp->SetAtomDrawingStyle(adsEllipsoid);
     GXApp->Uniq();
@@ -141,6 +147,11 @@ void TOlexViewer::OnFileChanged(const char* fileName)  {
   }
   catch(...)  {}
 }
+//.......................................................................................
+void TOlexViewer::Clear()  {
+  GXApp->Clear();
+}
+//.......................................................................................
 olxstr TOlexViewer::GetObjectLabelAt(int x, int y)  {
   AGDrawObject *G = GXApp->SelectObject(x, y, 0);
   olxstr Tip;
@@ -160,9 +171,11 @@ olxstr TOlexViewer::GetObjectLabelAt(int x, int y)  {
   }
   return Tip;
 }
+//.......................................................................................
 olxstr TOlexViewer::GetSelectionInfo()  {
   return GXApp->GetSelectionInfo();
 }
+//.......................................................................................
 void TOlexViewer::ShowLabels(unsigned short type)  {
   short t = type == 0 ? 0 : lmLabels;
   if( (type & olxv_LabelsH) != 0 )  t |= lmHydr;
@@ -174,13 +187,16 @@ void TOlexViewer::ShowLabels(unsigned short type)  {
     GXApp->LabelsVisible(true);
   }
 }
+//.......................................................................................
 void TOlexViewer::ShowQPeaks(short what)  {
   GXApp->QPeaksVisible((what & olxv_ShowQAtoms) != 0);
   GXApp->QPeaksVisible((what & olxv_ShowQBonds) != 0);
 }
+//.......................................................................................
 void TOlexViewer::ShowCell(bool v)  {
   GXApp->SetCellVisible(v);
 }
+//.......................................................................................
 void TOlexViewer::DrawStyle(short style)  {
   if( style == olxv_DrawStylePers )  {
     GXApp->AtomRad("pers");
@@ -211,7 +227,7 @@ void TOlexViewer::DrawStyle(short style)  {
     DefDS = style;
   }
 }
-
+//.......................................................................................
 void TOlexViewer::LoadStyle(const olxstr& _styleFile)  {
   olxstr styleFile( TEFile::ChangeFileExt(_styleFile, "glds"));
   try  {
@@ -224,6 +240,7 @@ void TOlexViewer::LoadStyle(const olxstr& _styleFile)  {
   }
   catch( ... )  {  }  // be quite
 }
+//.......................................................................................
 void TOlexViewer::LoadScene(const olxstr& _sceneFile)  {
   olxstr sceneFile( TEFile::ChangeFileExt(_sceneFile, "glsp"));
   try  {
@@ -235,35 +252,44 @@ void TOlexViewer::LoadScene(const olxstr& _sceneFile)  {
   }
   catch( ... )  {  }  // be quite
 }
-
+//.......................................................................................
 bool TOlexViewer::executeMacro(const olxstr& cmdLine)  {
   return false;
 }
+//.......................................................................................
 void TOlexViewer::print(const olxstr& Text, const short MessageType)  {
   return;
 }
+//.......................................................................................
 bool TOlexViewer::executeFunction(const olxstr& funcName, olxstr& retValue)  {
   return false;
 }
+//.......................................................................................
 IEObject* TOlexViewer::executeFunction(const olxstr& funcName)  {
   return NULL;
 }
+//.......................................................................................
 TLibrary&  TOlexViewer::GetLibrary()  {  return GXApp->GetLibrary();  }
+//.......................................................................................
 bool TOlexViewer::registerCallbackFunc(const olxstr& cbEvent, ABasicFunction* fn) {
   return false;
 }
+//.......................................................................................
 void TOlexViewer::unregisterCallbackFunc(const olxstr& cbEvent, const olxstr& funcName) {
   return;
 }
-
+//.......................................................................................
 const olxstr& TOlexViewer::getDataDir() const  {  return EmptyString;  }
+//.......................................................................................
 const olxstr& TOlexViewer::getVar(const olxstr &name, const olxstr &defval) const  {
   return EmptyString;
 }
+//.......................................................................................
 void TOlexViewer::setVar(const olxstr &name, const olxstr &val) const {
   return;
 }
-
+//.......................................................................................
+//.......................................................................................
 const char* olxv_Initialize(HDC hdc, int w, int h)  {
   if( TOlexViewer::Instance != NULL )  return "";
   try  {
@@ -313,6 +339,9 @@ void olxv_LoadScene(const char* FN)  {
 }
 void olxv_LoadStyle(const char* FN)  {
   if( TOlexViewer::Instance != NULL )  TOlexViewer::Instance->LoadStyle(FN);
+}
+void olxv_Clear()  {
+  if( TOlexViewer::Instance != NULL )  TOlexViewer::Instance->Clear();
 }
 
 BOOL APIENTRY DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved)  {

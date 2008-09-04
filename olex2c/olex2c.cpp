@@ -34,6 +34,7 @@ using namespace std;
 #include "xlcongen.h"
 #include "seval.h"
 #include "ecast.h"
+#include "utf8file.h"
 //
 
 #define olx_Shift 25
@@ -177,6 +178,7 @@ public:
     DataDir << "Olex2/";
   #endif
 #endif
+    XApp.GetLog().AddStream( TUtf8File::Create(DataDir + "olex2c.log"), true );
     FMacroItem = NULL;
     FProcess = NULL;
 
