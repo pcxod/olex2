@@ -76,13 +76,11 @@ void __fastcall TForm1::FormMouseUp(TObject *Sender, TMouseButton Button,
     sbStatus->Panels->Items[0]->Text = olxv_GetSelectionInfo();
 }
 //---------------------------------------------------------------------------
-void __fastcall TForm1::FormResize(TObject *Sender)
-{
-  olxv_OnSize(Width, Height);  
+void __fastcall TForm1::FormResize(TObject *Sender)  {
+  olxv_OnSize(Width, Height);
 }
 //---------------------------------------------------------------------------
-void __fastcall TForm1::Listen1Click(TObject *Sender)
-{
+void __fastcall TForm1::Listen1Click(TObject *Sender)  {
    if( dlgOpen->Execute() )  {
      FileName = dlgOpen->FileName;
    }
@@ -157,6 +155,20 @@ void __fastcall TForm1::miQClick(TObject *Sender)  {
 void __fastcall TForm1::miCellClick(TObject *Sender)  {
   miCell->Checked = !miCell->Checked;   
   olxv_ShowCell( miCell->Checked );
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::miClearClick(TObject *Sender)  {
+  olxv_Clear();
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::miTestClick(TObject *Sender)  {
+  if( FileName.IsEmpty() )  return;
+  for( int i=0; i < 1024; i++ )  {
+    olxv_OnFileChanged(FileName.c_str());
+    Refresh();
+  }
 }
 //---------------------------------------------------------------------------
 

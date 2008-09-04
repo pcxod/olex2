@@ -32,6 +32,8 @@ __published:	// IDE-managed Components
   TMenuItem *miQ;
   TMenuItem *View2;
   TMenuItem *miCell;
+  TMenuItem *miClear;
+  TMenuItem *miTest;
   void __fastcall FormPaint(TObject *Sender);
   void __fastcall FormShow(TObject *Sender);
   void __fastcall FormMouseDown(TObject *Sender, TMouseButton Button,
@@ -50,6 +52,8 @@ __published:	// IDE-managed Components
   void __fastcall miHClick(TObject *Sender);
   void __fastcall miQClick(TObject *Sender);
   void __fastcall miCellClick(TObject *Sender);
+  void __fastcall miClearClick(TObject *Sender);
+  void __fastcall miTestClick(TObject *Sender);
 private:	// User declarations
   AnsiString FileName;
   void CheckLabels();

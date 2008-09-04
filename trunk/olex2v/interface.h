@@ -61,6 +61,7 @@ public:
   void OnSize(int w, int h);
   bool OnMouse(int x, int y, short MouseEvent, short MouseButton, short ShiftState);
   void OnFileChanged(const char* fileName);
+  void Clear();
   olxstr GetObjectLabelAt(int x, int y);
   olxstr GetSelectionInfo();
   void ShowLabels(unsigned short type);
@@ -100,5 +101,6 @@ extern "C" {
   DllExportA void DllExportB olxv_DrawStyle(short style);
   DllExportA void DllExportB olxv_LoadStyle(const char* FN);
   DllExportA void DllExportB olxv_LoadScene(const char* FN);
+  DllExportA void DllExportB olxv_Clear();
 };  // extern "C"
 #endif
