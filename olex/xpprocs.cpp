@@ -4485,6 +4485,8 @@ void TMainForm::macEditIns(TStrObjList &Cmds, const TParamList &Options, TMacroE
   TStrList SL;
   FXApp->XFile().UpdateAsymmUnit();  // synchronise au's
   Ins->SaveHeader(SL);
+  SL.Add("HKLF ") << Ins->Hklf();
+
   TdlgEdit *dlg = new TdlgEdit(this, true);
   dlg->SetText( SL.Text('\n') );
   try  {
