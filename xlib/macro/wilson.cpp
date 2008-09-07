@@ -29,10 +29,10 @@ struct TWilsonRef  {
   }
 };
 struct TWilsonBin {
-  double SFo2, SFe2, Sds, Minds, Maxds;
+  double SFo2, Fe2, Sds, Minds, Maxds;
   int Count;
   TWilsonBin(double minds, double maxds)  {
-    SFe2 = SFo2 = Sds = 0;
+    Fe2 = SFo2 = Sds = 0;
     Count = 0;
     Maxds = maxds;
     Minds = minds;
@@ -82,7 +82,7 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
   refs.SetCapacity(Refs.Count());
 
   TScattererLib scat_lib(9);
-  TTypeList< AnAssociation2<TLibScatterer*, int> > scatterers;
+  TTypeList< AnAssociation2<TLibScatterer*, double> > scatterers;
   TPtrList<TBasicAtomInfo> bais;
   for( int i=0; i < au.AtomCount(); i++ )  {
     const TCAtom& ca = au.GetAtom(i);
@@ -96,7 +96,7 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
       }
       bais.Add( &ca.GetAtomInfo() );
     }
-    scatterers[ind].B() ++;
+    scatterers[ind].B() += ca.GetOccp();
   }
   if( scatterers.IsEmpty() )  {
     bais.Add( &au.GetAtomsInfo()->GetAtomInfo(iCarbonIndex) );
@@ -105,27 +105,31 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
   }
   else  {
     for( int i=0; i < scatterers.Count(); i++ )
-      scatterers[i].B() *= au.GetZ();
+      scatterers[i].B() *= XApp.XFile().GetUnitCell().MatrixCount();
   }
 
+  double minds=100, maxds=0;
   for( int i=0; i < Refs.Count(); i++ )  {
     Refs[i].MulHkl(hkl, hkl2c);
     TWilsonRef& ref = refs.AddNew();
     ref.ds = hkl.QLength()*0.25;
+    if( ref.ds < minds )  minds = ref.ds;
+    if( ref.ds > maxds )  maxds = ref.ds;
     ref.Fo2 = Refs[i].GetI() * Refs[i].GetDegeneracy();
-    for( int j=0; j < scatterers.Count(); j++)  {
-      double v = scatterers[j].GetA()->Calc_sq(ref.ds);
+    if( Refs[i].IsCentric() )
+      ref.Fo2 /= 2;
+    for( int j=0; j < scatterers.Count(); j++ )  {
+      double v = scatterers[j].GetA()->Calc_sq( ref.ds );
       ref.Fe2 += v*v*scatterers[j].GetB();
     }
   }
 
+  // get parameters
   int binsCnt = Options.FindValue("b", "10").ToInt();
   bool picture = Options.Contains("p");
   if( binsCnt <= 0 ) binsCnt = 10;
 
-  refs.QuickSorter.SortSF(refs, TWilsonRef::SortByDs);
-
-  double minds=refs[0].ds, maxds=refs.Last().ds, dsR = maxds-minds;
+  double dsR = maxds-minds;
   if( ! picture )  {  /// use spherical bins
     double Vtot = SphereVol(sqrt(maxds)), Vstep = Vtot/binsCnt, 
       Vstart = SphereVol(sqrt(minds)),
@@ -155,29 +159,35 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
         bins.AddNew(minds + (i+1)*step - hstep, minds+(i+1)*step + hstep );
     }
   }
-
+  // calculate Fexpected for the bins
+  for( int i=0; i < bins.Count(); i++ )  {
+    for( int j=0; j < scatterers.Count(); j++ )  {
+      double v = scatterers[j].GetA()->Calc_sq( (bins[i].Maxds+bins[i].Minds)/2 );
+      bins[i].Fe2 += v*v*scatterers[j].GetB();
+    }
+  }
+  // fill the bins and assign Fexp to the refelections
   for( int i=0; i < refs.Count(); i++ )  {
-    const TWilsonRef& ref = refs[i];
+    TWilsonRef& ref = refs[i];
     for( int j=0; j < bins.Count(); j++ )  {
       if( ref.ds < bins[j].Maxds && ref.ds > bins[j].Minds )  {
         bins[j].Count ++;
         bins[j].SFo2 += ref.Fo2;
-        bins[j].SFe2 += ref.Fe2;
         bins[j].Sds += ref.ds;
       }
     }
   }
 
-  TStrList output, header;
   TTypeList< AnAssociation2<double,double> > binData;
-
+  // normalise summs
   for( int i=0; i < bins.Count(); i++ )  {
     if( bins[i].Count == 0 )  continue;
     bins[i].SFo2 /= bins[i].Count;
-    bins[i].SFe2 /= bins[i].Count;
     bins[i].Sds /= bins[i].Count;
-    binData.AddNew( log(bins[i].SFo2/bins[i].SFe2), bins[i].Sds );
+    binData.AddNew( log(bins[i].SFo2/bins[i].Fe2), (bins[i].Maxds+bins[i].Minds)/2 );
   }
+
+  TStrList output, header;
   if( binData.Count() != 0 )  {
     TTTable<TStrList> tab(binData.Count(), 2);
     tab.ColName(0) = "sin^2(theta)/lambda^2";
@@ -206,7 +216,8 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
     double E2 = 0, SE2 = 0;
     int iE2GT2 = 0;
     for( int i=0; i < refs.Count(); i++ )  {
-      refs[i].Fo2 /= (K*exp(-2*B*refs[i].ds)*Refs[i].GetDegeneracy()*refs[i].Fe2);
+      refs[i].Fo2 /= (K*exp(-2*B*refs[i].ds)*refs[i].Fe2);
+      //refs[i].Fo2 /= (K*exp(-2*B*refs[i].ds)*Refs[i].GetDegeneracy()*refs[i].Fe2);
       if( refs[i].Fo2 < 0 )  refs[i].Fo2 = 0;
       SE2 += refs[i].Fo2;
       E2 += fabs(refs[i].Fo2-1);
