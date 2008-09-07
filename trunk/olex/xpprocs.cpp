@@ -8365,7 +8365,7 @@ void TMainForm::macLstGO(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 struct Main_StrFPatt  {
   int h, k, l;
   double ps;
-  TEComplex<double> v;
+  compd v;
 };
 void TMainForm::macCalcPatt(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   TRefList refs;
@@ -8414,7 +8414,7 @@ void TMainForm::macCalcPatt(TStrObjList &Cmds, const TParamList &Options, TMacro
       AllF[index].l = (int)hkl[2];
       AllF[index].ps = hkl[0]*ml[j].t[0] + hkl[1]*ml[j].t[1] + hkl[2]*ml[j].t[2];
       AllF[index].v = sqrt(refs[i].GetI());
-      AllF[index].v *= TEComplex<double>::polar(1, 2*M_PI*AllF[index].ps);
+      AllF[index].v *= compd::polar(1, 2*M_PI*AllF[index].ps);
     }
   }
 // init map
@@ -8425,12 +8425,12 @@ void TMainForm::macCalcPatt(TStrObjList &Cmds, const TParamList &Options, TMacro
   FXApp->XGrid().InitGrid(mapX, mapY, mapZ);
 //  TArray3D<double> map(0, mapX/ml.Count(), 
 //////////////////////////////////////////////////////////////////////////////////////////
-  TEComplex<double> ** S, *T;
+  compd ** S, *T;
   int kLen = maxK-minK+1, hLen = maxH-minH+1, lLen = maxL-minL+1;
-  S = new TEComplex<double>*[kLen];
+  S = new compd*[kLen];
   for( int i=0; i < kLen; i++ )
-    S[i] = new TEComplex<double>[lLen];
-  T = new TEComplex<double>[lLen];
+    S[i] = new compd[lLen];
+  T = new compd[lLen];
   const double T_PI = 2*M_PI;
 // precalculations
   int maxDim = olx_max(mapX, mapY);
@@ -8440,9 +8440,9 @@ void TMainForm::macCalcPatt(TStrObjList &Cmds, const TParamList &Options, TMacro
   int maxInd = olx_max(maxH, maxK);
   if( maxL > maxInd )  maxInd = maxL;
   int iLen = maxInd - minInd + 1;
-  TEComplex<double>** sin_cos = new TEComplex<double>*[maxDim];
+  compd** sin_cos = new compd*[maxDim];
   for( int i=0; i < maxDim; i++ )  {
-    sin_cos[i] = new TEComplex<double>[iLen];
+    sin_cos[i] = new compd[iLen];
     for( int j=minInd; j <= maxInd; j++ )  {
       double rv = (double)(i*j)/maxDim, ca, sa;
       rv *= T_PI;
@@ -8451,7 +8451,7 @@ void TMainForm::macCalcPatt(TStrObjList &Cmds, const TParamList &Options, TMacro
       sin_cos[i][j-minInd].SetIm(sa);
     }
   }
-  TEComplex<double> R;
+  compd R;
   for( int ix=0; ix < mapX; ix++ )  {
     for( int i=0; i < AllF.Count(); i++ )  {
       const Main_StrFPatt& sf = AllF[i];
@@ -8590,7 +8590,7 @@ void main_peak_search(const TArray3D<float>& Data, TArray3D<bool>& Mask,
 struct Main_StrF  {
   int h, k, l;
   double ps;
-  TEComplex<double> v;
+  compd v;
 };
 void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
 // scale type
@@ -8600,7 +8600,7 @@ void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMa
   if( resolution < 0.1 )  resolution = 0.1;
   resolution = 1./resolution;
   TRefList refs;
-  TArrayList<TEComplex<double> > F;
+  TArrayList<compd > F;
   TAsymmUnit& au = FXApp->XFile().GetAsymmUnit();
   const TUnitCell& uc = FXApp->XFile().GetUnitCell();
   // space group matrix list
@@ -8660,18 +8660,18 @@ void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMa
       TReflection& ref = refs.AddNew(row[hInd].ToInt(), row[kInd].ToInt(), 
                                      row[lInd].ToInt(), row[mfInd].ToDouble(), row[sfInd].ToDouble());
       if( diff_map )  {
-        const TEComplex<double> rv(row[aInd].ToDouble(), row[bInd].ToDouble());
+        const compd rv(row[aInd].ToDouble(), row[bInd].ToDouble());
         double dI = (ref.GetI() - rv.mod());
-        F[i] = TEComplex<double>::polar(dI, rv.arg());
+        F[i] = compd::polar(dI, rv.arg());
       }
       else if( tomc_map )  {
-        const TEComplex<double> rv(row[aInd].ToDouble(), row[bInd].ToDouble());
+        const compd rv(row[aInd].ToDouble(), row[bInd].ToDouble());
         double dI = 2*ref.GetI() - rv.mod();
-        F[i] = TEComplex<double>::polar(dI, rv.arg());
+        F[i] = compd::polar(dI, rv.arg());
       }
       else if( obs_map ) {
-        const TEComplex<double> rv(row[aInd].ToDouble(), row[bInd].ToDouble());
-        F[i] = TEComplex<double>::polar(ref.GetI(), rv.arg());
+        const compd rv(row[aInd].ToDouble(), row[bInd].ToDouble());
+        F[i] = compd::polar(ref.GetI(), rv.arg());
       }
       else  {
         F[i].SetRe(row[aInd].ToDouble());
@@ -8722,15 +8722,15 @@ void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMa
         }
         if( diff_map )  {
           dI -= F[i].mod();
-          F[i] = TEComplex<double>::polar(dI, F[i].arg());
+          F[i] = compd::polar(dI, F[i].arg());
         }
         else if( tomc_map )  {
           dI *= 2;
           dI -= F[i].mod();
-          F[i] = TEComplex<double>::polar(dI, F[i].arg());
+          F[i] = compd::polar(dI, F[i].arg());
         }
         else if( obs_map )  {
-          F[i] = TEComplex<double>::polar(dI, F[i].arg());
+          F[i] = compd::polar(dI, F[i].arg());
         }
       }
     }
@@ -8757,7 +8757,7 @@ void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMa
       AllF[index].l = (int)hkl[2];
       AllF[index].ps = hkl[0]*ml[j].t[0] + hkl[1]*ml[j].t[1] + hkl[2]*ml[j].t[2];
       AllF[index].v = F[i];
-      AllF[index].v *= TEComplex<double>::polar(1, 2*M_PI*AllF[index].ps);
+      AllF[index].v *= compd::polar(1, 2*M_PI*AllF[index].ps);
     }
   }
 // init map
@@ -8770,12 +8770,12 @@ void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMa
   FXApp->XGrid().SetMinHole(-0.49);
 //  TArray3D<double> map(0, mapX/ml.Count(), 
 //////////////////////////////////////////////////////////////////////////////////////////
-  TEComplex<double> ** S, *T;
+  compd ** S, *T;
   int kLen = maxK-minK+1, hLen = maxH-minH+1, lLen = maxL-minL+1;
-  S = new TEComplex<double>*[kLen];
+  S = new compd*[kLen];
   for( int i=0; i < kLen; i++ )
-    S[i] = new TEComplex<double>[lLen];
-  T = new TEComplex<double>[lLen];
+    S[i] = new compd[lLen];
+  T = new compd[lLen];
   const double T_PI = 2*M_PI;
 // precalculations
   int minInd = olx_min(minH, minK);
@@ -8785,10 +8785,10 @@ void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMa
   int iLen = maxInd - minInd + 1;
   int mapMax = olx_max(mapX, mapY);
   if( mapZ > mapMax )  mapMax = mapZ;
-  TEComplex<double>** sin_cosX = new TEComplex<double>*[mapX],
+  compd** sin_cosX = new compd*[mapX],
                       **sin_cosY, **sin_cosZ;
   for( int i=0; i < mapX; i++ )  {
-    sin_cosX[i] = new TEComplex<double>[iLen];
+    sin_cosX[i] = new compd[iLen];
     for( int j=minInd; j <= maxInd; j++ )  {
       double rv = (double)(i*j)/mapX, ca, sa;
       rv *= T_PI;
@@ -8801,9 +8801,9 @@ void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMa
     sin_cosY = sin_cosX;
   }
   else  {
-    sin_cosY = new TEComplex<double>*[mapY];
+    sin_cosY = new compd*[mapY];
     for( int i=0; i < mapY; i++ )  {
-      sin_cosY[i] = new TEComplex<double>[iLen];
+      sin_cosY[i] = new compd[iLen];
       for( int j=minInd; j <= maxInd; j++ )  {
         double rv = (double)(i*j)/mapY, ca, sa;
         rv *= T_PI;
@@ -8820,9 +8820,9 @@ void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMa
     sin_cosZ = sin_cosY;
   }
   else  {
-    sin_cosZ = new TEComplex<double>*[mapZ];
+    sin_cosZ = new compd*[mapZ];
     for( int i=0; i < mapZ; i++ )  {
-      sin_cosZ[i] = new TEComplex<double>[iLen];
+      sin_cosZ[i] = new compd[iLen];
       for( int j=minInd; j <= maxInd; j++ )  {
         double rv = (double)(i*j)/mapZ, ca, sa;
         rv *= T_PI;
@@ -8832,7 +8832,7 @@ void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMa
       }
     }
   }
-  TEComplex<double> R;
+  compd R;
   /* http://smallcode.weblogs.us/2006/11/27/calculate-standard-deviation-in-one-pass/
     for one pass calculation of the variance
   */
