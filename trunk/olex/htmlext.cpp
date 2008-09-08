@@ -276,7 +276,8 @@ TAG_HANDLER_PROC(tag)  {
     if( tag.HasParam(wxT("FLAT")) )  flags |= wxNO_BORDER;
     olxstr buttonImage = tag.GetParam(wxT("IMAGE")).c_str();
     if( !buttonImage.IsEmpty() )  {
-      Btn = new TBmpButton( m_WParser->GetWindowInterface()->GetHTMLWindow(), flags );
+      Btn = new TBmpButton(  m_WParser->GetWindowInterface()->GetHTMLWindow(), -1, wxNullBitmap, 
+        wxDefaultPosition, wxDefaultSize, flags );
       ((TBmpButton*)Btn)->SetSource( buttonImage );
       wxFSFile *fsFile = TFileHandlerManager::GetFSFileHandler( buttonImage );
       if( fsFile == NULL )
@@ -302,7 +303,8 @@ TAG_HANDLER_PROC(tag)  {
       CreatedWindow = (TBmpButton*)Btn;
     }
     else  {
-      Btn = new TButton( m_WParser->GetWindowInterface()->GetHTMLWindow(), flags );
+      Btn = new TButton( m_WParser->GetWindowInterface()->GetHTMLWindow(), -1, wxEmptyString, 
+        wxDefaultPosition, wxDefaultSize, flags );
       ((TButton*)Btn)->SetCaption(Value);
       ((TButton*)Btn)->SetFont( m_WParser->GetDC()->GetFont() );
       if( (flags & wxBU_EXACTFIT) == 0 )  {
