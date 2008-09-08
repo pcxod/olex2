@@ -1834,7 +1834,7 @@ void THtml::macDefineControl(TStrObjList &Cmds, const TParamList &Options, TMacr
   }
   else if( Cmds[1].Comparei("button") == 0 )  {
     props = ObjectsState.DefineControl(Cmds[0], typeid(TButton) );
-    props->Item("down") = Options.FindValue("c", "false");
+    props->Item("checked") = Options.FindValue("c", "false");
   }
   else if( Cmds[1].Comparei("combo") == 0 )  {
     props = ObjectsState.DefineControl(Cmds[0], typeid(TComboBox) );
@@ -2080,7 +2080,12 @@ void THtml::funSetData(const TStrObjList &Params, TMacroError &E)  {
 }
 //..............................................................................
 bool THtml::GetObjectState(const IEObject *Obj)  {
-  return EsdlInstanceOf(*Obj, TCheckBox) ? ((_xl_Controls::TCheckBox*)Obj)->IsChecked() : false;
+  if( EsdlInstanceOf(*Obj, TCheckBox) )
+    return ((_xl_Controls::TCheckBox*)Obj)->IsChecked();
+  else if( EsdlInstanceOf(*Obj, TButton) )
+    return ((_xl_Controls::TButton*)Obj)->IsDown();
+  else
+    return false;
 }
 void THtml::funGetState(const TStrObjList &Params, TMacroError &E)  {
   const IEObject *Obj = FindObject(Params[0]);
@@ -2129,10 +2134,10 @@ void THtml::funSetLabel(const TStrObjList &Params, TMacroError &E)  {
 }
 //..............................................................................
 void THtml::SetObjectState(IEObject *Obj, bool State)  {
-  if( EsdlInstanceOf(*Obj, TCheckBox) )  {
+  if( EsdlInstanceOf(*Obj, TCheckBox) )
     ((_xl_Controls::TCheckBox*)Obj)->SetChecked(State);
-    return;
-  }
+  else if( EsdlInstanceOf(*Obj, TButton) )
+    ((_xl_Controls::TButton*)Obj)->SetDown(State);
 }
 //..............................................................................
 void THtml::funSetImage(const TStrObjList &Params, TMacroError &E)  {
@@ -2316,11 +2321,11 @@ void THtml::TObjectsState::SaveState()  {
     else if( EsdlInstanceOf(*obj, TButton) )    {  
       _xl_Controls::TButton* bt = (_xl_Controls::TButton*)obj;
       props->Add("val", bt->GetCaption() );
-      props->Add("down", bt->IsDown() );
+      props->Add("checked", bt->IsDown() );
     }
     else if( EsdlInstanceOf(*obj, TBmpButton) )    {  
       _xl_Controls::TBmpButton* bt = (_xl_Controls::TBmpButton*)obj;  
-      props->Add("down", bt->IsDown() );
+      props->Add("checked", bt->IsDown() );
       props->Add("val", bt->GetSource() );
     }
     else if( EsdlInstanceOf(*obj, TComboBox) )  {  
@@ -2389,7 +2394,7 @@ void THtml::TObjectsState::RestoreState()  {
       bt->OnDown->SetEnabled(false);
       bt->OnUp->SetEnabled(false);
       bt->OnClick->SetEnabled(false);
-      bt->SetDown( props["down"].ToBool() );
+      bt->SetDown( props["checked"].ToBool() );
       bt->OnDown->SetEnabled(true);
       bt->OnUp->SetEnabled(true);
       bt->OnClick->SetEnabled(true);
@@ -2400,7 +2405,7 @@ void THtml::TObjectsState::RestoreState()  {
       bt->OnDown->SetEnabled(false);
       bt->OnUp->SetEnabled(false);
       bt->OnClick->SetEnabled(false);
-      bt->SetDown( props["down"].ToBool() );
+      bt->SetDown( props["checked"].ToBool() );
       bt->OnDown->SetEnabled(true);
       bt->OnUp->SetEnabled(true);
       bt->OnClick->SetEnabled(true);
@@ -2485,11 +2490,11 @@ TSStrStrList<olxstr,false>* THtml::TObjectsState::DefineControl(const olxstr& na
     props->Add("val");
   }
   else if( type == typeid(TButton) )    {  
-    props->Add("down");
+    props->Add("checked");
     props->Add("val");
   }
   else if( type == typeid(TBmpButton) )    {  
-    props->Add("down");
+    props->Add("checked");
     props->Add("val");
   }
   else if( type == typeid(TComboBox) )  {  

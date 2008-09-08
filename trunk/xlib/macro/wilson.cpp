@@ -238,7 +238,7 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
 
     output.Add("#Title = Wilson plot");
     output.Add("#y_label = sin^2(theta)/lambda^2");
-    output.Add("#x_label = ln(<Fo2>)/(Fexp2)");
+    output.Add("#x_label = ln(<Fo^2>)/(Fexp^2)");
     output.Add(olxstr("#y = ") << olxstr::FormatFloat(3,line[1]) << "*x" 
       << ((line[1] < 0) ? " " : "+") << olxstr::FormatFloat(3,line[0]) );
     output.Add("#B = ") << olxstr::FormatFloat(3,B);
