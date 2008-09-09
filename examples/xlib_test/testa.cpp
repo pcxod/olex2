@@ -244,7 +244,187 @@ void CodeGen(smatd& m, const olxstr& d_type, const olxstr&var_type, const olxstr
   if( zmixed )  out.Add( "    v[2] = a2;" );
   out.Add("  }");
 }
+void HallSymbolTranslation(const smatd& m, olxstr& hs)  {
+  static TTypeList<AnAssociation2<vec3d, olxstr> > trans;
+  if( trans.IsEmpty() )  {
+    trans.AddNew( vec3d(0.5, 0, 0), "a");
+    trans.AddNew( vec3d(0, 0.5, 0), "b");
+    trans.AddNew( vec3d(0, 0, 0.5), "c");
+    trans.AddNew( vec3d(0.5, 0.5, 0.5), "n");
+    trans.AddNew( vec3d(0.25, 0, 0), "u");
+    trans.AddNew( vec3d(0, 0.25, 0), "v");
+    trans.AddNew( vec3d(0, 0, 0.25), "w");
+    trans.AddNew( vec3d(0.25, 0.25, 0.25), "d");
+  }
+  for( int j=0; j < trans.Count(); j++ )  {
+    if( trans[j].GetA() == m.t )  {
+      hs << trans[j].GetB();
+      return;
+    }
+  }
+  for( int j=0; j < trans.Count(); j++ )  {
+    for( int k=j+1; k < trans.Count(); k++ )  {
+      if( trans[j].GetA()+trans[k].GetA() == m.t )  {
+        hs << trans[j].GetB() << trans[k].GetB();
+        return;
+      }
+    }
+  }
+  for( int j=0; j < trans.Count(); j++ )  {
+    for( int k=j+1; k < trans.Count(); k++ )  {
+      for( int l=k+1; l < trans.Count(); l++ )  {
+        if( trans[j].GetA()+trans[k].GetA()+trans[l].GetA() == m.t )  {
+          hs << trans[j].GetB() << trans[k].GetB() << trans[l].GetB();
+          return;
+        }
+      }
+    }
+  }
+  TBasicApp::GetLog() << "hmm\n";
+}
+void HallSymbolTranslationR(const smatd& m, olxstr& hs, int order)  {
+  double v = m.t[0] != 0 ? m.t[0] : (m.t[1] != 0 ? m.t[1] : m.t[2]);
+  if( v == 0 )  return;
+  bool processed = false;
+  if( order <= 2 || m.t.Length() != v )  {
+    HallSymbolTranslation(m, hs);
+    return;
+  }
+  if( order == 3 )  {
+    if( fabs(v - 1./3) < 0.05 )  {
+      hs << '1';
+      processed = true;
+    }
+    else if( fabs(v - 2./3) < 0.05 )  {
+      hs << '2';
+      processed = true;
+    }
+  }
+  else if( order == 4 )  {
+    if( fabs(v - 1./4) < 0.05 )  {
+      hs << '1';
+      processed = true;
+    }
+    else if( fabs(v - 3./4) < 0.05 )  {
+      hs << '3';
+      processed = true;
+    }
+  }
+  else if( order == 6 )  {
+    if( fabs(v - 1./6) < 0.05 )  {
+      hs << '1';
+      processed = true;
+    }
+    else if( fabs(v - 2./6) < 0.05 )  {
+      hs << '2';
+      processed = true;
+    }
+    else if( fabs(v - 4./6) < 0.05 )  {
+      hs << '4';
+      processed = true;
+    }
+    else if( fabs(v - 5./6) < 0.05 )  {
+      hs << '5';
+      processed = true;
+    }
+  }
+  if( !processed )
+    HallSymbolTranslation(m, hs);
+}
+int HallSymbolFindR(olxstr& hs, TPtrList<const smatd>& matrs, const TTypeList<AnAssociation2<mat3d, olxstr> >& rot, bool full)  {
+  int previous = 0;
+  for( int i=0; i < rot.Count(); i++ )  {
+    for( int j=0; j < matrs.Count(); j++ )  {
+      if( matrs[j] == NULL )  continue;
+      const smatd& m = *matrs[j];
+      if( rot[i].GetA() == m.r )  {
+        hs << ' ';
+        if( full )  hs << rot[i].GetB();
+        else        hs << rot[i].GetB().CharAt(0);
+        previous = rot[i].GetB().CharAt(0)-'0';
+        HallSymbolTranslationR(m, hs, previous);
+        matrs[j] = NULL;
+        break;
+      }
+      else if( rot[i].GetA() == -m.r )  {
+        hs << " -";
+        if( full )  hs << rot[i].GetB();
+        else        hs << rot[i].GetB().CharAt(0);
+        previous = rot[i].GetB().CharAt(0)-'0';
+        HallSymbolTranslationR(m, hs, previous);
+        matrs[j] = NULL;
+        break;
+      }
+    }
+    if( previous != 0 )  break;
+  }
+  if( previous != 0 )
+    matrs.Pack();
+  return previous;
+}
+olxstr HallSymbol(const TSpaceGroup& sg)  {
+  //smatd_list ml;
+  //sg.GetMatrices(ml, mattAll);
+  olxstr hs( sg.IsCentrosymmetric() ? olxstr('-') << sg.GetLattice().GetSymbol() : sg.GetLattice().GetSymbol());
+  if( sg.MatrixCount() == 0 )  {
+    hs << ' ' << '1';
+  }
+  else  {
+    TTypeList<AnAssociation2<mat3d, olxstr> > rotx, roty, rotz, 
+      rotx1, roty1, rotz1, rot3;
+    rotx.AddNew( mat3d( 1, 0, 0,   0,-1, 0,   0, 0,-1), "2x" );
+    rotx.AddNew( mat3d( 1, 0, 0,   0, 0,-1,   0, 1,-1), "3x" );
+    rotx.AddNew( mat3d( 1, 0, 0,   0, 0,-1,   0, 1, 0), "4x" );
+    rotx.AddNew( mat3d( 1, 0, 0,   0, 1,-1,   0, 1, 0), "6x" );
+
+    roty.AddNew( mat3d( 0, 0, 1,   0, 1, 0,  -1, 0, 1), "6y" );
+    roty.AddNew( mat3d( 0, 0, 1,   0, 1, 0,  -1, 0, 0), "4y" );
+    roty.AddNew( mat3d(-1, 0, 1,   0, 1, 0,  -1, 0, 0), "3y" );
+    roty.AddNew( mat3d(-1, 0, 0,   0, 1, 0,   0, 0,-1), "2y" );
+
+    rotz.AddNew( mat3d( 1,-1, 0,   1, 0, 0,   0, 0, 1), "6z" );
+    rotz.AddNew( mat3d( 0,-1, 0,   1, 0, 0,   0, 0, 1), "4z" );
+    rotz.AddNew( mat3d( 0,-1, 0,   1,-1, 0,   0, 0, 1), "3z" );
+    rotz.AddNew( mat3d(-1, 0, 0,   0,-1, 0,   0, 0, 1), "2z" );
+    // x
+    rotx1.AddNew( mat3d(-1, 0,  0,   0,  0, -1,   0,  -1,  0), "2" );
+    rotx1.AddNew( mat3d(-1, 0,  0,   0,  0,  1,   0,   1,  0), "2\"" );
+    // y
+    roty1.AddNew( mat3d( 0, 0, -1,   0, -1,  0,  -1,   0,  0), "2" );
+    roty1.AddNew( mat3d( 0, 0,  1,   0, -1,  0,   1,   0,  0), "2\"" );
+    // z
+    rotz1.AddNew( mat3d( 0,-1,  0,  -1,  0,  0,   0,   0, -1), "2" );
+    rotz1.AddNew( mat3d( 0, 1,  0,   1,  0,  0,   0,   0, -1), "2\"" );
+
+    rot3.AddNew( mat3d( 0, 0,  1,   1,  0,  0,   0,   1,  0), "3*" );
+
+    TPtrList<const smatd> matrs;
+    for( int i=0; i < sg.MatrixCount(); i++ )
+      matrs.Add( &sg.GetMatrix(i) );
+    
+    int rz = HallSymbolFindR(hs, matrs, rotz, false);
+    // c direction
+    if( rz != 0 )  {
+      int rx = HallSymbolFindR(hs, matrs, rotx, false);
+      if( rx != 0 )
+        HallSymbolFindR(hs, matrs, rot3, false);
+      else
+        HallSymbolFindR(hs, matrs, rotz1, true);
+    }
+    else  { // no c direction
+      HallSymbolFindR(hs, matrs, rotx, true);
+      HallSymbolFindR(hs, matrs, roty, true);
+      if( HallSymbolFindR(hs, matrs, rot3, true) != 0 )
+        HallSymbolFindR(hs, matrs, rotz1, true);
+    }
+  }
+  return hs;
+}
 int CodeGen(TSpaceGroup& sg, TStrList& out)  {
+  olxstr hs ( HallSymbol(sg) );
+  if( !(sg.GetHallSymbol() == hs) )  {
+    TBasicApp::GetLog() << hs << " vs. " << sg.GetHallSymbol() << '\n';
+  }
   smatd_list ml;
   sg.GetMatrices(ml, mattAll);
   out.Add("  template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {");
@@ -272,6 +452,24 @@ int CodeGen(TSpaceGroup& sg, TStrList& out)  {
     }
   }
   out.Add("  }");
+  //////////////////////////////
+  out.Add("  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {");
+  for( int i=0; i < ml.Count(); i++ )  {
+    smatd& m = ml[i];
+    for( int j=0; j < 3; j++ )  {
+      olxstr& str = out.Add("    res[") << i << "][" << j << "] = ";
+      bool added = false;
+      for( int k=0; k < 3; k++ )  {
+        if( m.r[k][j] != 0 )  {  // transposed form for hkl
+          str << ((m.r[k][j] > 0) ? (added ? (olxstr("+v[") << k << ']') : (olxstr("v[") << k << ']')) : (olxstr("-v[") << k << ']'));
+          added = true;
+        }
+      }
+      str << ';';
+    }
+  }
+  out.Add("  }");
+  ///////////////////////
   out.Add("  template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {");
   for( int i=0; i < ml.Count(); i++ )  {
     smatd& m = ml[i];
