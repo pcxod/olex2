@@ -126,7 +126,7 @@
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
 				AdditionalIncludeDirectories="..\..\..\xlib;..\..\..\sdl"
-				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;_UNICODE"
+				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;_UNICODE;_NO_PYTHON"
 				StringPooling="true"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="0"

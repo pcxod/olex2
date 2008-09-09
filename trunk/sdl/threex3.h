@@ -69,6 +69,9 @@ public:
     m = DotProd(point)/m;
     return TVector3<T>(point[0]-data[0]*m, point[1]-data[1]*m, point[2]-data[2]*m);  
   }
+  inline TVector3<T> operator -() const {
+    return TVector3<T>( -data[0], -data[1], -data[2] );
+  }
   // returns a reflection of this vector from a plane represented by normal
   template <class AT> inline TVector3<T> Reflect(const TVector3<AT>& normal) const {
     T m = DotProd(normal)*2;
@@ -199,6 +202,10 @@ public:
     data[1][0] = yx;  data[1][1] = yy;  data[1][2] = yz;
     data[2][0] = zx;  data[2][1] = zy;  data[2][2] = zz;
   }
+  template <class vt>
+  TMatrix33(const TVector3<vt>& x, const TVector3<vt>& y, const TVector3<vt>& z)  {
+    data[0] = x;  data[1] = y;  data[2] = z;
+  }
   TMatrix33(const TMatrix33<T>& v)  {
     data[0][0] = v[0][0];  data[0][1] = v[0][1];  data[0][2] = v[0][2];
     data[1][0] = v[1][0];  data[1][1] = v[1][1];  data[1][2] = v[1][2];
@@ -243,6 +250,11 @@ public:
     return TMatrix33<T>(v[0][0], v[1][0], v[2][0], 
                         v[0][1], v[1][1], v[2][1], 
                         v[0][2], v[2][1], v[2][2]);
+  }
+  inline TMatrix33 operator -() const {
+    return TMatrix33<T>(-data[0][0], -data[0][1], -data[0][2], 
+                        -data[1][0], -data[1][1], -data[1][2], 
+                        -data[2][0], -data[2][1], -data[2][2]);
   }
   template <class AT> inline static TMatrix33<AT>& Transpose (const TMatrix33& src, TMatrix33<AT>& dest) {
     dest[0][0] = src[0][0];  dest[0][1] = src[1][0];  dest[0][2] = src[2][0];
