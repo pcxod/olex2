@@ -24,6 +24,7 @@
 #include "restraints.h"
 #include "scat_it.h"
 #include "chemdata.h"
+#include "outstream.h"
 
 
 using namespace std;
@@ -31,15 +32,33 @@ using namespace std;
 
 class ISF_calc {
 public:
-  virtual void CalcSF() = 0;
+  virtual vec3d Calc(const TArrayList<vec3d>& positions) = 0;
 };
 
 template <class sg> class SF_calc : public ISF_calc {
 public:
-  virtual void CalcSF() {
+  virtual vec3d Calc(const TArrayList<vec3d>& positions) {
     vec3d pos;
     TArrayList<vec3d> rv(sg::size);
-    sg::GenPos(pos, rv);
+    for( int i=0; i < positions.Count(); i++ )  {
+      sg::GenPos(positions[i], rv);
+      for( int j=0; j < sg::size; j++ ) // this is important, not rv.count()!
+        pos += rv[j];
+    }
+    return pos;
+  }
+};
+
+class NT_calc  {
+public:
+  static vec3d Calc(const smatd_list& symop, const TArrayList<vec3d>& positions) {
+    vec3d pos;
+    for( int i=0; i < symop.Count(); i++ )  {
+      for( int j=0; j < positions.Count(); j++ )  {
+        pos += symop[i]*positions[j];
+      }
+    }
+    return pos;
   }
 };
 
@@ -54,20 +73,25 @@ void ParseShelxIns(TStrList& ins)  {
 }
 
 int main(int argc, char* argv[])  {
-
-  ISF_calc* sf_calc = fs_factory_ISF_calc("P21/n");
-  if( sf_calc != NULL )  {
-    sf_calc->CalcSF();
-    delete sf_calc;
-    SF_calc<FastSG_P_1> sc;
-    sc.CalcSF();
-    double pos[3] = {0.5, 0.5, 0.5};
-    TArrayList<vec3d> rv(FastSG_P21_n::size);
-    for( int i=0; i < 10; i++ )  {
-      pos[0] += 0.6;
-      FastSG_P21_n::GenPos(pos, rv);
-    }
-    cout << rv[0][0] << rv[1][0];
+  TSymmLib sl;
+  TBasicApp bapp(argv[0]);
+  bapp.GetLog().AddStream( new TOutStream, true );
+  TSpaceGroup* sg = sl.FindGroup("P21/c");
+  ISF_calc* sf_calc = fs_factory_ISF_calc("P21/c");
+  if( sf_calc != NULL && sg != NULL )  {  // acording to the test it gives 4 times speed up
+    TArrayList<vec3d> positions(10000000);
+    positions[0] = vec3d(0.5, -0.5, 0.5);  
+    positions[1] = vec3d(-0.5, 0.5, -0.5);  
+    smatd_list ml;
+    sg->GetMatrices(ml, mattAll);
+    time_t n = TETime::msNow();
+    vec3d p1 = sf_calc->Calc(positions);
+    TBasicApp::GetLog() << "FastSymm: " << TETime::msNow() - n << '\n';
+    n = TETime::msNow();
+    vec3d p2 = NT_calc::Calc(ml, positions);
+    TBasicApp::GetLog() << "Conventional: " << TETime::msNow() - n << '\n';
+    TBasicApp::GetLog() << p1.ToString() << '\n';
+    TBasicApp::GetLog() << p2.ToString() << '\n';
   }
   XModel xm;
   TAtomsInfo ai;
