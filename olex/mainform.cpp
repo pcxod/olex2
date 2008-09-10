@@ -756,8 +756,9 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual accupancy\
 
   this_InitMacroD(LstRes, EmptyString, fpNone|psFileLoaded,
 "Prints all interpreted restrains for current structure" );
-  this_InitMacroD(CalcVoid, "d-distance from Van-der-Waalse surface&;i-invert", fpNone|psFileLoaded,
-"Calculates solvent accessible void and packing parameters" );
+  this_InitMacroD(CalcVoid, "d-distance from Van-der-Waalse surface&;i-invert", fpNone|fpOne|psFileLoaded,
+"Calculates solvent accessible void and packing parameters; optionally accepts a file with space \
+separated values of Atom Type and radius, an entry a line" );
   this_InitMacroD(Sgen, EmptyString, (fpAny^fpNone)|psFileLoaded,
 "Grows the structure using provided atoms (all if none provided) and symmetry code" );
   this_InitMacroD(LstSymm, EmptyString, fpNone|psFileLoaded,

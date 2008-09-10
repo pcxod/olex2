@@ -4655,6 +4655,30 @@ bool InvestigateVoid(int x, int y, int z, TArray3D<short>& map, T3DIndexList& po
 }
 //
 void TMainForm::macCalcVoid(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  TPSTypeList<TBasicAtomInfo*, double> radii;
+  if( Cmds.Count() == 1 && TEFile::FileExists(Cmds[0]) )  {
+    TBasicApp::GetLog() << "Using user defined radii for: \n";
+    TStrList sl, toks;
+    sl.LoadFromFile(Cmds[0]);
+    TAtomsInfo* ai = TAtomsInfo::GetInstance();
+    for( int i=0; i < sl.Count(); i++ )  {
+      toks.Clear();
+      toks.Strtok(sl[i], ' ');
+      if( toks.Count() == 2 )  {
+        TBasicAtomInfo* bai = ai->FindAtomInfoBySymbol( toks[0] );
+        if( bai == NULL )  {
+          TBasicApp::GetLog() << " invalid atom type: " << toks[0] << '\n';
+          continue;
+        }
+        TBasicApp::GetLog() << ' ' << toks[0] << '\t' << toks[1] << '\n';
+        int b_i = radii.IndexOfComparable( bai );
+        if( b_i == -1 )
+          radii.Add( bai, toks[1].ToDouble() );
+        else
+          radii.Object(b_i) = toks[1].ToDouble();
+      }
+    }
+  }
   double surfdis = Options.FindValue("d", "0.25").ToDouble();
   bool invert = Options.Contains("i");
   int mapX = 100, mapY = 100, mapZ = 100;
@@ -4664,7 +4688,8 @@ void TMainForm::macCalcVoid(TStrObjList &Cmds, const TParamList &Options, TMacro
   vec3d voidCenter;
   short*** D = map.Data;
   long structureGridPoints = 0;
-  int MaxLevel = FXApp->CalcVoid(map, surfdis, -101, &structureGridPoints, voidCenter);
+  int MaxLevel = FXApp->CalcVoid(map, surfdis, -101, &structureGridPoints, voidCenter, 
+    radii.IsEmpty() ? NULL : &radii);
   double vol = FXApp->XFile().GetLattice().GetUnitCell().CalcVolume();
   TBasicApp::GetLog() << ( olxstr("Cell volume (A^3) ") << olxstr::FormatFloat(3, vol) << '\n');
   TBasicApp::GetLog() << ( olxstr("Max level reached ") << MaxLevel << '\n');

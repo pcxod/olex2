@@ -77,11 +77,12 @@ public:
   */
   static int GetMatrixMultiplier(short Latt);
   /* This function creates a map of the unit cell with provided partioning.
-  It uses Van-der-Waals atomic radii and adds delta to it. The grid points
+  It uses Van-der-Waals atomic radii by defualt and adds delta to it. The grid points
   belonging to atoms have value 'value', the others - '0'
   Returns the number of grid points occupied by the structure to structurePoinst if no NULL
   */
-  void BuildStructureMap( TArray3D<short>& map, double delta, short value, long* structurePoints );
+  void BuildStructureMap( TArray3D<short>& map, double delta, short value, 
+    long* structurePoints, TPSTypeList<TBasicAtomInfo*, double>* radii );
 protected:
   // helper function, association should be AnAssociation2+<vec3d,TCAtom*,+>
   template <class Association> 
