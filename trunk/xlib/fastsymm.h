@@ -555,7 +555,6 @@ BeginXlibNamespace()
   FSymmFactory(base,clazz)\
 
 struct FastSG_A112 {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -569,6 +568,20 @@ struct FastSG_A112 {
     res[3][0] = -v[0];
     res[3][1] = -v[1]+1./2;
     res[3][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -588,9 +601,11 @@ struct FastSG_A112 {
     res[3][2] = v[2];
     phase[3] = (res[3][1]+res[3][2])*1./2;
   }
+  static const short size=4;
+  static const char lattice='A';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_A112_a {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -616,6 +631,32 @@ struct FastSG_A112_a {
     res[7][0] = v[0]+1./2;
     res[7][1] = v[1]+1./2;
     res[7][2] = -v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = v[1];
+    res[7][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -651,9 +692,11 @@ struct FastSG_A112_a {
     res[7][2] = -v[2];
     phase[7] = (res[7][0]+res[7][1]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='A';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_A112_m {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -679,6 +722,32 @@ struct FastSG_A112_m {
     res[7][0] = v[0];
     res[7][1] = v[1]+1./2;
     res[7][2] = -v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = v[1];
+    res[7][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -714,9 +783,11 @@ struct FastSG_A112_m {
     res[7][2] = -v[2];
     phase[7] = (res[7][1]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='A';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_A112_n {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -741,6 +812,32 @@ struct FastSG_A112_n {
     res[6][2] = v[2];
     res[7][0] = v[0]+1./2;
     res[7][1] = v[1]+1./2;
+    res[7][2] = -v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = v[1];
     res[7][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -777,9 +874,11 @@ struct FastSG_A112_n {
     res[7][2] = -v[2];
     phase[7] = (res[7][0]+res[7][1])*1./2;
   }
+  static const short size=8;
+  static const char lattice='A';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_A11a {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -793,6 +892,20 @@ struct FastSG_A11a {
     res[3][0] = v[0]+1./2;
     res[3][1] = v[1]+1./2;
     res[3][2] = -v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = -v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -812,9 +925,11 @@ struct FastSG_A11a {
     res[3][2] = -v[2];
     phase[3] = (res[3][0]+res[3][1]+res[3][2])*1./2;
   }
+  static const short size=4;
+  static const char lattice='A';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_A11m {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -828,6 +943,20 @@ struct FastSG_A11m {
     res[3][0] = v[0];
     res[3][1] = v[1]+1./2;
     res[3][2] = -v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = -v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -847,9 +976,11 @@ struct FastSG_A11m {
     res[3][2] = -v[2];
     phase[3] = (res[3][1]+res[3][2])*1./2;
   }
+  static const short size=4;
+  static const char lattice='A';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_A11n {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -862,6 +993,20 @@ struct FastSG_A11n {
     res[2][2] = -v[2]+1./2;
     res[3][0] = v[0]+1./2;
     res[3][1] = v[1]+1./2;
+    res[3][2] = -v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = -v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
     res[3][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -882,9 +1027,11 @@ struct FastSG_A11n {
     res[3][2] = -v[2];
     phase[3] = (res[3][0]+res[3][1])*1./2;
   }
+  static const short size=4;
+  static const char lattice='A';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_A2 {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -898,6 +1045,20 @@ struct FastSG_A2 {
     res[3][0] = -v[0];
     res[3][1] = v[1]+1./2;
     res[3][2] = -v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = v[1];
+    res[2][2] = -v[2];
+    res[3][0] = -v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -917,9 +1078,11 @@ struct FastSG_A2 {
     res[3][2] = -v[2];
     phase[3] = (res[3][1]+res[3][2])*1./2;
   }
+  static const short size=4;
+  static const char lattice='A';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_A2_a {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -945,6 +1108,32 @@ struct FastSG_A2_a {
     res[7][0] = v[0]+1./2;
     res[7][1] = -v[1]+1./2;
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = v[1];
+    res[4][2] = -v[2];
+    res[5][0] = v[0];
+    res[5][1] = -v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -980,9 +1169,11 @@ struct FastSG_A2_a {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][1]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='A';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_A2_m {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -1008,6 +1199,32 @@ struct FastSG_A2_m {
     res[7][0] = v[0];
     res[7][1] = -v[1]+1./2;
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = v[1];
+    res[4][2] = -v[2];
+    res[5][0] = v[0];
+    res[5][1] = -v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -1043,9 +1260,11 @@ struct FastSG_A2_m {
     res[7][2] = v[2];
     phase[7] = (res[7][1]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='A';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_A2_n {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -1072,6 +1291,32 @@ struct FastSG_A2_n {
     res[7][1] = -v[1]+1./2;
     res[7][2] = v[2];
   }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = v[1];
+    res[4][2] = -v[2];
+    res[5][0] = v[0];
+    res[5][1] = -v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
+  }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -1106,9 +1351,11 @@ struct FastSG_A2_n {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][1])*1./2;
   }
+  static const short size=8;
+  static const char lattice='A';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_A2122 {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -1135,6 +1382,32 @@ struct FastSG_A2122 {
     res[7][1] = v[1]+1./2;
     res[7][2] = -v[2]+1./2;
   }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = v[0];
+    res[5][1] = -v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = -v[0];
+    res[7][1] = v[1];
+    res[7][2] = -v[2];
+  }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -1169,9 +1442,11 @@ struct FastSG_A2122 {
     res[7][2] = -v[2];
     phase[7] = (res[7][1]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='A';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_A21am {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -1197,6 +1472,32 @@ struct FastSG_A21am {
     res[7][0] = v[0]+1./2;
     res[7][1] = -v[1]+1./2;
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[0];
+    res[2][1] = -v[1];
+    res[2][2] = -v[2];
+    res[3][0] = v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = v[1];
+    res[4][2] = -v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -1232,9 +1533,11 @@ struct FastSG_A21am {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][1]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='A';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_A21ma {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -1260,6 +1563,32 @@ struct FastSG_A21ma {
     res[7][0] = v[0];
     res[7][1] = -v[1]+1./2;
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[0];
+    res[2][1] = -v[1];
+    res[2][2] = -v[2];
+    res[3][0] = v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = v[1];
+    res[4][2] = -v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -1295,9 +1624,11 @@ struct FastSG_A21ma {
     res[7][2] = v[2];
     phase[7] = (res[7][1]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='A';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_A222 {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -1324,6 +1655,32 @@ struct FastSG_A222 {
     res[7][1] = v[1]+1./2;
     res[7][2] = -v[2]+1./2;
   }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = v[0];
+    res[5][1] = -v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = -v[0];
+    res[7][1] = v[1];
+    res[7][2] = -v[2];
+  }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -1358,9 +1715,11 @@ struct FastSG_A222 {
     res[7][2] = -v[2];
     phase[7] = (res[7][1]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='A';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_A2aa {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -1386,6 +1745,32 @@ struct FastSG_A2aa {
     res[7][0] = v[0]+1./2;
     res[7][1] = -v[1]+1./2;
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[0];
+    res[2][1] = -v[1];
+    res[2][2] = -v[2];
+    res[3][0] = v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = v[1];
+    res[4][2] = -v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -1421,9 +1806,11 @@ struct FastSG_A2aa {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][1]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='A';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_A2mm {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -1449,6 +1836,32 @@ struct FastSG_A2mm {
     res[7][0] = v[0];
     res[7][1] = -v[1]+1./2;
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[0];
+    res[2][1] = -v[1];
+    res[2][2] = -v[2];
+    res[3][0] = v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = v[1];
+    res[4][2] = -v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -1484,9 +1897,11 @@ struct FastSG_A2mm {
     res[7][2] = v[2];
     phase[7] = (res[7][1]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='A';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Aa {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -1500,6 +1915,20 @@ struct FastSG_Aa {
     res[3][0] = v[0]+1./2;
     res[3][1] = -v[1]+1./2;
     res[3][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -1519,9 +1948,11 @@ struct FastSG_Aa {
     res[3][2] = v[2];
     phase[3] = (res[3][0]+res[3][1]+res[3][2])*1./2;
   }
+  static const short size=4;
+  static const char lattice='A';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Aba2 {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -1546,6 +1977,32 @@ struct FastSG_Aba2 {
     res[6][2] = v[2]+1./2;
     res[7][0] = v[0]+1./2;
     res[7][1] = -v[1]+1./2;
+    res[7][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
+    res[4][0] = -v[0];
+    res[4][1] = v[1];
+    res[4][2] = v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
     res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -1582,9 +2039,11 @@ struct FastSG_Aba2 {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][1])*1./2;
   }
+  static const short size=8;
+  static const char lattice='A';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Abaa {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -1633,6 +2092,56 @@ struct FastSG_Abaa {
     res[14][2] = -v[2];
     res[15][0] = v[0]+1./2;
     res[15][1] = -v[1]+1./2;
+    res[15][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = v[1];
+    res[7][2] = -v[2];
+    res[8][0] = v[0];
+    res[8][1] = -v[1];
+    res[8][2] = -v[2];
+    res[9][0] = -v[0];
+    res[9][1] = v[1];
+    res[9][2] = v[2];
+    res[10][0] = v[0];
+    res[10][1] = -v[1];
+    res[10][2] = -v[2];
+    res[11][0] = -v[0];
+    res[11][1] = v[1];
+    res[11][2] = v[2];
+    res[12][0] = -v[0];
+    res[12][1] = v[1];
+    res[12][2] = -v[2];
+    res[13][0] = v[0];
+    res[13][1] = -v[1];
+    res[13][2] = v[2];
+    res[14][0] = -v[0];
+    res[14][1] = v[1];
+    res[14][2] = -v[2];
+    res[15][0] = v[0];
+    res[15][1] = -v[1];
     res[15][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -1701,9 +2210,11 @@ struct FastSG_Abaa {
     res[15][2] = v[2];
     phase[15] = (res[15][0]+res[15][1])*1./2;
   }
+  static const short size=16;
+  static const char lattice='A';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Abm2 {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -1728,6 +2239,32 @@ struct FastSG_Abm2 {
     res[6][2] = v[2]+1./2;
     res[7][0] = v[0];
     res[7][1] = -v[1]+1./2;
+    res[7][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
+    res[4][0] = -v[0];
+    res[4][1] = v[1];
+    res[4][2] = v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
     res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -1764,9 +2301,11 @@ struct FastSG_Abm2 {
     res[7][2] = v[2];
     phase[7] = res[7][1]*1./2;
   }
+  static const short size=8;
+  static const char lattice='A';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Abma {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -1816,6 +2355,56 @@ struct FastSG_Abma {
     res[15][0] = v[0];
     res[15][1] = -v[1]+1./2;
     res[15][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = v[1];
+    res[7][2] = -v[2];
+    res[8][0] = v[0];
+    res[8][1] = -v[1];
+    res[8][2] = -v[2];
+    res[9][0] = -v[0];
+    res[9][1] = v[1];
+    res[9][2] = v[2];
+    res[10][0] = v[0];
+    res[10][1] = -v[1];
+    res[10][2] = -v[2];
+    res[11][0] = -v[0];
+    res[11][1] = v[1];
+    res[11][2] = v[2];
+    res[12][0] = -v[0];
+    res[12][1] = v[1];
+    res[12][2] = -v[2];
+    res[13][0] = v[0];
+    res[13][1] = -v[1];
+    res[13][2] = v[2];
+    res[14][0] = -v[0];
+    res[14][1] = v[1];
+    res[14][2] = -v[2];
+    res[15][0] = v[0];
+    res[15][1] = -v[1];
+    res[15][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -1883,9 +2472,11 @@ struct FastSG_Abma {
     res[15][2] = v[2];
     phase[15] = (res[15][1]+res[15][2])*1./2;
   }
+  static const short size=16;
+  static const char lattice='A';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Abmm {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -1935,6 +2526,56 @@ struct FastSG_Abmm {
     res[15][0] = v[0];
     res[15][1] = -v[1]+1./2;
     res[15][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = v[1];
+    res[7][2] = -v[2];
+    res[8][0] = v[0];
+    res[8][1] = -v[1];
+    res[8][2] = -v[2];
+    res[9][0] = -v[0];
+    res[9][1] = v[1];
+    res[9][2] = v[2];
+    res[10][0] = v[0];
+    res[10][1] = -v[1];
+    res[10][2] = -v[2];
+    res[11][0] = -v[0];
+    res[11][1] = v[1];
+    res[11][2] = v[2];
+    res[12][0] = -v[0];
+    res[12][1] = v[1];
+    res[12][2] = -v[2];
+    res[13][0] = v[0];
+    res[13][1] = -v[1];
+    res[13][2] = v[2];
+    res[14][0] = -v[0];
+    res[14][1] = v[1];
+    res[14][2] = -v[2];
+    res[15][0] = v[0];
+    res[15][1] = -v[1];
+    res[15][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -2002,9 +2643,11 @@ struct FastSG_Abmm {
     res[15][2] = v[2];
     phase[15] = (res[15][1]+res[15][2])*1./2;
   }
+  static const short size=16;
+  static const char lattice='A';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Ac2a {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -2029,6 +2672,32 @@ struct FastSG_Ac2a {
     res[6][2] = v[2]+1./2;
     res[7][0] = -v[0]+1./2;
     res[7][1] = v[1]+1./2;
+    res[7][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = v[1];
+    res[2][2] = -v[2];
+    res[3][0] = -v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = v[1];
+    res[4][2] = -v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = v[2];
+    res[7][0] = -v[0];
+    res[7][1] = v[1];
     res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -2065,9 +2734,11 @@ struct FastSG_Ac2a {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][1])*1./2;
   }
+  static const short size=8;
+  static const char lattice='A';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Ac2m {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -2092,6 +2763,32 @@ struct FastSG_Ac2m {
     res[6][2] = v[2]+1./2;
     res[7][0] = -v[0];
     res[7][1] = v[1]+1./2;
+    res[7][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = v[1];
+    res[2][2] = -v[2];
+    res[3][0] = -v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = v[1];
+    res[4][2] = -v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = v[2];
+    res[7][0] = -v[0];
+    res[7][1] = v[1];
     res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -2128,9 +2825,11 @@ struct FastSG_Ac2m {
     res[7][2] = v[2];
     phase[7] = res[7][1]*1./2;
   }
+  static const short size=8;
+  static const char lattice='A';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Acaa {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -2180,6 +2879,56 @@ struct FastSG_Acaa {
     res[15][0] = v[0]+1./2;
     res[15][1] = -v[1]+1./2;
     res[15][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = v[1];
+    res[7][2] = -v[2];
+    res[8][0] = v[0];
+    res[8][1] = -v[1];
+    res[8][2] = -v[2];
+    res[9][0] = -v[0];
+    res[9][1] = v[1];
+    res[9][2] = v[2];
+    res[10][0] = v[0];
+    res[10][1] = -v[1];
+    res[10][2] = -v[2];
+    res[11][0] = -v[0];
+    res[11][1] = v[1];
+    res[11][2] = v[2];
+    res[12][0] = -v[0];
+    res[12][1] = v[1];
+    res[12][2] = -v[2];
+    res[13][0] = v[0];
+    res[13][1] = -v[1];
+    res[13][2] = v[2];
+    res[14][0] = -v[0];
+    res[14][1] = v[1];
+    res[14][2] = -v[2];
+    res[15][0] = v[0];
+    res[15][1] = -v[1];
+    res[15][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -2247,9 +2996,11 @@ struct FastSG_Acaa {
     res[15][2] = v[2];
     phase[15] = (res[15][0]+res[15][1]+res[15][2])*1./2;
   }
+  static const short size=16;
+  static const char lattice='A';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Acam {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -2298,6 +3049,56 @@ struct FastSG_Acam {
     res[14][2] = -v[2];
     res[15][0] = v[0]+1./2;
     res[15][1] = -v[1]+1./2;
+    res[15][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = v[1];
+    res[7][2] = -v[2];
+    res[8][0] = v[0];
+    res[8][1] = -v[1];
+    res[8][2] = -v[2];
+    res[9][0] = -v[0];
+    res[9][1] = v[1];
+    res[9][2] = v[2];
+    res[10][0] = v[0];
+    res[10][1] = -v[1];
+    res[10][2] = -v[2];
+    res[11][0] = -v[0];
+    res[11][1] = v[1];
+    res[11][2] = v[2];
+    res[12][0] = -v[0];
+    res[12][1] = v[1];
+    res[12][2] = -v[2];
+    res[13][0] = v[0];
+    res[13][1] = -v[1];
+    res[13][2] = v[2];
+    res[14][0] = -v[0];
+    res[14][1] = v[1];
+    res[14][2] = -v[2];
+    res[15][0] = v[0];
+    res[15][1] = -v[1];
     res[15][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -2366,9 +3167,11 @@ struct FastSG_Acam {
     res[15][2] = v[2];
     phase[15] = (res[15][0]+res[15][1])*1./2;
   }
+  static const short size=16;
+  static const char lattice='A';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Acmm {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -2417,6 +3220,56 @@ struct FastSG_Acmm {
     res[14][2] = -v[2];
     res[15][0] = v[0];
     res[15][1] = -v[1]+1./2;
+    res[15][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = v[1];
+    res[7][2] = -v[2];
+    res[8][0] = v[0];
+    res[8][1] = -v[1];
+    res[8][2] = -v[2];
+    res[9][0] = -v[0];
+    res[9][1] = v[1];
+    res[9][2] = v[2];
+    res[10][0] = v[0];
+    res[10][1] = -v[1];
+    res[10][2] = -v[2];
+    res[11][0] = -v[0];
+    res[11][1] = v[1];
+    res[11][2] = v[2];
+    res[12][0] = -v[0];
+    res[12][1] = v[1];
+    res[12][2] = -v[2];
+    res[13][0] = v[0];
+    res[13][1] = -v[1];
+    res[13][2] = v[2];
+    res[14][0] = -v[0];
+    res[14][1] = v[1];
+    res[14][2] = -v[2];
+    res[15][0] = v[0];
+    res[15][1] = -v[1];
     res[15][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -2485,9 +3338,11 @@ struct FastSG_Acmm {
     res[15][2] = v[2];
     phase[15] = res[15][1]*1./2;
   }
+  static const short size=16;
+  static const char lattice='A';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Am {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -2501,6 +3356,20 @@ struct FastSG_Am {
     res[3][0] = v[0];
     res[3][1] = -v[1]+1./2;
     res[3][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -2520,9 +3389,11 @@ struct FastSG_Am {
     res[3][2] = v[2];
     phase[3] = (res[3][1]+res[3][2])*1./2;
   }
+  static const short size=4;
+  static const char lattice='A';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Am2a {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -2549,6 +3420,32 @@ struct FastSG_Am2a {
     res[7][1] = v[1]+1./2;
     res[7][2] = v[2]+1./2;
   }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = v[1];
+    res[2][2] = -v[2];
+    res[3][0] = -v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = v[1];
+    res[4][2] = -v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = v[2];
+    res[7][0] = -v[0];
+    res[7][1] = v[1];
+    res[7][2] = v[2];
+  }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -2583,9 +3480,11 @@ struct FastSG_Am2a {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][1]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='A';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Am2m {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -2612,6 +3511,32 @@ struct FastSG_Am2m {
     res[7][1] = v[1]+1./2;
     res[7][2] = v[2]+1./2;
   }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = v[1];
+    res[2][2] = -v[2];
+    res[3][0] = -v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = v[1];
+    res[4][2] = -v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = v[2];
+    res[7][0] = -v[0];
+    res[7][1] = v[1];
+    res[7][2] = v[2];
+  }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -2646,9 +3571,11 @@ struct FastSG_Am2m {
     res[7][2] = v[2];
     phase[7] = (res[7][1]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='A';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Ama2 {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -2674,6 +3601,32 @@ struct FastSG_Ama2 {
     res[7][0] = v[0]+1./2;
     res[7][1] = -v[1]+1./2;
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
+    res[4][0] = -v[0];
+    res[4][1] = v[1];
+    res[4][2] = v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -2709,9 +3662,11 @@ struct FastSG_Ama2 {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][1]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='A';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Amaa {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -2761,6 +3716,56 @@ struct FastSG_Amaa {
     res[15][0] = v[0]+1./2;
     res[15][1] = -v[1]+1./2;
     res[15][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = v[1];
+    res[7][2] = -v[2];
+    res[8][0] = v[0];
+    res[8][1] = -v[1];
+    res[8][2] = -v[2];
+    res[9][0] = -v[0];
+    res[9][1] = v[1];
+    res[9][2] = v[2];
+    res[10][0] = v[0];
+    res[10][1] = -v[1];
+    res[10][2] = -v[2];
+    res[11][0] = -v[0];
+    res[11][1] = v[1];
+    res[11][2] = v[2];
+    res[12][0] = -v[0];
+    res[12][1] = v[1];
+    res[12][2] = -v[2];
+    res[13][0] = v[0];
+    res[13][1] = -v[1];
+    res[13][2] = v[2];
+    res[14][0] = -v[0];
+    res[14][1] = v[1];
+    res[14][2] = -v[2];
+    res[15][0] = v[0];
+    res[15][1] = -v[1];
+    res[15][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -2828,9 +3833,11 @@ struct FastSG_Amaa {
     res[15][2] = v[2];
     phase[15] = (res[15][0]+res[15][1]+res[15][2])*1./2;
   }
+  static const short size=16;
+  static const char lattice='A';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Amam {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -2880,6 +3887,56 @@ struct FastSG_Amam {
     res[15][0] = v[0]+1./2;
     res[15][1] = -v[1]+1./2;
     res[15][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = v[1];
+    res[7][2] = -v[2];
+    res[8][0] = v[0];
+    res[8][1] = -v[1];
+    res[8][2] = -v[2];
+    res[9][0] = -v[0];
+    res[9][1] = v[1];
+    res[9][2] = v[2];
+    res[10][0] = v[0];
+    res[10][1] = -v[1];
+    res[10][2] = -v[2];
+    res[11][0] = -v[0];
+    res[11][1] = v[1];
+    res[11][2] = v[2];
+    res[12][0] = -v[0];
+    res[12][1] = v[1];
+    res[12][2] = -v[2];
+    res[13][0] = v[0];
+    res[13][1] = -v[1];
+    res[13][2] = v[2];
+    res[14][0] = -v[0];
+    res[14][1] = v[1];
+    res[14][2] = -v[2];
+    res[15][0] = v[0];
+    res[15][1] = -v[1];
+    res[15][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -2947,9 +4004,11 @@ struct FastSG_Amam {
     res[15][2] = v[2];
     phase[15] = (res[15][0]+res[15][1]+res[15][2])*1./2;
   }
+  static const short size=16;
+  static const char lattice='A';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Amm2 {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -2975,6 +4034,32 @@ struct FastSG_Amm2 {
     res[7][0] = v[0];
     res[7][1] = -v[1]+1./2;
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
+    res[4][0] = -v[0];
+    res[4][1] = v[1];
+    res[4][2] = v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -3010,9 +4095,11 @@ struct FastSG_Amm2 {
     res[7][2] = v[2];
     phase[7] = (res[7][1]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='A';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Amma {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -3062,6 +4149,56 @@ struct FastSG_Amma {
     res[15][0] = v[0];
     res[15][1] = -v[1]+1./2;
     res[15][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = v[1];
+    res[7][2] = -v[2];
+    res[8][0] = v[0];
+    res[8][1] = -v[1];
+    res[8][2] = -v[2];
+    res[9][0] = -v[0];
+    res[9][1] = v[1];
+    res[9][2] = v[2];
+    res[10][0] = v[0];
+    res[10][1] = -v[1];
+    res[10][2] = -v[2];
+    res[11][0] = -v[0];
+    res[11][1] = v[1];
+    res[11][2] = v[2];
+    res[12][0] = -v[0];
+    res[12][1] = v[1];
+    res[12][2] = -v[2];
+    res[13][0] = v[0];
+    res[13][1] = -v[1];
+    res[13][2] = v[2];
+    res[14][0] = -v[0];
+    res[14][1] = v[1];
+    res[14][2] = -v[2];
+    res[15][0] = v[0];
+    res[15][1] = -v[1];
+    res[15][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -3129,9 +4266,11 @@ struct FastSG_Amma {
     res[15][2] = v[2];
     phase[15] = (res[15][1]+res[15][2])*1./2;
   }
+  static const short size=16;
+  static const char lattice='A';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Ammm {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -3181,6 +4320,56 @@ struct FastSG_Ammm {
     res[15][0] = v[0];
     res[15][1] = -v[1]+1./2;
     res[15][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = v[1];
+    res[7][2] = -v[2];
+    res[8][0] = v[0];
+    res[8][1] = -v[1];
+    res[8][2] = -v[2];
+    res[9][0] = -v[0];
+    res[9][1] = v[1];
+    res[9][2] = v[2];
+    res[10][0] = v[0];
+    res[10][1] = -v[1];
+    res[10][2] = -v[2];
+    res[11][0] = -v[0];
+    res[11][1] = v[1];
+    res[11][2] = v[2];
+    res[12][0] = -v[0];
+    res[12][1] = v[1];
+    res[12][2] = -v[2];
+    res[13][0] = v[0];
+    res[13][1] = -v[1];
+    res[13][2] = v[2];
+    res[14][0] = -v[0];
+    res[14][1] = v[1];
+    res[14][2] = -v[2];
+    res[15][0] = v[0];
+    res[15][1] = -v[1];
+    res[15][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -3248,9 +4437,11 @@ struct FastSG_Ammm {
     res[15][2] = v[2];
     phase[15] = (res[15][1]+res[15][2])*1./2;
   }
+  static const short size=16;
+  static const char lattice='A';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_An {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -3263,6 +4454,20 @@ struct FastSG_An {
     res[2][2] = v[2]+1./2;
     res[3][0] = v[0]+1./2;
     res[3][1] = -v[1]+1./2;
+    res[3][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = -v[1];
     res[3][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -3283,9 +4488,11 @@ struct FastSG_An {
     res[3][2] = v[2];
     phase[3] = (res[3][0]+res[3][1])*1./2;
   }
+  static const short size=4;
+  static const char lattice='A';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_B112 {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -3299,6 +4506,20 @@ struct FastSG_B112 {
     res[3][0] = -v[0]+1./2;
     res[3][1] = -v[1];
     res[3][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -3318,9 +4539,11 @@ struct FastSG_B112 {
     res[3][2] = v[2];
     phase[3] = (res[3][0]+res[3][2])*1./2;
   }
+  static const short size=4;
+  static const char lattice='B';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_B112_b {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -3346,6 +4569,32 @@ struct FastSG_B112_b {
     res[7][0] = v[0]+1./2;
     res[7][1] = v[1]+1./2;
     res[7][2] = -v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = v[1];
+    res[7][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -3381,9 +4630,11 @@ struct FastSG_B112_b {
     res[7][2] = -v[2];
     phase[7] = (res[7][0]+res[7][1]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='B';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_B112_m {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -3409,6 +4660,32 @@ struct FastSG_B112_m {
     res[7][0] = v[0]+1./2;
     res[7][1] = v[1];
     res[7][2] = -v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = v[1];
+    res[7][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -3444,9 +4721,11 @@ struct FastSG_B112_m {
     res[7][2] = -v[2];
     phase[7] = (res[7][0]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='B';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_B112_n {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -3471,6 +4750,32 @@ struct FastSG_B112_n {
     res[6][2] = v[2];
     res[7][0] = v[0]+1./2;
     res[7][1] = v[1]+1./2;
+    res[7][2] = -v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = v[1];
     res[7][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -3507,9 +4812,11 @@ struct FastSG_B112_n {
     res[7][2] = -v[2];
     phase[7] = (res[7][0]+res[7][1])*1./2;
   }
+  static const short size=8;
+  static const char lattice='B';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_B11b {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -3523,6 +4830,20 @@ struct FastSG_B11b {
     res[3][0] = v[0]+1./2;
     res[3][1] = v[1]+1./2;
     res[3][2] = -v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = -v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -3542,9 +4863,11 @@ struct FastSG_B11b {
     res[3][2] = -v[2];
     phase[3] = (res[3][0]+res[3][1]+res[3][2])*1./2;
   }
+  static const short size=4;
+  static const char lattice='B';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_B11m {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -3558,6 +4881,20 @@ struct FastSG_B11m {
     res[3][0] = v[0]+1./2;
     res[3][1] = v[1];
     res[3][2] = -v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = -v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -3577,9 +4914,11 @@ struct FastSG_B11m {
     res[3][2] = -v[2];
     phase[3] = (res[3][0]+res[3][2])*1./2;
   }
+  static const short size=4;
+  static const char lattice='B';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_B11n {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -3594,6 +4933,20 @@ struct FastSG_B11n {
     res[3][1] = v[1]+1./2;
     res[3][2] = -v[2];
   }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = -v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+  }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -3612,9 +4965,11 @@ struct FastSG_B11n {
     res[3][2] = -v[2];
     phase[3] = (res[3][0]+res[3][1])*1./2;
   }
+  static const short size=4;
+  static const char lattice='B';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_B2_b11 {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -3640,6 +4995,32 @@ struct FastSG_B2_b11 {
     res[7][0] = -v[0]+1./2;
     res[7][1] = v[1]+1./2;
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = v[0];
+    res[6][1] = -v[1];
+    res[6][2] = -v[2];
+    res[7][0] = -v[0];
+    res[7][1] = v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -3675,9 +5056,11 @@ struct FastSG_B2_b11 {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][1]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='B';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_B2_m11 {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -3703,6 +5086,32 @@ struct FastSG_B2_m11 {
     res[7][0] = -v[0]+1./2;
     res[7][1] = v[1];
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = v[0];
+    res[6][1] = -v[1];
+    res[6][2] = -v[2];
+    res[7][0] = -v[0];
+    res[7][1] = v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -3738,9 +5147,11 @@ struct FastSG_B2_m11 {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='B';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_B2_n11 {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -3765,6 +5176,32 @@ struct FastSG_B2_n11 {
     res[6][2] = -v[2];
     res[7][0] = -v[0]+1./2;
     res[7][1] = v[1]+1./2;
+    res[7][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = v[0];
+    res[6][1] = -v[1];
+    res[6][2] = -v[2];
+    res[7][0] = -v[0];
+    res[7][1] = v[1];
     res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -3801,9 +5238,11 @@ struct FastSG_B2_n11 {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][1])*1./2;
   }
+  static const short size=8;
+  static const char lattice='B';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_B211 {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -3817,6 +5256,20 @@ struct FastSG_B211 {
     res[3][0] = v[0]+1./2;
     res[3][1] = -v[1];
     res[3][2] = -v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[0];
+    res[2][1] = -v[1];
+    res[2][2] = -v[2];
+    res[3][0] = v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -3836,9 +5289,11 @@ struct FastSG_B211 {
     res[3][2] = -v[2];
     phase[3] = (res[3][0]+res[3][2])*1./2;
   }
+  static const short size=4;
+  static const char lattice='B';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_B2212 {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -3864,6 +5319,32 @@ struct FastSG_B2212 {
     res[7][0] = -v[0]+1./2;
     res[7][1] = v[1]+1./2;
     res[7][2] = -v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = v[0];
+    res[5][1] = -v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = -v[0];
+    res[7][1] = v[1];
+    res[7][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -3899,9 +5380,11 @@ struct FastSG_B2212 {
     res[7][2] = -v[2];
     phase[7] = (res[7][0]+res[7][1]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='B';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_B222 {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -3927,6 +5410,32 @@ struct FastSG_B222 {
     res[7][0] = -v[0]+1./2;
     res[7][1] = v[1];
     res[7][2] = -v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = v[0];
+    res[5][1] = -v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = -v[0];
+    res[7][1] = v[1];
+    res[7][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -3962,9 +5471,11 @@ struct FastSG_B222 {
     res[7][2] = -v[2];
     phase[7] = (res[7][0]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='B';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_B2cb {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -3989,6 +5500,32 @@ struct FastSG_B2cb {
     res[6][2] = v[2]+1./2;
     res[7][0] = v[0]+1./2;
     res[7][1] = -v[1]+1./2;
+    res[7][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[0];
+    res[2][1] = -v[1];
+    res[2][2] = -v[2];
+    res[3][0] = v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = v[1];
+    res[4][2] = -v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
     res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -4025,9 +5562,11 @@ struct FastSG_B2cb {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][1])*1./2;
   }
+  static const short size=8;
+  static const char lattice='B';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_B2cm {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -4051,6 +5590,32 @@ struct FastSG_B2cm {
     res[6][1] = -v[1];
     res[6][2] = v[2]+1./2;
     res[7][0] = v[0]+1./2;
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[0];
+    res[2][1] = -v[1];
+    res[2][2] = -v[2];
+    res[3][0] = v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = v[1];
+    res[4][2] = -v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
     res[7][1] = -v[1];
     res[7][2] = v[2];
   }
@@ -4088,9 +5653,11 @@ struct FastSG_B2cm {
     res[7][2] = v[2];
     phase[7] = res[7][0]*1./2;
   }
+  static const short size=8;
+  static const char lattice='B';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_B2mb {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -4116,6 +5683,32 @@ struct FastSG_B2mb {
     res[7][0] = v[0]+1./2;
     res[7][1] = -v[1]+1./2;
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[0];
+    res[2][1] = -v[1];
+    res[2][2] = -v[2];
+    res[3][0] = v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = v[1];
+    res[4][2] = -v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -4151,9 +5744,11 @@ struct FastSG_B2mb {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][1]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='B';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_B2mm {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -4179,6 +5774,32 @@ struct FastSG_B2mm {
     res[7][0] = v[0]+1./2;
     res[7][1] = -v[1];
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[0];
+    res[2][1] = -v[1];
+    res[2][2] = -v[2];
+    res[3][0] = v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = v[1];
+    res[4][2] = -v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -4214,9 +5835,11 @@ struct FastSG_B2mm {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='B';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Bb11 {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -4230,6 +5853,20 @@ struct FastSG_Bb11 {
     res[3][0] = -v[0]+1./2;
     res[3][1] = v[1]+1./2;
     res[3][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = v[1];
+    res[3][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -4249,9 +5886,11 @@ struct FastSG_Bb11 {
     res[3][2] = v[2];
     phase[3] = (res[3][0]+res[3][1]+res[3][2])*1./2;
   }
+  static const short size=4;
+  static const char lattice='B';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Bb21m {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -4277,6 +5916,32 @@ struct FastSG_Bb21m {
     res[7][0] = -v[0]+1./2;
     res[7][1] = v[1]+1./2;
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = v[1];
+    res[2][2] = -v[2];
+    res[3][0] = -v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = v[1];
+    res[4][2] = -v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = v[2];
+    res[7][0] = -v[0];
+    res[7][1] = v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -4312,9 +5977,11 @@ struct FastSG_Bb21m {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][1]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='B';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Bb2b {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -4340,6 +6007,32 @@ struct FastSG_Bb2b {
     res[7][0] = -v[0]+1./2;
     res[7][1] = v[1]+1./2;
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = v[1];
+    res[2][2] = -v[2];
+    res[3][0] = -v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = v[1];
+    res[4][2] = -v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = v[2];
+    res[7][0] = -v[0];
+    res[7][1] = v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -4375,9 +6068,11 @@ struct FastSG_Bb2b {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][1]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='B';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Bba2 {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -4402,6 +6097,32 @@ struct FastSG_Bba2 {
     res[6][2] = v[2]+1./2;
     res[7][0] = v[0]+1./2;
     res[7][1] = -v[1]+1./2;
+    res[7][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
+    res[4][0] = -v[0];
+    res[4][1] = v[1];
+    res[4][2] = v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
     res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -4438,9 +6159,11 @@ struct FastSG_Bba2 {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][1])*1./2;
   }
+  static const short size=8;
+  static const char lattice='B';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Bbab {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -4488,6 +6211,56 @@ struct FastSG_Bbab {
     res[14][1] = v[1];
     res[14][2] = -v[2];
     res[15][0] = v[0]+1./2;
+    res[15][1] = -v[1];
+    res[15][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = v[1];
+    res[7][2] = -v[2];
+    res[8][0] = v[0];
+    res[8][1] = -v[1];
+    res[8][2] = -v[2];
+    res[9][0] = -v[0];
+    res[9][1] = v[1];
+    res[9][2] = v[2];
+    res[10][0] = v[0];
+    res[10][1] = -v[1];
+    res[10][2] = -v[2];
+    res[11][0] = -v[0];
+    res[11][1] = v[1];
+    res[11][2] = v[2];
+    res[12][0] = -v[0];
+    res[12][1] = v[1];
+    res[12][2] = -v[2];
+    res[13][0] = v[0];
+    res[13][1] = -v[1];
+    res[13][2] = v[2];
+    res[14][0] = -v[0];
+    res[14][1] = v[1];
+    res[14][2] = -v[2];
+    res[15][0] = v[0];
     res[15][1] = -v[1];
     res[15][2] = v[2];
   }
@@ -4557,9 +6330,11 @@ struct FastSG_Bbab {
     res[15][2] = v[2];
     phase[15] = res[15][0]*1./2;
   }
+  static const short size=16;
+  static const char lattice='B';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Bbcb {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -4607,6 +6382,56 @@ struct FastSG_Bbcb {
     res[14][1] = v[1];
     res[14][2] = -v[2];
     res[15][0] = v[0]+1./2;
+    res[15][1] = -v[1];
+    res[15][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = v[1];
+    res[7][2] = -v[2];
+    res[8][0] = v[0];
+    res[8][1] = -v[1];
+    res[8][2] = -v[2];
+    res[9][0] = -v[0];
+    res[9][1] = v[1];
+    res[9][2] = v[2];
+    res[10][0] = v[0];
+    res[10][1] = -v[1];
+    res[10][2] = -v[2];
+    res[11][0] = -v[0];
+    res[11][1] = v[1];
+    res[11][2] = v[2];
+    res[12][0] = -v[0];
+    res[12][1] = v[1];
+    res[12][2] = -v[2];
+    res[13][0] = v[0];
+    res[13][1] = -v[1];
+    res[13][2] = v[2];
+    res[14][0] = -v[0];
+    res[14][1] = v[1];
+    res[14][2] = -v[2];
+    res[15][0] = v[0];
     res[15][1] = -v[1];
     res[15][2] = v[2];
   }
@@ -4676,9 +6501,11 @@ struct FastSG_Bbcb {
     res[15][2] = v[2];
     phase[15] = res[15][0]*1./2;
   }
+  static const short size=16;
+  static const char lattice='B';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Bbcm {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -4727,6 +6554,56 @@ struct FastSG_Bbcm {
     res[14][2] = -v[2];
     res[15][0] = v[0]+1./2;
     res[15][1] = -v[1]+1./2;
+    res[15][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = v[1];
+    res[7][2] = -v[2];
+    res[8][0] = v[0];
+    res[8][1] = -v[1];
+    res[8][2] = -v[2];
+    res[9][0] = -v[0];
+    res[9][1] = v[1];
+    res[9][2] = v[2];
+    res[10][0] = v[0];
+    res[10][1] = -v[1];
+    res[10][2] = -v[2];
+    res[11][0] = -v[0];
+    res[11][1] = v[1];
+    res[11][2] = v[2];
+    res[12][0] = -v[0];
+    res[12][1] = v[1];
+    res[12][2] = -v[2];
+    res[13][0] = v[0];
+    res[13][1] = -v[1];
+    res[13][2] = v[2];
+    res[14][0] = -v[0];
+    res[14][1] = v[1];
+    res[14][2] = -v[2];
+    res[15][0] = v[0];
+    res[15][1] = -v[1];
     res[15][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -4795,9 +6672,11 @@ struct FastSG_Bbcm {
     res[15][2] = v[2];
     phase[15] = (res[15][0]+res[15][1])*1./2;
   }
+  static const short size=16;
+  static const char lattice='B';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Bbm2 {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -4823,6 +6702,32 @@ struct FastSG_Bbm2 {
     res[7][0] = v[0]+1./2;
     res[7][1] = -v[1]+1./2;
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
+    res[4][0] = -v[0];
+    res[4][1] = v[1];
+    res[4][2] = v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -4858,9 +6763,11 @@ struct FastSG_Bbm2 {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][1]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='B';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Bbmb {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -4910,6 +6817,56 @@ struct FastSG_Bbmb {
     res[15][0] = v[0]+1./2;
     res[15][1] = -v[1];
     res[15][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = v[1];
+    res[7][2] = -v[2];
+    res[8][0] = v[0];
+    res[8][1] = -v[1];
+    res[8][2] = -v[2];
+    res[9][0] = -v[0];
+    res[9][1] = v[1];
+    res[9][2] = v[2];
+    res[10][0] = v[0];
+    res[10][1] = -v[1];
+    res[10][2] = -v[2];
+    res[11][0] = -v[0];
+    res[11][1] = v[1];
+    res[11][2] = v[2];
+    res[12][0] = -v[0];
+    res[12][1] = v[1];
+    res[12][2] = -v[2];
+    res[13][0] = v[0];
+    res[13][1] = -v[1];
+    res[13][2] = v[2];
+    res[14][0] = -v[0];
+    res[14][1] = v[1];
+    res[14][2] = -v[2];
+    res[15][0] = v[0];
+    res[15][1] = -v[1];
+    res[15][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -4977,9 +6934,11 @@ struct FastSG_Bbmb {
     res[15][2] = v[2];
     phase[15] = (res[15][0]+res[15][2])*1./2;
   }
+  static const short size=16;
+  static const char lattice='B';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Bbmm {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -5029,6 +6988,56 @@ struct FastSG_Bbmm {
     res[15][0] = v[0]+1./2;
     res[15][1] = -v[1]+1./2;
     res[15][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = v[1];
+    res[7][2] = -v[2];
+    res[8][0] = v[0];
+    res[8][1] = -v[1];
+    res[8][2] = -v[2];
+    res[9][0] = -v[0];
+    res[9][1] = v[1];
+    res[9][2] = v[2];
+    res[10][0] = v[0];
+    res[10][1] = -v[1];
+    res[10][2] = -v[2];
+    res[11][0] = -v[0];
+    res[11][1] = v[1];
+    res[11][2] = v[2];
+    res[12][0] = -v[0];
+    res[12][1] = v[1];
+    res[12][2] = -v[2];
+    res[13][0] = v[0];
+    res[13][1] = -v[1];
+    res[13][2] = v[2];
+    res[14][0] = -v[0];
+    res[14][1] = v[1];
+    res[14][2] = -v[2];
+    res[15][0] = v[0];
+    res[15][1] = -v[1];
+    res[15][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -5096,9 +7105,11 @@ struct FastSG_Bbmm {
     res[15][2] = v[2];
     phase[15] = (res[15][0]+res[15][1]+res[15][2])*1./2;
   }
+  static const short size=16;
+  static const char lattice='B';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Bm11 {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -5112,6 +7123,20 @@ struct FastSG_Bm11 {
     res[3][0] = -v[0]+1./2;
     res[3][1] = v[1];
     res[3][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = v[1];
+    res[3][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -5131,9 +7156,11 @@ struct FastSG_Bm11 {
     res[3][2] = v[2];
     phase[3] = (res[3][0]+res[3][2])*1./2;
   }
+  static const short size=4;
+  static const char lattice='B';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Bm21b {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -5159,6 +7186,32 @@ struct FastSG_Bm21b {
     res[7][0] = -v[0]+1./2;
     res[7][1] = v[1];
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = v[1];
+    res[2][2] = -v[2];
+    res[3][0] = -v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = v[1];
+    res[4][2] = -v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = v[2];
+    res[7][0] = -v[0];
+    res[7][1] = v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -5194,9 +7247,11 @@ struct FastSG_Bm21b {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='B';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Bm2m {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -5222,6 +7277,32 @@ struct FastSG_Bm2m {
     res[7][0] = -v[0]+1./2;
     res[7][1] = v[1];
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = v[1];
+    res[2][2] = -v[2];
+    res[3][0] = -v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = v[1];
+    res[4][2] = -v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = v[2];
+    res[7][0] = -v[0];
+    res[7][1] = v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -5257,9 +7338,11 @@ struct FastSG_Bm2m {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='B';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Bma2 {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -5283,6 +7366,32 @@ struct FastSG_Bma2 {
     res[6][1] = -v[1];
     res[6][2] = v[2]+1./2;
     res[7][0] = v[0]+1./2;
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
+    res[4][0] = -v[0];
+    res[4][1] = v[1];
+    res[4][2] = v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
     res[7][1] = -v[1];
     res[7][2] = v[2];
   }
@@ -5320,9 +7429,11 @@ struct FastSG_Bma2 {
     res[7][2] = v[2];
     phase[7] = res[7][0]*1./2;
   }
+  static const short size=8;
+  static const char lattice='B';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Bmab {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -5371,6 +7482,56 @@ struct FastSG_Bmab {
     res[14][2] = -v[2];
     res[15][0] = v[0]+1./2;
     res[15][1] = -v[1]+1./2;
+    res[15][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = v[1];
+    res[7][2] = -v[2];
+    res[8][0] = v[0];
+    res[8][1] = -v[1];
+    res[8][2] = -v[2];
+    res[9][0] = -v[0];
+    res[9][1] = v[1];
+    res[9][2] = v[2];
+    res[10][0] = v[0];
+    res[10][1] = -v[1];
+    res[10][2] = -v[2];
+    res[11][0] = -v[0];
+    res[11][1] = v[1];
+    res[11][2] = v[2];
+    res[12][0] = -v[0];
+    res[12][1] = v[1];
+    res[12][2] = -v[2];
+    res[13][0] = v[0];
+    res[13][1] = -v[1];
+    res[13][2] = v[2];
+    res[14][0] = -v[0];
+    res[14][1] = v[1];
+    res[14][2] = -v[2];
+    res[15][0] = v[0];
+    res[15][1] = -v[1];
     res[15][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -5439,9 +7600,11 @@ struct FastSG_Bmab {
     res[15][2] = v[2];
     phase[15] = (res[15][0]+res[15][1])*1./2;
   }
+  static const short size=16;
+  static const char lattice='B';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Bmam {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -5489,6 +7652,56 @@ struct FastSG_Bmam {
     res[14][1] = v[1];
     res[14][2] = -v[2];
     res[15][0] = v[0]+1./2;
+    res[15][1] = -v[1];
+    res[15][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = v[1];
+    res[7][2] = -v[2];
+    res[8][0] = v[0];
+    res[8][1] = -v[1];
+    res[8][2] = -v[2];
+    res[9][0] = -v[0];
+    res[9][1] = v[1];
+    res[9][2] = v[2];
+    res[10][0] = v[0];
+    res[10][1] = -v[1];
+    res[10][2] = -v[2];
+    res[11][0] = -v[0];
+    res[11][1] = v[1];
+    res[11][2] = v[2];
+    res[12][0] = -v[0];
+    res[12][1] = v[1];
+    res[12][2] = -v[2];
+    res[13][0] = v[0];
+    res[13][1] = -v[1];
+    res[13][2] = v[2];
+    res[14][0] = -v[0];
+    res[14][1] = v[1];
+    res[14][2] = -v[2];
+    res[15][0] = v[0];
     res[15][1] = -v[1];
     res[15][2] = v[2];
   }
@@ -5558,9 +7771,11 @@ struct FastSG_Bmam {
     res[15][2] = v[2];
     phase[15] = res[15][0]*1./2;
   }
+  static const short size=16;
+  static const char lattice='B';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Bmcm {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -5608,6 +7823,56 @@ struct FastSG_Bmcm {
     res[14][1] = v[1];
     res[14][2] = -v[2];
     res[15][0] = v[0]+1./2;
+    res[15][1] = -v[1];
+    res[15][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = v[1];
+    res[7][2] = -v[2];
+    res[8][0] = v[0];
+    res[8][1] = -v[1];
+    res[8][2] = -v[2];
+    res[9][0] = -v[0];
+    res[9][1] = v[1];
+    res[9][2] = v[2];
+    res[10][0] = v[0];
+    res[10][1] = -v[1];
+    res[10][2] = -v[2];
+    res[11][0] = -v[0];
+    res[11][1] = v[1];
+    res[11][2] = v[2];
+    res[12][0] = -v[0];
+    res[12][1] = v[1];
+    res[12][2] = -v[2];
+    res[13][0] = v[0];
+    res[13][1] = -v[1];
+    res[13][2] = v[2];
+    res[14][0] = -v[0];
+    res[14][1] = v[1];
+    res[14][2] = -v[2];
+    res[15][0] = v[0];
     res[15][1] = -v[1];
     res[15][2] = v[2];
   }
@@ -5677,9 +7942,11 @@ struct FastSG_Bmcm {
     res[15][2] = v[2];
     phase[15] = res[15][0]*1./2;
   }
+  static const short size=16;
+  static const char lattice='B';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Bmm2 {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -5705,6 +7972,32 @@ struct FastSG_Bmm2 {
     res[7][0] = v[0]+1./2;
     res[7][1] = -v[1];
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
+    res[4][0] = -v[0];
+    res[4][1] = v[1];
+    res[4][2] = v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -5740,9 +8033,11 @@ struct FastSG_Bmm2 {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='B';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Bmmb {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -5792,6 +8087,56 @@ struct FastSG_Bmmb {
     res[15][0] = v[0]+1./2;
     res[15][1] = -v[1]+1./2;
     res[15][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = v[1];
+    res[7][2] = -v[2];
+    res[8][0] = v[0];
+    res[8][1] = -v[1];
+    res[8][2] = -v[2];
+    res[9][0] = -v[0];
+    res[9][1] = v[1];
+    res[9][2] = v[2];
+    res[10][0] = v[0];
+    res[10][1] = -v[1];
+    res[10][2] = -v[2];
+    res[11][0] = -v[0];
+    res[11][1] = v[1];
+    res[11][2] = v[2];
+    res[12][0] = -v[0];
+    res[12][1] = v[1];
+    res[12][2] = -v[2];
+    res[13][0] = v[0];
+    res[13][1] = -v[1];
+    res[13][2] = v[2];
+    res[14][0] = -v[0];
+    res[14][1] = v[1];
+    res[14][2] = -v[2];
+    res[15][0] = v[0];
+    res[15][1] = -v[1];
+    res[15][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -5859,9 +8204,11 @@ struct FastSG_Bmmb {
     res[15][2] = v[2];
     phase[15] = (res[15][0]+res[15][1]+res[15][2])*1./2;
   }
+  static const short size=16;
+  static const char lattice='B';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Bmmm {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -5911,6 +8258,56 @@ struct FastSG_Bmmm {
     res[15][0] = v[0]+1./2;
     res[15][1] = -v[1];
     res[15][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = v[1];
+    res[7][2] = -v[2];
+    res[8][0] = v[0];
+    res[8][1] = -v[1];
+    res[8][2] = -v[2];
+    res[9][0] = -v[0];
+    res[9][1] = v[1];
+    res[9][2] = v[2];
+    res[10][0] = v[0];
+    res[10][1] = -v[1];
+    res[10][2] = -v[2];
+    res[11][0] = -v[0];
+    res[11][1] = v[1];
+    res[11][2] = v[2];
+    res[12][0] = -v[0];
+    res[12][1] = v[1];
+    res[12][2] = -v[2];
+    res[13][0] = v[0];
+    res[13][1] = -v[1];
+    res[13][2] = v[2];
+    res[14][0] = -v[0];
+    res[14][1] = v[1];
+    res[14][2] = -v[2];
+    res[15][0] = v[0];
+    res[15][1] = -v[1];
+    res[15][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -5978,9 +8375,11 @@ struct FastSG_Bmmm {
     res[15][2] = v[2];
     phase[15] = (res[15][0]+res[15][2])*1./2;
   }
+  static const short size=16;
+  static const char lattice='B';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Bn11 {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -5993,6 +8392,20 @@ struct FastSG_Bn11 {
     res[2][2] = v[2]+1./2;
     res[3][0] = -v[0]+1./2;
     res[3][1] = v[1]+1./2;
+    res[3][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = v[1];
     res[3][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -6013,15 +8426,25 @@ struct FastSG_Bn11 {
     res[3][2] = v[2];
     phase[3] = (res[3][0]+res[3][1])*1./2;
   }
+  static const short size=4;
+  static const char lattice='B';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_C1 {
- static const short size=2;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
     res[0][2] = v[2];
     res[1][0] = v[0]+1./2;
     res[1][1] = v[1]+1./2;
+    res[1][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
     res[1][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -6034,9 +8457,11 @@ struct FastSG_C1 {
     res[1][2] = v[2];
     phase[1] = (res[1][0]+res[1][1])*1./2;
   }
+  static const short size=2;
+  static const char lattice='C';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_C2 {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -6049,6 +8474,20 @@ struct FastSG_C2 {
     res[2][2] = -v[2];
     res[3][0] = -v[0]+1./2;
     res[3][1] = v[1]+1./2;
+    res[3][2] = -v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = v[1];
+    res[2][2] = -v[2];
+    res[3][0] = -v[0];
+    res[3][1] = v[1];
     res[3][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -6069,9 +8508,11 @@ struct FastSG_C2 {
     res[3][2] = -v[2];
     phase[3] = (res[3][0]+res[3][1])*1./2;
   }
+  static const short size=4;
+  static const char lattice='C';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_C2_c {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -6097,6 +8538,32 @@ struct FastSG_C2_c {
     res[7][0] = v[0]+1./2;
     res[7][1] = -v[1]+1./2;
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = v[1];
+    res[4][2] = -v[2];
+    res[5][0] = v[0];
+    res[5][1] = -v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -6132,9 +8599,11 @@ struct FastSG_C2_c {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][1]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='C';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_C2_c11 {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -6160,6 +8629,32 @@ struct FastSG_C2_c11 {
     res[7][0] = -v[0]+1./2;
     res[7][1] = v[1]+1./2;
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = v[0];
+    res[6][1] = -v[1];
+    res[6][2] = -v[2];
+    res[7][0] = -v[0];
+    res[7][1] = v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -6195,9 +8690,11 @@ struct FastSG_C2_c11 {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][1]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='C';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_C2_m {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -6222,6 +8719,32 @@ struct FastSG_C2_m {
     res[6][2] = -v[2];
     res[7][0] = v[0]+1./2;
     res[7][1] = -v[1]+1./2;
+    res[7][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = v[1];
+    res[4][2] = -v[2];
+    res[5][0] = v[0];
+    res[5][1] = -v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
     res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -6258,9 +8781,11 @@ struct FastSG_C2_m {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][1])*1./2;
   }
+  static const short size=8;
+  static const char lattice='C';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_C2_m11 {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -6285,6 +8810,32 @@ struct FastSG_C2_m11 {
     res[6][2] = -v[2];
     res[7][0] = -v[0]+1./2;
     res[7][1] = v[1]+1./2;
+    res[7][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = v[0];
+    res[6][1] = -v[1];
+    res[6][2] = -v[2];
+    res[7][0] = -v[0];
+    res[7][1] = v[1];
     res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -6321,9 +8872,11 @@ struct FastSG_C2_m11 {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][1])*1./2;
   }
+  static const short size=8;
+  static const char lattice='C';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_C2_n {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -6349,6 +8902,32 @@ struct FastSG_C2_n {
     res[7][0] = v[0]+1./2;
     res[7][1] = -v[1];
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = v[1];
+    res[4][2] = -v[2];
+    res[5][0] = v[0];
+    res[5][1] = -v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -6384,9 +8963,11 @@ struct FastSG_C2_n {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='C';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_C2_n11 {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -6412,6 +8993,32 @@ struct FastSG_C2_n11 {
     res[7][0] = -v[0]+1./2;
     res[7][1] = v[1];
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = v[0];
+    res[6][1] = -v[1];
+    res[6][2] = -v[2];
+    res[7][0] = -v[0];
+    res[7][1] = v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -6447,9 +9054,11 @@ struct FastSG_C2_n11 {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='C';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_C211 {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -6462,6 +9071,20 @@ struct FastSG_C211 {
     res[2][2] = -v[2];
     res[3][0] = v[0]+1./2;
     res[3][1] = -v[1]+1./2;
+    res[3][2] = -v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[0];
+    res[2][1] = -v[1];
+    res[2][2] = -v[2];
+    res[3][0] = v[0];
+    res[3][1] = -v[1];
     res[3][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -6482,9 +9105,11 @@ struct FastSG_C211 {
     res[3][2] = -v[2];
     phase[3] = (res[3][0]+res[3][1])*1./2;
   }
+  static const short size=4;
+  static const char lattice='C';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_C222 {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -6509,6 +9134,32 @@ struct FastSG_C222 {
     res[6][2] = -v[2];
     res[7][0] = -v[0]+1./2;
     res[7][1] = v[1]+1./2;
+    res[7][2] = -v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = v[0];
+    res[5][1] = -v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = -v[0];
+    res[7][1] = v[1];
     res[7][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -6545,9 +9196,11 @@ struct FastSG_C222 {
     res[7][2] = -v[2];
     phase[7] = (res[7][0]+res[7][1])*1./2;
   }
+  static const short size=8;
+  static const char lattice='C';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_C2221 {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -6573,6 +9226,32 @@ struct FastSG_C2221 {
     res[7][0] = -v[0]+1./2;
     res[7][1] = v[1]+1./2;
     res[7][2] = -v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = v[0];
+    res[5][1] = -v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = -v[0];
+    res[7][1] = v[1];
+    res[7][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -6608,9 +9287,11 @@ struct FastSG_C2221 {
     res[7][2] = -v[2];
     phase[7] = (res[7][0]+res[7][1]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='C';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_C2cb {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -6636,6 +9317,32 @@ struct FastSG_C2cb {
     res[7][0] = v[0]+1./2;
     res[7][1] = -v[1];
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[0];
+    res[2][1] = -v[1];
+    res[2][2] = -v[2];
+    res[3][0] = v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = v[1];
+    res[4][2] = -v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -6671,9 +9378,11 @@ struct FastSG_C2cb {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='C';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_C2cm {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -6699,6 +9408,32 @@ struct FastSG_C2cm {
     res[7][0] = v[0]+1./2;
     res[7][1] = -v[1]+1./2;
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[0];
+    res[2][1] = -v[1];
+    res[2][2] = -v[2];
+    res[3][0] = v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = v[1];
+    res[4][2] = -v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -6734,9 +9469,11 @@ struct FastSG_C2cm {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][1]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='C';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_C2mb {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -6760,6 +9497,32 @@ struct FastSG_C2mb {
     res[6][1] = -v[1]+1./2;
     res[6][2] = v[2];
     res[7][0] = v[0]+1./2;
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[0];
+    res[2][1] = -v[1];
+    res[2][2] = -v[2];
+    res[3][0] = v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = v[1];
+    res[4][2] = -v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
     res[7][1] = -v[1];
     res[7][2] = v[2];
   }
@@ -6797,9 +9560,11 @@ struct FastSG_C2mb {
     res[7][2] = v[2];
     phase[7] = res[7][0]*1./2;
   }
+  static const short size=8;
+  static const char lattice='C';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_C2mm {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -6824,6 +9589,32 @@ struct FastSG_C2mm {
     res[6][2] = v[2];
     res[7][0] = v[0]+1./2;
     res[7][1] = -v[1]+1./2;
+    res[7][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[0];
+    res[2][1] = -v[1];
+    res[2][2] = -v[2];
+    res[3][0] = v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = v[1];
+    res[4][2] = -v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
     res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -6860,9 +9651,11 @@ struct FastSG_C2mm {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][1])*1./2;
   }
+  static const short size=8;
+  static const char lattice='C';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Cc {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -6876,6 +9669,20 @@ struct FastSG_Cc {
     res[3][0] = v[0]+1./2;
     res[3][1] = -v[1]+1./2;
     res[3][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -6895,9 +9702,11 @@ struct FastSG_Cc {
     res[3][2] = v[2];
     phase[3] = (res[3][0]+res[3][1]+res[3][2])*1./2;
   }
+  static const short size=4;
+  static const char lattice='C';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Cc11 {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -6911,6 +9720,20 @@ struct FastSG_Cc11 {
     res[3][0] = -v[0]+1./2;
     res[3][1] = v[1]+1./2;
     res[3][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = v[1];
+    res[3][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -6930,9 +9753,11 @@ struct FastSG_Cc11 {
     res[3][2] = v[2];
     phase[3] = (res[3][0]+res[3][1]+res[3][2])*1./2;
   }
+  static const short size=4;
+  static const char lattice='C';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Cc2a {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -6958,6 +9783,32 @@ struct FastSG_Cc2a {
     res[7][0] = -v[0]+1./2;
     res[7][1] = v[1];
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = v[1];
+    res[2][2] = -v[2];
+    res[3][0] = -v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = v[1];
+    res[4][2] = -v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = v[2];
+    res[7][0] = -v[0];
+    res[7][1] = v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -6993,9 +9844,11 @@ struct FastSG_Cc2a {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='C';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Cc2m {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -7021,6 +9874,32 @@ struct FastSG_Cc2m {
     res[7][0] = -v[0]+1./2;
     res[7][1] = v[1]+1./2;
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = v[1];
+    res[2][2] = -v[2];
+    res[3][0] = -v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = v[1];
+    res[4][2] = -v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = v[2];
+    res[7][0] = -v[0];
+    res[7][1] = v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -7056,9 +9935,11 @@ struct FastSG_Cc2m {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][1]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='C';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Ccc2 {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -7084,6 +9965,32 @@ struct FastSG_Ccc2 {
     res[7][0] = v[0]+1./2;
     res[7][1] = -v[1]+1./2;
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
+    res[4][0] = -v[0];
+    res[4][1] = v[1];
+    res[4][2] = v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -7119,9 +10026,11 @@ struct FastSG_Ccc2 {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][1]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='C';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Ccca {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -7171,6 +10080,56 @@ struct FastSG_Ccca {
     res[15][0] = v[0]+1./2;
     res[15][1] = -v[1]+1./2;
     res[15][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = v[1];
+    res[7][2] = -v[2];
+    res[8][0] = v[0];
+    res[8][1] = -v[1];
+    res[8][2] = -v[2];
+    res[9][0] = -v[0];
+    res[9][1] = v[1];
+    res[9][2] = v[2];
+    res[10][0] = v[0];
+    res[10][1] = -v[1];
+    res[10][2] = -v[2];
+    res[11][0] = -v[0];
+    res[11][1] = v[1];
+    res[11][2] = v[2];
+    res[12][0] = -v[0];
+    res[12][1] = v[1];
+    res[12][2] = -v[2];
+    res[13][0] = v[0];
+    res[13][1] = -v[1];
+    res[13][2] = v[2];
+    res[14][0] = -v[0];
+    res[14][1] = v[1];
+    res[14][2] = -v[2];
+    res[15][0] = v[0];
+    res[15][1] = -v[1];
+    res[15][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -7238,9 +10197,11 @@ struct FastSG_Ccca {
     res[15][2] = v[2];
     phase[15] = (res[15][0]+res[15][1]+res[15][2])*1./2;
   }
+  static const short size=16;
+  static const char lattice='C';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Cccb {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -7290,6 +10251,56 @@ struct FastSG_Cccb {
     res[15][0] = v[0]+1./2;
     res[15][1] = -v[1];
     res[15][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = v[1];
+    res[7][2] = -v[2];
+    res[8][0] = v[0];
+    res[8][1] = -v[1];
+    res[8][2] = -v[2];
+    res[9][0] = -v[0];
+    res[9][1] = v[1];
+    res[9][2] = v[2];
+    res[10][0] = v[0];
+    res[10][1] = -v[1];
+    res[10][2] = -v[2];
+    res[11][0] = -v[0];
+    res[11][1] = v[1];
+    res[11][2] = v[2];
+    res[12][0] = -v[0];
+    res[12][1] = v[1];
+    res[12][2] = -v[2];
+    res[13][0] = v[0];
+    res[13][1] = -v[1];
+    res[13][2] = v[2];
+    res[14][0] = -v[0];
+    res[14][1] = v[1];
+    res[14][2] = -v[2];
+    res[15][0] = v[0];
+    res[15][1] = -v[1];
+    res[15][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -7357,9 +10368,11 @@ struct FastSG_Cccb {
     res[15][2] = v[2];
     phase[15] = (res[15][0]+res[15][2])*1./2;
   }
+  static const short size=16;
+  static const char lattice='C';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Cccm {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -7409,6 +10422,56 @@ struct FastSG_Cccm {
     res[15][0] = v[0]+1./2;
     res[15][1] = -v[1]+1./2;
     res[15][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = v[1];
+    res[7][2] = -v[2];
+    res[8][0] = v[0];
+    res[8][1] = -v[1];
+    res[8][2] = -v[2];
+    res[9][0] = -v[0];
+    res[9][1] = v[1];
+    res[9][2] = v[2];
+    res[10][0] = v[0];
+    res[10][1] = -v[1];
+    res[10][2] = -v[2];
+    res[11][0] = -v[0];
+    res[11][1] = v[1];
+    res[11][2] = v[2];
+    res[12][0] = -v[0];
+    res[12][1] = v[1];
+    res[12][2] = -v[2];
+    res[13][0] = v[0];
+    res[13][1] = -v[1];
+    res[13][2] = v[2];
+    res[14][0] = -v[0];
+    res[14][1] = v[1];
+    res[14][2] = -v[2];
+    res[15][0] = v[0];
+    res[15][1] = -v[1];
+    res[15][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -7476,9 +10539,11 @@ struct FastSG_Cccm {
     res[15][2] = v[2];
     phase[15] = (res[15][0]+res[15][1]+res[15][2])*1./2;
   }
+  static const short size=16;
+  static const char lattice='C';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Ccm21 {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -7503,6 +10568,32 @@ struct FastSG_Ccm21 {
     res[6][2] = v[2];
     res[7][0] = v[0]+1./2;
     res[7][1] = -v[1]+1./2;
+    res[7][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
+    res[4][0] = -v[0];
+    res[4][1] = v[1];
+    res[4][2] = v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
     res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -7539,9 +10630,11 @@ struct FastSG_Ccm21 {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][1])*1./2;
   }
+  static const short size=8;
+  static const char lattice='C';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Ccmb {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -7590,6 +10683,56 @@ struct FastSG_Ccmb {
     res[14][2] = -v[2];
     res[15][0] = v[0]+1./2;
     res[15][1] = -v[1]+1./2;
+    res[15][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = v[1];
+    res[7][2] = -v[2];
+    res[8][0] = v[0];
+    res[8][1] = -v[1];
+    res[8][2] = -v[2];
+    res[9][0] = -v[0];
+    res[9][1] = v[1];
+    res[9][2] = v[2];
+    res[10][0] = v[0];
+    res[10][1] = -v[1];
+    res[10][2] = -v[2];
+    res[11][0] = -v[0];
+    res[11][1] = v[1];
+    res[11][2] = v[2];
+    res[12][0] = -v[0];
+    res[12][1] = v[1];
+    res[12][2] = -v[2];
+    res[13][0] = v[0];
+    res[13][1] = -v[1];
+    res[13][2] = v[2];
+    res[14][0] = -v[0];
+    res[14][1] = v[1];
+    res[14][2] = -v[2];
+    res[15][0] = v[0];
+    res[15][1] = -v[1];
     res[15][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -7658,9 +10801,11 @@ struct FastSG_Ccmb {
     res[15][2] = v[2];
     phase[15] = (res[15][0]+res[15][1])*1./2;
   }
+  static const short size=16;
+  static const char lattice='C';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Ccmm {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -7709,6 +10854,56 @@ struct FastSG_Ccmm {
     res[14][2] = -v[2];
     res[15][0] = v[0]+1./2;
     res[15][1] = -v[1]+1./2;
+    res[15][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = v[1];
+    res[7][2] = -v[2];
+    res[8][0] = v[0];
+    res[8][1] = -v[1];
+    res[8][2] = -v[2];
+    res[9][0] = -v[0];
+    res[9][1] = v[1];
+    res[9][2] = v[2];
+    res[10][0] = v[0];
+    res[10][1] = -v[1];
+    res[10][2] = -v[2];
+    res[11][0] = -v[0];
+    res[11][1] = v[1];
+    res[11][2] = v[2];
+    res[12][0] = -v[0];
+    res[12][1] = v[1];
+    res[12][2] = -v[2];
+    res[13][0] = v[0];
+    res[13][1] = -v[1];
+    res[13][2] = v[2];
+    res[14][0] = -v[0];
+    res[14][1] = v[1];
+    res[14][2] = -v[2];
+    res[15][0] = v[0];
+    res[15][1] = -v[1];
     res[15][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -7777,9 +10972,11 @@ struct FastSG_Ccmm {
     res[15][2] = v[2];
     phase[15] = (res[15][0]+res[15][1])*1./2;
   }
+  static const short size=16;
+  static const char lattice='C';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Cm {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -7792,6 +10989,20 @@ struct FastSG_Cm {
     res[2][2] = v[2];
     res[3][0] = v[0]+1./2;
     res[3][1] = -v[1]+1./2;
+    res[3][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = -v[1];
     res[3][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -7812,9 +11023,11 @@ struct FastSG_Cm {
     res[3][2] = v[2];
     phase[3] = (res[3][0]+res[3][1])*1./2;
   }
+  static const short size=4;
+  static const char lattice='C';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Cm11 {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -7827,6 +11040,20 @@ struct FastSG_Cm11 {
     res[2][2] = v[2];
     res[3][0] = -v[0]+1./2;
     res[3][1] = v[1]+1./2;
+    res[3][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = v[1];
     res[3][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -7847,9 +11074,11 @@ struct FastSG_Cm11 {
     res[3][2] = v[2];
     phase[3] = (res[3][0]+res[3][1])*1./2;
   }
+  static const short size=4;
+  static const char lattice='C';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Cm2a {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -7873,6 +11102,32 @@ struct FastSG_Cm2a {
     res[6][1] = v[1]+1./2;
     res[6][2] = v[2];
     res[7][0] = -v[0]+1./2;
+    res[7][1] = v[1];
+    res[7][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = v[1];
+    res[2][2] = -v[2];
+    res[3][0] = -v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = v[1];
+    res[4][2] = -v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = v[2];
+    res[7][0] = -v[0];
     res[7][1] = v[1];
     res[7][2] = v[2];
   }
@@ -7910,9 +11165,11 @@ struct FastSG_Cm2a {
     res[7][2] = v[2];
     phase[7] = res[7][0]*1./2;
   }
+  static const short size=8;
+  static const char lattice='C';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Cm2m {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -7937,6 +11194,32 @@ struct FastSG_Cm2m {
     res[6][2] = v[2];
     res[7][0] = -v[0]+1./2;
     res[7][1] = v[1]+1./2;
+    res[7][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = v[1];
+    res[2][2] = -v[2];
+    res[3][0] = -v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = v[1];
+    res[4][2] = -v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = v[2];
+    res[7][0] = -v[0];
+    res[7][1] = v[1];
     res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -7973,9 +11256,11 @@ struct FastSG_Cm2m {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][1])*1./2;
   }
+  static const short size=8;
+  static const char lattice='C';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Cmc21 {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -8001,6 +11286,32 @@ struct FastSG_Cmc21 {
     res[7][0] = v[0]+1./2;
     res[7][1] = -v[1]+1./2;
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
+    res[4][0] = -v[0];
+    res[4][1] = v[1];
+    res[4][2] = v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -8036,9 +11347,11 @@ struct FastSG_Cmc21 {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][1]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='C';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Cmca {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -8088,6 +11401,56 @@ struct FastSG_Cmca {
     res[15][0] = v[0]+1./2;
     res[15][1] = -v[1];
     res[15][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = v[1];
+    res[7][2] = -v[2];
+    res[8][0] = v[0];
+    res[8][1] = -v[1];
+    res[8][2] = -v[2];
+    res[9][0] = -v[0];
+    res[9][1] = v[1];
+    res[9][2] = v[2];
+    res[10][0] = v[0];
+    res[10][1] = -v[1];
+    res[10][2] = -v[2];
+    res[11][0] = -v[0];
+    res[11][1] = v[1];
+    res[11][2] = v[2];
+    res[12][0] = -v[0];
+    res[12][1] = v[1];
+    res[12][2] = -v[2];
+    res[13][0] = v[0];
+    res[13][1] = -v[1];
+    res[13][2] = v[2];
+    res[14][0] = -v[0];
+    res[14][1] = v[1];
+    res[14][2] = -v[2];
+    res[15][0] = v[0];
+    res[15][1] = -v[1];
+    res[15][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -8155,9 +11518,11 @@ struct FastSG_Cmca {
     res[15][2] = v[2];
     phase[15] = (res[15][0]+res[15][2])*1./2;
   }
+  static const short size=16;
+  static const char lattice='C';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Cmcm {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -8207,6 +11572,56 @@ struct FastSG_Cmcm {
     res[15][0] = v[0]+1./2;
     res[15][1] = -v[1]+1./2;
     res[15][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = v[1];
+    res[7][2] = -v[2];
+    res[8][0] = v[0];
+    res[8][1] = -v[1];
+    res[8][2] = -v[2];
+    res[9][0] = -v[0];
+    res[9][1] = v[1];
+    res[9][2] = v[2];
+    res[10][0] = v[0];
+    res[10][1] = -v[1];
+    res[10][2] = -v[2];
+    res[11][0] = -v[0];
+    res[11][1] = v[1];
+    res[11][2] = v[2];
+    res[12][0] = -v[0];
+    res[12][1] = v[1];
+    res[12][2] = -v[2];
+    res[13][0] = v[0];
+    res[13][1] = -v[1];
+    res[13][2] = v[2];
+    res[14][0] = -v[0];
+    res[14][1] = v[1];
+    res[14][2] = -v[2];
+    res[15][0] = v[0];
+    res[15][1] = -v[1];
+    res[15][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -8274,9 +11689,11 @@ struct FastSG_Cmcm {
     res[15][2] = v[2];
     phase[15] = (res[15][0]+res[15][1]+res[15][2])*1./2;
   }
+  static const short size=16;
+  static const char lattice='C';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Cmm2 {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -8301,6 +11718,32 @@ struct FastSG_Cmm2 {
     res[6][2] = v[2];
     res[7][0] = v[0]+1./2;
     res[7][1] = -v[1]+1./2;
+    res[7][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
+    res[4][0] = -v[0];
+    res[4][1] = v[1];
+    res[4][2] = v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
     res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -8337,9 +11780,11 @@ struct FastSG_Cmm2 {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][1])*1./2;
   }
+  static const short size=8;
+  static const char lattice='C';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Cmma {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -8387,6 +11832,56 @@ struct FastSG_Cmma {
     res[14][1] = v[1];
     res[14][2] = -v[2];
     res[15][0] = v[0]+1./2;
+    res[15][1] = -v[1];
+    res[15][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = v[1];
+    res[7][2] = -v[2];
+    res[8][0] = v[0];
+    res[8][1] = -v[1];
+    res[8][2] = -v[2];
+    res[9][0] = -v[0];
+    res[9][1] = v[1];
+    res[9][2] = v[2];
+    res[10][0] = v[0];
+    res[10][1] = -v[1];
+    res[10][2] = -v[2];
+    res[11][0] = -v[0];
+    res[11][1] = v[1];
+    res[11][2] = v[2];
+    res[12][0] = -v[0];
+    res[12][1] = v[1];
+    res[12][2] = -v[2];
+    res[13][0] = v[0];
+    res[13][1] = -v[1];
+    res[13][2] = v[2];
+    res[14][0] = -v[0];
+    res[14][1] = v[1];
+    res[14][2] = -v[2];
+    res[15][0] = v[0];
     res[15][1] = -v[1];
     res[15][2] = v[2];
   }
@@ -8456,9 +11951,11 @@ struct FastSG_Cmma {
     res[15][2] = v[2];
     phase[15] = res[15][0]*1./2;
   }
+  static const short size=16;
+  static const char lattice='C';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Cmmb {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -8507,6 +12004,56 @@ struct FastSG_Cmmb {
     res[14][2] = -v[2];
     res[15][0] = v[0]+1./2;
     res[15][1] = -v[1]+1./2;
+    res[15][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = v[1];
+    res[7][2] = -v[2];
+    res[8][0] = v[0];
+    res[8][1] = -v[1];
+    res[8][2] = -v[2];
+    res[9][0] = -v[0];
+    res[9][1] = v[1];
+    res[9][2] = v[2];
+    res[10][0] = v[0];
+    res[10][1] = -v[1];
+    res[10][2] = -v[2];
+    res[11][0] = -v[0];
+    res[11][1] = v[1];
+    res[11][2] = v[2];
+    res[12][0] = -v[0];
+    res[12][1] = v[1];
+    res[12][2] = -v[2];
+    res[13][0] = v[0];
+    res[13][1] = -v[1];
+    res[13][2] = v[2];
+    res[14][0] = -v[0];
+    res[14][1] = v[1];
+    res[14][2] = -v[2];
+    res[15][0] = v[0];
+    res[15][1] = -v[1];
     res[15][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -8575,9 +12122,11 @@ struct FastSG_Cmmb {
     res[15][2] = v[2];
     phase[15] = (res[15][0]+res[15][1])*1./2;
   }
+  static const short size=16;
+  static const char lattice='C';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Cmmm {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -8626,6 +12175,56 @@ struct FastSG_Cmmm {
     res[14][2] = -v[2];
     res[15][0] = v[0]+1./2;
     res[15][1] = -v[1]+1./2;
+    res[15][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = v[1];
+    res[7][2] = -v[2];
+    res[8][0] = v[0];
+    res[8][1] = -v[1];
+    res[8][2] = -v[2];
+    res[9][0] = -v[0];
+    res[9][1] = v[1];
+    res[9][2] = v[2];
+    res[10][0] = v[0];
+    res[10][1] = -v[1];
+    res[10][2] = -v[2];
+    res[11][0] = -v[0];
+    res[11][1] = v[1];
+    res[11][2] = v[2];
+    res[12][0] = -v[0];
+    res[12][1] = v[1];
+    res[12][2] = -v[2];
+    res[13][0] = v[0];
+    res[13][1] = -v[1];
+    res[13][2] = v[2];
+    res[14][0] = -v[0];
+    res[14][1] = v[1];
+    res[14][2] = -v[2];
+    res[15][0] = v[0];
+    res[15][1] = -v[1];
     res[15][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -8694,9 +12293,11 @@ struct FastSG_Cmmm {
     res[15][2] = v[2];
     phase[15] = (res[15][0]+res[15][1])*1./2;
   }
+  static const short size=16;
+  static const char lattice='C';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Cn {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -8711,6 +12312,20 @@ struct FastSG_Cn {
     res[3][1] = -v[1];
     res[3][2] = v[2]+1./2;
   }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
+  }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -8729,9 +12344,11 @@ struct FastSG_Cn {
     res[3][2] = v[2];
     phase[3] = (res[3][0]+res[3][2])*1./2;
   }
+  static const short size=4;
+  static const char lattice='C';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Cn11 {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -8745,6 +12362,20 @@ struct FastSG_Cn11 {
     res[3][0] = -v[0]+1./2;
     res[3][1] = v[1];
     res[3][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = v[1];
+    res[3][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -8764,9 +12395,11 @@ struct FastSG_Cn11 {
     res[3][2] = v[2];
     phase[3] = (res[3][0]+res[3][2])*1./2;
   }
+  static const short size=4;
+  static const char lattice='C';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_F_43c {
- static const short size=96;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -9056,6 +12689,296 @@ struct FastSG_F_43c {
     res[95][0] = v[2]+1./2;
     res[95][1] = v[1]+1./2;
     res[95][2] = v[0]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = v[2];
+    res[4][0] = -v[1];
+    res[4][1] = v[0];
+    res[4][2] = -v[2];
+    res[5][0] = -v[1];
+    res[5][1] = v[0];
+    res[5][2] = -v[2];
+    res[6][0] = -v[1];
+    res[6][1] = v[0];
+    res[6][2] = -v[2];
+    res[7][0] = -v[1];
+    res[7][1] = v[0];
+    res[7][2] = -v[2];
+    res[8][0] = -v[0];
+    res[8][1] = -v[1];
+    res[8][2] = v[2];
+    res[9][0] = -v[0];
+    res[9][1] = -v[1];
+    res[9][2] = v[2];
+    res[10][0] = -v[0];
+    res[10][1] = -v[1];
+    res[10][2] = v[2];
+    res[11][0] = -v[0];
+    res[11][1] = -v[1];
+    res[11][2] = v[2];
+    res[12][0] = v[1];
+    res[12][1] = -v[0];
+    res[12][2] = -v[2];
+    res[13][0] = v[1];
+    res[13][1] = -v[0];
+    res[13][2] = -v[2];
+    res[14][0] = v[1];
+    res[14][1] = -v[0];
+    res[14][2] = -v[2];
+    res[15][0] = v[1];
+    res[15][1] = -v[0];
+    res[15][2] = -v[2];
+    res[16][0] = -v[0];
+    res[16][1] = -v[2];
+    res[16][2] = v[1];
+    res[17][0] = -v[0];
+    res[17][1] = -v[2];
+    res[17][2] = v[1];
+    res[18][0] = -v[0];
+    res[18][1] = -v[2];
+    res[18][2] = v[1];
+    res[19][0] = -v[0];
+    res[19][1] = -v[2];
+    res[19][2] = v[1];
+    res[20][0] = v[0];
+    res[20][1] = -v[1];
+    res[20][2] = -v[2];
+    res[21][0] = v[0];
+    res[21][1] = -v[1];
+    res[21][2] = -v[2];
+    res[22][0] = v[0];
+    res[22][1] = -v[1];
+    res[22][2] = -v[2];
+    res[23][0] = v[0];
+    res[23][1] = -v[1];
+    res[23][2] = -v[2];
+    res[24][0] = -v[0];
+    res[24][1] = v[2];
+    res[24][2] = -v[1];
+    res[25][0] = -v[0];
+    res[25][1] = v[2];
+    res[25][2] = -v[1];
+    res[26][0] = -v[0];
+    res[26][1] = v[2];
+    res[26][2] = -v[1];
+    res[27][0] = -v[0];
+    res[27][1] = v[2];
+    res[27][2] = -v[1];
+    res[28][0] = v[2];
+    res[28][1] = -v[1];
+    res[28][2] = -v[0];
+    res[29][0] = v[2];
+    res[29][1] = -v[1];
+    res[29][2] = -v[0];
+    res[30][0] = v[2];
+    res[30][1] = -v[1];
+    res[30][2] = -v[0];
+    res[31][0] = v[2];
+    res[31][1] = -v[1];
+    res[31][2] = -v[0];
+    res[32][0] = -v[0];
+    res[32][1] = v[1];
+    res[32][2] = -v[2];
+    res[33][0] = -v[0];
+    res[33][1] = v[1];
+    res[33][2] = -v[2];
+    res[34][0] = -v[0];
+    res[34][1] = v[1];
+    res[34][2] = -v[2];
+    res[35][0] = -v[0];
+    res[35][1] = v[1];
+    res[35][2] = -v[2];
+    res[36][0] = -v[2];
+    res[36][1] = -v[1];
+    res[36][2] = v[0];
+    res[37][0] = -v[2];
+    res[37][1] = -v[1];
+    res[37][2] = v[0];
+    res[38][0] = -v[2];
+    res[38][1] = -v[1];
+    res[38][2] = v[0];
+    res[39][0] = -v[2];
+    res[39][1] = -v[1];
+    res[39][2] = v[0];
+    res[40][0] = v[1];
+    res[40][1] = v[2];
+    res[40][2] = v[0];
+    res[41][0] = v[1];
+    res[41][1] = v[2];
+    res[41][2] = v[0];
+    res[42][0] = v[1];
+    res[42][1] = v[2];
+    res[42][2] = v[0];
+    res[43][0] = v[1];
+    res[43][1] = v[2];
+    res[43][2] = v[0];
+    res[44][0] = v[2];
+    res[44][1] = v[0];
+    res[44][2] = v[1];
+    res[45][0] = v[2];
+    res[45][1] = v[0];
+    res[45][2] = v[1];
+    res[46][0] = v[2];
+    res[46][1] = v[0];
+    res[46][2] = v[1];
+    res[47][0] = v[2];
+    res[47][1] = v[0];
+    res[47][2] = v[1];
+    res[48][0] = v[2];
+    res[48][1] = -v[0];
+    res[48][2] = -v[1];
+    res[49][0] = v[2];
+    res[49][1] = -v[0];
+    res[49][2] = -v[1];
+    res[50][0] = v[2];
+    res[50][1] = -v[0];
+    res[50][2] = -v[1];
+    res[51][0] = v[2];
+    res[51][1] = -v[0];
+    res[51][2] = -v[1];
+    res[52][0] = -v[1];
+    res[52][1] = -v[2];
+    res[52][2] = v[0];
+    res[53][0] = -v[1];
+    res[53][1] = -v[2];
+    res[53][2] = v[0];
+    res[54][0] = -v[1];
+    res[54][1] = -v[2];
+    res[54][2] = v[0];
+    res[55][0] = -v[1];
+    res[55][1] = -v[2];
+    res[55][2] = v[0];
+    res[56][0] = -v[2];
+    res[56][1] = -v[0];
+    res[56][2] = v[1];
+    res[57][0] = -v[2];
+    res[57][1] = -v[0];
+    res[57][2] = v[1];
+    res[58][0] = -v[2];
+    res[58][1] = -v[0];
+    res[58][2] = v[1];
+    res[59][0] = -v[2];
+    res[59][1] = -v[0];
+    res[59][2] = v[1];
+    res[60][0] = -v[1];
+    res[60][1] = v[2];
+    res[60][2] = -v[0];
+    res[61][0] = -v[1];
+    res[61][1] = v[2];
+    res[61][2] = -v[0];
+    res[62][0] = -v[1];
+    res[62][1] = v[2];
+    res[62][2] = -v[0];
+    res[63][0] = -v[1];
+    res[63][1] = v[2];
+    res[63][2] = -v[0];
+    res[64][0] = v[1];
+    res[64][1] = -v[2];
+    res[64][2] = -v[0];
+    res[65][0] = v[1];
+    res[65][1] = -v[2];
+    res[65][2] = -v[0];
+    res[66][0] = v[1];
+    res[66][1] = -v[2];
+    res[66][2] = -v[0];
+    res[67][0] = v[1];
+    res[67][1] = -v[2];
+    res[67][2] = -v[0];
+    res[68][0] = -v[2];
+    res[68][1] = v[0];
+    res[68][2] = -v[1];
+    res[69][0] = -v[2];
+    res[69][1] = v[0];
+    res[69][2] = -v[1];
+    res[70][0] = -v[2];
+    res[70][1] = v[0];
+    res[70][2] = -v[1];
+    res[71][0] = -v[2];
+    res[71][1] = v[0];
+    res[71][2] = -v[1];
+    res[72][0] = -v[1];
+    res[72][1] = -v[0];
+    res[72][2] = v[2];
+    res[73][0] = -v[1];
+    res[73][1] = -v[0];
+    res[73][2] = v[2];
+    res[74][0] = -v[1];
+    res[74][1] = -v[0];
+    res[74][2] = v[2];
+    res[75][0] = -v[1];
+    res[75][1] = -v[0];
+    res[75][2] = v[2];
+    res[76][0] = v[1];
+    res[76][1] = v[0];
+    res[76][2] = v[2];
+    res[77][0] = v[1];
+    res[77][1] = v[0];
+    res[77][2] = v[2];
+    res[78][0] = v[1];
+    res[78][1] = v[0];
+    res[78][2] = v[2];
+    res[79][0] = v[1];
+    res[79][1] = v[0];
+    res[79][2] = v[2];
+    res[80][0] = v[0];
+    res[80][1] = -v[2];
+    res[80][2] = -v[1];
+    res[81][0] = v[0];
+    res[81][1] = -v[2];
+    res[81][2] = -v[1];
+    res[82][0] = v[0];
+    res[82][1] = -v[2];
+    res[82][2] = -v[1];
+    res[83][0] = v[0];
+    res[83][1] = -v[2];
+    res[83][2] = -v[1];
+    res[84][0] = v[0];
+    res[84][1] = v[2];
+    res[84][2] = v[1];
+    res[85][0] = v[0];
+    res[85][1] = v[2];
+    res[85][2] = v[1];
+    res[86][0] = v[0];
+    res[86][1] = v[2];
+    res[86][2] = v[1];
+    res[87][0] = v[0];
+    res[87][1] = v[2];
+    res[87][2] = v[1];
+    res[88][0] = -v[2];
+    res[88][1] = v[1];
+    res[88][2] = -v[0];
+    res[89][0] = -v[2];
+    res[89][1] = v[1];
+    res[89][2] = -v[0];
+    res[90][0] = -v[2];
+    res[90][1] = v[1];
+    res[90][2] = -v[0];
+    res[91][0] = -v[2];
+    res[91][1] = v[1];
+    res[91][2] = -v[0];
+    res[92][0] = v[2];
+    res[92][1] = v[1];
+    res[92][2] = v[0];
+    res[93][0] = v[2];
+    res[93][1] = v[1];
+    res[93][2] = v[0];
+    res[94][0] = v[2];
+    res[94][1] = v[1];
+    res[94][2] = v[0];
+    res[95][0] = v[2];
+    res[95][1] = v[1];
+    res[95][2] = v[0];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -9443,9 +13366,11 @@ struct FastSG_F_43c {
     res[95][2] = v[0];
     phase[95] = (res[95][0]+res[95][1]+res[95][2])*1./2;
   }
+  static const short size=96;
+  static const char lattice='F';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_F_43m {
- static const short size=96;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -9734,6 +13659,296 @@ struct FastSG_F_43m {
     res[94][2] = v[0]+1./2;
     res[95][0] = v[2]+1./2;
     res[95][1] = v[1]+1./2;
+    res[95][2] = v[0];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = v[2];
+    res[4][0] = -v[1];
+    res[4][1] = v[0];
+    res[4][2] = -v[2];
+    res[5][0] = -v[1];
+    res[5][1] = v[0];
+    res[5][2] = -v[2];
+    res[6][0] = -v[1];
+    res[6][1] = v[0];
+    res[6][2] = -v[2];
+    res[7][0] = -v[1];
+    res[7][1] = v[0];
+    res[7][2] = -v[2];
+    res[8][0] = -v[0];
+    res[8][1] = -v[1];
+    res[8][2] = v[2];
+    res[9][0] = -v[0];
+    res[9][1] = -v[1];
+    res[9][2] = v[2];
+    res[10][0] = -v[0];
+    res[10][1] = -v[1];
+    res[10][2] = v[2];
+    res[11][0] = -v[0];
+    res[11][1] = -v[1];
+    res[11][2] = v[2];
+    res[12][0] = v[1];
+    res[12][1] = -v[0];
+    res[12][2] = -v[2];
+    res[13][0] = v[1];
+    res[13][1] = -v[0];
+    res[13][2] = -v[2];
+    res[14][0] = v[1];
+    res[14][1] = -v[0];
+    res[14][2] = -v[2];
+    res[15][0] = v[1];
+    res[15][1] = -v[0];
+    res[15][2] = -v[2];
+    res[16][0] = -v[0];
+    res[16][1] = -v[2];
+    res[16][2] = v[1];
+    res[17][0] = -v[0];
+    res[17][1] = -v[2];
+    res[17][2] = v[1];
+    res[18][0] = -v[0];
+    res[18][1] = -v[2];
+    res[18][2] = v[1];
+    res[19][0] = -v[0];
+    res[19][1] = -v[2];
+    res[19][2] = v[1];
+    res[20][0] = v[0];
+    res[20][1] = -v[1];
+    res[20][2] = -v[2];
+    res[21][0] = v[0];
+    res[21][1] = -v[1];
+    res[21][2] = -v[2];
+    res[22][0] = v[0];
+    res[22][1] = -v[1];
+    res[22][2] = -v[2];
+    res[23][0] = v[0];
+    res[23][1] = -v[1];
+    res[23][2] = -v[2];
+    res[24][0] = -v[0];
+    res[24][1] = v[2];
+    res[24][2] = -v[1];
+    res[25][0] = -v[0];
+    res[25][1] = v[2];
+    res[25][2] = -v[1];
+    res[26][0] = -v[0];
+    res[26][1] = v[2];
+    res[26][2] = -v[1];
+    res[27][0] = -v[0];
+    res[27][1] = v[2];
+    res[27][2] = -v[1];
+    res[28][0] = v[2];
+    res[28][1] = -v[1];
+    res[28][2] = -v[0];
+    res[29][0] = v[2];
+    res[29][1] = -v[1];
+    res[29][2] = -v[0];
+    res[30][0] = v[2];
+    res[30][1] = -v[1];
+    res[30][2] = -v[0];
+    res[31][0] = v[2];
+    res[31][1] = -v[1];
+    res[31][2] = -v[0];
+    res[32][0] = -v[0];
+    res[32][1] = v[1];
+    res[32][2] = -v[2];
+    res[33][0] = -v[0];
+    res[33][1] = v[1];
+    res[33][2] = -v[2];
+    res[34][0] = -v[0];
+    res[34][1] = v[1];
+    res[34][2] = -v[2];
+    res[35][0] = -v[0];
+    res[35][1] = v[1];
+    res[35][2] = -v[2];
+    res[36][0] = -v[2];
+    res[36][1] = -v[1];
+    res[36][2] = v[0];
+    res[37][0] = -v[2];
+    res[37][1] = -v[1];
+    res[37][2] = v[0];
+    res[38][0] = -v[2];
+    res[38][1] = -v[1];
+    res[38][2] = v[0];
+    res[39][0] = -v[2];
+    res[39][1] = -v[1];
+    res[39][2] = v[0];
+    res[40][0] = v[1];
+    res[40][1] = v[2];
+    res[40][2] = v[0];
+    res[41][0] = v[1];
+    res[41][1] = v[2];
+    res[41][2] = v[0];
+    res[42][0] = v[1];
+    res[42][1] = v[2];
+    res[42][2] = v[0];
+    res[43][0] = v[1];
+    res[43][1] = v[2];
+    res[43][2] = v[0];
+    res[44][0] = v[2];
+    res[44][1] = v[0];
+    res[44][2] = v[1];
+    res[45][0] = v[2];
+    res[45][1] = v[0];
+    res[45][2] = v[1];
+    res[46][0] = v[2];
+    res[46][1] = v[0];
+    res[46][2] = v[1];
+    res[47][0] = v[2];
+    res[47][1] = v[0];
+    res[47][2] = v[1];
+    res[48][0] = v[2];
+    res[48][1] = -v[0];
+    res[48][2] = -v[1];
+    res[49][0] = v[2];
+    res[49][1] = -v[0];
+    res[49][2] = -v[1];
+    res[50][0] = v[2];
+    res[50][1] = -v[0];
+    res[50][2] = -v[1];
+    res[51][0] = v[2];
+    res[51][1] = -v[0];
+    res[51][2] = -v[1];
+    res[52][0] = -v[1];
+    res[52][1] = -v[2];
+    res[52][2] = v[0];
+    res[53][0] = -v[1];
+    res[53][1] = -v[2];
+    res[53][2] = v[0];
+    res[54][0] = -v[1];
+    res[54][1] = -v[2];
+    res[54][2] = v[0];
+    res[55][0] = -v[1];
+    res[55][1] = -v[2];
+    res[55][2] = v[0];
+    res[56][0] = -v[2];
+    res[56][1] = -v[0];
+    res[56][2] = v[1];
+    res[57][0] = -v[2];
+    res[57][1] = -v[0];
+    res[57][2] = v[1];
+    res[58][0] = -v[2];
+    res[58][1] = -v[0];
+    res[58][2] = v[1];
+    res[59][0] = -v[2];
+    res[59][1] = -v[0];
+    res[59][2] = v[1];
+    res[60][0] = -v[1];
+    res[60][1] = v[2];
+    res[60][2] = -v[0];
+    res[61][0] = -v[1];
+    res[61][1] = v[2];
+    res[61][2] = -v[0];
+    res[62][0] = -v[1];
+    res[62][1] = v[2];
+    res[62][2] = -v[0];
+    res[63][0] = -v[1];
+    res[63][1] = v[2];
+    res[63][2] = -v[0];
+    res[64][0] = v[1];
+    res[64][1] = -v[2];
+    res[64][2] = -v[0];
+    res[65][0] = v[1];
+    res[65][1] = -v[2];
+    res[65][2] = -v[0];
+    res[66][0] = v[1];
+    res[66][1] = -v[2];
+    res[66][2] = -v[0];
+    res[67][0] = v[1];
+    res[67][1] = -v[2];
+    res[67][2] = -v[0];
+    res[68][0] = -v[2];
+    res[68][1] = v[0];
+    res[68][2] = -v[1];
+    res[69][0] = -v[2];
+    res[69][1] = v[0];
+    res[69][2] = -v[1];
+    res[70][0] = -v[2];
+    res[70][1] = v[0];
+    res[70][2] = -v[1];
+    res[71][0] = -v[2];
+    res[71][1] = v[0];
+    res[71][2] = -v[1];
+    res[72][0] = -v[1];
+    res[72][1] = -v[0];
+    res[72][2] = v[2];
+    res[73][0] = -v[1];
+    res[73][1] = -v[0];
+    res[73][2] = v[2];
+    res[74][0] = -v[1];
+    res[74][1] = -v[0];
+    res[74][2] = v[2];
+    res[75][0] = -v[1];
+    res[75][1] = -v[0];
+    res[75][2] = v[2];
+    res[76][0] = v[1];
+    res[76][1] = v[0];
+    res[76][2] = v[2];
+    res[77][0] = v[1];
+    res[77][1] = v[0];
+    res[77][2] = v[2];
+    res[78][0] = v[1];
+    res[78][1] = v[0];
+    res[78][2] = v[2];
+    res[79][0] = v[1];
+    res[79][1] = v[0];
+    res[79][2] = v[2];
+    res[80][0] = v[0];
+    res[80][1] = -v[2];
+    res[80][2] = -v[1];
+    res[81][0] = v[0];
+    res[81][1] = -v[2];
+    res[81][2] = -v[1];
+    res[82][0] = v[0];
+    res[82][1] = -v[2];
+    res[82][2] = -v[1];
+    res[83][0] = v[0];
+    res[83][1] = -v[2];
+    res[83][2] = -v[1];
+    res[84][0] = v[0];
+    res[84][1] = v[2];
+    res[84][2] = v[1];
+    res[85][0] = v[0];
+    res[85][1] = v[2];
+    res[85][2] = v[1];
+    res[86][0] = v[0];
+    res[86][1] = v[2];
+    res[86][2] = v[1];
+    res[87][0] = v[0];
+    res[87][1] = v[2];
+    res[87][2] = v[1];
+    res[88][0] = -v[2];
+    res[88][1] = v[1];
+    res[88][2] = -v[0];
+    res[89][0] = -v[2];
+    res[89][1] = v[1];
+    res[89][2] = -v[0];
+    res[90][0] = -v[2];
+    res[90][1] = v[1];
+    res[90][2] = -v[0];
+    res[91][0] = -v[2];
+    res[91][1] = v[1];
+    res[91][2] = -v[0];
+    res[92][0] = v[2];
+    res[92][1] = v[1];
+    res[92][2] = v[0];
+    res[93][0] = v[2];
+    res[93][1] = v[1];
+    res[93][2] = v[0];
+    res[94][0] = v[2];
+    res[94][1] = v[1];
+    res[94][2] = v[0];
+    res[95][0] = v[2];
+    res[95][1] = v[1];
     res[95][2] = v[0];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -10122,9 +14337,11 @@ struct FastSG_F_43m {
     res[95][2] = v[0];
     phase[95] = (res[95][0]+res[95][1])*1./2;
   }
+  static const short size=96;
+  static const char lattice='F';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_F222 {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -10173,6 +14390,56 @@ struct FastSG_F222 {
     res[14][2] = -v[2]+1./2;
     res[15][0] = -v[0]+1./2;
     res[15][1] = v[1]+1./2;
+    res[15][2] = -v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = -v[0];
+    res[5][1] = -v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = -v[0];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
+    res[8][0] = v[0];
+    res[8][1] = -v[1];
+    res[8][2] = -v[2];
+    res[9][0] = v[0];
+    res[9][1] = -v[1];
+    res[9][2] = -v[2];
+    res[10][0] = v[0];
+    res[10][1] = -v[1];
+    res[10][2] = -v[2];
+    res[11][0] = v[0];
+    res[11][1] = -v[1];
+    res[11][2] = -v[2];
+    res[12][0] = -v[0];
+    res[12][1] = v[1];
+    res[12][2] = -v[2];
+    res[13][0] = -v[0];
+    res[13][1] = v[1];
+    res[13][2] = -v[2];
+    res[14][0] = -v[0];
+    res[14][1] = v[1];
+    res[14][2] = -v[2];
+    res[15][0] = -v[0];
+    res[15][1] = v[1];
     res[15][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -10241,9 +14508,11 @@ struct FastSG_F222 {
     res[15][2] = -v[2];
     phase[15] = (res[15][0]+res[15][1])*1./2;
   }
+  static const short size=16;
+  static const char lattice='F';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_F23 {
- static const short size=48;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -10388,6 +14657,152 @@ struct FastSG_F23 {
     res[46][2] = -v[2]+1./2;
     res[47][0] = -v[0]+1./2;
     res[47][1] = v[1]+1./2;
+    res[47][2] = -v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = v[2];
+    res[4][0] = v[1];
+    res[4][1] = v[2];
+    res[4][2] = v[0];
+    res[5][0] = v[1];
+    res[5][1] = v[2];
+    res[5][2] = v[0];
+    res[6][0] = v[1];
+    res[6][1] = v[2];
+    res[6][2] = v[0];
+    res[7][0] = v[1];
+    res[7][1] = v[2];
+    res[7][2] = v[0];
+    res[8][0] = v[2];
+    res[8][1] = v[0];
+    res[8][2] = v[1];
+    res[9][0] = v[2];
+    res[9][1] = v[0];
+    res[9][2] = v[1];
+    res[10][0] = v[2];
+    res[10][1] = v[0];
+    res[10][2] = v[1];
+    res[11][0] = v[2];
+    res[11][1] = v[0];
+    res[11][2] = v[1];
+    res[12][0] = v[2];
+    res[12][1] = -v[0];
+    res[12][2] = -v[1];
+    res[13][0] = v[2];
+    res[13][1] = -v[0];
+    res[13][2] = -v[1];
+    res[14][0] = v[2];
+    res[14][1] = -v[0];
+    res[14][2] = -v[1];
+    res[15][0] = v[2];
+    res[15][1] = -v[0];
+    res[15][2] = -v[1];
+    res[16][0] = -v[1];
+    res[16][1] = -v[2];
+    res[16][2] = v[0];
+    res[17][0] = -v[1];
+    res[17][1] = -v[2];
+    res[17][2] = v[0];
+    res[18][0] = -v[1];
+    res[18][1] = -v[2];
+    res[18][2] = v[0];
+    res[19][0] = -v[1];
+    res[19][1] = -v[2];
+    res[19][2] = v[0];
+    res[20][0] = -v[2];
+    res[20][1] = -v[0];
+    res[20][2] = v[1];
+    res[21][0] = -v[2];
+    res[21][1] = -v[0];
+    res[21][2] = v[1];
+    res[22][0] = -v[2];
+    res[22][1] = -v[0];
+    res[22][2] = v[1];
+    res[23][0] = -v[2];
+    res[23][1] = -v[0];
+    res[23][2] = v[1];
+    res[24][0] = -v[1];
+    res[24][1] = v[2];
+    res[24][2] = -v[0];
+    res[25][0] = -v[1];
+    res[25][1] = v[2];
+    res[25][2] = -v[0];
+    res[26][0] = -v[1];
+    res[26][1] = v[2];
+    res[26][2] = -v[0];
+    res[27][0] = -v[1];
+    res[27][1] = v[2];
+    res[27][2] = -v[0];
+    res[28][0] = v[1];
+    res[28][1] = -v[2];
+    res[28][2] = -v[0];
+    res[29][0] = v[1];
+    res[29][1] = -v[2];
+    res[29][2] = -v[0];
+    res[30][0] = v[1];
+    res[30][1] = -v[2];
+    res[30][2] = -v[0];
+    res[31][0] = v[1];
+    res[31][1] = -v[2];
+    res[31][2] = -v[0];
+    res[32][0] = -v[2];
+    res[32][1] = v[0];
+    res[32][2] = -v[1];
+    res[33][0] = -v[2];
+    res[33][1] = v[0];
+    res[33][2] = -v[1];
+    res[34][0] = -v[2];
+    res[34][1] = v[0];
+    res[34][2] = -v[1];
+    res[35][0] = -v[2];
+    res[35][1] = v[0];
+    res[35][2] = -v[1];
+    res[36][0] = -v[0];
+    res[36][1] = -v[1];
+    res[36][2] = v[2];
+    res[37][0] = -v[0];
+    res[37][1] = -v[1];
+    res[37][2] = v[2];
+    res[38][0] = -v[0];
+    res[38][1] = -v[1];
+    res[38][2] = v[2];
+    res[39][0] = -v[0];
+    res[39][1] = -v[1];
+    res[39][2] = v[2];
+    res[40][0] = v[0];
+    res[40][1] = -v[1];
+    res[40][2] = -v[2];
+    res[41][0] = v[0];
+    res[41][1] = -v[1];
+    res[41][2] = -v[2];
+    res[42][0] = v[0];
+    res[42][1] = -v[1];
+    res[42][2] = -v[2];
+    res[43][0] = v[0];
+    res[43][1] = -v[1];
+    res[43][2] = -v[2];
+    res[44][0] = -v[0];
+    res[44][1] = v[1];
+    res[44][2] = -v[2];
+    res[45][0] = -v[0];
+    res[45][1] = v[1];
+    res[45][2] = -v[2];
+    res[46][0] = -v[0];
+    res[46][1] = v[1];
+    res[46][2] = -v[2];
+    res[47][0] = -v[0];
+    res[47][1] = v[1];
     res[47][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -10584,9 +14999,11 @@ struct FastSG_F23 {
     res[47][2] = -v[2];
     phase[47] = (res[47][0]+res[47][1])*1./2;
   }
+  static const short size=48;
+  static const char lattice='F';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_F2dd {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -10636,6 +15053,56 @@ struct FastSG_F2dd {
     res[15][0] = v[0]+3./4;
     res[15][1] = -v[1]+3./4;
     res[15][2] = v[2]+1./4;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = v[0];
+    res[5][1] = -v[1];
+    res[5][2] = -v[2];
+    res[6][0] = v[0];
+    res[6][1] = -v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
+    res[7][2] = -v[2];
+    res[8][0] = v[0];
+    res[8][1] = v[1];
+    res[8][2] = -v[2];
+    res[9][0] = v[0];
+    res[9][1] = v[1];
+    res[9][2] = -v[2];
+    res[10][0] = v[0];
+    res[10][1] = v[1];
+    res[10][2] = -v[2];
+    res[11][0] = v[0];
+    res[11][1] = v[1];
+    res[11][2] = -v[2];
+    res[12][0] = v[0];
+    res[12][1] = -v[1];
+    res[12][2] = v[2];
+    res[13][0] = v[0];
+    res[13][1] = -v[1];
+    res[13][2] = v[2];
+    res[14][0] = v[0];
+    res[14][1] = -v[1];
+    res[14][2] = v[2];
+    res[15][0] = v[0];
+    res[15][1] = -v[1];
+    res[15][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -10703,9 +15170,11 @@ struct FastSG_F2dd {
     res[15][2] = v[2];
     phase[15] = (res[15][0]+res[15][1])*3./4+res[15][2]*1./4;
   }
+  static const short size=16;
+  static const char lattice='F';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_F2mm {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -10754,6 +15223,56 @@ struct FastSG_F2mm {
     res[14][2] = v[2]+1./2;
     res[15][0] = v[0]+1./2;
     res[15][1] = -v[1]+1./2;
+    res[15][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = v[0];
+    res[5][1] = -v[1];
+    res[5][2] = -v[2];
+    res[6][0] = v[0];
+    res[6][1] = -v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
+    res[7][2] = -v[2];
+    res[8][0] = v[0];
+    res[8][1] = v[1];
+    res[8][2] = -v[2];
+    res[9][0] = v[0];
+    res[9][1] = v[1];
+    res[9][2] = -v[2];
+    res[10][0] = v[0];
+    res[10][1] = v[1];
+    res[10][2] = -v[2];
+    res[11][0] = v[0];
+    res[11][1] = v[1];
+    res[11][2] = -v[2];
+    res[12][0] = v[0];
+    res[12][1] = -v[1];
+    res[12][2] = v[2];
+    res[13][0] = v[0];
+    res[13][1] = -v[1];
+    res[13][2] = v[2];
+    res[14][0] = v[0];
+    res[14][1] = -v[1];
+    res[14][2] = v[2];
+    res[15][0] = v[0];
+    res[15][1] = -v[1];
     res[15][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -10822,9 +15341,11 @@ struct FastSG_F2mm {
     res[15][2] = v[2];
     phase[15] = (res[15][0]+res[15][1])*1./2;
   }
+  static const short size=16;
+  static const char lattice='F';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_F4132 {
- static const short size=96;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -11114,6 +15635,296 @@ struct FastSG_F4132 {
     res[95][0] = -v[2]+3./4;
     res[95][1] = -v[1]+3./4;
     res[95][2] = -v[0]+1./4;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = v[2];
+    res[4][0] = v[1];
+    res[4][1] = -v[0];
+    res[4][2] = v[2];
+    res[5][0] = v[1];
+    res[5][1] = -v[0];
+    res[5][2] = v[2];
+    res[6][0] = v[1];
+    res[6][1] = -v[0];
+    res[6][2] = v[2];
+    res[7][0] = v[1];
+    res[7][1] = -v[0];
+    res[7][2] = v[2];
+    res[8][0] = -v[0];
+    res[8][1] = -v[1];
+    res[8][2] = v[2];
+    res[9][0] = -v[0];
+    res[9][1] = -v[1];
+    res[9][2] = v[2];
+    res[10][0] = -v[0];
+    res[10][1] = -v[1];
+    res[10][2] = v[2];
+    res[11][0] = -v[0];
+    res[11][1] = -v[1];
+    res[11][2] = v[2];
+    res[12][0] = -v[1];
+    res[12][1] = v[0];
+    res[12][2] = v[2];
+    res[13][0] = -v[1];
+    res[13][1] = v[0];
+    res[13][2] = v[2];
+    res[14][0] = -v[1];
+    res[14][1] = v[0];
+    res[14][2] = v[2];
+    res[15][0] = -v[1];
+    res[15][1] = v[0];
+    res[15][2] = v[2];
+    res[16][0] = v[0];
+    res[16][1] = v[2];
+    res[16][2] = -v[1];
+    res[17][0] = v[0];
+    res[17][1] = v[2];
+    res[17][2] = -v[1];
+    res[18][0] = v[0];
+    res[18][1] = v[2];
+    res[18][2] = -v[1];
+    res[19][0] = v[0];
+    res[19][1] = v[2];
+    res[19][2] = -v[1];
+    res[20][0] = v[0];
+    res[20][1] = -v[1];
+    res[20][2] = -v[2];
+    res[21][0] = v[0];
+    res[21][1] = -v[1];
+    res[21][2] = -v[2];
+    res[22][0] = v[0];
+    res[22][1] = -v[1];
+    res[22][2] = -v[2];
+    res[23][0] = v[0];
+    res[23][1] = -v[1];
+    res[23][2] = -v[2];
+    res[24][0] = v[0];
+    res[24][1] = -v[2];
+    res[24][2] = v[1];
+    res[25][0] = v[0];
+    res[25][1] = -v[2];
+    res[25][2] = v[1];
+    res[26][0] = v[0];
+    res[26][1] = -v[2];
+    res[26][2] = v[1];
+    res[27][0] = v[0];
+    res[27][1] = -v[2];
+    res[27][2] = v[1];
+    res[28][0] = -v[2];
+    res[28][1] = v[1];
+    res[28][2] = v[0];
+    res[29][0] = -v[2];
+    res[29][1] = v[1];
+    res[29][2] = v[0];
+    res[30][0] = -v[2];
+    res[30][1] = v[1];
+    res[30][2] = v[0];
+    res[31][0] = -v[2];
+    res[31][1] = v[1];
+    res[31][2] = v[0];
+    res[32][0] = -v[0];
+    res[32][1] = v[1];
+    res[32][2] = -v[2];
+    res[33][0] = -v[0];
+    res[33][1] = v[1];
+    res[33][2] = -v[2];
+    res[34][0] = -v[0];
+    res[34][1] = v[1];
+    res[34][2] = -v[2];
+    res[35][0] = -v[0];
+    res[35][1] = v[1];
+    res[35][2] = -v[2];
+    res[36][0] = v[2];
+    res[36][1] = v[1];
+    res[36][2] = -v[0];
+    res[37][0] = v[2];
+    res[37][1] = v[1];
+    res[37][2] = -v[0];
+    res[38][0] = v[2];
+    res[38][1] = v[1];
+    res[38][2] = -v[0];
+    res[39][0] = v[2];
+    res[39][1] = v[1];
+    res[39][2] = -v[0];
+    res[40][0] = v[1];
+    res[40][1] = v[2];
+    res[40][2] = v[0];
+    res[41][0] = v[1];
+    res[41][1] = v[2];
+    res[41][2] = v[0];
+    res[42][0] = v[1];
+    res[42][1] = v[2];
+    res[42][2] = v[0];
+    res[43][0] = v[1];
+    res[43][1] = v[2];
+    res[43][2] = v[0];
+    res[44][0] = v[2];
+    res[44][1] = v[0];
+    res[44][2] = v[1];
+    res[45][0] = v[2];
+    res[45][1] = v[0];
+    res[45][2] = v[1];
+    res[46][0] = v[2];
+    res[46][1] = v[0];
+    res[46][2] = v[1];
+    res[47][0] = v[2];
+    res[47][1] = v[0];
+    res[47][2] = v[1];
+    res[48][0] = v[2];
+    res[48][1] = -v[0];
+    res[48][2] = -v[1];
+    res[49][0] = v[2];
+    res[49][1] = -v[0];
+    res[49][2] = -v[1];
+    res[50][0] = v[2];
+    res[50][1] = -v[0];
+    res[50][2] = -v[1];
+    res[51][0] = v[2];
+    res[51][1] = -v[0];
+    res[51][2] = -v[1];
+    res[52][0] = -v[1];
+    res[52][1] = -v[2];
+    res[52][2] = v[0];
+    res[53][0] = -v[1];
+    res[53][1] = -v[2];
+    res[53][2] = v[0];
+    res[54][0] = -v[1];
+    res[54][1] = -v[2];
+    res[54][2] = v[0];
+    res[55][0] = -v[1];
+    res[55][1] = -v[2];
+    res[55][2] = v[0];
+    res[56][0] = -v[2];
+    res[56][1] = -v[0];
+    res[56][2] = v[1];
+    res[57][0] = -v[2];
+    res[57][1] = -v[0];
+    res[57][2] = v[1];
+    res[58][0] = -v[2];
+    res[58][1] = -v[0];
+    res[58][2] = v[1];
+    res[59][0] = -v[2];
+    res[59][1] = -v[0];
+    res[59][2] = v[1];
+    res[60][0] = -v[1];
+    res[60][1] = v[2];
+    res[60][2] = -v[0];
+    res[61][0] = -v[1];
+    res[61][1] = v[2];
+    res[61][2] = -v[0];
+    res[62][0] = -v[1];
+    res[62][1] = v[2];
+    res[62][2] = -v[0];
+    res[63][0] = -v[1];
+    res[63][1] = v[2];
+    res[63][2] = -v[0];
+    res[64][0] = v[1];
+    res[64][1] = -v[2];
+    res[64][2] = -v[0];
+    res[65][0] = v[1];
+    res[65][1] = -v[2];
+    res[65][2] = -v[0];
+    res[66][0] = v[1];
+    res[66][1] = -v[2];
+    res[66][2] = -v[0];
+    res[67][0] = v[1];
+    res[67][1] = -v[2];
+    res[67][2] = -v[0];
+    res[68][0] = -v[2];
+    res[68][1] = v[0];
+    res[68][2] = -v[1];
+    res[69][0] = -v[2];
+    res[69][1] = v[0];
+    res[69][2] = -v[1];
+    res[70][0] = -v[2];
+    res[70][1] = v[0];
+    res[70][2] = -v[1];
+    res[71][0] = -v[2];
+    res[71][1] = v[0];
+    res[71][2] = -v[1];
+    res[72][0] = v[1];
+    res[72][1] = v[0];
+    res[72][2] = -v[2];
+    res[73][0] = v[1];
+    res[73][1] = v[0];
+    res[73][2] = -v[2];
+    res[74][0] = v[1];
+    res[74][1] = v[0];
+    res[74][2] = -v[2];
+    res[75][0] = v[1];
+    res[75][1] = v[0];
+    res[75][2] = -v[2];
+    res[76][0] = -v[1];
+    res[76][1] = -v[0];
+    res[76][2] = -v[2];
+    res[77][0] = -v[1];
+    res[77][1] = -v[0];
+    res[77][2] = -v[2];
+    res[78][0] = -v[1];
+    res[78][1] = -v[0];
+    res[78][2] = -v[2];
+    res[79][0] = -v[1];
+    res[79][1] = -v[0];
+    res[79][2] = -v[2];
+    res[80][0] = -v[0];
+    res[80][1] = v[2];
+    res[80][2] = v[1];
+    res[81][0] = -v[0];
+    res[81][1] = v[2];
+    res[81][2] = v[1];
+    res[82][0] = -v[0];
+    res[82][1] = v[2];
+    res[82][2] = v[1];
+    res[83][0] = -v[0];
+    res[83][1] = v[2];
+    res[83][2] = v[1];
+    res[84][0] = -v[0];
+    res[84][1] = -v[2];
+    res[84][2] = -v[1];
+    res[85][0] = -v[0];
+    res[85][1] = -v[2];
+    res[85][2] = -v[1];
+    res[86][0] = -v[0];
+    res[86][1] = -v[2];
+    res[86][2] = -v[1];
+    res[87][0] = -v[0];
+    res[87][1] = -v[2];
+    res[87][2] = -v[1];
+    res[88][0] = v[2];
+    res[88][1] = -v[1];
+    res[88][2] = v[0];
+    res[89][0] = v[2];
+    res[89][1] = -v[1];
+    res[89][2] = v[0];
+    res[90][0] = v[2];
+    res[90][1] = -v[1];
+    res[90][2] = v[0];
+    res[91][0] = v[2];
+    res[91][1] = -v[1];
+    res[91][2] = v[0];
+    res[92][0] = -v[2];
+    res[92][1] = -v[1];
+    res[92][2] = -v[0];
+    res[93][0] = -v[2];
+    res[93][1] = -v[1];
+    res[93][2] = -v[0];
+    res[94][0] = -v[2];
+    res[94][1] = -v[1];
+    res[94][2] = -v[0];
+    res[95][0] = -v[2];
+    res[95][1] = -v[1];
+    res[95][2] = -v[0];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -11501,9 +16312,11 @@ struct FastSG_F4132 {
     res[95][2] = -v[0];
     phase[95] = (res[95][0]+res[95][1])*3./4+res[95][2]*1./4;
   }
+  static const short size=96;
+  static const char lattice='F';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_F432 {
- static const short size=96;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -11792,6 +16605,296 @@ struct FastSG_F432 {
     res[94][2] = -v[0]+1./2;
     res[95][0] = -v[2]+1./2;
     res[95][1] = -v[1]+1./2;
+    res[95][2] = -v[0];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = v[2];
+    res[4][0] = v[1];
+    res[4][1] = -v[0];
+    res[4][2] = v[2];
+    res[5][0] = v[1];
+    res[5][1] = -v[0];
+    res[5][2] = v[2];
+    res[6][0] = v[1];
+    res[6][1] = -v[0];
+    res[6][2] = v[2];
+    res[7][0] = v[1];
+    res[7][1] = -v[0];
+    res[7][2] = v[2];
+    res[8][0] = -v[0];
+    res[8][1] = -v[1];
+    res[8][2] = v[2];
+    res[9][0] = -v[0];
+    res[9][1] = -v[1];
+    res[9][2] = v[2];
+    res[10][0] = -v[0];
+    res[10][1] = -v[1];
+    res[10][2] = v[2];
+    res[11][0] = -v[0];
+    res[11][1] = -v[1];
+    res[11][2] = v[2];
+    res[12][0] = -v[1];
+    res[12][1] = v[0];
+    res[12][2] = v[2];
+    res[13][0] = -v[1];
+    res[13][1] = v[0];
+    res[13][2] = v[2];
+    res[14][0] = -v[1];
+    res[14][1] = v[0];
+    res[14][2] = v[2];
+    res[15][0] = -v[1];
+    res[15][1] = v[0];
+    res[15][2] = v[2];
+    res[16][0] = v[0];
+    res[16][1] = v[2];
+    res[16][2] = -v[1];
+    res[17][0] = v[0];
+    res[17][1] = v[2];
+    res[17][2] = -v[1];
+    res[18][0] = v[0];
+    res[18][1] = v[2];
+    res[18][2] = -v[1];
+    res[19][0] = v[0];
+    res[19][1] = v[2];
+    res[19][2] = -v[1];
+    res[20][0] = v[0];
+    res[20][1] = -v[1];
+    res[20][2] = -v[2];
+    res[21][0] = v[0];
+    res[21][1] = -v[1];
+    res[21][2] = -v[2];
+    res[22][0] = v[0];
+    res[22][1] = -v[1];
+    res[22][2] = -v[2];
+    res[23][0] = v[0];
+    res[23][1] = -v[1];
+    res[23][2] = -v[2];
+    res[24][0] = v[0];
+    res[24][1] = -v[2];
+    res[24][2] = v[1];
+    res[25][0] = v[0];
+    res[25][1] = -v[2];
+    res[25][2] = v[1];
+    res[26][0] = v[0];
+    res[26][1] = -v[2];
+    res[26][2] = v[1];
+    res[27][0] = v[0];
+    res[27][1] = -v[2];
+    res[27][2] = v[1];
+    res[28][0] = -v[2];
+    res[28][1] = v[1];
+    res[28][2] = v[0];
+    res[29][0] = -v[2];
+    res[29][1] = v[1];
+    res[29][2] = v[0];
+    res[30][0] = -v[2];
+    res[30][1] = v[1];
+    res[30][2] = v[0];
+    res[31][0] = -v[2];
+    res[31][1] = v[1];
+    res[31][2] = v[0];
+    res[32][0] = -v[0];
+    res[32][1] = v[1];
+    res[32][2] = -v[2];
+    res[33][0] = -v[0];
+    res[33][1] = v[1];
+    res[33][2] = -v[2];
+    res[34][0] = -v[0];
+    res[34][1] = v[1];
+    res[34][2] = -v[2];
+    res[35][0] = -v[0];
+    res[35][1] = v[1];
+    res[35][2] = -v[2];
+    res[36][0] = v[2];
+    res[36][1] = v[1];
+    res[36][2] = -v[0];
+    res[37][0] = v[2];
+    res[37][1] = v[1];
+    res[37][2] = -v[0];
+    res[38][0] = v[2];
+    res[38][1] = v[1];
+    res[38][2] = -v[0];
+    res[39][0] = v[2];
+    res[39][1] = v[1];
+    res[39][2] = -v[0];
+    res[40][0] = v[1];
+    res[40][1] = v[2];
+    res[40][2] = v[0];
+    res[41][0] = v[1];
+    res[41][1] = v[2];
+    res[41][2] = v[0];
+    res[42][0] = v[1];
+    res[42][1] = v[2];
+    res[42][2] = v[0];
+    res[43][0] = v[1];
+    res[43][1] = v[2];
+    res[43][2] = v[0];
+    res[44][0] = v[2];
+    res[44][1] = v[0];
+    res[44][2] = v[1];
+    res[45][0] = v[2];
+    res[45][1] = v[0];
+    res[45][2] = v[1];
+    res[46][0] = v[2];
+    res[46][1] = v[0];
+    res[46][2] = v[1];
+    res[47][0] = v[2];
+    res[47][1] = v[0];
+    res[47][2] = v[1];
+    res[48][0] = v[2];
+    res[48][1] = -v[0];
+    res[48][2] = -v[1];
+    res[49][0] = v[2];
+    res[49][1] = -v[0];
+    res[49][2] = -v[1];
+    res[50][0] = v[2];
+    res[50][1] = -v[0];
+    res[50][2] = -v[1];
+    res[51][0] = v[2];
+    res[51][1] = -v[0];
+    res[51][2] = -v[1];
+    res[52][0] = -v[1];
+    res[52][1] = -v[2];
+    res[52][2] = v[0];
+    res[53][0] = -v[1];
+    res[53][1] = -v[2];
+    res[53][2] = v[0];
+    res[54][0] = -v[1];
+    res[54][1] = -v[2];
+    res[54][2] = v[0];
+    res[55][0] = -v[1];
+    res[55][1] = -v[2];
+    res[55][2] = v[0];
+    res[56][0] = -v[2];
+    res[56][1] = -v[0];
+    res[56][2] = v[1];
+    res[57][0] = -v[2];
+    res[57][1] = -v[0];
+    res[57][2] = v[1];
+    res[58][0] = -v[2];
+    res[58][1] = -v[0];
+    res[58][2] = v[1];
+    res[59][0] = -v[2];
+    res[59][1] = -v[0];
+    res[59][2] = v[1];
+    res[60][0] = -v[1];
+    res[60][1] = v[2];
+    res[60][2] = -v[0];
+    res[61][0] = -v[1];
+    res[61][1] = v[2];
+    res[61][2] = -v[0];
+    res[62][0] = -v[1];
+    res[62][1] = v[2];
+    res[62][2] = -v[0];
+    res[63][0] = -v[1];
+    res[63][1] = v[2];
+    res[63][2] = -v[0];
+    res[64][0] = v[1];
+    res[64][1] = -v[2];
+    res[64][2] = -v[0];
+    res[65][0] = v[1];
+    res[65][1] = -v[2];
+    res[65][2] = -v[0];
+    res[66][0] = v[1];
+    res[66][1] = -v[2];
+    res[66][2] = -v[0];
+    res[67][0] = v[1];
+    res[67][1] = -v[2];
+    res[67][2] = -v[0];
+    res[68][0] = -v[2];
+    res[68][1] = v[0];
+    res[68][2] = -v[1];
+    res[69][0] = -v[2];
+    res[69][1] = v[0];
+    res[69][2] = -v[1];
+    res[70][0] = -v[2];
+    res[70][1] = v[0];
+    res[70][2] = -v[1];
+    res[71][0] = -v[2];
+    res[71][1] = v[0];
+    res[71][2] = -v[1];
+    res[72][0] = v[1];
+    res[72][1] = v[0];
+    res[72][2] = -v[2];
+    res[73][0] = v[1];
+    res[73][1] = v[0];
+    res[73][2] = -v[2];
+    res[74][0] = v[1];
+    res[74][1] = v[0];
+    res[74][2] = -v[2];
+    res[75][0] = v[1];
+    res[75][1] = v[0];
+    res[75][2] = -v[2];
+    res[76][0] = -v[1];
+    res[76][1] = -v[0];
+    res[76][2] = -v[2];
+    res[77][0] = -v[1];
+    res[77][1] = -v[0];
+    res[77][2] = -v[2];
+    res[78][0] = -v[1];
+    res[78][1] = -v[0];
+    res[78][2] = -v[2];
+    res[79][0] = -v[1];
+    res[79][1] = -v[0];
+    res[79][2] = -v[2];
+    res[80][0] = -v[0];
+    res[80][1] = v[2];
+    res[80][2] = v[1];
+    res[81][0] = -v[0];
+    res[81][1] = v[2];
+    res[81][2] = v[1];
+    res[82][0] = -v[0];
+    res[82][1] = v[2];
+    res[82][2] = v[1];
+    res[83][0] = -v[0];
+    res[83][1] = v[2];
+    res[83][2] = v[1];
+    res[84][0] = -v[0];
+    res[84][1] = -v[2];
+    res[84][2] = -v[1];
+    res[85][0] = -v[0];
+    res[85][1] = -v[2];
+    res[85][2] = -v[1];
+    res[86][0] = -v[0];
+    res[86][1] = -v[2];
+    res[86][2] = -v[1];
+    res[87][0] = -v[0];
+    res[87][1] = -v[2];
+    res[87][2] = -v[1];
+    res[88][0] = v[2];
+    res[88][1] = -v[1];
+    res[88][2] = v[0];
+    res[89][0] = v[2];
+    res[89][1] = -v[1];
+    res[89][2] = v[0];
+    res[90][0] = v[2];
+    res[90][1] = -v[1];
+    res[90][2] = v[0];
+    res[91][0] = v[2];
+    res[91][1] = -v[1];
+    res[91][2] = v[0];
+    res[92][0] = -v[2];
+    res[92][1] = -v[1];
+    res[92][2] = -v[0];
+    res[93][0] = -v[2];
+    res[93][1] = -v[1];
+    res[93][2] = -v[0];
+    res[94][0] = -v[2];
+    res[94][1] = -v[1];
+    res[94][2] = -v[0];
+    res[95][0] = -v[2];
+    res[95][1] = -v[1];
     res[95][2] = -v[0];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -12180,9 +17283,11 @@ struct FastSG_F432 {
     res[95][2] = -v[0];
     phase[95] = (res[95][0]+res[95][1])*1./2;
   }
+  static const short size=96;
+  static const char lattice='F';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Fd_3 {
- static const short size=96;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -12472,6 +17577,296 @@ struct FastSG_Fd_3 {
     res[95][0] = v[0]+3./4;
     res[95][1] = -v[1]+1./2;
     res[95][2] = v[2]+1./4;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = v[1];
+    res[4][2] = v[2];
+    res[5][0] = -v[0];
+    res[5][1] = -v[1];
+    res[5][2] = -v[2];
+    res[6][0] = v[0];
+    res[6][1] = v[1];
+    res[6][2] = v[2];
+    res[7][0] = -v[0];
+    res[7][1] = -v[1];
+    res[7][2] = -v[2];
+    res[8][0] = v[1];
+    res[8][1] = v[2];
+    res[8][2] = v[0];
+    res[9][0] = -v[1];
+    res[9][1] = -v[2];
+    res[9][2] = -v[0];
+    res[10][0] = v[1];
+    res[10][1] = v[2];
+    res[10][2] = v[0];
+    res[11][0] = -v[1];
+    res[11][1] = -v[2];
+    res[11][2] = -v[0];
+    res[12][0] = v[1];
+    res[12][1] = v[2];
+    res[12][2] = v[0];
+    res[13][0] = -v[1];
+    res[13][1] = -v[2];
+    res[13][2] = -v[0];
+    res[14][0] = v[1];
+    res[14][1] = v[2];
+    res[14][2] = v[0];
+    res[15][0] = -v[1];
+    res[15][1] = -v[2];
+    res[15][2] = -v[0];
+    res[16][0] = v[2];
+    res[16][1] = v[0];
+    res[16][2] = v[1];
+    res[17][0] = -v[2];
+    res[17][1] = -v[0];
+    res[17][2] = -v[1];
+    res[18][0] = v[2];
+    res[18][1] = v[0];
+    res[18][2] = v[1];
+    res[19][0] = -v[2];
+    res[19][1] = -v[0];
+    res[19][2] = -v[1];
+    res[20][0] = v[2];
+    res[20][1] = v[0];
+    res[20][2] = v[1];
+    res[21][0] = -v[2];
+    res[21][1] = -v[0];
+    res[21][2] = -v[1];
+    res[22][0] = v[2];
+    res[22][1] = v[0];
+    res[22][2] = v[1];
+    res[23][0] = -v[2];
+    res[23][1] = -v[0];
+    res[23][2] = -v[1];
+    res[24][0] = v[2];
+    res[24][1] = -v[0];
+    res[24][2] = -v[1];
+    res[25][0] = -v[2];
+    res[25][1] = v[0];
+    res[25][2] = v[1];
+    res[26][0] = v[2];
+    res[26][1] = -v[0];
+    res[26][2] = -v[1];
+    res[27][0] = -v[2];
+    res[27][1] = v[0];
+    res[27][2] = v[1];
+    res[28][0] = v[2];
+    res[28][1] = -v[0];
+    res[28][2] = -v[1];
+    res[29][0] = -v[2];
+    res[29][1] = v[0];
+    res[29][2] = v[1];
+    res[30][0] = v[2];
+    res[30][1] = -v[0];
+    res[30][2] = -v[1];
+    res[31][0] = -v[2];
+    res[31][1] = v[0];
+    res[31][2] = v[1];
+    res[32][0] = -v[1];
+    res[32][1] = -v[2];
+    res[32][2] = v[0];
+    res[33][0] = v[1];
+    res[33][1] = v[2];
+    res[33][2] = -v[0];
+    res[34][0] = -v[1];
+    res[34][1] = -v[2];
+    res[34][2] = v[0];
+    res[35][0] = v[1];
+    res[35][1] = v[2];
+    res[35][2] = -v[0];
+    res[36][0] = -v[1];
+    res[36][1] = -v[2];
+    res[36][2] = v[0];
+    res[37][0] = v[1];
+    res[37][1] = v[2];
+    res[37][2] = -v[0];
+    res[38][0] = -v[1];
+    res[38][1] = -v[2];
+    res[38][2] = v[0];
+    res[39][0] = v[1];
+    res[39][1] = v[2];
+    res[39][2] = -v[0];
+    res[40][0] = -v[2];
+    res[40][1] = -v[0];
+    res[40][2] = v[1];
+    res[41][0] = v[2];
+    res[41][1] = v[0];
+    res[41][2] = -v[1];
+    res[42][0] = -v[2];
+    res[42][1] = -v[0];
+    res[42][2] = v[1];
+    res[43][0] = v[2];
+    res[43][1] = v[0];
+    res[43][2] = -v[1];
+    res[44][0] = -v[2];
+    res[44][1] = -v[0];
+    res[44][2] = v[1];
+    res[45][0] = v[2];
+    res[45][1] = v[0];
+    res[45][2] = -v[1];
+    res[46][0] = -v[2];
+    res[46][1] = -v[0];
+    res[46][2] = v[1];
+    res[47][0] = v[2];
+    res[47][1] = v[0];
+    res[47][2] = -v[1];
+    res[48][0] = -v[1];
+    res[48][1] = v[2];
+    res[48][2] = -v[0];
+    res[49][0] = v[1];
+    res[49][1] = -v[2];
+    res[49][2] = v[0];
+    res[50][0] = -v[1];
+    res[50][1] = v[2];
+    res[50][2] = -v[0];
+    res[51][0] = v[1];
+    res[51][1] = -v[2];
+    res[51][2] = v[0];
+    res[52][0] = -v[1];
+    res[52][1] = v[2];
+    res[52][2] = -v[0];
+    res[53][0] = v[1];
+    res[53][1] = -v[2];
+    res[53][2] = v[0];
+    res[54][0] = -v[1];
+    res[54][1] = v[2];
+    res[54][2] = -v[0];
+    res[55][0] = v[1];
+    res[55][1] = -v[2];
+    res[55][2] = v[0];
+    res[56][0] = v[1];
+    res[56][1] = -v[2];
+    res[56][2] = -v[0];
+    res[57][0] = -v[1];
+    res[57][1] = v[2];
+    res[57][2] = v[0];
+    res[58][0] = v[1];
+    res[58][1] = -v[2];
+    res[58][2] = -v[0];
+    res[59][0] = -v[1];
+    res[59][1] = v[2];
+    res[59][2] = v[0];
+    res[60][0] = v[1];
+    res[60][1] = -v[2];
+    res[60][2] = -v[0];
+    res[61][0] = -v[1];
+    res[61][1] = v[2];
+    res[61][2] = v[0];
+    res[62][0] = v[1];
+    res[62][1] = -v[2];
+    res[62][2] = -v[0];
+    res[63][0] = -v[1];
+    res[63][1] = v[2];
+    res[63][2] = v[0];
+    res[64][0] = -v[2];
+    res[64][1] = v[0];
+    res[64][2] = -v[1];
+    res[65][0] = v[2];
+    res[65][1] = -v[0];
+    res[65][2] = v[1];
+    res[66][0] = -v[2];
+    res[66][1] = v[0];
+    res[66][2] = -v[1];
+    res[67][0] = v[2];
+    res[67][1] = -v[0];
+    res[67][2] = v[1];
+    res[68][0] = -v[2];
+    res[68][1] = v[0];
+    res[68][2] = -v[1];
+    res[69][0] = v[2];
+    res[69][1] = -v[0];
+    res[69][2] = v[1];
+    res[70][0] = -v[2];
+    res[70][1] = v[0];
+    res[70][2] = -v[1];
+    res[71][0] = v[2];
+    res[71][1] = -v[0];
+    res[71][2] = v[1];
+    res[72][0] = -v[0];
+    res[72][1] = -v[1];
+    res[72][2] = v[2];
+    res[73][0] = v[0];
+    res[73][1] = v[1];
+    res[73][2] = -v[2];
+    res[74][0] = -v[0];
+    res[74][1] = -v[1];
+    res[74][2] = v[2];
+    res[75][0] = v[0];
+    res[75][1] = v[1];
+    res[75][2] = -v[2];
+    res[76][0] = -v[0];
+    res[76][1] = -v[1];
+    res[76][2] = v[2];
+    res[77][0] = v[0];
+    res[77][1] = v[1];
+    res[77][2] = -v[2];
+    res[78][0] = -v[0];
+    res[78][1] = -v[1];
+    res[78][2] = v[2];
+    res[79][0] = v[0];
+    res[79][1] = v[1];
+    res[79][2] = -v[2];
+    res[80][0] = v[0];
+    res[80][1] = -v[1];
+    res[80][2] = -v[2];
+    res[81][0] = -v[0];
+    res[81][1] = v[1];
+    res[81][2] = v[2];
+    res[82][0] = v[0];
+    res[82][1] = -v[1];
+    res[82][2] = -v[2];
+    res[83][0] = -v[0];
+    res[83][1] = v[1];
+    res[83][2] = v[2];
+    res[84][0] = v[0];
+    res[84][1] = -v[1];
+    res[84][2] = -v[2];
+    res[85][0] = -v[0];
+    res[85][1] = v[1];
+    res[85][2] = v[2];
+    res[86][0] = v[0];
+    res[86][1] = -v[1];
+    res[86][2] = -v[2];
+    res[87][0] = -v[0];
+    res[87][1] = v[1];
+    res[87][2] = v[2];
+    res[88][0] = -v[0];
+    res[88][1] = v[1];
+    res[88][2] = -v[2];
+    res[89][0] = v[0];
+    res[89][1] = -v[1];
+    res[89][2] = v[2];
+    res[90][0] = -v[0];
+    res[90][1] = v[1];
+    res[90][2] = -v[2];
+    res[91][0] = v[0];
+    res[91][1] = -v[1];
+    res[91][2] = v[2];
+    res[92][0] = -v[0];
+    res[92][1] = v[1];
+    res[92][2] = -v[2];
+    res[93][0] = v[0];
+    res[93][1] = -v[1];
+    res[93][2] = v[2];
+    res[94][0] = -v[0];
+    res[94][1] = v[1];
+    res[94][2] = -v[2];
+    res[95][0] = v[0];
+    res[95][1] = -v[1];
+    res[95][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -12859,9 +18254,11 @@ struct FastSG_Fd_3 {
     res[95][2] = v[2];
     phase[95] = res[95][0]*3./4+res[95][1]*1./2+res[95][2]*1./4;
   }
+  static const short size=96;
+  static const char lattice='F';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Fd_3c {
- static const short size=192;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -13439,6 +18836,584 @@ struct FastSG_Fd_3c {
     res[191][0] = v[2]+1./2;
     res[191][1] = v[1]+1./2;
     res[191][2] = v[0]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = v[1];
+    res[4][2] = v[2];
+    res[5][0] = -v[0];
+    res[5][1] = -v[1];
+    res[5][2] = -v[2];
+    res[6][0] = v[0];
+    res[6][1] = v[1];
+    res[6][2] = v[2];
+    res[7][0] = -v[0];
+    res[7][1] = -v[1];
+    res[7][2] = -v[2];
+    res[8][0] = v[1];
+    res[8][1] = -v[0];
+    res[8][2] = v[2];
+    res[9][0] = -v[1];
+    res[9][1] = v[0];
+    res[9][2] = -v[2];
+    res[10][0] = v[1];
+    res[10][1] = -v[0];
+    res[10][2] = v[2];
+    res[11][0] = -v[1];
+    res[11][1] = v[0];
+    res[11][2] = -v[2];
+    res[12][0] = v[1];
+    res[12][1] = -v[0];
+    res[12][2] = v[2];
+    res[13][0] = -v[1];
+    res[13][1] = v[0];
+    res[13][2] = -v[2];
+    res[14][0] = v[1];
+    res[14][1] = -v[0];
+    res[14][2] = v[2];
+    res[15][0] = -v[1];
+    res[15][1] = v[0];
+    res[15][2] = -v[2];
+    res[16][0] = -v[0];
+    res[16][1] = -v[1];
+    res[16][2] = v[2];
+    res[17][0] = v[0];
+    res[17][1] = v[1];
+    res[17][2] = -v[2];
+    res[18][0] = -v[0];
+    res[18][1] = -v[1];
+    res[18][2] = v[2];
+    res[19][0] = v[0];
+    res[19][1] = v[1];
+    res[19][2] = -v[2];
+    res[20][0] = -v[0];
+    res[20][1] = -v[1];
+    res[20][2] = v[2];
+    res[21][0] = v[0];
+    res[21][1] = v[1];
+    res[21][2] = -v[2];
+    res[22][0] = -v[0];
+    res[22][1] = -v[1];
+    res[22][2] = v[2];
+    res[23][0] = v[0];
+    res[23][1] = v[1];
+    res[23][2] = -v[2];
+    res[24][0] = -v[1];
+    res[24][1] = v[0];
+    res[24][2] = v[2];
+    res[25][0] = v[1];
+    res[25][1] = -v[0];
+    res[25][2] = -v[2];
+    res[26][0] = -v[1];
+    res[26][1] = v[0];
+    res[26][2] = v[2];
+    res[27][0] = v[1];
+    res[27][1] = -v[0];
+    res[27][2] = -v[2];
+    res[28][0] = -v[1];
+    res[28][1] = v[0];
+    res[28][2] = v[2];
+    res[29][0] = v[1];
+    res[29][1] = -v[0];
+    res[29][2] = -v[2];
+    res[30][0] = -v[1];
+    res[30][1] = v[0];
+    res[30][2] = v[2];
+    res[31][0] = v[1];
+    res[31][1] = -v[0];
+    res[31][2] = -v[2];
+    res[32][0] = v[0];
+    res[32][1] = v[2];
+    res[32][2] = -v[1];
+    res[33][0] = -v[0];
+    res[33][1] = -v[2];
+    res[33][2] = v[1];
+    res[34][0] = v[0];
+    res[34][1] = v[2];
+    res[34][2] = -v[1];
+    res[35][0] = -v[0];
+    res[35][1] = -v[2];
+    res[35][2] = v[1];
+    res[36][0] = v[0];
+    res[36][1] = v[2];
+    res[36][2] = -v[1];
+    res[37][0] = -v[0];
+    res[37][1] = -v[2];
+    res[37][2] = v[1];
+    res[38][0] = v[0];
+    res[38][1] = v[2];
+    res[38][2] = -v[1];
+    res[39][0] = -v[0];
+    res[39][1] = -v[2];
+    res[39][2] = v[1];
+    res[40][0] = v[0];
+    res[40][1] = -v[1];
+    res[40][2] = -v[2];
+    res[41][0] = -v[0];
+    res[41][1] = v[1];
+    res[41][2] = v[2];
+    res[42][0] = v[0];
+    res[42][1] = -v[1];
+    res[42][2] = -v[2];
+    res[43][0] = -v[0];
+    res[43][1] = v[1];
+    res[43][2] = v[2];
+    res[44][0] = v[0];
+    res[44][1] = -v[1];
+    res[44][2] = -v[2];
+    res[45][0] = -v[0];
+    res[45][1] = v[1];
+    res[45][2] = v[2];
+    res[46][0] = v[0];
+    res[46][1] = -v[1];
+    res[46][2] = -v[2];
+    res[47][0] = -v[0];
+    res[47][1] = v[1];
+    res[47][2] = v[2];
+    res[48][0] = v[0];
+    res[48][1] = -v[2];
+    res[48][2] = v[1];
+    res[49][0] = -v[0];
+    res[49][1] = v[2];
+    res[49][2] = -v[1];
+    res[50][0] = v[0];
+    res[50][1] = -v[2];
+    res[50][2] = v[1];
+    res[51][0] = -v[0];
+    res[51][1] = v[2];
+    res[51][2] = -v[1];
+    res[52][0] = v[0];
+    res[52][1] = -v[2];
+    res[52][2] = v[1];
+    res[53][0] = -v[0];
+    res[53][1] = v[2];
+    res[53][2] = -v[1];
+    res[54][0] = v[0];
+    res[54][1] = -v[2];
+    res[54][2] = v[1];
+    res[55][0] = -v[0];
+    res[55][1] = v[2];
+    res[55][2] = -v[1];
+    res[56][0] = -v[2];
+    res[56][1] = v[1];
+    res[56][2] = v[0];
+    res[57][0] = v[2];
+    res[57][1] = -v[1];
+    res[57][2] = -v[0];
+    res[58][0] = -v[2];
+    res[58][1] = v[1];
+    res[58][2] = v[0];
+    res[59][0] = v[2];
+    res[59][1] = -v[1];
+    res[59][2] = -v[0];
+    res[60][0] = -v[2];
+    res[60][1] = v[1];
+    res[60][2] = v[0];
+    res[61][0] = v[2];
+    res[61][1] = -v[1];
+    res[61][2] = -v[0];
+    res[62][0] = -v[2];
+    res[62][1] = v[1];
+    res[62][2] = v[0];
+    res[63][0] = v[2];
+    res[63][1] = -v[1];
+    res[63][2] = -v[0];
+    res[64][0] = -v[0];
+    res[64][1] = v[1];
+    res[64][2] = -v[2];
+    res[65][0] = v[0];
+    res[65][1] = -v[1];
+    res[65][2] = v[2];
+    res[66][0] = -v[0];
+    res[66][1] = v[1];
+    res[66][2] = -v[2];
+    res[67][0] = v[0];
+    res[67][1] = -v[1];
+    res[67][2] = v[2];
+    res[68][0] = -v[0];
+    res[68][1] = v[1];
+    res[68][2] = -v[2];
+    res[69][0] = v[0];
+    res[69][1] = -v[1];
+    res[69][2] = v[2];
+    res[70][0] = -v[0];
+    res[70][1] = v[1];
+    res[70][2] = -v[2];
+    res[71][0] = v[0];
+    res[71][1] = -v[1];
+    res[71][2] = v[2];
+    res[72][0] = v[2];
+    res[72][1] = v[1];
+    res[72][2] = -v[0];
+    res[73][0] = -v[2];
+    res[73][1] = -v[1];
+    res[73][2] = v[0];
+    res[74][0] = v[2];
+    res[74][1] = v[1];
+    res[74][2] = -v[0];
+    res[75][0] = -v[2];
+    res[75][1] = -v[1];
+    res[75][2] = v[0];
+    res[76][0] = v[2];
+    res[76][1] = v[1];
+    res[76][2] = -v[0];
+    res[77][0] = -v[2];
+    res[77][1] = -v[1];
+    res[77][2] = v[0];
+    res[78][0] = v[2];
+    res[78][1] = v[1];
+    res[78][2] = -v[0];
+    res[79][0] = -v[2];
+    res[79][1] = -v[1];
+    res[79][2] = v[0];
+    res[80][0] = v[1];
+    res[80][1] = v[2];
+    res[80][2] = v[0];
+    res[81][0] = -v[1];
+    res[81][1] = -v[2];
+    res[81][2] = -v[0];
+    res[82][0] = v[1];
+    res[82][1] = v[2];
+    res[82][2] = v[0];
+    res[83][0] = -v[1];
+    res[83][1] = -v[2];
+    res[83][2] = -v[0];
+    res[84][0] = v[1];
+    res[84][1] = v[2];
+    res[84][2] = v[0];
+    res[85][0] = -v[1];
+    res[85][1] = -v[2];
+    res[85][2] = -v[0];
+    res[86][0] = v[1];
+    res[86][1] = v[2];
+    res[86][2] = v[0];
+    res[87][0] = -v[1];
+    res[87][1] = -v[2];
+    res[87][2] = -v[0];
+    res[88][0] = v[2];
+    res[88][1] = v[0];
+    res[88][2] = v[1];
+    res[89][0] = -v[2];
+    res[89][1] = -v[0];
+    res[89][2] = -v[1];
+    res[90][0] = v[2];
+    res[90][1] = v[0];
+    res[90][2] = v[1];
+    res[91][0] = -v[2];
+    res[91][1] = -v[0];
+    res[91][2] = -v[1];
+    res[92][0] = v[2];
+    res[92][1] = v[0];
+    res[92][2] = v[1];
+    res[93][0] = -v[2];
+    res[93][1] = -v[0];
+    res[93][2] = -v[1];
+    res[94][0] = v[2];
+    res[94][1] = v[0];
+    res[94][2] = v[1];
+    res[95][0] = -v[2];
+    res[95][1] = -v[0];
+    res[95][2] = -v[1];
+    res[96][0] = v[2];
+    res[96][1] = -v[0];
+    res[96][2] = -v[1];
+    res[97][0] = -v[2];
+    res[97][1] = v[0];
+    res[97][2] = v[1];
+    res[98][0] = v[2];
+    res[98][1] = -v[0];
+    res[98][2] = -v[1];
+    res[99][0] = -v[2];
+    res[99][1] = v[0];
+    res[99][2] = v[1];
+    res[100][0] = v[2];
+    res[100][1] = -v[0];
+    res[100][2] = -v[1];
+    res[101][0] = -v[2];
+    res[101][1] = v[0];
+    res[101][2] = v[1];
+    res[102][0] = v[2];
+    res[102][1] = -v[0];
+    res[102][2] = -v[1];
+    res[103][0] = -v[2];
+    res[103][1] = v[0];
+    res[103][2] = v[1];
+    res[104][0] = -v[1];
+    res[104][1] = -v[2];
+    res[104][2] = v[0];
+    res[105][0] = v[1];
+    res[105][1] = v[2];
+    res[105][2] = -v[0];
+    res[106][0] = -v[1];
+    res[106][1] = -v[2];
+    res[106][2] = v[0];
+    res[107][0] = v[1];
+    res[107][1] = v[2];
+    res[107][2] = -v[0];
+    res[108][0] = -v[1];
+    res[108][1] = -v[2];
+    res[108][2] = v[0];
+    res[109][0] = v[1];
+    res[109][1] = v[2];
+    res[109][2] = -v[0];
+    res[110][0] = -v[1];
+    res[110][1] = -v[2];
+    res[110][2] = v[0];
+    res[111][0] = v[1];
+    res[111][1] = v[2];
+    res[111][2] = -v[0];
+    res[112][0] = -v[2];
+    res[112][1] = -v[0];
+    res[112][2] = v[1];
+    res[113][0] = v[2];
+    res[113][1] = v[0];
+    res[113][2] = -v[1];
+    res[114][0] = -v[2];
+    res[114][1] = -v[0];
+    res[114][2] = v[1];
+    res[115][0] = v[2];
+    res[115][1] = v[0];
+    res[115][2] = -v[1];
+    res[116][0] = -v[2];
+    res[116][1] = -v[0];
+    res[116][2] = v[1];
+    res[117][0] = v[2];
+    res[117][1] = v[0];
+    res[117][2] = -v[1];
+    res[118][0] = -v[2];
+    res[118][1] = -v[0];
+    res[118][2] = v[1];
+    res[119][0] = v[2];
+    res[119][1] = v[0];
+    res[119][2] = -v[1];
+    res[120][0] = -v[1];
+    res[120][1] = v[2];
+    res[120][2] = -v[0];
+    res[121][0] = v[1];
+    res[121][1] = -v[2];
+    res[121][2] = v[0];
+    res[122][0] = -v[1];
+    res[122][1] = v[2];
+    res[122][2] = -v[0];
+    res[123][0] = v[1];
+    res[123][1] = -v[2];
+    res[123][2] = v[0];
+    res[124][0] = -v[1];
+    res[124][1] = v[2];
+    res[124][2] = -v[0];
+    res[125][0] = v[1];
+    res[125][1] = -v[2];
+    res[125][2] = v[0];
+    res[126][0] = -v[1];
+    res[126][1] = v[2];
+    res[126][2] = -v[0];
+    res[127][0] = v[1];
+    res[127][1] = -v[2];
+    res[127][2] = v[0];
+    res[128][0] = v[1];
+    res[128][1] = -v[2];
+    res[128][2] = -v[0];
+    res[129][0] = -v[1];
+    res[129][1] = v[2];
+    res[129][2] = v[0];
+    res[130][0] = v[1];
+    res[130][1] = -v[2];
+    res[130][2] = -v[0];
+    res[131][0] = -v[1];
+    res[131][1] = v[2];
+    res[131][2] = v[0];
+    res[132][0] = v[1];
+    res[132][1] = -v[2];
+    res[132][2] = -v[0];
+    res[133][0] = -v[1];
+    res[133][1] = v[2];
+    res[133][2] = v[0];
+    res[134][0] = v[1];
+    res[134][1] = -v[2];
+    res[134][2] = -v[0];
+    res[135][0] = -v[1];
+    res[135][1] = v[2];
+    res[135][2] = v[0];
+    res[136][0] = -v[2];
+    res[136][1] = v[0];
+    res[136][2] = -v[1];
+    res[137][0] = v[2];
+    res[137][1] = -v[0];
+    res[137][2] = v[1];
+    res[138][0] = -v[2];
+    res[138][1] = v[0];
+    res[138][2] = -v[1];
+    res[139][0] = v[2];
+    res[139][1] = -v[0];
+    res[139][2] = v[1];
+    res[140][0] = -v[2];
+    res[140][1] = v[0];
+    res[140][2] = -v[1];
+    res[141][0] = v[2];
+    res[141][1] = -v[0];
+    res[141][2] = v[1];
+    res[142][0] = -v[2];
+    res[142][1] = v[0];
+    res[142][2] = -v[1];
+    res[143][0] = v[2];
+    res[143][1] = -v[0];
+    res[143][2] = v[1];
+    res[144][0] = v[1];
+    res[144][1] = v[0];
+    res[144][2] = -v[2];
+    res[145][0] = -v[1];
+    res[145][1] = -v[0];
+    res[145][2] = v[2];
+    res[146][0] = v[1];
+    res[146][1] = v[0];
+    res[146][2] = -v[2];
+    res[147][0] = -v[1];
+    res[147][1] = -v[0];
+    res[147][2] = v[2];
+    res[148][0] = v[1];
+    res[148][1] = v[0];
+    res[148][2] = -v[2];
+    res[149][0] = -v[1];
+    res[149][1] = -v[0];
+    res[149][2] = v[2];
+    res[150][0] = v[1];
+    res[150][1] = v[0];
+    res[150][2] = -v[2];
+    res[151][0] = -v[1];
+    res[151][1] = -v[0];
+    res[151][2] = v[2];
+    res[152][0] = -v[1];
+    res[152][1] = -v[0];
+    res[152][2] = -v[2];
+    res[153][0] = v[1];
+    res[153][1] = v[0];
+    res[153][2] = v[2];
+    res[154][0] = -v[1];
+    res[154][1] = -v[0];
+    res[154][2] = -v[2];
+    res[155][0] = v[1];
+    res[155][1] = v[0];
+    res[155][2] = v[2];
+    res[156][0] = -v[1];
+    res[156][1] = -v[0];
+    res[156][2] = -v[2];
+    res[157][0] = v[1];
+    res[157][1] = v[0];
+    res[157][2] = v[2];
+    res[158][0] = -v[1];
+    res[158][1] = -v[0];
+    res[158][2] = -v[2];
+    res[159][0] = v[1];
+    res[159][1] = v[0];
+    res[159][2] = v[2];
+    res[160][0] = -v[0];
+    res[160][1] = v[2];
+    res[160][2] = v[1];
+    res[161][0] = v[0];
+    res[161][1] = -v[2];
+    res[161][2] = -v[1];
+    res[162][0] = -v[0];
+    res[162][1] = v[2];
+    res[162][2] = v[1];
+    res[163][0] = v[0];
+    res[163][1] = -v[2];
+    res[163][2] = -v[1];
+    res[164][0] = -v[0];
+    res[164][1] = v[2];
+    res[164][2] = v[1];
+    res[165][0] = v[0];
+    res[165][1] = -v[2];
+    res[165][2] = -v[1];
+    res[166][0] = -v[0];
+    res[166][1] = v[2];
+    res[166][2] = v[1];
+    res[167][0] = v[0];
+    res[167][1] = -v[2];
+    res[167][2] = -v[1];
+    res[168][0] = -v[0];
+    res[168][1] = -v[2];
+    res[168][2] = -v[1];
+    res[169][0] = v[0];
+    res[169][1] = v[2];
+    res[169][2] = v[1];
+    res[170][0] = -v[0];
+    res[170][1] = -v[2];
+    res[170][2] = -v[1];
+    res[171][0] = v[0];
+    res[171][1] = v[2];
+    res[171][2] = v[1];
+    res[172][0] = -v[0];
+    res[172][1] = -v[2];
+    res[172][2] = -v[1];
+    res[173][0] = v[0];
+    res[173][1] = v[2];
+    res[173][2] = v[1];
+    res[174][0] = -v[0];
+    res[174][1] = -v[2];
+    res[174][2] = -v[1];
+    res[175][0] = v[0];
+    res[175][1] = v[2];
+    res[175][2] = v[1];
+    res[176][0] = v[2];
+    res[176][1] = -v[1];
+    res[176][2] = v[0];
+    res[177][0] = -v[2];
+    res[177][1] = v[1];
+    res[177][2] = -v[0];
+    res[178][0] = v[2];
+    res[178][1] = -v[1];
+    res[178][2] = v[0];
+    res[179][0] = -v[2];
+    res[179][1] = v[1];
+    res[179][2] = -v[0];
+    res[180][0] = v[2];
+    res[180][1] = -v[1];
+    res[180][2] = v[0];
+    res[181][0] = -v[2];
+    res[181][1] = v[1];
+    res[181][2] = -v[0];
+    res[182][0] = v[2];
+    res[182][1] = -v[1];
+    res[182][2] = v[0];
+    res[183][0] = -v[2];
+    res[183][1] = v[1];
+    res[183][2] = -v[0];
+    res[184][0] = -v[2];
+    res[184][1] = -v[1];
+    res[184][2] = -v[0];
+    res[185][0] = v[2];
+    res[185][1] = v[1];
+    res[185][2] = v[0];
+    res[186][0] = -v[2];
+    res[186][1] = -v[1];
+    res[186][2] = -v[0];
+    res[187][0] = v[2];
+    res[187][1] = v[1];
+    res[187][2] = v[0];
+    res[188][0] = -v[2];
+    res[188][1] = -v[1];
+    res[188][2] = -v[0];
+    res[189][0] = v[2];
+    res[189][1] = v[1];
+    res[189][2] = v[0];
+    res[190][0] = -v[2];
+    res[190][1] = -v[1];
+    res[190][2] = -v[0];
+    res[191][0] = v[2];
+    res[191][1] = v[1];
+    res[191][2] = v[0];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -14210,9 +20185,11 @@ struct FastSG_Fd_3c {
     res[191][2] = v[0];
     phase[191] = (res[191][0]+res[191][1]+res[191][2])*1./2;
   }
+  static const short size=192;
+  static const char lattice='F';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Fd_3m {
- static const short size=192;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -14789,6 +20766,584 @@ struct FastSG_Fd_3m {
     res[190][2] = -v[0];
     res[191][0] = v[2]+1./2;
     res[191][1] = v[1]+1./2;
+    res[191][2] = v[0];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = v[1];
+    res[4][2] = v[2];
+    res[5][0] = -v[0];
+    res[5][1] = -v[1];
+    res[5][2] = -v[2];
+    res[6][0] = v[0];
+    res[6][1] = v[1];
+    res[6][2] = v[2];
+    res[7][0] = -v[0];
+    res[7][1] = -v[1];
+    res[7][2] = -v[2];
+    res[8][0] = v[1];
+    res[8][1] = -v[0];
+    res[8][2] = v[2];
+    res[9][0] = -v[1];
+    res[9][1] = v[0];
+    res[9][2] = -v[2];
+    res[10][0] = v[1];
+    res[10][1] = -v[0];
+    res[10][2] = v[2];
+    res[11][0] = -v[1];
+    res[11][1] = v[0];
+    res[11][2] = -v[2];
+    res[12][0] = v[1];
+    res[12][1] = -v[0];
+    res[12][2] = v[2];
+    res[13][0] = -v[1];
+    res[13][1] = v[0];
+    res[13][2] = -v[2];
+    res[14][0] = v[1];
+    res[14][1] = -v[0];
+    res[14][2] = v[2];
+    res[15][0] = -v[1];
+    res[15][1] = v[0];
+    res[15][2] = -v[2];
+    res[16][0] = -v[0];
+    res[16][1] = -v[1];
+    res[16][2] = v[2];
+    res[17][0] = v[0];
+    res[17][1] = v[1];
+    res[17][2] = -v[2];
+    res[18][0] = -v[0];
+    res[18][1] = -v[1];
+    res[18][2] = v[2];
+    res[19][0] = v[0];
+    res[19][1] = v[1];
+    res[19][2] = -v[2];
+    res[20][0] = -v[0];
+    res[20][1] = -v[1];
+    res[20][2] = v[2];
+    res[21][0] = v[0];
+    res[21][1] = v[1];
+    res[21][2] = -v[2];
+    res[22][0] = -v[0];
+    res[22][1] = -v[1];
+    res[22][2] = v[2];
+    res[23][0] = v[0];
+    res[23][1] = v[1];
+    res[23][2] = -v[2];
+    res[24][0] = -v[1];
+    res[24][1] = v[0];
+    res[24][2] = v[2];
+    res[25][0] = v[1];
+    res[25][1] = -v[0];
+    res[25][2] = -v[2];
+    res[26][0] = -v[1];
+    res[26][1] = v[0];
+    res[26][2] = v[2];
+    res[27][0] = v[1];
+    res[27][1] = -v[0];
+    res[27][2] = -v[2];
+    res[28][0] = -v[1];
+    res[28][1] = v[0];
+    res[28][2] = v[2];
+    res[29][0] = v[1];
+    res[29][1] = -v[0];
+    res[29][2] = -v[2];
+    res[30][0] = -v[1];
+    res[30][1] = v[0];
+    res[30][2] = v[2];
+    res[31][0] = v[1];
+    res[31][1] = -v[0];
+    res[31][2] = -v[2];
+    res[32][0] = v[0];
+    res[32][1] = v[2];
+    res[32][2] = -v[1];
+    res[33][0] = -v[0];
+    res[33][1] = -v[2];
+    res[33][2] = v[1];
+    res[34][0] = v[0];
+    res[34][1] = v[2];
+    res[34][2] = -v[1];
+    res[35][0] = -v[0];
+    res[35][1] = -v[2];
+    res[35][2] = v[1];
+    res[36][0] = v[0];
+    res[36][1] = v[2];
+    res[36][2] = -v[1];
+    res[37][0] = -v[0];
+    res[37][1] = -v[2];
+    res[37][2] = v[1];
+    res[38][0] = v[0];
+    res[38][1] = v[2];
+    res[38][2] = -v[1];
+    res[39][0] = -v[0];
+    res[39][1] = -v[2];
+    res[39][2] = v[1];
+    res[40][0] = v[0];
+    res[40][1] = -v[1];
+    res[40][2] = -v[2];
+    res[41][0] = -v[0];
+    res[41][1] = v[1];
+    res[41][2] = v[2];
+    res[42][0] = v[0];
+    res[42][1] = -v[1];
+    res[42][2] = -v[2];
+    res[43][0] = -v[0];
+    res[43][1] = v[1];
+    res[43][2] = v[2];
+    res[44][0] = v[0];
+    res[44][1] = -v[1];
+    res[44][2] = -v[2];
+    res[45][0] = -v[0];
+    res[45][1] = v[1];
+    res[45][2] = v[2];
+    res[46][0] = v[0];
+    res[46][1] = -v[1];
+    res[46][2] = -v[2];
+    res[47][0] = -v[0];
+    res[47][1] = v[1];
+    res[47][2] = v[2];
+    res[48][0] = v[0];
+    res[48][1] = -v[2];
+    res[48][2] = v[1];
+    res[49][0] = -v[0];
+    res[49][1] = v[2];
+    res[49][2] = -v[1];
+    res[50][0] = v[0];
+    res[50][1] = -v[2];
+    res[50][2] = v[1];
+    res[51][0] = -v[0];
+    res[51][1] = v[2];
+    res[51][2] = -v[1];
+    res[52][0] = v[0];
+    res[52][1] = -v[2];
+    res[52][2] = v[1];
+    res[53][0] = -v[0];
+    res[53][1] = v[2];
+    res[53][2] = -v[1];
+    res[54][0] = v[0];
+    res[54][1] = -v[2];
+    res[54][2] = v[1];
+    res[55][0] = -v[0];
+    res[55][1] = v[2];
+    res[55][2] = -v[1];
+    res[56][0] = -v[2];
+    res[56][1] = v[1];
+    res[56][2] = v[0];
+    res[57][0] = v[2];
+    res[57][1] = -v[1];
+    res[57][2] = -v[0];
+    res[58][0] = -v[2];
+    res[58][1] = v[1];
+    res[58][2] = v[0];
+    res[59][0] = v[2];
+    res[59][1] = -v[1];
+    res[59][2] = -v[0];
+    res[60][0] = -v[2];
+    res[60][1] = v[1];
+    res[60][2] = v[0];
+    res[61][0] = v[2];
+    res[61][1] = -v[1];
+    res[61][2] = -v[0];
+    res[62][0] = -v[2];
+    res[62][1] = v[1];
+    res[62][2] = v[0];
+    res[63][0] = v[2];
+    res[63][1] = -v[1];
+    res[63][2] = -v[0];
+    res[64][0] = -v[0];
+    res[64][1] = v[1];
+    res[64][2] = -v[2];
+    res[65][0] = v[0];
+    res[65][1] = -v[1];
+    res[65][2] = v[2];
+    res[66][0] = -v[0];
+    res[66][1] = v[1];
+    res[66][2] = -v[2];
+    res[67][0] = v[0];
+    res[67][1] = -v[1];
+    res[67][2] = v[2];
+    res[68][0] = -v[0];
+    res[68][1] = v[1];
+    res[68][2] = -v[2];
+    res[69][0] = v[0];
+    res[69][1] = -v[1];
+    res[69][2] = v[2];
+    res[70][0] = -v[0];
+    res[70][1] = v[1];
+    res[70][2] = -v[2];
+    res[71][0] = v[0];
+    res[71][1] = -v[1];
+    res[71][2] = v[2];
+    res[72][0] = v[2];
+    res[72][1] = v[1];
+    res[72][2] = -v[0];
+    res[73][0] = -v[2];
+    res[73][1] = -v[1];
+    res[73][2] = v[0];
+    res[74][0] = v[2];
+    res[74][1] = v[1];
+    res[74][2] = -v[0];
+    res[75][0] = -v[2];
+    res[75][1] = -v[1];
+    res[75][2] = v[0];
+    res[76][0] = v[2];
+    res[76][1] = v[1];
+    res[76][2] = -v[0];
+    res[77][0] = -v[2];
+    res[77][1] = -v[1];
+    res[77][2] = v[0];
+    res[78][0] = v[2];
+    res[78][1] = v[1];
+    res[78][2] = -v[0];
+    res[79][0] = -v[2];
+    res[79][1] = -v[1];
+    res[79][2] = v[0];
+    res[80][0] = v[1];
+    res[80][1] = v[2];
+    res[80][2] = v[0];
+    res[81][0] = -v[1];
+    res[81][1] = -v[2];
+    res[81][2] = -v[0];
+    res[82][0] = v[1];
+    res[82][1] = v[2];
+    res[82][2] = v[0];
+    res[83][0] = -v[1];
+    res[83][1] = -v[2];
+    res[83][2] = -v[0];
+    res[84][0] = v[1];
+    res[84][1] = v[2];
+    res[84][2] = v[0];
+    res[85][0] = -v[1];
+    res[85][1] = -v[2];
+    res[85][2] = -v[0];
+    res[86][0] = v[1];
+    res[86][1] = v[2];
+    res[86][2] = v[0];
+    res[87][0] = -v[1];
+    res[87][1] = -v[2];
+    res[87][2] = -v[0];
+    res[88][0] = v[2];
+    res[88][1] = v[0];
+    res[88][2] = v[1];
+    res[89][0] = -v[2];
+    res[89][1] = -v[0];
+    res[89][2] = -v[1];
+    res[90][0] = v[2];
+    res[90][1] = v[0];
+    res[90][2] = v[1];
+    res[91][0] = -v[2];
+    res[91][1] = -v[0];
+    res[91][2] = -v[1];
+    res[92][0] = v[2];
+    res[92][1] = v[0];
+    res[92][2] = v[1];
+    res[93][0] = -v[2];
+    res[93][1] = -v[0];
+    res[93][2] = -v[1];
+    res[94][0] = v[2];
+    res[94][1] = v[0];
+    res[94][2] = v[1];
+    res[95][0] = -v[2];
+    res[95][1] = -v[0];
+    res[95][2] = -v[1];
+    res[96][0] = v[2];
+    res[96][1] = -v[0];
+    res[96][2] = -v[1];
+    res[97][0] = -v[2];
+    res[97][1] = v[0];
+    res[97][2] = v[1];
+    res[98][0] = v[2];
+    res[98][1] = -v[0];
+    res[98][2] = -v[1];
+    res[99][0] = -v[2];
+    res[99][1] = v[0];
+    res[99][2] = v[1];
+    res[100][0] = v[2];
+    res[100][1] = -v[0];
+    res[100][2] = -v[1];
+    res[101][0] = -v[2];
+    res[101][1] = v[0];
+    res[101][2] = v[1];
+    res[102][0] = v[2];
+    res[102][1] = -v[0];
+    res[102][2] = -v[1];
+    res[103][0] = -v[2];
+    res[103][1] = v[0];
+    res[103][2] = v[1];
+    res[104][0] = -v[1];
+    res[104][1] = -v[2];
+    res[104][2] = v[0];
+    res[105][0] = v[1];
+    res[105][1] = v[2];
+    res[105][2] = -v[0];
+    res[106][0] = -v[1];
+    res[106][1] = -v[2];
+    res[106][2] = v[0];
+    res[107][0] = v[1];
+    res[107][1] = v[2];
+    res[107][2] = -v[0];
+    res[108][0] = -v[1];
+    res[108][1] = -v[2];
+    res[108][2] = v[0];
+    res[109][0] = v[1];
+    res[109][1] = v[2];
+    res[109][2] = -v[0];
+    res[110][0] = -v[1];
+    res[110][1] = -v[2];
+    res[110][2] = v[0];
+    res[111][0] = v[1];
+    res[111][1] = v[2];
+    res[111][2] = -v[0];
+    res[112][0] = -v[2];
+    res[112][1] = -v[0];
+    res[112][2] = v[1];
+    res[113][0] = v[2];
+    res[113][1] = v[0];
+    res[113][2] = -v[1];
+    res[114][0] = -v[2];
+    res[114][1] = -v[0];
+    res[114][2] = v[1];
+    res[115][0] = v[2];
+    res[115][1] = v[0];
+    res[115][2] = -v[1];
+    res[116][0] = -v[2];
+    res[116][1] = -v[0];
+    res[116][2] = v[1];
+    res[117][0] = v[2];
+    res[117][1] = v[0];
+    res[117][2] = -v[1];
+    res[118][0] = -v[2];
+    res[118][1] = -v[0];
+    res[118][2] = v[1];
+    res[119][0] = v[2];
+    res[119][1] = v[0];
+    res[119][2] = -v[1];
+    res[120][0] = -v[1];
+    res[120][1] = v[2];
+    res[120][2] = -v[0];
+    res[121][0] = v[1];
+    res[121][1] = -v[2];
+    res[121][2] = v[0];
+    res[122][0] = -v[1];
+    res[122][1] = v[2];
+    res[122][2] = -v[0];
+    res[123][0] = v[1];
+    res[123][1] = -v[2];
+    res[123][2] = v[0];
+    res[124][0] = -v[1];
+    res[124][1] = v[2];
+    res[124][2] = -v[0];
+    res[125][0] = v[1];
+    res[125][1] = -v[2];
+    res[125][2] = v[0];
+    res[126][0] = -v[1];
+    res[126][1] = v[2];
+    res[126][2] = -v[0];
+    res[127][0] = v[1];
+    res[127][1] = -v[2];
+    res[127][2] = v[0];
+    res[128][0] = v[1];
+    res[128][1] = -v[2];
+    res[128][2] = -v[0];
+    res[129][0] = -v[1];
+    res[129][1] = v[2];
+    res[129][2] = v[0];
+    res[130][0] = v[1];
+    res[130][1] = -v[2];
+    res[130][2] = -v[0];
+    res[131][0] = -v[1];
+    res[131][1] = v[2];
+    res[131][2] = v[0];
+    res[132][0] = v[1];
+    res[132][1] = -v[2];
+    res[132][2] = -v[0];
+    res[133][0] = -v[1];
+    res[133][1] = v[2];
+    res[133][2] = v[0];
+    res[134][0] = v[1];
+    res[134][1] = -v[2];
+    res[134][2] = -v[0];
+    res[135][0] = -v[1];
+    res[135][1] = v[2];
+    res[135][2] = v[0];
+    res[136][0] = -v[2];
+    res[136][1] = v[0];
+    res[136][2] = -v[1];
+    res[137][0] = v[2];
+    res[137][1] = -v[0];
+    res[137][2] = v[1];
+    res[138][0] = -v[2];
+    res[138][1] = v[0];
+    res[138][2] = -v[1];
+    res[139][0] = v[2];
+    res[139][1] = -v[0];
+    res[139][2] = v[1];
+    res[140][0] = -v[2];
+    res[140][1] = v[0];
+    res[140][2] = -v[1];
+    res[141][0] = v[2];
+    res[141][1] = -v[0];
+    res[141][2] = v[1];
+    res[142][0] = -v[2];
+    res[142][1] = v[0];
+    res[142][2] = -v[1];
+    res[143][0] = v[2];
+    res[143][1] = -v[0];
+    res[143][2] = v[1];
+    res[144][0] = v[1];
+    res[144][1] = v[0];
+    res[144][2] = -v[2];
+    res[145][0] = -v[1];
+    res[145][1] = -v[0];
+    res[145][2] = v[2];
+    res[146][0] = v[1];
+    res[146][1] = v[0];
+    res[146][2] = -v[2];
+    res[147][0] = -v[1];
+    res[147][1] = -v[0];
+    res[147][2] = v[2];
+    res[148][0] = v[1];
+    res[148][1] = v[0];
+    res[148][2] = -v[2];
+    res[149][0] = -v[1];
+    res[149][1] = -v[0];
+    res[149][2] = v[2];
+    res[150][0] = v[1];
+    res[150][1] = v[0];
+    res[150][2] = -v[2];
+    res[151][0] = -v[1];
+    res[151][1] = -v[0];
+    res[151][2] = v[2];
+    res[152][0] = -v[1];
+    res[152][1] = -v[0];
+    res[152][2] = -v[2];
+    res[153][0] = v[1];
+    res[153][1] = v[0];
+    res[153][2] = v[2];
+    res[154][0] = -v[1];
+    res[154][1] = -v[0];
+    res[154][2] = -v[2];
+    res[155][0] = v[1];
+    res[155][1] = v[0];
+    res[155][2] = v[2];
+    res[156][0] = -v[1];
+    res[156][1] = -v[0];
+    res[156][2] = -v[2];
+    res[157][0] = v[1];
+    res[157][1] = v[0];
+    res[157][2] = v[2];
+    res[158][0] = -v[1];
+    res[158][1] = -v[0];
+    res[158][2] = -v[2];
+    res[159][0] = v[1];
+    res[159][1] = v[0];
+    res[159][2] = v[2];
+    res[160][0] = -v[0];
+    res[160][1] = v[2];
+    res[160][2] = v[1];
+    res[161][0] = v[0];
+    res[161][1] = -v[2];
+    res[161][2] = -v[1];
+    res[162][0] = -v[0];
+    res[162][1] = v[2];
+    res[162][2] = v[1];
+    res[163][0] = v[0];
+    res[163][1] = -v[2];
+    res[163][2] = -v[1];
+    res[164][0] = -v[0];
+    res[164][1] = v[2];
+    res[164][2] = v[1];
+    res[165][0] = v[0];
+    res[165][1] = -v[2];
+    res[165][2] = -v[1];
+    res[166][0] = -v[0];
+    res[166][1] = v[2];
+    res[166][2] = v[1];
+    res[167][0] = v[0];
+    res[167][1] = -v[2];
+    res[167][2] = -v[1];
+    res[168][0] = -v[0];
+    res[168][1] = -v[2];
+    res[168][2] = -v[1];
+    res[169][0] = v[0];
+    res[169][1] = v[2];
+    res[169][2] = v[1];
+    res[170][0] = -v[0];
+    res[170][1] = -v[2];
+    res[170][2] = -v[1];
+    res[171][0] = v[0];
+    res[171][1] = v[2];
+    res[171][2] = v[1];
+    res[172][0] = -v[0];
+    res[172][1] = -v[2];
+    res[172][2] = -v[1];
+    res[173][0] = v[0];
+    res[173][1] = v[2];
+    res[173][2] = v[1];
+    res[174][0] = -v[0];
+    res[174][1] = -v[2];
+    res[174][2] = -v[1];
+    res[175][0] = v[0];
+    res[175][1] = v[2];
+    res[175][2] = v[1];
+    res[176][0] = v[2];
+    res[176][1] = -v[1];
+    res[176][2] = v[0];
+    res[177][0] = -v[2];
+    res[177][1] = v[1];
+    res[177][2] = -v[0];
+    res[178][0] = v[2];
+    res[178][1] = -v[1];
+    res[178][2] = v[0];
+    res[179][0] = -v[2];
+    res[179][1] = v[1];
+    res[179][2] = -v[0];
+    res[180][0] = v[2];
+    res[180][1] = -v[1];
+    res[180][2] = v[0];
+    res[181][0] = -v[2];
+    res[181][1] = v[1];
+    res[181][2] = -v[0];
+    res[182][0] = v[2];
+    res[182][1] = -v[1];
+    res[182][2] = v[0];
+    res[183][0] = -v[2];
+    res[183][1] = v[1];
+    res[183][2] = -v[0];
+    res[184][0] = -v[2];
+    res[184][1] = -v[1];
+    res[184][2] = -v[0];
+    res[185][0] = v[2];
+    res[185][1] = v[1];
+    res[185][2] = v[0];
+    res[186][0] = -v[2];
+    res[186][1] = -v[1];
+    res[186][2] = -v[0];
+    res[187][0] = v[2];
+    res[187][1] = v[1];
+    res[187][2] = v[0];
+    res[188][0] = -v[2];
+    res[188][1] = -v[1];
+    res[188][2] = -v[0];
+    res[189][0] = v[2];
+    res[189][1] = v[1];
+    res[189][2] = v[0];
+    res[190][0] = -v[2];
+    res[190][1] = -v[1];
+    res[190][2] = -v[0];
+    res[191][0] = v[2];
+    res[191][1] = v[1];
     res[191][2] = v[0];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -15561,9 +22116,11 @@ struct FastSG_Fd_3m {
     res[191][2] = v[0];
     phase[191] = (res[191][0]+res[191][1])*1./2;
   }
+  static const short size=192;
+  static const char lattice='F';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Fd2d {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -15613,6 +22170,56 @@ struct FastSG_Fd2d {
     res[15][0] = -v[0]+3./4;
     res[15][1] = v[1]+3./4;
     res[15][2] = v[2]+1./4;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = v[2];
+    res[4][0] = -v[0];
+    res[4][1] = v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = -v[0];
+    res[7][1] = v[1];
+    res[7][2] = -v[2];
+    res[8][0] = v[0];
+    res[8][1] = v[1];
+    res[8][2] = -v[2];
+    res[9][0] = v[0];
+    res[9][1] = v[1];
+    res[9][2] = -v[2];
+    res[10][0] = v[0];
+    res[10][1] = v[1];
+    res[10][2] = -v[2];
+    res[11][0] = v[0];
+    res[11][1] = v[1];
+    res[11][2] = -v[2];
+    res[12][0] = -v[0];
+    res[12][1] = v[1];
+    res[12][2] = v[2];
+    res[13][0] = -v[0];
+    res[13][1] = v[1];
+    res[13][2] = v[2];
+    res[14][0] = -v[0];
+    res[14][1] = v[1];
+    res[14][2] = v[2];
+    res[15][0] = -v[0];
+    res[15][1] = v[1];
+    res[15][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -15680,9 +22287,11 @@ struct FastSG_Fd2d {
     res[15][2] = v[2];
     phase[15] = (res[15][0]+res[15][1])*3./4+res[15][2]*1./4;
   }
+  static const short size=16;
+  static const char lattice='F';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Fdd2 {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -15732,6 +22341,56 @@ struct FastSG_Fdd2 {
     res[15][0] = v[0]+3./4;
     res[15][1] = -v[1]+3./4;
     res[15][2] = v[2]+1./4;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = -v[0];
+    res[5][1] = -v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = -v[0];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
+    res[8][0] = -v[0];
+    res[8][1] = v[1];
+    res[8][2] = v[2];
+    res[9][0] = -v[0];
+    res[9][1] = v[1];
+    res[9][2] = v[2];
+    res[10][0] = -v[0];
+    res[10][1] = v[1];
+    res[10][2] = v[2];
+    res[11][0] = -v[0];
+    res[11][1] = v[1];
+    res[11][2] = v[2];
+    res[12][0] = v[0];
+    res[12][1] = -v[1];
+    res[12][2] = v[2];
+    res[13][0] = v[0];
+    res[13][1] = -v[1];
+    res[13][2] = v[2];
+    res[14][0] = v[0];
+    res[14][1] = -v[1];
+    res[14][2] = v[2];
+    res[15][0] = v[0];
+    res[15][1] = -v[1];
+    res[15][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -15799,9 +22458,11 @@ struct FastSG_Fdd2 {
     res[15][2] = v[2];
     phase[15] = (res[15][0]+res[15][1])*3./4+res[15][2]*1./4;
   }
+  static const short size=16;
+  static const char lattice='F';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Fddd {
- static const short size=32;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -15899,6 +22560,104 @@ struct FastSG_Fddd {
     res[31][0] = v[0]+3./4;
     res[31][1] = -v[1]+1./2;
     res[31][2] = v[2]+1./4;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = v[1];
+    res[4][2] = v[2];
+    res[5][0] = -v[0];
+    res[5][1] = -v[1];
+    res[5][2] = -v[2];
+    res[6][0] = v[0];
+    res[6][1] = v[1];
+    res[6][2] = v[2];
+    res[7][0] = -v[0];
+    res[7][1] = -v[1];
+    res[7][2] = -v[2];
+    res[8][0] = -v[0];
+    res[8][1] = -v[1];
+    res[8][2] = v[2];
+    res[9][0] = v[0];
+    res[9][1] = v[1];
+    res[9][2] = -v[2];
+    res[10][0] = -v[0];
+    res[10][1] = -v[1];
+    res[10][2] = v[2];
+    res[11][0] = v[0];
+    res[11][1] = v[1];
+    res[11][2] = -v[2];
+    res[12][0] = -v[0];
+    res[12][1] = -v[1];
+    res[12][2] = v[2];
+    res[13][0] = v[0];
+    res[13][1] = v[1];
+    res[13][2] = -v[2];
+    res[14][0] = -v[0];
+    res[14][1] = -v[1];
+    res[14][2] = v[2];
+    res[15][0] = v[0];
+    res[15][1] = v[1];
+    res[15][2] = -v[2];
+    res[16][0] = v[0];
+    res[16][1] = -v[1];
+    res[16][2] = -v[2];
+    res[17][0] = -v[0];
+    res[17][1] = v[1];
+    res[17][2] = v[2];
+    res[18][0] = v[0];
+    res[18][1] = -v[1];
+    res[18][2] = -v[2];
+    res[19][0] = -v[0];
+    res[19][1] = v[1];
+    res[19][2] = v[2];
+    res[20][0] = v[0];
+    res[20][1] = -v[1];
+    res[20][2] = -v[2];
+    res[21][0] = -v[0];
+    res[21][1] = v[1];
+    res[21][2] = v[2];
+    res[22][0] = v[0];
+    res[22][1] = -v[1];
+    res[22][2] = -v[2];
+    res[23][0] = -v[0];
+    res[23][1] = v[1];
+    res[23][2] = v[2];
+    res[24][0] = -v[0];
+    res[24][1] = v[1];
+    res[24][2] = -v[2];
+    res[25][0] = v[0];
+    res[25][1] = -v[1];
+    res[25][2] = v[2];
+    res[26][0] = -v[0];
+    res[26][1] = v[1];
+    res[26][2] = -v[2];
+    res[27][0] = v[0];
+    res[27][1] = -v[1];
+    res[27][2] = v[2];
+    res[28][0] = -v[0];
+    res[28][1] = v[1];
+    res[28][2] = -v[2];
+    res[29][0] = v[0];
+    res[29][1] = -v[1];
+    res[29][2] = v[2];
+    res[30][0] = -v[0];
+    res[30][1] = v[1];
+    res[30][2] = -v[2];
+    res[31][0] = v[0];
+    res[31][1] = -v[1];
+    res[31][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -16030,9 +22789,11 @@ struct FastSG_Fddd {
     res[31][2] = v[2];
     phase[31] = res[31][0]*3./4+res[31][1]*1./2+res[31][2]*1./4;
   }
+  static const short size=32;
+  static const char lattice='F';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Fm_3 {
- static const short size=96;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -16321,6 +23082,296 @@ struct FastSG_Fm_3 {
     res[94][2] = -v[2];
     res[95][0] = v[0]+1./2;
     res[95][1] = -v[1]+1./2;
+    res[95][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = v[1];
+    res[4][2] = v[2];
+    res[5][0] = -v[0];
+    res[5][1] = -v[1];
+    res[5][2] = -v[2];
+    res[6][0] = v[0];
+    res[6][1] = v[1];
+    res[6][2] = v[2];
+    res[7][0] = -v[0];
+    res[7][1] = -v[1];
+    res[7][2] = -v[2];
+    res[8][0] = v[1];
+    res[8][1] = v[2];
+    res[8][2] = v[0];
+    res[9][0] = -v[1];
+    res[9][1] = -v[2];
+    res[9][2] = -v[0];
+    res[10][0] = v[1];
+    res[10][1] = v[2];
+    res[10][2] = v[0];
+    res[11][0] = -v[1];
+    res[11][1] = -v[2];
+    res[11][2] = -v[0];
+    res[12][0] = v[1];
+    res[12][1] = v[2];
+    res[12][2] = v[0];
+    res[13][0] = -v[1];
+    res[13][1] = -v[2];
+    res[13][2] = -v[0];
+    res[14][0] = v[1];
+    res[14][1] = v[2];
+    res[14][2] = v[0];
+    res[15][0] = -v[1];
+    res[15][1] = -v[2];
+    res[15][2] = -v[0];
+    res[16][0] = v[2];
+    res[16][1] = v[0];
+    res[16][2] = v[1];
+    res[17][0] = -v[2];
+    res[17][1] = -v[0];
+    res[17][2] = -v[1];
+    res[18][0] = v[2];
+    res[18][1] = v[0];
+    res[18][2] = v[1];
+    res[19][0] = -v[2];
+    res[19][1] = -v[0];
+    res[19][2] = -v[1];
+    res[20][0] = v[2];
+    res[20][1] = v[0];
+    res[20][2] = v[1];
+    res[21][0] = -v[2];
+    res[21][1] = -v[0];
+    res[21][2] = -v[1];
+    res[22][0] = v[2];
+    res[22][1] = v[0];
+    res[22][2] = v[1];
+    res[23][0] = -v[2];
+    res[23][1] = -v[0];
+    res[23][2] = -v[1];
+    res[24][0] = v[2];
+    res[24][1] = -v[0];
+    res[24][2] = -v[1];
+    res[25][0] = -v[2];
+    res[25][1] = v[0];
+    res[25][2] = v[1];
+    res[26][0] = v[2];
+    res[26][1] = -v[0];
+    res[26][2] = -v[1];
+    res[27][0] = -v[2];
+    res[27][1] = v[0];
+    res[27][2] = v[1];
+    res[28][0] = v[2];
+    res[28][1] = -v[0];
+    res[28][2] = -v[1];
+    res[29][0] = -v[2];
+    res[29][1] = v[0];
+    res[29][2] = v[1];
+    res[30][0] = v[2];
+    res[30][1] = -v[0];
+    res[30][2] = -v[1];
+    res[31][0] = -v[2];
+    res[31][1] = v[0];
+    res[31][2] = v[1];
+    res[32][0] = -v[1];
+    res[32][1] = -v[2];
+    res[32][2] = v[0];
+    res[33][0] = v[1];
+    res[33][1] = v[2];
+    res[33][2] = -v[0];
+    res[34][0] = -v[1];
+    res[34][1] = -v[2];
+    res[34][2] = v[0];
+    res[35][0] = v[1];
+    res[35][1] = v[2];
+    res[35][2] = -v[0];
+    res[36][0] = -v[1];
+    res[36][1] = -v[2];
+    res[36][2] = v[0];
+    res[37][0] = v[1];
+    res[37][1] = v[2];
+    res[37][2] = -v[0];
+    res[38][0] = -v[1];
+    res[38][1] = -v[2];
+    res[38][2] = v[0];
+    res[39][0] = v[1];
+    res[39][1] = v[2];
+    res[39][2] = -v[0];
+    res[40][0] = -v[2];
+    res[40][1] = -v[0];
+    res[40][2] = v[1];
+    res[41][0] = v[2];
+    res[41][1] = v[0];
+    res[41][2] = -v[1];
+    res[42][0] = -v[2];
+    res[42][1] = -v[0];
+    res[42][2] = v[1];
+    res[43][0] = v[2];
+    res[43][1] = v[0];
+    res[43][2] = -v[1];
+    res[44][0] = -v[2];
+    res[44][1] = -v[0];
+    res[44][2] = v[1];
+    res[45][0] = v[2];
+    res[45][1] = v[0];
+    res[45][2] = -v[1];
+    res[46][0] = -v[2];
+    res[46][1] = -v[0];
+    res[46][2] = v[1];
+    res[47][0] = v[2];
+    res[47][1] = v[0];
+    res[47][2] = -v[1];
+    res[48][0] = -v[1];
+    res[48][1] = v[2];
+    res[48][2] = -v[0];
+    res[49][0] = v[1];
+    res[49][1] = -v[2];
+    res[49][2] = v[0];
+    res[50][0] = -v[1];
+    res[50][1] = v[2];
+    res[50][2] = -v[0];
+    res[51][0] = v[1];
+    res[51][1] = -v[2];
+    res[51][2] = v[0];
+    res[52][0] = -v[1];
+    res[52][1] = v[2];
+    res[52][2] = -v[0];
+    res[53][0] = v[1];
+    res[53][1] = -v[2];
+    res[53][2] = v[0];
+    res[54][0] = -v[1];
+    res[54][1] = v[2];
+    res[54][2] = -v[0];
+    res[55][0] = v[1];
+    res[55][1] = -v[2];
+    res[55][2] = v[0];
+    res[56][0] = v[1];
+    res[56][1] = -v[2];
+    res[56][2] = -v[0];
+    res[57][0] = -v[1];
+    res[57][1] = v[2];
+    res[57][2] = v[0];
+    res[58][0] = v[1];
+    res[58][1] = -v[2];
+    res[58][2] = -v[0];
+    res[59][0] = -v[1];
+    res[59][1] = v[2];
+    res[59][2] = v[0];
+    res[60][0] = v[1];
+    res[60][1] = -v[2];
+    res[60][2] = -v[0];
+    res[61][0] = -v[1];
+    res[61][1] = v[2];
+    res[61][2] = v[0];
+    res[62][0] = v[1];
+    res[62][1] = -v[2];
+    res[62][2] = -v[0];
+    res[63][0] = -v[1];
+    res[63][1] = v[2];
+    res[63][2] = v[0];
+    res[64][0] = -v[2];
+    res[64][1] = v[0];
+    res[64][2] = -v[1];
+    res[65][0] = v[2];
+    res[65][1] = -v[0];
+    res[65][2] = v[1];
+    res[66][0] = -v[2];
+    res[66][1] = v[0];
+    res[66][2] = -v[1];
+    res[67][0] = v[2];
+    res[67][1] = -v[0];
+    res[67][2] = v[1];
+    res[68][0] = -v[2];
+    res[68][1] = v[0];
+    res[68][2] = -v[1];
+    res[69][0] = v[2];
+    res[69][1] = -v[0];
+    res[69][2] = v[1];
+    res[70][0] = -v[2];
+    res[70][1] = v[0];
+    res[70][2] = -v[1];
+    res[71][0] = v[2];
+    res[71][1] = -v[0];
+    res[71][2] = v[1];
+    res[72][0] = -v[0];
+    res[72][1] = -v[1];
+    res[72][2] = v[2];
+    res[73][0] = v[0];
+    res[73][1] = v[1];
+    res[73][2] = -v[2];
+    res[74][0] = -v[0];
+    res[74][1] = -v[1];
+    res[74][2] = v[2];
+    res[75][0] = v[0];
+    res[75][1] = v[1];
+    res[75][2] = -v[2];
+    res[76][0] = -v[0];
+    res[76][1] = -v[1];
+    res[76][2] = v[2];
+    res[77][0] = v[0];
+    res[77][1] = v[1];
+    res[77][2] = -v[2];
+    res[78][0] = -v[0];
+    res[78][1] = -v[1];
+    res[78][2] = v[2];
+    res[79][0] = v[0];
+    res[79][1] = v[1];
+    res[79][2] = -v[2];
+    res[80][0] = v[0];
+    res[80][1] = -v[1];
+    res[80][2] = -v[2];
+    res[81][0] = -v[0];
+    res[81][1] = v[1];
+    res[81][2] = v[2];
+    res[82][0] = v[0];
+    res[82][1] = -v[1];
+    res[82][2] = -v[2];
+    res[83][0] = -v[0];
+    res[83][1] = v[1];
+    res[83][2] = v[2];
+    res[84][0] = v[0];
+    res[84][1] = -v[1];
+    res[84][2] = -v[2];
+    res[85][0] = -v[0];
+    res[85][1] = v[1];
+    res[85][2] = v[2];
+    res[86][0] = v[0];
+    res[86][1] = -v[1];
+    res[86][2] = -v[2];
+    res[87][0] = -v[0];
+    res[87][1] = v[1];
+    res[87][2] = v[2];
+    res[88][0] = -v[0];
+    res[88][1] = v[1];
+    res[88][2] = -v[2];
+    res[89][0] = v[0];
+    res[89][1] = -v[1];
+    res[89][2] = v[2];
+    res[90][0] = -v[0];
+    res[90][1] = v[1];
+    res[90][2] = -v[2];
+    res[91][0] = v[0];
+    res[91][1] = -v[1];
+    res[91][2] = v[2];
+    res[92][0] = -v[0];
+    res[92][1] = v[1];
+    res[92][2] = -v[2];
+    res[93][0] = v[0];
+    res[93][1] = -v[1];
+    res[93][2] = v[2];
+    res[94][0] = -v[0];
+    res[94][1] = v[1];
+    res[94][2] = -v[2];
+    res[95][0] = v[0];
+    res[95][1] = -v[1];
     res[95][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -16709,9 +23760,11 @@ struct FastSG_Fm_3 {
     res[95][2] = v[2];
     phase[95] = (res[95][0]+res[95][1])*1./2;
   }
+  static const short size=96;
+  static const char lattice='F';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Fm_3c {
- static const short size=192;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -17289,6 +24342,584 @@ struct FastSG_Fm_3c {
     res[191][0] = v[2]+1./2;
     res[191][1] = v[1]+1./2;
     res[191][2] = v[0]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = v[1];
+    res[4][2] = v[2];
+    res[5][0] = -v[0];
+    res[5][1] = -v[1];
+    res[5][2] = -v[2];
+    res[6][0] = v[0];
+    res[6][1] = v[1];
+    res[6][2] = v[2];
+    res[7][0] = -v[0];
+    res[7][1] = -v[1];
+    res[7][2] = -v[2];
+    res[8][0] = v[1];
+    res[8][1] = -v[0];
+    res[8][2] = v[2];
+    res[9][0] = -v[1];
+    res[9][1] = v[0];
+    res[9][2] = -v[2];
+    res[10][0] = v[1];
+    res[10][1] = -v[0];
+    res[10][2] = v[2];
+    res[11][0] = -v[1];
+    res[11][1] = v[0];
+    res[11][2] = -v[2];
+    res[12][0] = v[1];
+    res[12][1] = -v[0];
+    res[12][2] = v[2];
+    res[13][0] = -v[1];
+    res[13][1] = v[0];
+    res[13][2] = -v[2];
+    res[14][0] = v[1];
+    res[14][1] = -v[0];
+    res[14][2] = v[2];
+    res[15][0] = -v[1];
+    res[15][1] = v[0];
+    res[15][2] = -v[2];
+    res[16][0] = -v[0];
+    res[16][1] = -v[1];
+    res[16][2] = v[2];
+    res[17][0] = v[0];
+    res[17][1] = v[1];
+    res[17][2] = -v[2];
+    res[18][0] = -v[0];
+    res[18][1] = -v[1];
+    res[18][2] = v[2];
+    res[19][0] = v[0];
+    res[19][1] = v[1];
+    res[19][2] = -v[2];
+    res[20][0] = -v[0];
+    res[20][1] = -v[1];
+    res[20][2] = v[2];
+    res[21][0] = v[0];
+    res[21][1] = v[1];
+    res[21][2] = -v[2];
+    res[22][0] = -v[0];
+    res[22][1] = -v[1];
+    res[22][2] = v[2];
+    res[23][0] = v[0];
+    res[23][1] = v[1];
+    res[23][2] = -v[2];
+    res[24][0] = -v[1];
+    res[24][1] = v[0];
+    res[24][2] = v[2];
+    res[25][0] = v[1];
+    res[25][1] = -v[0];
+    res[25][2] = -v[2];
+    res[26][0] = -v[1];
+    res[26][1] = v[0];
+    res[26][2] = v[2];
+    res[27][0] = v[1];
+    res[27][1] = -v[0];
+    res[27][2] = -v[2];
+    res[28][0] = -v[1];
+    res[28][1] = v[0];
+    res[28][2] = v[2];
+    res[29][0] = v[1];
+    res[29][1] = -v[0];
+    res[29][2] = -v[2];
+    res[30][0] = -v[1];
+    res[30][1] = v[0];
+    res[30][2] = v[2];
+    res[31][0] = v[1];
+    res[31][1] = -v[0];
+    res[31][2] = -v[2];
+    res[32][0] = v[0];
+    res[32][1] = v[2];
+    res[32][2] = -v[1];
+    res[33][0] = -v[0];
+    res[33][1] = -v[2];
+    res[33][2] = v[1];
+    res[34][0] = v[0];
+    res[34][1] = v[2];
+    res[34][2] = -v[1];
+    res[35][0] = -v[0];
+    res[35][1] = -v[2];
+    res[35][2] = v[1];
+    res[36][0] = v[0];
+    res[36][1] = v[2];
+    res[36][2] = -v[1];
+    res[37][0] = -v[0];
+    res[37][1] = -v[2];
+    res[37][2] = v[1];
+    res[38][0] = v[0];
+    res[38][1] = v[2];
+    res[38][2] = -v[1];
+    res[39][0] = -v[0];
+    res[39][1] = -v[2];
+    res[39][2] = v[1];
+    res[40][0] = v[0];
+    res[40][1] = -v[1];
+    res[40][2] = -v[2];
+    res[41][0] = -v[0];
+    res[41][1] = v[1];
+    res[41][2] = v[2];
+    res[42][0] = v[0];
+    res[42][1] = -v[1];
+    res[42][2] = -v[2];
+    res[43][0] = -v[0];
+    res[43][1] = v[1];
+    res[43][2] = v[2];
+    res[44][0] = v[0];
+    res[44][1] = -v[1];
+    res[44][2] = -v[2];
+    res[45][0] = -v[0];
+    res[45][1] = v[1];
+    res[45][2] = v[2];
+    res[46][0] = v[0];
+    res[46][1] = -v[1];
+    res[46][2] = -v[2];
+    res[47][0] = -v[0];
+    res[47][1] = v[1];
+    res[47][2] = v[2];
+    res[48][0] = v[0];
+    res[48][1] = -v[2];
+    res[48][2] = v[1];
+    res[49][0] = -v[0];
+    res[49][1] = v[2];
+    res[49][2] = -v[1];
+    res[50][0] = v[0];
+    res[50][1] = -v[2];
+    res[50][2] = v[1];
+    res[51][0] = -v[0];
+    res[51][1] = v[2];
+    res[51][2] = -v[1];
+    res[52][0] = v[0];
+    res[52][1] = -v[2];
+    res[52][2] = v[1];
+    res[53][0] = -v[0];
+    res[53][1] = v[2];
+    res[53][2] = -v[1];
+    res[54][0] = v[0];
+    res[54][1] = -v[2];
+    res[54][2] = v[1];
+    res[55][0] = -v[0];
+    res[55][1] = v[2];
+    res[55][2] = -v[1];
+    res[56][0] = -v[2];
+    res[56][1] = v[1];
+    res[56][2] = v[0];
+    res[57][0] = v[2];
+    res[57][1] = -v[1];
+    res[57][2] = -v[0];
+    res[58][0] = -v[2];
+    res[58][1] = v[1];
+    res[58][2] = v[0];
+    res[59][0] = v[2];
+    res[59][1] = -v[1];
+    res[59][2] = -v[0];
+    res[60][0] = -v[2];
+    res[60][1] = v[1];
+    res[60][2] = v[0];
+    res[61][0] = v[2];
+    res[61][1] = -v[1];
+    res[61][2] = -v[0];
+    res[62][0] = -v[2];
+    res[62][1] = v[1];
+    res[62][2] = v[0];
+    res[63][0] = v[2];
+    res[63][1] = -v[1];
+    res[63][2] = -v[0];
+    res[64][0] = -v[0];
+    res[64][1] = v[1];
+    res[64][2] = -v[2];
+    res[65][0] = v[0];
+    res[65][1] = -v[1];
+    res[65][2] = v[2];
+    res[66][0] = -v[0];
+    res[66][1] = v[1];
+    res[66][2] = -v[2];
+    res[67][0] = v[0];
+    res[67][1] = -v[1];
+    res[67][2] = v[2];
+    res[68][0] = -v[0];
+    res[68][1] = v[1];
+    res[68][2] = -v[2];
+    res[69][0] = v[0];
+    res[69][1] = -v[1];
+    res[69][2] = v[2];
+    res[70][0] = -v[0];
+    res[70][1] = v[1];
+    res[70][2] = -v[2];
+    res[71][0] = v[0];
+    res[71][1] = -v[1];
+    res[71][2] = v[2];
+    res[72][0] = v[2];
+    res[72][1] = v[1];
+    res[72][2] = -v[0];
+    res[73][0] = -v[2];
+    res[73][1] = -v[1];
+    res[73][2] = v[0];
+    res[74][0] = v[2];
+    res[74][1] = v[1];
+    res[74][2] = -v[0];
+    res[75][0] = -v[2];
+    res[75][1] = -v[1];
+    res[75][2] = v[0];
+    res[76][0] = v[2];
+    res[76][1] = v[1];
+    res[76][2] = -v[0];
+    res[77][0] = -v[2];
+    res[77][1] = -v[1];
+    res[77][2] = v[0];
+    res[78][0] = v[2];
+    res[78][1] = v[1];
+    res[78][2] = -v[0];
+    res[79][0] = -v[2];
+    res[79][1] = -v[1];
+    res[79][2] = v[0];
+    res[80][0] = v[1];
+    res[80][1] = v[2];
+    res[80][2] = v[0];
+    res[81][0] = -v[1];
+    res[81][1] = -v[2];
+    res[81][2] = -v[0];
+    res[82][0] = v[1];
+    res[82][1] = v[2];
+    res[82][2] = v[0];
+    res[83][0] = -v[1];
+    res[83][1] = -v[2];
+    res[83][2] = -v[0];
+    res[84][0] = v[1];
+    res[84][1] = v[2];
+    res[84][2] = v[0];
+    res[85][0] = -v[1];
+    res[85][1] = -v[2];
+    res[85][2] = -v[0];
+    res[86][0] = v[1];
+    res[86][1] = v[2];
+    res[86][2] = v[0];
+    res[87][0] = -v[1];
+    res[87][1] = -v[2];
+    res[87][2] = -v[0];
+    res[88][0] = v[2];
+    res[88][1] = v[0];
+    res[88][2] = v[1];
+    res[89][0] = -v[2];
+    res[89][1] = -v[0];
+    res[89][2] = -v[1];
+    res[90][0] = v[2];
+    res[90][1] = v[0];
+    res[90][2] = v[1];
+    res[91][0] = -v[2];
+    res[91][1] = -v[0];
+    res[91][2] = -v[1];
+    res[92][0] = v[2];
+    res[92][1] = v[0];
+    res[92][2] = v[1];
+    res[93][0] = -v[2];
+    res[93][1] = -v[0];
+    res[93][2] = -v[1];
+    res[94][0] = v[2];
+    res[94][1] = v[0];
+    res[94][2] = v[1];
+    res[95][0] = -v[2];
+    res[95][1] = -v[0];
+    res[95][2] = -v[1];
+    res[96][0] = v[2];
+    res[96][1] = -v[0];
+    res[96][2] = -v[1];
+    res[97][0] = -v[2];
+    res[97][1] = v[0];
+    res[97][2] = v[1];
+    res[98][0] = v[2];
+    res[98][1] = -v[0];
+    res[98][2] = -v[1];
+    res[99][0] = -v[2];
+    res[99][1] = v[0];
+    res[99][2] = v[1];
+    res[100][0] = v[2];
+    res[100][1] = -v[0];
+    res[100][2] = -v[1];
+    res[101][0] = -v[2];
+    res[101][1] = v[0];
+    res[101][2] = v[1];
+    res[102][0] = v[2];
+    res[102][1] = -v[0];
+    res[102][2] = -v[1];
+    res[103][0] = -v[2];
+    res[103][1] = v[0];
+    res[103][2] = v[1];
+    res[104][0] = -v[1];
+    res[104][1] = -v[2];
+    res[104][2] = v[0];
+    res[105][0] = v[1];
+    res[105][1] = v[2];
+    res[105][2] = -v[0];
+    res[106][0] = -v[1];
+    res[106][1] = -v[2];
+    res[106][2] = v[0];
+    res[107][0] = v[1];
+    res[107][1] = v[2];
+    res[107][2] = -v[0];
+    res[108][0] = -v[1];
+    res[108][1] = -v[2];
+    res[108][2] = v[0];
+    res[109][0] = v[1];
+    res[109][1] = v[2];
+    res[109][2] = -v[0];
+    res[110][0] = -v[1];
+    res[110][1] = -v[2];
+    res[110][2] = v[0];
+    res[111][0] = v[1];
+    res[111][1] = v[2];
+    res[111][2] = -v[0];
+    res[112][0] = -v[2];
+    res[112][1] = -v[0];
+    res[112][2] = v[1];
+    res[113][0] = v[2];
+    res[113][1] = v[0];
+    res[113][2] = -v[1];
+    res[114][0] = -v[2];
+    res[114][1] = -v[0];
+    res[114][2] = v[1];
+    res[115][0] = v[2];
+    res[115][1] = v[0];
+    res[115][2] = -v[1];
+    res[116][0] = -v[2];
+    res[116][1] = -v[0];
+    res[116][2] = v[1];
+    res[117][0] = v[2];
+    res[117][1] = v[0];
+    res[117][2] = -v[1];
+    res[118][0] = -v[2];
+    res[118][1] = -v[0];
+    res[118][2] = v[1];
+    res[119][0] = v[2];
+    res[119][1] = v[0];
+    res[119][2] = -v[1];
+    res[120][0] = -v[1];
+    res[120][1] = v[2];
+    res[120][2] = -v[0];
+    res[121][0] = v[1];
+    res[121][1] = -v[2];
+    res[121][2] = v[0];
+    res[122][0] = -v[1];
+    res[122][1] = v[2];
+    res[122][2] = -v[0];
+    res[123][0] = v[1];
+    res[123][1] = -v[2];
+    res[123][2] = v[0];
+    res[124][0] = -v[1];
+    res[124][1] = v[2];
+    res[124][2] = -v[0];
+    res[125][0] = v[1];
+    res[125][1] = -v[2];
+    res[125][2] = v[0];
+    res[126][0] = -v[1];
+    res[126][1] = v[2];
+    res[126][2] = -v[0];
+    res[127][0] = v[1];
+    res[127][1] = -v[2];
+    res[127][2] = v[0];
+    res[128][0] = v[1];
+    res[128][1] = -v[2];
+    res[128][2] = -v[0];
+    res[129][0] = -v[1];
+    res[129][1] = v[2];
+    res[129][2] = v[0];
+    res[130][0] = v[1];
+    res[130][1] = -v[2];
+    res[130][2] = -v[0];
+    res[131][0] = -v[1];
+    res[131][1] = v[2];
+    res[131][2] = v[0];
+    res[132][0] = v[1];
+    res[132][1] = -v[2];
+    res[132][2] = -v[0];
+    res[133][0] = -v[1];
+    res[133][1] = v[2];
+    res[133][2] = v[0];
+    res[134][0] = v[1];
+    res[134][1] = -v[2];
+    res[134][2] = -v[0];
+    res[135][0] = -v[1];
+    res[135][1] = v[2];
+    res[135][2] = v[0];
+    res[136][0] = -v[2];
+    res[136][1] = v[0];
+    res[136][2] = -v[1];
+    res[137][0] = v[2];
+    res[137][1] = -v[0];
+    res[137][2] = v[1];
+    res[138][0] = -v[2];
+    res[138][1] = v[0];
+    res[138][2] = -v[1];
+    res[139][0] = v[2];
+    res[139][1] = -v[0];
+    res[139][2] = v[1];
+    res[140][0] = -v[2];
+    res[140][1] = v[0];
+    res[140][2] = -v[1];
+    res[141][0] = v[2];
+    res[141][1] = -v[0];
+    res[141][2] = v[1];
+    res[142][0] = -v[2];
+    res[142][1] = v[0];
+    res[142][2] = -v[1];
+    res[143][0] = v[2];
+    res[143][1] = -v[0];
+    res[143][2] = v[1];
+    res[144][0] = v[1];
+    res[144][1] = v[0];
+    res[144][2] = -v[2];
+    res[145][0] = -v[1];
+    res[145][1] = -v[0];
+    res[145][2] = v[2];
+    res[146][0] = v[1];
+    res[146][1] = v[0];
+    res[146][2] = -v[2];
+    res[147][0] = -v[1];
+    res[147][1] = -v[0];
+    res[147][2] = v[2];
+    res[148][0] = v[1];
+    res[148][1] = v[0];
+    res[148][2] = -v[2];
+    res[149][0] = -v[1];
+    res[149][1] = -v[0];
+    res[149][2] = v[2];
+    res[150][0] = v[1];
+    res[150][1] = v[0];
+    res[150][2] = -v[2];
+    res[151][0] = -v[1];
+    res[151][1] = -v[0];
+    res[151][2] = v[2];
+    res[152][0] = -v[1];
+    res[152][1] = -v[0];
+    res[152][2] = -v[2];
+    res[153][0] = v[1];
+    res[153][1] = v[0];
+    res[153][2] = v[2];
+    res[154][0] = -v[1];
+    res[154][1] = -v[0];
+    res[154][2] = -v[2];
+    res[155][0] = v[1];
+    res[155][1] = v[0];
+    res[155][2] = v[2];
+    res[156][0] = -v[1];
+    res[156][1] = -v[0];
+    res[156][2] = -v[2];
+    res[157][0] = v[1];
+    res[157][1] = v[0];
+    res[157][2] = v[2];
+    res[158][0] = -v[1];
+    res[158][1] = -v[0];
+    res[158][2] = -v[2];
+    res[159][0] = v[1];
+    res[159][1] = v[0];
+    res[159][2] = v[2];
+    res[160][0] = -v[0];
+    res[160][1] = v[2];
+    res[160][2] = v[1];
+    res[161][0] = v[0];
+    res[161][1] = -v[2];
+    res[161][2] = -v[1];
+    res[162][0] = -v[0];
+    res[162][1] = v[2];
+    res[162][2] = v[1];
+    res[163][0] = v[0];
+    res[163][1] = -v[2];
+    res[163][2] = -v[1];
+    res[164][0] = -v[0];
+    res[164][1] = v[2];
+    res[164][2] = v[1];
+    res[165][0] = v[0];
+    res[165][1] = -v[2];
+    res[165][2] = -v[1];
+    res[166][0] = -v[0];
+    res[166][1] = v[2];
+    res[166][2] = v[1];
+    res[167][0] = v[0];
+    res[167][1] = -v[2];
+    res[167][2] = -v[1];
+    res[168][0] = -v[0];
+    res[168][1] = -v[2];
+    res[168][2] = -v[1];
+    res[169][0] = v[0];
+    res[169][1] = v[2];
+    res[169][2] = v[1];
+    res[170][0] = -v[0];
+    res[170][1] = -v[2];
+    res[170][2] = -v[1];
+    res[171][0] = v[0];
+    res[171][1] = v[2];
+    res[171][2] = v[1];
+    res[172][0] = -v[0];
+    res[172][1] = -v[2];
+    res[172][2] = -v[1];
+    res[173][0] = v[0];
+    res[173][1] = v[2];
+    res[173][2] = v[1];
+    res[174][0] = -v[0];
+    res[174][1] = -v[2];
+    res[174][2] = -v[1];
+    res[175][0] = v[0];
+    res[175][1] = v[2];
+    res[175][2] = v[1];
+    res[176][0] = v[2];
+    res[176][1] = -v[1];
+    res[176][2] = v[0];
+    res[177][0] = -v[2];
+    res[177][1] = v[1];
+    res[177][2] = -v[0];
+    res[178][0] = v[2];
+    res[178][1] = -v[1];
+    res[178][2] = v[0];
+    res[179][0] = -v[2];
+    res[179][1] = v[1];
+    res[179][2] = -v[0];
+    res[180][0] = v[2];
+    res[180][1] = -v[1];
+    res[180][2] = v[0];
+    res[181][0] = -v[2];
+    res[181][1] = v[1];
+    res[181][2] = -v[0];
+    res[182][0] = v[2];
+    res[182][1] = -v[1];
+    res[182][2] = v[0];
+    res[183][0] = -v[2];
+    res[183][1] = v[1];
+    res[183][2] = -v[0];
+    res[184][0] = -v[2];
+    res[184][1] = -v[1];
+    res[184][2] = -v[0];
+    res[185][0] = v[2];
+    res[185][1] = v[1];
+    res[185][2] = v[0];
+    res[186][0] = -v[2];
+    res[186][1] = -v[1];
+    res[186][2] = -v[0];
+    res[187][0] = v[2];
+    res[187][1] = v[1];
+    res[187][2] = v[0];
+    res[188][0] = -v[2];
+    res[188][1] = -v[1];
+    res[188][2] = -v[0];
+    res[189][0] = v[2];
+    res[189][1] = v[1];
+    res[189][2] = v[0];
+    res[190][0] = -v[2];
+    res[190][1] = -v[1];
+    res[190][2] = -v[0];
+    res[191][0] = v[2];
+    res[191][1] = v[1];
+    res[191][2] = v[0];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -18060,9 +25691,11 @@ struct FastSG_Fm_3c {
     res[191][2] = v[0];
     phase[191] = (res[191][0]+res[191][1]+res[191][2])*1./2;
   }
+  static const short size=192;
+  static const char lattice='F';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Fm_3m {
- static const short size=192;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -18639,6 +26272,584 @@ struct FastSG_Fm_3m {
     res[190][2] = -v[0];
     res[191][0] = v[2]+1./2;
     res[191][1] = v[1]+1./2;
+    res[191][2] = v[0];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = v[1];
+    res[4][2] = v[2];
+    res[5][0] = -v[0];
+    res[5][1] = -v[1];
+    res[5][2] = -v[2];
+    res[6][0] = v[0];
+    res[6][1] = v[1];
+    res[6][2] = v[2];
+    res[7][0] = -v[0];
+    res[7][1] = -v[1];
+    res[7][2] = -v[2];
+    res[8][0] = v[1];
+    res[8][1] = -v[0];
+    res[8][2] = v[2];
+    res[9][0] = -v[1];
+    res[9][1] = v[0];
+    res[9][2] = -v[2];
+    res[10][0] = v[1];
+    res[10][1] = -v[0];
+    res[10][2] = v[2];
+    res[11][0] = -v[1];
+    res[11][1] = v[0];
+    res[11][2] = -v[2];
+    res[12][0] = v[1];
+    res[12][1] = -v[0];
+    res[12][2] = v[2];
+    res[13][0] = -v[1];
+    res[13][1] = v[0];
+    res[13][2] = -v[2];
+    res[14][0] = v[1];
+    res[14][1] = -v[0];
+    res[14][2] = v[2];
+    res[15][0] = -v[1];
+    res[15][1] = v[0];
+    res[15][2] = -v[2];
+    res[16][0] = -v[0];
+    res[16][1] = -v[1];
+    res[16][2] = v[2];
+    res[17][0] = v[0];
+    res[17][1] = v[1];
+    res[17][2] = -v[2];
+    res[18][0] = -v[0];
+    res[18][1] = -v[1];
+    res[18][2] = v[2];
+    res[19][0] = v[0];
+    res[19][1] = v[1];
+    res[19][2] = -v[2];
+    res[20][0] = -v[0];
+    res[20][1] = -v[1];
+    res[20][2] = v[2];
+    res[21][0] = v[0];
+    res[21][1] = v[1];
+    res[21][2] = -v[2];
+    res[22][0] = -v[0];
+    res[22][1] = -v[1];
+    res[22][2] = v[2];
+    res[23][0] = v[0];
+    res[23][1] = v[1];
+    res[23][2] = -v[2];
+    res[24][0] = -v[1];
+    res[24][1] = v[0];
+    res[24][2] = v[2];
+    res[25][0] = v[1];
+    res[25][1] = -v[0];
+    res[25][2] = -v[2];
+    res[26][0] = -v[1];
+    res[26][1] = v[0];
+    res[26][2] = v[2];
+    res[27][0] = v[1];
+    res[27][1] = -v[0];
+    res[27][2] = -v[2];
+    res[28][0] = -v[1];
+    res[28][1] = v[0];
+    res[28][2] = v[2];
+    res[29][0] = v[1];
+    res[29][1] = -v[0];
+    res[29][2] = -v[2];
+    res[30][0] = -v[1];
+    res[30][1] = v[0];
+    res[30][2] = v[2];
+    res[31][0] = v[1];
+    res[31][1] = -v[0];
+    res[31][2] = -v[2];
+    res[32][0] = v[0];
+    res[32][1] = v[2];
+    res[32][2] = -v[1];
+    res[33][0] = -v[0];
+    res[33][1] = -v[2];
+    res[33][2] = v[1];
+    res[34][0] = v[0];
+    res[34][1] = v[2];
+    res[34][2] = -v[1];
+    res[35][0] = -v[0];
+    res[35][1] = -v[2];
+    res[35][2] = v[1];
+    res[36][0] = v[0];
+    res[36][1] = v[2];
+    res[36][2] = -v[1];
+    res[37][0] = -v[0];
+    res[37][1] = -v[2];
+    res[37][2] = v[1];
+    res[38][0] = v[0];
+    res[38][1] = v[2];
+    res[38][2] = -v[1];
+    res[39][0] = -v[0];
+    res[39][1] = -v[2];
+    res[39][2] = v[1];
+    res[40][0] = v[0];
+    res[40][1] = -v[1];
+    res[40][2] = -v[2];
+    res[41][0] = -v[0];
+    res[41][1] = v[1];
+    res[41][2] = v[2];
+    res[42][0] = v[0];
+    res[42][1] = -v[1];
+    res[42][2] = -v[2];
+    res[43][0] = -v[0];
+    res[43][1] = v[1];
+    res[43][2] = v[2];
+    res[44][0] = v[0];
+    res[44][1] = -v[1];
+    res[44][2] = -v[2];
+    res[45][0] = -v[0];
+    res[45][1] = v[1];
+    res[45][2] = v[2];
+    res[46][0] = v[0];
+    res[46][1] = -v[1];
+    res[46][2] = -v[2];
+    res[47][0] = -v[0];
+    res[47][1] = v[1];
+    res[47][2] = v[2];
+    res[48][0] = v[0];
+    res[48][1] = -v[2];
+    res[48][2] = v[1];
+    res[49][0] = -v[0];
+    res[49][1] = v[2];
+    res[49][2] = -v[1];
+    res[50][0] = v[0];
+    res[50][1] = -v[2];
+    res[50][2] = v[1];
+    res[51][0] = -v[0];
+    res[51][1] = v[2];
+    res[51][2] = -v[1];
+    res[52][0] = v[0];
+    res[52][1] = -v[2];
+    res[52][2] = v[1];
+    res[53][0] = -v[0];
+    res[53][1] = v[2];
+    res[53][2] = -v[1];
+    res[54][0] = v[0];
+    res[54][1] = -v[2];
+    res[54][2] = v[1];
+    res[55][0] = -v[0];
+    res[55][1] = v[2];
+    res[55][2] = -v[1];
+    res[56][0] = -v[2];
+    res[56][1] = v[1];
+    res[56][2] = v[0];
+    res[57][0] = v[2];
+    res[57][1] = -v[1];
+    res[57][2] = -v[0];
+    res[58][0] = -v[2];
+    res[58][1] = v[1];
+    res[58][2] = v[0];
+    res[59][0] = v[2];
+    res[59][1] = -v[1];
+    res[59][2] = -v[0];
+    res[60][0] = -v[2];
+    res[60][1] = v[1];
+    res[60][2] = v[0];
+    res[61][0] = v[2];
+    res[61][1] = -v[1];
+    res[61][2] = -v[0];
+    res[62][0] = -v[2];
+    res[62][1] = v[1];
+    res[62][2] = v[0];
+    res[63][0] = v[2];
+    res[63][1] = -v[1];
+    res[63][2] = -v[0];
+    res[64][0] = -v[0];
+    res[64][1] = v[1];
+    res[64][2] = -v[2];
+    res[65][0] = v[0];
+    res[65][1] = -v[1];
+    res[65][2] = v[2];
+    res[66][0] = -v[0];
+    res[66][1] = v[1];
+    res[66][2] = -v[2];
+    res[67][0] = v[0];
+    res[67][1] = -v[1];
+    res[67][2] = v[2];
+    res[68][0] = -v[0];
+    res[68][1] = v[1];
+    res[68][2] = -v[2];
+    res[69][0] = v[0];
+    res[69][1] = -v[1];
+    res[69][2] = v[2];
+    res[70][0] = -v[0];
+    res[70][1] = v[1];
+    res[70][2] = -v[2];
+    res[71][0] = v[0];
+    res[71][1] = -v[1];
+    res[71][2] = v[2];
+    res[72][0] = v[2];
+    res[72][1] = v[1];
+    res[72][2] = -v[0];
+    res[73][0] = -v[2];
+    res[73][1] = -v[1];
+    res[73][2] = v[0];
+    res[74][0] = v[2];
+    res[74][1] = v[1];
+    res[74][2] = -v[0];
+    res[75][0] = -v[2];
+    res[75][1] = -v[1];
+    res[75][2] = v[0];
+    res[76][0] = v[2];
+    res[76][1] = v[1];
+    res[76][2] = -v[0];
+    res[77][0] = -v[2];
+    res[77][1] = -v[1];
+    res[77][2] = v[0];
+    res[78][0] = v[2];
+    res[78][1] = v[1];
+    res[78][2] = -v[0];
+    res[79][0] = -v[2];
+    res[79][1] = -v[1];
+    res[79][2] = v[0];
+    res[80][0] = v[1];
+    res[80][1] = v[2];
+    res[80][2] = v[0];
+    res[81][0] = -v[1];
+    res[81][1] = -v[2];
+    res[81][2] = -v[0];
+    res[82][0] = v[1];
+    res[82][1] = v[2];
+    res[82][2] = v[0];
+    res[83][0] = -v[1];
+    res[83][1] = -v[2];
+    res[83][2] = -v[0];
+    res[84][0] = v[1];
+    res[84][1] = v[2];
+    res[84][2] = v[0];
+    res[85][0] = -v[1];
+    res[85][1] = -v[2];
+    res[85][2] = -v[0];
+    res[86][0] = v[1];
+    res[86][1] = v[2];
+    res[86][2] = v[0];
+    res[87][0] = -v[1];
+    res[87][1] = -v[2];
+    res[87][2] = -v[0];
+    res[88][0] = v[2];
+    res[88][1] = v[0];
+    res[88][2] = v[1];
+    res[89][0] = -v[2];
+    res[89][1] = -v[0];
+    res[89][2] = -v[1];
+    res[90][0] = v[2];
+    res[90][1] = v[0];
+    res[90][2] = v[1];
+    res[91][0] = -v[2];
+    res[91][1] = -v[0];
+    res[91][2] = -v[1];
+    res[92][0] = v[2];
+    res[92][1] = v[0];
+    res[92][2] = v[1];
+    res[93][0] = -v[2];
+    res[93][1] = -v[0];
+    res[93][2] = -v[1];
+    res[94][0] = v[2];
+    res[94][1] = v[0];
+    res[94][2] = v[1];
+    res[95][0] = -v[2];
+    res[95][1] = -v[0];
+    res[95][2] = -v[1];
+    res[96][0] = v[2];
+    res[96][1] = -v[0];
+    res[96][2] = -v[1];
+    res[97][0] = -v[2];
+    res[97][1] = v[0];
+    res[97][2] = v[1];
+    res[98][0] = v[2];
+    res[98][1] = -v[0];
+    res[98][2] = -v[1];
+    res[99][0] = -v[2];
+    res[99][1] = v[0];
+    res[99][2] = v[1];
+    res[100][0] = v[2];
+    res[100][1] = -v[0];
+    res[100][2] = -v[1];
+    res[101][0] = -v[2];
+    res[101][1] = v[0];
+    res[101][2] = v[1];
+    res[102][0] = v[2];
+    res[102][1] = -v[0];
+    res[102][2] = -v[1];
+    res[103][0] = -v[2];
+    res[103][1] = v[0];
+    res[103][2] = v[1];
+    res[104][0] = -v[1];
+    res[104][1] = -v[2];
+    res[104][2] = v[0];
+    res[105][0] = v[1];
+    res[105][1] = v[2];
+    res[105][2] = -v[0];
+    res[106][0] = -v[1];
+    res[106][1] = -v[2];
+    res[106][2] = v[0];
+    res[107][0] = v[1];
+    res[107][1] = v[2];
+    res[107][2] = -v[0];
+    res[108][0] = -v[1];
+    res[108][1] = -v[2];
+    res[108][2] = v[0];
+    res[109][0] = v[1];
+    res[109][1] = v[2];
+    res[109][2] = -v[0];
+    res[110][0] = -v[1];
+    res[110][1] = -v[2];
+    res[110][2] = v[0];
+    res[111][0] = v[1];
+    res[111][1] = v[2];
+    res[111][2] = -v[0];
+    res[112][0] = -v[2];
+    res[112][1] = -v[0];
+    res[112][2] = v[1];
+    res[113][0] = v[2];
+    res[113][1] = v[0];
+    res[113][2] = -v[1];
+    res[114][0] = -v[2];
+    res[114][1] = -v[0];
+    res[114][2] = v[1];
+    res[115][0] = v[2];
+    res[115][1] = v[0];
+    res[115][2] = -v[1];
+    res[116][0] = -v[2];
+    res[116][1] = -v[0];
+    res[116][2] = v[1];
+    res[117][0] = v[2];
+    res[117][1] = v[0];
+    res[117][2] = -v[1];
+    res[118][0] = -v[2];
+    res[118][1] = -v[0];
+    res[118][2] = v[1];
+    res[119][0] = v[2];
+    res[119][1] = v[0];
+    res[119][2] = -v[1];
+    res[120][0] = -v[1];
+    res[120][1] = v[2];
+    res[120][2] = -v[0];
+    res[121][0] = v[1];
+    res[121][1] = -v[2];
+    res[121][2] = v[0];
+    res[122][0] = -v[1];
+    res[122][1] = v[2];
+    res[122][2] = -v[0];
+    res[123][0] = v[1];
+    res[123][1] = -v[2];
+    res[123][2] = v[0];
+    res[124][0] = -v[1];
+    res[124][1] = v[2];
+    res[124][2] = -v[0];
+    res[125][0] = v[1];
+    res[125][1] = -v[2];
+    res[125][2] = v[0];
+    res[126][0] = -v[1];
+    res[126][1] = v[2];
+    res[126][2] = -v[0];
+    res[127][0] = v[1];
+    res[127][1] = -v[2];
+    res[127][2] = v[0];
+    res[128][0] = v[1];
+    res[128][1] = -v[2];
+    res[128][2] = -v[0];
+    res[129][0] = -v[1];
+    res[129][1] = v[2];
+    res[129][2] = v[0];
+    res[130][0] = v[1];
+    res[130][1] = -v[2];
+    res[130][2] = -v[0];
+    res[131][0] = -v[1];
+    res[131][1] = v[2];
+    res[131][2] = v[0];
+    res[132][0] = v[1];
+    res[132][1] = -v[2];
+    res[132][2] = -v[0];
+    res[133][0] = -v[1];
+    res[133][1] = v[2];
+    res[133][2] = v[0];
+    res[134][0] = v[1];
+    res[134][1] = -v[2];
+    res[134][2] = -v[0];
+    res[135][0] = -v[1];
+    res[135][1] = v[2];
+    res[135][2] = v[0];
+    res[136][0] = -v[2];
+    res[136][1] = v[0];
+    res[136][2] = -v[1];
+    res[137][0] = v[2];
+    res[137][1] = -v[0];
+    res[137][2] = v[1];
+    res[138][0] = -v[2];
+    res[138][1] = v[0];
+    res[138][2] = -v[1];
+    res[139][0] = v[2];
+    res[139][1] = -v[0];
+    res[139][2] = v[1];
+    res[140][0] = -v[2];
+    res[140][1] = v[0];
+    res[140][2] = -v[1];
+    res[141][0] = v[2];
+    res[141][1] = -v[0];
+    res[141][2] = v[1];
+    res[142][0] = -v[2];
+    res[142][1] = v[0];
+    res[142][2] = -v[1];
+    res[143][0] = v[2];
+    res[143][1] = -v[0];
+    res[143][2] = v[1];
+    res[144][0] = v[1];
+    res[144][1] = v[0];
+    res[144][2] = -v[2];
+    res[145][0] = -v[1];
+    res[145][1] = -v[0];
+    res[145][2] = v[2];
+    res[146][0] = v[1];
+    res[146][1] = v[0];
+    res[146][2] = -v[2];
+    res[147][0] = -v[1];
+    res[147][1] = -v[0];
+    res[147][2] = v[2];
+    res[148][0] = v[1];
+    res[148][1] = v[0];
+    res[148][2] = -v[2];
+    res[149][0] = -v[1];
+    res[149][1] = -v[0];
+    res[149][2] = v[2];
+    res[150][0] = v[1];
+    res[150][1] = v[0];
+    res[150][2] = -v[2];
+    res[151][0] = -v[1];
+    res[151][1] = -v[0];
+    res[151][2] = v[2];
+    res[152][0] = -v[1];
+    res[152][1] = -v[0];
+    res[152][2] = -v[2];
+    res[153][0] = v[1];
+    res[153][1] = v[0];
+    res[153][2] = v[2];
+    res[154][0] = -v[1];
+    res[154][1] = -v[0];
+    res[154][2] = -v[2];
+    res[155][0] = v[1];
+    res[155][1] = v[0];
+    res[155][2] = v[2];
+    res[156][0] = -v[1];
+    res[156][1] = -v[0];
+    res[156][2] = -v[2];
+    res[157][0] = v[1];
+    res[157][1] = v[0];
+    res[157][2] = v[2];
+    res[158][0] = -v[1];
+    res[158][1] = -v[0];
+    res[158][2] = -v[2];
+    res[159][0] = v[1];
+    res[159][1] = v[0];
+    res[159][2] = v[2];
+    res[160][0] = -v[0];
+    res[160][1] = v[2];
+    res[160][2] = v[1];
+    res[161][0] = v[0];
+    res[161][1] = -v[2];
+    res[161][2] = -v[1];
+    res[162][0] = -v[0];
+    res[162][1] = v[2];
+    res[162][2] = v[1];
+    res[163][0] = v[0];
+    res[163][1] = -v[2];
+    res[163][2] = -v[1];
+    res[164][0] = -v[0];
+    res[164][1] = v[2];
+    res[164][2] = v[1];
+    res[165][0] = v[0];
+    res[165][1] = -v[2];
+    res[165][2] = -v[1];
+    res[166][0] = -v[0];
+    res[166][1] = v[2];
+    res[166][2] = v[1];
+    res[167][0] = v[0];
+    res[167][1] = -v[2];
+    res[167][2] = -v[1];
+    res[168][0] = -v[0];
+    res[168][1] = -v[2];
+    res[168][2] = -v[1];
+    res[169][0] = v[0];
+    res[169][1] = v[2];
+    res[169][2] = v[1];
+    res[170][0] = -v[0];
+    res[170][1] = -v[2];
+    res[170][2] = -v[1];
+    res[171][0] = v[0];
+    res[171][1] = v[2];
+    res[171][2] = v[1];
+    res[172][0] = -v[0];
+    res[172][1] = -v[2];
+    res[172][2] = -v[1];
+    res[173][0] = v[0];
+    res[173][1] = v[2];
+    res[173][2] = v[1];
+    res[174][0] = -v[0];
+    res[174][1] = -v[2];
+    res[174][2] = -v[1];
+    res[175][0] = v[0];
+    res[175][1] = v[2];
+    res[175][2] = v[1];
+    res[176][0] = v[2];
+    res[176][1] = -v[1];
+    res[176][2] = v[0];
+    res[177][0] = -v[2];
+    res[177][1] = v[1];
+    res[177][2] = -v[0];
+    res[178][0] = v[2];
+    res[178][1] = -v[1];
+    res[178][2] = v[0];
+    res[179][0] = -v[2];
+    res[179][1] = v[1];
+    res[179][2] = -v[0];
+    res[180][0] = v[2];
+    res[180][1] = -v[1];
+    res[180][2] = v[0];
+    res[181][0] = -v[2];
+    res[181][1] = v[1];
+    res[181][2] = -v[0];
+    res[182][0] = v[2];
+    res[182][1] = -v[1];
+    res[182][2] = v[0];
+    res[183][0] = -v[2];
+    res[183][1] = v[1];
+    res[183][2] = -v[0];
+    res[184][0] = -v[2];
+    res[184][1] = -v[1];
+    res[184][2] = -v[0];
+    res[185][0] = v[2];
+    res[185][1] = v[1];
+    res[185][2] = v[0];
+    res[186][0] = -v[2];
+    res[186][1] = -v[1];
+    res[186][2] = -v[0];
+    res[187][0] = v[2];
+    res[187][1] = v[1];
+    res[187][2] = v[0];
+    res[188][0] = -v[2];
+    res[188][1] = -v[1];
+    res[188][2] = -v[0];
+    res[189][0] = v[2];
+    res[189][1] = v[1];
+    res[189][2] = v[0];
+    res[190][0] = -v[2];
+    res[190][1] = -v[1];
+    res[190][2] = -v[0];
+    res[191][0] = v[2];
+    res[191][1] = v[1];
     res[191][2] = v[0];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -19411,9 +27622,11 @@ struct FastSG_Fm_3m {
     res[191][2] = v[0];
     phase[191] = (res[191][0]+res[191][1])*1./2;
   }
+  static const short size=192;
+  static const char lattice='F';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Fm2m {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -19462,6 +27675,56 @@ struct FastSG_Fm2m {
     res[14][2] = v[2]+1./2;
     res[15][0] = -v[0]+1./2;
     res[15][1] = v[1]+1./2;
+    res[15][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = v[2];
+    res[4][0] = -v[0];
+    res[4][1] = v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = -v[0];
+    res[7][1] = v[1];
+    res[7][2] = -v[2];
+    res[8][0] = v[0];
+    res[8][1] = v[1];
+    res[8][2] = -v[2];
+    res[9][0] = v[0];
+    res[9][1] = v[1];
+    res[9][2] = -v[2];
+    res[10][0] = v[0];
+    res[10][1] = v[1];
+    res[10][2] = -v[2];
+    res[11][0] = v[0];
+    res[11][1] = v[1];
+    res[11][2] = -v[2];
+    res[12][0] = -v[0];
+    res[12][1] = v[1];
+    res[12][2] = v[2];
+    res[13][0] = -v[0];
+    res[13][1] = v[1];
+    res[13][2] = v[2];
+    res[14][0] = -v[0];
+    res[14][1] = v[1];
+    res[14][2] = v[2];
+    res[15][0] = -v[0];
+    res[15][1] = v[1];
     res[15][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -19530,9 +27793,11 @@ struct FastSG_Fm2m {
     res[15][2] = v[2];
     phase[15] = (res[15][0]+res[15][1])*1./2;
   }
+  static const short size=16;
+  static const char lattice='F';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Fmm2 {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -19581,6 +27846,56 @@ struct FastSG_Fmm2 {
     res[14][2] = v[2]+1./2;
     res[15][0] = v[0]+1./2;
     res[15][1] = -v[1]+1./2;
+    res[15][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = -v[0];
+    res[5][1] = -v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = -v[0];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
+    res[8][0] = -v[0];
+    res[8][1] = v[1];
+    res[8][2] = v[2];
+    res[9][0] = -v[0];
+    res[9][1] = v[1];
+    res[9][2] = v[2];
+    res[10][0] = -v[0];
+    res[10][1] = v[1];
+    res[10][2] = v[2];
+    res[11][0] = -v[0];
+    res[11][1] = v[1];
+    res[11][2] = v[2];
+    res[12][0] = v[0];
+    res[12][1] = -v[1];
+    res[12][2] = v[2];
+    res[13][0] = v[0];
+    res[13][1] = -v[1];
+    res[13][2] = v[2];
+    res[14][0] = v[0];
+    res[14][1] = -v[1];
+    res[14][2] = v[2];
+    res[15][0] = v[0];
+    res[15][1] = -v[1];
     res[15][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -19649,9 +27964,11 @@ struct FastSG_Fmm2 {
     res[15][2] = v[2];
     phase[15] = (res[15][0]+res[15][1])*1./2;
   }
+  static const short size=16;
+  static const char lattice='F';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Fmmm {
- static const short size=32;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -19748,6 +28065,104 @@ struct FastSG_Fmmm {
     res[30][2] = -v[2];
     res[31][0] = v[0]+1./2;
     res[31][1] = -v[1]+1./2;
+    res[31][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = v[1];
+    res[4][2] = v[2];
+    res[5][0] = -v[0];
+    res[5][1] = -v[1];
+    res[5][2] = -v[2];
+    res[6][0] = v[0];
+    res[6][1] = v[1];
+    res[6][2] = v[2];
+    res[7][0] = -v[0];
+    res[7][1] = -v[1];
+    res[7][2] = -v[2];
+    res[8][0] = -v[0];
+    res[8][1] = -v[1];
+    res[8][2] = v[2];
+    res[9][0] = v[0];
+    res[9][1] = v[1];
+    res[9][2] = -v[2];
+    res[10][0] = -v[0];
+    res[10][1] = -v[1];
+    res[10][2] = v[2];
+    res[11][0] = v[0];
+    res[11][1] = v[1];
+    res[11][2] = -v[2];
+    res[12][0] = -v[0];
+    res[12][1] = -v[1];
+    res[12][2] = v[2];
+    res[13][0] = v[0];
+    res[13][1] = v[1];
+    res[13][2] = -v[2];
+    res[14][0] = -v[0];
+    res[14][1] = -v[1];
+    res[14][2] = v[2];
+    res[15][0] = v[0];
+    res[15][1] = v[1];
+    res[15][2] = -v[2];
+    res[16][0] = v[0];
+    res[16][1] = -v[1];
+    res[16][2] = -v[2];
+    res[17][0] = -v[0];
+    res[17][1] = v[1];
+    res[17][2] = v[2];
+    res[18][0] = v[0];
+    res[18][1] = -v[1];
+    res[18][2] = -v[2];
+    res[19][0] = -v[0];
+    res[19][1] = v[1];
+    res[19][2] = v[2];
+    res[20][0] = v[0];
+    res[20][1] = -v[1];
+    res[20][2] = -v[2];
+    res[21][0] = -v[0];
+    res[21][1] = v[1];
+    res[21][2] = v[2];
+    res[22][0] = v[0];
+    res[22][1] = -v[1];
+    res[22][2] = -v[2];
+    res[23][0] = -v[0];
+    res[23][1] = v[1];
+    res[23][2] = v[2];
+    res[24][0] = -v[0];
+    res[24][1] = v[1];
+    res[24][2] = -v[2];
+    res[25][0] = v[0];
+    res[25][1] = -v[1];
+    res[25][2] = v[2];
+    res[26][0] = -v[0];
+    res[26][1] = v[1];
+    res[26][2] = -v[2];
+    res[27][0] = v[0];
+    res[27][1] = -v[1];
+    res[27][2] = v[2];
+    res[28][0] = -v[0];
+    res[28][1] = v[1];
+    res[28][2] = -v[2];
+    res[29][0] = v[0];
+    res[29][1] = -v[1];
+    res[29][2] = v[2];
+    res[30][0] = -v[0];
+    res[30][1] = v[1];
+    res[30][2] = -v[2];
+    res[31][0] = v[0];
+    res[31][1] = -v[1];
     res[31][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -19880,9 +28295,11 @@ struct FastSG_Fmmm {
     res[31][2] = v[2];
     phase[31] = (res[31][0]+res[31][1])*1./2;
   }
+  static const short size=32;
+  static const char lattice='F';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Fx {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -19895,6 +28312,20 @@ struct FastSG_Fx {
     res[2][2] = v[2]+1./2;
     res[3][0] = v[0]+1./2;
     res[3][1] = v[1]+1./2;
+    res[3][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
     res[3][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -19915,9 +28346,11 @@ struct FastSG_Fx {
     res[3][2] = v[2];
     phase[3] = (res[3][0]+res[3][1])*1./2;
   }
+  static const short size=4;
+  static const char lattice='F';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_I_4 {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -19943,6 +28376,32 @@ struct FastSG_I_4 {
     res[7][0] = -v[1]+1./2;
     res[7][1] = v[0]+1./2;
     res[7][2] = -v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[1];
+    res[2][1] = v[0];
+    res[2][2] = -v[2];
+    res[3][0] = -v[1];
+    res[3][1] = v[0];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = -v[0];
+    res[5][1] = -v[1];
+    res[5][2] = v[2];
+    res[6][0] = v[1];
+    res[6][1] = -v[0];
+    res[6][2] = -v[2];
+    res[7][0] = v[1];
+    res[7][1] = -v[0];
+    res[7][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -19978,9 +28437,11 @@ struct FastSG_I_4 {
     res[7][2] = -v[2];
     phase[7] = (res[7][0]+res[7][1]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_I_42d {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -20030,6 +28491,56 @@ struct FastSG_I_42d {
     res[15][0] = v[1]+1./2;
     res[15][1] = v[0];
     res[15][2] = v[2]+3./4;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[1];
+    res[2][1] = v[0];
+    res[2][2] = -v[2];
+    res[3][0] = -v[1];
+    res[3][1] = v[0];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = -v[0];
+    res[5][1] = -v[1];
+    res[5][2] = v[2];
+    res[6][0] = v[1];
+    res[6][1] = -v[0];
+    res[6][2] = -v[2];
+    res[7][0] = v[1];
+    res[7][1] = -v[0];
+    res[7][2] = -v[2];
+    res[8][0] = v[0];
+    res[8][1] = -v[1];
+    res[8][2] = -v[2];
+    res[9][0] = v[0];
+    res[9][1] = -v[1];
+    res[9][2] = -v[2];
+    res[10][0] = -v[0];
+    res[10][1] = v[1];
+    res[10][2] = -v[2];
+    res[11][0] = -v[0];
+    res[11][1] = v[1];
+    res[11][2] = -v[2];
+    res[12][0] = -v[1];
+    res[12][1] = -v[0];
+    res[12][2] = v[2];
+    res[13][0] = -v[1];
+    res[13][1] = -v[0];
+    res[13][2] = v[2];
+    res[14][0] = v[1];
+    res[14][1] = v[0];
+    res[14][2] = v[2];
+    res[15][0] = v[1];
+    res[15][1] = v[0];
+    res[15][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -20097,9 +28608,11 @@ struct FastSG_I_42d {
     res[15][2] = v[2];
     phase[15] = res[15][0]*1./2+res[15][2]*3./4;
   }
+  static const short size=16;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_I_42m {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -20149,6 +28662,56 @@ struct FastSG_I_42m {
     res[15][0] = v[1]+1./2;
     res[15][1] = v[0]+1./2;
     res[15][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[1];
+    res[2][1] = v[0];
+    res[2][2] = -v[2];
+    res[3][0] = -v[1];
+    res[3][1] = v[0];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = -v[0];
+    res[5][1] = -v[1];
+    res[5][2] = v[2];
+    res[6][0] = v[1];
+    res[6][1] = -v[0];
+    res[6][2] = -v[2];
+    res[7][0] = v[1];
+    res[7][1] = -v[0];
+    res[7][2] = -v[2];
+    res[8][0] = v[0];
+    res[8][1] = -v[1];
+    res[8][2] = -v[2];
+    res[9][0] = v[0];
+    res[9][1] = -v[1];
+    res[9][2] = -v[2];
+    res[10][0] = -v[0];
+    res[10][1] = v[1];
+    res[10][2] = -v[2];
+    res[11][0] = -v[0];
+    res[11][1] = v[1];
+    res[11][2] = -v[2];
+    res[12][0] = -v[1];
+    res[12][1] = -v[0];
+    res[12][2] = v[2];
+    res[13][0] = -v[1];
+    res[13][1] = -v[0];
+    res[13][2] = v[2];
+    res[14][0] = v[1];
+    res[14][1] = v[0];
+    res[14][2] = v[2];
+    res[15][0] = v[1];
+    res[15][1] = v[0];
+    res[15][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -20216,9 +28779,11 @@ struct FastSG_I_42m {
     res[15][2] = v[2];
     phase[15] = (res[15][0]+res[15][1]+res[15][2])*1./2;
   }
+  static const short size=16;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_I_43d {
- static const short size=48;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -20365,6 +28930,152 @@ struct FastSG_I_43d {
     res[47][1] = v[1]+3./4;
     res[47][2] = v[0]+3./4;
   }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[1];
+    res[2][1] = v[0];
+    res[2][2] = -v[2];
+    res[3][0] = -v[1];
+    res[3][1] = v[0];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = -v[0];
+    res[5][1] = -v[1];
+    res[5][2] = v[2];
+    res[6][0] = v[1];
+    res[6][1] = -v[0];
+    res[6][2] = -v[2];
+    res[7][0] = v[1];
+    res[7][1] = -v[0];
+    res[7][2] = -v[2];
+    res[8][0] = -v[0];
+    res[8][1] = -v[2];
+    res[8][2] = v[1];
+    res[9][0] = -v[0];
+    res[9][1] = -v[2];
+    res[9][2] = v[1];
+    res[10][0] = v[0];
+    res[10][1] = -v[1];
+    res[10][2] = -v[2];
+    res[11][0] = v[0];
+    res[11][1] = -v[1];
+    res[11][2] = -v[2];
+    res[12][0] = -v[0];
+    res[12][1] = v[2];
+    res[12][2] = -v[1];
+    res[13][0] = -v[0];
+    res[13][1] = v[2];
+    res[13][2] = -v[1];
+    res[14][0] = v[2];
+    res[14][1] = -v[1];
+    res[14][2] = -v[0];
+    res[15][0] = v[2];
+    res[15][1] = -v[1];
+    res[15][2] = -v[0];
+    res[16][0] = -v[0];
+    res[16][1] = v[1];
+    res[16][2] = -v[2];
+    res[17][0] = -v[0];
+    res[17][1] = v[1];
+    res[17][2] = -v[2];
+    res[18][0] = -v[2];
+    res[18][1] = -v[1];
+    res[18][2] = v[0];
+    res[19][0] = -v[2];
+    res[19][1] = -v[1];
+    res[19][2] = v[0];
+    res[20][0] = v[1];
+    res[20][1] = v[2];
+    res[20][2] = v[0];
+    res[21][0] = v[1];
+    res[21][1] = v[2];
+    res[21][2] = v[0];
+    res[22][0] = v[2];
+    res[22][1] = v[0];
+    res[22][2] = v[1];
+    res[23][0] = v[2];
+    res[23][1] = v[0];
+    res[23][2] = v[1];
+    res[24][0] = v[2];
+    res[24][1] = -v[0];
+    res[24][2] = -v[1];
+    res[25][0] = v[2];
+    res[25][1] = -v[0];
+    res[25][2] = -v[1];
+    res[26][0] = -v[1];
+    res[26][1] = -v[2];
+    res[26][2] = v[0];
+    res[27][0] = -v[1];
+    res[27][1] = -v[2];
+    res[27][2] = v[0];
+    res[28][0] = -v[2];
+    res[28][1] = -v[0];
+    res[28][2] = v[1];
+    res[29][0] = -v[2];
+    res[29][1] = -v[0];
+    res[29][2] = v[1];
+    res[30][0] = -v[1];
+    res[30][1] = v[2];
+    res[30][2] = -v[0];
+    res[31][0] = -v[1];
+    res[31][1] = v[2];
+    res[31][2] = -v[0];
+    res[32][0] = v[1];
+    res[32][1] = -v[2];
+    res[32][2] = -v[0];
+    res[33][0] = v[1];
+    res[33][1] = -v[2];
+    res[33][2] = -v[0];
+    res[34][0] = -v[2];
+    res[34][1] = v[0];
+    res[34][2] = -v[1];
+    res[35][0] = -v[2];
+    res[35][1] = v[0];
+    res[35][2] = -v[1];
+    res[36][0] = -v[1];
+    res[36][1] = -v[0];
+    res[36][2] = v[2];
+    res[37][0] = -v[1];
+    res[37][1] = -v[0];
+    res[37][2] = v[2];
+    res[38][0] = v[1];
+    res[38][1] = v[0];
+    res[38][2] = v[2];
+    res[39][0] = v[1];
+    res[39][1] = v[0];
+    res[39][2] = v[2];
+    res[40][0] = v[0];
+    res[40][1] = -v[2];
+    res[40][2] = -v[1];
+    res[41][0] = v[0];
+    res[41][1] = -v[2];
+    res[41][2] = -v[1];
+    res[42][0] = v[0];
+    res[42][1] = v[2];
+    res[42][2] = v[1];
+    res[43][0] = v[0];
+    res[43][1] = v[2];
+    res[43][2] = v[1];
+    res[44][0] = -v[2];
+    res[44][1] = v[1];
+    res[44][2] = -v[0];
+    res[45][0] = -v[2];
+    res[45][1] = v[1];
+    res[45][2] = -v[0];
+    res[46][0] = v[2];
+    res[46][1] = v[1];
+    res[46][2] = v[0];
+    res[47][0] = v[2];
+    res[47][1] = v[1];
+    res[47][2] = v[0];
+  }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -20559,9 +29270,11 @@ struct FastSG_I_43d {
     res[47][2] = v[0];
     phase[47] = (res[47][0]+res[47][1]+res[47][2])*3./4;
   }
+  static const short size=48;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_I_43m {
- static const short size=48;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -20708,6 +29421,152 @@ struct FastSG_I_43m {
     res[47][1] = v[1]+1./2;
     res[47][2] = v[0]+1./2;
   }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[1];
+    res[2][1] = v[0];
+    res[2][2] = -v[2];
+    res[3][0] = -v[1];
+    res[3][1] = v[0];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = -v[0];
+    res[5][1] = -v[1];
+    res[5][2] = v[2];
+    res[6][0] = v[1];
+    res[6][1] = -v[0];
+    res[6][2] = -v[2];
+    res[7][0] = v[1];
+    res[7][1] = -v[0];
+    res[7][2] = -v[2];
+    res[8][0] = -v[0];
+    res[8][1] = -v[2];
+    res[8][2] = v[1];
+    res[9][0] = -v[0];
+    res[9][1] = -v[2];
+    res[9][2] = v[1];
+    res[10][0] = v[0];
+    res[10][1] = -v[1];
+    res[10][2] = -v[2];
+    res[11][0] = v[0];
+    res[11][1] = -v[1];
+    res[11][2] = -v[2];
+    res[12][0] = -v[0];
+    res[12][1] = v[2];
+    res[12][2] = -v[1];
+    res[13][0] = -v[0];
+    res[13][1] = v[2];
+    res[13][2] = -v[1];
+    res[14][0] = v[2];
+    res[14][1] = -v[1];
+    res[14][2] = -v[0];
+    res[15][0] = v[2];
+    res[15][1] = -v[1];
+    res[15][2] = -v[0];
+    res[16][0] = -v[0];
+    res[16][1] = v[1];
+    res[16][2] = -v[2];
+    res[17][0] = -v[0];
+    res[17][1] = v[1];
+    res[17][2] = -v[2];
+    res[18][0] = -v[2];
+    res[18][1] = -v[1];
+    res[18][2] = v[0];
+    res[19][0] = -v[2];
+    res[19][1] = -v[1];
+    res[19][2] = v[0];
+    res[20][0] = v[1];
+    res[20][1] = v[2];
+    res[20][2] = v[0];
+    res[21][0] = v[1];
+    res[21][1] = v[2];
+    res[21][2] = v[0];
+    res[22][0] = v[2];
+    res[22][1] = v[0];
+    res[22][2] = v[1];
+    res[23][0] = v[2];
+    res[23][1] = v[0];
+    res[23][2] = v[1];
+    res[24][0] = v[2];
+    res[24][1] = -v[0];
+    res[24][2] = -v[1];
+    res[25][0] = v[2];
+    res[25][1] = -v[0];
+    res[25][2] = -v[1];
+    res[26][0] = -v[1];
+    res[26][1] = -v[2];
+    res[26][2] = v[0];
+    res[27][0] = -v[1];
+    res[27][1] = -v[2];
+    res[27][2] = v[0];
+    res[28][0] = -v[2];
+    res[28][1] = -v[0];
+    res[28][2] = v[1];
+    res[29][0] = -v[2];
+    res[29][1] = -v[0];
+    res[29][2] = v[1];
+    res[30][0] = -v[1];
+    res[30][1] = v[2];
+    res[30][2] = -v[0];
+    res[31][0] = -v[1];
+    res[31][1] = v[2];
+    res[31][2] = -v[0];
+    res[32][0] = v[1];
+    res[32][1] = -v[2];
+    res[32][2] = -v[0];
+    res[33][0] = v[1];
+    res[33][1] = -v[2];
+    res[33][2] = -v[0];
+    res[34][0] = -v[2];
+    res[34][1] = v[0];
+    res[34][2] = -v[1];
+    res[35][0] = -v[2];
+    res[35][1] = v[0];
+    res[35][2] = -v[1];
+    res[36][0] = -v[1];
+    res[36][1] = -v[0];
+    res[36][2] = v[2];
+    res[37][0] = -v[1];
+    res[37][1] = -v[0];
+    res[37][2] = v[2];
+    res[38][0] = v[1];
+    res[38][1] = v[0];
+    res[38][2] = v[2];
+    res[39][0] = v[1];
+    res[39][1] = v[0];
+    res[39][2] = v[2];
+    res[40][0] = v[0];
+    res[40][1] = -v[2];
+    res[40][2] = -v[1];
+    res[41][0] = v[0];
+    res[41][1] = -v[2];
+    res[41][2] = -v[1];
+    res[42][0] = v[0];
+    res[42][1] = v[2];
+    res[42][2] = v[1];
+    res[43][0] = v[0];
+    res[43][1] = v[2];
+    res[43][2] = v[1];
+    res[44][0] = -v[2];
+    res[44][1] = v[1];
+    res[44][2] = -v[0];
+    res[45][0] = -v[2];
+    res[45][1] = v[1];
+    res[45][2] = -v[0];
+    res[46][0] = v[2];
+    res[46][1] = v[1];
+    res[46][2] = v[0];
+    res[47][0] = v[2];
+    res[47][1] = v[1];
+    res[47][2] = v[0];
+  }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -20902,9 +29761,11 @@ struct FastSG_I_43m {
     res[47][2] = v[0];
     phase[47] = (res[47][0]+res[47][1]+res[47][2])*1./2;
   }
+  static const short size=48;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_I_4c2 {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -20953,6 +29814,56 @@ struct FastSG_I_4c2 {
     res[14][2] = v[2]+1./2;
     res[15][0] = v[0]+1./2;
     res[15][1] = -v[1]+1./2;
+    res[15][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[1];
+    res[2][1] = v[0];
+    res[2][2] = -v[2];
+    res[3][0] = -v[1];
+    res[3][1] = v[0];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = -v[0];
+    res[5][1] = -v[1];
+    res[5][2] = v[2];
+    res[6][0] = v[1];
+    res[6][1] = -v[0];
+    res[6][2] = -v[2];
+    res[7][0] = v[1];
+    res[7][1] = -v[0];
+    res[7][2] = -v[2];
+    res[8][0] = v[1];
+    res[8][1] = v[0];
+    res[8][2] = -v[2];
+    res[9][0] = v[1];
+    res[9][1] = v[0];
+    res[9][2] = -v[2];
+    res[10][0] = -v[1];
+    res[10][1] = -v[0];
+    res[10][2] = -v[2];
+    res[11][0] = -v[1];
+    res[11][1] = -v[0];
+    res[11][2] = -v[2];
+    res[12][0] = -v[0];
+    res[12][1] = v[1];
+    res[12][2] = v[2];
+    res[13][0] = -v[0];
+    res[13][1] = v[1];
+    res[13][2] = v[2];
+    res[14][0] = v[0];
+    res[14][1] = -v[1];
+    res[14][2] = v[2];
+    res[15][0] = v[0];
+    res[15][1] = -v[1];
     res[15][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -21021,9 +29932,11 @@ struct FastSG_I_4c2 {
     res[15][2] = v[2];
     phase[15] = (res[15][0]+res[15][1])*1./2;
   }
+  static const short size=16;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_I_4m2 {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -21073,6 +29986,56 @@ struct FastSG_I_4m2 {
     res[15][0] = v[0]+1./2;
     res[15][1] = -v[1]+1./2;
     res[15][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[1];
+    res[2][1] = v[0];
+    res[2][2] = -v[2];
+    res[3][0] = -v[1];
+    res[3][1] = v[0];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = -v[0];
+    res[5][1] = -v[1];
+    res[5][2] = v[2];
+    res[6][0] = v[1];
+    res[6][1] = -v[0];
+    res[6][2] = -v[2];
+    res[7][0] = v[1];
+    res[7][1] = -v[0];
+    res[7][2] = -v[2];
+    res[8][0] = v[1];
+    res[8][1] = v[0];
+    res[8][2] = -v[2];
+    res[9][0] = v[1];
+    res[9][1] = v[0];
+    res[9][2] = -v[2];
+    res[10][0] = -v[1];
+    res[10][1] = -v[0];
+    res[10][2] = -v[2];
+    res[11][0] = -v[1];
+    res[11][1] = -v[0];
+    res[11][2] = -v[2];
+    res[12][0] = -v[0];
+    res[12][1] = v[1];
+    res[12][2] = v[2];
+    res[13][0] = -v[0];
+    res[13][1] = v[1];
+    res[13][2] = v[2];
+    res[14][0] = v[0];
+    res[14][1] = -v[1];
+    res[14][2] = v[2];
+    res[15][0] = v[0];
+    res[15][1] = -v[1];
+    res[15][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -21140,9 +30103,11 @@ struct FastSG_I_4m2 {
     res[15][2] = v[2];
     phase[15] = (res[15][0]+res[15][1]+res[15][2])*1./2;
   }
+  static const short size=16;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_I112 {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -21156,6 +30121,20 @@ struct FastSG_I112 {
     res[3][0] = -v[0]+1./2;
     res[3][1] = -v[1]+1./2;
     res[3][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -21175,9 +30154,11 @@ struct FastSG_I112 {
     res[3][2] = v[2];
     phase[3] = (res[3][0]+res[3][1]+res[3][2])*1./2;
   }
+  static const short size=4;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_I112_a {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -21203,6 +30184,32 @@ struct FastSG_I112_a {
     res[7][0] = v[0];
     res[7][1] = v[1]+1./2;
     res[7][2] = -v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = v[1];
+    res[7][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -21238,9 +30245,11 @@ struct FastSG_I112_a {
     res[7][2] = -v[2];
     phase[7] = (res[7][1]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_I112_b {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -21266,6 +30275,32 @@ struct FastSG_I112_b {
     res[7][0] = v[0]+1./2;
     res[7][1] = v[1];
     res[7][2] = -v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = v[1];
+    res[7][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -21301,9 +30336,11 @@ struct FastSG_I112_b {
     res[7][2] = -v[2];
     phase[7] = (res[7][0]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_I112_m {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -21329,6 +30366,32 @@ struct FastSG_I112_m {
     res[7][0] = v[0]+1./2;
     res[7][1] = v[1]+1./2;
     res[7][2] = -v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = v[1];
+    res[7][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -21364,9 +30427,11 @@ struct FastSG_I112_m {
     res[7][2] = -v[2];
     phase[7] = (res[7][0]+res[7][1]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_I11a {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -21380,6 +30445,20 @@ struct FastSG_I11a {
     res[3][0] = v[0];
     res[3][1] = v[1]+1./2;
     res[3][2] = -v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = -v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -21399,9 +30478,11 @@ struct FastSG_I11a {
     res[3][2] = -v[2];
     phase[3] = (res[3][1]+res[3][2])*1./2;
   }
+  static const short size=4;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_I11b {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -21415,6 +30496,20 @@ struct FastSG_I11b {
     res[3][0] = v[0]+1./2;
     res[3][1] = v[1];
     res[3][2] = -v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = -v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -21434,9 +30529,11 @@ struct FastSG_I11b {
     res[3][2] = -v[2];
     phase[3] = (res[3][0]+res[3][2])*1./2;
   }
+  static const short size=4;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_I11m {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -21450,6 +30547,20 @@ struct FastSG_I11m {
     res[3][0] = v[0]+1./2;
     res[3][1] = v[1]+1./2;
     res[3][2] = -v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = -v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -21469,9 +30580,11 @@ struct FastSG_I11m {
     res[3][2] = -v[2];
     phase[3] = (res[3][0]+res[3][1]+res[3][2])*1./2;
   }
+  static const short size=4;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_I2 {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -21485,6 +30598,20 @@ struct FastSG_I2 {
     res[3][0] = -v[0]+1./2;
     res[3][1] = v[1]+1./2;
     res[3][2] = -v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = v[1];
+    res[2][2] = -v[2];
+    res[3][0] = -v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -21504,9 +30631,11 @@ struct FastSG_I2 {
     res[3][2] = -v[2];
     phase[3] = (res[3][0]+res[3][1]+res[3][2])*1./2;
   }
+  static const short size=4;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_I2_a {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -21532,6 +30661,32 @@ struct FastSG_I2_a {
     res[7][0] = v[0];
     res[7][1] = -v[1]+1./2;
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = v[1];
+    res[4][2] = -v[2];
+    res[5][0] = v[0];
+    res[5][1] = -v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -21567,9 +30722,11 @@ struct FastSG_I2_a {
     res[7][2] = v[2];
     phase[7] = (res[7][1]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_I2_b11 {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -21595,6 +30752,32 @@ struct FastSG_I2_b11 {
     res[7][0] = -v[0]+1./2;
     res[7][1] = v[1];
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = v[0];
+    res[6][1] = -v[1];
+    res[6][2] = -v[2];
+    res[7][0] = -v[0];
+    res[7][1] = v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -21630,9 +30813,11 @@ struct FastSG_I2_b11 {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_I2_c {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -21657,6 +30842,32 @@ struct FastSG_I2_c {
     res[6][2] = -v[2];
     res[7][0] = v[0]+1./2;
     res[7][1] = -v[1]+1./2;
+    res[7][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = v[1];
+    res[4][2] = -v[2];
+    res[5][0] = v[0];
+    res[5][1] = -v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
     res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -21693,9 +30904,11 @@ struct FastSG_I2_c {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][1])*1./2;
   }
+  static const short size=8;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_I2_c11 {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -21720,6 +30933,32 @@ struct FastSG_I2_c11 {
     res[6][2] = -v[2];
     res[7][0] = -v[0]+1./2;
     res[7][1] = v[1]+1./2;
+    res[7][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = v[0];
+    res[6][1] = -v[1];
+    res[6][2] = -v[2];
+    res[7][0] = -v[0];
+    res[7][1] = v[1];
     res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -21756,9 +30995,11 @@ struct FastSG_I2_c11 {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][1])*1./2;
   }
+  static const short size=8;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_I2_m {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -21784,6 +31025,32 @@ struct FastSG_I2_m {
     res[7][0] = v[0]+1./2;
     res[7][1] = -v[1]+1./2;
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = v[1];
+    res[4][2] = -v[2];
+    res[5][0] = v[0];
+    res[5][1] = -v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -21819,9 +31086,11 @@ struct FastSG_I2_m {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][1]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_I2_m11 {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -21847,6 +31116,32 @@ struct FastSG_I2_m11 {
     res[7][0] = -v[0]+1./2;
     res[7][1] = v[1]+1./2;
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = v[0];
+    res[6][1] = -v[1];
+    res[6][2] = -v[2];
+    res[7][0] = -v[0];
+    res[7][1] = v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -21882,9 +31177,11 @@ struct FastSG_I2_m11 {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][1]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_I211 {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -21898,6 +31195,20 @@ struct FastSG_I211 {
     res[3][0] = v[0]+1./2;
     res[3][1] = -v[1]+1./2;
     res[3][2] = -v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[0];
+    res[2][1] = -v[1];
+    res[2][2] = -v[2];
+    res[3][0] = v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -21917,9 +31228,11 @@ struct FastSG_I211 {
     res[3][2] = -v[2];
     phase[3] = (res[3][0]+res[3][1]+res[3][2])*1./2;
   }
+  static const short size=4;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_I212121 {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -21945,6 +31258,32 @@ struct FastSG_I212121 {
     res[7][0] = -v[0];
     res[7][1] = v[1]+1./2;
     res[7][2] = -v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = v[0];
+    res[5][1] = -v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = -v[0];
+    res[7][1] = v[1];
+    res[7][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -21980,9 +31319,11 @@ struct FastSG_I212121 {
     res[7][2] = -v[2];
     phase[7] = (res[7][1]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_I213 {
- static const short size=24;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -22056,6 +31397,80 @@ struct FastSG_I213 {
     res[23][0] = -v[0];
     res[23][1] = v[1]+1./2;
     res[23][2] = -v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[1];
+    res[2][1] = v[2];
+    res[2][2] = v[0];
+    res[3][0] = v[1];
+    res[3][1] = v[2];
+    res[3][2] = v[0];
+    res[4][0] = v[2];
+    res[4][1] = v[0];
+    res[4][2] = v[1];
+    res[5][0] = v[2];
+    res[5][1] = v[0];
+    res[5][2] = v[1];
+    res[6][0] = v[2];
+    res[6][1] = -v[0];
+    res[6][2] = -v[1];
+    res[7][0] = v[2];
+    res[7][1] = -v[0];
+    res[7][2] = -v[1];
+    res[8][0] = -v[1];
+    res[8][1] = -v[2];
+    res[8][2] = v[0];
+    res[9][0] = -v[1];
+    res[9][1] = -v[2];
+    res[9][2] = v[0];
+    res[10][0] = -v[2];
+    res[10][1] = -v[0];
+    res[10][2] = v[1];
+    res[11][0] = -v[2];
+    res[11][1] = -v[0];
+    res[11][2] = v[1];
+    res[12][0] = -v[1];
+    res[12][1] = v[2];
+    res[12][2] = -v[0];
+    res[13][0] = -v[1];
+    res[13][1] = v[2];
+    res[13][2] = -v[0];
+    res[14][0] = v[1];
+    res[14][1] = -v[2];
+    res[14][2] = -v[0];
+    res[15][0] = v[1];
+    res[15][1] = -v[2];
+    res[15][2] = -v[0];
+    res[16][0] = -v[2];
+    res[16][1] = v[0];
+    res[16][2] = -v[1];
+    res[17][0] = -v[2];
+    res[17][1] = v[0];
+    res[17][2] = -v[1];
+    res[18][0] = -v[0];
+    res[18][1] = -v[1];
+    res[18][2] = v[2];
+    res[19][0] = -v[0];
+    res[19][1] = -v[1];
+    res[19][2] = v[2];
+    res[20][0] = v[0];
+    res[20][1] = -v[1];
+    res[20][2] = -v[2];
+    res[21][0] = v[0];
+    res[21][1] = -v[1];
+    res[21][2] = -v[2];
+    res[22][0] = -v[0];
+    res[22][1] = v[1];
+    res[22][2] = -v[2];
+    res[23][0] = -v[0];
+    res[23][1] = v[1];
+    res[23][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -22155,9 +31570,11 @@ struct FastSG_I213 {
     res[23][2] = -v[2];
     phase[23] = (res[23][1]+res[23][2])*1./2;
   }
+  static const short size=24;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_I222 {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -22183,6 +31600,32 @@ struct FastSG_I222 {
     res[7][0] = -v[0]+1./2;
     res[7][1] = v[1]+1./2;
     res[7][2] = -v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = v[0];
+    res[5][1] = -v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = -v[0];
+    res[7][1] = v[1];
+    res[7][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -22218,9 +31661,11 @@ struct FastSG_I222 {
     res[7][2] = -v[2];
     phase[7] = (res[7][0]+res[7][1]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_I23 {
- static const short size=24;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -22294,6 +31739,80 @@ struct FastSG_I23 {
     res[23][0] = -v[0]+1./2;
     res[23][1] = v[1]+1./2;
     res[23][2] = -v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[1];
+    res[2][1] = v[2];
+    res[2][2] = v[0];
+    res[3][0] = v[1];
+    res[3][1] = v[2];
+    res[3][2] = v[0];
+    res[4][0] = v[2];
+    res[4][1] = v[0];
+    res[4][2] = v[1];
+    res[5][0] = v[2];
+    res[5][1] = v[0];
+    res[5][2] = v[1];
+    res[6][0] = v[2];
+    res[6][1] = -v[0];
+    res[6][2] = -v[1];
+    res[7][0] = v[2];
+    res[7][1] = -v[0];
+    res[7][2] = -v[1];
+    res[8][0] = -v[1];
+    res[8][1] = -v[2];
+    res[8][2] = v[0];
+    res[9][0] = -v[1];
+    res[9][1] = -v[2];
+    res[9][2] = v[0];
+    res[10][0] = -v[2];
+    res[10][1] = -v[0];
+    res[10][2] = v[1];
+    res[11][0] = -v[2];
+    res[11][1] = -v[0];
+    res[11][2] = v[1];
+    res[12][0] = -v[1];
+    res[12][1] = v[2];
+    res[12][2] = -v[0];
+    res[13][0] = -v[1];
+    res[13][1] = v[2];
+    res[13][2] = -v[0];
+    res[14][0] = v[1];
+    res[14][1] = -v[2];
+    res[14][2] = -v[0];
+    res[15][0] = v[1];
+    res[15][1] = -v[2];
+    res[15][2] = -v[0];
+    res[16][0] = -v[2];
+    res[16][1] = v[0];
+    res[16][2] = -v[1];
+    res[17][0] = -v[2];
+    res[17][1] = v[0];
+    res[17][2] = -v[1];
+    res[18][0] = -v[0];
+    res[18][1] = -v[1];
+    res[18][2] = v[2];
+    res[19][0] = -v[0];
+    res[19][1] = -v[1];
+    res[19][2] = v[2];
+    res[20][0] = v[0];
+    res[20][1] = -v[1];
+    res[20][2] = -v[2];
+    res[21][0] = v[0];
+    res[21][1] = -v[1];
+    res[21][2] = -v[2];
+    res[22][0] = -v[0];
+    res[22][1] = v[1];
+    res[22][2] = -v[2];
+    res[23][0] = -v[0];
+    res[23][1] = v[1];
+    res[23][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -22393,9 +31912,11 @@ struct FastSG_I23 {
     res[23][2] = -v[2];
     phase[23] = (res[23][0]+res[23][1]+res[23][2])*1./2;
   }
+  static const short size=24;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_I2cb {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -22421,6 +31942,32 @@ struct FastSG_I2cb {
     res[7][0] = v[0];
     res[7][1] = -v[1]+1./2;
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[0];
+    res[2][1] = -v[1];
+    res[2][2] = -v[2];
+    res[3][0] = v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = v[1];
+    res[4][2] = -v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -22456,9 +32003,11 @@ struct FastSG_I2cb {
     res[7][2] = v[2];
     phase[7] = (res[7][1]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_I2cm {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -22483,6 +32032,32 @@ struct FastSG_I2cm {
     res[6][2] = v[2]+1./2;
     res[7][0] = v[0]+1./2;
     res[7][1] = -v[1]+1./2;
+    res[7][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[0];
+    res[2][1] = -v[1];
+    res[2][2] = -v[2];
+    res[3][0] = v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = v[1];
+    res[4][2] = -v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
     res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -22519,9 +32094,11 @@ struct FastSG_I2cm {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][1])*1./2;
   }
+  static const short size=8;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_I2mb {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -22547,6 +32124,32 @@ struct FastSG_I2mb {
     res[7][0] = v[0]+1./2;
     res[7][1] = -v[1];
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[0];
+    res[2][1] = -v[1];
+    res[2][2] = -v[2];
+    res[3][0] = v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = v[1];
+    res[4][2] = -v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -22582,9 +32185,11 @@ struct FastSG_I2mb {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_I2mm {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -22610,6 +32215,32 @@ struct FastSG_I2mm {
     res[7][0] = v[0]+1./2;
     res[7][1] = -v[1]+1./2;
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[0];
+    res[2][1] = -v[1];
+    res[2][2] = -v[2];
+    res[3][0] = v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = v[1];
+    res[4][2] = -v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -22645,9 +32276,11 @@ struct FastSG_I2mm {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][1]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_I4 {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -22673,6 +32306,32 @@ struct FastSG_I4 {
     res[7][0] = v[1]+1./2;
     res[7][1] = -v[0]+1./2;
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[1];
+    res[2][1] = -v[0];
+    res[2][2] = v[2];
+    res[3][0] = v[1];
+    res[3][1] = -v[0];
+    res[3][2] = v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = -v[0];
+    res[5][1] = -v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[1];
+    res[6][1] = v[0];
+    res[6][2] = v[2];
+    res[7][0] = -v[1];
+    res[7][1] = v[0];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -22708,9 +32367,11 @@ struct FastSG_I4 {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][1]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_I4_m {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -22760,6 +32421,56 @@ struct FastSG_I4_m {
     res[15][0] = -v[1]+1./2;
     res[15][1] = v[0]+1./2;
     res[15][2] = -v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[1];
+    res[4][1] = -v[0];
+    res[4][2] = v[2];
+    res[5][0] = -v[1];
+    res[5][1] = v[0];
+    res[5][2] = -v[2];
+    res[6][0] = v[1];
+    res[6][1] = -v[0];
+    res[6][2] = v[2];
+    res[7][0] = -v[1];
+    res[7][1] = v[0];
+    res[7][2] = -v[2];
+    res[8][0] = -v[0];
+    res[8][1] = -v[1];
+    res[8][2] = v[2];
+    res[9][0] = v[0];
+    res[9][1] = v[1];
+    res[9][2] = -v[2];
+    res[10][0] = -v[0];
+    res[10][1] = -v[1];
+    res[10][2] = v[2];
+    res[11][0] = v[0];
+    res[11][1] = v[1];
+    res[11][2] = -v[2];
+    res[12][0] = -v[1];
+    res[12][1] = v[0];
+    res[12][2] = v[2];
+    res[13][0] = v[1];
+    res[13][1] = -v[0];
+    res[13][2] = -v[2];
+    res[14][0] = -v[1];
+    res[14][1] = v[0];
+    res[14][2] = v[2];
+    res[15][0] = v[1];
+    res[15][1] = -v[0];
+    res[15][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -22827,9 +32538,11 @@ struct FastSG_I4_m {
     res[15][2] = -v[2];
     phase[15] = (res[15][0]+res[15][1]+res[15][2])*1./2;
   }
+  static const short size=16;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_I4_mcm {
- static const short size=32;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -22926,6 +32639,104 @@ struct FastSG_I4_mcm {
     res[30][2] = -v[2];
     res[31][0] = v[1]+1./2;
     res[31][1] = v[0]+1./2;
+    res[31][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[1];
+    res[4][1] = -v[0];
+    res[4][2] = v[2];
+    res[5][0] = -v[1];
+    res[5][1] = v[0];
+    res[5][2] = -v[2];
+    res[6][0] = v[1];
+    res[6][1] = -v[0];
+    res[6][2] = v[2];
+    res[7][0] = -v[1];
+    res[7][1] = v[0];
+    res[7][2] = -v[2];
+    res[8][0] = -v[0];
+    res[8][1] = -v[1];
+    res[8][2] = v[2];
+    res[9][0] = v[0];
+    res[9][1] = v[1];
+    res[9][2] = -v[2];
+    res[10][0] = -v[0];
+    res[10][1] = -v[1];
+    res[10][2] = v[2];
+    res[11][0] = v[0];
+    res[11][1] = v[1];
+    res[11][2] = -v[2];
+    res[12][0] = -v[1];
+    res[12][1] = v[0];
+    res[12][2] = v[2];
+    res[13][0] = v[1];
+    res[13][1] = -v[0];
+    res[13][2] = -v[2];
+    res[14][0] = -v[1];
+    res[14][1] = v[0];
+    res[14][2] = v[2];
+    res[15][0] = v[1];
+    res[15][1] = -v[0];
+    res[15][2] = -v[2];
+    res[16][0] = v[0];
+    res[16][1] = -v[1];
+    res[16][2] = -v[2];
+    res[17][0] = -v[0];
+    res[17][1] = v[1];
+    res[17][2] = v[2];
+    res[18][0] = v[0];
+    res[18][1] = -v[1];
+    res[18][2] = -v[2];
+    res[19][0] = -v[0];
+    res[19][1] = v[1];
+    res[19][2] = v[2];
+    res[20][0] = -v[0];
+    res[20][1] = v[1];
+    res[20][2] = -v[2];
+    res[21][0] = v[0];
+    res[21][1] = -v[1];
+    res[21][2] = v[2];
+    res[22][0] = -v[0];
+    res[22][1] = v[1];
+    res[22][2] = -v[2];
+    res[23][0] = v[0];
+    res[23][1] = -v[1];
+    res[23][2] = v[2];
+    res[24][0] = v[1];
+    res[24][1] = v[0];
+    res[24][2] = -v[2];
+    res[25][0] = -v[1];
+    res[25][1] = -v[0];
+    res[25][2] = v[2];
+    res[26][0] = v[1];
+    res[26][1] = v[0];
+    res[26][2] = -v[2];
+    res[27][0] = -v[1];
+    res[27][1] = -v[0];
+    res[27][2] = v[2];
+    res[28][0] = -v[1];
+    res[28][1] = -v[0];
+    res[28][2] = -v[2];
+    res[29][0] = v[1];
+    res[29][1] = v[0];
+    res[29][2] = v[2];
+    res[30][0] = -v[1];
+    res[30][1] = -v[0];
+    res[30][2] = -v[2];
+    res[31][0] = v[1];
+    res[31][1] = v[0];
     res[31][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -23058,9 +32869,11 @@ struct FastSG_I4_mcm {
     res[31][2] = v[2];
     phase[31] = (res[31][0]+res[31][1])*1./2;
   }
+  static const short size=32;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_I4_mmm {
- static const short size=32;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -23158,6 +32971,104 @@ struct FastSG_I4_mmm {
     res[31][0] = v[1]+1./2;
     res[31][1] = v[0]+1./2;
     res[31][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[1];
+    res[4][1] = -v[0];
+    res[4][2] = v[2];
+    res[5][0] = -v[1];
+    res[5][1] = v[0];
+    res[5][2] = -v[2];
+    res[6][0] = v[1];
+    res[6][1] = -v[0];
+    res[6][2] = v[2];
+    res[7][0] = -v[1];
+    res[7][1] = v[0];
+    res[7][2] = -v[2];
+    res[8][0] = -v[0];
+    res[8][1] = -v[1];
+    res[8][2] = v[2];
+    res[9][0] = v[0];
+    res[9][1] = v[1];
+    res[9][2] = -v[2];
+    res[10][0] = -v[0];
+    res[10][1] = -v[1];
+    res[10][2] = v[2];
+    res[11][0] = v[0];
+    res[11][1] = v[1];
+    res[11][2] = -v[2];
+    res[12][0] = -v[1];
+    res[12][1] = v[0];
+    res[12][2] = v[2];
+    res[13][0] = v[1];
+    res[13][1] = -v[0];
+    res[13][2] = -v[2];
+    res[14][0] = -v[1];
+    res[14][1] = v[0];
+    res[14][2] = v[2];
+    res[15][0] = v[1];
+    res[15][1] = -v[0];
+    res[15][2] = -v[2];
+    res[16][0] = v[0];
+    res[16][1] = -v[1];
+    res[16][2] = -v[2];
+    res[17][0] = -v[0];
+    res[17][1] = v[1];
+    res[17][2] = v[2];
+    res[18][0] = v[0];
+    res[18][1] = -v[1];
+    res[18][2] = -v[2];
+    res[19][0] = -v[0];
+    res[19][1] = v[1];
+    res[19][2] = v[2];
+    res[20][0] = -v[0];
+    res[20][1] = v[1];
+    res[20][2] = -v[2];
+    res[21][0] = v[0];
+    res[21][1] = -v[1];
+    res[21][2] = v[2];
+    res[22][0] = -v[0];
+    res[22][1] = v[1];
+    res[22][2] = -v[2];
+    res[23][0] = v[0];
+    res[23][1] = -v[1];
+    res[23][2] = v[2];
+    res[24][0] = v[1];
+    res[24][1] = v[0];
+    res[24][2] = -v[2];
+    res[25][0] = -v[1];
+    res[25][1] = -v[0];
+    res[25][2] = v[2];
+    res[26][0] = v[1];
+    res[26][1] = v[0];
+    res[26][2] = -v[2];
+    res[27][0] = -v[1];
+    res[27][1] = -v[0];
+    res[27][2] = v[2];
+    res[28][0] = -v[1];
+    res[28][1] = -v[0];
+    res[28][2] = -v[2];
+    res[29][0] = v[1];
+    res[29][1] = v[0];
+    res[29][2] = v[2];
+    res[30][0] = -v[1];
+    res[30][1] = -v[0];
+    res[30][2] = -v[2];
+    res[31][0] = v[1];
+    res[31][1] = v[0];
+    res[31][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -23289,9 +33200,11 @@ struct FastSG_I4_mmm {
     res[31][2] = v[2];
     phase[31] = (res[31][0]+res[31][1]+res[31][2])*1./2;
   }
+  static const short size=32;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_I41 {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -23317,6 +33230,32 @@ struct FastSG_I41 {
     res[7][0] = v[1]+1./2;
     res[7][1] = -v[0];
     res[7][2] = v[2]+3./4;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[1];
+    res[2][1] = -v[0];
+    res[2][2] = v[2];
+    res[3][0] = v[1];
+    res[3][1] = -v[0];
+    res[3][2] = v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = -v[0];
+    res[5][1] = -v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[1];
+    res[6][1] = v[0];
+    res[6][2] = v[2];
+    res[7][0] = -v[1];
+    res[7][1] = v[0];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -23352,9 +33291,11 @@ struct FastSG_I41 {
     res[7][2] = v[2];
     phase[7] = res[7][0]*1./2+res[7][2]*3./4;
   }
+  static const short size=8;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_I41_a {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -23404,6 +33345,56 @@ struct FastSG_I41_a {
     res[15][0] = -v[1]+3./4;
     res[15][1] = v[0]+3./4;
     res[15][2] = -v[2]+3./4;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[1];
+    res[4][1] = -v[0];
+    res[4][2] = v[2];
+    res[5][0] = -v[1];
+    res[5][1] = v[0];
+    res[5][2] = -v[2];
+    res[6][0] = v[1];
+    res[6][1] = -v[0];
+    res[6][2] = v[2];
+    res[7][0] = -v[1];
+    res[7][1] = v[0];
+    res[7][2] = -v[2];
+    res[8][0] = -v[0];
+    res[8][1] = -v[1];
+    res[8][2] = v[2];
+    res[9][0] = v[0];
+    res[9][1] = v[1];
+    res[9][2] = -v[2];
+    res[10][0] = -v[0];
+    res[10][1] = -v[1];
+    res[10][2] = v[2];
+    res[11][0] = v[0];
+    res[11][1] = v[1];
+    res[11][2] = -v[2];
+    res[12][0] = -v[1];
+    res[12][1] = v[0];
+    res[12][2] = v[2];
+    res[13][0] = v[1];
+    res[13][1] = -v[0];
+    res[13][2] = -v[2];
+    res[14][0] = -v[1];
+    res[14][1] = v[0];
+    res[14][2] = v[2];
+    res[15][0] = v[1];
+    res[15][1] = -v[0];
+    res[15][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -23471,9 +33462,11 @@ struct FastSG_I41_a {
     res[15][2] = -v[2];
     phase[15] = (res[15][0]+res[15][1]+res[15][2])*3./4;
   }
+  static const short size=16;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_I41_acd {
- static const short size=32;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -23571,6 +33564,104 @@ struct FastSG_I41_acd {
     res[31][0] = v[1]+3./4;
     res[31][1] = v[0]+3./4;
     res[31][2] = v[2]+3./4;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[1];
+    res[4][1] = -v[0];
+    res[4][2] = v[2];
+    res[5][0] = -v[1];
+    res[5][1] = v[0];
+    res[5][2] = -v[2];
+    res[6][0] = v[1];
+    res[6][1] = -v[0];
+    res[6][2] = v[2];
+    res[7][0] = -v[1];
+    res[7][1] = v[0];
+    res[7][2] = -v[2];
+    res[8][0] = -v[0];
+    res[8][1] = -v[1];
+    res[8][2] = v[2];
+    res[9][0] = v[0];
+    res[9][1] = v[1];
+    res[9][2] = -v[2];
+    res[10][0] = -v[0];
+    res[10][1] = -v[1];
+    res[10][2] = v[2];
+    res[11][0] = v[0];
+    res[11][1] = v[1];
+    res[11][2] = -v[2];
+    res[12][0] = -v[1];
+    res[12][1] = v[0];
+    res[12][2] = v[2];
+    res[13][0] = v[1];
+    res[13][1] = -v[0];
+    res[13][2] = -v[2];
+    res[14][0] = -v[1];
+    res[14][1] = v[0];
+    res[14][2] = v[2];
+    res[15][0] = v[1];
+    res[15][1] = -v[0];
+    res[15][2] = -v[2];
+    res[16][0] = v[0];
+    res[16][1] = -v[1];
+    res[16][2] = -v[2];
+    res[17][0] = -v[0];
+    res[17][1] = v[1];
+    res[17][2] = v[2];
+    res[18][0] = v[0];
+    res[18][1] = -v[1];
+    res[18][2] = -v[2];
+    res[19][0] = -v[0];
+    res[19][1] = v[1];
+    res[19][2] = v[2];
+    res[20][0] = -v[0];
+    res[20][1] = v[1];
+    res[20][2] = -v[2];
+    res[21][0] = v[0];
+    res[21][1] = -v[1];
+    res[21][2] = v[2];
+    res[22][0] = -v[0];
+    res[22][1] = v[1];
+    res[22][2] = -v[2];
+    res[23][0] = v[0];
+    res[23][1] = -v[1];
+    res[23][2] = v[2];
+    res[24][0] = v[1];
+    res[24][1] = v[0];
+    res[24][2] = -v[2];
+    res[25][0] = -v[1];
+    res[25][1] = -v[0];
+    res[25][2] = v[2];
+    res[26][0] = v[1];
+    res[26][1] = v[0];
+    res[26][2] = -v[2];
+    res[27][0] = -v[1];
+    res[27][1] = -v[0];
+    res[27][2] = v[2];
+    res[28][0] = -v[1];
+    res[28][1] = -v[0];
+    res[28][2] = -v[2];
+    res[29][0] = v[1];
+    res[29][1] = v[0];
+    res[29][2] = v[2];
+    res[30][0] = -v[1];
+    res[30][1] = -v[0];
+    res[30][2] = -v[2];
+    res[31][0] = v[1];
+    res[31][1] = v[0];
+    res[31][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -23702,9 +33793,11 @@ struct FastSG_I41_acd {
     res[31][2] = v[2];
     phase[31] = (res[31][0]+res[31][1]+res[31][2])*3./4;
   }
+  static const short size=32;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_I41_amd {
- static const short size=32;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -23802,6 +33895,104 @@ struct FastSG_I41_amd {
     res[31][0] = v[1]+3./4;
     res[31][1] = v[0]+3./4;
     res[31][2] = v[2]+1./4;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[1];
+    res[4][1] = -v[0];
+    res[4][2] = v[2];
+    res[5][0] = -v[1];
+    res[5][1] = v[0];
+    res[5][2] = -v[2];
+    res[6][0] = v[1];
+    res[6][1] = -v[0];
+    res[6][2] = v[2];
+    res[7][0] = -v[1];
+    res[7][1] = v[0];
+    res[7][2] = -v[2];
+    res[8][0] = -v[0];
+    res[8][1] = -v[1];
+    res[8][2] = v[2];
+    res[9][0] = v[0];
+    res[9][1] = v[1];
+    res[9][2] = -v[2];
+    res[10][0] = -v[0];
+    res[10][1] = -v[1];
+    res[10][2] = v[2];
+    res[11][0] = v[0];
+    res[11][1] = v[1];
+    res[11][2] = -v[2];
+    res[12][0] = -v[1];
+    res[12][1] = v[0];
+    res[12][2] = v[2];
+    res[13][0] = v[1];
+    res[13][1] = -v[0];
+    res[13][2] = -v[2];
+    res[14][0] = -v[1];
+    res[14][1] = v[0];
+    res[14][2] = v[2];
+    res[15][0] = v[1];
+    res[15][1] = -v[0];
+    res[15][2] = -v[2];
+    res[16][0] = v[0];
+    res[16][1] = -v[1];
+    res[16][2] = -v[2];
+    res[17][0] = -v[0];
+    res[17][1] = v[1];
+    res[17][2] = v[2];
+    res[18][0] = v[0];
+    res[18][1] = -v[1];
+    res[18][2] = -v[2];
+    res[19][0] = -v[0];
+    res[19][1] = v[1];
+    res[19][2] = v[2];
+    res[20][0] = -v[0];
+    res[20][1] = v[1];
+    res[20][2] = -v[2];
+    res[21][0] = v[0];
+    res[21][1] = -v[1];
+    res[21][2] = v[2];
+    res[22][0] = -v[0];
+    res[22][1] = v[1];
+    res[22][2] = -v[2];
+    res[23][0] = v[0];
+    res[23][1] = -v[1];
+    res[23][2] = v[2];
+    res[24][0] = v[1];
+    res[24][1] = v[0];
+    res[24][2] = -v[2];
+    res[25][0] = -v[1];
+    res[25][1] = -v[0];
+    res[25][2] = v[2];
+    res[26][0] = v[1];
+    res[26][1] = v[0];
+    res[26][2] = -v[2];
+    res[27][0] = -v[1];
+    res[27][1] = -v[0];
+    res[27][2] = v[2];
+    res[28][0] = -v[1];
+    res[28][1] = -v[0];
+    res[28][2] = -v[2];
+    res[29][0] = v[1];
+    res[29][1] = v[0];
+    res[29][2] = v[2];
+    res[30][0] = -v[1];
+    res[30][1] = -v[0];
+    res[30][2] = -v[2];
+    res[31][0] = v[1];
+    res[31][1] = v[0];
+    res[31][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -23933,9 +34124,11 @@ struct FastSG_I41_amd {
     res[31][2] = v[2];
     phase[31] = (res[31][0]+res[31][1])*3./4+res[31][2]*1./4;
   }
+  static const short size=32;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_I4122 {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -23985,6 +34178,56 @@ struct FastSG_I4122 {
     res[15][0] = -v[1]+1./2;
     res[15][1] = -v[0]+1./2;
     res[15][2] = -v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[1];
+    res[2][1] = -v[0];
+    res[2][2] = v[2];
+    res[3][0] = v[1];
+    res[3][1] = -v[0];
+    res[3][2] = v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = -v[0];
+    res[5][1] = -v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[1];
+    res[6][1] = v[0];
+    res[6][2] = v[2];
+    res[7][0] = -v[1];
+    res[7][1] = v[0];
+    res[7][2] = v[2];
+    res[8][0] = v[0];
+    res[8][1] = -v[1];
+    res[8][2] = -v[2];
+    res[9][0] = v[0];
+    res[9][1] = -v[1];
+    res[9][2] = -v[2];
+    res[10][0] = -v[0];
+    res[10][1] = v[1];
+    res[10][2] = -v[2];
+    res[11][0] = -v[0];
+    res[11][1] = v[1];
+    res[11][2] = -v[2];
+    res[12][0] = v[1];
+    res[12][1] = v[0];
+    res[12][2] = -v[2];
+    res[13][0] = v[1];
+    res[13][1] = v[0];
+    res[13][2] = -v[2];
+    res[14][0] = -v[1];
+    res[14][1] = -v[0];
+    res[14][2] = -v[2];
+    res[15][0] = -v[1];
+    res[15][1] = -v[0];
+    res[15][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -24052,9 +34295,11 @@ struct FastSG_I4122 {
     res[15][2] = -v[2];
     phase[15] = (res[15][0]+res[15][1]+res[15][2])*1./2;
   }
+  static const short size=16;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_I4132 {
- static const short size=48;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -24200,6 +34445,152 @@ struct FastSG_I4132 {
     res[47][0] = -v[2]+3./4;
     res[47][1] = -v[1]+3./4;
     res[47][2] = -v[0]+3./4;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[1];
+    res[2][1] = -v[0];
+    res[2][2] = v[2];
+    res[3][0] = v[1];
+    res[3][1] = -v[0];
+    res[3][2] = v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = -v[0];
+    res[5][1] = -v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[1];
+    res[6][1] = v[0];
+    res[6][2] = v[2];
+    res[7][0] = -v[1];
+    res[7][1] = v[0];
+    res[7][2] = v[2];
+    res[8][0] = v[0];
+    res[8][1] = v[2];
+    res[8][2] = -v[1];
+    res[9][0] = v[0];
+    res[9][1] = v[2];
+    res[9][2] = -v[1];
+    res[10][0] = v[0];
+    res[10][1] = -v[1];
+    res[10][2] = -v[2];
+    res[11][0] = v[0];
+    res[11][1] = -v[1];
+    res[11][2] = -v[2];
+    res[12][0] = v[0];
+    res[12][1] = -v[2];
+    res[12][2] = v[1];
+    res[13][0] = v[0];
+    res[13][1] = -v[2];
+    res[13][2] = v[1];
+    res[14][0] = -v[2];
+    res[14][1] = v[1];
+    res[14][2] = v[0];
+    res[15][0] = -v[2];
+    res[15][1] = v[1];
+    res[15][2] = v[0];
+    res[16][0] = -v[0];
+    res[16][1] = v[1];
+    res[16][2] = -v[2];
+    res[17][0] = -v[0];
+    res[17][1] = v[1];
+    res[17][2] = -v[2];
+    res[18][0] = v[2];
+    res[18][1] = v[1];
+    res[18][2] = -v[0];
+    res[19][0] = v[2];
+    res[19][1] = v[1];
+    res[19][2] = -v[0];
+    res[20][0] = v[1];
+    res[20][1] = v[2];
+    res[20][2] = v[0];
+    res[21][0] = v[1];
+    res[21][1] = v[2];
+    res[21][2] = v[0];
+    res[22][0] = v[2];
+    res[22][1] = v[0];
+    res[22][2] = v[1];
+    res[23][0] = v[2];
+    res[23][1] = v[0];
+    res[23][2] = v[1];
+    res[24][0] = v[2];
+    res[24][1] = -v[0];
+    res[24][2] = -v[1];
+    res[25][0] = v[2];
+    res[25][1] = -v[0];
+    res[25][2] = -v[1];
+    res[26][0] = -v[1];
+    res[26][1] = -v[2];
+    res[26][2] = v[0];
+    res[27][0] = -v[1];
+    res[27][1] = -v[2];
+    res[27][2] = v[0];
+    res[28][0] = -v[2];
+    res[28][1] = -v[0];
+    res[28][2] = v[1];
+    res[29][0] = -v[2];
+    res[29][1] = -v[0];
+    res[29][2] = v[1];
+    res[30][0] = -v[1];
+    res[30][1] = v[2];
+    res[30][2] = -v[0];
+    res[31][0] = -v[1];
+    res[31][1] = v[2];
+    res[31][2] = -v[0];
+    res[32][0] = v[1];
+    res[32][1] = -v[2];
+    res[32][2] = -v[0];
+    res[33][0] = v[1];
+    res[33][1] = -v[2];
+    res[33][2] = -v[0];
+    res[34][0] = -v[2];
+    res[34][1] = v[0];
+    res[34][2] = -v[1];
+    res[35][0] = -v[2];
+    res[35][1] = v[0];
+    res[35][2] = -v[1];
+    res[36][0] = v[1];
+    res[36][1] = v[0];
+    res[36][2] = -v[2];
+    res[37][0] = v[1];
+    res[37][1] = v[0];
+    res[37][2] = -v[2];
+    res[38][0] = -v[1];
+    res[38][1] = -v[0];
+    res[38][2] = -v[2];
+    res[39][0] = -v[1];
+    res[39][1] = -v[0];
+    res[39][2] = -v[2];
+    res[40][0] = -v[0];
+    res[40][1] = v[2];
+    res[40][2] = v[1];
+    res[41][0] = -v[0];
+    res[41][1] = v[2];
+    res[41][2] = v[1];
+    res[42][0] = -v[0];
+    res[42][1] = -v[2];
+    res[42][2] = -v[1];
+    res[43][0] = -v[0];
+    res[43][1] = -v[2];
+    res[43][2] = -v[1];
+    res[44][0] = v[2];
+    res[44][1] = -v[1];
+    res[44][2] = v[0];
+    res[45][0] = v[2];
+    res[45][1] = -v[1];
+    res[45][2] = v[0];
+    res[46][0] = -v[2];
+    res[46][1] = -v[1];
+    res[46][2] = -v[0];
+    res[47][0] = -v[2];
+    res[47][1] = -v[1];
+    res[47][2] = -v[0];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -24395,9 +34786,11 @@ struct FastSG_I4132 {
     res[47][2] = -v[0];
     phase[47] = (res[47][0]+res[47][1]+res[47][2])*3./4;
   }
+  static const short size=48;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_I41cd {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -24447,6 +34840,56 @@ struct FastSG_I41cd {
     res[15][0] = v[1];
     res[15][1] = v[0]+1./2;
     res[15][2] = v[2]+3./4;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[1];
+    res[2][1] = -v[0];
+    res[2][2] = v[2];
+    res[3][0] = v[1];
+    res[3][1] = -v[0];
+    res[3][2] = v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = -v[0];
+    res[5][1] = -v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[1];
+    res[6][1] = v[0];
+    res[6][2] = v[2];
+    res[7][0] = -v[1];
+    res[7][1] = v[0];
+    res[7][2] = v[2];
+    res[8][0] = -v[0];
+    res[8][1] = v[1];
+    res[8][2] = v[2];
+    res[9][0] = -v[0];
+    res[9][1] = v[1];
+    res[9][2] = v[2];
+    res[10][0] = v[0];
+    res[10][1] = -v[1];
+    res[10][2] = v[2];
+    res[11][0] = v[0];
+    res[11][1] = -v[1];
+    res[11][2] = v[2];
+    res[12][0] = -v[1];
+    res[12][1] = -v[0];
+    res[12][2] = v[2];
+    res[13][0] = -v[1];
+    res[13][1] = -v[0];
+    res[13][2] = v[2];
+    res[14][0] = v[1];
+    res[14][1] = v[0];
+    res[14][2] = v[2];
+    res[15][0] = v[1];
+    res[15][1] = v[0];
+    res[15][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -24514,9 +34957,11 @@ struct FastSG_I41cd {
     res[15][2] = v[2];
     phase[15] = res[15][1]*1./2+res[15][2]*3./4;
   }
+  static const short size=16;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_I41md {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -24566,6 +35011,56 @@ struct FastSG_I41md {
     res[15][0] = v[1]+1./2;
     res[15][1] = v[0];
     res[15][2] = v[2]+3./4;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[1];
+    res[2][1] = -v[0];
+    res[2][2] = v[2];
+    res[3][0] = v[1];
+    res[3][1] = -v[0];
+    res[3][2] = v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = -v[0];
+    res[5][1] = -v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[1];
+    res[6][1] = v[0];
+    res[6][2] = v[2];
+    res[7][0] = -v[1];
+    res[7][1] = v[0];
+    res[7][2] = v[2];
+    res[8][0] = -v[0];
+    res[8][1] = v[1];
+    res[8][2] = v[2];
+    res[9][0] = -v[0];
+    res[9][1] = v[1];
+    res[9][2] = v[2];
+    res[10][0] = v[0];
+    res[10][1] = -v[1];
+    res[10][2] = v[2];
+    res[11][0] = v[0];
+    res[11][1] = -v[1];
+    res[11][2] = v[2];
+    res[12][0] = -v[1];
+    res[12][1] = -v[0];
+    res[12][2] = v[2];
+    res[13][0] = -v[1];
+    res[13][1] = -v[0];
+    res[13][2] = v[2];
+    res[14][0] = v[1];
+    res[14][1] = v[0];
+    res[14][2] = v[2];
+    res[15][0] = v[1];
+    res[15][1] = v[0];
+    res[15][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -24633,9 +35128,11 @@ struct FastSG_I41md {
     res[15][2] = v[2];
     phase[15] = res[15][0]*1./2+res[15][2]*3./4;
   }
+  static const short size=16;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_I422 {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -24685,6 +35182,56 @@ struct FastSG_I422 {
     res[15][0] = -v[1]+1./2;
     res[15][1] = -v[0]+1./2;
     res[15][2] = -v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[1];
+    res[2][1] = -v[0];
+    res[2][2] = v[2];
+    res[3][0] = v[1];
+    res[3][1] = -v[0];
+    res[3][2] = v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = -v[0];
+    res[5][1] = -v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[1];
+    res[6][1] = v[0];
+    res[6][2] = v[2];
+    res[7][0] = -v[1];
+    res[7][1] = v[0];
+    res[7][2] = v[2];
+    res[8][0] = v[0];
+    res[8][1] = -v[1];
+    res[8][2] = -v[2];
+    res[9][0] = v[0];
+    res[9][1] = -v[1];
+    res[9][2] = -v[2];
+    res[10][0] = -v[0];
+    res[10][1] = v[1];
+    res[10][2] = -v[2];
+    res[11][0] = -v[0];
+    res[11][1] = v[1];
+    res[11][2] = -v[2];
+    res[12][0] = v[1];
+    res[12][1] = v[0];
+    res[12][2] = -v[2];
+    res[13][0] = v[1];
+    res[13][1] = v[0];
+    res[13][2] = -v[2];
+    res[14][0] = -v[1];
+    res[14][1] = -v[0];
+    res[14][2] = -v[2];
+    res[15][0] = -v[1];
+    res[15][1] = -v[0];
+    res[15][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -24752,9 +35299,11 @@ struct FastSG_I422 {
     res[15][2] = -v[2];
     phase[15] = (res[15][0]+res[15][1]+res[15][2])*1./2;
   }
+  static const short size=16;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_I432 {
- static const short size=48;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -24900,6 +35449,152 @@ struct FastSG_I432 {
     res[47][0] = -v[2]+1./2;
     res[47][1] = -v[1]+1./2;
     res[47][2] = -v[0]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[1];
+    res[2][1] = -v[0];
+    res[2][2] = v[2];
+    res[3][0] = v[1];
+    res[3][1] = -v[0];
+    res[3][2] = v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = -v[0];
+    res[5][1] = -v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[1];
+    res[6][1] = v[0];
+    res[6][2] = v[2];
+    res[7][0] = -v[1];
+    res[7][1] = v[0];
+    res[7][2] = v[2];
+    res[8][0] = v[0];
+    res[8][1] = v[2];
+    res[8][2] = -v[1];
+    res[9][0] = v[0];
+    res[9][1] = v[2];
+    res[9][2] = -v[1];
+    res[10][0] = v[0];
+    res[10][1] = -v[1];
+    res[10][2] = -v[2];
+    res[11][0] = v[0];
+    res[11][1] = -v[1];
+    res[11][2] = -v[2];
+    res[12][0] = v[0];
+    res[12][1] = -v[2];
+    res[12][2] = v[1];
+    res[13][0] = v[0];
+    res[13][1] = -v[2];
+    res[13][2] = v[1];
+    res[14][0] = -v[2];
+    res[14][1] = v[1];
+    res[14][2] = v[0];
+    res[15][0] = -v[2];
+    res[15][1] = v[1];
+    res[15][2] = v[0];
+    res[16][0] = -v[0];
+    res[16][1] = v[1];
+    res[16][2] = -v[2];
+    res[17][0] = -v[0];
+    res[17][1] = v[1];
+    res[17][2] = -v[2];
+    res[18][0] = v[2];
+    res[18][1] = v[1];
+    res[18][2] = -v[0];
+    res[19][0] = v[2];
+    res[19][1] = v[1];
+    res[19][2] = -v[0];
+    res[20][0] = v[1];
+    res[20][1] = v[2];
+    res[20][2] = v[0];
+    res[21][0] = v[1];
+    res[21][1] = v[2];
+    res[21][2] = v[0];
+    res[22][0] = v[2];
+    res[22][1] = v[0];
+    res[22][2] = v[1];
+    res[23][0] = v[2];
+    res[23][1] = v[0];
+    res[23][2] = v[1];
+    res[24][0] = v[2];
+    res[24][1] = -v[0];
+    res[24][2] = -v[1];
+    res[25][0] = v[2];
+    res[25][1] = -v[0];
+    res[25][2] = -v[1];
+    res[26][0] = -v[1];
+    res[26][1] = -v[2];
+    res[26][2] = v[0];
+    res[27][0] = -v[1];
+    res[27][1] = -v[2];
+    res[27][2] = v[0];
+    res[28][0] = -v[2];
+    res[28][1] = -v[0];
+    res[28][2] = v[1];
+    res[29][0] = -v[2];
+    res[29][1] = -v[0];
+    res[29][2] = v[1];
+    res[30][0] = -v[1];
+    res[30][1] = v[2];
+    res[30][2] = -v[0];
+    res[31][0] = -v[1];
+    res[31][1] = v[2];
+    res[31][2] = -v[0];
+    res[32][0] = v[1];
+    res[32][1] = -v[2];
+    res[32][2] = -v[0];
+    res[33][0] = v[1];
+    res[33][1] = -v[2];
+    res[33][2] = -v[0];
+    res[34][0] = -v[2];
+    res[34][1] = v[0];
+    res[34][2] = -v[1];
+    res[35][0] = -v[2];
+    res[35][1] = v[0];
+    res[35][2] = -v[1];
+    res[36][0] = v[1];
+    res[36][1] = v[0];
+    res[36][2] = -v[2];
+    res[37][0] = v[1];
+    res[37][1] = v[0];
+    res[37][2] = -v[2];
+    res[38][0] = -v[1];
+    res[38][1] = -v[0];
+    res[38][2] = -v[2];
+    res[39][0] = -v[1];
+    res[39][1] = -v[0];
+    res[39][2] = -v[2];
+    res[40][0] = -v[0];
+    res[40][1] = v[2];
+    res[40][2] = v[1];
+    res[41][0] = -v[0];
+    res[41][1] = v[2];
+    res[41][2] = v[1];
+    res[42][0] = -v[0];
+    res[42][1] = -v[2];
+    res[42][2] = -v[1];
+    res[43][0] = -v[0];
+    res[43][1] = -v[2];
+    res[43][2] = -v[1];
+    res[44][0] = v[2];
+    res[44][1] = -v[1];
+    res[44][2] = v[0];
+    res[45][0] = v[2];
+    res[45][1] = -v[1];
+    res[45][2] = v[0];
+    res[46][0] = -v[2];
+    res[46][1] = -v[1];
+    res[46][2] = -v[0];
+    res[47][0] = -v[2];
+    res[47][1] = -v[1];
+    res[47][2] = -v[0];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -25095,9 +35790,11 @@ struct FastSG_I432 {
     res[47][2] = -v[0];
     phase[47] = (res[47][0]+res[47][1]+res[47][2])*1./2;
   }
+  static const short size=48;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_I4cm {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -25146,6 +35843,56 @@ struct FastSG_I4cm {
     res[14][2] = v[2]+1./2;
     res[15][0] = v[1]+1./2;
     res[15][1] = v[0]+1./2;
+    res[15][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[1];
+    res[2][1] = -v[0];
+    res[2][2] = v[2];
+    res[3][0] = v[1];
+    res[3][1] = -v[0];
+    res[3][2] = v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = -v[0];
+    res[5][1] = -v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[1];
+    res[6][1] = v[0];
+    res[6][2] = v[2];
+    res[7][0] = -v[1];
+    res[7][1] = v[0];
+    res[7][2] = v[2];
+    res[8][0] = -v[0];
+    res[8][1] = v[1];
+    res[8][2] = v[2];
+    res[9][0] = -v[0];
+    res[9][1] = v[1];
+    res[9][2] = v[2];
+    res[10][0] = v[0];
+    res[10][1] = -v[1];
+    res[10][2] = v[2];
+    res[11][0] = v[0];
+    res[11][1] = -v[1];
+    res[11][2] = v[2];
+    res[12][0] = -v[1];
+    res[12][1] = -v[0];
+    res[12][2] = v[2];
+    res[13][0] = -v[1];
+    res[13][1] = -v[0];
+    res[13][2] = v[2];
+    res[14][0] = v[1];
+    res[14][1] = v[0];
+    res[14][2] = v[2];
+    res[15][0] = v[1];
+    res[15][1] = v[0];
     res[15][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -25214,9 +35961,11 @@ struct FastSG_I4cm {
     res[15][2] = v[2];
     phase[15] = (res[15][0]+res[15][1])*1./2;
   }
+  static const short size=16;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_I4mm {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -25266,6 +36015,56 @@ struct FastSG_I4mm {
     res[15][0] = v[1]+1./2;
     res[15][1] = v[0]+1./2;
     res[15][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[1];
+    res[2][1] = -v[0];
+    res[2][2] = v[2];
+    res[3][0] = v[1];
+    res[3][1] = -v[0];
+    res[3][2] = v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = -v[0];
+    res[5][1] = -v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[1];
+    res[6][1] = v[0];
+    res[6][2] = v[2];
+    res[7][0] = -v[1];
+    res[7][1] = v[0];
+    res[7][2] = v[2];
+    res[8][0] = -v[0];
+    res[8][1] = v[1];
+    res[8][2] = v[2];
+    res[9][0] = -v[0];
+    res[9][1] = v[1];
+    res[9][2] = v[2];
+    res[10][0] = v[0];
+    res[10][1] = -v[1];
+    res[10][2] = v[2];
+    res[11][0] = v[0];
+    res[11][1] = -v[1];
+    res[11][2] = v[2];
+    res[12][0] = -v[1];
+    res[12][1] = -v[0];
+    res[12][2] = v[2];
+    res[13][0] = -v[1];
+    res[13][1] = -v[0];
+    res[13][2] = v[2];
+    res[14][0] = v[1];
+    res[14][1] = v[0];
+    res[14][2] = v[2];
+    res[15][0] = v[1];
+    res[15][1] = v[0];
+    res[15][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -25333,9 +36132,11 @@ struct FastSG_I4mm {
     res[15][2] = v[2];
     phase[15] = (res[15][0]+res[15][1]+res[15][2])*1./2;
   }
+  static const short size=16;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Ia {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -25349,6 +36150,20 @@ struct FastSG_Ia {
     res[3][0] = v[0];
     res[3][1] = -v[1]+1./2;
     res[3][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -25368,9 +36183,11 @@ struct FastSG_Ia {
     res[3][2] = v[2];
     phase[3] = (res[3][1]+res[3][2])*1./2;
   }
+  static const short size=4;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Ia_3 {
- static const short size=48;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -25516,6 +36333,152 @@ struct FastSG_Ia_3 {
     res[47][0] = v[0];
     res[47][1] = -v[1]+1./2;
     res[47][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[1];
+    res[4][1] = v[2];
+    res[4][2] = v[0];
+    res[5][0] = -v[1];
+    res[5][1] = -v[2];
+    res[5][2] = -v[0];
+    res[6][0] = v[1];
+    res[6][1] = v[2];
+    res[6][2] = v[0];
+    res[7][0] = -v[1];
+    res[7][1] = -v[2];
+    res[7][2] = -v[0];
+    res[8][0] = v[2];
+    res[8][1] = v[0];
+    res[8][2] = v[1];
+    res[9][0] = -v[2];
+    res[9][1] = -v[0];
+    res[9][2] = -v[1];
+    res[10][0] = v[2];
+    res[10][1] = v[0];
+    res[10][2] = v[1];
+    res[11][0] = -v[2];
+    res[11][1] = -v[0];
+    res[11][2] = -v[1];
+    res[12][0] = v[2];
+    res[12][1] = -v[0];
+    res[12][2] = -v[1];
+    res[13][0] = -v[2];
+    res[13][1] = v[0];
+    res[13][2] = v[1];
+    res[14][0] = v[2];
+    res[14][1] = -v[0];
+    res[14][2] = -v[1];
+    res[15][0] = -v[2];
+    res[15][1] = v[0];
+    res[15][2] = v[1];
+    res[16][0] = -v[1];
+    res[16][1] = -v[2];
+    res[16][2] = v[0];
+    res[17][0] = v[1];
+    res[17][1] = v[2];
+    res[17][2] = -v[0];
+    res[18][0] = -v[1];
+    res[18][1] = -v[2];
+    res[18][2] = v[0];
+    res[19][0] = v[1];
+    res[19][1] = v[2];
+    res[19][2] = -v[0];
+    res[20][0] = -v[2];
+    res[20][1] = -v[0];
+    res[20][2] = v[1];
+    res[21][0] = v[2];
+    res[21][1] = v[0];
+    res[21][2] = -v[1];
+    res[22][0] = -v[2];
+    res[22][1] = -v[0];
+    res[22][2] = v[1];
+    res[23][0] = v[2];
+    res[23][1] = v[0];
+    res[23][2] = -v[1];
+    res[24][0] = -v[1];
+    res[24][1] = v[2];
+    res[24][2] = -v[0];
+    res[25][0] = v[1];
+    res[25][1] = -v[2];
+    res[25][2] = v[0];
+    res[26][0] = -v[1];
+    res[26][1] = v[2];
+    res[26][2] = -v[0];
+    res[27][0] = v[1];
+    res[27][1] = -v[2];
+    res[27][2] = v[0];
+    res[28][0] = v[1];
+    res[28][1] = -v[2];
+    res[28][2] = -v[0];
+    res[29][0] = -v[1];
+    res[29][1] = v[2];
+    res[29][2] = v[0];
+    res[30][0] = v[1];
+    res[30][1] = -v[2];
+    res[30][2] = -v[0];
+    res[31][0] = -v[1];
+    res[31][1] = v[2];
+    res[31][2] = v[0];
+    res[32][0] = -v[2];
+    res[32][1] = v[0];
+    res[32][2] = -v[1];
+    res[33][0] = v[2];
+    res[33][1] = -v[0];
+    res[33][2] = v[1];
+    res[34][0] = -v[2];
+    res[34][1] = v[0];
+    res[34][2] = -v[1];
+    res[35][0] = v[2];
+    res[35][1] = -v[0];
+    res[35][2] = v[1];
+    res[36][0] = -v[0];
+    res[36][1] = -v[1];
+    res[36][2] = v[2];
+    res[37][0] = v[0];
+    res[37][1] = v[1];
+    res[37][2] = -v[2];
+    res[38][0] = -v[0];
+    res[38][1] = -v[1];
+    res[38][2] = v[2];
+    res[39][0] = v[0];
+    res[39][1] = v[1];
+    res[39][2] = -v[2];
+    res[40][0] = v[0];
+    res[40][1] = -v[1];
+    res[40][2] = -v[2];
+    res[41][0] = -v[0];
+    res[41][1] = v[1];
+    res[41][2] = v[2];
+    res[42][0] = v[0];
+    res[42][1] = -v[1];
+    res[42][2] = -v[2];
+    res[43][0] = -v[0];
+    res[43][1] = v[1];
+    res[43][2] = v[2];
+    res[44][0] = -v[0];
+    res[44][1] = v[1];
+    res[44][2] = -v[2];
+    res[45][0] = v[0];
+    res[45][1] = -v[1];
+    res[45][2] = v[2];
+    res[46][0] = -v[0];
+    res[46][1] = v[1];
+    res[46][2] = -v[2];
+    res[47][0] = v[0];
+    res[47][1] = -v[1];
+    res[47][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -25711,9 +36674,11 @@ struct FastSG_Ia_3 {
     res[47][2] = v[2];
     phase[47] = (res[47][1]+res[47][2])*1./2;
   }
+  static const short size=48;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Ia_3d {
- static const short size=96;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -26003,6 +36968,296 @@ struct FastSG_Ia_3d {
     res[95][0] = v[2]+3./4;
     res[95][1] = v[1]+3./4;
     res[95][2] = v[0]+3./4;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[1];
+    res[4][1] = -v[0];
+    res[4][2] = v[2];
+    res[5][0] = -v[1];
+    res[5][1] = v[0];
+    res[5][2] = -v[2];
+    res[6][0] = v[1];
+    res[6][1] = -v[0];
+    res[6][2] = v[2];
+    res[7][0] = -v[1];
+    res[7][1] = v[0];
+    res[7][2] = -v[2];
+    res[8][0] = -v[0];
+    res[8][1] = -v[1];
+    res[8][2] = v[2];
+    res[9][0] = v[0];
+    res[9][1] = v[1];
+    res[9][2] = -v[2];
+    res[10][0] = -v[0];
+    res[10][1] = -v[1];
+    res[10][2] = v[2];
+    res[11][0] = v[0];
+    res[11][1] = v[1];
+    res[11][2] = -v[2];
+    res[12][0] = -v[1];
+    res[12][1] = v[0];
+    res[12][2] = v[2];
+    res[13][0] = v[1];
+    res[13][1] = -v[0];
+    res[13][2] = -v[2];
+    res[14][0] = -v[1];
+    res[14][1] = v[0];
+    res[14][2] = v[2];
+    res[15][0] = v[1];
+    res[15][1] = -v[0];
+    res[15][2] = -v[2];
+    res[16][0] = v[0];
+    res[16][1] = v[2];
+    res[16][2] = -v[1];
+    res[17][0] = -v[0];
+    res[17][1] = -v[2];
+    res[17][2] = v[1];
+    res[18][0] = v[0];
+    res[18][1] = v[2];
+    res[18][2] = -v[1];
+    res[19][0] = -v[0];
+    res[19][1] = -v[2];
+    res[19][2] = v[1];
+    res[20][0] = v[0];
+    res[20][1] = -v[1];
+    res[20][2] = -v[2];
+    res[21][0] = -v[0];
+    res[21][1] = v[1];
+    res[21][2] = v[2];
+    res[22][0] = v[0];
+    res[22][1] = -v[1];
+    res[22][2] = -v[2];
+    res[23][0] = -v[0];
+    res[23][1] = v[1];
+    res[23][2] = v[2];
+    res[24][0] = v[0];
+    res[24][1] = -v[2];
+    res[24][2] = v[1];
+    res[25][0] = -v[0];
+    res[25][1] = v[2];
+    res[25][2] = -v[1];
+    res[26][0] = v[0];
+    res[26][1] = -v[2];
+    res[26][2] = v[1];
+    res[27][0] = -v[0];
+    res[27][1] = v[2];
+    res[27][2] = -v[1];
+    res[28][0] = -v[2];
+    res[28][1] = v[1];
+    res[28][2] = v[0];
+    res[29][0] = v[2];
+    res[29][1] = -v[1];
+    res[29][2] = -v[0];
+    res[30][0] = -v[2];
+    res[30][1] = v[1];
+    res[30][2] = v[0];
+    res[31][0] = v[2];
+    res[31][1] = -v[1];
+    res[31][2] = -v[0];
+    res[32][0] = -v[0];
+    res[32][1] = v[1];
+    res[32][2] = -v[2];
+    res[33][0] = v[0];
+    res[33][1] = -v[1];
+    res[33][2] = v[2];
+    res[34][0] = -v[0];
+    res[34][1] = v[1];
+    res[34][2] = -v[2];
+    res[35][0] = v[0];
+    res[35][1] = -v[1];
+    res[35][2] = v[2];
+    res[36][0] = v[2];
+    res[36][1] = v[1];
+    res[36][2] = -v[0];
+    res[37][0] = -v[2];
+    res[37][1] = -v[1];
+    res[37][2] = v[0];
+    res[38][0] = v[2];
+    res[38][1] = v[1];
+    res[38][2] = -v[0];
+    res[39][0] = -v[2];
+    res[39][1] = -v[1];
+    res[39][2] = v[0];
+    res[40][0] = v[1];
+    res[40][1] = v[2];
+    res[40][2] = v[0];
+    res[41][0] = -v[1];
+    res[41][1] = -v[2];
+    res[41][2] = -v[0];
+    res[42][0] = v[1];
+    res[42][1] = v[2];
+    res[42][2] = v[0];
+    res[43][0] = -v[1];
+    res[43][1] = -v[2];
+    res[43][2] = -v[0];
+    res[44][0] = v[2];
+    res[44][1] = v[0];
+    res[44][2] = v[1];
+    res[45][0] = -v[2];
+    res[45][1] = -v[0];
+    res[45][2] = -v[1];
+    res[46][0] = v[2];
+    res[46][1] = v[0];
+    res[46][2] = v[1];
+    res[47][0] = -v[2];
+    res[47][1] = -v[0];
+    res[47][2] = -v[1];
+    res[48][0] = v[2];
+    res[48][1] = -v[0];
+    res[48][2] = -v[1];
+    res[49][0] = -v[2];
+    res[49][1] = v[0];
+    res[49][2] = v[1];
+    res[50][0] = v[2];
+    res[50][1] = -v[0];
+    res[50][2] = -v[1];
+    res[51][0] = -v[2];
+    res[51][1] = v[0];
+    res[51][2] = v[1];
+    res[52][0] = -v[1];
+    res[52][1] = -v[2];
+    res[52][2] = v[0];
+    res[53][0] = v[1];
+    res[53][1] = v[2];
+    res[53][2] = -v[0];
+    res[54][0] = -v[1];
+    res[54][1] = -v[2];
+    res[54][2] = v[0];
+    res[55][0] = v[1];
+    res[55][1] = v[2];
+    res[55][2] = -v[0];
+    res[56][0] = -v[2];
+    res[56][1] = -v[0];
+    res[56][2] = v[1];
+    res[57][0] = v[2];
+    res[57][1] = v[0];
+    res[57][2] = -v[1];
+    res[58][0] = -v[2];
+    res[58][1] = -v[0];
+    res[58][2] = v[1];
+    res[59][0] = v[2];
+    res[59][1] = v[0];
+    res[59][2] = -v[1];
+    res[60][0] = -v[1];
+    res[60][1] = v[2];
+    res[60][2] = -v[0];
+    res[61][0] = v[1];
+    res[61][1] = -v[2];
+    res[61][2] = v[0];
+    res[62][0] = -v[1];
+    res[62][1] = v[2];
+    res[62][2] = -v[0];
+    res[63][0] = v[1];
+    res[63][1] = -v[2];
+    res[63][2] = v[0];
+    res[64][0] = v[1];
+    res[64][1] = -v[2];
+    res[64][2] = -v[0];
+    res[65][0] = -v[1];
+    res[65][1] = v[2];
+    res[65][2] = v[0];
+    res[66][0] = v[1];
+    res[66][1] = -v[2];
+    res[66][2] = -v[0];
+    res[67][0] = -v[1];
+    res[67][1] = v[2];
+    res[67][2] = v[0];
+    res[68][0] = -v[2];
+    res[68][1] = v[0];
+    res[68][2] = -v[1];
+    res[69][0] = v[2];
+    res[69][1] = -v[0];
+    res[69][2] = v[1];
+    res[70][0] = -v[2];
+    res[70][1] = v[0];
+    res[70][2] = -v[1];
+    res[71][0] = v[2];
+    res[71][1] = -v[0];
+    res[71][2] = v[1];
+    res[72][0] = v[1];
+    res[72][1] = v[0];
+    res[72][2] = -v[2];
+    res[73][0] = -v[1];
+    res[73][1] = -v[0];
+    res[73][2] = v[2];
+    res[74][0] = v[1];
+    res[74][1] = v[0];
+    res[74][2] = -v[2];
+    res[75][0] = -v[1];
+    res[75][1] = -v[0];
+    res[75][2] = v[2];
+    res[76][0] = -v[1];
+    res[76][1] = -v[0];
+    res[76][2] = -v[2];
+    res[77][0] = v[1];
+    res[77][1] = v[0];
+    res[77][2] = v[2];
+    res[78][0] = -v[1];
+    res[78][1] = -v[0];
+    res[78][2] = -v[2];
+    res[79][0] = v[1];
+    res[79][1] = v[0];
+    res[79][2] = v[2];
+    res[80][0] = -v[0];
+    res[80][1] = v[2];
+    res[80][2] = v[1];
+    res[81][0] = v[0];
+    res[81][1] = -v[2];
+    res[81][2] = -v[1];
+    res[82][0] = -v[0];
+    res[82][1] = v[2];
+    res[82][2] = v[1];
+    res[83][0] = v[0];
+    res[83][1] = -v[2];
+    res[83][2] = -v[1];
+    res[84][0] = -v[0];
+    res[84][1] = -v[2];
+    res[84][2] = -v[1];
+    res[85][0] = v[0];
+    res[85][1] = v[2];
+    res[85][2] = v[1];
+    res[86][0] = -v[0];
+    res[86][1] = -v[2];
+    res[86][2] = -v[1];
+    res[87][0] = v[0];
+    res[87][1] = v[2];
+    res[87][2] = v[1];
+    res[88][0] = v[2];
+    res[88][1] = -v[1];
+    res[88][2] = v[0];
+    res[89][0] = -v[2];
+    res[89][1] = v[1];
+    res[89][2] = -v[0];
+    res[90][0] = v[2];
+    res[90][1] = -v[1];
+    res[90][2] = v[0];
+    res[91][0] = -v[2];
+    res[91][1] = v[1];
+    res[91][2] = -v[0];
+    res[92][0] = -v[2];
+    res[92][1] = -v[1];
+    res[92][2] = -v[0];
+    res[93][0] = v[2];
+    res[93][1] = v[1];
+    res[93][2] = v[0];
+    res[94][0] = -v[2];
+    res[94][1] = -v[1];
+    res[94][2] = -v[0];
+    res[95][0] = v[2];
+    res[95][1] = v[1];
+    res[95][2] = v[0];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -26390,9 +37645,11 @@ struct FastSG_Ia_3d {
     res[95][2] = v[0];
     phase[95] = (res[95][0]+res[95][1]+res[95][2])*3./4;
   }
+  static const short size=96;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Ib11 {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -26406,6 +37663,20 @@ struct FastSG_Ib11 {
     res[3][0] = -v[0]+1./2;
     res[3][1] = v[1];
     res[3][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = v[1];
+    res[3][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -26425,9 +37696,11 @@ struct FastSG_Ib11 {
     res[3][2] = v[2];
     phase[3] = (res[3][0]+res[3][2])*1./2;
   }
+  static const short size=4;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Iba2 {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -26452,6 +37725,32 @@ struct FastSG_Iba2 {
     res[6][2] = v[2]+1./2;
     res[7][0] = v[0]+1./2;
     res[7][1] = -v[1]+1./2;
+    res[7][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
+    res[4][0] = -v[0];
+    res[4][1] = v[1];
+    res[4][2] = v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
     res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -26488,9 +37787,11 @@ struct FastSG_Iba2 {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][1])*1./2;
   }
+  static const short size=8;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Ibam {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -26539,6 +37840,56 @@ struct FastSG_Ibam {
     res[14][2] = -v[2];
     res[15][0] = v[0]+1./2;
     res[15][1] = -v[1]+1./2;
+    res[15][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = v[1];
+    res[7][2] = -v[2];
+    res[8][0] = v[0];
+    res[8][1] = -v[1];
+    res[8][2] = -v[2];
+    res[9][0] = -v[0];
+    res[9][1] = v[1];
+    res[9][2] = v[2];
+    res[10][0] = v[0];
+    res[10][1] = -v[1];
+    res[10][2] = -v[2];
+    res[11][0] = -v[0];
+    res[11][1] = v[1];
+    res[11][2] = v[2];
+    res[12][0] = -v[0];
+    res[12][1] = v[1];
+    res[12][2] = -v[2];
+    res[13][0] = v[0];
+    res[13][1] = -v[1];
+    res[13][2] = v[2];
+    res[14][0] = -v[0];
+    res[14][1] = v[1];
+    res[14][2] = -v[2];
+    res[15][0] = v[0];
+    res[15][1] = -v[1];
     res[15][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -26607,9 +37958,11 @@ struct FastSG_Ibam {
     res[15][2] = v[2];
     phase[15] = (res[15][0]+res[15][1])*1./2;
   }
+  static const short size=16;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Ibca {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -26659,6 +38012,56 @@ struct FastSG_Ibca {
     res[15][0] = v[0];
     res[15][1] = -v[1]+1./2;
     res[15][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = v[1];
+    res[7][2] = -v[2];
+    res[8][0] = v[0];
+    res[8][1] = -v[1];
+    res[8][2] = -v[2];
+    res[9][0] = -v[0];
+    res[9][1] = v[1];
+    res[9][2] = v[2];
+    res[10][0] = v[0];
+    res[10][1] = -v[1];
+    res[10][2] = -v[2];
+    res[11][0] = -v[0];
+    res[11][1] = v[1];
+    res[11][2] = v[2];
+    res[12][0] = -v[0];
+    res[12][1] = v[1];
+    res[12][2] = -v[2];
+    res[13][0] = v[0];
+    res[13][1] = -v[1];
+    res[13][2] = v[2];
+    res[14][0] = -v[0];
+    res[14][1] = v[1];
+    res[14][2] = -v[2];
+    res[15][0] = v[0];
+    res[15][1] = -v[1];
+    res[15][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -26726,9 +38129,11 @@ struct FastSG_Ibca {
     res[15][2] = v[2];
     phase[15] = (res[15][1]+res[15][2])*1./2;
   }
+  static const short size=16;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Ibm2 {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -26754,6 +38159,32 @@ struct FastSG_Ibm2 {
     res[7][0] = v[0]+1./2;
     res[7][1] = -v[1];
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
+    res[4][0] = -v[0];
+    res[4][1] = v[1];
+    res[4][2] = v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -26789,9 +38220,11 @@ struct FastSG_Ibm2 {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Ibmm {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -26841,6 +38274,56 @@ struct FastSG_Ibmm {
     res[15][0] = v[0]+1./2;
     res[15][1] = -v[1]+1./2;
     res[15][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = v[1];
+    res[7][2] = -v[2];
+    res[8][0] = v[0];
+    res[8][1] = -v[1];
+    res[8][2] = -v[2];
+    res[9][0] = -v[0];
+    res[9][1] = v[1];
+    res[9][2] = v[2];
+    res[10][0] = v[0];
+    res[10][1] = -v[1];
+    res[10][2] = -v[2];
+    res[11][0] = -v[0];
+    res[11][1] = v[1];
+    res[11][2] = v[2];
+    res[12][0] = -v[0];
+    res[12][1] = v[1];
+    res[12][2] = -v[2];
+    res[13][0] = v[0];
+    res[13][1] = -v[1];
+    res[13][2] = v[2];
+    res[14][0] = -v[0];
+    res[14][1] = v[1];
+    res[14][2] = -v[2];
+    res[15][0] = v[0];
+    res[15][1] = -v[1];
+    res[15][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -26908,9 +38391,11 @@ struct FastSG_Ibmm {
     res[15][2] = v[2];
     phase[15] = (res[15][0]+res[15][1]+res[15][2])*1./2;
   }
+  static const short size=16;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Ic {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -26923,6 +38408,20 @@ struct FastSG_Ic {
     res[2][2] = v[2]+1./2;
     res[3][0] = v[0]+1./2;
     res[3][1] = -v[1]+1./2;
+    res[3][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = -v[1];
     res[3][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -26943,9 +38442,11 @@ struct FastSG_Ic {
     res[3][2] = v[2];
     phase[3] = (res[3][0]+res[3][1])*1./2;
   }
+  static const short size=4;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Ic11 {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -26958,6 +38459,20 @@ struct FastSG_Ic11 {
     res[2][2] = v[2]+1./2;
     res[3][0] = -v[0]+1./2;
     res[3][1] = v[1]+1./2;
+    res[3][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = v[1];
     res[3][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -26978,9 +38493,11 @@ struct FastSG_Ic11 {
     res[3][2] = v[2];
     phase[3] = (res[3][0]+res[3][1])*1./2;
   }
+  static const short size=4;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Ic2a {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -27006,6 +38523,32 @@ struct FastSG_Ic2a {
     res[7][0] = -v[0]+1./2;
     res[7][1] = v[1];
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = v[1];
+    res[2][2] = -v[2];
+    res[3][0] = -v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = v[1];
+    res[4][2] = -v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = v[2];
+    res[7][0] = -v[0];
+    res[7][1] = v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -27041,9 +38584,11 @@ struct FastSG_Ic2a {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Ic2m {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -27068,6 +38613,32 @@ struct FastSG_Ic2m {
     res[6][2] = v[2]+1./2;
     res[7][0] = -v[0]+1./2;
     res[7][1] = v[1]+1./2;
+    res[7][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = v[1];
+    res[2][2] = -v[2];
+    res[3][0] = -v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = v[1];
+    res[4][2] = -v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = v[2];
+    res[7][0] = -v[0];
+    res[7][1] = v[1];
     res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -27104,9 +38675,11 @@ struct FastSG_Ic2m {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][1])*1./2;
   }
+  static const short size=8;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Icab {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -27155,6 +38728,56 @@ struct FastSG_Icab {
     res[14][2] = -v[2];
     res[15][0] = v[0]+1./2;
     res[15][1] = -v[1]+1./2;
+    res[15][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = v[1];
+    res[7][2] = -v[2];
+    res[8][0] = v[0];
+    res[8][1] = -v[1];
+    res[8][2] = -v[2];
+    res[9][0] = -v[0];
+    res[9][1] = v[1];
+    res[9][2] = v[2];
+    res[10][0] = v[0];
+    res[10][1] = -v[1];
+    res[10][2] = -v[2];
+    res[11][0] = -v[0];
+    res[11][1] = v[1];
+    res[11][2] = v[2];
+    res[12][0] = -v[0];
+    res[12][1] = v[1];
+    res[12][2] = -v[2];
+    res[13][0] = v[0];
+    res[13][1] = -v[1];
+    res[13][2] = v[2];
+    res[14][0] = -v[0];
+    res[14][1] = v[1];
+    res[14][2] = -v[2];
+    res[15][0] = v[0];
+    res[15][1] = -v[1];
     res[15][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -27223,9 +38846,11 @@ struct FastSG_Icab {
     res[15][2] = v[2];
     phase[15] = (res[15][0]+res[15][1])*1./2;
   }
+  static const short size=16;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Icma {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -27275,6 +38900,56 @@ struct FastSG_Icma {
     res[15][0] = v[0]+1./2;
     res[15][1] = -v[1]+1./2;
     res[15][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = v[1];
+    res[7][2] = -v[2];
+    res[8][0] = v[0];
+    res[8][1] = -v[1];
+    res[8][2] = -v[2];
+    res[9][0] = -v[0];
+    res[9][1] = v[1];
+    res[9][2] = v[2];
+    res[10][0] = v[0];
+    res[10][1] = -v[1];
+    res[10][2] = -v[2];
+    res[11][0] = -v[0];
+    res[11][1] = v[1];
+    res[11][2] = v[2];
+    res[12][0] = -v[0];
+    res[12][1] = v[1];
+    res[12][2] = -v[2];
+    res[13][0] = v[0];
+    res[13][1] = -v[1];
+    res[13][2] = v[2];
+    res[14][0] = -v[0];
+    res[14][1] = v[1];
+    res[14][2] = -v[2];
+    res[15][0] = v[0];
+    res[15][1] = -v[1];
+    res[15][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -27342,9 +39017,11 @@ struct FastSG_Icma {
     res[15][2] = v[2];
     phase[15] = (res[15][0]+res[15][1]+res[15][2])*1./2;
   }
+  static const short size=16;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Icmm {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -27394,6 +39071,56 @@ struct FastSG_Icmm {
     res[15][0] = v[0]+1./2;
     res[15][1] = -v[1];
     res[15][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = v[1];
+    res[7][2] = -v[2];
+    res[8][0] = v[0];
+    res[8][1] = -v[1];
+    res[8][2] = -v[2];
+    res[9][0] = -v[0];
+    res[9][1] = v[1];
+    res[9][2] = v[2];
+    res[10][0] = v[0];
+    res[10][1] = -v[1];
+    res[10][2] = -v[2];
+    res[11][0] = -v[0];
+    res[11][1] = v[1];
+    res[11][2] = v[2];
+    res[12][0] = -v[0];
+    res[12][1] = v[1];
+    res[12][2] = -v[2];
+    res[13][0] = v[0];
+    res[13][1] = -v[1];
+    res[13][2] = v[2];
+    res[14][0] = -v[0];
+    res[14][1] = v[1];
+    res[14][2] = -v[2];
+    res[15][0] = v[0];
+    res[15][1] = -v[1];
+    res[15][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -27461,9 +39188,11 @@ struct FastSG_Icmm {
     res[15][2] = v[2];
     phase[15] = (res[15][0]+res[15][2])*1./2;
   }
+  static const short size=16;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Im {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -27477,6 +39206,20 @@ struct FastSG_Im {
     res[3][0] = v[0]+1./2;
     res[3][1] = -v[1]+1./2;
     res[3][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -27496,9 +39239,11 @@ struct FastSG_Im {
     res[3][2] = v[2];
     phase[3] = (res[3][0]+res[3][1]+res[3][2])*1./2;
   }
+  static const short size=4;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Im_3 {
- static const short size=48;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -27644,6 +39389,152 @@ struct FastSG_Im_3 {
     res[47][0] = v[0]+1./2;
     res[47][1] = -v[1]+1./2;
     res[47][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[1];
+    res[4][1] = v[2];
+    res[4][2] = v[0];
+    res[5][0] = -v[1];
+    res[5][1] = -v[2];
+    res[5][2] = -v[0];
+    res[6][0] = v[1];
+    res[6][1] = v[2];
+    res[6][2] = v[0];
+    res[7][0] = -v[1];
+    res[7][1] = -v[2];
+    res[7][2] = -v[0];
+    res[8][0] = v[2];
+    res[8][1] = v[0];
+    res[8][2] = v[1];
+    res[9][0] = -v[2];
+    res[9][1] = -v[0];
+    res[9][2] = -v[1];
+    res[10][0] = v[2];
+    res[10][1] = v[0];
+    res[10][2] = v[1];
+    res[11][0] = -v[2];
+    res[11][1] = -v[0];
+    res[11][2] = -v[1];
+    res[12][0] = v[2];
+    res[12][1] = -v[0];
+    res[12][2] = -v[1];
+    res[13][0] = -v[2];
+    res[13][1] = v[0];
+    res[13][2] = v[1];
+    res[14][0] = v[2];
+    res[14][1] = -v[0];
+    res[14][2] = -v[1];
+    res[15][0] = -v[2];
+    res[15][1] = v[0];
+    res[15][2] = v[1];
+    res[16][0] = -v[1];
+    res[16][1] = -v[2];
+    res[16][2] = v[0];
+    res[17][0] = v[1];
+    res[17][1] = v[2];
+    res[17][2] = -v[0];
+    res[18][0] = -v[1];
+    res[18][1] = -v[2];
+    res[18][2] = v[0];
+    res[19][0] = v[1];
+    res[19][1] = v[2];
+    res[19][2] = -v[0];
+    res[20][0] = -v[2];
+    res[20][1] = -v[0];
+    res[20][2] = v[1];
+    res[21][0] = v[2];
+    res[21][1] = v[0];
+    res[21][2] = -v[1];
+    res[22][0] = -v[2];
+    res[22][1] = -v[0];
+    res[22][2] = v[1];
+    res[23][0] = v[2];
+    res[23][1] = v[0];
+    res[23][2] = -v[1];
+    res[24][0] = -v[1];
+    res[24][1] = v[2];
+    res[24][2] = -v[0];
+    res[25][0] = v[1];
+    res[25][1] = -v[2];
+    res[25][2] = v[0];
+    res[26][0] = -v[1];
+    res[26][1] = v[2];
+    res[26][2] = -v[0];
+    res[27][0] = v[1];
+    res[27][1] = -v[2];
+    res[27][2] = v[0];
+    res[28][0] = v[1];
+    res[28][1] = -v[2];
+    res[28][2] = -v[0];
+    res[29][0] = -v[1];
+    res[29][1] = v[2];
+    res[29][2] = v[0];
+    res[30][0] = v[1];
+    res[30][1] = -v[2];
+    res[30][2] = -v[0];
+    res[31][0] = -v[1];
+    res[31][1] = v[2];
+    res[31][2] = v[0];
+    res[32][0] = -v[2];
+    res[32][1] = v[0];
+    res[32][2] = -v[1];
+    res[33][0] = v[2];
+    res[33][1] = -v[0];
+    res[33][2] = v[1];
+    res[34][0] = -v[2];
+    res[34][1] = v[0];
+    res[34][2] = -v[1];
+    res[35][0] = v[2];
+    res[35][1] = -v[0];
+    res[35][2] = v[1];
+    res[36][0] = -v[0];
+    res[36][1] = -v[1];
+    res[36][2] = v[2];
+    res[37][0] = v[0];
+    res[37][1] = v[1];
+    res[37][2] = -v[2];
+    res[38][0] = -v[0];
+    res[38][1] = -v[1];
+    res[38][2] = v[2];
+    res[39][0] = v[0];
+    res[39][1] = v[1];
+    res[39][2] = -v[2];
+    res[40][0] = v[0];
+    res[40][1] = -v[1];
+    res[40][2] = -v[2];
+    res[41][0] = -v[0];
+    res[41][1] = v[1];
+    res[41][2] = v[2];
+    res[42][0] = v[0];
+    res[42][1] = -v[1];
+    res[42][2] = -v[2];
+    res[43][0] = -v[0];
+    res[43][1] = v[1];
+    res[43][2] = v[2];
+    res[44][0] = -v[0];
+    res[44][1] = v[1];
+    res[44][2] = -v[2];
+    res[45][0] = v[0];
+    res[45][1] = -v[1];
+    res[45][2] = v[2];
+    res[46][0] = -v[0];
+    res[46][1] = v[1];
+    res[46][2] = -v[2];
+    res[47][0] = v[0];
+    res[47][1] = -v[1];
+    res[47][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -27839,9 +39730,11 @@ struct FastSG_Im_3 {
     res[47][2] = v[2];
     phase[47] = (res[47][0]+res[47][1]+res[47][2])*1./2;
   }
+  static const short size=48;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Im_3m {
- static const short size=96;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -28131,6 +40024,296 @@ struct FastSG_Im_3m {
     res[95][0] = v[2]+1./2;
     res[95][1] = v[1]+1./2;
     res[95][2] = v[0]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[1];
+    res[4][1] = -v[0];
+    res[4][2] = v[2];
+    res[5][0] = -v[1];
+    res[5][1] = v[0];
+    res[5][2] = -v[2];
+    res[6][0] = v[1];
+    res[6][1] = -v[0];
+    res[6][2] = v[2];
+    res[7][0] = -v[1];
+    res[7][1] = v[0];
+    res[7][2] = -v[2];
+    res[8][0] = -v[0];
+    res[8][1] = -v[1];
+    res[8][2] = v[2];
+    res[9][0] = v[0];
+    res[9][1] = v[1];
+    res[9][2] = -v[2];
+    res[10][0] = -v[0];
+    res[10][1] = -v[1];
+    res[10][2] = v[2];
+    res[11][0] = v[0];
+    res[11][1] = v[1];
+    res[11][2] = -v[2];
+    res[12][0] = -v[1];
+    res[12][1] = v[0];
+    res[12][2] = v[2];
+    res[13][0] = v[1];
+    res[13][1] = -v[0];
+    res[13][2] = -v[2];
+    res[14][0] = -v[1];
+    res[14][1] = v[0];
+    res[14][2] = v[2];
+    res[15][0] = v[1];
+    res[15][1] = -v[0];
+    res[15][2] = -v[2];
+    res[16][0] = v[0];
+    res[16][1] = v[2];
+    res[16][2] = -v[1];
+    res[17][0] = -v[0];
+    res[17][1] = -v[2];
+    res[17][2] = v[1];
+    res[18][0] = v[0];
+    res[18][1] = v[2];
+    res[18][2] = -v[1];
+    res[19][0] = -v[0];
+    res[19][1] = -v[2];
+    res[19][2] = v[1];
+    res[20][0] = v[0];
+    res[20][1] = -v[1];
+    res[20][2] = -v[2];
+    res[21][0] = -v[0];
+    res[21][1] = v[1];
+    res[21][2] = v[2];
+    res[22][0] = v[0];
+    res[22][1] = -v[1];
+    res[22][2] = -v[2];
+    res[23][0] = -v[0];
+    res[23][1] = v[1];
+    res[23][2] = v[2];
+    res[24][0] = v[0];
+    res[24][1] = -v[2];
+    res[24][2] = v[1];
+    res[25][0] = -v[0];
+    res[25][1] = v[2];
+    res[25][2] = -v[1];
+    res[26][0] = v[0];
+    res[26][1] = -v[2];
+    res[26][2] = v[1];
+    res[27][0] = -v[0];
+    res[27][1] = v[2];
+    res[27][2] = -v[1];
+    res[28][0] = -v[2];
+    res[28][1] = v[1];
+    res[28][2] = v[0];
+    res[29][0] = v[2];
+    res[29][1] = -v[1];
+    res[29][2] = -v[0];
+    res[30][0] = -v[2];
+    res[30][1] = v[1];
+    res[30][2] = v[0];
+    res[31][0] = v[2];
+    res[31][1] = -v[1];
+    res[31][2] = -v[0];
+    res[32][0] = -v[0];
+    res[32][1] = v[1];
+    res[32][2] = -v[2];
+    res[33][0] = v[0];
+    res[33][1] = -v[1];
+    res[33][2] = v[2];
+    res[34][0] = -v[0];
+    res[34][1] = v[1];
+    res[34][2] = -v[2];
+    res[35][0] = v[0];
+    res[35][1] = -v[1];
+    res[35][2] = v[2];
+    res[36][0] = v[2];
+    res[36][1] = v[1];
+    res[36][2] = -v[0];
+    res[37][0] = -v[2];
+    res[37][1] = -v[1];
+    res[37][2] = v[0];
+    res[38][0] = v[2];
+    res[38][1] = v[1];
+    res[38][2] = -v[0];
+    res[39][0] = -v[2];
+    res[39][1] = -v[1];
+    res[39][2] = v[0];
+    res[40][0] = v[1];
+    res[40][1] = v[2];
+    res[40][2] = v[0];
+    res[41][0] = -v[1];
+    res[41][1] = -v[2];
+    res[41][2] = -v[0];
+    res[42][0] = v[1];
+    res[42][1] = v[2];
+    res[42][2] = v[0];
+    res[43][0] = -v[1];
+    res[43][1] = -v[2];
+    res[43][2] = -v[0];
+    res[44][0] = v[2];
+    res[44][1] = v[0];
+    res[44][2] = v[1];
+    res[45][0] = -v[2];
+    res[45][1] = -v[0];
+    res[45][2] = -v[1];
+    res[46][0] = v[2];
+    res[46][1] = v[0];
+    res[46][2] = v[1];
+    res[47][0] = -v[2];
+    res[47][1] = -v[0];
+    res[47][2] = -v[1];
+    res[48][0] = v[2];
+    res[48][1] = -v[0];
+    res[48][2] = -v[1];
+    res[49][0] = -v[2];
+    res[49][1] = v[0];
+    res[49][2] = v[1];
+    res[50][0] = v[2];
+    res[50][1] = -v[0];
+    res[50][2] = -v[1];
+    res[51][0] = -v[2];
+    res[51][1] = v[0];
+    res[51][2] = v[1];
+    res[52][0] = -v[1];
+    res[52][1] = -v[2];
+    res[52][2] = v[0];
+    res[53][0] = v[1];
+    res[53][1] = v[2];
+    res[53][2] = -v[0];
+    res[54][0] = -v[1];
+    res[54][1] = -v[2];
+    res[54][2] = v[0];
+    res[55][0] = v[1];
+    res[55][1] = v[2];
+    res[55][2] = -v[0];
+    res[56][0] = -v[2];
+    res[56][1] = -v[0];
+    res[56][2] = v[1];
+    res[57][0] = v[2];
+    res[57][1] = v[0];
+    res[57][2] = -v[1];
+    res[58][0] = -v[2];
+    res[58][1] = -v[0];
+    res[58][2] = v[1];
+    res[59][0] = v[2];
+    res[59][1] = v[0];
+    res[59][2] = -v[1];
+    res[60][0] = -v[1];
+    res[60][1] = v[2];
+    res[60][2] = -v[0];
+    res[61][0] = v[1];
+    res[61][1] = -v[2];
+    res[61][2] = v[0];
+    res[62][0] = -v[1];
+    res[62][1] = v[2];
+    res[62][2] = -v[0];
+    res[63][0] = v[1];
+    res[63][1] = -v[2];
+    res[63][2] = v[0];
+    res[64][0] = v[1];
+    res[64][1] = -v[2];
+    res[64][2] = -v[0];
+    res[65][0] = -v[1];
+    res[65][1] = v[2];
+    res[65][2] = v[0];
+    res[66][0] = v[1];
+    res[66][1] = -v[2];
+    res[66][2] = -v[0];
+    res[67][0] = -v[1];
+    res[67][1] = v[2];
+    res[67][2] = v[0];
+    res[68][0] = -v[2];
+    res[68][1] = v[0];
+    res[68][2] = -v[1];
+    res[69][0] = v[2];
+    res[69][1] = -v[0];
+    res[69][2] = v[1];
+    res[70][0] = -v[2];
+    res[70][1] = v[0];
+    res[70][2] = -v[1];
+    res[71][0] = v[2];
+    res[71][1] = -v[0];
+    res[71][2] = v[1];
+    res[72][0] = v[1];
+    res[72][1] = v[0];
+    res[72][2] = -v[2];
+    res[73][0] = -v[1];
+    res[73][1] = -v[0];
+    res[73][2] = v[2];
+    res[74][0] = v[1];
+    res[74][1] = v[0];
+    res[74][2] = -v[2];
+    res[75][0] = -v[1];
+    res[75][1] = -v[0];
+    res[75][2] = v[2];
+    res[76][0] = -v[1];
+    res[76][1] = -v[0];
+    res[76][2] = -v[2];
+    res[77][0] = v[1];
+    res[77][1] = v[0];
+    res[77][2] = v[2];
+    res[78][0] = -v[1];
+    res[78][1] = -v[0];
+    res[78][2] = -v[2];
+    res[79][0] = v[1];
+    res[79][1] = v[0];
+    res[79][2] = v[2];
+    res[80][0] = -v[0];
+    res[80][1] = v[2];
+    res[80][2] = v[1];
+    res[81][0] = v[0];
+    res[81][1] = -v[2];
+    res[81][2] = -v[1];
+    res[82][0] = -v[0];
+    res[82][1] = v[2];
+    res[82][2] = v[1];
+    res[83][0] = v[0];
+    res[83][1] = -v[2];
+    res[83][2] = -v[1];
+    res[84][0] = -v[0];
+    res[84][1] = -v[2];
+    res[84][2] = -v[1];
+    res[85][0] = v[0];
+    res[85][1] = v[2];
+    res[85][2] = v[1];
+    res[86][0] = -v[0];
+    res[86][1] = -v[2];
+    res[86][2] = -v[1];
+    res[87][0] = v[0];
+    res[87][1] = v[2];
+    res[87][2] = v[1];
+    res[88][0] = v[2];
+    res[88][1] = -v[1];
+    res[88][2] = v[0];
+    res[89][0] = -v[2];
+    res[89][1] = v[1];
+    res[89][2] = -v[0];
+    res[90][0] = v[2];
+    res[90][1] = -v[1];
+    res[90][2] = v[0];
+    res[91][0] = -v[2];
+    res[91][1] = v[1];
+    res[91][2] = -v[0];
+    res[92][0] = -v[2];
+    res[92][1] = -v[1];
+    res[92][2] = -v[0];
+    res[93][0] = v[2];
+    res[93][1] = v[1];
+    res[93][2] = v[0];
+    res[94][0] = -v[2];
+    res[94][1] = -v[1];
+    res[94][2] = -v[0];
+    res[95][0] = v[2];
+    res[95][1] = v[1];
+    res[95][2] = v[0];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -28518,9 +40701,11 @@ struct FastSG_Im_3m {
     res[95][2] = v[0];
     phase[95] = (res[95][0]+res[95][1]+res[95][2])*1./2;
   }
+  static const short size=96;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Im11 {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -28534,6 +40719,20 @@ struct FastSG_Im11 {
     res[3][0] = -v[0]+1./2;
     res[3][1] = v[1]+1./2;
     res[3][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = v[1];
+    res[3][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -28553,9 +40752,11 @@ struct FastSG_Im11 {
     res[3][2] = v[2];
     phase[3] = (res[3][0]+res[3][1]+res[3][2])*1./2;
   }
+  static const short size=4;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Im2a {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -28581,6 +40782,32 @@ struct FastSG_Im2a {
     res[7][0] = -v[0];
     res[7][1] = v[1]+1./2;
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = v[1];
+    res[2][2] = -v[2];
+    res[3][0] = -v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = v[1];
+    res[4][2] = -v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = v[2];
+    res[7][0] = -v[0];
+    res[7][1] = v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -28616,9 +40843,11 @@ struct FastSG_Im2a {
     res[7][2] = v[2];
     phase[7] = (res[7][1]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Im2m {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -28644,6 +40873,32 @@ struct FastSG_Im2m {
     res[7][0] = -v[0]+1./2;
     res[7][1] = v[1]+1./2;
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = v[1];
+    res[2][2] = -v[2];
+    res[3][0] = -v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = v[1];
+    res[4][2] = -v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = v[2];
+    res[7][0] = -v[0];
+    res[7][1] = v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -28679,9 +40934,11 @@ struct FastSG_Im2m {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][1]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Ima2 {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -28707,6 +40964,32 @@ struct FastSG_Ima2 {
     res[7][0] = v[0];
     res[7][1] = -v[1]+1./2;
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
+    res[4][0] = -v[0];
+    res[4][1] = v[1];
+    res[4][2] = v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -28742,9 +41025,11 @@ struct FastSG_Ima2 {
     res[7][2] = v[2];
     phase[7] = (res[7][1]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Imam {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -28793,6 +41078,56 @@ struct FastSG_Imam {
     res[14][2] = -v[2];
     res[15][0] = v[0]+1./2;
     res[15][1] = -v[1]+1./2;
+    res[15][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = v[1];
+    res[7][2] = -v[2];
+    res[8][0] = v[0];
+    res[8][1] = -v[1];
+    res[8][2] = -v[2];
+    res[9][0] = -v[0];
+    res[9][1] = v[1];
+    res[9][2] = v[2];
+    res[10][0] = v[0];
+    res[10][1] = -v[1];
+    res[10][2] = -v[2];
+    res[11][0] = -v[0];
+    res[11][1] = v[1];
+    res[11][2] = v[2];
+    res[12][0] = -v[0];
+    res[12][1] = v[1];
+    res[12][2] = -v[2];
+    res[13][0] = v[0];
+    res[13][1] = -v[1];
+    res[13][2] = v[2];
+    res[14][0] = -v[0];
+    res[14][1] = v[1];
+    res[14][2] = -v[2];
+    res[15][0] = v[0];
+    res[15][1] = -v[1];
     res[15][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -28861,9 +41196,11 @@ struct FastSG_Imam {
     res[15][2] = v[2];
     phase[15] = (res[15][0]+res[15][1])*1./2;
   }
+  static const short size=16;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Imcb {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -28913,6 +41250,56 @@ struct FastSG_Imcb {
     res[15][0] = v[0];
     res[15][1] = -v[1]+1./2;
     res[15][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = v[1];
+    res[7][2] = -v[2];
+    res[8][0] = v[0];
+    res[8][1] = -v[1];
+    res[8][2] = -v[2];
+    res[9][0] = -v[0];
+    res[9][1] = v[1];
+    res[9][2] = v[2];
+    res[10][0] = v[0];
+    res[10][1] = -v[1];
+    res[10][2] = -v[2];
+    res[11][0] = -v[0];
+    res[11][1] = v[1];
+    res[11][2] = v[2];
+    res[12][0] = -v[0];
+    res[12][1] = v[1];
+    res[12][2] = -v[2];
+    res[13][0] = v[0];
+    res[13][1] = -v[1];
+    res[13][2] = v[2];
+    res[14][0] = -v[0];
+    res[14][1] = v[1];
+    res[14][2] = -v[2];
+    res[15][0] = v[0];
+    res[15][1] = -v[1];
+    res[15][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -28980,9 +41367,11 @@ struct FastSG_Imcb {
     res[15][2] = v[2];
     phase[15] = (res[15][1]+res[15][2])*1./2;
   }
+  static const short size=16;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Imcm {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -29032,6 +41421,56 @@ struct FastSG_Imcm {
     res[15][0] = v[0];
     res[15][1] = -v[1]+1./2;
     res[15][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = v[1];
+    res[7][2] = -v[2];
+    res[8][0] = v[0];
+    res[8][1] = -v[1];
+    res[8][2] = -v[2];
+    res[9][0] = -v[0];
+    res[9][1] = v[1];
+    res[9][2] = v[2];
+    res[10][0] = v[0];
+    res[10][1] = -v[1];
+    res[10][2] = -v[2];
+    res[11][0] = -v[0];
+    res[11][1] = v[1];
+    res[11][2] = v[2];
+    res[12][0] = -v[0];
+    res[12][1] = v[1];
+    res[12][2] = -v[2];
+    res[13][0] = v[0];
+    res[13][1] = -v[1];
+    res[13][2] = v[2];
+    res[14][0] = -v[0];
+    res[14][1] = v[1];
+    res[14][2] = -v[2];
+    res[15][0] = v[0];
+    res[15][1] = -v[1];
+    res[15][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -29099,9 +41538,11 @@ struct FastSG_Imcm {
     res[15][2] = v[2];
     phase[15] = (res[15][1]+res[15][2])*1./2;
   }
+  static const short size=16;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Imm2 {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -29127,6 +41568,32 @@ struct FastSG_Imm2 {
     res[7][0] = v[0]+1./2;
     res[7][1] = -v[1]+1./2;
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
+    res[4][0] = -v[0];
+    res[4][1] = v[1];
+    res[4][2] = v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -29162,9 +41629,11 @@ struct FastSG_Imm2 {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][1]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Imma {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -29214,6 +41683,56 @@ struct FastSG_Imma {
     res[15][0] = v[0]+1./2;
     res[15][1] = -v[1];
     res[15][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = v[1];
+    res[7][2] = -v[2];
+    res[8][0] = v[0];
+    res[8][1] = -v[1];
+    res[8][2] = -v[2];
+    res[9][0] = -v[0];
+    res[9][1] = v[1];
+    res[9][2] = v[2];
+    res[10][0] = v[0];
+    res[10][1] = -v[1];
+    res[10][2] = -v[2];
+    res[11][0] = -v[0];
+    res[11][1] = v[1];
+    res[11][2] = v[2];
+    res[12][0] = -v[0];
+    res[12][1] = v[1];
+    res[12][2] = -v[2];
+    res[13][0] = v[0];
+    res[13][1] = -v[1];
+    res[13][2] = v[2];
+    res[14][0] = -v[0];
+    res[14][1] = v[1];
+    res[14][2] = -v[2];
+    res[15][0] = v[0];
+    res[15][1] = -v[1];
+    res[15][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -29281,9 +41800,11 @@ struct FastSG_Imma {
     res[15][2] = v[2];
     phase[15] = (res[15][0]+res[15][2])*1./2;
   }
+  static const short size=16;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Immb {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -29333,6 +41854,56 @@ struct FastSG_Immb {
     res[15][0] = v[0]+1./2;
     res[15][1] = -v[1]+1./2;
     res[15][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = v[1];
+    res[7][2] = -v[2];
+    res[8][0] = v[0];
+    res[8][1] = -v[1];
+    res[8][2] = -v[2];
+    res[9][0] = -v[0];
+    res[9][1] = v[1];
+    res[9][2] = v[2];
+    res[10][0] = v[0];
+    res[10][1] = -v[1];
+    res[10][2] = -v[2];
+    res[11][0] = -v[0];
+    res[11][1] = v[1];
+    res[11][2] = v[2];
+    res[12][0] = -v[0];
+    res[12][1] = v[1];
+    res[12][2] = -v[2];
+    res[13][0] = v[0];
+    res[13][1] = -v[1];
+    res[13][2] = v[2];
+    res[14][0] = -v[0];
+    res[14][1] = v[1];
+    res[14][2] = -v[2];
+    res[15][0] = v[0];
+    res[15][1] = -v[1];
+    res[15][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -29400,9 +41971,11 @@ struct FastSG_Immb {
     res[15][2] = v[2];
     phase[15] = (res[15][0]+res[15][1]+res[15][2])*1./2;
   }
+  static const short size=16;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Immm {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -29452,6 +42025,56 @@ struct FastSG_Immm {
     res[15][0] = v[0]+1./2;
     res[15][1] = -v[1]+1./2;
     res[15][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = v[1];
+    res[7][2] = -v[2];
+    res[8][0] = v[0];
+    res[8][1] = -v[1];
+    res[8][2] = -v[2];
+    res[9][0] = -v[0];
+    res[9][1] = v[1];
+    res[9][2] = v[2];
+    res[10][0] = v[0];
+    res[10][1] = -v[1];
+    res[10][2] = -v[2];
+    res[11][0] = -v[0];
+    res[11][1] = v[1];
+    res[11][2] = v[2];
+    res[12][0] = -v[0];
+    res[12][1] = v[1];
+    res[12][2] = -v[2];
+    res[13][0] = v[0];
+    res[13][1] = -v[1];
+    res[13][2] = v[2];
+    res[14][0] = -v[0];
+    res[14][1] = v[1];
+    res[14][2] = -v[2];
+    res[15][0] = v[0];
+    res[15][1] = -v[1];
+    res[15][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -29519,10 +42142,20 @@ struct FastSG_Immm {
     res[15][2] = v[2];
     phase[15] = (res[15][0]+res[15][1]+res[15][2])*1./2;
   }
+  static const short size=16;
+  static const char lattice='I';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P_1 {
- static const short size=2;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
     res[0][2] = v[2];
@@ -29540,9 +42173,11 @@ struct FastSG_P_1 {
     res[1][2] = -v[2];
     phase[1] =  0;
   }
+  static const short size=2;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P_3 {
- static const short size=6;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -29561,6 +42196,26 @@ struct FastSG_P_3 {
     res[4][2] = v[2];
     res[5][0] = v[0]-v[1];
     res[5][1] = v[0];
+    res[5][2] = -v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[1];
+    res[2][1] = -v[0]-v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[1];
+    res[3][1] = v[0]+v[1];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0]-v[1];
+    res[4][1] = v[0];
+    res[4][2] = v[2];
+    res[5][0] = v[0]+v[1];
+    res[5][1] = -v[0];
     res[5][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -29589,9 +42244,11 @@ struct FastSG_P_3 {
     res[5][2] = -v[2];
     phase[5] =  0;
   }
+  static const short size=6;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P_31c {
- static const short size=12;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -29629,6 +42286,44 @@ struct FastSG_P_31c {
     res[11][0] = -v[0];
     res[11][1] = -v[0]+v[1];
     res[11][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[1];
+    res[2][1] = -v[0]-v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[1];
+    res[3][1] = v[0]+v[1];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0]-v[1];
+    res[4][1] = v[0];
+    res[4][2] = v[2];
+    res[5][0] = v[0]+v[1];
+    res[5][1] = -v[0];
+    res[5][2] = -v[2];
+    res[6][0] = -v[1];
+    res[6][1] = -v[0];
+    res[6][2] = -v[2];
+    res[7][0] = v[1];
+    res[7][1] = v[0];
+    res[7][2] = v[2];
+    res[8][0] = -v[0];
+    res[8][1] = v[0]+v[1];
+    res[8][2] = -v[2];
+    res[9][0] = v[0];
+    res[9][1] = -v[0]-v[1];
+    res[9][2] = v[2];
+    res[10][0] = v[0]+v[1];
+    res[10][1] = -v[1];
+    res[10][2] = -v[2];
+    res[11][0] = -v[0]-v[1];
+    res[11][1] = v[1];
+    res[11][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -29680,9 +42375,11 @@ struct FastSG_P_31c {
     res[11][2] = v[2];
     phase[11] = res[11][2]*1./2;
   }
+  static const short size=12;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P_31m {
- static const short size=12;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -29719,6 +42416,44 @@ struct FastSG_P_31m {
     res[10][2] = -v[2];
     res[11][0] = -v[0];
     res[11][1] = -v[0]+v[1];
+    res[11][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[1];
+    res[2][1] = -v[0]-v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[1];
+    res[3][1] = v[0]+v[1];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0]-v[1];
+    res[4][1] = v[0];
+    res[4][2] = v[2];
+    res[5][0] = v[0]+v[1];
+    res[5][1] = -v[0];
+    res[5][2] = -v[2];
+    res[6][0] = -v[1];
+    res[6][1] = -v[0];
+    res[6][2] = -v[2];
+    res[7][0] = v[1];
+    res[7][1] = v[0];
+    res[7][2] = v[2];
+    res[8][0] = -v[0];
+    res[8][1] = v[0]+v[1];
+    res[8][2] = -v[2];
+    res[9][0] = v[0];
+    res[9][1] = -v[0]-v[1];
+    res[9][2] = v[2];
+    res[10][0] = v[0]+v[1];
+    res[10][1] = -v[1];
+    res[10][2] = -v[2];
+    res[11][0] = -v[0]-v[1];
+    res[11][1] = v[1];
     res[11][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -29771,9 +42506,11 @@ struct FastSG_P_31m {
     res[11][2] = v[2];
     phase[11] =  0;
   }
+  static const short size=12;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P_3c1 {
- static const short size=12;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -29811,6 +42548,44 @@ struct FastSG_P_3c1 {
     res[11][0] = -v[1];
     res[11][1] = -v[0];
     res[11][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[1];
+    res[2][1] = -v[0]-v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[1];
+    res[3][1] = v[0]+v[1];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0]-v[1];
+    res[4][1] = v[0];
+    res[4][2] = v[2];
+    res[5][0] = v[0]+v[1];
+    res[5][1] = -v[0];
+    res[5][2] = -v[2];
+    res[6][0] = v[0];
+    res[6][1] = -v[0]-v[1];
+    res[6][2] = -v[2];
+    res[7][0] = -v[0];
+    res[7][1] = v[0]+v[1];
+    res[7][2] = v[2];
+    res[8][0] = -v[0]-v[1];
+    res[8][1] = v[1];
+    res[8][2] = -v[2];
+    res[9][0] = v[0]+v[1];
+    res[9][1] = -v[1];
+    res[9][2] = v[2];
+    res[10][0] = v[1];
+    res[10][1] = v[0];
+    res[10][2] = -v[2];
+    res[11][0] = -v[1];
+    res[11][1] = -v[0];
+    res[11][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -29862,9 +42637,11 @@ struct FastSG_P_3c1 {
     res[11][2] = v[2];
     phase[11] = res[11][2]*1./2;
   }
+  static const short size=12;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P_3m1 {
- static const short size=12;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -29895,6 +42672,44 @@ struct FastSG_P_3m1 {
     res[8][2] = -v[2];
     res[9][0] = v[0];
     res[9][1] = v[0]-v[1];
+    res[9][2] = v[2];
+    res[10][0] = v[1];
+    res[10][1] = v[0];
+    res[10][2] = -v[2];
+    res[11][0] = -v[1];
+    res[11][1] = -v[0];
+    res[11][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[1];
+    res[2][1] = -v[0]-v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[1];
+    res[3][1] = v[0]+v[1];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0]-v[1];
+    res[4][1] = v[0];
+    res[4][2] = v[2];
+    res[5][0] = v[0]+v[1];
+    res[5][1] = -v[0];
+    res[5][2] = -v[2];
+    res[6][0] = v[0];
+    res[6][1] = -v[0]-v[1];
+    res[6][2] = -v[2];
+    res[7][0] = -v[0];
+    res[7][1] = v[0]+v[1];
+    res[7][2] = v[2];
+    res[8][0] = -v[0]-v[1];
+    res[8][1] = v[1];
+    res[8][2] = -v[2];
+    res[9][0] = v[0]+v[1];
+    res[9][1] = -v[1];
     res[9][2] = v[2];
     res[10][0] = v[1];
     res[10][1] = v[0];
@@ -29953,9 +42768,11 @@ struct FastSG_P_3m1 {
     res[11][2] = v[2];
     phase[11] =  0;
   }
+  static const short size=12;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P_4 {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -29968,6 +42785,20 @@ struct FastSG_P_4 {
     res[2][2] = v[2];
     res[3][0] = -v[1];
     res[3][1] = v[0];
+    res[3][2] = -v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[1];
+    res[1][1] = v[0];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[1];
+    res[3][1] = -v[0];
     res[3][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -29988,9 +42819,11 @@ struct FastSG_P_4 {
     res[3][2] = -v[2];
     phase[3] =  0;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P_421c {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -30016,6 +42849,32 @@ struct FastSG_P_421c {
     res[7][0] = v[1]+1./2;
     res[7][1] = v[0]+1./2;
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[1];
+    res[1][1] = v[0];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[1];
+    res[3][1] = -v[0];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[1];
+    res[6][1] = -v[0];
+    res[6][2] = v[2];
+    res[7][0] = v[1];
+    res[7][1] = v[0];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -30051,9 +42910,11 @@ struct FastSG_P_421c {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][1]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P_421m {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -30078,6 +42939,32 @@ struct FastSG_P_421m {
     res[6][2] = v[2];
     res[7][0] = v[1]+1./2;
     res[7][1] = v[0]+1./2;
+    res[7][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[1];
+    res[1][1] = v[0];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[1];
+    res[3][1] = -v[0];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[1];
+    res[6][1] = -v[0];
+    res[6][2] = v[2];
+    res[7][0] = v[1];
+    res[7][1] = v[0];
     res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -30114,9 +43001,11 @@ struct FastSG_P_421m {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][1])*1./2;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P_42c {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -30142,6 +43031,32 @@ struct FastSG_P_42c {
     res[7][0] = v[1];
     res[7][1] = v[0];
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[1];
+    res[1][1] = v[0];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[1];
+    res[3][1] = -v[0];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[1];
+    res[6][1] = -v[0];
+    res[6][2] = v[2];
+    res[7][0] = v[1];
+    res[7][1] = v[0];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -30177,9 +43092,11 @@ struct FastSG_P_42c {
     res[7][2] = v[2];
     phase[7] = res[7][2]*1./2;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P_42m {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -30192,6 +43109,32 @@ struct FastSG_P_42m {
     res[2][2] = v[2];
     res[3][0] = -v[1];
     res[3][1] = v[0];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[1];
+    res[6][1] = -v[0];
+    res[6][2] = v[2];
+    res[7][0] = v[1];
+    res[7][1] = v[0];
+    res[7][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[1];
+    res[1][1] = v[0];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[1];
+    res[3][1] = -v[0];
     res[3][2] = -v[2];
     res[4][0] = v[0];
     res[4][1] = -v[1];
@@ -30240,9 +43183,11 @@ struct FastSG_P_42m {
     res[7][2] = v[2];
     phase[7] =  0;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P_43m {
- static const short size=24;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -30298,6 +43243,80 @@ struct FastSG_P_43m {
     res[17][0] = v[1];
     res[17][1] = -v[2];
     res[17][2] = -v[0];
+    res[18][0] = -v[1];
+    res[18][1] = -v[0];
+    res[18][2] = v[2];
+    res[19][0] = v[1];
+    res[19][1] = v[0];
+    res[19][2] = v[2];
+    res[20][0] = v[0];
+    res[20][1] = -v[2];
+    res[20][2] = -v[1];
+    res[21][0] = v[0];
+    res[21][1] = v[2];
+    res[21][2] = v[1];
+    res[22][0] = -v[2];
+    res[22][1] = v[1];
+    res[22][2] = -v[0];
+    res[23][0] = v[2];
+    res[23][1] = v[1];
+    res[23][2] = v[0];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[1];
+    res[1][1] = v[0];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[1];
+    res[3][1] = -v[0];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[2];
+    res[4][2] = v[1];
+    res[5][0] = v[0];
+    res[5][1] = -v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[2];
+    res[6][2] = -v[1];
+    res[7][0] = v[2];
+    res[7][1] = -v[1];
+    res[7][2] = -v[0];
+    res[8][0] = -v[0];
+    res[8][1] = v[1];
+    res[8][2] = -v[2];
+    res[9][0] = -v[2];
+    res[9][1] = -v[1];
+    res[9][2] = v[0];
+    res[10][0] = v[1];
+    res[10][1] = v[2];
+    res[10][2] = v[0];
+    res[11][0] = v[2];
+    res[11][1] = v[0];
+    res[11][2] = v[1];
+    res[12][0] = v[2];
+    res[12][1] = -v[0];
+    res[12][2] = -v[1];
+    res[13][0] = -v[1];
+    res[13][1] = -v[2];
+    res[13][2] = v[0];
+    res[14][0] = -v[2];
+    res[14][1] = -v[0];
+    res[14][2] = v[1];
+    res[15][0] = -v[1];
+    res[15][1] = v[2];
+    res[15][2] = -v[0];
+    res[16][0] = v[1];
+    res[16][1] = -v[2];
+    res[16][2] = -v[0];
+    res[17][0] = -v[2];
+    res[17][1] = v[0];
+    res[17][2] = -v[1];
     res[18][0] = -v[1];
     res[18][1] = -v[0];
     res[18][2] = v[2];
@@ -30415,9 +43434,11 @@ struct FastSG_P_43m {
     res[23][2] = v[0];
     phase[23] =  0;
   }
+  static const short size=24;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P_43n {
- static const short size=24;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -30491,6 +43512,80 @@ struct FastSG_P_43n {
     res[23][0] = v[2]+1./2;
     res[23][1] = v[1]+1./2;
     res[23][2] = v[0]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[1];
+    res[1][1] = v[0];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[1];
+    res[3][1] = -v[0];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[2];
+    res[4][2] = v[1];
+    res[5][0] = v[0];
+    res[5][1] = -v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[2];
+    res[6][2] = -v[1];
+    res[7][0] = v[2];
+    res[7][1] = -v[1];
+    res[7][2] = -v[0];
+    res[8][0] = -v[0];
+    res[8][1] = v[1];
+    res[8][2] = -v[2];
+    res[9][0] = -v[2];
+    res[9][1] = -v[1];
+    res[9][2] = v[0];
+    res[10][0] = v[1];
+    res[10][1] = v[2];
+    res[10][2] = v[0];
+    res[11][0] = v[2];
+    res[11][1] = v[0];
+    res[11][2] = v[1];
+    res[12][0] = v[2];
+    res[12][1] = -v[0];
+    res[12][2] = -v[1];
+    res[13][0] = -v[1];
+    res[13][1] = -v[2];
+    res[13][2] = v[0];
+    res[14][0] = -v[2];
+    res[14][1] = -v[0];
+    res[14][2] = v[1];
+    res[15][0] = -v[1];
+    res[15][1] = v[2];
+    res[15][2] = -v[0];
+    res[16][0] = v[1];
+    res[16][1] = -v[2];
+    res[16][2] = -v[0];
+    res[17][0] = -v[2];
+    res[17][1] = v[0];
+    res[17][2] = -v[1];
+    res[18][0] = -v[1];
+    res[18][1] = -v[0];
+    res[18][2] = v[2];
+    res[19][0] = v[1];
+    res[19][1] = v[0];
+    res[19][2] = v[2];
+    res[20][0] = v[0];
+    res[20][1] = -v[2];
+    res[20][2] = -v[1];
+    res[21][0] = v[0];
+    res[21][1] = v[2];
+    res[21][2] = v[1];
+    res[22][0] = -v[2];
+    res[22][1] = v[1];
+    res[22][2] = -v[0];
+    res[23][0] = v[2];
+    res[23][1] = v[1];
+    res[23][2] = v[0];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -30590,9 +43685,11 @@ struct FastSG_P_43n {
     res[23][2] = v[0];
     phase[23] = (res[23][0]+res[23][1]+res[23][2])*1./2;
   }
+  static const short size=24;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P_4b2 {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -30617,6 +43714,32 @@ struct FastSG_P_4b2 {
     res[6][2] = v[2];
     res[7][0] = v[0]+1./2;
     res[7][1] = -v[1]+1./2;
+    res[7][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[1];
+    res[1][1] = v[0];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[1];
+    res[3][1] = -v[0];
+    res[3][2] = -v[2];
+    res[4][0] = v[1];
+    res[4][1] = v[0];
+    res[4][2] = -v[2];
+    res[5][0] = -v[1];
+    res[5][1] = -v[0];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
     res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -30653,9 +43776,11 @@ struct FastSG_P_4b2 {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][1])*1./2;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P_4c2 {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -30681,6 +43806,32 @@ struct FastSG_P_4c2 {
     res[7][0] = v[0];
     res[7][1] = -v[1];
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[1];
+    res[1][1] = v[0];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[1];
+    res[3][1] = -v[0];
+    res[3][2] = -v[2];
+    res[4][0] = v[1];
+    res[4][1] = v[0];
+    res[4][2] = -v[2];
+    res[5][0] = -v[1];
+    res[5][1] = -v[0];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -30716,9 +43867,11 @@ struct FastSG_P_4c2 {
     res[7][2] = v[2];
     phase[7] = res[7][2]*1./2;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P_4m2 {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -30731,6 +43884,32 @@ struct FastSG_P_4m2 {
     res[2][2] = v[2];
     res[3][0] = -v[1];
     res[3][1] = v[0];
+    res[3][2] = -v[2];
+    res[4][0] = v[1];
+    res[4][1] = v[0];
+    res[4][2] = -v[2];
+    res[5][0] = -v[1];
+    res[5][1] = -v[0];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[1];
+    res[1][1] = v[0];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[1];
+    res[3][1] = -v[0];
     res[3][2] = -v[2];
     res[4][0] = v[1];
     res[4][1] = v[0];
@@ -30779,9 +43958,11 @@ struct FastSG_P_4m2 {
     res[7][2] = v[2];
     phase[7] =  0;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P_4n2 {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -30807,6 +43988,32 @@ struct FastSG_P_4n2 {
     res[7][0] = v[0]+1./2;
     res[7][1] = -v[1]+1./2;
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[1];
+    res[1][1] = v[0];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[1];
+    res[3][1] = -v[0];
+    res[3][2] = -v[2];
+    res[4][0] = v[1];
+    res[4][1] = v[0];
+    res[4][2] = -v[2];
+    res[5][0] = -v[1];
+    res[5][1] = -v[0];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -30842,9 +44049,11 @@ struct FastSG_P_4n2 {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][1]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P_6 {
- static const short size=6;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -30863,6 +44072,26 @@ struct FastSG_P_6 {
     res[4][2] = v[2];
     res[5][0] = -v[1];
     res[5][1] = v[0]-v[1];
+    res[5][2] = -v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0]-v[1];
+    res[1][1] = v[0];
+    res[1][2] = -v[2];
+    res[2][0] = v[1];
+    res[2][1] = -v[0]-v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0]-v[1];
+    res[4][1] = v[0];
+    res[4][2] = v[2];
+    res[5][0] = v[1];
+    res[5][1] = -v[0]-v[1];
     res[5][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -30891,9 +44120,11 @@ struct FastSG_P_6 {
     res[5][2] = -v[2];
     phase[5] =  0;
   }
+  static const short size=6;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P_62c {
- static const short size=12;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -30931,6 +44162,44 @@ struct FastSG_P_62c {
     res[11][0] = -v[0];
     res[11][1] = -v[0]+v[1];
     res[11][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0]-v[1];
+    res[1][1] = v[0];
+    res[1][2] = -v[2];
+    res[2][0] = v[1];
+    res[2][1] = -v[0]-v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0]-v[1];
+    res[4][1] = v[0];
+    res[4][2] = v[2];
+    res[5][0] = v[1];
+    res[5][1] = -v[0]-v[1];
+    res[5][2] = -v[2];
+    res[6][0] = v[0];
+    res[6][1] = -v[0]-v[1];
+    res[6][2] = -v[2];
+    res[7][0] = -v[0]-v[1];
+    res[7][1] = v[1];
+    res[7][2] = -v[2];
+    res[8][0] = v[1];
+    res[8][1] = v[0];
+    res[8][2] = -v[2];
+    res[9][0] = v[1];
+    res[9][1] = v[0];
+    res[9][2] = v[2];
+    res[10][0] = v[0];
+    res[10][1] = -v[0]-v[1];
+    res[10][2] = v[2];
+    res[11][0] = -v[0]-v[1];
+    res[11][1] = v[1];
+    res[11][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -30982,9 +44251,11 @@ struct FastSG_P_62c {
     res[11][2] = v[2];
     phase[11] = res[11][2]*1./2;
   }
+  static const short size=12;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P_62m {
- static const short size=12;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -31021,6 +44292,44 @@ struct FastSG_P_62m {
     res[10][2] = v[2];
     res[11][0] = -v[0];
     res[11][1] = -v[0]+v[1];
+    res[11][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0]-v[1];
+    res[1][1] = v[0];
+    res[1][2] = -v[2];
+    res[2][0] = v[1];
+    res[2][1] = -v[0]-v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0]-v[1];
+    res[4][1] = v[0];
+    res[4][2] = v[2];
+    res[5][0] = v[1];
+    res[5][1] = -v[0]-v[1];
+    res[5][2] = -v[2];
+    res[6][0] = v[0];
+    res[6][1] = -v[0]-v[1];
+    res[6][2] = -v[2];
+    res[7][0] = -v[0]-v[1];
+    res[7][1] = v[1];
+    res[7][2] = -v[2];
+    res[8][0] = v[1];
+    res[8][1] = v[0];
+    res[8][2] = -v[2];
+    res[9][0] = v[1];
+    res[9][1] = v[0];
+    res[9][2] = v[2];
+    res[10][0] = v[0];
+    res[10][1] = -v[0]-v[1];
+    res[10][2] = v[2];
+    res[11][0] = -v[0]-v[1];
+    res[11][1] = v[1];
     res[11][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -31073,9 +44382,11 @@ struct FastSG_P_62m {
     res[11][2] = v[2];
     phase[11] =  0;
   }
+  static const short size=12;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P_6c2 {
- static const short size=12;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -31113,6 +44424,44 @@ struct FastSG_P_6c2 {
     res[11][0] = -v[1];
     res[11][1] = -v[0];
     res[11][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0]-v[1];
+    res[1][1] = v[0];
+    res[1][2] = -v[2];
+    res[2][0] = v[1];
+    res[2][1] = -v[0]-v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0]-v[1];
+    res[4][1] = v[0];
+    res[4][2] = v[2];
+    res[5][0] = v[1];
+    res[5][1] = -v[0]-v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[1];
+    res[6][1] = -v[0];
+    res[6][2] = -v[2];
+    res[7][0] = -v[0];
+    res[7][1] = v[0]+v[1];
+    res[7][2] = -v[2];
+    res[8][0] = v[0]+v[1];
+    res[8][1] = -v[1];
+    res[8][2] = -v[2];
+    res[9][0] = -v[0];
+    res[9][1] = v[0]+v[1];
+    res[9][2] = v[2];
+    res[10][0] = v[0]+v[1];
+    res[10][1] = -v[1];
+    res[10][2] = v[2];
+    res[11][0] = -v[1];
+    res[11][1] = -v[0];
+    res[11][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -31164,9 +44513,11 @@ struct FastSG_P_6c2 {
     res[11][2] = v[2];
     phase[11] = res[11][2]*1./2;
   }
+  static const short size=12;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P_6m2 {
- static const short size=12;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -31200,6 +44551,44 @@ struct FastSG_P_6m2 {
     res[9][2] = v[2];
     res[10][0] = v[0];
     res[10][1] = v[0]-v[1];
+    res[10][2] = v[2];
+    res[11][0] = -v[1];
+    res[11][1] = -v[0];
+    res[11][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0]-v[1];
+    res[1][1] = v[0];
+    res[1][2] = -v[2];
+    res[2][0] = v[1];
+    res[2][1] = -v[0]-v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0]-v[1];
+    res[4][1] = v[0];
+    res[4][2] = v[2];
+    res[5][0] = v[1];
+    res[5][1] = -v[0]-v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[1];
+    res[6][1] = -v[0];
+    res[6][2] = -v[2];
+    res[7][0] = -v[0];
+    res[7][1] = v[0]+v[1];
+    res[7][2] = -v[2];
+    res[8][0] = v[0]+v[1];
+    res[8][1] = -v[1];
+    res[8][2] = -v[2];
+    res[9][0] = -v[0];
+    res[9][1] = v[0]+v[1];
+    res[9][2] = v[2];
+    res[10][0] = v[0]+v[1];
+    res[10][1] = -v[1];
     res[10][2] = v[2];
     res[11][0] = -v[1];
     res[11][1] = -v[0];
@@ -31255,10 +44644,17 @@ struct FastSG_P_6m2 {
     res[11][2] = v[2];
     phase[11] =  0;
   }
+  static const short size=12;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P1 {
- static const short size=1;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
     res[0][2] = v[2];
@@ -31269,10 +44665,20 @@ struct FastSG_P1 {
     res[0][2] = v[2];
     phase[0] =  0;
   }
+  static const short size=1;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P112 {
- static const short size=2;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
     res[0][2] = v[2];
@@ -31290,9 +44696,11 @@ struct FastSG_P112 {
     res[1][2] = v[2];
     phase[1] =  0;
   }
+  static const short size=2;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P112_a {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -31304,6 +44712,20 @@ struct FastSG_P112_a {
     res[2][1] = -v[1];
     res[2][2] = v[2];
     res[3][0] = v[0]+1./2;
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
     res[3][1] = v[1];
     res[3][2] = -v[2];
   }
@@ -31325,9 +44747,11 @@ struct FastSG_P112_a {
     res[3][2] = -v[2];
     phase[3] = res[3][0]*1./2;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P112_b {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -31340,6 +44764,20 @@ struct FastSG_P112_b {
     res[2][2] = v[2];
     res[3][0] = v[0];
     res[3][1] = v[1]+1./2;
+    res[3][2] = -v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
     res[3][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -31360,10 +44798,26 @@ struct FastSG_P112_b {
     res[3][2] = -v[2];
     phase[3] = res[3][1]*1./2;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P112_m {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
     res[0][2] = v[2];
@@ -31395,9 +44849,11 @@ struct FastSG_P112_m {
     res[3][2] = -v[2];
     phase[3] =  0;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P112_n {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -31410,6 +44866,20 @@ struct FastSG_P112_n {
     res[2][2] = v[2];
     res[3][0] = v[0]+1./2;
     res[3][1] = v[1]+1./2;
+    res[3][2] = -v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
     res[3][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -31430,9 +44900,11 @@ struct FastSG_P112_n {
     res[3][2] = -v[2];
     phase[3] = (res[3][0]+res[3][1])*1./2;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P1121 {
- static const short size=2;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -31440,6 +44912,14 @@ struct FastSG_P1121 {
     res[1][0] = -v[0];
     res[1][1] = -v[1];
     res[1][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -31451,9 +44931,11 @@ struct FastSG_P1121 {
     res[1][2] = v[2];
     phase[1] = res[1][2]*1./2;
   }
+  static const short size=2;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P1121_a {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -31467,6 +44949,20 @@ struct FastSG_P1121_a {
     res[3][0] = v[0]+1./2;
     res[3][1] = v[1];
     res[3][2] = -v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -31486,9 +44982,11 @@ struct FastSG_P1121_a {
     res[3][2] = -v[2];
     phase[3] = (res[3][0]+res[3][2])*1./2;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P1121_b {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -31502,6 +45000,20 @@ struct FastSG_P1121_b {
     res[3][0] = v[0];
     res[3][1] = v[1]+1./2;
     res[3][2] = -v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -31521,9 +45033,11 @@ struct FastSG_P1121_b {
     res[3][2] = -v[2];
     phase[3] = (res[3][1]+res[3][2])*1./2;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P1121_m {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -31537,6 +45051,20 @@ struct FastSG_P1121_m {
     res[3][0] = v[0];
     res[3][1] = v[1];
     res[3][2] = -v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -31556,9 +45084,11 @@ struct FastSG_P1121_m {
     res[3][2] = -v[2];
     phase[3] = res[3][2]*1./2;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P1121_n {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -31572,6 +45102,20 @@ struct FastSG_P1121_n {
     res[3][0] = v[0]+1./2;
     res[3][1] = v[1]+1./2;
     res[3][2] = -v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -31591,14 +45135,24 @@ struct FastSG_P1121_n {
     res[3][2] = -v[2];
     phase[3] = (res[3][0]+res[3][1]+res[3][2])*1./2;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P11a {
- static const short size=2;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
     res[0][2] = v[2];
     res[1][0] = v[0]+1./2;
+    res[1][1] = v[1];
+    res[1][2] = -v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
     res[1][1] = v[1];
     res[1][2] = -v[2];
   }
@@ -31612,15 +45166,25 @@ struct FastSG_P11a {
     res[1][2] = -v[2];
     phase[1] = res[1][0]*1./2;
   }
+  static const short size=2;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P11b {
- static const short size=2;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
     res[0][2] = v[2];
     res[1][0] = v[0];
     res[1][1] = v[1]+1./2;
+    res[1][2] = -v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
     res[1][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -31633,10 +45197,20 @@ struct FastSG_P11b {
     res[1][2] = -v[2];
     phase[1] = res[1][1]*1./2;
   }
+  static const short size=2;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P11m {
- static const short size=2;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = -v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
     res[0][2] = v[2];
@@ -31654,15 +45228,25 @@ struct FastSG_P11m {
     res[1][2] = -v[2];
     phase[1] =  0;
   }
+  static const short size=2;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P11n {
- static const short size=2;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
     res[0][2] = v[2];
     res[1][0] = v[0]+1./2;
     res[1][1] = v[1]+1./2;
+    res[1][2] = -v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
     res[1][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -31675,10 +45259,20 @@ struct FastSG_P11n {
     res[1][2] = -v[2];
     phase[1] = (res[1][0]+res[1][1])*1./2;
   }
+  static const short size=2;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P2 {
- static const short size=2;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = v[1];
+    res[1][2] = -v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
     res[0][2] = v[2];
@@ -31696,9 +45290,11 @@ struct FastSG_P2 {
     res[1][2] = -v[2];
     phase[1] =  0;
   }
+  static const short size=2;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P2_a {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -31710,6 +45306,20 @@ struct FastSG_P2_a {
     res[2][1] = v[1];
     res[2][2] = -v[2];
     res[3][0] = v[0]+1./2;
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = v[1];
+    res[2][2] = -v[2];
+    res[3][0] = v[0];
     res[3][1] = -v[1];
     res[3][2] = v[2];
   }
@@ -31731,9 +45341,11 @@ struct FastSG_P2_a {
     res[3][2] = v[2];
     phase[3] = res[3][0]*1./2;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P2_b11 {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -31746,6 +45358,20 @@ struct FastSG_P2_b11 {
     res[2][2] = -v[2];
     res[3][0] = -v[0];
     res[3][1] = v[1]+1./2;
+    res[3][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = -v[1];
+    res[2][2] = -v[2];
+    res[3][0] = -v[0];
+    res[3][1] = v[1];
     res[3][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -31766,9 +45392,11 @@ struct FastSG_P2_b11 {
     res[3][2] = v[2];
     phase[3] = res[3][1]*1./2;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P2_c {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -31782,6 +45410,20 @@ struct FastSG_P2_c {
     res[3][0] = v[0];
     res[3][1] = -v[1];
     res[3][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = v[1];
+    res[2][2] = -v[2];
+    res[3][0] = v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -31801,9 +45443,11 @@ struct FastSG_P2_c {
     res[3][2] = v[2];
     phase[3] = res[3][2]*1./2;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P2_c11 {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -31817,6 +45461,20 @@ struct FastSG_P2_c11 {
     res[3][0] = -v[0];
     res[3][1] = v[1];
     res[3][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = -v[1];
+    res[2][2] = -v[2];
+    res[3][0] = -v[0];
+    res[3][1] = v[1];
+    res[3][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -31836,10 +45494,26 @@ struct FastSG_P2_c11 {
     res[3][2] = v[2];
     phase[3] = res[3][2]*1./2;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P2_m {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = v[1];
+    res[2][2] = -v[2];
+    res[3][0] = v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
     res[0][2] = v[2];
@@ -31871,10 +45545,26 @@ struct FastSG_P2_m {
     res[3][2] = v[2];
     phase[3] =  0;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P2_m11 {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = -v[1];
+    res[2][2] = -v[2];
+    res[3][0] = -v[0];
+    res[3][1] = v[1];
+    res[3][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
     res[0][2] = v[2];
@@ -31906,9 +45596,11 @@ struct FastSG_P2_m11 {
     res[3][2] = v[2];
     phase[3] =  0;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P2_n {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -31922,6 +45614,20 @@ struct FastSG_P2_n {
     res[3][0] = v[0]+1./2;
     res[3][1] = -v[1];
     res[3][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = v[1];
+    res[2][2] = -v[2];
+    res[3][0] = v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -31941,9 +45647,11 @@ struct FastSG_P2_n {
     res[3][2] = v[2];
     phase[3] = (res[3][0]+res[3][2])*1./2;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P2_n11 {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -31957,6 +45665,20 @@ struct FastSG_P2_n11 {
     res[3][0] = -v[0];
     res[3][1] = v[1]+1./2;
     res[3][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = -v[1];
+    res[2][2] = -v[2];
+    res[3][0] = -v[0];
+    res[3][1] = v[1];
+    res[3][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -31976,15 +45698,25 @@ struct FastSG_P2_n11 {
     res[3][2] = v[2];
     phase[3] = (res[3][1]+res[3][2])*1./2;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P21 {
- static const short size=2;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
     res[0][2] = v[2];
     res[1][0] = -v[0];
     res[1][1] = v[1]+1./2;
+    res[1][2] = -v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = v[1];
     res[1][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -31997,9 +45729,11 @@ struct FastSG_P21 {
     res[1][2] = -v[2];
     phase[1] = res[1][1]*1./2;
   }
+  static const short size=2;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P21_a {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -32012,6 +45746,20 @@ struct FastSG_P21_a {
     res[2][2] = -v[2];
     res[3][0] = v[0]+1./2;
     res[3][1] = -v[1]+1./2;
+    res[3][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = v[1];
+    res[2][2] = -v[2];
+    res[3][0] = v[0];
+    res[3][1] = -v[1];
     res[3][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -32032,9 +45780,11 @@ struct FastSG_P21_a {
     res[3][2] = v[2];
     phase[3] = (res[3][0]+res[3][1])*1./2;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P21_b11 {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -32047,6 +45797,20 @@ struct FastSG_P21_b11 {
     res[2][2] = -v[2];
     res[3][0] = -v[0]+1./2;
     res[3][1] = v[1]+1./2;
+    res[3][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = -v[1];
+    res[2][2] = -v[2];
+    res[3][0] = -v[0];
+    res[3][1] = v[1];
     res[3][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -32067,9 +45831,11 @@ struct FastSG_P21_b11 {
     res[3][2] = v[2];
     phase[3] = (res[3][0]+res[3][1])*1./2;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P21_c {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -32083,6 +45849,20 @@ struct FastSG_P21_c {
     res[3][0] = v[0];
     res[3][1] = -v[1]+1./2;
     res[3][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = v[1];
+    res[2][2] = -v[2];
+    res[3][0] = v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -32102,9 +45882,11 @@ struct FastSG_P21_c {
     res[3][2] = v[2];
     phase[3] = (res[3][1]+res[3][2])*1./2;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P21_c11 {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -32118,6 +45900,20 @@ struct FastSG_P21_c11 {
     res[3][0] = -v[0]+1./2;
     res[3][1] = v[1];
     res[3][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = -v[1];
+    res[2][2] = -v[2];
+    res[3][0] = -v[0];
+    res[3][1] = v[1];
+    res[3][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -32137,9 +45933,11 @@ struct FastSG_P21_c11 {
     res[3][2] = v[2];
     phase[3] = (res[3][0]+res[3][2])*1./2;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P21_m {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -32152,6 +45950,20 @@ struct FastSG_P21_m {
     res[2][2] = -v[2];
     res[3][0] = v[0];
     res[3][1] = -v[1]+1./2;
+    res[3][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = v[1];
+    res[2][2] = -v[2];
+    res[3][0] = v[0];
+    res[3][1] = -v[1];
     res[3][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -32172,9 +45984,11 @@ struct FastSG_P21_m {
     res[3][2] = v[2];
     phase[3] = res[3][1]*1./2;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P21_m11 {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -32186,6 +46000,20 @@ struct FastSG_P21_m11 {
     res[2][1] = -v[1];
     res[2][2] = -v[2];
     res[3][0] = -v[0]+1./2;
+    res[3][1] = v[1];
+    res[3][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = -v[1];
+    res[2][2] = -v[2];
+    res[3][0] = -v[0];
     res[3][1] = v[1];
     res[3][2] = v[2];
   }
@@ -32207,9 +46035,11 @@ struct FastSG_P21_m11 {
     res[3][2] = v[2];
     phase[3] = res[3][0]*1./2;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P21_n {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -32223,6 +46053,20 @@ struct FastSG_P21_n {
     res[3][0] = v[0]+1./2;
     res[3][1] = -v[1]+1./2;
     res[3][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = v[1];
+    res[2][2] = -v[2];
+    res[3][0] = v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -32242,9 +46086,11 @@ struct FastSG_P21_n {
     res[3][2] = v[2];
     phase[3] = (res[3][0]+res[3][1]+res[3][2])*1./2;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P21_n11 {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -32258,6 +46104,20 @@ struct FastSG_P21_n11 {
     res[3][0] = -v[0]+1./2;
     res[3][1] = v[1]+1./2;
     res[3][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = -v[1];
+    res[2][2] = -v[2];
+    res[3][0] = -v[0];
+    res[3][1] = v[1];
+    res[3][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -32277,10 +46137,20 @@ struct FastSG_P21_n11 {
     res[3][2] = v[2];
     phase[3] = (res[3][0]+res[3][1]+res[3][2])*1./2;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P211 {
- static const short size=2;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
     res[0][2] = v[2];
@@ -32298,14 +46168,24 @@ struct FastSG_P211 {
     res[1][2] = -v[2];
     phase[1] =  0;
   }
+  static const short size=2;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P2111 {
- static const short size=2;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
     res[0][2] = v[2];
     res[1][0] = v[0]+1./2;
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
     res[1][1] = -v[1];
     res[1][2] = -v[2];
   }
@@ -32319,9 +46199,11 @@ struct FastSG_P2111 {
     res[1][2] = -v[2];
     phase[1] = res[1][0]*1./2;
   }
+  static const short size=2;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P21212 {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -32334,6 +46216,20 @@ struct FastSG_P21212 {
     res[2][2] = -v[2];
     res[3][0] = -v[0]+1./2;
     res[3][1] = v[1]+1./2;
+    res[3][2] = -v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[0];
+    res[2][1] = -v[1];
+    res[2][2] = -v[2];
+    res[3][0] = -v[0];
+    res[3][1] = v[1];
     res[3][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -32354,9 +46250,11 @@ struct FastSG_P21212 {
     res[3][2] = -v[2];
     phase[3] = (res[3][0]+res[3][1])*1./2;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P212121 {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -32371,6 +46269,20 @@ struct FastSG_P212121 {
     res[3][1] = v[1]+1./2;
     res[3][2] = -v[2]+1./2;
   }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[0];
+    res[2][1] = -v[1];
+    res[2][2] = -v[2];
+    res[3][0] = -v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+  }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -32389,9 +46301,11 @@ struct FastSG_P212121 {
     res[3][2] = -v[2];
     phase[3] = (res[3][1]+res[3][2])*1./2;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P2122 {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -32400,6 +46314,20 @@ struct FastSG_P2122 {
     res[1][1] = -v[1];
     res[1][2] = v[2];
     res[2][0] = v[0]+1./2;
+    res[2][1] = -v[1];
+    res[2][2] = -v[2];
+    res[3][0] = -v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[0];
     res[2][1] = -v[1];
     res[2][2] = -v[2];
     res[3][0] = -v[0];
@@ -32424,9 +46352,11 @@ struct FastSG_P2122 {
     res[3][2] = -v[2];
     phase[3] =  0;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P21221 {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -32437,6 +46367,20 @@ struct FastSG_P21221 {
     res[2][0] = v[0]+1./2;
     res[2][1] = -v[1];
     res[2][2] = -v[2]+1./2;
+    res[3][0] = -v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[0];
+    res[2][1] = -v[1];
+    res[2][2] = -v[2];
     res[3][0] = -v[0];
     res[3][1] = v[1];
     res[3][2] = -v[2];
@@ -32459,9 +46403,11 @@ struct FastSG_P21221 {
     res[3][2] = -v[2];
     phase[3] =  0;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P213 {
- static const short size=12;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -32499,6 +46445,44 @@ struct FastSG_P213 {
     res[11][0] = -v[0];
     res[11][1] = v[1]+1./2;
     res[11][2] = -v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[1];
+    res[1][1] = v[2];
+    res[1][2] = v[0];
+    res[2][0] = v[2];
+    res[2][1] = v[0];
+    res[2][2] = v[1];
+    res[3][0] = v[2];
+    res[3][1] = -v[0];
+    res[3][2] = -v[1];
+    res[4][0] = -v[1];
+    res[4][1] = -v[2];
+    res[4][2] = v[0];
+    res[5][0] = -v[2];
+    res[5][1] = -v[0];
+    res[5][2] = v[1];
+    res[6][0] = -v[1];
+    res[6][1] = v[2];
+    res[6][2] = -v[0];
+    res[7][0] = v[1];
+    res[7][1] = -v[2];
+    res[7][2] = -v[0];
+    res[8][0] = -v[2];
+    res[8][1] = v[0];
+    res[8][2] = -v[1];
+    res[9][0] = -v[0];
+    res[9][1] = -v[1];
+    res[9][2] = v[2];
+    res[10][0] = v[0];
+    res[10][1] = -v[1];
+    res[10][2] = -v[2];
+    res[11][0] = -v[0];
+    res[11][1] = v[1];
+    res[11][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -32550,9 +46534,11 @@ struct FastSG_P213 {
     res[11][2] = -v[2];
     phase[11] = (res[11][1]+res[11][2])*1./2;
   }
+  static const short size=12;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P21ab {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -32565,6 +46551,20 @@ struct FastSG_P21ab {
     res[2][2] = -v[2];
     res[3][0] = v[0]+1./2;
     res[3][1] = -v[1]+1./2;
+    res[3][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = -v[2];
+    res[3][0] = v[0];
+    res[3][1] = -v[1];
     res[3][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -32585,9 +46585,11 @@ struct FastSG_P21ab {
     res[3][2] = v[2];
     phase[3] = (res[3][0]+res[3][1])*1./2;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P21am {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -32599,6 +46601,20 @@ struct FastSG_P21am {
     res[2][1] = v[1];
     res[2][2] = -v[2];
     res[3][0] = v[0]+1./2;
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = -v[2];
+    res[3][0] = v[0];
     res[3][1] = -v[1];
     res[3][2] = v[2];
   }
@@ -32620,9 +46636,11 @@ struct FastSG_P21am {
     res[3][2] = v[2];
     phase[3] = res[3][0]*1./2;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P21ca {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -32636,6 +46654,20 @@ struct FastSG_P21ca {
     res[3][0] = v[0];
     res[3][1] = -v[1];
     res[3][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = -v[2];
+    res[3][0] = v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -32655,9 +46687,11 @@ struct FastSG_P21ca {
     res[3][2] = v[2];
     phase[3] = res[3][2]*1./2;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P21cn {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -32671,6 +46705,20 @@ struct FastSG_P21cn {
     res[3][0] = v[0];
     res[3][1] = -v[1]+1./2;
     res[3][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = -v[2];
+    res[3][0] = v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -32690,9 +46738,11 @@ struct FastSG_P21cn {
     res[3][2] = v[2];
     phase[3] = (res[3][1]+res[3][2])*1./2;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P21ma {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -32701,6 +46751,20 @@ struct FastSG_P21ma {
     res[1][1] = -v[1];
     res[1][2] = -v[2];
     res[2][0] = v[0]+1./2;
+    res[2][1] = v[1];
+    res[2][2] = -v[2];
+    res[3][0] = v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
     res[2][1] = v[1];
     res[2][2] = -v[2];
     res[3][0] = v[0];
@@ -32725,9 +46789,11 @@ struct FastSG_P21ma {
     res[3][2] = v[2];
     phase[3] =  0;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P21mn {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -32737,6 +46803,20 @@ struct FastSG_P21mn {
     res[1][2] = -v[2];
     res[2][0] = v[0]+1./2;
     res[2][1] = v[1]+1./2;
+    res[2][2] = -v[2];
+    res[3][0] = v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
     res[2][2] = -v[2];
     res[3][0] = v[0];
     res[3][1] = -v[1];
@@ -32760,9 +46840,11 @@ struct FastSG_P21mn {
     res[3][2] = v[2];
     phase[3] =  0;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P21nb {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -32776,6 +46858,20 @@ struct FastSG_P21nb {
     res[3][0] = v[0]+1./2;
     res[3][1] = -v[1]+1./2;
     res[3][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = -v[2];
+    res[3][0] = v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -32795,9 +46891,11 @@ struct FastSG_P21nb {
     res[3][2] = v[2];
     phase[3] = (res[3][0]+res[3][1]+res[3][2])*1./2;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P21nm {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -32811,6 +46909,20 @@ struct FastSG_P21nm {
     res[3][0] = v[0]+1./2;
     res[3][1] = -v[1];
     res[3][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = -v[2];
+    res[3][0] = v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -32830,9 +46942,11 @@ struct FastSG_P21nm {
     res[3][2] = v[2];
     phase[3] = (res[3][0]+res[3][2])*1./2;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P2212 {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -32845,6 +46959,20 @@ struct FastSG_P2212 {
     res[2][2] = -v[2];
     res[3][0] = -v[0];
     res[3][1] = v[1]+1./2;
+    res[3][2] = -v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[0];
+    res[2][1] = -v[1];
+    res[2][2] = -v[2];
+    res[3][0] = -v[0];
+    res[3][1] = v[1];
     res[3][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -32865,9 +46993,11 @@ struct FastSG_P2212 {
     res[3][2] = -v[2];
     phase[3] = res[3][1]*1./2;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P22121 {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -32881,6 +47011,20 @@ struct FastSG_P22121 {
     res[3][0] = -v[0];
     res[3][1] = v[1]+1./2;
     res[3][2] = -v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[0];
+    res[2][1] = -v[1];
+    res[2][2] = -v[2];
+    res[3][0] = -v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -32900,10 +47044,26 @@ struct FastSG_P22121 {
     res[3][2] = -v[2];
     phase[3] = (res[3][1]+res[3][2])*1./2;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P222 {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[0];
+    res[2][1] = -v[1];
+    res[2][2] = -v[2];
+    res[3][0] = -v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
     res[0][2] = v[2];
@@ -32935,9 +47095,11 @@ struct FastSG_P222 {
     res[3][2] = -v[2];
     phase[3] =  0;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P2221 {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -32951,6 +47113,20 @@ struct FastSG_P2221 {
     res[3][0] = -v[0];
     res[3][1] = v[1];
     res[3][2] = -v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[0];
+    res[2][1] = -v[1];
+    res[2][2] = -v[2];
+    res[3][0] = -v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -32970,9 +47146,11 @@ struct FastSG_P2221 {
     res[3][2] = -v[2];
     phase[3] = res[3][2]*1./2;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P23 {
- static const short size=12;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -33001,6 +47179,44 @@ struct FastSG_P23 {
     res[8][0] = v[1];
     res[8][1] = -v[2];
     res[8][2] = -v[0];
+    res[9][0] = -v[0];
+    res[9][1] = -v[1];
+    res[9][2] = v[2];
+    res[10][0] = v[0];
+    res[10][1] = -v[1];
+    res[10][2] = -v[2];
+    res[11][0] = -v[0];
+    res[11][1] = v[1];
+    res[11][2] = -v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[1];
+    res[1][1] = v[2];
+    res[1][2] = v[0];
+    res[2][0] = v[2];
+    res[2][1] = v[0];
+    res[2][2] = v[1];
+    res[3][0] = v[2];
+    res[3][1] = -v[0];
+    res[3][2] = -v[1];
+    res[4][0] = -v[1];
+    res[4][1] = -v[2];
+    res[4][2] = v[0];
+    res[5][0] = -v[2];
+    res[5][1] = -v[0];
+    res[5][2] = v[1];
+    res[6][0] = -v[1];
+    res[6][1] = v[2];
+    res[6][2] = -v[0];
+    res[7][0] = v[1];
+    res[7][1] = -v[2];
+    res[7][2] = -v[0];
+    res[8][0] = -v[2];
+    res[8][1] = v[0];
+    res[8][2] = -v[1];
     res[9][0] = -v[0];
     res[9][1] = -v[1];
     res[9][2] = v[2];
@@ -33061,9 +47277,11 @@ struct FastSG_P23 {
     res[11][2] = -v[2];
     phase[11] =  0;
   }
+  static const short size=12;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P2aa {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -33075,6 +47293,20 @@ struct FastSG_P2aa {
     res[2][1] = v[1];
     res[2][2] = -v[2];
     res[3][0] = v[0]+1./2;
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = -v[2];
+    res[3][0] = v[0];
     res[3][1] = -v[1];
     res[3][2] = v[2];
   }
@@ -33096,9 +47328,11 @@ struct FastSG_P2aa {
     res[3][2] = v[2];
     phase[3] = res[3][0]*1./2;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P2an {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -33111,6 +47345,20 @@ struct FastSG_P2an {
     res[2][2] = -v[2];
     res[3][0] = v[0]+1./2;
     res[3][1] = -v[1]+1./2;
+    res[3][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = -v[2];
+    res[3][0] = v[0];
+    res[3][1] = -v[1];
     res[3][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -33131,9 +47379,11 @@ struct FastSG_P2an {
     res[3][2] = v[2];
     phase[3] = (res[3][0]+res[3][1])*1./2;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P2cb {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -33147,6 +47397,20 @@ struct FastSG_P2cb {
     res[3][0] = v[0];
     res[3][1] = -v[1]+1./2;
     res[3][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = -v[2];
+    res[3][0] = v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -33166,9 +47430,11 @@ struct FastSG_P2cb {
     res[3][2] = v[2];
     phase[3] = (res[3][1]+res[3][2])*1./2;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P2cm {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -33182,6 +47448,20 @@ struct FastSG_P2cm {
     res[3][0] = v[0];
     res[3][1] = -v[1];
     res[3][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = -v[2];
+    res[3][0] = v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -33201,9 +47481,11 @@ struct FastSG_P2cm {
     res[3][2] = v[2];
     phase[3] = res[3][2]*1./2;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P2mb {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -33216,6 +47498,20 @@ struct FastSG_P2mb {
     res[2][2] = -v[2];
     res[3][0] = v[0];
     res[3][1] = -v[1]+1./2;
+    res[3][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = -v[2];
+    res[3][0] = v[0];
+    res[3][1] = -v[1];
     res[3][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -33236,10 +47532,26 @@ struct FastSG_P2mb {
     res[3][2] = v[2];
     phase[3] = res[3][1]*1./2;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P2mm {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = -v[2];
+    res[3][0] = v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
     res[0][2] = v[2];
@@ -33271,9 +47583,11 @@ struct FastSG_P2mm {
     res[3][2] = v[2];
     phase[3] =  0;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P2na {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -33287,6 +47601,20 @@ struct FastSG_P2na {
     res[3][0] = v[0]+1./2;
     res[3][1] = -v[1];
     res[3][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = -v[2];
+    res[3][0] = v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -33306,9 +47634,11 @@ struct FastSG_P2na {
     res[3][2] = v[2];
     phase[3] = (res[3][0]+res[3][2])*1./2;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P2nn {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -33322,6 +47652,20 @@ struct FastSG_P2nn {
     res[3][0] = v[0]+1./2;
     res[3][1] = -v[1]+1./2;
     res[3][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = -v[2];
+    res[3][0] = v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -33341,9 +47685,11 @@ struct FastSG_P2nn {
     res[3][2] = v[2];
     phase[3] = (res[3][0]+res[3][1]+res[3][2])*1./2;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P3 {
- static const short size=3;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -33353,6 +47699,17 @@ struct FastSG_P3 {
     res[1][2] = v[2];
     res[2][0] = -v[0]+v[1];
     res[2][1] = -v[0];
+    res[2][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[1];
+    res[1][1] = -v[0]-v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0]-v[1];
+    res[2][1] = v[0];
     res[2][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -33369,9 +47726,11 @@ struct FastSG_P3 {
     res[2][2] = v[2];
     phase[2] =  0;
   }
+  static const short size=3;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P31 {
- static const short size=3;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -33382,6 +47741,17 @@ struct FastSG_P31 {
     res[2][0] = -v[0]+v[1];
     res[2][1] = -v[0];
     res[2][2] = v[2]+2./3;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[1];
+    res[1][1] = -v[0]-v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0]-v[1];
+    res[2][1] = v[0];
+    res[2][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -33397,9 +47767,11 @@ struct FastSG_P31 {
     res[2][2] = v[2];
     phase[2] = res[2][2]*2./3;
   }
+  static const short size=3;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P3112 {
- static const short size=6;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -33418,6 +47790,26 @@ struct FastSG_P3112 {
     res[4][2] = -v[2]+1./3;
     res[5][0] = v[0];
     res[5][1] = v[0]-v[1];
+    res[5][2] = -v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[1];
+    res[1][1] = -v[0]-v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0]-v[1];
+    res[2][1] = v[0];
+    res[2][2] = v[2];
+    res[3][0] = -v[1];
+    res[3][1] = -v[0];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = v[0]+v[1];
+    res[4][2] = -v[2];
+    res[5][0] = v[0]+v[1];
+    res[5][1] = -v[1];
     res[5][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -33446,9 +47838,11 @@ struct FastSG_P3112 {
     res[5][2] = -v[2];
     phase[5] =  0;
   }
+  static const short size=6;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P312 {
- static const short size=6;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -33467,6 +47861,26 @@ struct FastSG_P312 {
     res[4][2] = -v[2];
     res[5][0] = v[0];
     res[5][1] = v[0]-v[1];
+    res[5][2] = -v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[1];
+    res[1][1] = -v[0]-v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0]-v[1];
+    res[2][1] = v[0];
+    res[2][2] = v[2];
+    res[3][0] = -v[1];
+    res[3][1] = -v[0];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = v[0]+v[1];
+    res[4][2] = -v[2];
+    res[5][0] = v[0]+v[1];
+    res[5][1] = -v[1];
     res[5][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -33495,9 +47909,11 @@ struct FastSG_P312 {
     res[5][2] = -v[2];
     phase[5] =  0;
   }
+  static const short size=6;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P3121 {
- static const short size=6;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -33514,6 +47930,26 @@ struct FastSG_P3121 {
     res[4][0] = -v[0];
     res[4][1] = -v[0]+v[1];
     res[4][2] = -v[2]+1./3;
+    res[5][0] = v[1];
+    res[5][1] = v[0];
+    res[5][2] = -v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[1];
+    res[1][1] = -v[0]-v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0]-v[1];
+    res[2][1] = v[0];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = -v[0]-v[1];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0]-v[1];
+    res[4][1] = v[1];
+    res[4][2] = -v[2];
     res[5][0] = v[1];
     res[5][1] = v[0];
     res[5][2] = -v[2];
@@ -33544,9 +47980,11 @@ struct FastSG_P3121 {
     res[5][2] = -v[2];
     phase[5] =  0;
   }
+  static const short size=6;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P31c {
- static const short size=6;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -33566,6 +48004,26 @@ struct FastSG_P31c {
     res[5][0] = -v[0];
     res[5][1] = -v[0]+v[1];
     res[5][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[1];
+    res[1][1] = -v[0]-v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0]-v[1];
+    res[2][1] = v[0];
+    res[2][2] = v[2];
+    res[3][0] = v[1];
+    res[3][1] = v[0];
+    res[3][2] = v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[0]-v[1];
+    res[4][2] = v[2];
+    res[5][0] = -v[0]-v[1];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -33593,9 +48051,11 @@ struct FastSG_P31c {
     res[5][2] = v[2];
     phase[5] = res[5][2]*1./2;
   }
+  static const short size=6;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P31m {
- static const short size=6;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -33614,6 +48074,26 @@ struct FastSG_P31m {
     res[4][2] = v[2];
     res[5][0] = -v[0];
     res[5][1] = -v[0]+v[1];
+    res[5][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[1];
+    res[1][1] = -v[0]-v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0]-v[1];
+    res[2][1] = v[0];
+    res[2][2] = v[2];
+    res[3][0] = v[1];
+    res[3][1] = v[0];
+    res[3][2] = v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[0]-v[1];
+    res[4][2] = v[2];
+    res[5][0] = -v[0]-v[1];
+    res[5][1] = v[1];
     res[5][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -33642,9 +48122,11 @@ struct FastSG_P31m {
     res[5][2] = v[2];
     phase[5] =  0;
   }
+  static const short size=6;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P32 {
- static const short size=3;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -33655,6 +48137,17 @@ struct FastSG_P32 {
     res[2][0] = -v[0]+v[1];
     res[2][1] = -v[0];
     res[2][2] = v[2]+1./3;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[1];
+    res[1][1] = -v[0]-v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0]-v[1];
+    res[2][1] = v[0];
+    res[2][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -33670,9 +48163,11 @@ struct FastSG_P32 {
     res[2][2] = v[2];
     phase[2] = res[2][2]*1./3;
   }
+  static const short size=3;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P321 {
- static const short size=6;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -33688,6 +48183,26 @@ struct FastSG_P321 {
     res[3][2] = -v[2];
     res[4][0] = -v[0];
     res[4][1] = -v[0]+v[1];
+    res[4][2] = -v[2];
+    res[5][0] = v[1];
+    res[5][1] = v[0];
+    res[5][2] = -v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[1];
+    res[1][1] = -v[0]-v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0]-v[1];
+    res[2][1] = v[0];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = -v[0]-v[1];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0]-v[1];
+    res[4][1] = v[1];
     res[4][2] = -v[2];
     res[5][0] = v[1];
     res[5][1] = v[0];
@@ -33719,9 +48234,11 @@ struct FastSG_P321 {
     res[5][2] = -v[2];
     phase[5] =  0;
   }
+  static const short size=6;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P3212 {
- static const short size=6;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -33740,6 +48257,26 @@ struct FastSG_P3212 {
     res[4][2] = -v[2]+2./3;
     res[5][0] = v[0];
     res[5][1] = v[0]-v[1];
+    res[5][2] = -v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[1];
+    res[1][1] = -v[0]-v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0]-v[1];
+    res[2][1] = v[0];
+    res[2][2] = v[2];
+    res[3][0] = -v[1];
+    res[3][1] = -v[0];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = v[0]+v[1];
+    res[4][2] = -v[2];
+    res[5][0] = v[0]+v[1];
+    res[5][1] = -v[1];
     res[5][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -33768,9 +48305,11 @@ struct FastSG_P3212 {
     res[5][2] = -v[2];
     phase[5] =  0;
   }
+  static const short size=6;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P3221 {
- static const short size=6;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -33787,6 +48326,26 @@ struct FastSG_P3221 {
     res[4][0] = -v[0];
     res[4][1] = -v[0]+v[1];
     res[4][2] = -v[2]+2./3;
+    res[5][0] = v[1];
+    res[5][1] = v[0];
+    res[5][2] = -v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[1];
+    res[1][1] = -v[0]-v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0]-v[1];
+    res[2][1] = v[0];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = -v[0]-v[1];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0]-v[1];
+    res[4][1] = v[1];
+    res[4][2] = -v[2];
     res[5][0] = v[1];
     res[5][1] = v[0];
     res[5][2] = -v[2];
@@ -33817,9 +48376,11 @@ struct FastSG_P3221 {
     res[5][2] = -v[2];
     phase[5] =  0;
   }
+  static const short size=6;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P3c1 {
- static const short size=6;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -33839,6 +48400,26 @@ struct FastSG_P3c1 {
     res[5][0] = -v[1];
     res[5][1] = -v[0];
     res[5][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[1];
+    res[1][1] = -v[0]-v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0]-v[1];
+    res[2][1] = v[0];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = v[0]+v[1];
+    res[3][2] = v[2];
+    res[4][0] = v[0]+v[1];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = -v[1];
+    res[5][1] = -v[0];
+    res[5][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -33866,9 +48447,11 @@ struct FastSG_P3c1 {
     res[5][2] = v[2];
     phase[5] = res[5][2]*1./2;
   }
+  static const short size=6;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P3m1 {
- static const short size=6;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -33884,6 +48467,26 @@ struct FastSG_P3m1 {
     res[3][2] = v[2];
     res[4][0] = v[0];
     res[4][1] = v[0]-v[1];
+    res[4][2] = v[2];
+    res[5][0] = -v[1];
+    res[5][1] = -v[0];
+    res[5][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[1];
+    res[1][1] = -v[0]-v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0]-v[1];
+    res[2][1] = v[0];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = v[0]+v[1];
+    res[3][2] = v[2];
+    res[4][0] = v[0]+v[1];
+    res[4][1] = -v[1];
     res[4][2] = v[2];
     res[5][0] = -v[1];
     res[5][1] = -v[0];
@@ -33915,9 +48518,11 @@ struct FastSG_P3m1 {
     res[5][2] = v[2];
     phase[5] =  0;
   }
+  static const short size=6;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P4 {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -33930,6 +48535,20 @@ struct FastSG_P4 {
     res[2][2] = v[2];
     res[3][0] = v[1];
     res[3][1] = -v[0];
+    res[3][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[1];
+    res[1][1] = -v[0];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[1];
+    res[3][1] = v[0];
     res[3][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -33950,9 +48569,11 @@ struct FastSG_P4 {
     res[3][2] = v[2];
     phase[3] =  0;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P4_m {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -33977,6 +48598,32 @@ struct FastSG_P4_m {
     res[6][2] = v[2];
     res[7][0] = -v[1];
     res[7][1] = v[0];
+    res[7][2] = -v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[1];
+    res[2][1] = -v[0];
+    res[2][2] = v[2];
+    res[3][0] = -v[1];
+    res[3][1] = v[0];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[1];
+    res[6][1] = v[0];
+    res[6][2] = v[2];
+    res[7][0] = v[1];
+    res[7][1] = -v[0];
     res[7][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -34013,9 +48660,11 @@ struct FastSG_P4_m {
     res[7][2] = -v[2];
     phase[7] =  0;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P4_mbm {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -34064,6 +48713,56 @@ struct FastSG_P4_mbm {
     res[14][2] = -v[2];
     res[15][0] = v[1]+1./2;
     res[15][1] = v[0]+1./2;
+    res[15][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[1];
+    res[2][1] = -v[0];
+    res[2][2] = v[2];
+    res[3][0] = -v[1];
+    res[3][1] = v[0];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[1];
+    res[6][1] = v[0];
+    res[6][2] = v[2];
+    res[7][0] = v[1];
+    res[7][1] = -v[0];
+    res[7][2] = -v[2];
+    res[8][0] = v[0];
+    res[8][1] = -v[1];
+    res[8][2] = -v[2];
+    res[9][0] = -v[0];
+    res[9][1] = v[1];
+    res[9][2] = v[2];
+    res[10][0] = -v[0];
+    res[10][1] = v[1];
+    res[10][2] = -v[2];
+    res[11][0] = v[0];
+    res[11][1] = -v[1];
+    res[11][2] = v[2];
+    res[12][0] = v[1];
+    res[12][1] = v[0];
+    res[12][2] = -v[2];
+    res[13][0] = -v[1];
+    res[13][1] = -v[0];
+    res[13][2] = v[2];
+    res[14][0] = -v[1];
+    res[14][1] = -v[0];
+    res[14][2] = -v[2];
+    res[15][0] = v[1];
+    res[15][1] = v[0];
     res[15][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -34132,9 +48831,11 @@ struct FastSG_P4_mbm {
     res[15][2] = v[2];
     phase[15] = (res[15][0]+res[15][1])*1./2;
   }
+  static const short size=16;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P4_mcc {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -34184,6 +48885,56 @@ struct FastSG_P4_mcc {
     res[15][0] = v[1];
     res[15][1] = v[0];
     res[15][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[1];
+    res[2][1] = -v[0];
+    res[2][2] = v[2];
+    res[3][0] = -v[1];
+    res[3][1] = v[0];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[1];
+    res[6][1] = v[0];
+    res[6][2] = v[2];
+    res[7][0] = v[1];
+    res[7][1] = -v[0];
+    res[7][2] = -v[2];
+    res[8][0] = v[0];
+    res[8][1] = -v[1];
+    res[8][2] = -v[2];
+    res[9][0] = -v[0];
+    res[9][1] = v[1];
+    res[9][2] = v[2];
+    res[10][0] = -v[0];
+    res[10][1] = v[1];
+    res[10][2] = -v[2];
+    res[11][0] = v[0];
+    res[11][1] = -v[1];
+    res[11][2] = v[2];
+    res[12][0] = v[1];
+    res[12][1] = v[0];
+    res[12][2] = -v[2];
+    res[13][0] = -v[1];
+    res[13][1] = -v[0];
+    res[13][2] = v[2];
+    res[14][0] = -v[1];
+    res[14][1] = -v[0];
+    res[14][2] = -v[2];
+    res[15][0] = v[1];
+    res[15][1] = v[0];
+    res[15][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -34251,9 +49002,11 @@ struct FastSG_P4_mcc {
     res[15][2] = v[2];
     phase[15] = res[15][2]*1./2;
   }
+  static const short size=16;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P4_mmm {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -34278,6 +49031,56 @@ struct FastSG_P4_mmm {
     res[6][2] = v[2];
     res[7][0] = -v[1];
     res[7][1] = v[0];
+    res[7][2] = -v[2];
+    res[8][0] = v[0];
+    res[8][1] = -v[1];
+    res[8][2] = -v[2];
+    res[9][0] = -v[0];
+    res[9][1] = v[1];
+    res[9][2] = v[2];
+    res[10][0] = -v[0];
+    res[10][1] = v[1];
+    res[10][2] = -v[2];
+    res[11][0] = v[0];
+    res[11][1] = -v[1];
+    res[11][2] = v[2];
+    res[12][0] = v[1];
+    res[12][1] = v[0];
+    res[12][2] = -v[2];
+    res[13][0] = -v[1];
+    res[13][1] = -v[0];
+    res[13][2] = v[2];
+    res[14][0] = -v[1];
+    res[14][1] = -v[0];
+    res[14][2] = -v[2];
+    res[15][0] = v[1];
+    res[15][1] = v[0];
+    res[15][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[1];
+    res[2][1] = -v[0];
+    res[2][2] = v[2];
+    res[3][0] = -v[1];
+    res[3][1] = v[0];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[1];
+    res[6][1] = v[0];
+    res[6][2] = v[2];
+    res[7][0] = v[1];
+    res[7][1] = -v[0];
     res[7][2] = -v[2];
     res[8][0] = v[0];
     res[8][1] = -v[1];
@@ -34370,9 +49173,11 @@ struct FastSG_P4_mmm {
     res[15][2] = v[2];
     phase[15] =  0;
   }
+  static const short size=16;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P4_mnc {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -34422,6 +49227,56 @@ struct FastSG_P4_mnc {
     res[15][0] = v[1]+1./2;
     res[15][1] = v[0]+1./2;
     res[15][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[1];
+    res[2][1] = -v[0];
+    res[2][2] = v[2];
+    res[3][0] = -v[1];
+    res[3][1] = v[0];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[1];
+    res[6][1] = v[0];
+    res[6][2] = v[2];
+    res[7][0] = v[1];
+    res[7][1] = -v[0];
+    res[7][2] = -v[2];
+    res[8][0] = v[0];
+    res[8][1] = -v[1];
+    res[8][2] = -v[2];
+    res[9][0] = -v[0];
+    res[9][1] = v[1];
+    res[9][2] = v[2];
+    res[10][0] = -v[0];
+    res[10][1] = v[1];
+    res[10][2] = -v[2];
+    res[11][0] = v[0];
+    res[11][1] = -v[1];
+    res[11][2] = v[2];
+    res[12][0] = v[1];
+    res[12][1] = v[0];
+    res[12][2] = -v[2];
+    res[13][0] = -v[1];
+    res[13][1] = -v[0];
+    res[13][2] = v[2];
+    res[14][0] = -v[1];
+    res[14][1] = -v[0];
+    res[14][2] = -v[2];
+    res[15][0] = v[1];
+    res[15][1] = v[0];
+    res[15][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -34489,9 +49344,11 @@ struct FastSG_P4_mnc {
     res[15][2] = v[2];
     phase[15] = (res[15][0]+res[15][1]+res[15][2])*1./2;
   }
+  static const short size=16;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P4_n {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -34516,6 +49373,32 @@ struct FastSG_P4_n {
     res[6][2] = v[2];
     res[7][0] = -v[1];
     res[7][1] = v[0]+1./2;
+    res[7][2] = -v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[1];
+    res[2][1] = -v[0];
+    res[2][2] = v[2];
+    res[3][0] = -v[1];
+    res[3][1] = v[0];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[1];
+    res[6][1] = v[0];
+    res[6][2] = v[2];
+    res[7][0] = v[1];
+    res[7][1] = -v[0];
     res[7][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -34552,9 +49435,11 @@ struct FastSG_P4_n {
     res[7][2] = -v[2];
     phase[7] = res[7][1]*1./2;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P4_nbm {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -34603,6 +49488,56 @@ struct FastSG_P4_nbm {
     res[14][2] = -v[2];
     res[15][0] = v[1]+1./2;
     res[15][1] = v[0]+1./2;
+    res[15][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[1];
+    res[2][1] = -v[0];
+    res[2][2] = v[2];
+    res[3][0] = -v[1];
+    res[3][1] = v[0];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[1];
+    res[6][1] = v[0];
+    res[6][2] = v[2];
+    res[7][0] = v[1];
+    res[7][1] = -v[0];
+    res[7][2] = -v[2];
+    res[8][0] = v[0];
+    res[8][1] = -v[1];
+    res[8][2] = -v[2];
+    res[9][0] = -v[0];
+    res[9][1] = v[1];
+    res[9][2] = v[2];
+    res[10][0] = -v[0];
+    res[10][1] = v[1];
+    res[10][2] = -v[2];
+    res[11][0] = v[0];
+    res[11][1] = -v[1];
+    res[11][2] = v[2];
+    res[12][0] = v[1];
+    res[12][1] = v[0];
+    res[12][2] = -v[2];
+    res[13][0] = -v[1];
+    res[13][1] = -v[0];
+    res[13][2] = v[2];
+    res[14][0] = -v[1];
+    res[14][1] = -v[0];
+    res[14][2] = -v[2];
+    res[15][0] = v[1];
+    res[15][1] = v[0];
     res[15][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -34671,9 +49606,11 @@ struct FastSG_P4_nbm {
     res[15][2] = v[2];
     phase[15] = (res[15][0]+res[15][1])*1./2;
   }
+  static const short size=16;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P4_ncc {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -34723,6 +49660,56 @@ struct FastSG_P4_ncc {
     res[15][0] = v[1];
     res[15][1] = v[0];
     res[15][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[1];
+    res[2][1] = -v[0];
+    res[2][2] = v[2];
+    res[3][0] = -v[1];
+    res[3][1] = v[0];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[1];
+    res[6][1] = v[0];
+    res[6][2] = v[2];
+    res[7][0] = v[1];
+    res[7][1] = -v[0];
+    res[7][2] = -v[2];
+    res[8][0] = v[0];
+    res[8][1] = -v[1];
+    res[8][2] = -v[2];
+    res[9][0] = -v[0];
+    res[9][1] = v[1];
+    res[9][2] = v[2];
+    res[10][0] = -v[0];
+    res[10][1] = v[1];
+    res[10][2] = -v[2];
+    res[11][0] = v[0];
+    res[11][1] = -v[1];
+    res[11][2] = v[2];
+    res[12][0] = v[1];
+    res[12][1] = v[0];
+    res[12][2] = -v[2];
+    res[13][0] = -v[1];
+    res[13][1] = -v[0];
+    res[13][2] = v[2];
+    res[14][0] = -v[1];
+    res[14][1] = -v[0];
+    res[14][2] = -v[2];
+    res[15][0] = v[1];
+    res[15][1] = v[0];
+    res[15][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -34790,9 +49777,11 @@ struct FastSG_P4_ncc {
     res[15][2] = v[2];
     phase[15] = res[15][2]*1./2;
   }
+  static const short size=16;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P4_nmm {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -34835,6 +49824,56 @@ struct FastSG_P4_nmm {
     res[12][2] = -v[2];
     res[13][0] = -v[1]+1./2;
     res[13][1] = -v[0]+1./2;
+    res[13][2] = v[2];
+    res[14][0] = -v[1];
+    res[14][1] = -v[0];
+    res[14][2] = -v[2];
+    res[15][0] = v[1];
+    res[15][1] = v[0];
+    res[15][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[1];
+    res[2][1] = -v[0];
+    res[2][2] = v[2];
+    res[3][0] = -v[1];
+    res[3][1] = v[0];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[1];
+    res[6][1] = v[0];
+    res[6][2] = v[2];
+    res[7][0] = v[1];
+    res[7][1] = -v[0];
+    res[7][2] = -v[2];
+    res[8][0] = v[0];
+    res[8][1] = -v[1];
+    res[8][2] = -v[2];
+    res[9][0] = -v[0];
+    res[9][1] = v[1];
+    res[9][2] = v[2];
+    res[10][0] = -v[0];
+    res[10][1] = v[1];
+    res[10][2] = -v[2];
+    res[11][0] = v[0];
+    res[11][1] = -v[1];
+    res[11][2] = v[2];
+    res[12][0] = v[1];
+    res[12][1] = v[0];
+    res[12][2] = -v[2];
+    res[13][0] = -v[1];
+    res[13][1] = -v[0];
     res[13][2] = v[2];
     res[14][0] = -v[1];
     res[14][1] = -v[0];
@@ -34909,9 +49948,11 @@ struct FastSG_P4_nmm {
     res[15][2] = v[2];
     phase[15] =  0;
   }
+  static const short size=16;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P4_nnc {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -34961,6 +50002,56 @@ struct FastSG_P4_nnc {
     res[15][0] = v[1]+1./2;
     res[15][1] = v[0]+1./2;
     res[15][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[1];
+    res[2][1] = -v[0];
+    res[2][2] = v[2];
+    res[3][0] = -v[1];
+    res[3][1] = v[0];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[1];
+    res[6][1] = v[0];
+    res[6][2] = v[2];
+    res[7][0] = v[1];
+    res[7][1] = -v[0];
+    res[7][2] = -v[2];
+    res[8][0] = v[0];
+    res[8][1] = -v[1];
+    res[8][2] = -v[2];
+    res[9][0] = -v[0];
+    res[9][1] = v[1];
+    res[9][2] = v[2];
+    res[10][0] = -v[0];
+    res[10][1] = v[1];
+    res[10][2] = -v[2];
+    res[11][0] = v[0];
+    res[11][1] = -v[1];
+    res[11][2] = v[2];
+    res[12][0] = v[1];
+    res[12][1] = v[0];
+    res[12][2] = -v[2];
+    res[13][0] = -v[1];
+    res[13][1] = -v[0];
+    res[13][2] = v[2];
+    res[14][0] = -v[1];
+    res[14][1] = -v[0];
+    res[14][2] = -v[2];
+    res[15][0] = v[1];
+    res[15][1] = v[0];
+    res[15][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -35028,9 +50119,11 @@ struct FastSG_P4_nnc {
     res[15][2] = v[2];
     phase[15] = (res[15][0]+res[15][1]+res[15][2])*1./2;
   }
+  static const short size=16;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P41 {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -35044,6 +50137,20 @@ struct FastSG_P41 {
     res[3][0] = v[1];
     res[3][1] = -v[0];
     res[3][2] = v[2]+3./4;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[1];
+    res[1][1] = -v[0];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[1];
+    res[3][1] = v[0];
+    res[3][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -35063,9 +50170,11 @@ struct FastSG_P41 {
     res[3][2] = v[2];
     phase[3] = res[3][2]*3./4;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P41212 {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -35091,6 +50200,32 @@ struct FastSG_P41212 {
     res[7][0] = -v[1];
     res[7][1] = -v[0];
     res[7][2] = -v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[1];
+    res[1][1] = -v[0];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[1];
+    res[3][1] = v[0];
+    res[3][2] = v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = v[1];
+    res[6][1] = v[0];
+    res[6][2] = -v[2];
+    res[7][0] = -v[1];
+    res[7][1] = -v[0];
+    res[7][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -35126,9 +50261,11 @@ struct FastSG_P41212 {
     res[7][2] = -v[2];
     phase[7] = res[7][2]*1./2;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P4122 {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -35154,6 +50291,32 @@ struct FastSG_P4122 {
     res[7][0] = -v[1];
     res[7][1] = -v[0];
     res[7][2] = -v[2]+1./4;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[1];
+    res[1][1] = -v[0];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[1];
+    res[3][1] = v[0];
+    res[3][2] = v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = v[1];
+    res[6][1] = v[0];
+    res[6][2] = -v[2];
+    res[7][0] = -v[1];
+    res[7][1] = -v[0];
+    res[7][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -35189,9 +50352,11 @@ struct FastSG_P4122 {
     res[7][2] = -v[2];
     phase[7] = res[7][2]*1./4;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P4132 {
- static const short size=24;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -35265,6 +50430,80 @@ struct FastSG_P4132 {
     res[23][0] = -v[2]+3./4;
     res[23][1] = -v[1]+3./4;
     res[23][2] = -v[0]+3./4;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[1];
+    res[1][1] = -v[0];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[1];
+    res[3][1] = v[0];
+    res[3][2] = v[2];
+    res[4][0] = v[0];
+    res[4][1] = v[2];
+    res[4][2] = -v[1];
+    res[5][0] = v[0];
+    res[5][1] = -v[1];
+    res[5][2] = -v[2];
+    res[6][0] = v[0];
+    res[6][1] = -v[2];
+    res[6][2] = v[1];
+    res[7][0] = -v[2];
+    res[7][1] = v[1];
+    res[7][2] = v[0];
+    res[8][0] = -v[0];
+    res[8][1] = v[1];
+    res[8][2] = -v[2];
+    res[9][0] = v[2];
+    res[9][1] = v[1];
+    res[9][2] = -v[0];
+    res[10][0] = v[1];
+    res[10][1] = v[2];
+    res[10][2] = v[0];
+    res[11][0] = v[2];
+    res[11][1] = v[0];
+    res[11][2] = v[1];
+    res[12][0] = v[2];
+    res[12][1] = -v[0];
+    res[12][2] = -v[1];
+    res[13][0] = -v[1];
+    res[13][1] = -v[2];
+    res[13][2] = v[0];
+    res[14][0] = -v[2];
+    res[14][1] = -v[0];
+    res[14][2] = v[1];
+    res[15][0] = -v[1];
+    res[15][1] = v[2];
+    res[15][2] = -v[0];
+    res[16][0] = v[1];
+    res[16][1] = -v[2];
+    res[16][2] = -v[0];
+    res[17][0] = -v[2];
+    res[17][1] = v[0];
+    res[17][2] = -v[1];
+    res[18][0] = v[1];
+    res[18][1] = v[0];
+    res[18][2] = -v[2];
+    res[19][0] = -v[1];
+    res[19][1] = -v[0];
+    res[19][2] = -v[2];
+    res[20][0] = -v[0];
+    res[20][1] = v[2];
+    res[20][2] = v[1];
+    res[21][0] = -v[0];
+    res[21][1] = -v[2];
+    res[21][2] = -v[1];
+    res[22][0] = v[2];
+    res[22][1] = -v[1];
+    res[22][2] = v[0];
+    res[23][0] = -v[2];
+    res[23][1] = -v[1];
+    res[23][2] = -v[0];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -35364,9 +50603,11 @@ struct FastSG_P4132 {
     res[23][2] = -v[0];
     phase[23] = (res[23][0]+res[23][1]+res[23][2])*3./4;
   }
+  static const short size=24;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P42 {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -35380,6 +50621,20 @@ struct FastSG_P42 {
     res[3][0] = v[1];
     res[3][1] = -v[0];
     res[3][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[1];
+    res[1][1] = -v[0];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[1];
+    res[3][1] = v[0];
+    res[3][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -35399,9 +50654,11 @@ struct FastSG_P42 {
     res[3][2] = v[2];
     phase[3] = res[3][2]*1./2;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P42_m {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -35427,6 +50684,32 @@ struct FastSG_P42_m {
     res[7][0] = -v[1];
     res[7][1] = v[0];
     res[7][2] = -v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[1];
+    res[2][1] = -v[0];
+    res[2][2] = v[2];
+    res[3][0] = -v[1];
+    res[3][1] = v[0];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[1];
+    res[6][1] = v[0];
+    res[6][2] = v[2];
+    res[7][0] = v[1];
+    res[7][1] = -v[0];
+    res[7][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -35462,9 +50745,11 @@ struct FastSG_P42_m {
     res[7][2] = -v[2];
     phase[7] = res[7][2]*1./2;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P42_mbc {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -35514,6 +50799,56 @@ struct FastSG_P42_mbc {
     res[15][0] = v[1]+1./2;
     res[15][1] = v[0]+1./2;
     res[15][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[1];
+    res[2][1] = -v[0];
+    res[2][2] = v[2];
+    res[3][0] = -v[1];
+    res[3][1] = v[0];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[1];
+    res[6][1] = v[0];
+    res[6][2] = v[2];
+    res[7][0] = v[1];
+    res[7][1] = -v[0];
+    res[7][2] = -v[2];
+    res[8][0] = v[0];
+    res[8][1] = -v[1];
+    res[8][2] = -v[2];
+    res[9][0] = -v[0];
+    res[9][1] = v[1];
+    res[9][2] = v[2];
+    res[10][0] = -v[0];
+    res[10][1] = v[1];
+    res[10][2] = -v[2];
+    res[11][0] = v[0];
+    res[11][1] = -v[1];
+    res[11][2] = v[2];
+    res[12][0] = v[1];
+    res[12][1] = v[0];
+    res[12][2] = -v[2];
+    res[13][0] = -v[1];
+    res[13][1] = -v[0];
+    res[13][2] = v[2];
+    res[14][0] = -v[1];
+    res[14][1] = -v[0];
+    res[14][2] = -v[2];
+    res[15][0] = v[1];
+    res[15][1] = v[0];
+    res[15][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -35581,9 +50916,11 @@ struct FastSG_P42_mbc {
     res[15][2] = v[2];
     phase[15] = (res[15][0]+res[15][1]+res[15][2])*1./2;
   }
+  static const short size=16;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P42_mcm {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -35621,6 +50958,56 @@ struct FastSG_P42_mcm {
     res[11][0] = v[0];
     res[11][1] = -v[1];
     res[11][2] = v[2]+1./2;
+    res[12][0] = v[1];
+    res[12][1] = v[0];
+    res[12][2] = -v[2];
+    res[13][0] = -v[1];
+    res[13][1] = -v[0];
+    res[13][2] = v[2];
+    res[14][0] = -v[1];
+    res[14][1] = -v[0];
+    res[14][2] = -v[2];
+    res[15][0] = v[1];
+    res[15][1] = v[0];
+    res[15][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[1];
+    res[2][1] = -v[0];
+    res[2][2] = v[2];
+    res[3][0] = -v[1];
+    res[3][1] = v[0];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[1];
+    res[6][1] = v[0];
+    res[6][2] = v[2];
+    res[7][0] = v[1];
+    res[7][1] = -v[0];
+    res[7][2] = -v[2];
+    res[8][0] = v[0];
+    res[8][1] = -v[1];
+    res[8][2] = -v[2];
+    res[9][0] = -v[0];
+    res[9][1] = v[1];
+    res[9][2] = v[2];
+    res[10][0] = -v[0];
+    res[10][1] = v[1];
+    res[10][2] = -v[2];
+    res[11][0] = v[0];
+    res[11][1] = -v[1];
+    res[11][2] = v[2];
     res[12][0] = v[1];
     res[12][1] = v[0];
     res[12][2] = -v[2];
@@ -35700,9 +51087,11 @@ struct FastSG_P42_mcm {
     res[15][2] = v[2];
     phase[15] =  0;
   }
+  static const short size=16;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P42_mmc {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -35752,6 +51141,56 @@ struct FastSG_P42_mmc {
     res[15][0] = v[1];
     res[15][1] = v[0];
     res[15][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[1];
+    res[2][1] = -v[0];
+    res[2][2] = v[2];
+    res[3][0] = -v[1];
+    res[3][1] = v[0];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[1];
+    res[6][1] = v[0];
+    res[6][2] = v[2];
+    res[7][0] = v[1];
+    res[7][1] = -v[0];
+    res[7][2] = -v[2];
+    res[8][0] = v[0];
+    res[8][1] = -v[1];
+    res[8][2] = -v[2];
+    res[9][0] = -v[0];
+    res[9][1] = v[1];
+    res[9][2] = v[2];
+    res[10][0] = -v[0];
+    res[10][1] = v[1];
+    res[10][2] = -v[2];
+    res[11][0] = v[0];
+    res[11][1] = -v[1];
+    res[11][2] = v[2];
+    res[12][0] = v[1];
+    res[12][1] = v[0];
+    res[12][2] = -v[2];
+    res[13][0] = -v[1];
+    res[13][1] = -v[0];
+    res[13][2] = v[2];
+    res[14][0] = -v[1];
+    res[14][1] = -v[0];
+    res[14][2] = -v[2];
+    res[15][0] = v[1];
+    res[15][1] = v[0];
+    res[15][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -35819,9 +51258,11 @@ struct FastSG_P42_mmc {
     res[15][2] = v[2];
     phase[15] = res[15][2]*1./2;
   }
+  static const short size=16;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P42_mnm {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -35859,6 +51300,56 @@ struct FastSG_P42_mnm {
     res[11][0] = v[0]+1./2;
     res[11][1] = -v[1]+1./2;
     res[11][2] = v[2]+1./2;
+    res[12][0] = v[1];
+    res[12][1] = v[0];
+    res[12][2] = -v[2];
+    res[13][0] = -v[1];
+    res[13][1] = -v[0];
+    res[13][2] = v[2];
+    res[14][0] = -v[1];
+    res[14][1] = -v[0];
+    res[14][2] = -v[2];
+    res[15][0] = v[1];
+    res[15][1] = v[0];
+    res[15][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[1];
+    res[2][1] = -v[0];
+    res[2][2] = v[2];
+    res[3][0] = -v[1];
+    res[3][1] = v[0];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[1];
+    res[6][1] = v[0];
+    res[6][2] = v[2];
+    res[7][0] = v[1];
+    res[7][1] = -v[0];
+    res[7][2] = -v[2];
+    res[8][0] = v[0];
+    res[8][1] = -v[1];
+    res[8][2] = -v[2];
+    res[9][0] = -v[0];
+    res[9][1] = v[1];
+    res[9][2] = v[2];
+    res[10][0] = -v[0];
+    res[10][1] = v[1];
+    res[10][2] = -v[2];
+    res[11][0] = v[0];
+    res[11][1] = -v[1];
+    res[11][2] = v[2];
     res[12][0] = v[1];
     res[12][1] = v[0];
     res[12][2] = -v[2];
@@ -35938,9 +51429,11 @@ struct FastSG_P42_mnm {
     res[15][2] = v[2];
     phase[15] =  0;
   }
+  static const short size=16;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P42_n {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -35966,6 +51459,32 @@ struct FastSG_P42_n {
     res[7][0] = -v[1]+1./2;
     res[7][1] = v[0];
     res[7][2] = -v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[1];
+    res[2][1] = -v[0];
+    res[2][2] = v[2];
+    res[3][0] = -v[1];
+    res[3][1] = v[0];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[1];
+    res[6][1] = v[0];
+    res[6][2] = v[2];
+    res[7][0] = v[1];
+    res[7][1] = -v[0];
+    res[7][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -36001,9 +51520,11 @@ struct FastSG_P42_n {
     res[7][2] = -v[2];
     phase[7] = (res[7][0]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P42_nbc {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -36053,6 +51574,56 @@ struct FastSG_P42_nbc {
     res[15][0] = v[1]+1./2;
     res[15][1] = v[0]+1./2;
     res[15][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[1];
+    res[2][1] = -v[0];
+    res[2][2] = v[2];
+    res[3][0] = -v[1];
+    res[3][1] = v[0];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[1];
+    res[6][1] = v[0];
+    res[6][2] = v[2];
+    res[7][0] = v[1];
+    res[7][1] = -v[0];
+    res[7][2] = -v[2];
+    res[8][0] = v[0];
+    res[8][1] = -v[1];
+    res[8][2] = -v[2];
+    res[9][0] = -v[0];
+    res[9][1] = v[1];
+    res[9][2] = v[2];
+    res[10][0] = -v[0];
+    res[10][1] = v[1];
+    res[10][2] = -v[2];
+    res[11][0] = v[0];
+    res[11][1] = -v[1];
+    res[11][2] = v[2];
+    res[12][0] = v[1];
+    res[12][1] = v[0];
+    res[12][2] = -v[2];
+    res[13][0] = -v[1];
+    res[13][1] = -v[0];
+    res[13][2] = v[2];
+    res[14][0] = -v[1];
+    res[14][1] = -v[0];
+    res[14][2] = -v[2];
+    res[15][0] = v[1];
+    res[15][1] = v[0];
+    res[15][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -36120,9 +51691,11 @@ struct FastSG_P42_nbc {
     res[15][2] = v[2];
     phase[15] = (res[15][0]+res[15][1]+res[15][2])*1./2;
   }
+  static const short size=16;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P42_ncm {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -36165,6 +51738,56 @@ struct FastSG_P42_ncm {
     res[12][2] = -v[2];
     res[13][0] = -v[1]+1./2;
     res[13][1] = -v[0]+1./2;
+    res[13][2] = v[2];
+    res[14][0] = -v[1];
+    res[14][1] = -v[0];
+    res[14][2] = -v[2];
+    res[15][0] = v[1];
+    res[15][1] = v[0];
+    res[15][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[1];
+    res[2][1] = -v[0];
+    res[2][2] = v[2];
+    res[3][0] = -v[1];
+    res[3][1] = v[0];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[1];
+    res[6][1] = v[0];
+    res[6][2] = v[2];
+    res[7][0] = v[1];
+    res[7][1] = -v[0];
+    res[7][2] = -v[2];
+    res[8][0] = v[0];
+    res[8][1] = -v[1];
+    res[8][2] = -v[2];
+    res[9][0] = -v[0];
+    res[9][1] = v[1];
+    res[9][2] = v[2];
+    res[10][0] = -v[0];
+    res[10][1] = v[1];
+    res[10][2] = -v[2];
+    res[11][0] = v[0];
+    res[11][1] = -v[1];
+    res[11][2] = v[2];
+    res[12][0] = v[1];
+    res[12][1] = v[0];
+    res[12][2] = -v[2];
+    res[13][0] = -v[1];
+    res[13][1] = -v[0];
     res[13][2] = v[2];
     res[14][0] = -v[1];
     res[14][1] = -v[0];
@@ -36239,9 +51862,11 @@ struct FastSG_P42_ncm {
     res[15][2] = v[2];
     phase[15] =  0;
   }
+  static const short size=16;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P42_nmc {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -36291,6 +51916,56 @@ struct FastSG_P42_nmc {
     res[15][0] = v[1];
     res[15][1] = v[0];
     res[15][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[1];
+    res[2][1] = -v[0];
+    res[2][2] = v[2];
+    res[3][0] = -v[1];
+    res[3][1] = v[0];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[1];
+    res[6][1] = v[0];
+    res[6][2] = v[2];
+    res[7][0] = v[1];
+    res[7][1] = -v[0];
+    res[7][2] = -v[2];
+    res[8][0] = v[0];
+    res[8][1] = -v[1];
+    res[8][2] = -v[2];
+    res[9][0] = -v[0];
+    res[9][1] = v[1];
+    res[9][2] = v[2];
+    res[10][0] = -v[0];
+    res[10][1] = v[1];
+    res[10][2] = -v[2];
+    res[11][0] = v[0];
+    res[11][1] = -v[1];
+    res[11][2] = v[2];
+    res[12][0] = v[1];
+    res[12][1] = v[0];
+    res[12][2] = -v[2];
+    res[13][0] = -v[1];
+    res[13][1] = -v[0];
+    res[13][2] = v[2];
+    res[14][0] = -v[1];
+    res[14][1] = -v[0];
+    res[14][2] = -v[2];
+    res[15][0] = v[1];
+    res[15][1] = v[0];
+    res[15][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -36358,9 +52033,11 @@ struct FastSG_P42_nmc {
     res[15][2] = v[2];
     phase[15] = res[15][2]*1./2;
   }
+  static const short size=16;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P42_nnm {
- static const short size=16;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -36409,6 +52086,56 @@ struct FastSG_P42_nnm {
     res[14][2] = -v[2];
     res[15][0] = v[1]+1./2;
     res[15][1] = v[0]+1./2;
+    res[15][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[1];
+    res[2][1] = -v[0];
+    res[2][2] = v[2];
+    res[3][0] = -v[1];
+    res[3][1] = v[0];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[1];
+    res[6][1] = v[0];
+    res[6][2] = v[2];
+    res[7][0] = v[1];
+    res[7][1] = -v[0];
+    res[7][2] = -v[2];
+    res[8][0] = v[0];
+    res[8][1] = -v[1];
+    res[8][2] = -v[2];
+    res[9][0] = -v[0];
+    res[9][1] = v[1];
+    res[9][2] = v[2];
+    res[10][0] = -v[0];
+    res[10][1] = v[1];
+    res[10][2] = -v[2];
+    res[11][0] = v[0];
+    res[11][1] = -v[1];
+    res[11][2] = v[2];
+    res[12][0] = v[1];
+    res[12][1] = v[0];
+    res[12][2] = -v[2];
+    res[13][0] = -v[1];
+    res[13][1] = -v[0];
+    res[13][2] = v[2];
+    res[14][0] = -v[1];
+    res[14][1] = -v[0];
+    res[14][2] = -v[2];
+    res[15][0] = v[1];
+    res[15][1] = v[0];
     res[15][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -36477,9 +52204,11 @@ struct FastSG_P42_nnm {
     res[15][2] = v[2];
     phase[15] = (res[15][0]+res[15][1])*1./2;
   }
+  static const short size=16;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P4212 {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -36498,6 +52227,32 @@ struct FastSG_P4212 {
     res[4][2] = -v[2];
     res[5][0] = -v[0]+1./2;
     res[5][1] = v[1]+1./2;
+    res[5][2] = -v[2];
+    res[6][0] = v[1];
+    res[6][1] = v[0];
+    res[6][2] = -v[2];
+    res[7][0] = -v[1];
+    res[7][1] = -v[0];
+    res[7][2] = -v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[1];
+    res[1][1] = -v[0];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[1];
+    res[3][1] = v[0];
+    res[3][2] = v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
     res[5][2] = -v[2];
     res[6][0] = v[1];
     res[6][1] = v[0];
@@ -36540,9 +52295,11 @@ struct FastSG_P4212 {
     res[7][2] = -v[2];
     phase[7] =  0;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P422 {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -36555,6 +52312,32 @@ struct FastSG_P422 {
     res[2][2] = v[2];
     res[3][0] = v[1];
     res[3][1] = -v[0];
+    res[3][2] = v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = v[1];
+    res[6][1] = v[0];
+    res[6][2] = -v[2];
+    res[7][0] = -v[1];
+    res[7][1] = -v[0];
+    res[7][2] = -v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[1];
+    res[1][1] = -v[0];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[1];
+    res[3][1] = v[0];
     res[3][2] = v[2];
     res[4][0] = v[0];
     res[4][1] = -v[1];
@@ -36603,9 +52386,11 @@ struct FastSG_P422 {
     res[7][2] = -v[2];
     phase[7] =  0;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P42212 {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -36625,6 +52410,32 @@ struct FastSG_P42212 {
     res[5][0] = -v[0]+1./2;
     res[5][1] = v[1]+1./2;
     res[5][2] = -v[2]+1./2;
+    res[6][0] = v[1];
+    res[6][1] = v[0];
+    res[6][2] = -v[2];
+    res[7][0] = -v[1];
+    res[7][1] = -v[0];
+    res[7][2] = -v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[1];
+    res[1][1] = -v[0];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[1];
+    res[3][1] = v[0];
+    res[3][2] = v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
     res[6][0] = v[1];
     res[6][1] = v[0];
     res[6][2] = -v[2];
@@ -36666,9 +52477,11 @@ struct FastSG_P42212 {
     res[7][2] = -v[2];
     phase[7] =  0;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P4222 {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -36694,6 +52507,32 @@ struct FastSG_P4222 {
     res[7][0] = -v[1];
     res[7][1] = -v[0];
     res[7][2] = -v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[1];
+    res[1][1] = -v[0];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[1];
+    res[3][1] = v[0];
+    res[3][2] = v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = v[1];
+    res[6][1] = v[0];
+    res[6][2] = -v[2];
+    res[7][0] = -v[1];
+    res[7][1] = -v[0];
+    res[7][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -36729,9 +52568,11 @@ struct FastSG_P4222 {
     res[7][2] = -v[2];
     phase[7] = res[7][2]*1./2;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P4232 {
- static const short size=24;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -36805,6 +52646,80 @@ struct FastSG_P4232 {
     res[23][0] = -v[2]+1./2;
     res[23][1] = -v[1]+1./2;
     res[23][2] = -v[0]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[1];
+    res[1][1] = -v[0];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[1];
+    res[3][1] = v[0];
+    res[3][2] = v[2];
+    res[4][0] = v[0];
+    res[4][1] = v[2];
+    res[4][2] = -v[1];
+    res[5][0] = v[0];
+    res[5][1] = -v[1];
+    res[5][2] = -v[2];
+    res[6][0] = v[0];
+    res[6][1] = -v[2];
+    res[6][2] = v[1];
+    res[7][0] = -v[2];
+    res[7][1] = v[1];
+    res[7][2] = v[0];
+    res[8][0] = -v[0];
+    res[8][1] = v[1];
+    res[8][2] = -v[2];
+    res[9][0] = v[2];
+    res[9][1] = v[1];
+    res[9][2] = -v[0];
+    res[10][0] = v[1];
+    res[10][1] = v[2];
+    res[10][2] = v[0];
+    res[11][0] = v[2];
+    res[11][1] = v[0];
+    res[11][2] = v[1];
+    res[12][0] = v[2];
+    res[12][1] = -v[0];
+    res[12][2] = -v[1];
+    res[13][0] = -v[1];
+    res[13][1] = -v[2];
+    res[13][2] = v[0];
+    res[14][0] = -v[2];
+    res[14][1] = -v[0];
+    res[14][2] = v[1];
+    res[15][0] = -v[1];
+    res[15][1] = v[2];
+    res[15][2] = -v[0];
+    res[16][0] = v[1];
+    res[16][1] = -v[2];
+    res[16][2] = -v[0];
+    res[17][0] = -v[2];
+    res[17][1] = v[0];
+    res[17][2] = -v[1];
+    res[18][0] = v[1];
+    res[18][1] = v[0];
+    res[18][2] = -v[2];
+    res[19][0] = -v[1];
+    res[19][1] = -v[0];
+    res[19][2] = -v[2];
+    res[20][0] = -v[0];
+    res[20][1] = v[2];
+    res[20][2] = v[1];
+    res[21][0] = -v[0];
+    res[21][1] = -v[2];
+    res[21][2] = -v[1];
+    res[22][0] = v[2];
+    res[22][1] = -v[1];
+    res[22][2] = v[0];
+    res[23][0] = -v[2];
+    res[23][1] = -v[1];
+    res[23][2] = -v[0];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -36904,9 +52819,11 @@ struct FastSG_P4232 {
     res[23][2] = -v[0];
     phase[23] = (res[23][0]+res[23][1]+res[23][2])*1./2;
   }
+  static const short size=24;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P42bc {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -36932,6 +52849,32 @@ struct FastSG_P42bc {
     res[7][0] = v[1]+1./2;
     res[7][1] = v[0]+1./2;
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[1];
+    res[1][1] = -v[0];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[1];
+    res[3][1] = v[0];
+    res[3][2] = v[2];
+    res[4][0] = -v[0];
+    res[4][1] = v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = -v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[1];
+    res[6][1] = -v[0];
+    res[6][2] = v[2];
+    res[7][0] = v[1];
+    res[7][1] = v[0];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -36967,9 +52910,11 @@ struct FastSG_P42bc {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][1]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P42cm {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -36989,6 +52934,32 @@ struct FastSG_P42cm {
     res[5][0] = v[0];
     res[5][1] = -v[1];
     res[5][2] = v[2]+1./2;
+    res[6][0] = -v[1];
+    res[6][1] = -v[0];
+    res[6][2] = v[2];
+    res[7][0] = v[1];
+    res[7][1] = v[0];
+    res[7][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[1];
+    res[1][1] = -v[0];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[1];
+    res[3][1] = v[0];
+    res[3][2] = v[2];
+    res[4][0] = -v[0];
+    res[4][1] = v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = -v[1];
+    res[5][2] = v[2];
     res[6][0] = -v[1];
     res[6][1] = -v[0];
     res[6][2] = v[2];
@@ -37030,9 +53001,11 @@ struct FastSG_P42cm {
     res[7][2] = v[2];
     phase[7] =  0;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P42mc {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -37058,6 +53031,32 @@ struct FastSG_P42mc {
     res[7][0] = v[1];
     res[7][1] = v[0];
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[1];
+    res[1][1] = -v[0];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[1];
+    res[3][1] = v[0];
+    res[3][2] = v[2];
+    res[4][0] = -v[0];
+    res[4][1] = v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = -v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[1];
+    res[6][1] = -v[0];
+    res[6][2] = v[2];
+    res[7][0] = v[1];
+    res[7][1] = v[0];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -37093,9 +53092,11 @@ struct FastSG_P42mc {
     res[7][2] = v[2];
     phase[7] = res[7][2]*1./2;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P42nm {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -37115,6 +53116,32 @@ struct FastSG_P42nm {
     res[5][0] = v[0]+1./2;
     res[5][1] = -v[1]+1./2;
     res[5][2] = v[2]+1./2;
+    res[6][0] = -v[1];
+    res[6][1] = -v[0];
+    res[6][2] = v[2];
+    res[7][0] = v[1];
+    res[7][1] = v[0];
+    res[7][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[1];
+    res[1][1] = -v[0];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[1];
+    res[3][1] = v[0];
+    res[3][2] = v[2];
+    res[4][0] = -v[0];
+    res[4][1] = v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = -v[1];
+    res[5][2] = v[2];
     res[6][0] = -v[1];
     res[6][1] = -v[0];
     res[6][2] = v[2];
@@ -37156,9 +53183,11 @@ struct FastSG_P42nm {
     res[7][2] = v[2];
     phase[7] =  0;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P43 {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -37172,6 +53201,20 @@ struct FastSG_P43 {
     res[3][0] = v[1];
     res[3][1] = -v[0];
     res[3][2] = v[2]+1./4;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[1];
+    res[1][1] = -v[0];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[1];
+    res[3][1] = v[0];
+    res[3][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -37191,9 +53234,11 @@ struct FastSG_P43 {
     res[3][2] = v[2];
     phase[3] = res[3][2]*1./4;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P432 {
- static const short size=24;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -37249,6 +53294,80 @@ struct FastSG_P432 {
     res[17][0] = v[1];
     res[17][1] = -v[2];
     res[17][2] = -v[0];
+    res[18][0] = v[1];
+    res[18][1] = v[0];
+    res[18][2] = -v[2];
+    res[19][0] = -v[1];
+    res[19][1] = -v[0];
+    res[19][2] = -v[2];
+    res[20][0] = -v[0];
+    res[20][1] = v[2];
+    res[20][2] = v[1];
+    res[21][0] = -v[0];
+    res[21][1] = -v[2];
+    res[21][2] = -v[1];
+    res[22][0] = v[2];
+    res[22][1] = -v[1];
+    res[22][2] = v[0];
+    res[23][0] = -v[2];
+    res[23][1] = -v[1];
+    res[23][2] = -v[0];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[1];
+    res[1][1] = -v[0];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[1];
+    res[3][1] = v[0];
+    res[3][2] = v[2];
+    res[4][0] = v[0];
+    res[4][1] = v[2];
+    res[4][2] = -v[1];
+    res[5][0] = v[0];
+    res[5][1] = -v[1];
+    res[5][2] = -v[2];
+    res[6][0] = v[0];
+    res[6][1] = -v[2];
+    res[6][2] = v[1];
+    res[7][0] = -v[2];
+    res[7][1] = v[1];
+    res[7][2] = v[0];
+    res[8][0] = -v[0];
+    res[8][1] = v[1];
+    res[8][2] = -v[2];
+    res[9][0] = v[2];
+    res[9][1] = v[1];
+    res[9][2] = -v[0];
+    res[10][0] = v[1];
+    res[10][1] = v[2];
+    res[10][2] = v[0];
+    res[11][0] = v[2];
+    res[11][1] = v[0];
+    res[11][2] = v[1];
+    res[12][0] = v[2];
+    res[12][1] = -v[0];
+    res[12][2] = -v[1];
+    res[13][0] = -v[1];
+    res[13][1] = -v[2];
+    res[13][2] = v[0];
+    res[14][0] = -v[2];
+    res[14][1] = -v[0];
+    res[14][2] = v[1];
+    res[15][0] = -v[1];
+    res[15][1] = v[2];
+    res[15][2] = -v[0];
+    res[16][0] = v[1];
+    res[16][1] = -v[2];
+    res[16][2] = -v[0];
+    res[17][0] = -v[2];
+    res[17][1] = v[0];
+    res[17][2] = -v[1];
     res[18][0] = v[1];
     res[18][1] = v[0];
     res[18][2] = -v[2];
@@ -37366,9 +53485,11 @@ struct FastSG_P432 {
     res[23][2] = -v[0];
     phase[23] =  0;
   }
+  static const short size=24;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P43212 {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -37394,6 +53515,32 @@ struct FastSG_P43212 {
     res[7][0] = -v[1];
     res[7][1] = -v[0];
     res[7][2] = -v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[1];
+    res[1][1] = -v[0];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[1];
+    res[3][1] = v[0];
+    res[3][2] = v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = v[1];
+    res[6][1] = v[0];
+    res[6][2] = -v[2];
+    res[7][0] = -v[1];
+    res[7][1] = -v[0];
+    res[7][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -37429,9 +53576,11 @@ struct FastSG_P43212 {
     res[7][2] = -v[2];
     phase[7] = res[7][2]*1./2;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P4322 {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -37457,6 +53606,32 @@ struct FastSG_P4322 {
     res[7][0] = -v[1];
     res[7][1] = -v[0];
     res[7][2] = -v[2]+3./4;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[1];
+    res[1][1] = -v[0];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[1];
+    res[3][1] = v[0];
+    res[3][2] = v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = v[1];
+    res[6][1] = v[0];
+    res[6][2] = -v[2];
+    res[7][0] = -v[1];
+    res[7][1] = -v[0];
+    res[7][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -37492,9 +53667,11 @@ struct FastSG_P4322 {
     res[7][2] = -v[2];
     phase[7] = res[7][2]*3./4;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P4332 {
- static const short size=24;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -37568,6 +53745,80 @@ struct FastSG_P4332 {
     res[23][0] = -v[2]+1./4;
     res[23][1] = -v[1]+1./4;
     res[23][2] = -v[0]+1./4;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[1];
+    res[1][1] = -v[0];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[1];
+    res[3][1] = v[0];
+    res[3][2] = v[2];
+    res[4][0] = v[0];
+    res[4][1] = v[2];
+    res[4][2] = -v[1];
+    res[5][0] = v[0];
+    res[5][1] = -v[1];
+    res[5][2] = -v[2];
+    res[6][0] = v[0];
+    res[6][1] = -v[2];
+    res[6][2] = v[1];
+    res[7][0] = -v[2];
+    res[7][1] = v[1];
+    res[7][2] = v[0];
+    res[8][0] = -v[0];
+    res[8][1] = v[1];
+    res[8][2] = -v[2];
+    res[9][0] = v[2];
+    res[9][1] = v[1];
+    res[9][2] = -v[0];
+    res[10][0] = v[1];
+    res[10][1] = v[2];
+    res[10][2] = v[0];
+    res[11][0] = v[2];
+    res[11][1] = v[0];
+    res[11][2] = v[1];
+    res[12][0] = v[2];
+    res[12][1] = -v[0];
+    res[12][2] = -v[1];
+    res[13][0] = -v[1];
+    res[13][1] = -v[2];
+    res[13][2] = v[0];
+    res[14][0] = -v[2];
+    res[14][1] = -v[0];
+    res[14][2] = v[1];
+    res[15][0] = -v[1];
+    res[15][1] = v[2];
+    res[15][2] = -v[0];
+    res[16][0] = v[1];
+    res[16][1] = -v[2];
+    res[16][2] = -v[0];
+    res[17][0] = -v[2];
+    res[17][1] = v[0];
+    res[17][2] = -v[1];
+    res[18][0] = v[1];
+    res[18][1] = v[0];
+    res[18][2] = -v[2];
+    res[19][0] = -v[1];
+    res[19][1] = -v[0];
+    res[19][2] = -v[2];
+    res[20][0] = -v[0];
+    res[20][1] = v[2];
+    res[20][2] = v[1];
+    res[21][0] = -v[0];
+    res[21][1] = -v[2];
+    res[21][2] = -v[1];
+    res[22][0] = v[2];
+    res[22][1] = -v[1];
+    res[22][2] = v[0];
+    res[23][0] = -v[2];
+    res[23][1] = -v[1];
+    res[23][2] = -v[0];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -37667,9 +53918,11 @@ struct FastSG_P4332 {
     res[23][2] = -v[0];
     phase[23] = (res[23][0]+res[23][1]+res[23][2])*1./4;
   }
+  static const short size=24;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P4bm {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -37694,6 +53947,32 @@ struct FastSG_P4bm {
     res[6][2] = v[2];
     res[7][0] = v[1]+1./2;
     res[7][1] = v[0]+1./2;
+    res[7][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[1];
+    res[1][1] = -v[0];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[1];
+    res[3][1] = v[0];
+    res[3][2] = v[2];
+    res[4][0] = -v[0];
+    res[4][1] = v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = -v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[1];
+    res[6][1] = -v[0];
+    res[6][2] = v[2];
+    res[7][0] = v[1];
+    res[7][1] = v[0];
     res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -37730,9 +54009,11 @@ struct FastSG_P4bm {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][1])*1./2;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P4cc {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -37758,6 +54039,32 @@ struct FastSG_P4cc {
     res[7][0] = v[1];
     res[7][1] = v[0];
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[1];
+    res[1][1] = -v[0];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[1];
+    res[3][1] = v[0];
+    res[3][2] = v[2];
+    res[4][0] = -v[0];
+    res[4][1] = v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = -v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[1];
+    res[6][1] = -v[0];
+    res[6][2] = v[2];
+    res[7][0] = v[1];
+    res[7][1] = v[0];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -37793,9 +54100,11 @@ struct FastSG_P4cc {
     res[7][2] = v[2];
     phase[7] = res[7][2]*1./2;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P4mm {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -37808,6 +54117,32 @@ struct FastSG_P4mm {
     res[2][2] = v[2];
     res[3][0] = v[1];
     res[3][1] = -v[0];
+    res[3][2] = v[2];
+    res[4][0] = -v[0];
+    res[4][1] = v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = -v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[1];
+    res[6][1] = -v[0];
+    res[6][2] = v[2];
+    res[7][0] = v[1];
+    res[7][1] = v[0];
+    res[7][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[1];
+    res[1][1] = -v[0];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[1];
+    res[3][1] = v[0];
     res[3][2] = v[2];
     res[4][0] = -v[0];
     res[4][1] = v[1];
@@ -37856,9 +54191,11 @@ struct FastSG_P4mm {
     res[7][2] = v[2];
     phase[7] =  0;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P4nc {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -37884,6 +54221,32 @@ struct FastSG_P4nc {
     res[7][0] = v[1]+1./2;
     res[7][1] = v[0]+1./2;
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[1];
+    res[1][1] = -v[0];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[1];
+    res[3][1] = v[0];
+    res[3][2] = v[2];
+    res[4][0] = -v[0];
+    res[4][1] = v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = -v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[1];
+    res[6][1] = -v[0];
+    res[6][2] = v[2];
+    res[7][0] = v[1];
+    res[7][1] = v[0];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -37919,9 +54282,11 @@ struct FastSG_P4nc {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][1]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P6 {
- static const short size=6;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -37940,6 +54305,26 @@ struct FastSG_P6 {
     res[4][2] = v[2];
     res[5][0] = v[1];
     res[5][1] = -v[0]+v[1];
+    res[5][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0]+v[1];
+    res[1][1] = -v[0];
+    res[1][2] = v[2];
+    res[2][0] = v[1];
+    res[2][1] = -v[0]-v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
+    res[4][0] = -v[0]-v[1];
+    res[4][1] = v[0];
+    res[4][2] = v[2];
+    res[5][0] = -v[1];
+    res[5][1] = v[0]+v[1];
     res[5][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -37968,9 +54353,11 @@ struct FastSG_P6 {
     res[5][2] = v[2];
     phase[5] =  0;
   }
+  static const short size=6;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P6_m {
- static const short size=12;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -38007,6 +54394,44 @@ struct FastSG_P6_m {
     res[10][2] = v[2];
     res[11][0] = -v[1];
     res[11][1] = v[0]-v[1];
+    res[11][2] = -v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0]+v[1];
+    res[2][1] = -v[0];
+    res[2][2] = v[2];
+    res[3][0] = -v[0]-v[1];
+    res[3][1] = v[0];
+    res[3][2] = -v[2];
+    res[4][0] = v[1];
+    res[4][1] = -v[0]-v[1];
+    res[4][2] = v[2];
+    res[5][0] = -v[1];
+    res[5][1] = v[0]+v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = v[1];
+    res[7][2] = -v[2];
+    res[8][0] = -v[0]-v[1];
+    res[8][1] = v[0];
+    res[8][2] = v[2];
+    res[9][0] = v[0]+v[1];
+    res[9][1] = -v[0];
+    res[9][2] = -v[2];
+    res[10][0] = -v[1];
+    res[10][1] = v[0]+v[1];
+    res[10][2] = v[2];
+    res[11][0] = v[1];
+    res[11][1] = -v[0]-v[1];
     res[11][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -38059,9 +54484,11 @@ struct FastSG_P6_m {
     res[11][2] = -v[2];
     phase[11] =  0;
   }
+  static const short size=12;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P6_mcc {
- static const short size=24;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -38135,6 +54562,80 @@ struct FastSG_P6_mcc {
     res[23][0] = -v[0];
     res[23][1] = -v[0]+v[1];
     res[23][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0]+v[1];
+    res[2][1] = -v[0];
+    res[2][2] = v[2];
+    res[3][0] = -v[0]-v[1];
+    res[3][1] = v[0];
+    res[3][2] = -v[2];
+    res[4][0] = v[1];
+    res[4][1] = -v[0]-v[1];
+    res[4][2] = v[2];
+    res[5][0] = -v[1];
+    res[5][1] = v[0]+v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = v[1];
+    res[7][2] = -v[2];
+    res[8][0] = -v[0]-v[1];
+    res[8][1] = v[0];
+    res[8][2] = v[2];
+    res[9][0] = v[0]+v[1];
+    res[9][1] = -v[0];
+    res[9][2] = -v[2];
+    res[10][0] = -v[1];
+    res[10][1] = v[0]+v[1];
+    res[10][2] = v[2];
+    res[11][0] = v[1];
+    res[11][1] = -v[0]-v[1];
+    res[11][2] = -v[2];
+    res[12][0] = v[0];
+    res[12][1] = -v[0]-v[1];
+    res[12][2] = -v[2];
+    res[13][0] = -v[0];
+    res[13][1] = v[0]+v[1];
+    res[13][2] = v[2];
+    res[14][0] = -v[0]-v[1];
+    res[14][1] = v[1];
+    res[14][2] = -v[2];
+    res[15][0] = v[0]+v[1];
+    res[15][1] = -v[1];
+    res[15][2] = v[2];
+    res[16][0] = v[1];
+    res[16][1] = v[0];
+    res[16][2] = -v[2];
+    res[17][0] = -v[1];
+    res[17][1] = -v[0];
+    res[17][2] = v[2];
+    res[18][0] = -v[1];
+    res[18][1] = -v[0];
+    res[18][2] = -v[2];
+    res[19][0] = v[1];
+    res[19][1] = v[0];
+    res[19][2] = v[2];
+    res[20][0] = -v[0];
+    res[20][1] = v[0]+v[1];
+    res[20][2] = -v[2];
+    res[21][0] = v[0];
+    res[21][1] = -v[0]-v[1];
+    res[21][2] = v[2];
+    res[22][0] = v[0]+v[1];
+    res[22][1] = -v[1];
+    res[22][2] = -v[2];
+    res[23][0] = -v[0]-v[1];
+    res[23][1] = v[1];
+    res[23][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -38234,9 +54735,11 @@ struct FastSG_P6_mcc {
     res[23][2] = v[2];
     phase[23] = res[23][2]*1./2;
   }
+  static const short size=24;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P6_mmm {
- static const short size=24;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -38309,6 +54812,80 @@ struct FastSG_P6_mmm {
     res[22][2] = -v[2];
     res[23][0] = -v[0];
     res[23][1] = -v[0]+v[1];
+    res[23][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0]+v[1];
+    res[2][1] = -v[0];
+    res[2][2] = v[2];
+    res[3][0] = -v[0]-v[1];
+    res[3][1] = v[0];
+    res[3][2] = -v[2];
+    res[4][0] = v[1];
+    res[4][1] = -v[0]-v[1];
+    res[4][2] = v[2];
+    res[5][0] = -v[1];
+    res[5][1] = v[0]+v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = v[1];
+    res[7][2] = -v[2];
+    res[8][0] = -v[0]-v[1];
+    res[8][1] = v[0];
+    res[8][2] = v[2];
+    res[9][0] = v[0]+v[1];
+    res[9][1] = -v[0];
+    res[9][2] = -v[2];
+    res[10][0] = -v[1];
+    res[10][1] = v[0]+v[1];
+    res[10][2] = v[2];
+    res[11][0] = v[1];
+    res[11][1] = -v[0]-v[1];
+    res[11][2] = -v[2];
+    res[12][0] = v[0];
+    res[12][1] = -v[0]-v[1];
+    res[12][2] = -v[2];
+    res[13][0] = -v[0];
+    res[13][1] = v[0]+v[1];
+    res[13][2] = v[2];
+    res[14][0] = -v[0]-v[1];
+    res[14][1] = v[1];
+    res[14][2] = -v[2];
+    res[15][0] = v[0]+v[1];
+    res[15][1] = -v[1];
+    res[15][2] = v[2];
+    res[16][0] = v[1];
+    res[16][1] = v[0];
+    res[16][2] = -v[2];
+    res[17][0] = -v[1];
+    res[17][1] = -v[0];
+    res[17][2] = v[2];
+    res[18][0] = -v[1];
+    res[18][1] = -v[0];
+    res[18][2] = -v[2];
+    res[19][0] = v[1];
+    res[19][1] = v[0];
+    res[19][2] = v[2];
+    res[20][0] = -v[0];
+    res[20][1] = v[0]+v[1];
+    res[20][2] = -v[2];
+    res[21][0] = v[0];
+    res[21][1] = -v[0]-v[1];
+    res[21][2] = v[2];
+    res[22][0] = v[0]+v[1];
+    res[22][1] = -v[1];
+    res[22][2] = -v[2];
+    res[23][0] = -v[0]-v[1];
+    res[23][1] = v[1];
     res[23][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -38409,9 +54986,11 @@ struct FastSG_P6_mmm {
     res[23][2] = v[2];
     phase[23] =  0;
   }
+  static const short size=24;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P61 {
- static const short size=6;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -38431,6 +55010,26 @@ struct FastSG_P61 {
     res[5][0] = v[1];
     res[5][1] = -v[0]+v[1];
     res[5][2] = v[2]+5./6;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0]+v[1];
+    res[1][1] = -v[0];
+    res[1][2] = v[2];
+    res[2][0] = v[1];
+    res[2][1] = -v[0]-v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
+    res[4][0] = -v[0]-v[1];
+    res[4][1] = v[0];
+    res[4][2] = v[2];
+    res[5][0] = -v[1];
+    res[5][1] = v[0]+v[1];
+    res[5][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -38458,9 +55057,11 @@ struct FastSG_P61 {
     res[5][2] = v[2];
     phase[5] = res[5][2]*5./6;
   }
+  static const short size=6;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P6122 {
- static const short size=12;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -38498,6 +55099,44 @@ struct FastSG_P6122 {
     res[11][0] = v[0];
     res[11][1] = v[0]-v[1];
     res[11][2] = -v[2]+1./6;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0]+v[1];
+    res[1][1] = -v[0];
+    res[1][2] = v[2];
+    res[2][0] = v[1];
+    res[2][1] = -v[0]-v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
+    res[4][0] = -v[0]-v[1];
+    res[4][1] = v[0];
+    res[4][2] = v[2];
+    res[5][0] = -v[1];
+    res[5][1] = v[0]+v[1];
+    res[5][2] = v[2];
+    res[6][0] = v[0];
+    res[6][1] = -v[0]-v[1];
+    res[6][2] = -v[2];
+    res[7][0] = -v[0]-v[1];
+    res[7][1] = v[1];
+    res[7][2] = -v[2];
+    res[8][0] = v[1];
+    res[8][1] = v[0];
+    res[8][2] = -v[2];
+    res[9][0] = -v[1];
+    res[9][1] = -v[0];
+    res[9][2] = -v[2];
+    res[10][0] = -v[0];
+    res[10][1] = v[0]+v[1];
+    res[10][2] = -v[2];
+    res[11][0] = v[0]+v[1];
+    res[11][1] = -v[1];
+    res[11][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -38549,9 +55188,11 @@ struct FastSG_P6122 {
     res[11][2] = -v[2];
     phase[11] = res[11][2]*1./6;
   }
+  static const short size=12;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P62 {
- static const short size=6;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -38571,6 +55212,26 @@ struct FastSG_P62 {
     res[5][0] = v[1];
     res[5][1] = -v[0]+v[1];
     res[5][2] = v[2]+2./3;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0]+v[1];
+    res[1][1] = -v[0];
+    res[1][2] = v[2];
+    res[2][0] = v[1];
+    res[2][1] = -v[0]-v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
+    res[4][0] = -v[0]-v[1];
+    res[4][1] = v[0];
+    res[4][2] = v[2];
+    res[5][0] = -v[1];
+    res[5][1] = v[0]+v[1];
+    res[5][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -38598,9 +55259,11 @@ struct FastSG_P62 {
     res[5][2] = v[2];
     phase[5] = res[5][2]*2./3;
   }
+  static const short size=6;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P622 {
- static const short size=12;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -38637,6 +55300,44 @@ struct FastSG_P622 {
     res[10][2] = -v[2];
     res[11][0] = v[0];
     res[11][1] = v[0]-v[1];
+    res[11][2] = -v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0]+v[1];
+    res[1][1] = -v[0];
+    res[1][2] = v[2];
+    res[2][0] = v[1];
+    res[2][1] = -v[0]-v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
+    res[4][0] = -v[0]-v[1];
+    res[4][1] = v[0];
+    res[4][2] = v[2];
+    res[5][0] = -v[1];
+    res[5][1] = v[0]+v[1];
+    res[5][2] = v[2];
+    res[6][0] = v[0];
+    res[6][1] = -v[0]-v[1];
+    res[6][2] = -v[2];
+    res[7][0] = -v[0]-v[1];
+    res[7][1] = v[1];
+    res[7][2] = -v[2];
+    res[8][0] = v[1];
+    res[8][1] = v[0];
+    res[8][2] = -v[2];
+    res[9][0] = -v[1];
+    res[9][1] = -v[0];
+    res[9][2] = -v[2];
+    res[10][0] = -v[0];
+    res[10][1] = v[0]+v[1];
+    res[10][2] = -v[2];
+    res[11][0] = v[0]+v[1];
+    res[11][1] = -v[1];
     res[11][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -38689,9 +55390,11 @@ struct FastSG_P622 {
     res[11][2] = -v[2];
     phase[11] =  0;
   }
+  static const short size=12;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P6222 {
- static const short size=12;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -38729,6 +55432,44 @@ struct FastSG_P6222 {
     res[11][0] = v[0];
     res[11][1] = v[0]-v[1];
     res[11][2] = -v[2]+1./3;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0]+v[1];
+    res[1][1] = -v[0];
+    res[1][2] = v[2];
+    res[2][0] = v[1];
+    res[2][1] = -v[0]-v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
+    res[4][0] = -v[0]-v[1];
+    res[4][1] = v[0];
+    res[4][2] = v[2];
+    res[5][0] = -v[1];
+    res[5][1] = v[0]+v[1];
+    res[5][2] = v[2];
+    res[6][0] = v[0];
+    res[6][1] = -v[0]-v[1];
+    res[6][2] = -v[2];
+    res[7][0] = -v[0]-v[1];
+    res[7][1] = v[1];
+    res[7][2] = -v[2];
+    res[8][0] = v[1];
+    res[8][1] = v[0];
+    res[8][2] = -v[2];
+    res[9][0] = -v[1];
+    res[9][1] = -v[0];
+    res[9][2] = -v[2];
+    res[10][0] = -v[0];
+    res[10][1] = v[0]+v[1];
+    res[10][2] = -v[2];
+    res[11][0] = v[0]+v[1];
+    res[11][1] = -v[1];
+    res[11][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -38780,9 +55521,11 @@ struct FastSG_P6222 {
     res[11][2] = -v[2];
     phase[11] = res[11][2]*1./3;
   }
+  static const short size=12;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P63 {
- static const short size=6;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -38802,6 +55545,26 @@ struct FastSG_P63 {
     res[5][0] = v[1];
     res[5][1] = -v[0]+v[1];
     res[5][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0]+v[1];
+    res[1][1] = -v[0];
+    res[1][2] = v[2];
+    res[2][0] = v[1];
+    res[2][1] = -v[0]-v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
+    res[4][0] = -v[0]-v[1];
+    res[4][1] = v[0];
+    res[4][2] = v[2];
+    res[5][0] = -v[1];
+    res[5][1] = v[0]+v[1];
+    res[5][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -38829,9 +55592,11 @@ struct FastSG_P63 {
     res[5][2] = v[2];
     phase[5] = res[5][2]*1./2;
   }
+  static const short size=6;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P63_m {
- static const short size=12;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -38869,6 +55634,44 @@ struct FastSG_P63_m {
     res[11][0] = -v[1];
     res[11][1] = v[0]-v[1];
     res[11][2] = -v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0]+v[1];
+    res[2][1] = -v[0];
+    res[2][2] = v[2];
+    res[3][0] = -v[0]-v[1];
+    res[3][1] = v[0];
+    res[3][2] = -v[2];
+    res[4][0] = v[1];
+    res[4][1] = -v[0]-v[1];
+    res[4][2] = v[2];
+    res[5][0] = -v[1];
+    res[5][1] = v[0]+v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = v[1];
+    res[7][2] = -v[2];
+    res[8][0] = -v[0]-v[1];
+    res[8][1] = v[0];
+    res[8][2] = v[2];
+    res[9][0] = v[0]+v[1];
+    res[9][1] = -v[0];
+    res[9][2] = -v[2];
+    res[10][0] = -v[1];
+    res[10][1] = v[0]+v[1];
+    res[10][2] = v[2];
+    res[11][0] = v[1];
+    res[11][1] = -v[0]-v[1];
+    res[11][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -38920,9 +55723,11 @@ struct FastSG_P63_m {
     res[11][2] = -v[2];
     phase[11] = res[11][2]*1./2;
   }
+  static const short size=12;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P63_mcm {
- static const short size=24;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -38995,6 +55800,80 @@ struct FastSG_P63_mcm {
     res[22][2] = -v[2];
     res[23][0] = -v[0];
     res[23][1] = -v[0]+v[1];
+    res[23][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0]+v[1];
+    res[2][1] = -v[0];
+    res[2][2] = v[2];
+    res[3][0] = -v[0]-v[1];
+    res[3][1] = v[0];
+    res[3][2] = -v[2];
+    res[4][0] = v[1];
+    res[4][1] = -v[0]-v[1];
+    res[4][2] = v[2];
+    res[5][0] = -v[1];
+    res[5][1] = v[0]+v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = v[1];
+    res[7][2] = -v[2];
+    res[8][0] = -v[0]-v[1];
+    res[8][1] = v[0];
+    res[8][2] = v[2];
+    res[9][0] = v[0]+v[1];
+    res[9][1] = -v[0];
+    res[9][2] = -v[2];
+    res[10][0] = -v[1];
+    res[10][1] = v[0]+v[1];
+    res[10][2] = v[2];
+    res[11][0] = v[1];
+    res[11][1] = -v[0]-v[1];
+    res[11][2] = -v[2];
+    res[12][0] = v[0];
+    res[12][1] = -v[0]-v[1];
+    res[12][2] = -v[2];
+    res[13][0] = -v[0];
+    res[13][1] = v[0]+v[1];
+    res[13][2] = v[2];
+    res[14][0] = -v[0]-v[1];
+    res[14][1] = v[1];
+    res[14][2] = -v[2];
+    res[15][0] = v[0]+v[1];
+    res[15][1] = -v[1];
+    res[15][2] = v[2];
+    res[16][0] = v[1];
+    res[16][1] = v[0];
+    res[16][2] = -v[2];
+    res[17][0] = -v[1];
+    res[17][1] = -v[0];
+    res[17][2] = v[2];
+    res[18][0] = -v[1];
+    res[18][1] = -v[0];
+    res[18][2] = -v[2];
+    res[19][0] = v[1];
+    res[19][1] = v[0];
+    res[19][2] = v[2];
+    res[20][0] = -v[0];
+    res[20][1] = v[0]+v[1];
+    res[20][2] = -v[2];
+    res[21][0] = v[0];
+    res[21][1] = -v[0]-v[1];
+    res[21][2] = v[2];
+    res[22][0] = v[0]+v[1];
+    res[22][1] = -v[1];
+    res[22][2] = -v[2];
+    res[23][0] = -v[0]-v[1];
+    res[23][1] = v[1];
     res[23][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -39095,9 +55974,11 @@ struct FastSG_P63_mcm {
     res[23][2] = v[2];
     phase[23] =  0;
   }
+  static const short size=24;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P63_mmc {
- static const short size=24;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -39171,6 +56052,80 @@ struct FastSG_P63_mmc {
     res[23][0] = -v[0];
     res[23][1] = -v[0]+v[1];
     res[23][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0]+v[1];
+    res[2][1] = -v[0];
+    res[2][2] = v[2];
+    res[3][0] = -v[0]-v[1];
+    res[3][1] = v[0];
+    res[3][2] = -v[2];
+    res[4][0] = v[1];
+    res[4][1] = -v[0]-v[1];
+    res[4][2] = v[2];
+    res[5][0] = -v[1];
+    res[5][1] = v[0]+v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[0];
+    res[6][1] = -v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0];
+    res[7][1] = v[1];
+    res[7][2] = -v[2];
+    res[8][0] = -v[0]-v[1];
+    res[8][1] = v[0];
+    res[8][2] = v[2];
+    res[9][0] = v[0]+v[1];
+    res[9][1] = -v[0];
+    res[9][2] = -v[2];
+    res[10][0] = -v[1];
+    res[10][1] = v[0]+v[1];
+    res[10][2] = v[2];
+    res[11][0] = v[1];
+    res[11][1] = -v[0]-v[1];
+    res[11][2] = -v[2];
+    res[12][0] = v[0];
+    res[12][1] = -v[0]-v[1];
+    res[12][2] = -v[2];
+    res[13][0] = -v[0];
+    res[13][1] = v[0]+v[1];
+    res[13][2] = v[2];
+    res[14][0] = -v[0]-v[1];
+    res[14][1] = v[1];
+    res[14][2] = -v[2];
+    res[15][0] = v[0]+v[1];
+    res[15][1] = -v[1];
+    res[15][2] = v[2];
+    res[16][0] = v[1];
+    res[16][1] = v[0];
+    res[16][2] = -v[2];
+    res[17][0] = -v[1];
+    res[17][1] = -v[0];
+    res[17][2] = v[2];
+    res[18][0] = -v[1];
+    res[18][1] = -v[0];
+    res[18][2] = -v[2];
+    res[19][0] = v[1];
+    res[19][1] = v[0];
+    res[19][2] = v[2];
+    res[20][0] = -v[0];
+    res[20][1] = v[0]+v[1];
+    res[20][2] = -v[2];
+    res[21][0] = v[0];
+    res[21][1] = -v[0]-v[1];
+    res[21][2] = v[2];
+    res[22][0] = v[0]+v[1];
+    res[22][1] = -v[1];
+    res[22][2] = -v[2];
+    res[23][0] = -v[0]-v[1];
+    res[23][1] = v[1];
+    res[23][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -39270,9 +56225,11 @@ struct FastSG_P63_mmc {
     res[23][2] = v[2];
     phase[23] = res[23][2]*1./2;
   }
+  static const short size=24;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P6322 {
- static const short size=12;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -39310,6 +56267,44 @@ struct FastSG_P6322 {
     res[11][0] = v[0];
     res[11][1] = v[0]-v[1];
     res[11][2] = -v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0]+v[1];
+    res[1][1] = -v[0];
+    res[1][2] = v[2];
+    res[2][0] = v[1];
+    res[2][1] = -v[0]-v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
+    res[4][0] = -v[0]-v[1];
+    res[4][1] = v[0];
+    res[4][2] = v[2];
+    res[5][0] = -v[1];
+    res[5][1] = v[0]+v[1];
+    res[5][2] = v[2];
+    res[6][0] = v[0];
+    res[6][1] = -v[0]-v[1];
+    res[6][2] = -v[2];
+    res[7][0] = -v[0]-v[1];
+    res[7][1] = v[1];
+    res[7][2] = -v[2];
+    res[8][0] = v[1];
+    res[8][1] = v[0];
+    res[8][2] = -v[2];
+    res[9][0] = -v[1];
+    res[9][1] = -v[0];
+    res[9][2] = -v[2];
+    res[10][0] = -v[0];
+    res[10][1] = v[0]+v[1];
+    res[10][2] = -v[2];
+    res[11][0] = v[0]+v[1];
+    res[11][1] = -v[1];
+    res[11][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -39361,9 +56356,11 @@ struct FastSG_P6322 {
     res[11][2] = -v[2];
     phase[11] = res[11][2]*1./2;
   }
+  static const short size=12;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P63cm {
- static const short size=12;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -39400,6 +56397,44 @@ struct FastSG_P63cm {
     res[10][2] = v[2];
     res[11][0] = -v[0];
     res[11][1] = -v[0]+v[1];
+    res[11][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0]+v[1];
+    res[1][1] = -v[0];
+    res[1][2] = v[2];
+    res[2][0] = v[1];
+    res[2][1] = -v[0]-v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
+    res[4][0] = -v[0]-v[1];
+    res[4][1] = v[0];
+    res[4][2] = v[2];
+    res[5][0] = -v[1];
+    res[5][1] = v[0]+v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[0]+v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0]+v[1];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
+    res[8][0] = -v[1];
+    res[8][1] = -v[0];
+    res[8][2] = v[2];
+    res[9][0] = v[1];
+    res[9][1] = v[0];
+    res[9][2] = v[2];
+    res[10][0] = v[0];
+    res[10][1] = -v[0]-v[1];
+    res[10][2] = v[2];
+    res[11][0] = -v[0]-v[1];
+    res[11][1] = v[1];
     res[11][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -39452,9 +56487,11 @@ struct FastSG_P63cm {
     res[11][2] = v[2];
     phase[11] =  0;
   }
+  static const short size=12;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P63mc {
- static const short size=12;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -39492,6 +56529,44 @@ struct FastSG_P63mc {
     res[11][0] = -v[0];
     res[11][1] = -v[0]+v[1];
     res[11][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0]+v[1];
+    res[1][1] = -v[0];
+    res[1][2] = v[2];
+    res[2][0] = v[1];
+    res[2][1] = -v[0]-v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
+    res[4][0] = -v[0]-v[1];
+    res[4][1] = v[0];
+    res[4][2] = v[2];
+    res[5][0] = -v[1];
+    res[5][1] = v[0]+v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[0]+v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0]+v[1];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
+    res[8][0] = -v[1];
+    res[8][1] = -v[0];
+    res[8][2] = v[2];
+    res[9][0] = v[1];
+    res[9][1] = v[0];
+    res[9][2] = v[2];
+    res[10][0] = v[0];
+    res[10][1] = -v[0]-v[1];
+    res[10][2] = v[2];
+    res[11][0] = -v[0]-v[1];
+    res[11][1] = v[1];
+    res[11][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -39543,9 +56618,11 @@ struct FastSG_P63mc {
     res[11][2] = v[2];
     phase[11] = res[11][2]*1./2;
   }
+  static const short size=12;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P64 {
- static const short size=6;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -39565,6 +56642,26 @@ struct FastSG_P64 {
     res[5][0] = v[1];
     res[5][1] = -v[0]+v[1];
     res[5][2] = v[2]+1./3;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0]+v[1];
+    res[1][1] = -v[0];
+    res[1][2] = v[2];
+    res[2][0] = v[1];
+    res[2][1] = -v[0]-v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
+    res[4][0] = -v[0]-v[1];
+    res[4][1] = v[0];
+    res[4][2] = v[2];
+    res[5][0] = -v[1];
+    res[5][1] = v[0]+v[1];
+    res[5][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -39592,9 +56689,11 @@ struct FastSG_P64 {
     res[5][2] = v[2];
     phase[5] = res[5][2]*1./3;
   }
+  static const short size=6;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P6422 {
- static const short size=12;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -39632,6 +56731,44 @@ struct FastSG_P6422 {
     res[11][0] = v[0];
     res[11][1] = v[0]-v[1];
     res[11][2] = -v[2]+2./3;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0]+v[1];
+    res[1][1] = -v[0];
+    res[1][2] = v[2];
+    res[2][0] = v[1];
+    res[2][1] = -v[0]-v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
+    res[4][0] = -v[0]-v[1];
+    res[4][1] = v[0];
+    res[4][2] = v[2];
+    res[5][0] = -v[1];
+    res[5][1] = v[0]+v[1];
+    res[5][2] = v[2];
+    res[6][0] = v[0];
+    res[6][1] = -v[0]-v[1];
+    res[6][2] = -v[2];
+    res[7][0] = -v[0]-v[1];
+    res[7][1] = v[1];
+    res[7][2] = -v[2];
+    res[8][0] = v[1];
+    res[8][1] = v[0];
+    res[8][2] = -v[2];
+    res[9][0] = -v[1];
+    res[9][1] = -v[0];
+    res[9][2] = -v[2];
+    res[10][0] = -v[0];
+    res[10][1] = v[0]+v[1];
+    res[10][2] = -v[2];
+    res[11][0] = v[0]+v[1];
+    res[11][1] = -v[1];
+    res[11][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -39683,9 +56820,11 @@ struct FastSG_P6422 {
     res[11][2] = -v[2];
     phase[11] = res[11][2]*2./3;
   }
+  static const short size=12;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P65 {
- static const short size=6;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -39705,6 +56844,26 @@ struct FastSG_P65 {
     res[5][0] = v[1];
     res[5][1] = -v[0]+v[1];
     res[5][2] = v[2]+1./6;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0]+v[1];
+    res[1][1] = -v[0];
+    res[1][2] = v[2];
+    res[2][0] = v[1];
+    res[2][1] = -v[0]-v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
+    res[4][0] = -v[0]-v[1];
+    res[4][1] = v[0];
+    res[4][2] = v[2];
+    res[5][0] = -v[1];
+    res[5][1] = v[0]+v[1];
+    res[5][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -39732,9 +56891,11 @@ struct FastSG_P65 {
     res[5][2] = v[2];
     phase[5] = res[5][2]*1./6;
   }
+  static const short size=6;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P6522 {
- static const short size=12;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -39772,6 +56933,44 @@ struct FastSG_P6522 {
     res[11][0] = v[0];
     res[11][1] = v[0]-v[1];
     res[11][2] = -v[2]+5./6;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0]+v[1];
+    res[1][1] = -v[0];
+    res[1][2] = v[2];
+    res[2][0] = v[1];
+    res[2][1] = -v[0]-v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
+    res[4][0] = -v[0]-v[1];
+    res[4][1] = v[0];
+    res[4][2] = v[2];
+    res[5][0] = -v[1];
+    res[5][1] = v[0]+v[1];
+    res[5][2] = v[2];
+    res[6][0] = v[0];
+    res[6][1] = -v[0]-v[1];
+    res[6][2] = -v[2];
+    res[7][0] = -v[0]-v[1];
+    res[7][1] = v[1];
+    res[7][2] = -v[2];
+    res[8][0] = v[1];
+    res[8][1] = v[0];
+    res[8][2] = -v[2];
+    res[9][0] = -v[1];
+    res[9][1] = -v[0];
+    res[9][2] = -v[2];
+    res[10][0] = -v[0];
+    res[10][1] = v[0]+v[1];
+    res[10][2] = -v[2];
+    res[11][0] = v[0]+v[1];
+    res[11][1] = -v[1];
+    res[11][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -39823,9 +57022,11 @@ struct FastSG_P6522 {
     res[11][2] = -v[2];
     phase[11] = res[11][2]*5./6;
   }
+  static const short size=12;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P6cc {
- static const short size=12;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -39863,6 +57064,44 @@ struct FastSG_P6cc {
     res[11][0] = -v[0];
     res[11][1] = -v[0]+v[1];
     res[11][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0]+v[1];
+    res[1][1] = -v[0];
+    res[1][2] = v[2];
+    res[2][0] = v[1];
+    res[2][1] = -v[0]-v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
+    res[4][0] = -v[0]-v[1];
+    res[4][1] = v[0];
+    res[4][2] = v[2];
+    res[5][0] = -v[1];
+    res[5][1] = v[0]+v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[0]+v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0]+v[1];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
+    res[8][0] = -v[1];
+    res[8][1] = -v[0];
+    res[8][2] = v[2];
+    res[9][0] = v[1];
+    res[9][1] = v[0];
+    res[9][2] = v[2];
+    res[10][0] = v[0];
+    res[10][1] = -v[0]-v[1];
+    res[10][2] = v[2];
+    res[11][0] = -v[0]-v[1];
+    res[11][1] = v[1];
+    res[11][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -39914,9 +57153,11 @@ struct FastSG_P6cc {
     res[11][2] = v[2];
     phase[11] = res[11][2]*1./2;
   }
+  static const short size=12;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_P6mm {
- static const short size=12;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -39953,6 +57194,44 @@ struct FastSG_P6mm {
     res[10][2] = v[2];
     res[11][0] = -v[0];
     res[11][1] = -v[0]+v[1];
+    res[11][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0]+v[1];
+    res[1][1] = -v[0];
+    res[1][2] = v[2];
+    res[2][0] = v[1];
+    res[2][1] = -v[0]-v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
+    res[4][0] = -v[0]-v[1];
+    res[4][1] = v[0];
+    res[4][2] = v[2];
+    res[5][0] = -v[1];
+    res[5][1] = v[0]+v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[0]+v[1];
+    res[6][2] = v[2];
+    res[7][0] = v[0]+v[1];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
+    res[8][0] = -v[1];
+    res[8][1] = -v[0];
+    res[8][2] = v[2];
+    res[9][0] = v[1];
+    res[9][1] = v[0];
+    res[9][2] = v[2];
+    res[10][0] = v[0];
+    res[10][1] = -v[0]-v[1];
+    res[10][2] = v[2];
+    res[11][0] = -v[0]-v[1];
+    res[11][1] = v[1];
     res[11][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -40005,14 +57284,24 @@ struct FastSG_P6mm {
     res[11][2] = v[2];
     phase[11] =  0;
   }
+  static const short size=12;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pa {
- static const short size=2;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
     res[0][2] = v[2];
     res[1][0] = v[0]+1./2;
+    res[1][1] = -v[1];
+    res[1][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
     res[1][1] = -v[1];
     res[1][2] = v[2];
   }
@@ -40026,9 +57315,11 @@ struct FastSG_Pa {
     res[1][2] = v[2];
     phase[1] = res[1][0]*1./2;
   }
+  static const short size=2;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pa_3 {
- static const short size=24;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -40102,6 +57393,80 @@ struct FastSG_Pa_3 {
     res[23][0] = v[0];
     res[23][1] = -v[1]+1./2;
     res[23][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[1];
+    res[2][1] = v[2];
+    res[2][2] = v[0];
+    res[3][0] = -v[1];
+    res[3][1] = -v[2];
+    res[3][2] = -v[0];
+    res[4][0] = v[2];
+    res[4][1] = v[0];
+    res[4][2] = v[1];
+    res[5][0] = -v[2];
+    res[5][1] = -v[0];
+    res[5][2] = -v[1];
+    res[6][0] = v[2];
+    res[6][1] = -v[0];
+    res[6][2] = -v[1];
+    res[7][0] = -v[2];
+    res[7][1] = v[0];
+    res[7][2] = v[1];
+    res[8][0] = -v[1];
+    res[8][1] = -v[2];
+    res[8][2] = v[0];
+    res[9][0] = v[1];
+    res[9][1] = v[2];
+    res[9][2] = -v[0];
+    res[10][0] = -v[2];
+    res[10][1] = -v[0];
+    res[10][2] = v[1];
+    res[11][0] = v[2];
+    res[11][1] = v[0];
+    res[11][2] = -v[1];
+    res[12][0] = -v[1];
+    res[12][1] = v[2];
+    res[12][2] = -v[0];
+    res[13][0] = v[1];
+    res[13][1] = -v[2];
+    res[13][2] = v[0];
+    res[14][0] = v[1];
+    res[14][1] = -v[2];
+    res[14][2] = -v[0];
+    res[15][0] = -v[1];
+    res[15][1] = v[2];
+    res[15][2] = v[0];
+    res[16][0] = -v[2];
+    res[16][1] = v[0];
+    res[16][2] = -v[1];
+    res[17][0] = v[2];
+    res[17][1] = -v[0];
+    res[17][2] = v[1];
+    res[18][0] = -v[0];
+    res[18][1] = -v[1];
+    res[18][2] = v[2];
+    res[19][0] = v[0];
+    res[19][1] = v[1];
+    res[19][2] = -v[2];
+    res[20][0] = v[0];
+    res[20][1] = -v[1];
+    res[20][2] = -v[2];
+    res[21][0] = -v[0];
+    res[21][1] = v[1];
+    res[21][2] = v[2];
+    res[22][0] = -v[0];
+    res[22][1] = v[1];
+    res[22][2] = -v[2];
+    res[23][0] = v[0];
+    res[23][1] = -v[1];
+    res[23][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -40201,15 +57566,25 @@ struct FastSG_Pa_3 {
     res[23][2] = v[2];
     phase[23] = (res[23][1]+res[23][2])*1./2;
   }
+  static const short size=24;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pb11 {
- static const short size=2;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
     res[0][2] = v[2];
     res[1][0] = -v[0];
     res[1][1] = v[1]+1./2;
+    res[1][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = v[1];
     res[1][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -40222,9 +57597,11 @@ struct FastSG_Pb11 {
     res[1][2] = v[2];
     phase[1] = res[1][1]*1./2;
   }
+  static const short size=2;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pb21a {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -40237,6 +57614,20 @@ struct FastSG_Pb21a {
     res[2][2] = -v[2];
     res[3][0] = -v[0]+1./2;
     res[3][1] = v[1]+1./2;
+    res[3][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = -v[2];
+    res[3][0] = -v[0];
+    res[3][1] = v[1];
     res[3][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -40257,9 +57648,11 @@ struct FastSG_Pb21a {
     res[3][2] = v[2];
     phase[3] = (res[3][0]+res[3][1])*1./2;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pb21m {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -40272,6 +57665,20 @@ struct FastSG_Pb21m {
     res[2][2] = -v[2];
     res[3][0] = -v[0];
     res[3][1] = v[1]+1./2;
+    res[3][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = -v[2];
+    res[3][0] = -v[0];
+    res[3][1] = v[1];
     res[3][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -40292,9 +57699,11 @@ struct FastSG_Pb21m {
     res[3][2] = v[2];
     phase[3] = res[3][1]*1./2;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pb2b {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -40307,6 +57716,20 @@ struct FastSG_Pb2b {
     res[2][2] = -v[2];
     res[3][0] = -v[0];
     res[3][1] = v[1]+1./2;
+    res[3][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = -v[2];
+    res[3][0] = -v[0];
+    res[3][1] = v[1];
     res[3][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -40327,9 +57750,11 @@ struct FastSG_Pb2b {
     res[3][2] = v[2];
     phase[3] = res[3][1]*1./2;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pb2n {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -40342,6 +57767,20 @@ struct FastSG_Pb2n {
     res[2][2] = -v[2];
     res[3][0] = -v[0]+1./2;
     res[3][1] = v[1]+1./2;
+    res[3][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = -v[2];
+    res[3][0] = -v[0];
+    res[3][1] = v[1];
     res[3][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -40362,9 +57801,11 @@ struct FastSG_Pb2n {
     res[3][2] = v[2];
     phase[3] = (res[3][0]+res[3][1])*1./2;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pba2 {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -40377,6 +57818,20 @@ struct FastSG_Pba2 {
     res[2][2] = v[2];
     res[3][0] = v[0]+1./2;
     res[3][1] = -v[1]+1./2;
+    res[3][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = -v[1];
     res[3][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -40397,9 +57852,11 @@ struct FastSG_Pba2 {
     res[3][2] = v[2];
     phase[3] = (res[3][0]+res[3][1])*1./2;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pbaa {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -40424,6 +57881,32 @@ struct FastSG_Pbaa {
     res[6][2] = -v[2];
     res[7][0] = v[0]+1./2;
     res[7][1] = -v[1]+1./2;
+    res[7][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
     res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -40460,9 +57943,11 @@ struct FastSG_Pbaa {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][1])*1./2;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pbab {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -40486,6 +57971,32 @@ struct FastSG_Pbab {
     res[6][1] = v[1];
     res[6][2] = -v[2];
     res[7][0] = v[0]+1./2;
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
     res[7][1] = -v[1];
     res[7][2] = v[2];
   }
@@ -40523,9 +58034,11 @@ struct FastSG_Pbab {
     res[7][2] = v[2];
     phase[7] = res[7][0]*1./2;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pbam {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -40550,6 +58063,32 @@ struct FastSG_Pbam {
     res[6][2] = -v[2];
     res[7][0] = v[0]+1./2;
     res[7][1] = -v[1]+1./2;
+    res[7][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
     res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -40586,9 +58125,11 @@ struct FastSG_Pbam {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][1])*1./2;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pban {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -40612,6 +58153,32 @@ struct FastSG_Pban {
     res[6][1] = v[1];
     res[6][2] = -v[2];
     res[7][0] = v[0]+1./2;
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
     res[7][1] = -v[1];
     res[7][2] = v[2];
   }
@@ -40649,9 +58216,11 @@ struct FastSG_Pban {
     res[7][2] = v[2];
     phase[7] = res[7][0]*1./2;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pbc21 {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -40665,6 +58234,20 @@ struct FastSG_Pbc21 {
     res[3][0] = v[0];
     res[3][1] = -v[1]+1./2;
     res[3][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -40684,9 +58267,11 @@ struct FastSG_Pbc21 {
     res[3][2] = v[2];
     phase[3] = (res[3][1]+res[3][2])*1./2;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pbca {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -40712,6 +58297,32 @@ struct FastSG_Pbca {
     res[7][0] = v[0];
     res[7][1] = -v[1]+1./2;
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -40747,9 +58358,11 @@ struct FastSG_Pbca {
     res[7][2] = v[2];
     phase[7] = (res[7][1]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pbcb {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -40775,6 +58388,32 @@ struct FastSG_Pbcb {
     res[7][0] = v[0];
     res[7][1] = -v[1];
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -40810,9 +58449,11 @@ struct FastSG_Pbcb {
     res[7][2] = v[2];
     phase[7] = res[7][2]*1./2;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pbcm {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -40838,6 +58479,32 @@ struct FastSG_Pbcm {
     res[7][0] = v[0];
     res[7][1] = -v[1]+1./2;
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -40873,9 +58540,11 @@ struct FastSG_Pbcm {
     res[7][2] = v[2];
     phase[7] = (res[7][1]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pbcn {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -40901,6 +58570,32 @@ struct FastSG_Pbcn {
     res[7][0] = v[0];
     res[7][1] = -v[1];
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -40936,9 +58631,11 @@ struct FastSG_Pbcn {
     res[7][2] = v[2];
     phase[7] = res[7][2]*1./2;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pbm2 {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -40951,6 +58648,20 @@ struct FastSG_Pbm2 {
     res[2][2] = v[2];
     res[3][0] = v[0];
     res[3][1] = -v[1]+1./2;
+    res[3][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = -v[1];
     res[3][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -40971,9 +58682,11 @@ struct FastSG_Pbm2 {
     res[3][2] = v[2];
     phase[3] = res[3][1]*1./2;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pbma {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -40998,6 +58711,32 @@ struct FastSG_Pbma {
     res[6][2] = -v[2];
     res[7][0] = v[0];
     res[7][1] = -v[1]+1./2;
+    res[7][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
     res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -41034,9 +58773,11 @@ struct FastSG_Pbma {
     res[7][2] = v[2];
     phase[7] = res[7][1]*1./2;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pbmb {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -41055,6 +58796,32 @@ struct FastSG_Pbmb {
     res[4][2] = -v[2];
     res[5][0] = -v[0];
     res[5][1] = v[1]+1./2;
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
     res[5][2] = v[2];
     res[6][0] = -v[0];
     res[6][1] = v[1];
@@ -41097,9 +58864,11 @@ struct FastSG_Pbmb {
     res[7][2] = v[2];
     phase[7] =  0;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pbmm {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -41124,6 +58893,32 @@ struct FastSG_Pbmm {
     res[6][2] = -v[2];
     res[7][0] = v[0];
     res[7][1] = -v[1]+1./2;
+    res[7][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
     res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -41160,9 +58955,11 @@ struct FastSG_Pbmm {
     res[7][2] = v[2];
     phase[7] = res[7][1]*1./2;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pbmn {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -41181,6 +58978,32 @@ struct FastSG_Pbmn {
     res[4][2] = -v[2];
     res[5][0] = -v[0]+1./2;
     res[5][1] = v[1]+1./2;
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
     res[5][2] = v[2];
     res[6][0] = -v[0];
     res[6][1] = v[1];
@@ -41223,9 +59046,11 @@ struct FastSG_Pbmn {
     res[7][2] = v[2];
     phase[7] =  0;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pbn21 {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -41240,6 +59065,20 @@ struct FastSG_Pbn21 {
     res[3][1] = -v[1]+1./2;
     res[3][2] = v[2]+1./2;
   }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
+  }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -41258,9 +59097,11 @@ struct FastSG_Pbn21 {
     res[3][2] = v[2];
     phase[3] = (res[3][0]+res[3][1]+res[3][2])*1./2;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pbna {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -41286,6 +59127,32 @@ struct FastSG_Pbna {
     res[7][0] = v[0]+1./2;
     res[7][1] = -v[1]+1./2;
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -41321,9 +59188,11 @@ struct FastSG_Pbna {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][1]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pbnb {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -41349,6 +59218,32 @@ struct FastSG_Pbnb {
     res[7][0] = v[0]+1./2;
     res[7][1] = -v[1];
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -41384,9 +59279,11 @@ struct FastSG_Pbnb {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pbnm {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -41412,6 +59309,32 @@ struct FastSG_Pbnm {
     res[7][0] = v[0]+1./2;
     res[7][1] = -v[1]+1./2;
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -41447,9 +59370,11 @@ struct FastSG_Pbnm {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][1]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pbnn {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -41475,6 +59400,32 @@ struct FastSG_Pbnn {
     res[7][0] = v[0]+1./2;
     res[7][1] = -v[1];
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -41510,9 +59461,11 @@ struct FastSG_Pbnn {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pc {
- static const short size=2;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -41520,6 +59473,14 @@ struct FastSG_Pc {
     res[1][0] = v[0];
     res[1][1] = -v[1];
     res[1][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = -v[1];
+    res[1][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -41531,9 +59492,11 @@ struct FastSG_Pc {
     res[1][2] = v[2];
     phase[1] = res[1][2]*1./2;
   }
+  static const short size=2;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pc11 {
- static const short size=2;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -41541,6 +59504,14 @@ struct FastSG_Pc11 {
     res[1][0] = -v[0];
     res[1][1] = v[1];
     res[1][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -41552,9 +59523,11 @@ struct FastSG_Pc11 {
     res[1][2] = v[2];
     phase[1] = res[1][2]*1./2;
   }
+  static const short size=2;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pc21b {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -41568,6 +59541,20 @@ struct FastSG_Pc21b {
     res[3][0] = -v[0];
     res[3][1] = v[1];
     res[3][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = -v[2];
+    res[3][0] = -v[0];
+    res[3][1] = v[1];
+    res[3][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -41587,9 +59574,11 @@ struct FastSG_Pc21b {
     res[3][2] = v[2];
     phase[3] = res[3][2]*1./2;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pc21n {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -41603,6 +59592,20 @@ struct FastSG_Pc21n {
     res[3][0] = -v[0]+1./2;
     res[3][1] = v[1];
     res[3][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = -v[2];
+    res[3][0] = -v[0];
+    res[3][1] = v[1];
+    res[3][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -41622,9 +59625,11 @@ struct FastSG_Pc21n {
     res[3][2] = v[2];
     phase[3] = (res[3][0]+res[3][2])*1./2;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pc2a {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -41639,6 +59644,20 @@ struct FastSG_Pc2a {
     res[3][1] = v[1];
     res[3][2] = v[2]+1./2;
   }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = -v[2];
+    res[3][0] = -v[0];
+    res[3][1] = v[1];
+    res[3][2] = v[2];
+  }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -41657,9 +59676,11 @@ struct FastSG_Pc2a {
     res[3][2] = v[2];
     phase[3] = (res[3][0]+res[3][2])*1./2;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pc2m {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -41674,6 +59695,20 @@ struct FastSG_Pc2m {
     res[3][1] = v[1];
     res[3][2] = v[2]+1./2;
   }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = -v[2];
+    res[3][0] = -v[0];
+    res[3][1] = v[1];
+    res[3][2] = v[2];
+  }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -41692,9 +59727,11 @@ struct FastSG_Pc2m {
     res[3][2] = v[2];
     phase[3] = res[3][2]*1./2;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pca21 {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -41706,6 +59743,20 @@ struct FastSG_Pca21 {
     res[2][1] = v[1];
     res[2][2] = v[2]+1./2;
     res[3][0] = v[0]+1./2;
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
     res[3][1] = -v[1];
     res[3][2] = v[2];
   }
@@ -41727,9 +59778,11 @@ struct FastSG_Pca21 {
     res[3][2] = v[2];
     phase[3] = res[3][0]*1./2;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pcaa {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -41753,6 +59806,32 @@ struct FastSG_Pcaa {
     res[6][1] = v[1];
     res[6][2] = -v[2];
     res[7][0] = v[0]+1./2;
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
     res[7][1] = -v[1];
     res[7][2] = v[2];
   }
@@ -41790,9 +59869,11 @@ struct FastSG_Pcaa {
     res[7][2] = v[2];
     phase[7] = res[7][0]*1./2;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pcab {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -41817,6 +59898,32 @@ struct FastSG_Pcab {
     res[6][2] = -v[2];
     res[7][0] = v[0]+1./2;
     res[7][1] = -v[1]+1./2;
+    res[7][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
     res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -41853,9 +59960,11 @@ struct FastSG_Pcab {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][1])*1./2;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pcam {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -41879,6 +59988,32 @@ struct FastSG_Pcam {
     res[6][1] = v[1];
     res[6][2] = -v[2];
     res[7][0] = v[0]+1./2;
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
     res[7][1] = -v[1];
     res[7][2] = v[2];
   }
@@ -41916,9 +60051,11 @@ struct FastSG_Pcam {
     res[7][2] = v[2];
     phase[7] = res[7][0]*1./2;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pcan {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -41943,6 +60080,32 @@ struct FastSG_Pcan {
     res[6][2] = -v[2];
     res[7][0] = v[0]+1./2;
     res[7][1] = -v[1]+1./2;
+    res[7][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
     res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -41979,9 +60142,11 @@ struct FastSG_Pcan {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][1])*1./2;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pcc2 {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -41995,6 +60160,20 @@ struct FastSG_Pcc2 {
     res[3][0] = v[0];
     res[3][1] = -v[1];
     res[3][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -42014,9 +60193,11 @@ struct FastSG_Pcc2 {
     res[3][2] = v[2];
     phase[3] = res[3][2]*1./2;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pcca {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -42042,6 +60223,32 @@ struct FastSG_Pcca {
     res[7][0] = v[0];
     res[7][1] = -v[1];
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -42077,9 +60284,11 @@ struct FastSG_Pcca {
     res[7][2] = v[2];
     phase[7] = res[7][2]*1./2;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pccb {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -42105,6 +60314,32 @@ struct FastSG_Pccb {
     res[7][0] = v[0];
     res[7][1] = -v[1]+1./2;
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -42140,9 +60375,11 @@ struct FastSG_Pccb {
     res[7][2] = v[2];
     phase[7] = (res[7][1]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pccm {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -42168,6 +60405,32 @@ struct FastSG_Pccm {
     res[7][0] = v[0];
     res[7][1] = -v[1];
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -42203,9 +60466,11 @@ struct FastSG_Pccm {
     res[7][2] = v[2];
     phase[7] = res[7][2]*1./2;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pccn {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -42231,6 +60496,32 @@ struct FastSG_Pccn {
     res[7][0] = v[0];
     res[7][1] = -v[1]+1./2;
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -42266,9 +60557,11 @@ struct FastSG_Pccn {
     res[7][2] = v[2];
     phase[7] = (res[7][1]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pcm21 {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -42279,6 +60572,20 @@ struct FastSG_Pcm21 {
     res[2][0] = -v[0];
     res[2][1] = v[1];
     res[2][2] = v[2]+1./2;
+    res[3][0] = v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
     res[3][0] = v[0];
     res[3][1] = -v[1];
     res[3][2] = v[2];
@@ -42301,9 +60608,11 @@ struct FastSG_Pcm21 {
     res[3][2] = v[2];
     phase[3] =  0;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pcma {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -42323,6 +60632,32 @@ struct FastSG_Pcma {
     res[5][0] = -v[0]+1./2;
     res[5][1] = v[1];
     res[5][2] = v[2]+1./2;
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
     res[6][0] = -v[0];
     res[6][1] = v[1];
     res[6][2] = -v[2];
@@ -42364,9 +60699,11 @@ struct FastSG_Pcma {
     res[7][2] = v[2];
     phase[7] =  0;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pcmb {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -42391,6 +60728,32 @@ struct FastSG_Pcmb {
     res[6][2] = -v[2];
     res[7][0] = v[0];
     res[7][1] = -v[1]+1./2;
+    res[7][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
     res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -42427,9 +60790,11 @@ struct FastSG_Pcmb {
     res[7][2] = v[2];
     phase[7] = res[7][1]*1./2;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pcmm {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -42449,6 +60814,32 @@ struct FastSG_Pcmm {
     res[5][0] = -v[0];
     res[5][1] = v[1];
     res[5][2] = v[2]+1./2;
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
     res[6][0] = -v[0];
     res[6][1] = v[1];
     res[6][2] = -v[2];
@@ -42490,9 +60881,11 @@ struct FastSG_Pcmm {
     res[7][2] = v[2];
     phase[7] =  0;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pcmn {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -42517,6 +60910,32 @@ struct FastSG_Pcmn {
     res[6][2] = -v[2];
     res[7][0] = v[0];
     res[7][1] = -v[1]+1./2;
+    res[7][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
     res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -42553,9 +60972,11 @@ struct FastSG_Pcmn {
     res[7][2] = v[2];
     phase[7] = res[7][1]*1./2;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pcn2 {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -42569,6 +60990,20 @@ struct FastSG_Pcn2 {
     res[3][0] = v[0]+1./2;
     res[3][1] = -v[1];
     res[3][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -42588,9 +61023,11 @@ struct FastSG_Pcn2 {
     res[3][2] = v[2];
     phase[3] = (res[3][0]+res[3][2])*1./2;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pcna {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -42616,6 +61053,32 @@ struct FastSG_Pcna {
     res[7][0] = v[0]+1./2;
     res[7][1] = -v[1];
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -42651,9 +61114,11 @@ struct FastSG_Pcna {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pcnb {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -42679,6 +61144,32 @@ struct FastSG_Pcnb {
     res[7][0] = v[0]+1./2;
     res[7][1] = -v[1]+1./2;
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -42714,9 +61205,11 @@ struct FastSG_Pcnb {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][1]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pcnm {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -42742,6 +61235,32 @@ struct FastSG_Pcnm {
     res[7][0] = v[0]+1./2;
     res[7][1] = -v[1];
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -42777,9 +61296,11 @@ struct FastSG_Pcnm {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pcnn {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -42805,6 +61326,32 @@ struct FastSG_Pcnn {
     res[7][0] = v[0]+1./2;
     res[7][1] = -v[1]+1./2;
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -42840,10 +61387,20 @@ struct FastSG_Pcnn {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][1]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pm {
- static const short size=2;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = -v[1];
+    res[1][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
     res[0][2] = v[2];
@@ -42861,9 +61418,11 @@ struct FastSG_Pm {
     res[1][2] = v[2];
     phase[1] =  0;
   }
+  static const short size=2;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pm_3 {
- static const short size=24;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -42919,6 +61478,80 @@ struct FastSG_Pm_3 {
     res[17][0] = -v[1];
     res[17][1] = v[2];
     res[17][2] = v[0];
+    res[18][0] = -v[0];
+    res[18][1] = -v[1];
+    res[18][2] = v[2];
+    res[19][0] = v[0];
+    res[19][1] = v[1];
+    res[19][2] = -v[2];
+    res[20][0] = v[0];
+    res[20][1] = -v[1];
+    res[20][2] = -v[2];
+    res[21][0] = -v[0];
+    res[21][1] = v[1];
+    res[21][2] = v[2];
+    res[22][0] = -v[0];
+    res[22][1] = v[1];
+    res[22][2] = -v[2];
+    res[23][0] = v[0];
+    res[23][1] = -v[1];
+    res[23][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[1];
+    res[2][1] = v[2];
+    res[2][2] = v[0];
+    res[3][0] = -v[1];
+    res[3][1] = -v[2];
+    res[3][2] = -v[0];
+    res[4][0] = v[2];
+    res[4][1] = v[0];
+    res[4][2] = v[1];
+    res[5][0] = -v[2];
+    res[5][1] = -v[0];
+    res[5][2] = -v[1];
+    res[6][0] = v[2];
+    res[6][1] = -v[0];
+    res[6][2] = -v[1];
+    res[7][0] = -v[2];
+    res[7][1] = v[0];
+    res[7][2] = v[1];
+    res[8][0] = -v[1];
+    res[8][1] = -v[2];
+    res[8][2] = v[0];
+    res[9][0] = v[1];
+    res[9][1] = v[2];
+    res[9][2] = -v[0];
+    res[10][0] = -v[2];
+    res[10][1] = -v[0];
+    res[10][2] = v[1];
+    res[11][0] = v[2];
+    res[11][1] = v[0];
+    res[11][2] = -v[1];
+    res[12][0] = -v[1];
+    res[12][1] = v[2];
+    res[12][2] = -v[0];
+    res[13][0] = v[1];
+    res[13][1] = -v[2];
+    res[13][2] = v[0];
+    res[14][0] = v[1];
+    res[14][1] = -v[2];
+    res[14][2] = -v[0];
+    res[15][0] = -v[1];
+    res[15][1] = v[2];
+    res[15][2] = v[0];
+    res[16][0] = -v[2];
+    res[16][1] = v[0];
+    res[16][2] = -v[1];
+    res[17][0] = v[2];
+    res[17][1] = -v[0];
+    res[17][2] = v[1];
     res[18][0] = -v[0];
     res[18][1] = -v[1];
     res[18][2] = v[2];
@@ -43036,9 +61669,11 @@ struct FastSG_Pm_3 {
     res[23][2] = v[2];
     phase[23] =  0;
   }
+  static const short size=24;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pm_3m {
- static const short size=48;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -43148,6 +61783,152 @@ struct FastSG_Pm_3m {
     res[35][0] = -v[1];
     res[35][1] = v[2];
     res[35][2] = v[0];
+    res[36][0] = v[1];
+    res[36][1] = v[0];
+    res[36][2] = -v[2];
+    res[37][0] = -v[1];
+    res[37][1] = -v[0];
+    res[37][2] = v[2];
+    res[38][0] = -v[1];
+    res[38][1] = -v[0];
+    res[38][2] = -v[2];
+    res[39][0] = v[1];
+    res[39][1] = v[0];
+    res[39][2] = v[2];
+    res[40][0] = -v[0];
+    res[40][1] = v[2];
+    res[40][2] = v[1];
+    res[41][0] = v[0];
+    res[41][1] = -v[2];
+    res[41][2] = -v[1];
+    res[42][0] = -v[0];
+    res[42][1] = -v[2];
+    res[42][2] = -v[1];
+    res[43][0] = v[0];
+    res[43][1] = v[2];
+    res[43][2] = v[1];
+    res[44][0] = v[2];
+    res[44][1] = -v[1];
+    res[44][2] = v[0];
+    res[45][0] = -v[2];
+    res[45][1] = v[1];
+    res[45][2] = -v[0];
+    res[46][0] = -v[2];
+    res[46][1] = -v[1];
+    res[46][2] = -v[0];
+    res[47][0] = v[2];
+    res[47][1] = v[1];
+    res[47][2] = v[0];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[1];
+    res[2][1] = -v[0];
+    res[2][2] = v[2];
+    res[3][0] = -v[1];
+    res[3][1] = v[0];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[1];
+    res[6][1] = v[0];
+    res[6][2] = v[2];
+    res[7][0] = v[1];
+    res[7][1] = -v[0];
+    res[7][2] = -v[2];
+    res[8][0] = v[0];
+    res[8][1] = v[2];
+    res[8][2] = -v[1];
+    res[9][0] = -v[0];
+    res[9][1] = -v[2];
+    res[9][2] = v[1];
+    res[10][0] = v[0];
+    res[10][1] = -v[1];
+    res[10][2] = -v[2];
+    res[11][0] = -v[0];
+    res[11][1] = v[1];
+    res[11][2] = v[2];
+    res[12][0] = v[0];
+    res[12][1] = -v[2];
+    res[12][2] = v[1];
+    res[13][0] = -v[0];
+    res[13][1] = v[2];
+    res[13][2] = -v[1];
+    res[14][0] = -v[2];
+    res[14][1] = v[1];
+    res[14][2] = v[0];
+    res[15][0] = v[2];
+    res[15][1] = -v[1];
+    res[15][2] = -v[0];
+    res[16][0] = -v[0];
+    res[16][1] = v[1];
+    res[16][2] = -v[2];
+    res[17][0] = v[0];
+    res[17][1] = -v[1];
+    res[17][2] = v[2];
+    res[18][0] = v[2];
+    res[18][1] = v[1];
+    res[18][2] = -v[0];
+    res[19][0] = -v[2];
+    res[19][1] = -v[1];
+    res[19][2] = v[0];
+    res[20][0] = v[1];
+    res[20][1] = v[2];
+    res[20][2] = v[0];
+    res[21][0] = -v[1];
+    res[21][1] = -v[2];
+    res[21][2] = -v[0];
+    res[22][0] = v[2];
+    res[22][1] = v[0];
+    res[22][2] = v[1];
+    res[23][0] = -v[2];
+    res[23][1] = -v[0];
+    res[23][2] = -v[1];
+    res[24][0] = v[2];
+    res[24][1] = -v[0];
+    res[24][2] = -v[1];
+    res[25][0] = -v[2];
+    res[25][1] = v[0];
+    res[25][2] = v[1];
+    res[26][0] = -v[1];
+    res[26][1] = -v[2];
+    res[26][2] = v[0];
+    res[27][0] = v[1];
+    res[27][1] = v[2];
+    res[27][2] = -v[0];
+    res[28][0] = -v[2];
+    res[28][1] = -v[0];
+    res[28][2] = v[1];
+    res[29][0] = v[2];
+    res[29][1] = v[0];
+    res[29][2] = -v[1];
+    res[30][0] = -v[1];
+    res[30][1] = v[2];
+    res[30][2] = -v[0];
+    res[31][0] = v[1];
+    res[31][1] = -v[2];
+    res[31][2] = v[0];
+    res[32][0] = v[1];
+    res[32][1] = -v[2];
+    res[32][2] = -v[0];
+    res[33][0] = -v[1];
+    res[33][1] = v[2];
+    res[33][2] = v[0];
+    res[34][0] = -v[2];
+    res[34][1] = v[0];
+    res[34][2] = -v[1];
+    res[35][0] = v[2];
+    res[35][1] = -v[0];
+    res[35][2] = v[1];
     res[36][0] = v[1];
     res[36][1] = v[0];
     res[36][2] = -v[2];
@@ -43379,9 +62160,11 @@ struct FastSG_Pm_3m {
     res[47][2] = v[0];
     phase[47] =  0;
   }
+  static const short size=48;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pm_3n {
- static const short size=48;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -43527,6 +62310,152 @@ struct FastSG_Pm_3n {
     res[47][0] = v[2]+1./2;
     res[47][1] = v[1]+1./2;
     res[47][2] = v[0]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[1];
+    res[2][1] = -v[0];
+    res[2][2] = v[2];
+    res[3][0] = -v[1];
+    res[3][1] = v[0];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[1];
+    res[6][1] = v[0];
+    res[6][2] = v[2];
+    res[7][0] = v[1];
+    res[7][1] = -v[0];
+    res[7][2] = -v[2];
+    res[8][0] = v[0];
+    res[8][1] = v[2];
+    res[8][2] = -v[1];
+    res[9][0] = -v[0];
+    res[9][1] = -v[2];
+    res[9][2] = v[1];
+    res[10][0] = v[0];
+    res[10][1] = -v[1];
+    res[10][2] = -v[2];
+    res[11][0] = -v[0];
+    res[11][1] = v[1];
+    res[11][2] = v[2];
+    res[12][0] = v[0];
+    res[12][1] = -v[2];
+    res[12][2] = v[1];
+    res[13][0] = -v[0];
+    res[13][1] = v[2];
+    res[13][2] = -v[1];
+    res[14][0] = -v[2];
+    res[14][1] = v[1];
+    res[14][2] = v[0];
+    res[15][0] = v[2];
+    res[15][1] = -v[1];
+    res[15][2] = -v[0];
+    res[16][0] = -v[0];
+    res[16][1] = v[1];
+    res[16][2] = -v[2];
+    res[17][0] = v[0];
+    res[17][1] = -v[1];
+    res[17][2] = v[2];
+    res[18][0] = v[2];
+    res[18][1] = v[1];
+    res[18][2] = -v[0];
+    res[19][0] = -v[2];
+    res[19][1] = -v[1];
+    res[19][2] = v[0];
+    res[20][0] = v[1];
+    res[20][1] = v[2];
+    res[20][2] = v[0];
+    res[21][0] = -v[1];
+    res[21][1] = -v[2];
+    res[21][2] = -v[0];
+    res[22][0] = v[2];
+    res[22][1] = v[0];
+    res[22][2] = v[1];
+    res[23][0] = -v[2];
+    res[23][1] = -v[0];
+    res[23][2] = -v[1];
+    res[24][0] = v[2];
+    res[24][1] = -v[0];
+    res[24][2] = -v[1];
+    res[25][0] = -v[2];
+    res[25][1] = v[0];
+    res[25][2] = v[1];
+    res[26][0] = -v[1];
+    res[26][1] = -v[2];
+    res[26][2] = v[0];
+    res[27][0] = v[1];
+    res[27][1] = v[2];
+    res[27][2] = -v[0];
+    res[28][0] = -v[2];
+    res[28][1] = -v[0];
+    res[28][2] = v[1];
+    res[29][0] = v[2];
+    res[29][1] = v[0];
+    res[29][2] = -v[1];
+    res[30][0] = -v[1];
+    res[30][1] = v[2];
+    res[30][2] = -v[0];
+    res[31][0] = v[1];
+    res[31][1] = -v[2];
+    res[31][2] = v[0];
+    res[32][0] = v[1];
+    res[32][1] = -v[2];
+    res[32][2] = -v[0];
+    res[33][0] = -v[1];
+    res[33][1] = v[2];
+    res[33][2] = v[0];
+    res[34][0] = -v[2];
+    res[34][1] = v[0];
+    res[34][2] = -v[1];
+    res[35][0] = v[2];
+    res[35][1] = -v[0];
+    res[35][2] = v[1];
+    res[36][0] = v[1];
+    res[36][1] = v[0];
+    res[36][2] = -v[2];
+    res[37][0] = -v[1];
+    res[37][1] = -v[0];
+    res[37][2] = v[2];
+    res[38][0] = -v[1];
+    res[38][1] = -v[0];
+    res[38][2] = -v[2];
+    res[39][0] = v[1];
+    res[39][1] = v[0];
+    res[39][2] = v[2];
+    res[40][0] = -v[0];
+    res[40][1] = v[2];
+    res[40][2] = v[1];
+    res[41][0] = v[0];
+    res[41][1] = -v[2];
+    res[41][2] = -v[1];
+    res[42][0] = -v[0];
+    res[42][1] = -v[2];
+    res[42][2] = -v[1];
+    res[43][0] = v[0];
+    res[43][1] = v[2];
+    res[43][2] = v[1];
+    res[44][0] = v[2];
+    res[44][1] = -v[1];
+    res[44][2] = v[0];
+    res[45][0] = -v[2];
+    res[45][1] = v[1];
+    res[45][2] = -v[0];
+    res[46][0] = -v[2];
+    res[46][1] = -v[1];
+    res[46][2] = -v[0];
+    res[47][0] = v[2];
+    res[47][1] = v[1];
+    res[47][2] = v[0];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -43722,10 +62651,20 @@ struct FastSG_Pm_3n {
     res[47][2] = v[0];
     phase[47] = (res[47][0]+res[47][1]+res[47][2])*1./2;
   }
+  static const short size=48;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pm11 {
- static const short size=2;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
     res[0][2] = v[2];
@@ -43743,9 +62682,11 @@ struct FastSG_Pm11 {
     res[1][2] = v[2];
     phase[1] =  0;
   }
+  static const short size=2;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pm21b {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -43755,6 +62696,20 @@ struct FastSG_Pm21b {
     res[1][2] = -v[2];
     res[2][0] = v[0];
     res[2][1] = v[1]+1./2;
+    res[2][2] = -v[2];
+    res[3][0] = -v[0];
+    res[3][1] = v[1];
+    res[3][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
     res[2][2] = -v[2];
     res[3][0] = -v[0];
     res[3][1] = v[1];
@@ -43778,9 +62733,11 @@ struct FastSG_Pm21b {
     res[3][2] = v[2];
     phase[3] =  0;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pm21n {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -43790,6 +62747,20 @@ struct FastSG_Pm21n {
     res[1][2] = -v[2];
     res[2][0] = v[0]+1./2;
     res[2][1] = v[1]+1./2;
+    res[2][2] = -v[2];
+    res[3][0] = -v[0];
+    res[3][1] = v[1];
+    res[3][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
     res[2][2] = -v[2];
     res[3][0] = -v[0];
     res[3][1] = v[1];
@@ -43813,9 +62784,11 @@ struct FastSG_Pm21n {
     res[3][2] = v[2];
     phase[3] =  0;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pm2a {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -43827,6 +62800,20 @@ struct FastSG_Pm2a {
     res[2][1] = v[1];
     res[2][2] = -v[2];
     res[3][0] = -v[0]+1./2;
+    res[3][1] = v[1];
+    res[3][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = -v[2];
+    res[3][0] = -v[0];
     res[3][1] = v[1];
     res[3][2] = v[2];
   }
@@ -43848,10 +62835,26 @@ struct FastSG_Pm2a {
     res[3][2] = v[2];
     phase[3] = res[3][0]*1./2;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pm2m {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = -v[2];
+    res[3][0] = -v[0];
+    res[3][1] = v[1];
+    res[3][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
     res[0][2] = v[2];
@@ -43883,9 +62886,11 @@ struct FastSG_Pm2m {
     res[3][2] = v[2];
     phase[3] =  0;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pma2 {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -43897,6 +62902,20 @@ struct FastSG_Pma2 {
     res[2][1] = v[1];
     res[2][2] = v[2];
     res[3][0] = v[0]+1./2;
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
     res[3][1] = -v[1];
     res[3][2] = v[2];
   }
@@ -43918,9 +62937,11 @@ struct FastSG_Pma2 {
     res[3][2] = v[2];
     phase[3] = res[3][0]*1./2;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pmaa {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -43944,6 +62965,32 @@ struct FastSG_Pmaa {
     res[6][1] = v[1];
     res[6][2] = -v[2];
     res[7][0] = v[0]+1./2;
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
     res[7][1] = -v[1];
     res[7][2] = v[2];
   }
@@ -43981,9 +63028,11 @@ struct FastSG_Pmaa {
     res[7][2] = v[2];
     phase[7] = res[7][0]*1./2;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pmab {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -44008,6 +63057,32 @@ struct FastSG_Pmab {
     res[6][2] = -v[2];
     res[7][0] = v[0]+1./2;
     res[7][1] = -v[1]+1./2;
+    res[7][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
     res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -44044,9 +63119,11 @@ struct FastSG_Pmab {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][1])*1./2;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pmam {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -44070,6 +63147,32 @@ struct FastSG_Pmam {
     res[6][1] = v[1];
     res[6][2] = -v[2];
     res[7][0] = v[0]+1./2;
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
     res[7][1] = -v[1];
     res[7][2] = v[2];
   }
@@ -44107,9 +63210,11 @@ struct FastSG_Pmam {
     res[7][2] = v[2];
     phase[7] = res[7][0]*1./2;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pman {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -44134,6 +63239,32 @@ struct FastSG_Pman {
     res[6][2] = -v[2];
     res[7][0] = v[0]+1./2;
     res[7][1] = -v[1]+1./2;
+    res[7][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
     res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -44170,9 +63301,11 @@ struct FastSG_Pman {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][1])*1./2;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pmc21 {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -44186,6 +63319,20 @@ struct FastSG_Pmc21 {
     res[3][0] = v[0];
     res[3][1] = -v[1];
     res[3][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -44205,9 +63352,11 @@ struct FastSG_Pmc21 {
     res[3][2] = v[2];
     phase[3] = res[3][2]*1./2;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pmca {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -44233,6 +63382,32 @@ struct FastSG_Pmca {
     res[7][0] = v[0];
     res[7][1] = -v[1];
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -44268,9 +63443,11 @@ struct FastSG_Pmca {
     res[7][2] = v[2];
     phase[7] = res[7][2]*1./2;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pmcb {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -44296,6 +63473,32 @@ struct FastSG_Pmcb {
     res[7][0] = v[0];
     res[7][1] = -v[1]+1./2;
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -44331,9 +63534,11 @@ struct FastSG_Pmcb {
     res[7][2] = v[2];
     phase[7] = (res[7][1]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pmcm {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -44359,6 +63564,32 @@ struct FastSG_Pmcm {
     res[7][0] = v[0];
     res[7][1] = -v[1];
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -44394,9 +63625,11 @@ struct FastSG_Pmcm {
     res[7][2] = v[2];
     phase[7] = res[7][2]*1./2;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pmcn {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -44422,6 +63655,32 @@ struct FastSG_Pmcn {
     res[7][0] = v[0];
     res[7][1] = -v[1]+1./2;
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -44457,10 +63716,26 @@ struct FastSG_Pmcn {
     res[7][2] = v[2];
     phase[7] = (res[7][1]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pmm2 {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
     res[0][2] = v[2];
@@ -44492,9 +63767,11 @@ struct FastSG_Pmm2 {
     res[3][2] = v[2];
     phase[3] =  0;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pmma {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -44512,6 +63789,32 @@ struct FastSG_Pmma {
     res[4][1] = -v[1];
     res[4][2] = -v[2];
     res[5][0] = -v[0]+1./2;
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
     res[5][1] = v[1];
     res[5][2] = v[2];
     res[6][0] = -v[0];
@@ -44555,9 +63858,11 @@ struct FastSG_Pmma {
     res[7][2] = v[2];
     phase[7] =  0;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pmmb {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -44582,6 +63887,32 @@ struct FastSG_Pmmb {
     res[6][2] = -v[2];
     res[7][0] = v[0];
     res[7][1] = -v[1]+1./2;
+    res[7][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
     res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -44618,10 +63949,38 @@ struct FastSG_Pmmb {
     res[7][2] = v[2];
     phase[7] = res[7][1]*1./2;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pmmm {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
     res[0][2] = v[2];
@@ -44681,9 +64040,11 @@ struct FastSG_Pmmm {
     res[7][2] = v[2];
     phase[7] =  0;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pmmn {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -44708,6 +64069,32 @@ struct FastSG_Pmmn {
     res[6][2] = -v[2];
     res[7][0] = v[0];
     res[7][1] = -v[1]+1./2;
+    res[7][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
     res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -44744,9 +64131,11 @@ struct FastSG_Pmmn {
     res[7][2] = v[2];
     phase[7] = res[7][1]*1./2;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pmn21 {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -44760,6 +64149,20 @@ struct FastSG_Pmn21 {
     res[3][0] = v[0]+1./2;
     res[3][1] = -v[1];
     res[3][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -44779,9 +64182,11 @@ struct FastSG_Pmn21 {
     res[3][2] = v[2];
     phase[3] = (res[3][0]+res[3][2])*1./2;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pmna {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -44807,6 +64212,32 @@ struct FastSG_Pmna {
     res[7][0] = v[0]+1./2;
     res[7][1] = -v[1];
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -44842,9 +64273,11 @@ struct FastSG_Pmna {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pmnb {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -44870,6 +64303,32 @@ struct FastSG_Pmnb {
     res[7][0] = v[0]+1./2;
     res[7][1] = -v[1]+1./2;
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -44905,9 +64364,11 @@ struct FastSG_Pmnb {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][1]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pmnm {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -44933,6 +64394,32 @@ struct FastSG_Pmnm {
     res[7][0] = v[0]+1./2;
     res[7][1] = -v[1];
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -44968,9 +64455,11 @@ struct FastSG_Pmnm {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pmnn {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -44996,6 +64485,32 @@ struct FastSG_Pmnn {
     res[7][0] = v[0]+1./2;
     res[7][1] = -v[1]+1./2;
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -45031,9 +64546,11 @@ struct FastSG_Pmnn {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][1]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pn {
- static const short size=2;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -45041,6 +64558,14 @@ struct FastSG_Pn {
     res[1][0] = v[0]+1./2;
     res[1][1] = -v[1];
     res[1][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = -v[1];
+    res[1][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -45052,9 +64577,11 @@ struct FastSG_Pn {
     res[1][2] = v[2];
     phase[1] = (res[1][0]+res[1][2])*1./2;
   }
+  static const short size=2;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pn_3 {
- static const short size=24;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -45128,6 +64655,80 @@ struct FastSG_Pn_3 {
     res[23][0] = v[0]+1./2;
     res[23][1] = -v[1];
     res[23][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[1];
+    res[2][1] = v[2];
+    res[2][2] = v[0];
+    res[3][0] = -v[1];
+    res[3][1] = -v[2];
+    res[3][2] = -v[0];
+    res[4][0] = v[2];
+    res[4][1] = v[0];
+    res[4][2] = v[1];
+    res[5][0] = -v[2];
+    res[5][1] = -v[0];
+    res[5][2] = -v[1];
+    res[6][0] = v[2];
+    res[6][1] = -v[0];
+    res[6][2] = -v[1];
+    res[7][0] = -v[2];
+    res[7][1] = v[0];
+    res[7][2] = v[1];
+    res[8][0] = -v[1];
+    res[8][1] = -v[2];
+    res[8][2] = v[0];
+    res[9][0] = v[1];
+    res[9][1] = v[2];
+    res[9][2] = -v[0];
+    res[10][0] = -v[2];
+    res[10][1] = -v[0];
+    res[10][2] = v[1];
+    res[11][0] = v[2];
+    res[11][1] = v[0];
+    res[11][2] = -v[1];
+    res[12][0] = -v[1];
+    res[12][1] = v[2];
+    res[12][2] = -v[0];
+    res[13][0] = v[1];
+    res[13][1] = -v[2];
+    res[13][2] = v[0];
+    res[14][0] = v[1];
+    res[14][1] = -v[2];
+    res[14][2] = -v[0];
+    res[15][0] = -v[1];
+    res[15][1] = v[2];
+    res[15][2] = v[0];
+    res[16][0] = -v[2];
+    res[16][1] = v[0];
+    res[16][2] = -v[1];
+    res[17][0] = v[2];
+    res[17][1] = -v[0];
+    res[17][2] = v[1];
+    res[18][0] = -v[0];
+    res[18][1] = -v[1];
+    res[18][2] = v[2];
+    res[19][0] = v[0];
+    res[19][1] = v[1];
+    res[19][2] = -v[2];
+    res[20][0] = v[0];
+    res[20][1] = -v[1];
+    res[20][2] = -v[2];
+    res[21][0] = -v[0];
+    res[21][1] = v[1];
+    res[21][2] = v[2];
+    res[22][0] = -v[0];
+    res[22][1] = v[1];
+    res[22][2] = -v[2];
+    res[23][0] = v[0];
+    res[23][1] = -v[1];
+    res[23][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -45227,9 +64828,11 @@ struct FastSG_Pn_3 {
     res[23][2] = v[2];
     phase[23] = (res[23][0]+res[23][2])*1./2;
   }
+  static const short size=24;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pn_3m {
- static const short size=48;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -45369,6 +64972,152 @@ struct FastSG_Pn_3m {
     res[45][0] = -v[2]+1./2;
     res[45][1] = v[1];
     res[45][2] = -v[0]+1./2;
+    res[46][0] = -v[2];
+    res[46][1] = -v[1];
+    res[46][2] = -v[0];
+    res[47][0] = v[2];
+    res[47][1] = v[1];
+    res[47][2] = v[0];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[1];
+    res[2][1] = -v[0];
+    res[2][2] = v[2];
+    res[3][0] = -v[1];
+    res[3][1] = v[0];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[1];
+    res[6][1] = v[0];
+    res[6][2] = v[2];
+    res[7][0] = v[1];
+    res[7][1] = -v[0];
+    res[7][2] = -v[2];
+    res[8][0] = v[0];
+    res[8][1] = v[2];
+    res[8][2] = -v[1];
+    res[9][0] = -v[0];
+    res[9][1] = -v[2];
+    res[9][2] = v[1];
+    res[10][0] = v[0];
+    res[10][1] = -v[1];
+    res[10][2] = -v[2];
+    res[11][0] = -v[0];
+    res[11][1] = v[1];
+    res[11][2] = v[2];
+    res[12][0] = v[0];
+    res[12][1] = -v[2];
+    res[12][2] = v[1];
+    res[13][0] = -v[0];
+    res[13][1] = v[2];
+    res[13][2] = -v[1];
+    res[14][0] = -v[2];
+    res[14][1] = v[1];
+    res[14][2] = v[0];
+    res[15][0] = v[2];
+    res[15][1] = -v[1];
+    res[15][2] = -v[0];
+    res[16][0] = -v[0];
+    res[16][1] = v[1];
+    res[16][2] = -v[2];
+    res[17][0] = v[0];
+    res[17][1] = -v[1];
+    res[17][2] = v[2];
+    res[18][0] = v[2];
+    res[18][1] = v[1];
+    res[18][2] = -v[0];
+    res[19][0] = -v[2];
+    res[19][1] = -v[1];
+    res[19][2] = v[0];
+    res[20][0] = v[1];
+    res[20][1] = v[2];
+    res[20][2] = v[0];
+    res[21][0] = -v[1];
+    res[21][1] = -v[2];
+    res[21][2] = -v[0];
+    res[22][0] = v[2];
+    res[22][1] = v[0];
+    res[22][2] = v[1];
+    res[23][0] = -v[2];
+    res[23][1] = -v[0];
+    res[23][2] = -v[1];
+    res[24][0] = v[2];
+    res[24][1] = -v[0];
+    res[24][2] = -v[1];
+    res[25][0] = -v[2];
+    res[25][1] = v[0];
+    res[25][2] = v[1];
+    res[26][0] = -v[1];
+    res[26][1] = -v[2];
+    res[26][2] = v[0];
+    res[27][0] = v[1];
+    res[27][1] = v[2];
+    res[27][2] = -v[0];
+    res[28][0] = -v[2];
+    res[28][1] = -v[0];
+    res[28][2] = v[1];
+    res[29][0] = v[2];
+    res[29][1] = v[0];
+    res[29][2] = -v[1];
+    res[30][0] = -v[1];
+    res[30][1] = v[2];
+    res[30][2] = -v[0];
+    res[31][0] = v[1];
+    res[31][1] = -v[2];
+    res[31][2] = v[0];
+    res[32][0] = v[1];
+    res[32][1] = -v[2];
+    res[32][2] = -v[0];
+    res[33][0] = -v[1];
+    res[33][1] = v[2];
+    res[33][2] = v[0];
+    res[34][0] = -v[2];
+    res[34][1] = v[0];
+    res[34][2] = -v[1];
+    res[35][0] = v[2];
+    res[35][1] = -v[0];
+    res[35][2] = v[1];
+    res[36][0] = v[1];
+    res[36][1] = v[0];
+    res[36][2] = -v[2];
+    res[37][0] = -v[1];
+    res[37][1] = -v[0];
+    res[37][2] = v[2];
+    res[38][0] = -v[1];
+    res[38][1] = -v[0];
+    res[38][2] = -v[2];
+    res[39][0] = v[1];
+    res[39][1] = v[0];
+    res[39][2] = v[2];
+    res[40][0] = -v[0];
+    res[40][1] = v[2];
+    res[40][2] = v[1];
+    res[41][0] = v[0];
+    res[41][1] = -v[2];
+    res[41][2] = -v[1];
+    res[42][0] = -v[0];
+    res[42][1] = -v[2];
+    res[42][2] = -v[1];
+    res[43][0] = v[0];
+    res[43][1] = v[2];
+    res[43][2] = v[1];
+    res[44][0] = v[2];
+    res[44][1] = -v[1];
+    res[44][2] = v[0];
+    res[45][0] = -v[2];
+    res[45][1] = v[1];
+    res[45][2] = -v[0];
     res[46][0] = -v[2];
     res[46][1] = -v[1];
     res[46][2] = -v[0];
@@ -45570,9 +65319,11 @@ struct FastSG_Pn_3m {
     res[47][2] = v[0];
     phase[47] =  0;
   }
+  static const short size=48;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pn_3n {
- static const short size=48;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -45718,6 +65469,152 @@ struct FastSG_Pn_3n {
     res[47][0] = v[2]+1./2;
     res[47][1] = v[1]+1./2;
     res[47][2] = v[0]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[1];
+    res[2][1] = -v[0];
+    res[2][2] = v[2];
+    res[3][0] = -v[1];
+    res[3][1] = v[0];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[0];
+    res[5][1] = v[1];
+    res[5][2] = -v[2];
+    res[6][0] = -v[1];
+    res[6][1] = v[0];
+    res[6][2] = v[2];
+    res[7][0] = v[1];
+    res[7][1] = -v[0];
+    res[7][2] = -v[2];
+    res[8][0] = v[0];
+    res[8][1] = v[2];
+    res[8][2] = -v[1];
+    res[9][0] = -v[0];
+    res[9][1] = -v[2];
+    res[9][2] = v[1];
+    res[10][0] = v[0];
+    res[10][1] = -v[1];
+    res[10][2] = -v[2];
+    res[11][0] = -v[0];
+    res[11][1] = v[1];
+    res[11][2] = v[2];
+    res[12][0] = v[0];
+    res[12][1] = -v[2];
+    res[12][2] = v[1];
+    res[13][0] = -v[0];
+    res[13][1] = v[2];
+    res[13][2] = -v[1];
+    res[14][0] = -v[2];
+    res[14][1] = v[1];
+    res[14][2] = v[0];
+    res[15][0] = v[2];
+    res[15][1] = -v[1];
+    res[15][2] = -v[0];
+    res[16][0] = -v[0];
+    res[16][1] = v[1];
+    res[16][2] = -v[2];
+    res[17][0] = v[0];
+    res[17][1] = -v[1];
+    res[17][2] = v[2];
+    res[18][0] = v[2];
+    res[18][1] = v[1];
+    res[18][2] = -v[0];
+    res[19][0] = -v[2];
+    res[19][1] = -v[1];
+    res[19][2] = v[0];
+    res[20][0] = v[1];
+    res[20][1] = v[2];
+    res[20][2] = v[0];
+    res[21][0] = -v[1];
+    res[21][1] = -v[2];
+    res[21][2] = -v[0];
+    res[22][0] = v[2];
+    res[22][1] = v[0];
+    res[22][2] = v[1];
+    res[23][0] = -v[2];
+    res[23][1] = -v[0];
+    res[23][2] = -v[1];
+    res[24][0] = v[2];
+    res[24][1] = -v[0];
+    res[24][2] = -v[1];
+    res[25][0] = -v[2];
+    res[25][1] = v[0];
+    res[25][2] = v[1];
+    res[26][0] = -v[1];
+    res[26][1] = -v[2];
+    res[26][2] = v[0];
+    res[27][0] = v[1];
+    res[27][1] = v[2];
+    res[27][2] = -v[0];
+    res[28][0] = -v[2];
+    res[28][1] = -v[0];
+    res[28][2] = v[1];
+    res[29][0] = v[2];
+    res[29][1] = v[0];
+    res[29][2] = -v[1];
+    res[30][0] = -v[1];
+    res[30][1] = v[2];
+    res[30][2] = -v[0];
+    res[31][0] = v[1];
+    res[31][1] = -v[2];
+    res[31][2] = v[0];
+    res[32][0] = v[1];
+    res[32][1] = -v[2];
+    res[32][2] = -v[0];
+    res[33][0] = -v[1];
+    res[33][1] = v[2];
+    res[33][2] = v[0];
+    res[34][0] = -v[2];
+    res[34][1] = v[0];
+    res[34][2] = -v[1];
+    res[35][0] = v[2];
+    res[35][1] = -v[0];
+    res[35][2] = v[1];
+    res[36][0] = v[1];
+    res[36][1] = v[0];
+    res[36][2] = -v[2];
+    res[37][0] = -v[1];
+    res[37][1] = -v[0];
+    res[37][2] = v[2];
+    res[38][0] = -v[1];
+    res[38][1] = -v[0];
+    res[38][2] = -v[2];
+    res[39][0] = v[1];
+    res[39][1] = v[0];
+    res[39][2] = v[2];
+    res[40][0] = -v[0];
+    res[40][1] = v[2];
+    res[40][2] = v[1];
+    res[41][0] = v[0];
+    res[41][1] = -v[2];
+    res[41][2] = -v[1];
+    res[42][0] = -v[0];
+    res[42][1] = -v[2];
+    res[42][2] = -v[1];
+    res[43][0] = v[0];
+    res[43][1] = v[2];
+    res[43][2] = v[1];
+    res[44][0] = v[2];
+    res[44][1] = -v[1];
+    res[44][2] = v[0];
+    res[45][0] = -v[2];
+    res[45][1] = v[1];
+    res[45][2] = -v[0];
+    res[46][0] = -v[2];
+    res[46][1] = -v[1];
+    res[46][2] = -v[0];
+    res[47][0] = v[2];
+    res[47][1] = v[1];
+    res[47][2] = v[0];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -45913,9 +65810,11 @@ struct FastSG_Pn_3n {
     res[47][2] = v[0];
     phase[47] = (res[47][0]+res[47][1]+res[47][2])*1./2;
   }
+  static const short size=48;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pn11 {
- static const short size=2;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -45923,6 +65822,14 @@ struct FastSG_Pn11 {
     res[1][0] = -v[0];
     res[1][1] = v[1]+1./2;
     res[1][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -45934,9 +65841,11 @@ struct FastSG_Pn11 {
     res[1][2] = v[2];
     phase[1] = (res[1][1]+res[1][2])*1./2;
   }
+  static const short size=2;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pn21a {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -45950,6 +65859,20 @@ struct FastSG_Pn21a {
     res[3][0] = -v[0]+1./2;
     res[3][1] = v[1]+1./2;
     res[3][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = -v[2];
+    res[3][0] = -v[0];
+    res[3][1] = v[1];
+    res[3][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -45969,9 +65892,11 @@ struct FastSG_Pn21a {
     res[3][2] = v[2];
     phase[3] = (res[3][0]+res[3][1]+res[3][2])*1./2;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pn21m {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -45985,6 +65910,20 @@ struct FastSG_Pn21m {
     res[3][0] = -v[0];
     res[3][1] = v[1]+1./2;
     res[3][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = -v[2];
+    res[3][0] = -v[0];
+    res[3][1] = v[1];
+    res[3][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -46004,9 +65943,11 @@ struct FastSG_Pn21m {
     res[3][2] = v[2];
     phase[3] = (res[3][1]+res[3][2])*1./2;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pn2b {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -46020,6 +65961,20 @@ struct FastSG_Pn2b {
     res[3][0] = -v[0];
     res[3][1] = v[1]+1./2;
     res[3][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = -v[2];
+    res[3][0] = -v[0];
+    res[3][1] = v[1];
+    res[3][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -46039,9 +65994,11 @@ struct FastSG_Pn2b {
     res[3][2] = v[2];
     phase[3] = (res[3][1]+res[3][2])*1./2;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pn2n {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -46055,6 +66012,20 @@ struct FastSG_Pn2n {
     res[3][0] = -v[0]+1./2;
     res[3][1] = v[1]+1./2;
     res[3][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = -v[2];
+    res[3][0] = -v[0];
+    res[3][1] = v[1];
+    res[3][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -46074,9 +66045,11 @@ struct FastSG_Pn2n {
     res[3][2] = v[2];
     phase[3] = (res[3][0]+res[3][1]+res[3][2])*1./2;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pna21 {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -46089,6 +66062,20 @@ struct FastSG_Pna21 {
     res[2][2] = v[2]+1./2;
     res[3][0] = v[0]+1./2;
     res[3][1] = -v[1]+1./2;
+    res[3][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = -v[1];
     res[3][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -46109,9 +66096,11 @@ struct FastSG_Pna21 {
     res[3][2] = v[2];
     phase[3] = (res[3][0]+res[3][1])*1./2;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pnaa {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -46136,6 +66125,32 @@ struct FastSG_Pnaa {
     res[6][2] = -v[2];
     res[7][0] = v[0]+1./2;
     res[7][1] = -v[1]+1./2;
+    res[7][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
     res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -46172,9 +66187,11 @@ struct FastSG_Pnaa {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][1])*1./2;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pnab {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -46198,6 +66215,32 @@ struct FastSG_Pnab {
     res[6][1] = v[1];
     res[6][2] = -v[2];
     res[7][0] = v[0]+1./2;
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
     res[7][1] = -v[1];
     res[7][2] = v[2];
   }
@@ -46235,9 +66278,11 @@ struct FastSG_Pnab {
     res[7][2] = v[2];
     phase[7] = res[7][0]*1./2;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pnam {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -46262,6 +66307,32 @@ struct FastSG_Pnam {
     res[6][2] = -v[2];
     res[7][0] = v[0]+1./2;
     res[7][1] = -v[1]+1./2;
+    res[7][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
     res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -46298,9 +66369,11 @@ struct FastSG_Pnam {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][1])*1./2;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pnan {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -46324,6 +66397,32 @@ struct FastSG_Pnan {
     res[6][1] = v[1];
     res[6][2] = -v[2];
     res[7][0] = v[0]+1./2;
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
     res[7][1] = -v[1];
     res[7][2] = v[2];
   }
@@ -46361,9 +66460,11 @@ struct FastSG_Pnan {
     res[7][2] = v[2];
     phase[7] = res[7][0]*1./2;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pnc2 {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -46377,6 +66478,20 @@ struct FastSG_Pnc2 {
     res[3][0] = v[0];
     res[3][1] = -v[1]+1./2;
     res[3][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -46396,9 +66511,11 @@ struct FastSG_Pnc2 {
     res[3][2] = v[2];
     phase[3] = (res[3][1]+res[3][2])*1./2;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pnca {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -46424,6 +66541,32 @@ struct FastSG_Pnca {
     res[7][0] = v[0];
     res[7][1] = -v[1]+1./2;
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -46459,9 +66602,11 @@ struct FastSG_Pnca {
     res[7][2] = v[2];
     phase[7] = (res[7][1]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pncb {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -46487,6 +66632,32 @@ struct FastSG_Pncb {
     res[7][0] = v[0];
     res[7][1] = -v[1];
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -46522,9 +66693,11 @@ struct FastSG_Pncb {
     res[7][2] = v[2];
     phase[7] = res[7][2]*1./2;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pncm {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -46550,6 +66723,32 @@ struct FastSG_Pncm {
     res[7][0] = v[0];
     res[7][1] = -v[1]+1./2;
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -46585,9 +66784,11 @@ struct FastSG_Pncm {
     res[7][2] = v[2];
     phase[7] = (res[7][1]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pncn {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -46613,6 +66814,32 @@ struct FastSG_Pncn {
     res[7][0] = v[0];
     res[7][1] = -v[1];
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -46648,9 +66875,11 @@ struct FastSG_Pncn {
     res[7][2] = v[2];
     phase[7] = res[7][2]*1./2;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pnm21 {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -46661,6 +66890,20 @@ struct FastSG_Pnm21 {
     res[2][0] = -v[0];
     res[2][1] = v[1]+1./2;
     res[2][2] = v[2]+1./2;
+    res[3][0] = v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
     res[3][0] = v[0];
     res[3][1] = -v[1];
     res[3][2] = v[2];
@@ -46683,9 +66926,11 @@ struct FastSG_Pnm21 {
     res[3][2] = v[2];
     phase[3] =  0;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pnma {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -46710,6 +66955,32 @@ struct FastSG_Pnma {
     res[6][2] = -v[2];
     res[7][0] = v[0];
     res[7][1] = -v[1]+1./2;
+    res[7][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
     res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -46746,9 +67017,11 @@ struct FastSG_Pnma {
     res[7][2] = v[2];
     phase[7] = res[7][1]*1./2;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pnmb {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -46768,6 +67041,32 @@ struct FastSG_Pnmb {
     res[5][0] = -v[0];
     res[5][1] = v[1]+1./2;
     res[5][2] = v[2]+1./2;
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
     res[6][0] = -v[0];
     res[6][1] = v[1];
     res[6][2] = -v[2];
@@ -46809,9 +67108,11 @@ struct FastSG_Pnmb {
     res[7][2] = v[2];
     phase[7] =  0;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pnmm {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -46836,6 +67137,32 @@ struct FastSG_Pnmm {
     res[6][2] = -v[2];
     res[7][0] = v[0];
     res[7][1] = -v[1]+1./2;
+    res[7][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
     res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
@@ -46872,9 +67199,11 @@ struct FastSG_Pnmm {
     res[7][2] = v[2];
     phase[7] = res[7][1]*1./2;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pnmn {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -46894,6 +67223,32 @@ struct FastSG_Pnmn {
     res[5][0] = -v[0]+1./2;
     res[5][1] = v[1]+1./2;
     res[5][2] = v[2]+1./2;
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
     res[6][0] = -v[0];
     res[6][1] = v[1];
     res[6][2] = -v[2];
@@ -46935,9 +67290,11 @@ struct FastSG_Pnmn {
     res[7][2] = v[2];
     phase[7] =  0;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pnn2 {
- static const short size=4;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -46951,6 +67308,20 @@ struct FastSG_Pnn2 {
     res[3][0] = v[0]+1./2;
     res[3][1] = -v[1]+1./2;
     res[3][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = v[2];
+    res[2][0] = -v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = -v[1];
+    res[3][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -46970,9 +67341,11 @@ struct FastSG_Pnn2 {
     res[3][2] = v[2];
     phase[3] = (res[3][0]+res[3][1]+res[3][2])*1./2;
   }
+  static const short size=4;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pnna {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -46998,6 +67371,32 @@ struct FastSG_Pnna {
     res[7][0] = v[0]+1./2;
     res[7][1] = -v[1]+1./2;
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -47033,9 +67432,11 @@ struct FastSG_Pnna {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][1]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pnnb {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -47061,6 +67462,32 @@ struct FastSG_Pnnb {
     res[7][0] = v[0]+1./2;
     res[7][1] = -v[1];
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -47096,9 +67523,11 @@ struct FastSG_Pnnb {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pnnm {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -47124,6 +67553,32 @@ struct FastSG_Pnnm {
     res[7][0] = v[0]+1./2;
     res[7][1] = -v[1]+1./2;
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -47159,9 +67614,11 @@ struct FastSG_Pnnm {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][1]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_Pnnn {
- static const short size=8;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -47187,6 +67644,32 @@ struct FastSG_Pnnn {
     res[7][0] = v[0]+1./2;
     res[7][1] = -v[1];
     res[7][2] = v[2]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = -v[0];
+    res[2][1] = -v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[0];
+    res[3][1] = v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = -v[1];
+    res[4][2] = -v[2];
+    res[5][0] = -v[0];
+    res[5][1] = v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0];
+    res[6][1] = v[1];
+    res[6][2] = -v[2];
+    res[7][0] = v[0];
+    res[7][1] = -v[1];
+    res[7][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -47222,9 +67705,11 @@ struct FastSG_Pnnn {
     res[7][2] = v[2];
     phase[7] = (res[7][0]+res[7][2])*1./2;
   }
+  static const short size=8;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_R_3 {
- static const short size=18;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -47280,6 +67765,62 @@ struct FastSG_R_3 {
     res[17][0] = v[0]-v[1]+1./3;
     res[17][1] = v[0]+2./3;
     res[17][2] = -v[2]+2./3;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = v[1];
+    res[4][2] = v[2];
+    res[5][0] = -v[0];
+    res[5][1] = -v[1];
+    res[5][2] = -v[2];
+    res[6][0] = v[1];
+    res[6][1] = -v[0]-v[1];
+    res[6][2] = v[2];
+    res[7][0] = -v[1];
+    res[7][1] = v[0]+v[1];
+    res[7][2] = -v[2];
+    res[8][0] = v[1];
+    res[8][1] = -v[0]-v[1];
+    res[8][2] = v[2];
+    res[9][0] = -v[1];
+    res[9][1] = v[0]+v[1];
+    res[9][2] = -v[2];
+    res[10][0] = v[1];
+    res[10][1] = -v[0]-v[1];
+    res[10][2] = v[2];
+    res[11][0] = -v[1];
+    res[11][1] = v[0]+v[1];
+    res[11][2] = -v[2];
+    res[12][0] = -v[0]-v[1];
+    res[12][1] = v[0];
+    res[12][2] = v[2];
+    res[13][0] = v[0]+v[1];
+    res[13][1] = -v[0];
+    res[13][2] = -v[2];
+    res[14][0] = -v[0]-v[1];
+    res[14][1] = v[0];
+    res[14][2] = v[2];
+    res[15][0] = v[0]+v[1];
+    res[15][1] = -v[0];
+    res[15][2] = -v[2];
+    res[16][0] = -v[0]-v[1];
+    res[16][1] = v[0];
+    res[16][2] = v[2];
+    res[17][0] = v[0]+v[1];
+    res[17][1] = -v[0];
+    res[17][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -47355,9 +67896,11 @@ struct FastSG_R_3 {
     res[17][2] = -v[2];
     phase[17] = res[17][0]*1./3+(res[17][1]+res[17][2])*2./3;
   }
+  static const short size=18;
+  static const char lattice='R';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_R_3_r {
- static const short size=6;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -47377,6 +67920,26 @@ struct FastSG_R_3_r {
     res[5][0] = -v[1];
     res[5][1] = -v[2];
     res[5][2] = -v[0];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[1];
+    res[2][1] = v[2];
+    res[2][2] = v[0];
+    res[3][0] = -v[1];
+    res[3][1] = -v[2];
+    res[3][2] = -v[0];
+    res[4][0] = v[2];
+    res[4][1] = v[0];
+    res[4][2] = v[1];
+    res[5][0] = -v[2];
+    res[5][1] = -v[0];
+    res[5][2] = -v[1];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -47404,9 +67967,11 @@ struct FastSG_R_3_r {
     res[5][2] = -v[1];
     phase[5] =  0;
   }
+  static const short size=6;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_R_3c {
- static const short size=36;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -47516,6 +68081,116 @@ struct FastSG_R_3c {
     res[35][0] = -v[1]+1./3;
     res[35][1] = -v[0]+2./3;
     res[35][2] = v[2]+1./6;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = v[1];
+    res[4][2] = v[2];
+    res[5][0] = -v[0];
+    res[5][1] = -v[1];
+    res[5][2] = -v[2];
+    res[6][0] = v[1];
+    res[6][1] = -v[0]-v[1];
+    res[6][2] = v[2];
+    res[7][0] = -v[1];
+    res[7][1] = v[0]+v[1];
+    res[7][2] = -v[2];
+    res[8][0] = v[1];
+    res[8][1] = -v[0]-v[1];
+    res[8][2] = v[2];
+    res[9][0] = -v[1];
+    res[9][1] = v[0]+v[1];
+    res[9][2] = -v[2];
+    res[10][0] = v[1];
+    res[10][1] = -v[0]-v[1];
+    res[10][2] = v[2];
+    res[11][0] = -v[1];
+    res[11][1] = v[0]+v[1];
+    res[11][2] = -v[2];
+    res[12][0] = -v[0]-v[1];
+    res[12][1] = v[0];
+    res[12][2] = v[2];
+    res[13][0] = v[0]+v[1];
+    res[13][1] = -v[0];
+    res[13][2] = -v[2];
+    res[14][0] = -v[0]-v[1];
+    res[14][1] = v[0];
+    res[14][2] = v[2];
+    res[15][0] = v[0]+v[1];
+    res[15][1] = -v[0];
+    res[15][2] = -v[2];
+    res[16][0] = -v[0]-v[1];
+    res[16][1] = v[0];
+    res[16][2] = v[2];
+    res[17][0] = v[0]+v[1];
+    res[17][1] = -v[0];
+    res[17][2] = -v[2];
+    res[18][0] = v[0];
+    res[18][1] = -v[0]-v[1];
+    res[18][2] = -v[2];
+    res[19][0] = -v[0];
+    res[19][1] = v[0]+v[1];
+    res[19][2] = v[2];
+    res[20][0] = v[0];
+    res[20][1] = -v[0]-v[1];
+    res[20][2] = -v[2];
+    res[21][0] = -v[0];
+    res[21][1] = v[0]+v[1];
+    res[21][2] = v[2];
+    res[22][0] = v[0];
+    res[22][1] = -v[0]-v[1];
+    res[22][2] = -v[2];
+    res[23][0] = -v[0];
+    res[23][1] = v[0]+v[1];
+    res[23][2] = v[2];
+    res[24][0] = -v[0]-v[1];
+    res[24][1] = v[1];
+    res[24][2] = -v[2];
+    res[25][0] = v[0]+v[1];
+    res[25][1] = -v[1];
+    res[25][2] = v[2];
+    res[26][0] = -v[0]-v[1];
+    res[26][1] = v[1];
+    res[26][2] = -v[2];
+    res[27][0] = v[0]+v[1];
+    res[27][1] = -v[1];
+    res[27][2] = v[2];
+    res[28][0] = -v[0]-v[1];
+    res[28][1] = v[1];
+    res[28][2] = -v[2];
+    res[29][0] = v[0]+v[1];
+    res[29][1] = -v[1];
+    res[29][2] = v[2];
+    res[30][0] = v[1];
+    res[30][1] = v[0];
+    res[30][2] = -v[2];
+    res[31][0] = -v[1];
+    res[31][1] = -v[0];
+    res[31][2] = v[2];
+    res[32][0] = v[1];
+    res[32][1] = v[0];
+    res[32][2] = -v[2];
+    res[33][0] = -v[1];
+    res[33][1] = -v[0];
+    res[33][2] = v[2];
+    res[34][0] = v[1];
+    res[34][1] = v[0];
+    res[34][2] = -v[2];
+    res[35][0] = -v[1];
+    res[35][1] = -v[0];
+    res[35][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -47663,9 +68338,11 @@ struct FastSG_R_3c {
     res[35][2] = v[2];
     phase[35] = res[35][0]*1./3+res[35][1]*2./3+res[35][2]*1./6;
   }
+  static const short size=36;
+  static const char lattice='R';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_R_3c_r {
- static const short size=12;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -47703,6 +68380,44 @@ struct FastSG_R_3c_r {
     res[11][0] = v[2]+1./2;
     res[11][1] = v[1]+1./2;
     res[11][2] = v[0]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[1];
+    res[2][1] = v[2];
+    res[2][2] = v[0];
+    res[3][0] = -v[1];
+    res[3][1] = -v[2];
+    res[3][2] = -v[0];
+    res[4][0] = v[2];
+    res[4][1] = v[0];
+    res[4][2] = v[1];
+    res[5][0] = -v[2];
+    res[5][1] = -v[0];
+    res[5][2] = -v[1];
+    res[6][0] = -v[1];
+    res[6][1] = -v[0];
+    res[6][2] = -v[2];
+    res[7][0] = v[1];
+    res[7][1] = v[0];
+    res[7][2] = v[2];
+    res[8][0] = -v[0];
+    res[8][1] = -v[2];
+    res[8][2] = -v[1];
+    res[9][0] = v[0];
+    res[9][1] = v[2];
+    res[9][2] = v[1];
+    res[10][0] = -v[2];
+    res[10][1] = -v[1];
+    res[10][2] = -v[0];
+    res[11][0] = v[2];
+    res[11][1] = v[1];
+    res[11][2] = v[0];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -47754,9 +68469,11 @@ struct FastSG_R_3c_r {
     res[11][2] = v[0];
     phase[11] = (res[11][0]+res[11][1]+res[11][2])*1./2;
   }
+  static const short size=12;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_R_3m {
- static const short size=36;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -47866,6 +68583,116 @@ struct FastSG_R_3m {
     res[35][0] = -v[1]+1./3;
     res[35][1] = -v[0]+2./3;
     res[35][2] = v[2]+2./3;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = -v[0];
+    res[3][1] = -v[1];
+    res[3][2] = -v[2];
+    res[4][0] = v[0];
+    res[4][1] = v[1];
+    res[4][2] = v[2];
+    res[5][0] = -v[0];
+    res[5][1] = -v[1];
+    res[5][2] = -v[2];
+    res[6][0] = v[1];
+    res[6][1] = -v[0]-v[1];
+    res[6][2] = v[2];
+    res[7][0] = -v[1];
+    res[7][1] = v[0]+v[1];
+    res[7][2] = -v[2];
+    res[8][0] = v[1];
+    res[8][1] = -v[0]-v[1];
+    res[8][2] = v[2];
+    res[9][0] = -v[1];
+    res[9][1] = v[0]+v[1];
+    res[9][2] = -v[2];
+    res[10][0] = v[1];
+    res[10][1] = -v[0]-v[1];
+    res[10][2] = v[2];
+    res[11][0] = -v[1];
+    res[11][1] = v[0]+v[1];
+    res[11][2] = -v[2];
+    res[12][0] = -v[0]-v[1];
+    res[12][1] = v[0];
+    res[12][2] = v[2];
+    res[13][0] = v[0]+v[1];
+    res[13][1] = -v[0];
+    res[13][2] = -v[2];
+    res[14][0] = -v[0]-v[1];
+    res[14][1] = v[0];
+    res[14][2] = v[2];
+    res[15][0] = v[0]+v[1];
+    res[15][1] = -v[0];
+    res[15][2] = -v[2];
+    res[16][0] = -v[0]-v[1];
+    res[16][1] = v[0];
+    res[16][2] = v[2];
+    res[17][0] = v[0]+v[1];
+    res[17][1] = -v[0];
+    res[17][2] = -v[2];
+    res[18][0] = v[0];
+    res[18][1] = -v[0]-v[1];
+    res[18][2] = -v[2];
+    res[19][0] = -v[0];
+    res[19][1] = v[0]+v[1];
+    res[19][2] = v[2];
+    res[20][0] = v[0];
+    res[20][1] = -v[0]-v[1];
+    res[20][2] = -v[2];
+    res[21][0] = -v[0];
+    res[21][1] = v[0]+v[1];
+    res[21][2] = v[2];
+    res[22][0] = v[0];
+    res[22][1] = -v[0]-v[1];
+    res[22][2] = -v[2];
+    res[23][0] = -v[0];
+    res[23][1] = v[0]+v[1];
+    res[23][2] = v[2];
+    res[24][0] = -v[0]-v[1];
+    res[24][1] = v[1];
+    res[24][2] = -v[2];
+    res[25][0] = v[0]+v[1];
+    res[25][1] = -v[1];
+    res[25][2] = v[2];
+    res[26][0] = -v[0]-v[1];
+    res[26][1] = v[1];
+    res[26][2] = -v[2];
+    res[27][0] = v[0]+v[1];
+    res[27][1] = -v[1];
+    res[27][2] = v[2];
+    res[28][0] = -v[0]-v[1];
+    res[28][1] = v[1];
+    res[28][2] = -v[2];
+    res[29][0] = v[0]+v[1];
+    res[29][1] = -v[1];
+    res[29][2] = v[2];
+    res[30][0] = v[1];
+    res[30][1] = v[0];
+    res[30][2] = -v[2];
+    res[31][0] = -v[1];
+    res[31][1] = -v[0];
+    res[31][2] = v[2];
+    res[32][0] = v[1];
+    res[32][1] = v[0];
+    res[32][2] = -v[2];
+    res[33][0] = -v[1];
+    res[33][1] = -v[0];
+    res[33][2] = v[2];
+    res[34][0] = v[1];
+    res[34][1] = v[0];
+    res[34][2] = -v[2];
+    res[35][0] = -v[1];
+    res[35][1] = -v[0];
+    res[35][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -48013,9 +68840,11 @@ struct FastSG_R_3m {
     res[35][2] = v[2];
     phase[35] = res[35][0]*1./3+(res[35][1]+res[35][2])*2./3;
   }
+  static const short size=36;
+  static const char lattice='R';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_R_3m_r {
- static const short size=12;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -48035,6 +68864,44 @@ struct FastSG_R_3m_r {
     res[5][0] = -v[1];
     res[5][1] = -v[2];
     res[5][2] = -v[0];
+    res[6][0] = -v[1];
+    res[6][1] = -v[0];
+    res[6][2] = -v[2];
+    res[7][0] = v[1];
+    res[7][1] = v[0];
+    res[7][2] = v[2];
+    res[8][0] = -v[0];
+    res[8][1] = -v[2];
+    res[8][2] = -v[1];
+    res[9][0] = v[0];
+    res[9][1] = v[2];
+    res[9][2] = v[1];
+    res[10][0] = -v[2];
+    res[10][1] = -v[1];
+    res[10][2] = -v[0];
+    res[11][0] = v[2];
+    res[11][1] = v[1];
+    res[11][2] = v[0];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = -v[0];
+    res[1][1] = -v[1];
+    res[1][2] = -v[2];
+    res[2][0] = v[1];
+    res[2][1] = v[2];
+    res[2][2] = v[0];
+    res[3][0] = -v[1];
+    res[3][1] = -v[2];
+    res[3][2] = -v[0];
+    res[4][0] = v[2];
+    res[4][1] = v[0];
+    res[4][2] = v[1];
+    res[5][0] = -v[2];
+    res[5][1] = -v[0];
+    res[5][2] = -v[1];
     res[6][0] = -v[1];
     res[6][1] = -v[0];
     res[6][2] = -v[2];
@@ -48104,9 +68971,11 @@ struct FastSG_R_3m_r {
     res[11][2] = v[0];
     phase[11] =  0;
   }
+  static const short size=12;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_R3 {
- static const short size=9;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -48135,6 +69004,35 @@ struct FastSG_R3 {
     res[8][0] = -v[0]+v[1]+1./3;
     res[8][1] = -v[0]+2./3;
     res[8][2] = v[2]+2./3;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[1];
+    res[3][1] = -v[0]-v[1];
+    res[3][2] = v[2];
+    res[4][0] = v[1];
+    res[4][1] = -v[0]-v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[1];
+    res[5][1] = -v[0]-v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0]-v[1];
+    res[6][1] = v[0];
+    res[6][2] = v[2];
+    res[7][0] = -v[0]-v[1];
+    res[7][1] = v[0];
+    res[7][2] = v[2];
+    res[8][0] = -v[0]-v[1];
+    res[8][1] = v[0];
+    res[8][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -48174,9 +69072,11 @@ struct FastSG_R3 {
     res[8][2] = v[2];
     phase[8] = res[8][0]*1./3+(res[8][1]+res[8][2])*2./3;
   }
+  static const short size=9;
+  static const char lattice='R';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_R32 {
- static const short size=18;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -48232,6 +69132,62 @@ struct FastSG_R32 {
     res[17][0] = v[1]+1./3;
     res[17][1] = v[0]+2./3;
     res[17][2] = -v[2]+2./3;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[1];
+    res[3][1] = -v[0]-v[1];
+    res[3][2] = v[2];
+    res[4][0] = v[1];
+    res[4][1] = -v[0]-v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[1];
+    res[5][1] = -v[0]-v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0]-v[1];
+    res[6][1] = v[0];
+    res[6][2] = v[2];
+    res[7][0] = -v[0]-v[1];
+    res[7][1] = v[0];
+    res[7][2] = v[2];
+    res[8][0] = -v[0]-v[1];
+    res[8][1] = v[0];
+    res[8][2] = v[2];
+    res[9][0] = v[0];
+    res[9][1] = -v[0]-v[1];
+    res[9][2] = -v[2];
+    res[10][0] = v[0];
+    res[10][1] = -v[0]-v[1];
+    res[10][2] = -v[2];
+    res[11][0] = v[0];
+    res[11][1] = -v[0]-v[1];
+    res[11][2] = -v[2];
+    res[12][0] = -v[0]-v[1];
+    res[12][1] = v[1];
+    res[12][2] = -v[2];
+    res[13][0] = -v[0]-v[1];
+    res[13][1] = v[1];
+    res[13][2] = -v[2];
+    res[14][0] = -v[0]-v[1];
+    res[14][1] = v[1];
+    res[14][2] = -v[2];
+    res[15][0] = v[1];
+    res[15][1] = v[0];
+    res[15][2] = -v[2];
+    res[16][0] = v[1];
+    res[16][1] = v[0];
+    res[16][2] = -v[2];
+    res[17][0] = v[1];
+    res[17][1] = v[0];
+    res[17][2] = -v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -48307,9 +69263,11 @@ struct FastSG_R32 {
     res[17][2] = -v[2];
     phase[17] = res[17][0]*1./3+(res[17][1]+res[17][2])*2./3;
   }
+  static const short size=18;
+  static const char lattice='R';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_R32_r {
- static const short size=6;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -48320,6 +69278,26 @@ struct FastSG_R32_r {
     res[2][0] = v[1];
     res[2][1] = v[2];
     res[2][2] = v[0];
+    res[3][0] = -v[1];
+    res[3][1] = -v[0];
+    res[3][2] = -v[2];
+    res[4][0] = -v[0];
+    res[4][1] = -v[2];
+    res[4][2] = -v[1];
+    res[5][0] = -v[2];
+    res[5][1] = -v[1];
+    res[5][2] = -v[0];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[1];
+    res[1][1] = v[2];
+    res[1][2] = v[0];
+    res[2][0] = v[2];
+    res[2][1] = v[0];
+    res[2][2] = v[1];
     res[3][0] = -v[1];
     res[3][1] = -v[0];
     res[3][2] = -v[2];
@@ -48356,9 +69334,11 @@ struct FastSG_R32_r {
     res[5][2] = -v[0];
     phase[5] =  0;
   }
+  static const short size=6;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_R3_r {
- static const short size=3;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -48369,6 +69349,17 @@ struct FastSG_R3_r {
     res[2][0] = v[1];
     res[2][1] = v[2];
     res[2][2] = v[0];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[1];
+    res[1][1] = v[2];
+    res[1][2] = v[0];
+    res[2][0] = v[2];
+    res[2][1] = v[0];
+    res[2][2] = v[1];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -48384,9 +69375,11 @@ struct FastSG_R3_r {
     res[2][2] = v[1];
     phase[2] =  0;
   }
+  static const short size=3;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_R3c {
- static const short size=18;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -48442,6 +69435,62 @@ struct FastSG_R3c {
     res[17][0] = -v[1]+1./3;
     res[17][1] = -v[0]+2./3;
     res[17][2] = v[2]+1./6;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[1];
+    res[3][1] = -v[0]-v[1];
+    res[3][2] = v[2];
+    res[4][0] = v[1];
+    res[4][1] = -v[0]-v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[1];
+    res[5][1] = -v[0]-v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0]-v[1];
+    res[6][1] = v[0];
+    res[6][2] = v[2];
+    res[7][0] = -v[0]-v[1];
+    res[7][1] = v[0];
+    res[7][2] = v[2];
+    res[8][0] = -v[0]-v[1];
+    res[8][1] = v[0];
+    res[8][2] = v[2];
+    res[9][0] = -v[0];
+    res[9][1] = v[0]+v[1];
+    res[9][2] = v[2];
+    res[10][0] = -v[0];
+    res[10][1] = v[0]+v[1];
+    res[10][2] = v[2];
+    res[11][0] = -v[0];
+    res[11][1] = v[0]+v[1];
+    res[11][2] = v[2];
+    res[12][0] = v[0]+v[1];
+    res[12][1] = -v[1];
+    res[12][2] = v[2];
+    res[13][0] = v[0]+v[1];
+    res[13][1] = -v[1];
+    res[13][2] = v[2];
+    res[14][0] = v[0]+v[1];
+    res[14][1] = -v[1];
+    res[14][2] = v[2];
+    res[15][0] = -v[1];
+    res[15][1] = -v[0];
+    res[15][2] = v[2];
+    res[16][0] = -v[1];
+    res[16][1] = -v[0];
+    res[16][2] = v[2];
+    res[17][0] = -v[1];
+    res[17][1] = -v[0];
+    res[17][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -48517,9 +69566,11 @@ struct FastSG_R3c {
     res[17][2] = v[2];
     phase[17] = res[17][0]*1./3+res[17][1]*2./3+res[17][2]*1./6;
   }
+  static const short size=18;
+  static const char lattice='R';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_R3c_r {
- static const short size=6;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -48539,6 +69590,26 @@ struct FastSG_R3c_r {
     res[5][0] = v[2]+1./2;
     res[5][1] = v[1]+1./2;
     res[5][2] = v[0]+1./2;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[1];
+    res[1][1] = v[2];
+    res[1][2] = v[0];
+    res[2][0] = v[2];
+    res[2][1] = v[0];
+    res[2][2] = v[1];
+    res[3][0] = v[1];
+    res[3][1] = v[0];
+    res[3][2] = v[2];
+    res[4][0] = v[0];
+    res[4][1] = v[2];
+    res[4][2] = v[1];
+    res[5][0] = v[2];
+    res[5][1] = v[1];
+    res[5][2] = v[0];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -48566,9 +69637,11 @@ struct FastSG_R3c_r {
     res[5][2] = v[0];
     phase[5] = (res[5][0]+res[5][1]+res[5][2])*1./2;
   }
+  static const short size=6;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_R3m {
- static const short size=18;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -48624,6 +69697,62 @@ struct FastSG_R3m {
     res[17][0] = -v[1]+1./3;
     res[17][1] = -v[0]+2./3;
     res[17][2] = v[2]+2./3;
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[0];
+    res[1][1] = v[1];
+    res[1][2] = v[2];
+    res[2][0] = v[0];
+    res[2][1] = v[1];
+    res[2][2] = v[2];
+    res[3][0] = v[1];
+    res[3][1] = -v[0]-v[1];
+    res[3][2] = v[2];
+    res[4][0] = v[1];
+    res[4][1] = -v[0]-v[1];
+    res[4][2] = v[2];
+    res[5][0] = v[1];
+    res[5][1] = -v[0]-v[1];
+    res[5][2] = v[2];
+    res[6][0] = -v[0]-v[1];
+    res[6][1] = v[0];
+    res[6][2] = v[2];
+    res[7][0] = -v[0]-v[1];
+    res[7][1] = v[0];
+    res[7][2] = v[2];
+    res[8][0] = -v[0]-v[1];
+    res[8][1] = v[0];
+    res[8][2] = v[2];
+    res[9][0] = -v[0];
+    res[9][1] = v[0]+v[1];
+    res[9][2] = v[2];
+    res[10][0] = -v[0];
+    res[10][1] = v[0]+v[1];
+    res[10][2] = v[2];
+    res[11][0] = -v[0];
+    res[11][1] = v[0]+v[1];
+    res[11][2] = v[2];
+    res[12][0] = v[0]+v[1];
+    res[12][1] = -v[1];
+    res[12][2] = v[2];
+    res[13][0] = v[0]+v[1];
+    res[13][1] = -v[1];
+    res[13][2] = v[2];
+    res[14][0] = v[0]+v[1];
+    res[14][1] = -v[1];
+    res[14][2] = v[2];
+    res[15][0] = -v[1];
+    res[15][1] = -v[0];
+    res[15][2] = v[2];
+    res[16][0] = -v[1];
+    res[16][1] = -v[0];
+    res[16][2] = v[2];
+    res[17][0] = -v[1];
+    res[17][1] = -v[0];
+    res[17][2] = v[2];
   }
   template <class pt, class vt, class vt1> static inline void GenHkl(const pt& v, vt& res, vt1& phase)  {
     res[0][0] = v[0];
@@ -48699,9 +69828,11 @@ struct FastSG_R3m {
     res[17][2] = v[2];
     phase[17] = res[17][0]*1./3+(res[17][1]+res[17][2])*2./3;
   }
+  static const short size=18;
+  static const char lattice='R';
+  static const olxstr fullName, hallSymbol;
 };
 struct FastSG_R3m_r {
- static const short size=6;
   template <class pt, class vt> static inline void GenPos(const pt& v, vt& res)  {
     res[0][0] = v[0];
     res[0][1] = v[1];
@@ -48712,6 +69843,26 @@ struct FastSG_R3m_r {
     res[2][0] = v[1];
     res[2][1] = v[2];
     res[2][2] = v[0];
+    res[3][0] = v[1];
+    res[3][1] = v[0];
+    res[3][2] = v[2];
+    res[4][0] = v[0];
+    res[4][1] = v[2];
+    res[4][2] = v[1];
+    res[5][0] = v[2];
+    res[5][1] = v[1];
+    res[5][2] = v[0];
+  }
+  template <class pt, class vt> static inline void GenHkl(const pt& v, vt& res)  {
+    res[0][0] = v[0];
+    res[0][1] = v[1];
+    res[0][2] = v[2];
+    res[1][0] = v[1];
+    res[1][1] = v[2];
+    res[1][2] = v[0];
+    res[2][0] = v[2];
+    res[2][1] = v[0];
+    res[2][2] = v[1];
     res[3][0] = v[1];
     res[3][1] = v[0];
     res[3][2] = v[2];
@@ -48748,6 +69899,9 @@ struct FastSG_R3m_r {
     res[5][2] = v[0];
     phase[5] =  0;
   }
+  static const short size=6;
+  static const char lattice='P';
+  static const olxstr fullName, hallSymbol;
 };
 
 

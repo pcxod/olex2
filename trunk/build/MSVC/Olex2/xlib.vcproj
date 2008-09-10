@@ -437,6 +437,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\xlib\fastsymm.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\xlib\macro\graphsr.cpp"
 				>
 			</File>

@@ -25,7 +25,6 @@
 
 ///////////////////////////////////////////////////////////////////////
 void ExportSymmLib();
-void ExportSymmLibA();
 void ExportSymmLibB();  // MSVC crashes on this code...
 void ExportSymmLibC();
 void ExportSymmLibD();  // new fastsymm output
@@ -280,7 +279,7 @@ void HallSymbolTranslation(const smatd& m, olxstr& hs)  {
       }
     }
   }
-  TBasicApp::GetLog() << "hmm\n";
+  TBasicApp::GetLog() << "t_fail: " << m.t.ToString() << '\n';
 }
 void HallSymbolTranslationR(const smatd& m, olxstr& hs, int order)  {
   double v = m.t[0] != 0 ? m.t[0] : (m.t[1] != 0 ? m.t[1] : m.t[2]);
@@ -363,41 +362,40 @@ int HallSymbolFindR(olxstr& hs, TPtrList<const smatd>& matrs, const TTypeList<An
   return previous;
 }
 olxstr HallSymbol(const TSpaceGroup& sg)  {
-  //smatd_list ml;
-  //sg.GetMatrices(ml, mattAll);
   olxstr hs( sg.IsCentrosymmetric() ? olxstr('-') << sg.GetLattice().GetSymbol() : sg.GetLattice().GetSymbol());
   if( sg.MatrixCount() == 0 )  {
     hs << ' ' << '1';
   }
   else  {
-    TTypeList<AnAssociation2<mat3d, olxstr> > rotx, roty, rotz, 
+    static TTypeList<AnAssociation2<mat3d, olxstr> > rotx, roty, rotz, 
       rotx1, roty1, rotz1, rot3;
-    rotx.AddNew( mat3d( 1, 0, 0,   0,-1, 0,   0, 0,-1), "2x" );
-    rotx.AddNew( mat3d( 1, 0, 0,   0, 0,-1,   0, 1,-1), "3x" );
-    rotx.AddNew( mat3d( 1, 0, 0,   0, 0,-1,   0, 1, 0), "4x" );
-    rotx.AddNew( mat3d( 1, 0, 0,   0, 1,-1,   0, 1, 0), "6x" );
+    if( rotx.IsEmpty() )  {
+      rotx.AddNew( mat3d( 1, 0, 0,   0,-1, 0,   0, 0,-1), "2x" );
+      rotx.AddNew( mat3d( 1, 0, 0,   0, 0,-1,   0, 1,-1), "3x" );
+      rotx.AddNew( mat3d( 1, 0, 0,   0, 0,-1,   0, 1, 0), "4x" );
+      rotx.AddNew( mat3d( 1, 0, 0,   0, 1,-1,   0, 1, 0), "6x" );
 
-    roty.AddNew( mat3d( 0, 0, 1,   0, 1, 0,  -1, 0, 1), "6y" );
-    roty.AddNew( mat3d( 0, 0, 1,   0, 1, 0,  -1, 0, 0), "4y" );
-    roty.AddNew( mat3d(-1, 0, 1,   0, 1, 0,  -1, 0, 0), "3y" );
-    roty.AddNew( mat3d(-1, 0, 0,   0, 1, 0,   0, 0,-1), "2y" );
+      roty.AddNew( mat3d( 0, 0, 1,   0, 1, 0,  -1, 0, 1), "6y" );
+      roty.AddNew( mat3d( 0, 0, 1,   0, 1, 0,  -1, 0, 0), "4y" );
+      roty.AddNew( mat3d(-1, 0, 1,   0, 1, 0,  -1, 0, 0), "3y" );
+      roty.AddNew( mat3d(-1, 0, 0,   0, 1, 0,   0, 0,-1), "2y" );
 
-    rotz.AddNew( mat3d( 1,-1, 0,   1, 0, 0,   0, 0, 1), "6z" );
-    rotz.AddNew( mat3d( 0,-1, 0,   1, 0, 0,   0, 0, 1), "4z" );
-    rotz.AddNew( mat3d( 0,-1, 0,   1,-1, 0,   0, 0, 1), "3z" );
-    rotz.AddNew( mat3d(-1, 0, 0,   0,-1, 0,   0, 0, 1), "2z" );
-    // x
-    rotx1.AddNew( mat3d(-1, 0,  0,   0,  0, -1,   0,  -1,  0), "2" );
-    rotx1.AddNew( mat3d(-1, 0,  0,   0,  0,  1,   0,   1,  0), "2\"" );
-    // y
-    roty1.AddNew( mat3d( 0, 0, -1,   0, -1,  0,  -1,   0,  0), "2" );
-    roty1.AddNew( mat3d( 0, 0,  1,   0, -1,  0,   1,   0,  0), "2\"" );
-    // z
-    rotz1.AddNew( mat3d( 0,-1,  0,  -1,  0,  0,   0,   0, -1), "2" );
-    rotz1.AddNew( mat3d( 0, 1,  0,   1,  0,  0,   0,   0, -1), "2\"" );
+      rotz.AddNew( mat3d( 1,-1, 0,   1, 0, 0,   0, 0, 1), "6z" );
+      rotz.AddNew( mat3d( 0,-1, 0,   1, 0, 0,   0, 0, 1), "4z" );
+      rotz.AddNew( mat3d( 0,-1, 0,   1,-1, 0,   0, 0, 1), "3z" );
+      rotz.AddNew( mat3d(-1, 0, 0,   0,-1, 0,   0, 0, 1), "2z" );
+      // x
+      rotx1.AddNew( mat3d(-1, 0,  0,   0,  0, -1,   0,  -1,  0), "2" );
+      rotx1.AddNew( mat3d(-1, 0,  0,   0,  0,  1,   0,   1,  0), "2\"" );
+      // y
+      roty1.AddNew( mat3d( 0, 0, -1,   0, -1,  0,  -1,   0,  0), "2" );
+      roty1.AddNew( mat3d( 0, 0,  1,   0, -1,  0,   1,   0,  0), "2\"" );
+      // z
+      rotz1.AddNew( mat3d( 0,-1,  0,  -1,  0,  0,   0,   0, -1), "2" );
+      rotz1.AddNew( mat3d( 0, 1,  0,   1,  0,  0,   0,   0, -1), "2\"" );
 
-    rot3.AddNew( mat3d( 0, 0,  1,   1,  0,  0,   0,   1,  0), "3*" );
-
+      rot3.AddNew( mat3d( 0, 0,  1,   1,  0,  0,   0,   1,  0), "3*" );
+    }
     TPtrList<const smatd> matrs;
     for( int i=0; i < sg.MatrixCount(); i++ )
       matrs.Add( &sg.GetMatrix(i) );
@@ -406,8 +404,10 @@ olxstr HallSymbol(const TSpaceGroup& sg)  {
     // c direction
     if( rz != 0 )  {
       int rx = HallSymbolFindR(hs, matrs, rotx, false);
-      if( rx != 0 )
-        HallSymbolFindR(hs, matrs, rot3, false);
+      if( rx != 0 )  {
+        if( HallSymbolFindR(hs, matrs, rot3, false) == 0 )
+          HallSymbolFindR(hs, matrs, rotx1, true);
+      }
       else
         HallSymbolFindR(hs, matrs, rotz1, true);
     }
@@ -420,10 +420,11 @@ olxstr HallSymbol(const TSpaceGroup& sg)  {
   }
   return hs;
 }
-int CodeGen(TSpaceGroup& sg, TStrList& out)  {
-  olxstr hs ( HallSymbol(sg) );
+int CodeGen(TSpaceGroup& sg, TStrList& out, olxstr& hs)  {
+  hs = HallSymbol(sg);
   if( !(sg.GetHallSymbol() == hs) )  {
-    TBasicApp::GetLog() << hs << " vs. " << sg.GetHallSymbol() << '\n';
+    TBasicApp::GetLog() << (olxstr(sg.GetNumber()) << ":" << sg.GetName()).Format(15, true, ' ') <<  
+      hs << " vs. " << sg.GetHallSymbol() << '\n';
   }
   smatd_list ml;
   sg.GetMatrices(ml, mattAll);
@@ -679,23 +680,6 @@ void ExportSymmLib()  {
   sgout1.SaveToFile("e:/tmp/sgout.cpp");
 }
             
-void ExportSymmLibA()  {
-  TSymmLib& sl = *TSymmLib::GetInstance();
-  TStrList out;
-  for( int i=0; i < sl.SGCount(); i++ )  {
-    TSpaceGroup& sg = sl.GetGroup(i);
-    out.Add("//") << sg.GetName() << " #" << sg.GetNumber() << " axis:" << sg.GetAxis();
-    out.Add("class TSpaceGroup_") << i << " : public ISGGroup  {";
-    out.Add("public: ");
-    int mc = CodeGen(sg, out);
-    out.Add("  virtual inline void GeneratePos(const evecd& v, TArrayList<evecd>& res) const {  DoGeneratePos(v,res);  }");
-    out.Add("  virtual inline void GeneratePos(const evecd& v, TArrayList<TVPointD>& res) const {  DoGeneratePos(v,res);  }");
-    out.Add("  virtual inline int GetSize() const {  return ") << mc << ";  }";
-    out.Add("};");
-  }
-  out.SaveToFile("e:/tmp/sgoutx.h");
-}
-
 struct chem_lib_Neutron_Scattering {
   compd coh;
   double xs; 
@@ -719,6 +703,7 @@ struct chem_lib_Gaussians {
   }
 };
 
+/*
 struct Label_Z_Henke  {
   const char* label;
   short z;
@@ -941,6 +926,7 @@ void ExportBAIA(TAtomsInfo& ais, TScattererLib& scl)  {
   out << neutron << isotopes << gaussians << henke << elements << arr;
   out.SaveToFile("e:/tmp/baiouta.h");
 }
+*/
 struct SGSM {
   double m[3];
 };
@@ -1001,9 +987,8 @@ void ExportSymmLibB()  {
 
 void ExportSymmLibD()  {
   TSymmLib& sl = *TSymmLib::GetInstance();
-  TStrList out, def_out;
-  smatd_list ml;
-  olxstr sg_name;
+  TStrList out, def_out, cppout;
+  olxstr sg_name, hs;
   def_out.Add("#define FSymmFactory(base, clazz) base* fs_factory##base(const olxstr& sgName) {\\");
   for( int i=0; i < sl.SGCount(); i++ )  {
     sg_name = sl.GetGroup(i).GetName();
@@ -1015,16 +1000,20 @@ void ExportSymmLibD()  {
     else
       def_out.Add("  else if( sgName == \"") << sl.GetGroup(i).GetName() << "\" ) return new clazz<FastSG_" << sg_name << ">;\\";
     out.Add("struct FastSG_") << sg_name << " {";
-    ml.Clear();
-    sl.GetGroup(i).GetMatrices(ml, mattAll);
-    out.Add(" static const short size=") << ml.Count() << ';'; 
-    CodeGen(sl.GetGroup(i), out);
+    int mc = CodeGen(sl.GetGroup(i), out, hs);
+    out.Add("  static const short size=") << mc << ';'; 
+    out.Add("  static const char lattice='") << sl.GetGroup(i).GetLattice().GetSymbol().CharAt(0) << "';"; 
+    out.Add("  static const olxstr fullName, hallSymbol;");
+    cppout.Add("const olxstr FastSG_") << sg_name << "::fullName(\"" << sl.GetGroup(i).GetFullName() << "\");";
+    hs.Replace('"', "\\\"");
+    cppout.Add("const olxstr FastSG_") << sg_name << "::hallSymbol(\"" << hs << "\");";
     out.Add("};");
   }
   def_out.Add("  else return NULL);\\");
   def_out.Add("}");
   def_out << out;
   def_out.SaveToFile("e:/tmp/sgouts_x.h");
+  cppout.SaveToFile("e:/tmp/sgouts_x.cpp");
 }
 
 
