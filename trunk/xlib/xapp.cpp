@@ -385,9 +385,10 @@ bool TXApp::FindSAtoms(const olxstr& condition, TSAtomPList& res)  {
   return !res.IsEmpty();
 }
 //..............................................................................
-short TXApp::CalcVoid(TArray3D<short>& map, double extraR, short val, long* structurePoints, vec3d& voidCenter)  {
+short TXApp::CalcVoid(TArray3D<short>& map, double extraR, short val, long* structurePoints, 
+                      vec3d& voidCenter, TPSTypeList<TBasicAtomInfo*, double>* radii)  {
   short*** D = map.Data;
-  XFile().GetLattice().GetUnitCell().BuildStructureMap(map, extraR, val, structurePoints);
+  XFile().GetLattice().GetUnitCell().BuildStructureMap(map, extraR, val, structurePoints, radii);
   int mapX = map.Length1(), mapY = map.Length2(), mapZ = map.Length3();
   int level = 0, MaxLevel = 0;
   while( true )  {

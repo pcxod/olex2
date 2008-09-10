@@ -25,7 +25,7 @@
 
 #include "olxmps.h"
 #include "arrays.h"
-
+#undef GetObject
 //---------------------------------------------------------------------------
 // TUnitCell function bodies
 //---------------------------------------------------------------------------
@@ -743,7 +743,7 @@ TCAtom* TUnitCell::FindCAtom(const vec3d& center) const  {
 }
 //..............................................................................
 void TUnitCell::BuildStructureMap( TArray3D<short>& map, double delta, short val, 
-                                  long* structurePoints )  {
+                                  long* structurePoints, TPSTypeList<TBasicAtomInfo*, double>* radii)  {
 
   TTypeList< AnAssociation2<vec3d,TCAtom*> > allAtoms;
   vec3d center, center1;
@@ -770,10 +770,14 @@ void TUnitCell::BuildStructureMap( TArray3D<short>& map, double delta, short val
   TPSTypeList<int, TArray3D<bool>* > scatterers;
   for( int i=0; i < au.AtomCount(); i++ )  {
     if( au.GetAtom(i).IsDeleted() )  continue;
-    const TBasicAtomInfo& bai = au.GetAtom(i).GetAtomInfo();
-    int ind = scatterers.IndexOfComparable( bai.GetIndex() );
+    int ind = scatterers.IndexOfComparable( au.GetAtom(i).GetAtomInfo().GetIndex() );
     if( ind != -1 )  continue;
-    const double r = bai.GetRad2() + delta;
+    double r = au.GetAtom(i).GetAtomInfo().GetRad2() + delta;
+    if( radii != NULL )  {
+      int b_i = radii->IndexOfComparable( &au.GetAtom(i).GetAtomInfo() );
+      if( b_i != -1 )
+        r = radii->GetObject(b_i) + delta;
+    }
     const double sr = r*r;
     TArray3D<bool>* spm = new TArray3D<bool>(0, (int)(r*appa), 0, (int)(r*bppa), 0, (int)(r*cppa));
     for( int x=0; x < spm->Length1(); x ++ )  {
@@ -784,7 +788,7 @@ void TUnitCell::BuildStructureMap( TArray3D<short>& map, double delta, short val
         }
       }
     }
-    scatterers.Add(bai.GetIndex(), spm);
+    scatterers.Add(au.GetAtom(i).GetAtomInfo().GetIndex(), spm);
   }
 
   for( int i=0; i < allAtoms.Count(); i++ )  {
@@ -864,14 +868,14 @@ void TUnitCell::BuildStructureMap( TArray3D<short>& map, double delta, short val
     }
   }
   if( structurePoints != NULL )  {
-  long sp = 0;
-  int mapX = map.Length1(), mapY = map.Length2(), mapZ = map.Length3();
-  for(int i=0; i < mapX; i++ )
-    for(int j=0; j < mapY; j++ )
-      for(int k=0; k < mapZ; k++ )
-        if( map.Data[i][j][k] == val )  {
-          sp ++;
-        }
+    long sp = 0;
+    int mapX = map.Length1(), mapY = map.Length2(), mapZ = map.Length3();
+    for(int i=0; i < mapX; i++ )
+      for(int j=0; j < mapY; j++ )
+        for(int k=0; k < mapZ; k++ )
+          if( map.Data[i][j][k] == val )  {
+            sp ++;
+          }
     *structurePoints = sp;
   }
 

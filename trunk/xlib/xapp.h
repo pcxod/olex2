@@ -72,7 +72,8 @@ public:
   The resulting map contains Levels, 0 for the surface, 1 - one pixel off the survface etc.
   returns the maximum level reached.  The void center is assigned to the point coordinates with
   largest level*/
-  short CalcVoid(TArray3D<short>& map, double extraR, short val, long* structurePoints, vec3d& voidCenter);
+  short CalcVoid(TArray3D<short>& map, double extraR, short val, long* structurePoints, 
+    vec3d& voidCenter, TPSTypeList<TBasicAtomInfo*, double>* radii);
   /* function undoes renaming atoms */
   void undoName(TUndoData *data);
   void NameHydrogens(TSAtom& a, TUndoData* ud, bool CheckLabel);
