@@ -53,7 +53,7 @@ public:
   };
 };
 
-class TSpaceGroup  {
+class TSpaceGroup : public IEObject {
   smatd_list Matrices;
   olxstr Name, FullName, Axis, HallSymbol;
   int Number;

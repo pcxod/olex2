@@ -69,8 +69,9 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
   TAsymmUnit& au = XApp.XFile().GetAsymmUnit();
   const mat3d& hkl2c = au.GetHklToCartesian();
 
-  TSpaceGroup* sg = TSymmLib::GetInstance()->FindSG(au);
-  if( sg == NULL )  {
+  TSpaceGroup* sg = NULL;
+  try  { sg = &XApp.XFile().GetLastLoaderSG();  }
+  catch(...)  {
     E.ProcessingError(__OlxSrcInfo, "Undefined space group" );
     return;
   }

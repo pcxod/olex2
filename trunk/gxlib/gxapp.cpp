@@ -35,6 +35,7 @@
 #include "ecast.h"
 
 #include "xlattice.h"
+#include "egc.h"
 
 #include "etime.h"
 
@@ -156,7 +157,10 @@ class xappXFileLoad: public AActionHandler  {
   TGXApp *FParent;
   TEBasis B;
 public:
-  xappXFileLoad(TGXApp *Parent) {  FParent = Parent;  }
+  xappXFileLoad(TGXApp *Parent) {  
+    FParent = Parent;  
+    AActionHandler::SetToDelete(false);
+  }
   ~xappXFileLoad()  {  return;  }
   bool Execute(const IEObject *Sender, const IEObject *Data)  {  return false;  }
   bool Enter(const IEObject *Sender, const IEObject *Data)  {
@@ -229,7 +233,7 @@ TGXApp::TGXApp(const olxstr &FileName):TXApp(FileName)  {
 
   FXGrid = new TXGrid("XGrid", this);
 
-  xappXFileLoad *P = new xappXFileLoad(this);
+  xappXFileLoad *P = &TEGC::NewG<xappXFileLoad>(this);
   XFile().GetLattice().OnStructureGrow->Add(P);
   XFile().GetLattice().OnStructureUniq->Add(P);
   XFile().OnFileLoad->Add(P);
@@ -282,9 +286,11 @@ void TGXApp::CreateXRefs()  {
   if( XReflections.Count() != 0 )  return;
 
   TRefList refs;
-  TSpaceGroup* sg = TSymmLib::GetInstance()->FindSG(FXFile->GetAsymmUnit());
-  if( sg == NULL ) 
+  TSpaceGroup* sg = NULL;
+  try  { sg = &XFile().GetLastLoaderSG();  }
+  catch(...)  {
     throw TFunctionFailedException(__OlxSourceInfo, "could not locate sapce group");
+  }
   THklFile::MergeStats ms = FHklFile->Merge( *sg, false, refs);
 
   vec3d Center;

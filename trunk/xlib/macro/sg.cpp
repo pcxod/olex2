@@ -235,8 +235,10 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
   }
   XApp.GetLog() << ( olxstr("Chosen lattice(s): ") << Tmp << '\n');
   // print current spacegroup
-  TSpaceGroup * sg = TSymmLib::GetInstance()->FindSG( XApp.XFile().GetAsymmUnit() );
-  if( sg  )  {
+  TSpaceGroup* sg = NULL;
+  try  { sg = &XApp.XFile().GetLastLoaderSG();  }
+  catch(...)  {}
+  if( sg != NULL )  {
     olxstr Tmp("Current space group: ");
     Tmp << sg->GetName();
     if( sg->GetFullName().Length() )

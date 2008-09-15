@@ -505,6 +505,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\xlib\sfutil.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\xlib\macro\sg.cpp"
 				>
 			</File>
@@ -671,6 +675,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\xlib\maputil.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\xlib\mol.h"
 				>
 			</File>
@@ -699,11 +707,19 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\xlib\sfutil.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\xlib\sgtest.h"
 				>
 			</File>
 			<File
 				RelativePath="..\..\..\xlib\splane.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\xlib\strfac.h"
 				>
 			</File>
 			<File

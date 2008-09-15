@@ -149,8 +149,9 @@ void XLibMacros::macAddSE(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     E.ProcessingError(__OlxSrcInfo, "Empty asymmetric unit");
     return;
   }
-  TSpaceGroup* sg = TSymmLib::GetInstance()->FindSG(au);
-  if( sg == NULL )  {
+  TSpaceGroup* sg = NULL;
+  try  { sg = &xapp.XFile().GetLastLoaderSG();  }
+  catch(...)  {
     E.ProcessingError(__OlxSrcInfo, "Could not identify current space group");
     return;
   }
@@ -351,8 +352,9 @@ void XLibMacros::macEnvi(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 //..............................................................................
 void XLibMacros::funRemoveSE(const TStrObjList &Params, TMacroError &E)  {
   TXApp& xapp = TXApp::GetInstance();
-  TSpaceGroup* sg = TSymmLib::GetInstance()->FindSG( xapp.XFile().GetAsymmUnit() );
-  if( sg == NULL )  {
+  TSpaceGroup* sg = NULL;
+  try  { sg = &xapp.XFile().GetLastLoaderSG();  }
+  catch(...)  {
     E.ProcessingError(__OlxSrcInfo, "could not identify current space group");
     return;
   }
@@ -874,8 +876,9 @@ void XLibMacros::macVoidE(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   TAsymmUnit& au = XApp.XFile().GetAsymmUnit();
   const TUnitCell& uc = XApp.XFile().GetUnitCell();
   // space group matrix list
-  const TSpaceGroup* sg = TSymmLib::GetInstance()->FindSG(au);
-  if( sg == NULL )  {
+  TSpaceGroup* sg = NULL;
+  try  { sg = &XApp.XFile().GetLastLoaderSG();  }
+  catch(...)  {
     E.ProcessingError(__OlxSrcInfo, "could not locate space group");
     return;
   }

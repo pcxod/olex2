@@ -31,6 +31,7 @@ private:
   TNetPList    Fragments;
   TSPlanePList Planes;
 protected:
+  TActionQList Actions;
   bool Generated;
   TAtomsInfo* AtomsInfo;  // a pointer only
   void Generate(TCAtomPList* Template, bool ClearCont, bool IncludeQ);  // generates atoms using current matrices list

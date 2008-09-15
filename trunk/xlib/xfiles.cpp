@@ -82,9 +82,12 @@ TXFile::TXFile(TAtomsInfo *S)  {
   AtomsInfo = S;
   FLattice = new TLattice(S);
   FAsymmUnit = &GetLattice().GetAsymmUnit();
-  OnFileLoad = &TBasicApp::GetInstance()->NewActionQueue("XFILELOAD");
-  OnFileSave = &TBasicApp::GetInstance()->NewActionQueue("XFILESAVE");
+  AActionHandler::SetToDelete(false);
+  FAsymmUnit->OnSGChange->Add(this); 
+  OnFileLoad = &Actions.NewQueue("XFILELOAD");
+  OnFileSave = &Actions.NewQueue("XFILESAVE");
   FLastLoader = NULL;
+  FSG = NULL;
 }
 //..............................................................................
 TXFile::~TXFile()  {
@@ -123,6 +126,13 @@ void TXFile::LastLoaderChanged() {
   OnFileLoad->Exit(this);
 }
 //..............................................................................
+bool TXFile::Execute(const IEObject *Sender, const IEObject *Data)  {
+  if( Data == NULL || !EsdlInstanceOf(*Data, TSpaceGroup) )
+    throw TInvalidArgumentException(__OlxSourceInfo, "space group");
+  FSG = const_cast<TSpaceGroup*>( dynamic_cast<const TSpaceGroup*>(Data) );
+  return true;
+}
+//..............................................................................
 void TXFile::LoadFromFile(const olxstr & FN) {
   olxstr Ext = TEFile::ExtractFileExt(FN);
   // this thows an exception if the file format loader does not exist
@@ -134,6 +144,7 @@ void TXFile::LoadFromFile(const olxstr & FN) {
   GetLattice().Clear(true);
   GetAsymmUnit().Assign(Loader->GetAsymmUnit());
   GetLattice().Init();
+  FSG = TSymmLib::GetInstance()->FindSG(Loader->GetAsymmUnit());
   OnFileLoad->Exit(this);
   FLastLoader = Loader;
 }

@@ -44,6 +44,7 @@ TAsymmUnit::TAsymmUnit(TLattice *L, TAtomsInfo *AI) :
   Z = 1;
   ContainsEquivalents = false;
   ExyzGroups = NULL;
+  OnSGChange = &Actions.NewQueue("AU_SG_CHANGE");
 }
 //..............................................................................
 TAsymmUnit::~TAsymmUnit() {
@@ -672,6 +673,7 @@ void TAsymmUnit::AddNewExyz(const TStrList& cAtoms)  {
 }
 //..............................................................................
 void TAsymmUnit::ChangeSpaceGroup(const TSpaceGroup& sg)  {
+  OnSGChange->Execute(this, &sg);
   Latt = sg.GetLattice().GetLatt();
   if( !sg.IsCentrosymmetric() && Latt > 0 )  Latt = -Latt;
 

@@ -95,9 +95,11 @@ void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F)  {
   TAsymmUnit& au = XFile().GetAsymmUnit();
   const mat3d& hkl2c = au.GetHklToCartesian();
   // space group matrix list
-  TSpaceGroup* sg = TSymmLib::GetInstance()->FindSG(au);
-  if( sg == NULL )
+  TSpaceGroup* sg = NULL;
+  try  { sg = &XFile().GetLastLoaderSG();  }
+  catch(...)  {
     throw TFunctionFailedException(__OlxSourceInfo, "unknown spacegroup");
+  }
   smatd_list ml, allm;
   sg->GetMatrices(ml, mattAll);
 

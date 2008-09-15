@@ -3,7 +3,7 @@
 #define xfilesH
 
 #include "xbase.h"
-#include "ematrix.h"
+#include "symmlib.h"
 
 #include "asymmunit.h"
 #include "lattice.h"
@@ -24,15 +24,19 @@ class THklFile;
 //---------------------------------------------------------------------------
 
 //---------------------------------------------------------------------------
-class TXFile: public IEObject {
+class TXFile: public AActionHandler {
 private:
   class TLattice *FLattice;
 protected:
+  TActionQList Actions;
   TStrPObjList<olxstr,TBasicCFile*> FileFormats;
   class TAtomsInfo *AtomsInfo;
   olxstr FFileName;
   TBasicCFile *FLastLoader;
-  class TAsymmUnit *FAsymmUnit; // just a pointer to FLAttice->AsymmUnit
+  TAsymmUnit *FAsymmUnit; // just a pointer to FLAttice->AsymmUnit
+  TSpaceGroup* FSG;
+  // on SG change of the asymmetric unit
+  virtual bool Execute(const IEObject *Sender, const IEObject *Data);
 public:
   TXFile(TAtomsInfo *S);
   virtual ~TXFile();
@@ -42,12 +46,19 @@ public:
   TAtomsInfo& GetAtomsInfo()                 const {  return *AtomsInfo;  }
   inline TLattice& GetLattice()              const {  return *FLattice;  }
   inline TUnitCell& GetUnitCell()            const {  return FLattice->GetUnitCell(); }
+  /* a propper pointer, created with new should be passed
+   the object will be deleted in the destructor !! */
   void RegisterFileFormat(TBasicCFile *F, const olxstr &Ext);
 
   virtual IEObject* Replicate() const;
-  // a propper pointer, created with new should be passed
-  // the object will free the memory in the destructor !!
-
+  /* the space group is initialised upon file loading
+   if the space group is unknow, TFunctionFailedException is thrown
+  */
+  inline TSpaceGroup& GetLastLoaderSG() {  
+    if( FSG == NULL )
+      throw TFunctionFailedException(__OlxSourceInfo, "unknown space group");
+    return *FSG; 
+  }
   inline TAsymmUnit& GetAsymmUnit()          const {  return *FAsymmUnit; }
   TBasicCFile* FindFormat(const olxstr &Ext);
   inline TBasicCFile* GetLastLoader()        const {  return FLastLoader; }
