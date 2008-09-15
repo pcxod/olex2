@@ -793,7 +793,7 @@ separated values of Atom Type and radius, an entry a line" );
   difference map&;abs-calculates modulus of the electron density&;tomc-calculates 2Fo-Fc\
   map&;obs-calculates observer emap&;calc-calculates calculated emap&;scale-scle to use\
   for difference maps, corrently available simple(s) sum(Fo^2)/sum(Fc^2) for Fo^2/sigme > 3)\
-  and regression(r)&;r-resolution in Angstrems", fpNone|psFileLoaded,
+  and regression(r)&;r-resolution in Angstrems&;i-integrates the map", fpNone|psFileLoaded,
 "Calculates fourier map" );
   this_InitMacroD(TestBinding, EmptyString, fpNone, "Internal tests" );
   this_InitMacroD(SGE, EmptyString, fpNone|fpOne|psFileLoaded, "Extended spacegroup determination. Internal use" );

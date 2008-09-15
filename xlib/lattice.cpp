@@ -44,13 +44,12 @@ TLattice::TLattice(TAtomsInfo *Info)  {
   Network     = new TNetwork(this, NULL);
   Delta    = 0.5f;
   DeltaI    = 1.2f;
-  OnStructureGrow = &TBasicApp::GetInstance()->NewActionQueue("STRGEN");
-  OnStructureUniq = &TBasicApp::GetInstance()->NewActionQueue("STRUNIQ");
+  OnStructureGrow = &Actions.NewQueue("STRGEN");
+  OnStructureUniq = &Actions.NewQueue("STRUNIQ");
 }
 //..............................................................................
 TLattice::~TLattice()  {
   Clear(true);
-
   delete UnitCell;
   delete AsymmUnit;
   delete Network;

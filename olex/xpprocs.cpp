@@ -119,7 +119,8 @@
 #endif
 
 #include "olxmps.h"
-#include "ecomplex.h"
+#include "beevers-lipson.h"
+#include "maputil.h"
 
 #include "olxvar.h"
 
@@ -4514,8 +4515,9 @@ void TMainForm::macMergeHkl(TStrObjList &Cmds, const TParamList &Options, TMacro
   }
   TAsymmUnit& au = FXApp->XFile().GetAsymmUnit();
   // space group matrix list
-  TSpaceGroup* sg = TSymmLib::GetInstance()->FindSG(au);
-  if( sg == NULL )  {
+  TSpaceGroup* sg = NULL;
+  try  { sg = &FXApp->XFile().GetLastLoaderSG();  }
+  catch(...)  {
     E.ProcessingError(__OlxSrcInfo, "could not locate sapce group");
     return;
   }
@@ -5278,6 +5280,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         //ins->Clear();
         hkl.LoadFromFile(FN, ins);
         FXApp->XFile().SetLastLoader(ins);
+        ins->Clear();
         ins->SetHKLSource(FN);  // make sure tha SGE finds the related HKL
         TMacroError er;
         ProcessXPMacro(olxstr("SGE '") << TEFile::ChangeFileExt(FN, "ins") << '\'', er);
@@ -5827,7 +5830,9 @@ void TMainForm::macReload(TStrObjList &Cmds, const TParamList &Options, TMacroEr
 }
 //..............................................................................
 void TMainForm::funSG(const TStrObjList &Cmds, TMacroError &E)  {
-  TSpaceGroup * sg = TSymmLib::GetInstance()->FindSG( FXApp->XFile().GetAsymmUnit() );
+  TSpaceGroup* sg = NULL;
+  try  { sg = &FXApp->XFile().GetLastLoaderSG();  }
+  catch(...)  {}
   if( sg != NULL )  {
     olxstr Tmp;
     if( Cmds.IsEmpty() )  {
@@ -7662,8 +7667,9 @@ void TMainForm::macInv(TStrObjList &Cmds, const TParamList &Options, TMacroError
   }
 
   if( FXApp->CheckFileType<TIns>() || FXApp->CheckFileType<TCif>() )  {
-    TSpaceGroup * sg = TSymmLib::GetInstance()->FindSG( FXApp->XFile().GetAsymmUnit() );
-    if( sg == NULL )  {
+    TSpaceGroup* sg = NULL;
+    try  { sg = &FXApp->XFile().GetLastLoaderSG();  }
+    catch(...)  {
       Error.ProcessingError(__OlxSrcInfo, "unknown file space group" );
       return;
     }
@@ -8396,8 +8402,9 @@ void TMainForm::macCalcPatt(TStrObjList &Cmds, const TParamList &Options, TMacro
   TRefList refs;
   TAsymmUnit& au = FXApp->XFile().GetAsymmUnit();
   // space group matrix list
-  TSpaceGroup* sg = TSymmLib::GetInstance()->FindSG(au);
-  if( sg == NULL )  {
+  TSpaceGroup* sg = NULL;
+  try  { sg = &FXApp->XFile().GetLastLoaderSG();  }
+  catch(...)  {
     E.ProcessingError(__OlxSrcInfo, "could not locate sapce group");
     return;
   }
@@ -8552,71 +8559,6 @@ void TMainForm::funGetWindowSize(const TStrObjList &Params, TMacroError &E)  {
     E.ProcessingError(__OlxSrcInfo, "undefined window");
 }
 //..............................................................................
-struct main_peak  { 
-  int x, y, z, count;  //center
-  bool process;
-  double summ;
-  main_peak() : process(true), summ(0), count(0) {}
-  main_peak(int _x, int _y, int _z, double val) : process(true),  
-    summ(val), count(1), x(_x), y(_y), z(_z) {}
-};
-struct main_level {
-  int x, y, z;
-  main_level(int _x, int _y, int _z) : x(_x), y(_y), z(_z) {}
-  bool operator == (const main_level& l) const {
-    if( x == l.x && y == l.y && z == l.z )  return true;
-    return false;
-  }
-};
-
-void main_peak_search(const TArray3D<float>& Data, TArray3D<bool>& Mask, 
-                      const TPtrList< TTypeList<main_level> >& SphereMask, TArrayList<main_peak>& maxima)  {
-  const int maxX = Data.Length1(),
-            maxY = Data.Length2(),
-            maxZ = Data.Length3();
-  bool*** mask = Mask.Data;
-  float*** const data = Data.Data;
-  int level = 1;
-  bool done = false;
-  while( !done )  {
-    done = true;
-    const TTypeList<main_level>& il = *SphereMask[level];
-    for( int i=0; i < maxima.Count(); i++ )  {
-      main_peak& peak = maxima[i];
-      if( !peak.process )  continue;
-      for( int j=0; j < il.Count(); j++ )  {
-        int x = peak.x + il[j].x;
-        if( x < 0 )     x += maxX;
-        if( x >= maxX ) x -= maxX; 
-        int y = peak.y + il[j].y;
-        if( y < 0 )     y += maxY;
-        if( y >= maxY ) y -= maxY; 
-        int z = peak.z + il[j].z;
-        if( z < 0 )     z += maxZ;
-        if( z >= maxZ ) z -= maxZ; 
-        if( mask[x][y][z] )  continue;
-        if( peak.summ > 0 && data[x][y][z] <= 0 )  {
-          peak.process = false;
-          break;
-        }
-        if( peak.summ < 0 && data[x][y][z] >= 0 )  {
-          peak.process = false;
-          break;
-        }
-        peak.count++;
-        peak.summ += data[x][y][z];
-        done = false;
-        mask[x][y][z] = true;
-      }
-    }
-    if( ++level >= SphereMask.Count() )  break;
-  }
-}
-struct Main_StrF  {
-  int h, k, l;
-  double ps;
-  compd v;
-};
 void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
 // scale type
   static const short stSimple     = 0x0001,
@@ -8624,167 +8566,40 @@ void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMa
   double resolution = Options.FindValue("r", "0.25").ToDouble();
   if( resolution < 0.1 )  resolution = 0.1;
   resolution = 1./resolution;
+  short mapType = SFUtil::mapTypeCalc;
+  if( Options.Contains("tomc") )
+    mapType = SFUtil::mapType2OmC;
+  else if( Options.Contains("obs") )
+    mapType = SFUtil::mapTypeObs;
+  else if( Options.Contains("diff") )
+    mapType = SFUtil::mapTypeDiff;
   TRefList refs;
   TArrayList<compd > F;
+  olxstr err( SFUtil::GetSF(refs, F, mapType, 
+    Options.Contains("fcf") ? SFUtil::sfOriginFcf : SFUtil::sfOriginOlex2, 
+    (Options.FindValue("s", "r").ToLowerCase().CharAt(0) == 'r') ? SFUtil::scaleRegression : SFUtil::scaleSimple) );
+  if( !err.IsEmpty() )  {
+    E.ProcessingError(__OlxSrcInfo, err);
+    return;
+  }
   TAsymmUnit& au = FXApp->XFile().GetAsymmUnit();
-  const TUnitCell& uc = FXApp->XFile().GetUnitCell();
-  // space group matrix list
-  const TSpaceGroup* sg = TSymmLib::GetInstance()->FindSG(au);
-  if( sg == NULL )  {
+  TUnitCell& uc = FXApp->XFile().GetUnitCell();
+  TSpaceGroup* sg = NULL;
+  try  { sg = &FXApp->XFile().GetLastLoaderSG();  }
+  catch(...)  {
     E.ProcessingError(__OlxSrcInfo, "could not locate sapce group");
     return;
   }
-  smatd_list ml;
-  sg->GetMatrices(ml, mattAll);
-  bool diff_map = Options.Contains("diff"); // Fo-Fc
-  bool tomc_map = Options.Contains("tomc"); // 2Fo-Fc
-  bool abs_map = Options.Contains("abs"); // |Fo-Fc|
-  bool obs_map = Options.Contains("obs"); // Fo
-  short scaleType = stSimple;
-  if( diff_map )  {
-    olxstr st = Options.FindValue('s').ToLowerCase();
-    if( !st.IsEmpty() )  {
-      if( st.CharAt(0) == 'r' )
-        scaleType = stRegression;
-    }
-  }
-  if( Options.Contains("fcf") )  {
-    olxstr fcffn = TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), "fcf");
-    if( !TEFile::FileExists(fcffn) )  {
-      fcffn = TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), "fco");
-      if( !TEFile::FileExists(fcffn) )  {
-        E.ProcessingError(__OlxSrcInfo, "please load fcf file or make sure the one exists in current folder");
-        return;
-      }
-    }
-    TCif cif( FXApp->AtomsInfo() );
-    cif.LoadFromFile( fcffn );
-    TCifLoop* hklLoop = cif.FindLoop("_refln");
-    if( hklLoop == NULL )  {
-      E.ProcessingError(__OlxSrcInfo, "no hkl loop found");
-      return;
-    }
-    int hInd = hklLoop->Table().ColIndex("_refln_index_h");
-    int kInd = hklLoop->Table().ColIndex("_refln_index_k");
-    int lInd = hklLoop->Table().ColIndex("_refln_index_l");
-    // list 3, F
-    int mfInd = hklLoop->Table().ColIndex("_refln_F_meas");
-    int sfInd = hklLoop->Table().ColIndex("_refln_F_sigma");
-    int aInd = hklLoop->Table().ColIndex("_refln_A_calc");
-    int bInd = hklLoop->Table().ColIndex("_refln_B_calc");
-
-    if( hInd == -1 || kInd == -1 || lInd == -1 || 
-        mfInd == -1 || sfInd == -1 || aInd == -1 || bInd == -1  ) {
-      E.ProcessingError(__OlxSrcInfo, "list 3 fcf file is expected");
-      return;
-    }
-    refs.SetCapacity( hklLoop->Table().RowCount() );
-    F.SetCount( hklLoop->Table().RowCount() );
-    for( int i=0; i < hklLoop->Table().RowCount(); i++ )  {
-      TStrPObjList<olxstr,TCifLoopData*>& row = hklLoop->Table()[i];
-      TReflection& ref = refs.AddNew(row[hInd].ToInt(), row[kInd].ToInt(), 
-                                     row[lInd].ToInt(), row[mfInd].ToDouble(), row[sfInd].ToDouble());
-      if( diff_map )  {
-        const compd rv(row[aInd].ToDouble(), row[bInd].ToDouble());
-        double dI = (ref.GetI() - rv.mod());
-        F[i] = compd::polar(dI, rv.arg());
-      }
-      else if( tomc_map )  {
-        const compd rv(row[aInd].ToDouble(), row[bInd].ToDouble());
-        double dI = 2*ref.GetI() - rv.mod();
-        F[i] = compd::polar(dI, rv.arg());
-      }
-      else if( obs_map ) {
-        const compd rv(row[aInd].ToDouble(), row[bInd].ToDouble());
-        F[i] = compd::polar(ref.GetI(), rv.arg());
-      }
-      else  {
-        F[i].SetRe(row[aInd].ToDouble());
-        F[i].SetIm(row[bInd].ToDouble());
-      }
-    }
-  }
-  else  {
-    olxstr hklFileName( FXApp->LocateHklFile() );
-    if( !TEFile::FileExists(hklFileName) )  {
-      E.ProcessingError(__OlxSrcInfo, "could not locate hkl file");
-      return;
-    }
-    THklFile Hkl;
-    Hkl.LoadFromFile(hklFileName);
-    double av = 0;
-    for( int i=0; i < Hkl.RefCount(); i++ )
-      av += Hkl[i].GetI() < 0 ? 0 : Hkl[i].GetI();
-    av /= Hkl.RefCount();
-
-    THklFile::MergeStats ms = Hkl.Merge( *sg, true, refs);
-    F.SetCount(refs.Count());
-    FXApp->CalcSF(refs, F);
-    if( diff_map || tomc_map || obs_map )  {
-      // find a linear scale between F
-      ematd points(2, F.Count() );
-      evecd line(2);
-      double sF2o = 0, sF2c = 0;
-      for( int i=0; i < F.Count(); i++ )  {
-        points[0][i] = sqrt(refs[i].GetI());
-        points[1][i] = F[i].mod();
-        if( refs[i].GetI()/refs[i].GetS() < 3 )  continue;
-        sF2o += refs[i].GetI();
-        sF2c += F[i].qmod();
-      }
-      double simple_scale = sqrt(sF2o/sF2c);
-      double rms = ematd::PLSQ(points, line, 1);
-      TBasicApp::GetLog() << olxstr("Trendline scale: ") << line.ToString() << '\n';
-      TBasicApp::GetLog() << olxstr("Simple scale: ") << olxstr::FormatFloat(3,simple_scale) << '\n';
-      
-      for( int i=0; i < F.Count(); i++ )  {
-        double dI = sqrt(refs[i].GetI());
-        if( scaleType == stSimple )
-          dI /= simple_scale;
-        else if( scaleType == stRegression )  {
-          dI *= line[1];
-          dI += line[0];
-        }
-        if( diff_map )  {
-          dI -= F[i].mod();
-          F[i] = compd::polar(dI, F[i].arg());
-        }
-        else if( tomc_map )  {
-          dI *= 2;
-          dI -= F[i].mod();
-          F[i] = compd::polar(dI, F[i].arg());
-        }
-        else if( obs_map )  {
-          F[i] = compd::polar(dI, F[i].arg());
-        }
-      }
-    }
-  }
-  double vol = FXApp->XFile().GetLattice().GetUnitCell().CalcVolume();
-  int minH = 100,  minK = 100,  minL = 100;
-  int maxH = -100, maxK = -100, maxL = -100;
-
-  vec3d hkl;
-  TArrayList<Main_StrF> AllF(refs.Count()*ml.Count());
-  int index = 0;
+  TArrayList<StructureFactor> P1SF;
+  TArrayList<vec3i> hkl(refs.Count());
   for( int i=0; i < refs.Count(); i++ )  {
-    const TReflection& ref = refs[i];
-    for( int j=0; j < ml.Count(); j++, index++ )  {
-      ref.MulHklT(hkl, ml[j]);
-      if( hkl[0] < minH )  minH = (int)hkl[0];
-      if( hkl[1] < minK )  minK = (int)hkl[1];
-      if( hkl[2] < minL )  minL = (int)hkl[2];
-      if( hkl[0] > maxH )  maxH = (int)hkl[0];
-      if( hkl[1] > maxK )  maxK = (int)hkl[1];
-      if( hkl[2] > maxL )  maxL = (int)hkl[2];
-      AllF[index].h = (int)hkl[0];
-      AllF[index].k = (int)hkl[1];
-      AllF[index].l = (int)hkl[2];
-      AllF[index].ps = hkl[0]*ml[j].t[0] + hkl[1]*ml[j].t[1] + hkl[2]*ml[j].t[2];
-      AllF[index].v = F[i];
-      AllF[index].v *= compd::polar(1, 2*M_PI*AllF[index].ps);
-    }
+    hkl[i][0] = refs[i].GetH();
+    hkl[i][1] = refs[i].GetK();
+    hkl[i][2] = refs[i].GetL();
   }
+  SFUtil::ExpandToP1(hkl, F, *sg, P1SF);
+  double vol = FXApp->XFile().GetLattice().GetUnitCell().CalcVolume();
+  BVFourier::MapInfo mi;
 // init map
   const int mapX = (int)(au.Axes()[0].GetV()*resolution),
 			mapY = (int)(au.Axes()[1].GetV()*resolution),
@@ -8793,285 +8608,48 @@ void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMa
   FXApp->XGrid().InitGrid(mapX, mapY, mapZ);
   FXApp->XGrid().SetMaxHole(0.49);
   FXApp->XGrid().SetMinHole(-0.49);
-//  TArray3D<double> map(0, mapX/ml.Count(), 
+  mi = BVFourier::CalcEDM(P1SF, FXApp->XGrid().Data()->Data, mapX, mapY, mapZ, vol);
 //////////////////////////////////////////////////////////////////////////////////////////
-  compd ** S, *T;
-  int kLen = maxK-minK+1, hLen = maxH-minH+1, lLen = maxL-minL+1;
-  S = new compd*[kLen];
-  for( int i=0; i < kLen; i++ )
-    S[i] = new compd[lLen];
-  T = new compd[lLen];
-  const double T_PI = 2*M_PI;
-// precalculations
-  int minInd = olx_min(minH, minK);
-  if( minL < minInd )  minInd = minL;
-  int maxInd = olx_max(maxH, maxK);
-  if( maxL > maxInd )  maxInd = maxL;
-  int iLen = maxInd - minInd + 1;
-  int mapMax = olx_max(mapX, mapY);
-  if( mapZ > mapMax )  mapMax = mapZ;
-  compd** sin_cosX = new compd*[mapX],
-                      **sin_cosY, **sin_cosZ;
-  for( int i=0; i < mapX; i++ )  {
-    sin_cosX[i] = new compd[iLen];
-    for( int j=minInd; j <= maxInd; j++ )  {
-      double rv = (double)(i*j)/mapX, ca, sa;
-      rv *= T_PI;
-      SinCos(-rv, &sa, &ca);
-      sin_cosX[i][j-minInd].SetRe(ca);
-      sin_cosX[i][j-minInd].SetIm(sa);
-    }
-  }
-  if( mapX == mapY )  {
-    sin_cosY = sin_cosX;
-  }
-  else  {
-    sin_cosY = new compd*[mapY];
-    for( int i=0; i < mapY; i++ )  {
-      sin_cosY[i] = new compd[iLen];
-      for( int j=minInd; j <= maxInd; j++ )  {
-        double rv = (double)(i*j)/mapY, ca, sa;
-        rv *= T_PI;
-        SinCos(-rv, &sa, &ca);
-        sin_cosY[i][j-minInd].SetRe(ca);
-        sin_cosY[i][j-minInd].SetIm(sa);
-      }
-    }
-  }
-  if( mapX == mapZ )  {
-    sin_cosZ = sin_cosX;
-  }
-  else if( mapY == mapZ )  {
-    sin_cosZ = sin_cosY;
-  }
-  else  {
-    sin_cosZ = new compd*[mapZ];
-    for( int i=0; i < mapZ; i++ )  {
-      sin_cosZ[i] = new compd[iLen];
-      for( int j=minInd; j <= maxInd; j++ )  {
-        double rv = (double)(i*j)/mapZ, ca, sa;
-        rv *= T_PI;
-        SinCos(-rv, &sa, &ca);
-        sin_cosZ[i][j-minInd].SetRe(ca);
-        sin_cosZ[i][j-minInd].SetIm(sa);
-      }
-    }
-  }
-  compd R;
-  /* http://smallcode.weblogs.us/2006/11/27/calculate-standard-deviation-in-one-pass/
-    for one pass calculation of the variance
-  */
-  TXGrid& grid = FXApp->XGrid();
-  double maxMapV = -1000, minMapV = 1000, sum = 0, sq_sum = 0;
-  for( int ix=0; ix < mapX; ix++ )  {
-    for( int i=0; i < AllF.Count(); i++ )  {
-      const Main_StrF& sf = AllF[i];
-      S[sf.k-minK][sf.l-minL] += sf.v*sin_cosX[ix][sf.h-minInd];
-    }
-    for( int iy=0; iy < mapY; iy++ )  {
-      for( int i=minK; i <= maxK; i++ )  {
-        for( int j=minL; j <= maxL; j++ )  {
-          T[j-minL] += S[i-minK][j-minL]*sin_cosY[iy][i-minInd];
-        }
-      }
-      for( int iz=0; iz < mapZ; iz++ )  {
-        R.Null();
-        for( int i=minL; i <= maxL; i++ )  {
-          R += T[i-minL]*sin_cosZ[iz][i-minInd];
-        }
-        double val = R.Re()/vol;
-        sum += ((val < 0) ? -val : val);
-        sq_sum += val*val;
-        if( abs_map && val < 0 )  val = -val;
-        if( val > maxMapV )  maxMapV = val;
-        if( val < minMapV )  minMapV = val;
-        grid.SetValue(ix, iy, iz, val);
-      }
-      for( int i=0; i < lLen; i++ )  
-        T[i].Null();
-    }
-    for( int i=0; i < kLen; i++ )  
-      for( int j=0; j < lLen; j++ )  
-        S[i][j].Null();
-  }
-  double map_mean = sum/(mapX*mapY*mapZ);
-  double map_var = sq_sum/(mapX*mapY*mapZ) - map_mean*map_mean;
-  FXApp->XGrid().SetMaxHole(sqrt(map_var)*1.4);
-  FXApp->XGrid().SetMinHole(-sqrt(map_var)*1.4);
-  grid.SetScale( -sqrt(map_var)*4 );
-  TBasicApp::GetLog() << (olxstr("Map max val ") << olxstr::FormatFloat(3, maxMapV) << " min val " << olxstr::FormatFloat(3, minMapV) << '\n');
-  // map clean up
-  //float*** gridData = grid.Data()->Data;
-  //maxMapV *= 0.25; 
-  //minMapV *= 0.25; 
-  //for( int ix=0; ix < mapX; ix++ )  {
-  //  for( int iy=0; iy < mapY; iy++ )  {
-  //    for( int iz=0; iz < mapZ; iz++ )  {
-  //      if( gridData[ix][iy][iz] < maxMapV && gridData[ix][iy][iz] > minMapV )
-  //        gridData[ix][iy][iz] = 0;
-  //    }
-  //  }
-  //}
-  // end map clean up
-
+  FXApp->XGrid().SetMaxHole( mi.sigma*1.4);
+  FXApp->XGrid().SetMinHole(-mi.sigma*1.4);
+  FXApp->XGrid().SetScale( -mi.sigma*4 );
+  FXApp->XGrid().SetMinVal( mi.minVal );
+  FXApp->XGrid().SetMaxVal( mi.maxVal );
+  TBasicApp::GetLog() << (olxstr("Map max val ") << olxstr::FormatFloat(3, mi.maxVal) << 
+    " min val " << olxstr::FormatFloat(3, mi.minVal) << '\n');
   // map integration
-/*
-  TPtrList< TTypeList<main_level> > SphereMask;
-  for( int level=0; level < 11; level++ )
-    SphereMask.Add( new TTypeList<main_level> );
-  
-  for( int x=-10; x < 11; x++ )  {
-    for( int y=-10; y < 11; y++ )  {
-      for( int z=-10; z < 11; z++ )  {
-        int r = Round(sqrt((double)(x*x + y*y + z*z)));
-        if( r < 11 && r > 0 )  // skip 0
-          SphereMask[r]->AddNew(x,y,z);
-      }
-    }
-  }
-  // eliminate duplicate indexes
-  for( int i=0; i < 11; i++ )  {
-    TTypeList<main_level>& l1 = *SphereMask[i];
-    for( int j= i+1; j < 11; j++ )  {
-      TTypeList<main_level>& l2 = *SphereMask[j];
-      for( int k=0; k < l1.Count(); k++ )  {
-        if( l1.IsNull(k) )  continue;
-        for( int l=0; l < l2.Count(); l++ )  {
-          if( l2[l] == l1[k] )  {
-            l2.NullItem(l);
-            break;
-          }
-        }
-      }
-    }
-    l1.Pack();
-  }
-  const int s_level = 3;
-  TArray3D<bool> Mask(0, mapX-1, 0, mapY-1, 0, mapZ-1);
-  TArrayList<main_peak> Peaks;
-  float*** gridData = grid.Data()->Data;
-  bool*** maskData = Mask.Data;
-  double pos_level = 0.5*maxMapV, neg_level = 0.8*minMapV; 
-  for( int ix=0; ix < mapX; ix++ )  {
-    for( int iy=0; iy < mapY; iy++ )  {
-      for( int iz=0; iz < mapZ; iz++ )  {
-        if( !maskData[ix][iy][iz] && ((gridData[ix][iy][iz] > pos_level) ||
-                                      (gridData[ix][iy][iz] < neg_level)) )  {
-          const double refval = gridData[ix][iy][iz];
-          bool located = true;
-          if( refval > 0 )  {
-            for( int i=-s_level; i <= s_level; i++ )  {
-              int x = ix+i;
-              if( x < 0 )      x += mapX;
-              if( x >= mapX )  x -= mapX;
-              for( int j=-s_level; j <= s_level; j++ )  {
-                int y = iy+j;
-                if( y < 0 )      y += mapY;
-                if( y >= mapY )  y -= mapY;
-                for( int k=-s_level; k <= s_level; k++ )  {
-                  if( i==0 && j==0 && k == 0 )  continue;
-                  int z = iz+k;
-                  if( z < 0 )      z += mapZ;
-                  if( z >= mapZ )  z -= mapZ;
-                  if( gridData[x][y][z] > refval )  {
-                    located = false;
-                    break;
-                  }
-                }
-                if( !located )  break;
-              }
-              if( !located )  break;
-            }
+  if( Options.Contains('i') )  {
+    TArrayList<MapUtil::peak> Peaks;
+    MapUtil::Integrate<float>(FXApp->XGrid().Data()->Data, mapX, mapY, mapZ, mi.minVal, mi.maxVal, Peaks);
+    int PointCount = mapX*mapY*mapZ;
+    for( int i=0; i < Peaks.Count(); i++ )  {
+      const MapUtil::peak& peak = Peaks[i];
+      if( peak.count >= 64 )  {
+        vec3d cnt((double)peak.x/mapX, (double)peak.y/mapY, (double)peak.z/mapZ); 
+        double pv = (double)peak.count*vol/PointCount;
+        double ed = peak.summ/(pv*218);
+        TCAtom* oa = uc.FindOverlappingAtom(cnt, 0.1);
+        if( oa != NULL )  {
+          if( oa->GetAtomInfo() != iQPeakIndex )  {
+            TBasicApp::GetLog() << (olxstr("Atom type under consideration ") << oa->GetLabel() << '\n');
           }
           else  {
-            for( int i=-s_level; i <= s_level; i++ )  {
-              int x = ix+i;
-              if( x < 0 )      x += mapX;
-              if( x >= mapX )  x -= mapX;
-              for( int j=-s_level; j <= s_level; j++ )  {
-                int y = iy+j;
-                if( y < 0 )      y += mapY;
-                if( y >= mapY )  y -= mapY;
-                for( int k=-s_level; k <= s_level; k++ )  {
-                  if( i==0 && j==0 && k == 0 )  continue;
-                  int z = iz+k;
-                  if( z < 0 )      z += mapZ;
-                  if( z >= mapZ )  z -= mapZ;
-                  if( gridData[x][y][z] < refval )  {
-                    located = false;
-                    break;
-                  }
-                }
-                if( !located )  break;
-              }
-              if( !located )  break;
-            }
+            oa->SetQPeak( oa->GetQPeak() + ed);
           }
-          if( located )
-            Peaks.Add( main_peak(ix, iy, iz, refval) );
+          continue;
         }
+        //au.CellToCartesian(cnt);
+        //TBasicApp::GetLog() << (olxstr("Peak ") << olxstr::FormatFloat(3, pv) << " at " << cnt.ToWStr() << '\n');
+        TCAtom& ca = au.NewAtom();
+        ca.SetLabel(olxstr("Q") << olxstr((100+i)));
+        ca.ccrd() = cnt;
+        ca.SetQPeak( ed );
+        ca.SetLoaderId( liNewAtom );
       }
     }
-  }
-  int PointCount = mapX*mapY*mapZ;
-  main_peak_search(*grid.Data(), Mask, SphereMask, Peaks);
-  for( int i=0; i < Peaks.Count(); i++ )  {
-    const main_peak& peak = Peaks[i];
-    if( peak.count >= 64 )  {
-      TVPoint<double> cnt; 
-      cnt[0] = (double)peak.x/mapX;
-      cnt[1] = (double)peak.y/mapY;
-      cnt[2] = (double)peak.z/mapZ;
-      double pv = (double)peak.count*vol/PointCount;
-      double ed = peak.summ/(pv*218);
-      TCAtom* oa = uc.FindOverlappingAtom(cnt, 0.1);
-      if( oa != NULL )  {
-        if( oa->GetAtomInfo() != iQPeakIndex )  {
-          TBasicApp::GetLog() << (olxstr("Atom type under consideration ") << oa->GetLabel() << '\n');
-        }
-        else  {
-          oa->SetQPeak( oa->GetQPeak() + ed);
-        }
-        continue;
-      }
-      //au.CellToCartesian(cnt);
-      //TBasicApp::GetLog() << (olxstr("Peak ") << olxstr::FormatFloat(3, pv) << " at " << cnt.ToWStr() << '\n');
-      TCAtom& ca = au.NewAtom();
-      ca.SetLabel(olxstr("Q") << olxstr((100+i)));
-      ca.CCenter().Value(0) = cnt[0];
-      ca.CCenter().Value(1) = cnt[1];
-      ca.CCenter().Value(2) = cnt[2];
-      ca.SetQPeak( ed );
-      ca.SetLoaderId( liNewAtom );
-    }
-  }
-  for( int level=0; level < 11; level++ )
-    delete SphereMask[level];
-  // end of integration 
-  au.InitData();
-  FXApp->XFile().EndUpdate();
-  // end map clean up
-*/
-  for( int i=0; i < kLen; i++ )
-    delete [] S[i];
-  delete [] S;
-  delete [] T;
-  if( sin_cosY == sin_cosX )  sin_cosY = NULL;
-  if( sin_cosZ == sin_cosX || sin_cosZ == sin_cosY )  sin_cosZ = NULL;
-  for( int i=0; i < mapX; i++ )
-    delete [] sin_cosX[i];
-  delete [] sin_cosX;
-  if( sin_cosY != NULL )  {
-    for( int i=0; i < mapY; i++ )
-      delete [] sin_cosY[i];
-    delete [] sin_cosY;
-  }
-  if( sin_cosZ != NULL )  {
-    for( int i=0; i < mapZ; i++ )
-      delete [] sin_cosZ[i];
-    delete [] sin_cosZ;
-  }
-
+    au.InitData();
+    FXApp->XFile().EndUpdate();
+  }  // integration
   FXApp->XGrid().InitIso(false);
   FXApp->ShowGrid(true, EmptyString);
 }

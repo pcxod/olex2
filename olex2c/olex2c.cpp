@@ -1072,7 +1072,9 @@ public:
   }
   //..............................................................................
   void funSG(const TStrObjList &Cmds, TMacroError &E)  {
-    TSpaceGroup * sg = TSymmLib::GetInstance()->FindSG( XApp.XFile().GetAsymmUnit() );
+    TSpaceGroup* sg = NULL;
+    try  { sg = &FXApp->XFile().GetLastLoaderSG();  }
+    catch(...)  {}
     if( sg != NULL )  {
       olxstr Tmp;
       if( Cmds.IsEmpty() )  {

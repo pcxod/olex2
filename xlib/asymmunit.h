@@ -99,6 +99,7 @@ public:  // residue class implementation
       }
   };
 protected:
+  TActionQList Actions;
   void ClearExyz();
   TPtrList<TResidue> Residues;
   TResidue MainResidue;
@@ -159,6 +160,8 @@ public:
 
   void Assign( const TAsymmUnit& C);
   void ChangeSpaceGroup(const class TSpaceGroup& sg);
+  // executed from the above function, Data is the new space group
+  TActionQueue* OnSGChange;
   // initialises transofrmation matrices, called after axis and angles initialised
   void InitMatrices();
   // initialises data such as Q-peak heights, called after all atoms initialised :)

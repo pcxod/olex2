@@ -87,6 +87,8 @@ public:
 
   DefPropP(float, MinHole)
   DefPropP(float, MaxHole)
+  DefPropP(float, MinVal)
+  DefPropP(float, MaxVal)
 
   inline bool IsEmpty()  const  {  return ED == NULL;  }
 
