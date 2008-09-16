@@ -7315,7 +7315,67 @@ public:
   }
 };
 #endif
+struct Int224 {
+  uint32_t d[7];
+  void set(int i, bool v) { 
+    if( v ) d[i/32] |= i << i%32;
+    else    d[i/32] &= ~(i << i%32);
+  }
+  void setTrue(int i) { 
+    d[i/32] |= 1 << i%32;
+  }
+  void setFalse(int i) { 
+    d[i/32] &= ~(1 << i%32);
+  }
+  bool get(int i)  {  
+    return ( d[i/32] & (1 << i%32) ) != 0;
+  }
+  Int224() { null();  }
+  void null() { d[0] = d[1] = d[2] = d[3] = d[4] = d[5] = d[6] = 0;  }
+  bool isNull()  {  return (d[0]|d[1]|d[2]|d[3]|d[4]|d[5]|d[6]) == 0;  }
+};
+
 void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+  TSymmLib& sl = *TSymmLib::GetInstance();
+  smatd_list ml;
+  Int224 cell[12][12][12];
+  vec3d p, p1;
+  vec3i ip;
+  for( int i=0; i < sl.SGCount(); i++ )  {
+    ml.Clear();
+    sl.GetGroup(i).GetMatrices(ml, mattAll);
+    for( int i1=0; i1 < 12; i1++ )
+      for( int i2=0; i2 < 12; i2++ )
+        for( int i3=0; i3 < 12; i3++ )
+          cell[i1][i2][i3].null();
+    int sets = 0;
+    for( int i1=0; i1 < 12; i1++ )  {
+      p[0] = (double)i1/12.0;
+      for( int i2=0; i2 < 12; i2++ )  {
+        p[1] = (double)i2/12.0;
+        for( int i3=0; i3 < 12; i3++ )  {
+          if( !cell[i1][i2][i3].isNull() )  continue;
+          p[2] = (double)i3/12.0;
+          for( int j=1; j < ml.Count(); j++)  {  // skip I
+            p1 = ml[0] * p;
+            p1 *= 12;
+            for( int k=0; k < 3; k++ )  {
+              while( p1[k] < 0  ) p1[k] += 12;
+              while( p1[k] > 12 ) p1[k] -= 12;
+              ip[k] = Round(p1[k]);
+              if( fabs( ip[k] - p1[k] ) > 0.01 )
+                TBasicApp::GetLog() << "oups...";
+            }
+            if( !cell[ip[0]][ip[1]][ip[2]].isNull() )  continue;
+            cell[ip[0]][ip[1]][ip[2]].setTrue(j);
+            sets++;
+          }
+        }
+      }
+    }
+    TBasicApp::GetLog() << sl.GetGroup(i).GetName() << "; mc = " << ml.Count() << " - " << (double)sets*100/(12*12*12) << "%\n";
+  }
+    return;
   TEBitArray ba;
   olxstr rr = ba.FormatString(31);
   if( FXApp->XFile().GetLastLoader() != NULL )  {
