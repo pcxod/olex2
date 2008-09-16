@@ -13,6 +13,7 @@ void SFUtil::ExpandToP1(const TArrayList<vec3i>& hkl, const TArrayList<compd>& F
     throw TFunctionFailedException(__OlxSourceInfo, "invalid space group");
   out.SetCount( sf_expansion->GetSGOrder()* hkl.Count() );
   sf_expansion->Expand(hkl, F, out);
+  delete sf_expansion;
 }
 //...........................................................................................
 void SFUtil::FindMinMax(const TArrayList<StructureFactor>& F, vec3i& min, vec3i& max)  {

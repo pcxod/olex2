@@ -7334,46 +7334,140 @@ struct Int224 {
   void null() { d[0] = d[1] = d[2] = d[3] = d[4] = d[5] = d[6] = 0;  }
   bool isNull()  {  return (d[0]|d[1]|d[2]|d[3]|d[4]|d[5]|d[6]) == 0;  }
 };
-
+template <class T> class LStack  {
+  struct item  {
+    item* prev;
+    T data;
+    item(const T& v, item* _prev) : data(v), prev(_prev)  {}
+  };
+  item* cur;
+public:
+  LStack() : cur(NULL)  {}
+  ~LStack()  {
+    while( cur != NULL )  {
+      item* p = cur->prev;
+      delete cur;
+      cur = p;
+    }
+  }
+  void push(const T& v)  {
+    item* ni = new item(v, cur);
+    cur = ni;
+  }
+  T pop()  { 
+    if( cur != NULL )  { 
+      item* i = cur->prev;
+      T rv = cur->data;
+      delete cur;
+      cur = i;
+      return rv;
+    }
+    throw 1;
+  }
+  bool isEmpty() {  return cur == NULL;  }
+};
+template <class T> class LQueue  {
+  struct item  {
+    item* next;
+    T data;
+    item(const T& v) : data(v), next(NULL)  {}
+  };
+  item* cur, *last;
+public:
+  LQueue() : cur(NULL), last(NULL)  {}
+  ~LQueue()  {
+    while( cur != NULL )  {
+      item* p = cur->next;
+      delete cur;
+      cur = p;
+    }
+  }
+  void push(const T& v)  {
+    item* ni = new item(v);
+    if( cur == NULL )  {
+      cur = last = ni;
+    }
+    else  {
+      last->next = ni;
+      last = ni;
+    }
+  }
+  T pop()  { 
+    if( cur != NULL )  { 
+      item* i = cur->next;
+      T rv = cur->data;
+      delete cur;
+      cur = i;
+      return rv;
+    }
+    throw 1;
+  }
+  bool isEmpty() {  return cur == NULL;  }
+};
 void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   TSymmLib& sl = *TSymmLib::GetInstance();
   smatd_list ml;
-  Int224 cell[12][12][12];
-  vec3d p, p1;
+  static const int dim = 24;
+  bool** cell[dim];
+  for( int i=0; i < dim; i++ )  {
+    cell[i] = new bool*[dim];
+    for( int j=0; j < dim; j++ )  {
+      cell[i][j] = new bool[dim]; 
+    }
+  }
+  vec3d p1;
   vec3i ip;
+  LQueue<vec3i> stack;
   for( int i=0; i < sl.SGCount(); i++ )  {
     ml.Clear();
     sl.GetGroup(i).GetMatrices(ml, mattAll);
-    for( int i1=0; i1 < 12; i1++ )
-      for( int i2=0; i2 < 12; i2++ )
-        for( int i3=0; i3 < 12; i3++ )
-          cell[i1][i2][i3].null();
-    int sets = 0;
-    for( int i1=0; i1 < 12; i1++ )  {
-      p[0] = (double)i1/12.0;
-      for( int i2=0; i2 < 12; i2++ )  {
-        p[1] = (double)i2/12.0;
-        for( int i3=0; i3 < 12; i3++ )  {
-          if( !cell[i1][i2][i3].isNull() )  continue;
-          p[2] = (double)i3/12.0;
-          for( int j=1; j < ml.Count(); j++)  {  // skip I
-            p1 = ml[0] * p;
-            p1 *= 12;
-            for( int k=0; k < 3; k++ )  {
-              while( p1[k] < 0  ) p1[k] += 12;
-              while( p1[k] > 12 ) p1[k] -= 12;
-              ip[k] = Round(p1[k]);
-              if( fabs( ip[k] - p1[k] ) > 0.01 )
-                TBasicApp::GetLog() << "oups...";
+    for( int i1=0; i1 < dim; i1++ )
+      for( int i2=0; i2 < dim; i2++ )
+        for( int i3=0; i3 < dim; i3++ )
+          cell[i1][i2][i3] = false;
+    int sets = 0, mi1 = 0, mi2 = 0, mi3 = 0;
+    stack.push( vec3i(0,0,0) );
+    while( !stack.isEmpty() )  {
+      vec3i p = stack.pop();
+      for( int i1=-1; i1 <=1; i1++ )  {
+        for( int i2=-1; i2 <=1; i2++ )  {
+          for( int i3=-1; i3 <=1; i3++ )  {
+            if( i1 == 0 && i2 == 0 && i3 == 0 )  continue;
+            vec3i pt(p[0]+i1, p[1]+i2, p[2]+i3);
+            if( pt[0] < 0 || pt[0] >= dim )  continue;
+            if( pt[1] < 0 || pt[1] >= dim )  continue;
+            if( pt[2] < 0 || pt[2] >= dim )  continue;
+            if( cell[pt[0]][pt[1]][pt[2]] )  continue;
+            cell[pt[0]][pt[1]][pt[2]] = true;
+            if( pt[0] > mi1 )  mi1 = pt[0];
+            if( pt[1] > mi2 )  mi2 = pt[1];
+            if( pt[2] > mi3 )  mi3 = pt[2];
+            stack.push( pt );
+            for( int l=1; l < ml.Count(); l++)  {  // skip I
+              p1 = pt;
+              p1 /= dim;
+              p1 = ml[l] * p1;
+              p1 *= dim;
+              for( int k=0; k < 3; k++ )  {
+                ip[k] = Round(p1[k]);
+                while( ip[k] < 0  )   ip[k] += dim;
+                while( ip[k] >= dim ) ip[k] -= dim;
+              }
+              if( cell[ip[0]][ip[1]][ip[2]] )  continue;
+              cell[ip[0]][ip[1]][ip[2]] = true;
+              sets++;
             }
-            if( !cell[ip[0]][ip[1]][ip[2]].isNull() )  continue;
-            cell[ip[0]][ip[1]][ip[2]].setTrue(j);
-            sets++;
           }
         }
       }
     }
-    TBasicApp::GetLog() << sl.GetGroup(i).GetName() << "; mc = " << ml.Count() << " - " << (double)sets*100/(12*12*12) << "%\n";
+    TBasicApp::GetLog() << sl.GetGroup(i).GetName() << "; mc = " << 
+      ml.Count() << " - " << (double)sets*100/(dim*dim*dim) << "% {" << mi1 << ',' << mi2 << ',' << mi3 << "}\n";
+  }
+  for( int i=0; i < dim; i++ )  {
+    for( int j=0; j < dim; j++ )
+      delete [] cell[i][j];
+    delete [] cell[i];
   }
     return;
   TEBitArray ba;

@@ -603,6 +603,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\xlib\beevers-lipson.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\xlib\catom.h"
 				>
 			</File>
