@@ -50,8 +50,7 @@ public:
   virtual int GetSGOrder() const {  return sg::size;  }
 };
 
-class SFUtil {
-public:
+namespace SFUtil {
   static const short mapTypeDiff = 0,  // map type
                      mapTypeObs  = 1,
                      mapTypeCalc = 2,
@@ -60,10 +59,10 @@ public:
                      scaleRegression = 1;
   static const short sfOriginFcf = 0,  // structure factor origin
                      sfOriginOlex2 = 1;
-  static void ExpandToP1(const TArrayList<vec3i>& hkl, const TArrayList<compd>& F, const TSpaceGroup& sg, TArrayList<StructureFactor>& out);
-  static void FindMinMax(const TArrayList<StructureFactor>& F, vec3i& min, vec3i& max);
+  void ExpandToP1(const TArrayList<vec3i>& hkl, const TArrayList<compd>& F, const TSpaceGroup& sg, TArrayList<StructureFactor>& out);
+  void FindMinMax(const TArrayList<StructureFactor>& F, vec3i& min, vec3i& max);
   // prepares the list of hkl and structure factors, return error message or empty string
-  static olxstr GetSF(TRefList& refs, TArrayList<compd>& F, 
+  olxstr GetSF(TRefList& refs, TArrayList<compd>& F, 
     short mapType, short sfOrigin = sfOriginOlex2, short scaleType = scaleSimple);
 };
 
