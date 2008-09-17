@@ -127,6 +127,7 @@
 #include "ecast.h"
 #include "atomref.h"
 #include "wxglscene.h"
+#include "equeue.h"
 
 using namespace _xl_Controls;
 
@@ -7315,99 +7316,10 @@ public:
   }
 };
 #endif
-struct Int224 {
-  uint32_t d[7];
-  void set(int i, bool v) { 
-    if( v ) d[i/32] |= i << i%32;
-    else    d[i/32] &= ~(i << i%32);
-  }
-  void setTrue(int i) { 
-    d[i/32] |= 1 << i%32;
-  }
-  void setFalse(int i) { 
-    d[i/32] &= ~(1 << i%32);
-  }
-  bool get(int i)  {  
-    return ( d[i/32] & (1 << i%32) ) != 0;
-  }
-  Int224() { null();  }
-  void null() { d[0] = d[1] = d[2] = d[3] = d[4] = d[5] = d[6] = 0;  }
-  bool isNull()  {  return (d[0]|d[1]|d[2]|d[3]|d[4]|d[5]|d[6]) == 0;  }
-};
-template <class T> class LStack  {
-  struct item  {
-    item* prev;
-    T data;
-    item(const T& v, item* _prev) : data(v), prev(_prev)  {}
-  };
-  item* cur;
-public:
-  LStack() : cur(NULL)  {}
-  ~LStack()  {
-    while( cur != NULL )  {
-      item* p = cur->prev;
-      delete cur;
-      cur = p;
-    }
-  }
-  void push(const T& v)  {
-    item* ni = new item(v, cur);
-    cur = ni;
-  }
-  T pop()  { 
-    if( cur != NULL )  { 
-      item* i = cur->prev;
-      T rv = cur->data;
-      delete cur;
-      cur = i;
-      return rv;
-    }
-    throw 1;
-  }
-  bool isEmpty() {  return cur == NULL;  }
-};
-template <class T> class LQueue  {
-  struct item  {
-    item* next;
-    T data;
-    item(const T& v) : data(v), next(NULL)  {}
-  };
-  item* cur, *last;
-public:
-  LQueue() : cur(NULL), last(NULL)  {}
-  ~LQueue()  {
-    while( cur != NULL )  {
-      item* p = cur->next;
-      delete cur;
-      cur = p;
-    }
-  }
-  void push(const T& v)  {
-    item* ni = new item(v);
-    if( cur == NULL )  {
-      cur = last = ni;
-    }
-    else  {
-      last->next = ni;
-      last = ni;
-    }
-  }
-  T pop()  { 
-    if( cur != NULL )  { 
-      item* i = cur->next;
-      T rv = cur->data;
-      delete cur;
-      cur = i;
-      return rv;
-    }
-    throw 1;
-  }
-  bool isEmpty() {  return cur == NULL;  }
-};
 void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   TSymmLib& sl = *TSymmLib::GetInstance();
   smatd_list ml;
-  static const int dim = 24;
+  static const int dim = 29;
   bool** cell[dim];
   for( int i=0; i < dim; i++ )  {
     cell[i] = new bool*[dim];
@@ -7417,7 +7329,6 @@ void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   }
   vec3d p1;
   vec3i ip;
-  LQueue<vec3i> stack;
   for( int i=0; i < sl.SGCount(); i++ )  {
     ml.Clear();
     sl.GetGroup(i).GetMatrices(ml, mattAll);
@@ -7426,38 +7337,34 @@ void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         for( int i3=0; i3 < dim; i3++ )
           cell[i1][i2][i3] = false;
     int sets = 0, mi1 = 0, mi2 = 0, mi3 = 0;
-    stack.push( vec3i(0,0,0) );
-    while( !stack.isEmpty() )  {
-      vec3i p = stack.pop();
-      for( int i1=-1; i1 <=1; i1++ )  {
-        for( int i2=-1; i2 <=1; i2++ )  {
-          for( int i3=-1; i3 <=1; i3++ )  {
-            if( i1 == 0 && i2 == 0 && i3 == 0 )  continue;
-            vec3i pt(p[0]+i1, p[1]+i2, p[2]+i3);
-            if( pt[0] < 0 || pt[0] >= dim )  continue;
-            if( pt[1] < 0 || pt[1] >= dim )  continue;
-            if( pt[2] < 0 || pt[2] >= dim )  continue;
-            if( cell[pt[0]][pt[1]][pt[2]] )  continue;
-            cell[pt[0]][pt[1]][pt[2]] = true;
-            if( pt[0] > mi1 )  mi1 = pt[0];
-            if( pt[1] > mi2 )  mi2 = pt[1];
-            if( pt[2] > mi3 )  mi3 = pt[2];
-            stack.push( pt );
-            for( int l=1; l < ml.Count(); l++)  {  // skip I
-              p1 = pt;
-              p1 /= dim;
-              p1 = ml[l] * p1;
-              p1 *= dim;
-              for( int k=0; k < 3; k++ )  {
-                ip[k] = Round(p1[k]);
-                while( ip[k] < 0  )   ip[k] += dim;
-                while( ip[k] >= dim ) ip[k] -= dim;
-              }
-              if( cell[ip[0]][ip[1]][ip[2]] )  continue;
-              cell[ip[0]][ip[1]][ip[2]] = true;
-              sets++;
+    for( int i1=0; i1 < dim; i1++ )  {
+      const double d1 = (double)i1/dim;
+      for( int i2=0; i2 < dim; i2++ )  {
+        const double d2 = (double)i2/dim;
+        for( int i3=0; i3 < dim; i3++ )  {
+          const double d3 = (double)i3/dim;
+          if( cell[i1][i2][i3] )  continue;
+          int vc = 0;
+          vec3i minv;
+          for( int l=1; l < ml.Count(); l++)  {  // skip I
+            p1 = ml[l] * vec3d(d1,d2,d3);
+            p1 *= dim;
+            for( int k=0; k < 3; k++ )  {
+              ip[k] = Round(p1[k]);
+              while( ip[k] < 0  )   ip[k] += dim;
+              while( ip[k] >= dim ) ip[k] -= dim;
             }
+            if( cell[ip[0]][ip[1]][ip[2]] )  continue;
+            if( vc++ == 0 )
+              minv = ip;
+            else if( ip.QLength() < minv.QLength() )
+              minv = ip;
+            cell[ip[0]][ip[1]][ip[2]] = true;
+            sets++;
           }
+          if( minv[0] > mi1 )  mi1 = minv[0];
+          if( minv[1] > mi2 )  mi2 = minv[1];
+          if( minv[2] > mi3 )  mi3 = minv[2];
         }
       }
     }

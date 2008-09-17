@@ -84,18 +84,20 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
 
   TScattererLib scat_lib(9);
   TTypeList< AnAssociation2<TLibScatterer*, double> > scatterers;
-  TPtrList<TBasicAtomInfo> bais;
+  TPtrList<const TBasicAtomInfo> bais;
   for( int i=0; i < au.AtomCount(); i++ )  {
     const TCAtom& ca = au.GetAtom(i);
     if( ca.IsDeleted() || ca.GetAtomInfo() == iQPeakIndex )  continue;
-    int ind = bais.IndexOf( &ca.GetAtomInfo() );
+    const TBasicAtomInfo& bai = (ca.GetAtomInfo() == iDeuteriumIndex) ? 
+      TAtomsInfo::GetInstance()->GetAtomInfo(iHydrogenIndex) : ca.GetAtomInfo();
+    int ind = bais.IndexOf( &bai );
     if( ind == -1 )  {
-      scatterers.AddNew<TLibScatterer*, int>(scat_lib.Find(ca.GetAtomInfo().GetSymbol()), 0);
+      scatterers.AddNew<TLibScatterer*, int>(scat_lib.Find(bai.GetSymbol()), 0);
       ind = scatterers.Count() -1;
       if( scatterers[ind].GetA() == NULL ) {
         throw TFunctionFailedException(__OlxSourceInfo, olxstr("could not locate scatterer: ") << ca.GetAtomInfo().GetSymbol() );
       }
-      bais.Add( &ca.GetAtomInfo() );
+      bais.Add( &bai );
     }
     scatterers[ind].B() += ca.GetOccp();
   }

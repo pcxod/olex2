@@ -80,8 +80,8 @@ int main(int argc, char* argv[])  {
     //ExportSymmLibA();
     //ExportBAI( *XApp.AtomsInfo() );
     //ExportBAIA( *XApp.AtomsInfo(), scl );
-    //ExportSymmLibC();
-    ExportSymmLibD();
+    ExportSymmLibC();
+    //ExportSymmLibD();
   }
   catch( TExceptionBase& exc )  {
     printf("An exception occured: %s\n", EsdlObjectName(exc).c_str() );
@@ -927,6 +927,7 @@ void ExportBAIA(TAtomsInfo& ais, TScattererLib& scl)  {
   out.SaveToFile("e:/tmp/baiouta.h");
 }
 */
+//#include "bricks.h"
 struct SGSM {
   double m[3];
 };
@@ -934,6 +935,7 @@ struct SG  {
   char* name, *full_name, *hall_symbol, *axis;
   int number, latt;
   char* matrices;
+  //int brick[3][2];
 };
 void ExportSymmLibC()  {
   TSymmLib& sl = *TSymmLib::GetInstance();
@@ -941,6 +943,15 @@ void ExportSymmLibC()  {
   out.Add("olx_SGDef olx_SG[") << sl.SGCount() << "]={";
   for( int i=0; i < sl.SGCount(); i++ )  {
     TSpaceGroup& sg = sl.GetGroup(i);
+    //brick const * br = NULL;
+    for(int j=0; btable[j].sg_number != 0; j++ )  {
+      if( sg.GetHallSymbol() == olxstr(btable[j].hall_symbol).Trim(' ') )  {
+        br = &btable[j];
+        break;
+      }
+    }
+    //if( br == NULL )
+    //  TBasicApp::GetLog() << "hmm";
     olxstr& s = out.Add("{\"") << sg.GetName() << "\", \"" << sg.GetFullName() << 
       "\", \"" << sg.GetHallSymbol().Trim(' ') << "\", \"" << sg.GetAxis() << "\", " << sg.GetNumber() << 
       ", " << sg.GetLattice().GetLatt()*( sg.IsCentrosymmetric() ? 1 : -1) << ", \"";
