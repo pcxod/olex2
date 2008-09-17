@@ -24,7 +24,7 @@ class TMacroError: public IEObject  {
   bool DeleteObject;
   olxstr ErrorInfo, Location;
   IEObject* RetValue;
-  TEStack<olxstr>* Stack;
+  str_stack* Stack;
 public:
   TMacroError();
   virtual ~TMacroError()  {
@@ -64,8 +64,8 @@ public:
   inline bool HasRetVal()     const {  return RetValue != NULL;  }
   inline IEObject* RetObj()  const  {  return RetValue;  }
   
-  TEStack<olxstr>* GetStack() const {  return Stack;  }
-  void SetStack(TEStack<olxstr>& stack)  {  Stack = &stack;  }
+  str_stack* GetStack() const {  return Stack;  }
+  void SetStack(str_stack& stack)  {  Stack = &stack;  }
 
   // the type is validated
   template <class EObj>

@@ -38,7 +38,7 @@ TLibrary* THtml::Library = NULL;
 /*____________________________________________________________________________*/
 // unfortunately the global variables are required ....
     olxstr SwitchSource;
-    TEStack<olxstr> SwitchSources;
+    str_stack SwitchSources;
 /*____________________________________________________________________________*/
 
 //..............................................................................

@@ -294,7 +294,7 @@ public:
   HANDLE GetConout() {  return conout;  }
   virtual bool executeMacro(const olxstr& cmdLine)  {
     TMacroError ME;
-    TEStack<olxstr> stack;
+    str_stack stack;
     ME.SetStack( stack );
     Macros.ProcessMacro( cmdLine, ME );
     AnalyseError(ME);
@@ -1073,7 +1073,7 @@ public:
   //..............................................................................
   void funSG(const TStrObjList &Cmds, TMacroError &E)  {
     TSpaceGroup* sg = NULL;
-    try  { sg = &FXApp->XFile().GetLastLoaderSG();  }
+    try  { sg = &XApp.XFile().GetLastLoaderSG();  }
     catch(...)  {}
     if( sg != NULL )  {
       olxstr Tmp;

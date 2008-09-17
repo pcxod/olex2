@@ -28,7 +28,7 @@ bool  TSymmParser::SymmToMatrix(const olxstr& S, smatd& M)  {
   double ratio;
   int op, index;
   bool res = true;
-  TEStack<olxstr> stack;
+  str_stack stack;
   M.Null();
   TStrList toks(olxstr::LowerCase(S), ',');
   if( toks.Count() != 3 )
@@ -36,8 +36,7 @@ bool  TSymmParser::SymmToMatrix(const olxstr& S, smatd& M)  {
          olxstr("Operation sign is missing or operation is incomplete while parsing \"") << S << '\"');
 
   for( int i=0; i < 3; i++ )  {
-    stack.Clear();
-    TEStack<olxstr>::LoadFromExpression(stack, toks[i]);
+    stack.LoadFromExpression(toks[i]);
     p = stack.Pop();
     op = IsAxis(Axes, p);
     if( op < 0 )  {
@@ -75,8 +74,8 @@ next_oper:
         M.t[i] = p.ToDouble();  // translation
         continue;
       }
-      if( stack.Capacity() == 1 )  {
-        p = stack.Pop() + p;
+      if( stack.Count() == 1 )  {
+        p = stack.Pop() << p;
         M.t[i] = p.ToDouble();  // translation
         continue;
       }

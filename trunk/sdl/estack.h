@@ -10,31 +10,61 @@
 #include "exception.h"
 
 BeginEsdlNamespace()
-
-
-template <class T>
-  class TEStack: public IEObject  {
-  private:
-    TTypeList<T>   Stack;
-    int Position;
-  public:
-    TEStack()  {
-      Position = 0;
+// the simplet stack implementation
+template <class T> class TStack  {
+  struct item  {
+    item* prev;
+    T data;
+    item(const T& v, item* _prev) : data(v), prev(_prev)  {}
+  };
+  item* cur;
+  int _count;
+public:
+  TStack() : cur(NULL), _count(0)  {}
+  virtual ~TStack()  {  Clear();  }
+  void Clear()  {
+    while( cur != NULL )  {
+      item* p = cur->prev;
+      delete cur;
+      cur = p;
     }
-    virtual ~TEStack()  {  ;  }
-    inline void Clear()  {
-      Stack.Clear();
-      Position = 0;
+    _count = 0;
+  }
+  inline T& Push(const T& v)  {
+    item* ni = new item(v, cur);
+    cur = ni;
+    _count++;
+    return cur->data;
+  }
+  inline T Pop()  { 
+    if( cur != NULL )  { 
+      item* i = cur->prev;
+      T rv = cur->data;
+      delete cur;
+      cur = i;
+      _count--;
+      return rv;
     }
-    static int LoadFromExpression(TEStack<T>& stack,  const olxstr& Exp) {
-      stack.Clear();
-      int argc=0;
-      char op;
-      olxstr o;
-      bool NewOperation = false;
-      if( Exp.Length() )  {
-        for( int i=0; i < Exp.Length(); i++ )  {
-          switch( Exp[i] )  {
+    throw TFunctionFailedException(__OlxSourceInfo, "stack is empty");
+  }
+  inline bool IsEmpty() const {  return cur == NULL;  }
+  inline int Count() const {  return _count;  }
+};
+
+class str_stack : public TStack<olxstr>  {
+public:
+  str_stack(const olxstr& exp)  {  LoadFromExpression(exp);  }
+  str_stack() {}
+
+  int LoadFromExpression(const olxstr& Exp) {
+    Clear();
+    int argc=0;
+    char op;
+    olxstr o;
+    bool NewOperation = false;
+    if( !Exp.IsEmpty() )  {
+      for( int i=0; i < Exp.Length(); i++ )  {
+        switch( Exp.CharAt(i) )  {
             case '-':    NewOperation = true;    op = '-';    break;
             case '+':    NewOperation = true;    op = '+';    break;
             case ' ':    break;
@@ -42,38 +72,23 @@ template <class T>
             case '/':    NewOperation = true;    op = '/';    break;
             default:
               if( NewOperation )  {
-                if( o.Length() )  {
-                  stack.Push(o);
+                if( !o.IsEmpty() )  {
+                  Push(o);
                   argc++;
                 }
-                stack.Push(op);
+                Push(op);
                 o = EmptyString;
                 NewOperation = false;
               }
-            o << Exp[i];
-            break;
-          }
+              o << Exp[i];
+              break;
         }
-        stack.Push(o);
       }
-      return argc;  }
-
-    const T& Pop()  {
-      Position--;
-      if( Position < 0 )  {
-        Position = 0;
-        throw TFunctionFailedException(__OlxSourceInfo, "empty stack");
-      }
-      return Stack[Position];
+      Push(o);
     }
-    inline void  Push(const T& val)  {
-      Stack.AddCCopy( val );
-      Position++;
-    }
-
-    inline int Capacity() const {  return Position;  }
-    inline bool IsEmpty() const {  return Position <= 0;  }
-  };
+    return argc;  
+  }
+};
 
 EndEsdlNamespace()
 #endif
