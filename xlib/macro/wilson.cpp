@@ -244,6 +244,8 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
     output.Add("#x_label = ln(<Fo^2>)/(Fexp^2)");
     output.Add(olxstr("#y = ") << olxstr::FormatFloat(3,line[1]) << "*x" 
       << ((line[1] < 0) ? " " : "+") << olxstr::FormatFloat(3,line[0]) );
+    output.Add("#fit_y_intercept = ") << olxstr::FormatFloat(3,line[1]);
+    output.Add("#fit_slope = ") << olxstr::FormatFloat(3,line[0]);
     output.Add("#B = ") << olxstr::FormatFloat(3,B);
     output.Add("#K = ") << olxstr::FormatFloat(3,1./K);
     output.Add("#<|E^2-1|> = ") << olxstr::FormatFloat(3,E2);
