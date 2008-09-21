@@ -114,21 +114,27 @@ public:
     data[0] *= (T)v[0];  data[1] *= (T)v[1];  data[2] *= (T)v[2];  
     return *this;
   }
-
+#ifndef __BORLANDC__ // stupid compiler
   template <class AT> inline TVector3<T>& operator += (AT v)  {
-    data[0] += (T)v;  data[1] += (T)v;  data[2] += (T)v;  
+    data[0] += (T)v;  data[1] += (T)v;  data[2] += (T)v;
     return *this;
   }
   template <class AT> inline TVector3<T>& operator -= (AT v)  {
-    data[0] -= (T)v;  data[1] -= (T)v;  data[2] -= (T)v;  
+    data[0] -= (T)v;  data[1] -= (T)v;  data[2] -= (T)v;
     return *this;
   }
   template <class AT> inline TVector3<T>& operator *= (AT v)  {
-    data[0] *= (T)v;  data[1] *= (T)v;  data[2] *= (T)v;  
+    data[0] *= (T)v;  data[1] *= (T)v;  data[2] *= (T)v;
     return *this;
   }
+#else
+  inline TVector3<T>& operator *= (double v)  {
+    data[0] *= v;  data[1] *= v;  data[2] *= v;
+    return *this;
+  }
+#endif
   template <class AT> inline TVector3<T>& operator /= (AT v)  {
-    data[0] /= v;  data[1] /= v;  data[2] /= v;  
+    data[0] /= v;  data[1] /= v;  data[2] /= v;
     return *this;
   }
 
@@ -142,17 +148,23 @@ public:
     return TVector3<T>(data[0]*v[0], data[1]*v[1], data[2]*v[2]);
   }
 
+#ifndef __BORLANDC__ // stupid compiler
   template <class AT> inline TVector3<T> operator + (AT v) const {
-    return TVector3<T>(data[0]+v, data[1]+v, data[2]+v);  
+    return TVector3<T>(data[0]+v, data[1]+v, data[2]+v);
   }
   template <class AT> inline TVector3<T> operator - (AT v) const {
-    return TVector3<T>(data[0]-v, data[1]-v, data[2]-v);  
+    return TVector3<T>(data[0]-v, data[1]-v, data[2]-v);
   }
   template <class AT> inline TVector3<T> operator * (AT v) const {
-    return TVector3<T>(data[0]*v, data[1]*v, data[2]*v);  
+    return TVector3<T>(data[0]*v, data[1]*v, data[2]*v);
   }
+#else
+  inline TVector3<T> operator * (double v) const {
+    return TVector3<T>(data[0]*v, data[1]*v, data[2]*v);
+  }
+#endif
   template <class AT> inline TVector3<T> operator / (AT v) const {
-    return TVector3<T>(data[0]/v, data[1]/v, data[2]/v);  
+    return TVector3<T>(data[0]/v, data[1]/v, data[2]/v);
   }
 
   /* beware - transposed form, use M.v for normal multiplication
@@ -304,19 +316,19 @@ public:
     data[2][0] = (T)v[2][0];  data[2][1] = (T)v[2][1];  data[2][2] = (T)v[2][2];
     return *this;
   }
-#ifndef __BORLANDC__ // relaly annoying - would use same for the Matrix33!
+#ifndef __BORLANDC__ // really annoying - would use same for the Matrix33!
   template <class AT> inline TMatrix33<T>& operator *= (AT v) {
     data[0][0] *= v;  data[0][1] *= v;  data[0][2] *= v;
     data[1][0] *= v;  data[1][1] *= v;  data[1][2] *= v;
     data[2][0] *= v;  data[2][1] *= v;  data[2][2] *= v;
-	return *this;
+    return *this;
   }
 #else
   inline TMatrix33<T>& operator *= (double v) {
     data[0][0] *= v;  data[0][1] *= v;  data[0][2] *= v;
     data[1][0] *= v;  data[1][1] *= v;  data[1][2] *= v;
     data[2][0] *= v;  data[2][1] *= v;  data[2][2] *= v;
-	return *this;
+    return *this;
   }
 #endif
   template <class AT> inline TMatrix33<T>& operator /= (AT v) {

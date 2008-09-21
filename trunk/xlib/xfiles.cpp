@@ -303,7 +303,7 @@ void TXFile::LibGetFormula(const TStrObjList& Params, TMacroError& E)  {
 
     bool subAdded = false;
     double dv = units[i].ToDouble()/GetAsymmUnit().GetZ();
-    tmp = (digits > 0) ? olxstr::FormatFloat(digits, dv) : dv;
+    tmp = (digits > 0) ? olxstr::FormatFloat(digits, dv) : olxstr(dv);
     if( tmp.IndexOf('.') != -1 )
       tmp.TrimFloat();
     if( html )  {
