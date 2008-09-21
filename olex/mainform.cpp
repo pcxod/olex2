@@ -618,7 +618,9 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual accupancy\
   this_InitMacro(Fvar, , (fpAny^fpNone)|psCheckFileTypeIns );
   this_InitMacro(Sump, , (fpAny^fpNone)|psCheckFileTypeIns );
   this_InitMacro(Part, p&;lo, (fpAny^fpNone)|psCheckFileTypeIns );
-  this_InitMacro(Afix, , (fpAny^fpNone)|psCheckFileTypeIns );
+  this_InitMacroD(Afix,"n-for afix 66 restraints the pyridine rings as well as phenol rings" , 
+    (fpAny^fpNone)|psCheckFileTypeIns,
+    "sets atoms afix, special cases are 56,69,66,69,76,79,106,109,116 and 119");
   this_InitMacro(Dfix, cs-do not clear selection&;e, fpAny|psCheckFileTypeIns );
   this_InitMacroD(Tria, "cs-do not clear selection", fpAny|psCheckFileTypeIns,
 "Adds a distance restraint for bonds and 'angle' restraint for the angle");
@@ -1230,8 +1232,6 @@ void TMainForm::StartupInit()  {
   FInfoBox->SetFontIndex( 2 );
   GlTooltip->SetFontIndex( 5 );
 
-  FXApp->Init(); // initialise the gl
-
   olxstr T(DataDir);  
   T << FLastSettingsFile;
   if( !TEFile::FileExists(T) )  {
@@ -1245,6 +1245,8 @@ void TMainForm::StartupInit()  {
     uiStrT("Exception: ") += uiStr(EsdlObjectName(exc)), wxOK|wxICON_ERROR);
     throw;
   }
+
+  FXApp->Init(); // initialise the gl after styles reloaded
 
   FInfoBox->SetHeight(FXApp->GetRender().Scene()->Font(2)->TextHeight(EmptyString));
   

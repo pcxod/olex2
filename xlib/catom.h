@@ -16,29 +16,31 @@ BeginXlibNamespace()
 //};
 
 class TEllipsoid;
+class TAfixGroup;
 
 class TCAtom: public ACollectionItem  {
 private:
   class TAsymmUnit *FParent;
   TBasicAtomInfo*  FAtomInfo;    // a pointer to TBasisAtomInfo object
+  TCAtom* Pivot;
   olxstr FLabel;    // atom's label
-  int     Id;       // c_atoms id; this is also used to identify if TSAtoms are the same
+  int     Id, Tag;       // c_atoms id; this is also used to identify if TSAtoms are the same
   int     LoaderId; // id of the atom in the asymmertic unit of the loader
-  int     ResiId, SameId, SharedSiteId, EllpId;   // residue and SADI ID
+  int     ResiId, SameId, SharedSiteId, EllpId, Afix;   // residue and SADI ID
   double  Occp;     // occupancy and its variable
   double  Uiso, QPeak;    // isotropic thermal parameter; use it when Ellipsoid = NULL
   int     FragmentId;   // this is used in asymmetric unit sort and initialised in TLatice::InitBody()
   vec3d Center, Esd;  // fractional coordinates and esds
   evecd FEllpsE;   // errors for the values six values from INS file
   evecd FFixedValues;  // at least five values (x,y,z, Occ, Uiso), may be 10, (x,y,z, Occ, Uij)
-  short Part, Afix, Degeneracy, 
+  short Part, Degeneracy, 
         Hfix; // hfix is only an of the "interface" use; HFIX istructions are parsed
   int AfixAtomId;   // this is used to fix afixes after sorting
   bool Deleted, 
-    Sortable;  // is true if not AFIX 5m,6m,7m,10m,11m > 16 or a part of SAME
+    Saved;  // is true the atoms already saved (to work aroung SAME, AFIX)
   bool CanBeGrown,
        HAttached;  // used for the hadd command
-  TPtrList<TCAtom>* FAttachedAtoms, *FAttachedAtomsI;
+  TPtrList<TCAtom>* FAttachedAtoms, *FAttachedAtomsI, *Dependent;
 public:
   TCAtom(TAsymmUnit *Parent);
   virtual ~TCAtom();
@@ -79,7 +81,13 @@ public:
   inline bool IsAttachedToI(TCAtom& CA)const {
     return FAttachedAtomsI == NULL ? false : FAttachedAtomsI->IndexOf(&CA) != -1;
   }
-
+  int DependentCount() const {  return Dependent == NULL ? 0 : Dependent->Count();  }
+  void ClearDependent()      {  if( Dependent != NULL )  Dependent->Clear();  }
+  TCAtom& GetDependentAtom(int i) const {  return *Dependent->Item(i);  }
+  void AddDependent(TCAtom& ca) {  
+    if( Dependent == NULL )  Dependent = new TPtrList<TCAtom>;
+    Dependent->Add(&ca);
+  }
   // beware - just the memory addresses compared!
   inline bool operator == (const TCAtom& ca)  const  {  return this == &ca;  }
   inline bool operator == (const TCAtom* ca)  const  {  return this == ca;  }
@@ -90,6 +98,7 @@ public:
   void  Assign(const TCAtom& S);
 
   DefPropP(int, Id)
+  DefPropP(int, Tag)
   DefPropP(int, LoaderId)
   DefPropP(int, ResiId)
   DefPropP(int, SameId)
@@ -101,14 +110,16 @@ public:
 //  short   Frag;    // fragment index
   DefPropP(short, Degeneracy)
   DefPropP(short, Part)
-  DefPropP(short, Afix)
+  int GetAfix() const {  return Afix;  }
+  void SetAfix(int v);
+  DefPropP(TCAtom*, Pivot)
   DefPropP(short, Hfix)
   DefPropP(double, Occp)
   DefPropP(double, Uiso)
   DefPropP(double, QPeak)
   DefPropB(Deleted)
   DefPropB(HAttached)
-  DefPropB(Sortable)
+  DefPropB(Saved)
   // can be grown is set by UnitCell::Init
   DefPropP(bool, CanBeGrown)
 
@@ -136,6 +147,7 @@ public:
   static const short CrdFixedValuesOffset,
                      OccpFixedValuesOffset,
                      UisoFixedValuesOffset;
+  friend TAfixGroup;
 };
 //..............................................................................
   typedef TPtrList<TCAtom> TCAtomPList;

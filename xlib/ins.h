@@ -15,6 +15,8 @@
 #include "symmparser.h"
 #include "atomref.h"
 #include "asymmunit.h"
+#include "estack.h"
+
 #ifdef AdAtom
   #undef AddAtom
 #endif
@@ -28,15 +30,18 @@ class TIns: public TBasicCFile  {
   struct ParseContext {
     TStrList Symm;
     TStrPObjList<olxstr, TBasicAtomInfo*>  BasicAtoms;  // SFAC container
-    bool CellFound;
-    int Afix, Part;
+    bool CellFound, DependentNonH, SetNextPivot;
+    int Part, Afix;
+    TStack< AnAssociation3<int,TCAtom*, bool> > DependentAtoms;  // number of atoms (left), pivot, Hydrogens or not
     double PartOccu;
+    TCAtom* Last;
     TAsymmUnit::TResidue* Resi;
-    ParseContext()  {
-      CellFound = false;
+    // SAME instructions and the first atom after it/them
+    TTypeList< AnAssociation2<TStrList,TCAtom*> > Same;
+    ParseContext() : Resi(NULL), Last(NULL)  {
+      SetNextPivot = DependentNonH = CellFound = false;
       PartOccu = 0;
       Afix = Part = 0;
-      Resi = NULL;
     }
   };
 private:
@@ -67,6 +72,10 @@ protected:
   void _SaveSymm(TStrList& SL);
   void _SaveHklSrc(TStrList& SL);
   void _SaveRefMethod(TStrList& SL);
+  void _ProcessAfix(TCAtom& a, ParseContext& cx);
+  // if atoms is saved, its Tag is added to the index (if not NULL) 
+  void _SaveAtom(TCAtom& a, int& part, int& afix, TStrPObjList<olxstr,TBasicAtomInfo*>* sfac, TStrList& sl, TIntList* index=NULL, bool checkSame=true);
+  void _ProcessSame(ParseContext& cx);
   // initialises the unparsed instruction list
   void _FinishParsing();
 public:
@@ -129,11 +138,12 @@ public:
    Instructions are initialised with all unrecognised commands
    @retutn error message or an empty string
   */
-  void UpdateAtomsFromStrings(TCAtomPList& CAtoms, TStrList& SL, TStrList& Instructions);
+  void UpdateAtomsFromStrings(TCAtomPList& CAtoms, const TIntList& index, TStrList& SL, TStrList& Instructions);
   /* saves some atoms to a plain ins format with no headers etc; to be used with
-    UpdateAtomsFromFile
+    UpdateAtomsFromStrings. index is initialised with the order in which atoms saved
+    this must be passed to UpdateAtomsFromString
   */
-  bool SaveAtomsToStrings(const TCAtomPList& CAtoms, TStrList& SL, TSimpleRestraintPList* processed);
+  bool SaveAtomsToStrings(const TCAtomPList& CAtoms, TIntList& index, TStrList& SL, TSimpleRestraintPList* processed);
   void SaveRestraints(TStrList& SL, const TCAtomPList* atoms, TSimpleRestraintPList* processed, TAsymmUnit* au);
   template <class StrLst> void ParseRestraints(StrLst& SL, TAsymmUnit* au)  {
       if( au == NULL )  au = &GetAsymmUnit();

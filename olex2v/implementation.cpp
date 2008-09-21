@@ -149,7 +149,8 @@ void TOlexViewer::OnFileChanged(const char* fileName)  {
 }
 //.......................................................................................
 void TOlexViewer::Clear()  {
-  GXApp->Clear();
+  GXApp->XFile().GetLattice().Clear(true);
+  GXApp->CreateObjects(false, false);
 }
 //.......................................................................................
 olxstr TOlexViewer::GetObjectLabelAt(int x, int y)  {
@@ -342,6 +343,9 @@ void olxv_LoadStyle(const char* FN)  {
 }
 void olxv_Clear()  {
   if( TOlexViewer::Instance != NULL )  TOlexViewer::Instance->Clear();
+}
+int olxv_GetVersion()  {
+  return DllVersion;
 }
 
 BOOL APIENTRY DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved)  {

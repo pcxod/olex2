@@ -54,6 +54,26 @@ extern "C" {
   void DllImport olxv_LoadStyle(const char* FN);
   void DllImport olxv_LoadScene(const char* FN);
   void DllImport olxv_Clear();
+  /* this changes if any of the function signatures changes or new functions added 
+    2008.09.19 - version 1 is returned, the starting point. Interface:
+    const char* DllImport olxv_Initialize(HDC hdc, int w, int h);
+    void DllImport olxv_Finalize();
+    void DllImport olxv_OnPaint();
+    void DllImport olxv_OnSize(int w, int h);
+    bool DllImport olxv_OnMouse(int w, int h, short MouseEvent, short MouseButton, short ShiftState);
+    void DllImport olxv_OnFileChanged(const char* FN);
+    const char* DllImport olxv_GetObjectLabelAt(int x, int y);
+    const char* DllImport olxv_GetSelectionInfo();
+    void DllImport olxv_ShowLabels(unsigned short what);
+    void DllImport olxv_ShowQPeaks(short what);
+    void DllImport olxv_ShowCell(bool v);
+    void DllImport olxv_DrawStyle(short style);
+    void DllImport olxv_LoadStyle(const char* FN);
+    void DllImport olxv_LoadScene(const char* FN);
+    void DllImport olxv_Clear();
+    int DllImport olxv_GetVersion();
+  */
+  int DllImport olxv_GetVersion();
 };
 
 #endif

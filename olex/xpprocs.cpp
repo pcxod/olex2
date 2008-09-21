@@ -3351,14 +3351,95 @@ void TMainForm::macAfix(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     E.ProcessingError(__OlxSrcInfo, "afix should be specified" );
     return;
   }
-  if( Cmds.Count() != 0 )
+  if( !Cmds.IsEmpty() )
     FXApp->FindXAtoms(Cmds.Text(' '), Atoms);
   if( Atoms.IsEmpty() )  {
-    E.ProcessingError(__OlxSrcInfo, "no atoms provided" );
-    return;
+    if( afix == 66 )  {  // special case
+      TTypeList< TSAtomPList > rings;
+      try  {  
+        FXApp->FindRings("C6", rings);  
+        if( Options.Contains('n') )
+          FXApp->FindRings("NC5", rings);  
+      }
+      catch( const TExceptionBase& exc )  {  throw TFunctionFailedException(__OlxSourceInfo, exc);  }
+      for( int i=0; i < rings.Count(); i++ )  {
+        if( !TNetwork::IsRingRegular(rings[i]) )  continue;
+        // find the pivot (with heaviest atom attached)
+        int pivot = -1;
+        double maxmw = 0;
+        for( int j=0; j < rings[i].Count(); j++ )  {
+          if( rings[i][j]->CAtom().GetAfix() != 0 )  {
+            pivot = -1;
+            break;
+          }
+          int nhc = 0;
+          double local_maxmw = 0;
+          for( int k=0; k < rings[i][j]->NodeCount(); k++ )  {
+            double mw = rings[i][j]->Node(k).GetAtomInfo().GetMr();
+            if( mw < 3 )  continue; // H, D
+            if( mw > local_maxmw )  local_maxmw = mw;
+            nhc++;
+          }
+          if( nhc == 3 )  {
+            if( local_maxmw > maxmw )  {
+              pivot = j;
+              maxmw = local_maxmw;
+            }
+          }
+        }
+        olxstr info("Processing");
+        for( int j=0; j < rings[i].Count(); j++ )
+          info << ' ' << rings[i][j]->GetLabel();
+        TBasicApp::GetLog() << (info << ". Chosen pivot atom is ") << rings[i][pivot]->GetLabel() << '\n';
+        if( pivot == -1 )  continue;
+        rings[i][pivot]->CAtom().ClearDependent();
+        for( int j=pivot+1; j < rings[i].Count(); j++ )  {
+          rings[i][pivot]->CAtom().AddDependent( rings[i][j]->CAtom() );
+          rings[i][j]->CAtom().SetAfix(65);
+          rings[i][j]->CAtom().SetPivot( &rings[i][pivot]->CAtom() );
+        }
+        for( int j=0; j < pivot; j++ )  {
+          rings[i][pivot]->CAtom().AddDependent( rings[i][j]->CAtom() );
+          rings[i][j]->CAtom().SetAfix(65);
+          rings[i][j]->CAtom().SetPivot( &rings[i][pivot]->CAtom() );
+        }
+        rings[i][pivot]->CAtom().SetAfix(66);
+      }
+    }
+    else  {
+      E.ProcessingError(__OlxSrcInfo, "no atoms provided" );
+    }
+      return;
   }
-  for( int i=0; i < Atoms.Count(); i++ )
-    Atoms[i]->Atom().CAtom().SetAfix( afix );
+  if( afix == 56 || afix == 66  || afix == 76 || afix == 116 || afix == 106 ||
+      afix == 59 || afix == 69  || afix == 79 || afix == 119 || afix == 109 )  {
+    if( (afix == 56 || afix == 59) &&  Atoms.Count() != 6 )  {
+      E.ProcessingError(__OlxSrcInfo, "please provide 5 atoms exactly" );
+      return;
+    }
+    else if( (afix == 66 || afix == 69 || afix == 76 || afix == 79) &&  Atoms.Count() != 6 )  {
+      E.ProcessingError(__OlxSrcInfo, "please provide 6 atoms exactly" );
+      return;
+    }
+    else if( (afix == 106 || afix == 109 || afix == 116 || afix == 119) &&  Atoms.Count() != 10 )  {
+      E.ProcessingError(__OlxSrcInfo, "please provide 10 atoms exactly" );
+      return;
+    }
+    Atoms[0]->Atom().CAtom().ClearDependent();
+    Atoms[0]->Atom().CAtom().SetPivot(NULL);
+    for( int i=1; i < Atoms.Count(); i++ )  {
+      if( Atoms[i]->Atom().CAtom().GetAfix() == afix )  // in case atoms are reodered
+        Atoms[i]->Atom().CAtom().ClearDependent();
+      Atoms[i]->Atom().CAtom().SetAfix( (afix/10)*10 + 5);
+      Atoms[0]->Atom().CAtom().AddDependent( Atoms[i]->Atom().CAtom() );
+      Atoms[i]->Atom().CAtom().SetPivot( &Atoms[0]->Atom().CAtom() );
+    }
+    Atoms[0]->Atom().CAtom().SetAfix(afix);
+  }
+  else  {
+    for( int i=0; i < Atoms.Count(); i++ )  
+      Atoms[i]->Atom().CAtom().SetAfix(afix);
+  }
 }
 //..............................................................................
 void TMainForm::macDegen(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
@@ -4360,7 +4441,6 @@ void TMainForm::macShowP(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 }
 //..............................................................................
 void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  TSAtomPList SAtoms;
   TCAtomPList CAtoms;
   TXAtomPList Atoms;
   TIns *Ins = (TIns*)FXApp->XFile().GetLastLoader();
@@ -4374,22 +4454,35 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options, TMacro
   Ins->UpdateParams();
   TSimpleRestraintPList restraints;
 
-  for(int i=0; i < Atoms.Count(); i++ )  {
-    TXAtom* XA = Atoms[i];
-    SAtoms.Add( &XA->Atom() );
-    for( int j=0; j < XA->Atom().NodeCount(); j++ )  {
-      TSAtom* SA = &XA->Atom().Node(j);
-      if( SA->GetAtomInfo() == iHydrogenIndex )
-        SAtoms.Add( SA );
+  for(int i=0; i < Atoms.Count(); i++ )
+    CAtoms.Add( &Atoms[i]->Atom().CAtom() );
+
+  for(int i=0; i < CAtoms.Count(); i++ )  {  // add afixed mates, recursion here!
+    for( int j=0; j < CAtoms[i]->DependentCount(); j++ ) 
+      CAtoms.Add( &CAtoms[i]->GetDependentAtom(j) );
+  }
+  TPtrList<TSameGroup> processed;
+  int ac = CAtoms.Count();  // to avoid recursion
+  for( int i=0; i < ac; i++ )  {
+    if( CAtoms[i]->GetSameId() != -1 )  {
+      TSameGroup& sg = FXApp->XFile().GetAsymmUnit().SimilarFragments()[CAtoms[i]->GetSameId()];
+      if( processed.IndexOf( &sg ) != -1 )  continue;
+      processed.Add( &sg );
+      for( int j=0; j < sg.Count(); j++ )
+        CAtoms.Add( &sg[j] );
     }
   }
+  for(int i=ac; i < CAtoms.Count(); i++ )  {  // add afixed mates, for SAME frags recursion here!
+    for( int j=0; j < CAtoms[i]->DependentCount(); j++ ) 
+      CAtoms.Add( &CAtoms[i]->GetDependentAtom(j) );
+  }
   // make sure that the list is unique
-  for( int i=0; i < SAtoms.Count(); i++ )
-    SAtoms[i]->SetTag(i);
-  for( int i=0; i < SAtoms.Count(); i++ )
-    if( SAtoms[i]->GetTag() != i )  SAtoms[i] = NULL;
-  SAtoms.Pack();
-  TListCaster::POP(SAtoms, CAtoms);
+  for( int i=0; i < CAtoms.Count(); i++ )
+    CAtoms[i]->SetTag(i);
+  for( int i=0; i < CAtoms.Count(); i++ )
+    if( CAtoms[i]->GetTag() != i || CAtoms[i]->IsDeleted() )  
+      CAtoms[i] = NULL;
+  CAtoms.Pack();
   FXApp->XFile().GetAsymmUnit().Sort( &CAtoms );
   TStrList SL, *InsParamsCopy, NewIns;
   TStrPObjList<olxstr, TStrList* > RemovedIns;
@@ -4431,8 +4524,8 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options, TMacro
     SL.Insert(0, "REM by Olex2 automatically, though you can change any parameters");
   }
   SL.Add(EmptyString);
-
-  Ins->SaveAtomsToStrings(CAtoms, SL, &restraints);
+  TIntList atomIndex;
+  Ins->SaveAtomsToStrings(CAtoms, atomIndex, SL, &restraints);
   for( int i=0; i < restraints.Count(); i++ )
     restraints[i]->GetParent()->Release(*restraints[i]);
 
@@ -4448,7 +4541,7 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options, TMacro
     if( dlg->ShowModal() == wxID_OK )  {
       SL.Clear();
       SL.Strtok(dlg->GetText(), '\n');
-      Ins->UpdateAtomsFromStrings(CAtoms, SL, NewIns);
+      Ins->UpdateAtomsFromStrings(CAtoms, atomIndex, SL, NewIns);
       // add new instructions
       for( int i=0; i < NewIns.Count(); i++ )  {
         SL.Clear();
@@ -4474,11 +4567,11 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options, TMacro
   }
   catch(const TExceptionBase& exc )  {
     TBasicApp::GetLog().Exception( exc.GetException()->GetError() );
-    for( int i=0; i < RemovedIns.Count(); i++ )
-      delete (TStrList*)RemovedIns.Object(i);
     for( int i=0; i < restraints.Count(); i++ )
       restraints[i]->GetParent()->Restore(*restraints[i]);
   }
+  for( int i=0; i < RemovedIns.Count(); i++ )
+    delete (TStrList*)RemovedIns.Object(i);
   dlg->Destroy();
 }
 //..............................................................................

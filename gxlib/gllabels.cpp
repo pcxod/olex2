@@ -160,6 +160,10 @@ bool TXGlLabels::Orient(TGlPrimitive *P)  {
       if( XA->Atom().CAtom().GetOccp() != 1 )
         Tmp << olxstr::FormatFloat(3, XA->Atom().CAtom().GetOccp() );
     }
+#ifdef _DEBUG
+    if( XA->Atom().CAtom().GetSameId() != -1 )
+      Tmp << ':' << XA->Atom().CAtom().GetSameId();
+#endif
     if( Tmp.IsEmpty() )  continue;
     P->String(&Tmp);
     if( !matInited )  {

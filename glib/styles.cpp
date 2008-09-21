@@ -282,8 +282,7 @@ TGraphicsStyles::TGraphicsStyles(TGlRender *Render)  {
   FRender = Render;
 }
 //..............................................................................
-TGraphicsStyles::~TGraphicsStyles()
-{
+TGraphicsStyles::~TGraphicsStyles()  {
   Clear();
   delete FRoot;
   delete FPStyles;

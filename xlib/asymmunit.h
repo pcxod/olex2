@@ -14,6 +14,7 @@
 #include "srestraint.h"
 
 #include "ellipsoid.h"
+#include "samegroup.h"
 
 #undef GetObject
 
@@ -113,9 +114,9 @@ protected:
                   rRBnd,  // rigid bond restraints (DELU)
                   rUsim,  // similar Uij (SIMU)
                   rUiso,  // Uij components approximate to isotropic behavior (ISOR)
-                  rEADP,  // equivalent adp, constraint
-                  rSAME;  // obvious ...
-
+                  rEADP;  // equivalent adp, constraint
+                 
+  TSameGroupList  rSAME;
 public:
 
   TAsymmUnit(TLattice *L, TAtomsInfo *AI);
@@ -303,7 +304,7 @@ public:
   // EADP
   inline TSRestraintList& EquivalentU()         {  return rEADP;  }
   // SAME
-  inline TSRestraintList& SimilarFragments()    {  return rSAME;  }
+  inline TSameGroupList& SimilarFragments()     {  return rSAME;  }
 
 
   // returns next available part istruction in atoms

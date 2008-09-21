@@ -264,69 +264,69 @@ class XRigidGroup : public ARestraint {
   short RefinementType_Code;
   XSite* Pivot;
 protected:
-  int SiteCount;
+  int MinSiteCount;
   double D1, D2;
 public:
   XRigidGroup(IRefinementModel& container, short code, 
               short rt, double d1 = -1, double d2 = -1) : ARestraint(container),
                 RigidGroup_Code(code), RefinementType_Code(rt), D1(d1), D2(d2), Pivot(NULL)  {
     if( code == rg_SP31)
-      SiteCount = 1;
+      MinSiteCount = 1;
     else if( code == rg_SP32 )
-      SiteCount = 2;
+      MinSiteCount = 2;
     else if( code == rg_SP33 )
-      SiteCount = 3;
+      MinSiteCount = 3;
     else if( code == rg_SP21 )
-      SiteCount = 1;
+      MinSiteCount = 1;
     else if( code == rg_Pentagon )  {
-      SiteCount = 5;
+      MinSiteCount = 5;
       if( D1 == -1 )  D1 = 1.42;
     }
     else if( code == rg_Hexagon_135 )  {
-      SiteCount = 6;
+      MinSiteCount = 6;
       if( D1 == -1 )  D1 = 1.39;
     }
     else if( code == rg_Hexagon_any )  {
-      SiteCount = 6;
+      MinSiteCount = 6;
       if( D1 == -1 )  D1 = 1.39;
     }
     else if( code == rg_O1_auto )
-      SiteCount = 1;
+      MinSiteCount = 1;
     else if( code == rg_SP22 )
-      SiteCount = 2;
+      MinSiteCount = 2;
     else if( code == rg_Cp_star )  {
-      SiteCount = 10;
+      MinSiteCount = 10;
       if( D1 == -1 )  D1 = 1.42;
       if( D2 == -1 )  D2 = 1.63;  // Me-Cp sidtance
     }
     else if ( code == rg_Naphthalene )  {
-      SiteCount = 10;
+      MinSiteCount = 10;
       if( D1 == -1 )  D1 = 1.39;
     }
     else if( code == rg_SP33_disorder )
-      SiteCount = 6;  
+      MinSiteCount = 6;  
     else if( code == rg_SP33_fourier )
-      SiteCount = 3;  
+      MinSiteCount = 3;  
     else if( code == rg_O1_fourier )
-      SiteCount = 1;  
+      MinSiteCount = 1;  
     else if( code == rg_BH )
-      SiteCount = 1;  
+      MinSiteCount = 1;  
     else
-      SiteCount = container.GetReferenceSize(code); 
+      MinSiteCount = container.GetReferenceSize(code); 
   }
   inline short GetGroupType()      const {  return RigidGroup_Code;  }
   inline short GetRefinementType() const {  return RefinementType_Code;  }
   DefPropP(XSite*, Pivot)
   void AddSite(XSite* xs)  {
-    if( Sites.Count() + 1 > SiteCount )
-      throw TInvalidArgumentException(__OlxSourceInfo, "too many atoms in the rigid group");
+//    if( Sites.Count() + 1 > SiteCount )
+//      throw TInvalidArgumentException(__OlxSourceInfo, "too many atoms in the rigid group");
     Sites.Add(xs);
   }
   inline int Count()                      const {  return Sites.Count();  }
   inline XSite* operator [] (int i)             {  return Sites[i];  }
   inline const XSite* operator [] (int i) const {  return Sites[i];  }
   inline bool IsValid()                   const {  
-    return (Pivot==NULL) ? Sites.Count() == SiteCount : Sites.Count() == SiteCount-1;  
+    return (Pivot==NULL) ? Sites.Count() >= MinSiteCount : Sites.Count() == MinSiteCount-1;  
   }
 };
 /* number of scatterers might be greater than the numbre of thermal displacement
@@ -350,12 +350,12 @@ public:
   virtual XScatterer& GetScatterer(int i)  {  return Scatterers[i];  }
   virtual XScatterer* FindScattererByName(const olxstr& name) {
     for( int i=0; i < Scatterers.Count(); i++ )
-      if( Scatterers[i].HasLabel(name) == 0 )
+      if( Scatterers[i].Label.Comparei(name) == 0 )
         return &Scatterers[i];
     return NULL;
   }
-  inline XScatterer& NewScatterer(double x, double y, double z)  {
-    return Scatterers.Add( new XScatterer(*this, x, y, z) );
+  inline XScatterer& NewScatterer(const olxstr& label, double x, double y, double z)  {
+    return Scatterers.Add( new XScatterer(*this, label, x, y, z) );
   }
   virtual inline XResidue* FindResidueByNumber(int Number) {
     for( int i=0; i < Residues.Count(); i++ )
@@ -482,6 +482,9 @@ public:
         return &Sfac[i];
     return NULL;
   }
+  olxstr CheckLabel(const XScatterer* xs, const olxstr& label)  {
+    throw TNotImplementedException(__OlxSourceInfo);
+  }
 
   double WaveLength, Temperature;  // global Fo/Fc scale is Variables[0]
   evecd Weight;
@@ -491,7 +494,6 @@ public:
   TTypeList<XUani> TDPs;
   // a list of all residues with key - number
   TTypeList<XResidue> Residues;
-  // a list of all scattererers for quick access by label
   TTypeList<XScatterer> Scatterers;
   TPSTypeList<int, XFrag*> References;
   TTypeList<XRigidGroup> RigidGroups;

@@ -299,7 +299,7 @@ void XLibMacros::macEnvi(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     allAtoms.Add( &au.GetCentroid(i) );
   }
   for( int i=0; i < allAtoms.Count(); i++ )  {
-    if( SA.CAtom().GetId() == i )
+    if( SA.CAtom().GetId() == allAtoms[i]->GetId() )
       L = latt.GetUnitCell().GetInRange(SA.ccrd(), allAtoms[i]->ccrd(), r, false);
     else
       L = latt.GetUnitCell().GetInRange(SA.ccrd(), allAtoms[i]->ccrd(), r, true);

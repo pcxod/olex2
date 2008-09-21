@@ -177,6 +177,7 @@ struct XLinearEquation {
   TTypeList<XEquationMember> Members; 
 };
 //
+//
 /* scatterer is associated with a single TDp and a single site, however, several
 scatterers might be involved. */
 class XScatterer {
@@ -213,16 +214,14 @@ public:
       }
     };
     TBasicAtomInfo* type;
-    olxstr label;
     _Ratio ratio;
     XScatterer& owner; 
     XScattererData* sd; // need a pointer for copy operator
-    Scatterer(XScatterer& _owner, const olxstr& _label, TBasicAtomInfo* _type, XScattererData* _sd, double _ratio) :
-      label(_label), type(_type), sd(_sd), ratio(_ratio), owner(_owner)  {  }
-    Scatterer( const Scatterer& sc ) : label(sc.label), type(sc.type), ratio(sc.ratio), 
+    Scatterer(XScatterer& _owner, TBasicAtomInfo* _type, XScattererData* _sd, double _ratio) :
+      type(_type), sd(_sd), ratio(_ratio), owner(_owner)  {  }
+    Scatterer( const Scatterer& sc ) : type(sc.type), ratio(sc.ratio), 
       owner(sc.owner), sd(sc.sd)  {  }
     Scatterer& operator = (const Scatterer& sc)  {
-      label = sc.label;
       type = sc.type;
       ratio = sc.ratio;
       sd = sc.sd;
@@ -345,8 +344,8 @@ public:
 private:
   TTypeList<XScatterer::Scatterer> Scatterers;
 public:
-  XScatterer(IRefinementModel& parent, double x, double y, double z) : 
-      Parent(parent), Residue(NULL) {  
+  XScatterer(IRefinementModel& parent, const olxstr& label, double x, double y, double z) : 
+      Label(label), Parent(parent), Residue(NULL), Part(0) {  
     Crd.center[0] = x;  Crd.center[1] = y;  Crd.center[2] = z;
     SiteOccupancy = 1;
     Deleted = false;
@@ -355,25 +354,17 @@ public:
   _Occupancy Occupancy;
   double SiteOccupancy;
   bool Deleted;
-  inline Scatterer& AddScatterer(const olxstr& label, TBasicAtomInfo* type, XScattererData* sd, double ratio)  {
-    Scatterer& sc = Scatterers.Add( new Scatterer(*this, label, type, sd, ratio) );
+  int Part;
+  olxstr Label;
+  inline Scatterer& AddScatterer(TBasicAtomInfo* type, XScattererData* sd, double ratio)  {
+    Scatterer& sc = Scatterers.Add( new Scatterer(*this, type, sd, ratio) );
     return sc;
   }
   inline int Count()                          const {  return Scatterers.Count();  }
   inline Scatterer& operator [] (int i)             {  return Scatterers[i];  }
   inline const Scatterer& operator [] (int i) const {  return Scatterers[i];  }
-  // Xs is a complex scatterer
-  inline bool HasLabel(const olxstr& label)  const  {  return (IndexOfLabel(label) != -1);  }
-  inline int IndexOfLabel(const olxstr& label)  const  {
-    if( Scatterers.Count() == 1 )
-      return (Scatterers[0].label.Comparei(label) == 0) ? 0 : -1;
-    for( int i=0; i < Scatterers.Count(); i++ )
-      if( Scatterers[i].label.Comparei(label) == 0 )
-        return i;
-    return -1;
-  }
   // supports TBasicAtomInfo& and int
-  template <class T> inline bool HasType(const T& type)  const  {  return IndexOfScatterer(type) != -1;  }
+  template <class T> inline bool HasType(const T& type)  const  {  return IndexOfType(type) != -1;  }
   // supports TBasicAtomInfo& and int
   template <class T> inline int IndexOfType(const T& type)  const  {
     if( Scatterers.Count() == 1 )
@@ -393,25 +384,13 @@ public:
 
   XResidue* Residue;  // managed by the XResidue, when adding/removing
   IRefinementModel& Parent;
-  // IRefinableOwner implementation
-  virtual olxstr GetName() const {  
-    if( Scatterers.Count() == 1 )
-      return Scatterers[0].label;
-    olxstr rv;
-    for( int i=0; i < Scatterers.Count(); i++ )  {
-      rv << Scatterers[i].label;
-      if( (i+1) < Scatterers.Count() )
-        rv << '&';
-    }
-    return rv;  
-  }
 };
 //
 struct XScattererRef {
-  XScatterer::Scatterer* scatterer;
+  XScatterer* scatterer;
   smatd const* symm; // this is borrowed from the Refine model
   XScattererRef() : scatterer(NULL), symm(NULL) {}
-  XScattererRef(XScatterer::Scatterer* _xs, smatd const* _symm) : scatterer(_xs), symm(_symm) {}
+  XScattererRef(XScatterer* _xs, smatd const* _symm) : scatterer(_xs), symm(_symm) {}
   XScattererRef& operator = (const XScattererRef& sr)  {
     scatterer = sr.scatterer;
     symm = sr.symm;
@@ -430,12 +409,16 @@ public:
   inline int Count() const {  return Scatterers.Count();  }
   inline XScatterer& operator [] (int i)             {  return *Scatterers[i]; }
   inline XScatterer const& operator [] (int i) const {  return *Scatterers[i]; }
-  inline XScatterer::Scatterer* FindScattererByName(const olxstr& name) {
-    for( int i=0; i < Scatterers.Count(); i++ )  {
-      int ind = Scatterers[i]->IndexOfLabel(name);
-      if( ind != -1 )  return &(*Scatterers[i])[ind];
-    }
+  inline XScatterer* FindScattererByName(const olxstr& name) {
+    for( int i=0; i < Scatterers.Count(); i++ )
+      if( Scatterers[i]->Label.Comparei(name) == 0 ) 
+        return Scatterers[i];
     return NULL;
+  }
+  bool IsEmpty() const {
+    for( int i=0; i < Scatterers.Count(); i++ )
+      if( !Scatterers[i]->Deleted )  return false;
+    return true;
   }
   inline int IndexOf(XScatterer* xs) const {  return Scatterers.IndexOf(xs);  }
   XResidue& operator = (const XResidue& res)  {

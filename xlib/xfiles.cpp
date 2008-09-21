@@ -137,7 +137,10 @@ void TXFile::LoadFromFile(const olxstr & FN) {
   olxstr Ext = TEFile::ExtractFileExt(FN);
   // this thows an exception if the file format loader does not exist
   TBasicCFile *Loader = FindFormat(Ext);
-  Loader->LoadFromFile(FN);
+  try  {  Loader->LoadFromFile(FN);  }
+  catch( const TExceptionBase& exc )  {
+    throw TFunctionFailedException(__OlxSourceInfo, exc.Replicate() );
+  }
 
   FFileName = FN;
   OnFileLoad->Enter(this);
@@ -153,7 +156,6 @@ void TXFile::UpdateAsymmUnit()  {
   //TLattice *L = GetLattice();
   TBasicCFile *LL = GetLastLoader();
   GetLattice().UpdateAsymmUnit();
-  TCAtomPList* NewAtoms = new TCAtomPList;
   LL->GetAsymmUnit().ClearResidues(false);
   LL->GetAsymmUnit().ClearEllps();
   for( int i=0; i < GetAsymmUnit().EllpCount(); i++ )
@@ -162,12 +164,18 @@ void TXFile::UpdateAsymmUnit()  {
     TAsymmUnit::TResidue& resi = GetAsymmUnit().GetResidue(i);
     LL->GetAsymmUnit().NewResidue(resi.GetClassName(), resi.GetNumber(), resi.GetAlias() );
   }
-  /* find new atoms */
+  int loaderid = GetAsymmUnit().GetMaxLoaderId();
+  // find new atoms 
   for( int i=0; i < GetAsymmUnit().AtomCount(); i++ )  {
-    TCAtom& CA1 = GetAsymmUnit().GetAtom(i);
-    if( CA1.GetLoaderId() == liNewAtom && CA1.GetAtomInfo() != iQPeakIndex )
-      NewAtoms->Add(&CA1);
+    TCAtom& CA = GetAsymmUnit().GetAtom(i);
+    if( CA.GetLoaderId() == liNewAtom && CA.GetAtomInfo() != iQPeakIndex )  {
+      TCAtom& CA1 = LL->GetAsymmUnit().NewAtom();
+      CA1.SetLoaderId(loaderid+i);
+      CA.SetLoaderId(loaderid+i);
+    }
   }
+  GetAsymmUnit().InitAtomIds();
+  LL->GetAsymmUnit().InitAtomIds();
   for(int i=0; i < LL->GetAsymmUnit().AtomCount(); i++ )  {
     TCAtom& CA = LL->GetAsymmUnit().GetAtom(i);
     for( int j=0; j < GetAsymmUnit().AtomCount(); j++ )  {
@@ -182,28 +190,17 @@ void TXFile::UpdateAsymmUnit()  {
       }
     }
   }
-  int loaderid = GetAsymmUnit().GetMaxLoaderId();
-  for( int i=0; i < NewAtoms->Count(); i++ )  {
-    TCAtom* CA = NewAtoms->Item(i);
-    TCAtom& CA1 = LL->GetAsymmUnit().NewAtom();
-    CA1.Assign(*CA);
-    CA1.SetLoaderId(loaderid+i);
-    CA->SetLoaderId(loaderid+i);
-    if( CA->GetResiId() != -1 )  // main residue
-      LL->GetAsymmUnit().GetResidue(CA->GetResiId()).AddAtom(&CA1);
-  }
-  delete NewAtoms;
 
-  LL->GetAsymmUnit().RestrainedDistances().Assign(GetAsymmUnit(), GetAsymmUnit().RestrainedDistances());
-  LL->GetAsymmUnit().RestrainedAngles().Assign(GetAsymmUnit(), GetAsymmUnit().RestrainedAngles());
-  LL->GetAsymmUnit().SimilarDistances().Assign(GetAsymmUnit(), GetAsymmUnit().SimilarDistances());
-  LL->GetAsymmUnit().RestrainedVolumes().Assign(GetAsymmUnit(), GetAsymmUnit().RestrainedVolumes());
-  LL->GetAsymmUnit().RestrainedPlanarity().Assign(GetAsymmUnit(), GetAsymmUnit().RestrainedPlanarity());
-  LL->GetAsymmUnit().RestranedUaAsUi().Assign(GetAsymmUnit(), GetAsymmUnit().RestranedUaAsUi());
-  LL->GetAsymmUnit().RigidBonds().Assign(GetAsymmUnit(), GetAsymmUnit().RigidBonds());
-  LL->GetAsymmUnit().SimilarU().Assign(GetAsymmUnit(), GetAsymmUnit().SimilarU());
-  LL->GetAsymmUnit().EquivalentU().Assign(GetAsymmUnit(), GetAsymmUnit().EquivalentU());
-  LL->GetAsymmUnit().SimilarFragments().Assign(GetAsymmUnit(), GetAsymmUnit().SimilarFragments());
+  LL->GetAsymmUnit().RestrainedDistances().Assign(LL->GetAsymmUnit(), GetAsymmUnit().RestrainedDistances());
+  LL->GetAsymmUnit().RestrainedAngles().Assign(LL->GetAsymmUnit(), GetAsymmUnit().RestrainedAngles());
+  LL->GetAsymmUnit().SimilarDistances().Assign(LL->GetAsymmUnit(), GetAsymmUnit().SimilarDistances());
+  LL->GetAsymmUnit().RestrainedVolumes().Assign(LL->GetAsymmUnit(), GetAsymmUnit().RestrainedVolumes());
+  LL->GetAsymmUnit().RestrainedPlanarity().Assign(LL->GetAsymmUnit(), GetAsymmUnit().RestrainedPlanarity());
+  LL->GetAsymmUnit().RestranedUaAsUi().Assign(LL->GetAsymmUnit(), GetAsymmUnit().RestranedUaAsUi());
+  LL->GetAsymmUnit().RigidBonds().Assign(LL->GetAsymmUnit(), GetAsymmUnit().RigidBonds());
+  LL->GetAsymmUnit().SimilarU().Assign(LL->GetAsymmUnit(), GetAsymmUnit().SimilarU());
+  LL->GetAsymmUnit().EquivalentU().Assign(LL->GetAsymmUnit(), GetAsymmUnit().EquivalentU());
+  LL->GetAsymmUnit().SimilarFragments().Assign(LL->GetAsymmUnit(), GetAsymmUnit().SimilarFragments());
   LL->GetAsymmUnit().ClearUsedSymm();
   for( int i=0; i < GetAsymmUnit().UsedSymmCount(); i++ )
     LL->GetAsymmUnit().AddUsedSymm( GetAsymmUnit().GetUsedSymm(i) );
@@ -223,8 +220,7 @@ void TXFile::SaveToFile(const olxstr & FN, bool Sort)  {
     if( !Loader->Adopt(this) )
       throw TFunctionFailedException(__OlxSourceInfo, "could not adopt specified file format");
   }
-  else
-  {
+  else  {
     UpdateAsymmUnit();
   }
   if( Sort )  Loader->GetAsymmUnit().Sort();

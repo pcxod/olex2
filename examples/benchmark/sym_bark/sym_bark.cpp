@@ -76,31 +76,31 @@ int main(int argc, char* argv[])  {
   TSymmLib sl;
   TBasicApp bapp(argv[0]);
   bapp.GetLog().AddStream( new TOutStream, true );
-  TSpaceGroup* sg = sl.FindGroup("P21/c");
-  ISF_calc* sf_calc = fs_factory_ISF_calc("P21/c");
-  if( sf_calc != NULL && sg != NULL )  {  // acording to the test it gives 4 times speed up
-    TArrayList<vec3d> positions(10000000);
-    positions[0] = vec3d(0.5, -0.5, 0.5);  
-    positions[1] = vec3d(-0.5, 0.5, -0.5);  
-    smatd_list ml;
-    sg->GetMatrices(ml, mattAll);
-    time_t n = TETime::msNow();
-    vec3d p1 = sf_calc->Calc(positions);
-    TBasicApp::GetLog() << "FastSymm: " << TETime::msNow() - n << '\n';
-    n = TETime::msNow();
-    vec3d p2 = NT_calc::Calc(ml, positions);
-    TBasicApp::GetLog() << "Conventional: " << TETime::msNow() - n << '\n';
-    TBasicApp::GetLog() << p1.ToString() << '\n';
-    TBasicApp::GetLog() << p2.ToString() << '\n';
-  }
+  //TSpaceGroup* sg = sl.FindGroup("P21/c");
+  //ISF_calc* sf_calc = fs_factory_ISF_calc("P21/c");
+  //if( sf_calc != NULL && sg != NULL )  {  // acording to the test it gives 4 times speed up
+  //  TArrayList<vec3d> positions(10000000);
+  //  positions[0] = vec3d(0.5, -0.5, 0.5);  
+  //  positions[1] = vec3d(-0.5, 0.5, -0.5);  
+  //  smatd_list ml;
+  //  sg->GetMatrices(ml, mattAll);
+  //  time_t n = TETime::msNow();
+  //  vec3d p1 = sf_calc->Calc(positions);
+  //  TBasicApp::GetLog() << "FastSymm: " << TETime::msNow() - n << '\n';
+  //  n = TETime::msNow();
+  //  vec3d p2 = NT_calc::Calc(ml, positions);
+  //  TBasicApp::GetLog() << "Conventional: " << TETime::msNow() - n << '\n';
+  //  TBasicApp::GetLog() << p1.ToString() << '\n';
+  //  TBasicApp::GetLog() << p2.ToString() << '\n';
+  //}
   XModel xm;
   TAtomsInfo ai;
   double defs [] = {0.02, 0.1, 0.01, 0.04, 1};
   XScattererData& sc_h = xm.NewScattererData("H");
   XScattererData& sc_c = xm.NewScattererData("C");
   xm.CHIV.Add( *(new Restraint_Chiv(xm, defs, 0)) );
-  xm.NewScatterer(0.0, 0.0, 0.0).AddScatterer("C1", &ai.GetAtomInfo(iCarbonIndex), &sc_c, 1);
-  xm.NewScatterer(0.5, 0.5, 0.5).AddScatterer("H1", &ai.GetAtomInfo(iHydrogenIndex), &sc_h, 1);
+  xm.NewScatterer("C1", 0.0, 0.0, 0.0).AddScatterer(&ai.GetAtomInfo(iCarbonIndex), &sc_c, 1);
+  xm.NewScatterer("H1", 0.5, 0.5, 0.5).AddScatterer(&ai.GetAtomInfo(iHydrogenIndex), &sc_h, 1);
   xm.Scatterers[0].Occupancy = 1;
   XVar& var = xm.Variables.AddNew(0.5);
   xm.Scatterers[1].Occupancy.options.SetVar( &var );

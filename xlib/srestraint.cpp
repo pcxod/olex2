@@ -133,7 +133,7 @@ void TSimpleRestraint::Assign(TAsymmUnit& tau, const TSimpleRestraint& sr)  {
     for(int i=0; i < sr.InvolvedAtoms.Count(); i++ )  {
       TCAtom* aa = tau.FindCAtomByLoaderId( sr.InvolvedAtoms[i].GetAtom()->GetLoaderId() );
       if( aa == NULL )
-        throw TFunctionFailedException(__OlxSourceInfo, "could not locate atoms");
+        throw TFunctionFailedException(__OlxSourceInfo, "asymmetric units do not match");
       AddAtom( *aa, sr.InvolvedAtoms[i].GetMatrix() );
     }
   }

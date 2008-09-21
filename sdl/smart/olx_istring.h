@@ -1216,6 +1216,12 @@ public:
     return rv;
   }
   //............................................................................
+  olxch Last() const {  
+    if( TT::_Length == 0 )
+      TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "empty string");
+    return T::SData->Data[TT::_Start+TT::_Length-1];
+  }
+  //............................................................................
   virtual IEObject* Replicate() const {  return new TTSString<T,TC>(*this);  }
   //............................................................................
 /*
