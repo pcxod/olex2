@@ -28,10 +28,8 @@ public:
     if( Expression.IsEmpty() )  {  // all atoms of the residue
       out.SetCapacity( out.Count() + resi->Count() );
       for( int i=0; i < resi->Count(); i++ )  {
-        if( IsValidScatterer( (*resi)[i]) )  {
-          for( int j=0; j < (*resi)[i].Count(); j++ )
-            out.AddNew( &(*resi)[i][j], (smatd*)NULL );
-        }
+        if( IsValidScatterer( (*resi)[i]) )
+          out.AddNew( &(*resi)[i], (smatd*)NULL );
       }
       return out.Count() - ac;
     }
@@ -45,7 +43,7 @@ public:
       if( !IsValidScatterer(xs) )  return 0;
       if( xs->Count() != 1 )
         throw TFunctionFailedException(__OlxSourceInfo, "cannot refer to complex scatterer as 'first'");
-      out.AddNew(&(*xs)[0], (const smatd*)NULL);
+      out.AddNew(xs, (const smatd*)NULL);
       return 1;
     }
     else if( Expression.Comparei("last") == 0 )  { 
@@ -58,7 +56,7 @@ public:
       if( !IsValidScatterer(xs) )  return 0;
       if( xs->Count() != 1 )
         throw TFunctionFailedException(__OlxSourceInfo, "cannot refer to complex scatterer as 'last'");
-      out.AddNew(&(*xs)[0], (smatd*)NULL);
+      out.AddNew(xs, (smatd*)NULL);
       return 1;
     }
     // validate complex expressions with >< chars
@@ -78,27 +76,25 @@ public:
         throw TFunctionFailedException(__OlxSourceInfo, "failed to expand >/< expression");
       if( from[0].symm != to[0].symm )
         throw TFunctionFailedException(__OlxSourceInfo, "EQIV must be the same in >/< expresion");
-      if( from[0].scatterer->owner.Residue != to[0].scatterer->owner.Residue )
+      if( from[0].scatterer->Residue != to[0].scatterer->Residue )
         throw TFunctionFailedException(__OlxSourceInfo, "RESI must be the same in >/< expresion");
       
-      XResidue* cr = from[0].scatterer->owner.Residue;
-      int from_ind = cr->IndexOf(&from[0].scatterer->owner);
-      int to_ind = cr->IndexOf(&to[0].scatterer->owner);
+      XResidue* cr = from[0].scatterer->Residue;
+      int from_ind = cr->IndexOf(from[0].scatterer);
+      int to_ind = cr->IndexOf(to[0].scatterer);
       if( (from_ind >= to_ind && gs_ind != -1) || (from_ind <= to_ind && ls_ind != -1) )
         throw TInvalidArgumentException(__OlxSourceInfo, "invalid direction in >/< expression");
 
       if( gs_ind != -1 )  {
         for( int i=from_ind; i <= to_ind; i++ )  {
           if( !IsValidScatterer( (*cr)[i] ) )  continue;
-          for( int j=0; j < (*cr)[i].Count(); j++ )
-            out.AddNew( &(*cr)[i][j], from[0].symm );
+          out.AddNew( &(*cr)[i], from[0].symm );
         }
       }
       else  {
         for( int i=from_ind; i >= to_ind; i-- )  {
           if( !IsValidScatterer( (*cr)[i] ) )  continue;
-          for( int j=0; j < (*cr)[i].Count(); j++ )
-            out.AddNew( &(*cr)[i][j], from[0].symm );
+          out.AddNew( &(*cr)[i], from[0].symm );
         }
       }
       return out.Count() - ac;
@@ -143,16 +139,15 @@ public:
         throw TInvalidArgumentException(__OlxSourceInfo, olxstr("sfac=") << sfac);
       for( int i=0; i < residues.Count(); i++ )  {
         for( int j=0; j < residues[i]->Count(); j++ )  {
-          int ind = (*residues[i])[j].IndexOfType(*bai);  // cannot use IsValid here, $H will not work
-          if( ind != -1 )  
-            out.Add( new XScattererRef(&(*residues[i])[j][ind], eqiv) );
+          if( (*residues[i])[j].HasType(*bai) )  // cannot use IsValid here, $H will not work
+            out.Add( new XScattererRef(&(*residues[i])[j], eqiv) );
         }
       }
     }
     else  {  // just an atom
       olxstr aname = ( (resi_ind == -1) ? Expression : Expression.SubStringTo(resi_ind) );
       for( int i=0; i < residues.Count(); i++ )  {
-        XScatterer::Scatterer* xs = residues[i]->FindScattererByName(aname);
+        XScatterer* xs = residues[i]->FindScattererByName(aname);
         if( xs != NULL )  
           out.AddNew( xs, eqiv );
       }

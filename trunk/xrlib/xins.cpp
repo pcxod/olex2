@@ -481,22 +481,23 @@ void XShelxIns::SaveToStrings(TStrList& SL)  {
   evecd QE;  // quadratic form of s thermal ellipsoid
   olxstr Tmp;
   TBasicAtomInfo *BAI;
+  TAtomsInfo& AtomsInfo = *TAtomsInfo::GetInstance();
   for( int i=0; i < xm.Residues.Count(); i++ )  {
     XResidue& residue = xm.Residues[i];
     for( int j=0; j < residue.Count(); j++ )  {
       if( residue[j].Deleted )  continue;
       for( int k=j+1; k < residue.Count(); k++ )  {
         if( residue[k].Deleted )  continue;
-        if( residue[j].GetPart() != residue[k].GetPart() )  continue;
-        if( residue[j].GetLabel().Comparei(residue[k].GetLabel()) == 0 ) 
-          residue[k].Label() = GetAsymmUnit().CheckLabel(&residue[k], residue[k].GetLabel() );
+        if( residue[j].Part != residue[k].Part )  continue;
+        if( residue[j].Label.Comparei(residue[k].Label) == 0 ) 
+          residue[k].Label = xm.CheckLabel(&residue[k], residue[k].Label );
       }
     }
   }
 
   TStrPObjList<olxstr,TBasicAtomInfo*> BasicAtoms(Sfac, ' ');
   for( int i=0; i < BasicAtoms.Count(); i++ )  {
-    BAI = AtomsInfo->FindAtomInfoBySymbol( BasicAtoms.String(i) );
+    BAI = AtomsInfo.FindAtomInfoBySymbol( BasicAtoms.String(i) );
     if( BAI != NULL )  BasicAtoms.Object(i) = BAI;
     else
       throw TFunctionFailedException(__OlxSourceInfo, olxstr("Unknown element: ") << BasicAtoms.String(i));
@@ -507,11 +508,11 @@ void XShelxIns::SaveToStrings(TStrList& SL)  {
   SL.Add(EmptyString);
   int afix = 0, part = 0, spindex, fragmentId = 0;
   int carbonBAIIndex = BasicAtoms.CIIndexOf('c');
-  for( int i=-1; i < GetAsymmUnit().ResidueCount(); i++ )  {
-    TAsymmUnit::TResidue& residue = GetAsymmUnit().GetResidue(i);
+  for( int i=0; i < xm.Residues.Count(); i++ )  {
+    XResidue& residue = xm.Residues[i];
     if( i != -1 && !residue.IsEmpty() ) SL.Add( residue.ToString() );
     for( int j=0; j < residue.Count(); j++ )  {
-      TCAtom& ac = residue[j];
+      XScatterer& ac = residue[j];
       if( ac.IsDeleted() )  continue;
       if( ac.GetFragmentId() != fragmentId )  {
         SL.Add(EmptyString);

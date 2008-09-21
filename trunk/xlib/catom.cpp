@@ -19,7 +19,7 @@ const short TCAtom::UisoFixedValuesOffset = 4;
 // TCAtom function bodies
 //----------------------------------------------------------------------------//
 TCAtom::TCAtom(TAsymmUnit *Parent)  {
-  Hfix = Afix   = 0;
+  Hfix = 0;
   Part   = 0;
   Occp   = 1;
   QPeak  = -1;
@@ -37,12 +37,16 @@ TCAtom::TCAtom(TAsymmUnit *Parent)  {
   Degeneracy = 1;
   FFixedValues.Resize(10);
   HAttached = false;
-  Sortable = true;
+  Saved = false;
+  Tag = -1;
+  Dependent = NULL;
+  Pivot = NULL;
 }
 //..............................................................................
 TCAtom::~TCAtom()  {
-  if( FAttachedAtoms != NULL )  delete FAttachedAtoms;
+  if( FAttachedAtoms != NULL )   delete FAttachedAtoms;
   if( FAttachedAtomsI != NULL )  delete FAttachedAtomsI;
+  if( Dependent != NULL )        delete Dependent;
 }
 //..............................................................................
 bool TCAtom::SetLabel(const olxstr &L)  {
@@ -95,6 +99,24 @@ void TCAtom::AtomInfo(TBasicAtomInfo* A)  {
 //..............................................................................
 void TCAtom::Assign(const TCAtom& S)  {
   SetAfix( S.GetAfix() );
+  Pivot = (S.Pivot != NULL) ? FParent->FindCAtomByLoaderId( S.GetLoaderId() ) : NULL;
+  if( S.Pivot != NULL && Pivot == NULL )
+    throw TFunctionFailedException(__OlxSourceInfo, "asymmetric units mismatch");
+  if( S.Dependent != NULL )  {
+    if( Dependent == NULL )  
+      Dependent = new TCAtomPList;
+    else
+      Dependent->Clear();
+    for( int i=0; i < S.Dependent->Count(); i++ )  {
+      Dependent->Add( FParent->FindCAtomByLoaderId( (*S.Dependent)[i]->GetLoaderId()) );
+      if( Dependent->Last() == NULL )
+        throw TFunctionFailedException(__OlxSourceInfo, "asymmetric units mismatch");
+    }
+  }
+  else  {
+    if( Dependent != NULL )  delete Dependent;
+    Dependent = NULL;
+  }
   SetPart( S.GetPart() );
   SetOccp( S.GetOccp() );
   SetOccpVar( S.GetOccpVar() );
@@ -116,7 +138,6 @@ void TCAtom::Assign(const TCAtom& S)  {
   Center = S.Center;
   Esd = S.Esd;
   SetDeleted( S.IsDeleted() );
-  SetSortable( S.IsSortable() );
   SetCanBeGrown( S.GetCanBeGrown() );
   Degeneracy = S.GetDegeneracy();
 
@@ -136,6 +157,21 @@ void TCAtom::Assign(const TCAtom& S)  {
   */
   Hfix = S.GetHfix();
   FFixedValues = S.GetFixedValues();
+}
+//..............................................................................
+void TCAtom::SetAfix(int v)  {
+  if( v == 0 )  {
+    Pivot = NULL;  // free for H
+    if( Dependent != NULL && Afix > 10 && (Afix%10) == 6 )  {  // rigid group
+      for( int i=0; i < Dependent->Count(); i++ )
+        (*Dependent)[i]->SetAfix(0);
+      Dependent->Clear();
+    }
+  }
+  else  {  // some clever stuff cam be here
+    
+  }
+  Afix = v;
 }
 //..............................................................................
 TAtomsInfo* TCAtom::AtomsInfo() const {  return FParent->GetAtomsInfo(); }

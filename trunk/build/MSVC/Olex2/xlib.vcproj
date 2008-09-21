@@ -489,6 +489,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\xlib\samegroup.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\xlib\satom.cpp"
 				>
 			</File>
@@ -696,6 +700,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\xlib\reflection.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\xlib\samegroup.h"
 				>
 			</File>
 			<File

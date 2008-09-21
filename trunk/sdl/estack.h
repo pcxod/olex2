@@ -49,6 +49,11 @@ public:
   }
   inline bool IsEmpty() const {  return cur == NULL;  }
   inline int Count() const {  return _count;  }
+  inline T& Current() {  
+    if( cur == NULL )
+      throw TFunctionFailedException(__OlxSourceInfo, "stack is empty");
+    return cur->data;  
+  }
 };
 
 class str_stack : public TStack<olxstr>  {

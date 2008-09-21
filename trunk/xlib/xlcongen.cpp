@@ -120,10 +120,15 @@ bool TXlConGen::FixAtom( TAtomEnvi& envi, const short Group, const TBasicAtomInf
           afix = 153;
         break;
     }
-
+    if( afix != 0 )  {
+      for( int i=0; i < CreatedAtoms.Count(); i++ )  {
+        CreatedAtoms[i]->SetAfix(afix);
+        CreatedAtoms[i]->SetPivot( &envi.GetBase().CAtom() );
+        envi.GetBase().CAtom().AddDependent( *CreatedAtoms[i] );
+      }
+    }
     for( int i=0; i < CreatedAtoms.Count(); i++ )  {
       CreatedAtoms[i]->SetPart( envi.GetBase().CAtom().GetPart() );
-      CreatedAtoms[i]->SetAfix(afix);
       if( envi.GetBase().GetAtomInfo() == iOxygenIndex ||
           envi.GetBase().GetAtomInfo() == iNitrogenIndex )
         CreatedAtoms[i]->SetUisoVar( -1.5 );

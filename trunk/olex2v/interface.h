@@ -20,6 +20,26 @@
   #endif
 #endif
 
+const int DllVersion = 1;
+/* version 1:
+  DllExportA const char* DllExportB olxv_Initialize(HDC hdc, int w, int h);
+  DllExportA void DllExportB olxv_Finalize();
+  DllExportA void DllExportB olxv_OnPaint();
+  DllExportA void DllExportB olxv_OnSize(int w, int h);
+  DllExportA bool DllExportB olxv_OnMouse(int w, int h, short MouseEvent, short MouseButton, short ShiftState);
+  DllExportA void DllExportB olxv_OnFileChanged(const char* FN);
+  DllExportA const char* DllExportB olxv_GetObjectLabelAt(int x, int y);
+  DllExportA const char* DllExportB olxv_GetSelectionInfo();
+  DllExportA void DllExportB olxv_ShowLabels(unsigned short type);
+  DllExportA void DllExportB olxv_ShowQPeaks(short what);
+  DllExportA void DllExportB olxv_ShowCell(bool v);
+  DllExportA void DllExportB olxv_DrawStyle(short style);
+  DllExportA void DllExportB olxv_LoadStyle(const char* FN);
+  DllExportA void DllExportB olxv_LoadScene(const char* FN);
+  DllExportA void DllExportB olxv_Clear();
+  DllExportA int DllExportB olxv_GetVersion();
+*/
+
 const short  // mouse event
   olxv_MouseUp     = 0x0001,
   olxv_MouseDown   = 0x0002,
@@ -102,5 +122,6 @@ extern "C" {
   DllExportA void DllExportB olxv_LoadStyle(const char* FN);
   DllExportA void DllExportB olxv_LoadScene(const char* FN);
   DllExportA void DllExportB olxv_Clear();
+  DllExportA int DllExportB olxv_GetVersion();
 };  // extern "C"
 #endif

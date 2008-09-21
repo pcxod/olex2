@@ -36,7 +36,7 @@ public:
 //----------------------------------------------------------------------------//
 TAsymmUnit::TAsymmUnit(TLattice *L, TAtomsInfo *AI) : 
   rDfix(rltBonds), rAfix(rltBonds), rDsim(rltBonds), rVfix(rltAtoms), rPfix(rltGroup),
-    rRBnd(rltAtoms), rUsim(rltAtoms), rUiso(rltAtoms), rEADP(rltAtoms), rSAME(rltGroup), MainResidue(*this, -1)
+    rRBnd(rltAtoms), rUsim(rltAtoms), rUiso(rltAtoms), rEADP(rltAtoms), MainResidue(*this, -1)
   {
   AtomsInfo = AI;
   Lattice   = L;
@@ -54,6 +54,7 @@ TAsymmUnit::~TAsymmUnit() {
 }
 //..............................................................................
 void  TAsymmUnit::Clear()  {
+  ClearRestraints();
   ClearExyz();
   Matrices.Clear();
   for( int i=0; i < CAtoms.Count(); i++ )
@@ -76,7 +77,6 @@ void  TAsymmUnit::Clear()  {
   Latt = -1;
   Z = 1;
   ContainsEquivalents = false;
-  ClearRestraints();
 }
 //..............................................................................
 void TAsymmUnit::ClearRestraints()  {
@@ -108,7 +108,7 @@ void TAsymmUnit::Assign(const TAsymmUnit& C)  {
 
   for( int i = 0; i < C.MatrixCount(); i++ )
     Matrices.AddNew( C.GetMatrix(i) );
-
+  
   for( int i = 0; i < C.EllpCount(); i++ )
     this->NewEllp() = C.GetEllp(i);
 
@@ -118,10 +118,14 @@ void TAsymmUnit::Assign(const TAsymmUnit& C)  {
   }
   for( int i = 0; i < C.AtomCount(); i++ )  {
     TCAtom& CA = this->NewAtom();
-    CA.Assign( C.GetAtom(i) );
     CA.SetId(i);
+    CA.SetLoaderId( C.GetAtom(i).GetLoaderId() ); // this is used in Assign!
     if( C.GetAtom(i).GetResiId() != -1 )  // main residue
       GetResidue(C.GetAtom(i).GetResiId()).AddAtom(&CA);
+  }
+  for( int i = 0; i < C.AtomCount(); i++ )  {
+    GetAtom(i).Assign( C.GetAtom(i) );
+    GetAtom(i).SetId(i);
   }
   // copy matrices
   Cartesian2Cell = C.GetCartesianToCell();
@@ -632,7 +636,7 @@ void TAsymmUnit::KeepH(TCAtomPList* list)  {
 //..............................................................................
 void TAsymmUnit::Sort(TCAtomPList* list)  {
  // sorting by four params
-  if( list == NULL )  list = &CAtoms;
+  if( list == NULL )  list = &MainResidue.AtomList();
  TCAtomPList::QuickSorter.Sort<TCAtomPComparator>(*list);
  TCAtomPList::QuickSorter.Sort<TCAtomPComparator>(*list);
  TCAtomPList::QuickSorter.Sort<TCAtomPComparator>(*list);
@@ -1041,7 +1045,7 @@ void TAsymmUnit::LibGetZprime(const TStrObjList& Params, TMacroError& E)  {
 //..............................................................................
 void TAsymmUnit::LibSetZprime(const TStrObjList& Params, TMacroError& E)  {
   double zp = Params[0].ToDouble();
-  Z = Round(TUnitCell::GetMatrixMultiplier(Latt)*MatrixCount()*zp);
+  Z = (short)Round(TUnitCell::GetMatrixMultiplier(Latt)*MatrixCount()*zp);
   if( Z <= 0 ) Z = 1;
 }
 //..............................................................................

@@ -521,7 +521,7 @@ void TUnitCell::GetAtomEnviList(TSAtom& atom, TAtomEnvi& envi, bool IncludeQ )  
   vec3d v;
   for( int i=0; i < atom.CAtom().AttachedAtomCount(); i++ )  {
     TCAtom& A = atom.CAtom().GetAttachedAtom(i);
-    if( !IncludeQ && A.GetAtomInfo() == iQPeakIndex )  continue;
+    if( A.IsDeleted() || (!IncludeQ && A.GetAtomInfo() == iQPeakIndex) )  continue;
 
     smatd* m = GetClosest( atom.ccrd(), A.ccrd(), false );
     if( m == NULL )
@@ -560,7 +560,7 @@ void TUnitCell::GetAtomQEnviList(TSAtom& atom, TAtomEnvi& envi)  {
   vec3d v;
   for( int i=0; i < atom.CAtom().AttachedAtomCount(); i++ )  {
     TCAtom& A = atom.CAtom().GetAttachedAtom(i);
-    if( A.GetAtomInfo() != iQPeakIndex )  continue;
+    if( A.IsDeleted() || A.GetAtomInfo() != iQPeakIndex )  continue;
 
     smatd* m = GetClosest( atom.ccrd(), A.ccrd(), false );
     if( m == NULL )
