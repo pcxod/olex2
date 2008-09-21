@@ -80,7 +80,7 @@ template <class ListClass, class ItemClass >  class TQuickPtrSorter  {
           while( ( hi > lo0 ) && ( Comparator::Compare(list.Item(hi), mid) > 0) ) hi--;
           if( lo <= hi )  {
             list.Swap(lo, hi);
-            list1.Swap(lom hi);
+            list1.Swap(lo, hi);
             lo++;
             hi--;
           }
@@ -282,7 +282,7 @@ template <class ListClass, class ItemClass >  class TBubblePtrSorter  {
       }
     }
   template <class BaseClass, class ListClassA>
-    static void BubbleSortMF(ListClass& list, ListClassA& list1, BaseClass& baseClassInstance,
+    static void SBubbleSortMF(ListClass& list, ListClassA& list1, BaseClass& baseClassInstance,
                               int (BaseClass::*f)(const ItemClass* a, const ItemClass* b) )  {
       bool changes = true;
       while( changes )  {
@@ -446,7 +446,7 @@ template <class ListClass, class ItemClass > class TQuickSorter  {
           while( ( hi > lo0 ) && ( (baseClassInstance.*f)(list.Item(hi), mid) > 0) ) hi--;
           if( lo <= hi )  {
             list.Swap(lo, hi);
-            lis1.Swap(lo, hi);
+            list1.Swap(lo, hi);
             lo++;
             hi--;
           }

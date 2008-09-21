@@ -147,7 +147,6 @@ public:
   static const short CrdFixedValuesOffset,
                      OccpFixedValuesOffset,
                      UisoFixedValuesOffset;
-  friend TAfixGroup;
 };
 //..............................................................................
   typedef TPtrList<TCAtom> TCAtomPList;
