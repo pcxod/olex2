@@ -8,14 +8,14 @@
       build\cif.obj build\congen.obj build\crs.obj build\ellipsoid.obj 
       build\envilist.obj build\evaln.obj build\hkl.obj build\idistribution.obj 
       build\ins.obj build\ipattern.obj build\lattice.obj build\lst.obj 
-      build\mol.obj build\network.obj build\p4p.obj build\restraints.obj 
-      build\satom.obj build\sbond.obj build\sgtest.obj build\splane.obj 
-      build\symmlib.obj build\symmparser.obj build\sysabs.obj build\unitcell.obj 
-      build\xbase.obj build\xfiles.obj build\xlcongen.obj build\xyz.obj 
-      build\tls.obj build\scat_it.obj build\srestraint.obj build\auto.obj 
-      build\pdb.obj build\symmtest.obj build\xapp.obj build\graphsr.obj 
-      build\brushhkl.obj build\sg.obj build\xmacro.obj build\wilson.obj 
-      build\testsymm.obj build\imp_auto.obj build\seval.obj"/>
+      build\mol.obj build\network.obj build\p4p.obj build\satom.obj 
+      build\sbond.obj build\sgtest.obj build\splane.obj build\symmlib.obj 
+      build\symmparser.obj build\sysabs.obj build\unitcell.obj build\xbase.obj 
+      build\xfiles.obj build\xlcongen.obj build\xyz.obj build\tls.obj 
+      build\scat_it.obj build\srestraint.obj build\auto.obj build\pdb.obj 
+      build\symmtest.obj build\xapp.obj build\graphsr.obj build\brushhkl.obj 
+      build\sg.obj build\xmacro.obj build\wilson.obj build\testsymm.obj 
+      build\imp_auto.obj build\seval.obj"/>
     <RESFILES value=""/>
     <DEFFILE value=""/>
     <RESDEPEN value="$(RESFILES)"/>
@@ -70,7 +70,6 @@
       <FILE FILENAME="..\..\..\xlib\mol.cpp" FORMNAME="" UNITNAME="mol.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\xlib\network.cpp" FORMNAME="" UNITNAME="network.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\xlib\p4p.cpp" FORMNAME="" UNITNAME="p4p.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
-      <FILE FILENAME="..\..\..\xlib\restraints.cpp" FORMNAME="" UNITNAME="restraints.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\xlib\satom.cpp" FORMNAME="" UNITNAME="satom.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\xlib\sbond.cpp" FORMNAME="" UNITNAME="sbond.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\xlib\sgtest.cpp" FORMNAME="" UNITNAME="sgtest.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>

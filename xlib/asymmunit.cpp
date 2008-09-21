@@ -324,7 +324,7 @@ TCAtom& TAsymmUnit::NewAtom(TResidue* resi)  {
 //..............................................................................
 TCAtom& TAsymmUnit::NewCentroid(const vec3d& CCenter)  {
   for( int i=0; i < CentroidCount(); i++ )  {
-    if( (Centroids[i]->ccrd()-CCenter).QLength() < 0.001 ) // already exists
+    if( Centroids[i]->ccrd().QDistanceTo(CCenter) < 0.001 ) // already exists
       return *Centroids[i];
   }
   TCAtom *A = new TCAtom(this);
