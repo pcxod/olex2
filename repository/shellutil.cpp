@@ -143,9 +143,9 @@ olxstr TShellUtil::PickFolder( const olxstr& Title,
   bi.pszDisplayName = path;
   bi.pidlRoot = rootFolder;
   bi.ulFlags = BIF_RETURNONLYFSDIRS|BIF_NEWDIALOGSTYLE;
-  if( SelectedFolder.Length() && TEFile::FileExists(SelectedFolder) )  {
+  if( !SelectedFolder.IsEmpty() && TEFile::FileExists(SelectedFolder) )  {
     bi.lpfn = BrowseCallbackProc;
-    bi.lParam = (long)SelectedFolder.u_str();
+    bi.lParam = (LPARAM)SelectedFolder.u_str();
   }
 
   LPITEMIDLIST pidlBrowse = SHBrowseForFolder(&bi);

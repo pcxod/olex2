@@ -53,6 +53,19 @@ public:
   void FindRings(const TPtrList<TBasicAtomInfo>& ringContent,
         TTypeList<TSAtomPList>& res);
 
+  void FindAtomRings(TSAtom& ringAtom, const TPtrList<TBasicAtomInfo>& ringContent,
+        TTypeList<TSAtomPList>& res);
+  struct RingInfo  {
+    int SubsNumber, MaxSubsANode, HeaviestSubsIndex;
+    TBasicAtomInfo* HeaviestSubsType;
+    bool HasAfix;
+    RingInfo() : HeaviestSubsType(NULL)  {
+      SubsNumber = MaxSubsANode = 0;
+      HeaviestSubsIndex = -1;
+      HasAfix = false;
+    }
+  };
+  static RingInfo AnalyseRing( const TSAtomPList& ring );
 
   /* quaternion method, Acta A45 (1989), 208
     This function finds the best match between atom pairs and returns the summ of

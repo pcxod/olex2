@@ -376,7 +376,7 @@ public:     void CalcProbFactor(float Prob);
   */
   void SelectRings(const olxstr& Condition, bool Invert=false);
   void FindRings(const olxstr& Condition, TTypeList<TSAtomPList>& rings );
-
+  
   TXGlLabel* CreateLabel(TXAtom *A, int FontIndex);
   // recreated all labels (if any) in case if font size etc changed
   void UpdateLabels();

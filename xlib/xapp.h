@@ -79,6 +79,7 @@ public:
   void NameHydrogens(TSAtom& a, TUndoData* ud, bool CheckLabel);
   // fixes hydrogen atom labels
   TUndoData* FixHL();
+  void RingContentFromStr(const olxstr& textDescr, TPtrList<TBasicAtomInfo>& ringDesc);
   void FindRings(const olxstr& Condition, TTypeList<TSAtomPList>& rings);
   bool FindSAtoms(const olxstr& condition, TSAtomPList& res);
 };
