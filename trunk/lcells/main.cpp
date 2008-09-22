@@ -61,6 +61,7 @@ void AddNode( TTreeNodes* tree, const olxstr& path )  {
 }
 
 bool LogListener::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, const IEObject *Data)  {
+  if( Data == NULL )  return true;  
   switch( MsgId )  {
     case ID_ERROR:
       form->AddMessage( Data->ToString().u_str() );

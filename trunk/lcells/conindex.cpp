@@ -371,14 +371,14 @@ void _fastcall TNet::operator >> (IDataOutputStream& S)  {
   TConNode *N;
   for( int i = 0; i < FNodes.Count(); i++ )
     FNodes[i]->Id = i;
-  S << FNodes.Count();
+  S << (int32_t)FNodes.Count();
   for( int i = 0; i < FNodes.Count(); i++ )  {
     S << FNodes[i]->Id;
-    S << FNodes[i]->AtomType;
+    S.Write(&FNodes[i]->AtomType, 1);
   }
   for( int i = 0; i < FNodes.Count(); i++ )  {
     N = FNodes[i];
-    S << N->Nodes.Count();
+    S << (int32_t)N->Nodes.Count();
     for( int j=0; j < N->Nodes.Count(); j++ )  {
       S << N->Nodes.Item(j)->Id;
     }
@@ -387,7 +387,7 @@ void _fastcall TNet::operator >> (IDataOutputStream& S)  {
 
 void _fastcall TNet::operator << (IDataInputStream& S)  {
   TConNode *N, *N1;
-  int count;
+  int32_t count;
   short Id;
   Clear();
   S >> count;
@@ -395,7 +395,7 @@ void _fastcall TNet::operator << (IDataInputStream& S)  {
   for( int i = 0; i < count; i++ )  {
     N = new TConNode;
     S >> N->Id;
-    S >> N->AtomType;
+    S.Read(&N->AtomType, 1);
     FNodes.AddACopy( N );
 //    Mr += N->AtomType;
   }

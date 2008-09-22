@@ -139,6 +139,14 @@ void TXFile::LoadFromFile(const olxstr & FN) {
   TBasicCFile *Loader = FindFormat(Ext);
   try  {  Loader->LoadFromFile(FN);  }
   catch( const TExceptionBase& exc )  {
+    if( FLastLoader == Loader )  {
+      FLastLoader = NULL;
+      FFileName = EmptyString;
+      FSG = NULL;
+      OnFileLoad->Enter(this);
+      GetLattice().Clear(true);
+      OnFileLoad->Exit(this);
+    }
     throw TFunctionFailedException(__OlxSourceInfo, exc.Replicate() );
   }
 

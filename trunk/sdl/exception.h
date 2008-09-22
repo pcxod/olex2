@@ -56,8 +56,8 @@ public:
   // traces back to the original cause
   TBasicException* GetSource()         const;
   virtual IEObject* Replicate()  const = 0;
-  template <class SC, class T>
-    void GetStackTrace( TTStrList<SC,T>& output )  const  {
+  template <class List>
+    List& GetStackTrace( List& output )  const  {
       TBasicException const* cause = this;
       //TPtrList<TBasicException const> list;
       while( cause != NULL )  {
@@ -67,6 +67,7 @@ public:
         output.Insert(0, cause->GetFullMessage() );
         cause = cause->GetCause();
       }
+      return output;
     }
   olxstr GetFullMessage()  const;
 };

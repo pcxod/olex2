@@ -2838,12 +2838,19 @@ void TMainForm::SaveScene(TDataItem *Root, TGlLightModel *FLM)  {
 }
 //..............................................................................
 void TMainForm::UpdateRecentFile(const olxstr& fn)  {
+  if( fn.IsEmpty() )  {
+    for( int i=0; i < FRecentFiles.Count(); i++ )  {  // change item captions
+      wxMenuItem* mi = FRecentFiles.Object(i);
+      if( mi != NULL )  mi->Check(false);
+    }
+    return;
+  }
   TPtrList<wxMenuItem> Items;
   olxstr FN( (fn.EndsWithi(".ins") || fn.EndsWithi(".res")) ? 
     TEFile::ChangeFileExt(fn, EmptyString) : fn );
   TEFile::OSPathI(FN);
   int index = FRecentFiles.IndexOf(FN);
-  wxMenuItem *mi=NULL;
+  wxMenuItem* mi=NULL;
   if( index == -1 )  {
     if( (FRecentFiles.Count()+1) < FRecentFilesToShow )  {
       MenuFile->AppendCheckItem(ID_FILE0+FRecentFiles.Count(), wxT("tmp"));

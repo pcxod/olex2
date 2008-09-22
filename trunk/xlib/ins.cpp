@@ -300,12 +300,21 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx,
   }
   else if( Toks[0].Comparei("AFIX") == 0 && (Toks.Count() > 1) )  {
     TAsymmUnit& au = GetAsymmUnit();
+    int prevAfix = cx.Afix;
     cx.Afix = Toks[1].ToInt();
-    int n = cx.Afix%10, m = cx.Afix < 10 ? cx.Afix : cx.Afix/10;
+    int n = cx.Afix < 17 ? 0 : cx.Afix%10,
+        m = cx.Afix < 17 ? cx.Afix : cx.Afix/10;
     if( cx.Afix == 0 )  {
       if( !cx.DependentAtoms.IsEmpty() )  {
-        if( cx.DependentAtoms.Current().GetA() != 0 )
-          throw TFunctionFailedException(__OlxSourceInfo, "incomplete AFIX group");
+        int old_n = prevAfix < 17 ? 0 : prevAfix%10;
+        if( cx.DependentAtoms.Current().GetA() != 0 )  {
+          if( old_n != 0 )
+            throw TFunctionFailedException(__OlxSourceInfo, olxstr("incomplete AFIX group") <<
+              (cx.Last != NULL ? (olxstr(" at ") << cx.Last->GetLabel()) : EmptyString) );
+          else
+            TBasicApp::GetLog().Warning( olxstr("Possibly incorrect AFIX ") << prevAfix <<
+              (cx.Last != NULL ? (olxstr(" at ") << cx.Last->GetLabel()) : EmptyString) );
+        }
         cx.DependentAtoms.Pop();
       }
     }

@@ -8,10 +8,10 @@
 //---------------------------------------------------------------------------
 struct TConNode  {
   TTypeList<TConNode*> Nodes;
-  short Id;
+  int16_t Id;
   bool  Used, Used1;
   void *Data;
-  unsigned char AtomType;
+  uint8_t AtomType;
   void __fastcall Analyse(class TNet *Parent, struct TConInfo *CI);
   void _fastcall FillList(int lastindex, TTypeList<TConNode*>& L);
   void _fastcall FindPaths(TConNode *Parent, TConInfo* CI, TTypeList<TConNode*>* Path);
