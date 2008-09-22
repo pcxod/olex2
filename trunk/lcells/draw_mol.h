@@ -10,9 +10,8 @@
 #include "xfiles.h"
 //---------------------------------------------------------------------------
 
-struct TDrawSort
-{
-  TVPointD P;
+struct TDrawSort {
+  vec3d P;
   TSAtom *A;
 };
 

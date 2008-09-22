@@ -60,15 +60,15 @@ void _fastcall TOrganiser::CalcZoom()  {
   }
   TDrawSort *DS;
   TTypeList<TDrawSort*> DrawSort;
-  TVPointD Min, Max, Center;
+  vec3d Min, Max, Center;
   double w = FBitmap->Width, h = FBitmap->Height;
   for( int i=0; i < AC; i++ )  {
     DS = new TDrawSort;
     DS->A = &XFile->GetLattice().GetAtom(i);
-    DS->P = DS->A->Center();
+    DS->P = DS->A->crd();
     DS->P *= Basis.GetMatrix();
     DrawSort.AddACopy(DS);
-    Center += DS->A->Center();
+    Center += DS->A->crd();
   }
   if( AC )  Center /= AC;
   Basis.SetCenter( Center );
@@ -101,15 +101,14 @@ void _fastcall TOrganiser::CalcZoom()  {
 //..............................................................................
 void _fastcall TOrganiser::Update()  {
   if( FBitmap == NULL )  return;
-  TVPointD X, Y, Z;
+  vec3d X, Y, Z;
   int AC = XFile->GetLattice().AtomCount();
-  TVPointDList Crd;
-  TVectorD Pars(3);
+  vec3d_list Crd;
   for( int i=0; i < AC; i++ )
-    Crd.AddNew( XFile->GetLattice().GetAtom(i).Center() );
+    Crd.AddNew( XFile->GetLattice().GetAtom(i).crd() );
 
   if( AC > 3 )  {
-    GetPlane(Crd, Pars, X, Y, Z);
+    GetPlane(Crd, X, Y, Z);
     Basis.Orient(X, Y, Z);
   }
   CalcZoom();
@@ -126,17 +125,16 @@ void _fastcall TOrganiser::Draw()  {
   C->Brush->Color = clWhite;
   C->FillRect(R);
 
-  TVPointD P;
+  vec3d P;
   double w = FBitmap->Width, h = FBitmap->Height;
   double hw = w/2, hh = h/2;
-  TMatrixD m( Basis.GetMatrix() );
-  m.Transpose();
+  mat3d m( mat3d::Transpose(Basis.GetMatrix()) );
   TTypeList<TDrawSort> DrawSort;
 
   for( int i=0; i < XFile->GetLattice().AtomCount(); i++ )  {
     TDrawSort& DS = DrawSort.AddNew();
     DS.A = &XFile->GetLattice().GetAtom(i);
-    DS.P = DS.A->Center();
+    DS.P = DS.A->crd();
     DS.P -= Basis.GetCenter();
     DS.P = m * DS.P;
     DS.P *= Basis.GetZoom();

@@ -2,8 +2,7 @@
 
 #ifndef cplanesH
 #define cplanesH
-#include "evpoint.h"
-#include "evector.h"
+#include "threex3.h"
 //---------------------------------------------------------------------------
-void _fastcall GetPlane(TVPointDList& Crds, TVectorD& s, TVPointD &X, TVPointD &Y, TVPointD &Z);
+void _fastcall GetPlane(vec3d_list& Crds, vec3d &X, vec3d &Y, vec3d &Z);
 #endif
