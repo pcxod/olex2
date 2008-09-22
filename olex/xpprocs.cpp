@@ -5438,128 +5438,129 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       }
       return;
     }
-    if( FXApp->XFile().GetLastLoader() &&
-        ( EsdlInstanceOf(*FXApp->XFile().GetLastLoader(), TP4PFile) ||
-          EsdlInstanceOf(*FXApp->XFile().GetLastLoader(), TCRSFile)    ) )  
-    {
-      TMacroError er;
-      if( TEFile::FileExists( TEFile::ChangeFileExt(FN, "ins") ) )
-        ProcessXPMacro("SG", er);
-      else
-        ProcessXPMacro("SGE", er);
-    }
-    // automatic export for kappa cif
-    if( FXApp->XFile().GetLastLoader() && (EsdlInstanceOf(*FXApp->XFile().GetLastLoader(), TCif)) )  {
-      TBasicApp::GetLog() << ("Start importing cif ...\n");
-      FXApp->Draw();
-      olxstr hklFileName = TEFile::ChangeFileExt(FN, "hkl");
-      olxstr insFileName = TEFile::ChangeFileExt(FN, "ins");
-      TMacroError er;
-      if( !TEFile::FileExists(hklFileName)  )  {
-        TCif* C = (TCif*)FXApp->XFile().GetLastLoader();
-        if( C->FindLoop("_refln") != NULL )  {
-          ProcessXPMacro( olxstr("export ") << TEFile::ExtractFileName(hklFileName), er);
-          if( !er.IsProcessingError() )  {
-            if( !TEFile::FileExists(insFileName) )  {
-              TIns ins( FXApp->AtomsInfo() );
-              ins.Adopt( &FXApp->XFile() );
-              ins.SaveToFile( insFileName );
-              ProcessXPMacro( olxstr("@reap \'") << insFileName << '\'', er);
-              if( !er.IsProcessingError() )  {
-                TBasicApp::GetLog() << ("End importing cif ...\n");
-                ProcessXPMacro("reset", er);
-              }
-              FXApp->Draw();
-              return;
-            }
-          }
-          else
-            AnalyseError( er );
-        }
-      }
+    catch(const TExceptionBase& exc)  { 
+      TStrList sl;
+      Error.ProcessingError(__OlxSrcInfo, exc.GetException()->GetStackTrace(sl).Text('\n') );
+      UpdateRecentFile(EmptyString);
     }
     FUndoStack->Clear();
     FInfoBox->Clear();
-    FInfoBox->PostText(FN);
-    FInfoBox->PostText(FXApp->XFile().GetLastLoader()->GetTitle());
-    // changes the loaded position of the box to left
-    OnResize();
-
-    Tmp = TEFile::ExtractFilePath(FN);
-    if( Tmp.Length() && !(Tmp == CurrentDir) )  {
-      if( !TEFile::ChangeDir(Tmp) )
-        TBasicApp::GetLog() << ("Cannot change current folder...\n");
-      else  {
-        if( !Blind )  CurrentDir = Tmp;
+    TEFile::DelFile(BadRefsFile);
+    TEFile::DelFile(RefineDataFile);
+    if( FXApp->XFile().GetLastLoader() != NULL )  {
+      if( FXApp->CheckFileType<TP4PFile>() || FXApp->CheckFileType<TCRSFile>() )  {
+        TMacroError er;
+        if( TEFile::FileExists( TEFile::ChangeFileExt(FN, "ins") ) )
+          ProcessXPMacro("SG", er);
+        else
+          ProcessXPMacro("SGE", er);
       }
-    }
-    if( !Blind )
-      UpdateRecentFile(FN);
-//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    QPeaksTable(DataDir+"qpeaks.htm", false);
-    RecentFilesTable(DataDir+"recent_files.htm", false);
-    olxstr lstFileName = TEFile::ChangeFileExt(FN, "lst");
-    if( TEFile::FileExists(lstFileName)  )  {
-      Lst.LoadFromFile(lstFileName);
-      BadReflectionsTable(false);
-      RefineDataTable(false);
-      if( Lst.SplitAtomCount() )  {
-        TBasicApp::GetLog() << ("The following atom(s) may be split: \n");
-        for( int i=0; i < Lst.SplitAtomCount(); i++ )  {
-          TLstSplitAtom& SpA = Lst.SplitAtom(i);
-          Tmp = SpA.AtomName;  Tmp.Format(5, true, ' ');
-          Tmp << olxstr::FormatFloat(3, SpA.PositionA[0]);  Tmp.Format(12, true, ' ');
-          Tmp << olxstr::FormatFloat(3, SpA.PositionA[1]);  Tmp.Format(19, true, ' ');
-          Tmp << olxstr::FormatFloat(3, SpA.PositionA[2]);  Tmp.Format(26, true, ' ');
-          Tmp << "& ";
-          Tmp << olxstr::FormatFloat(3, SpA.PositionB[0]);  Tmp.Format(35, true, ' ');
-          Tmp << olxstr::FormatFloat(3, SpA.PositionB[1]);  Tmp.Format(42, true, ' ');
-          Tmp << olxstr::FormatFloat(3, SpA.PositionB[2]);
-          TBasicApp::GetLog() << (Tmp << '\n');
+    // automatic export for kappa cif
+      if( FXApp->CheckFileType<TCif>() )  {
+        TBasicApp::GetLog() << ("Start importing cif ...\n");
+        FXApp->Draw();
+        olxstr hklFileName = TEFile::ChangeFileExt(FN, "hkl");
+        olxstr insFileName = TEFile::ChangeFileExt(FN, "ins");
+        TMacroError er;
+        if( !TEFile::FileExists(hklFileName)  )  {
+          TCif* C = (TCif*)FXApp->XFile().GetLastLoader();
+          if( C->FindLoop("_refln") != NULL )  {
+            ProcessXPMacro( olxstr("export ") << TEFile::ExtractFileName(hklFileName), er);
+            if( !er.IsProcessingError() )  {
+              if( !TEFile::FileExists(insFileName) )  {
+                TIns ins( FXApp->AtomsInfo() );
+                ins.Adopt( &FXApp->XFile() );
+                ins.SaveToFile( insFileName );
+                ProcessXPMacro( olxstr("@reap \'") << insFileName << '\'', er);
+                if( !er.IsProcessingError() )  {
+                  TBasicApp::GetLog() << ("End importing cif ...\n");
+                  ProcessXPMacro("reset", er);
+                }
+                FXApp->Draw();
+                return;
+              }
+            }
+            else
+              AnalyseError( er );
+          }
         }
       }
-      if( Lst.TrefTryCount() )  {
-        TBasicApp::GetLog() << ("TREF tries:\n");
-        olxstr Tmp1;
-        Tmp = "CFOM";  Tmp.Format(6, true, ' ');
-        Tmp1 = Tmp;
-        Tmp = "NQual";  Tmp1 << Tmp.Format(10, true, ' ');
-        Tmp = "Try#";   Tmp1 << Tmp.Format(10, true, ' ');
-        Tmp1 << "Semivariants";
-        TBasicApp::GetLog() << (Tmp1 << '\n');
-        int tcount = 0;
-        for( int i=0; i < Lst.TrefTryCount(); i++ )  {
-          if( i > 0 )  {
-            if( Lst.TrefTry(i-1).CFOM == Lst.TrefTry(i).CFOM &&
+      FInfoBox->PostText(FN);
+      FInfoBox->PostText(FXApp->XFile().GetLastLoader()->GetTitle());
+      // changes the loaded position of the box to left
+      OnResize();
+
+      Tmp = TEFile::ExtractFilePath(FN);
+      if( Tmp.Length() && !(Tmp == CurrentDir) )  {
+        if( !TEFile::ChangeDir(Tmp) )
+          TBasicApp::GetLog() << ("Cannot change current folder...\n");
+        else  {
+          if( !Blind )  CurrentDir = Tmp;
+        }
+      }
+      if( !Blind )  UpdateRecentFile(FN);
+      //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+      QPeaksTable(DataDir+"qpeaks.htm", false);
+      RecentFilesTable(DataDir+"recent_files.htm", false);
+      olxstr lstFileName = TEFile::ChangeFileExt(FN, "lst");
+      if( TEFile::FileExists(lstFileName)  )  {
+        Lst.LoadFromFile(lstFileName);
+        BadReflectionsTable(false);
+        RefineDataTable(false);
+        if( Lst.SplitAtomCount() )  {
+          TBasicApp::GetLog() << ("The following atom(s) may be split: \n");
+          for( int i=0; i < Lst.SplitAtomCount(); i++ )  {
+            TLstSplitAtom& SpA = Lst.SplitAtom(i);
+            Tmp = SpA.AtomName;  Tmp.Format(5, true, ' ');
+            Tmp << olxstr::FormatFloat(3, SpA.PositionA[0]);  Tmp.Format(12, true, ' ');
+            Tmp << olxstr::FormatFloat(3, SpA.PositionA[1]);  Tmp.Format(19, true, ' ');
+            Tmp << olxstr::FormatFloat(3, SpA.PositionA[2]);  Tmp.Format(26, true, ' ');
+            Tmp << "& ";
+            Tmp << olxstr::FormatFloat(3, SpA.PositionB[0]);  Tmp.Format(35, true, ' ');
+            Tmp << olxstr::FormatFloat(3, SpA.PositionB[1]);  Tmp.Format(42, true, ' ');
+            Tmp << olxstr::FormatFloat(3, SpA.PositionB[2]);
+            TBasicApp::GetLog() << (Tmp << '\n');
+          }
+        }
+        if( Lst.TrefTryCount() )  {
+          TBasicApp::GetLog() << ("TREF tries:\n");
+          olxstr Tmp1;
+          Tmp = "CFOM";  Tmp.Format(6, true, ' ');
+          Tmp1 = Tmp;
+          Tmp = "NQual";  Tmp1 << Tmp.Format(10, true, ' ');
+          Tmp = "Try#";   Tmp1 << Tmp.Format(10, true, ' ');
+          Tmp1 << "Semivariants";
+          TBasicApp::GetLog() << (Tmp1 << '\n');
+          int tcount = 0;
+          for( int i=0; i < Lst.TrefTryCount(); i++ )  {
+            if( i > 0 )  {
+              if( Lst.TrefTry(i-1).CFOM == Lst.TrefTry(i).CFOM &&
                 Lst.TrefTry(i-1).Semivariants == Lst.TrefTry(i).Semivariants &&
                 Lst.TrefTry(i-1).NQual == Lst.TrefTry(i).NQual )
-              continue;
-          }
-          Tmp = Lst.TrefTry(i).CFOM;  Tmp.Format(6, true, ' ');
-          Tmp1 = Tmp;
-          Tmp = Lst.TrefTry(i).NQual;  Tmp1 << Tmp.Format(10, true, ' ');
-          Tmp = Lst.TrefTry(i).Try;    Tmp1 << Tmp.Format(10, true, ' ');
-          Tmp1 << Lst.TrefTry(i).Semivariants.FormatString( 31 );
-          //Tmp1 += Lst.TrefTry(i).Semivariants.FormatString( Lst.TrefTry(i).Semivariants.Count() );
-          TBasicApp::GetLog() << (Tmp1 << '\n');
-          tcount ++;
-          if( tcount > 5 && ( (i+1) < Lst.TrefTryCount()) )  {
-            TBasicApp::GetLog() << ( olxstr("There are ") << Lst.TrefTryCount() - i << " more tries\n");
-            break;
+                continue;
+            }
+            Tmp = Lst.TrefTry(i).CFOM;  Tmp.Format(6, true, ' ');
+            Tmp1 = Tmp;
+            Tmp = Lst.TrefTry(i).NQual;  Tmp1 << Tmp.Format(10, true, ' ');
+            Tmp = Lst.TrefTry(i).Try;    Tmp1 << Tmp.Format(10, true, ' ');
+            Tmp1 << Lst.TrefTry(i).Semivariants.FormatString( 31 );
+            //Tmp1 += Lst.TrefTry(i).Semivariants.FormatString( Lst.TrefTry(i).Semivariants.Count() );
+            TBasicApp::GetLog() << (Tmp1 << '\n');
+            tcount ++;
+            if( tcount > 5 && ( (i+1) < Lst.TrefTryCount()) )  {
+              TBasicApp::GetLog() << ( olxstr("There are ") << Lst.TrefTryCount() - i << " more tries\n");
+              break;
+            }
           }
         }
-      }
-      if( Lst.PattSolutionCount() > 1 )  {
-        TBasicApp::GetLog() << ( olxstr("There are ") << Lst.PattSolutionCount()
+        if( Lst.PattSolutionCount() > 1 )  {
+          TBasicApp::GetLog() << ( olxstr("There are ") << Lst.PattSolutionCount()
             << " possible patterson solutions in the listing file\n");
-        TBasicApp::GetLog() << ( "To browse possible solutions press Ctrl+Up and Ctrl+Down buttons. Press Enter to choose a particular solution\n" );
-        FMode |= mSolve;
-        CurrentSolution = -1;
+          TBasicApp::GetLog() << ( "To browse possible solutions press Ctrl+Up and Ctrl+Down buttons. Press Enter to choose a particular solution\n" );
+          FMode |= mSolve;
+          CurrentSolution = -1;
+        }
       }
-    }
-    else  {
-      TEFile::DelFile(BadRefsFile);
-      TEFile::DelFile(RefineDataFile);
     }
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 //      FXApp->Draw();  // to update the scene just in case...

@@ -101,15 +101,15 @@ void _fastcall TOrganiser::CalcZoom()  {
 //..............................................................................
 void _fastcall TOrganiser::Update()  {
   if( FBitmap == NULL )  return;
-  vec3d X, Y, Z;
+  vec3d Z(0,0,1);
   int AC = XFile->GetLattice().AtomCount();
   vec3d_list Crd;
   for( int i=0; i < AC; i++ )
     Crd.AddNew( XFile->GetLattice().GetAtom(i).crd() );
 
   if( AC > 3 )  {
-    GetPlane(Crd, X, Y, Z);
-    Basis.Orient(X, Y, Z);
+    GetPlane(Crd, Z);
+    Basis.OrientNormal(Z);
   }
   CalcZoom();
 }
