@@ -863,7 +863,7 @@ bool TIns::Adopt(TXFile *XF)  {
   GetAsymmUnit().SetZ( (short)XF->GetLattice().GetUnitCell().MatrixCount() );
   try  {
     TSpaceGroup& sg = XF->GetLastLoaderSG();
-    Title = "in" << sg.GetFullName();
+    FTitle << "in" << sg.GetFullName();
   }
   catch( ... )  {}
   if( (XF->GetLastLoader() != NULL) )  {
