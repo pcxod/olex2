@@ -300,10 +300,7 @@ bool RingsEq(const TSAtomPList& r1, const TSAtomPList& r2 )  {
   }
   return true;
 }
-void TXApp::FindRings(const olxstr& Condition, TTypeList<TSAtomPList>& rings)  {
-  TPtrList<TBasicAtomInfo> ring;
-  // external ring connectivity
-  TTypeList< TPtrList<TBasicAtomInfo> > extRing;
+void TXApp::RingContentFromStr(const olxstr& Condition, TPtrList<TBasicAtomInfo>& ringDesc)  {
   TStrList toks;
   olxstr symbol, count;
   for( int i=0; i < Condition.Length(); i++ )  {
@@ -344,9 +341,14 @@ void TXApp::FindRings(const olxstr& Condition, TTypeList<TSAtomPList>& rings)  {
     TBasicAtomInfo* bai = FAtomsInfo->FindAtomInfoBySymbol( toks[i] );
     if( bai == NULL )
       throw TInvalidArgumentException(__OlxSourceInfo, olxstr("Unknown element: ") << toks.String(i) );
-    ring.Add( bai );
+    ringDesc.Add( bai );
   }
-
+}
+void TXApp::FindRings(const olxstr& Condition, TTypeList<TSAtomPList>& rings)  {
+  TPtrList<TBasicAtomInfo> ring;
+  // external ring connectivity
+  TTypeList< TPtrList<TBasicAtomInfo> > extRing;
+  RingContentFromStr(Condition, ring);
   for( int i=0; i < XFile().GetLattice().FragmentCount(); i++ )  {
     XFile().GetLattice().GetFragment(i).FindRings(ring, rings);
   }

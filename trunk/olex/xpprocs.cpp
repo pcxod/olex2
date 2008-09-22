@@ -3358,7 +3358,7 @@ void TMainForm::macAfix(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   if( !Cmds.IsEmpty() )
     FXApp->FindXAtoms(Cmds.Text(' '), Atoms);
   if( Atoms.IsEmpty() )  {
-    if( afix == 66 )  {  // special case
+    if( afix == 66 || afix == 69 )  {  // special case
       TTypeList< TSAtomPList > rings;
       try  {  
         FXApp->FindRings("C6", rings);  
@@ -3369,30 +3369,9 @@ void TMainForm::macAfix(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       for( int i=0; i < rings.Count(); i++ )  {
         if( !TNetwork::IsRingRegular(rings[i]) )  continue;
         // find the pivot (with heaviest atom attached)
-        int pivot = -1, pivot_count = 0;
-        double maxmw = 0;
-        for( int j=0; j < rings[i].Count(); j++ )  {
-          if( rings[i][j]->CAtom().GetAfix() != 0 )  {
-            pivot = -1;
-            break;
-          }
-          int nhc = 0;
-          double local_maxmw = 0;
-          for( int k=0; k < rings[i][j]->NodeCount(); k++ )  {
-            double mw = rings[i][j]->Node(k).GetAtomInfo().GetMr();
-            if( mw < 3 )  continue; // H, D
-            if( mw > local_maxmw )  local_maxmw = mw;
-            nhc++;
-          }
-          if( nhc == 3 )  {
-            if( local_maxmw > maxmw )  {
-              pivot = j;
-              maxmw = local_maxmw;
-            }
-            pivot_count++;
-          }
-        }
-        if( pivot == -1 || pivot_count > 1 )  continue;
+        TNetwork::RingInfo ri = TNetwork::AnalyseRing( rings[i] );
+        if( ri.HasAfix || ri.SubsNumber > 1 || ri.HeaviestSubsIndex == -1 )  continue;
+        int pivot = ri.HeaviestSubsIndex;
         olxstr info("Processing");
         for( int j=0; j < rings[i].Count(); j++ )
           info << ' ' << rings[i][j]->GetLabel();
@@ -3416,12 +3395,47 @@ void TMainForm::macAfix(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     }
     return;
   }
-//  else if( Atoms.Count() == 1 && afix == 66 )  {
+  else if( Atoms.Count() == 1 && (afix == 66 || afix == 69) )  {
+    TPtrList<TBasicAtomInfo> ring;
+    TTypeList< TSAtomPList > rings;
+    if( Atoms[0]->Atom().GetAtomInfo() != iCarbonIndex )  {
+      ring.Add( &Atoms[0]->Atom().GetAtomInfo() );
+      FXApp->RingContentFromStr("C5", ring);
+    }
+    else  
+      FXApp->RingContentFromStr("C6", ring);
     
-//  }
+    Atoms[0]->Atom().GetNetwork().FindAtomRings(Atoms[0]->Atom(), ring, rings);
+    if( rings.Count() == 0 )  {
+      E.ProcessingError(__OlxSrcInfo, "could not locate the C6 or XC5 ring" );
+      return;
+    }
+    else if( rings.Count() > 1 )  {
+      E.ProcessingError(__OlxSrcInfo, "the atom is shared by several rings" );
+      return;
+    }
+    TNetwork::RingInfo ri = TNetwork::AnalyseRing( rings[0] );
+    if( ri.SubsNumber > 1 )  
+      TBasicApp::GetLog() << "The selected ring has more than one substituent\n";
+    olxstr info("Processing");
+    for( int i=rings[0].Count()-1; i >= 0; i-- )
+      info << ' ' << rings[0][i]->GetLabel();
+    TBasicApp::GetLog() << (info << ". Chosen pivot atom is ") << rings[0].Last()->GetLabel() << '\n';
+    rings[0].Last()->CAtom().ClearDependent();
+    rings[0].Last()->CAtom().SetPivot(NULL);
+    for( int i=0; i < rings[0].Count()-1; i++ )  {
+      if( rings[0][i]->CAtom().GetAfix() == afix )  // in case atoms are reodered
+        rings[0][i]->CAtom().ClearDependent();
+      rings[0][i]->CAtom().SetAfix( (afix/10)*10 + 5);
+      rings[0].Last()->CAtom().AddDependent( rings[0][i]->CAtom() );
+      rings[0][i]->CAtom().SetPivot( &rings[0].Last()->CAtom() );
+    }
+    rings[0].Last()->CAtom().SetAfix(afix);
+    return;
+  }
   if( afix == 56 || afix == 66  || afix == 76 || afix == 116 || afix == 106 ||
       afix == 59 || afix == 69  || afix == 79 || afix == 119 || afix == 109 )  {
-    if( (afix == 56 || afix == 59) &&  Atoms.Count() != 6 )  {
+    if( (afix == 56 || afix == 59) &&  Atoms.Count() != 5 )  {
       E.ProcessingError(__OlxSrcInfo, "please provide 5 atoms exactly" );
       return;
     }
