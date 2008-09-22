@@ -2099,7 +2099,7 @@ void TMainForm::macFile(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   olxstr Tmp;
   if( Cmds.IsEmpty() )  {  // error
     // res -> Ins rotation if ins file
-    if( EsdlInstanceOf(*FXApp->XFile().GetLastLoader(), TIns) )
+    if( FXApp->CheckFileType<TIns>() )
       Tmp = TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), "ins");
     else
       Tmp = FXApp->XFile().GetFileName();
@@ -2114,18 +2114,22 @@ void TMainForm::macFile(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 
   FXApp->SaveXFile(Tmp, Sort);
   UpdateRecentFile(Tmp);
-  FInfoBox->Clear();
-  FInfoBox->PostText(FXApp->XFile().GetFileName());
-  FInfoBox->PostText(FXApp->XFile().GetLastLoader()->GetTitle());
-  OnResize();
-  Tmp = TEFile::ExtractFilePath(Tmp);
-  if( Tmp.Length() && (Tmp.Comparei(CurrentDir)) )
-  {
-    if( !TEFile::ChangeDir(Tmp) )
-      TBasicApp::GetLog().Error("Cannot change current folder...");
-    else
-      CurrentDir = Tmp;
+  if( FXApp->XFile().GetLastLoader() != NULL )  {
+    //FInfoBox->Clear();
+    //FInfoBox->PostText(FXApp->XFile().GetFileName());
+    //FInfoBox->PostText(FXApp->XFile().GetLastLoader()->GetTitle());
+    Tmp = TEFile::ExtractFilePath(Tmp);
+    if( !Tmp.IsEmpty() && (Tmp.Comparei(CurrentDir)) )  {
+      if( !TEFile::ChangeDir(Tmp) )
+        TBasicApp::GetLog().Error("Cannot change current folder...");
+      else
+        CurrentDir = Tmp;
+    }
   }
+  else  {
+    ProcessXPMacro(olxstr("reap \'") << Tmp << '\'', Error);
+  }
+  OnResize();
 }
 //..............................................................................
 void TMainForm::macUser(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {

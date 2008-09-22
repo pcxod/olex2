@@ -751,7 +751,11 @@ void TIns::_SaveAtom(TCAtom& a, int& part, int& afix, TStrPObjList<olxstr,TBasic
   }
   afix = a.GetAfix();
   part = a.GetPart();
-  int spindex = sfac == NULL ? -2 : sfac->IndexOfObject( &a.GetAtomInfo() );
+  int spindex;
+  if( a.GetAtomInfo() == iQPeakIndex )
+    spindex = (sfac == NULL ? -2 : sfac->CIIndexOf('c') );
+  else
+    spindex = (sfac == NULL ? -2 : sfac->IndexOfObject( &a.GetAtomInfo() ));
   HypernateIns( _AtomToString(&a, spindex+1), sl );
   a.SetSaved(true);
   if( index != NULL )  index->Add(a.GetTag());
@@ -781,16 +785,17 @@ void TIns::SaveToStrings(TStrList& SL)  {
         if( residue[j].GetAtomInfo() == iQPeakIndex )  {
           if( carbonBAIIndex == -1 )  {
             BasicAtoms.Add( "C", &AtomsInfo->GetAtomInfo(iCarbonIndex) );
-            spindex = carbonBAIIndex = BasicAtoms.Count() -1;
+            carbonBAIIndex = BasicAtoms.Count() -1;
             Unit << ' ' << '1';
+            Sfac << ' ' << 'C';
           }
-          spindex = carbonBAIIndex;
         }
         else  {
           BasicAtoms.Add( residue[j].GetAtomInfo().GetSymbol(), &residue[j].GetAtomInfo() );
           Unit << ' ' << '1';
           Sfac << ' ' << residue[j].GetAtomInfo().GetSymbol();
-          spindex = BasicAtoms.Count() - 1;
+          if( residue[j].GetAtomInfo() == iCarbonIndex )
+            carbonBAIIndex = BasicAtoms.Count() - 1;
         }
       }
       for( int k=j+1; k < residue.Count(); k++ )  {
@@ -856,7 +861,11 @@ bool TIns::Adopt(TXFile *XF)  {
   Clear();
   GetAsymmUnit().Assign( XF->GetAsymmUnit() );
   GetAsymmUnit().SetZ( (short)XF->GetLattice().GetUnitCell().MatrixCount() );
-
+  try  {
+    TSpaceGroup& sg = XF->GetLastLoaderSG();
+    Title = "in" << sg.GetFullName();
+  }
+  catch( ... )  {}
   if( (XF->GetLastLoader() != NULL) )  {
     FTitle = XF->GetLastLoader()->GetTitle();
     SetHKLSource( XF->GetLastLoader()->GetHKLSource() );
