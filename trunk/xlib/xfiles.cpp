@@ -134,19 +134,18 @@ bool TXFile::Execute(const IEObject *Sender, const IEObject *Data)  {
 }
 //..............................................................................
 void TXFile::LoadFromFile(const olxstr & FN) {
-  olxstr Ext = TEFile::ExtractFileExt(FN);
+  olxstr Ext( TEFile::ExtractFileExt(FN) );
   // this thows an exception if the file format loader does not exist
-  TBasicCFile *Loader = FindFormat(Ext);
+  TBasicCFile* Loader = FindFormat(Ext);
+  bool replicated = false;
+  if( FLastLoader == Loader )  {
+    Loader = (TBasicCFile*)Loader->Replicate();
+    replicated = true;
+  }
   try  {  Loader->LoadFromFile(FN);  }
   catch( const TExceptionBase& exc )  {
-    if( FLastLoader == Loader )  {
-      FLastLoader = NULL;
-      FFileName = EmptyString;
-      //FSG = NULL;
-      OnFileLoad->Enter(this);
-      //GetLattice().Clear(true);
-      OnFileLoad->Exit(this);
-    }
+    if( replicated )  
+      delete Loader;
     throw TFunctionFailedException(__OlxSourceInfo, exc.Replicate() );
   }
 
@@ -157,6 +156,13 @@ void TXFile::LoadFromFile(const olxstr & FN) {
   GetLattice().Init();
   FSG = TSymmLib::GetInstance()->FindSG(Loader->GetAsymmUnit());
   OnFileLoad->Exit(this);
+  if( replicated )  {
+    for( int i=0; i < FileFormats.Count(); i++ )
+      if( FileFormats.Object(i) == FLastLoader )
+        FileFormats.Object(i) = Loader;
+    delete FLastLoader;
+  }
+
   FLastLoader = Loader;
 }
 //..............................................................................

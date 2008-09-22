@@ -5445,13 +5445,13 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     catch(const TExceptionBase& exc)  { 
       TStrList sl;
       Error.ProcessingError(__OlxSrcInfo, exc.GetException()->GetStackTrace(sl).Text('\n') );
-      UpdateRecentFile(EmptyString);
+      return;
     }
-    FUndoStack->Clear();
-    FInfoBox->Clear();
-    TEFile::DelFile(BadRefsFile);
-    TEFile::DelFile(RefineDataFile);
     if( FXApp->XFile().GetLastLoader() != NULL )  {
+      FUndoStack->Clear();
+      FInfoBox->Clear();
+      TEFile::DelFile(BadRefsFile);
+      TEFile::DelFile(RefineDataFile);
       if( FXApp->CheckFileType<TP4PFile>() || FXApp->CheckFileType<TCRSFile>() )  {
         TMacroError er;
         if( TEFile::FileExists( TEFile::ChangeFileExt(FN, "ins") ) )
@@ -5495,7 +5495,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       OnResize();
 
       Tmp = TEFile::ExtractFilePath(FN);
-      if( Tmp.Length() && !(Tmp == CurrentDir) )  {
+      if( !Tmp.IsEmpty() && !(Tmp == CurrentDir) )  {
         if( !TEFile::ChangeDir(Tmp) )
           TBasicApp::GetLog() << ("Cannot change current folder...\n");
         else  {
