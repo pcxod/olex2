@@ -32,7 +32,7 @@ class TIns: public TBasicCFile  {
     TStrPObjList<olxstr, TBasicAtomInfo*>  BasicAtoms;  // SFAC container
     bool CellFound, DependentNonH, SetNextPivot;
     int Part, Afix;
-    TStack< AnAssociation3<int,TCAtom*, bool> > DependentAtoms;  // number of atoms (left), pivot, Hydrogens or not
+    esdl::TStack< AnAssociation3<int,TCAtom*, bool> > DependentAtoms;  // number of atoms (left), pivot, Hydrogens or not
     double PartOccu;
     TCAtom* Last;
     TAsymmUnit::TResidue* Resi;

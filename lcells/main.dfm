@@ -332,7 +332,7 @@ object dlgMain: TdlgMain
     Left = 0
     Top = 170
     Width = 701
-    Height = 222
+    Height = 214
     Align = alClient
     Caption = 'Panel5'
     TabOrder = 2
@@ -340,21 +340,21 @@ object dlgMain: TdlgMain
       Left = 1
       Top = 1
       Width = 699
-      Height = 220
+      Height = 212
       Align = alClient
       TabOrder = 0
       object Splitter2: TSplitter
         Left = 225
         Top = 1
         Width = 3
-        Height = 218
+        Height = 210
         Cursor = crHSplit
       end
       object mMemo: TRichEdit
         Left = 228
         Top = 1
         Width = 470
-        Height = 218
+        Height = 210
         Align = alClient
         Font.Charset = RUSSIAN_CHARSET
         Font.Color = clWindowText
@@ -372,7 +372,7 @@ object dlgMain: TdlgMain
         Left = 1
         Top = 1
         Width = 224
-        Height = 218
+        Height = 210
         Align = alLeft
         Indent = 19
         PopupMenu = pmTree

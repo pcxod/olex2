@@ -506,7 +506,7 @@ void __fastcall TdlgMain::sbSaveAsClick(TObject *Sender)  {
 //---------------------------------------------------------------------------
 
 bool _fastcall TdlgMain::ReduceCell(TCell &C)  {
-  TVPointD X,Y,Z;
+  vec3d X,Y,Z;
   int R[6];
   double Rd[6];
   double val, TX, TY, TZ, AX, AY, AZ, cosa, sina;
