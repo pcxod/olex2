@@ -142,9 +142,9 @@ void TXFile::LoadFromFile(const olxstr & FN) {
     if( FLastLoader == Loader )  {
       FLastLoader = NULL;
       FFileName = EmptyString;
-      FSG = NULL;
+      //FSG = NULL;
       OnFileLoad->Enter(this);
-      GetLattice().Clear(true);
+      //GetLattice().Clear(true);
       OnFileLoad->Exit(this);
     }
     throw TFunctionFailedException(__OlxSourceInfo, exc.Replicate() );
