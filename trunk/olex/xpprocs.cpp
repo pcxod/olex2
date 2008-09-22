@@ -3369,7 +3369,7 @@ void TMainForm::macAfix(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       for( int i=0; i < rings.Count(); i++ )  {
         if( !TNetwork::IsRingRegular(rings[i]) )  continue;
         // find the pivot (with heaviest atom attached)
-        int pivot = -1;
+        int pivot = -1, pivot_count = 0;
         double maxmw = 0;
         for( int j=0; j < rings[i].Count(); j++ )  {
           if( rings[i][j]->CAtom().GetAfix() != 0 )  {
@@ -3389,13 +3389,14 @@ void TMainForm::macAfix(TStrObjList &Cmds, const TParamList &Options, TMacroErro
               pivot = j;
               maxmw = local_maxmw;
             }
+            pivot_count++;
           }
         }
+        if( pivot == -1 || pivot_count > 1 )  continue;
         olxstr info("Processing");
         for( int j=0; j < rings[i].Count(); j++ )
           info << ' ' << rings[i][j]->GetLabel();
         TBasicApp::GetLog() << (info << ". Chosen pivot atom is ") << rings[i][pivot]->GetLabel() << '\n';
-        if( pivot == -1 )  continue;
         rings[i][pivot]->CAtom().ClearDependent();
         for( int j=pivot+1; j < rings[i].Count(); j++ )  {
           rings[i][pivot]->CAtom().AddDependent( rings[i][j]->CAtom() );
@@ -3413,8 +3414,11 @@ void TMainForm::macAfix(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     else  {
       E.ProcessingError(__OlxSrcInfo, "no atoms provided" );
     }
-      return;
+    return;
   }
+//  else if( Atoms.Count() == 1 && afix == 66 )  {
+    
+//  }
   if( afix == 56 || afix == 66  || afix == 76 || afix == 116 || afix == 106 ||
       afix == 59 || afix == 69  || afix == 79 || afix == 119 || afix == 109 )  {
     if( (afix == 56 || afix == 59) &&  Atoms.Count() != 6 )  {
