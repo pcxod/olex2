@@ -33,7 +33,7 @@ TGlTextBox::TGlTextBox(const olxstr& collectionName, TGlRender *Render):
   Width = Height = 0;
   MaxStringLength = 0;
   Groupable(false);
-  FontIndex = -1;
+  FontIndex = 0;  // previous -1 was very dangerous...
   FScrollDirectionUp = true;
   Z = 0;
 }
@@ -74,10 +74,9 @@ void TGlTextBox::Create(const olxstr& cName)  {
   GlP->Data().Resize(3, 4);
 
   GlM = const_cast<TGlMaterial*>(GS->Material("Text"));
-  if( GlM->Mark() )  {
-    if( FontIndex == -1 )  FontIndex = 0;
+  if( GlM->Mark() )
     *GlM = Font()->GetMaterial();
-  }
+
   GlP = GPC->NewPrimitive("Text");
   GlP->SetProperties(GlM);
   GlP->Type(sgloText);
@@ -163,7 +162,7 @@ void TGlTextBox::PostText(const olxstr& S, TGlMaterial* M)  {
     PostText(Txt, M);
     return;
   }
-  if( M )  {
+  if( M != NULL )  {
     TGlMaterial *GlM = new TGlMaterial;
     *GlM = *M;
     FBuffer.Add(Tmp, GlM);
@@ -179,13 +178,11 @@ void TGlTextBox::PostText(const olxstr& S, TGlMaterial* M)  {
     Height = Font()->TextHeight(FBuffer[0]);
 }
 //..............................................................................
-void TGlTextBox::PostText(const TStrList &SL, TGlMaterial *M)
-{
+void TGlTextBox::PostText(const TStrList &SL, TGlMaterial *M)  {
   int position = FBuffer.Count();
   for( int i=0; i < SL.Count(); i++ )
-  {  PostText(SL.String(i), NULL);  }
-  if( M )
-  {
+    PostText(SL[i], NULL);
+  if( M != NULL )  {
     TGlMaterial *GlM = new TGlMaterial;
     *GlM = *M;
 //    FBuffer.Object(FBuffer.Count()-1) = GlM;
@@ -213,7 +210,10 @@ bool TGlTextBox::OnMouseUp(const IEObject *Sender, const TMouseData *Data)  {
 }
 //..............................................................................
 TGlFont *TGlTextBox::Font()  const   {
-  return FParent->Scene()->Font(FontIndex);
+  TGlFont* fnt = FParent->Scene()->Font(FontIndex);
+  if( fnt == NULL )
+    throw TFunctionFailedException(__OlxSourceInfo, "invalid font");
+  return fnt;
 }
 //..............................................................................
 
