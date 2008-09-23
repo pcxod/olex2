@@ -140,7 +140,7 @@ void TCAtom::Assign(const TCAtom& S)  {
 //..............................................................................
 int TCAtom::GetAfix() const {
   if( ParentAfixGroup == NULL )  {
-    if( DependentAfixGroup != NULL && DependentAfixGroup->DecAfixForDependent() )
+    if( DependentAfixGroup != NULL && (DependentAfixGroup->IsFitted() || DependentAfixGroup->GetM() == 0) )
       return DependentAfixGroup->GetAfix();
     return 0;
   }

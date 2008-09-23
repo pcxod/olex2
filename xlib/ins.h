@@ -36,9 +36,10 @@ class TIns: public TBasicCFile  {
     double PartOccu;
     TCAtom* Last;
     TAsymmUnit::TResidue* Resi;
+    TAsymmUnit& au;
     // SAME instructions and the first atom after it/them
     TTypeList< AnAssociation2<TStrList,TCAtom*> > Same;
-    ParseContext() : Resi(NULL), Last(NULL)  {
+    ParseContext(TAsymmUnit& _au) : au(_au), Resi(NULL), Last(NULL)  {
       SetNextPivot = DependentNonH = CellFound = false;
       PartOccu = 0;
       Part = 0;
