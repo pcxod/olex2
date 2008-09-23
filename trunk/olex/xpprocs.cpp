@@ -3355,6 +3355,7 @@ void TMainForm::macAfix(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     E.ProcessingError(__OlxSrcInfo, "afix should be specified" );
     return;
   }
+  TAsymmUnit& au = FXApp->XFile().GetAsymmUnit();
   if( !Cmds.IsEmpty() )
     FXApp->FindXAtoms(Cmds.Text(' '), Atoms);
   if( Atoms.IsEmpty() )  {
@@ -3376,18 +3377,13 @@ void TMainForm::macAfix(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         for( int j=0; j < rings[i].Count(); j++ )
           info << ' ' << rings[i][j]->GetLabel();
         TBasicApp::GetLog() << (info << ". Chosen pivot atom is ") << rings[i][pivot]->GetLabel() << '\n';
-        rings[i][pivot]->CAtom().ClearDependent();
-        for( int j=pivot+1; j < rings[i].Count(); j++ )  {
-          rings[i][pivot]->CAtom().AddDependent( rings[i][j]->CAtom() );
-          rings[i][j]->CAtom().SetAfix(65);
-          rings[i][j]->CAtom().SetPivot( &rings[i][pivot]->CAtom() );
-        }
-        for( int j=0; j < pivot; j++ )  {
-          rings[i][pivot]->CAtom().AddDependent( rings[i][j]->CAtom() );
-          rings[i][j]->CAtom().SetAfix(65);
-          rings[i][j]->CAtom().SetPivot( &rings[i][pivot]->CAtom() );
-        }
-        rings[i][pivot]->CAtom().SetAfix(66);
+        if( rings[i][pivot]->CAtom().GetDependentAfixGroup() != NULL )
+          rings[i][pivot]->CAtom().GetDependentAfixGroup()->Clear();
+        TAfixGroup& ag = au.GetAfixGroups().New(&rings[i][pivot]->CAtom(), afix);
+        for( int j=pivot+1; j < rings[i].Count(); j++ )
+          ag.AddDependent( rings[i][j]->CAtom() );
+        for( int j=0; j < pivot; j++ )
+          ag.AddDependent( rings[i][j]->CAtom() );
       }
     }
     else  {
@@ -3421,16 +3417,16 @@ void TMainForm::macAfix(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     for( int i=rings[0].Count()-1; i >= 0; i-- )
       info << ' ' << rings[0][i]->GetLabel();
     TBasicApp::GetLog() << (info << ". Chosen pivot atom is ") << rings[0].Last()->GetLabel() << '\n';
-    rings[0].Last()->CAtom().ClearDependent();
-    rings[0].Last()->CAtom().SetPivot(NULL);
-    for( int i=0; i < rings[0].Count()-1; i++ )  {
-      if( rings[0][i]->CAtom().GetAfix() == afix )  // in case atoms are reodered
-        rings[0][i]->CAtom().ClearDependent();
-      rings[0][i]->CAtom().SetAfix( (afix/10)*10 + 5);
-      rings[0].Last()->CAtom().AddDependent( rings[0][i]->CAtom() );
-      rings[0][i]->CAtom().SetPivot( &rings[0].Last()->CAtom() );
+    if( rings[0].Last()->CAtom().GetDependentAfixGroup() != NULL )
+      rings[0].Last()->CAtom().GetDependentAfixGroup()->Clear();
+    TAfixGroup& ag = au.GetAfixGroups().New(&rings[0].Last()->CAtom(), afix);
+    for( int i=0; i < rings[0].Count()-1; i++ )  {  
+      TCAtom& ca = rings[0][i]->CAtom();
+      if( ca.GetDependentAfixGroup() != NULL && ca.GetDependentAfixGroup()->GetAfix() == afix )  // if used in case to change order
+        ca.GetDependentAfixGroup()->Clear();
     }
-    rings[0].Last()->CAtom().SetAfix(afix);
+    for( int i=0; i < rings[0].Count()-1; i++ )
+      ag.AddDependent(rings[0][i]->CAtom());
     return;
   }
   if( afix == 56 || afix == 66  || afix == 76 || afix == 116 || afix == 106 ||
@@ -3447,20 +3443,27 @@ void TMainForm::macAfix(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       E.ProcessingError(__OlxSrcInfo, "please provide 10 atoms exactly" );
       return;
     }
-    Atoms[0]->Atom().CAtom().ClearDependent();
-    Atoms[0]->Atom().CAtom().SetPivot(NULL);
+    if( Atoms[0]->Atom().CAtom().GetDependentAfixGroup() != NULL )
+      Atoms[0]->Atom().CAtom().GetDependentAfixGroup()->Clear();
+    TAfixGroup& ag = au.GetAfixGroups().New(&Atoms[0]->Atom().CAtom(), afix);
     for( int i=1; i < Atoms.Count(); i++ )  {
-      if( Atoms[i]->Atom().CAtom().GetAfix() == afix )  // in case atoms are reodered
-        Atoms[i]->Atom().CAtom().ClearDependent();
-      Atoms[i]->Atom().CAtom().SetAfix( (afix/10)*10 + 5);
-      Atoms[0]->Atom().CAtom().AddDependent( Atoms[i]->Atom().CAtom() );
-      Atoms[i]->Atom().CAtom().SetPivot( &Atoms[0]->Atom().CAtom() );
+      TCAtom& ca = Atoms[i]->Atom().CAtom();
+      if( ca.GetDependentAfixGroup() != NULL && ca.GetDependentAfixGroup()->GetAfix() == afix )  // if used in case to change order
+        ca.GetDependentAfixGroup()->Clear();
     }
-    Atoms[0]->Atom().CAtom().SetAfix(afix);
+    for( int i=1; i < Atoms.Count(); i++ )
+      ag.AddDependent(Atoms[i]->Atom().CAtom());
   }
   else  {
-    for( int i=0; i < Atoms.Count(); i++ )  
-      Atoms[i]->Atom().CAtom().SetAfix(afix);
+    if( afix == 0 )  {
+      for( int i=0; i < Atoms.Count(); i++ )  {
+        if( Atoms[i]->Atom().CAtom().GetDependentAfixGroup() != NULL )
+          Atoms[i]->Atom().CAtom().GetDependentAfixGroup()->Clear();
+      }
+    }
+    TAfixGroup& ag = au.GetAfixGroups().New(&Atoms[0]->Atom().CAtom(), afix);
+    for( int i=1; i < Atoms.Count(); i++ )  
+      ag.AddDependent(Atoms[i]->Atom().CAtom());
   }
 }
 //..............................................................................
@@ -4480,8 +4483,9 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options, TMacro
     CAtoms.Add( &Atoms[i]->Atom().CAtom() );
 
   for(int i=0; i < CAtoms.Count(); i++ )  {  // add afixed mates, recursion here!
-    for( int j=0; j < CAtoms[i]->DependentCount(); j++ ) 
-      CAtoms.Add( &CAtoms[i]->GetDependentAtom(j) );
+    if( CAtoms[i]->GetDependentAfixGroup() == NULL )  continue;
+    for( int j=0; j < CAtoms[i]->GetDependentAfixGroup()->Count(); j++ ) 
+      CAtoms.Add( &(*CAtoms[i]->GetDependentAfixGroup())[j] );
   }
   TPtrList<TSameGroup> processed;
   int ac = CAtoms.Count();  // to avoid recursion
@@ -4495,8 +4499,9 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options, TMacro
     }
   }
   for(int i=ac; i < CAtoms.Count(); i++ )  {  // add afixed mates, for SAME frags recursion here!
-    for( int j=0; j < CAtoms[i]->DependentCount(); j++ ) 
-      CAtoms.Add( &CAtoms[i]->GetDependentAtom(j) );
+    if( CAtoms[i]->GetDependentAfixGroup() == NULL )  continue;
+    for( int j=0; j < CAtoms[i]->GetDependentAfixGroup()->Count(); j++ ) 
+      CAtoms.Add( &(*CAtoms[i]->GetDependentAfixGroup())[j] );
   }
   // make sure that the list is unique
   for( int i=0; i < CAtoms.Count(); i++ )

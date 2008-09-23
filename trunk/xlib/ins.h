@@ -31,8 +31,8 @@ class TIns: public TBasicCFile  {
     TStrList Symm;
     TStrPObjList<olxstr, TBasicAtomInfo*>  BasicAtoms;  // SFAC container
     bool CellFound, DependentNonH, SetNextPivot;
-    int Part, Afix;
-    esdl::TStack< AnAssociation3<int,TCAtom*, bool> > DependentAtoms;  // number of atoms (left), pivot, Hydrogens or not
+    int Part;
+    esdl::TStack< AnAssociation3<int,TAfixGroup*, bool> > AfixGroups;  // number of atoms (left), pivot, Hydrogens or not
     double PartOccu;
     TCAtom* Last;
     TAsymmUnit::TResidue* Resi;
@@ -41,7 +41,7 @@ class TIns: public TBasicCFile  {
     ParseContext() : Resi(NULL), Last(NULL)  {
       SetNextPivot = DependentNonH = CellFound = false;
       PartOccu = 0;
-      Afix = Part = 0;
+      Part = 0;
     }
   };
 private:

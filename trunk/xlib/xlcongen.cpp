@@ -121,11 +121,9 @@ bool TXlConGen::FixAtom( TAtomEnvi& envi, const short Group, const TBasicAtomInf
         break;
     }
     if( afix != 0 )  {
-      for( int i=0; i < CreatedAtoms.Count(); i++ )  {
-        CreatedAtoms[i]->SetAfix(afix);
-        CreatedAtoms[i]->SetPivot( &envi.GetBase().CAtom() );
-        envi.GetBase().CAtom().AddDependent( *CreatedAtoms[i] );
-      }
+      TAfixGroup& ag = au.GetAfixGroups().New( &envi.GetBase().CAtom(), afix );
+      for( int i=0; i < CreatedAtoms.Count(); i++ )
+        ag.AddDependent(*CreatedAtoms[i]);
     }
     for( int i=0; i < CreatedAtoms.Count(); i++ )  {
       CreatedAtoms[i]->SetPart( envi.GetBase().CAtom().GetPart() );

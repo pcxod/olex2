@@ -56,6 +56,7 @@ TAsymmUnit::~TAsymmUnit() {
 void  TAsymmUnit::Clear()  {
   ClearRestraints();
   ClearExyz();
+  AfixGroups.Clear();
   Matrices.Clear();
   for( int i=0; i < CAtoms.Count(); i++ )
     delete CAtoms[i];
@@ -165,6 +166,7 @@ void TAsymmUnit::Assign(const TAsymmUnit& C)  {
   rUiso.Assign(*this, C.rUiso);
   rEADP.Assign(*this, C.rEADP);
   rSAME.Assign(*this, C.rSAME);
+  AfixGroups.Assign(*this, C.AfixGroups);
 
   for( int i=0; i < C.UsedSymm.Count(); i++ )
     UsedSymm.AddCCopy( C.UsedSymm[i] );
@@ -577,63 +579,6 @@ size_t TAsymmUnit::CountElements(const olxstr &Symbol) const  {
   return cnt;
 }
 //..............................................................................
-void TAsymmUnit::KeepH(TCAtomPList* list)  {
-  TPtrList<TCAtomPList> lists;
-  if( list == NULL )  {
-    for( int i=-1; i < Residues.Count(); i++ )
-      lists.Add( &GetResidue(i).AtomList() );
-  }
-  else
-    lists.Add(list);
-
-  typedef AnAssociation2<TCAtom*, TCAtomPList*> TANode;
-
-  for( int i=0; i < lists.Count(); i++ )  {
-    TTypeList <TANode> atomTree;
-    for( int j=0; j < lists[i]->Count(); j++ ) {
-      if( lists[i]->Item(j)->GetAfixAtomId() == -1 )
-       atomTree.AddNew( lists[i]->Item(j), new TCAtomPList() );
-    }
-    for( int j=0; j < lists[i]->Count(); j++ ) {
-      if( lists[i]->Item(j)->GetAfixAtomId() != -1 )  {
-        for( int k=0; k < atomTree.Count(); k++ )  {
-          if( atomTree[k].A()->GetLoaderId() == lists[i]->Item(j)->GetAfixAtomId() )  {
-            atomTree[k].B()->Add( lists[i]->Item(j) );
-            break;
-          }
-        }
-      }
-    }
-    lists[i]->Clear();
-    for( int j=0; j < atomTree.Count(); j++ )  {
-      lists[i]->Add( atomTree[j].A() );
-      for( int k=0; k < atomTree[j].GetB()->Count(); k++ )
-        lists[i]->Add( atomTree[j].GetB()->Item(k) );
-      delete atomTree[j].GetB();
-    }
-  }
-
- //fix afixes
-/*
- int afixId;
- for( int i=0; i < AtomCount(); i++ ) {
-   if( GetAtom(i)->GetAfixAtomId() != -1 )  {
-     afixId = GetAtom(i)->GetAfixAtomId();
-     for(int j=0; j < AtomCount(); j++ )  {
-       if( GetAtom(j)->GetLoaderId() == afixId )  {
-         while( ++j < AtomCount() )
-           if( GetAtom(j)->GetAfixAtomId() == -1 )  break;
-         if( (j+1) < AtomCount() )  {
-           CAtoms->Move(i, j);
-         }
-         break;
-       }
-     }
-   }
- }
-*/
-}
-//..............................................................................
 void TAsymmUnit::Sort(TCAtomPList* list)  {
  // sorting by four params
   if( list == NULL )  list = &MainResidue.AtomList();
@@ -641,7 +586,6 @@ void TAsymmUnit::Sort(TCAtomPList* list)  {
  TCAtomPList::QuickSorter.Sort<TCAtomPComparator>(*list);
  TCAtomPList::QuickSorter.Sort<TCAtomPComparator>(*list);
  TCAtomPList::QuickSorter.Sort<TCAtomPComparator>(*list);
- KeepH(list);
 }
 //..............................................................................
 int TAsymmUnit::GetMaxPart()  const {

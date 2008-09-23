@@ -215,25 +215,25 @@ void TLattice::InitBody()  {
       TSAtom& SAtom = Frag->Node(j);
       TCAtom& CAtom = SAtom.CAtom();
       CAtom.SetFragmentId(i);
-      if( CAtom.GetAfix() )  {
-        if( SAtom.NodeCount() == 1 )
-          CAtom.SetAfixAtomId( SAtom.Node(0).CAtom().GetLoaderId() );
-        else  {
-          conIndex = 0;
-          for( int k=0; k < SAtom.NodeCount(); k++ )  {
-            if( SAtom.Node(k).GetAtomInfo() != iQPeakIndex )  {
-              conIndex ++;
-              CAtom.SetAfixAtomId( SAtom.Node(k).CAtom().GetLoaderId() );
-            }
-          }
-          if( conIndex > 1 )  {
-            //TBasicApp::GetLog()->CriticalInfo( (olxstr("Bad connectivity for: ") << SAtom->GetLabel()) <<
-            //  ". Please fix the problem and reload file"
-            //);
-            CAtom.SetAfixAtomId(-1);
-          }
-        }
-      }
+      //if( CAtom.GetAfix() )  {
+      //  if( SAtom.NodeCount() == 1 )
+      //    CAtom.SetAfixAtomId( SAtom.Node(0).CAtom().GetLoaderId() );
+      //  else  {
+      //    conIndex = 0;
+      //    for( int k=0; k < SAtom.NodeCount(); k++ )  {
+      //      if( SAtom.Node(k).GetAtomInfo() != iQPeakIndex )  {
+      //        conIndex ++;
+      //        CAtom.SetAfixAtomId( SAtom.Node(k).CAtom().GetLoaderId() );
+      //      }
+      //    }
+      //    if( conIndex > 1 )  {
+      //      //TBasicApp::GetLog()->CriticalInfo( (olxstr("Bad connectivity for: ") << SAtom->GetLabel()) <<
+      //      //  ". Please fix the problem and reload file"
+      //      //);
+      //      CAtom.SetAfixAtomId(-1);
+      //    }
+      //  }
+      //}
     }
   }
 }

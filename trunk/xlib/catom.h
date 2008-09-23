@@ -22,11 +22,10 @@ class TCAtom: public ACollectionItem  {
 private:
   class TAsymmUnit *FParent;
   TBasicAtomInfo*  FAtomInfo;    // a pointer to TBasisAtomInfo object
-  TCAtom* Pivot;
   olxstr FLabel;    // atom's label
   int     Id, Tag;       // c_atoms id; this is also used to identify if TSAtoms are the same
   int     LoaderId; // id of the atom in the asymmertic unit of the loader
-  int     ResiId, SameId, SharedSiteId, EllpId, Afix;   // residue and SADI ID
+  int     ResiId, SameId, SharedSiteId, EllpId;   // residue and SADI ID
   double  Occp;     // occupancy and its variable
   double  Uiso, QPeak;    // isotropic thermal parameter; use it when Ellipsoid = NULL
   int     FragmentId;   // this is used in asymmetric unit sort and initialised in TLatice::InitBody()
@@ -35,12 +34,12 @@ private:
   evecd FFixedValues;  // at least five values (x,y,z, Occ, Uiso), may be 10, (x,y,z, Occ, Uij)
   short Part, Degeneracy, 
         Hfix; // hfix is only an of the "interface" use; HFIX istructions are parsed
-  int AfixAtomId;   // this is used to fix afixes after sorting
   bool Deleted, 
     Saved;  // is true the atoms already saved (to work aroung SAME, AFIX)
   bool CanBeGrown,
        HAttached;  // used for the hadd command
-  TPtrList<TCAtom>* FAttachedAtoms, *FAttachedAtomsI, *Dependent;
+  TPtrList<TCAtom>* FAttachedAtoms, *FAttachedAtomsI;
+  TAfixGroup* DependentAfixGroup, *ParentAfixGroup;
 public:
   TCAtom(TAsymmUnit *Parent);
   virtual ~TCAtom();
@@ -81,13 +80,6 @@ public:
   inline bool IsAttachedToI(TCAtom& CA)const {
     return FAttachedAtomsI == NULL ? false : FAttachedAtomsI->IndexOf(&CA) != -1;
   }
-  int DependentCount() const {  return Dependent == NULL ? 0 : Dependent->Count();  }
-  void ClearDependent()      {  if( Dependent != NULL )  Dependent->Clear();  }
-  TCAtom& GetDependentAtom(int i) const {  return *Dependent->Item(i);  }
-  void AddDependent(TCAtom& ca) {  
-    if( Dependent == NULL )  Dependent = new TPtrList<TCAtom>;
-    Dependent->Add(&ca);
-  }
   // beware - just the memory addresses compared!
   inline bool operator == (const TCAtom& ca)  const  {  return this == &ca;  }
   inline bool operator == (const TCAtom* ca)  const  {  return this == ca;  }
@@ -104,15 +96,14 @@ public:
   DefPropP(int, SameId)
   DefPropP(int, EllpId)
   DefPropP(int, FragmentId)
-  DefPropP(int, AfixAtomId)
   DefPropP(int, SharedSiteId)
   inline bool IsSiteShared() const {  return SharedSiteId != -1;  }
 //  short   Frag;    // fragment index
   DefPropP(short, Degeneracy)
   DefPropP(short, Part)
-  int GetAfix() const {  return Afix;  }
-  void SetAfix(int v);
-  DefPropP(TCAtom*, Pivot)
+  int GetAfix() const;
+  DefPropP(TAfixGroup*, ParentAfixGroup)
+  DefPropP(TAfixGroup*, DependentAfixGroup)
   DefPropP(short, Hfix)
   DefPropP(double, Occp)
   DefPropP(double, Uiso)
@@ -188,7 +179,86 @@ public:
   DefPropC(olxstr, Name)
   olxstr GetFullLabel() const;
 };
-
+//....................................................................................
+class TAfixGroup  {
+  double D, Sof, U;
+  int Afix, Id;
+  TCAtom* Pivot;
+  TCAtomPList Dependent;
+public:
+  TAfixGroup(int id, TCAtom* pivot, int afix, double d = 0, double sof = 0, double u = 0) :
+      Id(id), Pivot(pivot), D(d), Afix(afix), Sof(sof), U(u)  {  
+    if( pivot != NULL )  pivot->SetDependentAfixGroup(this);
+  }
+  TAfixGroup( TAsymmUnit& tau, const TAfixGroup& ag )  {  Assign(tau, ag);  }
+  ~TAfixGroup()  {  Clear();  }
+  DefPropP(double, D)
+  DefPropP(double, Sof)
+  DefPropP(double, U)
+  DefPropP(int, Id)
+  void Assign(TAsymmUnit& tau, const TAfixGroup& ag);
+  TCAtom& GetPivot() {  return *Pivot;  }
+  void SetPivot(TCAtom& ca)  {  
+    Pivot = &ca;
+    ca.SetDependentAfixGroup(this);
+  }
+  const TCAtom& GetPivot() const {  return *Pivot;  }
+  int GetM() const {  return GetM(Afix);  }
+  int GetN() const {  return GetN(Afix);  }
+  bool IsFitted() const {  return IsFitted(Afix);  }
+  bool DecAfixForDependent() const {  return DecAfixForDependent(Afix);  }
+  static int GetM(int afix) {  return afix < 10 ? 0 : afix/10;  }
+  static int GetN(int afix) {  return afix < 10 ? afix : afix%10;  }
+  static bool IsFitted(int afix)  {  
+    int m = GetM(afix);
+    return (m == 5 || m == 6 || m == 7 || m == 10 || m == 11);
+  }
+  static bool DecAfixForDependent(int afix)  {
+    int n = GetN(afix);
+    return (n == 6 || n == 9);
+  }
+  TCAtom& AddDependent(TCAtom& a)  {
+    Dependent.Add(&a);
+    a.SetParentAfixGroup(this);
+    return a;
+  }
+  int GetAfix() const {  return Afix;  }
+  void SetAfix(int a)  {
+    if( a == 0 )
+      Clear();
+  }
+  void Clear()  {
+    for( int i=0; i < Dependent.Count(); i++ )
+      Dependent[i]->SetParentAfixGroup(NULL);
+    Dependent.Clear();
+    Pivot->SetDependentAfixGroup(NULL);
+  }
+  int Count() const {  return Dependent.Count();  }
+  TCAtom& operator [] (int i) {  return *Dependent[i];  }
+  const TCAtom& operator [] (int i) const {  return *Dependent[i];  }
+};
+//....................................................................................
+class TAfixGroups {
+  TTypeList<TAfixGroup> Groups;
+public:
+  TAfixGroup& New(TCAtom* pivot, int Afix, double d = 0, double sof = 0, double u = 0 )  {
+    return Groups.Add( new TAfixGroup(Groups.Count(), pivot, Afix, d, sof, u) );
+  }
+  int Count() const {  return Groups.Count();  }
+  TAfixGroup& operator [] (int i) {  return Groups[i];  }
+  const TAfixGroup& operator [] (int i) const {  return Groups[i];  }
+  void Clear() {  Groups.Clear();  }
+  void Delete(int i)  {
+    Groups.Delete(i);
+    for( int j=i; j < Groups.Count(); j++ )
+      Groups[j].SetId(j);
+  }
+  void Assign( TAsymmUnit& tau, const TAfixGroups& ags )  {
+    Clear();
+    for( int i=0; i < ags.Count(); i++ )
+      Groups.Add( new TAfixGroup(tau, ags[i]) );
+  }
+};
 typedef TTypeList<TGroupCAtom> TCAtomGroup;
 //..............................................................................
 
