@@ -297,6 +297,7 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx,
   else if( Toks[0].Comparei("AFIX") == 0 && (Toks.Count() > 1) )  {
     int afix = Toks[1].ToInt();
     TAfixGroup* afixg = NULL;
+    int n = 0, m = 0;
     if( afix != 0 )  {
       double d = 0, u = 0, sof = 0;
       if( Toks.Count() > 2 && Toks[2].IsNumber() )
@@ -305,7 +306,10 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx,
         sof = Toks[3].ToDouble();
       if( Toks.Count() > 4 )
         u = Toks[3].ToDouble();
-      afixg = &cx.au.GetAfixGroups().New(NULL, afix, d, sof == 11 ? 0 : sof, u == 10.08 ? 0 : u);
+      n = TAfixGroup::GetN(afix);
+      m = TAfixGroup::GetM(afix);
+      if( !(m == 0 && n == 5) )
+        afixg = &cx.au.GetAfixGroups().New(NULL, afix, d, sof == 11 ? 0 : sof, u == 10.08 ? 0 : u);
     }
     // Shelx manual: n is always a single digit; m may be two, one or zero digits (the last corresponds to m = 0).
     if( afix == 0 )  {
@@ -321,17 +325,16 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx,
         }
         if( cx.AfixGroups.Current().GetB()->GetPivot() == NULL )
           throw TFunctionFailedException(__OlxSourceInfo, "undefined pivot atom for a fitted group");
-        cx.AfixGroups.Pop();
+        while( !cx.AfixGroups.IsEmpty() && cx.AfixGroups.Current().GetA() <= 0 )  // pop all out  
+          cx.AfixGroups.Pop();
       }
     }
     else  {
-      if( !cx.AfixGroups.IsEmpty() && cx.AfixGroups.Current().GetA() == 0 )  {
+      if( !cx.AfixGroups.IsEmpty() && cx.AfixGroups.Current().GetA() == 0 )  {  // pop m =0 as well
         cx.AfixGroups.Pop();
         if( !cx.AfixGroups.IsEmpty() )
           cx.DependentNonH = cx.AfixGroups.Current().GetC();
       }
-      int n = afixg->GetN(),
-          m = afixg->GetM();
       switch( m )  {
       case 1:
       case 4:
@@ -373,12 +376,12 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx,
         cx.DependentNonH = false;
         break;
       }
-      if( m == 0 )  {  // generic container then
+      if( m == 0 && n != 5 )  {  // generic container then, beside, 5 is dependent atom of rigid group
         cx.AfixGroups.Push( AnAssociation3<int,TAfixGroup*,bool>(-1, afixg, false) );
         cx.SetNextPivot = true; // but need this anyway
       }
-      if( !cx.SetNextPivot )  {
-        if( cx.Last == NULL )
+      if( !cx.SetNextPivot && afixg != NULL )  {
+        if( cx.Last == NULL  )
           throw TFunctionFailedException(__OlxSourceInfo, "undefined pivot atom for a fitted group");
         afixg->SetPivot(*cx.Last);
       }

@@ -145,7 +145,7 @@ int TCAtom::GetAfix() const {
     return 0;
   }
   if( ParentAfixGroup->DecAfixForDependent() )
-    return ParentAfixGroup->GetAfix() - 1;
+    return (ParentAfixGroup->GetAfix()/10)*10 + 5;
   else
     return ParentAfixGroup->GetAfix();
 }
