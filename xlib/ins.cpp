@@ -93,8 +93,7 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
     else if( Toks[0].Comparei("END") == 0 )     {   //reset RESI to default
       End = true;  
       cx.Resi = &GetAsymmUnit().GetResidue(-1);
-      cx.DependentAtoms.Clear();
-      cx.Afix = 0;
+      cx.AfixGroups.Clear();
       cx.Part = 0;
     }
     else if( Toks.Count() < 6 )  // atom sgould have at least 7 parameters
@@ -154,9 +153,6 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
   _FinishParsing();
   // initialise asu data
   GetAsymmUnit().InitData();
-  // this bit was modified, so it now takes both - one line an multiline
-  // parameter; the closing tag must exist - otherwise all rems after <hkl>
-  // will be removed
   for( int i=0; i < InsCount(); i++ )  {
     if( !InsName(i).Comparei("exyz") && (InsParams(i).Count() > 1) ) {
       TCAtomPList atoms;
@@ -300,53 +296,68 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx,
   }
   else if( Toks[0].Comparei("AFIX") == 0 && (Toks.Count() > 1) )  {
     TAsymmUnit& au = GetAsymmUnit();
-    int prevAfix = cx.Afix;
-    cx.Afix = Toks[1].ToInt();
-    int n = cx.Afix < 17 ? 0 : cx.Afix%10,
-        m = cx.Afix < 17 ? cx.Afix : cx.Afix/10;
-    if( cx.Afix == 0 )  {
-      if( !cx.DependentAtoms.IsEmpty() )  {
-        int old_n = prevAfix < 17 ? 0 : prevAfix%10;
-        if( cx.DependentAtoms.Current().GetA() != 0 )  {
-          if( old_n != 0 )
+    int afix = Toks[1].ToInt();
+    TAfixGroup* afixg = NULL;
+    if( afix != 0 )  {
+      double d = 0, u = 0, sof = 0;
+      if( Toks.Count() > 2 && Toks[2].IsNumber() )
+        d = Toks[2].ToDouble();
+      if( Toks.Count() > 3 )
+        sof = Toks[3].ToDouble();
+      if( Toks.Count() > 4 )
+        u = Toks[3].ToDouble();
+      afixg = &au.GetAfixGroups().New(NULL, afix, d, sof == 11 ? 0 : sof, u == 10.08 ? 0 : u);
+    }
+    // Shelx manual: n is always a single digit; m may be two, one or zero digits (the last corresponds to m = 0).
+    if( afix == 0 )  {
+      if( !cx.AfixGroups.IsEmpty() )  {
+        int old_m = cx.AfixGroups.Current().GetB()->GetM();
+        if( cx.AfixGroups.Current().GetA() != 0 )  {
+          if( old_m != 0 )
             throw TFunctionFailedException(__OlxSourceInfo, olxstr("incomplete AFIX group") <<
               (cx.Last != NULL ? (olxstr(" at ") << cx.Last->GetLabel()) : EmptyString) );
           else
-            TBasicApp::GetLog().Warning( olxstr("Possibly incorrect AFIX ") << prevAfix <<
+            TBasicApp::GetLog().Warning( olxstr("Possibly incorrect AFIX ") << cx.AfixGroups.Current().GetB()->GetAfix() <<
               (cx.Last != NULL ? (olxstr(" at ") << cx.Last->GetLabel()) : EmptyString) );
         }
-        cx.DependentAtoms.Pop();
+        if( cx.AfixGroups.Current().GetB()->GetPivot() == NULL )
+          throw TFunctionFailedException(__OlxSourceInfo, "undefined pivot atom for a fitted group");
+        cx.AfixGroups.Pop();
       }
     }
     else  {
-      if( !cx.DependentAtoms.IsEmpty() && cx.DependentAtoms.Current().GetA() == 0 )  {
-        cx.DependentAtoms.Pop();
-        if( !cx.DependentAtoms.IsEmpty() )
-          cx.DependentNonH = cx.DependentAtoms.Current().GetC();
+      if( !cx.AfixGroups.IsEmpty() && cx.AfixGroups.Current().GetA() == 0 )  {
+        cx.AfixGroups.Pop();
+        if( !cx.AfixGroups.IsEmpty() )
+          cx.DependentNonH = cx.AfixGroups.Current().GetC();
       }
-
+      int n = afixg->GetN(),
+          m = afixg->GetM();
       if( n == 6 || n == 9 )  {
         switch( m )  {
         case 6:
         case 7:
-          cx.DependentAtoms.Push( AnAssociation3<int,TCAtom*,bool>(5, NULL, true));
+          cx.AfixGroups.Push( AnAssociation3<int,TAfixGroup*,bool>(5, afixg, true));
           cx.DependentNonH = true;
           cx.SetNextPivot = true;
           break;
         case 5:
-          cx.DependentAtoms.Push( AnAssociation3<int,TCAtom*,bool>(4, NULL, true));
+          cx.AfixGroups.Push( AnAssociation3<int,TAfixGroup*,bool>(4, afixg, true));
           cx.DependentNonH = true;
           cx.SetNextPivot = true;
           break;
         case 11:  //naphtalene
         case 10:  // Cp*
-          cx.DependentAtoms.Push( AnAssociation3<int,TCAtom*,bool>(9, NULL, true));
+          cx.AfixGroups.Push( AnAssociation3<int,TAfixGroup*,bool>(9, afixg, true));
           cx.DependentNonH = true;
           cx.SetNextPivot = true;
           break;
         }
       }
       else  {
+        if( cx.Last == NULL )
+          throw TFunctionFailedException(__OlxSourceInfo, "undefined pivot atom for a fitted group");
+        afixg->SetPivot(*cx.Last);
         bool added = false;
         switch( m )  {
         case 1:
@@ -355,24 +366,24 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx,
         case 14:
         case 15:
         case 16:
-          cx.DependentAtoms.Push( AnAssociation3<int,TCAtom*,bool>(1, cx.Last, false) );
+          cx.AfixGroups.Push( AnAssociation3<int,TAfixGroup*,bool>(1, afixg, false) );
           cx.DependentNonH = false;
           added = true;
           break;
         case 2:
         case 9:
-          cx.DependentAtoms.Push( AnAssociation3<int,TCAtom*,bool>(2, cx.Last, false) );
+          cx.AfixGroups.Push( AnAssociation3<int,TAfixGroup*,bool>(2, afixg, false) );
           cx.DependentNonH = false;
           added = true;
           break;
         case 3:
         case 13:
-          cx.DependentAtoms.Push( AnAssociation3<int,TCAtom*,bool>(3, cx.Last, false) );
+          cx.AfixGroups.Push( AnAssociation3<int,TAfixGroup*,bool>(3, afixg, false) );
           cx.DependentNonH = false;
           added = true;
           break;
         case 12:  // disordered CH3
-          cx.DependentAtoms.Push( AnAssociation3<int,TCAtom*,bool>(6, cx.Last, false) );
+          cx.AfixGroups.Push( AnAssociation3<int,TAfixGroup*,bool>(6, afixg, false) );
           cx.DependentNonH = false;
           added = true;
           break;
@@ -744,10 +755,24 @@ void TIns::_SaveAtom(TCAtom& a, int& part, int& afix, TStrPObjList<olxstr,TBasic
     return;
   }
   if( a.GetPart() != part )  sl.Add("PART ") << a.GetPart();
-  if( a.GetAfix() != afix )  { 
-    if( !(afix == 56 || afix == 66  || afix == 76 || afix == 116 || afix == 106 ||
-          afix == 59 || afix == 69  || afix == 79 || afix == 119 || afix == 109) )  // not sue if XL bug...
-      sl.Add("AFIX ") << a.GetAfix();
+  TAfixGroup* ag = a.GetDependentAfixGroup();
+  int atom_afix = a.GetAfix();
+  if( atom_afix != afix )  { 
+    if( !TAfixGroup::DecAfixForDependent(afix) )  {
+      if( ag != NULL )  {
+        olxstr& str = sl.Add("AFIX ") << atom_afix;
+        if( ag->GetD() != 0 )  {
+          str << ' ' << ag->GetD();
+        }
+        if( ag->GetSof() != 0 )  {
+          str << ' ' << ag->GetSof();
+          if( ag->GetU() != 0 )
+            str << ' ' << ag->GetU();
+        }
+      }
+      else
+        sl.Add("AFIX ") << atom_afix;
+    }
   }
   afix = a.GetAfix();
   part = a.GetPart();
@@ -759,8 +784,10 @@ void TIns::_SaveAtom(TCAtom& a, int& part, int& afix, TStrPObjList<olxstr,TBasic
   HypernateIns( _AtomToString(&a, spindex+1), sl );
   a.SetSaved(true);
   if( index != NULL )  index->Add(a.GetTag());
-  for( int i=0; i < a.DependentCount(); i++ )
-    _SaveAtom(a.GetDependentAtom(i), part, afix, sfac, sl, index, checkSame);
+  if( ag != NULL )  {
+    for( int i=0; i < ag->Count(); i++ )
+    _SaveAtom( (*ag)[i], part, afix, sfac, sl, index, checkSame);
+  }
 }
 //..............................................................................
 void TIns::SaveToStrings(TStrList& SL)  {
@@ -821,7 +848,8 @@ void TIns::SaveToStrings(TStrList& SL)  {
         SL.Add(EmptyString);
         fragmentId = ac.GetFragmentId();
       }
-      if( ac.GetPivot() != NULL && !ac.GetPivot()->IsDeleted() )  continue;
+      if( ac.GetParentAfixGroup() != NULL && 
+         !ac.GetParentAfixGroup()->GetPivot().IsDeleted() )  continue;
       _SaveAtom(ac, part, afix, &BasicAtoms, SL);
     }
   }
@@ -931,8 +959,8 @@ void TIns::UpdateAtomsFromStrings(TCAtomPList& CAtoms, const TIntList& index, TS
   SL.CombineLines('=');
   FVars.Resize(0);
   for( int i=0; i < CAtoms.Count(); i++ )  {
-    CAtoms[i]->ClearDependent();
-    CAtoms[i]->SetPivot(NULL);
+    if( CAtoms[i]->GetParentAfixGroup() != NULL )
+      CAtoms[i]->GetParentAfixGroup()->Clear();
   }
   for( int i=0; i < SL.Count(); i++ )  {
     Tmp = olxstr::DeleteSequencesOf<char>(SL[i].UpperCase(), true);
@@ -1005,8 +1033,10 @@ bool TIns::SaveAtomsToStrings(const TCAtomPList& CAtoms, TIntList& index, TStrLi
       resi = CAtoms[i]->GetResiId();
       SL.Add( GetAsymmUnit().GetResidue(CAtoms[i]->GetResiId()).ToString());
     }
-    if( CAtoms[i]->GetPivot() != NULL && !CAtoms[i]->GetPivot()->IsDeleted() )  continue;
-    _SaveAtom( *CAtoms[i], part, afix, NULL, SL, &index);
+    TCAtom& ac = *CAtoms[i];
+    if( ac.GetParentAfixGroup() != NULL && 
+      !ac.GetParentAfixGroup()->GetPivot().IsDeleted() )  continue;
+    _SaveAtom( ac, part, afix, NULL, SL, &index);
   }
   return true;
 }
@@ -1106,30 +1136,27 @@ void TIns::SavePattSolution(const olxstr& FileName, const TTypeList<TPattAtom>& 
 //..............................................................................
 void TIns::_ProcessAfix(TCAtom& a, ParseContext& cx)  {
   if( cx.SetNextPivot )  {
-    cx.DependentAtoms.Current().SetB( &a );
+    cx.AfixGroups.Current().B()->SetPivot(a);
     cx.SetNextPivot = 0;
     return;
   }
-  if( !cx.DependentAtoms.IsEmpty() )  {
-    if( cx.DependentAtoms.Current().GetA() == 0 )  {
-      cx.DependentAtoms.Pop();
-      if( !cx.DependentAtoms.IsEmpty() )
-        cx.DependentNonH = cx.DependentAtoms.Current().GetC();
+  if( !cx.AfixGroups.IsEmpty() )  {
+    if( cx.AfixGroups.Current().GetA() == 0 )  {
+      cx.AfixGroups.Pop();
+      if( !cx.AfixGroups.IsEmpty() )
+        cx.DependentNonH = cx.AfixGroups.Current().GetC();
     }
     else  {
       if( cx.DependentNonH )  {
         if( a.GetAtomInfo() != iHydrogenIndex && a.GetAtomInfo() != iDeuteriumIndex )  {
-          cx.DependentAtoms.Current().A()--;
-          cx.DependentAtoms.Current().B()->AddDependent(a);
-          a.SetAfix( (cx.DependentAtoms.Current().B()->GetAfix()/10)*10 + 5);  // auto Afix 
-          a.SetPivot( cx.DependentAtoms.Current().B() );
+          cx.AfixGroups.Current().A()--;
+          cx.AfixGroups.Current().B()->AddDependent(a);
         }
       }
       else  {
         if( a.GetAtomInfo() == iHydrogenIndex || a.GetAtomInfo() == iDeuteriumIndex )  {
-          cx.DependentAtoms.Current().A()--;
-          cx.DependentAtoms.Current().B()->AddDependent(a);
-          a.SetPivot( cx.DependentAtoms.Current().B() );
+          cx.AfixGroups.Current().A()--;
+          cx.AfixGroups.Current().B()->AddDependent(a);
         }
       }
     }
@@ -1155,7 +1182,6 @@ TCAtom* TIns::_ParseAtom(TStrList& Toks, ParseContext& cx, TCAtom* atom)  {
   atom->ccrdEsd()[0] = fabs(atom->ccrd()[0]*Error);
   atom->ccrdEsd()[1] = fabs(atom->ccrd()[1]*Error);
   atom->ccrdEsd()[2] = fabs(atom->ccrd()[2]*Error);
-  atom->SetAfix( cx.Afix );
   atom->SetPart( cx.Part );
   // update the context
   cx.Last = atom;

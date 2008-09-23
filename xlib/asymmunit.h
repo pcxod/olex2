@@ -117,6 +117,7 @@ protected:
                   rEADP;  // equivalent adp, constraint
                  
   TSameGroupList  rSAME;
+  TAfixGroups AfixGroups;
 public:
 
   TAsymmUnit(TLattice *L, TAtomsInfo *AI);
@@ -257,8 +258,6 @@ public:
 
   // sorts the content of the asymmetric unit or the list if provided
   void Sort(TCAtomPList* list = NULL);
-  // to be used to keep afix instructions with corresponding atoms
-  void KeepH(TCAtomPList* list = NULL);
 
   olxstr CheckLabel(const TCAtom* ca, const olxstr &Label, char a='0', char b='a', char c='a') const;
 
@@ -305,7 +304,8 @@ public:
   inline TSRestraintList& EquivalentU()         {  return rEADP;  }
   // SAME
   inline TSameGroupList& SimilarFragments()     {  return rSAME;  }
-
+  
+  inline TAfixGroups& GetAfixGroups()           {  return AfixGroups;  }
 
   // returns next available part istruction in atoms
   int GetMaxPart() const;

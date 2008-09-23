@@ -32,7 +32,6 @@ TBasicCFile::~TBasicCFile()  {
 //..............................................................................
 void TBasicCFile::SaveToFile(const olxstr &A)  {
   TStrList L;
-  FAsymmUnit->KeepH();
   SaveToStrings( L );
 #ifdef _UNICODE
   TCStrList(L).SaveToFile( A );
@@ -215,6 +214,7 @@ void TXFile::UpdateAsymmUnit()  {
   LL->GetAsymmUnit().SimilarU().Assign(LL->GetAsymmUnit(), GetAsymmUnit().SimilarU());
   LL->GetAsymmUnit().EquivalentU().Assign(LL->GetAsymmUnit(), GetAsymmUnit().EquivalentU());
   LL->GetAsymmUnit().SimilarFragments().Assign(LL->GetAsymmUnit(), GetAsymmUnit().SimilarFragments());
+  LL->GetAsymmUnit().GetAfixGroups().Assign(LL->GetAsymmUnit(), GetAsymmUnit().GetAfixGroups());
   LL->GetAsymmUnit().ClearUsedSymm();
   for( int i=0; i < GetAsymmUnit().UsedSymmCount(); i++ )
     LL->GetAsymmUnit().AddUsedSymm( GetAsymmUnit().GetUsedSymm(i) );

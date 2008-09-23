@@ -373,7 +373,5 @@ void AConstraintGenerator::GenerateAtom( TCAtomPList& created, TAtomEnvi& envi,
   }
   envi.GetBase().CAtom().SetHAttached( crds.Count() != 0 );
   DoGenerateAtom(created, au, crds, tmp);
-  for( int i=0; i < created.Count(); i++ )
-    created[i]->SetAfixAtomId( envi.GetBase().CAtom().GetLoaderId() );
 }
 
