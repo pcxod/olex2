@@ -531,22 +531,22 @@ void TXApp::AutoAfixRings(int afix, TSAtom* sa, bool TryPyridine)  {
 
       sa->GetNetwork().FindAtomRings(*sa, ring, rings);
       if( rings.Count() == 0 )  {
-        GetLog().Error(olxstr(__OlxSrcInfo) << ": could not locate the XC(n-1) ring");
+        GetLog() << "no suitable rings have been found\n";
         return;
       }
       else if( rings.Count() > 1 )  {
-        GetLog().Error(olxstr(__OlxSrcInfo) << ": the atom is shared by several rings" );
+        GetLog() << "the atom is shared by several rings\n";
         return;
       }
       TNetwork::RingInfo ri;
       TNetwork::AnalyseRing( rings[0], ri );
       if( m == 11 )  {  // need to rearrage the ring to fit shelxl requirements as fihure of 8
         if( ri.Alpha.IndexOf( rings[0].Count() -1 ) == -1 )  {
-          GetLog().Error(olxstr(__OlxSrcInfo) << ": the alpha substituted atom is expected" );
+          GetLog() << "the alpha substituted atom is expected\n";
           return;
         }
         if( ri.Ternary.Count() != 2 )  {
-          GetLog().Error(olxstr(__OlxSrcInfo) << ": naphtalene ring should have two ternary atoms" );
+          GetLog() << "naphtalene ring should have two ternary atoms\n";
           return;
         }
         if( ri.Ternary.IndexOf(rings[0].Count()-2) != -1 )  { // countr-clockwise direction to revert
@@ -573,7 +573,7 @@ void TXApp::AutoAfixRings(int afix, TSAtom* sa, bool TryPyridine)  {
           return;
         }
       }
-      if( ri.Substituted.Count() > 1 )  
+      if( ri.Substituted.Count() > 1 && m != 10 )  
         TBasicApp::GetLog() << "The selected ring has more than one substituent\n";
       ProcessRingAfix(rings[0], afix, m!=10);
     }
