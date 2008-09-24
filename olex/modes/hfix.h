@@ -31,6 +31,12 @@ public:
       if( TAfixGroup::IsFitted(Hfix) && (n == 6 || n == 9) )  {
         TGlXApp::GetGXApp()->AutoAfixRings(Hfix, &XA->Atom(), true);
       }
+      else if( Hfix == 0 )  {  // special case
+        TCAtom& ca = XA->Atom().CAtom();
+        if( ca.GetDependentAfixGroup() != NULL )       ca.GetDependentAfixGroup()->Clear();
+        else if( ca.GetDependentHfixGroup() != NULL )  ca.GetDependentHfixGroup()->Clear();
+        else if( ca.GetParentAfixGroup() != NULL )     ca.GetParentAfixGroup()->Clear();
+      }
       else  {
         int afix = TXlConGen::ShelxToOlex(Hfix, AE);
         if( afix != -1 )  {
