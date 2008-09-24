@@ -56,16 +56,27 @@ public:
   void FindAtomRings(TSAtom& ringAtom, const TPtrList<TBasicAtomInfo>& ringContent,
         TTypeList<TSAtomPList>& res);
   struct RingInfo  {
-    int SubsNumber, MaxSubsANode, HeaviestSubsIndex;
+    int MaxSubsANode, HeaviestSubsIndex;
     TBasicAtomInfo* HeaviestSubsType;
+    TIntList Ternary, // three bond inside the ring
+      Substituted,    // more than two connections, two belong to the ring
+      Alpha;          // susbtituted next to a ternary atom 
+    TTypeList<TSAtomPList> Substituents;
     bool HasAfix;
-    RingInfo() : HeaviestSubsType(NULL)  {
-      SubsNumber = MaxSubsANode = 0;
+    RingInfo() : HeaviestSubsType(NULL), MaxSubsANode(0), HeaviestSubsIndex(-1), HasAfix(false)  {  }
+    RingInfo& Clear()  {
+      MaxSubsANode = 0;
       HeaviestSubsIndex = -1;
       HasAfix = false;
+      Ternary.Clear();
+      Substituted.Clear();
+      Alpha.Clear();
+      Substituents.Clear();
+      return *this;
     }
+    bool IsSingleCSubstituted() const;  // returns true if all substituents are single CHn groups
   };
-  static RingInfo AnalyseRing( const TSAtomPList& ring );
+  static RingInfo& AnalyseRing( const TSAtomPList& ring, RingInfo& ri );
 
   /* quaternion method, Acta A45 (1989), 208
     This function finds the best match between atom pairs and returns the summ of

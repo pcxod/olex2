@@ -594,6 +594,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\sdl\ellist.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\sdl\emath.h"
 				>
 			</File>

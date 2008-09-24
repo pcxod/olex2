@@ -3356,34 +3356,66 @@ void TMainForm::macAfix(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     return;
   }
   TAsymmUnit& au = FXApp->XFile().GetAsymmUnit();
-  if( !Cmds.IsEmpty() )
-    FXApp->FindXAtoms(Cmds.Text(' '), Atoms);
+  FindXAtoms(Cmds, Atoms, false, !Options.Contains("cs"));
   if( Atoms.IsEmpty() )  {
-    if( afix == 66 || afix == 69 )  {  // special case
+    int m = TAfixGroup::GetM(afix), n = TAfixGroup::GetN(afix);
+    if( TAfixGroup::IsFitted(afix) && ( n == 6 || n == 9) )  {  // special case
       TTypeList< TSAtomPList > rings;
       try  {  
-        FXApp->FindRings("C6", rings);  
-        if( Options.Contains('n') )
-          FXApp->FindRings("NC5", rings);  
+        if( m == 6 )  {
+          FXApp->FindRings("C6", rings);  
+          if( Options.Contains('n') )  FXApp->FindRings("NC5", rings);  
+        }
+        else if( m == 5 || m == 10 ) // Cp or Cp*
+          FXApp->FindRings("C5", rings);  
+        else if( m == 11 )
+          FXApp->FindRings("C10", rings);  
       }
       catch( const TExceptionBase& exc )  {  throw TFunctionFailedException(__OlxSourceInfo, exc);  }
+      TNetwork::RingInfo ri;
       for( int i=0; i < rings.Count(); i++ )  {
-        if( !TNetwork::IsRingRegular(rings[i]) )  continue;
+        if( m != 11 && !TNetwork::IsRingRegular(rings[i]) )  continue;
         // find the pivot (with heaviest atom attached)
-        TNetwork::RingInfo ri = TNetwork::AnalyseRing( rings[i] );
-        if( ri.HasAfix || ri.SubsNumber > 1 || ri.HeaviestSubsIndex == -1 )  continue;
-        int pivot = ri.HeaviestSubsIndex;
+        TNetwork::AnalyseRing( rings[i], ri.Clear() );
+        if( ri.HasAfix || ri.HeaviestSubsIndex == -1 )  continue;
+        if( m != 10 && ri.Substituted.Count() > 1 )  continue;
+        if( m == 10 && ri.Substituted.Count() != 5 )  continue; // Cp*
+        int shift = (m == 10 ? 0 : ri.HeaviestSubsIndex+1); // do not allign to pivot for Cp* 
+        rings[i].ShiftL(shift);  // pivot is the last one now
+        if( m == 11 )  {  // validate and rearrange to figure of 8
+          if( ri.Alpha.IndexOf( shift -1 ) == -1 ) continue;
+          if( ri.Ternary.Count() != 2 )  continue;
+          if( ri.Ternary.IndexOf(shift-2) != -1 )  { // counter-clockwise direction
+            for( int j=0; j < (rings[i].Count()-1)/2; j++ )  {
+              TSAtom* a = rings[i][j];
+              rings[i][j] = rings[0][rings[0].Count()-j-2];
+              rings[i][rings[i].Count()-j-2] = a;
+            }
+          }
+          rings[i].Swap(0, 4);
+          rings[i].Swap(1, 3);
+        }
+        else if( m == 10 )  {  // Cp*
+          if( !ri.IsSingleCSubstituted() )  continue;
+          for( int j=0; j < ri.Substituents.Count(); j++ )
+            rings[i].Add(ri.Substituents[j][0] );
+        }
         olxstr info("Processing");
         for( int j=0; j < rings[i].Count(); j++ )
           info << ' ' << rings[i][j]->GetLabel();
-        TBasicApp::GetLog() << (info << ". Chosen pivot atom is ") << rings[i][pivot]->GetLabel() << '\n';
-        if( rings[i][pivot]->CAtom().GetDependentAfixGroup() != NULL )
-          rings[i][pivot]->CAtom().GetDependentAfixGroup()->Clear();
-        TAfixGroup& ag = au.GetAfixGroups().New(&rings[i][pivot]->CAtom(), afix);
-        for( int j=pivot+1; j < rings[i].Count(); j++ )
-          ag.AddDependent( rings[i][j]->CAtom() );
-        for( int j=0; j < pivot; j++ )
-          ag.AddDependent( rings[i][j]->CAtom() );
+        TBasicApp::GetLog() << (info << ". Chosen pivot atom is ") << 
+          (m == 10 ? rings[i][0]->GetLabel() : rings[i].Last()->GetLabel()) << '\n';
+        if( rings[i].Last()->CAtom().GetDependentAfixGroup() != NULL )
+          rings[i].Last()->CAtom().GetDependentAfixGroup()->Clear();
+        TAfixGroup& ag = au.GetAfixGroups().New( &(m == 10 ? rings[i][0]->CAtom() : rings[i].Last()->CAtom()), afix);
+        if( m != 10 )  {
+          for( int j=rings[i].Count()-2; j >= 0; j-- )
+            ag.AddDependent( rings[i][j]->CAtom() );
+        }
+        else  {
+          for( int j=1; j < rings[i].Count(); j++ )
+            ag.AddDependent( rings[i][j]->CAtom() );
+        }
       }
     }
     else  {
@@ -3391,27 +3423,49 @@ void TMainForm::macAfix(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     }
     return;
   }
-  else if( Atoms.Count() == 1 && (afix == 66 || afix == 69) )  {
+  else if( Atoms.Count() == 1 && (afix == 66 || afix == 69 || afix == 56 || afix == 59 || afix == 116 || afix == 119) )  {
     TPtrList<TBasicAtomInfo> ring;
     TTypeList< TSAtomPList > rings;
-    if( Atoms[0]->Atom().GetAtomInfo() != iCarbonIndex )  {
-      ring.Add( &Atoms[0]->Atom().GetAtomInfo() );
-      FXApp->RingContentFromStr("C5", ring);
-    }
-    else  
-      FXApp->RingContentFromStr("C6", ring);
+    if( Atoms[0]->Atom().GetAtomInfo() != iCarbonIndex )
+        ring.Add( &Atoms[0]->Atom().GetAtomInfo() );
+    if( (afix/10) == 6 )
+      FXApp->RingContentFromStr( ring.IsEmpty() ? "C6" :"C5", ring);
+    else if( (afix/10) == 5 )
+      FXApp->RingContentFromStr(ring.IsEmpty() ? "C5" :"C4", ring);
+    else if( (afix/10) == 11 ) 
+      FXApp->RingContentFromStr(ring.IsEmpty() ? "C10" :"C9", ring);
     
     Atoms[0]->Atom().GetNetwork().FindAtomRings(Atoms[0]->Atom(), ring, rings);
     if( rings.Count() == 0 )  {
-      E.ProcessingError(__OlxSrcInfo, "could not locate the C6 or XC5 ring" );
+      E.ProcessingError(__OlxSrcInfo, "could not locate the XC(n-1) ring" );
       return;
     }
     else if( rings.Count() > 1 )  {
       E.ProcessingError(__OlxSrcInfo, "the atom is shared by several rings" );
       return;
     }
-    TNetwork::RingInfo ri = TNetwork::AnalyseRing( rings[0] );
-    if( ri.SubsNumber > 1 )  
+    TNetwork::RingInfo ri;
+    TNetwork::AnalyseRing( rings[0], ri );
+    if( (afix/10) == 11 )  {  // need to rearrage the ring to fit shelxl requirements as fihure of 8
+      if( ri.Alpha.IndexOf( rings[0].Count() -1 ) == -1 )  {
+        E.ProcessingError(__OlxSrcInfo, "the alpha substituted atom is expected" );
+        return;
+      }
+      if( ri.Ternary.Count() != 2 )  {
+        E.ProcessingError(__OlxSrcInfo, "naphtalene ring should have two ternary atoms" );
+        return;
+      }
+      if( ri.Ternary.IndexOf(rings[0].Count()-2) != -1 )  { // countr-clockwise direction to revert
+        for( int i=0; i < (rings[0].Count()-1)/2; i++ )  {
+          TSAtom* a = rings[0][i];
+          rings[0][i] = rings[0][rings[0].Count()-i-2];
+          rings[0][rings[0].Count()-i-2] = a;
+        }
+      }
+      rings[0].Swap(0, 4);
+      rings[0].Swap(1, 3);
+    }
+    if( ri.Substituted.Count() > 1 )  
       TBasicApp::GetLog() << "The selected ring has more than one substituent\n";
     olxstr info("Processing");
     for( int i=rings[0].Count()-1; i >= 0; i-- )
@@ -3425,8 +3479,27 @@ void TMainForm::macAfix(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       if( ca.GetDependentAfixGroup() != NULL && ca.GetDependentAfixGroup()->GetAfix() == afix )  // if used in case to change order
         ca.GetDependentAfixGroup()->Clear();
     }
-    for( int i=0; i < rings[0].Count()-1; i++ )
+    for( int i=rings[0].Count()-2; i >= 0;  i-- )
       ag.AddDependent(rings[0][i]->CAtom());
+    return;
+  }
+  if( afix < 0 )  {  // testing naphtalene rings...
+    TTypeList< TSAtomPList > rings;
+    try  {  FXApp->FindRings("C10", rings);  }
+    catch( const TExceptionBase& exc )  {  throw TFunctionFailedException(__OlxSourceInfo, exc);  }
+    if( rings.IsEmpty() )  return;
+    TNetwork::RingInfo ri;
+    TBasicApp::GetLog() << "Found rings: \n";
+    for( int i=0; i < rings.Count(); i++ )  {
+      olxstr out(i+1);
+      for( int j=0; j < rings[i].Count(); j++ )  {
+        TSAtom& sa = *rings[i][j];
+        out << ' ' << sa.GetLabel();
+      }
+      TNetwork::AnalyseRing(rings[i], ri.Clear());
+      TBasicApp::GetLog() << (out << '\n');
+    }
+
     return;
   }
   if( afix == 56 || afix == 66  || afix == 76 || afix == 116 || afix == 106 ||
@@ -3457,13 +3530,20 @@ void TMainForm::macAfix(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   else  {
     if( afix == 0 )  {
       for( int i=0; i < Atoms.Count(); i++ )  {
-        if( Atoms[i]->Atom().CAtom().GetDependentAfixGroup() != NULL )
-          Atoms[i]->Atom().CAtom().GetDependentAfixGroup()->Clear();
+        TCAtom& ca = Atoms[i]->Atom().CAtom();
+        if( ca.GetDependentAfixGroup() != NULL )
+          ca.GetDependentAfixGroup()->Clear();
+        else if( ca.GetDependentHfixGroup() != NULL )
+          ca.GetDependentHfixGroup()->Clear();
+        else if( ca.GetParentAfixGroup() != NULL )
+          ca.GetParentAfixGroup()->Clear();
       }
     }
-    TAfixGroup& ag = au.GetAfixGroups().New(&Atoms[0]->Atom().CAtom(), afix);
-    for( int i=1; i < Atoms.Count(); i++ )  
-      ag.AddDependent(Atoms[i]->Atom().CAtom());
+    else  {
+      TAfixGroup& ag = au.GetAfixGroups().New(&Atoms[0]->Atom().CAtom(), afix);
+      for( int i=1; i < Atoms.Count(); i++ )  
+        ag.AddDependent(Atoms[i]->Atom().CAtom());
+    }
   }
 }
 //..............................................................................
@@ -4478,15 +4558,9 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options, TMacro
   FXApp->XFile().UpdateAsymmUnit();
   Ins->UpdateParams();
   TSimpleRestraintPList restraints;
-
   for(int i=0; i < Atoms.Count(); i++ )
     CAtoms.Add( &Atoms[i]->Atom().CAtom() );
 
-  for(int i=0; i < CAtoms.Count(); i++ )  {  // add afixed mates, recursion here!
-    if( CAtoms[i]->GetDependentAfixGroup() == NULL )  continue;
-    for( int j=0; j < CAtoms[i]->GetDependentAfixGroup()->Count(); j++ ) 
-      CAtoms.Add( &(*CAtoms[i]->GetDependentAfixGroup())[j] );
-  }
   TPtrList<TSameGroup> processed;
   int ac = CAtoms.Count();  // to avoid recursion
   for( int i=0; i < ac; i++ )  {
@@ -4498,10 +4572,27 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options, TMacro
         CAtoms.Add( &sg[j] );
     }
   }
-  for(int i=ac; i < CAtoms.Count(); i++ )  {  // add afixed mates, for SAME frags recursion here!
-    if( CAtoms[i]->GetDependentAfixGroup() == NULL )  continue;
-    for( int j=0; j < CAtoms[i]->GetDependentAfixGroup()->Count(); j++ ) 
-      CAtoms.Add( &(*CAtoms[i]->GetDependentAfixGroup())[j] );
+  TAsymmUnit& au = FXApp->XFile().GetAsymmUnit();
+  for( int i=0; i < au.GetAfixGroups().Count(); i++ )
+    au.GetAfixGroups()[i].SetTag(0);
+  for(int i=0; i < CAtoms.Count(); i++ )  {  // add afixed mates and afix parents
+    TCAtom& ca = *CAtoms[i];
+    if( ca.GetDependentHfixGroup() != NULL && ca.GetDependentHfixGroup()->GetTag() == 0 )  {
+      for( int j=0; j < ca.GetDependentHfixGroup()->Count(); j++ ) 
+        CAtoms.Add( &(*ca.GetDependentHfixGroup())[j] );
+      ca.GetDependentHfixGroup()->SetTag(1);
+    }
+    if( ca.GetDependentAfixGroup() != NULL && ca.GetDependentAfixGroup()->GetTag() == 0)  {
+      for( int j=0; j < ca.GetDependentAfixGroup()->Count(); j++ ) 
+        CAtoms.Add( &(*ca.GetDependentAfixGroup())[j] );
+      ca.GetDependentAfixGroup()->SetTag(1);
+    }
+    if( ca.GetParentAfixGroup() != NULL && ca.GetParentAfixGroup()->GetTag() == 0 )  {
+      CAtoms.Add( &ca.GetParentAfixGroup()->GetPivot() );
+      for( int j=0; j < ca.GetParentAfixGroup()->Count(); j++ ) 
+        CAtoms.Add( &(*ca.GetParentAfixGroup())[j] );
+      ca.GetParentAfixGroup()->SetTag(1);
+    }
   }
   // make sure that the list is unique
   for( int i=0; i < CAtoms.Count(); i++ )

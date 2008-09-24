@@ -486,6 +486,7 @@ bool TNetwork_TryRing( TSAtom* sa, TSAtomPList& ring, const TPtrList<TBasicAtomI
       return true;
     }
   }
+  sa->SetTag(0); // unroll the tags
   return false;
 }
 // tries to find the ring in given direction
@@ -601,33 +602,50 @@ void TNetwork::FindAtomRings(TSAtom& ringAtom, const TPtrList<TBasicAtomInfo>& r
   res.Pack();
 }
 //..............................................................................
-TNetwork::RingInfo TNetwork::AnalyseRing( const TSAtomPList& ring )  {
-  RingInfo ri;
+TNetwork::RingInfo& TNetwork::AnalyseRing( const TSAtomPList& ring, TNetwork::RingInfo& ri )  {
   int pivot = -1, pivot_count = 0;
   double maxmw = 0;
   for( int i=0; i < ring.Count(); i++ )  {
     if( !ri.HasAfix && ring[i]->CAtom().GetAfix() != 0 )
       ri.HasAfix = true;
+    TSAtomPList& al = ri.Substituents.AddNew();
    
-    int nhc = 0;
+    int nhc = 0, // not hydrogen atom count
+      rnc = 0;   // of which belong to the ring
     double local_maxmw = 0;
     for( int j=0; j < ring[i]->NodeCount(); j++ )  {
       TSAtom& ra = ring[i]->Node(j);
       if( ra.IsDeleted() || ra.GetAtomInfo() == iQPeakIndex )  continue;
       double mw = ra.GetAtomInfo().GetMr();
       if( mw < 3 )  continue; // H, D
+      if( ra.crd().DistanceTo( ring[i]->crd() ) > 2 )  continue;  // skip M-E bonds
       if( mw > local_maxmw )  local_maxmw = mw;
+      if( ring.IndexOf(&ra) != -1 )
+        rnc++;
+      else
+        al.Add(&ra);
       nhc++;
     }
-    if( nhc > 2 )  {
+    if( nhc != rnc )  {
       if( local_maxmw > maxmw )  {
         ri.HeaviestSubsIndex = i;
         ri.HeaviestSubsType = &ring[i]->GetAtomInfo();
         maxmw = local_maxmw;
       }
-      ri.SubsNumber++;
-      if( nhc-2 > ri.MaxSubsANode )
-        ri.MaxSubsANode = nhc-2;
+      ri.Substituted.Add(i);
+      if( nhc-rnc > ri.MaxSubsANode )
+        ri.MaxSubsANode = nhc-rnc;
+    }
+    else if( rnc > 2 ) 
+      ri.Ternary.Add(i);
+  }
+  // analyse alpha atoms (substituted next to ternary atoms)
+  for( int i=0; i < ri.Substituted.Count(); i++ )  {
+    for( int j=0;  j < ri.Ternary.Count(); j++ )  {
+      if( ring[ri.Substituted[i]]->IsConnectedTo( *ring[ri.Ternary[j]] ) )  {
+        ri.Alpha.Add( ri.Substituted[i] );
+        break;
+      }
     }
   }
   return ri;
@@ -875,3 +893,20 @@ void TNetwork::DoAlignAtoms(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& 
   }
 }
 //..............................................................................
+//..............................................................................
+//..............................................................................
+bool TNetwork::RingInfo::IsSingleCSubstituted() const  {
+  for( int i=0; i < Substituents.Count(); i++ )  {
+    if( Substituents[i].Count() != 1 )  return false;
+    TSAtom& sa = *Substituents[i][0];
+    if( sa.GetAtomInfo() != iCarbonIndex )  return false;
+    int nhc = 0;
+    for( int j=0; j < sa.NodeCount(); j++ )  {
+      TSAtom& ra = sa.Node(j);
+      if( ra.GetAtomInfo().GetMr() < 3 || ra.GetAtomInfo() == iQPeakIndex )  continue;
+      nhc++;
+    }
+    if( nhc > 1 )  return false;  // only one to ring bond 
+  }
+  return true;
+}

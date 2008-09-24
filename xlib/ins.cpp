@@ -68,6 +68,8 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
   Clear();
   ParseContext cx(GetAsymmUnit());
   TStrList Toks, InsFile(FileContent);
+  for( int i=0; i < InsFile.Count(); i++ )  // heh found it
+    InsFile[i] = InsFile[i].Trim(' ');
   InsFile.CombineLines('=');
   bool   End = false;// true if END instruction reached
   cx.Resi = &GetAsymmUnit().GetResidue(-1);
@@ -308,7 +310,7 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx,
         u = Toks[3].ToDouble();
       n = TAfixGroup::GetN(afix);
       m = TAfixGroup::GetM(afix);
-      if( !(m == 0 && n == 5) )
+      if( !TAfixGroup::IsDependent(afix) )
         afixg = &cx.au.GetAfixGroups().New(NULL, afix, d, sof == 11 ? 0 : sof, u == 10.08 ? 0 : u);
     }
     // Shelx manual: n is always a single digit; m may be two, one or zero digits (the last corresponds to m = 0).
@@ -335,55 +337,58 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx,
         if( !cx.AfixGroups.IsEmpty() )
           cx.DependentNonH = cx.AfixGroups.Current().GetC();
       }
-      switch( m )  {
-      case 1:
-      case 4:
-      case 8:
-      case 14:
-      case 15:
-      case 16:
-        cx.AfixGroups.Push( AnAssociation3<int,TAfixGroup*,bool>(1, afixg, false) );
-        cx.DependentNonH = false;
-        break;
-      case 2:
-      case 9:
-        cx.AfixGroups.Push( AnAssociation3<int,TAfixGroup*,bool>(2, afixg, false) );
-        cx.DependentNonH = false;
-        break;
-      case 3:
-      case 13:
-        cx.AfixGroups.Push( AnAssociation3<int,TAfixGroup*,bool>(3, afixg, false) );
-        cx.DependentNonH = false;
-        break;
-      case 7:
-        cx.AfixGroups.Push( AnAssociation3<int,TAfixGroup*,bool>(5, afixg, true));
-        cx.DependentNonH = true;
-        cx.SetNextPivot = true;
-        break;
-      case 5:
-        cx.AfixGroups.Push( AnAssociation3<int,TAfixGroup*,bool>(4, afixg, true));
-        cx.DependentNonH = true;
-        cx.SetNextPivot = true;
-        break;
-      case 11:  //naphtalene
-      case 10:  // Cp*
-        cx.AfixGroups.Push( AnAssociation3<int,TAfixGroup*,bool>(9, afixg, true));
-        cx.DependentNonH = true;
-        cx.SetNextPivot = true;
-        break;
-      case 12:  // disordered CH3
-        cx.AfixGroups.Push( AnAssociation3<int,TAfixGroup*,bool>(6, afixg, false) );
-        cx.DependentNonH = false;
-        break;
-      }
-      if( m == 0 && n != 5 )  {  // generic container then, beside, 5 is dependent atom of rigid group
-        cx.AfixGroups.Push( AnAssociation3<int,TAfixGroup*,bool>(-1, afixg, false) );
-        cx.SetNextPivot = true; // but need this anyway
-      }
-      if( !cx.SetNextPivot && afixg != NULL )  {
-        if( cx.Last == NULL  )
-          throw TFunctionFailedException(__OlxSourceInfo, "undefined pivot atom for a fitted group");
-        afixg->SetPivot(*cx.Last);
+      if( afixg != NULL )  {
+        switch( m )  {
+        case 1:
+        case 4:
+        case 8:
+        case 14:
+        case 15:
+        case 16:
+          cx.AfixGroups.Push( AnAssociation3<int,TAfixGroup*,bool>(1, afixg, false) );
+          cx.DependentNonH = false;
+          break;
+        case 2:
+        case 9:
+          cx.AfixGroups.Push( AnAssociation3<int,TAfixGroup*,bool>(2, afixg, false) );
+          cx.DependentNonH = false;
+          break;
+        case 3:
+        case 13:
+          cx.AfixGroups.Push( AnAssociation3<int,TAfixGroup*,bool>(3, afixg, false) );
+          cx.DependentNonH = false;
+          break;
+        case 7:
+        case 6:
+          cx.AfixGroups.Push( AnAssociation3<int,TAfixGroup*,bool>(5, afixg, true));
+          cx.DependentNonH = true;
+          cx.SetNextPivot = true;
+          break;
+        case 5:
+          cx.AfixGroups.Push( AnAssociation3<int,TAfixGroup*,bool>(4, afixg, true));
+          cx.DependentNonH = true;
+          cx.SetNextPivot = true;
+          break;
+        case 11:  //naphtalene
+        case 10:  // Cp*
+          cx.AfixGroups.Push( AnAssociation3<int,TAfixGroup*,bool>(9, afixg, true));
+          cx.DependentNonH = true;
+          cx.SetNextPivot = true;
+          break;
+        case 12:  // disordered CH3
+          cx.AfixGroups.Push( AnAssociation3<int,TAfixGroup*,bool>(6, afixg, false) );
+          cx.DependentNonH = false;
+          break;
+        }
+        if( m == 0 && !TAfixGroup::IsDependent(afix) )  {  // generic container then, beside, 5 is dependent atom of rigid group
+          cx.AfixGroups.Push( AnAssociation3<int,TAfixGroup*,bool>(-1, afixg, false) );
+          cx.SetNextPivot = !TAfixGroup::IsRiding(afix); // if not riding
+        }
+        if( !cx.SetNextPivot )  {
+          if( cx.Last == NULL  )
+            throw TFunctionFailedException(__OlxSourceInfo, "undefined pivot atom for a fitted group");
+          afixg->SetPivot(*cx.Last);
+        }
       }
     }
   }
@@ -752,7 +757,7 @@ void TIns::_SaveAtom(TCAtom& a, int& part, int& afix, TStrPObjList<olxstr,TBasic
   TAfixGroup* ag = a.GetDependentAfixGroup();
   int atom_afix = a.GetAfix();
   if( atom_afix != afix )  { 
-    if( !TAfixGroup::DecAfixForDependent(afix) )  {
+    if( !TAfixGroup::HasExcplicitPivot(afix) || !TAfixGroup::IsDependent(atom_afix) )  {
       if( ag != NULL )  {
         olxstr& str = sl.Add("AFIX ") << atom_afix;
         if( ag->GetD() != 0 )  {
@@ -768,7 +773,7 @@ void TIns::_SaveAtom(TCAtom& a, int& part, int& afix, TStrPObjList<olxstr,TBasic
         sl.Add("AFIX ") << atom_afix;
     }
   }
-  afix = a.GetAfix();
+  afix = atom_afix;
   part = a.GetPart();
   int spindex;
   if( a.GetAtomInfo() == iQPeakIndex )
@@ -778,9 +783,14 @@ void TIns::_SaveAtom(TCAtom& a, int& part, int& afix, TStrPObjList<olxstr,TBasic
   HypernateIns( _AtomToString(&a, spindex+1), sl );
   a.SetSaved(true);
   if( index != NULL )  index->Add(a.GetTag());
-  if( ag != NULL )  {
+  TAfixGroup* hg = a.GetDependentHfixGroup();
+  if( hg != NULL )  {  // save hydrogen atoms first
+    for( int i=0; i < hg->Count(); i++ )
+      _SaveAtom( (*hg)[i], part, afix, sfac, sl, index, checkSame);
+  }
+  if( ag != NULL )  {  // save dependent rigid group
     for( int i=0; i < ag->Count(); i++ )
-    _SaveAtom( (*ag)[i], part, afix, sfac, sl, index, checkSame);
+      _SaveAtom( (*ag)[i], part, afix, sfac, sl, index, checkSame);
   }
 }
 //..............................................................................

@@ -1277,8 +1277,11 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPL
       v = acos(v)*180/M_PI;
       double d1 = AE.GetCrd(0).DistanceTo( atom.crd() );
       double d2 = AE.GetCrd(1).DistanceTo( atom.crd() );
-      if( d1 > 1.65 || d2 > 1.65 )  {
-        ;
+      if( d1 > 1.65 || d2 > 1.65 )  {  // coordination?
+        if( (d1 < 1.5 && d1 > 1.35) || (d2 < 1.5 && d2 > 1.35) )  {
+          TBasicApp::GetLog().Info( olxstr(atom.GetLabel()) << ": RNH(2)M" );
+          cg.FixAtom( AE, fgNH2, HAI);
+        }
       }
       else if( v < 120 && d1 > 1.45 && d2 > 1.45 )  {
         TBasicApp::GetLog().Info( olxstr(atom.GetLabel()) << ": R2NH2+" );
