@@ -39,7 +39,7 @@ TCAtom::TCAtom(TAsymmUnit *Parent)  {
   HAttached = false;
   Saved = false;
   Tag = -1;
-  DependentAfixGroup = ParentAfixGroup = NULL;
+  DependentAfixGroup = DependentHfixGroup = ParentAfixGroup = NULL;
 }
 //..............................................................................
 TCAtom::~TCAtom()  {
@@ -96,7 +96,7 @@ void TCAtom::AtomInfo(TBasicAtomInfo* A)  {
 }
 //..............................................................................
 void TCAtom::Assign(const TCAtom& S)  {
-  DependentAfixGroup = ParentAfixGroup = NULL;  // managed by the group
+  DependentAfixGroup = DependentHfixGroup = ParentAfixGroup = NULL;  // managed by the group
   SetPart( S.GetPart() );
   SetOccp( S.GetOccp() );
   SetOccpVar( S.GetOccpVar() );
@@ -142,9 +142,11 @@ int TCAtom::GetAfix() const {
   if( ParentAfixGroup == NULL )  {
     if( DependentAfixGroup != NULL && (DependentAfixGroup->IsFitted() || DependentAfixGroup->GetM() == 0) )
       return DependentAfixGroup->GetAfix();
+    if( DependentHfixGroup != NULL && !DependentHfixGroup->IsRiding() )
+      return DependentHfixGroup->GetAfix();
     return 0;
   }
-  if( ParentAfixGroup->DecAfixForDependent() )
+  if( ParentAfixGroup->HasExcplicitPivot() )
     return (ParentAfixGroup->GetAfix()/10)*10 + 5;
   else
     return ParentAfixGroup->GetAfix();
@@ -247,19 +249,22 @@ olxstr TGroupCAtom::GetFullLabel() const  {
 //..............................................................................
 //..............................................................................
 //..............................................................................
+void TAfixGroup::Clear()  {  Parent.Delete(Id);  }
+//..............................................................................
 void TAfixGroup::Assign(TAsymmUnit& tau, const TAfixGroup& ag)  {
+  D = ag.D;
+  Sof = ag.Sof;
+  U = ag.U;
+  Afix = ag.Afix;
+
   Pivot = tau.FindCAtomByLoaderId(ag.Pivot->GetLoaderId());
   if( Pivot == NULL )
     throw TFunctionFailedException(__OlxSourceInfo, "asymmetric units mismatch");
-  Pivot->SetDependentAfixGroup(this);
+  SetPivot( *Pivot );
   for( int i=0; i < ag.Dependent.Count(); i++ )  {
     Dependent.Add( tau.FindCAtomByLoaderId( ag.Dependent[i]->GetLoaderId()) );
     if( Dependent.Last() == NULL )
       throw TFunctionFailedException(__OlxSourceInfo, "asymmetric units mismatch");
     Dependent.Last()->SetParentAfixGroup(this);
   }
-  D = ag.D;
-  Sof = ag.Sof;
-  U = ag.U;
-  Afix = ag.Afix;
 }
