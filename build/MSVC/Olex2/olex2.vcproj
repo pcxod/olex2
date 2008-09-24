@@ -648,11 +648,87 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
+				RelativePath="..\..\..\olex\cmdline.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\olex\ctrls.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\olex\dgenopt.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\olex\dgrad.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\olex\edit.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\repository\fftn.h"
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\olex\htmlext.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\olex\imagep.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\olex\langdict.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\olex\mainform.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\olex\matprop.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\olex\msgbox.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\olex\obase.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\olex\primtvs.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\olex\ptable.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\olex\scenep.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\olex\updateoptions.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\olex\wininterface.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\repository\wxzipfsext.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\olex\xglapp.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\olex\xglcanv.h"
 				>
 			</File>
 		</Filter>
@@ -667,6 +743,58 @@
 			</File>
 			<File
 				RelativePath=".\icon.ico"
+				>
+			</File>
+		</Filter>
+		<Filter
+			Name="modes"
+			>
+			<File
+				RelativePath="..\..\..\olex\modes\fixc.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\olex\modes\fixu.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\olex\modes\grow.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\olex\modes\hfix.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\olex\modes\himp.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\olex\modes\match.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\olex\modes\move.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\olex\modes\name.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\olex\modes\occu.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\olex\modes\pack.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\olex\modes\part.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\olex\modes\split.h"
 				>
 			</File>
 		</Filter>

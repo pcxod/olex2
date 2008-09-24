@@ -3385,10 +3385,10 @@ void TMainForm::macAfix(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         if( m == 11 )  {  // validate and rearrange to figure of 8
           if( ri.Alpha.IndexOf( shift -1 ) == -1 ) continue;
           if( ri.Ternary.Count() != 2 )  continue;
-          if( ri.Ternary.IndexOf(shift-2) != -1 )  { // counter-clockwise direction
+          if( ri.Ternary.IndexOf( shift >= 2 ? shift-2 : rings[i].Count()-shift ) != -1 )  { // counter-clockwise direction
             for( int j=0; j < (rings[i].Count()-1)/2; j++ )  {
               TSAtom* a = rings[i][j];
-              rings[i][j] = rings[0][rings[0].Count()-j-2];
+              rings[i][j] = rings[i][rings[i].Count()-j-2];
               rings[i][rings[i].Count()-j-2] = a;
             }
           }

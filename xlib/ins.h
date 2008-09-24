@@ -30,7 +30,7 @@ class TIns: public TBasicCFile  {
   struct ParseContext {
     TStrList Symm;
     TStrPObjList<olxstr, TBasicAtomInfo*>  BasicAtoms;  // SFAC container
-    bool CellFound, DependentNonH, SetNextPivot;
+    bool CellFound, SetNextPivot;
     int Part;
     esdl::TStack< AnAssociation3<int,TAfixGroup*, bool> > AfixGroups;  // number of atoms (left), pivot, Hydrogens or not
     double PartOccu;
@@ -40,7 +40,7 @@ class TIns: public TBasicCFile  {
     // SAME instructions and the first atom after it/them
     TTypeList< AnAssociation2<TStrList,TCAtom*> > Same;
     ParseContext(TAsymmUnit& _au) : au(_au), Resi(NULL), Last(NULL)  {
-      SetNextPivot = DependentNonH = CellFound = false;
+      SetNextPivot = CellFound = false;
       PartOccu = 0;
       Part = 0;
     }
