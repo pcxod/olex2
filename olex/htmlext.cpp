@@ -341,6 +341,9 @@ TAG_HANDLER_PROC(tag)  {
     if( tag.HasParam(wxT("DOWN")) )
       Btn->SetDown( tag.GetParam(wxT("DOWN")).CmpNoCase(wxT("true")) == 0 );
 
+    if( tag.HasParam(wxT("HINT")) )
+      Btn->SetHint( tag.GetParam(wxT("HINT")).c_str() );
+
     olxstr modeDependent = tag.GetParam(wxT("MODEDEPENDENT")).c_str();
     if( !modeDependent.IsEmpty() )  {
       Btn->ActionQueue( TGlXApp::GetMainForm()->OnModeChange, modeDependent );

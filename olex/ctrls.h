@@ -140,7 +140,7 @@ class AButtonBase: public AActionHandler  {
 protected:
   TActionQList *FActions;
   void ClickEvent(wxCommandEvent& event);
-  olxstr OnClickStr, Data, OnUpStr, OnDownStr, FDependMode;
+  olxstr OnClickStr, Data, OnUpStr, OnDownStr, FDependMode, Hint;
   TActionQueue *FActionQueue;
   virtual wxWindow* GetParent()  const  = 0;
 public:
@@ -155,6 +155,7 @@ public:
   DefPropC(olxstr, Data)       // data associated with object
   DefPropC(olxstr, OnUpStr)   // passed to OnUp event
   DefPropC(olxstr, OnDownStr) // passed to OnDown event
+  DefPropC(olxstr, Hint) // passed to OnDown event
 
   inline bool IsDown()  const {  return FDown;  }
   void SetDown(bool v);

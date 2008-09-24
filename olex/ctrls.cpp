@@ -451,10 +451,13 @@ TButton::~TButton()  {  ;  }
 //..............................................................................
 void TButton::MouseEnterEvent(wxMouseEvent& event)  {
   SetCursor( wxCursor(wxCURSOR_HAND) );
+  if( !GetHint().IsEmpty() )
+    SetToolTip( GetHint().u_str() );
   event.Skip();
 }
 //..............................................................................
 void TButton::MouseLeaveEvent(wxMouseEvent& event)  {  
+  
   event.Skip();
 }
 //..............................................................................
