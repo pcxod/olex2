@@ -38,6 +38,7 @@ protected:
   olxstr CifTemplatesDir;  // the folder with CIF templates/data
 protected:
   virtual bool CheckProgramState(unsigned int specialCheck);
+  void ProcessRingAfix(TSAtomPList& ring, int afix, bool pivot_last);
 public:
   TXApp(const olxstr &basedir);
   virtual ~TXApp();
@@ -82,6 +83,7 @@ public:
   void RingContentFromStr(const olxstr& textDescr, TPtrList<TBasicAtomInfo>& ringDesc);
   void FindRings(const olxstr& Condition, TTypeList<TSAtomPList>& rings);
   bool FindSAtoms(const olxstr& condition, TSAtomPList& res);
+  void AutoAfixRings(int afix, TSAtom* sa = NULL, bool TryPyridine = false);
 };
 
 

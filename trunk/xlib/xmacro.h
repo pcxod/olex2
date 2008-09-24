@@ -3,6 +3,7 @@
 #include "library.h"
 #include "xapp.h"
 #include "cif.h"
+#include <stdarg.h>
 // on Linux its is defined as something...
 #undef QLength
 
@@ -50,8 +51,41 @@ class XLibMacros  {
 
 public:
   static const olxstr NoneString;
-  // finds numbers and removes them from the list
-  static void ParseDoubles(TStrObjList& Cmds, int number, ...);
+  // finds numbers and removes them from the list and returns the number of found numbers
+  template <typename nt> static int ParseNumbers(TStrObjList& Cmds, int cnt, ...)  {
+    va_list argptr;
+    va_start(argptr, cnt);
+    if( cnt <= 0 )  {  va_end(argptr);  return 0;  }
+    int fc=0;
+    for( int i=0; i < Cmds.Count(); i++ )  {
+      if( Cmds[i].IsNumber() )  {
+        *va_arg(argptr, nt*) = Cmds[i].ToDouble();
+        Cmds.Delete(i);
+        fc++;
+        if( fc >= cnt )  break;
+        i--;
+      }
+    }
+    va_end(argptr);
+    return fc;
+  }
+  template <> static int ParseNumbers<int>(TStrObjList& Cmds, int cnt, ...)  {
+    va_list argptr;
+    va_start(argptr, cnt);
+    if( cnt <= 0 )  {  va_end(argptr);  return 0;  }
+    int fc=0;
+    for( int i=0; i < Cmds.Count(); i++ )  {
+      if( Cmds[i].IsNumber() )  {
+        *va_arg(argptr, int*) = Cmds[i].ToInt();
+        Cmds.Delete(i);
+        fc++;
+        if( fc >= cnt )  break;
+        i--;
+      }
+    }
+    va_end(argptr);
+    return fc;
+  }
   static void Export(class TLibrary& lib);
 
 protected:

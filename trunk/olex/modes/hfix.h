@@ -27,11 +27,16 @@ public:
       TXAtom *XA = &(TXAtom&)obj;
       TAtomEnvi AE;
       TGlXApp::GetGXApp()->XFile().GetUnitCell().GetAtomEnviList(XA->Atom(), AE);
-      int afix = TXlConGen::ShelxToOlex(Hfix, AE);
-      if( afix != -1 )  {
-        xlConGen->FixAtom(AE, afix, TAtomsInfo::GetInstance()->GetAtomInfo(iHydrogenIndex));
-        TGlXApp::GetMainForm()->executeMacro("fuse");
-        TGlXApp::GetGXApp()->MarkLabel(XA, true);
+      int n = TAfixGroup::GetN(Hfix);
+      if( TAfixGroup::IsFitted(Hfix) && (n == 6 || n == 9) )  {
+        TGlXApp::GetGXApp()->AutoAfixRings(Hfix, &XA->Atom(), true);
+      }
+      else  {
+        int afix = TXlConGen::ShelxToOlex(Hfix, AE);
+        if( afix != -1 )  {
+          xlConGen->FixAtom(AE, afix, TAtomsInfo::GetInstance()->GetAtomInfo(iHydrogenIndex));
+          TGlXApp::GetMainForm()->executeMacro("fuse");
+        }
       }
       //if( TGlXApp::GetMainForm()->executeMacro(
       //      olxstr("addins HFIX ") << Hfix << ' ' << XA->Atom().GetLabel()) )

@@ -441,3 +441,142 @@ short TXApp::CalcVoid(TArray3D<short>& map, double extraR, short val, long* stru
   return MaxLevel;
 }
 //..............................................................................
+void TXApp::ProcessRingAfix(TSAtomPList& ring, int afix, bool pivot_last)  {
+  olxstr info("Processing");
+  int pivot = (pivot_last ? ring.Count()-1 : 0);
+  for( int i=0; i < ring.Count(); i++ )
+    info << ' ' << ring[i]->GetLabel();
+  TBasicApp::GetLog() << (info << ". Chosen pivot atom is " << ring[pivot]->GetLabel() << '\n');
+  if( ring[pivot]->CAtom().GetDependentAfixGroup() != NULL )
+    ring[pivot]->CAtom().GetDependentAfixGroup()->Clear();
+  TAfixGroup& ag = FXFile->GetAsymmUnit().GetAfixGroups().New( &ring[pivot]->CAtom(), afix);
+  for( int i=0; i < ring.Count(); i++ )  {  
+    if( i == pivot )  continue;  // do not want to delete just created!
+    TCAtom& ca = ring[i]->CAtom();
+    if( ca.GetDependentAfixGroup() != NULL && ca.GetDependentAfixGroup()->GetAfix() == afix )  // if used in case to change order
+      ca.GetDependentAfixGroup()->Clear();
+  }
+  if( pivot_last )  {
+    for( int i=ring.Count()-2; i >= 0; i-- )
+      ag.AddDependent( ring[i]->CAtom() );
+  }
+  else  {
+    for( int i=1; i < ring.Count(); i++ )
+      ag.AddDependent( ring[i]->CAtom() );
+  }
+
+}
+//..............................................................................
+void TXApp::AutoAfixRings(int afix, TSAtom* sa, bool TryPyridine)  {
+  int m = TAfixGroup::GetM(afix), n = TAfixGroup::GetN(afix);
+  if( TAfixGroup::IsFitted(afix) && ( n == 6 || n == 9) )  {  // special case
+    if( sa == NULL )  {
+      TTypeList< TSAtomPList > rings;
+      try  {  
+        if( m == 6 || m == 7 )  {
+          FindRings("C6", rings);  
+          if( TryPyridine )  
+            FindRings("NC5", rings);  
+        }
+        else if( m == 5 || m == 10 ) // Cp or Cp*
+          FindRings("C5", rings);  
+        else if( m == 11 )
+          FindRings("C10", rings);  
+      }
+      catch( const TExceptionBase& exc )  {  throw TFunctionFailedException(__OlxSourceInfo, exc);  }
+      TNetwork::RingInfo ri;
+      for( int i=0; i < rings.Count(); i++ )  {
+        if( m != 11 && !TNetwork::IsRingRegular(rings[i]) )  continue;
+        // find the pivot (with heaviest atom attached)
+        TNetwork::AnalyseRing( rings[i], ri.Clear() );
+        if( ri.HasAfix || ri.HeaviestSubsIndex == -1 )  continue;
+        if( m != 10 && ri.Substituted.Count() > 1 )  continue;
+        if( m == 10 && ri.Substituted.Count() != 5 )  continue; // Cp*
+        int shift = (m == 10 ? 0 : ri.HeaviestSubsIndex+1); // do not allign to pivot for Cp* 
+        rings[i].ShiftL(shift);  // pivot is the last one now
+        if( m == 11 )  {  // validate and rearrange to figure of 8
+          if( ri.Alpha.IndexOf( shift -1 ) == -1 ) continue;
+          if( ri.Ternary.Count() != 2 )  continue;
+          if( ri.Ternary.IndexOf( shift >= 2 ? shift-2 : rings[i].Count()-shift ) != -1 )  { // counter-clockwise direction
+            for( int j=0; j < (rings[i].Count()-1)/2; j++ )  {
+              TSAtom* a = rings[i][j];
+              rings[i][j] = rings[i][rings[i].Count()-j-2];
+              rings[i][rings[i].Count()-j-2] = a;
+            }
+          }
+          rings[i].Swap(0, 4);
+          rings[i].Swap(1, 3);
+        }
+        else if( m == 10 )  {  // Cp*
+          if( !ri.IsSingleCSubstituted() )  continue;
+          for( int j=0; j < ri.Substituents.Count(); j++ )
+            rings[i].Add(ri.Substituents[j][0] );
+        }
+        ProcessRingAfix(rings[i], afix, m != 10);
+      }
+    }
+    else  {  // sa != NULL
+      TPtrList<TBasicAtomInfo> ring;
+      TTypeList< TSAtomPList > rings;
+      if( sa->GetAtomInfo() != iCarbonIndex )
+        ring.Add( &sa->GetAtomInfo() );
+      if( m == 6 || m == 7)
+        RingContentFromStr( ring.IsEmpty() ? "C6" :"C5", ring);
+      else if( m == 5 )
+        RingContentFromStr(ring.IsEmpty() ? "C5" :"C4", ring);
+      else if( m == 10 )
+        RingContentFromStr(ring.IsEmpty() ? "C5" :"C4", ring);
+      else if( m == 11 ) 
+        RingContentFromStr(ring.IsEmpty() ? "C10" :"C9", ring);
+
+      sa->GetNetwork().FindAtomRings(*sa, ring, rings);
+      if( rings.Count() == 0 )  {
+        GetLog().Error(olxstr(__OlxSrcInfo) << ": could not locate the XC(n-1) ring");
+        return;
+      }
+      else if( rings.Count() > 1 )  {
+        GetLog().Error(olxstr(__OlxSrcInfo) << ": the atom is shared by several rings" );
+        return;
+      }
+      TNetwork::RingInfo ri;
+      TNetwork::AnalyseRing( rings[0], ri );
+      if( m == 11 )  {  // need to rearrage the ring to fit shelxl requirements as fihure of 8
+        if( ri.Alpha.IndexOf( rings[0].Count() -1 ) == -1 )  {
+          GetLog().Error(olxstr(__OlxSrcInfo) << ": the alpha substituted atom is expected" );
+          return;
+        }
+        if( ri.Ternary.Count() != 2 )  {
+          GetLog().Error(olxstr(__OlxSrcInfo) << ": naphtalene ring should have two ternary atoms" );
+          return;
+        }
+        if( ri.Ternary.IndexOf(rings[0].Count()-2) != -1 )  { // countr-clockwise direction to revert
+          for( int i=0; i < (rings[0].Count()-1)/2; i++ )  {
+            TSAtom* a = rings[0][i];
+            rings[0][i] = rings[0][rings[0].Count()-i-2];
+            rings[0][rings[0].Count()-i-2] = a;
+          }
+        }
+        rings[0].Swap(0, 4);
+        rings[0].Swap(1, 3);
+      }
+      else if( m == 10 )  {
+        if( !ri.IsSingleCSubstituted() )  {
+          TBasicApp::GetLog() << "Could not locate Cp* ring\n";
+          return;
+        }
+        for( int j=0; j < ri.Substituents.Count(); j++ )
+          rings[0].Add(ri.Substituents[j][0] );
+      }
+      else  {
+        if( ri.Substituents.Last().Count() == 0 )  {
+          TBasicApp::GetLog() << "A substituted atom is expected\n";
+          return;
+        }
+      }
+      if( ri.Substituted.Count() > 1 )  
+        TBasicApp::GetLog() << "The selected ring has more than one substituent\n";
+      ProcessRingAfix(rings[0], afix, m!=10);
+    }
+  }
+}
+//..............................................................................
