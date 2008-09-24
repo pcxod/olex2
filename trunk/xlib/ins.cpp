@@ -312,6 +312,10 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx,
       m = TAfixGroup::GetM(afix);
       if( !TAfixGroup::IsDependent(afix) )
         afixg = &cx.au.GetAfixGroups().New(NULL, afix, d, sof == 11 ? 0 : sof, u == 10.08 ? 0 : u);
+      else {
+        if( !cx.AfixGroups.IsEmpty() && !cx.AfixGroups.Current().B()->IsFitted() ) 
+          cx.AfixGroups.Pop();
+      }
     }
     // Shelx manual: n is always a single digit; m may be two, one or zero digits (the last corresponds to m = 0).
     if( afix == 0 )  {
@@ -334,8 +338,6 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx,
     else  {
       if( !cx.AfixGroups.IsEmpty() && cx.AfixGroups.Current().GetA() == 0 )  {  // pop m =0 as well
         cx.AfixGroups.Pop();
-        if( !cx.AfixGroups.IsEmpty() )
-          cx.DependentNonH = cx.AfixGroups.Current().GetC();
       }
       if( afixg != NULL )  {
         switch( m )  {
@@ -346,38 +348,31 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx,
         case 15:
         case 16:
           cx.AfixGroups.Push( AnAssociation3<int,TAfixGroup*,bool>(1, afixg, false) );
-          cx.DependentNonH = false;
           break;
         case 2:
         case 9:
           cx.AfixGroups.Push( AnAssociation3<int,TAfixGroup*,bool>(2, afixg, false) );
-          cx.DependentNonH = false;
           break;
         case 3:
         case 13:
           cx.AfixGroups.Push( AnAssociation3<int,TAfixGroup*,bool>(3, afixg, false) );
-          cx.DependentNonH = false;
           break;
         case 7:
         case 6:
           cx.AfixGroups.Push( AnAssociation3<int,TAfixGroup*,bool>(5, afixg, true));
-          cx.DependentNonH = true;
           cx.SetNextPivot = true;
           break;
         case 5:
           cx.AfixGroups.Push( AnAssociation3<int,TAfixGroup*,bool>(4, afixg, true));
-          cx.DependentNonH = true;
           cx.SetNextPivot = true;
           break;
         case 11:  //naphtalene
         case 10:  // Cp*
           cx.AfixGroups.Push( AnAssociation3<int,TAfixGroup*,bool>(9, afixg, true));
-          cx.DependentNonH = true;
           cx.SetNextPivot = true;
           break;
         case 12:  // disordered CH3
           cx.AfixGroups.Push( AnAssociation3<int,TAfixGroup*,bool>(6, afixg, false) );
-          cx.DependentNonH = false;
           break;
         }
         if( m == 0 && !TAfixGroup::IsDependent(afix) )  {  // generic container then, beside, 5 is dependent atom of rigid group
@@ -1150,11 +1145,9 @@ void TIns::_ProcessAfix(TCAtom& a, ParseContext& cx)  {
   if( !cx.AfixGroups.IsEmpty() )  {
     if( cx.AfixGroups.Current().GetA() == 0 )  {
       cx.AfixGroups.Pop();
-      if( !cx.AfixGroups.IsEmpty() )
-        cx.DependentNonH = cx.AfixGroups.Current().GetC();
     }
     else  {
-      if( cx.DependentNonH )  {
+      if( cx.AfixGroups.Current().GetC() )  {
         if( a.GetAtomInfo() != iHydrogenIndex && a.GetAtomInfo() != iDeuteriumIndex )  {
           cx.AfixGroups.Current().A()--;
           cx.AfixGroups.Current().B()->AddDependent(a);

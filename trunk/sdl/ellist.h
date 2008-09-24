@@ -3,29 +3,58 @@
 #define _ellist_h
 #include "ebase.h"
 BeginEsdlNamespace()
-
+// none is yet tested!!!
 template <class T> TUDTypeList  {
   struct Entry  {
     T* data;
     Entry* next;
     Entry(T* d) : data(d), next(NULL) {  }
   };
-  int count;
+  int count, pos;
   Entry* first, *last, *cur;
 public:
-  TUDList() : first(NULL), last(NULL), cur(NULL), count(0)  {  }
-  void Reset()  {  cur = NULL;  }
-  int Count() const {  return count;  }
-  bool HasNext() const {  return cur == NULL ? false : cur->nect != NULL;  }
-  T& Next() {  
-    if( first == NULL )
-      TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "empty list");
-    if( cur == NULL )  cur = first;
-    else  {
-      if( cur->next == NULL )
-        TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "end of the list");
-      cur = cur->next;
+  TUDTypeList() : count(0), pos(-1) {
+    cur = last = first = new Entry(NULL);  
+  }
+  ~TUDTypeList()       {  
+    Clear();  
+    delete first;
+  }
+  void Clear()         {
+    cur = first->next;
+    while( cur != NULL )  {
+      delete cur->data;
+      last = cur->next;
+      delete cur;
+      cur = last;
     }
+    cur = last = first;   
+    count = 0;
+  }
+  void Reset()         {  cur = first;  pos = -1;  }
+  int Count()    const {  return count;  }
+  T& operator [] (int ind)  {
+    if( pos == (ind-1) )  return Next();
+    pos = -1;
+    cur = first;
+    while( ind-- >= 0 )  {
+      cur = cur->next;
+      pos++;
+    }
+    return *cur->data;
+  }
+  bool HasNext() const {  return !(cur == NULL || cur->next == NULL);  }
+  T& Next() {  
+    if( first == NULL || cur == NULL || cur->next == NULL )
+      TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "end of the list");
+    cur = cur->next;
+    return *cur->data;
+  }
+  const T& Next() const {  
+    if( first == NULL || cur == NULL || cur->next == NULL )
+      TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "end of the list");
+    cur = cur->next;
+    pos++;
     return *cur->data;
   }
   T& Add(T& v)  {
@@ -36,6 +65,7 @@ public:
       last = last->next;
     }
     count++;
+    pos++;
     return v;
   }
   T& Add(T* v)  {
@@ -46,9 +76,11 @@ public:
       last = last->next;
     }
     count ++;
+    pos++;
     return *v;
   }
 };
+
 
 EndEsdlNamespace()
 #endif
