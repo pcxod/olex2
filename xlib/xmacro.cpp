@@ -21,9 +21,6 @@
 #include "dataitem.h"
 #include "fsext.h"
 
-
-#include <stdarg.h>
-
 #define xlib_InitMacro(macroName, validOptions, argc, desc)\
   lib.RegisterStaticMacro( new TStaticMacro(&XLibMacros::mac##macroName, #macroName, (validOptions), argc, desc))
 #define xlib_InitFunc(funcName, argc, desc) \
@@ -110,28 +107,6 @@ void XLibMacros::Export(TLibrary& lib)  {
 //_________________________________________________________________________________________________________________________
   xlib_InitFunc(RemoveSE, fpOne|psFileLoaded, "Returns a new space group name without provided element");
 //_________________________________________________________________________________________________________________________
-}
-//..............................................................................
-void XLibMacros::ParseDoubles(TStrObjList& Cmds, int cnt, ...)  {
-  va_list argptr;
-  va_start(argptr, cnt);
-  if( cnt == 0 )  {
-    va_end(argptr);
-    return;
-  }
-  TPtrList<double> vars(cnt);
-  for( int i=0; i < cnt; i++ )
-    vars[i] = va_arg(argptr, double*);
-  int fc=0;
-  for( int i=0; i < Cmds.Count(); i++ )  {
-    if( Cmds[i].IsNumber() )  {
-      *vars[fc] = Cmds[i].ToDouble();
-      Cmds.Delete(i);
-      if( fc >= cnt )  break;
-      i--;
-    }
-  }
-  va_end(argptr);
 }
 //..............................................................................
 //..............................................................................
@@ -256,7 +231,7 @@ void XLibMacros::macCompaq(TStrObjList &Cmds, const TParamList &Options, TMacroE
 //..............................................................................
 void XLibMacros::macEnvi(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
   double r = 2.7;
-  ParseDoubles(Cmds, 1, &r);
+  ParseNumbers<double>(Cmds, 1, &r);
   if( r < 1 || r > 10 )  {
     E.ProcessingError(__OlxSrcInfo, "radius must be within [1;10] range" );
     return;

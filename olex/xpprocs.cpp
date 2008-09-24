@@ -128,6 +128,7 @@
 #include "atomref.h"
 #include "wxglscene.h"
 #include "equeue.h"
+#include "xmacro.h"
 
 using namespace _xl_Controls;
 
@@ -2343,15 +2344,9 @@ void TMainForm::macKill(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 //..............................................................................
 void TMainForm::macLS(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   TIns* iF = (TIns*)FXApp->XFile().GetLastLoader();
-  for( int i=0; i < Cmds.Count(); i++ )  {
-    if( Cmds[i].IsNumber() )  {
-      int ls = Cmds[i].ToInt();
-      Cmds.Delete(i);
-      if( ls != -1 )
-        iF->SetIterations(ls);
-      break;
-    }
-  }
+  int ls = -1;
+  XLibMacros::ParseNumbers<int>(Cmds, 1, &ls);
+  if( ls != -1 )  iF->SetIterations( (int)ls);
   if( !Cmds.IsEmpty() )
     iF->SetRefinementMethod( Cmds[0] );
 }
@@ -2853,18 +2848,17 @@ void TMainForm::macWaitFor(TStrObjList &Cmds, const TParamList &Options, TMacroE
 }
 //..............................................................................
 void TMainForm::macOccu(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  if( !Cmds.LastStr().IsNumber() )  {
-    Error.ProcessingError(__OlxSrcInfo, "wrong occupancy value" );
+  double occu = 0;
+  if( XLibMacros::ParseNumbers<double>(Cmds, 1, &occu) == 0 )  {
+    Error.ProcessingError(__OlxSrcInfo, "please provide occupancy" );
     return;
   }
-  TCAtomPList CAtoms;
-  double occp = Cmds.LastStr().ToDouble();
-  Cmds.Delete(Cmds.Count()-1);
-  FXApp->FindCAtoms(Cmds.Text(' '), CAtoms);
-  for( int i=0; i < CAtoms.Count(); i++ )  {
-    CAtoms[i]->SetOccp(occp);
+  TXAtomPList xatoms;
+  FindXAtoms(Cmds, xatoms, true, !Options.Contains("cs"));
+  for( int i=0; i < xatoms.Count(); i++ )  {
+    xatoms[i]->Atom().CAtom().SetOccp(occu);
     // reset the variable as it has priority when saving to a file
-    CAtoms[i]->SetOccpVar(0);
+    xatoms[i]->Atom().CAtom().SetOccpVar(0);
   }
 }
 //..............................................................................
@@ -3187,41 +3181,30 @@ void TMainForm::macFvar(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   if( !FXApp->CheckFileType<TIns>() )  return;
 
   TIns *I = (TIns*)FXApp->XFile().GetLastLoader();
-  if( !Cmds.Count() )  {
+  if( Cmds.IsEmpty() )  {
     olxstr tmp = "Free variables: ";
     for( int i=0; i < I->Vars().Count(); i++ )
       tmp << olxstr::FormatFloat(3, I->Vars()[i]) << ' ';
     TBasicApp::GetLog() << (tmp << '\n');
     return;
   }
-  float fvar = 0;
-  for( int i=0; i < Cmds.Count(); i++ )  {
-    if( Cmds[i].IsNumber() )  {
-      fvar = Cmds[i].ToDouble();
-      Cmds.Delete(i);
-      break;
-    }
-  }
-  if( Cmds.IsEmpty() )  {
-    E.ProcessingError(__OlxSrcInfo, "atom names are expected" );
-    return;
-  }
-  TCAtomPList CAtoms;
-  FXApp->FindCAtoms(Cmds.Text(' '), CAtoms);
-  if( CAtoms.Count() == 2 && !fvar )  {
+  double fvar = 0;
+  XLibMacros::ParseNumbers<double>(Cmds, 1, &fvar);
+  TXAtomPList xatoms;
+  FindXAtoms(Cmds, xatoms, true, !Options.Contains("cs"));
+  if( xatoms.Count() == 2 && !fvar )  {
     I->AddVar(0.5);
     int num = I->Vars().Count();
-    CAtoms.Item(0)->SetOccpVar(num*10+1);
-    CAtoms.Item(1)->SetOccpVar(-num*10-1);
+    xatoms[0]->Atom().CAtom().SetOccpVar(num*10+1);
+    xatoms[1]->Atom().CAtom().SetOccpVar(-num*10-1);
   }
   else  {
-    if( fvar )  {
-      for(int i=0; i < CAtoms.Count(); i++ )
-        CAtoms[i]->SetOccpVar(fvar);
+    for(int i=0; i < xatoms.Count(); i++ )
+      xatoms[i]->Atom().CAtom().SetOccpVar(fvar);
+    if( fvar != 0)  {
       int iv = (int)fabs(fvar/10);
-      while( I->Vars().Count() < iv )  {
+      while( I->Vars().Count() < iv )
         I->AddVar(0.5);
-      }
     }
   }
 }
@@ -3265,33 +3248,15 @@ void TMainForm::macPart(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   if( !FXApp->CheckFileType<TIns>() )  return;
 
   TIns *Ins = (TIns*)FXApp->XFile().GetLastLoader();
-  short part = -1, partCount = 1;
-  bool linkOccu = false;
-  TXAtomPList Atoms;
-  TSAtom *SA;
-  for( int i=0; i < Cmds.Count(); i++ )  {
-    if( Cmds[i].IsNumber() )  {
-      part = Cmds[i].ToInt();
-      Cmds.Delete(i);
-      break ;
-    }
-  }
+  int part = -1, partCount = Options.FindValue("p", "1").ToInt();
+  XLibMacros::ParseNumbers<int>(Cmds, 1, &part);
+  bool linkOccu = Options.Contains("lo");
 
-  if( Cmds.Count() )  FXApp->FindXAtoms(Cmds.Text(' '), Atoms);
-  if( Atoms.IsEmpty() )  {
-    E.ProcessingError(__OlxSrcInfo, "non zero number of atoms is expected" );
+  TXAtomPList Atoms;
+  FindXAtoms(Cmds,Atoms, true, !Options.Contains("cs") );
+  if( !partCount || partCount < 0 || (Atoms.Count()%partCount) )  {
+    E.ProcessingError(__OlxSrcInfo, "wrong number of parts" );
     return;
-  }
-  for( int i=0; i < Options.Count(); i++ )  {
-    if( Options.GetName(i).Comparei("p") == 0 )  {
-      partCount = Options.GetValue(i).ToInt();
-      if( !partCount || partCount < 0 || (Atoms.Count()%partCount) )  {
-        E.ProcessingError(__OlxSrcInfo, "wrong number of parts" );
-        return;
-      }
-    }
-    else if( Options.GetName(i).Comparei("lo") == 0 )
-      linkOccu = true;
   }
   int startVar;
   if( linkOccu )  {
@@ -3313,9 +3278,9 @@ void TMainForm::macPart(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     for( int j=(Atoms.Count()/partCount)*i; j < (Atoms.Count()/partCount)*(i+1); j++ )  {
       Atoms[j]->Atom().CAtom().SetPart( part );
       for( int k=0; k <  Atoms[j]->Atom().NodeCount(); k++ )  {
-        SA = &Atoms[j]->Atom().Node(k);
-        if( SA->GetAtomInfo() == iHydrogenIndex )
-          SA->CAtom().SetPart(part);
+        TSAtom& SA = Atoms[j]->Atom().Node(k);
+        if( SA.GetAtomInfo() == iHydrogenIndex )
+          SA.CAtom().SetPart(part);
       }
       if( linkOccu )  {
         if( partCount == 2 )  {
@@ -3342,190 +3307,45 @@ void TMainForm::macPart(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   }
 }
 void TMainForm::macAfix(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  short afix = -1;
+  int afix = -1;
   TXAtomPList Atoms;
-  for( int i=0; i < Cmds.Count(); i++ )  {
-    if( Cmds[i].IsNumber() )  {
-      afix = Cmds[i].ToInt();
-      Cmds.Delete(i);
-      break ;
-    }
-  }
+  XLibMacros::ParseNumbers<int>(Cmds, 1, &afix);
   if( afix == -1 )  {
     E.ProcessingError(__OlxSrcInfo, "afix should be specified" );
     return;
   }
   TAsymmUnit& au = FXApp->XFile().GetAsymmUnit();
   FindXAtoms(Cmds, Atoms, false, !Options.Contains("cs"));
-  if( Atoms.IsEmpty() )  {
-    int m = TAfixGroup::GetM(afix), n = TAfixGroup::GetN(afix);
-    if( TAfixGroup::IsFitted(afix) && ( n == 6 || n == 9) )  {  // special case
-      TTypeList< TSAtomPList > rings;
-      try  {  
-        if( m == 6 )  {
-          FXApp->FindRings("C6", rings);  
-          if( Options.Contains('n') )  FXApp->FindRings("NC5", rings);  
-        }
-        else if( m == 5 || m == 10 ) // Cp or Cp*
-          FXApp->FindRings("C5", rings);  
-        else if( m == 11 )
-          FXApp->FindRings("C10", rings);  
-      }
-      catch( const TExceptionBase& exc )  {  throw TFunctionFailedException(__OlxSourceInfo, exc);  }
-      TNetwork::RingInfo ri;
-      for( int i=0; i < rings.Count(); i++ )  {
-        if( m != 11 && !TNetwork::IsRingRegular(rings[i]) )  continue;
-        // find the pivot (with heaviest atom attached)
-        TNetwork::AnalyseRing( rings[i], ri.Clear() );
-        if( ri.HasAfix || ri.HeaviestSubsIndex == -1 )  continue;
-        if( m != 10 && ri.Substituted.Count() > 1 )  continue;
-        if( m == 10 && ri.Substituted.Count() != 5 )  continue; // Cp*
-        int shift = (m == 10 ? 0 : ri.HeaviestSubsIndex+1); // do not allign to pivot for Cp* 
-        rings[i].ShiftL(shift);  // pivot is the last one now
-        if( m == 11 )  {  // validate and rearrange to figure of 8
-          if( ri.Alpha.IndexOf( shift -1 ) == -1 ) continue;
-          if( ri.Ternary.Count() != 2 )  continue;
-          if( ri.Ternary.IndexOf( shift >= 2 ? shift-2 : rings[i].Count()-shift ) != -1 )  { // counter-clockwise direction
-            for( int j=0; j < (rings[i].Count()-1)/2; j++ )  {
-              TSAtom* a = rings[i][j];
-              rings[i][j] = rings[i][rings[i].Count()-j-2];
-              rings[i][rings[i].Count()-j-2] = a;
-            }
-          }
-          rings[i].Swap(0, 4);
-          rings[i].Swap(1, 3);
-        }
-        else if( m == 10 )  {  // Cp*
-          if( !ri.IsSingleCSubstituted() )  continue;
-          for( int j=0; j < ri.Substituents.Count(); j++ )
-            rings[i].Add(ri.Substituents[j][0] );
-        }
-        olxstr info("Processing");
-        for( int j=0; j < rings[i].Count(); j++ )
-          info << ' ' << rings[i][j]->GetLabel();
-        TBasicApp::GetLog() << (info << ". Chosen pivot atom is ") << 
-          (m == 10 ? rings[i][0]->GetLabel() : rings[i].Last()->GetLabel()) << '\n';
-        if( rings[i].Last()->CAtom().GetDependentAfixGroup() != NULL )
-          rings[i].Last()->CAtom().GetDependentAfixGroup()->Clear();
-        TAfixGroup& ag = au.GetAfixGroups().New( &(m == 10 ? rings[i][0]->CAtom() : rings[i].Last()->CAtom()), afix);
-        if( m != 10 )  {
-          for( int j=rings[i].Count()-2; j >= 0; j-- )
-            ag.AddDependent( rings[i][j]->CAtom() );
-        }
-        else  {
-          for( int j=1; j < rings[i].Count(); j++ )
-            ag.AddDependent( rings[i][j]->CAtom() );
-        }
-      }
-    }
+  int m = TAfixGroup::GetM(afix), n = TAfixGroup::GetN(afix);
+  if( TAfixGroup::IsFitted(afix) && ( n == 6 || n == 9) )  {  // special case
+    if( Atoms.IsEmpty() )
+      FXApp->AutoAfixRings(afix, NULL, Options.Contains('n'));
+    else if( Atoms.Count() == 1 )
+      FXApp->AutoAfixRings(afix, &Atoms[0]->Atom(), Options.Contains('n'));
     else  {
-      E.ProcessingError(__OlxSrcInfo, "no atoms provided" );
-    }
-    return;
-  }
-  else if( Atoms.Count() == 1 && (afix == 66 || afix == 69 || afix == 56 || afix == 59 || afix == 116 || afix == 119) )  {
-    TPtrList<TBasicAtomInfo> ring;
-    TTypeList< TSAtomPList > rings;
-    if( Atoms[0]->Atom().GetAtomInfo() != iCarbonIndex )
-        ring.Add( &Atoms[0]->Atom().GetAtomInfo() );
-    if( (afix/10) == 6 )
-      FXApp->RingContentFromStr( ring.IsEmpty() ? "C6" :"C5", ring);
-    else if( (afix/10) == 5 )
-      FXApp->RingContentFromStr(ring.IsEmpty() ? "C5" :"C4", ring);
-    else if( (afix/10) == 11 ) 
-      FXApp->RingContentFromStr(ring.IsEmpty() ? "C10" :"C9", ring);
-    
-    Atoms[0]->Atom().GetNetwork().FindAtomRings(Atoms[0]->Atom(), ring, rings);
-    if( rings.Count() == 0 )  {
-      E.ProcessingError(__OlxSrcInfo, "could not locate the XC(n-1) ring" );
-      return;
-    }
-    else if( rings.Count() > 1 )  {
-      E.ProcessingError(__OlxSrcInfo, "the atom is shared by several rings" );
-      return;
-    }
-    TNetwork::RingInfo ri;
-    TNetwork::AnalyseRing( rings[0], ri );
-    if( (afix/10) == 11 )  {  // need to rearrage the ring to fit shelxl requirements as fihure of 8
-      if( ri.Alpha.IndexOf( rings[0].Count() -1 ) == -1 )  {
-        E.ProcessingError(__OlxSrcInfo, "the alpha substituted atom is expected" );
+      if( (afix == 56 || afix == 59) &&  Atoms.Count() != 5 )  {
+        E.ProcessingError(__OlxSrcInfo, "please provide 5 atoms exactly" );
         return;
       }
-      if( ri.Ternary.Count() != 2 )  {
-        E.ProcessingError(__OlxSrcInfo, "naphtalene ring should have two ternary atoms" );
+      else if( (afix == 66 || afix == 69 || afix == 76 || afix == 79) &&  Atoms.Count() != 6 )  {
+        E.ProcessingError(__OlxSrcInfo, "please provide 6 atoms exactly" );
         return;
       }
-      if( ri.Ternary.IndexOf(rings[0].Count()-2) != -1 )  { // countr-clockwise direction to revert
-        for( int i=0; i < (rings[0].Count()-1)/2; i++ )  {
-          TSAtom* a = rings[0][i];
-          rings[0][i] = rings[0][rings[0].Count()-i-2];
-          rings[0][rings[0].Count()-i-2] = a;
-        }
+      else if( (afix == 106 || afix == 109 || afix == 116 || afix == 119) &&  Atoms.Count() != 10 )  {
+        E.ProcessingError(__OlxSrcInfo, "please provide 10 atoms exactly" );
+        return;
       }
-      rings[0].Swap(0, 4);
-      rings[0].Swap(1, 3);
-    }
-    if( ri.Substituted.Count() > 1 )  
-      TBasicApp::GetLog() << "The selected ring has more than one substituent\n";
-    olxstr info("Processing");
-    for( int i=rings[0].Count()-1; i >= 0; i-- )
-      info << ' ' << rings[0][i]->GetLabel();
-    TBasicApp::GetLog() << (info << ". Chosen pivot atom is ") << rings[0].Last()->GetLabel() << '\n';
-    if( rings[0].Last()->CAtom().GetDependentAfixGroup() != NULL )
-      rings[0].Last()->CAtom().GetDependentAfixGroup()->Clear();
-    TAfixGroup& ag = au.GetAfixGroups().New(&rings[0].Last()->CAtom(), afix);
-    for( int i=0; i < rings[0].Count()-1; i++ )  {  
-      TCAtom& ca = rings[0][i]->CAtom();
-      if( ca.GetDependentAfixGroup() != NULL && ca.GetDependentAfixGroup()->GetAfix() == afix )  // if used in case to change order
-        ca.GetDependentAfixGroup()->Clear();
-    }
-    for( int i=rings[0].Count()-2; i >= 0;  i-- )
-      ag.AddDependent(rings[0][i]->CAtom());
-    return;
-  }
-  if( afix < 0 )  {  // testing naphtalene rings...
-    TTypeList< TSAtomPList > rings;
-    try  {  FXApp->FindRings("C10", rings);  }
-    catch( const TExceptionBase& exc )  {  throw TFunctionFailedException(__OlxSourceInfo, exc);  }
-    if( rings.IsEmpty() )  return;
-    TNetwork::RingInfo ri;
-    TBasicApp::GetLog() << "Found rings: \n";
-    for( int i=0; i < rings.Count(); i++ )  {
-      olxstr out(i+1);
-      for( int j=0; j < rings[i].Count(); j++ )  {
-        TSAtom& sa = *rings[i][j];
-        out << ' ' << sa.GetLabel();
+      if( Atoms[0]->Atom().CAtom().GetDependentAfixGroup() != NULL )
+        Atoms[0]->Atom().CAtom().GetDependentAfixGroup()->Clear();
+      TAfixGroup& ag = au.GetAfixGroups().New(&Atoms[0]->Atom().CAtom(), afix);
+      for( int i=1; i < Atoms.Count(); i++ )  {
+        TCAtom& ca = Atoms[i]->Atom().CAtom();
+        if( ca.GetDependentAfixGroup() != NULL && ca.GetDependentAfixGroup()->GetAfix() == afix )  // if used in case to change order
+          ca.GetDependentAfixGroup()->Clear();
       }
-      TNetwork::AnalyseRing(rings[i], ri.Clear());
-      TBasicApp::GetLog() << (out << '\n');
+      for( int i=1; i < Atoms.Count(); i++ )
+        ag.AddDependent(Atoms[i]->Atom().CAtom());
     }
-
-    return;
-  }
-  if( afix == 56 || afix == 66  || afix == 76 || afix == 116 || afix == 106 ||
-      afix == 59 || afix == 69  || afix == 79 || afix == 119 || afix == 109 )  {
-    if( (afix == 56 || afix == 59) &&  Atoms.Count() != 5 )  {
-      E.ProcessingError(__OlxSrcInfo, "please provide 5 atoms exactly" );
-      return;
-    }
-    else if( (afix == 66 || afix == 69 || afix == 76 || afix == 79) &&  Atoms.Count() != 6 )  {
-      E.ProcessingError(__OlxSrcInfo, "please provide 6 atoms exactly" );
-      return;
-    }
-    else if( (afix == 106 || afix == 109 || afix == 116 || afix == 119) &&  Atoms.Count() != 10 )  {
-      E.ProcessingError(__OlxSrcInfo, "please provide 10 atoms exactly" );
-      return;
-    }
-    if( Atoms[0]->Atom().CAtom().GetDependentAfixGroup() != NULL )
-      Atoms[0]->Atom().CAtom().GetDependentAfixGroup()->Clear();
-    TAfixGroup& ag = au.GetAfixGroups().New(&Atoms[0]->Atom().CAtom(), afix);
-    for( int i=1; i < Atoms.Count(); i++ )  {
-      TCAtom& ca = Atoms[i]->Atom().CAtom();
-      if( ca.GetDependentAfixGroup() != NULL && ca.GetDependentAfixGroup()->GetAfix() == afix )  // if used in case to change order
-        ca.GetDependentAfixGroup()->Clear();
-    }
-    for( int i=1; i < Atoms.Count(); i++ )
-      ag.AddDependent(Atoms[i]->Atom().CAtom());
   }
   else  {
     if( afix == 0 )  {
@@ -3571,11 +3391,7 @@ void TMainForm::macRRings(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   catch( const TExceptionBase& exc )  {  throw TFunctionFailedException(__OlxSourceInfo, exc);  }
 
   double l = 1.39, e = 0.001;
-
-  if( Cmds.Count() > 1 && Cmds[1].IsNumber() )
-    l = Cmds[1].ToDouble();
-  if( Cmds.Count() > 2 && Cmds[2].IsNumber() )
-    e = Cmds[2].ToDouble();
+  XLibMacros::ParseNumbers<double>(Cmds, 2, &l, &e);
 
   for( int i=0; i < rings.Count(); i++ )  {
     TSimpleRestraint& dfix = FXApp->XFile().GetAsymmUnit().RestrainedDistances().AddNew();
@@ -3928,19 +3744,8 @@ void TMainForm::macEADP(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 void TMainForm::macSIMU(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   short setCnt = 0;
   double esd1 = 0.04, esd2=0.08, val = 1.7;  // esd
-  for( int i=0; i < Cmds.Count(); i++ )  {
-    if( Cmds[i].IsNumber() )  {
-      if( setCnt == 0 )      {  esd1 = Cmds[i].ToDouble();  setCnt++;  }
-      else if( setCnt == 1 ) {  esd2 = Cmds[i].ToDouble();  setCnt++;  }
-      else if( setCnt == 2 ) {  val = Cmds[i].ToDouble();  setCnt++;  }
-      else  {
-        E.ProcessingError(__OlxSrcInfo, "too many numirical parameters" );
-        return;
-      }
-      Cmds.Delete(i);
-    }
-  }
-  if( setCnt == 1 )  esd2 = esd1 * 2;
+  if(XLibMacros::ParseNumbers<double>(Cmds, 3, &esd1, &esd2, &val) == 1 )
+    esd2 = esd1 * 2;
   TXAtomPList Atoms;
   FindXAtoms(Cmds, Atoms, false, !Options.Contains("cs"));
   // validate that atoms of the same type
@@ -3957,18 +3762,8 @@ void TMainForm::macSIMU(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 void TMainForm::macDELU(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   short setCnt = 0;
   double esd1 = 0.01, esd2=0.01;  // esd
-  for( int i=0; i < Cmds.Count(); i++ )  {
-    if( Cmds[i].IsNumber() )  {
-      if( setCnt == 0 )      {  esd1 = Cmds[i].ToDouble();  setCnt++;  }
-      else if( setCnt == 1 ) {  esd2 = Cmds[i].ToDouble();  setCnt++;  }
-      else  {
-        E.ProcessingError(__OlxSrcInfo, "too many numirical parameters" );
-        return;
-      }
-      Cmds.Delete(i);
-    }
-  }
-  if( setCnt == 1 )  esd2 = esd1;
+  if( XLibMacros::ParseNumbers<double>(Cmds, 2, &esd1, &esd2) == 1 )
+    esd2 = esd1;
   TXAtomPList Atoms;
   FindXAtoms(Cmds, Atoms, false, !Options.Contains("cs"));
   // validate that atoms of the same type
@@ -3984,18 +3779,8 @@ void TMainForm::macDELU(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 void TMainForm::macISOR(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   short setCnt = 0;
   double esd1 = 0.1, esd2=0.2;  // esd
-  for( int i=0; i < Cmds.Count(); i++ )  {
-    if( Cmds[i].IsNumber() )  {
-      if( setCnt == 0 )      {  esd1 = Cmds[i].ToDouble();  setCnt++;  }
-      else if( setCnt == 1 ) {  esd2 = Cmds[i].ToDouble();  setCnt++;  }
-      else  {
-        E.ProcessingError(__OlxSrcInfo, "too many numirical parameters" );
-        return;
-      }
-      Cmds.Delete(i);
-    }
-  }
-  if( setCnt == 1 )  esd2 = esd1 * 2;
+  if( XLibMacros::ParseNumbers<double>(Cmds, 2, &esd1, &esd2) == 1 )
+    esd2 = 2*esd1;
   TXAtomPList Atoms;
   FindXAtoms(Cmds, Atoms, false, !Options.Contains("cs"));
   // validate that atoms of the same type
@@ -4011,17 +3796,8 @@ void TMainForm::macISOR(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 void TMainForm::macChiv(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   short setCnt = 0;
   double esd = 0.1, val=0;  // esd
-  for( int i=0; i < Cmds.Count(); i++ )  {
-    if( Cmds[i].IsNumber() )  {
-      if( setCnt == 0 )      {  val = Cmds[i].ToDouble(); setCnt++;  }
-      else if( setCnt == 1 ) {  esd = Cmds[i].ToDouble(); setCnt++;  }
-      else  {
-        E.ProcessingError(__OlxSrcInfo, "too many numirical parameters" );
-        return;
-      }
-      Cmds.Delete(i);
-    }
-  }
+  XLibMacros::ParseNumbers<double>(Cmds, 2, &esd, &val);
+
   TXAtomPList Atoms;
   if( !FindXAtoms(Cmds, Atoms, false, !Options.Contains("cs")) )  {
     E.ProcessingError(__OlxSrcInfo, "no atoms provided" );
@@ -7959,18 +7735,10 @@ void TMainForm::macInv(TStrObjList &Cmds, const TParamList &Options, TMacroError
 void TMainForm::macPush(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   vec3d pnt;
   int pc = 0;
-  for( int i=0; i < Cmds.Count(); i++ )  {
-    if( Cmds[i].IsNumber() )  {
-      pnt[pc] = Cmds[i].ToDouble();
-      Cmds.Delete(i);
-      i--;
-      pc++;
-      if( pc > 3 )
-        throw TInvalidArgumentException(__OlxSourceInfo, "too many numerical parameters");
-    }
+  if( XLibMacros::ParseNumbers<double>(Cmds, 3, &pnt[0], &pnt[1], &pnt[2]) != 3 )  {
+    Error.ProcessingError(__OlxSrcInfo, "could not locate translation" );
+    return;
   }
-  if( pc < 3 )
-    throw TInvalidArgumentException(__OlxSourceInfo, "wrong number of numerical parameters");
   TXAtomPList xatoms;
   if( !FindXAtoms(Cmds, xatoms, true, true) )  {
     Error.ProcessingError(__OlxSrcInfo, "no atoms provided" );
