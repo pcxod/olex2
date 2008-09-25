@@ -8,6 +8,7 @@
 #include "ecomplex.h"
 #include "undo.h"
 #include "arrays.h"
+#include "atomref.h"
 
 // program state and some other special checks for functions
 const unsigned int   psFileLoaded        = 0x00010000,
@@ -36,11 +37,12 @@ protected:
   TAtomsInfo* FAtomsInfo;
   TLibrary Library;
   olxstr CifTemplatesDir;  // the folder with CIF templates/data
+  ASelectionOwner* SelectionOwner;
 protected:
   virtual bool CheckProgramState(unsigned int specialCheck);
   void ProcessRingAfix(TSAtomPList& ring, int afix, bool pivot_last);
 public:
-  TXApp(const olxstr &basedir);
+  TXApp(const olxstr &basedir, ASelectionOwner* selOwner=NULL);
   virtual ~TXApp();
   inline TAtomsInfo* AtomsInfo() {  return FAtomsInfo; }
   inline TXFile& XFile()         {  return *FXFile; }
@@ -82,7 +84,9 @@ public:
   TUndoData* FixHL();
   void RingContentFromStr(const olxstr& textDescr, TPtrList<TBasicAtomInfo>& ringDesc);
   void FindRings(const olxstr& Condition, TTypeList<TSAtomPList>& rings);
-  bool FindSAtoms(const olxstr& condition, TSAtomPList& res);
+  // 
+  virtual bool FindSAtoms(const olxstr& condition, TSAtomPList& res, bool ReturnAll = true, bool ClearSelection=true);
+  // fins Cp, Ph, Naph and Cp* rings and adds corresponding afixes
   void AutoAfixRings(int afix, TSAtom* sa = NULL, bool TryPyridine = false);
 };
 

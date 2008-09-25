@@ -17,7 +17,8 @@
 #include "unitcell.h"
 #include "chemdata.h"
 
-TXApp::TXApp(const olxstr &basedir) : TBasicApp(basedir), Library(EmptyString, this)  {
+TXApp::TXApp(const olxstr &basedir, ASelectionOwner* selOwner) : 
+    SelectionOwner(selOwner), TBasicApp(basedir), Library(EmptyString, this)  {
   try  {
     FAtomsInfo = new TAtomsInfo( BaseDir() + "ptablex.dat" );
     if( TSymmLib::GetInstance() == NULL )
@@ -364,12 +365,25 @@ void TXApp::FindRings(const olxstr& Condition, TTypeList<TSAtomPList>& rings)  {
   rings.Pack();
 }
 //..............................................................................
-bool TXApp::FindSAtoms(const olxstr& condition, TSAtomPList& res)  {
+bool TXApp::FindSAtoms(const olxstr& condition, TSAtomPList& res, bool ReturnAll, bool ClearSelection)  {
+  if( SelectionOwner != NULL )
+    SelectionOwner->SetDoClearSelection(ClearSelection);
+  TCAtomGroup ag;
+  if( condition.IsEmpty() )  {  // try the selection first
+    if( SelectionOwner != NULL )
+      SelectionOwner->ExpandSelection(ag);
+  }
   if( !condition.IsEmpty() )  {
-    TAtomReference ar(condition);      
-    TCAtomGroup ag;
+    TAtomReference ar(condition, SelectionOwner);      
     int atomAGroup;
     ar.Expand(XFile().GetAsymmUnit(), ag, EmptyString, atomAGroup);
+  }
+  else if( ag.IsEmpty() && ReturnAll ) {
+    res.SetCapacity( XFile().GetLattice().AtomCount() );
+    for( int i=0; i < XFile().GetLattice().AtomCount(); i++ )
+      res.Add( &XFile().GetLattice().GetAtom(i) );
+  }
+  if( !ag.IsEmpty() )  {
     res.SetCapacity( ag.Count() );
     for( int i=0; i < XFile().GetAsymmUnit().AtomCount(); i++ )
       XFile().GetAsymmUnit().GetAtom(i).SetTag(0);
@@ -380,11 +394,6 @@ bool TXApp::FindSAtoms(const olxstr& condition, TSAtomPList& res)  {
       if( sa->CAtom().GetTag() == 1 )
         res.Add( sa );
     }
-  }
-  else  {
-    res.SetCapacity( XFile().GetLattice().AtomCount() );
-    for( int i=0; i < XFile().GetLattice().AtomCount(); i++ )
-      res.Add( &XFile().GetLattice().GetAtom(i) );
   }
   return !res.IsEmpty();
 }

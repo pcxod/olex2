@@ -199,7 +199,7 @@ enum  {
   ID_OnSelect = 1
 };
 
-TGXApp::TGXApp(const olxstr &FileName):TXApp(FileName)  {
+TGXApp::TGXApp(const olxstr &FileName) : TXApp(FileName, this)  {
   FStructureVisible = FQPeaksVisible = FHydrogensVisible =  FHBondsVisible = true;
   XGrowPointsVisible = FXGrowLinesVisible = FQPeakBondsVisible = false;
 
@@ -1875,9 +1875,15 @@ void TGXApp::SelectAtoms(const olxstr &Names, bool Invert)  {
   }
 }
 //..............................................................................
-void TGXApp::FindCAtoms(const olxstr &Atoms, TCAtomPList& List, bool ClearSelection)
-{
-  if( Atoms.Length() == 0 )  {
+void TGXApp::ExpandSelection(TCAtomGroup& atoms)  {
+  TCAtomPList catoms;
+  GetSelectedCAtoms(catoms, GetDoClearSelection());
+  for( int i=0; i < catoms.Count(); i++ )
+    atoms.AddNew( catoms[i] );
+}
+//..............................................................................
+void TGXApp::FindCAtoms(const olxstr &Atoms, TCAtomPList& List, bool ClearSelection)  {
+  if( Atoms.IsEmpty() )  {
     TAsymmUnit& AU = XFile().GetLattice().GetAsymmUnit();
     for(int i=0; i < AU.AtomCount(); i++ )  {
       if( !AU.GetAtom(i).IsDeleted() )
@@ -1890,7 +1896,7 @@ void TGXApp::FindCAtoms(const olxstr &Atoms, TCAtomPList& List, bool ClearSelect
   TBasicAtomInfo *BAI;
   TCAtom *A;
   for( int i = 0; i < Toks.Count(); i++ )  {
-    Tmp = Toks.String(i);
+    Tmp = Toks[i];
     if( !Tmp.Comparei("sel") )  {
       GetSelectedCAtoms(List, ClearSelection);
       continue;

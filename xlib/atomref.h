@@ -13,9 +13,15 @@ BeginXlibNamespace()
     when something is being calculated
   O21 > O25 -> [021..O25] 
   O25 < O21 -> [025..O21] 
-
 */
-
+//TODO: add C? C?1 kind of expressions
+class ASelectionOwner {
+  bool DoClearSelection;
+public:
+  ASelectionOwner() : DoClearSelection(true) {}
+  virtual void ExpandSelection(TCAtomGroup& catoms) = 0;
+  DefPropP(bool, DoClearSelection)
+};
 class TAtomReference : public IEObject  {
   olxstr Expression;
 protected:
@@ -24,8 +30,10 @@ protected:
                                 ca->GetAtomInfo() == iDeuteriumIndex ||
                                 ca->GetAtomInfo() == iQPeakIndex );
   }
+  ASelectionOwner* SelectionOwner;
 public:
-  TAtomReference(const olxstr& expression) : Expression(expression)  {  }
+  TAtomReference(const olxstr& expression, ASelectionOwner* selectionOwner = NULL) : 
+      Expression(expression), SelectionOwner(selectionOwner)  {  }
   const olxstr& GetExpression() const {  return Expression;  }
   int _Expand(TAsymmUnit& au, TCAtomGroup& atoms, TAsymmUnit::TResidue* CurrResi)  {
     int ac = atoms.Count();
@@ -37,6 +45,11 @@ public:
           atoms.AddNew( ca );
       }
       return atoms.Count() - ac;
+    }
+    else if( Expression.Comparei("sel") == 0 )  { 
+      if( SelectionOwner == NULL )
+        throw TInvalidArgumentException(__OlxSourceInfo, "invalid slection owner");
+      SelectionOwner->ExpandSelection(atoms);
     }
     else if( Expression.Comparei("first") == 0 )  { 
       if( au.AtomCount() == 0 )  return 0;
@@ -171,7 +184,7 @@ public:
     for( int i=0; i < residues.Count(); i++ )  {
       bool succeded = true;
       for( int j=0; j < toks.Count(); j++ )  {
-        if( TAtomReference(toks[j])._Expand(au, tmp_atoms, residues[i]) == 0 )  {
+        if( TAtomReference(toks[j], SelectionOwner)._Expand(au, tmp_atoms, residues[i]) == 0 )  {
           if( i == 0 )  unprocessed.Add( toks[j] );
           succeded = false;
           break;
