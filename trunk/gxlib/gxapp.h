@@ -83,7 +83,7 @@ typedef TPtrList<TXPlane> TXPlanePList;
 typedef TPtrList<TXAtom> TXAtomPList;
 typedef TPtrList<TXBond> TXBondPList;
 
-class TGXApp : public TXApp, AEventsDispatcher  {
+class TGXApp : public TXApp, AEventsDispatcher, public ASelectionOwner  {
   TXAtomList XAtoms;
   TXBondList XBonds;
   TXPlaneList XPlanes;
@@ -208,6 +208,8 @@ public:
   void UnGroupSelection()                   {  GetRender().UnGroupSelection(); Draw(); }
   void UnGroup(TGlGroup *G)                 {  GetRender().UnGroup(G); Draw(); }
   olxstr GetSelectionInfo();
+  // ASelection Owner interface
+  virtual void ExpandSelection(TCAtomGroup& atoms);
 
   TGlBitmap* CreateGlBitmap(const olxstr& name,
     int left, int top, int width, int height, unsigned char* RGBa, unsigned int format);

@@ -238,7 +238,7 @@ void XLibMacros::macEnvi(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   }
   TSAtomPList atoms;
   TXApp& xapp = TXApp::GetInstance();
-  if( !xapp.FindSAtoms(Cmds.Text(' '), atoms) )  {
+  if( !xapp.FindSAtoms(Cmds.Text(' '), atoms, false, false) )  {
     E.ProcessingError(__OlxSrcInfo, "no atoms provided" );
     return;
   }

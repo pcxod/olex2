@@ -87,7 +87,7 @@ enum  {
   ID_STRUCTURECHANGED
 };
 
-class TOlex: public AEventsDispatcher, public olex::IOlexProcessor  {
+class TOlex: public AEventsDispatcher, public olex::IOlexProcessor, public ASelectionOwner  {
   TXApp XApp;
   TLst Lst;
   HANDLE TimerThreadHandle;
@@ -122,34 +122,20 @@ class TOlex: public AEventsDispatcher, public olex::IOlexProcessor  {
         atoms[i] = NULL;
     atoms.Pack();
   }
+  // slection owner interface
+  virtual void ExpandSelection(TCAtomGroup& atoms)  {
+    for( int i=0; i < Selection.Count(); i++ )
+      atoms.AddNew( &Selection[i]->CAtom() );
+    if( GetDoClearSelection() )
+      Selection.Clear();
+  }
   bool LocateAtoms(TStrObjList &Cmds, TSAtomPList& atoms, bool all)  {
-    if( Cmds.IsEmpty() )  {
-      if( !Selection.IsEmpty() )
-        atoms.AddList( Selection );
-      else if( all ) {
-        TLattice& latt = XApp.XFile().GetLattice();
-        for( int i=0; i < latt.AtomCount(); i++ )
-          if( !latt.GetAtom(i).IsDeleted() )
-            atoms.Add( &latt.GetAtom(i) );
-      }
-    }
-    else  {
-      for( int i=0; i < Cmds.Count(); i++ )  {
-        if( Cmds[i].Comparei("sel") == 0 )  {
-          atoms.AddList( Selection );
-          Cmds.Delete(i);
-          break;
-        }
-      }
-      olxstr cnd(Cmds.Text(' '));
-      if( !cnd.IsEmpty() )
-        XApp.FindSAtoms(Cmds.Text(' '), atoms);
-    }
+    XApp.FindSAtoms(Cmds.Text(' '), atoms, true);
     UnifyAtomList(atoms);
     return !atoms.IsEmpty();
   }
 public:
-  TOlex( const olxstr& basedir) : XApp(basedir), Macros(*this) {
+  TOlex( const olxstr& basedir) : XApp(basedir, this), Macros(*this) {
     OlexInstance = this;
     XApp.GetLog().AddStream( new TOutStream(), true );
     XApp.GetLog().OnInfo->Add(this, ID_INFO);
@@ -1147,21 +1133,9 @@ public:
   //..............................................................................
   void macInfo(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
     TCAtomPList atoms;
-    if( Cmds.IsEmpty() )  {
-      for( int i=0; i < XApp.XFile().GetAsymmUnit().AtomCount(); i++ )  {
-        TCAtom& ca = XApp.XFile().GetAsymmUnit().GetAtom(i);
-        if( ca.IsDeleted() )  continue;
-        atoms.Add( &ca );
-      }
-    }
-    else  {
-      TAtomReference ar(Cmds.Text(' '));      
-      TCAtomGroup ag;
-      int atomAGroup;
-      olxstr unp(ar.Expand(XApp.XFile().GetAsymmUnit(), ag, EmptyString, atomAGroup));
-      for( int i=0; i < ag.Count(); i++ )  
-        atoms.Add( ag[i].GetAtom() );
-    }
+    TSAtomPList satoms;
+    LocateAtoms(Cmds, satoms, true);
+    TListCaster::POP(satoms, atoms);
     TTTable<TStrList> Table(atoms.Count(), 7);
     Table.ColName(0) = "Atom";
     Table.ColName(1) = "Symb";
