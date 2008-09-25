@@ -331,7 +331,6 @@ private:
   DefMacro(RRings)
   DefMacro(Flat)
   DefMacro(Chiv)
-  DefMacro(EADP)
   DefMacro(SIMU)
   DefMacro(DELU)
   DefMacro(ISOR)

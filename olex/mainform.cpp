@@ -634,8 +634,6 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual accupancy\
 "Forces flat group restraint for at least 4 provided atoms" );
   this_InitMacroD(Chiv, "cs- do not clear selection", fpAny|psCheckFileTypeIns,
 "Forces chiral volume of atom(s) to '0' or provided value" );
-  this_InitMacroD(EADP, "cs-do not clear selection", fpAny|psCheckFileTypeIns,
-"Forces EADP/Uiso of provided atoms to be constrained the same" );
   this_InitMacroD(DELU, "cs-do not clear selection", fpAny|psCheckFileTypeIns,
 "Rigid bond contstraint. If no atoms provided, all non-H atoms considered" );
   this_InitMacroD(SIMU, "cs-do not clear selection", fpAny|psCheckFileTypeIns,

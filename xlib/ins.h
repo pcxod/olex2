@@ -240,6 +240,10 @@ public:
           srl = &au->EquivalentU();
           RequiredParams = 0;  AcceptsParams = 0;
         }
+        //else if( Toks[0].Comparei("EXYZ") == 0 )  {
+        //  srl = &au->SharedSites();
+        //  RequiredParams = 0;  AcceptsParams = 0;
+        //}
         else
           srl = NULL;
         if( srl != NULL )  {
