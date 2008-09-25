@@ -618,10 +618,10 @@ void TGXApp::BangTable(TXAtom *XA, TTTable<TStrList>& Table)
       if( V.QLength()*V1.QLength() != 0 )  {
         angle = V.CAngle(V1);
         angle = acos(angle)*180/M_PI;
-        Table.Row(i)->String(j+1) = olxstr::FormatFloat(3, angle);
+        Table[i][j+1] = olxstr::FormatFloat(3, angle);
       }
       else
-      { Table.Row(i)->String(j+1) = '-'; }
+        Table[i][j+1] = '-';
     }
   }
 }

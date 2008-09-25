@@ -1174,7 +1174,6 @@ TLinkedLoopTable::TLinkedLoopTable(TCif *C)  {
   BondSort.SortType = slltLength;
   olxstr Tmp;
   TCifLoop *CL;
-  TStrPObjList<olxstr,TCifLoopData*> *L;
   TCifLoopTable *Table;
   TLAtom *LA;
   TLBond *LB, *LB1;
@@ -1202,14 +1201,14 @@ TLinkedLoopTable::TLinkedLoopTable(TCif *C)  {
   index3 = Table->ColIndex("_geom_bond_site_symmetry_2");
   if( (index == -1) || (index1 == -1) || (index2 == -1) || (index3 == -1))  return;  // will not work then ...
   for( int j=0; j < Table->RowCount(); j++ )  {
-    L = Table->Row(j);
+    TStrPObjList<olxstr,TCifLoopData*>& L = (*Table)[j];
     LB = new TLBond;
-    Tmp = L->String(index);
+    Tmp = L[index];
     LB->A1 = AtomByName(Tmp);
-    Tmp = L->String(index1);
+    Tmp = L[index1];
     LB->A2 = AtomByName(Tmp);
-    LB->Value = L->String(index2);
-    LB->S2 = L->String(index3);
+    LB->Value = L[index2];
+    LB->S2 = L[index3];
     uniq = true;
     for( int k=0; k < FBonds->Count(); k++ )  {
       LB1 = (TLBond*)FBonds->Item(k);
@@ -1245,19 +1244,19 @@ TLinkedLoopTable::TLinkedLoopTable(TCif *C)  {
   if( (index == -1) || (index1 == -1) || (index2 == -1) || (index3 == -1) || (index4 == -1) || (index5 == -1))  
     return;  // will not work then ...
   for( int j=0; j < Table->RowCount(); j++ )  {
-    L = Table->Row(j);
+    TStrPObjList<olxstr,TCifLoopData*>& L = (*Table)[j];
     LAn = new TLAngle;
     FAngles->Add(LAn);
-    Tmp = L->String(index);
+    Tmp = L[index];
     LAn->A1 = AtomByName(Tmp);
-    Tmp = L->String(index1);
+    Tmp = L[index1];
     LAn->A2 = AtomByName(Tmp);
-    Tmp = L->String(index2);
+    Tmp = L[index2];
     LAn->A3 = AtomByName(Tmp);
     LAn->A2->Angles->Add(LAn);
-    LAn->Value = L->String(index3);
-    LAn->S1 = L->String(index4);
-    LAn->S3 = L->String(index5);
+    LAn->Value = L[index3];
+    LAn->S1 = L[index4];
+    LAn->S3 = L[index5];
   }
 }
 //..............................................................................
@@ -1387,14 +1386,14 @@ olxstr TLinkedLoopTable::SymmCodeToSymm(TCif *Cif, const olxstr &Code)  {
   if( Toks.Count() == 1 )  {
     isymm = Toks[0].ToInt()-1;
     if( isymm < 0 || isymm >= LT->RowCount() )  return Symm;
-    Symm = LT->Row(isymm)->String(0);
+    Symm = (*LT)[isymm][0];
     return Symm;
   }
   if( Toks.Count() != 2 )  return Symm;
   isymm = Toks[0].ToInt()-1;
   if( isymm < 0 || isymm >= LT->RowCount() )  return Symm;
   if( Toks.String(1).Length() != 3 )  return Symm;
-  TSymmParser::SymmToMatrix(LT->Row(isymm)->String(0), mSymm);
+  TSymmParser::SymmToMatrix((*LT)[isymm][0], mSymm);
   mSymm.t[0] += (int)(Toks.String(1)[0]-'5');
   mSymm.t[1] += (int)(Toks.String(1)[1]-'5');
   mSymm.t[2] += (int)(Toks.String(1)[2]-'5');
@@ -1582,7 +1581,7 @@ bool TCif::CreateTable(TDataItem *TD, TTTable<TStrList> &Table, smatd_list& Symm
     TCifLoopTable* Table = &SymmLoop->Table();
     for( int i=0; i < Table->RowCount(); i++ )  {
       smatd& Matrix = AllSymmList.AddNew();
-        if( !TSymmParser::SymmToMatrix(Table->Row(i)->String(sindex), Matrix) )
+        if( !TSymmParser::SymmToMatrix((*Table)[i][sindex], Matrix) )
           throw TFunctionFailedException(__OlxSourceInfo, "could not process symmetry matrix");
     }
   }
@@ -1614,13 +1613,13 @@ bool TCif::CreateTable(TDataItem *TD, TTTable<TStrList> &Table, smatd_list& Symm
 
       if( sindex >=0 && LT->ColName(j).IndexOf("site_symmetry") != -1 )  {
         // 1_555
-        if( LT->Row(i)->String(j) != '.' )  {
+        if( (*LT)[i][j] != '.' )  {
           olxstr tmp = LT->ColName(j).SubStringFrom( LT->ColName(j).LastIndexOf('_')+1 );
           if( !tmp.IsNumber() )
             continue;
           Tmp = "label_";
           Tmp << tmp;
-          SymmMatr = TSymmParser::SymmCodeToMatrix(AllSymmList, LT->Row(i)->String(j) );
+          SymmMatr = TSymmParser::SymmCodeToMatrix(AllSymmList, (*LT)[i][j] );
           int matIndex = SymmList.IndexOf( SymmMatr );
           if( matIndex == -1 )  {
             SymmList.AddCCopy( SymmMatr );
@@ -1635,18 +1634,18 @@ bool TCif::CreateTable(TDataItem *TD, TTTable<TStrList> &Table, smatd_list& Symm
         }
       }
       if( DI == NULL )  continue;
-      Val = LT->Row(i)->String(j);
+      Val = (*LT)[i][j];
 
 
       Tmp = DI->GetFieldValue("mustequal", EmptyString);
       Toks.Clear();
       Toks.Strtok(Tmp, ';');
-      if( Tmp.Length() && (Toks.CIIndexOf(Val)==-1) ) // equal to
+      if( !Tmp.IsEmpty() && (Toks.CIIndexOf(Val)==-1) ) // equal to
       {  AddRow = false;  break;  }
 
       Tmp = DI->GetFieldValue("atypeequal", EmptyString);
-      if( Tmp.Length() != 0 )  {  // check for atom type equals to
-        TCifLoopData* CD = (TCifLoopData*)LT->Row(i)->Object(j);
+      if( !Tmp.IsEmpty() )  {  // check for atom type equals to
+        TCifLoopData* CD = (TCifLoopData*)(*LT)[i].Object(j);
         if( CD != NULL && CD->CA != NULL )
           if( CD->CA->GetAtomInfo().GetSymbol().Comparei( Tmp ) )  {
             AddRow = false;
@@ -1654,8 +1653,8 @@ bool TCif::CreateTable(TDataItem *TD, TTTable<TStrList> &Table, smatd_list& Symm
           }
       }
       Tmp = DI->GetFieldValue("atypenotequal", EmptyString);
-      if( Tmp.Length() != 0 )  {  // check for atom type equals to
-        TCifLoopData* CD = (TCifLoopData*)LT->Row(i)->Object(j);
+      if( !Tmp.IsEmpty() )  {  // check for atom type equals to
+        TCifLoopData* CD = (TCifLoopData*)(*LT)[i].Object(j);
         if( CD != NULL && CD->CA != NULL )
           if( !CD->CA->GetAtomInfo().GetSymbol().Comparei( Tmp ) )  {
             AddRow = false;
@@ -1671,9 +1670,9 @@ bool TCif::CreateTable(TDataItem *TD, TTTable<TStrList> &Table, smatd_list& Symm
 
       Tmp = DI->GetFieldValue("multiplier", EmptyString);
       if( Tmp.Length() )  {  // Multiply
-        Val = Table.Row(i-RowDeleted)->String(j);
+        Val = Table[i-RowDeleted][j];
         MultValue(Val, Tmp);
-        Table.Row(i-RowDeleted)->String(j) = Val;
+        Table[i-RowDeleted][j] = Val;
       }
     }
     if( !AddRow )  {
