@@ -214,14 +214,12 @@ void TXFile::UpdateAsymmUnit()  {
   LL->GetAsymmUnit().SimilarU().Assign(LL->GetAsymmUnit(), GetAsymmUnit().SimilarU());
   LL->GetAsymmUnit().EquivalentU().Assign(LL->GetAsymmUnit(), GetAsymmUnit().EquivalentU());
   LL->GetAsymmUnit().SimilarFragments().Assign(LL->GetAsymmUnit(), GetAsymmUnit().SimilarFragments());
+  LL->GetAsymmUnit().SharedSites().Assign(LL->GetAsymmUnit(), GetAsymmUnit().SharedSites());
   LL->GetAsymmUnit().GetAfixGroups().Assign(LL->GetAsymmUnit(), GetAsymmUnit().GetAfixGroups());
   LL->GetAsymmUnit().ClearUsedSymm();
   for( int i=0; i < GetAsymmUnit().UsedSymmCount(); i++ )
     LL->GetAsymmUnit().AddUsedSymm( GetAsymmUnit().GetUsedSymm(i) );
-
   LL->GetAsymmUnit().SetZ( GetAsymmUnit().GetZ() );
-
-  //AsymmUnit()->CollapseExyz();
 }
 //..............................................................................
 void TXFile::SaveToFile(const olxstr & FN, bool Sort)  {

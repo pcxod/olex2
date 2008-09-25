@@ -42,7 +42,6 @@ class TAsymmUnit: public IEObject  {
   TEVPointD  FAngles;    // angles + errors
   vec3d   RAxes;     // reciprical axes
   vec3d   RAngles;    // reciprical angles
-  TTypeList<TCAtomPList>*  ExyzGroups;
   TCSTypeList<olxstr, TLibScatterer*> SfacData;  // label + params
   // this list holds the list of all atoms which are not deleted
 public:  // residue class implementation
@@ -101,7 +100,6 @@ public:  // residue class implementation
   };
 protected:
   TActionQList Actions;
-  void ClearExyz();
   TPtrList<TResidue> Residues;
   TResidue MainResidue;
   // in INS file is EQUV command
@@ -114,7 +112,8 @@ protected:
                   rRBnd,  // rigid bond restraints (DELU)
                   rUsim,  // similar Uij (SIMU)
                   rUiso,  // Uij components approximate to isotropic behavior (ISOR)
-                  rEADP;  // equivalent adp, constraint
+                  rEADP,  // equivalent adp, constraint
+                  rEXYZ;
                  
   TSameGroupList  rSAME;
   TAfixGroups AfixGroups;
@@ -134,11 +133,6 @@ public:
   DefPropP(short, Z)
   DefPropP(short, Latt)
   inline olxstr& CellSymmetry()            {  return FCellSymmetry ;  }
-
-  void AddExyz(const TCAtomPList& cAtoms);
-  void AddNewExyz(const TStrList& cAtoms);
-  TCAtomPList& ExyzGroup(size_t i) const {  return ExyzGroups->Item(i);  }
-  int ExyzGroupCount()             const {  return ExyzGroups == NULL ?  0 : ExyzGroups->Count();  }
 
   const mat3d& GetCellToCartesian() const {  return Cell2Cartesian; }
   const mat3d& GetCartesianToCell() const {  return Cartesian2Cell; }
@@ -302,6 +296,8 @@ public:
   inline TSRestraintList& RestranedUaAsUi()     {  return rUiso;  }
   // EADP
   inline TSRestraintList& EquivalentU()         {  return rEADP;  }
+  // EXYZ
+  inline TSRestraintList& SharedSites()         {  return rEXYZ;  }
   // SAME
   inline TSameGroupList& SimilarFragments()     {  return rSAME;  }
   

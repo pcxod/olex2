@@ -147,6 +147,11 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
         Ins[j] = EmptyString;
     }
   }
+  for( int i=0; i < cx.au.SharedSites().Count(); i++ )  {
+    TSimpleRestraint& sr = cx.au.SharedSites()[i];
+    for( int j=0; j < sr.AtomCount(); j++ ) 
+      sr.GetAtom(i).GetAtom()->SetSharedSiteId(i);
+  }
 
   Ins.Pack();
   ParseRestraints(Ins, NULL);
@@ -155,23 +160,6 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
   _FinishParsing();
   // initialise asu data
   GetAsymmUnit().InitData();
-  for( int i=0; i < InsCount(); i++ )  {
-    if( !InsName(i).Comparei("exyz") && (InsParams(i).Count() > 1) ) {
-      TCAtomPList atoms;
-      bool error = false;
-      for( int j=0; j < InsParams(i).Count(); j++ )  {
-        TCAtom* atom = GetAsymmUnit().FindCAtom(InsParams(i).String(j));
-        if( atom == NULL )  {
-          TBasicApp::GetLog().Error(olxstr("TIns::LoadFromStrings: unknow atom in EXYZ instruction - ") << InsParams(i).String(j));
-          TBasicApp::GetLog().Error("Please fix the problem and reload the file");
-          error = true;
-          break;
-        }
-        atoms.Add(atom);
-      }
-      if( !error )  GetAsymmUnit().AddExyz(atoms);
-    }
-  }
   if( !cx.CellFound )  {  // in case there are no atoms
     Clear();
     throw TInvalidArgumentException(__OlxSourceInfo, "empty CELL");
@@ -179,8 +167,7 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
 }
 //..............................................................................
 void TIns::_ProcessSame(ParseContext& cx)  {
-  TAsymmUnit& au = GetAsymmUnit();
-  TSameGroupList& sgl = au.SimilarFragments();
+  TSameGroupList& sgl = cx.au.SimilarFragments();
   TStrList toks;
   for( int i=0; i < cx.Same.Count(); i++ )  {
     TCAtom* ca = cx.Same[i].B();
@@ -207,7 +194,7 @@ void TIns::_ProcessSame(ParseContext& cx)  {
        TAtomReference ar( toks.Text(' ', from_ind) );
        TCAtomGroup ag;
        int atomAGroup;
-       try  {  ar.Expand( GetAsymmUnit(), ag, resi, atomAGroup);  }
+       try  {  ar.Expand( cx.au, ag, resi, atomAGroup);  }
        catch( const TExceptionBase& ex )  {
          throw TFunctionFailedException(__OlxSourceInfo, olxstr("invalid SAME instruction :") << ex.GetException()->GetError());
        }
@@ -223,9 +210,9 @@ void TIns::_ProcessSame(ParseContext& cx)  {
     }
     // now process the reference group
     for( int j=0; j < max_atoms; j++ )  {
-      if( ca->GetId() + j >= au.AtomCount() )
+      if( ca->GetId() + j >= cx.au.AtomCount() )
         throw TFunctionFailedException(__OlxSourceInfo, "not enough atoms to create the reference group for SAME");
-      TCAtom& a = au.GetAtom(ca->GetId() + j);
+      TCAtom& a = cx.au.GetAtom(ca->GetId() + j);
       if( a.GetAtomInfo() == iHydrogenIndex || a.GetAtomInfo() == iDeuteriumIndex )  {
         max_atoms++;
         continue;
@@ -1014,7 +1001,13 @@ void TIns::UpdateAtomsFromStrings(TCAtomPList& CAtoms, const TIntList& index, TS
       _ProcessAfix(*atom, cx);
     }
   }
+  _ProcessSame(cx);
   ParseRestraints(Instructions, CAtoms[0]->GetParent());
+  for( int i=0; i < cx.au.SharedSites().Count(); i++ )  {
+    TSimpleRestraint& sr = cx.au.SharedSites()[i];
+    for( int j=0; j < sr.AtomCount(); j++ ) 
+      sr.GetAtom(i).GetAtom()->SetSharedSiteId(i);
+  }
   Instructions.Pack();
 }
 //..............................................................................
@@ -1521,7 +1514,21 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
     if( sr.AtomCount() < 2 )  continue;
     Tmp = "EADP";
     for( int j=0; j < sr.AtomCount(); j++ )  {
-     Tmp << ' ' << sr.GetAtom(j).GetFullLabel();
+     Tmp << ' ' << sr.GetAtom(j).GetAtom()->GetLabel();
+     StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), au);
+    }
+    HypernateIns(Tmp, SL);
+    if( processed != 0 )  processed->Add( &sr );
+  }
+  // equivalent EXYZ constraint
+  for( int i=0; i < au->SharedSites().Count(); i++ )  {
+    TSimpleRestraint& sr = au->SharedSites()[i];
+    sr.Validate();
+    if( !ProcessRestraint(atoms, sr) )  continue;
+    if( sr.AtomCount() < 2 )  continue;
+    Tmp = "EXYZ";
+    for( int j=0; j < sr.AtomCount(); j++ )  {
+     Tmp << ' ' << sr.GetAtom(j).GetAtom()->GetLabel();
      StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), au);
     }
     HypernateIns(Tmp, SL);

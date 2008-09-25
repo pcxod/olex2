@@ -36,26 +36,21 @@ public:
 //----------------------------------------------------------------------------//
 TAsymmUnit::TAsymmUnit(TLattice *L, TAtomsInfo *AI) : 
   rDfix(rltBonds), rAfix(rltBonds), rDsim(rltBonds), rVfix(rltAtoms), rPfix(rltGroup),
-    rRBnd(rltAtoms), rUsim(rltAtoms), rUiso(rltAtoms), rEADP(rltAtoms), MainResidue(*this, -1)
+    rRBnd(rltAtoms), rUsim(rltAtoms), rUiso(rltAtoms), rEADP(rltAtoms), rEXYZ(rltAtoms),
+    MainResidue(*this, -1)
   {
   AtomsInfo = AI;
   Lattice   = L;
   Latt = -1;
   Z = 1;
   ContainsEquivalents = false;
-  ExyzGroups = NULL;
   OnSGChange = &Actions.NewQueue("AU_SG_CHANGE");
 }
 //..............................................................................
-TAsymmUnit::~TAsymmUnit() {
-  Clear();
-  if( ExyzGroups != NULL)
-    delete ExyzGroups;
-}
+TAsymmUnit::~TAsymmUnit() {  Clear();  }
 //..............................................................................
 void  TAsymmUnit::Clear()  {
   ClearRestraints();
-  ClearExyz();
   AfixGroups.Clear();
   Matrices.Clear();
   for( int i=0; i < CAtoms.Count(); i++ )
@@ -90,12 +85,9 @@ void TAsymmUnit::ClearRestraints()  {
   rUsim.Clear();
   rUiso.Clear();
   rEADP.Clear();
+  rEXYZ.Clear();
   rSAME.Clear();
   UsedSymm.Clear();
-}
-//..............................................................................
-void TAsymmUnit::ClearExyz() {
-  if( ExyzGroups != NULL ) ExyzGroups->Clear();
 }
 //..............................................................................
 void TAsymmUnit::Assign(const TAsymmUnit& C)  {
@@ -140,16 +132,6 @@ void TAsymmUnit::Assign(const TAsymmUnit& C)  {
   SetContainsEquivalents( C.DoesContainEquivalents() );
   MaxQPeak = C.GetMaxQPeak();
   MinQPeak = C.GetMinQPeak();
-  if( C.ExyzGroupCount() != 0 )  {
-    if( ExyzGroups == NULL )  ExyzGroups = new TTypeList<TCAtomPList>;
-    for(int i=0; i < C.ExyzGroupCount(); i++ )  {
-      TCAtomPList& Xyz = C.ExyzGroup(i);
-      TCAtomPList& thisXyz = ExyzGroups->AddNew();
-      for( int j=0; j < Xyz.Count(); j++ )
-        thisXyz.Add(&GetAtom(Xyz[j]->GetId()));
-    }
-  }
-
   for( int i=0; i < C.SfacCount(); i++ )  {
     if( C.GetSfacData(i).IsBuiltIn() )
       SfacData.Add(C.GetSfacLabel(i), &C.GetSfacData(i) );
@@ -165,6 +147,7 @@ void TAsymmUnit::Assign(const TAsymmUnit& C)  {
   rUsim.Assign(*this, C.rUsim);
   rUiso.Assign(*this, C.rUiso);
   rEADP.Assign(*this, C.rEADP);
+  rEXYZ.Assign(*this, C.rEXYZ);
   rSAME.Assign(*this, C.rSAME);
   AfixGroups.Assign(*this, C.AfixGroups);
 
@@ -604,20 +587,6 @@ int TAsymmUnit::GetMaxLoaderId() const  {
       id = GetAtom(i).GetLoaderId();
 
   return id+1;
-}
-//..............................................................................
-void TAsymmUnit::AddExyz(const TCAtomPList& cAtoms)  {
-  if( ExyzGroups == NULL )
-    ExyzGroups = new TTypeList<TCAtomPList>;
-  TCAtomPList& Xyz = ExyzGroups->AddNew();
-  for( int i=0; i < cAtoms.Count(); i++ )  {
-    Xyz.Add(cAtoms[i]);
-    cAtoms[i]->SetSharedSiteId(ExyzGroups->Count()-1);
-  }
-}
-//..............................................................................
-void TAsymmUnit::AddNewExyz(const TStrList& cAtoms)  {
-  throw TNotImplementedException(__OlxSourceInfo);
 }
 //..............................................................................
 void TAsymmUnit::ChangeSpaceGroup(const TSpaceGroup& sg)  {

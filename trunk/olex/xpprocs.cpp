@@ -3722,25 +3722,6 @@ void TMainForm::macFlat(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   FXApp->XFile().GetAsymmUnit().RestrainedPlanarity().ValidateRestraint(sr);
 }
 //..............................................................................
-void TMainForm::macEADP(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  TXAtomPList Atoms;
-  if( !FindXAtoms(Cmds, Atoms, false, !Options.Contains("cs")) )  {
-    E.ProcessingError(__OlxSrcInfo, "no atoms provided" );
-    return;
-  }
-  // validate that atoms of the same type
-  bool allIso = (Atoms[0]->Atom().GetEllipsoid() == NULL);
-  for( int i=1; i < Atoms.Count(); i++ )
-    if( (Atoms[i]->Atom().GetEllipsoid() == NULL) != allIso )  {
-      E.ProcessingError(__OlxSrcInfo, "mixed atoms types *aniso and iso)" );
-      return;
-    }
-  TSimpleRestraint& sr = FXApp->XFile().GetAsymmUnit().EquivalentU().AddNew();
-  for( int i=0; i < Atoms.Count(); i++ )
-    sr.AddAtom(Atoms[i]->Atom().CAtom(), NULL);
-  FXApp->XFile().GetAsymmUnit().EquivalentU().ValidateRestraint(sr);
-}
-//..............................................................................
 void TMainForm::macSIMU(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   short setCnt = 0;
   double esd1 = 0.04, esd2=0.08, val = 1.7;  // esd

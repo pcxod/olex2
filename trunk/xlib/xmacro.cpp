@@ -20,6 +20,7 @@
 #include "datafile.h"
 #include "dataitem.h"
 #include "fsext.h"
+#include "ecast.h"
 
 #define xlib_InitMacro(macroName, validOptions, argc, desc)\
   lib.RegisterStaticMacro( new TStaticMacro(&XLibMacros::mac##macroName, #macroName, (validOptions), argc, desc))
@@ -68,6 +69,12 @@ void XLibMacros::Export(TLibrary& lib)  {
   xlib_InitMacro(Fuse, "f-removes symmetrical equivalents", fpNone|psFileLoaded,
 "Re-initialises the connectivity list" );
 //_________________________________________________________________________________________________________________________
+  xlib_InitMacro(EXYZ, "", fpAny|psCheckFileTypeIns,
+"Shares a site between two or more atoms" );
+//_________________________________________________________________________________________________________________________
+  xlib_InitMacro(EADP, "", fpAny|psCheckFileTypeIns,
+"Forces EADP/Uiso of provided atoms to be constrained the same" );
+//_________________________________________________________________________________________________________________________
   xlib_InitMacro(Cif2Doc, "", fpNone|fpOne|psFileLoaded, "converts cif to a document" );
 //_________________________________________________________________________________________________________________________
   xlib_InitMacro(Cif2Tab, "", fpAny|psFileLoaded, "creates a table from a cif" );
@@ -112,6 +119,42 @@ void XLibMacros::Export(TLibrary& lib)  {
 //..............................................................................
 void XLibMacros::macFuse(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
   TXApp::GetInstance().XFile().GetLattice().Uniq( Options.Contains("f") );
+}
+//..............................................................................
+void XLibMacros::macEXYZ(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
+  TSAtomPList atoms;
+  TXApp& xapp = TXApp::GetInstance();
+  xapp.FindSAtoms(Cmds.Text(' '), atoms, false, false);
+  if( atoms.Count() < 2 )  {
+    E.ProcessingError(__OlxSrcInfo, "not enough atoms provided" );
+    return;
+  }
+  TSimpleRestraint& sr = xapp.XFile().GetAsymmUnit().SharedSites().AddNew();
+  for( int i=0; i < atoms.Count(); i++ )
+    sr.AddAtom(atoms[i]->CAtom(), NULL);
+  xapp.XFile().GetAsymmUnit().SharedSites().ValidateRestraint(sr);
+}
+//..............................................................................
+void XLibMacros::macEADP(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  TSAtomPList atoms;
+  TXApp& xapp = TXApp::GetInstance();
+  xapp.FindSAtoms(Cmds.Text(' '), atoms, false, true);
+  if( atoms.Count() < 2 )  {
+    E.ProcessingError(__OlxSrcInfo, "not enough atoms provided" );
+    return;
+  }
+  // validate that atoms of the same type
+  bool allIso = (atoms[0]->GetEllipsoid() == NULL);
+  for( int i=1; i < atoms.Count(); i++ )
+    if( (atoms[i]->GetEllipsoid() == NULL) != allIso )  {
+      E.ProcessingError(__OlxSrcInfo, "mixed atoms types (aniso and iso)" );
+      return;
+    }
+
+  TSimpleRestraint& sr = xapp.XFile().GetAsymmUnit().EquivalentU().AddNew();
+  for( int i=0; i < atoms.Count(); i++ )
+    sr.AddAtom(atoms[i]->CAtom(), NULL);
+  xapp.XFile().GetAsymmUnit().EquivalentU().ValidateRestraint(sr);
 }
 //..............................................................................
 void XLibMacros::macAddSE(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {

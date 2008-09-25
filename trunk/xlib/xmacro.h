@@ -22,6 +22,8 @@ class XLibMacros  {
   static DefMacro(Envi)
   static DefMacro(AddSE)
   static DefMacro(Fuse)
+  static DefMacro(EXYZ)
+  static DefMacro(EADP)
   static DefMacro(VoidE)
   static DefMacro(ChangeSG)
 
