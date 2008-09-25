@@ -1492,7 +1492,7 @@ void TMainForm::macBang(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   TTTable<TStrList> Table;
   olxstr Tmp = Cmds.Text(' '), clipbrd;
   TXAtomPList Atoms;
-  if( !FindXAtoms(Cmds, Atoms, true, true) ) {
+  if( !FindXAtoms(Cmds, Atoms, false, true) ) {
     Error.ProcessingError(__OlxSrcInfo, "could not find any atoms" );
     return;
   }
@@ -2073,9 +2073,9 @@ void TMainForm::macMpln(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       for( int j=0; j < colCount; j++ )  {
         if( i + j >= Atoms.Count() )
           break;
-        tab.Row(i/colCount)->String(j*2) = Atoms[i+j]->Atom().GetLabel();
+        tab[i/colCount][j*2] = Atoms[i+j]->Atom().GetLabel();
         double v = plane->DistanceTo(Atoms[i+j]->Atom());
-        tab.Row(i/colCount)->String(j*2+1) = olxstr::FormatFloat(3, v );
+        tab[i/colCount][j*2+1] = olxstr::FormatFloat(3, v );
       }
     }
     TStrList Output;
@@ -2159,22 +2159,22 @@ void TMainForm::macDir(TStrObjList &Cmds, const TParamList &Options, TMacroError
   TFileListItem::SortListByName(fl);
 
   for( int i=0; i < fl.Count(); i++ )  {
-    tab.Row(i)->String(0) = fl[i].GetName();
+    tab[i][0] = fl[i].GetName();
     if( (fl[i].GetAttributes() & sefDir) != 0 )
-      tab.Row(i)->String(1) = "Folder";
+      tab[i][1] = "Folder";
     else
-      tab.Row(i)->String(1) = fl[i].GetSize();
-    tab.Row(i)->String(2) = TETime::FormatDateTime("yyyy.MM.dd hh:mm:ss", fl[i].GetModificationTime());
+      tab[i][1] = fl[i].GetSize();
+    tab[i][2] = TETime::FormatDateTime("yyyy.MM.dd hh:mm:ss", fl[i].GetModificationTime());
     if( (fl[i].GetAttributes() & sefReadOnly) != 0 )
-      tab.Row(i)->String(3) << 'r';
+      tab[i][3] << 'r';
     if( (fl[i].GetAttributes() & sefWriteOnly) != 0 )
-      tab.Row(i)->String(3) << 'w';
+      tab[i][3] << 'w';
     if( (fl[i].GetAttributes() & sefHidden) != 0 )
-      tab.Row(i)->String(3) << 'h';
+      tab[i][3] << 'h';
     if( (fl[i].GetAttributes() & sefSystem) != 0 )
-      tab.Row(i)->String(3) << 's';
+      tab[i][3] << 's';
     if( (fl[i].GetAttributes() & sefExecute) != 0 )
-      tab.Row(i)->String(3) << 'e';
+      tab[i][3] << 'e';
   }
 
   tab.CreateTXTList(Output, "Directory list", true, true, ' ');
@@ -6226,7 +6226,7 @@ void TMainForm::macSGInfo(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   TTTable<TStrList> tab( SGMatrices.Count(), 2 );
 
   for( int i=0; i < SGMatrices.Count(); i++ )
-    tab.Row(i)->String(0) = TSymmParser::MatrixToSymm( SGMatrices[i] );
+    tab[i][0] = TSymmParser::MatrixToSymm( SGMatrices[i] );
 
   for( int i=0; i < TSymmLib::GetInstance()->SymmElementCount(); i++ )  {
     TSymmElement& se = TSymmLib::GetInstance()->GetSymmElement(i);
@@ -6234,8 +6234,8 @@ void TMainForm::macSGInfo(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     if( TSpaceGroup::ContainsElement( SGMatrices, &se ) )  {
       for( int j=0; j < SGMatrices.Count(); j++ )  {
         if( SGMatrices[j].GetTag() != 0 )  {
-          if( tab.Row(j)->String(1).Length() )  tab.Row(j)->String(1) << ", ";
-          tab.Row(j)->String(1) << TSymmLib::GetInstance()->GetSymmElement(i).GetName();
+          if( !tab[j][1].IsEmpty() )  tab[j][1] << ", ";
+          tab[j][1] << TSymmLib::GetInstance()->GetSymmElement(i).GetName();
         }
       }
     }
@@ -7223,23 +7223,23 @@ void TMainForm::macTls(TStrObjList &Cmds, const TParamList &Options, TMacroError
     if( (i+1) < satoms.Count() )
       ttitle << ", ";
   }
-  tab.Row(0)->String(0) = "T";
+  tab[0][0] = "T";
   for(int i=0; i < 3; i++ )  {
-    tab.Row(1)->String(i) = olxstr::FormatFloat( -3, tls.GetT()[i][0] );
-    tab.Row(2)->String(i) = olxstr::FormatFloat( -3, tls.GetT()[i][1] );
-    tab.Row(3)->String(i) = olxstr::FormatFloat( -3, tls.GetT()[i][2] );
+    tab[1][i] = olxstr::FormatFloat( -3, tls.GetT()[i][0] );
+    tab[2][i] = olxstr::FormatFloat( -3, tls.GetT()[i][1] );
+    tab[3][i] = olxstr::FormatFloat( -3, tls.GetT()[i][2] );
   }
-  tab.Row(4)->String(0) = "L";
+  tab[4][0] = "L";
   for(int i=0; i < 3; i++ )  {
-    tab.Row(5)->String(i) = olxstr::FormatFloat( -3, tls.GetL()[i][0] );
-    tab.Row(6)->String(i) = olxstr::FormatFloat( -3, tls.GetL()[i][1] );
-    tab.Row(7)->String(i) = olxstr::FormatFloat( -3, tls.GetL()[i][2] );
+    tab[5][i] = olxstr::FormatFloat( -3, tls.GetL()[i][0] );
+    tab[6][i] = olxstr::FormatFloat( -3, tls.GetL()[i][1] );
+    tab[7][i] = olxstr::FormatFloat( -3, tls.GetL()[i][2] );
   }
-  tab.Row(8)->String(0) = "S";
+  tab[8][0] = "S";
   for(int i=0; i < 3; i++ )  {
-    tab.Row(9)->String(i) = olxstr::FormatFloat( -3, tls.GetS()[i][0] );
-    tab.Row(10)->String(i) = olxstr::FormatFloat( -3, tls.GetS()[i][1] );
-    tab.Row(11)->String(i) = olxstr::FormatFloat( -3, tls.GetS()[i][2] );
+    tab[9][i] = olxstr::FormatFloat( -3, tls.GetS()[i][0] );
+    tab[10][i] = olxstr::FormatFloat( -3, tls.GetS()[i][1] );
+    tab[11][i] = olxstr::FormatFloat( -3, tls.GetS()[i][2] );
   }
   TStrList output;
   tab.CreateTXTList(output, ttitle, false, false, ' ');
@@ -7691,10 +7691,10 @@ void TMainForm::macLstFS(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   tab.ColName(2) = "Timestamp";
   tab.ColName(3) = "Persistent";
   for(int i=0; i < TFileHandlerManager::Count(); i++ )  {
-    tab.Row(i)->String(0) = TFileHandlerManager::GetBlockName(i);
-    tab.Row(i)->String(1) = TFileHandlerManager::GetBlockSize(i);
-    tab.Row(i)->String(2) = TFileHandlerManager::GetBlockDateTime(i);
-    tab.Row(i)->String(3) = TFileHandlerManager::GetPersistenceId(i);
+    tab[i][0] = TFileHandlerManager::GetBlockName(i);
+    tab[i][1] = TFileHandlerManager::GetBlockSize(i);
+    tab[i][2] = TFileHandlerManager::GetBlockDateTime(i);
+    tab[i][3] = TFileHandlerManager::GetPersistenceId(i);
     tc += TFileHandlerManager::GetBlockSize(i);
   }
   tc /= (1024*1024);

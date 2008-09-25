@@ -92,23 +92,23 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
   laueTab.ColName(2) = "Count";
   laueTab.ColName(3) = "Flag";
   for( int i=0; i < LaueClassStats.Count(); i++ )  {
-    laueTab.Row(i)->String(0) = LaueClassStats[i].GetSpaceGroup().GetBareName();
+    laueTab[i][0] = LaueClassStats[i].GetSpaceGroup().GetBareName();
     if( LaueClassStats[i].GetCount() != 0 )  {
       double dv = LaueClassStats[i].GetSummI()/LaueClassStats[i].GetCount();
-      laueTab.Row(i)->String(1) = olxstr::FormatFloat(2, dv );
-      laueTab.Row(i)->String(1) << '(' << olxstr::FormatFloat(2, LaueClassStats[i].GetSummSI()/LaueClassStats[i].GetCount() ) << ')';
+      laueTab[i][1] = olxstr::FormatFloat(2, dv );
+      laueTab[i][1] << '(' << olxstr::FormatFloat(2, LaueClassStats[i].GetSummSI()/LaueClassStats[i].GetCount() ) << ')';
       if( dv < averageLaueHit/2 )  {
-        laueTab.Row(i)->String(3) = '+';
+        laueTab[i][3] = '+';
         CalculatedLaueClasses.AddACopy( &LaueClassStats[i].GetSpaceGroup() );
       }
       else
-        laueTab.Row(i)->String(3) = '-';
+        laueTab[i][3] = '-';
     }
     else  {
-      laueTab.Row(i)->String(1) = '-';
+      laueTab[i][1] = '-';
       CalculatedLaueClasses.AddACopy( &LaueClassStats[i].GetSpaceGroup() );
     }
-    laueTab.Row(i)->String(2) = LaueClassStats[i].GetCount();
+    laueTab[i][2] = LaueClassStats[i].GetCount();
   }
   XApp.GetLog() << ( EmptyString );
   laueTab.CreateTXTList(Output, "1. Laue symmetry test", true, true, ' ');
@@ -159,24 +159,24 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
   saStat.ColName(2) = "Count";
   saStat.ColName(3) = "Flag";
   for( int i=0; i < SAHits.Count(); i++ )  {
-    saStat.Row(i)->String(0) = SAHits[i].GetSymmElement().GetName();
+    saStat[i][0] = SAHits[i].GetSymmElement().GetName();
     if( SAHits[i].GetCount() != 0 )  {
       double v = SAHits[i].GetSummI()/SAHits[i].GetCount();
-      saStat.Row(i)->String(1) << olxstr::FormatFloat(2, v) << '('
+      saStat[i][1] << olxstr::FormatFloat(2, v) << '('
                                << olxstr::FormatFloat(2, SAHits[i].GetSummSI()/SAHits[i].GetCount()) << ')';
       if( SAHits[i].IsPresent() )  {
-        saStat.Row(i)->String(3) = '+';
+        saStat[i][3] = '+';
         if( SAHits[i].IsExcluded() )
-          saStat.Row(i)->String(3) << '-';
+          saStat[i][3] << '-';
         else
           PresentElements.Add( &SAHits[i].GetSymmElement() );
       }
       else
-        saStat.Row(i)->String(3) = '-';
+        saStat[i][3] = '-';
     }
     else
-      saStat.Row(i)->String(3) = '-';
-    saStat.Row(i)->String(2) = SAHits[i].GetCount();
+      saStat[i][3] = '-';
+    saStat[i][2] = SAHits[i].GetCount();
   }
   Output.Clear();
   XApp.GetLog() << ( EmptyString );
@@ -208,20 +208,20 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
     ChosenLats.Add( SortedLatticeHits.GetObject(0) );
 
   for( int i=0; i < LatticeHits.Count(); i++ )  {
-    latTab.Row(i)->String(0) = LatticeHits[i].GetObject()->GetSymbol();
+    latTab[i][0] = LatticeHits[i].GetObject()->GetSymbol();
     if( LatticeHits[i].GetStrongCount() != 0 )
-      latTab.Row(i)->String(1) << olxstr::FormatFloat(2, LatticeHits[i].GetSummStrongI()/LatticeHits[i].GetStrongCount() )
+      latTab[i][1] << olxstr::FormatFloat(2, LatticeHits[i].GetSummStrongI()/LatticeHits[i].GetStrongCount() )
                                << '(' << olxstr::FormatFloat(2, LatticeHits[i].GetSummStrongSI()/LatticeHits[i].GetStrongCount() )  << ')';
     else
-      latTab.Row(i)->String(1) = '-';
-    latTab.Row(i)->String(2) = LatticeHits[i].GetStrongCount();
+      latTab[i][1] = '-';
+    latTab[i][2] = LatticeHits[i].GetStrongCount();
     if( LatticeHits[i].GetWeakCount() != 0 )
-      latTab.Row(i)->String(3) << olxstr::FormatFloat(2, LatticeHits[i].GetSummWeakI()/LatticeHits[i].GetWeakCount() )
+      latTab[i][3] << olxstr::FormatFloat(2, LatticeHits[i].GetSummWeakI()/LatticeHits[i].GetWeakCount() )
                                << '(' << olxstr::FormatFloat(2, LatticeHits[i].GetSummWeakSI()/LatticeHits[i].GetWeakCount() )  << ')';
 
     else
-      latTab.Row(i)->String(3) = '-';
-    latTab.Row(i)->String(4) = LatticeHits[i].GetWeakCount();
+      latTab[i][3] = '-';
+    latTab[i][4] = LatticeHits[i].GetWeakCount();
   }
   Output.Clear();
   XApp.GetLog() << ( EmptyString );
@@ -304,24 +304,24 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
   sgTab.ColName(6) = "SA match";
   int maxElementFound = 0;
   for( int i=0; i < sortedSATestResults.Count(); i++ )  {
-    sgTab.Row(i)->String(0) = sortedSATestResults.GetObject(i)->GetA()->GetObject()->GetName();
+    sgTab[i][0] = sortedSATestResults.GetObject(i)->GetA()->GetObject()->GetName();
     if( sortedSATestResults.GetObject(i)->GetA()->GetStrongCount() != 0 )  {
-      sgTab.Row(i)->String(1) = olxstr::FormatFloat(2,
+      sgTab[i][1] = olxstr::FormatFloat(2,
               sortedSATestResults.GetObject(i)->GetA()->GetSummStrongI()/sortedSATestResults.GetObject(i)->GetA()->GetStrongCount() );
     }
     else  {
-      sgTab.Row(i)->String(1) = '-';
+      sgTab[i][1] = '-';
     }
-    sgTab.Row(i)->String(2) = sortedSATestResults.GetObject(i)->GetA()->GetStrongCount();
+    sgTab[i][2] = sortedSATestResults.GetObject(i)->GetA()->GetStrongCount();
     if( sortedSATestResults.GetObject(i)->GetA()->GetWeakCount() != 0 )  {
-      sgTab.Row(i)->String(3) = olxstr::FormatFloat(2,
+      sgTab[i][3] = olxstr::FormatFloat(2,
               sortedSATestResults.GetObject(i)->GetA()->GetSummWeakI()/sortedSATestResults.GetObject(i)->GetA()->GetWeakCount() );
     }
     else  {
-      sgTab.Row(i)->String(3) = '-';
+      sgTab[i][3] = '-';
     }
-    sgTab.Row(i)->String(4) = sortedSATestResults.GetObject(i)->GetA()->GetWeakCount();
-    sgTab.Row(i)->String(5) = sortedSATestResults.GetObject(i)->GetA()->GetObject()->GetLaueClass().GetBareName();
+    sgTab[i][4] = sortedSATestResults.GetObject(i)->GetA()->GetWeakCount();
+    sgTab[i][5] = sortedSATestResults.GetObject(i)->GetA()->GetObject()->GetLaueClass().GetBareName();
     if( PresentElements.Count() )  {
       int ElementFound = 0;
       smatd_list sgMl;
@@ -347,7 +347,7 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
         else
           if( TSpaceGroup::ContainsElement( sgMl, PresentElements[j] ) )  ElementFound++;
       }
-      sgTab.Row(i)->String(6) << olxstr::FormatFloat(0, 100*ElementFound/PresentElements.Count()) << '%';
+      sgTab[i][6] << olxstr::FormatFloat(0, 100*ElementFound/PresentElements.Count()) << '%';
       sortedSATestResults.GetObject(i)->B() = ElementFound;
       if( ElementFound > maxElementFound )
         maxElementFound = ElementFound;
@@ -426,11 +426,11 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
       tmp = "<a href=\"reset -s=";
       tmp << FoundSpaceGroups[i]->GetName() << "\">" << FoundSpaceGroups[i]->GetName() << "</a>";
       if( FoundSpaceGroups[i]->IsCentrosymmetric() )  {
-        sgOutput.Row(cscount)->String(0) = tmp;
+        sgOutput[cscount][0] = tmp;
         cscount++;
       }
       else  {
-        sgOutput.Row(ncscount)->String(1) = tmp;
+        sgOutput[ncscount][1] = tmp;
         ncscount++;
       }
       if( rv != NULL )
@@ -442,8 +442,8 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
   else  {
     XApp.GetLog().Error( "Could not find any suitable space group");
     TTTable<TStrList> sgOutput( 1, 2 );
-    sgOutput.Row(0)->String(0) = "n/a";
-    sgOutput.Row(0)->String(1) = "n/a";
+    sgOutput[0][0] = "n/a";
+    sgOutput[0][1] = "n/a";
     Output.Clear();
     sgOutput.CreateHTMLList(Output, EmptyString, false, false, false);
   }

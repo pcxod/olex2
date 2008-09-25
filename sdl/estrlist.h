@@ -80,11 +80,13 @@ public:
      Clear();
   }
   void SetCount(int nc)  {
-    if( nc < Count() )
-      ;//  Strings.Shrink(nc);
+    if( nc < Strings.Count() )  {
+      for( int i=nc; i < Strings.Count(); i++ )
+        delete Strings[i];
+      Strings.SetCount(nc);
+    }
     else  {
-      int oldCount = Strings.Count();
-      for( int i=0; i < nc-oldCount; i++ )
+      while( Strings.Count() < nc )
         Add(EmptyString);
     }
   }
