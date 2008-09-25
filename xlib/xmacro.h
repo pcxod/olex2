@@ -59,24 +59,7 @@ public:
     int fc=0;
     for( int i=0; i < Cmds.Count(); i++ )  {
       if( Cmds[i].IsNumber() )  {
-        *va_arg(argptr, nt*) = Cmds[i].ToDouble();
-        Cmds.Delete(i);
-        fc++;
-        if( fc >= cnt )  break;
-        i--;
-      }
-    }
-    va_end(argptr);
-    return fc;
-  }
-  template <> static int ParseNumbers<int>(TStrObjList& Cmds, int cnt, ...)  {
-    va_list argptr;
-    va_start(argptr, cnt);
-    if( cnt <= 0 )  {  va_end(argptr);  return 0;  }
-    int fc=0;
-    for( int i=0; i < Cmds.Count(); i++ )  {
-      if( Cmds[i].IsNumber() )  {
-        *va_arg(argptr, int*) = Cmds[i].ToInt();
+        *va_arg(argptr, nt*) = (nt)Cmds[i].ToDouble();
         Cmds.Delete(i);
         fc++;
         if( fc >= cnt )  break;

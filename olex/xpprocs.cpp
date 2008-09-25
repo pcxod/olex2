@@ -1492,7 +1492,7 @@ void TMainForm::macBang(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   TTTable<TStrList> Table;
   olxstr Tmp = Cmds.Text(' '), clipbrd;
   TXAtomPList Atoms;
-  if( !FindXAtoms(Cmds, Atoms, false, true) ) {
+  if( !FindXAtoms(Cmds, Atoms, true, true) ) {
     Error.ProcessingError(__OlxSrcInfo, "could not find any atoms" );
     return;
   }
@@ -1502,7 +1502,7 @@ void TMainForm::macBang(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     Output.Clear();
     Table.CreateTXTList(Output, EmptyString, true, true, ' ');
     FGlConsole->PrintText( Output, NULL, false );
-    clipbrd << Output.Text('\n');
+    clipbrd << Output.Text(NewLineSequence);
   }
   if( wxTheClipboard->Open() )  {
     if (wxTheClipboard->IsSupported(wxDF_TEXT) )
