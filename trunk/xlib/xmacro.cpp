@@ -70,7 +70,7 @@ void XLibMacros::Export(TLibrary& lib)  {
 "Re-initialises the connectivity list" );
 //_________________________________________________________________________________________________________________________
   xlib_InitMacro(EXYZ, "", fpAny|psCheckFileTypeIns,
-"Shares a site between two or more atoms" );
+"Shares adds a new element to the give site" );
 //_________________________________________________________________________________________________________________________
   xlib_InitMacro(EADP, "", fpAny|psCheckFileTypeIns,
 "Forces EADP/Uiso of provided atoms to be constrained the same" );
@@ -122,17 +122,22 @@ void XLibMacros::macFuse(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 }
 //..............................................................................
 void XLibMacros::macEXYZ(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
+  return;
   TSAtomPList atoms;
   TXApp& xapp = TXApp::GetInstance();
   xapp.FindSAtoms(Cmds.Text(' '), atoms, false, false);
-  if( atoms.Count() < 2 )  {
-    E.ProcessingError(__OlxSrcInfo, "not enough atoms provided" );
+  if( atoms.Count() != 1 )  {
+    E.ProcessingError(__OlxSrcInfo, "please provide one atom exactly" );
     return;
   }
-  TSimpleRestraint& sr = xapp.XFile().GetAsymmUnit().SharedSites().AddNew();
-  for( int i=0; i < atoms.Count(); i++ )
-    sr.AddAtom(atoms[i]->CAtom(), NULL);
-  xapp.XFile().GetAsymmUnit().SharedSites().ValidateRestraint(sr);
+  if( atoms[0]->CAtom().GetExyzGroup() != NULL )  {
+  
+  }
+  else  {
+    TExyzGroup& sr = xapp.XFile().GetAsymmUnit().SharedSites().New();
+    for( int i=0; i < atoms.Count(); i++ )
+      sr.Add(atoms[i]->CAtom());
+  }
 }
 //..............................................................................
 void XLibMacros::macEADP(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {

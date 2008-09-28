@@ -101,10 +101,6 @@ bool TXGlLabels::Orient(TGlPrimitive *P)  {
         if( Tmp.Length() )  Tmp << ", ";
         Tmp << XA->Atom().CAtom().GetAfix();
       }
-      if( XA->Atom().CAtom().GetHfix() != 0 )  {
-        if( Tmp.Length() )  Tmp << ", ";
-        Tmp << XA->Atom().CAtom().GetHfix();
-      }
     }
     if( FMode & lmOVar )  {
       if( XA->Atom().CAtom().GetOccpVar() != 0 && XA->Atom().CAtom().GetOccpVar() != 10 )  {

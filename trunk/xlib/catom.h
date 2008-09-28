@@ -18,6 +18,8 @@ BeginXlibNamespace()
 class TEllipsoid;
 class TAfixGroup;
 class TAfixGroups;
+class TExyzGroup;
+class TExyzGroups;
 
 class TCAtom: public ACollectionItem  {
 private:
@@ -26,15 +28,14 @@ private:
   olxstr FLabel;    // atom's label
   int     Id, Tag;       // c_atoms id; this is also used to identify if TSAtoms are the same
   int     LoaderId; // id of the atom in the asymmertic unit of the loader
-  int     ResiId, SameId, SharedSiteId, EllpId;   // residue and SADI ID
+  int     ResiId, SameId, EllpId;   // residue and SADI ID
   double  Occp;     // occupancy and its variable
   double  Uiso, QPeak;    // isotropic thermal parameter; use it when Ellipsoid = NULL
   int     FragmentId;   // this is used in asymmetric unit sort and initialised in TLatice::InitBody()
   vec3d Center, Esd;  // fractional coordinates and esds
   evecd FEllpsE;   // errors for the values six values from INS file
   evecd FFixedValues;  // at least five values (x,y,z, Occ, Uiso), may be 10, (x,y,z, Occ, Uij)
-  short Part, Degeneracy, 
-        Hfix; // hfix is only an of the "interface" use; HFIX istructions are parsed
+  short Part, Degeneracy;
   bool Deleted, 
     Saved;  // is true the atoms already saved (to work aroung SAME, AFIX)
   bool CanBeGrown,
@@ -42,6 +43,7 @@ private:
   TPtrList<TCAtom>* FAttachedAtoms, *FAttachedAtomsI;
   /* Afix group is a fitted group, Hfix group the immediate dependent group */
   TAfixGroup* DependentAfixGroup, *DependentHfixGroup, *ParentAfixGroup;
+  TExyzGroup* ExyzGroup;
 public:
   TCAtom(TAsymmUnit *Parent);
   virtual ~TCAtom();
@@ -98,8 +100,7 @@ public:
   DefPropP(int, SameId)
   DefPropP(int, EllpId)
   DefPropP(int, FragmentId)
-  DefPropP(int, SharedSiteId)
-  inline bool IsSiteShared() const {  return SharedSiteId != -1;  }
+  DefPropP(TExyzGroup*, ExyzGroup)
 //  short   Frag;    // fragment index
   DefPropP(short, Degeneracy)
   DefPropP(short, Part)
@@ -107,7 +108,6 @@ public:
   DefPropP(TAfixGroup*, ParentAfixGroup)
   DefPropP(TAfixGroup*, DependentAfixGroup)
   DefPropP(TAfixGroup*, DependentHfixGroup)
-  DefPropP(short, Hfix)
   DefPropP(double, Occp)
   DefPropP(double, Uiso)
   DefPropP(double, QPeak)
@@ -199,7 +199,7 @@ public:
         pivot->SetDependentHfixGroup(this);
     }
   }
-  TAfixGroup(TAfixGroups& parent, TAsymmUnit& tau, const TAfixGroup& ag ) : Parent(parent) {  
+  TAfixGroup(TAfixGroups& parent, TAsymmUnit& tau, const TAfixGroup& ag) : Parent(parent) {  
     Assign(tau, ag);  
   }
   ~TAfixGroup()  {  // note that Clear just removes the item from the parent list, calling this  
@@ -279,7 +279,7 @@ public:
     for( int j=i; j < Groups.Count(); j++ )
       Groups[j].SetId(j);
   }
-  void Assign( TAsymmUnit& tau, const TAfixGroups& ags )  {
+  void Assign( TAsymmUnit& tau, const TAfixGroups& ags)  {
     Clear();
     for( int i=0; i < ags.Count(); i++ )  {
       if( !ags[i].IsEmpty() )  {
@@ -289,6 +289,58 @@ public:
     }
   }
 };
+//....................................................................................
+class TExyzGroup {
+  int Id;
+  TCAtomPList Atoms;
+  TExyzGroups& Parent;
+public:
+  TExyzGroup(TExyzGroups& parent, int id) : Parent(parent), Id(id) {  }
+  ~TExyzGroup()  { 
+    for( int i=0; i < Atoms.Count(); i++ )
+      Atoms[i]->SetExyzGroup(NULL);
+  }
+  DefPropP(int, Id)
+  TCAtom& Add(TCAtom& ca)  {
+    ca.SetExyzGroup(this);
+    return ca;
+  }
+  TCAtom& operator [] (int i) {  return *Atoms[i];  }
+  const TCAtom& operator [] (int i) const {  return *Atoms[i];  }
+  int Count() const {  return Atoms.Count();  }
+  bool IsEmpty() const {
+    int ac = 0;
+    for( int i=0; i < Atoms.Count(); i++ )
+      if( !Atoms[i]->IsDeleted() ) ac++;
+    return (ac > 1);
+  }
+  void Assign(TAsymmUnit& tau, const TExyzGroup& ags);
+  void Clear();
+};
+//....................................................................................
+class TExyzGroups {
+  TTypeList<TExyzGroup> Groups;
+public:
+  TExyzGroup& New() {  return Groups.Add( TExyzGroup(*this, Groups.Count()) );  }
+  void Clear() {  Groups.Clear();  }
+  int Count() const {  return Groups.Count();  }
+  TExyzGroup& operator [] (int i) {  return Groups[i];  }
+  const TExyzGroup& operator [] (int i) const {  return Groups[i];  }
+  void Delete(int i)  {
+    Groups.Delete(i);
+    for( int j=i; j < Groups.Count(); j++ )
+      Groups[j].SetId(j);
+  }
+
+  void Assign(TAsymmUnit& tau, const TExyzGroups& ags)  {
+    Clear();
+    for( int i=0; i < ags.Count(); i++ )  {
+      if( ags[i].IsEmpty() )  continue;
+      Groups.Add( new TExyzGroup(*this, Groups.Count()) ).Assign(tau, ags[i]);
+    }
+  }
+};
+//....................................................................................
 typedef TTypeList<TGroupCAtom> TCAtomGroup;
 //..............................................................................
 

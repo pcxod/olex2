@@ -47,9 +47,10 @@ void TNetwork::SortNodes()  {
 }
 //..............................................................................
 void TNetwork::TDisassembleTaskRemoveSymmEq::Run(long index)  {
-  if( Atoms[index]->CAtom().IsSiteShared() )  return;
+  if( Atoms[index]->CAtom().GetExyzGroup() != NULL )  return;
   if( (Atoms[index]->GetTag() & 0x0002) != 0 )  return;
-  for( int i=index+1; i < Atoms.Count(); i++ )  {
+  int ac = Atoms.Count();
+  for( int i=index+1; i < ac; i++ )  {
     if( fabs(Distances[0][index] - Distances[0][i]) > 0.01 )  return;
     if( Atoms[index]->crd().QDistanceTo( Atoms[i]->crd() ) < 0.0001 )  {
       Atoms[index]->AddMatrices(Atoms[i]);
@@ -92,11 +93,13 @@ void TNetwork::Disassemble(TSAtomPList& Atoms, TNetPList& Frags, TSBondPList* In
   if( Atoms.Count() < 2 )  return;
   TNetwork *Net;
   //TSAtom *A;
+  int ac;
   double** Distances = new double* [4];
   double  Delta = GetLattice().GetDelta();
   Atoms.QuickSorter.SortSF(Atoms, AtomsSortByDistance);
   Distances[0] = new double[ Atoms.Count() ];  // distsnaces from {0,0,0} to an atom
-  for( int i = 0; i < Atoms.Count(); i++ )  {
+  ac = Atoms.Count();
+  for( int i = 0; i < ac; i++ )  {
     Distances[0][i] = Atoms[i]->crd().Length();
     Atoms[i]->SetTag(1);
     Atoms[i]->SetNetId(-1);
@@ -105,7 +108,8 @@ void TNetwork::Disassemble(TSAtomPList& Atoms, TNetPList& Frags, TSBondPList* In
   TDisassembleTaskRemoveSymmEq searchEqTask( Atoms, Distances);
   // profiling has shown it gives no benifit and makes the process slow
   //TListIteratorManager<TDisassembleTaskRemoveSymmEq> searchEq(searchEqTask, Atoms.Count(), tQuadraticTask, 100);
-  for( int i=0; i < Atoms.Count(); i++ )
+  ac = Atoms.Count();
+  for( int i=0; i < ac; i++ )
     searchEqTask.Run(i);
   // removing symmetrical equivalents from the Atoms list (passes as param)
   //............................................
@@ -123,10 +127,11 @@ void TNetwork::Disassemble(TSAtomPList& Atoms, TNetPList& Frags, TSBondPList* In
   if( Atoms.IsEmpty() )  return;
   //............................................
 
-  Distances[1] = new double[ Atoms.Count() ];
-  Distances[2] = new double[ Atoms.Count() ];
-  Distances[3] = new double[ Atoms.Count() ];
-  for( int i = 0; i < Atoms.Count() ; i++ )  {  // recalculate distances and remove some function calls
+  ac = Atoms.Count();
+  Distances[1] = new double[ ac ];
+  Distances[2] = new double[ ac ];
+  Distances[3] = new double[ ac ];
+  for( int i = 0; i < ac; i++ )  {  // recalculate distances and remove some function calls
     TSAtom* A = Atoms[i];
     Distances[0][i] = A->crd().Length();
     Distances[1][i] = A->crd()[0];
@@ -141,7 +146,7 @@ void TNetwork::Disassemble(TSAtomPList& Atoms, TNetPList& Frags, TSBondPList* In
   // creating bonds
   TBasicApp::GetLog().Info( olxstr("Starting bond creation") );
   st = TETime::msNow();
-  for( int i=0; i < Atoms.Count(); i++ )  {
+  for( int i=0; i < ac; i++ )  {
     TSAtom* A1 = Atoms[i];
     if( A1->GetTag() )  {
       Net = new TNetwork(&GetLattice(), this);

@@ -140,7 +140,17 @@ bool TGlXApp::OnInit()  {
 
   MainForm->GlCanvas(new TGlCanvas(MainForm, wxID_ANY, wTop, wxDefaultSize, 0, wxT("GL_CANVAS") ) );
   // cratea an instance of the XApplication
-  olxstr BaseDir = argv[0], Tmp;
+  olxstr BaseDir(argv[0]), Tmp;
+  // 2008.09.29
+  // see if the system variable OLEX2_DIR is define to override the default basedir
+  wxString OlxPath; // we cannot use any TEFile functions, working eith c_str, as the TEGC is not initialised yet...
+  if( wxGetEnv( wxT("OLEX2_DIR"), &OlxPath) )  {
+    if( wxDirExists(OlxPath) && wxIsAbsolutePath(OlxPath))  {
+      olxstr olx_path(OlxPath.c_str() );
+      BaseDir = TEFile::AddTrailingBackslashI(olx_path) << "dummy.txt";
+    }
+  }
+  // end of the basedir override
   if( !TEFile::IsAbsolutePath(BaseDir) )
     BaseDir = TEFile::AddTrailingBackslash( TEFile::CurrentDir() );
   try  {
@@ -165,8 +175,8 @@ bool TGlXApp::OnInit()  {
     Tmp << argv[i] <<  ' ';
   TParamList::StrtokParams(Tmp, ' ', XApp->Arguments);
   for( int i=0; i < XApp->Arguments.Count(); i++ )  {
-    if( XApp->Arguments.String(i).FirstIndexOf('=') != -1 )  {
-      XApp->ParamList.FromString(XApp->Arguments.String(i), '=');
+    if( XApp->Arguments[i].FirstIndexOf('=') != -1 )  {
+      XApp->ParamList.FromString(XApp->Arguments[i], '=');
       XApp->Arguments.Delete(i);
       i--;
     }
