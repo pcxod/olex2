@@ -595,6 +595,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\gxlib\gxapp.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\gxlib\gxbase.h"
 				>
 			</File>
@@ -604,10 +608,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\gxlib\wxglscene.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\gxlib\xapp.h"
 				>
 			</File>
 			<File

@@ -19,7 +19,6 @@ const short TCAtom::UisoFixedValuesOffset = 4;
 // TCAtom function bodies
 //----------------------------------------------------------------------------//
 TCAtom::TCAtom(TAsymmUnit *Parent)  {
-  Hfix = 0;
   Part   = 0;
   Occp   = 1;
   QPeak  = -1;
@@ -30,7 +29,7 @@ TCAtom::TCAtom(TAsymmUnit *Parent)  {
   EllpId = -1;
   Uiso = caDefIso;
   LoaderId = -1;
-  SharedSiteId = FragmentId = -1;
+  FragmentId = -1;
   CanBeGrown = Deleted = false;
   FAttachedAtoms = NULL;
   FAttachedAtomsI = NULL;
@@ -40,6 +39,7 @@ TCAtom::TCAtom(TAsymmUnit *Parent)  {
   Saved = false;
   Tag = -1;
   DependentAfixGroup = DependentHfixGroup = ParentAfixGroup = NULL;
+  ExyzGroup = NULL;
 }
 //..............................................................................
 TCAtom::~TCAtom()  {
@@ -97,13 +97,13 @@ void TCAtom::AtomInfo(TBasicAtomInfo* A)  {
 //..............................................................................
 void TCAtom::Assign(const TCAtom& S)  {
   DependentAfixGroup = DependentHfixGroup = ParentAfixGroup = NULL;  // managed by the group
+  ExyzGroup = NULL;  // also managed by the group
   SetPart( S.GetPart() );
   SetOccp( S.GetOccp() );
   SetOccpVar( S.GetOccpVar() );
   SetQPeak( S.GetQPeak() );
   SetResiId( S.GetResiId() );
   SetSameId( S.GetSameId() );
-  SetSharedSiteId( S.GetSharedSiteId() );
   EllpId = S.EllpId;
   SetUiso( S.GetUiso() );
   SetUisoVar( S.GetUisoVar() );
@@ -134,7 +134,6 @@ void TCAtom::Assign(const TCAtom& S)  {
     if( FAttachedAtoms )  {  delete FAttachedAtoms;  FAttachedAtoms = NULL;  }
   }
   */
-  Hfix = S.GetHfix();
   FFixedValues = S.GetFixedValues();
 }
 //..............................................................................
@@ -266,5 +265,18 @@ void TAfixGroup::Assign(TAsymmUnit& tau, const TAfixGroup& ag)  {
     if( Dependent.Last() == NULL )
       throw TFunctionFailedException(__OlxSourceInfo, "asymmetric units mismatch");
     Dependent.Last()->SetParentAfixGroup(this);
+  }
+}
+//..............................................................................
+//..............................................................................
+//..............................................................................
+void TExyzGroup::Clear()  {  Parent.Delete(Id);  }
+//..............................................................................
+void TExyzGroup::Assign(TAsymmUnit& tau, const TExyzGroup& ag)  {
+  for( int i=0; i < ag.Atoms.Count(); i++ )  {
+    Atoms.Add( tau.FindCAtomByLoaderId( ag.Atoms[i]->GetLoaderId()) );
+    if( Atoms.Last() == NULL )
+      throw TFunctionFailedException(__OlxSourceInfo, "asymmetric units mismatch");
+    Atoms.Last()->SetExyzGroup(this);
   }
 }

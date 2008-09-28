@@ -147,11 +147,6 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
         Ins[j] = EmptyString;
     }
   }
-  for( int i=0; i < cx.au.SharedSites().Count(); i++ )  {
-    TSimpleRestraint& sr = cx.au.SharedSites()[i];
-    for( int j=0; j < sr.AtomCount(); j++ ) 
-      sr.GetAtom(i).GetAtom()->SetSharedSiteId(i);
-  }
 
   Ins.Pack();
   ParseRestraints(Ins, NULL);
@@ -238,19 +233,6 @@ void TIns::_FinishParsing()  {
     TInsList* Param = new TInsList(Ins[i], ' ');
     Ins.Object(i) = Param;
     Ins[i] = Param->String(0);
-    // special treatment of HFIX instructions
-    if( !Param->String(0).Comparei("HFIX") && Param->Count() > 2 ) {
-      int iv = Param->String(1).ToInt();
-      if( iv > 0 )  {
-        for( int j=2; j<Param->Count(); j++ )  {
-          TCAtom* atom = GetAsymmUnit().FindCAtom(Param->String(j));
-          if( atom != NULL )
-            atom->SetHfix(iv);
-        }
-      }
-      continue;
-    }
-    //end
     Param->Delete(0);
     for( int j=0; j < Param->Count(); j++ )
       Param->Object(j) = GetAsymmUnit().FindCAtom(Param->String(j));
@@ -522,15 +504,6 @@ bool TIns::AddIns(const TStrList& toks, bool CheckUniq)  {
         }
       }
     }
-  }
-  //special treatment of the addins HFIX num atoms instruction
-  if( toks[0].Comparei("HFIX") == 0 && toks.Count() > 2 )  {
-    int hfix = toks[1].ToInt();
-    for( int i=2; i < toks.Count(); i++ )  {
-      TCAtom* ca = GetAsymmUnit().FindCAtom(toks[i]);
-      if( ca != NULL )  ca->SetHfix(hfix);
-    }
-    return true;
   }
   TInsList& Params = *(new TInsList(toks.Count()-1));
   for( int i=1; i < toks.Count(); i++ )  {
@@ -950,6 +923,8 @@ void TIns::UpdateAtomsFromStrings(TCAtomPList& CAtoms, const TIntList& index, TS
       CAtoms[i]->GetParentAfixGroup()->Clear();
     if( CAtoms[i]->GetDependentAfixGroup() != NULL )
       CAtoms[i]->GetDependentAfixGroup()->Clear();
+    if( CAtoms[i]->GetExyzGroup() != NULL )
+      CAtoms[i]->GetExyzGroup()->Clear();
   }
   for( int i=0; i < SL.Count(); i++ )  {
     Tmp = olxstr::DeleteSequencesOf<char>(SL[i].UpperCase(), true);
@@ -1003,11 +978,6 @@ void TIns::UpdateAtomsFromStrings(TCAtomPList& CAtoms, const TIntList& index, TS
   }
   _ProcessSame(cx);
   ParseRestraints(Instructions, CAtoms[0]->GetParent());
-  for( int i=0; i < cx.au.SharedSites().Count(); i++ )  {
-    TSimpleRestraint& sr = cx.au.SharedSites()[i];
-    for( int j=0; j < sr.AtomCount(); j++ ) 
-      sr.GetAtom(i).GetAtom()->SetSharedSiteId(i);
-  }
   Instructions.Pack();
 }
 //..............................................................................
@@ -1522,17 +1492,12 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
   }
   // equivalent EXYZ constraint
   for( int i=0; i < au->SharedSites().Count(); i++ )  {
-    TSimpleRestraint& sr = au->SharedSites()[i];
-    sr.Validate();
-    if( !ProcessRestraint(atoms, sr) )  continue;
-    if( sr.AtomCount() < 2 )  continue;
+    TExyzGroup& sr = au->SharedSites()[i];
+    if( sr.IsEmpty() )  continue;
     Tmp = "EXYZ";
-    for( int j=0; j < sr.AtomCount(); j++ )  {
-     Tmp << ' ' << sr.GetAtom(j).GetAtom()->GetLabel();
-     StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), au);
-    }
+    for( int j=0; j < sr.Count(); j++ )
+     Tmp << ' ' << sr[j].GetLabel();
     HypernateIns(Tmp, SL);
-    if( processed != 0 )  processed->Add( &sr );
   }
   // store the rest of eqiv ...
   for( int i=0; i < au->UsedSymmCount(); i++ )
@@ -1569,12 +1534,6 @@ void TIns::SaveHeader(TStrList& SL, int* SfacIndex, int* UnitIndex)  {
   }
   if( UnitIndex != NULL )  *UnitIndex = SL.Count();  
   SL.Add("UNIT ") << Unit;
-  for( int i=0; i < GetAsymmUnit().AtomCount(); i++ )  {
-    TCAtom& ca = GetAsymmUnit().GetAtom(i);
-    if( ca.IsDeleted() )  continue;
-    if( ca.GetHfix() > 0 )
-      SL.Add("HFIX ") << ca.GetHfix() << ' ' << ca.GetLabel();
-  }
   SaveRestraints(SL, NULL, NULL, NULL);
   _SaveRefMethod(SL);
 

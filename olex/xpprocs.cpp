@@ -312,7 +312,7 @@ void TMainForm::funStrcmp(const TStrObjList& Params, TMacroError &E)  {
 //..............................................................................
 void TMainForm::funGetEnv(const TStrObjList& Params, TMacroError &E)  {
   wxString Val;
-  if( !wxGetEnv( uiStr(Params[0]), &Val) )  {
+  if( !wxGetEnv( Params[0].u_str(), &Val) )  {
     E.ProcessingError(__OlxSrcInfo,  "undefined variable: ") << Params[0];
     return;
   }

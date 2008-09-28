@@ -220,7 +220,7 @@ void TUnitCell::TSearchSymmEqTask::Run(long ind)  {
       int iLy = Round(Vec[1]);  Vec[1] -= iLy;
       int iLz = Round(Vec[2]);  Vec[2] -= iLz;
       // skip I
-      if( j == 0 && iLx == 0 && iLy == 0 && iLz == 0 )  {
+      if( (j|iLx|iLy|iLz) == 0 )  {
         if( !Initialise || ind == i )  continue;
         if( Atoms[i]->GetFragmentId() == Atoms[ind]->GetFragmentId() )  continue;
         AU->CellToCartesian(Vec);
@@ -239,7 +239,7 @@ void TUnitCell::TSearchSymmEqTask::Run(long ind)  {
           if( Initialise )  Atoms[ind]->SetDegeneracy( Atoms[ind]->GetDegeneracy() + 1 );
           continue;
         }
-        if( Atoms[i]->GetAtomInfo() != Atoms[ind]->GetAtomInfo() ) continue;
+        if( Atoms[i]->GetAtomInfo() != Atoms[ind]->GetAtomInfo() ) continue;  //keep atoms of different type (EXYZ)
         Report.Add( olxstr(Atoms[ind]->Label(), 10) << '-' << Atoms[i]->GetLabel() );
         Atoms[i]->SetTag(-1);
         break;

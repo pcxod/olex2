@@ -36,8 +36,7 @@ public:
 //----------------------------------------------------------------------------//
 TAsymmUnit::TAsymmUnit(TLattice *L, TAtomsInfo *AI) : 
   rDfix(rltBonds), rAfix(rltBonds), rDsim(rltBonds), rVfix(rltAtoms), rPfix(rltGroup),
-    rRBnd(rltAtoms), rUsim(rltAtoms), rUiso(rltAtoms), rEADP(rltAtoms), rEXYZ(rltAtoms),
-    MainResidue(*this, -1)
+    rRBnd(rltAtoms), rUsim(rltAtoms), rUiso(rltAtoms), rEADP(rltAtoms), MainResidue(*this, -1)
   {
   AtomsInfo = AI;
   Lattice   = L;
@@ -85,8 +84,8 @@ void TAsymmUnit::ClearRestraints()  {
   rUsim.Clear();
   rUiso.Clear();
   rEADP.Clear();
-  rEXYZ.Clear();
   rSAME.Clear();
+  ExyzGroups.Clear();
   UsedSymm.Clear();
 }
 //..............................................................................
@@ -147,8 +146,8 @@ void TAsymmUnit::Assign(const TAsymmUnit& C)  {
   rUsim.Assign(*this, C.rUsim);
   rUiso.Assign(*this, C.rUiso);
   rEADP.Assign(*this, C.rEADP);
-  rEXYZ.Assign(*this, C.rEXYZ);
   rSAME.Assign(*this, C.rSAME);
+  ExyzGroups.Assign(*this, C.ExyzGroups);
   AfixGroups.Assign(*this, C.AfixGroups);
 
   for( int i=0; i < C.UsedSymm.Count(); i++ )

@@ -112,11 +112,11 @@ protected:
                   rRBnd,  // rigid bond restraints (DELU)
                   rUsim,  // similar Uij (SIMU)
                   rUiso,  // Uij components approximate to isotropic behavior (ISOR)
-                  rEADP,  // equivalent adp, constraint
-                  rEXYZ;
+                  rEADP;  // equivalent adp, constraint
                  
   TSameGroupList  rSAME;
   TAfixGroups AfixGroups;
+  TExyzGroups ExyzGroups;
 public:
 
   TAsymmUnit(TLattice *L, TAtomsInfo *AI);
@@ -296,11 +296,10 @@ public:
   inline TSRestraintList& RestranedUaAsUi()     {  return rUiso;  }
   // EADP
   inline TSRestraintList& EquivalentU()         {  return rEADP;  }
-  // EXYZ
-  inline TSRestraintList& SharedSites()         {  return rEXYZ;  }
   // SAME
   inline TSameGroupList& SimilarFragments()     {  return rSAME;  }
-  
+  // EXYZ
+  inline TExyzGroups& SharedSites()             {  return ExyzGroups;  }
   inline TAfixGroups& GetAfixGroups()           {  return AfixGroups;  }
 
   // returns next available part istruction in atoms
