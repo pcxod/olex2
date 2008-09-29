@@ -10,16 +10,16 @@
 // ************************************************************************ //
 
 // C++ TLBWRTR : $Revision:   1.151.1.0.1.27  $
-// File generated on 30/07/2008 11:59:55 from Type Library described below.
+// File generated on 29/09/2008 20:57:59 from Type Library described below.
 
 // ************************************************************************  //
-// Type Lib: C:\Documents and Settings\Oleg\Desktop\sourceforge-svn\trunk\olex2-tl\Olex2xProj.tlb (1)
-// LIBID: {CC5032B2-BBC7-4440-ACC8-05E56E841525}
+// Type Lib: E:\SVN\srcf-svn\trunk\olex2-tl\Olex2xProj.tlb (1)
+// LIBID: {D41CFEFC-B104-4627-AE02-DFF9BA532354}
 // LCID: 0
 // Helpfile: 
 // HelpString: Olex2xProj Library
 // DepndLst: 
-//   (1) v2.0 stdole, (C:\WINDOWS\system32\stdole2.tlb)
+//   (1) v2.0 stdole, (C:\Windows\SysWOW64\stdole2.tlb)
 // ************************************************************************ //
 
 #include <vcl.h>
