@@ -321,7 +321,7 @@ public:
 class TExyzGroups {
   TTypeList<TExyzGroup> Groups;
 public:
-  TExyzGroup& New() {  return Groups.Add( TExyzGroup(*this, Groups.Count()) );  }
+  TExyzGroup& New() {  return Groups.Add( new TExyzGroup(*this, Groups.Count()) );  }
   void Clear() {  Groups.Clear();  }
   int Count() const {  return Groups.Count();  }
   TExyzGroup& operator [] (int i) {  return Groups[i];  }
