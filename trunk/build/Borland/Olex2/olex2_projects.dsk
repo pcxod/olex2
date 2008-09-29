@@ -9,15 +9,20 @@ File_6=SourceModule,'E:\SVN\src\v1.1u\olex2-tl\Olex2Impl.cpp',0,1,656,17,670,0,0
 File_7=SourceModule,'E:\SVN\src\v1.1u\olex2-tl\About.cpp',0,1,4,49,19,0,0
 
 [Modules]
-Module0=E:\SVN\srcf-svn\trunk\olex2v-test\main.cpp
-Module1=E:\SVN\srcf-svn\trunk\installer\main.cpp
-Module2=E:\SVN\srcf-svn\trunk\olex2v\olex2v.h
-Module3=c:\program files\borland\cbuilder6\include\vcl\dstring.h
+Module0=E:\SVN\srcf-svn\trunk\launch\main.cpp
+Module1=E:\SVN\srcf-svn\trunk\olex2v-test\main.cpp
+Module2=E:\SVN\srcf-svn\trunk\installer\main.cpp
+Module3=E:\SVN\srcf-svn\trunk\olex2v\olex2v.h
 Module4=E:\SVN\srcf-svn\trunk\sdl\settingsfile.cpp
 Module5=E:\wxWidgets-2.8.7\include\wx\wxchar.h
 Count=6
 EditWindowCount=1
 TypeLibWindowCount=1
+
+[E:\SVN\srcf-svn\trunk\launch\main.cpp]
+ModuleType=SourceModule
+FormState=1
+FormOnTop=0
 
 [E:\SVN\srcf-svn\trunk\olex2v-test\main.cpp]
 ModuleType=SourceModule
@@ -30,11 +35,6 @@ FormState=0
 FormOnTop=0
 
 [E:\SVN\srcf-svn\trunk\olex2v\olex2v.h]
-ModuleType=SourceModule
-FormState=0
-FormOnTop=0
-
-[c:\program files\borland\cbuilder6\include\vcl\dstring.h]
 ModuleType=SourceModule
 FormState=0
 FormOnTop=0
@@ -119,7 +119,7 @@ FormOnTop=0
 
 [EditWindow0]
 ViewCount=6
-CurrentView=1
+CurrentView=2
 View0=0
 View1=1
 View2=2
@@ -131,24 +131,22 @@ MessageView=MessageView@EditWindow0
 ClassHierarchy=ClassHierarchy@EditWindow0
 Create=1
 Visible=1
-State=2
-Left=1308
-Top=242
+State=0
+Left=294
+Top=186
 Width=1142
 Height=782
-MaxLeft=-4
-MaxTop=-4
-MaxWidth=908
-MaxHeight=1448
-ClientWidth=900
-ClientHeight=1426
+MaxLeft=-1
+MaxTop=-1
+ClientWidth=1126
+ClientHeight=746
 LeftPanelSize=0
 LeftPanelClients=CodeExplorer@EditWindow0
 LeftPanelData=00000400010000000C000000436F64654578706C6F726572000000000000000000000000000000000001000000000000000000000000FFFFFFFF
 RightPanelSize=0
 BottomPanelSize=0
 BottomPanelClients=MessageView@EditWindow0
-BottomPanelData=00000400010000000B0000004D6573736167655669657784030000000000000297000000000000000100000000000000000000000001000000006E0400000000000001000000006E0400000000000001000000006E0400000000000001000000006E04000000000000010000000084030000000000000100000000840300000B0000004D65737361676556696577FFFFFFFF
+BottomPanelData=00000400010000000B0000004D6573736167655669657713070000000000000297000000000000000100000000000000000000000001000000006E0400000000000001000000006E0400000000000001000000006E0400000000000001000000006E0400000000000001000000008403000000000000010000000084030000000000000100000000130700000B0000004D65737361676556696577FFFFFFFF
 
 [View0]
 Module=E:\wxWidgets-2.8.7\include\wx\wxchar.h
@@ -161,27 +159,27 @@ LeftCol=1
 Module=E:\SVN\srcf-svn\trunk\olex2v-test\main.cpp
 CursorX=52
 CursorY=171
-TopLine=138
-LeftCol=1
-
-[View2]
-Module=E:\SVN\srcf-svn\trunk\installer\main.cpp
-CursorX=62
-CursorY=181
-TopLine=166
-LeftCol=1
-
-[View3]
-Module=E:\SVN\srcf-svn\trunk\sdl\settingsfile.cpp
-CursorX=49
-CursorY=30
 TopLine=1
 LeftCol=1
 
+[View2]
+Module=E:\SVN\srcf-svn\trunk\launch\main.cpp
+CursorX=84
+CursorY=245
+TopLine=208
+LeftCol=1
+
+[View3]
+Module=E:\SVN\srcf-svn\trunk\installer\main.cpp
+CursorX=62
+CursorY=181
+TopLine=199
+LeftCol=1
+
 [View4]
-Module=c:\program files\borland\cbuilder6\include\vcl\dstring.h
-CursorX=1
-CursorY=68
+Module=E:\SVN\srcf-svn\trunk\sdl\settingsfile.cpp
+CursorX=49
+CursorY=30
 TopLine=1
 LeftCol=1
 
@@ -202,8 +200,8 @@ Width=650
 Height=441
 MaxLeft=-1
 MaxTop=-1
-ClientWidth=642
-ClientHeight=419
+ClientWidth=634
+ClientHeight=405
 Module=E:\SVN\srcf-svn\trunk\olex2-tl\Olex2xProj.tlb
 
 [Watches]
@@ -224,24 +222,24 @@ State=0
 Left=0
 Top=0
 Width=1250
-Height=100
+Height=120
 MaxLeft=-1
 MaxTop=-1
-ClientWidth=1242
-ClientHeight=78
+ClientWidth=1234
+ClientHeight=84
 
 [ProjectManager]
 Create=1
 Visible=1
 State=0
-Left=236
-Top=229
+Left=-640
+Top=161
 Width=468
 Height=602
 MaxLeft=-1
 MaxTop=-1
-ClientWidth=460
-ClientHeight=578
+ClientWidth=452
+ClientHeight=568
 TBDockHeight=313
 LRDockWidth=446
 Dockable=1
@@ -256,8 +254,8 @@ Width=533
 Height=353
 MaxLeft=-1
 MaxTop=-1
-ClientWidth=525
-ClientHeight=331
+ClientWidth=517
+ClientHeight=317
 DumpPane=79
 DisassemblyPane=187
 RegisterPane=231
@@ -270,7 +268,7 @@ State=0
 Left=200
 Top=122
 Width=156
-Height=82
+Height=84
 MaxLeft=-1
 MaxTop=-1
 ClientWidth=150
@@ -282,14 +280,14 @@ Visible=1
 State=0
 Left=0
 Top=181
-Width=182
-Height=621
+Width=174
+Height=611
 MaxLeft=-1
 MaxTop=-1
-ClientWidth=182
-ClientHeight=621
+ClientWidth=174
+ClientHeight=611
 TBDockHeight=551
-LRDockWidth=182
+LRDockWidth=174
 Dockable=1
 SplitPos=85
 ArrangeBy=Name
@@ -303,14 +301,14 @@ Visible=1
 State=0
 Left=0
 Top=12
-Width=182
+Width=174
 Height=153
 MaxLeft=-1
 MaxTop=-1
-ClientWidth=182
+ClientWidth=174
 ClientHeight=153
 TBDockHeight=370
-LRDockWidth=182
+LRDockWidth=174
 Dockable=1
 
 [CodeguardLog]
@@ -323,8 +321,8 @@ Width=448
 Height=185
 MaxLeft=-1
 MaxTop=-1
-ClientWidth=440
-ClientHeight=161
+ClientWidth=432
+ClientHeight=151
 TBDockHeight=190
 LRDockWidth=448
 Dockable=1
@@ -339,8 +337,8 @@ Width=403
 Height=284
 MaxLeft=-1
 MaxTop=-1
-ClientWidth=395
-ClientHeight=260
+ClientWidth=387
+ClientHeight=250
 TBDockHeight=284
 LRDockWidth=403
 Dockable=1
@@ -371,11 +369,11 @@ Visible=0
 State=0
 Left=12
 Top=0
-Width=888
+Width=1799
 Height=151
 MaxLeft=-1
 MaxTop=-1
-ClientWidth=888
+ClientWidth=1799
 ClientHeight=151
 TBDockHeight=151
 LRDockWidth=443
@@ -395,14 +393,14 @@ Width=190
 Height=826
 MaxLeft=-1
 MaxTop=-1
-ClientWidth=182
-ClientHeight=802
+ClientWidth=174
+ClientHeight=792
 TBDockHeight=826
 LRDockWidth=190
 Dockable=1
 DockClients=ObjectTree,PropertyInspector
-DockSiteData=0000040000000000220300000000000001B6000000000000000100000000A90000000E0000004F626A65637454726565566965770100000000220300001100000050726F7065727479496E73706563746F72FFFFFFFF
+DockSiteData=0000040000000000180300000000000001AE000000000000000100000000A90000000E0000004F626A65637454726565566965770100000000180300001100000050726F7065727479496E73706563746F72FFFFFFFF
 
 [ActiveProject]
-ActiveProject=12
+ActiveProject=8
 

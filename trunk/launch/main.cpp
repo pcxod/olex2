@@ -242,7 +242,7 @@ bool TdlgMain::UpdateInstallationH( const TUrl& url, const TStrList& properties 
   }
   catch( TExceptionBase& exc )  {
     TStrList out;
-    Application->MessageBox("Please make sure that your computer is online",
+    Application->MessageBox("Please make sure that your computer is online and/or\nyou have enough right to modify the installation folder",
       "Scheduled update failed", MB_OK|MB_ICONINFORMATION);
     return false;
   }
