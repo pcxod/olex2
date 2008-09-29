@@ -215,6 +215,7 @@ public:
     this_InitMacroD(Fix, "", (fpAny^fpNone)|psCheckFileTypeIns, "" );
     this_InitMacroD(LstMac, "", fpNone, "" );
     this_InitMacroD(LstFun, "", fpNone, "" );
+    this_InitMacroD(Quit, "", fpNone, "" );
     
     this_InitFuncD(User, fpNone|fpOne, "reap" );
     this_InitFuncD(SetVar, fpTwo, "setvar" );
@@ -386,6 +387,7 @@ public:
     TOlxVars::SetVar(name, val);
   }
   virtual TLibrary&  GetLibrary() {  return XApp.GetLibrary();  }
+  
   bool Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, const IEObject *Data=NULL)  {
     bool res = true;
     if( MsgId == ID_TIMER )  {
@@ -471,6 +473,10 @@ public:
     }
   }
   //..............................................................................
+  void macQuit(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+    TerminateSignal = true;
+  }
+  //..............................................................................
   void macLstMac(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
     TBasicFunctionPList macros;
     GetLibrary().ListAllMacros( macros );
@@ -490,10 +496,10 @@ public:
     tab.ColName(2) = "Timestamp";
     tab.ColName(3) = "Persistent";
     for(int i=0; i < TFileHandlerManager::Count(); i++ )  {
-      tab.Row(i)->String(0) = TFileHandlerManager::GetBlockName(i);
-      tab.Row(i)->String(1) = TFileHandlerManager::GetBlockSize(i);
-      tab.Row(i)->String(2) = TFileHandlerManager::GetBlockDateTime(i);
-      tab.Row(i)->String(3) = TFileHandlerManager::GetPersistenceId(i);
+      tab[i][0] = TFileHandlerManager::GetBlockName(i);
+      tab[i][1] = TFileHandlerManager::GetBlockSize(i);
+      tab[i][2] = TFileHandlerManager::GetBlockDateTime(i);
+      tab[i][3] = TFileHandlerManager::GetPersistenceId(i);
       tc += TFileHandlerManager::GetBlockSize(i);
     }
     tc /= (1024*1024);
@@ -1566,7 +1572,6 @@ int main(int argc, char* argv[])  {
   while( true )  {
     TBasicApp::GetInstance()->OnIdle->Execute(NULL);
     cin.getline(_cmd, 512);
-    if( olex.TerminateSignal )  break;
     cmd = _cmd;
     if( cmd.Comparei("quit") == 0 )  break;
     else  {
@@ -1575,6 +1580,7 @@ int main(int argc, char* argv[])  {
         TBasicApp::GetLog() << exc.GetException()->GetError();
       }
     }
+    if( olex.TerminateSignal )  break;
     cout << ">>";
   }
   TBasicApp::GetInstance()->OnIdle->Execute(NULL);
