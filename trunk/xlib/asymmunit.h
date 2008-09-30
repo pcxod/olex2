@@ -138,16 +138,25 @@ public:
   const mat3d& GetCartesianToCell() const {  return Cartesian2Cell; }
   const mat3d& GetHklToCartesian()  const {  return Hkl2Cartesian; }
   template <class VC>
-  inline void CellToCartesian(const VC& Cell, VC& Cartesian) const  {
-    Cartesian = Cell * Cell2Cartesian;
+  inline void CellToCartesian(const VC& cell, VC& crt) const  {
+    crt[0] = cell[0]*Cell2Cartesian[0][0] + cell[1]*Cell2Cartesian[1][0] + cell[2]*Cell2Cartesian[2][0];
+    crt[1] = cell[1]*Cell2Cartesian[1][1] + cell[2]*Cell2Cartesian[2][1];
+    crt[2] = cell[2]*Cell2Cartesian[2][2];
+    //Cartesian = Cell * Cell2Cartesian;
   }
   template <class VC>
-  inline void CellToCartesian(VC& Cartesian) const {
-    Cartesian *= Cell2Cartesian;
+  inline void CellToCartesian(VC& crt) const {
+    crt[0] = crt[0]*Cell2Cartesian[0][0] + crt[1]*Cell2Cartesian[1][0] + crt[2]*Cell2Cartesian[2][0];
+    crt[1] = crt[1]*Cell2Cartesian[1][1] + crt[2]*Cell2Cartesian[2][1];
+    crt[2] = crt[2]*Cell2Cartesian[2][2];
+    //crt *= Cell2Cartesian;
   }
   template <class VC>
-  inline void CartesianToCell(VC& Cell)      const {
-    Cell *= Cartesian2Cell;
+  inline void CartesianToCell(VC& cll)      const {
+    cll[0] = cll[0]*Cell2Cartesian[0][0] + cll[1]*Cell2Cartesian[1][0] + cll[2]*Cell2Cartesian[2][0];
+    cll[1] = cll[1]*Cell2Cartesian[1][1] + cll[2]*Cell2Cartesian[2][1];
+    cll[2] = cll[2]*Cell2Cartesian[2][2];
+    //cll *= Cartesian2Cell;
   }
 
   // J App Cryst 2002, 35, 477-480

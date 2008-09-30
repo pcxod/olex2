@@ -531,7 +531,7 @@ void TMainForm::XApp( TGXApp *XA)  {
   this_InitMacroD(Labels,
 "p-part&;l-label&;v-variables&;o-occupancy&;a-afix&;h-show hydrogen atom labels&;\
 f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual accupancy\
- (as in the ins file)",  fpNone,
+ (as in the ins file)&;qi-Q peak intensity",  fpNone,
 "Inverts visibility of atom labels on/off. Look at the options");
 
   this_InitMacroD(SetEnv, EmptyString, fpTwo,

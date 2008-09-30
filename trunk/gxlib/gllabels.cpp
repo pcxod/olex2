@@ -108,6 +108,10 @@ bool TXGlLabels::Orient(TGlPrimitive *P)  {
         Tmp << (int)XA->Atom().CAtom().GetOccpVar();
       }
     }
+    if( (FMode & lmQPeakI) && (XA->Atom().GetAtomInfo() == iQPeakIndex ) )  {
+      if( !Tmp.IsEmpty() )  Tmp << ", ";
+      Tmp << olxstr::FormatFloat(1, XA->Atom().CAtom().GetQPeak());
+    }
     if( FMode & lmAOcc )  {
       if( Tmp.Length() )  Tmp << ", ";
       double v;

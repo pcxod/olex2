@@ -788,13 +788,6 @@ void TAsymmUnit::LibSetAtomCrd(const TStrObjList& Params, TMacroError& E)  {
   ca.ccrd()[0] = Params[1].ToDouble();
   ca.ccrd()[1] = Params[2].ToDouble();
   ca.ccrd()[2] = Params[3].ToDouble();
-  if( ca.GetAtomInfo() == iQPeakIndex && Lattice != NULL )  {
-    if( Lattice->GetUnitCell().DoesOverlap( ca, 0.3 ) )  {
-      DelAtom( index );
-      E.SetRetVal(false);
-      return;
-    }
-  }
   E.SetRetVal(true);
 }
 //..............................................................................
@@ -908,6 +901,13 @@ void TAsymmUnit::LibSetAtomOccu(const TStrObjList& Params, TMacroError& E)  {
 }
 //..............................................................................
 void TAsymmUnit::LibNewAtom(const TStrObjList& Params, TMacroError& E)  {
+  vec3d crd(Params[1].ToDouble(), Params[2].ToDouble(), Params[3].ToDouble());
+  if( Lattice != NULL )  {
+    if( Lattice->GetUnitCell().FindOverlappingAtom( crd, 0.3 ) != NULL)  {
+      E.SetRetVal(-1);
+      return;
+    }
+  }
   int QPeakIndex = -1;
   double qPeak = 0;
   olxstr qLabel("Q");
@@ -932,6 +932,7 @@ void TAsymmUnit::LibNewAtom(const TStrObjList& Params, TMacroError& E)  {
     ca.SetQPeak( qPeak );
     ca.SetOccp(11.0);
     ca.SetUiso( 0.05 );
+    ca.ccrd() = crd;
     if( qPeak > MaxQPeak )  MaxQPeak = qPeak;
     if( qPeak < MaxQPeak )  MinQPeak = qPeak;
   }
@@ -965,9 +966,9 @@ void TAsymmUnit::LibSetZprime(const TStrObjList& Params, TMacroError& E)  {
 TLibrary* TAsymmUnit::ExportLibrary(const olxstr& name) {
 
   TLibrary* lib = new TLibrary( name.IsEmpty() ? olxstr("au") : name );
-  lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,  &TAsymmUnit::LibNewAtom, "NewAtom", fpOne,
+  lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,  &TAsymmUnit::LibNewAtom, "NewAtom", fpFour,
 "Adds a new atom to the asymmetric unit and return its ID, by which it can be reffered.\
- The function takes a single argument - the atom name") );
+ The function takes the atom name and ccordinates, if -1 is returned, the atom is not created") );
   lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,  &TAsymmUnit::LibGetAtomCount, "GetAtomCount", fpNone,
 "Returns the atom count in the asymmetric untit") );
   lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,  &TAsymmUnit::LibGetSymm, "GetCellSymm", fpNone,

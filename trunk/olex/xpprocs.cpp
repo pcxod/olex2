@@ -1811,6 +1811,10 @@ void TMainForm::macLabels(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     else if( !Options.GetName(i).Comparei("a") )  lmode |= lmAfix;
     else if( !Options.GetName(i).Comparei("h") )  lmode |= lmHydr;
     else if( !Options.GetName(i).Comparei("f") )  lmode |= lmFixed;
+    else if( !Options.GetName(i).Comparei("qi") ) {
+      lmode |= lmQPeakI;
+      lmode |= lmQPeak;
+    }
   }
   if( lmode == 0 )  {
     lmode |= lmLabels;
