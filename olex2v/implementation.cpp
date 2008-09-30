@@ -137,15 +137,18 @@ bool TOlexViewer::OnMouse(int x, int y, short MouseEvent, short MouseButton, sho
   return res;
 }
 //.......................................................................................
-void TOlexViewer::OnFileChanged(const char* fileName)  {
+bool TOlexViewer::OnFileChanged(const char* fileName)  {
   try  {
     GXApp->OnIdle->Execute(NULL, NULL);
     GXApp->LoadXFile(fileName);
     GXApp->SetAtomDrawingStyle(adsEllipsoid);
     GXApp->Uniq();
     DrawStyle( DefDS );
+    return true;
   }
-  catch(...)  {}
+  catch(...)  {
+    return false;
+  }
 }
 //.......................................................................................
 void TOlexViewer::Clear()  {
@@ -314,8 +317,9 @@ bool olxv_OnMouse(int w, int h, short MouseEvent, short MouseButton, short Shift
   if( TOlexViewer::Instance == NULL )  return false;
   return TOlexViewer::Instance->OnMouse(w, h, MouseEvent, MouseButton, ShiftState);
 }
-void olxv_OnFileChanged(const char* FN)  {
-  if( TOlexViewer::Instance != NULL )  TOlexViewer::Instance->OnFileChanged(FN);
+bool olxv_OnFileChanged(const char* FN)  {
+  if( TOlexViewer::Instance != NULL )  return TOlexViewer::Instance->OnFileChanged(FN);
+  return false;
 }
 const char* olxv_GetObjectLabelAt(int x, int y)  {
   return (TOlexViewer::Instance != NULL) ? TOlexViewer::Instance->GetObjectLabelAt(x, y).c_str() : "";

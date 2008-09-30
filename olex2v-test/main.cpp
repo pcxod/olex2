@@ -95,9 +95,10 @@ void __fastcall TForm1::tTimerTimer(TObject *Sender)  {
     if( fa != age )  {
       struct stat st;
       if( stat( FileName.c_str(), &st ) == 0 && (st.st_mode & S_IREAD) != 0 )  {
-        olxv_OnFileChanged(FileName.c_str());
-        Refresh();
-        age = fa;
+        if( olxv_OnFileChanged(FileName.c_str()) )  {
+          Refresh();
+          age = fa;
+        }
       }
     }
   }

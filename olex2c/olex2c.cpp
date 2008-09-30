@@ -1568,7 +1568,7 @@ int main(int argc, char* argv[])  {
   }
   char _cmd[512];
   olxstr cmd;
-  TBasicApp::GetInstance()->OnTimer->Add( new TTerminationListener );
+  //TBasicApp::GetInstance()->OnTimer->Add( new TTerminationListener );
   while( true )  {
     TBasicApp::GetInstance()->OnIdle->Execute(NULL);
     cin.getline(_cmd, 512);
