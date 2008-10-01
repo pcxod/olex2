@@ -4446,15 +4446,21 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options, TMacro
         Ins->AddIns(RemovedIns[i], *RemovedIns.Object(i));
       for( int i=0; i < restraints.Count(); i++ )
         restraints[i]->GetParent()->Restore(*restraints[i]);
+      restraints.Clear();
     }
   }
   catch(const TExceptionBase& exc )  {
     TBasicApp::GetLog().Exception( exc.GetException()->GetError() );
+    for( int i=0; i < RemovedIns.Count(); i++ )
+      Ins->AddIns(RemovedIns[i], *RemovedIns.Object(i));
     for( int i=0; i < restraints.Count(); i++ )
       restraints[i]->GetParent()->Restore(*restraints[i]);
+    restraints.Clear();
   }
   for( int i=0; i < RemovedIns.Count(); i++ )
     delete (TStrList*)RemovedIns.Object(i);
+  for( int i=0; i < restraints.Count(); i++ )
+    delete restraints[i];
   dlg->Destroy();
 }
 //..............................................................................
