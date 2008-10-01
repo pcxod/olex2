@@ -370,6 +370,48 @@ void AConstraintGenerator::GenerateAtom( TCAtomPList& created, TAtomEnvi& envi,
           crds.AddNew(Vec1.NormaliseTo(-1.10) + envi.GetBase().crd());
       }
       break;
+    case fgSiH1:
+      if( envi.Count() == 3 )  {
+        Vec1 = (envi.GetCrd(0)-envi.GetBase().crd()).Normalise();
+        Vec2 = (envi.GetCrd(1)-envi.GetBase().crd()).Normalise();
+        Vec3 = (envi.GetCrd(2)-envi.GetBase().crd()).Normalise();
+        crds.AddNew( (Vec1+Vec2+Vec3).Normalise() );
+        Vec1 -= Vec2;
+        Vec3 -= Vec2;
+        Vec3 = Vec1.XProdVec(Vec3);
+        Vec3.NormaliseTo( crds[0].CAngle(Vec3) < 0 ? 1.0 : -1.0);
+        crds[0] = (Vec3 += envi.GetBase().crd());
+      }
+      break;
+    case fgSH1:
+      if( envi.Count() == 1 )  {
+        if( pivoting != NULL && pivoting->Count() >= 1 )  {  // any pssibl H-bonds?
+          Vec1 = pivoting->GetCrd(0) - envi.GetBase().crd();
+          Vec2 = envi.GetCrd(0) - envi.GetBase().crd();
+          if( !pivoting->GetCAtom(0).IsHAttached() )
+            RotVec = Vec1.XProdVec( Vec2 ).Normalise();
+          else
+            RotVec = Vec2.XProdVec( Vec1 ).Normalise();
+          CreateRotationMatrix(M, RotVec, cos( M_PI*109.4/180)  );
+
+          crds.AddNew(Vec2);
+          crds[0] = M * crds[0];
+          crds[0].NormaliseTo(1.20);
+          crds[0] += envi.GetBase().crd();
+        }
+      }
+      if( crds.IsEmpty() )  {  // generic case - random placement ...
+        PlaneN = envi.GetCrd(0) - envi.GetBase().crd();
+        ca = Z.CAngle(PlaneN);
+        RotVec = PlaneN.XProdVec(Z).Normalise();
+        CreateRotationMatrix(M, RotVec, ca);
+
+        crds.AddNew(0, -sin(M_PI*109.4/180), cos(M_PI*109.4/180));
+        crds[0] = M * crds[0];
+        crds[0] *= 1.20;
+        crds[0] += envi.GetBase().crd();
+      }
+      break;
   }
   envi.GetBase().CAtom().SetHAttached( crds.Count() != 0 );
   DoGenerateAtom(created, au, crds, tmp);

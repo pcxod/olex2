@@ -3912,6 +3912,8 @@ void TMainForm::macReset(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     Ins->GetAsymmUnit().ChangeSpaceGroup( *sg );
     newSg = EmptyString;
     newSg <<  " reset to " << sg->GetName() << " #" << sg->GetNumber();
+    olxstr titl( TEFile::ChangeFileExt(TEFile::ExtractFileName(FXApp->XFile().GetFileName()), EmptyString) );
+    Ins->SetTitle( titl << " in " << sg->GetName() << " #" << sg->GetNumber());
   }
   if( fileName.IsEmpty() )
     fileName = FXApp->XFile().GetFileName();
