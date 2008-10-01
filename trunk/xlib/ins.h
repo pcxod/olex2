@@ -190,26 +190,31 @@ public:
           srl = &au->RestrainedDistances();
           RequiredParams = 1;  AcceptsParams = 2;
           DefEsd = 0.02;
+          Vals[0] = &DefVal;  Vals[1] = &DefEsd;
         }
         else if( Toks[0].Comparei("DANG") == 0 )  {
           srl = &au->RestrainedAngles();
           RequiredParams = 1;  AcceptsParams = 2;
           DefEsd = 0.04;
+          Vals[0] = &DefVal;  Vals[1] = &DefEsd;
         }
         else if( Toks[0].Comparei("SADI") == 0 )  {
           srl = &au->SimilarDistances();
           RequiredParams = 0;  AcceptsParams = 1;
           DefEsd = 0.02;
+          Vals[0] = &DefEsd;
         }
         else if( Toks[0].Comparei("CHIV") == 0 )  {
           srl = &au->RestrainedVolumes();
           RequiredParams = 1;  AcceptsParams = 2;
           DefEsd = 0.1;
+          Vals[0] = &DefEsd;  Vals[1] = &DefVal;
         }
         else if( Toks[0].Comparei("FLAT") == 0 )  {
           srl = &au->RestrainedPlanarity();
           DefEsd = 0.1;
           RequiredParams = 0;  AcceptsParams = 1;
+          Vals[0] = &DefEsd; ;
         }
         else if( Toks[0].Comparei("DELU") == 0 )  {
           srl = &au->RigidBonds();

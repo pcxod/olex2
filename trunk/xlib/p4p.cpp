@@ -81,27 +81,28 @@ void TP4PFile::LoadFromStrings(const TStrList& Strings)  {
   params.Clear();
   params.Strtok( Cell, ' ');
   if( params.Count() >= 6 )  {
-    GetAsymmUnit().Axes()[0].V() = params.String(0).ToDouble();
-    GetAsymmUnit().Axes()[1].V() = params.String(1).ToDouble();
-    GetAsymmUnit().Axes()[2].V() = params.String(2).ToDouble();
-    GetAsymmUnit().Angles()[0].V() = params.String(3).ToDouble();
-    GetAsymmUnit().Angles()[1].V() = params.String(4).ToDouble();
-    GetAsymmUnit().Angles()[2].V() = params.String(5).ToDouble();
+    GetAsymmUnit().Axes()[0].V() = params[0].ToDouble();
+    GetAsymmUnit().Axes()[1].V() = params[1].ToDouble();
+    GetAsymmUnit().Axes()[2].V() = params[2].ToDouble();
+    GetAsymmUnit().Angles()[0].V() = params[3].ToDouble();
+    GetAsymmUnit().Angles()[1].V() = params[4].ToDouble();
+    GetAsymmUnit().Angles()[2].V() = params[5].ToDouble();
+    GetAsymmUnit().InitMatrices();
   }
   params.Clear();
   params.Strtok( CellSd, ' ');
   if( params.Count() >= 6 )  {
-    GetAsymmUnit().Axes()[0].E() = params.String(0).ToDouble();
-    GetAsymmUnit().Axes()[1].E() = params.String(1).ToDouble();
-    GetAsymmUnit().Axes()[2].E() = params.String(2).ToDouble();
-    GetAsymmUnit().Angles()[0].E() = params.String(3).ToDouble();
-    GetAsymmUnit().Angles()[1].E() = params.String(4).ToDouble();
-    GetAsymmUnit().Angles()[2].E() = params.String(5).ToDouble();
+    GetAsymmUnit().Axes()[0].E() = params[0].ToDouble();
+    GetAsymmUnit().Axes()[1].E() = params[1].ToDouble();
+    GetAsymmUnit().Axes()[2].E() = params[2].ToDouble();
+    GetAsymmUnit().Angles()[0].E() = params[3].ToDouble();
+    GetAsymmUnit().Angles()[1].E() = params[4].ToDouble();
+    GetAsymmUnit().Angles()[2].E() = params[5].ToDouble();
   }
   params.Clear();
   params.Strtok( Size, ' ');
   if( params.Count() == 5 )  {
-    Temp = params.String(4);
+    Temp = params[4];
     params.Delete(4);
   }
   while( params.Count() > 3 )
@@ -113,7 +114,7 @@ void TP4PFile::LoadFromStrings(const TStrList& Strings)  {
   params.Clear();
   params.Strtok( Source, ' ');
   if( params.Count() > 2 )  {
-    Radiation = params.String(1).ToDouble();
+    Radiation = params[1].ToDouble();
   }
 
   Chem.DeleteChars('_');
