@@ -31,6 +31,10 @@ public:
         else if( envi.Count() == 3 )
           return 13;
         break;
+      case fgSiH1:
+        if( envi.Count() == 3 )
+          return 13;
+      case fgSH1:
       case fgOH1:
         return 147;
         break;

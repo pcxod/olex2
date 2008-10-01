@@ -465,7 +465,7 @@ void XLibMacros::funVSS(const TStrObjList &Cmds, TMacroError &Error)  {
       TArrayList< AnAssociation2<TCAtom const*, vec3d> > res;
       for( int i=0; i < au.AtomCount(); i++ )  {
         if( au.GetAtom(i).IsDeleted() )  continue;
-        uc.FindInRange( au.GetAtom(i), au.GetAtom(i).GetAtomInfo().GetRad1()+1.3, res);
+        uc.FindInRange( au.GetAtom(i).ccrd(), au.GetAtom(i).GetAtomInfo().GetRad1()+1.3, res);
         AtomCount++;
         double wght = 1;
         if( res.Count() > 1 )  {

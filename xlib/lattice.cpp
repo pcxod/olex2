@@ -1303,7 +1303,7 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPL
       v = acos(v)*180/M_PI;
       double d1 = AE.GetCrd(0).DistanceTo( atom.crd() );
       double d2 = AE.GetCrd(1).DistanceTo( atom.crd() );
-      if( d1 > 1.65 || d2 > 1.65 )  {  // coordination?
+      if( d1 > 1.72 || d2 > 1.72 )  {  // coordination?
         if( (d1 < 1.5 && d1 > 1.35) || (d2 < 1.5 && d2 > 1.35) )  {
           TBasicApp::GetLog().Info( olxstr(atom.GetLabel()) << ": RNH(2)M" );
           cg.FixAtom( AE, fgNH2, HAI, NULL, generated);
@@ -1449,6 +1449,24 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPL
       cg.FixAtom( AE, fgBH1, HAI, NULL, generated);
     }
   }
+  else if( atom.GetAtomInfo() == iSiliconIndex )  {
+    if( AE.Count() == 3 )  {
+      double v = TetrahedronVolume( atom.crd(), AE.GetCrd(0), AE.GetCrd(1), AE.GetCrd(2) );
+      if( v > 0.5 )  {
+        TBasicApp::GetLog().Info( olxstr(atom.GetLabel()) << ": XYZSiH" );
+        cg.FixAtom( AE, fgSiH1, HAI, NULL, generated);
+      }
+    }
+  }
+  else if( atom.GetAtomInfo() == iSulphurIndex )  {
+    if( AE.Count() == 1 && AE.GetBAI(0) == iCarbonIndex )  {
+      double d = AE.GetCrd(0).DistanceTo( atom.crd() );
+      if( d > 1.72 )  {
+        TBasicApp::GetLog().Info( olxstr(atom.GetLabel()) << ": CSH" );
+        cg.FixAtom( AE, fgSH1, HAI, NULL, generated);
+      }
+    }
+  }
   ProcessingAtoms.Delete( ProcessingAtoms.IndexOf(&atom) );
   return true;
 }
@@ -1460,6 +1478,8 @@ void TLattice::AnalyseHAdd(AConstraintGenerator& cg, const TSAtomPList& atoms)  
   CTypes.Add( &AtomsInfo->GetAtomInfo(iNitrogenIndex) );
   CTypes.Add( &AtomsInfo->GetAtomInfo(iOxygenIndex) );
   CTypes.Add( &AtomsInfo->GetAtomInfo(iBoronIndex) );
+  CTypes.Add( &AtomsInfo->GetAtomInfo(iSiliconIndex) );
+  CTypes.Add( &AtomsInfo->GetAtomInfo(iSulphurIndex) );
   TSAtomPList ProcessingAtoms;
 
   for( int i=0; i < atoms.Count(); i++ )

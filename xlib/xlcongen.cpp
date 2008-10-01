@@ -49,6 +49,10 @@ bool TXlConGen::FixAtom( TAtomEnvi& envi, const short Group, const TBasicAtomInf
         else if( envi.Count() == 1 )
           afix = 163;
         break;
+      case fgSiH1:
+        if( NEnvi.Count() == 3 )
+          afix = 13;
+        break;
       case fgOH3:
         break;
       case fgOH2:
@@ -72,6 +76,7 @@ bool TXlConGen::FixAtom( TAtomEnvi& envi, const short Group, const TBasicAtomInf
           }
         }
         break;
+      case fgSH1:
       case fgOH1:
         if( envi.Count() == 1 )
           afix = 147;

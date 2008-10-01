@@ -439,14 +439,13 @@ smatd_list* TUnitCell::GetInRange(const vec3d& to, const vec3d& from, double R, 
   return retVal;
 }
 //..............................................................................
-void TUnitCell::FindInRange(const TCAtom& atom, double R, 
+void TUnitCell::FindInRange(const vec3d& to, double R, 
                             TArrayList< AnAssociation2<TCAtom const*,vec3d> >& res) const {
-
   const TAsymmUnit& au = GetLattice().GetAsymmUnit();
-  vec3d to( atom.ccrd() );
   vec3d V1;
   R *= R;
-  for( int i=0; i < au.AtomCount(); i++ )  {
+  int ac = au.AtomCount();
+  for( int i=0; i < ac; i++ )  {
     const TCAtom& a = au.GetAtom(i);
     if( a.IsDeleted() )  continue;
     for( int j=0; j < MatrixCount(); j++ )  {
@@ -459,6 +458,34 @@ void TUnitCell::FindInRange(const TCAtom& atom, double R,
       double D = V1.QLength();
       if( D < R && D > 0.01 )  {
         res.Add( AnAssociation2<TCAtom const*, vec3d>(&a, V1) );
+      }
+    }
+  }
+}
+//..............................................................................
+void TUnitCell::FindInRange(const vec3d& to, double R, 
+                            TArrayList< AnAssociation2<TCAtom const*,smatd> >& res) const {
+  const TAsymmUnit& au = GetLattice().GetAsymmUnit();
+  vec3d V1;
+  R *= R;
+  int ac = au.AtomCount();
+  for( int i=0; i < ac; i++ )  {
+    const TCAtom& a = au.GetAtom(i);
+    if( a.IsDeleted() )  continue;
+    for( int j=0; j < MatrixCount(); j++ )  {
+      const smatd& matr = GetMatrix(j);
+      V1 = matr * a.ccrd() - to;
+      int ix = Round(V1[0]);  V1[0] -= ix;  // find closest distance
+      int iy = Round(V1[1]);  V1[1] -= iy;
+      int iz = Round(V1[2]);  V1[2] -= iz;
+      GetLattice().GetAsymmUnit().CellToCartesian(V1);
+      double D = V1.QLength();
+      if( D < R && D > 0.01 )  {
+        res.Add( AnAssociation2<TCAtom const*, smatd>(&a, matr) );
+        smatd& m = res.Last().B();
+        m.t[0] -= ix;
+        m.t[1] -= iy;
+        m.t[2] -= iz;
       }
     }
   }

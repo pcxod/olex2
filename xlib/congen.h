@@ -16,7 +16,9 @@ const short fgCH3     = 1,
             fgNH3     = 8,  
             fgNH2     = 9,
             fgNH1     = 10,
-            fgBH1     = 11;
+            fgBH1     = 11,
+            fgSiH1    = 12,
+            fgSH1     = 13;
 
 // fixable parameters
 const short fpDistance = 0x0001,

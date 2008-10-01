@@ -61,8 +61,11 @@ public:
 
   double FindClosestDistance(const class TCAtom& to, const TCAtom& atom) const;
   // finds all atoms and their ccordinates inside the sphere of radius R
-  void FindInRange(const TCAtom& atom, double R, 
+  void FindInRange(const vec3d& center, double R, 
     TArrayList< AnAssociation2<TCAtom const*, vec3d> >& res) const;
+  // finds all atoms and their ccordinates inside the sphere of radius R
+  void FindInRange(const vec3d& center, double R, 
+    TArrayList< AnAssociation2<TCAtom const*, smatd> >& res) const;
   /* finds all atoms (+symm attached) and Q-peaks, if specfied; if part is not -1, part 0 and 
   the specified part are only placed
   */
