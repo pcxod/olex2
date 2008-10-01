@@ -153,7 +153,7 @@ public:
   }
   template <class VC>
   inline void CartesianToCell(VC& cll)      const {
-    cll[0] = cll[0]*Cartesian2Cell[0][0] + cll[1]*Cartesian2Cell[1][0] + cll[2]*Cartesian2Cell`[2][0];
+    cll[0] = cll[0]*Cartesian2Cell[0][0] + cll[1]*Cartesian2Cell[1][0] + cll[2]*Cartesian2Cell[2][0];
     cll[1] = cll[1]*Cartesian2Cell[1][1] + cll[2]*Cartesian2Cell[2][1];
     cll[2] = cll[2]*Cartesian2Cell[2][2];
     //cll *= Cartesian2Cell;
