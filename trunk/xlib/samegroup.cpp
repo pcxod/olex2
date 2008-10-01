@@ -4,6 +4,7 @@
 void TSameGroup::Assign(TAsymmUnit& tau, const TSameGroup& sg)  {
   Clear();
   if( sg.Count() == 0 )  return;
+
   TAsymmUnit * au = sg[0].GetParent();
 
   if( au == &tau )  {
@@ -18,8 +19,8 @@ void TSameGroup::Assign(TAsymmUnit& tau, const TSameGroup& sg)  {
       Add( *aa );
     }
   }
-  for( int i=0; i < sg.Dependent.Count(); i++ )
-    Dependent.Add( &Parent[ sg.Dependent[i]->Id ] );
   Esd12 = sg.Esd12;  
   Esd13 = sg.Esd13;  
+  for( int i=0; i < sg.Dependent.Count(); i++ )
+    Dependent.Add( &Parent[ sg.Dependent[i]->Id ] );
 }

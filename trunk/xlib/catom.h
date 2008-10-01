@@ -42,7 +42,8 @@ private:
        HAttached;  // used for the hadd command
   TPtrList<TCAtom>* FAttachedAtoms, *FAttachedAtomsI;
   /* Afix group is a fitted group, Hfix group the immediate dependent group */
-  TAfixGroup* DependentAfixGroup, *DependentHfixGroup, *ParentAfixGroup;
+  TAfixGroup* DependentAfixGroup, *ParentAfixGroup;
+  TPtrList<TAfixGroup>* DependentHfixGroups;
   TExyzGroup* ExyzGroup;
 public:
   TCAtom(TAsymmUnit *Parent);
@@ -107,7 +108,17 @@ public:
   int GetAfix() const;
   DefPropP(TAfixGroup*, ParentAfixGroup)
   DefPropP(TAfixGroup*, DependentAfixGroup)
-  DefPropP(TAfixGroup*, DependentHfixGroup)
+  int DependentHfixGroupCount() const {  return DependentHfixGroups == NULL ? 0 : DependentHfixGroups->Count();  }
+  TAfixGroup& GetDependentHfixGroup(int i) {  return *DependentHfixGroups->Item(i);  }
+  const TAfixGroup& GetDependentHfixGroup(int i) const {  return *DependentHfixGroups->Item(i);  }
+  void RemoveDependentHfixGroup(TAfixGroup& hg) {  DependentHfixGroups->Remove(&hg);  }
+  void ClearDependentHfixGroups() {  
+    if( DependentHfixGroups != NULL ) DependentHfixGroups->Clear();
+  }
+  void AddDependentHfixGroup(TAfixGroup& hg) {
+    if( DependentHfixGroups == NULL )  DependentHfixGroups = new TPtrList<TAfixGroup>;
+    DependentHfixGroups->Add(&hg);
+  }
   DefPropP(double, Occp)
   DefPropP(double, Uiso)
   DefPropP(double, QPeak)
@@ -196,7 +207,7 @@ public:
       if( HasExcplicitPivot() )
         pivot->SetDependentAfixGroup(this);
       else
-        pivot->SetDependentHfixGroup(this);
+        pivot->AddDependentHfixGroup(*this);
     }
   }
   TAfixGroup(TAfixGroups& parent, TAsymmUnit& tau, const TAfixGroup& ag) : Parent(parent) {  
@@ -208,8 +219,8 @@ public:
     Dependent.Clear();
     if( HasExcplicitPivot() )
       Pivot->SetDependentAfixGroup(NULL);
-    else
-      Pivot->SetDependentHfixGroup(NULL);
+    else if( Pivot->DependentHfixGroupCount() != 0 ) // might happen at several places 
+      Pivot->RemoveDependentHfixGroup(*this);
   }
   DefPropP(double, D)
   DefPropP(double, Sof)
@@ -222,7 +233,7 @@ public:
     if( HasExcplicitPivot() )
       Pivot->SetDependentAfixGroup(this);
     else
-      Pivot->SetDependentHfixGroup(this);
+      Pivot->AddDependentHfixGroup(*this);
   }
   const TCAtom& GetPivot() const {  return *Pivot;  }
   int GetM() const {  return GetM(Afix);  }

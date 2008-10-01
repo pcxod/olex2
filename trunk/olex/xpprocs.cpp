@@ -3357,8 +3357,10 @@ void TMainForm::macAfix(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         TCAtom& ca = Atoms[i]->Atom().CAtom();
         if( ca.GetDependentAfixGroup() != NULL )
           ca.GetDependentAfixGroup()->Clear();
-        else if( ca.GetDependentHfixGroup() != NULL )
-          ca.GetDependentHfixGroup()->Clear();
+        else if( ca.DependentHfixGroupCount() != 0 )  {
+          for( int j=0; j < ca.DependentHfixGroupCount(); j++ )
+            ca.GetDependentHfixGroup(j).Clear();
+        }
         else if( ca.GetParentAfixGroup() != NULL )
           ca.GetParentAfixGroup()->Clear();
       }
@@ -4338,10 +4340,12 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options, TMacro
     au.GetAfixGroups()[i].SetTag(0);
   for(int i=0; i < CAtoms.Count(); i++ )  {  // add afixed mates and afix parents
     TCAtom& ca = *CAtoms[i];
-    if( ca.GetDependentHfixGroup() != NULL && ca.GetDependentHfixGroup()->GetTag() == 0 )  {
-      for( int j=0; j < ca.GetDependentHfixGroup()->Count(); j++ ) 
-        CAtoms.Add( &(*ca.GetDependentHfixGroup())[j] );
-      ca.GetDependentHfixGroup()->SetTag(1);
+    for( int j=0; j < ca.DependentHfixGroupCount(); j++ )  {
+      TAfixGroup& hg = ca.GetDependentHfixGroup(j);
+      if( hg.GetTag() != 0 )  continue;
+      for( int k=0; k < hg.Count(); k++ ) 
+        CAtoms.Add( &hg[k] );
+      hg.SetTag(1);
     }
     if( ca.GetDependentAfixGroup() != NULL && ca.GetDependentAfixGroup()->GetTag() == 0)  {
       for( int j=0; j < ca.GetDependentAfixGroup()->Count(); j++ ) 

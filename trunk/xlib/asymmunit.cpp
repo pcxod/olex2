@@ -51,6 +51,7 @@ TAsymmUnit::~TAsymmUnit() {  Clear();  }
 void  TAsymmUnit::Clear()  {
   ClearRestraints();
   AfixGroups.Clear();
+  rSAME.Clear();
   Matrices.Clear();
   for( int i=0; i < CAtoms.Count(); i++ )
     delete CAtoms[i];
@@ -84,7 +85,6 @@ void TAsymmUnit::ClearRestraints()  {
   rUsim.Clear();
   rUiso.Clear();
   rEADP.Clear();
-  rSAME.Clear();
   ExyzGroups.Clear();
   UsedSymm.Clear();
 }

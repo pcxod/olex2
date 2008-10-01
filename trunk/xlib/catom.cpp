@@ -38,13 +38,15 @@ TCAtom::TCAtom(TAsymmUnit *Parent)  {
   HAttached = false;
   Saved = false;
   Tag = -1;
-  DependentAfixGroup = DependentHfixGroup = ParentAfixGroup = NULL;
+  DependentAfixGroup = ParentAfixGroup = NULL;
+  DependentHfixGroups = NULL;
   ExyzGroup = NULL;
 }
 //..............................................................................
 TCAtom::~TCAtom()  {
   if( FAttachedAtoms != NULL )   delete FAttachedAtoms;
   if( FAttachedAtomsI != NULL )  delete FAttachedAtomsI;
+  if( DependentHfixGroups != NULL )  delete DependentHfixGroups; 
 }
 //..............................................................................
 bool TCAtom::SetLabel(const olxstr &L)  {
@@ -96,7 +98,11 @@ void TCAtom::AtomInfo(TBasicAtomInfo* A)  {
 }
 //..............................................................................
 void TCAtom::Assign(const TCAtom& S)  {
-  DependentAfixGroup = DependentHfixGroup = ParentAfixGroup = NULL;  // managed by the group
+  DependentAfixGroup = ParentAfixGroup = NULL;  // managed by the group
+  if( DependentHfixGroups != NULL )  {
+    delete DependentHfixGroups;
+    DependentHfixGroups = NULL;
+  }
   ExyzGroup = NULL;  // also managed by the group
   SetPart( S.GetPart() );
   SetOccp( S.GetOccp() );
@@ -141,8 +147,8 @@ int TCAtom::GetAfix() const {
   if( ParentAfixGroup == NULL )  {
     if( DependentAfixGroup != NULL && (DependentAfixGroup->IsFitted() || DependentAfixGroup->GetM() == 0) )
       return DependentAfixGroup->GetAfix();
-    if( DependentHfixGroup != NULL && !DependentHfixGroup->IsRiding() )
-      return DependentHfixGroup->GetAfix();
+    //if( DependentHfixGroup != NULL && !DependentHfixGroup->IsRiding() )
+    //  return DependentHfixGroup->GetAfix();
     return 0;
   }
   if( ParentAfixGroup->HasExcplicitPivot() )
