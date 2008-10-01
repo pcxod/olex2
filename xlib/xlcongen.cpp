@@ -14,7 +14,7 @@ bool TXlConGen::FixParam(const short paramMask, TStrList& res, const TCAtomPList
   throw TNotImplementedException( __OlxSourceInfo );
 }
 //..............................................................................
-bool TXlConGen::FixAtom( TAtomEnvi& envi, const short Group, const TBasicAtomInfo& atomType, TAtomEnvi* pivoting)  {
+bool TXlConGen::FixAtom( TAtomEnvi& envi, const short Group, const TBasicAtomInfo& atomType, TAtomEnvi* pivoting, TCAtomPList* generated)  {
   try  {
     TAsymmUnit& au = *envi.GetBase().CAtom().GetParent();
     TSimpleRestraint* sr;
@@ -135,6 +135,8 @@ bool TXlConGen::FixAtom( TAtomEnvi& envi, const short Group, const TBasicAtomInf
       CreatedAtoms[i]->SetUiso( 4*caDefIso*caDefIso );
       CreatedAtoms[i]->SetOccpVar( envi.GetBase().CAtom().GetOccpVar() );
       CreatedAtoms[i]->SetOccp( envi.GetBase().CAtom().GetOccp() );
+      if( generated != NULL )
+        generated->Add(CreatedAtoms[i]);
     }
 
     if( CreatedAtoms.IsEmpty() )  // nothing inserted

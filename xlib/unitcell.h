@@ -63,8 +63,10 @@ public:
   // finds all atoms and their ccordinates inside the sphere of radius R
   void FindInRange(const TCAtom& atom, double R, 
     TArrayList< AnAssociation2<TCAtom const*, vec3d> >& res) const;
-  // finds all atoms (+symm attached) and Q-peaks, if specfied
-  void GetAtomEnviList(TSAtom& atom, TAtomEnvi& envi, bool IncludeQ = false) const;
+  /* finds all atoms (+symm attached) and Q-peaks, if specfied; if part is not -1, part 0 and 
+  the specified part are only placed
+  */
+  void GetAtomEnviList(TSAtom& atom, TAtomEnvi& envi, bool IncludeQ = false, int part=-1) const;
   // finds only q-peaks in the environment of specified atom
   void GetAtomQEnviList(TSAtom& atom, TAtomEnvi& envi);
   /* finds "pivoting" atoms for possible h-bonds, considering O and N only with

@@ -5,7 +5,7 @@
 
 BeginXlibNamespace()
 
-class TSameGroup {
+class TSameGroup : public ACollectionItem {
   TPtrList<TSameGroup> Dependent;  // pointers borrowed from Parent
   TCAtomPList Atoms;
   int Id;
@@ -16,6 +16,8 @@ public:
     Esd13 = 0.04;
   }
   ~TSameGroup()  {  Clear();  }
+
+  int GetId() const {  return Id;  }
 
   void Assign(class TAsymmUnit& tau, const TSameGroup& sg);
   
@@ -65,9 +67,19 @@ public:
   void Assign(TAsymmUnit& tau, const TSameGroupList& sl)  {
     Clear();
     for( int i=0; i < sl.Groups.Count(); i++ )
-      New();
-    for( int i=0; i < sl.Groups.Count(); i++ )
+      New().SetTag(0);
+    for( int i=0; i < sl.Groups.Count(); i++ )  {
+      // dependent first, to override shared atoms SameId
+      for( int j=0; j < sl.Groups[i].DependentCount(); j++ )  {
+        int id = sl.Groups[i].GetDependent(j).GetId();
+        if( Groups[id].GetTag() != 0 )  continue;
+        Groups[id].Assign(tau, sl.Groups[i].GetDependent(j));
+        Groups[id].SetTag(1);
+      }
+      if( Groups[i].GetTag() != 0 )  continue;
       Groups[i].Assign( tau, sl.Groups[i] );
+      Groups[i].SetTag(1);
+    }
   }
 };
 

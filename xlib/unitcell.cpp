@@ -503,7 +503,7 @@ smatd_list* TUnitCell::GetInRangeEx(const vec3d& to, const vec3d& from,
   return retVal;
 }
 //..............................................................................
-void TUnitCell::GetAtomEnviList(TSAtom& atom, TAtomEnvi& envi, bool IncludeQ )  const {
+void TUnitCell::GetAtomEnviList(TSAtom& atom, TAtomEnvi& envi, bool IncludeQ, int part )  const {
   if( atom.IsGrown() )
     throw TFunctionFailedException(__OlxSourceInfo, "not implementd for grown atoms");
 
@@ -516,7 +516,8 @@ void TUnitCell::GetAtomEnviList(TSAtom& atom, TAtomEnvi& envi, bool IncludeQ )  
     TSAtom& A = atom.Node(i);
     if( A.IsDeleted() ) continue;
     if( !IncludeQ && A.GetAtomInfo() == iQPeakIndex )  continue;
-    envi.Add( A.CAtom(), I, A.crd() );
+    if( part == -1 || (A.CAtom().GetPart() == 0 || A.CAtom().GetPart() == part) )
+      envi.Add( A.CAtom(), I, A.crd() );
   }
   vec3d v;
   for( int i=0; i < atom.CAtom().AttachedAtomCount(); i++ )  {
@@ -536,8 +537,10 @@ void TUnitCell::GetAtomEnviList(TSAtom& atom, TAtomEnvi& envi, bool IncludeQ )  
         break;
       }
     }
-    if( Add )
-      envi.Add( A, *m, v );
+    if( Add )  {
+      if( part == -1 || (A.GetPart() == 0 || A.GetPart() == part) )
+        envi.Add( A, *m, v );
+    }
     delete m;
   }
 }
