@@ -12,7 +12,10 @@ fi
 PATH="$PATH:OLEX_BIN:OLEX_INS"
 export PATH
 
-OLEX_INS/unirun OLEX_INS
+# Setup the olex2 directory
+export OLEX2_DIR=OLEX_INS
+
+OLEX_INS/unirun OLEX_INS | zenity --progress --pulsate --text='Olex2 is downloading and updating GUI' --auto-close
 OLEX_INS/olex2 &
 
 
