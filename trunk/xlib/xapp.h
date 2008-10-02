@@ -56,8 +56,8 @@ public:
 
   template <class FT>
     bool CheckFileType()  {
-      if( XFile().GetLastLoader() == NULL )  return false;
-      return EsdlInstanceOf(*XFile().GetLastLoader(), FT);
+      if( !XFile().HasLastLoader() )  return false;
+      return EsdlInstanceOf(*XFile().LastLoader(), FT);
     }
 
   static TXApp& GetInstance()  {

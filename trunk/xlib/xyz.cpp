@@ -84,9 +84,9 @@ void TXyz::LoadFromStrings(const TStrList& Strings)  {
 //..............................................................................
 bool TXyz::Adopt(TXFile *XF)  {
   Clear();
-  if( XF->GetLastLoader() != NULL )  {
-    FTitle = XF->GetLastLoader()->GetTitle();
-    SetHKLSource( XF->GetLastLoader()->GetHKLSource() );
+  if( XF->HasLastLoader() )  {
+    FTitle = XF->LastLoader()->GetTitle();
+    SetHKLSource( XF->LastLoader()->GetHKLSource() );
   }
   else  {
     SetHKLSource(EmptyString);

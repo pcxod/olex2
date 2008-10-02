@@ -125,9 +125,9 @@ bool TP4PFile::Adopt(TXFile* f)  {
   Chem = f->GetAsymmUnit().SummFormula(' ');
   GetAsymmUnit().Angles() = f->GetAsymmUnit().Angles();
   GetAsymmUnit().Axes()   = f->GetAsymmUnit().Axes();
-  if( f->GetLastLoader() )  {
-    FTitle = f->GetLastLoader()->GetTitle();
-    SetHKLSource( f->GetLastLoader()->GetHKLSource() );
+  if( f->HasLastLoader() )  {
+    FTitle = f->LastLoader()->GetTitle();
+    SetHKLSource( f->LastLoader()->GetHKLSource() );
   }
   else  {
     FTitle = "?";

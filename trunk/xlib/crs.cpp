@@ -143,9 +143,9 @@ bool TCRSFile::Adopt(TXFile* f)  {
   Sfac = EmptyString;
   f->GetAsymmUnit().SummFormula(BasicAtoms, Sfac, Unit);
 
-  if( f->GetLastLoader() )  {
-    FTitle = f->GetLastLoader()->GetTitle();
-    SetHKLSource( f->GetLastLoader()->GetHKLSource() );
+  if( f->HasLastLoader() )  {
+    FTitle = f->LastLoader()->GetTitle();
+    SetHKLSource( f->LastLoader()->GetHKLSource() );
   }
   else  {
     FHKLSource = EmptyString;

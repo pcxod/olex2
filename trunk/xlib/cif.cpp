@@ -1058,8 +1058,8 @@ bool TCif::Adopt(TXFile *XF)  {
         LoopData = new TCifLoopData;  Row->Object(6) = LoopData;
     }
   }
-  if( XF->GetLastLoader() )
-    SetHKLSource( XF->GetLastLoader()->GetHKLSource() );
+  if( XF->HasLastLoader() )
+    SetHKLSource( XF->LastLoader()->GetHKLSource() );
 
   return true;
 }

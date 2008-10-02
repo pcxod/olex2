@@ -578,7 +578,7 @@ void TAutoDB::ProcessFolder(const olxstr& folder)  {
       try  {
       TBasicApp::GetLog().Info( olxstr("Processing ") << files[i].GetName() << "..." );
         XFile.LoadFromFile( files[i].GetName() );
-        TCif& cif = *(TCif*)XFile.GetLastLoader();
+        TCif& cif = XFile.GetLastLoader<TCif>();
         olxstr r1 = cif.GetSParam("_refine_ls_R_factor_gt");
         if( r1.Length() && r1.ToDouble() > 5 )  {
           TBasicApp::GetLog().Info( olxstr("Skipped r1=") << r1 );

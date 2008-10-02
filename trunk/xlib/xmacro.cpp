@@ -21,6 +21,7 @@
 #include "dataitem.h"
 #include "fsext.h"
 #include "ecast.h"
+#include "xlcongen.h"
 
 #define xlib_InitMacro(macroName, validOptions, argc, desc)\
   lib.RegisterStaticMacro( new TStaticMacro(&XLibMacros::mac##macroName, #macroName, (validOptions), argc, desc))
@@ -28,17 +29,19 @@
   lib.RegisterStaticFunction( new TStaticFunction(&XLibMacros::fun##funcName, #funcName, argc, desc))
 
 const olxstr XLibMacros::NoneString("none");
-
+const olxstr XLibMacros::NAString("n/a");
+TActionQList XLibMacros::Actions;
+TActionQueue* XLibMacros::OnDelIns = &XLibMacros::Actions.NewQueue("OnDelIns");
 
 void XLibMacros::Export(TLibrary& lib)  {
   xlib_InitMacro(BrushHkl, "f-consider Friedel law", fpAny, "for high redundancy\
  data sets, removes equivalents with high sigma");
 //_________________________________________________________________________________________________________________________
   xlib_InitMacro(SG, "a", fpNone|fpOne, "suggest space group");
+  xlib_InitMacro(SGE, "", fpNone|fpOne|psFileLoaded, "Extended spacegroup determination. Internal use" );
 //_________________________________________________________________________________________________________________________
   xlib_InitMacro(GraphSR, "b-number of bins", fpNone|fpOne|psFileLoaded,
 "Prints a scale vs resolution graph for current file (fcf file must exist in current folder)");
-//_________________________________________________________________________________________________________________________
   xlib_InitMacro(Wilson, "b-number of bins&;p-uses linear vins for picture, otherwise uses spherical bins", 
     fpNone|fpOne|psFileLoaded, "Prints Wilson plot data");
 //_________________________________________________________________________________________________________________________
@@ -68,6 +71,7 @@ void XLibMacros::Export(TLibrary& lib)  {
 //_________________________________________________________________________________________________________________________
   xlib_InitMacro(Fuse, "f-removes symmetrical equivalents", fpNone|psFileLoaded,
 "Re-initialises the connectivity list" );
+  xlib_InitMacro(Flush, EmptyString, fpNone|fpOne, "Flushes log streams" );
 //_________________________________________________________________________________________________________________________
   xlib_InitMacro(EXYZ, "", fpAny|psCheckFileTypeIns,
 "Shares adds a new element to the give site" );
@@ -90,6 +94,18 @@ void XLibMacros::Export(TLibrary& lib)  {
 //_________________________________________________________________________________________________________________________
   xlib_InitMacro(Htab, "", fpNone|fpOne|psCheckFileTypeIns, "Adds HTBA instructions to the ins file, maximum bond length might be provided" );
 //_________________________________________________________________________________________________________________________
+  xlib_InitMacro(HAdd, "", fpAny|psCheckFileTypeIns, "Adds hydrogen atoms to all or provided atoms" );
+//_________________________________________________________________________________________________________________________
+  xlib_InitMacro(FixUnit,"", fpNone|fpOne|psCheckFileTypeIns, " Sets SFAc and UNIT to current content of the asymmetric unit.\
+ Takes Z', with default value of 1.");
+//_________________________________________________________________________________________________________________________
+  xlib_InitMacro(AddIns,"", (fpAny^fpNone)|psCheckFileTypeIns, "Adds an instruction to the INS file" );
+  xlib_InitMacro(DelIns, "", fpOne|psCheckFileTypeIns, "A number or the name (will remove all accurances) can be provided" );
+  xlib_InitMacro(LstIns, "", fpNone|psCheckFileTypeIns, "Lists all instructions of currently loaded Ins file" );
+  xlib_InitMacro(FixHL, "", fpNone|psFileLoaded, "" );
+  xlib_InitMacro(LS, "", fpOne|fpTwo|psCheckFileTypeIns, "Sets refinement method and/or the number of iterations.");
+  xlib_InitMacro(Plan, "", fpOne|psCheckFileTypeIns, "Sets the number of Fuorier peaks to be found from the difference map");
+  xlib_InitMacro(UpdateWght, "", fpAny|psCheckFileTypeIns, "Copies proposed weight to current");
 //_________________________________________________________________________________________________________________________
 //_________________________________________________________________________________________________________________________
 
@@ -101,11 +117,20 @@ void XLibMacros::Export(TLibrary& lib)  {
   xlib_InitFunc(FilePath, fpNone|fpOne, "Returns file path. If no arguments provided - of currently loaded file");
   xlib_InitFunc(FileFull, fpNone, "Returns full path of currently loaded file");
   xlib_InitFunc(FileDrive, fpNone|fpOne, "Returns file drive. If no arguments provided - of currently loaded file");
+  xlib_InitFunc(Title, fpNone|fpOne, "If the file is laoded, returns it's title else if a parameter passed, it is returned");
   xlib_InitFunc(IsFileLoaded, fpNone, "Returns true/false");
   xlib_InitFunc(IsFileType, fpOne, "Checks type of currently loaded file [ins,res,ires,cif,mol,xyz]");
 //_________________________________________________________________________________________________________________________
   xlib_InitFunc(BaseDir, fpNone|fpOne, "Returns the startup folder");
   xlib_InitFunc(HKLSrc, fpNone|fpOne|psFileLoaded, "Returns/sets hkl source for currently loaded file");
+//_________________________________________________________________________________________________________________________
+  xlib_InitFunc(LSM, fpNone|psCheckFileTypeIns, "Return current refinement method, L.S. or CGLS currently.");
+  xlib_InitFunc(SSM, fpNone|fpOne, "Return current structure solution method, TREF or PATT currently. If current method is unknown\
+ and an argument is provided, that argument is returned");
+  xlib_InitFunc(Ins, fpOne|psCheckFileTypeIns, "Returns instruction value (all data after the instruction). In case the instruction\
+ does not exist it return 'n/a' string");
+  xlib_InitFunc(SG, fpNone|fpOne, "Returns space group of currently loaded file. Also takes a string template, where\
+ %# is replaced with SG number, %n - short name, %N - full name and %h - Hall symbol" );
 //_________________________________________________________________________________________________________________________
   xlib_InitFunc(ATA, fpAny|psFileLoaded, "Test current structure agains database.\
   (Atom Tye Assignment). Returns true if any atom type changed" );
@@ -131,7 +156,7 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   TAsymmUnit& au = TXApp::GetInstance().XFile().GetAsymmUnit();
   TUnitCell& uc = TXApp::GetInstance().XFile().GetUnitCell();
   TLattice& lat = TXApp::GetInstance().XFile().GetLattice();
-  TIns& ins = *(TIns*)TXApp::GetInstance().XFile().GetLastLoader();
+  TIns& ins = TXApp::GetInstance().XFile().GetLastLoader<TIns>();
   TArrayList< AnAssociation2<TCAtom const*, smatd> > all;
   int h_indexes[3];
   for( int i=0; i < lat.AtomCount(); i++ )  {
@@ -192,8 +217,149 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   }
 }
 //..............................................................................
+void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+  TXApp& XApp = TXApp::GetInstance();
+  TSAtomPList satoms;
+  XApp.FindSAtoms( Cmds.Text(' '), satoms, true );
+  TXlConGen xlcg( &XApp.XFile().GetLastLoader<TIns>() );
+  XApp.XFile().GetLattice().AnalyseHAdd( xlcg, satoms );
+  XApp.XFile().EndUpdate();
+  delete XApp.FixHL();
+}
+//..............................................................................
+void XLibMacros::macFixHL(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  delete TXApp::GetInstance().FixHL();
+}
+//..............................................................................
 void XLibMacros::macFuse(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
   TXApp::GetInstance().XFile().GetLattice().Uniq( Options.Contains("f") );
+}
+//..............................................................................
+void XLibMacros::macLstIns(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
+  bool remarks = Options.Contains("r");
+  TIns& Ins = TXApp::GetInstance().XFile().GetLastLoader<TIns>();
+  TBasicApp::GetLog() << ("List of current instructions:\n");
+  olxstr Tmp;
+  for( int i=0; i < Ins.InsCount(); i++ )  {
+    if( !remarks && !Ins.InsName(i).Comparei("REM") )  continue;
+    Tmp = i;  Tmp.Format(3, true, ' ');
+    Tmp << Ins.InsName(i) << ' ' << Ins.InsParams(i).Text(' ');
+    TBasicApp::GetLog() << (Tmp << '\n');
+  }
+}
+//..............................................................................
+void XLibMacros::macAddIns(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+  TIns& Ins = TXApp::GetInstance().XFile().GetLastLoader<TIns>();
+  if( !Ins.AddIns(TStrList(Cmds)) )  {
+    Error.ProcessingError(__OlxSrcInfo, olxstr("could not add instruction: ") << Cmds.Text(' ') );
+    return;
+  }
+}
+//..............................................................................
+void XLibMacros::macDelIns(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  bool isOmit = false;
+  TIns& Ins = TXApp::GetInstance().XFile().GetLastLoader<TIns>();
+  if( Cmds[0].IsNumber() )  {
+    int insIndex = Cmds[0].ToInt();
+    if( Ins.InsName(insIndex).Comparei("OMIT") == 0 )
+      isOmit = true;
+    Ins.DelIns(insIndex);
+  }
+  else  {
+    for( int i=0; i < Ins.InsCount(); i++ )  {
+      if( Ins.InsName(i).Comparei(Cmds[0]) == 0 )  {
+        Ins.DelIns(i);  i--;  continue;
+      }
+    }
+  }
+  OnDelIns->Exit(NULL, &Cmds[0]);
+}
+//..............................................................................
+void XLibMacros::macLS(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+  TIns& iF = TXApp::GetInstance().XFile().GetLastLoader<TIns>();
+  int ls = -1;
+  XLibMacros::ParseNumbers<int>(Cmds, 1, &ls);
+  if( ls != -1 )  iF.SetIterations( (int)ls);
+  if( !Cmds.IsEmpty() )
+    iF.SetRefinementMethod( Cmds[0] );
+}
+//..............................................................................
+void XLibMacros::macUpdateWght(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+  TIns& I = TXApp::GetInstance().XFile().GetLastLoader<TIns>();
+  if( I.Wght1().Count() == 0 )  return;
+  if( Cmds.IsEmpty() )  { I.Wght() = I.Wght1();  }
+  else  {
+    I.Wght().Resize(Cmds.Count());
+    for( int i=0; i < Cmds.Count(); i++ )  
+      I.Wght()[i] = Cmds[i].ToDouble();
+  }
+}
+//..............................................................................
+void XLibMacros::macPlan(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error) {
+  int plan = Cmds[0].ToInt();
+  if( plan == -1 )  return; // leave like it is
+  TXApp::GetInstance().XFile().GetLastLoader<TIns>().SetPlan( plan );
+}
+//..............................................................................
+class TFixUnit_Sorter  {
+public:
+  static int Compare(TBasicAtomInfo const * s1, 
+                    TBasicAtomInfo const * s2)  {
+    double diff = s1->GetMr() - s1->GetMr();
+    if( diff < 0 )  return -1;
+    if( diff > 0 )  return 1;
+    return 0;
+  }
+};
+void XLibMacros::macFixUnit(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+  double Zp = Cmds.IsEmpty() ? 1 : Cmds[0].ToDouble();
+  if( Zp <= 0 )  Zp = 1;
+  TIns& Ins = TXApp::GetInstance().XFile().GetLastLoader<TIns>();
+  TXApp::GetInstance().XFile().UpdateAsymmUnit();
+  TPtrList<TBasicAtomInfo> content;
+  TAsymmUnit& au = TXApp::GetInstance().XFile().GetAsymmUnit();
+  int nhc = 0;
+  TBasicAtomInfo *cBai = NULL, *hBai = NULL;
+  for(int i=0; i < au.AtomCount(); i++ )  {
+    TCAtom& ca = au.GetAtom(i);
+    TBasicAtomInfo& bai = ca.GetAtomInfo();
+    if( ca.IsDeleted() || bai == iQPeakIndex )  continue;
+    if( bai.GetMr() > 3.5 )
+      nhc++;
+    int ind = content.IndexOf(&bai);
+    if( ind == -1 )  {
+      content.Add(&bai);
+      bai.SetSumm( ca.GetOccp() );
+      if( cBai == NULL && bai == iCarbonIndex )    cBai = &bai;
+      if( hBai == NULL && bai == iHydrogenIndex )  hBai = &bai;
+    }
+    else
+      bai.SetSumm( bai.GetSumm() + ca.GetOccp() );
+  }
+  int Z = Round(au.EstimateZ((int)((double)nhc/Zp)));
+  au.SetZ(Z);
+  TBasicApp::GetLog() << (olxstr("for Z'=") << olxstr::FormatFloat(2, Zp).TrimFloat() <<
+    " and " << nhc << " non hydrogen atoms Z is etimated to be " << Z << '\n');
+  olxstr sfac, unit, n_c;
+  content.QuickSorter.Sort<TFixUnit_Sorter>(content);
+  if( cBai != NULL && content.Count() > 1 )
+    content.Swap(0, content.IndexOf(cBai) );
+  if( hBai != NULL && content.Count() > 2 )
+    content.Swap(1, content.IndexOf(hBai) );
+
+  for( int i=0; i < content.Count(); i++ )  {
+    sfac << content[i]->GetSymbol();
+    unit << content[i]->GetSumm()*Z;
+    n_c << content[i]->GetSymbol() << olxstr::FormatFloat(3,(double)content[i]->GetSumm()/Zp).TrimFloat();
+    if( (i+1) < content.Count() )  {
+      sfac << ' ';
+      unit << ' ';
+      n_c << ' ';
+    }
+  }
+  TBasicApp::GetLog() << "New content is: " << n_c << '\n';
+  Ins.SetSfac(sfac);
+  Ins.SetUnit(unit);
 }
 //..............................................................................
 void XLibMacros::macEXYZ(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
@@ -320,7 +486,7 @@ void XLibMacros::macAddSE(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     xapp.FindSAtoms(EmptyString, atoms);
     xapp.XFile().GetLattice().TransformFragments(atoms, m);
     au.ChangeSpaceGroup(*sg);
-    xapp.XFile().GetLastLoader()->GetAsymmUnit().ChangeSpaceGroup(*sg);
+    xapp.XFile().LastLoader()->GetAsymmUnit().ChangeSpaceGroup(*sg);
     latt.Init();
     for( int i=0; i < au.AtomCount(); i++ )  {
       for( int j=i+1; j < au.AtomCount(); j++ )  {
@@ -478,7 +644,7 @@ void XLibMacros::funFileName(const TStrObjList &Params, TMacroError &E)  {
   if( !Params.IsEmpty() )
     Tmp = TEFile::ExtractFileName(Params[0]);
   else  {
-    if( TXApp::GetInstance().XFile().GetLastLoader() != NULL )
+    if( TXApp::GetInstance().XFile().HasLastLoader() )
       Tmp = TEFile::ExtractFileName( TXApp::GetInstance().XFile().GetFileName() );
     else
       Tmp = NoneString;
@@ -491,7 +657,7 @@ void XLibMacros::funFileExt(const TStrObjList &Params, TMacroError &E)  {
   if( !Params.IsEmpty() )
     E.SetRetVal( TEFile::ExtractFileExt(Params[0]) );
   else  {
-    if( TXApp::GetInstance().XFile().GetLastLoader() != NULL )
+    if( TXApp::GetInstance().XFile().HasLastLoader() )
       E.SetRetVal( TEFile::ExtractFileExt(TXApp::GetInstance().XFile().GetFileName()) );
     else
       E.SetRetVal( NoneString );
@@ -503,7 +669,7 @@ void XLibMacros::funFilePath(const TStrObjList &Params, TMacroError &E)  {
   if( !Params.IsEmpty() )
     Tmp = TEFile::ExtractFilePath( Params[0] );
   else  {
-    if( TXApp::GetInstance().XFile().GetLastLoader() )
+    if( TXApp::GetInstance().XFile().HasLastLoader() )
       Tmp = TEFile::ExtractFilePath( TXApp::GetInstance().XFile().GetFileName() );
     else
       Tmp = NoneString;
@@ -518,7 +684,7 @@ void XLibMacros::funFileDrive(const TStrObjList &Params, TMacroError &E)  {
   if( !Params.IsEmpty() )
     E.SetRetVal( TEFile::ExtractFileDrive(Params[0]) );
   else  {
-    if( TXApp::GetInstance().XFile().GetLastLoader() != NULL )
+    if( TXApp::GetInstance().XFile().HasLastLoader() )
       E.SetRetVal( TEFile::ExtractFileDrive(TXApp::GetInstance().XFile().GetFileName()) );
     else
       E.SetRetVal( NoneString );
@@ -526,14 +692,25 @@ void XLibMacros::funFileDrive(const TStrObjList &Params, TMacroError &E)  {
 }
 //..............................................................................
 void XLibMacros::funFileFull(const TStrObjList &Params, TMacroError &E)  {
-  if( TXApp::GetInstance().XFile().GetLastLoader() == NULL )
-    E.SetRetVal( NoneString );
-  else
+  if( TXApp::GetInstance().XFile().HasLastLoader() )
     E.SetRetVal( TXApp::GetInstance().XFile().GetFileName() );
+  else
+    E.SetRetVal( NoneString );
 }
 //..............................................................................
 void XLibMacros::funIsFileLoaded(const TStrObjList& Params, TMacroError &E) {
-  E.SetRetVal( TXApp::GetInstance().XFile().GetLastLoader() != NULL );
+  E.SetRetVal( TXApp::GetInstance().XFile().HasLastLoader() );
+}
+//..............................................................................
+void XLibMacros::funTitle(const TStrObjList& Params, TMacroError &E)  {
+  if( !TXApp::GetInstance().XFile().HasLastLoader() )  {
+    if( Params.IsEmpty() )
+      E.SetRetVal( olxstr("File is not loaded") );
+    else
+      E.SetRetVal( Params[0] );
+  }
+  else
+    E.SetRetVal( TXApp::GetInstance().XFile().LastLoader()->GetTitle() );
 }
 //..............................................................................
 void XLibMacros::funIsFileType(const TStrObjList& Params, TMacroError &E) {
@@ -576,11 +753,128 @@ void XLibMacros::funBaseDir(const TStrObjList& Params, TMacroError &E)  {
   E.SetRetVal( tmp );
 }
 //..............................................................................
+void XLibMacros::funLSM(const TStrObjList& Params, TMacroError &E) {
+  E.SetRetVal( TXApp::GetInstance().XFile().GetLastLoader<TIns>().GetRefinementMethod() );
+}
+//..............................................................................
+void XLibMacros::funIns(const TStrObjList& Params, TMacroError &E)  {
+  TIns& I = TXApp::GetInstance().XFile().GetLastLoader<TIns>();
+  olxstr tmp;
+  if( Params[0].Comparei("weight") == 0 || Params[0].Comparei("wght") == 0 )  {
+    for( int j=0; j < I.Wght().Count(); j++ )  {
+      tmp << I.Wght()[j];
+      if( (j+1) < I.Wght().Count() )  tmp << ' ';
+    }
+    E.SetRetVal( tmp );
+    return;
+  }
+  if( !Params[0].Comparei("weight1") )  {
+    for( int j=0; j < I.Wght1().Count(); j++ )  {
+      tmp << I.Wght1()[j];
+      if( (j+1) < I.Wght1().Count() )  tmp << ' ';
+    }
+    E.SetRetVal( tmp );
+    return;
+  }
+  if( (Params[0].Comparei("L.S.") == 0) || (Params[0].Comparei("CGLS") == 0) )  {
+    for( int i=0; i < I.GetLSV().Count(); i++ )  {
+      tmp << I.GetLSV()[i];
+      if( (i+1) < I.GetLSV().Count() )  tmp << ' ';
+    }
+    E.SetRetVal( I.GetLSV().Count() == 0 ? NAString : tmp );
+    return;
+  }
+  if( Params[0].Comparei("ls") == 0 )  {
+    E.SetRetVal( I.GetLSV().Count() == 0 ? NAString : olxstr(I.GetIterations()) );
+    return;
+  }
+  if( Params[0].Comparei("plan") == 0)  {
+    for( int i=0; i < I.GetPlanV().Count(); i++ )  {
+      tmp << ((i < 1) ? Round(I.GetPlanV()[i]) : I.GetPlanV()[i]);
+      if( (i+1) < I.GetPlanV().Count() )  tmp << ' ';
+    }
+    E.SetRetVal( I.GetPlanV().Count() == 0 ? NAString : tmp );
+    return;
+  }
+  if( Params[0].Comparei("qnum") == 0)  {
+    E.SetRetVal( I.GetPlanV().Count() == 0 ? NAString : olxstr(I.GetPlan()) );
+    return;
+  }
+  if( Params[0].Comparei("R1") == 0)  {
+    E.SetRetVal( I.GetR1() < 0 ? NAString : olxstr(I.GetR1()) );
+    return;
+  }
+  if( !I.InsExists(Params[0]) )  {
+    E.SetRetVal( NAString );
+    return;
+  }
+//  FXApp->XFile().UpdateAsymmUnit();
+//  I->UpdateParams();
+
+  TInsList* insv = I.FindIns( Params[0] );
+  if( insv != 0 )
+    E.SetRetVal( insv->Text(' ') );
+  else
+    E.SetRetVal( EmptyString );
+}
+//..............................................................................
+void XLibMacros::funSSM(const TStrObjList& Params, TMacroError &E) {
+  TIns& I = TXApp::GetInstance().XFile().GetLastLoader<TIns>();
+  if( I.GetSolutionMethod().IsEmpty() && Params.Count() == 1 )
+    E.SetRetVal( Params[0] );
+  else
+    E.SetRetVal( I.GetSolutionMethod() );
+}
+//..............................................................................
+void XLibMacros::funSG(const TStrObjList &Cmds, TMacroError &E)  {
+  TSpaceGroup* sg = NULL;
+  try  { sg = &TXApp::GetInstance().XFile().GetLastLoaderSG();  }
+  catch(...)  {}
+  if( sg != NULL )  {
+    olxstr Tmp;
+    if( Cmds.IsEmpty() )  {
+      Tmp = sg->GetName();
+      if( !sg->GetFullName().IsEmpty() )  {
+        Tmp << " (" << sg->GetFullName() << ')';
+      }
+      Tmp << " #" << sg->GetNumber();
+    }
+    else  {
+      Tmp = Cmds[0];
+      Tmp.Replace("%#", olxstr(sg->GetNumber()) );
+      Tmp.Replace("%n", sg->GetName());
+      Tmp.Replace("%N", sg->GetFullName());
+      Tmp.Replace("%H", sg->GetHallSymbol());
+      if( Tmp.IndexOf("%h") != -1 )  {
+        olxstr t = sg->GetFullName(), res;
+        res.SetCapacity( t.Length() + 20 );
+        for( int i=0; i < t.Length(); i++ )  {
+          if( (i+1) < t.Length() )  {
+            if( (t[i] >= '0' && t[i] <= '9')  &&  (t[i+1] >= '0' && t[i+1] <= '9') )  {
+              res << t[i] << "<sub>" << t[i+1] << "</sub>";
+              i++;
+              continue;
+            }
+          }
+          res << t[i];
+        }
+        Tmp.Replace("%h", res);
+      }
+    }
+    E.SetRetVal( Tmp );
+  }
+  else  {
+    E.SetRetVal( NAString );
+//    E.ProcessingError(__OlxSrcInfo, "could not find space group for the file" );
+    return;
+  }
+}
+//..............................................................................
 void XLibMacros::funHKLSrc(const TStrObjList& Params, TMacroError &E)  {
   if( Params.Count() == 1 )
-    TXApp::GetInstance().XFile().GetLastLoader()->SetHKLSource( Params[0] );
+    TXApp::GetInstance().XFile().LastLoader()->SetHKLSource( Params[0] );
   else
-    E.SetRetVal( TXApp::GetInstance().XFile().GetLastLoader()->GetHKLSource() );
+    E.SetRetVal( TXApp::GetInstance().XFile().LastLoader()->GetHKLSource() );
 }
 //..............................................................................
 void XLibMacros::macCif2Doc(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
@@ -612,7 +906,7 @@ void XLibMacros::macCif2Doc(TStrObjList &Cmds, const TParamList &Options, TMacro
 
   TCif *Cif, Cif1(xapp.AtomsInfo());
   if( xapp.CheckFileType<TCif>() )
-    Cif = (TCif*)xapp.XFile().GetLastLoader();
+    Cif = &xapp.XFile().GetLastLoader<TCif>();
   else  {
     olxstr cifFN = TEFile::ChangeFileExt( xapp.XFile().GetFileName(), "cif");
     if( TEFile::FileExists( cifFN ) ) 
@@ -670,7 +964,7 @@ void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options, TMacro
   TCif *Cif, Cif1(xapp.AtomsInfo());
 
   if( xapp.CheckFileType<TCif>() )
-    Cif = (TCif*)xapp.XFile().GetLastLoader();
+    Cif = &xapp.XFile().GetLastLoader<TCif>();
   else  {
     olxstr cifFN = TEFile::ChangeFileExt( xapp.XFile().GetFileName(), "cif");
     if( TEFile::FileExists( cifFN ) )  {
@@ -841,7 +1135,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
   TCif *Cif, Cif1(xapp.AtomsInfo()), Cif2(xapp.AtomsInfo());
 
   if( xapp.CheckFileType<TCif>() )
-    Cif = (TCif*)xapp.XFile().GetLastLoader();
+    Cif = &xapp.XFile().GetLastLoader<TCif>();
   else  {
     olxstr cifFN = TEFile::ChangeFileExt( xapp.XFile().GetFileName(), "cif");
     if( TEFile::FileExists( cifFN ) )  {
@@ -930,7 +1224,7 @@ void XLibMacros::macCifExtract(TStrObjList &Cmds, const TParamList &Options, TMa
   TCif In(xapp.AtomsInfo()),  Out(xapp.AtomsInfo()), *Cif, Cif1(xapp.AtomsInfo());
 
   if( xapp.CheckFileType<TCif>() )
-    Cif = (TCif*)xapp.XFile().GetLastLoader();
+    Cif = &xapp.XFile().GetLastLoader<TCif>();
   else  {
     olxstr cifFN = TEFile::ChangeFileExt( xapp.XFile().GetFileName(), "cif");
     if( TEFile::FileExists( cifFN ) )  {
@@ -1318,9 +1612,69 @@ void XLibMacros::macChangeSG(TStrObjList &Cmds, const TParamList &Options, TMacr
   }
   au.InitAtomIds();
   au.ChangeSpaceGroup(*sg);
-  xapp.XFile().GetLastLoader()->GetAsymmUnit().ChangeSpaceGroup(*sg);
+  xapp.XFile().LastLoader()->GetAsymmUnit().ChangeSpaceGroup(*sg);
   latt.Init();
   latt.CompaqAll();
+}
+//..............................................................................
+void XLibMacros::macFlush(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  TBasicApp::GetLog().Flush();
+}
+//..............................................................................
+void XLibMacros::macSGE(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  using namespace olex;
+  IOlexProcessor* op = IOlexProcessor::GetInstance();
+  if( op == NULL )
+    throw TFunctionFailedException(__OlxSourceInfo, "this function requires Olex2 processor implementation");
+  TPtrList<TSpaceGroup> sgs;
+  TSpaceGroup* sg = NULL;
+  bool cntro = false;
+  E.SetRetVal(&sgs);
+  op->executeMacroEx("SG", E);
+  E.SetRetVal<bool>(false);
+  if( sgs.Count() == 0 )  {
+    TBasicApp::GetLog().Error( "Could not find any suitable spacegroup. Terminating ... " );
+    return;
+  }
+  else if( sgs.Count() == 1 )  {
+    sg = sgs[0];
+    TBasicApp::GetLog() << "Univocal spacegroup choice: " << sg->GetName() << '\n';
+  }
+  else  {
+    E.Reset();
+    op->executeMacroEx("Wilson", E);
+    bool centro = E.GetRetVal().ToBool();
+    TBasicApp::GetLog() << "Searching for centrosymmetric group: " << centro << '\n';
+    for( int i=0; i < sgs.Count(); i++ )  {
+      if( centro )  {
+        if( sgs[i]->IsCentrosymmetric() )  {
+          sg = sgs[i];
+          break;
+        }
+      }
+      else  {
+        if( !sgs[i]->IsCentrosymmetric() )  {
+          sg = sgs[i];
+          break;
+        }
+      }
+    }
+    if( sg == NULL )  {  // no match to centre of symmetry found
+      sg = sgs[0];
+      TBasicApp::GetLog() << "Could not match, choosing: " << sg->GetName() << '\n';
+    }
+    else  {
+      TBasicApp::GetLog() << "Chosen: " << sg->GetName() << '\n';
+    }
+  }
+  olxstr fn( Cmds.IsEmpty() ? TEFile::ChangeFileExt(TXApp::GetInstance().XFile().GetFileName(), "ins") : Cmds[0] );
+  op->executeMacroEx(olxstr("reset -s=") << sg->GetName() << " -f='" << fn << '\'', E);
+  if( E.IsSuccessful() )  {
+    op->executeMacroEx(olxstr("reap '") << fn << '\'', E);
+    if( E.IsSuccessful() )  
+      op->executeMacroEx(olxstr("solve"), E);
+    E.SetRetVal<bool>(E.IsSuccessful());
+  }
 }
 //..............................................................................
 

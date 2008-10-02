@@ -2627,11 +2627,11 @@ void TGXApp::HklVisible(bool v)  {
     FDUnitCell->Reciprical(false);
     FHklVisible = false;
     if( !FHklFile->RefCount() )  {
-      if( !FXFile->GetLastLoader() )
+      if( !FXFile->HasLastLoader() )
       {  Log->Error("Cannot display HKL - file is not loaded");  return;  }
-      if( !TEFile::FileExists(FXFile->GetLastLoader()->GetHKLSource()) )
+      if( !TEFile::FileExists(FXFile->LastLoader()->GetHKLSource()) )
       {  Log->Error("Cannot display HKL - could locate HKL file");  return;  }
-      if( !FHklFile->LoadFromFile(FXFile->GetLastLoader()->GetHKLSource()) )
+      if( !FHklFile->LoadFromFile(FXFile->LastLoader()->GetHKLSource()) )
       {  Log->Error("Cannot display HKL - could load HKL file");  return;  }
     }
     CreateXRefs();

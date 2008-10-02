@@ -148,7 +148,7 @@ int CalcL( int v )  {
 //..............................................................................
 void TMainForm::funFileLast(const TStrObjList& Params, TMacroError &E)  {
   int index = 0;
-  if( FXApp->XFile().GetLastLoader() )  index = 1;
+  if( FXApp->XFile().HasLastLoader() )  index = 1;
   if( FRecentFiles.Count() <= index )  {
     E.ProcessingError(__OlxSrcInfo, "no last file");
     return;
@@ -179,21 +179,10 @@ void TMainForm::funCell(const TStrObjList& Params, TMacroError &E)  {
     E.ProcessingError(__OlxSrcInfo, "invalid argument: ") << Params[0];
 }
 //..............................................................................
-void TMainForm::funTitle(const TStrObjList& Params, TMacroError &E)  {
-  if( !FXApp->XFile().GetLastLoader() )  {
-    if( Params.IsEmpty() )
-      E.SetRetVal( olxstr("File is not loaded") );
-    else
-      E.SetRetVal( Params[0] );
-  }
-  else
-    E.SetRetVal( FXApp->XFile().GetLastLoader()->GetTitle() );
-}
-//..............................................................................
 void TMainForm::funCif(const TStrObjList& Params, TMacroError &E)  {
-  TCif* cf = (TCif*)FXApp->XFile().GetLastLoader();
-  if( cf->ParamExists( Params[0] ) )
-    E.SetRetVal( cf->GetSParam(Params[0]) );
+  TCif& cf = FXApp->XFile().GetLastLoader<TCif>();
+  if( cf.ParamExists( Params[0] ) )
+    E.SetRetVal( cf.GetSParam(Params[0]) );
   else
     E.SetRetVal( NAString );
 }
@@ -225,9 +214,9 @@ void TMainForm::funIsOS(const TStrObjList& Params, TMacroError &E)  {
 }
 //..............................................................................
 void TMainForm::funCrs(const TStrObjList& Params, TMacroError &E)  {
-  TCRSFile* cf = (TCRSFile*)FXApp->XFile().GetLastLoader();
+  TCRSFile& cf = FXApp->XFile().GetLastLoader<TCRSFile>();
   if( Params[0].Comparei("sg") == 0 )  {
-    TSpaceGroup* sg = cf->GetSG();
+    TSpaceGroup* sg = cf.GetSG();
     if( sg != NULL )
       E.SetRetVal( sg->GetName() );
     else
@@ -235,67 +224,6 @@ void TMainForm::funCrs(const TStrObjList& Params, TMacroError &E)  {
   }
   else
     E.SetRetVal( NAString );
-}
-//..............................................................................
-void TMainForm::funIns(const TStrObjList& Params, TMacroError &E)  {
-  TIns *I = (TIns*)FXApp->XFile().GetLastLoader();
-  olxstr tmp;
-  if( Params[0].Comparei("weight") == 0 || Params[0].Comparei("wght") == 0 )  {
-    for( int j=0; j < I->Wght().Count(); j++ )  {
-      tmp << I->Wght()[j];
-      if( (j+1) < I->Wght().Count() )  tmp << ' ';
-    }
-    E.SetRetVal( tmp );
-    return;
-  }
-  if( !Params[0].Comparei("weight1") )  {
-    for( int j=0; j < I->Wght1().Count(); j++ )  {
-      tmp << I->Wght1()[j];
-      if( (j+1) < I->Wght1().Count() )  tmp << ' ';
-    }
-    E.SetRetVal( tmp );
-    return;
-  }
-  if( (Params[0].Comparei("L.S.") == 0) || (Params[0].Comparei("CGLS") == 0) )  {
-    for( int i=0; i < I->GetLSV().Count(); i++ )  {
-      tmp << I->GetLSV()[i];
-      if( (i+1) < I->GetLSV().Count() )  tmp << ' ';
-    }
-    E.SetRetVal( I->GetLSV().Count() == 0 ? NAString : tmp );
-    return;
-  }
-  if( Params[0].Comparei("ls") == 0 )  {
-    E.SetRetVal( I->GetLSV().Count() == 0 ? NAString : olxstr(I->GetIterations()) );
-    return;
-  }
-  if( Params[0].Comparei("plan") == 0)  {
-    for( int i=0; i < I->GetPlanV().Count(); i++ )  {
-      tmp << ((i < 1) ? Round(I->GetPlanV()[i]) : I->GetPlanV()[i]);
-      if( (i+1) < I->GetPlanV().Count() )  tmp << ' ';
-    }
-    E.SetRetVal( I->GetPlanV().Count() == 0 ? NAString : tmp );
-    return;
-  }
-  if( Params[0].Comparei("qnum") == 0)  {
-    E.SetRetVal( I->GetPlanV().Count() == 0 ? NAString : olxstr(I->GetPlan()) );
-    return;
-  }
-  if( Params[0].Comparei("R1") == 0)  {
-    E.SetRetVal( I->GetR1() < 0 ? NAString : olxstr(I->GetR1()) );
-    return;
-  }
-  if( !I->InsExists(Params[0]) )  {
-    E.SetRetVal( NAString );
-    return;
-  }
-//  FXApp->XFile().UpdateAsymmUnit();
-//  I->UpdateParams();
-
-  TInsList* insv = I->FindIns( Params[0] );
-  if( insv != 0 )
-    E.SetRetVal( insv->Text(' ') );
-  else
-    E.SetRetVal( EmptyString );
 }
 //..............................................................................
 void TMainForm::funDataDir(const TStrObjList& Params, TMacroError &E)  {
@@ -1221,7 +1149,7 @@ void TMainForm::macPict(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 
   olxstr bmpFN;
 
-  if( FXApp->XFile().GetLastLoader() && Cmds[0].FirstIndexOf(':') == -1 )
+  if( FXApp->XFile().HasLastLoader() && Cmds[0].FirstIndexOf(':') == -1 )
     bmpFN = TEFile::ExtractFilePath(FXApp->XFile().GetFileName()) << TEFile::ExtractFileName( Cmds[0] );
   else
     bmpFN = Cmds[0];
@@ -1368,7 +1296,7 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   FXApp->GetRender().SetView();
   FXApp->Draw();
   olxstr bmpFN;
-  if( FXApp->XFile().GetLastLoader() )
+  if( FXApp->XFile().HasLastLoader() )
     bmpFN = TEFile::ExtractFilePath(FXApp->XFile().GetFileName()) << TEFile::ExtractFileName( Cmds[0] );
   else
     bmpFN = Cmds[0];
@@ -2119,7 +2047,7 @@ void TMainForm::macFile(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 
   FXApp->SaveXFile(Tmp, Sort);
   UpdateRecentFile(Tmp);
-  if( FXApp->XFile().GetLastLoader() != NULL )  {
+  if( FXApp->XFile().HasLastLoader() )  {
     //FInfoBox->Clear();
     //FInfoBox->PostText(FXApp->XFile().GetFileName());
     //FInfoBox->PostText(FXApp->XFile().GetLastLoader()->GetTitle());
@@ -2346,36 +2274,8 @@ void TMainForm::macKill(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   }
 }
 //..............................................................................
-void TMainForm::macLS(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  TIns* iF = (TIns*)FXApp->XFile().GetLastLoader();
-  int ls = -1;
-  XLibMacros::ParseNumbers<int>(Cmds, 1, &ls);
-  if( ls != -1 )  iF->SetIterations( (int)ls);
-  if( !Cmds.IsEmpty() )
-    iF->SetRefinementMethod( Cmds[0] );
-}
-//..............................................................................
-void TMainForm::macUpdateWght(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  if( !FXApp->CheckFileType<TIns>() )  return;
-  TIns *I = (TIns*)FXApp->XFile().GetLastLoader();
-  if( I->Wght1().Count() == 0 )  return;
-  if( Cmds.IsEmpty() )  { I->Wght() = I->Wght1();  }
-  else  {
-    I->Wght().Resize(Cmds.Count());
-    for( int i=0; i < Cmds.Count(); i++ )  I->Wght()[i] = Cmds[i].ToDouble();
-  }
-}
-//..............................................................................
-void TMainForm::macPlan(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error) {
-  int plan = Cmds[0].ToInt();
-  if( plan == -1 )  return; // leave like it is
-
-  TIns *IF = (TIns*)FXApp->XFile().GetLastLoader();
-  IF->SetPlan( plan );
-}
-//..............................................................................
 void TMainForm::macOmit(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  TIns *IF = (TIns*)FXApp->XFile().GetLastLoader();
+  TIns& IF = FXApp->XFile().GetLastLoader<TIns>();
   if( Cmds.Count() == 1 )  {
     if( Cmds[0].IsNumber() )  {
       double th = Cmds[0].ToDouble();
@@ -2384,13 +2284,13 @@ void TMainForm::macOmit(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         TLstRef& r = Lst.DRef(i);
         if( !r.Deleted && r.DF >= th )  {
           o[0] = r.H;  o[1] = r.K;  o[2] = r.L;
-          IF->AddIns("OMIT", o, false);
+          IF.AddIns("OMIT", o, false);
         }
       }
     }
   }
   else 
-    IF->AddIns("OMIT", Cmds );
+    IF.AddIns("OMIT", Cmds );
 
   BadReflectionsTable(false);
   executeMacro("html.updatehtml");
@@ -2533,7 +2433,7 @@ void TMainForm::macSave(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     return;
   }
   if( Tmp == "view" )  {
-    if( FXApp->XFile().GetLastLoader() != NULL )  {
+    if( FXApp->XFile().HasLastLoader() )  {
       Tmp = (Cmds.Count() == 1) ? TEFile::ChangeFileExt(Cmds[0], "xlds") :
                                   TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), "xlds");
       TDataFile DF;
@@ -2621,7 +2521,7 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     return;
   }
   if( Tmp == "view" )  {
-    if( FXApp->XFile().GetLastLoader() != NULL )  {
+    if( FXApp->XFile().HasLastLoader() )  {
       if( Cmds.Count() == 1 )
         Tmp = TEFile::ChangeFileExt(Cmds[0], "xlds");
       else
@@ -2866,37 +2766,6 @@ void TMainForm::macOccu(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   }
 }
 //..............................................................................
-void TMainForm::macAddIns(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  // synchronise atom names
-  //FXApp->XFile().UpdateAsymmUnit();
-
-  TIns * Ins = (TIns*)FXApp->XFile().GetLastLoader();
-  // check for long instructions
-  if( !Ins->AddIns(TStrList(Cmds)) )  {
-    Error.ProcessingError(__OlxSrcInfo, olxstr("could not add instruction: ") << Cmds.Text(' ') );
-    return;
-  }
-  // synchronise instruction params
-  Ins->UpdateParams();
-}
-//..............................................................................
-void TMainForm::macFixUnit(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)
-{
-  if( !FXApp->CheckFileType<TIns>() )  return;
-
-  TIns * Ins = (TIns*)FXApp->XFile().GetLastLoader();
-  FXApp->XFile().UpdateAsymmUnit();
-  bool atoms = false;
-  TCAtom *CA;
-  for(int i=0; i < FXApp->XFile().GetAsymmUnit().AtomCount(); i++ )  {
-    CA = &FXApp->XFile().GetAsymmUnit().GetAtom(i);
-    if( CA->IsDeleted() )  continue;
-    if( CA->GetAtomInfo() != iQPeakIndex )
-    {  atoms = true;  break;  }
-  }
-  if( atoms )  {  Ins->FixUnit();  }
-}
-//..............................................................................
 void TMainForm::macHtmlPanelSwap(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   if( Cmds.IsEmpty() )  {
     FHtmlOnLeft = !FHtmlOnLeft;
@@ -2984,7 +2853,7 @@ void TMainForm::macQPeakScale(TStrObjList &Cmds, const TParamList &Options, TMac
     return;
   }
   if( Cmds.Count() == 1 )  {
-    if( FXApp->XFile().GetLastLoader() == NULL )  {
+    if( FXApp->XFile().HasLastLoader() )  {
       E.ProcessingError(__OlxSrcInfo, "file is not loaded" );
       return;
     }
@@ -3010,7 +2879,7 @@ void TMainForm::macLabel(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 }
 //..............................................................................
 void TMainForm::macCalcChn(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  if( !FXApp->XFile().GetLastLoader() && !Cmds.Count() )  {
+  if( !FXApp->XFile().HasLastLoader() && Cmds.IsEmpty() )  {
     Error.ProcessingError(__OlxSrcInfo, "nor file is loaded neither formula is provided" );
     return;
   }
@@ -3035,7 +2904,7 @@ void TMainForm::macCalcChn(TStrObjList &Cmds, const TParamList &Options, TMacroE
 //..............................................................................
 void TMainForm::macCalcMass(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   TIPattern *ip = NULL;
-  if( !FXApp->XFile().GetLastLoader() && !Cmds.Count() )  {
+  if( !FXApp->XFile().HasLastLoader() && Cmds.IsEmpty() )  {
     Error.ProcessingError(__OlxSrcInfo, "nor file is loaded neither formula is provided" );
     return;
   }
@@ -3182,13 +3051,11 @@ void TMainForm::macShowH(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 }
 //..............................................................................
 void TMainForm::macFvar(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  if( !FXApp->CheckFileType<TIns>() )  return;
-
-  TIns *I = (TIns*)FXApp->XFile().GetLastLoader();
+  TIns& I = FXApp->XFile().GetLastLoader<TIns>();
   if( Cmds.IsEmpty() )  {
     olxstr tmp = "Free variables: ";
-    for( int i=0; i < I->Vars().Count(); i++ )
-      tmp << olxstr::FormatFloat(3, I->Vars()[i]) << ' ';
+    for( int i=0; i < I.Vars().Count(); i++ )
+      tmp << olxstr::FormatFloat(3, I.Vars()[i]) << ' ';
     TBasicApp::GetLog() << (tmp << '\n');
     return;
   }
@@ -3197,8 +3064,8 @@ void TMainForm::macFvar(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   TXAtomPList xatoms;
   FindXAtoms(Cmds, xatoms, true, !Options.Contains("cs"));
   if( xatoms.Count() == 2 && !fvar )  {
-    I->AddVar(0.5);
-    int num = I->Vars().Count();
+    I.AddVar(0.5);
+    int num = I.Vars().Count();
     xatoms[0]->Atom().CAtom().SetOccpVar(num*10+1);
     xatoms[1]->Atom().CAtom().SetOccpVar(-num*10-1);
   }
@@ -3207,17 +3074,14 @@ void TMainForm::macFvar(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       xatoms[i]->Atom().CAtom().SetOccpVar(fvar);
     if( fvar != 0)  {
       int iv = (int)fabs(fvar/10);
-      while( I->Vars().Count() < iv )
-        I->AddVar(0.5);
+      while( I.Vars().Count() < iv )
+        I.AddVar(0.5);
     }
   }
 }
 //..............................................................................
-void TMainForm::macSump(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)
-{
-  if( !FXApp->CheckFileType<TIns>() )  return;
-
-  TIns *I = (TIns*)FXApp->XFile().GetLastLoader();
+void TMainForm::macSump(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
+  TIns& I = FXApp->XFile().GetLastLoader<TIns>();
   TCAtomPList CAtoms;
   FXApp->FindCAtoms(Cmds.Text(' '), CAtoms);
   if( CAtoms.Count() < 2 )  {
@@ -3237,21 +3101,19 @@ void TMainForm::macSump(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   }
   sump = "1 0.01";
   for( int i=0; i < CAtoms.Count(); i++ )  {
-    I->AddVar(1./CAtoms.Count());
-    CAtoms[i]->SetOccpVar( I->Vars().Count()*10+1 );
+    I.AddVar(1./CAtoms.Count());
+    CAtoms[i]->SetOccpVar( I.Vars().Count()*10+1 );
     sump << ' ';
     sump << "1.00 ";  // weight
-    sump << I->Vars().Count();  // variable
+    sump << I.Vars().Count();  // variable
   }
   TStrList SL;
   SL.Add(sump);
-  I->AddIns("SUMP", SL);
+  I.AddIns("SUMP", SL);
 }
 //..............................................................................
 void TMainForm::macPart(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  if( !FXApp->CheckFileType<TIns>() )  return;
-
-  TIns *Ins = (TIns*)FXApp->XFile().GetLastLoader();
+  TIns& Ins = FXApp->XFile().GetLastLoader<TIns>();
   int part = -1, partCount = Options.FindValue("p", "1").ToInt();
   XLibMacros::ParseNumbers<int>(Cmds, 1, &part);
   bool linkOccu = Options.Contains("lo");
@@ -3266,13 +3128,14 @@ void TMainForm::macPart(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   if( linkOccu )  {
     // -21 -> 21
     if( partCount == 2 )  {
-      Ins->AddVar(0.5);
-      startVar = Ins->Vars().Count()*10+1;
+      Ins.AddVar(0.5);
+      startVar = Ins.Vars().Count()*10+1;
     }
     // SUMP
     if( partCount > 2 )  {
-      startVar = Ins->Vars().Count()*10+1;
-      for( int i=0; i < partCount; i++ )  {  Ins->AddVar(1./partCount);  }
+      startVar = Ins.Vars().Count()*10+1;
+      for( int i=0; i < partCount; i++ )  
+        Ins.AddVar(1./partCount);
     }
   }
 
@@ -3306,7 +3169,7 @@ void TMainForm::macPart(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       }
       TStrList SL;
       SL.Add(Sump);
-      Ins->AddIns("SUMP", SL);
+      Ins.AddIns("SUMP", SL);
     }
   }
 }
@@ -3880,7 +3743,7 @@ void TMainForm::macReset(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     Ins->Adopt( &FXApp->XFile() );
   }
   else if( FXApp->CheckFileType<TCRSFile>() )  {
-    TSpaceGroup* sg = ((TCRSFile*)FXApp->XFile().GetLastLoader())->GetSG();
+    TSpaceGroup* sg = FXApp->XFile().GetLastLoader<TCRSFile>().GetSG();
     if( newSg.IsEmpty() )  {
       if( sg == NULL )  {
         E.ProcessingError(__OlxSrcInfo, "please specify a space group with -s=SG switch" );
@@ -3930,25 +3793,6 @@ void TMainForm::macReset(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   ProcessXPMacro("htmlreload", E);
 }
 //..............................................................................
-void TMainForm::macLstIns(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
-  if( !FXApp->CheckFileType<TIns>() )  return;
-
-  bool remarks = false;
-  for( int i=0; i < Options.Count(); i++ )  {
-    if( !Options.GetName(i).Comparei("r") )  {  remarks = true; break;  }
-  }
-
-  TIns *Ins = (TIns*)FXApp->XFile().GetLastLoader();
-  TBasicApp::GetLog() << ("List of current instructions:\n");
-  olxstr Tmp;
-  for( int i=0; i < Ins->InsCount(); i++ )  {
-    if( !remarks && !Ins->InsName(i).Comparei("REM") )  continue;
-    Tmp = i;  Tmp.Format(3, true, ' ');
-    Tmp << Ins->InsName(i) << ' ' << Ins->InsParams(i).Text(' ');
-    TBasicApp::GetLog() << (Tmp << '\n');
-  }
-}
-//..............................................................................
 void TMainForm::macLstMac(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   TBasicFunctionPList macros;
   GetLibrary().ListAllMacros( macros );
@@ -3988,29 +3832,6 @@ void TMainForm::macLstVar(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   TStrList Output;
   tab.CreateTXTList(Output, "Variables list", true, true, ' ');
   FGlConsole->PrintText( Output, NULL, false );
-}
-//..............................................................................
-void TMainForm::macDelIns(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  bool isOmit = false;
-  TIns *Ins = (TIns*)FXApp->XFile().GetLastLoader();
-  if( Cmds[0].IsNumber() )  {
-    int insIndex = Cmds[0].ToInt();
-    if( Ins->InsName(insIndex).Comparei("OMIT") == 0 )
-      isOmit = true;
-    Ins->DelIns(insIndex);
-  }
-  else  {
-    isOmit = (Cmds[0].Comparei("OMIT") == 0);
-    for( int i=0; i < Ins->InsCount(); i++ )  {
-      if( Ins->InsName(i).Comparei(Cmds[0]) == 0 )  {
-        Ins->DelIns(i);  i--;  continue;
-      }
-    }
-  }
-  if( isOmit)  {
-    BadReflectionsTable(false);
-    executeMacro("html.updatehtml");
-  }
 }
 //..............................................................................
 void TMainForm::macText(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
@@ -4313,7 +4134,7 @@ void TMainForm::macShowP(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   TCAtomPList CAtoms;
   TXAtomPList Atoms;
-  TIns *Ins = (TIns*)FXApp->XFile().GetLastLoader();
+  TIns& Ins = FXApp->XFile().GetLastLoader<TIns>();
   
   if( !FindXAtoms(Cmds, Atoms, true, !Options.Contains("cs")) )  {
     E.ProcessingError(__OlxSrcInfo, "wrong atom names" );
@@ -4321,7 +4142,7 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options, TMacro
   }
   // synchronise atom names etc
   FXApp->XFile().UpdateAsymmUnit();
-  Ins->UpdateParams();
+  Ins.UpdateParams();
   TSimpleRestraintPList restraints;
   for(int i=0; i < Atoms.Count(); i++ )
     CAtoms.Add( &Atoms[i]->Atom().CAtom() );
@@ -4375,10 +4196,10 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options, TMacro
   olxstr Tmp;
   bool found;
   // go through instructions
-  for(int i=0; i < Ins->InsCount(); i++ )  {
+  for(int i=0; i < Ins.InsCount(); i++ )  {
     // do not process remarks
-    if( Ins->InsName(i).Comparei("rem") != 0 )  {
-      InsParams = &Ins->InsParams(i);
+    if( Ins.InsName(i).Comparei("rem") != 0 )  {
+      InsParams = &Ins.InsParams(i);
       found = false;
       for( int j=0; j < InsParams->Count(); j++ )  {
         if( !InsParams->Object(j) )  continue;
@@ -4392,12 +4213,12 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options, TMacro
         if( found )  break;
       }
       if( found )  {
-        Tmp = Ins->InsName(i);  Tmp << ' ' << InsParams->Text(' ');
+        Tmp = Ins.InsName(i);  Tmp << ' ' << InsParams->Text(' ');
         SL.Add(Tmp);
         InsParamsCopy = new TStrList();
         InsParamsCopy->Assign(*InsParams);
-        RemovedIns.Add(Ins->InsName(i), InsParamsCopy);
-        Ins->DelIns(i);
+        RemovedIns.Add(Ins.InsName(i), InsParamsCopy);
+        Ins.DelIns(i);
         i--;
       }
     }
@@ -4410,7 +4231,7 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options, TMacro
   }
   SL.Add(EmptyString);
   TIntList atomIndex;
-  Ins->SaveAtomsToStrings(CAtoms, atomIndex, SL, &restraints);
+  Ins.SaveAtomsToStrings(CAtoms, atomIndex, SL, &restraints);
   for( int i=0; i < restraints.Count(); i++ )
     restraints[i]->GetParent()->Release(*restraints[i]);
 
@@ -4426,7 +4247,7 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options, TMacro
     if( dlg->ShowModal() == wxID_OK )  {
       SL.Clear();
       SL.Strtok(dlg->GetText(), '\n');
-      Ins->UpdateAtomsFromStrings(CAtoms, atomIndex, SL, NewIns);
+      Ins.UpdateAtomsFromStrings(CAtoms, atomIndex, SL, NewIns);
       // add new instructions
       for( int i=0; i < NewIns.Count(); i++ )  {
         SL.Clear();
@@ -4434,18 +4255,18 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options, TMacro
         if( SL.IsEmpty() )  continue;
         Tmp = SL[0];
         SL.Delete(0);
-        Ins->AddIns(Tmp, SL);
+        Ins.AddIns(Tmp, SL);
       }
       // synchronisation for new instructions
       FXApp->XFile().UpdateAsymmUnit();
       // update instruction parameters
-      Ins->UpdateParams();
+      Ins.UpdateParams();
       // emulate loading a new file
       FXApp->XFile().EndUpdate();
     }
     else  {
       for( int i=0; i < RemovedIns.Count(); i++ )
-        Ins->AddIns(RemovedIns[i], *RemovedIns.Object(i));
+        Ins.AddIns(RemovedIns[i], *RemovedIns.Object(i));
       for( int i=0; i < restraints.Count(); i++ )
         restraints[i]->GetParent()->Restore(*restraints[i]);
       restraints.Clear();
@@ -4454,7 +4275,7 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options, TMacro
   catch(const TExceptionBase& exc )  {
     TBasicApp::GetLog().Exception( exc.GetException()->GetError() );
     for( int i=0; i < RemovedIns.Count(); i++ )
-      Ins->AddIns(RemovedIns[i], *RemovedIns.Object(i));
+      Ins.AddIns(RemovedIns[i], *RemovedIns.Object(i));
     for( int i=0; i < restraints.Count(); i++ )
       restraints[i]->GetParent()->Restore(*restraints[i]);
     restraints.Clear();
@@ -4467,11 +4288,11 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options, TMacro
 }
 //..............................................................................
 void TMainForm::macEditIns(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  TIns *Ins = (TIns*)FXApp->XFile().GetLastLoader();
+  TIns& Ins = FXApp->XFile().GetLastLoader<TIns>();
   TStrList SL;
   FXApp->XFile().UpdateAsymmUnit();  // synchronise au's
-  Ins->SaveHeader(SL);
-  SL.Add("HKLF ") << Ins->Hklf();
+  Ins.SaveHeader(SL);
+  SL.Add("HKLF ") << Ins.Hklf();
 
   TdlgEdit *dlg = new TdlgEdit(this, true);
   dlg->SetText( SL.Text('\n') );
@@ -4479,7 +4300,7 @@ void TMainForm::macEditIns(TStrObjList &Cmds, const TParamList &Options, TMacroE
     if( dlg->ShowModal() == wxID_OK )  {
       SL.Clear();
       SL.Strtok( dlg->GetText(), '\n' );
-      Ins->ParseHeader(SL);
+      Ins.ParseHeader(SL);
       FXApp->XFile().LastLoaderChanged();
       BadReflectionsTable(false);
     }
@@ -4534,9 +4355,7 @@ void TMainForm::macMergeHkl(TStrObjList &Cmds, const TParamList &Options, TMacro
 }
 //..............................................................................
 void TMainForm::macEditHkl(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  if( !FXApp->CheckFileType<TIns>() )  return;
 
-  TIns *Ins = (TIns*)FXApp->XFile().GetLastLoader();
   olxstr HklFN( FXApp->LocateHklFile() );
   if( !TEFile::FileExists(HklFN) )  {
     E.ProcessingError(__OlxSrcInfo, "could not locate the HKL file" );
@@ -4747,7 +4566,7 @@ void TMainForm::macCalcVoid(TStrObjList &Cmds, const TParamList &Options, TMacro
 //..............................................................................
 void TMainForm::macViewGrid(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   olxstr gname;
-  if( FXApp->XFile().GetLastLoader() != NULL && Cmds.IsEmpty() )  {
+  if( FXApp->XFile().HasLastLoader() && Cmds.IsEmpty() )  {
     gname = TEFile::ExtractFilePath(FXApp->XFile().GetFileName());
     TEFile::AddTrailingBackslashI(gname) << "map.txt";
   }
@@ -4893,7 +4712,7 @@ void TMainForm::macDirection(TStrObjList &Cmds, const TParamList &Options, TMacr
   vec3d Z;
   mat3d Basis( FXApp->GetRender().GetBasis().GetMatrix() );
   olxstr Tmp;
-  if( FXApp->XFile().GetLastLoader() )  {
+  if( FXApp->XFile().HasLastLoader() )  {
     mat3d cellM;
     TAsymmUnit &au = FXApp->XFile().GetAsymmUnit();
     if( FXApp->HklVisible() ) cellM = au.GetHklToCartesian();
@@ -5334,7 +5153,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       Error.ProcessingError(__OlxSrcInfo, exc.GetException()->GetStackTrace(sl).Text('\n') );
       return;
     }
-    if( FXApp->XFile().GetLastLoader() != NULL )  {
+    if( FXApp->XFile().HasLastLoader() )  {
       FUndoStack->Clear();
       FInfoBox->Clear();
       TEFile::DelFile(BadRefsFile);
@@ -5354,9 +5173,10 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         olxstr insFileName = TEFile::ChangeFileExt(FN, "ins");
         TMacroError er;
         if( !TEFile::FileExists(hklFileName)  )  {
-          TCif* C = (TCif*)FXApp->XFile().GetLastLoader();
-          if( C->FindLoop("_refln") != NULL )  {
-            ProcessXPMacro( olxstr("export ") << TEFile::ExtractFileName(hklFileName), er);
+          TCif& C = FXApp->XFile().GetLastLoader<TCif>();
+          if( C.FindLoop("_refln") != NULL )  {
+            er.SetRetVal(&C);
+            ProcessXPMacro( olxstr("export ") << TEFile::ExtractFileName(hklFileName), er, false, false);
             if( !er.IsProcessingError() )  {
               if( !TEFile::FileExists(insFileName) )  {
                 TIns ins( FXApp->AtomsInfo() );
@@ -5377,7 +5197,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         }
       }
       FInfoBox->PostText(FN);
-      FInfoBox->PostText(FXApp->XFile().GetLastLoader()->GetTitle());
+      FInfoBox->PostText(FXApp->XFile().LastLoader()->GetTitle());
       // changes the loaded position of the box to left
       OnResize();
 
@@ -5815,50 +5635,6 @@ void TMainForm::macReload(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   }
 }
 //..............................................................................
-void TMainForm::funSG(const TStrObjList &Cmds, TMacroError &E)  {
-  TSpaceGroup* sg = NULL;
-  try  { sg = &FXApp->XFile().GetLastLoaderSG();  }
-  catch(...)  {}
-  if( sg != NULL )  {
-    olxstr Tmp;
-    if( Cmds.IsEmpty() )  {
-      Tmp = sg->GetName();
-      if( !sg->GetFullName().IsEmpty() )  {
-        Tmp << " (" << sg->GetFullName() << ')';
-      }
-      Tmp << " #" << sg->GetNumber();
-    }
-    else  {
-      Tmp = Cmds[0];
-      Tmp.Replace("%#", olxstr(sg->GetNumber()) );
-      Tmp.Replace("%n", sg->GetName());
-      Tmp.Replace("%N", sg->GetFullName());
-      Tmp.Replace("%H", sg->GetHallSymbol());
-      if( Tmp.IndexOf("%h") != -1 )  {
-        olxstr t = sg->GetFullName(), res;
-        res.SetCapacity( t.Length() + 20 );
-        for( int i=0; i < t.Length(); i++ )  {
-          if( (i+1) < t.Length() )  {
-            if( (t[i] >= '0' && t[i] <= '9')  &&  (t[i+1] >= '0' && t[i+1] <= '9') )  {
-              res << t[i] << "<sub>" << t[i+1] << "</sub>";
-              i++;
-              continue;
-            }
-          }
-          res << t[i];
-        }
-        Tmp.Replace("%h", res);
-      }
-    }
-    E.SetRetVal( Tmp );
-  }
-  else  {
-    E.SetRetVal( NAString );
-//    E.ProcessingError(__OlxSrcInfo, "could not find space group for the file" );
-    return;
-  }
-}
-//..............................................................................
 void TMainForm::macSelBack(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   FXApp->RestoreSelection();
 }
@@ -5967,8 +5743,8 @@ void TMainForm::ChangeSolution( int sol )  {
   else  {
     if( sol < 0 )  sol = Lst.PattSolutionCount()-1;
     if( sol >= Lst.PattSolutionCount() )  sol = 0;
-    TIns *Ins = (TIns*)FXApp->XFile().GetLastLoader();
-    Ins->SavePattSolution( TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), "res"),
+    TIns& Ins = FXApp->XFile().GetLastLoader<TIns>();
+    Ins.SavePattSolution( TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), "res"),
       Lst.PattSolution(sol), olxstr("Solution #") << (sol+1) );
 
     FXApp->LoadXFile( TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), "res") );
@@ -5987,7 +5763,7 @@ void TMainForm::macTref(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   CurrentSolution = -1;
   FMode |= mSolve;
   SolutionFolder = EmptyString;
-  TIns *Ins = (TIns*)FXApp->XFile().GetLastLoader();
+  TIns& Ins = FXApp->XFile().GetLastLoader<TIns>();
 
   int reps = Cmds[0].ToInt();
   for( int i=0; i < Lst.TrefTryCount(); i++ )  {
@@ -6009,7 +5785,7 @@ void TMainForm::macTref(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   olxstr cresFN = TEFile::ChangeFileExt( FXApp->XFile().GetFileName(), "res" );
   olxstr clstFN = TEFile::ChangeFileExt( FXApp->XFile().GetFileName(), "lst" );
   for( int i=0; i < Solutions.Count(); i++ )  {
-    Ins->SaveToRefine( cinsFN, olxstr("TREF -") << Solutions[i], EmptyString);
+    Ins.SaveToRefine( cinsFN, olxstr("TREF -") << Solutions[i], EmptyString);
     FXApp->LoadXFile( cinsFN );
     ProcessXPMacro( "solve", E );
     while( FProcess )  {
@@ -6048,8 +5824,11 @@ void TMainForm::macExport(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     E.ProcessingError(__OlxSrcInfo, "the hkl file already exists");
     return;
   }
-
-  TCif* C = (TCif*)FXApp->XFile().GetLastLoader();
+  TCif* C = NULL;
+  if( E.RetObj() != NULL && EsdlInstanceOf(*E.RetObj(), TCif) )
+    C = E.GetRetObj< TCif >();
+  else
+    C = &FXApp->XFile().GetLastLoader<TCif>();
   TCifLoop* hklLoop = C->FindLoop("_refln");
   if( hklLoop == NULL )  {
     E.ProcessingError(__OlxSrcInfo, "no hkl loop found");
@@ -6076,10 +5855,6 @@ void TMainForm::macExport(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     file.Append( *r );
   }
   file.SaveToFile( exName );
-}
-//..............................................................................
-void TMainForm::macFixHL(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  FUndoStack->Push( FXApp->FixHL() );
 }
 //..............................................................................
 void TMainForm::funAlert(const TStrObjList& Params, TMacroError &E) {
@@ -6996,27 +6771,8 @@ void TMainForm::funIsCurrentLanguage(const TStrObjList& Params, TMacroError &E) 
   E.SetRetVal( false );
 }
 //..............................................................................
-void TMainForm::macHAdd(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  TIns *Ins = (TIns*)FXApp->XFile().GetLastLoader();
-  TSAtomPList satoms;
-  TXAtomPList xatoms;
-  if( !FindXAtoms(Cmds, xatoms, true, !Options.Contains("cs")) )  {
-    Error.ProcessingError(__OlxSrcInfo, "wrong atom names" );
-    return;
-  }
-  TListCaster::POP(xatoms, satoms);
-  TXlConGen xlcg( Ins );
-  FXApp->XFile().GetLattice().AnalyseHAdd( xlcg, satoms );
-  FXApp->XFile().EndUpdate();
-  FXApp->XFile().UpdateAsymmUnit();
-  FUndoStack->Push( FXApp->FixHL() );
-  FUndoStack->Clear();
-}
-//..............................................................................
 void TMainForm::macHklStat(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  olxstr hklSrc = FXApp->XFile().GetLastLoader()->GetHKLSource();
-  if( hklSrc.IsEmpty() )
-    hklSrc = TEFile::ChangeFileExt( FXApp->XFile().GetLastLoader()->GetFileName(), "hkl");
+  olxstr hklSrc = FXApp->LocateHklFile();
   if( !TEFile::FileExists( hklSrc ) )  {
     Error.ProcessingError(__OlxSrcInfo, "could not find hkl file: ") << hklSrc;
     return;
@@ -7244,8 +7000,7 @@ void TMainForm::macTls(TStrObjList &Cmds, const TParamList &Options, TMacroError
 }
 //..............................................................................
 void TMainForm::funSfacList(const TStrObjList& Params, TMacroError &E) {
-  TIns* ins = (TIns*)FXApp->XFile().GetLastLoader();
-  olxstr tmp = ins->GetSfac();
+  olxstr tmp( FXApp->XFile().GetLastLoader<TIns>().GetSfac() );
   tmp.Replace(' ', ';');
   E.SetRetVal( tmp );
 }
@@ -7364,7 +7119,7 @@ void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     return;
   TEBitArray ba;
   olxstr rr = ba.FormatString(31);
-  if( FXApp->XFile().GetLastLoader() != NULL )  {
+  if( FXApp->XFile().HasLastLoader() )  {
     mat3d h2c = mat3d::Transpose(FXApp->XFile().GetAsymmUnit().GetHklToCartesian());
     TBasicApp::GetLog() << 1./h2c[0][0] << ',' << 1./h2c[1][1] << ',' << 1./h2c[2][2] << '\n';
     mat3d r, I;
@@ -7852,19 +7607,6 @@ void TMainForm::macLstRes(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   }
   
   TBasicApp::GetLog() << (output);
-}
-//..............................................................................
-void TMainForm::funLSM(const TStrObjList& Params, TMacroError &E) {
-  TIns *I = (TIns*)FXApp->XFile().GetLastLoader();
-  E.SetRetVal( I->GetRefinementMethod() );
-}
-//..............................................................................
-void TMainForm::funSSM(const TStrObjList& Params, TMacroError &E) {
-  TIns *I = (TIns*)FXApp->XFile().GetLastLoader();
-  if( I->GetSolutionMethod().IsEmpty() && Params.Count() == 1 )
-    E.SetRetVal( Params[0] );
-  else
-    E.SetRetVal( I->GetSolutionMethod() );
 }
 //..............................................................................
 void TMainForm::macLstSymm(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
@@ -8692,63 +8434,8 @@ void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMa
   FXApp->ShowGrid(true, EmptyString);
 }
 //..............................................................................
-void TMainForm::macFlush(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  TBasicApp::GetLog().Flush();
-}
-//..............................................................................
 void TMainForm::macShowSymm(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   throw TNotImplementedException(__OlxSourceInfo);
-}
-//..............................................................................
-void TMainForm::macSGE(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  TPtrList<TSpaceGroup> sgs;
-  TSpaceGroup* sg = NULL;
-  bool cntro = false;
-  E.SetRetVal(&sgs);
-  ProcessXPMacro("SG", E, false, false);
-  E.SetRetVal<bool>(false);
-  if( sgs.Count() == 0 )  {
-    TBasicApp::GetLog().Error( "Could not find any suitable spacegroup. Terminating ... " );
-    return;
-  }
-  else if( sgs.Count() == 1 )  {
-    sg = sgs[0];
-    TBasicApp::GetLog() << "Univocal spacegroup choice: " << sg->GetName() << '\n';
-  }
-  else  {
-    E.Reset();
-    ProcessXPMacro("Wilson", E, false, false);
-    bool centro = E.GetRetVal().ToBool();
-    TBasicApp::GetLog() << "Searching for centrosymmetric group: " << centro << '\n';
-    for( int i=0; i < sgs.Count(); i++ )  {
-      if( centro )  {
-        if( sgs[i]->IsCentrosymmetric() )  {
-          sg = sgs[i];
-          break;
-        }
-      }
-      else  {
-        if( !sgs[i]->IsCentrosymmetric() )  {
-          sg = sgs[i];
-          break;
-        }
-      }
-    }
-    if( sg == NULL )  {  // no match to centre of symmetry found
-      sg = sgs[0];
-      TBasicApp::GetLog() << "Could not match, choosing: " << sg->GetName() << '\n';
-    }
-    else  {
-      TBasicApp::GetLog() << "Chosen: " << sg->GetName() << '\n';
-    }
-  }
-  olxstr fn( Cmds.IsEmpty() ? TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), "ins") : Cmds[0] );
-  ProcessXPMacro(olxstr("reset -s=") << sg->GetName() << " -f='" << fn << '\'', E);
-  if( E.IsSuccessful() )  {
-    ProcessXPMacro(olxstr("reap '") << fn << '\'', E);
-    if( E.IsSuccessful() )  ProcessXPMacro(olxstr("solve"), E);
-    E.SetRetVal<bool>(E.IsSuccessful());
-  }
 }
 //..............................................................................
 class TestClass : public PyObject {
