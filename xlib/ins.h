@@ -421,7 +421,6 @@ public:
   inline const olxstr& InsName(int i) const {  return Ins.String(i);  }
   inline const TInsList& InsParams(int i)     {  return *Ins.Object(i); }
   void DelIns(int i);
-  void FixUnit();
   void DeleteAtom(TCAtom *CA);
 
   virtual IEObject* Replicate()  const {  return new TIns(AtomsInfo);  }

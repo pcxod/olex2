@@ -590,13 +590,6 @@ void TIns::HypernateIns(const olxstr& Ins, TStrList& Res)  {
   }
 }
 //..............................................................................
-void TIns::FixUnit()  {
-  TStrPObjList<olxstr,TBasicAtomInfo*> BasicAtoms;
-  Unit = EmptyString;
-  Sfac = EmptyString;
-  GetAsymmUnit().SummFormula(BasicAtoms, Sfac, Unit);
-}
-//..............................................................................
 void TIns::SaveToRefine(const olxstr& FileName, const olxstr& sMethod, const olxstr& comments)  {
   TStrList SL, mtoks;
   TInsList* L;
@@ -868,41 +861,41 @@ bool TIns::Adopt(TXFile *XF)  {
     FTitle << "in" << sg.GetFullName();
   }
   catch( ... )  {}
-  if( (XF->GetLastLoader() != NULL) )  {
-    FTitle = XF->GetLastLoader()->GetTitle();
-    SetHKLSource( XF->GetLastLoader()->GetHKLSource() );
+  if( XF->HasLastLoader() )  {
+    FTitle = XF->LastLoader()->GetTitle();
+    SetHKLSource( XF->LastLoader()->GetHKLSource() );
     
-    if( EsdlInstanceOf(*XF->GetLastLoader(), TP4PFile) )  {
-      TP4PFile* p4p = (TP4PFile*)XF->GetLastLoader();
-      Radiation = p4p->GetRadiation();
+    if( EsdlInstanceOf(*XF->LastLoader(), TP4PFile) )  {
+      TP4PFile& p4p = XF->GetLastLoader<TP4PFile>();
+      Radiation = p4p.GetRadiation();
       TStrList lst;
-      olxstr tmp = p4p->GetSize();  
+      olxstr tmp = p4p.GetSize();  
       if( tmp.IsEmpty() )  {
         tmp.Replace('?', '0');
         lst.Add("SIZE");
         lst.Add( tmp );  AddIns(lst); lst.Clear();
       }
-      tmp = p4p->GetTemp();
+      tmp = p4p.GetTemp();
       if( !tmp.IsEmpty() )  {
         tmp.Replace('?', '0');
         lst.Add("TEMP");
         lst.Add( tmp );  AddIns(lst); lst.Clear();
       }
-      if( p4p->GetChem() != "?" )  {
-        try  {  SetSfacUnit( p4p->GetChem() );  }
+      if( p4p.GetChem() != "?" )  {
+        try  {  SetSfacUnit( p4p.GetChem() );  }
         catch( TExceptionBase& )  {  }
       }
     }
-    else if( EsdlInstanceOf(*XF->GetLastLoader(), TCRSFile) )  {
-      TCRSFile* crs = (TCRSFile*)XF->GetLastLoader();
-      Sfac = crs->GetSfac();
-      Unit = crs->GetUnit();
-      Radiation = crs->GetRadiation();
+    else if( EsdlInstanceOf(*XF->LastLoader(), TCRSFile) )  {
+      TCRSFile& crs = XF->GetLastLoader<TCRSFile>();
+      Sfac = crs.GetSfac();
+      Unit = crs.GetUnit();
+      Radiation = crs.GetRadiation();
     }
-    else if( EsdlInstanceOf(*XF->GetLastLoader(), TCif) )  {
-      TCif* cif = (TCif*)XF->GetLastLoader();
-      olxstr chem = olxstr::DeleteChars( cif->GetSParam("_chemical_formula_sum"), ' ');
-      olxstr strSg = cif->GetSParam("_symmetry_space_group_name_H-M");
+    else if( EsdlInstanceOf(*XF->LastLoader(), TCif) )  {
+      TCif& cif = XF->GetLastLoader<TCif>();
+      olxstr chem = olxstr::DeleteChars( cif.GetSParam("_chemical_formula_sum"), ' ');
+      olxstr strSg = cif.GetSParam("_symmetry_space_group_name_H-M");
       
       SetSfacUnit( chem );
       TSpaceGroup* sg = TSymmLib::GetInstance()->FindGroup( strSg );

@@ -172,7 +172,8 @@ enum
   ID_GStyleSave,
   ID_GStyleOpen,
   ID_FixLattice,
-  ID_FreeLattice
+  ID_FreeLattice,
+  ID_DELINS
 };
 
 class TObjectVisibilityChange: public AActionHandler
@@ -567,12 +568,7 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual accupancy\
   this_InitMacro(BRad, , fpOne );
 
   this_InitMacro(Kill, h-kill hidden atoms, fpAny^fpNone );
-  this_InitMacroAD(LS, LS, EmptyString, fpOne|fpTwo|psCheckFileTypeIns,
-"Sets refinement method and/or the number of iterations.");
-  this_InitMacroD(Plan, EmptyString, fpOne|psCheckFileTypeIns,
-"Sets the number of Fuorier peaks to be found from the difference map");
   this_InitMacro(Omit, , fpOne|fpThree | psCheckFileTypeIns);
-  this_InitMacro(UpdateWght, , fpAny | psCheckFileTypeIns );
 
   this_InitMacro(Exec, s&;o&;d, fpAny^fpNone );
   this_InitMacroD(Shell, "", fpNone|fpOne, "if no arguments launches a new interactive shell,\
@@ -596,8 +592,6 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual accupancy\
 
   this_InitMacro(WaitFor, , fpOne );
   this_InitMacro(Occu, , (fpAny^fpNone)^fpOne );
-  this_InitMacro(FixUnit, , fpNone|psCheckFileTypeIns );
-  this_InitMacro(AddIns, , (fpAny^fpNone)|psCheckFileTypeIns );
 
   this_InitMacro(HtmlPanelSwap, , fpNone|fpOne );
   this_InitMacro(HtmlPanelWidth, , fpNone|fpOne );
@@ -651,9 +645,7 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual accupancy\
   this_InitMacro(ShowQ, , fpNone|fpTwo|psFileLoaded );
   this_InitMacro(LstMac, h-Shows help, fpNone );
   this_InitMacro(LstFun, h-Shows help, fpNone );
-  this_InitMacro(LstIns, r, fpNone|psCheckFileTypeIns );
   this_InitMacroD(LstVar, EmptyString, fpNone, "lists all defined variables" );
-  this_InitMacro(DelIns, , fpOne|psCheckFileTypeIns );
 
   this_InitMacro(Mode, p&;s&;t&;c, (fpAny^fpNone)|psFileLoaded );
 
@@ -720,7 +712,6 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual accupancy\
   this_InitMacro(Tref, ,fpOne|fpTwo|psCheckFileTypeIns );
   this_InitMacro(Patt, ,fpNone|psCheckFileTypeIns );
   this_InitMacro(Export, ,fpNone|fpOne|psCheckFileTypeCif );
-  this_InitMacro(FixHL, ,fpNone );
 
   this_InitMacro(InstallPlugin,"l-local installation from a zip file, which must contains index.ind" ,fpOne );
   this_InitMacro(SignPlugin, ,fpAny^(fpOne|fpNone) );
@@ -736,8 +727,6 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual accupancy\
 
   this_InitMacro(ChangeLanguage, ,fpOne );
 
-  this_InitMacroD(HAdd, "cs-do not clear selection", fpAny|psCheckFileTypeIns, "Adds hydrogen atoms\
-  to all or provided atoms" );
   this_InitMacro(HklStat, l,(fpAny^fpNone)|psFileLoaded );
 
   this_InitMacroD(Schedule, "r-repeatable", fpAny^(fpNone|fpOne),
@@ -796,8 +785,6 @@ separated values of Atom Type and radius, an entry a line" );
   and regression(r)&;r-resolution in Angstrems&;i-integrates the map", fpNone|psFileLoaded,
 "Calculates fourier map" );
   this_InitMacroD(TestBinding, EmptyString, fpNone, "Internal tests" );
-  this_InitMacroD(SGE, EmptyString, fpNone|fpOne|psFileLoaded, "Extended spacegroup determination. Internal use" );
-  this_InitMacroD(Flush, EmptyString, fpNone|fpOne, "Flushes log streams" );
   this_InitMacroD(ShowSymm, EmptyString, fpNone|fpOne, "Shows symmetry elements of the unitcell" );
   this_InitMacroD(Textm, EmptyString, fpOne, "Runs subsequent commands stored in a text file" );
   this_InitMacroD(TestStat, EmptyString, fpOne, "Test: runs statistical tests on structures in current folder. Expects a file name" );
@@ -812,15 +799,6 @@ separated values of Atom Type and radius, an entry a line" );
 
   this_InitFunc(Cell, fpOne|psFileLoaded);
 
-  this_InitFunc(Title, fpNone|fpOne);
-  this_InitFuncD(Ins, fpOne|psCheckFileTypeIns,
-"Returns instruction value (all data after the instruction). In case the instruction\
- does not exist it return 'n/a' string");
-  this_InitFuncD(LSM, fpNone|psCheckFileTypeIns,
-"Return current refinement method, L.S. or CGLS currently.");
-  this_InitFuncD(SSM, fpNone|fpOne,
-"Return current structure solution method, TREF or PATT currently. If current method is unknown\
- and an argument is provided, that argument is returned");
   this_InitFunc(DataDir, fpNone);
   this_InitFuncD(Cif, fpOne|psCheckFileTypeCif,
 "Returns instruction value (all data after the instruction). In case the instruction\
@@ -867,9 +845,6 @@ separated values of Atom Type and radius, an entry a line" );
   #endif
 
   this_InitFunc(CmdList, fpOne);
-  this_InitFuncD(SG, fpNone|fpOne,
-"Returns space group of currently loaded file. Also takes a string template, where\
- %# is replaced with SG number, %n - short name, %N - full name and %h - Hall symbol" );
   this_InitFunc(Alert, fpTwo|fpThree|fpFour);
 
   this_InitFunc(IsPluginInstalled, fpOne);
@@ -1140,7 +1115,7 @@ separated values of Atom Type and radius, an entry a line" );
   TBasicApp::GetLog().OnError->Add(this, ID_ERROR, msiEnter);
   TBasicApp::GetLog().OnException->Add(this, ID_EXCEPTION, msiEnter);
   FXApp->OnObjectsDestroy->Add(this, ID_XOBJECTSDESTROY, msiEnter);
-
+  XLibMacros::OnDelIns->Add(this, ID_DELINS, msiExit);
   LoadVFS(plGlobal);
 
   FHtml = new THtml(this, FXApp);
@@ -2093,6 +2068,14 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
       }
     }
   }
+  else if( MsgId == ID_DELINS )  {
+    if( Data != 0 && EsdlInstanceOf(*Data, olxstr) )  {
+      if( ((olxstr*)Data)->Comparei("OMIT") == 0 )  {
+        BadReflectionsTable(false);
+        executeMacro("html.updatehtml");
+      }
+    }
+  }
   return res;
 }
 //..............................................................................
@@ -2915,7 +2898,7 @@ bool TMainForm::QPeaksTable(const olxstr &FN, bool TableDef)  {
     Table.Resize(1, 3);
     Table[0].String(0) = "N/A";
     Table[0].String(1) = "N/A";
-    if( !EsdlInstanceOf(*FXApp->XFile().GetLastLoader(), TIns) )
+    if( FXApp->CheckFileType<TIns>() )
       Table[0].String(2) = "No Q-Peaks";
     else
       Table[0].String(1) = "N/A in this file format";
@@ -2951,7 +2934,7 @@ bool TMainForm::QPeaksTable(const olxstr &FN, bool TableDef)  {
 //..............................................................................
 void TMainForm::BadReflectionsTable(bool TableDef)  {
   if( FXApp->CheckFileType<TIns>() )
-    Lst.SynchroniseOmits( (TIns*)FXApp->XFile().GetLastLoader() );
+    Lst.SynchroniseOmits( &FXApp->XFile().GetLastLoader<TIns>() );
 
   TTTable<TStrList> Table;
   TStrList Output;
@@ -3066,8 +3049,7 @@ bool TMainForm::OnMouseUp(int x, int y, short Flags, short Buttons)  {
     }
   }
   // HKL "grid snap on mouse release
-  if( FXApp->XFile().GetLastLoader() && FXApp->HklVisible() && false )
-  {
+  if( FXApp->XFile().HasLastLoader() && FXApp->HklVisible() && false )  {
     mat3d cellM, M;
     vec3d N(0, 0, 1), Z;
     TAsymmUnit *au = &FXApp->XFile().GetAsymmUnit();
@@ -3256,9 +3238,12 @@ void TMainForm::SetUserCursor( const olxstr& param, const olxstr& mode )  {
   FGlCanvas->SetCursor(cr);
 }
 //..............................................................................
-bool TMainForm::executeMacro(const olxstr& cmdLine)  {
-  this->ProcessXPMacro( cmdLine, MacroError );
-  return MacroError.IsSuccessful();
+bool TMainForm::executeMacroEx(const olxstr& cmdLine, TMacroError& er)  {
+  str_stack stack;
+  er.SetStack( stack );
+  ProcessXPMacro( cmdLine, er, false, false );
+  AnalyseError(er);
+  return er.IsSuccessful();
 }
 //..............................................................................
 void TMainForm::print(const olxstr& output, const short MessageType)  {
@@ -3566,7 +3551,7 @@ void TMainForm::SaveVFS(short persistenceId)  {
   try  {
     olxstr dbFN;
     if( persistenceId == plStructure )  {
-      if( FXApp->XFile().GetLastLoader() == NULL || FXApp->XFile().GetFileName().IsEmpty() )  return;
+      if( !FXApp->XFile().HasLastLoader() )  return;
       dbFN = GetStructureOlexFolder();
       dbFN << TEFile::ChangeFileExt( TEFile::ExtractFileName(FXApp->XFile().GetFileName()) , "odb");
     }
@@ -3589,7 +3574,7 @@ void TMainForm::LoadVFS(short persistenceId)  {
   try  {
     olxstr dbFN;
     if( persistenceId == plStructure )  {
-      if( FXApp->XFile().GetLastLoader() == NULL || FXApp->XFile().GetFileName().IsEmpty() )  return;
+      if( !FXApp->XFile().HasLastLoader() )  return;
       dbFN = GetStructureOlexFolder();
       dbFN << TEFile::ChangeFileExt( TEFile::ExtractFileName(FXApp->XFile().GetFileName()) , "odb");
     }
@@ -3617,7 +3602,7 @@ void TMainForm::LoadVFS(short persistenceId)  {
 }
 //..............................................................................
 const olxstr& TMainForm::GetStructureOlexFolder()  {
-  if( FXApp->XFile().GetLastLoader() != NULL )  {
+  if( FXApp->XFile().HasLastLoader() )  {
     olxstr ofn = TEFile::ExtractFilePath(FXApp->XFile().GetFileName());
     TEFile::AddTrailingBackslashI(ofn) << ".olex/";
     if( !TEFile::FileExists(ofn) )  {

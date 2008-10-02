@@ -13,7 +13,7 @@ public:
   bool Init(TStrObjList &Cmds, const TParamList &Options) {
     if( !TGlXApp::GetGXApp()->CheckFileType<TIns>() )  return false;
     Hfix = Cmds.IsEmpty() ? 0 : Cmds[0].ToInt();
-    xlConGen = new TXlConGen( (TIns*)TGlXApp::GetGXApp()->XFile().GetLastLoader() );
+    xlConGen = new TXlConGen( &TGlXApp::GetGXApp()->XFile().GetLastLoader<TIns>() );
     TGlXApp::GetMainForm()->SetUserCursor( Hfix, "hfix");
     TGlXApp::GetMainForm()->executeMacro("labels -a -h");
     return true;
@@ -77,10 +77,10 @@ public:
               }
             }
             if( eqiv != NULL )  {
-              TIns* ins = (TIns*)TGlXApp::GetGXApp()->XFile().GetLastLoader();
+              TIns& ins = TGlXApp::GetGXApp()->XFile().GetLastLoader<TIns>();
               const smatd& e = TGlXApp::GetGXApp()->XFile().GetAsymmUnit().AddUsedSymm(*eqiv);
               int ei = TGlXApp::GetGXApp()->XFile().GetAsymmUnit().UsedSymmIndex(e)+1;
-              ins->AddIns(olxstr("FREE ") << XA->Atom().GetLabel() << ' ' << XA->Atom().GetLabel() << "_$" << ei );
+              ins.AddIns(olxstr("FREE ") << XA->Atom().GetLabel() << ' ' << XA->Atom().GetLabel() << "_$" << ei );
               delete eqiv;
             }
             //

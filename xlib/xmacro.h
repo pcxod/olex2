@@ -12,6 +12,7 @@
 class XLibMacros  {
   static DefMacro(BrushHkl)
   static DefMacro(SG)
+  static DefMacro(SGE)
   static DefMacro(GraphSR)
   static DefMacro(Wilson)
   static DefMacro(TestSymm)
@@ -26,7 +27,18 @@ class XLibMacros  {
   static DefMacro(EADP)
   static DefMacro(VoidE)
   static DefMacro(ChangeSG)
+  static DefMacro(FixUnit)
+  static DefMacro(LstIns)
+  static DefMacro(DelIns)
+  static DefMacro(AddIns)
   static DefMacro(Htab)
+  static DefMacro(HAdd)
+  static DefMacro(LS)
+  static DefMacro(Plan)
+  static DefMacro(UpdateWght)
+  static DefMacro(FixHL)
+
+  static DefMacro(Flush)
 
   static void MergePublTableData(TCifLoopTable& to, TCifLoopTable& from); // helper function
   static olxstr CifResolve(const olxstr& func);
@@ -41,19 +53,27 @@ class XLibMacros  {
   static DefFunc(FilePath)
   static DefFunc(FileFull)
   static DefFunc(FileDrive)
+  static DefFunc(Title)
   static DefFunc(IsFileLoaded)
   static DefFunc(IsFileType)
+  static DefFunc(Ins)
 
   static DefFunc(BaseDir)
   static DefFunc(HKLSrc)
+
+  static DefFunc(LSM)
+  static DefFunc(SSM)
+  static DefFunc(SG)
 
   static DefFunc(ATA) // atom type assigmnet
   static DefFunc(VSS) // validate structure or a solution, better the analyse!
 
   static DefFunc(RemoveSE) // SG modification
 
+  static TActionQList Actions;
 public:
   static const olxstr NoneString;
+  static const olxstr NAString;
   // finds numbers and removes them from the list and returns the number of found numbers
   template <typename nt> static int ParseNumbers(TStrObjList& Cmds, int cnt, ...)  {
     va_list argptr;
@@ -73,6 +93,7 @@ public:
     return fc;
   }
   static void Export(class TLibrary& lib);
+  static TActionQueue* OnDelIns;
 
 protected:
   class TEnviComparator  {

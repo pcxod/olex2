@@ -61,8 +61,17 @@ public:
   }
   inline TAsymmUnit& GetAsymmUnit()          const {  return *FAsymmUnit; }
   TBasicCFile* FindFormat(const olxstr &Ext);
-  inline TBasicCFile* GetLastLoader()        const {  return FLastLoader; }
+  template <class LoaderClass>
+  inline LoaderClass& GetLastLoader()        const {  
+    if( FLastLoader == NULL )
+      throw TFunctionFailedException(__OlxSourceInfo, "no last loader");
+    if( !EsdlInstanceOf(*FLastLoader, LoaderClass) )
+      throw TInvalidArgumentException(__OlxSourceInfo, "wrong last loader type");
+    return *(LoaderClass*)FLastLoader; 
+  }
   inline void SetLastLoader(TBasicCFile* ll)       {  FLastLoader = ll; }
+  inline bool HasLastLoader()                const {  return FLastLoader != NULL; }
+  TBasicCFile* LastLoader()                  const {  return FLastLoader;  }
   void UpdateAsymmUnit();
   void LoadFromFile(const olxstr & FN);
   void SaveToFile(const olxstr & FN, bool Sort);

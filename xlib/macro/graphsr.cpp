@@ -32,7 +32,7 @@ struct TGraphRSBin {
 void XLibMacros::macGraphSR(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   TXApp &XApp = TXApp::GetInstance();
   TCif* C;
-  if( XApp.CheckFileType<TCif>() )  C = (TCif*)XApp.XFile().GetLastLoader();
+  if( XApp.CheckFileType<TCif>() )  C = &XApp.XFile().GetLastLoader<TCif>();
   else  {
     olxstr fcffn = TEFile::ChangeFileExt(XApp.XFile().GetFileName(), "fcf");
     if( !TEFile::FileExists(fcffn) )  {

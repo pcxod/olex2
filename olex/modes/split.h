@@ -46,9 +46,9 @@ public:
   ~TSplitMode() {
     TXAtomPList Atoms;
     vec3d c;
-    TIns *Ins = (TIns*)TGlXApp::GetGXApp()->XFile().GetLastLoader();
-    Ins->AddVar(0.5);
-    int Var = Ins->Vars().Count()*10+1;
+    TIns& Ins = TGlXApp::GetGXApp()->XFile().GetLastLoader<TIns>();
+    Ins.AddVar(0.5);
+    int Var = Ins.Vars().Count()*10+1;
     UpdateSelectionCrds();
     TGlXApp::GetGXApp()->FindXAtoms(EmptyString, Atoms, false);
     for( int i=0; i < Atoms.Count(); i++ )  {

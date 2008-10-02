@@ -167,7 +167,7 @@ void TXFile::LoadFromFile(const olxstr & FN) {
 //..............................................................................
 void TXFile::UpdateAsymmUnit()  {
   //TLattice *L = GetLattice();
-  TBasicCFile *LL = GetLastLoader();
+  TBasicCFile* LL = FLastLoader;
   GetLattice().UpdateAsymmUnit();
   LL->GetAsymmUnit().ClearResidues(false);
   LL->GetAsymmUnit().ClearEllps();
@@ -226,7 +226,7 @@ void TXFile::SaveToFile(const olxstr & FN, bool Sort)  {
   olxstr Ext = TEFile::ExtractFileExt(FN);
   TBasicCFile *Loader = FindFormat(Ext);
 
-  TBasicCFile *LL = GetLastLoader();
+  TBasicCFile *LL = FLastLoader;
 
   if( LL != Loader )  {
     if( !Loader->Adopt(this) )
@@ -272,19 +272,19 @@ void TXFile::EndUpdate()  {
 //..............................................................................
 //..............................................................................
 void TXFile::LibGetFormula(const TStrObjList& Params, TMacroError& E)  {
-  if( GetLastLoader() == NULL )  {
+  if( FLastLoader == NULL )  {
     E.ProcessingError(__OlxSrcInfo, "no file is loaded");
     E.SetRetVal( E.GetInfo() );
     return;
   }
   olxstr as, us;
-  if( EsdlInstanceOf( *GetLastLoader(), TIns) )  {
-    TIns* ins = (TIns*)GetLastLoader();
+  if( EsdlInstanceOf( *FLastLoader, TIns) )  {
+    TIns* ins = (TIns*)FLastLoader;
     as = ins->GetSfac();
     us = ins->GetUnit();
   }
-  else if( EsdlInstanceOf( *GetLastLoader(), TCRSFile) )  {
-    TCRSFile* crs = (TCRSFile*)GetLastLoader();
+  else if( EsdlInstanceOf( *FLastLoader, TCRSFile) )  {
+    TCRSFile* crs = (TCRSFile*)FLastLoader;
     as = crs->GetSfac();
     us = crs->GetUnit();
   }
@@ -347,17 +347,17 @@ void TXFile::LibGetFormula(const TStrObjList& Params, TMacroError& E)  {
 }
 //..............................................................................
 void TXFile::LibSetFormula(const TStrObjList& Params, TMacroError& E) {
-  if( GetLastLoader() == NULL )  {
+  if( FLastLoader == NULL )  {
     E.ProcessingError(__OlxSrcInfo, "no file is loaded");
     E.SetRetVal( E.GetInfo() );
     return;
   }
-  if( !EsdlInstanceOf( *GetLastLoader(), TIns) )  {
+  if( !EsdlInstanceOf( *FLastLoader, TIns) )  {
     E.ProcessingError(__OlxSrcInfo, "operation only valid for ins files");
     E.SetRetVal( E.GetInfo() );
     return;
   }
-  TIns* ins = (TIns*)GetLastLoader();
+  TIns* ins = (TIns*)FLastLoader;
   olxstr Sfac, Unit;
   if( Params[0].IndexOf(':') == -1 )  {
     TTypeList<AnAssociation2<olxstr, int> > res;
@@ -404,7 +404,7 @@ void TXFile::LibEndUpdate(const TStrObjList& Params, TMacroError& E)  {
 }
 //..............................................................................
 void TXFile::LibSaveSolution(const TStrObjList& Params, TMacroError& E)  {
-  TIns* oins = (TIns*)GetLastLoader();
+  TIns* oins = (TIns*)FLastLoader;
   TIns ins(AtomsInfo);
   ins.GetAsymmUnit().Assign( *FAsymmUnit );
   ins.AddIns("FMAP 2");

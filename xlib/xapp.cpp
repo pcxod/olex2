@@ -46,9 +46,9 @@ TXApp::~TXApp()  {
 }
 //..............................................................................
 const olxstr& TXApp::LocateHklFile()  {
-  if( XFile().GetLastLoader() == NULL )  return EmptyString;
+  if( !XFile().HasLastLoader() )  return EmptyString;
 
-  olxstr &HklFN = TEGC::New<olxstr>( XFile().GetLastLoader()->GetHKLSource() );
+  olxstr &HklFN = TEGC::New<olxstr>( XFile().LastLoader()->GetHKLSource() );
   if( TEFile::FileExists( HklFN ) )  return HklFN;
   HklFN = TEFile::ChangeFileExt(XFile().GetFileName(), "hkl");
   if( TEFile::FileExists( HklFN ) )  return HklFN;
@@ -78,15 +78,15 @@ const olxstr& TXApp::LocateHklFile()  {
 //..............................................................................
 bool TXApp::CheckProgramState(unsigned int specialCheck)  {
  if( specialCheck & psFileLoaded )
-   return XFile().GetLastLoader() != NULL;
+   return XFile().HasLastLoader();
  else if( specialCheck & psCheckFileTypeIns )
-   return (XFile().GetLastLoader() == NULL) ? false : EsdlInstanceOf(*XFile().GetLastLoader(), TIns);
+   return (!XFile().HasLastLoader()) ? false : EsdlInstanceOf(*XFile().LastLoader(), TIns);
  else if( specialCheck & psCheckFileTypeP4P )
-   return (XFile().GetLastLoader() == NULL) ? false : EsdlInstanceOf(*XFile().GetLastLoader(), TP4PFile);
+   return (!XFile().HasLastLoader()) ? false : EsdlInstanceOf(*XFile().LastLoader(), TP4PFile);
  else if( specialCheck & psCheckFileTypeCRS )
-   return (XFile().GetLastLoader() == NULL) ? false : EsdlInstanceOf(*XFile().GetLastLoader(), TCRSFile);
+   return (!XFile().HasLastLoader()) ? false : EsdlInstanceOf(*XFile().LastLoader(), TCRSFile);
  else if( specialCheck & psCheckFileTypeCif )
-   return (XFile().GetLastLoader() == NULL) ? false : EsdlInstanceOf(*XFile().GetLastLoader(), TCif);
+   return (!XFile().HasLastLoader()) ? false : EsdlInstanceOf(*XFile().LastLoader(), TCif);
   throw TFunctionFailedException(__OlxSourceInfo, "undefined state");
 }
 //..............................................................................

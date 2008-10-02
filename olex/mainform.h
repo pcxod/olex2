@@ -90,7 +90,7 @@ class TMainForm: public TMainFrame, public AEventsDispatcher,
 {
   //TFrameMaker FrameMaker;
 public:
-  virtual bool executeMacro(const olxstr& function);
+  virtual bool executeMacroEx(const olxstr& function, TMacroError& ar);
   virtual void print(const olxstr& function, const short MessageType = olex::mtNone);
   virtual bool executeFunction(const olxstr& function, olxstr& retVal);
   virtual IEObject* executeFunction(const olxstr& function);
@@ -271,9 +271,7 @@ private:
   DefMacro(AZoom)
   DefMacro(BRad)
   DefMacro(Kill)
-  DefMacro(LS)
   DefMacro(UpdateWght)
-  DefMacro(Plan)
   DefMacro(Omit)
   DefMacro(Exec)
   DefMacro(Shell)
@@ -295,8 +293,6 @@ private:
   DefMacro(WaitFor)
 
   DefMacro(Occu)
-  DefMacro(AddIns)
-  DefMacro(FixUnit)
 
   DefMacro(HtmlPanelSwap)
   DefMacro(HtmlPanelWidth)
@@ -338,10 +334,8 @@ private:
   DefMacro(ShowQ)
   DefMacro(Mode)
   DefMacro(Reset)
-  DefMacro(LstIns)
   DefMacro(LstMac)
   DefMacro(LstFun)
-  DefMacro(DelIns)
   DefMacro(LstVar)
 
   DefMacro(Text)
@@ -400,7 +394,6 @@ private:
   DefMacro(Tref)
   DefMacro(Patt)
   DefMacro(Export)
-  DefMacro(FixHL)
 
   DefMacro(InstallPlugin)
   DefMacro(SignPlugin)
@@ -417,7 +410,6 @@ private:
   DefMacro(CalcVol)
   DefMacro(ChangeLanguage)
 
-  DefMacro(HAdd)
   DefMacro(HklStat)
 
   DefMacro(Schedule)
@@ -447,8 +439,6 @@ private:
   DefMacro(CalcPatt)
   DefMacro(CalcFourier)
   DefMacro(TestBinding)
-  DefMacro(SGE)
-  DefMacro(Flush)
   DefMacro(ShowSymm)
   DefMacro(Textm)
   DefMacro(TestStat)
@@ -462,13 +452,9 @@ private:
   DefFunc(ChooseDir)
 
   DefFunc(Cell)
-  DefFunc(Title)
-  DefFunc(Ins)
   DefFunc(Cif)
   DefFunc(P4p)
   DefFunc(Crs)
-  DefFunc(LSM)
-  DefFunc(SSM)
   DefFunc(DataDir)
   DefFunc(Strcat)
   DefFunc(Strcmp)
@@ -500,7 +486,6 @@ private:
   #endif
 
   DefFunc(CmdList)
-  DefFunc(SG)
   DefFunc(Alert)
 
   DefFunc(ValidatePlugin)

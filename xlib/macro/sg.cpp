@@ -30,7 +30,7 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
     return;
   }
   TTypeList<TBravaisLatticeRef> BravaisLattices;
-  if( XApp.XFile().GetLastLoader() != NULL )  {
+  if( XApp.XFile().HasLastLoader() )  {
     TSymmLib::GetInstance()->FindBravaisLattices( XApp.XFile().GetAsymmUnit(), BravaisLattices );
     int MatchCount = 0;
     if( BravaisLattices.Count() )  {

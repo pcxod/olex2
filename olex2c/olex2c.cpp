@@ -202,13 +202,7 @@ public:
     this_InitMacroD(WaitFor, "", fpOne, "" );
     this_InitMacroD(LstFS, "", fpNone, "" );
     this_InitMacroD(LstVar, "", fpNone, "" );
-    this_InitMacroD(AddIns, "", fpAny|psCheckFileTypeIns, "" );
-    this_InitMacroD(DelIns, "", fpOne|psCheckFileTypeIns, "" );
-    this_InitMacroD(FixHL, "", fpNone|psFileLoaded, "" );
     this_InitMacroD(Kill, "", (fpAny^fpNone)|psFileLoaded, "" );
-    this_InitMacroD(HAdd, "", fpAny|psCheckFileTypeIns, "" );
-    this_InitMacroD(LS, "", fpOne|fpTwo|psCheckFileTypeIns, "" );
-    this_InitMacroD(Plan, "", fpOne|psCheckFileTypeIns, "" );
     this_InitMacroD(Sel, "i&;a&;u", fpAny|psFileLoaded, "" );
     this_InitMacroD(Anis, "", fpAny|psCheckFileTypeIns, "" );
     this_InitMacroD(Isot, "", fpAny|psCheckFileTypeIns, "" );
@@ -228,10 +222,7 @@ public:
     this_InitFuncD(IsPluginInstalled, fpOne, "" );
     this_InitFuncD(CurrentLanguageEncoding, fpNone, "" );
     this_InitFuncD(StrCmp, fpTwo, "" );
-    this_InitFuncD(SG, fpNone|fpOne|psFileLoaded, "" );
-    this_InitFuncD(Ins, fpOne|psCheckFileTypeIns, "" );
     this_InitFuncD(Lst, fpOne|psFileLoaded, "" );
-    this_InitFuncD(LSM, fpNone|psCheckFileTypeIns, "" );
     this_InitFuncD(And, fpAny^(fpNone|fpOne), "" );
     this_InitFuncD(Or, fpAny^(fpNone|fpOne), "" );
     this_InitFuncD(Not, fpOne, "" );
@@ -279,13 +270,12 @@ public:
   }
   HANDLE GetConin()  {  return conin;  }
   HANDLE GetConout() {  return conout;  }
-  virtual bool executeMacro(const olxstr& cmdLine)  {
-    TMacroError ME;
+  virtual bool executeMacroEx(const olxstr& cmdLine, TMacroError& er)  {
     str_stack stack;
-    ME.SetStack( stack );
-    Macros.ProcessMacro( cmdLine, ME );
-    AnalyseError(ME);
-    return ME.IsSuccessful();
+    er.SetStack( stack );
+    Macros.ProcessMacro( cmdLine, er, false );
+    AnalyseError(er);
+    return er.IsSuccessful();
   }
   virtual void print(const olxstr& msg, const short MessageType = olex::mtNone)  {
     CONSOLE_SCREEN_BUFFER_INFO pi;
@@ -391,7 +381,7 @@ public:
   bool Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, const IEObject *Data=NULL)  {
     bool res = true;
     if( MsgId == ID_TIMER )  {
-      if( XApp.XFile().GetLastLoader() != NULL )  {
+      if( XApp.XFile().HasLastLoader() )  {
         olxstr sfn( TEFile::ExtractFilePath(XApp.XFile().GetFileName()) + "autochem.stop");
         if( TEFile::FileExists(sfn) )  {
           XApp.Sleep(100);
@@ -528,25 +518,11 @@ public:
     TBasicApp::GetLog() << Output << '\n';
   }
   //..............................................................................
-  void funLSM(const TStrObjList& Params, TMacroError &E) {
-    TIns *I = (TIns*)XApp.XFile().GetLastLoader();
-    E.SetRetVal( I->GetRefinementMethod() );
-  }
-  //..............................................................................
   void funSel(const TStrObjList& Params, TMacroError &E) {
     olxstr rv;
     for( int i=0; i < Selection.Count(); i++ )
       rv << Selection[i]->GetLabel() << ' ';
     E.SetRetVal( rv );
-  }
-  //..............................................................................
-  void macHAdd(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-    TSAtomPList satoms;
-    XApp.FindSAtoms( Cmds.Text(' '), satoms );
-    TXlConGen xlcg( (TIns*)XApp.XFile().GetLastLoader() );
-    XApp.XFile().GetLattice().AnalyseHAdd( xlcg, satoms );
-    XApp.XFile().EndUpdate();
-    delete XApp.FixHL();
   }
   //..............................................................................
   void macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
@@ -595,29 +571,6 @@ public:
     }
   }
   //..............................................................................
-  void macFixHL(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-    delete XApp.FixHL();
-  }
-  //..............................................................................
-  void macPlan(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error) {
-    int plan = Cmds[0].ToInt();
-    if( plan == -1 )  return; // leave like it is
-    ((TIns*)XApp.XFile().GetLastLoader())->SetPlan( plan );
-  }
-  //..............................................................................
-  void macLS(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-    TIns* iF = (TIns*)XApp.XFile().GetLastLoader();
-    for( int i=0; i < Cmds.Count(); i++ )  {
-      if( Cmds[i].IsNumber() )  {
-        int ls = Cmds[i].ToInt();
-        Cmds.Delete(i);
-        if( ls != -1 ) iF->SetIterations(ls);
-        break;
-      }
-    }
-    if( !Cmds.IsEmpty() )  iF->SetRefinementMethod( Cmds[0] );
-  }
-  //..............................................................................
   void macStop(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
     return;
   }
@@ -626,21 +579,20 @@ public:
     if( Cmds[0].Comparei("process") == 0 )  {
       while( FProcess != NULL )  {
         XApp.Sleep(50);
-        
       }
     }
   }
   //..............................................................................
   void macDelIns(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-    TIns *Ins = (TIns*)XApp.XFile().GetLastLoader();
+    TIns& Ins = XApp.XFile().GetLastLoader<TIns>();
     if( Cmds[0].IsNumber() )  {
       int insIndex = Cmds[0].ToInt();
-      Ins->DelIns(insIndex);
+      Ins.DelIns(insIndex);
       return;
     }
-    for( int i=0; i < Ins->InsCount(); i++ )  {
-      if(  !Ins->InsName(i).Comparei(Cmds[0]) )  {
-        Ins->DelIns(i);  i--;  continue;
+    for( int i=0; i < Ins.InsCount(); i++ )  {
+      if(  !Ins.InsName(i).Comparei(Cmds[0]) )  {
+        Ins.DelIns(i);  i--;  continue;
       }
     }
   }
@@ -663,7 +615,7 @@ public:
       Ins->Adopt( &XApp.XFile() );
     }
     else if( XApp.CheckFileType<TCRSFile>() )  {
-      TSpaceGroup* sg = ((TCRSFile*)XApp.XFile().GetLastLoader())->GetSG();
+      TSpaceGroup* sg = XApp.XFile().GetLastLoader<TCRSFile>().GetSG();
       if( newSg.IsEmpty() )  {
         if( sg == NULL )  {
           E.ProcessingError(__OlxSrcInfo, "please specify a space group with -s=SG switch" );
@@ -675,11 +627,10 @@ public:
       Ins->Adopt( &XApp.XFile() );
     }
     if( !content.IsEmpty() )  Ins->SetSfacUnit( content );
-    if( Ins->GetSfac().Length() == 0)  {
+    if( Ins->GetSfac().IsEmpty() )  {
       E.ProcessingError(__OlxSrcInfo, "empty SFAC instruction, please use -c=Content to specify" );
       return;
     }
-
     if( !newSg.IsEmpty() )  {
       TSpaceGroup* sg = TSymmLib::GetInstance()->FindGroup( newSg );
       if( sg == NULL )  {
@@ -689,6 +640,8 @@ public:
       Ins->GetAsymmUnit().ChangeSpaceGroup( *sg );
       newSg = EmptyString;
       newSg <<  " reset to " << sg->GetName() << " #" << sg->GetNumber();
+      olxstr titl( TEFile::ChangeFileExt(TEFile::ExtractFileName(XApp.XFile().GetFileName()), EmptyString) );
+      Ins->SetTitle( titl << " in " << sg->GetName() << " #" << sg->GetNumber());
     }
     if( fileName.IsEmpty() )
       fileName = XApp.XFile().GetFileName();
@@ -736,32 +689,6 @@ public:
       E.SetRetVal( Lst.Hole() );
     else
       E.SetRetVal<olxstr>( NAString );
-  }
-  //..............................................................................
-  void macAddIns(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-    XApp.XFile().UpdateAsymmUnit();
-    TIns * Ins = (TIns*)XApp.XFile().GetLastLoader();
-    olxstr InsName;
-    if( Cmds.Count() == 1 )  {
-      int spindex = Cmds[0].IndexOf(' ');
-      if( spindex != -1 )  {
-        InsName = Cmds[0].SubStringTo(spindex).Trim(' ');
-        Cmds[0].Delete(0, spindex+1);
-      }
-      else  {
-        InsName = Cmds[0];
-        Cmds.Delete(0);
-      }
-    }
-    else  {
-      InsName = Cmds[0];
-      Cmds.Delete(0);
-    }
-    if( !Ins->AddIns(InsName, Cmds) )  {
-      Error.ProcessingError(__OlxSrcInfo, "could not add instruction" );
-      return;
-    }
-    Ins->UpdateParams();
   }
   //..............................................................................
   void macIF(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
@@ -1004,106 +931,6 @@ public:
   //..............................................................................
   void funSetVar(const TStrObjList& Params, TMacroError &E)  {
     TOlxVars::SetVar(Params[0], Params[1]);
-  }
-  //..............................................................................
-  void funIns(const TStrObjList& Params, TMacroError &E)  {
-    TIns *I = (TIns*)XApp.XFile().GetLastLoader();
-
-    olxstr tmp;
-    if( Params[0].Comparei("weight") == 0 || Params[0].Comparei("wght") == 0 )  {
-      for( int j=0; j < I->Wght().Count(); j++ )  {
-        tmp << I->Wght()[j];
-        if( (j+1) < I->Wght().Count() )  tmp << ' ';
-      }
-      E.SetRetVal( tmp );
-      return;
-    }
-    if( !Params[0].Comparei("weight1") )  {
-      for( int j=0; j < I->Wght1().Count(); j++ )  {
-        tmp << I->Wght1()[j];
-        if( (j+1) < I->Wght1().Count() )  tmp << ' ';
-      }
-      E.SetRetVal( tmp );
-      return;
-    }
-    if( (Params[0].Comparei("L.S.") == 0) || (Params[0].Comparei("CGLS") == 0) )  {
-      for( int i=0; i < I->GetLSV().Count(); i++ )  {
-        tmp << I->GetLSV()[i];
-        if( (i+1) < I->GetLSV().Count() )  tmp << ' ';
-      }
-      E.SetRetVal( I->GetLSV().Count() == 0 ? NAString : tmp );
-      return;
-    }
-    if( Params[0].Comparei("ls") == 0 )  {
-      E.SetRetVal( I->GetLSV().Count() == 0 ? NAString : olxstr(I->GetIterations()) );
-      return;
-    }
-    if( Params[0].Comparei("plan") == 0)  {
-      for( int i=0; i < I->GetPlanV().Count(); i++ )  {
-        tmp << ((i < 1) ? Round(I->GetPlanV()[i]) : I->GetPlanV()[i]);
-        if( (i+1) < I->GetPlanV().Count() )  tmp << ' ';
-      }
-      E.SetRetVal( I->GetPlanV().Count() == 0 ? NAString : tmp );
-      return;
-    }
-    if( Params[0].Comparei("qnum") == 0)  {
-      E.SetRetVal( I->GetPlanV().Count() == 0 ? NAString : olxstr(I->GetPlan()) );
-      return;
-    }
-    if( Params[0].Comparei("R1") == 0)  {
-      E.SetRetVal( I->GetR1() < 0 ? NAString : olxstr(I->GetR1()) );
-      return;
-    }
-    if( !I->InsExists(Params[0]) )  {
-      E.SetRetVal( NAString );
-      return;
-    }
-
-  TInsList* insv = I->FindIns( Params[0] );
-    E.SetRetVal( (insv != NULL) ? insv->Text(' ') : EmptyString );
-  }
-  //..............................................................................
-  void funSG(const TStrObjList &Cmds, TMacroError &E)  {
-    TSpaceGroup* sg = NULL;
-    try  { sg = &XApp.XFile().GetLastLoaderSG();  }
-    catch(...)  {}
-    if( sg != NULL )  {
-      olxstr Tmp;
-      if( Cmds.IsEmpty() )  {
-        Tmp = sg->GetName();
-        if( !sg->GetFullName().IsEmpty() )  {
-          Tmp << " (" << sg->GetFullName() << ')';
-        }
-        Tmp << " #" << sg->GetNumber();
-      }
-      else  {
-        Tmp = Cmds[0];
-        Tmp.Replace("%#", olxstr(sg->GetNumber()) );
-        Tmp.Replace("%n", sg->GetName());
-        Tmp.Replace("%N", sg->GetFullName());
-        Tmp.Replace("%H", sg->GetHallSymbol());
-        if( Tmp.IndexOf("%h") != -1 )  {
-          olxstr t(sg->GetFullName()), res;
-          res.SetCapacity( t.Length() + 20 );
-          for( int i=0; i < t.Length(); i++ )  {
-            if( (i+1) < t.Length() )  {
-              if( (t[i] >= '0' && t[i] <= '9')  &&  (t[i+1] >= '0' && t[i+1] <= '9') )  {
-                res << t[i] << "<sub>" << t[i+1] << "</sub>";
-                i++;
-                continue;
-              }
-            }
-            res << t[i];
-          }
-          Tmp.Replace("%h", res);
-        }
-      }
-      E.SetRetVal( Tmp );
-    }
-    else  {
-      E.ProcessingError(__OlxSrcInfo, "could not find space group for the file" );
-      return;
-    }
   }
   //..............................................................................
   void funGetVar(const TStrObjList& Params, TMacroError &E)  {

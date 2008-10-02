@@ -33,7 +33,13 @@ namespace olex
   public:
     IOlexProcessor()  {  Instance = this;  }
     virtual ~IOlexProcessor()  {  ;  }
-    virtual bool executeMacro(const olxstr& cmdLine) = 0;
+    // uses custom macro error to set args, get rv
+    virtual bool executeMacroEx(const olxstr& cmdLine, TMacroError& er) = 0;
+    // a shortcut to above
+    inline bool executeMacro(const olxstr& cmdLine)  {
+      TMacroError er;
+      return executeMacroEx(cmdLine, er);
+    }
     virtual void print(const olxstr& Text, const short MessageType = mtNone) = 0;
     virtual bool executeFunction(const olxstr& funcName, olxstr& retValue) = 0;
     // returns a value, which should be deleted, of the TPType <> type

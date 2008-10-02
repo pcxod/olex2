@@ -62,10 +62,10 @@ void XLibMacros::funATA(const TStrObjList &Cmds, TMacroError &Error)  {
   TBAIPList bai_l;
   if( arg == 1 )  {
     if( xapp.CheckFileType<TIns>() )  {
-      TIns* ins = (TIns*)xapp.XFile().GetLastLoader();
-      TStrList sl(ins->GetSfac(), ' ');
+      TIns& ins = xapp.XFile().GetLastLoader<TIns>();
+      TStrList sl(ins.GetSfac(), ' ');
       for( int i=0; i < sl.Count(); i++ ) 
-        bai_l.Add( ins->GetAtomsInfo().FindAtomInfoBySymbol(sl[i]) );
+        bai_l.Add( ins.GetAtomsInfo().FindAtomInfoBySymbol(sl[i]) );
     }    
   }
   TAutoDB::AnalysisStat stat;
@@ -367,8 +367,8 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   // treating NPD atoms... promoting to the next available type
   if( changeNPD )  {
     if( xapp.CheckFileType<TIns>() )  {
-      TIns* ins = (TIns*)xapp.XFile().GetLastLoader();
-      TStrPObjList<olxstr,TBasicAtomInfo*> sl(ins->GetSfac(), ' ');
+      TIns& ins = xapp.XFile().GetLastLoader<TIns>();
+      TStrPObjList<olxstr,TBasicAtomInfo*> sl(ins.GetSfac(), ' ');
       for( int i=0; i < sl.Count(); i++ ) 
         sl.Object(i) = au.GetAtomsInfo()->FindAtomInfoBySymbol(sl[i]);
       sl.QuickSort<Main_BaiComparator>();
@@ -414,10 +414,10 @@ void XLibMacros::funVSS(const TStrObjList &Cmds, TMacroError &Error)  {
   bool use_formula = Cmds[0].ToBool();
   if( use_formula )  {
     if( xapp.CheckFileType<TIns>() )  {
-      TIns* ins = (TIns*)xapp.XFile().GetLastLoader();
+      TIns& ins = xapp.XFile().GetLastLoader<TIns>();
       TTypeList< AnAssociation2<int,TBasicAtomInfo*> > sl;
-      TStrList sfac(ins->GetSfac(), ' ');
-      TStrList unit(ins->GetUnit(), ' ');
+      TStrList sfac(ins.GetSfac(), ' ');
+      TStrList unit(ins.GetUnit(), ' ');
       int ac = 0;
       for( int i=0; i < sfac.Count(); i++ )  {
         int cnt = unit[i].ToInt();
