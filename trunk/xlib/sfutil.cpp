@@ -149,3 +149,4 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
   }
   return EmptyString;
 }
+
