@@ -6295,7 +6295,7 @@ void TMainForm::funValidatePlugin(const TStrObjList& Params, TMacroError &E) {
 //..............................................................................
 void TMainForm::macUpdateFile(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
 #ifndef __WIN32__  // skip updating launch or other win files not on win
-  olxstr ext(TEFile::ExtractFileExt(Cmds[0]);
+  olxstr ext(TEFile::ExtractFileExt(Cmds[0]));
   if( ext.Comparei("exe") == 0 || ext.Comparei("dll") == 0 || ext.Comparei("pyd") )  {
     TBasicApp::GetLog() << "Skipping windows files update...\n";
     return;
