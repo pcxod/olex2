@@ -40,10 +40,24 @@ TMemoryBlock* TZipWrapper::GetMemoryBlock(const olxstr &EM)  {
 //..............................................................................
 TZipWrapper::TZipWrapper(const olxstr &zipName, bool useCache)  {
   FInputStream = NULL;
+  wxfile = NULL;
   UseCache = useCache;
   //FFileInputStream = NULL;
   if( !TEFile::FileExists( zipName )  )  return;
   FInputStream = new wxZipInputStream( new wxFileInputStream( zipName.u_str() ) );
+  wxZipEntry *entry;
+  while( (entry = FInputStream->GetNextEntry() ) != NULL )
+    FEntries.Add( TEFile::UnixPath(entry->GetName().c_str()), entry );
+}
+//..............................................................................
+TZipWrapper::TZipWrapper(TEFile* file, bool useCache)  {
+  FInputStream = NULL;
+  wxfile = NULL;
+  UseCache = useCache;
+  //FFileInputStream = NULL;
+  if( file == NULL )  return;
+  wxfile = new wxFile( file->FileNo() );
+  FInputStream = new wxZipInputStream( new wxFileInputStream( *wxfile ) );
   wxZipEntry *entry;
   while( (entry = FInputStream->GetNextEntry() ) != NULL )
     FEntries.Add( TEFile::UnixPath(entry->GetName().c_str()), entry );
@@ -59,6 +73,10 @@ TZipWrapper::~TZipWrapper()  {
   for( int i=0; i < FEntries.Count(); i++ )
     delete FEntries.Object(i);
   if( FInputStream != NULL )  delete FInputStream;
+  if( wxfile != NULL )   {
+    wxfile->Detach();
+    delete wxfile;
+  }
 //  if( FFileInputStream )  delete FFileInputStream;
 }
 //..............................................................................
@@ -140,6 +158,9 @@ olxstr TZipWrapper::ComposeFileName(const olxstr &ZipFileNameA, const olxstr &FN
 
 TwxZipFileSystem::TwxZipFileSystem(const olxstr& zip_name, bool UseCache) : 
   zip(zip_name, UseCache) { }
+//..............................................................................
+TwxZipFileSystem::TwxZipFileSystem(TEFile* zip_fh, bool UseCache) : 
+  zip(zip_fh, UseCache) { }
 //..............................................................................
 IDataInputStream* TwxZipFileSystem::OpenFile(const olxstr& Source)  {
   TOnProgress Progress;

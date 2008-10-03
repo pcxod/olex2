@@ -9,7 +9,6 @@
 class TwxHttpFileSystem: public AFileSystem, public IEObject  {
   TUrl Url;
   THttp Http;
-  TStrList TmpFiles;
   TwxZipFileSystem* ZipFS;
 public:
   TwxHttpFileSystem(const TUrl& url, TwxZipFileSystem* zipFS=NULL) : Url(url) {
@@ -21,8 +20,8 @@ public:
     SetBase( olxstr('/') << url.GetPath() );
   }
   virtual ~TwxHttpFileSystem();
-  // saves stream to a temprray file and returs its name, deletes the file on exit if specified
-  olxstr SaveFile(const olxstr& fn, bool Delete=true);
+  // saves stream to a temprray file and returs the object which must be deleted manually
+  TEFile* SaveFile(const olxstr& fn);
   // zip is as primary source of the files, if a file is not in the zip - Url is used
   void SetZipFS( TwxZipFileSystem* zipFS )  {
     if( ZipFS != NULL )  delete ZipFS;

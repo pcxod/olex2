@@ -17,6 +17,7 @@ struct TZipEntry  {
 //---------------------------------------------------------------------------
 class TZipWrapper  {
   wxZipInputStream *FInputStream;
+  wxFile *wxfile;
 //  wxFileInputStream *FFileInputStream;
   TSStrPObjList<olxstr,wxZipEntry*, false> FEntries;
   TSStrPObjList<olxstr,TMemoryBlock*, false> FMemoryBlocks;
@@ -27,6 +28,7 @@ public:
   static olxstr ZipUrlSignature;
 
   TZipWrapper(const olxstr &zipName, bool useCache);
+  TZipWrapper(TEFile* zipName, bool useCache);
 
   ~TZipWrapper();
   IDataInputStream* OpenEntry(const olxstr &EN);
@@ -48,6 +50,7 @@ class TwxZipFileSystem: public AFileSystem, public IEObject  {
   TZipWrapper zip;
 public:
   TwxZipFileSystem(const olxstr& filename, bool UseCache);
+  TwxZipFileSystem(TEFile* file, bool UseCache);
   virtual ~TwxZipFileSystem() {}
 
   virtual IDataInputStream* OpenFile(const olxstr& zip_name);
