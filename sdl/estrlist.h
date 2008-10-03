@@ -211,12 +211,12 @@ public:
   }
   // convinience method
   void LoadFromTextStream(IInputStream& io)  {
+    Clear();
     int fl = io.GetSize() - io.GetPosition();
     if( fl <= 0 )  return;
     char * const&bf = new char [fl+1];
     io.Read(bf, fl);
     bf[fl] = '\0';
-    Clear();
     Strtok(CString(bf, fl), '\n', false); // must preserve the new lines on Linux!!! 2008.08.17
     for(int i=0; i < Count(); i++ )
       if( String(i).EndsWith('\r') )  String(i).SetLength( String(i).Length() -1 );
