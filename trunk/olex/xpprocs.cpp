@@ -981,15 +981,41 @@ void TMainForm::macIF(TStrObjList &Cmds, const TParamList &Options, TMacroError 
     return;
   }
   if( Condition.ToBool() )  {
-    if( Cmds[2].Comparei(NoneString) )
-      ProcessXPMacro(Cmds[2], E);
+    if( Cmds[2].Comparei(NoneString) )  {
+      if( Cmds[2].IndexOf(">>") != -1 )  {
+        TStrList toks(Cmds[2], ">>");
+        for( int i=0; i < toks.Count(); i++ )  {
+          ProcessXPMacro(toks[i], E);
+          if( !E.IsSuccessful() )  {
+            AnalyseError(E);
+            return;
+          }
+        }
+      }
+      else  {
+        ProcessXPMacro(Cmds[2], E);
+      }
+    }
     return;
   }
   else  {
     if( Cmds.Count() == 5 )  {
       if( !Cmds[3].Comparei("else") )  {
-        if( Cmds[4].Comparei(NoneString) )
-          ProcessXPMacro(Cmds[4], E);
+        if( Cmds[4].Comparei(NoneString) )  {
+          if( Cmds[4].IndexOf(">>") != -1 )  {
+            TStrList toks(Cmds[4], ">>");
+            for( int i=0; i < toks.Count(); i++ )  {
+              ProcessXPMacro(toks[i], E);
+              if( !E.IsSuccessful() )  {
+                AnalyseError(E);
+                return;
+              }
+            }
+          }
+          else  {
+            ProcessXPMacro(Cmds[4], E);
+          }
+        }
         return;
       }
       else  {
@@ -1176,7 +1202,7 @@ void TMainForm::macPict(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 }
 //..............................................................................
 void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  short res = 2;
+  short res = 1;
   //wxProgressDialog progress(wxT("Rendering..."), wxT("Pass 1 out of 4"), 5, this, wxPD_AUTO_HIDE); 
   if( Cmds.Count() == 2 )  res = Cmds[1].ToInt();
   if( res <= 0 )  res = 2;
@@ -1188,15 +1214,17 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       ScrWidth  = (orgWidth/(res*2)-1)*res*2;
   int BmpHeight = ScrHeight*res, BmpWidth = ScrWidth*res;
 
-  FXApp->Quality(qaPict);
-
   FXApp->GetRender().Resize(ScrWidth, ScrHeight); 
 
   const int bmpSize = BmpHeight*BmpWidth*3;
   char* bmpData = (char*)malloc(bmpSize);
   FGlConsole->Visible(false);
   FXApp->GetRender().OnDraw->SetEnabled( false );
-  if( res > 1 )  FXApp->GetRender().Scene()->ScaleFonts(res);
+  if( res > 1 )    {
+    FXApp->GetRender().Scene()->ScaleFonts(res);
+    if( res >= 3 )
+      FXApp->Quality(qaPict);
+  }
   for( int i=0; i < res; i++ )  {
     for( int j=0; j < res; j++ )  {
       FXApp->GetRender().LookAt(j, i, res);
@@ -1225,8 +1253,8 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       FXApp->GetRender().LookAt(j, i, res);
       FXApp->GetRender().Draw();
       char *PP = FXApp->GetRender().GetPixels(false, 1);
-      int mj = (int)j*ScrWidth;
-      int mi = (int)i*ScrHeight;
+      int mj = (int)(j*ScrWidth);
+      int mi = (int)(i*ScrHeight);
       for(int k=(int)(ScrWidth*0.25); k <= (int)(ScrWidth*0.75); k++ )  {
         for(int l=(int)(ScrHeight*0.25); l < ScrHeight; l++ )  {
           int indexA = (l*ScrWidth + k)*3;
@@ -1281,15 +1309,15 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       delete [] PP;
     }
   }
-
   //progress.Update(4, wxT("Saving piture..."));
-
-  FXApp->Quality(qaMedium);
+  if( res > 1 ) {
+    FXApp->GetRender().Scene()->RestoreFontScale();
+    if( res >= 3 ) 
+      FXApp->Quality(qaMedium);
+  }
 
   FXApp->GetRender().OnDraw->SetEnabled( true );
   FGlConsole->Visible(true);
-  if( res > 1 ) 
-    FXApp->GetRender().Scene()->RestoreFontScale();
   // end drawing etc
   FXApp->GetRender().Resize(orgWidth, orgHeight); 
   FXApp->GetRender().LookAt(0,0,1);

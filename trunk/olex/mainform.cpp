@@ -3177,19 +3177,23 @@ void TMainForm::OnInternalIdle()  {
       try  {
         macros.LoadFromFile( rof[i] );
         macros.CombineLines('\\');
-        for( int i=0; i < macros.Count(); i++ )
-          executeMacro( macros.String(i) );
+        for( int j=0; j < macros.Count(); j++ )  {
+          executeMacro( macros[j] );
+#ifdef _DEBUG
+          FXApp->GetLog() << TEFile::ExtractFileName(rof[i]) << ": " << macros[j] << '\n';
+#endif
+        }
       }
       catch( const TExceptionBase& exc )  {
         TBasicApp::GetLog().Exception( exc.GetException()->GetFullMessage() );
         ::wxMessageBox( uiStr(exc.GetException()->GetError()) += wxT('\n'),
           uiStrT("Exception: ") += uiStr(EsdlObjectName(exc)), wxOK|wxICON_ERROR);
       }
-      long fa = TEFile::FileAge( rof.String(i) );
+      long fa = TEFile::FileAge( rof[i] );
       // Null the file
-      try  {  TEFile ef(rof.String(i), "wb+");  }
+      try  {  TEFile ef(rof[i], "wb+");  }
       catch( TIOExceptionBase& )  { ;  }
-      TEFile::SetFileTimes(rof.String(i), fa, fa);
+      TEFile::SetFileTimes(rof[i], fa, fa);
       //TEFile::DelFile(rof.String(i));
     }
     TEFile::ChangeDir( curd );
