@@ -10,8 +10,6 @@
 
 TwxHttpFileSystem::~TwxHttpFileSystem()  {  
   if( ZipFS != NULL )  delete ZipFS;
-  for( int i=0; i < TmpFiles.Count(); i++ )
-    TEFile::DelFile(TmpFiles[i]);
 }
 //.........................................................................................
 IInputStream* TwxHttpFileSystem::OpenFile(const olxstr& Source)  {
@@ -93,7 +91,7 @@ wxInputStream* TwxHttpFileSystem::wxOpenFile(const olxstr& Source)  {
   return is;  
 }
 //.........................................................................................
-olxstr TwxHttpFileSystem::SaveFile(const olxstr& Source, bool Delete)  {
+TEFile* TwxHttpFileSystem::SaveFile(const olxstr& Source)  {
   TOnProgress Progress;
   Progress.SetMax(1);
   Progress.SetPos(0);
@@ -113,10 +111,9 @@ olxstr TwxHttpFileSystem::SaveFile(const olxstr& Source, bool Delete)  {
       TBasicApp::GetInstance()->OnProgress->Execute(this, &Progress);
     }
   }
-  catch( ... )  {   return EmptyString;  }
+  catch( ... )  {   return NULL;  }
   if( is == NULL )  {
     throw TFunctionFailedException(__OlxSourceInfo, olxstr("NULL handle for '") << o_src << '\'');
-    return EmptyString;
   }
   TEFile* tf = TEFile::TmpFile(EmptyString);
   char* bf = new char [1024*64];
@@ -132,11 +129,8 @@ olxstr TwxHttpFileSystem::SaveFile(const olxstr& Source, bool Delete)  {
   TBasicApp::GetInstance()->OnProgress->Exit(this, &Progress);
 
   delete [] bf;
-  olxstr rv(tf->GetName());
-  delete tf;
-  if( Delete )
-    TmpFiles.Add(rv);
-  return rv;  
+  tf->Seek(0, 0);
+  return tf;  
 }
 //.........................................................................................
 

@@ -63,6 +63,20 @@ public:
   virtual void Flush();
   void Seek(long Position, const int From);
   FILE* Handle()  const {  return FHandle; }
+  FILE* ReleaseHandle() {
+    FILE* rv = FHandle;
+    FHandle = NULL;
+    return rv;
+  }
+  int FileNo() const {
+    if( FHandle == NULL )
+      throw TInvalidArgumentException(__OlxSourceInfo, "NULL handle");
+#ifdef _MSC_VER
+    return _fileno(FHandle);
+#else
+    return fileno(FHandle);
+#endif
+  }
 
   virtual void Read(void *Bf, size_t count);
   virtual size_t Write(const void *Bf, size_t count);

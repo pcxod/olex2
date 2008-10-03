@@ -6173,15 +6173,15 @@ void TMainForm::macInstallPlugin(TStrObjList &Cmds, const TParamList &Options, T
         // plugin- = 7
         olxstr zip_fn( olxstr("/") << TEFile::UnixPath(TEFile::ParentDir(url.GetPath())) <<
           Cmds[0].SubStringFrom(7) << ".zip" );
-        olxstr local_fn;
+        TEFile* local_f = NULL;
         TDownloadProgress* dp = new TDownloadProgress(*FXApp);
         TBasicApp::GetInstance()->OnProgress->Add( dp );
-        try  { local_fn = httpFS.SaveFile( zip_fn );  }
+        try  { local_f = httpFS.SaveFile( zip_fn );  }
         catch( ... )  {  }
         TBasicApp::GetInstance()->OnProgress->Remove(dp);
         delete dp;
-        if( !local_fn.IsEmpty() )  {
-          httpFS.SetZipFS( new TwxZipFileSystem(local_fn, false) );
+        if( local_f != NULL )  {
+          httpFS.SetZipFS( new TwxZipFileSystem(local_f, false) );
         }
         TOSFileSystem osFS;
         osFS.SetBase( TBasicApp::GetInstance()->BaseDir() );
@@ -6198,6 +6198,7 @@ void TMainForm::macInstallPlugin(TStrObjList &Cmds, const TParamList &Options, T
         }
         osFS.OnAdoptFile->Remove( progressListener );
         delete progressListener;
+        delete local_f;
         if( Cause )
           throw TFunctionFailedException(__OlxSourceInfo, Cause);
 
