@@ -9,13 +9,9 @@
 #
 ###############################################################################
 # MACROS - some of these can and should be set using configure when this evolves#
-# VERSION = 1
-# PATCHLEVEL = 0
-# SUBLEVEL = 2
-# EXTRAVERSION =
 # NAME = Olex v1.1 - super banana monkey
 #
-PROXY = 
+PROXY = $(shell PROXY)
 OWNER = $(shell USER)
 GROUP = $(shell GROUP)
 #######################################
@@ -33,8 +29,11 @@ OLEX_BIN := $(HOME)/bin
 .DEFAULT_GOAL := all
 #######################################
 # Compiling
-CC = gcc
-CFLAGS = `wx-config --cxxflags --unicode --toolkit=gtk2` `python-config --includes` -I$(SRC_DIR)sdl -I$(SRC_DIR)xlib -I$(SRC_DIR)glib -I$(SRC_DIR)gxlib -I$(SRC_DIR)repository -I$(SRC_DIR)olex -I$(SRC_DIR)alglib -S -D__WXWIDGETS__ -D_UNICODE -fexceptions -O3 -combine
+CC := gcc
+CFLAGS := -fexceptions -O3 -combine
+OPTS = `wx-config --cxxflags --unicode --toolkit=gtk2` `python-config --includes` -I$(SRC_DIR)sdl -I$(SRC_DIR)xlib -I$(SRC_DIR)glib -I$(SRC_DIR)gxlib -I$(SRC_DIR)repository -I$(SRC_DIR)olex -I$(SRC_DIR)alglib -S -D__WXWIDGETS__ -D_UNICODE
+LDFLAGS += `wx-config --libs gl,core,html,net,aui --unicode --toolkit=gtk2` `python-config --libs --ldflags` -L. -fexceptions -g -rdynamic -O3
+CCFLAGS += $(CFLAGS)
 ###############################################################################
 
 # All will compile and link all of olex takes about 10 minutes
@@ -43,34 +42,66 @@ all: obj unirun olex link
 
 # obj will create the obj directory and compile the objects
 obj: $@
+	@echo $(CC) $(OPTS) $(CFLAGS)
 	@echo "Building object libraries, this can take a while"
 	@mkdir $(OBJ_DIR);
 	@cd $(OBJ_DIR); $(CC) $(SRC_DIR)alglib/*.cpp  $(SRC_DIR)sdl/*.cpp  $(SRC_DIR)sdl/smart/*.cpp  $(SRC_DIR)xlib/*.cpp  $(SRC_DIR)xlib/macro/*.cpp  $(SRC_DIR)glib/*.cpp  $(SRC_DIR)gxlib/*.cpp  $(SRC_DIR)repository/filesystem.cpp  $(SRC_DIR)repository/shellutil.cpp  $(SRC_DIR)repository/httpex.cpp  $(SRC_DIR)repository/url.cpp  $(SRC_DIR)repository/wxhttpfs.cpp  $(SRC_DIR)repository/wxzipfs.cpp  $(SRC_DIR)repository/fsext.cpp  $(SRC_DIR)repository/pyext.cpp  $(SRC_DIR)repository/integration.cpp   $(SRC_DIR)repository/IsoSurface.cpp $(SRC_DIR)repository/eprocess.cpp $(SRC_DIR)repository/olxvar.cpp \
-	$(CFLAGS)
+	$(OPTS) $(CFLAGS)
 
 # unirun will create the obj/unirun directory and compile the source
 unirun : $(OBJ_DIR)$@
 	@echo "Making unirun this is relatively quick"
 	@mkdir $(OBJ_DIR)unirun;
-	@cd $(OBJ_DIR)unirun/;	$(CC) $(SRC_DIR)unirun/*.cpp  $(CFLAGS)
+	@cd $(OBJ_DIR)unirun/;	$(CC) $(SRC_DIR)unirun/*.cpp  $(OPTS) $(CFLAGS)
 
 # olex will create the obj/olex directory and compile the source
 olex : $(OBJ_DIR)$@
 	@echo "Making olex this can take a while"
 	@mkdir $(OBJ_DIR)olex;
-	@cd $(OBJ_DIR)olex/; $(CC) $(SRC_DIR)olex/*.cpp $(CFLAGS)
+	@cd $(OBJ_DIR)olex/; $(CC) $(SRC_DIR)olex/*.cpp $(OPTS) $(CFLAGS)
 # There now appears to be no files in the olex/macro directory?
 #	@cd $(OBJ_DIR)olex/; $(CC) $(SRC_DIR)olex/*.cpp $(SRC_DIR)olex/macro/*.cpp $(CFLAGS)
 
 # link will link the *.s objects created and build the binaries in the bin directory
 link : $(OBJ_DIR)unirun$@ $(OBJ_DIR)olex$@
 	@echo "Linking unirun and olex"
-	@mkdir $(EXE_DIR); $(CC) $(OBJ_DIR)unirun/*.s $(OBJ_DIR)*.s -o $(EXE_DIR)unirun `wx-config --libs gl,core,html,net,aui --unicode --toolkit=gtk2` `python-config --libs --ldflags` -L. -fexceptions -g -rdynamic -O3
-	@$(CC) $(OBJ_DIR)*.s $(OBJ_DIR)olex/*.s -o $(EXE_DIR)olex2 `wx-config --libs gl,core,html,net,aui --unicode --toolkit=gtk2` `python-config --libs --ldflags` -L. -fexceptions -g -rdynamic -O3
+	@mkdir $(EXE_DIR); $(CC) $(OBJ_DIR)unirun/*.s $(OBJ_DIR)*.s -o $(EXE_DIR)unirun $(LDFLAGS)
+	@$(CC) $(OBJ_DIR)*.s $(OBJ_DIR)olex/*.s -o $(EXE_DIR)olex2 $(LDFLAGS)
 
 # install will allow a user with root/sudo permission to install a central copy of olex2
 install-root:
 	@echo "You must be root to install"
+	install -m 755 -d /usr/share/olex2
+	install -m 755 -d /usr/libexec/olex2
+	# Copy and install files
+	install -m 644 $(SRC_DIR)scripts/usettings.dat /usr/share/olex2/usettings.dat
+	install -m 755 scripts/olex2.xpm /usr/share/olex2/icons/olex2.xpm
+	install -m 755 bin/olex2 /usr/libexec/olex2/olex2
+	install -m 755 bin/unirun /usr/libexec/olex2/unirun
+	install -m 644 $(SRC_DIR)scripts/olex2.sh /usr/bin/olex2
+	strip /usr/libexec/olex2/unirun
+	strip /usr/libexec/olex2/olex2
+	chmod +x /usr/bin/olex2
+# Create desktop icon
+	cat > olex2.desktop << EOF
+	[Desktop Entry]
+	Type=Application
+	Name=olex2
+	Comment="Olex2 is visualisation software for small-molecule crystallography"
+	TryExec=/usr/bin/olex2
+	Exec=/usr/bin/olex2
+	Icon=olex2.xpm
+	MimeType=image/x-foo;
+	Categories=Engineering;
+	GenericName=Crystallography GUI
+	X-Trminal=true
+	EOF
+# Install shortcut to menu
+	desktop-file-install \
+		--dir /usr/share/applications \
+		--add-category Application    \
+		--add-category Education      \
+		 olex2.desktop
 
 # This is my sandbox for testing variables
 test:
@@ -80,10 +111,12 @@ test:
 # install installs into the users home directory ~/olex this should be
 # altered to install into the path provided by configure or the user at the top
 # of this file
-#
+# 
+# NOTE: 05/10/08 This needs modifying to bring it up2date with the new source code
+# options. It still will work but it does not utilise some of the new olex2 features
 install: 
 	@echo "Installing to local directory: " $(HOME) 
-	@mkdir $(HOME)/olex;
+	@mkdir $(OLEX_BIN);
 	@cp -r $(EXE_DIR)* $(OLEX_INS)/;
 	@cp $(SRC_DIR)scripts/usettings.dat $(OLEX_INS)/;
 	@cp $(SRC_DIR)scripts/startup $(OLEX_INS)/;
@@ -169,3 +202,4 @@ help:
 
 
 # DONE!
+# DO NOT DELETE
