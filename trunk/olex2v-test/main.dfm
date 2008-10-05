@@ -1,6 +1,6 @@
 object Form1: TForm1
-  Left = 249
-  Top = 182
+  Left = 226
+  Top = 286
   Width = 777
   Height = 583
   Caption = 'Form1'
@@ -24,8 +24,8 @@ object Form1: TForm1
   TextHeight = 13
   object sbStatus: TStatusBar
     Left = 0
-    Top = 523
-    Width = 769
+    Top = 508
+    Width = 761
     Height = 19
     Panels = <
       item

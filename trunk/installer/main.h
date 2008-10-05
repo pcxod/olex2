@@ -22,6 +22,7 @@ __published:	// IDE-managed Components
   TPanel *Panel2;
   TImage *iSplash;
   TfrMain *frMain;
+  TProgressBar *pbProgress;
   void __fastcall iSplashMouseMove(TObject *Sender, TShiftState Shift,
           int X, int Y);
   void __fastcall iSplashMouseDown(TObject *Sender, TMouseButton Button,
