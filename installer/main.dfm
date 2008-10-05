@@ -1,6 +1,6 @@
 object fMain: TfMain
-  Left = 0
-  Top = 149
+  Left = -637
+  Top = 146
   AlphaBlendValue = 90
   BorderIcons = []
   BorderStyle = bsNone
@@ -6466,6 +6466,10 @@ object fMain: TfMain
     inherited bbDone: TBitBtn
       OnClick = bbDoneClick
     end
+    inherited stAction: TStaticText
+      Width = 194
+      Height = 17
+    end
     inherited cbProxy: TCheckBox
       OnClick = cbProxyClick
       OnMouseDown = iSplashMouseDown
@@ -6478,5 +6482,16 @@ object fMain: TfMain
     inherited bbInstall: TBitBtn
       OnClick = bbInstallClick
     end
+  end
+  object pbProgress: TProgressBar
+    Left = 432
+    Top = 104
+    Width = 78
+    Height = 17
+    Min = 0
+    Max = 100
+    Smooth = True
+    TabOrder = 2
+    Visible = False
   end
 end

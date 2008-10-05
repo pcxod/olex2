@@ -35,7 +35,7 @@ public:
     if( !EsdlInstanceOf( *Data, TOnProgress) )  return false;
     IEObject *d_p = const_cast<IEObject*>(Data);
     TOnProgress *A = dynamic_cast<TOnProgress *>(d_p);
-//    fMain->frMain->pbProgress->Max = A->GetMax();
+    fMain->pbProgress->Max = A->GetMax();
     return true;
   }
   bool Execute(const IEObject *Sender, const IEObject *Data)  {
@@ -44,8 +44,12 @@ public:
 
     IEObject *d_p = const_cast<IEObject*>(Data);
     TOnProgress *A = dynamic_cast<TOnProgress *>(d_p);
-//    fMain->frMain->pbProgress->Position = A->GetPos();
-    fMain->frMain->stAction->Caption = A->GetAction().c_str();
+    fMain->pbProgress->Position = A->GetPos();
+    if( Sender != NULL && EsdlInstanceOf(*Sender, TWinHttpFileSystem) ) {
+      fMain->frMain->stAction->Caption = (olxstr("Downloading: ") << TEFile::ExtractFileName(A->GetAction())).c_str();
+    }
+    else
+      fMain->frMain->stAction->Caption = TEFile::ExtractFileName(A->GetAction()).c_str();
     Application->ProcessMessages();
     return true;
   }
@@ -210,7 +214,7 @@ bool TfMain::DoInstall(const olxstr& zipFile, const olxstr& installPath)  {
   for( int zi=0; zi < numitems; zi++ )  {
     GetZipItem(hz, zi, &ze); // fetch individual details
     Progress.SetPos( zi );
-    Progress.SetAction( ze.name );
+    Progress.SetAction( olxstr("Installing: ") << ze.name );
     TBasicApp::GetInstance()->OnProgress->Execute( NULL, &Progress );
     UnzipItem(hz, zi, (installPath + ze.name).c_str() );         // e.g. the item's name.
   }
@@ -222,6 +226,8 @@ void __fastcall TfMain::bbInstallClick(TObject *Sender)  {
   olxstr reposPath, proxyPath, installPath;
   TSettingsFile Settings;
 
+  frMain->bbInstall->Enabled = false;
+  pbProgress->Visible = true;
   if( frMain->eProxy->Enabled )  {
     proxyPath = frMain->eProxy->Text.c_str();
   }
@@ -314,6 +320,7 @@ void __fastcall TfMain::bbInstallClick(TObject *Sender)  {
   if( OlexInstalled )  {
     frMain->bbInstall->Caption = "Run!";
     frMain->bbInstall->Enabled = true;
+    pbProgress->Visible = false;
   }
 }
 //---------------------------------------------------------------------------
