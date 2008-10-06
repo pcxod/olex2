@@ -69,6 +69,7 @@ public:
   struct SkipOptions  {
     TStrList *extsToSkip,  // extenstions to skip
              *filesToSkip; // file names to skip
+    SkipOptions() : extsToSkip(NULL), filesToSkip(NULL) {  }
   };
 private:
   olxstr Name;

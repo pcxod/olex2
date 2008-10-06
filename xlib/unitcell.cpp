@@ -699,11 +699,12 @@ TCAtom* TUnitCell::FindOverlappingAtom(vec3d& pos, double delta) const  {
   double minD = 1000;
   delta *= delta;
   const TAsymmUnit& au = GetLattice().GetAsymmUnit();
-
-  for( int i=0; i < MatrixCount(); i++ )  {
+  int ac = au.AtomCount(),
+      mc = Matrices.Count();
+  for( int i=0; i < mc; i++ )  {
     const smatd& matr = GetMatrix(i);
     V1 = matr * pos;
-    for( int j=0; j < au.AtomCount(); j++ )  {
+    for( int j=0; j < ac; j++ )  {
       const TCAtom& ca = au.GetAtom(j);
       if( ca.IsDeleted() )  continue;
       V2 = ca.ccrd() - V1;
@@ -737,7 +738,7 @@ TCAtom* TUnitCell::FindOverlappingAtom(vec3d& pos, double delta) const  {
       }
       au.CellToCartesian(V2);
       double qd = V2.QLength();
-	  if( qd < minD && ca.GetAtomInfo() != iQPeakIndex )  {
+      if( qd < minD && ca.GetAtomInfo() != iQPeakIndex )  {
         minD = qd;
         pos = nearest;
       }

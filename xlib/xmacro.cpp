@@ -22,6 +22,7 @@
 #include "fsext.h"
 #include "ecast.h"
 #include "xlcongen.h"
+#include "bitarray.h"
 
 #define xlib_InitMacro(macroName, validOptions, argc, desc)\
   lib.RegisterStaticMacro( new TStaticMacro(&XLibMacros::mac##macroName, #macroName, (validOptions), argc, desc))
@@ -358,14 +359,22 @@ void XLibMacros::macFile(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 
   if( TEFile::ExtractFilePath(Tmp).IsEmpty() )
     Tmp = TEFile::AddTrailingBackslash(CurrentDir) + Tmp;
-
+  TEBitArray removedSAtoms, removedCAtoms;
   if( TEFile::ExtractFileExt(Tmp).Comparei("ins") == 0 )  {  // kill Q peak in the ins file
     TLattice& latt = XApp.XFile().GetLattice();
+    removedSAtoms.SetSize( latt.AtomCount() );
+    removedCAtoms.SetSize( latt.AtomCount() );
     for( int i=0; i < latt.AtomCount(); i++ )  {
       TSAtom& sa = latt.GetAtom(i);
       if( sa.GetAtomInfo() == iQPeakIndex )  {
-        sa.SetDeleted(true);
-        sa.CAtom().SetDeleted(true);
+        if( !sa.IsDeleted() )  {
+          sa.SetDeleted(true);
+          removedSAtoms.SetTrue(i);
+        }
+        if( !sa.IsDeleted() )  {
+          sa.CAtom().SetDeleted(true);
+          removedCAtoms.SetTrue(i);
+        }
       }
     }
   }
@@ -384,6 +393,14 @@ void XLibMacros::macFile(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     olex::IOlexProcessor* op = olex::IOlexProcessor::GetInstance();
     if( op != NULL )
       op->executeMacro(olxstr("reap \'") << Tmp << '\'');
+  }
+  if( removedSAtoms.Count() != 0 )  {  // need to restore, abit of mess here...
+    TLattice& latt = XApp.XFile().GetLattice();
+    for( int i=0; i < latt.AtomCount(); i++ )  {
+      TSAtom& sa = latt.GetAtom(i);
+      if( removedSAtoms.Get(i) )  sa.SetDeleted(false);
+      if( removedCAtoms.Get(i) )  sa.CAtom().SetDeleted(false);
+    }
   }
 }
 //..............................................................................
