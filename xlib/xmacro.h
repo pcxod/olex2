@@ -36,7 +36,14 @@ class XLibMacros  {
   static DefMacro(LS)
   static DefMacro(Plan)
   static DefMacro(UpdateWght)
+  static DefMacro(Anis)
+  static DefMacro(Isot)
   static DefMacro(FixHL)
+  static DefMacro(Fix)
+  static DefMacro(Free)
+  static DefMacro(File)
+  static DefMacro(User)
+  static DefMacro(Dir)
 
   static DefMacro(Flush)
 
@@ -74,6 +81,7 @@ class XLibMacros  {
 public:
   static const olxstr NoneString;
   static const olxstr NAString;
+  static olxstr CurrentDir;
   // finds numbers and removes them from the list and returns the number of found numbers
   template <typename nt> static int ParseNumbers(TStrObjList& Cmds, int cnt, ...)  {
     va_list argptr;

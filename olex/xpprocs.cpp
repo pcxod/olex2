@@ -2056,127 +2056,6 @@ void TMainForm::macCent(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   FXApp->AddCentroid(Atoms);
 }
 //..............................................................................
-void TMainForm::macFile(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  olxstr Tmp;
-  if( Cmds.IsEmpty() )  {  // error
-    // res -> Ins rotation if ins file
-    if( FXApp->CheckFileType<TIns>() )
-      Tmp = TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), "ins");
-    else
-      Tmp = FXApp->XFile().GetFileName();
-  }
-  else
-    Tmp = Cmds[0];
-
-  bool Sort = Options.Contains('s');
-
-  if( !TEFile::ExtractFilePath(Tmp).Length() )
-    Tmp = TEFile::AddTrailingBackslash(CurrentDir) + Tmp;
-
-  FXApp->SaveXFile(Tmp, Sort);
-  UpdateRecentFile(Tmp);
-  if( FXApp->XFile().HasLastLoader() )  {
-    //FInfoBox->Clear();
-    //FInfoBox->PostText(FXApp->XFile().GetFileName());
-    //FInfoBox->PostText(FXApp->XFile().GetLastLoader()->GetTitle());
-    Tmp = TEFile::ExtractFilePath(Tmp);
-    if( !Tmp.IsEmpty() && (Tmp.Comparei(CurrentDir)) )  {
-      if( !TEFile::ChangeDir(Tmp) )
-        TBasicApp::GetLog().Error("Cannot change current folder...");
-      else
-        CurrentDir = Tmp;
-    }
-  }
-  else  {
-    ProcessXPMacro(olxstr("reap \'") << Tmp << '\'', Error);
-  }
-  OnResize();
-}
-//..............................................................................
-void TMainForm::macUser(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  if( Cmds.IsEmpty() )  {
-    TBasicApp::GetLog() << TEFile::CurrentDir() << '\n';
-  }
-  else if( !TEFile::ChangeDir(Cmds[0]) )  {
-    Error.ProcessingError(__OlxSrcInfo, "could not change current folder" );
-  }
-  else
-    CurrentDir = Cmds[0]; 
-}
-//..............................................................................
-void TMainForm::macDir(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  olxstr Filter("*.*");
-  TStrList Output;
-  if( Cmds.Count() != 0 )  Filter = Cmds[0];
-  TFileList fl;
-  TEFile::ListCurrentDirEx(fl, Filter, sefFile|sefDir);
-  TTTable<TStrList> tab(fl.Count(), 4);
-  tab.ColName(0) = "Name";
-  tab.ColName(1) = "Size";
-  tab.ColName(2) = "Last Modified";
-  tab.ColName(3) = "Attributes";
-
-  TFileListItem::SortListByName(fl);
-
-  for( int i=0; i < fl.Count(); i++ )  {
-    tab[i][0] = fl[i].GetName();
-    if( (fl[i].GetAttributes() & sefDir) != 0 )
-      tab[i][1] = "Folder";
-    else
-      tab[i][1] = fl[i].GetSize();
-    tab[i][2] = TETime::FormatDateTime("yyyy.MM.dd hh:mm:ss", fl[i].GetModificationTime());
-    if( (fl[i].GetAttributes() & sefReadOnly) != 0 )
-      tab[i][3] << 'r';
-    if( (fl[i].GetAttributes() & sefWriteOnly) != 0 )
-      tab[i][3] << 'w';
-    if( (fl[i].GetAttributes() & sefHidden) != 0 )
-      tab[i][3] << 'h';
-    if( (fl[i].GetAttributes() & sefSystem) != 0 )
-      tab[i][3] << 's';
-    if( (fl[i].GetAttributes() & sefExecute) != 0 )
-      tab[i][3] << 'e';
-  }
-
-  tab.CreateTXTList(Output, "Directory list", true, true, ' ');
-  TBasicApp::GetLog() << Output;
-}
-//..............................................................................
-void TMainForm::macAnis(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  TXAtomPList XAtoms;
-  TCAtomPList CAtoms;
-  bool ConsiderH = Options.Contains("h");
-  if( !FindXAtoms(Cmds, XAtoms, true, !Options.Contains("cs")) )  {
-    Error.ProcessingError(__OlxSrcInfo, "wrong atom names" );
-    return;
-  }
-  CAtoms.SetCapacity( XAtoms.Count() );
-  for( int i=0; i < XAtoms.Count(); i++ )  {
-    if( (!ConsiderH && XAtoms[i]->Atom().GetAtomInfo() == iHydrogenIndex) ||
-        XAtoms[i]->Atom().GetAtomInfo() == iQPeakIndex )
-      continue;
-    CAtoms.Add( &XAtoms[i]->Atom().CAtom() );
-  }
-  FXApp->XFile().GetLattice().SetAnis( CAtoms, true );
-}
-//..............................................................................
-void TMainForm::macIsot(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  TXAtomPList XAtoms;
-  TCAtomPList CAtoms;
-  bool ConsiderH = Options.Contains("h");
-  if( !FindXAtoms(Cmds, XAtoms, true, !Options.Contains("cs")) )  {
-    Error.ProcessingError(__OlxSrcInfo, "wrong atom names" );
-    return;
-  }
-  CAtoms.SetCapacity( XAtoms.Count() );
-  for( int i=0; i < XAtoms.Count(); i++ )  {
-    if( (!ConsiderH && XAtoms[i]->Atom().GetAtomInfo() == iHydrogenIndex) ||
-        XAtoms[i]->Atom().GetAtomInfo() == iQPeakIndex )
-      continue;
-    CAtoms.Add( &XAtoms[i]->Atom().CAtom() );
-  }
-  FXApp->XFile().GetLattice().SetAnis( CAtoms, false );
-}
-//..............................................................................
 void TMainForm::macMask(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error){
   if( Cmds[0] == "atoms" )  {
     int Mask = Cmds[1].ToInt();
@@ -3882,96 +3761,6 @@ void TMainForm::macBind(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   throw TNotImplementedException(__OlxSourceInfo);
 }
 //..............................................................................
-void TMainForm::macFree(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
-  olxstr vars = Cmds[0];
-  Cmds.Delete(0);
-  TXAtomPList Atoms;
-  FXApp->FindXAtoms(Cmds.Text(' '), Atoms, false);
-  if( Atoms.IsEmpty() )  {
-    E.ProcessingError(__OlxSrcInfo, "no atoms provided");
-    return;
-  }
-  if( vars.Comparei( "XYZ" ) == 0 )  {
-    for(int i=0; i < Atoms.Count(); i++ )  {
-      TXAtom* XA = Atoms[i];
-      for( int j=0; j < 3; j++ )
-        XA->Atom().CAtom().FixedValues()[TCAtom::CrdFixedValuesOffset + j] = 0;
-    }
-  }
-  else if( vars.Comparei( "UISO" ) == 0 )  {
-    for(int i=0; i < Atoms.Count(); i++ )  {
-      TXAtom* XA = Atoms[i];
-      if( XA->Atom().GetEllipsoid() == NULL )  {  // isotropic atom
-          XA->Atom().CAtom().SetUisoVar( 0 );
-      }
-      else  {
-        for( int j=0; j < 6; j++ )
-          XA->Atom().CAtom().FixedValues()[TCAtom::UisoFixedValuesOffset + j] = 0;
-      }
-    }
-  }
-  else if( vars.Comparei( "OCCU" ) == 0 )  {
-    for(int i=0; i < Atoms.Count(); i++ )  {
-      Atoms[i]->Atom().CAtom().SetOccpVar( 0 );
-    }
-  }
-}
-//..............................................................................
-void TMainForm::macFix(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
-  olxstr vars = Cmds[0];
-  Cmds.Delete(0);
-  TXAtomPList Atoms;
-  FXApp->FindXAtoms(Cmds.Text(' '), Atoms, false);
-  if( Atoms.IsEmpty() )  {
-    E.ProcessingError(__OlxSrcInfo, "no atoms provided");
-    return;
-  }
-  if( vars.Comparei( "XYZ" ) == 0 )  {
-    for(int i=0; i < Atoms.Count(); i++ )  {
-      TXAtom* XA = Atoms[i];
-      for( int j=0; j < 3; j++ )
-        XA->Atom().CAtom().FixedValues()[TCAtom::CrdFixedValuesOffset + j] = 10;
-    }
-  }
-  else if( vars.Comparei( "UISO" ) == 0 )  {
-    double uiso = 0;
-    if( Cmds.Count() > 1 && Cmds[0].IsNumber() )  {
-      uiso = Cmds[0].ToDouble();
-    }
-    for(int i=0; i < Atoms.Count(); i++ )  {
-      TXAtom* XA = Atoms[i];
-      if( XA->Atom().GetEllipsoid() == NULL )  {  // isotropic atom
-        if( uiso != 0 )  {
-          if( uiso < 10 )  {
-            XA->Atom().CAtom().SetUiso( uiso );
-            XA->Atom().CAtom().SetUisoVar( 10 );
-          }
-          else  {
-            int iv = (int) uiso;
-            XA->Atom().CAtom().SetUiso( uiso-iv );
-            XA->Atom().CAtom().SetUisoVar( iv*10 );
-          }
-        }
-        else  if( XA->Atom().CAtom().GetUisoVar() == 0 )  {  // have to skip riding atoms
-          XA->Atom().CAtom().SetUisoVar( 10 );
-        }
-      }
-      else  {
-        for( int j=0; j < 6; j++ )
-          XA->Atom().CAtom().FixedValues()[TCAtom::UisoFixedValuesOffset + j] = 10;
-      }
-    }
-  }
-  else if( vars.Comparei( "OCCU" ) == 0 )  {
-    for(int i=0; i < Atoms.Count(); i++ )  {
-      if( Atoms[i]->Atom().CAtom().GetPart() == 0 )  {
-        Atoms[i]->Atom().CAtom().SetOccp( 1./Atoms[i]->Atom().CAtom().GetDegeneracy() );
-        Atoms[i]->Atom().CAtom().SetOccpVar( 10 );
-      }
-    }
-  }
-}
-//..............................................................................
 void TMainForm::macGrad(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   bool invert = Options.Contains('i');
   if( invert )  {
@@ -5064,7 +4853,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     }
 #endif // win32
     Tmp = TEFile::ExtractFilePath(FN);
-    if( Tmp.IsEmpty() )  { FN = CurrentDir + FN; }
+    if( Tmp.IsEmpty() )  { FN = XLibMacros::CurrentDir + FN; }
   }
   else  {
     FN = PickFile("Open File",
@@ -5080,7 +4869,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
           "|FCO files (*.fco)|*.fco" <<
           "|FCF files (*.fcf)|*.fcf" <<
           "|HKL files (*.hkl)|*.hkl",
-        CurrentDir, true);
+          XLibMacros::CurrentDir, true);
   }
   
   if( !FN.IsEmpty() )  {  // the dialog has been successfully executed
@@ -5230,11 +5019,12 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       OnResize();
 
       Tmp = TEFile::ExtractFilePath(FN);
-      if( !Tmp.IsEmpty() && !(Tmp == CurrentDir) )  {
+      if( !Tmp.IsEmpty() && !(Tmp == XLibMacros::CurrentDir) )  {
         if( !TEFile::ChangeDir(Tmp) )
           TBasicApp::GetLog() << ("Cannot change current folder...\n");
         else  {
-          if( !Blind )  CurrentDir = Tmp;
+          if( !Blind )  
+            XLibMacros::CurrentDir = Tmp;
         }
       }
       if( !Blind )  UpdateRecentFile(FN);

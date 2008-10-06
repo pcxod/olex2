@@ -30,6 +30,7 @@
 
 const olxstr XLibMacros::NoneString("none");
 const olxstr XLibMacros::NAString("n/a");
+olxstr XLibMacros::CurrentDir;
 TActionQList XLibMacros::Actions;
 TActionQueue* XLibMacros::OnDelIns = &XLibMacros::Actions.NewQueue("OnDelIns");
 
@@ -102,10 +103,20 @@ void XLibMacros::Export(TLibrary& lib)  {
   xlib_InitMacro(AddIns,"", (fpAny^fpNone)|psCheckFileTypeIns, "Adds an instruction to the INS file" );
   xlib_InitMacro(DelIns, "", fpOne|psCheckFileTypeIns, "A number or the name (will remove all accurances) can be provided" );
   xlib_InitMacro(LstIns, "", fpNone|psCheckFileTypeIns, "Lists all instructions of currently loaded Ins file" );
-  xlib_InitMacro(FixHL, "", fpNone|psFileLoaded, "" );
+  xlib_InitMacro(FixHL, "", fpNone|psFileLoaded, "Fixes hydgrogen atom labels" );
+  xlib_InitMacro(Fix, "", (fpAny^(fpNone|fpOne))|psCheckFileTypeIns, "Fixes specified parameters of atoms: XYZ, Uiso, Occu" );
+  xlib_InitMacro(Free, "", (fpAny^(fpNone|fpOne))|psCheckFileTypeIns, "Frees specified parameters of atoms: XYZ, Uiso, Occu" );
+  xlib_InitMacro(Isot,"" , fpAny|psCheckFileTypeIns,
+"makes provided atoms isotropic, if no arguments provieded, current selection all atoms become isotropic");
+  xlib_InitMacro(Anis,"h-adds hydrogen atoms" , (fpAny) | psCheckFileTypeIns, 
+"makes provided atoms anisotropic if no arguments provided current selection or all atoms are considered" );
+xlib_InitMacro(File, "s-sort the main residue of the asymmetric unit", fpNone|fpOne|psFileLoaded, 
+    "Saves current model to a file. By default an ins file is saved and loaded" );
   xlib_InitMacro(LS, "", fpOne|fpTwo|psCheckFileTypeIns, "Sets refinement method and/or the number of iterations.");
   xlib_InitMacro(Plan, "", fpOne|psCheckFileTypeIns, "Sets the number of Fuorier peaks to be found from the difference map");
   xlib_InitMacro(UpdateWght, "", fpAny|psCheckFileTypeIns, "Copies proposed weight to current");
+  xlib_InitMacro(User, "", fpNone|fpOne, "Changes current folder");
+  xlib_InitMacro(Dir, "", fpNone|fpOne, "Lists current folder. A file name mask may be provided");
 //_________________________________________________________________________________________________________________________
 //_________________________________________________________________________________________________________________________
 
@@ -227,8 +238,153 @@ void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   delete XApp.FixHL();
 }
 //..............................................................................
+void XLibMacros::macAnis(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+  TSAtomPList atoms;
+  if( !TXApp::GetInstance().FindSAtoms(Cmds.Text(' '), atoms, true) )  return;
+  TCAtomPList catoms;
+  TListCaster::POP(atoms, catoms);
+  bool useH = Options.Contains("h");
+  for( int i=0; i < catoms.Count(); i++ )
+    if( !useH && catoms[i]->GetAtomInfo() == iHydrogenIndex )
+      catoms[i] = NULL;
+  catoms.Pack();
+  TXApp::GetInstance().XFile().GetLattice().SetAnis(catoms, true);
+}
+//..............................................................................
+void XLibMacros::macIsot(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+  TSAtomPList atoms;
+  if( !TXApp::GetInstance().FindSAtoms(Cmds.Text(' '), atoms, true) )  return;
+  TCAtomPList catoms;
+  TListCaster::POP(atoms, catoms);
+  TXApp::GetInstance().XFile().GetLattice().SetAnis(catoms, false);
+}
+//..............................................................................
+void XLibMacros::macFix(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
+  olxstr vars( Cmds[0] );
+  Cmds.Delete(0);
+  TSAtomPList atoms;
+  if( !TXApp::GetInstance().FindSAtoms(Cmds.Text(' '), atoms, true) )  return;
+  if( vars.Comparei( "XYZ" ) == 0 )  {
+    for(int i=0; i < atoms.Count(); i++ )  {
+      for( int j=0; j < 3; j++ )
+        atoms[i]->CAtom().FixedValues()[TCAtom::CrdFixedValuesOffset + j] = 10;
+    }
+  }
+  else if( vars.Comparei( "UISO" ) == 0 )  {
+    double uiso = 0;
+    if( Cmds.Count() > 1 && Cmds[0].IsNumber() )  {
+      uiso = Cmds[0].ToDouble();
+    }
+    for( int i=0; i < atoms.Count(); i++ )  {
+      if( atoms[i]->GetEllipsoid() == NULL )  {  // isotropic atom
+        if( uiso != 0 )  {
+          if( uiso < 10 )  {
+            atoms[i]->CAtom().SetUiso( uiso );
+            atoms[i]->CAtom().SetUisoVar( 10 );
+          }
+          else  {
+            int iv = (int) uiso;
+            atoms[i]->CAtom().SetUiso( uiso-iv );
+            atoms[i]->CAtom().SetUisoVar( iv*10 );
+          }
+        }
+        else  if( atoms[i]->CAtom().GetUisoVar() == 0 )  {  // have to skip riding atoms
+          atoms[i]->CAtom().SetUisoVar( 10 );
+        }
+      }
+      else  {
+        for( int j=0; j < 6; j++ )
+          atoms[i]->CAtom().FixedValues()[TCAtom::UisoFixedValuesOffset + j] = 10;
+      }
+    }
+  }
+  else if( vars.Comparei( "OCCU" ) == 0 )  {
+    for(int i=0; i < atoms.Count(); i++ )  {
+      if( atoms[i]->CAtom().GetPart() == 0 )  {
+        atoms[i]->CAtom().SetOccp( 1./atoms[i]->CAtom().GetDegeneracy() );
+        atoms[i]->CAtom().SetOccpVar( 10 );
+      }
+    }
+  }
+}
+//..............................................................................
+void XLibMacros::macFree(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
+  olxstr vars = Cmds[0];
+  Cmds.Delete(0);
+  TSAtomPList atoms;
+  if( !TXApp::GetInstance().FindSAtoms(Cmds.Text(' '), atoms, true) )  return;
+  if( vars.Comparei( "XYZ" ) == 0 )  {
+    for(int i=0; i < atoms.Count(); i++ )  {
+      for( int j=0; j < 3; j++ )
+        atoms[i]->CAtom().FixedValues()[TCAtom::CrdFixedValuesOffset + j] = 0;
+    }
+  }
+  else if( vars.Comparei( "UISO" ) == 0 )  {
+    for(int i=0; i < atoms.Count(); i++ )  {
+      if( atoms[i]->CAtom().GetEllipsoid() == NULL )  {  // isotropic atom
+          atoms[i]->CAtom().SetUisoVar( 0 );
+      }
+      else  {
+        for( int j=0; j < 6; j++ )
+          atoms[i]->CAtom().FixedValues()[TCAtom::UisoFixedValuesOffset + j] = 0;
+      }
+    }
+  }
+  else if( vars.Comparei( "OCCU" ) == 0 )  {
+    for(int i=0; i < atoms.Count(); i++ )  {
+      atoms[i]->CAtom().SetOccpVar( 0 );
+    }
+  }
+}
+//..............................................................................
 void XLibMacros::macFixHL(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   delete TXApp::GetInstance().FixHL();
+}
+//..............................................................................
+void XLibMacros::macFile(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+  TXApp& XApp = TXApp::GetInstance();
+  olxstr Tmp;
+  if( Cmds.IsEmpty() )  {  // res -> Ins rotation if ins file
+    if( XApp.CheckFileType<TIns>() )  {
+      Tmp = TEFile::ChangeFileExt(XApp.XFile().GetFileName(), "ins");
+    }
+    else
+      Tmp = XApp.XFile().GetFileName();
+  }
+  else
+    Tmp = Cmds[0];
+
+  bool Sort = Options.Contains('s');
+
+  if( TEFile::ExtractFilePath(Tmp).IsEmpty() )
+    Tmp = TEFile::AddTrailingBackslash(CurrentDir) + Tmp;
+
+  if( TEFile::ExtractFileExt(Tmp).Comparei("ins") == 0 )  {  // kill Q peak in the ins file
+    TLattice& latt = XApp.XFile().GetLattice();
+    for( int i=0; i < latt.AtomCount(); i++ )  {
+      TSAtom& sa = latt.GetAtom(i);
+      if( sa.GetAtomInfo() == iQPeakIndex )  {
+        sa.SetDeleted(true);
+        sa.CAtom().SetDeleted(true);
+      }
+    }
+  }
+  
+  XApp.XFile().SaveToFile(Tmp, Sort);
+  if( XApp.XFile().HasLastLoader() )  {
+    Tmp = TEFile::ExtractFilePath(Tmp);
+    if( !Tmp.IsEmpty() && (Tmp.Comparei(CurrentDir)) )  {
+      if( !TEFile::ChangeDir(Tmp) )
+        TBasicApp::GetLog().Error("Cannot change current folder...");
+      else
+        CurrentDir = Tmp;
+    }
+  }
+  else  {
+    olex::IOlexProcessor* op = olex::IOlexProcessor::GetInstance();
+    if( op != NULL )
+      op->executeMacro(olxstr("reap \'") << Tmp << '\'');
+  }
 }
 //..............................................................................
 void XLibMacros::macFuse(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
@@ -293,6 +449,53 @@ void XLibMacros::macUpdateWght(TStrObjList &Cmds, const TParamList &Options, TMa
     for( int i=0; i < Cmds.Count(); i++ )  
       I.Wght()[i] = Cmds[i].ToDouble();
   }
+}
+//..............................................................................
+void XLibMacros::macUser(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+  if( Cmds.IsEmpty() )  {
+    TBasicApp::GetLog() << TEFile::CurrentDir() << '\n';
+  }
+  else if( !TEFile::ChangeDir(Cmds[0]) )  {
+    Error.ProcessingError(__OlxSrcInfo, "could not change current folder" );
+  }
+  else
+    CurrentDir = Cmds[0]; 
+}
+//..............................................................................
+void XLibMacros::macDir(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+  olxstr Filter( Cmds.IsEmpty() ? olxstr("*.*")  : Cmds[0] );
+  TStrList Output;
+  TFileList fl;
+  TEFile::ListCurrentDirEx(fl, Filter, sefFile|sefDir);
+  TTTable<TStrList> tab(fl.Count(), 4);
+  tab.ColName(0) = "Name";
+  tab.ColName(1) = "Size";
+  tab.ColName(2) = "Last Modified";
+  tab.ColName(3) = "Attributes";
+
+  TFileListItem::SortListByName(fl);
+
+  for( int i=0; i < fl.Count(); i++ )  {
+    tab[i][0] = fl[i].GetName();
+    if( (fl[i].GetAttributes() & sefDir) != 0 )
+      tab[i][1] = "Folder";
+    else
+      tab[i][1] = fl[i].GetSize();
+    tab[i][2] = TETime::FormatDateTime("yyyy.MM.dd hh:mm:ss", fl[i].GetModificationTime());
+    if( (fl[i].GetAttributes() & sefReadOnly) != 0 )
+      tab[i][3] << 'r';
+    if( (fl[i].GetAttributes() & sefWriteOnly) != 0 )
+      tab[i][3] << 'w';
+    if( (fl[i].GetAttributes() & sefHidden) != 0 )
+      tab[i][3] << 'h';
+    if( (fl[i].GetAttributes() & sefSystem) != 0 )
+      tab[i][3] << 's';
+    if( (fl[i].GetAttributes() & sefExecute) != 0 )
+      tab[i][3] << 'e';
+  }
+
+  tab.CreateTXTList(Output, "Directory list", true, true, ' ');
+  TBasicApp::GetLog() << Output;
 }
 //..............................................................................
 void XLibMacros::macPlan(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error) {

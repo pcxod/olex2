@@ -191,7 +191,6 @@ public:
     this_InitMacroD(Exec, "s&;o&;d", fpAny^fpNone, "exec" );
     this_InitMacroD(Echo, "", fpAny, "echo" );
     this_InitMacroDA(Reap, @reap, "", fpOne, "reap" );
-    this_InitMacroD(File, "", fpNone|fpOne|psFileLoaded, "file" );
     this_InitMacroD(Name, "", fpAny^(fpNone|fpOne)|psFileLoaded, "name" );
     this_InitMacroD(Info, "", fpAny, "info" );
     this_InitMacroDA(Python, @py, "", fpAny^fpNone, "Runs python script" );
@@ -204,9 +203,6 @@ public:
     this_InitMacroD(LstVar, "", fpNone, "" );
     this_InitMacroD(Kill, "", (fpAny^fpNone)|psFileLoaded, "" );
     this_InitMacroD(Sel, "i&;a&;u", fpAny|psFileLoaded, "" );
-    this_InitMacroD(Anis, "", fpAny|psCheckFileTypeIns, "" );
-    this_InitMacroD(Isot, "", fpAny|psCheckFileTypeIns, "" );
-    this_InitMacroD(Fix, "", (fpAny^fpNone)|psCheckFileTypeIns, "" );
     this_InitMacroD(LstMac, "", fpNone, "" );
     this_InitMacroD(LstFun, "", fpNone, "" );
     this_InitMacroD(Quit, "", fpNone, "" );
@@ -1020,146 +1016,6 @@ public:
     UnifyAtomList(Selection);
   }
   //..............................................................................
-  void macAnis(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-    TSAtomPList atoms;
-    TCAtomPList catoms;
-    if( !LocateAtoms(Cmds, atoms, true) )  return;
-    TListCaster::POP(atoms, catoms);
-    for( int i=0; i < catoms.Count(); i++ )
-      if( catoms[i]->GetAtomInfo() == iHydrogenIndex )
-        catoms[i] = NULL;
-    catoms.Pack();
-    XApp.XFile().GetLattice().SetAnis(catoms, true);
-  }
-  //..............................................................................
-  void macIsot(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-    TSAtomPList atoms;
-    if( !LocateAtoms(Cmds, atoms, true) )  return;
-    TCAtomPList catoms;
-    TListCaster::POP(atoms, catoms);
-    XApp.XFile().GetLattice().SetAnis(catoms, false);
-  }
-  //..............................................................................
-  void macFix(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
-    olxstr vars( Cmds[0] );
-    Cmds.Delete(0);
-    TSAtomPList atoms;
-    if( !LocateAtoms(Cmds, atoms, true) )  return;
-    if( vars.Comparei( "XYZ" ) == 0 )  {
-      for(int i=0; i < atoms.Count(); i++ )  {
-        for( int j=0; j < 3; j++ )
-          atoms[i]->CAtom().FixedValues()[TCAtom::CrdFixedValuesOffset + j] = 10;
-      }
-    }
-    else if( vars.Comparei( "UISO" ) == 0 )  {
-      double uiso = 0;
-      if( Cmds.Count() > 1 && Cmds[0].IsNumber() )  {
-        uiso = Cmds[0].ToDouble();
-      }
-      for( int i=0; i < atoms.Count(); i++ )  {
-        if( atoms[i]->GetEllipsoid() == NULL )  {  // isotropic atom
-          if( uiso != 0 )  {
-            if( uiso < 10 )  {
-              atoms[i]->CAtom().SetUiso( uiso );
-              atoms[i]->CAtom().SetUisoVar( 10 );
-            }
-            else  {
-              int iv = (int) uiso;
-              atoms[i]->CAtom().SetUiso( uiso-iv );
-              atoms[i]->CAtom().SetUisoVar( iv*10 );
-            }
-          }
-          else  if( atoms[i]->CAtom().GetUisoVar() == 0 )  {  // have to skip riding atoms
-            atoms[i]->CAtom().SetUisoVar( 10 );
-          }
-        }
-        else  {
-          for( int j=0; j < 6; j++ )
-            atoms[i]->CAtom().FixedValues()[TCAtom::UisoFixedValuesOffset + j] = 10;
-        }
-      }
-    }
-    else if( vars.Comparei( "OCCU" ) == 0 )  {
-      for(int i=0; i < atoms.Count(); i++ )  {
-        if( atoms[i]->CAtom().GetPart() == 0 )  {
-          atoms[i]->CAtom().SetOccp( 1./atoms[i]->CAtom().GetDegeneracy() );
-          atoms[i]->CAtom().SetOccpVar( 10 );
-        }
-      }
-    }
-  }
-  //..............................................................................
-  void macSGE(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-    TPtrList<TSpaceGroup> sgs;
-    TSpaceGroup* sg = NULL;
-    bool cntro = false;
-    E.SetRetVal(&sgs);
-    Macros.ProcessMacro( "SG", E );
-    E.SetRetVal<bool>(false);
-    if( sgs.Count() == 0 )  {
-      TBasicApp::GetLog().Error( "Could not find any suitable spacegroup. Terminating ... " );
-      return;
-    }
-    else if( sgs.Count() == 1 )  {
-      sg = sgs[0];
-      TBasicApp::GetLog() << "Univocal spacegroup choice: " << sg->GetName() << '\n';
-    }
-    else  {
-      E.Reset();
-      Macros.ProcessMacro("Wilson", E);
-      bool centro = E.GetRetVal().ToBool();
-      TBasicApp::GetLog() << "Searching for centrosymmetric group: " << centro << '\n';
-      for( int i=0; i < sgs.Count(); i++ )  {
-        if( centro )  {
-          if( sgs[i]->IsCentrosymmetric() )  {
-            sg = sgs[i];
-            break;
-          }
-        }
-        else  {
-          if( !sgs[i]->IsCentrosymmetric() )  {
-            sg = sgs[i];
-            break;
-          }
-        }
-      }
-      if( sg == NULL )  {  // no match to centre of symmetry found
-        sg = sgs[0];
-        TBasicApp::GetLog() << "Could not match, choosing: " << sg->GetName() << '\n';
-      }
-      else  {
-        TBasicApp::GetLog() << "Chosen: " << sg->GetName() << '\n';
-      }
-    }
-    olxstr fn( Cmds.IsEmpty() ? TEFile::ChangeFileExt(XApp.XFile().GetFileName(), "ins") : Cmds[0] );
-    executeMacro(olxstr("reset -s=") << sg->GetName() << " -f='" << fn << '\'');
-    if( E.IsSuccessful() )  {
-      executeMacro(olxstr("reap '") << fn << '\'');
-      E.SetRetVal<bool>(E.IsSuccessful());
-    }
-  }
-  //..............................................................................
-  void macFile(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-    olxstr Tmp;
-    XApp.XFile().UpdateAsymmUnit();
-    if( Cmds.IsEmpty() )  {  // error
-      // res -> Ins rotation if ins file
-      if( XApp.CheckFileType<TIns>() )
-        Tmp = TEFile::ChangeFileExt(XApp.XFile().GetFileName(), "ins");
-      else
-        Tmp = XApp.XFile().GetFileName();
-    }
-    else
-      Tmp = Cmds[0];
-
-    if( TEFile::ExtractFilePath(Tmp).IsEmpty() )
-      Tmp = TEFile::AddTrailingBackslash(TEFile::CurrentDir()) + Tmp;
-
-    XApp.XFile().SaveToFile(Tmp, Options.Contains('s'));
-    Tmp = TEFile::ExtractFilePath(Tmp);
-    if( !Tmp.IsEmpty() && Tmp.Comparei(TEFile::CurrentDir()) != 0 )
-      TEFile::ChangeDir(Tmp);
-  }
 //////////////////////////////////////////////////////////////////////////////////////////////////
   void CallbackFunc(const olxstr& cbEvent, TStrObjList& params)  {
     static TIntList indexes;
