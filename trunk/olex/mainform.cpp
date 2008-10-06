@@ -553,13 +553,6 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual accupancy\
   this_InitMacro(AddLabel, , fpThree|fpFive);
   this_InitMacro(Mpln, n&;r&;we, fpAny);
   this_InitMacro(Cent, , fpAny ^ fpNone);
-  this_InitMacro(File, s, fpNone|fpOne);
-  this_InitMacro(User, , fpNone|fpOne);
-  this_InitMacro(Dir, , fpNone|fpOne);
-  this_InitMacroD(Isot,"h-adds hydrogen atoms&;cs-do not clear selection" , fpAny|psCheckFileTypeIns,
-"makes provided atoms isotropic, if no arguments provieded, current selection all atoms become isotropic");
-  this_InitMacroD(Anis,"h-adds hydrogen atoms&;cs-do not clear selection" , (fpAny) | psCheckFileTypeIns, 
-"makes provided atoms anisotropic if no arguments provided current selection or all atoms are considered" );
   this_InitMacro(Mask, , fpAny );
 
   this_InitMacro(ARad, , fpOne );
@@ -653,9 +646,6 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual accupancy\
   this_InitMacro(ShowStr, , fpNone|fpOne|psFileLoaded );
   // not implemented
   this_InitMacro(Bind, , fpAny );
-
-  this_InitMacro(Free, , fpAny^(fpNone|fpOne) );
-  this_InitMacro(Fix, , fpAny^(fpNone|fpOne) );
 
   this_InitMacro(Grad, i&;p, fpNone|fpOne|fpFour );
   this_InitMacro(Split, , fpAny|psCheckFileTypeIns );
@@ -2563,7 +2553,7 @@ void TMainForm::SaveSettings(const olxstr &FN)  {
   TDataItem *I = DF.Root().AddItem("Folders");
   I->AddField("Styles", StylesDir);
   I->AddField("SceneP", SParamDir);
-  I->AddField("Current", CurrentDir);
+  I->AddField("Current", XLibMacros::CurrentDir);
   I->AddField("CifTemplates", FXApp->GetCifTemplatesDir());
 
   I = DF.Root().AddItem("HTML");
@@ -2629,8 +2619,8 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
     executeFunction(StylesDir, StylesDir);
   SParamDir = I->GetFieldValue("SceneP");
     executeFunction(SParamDir, SParamDir);
-  CurrentDir = I->GetFieldValue("Current");
-    executeFunction(CurrentDir, CurrentDir);
+  XLibMacros::CurrentDir = I->GetFieldValue("Current");
+    executeFunction(XLibMacros::CurrentDir, XLibMacros::CurrentDir);
   olxstr CifTemplatesDir( I->GetFieldValue("CifTemplates", EmptyString) );
   if( CifTemplatesDir.IsEmpty() )
     CifTemplatesDir = TutorialDir + "CIF/";
@@ -2678,7 +2668,7 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
     Tmp = I->GetFieldValue("CmdLine", EmptyString);
     CmdLineVisible = Tmp.IsEmpty() ? false : Tmp.ToBool();
   }
-  TEFile::ChangeDir(CurrentDir);
+  TEFile::ChangeDir(XLibMacros::CurrentDir);
 
   I = DF.Root().FindItem("Recent_files");
   if( I )  {

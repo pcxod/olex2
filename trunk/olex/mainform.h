@@ -260,11 +260,6 @@ private:
   DefMacro(AddLabel)
   DefMacro(Mpln)
   DefMacro(Cent)
-  DefMacro(File)
-  DefMacro(User)
-  DefMacro(Dir)
-  DefMacro(Anis)
-  DefMacro(Isot)
   DefMacro(Mask)
   DefMacro(ARad)
   DefMacro(ADS)
@@ -342,8 +337,6 @@ private:
   DefMacro(ShowStr)
 
   DefMacro(Bind)
-  DefMacro(Free)
-  DefMacro(Fix)
 
   DefMacro(Grad)
   DefMacro(Split)
@@ -535,7 +528,6 @@ public:
   virtual bool ProcessEvent( wxEvent& evt );
   void OnResize();
   olxstr StylesDir, // styles folder
-    CurrentDir,       // current folder ( last used)
     SParamDir,        // scene parameters folder
     DefStyle,         // default style file
     DefSceneP,        // default scene parameters file

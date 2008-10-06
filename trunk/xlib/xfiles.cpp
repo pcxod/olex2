@@ -194,9 +194,9 @@ void TXFile::UpdateAsymmUnit()  {
     for( int j=0; j < GetAsymmUnit().AtomCount(); j++ )  {
       TCAtom& CA1 = GetAsymmUnit().GetAtom(j);
       if( (CA1.GetLoaderId() == CA.GetLoaderId()) && (CA1.GetLoaderId() != liNewAtom) )  {
-        if( CA1.GetAtomInfo() == iQPeakIndex )  { // automatic delete Q-peaks
-          CA.SetDeleted(true);  break;
-        }
+//        if( CA1.GetAtomInfo() == iQPeakIndex )  { // automatic delete Q-peaks
+//          CA.SetDeleted(true);  break;
+//        }
         CA.Assign(CA1);
         LL->GetAsymmUnit().GetResidue(CA1.GetResiId()).AddAtom(&CA);
         break;
