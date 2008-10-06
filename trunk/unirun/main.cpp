@@ -67,7 +67,7 @@ public:
   }
 };
 
-bool UpdateInstallationH( const TUrl& url, const TStrList& properties, const TStrList* extensionsToSkip )  {
+bool UpdateInstallationH( const TUrl& url, const TStrList& properties, const TFSItem::SkipOptions* toSkip )  {
   try  {
     TOSFileSystem DestFS; // local file system
     TwxHttpFileSystem SrcFS( url ); // remote FS
@@ -76,7 +76,7 @@ bool UpdateInstallationH( const TUrl& url, const TStrList& properties, const TSt
     TEFile::AddTrailingBackslash( tmp );
     DestFS.SetBase( tmp );
     TFSIndex FI( SrcFS );
-    return FI.Synchronise(DestFS, properties, extensionsToSkip);
+    return FI.Synchronise(DestFS, properties, toSkip);
   }
   catch( TExceptionBase& exc )  {
     TStrList out;
@@ -140,6 +140,8 @@ void DoRun(const olxstr& basedir)  {
            UpdateInterval = "Always";
   int LastUpdate = 0;
   TStrList extensionsToSkip;
+  TFSItem::SkipOptions toSkip;
+  toSkip.extsToSkip = & extensionsToSkip;
   settings.LoadSettings( SettingsFile );
   if( settings.ParamExists("proxy") )
     Proxy = settings.ParamValue("proxy");
@@ -196,7 +198,7 @@ void DoRun(const olxstr& basedir)  {
     if( !Proxy.IsEmpty() )  url.SetProxy( Proxy );
       
     if( Update )
-      UpdateInstallationH( url, props, extensionsToSkip.IsEmpty() ? NULL : &extensionsToSkip );
+      UpdateInstallationH( url, props, extensionsToSkip.IsEmpty() ? NULL : &toSkip );
   }
   if( Update )  { // have to save lastupdate in anyway
     settings.UpdateParam("lastupdate", TETime::EpochTime() );

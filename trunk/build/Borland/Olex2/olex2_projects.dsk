@@ -9,16 +9,40 @@ File_6=SourceModule,'E:\SVN\src\v1.1u\olex2-tl\Olex2Impl.cpp',0,1,656,17,670,0,0
 File_7=SourceModule,'E:\SVN\src\v1.1u\olex2-tl\About.cpp',0,1,4,49,19,0,0
 
 [Modules]
-Module0=E:\SVN\srcf-svn\trunk\olex2v-test\main.cpp
-Module1=E:\SVN\srcf-svn\trunk\olex2v\olex2v.h
-Module2=E:\SVN\srcf-svn\trunk\sdl\settingsfile.cpp
-Module3=E:\SVN\srcf-svn\trunk\installer\main.cpp
-Module4=E:\wxWidgets-2.8.7\include\wx\wxchar.h
-Count=5
+Module0=E:\SVN\srcf-svn\trunk\launch\main.cpp
+Module1=E:\SVN\srcf-svn\trunk\repository\filesystem.h
+Module2=E:\SVN\srcf-svn\trunk\repository\filesystem.cpp
+Module3=E:\SVN\srcf-svn\trunk\olex2v-test\main.cpp
+Module4=E:\SVN\srcf-svn\trunk\launch\splash.cpp
+Module5=E:\SVN\srcf-svn\trunk\olex2v\olex2v.h
+Module6=E:\SVN\srcf-svn\trunk\sdl\settingsfile.cpp
+Module7=E:\SVN\srcf-svn\trunk\installer\main.cpp
+Module8=E:\wxWidgets-2.8.7\include\wx\wxchar.h
+Count=9
 EditWindowCount=1
 TypeLibWindowCount=1
 
+[E:\SVN\srcf-svn\trunk\launch\main.cpp]
+ModuleType=SourceModule
+FormState=1
+FormOnTop=0
+
+[E:\SVN\srcf-svn\trunk\repository\filesystem.h]
+ModuleType=SourceModule
+FormState=0
+FormOnTop=0
+
+[E:\SVN\srcf-svn\trunk\repository\filesystem.cpp]
+ModuleType=SourceModule
+FormState=0
+FormOnTop=0
+
 [E:\SVN\srcf-svn\trunk\olex2v-test\main.cpp]
+ModuleType=SourceModule
+FormState=1
+FormOnTop=0
+
+[E:\SVN\srcf-svn\trunk\launch\splash.cpp]
 ModuleType=SourceModule
 FormState=1
 FormOnTop=0
@@ -112,13 +136,17 @@ FormState=0
 FormOnTop=0
 
 [EditWindow0]
-ViewCount=5
-CurrentView=1
+ViewCount=9
+CurrentView=2
 View0=0
 View1=1
 View2=2
 View3=3
 View4=4
+View5=5
+View6=6
+View7=7
+View8=8
 CodeExplorer=CodeExplorer@EditWindow0
 MessageView=MessageView@EditWindow0
 ClassHierarchy=ClassHierarchy@EditWindow0
@@ -141,7 +169,7 @@ LeftPanelData=00000400010000000C000000436F64654578706C6F726572000000000000000000
 RightPanelSize=0
 BottomPanelSize=0
 BottomPanelClients=MessageView@EditWindow0
-BottomPanelData=00000400010000000B0000004D6573736167655669657784030000000000000297000000000000000100000000000000000000000001000000006E0400000000000001000000006E0400000000000001000000006E0400000000000001000000006E04000000000000010000000084030000000000000100000000840300000000000001000000008403000000000000FFFFFFFF
+BottomPanelData=00000400010000000B0000004D6573736167655669657713070000000000000297000000000000000100000000000000000000000001000000006E0400000000000001000000006E0400000000000001000000006E0400000000000001000000006E040000000000000100000000840300000000000001000000008403000000000000010000000084030000000000000100000000130700000B0000004D65737361676556696577FFFFFFFF
 
 [View0]
 Module=E:\wxWidgets-2.8.7\include\wx\wxchar.h
@@ -158,20 +186,48 @@ TopLine=77
 LeftCol=1
 
 [View2]
+Module=E:\SVN\srcf-svn\trunk\launch\main.cpp
+CursorX=49
+CursorY=244
+TopLine=214
+LeftCol=1
+
+[View3]
+Module=E:\SVN\srcf-svn\trunk\repository\filesystem.h
+CursorX=90
+CursorY=168
+TopLine=127
+LeftCol=1
+
+[View4]
+Module=E:\SVN\srcf-svn\trunk\repository\filesystem.cpp
+CursorX=1
+CursorY=1
+TopLine=118
+LeftCol=1
+
+[View5]
+Module=E:\SVN\srcf-svn\trunk\launch\splash.cpp
+CursorX=1
+CursorY=1
+TopLine=1
+LeftCol=1
+
+[View6]
 Module=E:\SVN\srcf-svn\trunk\installer\main.cpp
 CursorX=62
 CursorY=181
 TopLine=166
 LeftCol=1
 
-[View3]
+[View7]
 Module=E:\SVN\srcf-svn\trunk\sdl\settingsfile.cpp
 CursorX=49
 CursorY=30
 TopLine=1
 LeftCol=1
 
-[View4]
+[View8]
 Module=E:\SVN\srcf-svn\trunk\olex2v\olex2v.h
 CursorX=84
 CursorY=75
@@ -359,11 +415,11 @@ Visible=0
 State=0
 Left=12
 Top=0
-Width=888
+Width=1799
 Height=151
 MaxLeft=-1
 MaxTop=-1
-ClientWidth=888
+ClientWidth=1799
 ClientHeight=151
 TBDockHeight=151
 LRDockWidth=443
@@ -392,5 +448,5 @@ DockClients=ObjectTree,PropertyInspector
 DockSiteData=0000040000000000180300000000000001AE000000000000000100000000A90000000E0000004F626A65637454726565566965770100000000180300001100000050726F7065727479496E73706563746F72FFFFFFFF
 
 [ActiveProject]
-ActiveProject=9
+ActiveProject=8
 

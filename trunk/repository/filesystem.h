@@ -65,6 +65,12 @@ public:
 //.............................................................................//
 //.............................................................................//
 class TFSItem: public IEObject  {
+public:
+  struct SkipOptions  {
+    TStrList *extsToSkip,  // extenstions to skip
+             *filesToSkip; // file names to skip
+  };
+private:
   olxstr Name;
   long int Size, DateTime;
   bool Folder, Processed;
@@ -82,7 +88,7 @@ public:
   inline TFSItem* GetParent() const {  return Parent; }
 
   void operator >> (TStrList& strings) const;
-  int ReadStrings(int& index, TFSItem* caller, TStrList& strings, const TStrList* extensionsToSkip=NULL);
+  int ReadStrings(int& index, TFSItem* caller, TStrList& strings, const SkipOptions* toSkip=NULL);
   // removes empty folders recursively
   void ClearEmptyFolders();
   // removes nonexiting files recursively
@@ -148,6 +154,7 @@ public:
 //.............................................................................//
 //.............................................................................//
 class TFSIndex: public IEObject  {
+private:
   TFSItem *Root;
 protected:
   olxstr Source,  Destination;
@@ -156,10 +163,10 @@ protected:
 public:
   TFSIndex(AFileSystem& fs);
   virtual ~TFSIndex();
-  void LoadIndex(const olxstr& IndexFile, const TStrList* extensionsToSkip=NULL);
+  void LoadIndex(const olxstr& IndexFile, const TFSItem::SkipOptions* toSkip=NULL);
   void SaveIndex(const olxstr& IndexFile);
   // returns the number of updated files
-  int Synchronise(AFileSystem& To, const TStrList& properties, const TStrList* extensionsToSkip=NULL);
+  int Synchronise(AFileSystem& To, const TStrList& properties, const TFSItem::SkipOptions* toSkip=NULL);
   // returns true if the file is updated (added) and false otherwise
   bool UpdateFile(AFileSystem& To, const olxstr& fileName, bool Force);
   inline TFSItem& GetRoot()  const {  return *Root; }
