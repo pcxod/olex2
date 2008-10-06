@@ -126,7 +126,7 @@ void TFSItem::operator >> (TStrList& S) const  {
     Item(i) >> S;
 }
 //..............................................................................
-int TFSItem::ReadStrings(int& index, TFSItem* caller, TStrList& strings, const TStrList* extensionsToSkip)  {
+int TFSItem::ReadStrings(int& index, TFSItem* caller, TStrList& strings, const TFSItem::SkipOptions* toSkip)  {
   TStrList toks, propToks;
   while( (index + 2) <= strings.Count() )  {
     int level = strings[index].LeadingCharCount( '\t' ), nextlevel = 0;
@@ -139,11 +139,21 @@ int TFSItem::ReadStrings(int& index, TFSItem* caller, TStrList& strings, const T
       if( nextlevel > level )  
         folder = true;
     }
-    if( !folder && extensionsToSkip != NULL && !ext.IsEmpty() )  {
-      for( int i=0; i < extensionsToSkip->Count(); i++ )  {
-        if( (*extensionsToSkip)[i].Comparei(ext) == 0 )  {
-          skip = true;
-          break;
+    if( !folder && toSkip != NULL  )  {
+      if( toSkip->extsToSkip != NULL && !ext.IsEmpty() )  {  
+        for( int i=0; i < toSkip->extsToSkip->Count(); i++ )  {
+          if( (*toSkip->extsToSkip)[i].Comparei(ext) == 0 )  {
+            skip = true;
+            break;
+          }
+        }
+      }
+      if( !skip && toSkip->filesToSkip != NULL )  {
+        for( int i=0; i < toSkip->filesToSkip->Count(); i++ )  {
+          if( (*toSkip->filesToSkip)[i].Comparei(name) == 0 )  {
+            skip = true;
+            break;
+          }
         }
       }
     }
@@ -172,7 +182,7 @@ int TFSItem::ReadStrings(int& index, TFSItem* caller, TStrList& strings, const T
     index++;
     if( index < strings.Count() )  {
       if( folder )  {
-        int slevel = item->ReadStrings(index, this, strings, extensionsToSkip);
+        int slevel = item->ReadStrings(index, this, strings, toSkip);
         if( slevel != level )
           return slevel;
       }
@@ -486,7 +496,7 @@ TFSIndex::~TFSIndex()  {
   delete Root;
 }
 //..............................................................................
-void TFSIndex::LoadIndex(const olxstr& IndexFile, const TStrList* extensionsToSkip)  {
+void TFSIndex::LoadIndex(const olxstr& IndexFile, const TFSItem::SkipOptions* toSkip)  {
   GetRoot().Clear();
   if( !GetRoot().GetFileSystem().FileExists(IndexFile) )
     throw TFileDoesNotExistException(__OlxSourceInfo, IndexFile);
@@ -502,7 +512,7 @@ void TFSIndex::LoadIndex(const olxstr& IndexFile, const TStrList* extensionsToSk
   strings.LoadFromTextStream( *is );
   delete is;
   int index = 0;
-  GetRoot().ReadStrings(index, NULL, strings, extensionsToSkip);
+  GetRoot().ReadStrings(index, NULL, strings, toSkip);
   Properties.Clear();
   GetRoot().ListUniqueProperties( Properties );
   GetRoot().ClearNonexisting();
@@ -518,13 +528,13 @@ void TFSIndex::SaveIndex(const olxstr &IndexFile)  {
   TCStrList(strings).SaveToFile(IndexFile );
 }
 //..............................................................................
-int TFSIndex::Synchronise(AFileSystem& To, const TStrList& properties, const TStrList* extensionsToSkip)  {
+int TFSIndex::Synchronise(AFileSystem& To, const TStrList& properties, const TFSItem::SkipOptions* toSkip)  {
   TFSIndex DestI(To);
   olxstr SrcInd;   SrcInd << GetRoot().GetFileSystem().GetBase() << "index.ind";
   olxstr DestInd;  DestInd << To.GetBase() << "index.ind";
   FilesUpdated = 0;
   try  {
-    LoadIndex(SrcInd, extensionsToSkip);
+    LoadIndex(SrcInd, toSkip);
     if( To.FileExists(DestInd) )
       DestI.LoadIndex(DestInd);
     FilesUpdated = GetRoot().Synchronize(NULL, DestI.GetRoot(), properties );

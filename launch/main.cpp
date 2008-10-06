@@ -237,8 +237,11 @@ bool TdlgMain::UpdateInstallationH( const TUrl& url, const TStrList& properties 
     TEFile::AddTrailingBackslash( tmp );
     DestFS.SetBase( tmp );
     TFSIndex FI( SrcFS );
-
-    return FI.Synchronise(DestFS, properties);
+    TFSItem::SkipOptions so;
+    TStrList filesToSkip;
+    filesToSkip.Add("olex2.exe");
+    so.filesToSkip = &filesToSkip;
+    return FI.Synchronise(DestFS, properties, &so);
   }
   catch( TExceptionBase& exc )  {
     TStrList out;
