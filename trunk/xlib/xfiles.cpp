@@ -181,7 +181,7 @@ void TXFile::UpdateAsymmUnit()  {
   // find new atoms 
   for( int i=0; i < GetAsymmUnit().AtomCount(); i++ )  {
     TCAtom& CA = GetAsymmUnit().GetAtom(i);
-    if( CA.GetLoaderId() == liNewAtom && CA.GetAtomInfo() != iQPeakIndex )  {
+    if( CA.GetLoaderId() == liNewAtom )  {  //&& CA.GetAtomInfo() != iQPeakIndex )  {
       TCAtom& CA1 = LL->GetAsymmUnit().NewAtom();
       CA1.SetLoaderId(loaderid+i);
       CA.SetLoaderId(loaderid+i);

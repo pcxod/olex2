@@ -914,9 +914,10 @@ void TAsymmUnit::LibNewAtom(const TStrObjList& Params, TMacroError& E)  {
   if( Params[0].IsNumber() )  {
     TPSTypeList<double, TCAtom*> sortedPeaks;
     qPeak = Params[0].ToDouble();
-    for( int i=0; i < AtomCount(); i++ )  {
-      if( GetAtom(i).GetAtomInfo().GetIndex() != iQPeakIndex )  continue;
-      sortedPeaks.Add(GetAtom(i).GetQPeak(), &GetAtom(i) );
+    int ac = CAtoms.Count();
+    for( int i=0; i < ac; i++ )  {
+      if( CAtoms[i]->GetAtomInfo().GetIndex() != iQPeakIndex || CAtoms[i]->IsDeleted() )  continue;
+      sortedPeaks.Add(CAtoms[i]->GetQPeak(), CAtoms[i] );
     }
     sortedPeaks.Add( qPeak, NULL);
     for( int i=0; i < sortedPeaks.Count(); i++ )  {
@@ -924,6 +925,8 @@ void TAsymmUnit::LibNewAtom(const TStrObjList& Params, TMacroError& E)  {
         sortedPeaks.GetObject(i)->SetLabel( qLabel + olxstr(sortedPeaks.Count() - i) );
     }
     QPeakIndex = sortedPeaks.Count() - sortedPeaks.IndexOfComparable( qPeak );
+    MinQPeak = sortedPeaks.GetComparable(0);
+    MaxQPeak = sortedPeaks.Last().Comparable();
   }
 
   TCAtom& ca = this->NewAtom();
@@ -933,8 +936,6 @@ void TAsymmUnit::LibNewAtom(const TStrObjList& Params, TMacroError& E)  {
     ca.SetOccp(11.0);
     ca.SetUiso( 0.05 );
     ca.ccrd() = crd;
-    if( qPeak > MaxQPeak )  MaxQPeak = qPeak;
-    if( qPeak < MaxQPeak )  MinQPeak = qPeak;
   }
   else
     ca.SetLabel( Params[0] );
