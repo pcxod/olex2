@@ -49,7 +49,7 @@ public:
     if( matchBoth )  
       return (str.StartFromi(start) && str.EndsWithi(end));
     if( matchAny )
-      return str.IndexOf(mask) != -1;
+      return str.IndexOfi(mask) != -1;
     if( matchStart )
       return str.StartsFromi(start);
     if( matchEnd )
