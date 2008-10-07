@@ -50,7 +50,7 @@ public:
   inline const olxstr& Label() const {  return FLabel; }
 
   const class TGlMaterial* Material(const olxstr &PName);
-  void PrimitiveMaterial(const olxstr& PName, TGlMaterial *GlM);
+  TGlMaterial* PrimitiveMaterial(const olxstr& PName, const TGlMaterial& GlM);
 
   inline int PrimitiveStyleCount()              const {  return FPStyles.Count(); }
   inline TPrimitiveStyle* PrimitiveStyle(int i) const {  return FPStyles[i];  }

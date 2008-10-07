@@ -114,12 +114,12 @@ void TXBond::Create(const olxstr& cName)  {
       if( GlM->Mark() && FBond )  {
         if( SGlP->Params().Last() == ddsDefAtomA )  {
           TXAtom::GetDefSphereMaterial(FBond->A(), RGlM);
-          GS->PrimitiveMaterial(FStaticObjects.String(i), &RGlM);
+          GS->PrimitiveMaterial(FStaticObjects.String(i), RGlM);
           GlM = &RGlM;
         }
         if( SGlP->Params().Last() == ddsDefAtomB )  {
           TXAtom::GetDefSphereMaterial(FBond->B(), RGlM);
-          GS->PrimitiveMaterial(FStaticObjects.String(i), &RGlM);
+          GS->PrimitiveMaterial(FStaticObjects.String(i), RGlM);
           GlM = &RGlM;
         }
       }

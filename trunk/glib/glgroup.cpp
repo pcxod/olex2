@@ -26,18 +26,19 @@ TGlGroup::TGlGroup(const olxstr& collectionName, TGlRender *P) :
 }
 //..............................................................................
 void TGlGroup::Create(const olxstr& cName)  {
-  if( !cName.IsEmpty() != 0)  SetCollectionName(cName);
+  if( !cName.IsEmpty() )  SetCollectionName(cName);
 
-//  TGPCollection *GPC = FParent->FindCollection( GetCollectionName() );
-//  if( !GPC )     GPC = FParent->NewCollection( GetCollectionName() );
-//  else  {
-//    GPC->AddObject(this);
-//    return;
-//  }
-//  TGraphicsStyle *GS = GPC->Style();
-
-  TGraphicsStyle *GS = FParent->Styles()->NewStyle( GetCollectionName() );
-
+  TGPCollection *GPC = FParent->FindCollection( GetCollectionName() );
+  if( GPC == NULL )  
+    GPC = FParent->NewCollection( GetCollectionName() );
+  else  {
+    TGraphicsStyle *GS = GPC->Style();
+    FGlM = const_cast<TGlMaterial*>(GS->Material("mat"));
+    GPC->AddObject(this);
+    return;
+  }
+  GPC->AddObject(this);
+  TGraphicsStyle *GS = GPC->Style();
   FGlM = const_cast<TGlMaterial*>(GS->Material("mat"));
   DefaultColor = FGlM->Mark();
   if( FGlM->Mark() )  {
@@ -64,16 +65,20 @@ TGlGroup::~TGlGroup()  {
   if( ParentGroup() != NULL )
     ParentGroup()->Remove( (AGDrawObject*)this);
   Clear();
-}
+} 
 //..............................................................................
 void TGlGroup::Clear()  {
-  for( int i=0; i < FObjects.Count(); i++ )
+  for( int i=0; i < FObjects.Count(); i++ )  {
     FObjects[i]->ParentGroup(NULL);
+    FObjects[i]->Selected(false);
+  }
   FObjects.Clear();
 }
 //..............................................................................
 void TGlGroup::Remove(AGDrawObject *G)  {
   FObjects.Remove(G);
+  G->ParentGroup(NULL);
+  G->Selected(false);
 }
 //..............................................................................
 void TGlGroup::RemoveDeleted()  {
@@ -165,7 +170,7 @@ bool TGlGroup::OnMouseMove(const IEObject *Sender, const TMouseData *Data)  {
 }
 //..............................................................................
 void TGlGroup::GlM(const TGlMaterial& G)  {
-  *FGlM = G;
+  FGlM = Primitives()->Style()->PrimitiveMaterial("mat", G);
 }
 //..............................................................................
 

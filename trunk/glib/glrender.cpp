@@ -764,6 +764,8 @@ TGlGroup * TGlRender::GroupSelection(const olxstr& groupName)  {
     FSelection->Create();
     FSelection->Add(OS);
     // read style information for this particular group
+    OS->Primitives()->RemoveObject(OS);
+    FGObjects.Remove(OS);  // avoid duplication in the list!
     OS->Create(groupName);
     return OS;
   }
@@ -779,6 +781,8 @@ void TGlRender::UnGroup(TGlGroup *OS)  {
   TPtrList<AGDrawObject> Objects;
   for( int i=0; i < OS->Count(); i++ )
     Objects.Add( OS->Object(i) );
+  OS->Primitives()->RemoveObject(OS); // 
+  FGObjects.Remove(OS);
   delete OS;  // it will reset Parent group to NULL in the objects
   for( int i=0; i < Objects.Count(); i++ )
     FSelection->Add( Objects[i] );

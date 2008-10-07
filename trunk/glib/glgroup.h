@@ -44,7 +44,7 @@ public:
   void Selected(bool On);
 
   inline bool IsDefaultColor() const {  return DefaultColor;  }
-  inline TGlMaterial* GlM()    const {  return FGlM; }
+  inline const TGlMaterial* GlM()    const {  return FGlM; }
   void GlM(const TGlMaterial &G);
 };
 

@@ -2194,17 +2194,17 @@ void TGXApp::XAtomDS2XBondDS(const olxstr &Source)  {
         dds = (int)GlP->Params().Last();
         if( dds == ddsDefAtomA )  {  // from atom A
           GlP->SetProperties(GlMA);
-          XB->Primitives()->Style()->PrimitiveMaterial(GlP->Name(), GlMA);
+          XB->Primitives()->Style()->PrimitiveMaterial(GlP->Name(), *GlMA);
           continue;
         }
         if( dds == ddsDef )  {  // from haviest atom
           GlP->SetProperties(GlMA);
-          XB->Primitives()->Style()->PrimitiveMaterial(GlP->Name(), GlMA);
+          XB->Primitives()->Style()->PrimitiveMaterial(GlP->Name(), *GlMA);
           continue;
         }
         if( dds == ddsDefAtomB )  {
           GlP->SetProperties(GlMB);
-          XB->Primitives()->Style()->PrimitiveMaterial(GlP->Name(), GlMB);
+          XB->Primitives()->Style()->PrimitiveMaterial(GlP->Name(), *GlMB);
           continue;
         }
       }
