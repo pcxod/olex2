@@ -187,7 +187,7 @@ PyObject* runRegisterCallback(PyObject* self, PyObject* args)  {
   olxstr cbEvent;
   PyObject* fun;
   bool profile = false;
-  if( !PythonExt::ParseTuple(args, "wO|b", &cbEvent, &fun, profile) )  {
+  if( !PythonExt::ParseTuple(args, "wO|b", &cbEvent, &fun, &profile) )  {
     Py_INCREF(Py_None);
     return Py_None;
   }
