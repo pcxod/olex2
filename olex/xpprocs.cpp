@@ -1533,7 +1533,7 @@ void TMainForm::macGroup(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     FXApp->FindXAtoms( Cmds.Text(' '), xatoms, false);
     TGlGroup* glg = FXApp->GetRender().Selection();
     for( int i=0; i < xatoms.Count(); i++ )
-      xatoms[i]->SetTag(0);
+      xatoms[i]->SetTag( xatoms[i]->ParentGroup() == NULL ? 0 : 1);
     for( int i=0; i < glg->Count(); i++ )
       glg->Object(i)->SetTag(1);
     for( int i=0; i < xatoms.Count(); i++ )

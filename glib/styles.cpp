@@ -90,7 +90,7 @@ const TGlMaterial* TGraphicsStyle::Material(const olxstr &PName) {
   return (TGlMaterial*)PS->GetProperties();
 }
 //..............................................................................
-void TGraphicsStyle::PrimitiveMaterial(const olxstr &PName, TGlMaterial *GlM)  {
+TGlMaterial* TGraphicsStyle::PrimitiveMaterial(const olxstr &PName, const TGlMaterial& GlM)  {
   TPrimitiveStyle *PS=NULL;
   for( int i=0; i < PrimitiveStyleCount(); i++ )  {
     if( FPStyles[i]->PrimitiveName() == PName )  {
@@ -102,7 +102,7 @@ void TGraphicsStyle::PrimitiveMaterial(const olxstr &PName, TGlMaterial *GlM)  {
     PS = FParent->NewPrimitiveStyle(PName);
     FPStyles.Add(PS);
   }
-  PS->SetProperties(GlM);
+  return (TGlMaterial*)PS->SetProperties(&GlM);
 }
 //..............................................................................
 bool TGraphicsStyle::operator == (const TGraphicsStyle &GS) const  {

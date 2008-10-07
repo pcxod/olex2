@@ -371,7 +371,7 @@ void TdlgMatProp::OnOK(wxCommandEvent& event)
   }
   else  {
     if( GPCollection != NULL && EsdlInstanceOf(*GPCollection->Object(0), TGlGroup) )  {
-      *((TGlGroup*)GPCollection->Object(0))->GlM() = FMaterials[0];
+      ((TGlGroup*)GPCollection->Object(0))->GlM( FMaterials[0] );
     }
     else  {
       if( GPCollection != NULL )  {
@@ -379,7 +379,7 @@ void TdlgMatProp::OnOK(wxCommandEvent& event)
         if( !GS )  GS = FXApp->GetRender().Styles()->NewStyle( GPCollection->Name() );
         for( int i=0; i < GPCollection->PrimitiveCount(); i++ )  {
           GPCollection->Primitive(i)->SetProperties(&FMaterials[i]);
-          GS->PrimitiveMaterial( GPCollection->Primitive(i)->Name(), &FMaterials[i]);
+          GS->PrimitiveMaterial( GPCollection->Primitive(i)->Name(), FMaterials[i]);
         }
       }
     }
