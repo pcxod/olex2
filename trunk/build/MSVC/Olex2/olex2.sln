@@ -8,7 +8,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gllib", "gllib.vcproj", "{F
 		{01EB4F8B-6F6E-4FD4-908E-37E02AA6EA63} = {01EB4F8B-6F6E-4FD4-908E-37E02AA6EA63}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "xlib", "xlib.vcproj", "{C664746C-BA54-47ED-8CEC-58C2C9D859FD}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "xlib-np", "xlib-np.vcproj", "{C664746C-BA54-47ED-8CEC-58C2C9D859FD}"
 	ProjectSection(ProjectDependencies) = postProject
 		{01EB4F8B-6F6E-4FD4-908E-37E02AA6EA63} = {01EB4F8B-6F6E-4FD4-908E-37E02AA6EA63}
 	EndProjectSection
@@ -21,7 +21,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gxlib", "gxlib.vcproj", "{D
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "olex2c", "olex2c.vcproj", "{539C2C73-609E-4E80-8598-DED2341FCD93}"
 	ProjectSection(ProjectDependencies) = postProject
-		{C664746C-BA54-47ED-8CEC-58C2C9D859FD} = {C664746C-BA54-47ED-8CEC-58C2C9D859FD}
+		{61C58785-8535-4CD3-B84A-F324CFA4E27F} = {61C58785-8535-4CD3-B84A-F324CFA4E27F}
 		{01EB4F8B-6F6E-4FD4-908E-37E02AA6EA63} = {01EB4F8B-6F6E-4FD4-908E-37E02AA6EA63}
 	EndProjectSection
 EndProject
@@ -50,13 +50,15 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "olex2", "olex2.vcproj", "{E77DD146-78F9-4A48-8BC6-8792226C1670}"
 	ProjectSection(ProjectDependencies) = postProject
 		{DE855453-1F3B-4821-ABEB-A3922144B040} = {DE855453-1F3B-4821-ABEB-A3922144B040}
-		{C664746C-BA54-47ED-8CEC-58C2C9D859FD} = {C664746C-BA54-47ED-8CEC-58C2C9D859FD}
 		{01EB4F8B-6F6E-4FD4-908E-37E02AA6EA63} = {01EB4F8B-6F6E-4FD4-908E-37E02AA6EA63}
 		{F91183CE-E72E-4B45-A7E3-EE23C4B62338} = {F91183CE-E72E-4B45-A7E3-EE23C4B62338}
 		{DE8F09F2-84B2-4114-AA86-950FCC923CD9} = {DE8F09F2-84B2-4114-AA86-950FCC923CD9}
+		{61C58785-8535-4CD3-B84A-F324CFA4E27F} = {61C58785-8535-4CD3-B84A-F324CFA4E27F}
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ulaunch", "ulaunch.vcproj", "{FB67F543-EB17-4693-8A9A-4AA27F184129}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "xlib", "xlib.vcproj", "{61C58785-8535-4CD3-B84A-F324CFA4E27F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -194,6 +196,18 @@ Global
 		{FB67F543-EB17-4693-8A9A-4AA27F184129}.Unicode-release-no-python|Win32.Build.0 = Unicode-release-static|Win32
 		{FB67F543-EB17-4693-8A9A-4AA27F184129}.Unicode-release-static|Win32.ActiveCfg = Unicode-release-static|Win32
 		{FB67F543-EB17-4693-8A9A-4AA27F184129}.Unicode-release-static|Win32.Build.0 = Unicode-release-static|Win32
+		{61C58785-8535-4CD3-B84A-F324CFA4E27F}.Debug|Win32.ActiveCfg = Debug|Win32
+		{61C58785-8535-4CD3-B84A-F324CFA4E27F}.Debug|Win32.Build.0 = Debug|Win32
+		{61C58785-8535-4CD3-B84A-F324CFA4E27F}.Release|Win32.ActiveCfg = Release|Win32
+		{61C58785-8535-4CD3-B84A-F324CFA4E27F}.Release|Win32.Build.0 = Release|Win32
+		{61C58785-8535-4CD3-B84A-F324CFA4E27F}.Unicode|Win32.ActiveCfg = Unicode|Win32
+		{61C58785-8535-4CD3-B84A-F324CFA4E27F}.Unicode|Win32.Build.0 = Unicode|Win32
+		{61C58785-8535-4CD3-B84A-F324CFA4E27F}.Unicode-release|Win32.ActiveCfg = Unicode-release|Win32
+		{61C58785-8535-4CD3-B84A-F324CFA4E27F}.Unicode-release|Win32.Build.0 = Unicode-release|Win32
+		{61C58785-8535-4CD3-B84A-F324CFA4E27F}.Unicode-release-no-python|Win32.ActiveCfg = Unicode-release-static|Win32
+		{61C58785-8535-4CD3-B84A-F324CFA4E27F}.Unicode-release-no-python|Win32.Build.0 = Unicode-release-static|Win32
+		{61C58785-8535-4CD3-B84A-F324CFA4E27F}.Unicode-release-static|Win32.ActiveCfg = Unicode-release-static|Win32
+		{61C58785-8535-4CD3-B84A-F324CFA4E27F}.Unicode-release-static|Win32.Build.0 = Unicode-release-static|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

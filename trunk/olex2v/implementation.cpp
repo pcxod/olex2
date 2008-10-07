@@ -257,7 +257,7 @@ void TOlexViewer::LoadScene(const olxstr& _sceneFile)  {
   catch( ... )  {  }  // be quite
 }
 //.......................................................................................
-bool TOlexViewer::executeMacro(const olxstr& cmdLine)  {
+bool TOlexViewer::executeMacroEx(const olxstr& cmdLine, MacroError& er)  {
   return false;
 }
 //.......................................................................................

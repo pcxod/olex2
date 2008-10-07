@@ -101,6 +101,7 @@
 #include "utf8file.h"
 
 #include "msgbox.h"
+#include "strmask.h"
 
 #ifndef __BORLANDC__
   #include "ebtree.h"
@@ -446,7 +447,7 @@ void TMainForm::funRGB(const TStrObjList& Params, TMacroError &E)  {
 }
 //..............................................................................
 void TMainForm::funHtmlPanelWidth(const TStrObjList &Cmds, TMacroError &E)  {
-  if( FHtmlMinimized )
+  if( FHtml == NULL || FHtmlMinimized )
     E.SetRetVal( olxstr("-1") );
   else
     E.SetRetVal( GetHtml()->WI.GetWidth() );
@@ -3698,47 +3699,6 @@ void TMainForm::macReset(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   }
   ProcessXPMacro( olxstr("@reap \'") << FN << '\'', E);
   ProcessXPMacro("htmlreload", E);
-}
-//..............................................................................
-void TMainForm::macLstMac(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  TBasicFunctionPList macros;
-  GetLibrary().ListAllMacros( macros );
-  olxstr line;
-  for( int i=0; i < macros.Count(); i++ )  {
-    ABasicFunction* func = macros[i];
-    line = func->GetQualifiedName();
-    TBasicApp::GetLog() << (line << " - " << func->GetSignature() << '\n');
-  }
-}
-//..............................................................................
-void TMainForm::macLstFun(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  TBasicFunctionPList functions;
-  GetLibrary().ListAllFunctions( functions );
-  olxstr line;
-  for( int i=0; i < functions.Count(); i++ )  {
-    ABasicFunction* func = functions[i];
-    line = func->GetQualifiedName();
-    TBasicApp::GetLog() << (line << " - " << func->GetSignature() << '\n');
-  }
-}
-//..............................................................................
-void TMainForm::macLstVar(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  if( TOlxVars::VarCount() == 0 )  return;
-  TTTable<TStrList> tab(TOlxVars::VarCount(), 3);
-  tab.ColName(0) = "Name";
-  tab.ColName(1) = "Value";
-  tab.ColName(2) = "RefCnt";
-  for( int i=0; i < TOlxVars::VarCount(); i++ )  {
-    tab[i][0] = TOlxVars::GetVarName(i);
-    tab[i][1] = TOlxVars::GetVarStr(i);
-    if( TOlxVars::GetVarWrapper(i) != NULL )
-      tab[i][2] = TOlxVars::GetVarWrapper(i)->ob_refcnt;
-    else
-      tab[i][2] = NAString;
-  }
-  TStrList Output;
-  tab.CreateTXTList(Output, "Variables list", true, true, ' ');
-  FGlConsole->PrintText( Output, NULL, false );
 }
 //..............................................................................
 void TMainForm::macText(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
@@ -7258,28 +7218,6 @@ void TMainForm::macLineWidth(TStrObjList &Cmds, const TParamList &Options, TMacr
   int lw = Cmds[0].ToInt();
   if( lw > 10 && lw < 500 )
     FGlConsole->SetLineWidth( lw );
-}
-//..............................................................................
-void TMainForm::macLstFS(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  double tc = 0;
-  TTTable<TStrList> tab(TFileHandlerManager::Count(), 4);
-  tab.ColName(0) = "Name";
-  tab.ColName(1) = "Size";
-  tab.ColName(2) = "Timestamp";
-  tab.ColName(3) = "Persistent";
-  for(int i=0; i < TFileHandlerManager::Count(); i++ )  {
-    tab[i][0] = TFileHandlerManager::GetBlockName(i);
-    tab[i][1] = TFileHandlerManager::GetBlockSize(i);
-    tab[i][2] = TFileHandlerManager::GetBlockDateTime(i);
-    tab[i][3] = TFileHandlerManager::GetPersistenceId(i);
-    tc += TFileHandlerManager::GetBlockSize(i);
-  }
-  tc /= (1024*1024);
-
-  TStrList Output;
-  tab.CreateTXTList(Output, olxstr("Virtual FS content"), true, false, "|");
-  FGlConsole->PrintText( Output, NULL, false );
-  FGlConsole->PrintText( olxstr("Content size is ") << olxstr::FormatFloat(3, tc)  << "Mb");
 }
 //..............................................................................
 void TMainForm::macInv(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {

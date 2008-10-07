@@ -5,6 +5,7 @@
 #include <windows.h>
 #include <conio.h>
 #include <process.h>
+#include <io.h>
 
 using namespace std;
 
@@ -199,12 +200,8 @@ public:
     this_InitMacroD(Reload, "", fpOne, "" );
     this_InitMacroD(Reset, "s&;c&;f", fpAny|psFileLoaded, "" );
     this_InitMacroD(WaitFor, "", fpOne, "" );
-    this_InitMacroD(LstFS, "", fpNone, "" );
-    this_InitMacroD(LstVar, "", fpNone, "" );
     this_InitMacroD(Kill, "", (fpAny^fpNone)|psFileLoaded, "" );
     this_InitMacroD(Sel, "i&;a&;u", fpAny|psFileLoaded, "" );
-    this_InitMacroD(LstMac, "", fpNone, "" );
-    this_InitMacroD(LstFun, "", fpNone, "" );
     this_InitMacroD(Quit, "", fpNone, "" );
     
     this_InitFuncD(User, fpNone|fpOne, "reap" );
@@ -448,70 +445,8 @@ public:
     }
   }
   //..............................................................................
-  void macLstFun(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-    TBasicFunctionPList functions;
-    GetLibrary().ListAllFunctions( functions );
-    olxstr line;
-    for( int i=0; i < functions.Count(); i++ )  {
-      ABasicFunction* func = functions[i];
-      line = func->GetQualifiedName();
-      TBasicApp::GetLog() << (line << " - " << func->GetSignature() << '\n');
-    }
-  }
-  //..............................................................................
   void macQuit(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
     TerminateSignal = true;
-  }
-  //..............................................................................
-  void macLstMac(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-    TBasicFunctionPList macros;
-    GetLibrary().ListAllMacros( macros );
-    olxstr line;
-    for( int i=0; i < macros.Count(); i++ )  {
-      ABasicFunction* func = macros[i];
-      line = func->GetQualifiedName();
-      TBasicApp::GetLog() << (line << " - " << func->GetSignature() << '\n');
-    }
-  }
-  //..............................................................................
-  void macLstFS(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-    double tc = 0;
-    TTTable<TStrList> tab(TFileHandlerManager::Count(), 4);
-    tab.ColName(0) = "Name";
-    tab.ColName(1) = "Size";
-    tab.ColName(2) = "Timestamp";
-    tab.ColName(3) = "Persistent";
-    for(int i=0; i < TFileHandlerManager::Count(); i++ )  {
-      tab[i][0] = TFileHandlerManager::GetBlockName(i);
-      tab[i][1] = TFileHandlerManager::GetBlockSize(i);
-      tab[i][2] = TFileHandlerManager::GetBlockDateTime(i);
-      tab[i][3] = TFileHandlerManager::GetPersistenceId(i);
-      tc += TFileHandlerManager::GetBlockSize(i);
-    }
-    tc /= (1024*1024);
-    TStrList Output;
-    tab.CreateTXTList(Output, olxstr("Virtual FS content"), true, false, "|");
-    TBasicApp::GetLog() << Output << '\n';
-    TBasicApp::GetLog() << (olxstr("Content size is ") << olxstr::FormatFloat(3, tc)  << "Mb");
-  }
-  //..............................................................................
-  void macLstVar(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-    if( TOlxVars::VarCount() == 0 )  return;
-    TTTable<TStrList> tab(TOlxVars::VarCount(), 3);
-    tab.ColName(0) = "Name";
-    tab.ColName(1) = "Value";
-    tab.ColName(2) = "RefCnt";
-    for( int i=0; i < TOlxVars::VarCount(); i++ )  {
-      tab[i][0] = TOlxVars::GetVarName(i);
-      tab[i][1] = TOlxVars::GetVarStr(i);
-      if( TOlxVars::GetVarWrapper(i) != NULL )
-        tab[i][2] = TOlxVars::GetVarWrapper(i)->ob_refcnt;
-      else
-        tab[i][2] = NAString;
-    }
-    TStrList Output;
-    tab.CreateTXTList(Output, "Variables list", true, true, ' ');
-    TBasicApp::GetLog() << Output << '\n';
   }
   //..............................................................................
   void funSel(const TStrObjList& Params, TMacroError &E) {
@@ -1236,10 +1171,19 @@ public:
 };
 
 int main(int argc, char* argv[])  {
-	TOlex olex(argv[0]);
+  olxstr bd(argv[0]);
+  char* cbd = getenv("OLEX2_DIR");
+  if( cbd != NULL )  {
+    bd = cbd;
+    if( bd.Last() != '\\' || bd.Last() != '/' )
+      bd << '/';
+    bd << "dummy.txt";
+  }
+  TOlex olex(bd);
   SetConsoleTitle(L"Olex2 Console");
   TLibrary &Library = olex.GetLibrary();
   cout << "Welcome to Olex2 console\n";
+  cout << "GUI basedir is: " << TBasicApp::GetInstance()->BaseDir().c_str() << '\n';
   cout << "Compilation information: " << __DATE__ << ' ' << __TIME__ << '\n';
   cout << ">>";
   if( argc > 1 )  {

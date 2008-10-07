@@ -276,7 +276,6 @@ private:
   DefMacro(Style)
   DefMacro(Scene)
   DefMacro(SyncBC)
-  DefMacro(LstFS)  // prints out the content of the virtual file system
 
   DefMacro(IF)
   DefMacro(Basis)
@@ -329,9 +328,6 @@ private:
   DefMacro(ShowQ)
   DefMacro(Mode)
   DefMacro(Reset)
-  DefMacro(LstMac)
-  DefMacro(LstFun)
-  DefMacro(LstVar)
 
   DefMacro(Text)
   DefMacro(ShowStr)

@@ -44,6 +44,10 @@ class XLibMacros  {
   static DefMacro(File)
   static DefMacro(User)
   static DefMacro(Dir)
+  static DefMacro(LstMac)
+  static DefMacro(LstFun)
+  static DefMacro(LstVar)
+  static DefMacro(LstFS)
 
   static DefMacro(Flush)
 

@@ -173,6 +173,10 @@ public:
   static inline const olxstr& GetVarName(int index) {
     return Instance->Vars.GetComparable(index);
   }
+  static inline const olxstr& GetVarStr(int index) {
+    return Instance->Vars.GetObject(index);
+  }
+
 
   static inline void SetVar(const olxstr& name, const olxstr& value)  {
     if( Instance == NULL )  new TOlxVars();
