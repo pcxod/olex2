@@ -636,9 +636,6 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual accupancy\
 
   this_InitMacro(Reset, s&;c&;f, fpAny|psFileLoaded );
   this_InitMacro(ShowQ, , fpNone|fpTwo|psFileLoaded );
-  this_InitMacro(LstMac, h-Shows help, fpNone );
-  this_InitMacro(LstFun, h-Shows help, fpNone );
-  this_InitMacroD(LstVar, EmptyString, fpNone, "lists all defined variables" );
 
   this_InitMacro(Mode, p&;s&;t&;c, (fpAny^fpNone)|psFileLoaded );
 
@@ -725,8 +722,6 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual accupancy\
 
   this_InitMacro(Tls, , fpAny^(fpNone)|psFileLoaded );
 
-  this_InitMacroD(LstFS, EmptyString, fpNone,
-"Prints out detailed content of virtual file system");
   this_InitMacro(Test, , fpAny );
   // -f - force inversion even for nocentrosymmetric space group
   this_InitMacro(Inv, f, fpAny|psFileLoaded );
@@ -1765,7 +1760,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
     FMode = 0;  // to release waitfor 
     return false;
   }
-  if( MsgId == ID_GLDRAW )  {
+  if( MsgId == ID_GLDRAW && !IsIconized() )  {
     if( !FBitmapDraw )  
       FGlCanvas->SwapBuffers();
   }

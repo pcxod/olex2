@@ -3,7 +3,7 @@
 	ProjectType="Visual C++"
 	Version="8.00"
 	Name="xlib"
-	ProjectGUID="{C664746C-BA54-47ED-8CEC-58C2C9D859FD}"
+	ProjectGUID="{61C58785-8535-4CD3-B84A-F324CFA4E27F}"
 	RootNamespace="xlib"
 	Keyword="ManagedCProj"
 	>
@@ -41,7 +41,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="2"
-				AdditionalIncludeDirectories="..\..\..\alglib;..\..\..\sdl;..\..\..\repository;..\..\..\xlib"
+				AdditionalIncludeDirectories="..\..\..\alglib;..\..\..\sdl;..\..\..\repository;..\..\..\xlib;C:\Python25\include"
 				PreprocessorDefinitions="WIN32;"
 				StringPooling="true"
 				MinimalRebuild="true"
@@ -107,7 +107,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="..\..\..\xlib;..\..\..\alglib;..\..\..\repository;..\..\..\sdl"
+				AdditionalIncludeDirectories="..\..\..\alglib;..\..\..\sdl;..\..\..\repository;..\..\..\xlib;C:\Python25\include"
 				PreprocessorDefinitions="WIN32;NDEBUG"
 				RuntimeLibrary="2"
 				UsePrecompiledHeader="0"
@@ -170,7 +170,7 @@
 				Optimization="0"
 				InlineFunctionExpansion="0"
 				EnableIntrinsicFunctions="false"
-				AdditionalIncludeDirectories="..\..\..\alglib;..\..\..\sdl;..\..\..\repository;..\..\..\xlib"
+				AdditionalIncludeDirectories="..\..\..\alglib;..\..\..\sdl;..\..\..\repository;..\..\..\xlib;C:\Python25\include"
 				PreprocessorDefinitions="_UNICODE;_DEBUG;"
 				StringPooling="true"
 				MinimalRebuild="true"
@@ -241,7 +241,7 @@
 				InlineFunctionExpansion="2"
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
-				AdditionalIncludeDirectories="..\..\..\alglib;..\..\..\sdl;..\..\..\repository;..\..\..\xlib"
+				AdditionalIncludeDirectories="..\..\..\alglib;..\..\..\sdl;..\..\..\repository;..\..\..\xlib;C:\Python25\include"
 				PreprocessorDefinitions="_UNICODE;"
 				StringPooling="true"
 				MinimalRebuild="false"
@@ -313,7 +313,7 @@
 				InlineFunctionExpansion="2"
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
-				AdditionalIncludeDirectories="..\..\..\alglib;..\..\..\sdl;..\..\..\repository;..\..\..\xlib"
+				AdditionalIncludeDirectories="..\..\..\alglib;..\..\..\sdl;..\..\..\repository;..\..\..\xlib;C:\Python25\include"
 				PreprocessorDefinitions="_UNICODE;"
 				StringPooling="true"
 				MinimalRebuild="false"

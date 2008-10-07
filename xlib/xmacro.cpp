@@ -23,6 +23,8 @@
 #include "ecast.h"
 #include "xlcongen.h"
 #include "bitarray.h"
+#include "olxvar.h"
+#include "strmask.h"
 
 #define xlib_InitMacro(macroName, validOptions, argc, desc)\
   lib.RegisterStaticMacro( new TStaticMacro(&XLibMacros::mac##macroName, #macroName, (validOptions), argc, desc))
@@ -118,6 +120,10 @@ xlib_InitMacro(File, "s-sort the main residue of the asymmetric unit", fpNone|fp
   xlib_InitMacro(UpdateWght, "", fpAny|psCheckFileTypeIns, "Copies proposed weight to current");
   xlib_InitMacro(User, "", fpNone|fpOne, "Changes current folder");
   xlib_InitMacro(Dir, "", fpNone|fpOne, "Lists current folder. A file name mask may be provided");
+  xlib_InitMacro(LstVar, "", fpAny, "Lists all defined variables. Accepts * based masks" );
+  xlib_InitMacro(LstMac, "h-Shows help", fpAny, "Lists all defined macros. Accepts * based masks" );
+  xlib_InitMacro(LstFun, "h-Shows help", fpAny, "Lists all defined functions. Accepts * based masks" );
+  xlib_InitMacro(LstFS, EmptyString, fpAny, "Prints out detailed content of virtual file system. Accepts * based masks");
 //_________________________________________________________________________________________________________________________
 //_________________________________________________________________________________________________________________________
 
@@ -513,6 +519,134 @@ void XLibMacros::macDir(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 
   tab.CreateTXTList(Output, "Directory list", true, true, ' ');
   TBasicApp::GetLog() << Output;
+}
+//..............................................................................
+void XLibMacros::macLstMac(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  // create masks
+  TTypeList<TStrMask> masks;
+  for( int i=0; i < Cmds.Count(); i++ )
+    masks.AddNew(Cmds[i]);
+  if( masks.IsEmpty() )  masks.AddNew(EmptyString);
+  // end masks creation
+  TBasicFunctionPList macros;
+  TXApp::GetInstance().GetLibrary().ListAllMacros( macros );
+  for( int i=0; i < macros.Count(); i++ )  {
+    ABasicFunction* func = macros[i];
+    bool add = false;
+    olxstr fn = func->GetQualifiedName();
+    for( int j=0; j < masks.Count(); j++ )  {
+      if( masks[j].DoesMatchi(fn) )  {
+        add = true;
+        break;
+      }
+    }
+    if( !add )  continue;
+    TBasicApp::GetLog() << (fn << " - " << func->GetSignature() << '\n');
+  }
+}
+//..............................................................................
+void XLibMacros::macLstFun(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  // create masks
+  TTypeList<TStrMask> masks;
+  for( int i=0; i < Cmds.Count(); i++ )
+    masks.AddNew(Cmds[i]);
+  if( masks.IsEmpty() )  masks.AddNew(EmptyString);
+  // end masks creation
+  TBasicFunctionPList functions;
+  TXApp::GetInstance().GetLibrary().ListAllFunctions( functions );
+  for( int i=0; i < functions.Count(); i++ )  {
+    ABasicFunction* func = functions[i];
+    bool add = false;
+    olxstr fn = func->GetQualifiedName();
+    for( int j=0; j < masks.Count(); j++ )  {
+      if( masks[j].DoesMatchi(fn) )  {
+        add = true;
+        break;
+      }
+    }
+    if( !add )  continue;
+    TBasicApp::GetLog() << (fn << " - " << func->GetSignature() << '\n');
+  }
+}
+//..............................................................................
+void XLibMacros::macLstVar(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  if( TOlxVars::VarCount() == 0 )  return;
+  // create masks
+  TTypeList<TStrMask> masks;
+  for( int i=0; i < Cmds.Count(); i++ )
+    masks.AddNew(Cmds[i]);
+  if( masks.IsEmpty() )  masks.AddNew(EmptyString);
+  // end masks creation
+  TTTable<TStrList> tab(TOlxVars::VarCount(), 3);
+  tab.ColName(0) = "Name";
+  tab.ColName(1) = "Value";
+#ifndef _NO_PYTHON_
+  tab.ColName(2) = "RefCnt";
+#endif
+  int rowsCount = 0;
+  for( int i=0; i < TOlxVars::VarCount(); i++ )  {
+    bool add = false;
+    const olxstr& vn = TOlxVars::GetVarName(i);
+    for( int j=0; j < masks.Count(); j++ )  {
+      if( masks[j].DoesMatchi(vn) )  {
+        add = true;
+        break;
+      }
+    }
+    if( !add )  continue;
+    tab[rowsCount][0] = vn;
+    tab[rowsCount][1] = TOlxVars::GetVarStr(i);
+#ifndef _NO_PYTHON
+    if( TOlxVars::GetVarWrapper(i) != NULL )
+      tab[rowsCount][2] = TOlxVars::GetVarWrapper(i)->ob_refcnt;
+    else
+      tab[rowsCount][2] = NAString;
+#endif
+    rowsCount++;
+  }
+  tab.SetRowCount(rowsCount);
+  TStrList Output;
+  tab.CreateTXTList(Output, "Variables list", true, true, ' ');
+  TBasicApp::GetLog() << Output;
+}
+//..............................................................................
+void XLibMacros::macLstFS(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+  // create masks
+  TTypeList<TStrMask> masks;
+  for( int i=0; i < Cmds.Count(); i++ )
+    masks.AddNew(Cmds[i]);
+  if( masks.IsEmpty() )  masks.AddNew(EmptyString);
+  // end masks creation
+  double tc = 0;
+  TTTable<TStrList> tab(TFileHandlerManager::Count(), 4);
+  tab.ColName(0) = "Name";
+  tab.ColName(1) = "Size";
+  tab.ColName(2) = "Timestamp";
+  tab.ColName(3) = "Persistent";
+  int rowsAdded = 0;
+  for(int i=0; i < TFileHandlerManager::Count(); i++ )  {
+    bool add = false;
+    const olxstr& bn = TFileHandlerManager::GetBlockName(i);
+    for( int j=0; j < masks.Count(); j++ )  {
+      if( masks[j].DoesMatchi(bn) )  {
+        add = true;
+        break;
+      }
+    }
+    if( !add )  continue;
+    tab[rowsAdded][0] = bn;
+    tab[rowsAdded][1] = TFileHandlerManager::GetBlockSize(i);
+    tab[rowsAdded][2] = TFileHandlerManager::GetBlockDateTime(i);
+    tab[rowsAdded][3] = TFileHandlerManager::GetPersistenceId(i);
+    tc += TFileHandlerManager::GetBlockSize(i);
+    rowsAdded++;
+  }
+  tc /= (1024*1024);
+  tab.SetRowCount(rowsAdded);
+  TStrList Output;
+  tab.CreateTXTList(Output, olxstr("Virtual FS content"), true, false, "|");
+  TBasicApp::GetLog() << Output;
+  TBasicApp::GetLog() << (olxstr("Content size is ") << olxstr::FormatFloat(3, tc)  << "Mb\n");
 }
 //..............................................................................
 void XLibMacros::macPlan(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error) {

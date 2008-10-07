@@ -766,6 +766,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\sdl\strmask.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\sdl\talist.h"
 				>
 			</File>
