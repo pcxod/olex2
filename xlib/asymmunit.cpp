@@ -686,6 +686,17 @@ double TAsymmUnit::EstimateZ(int atomCount) const  {
   return olx_max((TUnitCell::GetMatrixMultiplier(GetLatt())*(MatrixCount()+1) * zp), 1);
 }
 //..............................................................................
+void TAsymmUnit::ToDataItem(TDataItem& item) const  {
+  throw TNotImplementedException(__OlxSourceInfo);
+  //TDataItem& cell = *item.AddItem("cell");
+  //cell.AddField("sides", olxstr(FAxes[0].ToString(), 80) << ',' << FAxes[1].ToString() << ',' << FAxes[2].ToString() );
+  //cell.AddField("angles", olxstr(FAngles[0].ToString(), 80) << ',' << FAngles[1].ToString() << ',' << FAngles[2].ToString() );
+  //cell.AddField("Z", Z);
+}
+//..............................................................................
+void TAsymmUnit::FromDataItem(TDataItem& item)  {
+  throw TNotImplementedException(__OlxSourceInfo);
+}
 //..............................................................................
 //..............................................................................
 //..............................................................................

@@ -589,3 +589,10 @@ void TXApp::AutoAfixRings(int afix, TSAtom* sa, bool TryPyridine)  {
   }
 }
 //..............................................................................
+void TXApp::ToDataItem(TDataItem& item) const  {
+  throw TNotImplementedException(__OlxSourceInfo);
+}
+//..............................................................................
+void TXApp::FromDataItem(TDataItem& item)  {
+  throw TNotImplementedException(__OlxSourceInfo);
+}

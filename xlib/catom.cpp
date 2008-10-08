@@ -179,6 +179,16 @@ void TCAtom::UpdateEllp(const TEllipsoid &NV ) {
     FParent->GetEllp(EllpId).Initialise(Q);
 }
 //..............................................................................
+void TCAtom::ToDataItem(TDataItem& item) const  {
+  throw TNotImplementedException(__OlxSourceInfo);
+//  item.AddField("type", FAtomInfo->GetSymbol() );
+//  item.AddField("ccrd", olxstr(ccrd[0]) << ',' << ccrd[1] << ',' << ccrd[2] );
+}
+//..............................................................................
+void TCAtom::FromDataItem(TDataItem& item)  {
+  throw TNotImplementedException(__OlxSourceInfo);
+}
+//..............................................................................
 void DigitStrtok(const olxstr &str, TStrPObjList<olxstr,bool> &chars)  {
   olxstr Dig, Char;
   for(int i=0; i < str.Length(); i++ )  {
@@ -200,6 +210,7 @@ void DigitStrtok(const olxstr &str, TStrPObjList<olxstr,bool> &chars)  {
   if( !Char.IsEmpty() )  chars.Add(Char, true);
   if( !Dig.IsEmpty() )   chars.Add(Dig, false);
 }
+//..............................................................................
 int TCAtom::CompareAtomLabels(const olxstr& S, const olxstr& S1)  {
   TStrPObjList<olxstr, bool> Chars1, Chars2;
 
