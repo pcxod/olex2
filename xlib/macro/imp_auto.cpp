@@ -6,6 +6,7 @@
 
 #include "integration.h"
 #include "xmacro.h"
+#include "sptrlist.h"
 
 
 void XLibMacros::funATA(const TStrObjList &Cmds, TMacroError &Error)  {
@@ -130,10 +131,36 @@ struct Main_BaiComparator {
       return a->GetObject()->GetIndex() - b->GetObject()->GetIndex();
   }
 };
+void helper_CleanBaiList(TStrPObjList<olxstr,TBasicAtomInfo*>& list, TSPtrList<TBasicAtomInfo>& au_bais)  {
+  TXApp& xapp = TXApp::GetInstance();
+  if( xapp.CheckFileType<TIns>() )  {
+    TIns& ins = xapp.XFile().GetLastLoader<TIns>();
+    list.Clear();   
+    list.Strtok(ins.GetSfac(), ' ');
+    TAtomsInfo& bai = *TAtomsInfo::GetInstance();
+    for( int i=0; i < list.Count(); i++ )  { 
+      list.Object(i) = bai.FindAtomInfoBySymbol(list[i]);
+      au_bais.Add(list.Last().Object());
+    }
+    list.QuickSort<Main_BaiComparator>();
+  }
+}
 
 void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   TXApp& xapp = TXApp::GetInstance();
-
+  TAtomsInfo& AtomsInfo = *TAtomsInfo::GetInstance();
+  TStrPObjList<olxstr,TBasicAtomInfo*> sfac;
+  TSPtrList<TBasicAtomInfo> AvailableTypes;
+  static TPtrList<TBasicAtomInfo> StandAlone;
+  if( StandAlone.IsEmpty() )  {
+    StandAlone.Add( &AtomsInfo.GetAtomInfo(iOxygenIndex) );
+    StandAlone.Add( &AtomsInfo.GetAtomInfo(iSodiumIndex) );
+    StandAlone.Add( &AtomsInfo.GetAtomInfo(iMagnesiumIndex) );
+    StandAlone.Add( &AtomsInfo.GetAtomInfo(iChlorineIndex) );
+    StandAlone.Add( &AtomsInfo.GetAtomInfo(iPotassiumIndex) );
+    StandAlone.Add( &AtomsInfo.GetAtomInfo(iCalciumIndex) );
+  }
+  helper_CleanBaiList(sfac, AvailableTypes);
   if( TAutoDB::GetInstance() == NULL )  {
     olxstr autodbf( xapp.BaseDir() + "auto.db");
     TEGC::AddP( new TAutoDB(*((TXFile*)xapp.XFile().Replicate()), xapp ) );
@@ -311,19 +338,41 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options, TMacroEr
             break;
           }
         if( alone )  {
-          if( sa.GetAtomInfo() == iQPeakIndex )  {
-            sa.CAtom().SetLabel( "O" );
-          }
-          else if( sa.GetAtomInfo() == iOxygenIndex )  {
-            if( sa.CAtom().GetUiso() < 0.01 )
-              sa.CAtom().SetLabel( "Cl" );
-          }
-          else if( sa.GetAtomInfo() == iChlorineIndex )  {
-            if( sa.CAtom().GetUiso() > 0.2 )
-              sa.CAtom().SetLabel( "O" );
-          }
-          else  {
-            sa.CAtom().SetLabel( "O" );
+          bool assignHeaviest = false, assignLightest = false;
+          const TAutoDB::AnalysisStat& stat = TAutoDB::GetInstance()->GetStats();
+          if( stat.SNAtomTypeAssignments == 0 )  { // now we can make up types
+            bool found = false;
+            for( int j=0; j < StandAlone.Count(); j++ )  {
+              if( sa.GetAtomInfo() == *StandAlone[j] )  {
+                found = true;
+                if( sa.CAtom().GetUiso() < 0.01 )  {  // search heavier
+                  bool assigned = false;
+                  for( int k=j+1; k < StandAlone.Count(); k++ )  {
+                    if( AvailableTypes.IndexOf(StandAlone[k]) != -1 )  {
+                      sa.CAtom().SetLabel(StandAlone[k]->GetSymbol());
+                      assigned = true;
+                      break;
+                    }
+                  }
+                  if( !assigned )  assignHeaviest = true;
+                }
+                else if( sa.CAtom().GetUiso() > 0.2 )  {  // search lighter
+                  bool assigned = false;
+                  for( int k=j-1; k >= 0; k-- )  {
+                    if( AvailableTypes.IndexOf(StandAlone[k]) != -1 )  {
+                      sa.CAtom().SetLabel(StandAlone[k]->GetSymbol());
+                      assigned = true;
+                      break;
+                    }
+                  }
+                  if( !assigned )  assignLightest = true;
+                }
+              }
+            }
+            if( !found || assignLightest )  // make lightest then
+              sa.CAtom().SetLabel(StandAlone[0]->GetSymbol());
+            else if( assignHeaviest )
+              sa.CAtom().SetLabel(StandAlone.Last()->GetSymbol());
           }
         }
       }
@@ -365,23 +414,15 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     }
   }
   // treating NPD atoms... promoting to the next available type
-  if( changeNPD )  {
-    if( xapp.CheckFileType<TIns>() )  {
-      TIns& ins = xapp.XFile().GetLastLoader<TIns>();
-      TStrPObjList<olxstr,TBasicAtomInfo*> sl(ins.GetSfac(), ' ');
-      for( int i=0; i < sl.Count(); i++ ) 
-        sl.Object(i) = au.GetAtomsInfo()->FindAtomInfoBySymbol(sl[i]);
-      sl.QuickSort<Main_BaiComparator>();
-
-      for( int i=0; i < latt.AtomCount(); i++ )  {
-        TSAtom& sa = latt.GetAtom(i);
-        if( (sa.GetEllipsoid() != NULL && sa.GetEllipsoid()->IsNPD()) ||
-          (sa.CAtom().GetUiso() <= 0.005) )  {
-            int ind = sl.IndexOfObject( &sa.GetAtomInfo() );
-            if( ind >= 0 && ((ind+1) < sl.Count()) )  {
-              sa.CAtom().AtomInfo( sl.Object(ind+1) );
-            }
-        }
+  if( changeNPD && !sfac.IsEmpty() )  {
+    for( int i=0; i < latt.AtomCount(); i++ )  {
+      TSAtom& sa = latt.GetAtom(i);
+      if( (sa.GetEllipsoid() != NULL && sa.GetEllipsoid()->IsNPD()) ||
+        (sa.CAtom().GetUiso() <= 0.005) )  {
+          int ind = sfac.IndexOfObject( &sa.GetAtomInfo() );
+          if( ind >= 0 && ((ind+1) < sfac.Count()) )  {
+            sa.CAtom().AtomInfo( sfac.Object(ind+1) );
+          }
       }
     }
   }

@@ -943,6 +943,7 @@ void TAutoDB::AnalyseStructure(const olxstr& lastFileName, TLattice& latt,
                                TBAIPList* proposed_atoms)  {
 
   LastFileName = lastFileName;
+  stat.Clear();
   stat.FormulaConstrained = (proposed_atoms != NULL);
   stat.AtomDeltaConstrained = (BAIDelta != -1);
   Uisos.Clear();
@@ -950,6 +951,7 @@ void TAutoDB::AnalyseStructure(const olxstr& lastFileName, TLattice& latt,
     Uisos.Add(0.0);
     AnalyseNet( latt.GetFragment(i), permutator, Uisos[Uisos.Count()-1], stat, proposed_atoms );
   }
+  LastStat = stat;
 }
 //..............................................................................
 int SortGuessListByCount(const AnAssociation3<double, TBasicAtomInfo*, int>& a,

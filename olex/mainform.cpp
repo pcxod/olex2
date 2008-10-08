@@ -637,7 +637,10 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual accupancy\
   this_InitMacro(Reset, s&;c&;f, fpAny|psFileLoaded );
   this_InitMacro(ShowQ, , fpNone|fpTwo|psFileLoaded );
 
-  this_InitMacro(Mode, p&;s&;t&;c, (fpAny^fpNone)|psFileLoaded );
+  this_InitMacroD(Mode, "p-[name] prefix&;s-[grow] short interactions; [name] suffix&;t-[name] type\
+&;c-[grow] covalent bonds; [move] copy fragments instead of moving&;r-[split] a restraint/constraint for split atoms", 
+(fpAny^fpNone)|psFileLoaded, 
+    "Turns specified mode on. Valid mode: fixu, fixc, grow, himp, match, move, name, occu, pack, part, split");
 
   this_InitMacro(Text, , fpNone );
   this_InitMacro(ShowStr, , fpNone|fpOne|psFileLoaded );
@@ -645,7 +648,8 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual accupancy\
   this_InitMacro(Bind, , fpAny );
 
   this_InitMacro(Grad, i&;p, fpNone|fpOne|fpFour );
-  this_InitMacro(Split, , fpAny|psCheckFileTypeIns );
+  this_InitMacroD(Split, "r-EADP,ISOR or SIMU to be placed for the split atoms", 
+    fpAny|psCheckFileTypeIns, "splits provided atoms along the longest axis of the ADP" );
   this_InitMacro(ShowP, m-do not modify the display view, fpAny );
 
   this_InitMacro(EditAtom, cs-do not clear the selection,fpAny|psCheckFileTypeIns );

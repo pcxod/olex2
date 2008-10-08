@@ -7,18 +7,22 @@
 
 BeginChemNamespace()
 
-const  short iHydrogenIndex   = 0,
-             iBoronIndex   = 4,
-             iCarbonIndex   = 5,
-             iNitrogenIndex   = 6,
-             iOxygenIndex     = 7,
-             iFluorineIndex   = 8,
-             iSiliconIndex    = 13,
-             iPhosphorusIndex = 14,
-             iSulphurIndex    = 15,
-             iChlorineIndex   = 16,
-             iQPeakIndex      = 104,
-             iDeuteriumIndex      = 105;
+const  short iHydrogenIndex    = 0,
+             iBoronIndex       = 4,
+             iCarbonIndex      = 5,
+             iNitrogenIndex    = 6,
+             iOxygenIndex      = 7,
+             iFluorineIndex    = 8,
+             iSodiumIndex      = 10,
+             iMagnesiumIndex   = 11,
+             iSiliconIndex     = 13,
+             iPhosphorusIndex  = 14,
+             iSulphurIndex     = 15,
+             iChlorineIndex    = 16,
+             iPotassiumIndex   = 18,
+             iCalciumIndex     = 19,
+             iQPeakIndex       = 104,
+             iDeuteriumIndex   = 105;
 
 class TIsotope: public ACollectionItem  {
   double Mr, W;
