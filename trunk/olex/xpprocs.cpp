@@ -101,7 +101,6 @@
 #include "utf8file.h"
 
 #include "msgbox.h"
-#include "sptrlist.h"
 
 #ifndef __BORLANDC__
   #include "ebtree.h"
@@ -3810,83 +3809,69 @@ void TMainForm::macGrad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 //..............................................................................
 void TMainForm::macSplit(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
   bool found;
+  olxstr cr( Options.FindValue("r", EmptyString).ToLowerCase() );
   TCAtomPList Atoms;
   olxstr lbl;
   olxstr tmp = Cmds.IsEmpty() ? olxstr("sel") : Cmds.Text(' ');
   FXApp->FindCAtoms(tmp, Atoms, true);
-  if( Atoms.Count() == 0 )  return;
+  if( Atoms.IsEmpty() )  return;
+  TAsymmUnit& au = FXApp->XFile().GetAsymmUnit();
   TCAtomPList ProcessedAtoms;
   for( int i=0; i < Atoms.Count(); i++ )  {
     TCAtom* CA = Atoms[i];
     if( CA->GetEllipsoid() == NULL )  continue;
-    found = false;
-    for( int j=0; j < Lst.SplitAtomCount(); j++ )  {
-      TLstSplitAtom& SpA = Lst.SplitAtom(j);
-      if( !SpA.AtomName.Comparei(CA->Label()) )  {
-        lbl = SpA.AtomName;
-        if( lbl.Length() > 3 )  lbl.SetLength(3);
-        TCAtom& CA1 = FXApp->XFile().GetAsymmUnit().NewAtom();
-        CA1.Assign(*CA);
-        CA1.SetLoaderId(liNewAtom);
-        CA1.SetPart(1);
-        ProcessedAtoms.Add( &CA1 );
-        CA1.ccrd() = SpA.PositionA;
-        CA1.Label() = lbl+'a';
-        TCAtom& CA2 = FXApp->XFile().GetAsymmUnit().NewAtom();
-        CA2.Assign(*CA);
-        CA2.SetLoaderId(liNewAtom);
-        CA2.SetPart(2);
-        CA2.ccrd() = SpA.PositionB;
-        CA2.Label() = lbl+'b';
-        CA->SetDeleted(true);
-        ProcessedAtoms.Add( &CA2 );
-        found = true;
-      }
-    }
-    if( !found )  {
-      vec3d direction;
-      float Length = 0;
-      lbl = CA->Label();
-      if( CA->GetEllipsoid()->GetSX() > CA->GetEllipsoid()->GetSY() )  {
-        if( CA->GetEllipsoid()->GetSX() > CA->GetEllipsoid()->GetSZ() )  {
-          Length = CA->GetEllipsoid()->GetSX();
-          direction = CA->GetEllipsoid()->GetMatrix()[0];
-        }
-        else  {
-          Length = CA->GetEllipsoid()->GetSZ();
-          direction = CA->GetEllipsoid()->GetMatrix()[2];
-        }
+    vec3d direction;
+    float Length = 0;
+    lbl = CA->Label();
+    if( CA->GetEllipsoid()->GetSX() > CA->GetEllipsoid()->GetSY() )  {
+      if( CA->GetEllipsoid()->GetSX() > CA->GetEllipsoid()->GetSZ() )  {
+        Length = CA->GetEllipsoid()->GetSX();
+        direction = CA->GetEllipsoid()->GetMatrix()[0];
       }
       else  {
-        if( CA->GetEllipsoid()->GetSY() > CA->GetEllipsoid()->GetSZ() )  {
-          Length = CA->GetEllipsoid()->GetSY();
-          direction = CA->GetEllipsoid()->GetMatrix()[1];
-        }
-        else  {
-          Length = CA->GetEllipsoid()->GetSZ();
-          direction = CA->GetEllipsoid()->GetMatrix()[2];
-        }
+        Length = CA->GetEllipsoid()->GetSZ();
+        direction = CA->GetEllipsoid()->GetMatrix()[2];
       }
-      direction *= Length;
-      direction /= 2;
-      FXApp->XFile().GetAsymmUnit().CartesianToCell( direction );
-
-      TCAtom* CA1 = &FXApp->XFile().GetAsymmUnit().NewAtom();
-      CA1->Assign(*CA);
-      CA1->SetLoaderId(liNewAtom);
-      CA1->SetPart(1);
-      CA1->ccrd() += direction;
-      CA1->Label() = FXApp->XFile().GetAsymmUnit().CheckLabel(CA1, lbl+'a');
-      ProcessedAtoms.Add( CA1 );
-      CA1 = &FXApp->XFile().GetAsymmUnit().NewAtom();
-      CA1->Assign(*CA);
-      CA1->SetLoaderId(liNewAtom);
-      CA1->SetPart(2);
-      CA1->ccrd() -= direction;
-      CA1->Label() = FXApp->XFile().GetAsymmUnit().CheckLabel(CA1, lbl+'b');
-      ProcessedAtoms.Add( CA1 );
-      CA->SetDeleted(true);
     }
+    else  {
+      if( CA->GetEllipsoid()->GetSY() > CA->GetEllipsoid()->GetSZ() )  {
+        Length = CA->GetEllipsoid()->GetSY();
+        direction = CA->GetEllipsoid()->GetMatrix()[1];
+      }
+      else  {
+        Length = CA->GetEllipsoid()->GetSZ();
+        direction = CA->GetEllipsoid()->GetMatrix()[2];
+      }
+    }
+    direction *= Length;
+    direction /= 2;
+    FXApp->XFile().GetAsymmUnit().CartesianToCell( direction );
+
+    TCAtom& CA1 = FXApp->XFile().GetAsymmUnit().NewAtom();
+    CA1.Assign(*CA);
+    CA1.SetLoaderId(liNewAtom);
+    CA1.SetPart(1);
+    CA1.ccrd() += direction;
+    CA1.Label() = FXApp->XFile().GetAsymmUnit().CheckLabel(&CA1, lbl+'a');
+    ProcessedAtoms.Add( &CA1 );
+    TCAtom& CA2 = FXApp->XFile().GetAsymmUnit().NewAtom();
+    CA2.Assign(*CA);
+    CA2.SetLoaderId(liNewAtom);
+    CA2.SetPart(2);
+    CA2.ccrd() -= direction;
+    CA2.Label() = FXApp->XFile().GetAsymmUnit().CheckLabel(&CA2, lbl+'b');
+    ProcessedAtoms.Add( &CA2 );
+    TSimpleRestraint* sr = NULL;
+    if( cr.IsEmpty() );
+    else if( cr == "eadp" )
+      sr = &au.EquivalentU().AddNew();
+    else if( cr == "isor" )
+      sr = &au.RestranedUaAsUi().AddNew();
+    else if( cr == "simu" )
+      sr = &au.SimilarU().AddNew();
+    if( sr != NULL )
+      sr->AddAtomPair(CA1, NULL, CA2, NULL);
+    CA->SetDeleted(true);
   }
   for( int i=0; i < ProcessedAtoms.Count(); i++ )
     ProcessedAtoms[i]->AssignEllps(NULL);
@@ -6842,21 +6827,6 @@ public:
 };
 #endif
 void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  double test[10];
-  int ind;
-  TSPtrList<double> slst;
-  ind = slst.Add( &test[9] );
-  ind = slst.Add( &test[3] );
-  ind = slst.Add( &test[0] );
-  ind = slst.Add( &test[6] );
-  ind = slst.Add( &test[7] );
-  ind = slst.Add( &test[7] );
-  ind = slst.AddUnique( &test[5] );
-  ind = slst.AddUnique( &test[5] );
-  ind = slst.IndexOf(&test[9]);
-  ind = slst.IndexOf(&test[4]);
-  ind = slst.IndexOf(&test[7]);
-  ind = slst.IndexOf(&test[0]);
   return;
   TSymmLib& sl = *TSymmLib::GetInstance();
   smatd_list ml;

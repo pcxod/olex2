@@ -274,8 +274,20 @@ protected:
     }
     throw TInvalidArgumentException(__OlxSourceInfo, "index");
   }
+public:
+  // structre to store analysis statistics
+  struct AnalysisStat {
+    int AtomTypeChanges, ConfidentAtomTypes, SNAtomTypeAssignments;
+    bool FormulaConstrained, AtomDeltaConstrained;
+    AnalysisStat()  {  Clear();  }
+    void Clear()  {
+      AtomTypeChanges = ConfidentAtomTypes = SNAtomTypeAssignments = 0;
+      FormulaConstrained = AtomDeltaConstrained;
+    }
+  };
 private:
   TDoubleList Uisos;
+  AnalysisStat LastStat;
   olxstr LastFileName;
   int BAIDelta; // maximim element promotion
   double URatio; // ratio beyond which search for element promotion
@@ -289,15 +301,6 @@ public:
   void ProcessFolder(const olxstr& folder);
   void SaveToStream( IDataOutputStream& output ) const;
   void LoadFromStream( IDataInputStream& input );
-  // strcutre to store analysis statistics
-  struct AnalysisStat {
-    int AtomTypeChanges, ConfidentAtomTypes, SNAtomTypeAssignments;
-    bool FormulaConstrained, AtomDeltaConstrained;
-    AnalysisStat()  {
-      AtomTypeChanges = ConfidentAtomTypes = SNAtomTypeAssignments = 0;
-      FormulaConstrained = AtomDeltaConstrained;
-    }
-  };
 protected:
   void AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator, 
     double& Uiso, AnalysisStat& stat, TBAIPList* proposed_atoms = NULL);
@@ -305,7 +308,8 @@ public:
   void AnalyseStructure(const olxstr& LastFileName, TLattice& latt, 
     TAtomTypePermutator* permutator, AnalysisStat& stat, TBAIPList* proposed_atoms = NULL);
 
-  inline const TDoubleList& GetUisos()  const  {  return Uisos;  }
+  inline const TDoubleList& GetUisos()   const {  return Uisos;  }
+  const AnalysisStat& GetStats()         const {  return LastStat;  }
   inline const olxstr& GetLastFileName() const {  return LastFileName;  }
   void AnalyseNode(TSAtom& sa, TStrList& report);
   inline static TAutoDB* GetInstance()     {  return Instance;  }

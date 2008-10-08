@@ -30,16 +30,18 @@ protected:
       }
     }
   }
+  olxstr ReCon; // restraint or constraint to use for split atoms
 public:
   TSplitMode(int id) : AMode(id)  {}
   bool Init(TStrObjList &Cmds, const TParamList &Options) {
     if( !TGlXApp::GetGXApp()->CheckFileType<TIns>() )  return false;
+    ReCon = Options.FindValue("r", EmptyString).ToLowerCase();
     TGlXApp::GetMainForm()->executeMacro("cursor(hand)");
     TXAtomPList Atoms;
     TGlXApp::GetGXApp()->FindXAtoms(EmptyString, Atoms, false);
     for( int i=0; i < Atoms.Count(); i++ )  {
-      if( Atoms[i]->Atom().GetAtomInfo() != iQPeakIndex )
-        Atoms[i]->Moveable(true);
+      //if( Atoms[i]->Atom().GetAtomInfo() != iQPeakIndex )
+      Atoms[i]->Moveable(true);
     }
     return true;
   }
@@ -51,6 +53,7 @@ public:
     int Var = Ins.Vars().Count()*10+1;
     UpdateSelectionCrds();
     TGlXApp::GetGXApp()->FindXAtoms(EmptyString, Atoms, false);
+    TAsymmUnit& au = TGlXApp::GetGXApp()->XFile().GetAsymmUnit();
     for( int i=0; i < Atoms.Count(); i++ )  {
       Atoms[i]->Moveable(false);
       Atoms[i]->Roteable(false);
@@ -69,6 +72,16 @@ public:
       if( part == 0 )  part ++;
       SplitAtoms[i].A()->Atom().CAtom().SetPart( part );
       SplitAtoms[i].B()->Atom().CAtom().SetPart( part+1 );
+      TSimpleRestraint* sr = NULL;
+      if( ReCon.IsEmpty() );
+      else if( ReCon == "eadp" )
+        sr = &au.EquivalentU().AddNew();
+      else if( ReCon == "isor" )
+        sr = &au.RestranedUaAsUi().AddNew();
+      else if( ReCon == "simu" )
+        sr = &au.SimilarU().AddNew();
+      if( sr != NULL )
+        sr->AddAtomPair(SplitAtoms[i].A()->Atom().CAtom(), NULL, SplitAtoms[i].B()->Atom().CAtom(), NULL);
       //TGlXApp::GetMainForm()->executeMacro(
       //  olxstr("addins EADP ") << SplitAtoms[i].A()->Atom().GetLabel() << ' ' <<
       //  SplitAtoms[i].B()->Atom().GetLabel());
