@@ -19,6 +19,8 @@
 #include "macroerror.h"
 
 #include "paramlist.h"
+// sorted pointer list should not give any performace boost...
+//#include "sptrlist.h"
 
 BeginGlNamespace()
 
@@ -39,6 +41,7 @@ class TGlRender : public IEObject  {
   TObjectGroup *FPrimitives;  // a list of all groups of primitives
   TSStrPObjList<CString,class TGPCollection*, false> FCollections;
 //  TPtrList<class TGPCollection> FCollections; // a named list of collections (TGPCollection)
+//  TSPtrList<TGlMaterial> FTransluentObjects, FIdentityObjects, FTransluentIdentityObjects;
   TPtrList<TGlMaterial> FTransluentObjects, FIdentityObjects, FTransluentIdentityObjects;
   TPtrList<class AGDrawObject> FGObjects;
   TPtrList<class TGlGroup> FGroups;   // list of groups

@@ -778,9 +778,9 @@ void TGlRender::UnGroup(TGlGroup *OS)  {
   if( FSelection->Contains(OS) )
     FSelection->Remove(OS);
 
-  TPtrList<AGDrawObject> Objects;
+  TPtrList<AGDrawObject> Objects(OS->Count());
   for( int i=0; i < OS->Count(); i++ )
-    Objects.Add( OS->Object(i) );
+    Objects[i] = OS->Object(i);
   OS->Primitives()->RemoveObject(OS); // 
   FGObjects.Remove(OS);
   delete OS;  // it will reset Parent group to NULL in the objects

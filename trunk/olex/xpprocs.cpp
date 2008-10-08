@@ -101,7 +101,7 @@
 #include "utf8file.h"
 
 #include "msgbox.h"
-#include "strmask.h"
+#include "sptrlist.h"
 
 #ifndef __BORLANDC__
   #include "ebtree.h"
@@ -6842,6 +6842,22 @@ public:
 };
 #endif
 void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+  double test[10];
+  int ind;
+  TSPtrList<double> slst;
+  ind = slst.Add( &test[9] );
+  ind = slst.Add( &test[3] );
+  ind = slst.Add( &test[0] );
+  ind = slst.Add( &test[6] );
+  ind = slst.Add( &test[7] );
+  ind = slst.Add( &test[7] );
+  ind = slst.AddUnique( &test[5] );
+  ind = slst.AddUnique( &test[5] );
+  ind = slst.IndexOf(&test[9]);
+  ind = slst.IndexOf(&test[4]);
+  ind = slst.IndexOf(&test[7]);
+  ind = slst.IndexOf(&test[0]);
+  return;
   TSymmLib& sl = *TSymmLib::GetInstance();
   smatd_list ml;
   static const int dim = 29;
