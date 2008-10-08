@@ -444,6 +444,9 @@ public:     void CalcProbFactor(float Prob);
   void XAtomDS2XBondDS(const olxstr &Source);  // copies material properties from atoms
   void SynchroniseBonds( TXAtomPList& XAtoms );
   double CalcVolume(const TSStrPObjList<olxstr,double, true> *volumes, olxstr &report);
+
+  void ToDataItem(TDataItem& item) const;
+  void FromDataItem(TDataItem& item);
 //..............................................................................
   static TGXApp& GetInstance()  {
     TBasicApp *bai = TBasicApp::GetInstance();

@@ -7,6 +7,7 @@
 #include "evpoint.h"
 #include "typelist.h"
 #include "tptrlist.h"
+#include "dataitem.h"
 
 BeginXlibNamespace()
 
@@ -147,6 +148,9 @@ public:
   inline vec3d const& ccrd()    const {  return Center;  }
   inline vec3d& ccrdEsd()             {  return Esd;  }
   inline vec3d const& ccrdEsd() const {  return Esd;  }
+
+  void ToDataItem(TDataItem& item) const;
+  void FromDataItem(TDataItem& item);
 
   static int CompareAtomLabels(const olxstr& S, const olxstr& S1);
   static const short CrdFixedValuesOffset,

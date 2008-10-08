@@ -1044,7 +1044,7 @@ void THtml::CheckForSwitches(THtmlSwitch &Sender, bool izZip)  {
   TStrPObjList<olxstr,AHtmlObject*>& Lst = Sender.Strings();
   TStrList Toks;
   int ind;
-  olxstr Tag  = "<!-- #include ",
+  static const olxstr Tag  = "<!-- #include ",
            Tag1 = "<!-- #itemstate ",
            Tag2 = "<!-- #cmd ",
            Tag3 = "<!-- #link ",
@@ -1317,8 +1317,9 @@ bool THtml::UpdatePage()  {
       else if( EsdlInstanceOf(*wnd, TComboBox) )  {
         TComboBox* cb = (TComboBox*)wnd;
         if( cb->GetTextCtrl() != NULL )  {
-          cb->GetTextCtrl()->SetSelection(0, -1);
-          wnd = cb->GetTextCtrl();
+          cb->GetTextCtrl()->SetInsertionPoint(0);
+//          wnd = cb->GetTextCtrl();
+          wnd = cb;
         }
       }
       else if( EsdlInstanceOf(*wnd, TSpinCtrl) )  {
@@ -2174,7 +2175,8 @@ void THtml::funSetFocus(const TStrObjList &Params, TMacroError &E)  {
     ((TTextEdit*)wnd)->SetSelection(-1,-1);
   else if( EsdlInstanceOf(*wnd, TComboBox) )  {
     TComboBox* cb = (TComboBox*)wnd;
-    cb->GetTextCtrl()->SetSelection(-1, -1);
+    //cb->GetTextCtrl()->SetSelection(-1, -1);
+    cb->GetTextCtrl()->SetInsertionPoint(0);
     wnd = cb->GetTextCtrl();
   }
   wnd->SetFocus();

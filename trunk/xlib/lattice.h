@@ -134,6 +134,9 @@ public:
   inline bool operator != (const TLattice& l)  const  {  return this != &l;  }
   inline bool operator != (const TLattice* l)  const  {  return this != l;  }
 
+  void ToDataItem(TDataItem& item) const;
+  void FromDataItem(TDataItem& item);
+
 protected:
   // removes H2O and R3N from the list of potential hydrogen bond forming atoms
   void RemoveNonHBonding(class TAtomEnvi& envi);

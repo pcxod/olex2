@@ -16,6 +16,8 @@
 #include "ellipsoid.h"
 #include "samegroup.h"
 
+#include "dataitem.h"
+
 #undef GetObject
 
 BeginXlibNamespace()
@@ -317,6 +319,9 @@ public:
    to the asymmetri unit and the ins file respectevely
   */
   int GetMaxLoaderId() const;
+
+  void ToDataItem(TDataItem& item) const;
+  void FromDataItem(TDataItem& item);
 
   void LibNewAtom(const TStrObjList& Params, TMacroError& E);
   void LibGetAtomCount(const TStrObjList& Params, TMacroError& E);

@@ -20,15 +20,9 @@
 
 class TProgress: public AActionHandler  {
   inline bool IsFSSender(const IEObject* obj) const {
-//#ifdef __WIN32__
-//    if( obj != NULL && (EsdlInstanceOf(*obj, TWinHttpFileSystem) || 
-//                        EsdlInstanceOf(*obj, TWinZipFileSystem) )
-//                        ) return true;
-//#else
     if( obj != NULL && (EsdlInstanceOf(*obj, TwxHttpFileSystem) || 
                         EsdlInstanceOf(*obj, TwxZipFileSystem)  )
                         ) return true;
-//#endif
     return false;
   }
 public:
@@ -86,7 +80,7 @@ bool UpdateInstallationH( const TUrl& url, const TStrList& properties, const TFS
   }
 }
 //---------------------------------------------------------------------------
-bool UpdateInstallationZ( const olxstr& zip_name, const TStrList& properties )  {
+bool UpdateInstallationZ( const olxstr& zip_name, const TStrList& properties, const TFSItem::SkipOptions* toSkip )  {
   try  {
     TOSFileSystem DestFS; // local file system
     TwxZipFileSystem SrcFS(zip_name, false);
@@ -97,7 +91,7 @@ bool UpdateInstallationZ( const olxstr& zip_name, const TStrList& properties )  
     DestFS.SetBase( tmp );
     TFSIndex FI( SrcFS );
 
-    return FI.Synchronise(DestFS, properties);
+    return FI.Synchronise(DestFS, properties, toSkip);
   }
   catch( TExceptionBase& exc )  {
     TStrList out;
@@ -120,7 +114,33 @@ IMPLEMENT_APP_NO_MAIN(MyApp)
 int main(int argc, char** argv)  {
   MyApp app;
   wxAppConsole::SetInstance(&app);
-  DoRun( ((argc <= 1) ? olxstr(TEFile::CurrentDir())  : olxstr(argv[1])) << "/dummy.txt" );
+  if( argc == 1 )  { // no folder to update provided
+    char* olex_dir = getenv("OLEX2_DIR");
+    if( olex_dir != NULL )
+      DoRun( olxstr(olex_dir) << "/dummy.txt" );
+    else
+      DoRun( TEFile::CurrentDir() << "/dummy.txt" );
+  }
+  else  {
+    olxstr arg(argv[1]);
+#ifdef _WIN32
+    if( arg == "-help" || arg == "/help" )  {
+#else
+    if( arg == "--help" )  {
+#endif     
+      TBasicApp bapp(  TEFile::CurrentDir() << "/dummy.txt" );
+      TLog& log = bapp.GetLog();
+      log.AddStream( new TOutStream, true);
+      log << "Unirun, Olex2 update program\n";
+      log << "Compiled on " << __DATE__ << " at " << __TIME__ << '\n';
+      log << "Usage: unirun [olex2_gui_dir]\n";
+      log << "If no arguments provided, the system variable OLEX2_DIR will be checked first, if the variable is not set,\
+ current folder will be updated\n";
+      log << "(c) Oleg V. Dolomanov 2007-2008\n";
+      return 0;
+    }
+    DoRun( arg << "/dummy.txt" );
+  }
   return 0;
 }
 
@@ -139,9 +159,8 @@ void DoRun(const olxstr& basedir)  {
   olxstr Proxy, Repository = "http://dimas.dur.ac.uk/olex-distro/update",
            UpdateInterval = "Always";
   int LastUpdate = 0;
-  TStrList extensionsToSkip;
+  TStrList extensionsToSkip, filesToSkip;
   TFSItem::SkipOptions toSkip;
-  toSkip.extsToSkip = & extensionsToSkip;
   settings.LoadSettings( SettingsFile );
   if( settings.ParamExists("proxy") )
     Proxy = settings.ParamValue("proxy");
@@ -155,9 +174,16 @@ void DoRun(const olxstr& basedir)  {
     extensionsToSkip.Strtok(settings.ParamValue("exceptions", EmptyString), ';');
     TBasicApp::GetLog() << "Skipping the following extensions: " << extensionsToSkip.Text(' ') << '\n';
   }
+  if( settings.ParamExists("skip") )  {
+    filesToSkip.Strtok(settings.ParamValue("skip", EmptyString), ';');
+    TBasicApp::GetLog() << "Skipping the following files: " << extensionsToSkip.Text(' ') << '\n';
+  }
   if( TEFile::ExtractFileExt(Repository).Comparei("zip") != 0 )
     if( Repository.Length() && !Repository.EndsWith('/') )
       Repository << '/';
+
+  toSkip.extsToSkip = extensionsToSkip.IsEmpty() ? NULL : &extensionsToSkip;
+  toSkip.filesToSkip = filesToSkip.IsEmpty() ? NULL : &filesToSkip;
    
   bool Update = false;
   // evaluate properties
@@ -182,7 +208,8 @@ void DoRun(const olxstr& basedir)  {
       Repository = TBasicApp::GetInstance()->BaseDir() + Repository;
     if( TEFile::FileAge(Repository) > LastUpdate )  {
       Update = true;
-      UpdateInstallationZ( Repository, props );
+      bool skip = !(extensionsToSkip.IsEmpty() || filesToSkip.IsEmpty());
+      UpdateInstallationZ( Repository, props, skip ? NULL : &toSkip );
     }
   }
   else  {
@@ -197,8 +224,10 @@ void DoRun(const olxstr& basedir)  {
     TUrl url(Repository);
     if( !Proxy.IsEmpty() )  url.SetProxy( Proxy );
       
-    if( Update )
-      UpdateInstallationH( url, props, extensionsToSkip.IsEmpty() ? NULL : &toSkip );
+    if( Update )  {
+      bool skip = !(extensionsToSkip.IsEmpty() || filesToSkip.IsEmpty());
+      UpdateInstallationH( url, props, skip ? NULL : &toSkip );
+    }
   }
   if( Update )  { // have to save lastupdate in anyway
     settings.UpdateParam("lastupdate", TETime::EpochTime() );
