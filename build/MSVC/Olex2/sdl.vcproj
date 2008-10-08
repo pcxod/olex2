@@ -758,6 +758,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\sdl\sptrlist.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\sdl\sstrlist.h"
 				>
 			</File>
