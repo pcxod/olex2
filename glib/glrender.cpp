@@ -318,6 +318,15 @@ void TGlRender::SetView(short Res)  {
   SetView(0, 0, false, Res);
 }
 //..............................................................................
+void TGlRender::SetZoom(double V) {  
+  double MaxZ = olx_max(fabs(FMaxV.DistanceTo(FMinV)), 1);
+  double dv = V/MaxZ;
+  if( dv < 0.01 )  //  need to fix the zoom
+    FBasis->SetZoom( MaxZ*0.01);
+  else
+    FBasis->SetZoom(V); 
+}
+//..............................................................................
 void TGlRender::SetView(int x, int y, bool Select, short Res)  {
   glViewport(FLeft*Res, FTop*Res, FWidth*Res, FHeight*Res);
   glMatrixMode(GL_PROJECTION);
@@ -346,8 +355,7 @@ void TGlRender::SetView(int x, int y, bool Select, short Res)  {
 //..............................................................................
 void TGlRender::SetBasis(bool Identity)  {
   static float Bf[4][4];
-  float MaxZ, dv;
-  MaxZ = (float)olx_max(fabs(FMaxV.DistanceTo(FMinV)), 0.001);
+  float MaxZ = (float)olx_max(fabs(FMaxV.DistanceTo(FMinV)), 1);
   if( !Identity )  {
     memcpy( &Bf[0][0], GetBasis().GetMData(), 12*sizeof(float));
     Bf[3][0] = Bf[3][1] = 0;
@@ -360,8 +368,7 @@ void TGlRender::SetBasis(bool Identity)  {
   Bf[3][2] = -MaxZ;
 
   Bf[3][3] = MaxZ;
-  dv = (float)(GetBasis().GetZoom()/MaxZ);
-
+  float dv = (float)(GetBasis().GetZoom()/MaxZ);
   //glMatrixMode(GL_MODELVIEW);
   glLoadMatrixf(&Bf[0][0]);
   glScalef(dv, dv, dv);

@@ -26,7 +26,7 @@ bool TXlConGen::FixAtom( TAtomEnvi& envi, const short Group, const TBasicAtomInf
     switch( Group )  {
       case fgCH3:
         if( envi.Count() == 1 )  {
-          //TSAtom *SA = envi.GetBase()->Network()->GetLattice()->FindSAtom( envi.GetLabel(0) );
+          //TSAtom *SA = envi.GetBase()->Network()->GetLattice()->FindSAtom( envi.GetCAtom(0) );
           //envi.GetBase()->Network()->GetLattice()->GetUnitCell()->GetAtomEnviList(*SA, NEnvi);
           if( NEnvi.Count() > 2 )  // TODO: makes sense?
             afix = 137;

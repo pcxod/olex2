@@ -612,9 +612,17 @@ void TLattice::Grow(const smatd& transform)  {
   OnStructureGrow->Exit(this);
 }
 //..............................................................................
-TSAtom* TLattice::FindSAtom(const olxstr &Label) const {
+TSAtom* TLattice::FindSAtom(const olxstr& Label) const {
   for( int i =0; i < Atoms.Count(); i++ )
-    if( !Label.Comparei( Atoms[i]->GetLabel()) )  return Atoms[i];
+    if( !Label.Comparei( Atoms[i]->GetLabel()) )  
+      return Atoms[i];
+  return NULL;
+}
+//..............................................................................
+TSAtom* TLattice::FindSAtom(const TCAtom& ca) const {
+  for( int i =0; i < Atoms.Count(); i++ )
+    if( ca.GetLoaderId() == Atoms[i]->CAtom().GetLoaderId() )  
+      return Atoms[i];
   return NULL;
 }
 //..............................................................................
@@ -1355,7 +1363,7 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPL
       UnitCell->GetAtomPossibleHBonds(AE, pivoting);
       RemoveNonHBonding( pivoting );
       if( pivoting.Count() > 0 )
-        if( !_AnalyseAtomHAdd( cg, *FindSAtom(pivoting.GetLabel(0)), ProcessingAtoms) )
+        if( !_AnalyseAtomHAdd( cg, *FindSAtom(pivoting.GetCAtom(0)), ProcessingAtoms) )
           pivoting.Clear();
       cg.FixAtom( AE, fgOH2, HAI, &pivoting, generated);
     }
@@ -1370,7 +1378,7 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPL
           UnitCell->GetAtomPossibleHBonds(AE, pivoting);
           RemoveNonHBonding( pivoting );
           if( pivoting.Count() > 0 )
-            if( !_AnalyseAtomHAdd( cg, *FindSAtom(pivoting.GetLabel(0)), ProcessingAtoms) )
+            if( !_AnalyseAtomHAdd( cg, *FindSAtom(pivoting.GetCAtom(0)), ProcessingAtoms) )
               pivoting.Clear();
           cg.FixAtom( AE, fgOH1, HAI, &pivoting, generated);
         }
@@ -1387,7 +1395,7 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPL
             UnitCell->GetAtomPossibleHBonds(AE, pivoting);
             RemoveNonHBonding( pivoting );
             if( pivoting.Count() > 0 )
-              if( !_AnalyseAtomHAdd( cg, *FindSAtom(pivoting.GetLabel(0)), ProcessingAtoms) )
+              if( !_AnalyseAtomHAdd( cg, *FindSAtom(pivoting.GetCAtom(0)), ProcessingAtoms) )
                 pivoting.Clear();
             cg.FixAtom( AE, fgOH1, HAI, &pivoting, generated);
           }
@@ -1399,7 +1407,7 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPL
             UnitCell->GetAtomPossibleHBonds(AE, pivoting);
             RemoveNonHBonding( pivoting );
             if( pivoting.Count() > 0 )
-              if( !_AnalyseAtomHAdd( cg, *FindSAtom(pivoting.GetLabel(0)), ProcessingAtoms) )
+              if( !_AnalyseAtomHAdd( cg, *FindSAtom(pivoting.GetCAtom(0)), ProcessingAtoms) )
                 pivoting.Clear();
             cg.FixAtom( AE, fgOH1, HAI, &pivoting, generated);
           }
@@ -1411,7 +1419,7 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPL
             UnitCell->GetAtomPossibleHBonds(AE, pivoting);
             RemoveNonHBonding( pivoting );
             if( pivoting.Count() > 0 )
-              if( !_AnalyseAtomHAdd( cg, *FindSAtom(pivoting.GetLabel(0)), ProcessingAtoms) )
+              if( !_AnalyseAtomHAdd( cg, *FindSAtom(pivoting.GetCAtom(0)), ProcessingAtoms) )
                 pivoting.Clear();
             cg.FixAtom( AE, fgOH1, HAI, &pivoting, generated);
           }
