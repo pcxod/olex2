@@ -120,7 +120,7 @@ public:
   inline void RotateY( double V)             {  FBasis->RotateY(V); }
   inline void RotateZ( double V)             {  FBasis->RotateZ(V); }
   inline double GetZoom()              const {  return FBasis->GetZoom(); }
-  inline void  SetZoom(double V)             {  FBasis->SetZoom(V); }
+  void  SetZoom(double V);
   inline void ResetBasis()                   {  FBasis->Reset(); }
   
   TGlLightModel LightModel;
@@ -155,7 +155,7 @@ public:
   void Initialise();
   void InitLights();
   inline double CalcZoom() const { 
-    return CalculatedZoom < 0 ? (CalculatedZoom=olx_max(FMaxV.DistanceTo(FMinV), 0.001)) : CalculatedZoom;
+    return CalculatedZoom < 0 ? (CalculatedZoom=olx_max(FMaxV.DistanceTo(FMinV), 1.0)) : CalculatedZoom;
   }
   inline double GetScale() const {  // to be used to calculate raster positions (x,y)
     double df = CalcZoom();

@@ -99,6 +99,7 @@ public:
   inline int AtomCount()                    const {  return Atoms.Count();  }
   inline TSAtom& GetAtom(int i)             const {  return *Atoms[i];  }
   TSAtom* FindSAtom(const olxstr &Label) const;
+  TSAtom* FindSAtom(const TCAtom& ca) const;
 
   inline int BondCount()                    const {  return Bonds.Count();  }
   inline TSBond& GetBond(int i)             const {  return *Bonds[i]; }

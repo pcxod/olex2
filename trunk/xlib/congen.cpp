@@ -62,7 +62,7 @@ void AConstraintGenerator::GenerateAtom( TCAtomPList& created, TAtomEnvi& envi,
   switch( Group )  {
     case fgCH3:
       if( envi.Count() == 1 )  {
-        NA = envi.GetBase().GetNetwork().GetLattice().FindSAtom( envi.GetLabel(0) );
+        NA = envi.GetBase().GetNetwork().GetLattice().FindSAtom( envi.GetCAtom(0) );
         envi.GetBase().GetNetwork().GetLattice().GetUnitCell().GetAtomEnviList(*NA, NEnvi);
         NEnvi.Exclude( envi.GetBase().CAtom() );
         // best approximation, though not really required ...
@@ -120,7 +120,7 @@ void AConstraintGenerator::GenerateAtom( TCAtomPList& created, TAtomEnvi& envi,
         crds[1] = (M*crds[1])*-0.97 + envi.GetBase().crd();
       }
       else if( envi.Count() == 1 )  {
-        NA = envi.GetBase().GetNetwork().GetLattice().FindSAtom( envi.GetLabel(0) );
+        NA = envi.GetBase().GetNetwork().GetLattice().FindSAtom( envi.GetCAtom(0) );
         envi.GetBase().GetNetwork().GetLattice().GetUnitCell().GetAtomEnviList(*NA, NEnvi);
         if( NEnvi.Count() >= 2 )  {  // have to create in plane
           NEnvi.Exclude( envi.GetBase().CAtom() );
@@ -238,7 +238,7 @@ void AConstraintGenerator::GenerateAtom( TCAtomPList& created, TAtomEnvi& envi,
         else  {
           // Ar-B(OH)2 ?
           if( envi.GetBAI(0).GetIndex() == iBoronIndex )  {
-            NA = envi.GetBase().GetNetwork().GetLattice().FindSAtom( envi.GetLabel(0) );
+            NA = envi.GetBase().GetNetwork().GetLattice().FindSAtom( envi.GetCAtom(0) );
             envi.GetBase().GetNetwork().GetLattice().GetUnitCell().GetAtomEnviList(*NA, NEnvi);
             NEnvi.Exclude( envi.GetBase().CAtom() );
             if( NEnvi.Count() == 2 )  { // ArC-BO

@@ -72,7 +72,7 @@ public:
   inline void SetCommandIndex( int i) {  FCmdPos = i;  }
 
   bool Orient(TGlPrimitive *P);
-  bool GetDimensions(vec3d &Max, vec3d &Min){  return false;};
+  bool GetDimensions(vec3d &Max, vec3d &Min);
   bool ProcessKey( int Key, short ShiftState );
   bool WillProcessKey( int Key, short ShiftState );
 
