@@ -24,7 +24,7 @@ public:
   static time_t EncodeDateTimeSec( short Year, short Month, short Day,
                                  short Hour, short Min,  short Sec );
   // decodes given datetime to components
-  static void DecodeDateTimeSec( long datetime, short& Year, short& Month, short& Day,
+  static void DecodeDateTimeSec( time_t datetime, short& Year, short& Month, short& Day,
                                             short& Hour, short& Min, short& Sec);
 
   static inline time_t StartTime()  {  return TimeStart;  }
@@ -40,7 +40,10 @@ public:
 
   static olxstr FormatDateTime( time_t v );
   static olxstr FormatDateTime( const olxstr& format, time_t v );
-
+  // splits a string of this kind: "Oct 2 2008"
+  static time_t ParseDate(const olxstr& date);
+  // splits a string of this kind: "19:16:57"
+  static time_t ParseTime(const olxstr& time);
   inline static bool IsLeapYear( int year )  {
     return !(year%4) && ((year%100) || !(year%400));
   }

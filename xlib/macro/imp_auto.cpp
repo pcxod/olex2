@@ -329,7 +329,7 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options, TMacroEr
       }
     }
     else  if( assignTypes )  {  // treat O an Cl
-      if( latt.GetFragment(i).NodeCount() == 1 )  {
+      if( latt.GetFragment(i).NodeCount() == 1 && !latt.GetFragment(i).Node(0).IsDeleted() )  {
         TSAtom& sa = latt.GetFragment(i).Node(0);
         bool alone = true;
         for( int j=0; j < sa.CAtom().AttachedAtomCount(); j++ )

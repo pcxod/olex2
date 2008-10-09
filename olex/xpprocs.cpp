@@ -6399,7 +6399,19 @@ void TMainForm::funGetUserInput(const TStrObjList& Params, TMacroError &E) {
 }
 //..............................................................................
 void TMainForm::funGetCompilationInfo(const TStrObjList& Params, TMacroError &E) {
-  E.SetRetVal( olxstr(__DATE__) << ' ' << __TIME__ );
+  if( Params.IsEmpty() )
+    E.SetRetVal( olxstr(__DATE__) << ' ' << __TIME__ );
+  else  {
+    time_t date, time;
+    try {  
+      date = TETime::ParseDate( __DATE__ );
+      time = TETime::ParseTime( __TIME__ );
+      E.SetRetVal<olxstr>( TETime::FormatDateTime(Params[0], date+time) );
+    }
+    catch( TExceptionBase& ) {
+      E.SetRetVal( olxstr(__DATE__) << ' ' << __TIME__ );
+    }
+  }
 }
 //..............................................................................
 void TMainForm::macDelOFile(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
