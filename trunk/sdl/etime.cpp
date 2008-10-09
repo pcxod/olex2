@@ -10,6 +10,7 @@
 #include "etime.h"
 //#include "estring.h"
 #include "library.h"
+#include "estrlist.h"
 
 #ifdef __WIN32__
   #include <windows.h>
@@ -31,7 +32,7 @@ unsigned char DaysInMonth[2][12] =
 static const char* WeekDaysLong[] = {"Sunday", "Monday", "Tuesday", "Wednesday",
                                   "Thursday", "Friday", "Saturday"};
 
-static const char* MonthsLong[] = {"January", "February", "Match", "April",
+static const char* MonthsLong[] = {"January", "February", "March", "April",
                                 "May", "June", "July", "August",
                                 "September", "October", "November", "December"};
 
@@ -168,7 +169,7 @@ olxstr TETime::FormatDateTime( time_t v )  {
   return bf;
 }
 //..............................................................................
-void TETime::DecodeDateTimeSec(  long datetime,
+void TETime::DecodeDateTimeSec(  time_t datetime,
                                  short& Year, short& Month, short& Day,
                                  short& Hour, short& Min, short& Sec  )
 {
@@ -193,17 +194,55 @@ time_t TETime::EncodeDateTimeSec( short Year, short Month, short Day,
   t.tm_mday = Day;
   t.tm_mon = Month - 1;
   t.tm_year = Year - 1900;
+  t.tm_isdst = 1;
   return mktime( &t );
 }
 //..............................................................................
 time_t TETime::EpochTime()  {
-  return (long)time(NULL);
+  return (time_t)time(NULL);
+}
+//..............................................................................
+time_t TETime::ParseDate(const olxstr& date)  {
+  TStrList toks(date, ' ');
+  if( toks.Count() != 3 )
+    throw TInvalidArgumentException(__OlxSourceInfo, "three tokens expected for date");
+  int month = -1, day = -1, year = -1;
+  if( toks[0].Length() == 3 )  {
+    for( int i=0; i < 12; i++ )  {
+      if( MonthsLong[i][0] == toks[0].CharAt(0) && 
+          MonthsLong[i][1] == toks[0].CharAt(1) &&
+          MonthsLong[i][2] == toks[0].CharAt(2) )  {
+        month = i;
+        break;
+      }
+    }
+    if( month == -1 )  
+      throw TInvalidArgumentException(__OlxSourceInfo, "invalid short month name");
+  }
+  else
+    throw TInvalidArgumentException(__OlxSourceInfo, "not supported form mont names longer than 3 chars");
+  if( toks[1].Length() == 2 || toks[1].Length() == 1 )
+    day = toks[1].ToInt();
+  else
+    throw TInvalidArgumentException(__OlxSourceInfo, "day is expected in a 1 or two digit form");
+  if( toks[2].Length() == 4 )
+    year = toks[2].ToInt();
+  else
+    throw TInvalidArgumentException(__OlxSourceInfo, "year is expected in a 4 digit form");
+  return EncodeDateTimeSec(year, month+1, day, 0, 0, 0);
+}
+//..............................................................................
+time_t TETime::ParseTime(const olxstr& time)  {
+  TStrList toks(time, ':');
+  if( toks.Count() != 3 )
+    throw TInvalidArgumentException(__OlxSourceInfo, "three column separated tokens expected for time");
+  return toks[0].ToInt()*3600 + toks[1].ToInt()*60 + toks[2].ToInt();
 }
 //..............................................................................
 
 void FormatDateTime(const TStrObjList& Params, TMacroError& E)  {
   if( Params.Count() == 1 )
-    E.SetRetVal( TETime::FormatDateTime(Params[0].RadInt<time_t>()) );
+    E.SetRetVal( TETime::FormatDateTime("ddd MMM dd hh:mm:ss yyyy", Params[0].RadInt<time_t>()) );
   else
     E.SetRetVal( TETime::FormatDateTime(Params[1], Params[0].RadInt<time_t>()) );
 }

@@ -842,7 +842,7 @@ separated values of Atom Type and radius, an entry a line" );
   // number of lines, caption, def value
   this_InitFunc(GetUserInput, fpThree);
 
-  this_InitFunc(GetCompilationInfo, fpNone);
+  this_InitFunc(GetCompilationInfo, fpNone|fpOne);
 
   this_InitFuncD(TranslatePhrase, fpOne,
 "Translates provided phrase into current language");

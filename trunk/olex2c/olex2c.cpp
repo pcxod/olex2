@@ -211,7 +211,7 @@ public:
     this_InitFuncD(IsVar, fpOne, "" );
     this_InitFuncD(DataDir, fpNone, "" );
     this_InitFuncD(StrDir, fpNone, "" );
-    this_InitFuncD(GetCompilationInfo, fpNone, "" );
+    this_InitFuncD(GetCompilationInfo, fpNone|fpOne, "" );
     this_InitFuncD(IsPluginInstalled, fpOne, "" );
     this_InitFuncD(CurrentLanguageEncoding, fpNone, "" );
     this_InitFuncD(StrCmp, fpTwo, "" );
@@ -853,7 +853,19 @@ public:
   }
   //..............................................................................
   void funGetCompilationInfo(const TStrObjList& Params, TMacroError &E)  {
-    E.SetRetVal( olxstr(__DATE__) << ' ' << __TIME__ );
+    if( Params.IsEmpty() )
+      E.SetRetVal( olxstr(__DATE__) << ' ' << __TIME__ );
+    else  {
+      time_t date, time;
+      try {  
+        date = TETime::ParseDate( __DATE__ );
+        time = TETime::ParseTime( __TIME__ );
+        E.SetRetVal<olxstr>( TETime::FormatDateTime(Params[0], date+time) );
+      }
+      catch( TExceptionBase& ) {
+        E.SetRetVal( olxstr(__DATE__) << ' ' << __TIME__ );
+      }
+    }
   }
   //..............................................................................
   void funUnsetVar(const TStrObjList& Params, TMacroError &E)  {
