@@ -162,8 +162,18 @@ public:
   }
 
   // J App Cryst 2002, 35, 477-480
-  void UcifToUcart(evecd& v);
-  void UcartToUcif(evecd& v);
+  template <class T> void UcifToUcart(T& v)  {
+    mat3d M(v[0], v[5], v[4], v[1], v[3], v[2]);
+    M = UcifToUxyz*M*UcifToUxyzT;
+    v[0] = M[0][0];  v[1] = M[1][1];  v[2] = M[2][2];
+    v[3] = M[1][2];  v[4] = M[0][2];  v[5] = M[0][1];
+  }
+  template <class T> void UcartToUcif(T& v)  {
+    mat3d M(v[0], v[5], v[4], v[1], v[3], v[2]);
+    M = UxyzToUcif*M*UxyzToUcifT;
+    v[0] = M[0][0];  v[1] = M[1][1];  v[2] = M[2][2];
+    v[3] = M[1][2];  v[4] = M[0][2];  v[5] = M[0][1];
+  }
 
   void Assign( const TAsymmUnit& C);
   void ChangeSpaceGroup(const class TSpaceGroup& sg);
@@ -239,12 +249,11 @@ public:
     for( int i=0; i < Ellipsoids.Count(); i++ )
       delete Ellipsoids[i];
     for( int i=0; i < CAtoms.Count(); i++ )
-      CAtoms[i]->AssignEllps(NULL);
+      CAtoms[i]->AssignEllp(NULL);
     Ellipsoids.Clear();
   }
   void PackEllps();
   // Q - six values representing quadratic form of a thermal ellipsoid
-  TEllipsoid& NewEllp(const evecd& Q);
   TEllipsoid& NewEllp();  // initialisation performed manually !
 
   vec3d GetOCenter(bool IncludeQ, bool IncludeH) const;

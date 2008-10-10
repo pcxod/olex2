@@ -3874,7 +3874,7 @@ void TMainForm::macSplit(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     CA->SetDeleted(true);
   }
   for( int i=0; i < ProcessedAtoms.Count(); i++ )
-    ProcessedAtoms[i]->AssignEllps(NULL);
+    ProcessedAtoms[i]->AssignEllp(NULL);
   FXApp->XFile().EndUpdate();
   // copy new atoms to the XF AU
   FXApp->XFile().UpdateAsymmUnit();

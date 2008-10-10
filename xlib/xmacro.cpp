@@ -1958,7 +1958,7 @@ void XLibMacros::macChangeSG(TStrObjList &Cmds, const TParamList &Options, TMacr
       ca->SetTag( ca->GetTag() + 1 );
     }
     ca->ccrd() = list[i].GetA();
-    ca->AssignEllps(NULL);
+    ca->AssignEllp(NULL);
   }
   for( int i=0; i < au.AtomCount(); i++ )  {
     if( au.GetAtom(i).GetTag() == 0 )
