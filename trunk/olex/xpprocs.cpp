@@ -6082,6 +6082,7 @@ void TMainForm::macUpdateFile(TStrObjList &Cmds, const TParamList &Options, TMac
   if( settings.ParamExists("repository") )   Repository = settings.ParamValue("repository");
   if( settings.ParamValue("update").Comparei("never") )  {
     TBasicApp::GetLog() << (olxstr("User settings prevented updating file: ") << Cmds[0]);
+    return;
   }
   if( !Repository.IsEmpty() && !Repository.EndsWith('/') )  Repository << '/';
 
