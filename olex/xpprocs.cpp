@@ -6080,7 +6080,7 @@ void TMainForm::macUpdateFile(TStrObjList &Cmds, const TParamList &Options, TMac
   settings.LoadSettings( SettingsFile );
   if( settings.ParamExists("proxy") )        Proxy = settings.ParamValue("proxy");
   if( settings.ParamExists("repository") )   Repository = settings.ParamValue("repository");
-  if( settings.ParamValue("update").Comparei("never") )  {
+  if( settings.ParamValue("update").Comparei("never") == 0 )  {
     TBasicApp::GetLog() << (olxstr("User settings prevented updating file: ") << Cmds[0]);
     return;
   }
