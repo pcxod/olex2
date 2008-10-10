@@ -1377,7 +1377,7 @@ void TMainForm::OnGenerate(wxCommandEvent& WXUNUSED(event))
 }
 //..............................................................................
 void TMainForm::OnAbout(wxCommandEvent& WXUNUSED(event))  {
-  wxMessageBox( wxT("OLEX 2\n(c) Oleg V. Dolomanov, Horst Puschmann, 2004-2008\nUniversity of Durham"),
+  wxMessageBox( wxT("OLEX 2\n(c) Oleg V. Dolomanov, Horst Puschmann and Richard J. Gildea, 2004-2008\nDurham University"),
     wxT("About"), wxOK | wxICON_INFORMATION, this);
 }
 //..............................................................................

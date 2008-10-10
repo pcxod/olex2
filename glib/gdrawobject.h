@@ -78,9 +78,11 @@ public:
   inline bool Deleted()  const  {return (Flags & sgdoDeleted) == sgdoDeleted; }
   virtual void Deleted(bool On){ SetBit(On, Flags, sgdoDeleted); }
 
+  short MaskFlags(short mask) const {  return (Flags&mask);  }
+
   virtual inline TGlGroup *ParentGroup() const {  return FParentGroup; }
   virtual void ParentGroup(TGlGroup *P);
-
+  
   virtual void ListDrawingStyles(TStrList &List){  return; }
 
   virtual void UpdaterimitiveParams(TGlPrimitive *GlP){  return; }

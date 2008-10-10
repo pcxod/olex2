@@ -459,6 +459,7 @@ void TGlRender::Draw()  {
 //..............................................................................
 void TGlRender::DrawObjects( bool SelectPrimitives, bool SelectObjects)  {
   bool Select = SelectPrimitives || SelectObjects, Pers=false;
+  const int DrawMask = sgdoVisible|sgdoSelected|sgdoDeleted|sgdoGrouped;
   if( FIdentityObjects.Count() != 0 )  {
     if( FPerspective )  {
       FPerspective = false;
@@ -466,19 +467,18 @@ void TGlRender::DrawObjects( bool SelectPrimitives, bool SelectObjects)  {
       Pers = true;
     }
     SetBasis(true);
-
-    for( int i=0; i < FIdentityObjects.Count(); i++ )  {
+    const int id_obj_count = FIdentityObjects.Count();
+    for( int i=0; i < id_obj_count; i++ )  {
       TGlMaterial* GlM = FIdentityObjects[i];
       if( !Select )    GlM->Init();
-      for( int j=0; j < GlM->ObjectCount(); j++ )  {
+      const int obj_count = GlM->ObjectCount();
+      for( int j=0; j < obj_count; j++ )  {
         TGlPrimitive* GlP = (TGlPrimitive*)GlM->Object(j);
         TGPCollection* GPC = GlP->ParentCollection();
-        for( int k=0; k < GPC->ObjectCount(); k++ )  {
+        const int c_obj_count = GPC->ObjectCount();
+        for( int k=0; k < c_obj_count; k++ )  {
           AGDrawObject* GDO = GPC->Object(k);
-          if( !GDO->Visible() )  continue;
-          if( GDO->Deleted() )  continue;
-          if( GDO->Selected() ) continue;
-          if( GDO->Grouped() ) continue;
+          if( GDO->MaskFlags(DrawMask) != sgdoVisible )  continue;
           if( SelectObjects )     glLoadName(GDO->GetTag());
           if( SelectPrimitives )  glLoadName(GlP->GetTag());
           glPushMatrix();
@@ -500,21 +500,21 @@ void TGlRender::DrawObjects( bool SelectPrimitives, bool SelectObjects)  {
     glCallList( CompiledListId );
   }
   else  {
-    for( int i=0; i < FPrimitives->PropCount(); i++ )  {
+    const int prim_count = FPrimitives->PropCount();
+    for( int i=0; i < prim_count; i++ )  {
       TGlMaterial* GlM = (TGlMaterial*)FPrimitives->Properties(i);
       if( GlM->GetIdentityDraw() ) continue;  // already drawn
       if( GlM->GetTransparent() ) continue;  // will be drawn
       if( !Select )    GlM->Init();
-      for( int j=0; j < GlM->ObjectCount(); j++ )  {
+      const int obj_count = GlM->ObjectCount();
+      for( int j=0; j < obj_count; j++ )  {
         TGlPrimitive* GlP = (TGlPrimitive*)GlM->Object(j);
         TGPCollection* GPC = GlP->ParentCollection();
         if( GPC == NULL )  continue;
-        for( int k=0; k < GPC->ObjectCount(); k++ )  {
+        const int c_obj_count = GPC->ObjectCount();
+        for( int k=0; k < c_obj_count; k++ )  {
           AGDrawObject* GDO = GPC->Object(k);
-          if( !GDO->Visible() )  continue;
-          if( GDO->Deleted() )  continue;
-          if( GDO->Selected() ) continue;
-          if( GDO->Grouped() ) continue;
+          if( GDO->MaskFlags(DrawMask) != sgdoVisible )  continue;
           if( SelectObjects )     glLoadName(GDO->GetTag());
           if( SelectPrimitives )  glLoadName(GlP->GetTag());
           glPushMatrix();
@@ -526,18 +526,18 @@ void TGlRender::DrawObjects( bool SelectPrimitives, bool SelectObjects)  {
       }
     }
   }
-  for( int i=0; i < FTransluentObjects.Count(); i++ )  {
+  const int trans_obj_count = FTransluentObjects.Count();
+  for( int i=0; i < trans_obj_count; i++ )  {
     TGlMaterial* GlM = FTransluentObjects[i];
     if( !Select )    GlM->Init();
-    for( int j=0; j < GlM->ObjectCount(); j++ )  {
+    const int obj_count = GlM->ObjectCount();
+    for( int j=0; j < obj_count; j++ )  {
       TGlPrimitive* GlP = (TGlPrimitive*)GlM->Object(j);
       TGPCollection* GPC = GlP->ParentCollection();
-      for( int k=0; k < GPC->ObjectCount(); k++ )  {
+      const int c_obj_count = GPC->ObjectCount();
+      for( int k=0; k < c_obj_count; k++ )  {
         AGDrawObject* GDO = GPC->Object(k);
-        if( !GDO->Visible() )  continue;
-        if( GDO->Deleted() )  continue;
-        if( GDO->Selected() ) continue;
-        if( GDO->Grouped() ) continue;
+        if( GDO->MaskFlags(DrawMask) != sgdoVisible )  continue;
         if( SelectObjects )     glLoadName(GDO->GetTag());
         if( SelectPrimitives )  glLoadName(GlP->GetTag());
         glPushMatrix();
@@ -548,31 +548,32 @@ void TGlRender::DrawObjects( bool SelectPrimitives, bool SelectObjects)  {
       }
     }
   }
-  for( int i=0; i < GroupCount(); i++ )
-    Group(i)->Draw(SelectPrimitives, SelectObjects);
+  const int group_count = FGroups.Count();
+  for( int i=0; i < group_count; i++ )
+    FGroups[i]->Draw(SelectPrimitives, SelectObjects);
 
   glPushAttrib(GL_ALL_ATTRIB_BITS);
   FSelection->Draw(SelectPrimitives, SelectObjects);
   glPopAttrib();
-  if( FTransluentIdentityObjects.Count() != 0 )  {
+  if( !FTransluentIdentityObjects.IsEmpty() )  {
     if( FPerspective )  {
       FPerspective = false;
       SetView();
       Pers = true;
     }
     SetBasis(true);
-    for( int i=0; i < FTransluentIdentityObjects.Count(); i++ )  {
+    const int trans_id_obj_count = FTransluentIdentityObjects.Count();
+    for( int i=0; i < trans_id_obj_count; i++ )  {
       TGlMaterial* GlM = FTransluentIdentityObjects[i];
       if( !Select )    GlM->Init();
-      for( int j=0; j < GlM->ObjectCount(); j++ )  {
+      const int obj_count = GlM->ObjectCount(); 
+      for( int j=0; j < obj_count; j++ )  {
         TGlPrimitive* GlP = (TGlPrimitive*)GlM->Object(j);
         TGPCollection* GPC = GlP->ParentCollection();
-        for( int k=0; k < GPC->ObjectCount(); k++ )  {
+        const int c_obj_count = GPC->ObjectCount();
+        for( int k=0; k < c_obj_count; k++ )  {
           AGDrawObject* GDO = GPC->Object(k);
-          if( !GDO->Visible() )  continue;
-          if( GDO->Deleted() )  continue;
-          if( GDO->Selected() ) continue;
-          if( GDO->Grouped() ) continue;
+          if( GDO->MaskFlags(DrawMask) != sgdoVisible )  continue;
           if( SelectObjects )     glLoadName(GDO->GetTag());
           if( SelectPrimitives )  glLoadName(GlP->GetTag());
           glPushMatrix();
@@ -628,39 +629,33 @@ AGDrawObject* TGlRender::SelectObject(int x, int y, int depth)  {
   return Result;
 }
 //..............................................................................
-TGlPrimitive* TGlRender::SelectPrimitive(int x, int y)
-{
-  if( !FWidth || !FHeight )  return NULL;
+TGlPrimitive* TGlRender::SelectPrimitive(int x, int y)  {
+  if( (FWidth&FHeight) == 0 )  // test for 0
+    return NULL;
 
   TGlPrimitive *Result = NULL;
   GLuint *selectBuf = new GLuint [MAXSELECT];
-  int i, hits;
+  int hits;
+  const int prim_count = FPrimitives->ObjectCount();
+  for( int i=0; i < prim_count; i++ )
+    FPrimitives->Object(i)->SetTag( i+1 );
 
-  for( i=0; i < PrimitiveCount(); i++ )
-  {
-    Primitive(i)->SetTag( i+1 );
-  }
   Scene()->StartSelect(x, y, selectBuf);
   DrawObjects(true, false);
   Scene()->EndSelect();
 
   hits = glRenderMode(GL_RENDER);
-  if (hits >= 1)
-  {
-    if( hits == 1 )
-    {
+  if( hits >= 1 )  {
+    if( hits == 1 )  {
       int in = selectBuf[(hits-1)*4+3];
       if( in >=1 && in <= (PrimitiveCount()+1) )
         Result = Primitive(in-1);
     }
-    else
-    {
+    else  {
       unsigned int maxz = ~0;
       int in=0;
-      for( int i=0; i < hits; i++ )
-      {
-        if( selectBuf[i*4+1] < maxz )
-        {
+      for( int i=0; i < hits; i++ )  {
+        if( selectBuf[i*4+1] < maxz )  {
           in = i;
           maxz = selectBuf[i*4+1];
         }
