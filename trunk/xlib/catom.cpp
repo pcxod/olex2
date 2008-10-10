@@ -28,6 +28,7 @@ TCAtom::TCAtom(TAsymmUnit *Parent)  {
   FParent = Parent;
   EllpId = -1;
   Uiso = caDefIso;
+  UisoEsd = 0;
   LoaderId = -1;
   FragmentId = -1;
   CanBeGrown = Deleted = false;
@@ -119,12 +120,12 @@ void TCAtom::Assign(const TCAtom& S)  {
   LoaderId = S.GetLoaderId();
   Id = S.GetId();
   FragmentId = S.GetFragmentId();
-  FEllpsE  = S.FEllpsE;
   Center = S.Center;
   Esd = S.Esd;
   SetDeleted( S.IsDeleted() );
   SetCanBeGrown( S.GetCanBeGrown() );
   Degeneracy = S.GetDegeneracy();
+  UisoEsd = S.GetUisoEsd();
 
   /*
   if( FAttachedAtoms )  FAttachedAtomS.Clear();
@@ -161,32 +162,30 @@ TAtomsInfo* TCAtom::AtomsInfo() const {  return FParent->GetAtomsInfo(); }
 //..............................................................................
 TEllipsoid* TCAtom::GetEllipsoid() const {  return EllpId == -1 ? NULL : &FParent->GetEllp(EllpId);  }
 //..............................................................................
-void TCAtom::AssignEllps(TEllipsoid* NV) {  NV == NULL ? EllpId = -1 : EllpId = NV->GetId();  }
-//..............................................................................
-void TCAtom::UpdateEllp( const evecd& Quad)  {
-  if( EllpId == -1 )
-    EllpId = FParent->NewEllp(Quad).GetId();
-  else
-    FParent->GetEllp(EllpId).Initialise(Quad);
-}
+void TCAtom::AssignEllp(TEllipsoid* NV) {  NV == NULL ? EllpId = -1 : EllpId = NV->GetId();  }
 //..............................................................................
 void TCAtom::UpdateEllp(const TEllipsoid &NV ) {
-  evecd Q(6);
-  NV.GetQuad(Q);
-  if( EllpId == -1 )
-    EllpId = FParent->NewEllp(Q).GetId();
+  double Q[6], E[6];
+  NV.GetQuad(Q, E);
+  if( EllpId == -1 )  {
+    TEllipsoid& elp = FParent->NewEllp();
+    elp.Initialise(Q, E);
+    EllpId = elp.GetId();
+  }
   else
     FParent->GetEllp(EllpId).Initialise(Q);
 }
 //..............................................................................
 void TCAtom::ToDataItem(TDataItem& item) const  {
-  throw TNotImplementedException(__OlxSourceInfo);
-//  item.AddField("type", FAtomInfo->GetSymbol() );
-//  item.AddField("ccrd", olxstr(ccrd[0]) << ',' << ccrd[1] << ',' << ccrd[2] );
+  item.AddField("type", FAtomInfo->GetSymbol() );
+  item.AddField("ccrd", olxstr(Center[0]) << ',' << Center[1] << ',' << Center[2] );
 }
 //..............................................................................
 void TCAtom::FromDataItem(TDataItem& item)  {
-  throw TNotImplementedException(__OlxSourceInfo);
+  FAtomInfo = TAtomsInfo::GetInstance()->FindAtomInfoBySymbol( item.GetFieldValue("type") );
+  if( FAtomInfo == NULL )
+    throw TFunctionFailedException(__OlxSourceInfo, "invalid atom type");
+
 }
 //..............................................................................
 void DigitStrtok(const olxstr &str, TStrPObjList<olxstr,bool> &chars)  {

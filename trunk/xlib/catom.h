@@ -31,10 +31,9 @@ private:
   int     LoaderId; // id of the atom in the asymmertic unit of the loader
   int     ResiId, SameId, EllpId;   // residue and SADI ID
   double  Occp;     // occupancy and its variable
-  double  Uiso, QPeak;    // isotropic thermal parameter; use it when Ellipsoid = NULL
+  double  Uiso, QPeak, UisoEsd;    // isotropic thermal parameter; use it when Ellipsoid = NULL
   int     FragmentId;   // this is used in asymmetric unit sort and initialised in TLatice::InitBody()
   vec3d Center, Esd;  // fractional coordinates and esds
-  evecd FEllpsE;   // errors for the values six values from INS file
   evecd FFixedValues;  // at least five values (x,y,z, Occ, Uiso), may be 10, (x,y,z, Occ, Uij)
   short Part, Degeneracy;
   bool Deleted, 
@@ -122,6 +121,7 @@ public:
   }
   DefPropP(double, Occp)
   DefPropP(double, Uiso)
+  DefPropP(double, UisoEsd)
   DefPropP(double, QPeak)
   DefPropB(Deleted)
   DefPropB(HAttached)
@@ -139,11 +139,9 @@ public:
 
 
   TEllipsoid* GetEllipsoid() const;
-  void UpdateEllp( const evecd& Quad);
   void UpdateEllp( const TEllipsoid& NV);
-  void AssignEllps(TEllipsoid *NV);
+  void AssignEllp(TEllipsoid *NV);
 
-  inline evecd& EllpE()               {  return FEllpsE;  }
   inline vec3d& ccrd()                {  return Center;  }
   inline vec3d const& ccrd()    const {  return Center;  }
   inline vec3d& ccrdEsd()             {  return Esd;  }

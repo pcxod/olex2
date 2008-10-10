@@ -737,7 +737,7 @@ void TCif::Initialize()  {
   olxstr Param;
   TCifLoop *ALoop, *Loop;
   TCAtom *A;
-  evecd QE(6); // quadratic form of ellipsoid
+  double Q[6], E[6]; // quadratic form of ellipsoid
   TEValueD EValue;
   GetAsymmUnit().Axes()[0] = GetSParam("_cell_length_a");
   GetAsymmUnit().Axes()[1] = GetSParam("_cell_length_b");
@@ -793,9 +793,9 @@ void TCif::Initialize()  {
   for( int i=0; i < ALoop->Table().RowCount(); i++ )  {
     A = &GetAsymmUnit().NewAtom();
     A->SetLoaderId(GetAsymmUnit().AtomCount()-1);
-    A->SetLabel( ALoop->Table()[i].String(ALabel) );
-    A->AtomInfo( AtomsInfo->FindAtomInfoBySymbol(ALoop->Table()[i].String(ASymbol)) );
-    EValue = ALoop->Table()[i].String(ACx);
+    A->SetLabel( ALoop->Table()[i][ALabel] );
+    A->AtomInfo( AtomsInfo->FindAtomInfoBySymbol(ALoop->Table()[i][ASymbol]) );
+    EValue = ALoop->Table()[i][ACx];
     A->ccrd()[0] = EValue.GetV();  A->ccrdEsd()[0] = EValue.GetE();
     EValue = ALoop->Table()[i].String(ACy);
     A->ccrd()[1] = EValue.GetV();  A->ccrdEsd()[1] = EValue.GetE();
@@ -803,9 +803,8 @@ void TCif::Initialize()  {
     A->ccrd()[2] = EValue.GetV();  A->ccrdEsd()[2] = EValue.GetE();
     if( ACUiso >= 0 )    {
       EValue = ALoop->Table()[i].String(ACUiso);
-      A->EllpE().Resize(1);
+      A->SetUisoEsd( EValue.GetE() );
       A->SetUiso( EValue.GetV() );
-      A->EllpE()[0] = EValue.GetE();
     }
 
 //    if( !A->Info ) ;
@@ -841,15 +840,14 @@ void TCif::Initialize()  {
     A = GetAsymmUnit().FindCAtom( ALoop->Table()[i].String(ALabel) );
     if( A == NULL )
       throw TInvalidArgumentException(__OlxSourceInfo, olxstr("wrong atom in the aniso loop ") << ALabel);
-    A->EllpE().Resize(6);
-    EValue = ALoop->Table()[i].String(U11);  QE[0] = EValue.GetV();  A->EllpE()[0] = EValue.GetE();
-    EValue = ALoop->Table()[i].String(U22);  QE[1] = EValue.GetV();  A->EllpE()[1] = EValue.GetE();
-    EValue = ALoop->Table()[i].String(U33);  QE[2] = EValue.GetV();  A->EllpE()[2] = EValue.GetE();
-    EValue = ALoop->Table()[i].String(U23);  QE[3] = EValue.GetV();  A->EllpE()[3] = EValue.GetE();
-    EValue = ALoop->Table()[i].String(U13);  QE[4] = EValue.GetV();  A->EllpE()[4] = EValue.GetE();
-    EValue = ALoop->Table()[i].String(U12);  QE[5] = EValue.GetV();  A->EllpE()[5] = EValue.GetE();
-    GetAsymmUnit().UcifToUcart(QE);
-    A->UpdateEllp(QE);
+    EValue = ALoop->Table()[i][U11];  Q[0] = EValue.GetV();  E[0] = EValue.GetE();
+    EValue = ALoop->Table()[i][U22];  Q[1] = EValue.GetV();  E[1] = EValue.GetE();
+    EValue = ALoop->Table()[i][U33];  Q[2] = EValue.GetV();  E[2] = EValue.GetE();
+    EValue = ALoop->Table()[i][U23];  Q[3] = EValue.GetV();  E[3] = EValue.GetE();
+    EValue = ALoop->Table()[i][U13];  Q[4] = EValue.GetV();  E[4] = EValue.GetE();
+    EValue = ALoop->Table()[i][U12];  Q[5] = EValue.GetV();  E[5] = EValue.GetE();
+    GetAsymmUnit().UcifToUcart(Q);
+    A->AssignEllp( &GetAsymmUnit().NewEllp().Initialise(Q, E));
   }
   // bond lengths
   /*
@@ -940,12 +938,11 @@ bool TCif::Adopt(TXFile *XF)  {
   Clear();
   olxstr Param;
   TCifLoop *Loop;
-  TStrPObjList<olxstr,TCifLoopData* >* Row;
   TCifLoopTable *Table, *ATable;
   TCAtom *A;
   TCifLoopData *LoopData;
   TEValueD EValue;
-  evecd QE;  // quadratic form of s thermal ellipsoid
+  double Q[6], E[6];  // quadratic form of s thermal ellipsoid
   bool AddUTable=false;
 
   GetAsymmUnit().Assign( XF->GetAsymmUnit() );
@@ -981,11 +978,9 @@ bool TCif::Adopt(TXFile *XF)  {
   sg->GetMatrices(matrices, mattAll);
 
   for( int i=0; i < matrices.Count(); i++ )  {
-    Row = &Table->AddRow(EmptyString);
-    Row->String(0) = TSymmParser::MatrixToSymm( matrices[i] );
-    LoopData = new TCifLoopData;
-    Row->Object(0) = LoopData;
-    LoopData->String = true;
+    TStrPObjList<olxstr,TCifLoopData*>& Row = Table->AddRow(EmptyString);
+    Row[0] = TSymmParser::MatrixToSymm( matrices[i] );
+    Row.Object(0) = new TCifLoopData(true);
   }
 
   Loop = &AddLoop("_atom_site");
@@ -1016,46 +1011,25 @@ bool TCif::Adopt(TXFile *XF)  {
 
   for( int i = 0; i < GetAsymmUnit().AtomCount(); i++ )  {
     A = &GetAsymmUnit().GetAtom(i);
-    Row = &Table->AddRow(EmptyString);
-    Row->String(0) = A->Label();
-      LoopData = new TCifLoopData;  Row->Object(0) = LoopData;  LoopData->CA = A;
-    Row->String(1) = A->GetAtomInfo().GetSymbol();
-      LoopData = new TCifLoopData;  Row->Object(1) = LoopData;
-    EValue.V() = A->ccrd()[0];  EValue.E() = A->ccrdEsd()[0];
-      Row->String(2) = EValue.ToCStr();
-      LoopData = new TCifLoopData;  Row->Object(2) = LoopData;
-    EValue.V() = A->ccrd()[1];  EValue.E() = A->ccrdEsd()[1];
-      Row->String(3) = EValue.ToCStr();
-      LoopData = new TCifLoopData;  Row->Object(3) = LoopData;
-    EValue.V() = A->ccrd()[2];  EValue.E() = A->ccrdEsd()[2];
-      Row->String(4) = EValue.ToCStr();
-      LoopData = new TCifLoopData;  Row->Object(4) = LoopData;
-      
+    TStrPObjList<olxstr,TCifLoopData*>& Row = Table->AddRow(EmptyString);
+    Row[0] = A->Label();  Row.Object(0) = new TCifLoopData(A);
+    Row[1] = A->GetAtomInfo().GetSymbol();  Row.Object(1) = new TCifLoopData;
+    for( int j=0; j < 3; j++ )  {
+      EValue.V() = A->ccrd()[j];  EValue.E() = A->ccrdEsd()[j];
+      Row[j+2] = EValue.ToCStr();
+      Row.Object(j+2) = new TCifLoopData;
+    }      
     if( A->GetEllipsoid() != NULL )  {
-      A->GetEllipsoid()->GetQuad(QE);
-      GetAsymmUnit().UcartToUcif(QE);
+      A->GetEllipsoid()->GetQuad(Q, E);
+      GetAsymmUnit().UcartToUcif(Q);
 
-      Row = &ATable->AddRow(EmptyString);
-      Row->String(0) = A->Label();
-        LoopData = new TCifLoopData;  Row->Object(0) = LoopData;  LoopData->CA = A;
-      EValue.V() = QE[0];  EValue.E() = A->EllpE()[0];
-        Row->String(1) = EValue.ToCStr();
-        LoopData = new TCifLoopData;  Row->Object(1) = LoopData;
-      EValue.V() = QE[1];  EValue.E() = A->EllpE()[1];
-        Row->String(2) = EValue.ToCStr();
-        LoopData = new TCifLoopData;  Row->Object(2) = LoopData;
-      EValue.V() = QE[2];  EValue.E() = A->EllpE()[2];
-        Row->String(3) = EValue.ToCStr();
-        LoopData = new TCifLoopData;  Row->Object(3) = LoopData;
-      EValue.V() = QE[3];  EValue.E() = A->EllpE()[3];
-        Row->String(4) = EValue.ToCStr();
-        LoopData = new TCifLoopData;  Row->Object(4) = LoopData;
-      EValue.V() = QE[4];  EValue.E() = A->EllpE()[4];
-        Row->String(5) = EValue.ToCStr();
-        LoopData = new TCifLoopData;  Row->Object(5) = LoopData;
-      EValue.V() = QE[5];  EValue.E() = A->EllpE()[5];
-        Row->String(6) = EValue.ToCStr();
-        LoopData = new TCifLoopData;  Row->Object(6) = LoopData;
+      TStrPObjList<olxstr,TCifLoopData*>& Row1 = ATable->AddRow(EmptyString);
+      Row1[0] = A->Label();  Row1.Object(0) = new TCifLoopData(A);
+      for( int j=0; j < 3; j++ )  {
+        EValue.V() = Q[j];  EValue.E() = E[j];
+        Row1[j+1] = EValue.ToCStr();
+        Row1.Object(j+1) = new TCifLoopData;
+      }
     }
   }
   if( XF->HasLastLoader() )

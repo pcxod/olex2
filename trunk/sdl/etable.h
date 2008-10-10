@@ -216,15 +216,14 @@ public:
     if( !Title.IsEmpty() )  L.Add("<p ") << titlePAttr << '>' << Title << "</p>";
     if( Format )    L.Add( olxstr("<table ") << tabAttr << '>' );
     if( colNames )  {
-      L.Add("<tr ") << colTitleRowAttr << '>';
-      if( rowNames )  Tmp = "<td></td>";
+      if( rowNames )  Tmp << "<th>" << colTitleRowAttr << "</th>";
       for( int i=0; i < colCount; i++ )  {
         for( int j=0; j < ColNames.Count(); j++ )  {
-          if( colAttr.Count() < j )
-            Tmp << "<td " << colAttr[j+1] << '>';
+          if( (j+1) < colAttr.Count() )
+            Tmp << "<th " << colAttr[j+1] << '>';
           else
-            Tmp << "<td>";
-          Tmp << ColNames[j] << "</td>";
+            Tmp << "<th>";
+          Tmp << ColNames[j] << "</th>";
         }
       }
       L.Add( (Tmp << "</tr>") );

@@ -214,6 +214,11 @@ public:
     data[1][0] = yx;  data[1][1] = yy;  data[1][2] = yz;
     data[2][0] = zx;  data[2][1] = zy;  data[2][2] = zz;
   }
+  TMatrix33(T xx, T xy, T xz, T yy, T yz, T zz)  {
+    data[0][0] = xx;  data[0][1] = xy;  data[0][2] = xz;
+    data[1][0] = xy;  data[1][1] = yy;  data[1][2] = yz;
+    data[2][0] = xz;  data[2][1] = yz;  data[2][2] = zz;
+  }
   template <class vt>
   TMatrix33(const TVector3<vt>& x, const TVector3<vt>& y, const TVector3<vt>& z)  {
     data[0] = x;  data[1] = y;  data[2] = z;

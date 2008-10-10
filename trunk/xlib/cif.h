@@ -25,6 +25,10 @@ struct TCifLoopData  {
     CA = NULL;
     String = str;
   }
+  TCifLoopData(TCAtom* ca)  {
+    CA = ca;
+    String = false;
+  }
 };
   typedef TTTable< TStrPObjList<olxstr,TCifLoopData*> > TCifLoopTable;
 //---------------------------------------------------------------------------

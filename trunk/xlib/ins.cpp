@@ -1132,7 +1132,7 @@ void TIns::_ProcessAfix(TCAtom& a, ParseContext& cx)  {
 }
 //..............................................................................
 TCAtom* TIns::_ParseAtom(TStrList& Toks, ParseContext& cx, TCAtom* atom)  {
-  evecd QE(6);
+  double QE[6];
   if( atom == NULL )  {
     atom = &GetAsymmUnit().NewAtom(cx.Resi);
     atom->SetLoaderId(GetAsymmUnit().AtomCount()-1);
@@ -1178,7 +1178,6 @@ TCAtom* TIns::_ParseAtom(TStrList& Toks, ParseContext& cx, TCAtom* atom)  {
       atom->SetOccpVar(  Toks[5].ToDouble() );
   }
   if( Toks.Count() == 12 )  {  // full ellipsoid
-    atom->EllpE().Resize(6);
     QE[0] = Toks[6].ToDouble();
     QE[1] = Toks[7].ToDouble();
     QE[2] = Toks[8].ToDouble();
@@ -1195,7 +1194,7 @@ TCAtom* TIns::_ParseAtom(TStrList& Toks, ParseContext& cx, TCAtom* atom)  {
       }
     }
     GetAsymmUnit().UcifToUcart(QE);
-    atom->UpdateEllp(QE);
+    atom->AssignEllp( &GetAsymmUnit().NewEllp().Initialise(QE) );
     if( atom->GetEllipsoid()->IsNPD() )  {
       TBasicApp::GetLog().Info(olxstr("Not positevely defined: ") << atom->Label());
       atom->SetUiso( 0 );
@@ -1235,8 +1234,7 @@ TCAtom* TIns::_ParseAtom(TStrList& Toks, ParseContext& cx, TCAtom* atom)  {
 }
 //..............................................................................
 olxstr TIns::_AtomToString(TCAtom* CA, int SfacIndex)  {
-  double v;
-  evecd QE(6);   // quadratic form of ellipsoid
+  double v, Q[6];   // quadratic form of ellipsoid
   olxstr Tmp = CA->Label();
   Tmp.Format(6, true, ' ');
   Tmp << SfacIndex;
@@ -1252,11 +1250,11 @@ olxstr TIns::_AtomToString(TCAtom* CA, int SfacIndex)  {
   Tmp << olxstr::FormatFloat(-5, v) << ' ';
   // save Uiso, Uanis
   if( CA->GetEllipsoid() != NULL )  {
-    CA->GetEllipsoid()->GetQuad(QE);
-    GetAsymmUnit().UcartToUcif(QE);
+    CA->GetEllipsoid()->GetQuad(Q);
+    GetAsymmUnit().UcartToUcif(Q);
 
     for( int j = 0; j < 6; j++ )  {
-      v = QE[j];
+      v = Q[j];
       v += (CA->FixedValues()[TCAtom::UisoFixedValuesOffset+j]*Sign(v));
       Tmp << olxstr::FormatFloat(-5, v ) << ' ';
     }

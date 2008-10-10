@@ -1634,7 +1634,7 @@ void TLattice::SetAnis( const TCAtomPList& atoms, bool anis )  {
     for( int i=0; i < atoms.Count(); i++ )  {
       if( atoms[i]->GetEllipsoid() != NULL )  {
          GetAsymmUnit().NullEllp( atoms[i]->GetEllipsoid()->GetId() );
-         atoms[i]->AssignEllps( NULL );
+         atoms[i]->AssignEllp( NULL );
       }
     }
     GetAsymmUnit().PackEllps();

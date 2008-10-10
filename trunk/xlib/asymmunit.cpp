@@ -363,13 +363,6 @@ void TAsymmUnit::PackAtoms()  {
   InitAtomIds();
 }
 //..............................................................................
-TEllipsoid& TAsymmUnit::NewEllp(const evecd& Q)  {
-  TEllipsoid *E = new TEllipsoid(Q);
-  Ellipsoids.Add(E);
-  E->SetId( Ellipsoids.Count()-1 );
-  return *E;
-}
-//..............................................................................
 TEllipsoid& TAsymmUnit::NewEllp() {
   TEllipsoid *E = new TEllipsoid();
   Ellipsoids.Add(E);
@@ -646,32 +639,6 @@ void TAsymmUnit::OnCAtomCrdChange( TCAtom* ca, const smatd& matr )  {
   throw TNotImplementedException(__OlxSourceInfo);
 }
 //..............................................................................
-void TAsymmUnit::UcifToUcart(evecd& v)  { // silly expansion of Q-form ...
-  mat3d M;
-  M[0][0] = v[0];  M[1][1] = v[1];  M[2][2] = v[2];
-  M[1][2] = M[2][1] = v[3];
-  M[0][2] = M[2][0] = v[4];
-  M[0][1] = M[1][0] = v[5];
-
-  M = UcifToUxyz*M*UcifToUxyzT;
-
-  v[0] = M[0][0];  v[1] = M[1][1];  v[2] = M[2][2];
-  v[3] = M[1][2];  v[4] = M[0][2];  v[5] = M[0][1];
-}
-//..............................................................................
-void TAsymmUnit::UcartToUcif(evecd& v)  {
-  mat3d M;
-  M[0][0] = v[0];  M[1][1] = v[1];  M[2][2] = v[2];
-  M[1][2] = M[2][1] = v[3];
-  M[0][2] = M[2][0] = v[4];
-  M[0][1] = M[1][0] = v[5];
-
-  M = UxyzToUcif*M*UxyzToUcifT;
-
-  v[0] = M[0][0];  v[1] = M[1][1];  v[2] = M[2][2];
-  v[3] = M[1][2];  v[4] = M[0][2];  v[5] = M[0][1];
-}
-//..............................................................................
 double TAsymmUnit::CalcCellVolume()  const  {
   double cosa = cos( FAngles[0].GetV()*M_PI/180 ),
          cosb = cos( FAngles[1].GetV()*M_PI/180 ),
@@ -744,17 +711,19 @@ void TAsymmUnit::LibGetPeak(const TStrObjList& Params, TMacroError& E)  {
 void TAsymmUnit::LibGetAtomU(const TStrObjList& Params, TMacroError& E)  {
   int index = Params[0].ToInt();
   if( index < 0 || index >= AtomCount() )  throw TIndexOutOfRangeException(__OlxSourceInfo, index, 0, AtomCount());
-  evecd V(1);
+  evecd Q(1);
   if( GetAtom(index).GetEllipsoid() == NULL )  {
     // TODO: a special condition - the atom is isotropic, but a user wishes it to be
     // anisotropic - six values a, a, a, 0, 0, 0 have to be passed
     //if( GetAtom(index)->
-    V[0] = GetAtom(index).GetUiso();
+    Q[0] = GetAtom(index).GetUiso();
   }
-  else  // the function resises the vector automatically
-    GetAtom(index).GetEllipsoid()->GetQuad(V);
+  else  {  // the function resises the vector automatically
+    Q.Resize(6);
+    GetAtom(index).GetEllipsoid()->GetQuad(Q);
+  }
 
-  E.SetRetVal( V.ToString() );
+  E.SetRetVal( Q.ToString() );
 }
 //..............................................................................
 void TAsymmUnit::LibGetAtomUiso(const TStrObjList& Params, TMacroError& E)  {
@@ -881,13 +850,8 @@ void TAsymmUnit::LibSetAtomU(const TStrObjList& Params, TMacroError& E)  {
   int index = Params[0].ToInt();
   if( index < 0 || index >= AtomCount() )  throw TIndexOutOfRangeException(__OlxSourceInfo, index, 0, AtomCount());
   if( (GetAtom(index).GetEllipsoid() != NULL) && (Params.Count() == 7) )  {
-    evecd V(6);
-    V[0] = Params[1].ToDouble();
-    V[1] = Params[2].ToDouble();
-    V[2] = Params[3].ToDouble();
-    V[3] = Params[4].ToDouble();
-    V[4] = Params[5].ToDouble();
-    V[5] = Params[6].ToDouble();
+    double V[] = {Params[1].ToDouble(), Params[2].ToDouble(), Params[3].ToDouble(), 
+                  Params[4].ToDouble(), Params[5].ToDouble(), Params[6].ToDouble()};
     GetAtom(index).GetEllipsoid()->Initialise( V );
   }
   else if( (GetAtom(index).GetEllipsoid() == NULL) && (Params.Count() == 2) ) {
@@ -933,7 +897,7 @@ void TAsymmUnit::LibNewAtom(const TStrObjList& Params, TMacroError& E)  {
     sortedPeaks.Add( qPeak, NULL);
     for( int i=0; i < sortedPeaks.Count(); i++ )  {
       if( sortedPeaks.GetObject(i) )
-        sortedPeaks.GetObject(i)->SetLabel( qLabel + olxstr(sortedPeaks.Count() - i) );
+        sortedPeaks.GetObject(i)->Label() = (qLabel + olxstr(sortedPeaks.Count() - i));
     }
     QPeakIndex = sortedPeaks.Count() - sortedPeaks.IndexOfComparable( qPeak );
     MinQPeak = sortedPeaks.GetComparable(0);
@@ -942,7 +906,8 @@ void TAsymmUnit::LibNewAtom(const TStrObjList& Params, TMacroError& E)  {
 
   TCAtom& ca = this->NewAtom();
   if( QPeakIndex >= 0 )  {
-    ca.SetLabel( qLabel << olxstr(QPeakIndex) );
+    ca.Label() = qLabel << olxstr(QPeakIndex);
+    ca.AtomInfo( &AtomsInfo->GetAtomInfo(iQPeakIndex) );
     ca.SetQPeak( qPeak );
     ca.SetOccp(11.0);
     ca.SetUiso( 0.05 );
@@ -952,7 +917,7 @@ void TAsymmUnit::LibNewAtom(const TStrObjList& Params, TMacroError& E)  {
     ca.SetLabel( Params[0] );
   ca.SetLoaderId( liNewAtom );
   E.SetRetVal( AtomCount() -1 );
-  ca.AssignEllps( NULL );
+  ca.AssignEllp( NULL );
 }
 //..............................................................................
 void TAsymmUnit::LibGetZ(const TStrObjList& Params, TMacroError& E)  {

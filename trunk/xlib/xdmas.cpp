@@ -12,7 +12,7 @@ void TXDMas::LoadFromStrings(const TStrList& Strings)  {
   TStrList crds, toks, symm;
   crds.LoadFromFile( crdfn );
   bool CellFound = false, LattFound = false;
-  evecd QE(6);
+  double Q[6];
 
   for( int i=0; i < Strings.Count(); i++ )  {
     if( Strings[i].StartFromi("CELLSD") )  {
@@ -108,25 +108,24 @@ void TXDMas::LoadFromStrings(const TStrList& Strings)  {
           toks.Clear();
           toks.Strtok( crds[i+1], ' ');
           if( toks.Count() != 6 )  continue;
-          atom.EllpE().Resize(6);
-          QE[0] = toks[0].ToDouble();
-          QE[1] = toks[1].ToDouble();
-          QE[2] = toks[2].ToDouble();
-          QE[3] = toks[5].ToDouble();
-          QE[4] = toks[4].ToDouble();  // note swaped 3 and 5 vs. SHELX
-          QE[5] = toks[3].ToDouble();
-          if( QE[1] == 0 && QE[2] == 0 && QE[3] == 0 && QE[4] == 0 && QE[5] == 0  )  {
-            atom.SetUiso( QE[0] );
+          Q[0] = toks[0].ToDouble();
+          Q[1] = toks[1].ToDouble();
+          Q[2] = toks[2].ToDouble();
+          Q[3] = toks[5].ToDouble();
+          Q[4] = toks[4].ToDouble();  // note swaped 3 and 5 vs. SHELX
+          Q[5] = toks[3].ToDouble();
+          if( Q[1] == 0 && Q[2] == 0 && Q[3] == 0 && Q[4] == 0 && Q[5] == 0  )  {
+            atom.SetUiso( Q[0] );
           }
           else  {
-            GetAsymmUnit().UcifToUcart(QE);
-            atom.UpdateEllp(QE);
+            GetAsymmUnit().UcifToUcart(Q);
+            atom.AssignEllp(& GetAsymmUnit().NewEllp().Initialise(Q) );
             if( atom.GetEllipsoid()->IsNPD() )  {
               TBasicApp::GetLog().Info(olxstr("Not positevely defined: ") << atom.GetLabel());
               atom.SetUiso( 0 );
             }
             else
-              atom.SetUiso( (QE[0] +  QE[1] + QE[2])/3);
+              atom.SetUiso( (Q[0] +  Q[1] + Q[2])/3);
           }
           i++;
         }
