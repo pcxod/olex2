@@ -237,15 +237,15 @@ public:
         int index = i+ j*(Rows.Count()+inc)/colCount;
         if( index >= RowCount() )  {
           if( rowNames )
-            Tmp << "<td " << colAttr[0] << '>' << "&nbsp;" << "</td>";
+            Tmp << "<td>&nbsp;</td>";
           for( int k=0; k < ColNames.Count(); k++ )
-            Tmp << "<td " << colAttr[k+1] << '>' << "&nbsp;" << "</td>";
+            Tmp << "<td>&nbsp;</td>";
           continue;
         }
         if( rowNames )
-          Tmp << "<td " << colAttr[0] << '>' << RowNames[index] << "</td>";
+          Tmp << "<td>" << RowNames[index] << "</td>";
         for( int k=0; k < ColNames.Count(); k++ )
-          Tmp << "<td " << colAttr[k+1] << '>' << Rows[index][k] << "</td>";
+          Tmp << "<td>" << Rows[index][k] << "</td>";
       }
       L.Add( (Tmp << "</tr>") );
     }

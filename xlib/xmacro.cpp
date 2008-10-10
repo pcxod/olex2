@@ -1339,6 +1339,7 @@ void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options, TMacro
   olxstr RF = TEFile::ExtractFilePath(Cif->GetFileName()) + "tables.html", Tmp;
   Root = DF.Root().FindItemCI("Cif_Tables");
   smatd_list SymmList;
+  int tab_count = 1;
   for( int i=0; i < Cmds.Count(); i++ )  {
     TD = NULL;
     if( Cmds[i].IsNumber() )  {
@@ -1364,7 +1365,7 @@ void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options, TMacro
       continue;
     }
     if( Cif->CreateTable(TD, DT, SymmList) )  {
-      Tmp = "Table "; Tmp << (i+1) << ' ' << TD->GetFieldValueCI("caption");
+      Tmp = "Table "; Tmp << ++tab_count << ' ' << TD->GetFieldValueCI("caption");
       Tmp.Replace("%DATA_NAME%", Cif->GetDataName());
       if( Tmp.IndexOf("$") >= 0 )
         ProcessExternalFunction( Tmp );
