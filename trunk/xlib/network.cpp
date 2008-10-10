@@ -706,7 +706,6 @@ double TNetwork::FindAlignmentMatrix(const TTypeList< AnAssociation2<TSAtom*,TSA
   }
   centA /= atoms.Count();
   centB /= atoms.Count();
-
   for( int i=0; i < atoms.Count(); i++ )  {
     if( TryInversion )  {
       v = atoms[i].GetA()->ccrd();
@@ -756,17 +755,15 @@ double TNetwork::FindAlignmentMatrix(const TTypeList< AnAssociation2<TSAtom*,TSA
   res.r[0][0] = QRT(qt[0]) + QRT(qt[1]) - QRT(qt[2]) - QRT(qt[3]);
   res.r[0][1] = 2*(qt[1]*qt[2] + qt[0]*qt[3]);
   res.r[0][2] = 2*(qt[1]*qt[3] - qt[0]*qt[2]);
-  res.t[0] = (centB[0]);// - centA[0]);
 
   res.r[1][0] = 2*(qt[1]*qt[2] - qt[0]*qt[3]);
   res.r[1][1] = QRT(qt[0]) + QRT(qt[2]) - QRT(qt[1]) - QRT(qt[3]);
   res.r[1][2] = 2*(qt[2]*qt[3] + qt[0]*qt[1]);
-  res.t[1] = (centB[1]);// + centA[1]);
 
   res.r[2][0] = 2*(qt[1]*qt[3] + qt[0]*qt[2]);
   res.r[2][1] = 2*(qt[2]*qt[3] - qt[0]*qt[1]);
   res.r[2][2] = QRT(qt[0]) + QRT(qt[3]) - QRT(qt[1]) - QRT(qt[2]);
-  res.t[2] = (centB[2]);// - centA[2]);
+  res.t = centB;
   double rs = 0;
   for( int i=0; i < atoms.Count(); i++ )  {
     if( TryInversion )  {
