@@ -631,7 +631,7 @@ long TEFile::FileLength(const olxstr& fileName)  {
 }
 //..............................................................................
 bool TEFile::ChangeDir(const olxstr& To)  {
-  if( To.IsEmpty() == 0 )  return false;
+  if( To.IsEmpty() )  return false;
   olxstr path = OLX_OS_PATH(To);
 #ifdef __WIN32__
   return SetCurrentDirectory(path.u_str()) != 0;
