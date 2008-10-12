@@ -150,7 +150,7 @@ public:
   // returns a new object created with new using tmpnam
   static TEFile* TmpFile(const olxstr& templ);
   // function is based on utime
-  static bool SetFileTimes(const olxstr& fileName, long AccTime, long ModTime);
+  static bool SetFileTimes(const olxstr& fileName, uint64_t AccTime, uint64_t ModTime);
   // function is based on stat;
   static time_t FileAge(const olxstr& fileName);
   // function is based on stat;
