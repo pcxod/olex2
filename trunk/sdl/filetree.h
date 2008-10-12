@@ -2,8 +2,6 @@
 #define __olx_file_tree_H
 
 #include "efile.h"
-#include "bapp.h"
-#include "log.h"
 BeginEsdlNamespace()
 class TFileTree  {
 public:
@@ -87,7 +85,7 @@ public:
       for( int i=0; i < Folders.Count(); i++ )  {
         int ind = FindSortedIndexOf( f.Folders, Folders[i].Name );
         if( ind == -1 )
-          TBasicApp::GetLog() << (out.Add("New folder: ") << FullPath << Folders[i].Name);
+          out.Add("New folder: ") << FullPath << Folders[i].Name;
       }
     }
     void Synchronise(const Folder& f, TStrList& out) const {
