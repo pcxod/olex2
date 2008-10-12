@@ -1,7 +1,6 @@
 #ifndef efilelistH
 #define efilelistH
 #include "ebase.h"
-#include "smart/ostring.h"
 #include "typelist.h"
 #include "etime.h"
 

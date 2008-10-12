@@ -124,6 +124,13 @@ public:
   static olxstr RemoveTrailingBackslash(const olxstr &Path);
   static olxstr& RemoveTrailingBackslashI(olxstr &Path);
   static bool IsAbsolutePath(const olxstr &Path);
+  static char GetPathDelimeter()  {
+#ifdef __WIN32__
+    return '\\';
+#else
+    return '/';
+#endif
+  }
   // copies a file, use overwrite option to modify the behaviour
   static void Copy(const olxstr& From, const olxstr& to, bool overwrite = true);
   // renames a file, if the file with 'to' name exists, behaves according to the overwrite flag

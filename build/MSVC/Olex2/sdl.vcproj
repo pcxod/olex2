@@ -582,6 +582,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\sdl\efilelist.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\sdl\egc.h"
 				>
 			</File>
@@ -683,6 +687,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\sdl\exception.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\sdl\filetree.h"
 				>
 			</File>
 			<File
