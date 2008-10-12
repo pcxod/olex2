@@ -379,6 +379,7 @@ bool TEFile::DelDir(const olxstr& F)  {
 bool TEFile::ListCurrentDirEx(TFileList &Out, const olxstr &Mask, const unsigned short sF)  {
   olxstr Tmp;
   WIN32_FIND_DATA sd;
+  struct STAT_STR the_stat;
   memset(&sd, 0, sizeof(sd));
 
   int flags = 0;
@@ -403,10 +404,16 @@ bool TEFile::ListCurrentDirEx(TFileList &Out, const olxstr &Mask, const unsigned
       }
       TFileListItem& li = Out.AddNew();
       li.SetName( sd.cFileName );
-      li.SetSize( sd.nFileSizeHigh * MAXDWORD + sd.nFileSizeLow );
-      li.SetCreationTime( sd.ftCreationTime.dwHighDateTime*MAXDWORD+sd.ftCreationTime.dwLowDateTime );
-      li.SetModificationTime( sd.ftLastWriteTime.dwHighDateTime*MAXDWORD+sd.ftLastWriteTime.dwLowDateTime );
-      li.SetLastAccessTime( sd.ftLastAccessTime.dwHighDateTime*MAXDWORD+sd.ftLastAccessTime.dwLowDateTime );
+      uint64_t lv = sd.nFileSizeLow;
+      lv += sd.nFileSizeHigh * MAXDWORD;
+      li.SetSize( lv );
+      if( STAT(sd.cFileName, &the_stat) == 0 )  {
+        li.SetCreationTime( the_stat.st_ctime );
+        li.SetModificationTime( the_stat.st_mtime );
+        li.SetLastAccessTime( the_stat.st_atime );
+      }
+      else
+        throw TFunctionFailedException(__OlxSourceInfo, "stat failed");
       attrib = 0;
       if( (sd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0 )  attrib |= sefDir;
       else                                      attrib |= sefFile;
@@ -588,7 +595,7 @@ bool TEFile::ListDir(const olxstr& dir, TStrList &Out, const olxstr &Mask, const
   return res;
 }
 //..............................................................................
-bool TEFile::SetFileTimes(const olxstr& fileName, long AccTime, long ModTime)  {
+bool TEFile::SetFileTimes(const olxstr& fileName, uint64_t AccTime, uint64_t ModTime)  {
   struct UTIMBUF tb;
   tb.actime = AccTime;
   tb.modtime = ModTime;
@@ -623,10 +630,11 @@ time_t TEFile::FileAge(const olxstr& fileName)  {
 long TEFile::FileLength(const olxstr& fileName)  {
   struct STAT_STR the_stat;
 #ifdef __WIN32__
-  STAT(OLX_OS_PATH(fileName).u_str(), &the_stat);
+  if( STAT(OLX_OS_PATH(fileName).u_str(), &the_stat) != 0 )
 #else
-  STAT(OLX_OS_PATH(fileName).c_str(), &the_stat);
+  if( STAT(OLX_OS_PATH(fileName).c_str(), &the_stat) != 0 )
 #endif
+    throw TFunctionFailedException(__OlxSourceInfo, "stat failed");
   return the_stat.st_size;
 }
 //..............................................................................

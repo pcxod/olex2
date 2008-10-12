@@ -8,8 +8,8 @@ BeginEsdlNamespace()
   class TFileListItem  {
   protected:
     unsigned short Attributes;
-    time_t CreationTime, ModificationTime, LastAccessTime;
-    long Size;
+    uint64_t CreationTime, ModificationTime, LastAccessTime;
+    uint64_t Size;
     olxstr Name;
   public:
     TFileListItem()  { 
@@ -25,10 +25,10 @@ BeginEsdlNamespace()
       ModificationTime = item.ModificationTime;
       LastAccessTime = item.LastAccessTime;
     }
-    DefPropP(time_t, CreationTime)
-    DefPropP(time_t, ModificationTime)
-    DefPropP(time_t, LastAccessTime)
-    DefPropP(long, Size)
+    DefPropP(uint64_t, CreationTime)
+    DefPropP(uint64_t, ModificationTime)
+    DefPropP(uint64_t, LastAccessTime)
+    DefPropP(uint64_t, Size)
     DefPropP(unsigned short, Attributes)
     DefPropC(olxstr, Name)
 
