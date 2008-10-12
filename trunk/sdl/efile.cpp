@@ -18,24 +18,45 @@
   #include <io.h>
   #include <direct.h>
 
-  #ifdef _MSC_VER
-    #define chmod _chmod
-    #define chdir _chdir
-    #define access _access
-    #define getcwd _getcwd
-    #define makedir _mkdir
-    #include <sys/utime.h>
-    #define UTIMBUF _utimbuf
+  #ifdef _UNICODE
+    #define UTIME _wutime
+    #define unlink _wunlink
+    #define rmdir _wrmdir
+    #define STAT _wstat
+    #define STAT_STR _stat
+    #define chmod _wchmod
+    #define chdir _wchdir
+    #define access _waccess
+    #define getcwd _wgetcwd
+    #define makedir _wmkdir
+    #define fopen _wfopen
+    #define rename _wrename
   #else
-    #include <dirent.h>  // for gcc
-    #define makedir mkdir
-    #include <utime.h>
-    #define UTIMBUF utimbuf
+    #define STAT stat
+    #define STAT_STR stat
   #endif
 
-  #define UTIME _utime
-  #define unlink _unlink
-  #define rmdir _rmdir
+  #ifdef _MSC_VER
+    #include <sys/utime.h>
+    #ifndef _UNICODE
+      #define chmod _chmod
+      #define chdir _chdir
+      #define access _access
+      #define getcwd _getcwd
+      #define makedir _mkdir
+      #define UTIME _utime
+      #define unlink _unlink
+      #define rmdir _rmdir
+    #endif
+    #define UTIMBUF _utimbuf
+  #else
+    #include <utime.h>
+    #ifndef _UNICODE
+      #define UTIME utime
+      #define makedir mkdir
+    #endif
+    #define UTIMBUF utimbuf
+  #endif
   //this is only for UNC file names under windows
   #include <windows.h>
   #include <mapiutil.h>
@@ -52,6 +73,8 @@
 
   #define makedir(a) mkdir((a), 0755)
   #define UTIME utime
+  #define STAT stat
+  #define STAT_STR stat
 
   #define OLX_PATH_DEL '/'
   #define OLX_ENVI_PATH_DEL ':'
@@ -176,7 +199,11 @@ TEFile::~TEFile()  {  Close();  }
 bool TEFile::Open(const olxstr& F, const olxstr& Attribs)  {
   Close();
   FName = OLX_OS_PATH(F);
+#ifdef __WIN32__
+  FHandle = fopen( FName.u_str(), Attribs.u_str());
+#else
   FHandle = fopen( FName.c_str(), Attribs.c_str());
+#endif
   if( FHandle == NULL )  {
     olxstr fn = FName;
     FName = EmptyString;
@@ -259,7 +286,11 @@ void TEFile::Seek( long Position, const int From)  {
 }
 //..............................................................................
 bool TEFile::FileExists(const olxstr& F)  {
+#ifdef __WIN32__
+  return (access( OLX_OS_PATH(F).u_str(), 0)  == -1 ) ? false : true;
+#else
   return (access( OLX_OS_PATH(F).c_str(), 0)  == -1 ) ? false : true;
+#endif
 }
 //..............................................................................
 olxstr TEFile::ExtractFilePath(const olxstr &F)  {
@@ -324,162 +355,92 @@ olxstr TEFile::ChangeFileExt(const olxstr &F, const olxstr &Ext)  {
 bool TEFile::DelFile(const olxstr& F)  {
   if( !TEFile::FileExists(F) )  return true;
   olxstr fn = OLX_OS_PATH(F);
+#ifdef __WIN32__
+  if( !chmod(fn.u_str(), S_IWRITE) )
+    return (unlink(fn.u_str()) == -1) ? false: true;
+#else
   if( !chmod(fn.c_str(), S_IWRITE) )
     return (unlink(fn.c_str()) == -1) ? false: true;
+#endif
   return false;
 }
 //..............................................................................
 bool TEFile::DelDir(const olxstr& F)  {
   if( !TEFile::FileExists(F) )  return true;
   olxstr fn = OLX_OS_PATH(F);
+#ifdef __WIN32__
+  return (rmdir(fn.u_str()) == -1) ?  false : true;
+#else
   return (rmdir(fn.c_str()) == -1) ?  false : true;
+#endif
 }
 //..............................................................................
-#ifdef __BORLANDC__
+#ifdef __WIN32__
 bool TEFile::ListCurrentDirEx(TFileList &Out, const olxstr &Mask, const unsigned short sF)  {
   olxstr Tmp;
-  struct ffblk fdata;
-  struct stat the_stat;
+  WIN32_FIND_DATA sd;
+  memset(&sd, 0, sizeof(sd));
 
-  int done, flags = 0;
+  int flags = 0;
   unsigned short attrib;
   TStrList L;
-  if( (sF & sefDir) != 0 )       flags |= FA_DIREC;
-  if( (sF & sefReadOnly) != 0 )  flags |= FA_RDONLY;
-  if( (sF & sefSystem) != 0 )    flags |= FA_SYSTEM;
-  if( (sF & sefHidden) != 0 )    flags |= FA_HIDDEN;
-
+  if( (sF & sefDir) != 0 )       flags |= FILE_ATTRIBUTE_DIRECTORY;
+  if( (sF & sefReadOnly) != 0 )  flags |= FILE_ATTRIBUTE_READONLY;
+  if( (sF & sefSystem) != 0 )    flags |= FILE_ATTRIBUTE_SYSTEM;
+  if( (sF & sefHidden) != 0 )    flags |= FILE_ATTRIBUTE_HIDDEN;
+  sd.dwFileAttributes = flags; 
   L.Strtok(Mask, ';');
   for( int i=0; i < L.Count(); i++ )  {
-    done = findfirst(L.String(i).c_str(), &fdata, flags);
-    while( !done )  {
-      if( (sF & sefDir) != 0 && (sF & sefRelDir) == 0 &&
-          (fdata.ff_attrib & FA_DIREC) != 0)  {
-        if( strcmp(fdata.ff_name, ".") == 0 || strcmp(fdata.ff_name, "..") == 0)  {
-          done = findnext(&fdata);
+    HANDLE hn = FindFirstFile(L[i].u_str(), &sd);
+    if( hn == INVALID_HANDLE_VALUE )  continue;
+    bool done = true;
+    while( done )  {
+      if( (sF & sefDir) != 0 && (sF & sefRelDir) == 0 && (sd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0)  {
+        if( sd.cFileName[0] == '.' || (sd.cFileName[0] == '.' && sd.cFileName[1] == '.') )  {
+          done = (FindNextFile(hn, &sd) != 0);
           continue;
         }
       }
-      stat(fdata.ff_name, &the_stat);
       TFileListItem& li = Out.AddNew();
-      li.SetName( fdata.ff_name );
-      li.SetSize( fdata.ff_fsize );
-      li.SetCreationTime( the_stat.st_ctime );
-      li.SetModificationTime( the_stat.st_mtime );
-      li.SetLastAccessTime( the_stat.st_atime );
+      li.SetName( sd.cFileName );
+      li.SetSize( sd.nFileSizeHigh * MAXDWORD + sd.nFileSizeLow );
+      li.SetCreationTime( sd.ftCreationTime.dwHighDateTime*MAXDWORD+sd.ftCreationTime.dwLowDateTime );
+      li.SetModificationTime( sd.ftLastWriteTime.dwHighDateTime*MAXDWORD+sd.ftLastWriteTime.dwLowDateTime );
+      li.SetLastAccessTime( sd.ftLastAccessTime.dwHighDateTime*MAXDWORD+sd.ftLastAccessTime.dwLowDateTime );
       attrib = 0;
-      if( (fdata.ff_attrib & FA_DIREC) != 0 )  attrib |= sefDir;
+      if( (sd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0 )  attrib |= sefDir;
       else                                      attrib |= sefFile;
-      if( (fdata.ff_attrib & FA_RDONLY) != 0 ) attrib |= sefReadOnly;
-      if( (fdata.ff_attrib & FA_SYSTEM) != 0 ) attrib |= sefSystem;
-      if( (fdata.ff_attrib & FA_HIDDEN) != 0 ) attrib |= sefHidden;
+      if( (sd.dwFileAttributes & FILE_ATTRIBUTE_READONLY) != 0 ) attrib |= sefReadOnly;
+      if( (sd.dwFileAttributes & FILE_ATTRIBUTE_SYSTEM) != 0 ) attrib |= sefSystem;
+      if( (sd.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN) != 0 ) attrib |= sefHidden;
       li.SetAttributes( attrib );
-      done = findnext(&fdata);
+      done = (FindNextFile(hn, &sd) != 0);
     }
+    FindClose( hn );
   }
-  findclose( &fdata );
   return true;
 }
 bool TEFile::ListCurrentDir(TStrList& Out, const olxstr &Mask, const unsigned short sF)  {
   olxstr Tmp;
-  struct ffblk fdata;
-  int done, flags = 0;
-  TStrList L;
-  if( (sF & sefDir) != 0 )       flags |= FA_DIREC;
-  if( (sF & sefReadOnly) != 0 )  flags |= FA_RDONLY;
-  if( (sF & sefSystem) != 0 )    flags |= FA_SYSTEM;
-  if( (sF & sefHidden) != 0 )    flags |= FA_HIDDEN;
+  WIN32_FIND_DATA sd;
+  memset(&sd, 0, sizeof(sd));
 
+  int flags = 0;
+  TStrList L;
+  if( (sF & sefDir) != 0 )       flags |= FILE_ATTRIBUTE_DIRECTORY;
+  if( (sF & sefReadOnly) != 0 )  flags |= FILE_ATTRIBUTE_READONLY;
+  if( (sF & sefSystem) != 0 )    flags |= FILE_ATTRIBUTE_SYSTEM;
+  if( (sF & sefHidden) != 0 )    flags |= FILE_ATTRIBUTE_HIDDEN;
+  sd.dwFileAttributes = flags; 
   L.Strtok(Mask, ';');
   for( int i=0; i < L.Count(); i++ )  {
-    done = findfirst(L.String(i).c_str(), &fdata, flags);
-    while( !done )  {
-      if( (sF & sefDir) != 0 && (sF & sefRelDir) == 0 &&
-          (fdata.ff_attrib & FA_DIREC) != 0)  {
-        if( strcmp(fdata.ff_name, ".") == 0 || strcmp(fdata.ff_name, "..") == 0)  {
-          done = findnext(&fdata);
-          continue;
-        }
-      }
-      Out.Add( fdata.ff_name );
-      done = findnext(&fdata);
-    }
+    HANDLE hn = FindFirstFile(L[i].u_str(), &sd);
+    if( hn == INVALID_HANDLE_VALUE )  continue;
+    Out.Add( sd.cFileName );
+    while( FindNextFile(hn, &sd) )
+      Out.Add( sd.cFileName );
+    FindClose(hn);
   }
-  findclose( &fdata );
-  return true;
-}
-#elif _MSC_VER
-bool TEFile::ListCurrentDirEx(TFileList &Out, const olxstr &Mask, const unsigned short sF)  {
-  olxstr Tmp;
-  struct _finddata_t c_file;
-  c_file.attrib = 0;
-  unsigned short attrib;
-
-  if( (sF & sefDir) != 0 )       c_file.attrib |= _A_SUBDIR;
-  if( (sF & sefReadOnly) != 0 )  c_file.attrib |= _A_RDONLY;
-  if( (sF & sefSystem) != 0 )    c_file.attrib |= _A_SYSTEM;
-  if( (sF & sefHidden) != 0 )    c_file.attrib |= _A_HIDDEN;
-
-  intptr_t hFile;
-  TStrList L(Mask, ';');
-  for( int i=0; i < L.Count(); i++ )  {
-    hFile = _findfirst( L[i].c_str(), &c_file);
-    if( hFile == -1 )  continue;
-    do  {
-      if( (sF & sefDir) != 0 && (sF & sefRelDir) == 0 &&
-          (c_file.attrib & _A_SUBDIR) != 0)  {
-        if( strcmp(c_file.name, ".") == 0 || strcmp(c_file.name, "..") == 0)  {
-          if( _findnext(hFile, &c_file) != 0 )  break;
-          continue;
-        }
-      }
-      TFileListItem& li = Out.AddNew();
-      li.SetName( c_file.name );
-      li.SetSize( c_file.size );
-      li.SetCreationTime( c_file.time_create );
-      li.SetLastAccessTime( c_file.time_access );
-      li.SetModificationTime( c_file.time_write );
-      attrib = 0;
-      if( (c_file.attrib & _A_SUBDIR) != 0 ) attrib |= sefDir;
-      else                                   attrib |= sefFile;
-      if( (c_file.attrib & _A_RDONLY) != 0 ) attrib |= sefReadOnly;
-      if( (c_file.attrib & _A_SYSTEM) != 0 ) attrib |= sefSystem;
-      if( (c_file.attrib & _A_HIDDEN) != 0 ) attrib |= sefHidden;
-      li.SetAttributes( attrib );
-    }
-    while( _findnext(hFile, &c_file) == 0 );
-  }
-  _findclose(hFile);
-  return true;
-}
-bool TEFile::ListCurrentDir(TStrList &Out, const olxstr &Mask, const unsigned short sF)  {
-  olxstr Tmp;
-  struct _finddata_t c_file;
-  c_file.attrib = 0;
-
-  if( (sF & sefDir) != 0 )       c_file.attrib |= _A_SUBDIR;
-  if( (sF & sefReadOnly) != 0 )  c_file.attrib |= _A_RDONLY;
-  if( (sF & sefSystem) != 0 )    c_file.attrib |= _A_SYSTEM;
-  if( (sF & sefHidden) != 0 )    c_file.attrib |= _A_HIDDEN;
-
-  intptr_t hFile;
-  TStrList L(Mask, ';');
-  for( int i=0; i < L.Count(); i++ )  {
-    hFile = _findfirst( L[i].c_str(), &c_file);
-    if( hFile == -1 )  continue;
-    do  {
-      if( (sF & sefDir) != 0 && (sF & sefRelDir) == 0 &&
-          (c_file.attrib & _A_SUBDIR) != 0)  {
-        if( strcmp(c_file.name, ".") == 0 || strcmp(c_file.name, "..") == 0)  {
-          if( _findnext(hFile, &c_file) != 0 )  break;
-          continue;
-        }
-      }
-      Out.Add( c_file.name );
-    }
-    while( _findnext(hFile, &c_file) == 0 );
-  }
-  _findclose(hFile);
   return true;
 }
 #else
@@ -631,13 +592,21 @@ bool TEFile::SetFileTimes(const olxstr& fileName, long AccTime, long ModTime)  {
   struct UTIMBUF tb;
   tb.actime = AccTime;
   tb.modtime = ModTime;
+#ifdef __WIN32__
+  return UTIME(fileName.u_str(), &tb) == 0 ? true : false;
+#else
   return UTIME(fileName.c_str(), &tb) == 0 ? true : false;
+#endif
 }
 //..............................................................................
 // thanx to Luc - I have completely forgotten about stat!
 time_t TEFile::FileAge(const olxstr& fileName)  {
-  struct stat the_stat;
-  if( stat(OLX_OS_PATH(fileName).c_str(), &the_stat) != 0 )
+  struct STAT_STR the_stat;
+#ifdef __WIN32__
+  if( STAT(OLX_OS_PATH(fileName).u_str(), &the_stat) != 0 )
+#else
+  if( STAT(OLX_OS_PATH(fileName).c_str(), &the_stat) != 0 )
+#endif
     throw TInvalidArgumentException(__OlxSourceInfo, olxstr("Invalid file '") << fileName << '\'');
 #ifdef __BORLANDC__
   return the_stat.st_mtime;
@@ -652,21 +621,37 @@ time_t TEFile::FileAge(const olxstr& fileName)  {
 }
 //..............................................................................
 long TEFile::FileLength(const olxstr& fileName)  {
-  struct stat the_stat;
-  stat(OLX_OS_PATH(fileName).c_str(), &the_stat);
+  struct STAT_STR the_stat;
+#ifdef __WIN32__
+  STAT(OLX_OS_PATH(fileName).u_str(), &the_stat);
+#else
+  STAT(OLX_OS_PATH(fileName).c_str(), &the_stat);
+#endif
   return the_stat.st_size;
 }
 //..............................................................................
 bool TEFile::ChangeDir(const olxstr& To)  {
-  if( To.Length() == 0 )  return false;
-  return ( chdir(OLX_OS_PATH(To).c_str()) == -1 ) ?  false : true;
+  if( To.IsEmpty() == 0 )  return false;
+  olxstr path = OLX_OS_PATH(To);
+#ifdef __WIN32__
+  return SetCurrentDirectory(path.u_str()) != 0;
+#else
+  return ( chdir(path.c_str()) == -1 ) ?  false : true;
+#endif
 }
 //..............................................................................
 olxstr TEFile::CurrentDir()  {
+#ifdef __WIN32__
+  olxch bf[MAX_PATH];
+  if( GetCurrentDirectory(MAX_PATH, bf) == 0 )
+    return EmptyString;
+  return olxstr(bf);
+#else
   char *Dp = getcwd(NULL, MAX_PATH);
-  olxstr Dir = Dp;
+  olxstr Dir( Dp );
   free(Dp);
   return Dir;
+#endif
 }
 //..............................................................................
 bool TEFile::MakeDirs(const olxstr& Name)  {
@@ -674,16 +659,20 @@ bool TEFile::MakeDirs(const olxstr& Name)  {
   olxstr toCreate;
   toCreate.SetCapacity( Name.Length() + 5 );
   for( int i=0; i < toks.Count(); i++ )  {
-    toCreate << toks.String(i) << OLX_PATH_DEL;
+    toCreate << toks[i] << OLX_PATH_DEL;
     if( !FileExists( toCreate ) )
-      if( makedir( toCreate.c_str() ) == -1 )
+      if( !MakeDir( toCreate ) )
         return false;
   }
   return true;
 }
 //..............................................................................
 bool TEFile::MakeDir(const olxstr& Name)  {
+#ifdef __WIN32__
+  return ( makedir(OLX_OS_PATH(Name).u_str()) == -1 ) ? false : true;
+#else
   return ( makedir(OLX_OS_PATH(Name).c_str()) == -1 ) ? false : true;
+#endif
 }
 //..............................................................................
 olxstr TEFile::OSPath(const olxstr &F)  {
@@ -779,7 +768,11 @@ TEFile* TEFile::TmpFile(const olxstr& templ)  {
 //..............................................................................
 bool TEFile::Rename(const olxstr& from, const olxstr& to, bool overwrite)  {
   if( FileExists(to) && ! overwrite )  return false;
+#ifdef __WIN32__
+  return rename( from.u_str(), to.u_str() ) != -1;
+#else
   return rename( from.c_str(), to.c_str() ) != -1;
+#endif
 }
 //..............................................................................
 void TEFile::Copy(const olxstr& From, const olxstr& To, bool overwrite )  {

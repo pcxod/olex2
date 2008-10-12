@@ -9,9 +9,9 @@ File_6=SourceModule,'E:\SVN\src\v1.1u\olex2-tl\Olex2Impl.cpp',0,1,656,17,670,0,0
 File_7=SourceModule,'E:\SVN\src\v1.1u\olex2-tl\About.cpp',0,1,4,49,19,0,0
 
 [Modules]
-Module0=E:\SVN\srcf-svn\trunk\launch\main.cpp
+Module0=E:\SVN\srcf-svn\trunk\launch\splash.cpp
 Module1=E:\SVN\srcf-svn\trunk\olex2v-test\main.cpp
-Module2=E:\SVN\srcf-svn\trunk\launch\splash.cpp
+Module2=E:\SVN\srcf-svn\trunk\launch\main.cpp
 Module3=E:\SVN\srcf-svn\trunk\olex2v\olex2v.h
 Module4=E:\SVN\srcf-svn\trunk\sdl\settingsfile.cpp
 Module5=E:\SVN\srcf-svn\trunk\installer\main.cpp
@@ -22,7 +22,7 @@ Count=9
 EditWindowCount=1
 TypeLibWindowCount=1
 
-[E:\SVN\srcf-svn\trunk\launch\main.cpp]
+[E:\SVN\srcf-svn\trunk\launch\splash.cpp]
 ModuleType=SourceModule
 FormState=1
 FormOnTop=0
@@ -32,7 +32,7 @@ ModuleType=SourceModule
 FormState=1
 FormOnTop=0
 
-[E:\SVN\srcf-svn\trunk\launch\splash.cpp]
+[E:\SVN\srcf-svn\trunk\launch\main.cpp]
 ModuleType=SourceModule
 FormState=1
 FormOnTop=0
@@ -137,7 +137,7 @@ FormOnTop=0
 
 [EditWindow0]
 ViewCount=9
-CurrentView=2
+CurrentView=5
 View0=0
 View1=1
 View2=2
