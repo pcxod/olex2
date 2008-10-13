@@ -9,28 +9,49 @@
 #include <Forms.hpp>
 #include <Buttons.hpp>
 #include <ComCtrls.hpp>
-#include "E:\SVN\srcf-svn\trunk\sdl\bapp.h"
+#include "bapp.h"
 //---------------------------------------------------------------------------
 class TfMain : public TForm
 {
 __published:	// IDE-managed Components
-  TLabel *Label1;
-  TLabel *Label2;
-  TEdit *eDest;
-  TEdit *eSrc;
-  TSpeedButton *sbDest;
-  TSpeedButton *sbSrc;
-  TBitBtn *bbRun;
+  TPageControl *pgTasks;
+  TTabSheet *tbSync;
+  TTabSheet *tsDublicates;
+  TStatusBar *sbSyncStatus;
   TRichEdit *reEdit;
-  TProgressBar *pbOverall;
-  TProgressBar *pbFC;
-  TLabel *Label3;
-  TLabel *Label4;
   TStaticText *stCurrent;
   TLabel *Label5;
+  TLabel *Label4;
+  TLabel *Label3;
+  TProgressBar *pbOverall;
+  TProgressBar *pbFC;
   TStaticText *stTotal;
   TStaticText *stSpeed;
-  TStatusBar *sbStatus;
+  TEdit *eDest;
+  TEdit *eSrc;
+  TSpeedButton *sbSrc;
+  TSpeedButton *sbDest;
+  TLabel *Label2;
+  TLabel *Label1;
+  TBitBtn *bbRun;
+  TLabel *lLog;
+  TLabel *Label6;
+  TLabel *Label7;
+  TEdit *eDupSource;
+  TSpeedButton *SpeedButton1;
+  TBitBtn *BitBtn1;
+  TLabel *Label8;
+  TProgressBar *pbDupAverall;
+  TStaticText *StaticText1;
+  TLabel *Label9;
+  TProgressBar *pbDupFC;
+  TLabel *Label10;
+  TStaticText *stDupCurrentFile;
+  TLabel *Label11;
+  TStaticText *stDupAverageSpeed;
+  TLabel *Label12;
+  TRichEdit *RichEdit1;
+  TListView *lvDublicates;
   void __fastcall sbSrcClick(TObject *Sender);
   void __fastcall bbRunClick(TObject *Sender);
 private:	// User declarations
