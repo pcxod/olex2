@@ -176,7 +176,7 @@ void DoRun(const olxstr& basedir)  {
   }
   if( settings.ParamExists("skip") )  {
     filesToSkip.Strtok(settings.ParamValue("skip", EmptyString), ';');
-    TBasicApp::GetLog() << "Skipping the following files: " << extensionsToSkip.Text(' ') << '\n';
+    TBasicApp::GetLog() << "Skipping the following files: " << filesToSkip.Text(' ') << '\n';
   }
   if( TEFile::ExtractFileExt(Repository).Comparei("zip") != 0 )
     if( Repository.Length() && !Repository.EndsWith('/') )
@@ -209,7 +209,7 @@ void DoRun(const olxstr& basedir)  {
     if( TEFile::FileAge(Repository) > LastUpdate )  {
       Update = true;
       bool skip = !(extensionsToSkip.IsEmpty() || filesToSkip.IsEmpty());
-      UpdateInstallationZ( Repository, props, skip ? NULL : &toSkip );
+      UpdateInstallationZ( Repository, props, !skip ? NULL : &toSkip );
     }
   }
   else  {
@@ -226,7 +226,7 @@ void DoRun(const olxstr& basedir)  {
       
     if( Update )  {
       bool skip = !(extensionsToSkip.IsEmpty() || filesToSkip.IsEmpty());
-      UpdateInstallationH( url, props, skip ? NULL : &toSkip );
+      UpdateInstallationH( url, props, !skip ? NULL : &toSkip );
     }
   }
   if( Update )  { // have to save lastupdate in anyway

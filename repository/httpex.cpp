@@ -91,11 +91,12 @@ wxString THttp::GenerateAuthString(const wxString& user, const wxString& pass) c
 void THttp::SetPostBuffer(const olxstr& post_buf)  {  m_post_buf = post_buf;  }
 //............................................................................//
 void THttp::SendHeaders()  {
+  return;
   CString buf;
   for( int i=0; i < Headers.Count(); i++ )  {
     buf = Headers.GetComparable(i);  
     buf  << ": "  << Headers.GetObject(i) << "\r\n";
-//    Write( buf.raw_str(), buf.RawLen() );
+    Write( buf.raw_str(), buf.RawLen() );
   }
 }
 //............................................................................//
@@ -192,7 +193,7 @@ bool THttp::BuildRequest(const wxString& path, wxHTTP_Req req)  {
   Notify(false);
 
   wxString buf;
-  buf.Printf(wxT("%s %s HTTP/1.0\r\n"), request, path.c_str());
+  buf.Printf(wxT("%s %s HTTP/1.0\n\n"), request, path.c_str());
   const wxWX2MBbuf pathbuf = wxConvLocal.cWX2MB(buf);
   Write(pathbuf, strlen(wxMBSTRINGCAST pathbuf));
   SendHeaders();
