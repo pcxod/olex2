@@ -17,7 +17,7 @@
   #include <malloc.h>
   #include <io.h>
   #include <direct.h>
-
+  #define OLXSTR(A) (A).u_str()
   #ifdef _UNICODE
     #define UTIME _wutime
     #define unlink _wunlink
@@ -70,6 +70,8 @@
   #include <stdlib.h>
   #include <dirent.h>
   #include <utime.h>
+
+  #define OLXSTR(A) (A).c_str()
 
   #define makedir(a) mkdir((a), 0755)
   #define UTIME utime
@@ -199,11 +201,7 @@ TEFile::~TEFile()  {  Close();  }
 bool TEFile::Open(const olxstr& F, const olxstr& Attribs)  {
   Close();
   FName = OLX_OS_PATH(F);
-#ifdef __WIN32__
-  FHandle = fopen( FName.u_str(), Attribs.u_str());
-#else
-  FHandle = fopen( FName.c_str(), Attribs.c_str());
-#endif
+  FHandle = fopen( OLXSTR(FName), Attribs.u_str());
   if( FHandle == NULL )  {
     olxstr fn = FName;
     FName = EmptyString;
@@ -286,11 +284,7 @@ void TEFile::Seek( long Position, const int From)  {
 }
 //..............................................................................
 bool TEFile::FileExists(const olxstr& F)  {
-#ifdef __WIN32__
-  return (access( OLX_OS_PATH(F).u_str(), 0)  == -1 ) ? false : true;
-#else
-  return (access( OLX_OS_PATH(F).c_str(), 0)  == -1 ) ? false : true;
-#endif
+  return (access( OLXSTR(OLX_OS_PATH(F)), 0)  == -1 ) ? false : true;
 }
 //..............................................................................
 olxstr TEFile::ExtractFilePath(const olxstr &F)  {
@@ -355,24 +349,14 @@ olxstr TEFile::ChangeFileExt(const olxstr &F, const olxstr &Ext)  {
 bool TEFile::DelFile(const olxstr& F)  {
   if( !TEFile::FileExists(F) )  return true;
   olxstr fn = OLX_OS_PATH(F);
-#ifdef __WIN32__
-  if( !chmod(fn.u_str(), S_IWRITE) )
-    return (unlink(fn.u_str()) == -1) ? false: true;
-#else
-  if( !chmod(fn.c_str(), S_IWRITE) )
-    return (unlink(fn.c_str()) == -1) ? false: true;
-#endif
+  if( !chmod(OLXSTR(fn), S_IWRITE) )
+    return (unlink(OLXSTR(fn)) == -1) ? false: true;
   return false;
 }
 //..............................................................................
 bool TEFile::DelDir(const olxstr& F)  {
   if( !TEFile::FileExists(F) )  return true;
-  olxstr fn = OLX_OS_PATH(F);
-#ifdef __WIN32__
-  return (rmdir(fn.u_str()) == -1) ?  false : true;
-#else
-  return (rmdir(fn.c_str()) == -1) ?  false : true;
-#endif
+  return (rmdir(OLXSTR(OLX_OS_PATH(F))) == -1) ?  false : true;
 }
 //..............................................................................
 #ifdef __WIN32__
@@ -599,21 +583,13 @@ bool TEFile::SetFileTimes(const olxstr& fileName, uint64_t AccTime, uint64_t Mod
   struct UTIMBUF tb;
   tb.actime = AccTime;
   tb.modtime = ModTime;
-#ifdef __WIN32__
-  return UTIME(fileName.u_str(), &tb) == 0 ? true : false;
-#else
-  return UTIME(fileName.c_str(), &tb) == 0 ? true : false;
-#endif
+  return UTIME(OLXSTR(fileName), &tb) == 0 ? true : false;
 }
 //..............................................................................
 // thanx to Luc - I have completely forgotten about stat!
 time_t TEFile::FileAge(const olxstr& fileName)  {
   struct STAT_STR the_stat;
-#ifdef __WIN32__
-  if( STAT(OLX_OS_PATH(fileName).u_str(), &the_stat) != 0 )
-#else
-  if( STAT(OLX_OS_PATH(fileName).c_str(), &the_stat) != 0 )
-#endif
+  if( STAT(OLXSTR(OLX_OS_PATH(fileName)), &the_stat) != 0 )
     throw TInvalidArgumentException(__OlxSourceInfo, olxstr("Invalid file '") << fileName << '\'');
 #ifdef __BORLANDC__
   return the_stat.st_mtime;
@@ -629,11 +605,7 @@ time_t TEFile::FileAge(const olxstr& fileName)  {
 //..............................................................................
 long TEFile::FileLength(const olxstr& fileName)  {
   struct STAT_STR the_stat;
-#ifdef __WIN32__
-  if( STAT(OLX_OS_PATH(fileName).u_str(), &the_stat) != 0 )
-#else
-  if( STAT(OLX_OS_PATH(fileName).c_str(), &the_stat) != 0 )
-#endif
+  if( STAT(OLXSTR(OLX_OS_PATH(fileName)), &the_stat) != 0 )
     throw TFunctionFailedException(__OlxSourceInfo, "stat failed");
   return the_stat.st_size;
 }
@@ -676,11 +648,7 @@ bool TEFile::MakeDirs(const olxstr& Name)  {
 }
 //..............................................................................
 bool TEFile::MakeDir(const olxstr& Name)  {
-#ifdef __WIN32__
-  return ( makedir(OLX_OS_PATH(Name).u_str()) == -1 ) ? false : true;
-#else
-  return ( makedir(OLX_OS_PATH(Name).c_str()) == -1 ) ? false : true;
-#endif
+  return ( makedir(OLXSTR(OLX_OS_PATH(Name))) == -1 ) ? false : true;
 }
 //..............................................................................
 olxstr TEFile::OSPath(const olxstr &F)  {
@@ -776,11 +744,7 @@ TEFile* TEFile::TmpFile(const olxstr& templ)  {
 //..............................................................................
 bool TEFile::Rename(const olxstr& from, const olxstr& to, bool overwrite)  {
   if( FileExists(to) && ! overwrite )  return false;
-#ifdef __WIN32__
-  return rename( from.u_str(), to.u_str() ) != -1;
-#else
-  return rename( from.c_str(), to.c_str() ) != -1;
-#endif
+  return rename( OLXSTR(from), OLXSTR(to) ) != -1;
 }
 //..............................................................................
 void TEFile::Copy(const olxstr& From, const olxstr& To, bool overwrite )  {
