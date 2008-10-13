@@ -30,7 +30,7 @@ public:
   }
   virtual bool Execute(const IEObject *Sender, const IEObject *Data) {
     if( Data == &OnExpand )  {
-      fMain->sbStatus->Panels->Items[0]->Text = OnExpand.GetAction().u_str();
+      fMain->sbSyncStatus->Panels->Items[0]->Text = OnExpand.GetAction().u_str();
     }
     else if( Data == &OnCompare )  {
       fMain->reEdit->Lines->Add( OnCompare.GetAction().u_str() );
@@ -40,7 +40,7 @@ public:
         double dv = 100.0/OnFileCopy.GetMax();
         fMain->pbFC->Position = (int)(OnFileCopy.GetPos()*dv);
         fMain->stCurrent->Caption = TEFile::ExtractFileName(OnFileCopy.GetAction()).u_str();
-        fMain->sbStatus->Panels->Items[0]->Text = TEFile::ExtractFilePath(OnFileCopy.GetAction()).u_str();
+        fMain->sbSyncStatus->Panels->Items[0]->Text = TEFile::ExtractFilePath(OnFileCopy.GetAction()).u_str();
       }
     }
     if( Data == &OnSync || Data == &OnFileCopy )  {
