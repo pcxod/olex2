@@ -129,9 +129,10 @@ void TFSItem::operator >> (TStrList& S) const  {
 int TFSItem::ReadStrings(int& index, TFSItem* caller, TStrList& strings, const TFSItem::SkipOptions* toSkip)  {
   TStrList toks, propToks;
   while( (index + 2) <= strings.Count() )  {
-    int level = strings[index].LeadingCharCount( '\t' ), nextlevel = 0;
-    olxstr name = strings[index].Trim('\t'), 
-      ext = TEFile::ExtractFileExt(name);
+    int level = strings[index].LeadingCharCount( '\t' ), 
+        nextlevel = 0;
+    olxstr name( strings[index].Trim('\t') ), 
+           ext( TEFile::ExtractFileExt(name) );
     bool skip = false, folder = false;
     TFSItem* item = NULL;
     if( (index+2) < strings.Count() )  {
@@ -139,24 +140,49 @@ int TFSItem::ReadStrings(int& index, TFSItem* caller, TStrList& strings, const T
       if( nextlevel > level )  
         folder = true;
     }
-    if( !folder && toSkip != NULL  )  {
-      if( toSkip->extsToSkip != NULL && !ext.IsEmpty() )  {  
-        for( int i=0; i < toSkip->extsToSkip->Count(); i++ )  {
-          if( (*toSkip->extsToSkip)[i].Comparei(ext) == 0 )  {
-            skip = true;
-            break;
+    if( toSkip != NULL )  {  // skip business
+      if( folder )  {
+        if( toSkip->filesToSkip != NULL )  {
+          for( int i=0; i < toSkip->filesToSkip->Count(); i++ )  {
+            if( (*toSkip->filesToSkip)[i].Comparei(name) == 0 )  {
+              skip = true;
+              break;
+            }
+          }
+          if( skip )  {
+            index++;
+            for( int i=index+1; i < strings.Count(); i+=2 )  {
+              nextlevel = strings[i].LeadingCharCount('\t');
+              if( nextlevel <= level )  {
+                index = i;
+                break;
+              }
+            }
+            if( nextlevel < level )  
+              return  nextlevel;
+            continue;
           }
         }
       }
-      if( !skip && toSkip->filesToSkip != NULL )  {
-        for( int i=0; i < toSkip->filesToSkip->Count(); i++ )  {
-          if( (*toSkip->filesToSkip)[i].Comparei(name) == 0 )  {
-            skip = true;
-            break;
+      else  {
+        if( toSkip->extsToSkip != NULL && !ext.IsEmpty() )  {  
+          for( int i=0; i < toSkip->extsToSkip->Count(); i++ )  {
+            if( (*toSkip->extsToSkip)[i].Comparei(ext) == 0 )  {
+              skip = true;
+              break;
+            }
+          }
+        }
+        if( !skip && toSkip->filesToSkip != NULL )  {
+          for( int i=0; i < toSkip->filesToSkip->Count(); i++ )  {
+            if( (*toSkip->filesToSkip)[i].Comparei(name) == 0 )  {
+              skip = true;
+              break;
+            }
           }
         }
       }
-    }
+    }  // end skip business
     if( !skip )  {
       item = &NewItem( name );
       item->SetFolder(folder);

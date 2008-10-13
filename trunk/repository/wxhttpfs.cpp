@@ -25,9 +25,9 @@ IInputStream* TwxHttpFileSystem::OpenFile(const olxstr& Source)  {
   TBasicApp::GetInstance()->OnProgress->Enter(this, &Progress);
   wxInputStream* is = NULL;
   try  {
-    olxstr src;
-    if( Url.HasProxy() )
-      src << Url.GetFullHost();
+    olxstr src( Url.GetFullHost() );
+    //if( Url.HasProxy() )  // 2008-10-13
+    //  src << Url.GetFullHost();
     src << o_src;
     src.Replace(' ', "%20");
     is = Http.GetInputStream( src.u_str() );
