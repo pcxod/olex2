@@ -201,7 +201,7 @@ TEFile::~TEFile()  {  Close();  }
 bool TEFile::Open(const olxstr& F, const olxstr& Attribs)  {
   Close();
   FName = OLX_OS_PATH(F);
-  FHandle = fopen( OLXSTR(FName), Attribs.u_str());
+  FHandle = fopen( OLXSTR(FName), OLXSTR(Attribs));
   if( FHandle == NULL )  {
     olxstr fn = FName;
     FName = EmptyString;
