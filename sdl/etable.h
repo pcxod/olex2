@@ -213,8 +213,14 @@ public:
                       unsigned short colCount = 1) const  {
 
     olxstr Tmp;
-    if( !Title.IsEmpty() )  L.Add("<p ") << titlePAttr << '>' << Title << "</p>";
-    if( Format )    L.Add( olxstr("<table ") << tabAttr << '>' );
+    if( Format )  {
+      L.Add( olxstr("<table ") << tabAttr << '>' );
+      if( !Title.IsEmpty() )  
+        L.Add("<caption ") << titlePAttr << '>' << Title << "</caption>";
+    }
+    else if( !Title.IsEmpty() )  
+      L.Add("<p ") << titlePAttr << '>' << Title << "</p>";
+    else
     if( colNames )  {
       if( rowNames )  Tmp << "<th>" << colTitleRowAttr << "</th>";
       for( int i=0; i < colCount; i++ )  {
