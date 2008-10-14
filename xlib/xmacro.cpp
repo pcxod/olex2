@@ -1329,7 +1329,9 @@ void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options, TMacro
     Cif = &Cif1;
   }
 
-  TStrList SL, Dic, SL1;
+  TStrList SL, SL1, Dic, 
+    CLA, // cell attributes
+    THA;  // header (th) attributes
   TDataFile DF;
   TDataItem *TD, *Root;
   TTTable<TStrList> DT;
@@ -1369,11 +1371,15 @@ void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options, TMacro
       Tmp.Replace("%DATA_NAME%", Cif->GetDataName());
       if( Tmp.IndexOf("$") >= 0 )
         ProcessExternalFunction( Tmp );
-      SL1.Clear();
       // attributes of the row names ...
-      SL1.Add(EmptyString);
-      for( int j=0; j < TD->ItemCount(); j++ )
-        SL1.Add( TD->Item(j).GetFieldValue("cola", EmptyString) );
+      CLA.Clear();
+      THA.Clear();
+      CLA.Add( TD->GetFieldValue("tha", EmptyString) );
+      THA.Add( TD->GetFieldValue("tha", EmptyString) );
+      for( int j=0; j < TD->ItemCount(); j++ )  {
+        CLA.Add( TD->Item(j).GetFieldValue("cola", EmptyString) );
+        THA.Add( TD->Item(j).GetFieldValue("tha", EmptyString) );
+      }
 
       olxstr footer;
       for(int i=0; i < SymmList.Count(); i++ )  {
@@ -1389,10 +1395,10 @@ void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options, TMacro
                       true, false,
                       TD->GetFieldValue("tita", EmptyString),  // title paragraph attributes
                       TD->GetFieldValue("foota", EmptyString),  // footer paragraph attributes
-                      TD->GetFieldValue("tha", EmptyString), // const olxstr& colTitleRowAttr,
                       TD->GetFieldValue("taba", EmptyString),  //const olxstr& tabAttr,
                       TD->GetFieldValue("rowa", EmptyString),  //const olxstr& rowAttr,
-                      SL1, //const TStrList& colAttr,
+                      THA, // header attributes
+                      CLA, // cell attributes,
                       true,
                       TD->GetFieldValue("coln", "1").ToInt()
                       ); //bool Format) const  {

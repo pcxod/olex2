@@ -205,10 +205,10 @@ public:
                       bool colNames, bool rowNames,
                       const olxstr& titlePAttr,
                       const olxstr& footerPAttr,
-                      const olxstr& colTitleRowAttr,
                       const olxstr& tabAttr,
                       const olxstr& rowAttr,
-                      const TStrList& colAttr,
+                      const TStrList& thAttr,
+                      const TStrList& clAttr,
                       bool Format=true,
                       unsigned short colCount = 1) const  {
 
@@ -220,17 +220,12 @@ public:
     }
     else if( !Title.IsEmpty() )  
       L.Add("<p ") << titlePAttr << '>' << Title << "</p>";
-    else
+
     if( colNames )  {
-      if( rowNames )  Tmp << "<th>" << colTitleRowAttr << "</th>";
+      if( rowNames )  Tmp << "<th>" << thAttr[0] << "</th>";
       for( int i=0; i < colCount; i++ )  {
-        for( int j=0; j < ColNames.Count(); j++ )  {
-          if( (j+1) < colAttr.Count() )
-            Tmp << "<th " << colAttr[j+1] << '>';
-          else
-            Tmp << "<th>";
-          Tmp << ColNames[j] << "</th>";
-        }
+        for( int j=0; j < ColNames.Count(); j++ )
+          Tmp << "<th " << thAttr[j+1] << '>' << ColNames[j] << "</th>";
       }
       L.Add( (Tmp << "</tr>") );
     } //!ColNames
@@ -243,15 +238,15 @@ public:
         int index = i+ j*(Rows.Count()+inc)/colCount;
         if( index >= RowCount() )  {
           if( rowNames )
-            Tmp << "<td>&nbsp;</td>";
+            Tmp << "<td " << clAttr[0] << ">&nbsp;</td>";
           for( int k=0; k < ColNames.Count(); k++ )
-            Tmp << "<td>&nbsp;</td>";
+            Tmp << "<td " << clAttr[k+1] << ">&nbsp;</td>";
           continue;
         }
         if( rowNames )
-          Tmp << "<td>" << RowNames[index] << "</td>";
+          Tmp << "<td " << clAttr[0] << '>' << RowNames[index] << "</td>";
         for( int k=0; k < ColNames.Count(); k++ )
-          Tmp << "<td>" << Rows[index][k] << "</td>";
+          Tmp << "<td " << clAttr[k+1] << '>' << Rows[index][k] << "</td>";
       }
       L.Add( (Tmp << "</tr>") );
     }
