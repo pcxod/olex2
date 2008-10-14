@@ -283,24 +283,26 @@ int TFSItem::TotalItemsCount(int &cnt)  {
   return cnt;
 }
 //..............................................................................
-long int TFSItem::TotalItemsSize(long int &cnt)  {
+double TFSItem::TotalItemsSize(double& cnt, const TStrList& props)  {
   for( int i=0; i < Count(); i++ )  {
     TFSItem& FS = Item(i);
     if( FS.IsFolder() )
-      FS.TotalItemsSize(cnt);
-    else
-      cnt += FS.GetSize();
+      FS.TotalItemsSize(cnt, props);
+    else  {
+      if( FS.ValidateProperties(props) ) 
+        cnt += FS.GetSize();
+    }
   }
   return cnt;
 }
 //..............................................................................
-int TFSItem::Synchronize(TFSItem* Caller, TFSItem& Dest, const TStrList& properties, bool Count)  {
+double TFSItem::Synchronize(TFSItem* Caller, TFSItem& Dest, const TStrList& properties, bool Count)  {
   static TOnProgress Progress;
-  static long int fc=0;
+  static double fc=0;
   if( Caller == NULL )  {
     fc = 0;
     Progress.SetMax( Synchronize(this, Dest, properties, true) );
-    if( !fc )  return 0;  // nothing to do then ...
+    if( fc == 0 )  return 0;  // nothing to do then ...
     fc = 0;
     Progress.SetPos( 0.0 );
     TBasicApp::GetInstance()->OnProgress->Enter(this, &Progress);
@@ -315,9 +317,7 @@ int TFSItem::Synchronize(TFSItem* Caller, TFSItem& Dest, const TStrList& propert
       Progress.SetAction( FI.GetFullName() );
       Progress.IncPos( FI.GetSize() );
       TBasicApp::GetInstance()->OnProgress->Execute(this, &Progress);
-    }                                        
-    else
-      fc += FI.GetSize();
+    } 
 
     TFSItem* Res = FindByName( FI.GetName() );
     if( FI.IsFolder() && Res!= NULL )  {
@@ -331,41 +331,26 @@ int TFSItem::Synchronize(TFSItem* Caller, TFSItem& Dest, const TStrList& propert
     }
     else  {
       Res->SetProcessed(true);
-      if( !FI.IsFolder() && FI.Properties.Count() != 0 && properties.Count() != 0 )  {
-        bool proceed = false;
-        for(int j=0; j < properties.Count(); j++ )  {
-          if( FI.HasProperty( properties.String(j) ) )  {
-            proceed = true;  break;
-          }
-        }
-        if( !proceed )  continue;
-      }
+      if( !FI.ValidateProperties(properties) )
+        continue;
       if( Res->GetDateTime() > FI.GetDateTime() ||
           !FI.GetFileSystem().FileExists(FI.GetFileSystem().GetBase() + FI.GetFullName()) )  {
         if( !Count )
           FI.UpdateFile(*Res);
+        fc += FI.GetSize();
       }
     }
   }
   /* add new files ans update the changed ones */
   for( int i=0; i < this->Count(); i++ )  {
     TFSItem& FI = Item(i);
-    if( !FI.IsFolder() && FI.Properties.Count() != 0 && properties.Count() != 0 )  {
-      bool proceed = false;
-      for(int j=0; j < properties.Count(); j++ )  {
-        if( FI.HasProperty( properties.String(j) ) )  {
-          proceed = true;  break;
-        }
-      }
-      if( !proceed )  continue;
-    }
+    if( !FI.ValidateProperties(properties) ) 
+      continue;
     if( !Count )  {
       Progress.SetAction( FI.GetFullName() );
       Progress.IncPos( FI.GetSize() );
       TBasicApp::GetInstance()->OnProgress->Execute(this, &Progress);
     }
-    else
-      fc += FI.GetSize();
 
     if( FI.IsProcessed() )  continue;
     if( FI.IsFolder() )  {
@@ -375,11 +360,12 @@ int TFSItem::Synchronize(TFSItem* Caller, TFSItem& Dest, const TStrList& propert
           FI.Synchronize(this, *Res, properties);
       }
       else
-        FI.TotalItemsSize(fc);
+        FI.TotalItemsSize(fc, properties);
     }
     else  {
       if( !Count )
         Dest.UpdateFile(FI);
+      fc += FI.GetSize();
     }
   }
   if( this->GetParent() == NULL )  {
@@ -585,24 +571,24 @@ void TFSIndex::SaveIndex(const olxstr &IndexFile)  {
   delete tmp_f;
 }
 //..............................................................................
-int TFSIndex::Synchronise(AFileSystem& To, const TStrList& properties, const TFSItem::SkipOptions* toSkip)  {
+double TFSIndex::Synchronise(AFileSystem& To, const TStrList& properties, const TFSItem::SkipOptions* toSkip)  {
   TFSIndex DestI(To);
   olxstr SrcInd;   SrcInd << GetRoot().GetFileSystem().GetBase() << "index.ind";
   olxstr DestInd;  DestInd << To.GetBase() << "index.ind";
-  FilesUpdated = 0;
+  double BytesTransfered= 0;
   try  {
     LoadIndex(SrcInd, toSkip);
     if( To.FileExists(DestInd) )
       DestI.LoadIndex(DestInd);
-    FilesUpdated = GetRoot().Synchronize(NULL, DestI.GetRoot(), properties );
-
-    DestI.SaveIndex(DestInd);
+    BytesTransfered = GetRoot().Synchronize(NULL, DestI.GetRoot(), properties );
+    if( BytesTransfered != 0 )
+      DestI.SaveIndex(DestInd);
   }
   catch( const TExceptionBase& exc )  {
     throw TFunctionFailedException(__OlxSourceInfo, exc);
   }
 
-  return FilesUpdated;
+  return BytesTransfered;
 }
 //..............................................................................
 bool TFSIndex::UpdateFile(AFileSystem& To, const olxstr& fileName, bool Force)  {

@@ -99,15 +99,21 @@ public:
   }
   virtual wxInputStream* wxOpenFile(const olxstr& Source) {  return Ftp.GetInputStream(Source.u_str());  }
   virtual bool FileExists(const olxstr& DN)  {  
-    // hack here... too slow otherwise, suume that index IS up-todate
+    // hack here... too slow otherwise, assume that index IS up-to-date
     olxstr fn( NormaliseName(DN).u_str() );
     if( fn == "index.ind" )
       return Ftp.FileExists( wxT("index.ind") );  
     return true;
   }
 
-  virtual bool DelFile(const olxstr& FN)     {  return Ftp.RmFile(NormaliseName(FN).u_str());    }
-  virtual bool DelDir(const olxstr& DN)      {  return Ftp.RmDir(NormaliseName(DN).u_str());     }
+  virtual bool DelFile(const olxstr& FN)     {  // to dangerous
+    return true;
+    return Ftp.RmFile(NormaliseName(FN).u_str());    
+  }
+  virtual bool DelDir(const olxstr& DN)      {  // too dangerous
+    return true; 
+    //return Ftp.RmDir(NormaliseName(DN).u_str());     
+  }
   virtual bool AdoptFile(const TFSItem& src){  
     IInputStream* is = NULL;
     try  {  
@@ -139,7 +145,7 @@ public:
       olxstr path = (ind != -1) ? rel_path.SubStringTo(ind) : EmptyString;
       olxstr fn( ind == 0-1 ? rel_path : rel_path.SubStringFrom(ind+1) );
       int depth = 0;
-      if( !path.IsEmpty() && !FileExists(path) )  {
+      if( !path.IsEmpty() && !Ftp.FileExists(path.u_str()) )  {
         if( !NewDir(path) )  
           throw TFunctionFailedException(__OlxSourceInfo, olxstr("Mkdir \'") << path << '\'');
       }
