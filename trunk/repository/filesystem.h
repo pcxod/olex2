@@ -114,6 +114,13 @@ public:
   inline bool HasProperty( const olxstr& pn )  const {
     return Properties.IndexOfComparable(pn) != -1;
   }
+  inline bool ValidateProperties( const TStrList& prs )  const {
+    if( Properties.IsEmpty() || prs.IsEmpty() )  return true;
+    for( int i=0; i < prs.Count(); i++ )
+      if( Properties.IndexOfComparable(prs[i]) != -1 )
+        return true;
+    return false;
+  }
   void ListUniqueProperties(TCSTypeList<olxstr, void*>& Properties);
 
   inline bool IsFolder()  const     {  return Folder; }
@@ -142,7 +149,7 @@ public:
   inline AFileSystem& GetFileSystem()  const   {  return *FileSystem; }
   inline void SetFileSystem(AFileSystem& FS)   {  FileSystem = &FS; }
   // caller must be NULL, when invoked externally
-  int Synchronize(TFSItem* Caller, TFSItem& Dest, const TStrList& properties, bool Count=false);
+  double Synchronize(TFSItem* Caller, TFSItem& Dest, const TStrList& properties, bool Count=false);
   TFSItem* UpdateFile(TFSItem& FN);
   void DelFile();
 
@@ -150,7 +157,7 @@ public:
   inline void SetProcessed(bool v) {  Processed = v; }
 
   int TotalItemsCount(int &cnt);
-  long int TotalItemsSize(long int &cnt);
+  double TotalItemsSize(double& cnt, const TStrList& props);
 
   static TGraphTraverser<TFSItem> Traverser;
 };
@@ -162,15 +169,14 @@ private:
   TFSItem *Root;
 protected:
   olxstr Source,  Destination;
-  int FilesUpdated;
   TCSTypeList<olxstr, void*> Properties;
 public:
   TFSIndex(AFileSystem& fs);
   virtual ~TFSIndex();
   void LoadIndex(const olxstr& IndexFile, const TFSItem::SkipOptions* toSkip=NULL);
   void SaveIndex(const olxstr& IndexFile);
-  // returns the number of updated files
-  int Synchronise(AFileSystem& To, const TStrList& properties, const TFSItem::SkipOptions* toSkip=NULL);
+  // returns the number transfered bytes 
+  double Synchronise(AFileSystem& To, const TStrList& properties, const TFSItem::SkipOptions* toSkip=NULL);
   // returns true if the file is updated (added) and false otherwise
   bool UpdateFile(AFileSystem& To, const olxstr& fileName, bool Force);
   inline TFSItem& GetRoot()  const {  return *Root; }
