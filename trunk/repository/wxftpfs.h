@@ -12,6 +12,11 @@ class TwxFtpFileSystem: public AFileSystem, public IEObject  {
   wxFTP Ftp;
   TwxZipFileSystem* ZipFS;
   olxstr pwd;
+  olxstr NormaliseName(const olxstr& name) const {
+    olxstr fn( TEFile::UnixPath(name) );
+    fn = fn.StartsFrom(pwd) ? fn.SubStringFrom(pwd.Length()) : fn;
+    return fn.Trim('/');
+  }
 public:
   TwxFtpFileSystem(const TUrl& url, const olxstr& userName, const olxstr& pswd, TwxZipFileSystem* zipFS=NULL) : Url(url) {
     Ftp.SetUser( userName.u_str() );
@@ -38,7 +43,7 @@ public:
       ZipFS = zipFS;
   }
   virtual IInputStream* OpenFile(const olxstr& Source)  {
-    olxstr o_src(TEFile::UnixPath(Source));
+    olxstr o_src(NormaliseName(Source));
     olxstr zip_name = Source.SubStringFrom( Url.GetPath().Length()+1 );
     if( ZipFS != NULL && ZipFS->FileExists(zip_name) != 0 )  {
       return ZipFS->OpenFile(zip_name);
@@ -50,10 +55,7 @@ public:
     TBasicApp::GetInstance()->OnProgress->Enter(this, &Progress);
     wxInputStream* is = NULL;
     try  {
-      olxstr src( Url.GetFullHost() );
-      //if( Url.HasProxy() )  // 2008-10-13
-      //  src << Url.GetFullHost();
-      src << o_src;
+      olxstr src( o_src );
       src.Replace(' ', "%20");
       is = wxOpenFile( src );
       if( is != NULL )  {
@@ -96,13 +98,33 @@ public:
     
   }
   virtual wxInputStream* wxOpenFile(const olxstr& Source) {  return Ftp.GetInputStream(Source.u_str());  }
-  virtual bool FileExists(const olxstr& DN)  {  return Ftp.FileExists(DN.u_str());  }
+  virtual bool FileExists(const olxstr& DN)  {  
+    // hack here... too slow otherwise, suume that index IS up-todate
+    olxstr fn( NormaliseName(DN).u_str() );
+    if( fn == "index.ind" )
+      return Ftp.FileExists( wxT("index.ind") );  
+    return true;
+  }
 
-  virtual bool DelFile(const olxstr& FN)     {  return Ftp.RmFile(FN.u_str());    }
-  virtual bool DelDir(const olxstr& DN)      {  return Ftp.RmDir(DN.u_str());     }
+  virtual bool DelFile(const olxstr& FN)     {  return Ftp.RmFile(NormaliseName(FN).u_str());    }
+  virtual bool DelDir(const olxstr& DN)      {  return Ftp.RmDir(NormaliseName(DN).u_str());     }
   virtual bool AdoptFile(const TFSItem& src){  
-    olxstr rel_path( TEFile::UnixPath(src.GetFullName()) );
-    olxstr fn( GetBase() + rel_path );
+    IInputStream* is = NULL;
+    try  {  
+      is = src.GetFileSystem().OpenFile(src.GetFileSystem().GetBase() + src.GetFullName() );  
+      if( is != NULL )  
+        return AdoptStream(*is, TEFile::UnixPath(src.GetFullName()));
+    }
+    catch(const TExceptionBase& exc)  {
+      throw TFunctionFailedException(__OlxSourceInfo, exc);
+    }
+    if( is == NULL )  return false;
+    else
+      delete is;
+    return true;
+  }
+  virtual bool AdoptStream(IInputStream& in, const olxstr& as) {  
+    olxstr rel_path( NormaliseName(as) );
 //    OnAdoptFile->Execute( this, &F__N);
     TOnProgress Progress;
     Progress.SetMax(1);
@@ -110,13 +132,7 @@ public:
     Progress.SetAction(olxstr("Uploading ") << rel_path );
     TBasicApp::GetInstance()->OnProgress->Enter(this, &Progress);
 
-    IInputStream* is = NULL;
-    try  {  is = src.GetFileSystem().OpenFile(src.GetFileSystem().GetBase() + rel_path );  }
-    catch(const TExceptionBase& exc)  {
-      throw TFunctionFailedException(__OlxSourceInfo, exc);
-    }
-    if( is == NULL )  return false;
-    Progress.SetMax( is->GetSize() );
+    Progress.SetMax( in.GetSize() );
     try {
       //TStrList path_toks;
       int ind = rel_path.LastIndexOf('/');
@@ -135,9 +151,9 @@ public:
       char* bf = new char [bf_sz];
       size_t read = 0;
       try {
-        while( (read = is->SafeRead(bf, bf_sz)) > 0 )  {
+        while( (read = in.SafeRead(bf, bf_sz)) > 0 )  {
           out->Write(bf, read);
-          Progress.SetPos( is->GetPosition() );
+          Progress.SetPos( in.GetPosition() );
           TBasicApp::GetInstance()->OnProgress->Execute(this, &Progress);
         }
         Progress.SetAction("Upload complete");
@@ -152,36 +168,29 @@ public:
       }
       delete out;
       delete [] bf;
-      delete is;
     }
     catch( const TExceptionBase& exc )  {
-      delete is;
       throw TFunctionFailedException(__OlxSourceInfo, exc);
     }
     return true;
   }
   virtual bool NewDir(const olxstr& DN)      {  
-    olxstr norm_path( TEFile::UnixPath(DN) ),
-           rel_path(norm_path);
-    if( norm_path.StartsFrom(pwd) )  {  // absolute location
-      rel_path = norm_path.SubStringFrom(pwd.Length());
-      rel_path.Trim('/');
-      if( rel_path.FirstIndexOf('/') != -1 )  {
-        TStrList toks(rel_path, '/');
-        for( int i=0; i < toks.Count(); i++ )  {
-          if( !Ftp.FileExists( toks[i].u_str() ) )
-            if( !Ftp.MkDir(toks[i].u_str()) )
-              return false;
-          if( !Ftp.ChDir(toks[i].u_str()) )
+    olxstr norm_path( NormaliseName(DN) );
+    if( norm_path.FirstIndexOf('/') != -1 )  {
+      TStrList toks(norm_path, '/');
+      for( int i=0; i < toks.Count(); i++ )  {
+        if( !Ftp.FileExists( toks[i].u_str() ) )
+          if( !Ftp.MkDir(toks[i].u_str()) )
             return false;
-        }
-        for( int i=0; i < toks.Count(); i++ )  // restore the level
-          if( !Ftp.ChDir(wxT("..")) )
-            return false;
-        return true;
+        if( !Ftp.ChDir(toks[i].u_str()) )
+          return false;
       }
+      for( int i=0; i < toks.Count(); i++ )  // restore the level
+        if( !Ftp.ChDir(wxT("..")) )
+          return false;
+      return true;
     }
-    return Ftp.MkDir(rel_path.u_str());     
+    return Ftp.MkDir(norm_path.u_str());     
   }
   virtual bool ChangeDir(const olxstr& DN)   {  
     if( Ftp.ChDir( DN.u_str() ) )  {

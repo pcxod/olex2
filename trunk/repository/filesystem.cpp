@@ -32,6 +32,25 @@ bool TOSFileSystem::DelDir(const olxstr& DN)  {
   return true;
 }
 //..............................................................................
+bool TOSFileSystem::AdoptStream(IInputStream& f, const olxstr& name)  {
+  F__N = name;
+  OnAdoptFile->Execute( this, &F__N);
+
+  try {
+    olxstr path = TEFile::ExtractFilePath( name );
+    if( !TEFile::FileExists(path) )
+      if( !TEFile::MakeDir(path) )
+        if( !TEFile::MakeDirs(path) )
+          throw TFunctionFailedException(__OlxSourceInfo, olxstr("Mkdir \'") << path << '\'');
+    TEFile destFile(name, "wb+");
+    destFile << f;
+  }
+  catch( const TExceptionBase& exc )  {
+    throw TFunctionFailedException(__OlxSourceInfo, exc);
+  }
+  return true;
+}
+//..............................................................................
 bool TOSFileSystem::AdoptFile(const TFSItem& Src)  {
   F__N = GetBase() + Src.GetFullName();
   OnAdoptFile->Execute( this, &F__N);
@@ -477,6 +496,8 @@ TFSItem& TFSItem::NewItem(TFSItem* item)  {
 }
 //..............................................................................
 void TFSItem::ClearNonexisting()  {
+  if( !EsdlInstanceOf(GetFileSystem(), TOSFileSystem) ) 
+    return;
   for( int i=0; i < Count(); i++ )  {
     if( !Item(i).IsFolder() )  {
       if( !GetFileSystem().FileExists( GetFileSystem().GetBase() + Item(i).GetFullName()) )  {
@@ -551,7 +572,17 @@ void TFSIndex::SaveIndex(const olxstr &IndexFile)  {
 
   for( int i=0; i < GetRoot().Count(); i++ )
     GetRoot().Item(i) >> strings;
-  TCStrList(strings).SaveToFile(IndexFile );
+  TEFile* tmp_f = TEFile::TmpFile(EmptyString);
+  TCStrList(strings).SaveToTextStream(*tmp_f);
+  tmp_f->SetPosition(0);
+  try  {
+    this->Root->GetFileSystem().AdoptStream(*tmp_f, IndexFile);
+  }
+  catch(const TExceptionBase& exc)  {
+    delete tmp_f;
+    throw TFunctionFailedException(__OlxSourceInfo, exc, "could not save index");
+  }
+  delete tmp_f;
 }
 //..............................................................................
 int TFSIndex::Synchronise(AFileSystem& To, const TStrList& properties, const TFSItem::SkipOptions* toSkip)  {

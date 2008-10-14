@@ -34,6 +34,8 @@ public:
   // returns a base at which the file system is initalised
   inline const olxstr& GetBase() const  {  return FBase; }
   inline void SetBase(const olxstr& b)  {  FBase = b; }
+
+  virtual bool AdoptStream(IInputStream& file, const olxstr& name) = 0;
 };
 //.............................................................................//
 //.............................................................................//
@@ -48,6 +50,7 @@ public:
   virtual bool DelFile(const olxstr& FN);
   virtual bool DelDir(const olxstr& DN);
   virtual bool AdoptFile(const TFSItem& Source);
+  virtual bool AdoptStream(IInputStream& file, const olxstr& name);
   virtual bool NewDir(const olxstr& DN);
   virtual bool FileExists(const olxstr& DN);
   // not that the stream must be deleted
