@@ -8,20 +8,22 @@
 #include "outstream.h"
 #include "efile.h"
 #include "wxzipfs.h"
-#ifdef __WIN32__
-  #include "winzipfs.h"
-  #include "winhttpfs.h"
-#endif
+//#ifdef __WIN32__
+//  #include "winzipfs.h"
+//  #include "winhttpfs.h"
+//#endif
 #include "etime.h"
 #include "settingsfile.h"
 #include "datafile.h"
 #include "dataitem.h"
 #include "wxhttpfs.h"
+#include "wxftpfs.h"
 
 class TProgress: public AActionHandler  {
   inline bool IsFSSender(const IEObject* obj) const {
     if( obj != NULL && (EsdlInstanceOf(*obj, TwxHttpFileSystem) || 
-                        EsdlInstanceOf(*obj, TwxZipFileSystem)  )
+                        EsdlInstanceOf(*obj, TwxZipFileSystem)  ||
+                        EsdlInstanceOf(*obj, TwxFtpFileSystem)  )
                         ) return true;
     return false;
   }
@@ -61,6 +63,20 @@ public:
   }
 };
 
+bool UpdateMirror( AFileSystem& src, TwxFtpFileSystem& dest )  {
+  try  {
+    TFSIndex FI( src );
+    TStrList empty;
+    return FI.Synchronise(dest, empty, NULL);
+  }
+  catch( TExceptionBase& exc )  {
+    TStrList out;
+    exc.GetException()->GetStackTrace(out);
+    TBasicApp::GetLog() << "Update failed due to :\n" << out.Text('\n');
+    return false;
+  }
+}
+//---------------------------------------------------------------------------
 bool UpdateInstallationH( const TUrl& url, const TStrList& properties, const TFSItem::SkipOptions* toSkip )  {
   try  {
     TOSFileSystem DestFS; // local file system
@@ -157,7 +173,8 @@ void DoRun(const olxstr& basedir)  {
     return;
   }
   olxstr Proxy, Repository = "http://dimas.dur.ac.uk/olex-distro/update",
-           UpdateInterval = "Always";
+           UpdateInterval = "Always",
+           ftpToSync, ftpUser, ftpPwd, syncSrc;
   int LastUpdate = 0;
   TStrList extensionsToSkip, filesToSkip;
   TFSItem::SkipOptions toSkip;
@@ -174,6 +191,15 @@ void DoRun(const olxstr& basedir)  {
     extensionsToSkip.Strtok(settings.ParamValue("exceptions", EmptyString), ';');
     TBasicApp::GetLog() << "Skipping the following extensions: " << extensionsToSkip.Text(' ') << '\n';
   }
+  if( settings.ParamExists("ftpToSync") )  {
+    TStrList toks(settings.ParamValue("ftpToSync", EmptyString), ';');
+    ftpToSync = toks[0];
+    if( toks.Count() > 1 )  ftpUser = toks[1];
+    if( toks.Count() > 2 )  ftpPwd = toks[2];
+    TBasicApp::GetLog() << "Synchronising the following ftp mirror: " << ftpToSync << '\n';
+  }
+  syncSrc = settings.ParamValue("sync", "fs2Ftp");
+
   if( settings.ParamExists("skip") )  {
     filesToSkip.Strtok(settings.ParamValue("skip", EmptyString), ';');
     TBasicApp::GetLog() << "Skipping the following files: " << filesToSkip.Text(' ') << '\n';
@@ -232,6 +258,34 @@ void DoRun(const olxstr& basedir)  {
   if( Update )  { // have to save lastupdate in anyway
     settings.UpdateParam("lastupdate", TETime::EpochTime() );
     settings.SaveSettings( SettingsFile );
+  }
+  if( !ftpToSync.IsEmpty() )  {
+    AFileSystem* FS = NULL;
+    try  {
+      if( syncSrc.Comparei("fs2Ftp") == 0 )  {
+        FS = new TOSFileSystem; // local file system
+        FS->SetBase( TBasicApp::GetInstance()->BaseDir() );
+        FS->SetBase( TEFile::AddTrailingBackslash( FS->GetBase() ) );
+      }
+      else if( syncSrc.Comparei("http2Ftp") == 0 )  {
+        TUrl url(Repository);
+        if( !Proxy.IsEmpty() )  url.SetProxy( Proxy );
+        FS = new TwxHttpFileSystem(url);    
+      }
+    }
+    catch(...)  {
+      TBasicApp::GetLog() << "Was unable to initialise source file system to syncronise an ftp mirror\n";
+    }
+    if( FS != NULL )  {
+      try  {
+        TwxFtpFileSystem ftp(ftpToSync, ftpUser, ftpPwd, NULL);  
+        UpdateMirror(*FS, ftp);
+      }
+      catch(...)  {
+        TBasicApp::GetLog() << "An error accured while synchonising the ftp mirror\n";
+      }
+      delete FS;
+    }
   }
 }
 

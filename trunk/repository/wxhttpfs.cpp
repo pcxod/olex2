@@ -60,8 +60,6 @@ IInputStream* TwxHttpFileSystem::OpenFile(const olxstr& Source)  {
     TBasicApp::GetInstance()->OnProgress->Exit(this, &Progress);
   }
   catch(...)  {
-    delete ms;
-    ms = NULL;
     Progress.SetAction("Download failed");
     Progress.SetPos( 0 );
     TBasicApp::GetInstance()->OnProgress->Execute(this, &Progress);
