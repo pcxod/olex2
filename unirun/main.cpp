@@ -234,8 +234,8 @@ void DoRun(const olxstr& basedir)  {
       Repository = TBasicApp::GetInstance()->BaseDir() + Repository;
     if( TEFile::FileAge(Repository) > LastUpdate )  {
       Update = true;
-      bool skip = !(extensionsToSkip.IsEmpty() || filesToSkip.IsEmpty());
-      UpdateInstallationZ( Repository, props, !skip ? NULL : &toSkip );
+      bool skip = (extensionsToSkip.IsEmpty() && filesToSkip.IsEmpty());
+      UpdateInstallationZ( Repository, props, skip ? NULL : &toSkip );
     }
   }
   else  {
@@ -251,8 +251,8 @@ void DoRun(const olxstr& basedir)  {
     if( !Proxy.IsEmpty() )  url.SetProxy( Proxy );
       
     if( Update )  {
-      bool skip = !(extensionsToSkip.IsEmpty() || filesToSkip.IsEmpty());
-      UpdateInstallationH( url, props, !skip ? NULL : &toSkip );
+      bool skip = !(extensionsToSkip.IsEmpty() && filesToSkip.IsEmpty());
+      UpdateInstallationH( url, props, skip ? NULL : &toSkip );
     }
   }
   if( Update )  { // have to save lastupdate in anyway
