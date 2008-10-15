@@ -387,18 +387,16 @@ void XLibMacros::macFile(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   
   XApp.XFile().SaveToFile(Tmp, Sort);
   if( XApp.XFile().HasLastLoader() )  {
-    Tmp = TEFile::ExtractFilePath(Tmp);
-    if( !Tmp.IsEmpty() && (Tmp.Comparei(CurrentDir)) )  {
-      if( !TEFile::ChangeDir(Tmp) )
+    olxstr fd = TEFile::ExtractFilePath(Tmp);
+    if( !fd.IsEmpty() && (fd.Comparei(CurrentDir)) )  {
+      if( !TEFile::ChangeDir(fd) )
         TBasicApp::GetLog().Error("Cannot change current folder...");
       else
-        CurrentDir = Tmp;
+        CurrentDir = fd;
     }
   }
-  else  {
-    olex::IOlexProcessor* op = olex::IOlexProcessor::GetInstance();
-    if( op != NULL )
-      op->executeMacro(olxstr("reap \'") << Tmp << '\'');
+  else  if( !Sort )  {
+    Sort = true;  // forse reading the file
   }
   if( removedSAtoms.Count() != 0 )  {  // need to restore, abit of mess here...
     TLattice& latt = XApp.XFile().GetLattice();
@@ -407,6 +405,11 @@ void XLibMacros::macFile(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       if( removedSAtoms.Get(i) )  sa.SetDeleted(false);
       if( removedCAtoms.Get(i) )  sa.CAtom().SetDeleted(false);
     }
+  }
+  if( Sort )  {
+    olex::IOlexProcessor* op = olex::IOlexProcessor::GetInstance();
+      if( op != NULL )
+        op->executeMacro(olxstr("reap \'") << Tmp << '\'');
   }
 }
 //..............................................................................
