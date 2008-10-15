@@ -251,7 +251,7 @@ void DoRun(const olxstr& basedir)  {
     if( !Proxy.IsEmpty() )  url.SetProxy( Proxy );
       
     if( Update )  {
-      bool skip = !(extensionsToSkip.IsEmpty() && filesToSkip.IsEmpty());
+      bool skip = (extensionsToSkip.IsEmpty() && filesToSkip.IsEmpty());
       UpdateInstallationH( url, props, skip ? NULL : &toSkip );
     }
   }
