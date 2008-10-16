@@ -147,8 +147,10 @@ xlib_InitMacro(File, "s-sort the main residue of the asymmetric unit", fpNone|fp
  and an argument is provided, that argument is returned");
   xlib_InitFunc(Ins, fpOne|psCheckFileTypeIns, "Returns instruction value (all data after the instruction). In case the instruction\
  does not exist it return 'n/a' string");
-  xlib_InitFunc(SG, fpNone|fpOne, "Returns space group of currently loaded file. Also takes a string template, where\
- %# is replaced with SG number, %n - short name, %N - full name and %h - Hall symbol" );
+  xlib_InitFunc(SG, fpNone|fpOne, "Returns space group of currently loaded file.\
+ Also takes a string template, where %# is replaced with SG number, %n - short name,\
+ %N - full name, %h - html representation of the short name, %H - same as %h for full name,\
+ %s - syngony, %HS -Hall symbol" );
 //_________________________________________________________________________________________________________________________
   xlib_InitFunc(ATA, fpAny|psFileLoaded, "Test current structure agains database.\
   (Atom Tye Assignment). Returns true if any atom type changed" );
@@ -1183,6 +1185,21 @@ void XLibMacros::funSSM(const TStrObjList& Params, TMacroError &E) {
     E.SetRetVal( I.GetSolutionMethod() );
 }
 //..............................................................................
+olxstr XLibMacros_funSGNameToHtml(const olxstr& name)  {
+  olxstr res;
+  res.SetCapacity( name.Length() + 20 );
+  for( int i=0; i < name.Length(); i++ )  {
+    if( (i+1) < name.Length() )  {
+      if( (name[i] >= '0' && name[i] <= '9')  &&  (name[i+1] >= '0' && name[i+1] <= '9') )  {
+        res << name[i] << "<sub>" << name[i+1] << "</sub>";
+        i++;
+        continue;
+      }
+    }
+    res << name[i];
+  }
+  return res;
+}
 void XLibMacros::funSG(const TStrObjList &Cmds, TMacroError &E)  {
   TSpaceGroup* sg = NULL;
   try  { sg = &TXApp::GetInstance().XFile().GetLastLoaderSG();  }
@@ -1201,22 +1218,12 @@ void XLibMacros::funSG(const TStrObjList &Cmds, TMacroError &E)  {
       Tmp.Replace("%#", olxstr(sg->GetNumber()) );
       Tmp.Replace("%n", sg->GetName());
       Tmp.Replace("%N", sg->GetFullName());
-      Tmp.Replace("%H", sg->GetHallSymbol());
-      if( Tmp.IndexOf("%h") != -1 || Tmp.IndexOf("%hs") != -1 )  {
-        olxstr t( Tmp.IndexOf("%h") ? sg->GetFullName() : sg->GetName()), res;
-        res.SetCapacity( t.Length() + 20 );
-        for( int i=0; i < t.Length(); i++ )  {
-          if( (i+1) < t.Length() )  {
-            if( (t[i] >= '0' && t[i] <= '9')  &&  (t[i+1] >= '0' && t[i+1] <= '9') )  {
-              res << t[i] << "<sub>" << t[i+1] << "</sub>";
-              i++;
-              continue;
-            }
-          }
-          res << t[i];
-        }
-        Tmp.Replace("%h", res);
-      }
+      Tmp.Replace("%HS", sg->GetHallSymbol());
+      Tmp.Replace("%s", sg->GetBravaisLattice().GetName());
+      if( Tmp.IndexOf("%H") != -1 )
+        Tmp.Replace("%H", XLibMacros_funSGNameToHtml(sg->GetFullName()));
+      if( Tmp.IndexOf("%h") != -1 )
+        Tmp.Replace("%h", XLibMacros_funSGNameToHtml(sg->GetName()));
     }
     E.SetRetVal( Tmp );
   }
