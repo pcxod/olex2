@@ -190,8 +190,7 @@ public:
   bool ResolveParamsFromDictionary(
     TStrList &Dic,   // the dictionary containing the cif fields
     olxstr &String,    // the string in which the parameters are stores
-    char Open,           // OpenParamIndexClose: %10%, (10), ...
-    char Close,
+    olxch Quote,           // %10%, #10#, ...
     olxstr (*ResolveExternal)(const olxstr& valueName) = NULL,
     bool DoubleTheta = true);
   bool CreateTable(TDataItem *TableDefinitions, TTTable<TStrList>& Table, smatd_list& SymmList);
