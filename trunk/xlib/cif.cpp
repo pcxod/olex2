@@ -940,7 +940,6 @@ bool TCif::Adopt(TXFile *XF)  {
   TCifLoop *Loop;
   TCifLoopTable *Table, *ATable;
   TCAtom *A;
-  TCifLoopData *LoopData;
   TEValueD EValue;
   double Q[6], E[6];  // quadratic form of s thermal ellipsoid
   bool AddUTable=false;
@@ -1381,7 +1380,7 @@ void TCif::DeleteAtom(TCAtom *A)  {
 }
 //..............................................................................
 bool TCif::ResolveParamsFromDictionary(TStrList &Dic, olxstr &String,
- char Open, char Close,
+ olxch Quote,
  olxstr (*ResolveExternal)(const olxstr& valueName),
  bool DoubleTheta)  {
 
@@ -1392,33 +1391,55 @@ bool TCif::ResolveParamsFromDictionary(TStrList &Dic, olxstr &String,
   double theta;
 
   for( int i=0; i < String.Length(); i++ )  {
-    if( String[i] == Open )  {
-      if( (i+1) < String.Length() && (String[i+1] == '$' || (String[i+1] <= '9' && String[i+1] >= '0')) ) {
+    if( String.CharAt(i) == Quote )  {
+      if( (i+1) < String.Length() && String.CharAt(i+1) == Quote )  {
+        String.Delete(i, 1);
+        continue;
+      }
+      if( (i+1) < String.Length() && 
+        (String.CharAt(i+1) == '$' || String.CharAt(i+1) == '_' || 
+          (String.CharAt(i+1) <= '9' && String.CharAt(i+1) >= '0')) ) {
         Val = EmptyString;
         start = i;
         while( (i+1) < String.Length() )  {
           i++;
-          if( String[i] == Close )  {
-            end = i;  break;
+          if( String.CharAt(i) == Quote )  {
+            if( (i+1) < String.Length() && String.CharAt(i+1) == Quote )  {
+              String.Delete(i, 1);
+              Val << Quote;
+              continue;
+            }
+            else  {
+              end = i;  
+              break;
+            }
           }
-//          if( String[i] <= '9' && String[i] >= '0' )  {
-           Val << String[i];
-//           continue;
-//          }
-//          Val = EmptyString;
-//          break;
+          Val << String.CharAt(i);
         }
       }
-      if( Val.Length() != 0 )  {
+      if( !Val.IsEmpty() )  {
         if( !Val.IsNumber() )  {
-          if( Val[0] == '$' && ResolveExternal != NULL )  {
+          if( Val.CharAt(0) == '$' )  {
+            if( ResolveExternal != NULL )  {
+              String.Delete(start, end-start+1);
+              Tmp = ResolveExternal( Val );
+              ResolveParamsFromDictionary(Dic, Tmp, Quote, ResolveExternal);
+              String.Insert(Tmp, start);
+              i = start + Tmp.Length() - 1;
+            }
+          }
+          else if( Val.CharAt(0) == '_' )  {
+            Params = FindParam(Val);
+            if( Params == NULL || Params->Data->IsEmpty() )  
+              Tmp = 'N';
+            else
+              Tmp = Params->Data->String(0);
             String.Delete(start, end-start+1);
-            Tmp = ResolveExternal( Val );
             String.Insert(Tmp, start);
             i = start + Tmp.Length() - 1;
           }
           else
-            TBasicApp::GetLog() << olxstr("A number or function starting from '$' is expected");
+            TBasicApp::GetLog() << olxstr("A number or function starting from '$' or '_' is expected");
           continue;
         }
         index = Val.ToInt();
@@ -1460,15 +1481,12 @@ bool TCif::ResolveParamsFromDictionary(TStrList &Dic, olxstr &String,
               else
                 Tmp = "unknown";
             }
-            else if( !SVal.Comparei("data_name") )  {
+            else if( !SVal.Comparei("data_name") )
               Tmp = GetDataName();
-            }
-            else if( !SVal.Comparei("weighta") )  {
+            else if( !SVal.Comparei("weighta") )
               Tmp = GetWeightA();
-            }
-            else if( !SVal.Comparei("weightb") )  {
+            else if( !SVal.Comparei("weightb") )
               Tmp = GetWeightB();
-            }
             else {
               Params = FindParam(SVal);
               if( !Params )  {
@@ -1493,15 +1511,15 @@ bool TCif::ResolveParamsFromDictionary(TStrList &Dic, olxstr &String,
               }
               else if( index == 13 || index == 14 || index == 30 )  {
                 if( DoubleTheta )  {
-                  theta = Params->Data->Text("").ToDouble();
+                  theta = Params->Data->Text(EmptyString).ToDouble();
                   theta *= 2;
                   Tmp = theta;
                 }
                 else
-                  Tmp = Params->Data->Text(" ");
+                  Tmp = Params->Data->Text(' ');
               }
               else
-                Tmp = Params->Data->Text(" ");
+                Tmp = Params->Data->Text(' ');
             }
 
             String.Insert(Tmp, start);

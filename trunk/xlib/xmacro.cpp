@@ -1287,7 +1287,7 @@ void XLibMacros::macCif2Doc(TStrObjList &Cmds, const TParamList &Options, TMacro
   SL.LoadFromFile( TN );
   Dic.LoadFromFile( CifDictionaryFile );
   for( int i=0; i < SL.Count(); i++ )
-    Cif->ResolveParamsFromDictionary(Dic, SL[i], '%', '%', &XLibMacros::CifResolve);
+    Cif->ResolveParamsFromDictionary(Dic, SL[i], '%', &XLibMacros::CifResolve);
   TUtf8File::WriteLines( RF, SL, false );
   TBasicApp::GetLog().Info(olxstr("Document name: ") << RF);
 }
@@ -1371,7 +1371,7 @@ void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options, TMacro
         fn = xapp.GetCifTemplatesDir() + fn;
       SL1.LoadFromFile( fn );
       for( int j=0; j < SL1.Count(); j++ )  {
-        Cif->ResolveParamsFromDictionary(Dic, SL1[j], '%', '%', &XLibMacros::CifResolve);
+        Cif->ResolveParamsFromDictionary(Dic, SL1[j], '%', &XLibMacros::CifResolve);
         SL.Add( SL1[j] );
       }
       continue;

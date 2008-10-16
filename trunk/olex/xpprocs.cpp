@@ -3808,7 +3808,6 @@ void TMainForm::macGrad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 }
 //..............................................................................
 void TMainForm::macSplit(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
-  bool found;
   olxstr cr( Options.FindValue("r", EmptyString).ToLowerCase() );
   TCAtomPList Atoms;
   olxstr lbl;
