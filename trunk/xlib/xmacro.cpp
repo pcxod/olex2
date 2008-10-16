@@ -1202,8 +1202,8 @@ void XLibMacros::funSG(const TStrObjList &Cmds, TMacroError &E)  {
       Tmp.Replace("%n", sg->GetName());
       Tmp.Replace("%N", sg->GetFullName());
       Tmp.Replace("%H", sg->GetHallSymbol());
-      if( Tmp.IndexOf("%h") != -1 )  {
-        olxstr t = sg->GetFullName(), res;
+      if( Tmp.IndexOf("%h") != -1 || Tmp.IndexOf("%hs") != -1 )  {
+        olxstr t( Tmp.IndexOf("%h") ? sg->GetFullName() : sg->GetName()), res;
         res.SetCapacity( t.Length() + 20 );
         for( int i=0; i < t.Length(); i++ )  {
           if( (i+1) < t.Length() )  {
