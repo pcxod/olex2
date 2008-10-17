@@ -202,7 +202,7 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   TLattice& lat = TXApp::GetInstance().XFile().GetLattice();
   TIns& ins = TXApp::GetInstance().XFile().GetLastLoader<TIns>();
   TArrayList< AnAssociation2<TCAtom const*, smatd> > all;
-  int h_indexes[3];
+  int h_indexes[4];
   for( int i=0; i < lat.AtomCount(); i++ )  {
     TSAtom& sa = lat.GetAtom(i);
     TBasicAtomInfo& bai = sa.GetAtomInfo();
@@ -213,11 +213,11 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       if( bai1 == iHydrogenIndex || bai1 == iDeuteriumIndex )  {
         h_indexes[hc] = j;
         hc++;
-        if( hc >= 3 )
+        if( hc >= 4 )
           break;
       }
     }
-    if( hc == 0 || hc >= 3 )  continue;
+    if( hc == 0 || hc >= 4 )  continue;
     all.Clear();
     uc.FindInRange(sa.ccrd(), max_d+bai.GetRad1()-0.6, all);
     for( int j=0; j < all.Count(); j++ )  {
@@ -231,7 +231,6 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       double d = bond.Length();
       if( (bai.GetRad1() + bai1.GetRad1() + 0.45) > d )  continue;  // coval bond
       // analyse angles
-      bool found = false;
       for( int k=0; k < hc; k++ )  {
         vec3d base = sa.Node(h_indexes[k]).ccrd();
         vec3d v1 = sa.ccrd() - base;
@@ -240,21 +239,18 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options, TMacroErr
         au.CellToCartesian(v2);
         double c_a = v1.CAngle(v2);
         if( c_a < min_ang )  {  // > 150 degrees
-          found = true;
-          break;
+          olxstr htab("HTAB ", 80);
+          htab << sa.GetLabel() << ' ' << ca.GetLabel();
+          const smatd& mt = all[j].GetB();
+          if( !(mt.t.IsNull() && mt.r.IsI()) )  {
+            const smatd& eqiv = au.AddUsedSymm(mt);
+            int ei = au.UsedSymmIndex(eqiv);
+            htab << "_$" << ei+1;
+          }
+          ins.AddIns(htab);
+          TBasicApp::GetLog() << htab << " d=" << olxstr::FormatFloat(3, d) << '\n';
         }
       }
-      if( !found )  continue;
-      olxstr htab("HTAB ", 80);
-      htab << sa.GetLabel() << ' ' << ca.GetLabel();
-      const smatd& mt = all[j].GetB();
-      if( !(mt.t.IsNull() && mt.r.IsI()) )  {
-        const smatd& eqiv = au.AddUsedSymm(mt);
-        int ei = au.UsedSymmIndex(eqiv);
-        htab << "_$" << ei+1;
-      }
-      ins.AddIns(htab);
-      TBasicApp::GetLog() << htab << " d=" << olxstr::FormatFloat(3, d) << '\n';
     }
   }
 }

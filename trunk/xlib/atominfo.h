@@ -116,7 +116,7 @@ public:
   // checks if p is an element symbol, will correctly distinguis "C " and "Cd"
   static bool IsShortcut(const olxstr &c) {  
     return c.Comparei("Ph") == 0 || c.Comparei("Cp") == 0 || c.Comparei("Me") == 0 ||
-      c.Comparei("Et") == 0 || c.Comparei("Pr") == 0 || c.Comparei("Bu") == 0 || 
+      c.Comparei("Et") == 0 || c.Comparei("Bu") == 0 || 
       c.Comparei("Py") == 0 || c.Comparei("Tf") == 0;  
   }
   static void ExpandShortcut(const olxstr& sh, TTypeList<AnAssociation2<olxstr, int> >& res, int cnt=1)  {
@@ -147,10 +147,6 @@ public:
     else if( sh.Comparei("Et") == 0 )  {
       shc.AddNew("C", 2);
       shc.AddNew("H", 5);
-    }
-    else if( sh.Comparei("Pr") == 0 )  {
-      shc.AddNew("C", 3);
-      shc.AddNew("H", 7);
     }
     else if( sh.Comparei("Bu") == 0 )  {
       shc.AddNew("C", 4);
