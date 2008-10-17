@@ -1987,10 +1987,11 @@ void TAtomsInfo::ParseSimpleElementStr(const olxstr& str, TStrList& toks)  const
   olxstr elm;
   for( int i=0; i < str.Length(); i++ )  {
     if( str[i] >= 'A' && str[i] <= 'Z' )  {
-      if( elm.Length() )  {
+      if( !elm.IsEmpty() )  {
         if( (i+1) < str.Length() )  {
           if( str[i+1] >= 'A' && str[i+1] <= 'Z' )  {
-            if( IsElement( elm + str[i+1] ) )  {
+            olxstr tmp(elm + str[i+1]);
+            if( IsElement(tmp) || IsShortcut(tmp) )  {
               i++;
               toks.Add(elm);
               if( (i+1) < str.Length() )
@@ -1998,7 +1999,7 @@ void TAtomsInfo::ParseSimpleElementStr(const olxstr& str, TStrList& toks)  const
             }
           }
         }
-        if( !IsElement( elm ) )
+        if( !IsElement(elm) && !IsShortcut(elm) )
           throw TFunctionFailedException(__OlxSourceInfo, olxstr("Unknown element - ") << elm);
         toks.Add(elm);
         elm = str[i];
@@ -2009,14 +2010,14 @@ void TAtomsInfo::ParseSimpleElementStr(const olxstr& str, TStrList& toks)  const
     else
       elm << str[i];
   }
-  if( elm.Length() )  {
-    if( !IsElement( elm ) )
+  if( !elm.IsEmpty() )  {
+    if( !IsElement(elm) && !IsShortcut(elm) )
       throw TFunctionFailedException(__OlxSourceInfo, olxstr("Unknown element - ") << elm);
     toks.Add(elm);
   }
 }
 //..............................................................................
-void TAtomsInfo::ParseElementString(const olxstr& su, TTypeList<AnAssociation2<olxstr, int> >& res)  const {
+void TAtomsInfo::ParseElementString(const olxstr& su, TTypeList<AnAssociation2<olxstr, int> >& res) const {
   olxstr elm, cnt;
   bool nowCnt = false;
   TStrList toks;
@@ -2027,12 +2028,12 @@ void TAtomsInfo::ParseElementString(const olxstr& su, TTypeList<AnAssociation2<o
         cnt << su[i];
       }
       else  {
-        if( elm.Length() && cnt.Length() )  {
+        if( !elm.IsEmpty() && !cnt.IsEmpty() )  {
           toks.Clear();
           ParseSimpleElementStr( elm, toks );
           for( int i=0; i < toks.Count()-1; i++ )
-            res.AddNew<olxstr, int>(toks.String(i), 1);
-          res.AddNew<olxstr, int>(toks.String( toks.Count() -1 ), cnt.ToInt());
+            ExpandShortcut(toks[i], res);
+          ExpandShortcut(toks[toks.Count() -1], res, cnt.ToInt());
           cnt = EmptyString;
         }
         nowCnt = false;
@@ -2048,19 +2049,28 @@ void TAtomsInfo::ParseElementString(const olxstr& su, TTypeList<AnAssociation2<o
       }
     }
   }
-  if( elm.Length() )  {
+  if( !elm.IsEmpty() )  {
     toks.Clear();
     ParseSimpleElementStr( elm, toks );
     for( int i=0; i < toks.Count()-1; i++ )
-      res.AddNew<olxstr, int>(toks.String(i), 1);
-    if( cnt.Length() )
-      res.AddNew<olxstr, int>(toks.String( toks.Count() -1 ), cnt.ToInt());
-    else
-      res.AddNew<olxstr, int>(toks.String( toks.Count() -1 ), 1);
+      ExpandShortcut(toks[i], res);
+    ExpandShortcut(toks[toks.Count() -1], res, cnt.IsEmpty() ? 1 : cnt.ToInt());
   }
 }
 //..............................................................................
+olxstr& TAtomsInfo::NormaliseAtomString(olxstr& str) const {
+  TTypeList<AnAssociation2<olxstr, int> > res;
+  ParseElementString(str, res);
+  str = EmptyString;
+  for( int i=0; i < res.Count(); i++ )  {
+    str << res[i].GetA() << res[i].GetB();
+    if( (i+1) < res.Count() )
+      str << ' ';
+  }
+  return str;
+}
+//..............................................................................
 
-class TLibrary*  ExportLibrary(const olxstr& name);
+//class TLibrary*  ExportLibrary(const olxstr& name);
 //..............................................................................
 

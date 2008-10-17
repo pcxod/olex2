@@ -113,6 +113,66 @@ public:
   inline bool IsElement(const olxstr& S) const  {  return (FindAtomInfoBySymbol(S) != NULL);  }
   // checks if p is an element symbol, will correctly distinguis "C " and "Cd"
   inline bool IsAtom(const olxstr &C)     const {  return (FindAtomInfoEx(C) != NULL);  }
+  // checks if p is an element symbol, will correctly distinguis "C " and "Cd"
+  static bool IsShortcut(const olxstr &c) {  
+    return c.Comparei("Ph") == 0 || c.Comparei("Cp") == 0 || c.Comparei("Me") == 0 ||
+      c.Comparei("Et") == 0 || c.Comparei("Pr") == 0 || c.Comparei("Bu") == 0 || 
+      c.Comparei("Py") == 0 || c.Comparei("Tf") == 0;  
+  }
+  static void ExpandShortcut(const olxstr& sh, TTypeList<AnAssociation2<olxstr, int> >& res, int cnt=1)  {
+    TTypeList<AnAssociation2<olxstr, int> > shc;
+    if( sh.Comparei("Ph") == 0 )  {
+      shc.AddNew("C", 6);
+      shc.AddNew("H", 5);
+    }
+    else if( sh.Comparei("Py") == 0 )  {
+      shc.AddNew("C", 5);
+      shc.AddNew("N", 1);
+      shc.AddNew("H", 4);
+    }
+    else if( sh.Comparei("Tf") == 0 )  {
+      shc.AddNew("C", 1);
+      shc.AddNew("S", 1);
+      shc.AddNew("O", 2);
+      shc.AddNew("F", 3);
+    }
+    else if( sh.Comparei("Cp") == 0 )  {
+      shc.AddNew("C", 5);
+      shc.AddNew("H", 5);
+    }
+    else if( sh.Comparei("Me") == 0 )  {
+      shc.AddNew("C", 1);
+      shc.AddNew("H", 3);
+    }
+    else if( sh.Comparei("Et") == 0 )  {
+      shc.AddNew("C", 2);
+      shc.AddNew("H", 5);
+    }
+    else if( sh.Comparei("Pr") == 0 )  {
+      shc.AddNew("C", 3);
+      shc.AddNew("H", 7);
+    }
+    else if( sh.Comparei("Bu") == 0 )  {
+      shc.AddNew("C", 4);
+      shc.AddNew("H", 9);
+    }
+    else    // just add whatever is provided
+      shc.AddNew(sh, 1);
+    
+    for( int i=0; i < shc.Count(); i++ )  {
+      shc[i].B() *= cnt;
+      bool found = false;
+      for( int j=0; j < res.Count(); j++ )  {
+        if( res[j].GetA().Comparei(shc[i].GetA()) == 0 )  {
+          res[j].B() += shc[i].GetB();
+          found = true;
+          break;
+        }
+      }
+      if( !found )
+        res.AddCCopy( shc[i] );
+    }
+  }
   /* parses a string like C37H41P2BRhClO into a list of element names and theur
     count
   */
@@ -122,6 +182,8 @@ public:
       throw TFunctionFailedException(__OlxSourceInfo, "object is not initialised");
     return Instance;
   }
+  // combines dublicate types and expands shortcuts such as Me, Ph and Cp
+  olxstr& NormaliseAtomString(olxstr& str) const;
 };
 
 EndChemNamespace()
