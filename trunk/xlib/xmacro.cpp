@@ -96,7 +96,8 @@ void XLibMacros::Export(TLibrary& lib)  {
 //_________________________________________________________________________________________________________________________
   xlib_InitMacro(ChangeSG, "", fpOne|fpFour|psFileLoaded, "[shift] SG Changes space group of current structure" );
 //_________________________________________________________________________________________________________________________
-  xlib_InitMacro(Htab, "", fpNone|fpOne|psCheckFileTypeIns, "Adds HTBA instructions to the ins file, maximum bond length might be provided" );
+  xlib_InitMacro(Htab, "t-adds extra elements (comma separated) to the donor list. Defaults are [N,O,F,Cl,S]", fpNone|fpOne|fpTwo|psCheckFileTypeIns, 
+    "Adds HTBA instructions to the ins file, maximum bond length [2.9] and minimal angle [150] might be provided" );
 //_________________________________________________________________________________________________________________________
   xlib_InitMacro(HAdd, "", fpAny|psCheckFileTypeIns, "Adds hydrogen atoms to all or provided atoms" );
 //_________________________________________________________________________________________________________________________
@@ -168,11 +169,34 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   if( TXApp::GetInstance().XFile().GetLattice().IsGenerated() )  {
     E.ProcessingError(__OlxSrcInfo, "operation is not applicable to the grown structure");
   }
-  double max = 2.9;
-  if( !Cmds.IsEmpty() )
-    max = Cmds[0].ToDouble();
-  TBasicApp::GetLog() << "Processing HTAB with max D-A distance " << max << '\n';
-  
+  double max_d = 2.9, min_ang = 150.0;
+  int cnt = XLibMacros::ParseNumbers<double>(Cmds, 2, &max_d, &min_ang);
+  if( cnt == 1 )  {
+    if( max_d > 100 )  {
+      min_ang = max_d;
+      max_d = 2.9;
+    }
+    else if( max_d > 5 )
+      max_d = 2.9;
+  }
+  TIntList bais;
+  bais.Add(iNitrogenIndex);
+  bais.Add(iOxygenIndex);
+  bais.Add(iFluorineIndex);
+  bais.Add(iChlorineIndex);
+  bais.Add(iSulphurIndex);
+  TBasicApp::GetLog() << "Processing HTAB with max D-A distance " << max_d << " and minimum angle " << min_ang << '\n';
+  min_ang = cos(min_ang*M_PI/180.0);
+  if( Options.Contains('t') )  {
+    TStrList elm(Options.FindValue('t'), ',');
+    for( int i=0; i < elm.Count(); i++ )  {
+      TBasicAtomInfo* bai = TAtomsInfo::GetInstance()->FindAtomInfoBySymbol(elm[i]);
+      if( bai == NULL )
+        TBasicApp::GetLog() << (olxstr("Unknown element type: ") << elm[i] << '\n');
+      else if( bais.IndexOf(bai->GetIndex()) == -1 )
+          bais.Add(bai->GetIndex());
+    }
+  }
   TAsymmUnit& au = TXApp::GetInstance().XFile().GetAsymmUnit();
   TUnitCell& uc = TXApp::GetInstance().XFile().GetUnitCell();
   TLattice& lat = TXApp::GetInstance().XFile().GetLattice();
@@ -195,13 +219,11 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     }
     if( hc == 0 || hc >= 3 )  continue;
     all.Clear();
-    uc.FindInRange(sa.ccrd(), max+bai.GetRad1()-0.6, all);
+    uc.FindInRange(sa.ccrd(), max_d+bai.GetRad1()-0.6, all);
     for( int j=0; j < all.Count(); j++ )  {
       const TCAtom& ca = *all[j].GetA();
       const TBasicAtomInfo& bai1 = ca.GetAtomInfo();
-      int bi =  bai1.GetIndex();
-      if( !(bi == iNitrogenIndex || bi == iOxygenIndex || bi == iFluorineIndex ||
-        bi == iChlorineIndex || bi == iSulphurIndex ))  continue;
+      if(  bais.IndexOf(bai1.GetIndex()) == -1 )  continue;
       vec3d cvec( all[j].GetB()*ca.ccrd() ); 
       vec3d bond( cvec );
       bond -= sa.ccrd();
@@ -217,7 +239,7 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options, TMacroErr
         au.CellToCartesian(v1);
         au.CellToCartesian(v2);
         double c_a = v1.CAngle(v2);
-        if( c_a < -0.87 )  {  // > 150 degrees
+        if( c_a < min_ang )  {  // > 150 degrees
           found = true;
           break;
         }
