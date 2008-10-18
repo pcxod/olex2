@@ -129,35 +129,45 @@ class MyApp: public wxAppConsole {
 IMPLEMENT_APP_NO_MAIN(MyApp)
 int main(int argc, char** argv)  {
   MyApp app;
+  int res = 0;
   wxAppConsole::SetInstance(&app);
-  if( argc == 1 )  { // no folder to update provided
-    char* olex_dir = getenv("OLEX2_DIR");
-    if( olex_dir != NULL )
-      DoRun( olxstr(olex_dir) << "/dummy.txt" );
-    else
-      DoRun( TEFile::CurrentDir() << "/dummy.txt" );
-  }
-  else  {
-    olxstr arg(argv[1]);
-#ifdef _WIN32
-    if( arg == "-help" || arg == "/help" )  {
-#else
-    if( arg == "--help" )  {
-#endif     
-      TBasicApp bapp(  TEFile::CurrentDir() << "/dummy.txt" );
-      TLog& log = bapp.GetLog();
-      log.AddStream( new TOutStream, true);
-      log << "Unirun, Olex2 update program\n";
-      log << "Compiled on " << __DATE__ << " at " << __TIME__ << '\n';
-      log << "Usage: unirun [olex2_gui_dir]\n";
-      log << "If no arguments provided, the system variable OLEX2_DIR will be checked first, if the variable is not set,\
- current folder will be updated\n";
-      log << "(c) Oleg V. Dolomanov 2007-2008\n";
-      return 0;
+  try  {
+    if( argc == 1 )  { // no folder to update provided
+      char* olex_dir = getenv("OLEX2_DIR");
+      if( olex_dir != NULL )
+        DoRun( olxstr(olex_dir) << "/dummy.txt" );
+      else
+        DoRun( TEFile::CurrentDir() << "/dummy.txt" );
     }
-    DoRun( arg << "/dummy.txt" );
+    else  {
+      olxstr arg(argv[1]);
+#ifdef _WIN32
+      if( arg == "-help" || arg == "/help" )  {
+#else
+      if( arg == "--help" )  {
+#endif     
+        TBasicApp bapp(  TEFile::CurrentDir() << "/dummy.txt" );
+        TLog& log = bapp.GetLog();
+        log.AddStream( new TOutStream, true);
+        log << "Unirun, Olex2 update program\n";
+        log << "Compiled on " << __DATE__ << " at " << __TIME__ << '\n';
+        log << "Usage: unirun [olex2_gui_dir]\n";
+        log << "If no arguments provided, the system variable OLEX2_DIR will be checked first, if the variable is not set,\
+               current folder will be updated\n";
+        log << "(c) Oleg V. Dolomanov 2007-2008\n";
+        return 0;
+      }
+      DoRun( arg << "/dummy.txt" );
+    }
   }
-  return 0;
+  catch(const TExceptionBase& exc)  {
+    TStrList out;
+    exc.GetException()->GetStackTrace(out);
+    TBasicApp::GetLog() << out;
+    res = 1;
+  }
+  TBasicApp::GetLog() << '\n' << "Finished\n";
+  return res;
 }
 
 void DoRun(const olxstr& basedir)  {
