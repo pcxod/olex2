@@ -8,10 +8,6 @@
 #include "outstream.h"
 #include "efile.h"
 #include "wxzipfs.h"
-//#ifdef __WIN32__
-//  #include "winzipfs.h"
-//  #include "winhttpfs.h"
-//#endif
 #include "etime.h"
 #include "settingsfile.h"
 #include "datafile.h"
@@ -117,7 +113,7 @@ bool UpdateInstallationZ( const olxstr& zip_name, const TStrList& properties, co
   }
 }
 
-void DoRun(const olxstr& basedir);
+void DoRun();
 
 class MyApp: public wxAppConsole { 
   virtual bool OnInit() { 
@@ -129,15 +125,16 @@ class MyApp: public wxAppConsole {
 IMPLEMENT_APP_NO_MAIN(MyApp)
 int main(int argc, char** argv)  {
   MyApp app;
+  TBasicApp* bapp = NULL;
   int res = 0;
   wxAppConsole::SetInstance(&app);
   try  {
     if( argc == 1 )  { // no folder to update provided
       char* olex_dir = getenv("OLEX2_DIR");
       if( olex_dir != NULL )
-        DoRun( olxstr(olex_dir) << "/dummy.txt" );
+        bapp = new TBasicApp( olxstr(olex_dir) << "/dummy.txt" );
       else
-        DoRun( TEFile::CurrentDir() << "/dummy.txt" );
+        bapp = new TBasicApp(TEFile::CurrentDir() << "/dummy.txt");
     }
     else  {
       olxstr arg(argv[1]);
@@ -146,8 +143,8 @@ int main(int argc, char** argv)  {
 #else
       if( arg == "--help" )  {
 #endif     
-        TBasicApp bapp(  TEFile::CurrentDir() << "/dummy.txt" );
-        TLog& log = bapp.GetLog();
+        TBasicApp _bapp(  TEFile::CurrentDir() << "/dummy.txt" );
+        TLog& log = _bapp.GetLog();
         log.AddStream( new TOutStream, true);
         log << "Unirun, Olex2 update program\n";
         log << "Compiled on " << __DATE__ << " at " << __TIME__ << '\n';
@@ -157,23 +154,29 @@ int main(int argc, char** argv)  {
         log << "(c) Oleg V. Dolomanov 2007-2008\n";
         return 0;
       }
-      DoRun( arg << "/dummy.txt" );
+      bapp = new TBasicApp(arg << "/dummy.txt");
     }
+    bapp->GetLog().AddStream( new TOutStream, true);
+    DoRun();
   }
   catch(const TExceptionBase& exc)  {
-    TStrList out;
-    exc.GetException()->GetStackTrace(out);
-    TBasicApp::GetLog() << out;
+    if( bapp != NULL )  {
+      TStrList out;
+      exc.GetException()->GetStackTrace(out);
+      bapp->GetLog() << out;
+    }
     res = 1;
   }
-  TBasicApp::GetLog() << '\n' << "Finished\n";
+  if( bapp != 0 )
+    delete bapp;
+  printf("\nFinished\n");
   return res;
 }
 
-void DoRun(const olxstr& basedir)  {
-  TBasicApp bapp(  basedir );
-  bapp.GetLog().AddStream( new TOutStream, true);
-
+void DoRun()  {
+  TBasicApp& bapp = *TBasicApp::GetInstance();
+  if( &bapp == NULL )
+    return;
   bapp.OnProgress->Add( new TProgress );
 
   olxstr SettingsFile( TBasicApp::GetInstance()->BaseDir() + "usettings.dat" );
