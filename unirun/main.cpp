@@ -14,6 +14,8 @@
 #include "dataitem.h"
 #include "wxhttpfs.h"
 #include "wxftpfs.h"
+#include <iostream>
+using namespace std;
 
 class TProgress: public AActionHandler  {
   inline bool IsFSSender(const IEObject* obj) const {
@@ -167,9 +169,18 @@ int main(int argc, char** argv)  {
     }
     res = 1;
   }
-  if( bapp != 0 )
+  if( bapp != 0 )  {
+    bapp->GetLog() << "\nFinished\n";
     delete bapp;
-  printf("\nFinished\n");
+  }
+  else  {
+    cout << "\nFinished\n";
+//#ifdef _UNICODE
+//    wprintf( L"\nFinished\n");
+//#else
+//    printf("\nFinished\n");
+//#endif
+  }
   return res;
 }
 
