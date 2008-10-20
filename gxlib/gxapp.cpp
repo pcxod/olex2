@@ -54,7 +54,6 @@
 
 int CompareStr(const olxstr &Str, const olxstr &Str1, bool IC) {
   int minl = olx_min(Str1.Length(), Str.Length());
-  int diff1;
   for( int i = 0; i < minl; i++ )  {
     int diff = Str[i] - Str1[i];
     if( olxstr::o_isdigit(Str[i]) )  {
@@ -65,9 +64,9 @@ int CompareStr(const olxstr &Str, const olxstr &Str1, bool IC) {
           S << Str[j];  j++;
         }
         while( (k < Str1.Length()) && olxstr::o_isdigit(Str1[k]) )  {
-          S1 << Str[k];  k++;
+          S1 << Str1[k];  k++;
         }
-        diff1 = S.ToInt() - S1.ToInt();
+        int diff1 = S.ToInt() - S1.ToInt();
         if( diff1 != 0 )  return diff1;
         // if the number of digits different - diff1 != 0, so now k=j
         i = k-1;
@@ -76,7 +75,7 @@ int CompareStr(const olxstr &Str, const olxstr &Str1, bool IC) {
     else  {
       diff = IC ? (olxstr::o_toupper(Str[i]) - olxstr::o_toupper(Str1[i])) :
                  (Str[i] - Str1[i]);
-      if( diff != 0 )  return 0;
+      if( diff != 0 )  return diff;
     }
   }
   return 0;
