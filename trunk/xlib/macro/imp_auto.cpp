@@ -10,6 +10,7 @@
 #include "beevers-lipson.h"
 #include "arrays.h"
 #include "maputil.h"
+#include "estopwatch.h"
 
 
 void XLibMacros::funATA(const TStrObjList &Cmds, TMacroError &Error)  {
@@ -563,18 +564,17 @@ void XLibMacros::funVSS(const TStrObjList &Cmds, TMacroError &Error)  {
 //..............................................................................
 void XLibMacros::funFATA(const TStrObjList &Cmds, TMacroError &E)  {
   TXApp& xapp = TXApp::GetInstance();
+  TStopWatch sw(__FUNC__);
   double resolution = 0.2;
   resolution = 1./resolution;
   TRefList refs;
   TArrayList<compd> F;
-  time_t ti = TETime::msNow();
+  
   olxstr err( SFUtil::GetSF(refs, F, SFUtil::mapTypeDiff, SFUtil::sfOriginOlex2, SFUtil::scaleRegression) );
   if( !err.IsEmpty() )  {
     E.ProcessingError(__OlxSrcInfo, err);
     return;
   }
-  TBasicApp::GetLog() << (olxstr("Calculating and scaling structure factors (direct): ") << TETime::msNow() - ti << "ms\n");
-
   TAsymmUnit& au = xapp.XFile().GetAsymmUnit();
   TUnitCell& uc = xapp.XFile().GetUnitCell();
   TSpaceGroup* sg = NULL;
@@ -590,9 +590,9 @@ void XLibMacros::funFATA(const TStrObjList &Cmds, TMacroError &E)  {
     hkl[i][1] = refs[i].GetK();
     hkl[i][2] = refs[i].GetL();
   }
-  ti = TETime::msNow();
+  sw.start("Expanding structure factors to P1 (fast symm)");
   SFUtil::ExpandToP1(hkl, F, *sg, P1SF);
-  TBasicApp::GetLog() << (olxstr("Expanding structure factors to P1 (fast symm): ") << TETime::msNow() - ti << "ms\n");
+  sw.stop();
   double vol = xapp.XFile().GetLattice().GetUnitCell().CalcVolume();
   BVFourier::MapInfo mi;
 // init map
@@ -600,15 +600,15 @@ void XLibMacros::funFATA(const TStrObjList &Cmds, TMacroError &E)  {
 			mapY = (int)(au.Axes()[1].GetV()*resolution),
 			mapZ = (int)(au.Axes()[2].GetV()*resolution);
   TArray3D<float> map(0, mapX-1, 0, mapY-1, 0, mapZ-1);
-  ti = TETime::msNow();
+  sw.start("Calculating electron density map in P1 (Beevers-Lipson)");
   mi = BVFourier::CalcEDM(P1SF, map.Data, mapX, mapY, mapZ, vol);
-  TBasicApp::GetLog() << (olxstr("Calculating electron density map in P1 (Beevers-Lipson): ") << TETime::msNow() - ti << "ms\n");
+  sw.stop();
 //////////////////////////////////////////////////////////////////////////////////////////
   // map integration
   TArrayList<MapUtil::peak> Peaks;
-  ti = TETime::msNow();
+  sw.start("Integrating P1 map: ");
   MapUtil::Integrate<float>(map.Data, mapX, mapY, mapZ, mi.minVal, mi.maxVal, mi.sigma, Peaks);
-  TBasicApp::GetLog() << (olxstr("Integrating P1 map: ") << TETime::msNow() - ti << "ms\n");
+  sw.stop();
   int PointCount = mapX*mapY*mapZ;
   for( int i=0; i < Peaks.Count(); i++ )  {
     const MapUtil::peak& peak = Peaks[i];
@@ -624,6 +624,7 @@ void XLibMacros::funFATA(const TStrObjList &Cmds, TMacroError &E)  {
     }
     continue;
   }
+  sw.print( xapp.GetLog(), &TLog::Info );
   E.SetRetVal(false);
   //au.InitData();
 //  xapp.XFile().EndUpdate();
