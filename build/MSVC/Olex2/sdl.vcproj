@@ -638,6 +638,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\sdl\estopwatch.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\sdl\estrbuffer.h"
 				>
 			</File>
