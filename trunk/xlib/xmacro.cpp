@@ -154,7 +154,10 @@ xlib_InitMacro(File, "s-sort the main residue of the asymmetric unit", fpNone|fp
  %s - syngony, %HS -Hall symbol" );
 //_________________________________________________________________________________________________________________________
   xlib_InitFunc(ATA, fpAny|psFileLoaded, "Test current structure agains database.\
-  (Atom Tye Assignment). Returns true if any atom type changed" );
+  (Atom Type Assignment). Returns true if any atom type changed" );
+//_________________________________________________________________________________________________________________________
+  xlib_InitFunc(FATA, fpAny|psFileLoaded, "Calculates the diff fourier map and integrates it to find artefacts around atoms.\
+  (Fouriesr Atom Type Assignment). Returns true if any atom type changed" );
 //_________________________________________________________________________________________________________________________
   xlib_InitFunc(VSS, fpOne|psFileLoaded, "Validate Structure or Solution.\
   Takes a boolean value. if value is true, the number of tested atoms is limited\

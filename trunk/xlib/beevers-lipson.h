@@ -90,8 +90,9 @@ public:
     */
     MapInfo mi = {0, 1000, -1000};
     double sum = 0, sq_sum = 0;
+    const int f_count = F.Count();
     for( int ix=0; ix < mapX; ix++ )  {
-      for( int i=0; i < F.Count(); i++ )  {
+      for( int i=0; i < f_count; i++ )  {
         const StructureFactor& sf = F[i];
         S[sf.hkl[1]-min[1]][sf.hkl[2]-min[2]] += sf.val*sin_cosX[ix][sf.hkl[0]-minInd];
       }

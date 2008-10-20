@@ -78,6 +78,7 @@ class XLibMacros  {
 
   static DefFunc(ATA) // atom type assigmnet
   static DefFunc(VSS) // validate structure or a solution, better the analyse!
+  static DefFunc(FATA) // atom type assignment from Fourier map
 
   static DefFunc(RemoveSE) // SG modification
 

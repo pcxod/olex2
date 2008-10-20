@@ -8163,7 +8163,7 @@ void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMa
   // map integration
   if( Options.Contains('i') )  {
     TArrayList<MapUtil::peak> Peaks;
-    MapUtil::Integrate<float>(FXApp->XGrid().Data()->Data, mapX, mapY, mapZ, mi.minVal, mi.maxVal, Peaks);
+    MapUtil::Integrate<float>(FXApp->XGrid().Data()->Data, mapX, mapY, mapZ, mi.minVal, mi.maxVal, mi.sigma, Peaks);
     int PointCount = mapX*mapY*mapZ;
     for( int i=0; i < Peaks.Count(); i++ )  {
       const MapUtil::peak& peak = Peaks[i];

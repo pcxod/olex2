@@ -7,6 +7,9 @@
 #include "integration.h"
 #include "xmacro.h"
 #include "sptrlist.h"
+#include "beevers-lipson.h"
+#include "arrays.h"
+#include "maputil.h"
 
 
 void XLibMacros::funATA(const TStrObjList &Cmds, TMacroError &Error)  {
@@ -556,4 +559,72 @@ void XLibMacros::funVSS(const TStrObjList &Cmds, TMacroError &Error)  {
 //  TAutoDB::GetInstance()->AnalyseStructure( xapp.XFile().GetFileName(), latt, 
 //    NULL, stat, NULL);
   Error.SetRetVal( (double)ValidatedAtomCount*100/AtomCount );
+}
+//..............................................................................
+void XLibMacros::funFATA(const TStrObjList &Cmds, TMacroError &E)  {
+  TXApp& xapp = TXApp::GetInstance();
+  double resolution = 0.2;
+  resolution = 1./resolution;
+  TRefList refs;
+  TArrayList<compd> F;
+  time_t ti = TETime::msNow();
+  olxstr err( SFUtil::GetSF(refs, F, SFUtil::mapTypeDiff, SFUtil::sfOriginOlex2, SFUtil::scaleRegression) );
+  if( !err.IsEmpty() )  {
+    E.ProcessingError(__OlxSrcInfo, err);
+    return;
+  }
+  TBasicApp::GetLog() << (olxstr("Calculating and scaling structure factors (direct): ") << TETime::msNow() - ti << "ms\n");
+
+  TAsymmUnit& au = xapp.XFile().GetAsymmUnit();
+  TUnitCell& uc = xapp.XFile().GetUnitCell();
+  TSpaceGroup* sg = NULL;
+  try  { sg = &xapp.XFile().GetLastLoaderSG();  }
+  catch(...)  {
+    E.ProcessingError(__OlxSrcInfo, "could not locate space group");
+    return;
+  }
+  TArrayList<StructureFactor> P1SF;
+  TArrayList<vec3i> hkl(refs.Count());
+  for( int i=0; i < refs.Count(); i++ )  {
+    hkl[i][0] = refs[i].GetH();
+    hkl[i][1] = refs[i].GetK();
+    hkl[i][2] = refs[i].GetL();
+  }
+  ti = TETime::msNow();
+  SFUtil::ExpandToP1(hkl, F, *sg, P1SF);
+  TBasicApp::GetLog() << (olxstr("Expanding structure factors to P1 (fast symm): ") << TETime::msNow() - ti << "ms\n");
+  double vol = xapp.XFile().GetLattice().GetUnitCell().CalcVolume();
+  BVFourier::MapInfo mi;
+// init map
+  const int mapX = (int)(au.Axes()[0].GetV()*resolution),
+			mapY = (int)(au.Axes()[1].GetV()*resolution),
+			mapZ = (int)(au.Axes()[2].GetV()*resolution);
+  TArray3D<float> map(0, mapX-1, 0, mapY-1, 0, mapZ-1);
+  ti = TETime::msNow();
+  mi = BVFourier::CalcEDM(P1SF, map.Data, mapX, mapY, mapZ, vol);
+  TBasicApp::GetLog() << (olxstr("Calculating electron density map in P1 (Beevers-Lipson): ") << TETime::msNow() - ti << "ms\n");
+//////////////////////////////////////////////////////////////////////////////////////////
+  // map integration
+  TArrayList<MapUtil::peak> Peaks;
+  ti = TETime::msNow();
+  MapUtil::Integrate<float>(map.Data, mapX, mapY, mapZ, mi.minVal, mi.maxVal, mi.sigma, Peaks);
+  TBasicApp::GetLog() << (olxstr("Integrating P1 map: ") << TETime::msNow() - ti << "ms\n");
+  int PointCount = mapX*mapY*mapZ;
+  for( int i=0; i < Peaks.Count(); i++ )  {
+    const MapUtil::peak& peak = Peaks[i];
+    if( peak.count >= 64 )  {
+      vec3d cnt((double)peak.x/mapX, (double)peak.y/mapY, (double)peak.z/mapZ); 
+      double pv = (double)peak.count*vol/PointCount;
+      double ed = peak.summ/(pv*218);
+      TCAtom* oa = uc.FindOverlappingAtom(cnt, 0.1);
+      if( oa != NULL && oa->GetAtomInfo() != iQPeakIndex )  {
+        TBasicApp::GetLog() << (olxstr("Atom type under consideration ") << oa->GetLabel() << 
+          (ed < 0 ? olxstr(ed) : olxstr("+") << ed) << '\n');
+      }
+    }
+    continue;
+  }
+  E.SetRetVal(false);
+  //au.InitData();
+//  xapp.XFile().EndUpdate();
 }

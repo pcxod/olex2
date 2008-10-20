@@ -71,7 +71,7 @@ protected:
 public:
   // a simple map integration, considering the peaks and holes as spheres
   template <typename FloatT> static void Integrate(FloatT*** const map, int mapX, int mapY, int mapZ, 
-    FloatT mapMin, FloatT mapMax, TArrayList<MapUtil::peak>& Peaks)  {
+    FloatT mapMin, FloatT mapMax, FloatT mapSig, TArrayList<MapUtil::peak>& Peaks)  {
     TPtrList< TTypeList<level> > SphereMask;
     const int maxLevel = 11;
     for( int l=0; l < maxLevel; l++ )
@@ -106,7 +106,8 @@ public:
     const int s_level = 3;
     TArray3D<bool> Mask(0, mapX-1, 0, mapY-1, 0, mapZ-1);
     bool*** const maskData = Mask.Data;
-    double pos_level = 0.5*mapMax, neg_level = 0.8*mapMin; 
+//    double pos_level = 0.5*mapMax, neg_level = 0.8*mapMin; 
+    double pos_level = 3*mapSig, neg_level = -3*mapSig; 
     for( int ix=0; ix < mapX; ix++ )  {
       for( int iy=0; iy < mapY; iy++ )  {
         for( int iz=0; iz < mapZ; iz++ )  {

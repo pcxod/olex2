@@ -30,7 +30,8 @@ public:
     TArrayList<vec3i> rv(sg::size);
     TArrayList<double> ps(sg::size);
     const double pi_2 = M_PI*2;
-    for( int i=0; i < hkl.Count(); i++ )  {
+    const int hkl_cnt = hkl.Count();
+    for( int i=0; i < hkl_cnt; i++ )  {
       sg::GenHkl(hkl[i], rv, ps);
       const int off = i*sg::size;
       for( int j=0; j < sg::size; j++ )  {
