@@ -891,15 +891,16 @@ void TAsymmUnit::LibNewAtom(const TStrObjList& Params, TMacroError& E)  {
     qPeak = Params[0].ToDouble();
     int ac = CAtoms.Count();
     for( int i=0; i < ac; i++ )  {
-      if( CAtoms[i]->GetAtomInfo().GetIndex() != iQPeakIndex || CAtoms[i]->IsDeleted() )  continue;
+      if( CAtoms[i]->GetAtomInfo() != iQPeakIndex || CAtoms[i]->IsDeleted() )  continue;
       sortedPeaks.Add(CAtoms[i]->GetQPeak(), CAtoms[i] );
     }
     sortedPeaks.Add( qPeak, NULL);
-    for( int i=0; i < sortedPeaks.Count(); i++ )  {
-      if( sortedPeaks.GetObject(i) )
-        sortedPeaks.GetObject(i)->Label() = (qLabel + olxstr(sortedPeaks.Count() - i));
+    ac = sortedPeaks.Count();
+    for( int i=0; i < ac; i++ )  {
+      if( sortedPeaks.GetObject(i) != NULL )
+        sortedPeaks.GetObject(i)->Label() = (qLabel + olxstr(ac-i));
     }
-    QPeakIndex = sortedPeaks.Count() - sortedPeaks.IndexOfComparable( qPeak );
+    QPeakIndex = ac - sortedPeaks.IndexOfComparable( qPeak );
     MinQPeak = sortedPeaks.GetComparable(0);
     MaxQPeak = sortedPeaks.Last().Comparable();
   }
