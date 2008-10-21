@@ -635,7 +635,7 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual accupancy\
   this_InitMacro(AddExyz, , fpAny );
 
   this_InitMacro(Reset, s&;c&;f, fpAny|psFileLoaded );
-  this_InitMacro(ShowQ, , fpNone|fpTwo|psFileLoaded );
+  this_InitMacro(ShowQ, , fpNone|fpOne|fpTwo|psFileLoaded );
 
   this_InitMacroD(Mode, "p-[name] prefix&;s-[grow] short interactions; [name] suffix&;t-[name] type\
 &;c-[grow] covalent bonds; [move] copy fragments instead of moving&;r-[split] a restraint/constraint for split atoms", 

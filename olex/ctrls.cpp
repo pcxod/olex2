@@ -291,14 +291,14 @@ TMenu *TMenu::CopyMenu(wxMenu *menu)  {
       nm = CopyMenu(mi->GetSubMenu());
       miId = mi->GetId();
       miKind = mi->GetKind();
-      miText = mi->GetLabel();
+      miText = mi->GetText();
       miHelpStr = mi->GetHelp();
       M->Append(miId, miText, nm, miHelpStr);
     }
     else  {
       miId = mi->GetId();
       miKind = mi->GetKind();
-      miText = mi->GetLabel();
+      miText = mi->GetText();
       miHelpStr = mi->GetHelp();
       nmi = new wxMenuItem(M, miId, miText, miHelpStr, miKind);
       M->Append(nmi);
@@ -322,7 +322,7 @@ void TMenu::Clear()  {
 //----------------------------------------------------------------------------//
 //..............................................................................
 TMenuItem::TMenuItem(const short type, int id, TMenu* parent, const olxstr& Name) :
-  wxMenuItem(parent, id, uiStr(Name), wxString(), static_cast<wxItemKind>(type))
+  wxMenuItem(parent, id, Name.u_str(), wxString(), static_cast<wxItemKind>(type))
 {
   FActions = new TActionQList;
   OnModeChange = &FActions->NewQueue("ONMODECHANGE");

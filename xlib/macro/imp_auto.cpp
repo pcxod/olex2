@@ -610,19 +610,38 @@ void XLibMacros::funFATA(const TStrObjList &Cmds, TMacroError &E)  {
   MapUtil::Integrate<float>(map.Data, mapX, mapY, mapZ, mi.minVal, mi.maxVal, mi.sigma, Peaks);
   sw.stop();
   int PointCount = mapX*mapY*mapZ;
+  int minR = Round((3*1.5/(4*M_PI))*resolution);  // at least 1.5 A^3
+  int minPointCount = Round(4*M_PI*minR*minR*minR/3.0);
+  TArrayList< AnAssociation3<TCAtom*,double, int> > atoms (au.AtomCount());
+  for( int i=0; i < au.AtomCount(); i++ )  {
+    atoms[i].A() = &au.GetAtom(i);
+    atoms[i].B() = 0;
+    atoms[i].C() = 0;
+    atoms[i].A()->SetTag(i);
+  }
   for( int i=0; i < Peaks.Count(); i++ )  {
     const MapUtil::peak& peak = Peaks[i];
-    if( peak.count >= 64 )  {
+    if( peak.count >= minPointCount )  {
       vec3d cnt((double)peak.x/mapX, (double)peak.y/mapY, (double)peak.z/mapZ); 
       double pv = (double)peak.count*vol/PointCount;
       double ed = peak.summ/(pv*218);
       TCAtom* oa = uc.FindOverlappingAtom(cnt, 0.1);
       if( oa != NULL && oa->GetAtomInfo() != iQPeakIndex )  {
-        TBasicApp::GetLog() << (olxstr("Atom type under consideration ") << oa->GetLabel() << 
-          (ed < 0 ? olxstr(ed) : olxstr("+") << ed) << '\n');
+        atoms[oa->GetTag()].B() += ed;
+        atoms[oa->GetTag()].C()++;
       }
     }
     continue;
+  }
+  double minEd = mi.sigma*3;
+  for( int i=0; i < atoms.Count(); i++ )  {
+    if( atoms[i].GetC() != 0 )  {
+      double ed = atoms[i].GetB() / atoms[i].GetC();  
+      if( fabs(ed) < minEd )  continue;
+      TBasicApp::GetLog() << (olxstr("Atom type under consideration ") << atoms[i].GetA()->GetLabel() << 
+          (ed < 0 ? olxstr(ed) : olxstr("+") << ed) << '\n');
+    }
+
   }
   sw.print( xapp.GetLog(), &TLog::Info );
   E.SetRetVal(false);
