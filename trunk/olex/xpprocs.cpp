@@ -3569,6 +3569,9 @@ void TMainForm::macChiv(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   FXApp->XFile().GetAsymmUnit().RestrainedVolumes().ValidateRestraint(sr);
 }
 //..............................................................................
+int TMainForm_macShowQ_QPeakSort(const TXAtom* a, const TXAtom* b)  {
+  return a->Atom().CAtom().GetQPeak() - b->Atom().CAtom().GetQPeak();
+}
 void TMainForm::macShowQ(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   if( Cmds.Count() == 2 )  {
     bool v = Cmds[1].ToBool();
@@ -3596,6 +3599,17 @@ void TMainForm::macShowQ(TStrObjList &Cmds, const TParamList &Options, TMacroErr
         OnStateChange->Execute((AEventsDispatcher*)this, &sc);
       }
     }
+  }
+  else if( Cmds.Count() == 1 && Cmds[0].IsNumber() )  {
+    int num = Cmds[0].ToInt();
+    TXAtomPList xatoms;
+    FXApp->FindXAtoms("$Q", xatoms, false, true);
+    xatoms.QuickSorter.SortSF(xatoms, TMainForm_macShowQ_QPeakSort);
+    num = olx_min(xatoms.Count()*num/100, xatoms.Count());
+    for( int i=num; i < xatoms.Count(); i++ )  
+      xatoms[i]->Visible(false);
+    for( int i=0; i < num; i++ )  
+      xatoms[i]->Visible(true);
   }
   else  {
     if( (!FXApp->QPeaksVisible() && !FXApp->QPeakBondsVisible()) )  {
@@ -5148,6 +5162,8 @@ void TMainForm::funEval(const TStrObjList& Params, TMacroError &E)  {
 }
 //..............................................................................
 void TMainForm::macCreateMenu(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  for( int i=0; i < Cmds.Count(); i++ )
+    Cmds[i].Replace("\\t", '\t');
   int ind = Cmds[0].LastIndexOf(';');
   if( ind == -1 )  
     throw TInvalidArgumentException(__OlxSourceInfo, "menu name");
@@ -5155,8 +5171,7 @@ void TMainForm::macCreateMenu(TStrObjList &Cmds, const TParamList &Options, TMac
 
   short itemType = mtNormalItem;
   olxstr modeDependent, stateDependent;
-  for( int i=0; i < Options.Count(); i++ )
-  {
+  for( int i=0; i < Options.Count(); i++ )  {
     if( Options.GetName(i)[0] == 'r' )  {  itemType = mtRadioItem;  continue;  }
     if( Options.GetName(i)[0] == 'c' )  {  itemType = mtCheckItem;  continue;  }
     if( Options.GetName(i)[0] == '#' )  {  itemType = mtSeparator;  continue;  }
@@ -5168,8 +5183,7 @@ void TMainForm::macCreateMenu(TStrObjList &Cmds, const TParamList &Options, TMac
     TStrList toks;
     toks.Strtok( Cmds[0], ';');
     int mi=0;
-    while( (ind = menuName.LastIndexOf(';')) != -1 && ! menu )
-    {
+    while( (ind = menuName.LastIndexOf(';')) != -1 && ! menu )  {
       menuName = menuName.SubStringTo(ind);
       menu = Menus[menuName];
       mi++;
@@ -5187,7 +5201,7 @@ void TMainForm::macCreateMenu(TStrObjList &Cmds, const TParamList &Options, TMac
         else          accell++;
 
         if( Cmds.Count() == 3 )  {
-          int insindex = menu->FindItem( uiStr(Cmds[2]) );
+          int insindex = menu->FindItem( Cmds[2].u_str() );
           if( insindex == -1 )  insindex = 0;
           if( itemType == mtSeparator )  menu->InsertSeparator(insindex);
           else {
@@ -5215,15 +5229,15 @@ void TMainForm::macCreateMenu(TStrObjList &Cmds, const TParamList &Options, TMac
         TMenu* smenu = new TMenu();
         if( !menu )  {
           if( Cmds.Count() == 3 )  {
-            int insindex = MenuBar->FindMenu( uiStr(Cmds[2]) );
+            int insindex = MenuBar->FindMenu( Cmds[2].u_str() );
             if( insindex == -1 )  insindex = 0;
-            MenuBar->Insert( insindex, smenu, uiStr(toks[i]) );
+            MenuBar->Insert( insindex, smenu, toks[i].u_str() );
           }
           else
-            MenuBar->Append( smenu, uiStr(toks[i]) );
+            MenuBar->Append( smenu, toks[i].u_str() );
         }
         else
-          menu->Append( -1, uiStr(toks[i]), (wxMenu*)smenu );
+          menu->Append( -1, toks[i].u_str(), (wxMenu*)smenu );
         olxstr addedMenuName;
         for( int j=0; j <= i; j++ )  {
           addedMenuName << toks[j];
