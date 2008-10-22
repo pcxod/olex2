@@ -563,7 +563,7 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual accupancy\
   this_InitMacro(Kill, h-kill hidden atoms, fpAny^fpNone );
   this_InitMacro(Omit, , fpOne|fpThree | psCheckFileTypeIns);
 
-  this_InitMacro(Exec, s&;o&;d, fpAny^fpNone );
+  this_InitMacroD(Exec, "s-syncronise&;o-detached&;d-output dub file name&;q-do not post output to console", fpAny^fpNone, "Executes external command" );
   this_InitMacroD(Shell, "", fpNone|fpOne, "if no arguments launches a new interactive shell,\
   otherwise runs provided file in the interactive shell (on windows ShellExecute is\
   used to avoid flickering console)" );

@@ -2204,16 +2204,12 @@ void TMainForm::macOmit(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 }
 //..............................................................................
 void TMainForm::macExec(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  bool Asyn = true, // synchroniusly
-    Cout = true;    // catch output
+  bool Asyn = !Options.Contains('s'), // synchroniusly
+    Cout = !Options.Contains('o'),    // catch output
+    quite = Options.Contains('q');
 
-  olxstr dubFile;
+  olxstr dubFile( Options.FindValue('s',EmptyString) );
 
-  for( int i=0; i < Options.Count(); i++ )  {
-    if( Options.GetName(i) == "s" )  Asyn  = false;
-    else if( Options.GetName(i) == "o" )  Cout = false;
-    else if( Options.GetName(i) == "d" )  dubFile = Options.GetValue(i);
-  }
   olxstr Tmp;
   bool Space;
   for( int i=0; i < Cmds.Count(); i++ )  {
@@ -2223,7 +2219,7 @@ void TMainForm::macExec(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     if( Space ) Tmp << '\"';
     Tmp << ' ';
   }
-  TBasicApp::GetLog() << (olxstr("EXEC: ") << Tmp << '\n');
+  TBasicApp::GetLog().Info( olxstr("EXEC: ") << Tmp);
 #ifdef __WIN32__
   TWinProcess* Process  = new TWinProcess;
 #elif defined(__WXWIDGETS__)
@@ -2232,11 +2228,10 @@ void TMainForm::macExec(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 
   Process->OnTerminateCmds().Assign( FOnTerminateMacroCmds );
   FOnTerminateMacroCmds.Clear();
-  TBasicApp::GetLog() << "Please press Ctrl+C to terminate a process...\n";
   if( (Cout && Asyn) || Asyn )  {  // the only combination
     if( !Cout )  {
       SetProcess(Process);
-      if( !Process->Execute(Tmp, 0) )  {
+      if( !Process->Execute(Tmp, quite ? spfQuite : 0) )  {
         Error.ProcessingError(__OlxSrcInfo, "failed to launch a new process" );
         return;
       }
@@ -2248,7 +2243,7 @@ void TMainForm::macExec(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         TEFile* df = new TEFile(dubFile, "wb+");
         Process->SetDubStream( df );
       }
-      if( !Process->Execute(Tmp, spfRedirected) )  {
+      if( !Process->Execute(Tmp, quite ? spfRedirected|spfQuite : spfRedirected) )  {
         Error.ProcessingError(__OlxSrcInfo, "failed to launch a new process" );
         SetProcess(NULL);
         return;
