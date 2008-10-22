@@ -529,7 +529,7 @@ TAutoDB::TAutoDB(TXFile& xfile, ALibraryContainer& lc) : XFile(xfile)  {
   for( int i=0; i < MaxConnectivity-1; i++ )
     Nodes.AddNew();
   BAIDelta = -1;
-  URatio = 1.25;
+  URatio = 1.5;
   lc.GetLibrary().AttachLibrary( ExportLibrary() );
 }
 //..............................................................................
@@ -1062,12 +1062,13 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
   TSAtomPList cas;
   TAutoDBNet* sn = BuildSearchNet( net, cas );
   olxstr tmp;
-  for(int i=0; i < net.NodeCount(); i++ )  {
+  for(int i=0; i < net.NodeCount(); i++ )
     net.Node(i).SetTag(-1);
-  }
   if( sn == NULL )  return;
+  const int sn_count = sn->Count();
   TTypeList< TGuessCount > guesses;
-  for( int i=0; i < sn->Count(); i++ )  {
+  guesses.SetCapacity( sn_count);
+  for( int i=0; i < sn_count; i++ )  {
     sn->Node(i).SetTag(-1);
     sn->Node(i).SetId(0);
     TGuessCount& gc = guesses.AddNew();
@@ -1080,29 +1081,27 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
     gc.atom = &cas[i]->CAtom();
   }
   TAnalyseNetNodeTask analyseNetNodeTask(Nodes, *sn, guesses);
-  TListIteratorManager<TAnalyseNetNodeTask> nodesAnalysis(analyseNetNodeTask, sn->Count(), tLinearTask, 0);
+  TListIteratorManager<TAnalyseNetNodeTask> nodesAnalysis(analyseNetNodeTask, sn_count, tLinearTask, 0);
   //TListIteratorManager<TAnalyseNetNodeTask> nodesAnalysis(analyseNetNodeTask, sn->Count(), tQuadraticTask);
   int cindexes[MaxConnectivity];
   int UisoCnt = 0;
-  for(int i=0; i < guesses.Count(); i++ )  {
-    if( guesses[i].list3->Count() != 0 )
+  for(int i=0; i < sn_count; i++ )  {
+    if( !guesses[i].list3->IsEmpty() )
       sn->Node(i).SetId(2);
-    else if ( guesses[i].list2->Count() != 0 )
+    else if ( !guesses[i].list2->IsEmpty() )
       sn->Node(i).SetId(1);
     else
       sn->Node(i).SetId(0);
-    // otherwise it is zero
   }
-  for(int i=0; i < guesses.Count(); i++ )  {
+  // analysis of "confident", L3 and L2 atom types and Uiso
+  for(int i=0; i < sn_count; i++ )  {
     if( sn->Node(i).GetId() == 0 )  continue;
     tmp = EmptyString;
     TTypeList< THitList<TAutoDBNetNode> >* guessN =
-      (guesses[i].list3->Count() != 0) ? guesses[i].list3 : guesses[i].list2;
-    if( guessN->IsEmpty() )  continue;
+      !guesses[i].list3->IsEmpty() ? guesses[i].list3 : guesses[i].list2;
     for( int j=0; j < guessN->Count(); j++ )
       guessN->Item(j).Sort();
     guessN->QuickSorter.SortSF(*guessN, THitList<TAutoDBNetNode>::SortByFOMFunc);
-//    guessN->QuickSorter.SortSF(*guessN, THitList<TAutoDBNetNode>::SortByCountFunc);
     tmp << guesses[i].atom->GetLabel() << ' ';
     double cfom = 0;
     sn->Node(i).IsMetricSimilar(*guessN->Item(0).hits[0].Node, cfom, cindexes, false);
@@ -1118,45 +1117,66 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
           TBasicApp::GetLog().Info( "Oups ..." );
       }
     }
-
     Uiso += guesses[i].atom->GetUiso();
     UisoCnt ++;
     stat.ConfidentAtomTypes++;
+  }
+  if( UisoCnt != 0 )  Uiso /= UisoCnt;
+  if( UisoCnt != 0 )
+    TBasicApp::GetLog().Info( olxstr("Mean Uiso for confident atom types is ") << olxstr::FormatFloat(3,Uiso) );
+  else
+    TBasicApp::GetLog().Info("Could not locate confident atom types");
+  // assigning atom types according to L3 and L2 and printing stats
+  for(int i=0; i < sn_count; i++ )  {
+    if( sn->Node(i).GetId() == 0 )  continue;
+    tmp = EmptyString;
+    TTypeList< THitList<TAutoDBNetNode> >* guessN =
+      !guesses[i].list3->IsEmpty() ? guesses[i].list3 : guesses[i].list2;
 
     TBasicAtomInfo* type = guessN->Item(0).BAI;
     sn->Node(i).SetTag( type->GetIndex() );
     for( int j=0; j < guessN->Count(); j++ )  {
-      tmp << guessN->Item(j).BAI->GetSymbol() << '(' << olxstr::FormatFloat(2,1.0/(guessN->Item(j).MeanFom()+0.001)) << ")";
+      tmp << guessN->Item(j).BAI->GetSymbol() << '(' << olxstr::FormatFloat(2,1.0/(guessN->Item(j).MeanFomN(1)+0.001)) << ")";
       if( (j+1) < guessN->Count() )  tmp << ',';
     }
     if( permutator == NULL || !permutator->IsActive() )  {
-      sn->Node(i).SetTag( type->GetIndex() );
-      if( type != NULL && *type != guesses[i].atom->GetAtomInfo() )  {
-//        guesses[i].atom->SetLabel( olxstr( type->GetSymbol() ) << (i+1));
-        if( proposed_atoms != NULL )  {
-          if( proposed_atoms->IndexOf( type ) != -1 )  {
+      bool searchHeavier = false, searchLighter = false; // have to do it here too!
+      if( UisoCnt != 0 && Uiso != 0 )  {
+        double scale = guesses[i].atom->GetUiso() / Uiso;
+        if( scale > URatio )          searchLighter = true;
+        else if( scale < 1./URatio )  searchHeavier = true;
+      }
+      if( searchLighter || searchHeavier )  {
+        if(AnalyseUiso(*guesses[i].atom, *guessN, stat, searchHeavier, searchLighter, proposed_atoms) )
+          sn->Node(i).SetTag( guesses[i].atom->GetAtomInfo().GetIndex() );
+      }
+      else  {
+        if( type != NULL && *type != guesses[i].atom->GetAtomInfo() )  {
+          if( proposed_atoms != NULL )  {
+            if( proposed_atoms->IndexOf( type ) != -1 )  {
+              stat.AtomTypeChanges++;
+              guesses[i].atom->Label() =  (olxstr( type->GetSymbol() ) << (i+1));
+              guesses[i].atom->AtomInfo( type );
+            }
+          }
+          else if( BAIDelta != -1 )  {
+            if( abs(type->GetIndex() - guesses[i].atom->GetAtomInfo().GetIndex()) < BAIDelta )  {
+              stat.AtomTypeChanges++;
+              guesses[i].atom->Label() =  (olxstr( type->GetSymbol() ) << (i+1));
+              guesses[i].atom->AtomInfo( type );
+            }
+          }
+          else  {
             stat.AtomTypeChanges++;
             guesses[i].atom->Label() =  (olxstr( type->GetSymbol() ) << (i+1));
             guesses[i].atom->AtomInfo( type );
           }
-        }
-        else if( BAIDelta != -1 )  {
-          if( abs(type->GetIndex() - guesses[i].atom->GetAtomInfo().GetIndex()) < BAIDelta )  {
-            stat.AtomTypeChanges++;
-            guesses[i].atom->Label() =  (olxstr( type->GetSymbol() ) << (i+1));
-            guesses[i].atom->AtomInfo( type );
-          }
-        }
-        else  {
-          stat.AtomTypeChanges++;
-          guesses[i].atom->Label() =  (olxstr( type->GetSymbol() ) << (i+1));
-          guesses[i].atom->AtomInfo( type );
         }
       }
     }
     TBasicApp::GetLog().Info( tmp );
   }
-  for(int i=0; i < guesses.Count(); i++ )  {
+  for(int i=0; i < sn_count; i++ )  {
     if( sn->Node(i).GetTag() != -1 && guesses[i].atom->GetAtomInfo() != sn->Node(i).GetTag() )  {
       int change_evt = -1;
       TBasicAtomInfo* l_bai = &XFile.GetAtomsInfo().GetAtomInfo(sn->Node(i).GetTag());
@@ -1187,12 +1207,7 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
       }
     }
   }
-  if( UisoCnt != 0 )  Uiso /= UisoCnt;
-  if( UisoCnt != 0 )
-    TBasicApp::GetLog().Info( olxstr("Mean Uiso for confident atom types is ") << olxstr::FormatFloat(3,Uiso) );
-  else
-    TBasicApp::GetLog().Info("Could not locate confident atom types");
-  for(int i=0; i < guesses.Count(); i++ )  {
+  for(int i=0; i < sn_count; i++ )  {
     if( sn->Node(i).GetTag() == -1 )  {
       bool searchHeavier = false, searchLighter = false;
       if( UisoCnt != 0 && Uiso != 0 )  {
@@ -1208,7 +1223,6 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
       for( int j=0; j < guesses[i].list1->Count(); j++ )
         guesses[i].list1->Item(j).Sort();
       guesses[i].list1->QuickSorter.SortSF(*guesses[i].list1, THitList<TAutoDBNode>::SortByFOMFunc);
-//      guesses[i].list1->QuickSorter.SortSF(*guesses[i].list1, THitList<TAutoDBNode>::SortByCountFunc);
       if( guesses[i].list1->Count() != 0 )  {
         tmp << guesses[i].atom->GetLabel() << ' ';
         TBasicAtomInfo* type = &guesses[i].atom->GetAtomInfo();
@@ -1288,7 +1302,7 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
       }
     }
   }
-  for( int i=0; i < sn->Count(); i++ )  {
+  for( int i=0; i < sn_count; i++ )  {
     delete sn->Node(i).Center();
     delete guesses[i].list1;
     delete guesses[i].list2;
