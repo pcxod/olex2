@@ -340,10 +340,11 @@ public:
     struct THitList {
       TTypeList< THitStruct<NodeClass> > hits;
       TBasicAtomInfo* BAI;
+      double meanFom;
       static int SortByFOMFunc( const THitList<NodeClass>& a,
                                 const THitList<NodeClass>& b )  {
         int nc = olx_min( a.hits.Count(), b.hits.Count() );
-        //nc = 1;
+        //nc = olx_min(1, nc);
         double foma = 0, fomb = 0;
         for( int i=0; i < nc; i++ )  {
           foma += a.hits[i].Fom;
@@ -361,12 +362,19 @@ public:
       THitList( TBasicAtomInfo* bai, NodeClass* node, double fom )  {
         BAI = bai;
         hits.AddNew(node, fom);
+        meanFom = 0;
       }
       double MeanFom()  {
-        double fom = 0;
+        if( meanFom != 0 )  return meanFom;
         for( int i=0; i < hits.Count(); i++ )
-          fom += hits[i].Fom;
-        return fom /= hits.Count();
+          meanFom += hits[i].Fom;
+        return meanFom /= hits.Count();
+      }
+      double MeanFomN(int cnt)  {
+        double mf = 0;
+        for( int i=0; i < cnt; i++ )
+          mf += hits[i].Fom;
+        return mf /= cnt;
       }
       void Sort()  {  hits.QuickSorter.SortSF( hits, THitStruct<NodeClass>::SortByFOMFunc);  }
     };
@@ -378,6 +386,10 @@ public:
   };
   void ValidateResult(const olxstr& fileName, const TLattice& au, TStrList& report);
 protected:
+  // hits must be sorted beforehand!
+  void AnalyseUiso(TCAtom& ca, const TTypeList< THitList<TAutoDBNode> >& list, AnalysisStat& stat, 
+    bool heavier, bool lighter, TBAIPList* proposed_atoms = NULL);
+  
   class TAnalyseNetNodeTask  {
     TTypeList< TPtrList<TAutoDBNode> >& Nodes;
     TTypeList<TGuessCount>& Guesses;
@@ -397,6 +409,85 @@ protected:
   void LibBAIDelta(const TStrObjList& Params, TMacroError& E);
   void LibURatio(const TStrObjList& Params, TMacroError& E);
   class TLibrary*  ExportLibrary(const olxstr& name=EmptyString);
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+template <class NodeType>  bool AnalyseUiso(TCAtom& ca, const TTypeList< THitList<NodeType> >& list, AnalysisStat& stat, 
+                          bool heavier, bool lighter, TBAIPList* proposed_atoms)  {
+  if( !lighter && !heavier )  return false;
+  olxstr tmp( ca.GetLabel() );
+  tmp << ' ';
+  TBasicAtomInfo* type = &ca.GetAtomInfo();
+  if( heavier )  {
+    TBasicApp::GetLog().Info( olxstr("Searching element heavier for ") << ca.GetLabel() );
+    for( int j=0; j < list.Count(); j++ )  {
+      if( list[j].BAI->GetIndex() > type->GetIndex() )  {
+        if( proposed_atoms != NULL )  {
+          if( proposed_atoms->IndexOf( list[j].BAI ) != -1 )  {
+            type = list[j].BAI;
+            break;
+          }
+        }
+        else if( BAIDelta != -1 )  {
+          if( (list[j].BAI->GetIndex() - ca.GetAtomInfo().GetIndex()) < BAIDelta )  {
+            type = list[j].BAI;
+            break;
+          }
+        }
+        //              else  {
+        //              }
+      }
+    }
+  }
+  else if( lighter )  {
+    TBasicApp::GetLog().Info( olxstr("Searching element lighter for ") << ca.GetLabel() );
+    for( int j=0; j < list.Count(); j++ )  {
+      if( list[j].BAI->GetIndex() < type->GetIndex() )  {
+        if( proposed_atoms != NULL )  {
+          if( proposed_atoms->IndexOf( list[j].BAI ) != -1 )  {
+            type = list[j].BAI;
+            break;
+          }
+        }
+        else if( BAIDelta != -1 )  {
+          if( (ca.GetAtomInfo().GetIndex() - list[j].BAI->GetIndex()) < BAIDelta  )  {
+            type = list[j].BAI;
+            break;
+          }
+        }
+        //              else  {
+        //              }
+      }
+    }
+  }
+  for( int j=0; j < list.Count(); j++ )  {
+    tmp << list[j].BAI->GetSymbol() << '(' <<
+      olxstr::FormatFloat(3,1.0/(list[j].MeanFom()+0.001)) << ")" << list[j].hits[0].Fom;
+    if( (j+1) < list.Count() )  tmp << ',';
+  }
+  if( type == NULL || *type == ca.GetAtomInfo() )  return false;
+  int atc = stat.AtomTypeChanges;
+  if( proposed_atoms != NULL )  {
+    if( proposed_atoms->IndexOf( type ) != -1 )  {
+      stat.AtomTypeChanges++;
+      ca.Label() =  type->GetSymbol();
+      ca.AtomInfo( type );
+    }
+  }
+  else if( BAIDelta != -1 )  {
+    if( abs(type->GetIndex() - ca.GetAtomInfo().GetIndex()) < BAIDelta )  {
+      stat.AtomTypeChanges++;
+      ca.Label() =  type->GetSymbol();
+      ca.AtomInfo( type );
+    }
+  }
+  else  {
+    stat.AtomTypeChanges++;
+    ca.Label() =  type->GetSymbol();
+    ca.AtomInfo( type );
+  }
+  TBasicApp::GetLog().Info( tmp );
+  return atc != stat.AtomTypeChanges;
+}
+
 };
 
 class  TAtomTypePermutator {
