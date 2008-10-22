@@ -529,7 +529,7 @@ TAutoDB::TAutoDB(TXFile& xfile, ALibraryContainer& lc) : XFile(xfile)  {
   for( int i=0; i < MaxConnectivity-1; i++ )
     Nodes.AddNew();
   BAIDelta = -1;
-  URatio = 1.5;
+  URatio = 1.3;
   lc.GetLibrary().AttachLibrary( ExportLibrary() );
 }
 //..............................................................................
@@ -1117,7 +1117,10 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
           TBasicApp::GetLog().Info( "Oups ..." );
       }
     }
-    Uiso += guesses[i].atom->GetUiso();
+    if( sn->Node(i).Count() == 1 )  // normally wobly
+      Uiso += guesses[i].atom->GetUiso()*3./4.;
+    else
+      Uiso += guesses[i].atom->GetUiso();
     UisoCnt ++;
     stat.ConfidentAtomTypes++;
   }
@@ -1142,13 +1145,14 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
     if( permutator == NULL || !permutator->IsActive() )  {
       bool searchHeavier = false, searchLighter = false; // have to do it here too!
       if( UisoCnt != 0 && Uiso != 0 )  {
-        double scale = guesses[i].atom->GetUiso() / Uiso;
+        double uiso = sn->Node(i).Count() == 1 ? guesses[i].atom->GetUiso()*3./4. : guesses[i].atom->GetUiso();
+        double scale = uiso / Uiso;
         if( scale > URatio )          searchLighter = true;
         else if( scale < 1./URatio )  searchHeavier = true;
       }
       if( searchLighter || searchHeavier )  {
-        if(AnalyseUiso(*guesses[i].atom, *guessN, stat, searchHeavier, searchLighter, proposed_atoms) )
-          sn->Node(i).SetTag( guesses[i].atom->GetAtomInfo().GetIndex() );
+        AnalyseUiso(*guesses[i].atom, *guessN, stat, searchHeavier, searchLighter, proposed_atoms);
+        sn->Node(i).SetTag( guesses[i].atom->GetAtomInfo().GetIndex() ); // enforce atom type
       }
       else  {
         if( type != NULL && *type != guesses[i].atom->GetAtomInfo() )  {
