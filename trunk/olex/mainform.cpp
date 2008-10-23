@@ -1301,6 +1301,7 @@ void TMainForm::StartupInit()  {
   }
 
   ProcessXPMacro("onstartup", MacroError);
+  ProcessXPMacro("user_onstartup", MacroError);
 
   // load html in last cal - it might call some destructive functions on uninitialised data
 

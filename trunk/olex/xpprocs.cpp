@@ -6426,6 +6426,10 @@ void TMainForm::funGetCompilationInfo(const TStrObjList& Params, TMacroError &E)
 }
 //..............................................................................
 void TMainForm::macDelOFile(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+  if( FXApp->OverlayedXFileCount() == 0 )  {
+    ProcessXPMacro("fuse", Error);
+    return;
+  }
   int ind = Cmds[0].ToInt();
   if( ind < 0 || ind >= FXApp->OverlayedXFileCount() )
     throw TInvalidArgumentException(__OlxSourceInfo, olxstr("index=") << ind );
@@ -6439,18 +6443,7 @@ class TTetrahedron  {
   double Volume;
 protected:
   double CalcVolume()  {
-    vec3d a,b,n;
-    double d, caS, sa;
-    a = Points[1] - Points[0];
-    b = Points[2] - Points[0];
-    caS = a.CAngle(b);
-    sa = sqrt( 1- caS*caS);
-    caS = a.Length() * b.Length() * sa / 2;
-    n = a.XProdVec(b);
-    d = n[2]*Points[0][2] + n[1]*Points[0][1] + n[0]*Points[0][0];
-    d = n[2]*Points[3][2] + n[1]*Points[3][1] + n[0]*Points[3][0] - d;
-    d /= n.Length();
-    return fabs( caS*d/2 );
+    return TetrahedronVolume( Points[0], Points[1], Points[2], Points[3] );
   }
 public:
   TTetrahedron(const olxstr& name)  {

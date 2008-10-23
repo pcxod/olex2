@@ -51,6 +51,8 @@ class XLibMacros  {
 
   static DefMacro(Flush)
 
+  static DefMacro(SGS)  // SG settings
+
   static void MergePublTableData(TCifLoopTable& to, TCifLoopTable& from); // helper function
   static olxstr CifResolve(const olxstr& func);
   static bool ProcessExternalFunction(olxstr& func);
@@ -75,6 +77,7 @@ class XLibMacros  {
   static DefFunc(LSM)
   static DefFunc(SSM)
   static DefFunc(SG)
+  static DefFunc(SGS)  // SG settings
 
   static DefFunc(ATA) // atom type assigmnet
   static DefFunc(VSS) // validate structure or a solution, better the analyse!
