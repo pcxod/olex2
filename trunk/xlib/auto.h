@@ -13,11 +13,12 @@
 #include "xfiles.h"
 #include "tptrlist.h"
 #include "library.h"
+#include "xapp.h"
 
 BeginXlibNamespace()
 class TAutoDB;
 class TAutoDBNet;
-class  TAtomTypePermutator;
+class TAtomTypePermutator;
 
 class TAutoDBIdObject  {
   int32_t Id;
