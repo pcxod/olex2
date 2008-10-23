@@ -44,7 +44,7 @@ template <class VC>
     d = n[2]*A[2] + n[1]*A[1] + n[0]*A[0];
     d = n[2]*D[2] + n[1]*D[1] + n[0]*D[0] - d;
     d /= n.Length();
-    return fabs( caS*d/(2*3) );
+    return fabs( caS*d/3 );
   }
 
 // greatest common denominator
