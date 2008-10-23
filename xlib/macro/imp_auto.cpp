@@ -662,3 +662,4 @@ void XLibMacros::funFATA(const TStrObjList &Cmds, TMacroError &E)  {
   //au.InitData();
 //  xapp.XFile().EndUpdate();
 }
+
