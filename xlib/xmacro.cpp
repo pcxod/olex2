@@ -125,6 +125,7 @@ xlib_InitMacro(File, "s-sort the main residue of the asymmetric unit", fpNone|fp
   xlib_InitMacro(LstMac, "h-Shows help", fpAny, "Lists all defined macros. Accepts * based masks" );
   xlib_InitMacro(LstFun, "h-Shows help", fpAny, "Lists all defined functions. Accepts * based masks" );
   xlib_InitMacro(LstFS, EmptyString, fpAny, "Prints out detailed content of virtual file system. Accepts * based masks");
+  xlib_InitMacro(SGS, EmptyString, fpAny|psFileLoaded, "Changes current space group settings");
 //_________________________________________________________________________________________________________________________
 //_________________________________________________________________________________________________________________________
 
@@ -148,10 +149,11 @@ xlib_InitMacro(File, "s-sort the main residue of the asymmetric unit", fpNone|fp
  and an argument is provided, that argument is returned");
   xlib_InitFunc(Ins, fpOne|psCheckFileTypeIns, "Returns instruction value (all data after the instruction). In case the instruction\
  does not exist it return 'n/a' string");
-  xlib_InitFunc(SG, fpNone|fpOne, "Returns space group of currently loaded file.\
+  xlib_InitFunc(SG, fpNone|fpOne|psFileLoaded, "Returns space group of currently loaded file.\
  Also takes a string template, where %# is replaced with SG number, %n - short name,\
  %N - full name, %h - html representation of the short name, %H - same as %h for full name,\
  %s - syngony, %HS -Hall symbol" );
+  xlib_InitFunc(SGS, fpNone|fpOne|psFileLoaded, "Returns current space settings" );
 //_________________________________________________________________________________________________________________________
   xlib_InitFunc(ATA, fpAny|psFileLoaded, "Test current structure agains database.\
   (Atom Type Assignment). Returns true if any atom type changed" );
@@ -593,6 +595,10 @@ void XLibMacros::macLstFun(TStrObjList &Cmds, const TParamList &Options, TMacroE
     if( !add )  continue;
     TBasicApp::GetLog() << (fn << " - " << func->GetSignature() << '\n');
   }
+}
+//..............................................................................
+void XLibMacros::macSGS(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  throw TNotImplementedException(__OlxSourceInfo);
 }
 //..............................................................................
 void XLibMacros::macLstVar(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
@@ -1212,10 +1218,12 @@ olxstr XLibMacros_funSGNameToHtml(const olxstr& name)  {
   for( int i=0; i < name.Length(); i++ )  {
     if( (i+1) < name.Length() )  {
       if( (name[i] >= '0' && name[i] <= '9')  &&  (name[i+1] >= '0' && name[i+1] <= '9') )  {
-        res << name[i] << "<sub>" << name[i+1] << "</sub>";
-        i++;
-        continue;
+        if( name[i] != '1' )  {
+          res << name[i] << "<sub>" << name[i+1] << "</sub>";
+          i++;
+        } 
       }
+      continue;
     }
     res << name[i];
   }
@@ -1252,6 +1260,22 @@ void XLibMacros::funSG(const TStrObjList &Cmds, TMacroError &E)  {
     E.SetRetVal( NAString );
 //    E.ProcessingError(__OlxSrcInfo, "could not find space group for the file" );
     return;
+  }
+}
+//..............................................................................
+void XLibMacros::funSGS(const TStrObjList &Cmds, TMacroError &E)  {
+  TXApp& xapp = TXApp::GetInstance();
+  TSpaceGroup& sg = xapp.XFile().GetLastLoaderSG();
+  const olxstr& axis =  sg.GetAxis();
+  if( axis.IsEmpty() )
+    E.SetRetVal<olxstr>( "standard" );
+  else  {
+    if( axis.Length() == 2 )  {  // axis + cell choice
+      E.SetRetVal(olxstr(axis.CharAt(0)) << ": cell choice " << axis.CharAt(1));
+    }
+    else  {
+      E.SetRetVal(olxstr("axis: ") << axis);
+    }
   }
 }
 //..............................................................................
