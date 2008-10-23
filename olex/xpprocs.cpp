@@ -2265,7 +2265,7 @@ void TMainForm::macShell(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 #ifdef __WIN32__
     ShellExecute((HWND)this->GetHWND(), wxT("open"), uiStr(Cmds[0]), NULL, uiStr(TEFile::CurrentDir()), SW_SHOWNORMAL);
 #else
-    if( Cmds[0].EndsWith(".htm") || Cmds[0].EndsWith(".html") )
+    if( Cmds[0].StartsWith("http") || Cmds[0].EndsWith(".htm") || Cmds[0].EndsWith(".html") || Cmds[0].EndsWith(".php") || Cmds[0].EndsWith(".asp") )
       ProcessXPMacro( olxstr("exec -o getvar(defbrowser) '") << Cmds[0] << '\'', Error);
     else
       ProcessXPMacro( olxstr("exec -o getvar(defexplorer) '") << Cmds[0] << '\'', Error);
