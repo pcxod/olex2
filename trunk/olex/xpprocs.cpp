@@ -1055,17 +1055,21 @@ void TMainForm::macPict(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   if( PictureQuality )  FXApp->Quality(qaPict);
 
   short bits = 24, extraBytes;
-  float res = 2, aRes;
 
-  if( Cmds.Count() == 2 )  res = Cmds[1].ToDouble();
-  aRes = res;
-  if( res <= 1 )  res = 1;
-  if( res >= 10 )  res = 10;
   int vpLeft = FXApp->GetRender().GetLeft(),
       vpTop = FXApp->GetRender().GetTop(),
       vpWidth = FXApp->GetRender().GetWidth(),
       vpHeight = FXApp->GetRender().GetHeight();
 
+  float res = 2, aRes;
+  if( Cmds.Count() == 2 )  
+    res = Cmds[1].ToDouble();
+  if( res >= 100 )  // width provided
+    res /= vpWidth;
+  if( res > 10 )
+    res = 10;
+  aRes = res;
+  if( res <= 1 )  res = 1;
 
   int BmpHeight = vpHeight*res, BmpWidth = vpWidth*res;
 
@@ -1200,15 +1204,19 @@ void TMainForm::macPict(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 }
 //..............................................................................
 void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  float res = 1, aRes;
   //wxProgressDialog progress(wxT("Rendering..."), wxT("Pass 1 out of 4"), 5, this, wxPD_AUTO_HIDE); 
-  if( Cmds.Count() == 2 )  res = Cmds[1].ToDouble();
-  aRes = res;
-  if( res < 1 )   res = 1;
-  if( res > 10 )  res = 10;
-
   int orgHeight = FXApp->GetRender().GetHeight(),
       orgWidth  = FXApp->GetRender().GetWidth();
+  float res = 1, aRes;
+  if( Cmds.Count() == 2 )  
+    res = Cmds[1].ToDouble();
+  if( res >= 100 )  // width provided
+    res /= orgWidth;
+  if( res > 10 )
+    res = 10;
+  aRes = res;
+  if( res <= 1 )  res = 1;
+
   int ScrHeight = (orgHeight/(res*2)-1)*res*2,
       ScrWidth  = (orgWidth/(res*2)-1)*res*2;
   int BmpHeight = ScrHeight*res, BmpWidth = ScrWidth*res;
@@ -3458,7 +3466,8 @@ void TMainForm::macChiv(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 }
 //..............................................................................
 int TMainForm_macShowQ_QPeakSort(const TXAtom* a, const TXAtom* b)  {
-  return a->Atom().CAtom().GetQPeak() - b->Atom().CAtom().GetQPeak();
+  double v = a->Atom().CAtom().GetQPeak() - b->Atom().CAtom().GetQPeak();
+  return v < 0 ? 1 : (v > 0 ? -1 : 0);
 }
 void TMainForm::macShowQ(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   if( Cmds.Count() == 2 )  {
