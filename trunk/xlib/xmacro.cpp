@@ -1222,8 +1222,8 @@ olxstr XLibMacros_funSGNameToHtml(const olxstr& name)  {
           res << name[i] << "<sub>" << name[i+1] << "</sub>";
           i++;
         } 
+        continue;
       }
-      continue;
     }
     res << name[i];
   }
