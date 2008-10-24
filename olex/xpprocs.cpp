@@ -1170,7 +1170,7 @@ void TMainForm::macPict(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 
   olxstr bmpFN;
 
-  if( FXApp->XFile().HasLastLoader() && TEFile::IsAbsolutePath(Cmds[0]) )
+  if( FXApp->XFile().HasLastLoader() && !TEFile::IsAbsolutePath(Cmds[0]) )
     bmpFN = TEFile::ExtractFilePath(FXApp->XFile().GetFileName()) << TEFile::ExtractFileName( Cmds[0] );
   else
     bmpFN = Cmds[0];
@@ -1323,7 +1323,7 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   FXApp->GetRender().SetView();
   FXApp->Draw();
   olxstr bmpFN;
-  if( FXApp->XFile().HasLastLoader() && TEFile::IsAbsolutePath(Cmds[0]) )
+  if( FXApp->XFile().HasLastLoader() && !TEFile::IsAbsolutePath(Cmds[0]) )
     bmpFN = TEFile::ExtractFilePath(FXApp->XFile().GetFileName()) << TEFile::ExtractFileName( Cmds[0] );
   else
     bmpFN = Cmds[0];
