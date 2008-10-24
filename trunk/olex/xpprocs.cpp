@@ -1047,25 +1047,20 @@ void TMainForm::macLines(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 //..............................................................................
 void TMainForm::macPict(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
 #ifdef __WIN32__
-  bool Emboss = false, EmbossColour = false, PictureQuality = false;
-  for( int i=0; i < Options.Count(); i++ )  {
-    if( !Options.GetName(i).Comparei("c") )
-    {  Emboss = true;  EmbossColour = true;  continue;  }
-    if( !Options.GetName(i).Comparei("bw") )
-    {  Emboss = true;  continue;  }
-    if( !Options.GetName(i).Comparei("pq") )
-    {  PictureQuality = true;  continue;  }
-  }
+  bool Emboss = Options.Contains("bw"), 
+    EmbossColour = Options.Contains("c"), 
+    PictureQuality = Options.Contains("pq");
+  if( EmbossColour )  Emboss = true;
 
   if( PictureQuality )  FXApp->Quality(qaPict);
 
   short bits = 24, extraBytes;
-  float res = 2;
+  float res = 2, aRes;
 
   if( Cmds.Count() == 2 )  res = Cmds[1].ToDouble();
-  if( res <= 0 )  res = 2;
+  aRes = res;
+  if( res <= 1 )  res = 1;
   if( res >= 10 )  res = 10;
-
   int vpLeft = FXApp->GetRender().GetLeft(),
       vpTop = FXApp->GetRender().GetTop(),
       vpWidth = FXApp->GetRender().GetWidth(),
@@ -1175,7 +1170,7 @@ void TMainForm::macPict(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 
   olxstr bmpFN;
 
-  if( FXApp->XFile().HasLastLoader() && Cmds[0].FirstIndexOf(':') == -1 )
+  if( FXApp->XFile().HasLastLoader() && TEFile::IsAbsolutePath(Cmds[0]) )
     bmpFN = TEFile::ExtractFilePath(FXApp->XFile().GetFileName()) << TEFile::ExtractFileName( Cmds[0] );
   else
     bmpFN = Cmds[0];
@@ -1190,22 +1185,26 @@ void TMainForm::macPict(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   if( !BmpFile.ExtractFileExt(Cmds[0]).Comparei("bmp") )
     return;
   wxImage image;
-  image.LoadFile( uiStr(bmpFN), wxBITMAP_TYPE_BMP);
+  image.LoadFile( bmpFN.u_str(), wxBITMAP_TYPE_BMP);
   if( !image.Ok() )  {
     Error.ProcessingError(__OlxSrcInfo, "could not process image conversion" );
     return;
   }
-  image.SaveFile( uiStr(bmpFN) );
+  if( aRes < 1 && aRes > 0 )
+    image.Scale(BmpWidth*aRes, BmpHeight*aRes).SaveFile( bmpFN.u_str() );
+  else
+    image.SaveFile( bmpFN.u_str() );
 #else
   macPicta(Cmds, Options, Error);
 #endif // __WIN32__
 }
 //..............................................................................
 void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  short res = 1;
+  float res = 1, aRes;
   //wxProgressDialog progress(wxT("Rendering..."), wxT("Pass 1 out of 4"), 5, this, wxPD_AUTO_HIDE); 
-  if( Cmds.Count() == 2 )  res = Cmds[1].ToInt();
-  if( res <= 0 )  res = 2;
+  if( Cmds.Count() == 2 )  res = Cmds[1].ToDouble();
+  aRes = res;
+  if( res < 1 )   res = 1;
   if( res > 10 )  res = 10;
 
   int orgHeight = FXApp->GetRender().GetHeight(),
@@ -1324,124 +1323,18 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   FXApp->GetRender().SetView();
   FXApp->Draw();
   olxstr bmpFN;
-  if( FXApp->XFile().HasLastLoader() )
+  if( FXApp->XFile().HasLastLoader() && TEFile::IsAbsolutePath(Cmds[0]) )
     bmpFN = TEFile::ExtractFilePath(FXApp->XFile().GetFileName()) << TEFile::ExtractFileName( Cmds[0] );
   else
     bmpFN = Cmds[0];
   wxImage image;
   image.SetData((unsigned char*)bmpData, BmpWidth, BmpHeight ); 
 //  image.Mirror(false).SaveFile( bmpFN.u_str() );
-  image.SaveFile( bmpFN.u_str() );
+  if( aRes < 1 && aRes > 0 )
+    image.Scale(BmpWidth*aRes, BmpHeight*aRes).SaveFile( bmpFN.u_str() );
+  else
+    image.SaveFile( bmpFN.u_str() );
   //progress.Update(4, wxT("Done"));
-  
-#ifdef __WIN32x__
-  short bits = 24, extraBytes;
-  float res = 2;
-
-  if( Cmds.Count() == 2 )  res = Cmds[1].ToDouble();
-  if( res <= 0 )  res = 2;
-  if( res >= 10 )  res = 5;
-
-  int ScrHeight = FXApp->GetRender().GetHeight(),
-      ScrWidth = FXApp->GetRender().GetWidth();
-  int BmpHeight = ScrHeight*res, BmpWidth = ScrWidth*res;
-
-  extraBytes = (4-(BmpWidth*3)%4)%4;
-  int extraGlBytes = (4-(ScrWidth*3)%4)%4;
-
-  BITMAPFILEHEADER BmpFHdr;
-  // intialise bitmap header
-  BITMAPINFO BmpInfo;
-  BmpInfo.bmiHeader.biSize = sizeof(BITMAPINFOHEADER) ;
-  BmpInfo.bmiHeader.biWidth = BmpWidth;
-  BmpInfo.bmiHeader.biHeight = BmpHeight;
-  BmpInfo.bmiHeader.biPlanes = 1 ;
-  BmpInfo.bmiHeader.biBitCount = (WORD) bits;
-  BmpInfo.bmiHeader.biCompression = BI_RGB ;
-  BmpInfo.bmiHeader.biSizeImage = (BmpWidth*3+extraBytes)*BmpHeight;
-  BmpInfo.bmiHeader.biXPelsPerMeter = 0 ;
-  BmpInfo.bmiHeader.biYPelsPerMeter = 0 ;
-  BmpInfo.bmiHeader.biClrUsed = 0;
-  BmpInfo.bmiHeader.biClrImportant = 0 ;
-
-  BmpFHdr.bfType = 0x4d42;
-  BmpFHdr.bfSize = sizeof(BmpFHdr)  + sizeof(BITMAPINFOHEADER) + (BmpWidth*3+extraBytes)*BmpHeight;
-  BmpFHdr.bfReserved1 = BmpFHdr.bfReserved2 = 0;
-  BmpFHdr.bfOffBits = sizeof(BmpFHdr) + sizeof(BmpInfo.bmiHeader) ;
-
-  TEFile *BmpFile = NULL;
-  olxstr bmpFN;
-  if( FXApp->XFile().GetLastLoader() )
-    bmpFN = TEFile::ExtractFilePath(FXApp->XFile().GetFileName()) << TEFile::ExtractFileName( Cmds[0] );
-  else
-    bmpFN = Cmds[0];
-  BmpFile = new TEFile(bmpFN, "w+b");
-
-  BmpFile->Write(&(BmpFHdr), sizeof(BITMAPFILEHEADER));
-  BmpFile->Write(&(BmpInfo), sizeof(BITMAPINFOHEADER));
-
-  FGlConsole->Visible(false);
-  FXApp->GetRender().OnDraw->SetEnabled( false );
-  if( res > 1 )  
-    FXApp->GetRender().Scene()->ScaleFonts(res);
-  char *imageLayer = new char [(BmpWidth*3+extraBytes)*ScrHeight];
-  int ires = res;
-  if( ires == 0 )  res = 1;
-  for( int i=0; i < res; i++ )  {
-    for( int j=0; j < res; j++ )  {
-      FXApp->GetRender().LookAt(j, i, res);
-      FXApp->GetRender().Draw();
-      char *PP = FXApp->GetRender().GetPixels();
-      for(int k=0; k < ScrWidth*3; k+=3 )  {
-        for(int l=0; l < ScrHeight; l++ )  {
-//          int indexA = l*(ScrWidth*3 + 5) + k + 5;
-          int indexA = l*(ScrWidth*3+extraGlBytes) + k;
-          int indexB = l*(BmpWidth*3+extraBytes) + j*ScrWidth*3 + k;
-          imageLayer[indexB] = PP[indexA+2];
-          imageLayer[indexB+1] = PP[indexA+1];
-          imageLayer[indexB+2] = PP[indexA];
-        }
-      }
-      delete [] PP;
-    }
-    BmpFile->Write(imageLayer, (BmpWidth*3+extraBytes)*ScrHeight);
-  }
-  delete [] imageLayer;
-
-  FXApp->GetRender().OnDraw->SetEnabled( true );
-  FGlConsole->Visible(true);
-  if( res > 1 ) 
-    FXApp->GetRender().Scene()->RestoreFontScale();
-  // end drawing etc
-  FXApp->GetRender().LookAt(0,0,1);
-  FXApp->GetRender().SetView();
-  FXApp->Draw();
-
-  //check if the image is bmp
-  if( !BmpFile->ExtractFileExt(Cmds[0]).Comparei("bmp") )
-  {  delete BmpFile;  return;  }
-  delete BmpFile;
-  wxImage image;
-  image.LoadFile( uiStr(bmpFN), wxBITMAP_TYPE_BMP);
-  if( !image.Ok() )  {
-    Error.ProcessingError(__OlxSrcInfo, "could not process image conversion" );
-    return;
-  }
-  image.SaveFile( uiStr(bmpFN) );
-#elif defined(RUBISH) // just make a snapshot then
-  FGlConsole->Visible(false);
-  FXApp->Draw();
-  FGlConsole->Visible(true);
-  char* pixels = FXApp->GetRender().GetPixels(true, 1);  //use malloc
-  olxstr bmpFN;
-  if( FXApp->XFile().GetLastLoader() )
-    bmpFN = TEFile::ExtractFilePath(FXApp->XFile().GetFileName()) << TEFile::ExtractFileName( Cmds[0] );
-  else
-    bmpFN = Cmds[0];
-  wxImage image;
-  image.SetData((unsigned char*)pixels, FXApp->GetRender().GetWidth(), FXApp->GetRender().GetHeight() ); 
-  image.Mirror(false).SaveFile( bmpFN.u_str() );
-#endif // __WIN32__
 }
 //..............................................................................
 void TMainForm::macBang(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
