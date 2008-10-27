@@ -125,7 +125,7 @@ xlib_InitMacro(File, "s-sort the main residue of the asymmetric unit", fpNone|fp
   xlib_InitMacro(LstMac, "h-Shows help", fpAny, "Lists all defined macros. Accepts * based masks" );
   xlib_InitMacro(LstFun, "h-Shows help", fpAny, "Lists all defined functions. Accepts * based masks" );
   xlib_InitMacro(LstFS, EmptyString, fpAny, "Prints out detailed content of virtual file system. Accepts * based masks");
-  xlib_InitMacro(SGS, EmptyString, fpAny|psFileLoaded, "Changes current space group settings");
+  xlib_InitMacro(SGS, EmptyString, fpOne|fpTwo|psFileLoaded, "Changes current space group settings using provided cell setting (if aplicable) and axis");
 //_________________________________________________________________________________________________________________________
 //_________________________________________________________________________________________________________________________
 
@@ -598,6 +598,23 @@ void XLibMacros::macLstFun(TStrObjList &Cmds, const TParamList &Options, TMacroE
 }
 //..............................................................................
 void XLibMacros::macSGS(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  // cell c 1 ->2, 2->3 and 3 ->1, C->A, A->I, I->C;
+  static const mat3d mon_b(-1, 0, 1, 0, 1, 0, -1, 0, 0), mon_bs(0, 0, -1, 0, 1, 0, 1, 0, -1);
+  // cell c 1 ->2, 2->3 and 3 ->1, A->B, B->I, I->A;
+  static const mat3d mon_c(0, -1, 0, 1, -1, 0, 0, 0, 1), mon_cs(-1, 1, 0, -1, 0, 0, 0, 0, 1);
+  // cell c 1 ->2, 2->3 and 3 ->1, B->C, C->I, I->B;
+  static const mat3d mon_a(1, 0, 0, 0, 0, -1, 0, 1, -1), mon_as(1, 0, 0, 0, -1, 1, 0, -1, 0);
+  // uniqe b->c cc1: C->A, 2: A->B; 3:I->I
+  static const mat3d b_to_c(0, 1, 0, 0, 0, 1, 1, 0, 0), b_to_cs(0, 0, 1, 1, 0, 0, 0, 1, 0);
+  // uniqe b->a cc1: C->B, 2: A->C; 3:I->I
+  static const mat3d b_to_a(b_to_cs), b_to_as(b_to_c);
+  // uniqe c->a cc1: A->B, 2: B->C; 3:I->I
+  static const mat3d c_to_a(b_to_c), c_to_as(b_to_cs);
+  static const mat3d I_to_P(-0.5, 0.5, 0.5, 0.5, -0.5, -0.5), P_to_I(0, 1, 1, 0, 1, 0);
+  static const mat3d F_to_P(0, 0.5, 0.5, 0, 0.5, 0), P_to_F(-1, 1, 1, -1, 1, 1);
+
+  TXApp& xapp = TXApp::GetInstance();
+  TSpaceGroup& sg = xapp.XFile().GetLastLoaderSG();
   throw TNotImplementedException(__OlxSourceInfo);
 }
 //..............................................................................
