@@ -1134,8 +1134,8 @@ void TIns::_ProcessAfix(TCAtom& a, ParseContext& cx)  {
 TCAtom* TIns::_ParseAtom(TStrList& Toks, ParseContext& cx, TCAtom* atom)  {
   double QE[6];
   if( atom == NULL )  {
-    atom = &GetAsymmUnit().NewAtom(cx.Resi);
-    atom->SetLoaderId(GetAsymmUnit().AtomCount()-1);
+    atom = &cx.au.NewAtom(cx.Resi);
+    atom->SetLoaderId(cx.au.AtomCount()-1);
   }
   atom->ccrd()[0] = Toks[2].ToDouble();
   atom->ccrd()[1] = Toks[3].ToDouble();
@@ -1193,8 +1193,8 @@ TCAtom* TIns::_ParseAtom(TStrList& Toks, ParseContext& cx, TCAtom* atom)  {
         atom->FixedValues()[TCAtom::UisoFixedValuesOffset+j] = fabs((double)iv);
       }
     }
-    GetAsymmUnit().UcifToUcart(QE);
-    atom->AssignEllp( &GetAsymmUnit().NewEllp().Initialise(QE) );
+    cx.au.UcifToUcart(QE);
+    atom->AssignEllp( &cx.au.NewEllp().Initialise(QE) );
     if( atom->GetEllipsoid()->IsNPD() )  {
       TBasicApp::GetLog().Info(olxstr("Not positevely defined: ") << atom->Label());
       atom->SetUiso( 0 );
