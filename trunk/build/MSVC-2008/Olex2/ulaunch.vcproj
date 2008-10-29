@@ -100,6 +100,7 @@
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="1"
 			CharacterSet="0"
+			ManagedExtensions="0"
 			WholeProgramOptimization="1"
 			>
 			<Tool
@@ -119,19 +120,27 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				Optimization="0"
-				WholeProgramOptimization="false"
+				UseUnicodeResponseFiles="false"
+				Optimization="3"
+				InlineFunctionExpansion="2"
+				EnableIntrinsicFunctions="true"
+				FavorSizeOrSpeed="1"
+				OmitFramePointers="true"
+				WholeProgramOptimization="true"
 				AdditionalIncludeDirectories="&quot;E:\wxWidgets-2.8.7\lib\vc_lib\msw&quot;;&quot;E:\wxWidgets-2.8.7\include&quot;;../../../sdl;../../../repository"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE"
 				StringPooling="true"
-				BasicRuntimeChecks="3"
+				BasicRuntimeChecks="0"
 				RuntimeLibrary="2"
+				BufferSecurityCheck="false"
+				EnableFunctionLevelLinking="true"
+				EnableEnhancedInstructionSet="2"
 				FloatingPointModel="2"
 				UsePrecompiledHeader="0"
 				BrowseInformation="1"
 				WarningLevel="3"
-				Detect64BitPortabilityProblems="true"
-				DebugInformationFormat="3"
+				Detect64BitPortabilityProblems="false"
+				DebugInformationFormat="0"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -443,6 +452,10 @@
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
+			<File
+				RelativePath="..\..\..\repository\wxftpfs.h"
+				>
+			</File>
 			<File
 				RelativePath="..\..\..\repository\wxzipfs.h"
 				>
