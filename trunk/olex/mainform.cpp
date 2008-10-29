@@ -3115,7 +3115,7 @@ bool TMainForm::CheckMode(const unsigned short mode, const olxstr& modeData)  {
 //..............................................................................
 bool TMainForm::CheckState(const unsigned short state, const olxstr& stateData)
 {
-  if( !stateData.Length() )  return (ProgramState & state) != 0;
+  if( stateData.IsEmpty() )  return (ProgramState & state) != 0;
 
   if( state == prsHtmlVis )  {
     if( !stateData.Length() )  return FHtmlMinimized;
@@ -3129,7 +3129,7 @@ bool TMainForm::CheckState(const unsigned short state, const olxstr& stateData)
     return (pp!=NULL) ? pp->Html->GetShowTooltips() : false;
   }
   if( state == prsPluginInstalled )  {
-    if( stateData.Length() == 0 )  return false;
+    if( stateData.IsEmpty() )  return false;
     return FPluginItem->ItemExists( stateData );
   }
   if( state == prsHelpVis )  {
