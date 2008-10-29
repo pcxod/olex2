@@ -35,17 +35,8 @@ TXBond::TXBond(const olxstr& collectionName, TSBond& B, TGlRender *R) :
   FDrawStyle = 0x0001;
   Params().Resize(5);
   FBond = &B;
-  if( &B != NULL )  {
-    vec3d C( B.GetB().crd() - B.GetA().crd() );
-    if( C.IsNull() )  Params().Null();
-    else  {
-      Params()[3] = C.Length();
-      C.Normalise();
-      Params()[0] = (float)(acos(C[2])*180/M_PI);
-      Params()[1] = -C[1];
-      Params()[2] = C[0];
-    }
-  }
+  if( FBond != NULL )
+    BondUpdated();
   Params()[4] = 0.8;
   if( !FStaticObjects.Count() )  CreateStaticPrimitives();
   // the objects will be automatically deleted by the corresponding action collections
@@ -53,13 +44,20 @@ TXBond::TXBond(const olxstr& collectionName, TSBond& B, TGlRender *R) :
 //..............................................................................
 void TXBond::BondUpdated()  {
   vec3d C( FBond->GetB().crd() - FBond->GetA().crd() );
-  if( C.IsNull() )  Params().Null();
+  if( C.IsNull() )  
+    Params().Null();
   else  {
     Params()[3] = C.Length();
     C.Normalise();
     Params()[0] = (float)(acos(C[2])*180/M_PI);
-    Params()[1] = -C[1];
-    Params()[2] = C[0];
+    if( fabs(Params()[0]-180) < 0.001 )  { // degenerate case with Pi rotation
+      Params()[1] = 0;
+      Params()[2] = 1;
+    }
+    else {
+      Params()[1] = -C[1];
+      Params()[2] = C[0];
+    }
   }
 }
 //..............................................................................

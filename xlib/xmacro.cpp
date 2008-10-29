@@ -294,6 +294,11 @@ void XLibMacros::macIsot(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 void XLibMacros::macFix(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
   olxstr vars( Cmds[0] );
   Cmds.Delete(0);
+  double var_val = 0;
+  if( !Cmds.IsEmpty() && Cmds[0].IsNumber() )  {
+    var_val = Cmds[0].ToDouble();
+    Cmds.Delete(0);
+  }
   TSAtomPList atoms;
   if( !TXApp::GetInstance().FindSAtoms(Cmds.Text(' '), atoms, true) )  return;
   if( vars.Comparei( "XYZ" ) == 0 )  {
@@ -303,21 +308,17 @@ void XLibMacros::macFix(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     }
   }
   else if( vars.Comparei( "UISO" ) == 0 )  {
-    double uiso = 0;
-    if( Cmds.Count() > 1 && Cmds[0].IsNumber() )  {
-      uiso = Cmds[0].ToDouble();
-    }
     for( int i=0; i < atoms.Count(); i++ )  {
       if( atoms[i]->GetEllipsoid() == NULL )  {  // isotropic atom
-        if( uiso != 0 )  {
-          if( uiso < 10 )  {
-            atoms[i]->CAtom().SetUiso( uiso );
-            atoms[i]->CAtom().SetUisoVar( 10 );
+        if( var_val != 0 )  {
+          if( var_val < 10 )  {
+            atoms[i]->CAtom().SetUiso( var_val );
+            atoms[i]->CAtom().SetUisoVar( 10.0 + var_val );
           }
           else  {
-            int iv = (int) uiso;
-            atoms[i]->CAtom().SetUiso( uiso-iv );
-            atoms[i]->CAtom().SetUisoVar( iv*10 );
+            int iv = (int) var_val;
+            atoms[i]->CAtom().SetUiso( var_val-iv );
+            atoms[i]->CAtom().SetUisoVar( var_val );
           }
         }
         else  if( atoms[i]->CAtom().GetUisoVar() == 0 )  {  // have to skip riding atoms

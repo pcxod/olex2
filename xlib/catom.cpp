@@ -271,7 +271,7 @@ void TAfixGroup::Assign(TAsymmUnit& tau, const TAfixGroup& ag)  {
   Sof = ag.Sof;
   U = ag.U;
   Afix = ag.Afix;
-
+  
   Pivot = tau.FindCAtomByLoaderId(ag.Pivot->GetLoaderId());
   if( Pivot == NULL )
     throw TFunctionFailedException(__OlxSourceInfo, "asymmetric units mismatch");
