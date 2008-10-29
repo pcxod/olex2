@@ -719,7 +719,7 @@ void TIns::_SaveAtom(TCAtom& a, int& part, int& afix, TStrPObjList<olxstr,TBasic
   if( a.GetPart() != part )  sl.Add("PART ") << a.GetPart();
   TAfixGroup* ag = a.GetDependentAfixGroup();
   int atom_afix = a.GetAfix();
-  if( atom_afix != afix )  { 
+  if( atom_afix != afix || afix == 1 || afix == 2 )  { 
     if( !TAfixGroup::HasExcplicitPivot(afix) || !TAfixGroup::IsDependent(atom_afix) )  {
       if( ag != NULL )  {
         olxstr& str = sl.Add("AFIX ") << atom_afix;
@@ -1217,7 +1217,7 @@ TCAtom* TIns::_ParseAtom(TStrList& Toks, ParseContext& cx, TCAtom* atom)  {
         else  {  // simply fixed value
           iv *= 10;
           atom->SetUiso( atom->GetUiso() - iv );
-          atom->SetUisoVar( (double)iv );
+          //atom->SetUisoVar( (double)iv );
         }
       }
     }

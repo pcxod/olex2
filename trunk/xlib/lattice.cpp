@@ -701,55 +701,61 @@ TSPlane* TLattice::TmpPlane(const TSAtomPList& atoms, int weightExtent)  {
 }
 //..............................................................................
 void TLattice::UpdateAsymmUnit()  {
-  if( !AtomCount() )  return;
-  int ac = GetAsymmUnit().AtomCount();
+  if( Atoms.IsEmpty() )  return;
+  if( !Generated )  {
+    for( int i=0; i < Atoms.Count(); i++ )  {
+      if( Atoms[i]->IsDeleted() )
+        Atoms[i]->CAtom().SetDeleted(true);
+    }
+    return;
+  }
   GetAsymmUnit().InitAtomIds();
-  TEList AUAtoms;
-  TEList *AtomG;
+  TTypeList<TSAtomPList> AUAtoms;
   TSAtom* OA;
-  for( int i=0; i < GetAsymmUnit().AtomCount(); i++ )  {  // create lists to store atom groups
-    AtomG = new TEList;
-    AUAtoms.Add(AtomG);
-  }
-  for( int i=0; i < GetAsymmUnit().CentroidCount(); i++ )  {  // create lists to store atom groups
-    AtomG = new TEList;
-    AUAtoms.Add(AtomG);
-  }
-  for( int i=0; i < Atoms.Count(); i++ )  {
+  const int ac = GetAsymmUnit().AtomCount();
+  const int lc = ac + GetAsymmUnit().CentroidCount();
+  for( int i=0; i < lc; i++ )  // create lists to store atom groups
+    AUAtoms.AddNew();
+  const int lat_ac = Atoms.Count();
+  for( int i=0; i < lat_ac; i++ )  {
     TSAtom* A = Atoms[i];
     if( A->IsDeleted() )  continue;
-    if( A->CAtom().GetLoaderId() == liCentroid )  // a centroid
-      AtomG = (TEList*)AUAtoms[GetAsymmUnit().AtomCount() + A->CAtom().GetId()];
-    else
-      AtomG = (TEList*)AUAtoms[A->CAtom().GetId()];
-    AtomG->Add(A);
+    TSAtomPList& l = (A->CAtom().GetLoaderId() == liCentroid) ?  
+      AUAtoms[GetAsymmUnit().AtomCount() + A->CAtom().GetId()] :
+      AUAtoms[A->CAtom().GetId()];
+    l.Add(A);
   }
-  for( int i=0; i < AUAtoms.Count(); i++ )  {  // create lists to store atom groups
-    AtomG = (TEList*)AUAtoms[i];
-    if( !AtomG->Count() )  {  // all atoms are deleted
+  for( int i=0; i < lc; i++ )  {  // create lists to store atom groups
+    TSAtomPList& l = AUAtoms[i];
+    if( l.IsEmpty() )  {  // all atoms are deleted
       if( i >= ac ) AsymmUnit->GetCentroid(i-ac).SetDeleted(true);
       else          AsymmUnit->GetAtom(i).SetDeleted(true);
       continue;
     }
     // find the original atom, or symmetry equivalent if removed
-    for( int j=0; j < AtomG->Count(); j++ )  {
-      TSAtom* A = (TSAtom*)AtomG->Item(j);
-      if( A->GetMatrix(0).r.IsI() )
-      { OA = A;  break; } // original atom is not deleted
-      OA = A;   // remmebred any not deleted atom
+    OA = NULL;
+    const int lst_c = l.Count();
+    for( int j=0; j < lst_c; j++ )  {
+      TSAtom* A = l[j];
+      int am_c = A->MatrixCount();
+      for( int k=0; k < am_c; k++ )  {
+        const smatd& m = A->GetMatrix(k);
+        if( m.GetTag() == 0 && m.t.IsNull() )  {  // the original atom
+          OA = A;  
+          break; 
+        }
+        if( OA != NULL )  break;
+      }
     }
-    TCAtom* CA;
-    if( i >= ac )  CA = &GetAsymmUnit().GetCentroid(i-ac);
-    else           CA = &GetAsymmUnit().GetAtom(i);
-    CA->SetDeleted(false);
-//    if( CA->LoaderId() == -1 )  continue;
+    if( OA == NULL )
+      OA = l[0];
+    TCAtom& CA = (i >= ac) ? GetAsymmUnit().GetCentroid(i-ac) : GetAsymmUnit().GetAtom(i);
+    CA.SetDeleted(false);
     if( OA->GetEllipsoid() )  {
-      CA->UpdateEllp(*OA->GetEllipsoid());
+      CA.UpdateEllp(*OA->GetEllipsoid());
     }
-    CA->ccrd() = OA->ccrd();
+    CA.ccrd() = OA->ccrd();
   }
-  for( int i=0; i < AUAtoms.Count(); i++ ) // cleenup memory
-    delete (TEList*)AUAtoms[i];
   TEStrBuffer Rep;
   if( GetAsymmUnit().DoesContainEquivalents() )
     AsymmUnit->SetContainsEquivalents( UnitCell->FindSymmEq(Rep, 0.1, false, false, false) != 0 );

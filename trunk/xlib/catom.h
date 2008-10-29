@@ -206,9 +206,9 @@ public:
   TAfixGroup(TAfixGroups& parent, int id, TCAtom* pivot, int afix, double d = 0, double sof = 0, double u = 0) :
       Parent(parent), Id(id), Pivot(pivot), D(d), Afix(afix), Sof(sof), U(u)  {  
     if( pivot != NULL )  {
-      if( HasExcplicitPivot() )
+      if( HasExcplicitPivot() || IsUnbound() )
         pivot->SetDependentAfixGroup(this);
-      else
+      else 
         pivot->AddDependentHfixGroup(*this);
     }
   }
@@ -219,7 +219,8 @@ public:
     for( int i=0; i < Dependent.Count(); i++ )
       Dependent[i]->SetParentAfixGroup(NULL);
     Dependent.Clear();
-    if( HasExcplicitPivot() )
+    if( Pivot == NULL )  return;
+    if( HasExcplicitPivot() || IsUnbound() )
       Pivot->SetDependentAfixGroup(NULL);
     else if( Pivot->DependentHfixGroupCount() != 0 ) // might happen at several places 
       Pivot->RemoveDependentHfixGroup(*this);
@@ -232,9 +233,9 @@ public:
   TCAtom& GetPivot() {  return *Pivot;  }
   void SetPivot(TCAtom& ca)  {  
     Pivot = &ca;
-    if( HasExcplicitPivot() )
+    if( HasExcplicitPivot() || IsUnbound() )
       Pivot->SetDependentAfixGroup(this);
-    else
+    else 
       Pivot->AddDependentHfixGroup(*this);
   }
   const TCAtom& GetPivot() const {  return *Pivot;  }
@@ -242,6 +243,7 @@ public:
   int GetN() const {  return GetN(Afix);  }
   bool IsFitted() const {  return IsFitted(Afix);  }
   bool IsRiding() const {  return IsRiding(Afix);  }
+  bool IsUnbound() const {  return IsUnbound(Afix);  }
   bool HasExcplicitPivot() const {  return HasExcplicitPivot(Afix);  }
   static int GetM(int afix) {  return afix < 10 ? 0 : afix/10;  }
   static int GetN(int afix) {  return afix < 10 ? afix : afix%10;  }
@@ -257,6 +259,9 @@ public:
     int n = GetN(afix);
     return (n == 3 || n == 4 || n == 7 || n == 8);
   }
+  static bool IsUnbound(int afix)  {
+    return (afix == 1 || afix == 2);
+  }
   static bool IsDependent(int afix)  {
     return GetN(afix) == 5;
   }
@@ -271,7 +276,8 @@ public:
       Clear();
   }
   void Clear();
-  bool IsEmpty()  const {  return (Pivot == NULL || Pivot->IsDeleted() || Dependent.IsEmpty());}
+  bool IsEmpty()  const {  return (Pivot == NULL || Pivot->IsDeleted() || 
+    (!IsUnbound() && Dependent.IsEmpty()));  }
   int Count() const {  return Dependent.Count();  }
   TCAtom& operator [] (int i) {  return *Dependent[i];  }
   const TCAtom& operator [] (int i) const {  return *Dependent[i];  }
