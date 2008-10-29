@@ -86,8 +86,8 @@
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="2"
-			CharacterSet="1"
-			ManagedExtensions="1"
+			CharacterSet="0"
+			ManagedExtensions="0"
 			WholeProgramOptimization="1"
 			>
 			<Tool
@@ -107,11 +107,26 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				UseUnicodeResponseFiles="false"
+				Optimization="3"
+				InlineFunctionExpansion="2"
+				EnableIntrinsicFunctions="true"
+				FavorSizeOrSpeed="1"
+				OmitFramePointers="true"
+				WholeProgramOptimization="true"
+				AdditionalIncludeDirectories="&quot;E:\wxWidgets-2.8.7\lib\vc_lib\mswd&quot;;&quot;E:\wxWidgets-2.8.7\include&quot;;..\..\..\glib;..\..\..\xlib;..\..\..\repository;C:\Python25\include;..\..\..\sdl"
 				PreprocessorDefinitions="WIN32;NDEBUG"
+				StringPooling="true"
+				BasicRuntimeChecks="0"
 				RuntimeLibrary="2"
-				UsePrecompiledHeader="2"
+				BufferSecurityCheck="false"
+				EnableFunctionLevelLinking="true"
+				EnableEnhancedInstructionSet="2"
+				FloatingPointModel="2"
+				UsePrecompiledHeader="0"
 				WarningLevel="3"
-				DebugInformationFormat="3"
+				Detect64BitPortabilityProblems="false"
+				DebugInformationFormat="0"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -598,6 +613,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\gxlib\gxapp.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\gxlib\gxbase.h"
 				>
 			</File>
@@ -607,10 +626,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\gxlib\wxglscene.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\gxlib\xapp.h"
 				>
 			</File>
 			<File

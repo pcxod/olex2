@@ -89,8 +89,8 @@
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="4"
-			CharacterSet="1"
-			ManagedExtensions="1"
+			CharacterSet="0"
+			ManagedExtensions="0"
 			WholeProgramOptimization="1"
 			>
 			<Tool
@@ -110,11 +110,25 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				UseUnicodeResponseFiles="false"
+				Optimization="3"
+				InlineFunctionExpansion="2"
+				EnableIntrinsicFunctions="true"
+				FavorSizeOrSpeed="1"
+				OmitFramePointers="true"
+				WholeProgramOptimization="true"
 				PreprocessorDefinitions="WIN32;NDEBUG"
+				StringPooling="true"
+				BasicRuntimeChecks="0"
 				RuntimeLibrary="2"
+				BufferSecurityCheck="false"
+				EnableFunctionLevelLinking="true"
+				EnableEnhancedInstructionSet="2"
+				FloatingPointModel="2"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
-				DebugInformationFormat="3"
+				Detect64BitPortabilityProblems="false"
+				DebugInformationFormat="0"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -586,6 +600,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\sdl\efilelist.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\sdl\egc.h"
 				>
 			</File>
@@ -595,6 +613,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\sdl\elist.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\sdl\ellist.h"
 				>
 			</File>
 			<File
@@ -614,6 +636,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\sdl\equeue.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\sdl\erange.h"
 				>
 			</File>
@@ -627,6 +653,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\sdl\estlist.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\sdl\estopwatch.h"
 				>
 			</File>
 			<File
@@ -679,6 +709,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\sdl\exception.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\sdl\filetree.h"
 				>
 			</File>
 			<File
@@ -754,11 +788,19 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\sdl\sptrlist.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\sdl\sstrlist.h"
 				>
 			</File>
 			<File
 				RelativePath="..\..\..\sdl\strconv.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\sdl\strmask.h"
 				>
 			</File>
 			<File

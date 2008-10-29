@@ -76,8 +76,8 @@ bool TGlBackground::Orient(TGlPrimitive *P)  {
   P = FPrimitive;
   ((TGlMaterial*)P->GetProperties())->Init();
   double Scale = Parent()->GetScale();
-  double HW = Parent()->GetWidth()/2*Scale;
-  double HH = Parent()->GetHeight()/2*Scale;
+  double HW = (Parent()->GetWidth()+1)/2*Scale;
+  double HH = (Parent()->GetHeight()+1)/2*Scale;
   double MaxZ = FParent->GetMaxRasterZ();
   MaxZ -= 0.01;
 //  if( !MaxZ )  MaxZ = -0.0001;
