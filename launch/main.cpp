@@ -140,7 +140,7 @@ __fastcall TdlgMain::TdlgMain(TComponent* Owner)
       if( Repository.Length() && !Repository.EndsWith('/') )
         Repository << '/';
 
-    bool Update = false;
+    bool Update = false, succeded = false;
     // evaluate properties
     TStrList props;
     props.Add("olex-update");
@@ -163,7 +163,7 @@ __fastcall TdlgMain::TdlgMain(TComponent* Owner)
         Repository = TBasicApp::GetInstance()->BaseDir() + Repository;
       if( TEFile::FileAge(Repository) > LastUpdate )  {
         Update = true;
-        UpdateInstallationZ( Repository, props );
+        succeded = UpdateInstallationZ( Repository, props );
       }
     }
     else  {
@@ -178,9 +178,9 @@ __fastcall TdlgMain::TdlgMain(TComponent* Owner)
       TUrl url(Repository);
       if( !Proxy.IsEmpty() )  url.SetProxy( Proxy );
       if( Update )
-        UpdateInstallationH( url, props );
+        succeded = UpdateInstallationH( url, props );
     }
-    if( Update )  { // have to save lastupdate in anyway
+    if( Update && succeded )  { // have to save lastupdate in anyway
       settings.UpdateParam("lastupdate", TETime::EpochTime() );
       settings.SaveSettings( SettingsFile );
     }
