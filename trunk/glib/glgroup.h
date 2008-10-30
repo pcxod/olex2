@@ -21,9 +21,9 @@ public:
   void Clear();
   void Draw(bool SelectPrimitives, bool SelectObjects) const;
   void Draw() const {  Draw(false, false); }
-  bool Add(AGDrawObject *G);
   // Adds an object to the list if it is not there and removes it otherwise
   // returns true if the object is added and false if it is removed
+  bool Add(AGDrawObject *G);
   void Remove(AGDrawObject *G);
   void RemoveDeleted();
 

@@ -34,6 +34,7 @@ class TXAtom: public TGlMouseListener  {
 private:
   TSAtom *FAtom;
   short FDrawStyle;
+  int XAppId;
   friend class TXAtomStylesClear;
 protected:
   TStrList* FindPrimitiveParams(TGlPrimitive *P);
@@ -49,6 +50,8 @@ public:
   TXAtom(const olxstr& collectionName, TSAtom& A, TGlRender *Render);
   virtual ~TXAtom();
   void Create(const olxstr& cName = CEmptyString);
+
+  DefPropP(int, XAppId)
 
   static TStrPObjList<olxstr,TGlPrimitive*> FStaticObjects;
   void CreateStaticPrimitives();

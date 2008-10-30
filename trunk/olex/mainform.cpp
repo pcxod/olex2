@@ -1449,7 +1449,7 @@ void TMainForm::OnAtomOccuChange(wxCommandEvent& event)  {
   if( XA == NULL )  return;
   olxstr Tmp("occu ");
   if( XA->Selected() )  Tmp << "sel";
-  else                  Tmp << XA->Atom().GetLabel();
+  else                  Tmp << "#x" << XA->GetXAppId();
   Tmp << ' ';
   switch( event.GetId() )  {
     case ID_AtomOccu1:   Tmp << "11";  break;
@@ -1681,7 +1681,7 @@ void TMainForm::OnAtomTypeChange(wxCommandEvent& event)  {
   if( XA == NULL )  return;
   olxstr Tmp("name ");
   if( XA->Selected() )  Tmp << "sel";
-  else                  Tmp << XA->Atom().GetLabel();
+  else                  Tmp << "#x" << XA->GetXAppId();
   Tmp << ' ';
   switch( event.GetId() )  {
     case ID_AtomTypeChangeC:
@@ -1713,7 +1713,7 @@ void TMainForm::OnAtomTypePTable(wxCommandEvent& event)  {
   if( !XA )  return;
   olxstr Tmp = "name ";
   if( XA->Selected() )  Tmp << "sel";
-  else                  Tmp << XA->Atom().GetLabel();
+  else                  Tmp << "#x" << XA->GetXAppId();
   Tmp << ' ';
   TPTableDlg *Dlg = new TPTableDlg(this, FXApp->AtomsInfo());
   if( Dlg->ShowModal() == wxID_OK )  {
@@ -1756,7 +1756,7 @@ void TMainForm::OnFragmentShowOnly(wxCommandEvent& event)  {
     A = &((TXBond*)FObjectUnderMouse)->Bond().A();
   else
     return;
-  ProcessXPMacro(olxstr("uniq ") + A->GetLabel(), MacroError);
+  ProcessXPMacro(olxstr("uniq #s") << A->GetLatId(), MacroError);
 }
 //..............................................................................
 bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, const IEObject *Data)  {
@@ -2075,11 +2075,11 @@ void TMainForm::OnAtom(wxCommandEvent& event)  {
   olxstr Tmp;
   switch( event.GetId() )  {
     case ID_AtomGrowShells:
-      Tmp = "grow -s "; Tmp << XA->Atom().GetLabel();
+      Tmp = "grow -s #x"; Tmp << XA->GetXAppId();
       ProcessXPMacro(Tmp, MacroError);
       break;
     case ID_AtomGrowFrags:
-      Tmp = "grow ";   Tmp << XA->Atom().GetLabel();
+      Tmp = "grow #x";   Tmp << XA->GetXAppId();
       ProcessXPMacro(Tmp, MacroError);
       break;
   }
@@ -3324,7 +3324,7 @@ bool TMainForm::ProcessEvent( wxEvent& evt )  {
       bool checked = AccMenus.GetValue(evt.GetId())->IsChecked();
       sl.Strtok( macro, ">>");
       for( int i=0; i < sl.Count(); i++ )  {
-        ProcessXPMacro( sl.String(i), MacroError );
+        ProcessXPMacro( sl[i], MacroError );
         if( !MacroError.IsSuccessful() )  {
           AnalyseError(MacroError);
           break;

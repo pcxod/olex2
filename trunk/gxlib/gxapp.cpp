@@ -371,6 +371,7 @@ void TGXApp::CreateObjects(bool SyncBonds, bool centerModel)  {
     TXAtom& XA = XAtoms.Add( *(new TXAtom(EmptyString, *allAtoms[i], FGlRender)) );
     if( allAtoms[i]->IsDeleted() )  XA.Deleted(true);
     XA.Create();
+    XA.SetXAppId(i);
     if( !FStructureVisible )  {  XA.Visible(FStructureVisible);  continue;  }
     if( allAtoms[i]->GetAtomInfo() == iHydrogenIndex )    {  XA.Visible(FHydrogensVisible);  }
     if( allAtoms[i]->GetAtomInfo() == iQPeakIndex )       {  XA.Visible(FQPeaksVisible);  }
@@ -1146,11 +1147,40 @@ bool TGXApp::AtomExpandable(TXAtom *XA)  {
   return FXFile->GetLattice().IsExpandable( XA->Atom() );
 }
 //..............................................................................
-void TGXApp::GetXAtoms(const olxstr &AtomName, TXAtomPList& res)  {
-  for( int i=0; i < XAtoms.Count(); i++ )  {
-    if( !XAtoms[i].Atom().GetLabel().Comparei(AtomName) )  {
-      if( !XAtoms[i].Deleted() && XAtoms[i].Visible() )  {
-        res.Add( &XAtoms[i] );
+void TGXApp::GetXAtoms(const olxstr& AtomName, TXAtomPList& res)  {
+  const int xac = XAtoms.Count();
+  const int SelMask = sgdoVisible|sgdoDeleted;
+  if( AtomName.StartsFrom("#c") )  {  // TCAtom.Id
+    int id = AtomName.SubStringFrom(2).ToInt();
+    for( int i=0; i < xac; i++ )  {
+      if( XAtoms[i].Atom().CAtom().GetId() == id )  
+        if( XAtoms[i].MaskFlags(SelMask) == sgdoVisible )
+          res.Add( &XAtoms[i] );
+    }
+  }
+  else if( AtomName.StartsFrom("#s") )  {  // SAtom.LatId
+    int id = AtomName.SubStringFrom(2).ToInt();
+    for( int i=0; i < xac; i++ )  {
+      if(XAtoms[i].Atom().GetLatId() == id )  { // only one is possible
+        if( XAtoms[i].MaskFlags(SelMask) == sgdoVisible )  
+          res.Add( &XAtoms[i] );
+        break;
+      }
+    }
+  }
+  else if( AtomName.StartsFrom("#x") )  {  // XAtom.XAppId
+    int id = AtomName.SubStringFrom(2).ToInt();
+    if( id < 0 || id >= xac )
+      throw TInvalidArgumentException(__OlxSourceInfo, "xatom id");
+    TXAtom& xa = XAtoms[id];
+    if( xa.MaskFlags(SelMask) == sgdoVisible )  
+      res.Add( &xa );
+  }
+  else  {
+    for( int i=0; i < xac; i++ )  {
+      if( XAtoms[i].Atom().GetLabel().Comparei(AtomName) == 0 )  {
+        if( XAtoms[i].MaskFlags(SelMask) == sgdoVisible )  
+          res.Add( &XAtoms[i] );
       }
     }
   }
@@ -1561,6 +1591,7 @@ TXAtom * TGXApp::AddCentroid(TXAtomPList& Atoms)  {
   if( A != NULL )  {
     TXAtom& XA = XAtoms.AddNew( *(new TXAtom(EmptyString, *A, FGlRender)) );
     XA.Create();
+    XA.SetXAppId( XAtoms.Count() - 1);
     XA.Params()[0] = (float)A->GetAtomInfo().GetRad();
     return &XA;
   }
@@ -1583,6 +1614,7 @@ TXAtom* TGXApp::AddAtom(TXAtom* templ)  {
     }
     TXAtom& XA = XAtoms.Add( new TXAtom(colName, *A, FGlRender) );
     XA.Create();
+    XA.SetXAppId( XAtoms.Count() - 1 );
     XA.Params()[0] = (float)A->GetAtomInfo().GetRad();
     return &XA;
   }

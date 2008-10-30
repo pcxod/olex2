@@ -47,6 +47,7 @@ TXAtom::TXAtom(const olxstr& collectionName, TSAtom& A, TGlRender *Render) :
   TGlMouseListener(collectionName, Render)
 {
   FParent = Render;
+  XAppId = -1;
   FAtom = &A;
   
   Move2D(false);

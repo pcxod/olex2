@@ -3634,7 +3634,7 @@ void TMainForm::macShowStr(TStrObjList &Cmds, const TParamList &Options, TMacroE
     FXApp->StructureVisible( !FXApp->StructureVisible() );
   else
     FXApp->StructureVisible( Cmds[0].ToBool() );
-
+  FXApp->CenterView();
   TStateChange sc(prsStrVis, FXApp->StructureVisible());
   OnStateChange->Execute((AEventsDispatcher*)this, &sc);
 }

@@ -63,6 +63,16 @@ public:
       atoms.AddNew( ca );
       return 1;
     }
+    else if( Expression.StartsFrom("#c") == 0 )  { 
+      if( au.AtomCount() == 0 )  return 0;
+      int i= Expression.SubStringFrom(2).ToInt();
+      if( i < 0 || i >= au.AtomCount() )
+        throw TInvalidArgumentException(__OlxSourceInfo, "catom id");
+      TCAtom* ca = &au.GetAtom(i);
+      if( !IsValidAtom(ca) )  return 0;
+      atoms.AddNew( ca );
+      return 1;
+    }
     else if( Expression.Comparei("last") == 0 )  { 
       if( au.AtomCount() == 0 )  return 0;
       int i=au.AtomCount()-1;

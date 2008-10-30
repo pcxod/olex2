@@ -693,12 +693,12 @@ void TGlRender::DeSelect(AGDrawObject *G)  {
 }
 //..............................................................................
 void TGlRender::InvertSelection()  {
-  AGDrawObject *GDO;
   TPtrList<AGDrawObject> Selected;
-  for( int i=0; i < GObjectCount(); i++ )  {
-    GDO = GObject(i);
+  const int oc = FGObjects.Count();
+  for( int i=0; i < oc; i++ )  {
+    AGDrawObject* GDO = FGObjects[i];
     if( !GDO->Grouped() && GDO->Visible() )  {
-      if( !GDO->Selected() && GDO->Groupable())
+      if( !GDO->Selected() && GDO->Groupable() && GDO != FSelection )
         Selected.Add(GDO);
     }
   }

@@ -374,7 +374,23 @@ bool TXApp::FindSAtoms(const olxstr& condition, TSAtomPList& res, bool ReturnAll
       SelectionOwner->ExpandSelection(ag);
   }
   if( !condition.IsEmpty() )  {
-    TAtomReference ar(condition, SelectionOwner);      
+    TStrList toks(condition, ' ');
+    TLattice& latt = XFile().GetLattice();
+    for( int i=0; i < toks.Count(); i++ )  {
+      if( toks[i].StartsFrom("#s") )  {  // TSAtom.LattId
+        int lat_id = toks[i].SubStringFrom(2).ToInt();
+        if( lat_id < 0 || lat_id >= latt.AtomCount() )
+          throw TInvalidArgumentException(__OlxSourceInfo, "satom id");
+        res.Add( &latt.GetAtom(lat_id) );
+        toks.Delete(i);
+        i--;
+      }
+      else if( toks[i].IsNumber() )  {  // should not be here, but the parser will choke on it
+        toks.Delete(i);
+        i--;
+      }
+    }
+    TAtomReference ar(toks.Text(' '), SelectionOwner);      
     int atomAGroup;
     ar.Expand(XFile().GetAsymmUnit(), ag, EmptyString, atomAGroup);
   }
