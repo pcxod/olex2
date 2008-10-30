@@ -495,12 +495,12 @@ public:
   // causes a lot of trouble
   const OC & FindObject(const SC &Name) const  {
     int in = TTStrList<SC,GC>::IndexOf(Name);
-    return (in != -1) ? TTStrList<SC,GC>::Strings[in].GetObject() : *(OC*)NULL;
+    return (in != -1) ? TTStrList<SC,GC>::Strings[in]->GetObject() : *(OC*)NULL;
   }
 
   OC* FindObjecti(const SC &Name) const  {
     int in = TTStrList<SC,GC>::CIIndexOf(Name);
-    return (in != -1) ? &TTStrList<SC,GC>::Strings[in].GetObject() : *(OC*)NULL;
+    return (in != -1) ? &TTStrList<SC,GC>::Strings[in]->GetObject() : *(OC*)NULL;
   }
 };
 

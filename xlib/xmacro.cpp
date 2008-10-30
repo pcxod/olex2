@@ -96,7 +96,7 @@ void XLibMacros::Export(TLibrary& lib)  {
 //_________________________________________________________________________________________________________________________
   xlib_InitMacro(ChangeSG, "", fpOne|fpFour|psFileLoaded, "[shift] SG Changes space group of current structure" );
 //_________________________________________________________________________________________________________________________
-  xlib_InitMacro(Htab, "t-adds extra elements (comma separated) to the donor list. Defaults are [N,O,F,Cl,S]", fpNone|fpOne|fpTwo|psCheckFileTypeIns, 
+  xlib_InitMacro(Htab, "t-adds extra elements (comma separated -t=Br,I) to the donor list. Defaults are [N,O,F,Cl,S]", fpNone|fpOne|fpTwo|psCheckFileTypeIns, 
     "Adds HTBA instructions to the ins file, maximum bond length [2.9] and minimal angle [150] might be provided" );
 //_________________________________________________________________________________________________________________________
   xlib_InitMacro(HAdd, "", fpAny|psCheckFileTypeIns, "Adds hydrogen atoms to all or provided atoms" );
@@ -244,16 +244,42 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options, TMacroErr
         au.CellToCartesian(v2);
         double c_a = v1.CAngle(v2);
         if( c_a < min_ang )  {  // > 150 degrees
-          olxstr htab("HTAB ", 80);
-          htab << sa.GetLabel() << ' ' << ca.GetLabel();
-          const smatd& mt = all[j].GetB();
-          if( !(mt.t.IsNull() && mt.r.IsI()) )  {
-            const smatd& eqiv = au.AddUsedSymm(mt);
-            int ei = au.UsedSymmIndex(eqiv);
-            htab << "_$" << ei+1;
+          if( sa.GetAtomInfo() == iCarbonIndex )  {
+            olxstr rtab_d("RTAB ", 80);
+            rtab_d << sa.GetAtomInfo().GetSymbol() << ca.GetAtomInfo().GetSymbol() << // codename
+              ' ' <<sa.GetLabel() << ' ' << ca.GetLabel();
+            const smatd& mt = all[j].GetB();
+            if( !(mt.t.IsNull() && mt.r.IsI()) )  {
+              const smatd& eqiv = au.AddUsedSymm(mt);
+              int ei = au.UsedSymmIndex(eqiv);
+              rtab_d << "_$" << ei+1;
+            }
+            ins.AddIns(rtab_d);
+            TBasicApp::GetLog() << rtab_d << " d=" << olxstr::FormatFloat(3, d) << '\n';
+
+            olxstr rtab_a("RTAB ", 80);
+            rtab_a << sa.GetAtomInfo().GetSymbol() << ca.GetAtomInfo().GetSymbol() << // codename
+              ' ' << sa.GetLabel() << ' ' << sa.Node(h_indexes[k]).GetLabel() << ' ' << ca.GetLabel();
+            if( !(mt.t.IsNull() && mt.r.IsI()) )  {
+              const smatd& eqiv = au.AddUsedSymm(mt);
+              int ei = au.UsedSymmIndex(eqiv);
+              rtab_a << "_$" << ei+1;
+            }
+            ins.AddIns(rtab_a);
+            TBasicApp::GetLog() << rtab_a << " a=" << olxstr::FormatFloat(3, acos(c_a)*180.0/M_PI) << '\n';
           }
-          ins.AddIns(htab);
-          TBasicApp::GetLog() << htab << " d=" << olxstr::FormatFloat(3, d) << '\n';
+          else  {
+            olxstr htab("HTAB ", 80);
+            htab << sa.GetLabel() << ' ' << ca.GetLabel();
+            const smatd& mt = all[j].GetB();
+            if( !(mt.t.IsNull() && mt.r.IsI()) )  {
+              const smatd& eqiv = au.AddUsedSymm(mt);
+              int ei = au.UsedSymmIndex(eqiv);
+              htab << "_$" << ei+1;
+            }
+            ins.AddIns(htab);
+            TBasicApp::GetLog() << htab << " d=" << olxstr::FormatFloat(3, d) << '\n';
+          }
         }
       }
     }
@@ -743,7 +769,7 @@ void XLibMacros::macFixUnit(TStrObjList &Cmds, const TParamList &Options, TMacro
   int Z = Round(au.EstimateZ((int)((double)nhc/Zp)));
   au.SetZ(Z);
   TBasicApp::GetLog() << (olxstr("for Z'=") << olxstr::FormatFloat(2, Zp).TrimFloat() <<
-    " and " << nhc << " non hydrogen atoms Z is etimated to be " << Z << '\n');
+    " and " << nhc << " non hydrogen atoms Z is estimated to be " << Z << '\n');
   olxstr sfac, unit, n_c;
   content.QuickSorter.Sort<TFixUnit_Sorter>(content);
   if( cBai != NULL && content.Count() > 1 )

@@ -635,7 +635,7 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual accupancy\
   this_InitMacro(AddExyz, , fpAny );
 
   this_InitMacro(Reset, s&;c&;f, fpAny|psFileLoaded );
-  this_InitMacro(ShowQ, , fpNone|fpOne|fpTwo|psFileLoaded );
+  this_InitMacro(ShowQ, wheel, fpNone|fpOne|fpTwo|psFileLoaded );
 
   this_InitMacroD(Mode, "p-[name] prefix&;s-[grow] short interactions; [name] suffix&;t-[name] type\
 &;c-[grow] covalent bonds; [move] copy fragments instead of moving&;r-[split] a restraint/constraint for split atoms", 
@@ -645,7 +645,7 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual accupancy\
   this_InitMacro(Text, , fpNone );
   this_InitMacro(ShowStr, , fpNone|fpOne|psFileLoaded );
   // not implemented
-  this_InitMacro(Bind, , fpAny );
+  this_InitMacro(Bind, , fpTwo );
 
   this_InitMacro(Grad, i&;p, fpNone|fpOne|fpFour );
   this_InitMacroD(Split, "r-EADP,ISOR or SIMU to be placed for the split atoms", 
@@ -3008,6 +3008,14 @@ void TMainForm::RefineDataTable(bool TableDef)  {
 
   Table.CreateHTMLList(Output, EmptyString, false, false, TableDef);
   TUtf8File::WriteLines( RefineDataFile, Output, false );
+}
+//..............................................................................
+void TMainForm::OnMouseWheel(int x, int y, double delta)  {
+  int ind = Bindings.IndexOf("wheel");
+  if( ind == -1 )  return;
+  olxstr cmd( Bindings.GetObject(ind) );
+  cmd << delta;
+  ProcessXPMacro(cmd, MacroError);
 }
 //..............................................................................
 void TMainForm::OnMouseMove(int x, int y)  {

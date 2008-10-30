@@ -160,6 +160,7 @@ protected:
 public:
   bool ProcessMacroFunc(olxstr &Cmd);
   void OnMouseMove(int x, int y);
+  void OnMouseWheel(int x, int y, double delta);
   bool OnMouseDown(int x, int y, short Flags, short Buttons);
   bool OnMouseUp(int x, int y, short Flags, short Buttons);
   bool OnMouseDblClick(int x, int y, short Flags, short Buttons);
@@ -559,6 +560,7 @@ private:
   void SetSGList(const olxstr &sglist);
 
   TStrPObjList<olxstr,wxMenuItem*> FRecentFiles;
+  TSStrStrList<olxstr,true> Bindings;
   short FRecentFilesToShow;
   void UpdateRecentFile(const olxstr& FN);
   TGlOption FBgColor;

@@ -3482,7 +3482,28 @@ int TMainForm_macShowQ_QPeakSort(const TXAtom* a, const TXAtom* b)  {
   return v < 0 ? 1 : (v > 0 ? -1 : 0);
 }
 void TMainForm::macShowQ(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  if( Cmds.Count() == 2 )  {
+  double wheel = Options.FindValue("wheel", '0').ToDouble();
+  if( wheel != 0 )  {
+    TXAtomPList xatoms;
+    FXApp->FindXAtoms("$Q", xatoms, false, true);
+    xatoms.QuickSorter.SortSF(xatoms, TMainForm_macShowQ_QPeakSort);
+    int v_cnt = 0;
+    for( int i=0; i < xatoms.Count(); i++ )
+      if( xatoms[i]->Visible() )
+        v_cnt++;
+    if( v_cnt == 0 && wheel < 0 )  return;
+    if( v_cnt == xatoms.Count() && wheel > 0 )  return;
+    v_cnt += wheel;
+    if( v_cnt < 0 )  v_cnt = 0;
+    if( v_cnt > xatoms.Count() )  v_cnt = xatoms.Count();
+    for( int i=v_cnt; i < xatoms.Count(); i++ )  
+      xatoms[i]->Visible(false);
+    for( int i=0; i < v_cnt; i++ )  
+      xatoms[i]->Visible(true);
+    FXApp->SyncQVisibility();
+    TimePerFrame = FXApp->Draw();
+  }
+  else if( Cmds.Count() == 2 )  {
     bool v = Cmds[1].ToBool();
     if( Cmds[0] == "a" )  {
       if( v && !FXApp->QPeaksVisible() )  {
@@ -3511,14 +3532,17 @@ void TMainForm::macShowQ(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   }
   else if( Cmds.Count() == 1 && Cmds[0].IsNumber() )  {
     int num = Cmds[0].ToInt();
+    const bool vis = num < 0;
+    if( num < 0 )  num = abs(num);
     TXAtomPList xatoms;
     FXApp->FindXAtoms("$Q", xatoms, false, true);
     xatoms.QuickSorter.SortSF(xatoms, TMainForm_macShowQ_QPeakSort);
     num = olx_min(xatoms.Count()*num/100, xatoms.Count());
     for( int i=num; i < xatoms.Count(); i++ )  
-      xatoms[i]->Visible(false);
+      xatoms[i]->Visible(vis);
     for( int i=0; i < num; i++ )  
-      xatoms[i]->Visible(true);
+      xatoms[i]->Visible(!vis);
+    FXApp->SyncQVisibility();
   }
   else  {
     if( (!FXApp->QPeaksVisible() && !FXApp->QPeakBondsVisible()) )  {
@@ -3640,7 +3664,15 @@ void TMainForm::macShowStr(TStrObjList &Cmds, const TParamList &Options, TMacroE
 }
 //..............................................................................
 void TMainForm::macBind(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
-  throw TNotImplementedException(__OlxSourceInfo);
+  if( Cmds[0].Comparei("wheel") == 0 )  {
+    int ind = Bindings.IndexOf("wheel");
+    if( ind == -1 )
+      Bindings.Add("wheel", Cmds[1]);
+    else
+      Bindings.Object(ind) = Cmds[1];
+  }
+  else
+    E.ProcessingError(__OlxSrcInfo, olxstr("unknown binding parameter: ") << Cmds[0]);
 }
 //..............................................................................
 void TMainForm::macGrad(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {

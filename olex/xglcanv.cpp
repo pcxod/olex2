@@ -200,7 +200,8 @@ void TGlCanvas::OnMouseDblClick(wxMouseEvent& me)  {
 }
 //..............................................................................
 void TGlCanvas::OnMouse(wxMouseEvent& me)  {
-  if( me.IsPageScroll() )  return;
+  if( me.GetWheelRotation() != 0 )  
+    FParent->OnMouseWheel(me.GetX(), me.GetY(), (double)me.GetWheelRotation()/me.GetWheelDelta());
   me.Skip();
 }
 //..............................................................................

@@ -2546,6 +2546,25 @@ void TGXApp::QPeaksVisible(bool v)  {
   }
 }
 //..............................................................................
+void TGXApp::SyncQVisibility()  {
+  if( !FQPeakBondsVisible )  return;
+ 
+  const int ac = XAtoms.Count();
+  for( int i=0; i < ac; i++ )  
+    XAtoms[i].Atom().SetTag(i);
+
+  const int bc = XBonds.Count();
+  for( int i=0; i < bc; i++ )  {
+    TSBond& b = XBonds[i].Bond();
+    if( b.A().GetAtomInfo().GetIndex() == iQPeakIndex || b.B().GetAtomInfo().GetIndex() == iQPeakIndex )
+      XBonds[i].Visible(XAtoms[b.A().GetTag()].Visible() && XAtoms[b.B().GetTag()].Visible());
+  }
+  for( int i=0; i < XGrowLines.Count(); i++ )  {
+    if( XGrowLines[i].SAtom()->GetAtomInfo() == iQPeakIndex )
+      XGrowLines[i].Visible( XAtoms[XGrowLines[i].SAtom()->GetTag()].Visible() );
+  }
+}
+//..............................................................................
 void TGXApp::QPeakBondsVisible(bool v)  {
   FQPeakBondsVisible = v;
   for( int i=0; i < XBonds.Count(); i++ )  {
