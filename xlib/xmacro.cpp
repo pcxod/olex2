@@ -624,6 +624,19 @@ void XLibMacros::macLstFun(TStrObjList &Cmds, const TParamList &Options, TMacroE
   }
 }
 //..............................................................................
+olxstr XLibMacros_macSGS_SgInfo(TSpaceGroup& sg)  {
+  const olxstr& caxis =  sg.GetAxis();
+  if( caxis.IsEmpty() )
+    return "standard";
+  else  {
+    if( caxis.Length() == 3 && caxis.CharAt(0) == '-' )    // -axis + cell choice
+      return olxstr("axis: -") << caxis.CharAt(1) << ", cell choice " << caxis.CharAt(1);
+    else if( caxis.Length() == 2 )    // axis + cell choice
+      return olxstr("axis: ") << caxis.CharAt(0) << ", cell choice " << caxis.CharAt(1);
+    else  
+      return olxstr("axis: ") << caxis;
+  }
+}
 void XLibMacros::macSGS(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   // cell c 1 ->2, 2->3 and 3 ->1, C->A, A->I, I->C;
   static const mat3d mon_b(-1, 0, 1, 0, 1, 0, -1, 0, 0), mon_bs(0, 0, -1, 0, 1, 0, 1, 0, -1);
@@ -642,7 +655,19 @@ void XLibMacros::macSGS(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 
   TXApp& xapp = TXApp::GetInstance();
   TSpaceGroup& sg = xapp.XFile().GetLastLoaderSG();
-  throw TNotImplementedException(__OlxSourceInfo);
+  TBasicApp::GetLog() << (olxstr("Current setting: ") << XLibMacros_macSGS_SgInfo(sg) << '\n');
+  if( sg.GetAxis().IsEmpty() )  {
+    TBasicApp::GetLog() << "Nothing to do\n";
+    return;
+  }
+  TSymmLib& sl = *TSymmLib::GetInstance();
+  TPtrList<TSpaceGroup> sgs;
+  sl.GetGroupByNumber(sg.GetNumber(), sgs);
+  for( int i=0; i < sgs.Count(); i++ )  {
+    if( &sg != sgs[i] )  {
+      TBasicApp::GetLog() << (olxstr("Possible: ") << XLibMacros_macSGS_SgInfo(*sgs[i]) << '\n');
+    }
+  }
 }
 //..............................................................................
 void XLibMacros::macLstVar(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
