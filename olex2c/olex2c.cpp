@@ -189,7 +189,7 @@ public:
     XApp.XFile().OnFileLoad->Add(this, ID_STRUCTURECHANGED);
 
     this_InitMacroD(IF, "", fpAny, "if...");
-    this_InitMacroD(Exec, "s&;o&;d", fpAny^fpNone, "exec" );
+    this_InitMacroD(Exec, "s&;o&;d&;q", fpAny^fpNone, "exec" );
     this_InitMacroD(Echo, "", fpAny, "echo" );
     this_InitMacroDA(Reap, @reap, "", fpOne, "reap" );
     this_InitMacroD(Name, "", fpAny^(fpNone|fpOne)|psFileLoaded, "name" );
@@ -690,16 +690,12 @@ public:
     }
   }
   void macExec(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-    bool Asyn = true, // synchroniusly
-      Cout = true;    // catch output
+    bool Asyn = !Options.Contains('s'), // synchroniusly
+      Cout = !Options.Contains('o'),    // catch output
+      quite = Options.Contains('q');
 
-    olxstr dubFile;
+    olxstr dubFile( Options.FindValue('s',EmptyString) );
 
-    for( int i=0; i < Options.Count(); i++ )  {
-      if( Options.GetName(i) == "s" )  Asyn  = false;
-      else if( Options.GetName(i) == "o" )  Cout = false;
-      else if( Options.GetName(i) == "d" )  dubFile = Options.GetValue(i);
-    }
     olxstr Tmp;
     bool Space;
     for( int i=0; i < Cmds.Count(); i++ )  {
@@ -713,11 +709,10 @@ public:
     TWinProcess* Process  = new TWinProcess;
     Process->OnTerminateCmds().Assign( FOnTerminateMacroCmds );
     FOnTerminateMacroCmds.Clear();
-//    TBasicApp::GetLog() << "Please press Ctrl+C to terminate a process...\n";
     if( (Cout && Asyn) || Asyn )  {  // the only combination
       if( !Cout )  {
         SetProcess(Process);
-        if( !Process->Execute(Tmp, 0) )  {
+        if( !Process->Execute(Tmp, quite ? spfQuite : 0) )  {
           Error.ProcessingError(__OlxSrcInfo, "failed to launch a new process" );
           return;
         }
@@ -729,7 +724,7 @@ public:
           TEFile* df = new TEFile(dubFile, "wb+");
           Process->SetDubStream( df );
         }
-        if( !Process->Execute(Tmp, spfRedirected) )  {
+        if( !Process->Execute(Tmp, quite ? spfRedirected|spfQuite : spfRedirected) )  {
           Error.ProcessingError(__OlxSrcInfo, "failed to launch a new process" );
           SetProcess(NULL);
           return;
