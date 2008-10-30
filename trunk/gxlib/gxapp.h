@@ -289,6 +289,8 @@ public:
   bool QPeaksVisible()       {  return FQPeaksVisible;  };
   void QPeakBondsVisible(bool v);
   bool QPeakBondsVisible()   {  return FQPeakBondsVisible;  };
+  // hides all bonds for all hidden q-peaks
+  void SyncQVisibility();
   void StructureVisible(bool v);
   void HklVisible(bool v);
   bool HklVisible()          {  return FHklVisible;  };
