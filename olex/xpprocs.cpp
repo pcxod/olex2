@@ -1698,6 +1698,7 @@ void TMainForm::macActivate(TStrObjList &Cmds, const TParamList &Options, TMacro
     vec3d V;
     V = XP->Plane().Normal();
     FXApp->GetRender().Basis()->OrientNormal(V);
+    FXApp->Draw();
   }
   else  {
     Error.ProcessingError(__OlxSrcInfo, "could not find specified plane: ") << Cmds[0];
@@ -3477,16 +3478,20 @@ void TMainForm::macChiv(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   FXApp->XFile().GetAsymmUnit().RestrainedVolumes().ValidateRestraint(sr);
 }
 //..............................................................................
-int TMainForm_macShowQ_QPeakSort(const TXAtom* a, const TXAtom* b)  {
+int TMainForm_macShowQ_QPeakSortA(const TXAtom* a, const TXAtom* b)  {
   double v = a->Atom().CAtom().GetQPeak() - b->Atom().CAtom().GetQPeak();
   return v < 0 ? 1 : (v > 0 ? -1 : 0);
+}
+int TMainForm_macShowQ_QPeakSortD(const TXAtom* a, const TXAtom* b)  {
+  double v = a->Atom().CAtom().GetQPeak() - b->Atom().CAtom().GetQPeak();
+  return v < 0 ? -1 : (v > 0 ? 1 : 0);
 }
 void TMainForm::macShowQ(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   double wheel = Options.FindValue("wheel", '0').ToDouble();
   if( wheel != 0 )  {
     TXAtomPList xatoms;
     FXApp->FindXAtoms("$Q", xatoms, false, true);
-    xatoms.QuickSorter.SortSF(xatoms, TMainForm_macShowQ_QPeakSort);
+    xatoms.QuickSorter.SortSF(xatoms, TMainForm_macShowQ_QPeakSortA);
     int v_cnt = 0;
     for( int i=0; i < xatoms.Count(); i++ )
       if( xatoms[i]->Visible() )
@@ -3532,16 +3537,16 @@ void TMainForm::macShowQ(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   }
   else if( Cmds.Count() == 1 && Cmds[0].IsNumber() )  {
     int num = Cmds[0].ToInt();
-    const bool vis = num < 0;
+    const bool negative = num < 0;
     if( num < 0 )  num = abs(num);
     TXAtomPList xatoms;
     FXApp->FindXAtoms("$Q", xatoms, false, true);
-    xatoms.QuickSorter.SortSF(xatoms, TMainForm_macShowQ_QPeakSort);
+    xatoms.QuickSorter.SortSF(xatoms, negative ? TMainForm_macShowQ_QPeakSortD : TMainForm_macShowQ_QPeakSortA);
     num = olx_min(xatoms.Count()*num/100, xatoms.Count());
     for( int i=num; i < xatoms.Count(); i++ )  
-      xatoms[i]->Visible(vis);
-    for( int i=0; i < num; i++ )  
-      xatoms[i]->Visible(!vis);
+      xatoms[i]->Visible(false);
+    for( int i=0; i < num; i++ )               
+      xatoms[i]->Visible(true);
     FXApp->SyncQVisibility();
   }
   else  {

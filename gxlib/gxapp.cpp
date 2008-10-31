@@ -2531,10 +2531,12 @@ void TGXApp::HydrogensVisible(bool v)  {
       XBonds[i].Visible(FHydrogensVisible);
     }
   }
-  for( int i=0; i < XGrowLines.Count(); i++ )  {
-    if( XGrowLines[i].SAtom()->GetAtomInfo() == iHydrogenIndex ||
-          XGrowLines[i].CAtom()->GetAtomInfo()== iHydrogenIndex )
-      XGrowLines[i].Visible(v);
+  if( FXGrowLinesVisible )  {
+    for( int i=0; i < XGrowLines.Count(); i++ )  {
+      if( XGrowLines[i].SAtom()->GetAtomInfo() == iHydrogenIndex ||
+            XGrowLines[i].CAtom()->GetAtomInfo()== iHydrogenIndex )
+        XGrowLines[i].Visible(v);
+    }
   }
 }
 //..............................................................................
@@ -2559,9 +2561,11 @@ void TGXApp::SyncQVisibility()  {
     if( b.A().GetAtomInfo().GetIndex() == iQPeakIndex || b.B().GetAtomInfo().GetIndex() == iQPeakIndex )
       XBonds[i].Visible(XAtoms[b.A().GetTag()].Visible() && XAtoms[b.B().GetTag()].Visible());
   }
-  for( int i=0; i < XGrowLines.Count(); i++ )  {
-    if( XGrowLines[i].SAtom()->GetAtomInfo() == iQPeakIndex )
-      XGrowLines[i].Visible( XAtoms[XGrowLines[i].SAtom()->GetTag()].Visible() );
+  if( FXGrowLinesVisible )  {
+    for( int i=0; i < XGrowLines.Count(); i++ )  {
+      if( XGrowLines[i].SAtom()->GetAtomInfo() == iQPeakIndex )
+        XGrowLines[i].Visible( XAtoms[XGrowLines[i].SAtom()->GetTag()].Visible() );
+    }
   }
 }
 //..............................................................................
@@ -2572,10 +2576,12 @@ void TGXApp::QPeakBondsVisible(bool v)  {
         (XBonds[i].Bond().B().GetAtomInfo() == iQPeakIndex)  )
       XBonds[i].Visible(v);
   }
-  for( int i=0; i < XGrowLines.Count(); i++ )  {
-    if( XGrowLines[i].SAtom()->GetAtomInfo() == iQPeakIndex ||
-          XGrowLines[i].CAtom()->GetAtomInfo() == iQPeakIndex )
-      XGrowLines[i].Visible(v);
+  if( FXGrowLinesVisible )  {
+    for( int i=0; i < XGrowLines.Count(); i++ )  {
+      if( XGrowLines[i].SAtom()->GetAtomInfo() == iQPeakIndex ||
+            XGrowLines[i].CAtom()->GetAtomInfo() == iQPeakIndex )
+        XGrowLines[i].Visible(v);
+    }
   }
 }
 //..............................................................................
