@@ -63,7 +63,7 @@ public:
       atoms.AddNew( ca );
       return 1;
     }
-    else if( Expression.StartsFrom("#c") == 0 )  { 
+    else if( Expression.StartsFrom("#c") )  { 
       if( au.AtomCount() == 0 )  return 0;
       int i= Expression.SubStringFrom(2).ToInt();
       if( i < 0 || i >= au.AtomCount() )
