@@ -92,7 +92,7 @@ public:
   void DrawStyle(short style);
   void LoadStyle(const olxstr& styleFile);
   void LoadScene(const olxstr& sceneFile);
-    virtual bool executeMacro(const olxstr& cmdLine);
+    virtual bool executeMacroEx(const olxstr& cmdLine, TMacroError& er);
     virtual void print(const olxstr& Text, const short MessageType = olex::mtNone);
     virtual bool executeFunction(const olxstr& funcName, olxstr& retValue);
     // returns a value, which should be deleted, of the TPType <> type
