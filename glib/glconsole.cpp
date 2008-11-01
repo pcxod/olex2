@@ -106,28 +106,27 @@ void TGlConsole::Create(const olxstr& cName)  {
 }
 //..............................................................................
 bool TGlConsole::Orient(TGlPrimitive *P)  {
-  static olxstr stString;
   TGlFont *Fnt = Font();
-  if( !Fnt )  return true;
-
+  if( Fnt == NULL )  return true;
 //  Fnt->DrawGlText( vec3d(0,0,0), "HELLW_O", true);
-
   P->Font(Fnt);
 
   if( FParent->GetWidth() < 100 )  return true;
   int th = Fnt->TextHeight(EmptyString), lc, ii;
   double Scale = FParent->GetScale(),
          MaxY = ((double)FParent->GetHeight()/2-Top-th)*Scale;
-
   double MaxZ = -FParent->GetMaxRasterZ();
+
   MaxZ += 0.02;
+  
+  olxstr line;
 
   vec3d T;
 
   TGlMaterial *OGlM = (TGlMaterial*)P->GetProperties();
   TGlOption CC, Ambient;
   CC = FParent->LightModel.ClearColor();
-  TGlMaterial GlM, *GlMP;
+  TGlMaterial GlM;
   GlM = *(TGlMaterial*)P->GetProperties();  // copy properties
 //  GlM.AmbientF[0] = 1-CC[0];  GlM.AmbientF[1] = 1-CC[1];  GlM.AmbientF[2] = 1-CC[2];
   Ambient = GlM.AmbientF;
@@ -141,6 +140,7 @@ bool TGlConsole::Orient(TGlPrimitive *P)  {
       Bk = (CC[2] - Ambient[2])/lc;
     }
     for( int i=FTxtPos; i >= olx_max(0, FTxtPos-lc); i-- )  {
+      if( FBuffer[i].IsEmpty() )  continue;
       ii = (FTxtPos-i);
       if( FLinesToShow >= 0 && ii > FLinesToShow )  continue;
       if( IsPromptVisible() )  ii += Cmds.Count();
@@ -148,26 +148,30 @@ bool TGlConsole::Orient(TGlPrimitive *P)  {
       T[0] = GlLeft;  T[1] = GlTop + ii*LineInc;
       T *= Scale;
       if( T[1] > MaxY )  break;
-      stString = FBuffer[i];
       if( FBuffer[i].Length() > MaxLineWidth )  
-        stString = FBuffer[i].SubStringTo(MaxLineWidth);
+        line = FBuffer[i].SubStringTo(MaxLineWidth);
+      else
+        line = FBuffer[i];
       // drawing spaces is not required ...
-      int stlen = stString.Length();
+      int stlen = line.Length();
       if( stlen == 0 )  continue;
-      while( stString[stlen-1] == ' ' && stlen > 1 ) stlen--;
-      stString = stString.SubStringTo(stlen);
+      while( line.CharAt(stlen-1) == ' ' && stlen > 1 ) stlen--;
+      line = line.SubStringTo(stlen);
 
-      GlMP = (TGlMaterial*)FBuffer.Object(i);
-      if( GlMP ) GlMP->Init();
+      glRasterPos3d(T[0], T[1], MaxZ);
+      TGlMaterial* GlMP = FBuffer.Object(i);
+      if( GlMP != NULL ) 
+        GlMP->Init();
       else if( IsBlend() )  {
         GlM.AmbientF[0] = Ambient[0] + (float)ii*Rk;
         GlM.AmbientF[1] = Ambient[1] + (float)ii*Gk;
         GlM.AmbientF[2] = Ambient[2] + (float)ii*Bk;
         GlM.Init(); // fading the text
       }
-      glRasterPos3d(T[0], T[1], MaxZ);
-      P->String( &stString );
-      P->Draw();
+      else
+        OGlM->Init();
+      P->String( &line );
+      FParent->DrawText(*P, T[0], T[1], MaxZ); 
       P->String(NULL);
     }
   }
@@ -177,9 +181,8 @@ bool TGlConsole::Orient(TGlPrimitive *P)  {
     if( Cmds.Count() == 1 )  {
       T[0] = GlLeft;  T[1] = GlTop;
       T *= Scale;
-      glRasterPos3d(T[0], T[1], MaxZ);
       P->String(&FCommand);
-      P->Draw();
+      FParent->DrawText(*P, T[0], T[1], MaxZ); 
       P->String(NULL);
     }
     else  {
@@ -188,10 +191,8 @@ bool TGlConsole::Orient(TGlPrimitive *P)  {
         ii = Cmds.Count()-i-1;
         T[0] = GlLeft;  T[1] = GlTop + ii*LineInc;
         T *= Scale;
-        glRasterPos3d(T[0], T[1], MaxZ);
-        stString = Cmds[i];
-        P->String(&stString);
-        P->Draw();
+        P->String(&Cmds[i]);
+        FParent->DrawText(*P, T[0], T[1], MaxZ); 
         P->String(NULL);
       }
     }

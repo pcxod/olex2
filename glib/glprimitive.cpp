@@ -214,7 +214,7 @@ void TGlPrimitive::Draw()  {
   if( FType == sgloText )  {
     if( FString == NULL )   return;
     if( FFont == NULL )     return;
-    int fontbase = Font()->FontBase();
+    const int fontbase = FFont->FontBase();
     /* each character of different colour */
     int StrLen = FString->Length();
     if( FData.Elements() == StrLen )  {

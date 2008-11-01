@@ -21,7 +21,9 @@
 #include "paramlist.h"
 // sorted pointer list should not give any performace boost...
 //#include "sptrlist.h"
-
+#ifdef DrawText
+  #undef DrawText
+#endif
 BeginGlNamespace()
 
 class TGlListManager  {
@@ -84,6 +86,7 @@ protected:
   int FGlImageHeight, FGlImageWidth;
   TActionQList *FActions;
   mutable double CalculatedZoom;
+  bool ATI;
 public:
   TGlRender(AGlScene *S, int width, int height);
   virtual ~TGlRender();
@@ -278,6 +281,9 @@ public:
   inline void GlScale( const float _x, const float _y, const float _z) const {
     glScalef(_x, _y, _z);
   }
+  // vendor specific, fixes for ATI
+  void DrawText(TGlPrimitive& p, double x, double y, double z);
+  bool IsATI() const {  return ATI;  }
   inline void GlScale( const float S ) const {  glScalef(S, S, S);  }
   void EnableClipPlane(class TGlClipPlane *P, bool v);
 

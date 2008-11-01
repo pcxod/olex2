@@ -84,7 +84,6 @@ void TGlTextBox::Create(const olxstr& cName)  {
 }
 //..............................................................................
 bool TGlTextBox::Orient(TGlPrimitive *P)  {
-  static olxstr stString;
 /*  vec3d Trans;
   Trans = FParent->Basis().Center();
   Trans *= FParent->Basis().Matrix();
@@ -93,7 +92,7 @@ bool TGlTextBox::Orient(TGlPrimitive *P)  {
   glNormal3d(0, 0, 1);
 
   TGlFont *Fnt = Font();
-  if( !Fnt )  return true;
+  if( Fnt == NULL )  return true;
 
   if( P->Type() == sgloText )  {
     P->Font(Fnt);
@@ -103,14 +102,18 @@ bool TGlTextBox::Orient(TGlPrimitive *P)  {
     double GlTop = ((double)FParent->GetHeight()/2 - (Top-Basis.GetCenter()[1]))*FParent->GetExtraZoom() + 0.1;
     double LineInc = (th*LineSpacing)*FParent->GetViewZoom();
     vec3d T;
-    TGlMaterial *GlM;
     for(int i=0; i < FBuffer.Count() ; i++ )  {
       T[0] = GlLeft;
       T[1] = GlTop - (i+1)*LineInc;
       T *= Scale;
       T[2] = Z;  
-      GlM = FBuffer.Object(i);
-      if( GlM ) GlM->Init();
+      TGlMaterial* GlM = FBuffer.Object(i);
+      if( GlM != NULL ) 
+        GlM->Init();
+      if( FParent->IsATI() )  {
+        glRasterPos3d(T[0], T[1], Z);
+        glCallList(Fnt->FontBase() + ' ');
+      }
       Fnt->DrawTextSafe(T, Scale*FParent->GetViewZoom(), FBuffer[i] ); 
 //      glRasterPos3d(T[0], T[1], Z);
 //      stString = FBuffer.String(i);

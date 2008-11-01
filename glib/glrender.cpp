@@ -93,6 +93,8 @@ void TGlRender::Initialise()  {
   }
   FBackground->Create();
   FCeiling->Create();
+  CString vendor( (const char*)glGetString(GL_VENDOR) );
+  ATI = vendor.StartsFrom("ATI");
 }
 //..............................................................................
 void TGlRender::InitLights()  {
@@ -1056,6 +1058,15 @@ void TGlRender::Compile(bool v)  {
       CompiledListId = -1;
     }
   }
+}
+//..............................................................................
+void TGlRender::DrawText(TGlPrimitive& p, double x, double y, double z)  {
+  if( ATI )  {
+    glRasterPos3d(x, y, z);
+    glCallList(p.Font()->FontBase() + ' ');
+  }
+  glRasterPos3d(x, y, z);
+  p.Draw();
 }
 //..............................................................................
 //..............................................................................
