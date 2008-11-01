@@ -68,21 +68,23 @@ void TXGlLabels::Clear()  {
 //..............................................................................
 bool TXGlLabels::Orient(TGlPrimitive *P)  {
   TGlFont *Fnt = Font();
-  if( !Fnt )  return true;
+  if( Fnt == NULL )  return true;
 
-  TXAtom *XA;
   vec3d V;
   bool currentGlM, matInited = false;
-  olxstr Tmp;
   P->Font(Fnt);
   TGlMaterial *OGlM = (TGlMaterial*)P->GetProperties();
-//  FMaterial.Init();
-  for( int i=0; i < AtomCount(); i++ )  {
-    XA = Atom(i);
+  if( FParent->IsATI() )  {
+    glRasterPos3d(0, 0, 0);
+    glCallList(Fnt->FontBase() + ' ');
+  }
+  const int ac = AtomCount();
+  for( int i=0; i < ac; i++ )  {
+    TXAtom* XA = Atom(i);
     if( XA->Deleted() || (!XA->Visible()))  continue;
     if( !(FMode & lmHydr) && (XA->Atom().GetAtomInfo() == iHydrogenIndex ) )  continue;
     if( !(FMode & lmQPeak) && (XA->Atom().GetAtomInfo() == iQPeakIndex ) )  continue;
-    Tmp  = EmptyString;
+    olxstr Tmp(EmptyString, 48);
     if( FMode & lmLabels )  {
       Tmp << XA->Atom().GetLabel();
       if( XA->Atom().CAtom().GetResiId() != -1 )  {
@@ -170,10 +172,18 @@ bool TXGlLabels::Orient(TGlPrimitive *P)  {
       if( FMarks->Item(i) == true ) {
         FMarkMaterial.Init();
         currentGlM = false;
+        if( FParent->IsATI() )  {
+          glRasterPos3d(0, 0, 0);
+          glCallList(Fnt->FontBase() + ' ');
+        } 
       }
       else  {
       ((TGlMaterial*)P->GetProperties())->Init();
         currentGlM = true;
+        if( FParent->IsATI() )  {
+          glRasterPos3d(0, 0, 0);
+          glCallList(Fnt->FontBase() + ' ');
+        } 
       }
       matInited = true;
     }
@@ -182,12 +192,20 @@ bool TXGlLabels::Orient(TGlPrimitive *P)  {
         if( currentGlM )  {
           FMarkMaterial.Init();
           currentGlM = false;
+          if( FParent->IsATI() )  {
+            glRasterPos3d(0, 0, 0);
+            glCallList(Fnt->FontBase() + ' ');
+          } 
         }
       }
       else  {
         if( !currentGlM )  {
           ((TGlMaterial*)P->GetProperties())->Init();
           currentGlM = true;
+          if( FParent->IsATI() )  {
+            glRasterPos3d(0, 0, 0);
+            glCallList(Fnt->FontBase() + ' ');
+          } 
         }
       }
     }
@@ -195,9 +213,7 @@ bool TXGlLabels::Orient(TGlPrimitive *P)  {
     V += FParent->GetBasis().GetCenter();
     V *= FParent->GetBasis().GetMatrix();
     glRasterPos3d(V[0]+0.15, V[1]+0.15, V[2]+5);
-//    V[0] += 0.45;  V[1] += 0.45;  V[2] += 5;
     P->Draw();
-//    Fnt->DrawGlText(V, Tmp, false);
   }
   OGlM->Init();
   return true;

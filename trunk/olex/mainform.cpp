@@ -3014,6 +3014,10 @@ void TMainForm::OnMouseWheel(int x, int y, double delta)  {
   int ind = Bindings.IndexOf("wheel");
   if( ind == -1 )  return;
   olxstr cmd( Bindings.GetObject(ind) );
+  ind = TOlxVars::VarIndex("wheel_step");
+  const olxstr& step( ind == -1 ? EmptyString : TOlxVars::GetVarStr(ind));
+  if( step.IsNumber() )
+    delta *= step.ToDouble();
   cmd << delta;
   ProcessXPMacro(cmd, MacroError);
 }
