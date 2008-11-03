@@ -1197,6 +1197,8 @@ TSymmLib::TSymmLib(const olxstr& FN)  {
 
   BL = new TBravaisLattice("Monoclinic");
   BL->AddSymmetry( this->FindGroup("P2/m") );
+  BL->AddSymmetry( this->FindGroup("P112/m") );
+  BL->AddSymmetry( this->FindGroup("P2/m11") );
   BL->AddLattice( FindLattice("P") );
   BL->AddLattice( FindLattice("A") );
   BL->AddLattice( FindLattice("B") );
@@ -1224,6 +1226,8 @@ TSymmLib::TSymmLib(const olxstr& FN)  {
   BL->AddSymmetry( this->FindGroup("P-3") );
   BL->AddSymmetry( this->FindGroup("P-3m1") );
   BL->AddSymmetry( this->FindGroup("P-31m") );
+  BL->AddSymmetry( this->FindGroup("R3:r") );
+  BL->AddSymmetry( this->FindGroup("R32:r") );
   BL->AddLattice( FindLattice("P") );
   BL->AddLattice( FindLattice("R") );
   BravaisLattices.Add( BL->GetName(), BL );
@@ -1455,18 +1459,21 @@ void TSymmLib::InitRelations()  {
       bl.GetLattice(j).AddBravaiseLattice( &bl );
     }
     for( int j=0; j < SGCount(); j++ )  {
-      if( &(GetGroup(j).GetBravaisLattice()) != NULL )  continue;
+      TSpaceGroup& sg = GetGroup(j);
+      if( &(sg.GetBravaisLattice()) != NULL )  continue;
       bool found = false;
       for( int k=0; k < bl.SymmetryCount(); k++ )  {
-        if( bl.GetSymmetry(k).EqualsWithoutTranslation( GetGroup(j) ) )  {
-          allSG.Clear();
-          GetGroupByNumber( GetGroup(j).GetNumber(), allSG );
-          for( int l=0; l < allSG.Count(); l++ )  {
-            if(  &(allSG[l]->GetBravaisLattice()) != NULL )
-              throw TFunctionFailedException(__OlxSourceInfo, "assert");
-            allSG[l]->SetBravaisLattice( bl );
-            allSG[l]->SetLaueClass( bl.GetSymmetry(k) );
-          }
+        if( bl.GetSymmetry(k).EqualsWithoutTranslation( sg ) )  {
+          sg.SetBravaisLattice(bl);
+          sg.SetLaueClass( bl.GetSymmetry(k) );
+          //allSG.Clear();
+          //GetGroupByNumber( GetGroup(j).GetNumber(), allSG );
+          //for( int l=0; l < allSG.Count(); l++ )  {
+          //  if(  &(allSG[l]->GetBravaisLattice()) != NULL )
+          //    throw TFunctionFailedException(__OlxSourceInfo, "assert");
+          //  allSG[l]->SetBravaisLattice( bl );
+          //  allSG[l]->SetLaueClass( bl.GetSymmetry(k) );
+          //}
           found = true;
           break;
         }
@@ -1495,8 +1502,11 @@ void TSymmLib::InitRelations()  {
   }
   // test
   for( int i=0; i < SGCount(); i++ )  {
-    if( &GetGroup(i).GetPointGroup() == NULL )
-      throw TFunctionFailedException(__OlxSourceInfo, "assert");;
+    TSpaceGroup& sg = GetGroup(i);
+    if( &sg.GetPointGroup() == NULL )
+      throw TFunctionFailedException(__OlxSourceInfo, "assert point group");
+    if( &sg.GetLaueClass() == NULL )
+      throw TFunctionFailedException(__OlxSourceInfo, "assert laue class");
   }
 }
 

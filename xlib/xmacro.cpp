@@ -672,19 +672,51 @@ void XLibMacros::macSGS(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       TBasicApp::GetLog() << ((olxstr("New space group: ") << new_sg->GetName() << '\n'));
     else
       TBasicApp::GetLog() << "Could not locate space group for given settings\n";
-    mat3d tm_t( mat3d::Transpose(tm) );
-    //vec3d tv(0.7559, 0.3266, 0.5059);  // this is for fractional coordinates
-    //mat3d i_tm( tm.Inverse() );
-    //tv = i_tm * tv;
-    //TBasicApp::GetLog() << tv.ToString() << '\n';
-    //for hkl, new_hkl = tm.Transpose() * old_hkl
+    const mat3d tm_t( mat3d::Transpose(tm) );
+    xapp.XFile().UpdateAsymmUnit();
+    TAsymmUnit& au = xapp.XFile().LastLoader()->GetAsymmUnit();
+    const mat3d i_tm( tm.Inverse() );
     mat3d f2c( mat3d::Transpose(xapp.XFile().GetAsymmUnit().GetCellToCartesian())*tm );
     f2c.Transpose();
-    TBasicApp::GetLog() << (olxstr("New cell: ") << f2c[0].Length() << ' ' << f2c[1].Length() << ' ' << f2c[2].Length() <<
-      ' '  << acos(f2c[1].CAngle(f2c[2]))*180.0/M_PI << 
-      ' '  << acos(f2c[0].CAngle(f2c[2]))*180.0/M_PI << 
-      ' '  << acos(f2c[0].CAngle(f2c[1]))*180.0/M_PI << '\n'
+    au.Axes()[0].V() = f2c[0].Length();
+    au.Axes()[1].V() = f2c[1].Length();
+    au.Axes()[2].V() = f2c[2].Length();
+    au.Angles()[0].V() = acos(f2c[1].CAngle(f2c[2]))*180.0/M_PI;
+    au.Angles()[1].V() = acos(f2c[0].CAngle(f2c[2]))*180.0/M_PI;
+    au.Angles()[2].V() = acos(f2c[0].CAngle(f2c[1]))*180.0/M_PI;
+    for( int i=0; i < au.AtomCount(); i++ )  {
+      TCAtom& ca = au.GetAtom(i);
+      ca.ccrd() = i_tm * ca.ccrd();
+    }
+    TBasicApp::GetLog() << (olxstr("New cell: ") << au.Axes()[0].ToString() << 
+      ' ' << au.Axes()[1].ToString() << 
+      ' ' << au.Axes()[2].ToString() <<
+      ' '  << au.Angles()[0].ToString() << 
+      ' '  << au.Angles()[1].ToString() << 
+      ' '  << au.Angles()[2].ToString() << '\n'
       );
+    TBasicApp::GetLog().Warning("Cell esd's were not updated!");
+    olxstr hkl_fn( xapp.LocateHklFile() );
+    if( !hkl_fn.IsEmpty() )  {
+      THklFile hklf;
+      hklf.LoadFromFile(hkl_fn);
+      for( int i=0; i < hklf.RefCount(); i++ )  {
+        vec3d hkl(hklf[i].GetH(), hklf[i].GetK(), hklf[i].GetL());
+        hkl = tm_t * hkl;
+        hklf[i].SetH(Round(hkl[0]));
+        hklf[i].SetK(Round(hkl[1]));
+        hklf[i].SetL(Round(hkl[2]));
+      }
+      olxstr new_hkl_fn( TEFile::ExtractFilePath(hkl_fn) );
+      TEFile::AddTrailingBackslashI(new_hkl_fn) << "test.hkl";
+      hklf.SaveToFile( new_hkl_fn );
+      xapp.XFile().LastLoader()->SetHKLSource(new_hkl_fn);
+    }
+    au.ChangeSpaceGroup(*new_sg);
+    au.InitMatrices();
+    xapp.XFile().LastLoaderChanged();
+    // keep the settings, as the hkl file has changed, so if user exists... inconsistency
+    xapp.XFile().SaveToFile( xapp.XFile().GetFileName(), false );
   }
   else  {
     E.ProcessingError(__OlxSrcInfo, "could not find appropriate transformation");
