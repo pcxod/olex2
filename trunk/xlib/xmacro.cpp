@@ -678,10 +678,10 @@ void XLibMacros::macSGS(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     const mat3d i_tm( tm.Inverse() );
     mat3d f2c( mat3d::Transpose(xapp.XFile().GetAsymmUnit().GetCellToCartesian())*tm );
     mat3d ax_err;
-    ax_err[0] = vec3d(au.Axes()[0].GetE(), au.Axes()[1].GetE(), au.Axes()[2].GetE());
+    ax_err[0] = vec3d(QRT(au.Axes()[0].GetE()), QRT(au.Axes()[1].GetE()), QRT(au.Axes()[2].GetE()));
     ax_err[1] = ax_err[0];  ax_err[2] = ax_err[0];
     mat3d an_err;
-    an_err[0] = vec3d(au.Angles()[0].GetE(), au.Angles()[1].GetE(), au.Angles()[2].GetE());
+    an_err[0] = vec3d(QRT(au.Angles()[0].GetE()), QRT(au.Angles()[1].GetE()), QRT(au.Angles()[2].GetE()));
     an_err[1] = an_err[0];  an_err[2] = an_err[0];
     // prepare positive matrix for error estimation
     mat3d tm_p(tm);
@@ -692,12 +692,12 @@ void XLibMacros::macSGS(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     ax_err *= tm_p;
     an_err *= tm_p;
     f2c.Transpose();
-    au.Axes()[0].V() = f2c[0].Length();  au.Axes()[0].E() = ax_err[0][0];
-    au.Axes()[1].V() = f2c[1].Length();  au.Axes()[1].E() = ax_err[1][1];
-    au.Axes()[2].V() = f2c[2].Length();  au.Axes()[2].E() = ax_err[2][2];
-    au.Angles()[0].V() = acos(f2c[1].CAngle(f2c[2]))*180.0/M_PI;  au.Angles()[0].E() = an_err[0][0];
-    au.Angles()[1].V() = acos(f2c[0].CAngle(f2c[2]))*180.0/M_PI;  au.Angles()[1].E() = an_err[1][1];
-    au.Angles()[2].V() = acos(f2c[0].CAngle(f2c[1]))*180.0/M_PI;  au.Angles()[2].E() = an_err[2][2];
+    au.Axes()[0].V() = f2c[0].Length();  au.Axes()[0].E() = sqrt(ax_err[0][0]);
+    au.Axes()[1].V() = f2c[1].Length();  au.Axes()[1].E() = sqrt(ax_err[1][1]);
+    au.Axes()[2].V() = f2c[2].Length();  au.Axes()[2].E() = sqrt(ax_err[2][2]);
+    au.Angles()[0].V() = acos(f2c[1].CAngle(f2c[2]))*180.0/M_PI;  au.Angles()[0].E() = sqrt(an_err[0][0]);
+    au.Angles()[1].V() = acos(f2c[0].CAngle(f2c[2]))*180.0/M_PI;  au.Angles()[1].E() = sqrt(an_err[1][1]);
+    au.Angles()[2].V() = acos(f2c[0].CAngle(f2c[1]))*180.0/M_PI;  au.Angles()[2].E() = sqrt(an_err[2][2]);
     for( int i=0; i < au.AtomCount(); i++ )  {
       TCAtom& ca = au.GetAtom(i);
       ca.ccrd() = i_tm * ca.ccrd();
