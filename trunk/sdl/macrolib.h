@@ -351,6 +351,8 @@ public:
         i--;
         continue;
       }
+      else if( Cmds[i].Length() > 1 && Cmds[i].CharAt(0) == '\\' && Cmds[i].CharAt(1) == '-' )
+        Cmds[i] = Cmds[i].SubStringFrom(1);
     }
     ABasicFunction *MF = OlexProcessor.GetLibrary().FindMacro(Command);//, Cmds.Count());
     if( MF != NULL )  {

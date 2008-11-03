@@ -893,7 +893,7 @@ void TMainForm::ProcessXPMacro(const olxstr &Cmd, TMacroError &Error, bool Proce
   Command = Cmds[0];
   Cmds.Delete(0);
   for( int i = 0; i < Cmds.Count(); i++ )  {
-    if( !Cmds[i].Length() )  continue;
+    if( Cmds[i].IsEmpty() )  continue;
 
     if( Cmds[i].CharAt(0) == '-' && !Cmds[i].IsNumber() )  {  // an option
       if( Cmds[i].Length() > 1 &&
@@ -904,9 +904,12 @@ void TMainForm::ProcessXPMacro(const olxstr &Cmd, TMacroError &Error, bool Proce
         // 18.04.07 added - !!!
         ProcessMacroFunc( Options.Value(Options.Count()-1) );
       }
-      Cmds.Delete(i);  i--;
+      Cmds.Delete(i);  
+      i--;
       continue;
     }
+    else if( Cmds[i].Length() > 1 && Cmds[i].CharAt(0) == '\\' && Cmds[i].CharAt(1) == '-' )
+      Cmds[i] = Cmds[i].SubStringFrom(1);
   }
   ABasicFunction *MF = GetLibrary().FindMacro(Command);//, Cmds.Count());
   if( MF != NULL )  {
