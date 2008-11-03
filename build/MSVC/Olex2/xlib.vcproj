@@ -723,6 +723,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\xlib\sgset.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\xlib\sgtest.h"
 				>
 			</File>

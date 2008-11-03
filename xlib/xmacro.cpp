@@ -25,6 +25,7 @@
 #include "bitarray.h"
 #include "olxvar.h"
 #include "strmask.h"
+#include "sgset.h"
 
 #define xlib_InitMacro(macroName, validOptions, argc, desc)\
   lib.RegisterStaticMacro( new TStaticMacro(&XLibMacros::mac##macroName, #macroName, (validOptions), argc, desc))
@@ -624,13 +625,18 @@ void XLibMacros::macLstFun(TStrObjList &Cmds, const TParamList &Options, TMacroE
   }
 }
 //..............................................................................
-olxstr XLibMacros_macSGS_SgInfo(TSpaceGroup& sg)  {
-  const olxstr& caxis =  sg.GetAxis();
+TSpaceGroup* XLibMacros_macSGS_FindSG(TPtrList<TSpaceGroup>& sgs, const olxstr& axis)  {
+  for( int i=0; i < sgs.Count(); i++ )
+    if( sgs[i]->GetAxis().Compare(axis) == 0 )
+      return sgs[i];
+  return NULL;
+}
+olxstr XLibMacros_macSGS_SgInfo(const olxstr& caxis)  {
   if( caxis.IsEmpty() )
     return "standard";
   else  {
     if( caxis.Length() == 3 && caxis.CharAt(0) == '-' )    // -axis + cell choice
-      return olxstr("axis: -") << caxis.CharAt(1) << ", cell choice " << caxis.CharAt(1);
+      return olxstr("axis: -") << caxis.CharAt(1) << ", cell choice " << caxis.CharAt(2);
     else if( caxis.Length() == 2 )    // axis + cell choice
       return olxstr("axis: ") << caxis.CharAt(0) << ", cell choice " << caxis.CharAt(1);
     else  
@@ -638,25 +644,12 @@ olxstr XLibMacros_macSGS_SgInfo(TSpaceGroup& sg)  {
   }
 }
 void XLibMacros::macSGS(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  // cell c 1 ->2, 2->3 and 3 ->1, C->A, A->I, I->C;
-  static const mat3d mon_b(-1, 0, 1, 0, 1, 0, -1, 0, 0), mon_bs(0, 0, -1, 0, 1, 0, 1, 0, -1);
-  // cell c 1 ->2, 2->3 and 3 ->1, A->B, B->I, I->A;
-  static const mat3d mon_c(0, -1, 0, 1, -1, 0, 0, 0, 1), mon_cs(-1, 1, 0, -1, 0, 0, 0, 0, 1);
-  // cell c 1 ->2, 2->3 and 3 ->1, B->C, C->I, I->B;
-  static const mat3d mon_a(1, 0, 0, 0, 0, -1, 0, 1, -1), mon_as(1, 0, 0, 0, -1, 1, 0, -1, 0);
-  // uniqe b->c cc1: C->A, 2: A->B; 3:I->I
-  static const mat3d b_to_c(0, 1, 0, 0, 0, 1, 1, 0, 0), b_to_cs(0, 0, 1, 1, 0, 0, 0, 1, 0);
-  // uniqe b->a cc1: C->B, 2: A->C; 3:I->I
-  static const mat3d b_to_a(b_to_cs), b_to_as(b_to_c);
-  // uniqe c->a cc1: A->B, 2: B->C; 3:I->I
-  static const mat3d c_to_a(b_to_c), c_to_as(b_to_cs);
-  static const mat3d I_to_P(-0.5, 0.5, 0.5, 0.5, -0.5, -0.5), P_to_I(0, 1, 1, 0, 1, 0);
-  static const mat3d F_to_P(0, 0.5, 0.5, 0, 0.5, 0), P_to_F(-1, 1, 1, -1, 1, 1);
-
   TXApp& xapp = TXApp::GetInstance();
-  TSpaceGroup& sg = xapp.XFile().GetLastLoaderSG();
-  TBasicApp::GetLog() << (olxstr("Current setting: ") << XLibMacros_macSGS_SgInfo(sg) << '\n');
-  if( sg.GetAxis().IsEmpty() )  {
+  TSpaceGroup& sg = Cmds.Count() == 1 ? xapp.XFile().GetLastLoaderSG() : *TSymmLib::GetInstance()->FindGroup(Cmds[1]);
+  SGSettings sg_set(sg);
+  olxstr axis = sg_set.axisInfo.GetAxis();
+  TBasicApp::GetLog() << (olxstr("Current setting: ") << XLibMacros_macSGS_SgInfo(axis) << '\n');
+  if( axis.IsEmpty() )  {
     TBasicApp::GetLog() << "Nothing to do\n";
     return;
   }
@@ -664,9 +657,37 @@ void XLibMacros::macSGS(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   TPtrList<TSpaceGroup> sgs;
   sl.GetGroupByNumber(sg.GetNumber(), sgs);
   for( int i=0; i < sgs.Count(); i++ )  {
-    if( &sg != sgs[i] )  {
-      TBasicApp::GetLog() << (olxstr("Possible: ") << XLibMacros_macSGS_SgInfo(*sgs[i]) << '\n');
-    }
+    if( &sg != sgs[i] )
+      TBasicApp::GetLog() << (olxstr("Possible: ") << XLibMacros_macSGS_SgInfo(sgs[i]->GetAxis()) << '\n');
+  }
+  AxisInfo n_ai(sg, Cmds[0]);
+  mat3d tm;
+  if( sg_set.GetTrasformation(n_ai, tm) )  {
+    TBasicApp::GetLog() << (olxstr("Cell choice trasformation matrix: \n"));
+    TBasicApp::GetLog() << tm[0].ToString() << '\n';
+    TBasicApp::GetLog() << tm[1].ToString() << '\n';
+    TBasicApp::GetLog() << tm[2].ToString() << '\n';
+    TSpaceGroup* new_sg = XLibMacros_macSGS_FindSG( sgs, n_ai.GetAxis() );
+    if( new_sg != NULL )  
+      TBasicApp::GetLog() << ((olxstr("New space group: ") << new_sg->GetName() << '\n'));
+    else
+      TBasicApp::GetLog() << "Could not locate space group for given settings\n";
+    mat3d tm_t( mat3d::Transpose(tm) );
+    //vec3d tv(0.7559, 0.3266, 0.5059);  // this is for fractional coordinates
+    //mat3d i_tm( tm.Inverse() );
+    //tv = i_tm * tv;
+    //TBasicApp::GetLog() << tv.ToString() << '\n';
+    //for hkl, new_hkl = tm.Transpose() * old_hkl
+    mat3d f2c( mat3d::Transpose(xapp.XFile().GetAsymmUnit().GetCellToCartesian())*tm );
+    f2c.Transpose();
+    TBasicApp::GetLog() << (olxstr("New cell: ") << f2c[0].Length() << ' ' << f2c[1].Length() << ' ' << f2c[2].Length() <<
+      ' '  << acos(f2c[1].CAngle(f2c[2]))*180.0/M_PI << 
+      ' '  << acos(f2c[0].CAngle(f2c[2]))*180.0/M_PI << 
+      ' '  << acos(f2c[0].CAngle(f2c[1]))*180.0/M_PI << '\n'
+      );
+  }
+  else  {
+    E.ProcessingError(__OlxSrcInfo, "could not find appropriate transformation");
   }
 }
 //..............................................................................
