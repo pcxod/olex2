@@ -73,8 +73,11 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
 //    LaueClasses.AddACopy( &(TSymmLib::GetInstance()->GetPointGroup(i)) );
 //  }
 
+  //LaueClasses.Add( TSymmLib::GetInstance()->FindGroup("P112/m") );
+  //LaueClasses.Add( TSymmLib::GetInstance()->FindGroup("P2/m11") );
+
   SGTest.MergeTest(LaueClasses, LaueClassStats);
-  TTypeList<TSpaceGroup*> CalculatedLaueClasses;
+  TPtrList<TSpaceGroup> CalculatedLaueClasses;
   // calculate average Sum(I-Ieq)/Count
   double averageLaueHit = 0;
   int laueHitCount = 0;
@@ -99,19 +102,19 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
       laueTab[i][1] << '(' << olxstr::FormatFloat(2, LaueClassStats[i].GetSummSI()/LaueClassStats[i].GetCount() ) << ')';
       if( dv < averageLaueHit/2 )  {
         laueTab[i][3] = '+';
-        CalculatedLaueClasses.AddACopy( &LaueClassStats[i].GetSpaceGroup() );
+        CalculatedLaueClasses.Add( &LaueClassStats[i].GetSpaceGroup() );
       }
       else
         laueTab[i][3] = '-';
     }
     else  {
       laueTab[i][1] = '-';
-      CalculatedLaueClasses.AddACopy( &LaueClassStats[i].GetSpaceGroup() );
+      CalculatedLaueClasses.Add( &LaueClassStats[i].GetSpaceGroup() );
     }
     laueTab[i][2] = LaueClassStats[i].GetCount();
   }
   XApp.GetLog() << ( EmptyString );
-  laueTab.CreateTXTList(Output, "1. Laue symmetry test", true, true, ' ');
+  laueTab.CreateTXTList(Output, "1. Merge test", true, true, ' ');
   XApp.GetLog() << ( Output );
   // analyse the crystal systems from the cell parameters and the diffraction matches
   // and give warnings
@@ -140,7 +143,7 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
       }
     }
     if( !found )  {
-      XApp.GetLog() << ( olxstr("An alternative Laue symmetry found: ") <<
+      XApp.GetLog() << ( olxstr("An alternative symmetry found: ") <<
         CalculatedLaueClasses[i]->GetBravaisLattice().GetName()) << '\n';
     }
   }

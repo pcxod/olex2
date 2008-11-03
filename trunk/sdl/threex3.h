@@ -266,7 +266,7 @@ public:
   inline static TMatrix33 Transpose (const TMatrix33& v) {
     return TMatrix33<T>(v[0][0], v[1][0], v[2][0], 
                         v[0][1], v[1][1], v[2][1], 
-                        v[0][2], v[2][1], v[2][2]);
+                        v[0][2], v[1][2], v[2][2]);
   }
   inline TMatrix33 operator -() const {
     return TMatrix33<T>(-data[0][0], -data[0][1], -data[0][2], 
@@ -352,7 +352,7 @@ public:
 	return TMatrix33( data[2][2]*data[1][1] - data[2][1]*data[1][2],
 			          data[2][1]*data[0][2] - data[2][2]*data[0][1],
 			          data[1][2]*data[0][1] - data[1][1]*data[0][2],
-			          data[2][1]*data[1][2] - data[2][2]*data[1][0],
+			          data[2][0]*data[1][2] - data[2][2]*data[1][0],
 					  data[2][2]*data[0][0] - data[2][0]*data[0][2],
 					  data[1][0]*data[0][2] - data[1][2]*data[0][0],
 					  data[2][1]*data[1][0] - data[2][0]*data[1][1],
