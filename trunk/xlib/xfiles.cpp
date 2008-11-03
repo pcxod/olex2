@@ -118,6 +118,7 @@ TBasicCFile *TXFile::FindFormat(const olxstr &Ext)  {
 //..............................................................................
 void TXFile::LastLoaderChanged() {
   if( FLastLoader == NULL )  return;
+  FSG = TSymmLib::GetInstance()->FindSG(FLastLoader->GetAsymmUnit());
   OnFileLoad->Enter(this);
   GetLattice().Clear(true);
   GetAsymmUnit().Assign(FLastLoader->GetAsymmUnit());
