@@ -211,6 +211,17 @@ void TDUnitCell::Create(const olxstr& cName)  {
   GlP->Type(sgloText);
   GlP->Font( Parent()->Scene()->DefFont() );
 }
+//..............................................................................
+bool TDUnitCell::GetDimensions(vec3d &Max, vec3d &Min)  {
+  //Min[0] = FGlP->Data()[0][1];  
+  //Min[1] = FGlP->Data()[1][1];  
+  //Min[2] = FGlP->Data()[2][1];
+  //Max[0] = FGlP->Data()[0][23];  
+  //Max[1] = FGlP->Data()[1][23];  
+  //Max[2] = FGlP->Data()[2][23];
+  return false;
+}
+//..............................................................................
 bool TDUnitCell::Orient(TGlPrimitive *P)  {
   if( P->Type() == sgloText )  {
     olxstr Str;

@@ -42,6 +42,28 @@ public:
     if( l < -1 )  l = -1;
     return l;
   }
+  // multiplies each element by itself
+  inline TVector3<T>& Qrt()  {
+    data[0] *= data[0];
+    data[1] *= data[1];
+    data[2] *= data[2];
+    return *this;
+  }
+  // multiplies each element by itself
+  static inline TVector3<T> Qrt(const TVector3<T>& v)  {
+    return TVector3<T>(v[0]*v[0], v[1]*v[1], v[2]*v[2]);
+  }
+  // takes square root of each element (must be >= 0!)
+  inline TVector3<T>& Sqrt()  {
+    data[0] = sqrt(data[0]);
+    data[1] = sqrt(data[1]);
+    data[2] = sqrt(data[2]);
+    return *this;
+  }
+  // takes square root of each element (must be >= 0!)
+  static inline TVector3<T> Sqrt(const TVector3<T>& v)  {
+    return TVector3<T>(sqrt(v[0]), sqrt(v1), sqrt(v2));
+  }
   template <class AT> inline T DotProd(const TVector3<AT>& v) const {
     return data[0]*v[0] + data[1]*v[1] + data[2]*v[2];
   }
@@ -291,6 +313,16 @@ public:
     data[1][0] = 0;  data[1][1] = 1;  data[1][2] = 0;
     data[2][0] = 0;  data[2][1] = 0;  data[2][2] = 1;
     return *this;
+  }
+  // normalises each vector
+  inline TMatrix33<T>& Normalise() {
+    data[0].Normalise();
+    data[1].Normalise();
+    data[2].Normalise();
+    return *this;
+  }
+  inline static TMatrix33<T> Normalise(const TMatrix33<T>& m)  {
+    return TMatrix33<T>(m).Normalise();
   }
   inline bool IsI() const {
     return (data[0][0] == 1 && data[1][1] == 1 && data[2][2] == 1 && 

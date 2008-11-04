@@ -139,40 +139,42 @@ public:
   const mat3d& GetCellToCartesian() const {  return Cell2Cartesian; }
   const mat3d& GetCartesianToCell() const {  return Cartesian2Cell; }
   const mat3d& GetHklToCartesian()  const {  return Hkl2Cartesian; }
-  template <class VC>
-  inline void CellToCartesian(const VC& cell, VC& crt) const  {
+  template <class VC> inline VC& CellToCartesian(const VC& cell, VC& crt) const  {
     crt[0] = cell[0]*Cell2Cartesian[0][0] + cell[1]*Cell2Cartesian[1][0] + cell[2]*Cell2Cartesian[2][0];
     crt[1] = cell[1]*Cell2Cartesian[1][1] + cell[2]*Cell2Cartesian[2][1];
     crt[2] = cell[2]*Cell2Cartesian[2][2];
+    return crt;
     //Cartesian = Cell * Cell2Cartesian;
   }
-  template <class VC>
-  inline void CellToCartesian(VC& crt) const {
+  template <class VC> inline VC& CellToCartesian(VC& crt) const {
     crt[0] = crt[0]*Cell2Cartesian[0][0] + crt[1]*Cell2Cartesian[1][0] + crt[2]*Cell2Cartesian[2][0];
     crt[1] = crt[1]*Cell2Cartesian[1][1] + crt[2]*Cell2Cartesian[2][1];
     crt[2] = crt[2]*Cell2Cartesian[2][2];
+    return crt;
     //crt *= Cell2Cartesian;
   }
-  template <class VC>
-  inline void CartesianToCell(VC& cll)      const {
+  template <class VC> inline VC& CartesianToCell(VC& cll) const {
     cll[0] = cll[0]*Cartesian2Cell[0][0] + cll[1]*Cartesian2Cell[1][0] + cll[2]*Cartesian2Cell[2][0];
     cll[1] = cll[1]*Cartesian2Cell[1][1] + cll[2]*Cartesian2Cell[2][1];
     cll[2] = cll[2]*Cartesian2Cell[2][2];
+    return cll;
     //cll *= Cartesian2Cell;
   }
 
   // J App Cryst 2002, 35, 477-480
-  template <class T> void UcifToUcart(T& v)  {
+  template <class T> T& UcifToUcart(T& v)  {
     mat3d M(v[0], v[5], v[4], v[1], v[3], v[2]);
     M = UcifToUxyz*M*UcifToUxyzT;
     v[0] = M[0][0];  v[1] = M[1][1];  v[2] = M[2][2];
     v[3] = M[1][2];  v[4] = M[0][2];  v[5] = M[0][1];
+    return v;
   }
-  template <class T> void UcartToUcif(T& v)  {
+  template <class T> T& UcartToUcif(T& v)  {
     mat3d M(v[0], v[5], v[4], v[1], v[3], v[2]);
     M = UxyzToUcif*M*UxyzToUcifT;
     v[0] = M[0][0];  v[1] = M[1][1];  v[2] = M[2][2];
     v[3] = M[1][2];  v[4] = M[0][2];  v[5] = M[0][1];
+    return v;
   }
 
   void Assign( const TAsymmUnit& C);

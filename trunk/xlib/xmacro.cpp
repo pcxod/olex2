@@ -661,6 +661,14 @@ void XLibMacros::macSGS(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       TBasicApp::GetLog() << (olxstr("Possible: ") << XLibMacros_macSGS_SgInfo(sgs[i]->GetAxis()) << '\n');
   }
   AxisInfo n_ai(sg, Cmds[0]);
+  if( sg_set.axisInfo.HasMonoclinicAxis() && !n_ai.HasMonoclinicAxis() )
+    n_ai.ChangeMonoclinicAxis(sg_set.axisInfo.GetMonoclinicAxis());
+  if( sg_set.axisInfo.HasCellChoice() && !n_ai.HasCellChoice() )
+    n_ai.ChangeCellChoice(sg_set.axisInfo.GetCellChoice());
+  if( sg_set.axisInfo.GetAxis() == n_ai.GetAxis() )  {
+    TBasicApp::GetLog() << "Nothing to change\n";
+    return;
+  }
   mat3d tm;
   if( sg_set.GetTrasformation(n_ai, tm) )  {
     TBasicApp::GetLog() << (olxstr("Cell choice trasformation matrix: \n"));
@@ -670,8 +678,10 @@ void XLibMacros::macSGS(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     TSpaceGroup* new_sg = XLibMacros_macSGS_FindSG( sgs, n_ai.GetAxis() );
     if( new_sg != NULL )  
       TBasicApp::GetLog() << ((olxstr("New space group: ") << new_sg->GetName() << '\n'));
-    else
-      TBasicApp::GetLog() << "Could not locate space group for given settings\n";
+    else  {
+      E.ProcessingError(__OlxSrcInfo, "Could not locate space group for given settings");
+      return;
+    }
     const mat3d tm_t( mat3d::Transpose(tm) );
     xapp.XFile().UpdateAsymmUnit();
     TAsymmUnit& au = xapp.XFile().LastLoader()->GetAsymmUnit();
