@@ -1256,7 +1256,7 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPL
     }
     else if( AE.Count() == 3 )  {
       double v = TetrahedronVolume( atom.crd(), AE.GetCrd(0), AE.GetCrd(1), AE.GetCrd(2) );
-      if( v > 0.5 )  {
+      if( v > 0.3 )  {
         TBasicApp::GetLog().Info( olxstr(atom.GetLabel()) << ": XYZCH" );
         cg.FixAtom( AE, fgCH1, HAI, NULL, generated);
       }

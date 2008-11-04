@@ -6809,9 +6809,9 @@ public:
 #endif
 void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   //return;
-  VcoVContainer vcovc;
-  vcovc.ReadShelxMat("C:/Documents and Settings/Oleg/My Documents/ilia/Cr/.olex/temp/4.mat");
-  double vcoc_v = vcovc.GetMatrix().Find("O3AA", vcoviX, vcoviY);
+//  VcoVContainer vcovc;
+//  vcovc.ReadShelxMat("E:/tmp/JohnW/.olex/temp/abs.mat");
+//  double vcoc_v = vcovc.GetMatrix().Find("C6AA", vcoviY, vcoviZ);
   return;
   TSymmLib& sl = *TSymmLib::GetInstance();
   smatd_list ml;

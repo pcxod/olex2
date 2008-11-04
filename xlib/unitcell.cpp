@@ -57,12 +57,25 @@ void TUnitCell::Clear()  {
 }
 //..............................................................................
 double TUnitCell::CalcVolume()  const  {
-  double cosa = cos( GetLattice().GetAsymmUnit().Angles()[0].GetV()*M_PI/180 ),
-         cosb = cos( GetLattice().GetAsymmUnit().Angles()[1].GetV()*M_PI/180 ),
-         cosg = cos( GetLattice().GetAsymmUnit().Angles()[2].GetV()*M_PI/180 );
-  return  GetLattice().GetAsymmUnit().Axes()[0].GetV()*
-          GetLattice().GetAsymmUnit().Axes()[1].GetV()*
-          GetLattice().GetAsymmUnit().Axes()[2].GetV()*sqrt( (1-cosa*cosa-cosb*cosb-cosg*cosg) + 2*(cosa*cosb*cosg));
+  TAsymmUnit& au = GetLattice().GetAsymmUnit();
+  static const double k = M_PI/180;
+  vec3d ang(au.Angles()[0].GetV()*k, au.Angles()[1].GetV()*k, au.Angles()[2].GetV()*k);
+//  vec3d ange(au.Angles()[0].GetE()*k, au.Angles()[1].GetE()*k, au.Angles()[2].GetE()*k);
+  vec3d ax(au.Axes()[0].GetV(), au.Axes()[1].GetV(), au.Axes()[2].GetV());
+//  vec3d axe(au.Axes()[0].GetE(), au.Axes()[1].GetE(), au.Axes()[2].GetE());
+  vec3d cs(cos(ang[0]), cos(ang[1]), cos(ang[2]) );
+//  vec3d ss(sin(ang[0]), sin(ang[1]), sin(ang[2]) );
+  double t = sqrt(1-cs.QLength() + 2*cs.Mul());
+  double r = ax.Mul();
+  double v = r*t;
+  //double esd = sqrt( QRT(ax[1]*ax[2]*t*axe[0]) +  
+  //  QRT(ax[0]*ax[2]*t*axe[1]) +
+  //  QRT(ax[0]*ax[1]*t*axe[2]) +
+  //  QRT(r/t*ss[0]*(-cs[0]-1)*ange[0]) +
+  //  QRT(r/t*ss[1]*(-cs[1]-1)*ange[1]) +
+  //  QRT(r/t*ss[2]*(-cs[2]-1)*ange[2]) 
+  //  );
+  return  v;
 }
 //..............................................................................
 int TUnitCell::GetMatrixMultiplier(short Latt)  {
