@@ -64,6 +64,29 @@ public:
   static inline TVector3<T> Sqrt(const TVector3<T>& v)  {
     return TVector3<T>(sqrt(v[0]), sqrt(v1), sqrt(v2));
   }
+  // takes absolute value of the vector elements
+  inline TVector3<T>& Abs()  {
+    data[0] = fabs(data[0]);
+    data[1] = fabs(data[1]);
+    data[2] = fabs(data[2]);
+    return *this;
+  }
+  // returns a vector with absolute values of provided one
+  static inline TVector3<T> Abs(const TVector3<T>& v)  {
+    return TVector3<T>(fabs(v[0]), fabs(v1), fabs(v2));
+  }
+  // returns sum of vector elements
+  inline T Sum() const {
+    return data[0]+data[1]+data[2];
+  }
+  // returns product of vector elements
+  inline T Mul() const {
+    return data[0]*data[1]*data[2];
+  }
+  // returns sum of absolute values of vector elements
+  inline T AbsSum()  {
+    return fabs(data[0])+fabs(data[1])+fabs(data[2]);
+  }
   template <class AT> inline T DotProd(const TVector3<AT>& v) const {
     return data[0]*v[0] + data[1]*v[1] + data[2]*v[2];
   }
@@ -136,6 +159,10 @@ public:
     data[0] *= (T)v[0];  data[1] *= (T)v[1];  data[2] *= (T)v[2];  
     return *this;
   }
+  template <class AT> inline TVector3<T>& operator /= (const TVector3<AT>& v)  {
+    data[0] /= (T)v[0];  data[1] /= (T)v[1];  data[2] /= (T)v[2];  
+    return *this;
+  }
 #ifndef __BORLANDC__ // stupid compiler
   template <class AT> inline TVector3<T>& operator += (AT v)  {
     data[0] += (T)v;  data[1] += (T)v;  data[2] += (T)v;
@@ -168,6 +195,9 @@ public:
   }
   template <class AT> inline TVector3<T> operator * (const TVector3<AT>& v) const {
     return TVector3<T>(data[0]*v[0], data[1]*v[1], data[2]*v[2]);
+  }
+  template <class AT> inline TVector3<T> operator / (const TVector3<AT>& v) const {
+    return TVector3<T>(data[0]/v[0], data[1]/v[1], data[2]/v[2]);
   }
 
 #ifndef __BORLANDC__ // stupid compiler

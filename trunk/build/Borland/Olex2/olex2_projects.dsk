@@ -9,9 +9,9 @@ File_6=SourceModule,'E:\SVN\src\v1.1u\olex2-tl\Olex2Impl.cpp',0,1,656,17,670,0,0
 File_7=SourceModule,'E:\SVN\src\v1.1u\olex2-tl\About.cpp',0,1,4,49,19,0,0
 
 [Modules]
-Module0=E:\SVN\srcf-svn\trunk\launch\splash.cpp
+Module0=E:\SVN\srcf-svn\trunk\launch\main.cpp
 Module1=E:\SVN\srcf-svn\trunk\olex2v-test\main.cpp
-Module2=E:\SVN\srcf-svn\trunk\launch\main.cpp
+Module2=E:\SVN\srcf-svn\trunk\launch\splash.cpp
 Module3=E:\SVN\srcf-svn\trunk\olex2v\olex2v.h
 Module4=E:\SVN\srcf-svn\trunk\sdl\settingsfile.cpp
 Module5=E:\SVN\srcf-svn\trunk\installer\main.cpp
@@ -22,7 +22,7 @@ Count=9
 EditWindowCount=1
 TypeLibWindowCount=1
 
-[E:\SVN\srcf-svn\trunk\launch\splash.cpp]
+[E:\SVN\srcf-svn\trunk\launch\main.cpp]
 ModuleType=SourceModule
 FormState=1
 FormOnTop=0
@@ -32,7 +32,7 @@ ModuleType=SourceModule
 FormState=1
 FormOnTop=0
 
-[E:\SVN\srcf-svn\trunk\launch\main.cpp]
+[E:\SVN\srcf-svn\trunk\launch\splash.cpp]
 ModuleType=SourceModule
 FormState=1
 FormOnTop=0
@@ -137,7 +137,7 @@ FormOnTop=0
 
 [EditWindow0]
 ViewCount=9
-CurrentView=5
+CurrentView=2
 View0=0
 View1=1
 View2=2
@@ -152,22 +152,24 @@ MessageView=MessageView@EditWindow0
 ClassHierarchy=ClassHierarchy@EditWindow0
 Create=1
 Visible=1
-State=0
+State=2
 Left=395
 Top=172
 Width=885
 Height=799
-MaxLeft=-4
+MaxLeft=-1
 MaxTop=-4
-ClientWidth=877
-ClientHeight=777
+MaxWidth=1288
+MaxHeight=989
+ClientWidth=1280
+ClientHeight=967
 LeftPanelSize=0
 LeftPanelClients=CodeExplorer@EditWindow0
 LeftPanelData=00000400010000000C000000436F64654578706C6F726572000000000000000000000000000000000001000000000000000000000000FFFFFFFF
 RightPanelSize=0
 BottomPanelSize=151
 BottomPanelClients=MessageView@EditWindow0
-BottomPanelData=00000400000000006D030000000000000297000000000000000100000000000000000000000001000000006E0400000000000001000000006E0400000000000001000000006E0400000000000001000000006E0400000000000001000000008403000000000000010000000084030000000000000100000000840300000000000001000000001307000000000000010000000013070000000000000100000000130700000000000001000000006D0300000B0000004D65737361676556696577FFFFFFFF
+BottomPanelData=000004000000000000050000000000000297000000000000000100000000000000000000000001000000006E0400000000000001000000006E0400000000000001000000006E0400000000000001000000006E040000000000000100000000840300000000000001000000008403000000000000010000000084030000000000000100000000130700000000000001000000001307000000000000010000000013070000000000000100000000000500000B0000004D65737361676556696577FFFFFFFF
 
 [View0]
 Module=E:\wxWidgets-2.8.7\include\wx\wxchar.h
@@ -185,9 +187,9 @@ LeftCol=1
 
 [View2]
 Module=E:\SVN\srcf-svn\trunk\launch\main.cpp
-CursorX=118
-CursorY=235
-TopLine=214
+CursorX=41
+CursorY=168
+TopLine=154
 LeftCol=1
 
 [View3]
@@ -267,9 +269,9 @@ Width=1280
 Height=100
 MaxLeft=-1
 MaxTop=-1
-MaxWidth=1280
+MaxWidth=1288
 MaxHeight=100
-ClientWidth=1272
+ClientWidth=1280
 ClientHeight=78
 
 [ProjectManager]
@@ -278,11 +280,11 @@ Visible=1
 State=0
 Left=0
 Top=0
-Width=27
+Width=182
 Height=913
 MaxLeft=-1
 MaxTop=-1
-ClientWidth=19
+ClientWidth=174
 ClientHeight=889
 TBDockHeight=313
 LRDockWidth=446
@@ -335,7 +337,7 @@ LRDockWidth=19
 Dockable=1
 SplitPos=32
 ArrangeBy=Name
-SelectedItem=Name
+SelectedItem=Caption
 ExpandedItems=
 HiddenCategories=
 
@@ -413,11 +415,11 @@ Visible=1
 State=0
 Left=12
 Top=0
-Width=865
+Width=1268
 Height=151
 MaxLeft=-1
 MaxTop=-1
-ClientWidth=865
+ClientWidth=1268
 ClientHeight=151
 TBDockHeight=151
 LRDockWidth=443
@@ -446,5 +448,5 @@ DockClients=ObjectTree,PropertyInspector
 DockSiteData=0000040000000000B6030000000000000113000000000000000100000000A90000000E0000004F626A65637454726565566965770100000000B60300001100000050726F7065727479496E73706563746F72FFFFFFFF
 
 [ActiveProject]
-ActiveProject=9
+ActiveProject=8
 
