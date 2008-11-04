@@ -628,24 +628,26 @@ TSAtom* TLattice::FindSAtom(const TCAtom& ca) const {
 //..............................................................................
 TSAtom* TLattice::NewCentroid(const TSAtomPList& Atoms)  {
   TSAtom *Centroid;
-  vec3d C, CC;
+  vec3d cc, ce;
   double aan = 0;
   for( int i=0; i < Atoms.Count(); i++ )  {
-    C += Atoms[i]->crd()*Atoms[i]->CAtom().GetOccp();
-    CC += Atoms[i]->ccrd()*Atoms[i]->CAtom().GetOccp();
+    cc += Atoms[i]->ccrd()*Atoms[i]->CAtom().GetOccp();
+    ce += vec3d::Qrt(Atoms[i]->CAtom().ccrdEsd())*Atoms[i]->CAtom().GetOccp();
     aan += Atoms[i]->CAtom().GetOccp();
   }
   if( aan == 0 )  return NULL;
-  C /= aan;
-  CC /= aan;
+  ce.Sqrt();
+  ce /= aan;
+  cc /= aan;
   TCAtom *CCent;
-  try{ CCent = &AsymmUnit->NewCentroid(CC); }
+  try{ CCent = &AsymmUnit->NewCentroid(cc); }
   catch(const TExceptionBase& exc)  {
     throw TFunctionFailedException(__OlxSourceInfo, exc.Replicate());
   }
   Centroid = new TSAtom( Network );
   Centroid->CAtom(*CCent);
-  Centroid->crd() = C; // if it has been moved
+  CCent->ccrdEsd() = ce;
+  Centroid->crd() = GetAsymmUnit().CellToCartesian(cc); 
   Centroid->AddMatrix( Matrices[0] );
   AddSAtom(Centroid);
   return Centroid;
@@ -702,13 +704,6 @@ TSPlane* TLattice::TmpPlane(const TSAtomPList& atoms, int weightExtent)  {
 //..............................................................................
 void TLattice::UpdateAsymmUnit()  {
   if( Atoms.IsEmpty() )  return;
-  if( !Generated )  {
-    for( int i=0; i < Atoms.Count(); i++ )  {
-      if( Atoms[i]->IsDeleted() )
-        Atoms[i]->CAtom().SetDeleted(true);
-    }
-    return;
-  }
   GetAsymmUnit().InitAtomIds();
   TTypeList<TSAtomPList> AUAtoms;
   TSAtom* OA;
@@ -1173,6 +1168,15 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPL
   TBasicAtomInfo& HAI = AtomsInfo->GetAtomInfo(iHydrogenIndex);
   TAtomEnvi AE;
   UnitCell->GetAtomEnviList(atom, AE, false, part);
+  //if( atom.GetAtomInfo() == iCarbonIndex )  { // treat hapta bonds
+  //  for( int i=0; i < AE.Count(); i++ )  {
+  //    vec3d v( AE.GetCrd(i) - atom.crd());
+  //    if( v.Length() > 2.0 )  {
+  //      AE.Delete(i);
+  //      i--;
+  //    }
+  //  }
+  //}
   if( part == -1 )  {  // check for disorder
     TIntList parts;
     TDoubleList occu, occu_var;
@@ -1485,6 +1489,35 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPL
   return true;
 }
 //..............................................................................
+void TLattice::_ProcessRingHAdd(AConstraintGenerator& cg, const TPtrList<TBasicAtomInfo>& rcont) {
+  TTypeList< TSAtomPList > rings;
+  TBasicAtomInfo& HAI = AtomsInfo->GetAtomInfo(iHydrogenIndex);
+  for( int i=0; i < FragmentCount(); i++ )
+    GetFragment(i).FindRings(rcont, rings);
+  TAtomEnvi AE;
+  for(int i=0; i < rings.Count(); i++ )  {
+    double rms = TSPlane::CalcRMS( rings[i] );
+    if( rms < 0.05 && TNetwork::IsRingRegular( rings[i]) )  {
+      for( int j=0; j < rings[i].Count(); j++ )  {
+        AE.Clear();
+        UnitCell->GetAtomEnviList(*rings[i][j], AE);
+        for( int k=0; k < AE.Count(); k++ )  {
+          vec3d v( AE.GetCrd(k) - rings[i][j]->crd());
+          if( v.Length() > 2.0 )  {
+            AE.Delete(k);
+            k--;
+          }
+        }
+        if( AE.Count() == 2 && rings[i][j]->GetAtomInfo() == iCarbonIndex)  {
+          TBasicApp::GetLog().Info( olxstr(rings[i][j]->GetLabel()) << ": X(Y=C)H" );
+          cg.FixAtom( AE, fgCH1, HAI);
+          rings[i][j]->CAtom().SetHAttached(true);
+        }
+      }
+    }
+  }
+}
+//..............................................................................
 void TLattice::AnalyseHAdd(AConstraintGenerator& cg, const TSAtomPList& atoms)  {
 
   TPtrList<TBasicAtomInfo> CTypes;
@@ -1499,32 +1532,16 @@ void TLattice::AnalyseHAdd(AConstraintGenerator& cg, const TSAtomPList& atoms)  
   for( int i=0; i < atoms.Count(); i++ )
     atoms[i]->CAtom().SetHAttached(false);
 
-  TBasicAtomInfo& HAI = AtomsInfo->GetAtomInfo(iHydrogenIndex);
-
-  // trean C6 benzene rings, NC5 pyridine
-  TTypeList< TSAtomPList > rings;
+  // treat rings
   TPtrList<TBasicAtomInfo> rcont;
   rcont.Add( &AtomsInfo->GetAtomInfo(iCarbonIndex) );
-  for( int i=0; i < 4; i++ )  rcont.Add( rcont[0] );
-  rcont.Add( NULL );  // any atom
-
-  for( int i=0; i < FragmentCount(); i++ )
-    GetFragment(i).FindRings(rcont, rings);
-  TAtomEnvi AE;
-  for(int i=0; i < rings.Count(); i++ )  {
-    double rms = TSPlane::CalcRMS( rings[i] );
-    if( rms < 0.05 && TNetwork::IsRingRegular( rings[i]) )  {
-      for( int j=0; j < rings[i].Count(); j++ )  {
-        AE.Clear();
-        UnitCell->GetAtomEnviList(*rings[i][j], AE);
-        if( AE.Count() == 2 && rings[i][j]->GetAtomInfo() == iCarbonIndex)  {
-          TBasicApp::GetLog().Info( olxstr(rings[i][j]->GetLabel()) << ": X(Y=C)H" );
-          cg.FixAtom( AE, fgCH1, HAI);
-          rings[i][j]->CAtom().SetHAttached(true);
-        }
-      }
-    }
-  }
+  for( int i=0; i < 4; i++ )  
+    rcont.Add( rcont[0] );
+  _ProcessRingHAdd(cg, rcont); // Cp
+  rcont.Add( rcont[0] );
+  _ProcessRingHAdd(cg, rcont); // Ph
+  rcont.Last() = &AtomsInfo->GetAtomInfo(iNitrogenIndex);
+  _ProcessRingHAdd(cg, rcont); // Py
 
   for( int i=0; i < atoms.Count(); i++ )  {
     if( atoms[i]->IsDeleted() )  continue;

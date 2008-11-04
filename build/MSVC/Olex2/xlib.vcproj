@@ -553,6 +553,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\xlib\vcov.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\xlib\macro\wilson.cpp"
 				>
 			</File>
@@ -760,6 +764,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\xlib\unitcell.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\xlib\vcov.h"
 				>
 			</File>
 			<File

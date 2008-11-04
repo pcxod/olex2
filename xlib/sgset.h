@@ -18,6 +18,21 @@ public:
   short GetCellChoice() const {
     return HasCellChoice() ? axis.Last()-'0' : -1;
   }
+  void ChangeCellChoice(short v)  {
+    if( HasCellChoice() )
+      axis[axis.Length()-1] = v+'0';
+    else
+      axis << (olxch)(v+'0');
+  }
+  void ChangeMonoclinicAxis(const olxstr& a)  {
+    if( HasCellChoice() )  {
+      short cc = GetCellChoice();
+      axis = a;
+      axis << (olxch)(cc+'0');
+    }
+    else
+      axis = a;
+  }
   bool HasMonoclinicAxis() const {
     if( axis.IsEmpty() )  return false; 
     if( (axis.Length() == 3 && axis.CharAt(0) == '-' ) ||

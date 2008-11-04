@@ -129,6 +129,7 @@
 #include "wxglscene.h"
 #include "equeue.h"
 #include "xmacro.h"
+#include "vcov.h"
 
 using namespace _xl_Controls;
 
@@ -4580,10 +4581,20 @@ void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError
       if( EsdlInstanceOf(*Sel->Object(0), TXAtom) &&
           EsdlInstanceOf(*Sel->Object(1), TXAtom) )  {
         Tmp = "Distance: ";
+        vec3d esd( vec3d::Qrt( ((TXAtom*)Sel->Object(0))->Atom().CAtom().ccrdEsd() ));
+        esd += vec3d::Qrt(((TXAtom*)Sel->Object(1))->Atom().CAtom().ccrdEsd());
         v = ((TXAtom*)Sel->Object(0))->Atom().crd().DistanceTo(
               ((TXAtom*)Sel->Object(1))->Atom().crd());
-        Tmp << olxstr::FormatFloat(3, v);
-        TBasicApp::GetLog() << (Tmp << '\n');
+        v = ((TXAtom*)Sel->Object(0))->Atom().crd().DistanceTo(
+              ((TXAtom*)Sel->Object(1))->Atom().crd());
+        if( esd.IsNull() )  {
+          Tmp << olxstr::FormatFloat(3, v);
+          TBasicApp::GetLog() << (Tmp << '\n');
+        }
+        else  {
+          TEValue<double> ev(v, sqrt(esd[0]+esd[1]+esd[2]));
+          TBasicApp::GetLog() << (Tmp << ev.ToString() << '\n');
+        }
         return;
       }
       if( EsdlInstanceOf(*Sel->Object(0), TXBond) &&
@@ -6797,6 +6808,10 @@ public:
 };
 #endif
 void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+  //return;
+  VcoVContainer vcovc;
+  vcovc.ReadShelxMat("C:/Documents and Settings/Oleg/My Documents/ilia/Cr/.olex/temp/4.mat");
+  double vcoc_v = vcovc.GetMatrix().Find("O3AA", vcoviX, vcoviY);
   return;
   TSymmLib& sl = *TSymmLib::GetInstance();
   smatd_list ml;

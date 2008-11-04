@@ -17,7 +17,7 @@ public:
   void Init(const double cell_params[6]);
   void Create(const olxstr& cName = EmptyString);
   bool Orient(TGlPrimitive *P);
-  bool GetDimensions(vec3d &Max, vec3d &Min){  return false;  }
+  bool GetDimensions(vec3d &Max, vec3d &Min);
 
   inline bool IsReciprical()  const {  return FReciprical;  }
   void Reciprical(bool v );
