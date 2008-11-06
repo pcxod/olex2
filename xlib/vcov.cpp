@@ -85,11 +85,12 @@ void VcoVMatrix::FindVcoV(const TPtrList<const TCAtom>& atoms, mat3d_list& m) co
   vec3i_list indexes;
   for( int i=0; i < atoms.Count(); i++ )  {
     a_indexes.Add(FindAtomIndex(*atoms[i]));
-    if( a_indexes.Last() == -1 )
-      throw TFunctionFailedException(__OlxSourceInfo, "unable to located provided atoms");
+    //if( a_indexes.Last() == -1 )
+    //  throw TFunctionFailedException(__OlxSourceInfo, "unable to located provided atoms");
     indexes.AddNew(-1,-1,-1);
   }
   for( int i=0; i < a_indexes.Count(); i++ )  {
+    if( a_indexes[i] == -1 )  continue;
     for( int j=a_indexes[i]; j < Index.Count() && Index[j].GetC() == atoms[i]->GetLoaderId(); j++ )  {
       if( Index[j].GetB() == vcoviX )
         indexes[i][0] = j;
