@@ -56,6 +56,11 @@ public:
   
     wxBoxSizer *ASizer = new wxBoxSizer( wxHORIZONTAL );
     cbSize = new wxComboBox(this, -1, olxstr(mf.GetSize()).u_str() );
+    cbSize->AppendString(wxT("10"));
+    cbSize->AppendString(wxT("12"));
+    cbSize->AppendString(wxT("16"));
+    cbSize->AppendString(wxT("20"));
+    cbSize->AppendString(wxT("24"));
       ASizer->Add( cbSize, 0, wxALL, 5);
     cbFixed = new wxCheckBox(this, -1, wxT("Fixed width"));
     cbFixed->SetValue( mf.IsFixed() );

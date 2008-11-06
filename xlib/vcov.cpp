@@ -61,11 +61,11 @@ void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au)  {
   for( int i=0; i < indexes.Count(); i++ )  {
     for( int j=0; j <= i; j++ )  {
       if( i == j )  
-        data[i][j] = diag[i];
+        data[i][j] = diag[i]*diag[i];
       else  {  // top diagonal to bottom diagonal
         const int ind = indexes[i] <= indexes[j] ? x_ind[indexes[i]] + indexes[j]-indexes[i] :
           x_ind[indexes[j]]  + indexes[i]-indexes[j];
-        data[i][j] = all_vcov[ind];  
+        data[i][j] = all_vcov[ind]*diag[i]*diag[j];  
       }
     }
   }
@@ -80,41 +80,36 @@ void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au)  {
     i = j-1;
   }
 }
-void VcoVMatrix::FindVcoV(const TCAtom& a1, const TCAtom& a2, ematd& m) const {
-  m.Resize(4,4);
-  m.Null();
-  int ind1 = FindAtomIndex(a1),
-      ind2 = FindAtomIndex(a2);
-  int indexes1[4] = {-1,-1,-1,-1}, 
-      indexes2[4] = {-1,-1,-1,-1};
-  if( (ind1|ind2) == -1 )
-    throw TFunctionFailedException(__OlxSourceInfo, "unable to located provided atoms");
-  for( int i=ind1; i < Index.Count() && Index[i].GetC() == a1.GetLoaderId(); i++ )  {
-    if( Index[i].GetB() == vcoviX )
-      indexes1[0] = i;
-    else if( Index[i].GetB() == vcoviY )
-      indexes1[1] = i;
-    else if( Index[i].GetB() == vcoviZ )
-      indexes1[2] = i;
-    else if( Index[i].GetB() == vcoviO )
-      indexes1[3] = i;
+void VcoVMatrix::FindVcoV(const TPtrList<const TCAtom>& atoms, mat3d_list& m) const {
+  TIntList a_indexes;
+  vec3i_list indexes;
+  for( int i=0; i < atoms.Count(); i++ )  {
+    a_indexes.Add(FindAtomIndex(*atoms[i]));
+    if( a_indexes.Last() == -1 )
+      throw TFunctionFailedException(__OlxSourceInfo, "unable to located provided atoms");
+    indexes.AddNew(-1,-1,-1);
   }
-  for( int i=ind2; i < Index.Count() && Index[i].GetC() == a2.GetLoaderId(); i++ )  {
-    if( Index[i].GetB() == vcoviX )
-      indexes2[0] = i;
-    else if( Index[i].GetB() == vcoviY )
-      indexes2[1] = i;
-    else if( Index[i].GetB() == vcoviZ )
-      indexes1[2] = i;
-    else if( Index[i].GetB() == vcoviO )
-      indexes2[3] = i;
+  for( int i=0; i < a_indexes.Count(); i++ )  {
+    for( int j=a_indexes[i]; j < Index.Count() && Index[j].GetC() == atoms[i]->GetLoaderId(); j++ )  {
+      if( Index[j].GetB() == vcoviX )
+        indexes[i][0] = j;
+      else if( Index[j].GetB() == vcoviY )
+        indexes[i][1] = j;
+      else if( Index[j].GetB() == vcoviZ )
+        indexes[i][2] = j;
+    }
   }
-  for( int i=0; i < 4; i++ )  {
-    if( indexes1[i] == -1 ) continue;
-    for( int j=i; j < 4; j++ )  {
-      if( indexes2[j] == -1 )  continue;
-      m[i][j] = Get(indexes1[i], indexes2[j]);
-      m[j][i] = m[i][j];
+  for( int i=0; i < a_indexes.Count(); i++ )  {
+    for( int j=0; j < a_indexes.Count(); j++ )  {
+      mat3d& a = m.AddNew();
+      for( int k=0; k < 3; k++ )  {
+        for( int l=k; l < 3; l++ )  {
+          if( indexes[i][k] != -1 && indexes[j][l] != -1 )  {
+            a[k][l] = Get(indexes[i][k], indexes[j][l]);
+            a[l][k] = a[k][l];
+          }
+        }
+      }
     }
   }
 }

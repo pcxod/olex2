@@ -4581,20 +4581,10 @@ void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError
       if( EsdlInstanceOf(*Sel->Object(0), TXAtom) &&
           EsdlInstanceOf(*Sel->Object(1), TXAtom) )  {
         Tmp = "Distance: ";
-        vec3d esd( vec3d::Qrt( ((TXAtom*)Sel->Object(0))->Atom().CAtom().ccrdEsd() ));
-        esd += vec3d::Qrt(((TXAtom*)Sel->Object(1))->Atom().CAtom().ccrdEsd());
         v = ((TXAtom*)Sel->Object(0))->Atom().crd().DistanceTo(
               ((TXAtom*)Sel->Object(1))->Atom().crd());
-        v = ((TXAtom*)Sel->Object(0))->Atom().crd().DistanceTo(
-              ((TXAtom*)Sel->Object(1))->Atom().crd());
-        if( esd.IsNull() )  {
-          Tmp << olxstr::FormatFloat(3, v);
-          TBasicApp::GetLog() << (Tmp << '\n');
-        }
-        else  {
-          TEValue<double> ev(v, sqrt(esd[0]+esd[1]+esd[2]));
-          TBasicApp::GetLog() << (Tmp << ev.ToString() << '\n');
-        }
+        Tmp << olxstr::FormatFloat(3, v);
+        TBasicApp::GetLog() << (Tmp << '\n');
         return;
       }
       if( EsdlInstanceOf(*Sel->Object(0), TXBond) &&
@@ -6809,8 +6799,21 @@ public:
 #endif
 void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   //return;
-//  VcoVContainer vcovc;
-//  vcovc.ReadShelxMat("E:/tmp/JohnW/.olex/temp/abs.mat");
+  VcoVContainer vcovc;
+  vcovc.ReadShelxMat( TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), "mat"), FXApp->XFile().GetAsymmUnit() );
+  TSAtomPList satoms;
+  TXAtomPList xatoms;
+  FXApp->FindXAtoms("sel", xatoms, false);
+  TListCaster::POP(xatoms, satoms);
+  if( satoms.Count() == 2 )  {
+    TBasicApp::GetLog() << satoms[0]->GetLabel() << ' ' << satoms[1]->GetLabel() << ':' 
+      << vcovc.CalcDistance(*satoms[0], *satoms[1]).ToString() << '\n';
+  }
+  else if( satoms.Count() == 3 )  {
+    TBasicApp::GetLog() << satoms[0]->GetLabel() << ' ' << satoms[1]->GetLabel() << ' ' <<
+      satoms[2]->GetLabel() << ':' << vcovc.CalcAngle(*satoms[0], *satoms[1], *satoms[2]).ToString() << '\n';
+  }
+  
 //  double vcoc_v = vcovc.GetMatrix().Find("C6AA", vcoviY, vcoviZ);
   return;
   TSymmLib& sl = *TSymmLib::GetInstance();
