@@ -49,7 +49,9 @@ public:
     else if( Expression.Comparei("sel") == 0 )  { 
       if( SelectionOwner == NULL )
         throw TInvalidArgumentException(__OlxSourceInfo, "invalid slection owner");
+      int ac = atoms.Count();
       SelectionOwner->ExpandSelection(atoms);
+      return atoms.Count()-ac;
     }
     else if( Expression.Comparei("first") == 0 )  { 
       if( au.AtomCount() == 0 )  return 0;

@@ -176,6 +176,10 @@ public:
     v[3] = M[1][2];  v[4] = M[0][2];  v[5] = M[0][1];
     return v;
   }
+  template <class T> T& CellToCart(T& v)  {
+    v = UcifToUxyz*v*UcifToUxyzT;
+    return v;
+  }
 
   void Assign( const TAsymmUnit& C);
   void ChangeSpaceGroup(const class TSpaceGroup& sg);

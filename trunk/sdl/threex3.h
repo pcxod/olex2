@@ -219,20 +219,20 @@ public:
     return TVector3<T>(data[0]/v, data[1]/v, data[2]/v);
   }
 
-  /* beware - transposed form, use M.v for normal multiplication
-    if matrix has more elements (in vectors) than given vector - only
-    number of vector elements is used
-  */
+  template <class AT> TVector3<T> ColMul(const TMatrix33<AT>& a) const  {
+    return TVector3<T>( data[0]*(a[0][0] + a[0][1] + a[0][2]),
+                        data[1]*(a[1][0] + a[1][1] + a[1][2]),
+                        data[2]*(a[2][0] + a[2][1] + a[2][2]));
+  }
+
+  /* beware - transposed form, use M.v for normal multiplication  */
   template <class AT> TVector3<T>  operator * (const TMatrix33<AT>& a) const  {
     return TVector3<T>( data[0]*a[0][0] + data[1]*a[1][0] + data[2]*a[2][0],
                         data[0]*a[0][1] + data[1]*a[1][1] + data[2]*a[2][1],
                         data[0]*a[0][2] + data[1]*a[1][2] + data[2]*a[2][2]);
   }
 
-  /* beware - transposed form, use M.v for normal multiplication
-    if matrix has more elements (in vectors) than given vector - only
-    number of vector elements is used
-  */
+  /* beware - transposed form, use M.v for normal multiplication  */
   template <class AT> TVector3<T>& operator *=(const TMatrix33<AT>& a)  {
     T bf[] = {(T)(data[0]*a[0][0] + data[1]*a[1][0] + data[2]*a[2][0]),
               (T)(data[0]*a[0][1] + data[1]*a[1][1] + data[2]*a[2][1]),
@@ -271,8 +271,7 @@ public:
     data[1][0] = xy;  data[1][1] = yy;  data[1][2] = yz;
     data[2][0] = xz;  data[2][1] = yz;  data[2][2] = zz;
   }
-  template <class vt>
-  TMatrix33(const TVector3<vt>& x, const TVector3<vt>& y, const TVector3<vt>& z)  {
+  template <class vt> TMatrix33(const TVector3<vt>& x, const TVector3<vt>& y, const TVector3<vt>& z)  {
     data[0] = x;  data[1] = y;  data[2] = z;
   }
   TMatrix33(const TMatrix33<T>& v)  {
@@ -371,17 +370,35 @@ public:
   }
 
   inline TMatrix33<T>& operator = (const TMatrix33<T>& v)  {
-    data[0][0] = v[0][0];  data[0][1] = v[0][1];  data[0][2] = v[0][2];
-    data[1][0] = v[1][0];  data[1][1] = v[1][1];  data[1][2] = v[1][2];
-    data[2][0] = v[2][0];  data[2][1] = v[2][1];  data[2][2] = v[2][2];
+    data[0] = v[0];  data[1] = v[1];  data[2] = v[2];
     return *this;
   }
 
   template <class AT> inline TMatrix33<T>& operator = (const TMatrix33<AT>& v)  {
-    data[0][0] = (T)v[0][0];  data[0][1] = (T)v[0][1];  data[0][2] = (T)v[0][2];
-    data[1][0] = (T)v[1][0];  data[1][1] = (T)v[1][1];  data[1][2] = (T)v[1][2];
-    data[2][0] = (T)v[2][0];  data[2][1] = (T)v[2][1];  data[2][2] = (T)v[2][2];
+    data[0] = v[0];  data[1] = v[1];  data[2] = v[2];
     return *this;
+  }
+  template <class AT> inline TMatrix33<T>& operator -= (const TMatrix33<AT>& v)  {
+    data[0] -= v[0];
+    data[1] -= v[1];
+    data[2] -= v[2];
+    return *this;
+  }
+  template <class AT> inline TMatrix33<T> operator - (const TMatrix33<AT>& v) const {
+    return TMatrix33<T>(data[0][0] - v[0][0], data[0][1] - v[0][1], data[0][2] - v[0][2],
+                        data[1][0] - v[1][0], data[1][1] - v[1][1], data[1][2] - v[1][2],
+                        data[2][0] - v[2][0], data[2][1] - v[2][1], data[2][2] - v[2][2]);
+  }
+  template <class AT> inline TMatrix33<T>& operator += (const TMatrix33<AT>& v)  {
+    data[0] += v[0];
+    data[1] += v[1];
+    data[2] += v[2];
+    return *this;
+  }
+  template <class AT> inline TMatrix33<T> operator + (const TMatrix33<AT>& v) const {
+    return TMatrix33<T>(data[0][0] + v[0][0], data[0][1] + v[0][1], data[0][2] + v[0][2],
+                        data[1][0] + v[1][0], data[1][1] + v[1][1], data[1][2] + v[1][2],
+                        data[2][0] + v[2][0], data[2][1] + v[2][1], data[2][2] + v[2][2]);
   }
 #ifndef __BORLANDC__ // really annoying - would use same for the Matrix33!
   template <class AT> inline TMatrix33<T>& operator *= (AT v) {
@@ -404,7 +421,7 @@ public:
     data[2][0] /= v;  data[2][1] /= v;  data[2][2] /= v;
 	return *this;
   }
-
+  inline T Trace() const {  return data[0][0]+data[1][1]+data[2][2];  }
   inline T Determinant() const {
     return data[0][0]*(data[1][1]*data[2][2] - data[1][2]*data[2][1]) - 
            data[0][1]*(data[1][0]*data[2][2] - data[1][2]*data[2][0]) +
