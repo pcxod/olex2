@@ -407,6 +407,11 @@ public:
     data[2][0] *= v;  data[2][1] *= v;  data[2][2] *= v;
     return *this;
   }
+  template <class AT> inline TMatrix33<T> operator * (AT v) const {
+    return TMatrix33<T>(data[0][0]*v, data[0][1]*v, data[0][2]*v,
+                        data[1][0]*v, data[1][1]*v, data[1][2]*v,
+                        data[2][0]*v, data[2][1]*v, data[2][2]*v);
+  }
 #else
   inline TMatrix33<T>& operator *= (double v) {
     data[0][0] *= v;  data[0][1] *= v;  data[0][2] *= v;
@@ -420,6 +425,11 @@ public:
     data[1][0] /= v;  data[1][1] /= v;  data[1][2] /= v;
     data[2][0] /= v;  data[2][1] /= v;  data[2][2] /= v;
 	return *this;
+  }
+  template <class AT> inline TMatrix33<T> operator / (AT v) const {
+    return TMatrix33<T>(data[0][0]/v, data[0][1]/v, data[0][2]/v,
+                        data[1][0]/v, data[1][1]/v, data[1][2]/v,
+                        data[2][0]/v, data[2][1]/v, data[2][2]/v);
   }
   inline T Trace() const {  return data[0][0]+data[1][1]+data[2][2];  }
   inline T Determinant() const {
