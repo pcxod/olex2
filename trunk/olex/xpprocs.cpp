@@ -6813,6 +6813,12 @@ void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     TBasicApp::GetLog() << satoms[0]->GetLabel() << ' ' << satoms[1]->GetLabel() << ' ' <<
       satoms[2]->GetLabel() << ':' << vcovc.CalcAngle(*satoms[0], *satoms[1], *satoms[2]).ToString() << '\n';
   }
+  else if( satoms.Count() > 4 )  {
+    TSAtom* la = satoms.Last();
+    satoms.Delete(satoms.Count()-1);
+    TBasicApp::GetLog() << "Distance from " << la->GetLabel() << " to centroid :" 
+      << vcovc.CalcDistanceToCentroid(satoms, *la).ToString() << '\n';
+  }
   
 //  double vcoc_v = vcovc.GetMatrix().Find("C6AA", vcoviY, vcoviZ);
   return;

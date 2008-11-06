@@ -54,7 +54,6 @@ public:
   }
   // reads the shelxl VcoV matrix and initliases atom loader Ids'
   void ReadShelxMat(const olxstr& fileName, TAsymmUnit& au);
-  // fills 6x6 matrix with {a1.crd,a2.crd}
   // fills creates three matrices AA, AB, ... AX, BA, BB, ... BX, ...
   void FindVcoV(const TPtrList<const TCAtom>& atoms, mat3d_list& m ) const;
   // for tests
@@ -114,6 +113,45 @@ public:
   }
   TEValue<double> CalcCentroid(const TSAtomPList& atoms) {
     return TEValue<double>(0,0);
+  }
+  TEValue<double> CalcDistanceToCentroid(const TSAtomPList& cent, const TSAtom& a) {
+    mat3d_list m;
+    TPtrList<const TCAtom> catoms;
+    TPtrList<const TSAtom> satoms;
+    satoms.SetCapacity(cent.Count()+1);
+    for( int i=0; i < cent.Count(); i++ )
+      satoms.Add( cent[i] );
+    satoms.Add(&a);
+    TListCaster::POP(satoms, catoms);
+    vcov.FindVcoV(catoms, m);
+    ProcessSymmetry(satoms, m);
+    mat3d c2f( a.CAtom().GetParent()->GetCellToCartesian() );
+    mat3d c2f_t( mat3d::Transpose(a.CAtom().GetParent()->GetCellToCartesian()) );
+    mat3d vcov, nvcov;
+    vec3d center;
+    // var(atom(i)), cov(atom(i),atom(j))
+    for( int i=0; i < cent.Count(); i++ )  {
+      center += cent[i]->crd();
+      for( int j=0; j < cent.Count(); j++ )
+        vcov += m[i*satoms.Count()+j]; 
+    }
+    vcov *= 1./(cent.Count()*cent.Count());
+    center /= cent.Count();
+    center -= a.crd();
+    // cov( atom(i), a)
+    for( int i=0; i < cent.Count(); i++ )  {
+      nvcov += m[i*satoms.Count()+cent.Count()];
+      nvcov += m[m.Count()-cent.Count()-2+i];
+    }
+    nvcov *= 1./cent.Count();
+    vcov -= nvcov;
+    // var(a,a)
+    vcov += m.Last();
+    // to cartesian frame
+    vcov = c2f_t*vcov*c2f;
+    double val = center.Length();
+    double esd = sqrt(center.ColMul(vcov).DotProd(center))/val;
+    return TEValue<double>(val, esd);
   }
 
   TEValue<double> CalcAngle(const TSAtom& a1, const TSAtom& a2, const TSAtom& a3) {
