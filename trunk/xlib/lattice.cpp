@@ -1501,6 +1501,10 @@ void TLattice::_ProcessRingHAdd(AConstraintGenerator& cg, const TPtrList<TBasicA
       for( int j=0; j < rings[i].Count(); j++ )  {
         AE.Clear();
         UnitCell->GetAtomEnviList(*rings[i][j], AE);
+        if( AE.Count() == 3 )  {
+          double v = TetrahedronVolume( AE.GetBase().crd(), AE.GetCrd(0), AE.GetCrd(1), AE.GetCrd(2) );
+          if( v < 0.05 )  continue;  // coordination
+        }
         for( int k=0; k < AE.Count(); k++ )  {
           vec3d v( AE.GetCrd(k) - rings[i][j]->crd());
           if( v.Length() > 2.0 )  {
