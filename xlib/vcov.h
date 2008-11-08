@@ -3,7 +3,14 @@
 #include "asymmunit.h"
 #include "lattice.h"
 #include "ecast.h"
-//#include "ematrix.h"
+#include "bapp.h"
+#include "log.h"
+/*
+  after several days if differentiation, I came across som stuff, which became to complecated and
+  tried to use the numerical differentiation, as all the functions calculated here are "smooth". The
+  results have shown that the resultiong esd is very similar to the exact expressions for angles and
+  some othe parameters, so here is the way forward, no more complecated fomulas!
+*/
 BeginXlibNamespace()
 
 const short // constants decribing the stored values
@@ -55,15 +62,50 @@ public:
   // reads the shelxl VcoV matrix and initliases atom loader Ids'
   void ReadShelxMat(const olxstr& fileName, TAsymmUnit& au);
   // fills creates three matrices AA, AB, ... AX, BA, BB, ... BX, ...
-  void FindVcoV(const TPtrList<const TCAtom>& atoms, mat3d_list& m ) const;
+  template <class list> void FindVcoV(const list& atoms, mat3d_list& m ) const {
+    TIntList a_indexes;
+    vec3i_list indexes;
+    for( int i=0; i < atoms.Count(); i++ )  {
+      a_indexes.Add(FindAtomIndex(atoms[i]->CAtom()));
+      if( a_indexes.Last() == -1 )
+        TBasicApp::GetLog().Error( olxstr("Unable to located provided atom: ") << atoms[i]->GetLabel());
+      indexes.AddNew(-1,-1,-1);
+    }
+    for( int i=0; i < a_indexes.Count(); i++ )  {
+      if( a_indexes[i] == -1 )  continue;
+      for( int j=a_indexes[i]; j < Index.Count() && Index[j].GetC() == atoms[i]->CAtom().GetLoaderId(); j++ )  {
+        if( Index[j].GetB() == vcoviX )
+          indexes[i][0] = j;
+        else if( Index[j].GetB() == vcoviY )
+          indexes[i][1] = j;
+        else if( Index[j].GetB() == vcoviZ )
+          indexes[i][2] = j;
+      }
+    }
+    for( int i=0; i < a_indexes.Count(); i++ )  {
+      for( int j=0; j < a_indexes.Count(); j++ )  {
+        mat3d& a = m.AddNew();
+        for( int k=0; k < 3; k++ )  {
+          for( int l=k; l < 3; l++ )  {
+            if( indexes[i][k] != -1 && indexes[j][l] != -1 )  {
+              a[k][l] = Get(indexes[i][k], indexes[j][l]);
+              a[l][k] = a[k][l];
+            }
+          }
+        }
+      }
+    }
+  }
   // for tests
   double Find(const olxstr& atom, const short va, const short vy) const;
 };
 
 class VcoVContainer {
   VcoVMatrix vcov;
+  TDoubleList weights1, weights2;
+  vec3d plane_param1, plane_param2;
 protected:
-  void ProcessSymmetry(const TPtrList<const TSAtom>& atoms, mat3d_list& ms)  {
+  template <class list> void ProcessSymmetry(const list& atoms, mat3d_list& ms)  {
     mat3d_list left(atoms.Count()), right(atoms.Count());
     int mc = 0;
     for( int i=0; i < atoms.Count(); i++ )  {
@@ -88,26 +130,198 @@ protected:
       }
     }
   }
-public:
-  VcoVContainer()  {
-    weights = NULL;
+  // distance to centroid /for tests/
+  double _calcDTC(const vec3d_list& atoms)  {
+    vec3d center;
+    for( int i=0; i < atoms.Count()-1; i++ )
+      center += atoms[i];
+    center /= (atoms.Count()-1);
+    center -= atoms.Last();
+    return center.Length();
   }
+  double _calcAngle(const vec3d_list& points)  {
+    return acos( (points[0]-points[1]).CAngle(points[2]-points[1]))*180.0/M_PI;
+  }
+  double _calcTHV(const vec3d_list& points) const {
+    return TetrahedronVolume(points[0], points[1], points[2], points[3]);
+  }
+  double _calcTang(const vec3d_list& points)  {
+    vec3d u(points[1]-points[0]),
+      v(points[2]-points[1]),
+      w(points[3]-points[2]);
+    double h11 = u.QLength(),
+      h22 = v.QLength(),
+      h33 = w.QLength(),
+      h12 = u.DotProd(v),
+      h13 = u.DotProd(w),
+      h23 = v.DotProd(w);
+    double A = h12*h23 - h13*h22;
+    double B = h11*h22 - h12*h12;
+    double C = h22*h33 - h23*h23;
+    return acos(A/sqrt(B*C))*180.0/M_PI;
+  }
+  template <int k> double _calcPlane(const vec3d_list& Points) {
+    mat3d m, vecs;
+    vec3d t;
+    double mass = 0;
+    TDoubleList& weights = (k == 1 ? weights1 : weights2);
+    vec3d& pp = (k == 1 ? plane_param1 : plane_param2);
+    vec3d plane_center;
+    for( int i=0; i < Points.Count(); i++ )  {
+      plane_center += Points[i]*weights[i];
+      mass += weights[i];
+    }
+    plane_center /= mass;
+
+    for( int i=0; i < Points.Count(); i++ )  {
+      vec3d t( Points[i] - plane_center );
+      const double wght = weights[i]*weights[i];
+      m[0][0] += (t[0]*t[0]*wght);
+      m[0][1] += (t[0]*t[1]*wght);
+      m[0][2] += (t[0]*t[2]*wght);
+
+      m[1][1] += (t[1]*t[1]*wght);
+      m[1][2] += (t[1]*t[2]*wght);
+
+      m[2][2] += t[2]*t[2]*wght;
+    } // equ: d = s[0]*x + s[1]*y + s[2]*z
+    m[1][0] = m[0][1];
+    m[2][0] = m[0][2];
+    m[2][1] = m[1][2];
+    mat3d::EigenValues(m, vecs.I());
+    if( m[0][0] < m[1][1] )  {
+      if( m[0][0] < m[2][2] )  {  
+        pp = vecs[0];
+        return m[0][0];
+      }
+      else  {
+        pp = vecs[2];
+        return m[2][2];
+      }
+    }
+    else  {
+      if( m[1][1] < m[2][2] )  {
+        pp = vecs[1];
+        return m[1][1];
+      }
+      else  {
+        pp = vecs[2];
+        return m[2][2];
+      }
+    }
+  }
+  double _calcP2PAngle(const vec3d_list& points, int fpc)  {
+    vec3d_list p1, p2;
+    p1.SetCapacity(fpc);
+    p2.SetCapacity(points.Count()-fpc);
+    for( int i=0; i < points.Count(); i++ )  {
+      if( i < fpc )
+        p1.AddCCopy(points[i]);
+      else
+        p2.AddCCopy(points[i]);
+    }
+    _calcPlane<1>(p1);
+    _calcPlane<1>(p2);
+    vec3d V(plane_param1-plane_param2);
+    return acos(plane_param1.CAngle(plane_param2));
+  }
+  // helper functions
+  double CalcEsd(const int sz, const mat3d_list& m, const TDoubleList& df)  {
+    double esd = 0;
+    for( int i=0; i < sz; i++ )  {
+      for( int j=0; j < sz; j++ )  {
+        const int m_ind = i*sz+j;
+        for( int k=0; k < 3; k++ )  {
+          for( int l=0; l < 3; l++ )  {
+            esd += m[m_ind][k][l]*df[i*3+k]*df[j*3+l];
+          }
+        }
+      }
+    }
+    return esd;
+  }
+  // helper functions
+  template <class list> void GetVcoV(const list& as, mat3d_list& m)  {
+    vcov.FindVcoV(as, m);
+    ProcessSymmetry(as, m);
+    mat3d c2f( as[0]->CAtom().GetParent()->GetCellToCartesian() );
+    mat3d c2f_t( mat3d::Transpose(as[0]->CAtom().GetParent()->GetCellToCartesian()) );
+    for( int i=0; i < m.Count(); i++ )
+      m[i] = c2f_t*m[i]*c2f;
+    ProcessSymmetry(as, m);
+  }
+  // helper functions
+  template <class list> void AtomsToPoints(const list& atoms, vec3d_list& r)  {
+    r.SetCapacity(atoms.Count());
+    for( int i=0; i < atoms.Count(); i++ )
+      r.AddCCopy(atoms[i]->crd());
+  }
+  template <class List, class Evaluator> 
+  void CalcDiff(const List& points, TDoubleList& df, Evaluator e)  {
+    const double delta=1.0e-10;
+    for( int i=0; i < points.Count(); i++ )  {
+      for( int j=0; j < 3; j++ )  {
+        points[i][j] += 2*delta;
+        double v1 = (this->*e)(points);
+        points[i][j] -= delta;
+        double v2 = (this->*e)(points);
+        points[i][j] -= 2*delta;
+        double v3 = (this->*e)(points);
+        points[i][j] -= delta;
+        double v4 = (this->*e)(points);
+        df[i*3+j] = (-v1+8*v2-8*v3+v4)/(12*delta);
+        points[i][j] += 2*delta;
+      }
+    }
+  }
+  template <class List, typename Evaluator, class extraParam> 
+  void CalcDiff(const List& points, TDoubleList& df, Evaluator e, const extraParam ep)  {
+    const double delta=1.0e-10;
+    for( int i=0; i < points.Count(); i++ )  {
+      for( int j=0; j < 3; j++ )  {
+        points[i][j] += 2*delta;
+        double v1 = (this->*e)(points, ep);
+        points[i][j] -= delta;
+        double v2 = (this->*e)(points, ep);
+        points[i][j] -= 2*delta;
+        double v3 = (this->*e)(points, ep);
+        points[i][j] -= delta;
+        double v4 = (this->*e)(points, ep);
+        df[i*3+j] = (-v1+8*v2-8*v3+v4)/(12*delta);
+        points[i][j] += 2*delta;
+      }
+    }
+  }
+  template <class list, typename eval> TEValue<double> DoCalc(const list& atoms, eval e)  {
+    mat3d_list m;
+    GetVcoV(atoms, m);
+    TDoubleList df(atoms.Count()*3);
+    vec3d_list points;
+    AtomsToPoints(atoms, points);
+    CalcDiff(points, df, e);
+    return TEValue<double>((this->*e)(points),sqrt(CalcEsd(atoms.Count(), m, df)));
+  }
+  template <class list, typename eval, class extraParam> TEValue<double> DoCalc(const list& atoms, eval e, const extraParam& ep)  {
+    mat3d_list m;
+    GetVcoV(atoms, m);
+    TDoubleList df(atoms.Count()*3);
+    vec3d_list points;
+    AtomsToPoints(atoms, points);
+    CalcDiff(points, df, e, ep);
+    return TEValue<double>((this->*e)(points, ep),sqrt(CalcEsd(atoms.Count(), m, df)));
+  }
+public:
+  VcoVContainer()  {  }
   void ReadShelxMat(const olxstr& fileName, TAsymmUnit& au) {
     vcov.ReadShelxMat(fileName, au);
   }
+  // precise calculation
   TEValue<double> CalcDistance(const TSAtom& a1, const TSAtom& a2) {
     mat3d_list m;
-    TPtrList<const TCAtom> catoms;
-    TPtrList<const TSAtom> satoms;
-    satoms.Add(&a1);
-    satoms.Add(&a2);
-    TListCaster::POP(satoms, catoms);
-    vcov.FindVcoV(catoms, m);
-    ProcessSymmetry(satoms, m);
+    TSAtom const* as[] = {&a1,&a2};
+    TSAtomPList satoms(2, as);
+    GetVcoV(satoms, m);
     mat3d vcov = m[0] - m[1] - m[2] + m[3];
-    mat3d c2f( a1.CAtom().GetParent()->GetCellToCartesian() );
-    mat3d c2f_t( mat3d::Transpose(a1.CAtom().GetParent()->GetCellToCartesian()) );
-    vcov = c2f_t*vcov*c2f;
     vec3d v = a1.crd() - a2.crd();
     double val = v.Length();
     double esd = sqrt(v.ColMul(vcov).DotProd(v))/val;
@@ -116,19 +330,12 @@ public:
   TEValue<double> CalcCentroid(const TSAtomPList& atoms) {
     return TEValue<double>(0,0);
   }
-  TEValue<double> CalcDistanceToCentroid(const TSAtomPList& cent, const TSAtom& a) {
+  // precise calculation
+  TEValue<double> CalcDistanceToCentroidP(const TSAtomPList& cent, const TSAtom& a) {
     mat3d_list m;
-    TPtrList<const TCAtom> catoms;
-    TPtrList<const TSAtom> satoms;
-    satoms.SetCapacity(cent.Count()+1);
-    for( int i=0; i < cent.Count(); i++ )
-      satoms.Add( cent[i] );
-    satoms.Add(&a);
-    TListCaster::POP(satoms, catoms);
-    vcov.FindVcoV(catoms, m);
-    ProcessSymmetry(satoms, m);
-    mat3d c2f( a.CAtom().GetParent()->GetCellToCartesian() );
-    mat3d c2f_t( mat3d::Transpose(a.CAtom().GetParent()->GetCellToCartesian()) );
+    TSAtomPList satoms(cent);
+    satoms.Add(const_cast<TSAtom*>(&a));
+    GetVcoV(satoms, m);
     mat3d vcov, nvcov;
     vec3d center;
     // var(atom(i)), cov(atom(i),atom(j))
@@ -149,30 +356,24 @@ public:
     vcov -= nvcov;
     // var(a,a)
     vcov += m.Last();
-    // to cartesian frame
-    vcov = c2f_t*vcov*c2f;
     double val = center.Length();
     double esd = sqrt(center.ColMul(vcov).DotProd(center))/val;
     return TEValue<double>(val, esd);
   }
-
-  TEValue<double> CalcAngle(const TSAtom& a1, const TSAtom& a2, const TSAtom& a3) {
+  TEValue<double> CalcDistanceToCentroid(const TSAtomPList& cent, const TSAtom& a) {
+    TSAtomPList satoms(cent);
+    satoms.Add(const_cast<TSAtom*>(&a));
+    return DoCalc(satoms, &VcoVContainer::_calcDTC);
+  }
+  // precise calculation, Sands
+  TEValue<double> CalcAngleP(const TSAtom& a1, const TSAtom& a2, const TSAtom& a3) {
     mat3d_list m;
-    TPtrList<const TCAtom> catoms;
-    TPtrList<const TSAtom> satoms;
-    satoms.Add(&a2);
-    satoms.Add(&a1);
-    satoms.Add(&a3);
-    TListCaster::POP(satoms, catoms);
-    vcov.FindVcoV(catoms, m);
-    ProcessSymmetry(satoms, m);
-    mat3d c2f( a1.CAtom().GetParent()->GetCellToCartesian() );
-    mat3d c2f_t( mat3d::Transpose(a1.CAtom().GetParent()->GetCellToCartesian()) );
-    for( int i=0; i < m.Count(); i++ )
-      m[i] = c2f_t*m[i]*c2f;
-    vec3d v1(satoms[0]->crd() - satoms[1]->crd()),
-          v2(satoms[1]->crd() - satoms[2]->crd()),
-          v3(satoms[2]->crd() - satoms[0]->crd());
+    TSAtom const * as[] = {&a1,&a2,&a3};
+    TSAtomPList satoms(3, as);
+    GetVcoV(satoms, m);
+    vec3d v1(satoms[1]->crd() - satoms[0]->crd()),
+          v2(satoms[0]->crd() - satoms[2]->crd()),
+          v3(satoms[2]->crd() - satoms[1]->crd());
     mat3d vcov(  v1.ColMul(m[0] - m[3] - m[1] + m[4]).DotProd(v1)/v1.QLength(), // var l1
       v1.ColMul(m[1] - m[4] - m[2] + m[5]).DotProd(v2)/(v1.Length()*v2.Length()), // cov(l1,l2) 
       v1.ColMul(m[2] - m[0] - m[5] + m[3]).DotProd(v3)/(v1.Length()*v3.Length()), // cov(l1,l3) 
@@ -187,19 +388,18 @@ public:
     esd = sqrt(esd)/(v1.Length()*v3.Length()*sin(a)/v2.Length());
     return TEValue<double>(a*180.0/M_PI,esd*180/M_PI);
   }
+  TEValue<double> CalcAngle(const TSAtom& a1, const TSAtom& a2, const TSAtom& a3) {
+    TSAtom const * as[] = {&a1,&a2,&a3};
+    TSAtomPList satoms(3, as);
+    return DoCalc(satoms, &VcoVContainer::_calcAngle);
+  }
   // Acta A30, 848, Uri Shmuelli
-  TEValue<double> CalcTAng(const TSAtom& a1, const TSAtom& a2, const TSAtom& a3, const TSAtom& a4) {
+  TEValue<double> CalcTAngP(const TSAtom& a1, const TSAtom& a2, const TSAtom& a3, const TSAtom& a4) {
     mat3d_list m;
-    TPtrList<const TCAtom> catoms;
-    TPtrList<const TSAtom> satoms;
-    satoms.Add(&a1);  satoms.Add(&a2);  satoms.Add(&a3);  satoms.Add(&a4);
-    TListCaster::POP(satoms, catoms);
-    vcov.FindVcoV(catoms, m);
+    TSAtom const * as[] = {&a1,&a2,&a3,&a4};
+    TSAtomPList satoms(4, as);
+    vcov.FindVcoV(satoms, m);
     ProcessSymmetry(satoms, m);
-    mat3d c2f( a1.CAtom().GetParent()->GetCellToCartesian() );
-    mat3d c2f_t( mat3d::Transpose(a1.CAtom().GetParent()->GetCellToCartesian()) );
-    for( int i=0; i < m.Count(); i++ )
-      m[i] = c2f_t*m[i]*c2f;
     vec3d u(a2.crd()-a1.crd()),
       v(a3.crd()-a2.crd()),
       w(a4.crd()-a3.crd());
@@ -238,140 +438,33 @@ public:
     }
     return TEValue<double>(tau*180.0/M_PI, sqrt(esd)*180.0/M_PI);
   }
-protected:
-  TDoubleList weights;
-  vec3d plane_params, plane_center;
-  double CalcPlane(const vec3d_list& Points) {
-    mat3d m, vecs;
-    vec3d t;
-    double mass = 0;
-    plane_center.Null();
-    for( int i=0; i < Points.Count(); i++ )  {
-      plane_center += Points[i]*weights[i];
-      mass += weights[i];
-    }
-    plane_center /= mass;
-
-    for( int i=0; i < Points.Count(); i++ )  {
-      vec3d t( Points[i] - plane_center );
-      const double wght = weights[i]*weights[i];
-      m[0][0] += (t[0]*t[0]*wght);
-      m[0][1] += (t[0]*t[1]*wght);
-      m[0][2] += (t[0]*t[2]*wght);
-
-      m[1][1] += (t[1]*t[1]*wght);
-      m[1][2] += (t[1]*t[2]*wght);
-
-      m[2][2] += t[2]*t[2]*wght;
-    } // equ: d = s[0]*x + s[1]*y + s[2]*z
-    m[1][0] = m[0][1];
-    m[2][0] = m[0][2];
-    m[2][1] = m[1][2];
-    mat3d::EigenValues(m, vecs.I());
-    if( m[0][0] < m[1][1] )  {
-      if( m[0][0] < m[2][2] )  {  
-        plane_params = vecs[0];
-        return m[0][0];
-      }
-      else  {
-        plane_params = vecs[2];
-        return m[2][2];
-      }
-    }
-    else  {
-      if( m[1][1] < m[2][2] )  {
-        plane_params = vecs[1];
-        return m[1][1];
-      }
-      else  {
-        plane_params = vecs[2];
-        return m[2][2];
-      }
-    }
-  }
-  double CalcTHV(const vec3d_list& points) const {
-    return TetrahedronVolume(points[0], points[1], points[2], points[3]);
-  }
-  template <class List, class Evaluator> 
-  void CalcDiff(const List& points, TDoubleList& df, Evaluator e)  {
-    const double delta=1.0e-10;
-    for( int i=0; i < points.Count(); i++ )  {
-      for( int j=0; j < 3; j++ )  {
-        points[i][j] += 2*delta;
-        double v1 = (this->*e)(points);
-        points[i][j] -= delta;
-        double v2 = (this->*e)(points);
-        points[i][j] -= 2*delta;
-        double v3 = (this->*e)(points);
-        points[i][j] -= delta;
-        double v4 = (this->*e)(points);
-        df[i*3+j] = (-v1+8*v2-8*v3+v4)/(12*delta);
-        points[i][j] += 2*delta;
-      }
-    }
-  }
-  double CalcEsd(const int sz, const mat3d_list& m, const TDoubleList& df)  {
-    double esd = 0;
-    for( int i=0; i < sz; i++ )  {
-      for( int j=0; j < sz; j++ )  {
-        const int m_ind = i*sz+j;
-        for( int k=0; k < 3; k++ )  {
-          for( int l=0; l < 3; l++ )  {
-            esd += m[m_ind][k][l]*df[i*3+k]*df[j*3+l];
-          }
-        }
-      }
-    }
-    return esd;
-  }
-public:
-  TEValue<double> Plane(const TSAtomPList& atoms) {
+  TEValue<double> CalcTAng(const TSAtom& a1, const TSAtom& a2, const TSAtom& a3, const TSAtom& a4) {
     mat3d_list m;
-    TPtrList<const TCAtom> catoms;
-    TPtrList<const TSAtom> satoms;
-    vec3d_list points;
-    TDoubleList dl(atoms.Count()*3);
-    weights.SetCount(atoms.Count());
-    points.SetCapacity(atoms.Count());
-    satoms.SetCapacity(atoms.Count());
-    for( int i=0; i < atoms.Count(); i++ )  {
-      points.AddNew(atoms[i]->crd());
-      satoms.Add(atoms[i]);
-      weights[i] = 1.0;
-    }
-    TListCaster::POP(satoms, catoms);
-    vcov.FindVcoV(catoms, m);
-    ProcessSymmetry(satoms, m);
-    mat3d c2f( atoms[0]->CAtom().GetParent()->GetCellToCartesian() );
-    mat3d c2f_t( mat3d::Transpose(atoms[0]->CAtom().GetParent()->GetCellToCartesian()) );
-    for( int i=0; i < m.Count(); i++ )
-      m[i] = c2f_t*m[i]*c2f;
-    CalcDiff(points, dl, &VcoVContainer::CalcPlane);
-    double esd = CalcEsd(atoms.Count(), m, dl);
-    return TEValue<double>(CalcPlane(points), sqrt(esd));
+    TSAtom const * as[] = {&a1,&a2,&a3,&a4};
+    TSAtomPList satoms(4, as);
+    return DoCalc(satoms, &VcoVContainer::_calcTang);
+  }
+  TEValue<double> CalcPlane(const TSAtomPList& atoms) {
+    weights1.SetCount(atoms.Count());
+    for( int i=0; i < atoms.Count(); i++ ) 
+      weights1[i] = 1.0;
+    return DoCalc(atoms, &VcoVContainer::_calcPlane<1>);
+  }
+  TEValue<double> CalcP2PAngle(const TSAtomPList& p1, const TSAtomPList& p2) {
+    weights1.SetCount(p1.Count());
+    weights2.SetCount(p2.Count());
+    for( int i=0; i < p1.Count(); i++ ) 
+      weights1[i] = 1.0;
+    for( int i=0; i < p2.Count(); i++ ) 
+      weights2[i] = 1.0;
+    TSAtomPList atoms(p1);
+    atoms.AddList(p2);
+    return DoCalc(atoms, &VcoVContainer::_calcP2PAngle, p1.Count());
   }
   TEValue<double> CalcTetrahedronVolume(const TSAtom& a1, const TSAtom& a2, const TSAtom& a3, const TSAtom& a4) {
-    mat3d_list m;
-    TPtrList<const TCAtom> catoms;
-    TPtrList<const TSAtom> satoms;
-    vec3d_list points;
-    satoms.Add(&a1);  satoms.Add(&a2);  satoms.Add(&a3);  satoms.Add(&a4);
-    points.AddCCopy(a1.crd());
-    points.AddCCopy(a2.crd());
-    points.AddCCopy(a3.crd());
-    points.AddCCopy(a4.crd());
-    TDoubleList dl(satoms.Count()*3);
-    TListCaster::POP(satoms, catoms);
-    vcov.FindVcoV(catoms, m);
-    ProcessSymmetry(satoms, m);
-    mat3d c2f( a1.CAtom().GetParent()->GetCellToCartesian() );
-    mat3d c2f_t( mat3d::Transpose(a1.CAtom().GetParent()->GetCellToCartesian()) );
-    for( int i=0; i < m.Count(); i++ )
-      m[i] = c2f_t*m[i]*c2f;
-    vec3d cnt, p;
-    CalcDiff(points, dl, &VcoVContainer::CalcTHV);
-    double esd = CalcEsd(4, m, dl);
-    return TEValue<double>(TetrahedronVolume(points[0], points[1], points[2], points[3]), sqrt(esd));
+    TSAtom const * as[] = {&a1,&a2,&a3,&a4};
+    TSAtomPList satoms(4, as);
+    return DoCalc(satoms, &VcoVContainer::_calcTHV);
   }
   const VcoVMatrix& GetMatrix() const {  return vcov;  }
 };

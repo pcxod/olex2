@@ -80,40 +80,7 @@ void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au)  {
     i = j-1;
   }
 }
-void VcoVMatrix::FindVcoV(const TPtrList<const TCAtom>& atoms, mat3d_list& m) const {
-  TIntList a_indexes;
-  vec3i_list indexes;
-  for( int i=0; i < atoms.Count(); i++ )  {
-    a_indexes.Add(FindAtomIndex(*atoms[i]));
-    //if( a_indexes.Last() == -1 )
-    //  throw TFunctionFailedException(__OlxSourceInfo, "unable to located provided atoms");
-    indexes.AddNew(-1,-1,-1);
-  }
-  for( int i=0; i < a_indexes.Count(); i++ )  {
-    if( a_indexes[i] == -1 )  continue;
-    for( int j=a_indexes[i]; j < Index.Count() && Index[j].GetC() == atoms[i]->GetLoaderId(); j++ )  {
-      if( Index[j].GetB() == vcoviX )
-        indexes[i][0] = j;
-      else if( Index[j].GetB() == vcoviY )
-        indexes[i][1] = j;
-      else if( Index[j].GetB() == vcoviZ )
-        indexes[i][2] = j;
-    }
-  }
-  for( int i=0; i < a_indexes.Count(); i++ )  {
-    for( int j=0; j < a_indexes.Count(); j++ )  {
-      mat3d& a = m.AddNew();
-      for( int k=0; k < 3; k++ )  {
-        for( int l=k; l < 3; l++ )  {
-          if( indexes[i][k] != -1 && indexes[j][l] != -1 )  {
-            a[k][l] = Get(indexes[i][k], indexes[j][l]);
-            a[l][k] = a[k][l];
-          }
-        }
-      }
-    }
-  }
-}
+
 double VcoVMatrix::Find(const olxstr& atom, const short va, const short vb) const {
   for( int i=0; i < Index.Count(); i++ )  {
     if( Index[i].GetA() == atom )  {
