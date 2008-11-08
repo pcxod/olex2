@@ -100,8 +100,7 @@ double TSPlane::DistanceTo(const TSAtom& A) const  {
 }
 //..............................................................................
 double TSPlane::Angle( const vec3d &A,  const vec3d &B) const  {
-  vec3d V;
-  V = B-A;
+  vec3d V(B-A);
   double ca = FNormal.CAngle(V), angle;
   angle = acos(ca)*180/M_PI;
   return angle;
