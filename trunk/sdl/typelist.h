@@ -81,21 +81,25 @@ public:
     return *(T*)(List[index] = &Obj);
   }
 //..............................................................................
-  // adds a copy of the object with default constructor  "assigned copy"
-  inline const T& AddACopy(const T& Obj)  {  return (AddNew() = Obj);  }
+  // adds a copy of the object with default constructor and assign operator "assigned copy"
+  inline T& AddACopy(const T& Obj)  {  
+    T& rv =AddNew();
+    rv = Obj;
+    return rv;
+  }
 //..............................................................................
   //sets the listitem to an new object copied by the assignement operator
-  inline const T& SetACopy(size_t index, const T& Obj)  {
+  inline T& SetACopy(size_t index, const T& Obj)  {
     if( List[index] != NULL )
       delete (DestructCast*)List[index];
     return (Alloc(index) = Obj);
   }
 //..............................................................................
   // adds a copy of the object with copy constructor "copied copy"
-  inline const T& AddCCopy(const T& Obj)  {  return AddNew<T>(Obj);  }
+  inline T& AddCCopy(const T& Obj)  {  return AddNew<T>(Obj);  }
 //..............................................................................
   //sets the listitem to an new object copied by the copy constructor
-  inline const T& SetCCopy(size_t index, const T& Obj)  {
+  inline T& SetCCopy(size_t index, const T& Obj)  {
     if( List[index] != NULL )
       delete (DestructCast*)List[index];
     return *(T*)( List[index] = new T(Obj) );
@@ -103,10 +107,14 @@ public:
 //..............................................................................
 //..............................................................................
   // assigned copy inserted
-  inline const T& InsertACopy(size_t index, const T& Obj)  {  return (InsertNew(index) = Obj);  }
+  inline T& InsertACopy(size_t index, const T& Obj)  {  
+    T& rv = InsertNew(index);
+    rv = Obj;
+    return rv;  
+  }
 //..............................................................................
   // insert anobject into thelist; the object will be deleted
-  inline const T& Insert(size_t index, T& Obj)  {  return *List.Insert(index, &Obj);  }
+  inline T& Insert(size_t index, T& Obj)  {  return *List.Insert(index, &Obj);  }
 //..............................................................................
   // copy constructor created copy is inserted
   inline const T& InsertCCopy(size_t index, const T& Obj)  {  return InsertNew<T>(index, Obj);  }

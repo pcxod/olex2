@@ -606,6 +606,10 @@ protected:  // used in GauseSolve to sort the matrix
   typedef TTypeList<vec3f> vec3f_list;
   typedef TTypeList<vec3d> vec3d_list;
 
+  typedef TArrayList<vec3i> vec3i_alist;
+  typedef TArrayList<vec3f> vec3f_alist;
+  typedef TArrayList<vec3d> vec3d_alist;
+
   typedef TPtrList<vec3i> vec3i_plist;
   typedef TPtrList<vec3f> vec3f_plist;
   typedef TPtrList<vec3d> vec3d_plist;
@@ -617,6 +621,10 @@ protected:  // used in GauseSolve to sort the matrix
   typedef TTypeList<mat3i> mat3i_list;
   typedef TTypeList<mat3f> mat3f_list;
   typedef TTypeList<mat3d> mat3d_list;
+
+  typedef TArrayList<mat3i> mat3i_alist;
+  typedef TArrayList<mat3f> mat3f_alist;
+  typedef TArrayList<mat3d> mat3d_alist;
 
   typedef TPtrList<mat3i> mat3i_plist;
   typedef TPtrList<mat3f> mat3f_plist;
