@@ -62,7 +62,7 @@ public:
   }
   // takes square root of each element (must be >= 0!)
   static inline TVector3<T> Sqrt(const TVector3<T>& v)  {
-    return TVector3<T>(sqrt(v[0]), sqrt(v1), sqrt(v2));
+    return TVector3<T>(sqrt(v[0]), sqrt(v[1]), sqrt(v[2]));
   }
   // takes absolute value of the vector elements
   inline TVector3<T>& Abs()  {
@@ -73,7 +73,7 @@ public:
   }
   // returns a vector with absolute values of provided one
   static inline TVector3<T> Abs(const TVector3<T>& v)  {
-    return TVector3<T>(fabs(v[0]), fabs(v1), fabs(v2));
+    return TVector3<T>(fabs(v[0]), fabs(v[1]), fabs(v[2]));
   }
   // returns sum of vector elements
   inline T Sum() const {
