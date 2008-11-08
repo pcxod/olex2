@@ -522,6 +522,10 @@ void TMainForm::XApp( TGXApp *XA)  {
  like C6 or NC5. If the 'where' keyword is used, logical operators, like and (&&),\
  and or (||) can be used to refine the selection");
 
+  this_InitMacroD(Esd, "", fpAny|psFileLoaded,
+    "This procedure calculates possible parameters for the selection and evaluates their esd using the variance-covariance\
+ matrix coming from the ShelXL refinement with 'MORE -3' option");
+  
   this_InitMacroD(Name, "c-disables checking labels for dublications&;s-simply changes suffix\
   of provided atoms to the provided one (or none)&;cs-leaves current selection unchanged", fpOne | fpTwo,
 "Names atoms. If the 'sel' keyword is used and a number is provided as second argument\
@@ -724,7 +728,7 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual accupancy\
 "Schedules a particular macro (second argument) to be executed within provided\
  interval (first argument)" );
 
-  this_InitMacro(Tls, , fpAny^(fpNone)|psFileLoaded );
+  this_InitMacroD(Tls, "", fpAny^(fpNone)|psFileLoaded, "James Haestier TLS test procedure" );
 
   this_InitMacro(Test, , fpAny );
   // -f - force inversion even for nocentrosymmetric space group

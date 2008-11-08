@@ -6800,53 +6800,6 @@ public:
 };
 #endif
 void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  //return;
-  VcoVContainer vcovc;
-  vcovc.ReadShelxMat( TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), "mat"), FXApp->XFile().GetAsymmUnit() );
-  TSAtomPList satoms;
-  TXAtomPList xatoms;
-  FXApp->FindXAtoms("sel", xatoms, false);
-  TListCaster::POP(xatoms, satoms);
-  if( satoms.Count() == 1 )  {
-    TSAtomPList atoms;
-    for( int i=0; i < satoms[0]->NodeCount(); i++ ) {
-      TSAtom& A = satoms[0]->Node(i);
-      if( A.IsDeleted() || (A.GetAtomInfo() == iQPeakIndex ) )
-        continue;
-      atoms.Add(&A);
-    }
-    if( atoms.Count() == 3 )
-      atoms.Add( satoms[0] );
-    if( atoms.Count() == 4 )  {
-      TBasicApp::GetLog() << "Tetrahedra volume :" 
-        << vcovc.CalcTetrahedronVolume(*atoms[0], *atoms[1], *atoms[2], *atoms[3]).ToString() << '\n';
-    }
-  }
-  else if( satoms.Count() == 2 )  {
-    TBasicApp::GetLog() << satoms[0]->GetLabel() << ' ' << satoms[1]->GetLabel() << ':' 
-      << vcovc.CalcDistance(*satoms[0], *satoms[1]).ToString() << '\n';
-  }
-  else if( satoms.Count() == 3 )  {
-    TBasicApp::GetLog() << satoms[0]->GetLabel() << ' ' << satoms[1]->GetLabel() << ' ' <<
-      satoms[2]->GetLabel() << ':' << vcovc.CalcAngle(*satoms[0], *satoms[1], *satoms[2]).ToString() << '\n';
-  }
-  else if( satoms.Count() == 4 )  {
-    TBasicApp::GetLog() << satoms[0]->GetLabel() << ' ' << satoms[1]->GetLabel() << ' ' <<
-      satoms[2]->GetLabel() << ' ' << satoms[2]->GetLabel() <<
-      ':' << vcovc.CalcTAng(*satoms[0], *satoms[1], *satoms[2], *satoms[3]).ToString() << '\n';
-  }
-  else if( satoms.Count() > 4 )  {
-    olxstr pl("plane ");
-    for( int i=0; i < satoms.Count(); i++ )
-      pl << satoms[i]->GetLabel() << ' ';
-    TBasicApp::GetLog() << pl << ':' << vcovc.CalcPlane(satoms).ToString() << '\n';
-    TSAtom* la = satoms.Last();
-    satoms.Delete(satoms.Count()-1);
-    TBasicApp::GetLog() << "Distance from " << la->GetLabel() << " to centroid :" 
-      << vcovc.CalcDistanceToCentroid(satoms, *la).ToString() << '\n';
-  }
-  
-//  double vcoc_v = vcovc.GetMatrix().Find("C6AA", vcoviY, vcoviZ);
   return;
   TSymmLib& sl = *TSymmLib::GetInstance();
   smatd_list ml;
@@ -8506,4 +8459,53 @@ void TMainForm::macImportFont(TStrObjList &Cmds, const TParamList &Options, TMac
     return;
   }
   wxs->ImportFont(Cmds[0], Cmds[1]);
+}
+//..............................................................................
+void TMainForm::macEsd(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+  VcoVContainer vcovc;
+  vcovc.ReadShelxMat( TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), "mat"), FXApp->XFile().GetAsymmUnit() );
+  TXAtomPList xatoms;
+  TSAtomPList satoms;
+  this->FindXAtoms(Cmds, xatoms, true, true);
+  TListCaster::POP(xatoms, satoms);
+  if( satoms.Count() == 1 )  {
+    TSAtomPList atoms;
+    for( int i=0; i < satoms[0]->NodeCount(); i++ ) {
+      TSAtom& A = satoms[0]->Node(i);
+      if( A.IsDeleted() || (A.GetAtomInfo() == iQPeakIndex ) )
+        continue;
+      atoms.Add(&A);
+    }
+    if( atoms.Count() == 3 )
+      atoms.Add( satoms[0] );
+    if( atoms.Count() == 4 )  {
+      TBasicApp::GetLog() << "Tetrahedra volume :" 
+        << vcovc.CalcTetrahedronVolume(*atoms[0], *atoms[1], *atoms[2], *atoms[3]).ToString() << '\n';
+    }
+  }
+  else if( satoms.Count() == 2 )  {
+    TBasicApp::GetLog() << satoms[0]->GetLabel() << ' ' << satoms[1]->GetLabel() << ':' 
+      << vcovc.CalcDistance(*satoms[0], *satoms[1]).ToString() << '\n';
+  }
+  else if( satoms.Count() == 3 )  {
+    TBasicApp::GetLog() << satoms[0]->GetLabel() << ' ' << satoms[1]->GetLabel() << ' ' <<
+      satoms[2]->GetLabel() << ':' << vcovc.CalcAngle(*satoms[0], *satoms[1], *satoms[2]).ToString() << '\n';
+  }
+  else if( satoms.Count() == 4 )  {
+    TBasicApp::GetLog() << satoms[0]->GetLabel() << ' ' << satoms[1]->GetLabel() << ' ' <<
+      satoms[2]->GetLabel() << ' ' << satoms[2]->GetLabel() <<
+      ':' << vcovc.CalcTAng(*satoms[0], *satoms[1], *satoms[2], *satoms[3]).ToString() << '\n';
+  }
+  else if( satoms.Count() > 4 )  {
+    olxstr pl("RMS for plane ");
+    for( int i=0; i < satoms.Count(); i++ )
+      pl << satoms[i]->GetLabel() << ' ';
+    TBasicApp::GetLog() << pl << ':' << vcovc.CalcPlane(satoms).ToString() << '\n';
+    TSAtom* la = satoms.Last();
+    satoms.Delete(satoms.Count()-1);
+    TBasicApp::GetLog() << "Distance from " << la->GetLabel() << " to centroid: " 
+      << vcovc.CalcPC2ADistance(satoms, *la).ToString() << '\n';
+    TBasicApp::GetLog() << "Distance from " << la->GetLabel() << " to plane: " 
+      << vcovc.CalcP2ADistance(satoms, *la).ToString() << '\n';
+  }
 }

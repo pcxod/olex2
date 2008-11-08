@@ -248,6 +248,7 @@ private:
   DefMacro(Exit)
   DefMacro(Pack)
   DefMacro(Sel)
+  DefMacro(Esd)
   DefMacro(Name)
   DefMacro(TelpV)
   DefMacro(Labels)
