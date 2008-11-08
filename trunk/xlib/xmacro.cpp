@@ -2251,3 +2251,4 @@ void XLibMacros::macSGE(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 #ifdef __BORLANC__
   #pragma package(smart_init)
 #endif
+
