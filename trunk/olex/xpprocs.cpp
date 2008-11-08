@@ -6839,7 +6839,7 @@ void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     olxstr pl("plane ");
     for( int i=0; i < satoms.Count(); i++ )
       pl << satoms[i]->GetLabel() << ' ';
-    TBasicApp::GetLog() << pl << ':' << vcovc.Plane(satoms).ToString() << '\n';
+    TBasicApp::GetLog() << pl << ':' << vcovc.CalcPlane(satoms).ToString() << '\n';
     TSAtom* la = satoms.Last();
     satoms.Delete(satoms.Count()-1);
     TBasicApp::GetLog() << "Distance from " << la->GetLabel() << " to centroid :" 
