@@ -2,6 +2,13 @@
 
 void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au)  {
   Clear();
+  olxstr lstFN( TEFile::ChangeFileExt(fileName, "lst") );
+  if( TEFile::FileExists(lstFN) && TEFile::FileExists(fileName) )  {
+    time_t lst_fa = TEFile::FileAge(lstFN);
+    time_t mat_fa = TEFile::FileAge(fileName);
+    if( lst_fa > mat_fa && (lst_fa-mat_fa) > 5 )
+      TBasicApp::GetLog() << "The mat file is possible out of date\n";
+  }
   TCStrList sl, toks;
   const CString sof("sof");
   sl.LoadFromFile(fileName);
