@@ -300,7 +300,7 @@ void  TLattice::Uniq(bool remEqv)  {
 }
 //..............................................................................
 void TLattice::GenerateAtoms(const TSAtomPList& atoms, TSAtomPList& result, const smatd_plist& matrices)  {
-  if( !atoms.Count() )  return;
+  if( atoms.IsEmpty() )  return;
 
 //  result->SetCount(mc*ac);
   for(int i=0; i < matrices.Count(); i++ )  {
@@ -757,6 +757,7 @@ void TLattice::UpdateAsymmUnit()  {
 }
 //..............................................................................
 void TLattice::ListAsymmUnit(TSAtomPList& L, TCAtomPList* Template, bool IncludeQ)  {
+  ClearPlanes();
   if( Template != NULL )  {
     for( int i=0; i < Template->Count(); i++ )  {
       if( Template->Item(i)->IsDeleted() )  continue;
