@@ -42,36 +42,36 @@ void TXPlane::Create(const olxstr& cName)  {
   GlP->Type(sgloPolygon);
   if( !FRectangular )  GlP->Data().Resize(3, FPlane->CrdCount());
   else                 GlP->Data().Resize(3, 5);
-  vec3d Center( FPlane->Center() ), org(FPlane->Crd(0)-FPlane->Center()), vec;
-  TPSTypeList<double, vec3d*> sortedPlane;
-  sortedPlane.Add( 0, &FPlane->Crd(0) );
+  vec3d Center( FPlane->Center() ), org(FPlane->GetAtom(0).crd()-FPlane->Center()), vec;
+  TPSTypeList<double, vec3d const*> sortedPlane;
+  sortedPlane.Add( 0, &FPlane->GetAtom(0).crd() );
 
   for( int i=1; i < FPlane->CrdCount(); i++ )  {
-    vec = FPlane->Crd(i) - Center;
+    vec = FPlane->GetAtom(i).crd() - Center;
     double ca = org.CAngle(vec);
     vec = org.XProdVec(vec);
     // negative - vec is on the right, positive - on the left
     double vo = vec.CAngle(FPlane->Normal());
     if( ca >= 0 )  { // -90 to 90
        if( vo < 0 )  // -90 to 0 3->4
-         sortedPlane.Add( 3.0 + ca, &FPlane->Crd(i) );
+         sortedPlane.Add( 3.0 + ca, &FPlane->GetAtom(i).crd() );
        else  // 0 to 90 0->1
-         sortedPlane.Add( 1.0 - ca, &FPlane->Crd(i) );
+         sortedPlane.Add( 1.0 - ca, &FPlane->GetAtom(i).crd() );
     }
     else if( ca > -1 ) {  // 90-270
        if( vo < 0 )  // 180 to 270 2->3
-         sortedPlane.Add( 3.0 + ca, &FPlane->Crd(i) );
+         sortedPlane.Add( 3.0 + ca, &FPlane->GetAtom(i).crd() );
        else  // 90 to 180 1->2
-         sortedPlane.Add( 1.0 - ca, &FPlane->Crd(i) );
+         sortedPlane.Add( 1.0 - ca, &FPlane->GetAtom(i).crd() );
     }
     else  {  //-1, special case
-      sortedPlane.Add( 2, &FPlane->Crd(i) );
+      sortedPlane.Add( 2, &FPlane->GetAtom(i).crd() );
     }
   }
 
   if( !FRectangular )  {
     for( int i=0; i < sortedPlane.Count(); i++ )  {
-      vec3d* crd = sortedPlane.Object(i);
+      vec3d const* crd = sortedPlane.Object(i);
       double d = FPlane->DistanceTo(*crd);
       vec = *crd - FPlane->Normal()*d;
       vec -= Center;

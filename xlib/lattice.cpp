@@ -679,14 +679,14 @@ TSPlane* TLattice::TmpPlane(const TSAtomPList& atoms, int weightExtent)  {
   if( atoms.Count() < 3 )  return NULL;
   TSPlane *Plane;
   //TODO: need to consider occupancy for disordered groups ...
-  TTypeList< AnAssociation2<vec3d, double> > Points;
+  TTypeList< AnAssociation2<TSAtom*, double> > Points;
   Points.SetCapacity( atoms.Count() );
 
   if( weightExtent != 0 )  {
     double swg = 0;
     for(int i=0; i < atoms.Count(); i++ )  {
       double wght = pow(atoms[i]->GetAtomInfo().GetMr(), (double)weightExtent);
-      Points.AddNew(atoms[i]->crd(), wght );
+      Points.AddNew(atoms[i], wght );
       swg += wght*wght;
     }
     for( int i=0; i < Points.Count(); i++ )
@@ -694,7 +694,7 @@ TSPlane* TLattice::TmpPlane(const TSAtomPList& atoms, int weightExtent)  {
   }
   else  {
     for(int i=0; i < atoms.Count(); i++ )
-      Points.AddNew(atoms[i]->crd(), 1 );
+      Points.AddNew(atoms[i], 1 );
   }
 
   Plane = new TSPlane( Network );

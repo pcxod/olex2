@@ -9,10 +9,9 @@
 
 BeginXlibNamespace()
 
-class TSPlane:public TSObject  {
+class TSPlane : public TSObject  {
 private:
-//  int FTag;
-  vec3d_list Crds;
+  TTypeList< AnAssociation2<TSAtom*, double> > Crds;
   vec3d FNormal, FCenter;
   double FDistance;
   bool  Deleted;
@@ -24,9 +23,7 @@ public:
 
   inline int CrdCount()              const {  return Crds.Count(); }
   // an association point, weight is provided
-  void Init(const TTypeList< AnAssociation2<vec3d, double> >& Points);
-  vec3d& Crd(int i)                     {  return Crds[i]; }
-  const vec3d& GetCrd(int i)      const {  return Crds[i]; }
+  void Init(const TTypeList< AnAssociation2<TSAtom*, double> >& Points);
 
   inline vec3d& Normal()                {  return FNormal; }
   inline vec3d& Center()                {  return FCenter; }
@@ -41,14 +38,18 @@ public:
   double D() const {  return FDistance; }
   double Z(double X, double Y) const;
   void D(double v) {  FDistance = v; }
+  int Count() const {  return Crds.Count();  }
+  const TSAtom& GetAtom(int i) const {  return *Crds[i].GetA();  }
+  TSAtom& Atom(int i) {  return *Crds[i].A();  }
 // static members
   /* calculates the A,B and C for the best plane Ax*By*Cz+D=0, D can be calculated as
    D = center.DotProd({A,B,C})
    for the point, weight association
+   returns sqrt(minimal eigen value/point.Count())
   */
-  static void CalcPlane(const TTypeList< AnAssociation2<vec3d, double> >& Points, 
+  static double CalcPlane(const TTypeList< AnAssociation2<vec3d, double> >& Points, 
     vec3d& Params, vec3d& center);
-  // returns a summ of sqrt( (distances from atoms to the plane)^2) divided by the number of atoms
+  // returns sqrt(minimal eigen value/point.Count())
   static double CalcRMS(const TSAtomPList& atoms);
 };
 

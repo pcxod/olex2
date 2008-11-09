@@ -132,6 +132,9 @@ protected:
   double _calcAngle(const vec3d_alist& points)  {
     return acos( (points[0]-points[1]).CAngle(points[2]-points[1]))*180.0/M_PI;
   }
+  double _calcB2BAngle(const vec3d_alist& points)  {
+    return acos( (points[1]-points[0]).CAngle(points[3]-points[2]))*180.0/M_PI;
+  }
   double _calcTHV(const vec3d_alist& points) const {
     return TetrahedronVolume(points[0], points[1], points[2], points[3]);
   }
@@ -183,21 +186,21 @@ protected:
     if( m[0][0] < m[1][1] )  {
       if( m[0][0] < m[2][2] )  {  
         pp = vecs[0];
-        return m[0][0];
+        return sqrt(m[0][0]/Points.Count());
       }
       else  {
         pp = vecs[2];
-        return m[2][2];
+        return sqrt(m[2][2]/Points.Count());
       }
     }
     else  {
       if( m[1][1] < m[2][2] )  {
         pp = vecs[1];
-        return m[1][1];
+        return sqrt(m[1][1]/Points.Count());
       }
       else  {
         pp = vecs[2];
-        return m[2][2];
+        return sqrt(m[2][2]/Points.Count());
       }
     }
   }
@@ -211,7 +214,7 @@ protected:
         p2[i-fpc] = points[i];
     }
     _calcPlane<1>(p1);
-    _calcPlane<1>(p2);
+    _calcPlane<2>(p2);
     return acos(plane_param1.CAngle(plane_param2))*180.0/M_PI;
   }
   // plane to bond angle in degrees
@@ -220,8 +223,8 @@ protected:
     for( int i=0; i < points.Count()-2; i++ ) 
       p1[i] = points[i];
     _calcPlane<1>(p1);
-    vec3d V(points.Last() - points[points.Count()-2]);
-    return acos(plane_param1.CAngle(plane_param2))*180.0/M_PI;
+    vec3d v(points.Last() - points[points.Count()-2]);
+    return acos(plane_param1.CAngle(v))*180.0/M_PI;
   }
   // plane to atom distance
   double _calcP2ADistance(const vec3d_alist& points)  {
@@ -357,8 +360,21 @@ public:
     double esd = sqrt(v.ColMul(vcov).DotProd(v))/val;
     return TEValue<double>(val,esd);
   }
-  TEValue<double> CalcCentroid(const TSAtomPList& atoms) {
-    return TEValue<double>(0,0);
+  TEVPoint<double> CalcCentroid(const TSAtomPList& atoms) {
+    mat3d_list m;
+    GetVcoV(atoms, m);
+    mat3d vcov;
+    vec3d center;
+    for( int i=0; i < atoms.Count(); i++ )  {
+      center += atoms[i]->crd();
+      for( int j=0; j < atoms.Count(); j++ )
+        vcov += m[i*atoms.Count()+j]; 
+    }
+    vcov *= 1./(atoms.Count()*atoms.Count());
+    center /= atoms.Count();
+    double val = center.Length();
+    double esd = sqrt(center.ColMul(vcov).DotProd(center))/val;
+    return TEVPoint<double>(center[0], center[1], center[2], sqrt(vcov[0][0]), sqrt(vcov[1][1]), sqrt(vcov[2][2]));
   }
   // precise calculation
   TEValue<double> CalcDistanceToCentroidP(const TSAtomPList& cent, const TSAtom& a) {
@@ -464,11 +480,18 @@ public:
     return TEValue<double>(tau*180.0/M_PI, sqrt(esd)*180.0/M_PI);
   }
   // torsion angle
-  TEValue<double> CalcTAng(const TSAtom& a1, const TSAtom& a2, const TSAtom& a3, const TSAtom& a4) {
+  TEValue<double> CalcTAngle(const TSAtom& a1, const TSAtom& a2, const TSAtom& a3, const TSAtom& a4) {
     mat3d_list m;
     TSAtom const * as[] = {&a1,&a2,&a3,&a4};
     TSAtomPList satoms(4, as);
     return DoCalc(satoms, &VcoVContainer::_calcTang);
+  }
+  // bond to bond angle
+  TEValue<double> CalcB2BAngle(const TSAtom& a1, const TSAtom& a2, const TSAtom& a3, const TSAtom& a4) {
+    mat3d_list m;
+    TSAtom const * as[] = {&a1,&a2,&a3,&a4};
+    TSAtomPList satoms(4, as);
+    return DoCalc(satoms, &VcoVContainer::_calcB2BAngle);
   }
   // returns rms for the best plane
   TEValue<double> CalcPlane(const TSAtomPList& atoms) {
@@ -492,7 +515,7 @@ public:
     satoms.Add(const_cast<TSAtom*>(&a));
     return DoCalc(satoms, &VcoVContainer::_calcPC2ADistance);
   }
-  // plane to a vector distance
+  // plane to a vector angle
   TEValue<double> CalcP2VAngle(const TSAtomPList& plane, const TSAtom& a1, const TSAtom& a2) {
     TSAtomPList satoms(plane);
     satoms.Add(const_cast<TSAtom*>(&a1));
@@ -512,7 +535,7 @@ public:
     return DoCalcEx(atoms, &VcoVContainer::_calcP2PAngle, p1.Count());
   }
   //plane centroid to plane centroid distance
-  TEValue<double> CalcP2PDistace(const TSAtomPList& p1, const TSAtomPList& p2) {
+  TEValue<double> CalcPC2PCDistance(const TSAtomPList& p1, const TSAtomPList& p2) {
     weights1.SetCount(p1.Count());
     weights2.SetCount(p2.Count());
     for( int i=0; i < p1.Count(); i++ ) 
