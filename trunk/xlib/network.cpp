@@ -688,13 +688,12 @@ bool TNetwork::IsRingRegular(const TSAtomPList& ring)  {
 }
 //..............................................................................
 // quaternion method, Acta A45 (1989), 208
-double TNetwork::FindAlignmentMatrix(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atoms,
+double TNetwork_FindAlignmentMatrix(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atoms,
                          smatd& res, bool TryInversion)  {
   ematd evm(4,4), ev(4,4);
-  vec3d centA, centB, v;
+  vec3d centA, centB(res.t), v;
   TAsymmUnit& au = atoms[0].GetA()->GetNetwork().GetLattice().GetAsymmUnit();
   for( int i=0; i < atoms.Count(); i++ )  {
-    centB += atoms[i].GetB()->crd();
     if( TryInversion )  {
       v = atoms[i].GetA()->ccrd();
       v *= -1;
@@ -705,7 +704,6 @@ double TNetwork::FindAlignmentMatrix(const TTypeList< AnAssociation2<TSAtom*,TSA
       centA += atoms[i].GetA()->crd();
   }
   centA /= atoms.Count();
-  centB /= atoms.Count();
   for( int i=0; i < atoms.Count(); i++ )  {
     if( TryInversion )  {
       v = atoms[i].GetA()->ccrd();
@@ -764,108 +762,53 @@ double TNetwork::FindAlignmentMatrix(const TTypeList< AnAssociation2<TSAtom*,TSA
   res.r[2][1] = 2*(qt[2]*qt[3] - qt[0]*qt[1]);
   res.r[2][2] = QRT(qt[0]) + QRT(qt[3]) - QRT(qt[1]) - QRT(qt[2]);
   res.t = centB;
-  double rs = 0;
-  for( int i=0; i < atoms.Count(); i++ )  {
-    if( TryInversion )  {
-      v = atoms[i].GetA()->ccrd();
-      v *= -1;
-      au.CellToCartesian(v);
+  return (minVal <= 0) ? 0 : sqrt(minVal/atoms.Count());
+}
+void TNetwork_CalcAMDiff(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atoms,
+                         smatd& res, mat3d& df, bool TryInversion)  {
+  static const double delta = 1e-10;
+  vec3d v(res.t), d;
+  for( int i=0; i < 3; i++ )  {
+    v[i] += delta;
+    res.t = v;
+    double df1 = TNetwork_FindAlignmentMatrix(atoms, res, TryInversion);
+    v[i] -= 2*delta;
+    res.t = v;
+    double df2 = TNetwork_FindAlignmentMatrix(atoms, res, TryInversion);
+    v[i] += delta;
+    d[i] = (df1 - df2)/(2*delta);
+  }
+  for( int i=0; i < 3; i++ )  {
+    for( int j=i; j < 3; j++ )  {
+      df[i][j] = d[i]*d[j];
+      df[j][i] = df[i][j];
     }
-    else
-      v = atoms[i].GetA()->crd();
-    v -= centA;
-    v *= res.r;
-    v += centB;
-    rs += v.DistanceTo( atoms[i].GetB()->crd() );
   }
-  rs /= atoms.Count();
-  return rs;
-//  if( minVal <= 0 )  return 0;
-//  return sqrt(minVal/atoms.Count());
+  res.t = v;  // restore
 }
-//..............................................................................
-double _dlda00(const vec3d& at, const vec3d& to, const smatd& m, double l[6])  {
-  return m.r[0][0]*(m.r[0].DotProd(at)-m.t[0]-to[0]) + 2*m.r[0][0]*l[0] + l[3]*m.r[1][0] + l[4]*m.r[2][0];
+double TNetwork_CalcAM(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atoms,
+                         smatd& res, bool TryInversion) {
+  mat3d df;
+  vec3d v(0.01, 0.01, 0.01), sn(res.t), so(-100, -100, -100);
+  while( sn.DistanceTo(so) > 1e-10 )  {
+    so = sn;
+    res.t = sn;
+    TNetwork_CalcAMDiff(atoms, res, df, TryInversion);
+    sn = so - df*v;
+  }
+  return TNetwork_FindAlignmentMatrix(atoms, res, TryInversion);
 }
-double _dlda01(const vec3d& at, const vec3d& to, const smatd& m, double l[6])  {
-  return m.r[0][1]*(m.r[0].DotProd(at)-m.t[1]-to[1]) + 2*m.r[0][1]*l[0] + l[3]*m.r[1][1] + l[4]*m.r[2][1];
-}
-double _dlda02(const vec3d& at, const vec3d& to, const smatd& m, double l[6])  {
-  return m.r[0][2]*(m.r[0].DotProd(at)-m.t[2]-to[2]) + 2*m.r[0][2]*l[0] + l[3]*m.r[1][2] + l[4]*m.r[2][2];
-}
-double _dlda10(const vec3d& at, const vec3d& to, const smatd& m, double l[6])  {
-  return m.r[1][0]*(m.r[1].DotProd(at)-m.t[0]-to[0]) + 2*m.r[1][0]*l[1] + l[3]*m.r[0][0] + l[6]*m.r[2][0];
-}
-double _dlda11(const vec3d& at, const vec3d& to, const smatd& m, double l[6])  {
-  return m.r[1][1]*(m.r[1].DotProd(at)-m.t[1]-to[1]) + 2*m.r[1][1]*l[1] + l[3]*m.r[0][1] + l[6]*m.r[2][1];
-}
-double _dlda12(const vec3d& at, const vec3d& to, const smatd& m, double l[6])  {
-  return m.r[1][2]*(m.r[1].DotProd(at)-m.t[2]-to[2]) + 2*m.r[1][2]*l[1] + l[3]*m.r[0][2] + l[6]*m.r[2][2];
-}
-double _dlda20(const vec3d& at, const vec3d& to, const smatd& m, double l[6])  {
-  return m.r[2][0]*(m.r[2].DotProd(at)-m.t[0]-to[0]) + 2*m.r[2][0]*l[2] + l[4]*m.r[0][0] + l[6]*m.r[1][0];
-}
-double _dlda21(const vec3d& at, const vec3d& to, const smatd& m, double l[6])  {
-  return m.r[2][1]*(m.r[2].DotProd(at)-m.t[1]-to[1]) + 2*m.r[2][1]*l[2] + l[4]*m.r[0][1] + l[6]*m.r[1][1];
-}
-double _dlda22(const vec3d& at, const vec3d& to, const smatd& m, double l[6])  {
-  return m.r[2][2]*(m.r[2].DotProd(at)-m.t[2]-to[2]) + 2*m.r[2][2]*l[2] + l[4]*m.r[0][2] + l[6]*m.r[1][2];
-}
-double _dldl0(const vec3d& at, const vec3d& to, const smatd& m, double l[6])  {
-  return m.r[0].DotProd(m.r[0])-1;
-}
-double _dldl1(const vec3d& at, const vec3d& to, const smatd& m, double l[6])  {
-  return m.r[1].DotProd(m.r[1])-1;
-}
-double _dldl2(const vec3d& at, const vec3d& to, const smatd& m, double l[6])  {
-  return m.r[2].DotProd(m.r[2])-1;
-}
-double _dldl3(const vec3d& at, const vec3d& to, const smatd& m, double l[6])  {
-  return m.r[0].DotProd(m.r[1]);
-}
-double _dldl4(const vec3d& at, const vec3d& to, const smatd& m, double l[6])  {
-  return m.r[0].DotProd(m.r[2]);
-}
-double _dldl5(const vec3d& at, const vec3d& to, const smatd& m, double l[6])  {
-  return m.r[1].DotProd(m.r[2]);
-}
-double _dldt0(const vec3d& at, const vec3d& to, const smatd& m, double l[6])  {
-  return -2*m.t[0]*(m.r[0].DotProd(at)-m.t[0]-to[0]);
-}
-double _dldt1(const vec3d& at, const vec3d& to, const smatd& m, double l[6])  {
-  return -2*m.t[1]*(m.r[1].DotProd(at)-m.t[1]-to[1]);
-}
-double _dldt2(const vec3d& at, const vec3d& to, const smatd& m, double l[6])  {
-  return -2*m.t[2]*(m.r[2].DotProd(at)-m.t[2]-to[2]);
-}
-double FindAlignmentMatrixX(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atoms,
+/* gradient descent shows that the procedure does converge and needs no refinement */
+double TNetwork::FindAlignmentMatrix(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atoms,
                          smatd& res, bool TryInversion)  {
-  ematd J(18,atoms.Count());
-  smatd matr;
-  double lambdas[6] = {0, 0, 0, 0, 0, 0};
-  TNetwork::FindAlignmentMatrix(atoms, matr, true); 
-  for( int i=0; i < atoms.Count(); i++ )  {
-    J[0][i] = _dlda00(atoms[i].GetA()->crd(), atoms[i].GetA()->crd(), matr, lambdas);
-    J[1][i] = _dlda01(atoms[i].GetA()->crd(), atoms[i].GetA()->crd(), matr, lambdas);
-    J[2][i] = _dlda02(atoms[i].GetA()->crd(), atoms[i].GetA()->crd(), matr, lambdas);
-    J[3][i] = _dlda10(atoms[i].GetA()->crd(), atoms[i].GetA()->crd(), matr, lambdas);
-    J[4][i] = _dlda11(atoms[i].GetA()->crd(), atoms[i].GetA()->crd(), matr, lambdas);
-    J[5][i] = _dlda12(atoms[i].GetA()->crd(), atoms[i].GetA()->crd(), matr, lambdas);
-    J[6][i] = _dlda20(atoms[i].GetA()->crd(), atoms[i].GetA()->crd(), matr, lambdas);
-    J[7][i] = _dlda21(atoms[i].GetA()->crd(), atoms[i].GetA()->crd(), matr, lambdas);
-    J[8][i] = _dlda22(atoms[i].GetA()->crd(), atoms[i].GetA()->crd(), matr, lambdas);
-    J[9][i] = _dldl0(atoms[i].GetA()->crd(), atoms[i].GetA()->crd(), matr, lambdas);
-    J[10][i] = _dldl0(atoms[i].GetA()->crd(), atoms[i].GetA()->crd(), matr, lambdas);
-    J[11][i] = _dldl1(atoms[i].GetA()->crd(), atoms[i].GetA()->crd(), matr, lambdas);
-    J[12][i] = _dldl2(atoms[i].GetA()->crd(), atoms[i].GetA()->crd(), matr, lambdas);
-    J[13][i] = _dldl3(atoms[i].GetA()->crd(), atoms[i].GetA()->crd(), matr, lambdas);
-    J[14][i] = _dldl4(atoms[i].GetA()->crd(), atoms[i].GetA()->crd(), matr, lambdas);
-    J[15][i] = _dldl5(atoms[i].GetA()->crd(), atoms[i].GetA()->crd(), matr, lambdas);
-    J[16][i] = _dldt0(atoms[i].GetA()->crd(), atoms[i].GetA()->crd(), matr, lambdas);
-    J[17][i] = _dldt1(atoms[i].GetA()->crd(), atoms[i].GetA()->crd(), matr, lambdas);
-    J[18][i] = _dldt2(atoms[i].GetA()->crd(), atoms[i].GetA()->crd(), matr, lambdas);
-  }
-  return 0;
+  vec3d centB;
+  TAsymmUnit& au = atoms[0].GetA()->GetNetwork().GetLattice().GetAsymmUnit();
+  for( int i=0; i < atoms.Count(); i++ )
+    centB += atoms[i].GetB()->crd();
+  centB /= atoms.Count();
+  res.t = centB;
+//  double rms = TNetwork_CalcAM(atoms, res, TryInversion);
+  return TNetwork_FindAlignmentMatrix(atoms, res, TryInversion);
 }
 //..............................................................................
 void TNetwork::DoAlignAtoms(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& satomp,

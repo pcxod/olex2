@@ -22,35 +22,30 @@ TSPlane::TSPlane(TNetwork* Parent):TSObject(Parent)  {
 TSPlane::~TSPlane()  {  }
 //..............................................................................
 double TSPlane::CalcRMS(const TSAtomPList& atoms)  {
-  if( atoms.Count() < 3 )  return 0;
+  if( atoms.Count() < 3 )  return -1;
   vec3d p, c;
   TTypeList< AnAssociation2<vec3d, double> > Points;
   Points.SetCapacity( atoms.Count() );
   for( int i=0; i < atoms.Count(); i++ )
     Points.AddNew( atoms[i]->crd(), 1);
-  CalcPlane(Points, p, c);
-  
-  double d = c.DotProd(p)/p.Length(), rms=0;
-  p.Normalise();
-  for( int i=0; i < atoms.Count(); i++ )  {
-    double tmp = p.DotProd(atoms[i]->crd())-d;
-    rms += tmp*tmp;
-  }
-  return sqrt(rms/atoms.Count());
+  return CalcPlane(Points, p, c);
 }
 //..............................................................................
-void TSPlane::Init(const TTypeList< AnAssociation2<vec3d, double> >& Points)  {
-  CalcPlane(Points, FNormal, FCenter);
+void TSPlane::Init(const TTypeList< AnAssociation2<TSAtom*, double> >& atoms)  {
+  TTypeList< AnAssociation2<vec3d, double> > points;
+  points.SetCapacity(atoms.Count());
+  for( int i=0; i < atoms.Count(); i++ )
+    points.AddNew( atoms[i].GetA()->crd(), atoms[i].GetB());
+  CalcPlane(points, FNormal, FCenter);
   FDistance = FNormal.DotProd(FCenter)/FNormal.Length();
   FNormal.Normalise();
-  Crds.SetCapacity( Points.Count() );
-  for( int i=0; i < Points.Count(); i++ )
-    Crds.AddCCopy(Points[i].GetA());
+  Crds.Clear();
+  Crds.AddList(atoms);
 }
 //..............................................................................
-void TSPlane::CalcPlane(const TTypeList< AnAssociation2<vec3d, double> >& Points, 
+double TSPlane::CalcPlane(const TTypeList< AnAssociation2<vec3d, double> >& Points, 
                         vec3d& Params, vec3d& center)  {
-  if( Points.Count() < 3 )  return;
+  if( Points.Count() < 3 )  return 0;
   mat3d m, vecs;
   vec3d p, t;
   double mass = 0;
@@ -78,16 +73,24 @@ void TSPlane::CalcPlane(const TTypeList< AnAssociation2<vec3d, double> >& Points
   m[2][1] = m[1][2];
   mat3d::EigenValues(m, vecs.I());
   if( m[0][0] < m[1][1] )  {
-    if( m[0][0] < m[2][2] )  
+    if( m[0][0] < m[2][2] )  {  
       Params = vecs[0];
-    else                     
+      return sqrt(m[0][0]/Points.Count());
+    }
+    else  {
       Params = vecs[2];
+      return sqrt(m[2][2]/Points.Count());
+    }
   }
   else  {
-    if( m[1][1] < m[2][2] )
+    if( m[1][1] < m[2][2] )  {
       Params = vecs[1];
-    else
+      return sqrt(m[1][1]/Points.Count());
+    }
+    else  {
       Params = vecs[2];
+      return sqrt(m[2][2]/Points.Count());
+    }
   }
 }
 //..............................................................................

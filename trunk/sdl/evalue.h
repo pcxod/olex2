@@ -203,6 +203,10 @@ public:
       while( fabs(FE*po) < 1 )  {  po *= 10;    pr ++;  }
       iv = Round(FE*po);
       if( pr != 0 )  {
+        if( iv == 10 && pr > 1 )  {
+          iv = 1;
+          pr--;
+        }
         S = olxstr::FormatFloat(pr, FV);
         S << '(' << iv << ')';
       }

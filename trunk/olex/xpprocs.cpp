@@ -8461,51 +8461,231 @@ void TMainForm::macImportFont(TStrObjList &Cmds, const TParamList &Options, TMac
   wxs->ImportFont(Cmds[0], Cmds[1]);
 }
 //..............................................................................
+class Esd_Tetrahedron  {
+  TSAtomPList atoms;
+  olxstr Name;
+  TEValue<double> Volume;
+  VcoVContainer& vcov;
+protected:
+  void CalcVolume()  {
+    Volume = vcov.CalcTetrahedronVolume( *atoms[0], *atoms[1], *atoms[2], *atoms[3] );
+  }
+public:
+  Esd_Tetrahedron(const olxstr& name, const VcoVContainer& _vcov): Volume(-1,0), vcov(const_cast<VcoVContainer&>(_vcov))  {
+    Name = name;
+  }
+  void Add( TSAtom* a )  {
+    atoms.Add( a );
+    if( atoms.Count() == 4 )
+      CalcVolume();
+  }
+  const olxstr& GetName() const  {  return Name;  }
+  double GetVolume()  const  {  return Volume.GetV();  }
+  double GetEsd()  const  {  return Volume.GetE();  }
+};
+int Esd_ThSort( const Esd_Tetrahedron& th1, const Esd_Tetrahedron& th2 )  {
+  double v = th1.GetVolume() - th2.GetVolume();
+  if( v < 0 )  return -1;
+  if( v > 0 )  return 1;
+  return 0;
+}
 void TMainForm::macEsd(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   VcoVContainer vcovc;
   vcovc.ReadShelxMat( TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), "mat"), FXApp->XFile().GetAsymmUnit() );
-  TXAtomPList xatoms;
-  TSAtomPList satoms;
-  this->FindXAtoms(Cmds, xatoms, true, true);
-  TListCaster::POP(xatoms, satoms);
-  if( satoms.Count() == 1 )  {
-    TSAtomPList atoms;
-    for( int i=0; i < satoms[0]->NodeCount(); i++ ) {
-      TSAtom& A = satoms[0]->Node(i);
-      if( A.IsDeleted() || (A.GetAtomInfo() == iQPeakIndex ) )
-        continue;
-      atoms.Add(&A);
+  TGlGroup& sel = *FXApp->Selection();
+  if( sel.Count() != 0 )  {
+    if( sel.Count() == 1 )  {
+      if( EsdlInstanceOf(*sel.Object(0), TXAtom) )  {
+        TSAtomPList atoms;
+        TXAtom& xa = *(TXAtom*)sel.Object(0);
+        for( int i=0; i < xa.Atom().NodeCount(); i++ ) {
+          TSAtom& A = xa.Atom().Node(i);
+          if( A.IsDeleted() || (A.GetAtomInfo() == iQPeakIndex ) )
+            continue;
+          atoms.Add(&A);
+        }
+        if( atoms.Count() == 3 )
+          atoms.Add( &xa.Atom() );
+        if( atoms.Count() < 4 )  {
+          Error.ProcessingError(__OlxSrcInfo, "An atom with at least four bonds is expected");
+          return;
+        }
+        TTypeList<Esd_Tetrahedron> tetrahedra;
+        // special case for 4 nodes
+        if( atoms.Count() == 4 )  {
+          Esd_Tetrahedron& th = tetrahedra.AddNew( olxstr(atoms[0]->GetLabel() ) << '-'
+            << atoms[1]->GetLabel() << '-'
+            << atoms[2]->GetLabel() << '-'
+            << atoms[3]->GetLabel(), vcovc);
+          th.Add( atoms[0] );
+          th.Add( atoms[1] );
+          th.Add( atoms[2] );
+          th.Add( atoms[3] );
+        }
+        else  {
+          for( int i=0; i < atoms.Count(); i++ ) {
+            for( int j=i+1; j < atoms.Count(); j++ ) {
+              for( int k=j+1; k < atoms.Count(); k++ ) {
+                Esd_Tetrahedron& th = tetrahedra.AddNew( olxstr(xa.Atom().GetLabel() ) << '-'
+                  << atoms[i]->GetLabel() << '-'
+                  << atoms[j]->GetLabel() << '-'
+                  << atoms[k]->GetLabel(), vcovc);
+                th.Add( &xa.Atom() );
+                th.Add( atoms[i] );
+                th.Add( atoms[j] );
+                th.Add( atoms[k] );
+              }
+            }
+          }
+        }
+        int thc = (atoms.Count()-2)*2;
+
+        TTypeList<Esd_Tetrahedron>::QuickSorter.SortSF( tetrahedra, &Esd_ThSort );
+        bool removed = false;
+        while(  tetrahedra.Count() > thc )  {
+          TBasicApp::GetLog() << ( olxstr("Removing tetrahedron ") <<  tetrahedra[0].GetName() << " with volume " << tetrahedra[0].GetVolume() << '\n' );
+          tetrahedra.Delete(0);
+          removed = true;
+        }
+        double v = 0, esd = 0;
+        for( int i=0; i < tetrahedra.Count(); i++ )  {
+          v += tetrahedra[i].GetVolume();
+          esd += tetrahedra[i].GetEsd()*tetrahedra[i].GetEsd();
+        }
+        TEValue<double> ev(v, sqrt(esd));
+        if( removed )
+          TBasicApp::GetLog() << ( olxstr("The volume for remaining tetrahedra is ") << ev.ToString() << '\n' );
+        else
+          TBasicApp::GetLog() << ( olxstr("The tetrahedra volume is ") << ev.ToString() << '\n' );
+      }
+      else if( EsdlInstanceOf(*sel.Object(0), TXPlane) )  {
+        TSAtomPList atoms;
+        TXPlane& xp = *(TXPlane*)sel.Object(0);
+        olxstr pld;
+        for( int i=0; i < xp.Plane().Count(); i++ )  {
+          atoms.Add( &xp.Plane().Atom(i) );
+          pld << atoms.Last()->GetLabel() << ' ';
+        }
+        TBasicApp::GetLog() << (olxstr("Plane ") << pld << "RMS: " << vcovc.CalcPlane(atoms).ToString() << '\n');
+        TEVPoint<double> cent( vcovc.CalcCentroid(atoms) );
+        TBasicApp::GetLog() << (olxstr("Plane ") << pld << "centroid : {" << cent[0].ToString() <<
+          ", " << cent[1].ToString() << ", " << cent[2].ToString() << "}\n");
+      }
+      else if( EsdlInstanceOf(*sel.Object(0), TXBond) )  {
+        TXBond& xb = *(TXBond*)sel.Object(0);
+        TBasicApp::GetLog() << (olxstr(xb.Bond().A().GetLabel()) << " to " <<
+          xb.Bond().B().GetLabel() << " distance: " <<
+          vcovc.CalcDistance(xb.Bond().A(), xb.Bond().B()).ToString() << '\n');
+      }
     }
-    if( atoms.Count() == 3 )
-      atoms.Add( satoms[0] );
-    if( atoms.Count() == 4 )  {
-      TBasicApp::GetLog() << "Tetrahedra volume :" 
-        << vcovc.CalcTetrahedronVolume(*atoms[0], *atoms[1], *atoms[2], *atoms[3]).ToString() << '\n';
+    else if( sel.Count() == 2 )  {
+      if( EsdlInstanceOf(*sel.Object(0), TXAtom) && EsdlInstanceOf(*sel.Object(1), TXAtom) )  {
+        TBasicApp::GetLog() << (olxstr(((TXAtom*)sel.Object(0))->Atom().GetLabel()) << " to " <<
+          ((TXAtom*)sel.Object(1))->Atom().GetLabel() << " distance: " <<
+          vcovc.CalcDistance(((TXAtom*)sel.Object(0))->Atom(), ((TXAtom*)sel.Object(1))->Atom()).ToString() << '\n');
+      }
+      else if( EsdlInstanceOf(*sel.Object(0), TXBond) && EsdlInstanceOf(*sel.Object(1), TXBond) )  {
+        TSBond& b1 = ((TXBond*)sel.Object(0))->Bond();
+        TSBond& b2 = ((TXBond*)sel.Object(1))->Bond();
+        TEValue<double> v(vcovc.CalcB2BAngle(b1.A(), b1.B(), b2.A(), b2.B())),
+          v1(180-v.GetV(), v.GetE());
+        TBasicApp::GetLog() << (olxstr(b1.A().GetLabel()) << '-' << b1.B().GetLabel() << " to " <<
+          b2.A().GetLabel() << '-' << b2.B().GetLabel() << " angle: " <<
+          v.ToString() << '(' << v1.ToString() << ")\n");
+      }
+      else if( (EsdlInstanceOf(*sel.Object(0), TXAtom) && EsdlInstanceOf(*sel.Object(1), TXPlane)) ||  
+               (EsdlInstanceOf(*sel.Object(1), TXAtom) && EsdlInstanceOf(*sel.Object(0), TXPlane)))  {
+        TSAtomPList atoms;
+        TXPlane& xp = *(TXPlane*)sel.Object( EsdlInstanceOf(*sel.Object(0), TXPlane) ? 0 : 1);
+        olxstr pld;
+        for( int i=0; i < xp.Plane().Count(); i++ )  {
+          atoms.Add( &xp.Plane().Atom(i) );
+          pld << atoms.Last()->GetLabel() << ' ';
+        }
+        TSAtom& sa = ((TXAtom*)sel.Object(EsdlInstanceOf(*sel.Object(0), TXAtom) ? 0 : 1))->Atom();
+        TBasicApp::GetLog() << (olxstr(sa.GetLabel()) << " to plane " << pld << "distance: " <<
+          vcovc.CalcP2ADistance(atoms, sa).ToString() << '\n');
+        TBasicApp::GetLog() << (olxstr(sa.GetLabel()) << " to plane " << pld << "centroid distance: " <<
+          vcovc.CalcPC2ADistance(atoms, sa).ToString() << '\n' );
+      }
+      else if( (EsdlInstanceOf(*sel.Object(0), TXBond) && EsdlInstanceOf(*sel.Object(1), TXPlane)) ||  
+               (EsdlInstanceOf(*sel.Object(1), TXBond) && EsdlInstanceOf(*sel.Object(0), TXPlane)))  {
+        TSAtomPList atoms;
+        TXPlane& xp = *(TXPlane*)sel.Object( EsdlInstanceOf(*sel.Object(0), TXPlane) ? 0 : 1);
+        olxstr pld;
+        for( int i=0; i < xp.Plane().Count(); i++ )  {
+          atoms.Add( &xp.Plane().Atom(i) );
+          pld << atoms.Last()->GetLabel() << ' ';
+        }
+        TSBond& sb = ((TXBond*)sel.Object(EsdlInstanceOf(*sel.Object(0), TXBond) ? 0 : 1))->Bond();
+        TEValue<double> v(vcovc.CalcP2VAngle(atoms, sb.A(), sb.B())),
+          v1(180-v.GetV(), v.GetE());
+        TBasicApp::GetLog() << (olxstr(sb.A().GetLabel()) << '-' << sb.B().GetLabel() << " to plane " << pld << "angle: " <<
+          v.ToString() << '(' << v1.ToString() << ")\n");
+      }
+      else if( EsdlInstanceOf(*sel.Object(0), TXPlane) && EsdlInstanceOf(*sel.Object(1), TXPlane) )  {
+        TSAtomPList p1, p2;
+        TXPlane* xp1 = (TXPlane*)sel.Object(0);
+        TXPlane* xp2 = (TXPlane*)sel.Object(1);
+        olxstr pld1, pld2;
+        for( int i=0; i < xp1->Plane().Count(); i++ )  {
+          p1.Add( &xp1->Plane().Atom(i) );
+          pld1 << p1.Last()->GetLabel() << ' ';
+        }
+        for( int i=0; i < xp2->Plane().Count(); i++ )  {
+          p2.Add( &xp2->Plane().Atom(i) );
+          pld2 << p2.Last()->GetLabel() << ' ';
+        }
+        TBasicApp::GetLog() << (olxstr("Plane ") << pld1 << "to plane " << pld2<< "angle: " <<
+          vcovc.CalcP2PAngle(p1, p2).ToString() << '\n' );
+        TBasicApp::GetLog() << (olxstr("Plane ") << pld1 << "centroid to plane " << pld2 << "centroid distance: " <<
+          vcovc.CalcPC2PCDistance(p1, p2).ToString() << '\n' );
+      }
     }
-  }
-  else if( satoms.Count() == 2 )  {
-    TBasicApp::GetLog() << satoms[0]->GetLabel() << ' ' << satoms[1]->GetLabel() << ':' 
-      << vcovc.CalcDistance(*satoms[0], *satoms[1]).ToString() << '\n';
-  }
-  else if( satoms.Count() == 3 )  {
-    TBasicApp::GetLog() << satoms[0]->GetLabel() << ' ' << satoms[1]->GetLabel() << ' ' <<
-      satoms[2]->GetLabel() << ':' << vcovc.CalcAngle(*satoms[0], *satoms[1], *satoms[2]).ToString() << '\n';
-  }
-  else if( satoms.Count() == 4 )  {
-    TBasicApp::GetLog() << satoms[0]->GetLabel() << ' ' << satoms[1]->GetLabel() << ' ' <<
-      satoms[2]->GetLabel() << ' ' << satoms[2]->GetLabel() <<
-      ':' << vcovc.CalcTAng(*satoms[0], *satoms[1], *satoms[2], *satoms[3]).ToString() << '\n';
-  }
-  else if( satoms.Count() > 4 )  {
-    olxstr pl("RMS for plane ");
-    for( int i=0; i < satoms.Count(); i++ )
-      pl << satoms[i]->GetLabel() << ' ';
-    TBasicApp::GetLog() << pl << ':' << vcovc.CalcPlane(satoms).ToString() << '\n';
-    TSAtom* la = satoms.Last();
-    satoms.Delete(satoms.Count()-1);
-    TBasicApp::GetLog() << "Distance from " << la->GetLabel() << " to centroid: " 
-      << vcovc.CalcPC2ADistance(satoms, *la).ToString() << '\n';
-    TBasicApp::GetLog() << "Distance from " << la->GetLabel() << " to plane: " 
-      << vcovc.CalcP2ADistance(satoms, *la).ToString() << '\n';
+    else if( sel.Count() == 3 )  {
+      if( EsdlInstanceOf(*sel.Object(0), TXAtom) && EsdlInstanceOf(*sel.Object(1), TXAtom) && EsdlInstanceOf(*sel.Object(2), TXAtom) )  {
+        TSAtom& a1 = ((TXAtom*)sel.Object(0))->Atom();
+        TSAtom& a2 = ((TXAtom*)sel.Object(1))->Atom();
+        TSAtom& a3 = ((TXAtom*)sel.Object(2))->Atom();
+        TBasicApp::GetLog() << (olxstr(a1.GetLabel()) << '-' << a2.GetLabel() << '-' << a3.GetLabel() << " angle: " <<
+          vcovc.CalcAngle(a1, a2, a3).ToString() << '\n');
+      }
+      else if( (EsdlInstanceOf(*sel.Object(0), TXPlane) && EsdlInstanceOf(*sel.Object(1), TXAtom) && EsdlInstanceOf(*sel.Object(2), TXAtom)) || 
+               (EsdlInstanceOf(*sel.Object(1), TXPlane) && EsdlInstanceOf(*sel.Object(0), TXAtom) && EsdlInstanceOf(*sel.Object(2), TXAtom)) ||
+               (EsdlInstanceOf(*sel.Object(2), TXPlane) && EsdlInstanceOf(*sel.Object(1), TXAtom) && EsdlInstanceOf(*sel.Object(0), TXAtom)))  {
+        TSAtom* a1 = NULL, *a2 = NULL;
+        TXPlane* xp = NULL;
+        TSAtomPList atoms;
+        for( int  i=0; i < 3; i++ )  {
+          if( EsdlInstanceOf(*sel.Object(i), TXPlane) )
+            xp = (TXPlane*)sel.Object(i);
+          else  {
+            if( a1 == NULL )
+              a1 = &((TXAtom*)sel.Object(i))->Atom();
+            else
+              a2 = &((TXAtom*)sel.Object(i))->Atom();
+          }
+        }
+        olxstr pld;
+        for( int i=0; i < xp->Plane().Count(); i++ )  {
+          atoms.Add( &xp->Plane().Atom(i) );
+          pld << atoms.Last()->GetLabel() << ' ';
+        }
+        TBasicApp::GetLog() << (olxstr(a1->GetLabel()) << '-' << a2->GetLabel() << " to plane " << pld << "angle: " <<
+          vcovc.CalcP2VAngle(atoms, *a1, *a2).ToString() << '\n' );
+      }
+    }
+    else if( sel.Count() == 4 )  {
+      if( EsdlInstanceOf(*sel.Object(0), TXAtom) && EsdlInstanceOf(*sel.Object(1), TXAtom) && 
+          EsdlInstanceOf(*sel.Object(2), TXAtom) && EsdlInstanceOf(*sel.Object(3), TXAtom) )  {
+        TSAtom& a1 = ((TXAtom*)sel.Object(0))->Atom();
+        TSAtom& a2 = ((TXAtom*)sel.Object(1))->Atom();
+        TSAtom& a3 = ((TXAtom*)sel.Object(2))->Atom();
+        TSAtom& a4 = ((TXAtom*)sel.Object(3))->Atom();
+        TBasicApp::GetLog() << (olxstr(a1.GetLabel()) << '-' << a2.GetLabel() << '-' << a3.GetLabel() << '-' << a4.GetLabel()
+          << " torsion angle: " <<
+          vcovc.CalcTAngle(a1, a2, a3, a4).ToString() << '\n');
+      }
+    }
   }
 }
