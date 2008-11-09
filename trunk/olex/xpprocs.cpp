@@ -8685,6 +8685,9 @@ void TMainForm::macEsd(TStrObjList &Cmds, const TParamList &Options, TMacroError
         TBasicApp::GetLog() << (olxstr(a1.GetLabel()) << '-' << a2.GetLabel() << '-' << a3.GetLabel() << '-' << a4.GetLabel()
           << " torsion angle: " <<
           vcovc.CalcTAngle(a1, a2, a3, a4).ToString() << '\n');
+        TBasicApp::GetLog() << (olxstr(a1.GetLabel()) << '-' << a2.GetLabel() << '-' << a3.GetLabel() << '-' << a4.GetLabel()
+          << " tetrahedron volume: " <<
+          vcovc.CalcTetrahedronVolume(a1, a2, a3, a4).ToString() << '\n');
       }
     }
   }
