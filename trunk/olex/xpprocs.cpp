@@ -131,6 +131,8 @@
 #include "xmacro.h"
 #include "vcov.h"
 
+#include "sfutil.h"
+
 using namespace _xl_Controls;
 
 static const olxstr NAString("n/a");
@@ -6800,6 +6802,15 @@ public:
 };
 #endif
 void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+  //olxstr hklfn = FXApp->LocateHklFile();
+  //if( TEFile::FileExists(hklfn) )  {
+  //  THklFile hf;
+  //  hf.LoadFromFile(hklfn);
+  //  TRefList refs;
+  //  hf.Merge( FXApp->XFile().GetAsymmUnit(), true, refs);
+  //  TArrayList<compd>
+  //  SFUtil::CalcSF(FXApp->XFile(), refs, F, true);
+  //}
   return;
   TSymmLib& sl = *TSymmLib::GetInstance();
   smatd_list ml;
