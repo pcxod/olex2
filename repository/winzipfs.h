@@ -22,6 +22,9 @@ public:
   virtual bool AdoptFile(const TFSItem& Source){  throw TNotImplementedException(__OlxSourceInfo);  }
   virtual bool NewDir(const olxstr& DN)      {  throw TNotImplementedException(__OlxSourceInfo);     }
   virtual bool ChangeDir(const olxstr& DN)   {  throw TNotImplementedException(__OlxSourceInfo);  }
+  virtual bool AdoptStream(IInputStream& file, const olxstr& name)  {
+    throw TNotImplementedException(__OlxSourceInfo);
+  }
 
   TEFile* OpenFileAsFile(const olxstr& Source)  {
     return (TEFile*)OpenFile(Source);

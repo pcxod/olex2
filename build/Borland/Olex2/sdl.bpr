@@ -24,7 +24,7 @@
     <PATHRC value=".;"/>
     <PATHASM value=".;"/>
     <LINKER value="TLib"/>
-    <USERDEFINES value="_DEBUG;_UNICODE;"/>
+    <USERDEFINES value="_DEBUG"/>
     <SYSDEFINES value="NO_STRICT"/>
     <MAINSOURCE value="sdl.bpf"/>
     <INCLUDEPATH value="..\..\..\sdl\smart;&quot;C:\Program Files\Borland\CBuilder6\Projects&quot;;..\..\..\sdl;$(BCB)\include;$(BCB)\include\vcl"/>
@@ -134,10 +134,10 @@ Item0=$(BCB)\source\vcl
 
 [HistoryLists\hlConditionals]
 Count=4
-Item0=_DEBUG;_UNICODE;
-Item1=_DEBUG;
-Item2=_DEBUG;_UNICODE
-Item3=_DEBUG
+Item0=_DEBUG
+Item1=_DEBUG;_UNICODE;
+Item2=_DEBUG;
+Item3=_DEBUG;_UNICODE
 
 [HistoryLists\hlIntOutputDir]
 Count=1
@@ -175,10 +175,5 @@ RemoteDebug=0
 ShowInfoMsgs=0
 LinkDebugVcl=0
 LinkCGLIB=0
-
-[Language]
-ActiveLang=
-ProjectLang=
-RootDir=
   </IDEOPTIONS>
 </PROJECT>
