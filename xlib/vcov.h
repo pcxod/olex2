@@ -272,7 +272,7 @@ protected:
     }
     return esd;
   }
-  // helper functions
+  // helper functions, matrices are in cartesian frame
   template <class atom_list> void GetVcoV(const atom_list& as, mat3d_list& m)  {
     vcov.FindVcoV(as, m);
     ProcessSymmetry(as, m);
@@ -280,6 +280,10 @@ protected:
     mat3d c2f_t( mat3d::Transpose(as[0]->CAtom().GetParent()->GetCellToCartesian()) );
     for( int i=0; i < m.Count(); i++ )
       m[i] = c2f_t*m[i]*c2f;
+  }
+  // helper functions, matrices are in fractional frame
+  template <class atom_list> void GetVcoVF(const atom_list& as, mat3d_list& m)  {
+    vcov.FindVcoV(as, m);
     ProcessSymmetry(as, m);
   }
   // helper functions
@@ -360,6 +364,7 @@ public:
     double esd = sqrt(v.ColMul(vcov).DotProd(v))/val;
     return TEValue<double>(val,esd);
   }
+  // cartesian centroid
   TEVPoint<double> CalcCentroid(const TSAtomPList& atoms) {
     mat3d_list m;
     GetVcoV(atoms, m);
@@ -372,12 +377,24 @@ public:
     }
     vcov *= 1./(atoms.Count()*atoms.Count());
     center /= atoms.Count();
-    double val = center.Length();
-    double esd = sqrt(center.ColMul(vcov).DotProd(center))/val;
     return TEVPoint<double>(center[0], center[1], center[2], sqrt(vcov[0][0]), sqrt(vcov[1][1]), sqrt(vcov[2][2]));
   }
-  // precise calculation
-  TEValue<double> CalcDistanceToCentroidP(const TSAtomPList& cent, const TSAtom& a) {
+  // fractional centroid
+  TEVPoint<double> CalcCentroidF(const TSAtomPList& atoms) {
+    mat3d_list m;
+    GetVcoVF(atoms, m);
+    mat3d vcov;
+    vec3d center;
+    for( int i=0; i < atoms.Count(); i++ )  {
+      center += atoms[i]->ccrd();
+      for( int j=0; j < atoms.Count(); j++ )
+        vcov += m[i*atoms.Count()+j]; 
+    }
+    vcov *= 1./(atoms.Count()*atoms.Count());
+    center /= atoms.Count();
+    return TEVPoint<double>(center[0], center[1], center[2], sqrt(vcov[0][0]), sqrt(vcov[1][1]), sqrt(vcov[2][2]));
+  }  // precise calculation
+  TEValue<double> CalcPC2ADistanceP(const TSAtomPList& cent, const TSAtom& a) {
     mat3d_list m;
     TSAtomPList satoms(cent);
     satoms.Add(const_cast<TSAtom*>(&a));
