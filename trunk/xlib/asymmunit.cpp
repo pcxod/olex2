@@ -323,15 +323,24 @@ TCAtom& TAsymmUnit::NewCentroid(const vec3d& CCenter)  {
 }
 //..............................................................................
 TCAtom * TAsymmUnit::FindCAtom(const olxstr &Label, TResidue* resi)  const {
+  int part = -1;
+  olxstr lb(Label);
+  int us_ind = Label.IndexOf('_');
+  if( us_ind != -1 && ++us_ind < Label.Length() )  {
+    part = olxstr::o_tolower(Label.CharAt(us_ind)) - 'a' + 1;
+    lb = lb.SubStringTo(us_ind-1);
+  }
   if( resi != NULL )  {
     for( int i=0; i < resi->Count(); i++ )
-      if( resi->GetAtom(i).GetLabel().Comparei(Label) == 0  )
+      if( resi->GetAtom(i).GetLabel().Comparei(lb) == 0 )
+        if( part == -1 || resi->GetAtom(i).GetPart() == part )
         return &resi->GetAtom(i);
   }
   else  {  // global search
     for( int i=0; i < CAtoms.Count(); i++ )
-      if( CAtoms[i]->GetLabel().Comparei(Label) == 0  )
-        return CAtoms[i];
+      if( CAtoms[i]->GetLabel().Comparei(lb) == 0  )
+        if( part == -1 || CAtoms[i]->GetPart() == part )
+          return CAtoms[i];
   }
   return NULL;
 }
