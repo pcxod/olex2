@@ -434,6 +434,7 @@ TLibrary*  TXFile::ExportLibrary(const olxstr& name)  {
   lib->RegisterFunction<TXFile>( new TFunction<TXFile>(this,  &TXFile::LibSaveSolution, "SaveSolution", fpOne|psCheckFileTypeIns,
 "Saves current Q-peak model to provided file (res-file)") );
   lib->AttachLibrary( FLattice->GetAsymmUnit().ExportLibrary() );
+  lib->AttachLibrary( FLattice->GetUnitCell().ExportLibrary() );
   lib->AttachLibrary( FLattice->ExportLibrary() );
   return lib;
 }

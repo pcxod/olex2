@@ -26,6 +26,7 @@ public:
   virtual ~TUnitCell();
 
   double CalcVolume()  const;
+  TEValue<double> CalcVolumeEx()  const;
   inline TLattice& GetLattice()    const {  return *Lattice;  }
   void Clear();
 
@@ -160,6 +161,10 @@ protected:
       return new TSearchSymmEqTask(Atoms, Matrices, Report, tolerance, Initialise);
     }
   };
+public:
+  void LibVolumeEx(const TStrObjList& Params, TMacroError& E);
+  void LibCellEx(const TStrObjList& Params, TMacroError& E);
+  class TLibrary*  ExportLibrary(const olxstr& name=EmptyString);
 };
 
 EndXlibNamespace()
