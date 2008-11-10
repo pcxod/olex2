@@ -172,6 +172,8 @@ void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F)  {
   }
   
   vec3d hkl, crd;
+  const int a_cnt = alist.Count(),
+            m_cnt = ml.Count();
   for( int i=0; i < refs.Count(); i++ )  {
     const TReflection& ref = refs[i];
     ref.MulHkl(hkl, hkl2c);
@@ -181,10 +183,10 @@ void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F)  {
       //scatterers[j].B() += scatterers[j].GetC();
     }
     compd ir;
-    for( int j=0; j < alist.Count(); j++ )  {
+    for( int j=0; j < a_cnt; j++ )  {
       crd = alist[j]->ccrd();
       compd l;
-      for( int k=0; k < ml.Count(); k++ )  {
+      for( int k=0; k < m_cnt; k++ )  {
         const smatd& mt = ml[k];
         ref.MulHkl(hkl, mt);
         double tv =  T_PI*hkl.DotProd(mt.t+crd);  // scattering vector + phase shift
