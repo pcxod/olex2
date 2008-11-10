@@ -4,6 +4,7 @@
 #include "estopwatch.h"
 
 DefineFSFactory(ISF_expansion,SF_expansion)
+DefineFSFactory(ISF_calculation,SF_calculation)
 
 //...........................................................................................
 void SFUtil::ExpandToP1(const TArrayList<vec3i>& hkl, const TArrayList<compd>& F, const TSpaceGroup& sg, TArrayList<StructureFactor>& out)  {
@@ -160,4 +161,69 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
   sw.print( xapp.GetLog(), &TLog::Info );
   return EmptyString;
 }
+//...........................................................................................
+void SFUtil::CalcSF(TXFile& xfile, const TRefList& refs, TArrayList<TEComplex<double> >& F, bool useFpDfp)  {
+  TSpaceGroup* sg = NULL;
+  try  { sg = &xfile.GetLastLoaderSG();  }
+  catch(...)  {
+    throw TFunctionFailedException(__OlxSourceInfo, "unknown spacegroup");
+  }
+  TAsymmUnit& au = xfile.GetAsymmUnit();
+  const mat3d& hkl2c = au.GetHklToCartesian();
+  double quad[6];
+  const static double EQ_PI = 8*QRT(M_PI);
+  const static double TQ_PI = 2*QRT(M_PI);
+  double WaveLength = 0.71073;
 
+  // the thermal ellipsoid scaling factors
+  double BM[6] = {hkl2c[0].Length(), hkl2c[1].Length(), hkl2c[2].Length(), 0, 0, 0};
+  BM[3] = 2*BM[1]*BM[2];
+  BM[4] = 2*BM[0]*BM[2];
+  BM[5] = 2*BM[0]*BM[1];
+  BM[0] *= BM[0];
+  BM[1] *= BM[1];
+  BM[2] *= BM[2];
+  
+  TPtrList<TBasicAtomInfo> bais;
+  TPtrList<TCAtom> alist;
+  double *Ucifs = new double[6*au.AtomCount() + 1];
+  TPtrList<cm_Element> scatterers;
+  for( int i=0; i < au.AtomCount(); i++ )  {
+    TCAtom& ca = au.GetAtom(i);
+    if( ca.IsDeleted() || ca.GetAtomInfo() == iQPeakIndex )  continue;
+    int ind = bais.IndexOf( &ca.GetAtomInfo() );
+    if( ind == -1 )  {
+      if( ca.GetAtomInfo() == iDeuteriumIndex ) // treat D as H
+        scatterers.Add(XElementLib::FindBySymbol("H"));
+      else 
+        scatterers.Add(XElementLib::FindBySymbol(ca.GetAtomInfo().GetSymbol()));
+     
+      if( scatterers.Last() == NULL ) {
+        delete [] Ucifs;
+        throw TFunctionFailedException(__OlxSourceInfo, olxstr("could not locate scatterer: ") << ca.GetAtomInfo().GetSymbol() );
+      }
+      bais.Add( &ca.GetAtomInfo() );
+      ind = scatterers.Count() - 1;
+    }
+    ca.SetTag(ind);
+    ind = alist.Count()*6;
+    alist.Add(&ca); 
+    TEllipsoid* elp = ca.GetEllipsoid();
+    if( elp != NULL )  {
+      elp->GetQuad(quad);  // default is Ucart
+      au.UcartToUcif(quad);
+      for( int k=0; k < 6; k++ )
+        Ucifs[ind+k] = -TQ_PI*quad[k]*BM[k];
+    }
+    else  {
+      Ucifs[ind] = ca.GetUiso();
+      Ucifs[ind] *= -EQ_PI;
+    }
+  }
+
+  ISF_calculation* sf_calculation = fs_factory_ISF_calculation(sg->GetName());
+  if( sf_calculation == NULL )
+    throw TFunctionFailedException(__OlxSourceInfo, "invalid space group");
+  sf_calculation->Calculate(WaveLength, refs, F, scatterers, alist, Ucifs);
+  delete sf_calculation;
+}

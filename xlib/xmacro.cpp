@@ -676,6 +676,8 @@ void XLibMacros::macSGS(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     TBasicApp::GetLog() << tm[1].ToString() << '\n';
     TBasicApp::GetLog() << tm[2].ToString() << '\n';
     TSpaceGroup* new_sg = XLibMacros_macSGS_FindSG( sgs, n_ai.GetAxis() );
+    if( new_sg == NULL && n_ai.GetAxis() == "abc" )
+      new_sg = XLibMacros_macSGS_FindSG( sgs, EmptyString );
     if( new_sg != NULL )  
       TBasicApp::GetLog() << ((olxstr("New space group: ") << new_sg->GetName() << '\n'));
     else  {
