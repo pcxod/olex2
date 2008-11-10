@@ -60,22 +60,31 @@ double TUnitCell::CalcVolume()  const  {
   TAsymmUnit& au = GetLattice().GetAsymmUnit();
   static const double k = M_PI/180;
   vec3d ang(au.Angles()[0].GetV()*k, au.Angles()[1].GetV()*k, au.Angles()[2].GetV()*k);
-//  vec3d ange(au.Angles()[0].GetE()*k, au.Angles()[1].GetE()*k, au.Angles()[2].GetE()*k);
   vec3d ax(au.Axes()[0].GetV(), au.Axes()[1].GetV(), au.Axes()[2].GetV());
-//  vec3d axe(au.Axes()[0].GetE(), au.Axes()[1].GetE(), au.Axes()[2].GetE());
   vec3d cs(cos(ang[0]), cos(ang[1]), cos(ang[2]) );
-//  vec3d ss(sin(ang[0]), sin(ang[1]), sin(ang[2]) );
+  return ax.Mul()*sqrt(1-cs.QLength() + 2*cs.Mul());
+}
+//..............................................................................
+TEValue<double> TUnitCell::CalcVolumeEx()  const  {
+  TAsymmUnit& au = GetLattice().GetAsymmUnit();
+  static const double k = M_PI/180;
+  vec3d ang(au.Angles()[0].GetV()*k, au.Angles()[1].GetV()*k, au.Angles()[2].GetV()*k);
+  vec3d ange(au.Angles()[0].GetE()*k, au.Angles()[1].GetE()*k, au.Angles()[2].GetE()*k);
+  vec3d ax(au.Axes()[0].GetV(), au.Axes()[1].GetV(), au.Axes()[2].GetV());
+  vec3d axe(au.Axes()[0].GetE(), au.Axes()[1].GetE(), au.Axes()[2].GetE());
+  vec3d cs(cos(ang[0]), cos(ang[1]), cos(ang[2]) );
+  vec3d ss(sin(ang[0]), sin(ang[1]), sin(ang[2]) );
   double t = sqrt(1-cs.QLength() + 2*cs.Mul());
   double r = ax.Mul();
   double v = r*t;
-  //double esd = sqrt( QRT(ax[1]*ax[2]*t*axe[0]) +  
-  //  QRT(ax[0]*ax[2]*t*axe[1]) +
-  //  QRT(ax[0]*ax[1]*t*axe[2]) +
-  //  QRT(r/t*ss[0]*(-cs[0]-1)*ange[0]) +
-  //  QRT(r/t*ss[1]*(-cs[1]-1)*ange[1]) +
-  //  QRT(r/t*ss[2]*(-cs[2]-1)*ange[2]) 
-  //  );
-  return  v;
+  double esd = sqrt( QRT(ax[1]*ax[2]*t*axe[0]) +  
+    QRT(ax[0]*ax[2]*t*axe[1]) +
+    QRT(ax[0]*ax[1]*t*axe[2]) +
+    QRT(r/t*ss[0]*(cs[0]-cs[1]*cs[2])*ange[0]) +
+    QRT(r/t*ss[1]*(cs[1]-cs[0]*cs[2])*ange[1]) +
+    QRT(r/t*ss[2]*(cs[2]-cs[0]*cs[1])*ange[2]) 
+    );
+  return  TEValue<double>(v, esd);
 }
 //..............................................................................
 int TUnitCell::GetMatrixMultiplier(short Latt)  {
@@ -926,4 +935,37 @@ void TUnitCell::BuildStructureMap( TArray3D<short>& map, double delta, short val
   for( int i=0; i < scatterers.Count(); i++ )
     delete scatterers.Object(i);
 }
+//////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////
+void TUnitCell::LibVolumeEx(const TStrObjList& Params, TMacroError& E)  {
+  E.SetRetVal( CalcVolumeEx().ToString() );
+}
+//..............................................................................
+void TUnitCell::LibCellEx(const TStrObjList& Params, TMacroError& E)  {
+  if( Params[0].Comparei('a') == 0 )
+    E.SetRetVal( Lattice->GetAsymmUnit().Axes()[0].ToString() );
+  else if( Params[0].Comparei('b') == 0 )
+    E.SetRetVal( Lattice->GetAsymmUnit().Axes()[1].ToString() );
+  else if( Params[0].Comparei('c') == 0 )
+    E.SetRetVal( Lattice->GetAsymmUnit().Axes()[2].ToString() );
+  else if( Params[0].Comparei("alpha") == 0 )
+    E.SetRetVal( Lattice->GetAsymmUnit().Angles()[0].ToString() );
+  else if( Params[0].Comparei("beta") == 0 )
+    E.SetRetVal( Lattice->GetAsymmUnit().Angles()[1].ToString() );
+  else if( Params[0].Comparei("gamma") == 0 )
+    E.SetRetVal( Lattice->GetAsymmUnit().Angles()[2].ToString() );
+  else
+    E.ProcessingError(__OlxSrcInfo, "invalid argument");
+}
+//..............................................................................
+class TLibrary*  TUnitCell::ExportLibrary(const olxstr& name)  {
+  TLibrary* lib = new TLibrary( name.IsEmpty() ? olxstr("uc") : name );
+  lib->RegisterFunction<TUnitCell>( new TFunction<TUnitCell>(this,  &TUnitCell::LibVolumeEx, "VolumeEx", fpNone,
+"Returns unit cell volume with esd") );
+  lib->RegisterFunction<TUnitCell>( new TFunction<TUnitCell>(this,  &TUnitCell::LibCellEx, "CellEx", fpOne,
+"Returns unit cell side/angle with esd") );
+  return lib;
+}
+//..............................................................................
 
