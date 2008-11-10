@@ -8567,9 +8567,12 @@ void TMainForm::macEsd(TStrObjList &Cmds, const TParamList &Options, TMacroError
           pld << atoms.Last()->GetLabel() << ' ';
         }
         TBasicApp::GetLog() << (olxstr("Plane ") << pld << "RMS: " << vcovc.CalcPlane(atoms).ToString() << '\n');
-        TEVPoint<double> cent( vcovc.CalcCentroid(atoms) );
-        TBasicApp::GetLog() << (olxstr("Plane ") << pld << "centroid : {" << cent[0].ToString() <<
-          ", " << cent[1].ToString() << ", " << cent[2].ToString() << "}\n");
+        TEVPoint<double> c_cent( vcovc.CalcCentroid(atoms) );
+        TBasicApp::GetLog() << (olxstr("Plane ") << pld << "cartesian centroid : {" << c_cent[0].ToString() <<
+          ", " << c_cent[1].ToString() << ", " << c_cent[2].ToString() << "}\n");
+        TEVPoint<double> f_cent( vcovc.CalcCentroidF(atoms) );
+        TBasicApp::GetLog() << (olxstr("Plane ") << pld << "fractional centroid : {" << f_cent[0].ToString() <<
+          ", " << f_cent[1].ToString() << ", " << f_cent[2].ToString() << "}\n");
       }
       else if( EsdlInstanceOf(*sel.Object(0), TXBond) )  {
         TXBond& xb = *(TXBond*)sel.Object(0);
@@ -8607,6 +8610,9 @@ void TMainForm::macEsd(TStrObjList &Cmds, const TParamList &Options, TMacroError
           vcovc.CalcP2ADistance(atoms, sa).ToString() << '\n');
         TBasicApp::GetLog() << (olxstr(sa.GetLabel()) << " to plane " << pld << "centroid distance: " <<
           vcovc.CalcPC2ADistance(atoms, sa).ToString() << '\n' );
+        // test show complete equivalence to the numerical diff above
+//        TBasicApp::GetLog() << (olxstr(sa.GetLabel()) << " to plane " << pld << "centroid distance (precise): " <<
+//          vcovc.CalcPC2ADistanceP(atoms, sa).ToString() << '\n' );
       }
       else if( (EsdlInstanceOf(*sel.Object(0), TXBond) && EsdlInstanceOf(*sel.Object(1), TXPlane)) ||  
                (EsdlInstanceOf(*sel.Object(1), TXBond) && EsdlInstanceOf(*sel.Object(0), TXPlane)))  {
