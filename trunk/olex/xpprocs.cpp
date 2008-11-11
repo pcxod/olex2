@@ -6807,38 +6807,39 @@ void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     THklFile hf;
     hf.LoadFromFile(hklfn);
     TRefList refsP, refsN;
-    hf.Merge( FXApp->XFile().GetLastLoaderSG(), false, refsP);
+    hf.Merge( FXApp->XFile().GetLastLoaderSG(), true, refsP);
     for( int i=0; i < refsP.Count(); i++ )  {
-      refsN.AddNew(-refsP[i].GetH(),
-        -refsP[i].GetK(),
-        -refsP[i].GetL(),
-        refsP[i].GetI(),
-        refsP[i].GetS()
-        );
+        refsN.AddNew(-refsP[i].GetH(),
+          -refsP[i].GetK(),
+          -refsP[i].GetL(),
+          refsP[i].GetI(),
+          refsP[i].GetS()
+          );
     }
     TArrayList<compd> FP(refsP.Count()), FN(refsP.Count());
     SFUtil::CalcSF(FXApp->XFile(), refsP, FP, true);
     SFUtil::CalcSF(FXApp->XFile(), refsN, FN, true);
+    //for( int i=0; i < FP.Count(); i++ )  {
+    //  vec3i r(refsP[i].GetH(), refsP[i].GetK(), refsP[i].GetL());
+    //  TBasicApp::GetLog() << (olxstr(refsP[i].ToString(), 70) << '\t' << 
+    //      olxstr::FormatFloat(3, FP[i].qmod()) << '\t' << 
+    //      olxstr::FormatFloat(3, FN[i].qmod()) << '\n');
+    //}
+    double up = 0, dn = 0;
     for( int i=0; i < FP.Count(); i++ )  {
-      vec3i r(refsP[i].GetH(), refsP[i].GetK(), refsP[i].GetL());
-      for( int j=i+1; j < FP.Count(); j++ )  {
-        if( refsP[j].EqNegHkl(r) )
-          TBasicApp::GetLog() << (olxstr(refsP[i].ToString(), 70) << '\t' << 
-          olxstr::FormatFloat(3, FP[i].qmod()) << '\t' << 
-          olxstr::FormatFloat(3, FN[i].qmod()) << '\n');
+      double pi = FP[i].qmod(),
+        ni = FN[i].qmod(),
+        oi = refsP[i].GetI();
+      for( int j=0; j < FP.Count(); j++ )  {
+        double pj = FP[j].qmod(),
+          nj = FN[j].qmod(),
+          oj = refsP[j].GetI();
+        up += (pi - ni)*(oj - pj);
+        dn += (pi - ni)*(pj - nj);
       }
     }
-    int cnt = 0;
-    double fp = 0;
-    for( int i=0; i < FP.Count(); i++ )  {
-      double d = FN[i].qmod() - FP[i].qmod();
-      if( d != 0 )  {
-        cnt++;
-        fp += (refsP[i].GetI() - FP[i].qmod())/d;
-      }
-    }
-    if( cnt != 0 )  fp /= cnt;
-    TBasicApp::GetLog() << fp << '\n';
+    if( dn != 0 )  up /= dn;
+    TBasicApp::GetLog() << up << '\n';
   }
   return;
   TSymmLib& sl = *TSymmLib::GetInstance();
