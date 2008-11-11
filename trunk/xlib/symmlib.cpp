@@ -1306,8 +1306,6 @@ TSymmLib::TSymmLib(const olxstr& FN)  {
   PointGroups.Add( FindGroup("P2/m") );
 
   PointGroups.Add( FindGroup("P222") );
-  PointGroups.Add( FindGroup("P2mm") );
-  PointGroups.Add( FindGroup("Pm2m") );
   PointGroups.Add( FindGroup("Pmm2") );
   PointGroups.Add( FindGroup("Pmmm") );
 
@@ -1325,9 +1323,9 @@ TSymmLib::TSymmLib(const olxstr& FN)  {
   PointGroups.Add( FindGroup("P321") );
   PointGroups.Add( FindGroup("P3m1") );
   PointGroups.Add( FindGroup("P-3m1") );
+  PointGroups.Add( FindGroup("P-31m") );
   PointGroups.Add( FindGroup("P312") );
   PointGroups.Add( FindGroup("P31m") );
-  PointGroups.Add( FindGroup("P-31m") );
 
   PointGroups.Add( FindGroup("P6") );
   PointGroups.Add( FindGroup("P-6") );
@@ -1482,10 +1480,12 @@ void TSymmLib::InitRelations()  {
     }
   }
   for( int i=0; i < SGCount(); i++ )  {
-    if( &GetGroup(i).GetPointGroup() != NULL )  continue;
+    TSpaceGroup& sg = GetGroup(i);
+    if( &sg.GetPointGroup() != NULL )  continue;
     TSpaceGroup* pg = NULL;
     for( int j=0; j < PointGroups.Count(); j++ )  {
       if( GetGroup(i).ContainsGroup( PointGroups[j] ) )  {
+        //sg.SetPointGroup( *PointGroups[j] );
         pg = PointGroups[j];
         break;
       }

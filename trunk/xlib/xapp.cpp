@@ -107,7 +107,7 @@ void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F)  {
   evecd quad(6);
   const static double EQ_PI = 8*QRT(M_PI);
   const static double T_PI = 2*M_PI;
-  const static double TQ_PI = 2*QRT(M_PI);
+  const static double TQ_PI = 2.0*QRT(M_PI);
   static const double ev_angstrom  = 6626.0755 * 2.99792458 / 1.60217733;
   double WaveLength = 0.71073;
 
@@ -194,8 +194,11 @@ void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F)  {
         SinCos(tv, &sa, &ca);
         if( alist[j]->GetEllipsoid() != NULL )  {
           double* Q = &Ucifs[j*6];  // pick up the correct ellipsoid
-          double B = (Q[0]*hkl[0]*hkl[0] + Q[1]*hkl[1]*hkl[1] + Q[2]*hkl[2]*hkl[2] + 
-            Q[3]*hkl[1]*hkl[2] + Q[4]*hkl[0]*hkl[2] + Q[5]*hkl[0]*hkl[1]);
+          //double B = (Q[0]*hkl[0]*hkl[0] + Q[1]*hkl[1]*hkl[1] + Q[2]*hkl[2]*hkl[2] + 
+          //  Q[3]*hkl[1]*hkl[2] + Q[4]*hkl[0]*hkl[2] + Q[5]*hkl[0]*hkl[1]);
+          double B = (hkl[0]*(Q[0]*hkl[0]+Q[4]*hkl[2]+Q[5]*hkl[1]) + 
+                      hkl[1]*(Q[1]*hkl[1]+Q[3]*hkl[2]) + 
+                      hkl[2]*(Q[2]*hkl[2]) );
           B = exp( B );
           l.Re() += B*ca;
           l.Im() += B*sa;
