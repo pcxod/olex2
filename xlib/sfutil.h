@@ -65,7 +65,7 @@ template <class sg> class SF_calculation : public ISF_calculation {
 public:
   virtual void Calculate(double waveLength, const TRefList& refs, TArrayList<compd>& F, 
       const TPtrList<cm_Element> scatterers, const TCAtomPList& atoms, double* U) const {
-    TArrayList<vec3i> rv(sg::size);
+    TArrayList<vec3d> rv(sg::size);
     TArrayList<double> ps(sg::size);
     TArrayList<compd> fo(scatterers.Count()), fpfdp(scatterers.Count());
     const mat3d& hkl2c = atoms[0]->GetParent()->GetHklToCartesian();
@@ -78,12 +78,12 @@ public:
     }
     for( int i=0; i < refs.Count(); i++ )  {
       const TReflection& ref = refs[i];
-      vec3i i_hkl(ref.GetH(), ref.GetK(), ref.GetL());
-      vec3d hkl(i_hkl[0]*hkl2c[0][0],
-                i_hkl[0]*hkl2c[0][1] + i_hkl[1]*hkl2c[1][1],
-                i_hkl[0]*hkl2c[0][2] + i_hkl[1]*hkl2c[1][2] + i_hkl[2]*hkl2c[2][2]);
+      vec3d d_hkl(ref.GetH(), ref.GetK(), ref.GetL());
+      vec3d hkl(d_hkl[0]*hkl2c[0][0],
+                d_hkl[0]*hkl2c[0][1] + d_hkl[1]*hkl2c[1][1],
+                d_hkl[0]*hkl2c[0][2] + d_hkl[1]*hkl2c[1][2] + d_hkl[2]*hkl2c[2][2]);
       const double d_s2 = hkl.QLength()*0.25;
-      sg::GenHkl(i_hkl, rv, ps);
+      sg::GenHkl(d_hkl, rv, ps);
       for( int j=0; j < scatterers.Count(); j++)  {
         fo[j] = scatterers[j]->gaussians->calc_sq(d_s2);
         fo[j] += fpfdp[j];
@@ -93,17 +93,17 @@ public:
         const vec3d& crd = atoms[j]->ccrd();
         compd l;
         for( int k=0; k < sg::size; k++ )  {
-          const vec3i& o_hkl = rv[k];
-          double tv =  T_PI*(o_hkl[0]*crd[0]+o_hkl[1]*crd[1]+o_hkl[2]*crd[2]+ps[k]);  // scattering vector + phase shift
+          const vec3d& o_hkl = rv[k];
+          double tv =  T_PI*(crd[0]*o_hkl[0]+crd[1]*o_hkl[1]+crd[2]*o_hkl[2]+ps[k]);  // scattering vector + phase shift
           double ca, sa;
           SinCos(tv, &sa, &ca);
           if( atoms[j]->GetEllpId() != -1 )  {
             const double* Q = &U[j*6];  // pick up the correct ellipsoid
-            const double B = exp(o_hkl[0]*(Q[0]*o_hkl[0]+Q[4]*o_hkl[2]+Q[5]*o_hkl[1]) + 
-                                 o_hkl[1]*(Q[1]*o_hkl[1]+Q[3]*o_hkl[2]) + 
-                                 o_hkl[2]*(Q[2]*o_hkl[2]) );
+            const double B = exp((Q[0]*o_hkl[0]+Q[4]*o_hkl[2]+Q[5]*o_hkl[1])*o_hkl[0] + 
+                                 (Q[1]*o_hkl[1]+Q[3]*o_hkl[2])*o_hkl[1] + 
+                                 (Q[2]*o_hkl[2])*o_hkl[2] );
             l.Re() += ca*B;
-            l.Re() += sa*B;
+            l.Im() += sa*B;
           }
           else  {
             l.Re() += ca;

@@ -186,7 +186,7 @@ void SFUtil::CalcSF(TXFile& xfile, const TRefList& refs, TArrayList<TEComplex<do
   
   TPtrList<TBasicAtomInfo> bais;
   TPtrList<TCAtom> alist;
-  double *Ucifs = new double[6*au.AtomCount() + 1];
+  double *U = new double[6*au.AtomCount() + 1];
   TPtrList<cm_Element> scatterers;
   for( int i=0; i < au.AtomCount(); i++ )  {
     TCAtom& ca = au.GetAtom(i);
@@ -199,7 +199,7 @@ void SFUtil::CalcSF(TXFile& xfile, const TRefList& refs, TArrayList<TEComplex<do
         scatterers.Add(XElementLib::FindBySymbol(ca.GetAtomInfo().GetSymbol()));
      
       if( scatterers.Last() == NULL ) {
-        delete [] Ucifs;
+        delete [] U;
         throw TFunctionFailedException(__OlxSourceInfo, olxstr("could not locate scatterer: ") << ca.GetAtomInfo().GetSymbol() );
       }
       bais.Add( &ca.GetAtomInfo() );
@@ -213,21 +213,22 @@ void SFUtil::CalcSF(TXFile& xfile, const TRefList& refs, TArrayList<TEComplex<do
       elp->GetQuad(quad);  // default is Ucart
       au.UcartToUcif(quad);
       for( int k=0; k < 6; k++ )
-        Ucifs[ind+k] = -TQ_PI*quad[k]*BM[k];
+        U[ind+k] = -TQ_PI*quad[k]*BM[k];
     }
     else  {
-      Ucifs[ind] = ca.GetUiso();
-      Ucifs[ind] *= -EQ_PI;
+      U[ind] = ca.GetUiso();
+      U[ind] *= -EQ_PI;
     }
   }
 
   ISF_calculation* sf_calculation = fs_factory_ISF_calculation(sg->GetName());
   if( sf_calculation == NULL )  {
-    delete [] Ucifs;
+    delete [] U;
     throw TFunctionFailedException(__OlxSourceInfo, "invalid space group");
   }
-  sf_calculation->Calculate(WaveLength, refs, F, scatterers, alist, Ucifs);
+  sf_calculation->Calculate(WaveLength, refs, F, scatterers, alist, U);
   delete sf_calculation;
+
 
   double sF2o = 0, sF2c = 0;
   const int f_cnt = F.Count();
@@ -239,5 +240,5 @@ void SFUtil::CalcSF(TXFile& xfile, const TRefList& refs, TArrayList<TEComplex<do
   double simple_scale = sF2o/sF2c;
   for( int i=0; i < f_cnt; i++ ) 
     refs[i].SetI( refs[i].GetI()/simple_scale );
-  delete [] Ucifs;
+  delete [] U;
 }

@@ -4,10 +4,10 @@
 
 #include "olxvar.h"
 #include "egc.h"
-#include "pyext.h"
 
 TOlxVars* TOlxVars::Instance = NULL;
 #ifndef _NO_PYTHON
+#include "pyext.h"
 char TOlxPyVar::svmn[] = "setValue";
 char TOlxPyVar::gvmn[] = "getValue";
 
