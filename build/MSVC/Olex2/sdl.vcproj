@@ -574,6 +574,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\sdl\ecomplex.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\sdl\edlist.h"
 				>
 			</File>

@@ -6802,15 +6802,44 @@ public:
 };
 #endif
 void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  //olxstr hklfn = FXApp->LocateHklFile();
-  //if( TEFile::FileExists(hklfn) )  {
-  //  THklFile hf;
-  //  hf.LoadFromFile(hklfn);
-  //  TRefList refs;
-  //  hf.Merge( FXApp->XFile().GetAsymmUnit(), true, refs);
-  //  TArrayList<compd>
-  //  SFUtil::CalcSF(FXApp->XFile(), refs, F, true);
-  //}
+  olxstr hklfn = FXApp->LocateHklFile();
+  if( TEFile::FileExists(hklfn) )  {
+    THklFile hf;
+    hf.LoadFromFile(hklfn);
+    TRefList refsP, refsN;
+    hf.Merge( FXApp->XFile().GetLastLoaderSG(), false, refsP);
+    for( int i=0; i < refsP.Count(); i++ )  {
+      refsN.AddNew(-refsP[i].GetH(),
+        -refsP[i].GetK(),
+        -refsP[i].GetL(),
+        refsP[i].GetI(),
+        refsP[i].GetS()
+        );
+    }
+    TArrayList<compd> FP(refsP.Count()), FN(refsP.Count());
+    SFUtil::CalcSF(FXApp->XFile(), refsP, FP, true);
+    SFUtil::CalcSF(FXApp->XFile(), refsN, FN, true);
+    for( int i=0; i < FP.Count(); i++ )  {
+      vec3i r(refsP[i].GetH(), refsP[i].GetK(), refsP[i].GetL());
+      for( int j=i+1; j < FP.Count(); j++ )  {
+        if( refsP[j].EqNegHkl(r) )
+          TBasicApp::GetLog() << (olxstr(refsP[i].ToString(), 70) << '\t' << 
+          olxstr::FormatFloat(3, FP[i].qmod()) << '\t' << 
+          olxstr::FormatFloat(3, FN[i].qmod()) << '\n');
+      }
+    }
+    int cnt = 0;
+    double fp = 0;
+    for( int i=0; i < FP.Count(); i++ )  {
+      double d = FN[i].qmod() - FP[i].qmod();
+      if( d != 0 )  {
+        cnt++;
+        fp += (refsP[i].GetI() - FP[i].qmod())/d;
+      }
+    }
+    if( cnt != 0 )  fp /= cnt;
+    TBasicApp::GetLog() << fp << '\n';
+  }
   return;
   TSymmLib& sl = *TSymmLib::GetInstance();
   smatd_list ml;

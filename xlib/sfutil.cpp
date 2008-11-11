@@ -222,8 +222,22 @@ void SFUtil::CalcSF(TXFile& xfile, const TRefList& refs, TArrayList<TEComplex<do
   }
 
   ISF_calculation* sf_calculation = fs_factory_ISF_calculation(sg->GetName());
-  if( sf_calculation == NULL )
+  if( sf_calculation == NULL )  {
+    delete [] Ucifs;
     throw TFunctionFailedException(__OlxSourceInfo, "invalid space group");
+  }
   sf_calculation->Calculate(WaveLength, refs, F, scatterers, alist, Ucifs);
   delete sf_calculation;
+
+  double sF2o = 0, sF2c = 0;
+  const int f_cnt = F.Count();
+  for( int i=0; i < f_cnt; i++ )  {
+    if( refs[i].GetI() < 3*refs[i].GetS() )  continue;
+    sF2o += refs[i].GetI();
+    sF2c += F[i].qmod();
+  }
+  double simple_scale = sF2o/sF2c;
+  for( int i=0; i < f_cnt; i++ ) 
+    refs[i].SetI( refs[i].GetI()/simple_scale );
+  delete [] Ucifs;
 }
