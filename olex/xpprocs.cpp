@@ -6834,7 +6834,7 @@ void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         double pj = FP[j].qmod(),
           nj = FN[j].qmod(),
           oj = refsP[j].GetI();
-        up += (pi - ni)*(oj - pj);
+        up += (oi - pi)*(nj - pj);
         dn += (pi - ni)*(pj - nj);
       }
     }

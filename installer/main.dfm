@@ -6460,9 +6460,6 @@ object fMain: TfMain
     inherited eProxy: TEdit
       Height = 19
     end
-    inherited eRepositoryPath: TEdit
-      Height = 19
-    end
     inherited bbDone: TBitBtn
       OnClick = bbDoneClick
     end
