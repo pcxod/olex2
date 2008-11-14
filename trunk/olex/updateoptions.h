@@ -6,11 +6,10 @@
 #include "settingsfile.h"
 //---------------------------------------------------------------------------
 
-class TdlgUpdateOptions: public TDialog
-{
-
+class TdlgUpdateOptions: public TDialog  {
   wxStaticText *stProxy, *stRepository, *stLastUpdated;
-  wxTextCtrl *tcProxy, *tcRepository;
+  wxTextCtrl *tcProxy;
+  wxComboBox* cbRepository;
   wxRadioBox *rbUpdateInterval;
 protected:
   TSettingsFile SF;

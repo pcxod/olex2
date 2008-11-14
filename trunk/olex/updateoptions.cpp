@@ -36,9 +36,11 @@ TdlgUpdateOptions::TdlgUpdateOptions(TMainFrame *ParentFrame) :
 
     stLastUpdated->SetLabel( uiStr(TETime::FormatDateTime(lastUpdate.RadInt<time_t>())) );
   }
-
+  wxString choices[] = {wxT("http://dimas.dur.ac.uk/olex-distro/update/"),
+  wxT("http://dimas.dur.ac.uk/olex-distro-test/update/"),
+  wxT("http://www.x-rayman.co.uk/olex2/olex-distro-test/update/")};
   tcProxy = new wxTextCtrl(this, -1, uiStr(SF.ParamValue("proxy")) , wxDefaultPosition, wxSize(320, 21), 0);
-  tcRepository = new wxTextCtrl(this, -1, uiStr(SF.ParamValue("repository")), wxDefaultPosition, wxSize(320, 21), 0);
+  cbRepository = new wxComboBox(this, -1, uiStr(SF.ParamValue("repository")), wxDefaultPosition, wxSize(320, 21), 3, choices);
 
   wxString options[] = {wxT("Always"), wxT("Daily"), wxT("Weekly"), wxT("Monthly"), wxT("Never")};
   rbUpdateInterval = new wxRadioBox(this, -1, wxT("Update Frequency"),
@@ -56,7 +58,7 @@ TdlgUpdateOptions::TdlgUpdateOptions(TMainFrame *ParentFrame) :
   wxBoxSizer *BSizer = new wxBoxSizer( wxHORIZONTAL );
   BSizer->Add( stRepository, 0, wxALL, Border );
   wxBoxSizer *BBSizer = new wxBoxSizer( wxHORIZONTAL );
-  BBSizer->Add( tcRepository, 0, wxALL, Border );
+  BBSizer->Add( cbRepository, 0, wxALL, Border );
 
   wxBoxSizer *CSizer = new wxBoxSizer( wxHORIZONTAL );
   CSizer->Add( rbUpdateInterval, 0, wxALL, Border );
@@ -94,7 +96,7 @@ TdlgUpdateOptions::~TdlgUpdateOptions()
 void TdlgUpdateOptions::OnOK(wxCommandEvent& event)
 {
   SF.UpdateParam( "proxy", tcProxy->GetValue().c_str() );
-  SF.UpdateParam( "repository", tcRepository->GetValue().c_str() );
+  SF.UpdateParam( "repository", cbRepository->GetValue().c_str() );
   SF.UpdateParam( "update", rbUpdateInterval->GetStringSelection().c_str() );
   SF.SaveSettings( SettingsFile );
   EndModal(wxID_OK);

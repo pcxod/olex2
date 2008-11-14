@@ -23,7 +23,6 @@ __published:	// IDE-managed Components
   TSpeedButton *sbPickZip;
   TEdit *eInstallationPath;
   TEdit *eProxy;
-  TEdit *eRepositoryPath;
   TBitBtn *bbInstall;
   TBitBtn *bbDone;
   TRadioGroup *rgAutoUpdate;
@@ -34,6 +33,7 @@ __published:	// IDE-managed Components
   TBitBtn *bbUninstall;
   TOpenDialog *dlgOpen;
   TImage *Image1;
+  TComboBox *cbRepository;
 private:	// User declarations
 public:		// User declarations
   __fastcall TfrMain(TComponent* Owner);

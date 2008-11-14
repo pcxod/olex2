@@ -2812,22 +2812,13 @@ object frMain: TfrMain
     Enabled = False
     TabOrder = 1
   end
-  object eRepositoryPath: TEdit
-    Left = 7
-    Top = 212
-    Width = 255
-    Height = 21
-    BevelOuter = bvNone
-    TabOrder = 2
-    Text = 'http://dimas.dur.ac.uk/olex-distro/'
-  end
   object bbDone: TBitBtn
     Left = 143
     Top = 273
     Width = 69
     Height = 22
     Caption = 'Exit'
-    TabOrder = 4
+    TabOrder = 3
     NumGlyphs = 2
   end
   object rgAutoUpdate: TRadioGroup
@@ -2849,7 +2840,7 @@ object frMain: TfrMain
       'Monthly'
       'Never')
     ParentFont = False
-    TabOrder = 5
+    TabOrder = 4
   end
   object stAction: TStaticText
     Left = 7
@@ -2858,7 +2849,7 @@ object frMain: TfrMain
     Height = 15
     AutoSize = False
     BevelInner = bvNone
-    TabOrder = 6
+    TabOrder = 5
   end
   object cbProxy: TCheckBox
     Left = 7
@@ -2872,7 +2863,7 @@ object frMain: TfrMain
     Font.Name = 'MS Sans Serif'
     Font.Style = []
     ParentFont = False
-    TabOrder = 7
+    TabOrder = 6
   end
   object cbCreateDesktopShortcut: TCheckBox
     Left = 144
@@ -2890,7 +2881,7 @@ object frMain: TfrMain
     ParentCtl3D = False
     ParentFont = False
     State = cbChecked
-    TabOrder = 8
+    TabOrder = 7
   end
   object cbCreateShortcut: TCheckBox
     Left = 144
@@ -2906,7 +2897,7 @@ object frMain: TfrMain
     Font.Style = []
     ParentFont = False
     State = cbChecked
-    TabOrder = 9
+    TabOrder = 8
   end
   object bbUninstall: TBitBtn
     Left = 215
@@ -2914,7 +2905,7 @@ object frMain: TfrMain
     Width = 72
     Height = 22
     Caption = 'Uninstall'
-    TabOrder = 10
+    TabOrder = 9
     Visible = False
     NumGlyphs = 2
   end
@@ -2925,8 +2916,21 @@ object frMain: TfrMain
     Height = 22
     Caption = 'Install'
     ModalResult = 1
-    TabOrder = 3
+    TabOrder = 2
     NumGlyphs = 2
+  end
+  object cbRepository: TComboBox
+    Left = 8
+    Top = 214
+    Width = 251
+    Height = 21
+    ItemHeight = 13
+    TabOrder = 10
+    Text = 'http://dimas.dur.ac.uk/olex-distro/'
+    Items.Strings = (
+      'http://dimas.dur.ac.uk/olex-distro/'
+      'http://dimas.dur.ac.uk/olex-distro-test/'
+      'http://www.x-rayman.co.uk/olex2/olex-distro-test/')
   end
   object dlgOpen: TOpenDialog
     FileName = 'olex2.zip'

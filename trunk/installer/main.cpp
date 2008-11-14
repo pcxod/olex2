@@ -77,14 +77,14 @@ __fastcall TfMain::TfMain(TComponent* Owner)
            sfile << TfMain::SettingsFile;
     if( TEFile::FileExists( sfile ) )  {
       TSettingsFile Settings( sfile );
-      frMain->eRepositoryPath->Text = Settings.ParamValue("repository").c_str();
+      frMain->cbRepository->Text = Settings.ParamValue("repository").c_str();
       frMain->eProxy->Text = Settings.ParamValue("proxy").c_str();
       int updateInd = frMain->rgAutoUpdate->Items->IndexOfName( Settings.ParamValue("update").c_str() );
       if( updateInd != -1 )
         frMain->rgAutoUpdate->ItemIndex = updateInd;
     }
     frMain->sbPickZip->Visible = false;
-    frMain->eRepositoryPath->Width = 278;
+    frMain->cbRepository->Width = 278;
     frMain->bbInstall->Caption = "Update";
     frMain->bbUninstall->Visible = true;
     frMain->bbBrowse->Enabled = false;
@@ -99,7 +99,7 @@ __fastcall TfMain::TfMain(TComponent* Owner)
         zipfn = TEFile::CurrentDir();
         zipfn << "\\olex2.zip";
       }
-      frMain->eRepositoryPath->Text = zipfn.c_str();
+      frMain->cbRepository->Text = zipfn.c_str();
     }
   }
   frMain->bbInstall->Default = true;
@@ -232,7 +232,7 @@ void __fastcall TfMain::bbInstallClick(TObject *Sender)  {
     proxyPath = frMain->eProxy->Text.c_str();
   }
 
-  reposPath = frMain->eRepositoryPath->Text.c_str();
+  reposPath = frMain->cbRepository->Text.c_str();
 
   bool localInstall = TEFile::IsAbsolutePath( reposPath );
 
@@ -287,7 +287,7 @@ void __fastcall TfMain::bbInstallClick(TObject *Sender)  {
         return;
     }
     else  {
-      if( !DoInstall( frMain->eRepositoryPath->Text.c_str(), installPath ) )
+      if( !DoInstall( frMain->cbRepository->Text.c_str(), installPath ) )
         return;
     }
 //    frMain->pbProgress->Position = 0;
@@ -309,7 +309,7 @@ void __fastcall TfMain::bbInstallClick(TObject *Sender)  {
                                  installPath + "olex2.exe", "Olex2 launcher");
     if( !localInstall )  {
       Settings.UpdateParam("repository", reposPath + "update/");
-      frMain->eRepositoryPath->Text = AnsiString(reposPath.c_str()) + "update/";
+      frMain->cbRepository->Text = AnsiString(reposPath.c_str()) + "update/";
     }
     Settings.SaveSettings( installPath + TfMain::SettingsFile );
   }
@@ -516,7 +516,7 @@ void __fastcall TfMain::FormPaint(TObject *Sender)
 void __fastcall TfMain::sbPickZipClick(TObject *Sender)
 {
   if( frMain->dlgOpen->Execute() )  {
-    frMain->eRepositoryPath->Text = frMain->dlgOpen->FileName;
+    frMain->cbRepository->Text = frMain->dlgOpen->FileName;
   }
 }
 //---------------------------------------------------------------------------
