@@ -164,6 +164,7 @@ enum
   ID_SelGroup,
   ID_SelUnGroup,
 
+  ID_GraphicsKill,
   ID_GraphicsHide,
   ID_GraphicsDS,
   ID_GraphicsP,
@@ -255,6 +256,7 @@ BEGIN_EVENT_TABLE(TMainForm, wxFrame)  // basic interface
   EVT_MENU(ID_ModelCenter, TMainForm::OnModelCenter)
 
   EVT_MENU(ID_GraphicsHide, TMainForm::OnGraphics)
+  EVT_MENU(ID_GraphicsKill, TMainForm::OnGraphics)
   EVT_MENU(ID_GraphicsDS, TMainForm::OnGraphics)
   EVT_MENU(ID_GraphicsP, TMainForm::OnGraphics)
   EVT_MENU(ID_GraphicsEdit, TMainForm::OnGraphics)
@@ -564,6 +566,7 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual accupancy\
   this_InitMacro(AZoom, , fpAny^fpNone );
   this_InitMacro(BRad, , fpOne );
 
+  this_InitMacro(Hide, , fpAny^fpNone );
   this_InitMacro(Kill, h-kill hidden atoms, fpAny^fpNone );
   this_InitMacro(Omit, , fpOne|fpThree | psCheckFileTypeIns);
 
@@ -1020,7 +1023,7 @@ separated values of Atom Type and radius, an entry a line" );
   pmAtom->Append(ID_AtomGrowFrags, wxT("Grow Fragments"));
     miAtomGrowFrag = pmAtom->FindItemByPosition(pmAtom->GetMenuItemCount()-1);
   pmAtom->AppendSeparator();
-  pmAtom->Append(ID_GraphicsHide, wxT("Delete"));
+  pmAtom->Append(ID_GraphicsKill, wxT("Delete"));
   pmAtom->AppendSeparator();
   pmAtom->Append(ID_MenuFragment, wxT("Fragment"), pmFragment->Clone());
   pmAtom->Append(ID_MenuGraphics, wxT("Graphics"), pmGraphics->Clone());
@@ -1031,13 +1034,14 @@ separated values of Atom Type and radius, an entry a line" );
   miBondInfo = pmBond->FindItemByPosition(0);
   pmBond->Append(ID_MenuTang, wxT("TANG"), pmTang);
   pmBond->AppendSeparator();
-  pmBond->Append(ID_GraphicsHide, wxT("Delete"));
+  pmBond->Append(ID_GraphicsKill, wxT("Delete"));
   pmBond->AppendSeparator();
   pmBond->Append(ID_MenuFragment, wxT("Fragment"), pmFragment->Clone());
   pmBond->Append(ID_MenuGraphics, wxT("Graphics"), pmGraphics->Clone());
   pmBond->Append(ID_Selection, wxT("Selection"), pmSelection->Clone());
 // setting plane menu
   pmPlane->Append(ID_PlaneActivate, wxT("Activate") );
+  pmPlane->Append(ID_GraphicsKill, wxT("Delete"));
   pmPlane->Append(1, wxT("Graphics"), pmGraphics->Clone());
   pmPlane->Append(ID_Selection, wxT("Selection"), pmSelection->Clone());
   pmPlane->AppendSeparator();
@@ -1507,9 +1511,19 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
   switch( event.GetId() )  {
     case ID_GraphicsHide:
       if( FObjectUnderMouse->Selected() )
-        ProcessXPMacro("kill sel", MacroError);
+        ProcessXPMacro("hide sel", MacroError);
       else
         FUndoStack->Push( FXApp->SetGraphicsVisible(FObjectUnderMouse, false) );
+      TimePerFrame = FXApp->Draw();
+      break;
+    case ID_GraphicsKill:
+      if( FObjectUnderMouse->Selected() )
+        ProcessXPMacro("kill sel", MacroError);
+      else  {
+        TPtrList<AGDrawObject> l;
+        l.Add(FObjectUnderMouse);
+        FUndoStack->Push( FXApp->DeleteXObjects(l) );
+      }
       TimePerFrame = FXApp->Draw();
       break;
     case ID_GraphicsEdit:

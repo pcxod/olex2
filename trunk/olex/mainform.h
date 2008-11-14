@@ -267,6 +267,7 @@ private:
   DefMacro(ADS)
   DefMacro(AZoom)
   DefMacro(BRad)
+  DefMacro(Hide)
   DefMacro(Kill)
   DefMacro(UpdateWght)
   DefMacro(Omit)

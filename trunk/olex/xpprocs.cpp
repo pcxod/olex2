@@ -2073,7 +2073,7 @@ void TMainForm::macBRad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 }
 //..............................................................................
 void TMainForm::macKill(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  if( Cmds.Count() == 1 && !Cmds[0].Comparei("sel") )  {
+  if( Cmds.Count() == 1 && Cmds[0].Comparei("sel") == 0 )  {
     TPtrList<AGDrawObject> Objects;
     TGlGroup *sel = FXApp->Selection();
     for( int i=0; i < sel->Count(); i++ )  Objects.Add( (AGDrawObject*)sel->Object(i) );
@@ -2086,6 +2086,25 @@ void TMainForm::macKill(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     if( Atoms.IsEmpty() )  return;
 
     FUndoStack->Push( FXApp->DeleteXAtoms(Atoms) );
+  }
+}
+//..............................................................................
+void TMainForm::macHide(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+  if( Cmds.Count() == 1 && Cmds[0].Comparei("sel") == 0 )  {
+    TPtrList<AGDrawObject> Objects;
+    TGlGroup *sel = FXApp->Selection();
+    for( int i=0; i < sel->Count(); i++ )  
+      Objects.Add( sel->Object(i) );
+    FUndoStack->Push( FXApp->SetGraphicsVisible( Objects, false ) );
+    sel->Clear();
+  }
+  else  {
+    TXAtomPList Atoms;
+    FXApp->FindXAtoms(Cmds.Text(' '), Atoms, true, Options.Contains('h'));
+    if( Atoms.IsEmpty() )  return;
+    TPtrList<AGDrawObject> go;
+    TListCaster::TT(Atoms, go);
+    FUndoStack->Push( FXApp->SetGraphicsVisible(go, false) );
   }
 }
 //..............................................................................
