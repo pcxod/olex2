@@ -590,7 +590,7 @@ private:
   void LoadVFS(short persistenceId);
   // this must be called at different times on GTK and windows
   void StartupInit();
-
+  bool SkipSizing; // when size changed from the LoadSettings
 public:
   TMainForm(TGlXApp *Parent, int Height, int Width);
   virtual ~TMainForm();
