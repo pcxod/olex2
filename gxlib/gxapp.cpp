@@ -566,28 +566,20 @@ void TGXApp::SetBasisVisible( bool v)  {
 //..............................................................................
 TUndoData* TGXApp::SetGraphicsVisible( AGDrawObject *G, bool v )  {
   if( v != IsGraphicsVisible(G) )  {
-    if( EsdlInstanceOf(*G, TXAtom)  )  {
-       TXAtomPList L;  L.Add( (TXAtom*)G );
-       return DeleteXAtoms(L);
-    }
-    if( EsdlInstanceOf(*G, TXBond) )  {
-      TKillUndo *undo = new TKillUndo( new TUndoActionImpl<TGXApp>(this, &GxlObject(TGXApp::undoDelete)));
-      undo->AddSBond( ((TXBond*)G)->Bond() );
-      ((TXBond*)G)->Deleted(true);
-      Draw();
-      return undo;
-    }
-    if( EsdlInstanceOf(*G, TXPlane) )  {
-      TKillUndo *undo = new TKillUndo( new TUndoActionImpl<TGXApp>(this, &GxlObject(TGXApp::undoDelete)));
-      undo->AddSPlane( ((TXPlane*)G)->Plane() );
-      ((TXPlane*)G)->Deleted(true);
-      Draw();
-      return undo;
-    }
     G->Visible(v);
     OnGraphicsVisible->Execute(dynamic_cast<TBasicApp*>(this), G);
     Draw();
   }
+  return NULL;
+}
+//..............................................................................
+TUndoData* TGXApp::SetGraphicsVisible( TPtrList<AGDrawObject>& G, bool v )  {
+  for( int i=0; i < G.Count(); i++ )  {
+    if( v == G[i]->Visible() )  continue;
+    G[i]->Visible(v);
+    OnGraphicsVisible->Execute(dynamic_cast<TBasicApp*>(this), G[i]);
+  }
+  Draw();
   return NULL;
 }
 //..............................................................................
