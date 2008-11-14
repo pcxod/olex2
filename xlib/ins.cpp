@@ -90,6 +90,8 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
 
     if( Toks[0].Comparei("SUMP") == 0 )  // can look like an atom !
       Ins.Add(InsFile[i]);
+    else if( Toks[0].Comparei("MOLE") == 0 )  // these are dodgy
+      continue;
     else if( ParseIns(InsFile, Toks, cx, i) )
       continue;
     else if( Toks[0].Comparei("END") == 0 )     {   //reset RESI to default
