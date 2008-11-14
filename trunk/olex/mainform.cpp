@@ -2688,8 +2688,12 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
   SkipSizing = true;
   I = DF.Root().FindItem("Window");
   if( I != NULL )  {
-    if( I->GetFieldValue("Maximized", "false").ToBool() )
+    if( I->GetFieldValue("Maximized", "false").ToBool() )  {
+      int l = I->GetFieldValue("X", "0").ToInt(), 
+          t = I->GetFieldValue("Y", "0").ToInt();
+      Move( l, t );
       Maximize();
+    }
     else  {
       int w = I->GetFieldValue("Width", "100").ToInt(), 
         h = I->GetFieldValue("Height", "100").ToInt(), 
