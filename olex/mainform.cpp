@@ -305,6 +305,7 @@ TMainForm::TMainForm(TGlXApp *Parent, int Width, int Height):
   TMainFrame(wxT("Olex2"), wxPoint(0,0), wxSize(Width, Height), wxT("MainForm"))
 {
 //  _crtBreakAlloc = 5892;
+  SkipSizing = false;
   Destroying = false;
   StartupInitialised = RunOnceProcessed = false;
   wxInitAllImageHandlers();
@@ -2421,6 +2422,7 @@ void TMainForm::OnGraphicsStyle(wxCommandEvent& event)
 //..............................................................................
 void TMainForm::OnSize(wxSizeEvent& event)  {
   wxFrame::OnSize(event);
+  if( SkipSizing )  return;
   if( FXApp == NULL || FGlConsole == NULL || FInfoBox == NULL || !StartupInitialised )  return;
   OnResize();
 }
@@ -2429,10 +2431,6 @@ void TMainForm::OnResize()  {
   int w=0, h=0, l=0;
   int dheight = InfoWindowVisible ? FInfoBox->GetHeight() : 1;
   GetClientSize(&w, &h);
-
-//#ifdef __X11__
-//  h -= 100;
-//#endif
 
   FInfoBox->SetTop(1);
   if( FHtmlMinimized )  {
@@ -2589,6 +2587,16 @@ void TMainForm::SaveSettings(const olxstr &FN)  {
     I->AddField("NormalFont", normal );
     I->AddField("FixedFont", fixed );
   }
+  
+  I = DF.Root().AddItem("Window");
+  if( IsMaximized() )  I->AddField("Maximized", true);
+  int w_w = 0, w_h = 0;
+  GetSize(&w_w, &w_h);
+  I->AddField("Width", w_w);
+  I->AddField("Height", w_h);
+  GetPosition(&w_w, &w_h);
+  I->AddField("X", w_w);
+  I->AddField("Y", w_h);
 
   I = DF.Root().AddItem("Windows");
   I->AddField("Help", HelpWindowVisible);
@@ -2622,7 +2630,6 @@ void TMainForm::SaveSettings(const olxstr &FN)  {
 }
 //..............................................................................
 void TMainForm::LoadSettings(const olxstr &FN)  {
-
   if( !TEFile::FileExists(FN) ) return;
 
   TDataFile DF;
@@ -2677,6 +2684,24 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
     olxstr ff( I->GetFieldValue("FixedFont", EmptyString) );
     FHtml->SetFonts(nf, ff);
   }
+
+  SkipSizing = true;
+  I = DF.Root().FindItem("Window");
+  if( I != NULL )  {
+    if( I->GetFieldValue("Maximized", "false").ToBool() )
+      Maximize();
+    else  {
+      int w = I->GetFieldValue("Width", "100").ToInt(), 
+        h = I->GetFieldValue("Height", "100").ToInt(), 
+        l = I->GetFieldValue("X", "0").ToInt(), 
+        t = I->GetFieldValue("Y", "0").ToInt();
+      SetSize(l, t, w, h);
+    }
+  }
+  else
+    Maximize();
+  SkipSizing = false;
+  
   I = DF.Root().FindItem("Windows");
   if( I != NULL )  {
     Tmp = I->GetFieldValue("Help");
