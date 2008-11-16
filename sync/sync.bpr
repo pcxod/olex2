@@ -8,7 +8,7 @@
     <RESFILES value="sync.res"/>
     <DEFFILE value=""/>
     <RESDEPEN value="$(RESFILES) main.dfm"/>
-    <LIBFILES value="..\build\Borland\Olex2\lib\sdl.lib"/>
+    <LIBFILES value="..\build\Borland\Olex2\lib\sdl_unicode.lib"/>
     <LIBRARIES value=""/>
     <SPARELIBS value="vcl.lib rtl.lib"/>
     <PACKAGES value="vcl.bpi rtl.bpi vclx.bpi bcbsmp.bpi dbrtl.bpi adortl.bpi vcldb.bpi 
@@ -51,7 +51,7 @@
       <FILE FILENAME="sync.res" FORMNAME="" UNITNAME="sync.res" CONTAINERID="ResTool" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="sync.cpp" FORMNAME="" UNITNAME="sync" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="main.cpp" FORMNAME="fMain" UNITNAME="main" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
-      <FILE FILENAME="..\build\Borland\Olex2\lib\sdl.lib" FORMNAME="" UNITNAME="sdl.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\build\Borland\Olex2\lib\sdl_unicode.lib" FORMNAME="" UNITNAME="sdl_unicode.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
   </FILELIST>
   <BUILDTOOLS>
   </BUILDTOOLS>

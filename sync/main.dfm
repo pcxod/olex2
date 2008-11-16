@@ -18,7 +18,7 @@ object fMain: TfMain
     Left = 0
     Top = 0
     Width = 678
-    Height = 525
+    Height = 520
     ActivePage = tbSync
     Align = alClient
     TabIndex = 0
@@ -92,7 +92,7 @@ object fMain: TfMain
       end
       object sbSyncStatus: TStatusBar
         Left = 0
-        Top = 478
+        Top = 473
         Width = 670
         Height = 19
         Panels = <
@@ -118,7 +118,7 @@ object fMain: TfMain
       object stCurrent: TStaticText
         Left = 96
         Top = 134
-        Width = 31
+        Width = 30
         Height = 17
         Caption = 'None'
         TabOrder = 2
