@@ -3811,6 +3811,19 @@ PyObject* pySetVar(PyObject* self, PyObject* args)  {
   return Py_None;
 }
 //..............................................................................
+PyObject* pyGetPlugins(PyObject* self, PyObject* args)  {
+  TDataItem* pi = TGlXApp::GetMainForm()->PluginItem();
+  if( pi == NULL )  {
+    Py_INCREF(Py_None);
+    return Py_None;
+  }
+
+  PyObject* af = PyTuple_New( pi->ItemCount() ), *f;
+  for( int i=0; i < pi->ItemCount(); i++ )
+    PyTuple_SetItem(af, i, PythonExt::BuildString(pi->Item(i).GetName()) );
+  return af;
+}
+//..............................................................................
 PyObject* pyExpFun(PyObject* self, PyObject* args)  {
   TBasicFunctionPList functions;
   TGlXApp::GetMainForm()->GetLibrary().ListAllFunctions( functions );
@@ -3898,6 +3911,7 @@ PyObject* pyIsControl(PyObject* self, PyObject* args)  {
 }
 //..............................................................................
 static PyMethodDef CORE_Methods[] = {
+  {"GetPluginList", pyGetPlugins, METH_VARARGS, "returns a list of installed plugins"},
   {"ExportFunctionList", pyExpFun, METH_VARARGS, "exports a list of olex functions and their description"},
   {"ExportMacroList", pyExpMac, METH_VARARGS, "exports a list of olex macros and their description"},
   {"IsVar", pyIsVar, METH_VARARGS, "returns boolean value if specified variable exists"},
