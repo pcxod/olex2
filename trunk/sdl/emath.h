@@ -46,6 +46,27 @@ template <class VC>
     d /= n.Length();
     return fabs( caS*d/3 );
   }
+  // tosion angle in degrees
+template <class VC>
+  double TorsionAngle(const VC& v1, const VC& v2, const VC& v3, const VC& v4)  {
+    VC V1(v1 - v2), 
+      V2(v3 - v2), 
+      V3(v4 - v3), 
+      V4(v2 - v3);
+    V1 = V1.XProdVec(V2);
+    V3 = V3.XProdVec(V4);
+    return acos(V1.CAngle(V3))*180/M_PI;
+  }
+  //angle in degrees for three coordinates A-B C-B angle
+template <class VC>
+  double Angle(const VC& v1, const VC& v2, const VC& v3)  {
+    return acos( (v1-v2).CAngle(v3-v2) )*180.0/M_PI;
+  }
+  //angle in degrees for four coordinates A-B D-C angle
+template <class VC>
+  double Angle(const VC& v1, const VC& v2, const VC& v3, const VC& v4)  {
+    return acos( (v1-v2).CAngle(v4-v3) )*180.0/M_PI;
+  }
 
 // greatest common denominator
 extern unsigned int gcd(unsigned int u, unsigned int v);

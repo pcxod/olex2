@@ -19,9 +19,9 @@ object fMain: TfMain
     Top = 0
     Width = 678
     Height = 520
-    ActivePage = tbSync
+    ActivePage = tsDublicates
     Align = alClient
-    TabIndex = 0
+    TabIndex = 1
     TabOrder = 0
     object tbSync: TTabSheet
       Caption = 'Synchronise'

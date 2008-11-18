@@ -24,6 +24,7 @@ bool TXlConGen::FixAtom( TAtomEnvi& envi, const short Group, const TBasicAtomInf
 
     short afix = 0;
     switch( Group )  {
+      case fgNH3:
       case fgCH3:
         if( envi.Count() == 1 )  {
           //TSAtom *SA = envi.GetBase()->Network()->GetLattice()->FindSAtom( envi.GetCAtom(0) );
@@ -82,8 +83,6 @@ bool TXlConGen::FixAtom( TAtomEnvi& envi, const short Group, const TBasicAtomInf
           afix = 147;
         break;
       case fgNH4:
-        break;
-      case fgNH3:
         break;
       case fgNH2:
         if( envi.Count() == 1 )  {

@@ -108,34 +108,20 @@ next_oper:
 //..............................................................................
 // Transforms matrix to standard SYMM operation (INS, CIF files)
 
-olxstr FormatFloatX(double f)  {
-  int sig = Sign(f);
-  f = fabs(f);
-  int w = (int)f;
-  double r = f-w;
-  if( fabs(r) < 0.01 )  return olxstr(w*sig);
-  if( fabs(r) > 0.99 )  return olxstr((w+1)*sig);
-  r = 1./r;
-  int w1 = (int)r;
-  double r1 = r-w1;
-
-  if( fabs(r1) < 0.01 )
-    if( sig < 0 )
-      return olxstr('-') << (int)(w*r+1) << '/' << (int)r;
-    else
-      return olxstr( (int)(w*r+1) ) << '/' << (int)r;
-  if( fabs(r1) > 0.99 )
-    if( sig < 0 )
-      return olxstr('-') << (int)(w*r+1) << '/' << (int)(r+1);
-    else
-      return olxstr( (int)(w*r+1) ) << '/' << (int)(r+1);
-
-  r1 = 1./r1;
-
-  if( sig < 0 )
-    return olxstr('-') << (int)(w*r+r1) << '/' << (int)(r1+w1);
+olxstr FormatFloatEx(double f)  {
+  olxstr rv;
+  if( f < 0 )
+    rv << '-';
+  int v = abs(Round(f*12)), base = 12;
+  int denom = esdl::gcd(v, base);
+  if( denom != 1 )  {
+    v /= denom;
+    base /= denom;
+  }
+  if( base == 1 )
+    return rv << v;
   else
-    return olxstr( (int)(w*r+r1) ) << '/' << (int)(r1+w1);
+    return rv << v << '/' << base;
 }
 olxstr TSymmParser::MatrixToSymm(const smatd& M)  {
   olxstr T, T1, T2;
@@ -165,6 +151,36 @@ olxstr TSymmParser::MatrixToSymm(const smatd& M)  {
       T2.TrimFloat();
       T1.Insert(T2, 0);
     }
+    T << T1;
+    T1 = EmptyString;
+  }
+  return T;
+}
+//..............................................................................
+olxstr TSymmParser::MatrixToSymmEx(const smatd& M)  {
+  olxstr T, T1, T2;
+  char Axis[] = {'X','Y','Z'};
+  for( int j=0; j < 3; j ++ )  {
+    if( j != 0 )
+      T << ',';
+    for( int i=0; i < 3; i ++ )  {
+      if( i == j )  {
+        if( M.r[j][i] != 0 )  {
+          //if( M[j][3] != 0 )
+          T1 << CharSign(M.r[j][i]);
+          if( fabs(fabs(M.r[j][i])-1) > 1e-5 )
+            T1 << (double)M.r[j][i];
+          T1 << Axis[j];
+        }
+        continue;
+      }
+      if( M.r[j][i] != 0 )  {
+        T1.Insert(Axis[i], 0);
+        T1.Insert(CharSign(M.r[j][i]), 0);
+      }
+    }
+    if( M.t[j] != 0 )
+      T1.Insert(FormatFloatEx(M.t[j]), 0);
     T << T1;
     T1 = EmptyString;
   }

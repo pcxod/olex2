@@ -6,6 +6,7 @@
 #include "network.h"
 #include "lattice.h"
 #include "asymmunit.h"
+#include "symmparser.h"
 
           
 //----------------------------------------------------------------------------//
@@ -52,4 +53,27 @@ bool TSAtom::IsGrown() {
   return Grown;
 }
 //..............................................................................
+olxstr TSAtom::GetGuiLabel() const  {  
+  olxstr rv(FCAtom->GetLabel());
+  if( FCAtom->GetResiId() != -1 )  {
+    rv << '_' <<
+      FCAtom->GetParent()->GetResidue(FCAtom->GetResiId()).GetNumber();
+  }
+  if( Network == NULL || (Matrices[0]->r.IsI() && Matrices[0]->t.IsNull()) )
+    return rv;
+  else
+    return rv << '.' << TSymmParser::MatrixToSymmCode(Network->GetLattice().GetUnitCell(), *Matrices[0]);
+}
+//..............................................................................
+olxstr TSAtom::GetGuiLabelEx() const  {  
+  olxstr rv(FCAtom->GetLabel());
+  if( FCAtom->GetResiId() != -1 )  {
+    rv << '_' <<
+      FCAtom->GetParent()->GetResidue(FCAtom->GetResiId()).GetNumber();
+  }
+  if( Network == NULL || (Matrices[0]->r.IsI() && Matrices[0]->t.IsNull()) )
+    return rv;
+  else
+    return rv << '(' << TSymmParser::MatrixToSymmEx(*Matrices[0]) << ')';
+}
 

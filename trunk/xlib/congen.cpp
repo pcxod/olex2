@@ -46,7 +46,8 @@ void AConstraintGenerator::GenerateAtom( TCAtomPList& created, TAtomEnvi& envi,
   M.I();
   M1.I();
   // idialised triangle in XY plane
-  vec3d PlaneN, Z(0,0,1), RotVec, Vec1, Vec2, Vec3;
+  static const vec3d Z(0,0,1), X(1,0,0);
+  vec3d PlaneN, RotVec, Vec1, Vec2, Vec3;
   double ca;
   bool AnglesEqual;
 
@@ -77,7 +78,7 @@ void AConstraintGenerator::GenerateAtom( TCAtomPList& created, TAtomEnvi& envi,
           CreateRotationMatrix(M1, Vec2, cos(M_PI*109.4/180) );
 
           RotVec = M1 * RotVec;
-          RotVec *= 0.980;
+          RotVec *= 0.960;
           crds.AddNew(RotVec);
           RotVec = M * RotVec;  // 120 degree
           crds.AddNew(RotVec);
@@ -88,20 +89,17 @@ void AConstraintGenerator::GenerateAtom( TCAtomPList& created, TAtomEnvi& envi,
         }
       }
       if( crds.IsEmpty() )  {
-        PlaneN = envi.GetCrd(0) - envi.GetBase().crd();
-        ca = Z.CAngle(PlaneN);
+        PlaneN = (envi.GetCrd(0) - envi.GetBase().crd()).Normalise();
         RotVec = PlaneN.XProdVec(Z).Normalise();
-        CreateRotationMatrix(M, RotVec, ca);
-
-        PlaneN *= -0.327;
-        crds.AddNew(1, 0, 0);
-        crds.AddNew(-0.5, sqrt3/2, 0);
-        crds.AddNew(-0.5, -sqrt3/2, 0);
+        CreateRotationMatrix(M, RotVec, cos(M_PI*109.4/180));
+        crds.AddNew(M*PlaneN);
+        CreateRotationMatrix(M, PlaneN, cos(M_PI*120./180));
+        crds.AddNew(M*crds[0]);
+        crds.AddNew(M*crds[1]);
+    
         for( int i=0; i < crds.Count(); i++ )  {
-          crds[i] = M * crds[i];
-          crds[i] *= 0.924;
+          crds[i] *= 0.96;
           crds[i] += envi.GetBase().crd();
-          crds[i] += PlaneN;
         }
       }
       break;
@@ -280,21 +278,17 @@ void AConstraintGenerator::GenerateAtom( TCAtomPList& created, TAtomEnvi& envi,
       break;
     case fgNH3:
       if( envi.Count() == 1 )  {
-        PlaneN = envi.GetCrd(0) - envi.GetBase().crd();
-        ca = Z.CAngle(PlaneN);
-        RotVec = PlaneN.XProdVec(Z);
-        RotVec.Normalise();
-        CreateRotationMatrix(M, RotVec, ca);
-
-        PlaneN *= -0.327;
-        crds.AddNew(1, 0, 0);
-        crds.AddNew(-0.5, sqrt3/2, 0);
-        crds.AddNew(-0.5, -sqrt3/2, 0);
+        PlaneN = (envi.GetCrd(0) - envi.GetBase().crd()).Normalise();
+        RotVec = PlaneN.XProdVec(Z).Normalise();
+        CreateRotationMatrix(M, RotVec, cos(M_PI*109.4/180));
+        crds.AddNew(M*PlaneN);
+        CreateRotationMatrix(M, PlaneN, cos(M_PI*120./180));
+        crds.AddNew(M*crds[0]);
+        crds.AddNew(M*crds[1]);
+    
         for( int i=0; i < crds.Count(); i++ )  {
-          crds[i] = M * crds[i];
-          crds[i] *= 0.85;
+          crds[i] *= 0.89;
           crds[i] += envi.GetBase().crd();
-          crds[i] += PlaneN;
         }
       }
       break;

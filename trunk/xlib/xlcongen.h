@@ -15,6 +15,7 @@ public:
   // translates shelxl AFIX, HFIX to olex2 notation
   static int OlexToShelx(short code, TAtomEnvi& envi, TAtomEnvi* pivot = NULL) {
     switch( code ) {
+      case fgNH3:  
       case fgCH3:  
         return 137;
       case fgCH2: 
@@ -86,6 +87,8 @@ public:
       case 137:
         if( envi.Count() == 1 && envi.GetBase().GetAtomInfo() == iCarbonIndex )
           return fgCH3;
+        else if( envi.Count() == 1 && envi.GetBase().GetAtomInfo() == iNitrogenIndex )
+          return fgNH3;
         break;
     }
     return -1;
