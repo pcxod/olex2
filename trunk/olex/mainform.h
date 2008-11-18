@@ -515,6 +515,7 @@ public:
   void TranslateString(olxstr& phrase);
 
   virtual TLibrary& GetLibrary()  {  return FXApp->GetLibrary();  }
+  TDataItem* PluginItem() {  return FPluginItem;  }
 
   virtual void LockWindowDestruction(wxWindow* wnd);
   virtual void UnlockWindowDestruction(wxWindow* wnd);
