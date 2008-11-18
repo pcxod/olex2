@@ -40,7 +40,11 @@ public:
 //----------------------------------------------------------------------------//
 // TComboBox implementation
 //----------------------------------------------------------------------------//
+#ifdef __MAC__
+class TComboBox: public wxComboBox, public IEObject  {
+#else
 class TComboBox: public wxOwnerDrawnComboBox, public IEObject  {
+#endif
 
   struct TDataObj  {
     IEObject* Data;
@@ -54,10 +58,12 @@ class TComboBox: public wxOwnerDrawnComboBox, public IEObject  {
   olxstr Data, OnChangeStr, OnLeaveStr, OnEnterStr;
 protected:
   void _AddObject( const olxstr &Item, IEObject* Data, bool Delete);
+#ifndef __MAC__
   virtual void OnDrawItem( wxDC& dc, const wxRect& rect, int item, int flags ) const;
   virtual wxCoord OnMeasureItem( size_t item ) const;
   virtual wxCoord OnMeasureItemWidth( size_t item ) const;
   virtual void OnDrawBg(wxDC& dc, const wxRect& rect, int item, int flags) const;
+#endif
 public:
   TComboBox(wxWindow *Parent, bool ReadOnly=false, const wxSize& sz=wxDefaultSize);
   virtual ~TComboBox();
