@@ -42,6 +42,10 @@ public:
 
   inline void SetLabel(const olxstr &L)       { FCAtom->SetLabel(L); }
   inline const olxstr& GetLabel() const       {  return FCAtom->GetLabel(); }
+  // returns a label plus (if not identity) first matrix like label_resi.2_556
+  olxstr GetGuiLabel() const;
+  // returns a label plus (if not identity) first matrix like label_resi(-2/3+X,Y,2-Z)
+  olxstr GetGuiLabelEx() const;
 
   inline int MatrixCount() const         {  return Matrices.Count();  }
   inline const smatd& GetMatrix(int i) const {  return *Matrices[i];  }

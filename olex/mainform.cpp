@@ -1891,10 +1891,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
       if( G != NULL )  {
         if( EsdlInstanceOf( *G, TXAtom) )  {
           TXAtom &xa = *(TXAtom*)G;
-          Tip = xa.Atom().GetLabel();
-          if( xa.Atom().CAtom().GetResiId() != -1 )
-            Tip << '_' <<
-            xa.Atom().CAtom().GetParent()->GetResidue(xa.Atom().CAtom().GetResiId()).GetNumber();
+          Tip = xa.Atom().GetGuiLabelEx();
           if( xa.Atom().GetAtomInfo() == iQPeakIndex )  {
             Tip << ':' << xa.Atom().CAtom().GetQPeak();
           }
