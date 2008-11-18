@@ -369,7 +369,6 @@ TAG_HANDLER_PROC(tag)  {
 #else
     Box->WI.SetHeight( ay );
 #endif    
-    Box->SetText(Value);
     if( tag.HasParam(wxT("ITEMS")) )  {
       olxstr Items = tag.GetParam(wxT("ITEMS")).c_str();
       TGlXApp::GetMainForm()->ProcessMacroFunc( Items );
@@ -383,6 +382,7 @@ TAG_HANDLER_PROC(tag)  {
       Box->AddObject(Value);
       Box->AddObject(EmptyString);  // fix the bug in wxWidgets (if Up pressed, crass occurs)
     }
+    Box->SetText(Value);
     Box->SetData(Data);
     if( tag.HasParam(wxT("ONCHANGE")) )  {
       Box->SetOnChangeStr( tag.GetParam(wxT("ONCHANGE")).c_str() );
@@ -620,9 +620,9 @@ TAG_HANDLER_PROC(tag)  {
         if( !bgc.IsEmpty() )  {
           wxColor bgCl = wxColor( uiStr(bgc) );
           Box->SetBackgroundColour( bgCl );
+#ifndef __MAC__          
           if( Box->GetTextCtrl() != NULL )
             Box->GetTextCtrl()->SetBackgroundColour( bgCl );
-#ifndef __MAC__          
           if( Box->GetPopupControl() != NULL && Box->GetPopupControl()->GetControl() != NULL )
             Box->GetPopupControl()->GetControl()->SetBackgroundColour( bgCl );
 #endif
@@ -630,9 +630,9 @@ TAG_HANDLER_PROC(tag)  {
         if( !fgc.IsEmpty() )  {
           wxColor fgCl = wxColor( uiStr(bgc) );
           Box->SetForegroundColour( fgCl );
+#ifndef __MAC__          
           if( Box->GetTextCtrl() != NULL )
             Box->GetTextCtrl()->SetForegroundColour( fgCl );
-#ifndef __MAC__          
           if( Box->GetPopupControl() != NULL && Box->GetPopupControl()->GetControl() != NULL)
             Box->GetPopupControl()->GetControl()->SetForegroundColour( fgCl );
 #endif
@@ -1316,11 +1316,13 @@ bool THtml::UpdatePage()  {
         ((TTextEdit*)wnd)->SetSelection(-1,-1);
       else if( EsdlInstanceOf(*wnd, TComboBox) )  {
         TComboBox* cb = (TComboBox*)wnd;
+#ifndef __MAC__
         if( cb->GetTextCtrl() != NULL )  {
           cb->GetTextCtrl()->SetInsertionPoint(0);
 //          wnd = cb->GetTextCtrl();
-          wnd = cb;
         }
+#endif				
+			  wnd = cb;
       }
       else if( EsdlInstanceOf(*wnd, TSpinCtrl) )  {
         TSpinCtrl* sc = (TSpinCtrl*)wnd;
@@ -2176,8 +2178,10 @@ void THtml::funSetFocus(const TStrObjList &Params, TMacroError &E)  {
   else if( EsdlInstanceOf(*wnd, TComboBox) )  {
     TComboBox* cb = (TComboBox*)wnd;
     //cb->GetTextCtrl()->SetSelection(-1, -1);
+#ifndef __MAC__
     cb->GetTextCtrl()->SetInsertionPoint(0);
     wnd = cb->GetTextCtrl();
+#endif		
   }
   wnd->SetFocus();
 }
@@ -2236,10 +2240,12 @@ void THtml::funSetFG(const TStrObjList &Params, TMacroError &E)  {
       TComboBox* Box = (TComboBox*)wxw;
       wxColor fgCl = wxColor( uiStr(Params[1]) );
       Box->SetForegroundColour( fgCl );
+#ifndef __MAC__
       if( Box->GetPopupControl() != NULL )
         Box->GetPopupControl()->GetControl()->SetForegroundColour( fgCl );
       if( Box->GetTextCtrl() != NULL )
         Box->GetTextCtrl()->SetForegroundColour( fgCl );
+#endif				
     }
     else
       wxw->SetForegroundColour( wxColor( uiStr(Params[1]) ) );
@@ -2259,10 +2265,12 @@ void THtml::funSetBG(const TStrObjList &Params, TMacroError &E)  {
       TComboBox* Box = (TComboBox*)wxw;
       wxColor fgCl = wxColor( uiStr(Params[1]) );
       Box->SetBackgroundColour( fgCl );
+#ifndef __MAC__
       if( Box->GetPopupControl() != NULL )
         Box->GetPopupControl()->GetControl()->SetBackgroundColour( fgCl );
       if( Box->GetTextCtrl() != NULL )
         Box->GetTextCtrl()->SetBackgroundColour( fgCl );
+#endif				
     }
     else
       wxw->SetBackgroundColour( wxColor( uiStr(Params[1]) ) );
@@ -2446,18 +2454,22 @@ void THtml::TObjectsState::RestoreState()  {
         if( !fg.IsEmpty() )  {
           wxColor fgCl = wxColor( fg.u_str() );
           Box->SetForegroundColour( fgCl );
+#ifndef __MAC__
           if( Box->GetPopupControl() != NULL )
             Box->GetPopupControl()->GetControl()->SetForegroundColour( fgCl );
           if( Box->GetTextCtrl() != NULL )
             Box->GetTextCtrl()->SetForegroundColour( fgCl );
+#endif						
         }
         if( !bg.IsEmpty() )  {
           wxColor bgCl = wxColor( bg.u_str() );
           Box->SetBackgroundColour( bgCl );
+#ifndef __MAC__					
           if( Box->GetPopupControl() != NULL )
             Box->GetPopupControl()->GetControl()->SetBackgroundColour( bgCl );
           if( Box->GetTextCtrl() != NULL )
             Box->GetTextCtrl()->SetBackgroundColour( bgCl );
+#endif						
         }
       }  
       else  {

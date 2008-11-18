@@ -60,7 +60,11 @@ IMPLEMENT_CLASS(TTimer, wxTimer)
 //----------------------------------------------------------------------------//
 // TdlgComboBox function bodies
 //----------------------------------------------------------------------------//
+#ifdef __MAC__
+BEGIN_EVENT_TABLE(TComboBox, wxComboBox)
+#else
 BEGIN_EVENT_TABLE(TComboBox, wxOwnerDrawnComboBox)
+#endif
 //  EVT_TEXT(-1, TComboBox::ChangeEvent)
   EVT_COMBOBOX(-1, TComboBox::ChangeEvent)
   EVT_TEXT_ENTER(-1, TComboBox::EnterPressedEvent)
@@ -98,8 +102,10 @@ TComboBox::~TComboBox()  {
 //..............................................................................
 void TComboBox::SetText(const olxstr& T)  {  
   SetValue( T.u_str() );  
+#ifndef __MAC__
   if( GetTextCtrl() != NULL )
     GetTextCtrl()->SetInsertionPoint(0);
+#endif		
 }
 //..............................................................................
 void TComboBox::Clear() {
@@ -111,7 +117,11 @@ void TComboBox::Clear() {
       delete d_o;
     }
   }
+#ifdef __MAC__
+  wxComboBox::Clear();
+#else	
   wxOwnerDrawnComboBox::Clear();
+#endif	
 }
 //..............................................................................
 void TComboBox::_AddObject( const olxstr &Item, IEObject* Data, bool Delete)  {
