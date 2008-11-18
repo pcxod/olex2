@@ -37,7 +37,11 @@
   TGlXApp::GetMainForm()->UnlockWindowDestruction( GetParent() );
 
 
+#ifdef __MAC__
+IMPLEMENT_CLASS(TComboBox, wxComboBox)
+#else
 IMPLEMENT_CLASS(TComboBox, wxOwnerDrawnComboBox)
+#endif
 IMPLEMENT_CLASS(TMenu, wxMenu)
 IMPLEMENT_CLASS(TMenuItem, wxMenuItem)
 IMPLEMENT_CLASS(TButton, wxButton)
@@ -65,8 +69,13 @@ BEGIN_EVENT_TABLE(TComboBox, wxOwnerDrawnComboBox)
 END_EVENT_TABLE()
 //..............................................................................
 TComboBox::TComboBox(wxWindow *Parent, bool ReadOnly, const wxSize& sz) :
+#ifdef __MAC__
+  wxComboBox(Parent, -1, wxString(), wxDefaultPosition, sz, 0, NULL,
+    wxCB_DROPDOWN|(ReadOnly?wxCB_READONLY:0)|wxTE_PROCESS_ENTER), WI(this)
+#else
   wxOwnerDrawnComboBox(Parent, -1, wxString(), wxDefaultPosition, sz, 0, NULL,
-  wxCB_DROPDOWN|(ReadOnly?wxCB_READONLY:0)|wxTE_PROCESS_ENTER), WI(this)
+    wxCB_DROPDOWN|(ReadOnly?wxCB_READONLY:0)|wxTE_PROCESS_ENTER), WI(this)
+#endif
 {
   if( Parent->IsFrozen() )  Hide();
 
@@ -189,6 +198,7 @@ void TComboBox::AddItems(const TStrList& EL) {
   }
 }
 //..............................................................................
+#ifndef __MAC__
 void TComboBox::OnDrawItem( wxDC& dc, const wxRect& rect, int item, int flags ) const {
   wxOwnerDrawnComboBox::OnDrawItem(dc, rect, item, flags);
   return;
@@ -205,6 +215,7 @@ wxCoord TComboBox::OnMeasureItemWidth( size_t item ) const {
 void TComboBox::OnDrawBg(wxDC& dc, const wxRect& rect, int item, int flags) const {
   return;
 }
+#endif
 //..............................................................................
 //----------------------------------------------------------------------------//
 // TMainFrame implementation
