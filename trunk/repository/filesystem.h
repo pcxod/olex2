@@ -176,9 +176,9 @@ public:
   void LoadIndex(const olxstr& IndexFile, const TFSItem::SkipOptions* toSkip=NULL);
   void SaveIndex(const olxstr& IndexFile);
   // returns the number transfered bytes 
-  double Synchronise(AFileSystem& To, const TStrList& properties, const TFSItem::SkipOptions* toSkip=NULL);
+  double Synchronise(AFileSystem& To, const TStrList& properties, const TFSItem::SkipOptions* toSkip=NULL, const olxstr& indexName="index.ind");
   // returns true if the file is updated (added) and false otherwise
-  bool UpdateFile(AFileSystem& To, const olxstr& fileName, bool Force);
+  bool UpdateFile(AFileSystem& To, const olxstr& fileName, bool Force, const olxstr& indexName="index.ind");
   inline TFSItem& GetRoot()  const {  return *Root; }
 };
 #endif

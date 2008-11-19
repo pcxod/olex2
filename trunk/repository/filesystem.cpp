@@ -571,10 +571,10 @@ void TFSIndex::SaveIndex(const olxstr &IndexFile)  {
   delete tmp_f;
 }
 //..............................................................................
-double TFSIndex::Synchronise(AFileSystem& To, const TStrList& properties, const TFSItem::SkipOptions* toSkip)  {
+double TFSIndex::Synchronise(AFileSystem& To, const TStrList& properties, const TFSItem::SkipOptions* toSkip, const olxstr& indexName)  {
   TFSIndex DestI(To);
-  olxstr SrcInd;   SrcInd << GetRoot().GetFileSystem().GetBase() << "index.ind";
-  olxstr DestInd;  DestInd << To.GetBase() << "index.ind";
+  olxstr SrcInd;   SrcInd << GetRoot().GetFileSystem().GetBase() << indexName;
+  olxstr DestInd;  DestInd << To.GetBase() << indexName;
   double BytesTransfered= 0;
   try  {
     LoadIndex(SrcInd, toSkip);
@@ -591,10 +591,10 @@ double TFSIndex::Synchronise(AFileSystem& To, const TStrList& properties, const 
   return BytesTransfered;
 }
 //..............................................................................
-bool TFSIndex::UpdateFile(AFileSystem& To, const olxstr& fileName, bool Force)  {
+bool TFSIndex::UpdateFile(AFileSystem& To, const olxstr& fileName, bool Force, const olxstr& indexName)  {
   TFSIndex DestI(To);
-  olxstr SrcInd;   SrcInd << GetRoot().GetFileSystem().GetBase() << "index.ind";
-  olxstr DestInd;  DestInd << To.GetBase() << "index.ind";
+  olxstr SrcInd;   SrcInd << GetRoot().GetFileSystem().GetBase() << indexName;
+  olxstr DestInd;  DestInd << To.GetBase() << indexName;
   bool res = false;
   try  {
     LoadIndex(SrcInd);
