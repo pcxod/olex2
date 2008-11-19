@@ -19,7 +19,7 @@ void BObject::AddFunction(BFunction* func)  {
 }
 
 void BObject::WriteDefinition(TStrList& out) const {
-  TEString line("class ");
+  olxstr line("class ");
   out.Add( line << GetType() << ' ' << '{' );
   for(int i=0; i < Functions.Count(); i++ )  {
     line = "  ";
@@ -28,7 +28,7 @@ void BObject::WriteDefinition(TStrList& out) const {
   out.Add("};");
 }
 
-BFunction::BFunction(BObject* retVal, const TEString& name, BTemplate* templ, short modifiers) : Name(name)  {
+BFunction::BFunction(BObject* retVal, const olxstr& name, BTemplate* templ, short modifiers) : Name(name)  {
   Modifiers = modifiers;
   Template = templ;
   if( Template != NULL )  Template->IncRef();
@@ -48,13 +48,13 @@ BObjects::~BObjects()  {
       delete Functions.Object(i);
 }
 void BObjects::PyBind(BObject* obj, TStrList& out)  {
-  static const TEString ident = "  ", ident2 = "    ";
+  static const olxstr ident = "  ", ident2 = "    ";
   TStrList methods;
   if( VoidType == NULL )
     VoidType = FindObject<void>();
   if( VoidType == NULL )
     throw TFunctionFailedException(__OlxSourceInfo, "could not locate built in type");
-  TEString line("class ");
+  olxstr line("class ");
   out.Add( line << "py_" << obj->GetType() << ' ' << '{' );
   line = ident;
   line << obj->GetType() << "* Instance;";

@@ -19,7 +19,7 @@ object MF: TMF
     Left = 0
     Top = 0
     Width = 870
-    Height = 615
+    Height = 602
     Align = alClient
     Font.Charset = ANSI_CHARSET
     Font.Color = clWindowText

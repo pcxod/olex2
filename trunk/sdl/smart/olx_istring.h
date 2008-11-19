@@ -759,17 +759,18 @@ public:
     return rv;
   }
   //............................................................................
-  //removes chars from string
+  //removes chars from string and return the number of removed chars
   template <typename AC> static size_t o_strdch(TC *whr, size_t whr_len, AC wht)  {
-    size_t ni = 0;
-    for( size_t i=0; i < whr_len; i++, ni++ )  {
+    size_t rn = 0;
+    for( size_t i=0; i < whr_len; i++ )  {
       if( whr[i] == wht )  {
-        ni--;
+        rn++;
         continue;
       }
-      else if( ni != i )  whr[ni] = whr[i];
+      else
+        whr[i-rn] = whr[i];
     }
-    return (whr_len - ni);
+    return rn;
   }
   //............................................................................
   template <typename AC> void DeleteChars(AC wht)  {

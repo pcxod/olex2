@@ -9,7 +9,7 @@
 #include "log.h"
 #undef GetObject
 
-static const TEString& BNullStr = *(TEString*)NULL;
+static const olxstr& BNullStr = *(olxstr*)NULL;
 // function modifiers
 const short bfmInline   = 0x0001,
             bfmStatic   = 0x0002,
@@ -27,13 +27,13 @@ class BObjects;
 
 
 class BTemplate : public AReferencible {
-  TStrPObjList<TEString*> Args;
+  TStrPObjList<olxstr,olxstr*> Args;
 public:
   BTemplate()  { ; }
   BTemplate(const BTemplate& tmpl)  {
     for( int i=0; i < tmpl.Args.Count(); i++ )  {
       if( tmpl.Args.Object(i) != NULL )
-        Args.Add( tmpl.Args[i], new TEString(tmpl.Args.Object(i)) );
+        Args.Add( tmpl.Args[i], new olxstr(tmpl.Args.Object(i)) );
       else
         Args.Add( tmpl.Args[i], NULL );
     }
@@ -43,18 +43,18 @@ public:
       if( Args.Object(i) != NULL )
         delete Args.Object(i);
   }
-  void AddArg(const TEString& name, const TEString& value=BNullStr)  {
+  void AddArg(const olxstr& name, const olxstr& value=BNullStr)  {
     if( &value == NULL )
       Args.Add(name, NULL);
     else
-      Args.Add(name, new TEString(value) );
+      Args.Add(name, new olxstr(value) );
   }
   inline int ArgCount() const {  return Args.Count(); }
-  inline const TEString& GetArgName(int i)  const {  return Args[i];  }
-  inline TEString* GetArgValue(int i)  const {  return Args.Object(i);  }
+  inline const olxstr& GetArgName(int i)  const {  return Args[i];  }
+  inline olxstr* GetArgValue(int i)  const {  return Args.Object(i);  }
 
-  TEString ToCString()  const  {
-    TEString rv("template <");
+  olxstr ToCString()  const  {
+    olxstr rv("template <");
     for( int i=0; i < Args.Count(); i++ )  {
       rv << Args[i];
       if( Args.Object(i) != NULL )
@@ -68,11 +68,11 @@ public:
 
 class BType : public AReferencible {
 protected:
-  TEString Type;
+  olxstr Type;
   short Modifiers;
   BType()  {  Modifiers = 0;  }
 public:
-  BType(const TEString& type, short modifiers=0) : Type(type)  {
+  BType(const olxstr& type, short modifiers=0) : Type(type)  {
     Modifiers = modifiers;
   }
   BType(const BType& type, short modifiers=0 ) : Type(type.Type) {
@@ -80,8 +80,8 @@ public:
   }
   virtual ~BType()  {  }
 
-  inline const TEString& GetType()  const  {  return Type;  }
-  inline void SetType(const TEString& t)   {  Type = t;  }
+  inline const olxstr& GetType()  const  {  return Type;  }
+  inline void SetType(const olxstr& t)   {  Type = t;  }
   inline const BType& operator = (const BType& t)  {
     Type = t.Type;
     return t;
@@ -95,8 +95,8 @@ public:
   inline bool IsPointer() const  {  return (Modifiers&btmPointer)!=0; }
   inline bool IsArray() const  {  return (Modifiers&btmArray)!=0; }
   // mod might refers to Type<mod>
-  virtual TEString ToCString(const TEString& mod, int arraySize=-1) const {
-    TEString rv;
+  virtual olxstr ToCString(const olxstr& mod, int arraySize=-1) const {
+    olxstr rv;
     if( (Modifiers&btmConst) != 0 )
       rv << "const " << Type;
     else
@@ -118,10 +118,10 @@ public:
 };
 
 class BObject : public BType {
-  TSStrPObjList<BFunction*, true> Functions;
+  TSStrPObjList<olxstr,BFunction*, true> Functions;
   BTemplate* Template;
 public:
-  BObject(const TEString& type, BTemplate* templ = NULL, short modifiers=0) : BType(type, modifiers)  {
+  BObject(const olxstr& type, BTemplate* templ = NULL, short modifiers=0) : BType(type, modifiers)  {
     Template = templ;
     if( Template != NULL )  Template->IncRef();
   }
@@ -136,7 +136,7 @@ public:
   inline int FunctionCount()  const {  return Functions.Count();  }
   inline const BFunction& Function(int i) const {  return *Functions.GetObject(i);  }
 
-  virtual TEString ToCString(const TEString& mod, int arraySize=-1) const {
+  virtual olxstr ToCString(const olxstr& mod, int arraySize=-1) const {
     return BType::ToCString(mod, arraySize);
   }
   void WriteDefinition(TStrList& out) const;
@@ -156,17 +156,17 @@ public:
     if( Object->DecRef() == 0 )  delete Object;
     if( Specialisation->DecRef() == 0 ) delete Specialisation;
   }
-  virtual TEString ToCString(int arraySize=-1) const {
+  virtual olxstr ToCString(int arraySize=-1) const {
     return Object->ToCString(Specialisation->GetType(), arraySize);
   }
 };
 
 class BArg {
-  TEString *DefVal, Name;
+  olxstr *DefVal, Name;
   BObject* Object;
 public:
-  BArg(BObject* object, const TEString& name, const TEString& defval = BNullStr) {
-    DefVal = (&defval != NULL) ? new TEString(defval) : NULL;
+  BArg(BObject* object, const olxstr& name, const olxstr& defval = BNullStr) {
+    DefVal = (&defval != NULL) ? new olxstr(defval) : NULL;
     Name = name;
     Object = object;
     Object->IncRef();
@@ -176,11 +176,11 @@ public:
     if( Object->DecRef() == 0 )  delete Object;
   }
   inline bool HasDefVal() const  {  return DefVal != NULL;  }
-  inline const TEString& GetDefVal() const  {  return *DefVal;  }
-  inline const TEString& GetName()   const  {  return Name;  }
+  inline const olxstr& GetDefVal() const  {  return *DefVal;  }
+  inline const olxstr& GetName()   const  {  return Name;  }
 
-  TEString ToCString(int arraySize = -1)  const {
-    TEString rv( Object->ToCString(EmptyString, arraySize) );
+  olxstr ToCString(int arraySize = -1)  const {
+    olxstr rv( Object->ToCString(EmptyString, arraySize) );
     rv << ' ' << Name;
     if( DefVal != NULL )
       rv << '=' << *DefVal;
@@ -191,11 +191,11 @@ public:
 class BFunction : public AReferencible {
   TPtrList< BArg > Args;
   BObject* RetVal;
-  TEString Name;
+  olxstr Name;
   short Modifiers;
   BTemplate* Template;
 public:
-  BFunction(BObject* retVal, const TEString& name, BTemplate* templ = NULL, short modifiers=0);
+  BFunction(BObject* retVal, const olxstr& name, BTemplate* templ = NULL, short modifiers=0);
   virtual ~BFunction()  {
     if( Template != NULL && Template->DecRef() == 0 )
       delete Template;
@@ -204,13 +204,13 @@ public:
     for(int i=0; i < Args.Count(); i++ )
       delete Args[i];
   }
-  inline const TEString& GetName() const {  return Name;  }
+  inline const olxstr& GetName() const {  return Name;  }
   inline int ArgCount() const {  return Args.Count();  }
   inline const BObject& GetRetVal() const  {  return *RetVal; }
   inline void AddArg(BArg* arg)  {  Args.Add(arg); }
 
-  TEString ToCHString() const  {
-    TEString rv( (Template != NULL) ? Template->ToCString() : EmptyString );
+  olxstr ToCHString() const  {
+    olxstr rv( (Template != NULL) ? Template->ToCString() : EmptyString );
     if( (Modifiers&bfmVirtual) != 0 )
       rv << " virtual";
     if( (Modifiers&bfmInline) != 0 )
@@ -228,8 +228,8 @@ public:
     return rv;
   }
 
-  TEString Declare() const  {
-    TEString rv( (Template != NULL) ? Template->ToCString() : EmptyString );
+  olxstr Declare() const  {
+    olxstr rv( (Template != NULL) ? Template->ToCString() : EmptyString );
     if( (Modifiers&bfmVirtual) != 0 )
       rv << " virtual";
     if( (Modifiers&bfmInline) != 0 )
@@ -246,8 +246,8 @@ public:
     rv << ')' << ' ' << '{';
     return rv;
   }
-  TEString CallStr() const  {
-    TEString rv(Name);
+  olxstr CallStr() const  {
+    olxstr rv(Name);
     rv << '(';
     for( int i=0; i < Args.Count(); i++ )  {
       rv << Args[i]->GetName();
@@ -262,24 +262,24 @@ public:
 
 class BObjects  {
   BObject* VoidType;
-  TSStrPObjList<BObject*, true> Objects;  // all objects
-  TSStrPObjList<BFunction*, true> Functions;  // all global functions
-  BTemplate* ParseTypeid(const char* ti, TEString& type, short& modifiers)  {
+  TSStrPObjList<olxstr,BObject*, true> Objects;  // all objects
+  TSStrPObjList<olxstr,BFunction*, true> Functions;  // all global functions
+  BTemplate* ParseTypeid(const char* ti, olxstr& type, short& modifiers)  {
     int stlen = strlen(ti);
-    TEString tmpl;
+    olxstr tmpl;
     type.SetCapacity( stlen);
     for( int i=0; i < stlen; i++ )  {
       if( ti[i] == '<' )  {
         i++;
         while( i < stlen && ti[i] != '>')  {
-          tmpl += ti[i];
+          tmpl << ti[i];
           i++;
         }
         //TBasicApp::GetLog()->CriticalInfo(tmpl);
         i++;
         continue;
       }
-      type += ti[i];
+      type << ti[i];
     }
     return NULL;
   }
@@ -289,7 +289,7 @@ public:
   ~BObjects();
   inline int ObjectCount() const {  return Objects.Count();  }
   inline BObject& Object(int i)  { return *Objects.Object(i);  }
-  BObject* FindObject(const TEString& name)  {
+  BObject* FindObject(const olxstr& name)  {
     int ind = Objects.IndexOfComparable(name);
     return (ind==-1) ? NULL : Objects.Object(ind);
   }
@@ -298,14 +298,14 @@ public:
   }
   template <class T>
     BObject* FindObject()  {
-      TEString type;
+      olxstr type;
       short mods = 0;
       BTemplate* templ = ParseTypeid( typeid(T).name(), type, mods );
       return FindObject(type);
     }
   template <class T>
     BObject* NewObject()  {
-      TEString type;
+      olxstr type;
       short mods = 0;
       BTemplate* templ = ParseTypeid( typeid(T).name(), type, mods );
       BObject* obj = new BObject(type, templ, mods);
