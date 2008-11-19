@@ -14,11 +14,11 @@ class CModel;
 
 /* primitive type, like char, int etc */
 class CPType  {
-  TEString TypeName;
+  olxstr TypeName;
 public:
-  CPType(const TEString& name) : TypeName(name)  {}
+  CPType(const olxstr& name) : TypeName(name)  {}
   virtual ~CPType()  {}
-  inline const TEString& GetTypeName() const {  return TypeName;  }
+  inline const olxstr& GetTypeName() const {  return TypeName;  }
   virtual bool IsPrimitive() const {  return true;  }
   inline bool IsComplex()    const {  return !IsPrimitive();  }
   virtual bool IsTemplate()  const {  return false;  }
@@ -28,7 +28,7 @@ public:
 class CTType : public CPType  {
   const CPType* RealType; // only defined for templates
 public:
-  CTType(const TEString& name) : CPType(name)  { RealType = NULL; }
+  CTType(const olxstr& name) : CPType(name)  { RealType = NULL; }
   inline void UseType(const CPType* type)  {  RealType = type;  }
   inline const CPType* GetRealType() const {  return RealType;  }
   virtual bool IsTemplate()  const {  return true;  }
@@ -36,50 +36,50 @@ public:
 
 class CMember {
   const CPType& Type;
-  TEString Name, DefValue;
+  olxstr Name, DefValue;
 public:
-  CMember(const CPType& atype, const TEString &name) : Type(atype), Name(name) {}
-  CMember(const CPType& atype, const TEString &name, const TEString &defVal) :
+  CMember(const CPType& atype, const olxstr &name) : Type(atype), Name(name) {}
+  CMember(const CPType& atype, const olxstr &name, const olxstr &defVal) :
     Type(atype), Name(name), DefValue(defVal) {}
   inline const CPType& GetType()     const {  return Type;  }
-  inline const TEString& GetName()   const {  return Name;  }
-  inline const TEString& GetDefVal() const {  return Name;  }
+  inline const olxstr& GetName()   const {  return Name;  }
+  inline const olxstr& GetDefVal() const {  return Name;  }
 };
 
 class CFunction  {
-  TEString Name;
+  olxstr Name;
 protected:
   TPtrList<CMember> Args;
   const CPType* RetType;
 public:
-  CFunction(const CPType* rettype, const TEString& name) : Name(name)  {  RetType = rettype;  }
+  CFunction(const CPType* rettype, const olxstr& name) : Name(name)  {  RetType = rettype;  }
   virtual ~CFunction() {
   }
-  inline void AddArg(const CPType& atype, const TEString &name)  { Args.Add( new CMember(atype, name) ); }
-  inline void AddArg(const CPType& atype, const TEString &name, const TEString &defVal)  {
+  inline void AddArg(const CPType& atype, const olxstr &name)  { Args.Add( new CMember(atype, name) ); }
+  inline void AddArg(const CPType& atype, const olxstr &name, const olxstr &defVal)  {
     Args.Add( new CMember(atype, name, defVal) );
   }
   inline int ArgCount(   )            const {  return Args.Count();  }
   inline const CMember& GetArg(int i) const {  return *Args[i];  }
   inline const CPType* GetRetType()   const {  return RetType;  }
-  inline const TEString& GetName()    const {  return Name;  }
+  inline const olxstr& GetName()    const {  return Name;  }
 };
 
 
 //class ACType : public CPType  {
 //public:
-//  ACType(const TEString& typeName) : CPType(typeName) {}
-//  virtual ACType* NewInstance(const TEString& name, CStruct* parent
+//  ACType(const olxstr& typeName) : CPType(typeName) {}
+//  virtual ACType* NewInstance(const olxstr& name, CStruct* parent
 //};
 
 class CStruct: public CPType  {
-  TSStrPObjList<CFunction*, false> Functions;
-  TSStrPObjList<CStruct*, false> Types; // all object declarations: namespaces, structs, classes
-  TSStrPObjList<CMember*, false> Members; // primitive and complex
-  TEString Name;
+  TSStrPObjList<olxstr, CFunction*, false> Functions;
+  TSStrPObjList<olxstr, CStruct*, false> Types; // all object declarations: namespaces, structs, classes
+  TSStrPObjList<olxstr, CMember*, false> Members; // primitive and complex
+  olxstr Name;
   CStruct* Parent;
 public:
-  CStruct(const TEString &name, CStruct* parent = NULL, const TEString &typeName="struct") :
+  CStruct(const olxstr &name, CStruct* parent = NULL, const olxstr &typeName="struct") :
     CPType(typeName), Name(name)  {  Parent = parent;  }
   virtual ~CStruct() {
     for( int i=0; i < Functions.Count(); i++ )  delete Functions.Object(i);
@@ -92,25 +92,25 @@ public:
 
   inline int TypeCount()                 const {  return Types.Count();  }
   inline const CStruct& GetType(int i)   const {  return *Types.GetObject(i);  }
-  inline const CStruct* FindType(const TEString &name) const {
+  inline const CStruct* FindType(const olxstr &name) const {
     return Types[name];
   }
 
   inline int FuncCount()                 const {  return Functions.Count();  }
   inline const CFunction& GetFunc(int i) const {  return *Functions.GetObject(i); }
-  inline const CFunction* FindFunc(const TEString &name) const {
+  inline const CFunction* FindFunc(const olxstr &name) const {
     return Functions[name];
   }
 
   inline int MemberCount()               const {  return Members.Count();  }
   inline const CMember& GetMember(int i) const {  return *Members.GetObject(i);  }
-  inline const CMember* FindMember(const TEString &name) const {
+  inline const CMember* FindMember(const olxstr &name) const {
     return Members[name];
   }
 
-  inline const TEString& GetName()       const {  return Name;  }
-  TEString GetQualifiedName() const {
-    TEString qn(Name, 128);
+  inline const olxstr& GetName()       const {  return Name;  }
+  olxstr GetQualifiedName() const {
+    olxstr qn(Name, 128);
     CStruct* pr = Parent;
     while( pr != NULL )  {
       qn.Insert( Parent->GetName() + "::", 0);
@@ -122,21 +122,21 @@ public:
 
 class CNamespace: public CStruct  {
 public:
-  CNamespace(const TEString &name, CNamespace* parent=NULL) : CStruct(name, parent, "namespace") {}
+  CNamespace(const olxstr &name, CNamespace* parent=NULL) : CStruct(name, parent, "namespace") {}
 };
 
 /* a complex type. It could be a struct or a class */
 class CType : public CStruct {
-  TSStrPObjList<CPType*, false> ProtectedTypes;
-  TSStrPObjList<CPType*, false> PrivateTypes;
-  TSStrPObjList<CPType*, false> ProtectedMembers;
-  TSStrPObjList<CPType*, false> PrivateMembers;
-  TSStrPObjList<CFunction*, false> ProtectedFunctions;
-  TSStrPObjList<CFunction*, false> PrivateFunctions;
-  TStrPObjList<CType*> Ancestors;  // cannot inherit from a primitive type
+  TSStrPObjList<olxstr, CPType*, false> ProtectedTypes;
+  TSStrPObjList<olxstr, CPType*, false> PrivateTypes;
+  TSStrPObjList<olxstr, CPType*, false> ProtectedMembers;
+  TSStrPObjList<olxstr, CPType*, false> PrivateMembers;
+  TSStrPObjList<olxstr, CFunction*, false> ProtectedFunctions;
+  TSStrPObjList<olxstr, CFunction*, false> PrivateFunctions;
+  TStrPObjList<olxstr, CType*> Ancestors;  // cannot inherit from a primitive type
   CTemplate* Template;
 public:
-  CType(const TEString& name, CStruct* parent, CTemplate* templ) : CStruct(name, parent, "class")  {
+  CType(const olxstr& name, CStruct* parent, CTemplate* templ) : CStruct(name, parent, "class")  {
     Template = templ;
   }
 
@@ -149,16 +149,16 @@ class CTemplate {
 public:
   class CTArg {
     CTType* Type;
-    TEString Name, DefValue;
+    olxstr Name, DefValue;
   public:
     CTArg(CTType* atype) : Type(atype) {}
-    CTArg(CTType* atype, const TEString &name) : Type(atype), Name(name) {}
-    CTArg(CTType* atype, const TEString &name, const TEString &defVal) :
+    CTArg(CTType* atype, const olxstr &name) : Type(atype), Name(name) {}
+    CTArg(CTType* atype, const olxstr &name, const olxstr &defVal) :
       Type(atype), Name(name), DefValue(defVal) {}
     virtual ~CTArg()  {  delete Type;  }
     inline const CTType& GetType()   const {  return *Type;  }
-    inline const TEString& GetName() const {  return Name;  }
-    inline const TEString& GetDefVal() const {  return Name;  }
+    inline const olxstr& GetName() const {  return Name;  }
+    inline const olxstr& GetDefVal() const {  return Name;  }
   };
 protected:
   TPtrList<CTArg> Args;
@@ -170,25 +170,25 @@ public:
   virtual ~CTemplate()  {
     for( int i=0; i < Args.Count(); i++ )  delete Args[i];
   }
-  void AddArg(const TEString& typeName)  {
+  void AddArg(const olxstr& typeName)  {
     Args.Add( new CTArg( new CTType(typeName) ) );
   }
-  void AddArg(const TEString& typeName, const TEString& argName)  {
+  void AddArg(const olxstr& typeName, const olxstr& argName)  {
     Args.Add( new CTArg( new CTType(typeName), argName ) );
   }
-  void AddArg(const TEString& typeName, const TEString& argName, const TEString& argVal)  {
+  void AddArg(const olxstr& typeName, const olxstr& argName, const olxstr& argVal)  {
     Args.Add( new CTArg( new CTType(typeName), argName, argVal ) );
   }
-  void Parse(const TEString& line);
+  void Parse(const olxstr& line);
 };
 
 class CModel  {
   CNamespace* nsGlobal;
 //  TSStrPObjList<CMacro*, false> Typedefs;
 //  TSStrPObjList<CMacro*, false> Typedefs;
-  TEString ProjectName;
+  olxstr ProjectName;
 public:
-  CModel(const TEString &projectName) : ProjectName(projectName)  {
+  CModel(const olxstr &projectName) : ProjectName(projectName)  {
     nsGlobal = new CNamespace(EmptyString);
   }
   ~CModel()  {  delete nsGlobal;  }
@@ -196,7 +196,7 @@ public:
   inline CNamespace& Global()  {  return *nsGlobal;  }
   /* if namespace already exists - returns it, otherwise returns a newly created one
   */
-  CNamespace& GetNamespace(const TEString& name, CNamespace* current=NULL)  {
+  CNamespace& GetNamespace(const olxstr& name, CNamespace* current=NULL)  {
     if( current == NULL ) current = nsGlobal;
     CNamespace* ns = (CNamespace*)current->FindType(name);
     if( ns == NULL ) ns = new CNamespace(name);
@@ -204,7 +204,7 @@ public:
     current->AddType(ns);
     return *ns;
   }
-  inline const TEString& GetProjectName()  const { return ProjectName; }
+  inline const olxstr& GetProjectName()  const { return ProjectName; }
 };
 
 #endif

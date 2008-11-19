@@ -7,7 +7,7 @@
 #include "syntaxp.h"
 #include "typelist.h"
 
-TOperatorSignature::TOperatorSignature(const short shortVal, const TEString &strVal)
+TOperatorSignature::TOperatorSignature(const short shortVal, const olxstr &strVal)
 {
   ShortValue = shortVal;
   StringValue = strVal;
@@ -52,19 +52,19 @@ TSyntaxParser::~TSyntaxParser()  {
     delete ComparisonOperators.Object(i);
 }
 
-void ParseOutExp(const TEString& exp, int& i, TEString& res)  {
+void ParseOutExp(const olxstr& exp, int& i, olxstr& res)  {
   char Char = exp[i];
   while( (Char <= 'z' && Char >= 'a') ||
          (Char <= 'Z' && Char >= 'A') ||
          (Char <= '9' && Char >= '0') ||
          (Char == '_') || (Char =='.') )
   {
-      res += Char;
+      res << Char;
       if( ++i >= exp.Length() )  break;
       Char = exp[i];
     }
 }
-void ParseOutComplexExp(const TEString& exp, int& i, TEString& res)  {
+void ParseOutComplexExp(const olxstr& exp, int& i, olxstr& res)  {
   if( exp[i] == '(' )  {
     if( ++i >= exp.Length() )
       throw TFunctionFailedException(__OlxSourceInfo, "Unclosed brackets");
@@ -74,13 +74,13 @@ void ParseOutComplexExp(const TEString& exp, int& i, TEString& res)  {
       else if( exp[i] == ')' )  bc--;
 
       if( bc == 0 )  break;
-      res += exp[i];
+      res << exp[i];
       if( ++i > exp.Length() )
         throw TFunctionFailedException(__OlxSourceInfo, "Unclosed brackets");
     }
   }
 }
-void ParseOutStr(const TEString& exp, int& i, TEString& res)  {
+void ParseOutStr(const olxstr& exp, int& i, olxstr& res)  {
   if( exp[i] == '\'' || exp[i] == '\"' )  {  // string beginning
     char StringWrappingChar = exp[i];
     while( true )  {
@@ -90,30 +90,30 @@ void ParseOutStr(const TEString& exp, int& i, TEString& res)  {
         if( !res.IsEmpty() && res[res.Length()-1] == '\\' )  res[res.Length()-1] = exp[i];
         else  break;
       }
-      res += exp[i];
+      res << exp[i];
     }
   }
 }
-IEvaluator* TSyntaxParser::CreateEvaluator(const TEString& expr, const TEString& args, const TEString& strval)  {
+IEvaluator* TSyntaxParser::CreateEvaluator(const olxstr& expr, const olxstr& args, const olxstr& strval)  {
   IEvaluator* evl = NULL;
   if( !expr.IsEmpty() )  {
     if( args.Length() )  {
       evl = EvaluatorFactory->Evaluator( expr, args );
       if( evl == NULL )
-        throw TFunctionFailedException(__OlxSourceInfo, TEString("Could not find evaluator for: ") << expr);
+        throw TFunctionFailedException(__OlxSourceInfo, olxstr("Could not find evaluator for: ") << expr);
     }
     else if( expr.IsNumber() )  {
-      evl = new TScalarEvaluator( expr.Double() );
+      evl = new TScalarEvaluator( expr.ToDouble() );
       Evaluators.Add( evl );
     }
-    else  if( expr.CompareCI("true") == 0  || expr.CompareCI("false") == 0 )  {
-      evl = new TBoolEvaluator( expr.Bool() );
+    else  if( expr.Comparei("true") == 0  || expr.Comparei("false") == 0 )  {
+      evl = new TBoolEvaluator( expr.ToBool() );
       Evaluators.Add( evl );
     }
     else  {
       evl = EvaluatorFactory->Evaluator( expr );
       if( evl == NULL )
-        throw TFunctionFailedException(__OlxSourceInfo, TEString("Could not find evaluator for: ") << expr);
+        throw TFunctionFailedException(__OlxSourceInfo, olxstr("Could not find evaluator for: ") << expr);
     }
   }
   else  {
@@ -123,26 +123,26 @@ IEvaluator* TSyntaxParser::CreateEvaluator(const TEString& expr, const TEString&
   return evl;
 }
 
-IEvaluable* TSyntaxParser::CreateEvaluable(const TEString& expr, const TEString& args, const TEString& strval)  {
+IEvaluable* TSyntaxParser::CreateEvaluable(const olxstr& expr, const olxstr& args, const olxstr& strval)  {
   IEvaluable* evl = NULL;
   if( !expr.IsEmpty() )  {
     if( args.Length() )  {
       evl = EvaluatorFactory->Evaluable( expr, args );
       if( evl == NULL )
-        throw TFunctionFailedException(__OlxSourceInfo, TEString("Could not find evaluator for: ") << expr);
+        throw TFunctionFailedException(__OlxSourceInfo, olxstr("Could not find evaluator for: ") << expr);
     }
     else if( expr.IsNumber() )  {
-      evl = new TBoolEvaluable( expr.Double() != 0 );
+      evl = new TBoolEvaluable( expr.ToDouble() != 0 );
       Evaluables.Add( evl );
     }
-    else  if( expr.CompareCI("true") == 0  || expr.CompareCI("false") == 0 )  {
-      evl = new TBoolEvaluable( expr.Bool() );
+    else  if( expr.Comparei("true") == 0  || expr.Comparei("false") == 0 )  {
+      evl = new TBoolEvaluable( expr.ToBool() );
       Evaluables.Add( evl );
     }
     else  {
       evl = EvaluatorFactory->Evaluable( expr );
       if( evl == NULL )
-        throw TFunctionFailedException(__OlxSourceInfo, TEString("Could not find evaluator for: ") << expr);
+        throw TFunctionFailedException(__OlxSourceInfo, olxstr("Could not find evaluator for: ") << expr);
     }
   }
   else  {
@@ -153,8 +153,8 @@ IEvaluable* TSyntaxParser::CreateEvaluable(const TEString& expr, const TEString&
 }
 
 
-IEvaluable* TSyntaxParser::SimpleParse(const TEString& Exp)  {
-  TEString LeftExp, RightExp, LeftStr, RightStr, FuncArgL, FuncArgR;
+IEvaluable* TSyntaxParser::SimpleParse(const olxstr& Exp)  {
+  olxstr LeftExp, RightExp, LeftStr, RightStr, FuncArgL, FuncArgR;
   IEvaluable *LeftCondition, *RightCondition;
   IEvaluable *LogicalOperator;
   TObjectFactory<IEvaluable> *loFactory = NULL, *coFactory=NULL;
@@ -163,7 +163,7 @@ IEvaluable* TSyntaxParser::SimpleParse(const TEString& Exp)  {
   LogicalOperator = NULL;
   char Char, StringWrappingChar;
   short index, bc;
-  TEString ComplexExp;
+  olxstr ComplexExp;
   for( int i=0; i < Exp.Length(); i++ )  {
     Char = Exp[i];
 
@@ -180,33 +180,31 @@ IEvaluable* TSyntaxParser::SimpleParse(const TEString& Exp)  {
       else                      Char = '\0';
     }
 
+    if( Char != '\0' )  {
+      if( coFactory || loFactory )  {
+        if( !RightStr.IsEmpty() )  ParseOutExp(Exp, i, RightStr);
+        else                       ParseOutExp(Exp, i, RightExp);
+      }
+      else  {
+        if( !LeftStr.IsEmpty() )  ParseOutExp(Exp, i, LeftStr);
+        else                      ParseOutExp(Exp, i, LeftExp);
+      }
+      Char = ((i >= Exp.Length()) ? '\0' : Exp.CharAt(i));
 
-    if( coFactory || loFactory )  {
-      if( !RightStr.IsEmpty() )  ParseOutExp(Exp, i, RightStr);
-      else                       ParseOutExp(Exp, i, RightExp);
+      if( Char == '\'' || Char == '\"' )  {  // string begiining
+        if( coFactory )
+          ParseOutStr( Exp, i, RightStr );
+        else
+          ParseOutStr( Exp, i, LeftStr );
+      }
+      else if( Char == '(' )  {  // function ...
+        if( coFactory || loFactory )
+          ParseOutComplexExp( Exp, i, FuncArgR);
+        else
+          ParseOutComplexExp( Exp, i, FuncArgL);
+      }
+      Char = ((i >= Exp.Length()) ? '\0' : Exp.CharAt(i));
     }
-    else  {
-      if( !LeftStr.IsEmpty() )  ParseOutExp(Exp, i, LeftStr);
-      else                      ParseOutExp(Exp, i, LeftExp);
-    }
-    Char = Exp[i];
-
-    // spaces are for readibility only
-//    if( Char == ' ' )  continue;
-
-    if( Char == '\'' || Char == '\"' )  {  // string begiining
-      if( coFactory ) 
-        ParseOutStr( Exp, i, RightStr );
-      else
-        ParseOutStr( Exp, i, LeftStr );
-    }
-    else if( Char == '(' )  {  // function ...
-      if( coFactory || loFactory )
-        ParseOutComplexExp( Exp, i, FuncArgR);
-      else
-        ParseOutComplexExp( Exp, i, FuncArgL);
-    }
-    Char = Exp[i];
     
     // procesing comparison operators
     if( coFactory && (LeftExp.Length() || LeftStr.Length()) && (RightExp.Length() || RightStr.Length()) )  {
@@ -364,7 +362,7 @@ IEvaluable* TSyntaxParser::SimpleParse(const TEString& Exp)  {
     LeftCondition = CreateEvaluable(LeftExp, FuncArgL, LeftStr);
   if( LeftCondition )  return LeftCondition;
 
-  throw TFunctionFailedException(__OlxSourceInfo, TEString("Failed to parse -" ) << Exp);
+  throw TFunctionFailedException(__OlxSourceInfo, olxstr("Failed to parse -" ) << Exp);
 }
 
 void TSyntaxParser::Clear()  {
@@ -377,8 +375,8 @@ void TSyntaxParser::Clear()  {
   Root = NULL;
 }
 
-void TSyntaxParser::Parse(const TEString &Text)  {
+void TSyntaxParser::Parse(const olxstr &Text)  {
   Clear();
-  Root = SimpleParse( TEString::RemoveChars(Text, ' ') );
+  Root = SimpleParse( olxstr::DeleteChars(Text, ' ') );
 }
 

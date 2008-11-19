@@ -5,25 +5,25 @@
 #include "efile.h"
 #include "cparser.h"
 
-const TEString CPP::defstr("#define");
-const TEString CPP::incstr("#include");
-const TEString CPP::ifdefstr("#ifdef");
-const TEString CPP::ifndefstr("#ifndef");
-const TEString CPP::ifstr("#if");
-const TEString CPP::endifstr("#endif");
-const TEString CPP::elsestr("#else");
-const TEString CPP::elifstr("#elif");
-const TEString CPP::undefstr("#undef");
-const TEString CPP::linestr("__LINE__");
-const TEString CParser::templatestr("template");
-const TEString CParser::namespacestr("namespace");
-const TEString CParser::classstr("class");
-//const TEString CParser::structstr("struct");
+const olxstr CPP::defstr("#define");
+const olxstr CPP::incstr("#include");
+const olxstr CPP::ifdefstr("#ifdef");
+const olxstr CPP::ifndefstr("#ifndef");
+const olxstr CPP::ifstr("#if");
+const olxstr CPP::endifstr("#endif");
+const olxstr CPP::elsestr("#else");
+const olxstr CPP::elifstr("#elif");
+const olxstr CPP::undefstr("#undef");
+const olxstr CPP::linestr("__LINE__");
+const olxstr CParser::templatestr("template");
+const olxstr CParser::namespacestr("namespace");
+const olxstr CParser::classstr("class");
+const olxstr CParser::structstr("struct");
 
-TEString PreprocessLine(const TEString& line)  {
+olxstr PreprocessLine(const olxstr& line)  {
   if( line.Length() == 0 )  return line;
 
-  TEString rv(EmptyString, line.Length() );
+  olxstr rv(EmptyString, line.Length() );
   int si = 0, ei = line.Length()-1;
   while( (line[si] == ' ' || line[si] == '\t') && si <= ei )  si++;
   while( (line[ei] == ' ' || line[ei] == '\t') && ei >= si )  ei--;
@@ -35,7 +35,7 @@ TEString PreprocessLine(const TEString& line)  {
       while( ++i <= ei && line[i] != quote )  rv << line[i];
     }
     if( i == si && line[i] == '#')  {
-      rv += '#';
+      rv << '#';
       while( ++i < ei && (line[i] == ' ' || line[i] == '\t') )  ;
       i--;
       continue;
@@ -60,20 +60,20 @@ TEString PreprocessLine(const TEString& line)  {
         continue;
       }
     }
-    rv += (line[i] != '\t') ? line[i] : ' ';
+    rv << ((line.CharAt(i) != '\t') ? line.CharAt(i) : ' ');
   }
   return rv;
 }
-void CPP::AnalyseDef(TEString& line)  {
+void CPP::AnalyseDef(olxstr& line)  {
   int obi = line.FirstIndexOf('(');
   if( obi == -1 || (obi > 0 && line[obi-1] == ' ') )  {  // just define?
     obi = line.FirstIndexOf(' ');
-    TEString macroName = (obi==-1) ? line : line.SubStringTo(obi);
-    TEString macroValue = (obi==-1) ? EmptyString : line.SubStringFrom(obi+1);
+    olxstr macroName = (obi==-1) ? line : line.SubStringTo(obi);
+    olxstr macroValue = (obi==-1) ? EmptyString : line.SubStringFrom(obi+1);
     //ExpandMacros(macroValue);
     int ind = Defines.IndexOf(macroName);
     if(  ind != -1 )  {
-      //throw TFunctionFailedException(__OlxSourceInfo, TEString("Macro redifinition") << macroName );
+      //throw TFunctionFailedException(__OlxSourceInfo, olxstr("Macro redifinition") << macroName );
       Defines.Object(ind) = macroValue;
     }
     else
@@ -89,16 +89,16 @@ void CPP::AnalyseDef(TEString& line)  {
       else if( line[i] == '(' )  bc++;
 
       if( bc == 0 )  {  // now we know where the arguments are and the macro body
-        TEString macroName = line.SubStringTo(obi);
-        TEString* macroBody;
+        olxstr macroName = line.SubStringTo(obi);
+        olxstr* macroBody;
         TStrList* args = NULL;
         if( obi == i-1 )  {  // empty args
-          macroBody = new TEString( line.SubStringFrom(i+1).Trim() );
+          macroBody = new olxstr( line.SubStringFrom(i+1).Trim(' ') );
         }
         else  {
-          TEString strArgs( line.SubString(obi+1, i-obi-1) );
-          macroBody = new TEString( line.SubStringFrom(i+1) );
-          args = new TStrList(TEString::RemoveChars(strArgs, ' '), ',');
+          olxstr strArgs( line.SubString(obi+1, i-obi-1) );
+          macroBody = new olxstr( line.SubStringFrom(i+1) );
+          args = new TStrList(olxstr::DeleteChars(strArgs, ' '), ',');
         }
         //ExpandMacros(*macroBody);
         int ind = Macros.IndexOf(macroName);
@@ -114,7 +114,7 @@ void CPP::AnalyseDef(TEString& line)  {
       }
     }
   }
-  throw TFunctionFailedException(__OlxSourceInfo, TEString("Invalid macro definition - ") << line);
+  throw TFunctionFailedException(__OlxSourceInfo, olxstr("Invalid macro definition - ") << line);
 }
 
 void CPP::ProcessIf(const TStrList& lines, int &index, TStrList& output)  {
@@ -185,7 +185,7 @@ void CPP::ProcessIf(const TStrList& lines, int &index, TStrList& output)  {
   Process(next, output);
 }
 
-int LocateName( const TEString& line, const TEString& what )  {
+int LocateName( const olxstr& line, const olxstr& what )  {
   if( line.Length() < what.Length() )  return -1;
   int al = line.Length(), bl = what.Length();
   const char *a = line.c_str();
@@ -212,12 +212,12 @@ int LocateName( const TEString& line, const TEString& what )  {
   }
   return -1;
 }
-TEString& CPP::ExpandMacros(TEString& line)  {
+olxstr& CPP::ExpandMacros(olxstr& line)  {
   if( line.IsEmpty() )  return line;
   if( line.Length() >= 2 && line[0] == '/' && line[1] == '/' )  return line;
 
   TStrList args;
-  TEString strArgs;
+  olxstr strArgs;
   bool changes = true, changed = false;
   while( changes )  {
     changes = false;
@@ -232,12 +232,12 @@ TEString& CPP::ExpandMacros(TEString& line)  {
           if( line[eind] == '(' )  bc++;
           else if( line[eind] == ')' )  bc--;
           if( bc == 0 )  break;
-          strArgs += line[eind];
+          strArgs << line[eind];
         }
         line.Delete( sind, eind-sind+1 );
 
         args.Clear();
-        args.Strtok(TEString::RemoveChars(strArgs, ' '), ',');
+        args.Strtok(olxstr::DeleteChars(strArgs, ' '), ',');
         line.Insert((args.Count() != 0) ? MacroValue(i).Expand(&args) : MacroValue(i).Expand(NULL), sind );
         changed = changes = true;
       }
@@ -260,12 +260,12 @@ TEString& CPP::ExpandMacros(TEString& line)  {
 }
 
 void CPP::Process(TStrList& lines, TStrList& output)  {
-  TEString line, fn;
+  olxstr line, fn;
   TStrList toks;
   for( int i=0; i < lines.Count(); i++ )  {
     if( lines[i].IsEmpty() )  continue;
 
-    TEString &lref = lines[i];
+    olxstr &lref = lines[i];
     // skip comments ...
     bool openquote = false;
     for( int j=0; j < lref.Length(); j++ )  {
@@ -290,7 +290,7 @@ void CPP::Process(TStrList& lines, TStrList& output)  {
           else  {  // search on other lines then
             lref.SetLength(j+1);
             while( ++i < lines.Count() )  {
-              TEString &cref = lines[i];
+              olxstr &cref = lines[i];
               for( int k=0; k < cref.Length(); k++ )  {
                 if( cref[k] == '*' && (k+1) < cref.Length() && cref[k+1] == '/' )  {
                   endindex = k;
@@ -313,7 +313,7 @@ void CPP::Process(TStrList& lines, TStrList& output)  {
       }
     }
 
-    Defines[linestr] = (TEString('"') << i << '"');
+    Defines[linestr] = (olxstr('"') << i << '"');
 //    line = PreprocessLine(lines[i]);
 //    if( line.IsEmpty() )  continue;
 
@@ -335,7 +335,7 @@ void CPP::Process(TStrList& lines, TStrList& output)  {
     else if( lines[i].StartsFrom(incstr) )  {
       line = lines[i];
       ExpandMacros(line);
-      line = line.SubStringFrom( incstr.Length()+1 ).Trim();
+      line = line.SubStringFrom( incstr.Length()+1 ).Trim(' ');
       if( line.Length() < 3 )  {
         output.Add("// FAILED ON ") << lines[i];
         continue;
@@ -344,9 +344,10 @@ void CPP::Process(TStrList& lines, TStrList& output)  {
       line = line.SubString(1, line.Length()-2);
       fn = CP->LocateFile(line);
       if( !TEFile::FileExists(fn) )  {
-        output.Add("// FAILED ON ") << lines[i];
+        output.Add("// FAILED ON Include ") << line;
+        output.Add("// >> ") << lines[i];
         continue;
-        //throw TFunctionFailedException(__OlxSourceInfo, TEString("could not locate included file - ") << line);
+        //throw TFunctionFailedException(__OlxSourceInfo, olxstr("could not locate included file - ") << line);
       }
       TStrList fl;
       fl.LoadFromFile(fn);
@@ -364,7 +365,7 @@ void CPP::Process(TStrList& lines, TStrList& output)  {
   }
 }
 
-void CPP::WriteOutput(const TEString& line, TStrList& output)  {
+void CPP::WriteOutput(const olxstr& line, TStrList& output)  {
   if( line.IsEmpty() )  return;
   output << line;
 /*
@@ -372,7 +373,7 @@ void CPP::WriteOutput(const TEString& line, TStrList& output)  {
   static CType* CurrentObject = NULL;
   //static CFunction* CurrentObject = NULL;
   if( line.StartsFrom(namespacestr) )  {
-    TEString nsname;
+    olxstr nsname;
     if( line[line.Length()-1] == '{') nsname = line.SubStringFrom(namespacestr.Length()+1, 1);
     else                              nsname = line.SubStringFrom(namespacestr.Length()+1, 0);
     CurrentNS = &Model->GetNamespace(nsname, CurrentNS);
@@ -407,7 +408,7 @@ CPP::~CPP()  {
     delete Macros.Object(i);
 }
 
-bool CPP::ValidateIf(const TEString& val)  {
+bool CPP::ValidateIf(const olxstr& val)  {
   Parser->Parse(val);
   if( Parser->GetRoot() == 0 )
     return IsDefined(val);
@@ -415,7 +416,7 @@ bool CPP::ValidateIf(const TEString& val)  {
 }
 
 
-TStrList& CParser::Parse(const TEString& filename)  {
+TStrList& CParser::Parse(const olxstr& filename)  {
   // model initialisation
   if( Model != NULL )  delete Model;
   Model = new CModel(filename);
@@ -459,11 +460,11 @@ TStrList& CParser::Parse(const TEString& filename)  {
     //MessageBox( NULL, exc.GetFullMessage().c_str(), EsdlClassName(exc).c_str(), 0 );
   }
 
-//  TEString test("_STLP_BEGIN_NAMESPACE");
+//  olxstr test("_STLP_BEGIN_NAMESPACE");
 //  LocateName(test, test);
 //  PP.ExpandMacros(test);
 
-//  TEString testa("what() const ;");
+//  olxstr testa("what() const ;");
 //  PreprocessLine(testa);
 //  PP.ExpandMacros(test);
 
@@ -478,17 +479,17 @@ TStrList& CParser::Parse(const TEString& filename)  {
 
   return Result;
 }
-TEString CParser::LocateFile(const TEString& fn) const {
+olxstr CParser::LocateFile(const olxstr& fn) const {
   if( TEFile::IsAbsolutePath(fn) )  return fn;
   if( fn.IndexOf("..") != -1 )  {
     for( int i=0; i < Paths.Count(); i++ )  {
-      TEString f( TEFile::AbsolutePathTo(Paths[i], fn) );
+      olxstr f( TEFile::AbsolutePathTo(Paths[i], fn) );
       if( TEFile::FileExists(f) )  return f;
     }
   }
   else  {
     for( int i=0; i < Paths.Count(); i++ )  {
-      TEString f( Paths[i]);
+      olxstr f( Paths[i]);
       f << fn;
       if( TEFile::FileExists(f) )  return f;
     }
@@ -496,7 +497,7 @@ TEString CParser::LocateFile(const TEString& fn) const {
   return EmptyString;
 }
 
-bool CParser::IsNextWord(int &ind, int end, const TEString& word)  {
+bool CParser::IsNextWord(int &ind, int end, const olxstr& word)  {
   if( ind + word.Length() > end )  return false;
 
   while( StrCode[ind] == ' ' ) ind++;
@@ -507,7 +508,7 @@ bool CParser::IsNextWord(int &ind, int end, const TEString& word)  {
   return true;
 }
 
-void CParser::ExtractExpression(int &i, int end, TEString& exp)  {
+void CParser::ExtractExpression(int &i, int end, olxstr& exp)  {
   const char oc = exp[0], cc = exp[1];
   exp.SetLength(0);
   while( i < end && StrCode[i] != oc )  i++;
@@ -521,7 +522,7 @@ void CParser::ExtractExpression(int &i, int end, TEString& exp)  {
   return;
 }
 
-void CParser::ExtractNext(int &i, int end, TEString& exp)  {
+void CParser::ExtractNext(int &i, int end, olxstr& exp)  {
   while( StrCode[i] == ' ' ) i++;
   for(; i < end; i++ )  {
     if( (StrCode[i] >= 'a' && StrCode[i] <= 'z') ||
@@ -536,13 +537,13 @@ void CParser::ExtractNext(int &i, int end, TEString& exp)  {
   return;
 }
 
-void CParser::_CParse(const TEString &parent, int start, int end)  {
-  TEString name, type, tmp;
+void CParser::_CParse(const olxstr &parent, int start, int end)  {
+  olxstr name, type, tmp;
   for( int i=start; i < end; i++ )  {
     if( IsNextWord(i, end, templatestr) )  {
       type = "<>";
       ExtractExpression(i, end, type); // xtract template arguments
-      if( IsNextWord(i, end, classstr) )  {
+      if( IsNextWord(i, end, classstr) || IsNextWord(i, end, structstr))  {
         name.SetLength(0);
         ExtractNext(i, end, name);
         if( type.IsEmpty() )  {  // explicit template type
@@ -552,7 +553,7 @@ void CParser::_CParse(const TEString &parent, int start, int end)  {
         }
         if( i < StrCode.Length() && (StrCode[i] == ':' || StrCode[i] == '{') )  {
           int sti = i, ob=1;
-          TEString der;
+          olxstr der;
           if( StrCode[i] == ':' )
             while( ++i < StrCode.Length() && StrCode[i] != '{' )  der << StrCode[i];
           // scrol the class template declaration
@@ -562,14 +563,14 @@ void CParser::_CParse(const TEString &parent, int start, int end)  {
             if( ob == 0 )  break;
           }
           if( der.Length() != 0 )
-            Input->Add( TEString("def template ") << parent << name << '<' << type << '>' << ':' << der);
+            Input->Add( olxstr("def template ") << parent << name << '<' << type << '>' << ':' << der);
           else
-            Input->Add( TEString("def template ") << parent << name << '<' << type << '>');
+            Input->Add( olxstr("def template ") << parent << name << '<' << type << '>');
 
           if( parent.IsEmpty() )
             _CParse( name << "::", sti, i);
           else
-            _CParse( TEString(parent) << name << "::", sti, i);
+            _CParse( olxstr(parent) << name << "::", sti, i);
         }
       }
       else  {  // function then?
@@ -585,7 +586,7 @@ void CParser::_CParse(const TEString &parent, int start, int end)  {
 
         if( i < StrCode.Length() )  {
           int sti = i;
-          TEString der;
+          olxstr der;
           if( StrCode[i] == '{' )  {  // scrol the function body
             int ob = 1;
             while( ++i < StrCode.Length() )  {
@@ -594,7 +595,7 @@ void CParser::_CParse(const TEString &parent, int start, int end)  {
               if( ob == 0 )  break;
             }
           }
-          Input->Add( TEString("def function ") << parent << name << '(' << tmp << ')');
+          Input->Add( olxstr("def function ") << parent << name << '(' << tmp << ')');
         }
       }
     }
@@ -603,7 +604,7 @@ void CParser::_CParse(const TEString &parent, int start, int end)  {
       ExtractNext(i, end, name);
       if( i < StrCode.Length() && (StrCode[i] == ':' || StrCode[i] == '{') )  {
         int sti = i, ob=1;
-        TEString der;
+        olxstr der;
         if( StrCode[i] == ':' )
           while( ++i < StrCode.Length() && StrCode[i] != '{' )  der << StrCode[i];
         // scrol the class template declaration
@@ -613,14 +614,39 @@ void CParser::_CParse(const TEString &parent, int start, int end)  {
           if( ob == 0 )  break;
         }
         if( der.Length() != 0 )
-          Input->Add( TEString("def class ") << parent << name << ':' << der);
+          Input->Add( olxstr("def class ") << parent << name << ':' << der);
         else
-          Input->Add( TEString("def class ") << parent << name);
+          Input->Add( olxstr("def class ") << parent << name);
 
         if( parent.IsEmpty() )
           _CParse( name << "::", sti, i);
         else
-          _CParse( TEString(parent) << name << "::", sti, i);
+          _CParse( olxstr(parent) << name << "::", sti, i);
+      }
+    }
+    else if( IsNextWord(i, end, structstr) )  {
+      name.SetLength(0);
+      ExtractNext(i, end, name);
+      if( i < StrCode.Length() && (StrCode[i] == ':' || StrCode[i] == '{') )  {
+        int sti = i, ob=1;
+        olxstr der;
+        if( StrCode[i] == ':' )
+          while( ++i < StrCode.Length() && StrCode[i] != '{' )  der << StrCode[i];
+        // scrol the class template declaration
+        while( ++i < StrCode.Length() )  {
+          if( StrCode[i] == '{' )  ob++;
+          else if( StrCode[i] == '}' )  ob --;
+          if( ob == 0 )  break;
+        }
+        if( der.Length() != 0 )
+          Input->Add( olxstr("def struct ") << parent << name << ':' << der);
+        else
+          Input->Add( olxstr("def struct ") << parent << name);
+
+        if( parent.IsEmpty() )
+          _CParse( name << "::", sti, i);
+        else
+          _CParse( olxstr(parent) << name << "::", sti, i);
       }
     }
     else if( IsNextWord(i, end, namespacestr) )  {
@@ -628,7 +654,7 @@ void CParser::_CParse(const TEString &parent, int start, int end)  {
       ExtractNext(i, end, name);
       if( i < StrCode.Length() && StrCode[i] == '{' )  {
         int sti = i, ob=1;
-        TEString der;
+        olxstr der;
         // scrol the class template declaration
         while( ++i < StrCode.Length() )  {
           if( StrCode[i] == '{' )  ob++;
@@ -636,12 +662,12 @@ void CParser::_CParse(const TEString &parent, int start, int end)  {
           if( ob == 0 )  break;
         }
 
-        Input->Add( TEString("def namespace ") << parent << name);
+        Input->Add( olxstr("def namespace ") << parent << name);
 
         if( parent.IsEmpty() )
           _CParse( name << "::", sti, i);
         else
-          _CParse( TEString(parent) << name << "::", sti, i);
+          _CParse( olxstr(parent) << name << "::", sti, i);
       }
     }
   }

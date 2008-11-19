@@ -101,8 +101,8 @@ void Test()  {
   objects.NewObject<const long double*&>();
   objects.NewObject<const long double *const &>();
 
-  objects.NewObject<TVectorD>();
-  BObject* strObj = objects.NewObject<TEString>();
+  objects.NewObject<evecd>();
+  BObject* strObj = objects.NewObject<olxstr>();
 
   BFunction* bf = new BFunction(objects.FindObject<int>(), "test");
   bf->AddArg( new BArg(objects.FindObject<double>(), "a1") );
@@ -133,6 +133,11 @@ void __fastcall TMF::CPP1Click(TObject *Sender)  {
     cp.AddPath( "c:/Program Files (x86)/Borland/CBuilder6/Include/Stlport/" );
     cp.AddPath( "c:/Program Files/Borland/CBuilder6/Include/" );
     cp.AddPath( "c:/Program Files/Borland/CBuilder6/Include/Stlport/" );
+    cp.AddPath( "E:/SVN/olex2-sf/trunk/sdl/" );
+    cp.AddPath( "E:/SVN/olex2-sf/trunk/xlib/" );
+    cp.AddPath( "E:/SVN/olex2-sf/trunk/glib/" );
+    cp.AddPath( "E:/SVN/olex2-sf/trunk/gxlib/" );
+    cp.AddPath( "E:/wxWidgets-2.8.7/include/" );
     try  {
       TStrList& rv = cp.Parse( dlgOpen->FileName.c_str() );
       reEdit->Lines->BeginUpdate();
@@ -141,7 +146,7 @@ void __fastcall TMF::CPP1Click(TObject *Sender)  {
       reEdit->Lines->EndUpdate();
     }
     catch( TExceptionBase& exc )  {
-      Application->MessageBox( exc.GetFullMessage().c_str(), EsdlClassName(exc).c_str(), 0 );
+      Application->MessageBox( exc.GetException()->GetFullMessage().c_str(), EsdlClassName(exc).c_str(), 0 );
     }
   }
 

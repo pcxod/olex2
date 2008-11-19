@@ -30,9 +30,9 @@ template <class IC>
 
 class TOperatorSignature  {
 public:
-  TEString StringValue;
+  olxstr StringValue;
   short    ShortValue;
-  TOperatorSignature(const short shortVal, const TEString &strVal);
+  TOperatorSignature(const short shortVal, const olxstr &strVal);
 
 };
 // an array to use in parsing
@@ -57,10 +57,10 @@ class IEvaluator: public IEObject  {
 public:
   virtual ~IEvaluator() {  ;  }
 
-  class TUnsupportedOperator: public TExceptionBase  {
+  class TUnsupportedOperator: public TBasicException  {
   public:
-    TUnsupportedOperator(const TEString& location):
-        TExceptionBase(location, EmptyString)  {  ;  }
+    TUnsupportedOperator(const olxstr& location):
+        TBasicException(location, EmptyString)  {  ;  }
     virtual IEObject* Replicate()  const {  return new TUnsupportedOperator(*this);  }
   };
   virtual bool operator == (const IEvaluator &val) const {  throw TUnsupportedOperator(__OlxSourceInfo);  }
@@ -74,10 +74,10 @@ public:
   virtual IEvaluator *NewInstance(IDataProvider *) = 0; // {  return NULL;  }
 
 
-  class TCastException: public TExceptionBase  {
+  class TCastException: public TBasicException  {
   public:
-    TCastException(const TEString& location, const IEObject* obj):
-        TExceptionBase(location, (obj != NULL) ? EsdlObjectName(*obj) : EmptyString)  { ;  }
+    TCastException(const olxstr& location, const IEObject* obj):
+        TBasicException(location, (obj != NULL) ? EsdlObjectName(*obj) : EmptyString)  { ;  }
     virtual IEObject* Replicate()  const {  return new TCastException(*this);  }
   };
   virtual short EvaluateShort()          const  {  throw TCastException(__OlxSourceInfo, this);  }
@@ -89,7 +89,7 @@ public:
   virtual unsigned int EvaluateUint()    const  {  throw TCastException(__OlxSourceInfo, this);  }
   virtual unsigned long EvaluateUlong()  const  {  throw TCastException(__OlxSourceInfo, this);  }
   virtual bool EvaluateBool()            const  {  throw TCastException(__OlxSourceInfo, this);  }
-  virtual const TEString& EvaluateString()     const  {  throw TCastException(__OlxSourceInfo, this);  }
+  virtual const olxstr& Evaluaolxstr()     const  {  throw TCastException(__OlxSourceInfo, this);  }
 };
 /*
 class IArithmetic
@@ -115,13 +115,13 @@ public:
 class IStringEvaluator: public IEvaluator  {
 public:
   ~IStringEvaluator() {  ;  }
-  bool operator == (const IEvaluator &val) const  {  return !EvaluateString().CompareCI( val.EvaluateString() );  }
-  bool operator != (const IEvaluator &val) const  {  return EvaluateString().CompareCI( val.EvaluateString() ) != 0;  }
-  bool operator > (const IEvaluator &val) const   {  return EvaluateString().CompareCI( val.EvaluateString() ) > 0;  }
-  bool operator >= (const IEvaluator &val) const  {  return EvaluateString().CompareCI( val.EvaluateString() ) >= 0;  }
-  bool operator < (const IEvaluator &val) const   {  return EvaluateString().CompareCI( val.EvaluateString() ) < 0;  }
-  bool operator <= (const IEvaluator &val) const  {  return EvaluateString().CompareCI( val.EvaluateString() ) <= 0;  }
-  const TEString& EvaluateString() const = 0;
+  bool operator == (const IEvaluator &val) const  {  return !Evaluaolxstr().Comparei( val.Evaluaolxstr() );  }
+  bool operator != (const IEvaluator &val) const  {  return Evaluaolxstr().Comparei( val.Evaluaolxstr() ) != 0;  }
+  bool operator > (const IEvaluator &val) const   {  return Evaluaolxstr().Comparei( val.Evaluaolxstr() ) > 0;  }
+  bool operator >= (const IEvaluator &val) const  {  return Evaluaolxstr().Comparei( val.Evaluaolxstr() ) >= 0;  }
+  bool operator < (const IEvaluator &val) const   {  return Evaluaolxstr().Comparei( val.Evaluaolxstr() ) < 0;  }
+  bool operator <= (const IEvaluator &val) const  {  return Evaluaolxstr().Comparei( val.Evaluaolxstr() ) <= 0;  }
+  const olxstr& Evaluaolxstr() const = 0;
 };
 
 class IDoubleEvaluator: public IEvaluator  {
@@ -272,12 +272,12 @@ public:
 };
 
 class TStringEvaluator: public IStringEvaluator  {
-  TEString Value;
+  olxstr Value;
 public:
-  TStringEvaluator(const TEString &Val)  {  Value = Val;  }
+  TStringEvaluator(const olxstr &Val)  {  Value = Val;  }
   ~TStringEvaluator() {  ;  }
-  const TEString& EvaluateString() const {  return Value;  }
-  void SetValue(const TEString& v)  {  Value = v;  }
+  const olxstr& Evaluaolxstr() const {  return Value;  }
+  void SetValue(const olxstr& v)  {  Value = v;  }
   IEvaluator *NewInstance(IDataProvider *) {  return new TStringEvaluator(Value);  }
 };
 
@@ -394,10 +394,10 @@ template <class CollectionProviderClass, class PropertyProviderClass, class Eval
       FPropertyEvaluator->Data( FCollection->Item( FIterator->EvaluateInt() ) );
       return FPropertyEvaluator->EvaluateUlong();
     }
-    const TEString& EvaluateString()     const
+    const olxstr& Evaluaolxstr()     const
     {
       FPropertyEvaluator->Data( FCollection->Item( FIterator->EvaluateInt() ) );
-      return FPropertyEvaluator->EvaluateString();
+      return FPropertyEvaluator->Evaluaolxstr();
     }
 
     virtual ~TCollectionPropertyEvaluator()  {  ;  }
@@ -414,21 +414,21 @@ class IClassDefinition
 public:
   virtual ~IClassDefinition()  {  ;  }
   // returns one of the above mtXXX constants
-  virtual short GetMemberType(const TEString& propName);
-  virtual TEString GetPropertyType(const TEString& propName);
-  virtual TEString GetComplexType(const TEString& propName);
-  virtual TEString GetCollectionType(const TEString& propName);
-  virtual IEvaluator* GetPropertyEvaluator(const TEString& propName);
-  virtual IDataProvider* GetComplexEvaluator(const TEString& propName);
-  //virtual ICollection* GetCollectionEvaluator(const TEString& propName);
+  virtual short GetMemberType(const olxstr& propName);
+  virtual olxstr GetPropertyType(const olxstr& propName);
+  virtual olxstr GetComplexType(const olxstr& propName);
+  virtual olxstr GetCollectionType(const olxstr& propName);
+  virtual IEvaluator* GetPropertyEvaluator(const olxstr& propName);
+  virtual IDataProvider* GetComplexEvaluator(const olxstr& propName);
+  //virtual ICollection* GetCollectionEvaluator(const olxstr& propName);
 
 };
 
 class TEvaluatorFactory  {
-  TSStrPObjList<IClassDefinition*, true> ClassDefinitions;
+  TSStrPObjList<olxstr,IClassDefinition*, true> ClassDefinitions;
 public:
   TEvaluatorFactory() {  ;  }
-  IEvaluator* Evaluator(const TEString &Val)  {
+  IEvaluator* Evaluator(const olxstr &Val)  {
     TStrList toks(Val, '.');
     if( toks.Count() <= 1 )
     {
@@ -466,11 +466,11 @@ class IEvaluatorFactory  {
 public:
   IEvaluatorFactory()  {  ;  }
   virtual ~IEvaluatorFactory() {  ;  }
-  virtual IEvaluator* Evaluator(const TEString &Val) = 0;
-  virtual IEvaluable* Evaluable(const TEString &Val) = 0;
-  virtual IEvaluator* Evaluator(const TEString& name, const TEString &Val) = 0;
-  virtual IEvaluable* Evaluable(const TEString& name, const TEString &Val) = 0;
-//  virtual ICollection* Collection(const TEString &Name) = 0;
+  virtual IEvaluator* Evaluator(const olxstr &Val) = 0;
+  virtual IEvaluable* Evaluable(const olxstr &Val) = 0;
+  virtual IEvaluator* Evaluator(const olxstr& name, const olxstr &Val) = 0;
+  virtual IEvaluable* Evaluable(const olxstr& name, const olxstr &Val) = 0;
+//  virtual ICollection* Collection(const olxstr &Name) = 0;
 };
 
 /*
@@ -632,18 +632,18 @@ class TSyntaxParser  {
   IEvaluatorFactory *EvaluatorFactory;
   TPtrList<IEvaluable> Evaluables;
   TPtrList<IEvaluator> Evaluators;
-  TSStrPObjList< TObjectFactory<IEvaluable>*, false > LogicalOperators, ComparisonOperators, ArithmeticFunctions;
-  IEvaluator* CreateEvaluator(const TEString& expr, const TEString& args, const TEString& strval);
-  IEvaluable* CreateEvaluable(const TEString& expr, const TEString& args, const TEString& strval);
+  TSStrPObjList<olxstr, TObjectFactory<IEvaluable>*, false > LogicalOperators, ComparisonOperators, ArithmeticFunctions;
+  IEvaluator* CreateEvaluator(const olxstr& expr, const olxstr& args, const olxstr& strval);
+  IEvaluable* CreateEvaluable(const olxstr& expr, const olxstr& args, const olxstr& strval);
 protected:
-  IEvaluable* SimpleParse(const TEString& Expression);
+  IEvaluable* SimpleParse(const olxstr& Expression);
   void Clear();
 public:
   TSyntaxParser(IEvaluatorFactory *FactoryInstance);
   ~TSyntaxParser();
   inline bool Evaluate()  {  return Root->Evaluate();  }
   inline IEvaluable *GetRoot()  {  return Root;  }
-  void Parse(const TEString &Text);
+  void Parse(const olxstr &Text);
 };
 
 /******************************************************************************/
