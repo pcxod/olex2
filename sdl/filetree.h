@@ -3,6 +3,7 @@
 
 #include "efile.h"
 #include "actions.h"
+#include "utf8file.h"
 
 BeginEsdlNamespace()
 class TFileTree  {
@@ -167,6 +168,23 @@ public:
           Folders[i].Synchronise(f.Folders[ind], onSync, onFileCopy);
       }
     }
+    void ExportIndex(const olxstr& fileName, TStrList* list = NULL, int level=0) const {
+      TStrList* lst = (list == NULL) ? new TStrList : list;
+      for( int i=0; i < Files.Count(); i++ )  {
+        lst->Add( olxstr::CharStr('\t', level) ) << Files[i].GetName(); 
+        lst->Add( olxstr::CharStr('\t', level) ) << Files[i].GetModificationTime() << ',' << Files[i].GetSize() << "{}"; 
+      }
+      for( int i=0; i < Folders.Count(); i++ )
+        Folders[i].ExportIndex(fileName, lst, level+1);
+      if( list == NULL )  {
+        try { TUtf8File::WriteLines(fileName, *lst, false);  }
+        catch( const TExceptionBase& exc )  {
+          delete lst;
+          throw TFunctionFailedException(__OlxSourceInfo, exc, "failed to save index");
+        }
+        delete lst;
+      }
+    }
   };
 ///////////////////////////////////////////////////////////////////////////////////////
   TActionQList Actions;
@@ -251,7 +269,7 @@ public:
     pg.SetAction( from );
     size_t full = fl/bf_sz,
            part = fl%bf_sz;
-    for( int i=0; i < full; i++ )  {
+    for( size_t i=0; i < full; i++ )  {
       in.Read(bf, bf_sz);
       out.Write(bf, bf_sz);
       pg.SetPos( (i+1)*bf_sz);
@@ -281,7 +299,7 @@ public:
     pg.SetAction( from );
     size_t full = fl/bf_sz,
            part = fl%bf_sz;
-    for( int i=0; i < full; i++ )  {
+    for( size_t i=0; i < full; i++ )  {
       f1.Read(bf1, bf_sz);
       f2.Read(bf2, bf_sz);
       if( olxstr::o_memcmp(bf1, bf2, bf_sz) != 0 )  {
