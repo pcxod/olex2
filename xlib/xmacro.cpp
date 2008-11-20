@@ -13,7 +13,6 @@
 #include "hkl.h"
 
 #include "unitcell.h"
-#include "symmlib.h"
 #include "symmtest.h"
 #include "integration.h"
 #include "utf8file.h"
@@ -625,6 +624,79 @@ void XLibMacros::macLstFun(TStrObjList &Cmds, const TParamList &Options, TMacroE
   }
 }
 //..............................................................................
+void XLibMacros::ChangeCell(const mat3d& tm, const TSpaceGroup& new_sg)  {
+  TXApp& xapp = TXApp::GetInstance();
+  TBasicApp::GetLog() << (olxstr("Cell choice trasformation matrix: \n"));
+  TBasicApp::GetLog() << tm[0].ToString() << '\n';
+  TBasicApp::GetLog() << tm[1].ToString() << '\n';
+  TBasicApp::GetLog() << tm[2].ToString() << '\n';
+  TBasicApp::GetLog() << ((olxstr("New space group: ") << new_sg.GetName() << '\n'));
+  const mat3d tm_t( mat3d::Transpose(tm) );
+  xapp.XFile().UpdateAsymmUnit();
+  TAsymmUnit& au = xapp.XFile().LastLoader()->GetAsymmUnit();
+  const mat3d i_tm( tm.Inverse() );
+  mat3d f2c( mat3d::Transpose(xapp.XFile().GetAsymmUnit().GetCellToCartesian())*tm );
+  mat3d ax_err;
+  ax_err[0] = vec3d(QRT(au.Axes()[0].GetE()), QRT(au.Axes()[1].GetE()), QRT(au.Axes()[2].GetE()));
+  ax_err[1] = ax_err[0];  ax_err[2] = ax_err[0];
+  mat3d an_err;
+  an_err[0] = vec3d(QRT(au.Angles()[0].GetE()), QRT(au.Angles()[1].GetE()), QRT(au.Angles()[2].GetE()));
+  an_err[1] = an_err[0];  an_err[2] = an_err[0];
+  // prepare positive matrix for error estimation
+  mat3d tm_p(tm);
+  for( int i=0; i < 3; i++ )
+    for( int j=0; j < 3; j++ )
+      if( tm_p[i][j] < 0 ) 
+        tm_p[i][j] = - tm_p[i][j];
+  ax_err *= tm_p;
+  an_err *= tm_p;
+  f2c.Transpose();
+  au.Axes()[0].V() = f2c[0].Length();  au.Axes()[0].E() = sqrt(ax_err[0][0]);
+  au.Axes()[1].V() = f2c[1].Length();  au.Axes()[1].E() = sqrt(ax_err[1][1]);
+  au.Axes()[2].V() = f2c[2].Length();  au.Axes()[2].E() = sqrt(ax_err[2][2]);
+  au.Angles()[0].V() = acos(f2c[1].CAngle(f2c[2]))*180.0/M_PI;  au.Angles()[0].E() = sqrt(an_err[0][0]);
+  au.Angles()[1].V() = acos(f2c[0].CAngle(f2c[2]))*180.0/M_PI;  au.Angles()[1].E() = sqrt(an_err[1][1]);
+  au.Angles()[2].V() = acos(f2c[0].CAngle(f2c[1]))*180.0/M_PI;  au.Angles()[2].E() = sqrt(an_err[2][2]);
+  for( int i=0; i < au.AtomCount(); i++ )  {
+    TCAtom& ca = au.GetAtom(i);
+    ca.ccrd() = i_tm * ca.ccrd();
+    if( ca.GetEllipsoid() != NULL )  { // reset to usio
+      au.NullEllp( ca.GetEllipsoid()->GetId() );
+      ca.AssignEllp(NULL);
+    }
+  }
+  au.PackEllps();
+  TBasicApp::GetLog() << (olxstr("New cell: ") << au.Axes()[0].ToString() << 
+    ' ' << au.Axes()[1].ToString() << 
+    ' ' << au.Axes()[2].ToString() <<
+    ' '  << au.Angles()[0].ToString() << 
+    ' '  << au.Angles()[1].ToString() << 
+    ' '  << au.Angles()[2].ToString() << '\n'
+    );
+  TBasicApp::GetLog().Error("Cell esd's are estimated!");
+  olxstr hkl_fn( xapp.LocateHklFile() );
+  if( !hkl_fn.IsEmpty() )  {
+    THklFile hklf;
+    hklf.LoadFromFile(hkl_fn);
+    for( int i=0; i < hklf.RefCount(); i++ )  {
+      vec3d hkl(hklf[i].GetH(), hklf[i].GetK(), hklf[i].GetL());
+      hkl = tm_t * hkl;
+      hklf[i].SetH(Round(hkl[0]));
+      hklf[i].SetK(Round(hkl[1]));
+      hklf[i].SetL(Round(hkl[2]));
+    }
+    olxstr new_hkl_fn( TEFile::ExtractFilePath(hkl_fn) );
+    TEFile::AddTrailingBackslashI(new_hkl_fn) << "test.hkl";
+    hklf.SaveToFile( new_hkl_fn );
+    xapp.XFile().LastLoader()->SetHKLSource(new_hkl_fn);
+  }
+  au.ChangeSpaceGroup(new_sg);
+  au.InitMatrices();
+  xapp.XFile().LastLoaderChanged();
+  // keep the settings, as the hkl file has changed, so if user exists... inconsistency
+  xapp.XFile().SaveToFile( xapp.XFile().GetFileName(), false );
+}
+//..............................................................................
 TSpaceGroup* XLibMacros_macSGS_FindSG(TPtrList<TSpaceGroup>& sgs, const olxstr& axis)  {
   for( int i=0; i < sgs.Count(); i++ )
     if( sgs[i]->GetAxis().Compare(axis) == 0 )
@@ -671,83 +743,14 @@ void XLibMacros::macSGS(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   }
   mat3d tm;
   if( sg_set.GetTrasformation(n_ai, tm) )  {
-    TBasicApp::GetLog() << (olxstr("Cell choice trasformation matrix: \n"));
-    TBasicApp::GetLog() << tm[0].ToString() << '\n';
-    TBasicApp::GetLog() << tm[1].ToString() << '\n';
-    TBasicApp::GetLog() << tm[2].ToString() << '\n';
     TSpaceGroup* new_sg = XLibMacros_macSGS_FindSG( sgs, n_ai.GetAxis() );
     if( new_sg == NULL && n_ai.GetAxis() == "abc" )
       new_sg = XLibMacros_macSGS_FindSG( sgs, EmptyString );
-    if( new_sg != NULL )  
-      TBasicApp::GetLog() << ((olxstr("New space group: ") << new_sg->GetName() << '\n'));
-    else  {
+    if( new_sg == NULL )  {
       E.ProcessingError(__OlxSrcInfo, "Could not locate space group for given settings");
       return;
     }
-    const mat3d tm_t( mat3d::Transpose(tm) );
-    xapp.XFile().UpdateAsymmUnit();
-    TAsymmUnit& au = xapp.XFile().LastLoader()->GetAsymmUnit();
-    const mat3d i_tm( tm.Inverse() );
-    mat3d f2c( mat3d::Transpose(xapp.XFile().GetAsymmUnit().GetCellToCartesian())*tm );
-    mat3d ax_err;
-    ax_err[0] = vec3d(QRT(au.Axes()[0].GetE()), QRT(au.Axes()[1].GetE()), QRT(au.Axes()[2].GetE()));
-    ax_err[1] = ax_err[0];  ax_err[2] = ax_err[0];
-    mat3d an_err;
-    an_err[0] = vec3d(QRT(au.Angles()[0].GetE()), QRT(au.Angles()[1].GetE()), QRT(au.Angles()[2].GetE()));
-    an_err[1] = an_err[0];  an_err[2] = an_err[0];
-    // prepare positive matrix for error estimation
-    mat3d tm_p(tm);
-    for( int i=0; i < 3; i++ )
-      for( int j=0; j < 3; j++ )
-        if( tm_p[i][j] < 0 ) 
-          tm_p[i][j] = - tm_p[i][j];
-    ax_err *= tm_p;
-    an_err *= tm_p;
-    f2c.Transpose();
-    au.Axes()[0].V() = f2c[0].Length();  au.Axes()[0].E() = sqrt(ax_err[0][0]);
-    au.Axes()[1].V() = f2c[1].Length();  au.Axes()[1].E() = sqrt(ax_err[1][1]);
-    au.Axes()[2].V() = f2c[2].Length();  au.Axes()[2].E() = sqrt(ax_err[2][2]);
-    au.Angles()[0].V() = acos(f2c[1].CAngle(f2c[2]))*180.0/M_PI;  au.Angles()[0].E() = sqrt(an_err[0][0]);
-    au.Angles()[1].V() = acos(f2c[0].CAngle(f2c[2]))*180.0/M_PI;  au.Angles()[1].E() = sqrt(an_err[1][1]);
-    au.Angles()[2].V() = acos(f2c[0].CAngle(f2c[1]))*180.0/M_PI;  au.Angles()[2].E() = sqrt(an_err[2][2]);
-    for( int i=0; i < au.AtomCount(); i++ )  {
-      TCAtom& ca = au.GetAtom(i);
-      ca.ccrd() = i_tm * ca.ccrd();
-      if( ca.GetEllipsoid() != NULL )  { // reset to usio
-        au.NullEllp( ca.GetEllipsoid()->GetId() );
-        ca.AssignEllp(NULL);
-      }
-    }
-    au.PackEllps();
-    TBasicApp::GetLog() << (olxstr("New cell: ") << au.Axes()[0].ToString() << 
-      ' ' << au.Axes()[1].ToString() << 
-      ' ' << au.Axes()[2].ToString() <<
-      ' '  << au.Angles()[0].ToString() << 
-      ' '  << au.Angles()[1].ToString() << 
-      ' '  << au.Angles()[2].ToString() << '\n'
-      );
-    TBasicApp::GetLog().Error("Cell esd's are estimated!");
-    olxstr hkl_fn( xapp.LocateHklFile() );
-    if( !hkl_fn.IsEmpty() )  {
-      THklFile hklf;
-      hklf.LoadFromFile(hkl_fn);
-      for( int i=0; i < hklf.RefCount(); i++ )  {
-        vec3d hkl(hklf[i].GetH(), hklf[i].GetK(), hklf[i].GetL());
-        hkl = tm_t * hkl;
-        hklf[i].SetH(Round(hkl[0]));
-        hklf[i].SetK(Round(hkl[1]));
-        hklf[i].SetL(Round(hkl[2]));
-      }
-      olxstr new_hkl_fn( TEFile::ExtractFilePath(hkl_fn) );
-      TEFile::AddTrailingBackslashI(new_hkl_fn) << "test.hkl";
-      hklf.SaveToFile( new_hkl_fn );
-      xapp.XFile().LastLoader()->SetHKLSource(new_hkl_fn);
-    }
-    au.ChangeSpaceGroup(*new_sg);
-    au.InitMatrices();
-    xapp.XFile().LastLoaderChanged();
-    // keep the settings, as the hkl file has changed, so if user exists... inconsistency
-    xapp.XFile().SaveToFile( xapp.XFile().GetFileName(), false );
+    ChangeCell(tm, *new_sg);
   }
   else  {
     E.ProcessingError(__OlxSrcInfo, "could not find appropriate transformation");
@@ -2119,9 +2122,49 @@ void XLibMacros::macChangeSG(TStrObjList &Cmds, const TParamList &Options, TMacr
     E.ProcessingError(__OlxSrcInfo, "Empty asymmetric unit");
     return;
   }
+  TSpaceGroup& from_sg = xapp.XFile().GetLastLoaderSG();
   TSpaceGroup* sg = TSymmLib::GetInstance()->FindGroup(Cmds.Last().String());
   if( sg == NULL )  {
     E.ProcessingError(__OlxSrcInfo, "Could not identify given space group");
+    return;
+  }
+  // change centering?
+  if( from_sg.GetName().SubStringFrom(1) == sg->GetName().SubStringFrom(1) )  {
+    olxch from = from_sg.GetLattice().GetSymbol()[0],
+          to = sg->GetLattice().GetSymbol()[0];
+    mat3d tm;
+    tm.I();
+    if( from == 'I' )  {
+      if( to == 'P' )
+        tm = mat3d(-0.5, 0.5, 0.5, -0.5, 0.5, -0.5);
+    }
+    else if( from == 'P' )  {
+      if( to == 'I' )
+        tm = mat3d(0, 1, 1, 0, 1, 0);
+      else if( to == 'C' )  {
+        tm = mat3d(0, 1, 1, 0, 1, 0);  // P->I
+        tm *= mat3d(-1, 0, 1, 0, 1, 0, -1, 0, 0);  // I->C, uniq axis b
+      }
+      else if( to == 'F' )
+        tm = mat3d(-1, 1, 1, -1, 1, 1);
+    }
+    else if( from == 'C' )  {
+      if( to == 'P' )  {
+        tm = mat3d(0, 0, -1, 0, 1, 0, 1, 0, -1);  // C->I, uniq axis b
+        tm *= mat3d(-0.5, 0.5, 0.5, -0.5, 0.5, -0.5);  // I->P 
+      }
+    }
+    else if( from == 'F')  {
+      if( to == 'P' )
+        tm = mat3d(0, 0.5, 0.5, 0, 0.5, 0);
+    }
+    if( !tm.IsI() )  {
+      TBasicApp::GetLog() << "EXPERIMENTAL: transformations considering b unique\n";
+      ChangeCell(tm, *sg);
+    }
+    else  {
+      TBasicApp::GetLog() << "The transformation is not supported\n";
+    }
     return;
   }
   smatd_list ml;

@@ -3,6 +3,7 @@
 #include "library.h"
 #include "xapp.h"
 #include "cif.h"
+#include "symmlib.h"
 #include <stdarg.h>
 // on Linux its is defined as something...
 #undef QLength
@@ -86,6 +87,7 @@ class XLibMacros  {
   static DefFunc(RemoveSE) // SG modification
 
   static TActionQList Actions;
+  static void ChangeCell(const mat3d& tm, const TSpaceGroup& sg);
 public:
   static const olxstr NoneString;
   static const olxstr NAString;
