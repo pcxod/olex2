@@ -48,10 +48,10 @@ public:
   }
 
   template <class ft> TGlOption& operator *= (ft v)  {
-    data[0] *= v;
-    data[1] *= v;
-    data[2] *= v;
-    data[3] *= v;
+    data[0] = (float)(data[0]*v);
+    data[1] = (float)(data[1]*v);
+    data[2] = (float)(data[2]*v);
+    data[3] = (float)(data[3]*v);
     return *this;
   }
   template <class ft> TGlOption operator * (ft v) const {

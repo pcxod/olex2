@@ -30,12 +30,12 @@ protected:
   olxstr GetFullName();
   TDataItem *DotItem(const olxstr& DotName, TStrList* Log);
   olxstr *DotField(const olxstr& DotName, olxstr &RefFieldName);
-  void AddItem(TDataItem& Item);
+  TDataItem& AddItem(TDataItem& Item);
   olxstr* FieldPtr(const olxstr &Name);
   inline void SetParent(TDataItem* p)  {  Parent = p;  }
   TEStrBuffer& writeFullName(TEStrBuffer& bf);
 public:
-  TDataItem(TDataItem *Parent, const olxstr& Name);
+  TDataItem(TDataItem *Parent, const olxstr& Name, const olxstr& value=EmptyString);
   virtual ~TDataItem();
   void Clear();
   void Sort();  // sorts fields and items - improve the access by name performance
@@ -44,11 +44,10 @@ public:
   void SaveToString(olxstr &Data);
   void SaveToStrBuffer(TEStrBuffer &Data);
 
-  void AddItem(const olxstr &Name, const olxstr &Data);
+  TDataItem& AddItem(const olxstr& Name, const olxstr& value=EmptyString);
   void AddContent(TDataItem& DI);
-  TDataItem *AddItem(const olxstr &Name);
   // implementation of the include instruction object.item
-  void AddItem(const olxstr &Name, TDataItem *Reference);
+  TDataItem& AddItem(const olxstr &Name, TDataItem *Reference);
   void DeleteItem(TDataItem *Item);
 
   TDataItem* GetAnyItem(const olxstr& Name);

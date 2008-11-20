@@ -51,8 +51,8 @@ public:
   inline const TGlOption& GetAttenuation()    const {  return FAttenuation;  }
 
   void operator = (const TGlLight &S );
-  void ToDataItem(TDataItem *Item);
-  bool FromDataItem(TDataItem *Item);
+  void ToDataItem(TDataItem& Item) const;
+  bool FromDataItem(const TDataItem& Item);
 };
 
 EndGlNamespace()

@@ -14,7 +14,7 @@
 UseEsdlNamespace()
 
 //..............................................................................
-TDataItem::TDataItem(TDataItem *Prnt, const olxstr &Nm)  {
+TDataItem::TDataItem(TDataItem* Prnt, const olxstr& nm, const olxstr& val) : Name(nm), Value(val)  {
   if( Prnt != NULL )  {
     Level = Prnt->GetLevel()+1;
     Index = Prnt->ItemCount();
@@ -24,7 +24,6 @@ TDataItem::TDataItem(TDataItem *Prnt, const olxstr &Nm)  {
     Index = -1;
   }
   Parent = Prnt;
-  Name = Nm;
   Data = NULL;
 }
 //..............................................................................
@@ -170,26 +169,28 @@ void TDataItem::DeleteItem(TDataItem *Item)  {
   }
 }
 //..............................................................................
-void TDataItem::AddItem(const olxstr &Name, TDataItem *Reference)  {
-  TDataItem *I = AddItem(Name);
-  I->AddItem(*Reference);  
+TDataItem& TDataItem::AddItem(const olxstr &Name, TDataItem *Reference)  {
+  TDataItem& I = AddItem(Name);
+  I.AddItem(*Reference);  
+  return I;
 }
 //..............................................................................
-void TDataItem::AddItem(TDataItem& Item)  {
+TDataItem& TDataItem::AddItem(TDataItem& Item)  {
   Items.Add(Item.GetName(), &Item);
   if( Item.GetParent() == NULL)
       Item.SetParent(this);
   Item.IncRef();
+  return Item;
 }
 //..............................................................................
-TDataItem *TDataItem::AddItem(const olxstr &Name)  {
+TDataItem& TDataItem::AddItem(const olxstr& name, const olxstr& val)  {
 //  if( !(Name == "!--") )  // comment
 //    if( ItemExists(Name) )
 //      BasicApp->Log->Exception(olxstr("TDataItem: dublicate definition: ") + Name, false);
-  TDataItem *DI = new TDataItem(this, Name);
+  TDataItem *DI = new TDataItem(this, name, val);
   AddItem(*DI);
   DI->DecRef(); //!!!
-  return DI;
+  return *DI;
 }
 //..............................................................................
 bool TDataItem::FieldExists(const olxstr &Name)  {
@@ -253,7 +254,7 @@ int TDataItem::LoadFromString( int start, olxstr &Data, TStrList* Log)  {
       if( ItemName.IsEmpty() && Log != NULL )
         Log->Add((this->GetName() + ':') << " empty item name!");
       DI = NULL;
-      try {  DI = AddItem(ItemName);  }
+      try {  DI = &AddItem(ItemName);  }
       catch(...) {
         if( Log != NULL )
           Log->Add((this->GetName() + ':') << " cannot add item");

@@ -1300,7 +1300,7 @@ void TMainForm::StartupInit()  {
     OnStateChange->Execute((AEventsDispatcher*)this, &sc);
   }
   else  {
-    FPluginItem = FPluginFile.Root().AddItem("Plugin");
+    FPluginItem = &FPluginFile.Root().AddItem("Plugin");
   }
 
   for( int i=0; i < StoredParams.Count(); i++ )  {
@@ -2565,13 +2565,13 @@ void TMainForm::PostCmdHelp(const olxstr &Cmd, bool Full)  {
 //..............................................................................
 void TMainForm::SaveSettings(const olxstr &FN)  {
   TDataFile DF;
-  TDataItem *I = DF.Root().AddItem("Folders");
+  TDataItem* I = &DF.Root().AddItem("Folders");
   I->AddField("Styles", StylesDir);
   I->AddField("SceneP", SParamDir);
   I->AddField("Current", XLibMacros::CurrentDir);
   I->AddField("CifTemplates", FXApp->GetCifTemplatesDir());
 
-  I = DF.Root().AddItem("HTML");
+  I = &DF.Root().AddItem("HTML");
   I->AddField("Minimized", FHtmlMinimized);
   I->AddField("OnLeft", FHtmlOnLeft);
   if( !FHtmlWidthFixed )
@@ -2587,7 +2587,7 @@ void TMainForm::SaveSettings(const olxstr &FN)  {
     I->AddField("FixedFont", fixed );
   }
   
-  I = DF.Root().AddItem("Window");
+  I = &DF.Root().AddItem("Window");
   if( IsMaximized() )  I->AddField("Maximized", true);
   int w_w = 0, w_h = 0;
   GetSize(&w_w, &w_h);
@@ -2597,12 +2597,12 @@ void TMainForm::SaveSettings(const olxstr &FN)  {
   I->AddField("X", w_w);
   I->AddField("Y", w_h);
 
-  I = DF.Root().AddItem("Windows");
+  I = &DF.Root().AddItem("Windows");
   I->AddField("Help", HelpWindowVisible);
   I->AddField("Info", InfoWindowVisible);
   I->AddField("CmdLine", CmdLineVisible);
 
-  I = DF.Root().AddItem("Defaults");
+  I = &DF.Root().AddItem("Defaults");
   I->AddField("Style", DefStyle);
   I->AddField("SceneP", DefSceneP);
 
@@ -2613,17 +2613,17 @@ void TMainForm::SaveSettings(const olxstr &FN)  {
   I->AddField("language", Dictionary.GetCurrentLanguage() );
   I->AddField("ExtraZoom", FXApp->GetExtraZoom() );
 
-  I = DF.Root().AddItem("Recent_files");
+  I = &DF.Root().AddItem("Recent_files");
   for( int i=0; i < olx_min(FRecentFilesToShow, FRecentFiles.Count()); i++ )
     I->AddField(olxstr("file") << i, FRecentFiles[i]);
 
-  I = DF.Root().AddItem("Stored_params");
+  I = &DF.Root().AddItem("Stored_params");
   for( int i=0; i < StoredParams.Count(); i++ )  {
-    TDataItem* it = I->AddItem( StoredParams.GetComparable(i) );
-    it->AddField("value", StoredParams.GetObject(i) );
+    TDataItem& it = I->AddItem( StoredParams.GetComparable(i) );
+    it.AddField("value", StoredParams.GetObject(i) );
   }
 
-  SaveScene(DF.Root().AddItem("Scene"));
+  SaveScene(&DF.Root().AddItem("Scene"));
   FXApp->GetRender().Styles()->ToDataItem(DF.Root().AddItem("Styles"));
   DF.SaveToXLFile(FN);
 }
@@ -2751,10 +2751,10 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
   if( TEFile::FileExists(DefStyle) )  {
     TDataFile SDF;
     SDF.LoadFromXLFile(DefStyle, &Log);
-    FXApp->GetRender().Styles()->FromDataItem(SDF.Root().FindItem("style"));
+    FXApp->GetRender().Styles()->FromDataItem(*SDF.Root().FindItem("style"));
   }
   else
-    FXApp->GetRender().Styles()->FromDataItem(DF.Root().FindItem("Styles"));
+    FXApp->GetRender().Styles()->FromDataItem(*DF.Root().FindItem("Styles"));
 
   I = DF.Root().FindItem("Defaults");
   DefStyle = I->GetFieldValue("Style");
@@ -2798,7 +2798,7 @@ void TMainForm::LoadScene(TDataItem *Root, TGlLightModel *FLM)  {
     TBasicApp::GetLog().Error("Wrong scene parameters file!");
     return;
   }
-  FLM->FromDataItem(I);
+  FLM->FromDataItem(*I);
   FBgColor = FLM->ClearColor();
 
   I = Root->FindItem("Fonts");
@@ -2811,20 +2811,20 @@ void TMainForm::LoadScene(TDataItem *Root, TGlLightModel *FLM)  {
   if( I != NULL )  {
     TDataItem *ci;
     ci = I->FindItem("Help_txt");
-    if( ci != NULL )  HelpFontColorTxt.FromDataItem(ci);
+    if( ci != NULL )  HelpFontColorTxt.FromDataItem(*ci);
     ci = I->FindItem("Help_cmd");
-    if( ci != NULL ) HelpFontColorCmd.FromDataItem(ci);
+    if( ci != NULL ) HelpFontColorCmd.FromDataItem(*ci);
 
     ci = I->FindItem("Exec");
-    if( ci != NULL ) ExecFontColor.FromDataItem(ci);
+    if( ci != NULL ) ExecFontColor.FromDataItem(*ci);
     ci = I->FindItem("Info");
-    if( ci != NULL ) InfoFontColor.FromDataItem(ci);
+    if( ci != NULL ) InfoFontColor.FromDataItem(*ci);
     ci =I->FindItem("Warning");
-    if( ci != NULL ) WarningFontColor.FromDataItem(ci);
+    if( ci != NULL ) WarningFontColor.FromDataItem(*ci);
     ci = I->FindItem("Error");
-    if( ci != NULL ) ErrorFontColor.FromDataItem(ci);
+    if( ci != NULL ) ErrorFontColor.FromDataItem(*ci);
     ci = I->FindItem("Exception");
-    if( ci != NULL ) ExceptionFontColor.FromDataItem(ci);
+    if( ci != NULL ) ExceptionFontColor.FromDataItem(*ci);
   }
 
 //  FXApp->GetRender().LightModel = FLM;
@@ -2838,13 +2838,13 @@ void TMainForm::SaveScene(TDataItem *Root, TGlLightModel *FLM)  {
     FLM->ToDataItem(Root->AddItem("Scene_Properties"));
   else
     FXApp->GetRender().LightModel.ToDataItem(Root->AddItem("Scene_Properties"));
-  I = Root->AddItem("Fonts");
+  I = &Root->AddItem("Fonts");
   for( int i=0; i < FXApp->GetRender().Scene()->FontCount(); i++ )  {
-    TDataItem* fi = I->AddItem( FXApp->GetRender().Scene()->Font(i)->GetName());
-    fi->AddField("id", FXApp->GetRender().Scene()->Font(i)->IdString() );
+    TDataItem& fi = I->AddItem( FXApp->GetRender().Scene()->Font(i)->GetName());
+    fi.AddField("id", FXApp->GetRender().Scene()->Font(i)->IdString() );
   }
 
-  I = Root->AddItem("Materials");
+  I = &Root->AddItem("Materials");
   HelpFontColorTxt.ToDataItem(I->AddItem("Help_txt"));
   HelpFontColorCmd.ToDataItem(I->AddItem("Help_cmd"));
   ExecFontColor.ToDataItem(I->AddItem("Exec"));

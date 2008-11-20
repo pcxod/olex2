@@ -39,7 +39,6 @@ class TAsymmUnit: public IEObject  {
                     Latt;
   bool              ContainsEquivalents;
   class TLattice*   Lattice;    // parent lattice
-  olxstr           FCellSymmetry;
   TEVPointD  FAxes;    // axes with errors
   TEVPointD  FAngles;    // angles + errors
   vec3d   RAxes;     // reciprical axes
@@ -134,7 +133,6 @@ public:
   double EstimateZ(int atomCount) const;
   DefPropP(short, Z)
   DefPropP(short, Latt)
-  inline olxstr& CellSymmetry()            {  return FCellSymmetry ;  }
 
   const mat3d& GetCellToCartesian() const {  return Cell2Cartesian; }
   const mat3d& GetCartesianToCell() const {  return Cartesian2Cell; }

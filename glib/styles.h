@@ -28,8 +28,8 @@ public:
     if( GetProperties() != S.GetProperties() )         return false;
     return true;  // the style name can be altered by a user ...
   }
-  void ToDataItem(TDataItem *Item);
-  bool FromDataItem(TDataItem *Item);
+  void ToDataItem(TDataItem& Item) const;
+  bool FromDataItem(const TDataItem& Item);
 };
 
 class TGraphicsStyle: public ACollectionItem  {
@@ -73,8 +73,8 @@ public:
   DefPropB(Saveable)
   DefPropB(Persistent)
 
-  void ToDataItem(TDataItem *Item);
-  bool FromDataItem(TDataItem *Item);
+  void ToDataItem(TDataItem& Item) const;
+  bool FromDataItem(const TDataItem& Item);
 
   void SetStylesTag(int Tag); // sets ICollectionItem::Tag of styles to Tag
   void RemoveStylesByTag( int Tag); // removes Styles with Style::Tag == Tag
@@ -85,7 +85,7 @@ class TGraphicsStyles: public IEObject  {
   olxstr FName;
   olxstr FLinkFile;
   TObjectGroup *FPStyles;
-  TPtrList<TDataItem> FDataItems;
+  mutable TPtrList<TDataItem> FDataItems;
   TGraphicsStyle *FRoot;
   class TGlRender *FRender;
 protected:
@@ -101,8 +101,8 @@ public:
   void Apply();
   // for extenal use
   TPrimitiveStyle *NewPrimitiveStyle(const olxstr &PName);
-  TDataItem *GetDataItem(TPrimitiveStyle *Style);
-  TGlMaterial* GetMaterial(TDataItem *I);
+  TDataItem* GetDataItem(const TPrimitiveStyle* Style) const;
+  TGlMaterial* GetMaterial(TDataItem& I) const;
   //
   inline TGraphicsStyle* Style(const olxstr& collName)  {  return FRoot->Style(collName);  }
   TGraphicsStyle* FindStyle(TGraphicsStyle *Style)  { return FRoot->FindStyle(Style);  }
@@ -116,8 +116,8 @@ public:
   inline const olxstr GetName() const {  return FName; }
   inline void Name(const olxstr &N)   { FName = N; }
 
-  void ToDataItem(TDataItem *Item);
-  bool FromDataItem(TDataItem *Item);
+  void ToDataItem(TDataItem& Item) const;
+  bool FromDataItem(const TDataItem& Item);
 
   inline const olxstr& LinkFile()  const {  return FLinkFile; }
   inline void LinkFile(const olxstr& F)  {  FLinkFile = F; }

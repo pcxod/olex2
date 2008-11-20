@@ -32,17 +32,17 @@ AGOProperties * TPrimitiveStyle::SetProperties(const AGOProperties *C)  {
   return AGroupObject::SetProperties(C);
 }
 //..............................................................................
-void TPrimitiveStyle::ToDataItem(TDataItem *Item)  {
-  Item->AddField("PName", PrimitiveName());
-  Item->AddItem("Material", FParent->GetDataItem(this));
+void TPrimitiveStyle::ToDataItem(TDataItem& Item) const {
+  Item.AddField("PName", PrimitiveName());
+  Item.AddItem("Material", FParent->GetDataItem(this));
 }
 //..............................................................................
-bool TPrimitiveStyle::FromDataItem(TDataItem *Item)  {
-  FPrimitiveName = Item->GetFieldValue("PName");
-  TDataItem *MI = Item->FindItem("Material");
+bool TPrimitiveStyle::FromDataItem(const TDataItem& Item)  {
+  FPrimitiveName = Item.GetFieldValue("PName");
+  TDataItem *MI = Item.FindItem("Material");
   if( MI != NULL )  {
     if( MI->ItemCount() != 0 )  {
-      TGlMaterial* GlM = FParent->GetMaterial(&MI->Item(0));
+      TGlMaterial* GlM = FParent->GetMaterial(MI->Item(0));
       if( GlM != NULL )  SetProperties( GlM );
     }
   }
@@ -114,51 +114,48 @@ bool TGraphicsStyle::operator == (const TGraphicsStyle &GS) const  {
   return true;
 }
 //..............................................................................
-void TGraphicsStyle::ToDataItem(TDataItem *Item)  {
+void TGraphicsStyle::ToDataItem(TDataItem& Item) const {
   if( !IsSaveable() )  return;
-  TDataItem *I, *RI;
-  Item->AddField("Name", FLabel);
-  if( IsPersistent() )  Item->AddField("Persistent", "true");
+  Item.AddField("Name", FLabel);
+  if( IsPersistent() )  
+    Item.AddField("Persistent", TrueString);
   for( int i=0; i < FParams.Count(); i++ )
-    Item->AddField(FParams.String(i), FParams.Object(i));
+    Item.AddField(FParams.GetString(i), FParams.GetObject(i));
 
   if( FStyles.Count() != 0 )  {
-    RI = Item->AddItem("SubStyles");
+    TDataItem& RI = Item.AddItem("SubStyles");
     for( int i=0; i < FStyles.Count(); i++ )  {
       if( !FStyles[i]->IsSaveable() )  continue;
-      I = RI->AddItem(olxstr("S_") <<i );
-      FStyles[i]->ToDataItem(I);
+      FStyles[i]->ToDataItem(RI.AddItem(olxstr("S_") <<i ));
     }
   }
-  for( int i=0; i < FPStyles.Count(); i++ )  {
-    I = Item->AddItem(olxstr("S") << i);
-    FPStyles[i]->ToDataItem(I);
-  }
+  for( int i=0; i < FPStyles.Count(); i++ )
+    FPStyles[i]->ToDataItem(Item.AddItem(olxstr("S") << i));
 }
 //..............................................................................
-bool TGraphicsStyle::FromDataItem(TDataItem *Item)  {
+bool TGraphicsStyle::FromDataItem(const TDataItem& Item)  {
   TGraphicsStyle *GS;
   int i, off;
   TPrimitiveStyle *PS;
-  FLabel = Item->GetFieldValue("Name");
-  SetPersistent( Item->GetFieldValue("Persistent", FalseString).ToBool() );
+  FLabel = Item.GetFieldValue("Name");
+  SetPersistent( Item.GetFieldValue("Persistent", FalseString).ToBool() );
   if( IsPersistent() ) i=2;
   else i=1;
-  for( ; i < Item->FieldCount(); i++ )
-    SetParameter(Item->FieldName(i), Item->Field(i) );
+  for( ; i < Item.FieldCount(); i++ )
+    SetParameter(Item.FieldName(i), Item.Field(i) );
   off = 0;
-  TDataItem* I = Item->FindItem("SubStyles");
+  TDataItem* I = Item.FindItem("SubStyles");
   if( I != NULL )  {
     off = 1;
     for( i=0; i < I->ItemCount(); i++ )  {
       GS = new TGraphicsStyle(FParent, this, EmptyString);
-      GS->FromDataItem(&I->Item(i));
+      GS->FromDataItem(I->Item(i));
       FStyles.Add(GS);
     }
   }
-  for( i=off; i < Item->ItemCount(); i++ )  {
+  for( i=off; i < Item.ItemCount(); i++ )  {
     PS = FParent->NewPrimitiveStyle(EmptyString);
-    PS->FromDataItem( &Item->Item(i) );
+    PS->FromDataItem( Item.GetItem(i) );
     FPStyles.Add(PS);
   }
   return true;
@@ -298,37 +295,36 @@ void TGraphicsStyles::Clear()  {
   FRender->_OnStylesClear();
 }
 //..............................................................................
-void TGraphicsStyles::ToDataItem(TDataItem *Item)  {
-  TDataItem *SI, *SI1;
-  SI = Item->AddItem("Materials");
+void TGraphicsStyles::ToDataItem(TDataItem& Item) const {
+  TDataItem& SI = Item.AddItem("Materials");
   FDataItems.Clear();
   for( int i=0; i < FPStyles->PropCount(); i++ )  {
-    SI1 = SI->AddItem(olxstr("Prop")<<i);
+    TDataItem& SI1 = SI.AddItem(olxstr("Prop")<<i);
     ((TGlMaterial*)FPStyles->Properties(i))->ToDataItem(SI1);
-    FDataItems.Add(SI1);
+    FDataItems.Add(&SI1);
   }
-  Item->AddField("Name", FName);
-  Item->AddField("LinkFile", FLinkFile);
-  FRoot->ToDataItem(Item->AddItem("Root"));
+  Item.AddField("Name", FName);
+  Item.AddField("LinkFile", FLinkFile);
+  FRoot->ToDataItem(Item.AddItem("Root"));
   FDataItems.Clear();
 }
 //..............................................................................
-bool TGraphicsStyles::FromDataItem(TDataItem *Item)  {
+bool TGraphicsStyles::FromDataItem(const TDataItem& Item)  {
   Clear();
-  if( Item == NULL )  throw TInvalidArgumentException(__OlxSourceInfo, "item=NULL");
-  TDataItem *SI;
-  SI = Item->FindItem("Materials");
+  if( &Item == NULL )  throw TInvalidArgumentException(__OlxSourceInfo, "item=NULL");
+  TDataItem* SI = Item.FindItem("Materials");
   TPtrList<TGlMaterial> mats;
   for( int i=0; i < SI->ItemCount(); i++ )  {
     TGlMaterial* GlM = new TGlMaterial;
     SI->Item(i).SetData( GlM );
-    GlM->FromDataItem( &SI->Item(i) );
+    GlM->FromDataItem( SI->Item(i) );
     mats.Add(GlM);
   }
-  FName = Item->GetFieldValue("Name");
-  FLinkFile = Item->GetFieldValue("LinkFile");
-  SI = Item->FindItem("Root");
-  if( SI != NULL )  FRoot->FromDataItem(SI);
+  FName = Item.GetFieldValue("Name");
+  FLinkFile = Item.GetFieldValue("LinkFile");
+  SI = Item.FindItem("Root");
+  if( SI != NULL )  
+    FRoot->FromDataItem(*SI);
   for( int i=0; i < mats.Count(); i++ )
     delete mats[i];
   FRender->_OnStylesLoaded();
@@ -344,15 +340,17 @@ TPrimitiveStyle *TGraphicsStyles::NewPrimitiveStyle(const olxstr &PName)  {
   return PS;
 }
 //..............................................................................
-TDataItem *TGraphicsStyles::GetDataItem(TPrimitiveStyle *Style)  {
+TDataItem* TGraphicsStyles::GetDataItem(const TPrimitiveStyle* Style) const {
   int i = FPStyles->IndexOf( Style->GetProperties() );
-  if( i == -1 )  throw TFunctionFailedException(__OlxSourceInfo, "unregistered properties");
+  if( i == -1 )  
+    throw TFunctionFailedException(__OlxSourceInfo, "unregistered properties");
   return FDataItems[i];
 }
 //..............................................................................
-TGlMaterial* TGraphicsStyles::GetMaterial(TDataItem *I)  {
-  if( I->GetData() == NULL )  I->SetData( new TGlMaterial() );
-  return (TGlMaterial*)I->GetData();
+TGlMaterial* TGraphicsStyles::GetMaterial(TDataItem& I) const {
+  if( I.GetData() == NULL )  
+    I.SetData( new TGlMaterial() );
+  return (TGlMaterial*)I.GetData();
 }
 //..............................................................................
 void TGraphicsStyles::DeleteStyle(TGraphicsStyle *Style)  {
@@ -373,13 +371,13 @@ bool TGraphicsStyles::LoadFromFile(const olxstr &FN)  {
   if( !DF.LoadFromXLFile(FN, NULL) )  return false;
   TDataItem *DI = DF.Root().FindItem("DStyle");
   if( DI == NULL )  return false;
-  FromDataItem(DI);
+  FromDataItem(*DI);
   return true;
 }
 //..............................................................................
 void TGraphicsStyles::SaveToFile(const olxstr &FN)  {
   TDataFile DF;
-  TDataItem *DI = DF.Root().AddItem("DStyle");
+  TDataItem& DI = DF.Root().AddItem("DStyle");
   this->ToDataItem(DI);
   DF.SaveToXLFile(FN);
 }

@@ -2248,8 +2248,7 @@ void TMainForm::macSave(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       }
     }
     else  {
-      if( SParamDir.Length() )  Tmp = SParamDir;
-      else                      Tmp = FXApp->BaseDir();
+      Tmp = (SParamDir.IsEmpty() ? FXApp->BaseDir() : SParamDir);
       Tmp << FN;  FN = Tmp;
     }
     FN = TEFile::ChangeFileExt(FN, "glsp");
@@ -2266,9 +2265,9 @@ void TMainForm::macSave(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       Tmp = (Cmds.Count() == 1) ? TEFile::ChangeFileExt(Cmds[0], "xlds") :
                                   TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), "xlds");
       TDataFile DF;
-      TDataItem *style = DF.Root().AddItem("style");
+      TDataItem& style = DF.Root().AddItem("style");
       FXApp->GetRender().Styles()->ToDataItem(style);
-      TDataItem *basis = DF.Root().AddItem("basis");
+      TDataItem& basis = DF.Root().AddItem("basis");
       FXApp->GetRender().GetBasis().ToDataItem(basis);
       DF.SaveToXLFile(Tmp);
     }
@@ -2307,7 +2306,7 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     TDataFile F;
     F.LoadFromXLFile(FN, NULL);
 
-    FXApp->GetRender().Styles()->FromDataItem(F.Root().FindItem("style"));
+    FXApp->GetRender().Styles()->FromDataItem(*F.Root().FindItem("style"));
     FXApp->CreateObjects( true );
     FN = FXApp->GetRender().Styles()->LinkFile();
     if( !FN.IsEmpty() )  {
@@ -2362,11 +2361,12 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       DF.LoadFromXLFile(Tmp, &log);
       TDataItem *style = DF.Root().FindItem("style");
       if( style == NULL )
-        FXApp->GetRender().Styles()->FromDataItem(DF.Root().FindItem("DStyle"));
+        FXApp->GetRender().Styles()->FromDataItem(*DF.Root().FindItem("DStyle"));
       else  {
-        FXApp->GetRender().Styles()->FromDataItem(style);
+        FXApp->GetRender().Styles()->FromDataItem(*style);
         TDataItem *basis = DF.Root().FindItem("basis");
-        if( basis )  FXApp->GetRender().Basis()->FromDataItem(basis);
+        if( basis != NULL )  
+          FXApp->GetRender().Basis()->FromDataItem(*basis);
       }
       FXApp->Draw();
     }

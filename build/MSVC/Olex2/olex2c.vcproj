@@ -120,7 +120,7 @@
 				Optimization="0"
 				WholeProgramOptimization="false"
 				AdditionalIncludeDirectories="..\..\..\glib;..\..\..\gxlib;..\..\..\repository;..\..\..\xlib;..\..\..\sdl;c:\Python25\include"
-				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;_UNICODE"
+				PreprocessorDefinitions="__WIN32__;NDEBUG;_CONSOLE;_UNICODE"
 				RuntimeLibrary="3"
 				UsePrecompiledHeader="0"
 				WarningLevel="2"
@@ -139,7 +139,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="kernel32.lib user32.lib shell32.lib ole32.lib $(NOINHERIT)"
+				AdditionalDependencies="kernel32.lib user32.lib shell32.lib ole32.lib wsock32.lib $(NOINHERIT)"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="C:\Python25\libs;&quot;$(SolutionDir)$(ConfigurationName)&quot;;&quot;$(TargetDir)&quot;;&quot;$(SolutionDir)\lib&quot;"
 				GenerateDebugInformation="true"
@@ -381,6 +381,10 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath="..\..\..\repository\filesystem.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\repository\fsext.cpp"
 				>
 				<FileConfiguration
@@ -434,6 +438,14 @@
 			</File>
 			<File
 				RelativePath="..\..\..\repository\shellutil.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\repository\url.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\repository\winhttpfs.cpp"
 				>
 			</File>
 		</Filter>

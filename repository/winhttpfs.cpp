@@ -32,7 +32,7 @@ void TWinHttpFileSystem::GetAddress(struct sockaddr* Result)  {
 
   olxstr HostAdd = Url.HasProxy() ? Url.GetProxy().GetHost() : Url.GetHost();
 
-  Host = gethostbyname( HostAdd.u_str() );
+  Host = gethostbyname( HostAdd.c_str() );
   if( Host != NULL )  {
     Address.sin_family  = AF_INET;
     Address.sin_port    = htons( (unsigned short)(Url.HasProxy() ? Url.GetProxy().GetPort() : Url.GetPort()) );
@@ -84,16 +84,18 @@ IDataInputStream* TWinHttpFileSystem::OpenFile(const olxstr& Source)  {
   TEFile* File1 = new TEFile();
 
   char  Request[512], *Buffer;
-  GetTempPath(512, Request);
+  olxch TmpFN[MAX_PATH];
+  GetTempPath(MAX_PATH, TmpFN);
   olxstr Tmp,
-           FileName = TEFile::UnixPath( Source );
+         FileName = TEFile::UnixPath( Source ),
+         fn_mask("http");
 
-  Tmp = Request;
-  GetTempFileName(Tmp.u_str(), "http", 0, Request);
-  File.Open(Request, "w+b");
+  Tmp = TmpFN;
+  GetTempFileName(Tmp.u_str(), fn_mask.u_str(), 0, TmpFN);
+  File.Open(TmpFN, "w+b");
 
-  GetTempFileName(Tmp.u_str(), "http", 0, Request);
-  File1->Open(Request, "w+b");
+  GetTempFileName(Tmp.u_str(), fn_mask.u_str(), 0, TmpFN);
+  File1->Open(TmpFN, "w+b");
 
   int i, parts,
     BufferSize = 1024*64,
@@ -112,7 +114,7 @@ IDataInputStream* TWinHttpFileSystem::OpenFile(const olxstr& Source)  {
   TBasicApp::GetInstance()->OnProgress->Execute(this, &Progress);
 
   Tmp.Replace(" ", "%20");
-  sprintf(Request, "GET %s HTTP/1.0\n\n", Tmp.u_str());
+  sprintf(Request, "GET %s HTTP/1.0\n\n", Tmp.c_str());
   send(Socket, Request, strlen(Request), 0);
   while( ThisRead )  {
     ThisRead = recv(Socket, Buffer, BufferSize, 0);
