@@ -238,7 +238,7 @@ void TOlexViewer::LoadStyle(const olxstr& _styleFile)  {
     if( TEFile::FileExists(styleFile) )  {
       TDataFile df;
       df.LoadFromXLFile(styleFile);
-      GXApp->GetRender().Styles()->FromDataItem(df.Root().FindItem("style"));
+      GXApp->GetRender().Styles()->FromDataItem(*df.Root().FindItem("style"));
       GXApp->CreateObjects( true );
     }
   }
@@ -251,7 +251,7 @@ void TOlexViewer::LoadScene(const olxstr& _sceneFile)  {
     if( TEFile::FileExists(sceneFile) )  {
       TDataFile df;
       df.LoadFromXLFile(sceneFile);
-      GXApp->GetRender().LightModel.FromDataItem(df.Root().FindItem("Scene_Properties"));
+      GXApp->GetRender().LightModel.FromDataItem(*df.Root().FindItem("Scene_Properties"));
     }
   }
   catch( ... )  {  }  // be quite
