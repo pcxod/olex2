@@ -17,7 +17,7 @@ TSOperation::TSOperation( TSOperation *P, TStrPObjList<olxstr, TSOperation*> *Va
   ToCalc = NULL;
   Operation = fNone;
   P2 = P1 = 0;
-  Expandable = false;
+  ChSig = Expandable = false;
   Function = fNone;
   Value = 0;
   Left = Right = NULL;
@@ -46,7 +46,7 @@ int TSOperation::LoadFromExpression(const olxstr &Exp)  {
   olxstr o, f;
   bool NewOperation = false;
   TSOperation *Opr;
-  if( Exp.Length() )  {
+  if( !Exp.IsEmpty() )  {
     Opr = new TSOperation(this, Variables, Functions, IVariables);
     ToCalc = Opr;
     for( int i=0; i < Exp.Length(); i++ )  {
@@ -81,14 +81,20 @@ int TSOperation::LoadFromExpression(const olxstr &Exp)  {
         default:
           if( NewOperation )  {
 new_Op:
-            if( !o.IsEmpty() )  Opr->Param = o;
+            if( !o.IsEmpty() )  {  
+              Opr->Param = o;
+              o = EmptyString;
+            }
+            else if( op == fMinus )  {
+              Opr->ChSig = !Opr->ChSig; // subsequent -- :)
+              NewOperation = false;
+              break;
+            }
             Opr->Right = new TSOperation(this, Variables, Functions, IVariables);
             Opr->Right->Left = Opr;
             Opr = Opr->Right;
-            o = EmptyString;
             Opr->Operation = op;
             NewOperation = false;
-//            i--;
             break;
           }
           o << Exp[i];
@@ -223,24 +229,26 @@ void TSOperation::MDCalculate()  {
       if( Func.Length() != 0 )
         throw TFunctionFailedException(__OlxSourceInfo, olxstr("undefined function: ") << Func);
     }
+    if( ChSig ) Value = -Value;
   }
 
   if( Left )  {
     if( Operation == fDivide )  {
-      if( Value )    Value = Left->Value/Value;
+      if( Value )    
+        Value = Left->Value/Value;
       else
         throw TDivException(__OlxSourceInfo);
       if( Left->Operation == fMinus )
         Value = -Value;
       Left->Value = 0;
     }
-    if( Operation == fMultiply )  {
+    else if( Operation == fMultiply )  {
       Value = Left->Value*Value;
       if( Left->Operation == fMinus )
         Value = -Value;
       Left->Value = 0;
     }
-    if( Operation == fExt )  {
+    else if( Operation == fExt )  {
       Value = pow(Left->Value, Value);
       if( Left->Operation == fMinus )
         Value = -Value;

@@ -21,12 +21,12 @@ constructur can be caled as TSOperatio(NULL, NULL, Function, NULL). If the funct
 are not in the expression call TSOperatio(NULL, NULL, NULL, NULL).
 Note that the variables list is in the upper case.
 */
-const short fPlus     = 1,
+const short fPlus      = 1,
             fMinus     = 2,
-            fMultiply   = 3,
+            fMultiply  = 3,
             fDivide    = 4,
-            fFunction   = 5,
-            fExt    = 6;
+            fFunction  = 5,
+            fExt       = 6;
 const short fNone = 0,
             fAbs  = 1,
             fCos  = 2,
@@ -41,6 +41,7 @@ protected:
   TSOperation *Left, *Right;
   short Function;
   double Value;
+  bool ChSig;
   void Calculate();
   void SSCalculate();
   void MDCalculate();

@@ -109,8 +109,8 @@ public:
   bool operator == (const TGlMaterial &G) const;
   bool operator == (const AGOProperties &G) const; // !!!
 
-  void ToDataItem(TDataItem *Item);
-  bool FromDataItem(TDataItem *Item);
+  void ToDataItem(TDataItem& Item);
+  bool FromDataItem(const TDataItem& Item);
 
   TIString ToString() const;
   void FromString( const olxstr& str );

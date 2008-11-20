@@ -169,8 +169,8 @@ const TGlMaterial& TGlMaterial::Intensity(TGlOption& ClearColor, double intensit
   return GlM;
 }
 //..............................................................................
-void TGlMaterial::ToDataItem(TDataItem *Item)  {
-  Item->SetValue( ToString() );
+void TGlMaterial::ToDataItem(TDataItem& Item)  {
+  Item.SetValue( ToString() );
 //  Item->AddField("AmbientF", AmbientF.ToString());
 //  Item->AddField("AmbientB", AmbientB.ToString());
 //  Item->AddField("DiffuseF", DiffuseF.ToString());
@@ -184,22 +184,22 @@ void TGlMaterial::ToDataItem(TDataItem *Item)  {
 //  Item->AddField("Flags", TEString( Flags) );
 }
 //..............................................................................
-bool TGlMaterial::FromDataItem(TDataItem *Item)  {
-  if( Item->FieldCount() != 0 )  {  // backwards compatibility
-    AmbientF.FromString(Item->GetFieldValue("AmbientF"));
-    AmbientB.FromString(Item->GetFieldValue("AmbientB"));
-    DiffuseF.FromString(Item->GetFieldValue("DiffuseF"));
-    DiffuseB.FromString(Item->GetFieldValue("DiffuseB"));
-    EmissionF.FromString(Item->GetFieldValue("EmissionF"));
-    EmissionB.FromString(Item->GetFieldValue("EmissionB"));
-    SpecularF.FromString(Item->GetFieldValue("SpecularF"));
-    SpecularB.FromString(Item->GetFieldValue("SpecularB"));
-    ShininessF = Item->GetFieldValue("ShininessF").ToInt();
-    ShininessB = Item->GetFieldValue("ShininessB").ToInt();
-    Flags = Item->GetFieldValue("Flags").ToInt();
+bool TGlMaterial::FromDataItem(const TDataItem& Item)  {
+  if( Item.FieldCount() != 0 )  {  // backwards compatibility
+    AmbientF.FromString(Item.GetFieldValue("AmbientF"));
+    AmbientB.FromString(Item.GetFieldValue("AmbientB"));
+    DiffuseF.FromString(Item.GetFieldValue("DiffuseF"));
+    DiffuseB.FromString(Item.GetFieldValue("DiffuseB"));
+    EmissionF.FromString(Item.GetFieldValue("EmissionF"));
+    EmissionB.FromString(Item.GetFieldValue("EmissionB"));
+    SpecularF.FromString(Item.GetFieldValue("SpecularF"));
+    SpecularB.FromString(Item.GetFieldValue("SpecularB"));
+    ShininessF = Item.GetFieldValue("ShininessF").ToInt();
+    ShininessB = Item.GetFieldValue("ShininessB").ToInt();
+    Flags = Item.GetFieldValue("Flags").ToInt();
   }
   else
-    FromString( Item->GetValue() );
+    FromString( Item.GetValue() );
   return true;
 }
 //..............................................................................

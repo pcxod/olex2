@@ -364,8 +364,14 @@ public:
         return;
       }
       for( int i=0; i < Cmds.Count(); i++ )  {
-        if( !ProcessMacroFunc(Cmds[i], Error) )
-          return;
+        if( !ProcessMacroFunc(Cmds[i], Error) )  {
+          if( !Error.DoesFunctionExist() )  {
+            Error.Reset();
+            continue;
+          }
+          else
+            return;
+        }
       }
       MF->Run(Cmds, Options, Error);
       if( Error.IsSuccessful() && Error.GetStack() != NULL )  Error.GetStack()->Pop();

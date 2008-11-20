@@ -36,6 +36,9 @@ using namespace std;
 #include "seval.h"
 #include "ecast.h"
 #include "utf8file.h"
+#include "winhttpfs.h"
+#include "settingsfile.h"
+
 //
 
 #define olx_Shift 25
@@ -229,7 +232,7 @@ public:
       Plugins = PluginFile.Root().FindItem("Plugin");
     }
     else  
-      Plugins = PluginFile.Root().AddItem("Plugin");
+      Plugins = &PluginFile.Root().AddItem("Plugin");
   
     olxstr macroFile( XApp.BaseDir() );
     macroFile << "macrox.xld";
@@ -270,6 +273,9 @@ public:
     AnalyseError(er);
     return er.IsSuccessful();
   }
+  //..........................................................................................
+  TDataItem* PluginsItem() {  return Plugins;  }
+  //..........................................................................................
   virtual void print(const olxstr& msg, const short MessageType = olex::mtNone)  {
     CONSOLE_SCREEN_BUFFER_INFO pi;
     GetConsoleScreenBufferInfo(conout, &pi); 
@@ -994,6 +1000,18 @@ public:
 bool TOlex::TerminateSignal = false;
 TOlex* TOlex::OlexInstance;
 ////////////////////////////////////////////////////////////////////////////////////////
+PyObject* pyGetPlugins(PyObject* self, PyObject* args)  {
+  TDataItem* pi = TOlex::OlexInstance->PluginsItem();
+  if( pi == NULL )  {
+    Py_INCREF(Py_None);
+    return Py_None;
+  }
+
+  PyObject* af = PyTuple_New( pi->ItemCount() ), *f;
+  for( int i=0; i < pi->ItemCount(); i++ )
+    PyTuple_SetItem(af, i, PythonExt::BuildString(pi->Item(i).GetName()) );
+  return af;
+}
 PyObject* pyVarValue(PyObject* self, PyObject* args)  {
   olxstr varName;
   PyObject* defVal = NULL;
@@ -1145,7 +1163,51 @@ PyObject* pyTranslate(PyObject* self, PyObject* args)  {
 PyObject* pyIsControl(PyObject* self, PyObject* args)  {
   return Py_BuildValue("b", false);
 }
+//..............................................................................
+PyObject* pyUpdateRepository(PyObject* self, PyObject* args)  {
+  olxstr index, index_fn, repos, dest, proxy;
+  if( !PythonExt::ParseTuple(args, "ww", &index, &dest) )  {
+    Py_INCREF(Py_None);
+    return Py_None;
+  }
+  olxstr SettingsFile( TBasicApp::GetInstance()->BaseDir() + "usettings.dat" );
+  TSettingsFile settings;
+  if( TEFile::FileExists(SettingsFile) )  {
+    if( settings.ParamExists("proxy") )        
+      proxy = settings.ParamValue("proxy");
+  }
+  int lsi = index.LastIndexOf('/');
+  if( lsi == -1 )  {
+    PyErr_SetObject(PyExc_AttributeError, PythonExt::BuildString("Invalid index file") );
+    return Py_BuildValue("b", false);
+  }
+  dest = TBasicApp::GetInstance()->BaseDir() + dest;
+  if( !TEFile::MakeDirs(dest) )  {
+    PyErr_SetObject(PyExc_AttributeError, PythonExt::BuildString("Could not create distination folder") );
+    return Py_BuildValue("b", false);
+  }
+  index_fn = index.SubStringFrom(lsi+1);
+  repos = index.SubStringTo(lsi+1);
+  TUrl url(repos);
+  if( !proxy.IsEmpty() )  
+    url.SetProxy( TUrl(proxy) );
+  TWinHttpFileSystem httpFS( url );
+  TOSFileSystem osFS;
+  osFS.SetBase(TEFile::AddTrailingBackslashI(dest));
+  TFSIndex fsIndex( httpFS );
+  TStrList properties;
+  try  {  fsIndex.Synchronise(osFS, properties, NULL, index_fn);  }
+  catch( const TExceptionBase& exc )  {
+    PyErr_SetObject(PyExc_TypeError, PythonExt::BuildString(exc.GetException()->GetFullMessage()) );
+    return Py_BuildValue("b", false);
+  }
+  return Py_BuildValue("b", true);
+}
+//..............................................................................
 static PyMethodDef CORE_Methods[] = {
+  {"UpdateRepository", pyUpdateRepository, METH_VARARGS, "Updates specified local repository from the http one. Takes the following arguments: \
+the index file name, destination folder (relative to the basedir)"},
+  {"GetPluginList", pyGetPlugins, METH_VARARGS, "returns a list of installed plugins"},
   {"ExportFunctionList", pyExpFun, METH_VARARGS, "exports a list of olex functions and their description"},
   {"ExportMacroList", pyExpMac, METH_VARARGS, "exports a list of olex macros and their description"},
   {"IsVar", pyIsVar, METH_VARARGS, "returns boolean value if specified variable exists"},

@@ -84,28 +84,25 @@ void TGlLightModel::Init()  {
   glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST); */
 }
 //..............................................................................
-bool TGlLightModel::FromDataItem(TDataItem *Item)
-{
-  FFlags = Item->GetFieldValue("Flags").ToInt();
-  FAmbient.FromString(Item->GetFieldValue("Ambient"));
-  FClearColor.FromString(Item->GetFieldValue("ClearColor"));
+bool TGlLightModel::FromDataItem(const TDataItem& Item)  {
+  FFlags = Item.GetFieldValue("Flags").ToInt();
+  FAmbient.FromString(Item.GetFieldValue("Ambient"));
+  FClearColor.FromString(Item.GetFieldValue("ClearColor"));
   TDataItem *SI;
   for( int i=0; i < 8; i++ )  {
-    SI = Item->FindItem( olxstr("Light") << i);
-    Light(i).FromDataItem(SI);
+    SI = Item.FindItem( olxstr("Light") << i);
+    if( SI == NULL )
+      throw TFunctionFailedException(__OlxSourceInfo, "invalid OpenGL light description");
+    FLights[i].FromDataItem(*SI);
   }
   return true;
 }
 //..............................................................................
-void TGlLightModel::ToDataItem(TDataItem *Item)
-{
-  Item->AddField("Flags", Flags());
-  Item->AddField("Ambient", FAmbient.ToString());
-  Item->AddField("ClearColor", FClearColor.ToString());
-  TDataItem *SI;
-  for( int i=0; i < 8; i++ )  {
-    SI = Item->AddItem( olxstr("Light") << i );
-    Light(i).ToDataItem(SI);
-  }
+void TGlLightModel::ToDataItem(TDataItem& Item) const {
+  Item.AddField("Flags", Flags());
+  Item.AddField("Ambient", FAmbient.ToString());
+  Item.AddField("ClearColor", FClearColor.ToString());
+  for( int i=0; i < 8; i++ )
+    FLights[i].ToDataItem(Item.AddItem( olxstr("Light") << i ));
 }
  

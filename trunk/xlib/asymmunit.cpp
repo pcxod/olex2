@@ -18,6 +18,7 @@
 #include "symmlib.h"
 #include "estlist.h"
 #include "lattice.h"
+#include "symmparser.h"
 
 #undef GetObject
 
@@ -663,11 +664,34 @@ double TAsymmUnit::EstimateZ(int atomCount) const  {
 }
 //..............................................................................
 void TAsymmUnit::ToDataItem(TDataItem& item) const  {
-  throw TNotImplementedException(__OlxSourceInfo);
-  //TDataItem& cell = *item.AddItem("cell");
-  //cell.AddField("sides", olxstr(FAxes[0].ToString(), 80) << ',' << FAxes[1].ToString() << ',' << FAxes[2].ToString() );
-  //cell.AddField("angles", olxstr(FAngles[0].ToString(), 80) << ',' << FAngles[1].ToString() << ',' << FAngles[2].ToString() );
-  //cell.AddField("Z", Z);
+  TDataItem& cell = item.AddItem("cell");
+  cell.AddField("a", FAxes[0].ToString());
+  cell.AddField("b", FAxes[1].ToString());
+  cell.AddField("c", FAxes[2].ToString());
+  cell.AddField("alpha", FAngles[0].ToString());
+  cell.AddField("beta",  FAngles[1].ToString());
+  cell.AddField("gamma", FAngles[2].ToString());
+  cell.AddField("Z", Z);
+  TDataItem& symm = item.AddItem("symm", Matrices.Count());
+  symm.AddField("latt", Latt);
+  for(int i=0; i < Matrices.Count(); i++ )  
+    symm.AddField(i, TSymmParser::MatrixToSymmEx(Matrices[i]) );
+  int sfac_cnt = 0;
+  for( int i=0; i < SfacData.Count(); i++ )
+    if( !SfacData.GetObject(i)->IsBuiltIn() )
+      sfac_cnt++;
+  if( sfac_cnt != 0 )  {
+    TDataItem& sfac = item.AddItem("sfac");
+    for( int i=0; i < SfacData.Count(); i++ )  {
+      const TLibScatterer& sf = *SfacData.GetObject(i);
+      if( sf.IsBuiltIn() )  continue;
+      olxstr str( sf.GetData()[0], 100);
+      for( int j=1; j < sf.Size(); j++ )
+        str << ' ' << sf.GetData()[j];
+      sfac.AddField(SfacData.GetComparable(i), str);
+    }
+  }
+
 }
 //..............................................................................
 void TAsymmUnit::FromDataItem(TDataItem& item)  {

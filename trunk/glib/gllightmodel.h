@@ -42,8 +42,8 @@ public:
 
   TGlLightModel& operator = (TGlLightModel &M);
 
-  void ToDataItem(TDataItem *Item);
-  bool FromDataItem(TDataItem *Item);
+  void ToDataItem(TDataItem& Item) const;
+  bool FromDataItem(const TDataItem& Item);
 };
 
 

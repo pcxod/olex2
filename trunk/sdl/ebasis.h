@@ -154,8 +154,8 @@ public:
 
   double    DistanceTo (TEBasis &B)  const {  return FCenter.DistanceTo(B.FCenter);  }
 
-  virtual void ToDataItem(TDataItem *Item) const;
-  virtual bool FromDataItem(TDataItem *Item);
+  virtual void ToDataItem(TDataItem& Item) const;
+  virtual bool FromDataItem(const TDataItem& Item);
 };
 
 EndEsdlNamespace()

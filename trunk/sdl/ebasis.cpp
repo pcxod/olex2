@@ -105,25 +105,24 @@ void  TEBasis::RotateZ( double A)  {
   CopyMatrix();
 }
 //..............................................................................
-void TEBasis::ToDataItem(TDataItem *Item) const  {
-  TDataItem *matr = Item->AddItem("matrix");
-  matr->AddField("xx", FMatrix[0][0]);
-  matr->AddField("xy", FMatrix[0][1]);
-  matr->AddField("xz", FMatrix[0][2]);
-  matr->AddField("yx", FMatrix[1][0]);
-  matr->AddField("yy", FMatrix[1][1]);
-  matr->AddField("yz", FMatrix[1][2]);
-  matr->AddField("zx", FMatrix[2][0]);
-  matr->AddField("zy", FMatrix[2][1]);
-  matr->AddField("zz", FMatrix[2][2]);
-  TDataItem *center = Item->AddItem("center");
-  center->AddField("x", FCenter[0]);
-  center->AddField("y", FCenter[1]);
-  center->AddField("z", FCenter[2]);
+void TEBasis::ToDataItem(TDataItem& Item) const  {
+  TDataItem& matr = Item.AddItem("matrix");
+  matr.AddField("xx", FMatrix[0][0]);
+  matr.AddField("xy", FMatrix[0][1]);
+  matr.AddField("xz", FMatrix[0][2]);
+  matr.AddField("yx", FMatrix[1][0]);
+  matr.AddField("yy", FMatrix[1][1]);
+  matr.AddField("yz", FMatrix[1][2]);
+  matr.AddField("zx", FMatrix[2][0]);
+  matr.AddField("zy", FMatrix[2][1]);
+  matr.AddField("zz", FMatrix[2][2]);
+  TDataItem& center = Item.AddItem("center");
+  center.AddField("x", FCenter[0]);
+  center.AddField("y", FCenter[1]);
+  center.AddField("z", FCenter[2]);
 }
-bool TEBasis::FromDataItem(TDataItem *Item)
-{
-  TDataItem *matr = Item->FindItem("matrix");
+bool TEBasis::FromDataItem(const TDataItem& Item)  {
+  TDataItem *matr = Item.FindItem("matrix");
   if( matr == NULL )  return false;
   FMatrix[0][0] = matr->GetFieldValue("xx").ToDouble();
   FMatrix[0][1] = matr->GetFieldValue("xy").ToDouble();
@@ -135,7 +134,7 @@ bool TEBasis::FromDataItem(TDataItem *Item)
   FMatrix[2][1] = matr->GetFieldValue("zy").ToDouble();
   FMatrix[2][2] = matr->GetFieldValue("zz").ToDouble();
 
-  TDataItem *center = Item->FindItem("center");
+  TDataItem *center = Item.FindItem("center");
   if( center == NULL )  return false;
   FCenter[0] = center->GetFieldValue("x").ToDouble();
   FCenter[1] = center->GetFieldValue("y").ToDouble();
