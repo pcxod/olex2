@@ -205,7 +205,7 @@
 				FavorSizeOrSpeed="1"
 				WholeProgramOptimization="true"
 				AdditionalIncludeDirectories="..\..\..\glib;..\..\..\gxlib;..\..\..\repository;..\..\..\xlib;..\..\..\sdl;c:\Python25\include"
-				PreprocessorDefinitions="WIN32;_CONSOLE;_UNICODE"
+				PreprocessorDefinitions="__WIN32__;_CONSOLE;_UNICODE"
 				RuntimeLibrary="2"
 				FloatingPointModel="2"
 				UsePrecompiledHeader="0"
@@ -225,7 +225,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="kernel32.lib user32.lib shell32.lib ole32.lib $(NOINHERIT)"
+				AdditionalDependencies="kernel32.lib user32.lib shell32.lib ole32.lib wsock32.lib $(NOINHERIT)"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="C:\Python25\libs;&quot;$(SolutionDir)$(ConfigurationName)&quot;;&quot;$(TargetDir)&quot;;&quot;$(SolutionDir)\lib&quot;"
 				GenerateManifest="true"
