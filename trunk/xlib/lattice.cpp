@@ -26,6 +26,7 @@
 
 #include "olxmps.h"
 #include "estrbuffer.h"
+#include "symmparser.h"
 
 #undef GetObject
 // sorts largest -> smallest
@@ -1682,7 +1683,16 @@ void TLattice::SetAnis( const TCAtomPList& atoms, bool anis )  {
 }
 //..............................................................................
 void TLattice::ToDataItem(TDataItem& item) const  {
-  throw TNotImplementedException(__OlxSourceInfo);
+  GetAsymmUnit().ToDataItem(item);
+  TDataItem& latt = item.AddItem("lattice");
+  if( !Matrices.IsEmpty() )  {
+    TDataItem& mat = latt.AddItem("matrices", Matrices.Count());
+    for( int i=0; i < Matrices.Count(); i++ )
+      mat.AddItem(i, TSymmParser::MatrixToSymmEx(*Matrices[i]));
+  }
+  for( int i=0; i < Atoms.Count(); i++ )  {
+    ;
+  }
 }
 //..............................................................................
 void TLattice::FromDataItem(TDataItem& item)  {

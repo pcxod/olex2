@@ -382,7 +382,7 @@ void TDataItem::SaveToString(olxstr &Data)  {
     for( int i=0; i < Level-1; i++ )    Data << ' ';
     Data << '<' << Name << ' ';
     if( !Value.IsEmpty() )
-      Data << '\"' << Value << '\"';
+      Data << '\"' << Value << "\" ";
   }
   fc = FieldCount();
   ic = ItemCount();
@@ -419,7 +419,7 @@ void TDataItem::SaveToStrBuffer(TEStrBuffer &Data)  {
     for( int i=0; i < Level-1; i++ )    Data << ' ';
     Data << '<' << Name << ' ';
     if( !Value.IsEmpty() )  {
-      Data << '\"' << Value << '\"';
+      Data << '\"' << Value << "\" ";
     }
   }
   fc = FieldCount();

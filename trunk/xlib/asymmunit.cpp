@@ -675,7 +675,7 @@ void TAsymmUnit::ToDataItem(TDataItem& item) const  {
   TDataItem& symm = item.AddItem("symm", Matrices.Count());
   symm.AddField("latt", Latt);
   for(int i=0; i < Matrices.Count(); i++ )  
-    symm.AddField(i, TSymmParser::MatrixToSymmEx(Matrices[i]) );
+    symm.AddItem(i, TSymmParser::MatrixToSymmEx(Matrices[i]) );
   int sfac_cnt = 0;
   for( int i=0; i < SfacData.Count(); i++ )
     if( !SfacData.GetObject(i)->IsBuiltIn() )
@@ -691,7 +691,25 @@ void TAsymmUnit::ToDataItem(TDataItem& item) const  {
       sfac.AddField(SfacData.GetComparable(i), str);
     }
   }
-
+  TDataItem& resi = item.AddItem("residues");
+  int atom_id = 0;
+  for( int i=-1; i < Residues.Count(); i++ )  {
+    TResidue& r = GetResidue(i);
+    if( r.IsEmpty() )  continue;
+    TDataItem* ri;
+    if( i == -1 )
+      ri = &resi.AddItem("default");
+    else  {
+      ri = &resi.AddItem( r.GetNumber() );
+      ri->AddField("class_name", r.GetClassName());
+      ri->AddField("alias", r.GetAlias());
+    }
+    for( int j=0; j < r.Count(); j++ )  {
+      if( r[j].IsDeleted() )  continue;
+      r[j].ToDataItem(ri->AddItem(atom_id++));
+      r[j].SetTag(atom_id);
+    }
+  }
 }
 //..............................................................................
 void TAsymmUnit::FromDataItem(TDataItem& item)  {
