@@ -3137,7 +3137,7 @@ void TGXApp::InitFadeMode()  {
 }
 //..............................................................................
 void TGXApp::ToDataItem(TDataItem& item) const  {
-  throw TNotImplementedException(__OlxSourceInfo);
+  FXFile->GetLattice().ToDataItem(item);
 }
 //..............................................................................
 void TGXApp::FromDataItem(TDataItem& item)  {
