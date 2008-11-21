@@ -41,6 +41,7 @@ public:
   int Count() const {  return Crds.Count();  }
   const TSAtom& GetAtom(int i) const {  return *Crds[i].GetA();  }
   TSAtom& Atom(int i) {  return *Crds[i].A();  }
+  double Weight(int i) const {  return Crds[i].GetB();  }
 // static members
   /* calculates the A,B and C for the best plane Ax*By*Cz+D=0, D can be calculated as
    D = center.DotProd({A,B,C})
