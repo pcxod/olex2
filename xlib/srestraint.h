@@ -65,6 +65,9 @@ public:
   DefPropP(double, Esd)
   DefPropP(double, Esd1)
   DefPropB(AllNonHAtoms)
+
+  void ToDataItem(TDataItem& item) const;
+  void FromDataItem(TDataItem& item);
 };
 
 class TSRestraintList : public IEObject  {
@@ -88,6 +91,9 @@ public:
   inline int Count() const {  return Restraints.Count();  }
   inline TSimpleRestraint& operator [] (int i){  return Restraints[i];  }
   inline short GetRestraintListType()  const  {  return RestraintListType;  }
+
+  void ToDataItem(TDataItem& item) const;
+  void FromDataItem(TDataItem& item);
 };
 
 //
