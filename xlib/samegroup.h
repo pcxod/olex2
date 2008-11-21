@@ -49,6 +49,9 @@ public:
   const TSameGroup& GetDependent(int i) const {  return *Dependent[i];  }
 
   double Esd12, Esd13;
+
+  void ToDataItem(TDataItem& item) const;
+  void FromDataItem(TDataItem& item);
 };
 
 class TSameGroupList  {
@@ -81,6 +84,9 @@ public:
       Groups[i].SetTag(1);
     }
   }
+
+  void ToDataItem(TDataItem& item) const;
+  void FromDataItem(TDataItem& item);
 };
 
 EndXlibNamespace()

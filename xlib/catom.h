@@ -281,6 +281,9 @@ public:
   int Count() const {  return Dependent.Count();  }
   TCAtom& operator [] (int i) {  return *Dependent[i];  }
   const TCAtom& operator [] (int i) const {  return *Dependent[i];  }
+
+  void ToDataItem(TDataItem& item) const;
+  void FromDataItem(TDataItem& item);
 };
 //....................................................................................
 class TAfixGroups {
@@ -307,6 +310,8 @@ public:
       }
     }
   }
+  void ToDataItem(TDataItem& item) const;
+  void FromDataItem(TDataItem& item);
 };
 //....................................................................................
 class TExyzGroup {
@@ -335,6 +340,8 @@ public:
   }
   void Assign(TAsymmUnit& tau, const TExyzGroup& ags);
   void Clear();
+  void ToDataItem(TDataItem& item) const;
+  void FromDataItem(TDataItem& item);
 };
 //....................................................................................
 class TExyzGroups {
@@ -358,6 +365,8 @@ public:
       Groups.Add( new TExyzGroup(*this, Groups.Count()) ).Assign(tau, ags[i]);
     }
   }
+  void ToDataItem(TDataItem& item) const;
+  void FromDataItem(TDataItem& item);
 };
 //....................................................................................
 typedef TTypeList<TGroupCAtom> TCAtomGroup;

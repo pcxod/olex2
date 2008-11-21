@@ -706,10 +706,12 @@ void TAsymmUnit::ToDataItem(TDataItem& item) const  {
     }
     for( int j=0; j < r.Count(); j++ )  {
       if( r[j].IsDeleted() )  continue;
-      r[j].ToDataItem(ri->AddItem(atom_id++));
       r[j].SetTag(atom_id);
+      r[j].ToDataItem(ri->AddItem(atom_id++));
     }
   }
+  AfixGroups.ToDataItem(item.AddItem("afix"));
+  ExyzGroups.ToDataItem(item.AddItem("exyz"));
 }
 //..............................................................................
 void TAsymmUnit::FromDataItem(TDataItem& item)  {
@@ -929,7 +931,8 @@ void TAsymmUnit::LibSetAtomOccu(const TStrObjList& Params, TMacroError& E)  {
 void TAsymmUnit::LibNewAtom(const TStrObjList& Params, TMacroError& E)  {
   vec3d crd(Params[1].ToDouble(), Params[2].ToDouble(), Params[3].ToDouble());
   if( Lattice != NULL )  {
-    if( Lattice->GetUnitCell().FindOverlappingAtom( crd, 0.3 ) != NULL)  {
+    vec3d test_pos(crd);
+    if( Lattice->GetUnitCell().FindOverlappingAtom( test_pos, 0.3 ) != NULL)  {
       E.SetRetVal(-1);
       return;
     }

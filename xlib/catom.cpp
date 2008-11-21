@@ -286,6 +286,37 @@ void TAfixGroup::Assign(TAsymmUnit& tau, const TAfixGroup& ag)  {
   }
 }
 //..............................................................................
+void TAfixGroup::ToDataItem(TDataItem& item) const {
+  item.AddField("afix", Afix);
+  item.AddField("d", D);
+  item.AddField("u", U);
+  item.AddField("pivot", Pivot->GetTag());
+  TDataItem& dep = item.AddItem("dependent");
+  int dep_id = 0;
+  for( int i=0; i < Dependent.Count(); i++ )  {
+    if( Dependent[i]->IsDeleted() )  continue;
+    dep.AddField(dep_id++, Dependent[i]->GetTag());
+  }
+}
+//..............................................................................
+void TAfixGroup::FromDataItem(TDataItem& item) {
+  throw TNotImplementedException(__OlxSourceInfo);
+}
+//..............................................................................
+//..............................................................................
+//..............................................................................
+void TAfixGroups::ToDataItem(TDataItem& item) const {
+  int group_id = 0;
+  for( int i=0; i < Groups.Count(); i++ )  {
+    if( Groups[i].IsEmpty() )  continue;
+    Groups[i].ToDataItem( item.AddItem(group_id++) );
+  }
+}
+//..............................................................................
+void TAfixGroups::FromDataItem(TDataItem& item) {
+  throw TNotImplementedException(__OlxSourceInfo);
+}
+//..............................................................................
 //..............................................................................
 //..............................................................................
 void TExyzGroup::Clear()  {  Parent.Delete(Id);  }
@@ -298,3 +329,30 @@ void TExyzGroup::Assign(TAsymmUnit& tau, const TExyzGroup& ag)  {
     Atoms.Last()->SetExyzGroup(this);
   }
 }
+//..............................................................................
+void TExyzGroup::ToDataItem(TDataItem& item) const {
+  int atom_id = 0;
+  for( int i=0; i < Atoms.Count(); i++ )  {
+    if( Atoms[i]->IsDeleted() )  continue;
+    item.AddField(atom_id++, Atoms[i]->GetTag());
+  }
+}
+//..............................................................................
+void TExyzGroup::FromDataItem(TDataItem& item) {
+  throw TNotImplementedException(__OlxSourceInfo);
+}
+//..............................................................................
+//..............................................................................
+//..............................................................................
+void TExyzGroups::ToDataItem(TDataItem& item) const {
+  int group_id = 0;
+  for( int i=0; i < Groups.Count(); i++ )  {
+    if( Groups[i].IsEmpty() )  continue;
+    Groups[i].ToDataItem( item.AddItem(group_id++) );
+  }
+}
+//..............................................................................
+void TExyzGroups::FromDataItem(TDataItem& item) {
+  throw TNotImplementedException(__OlxSourceInfo);
+}
+//..............................................................................
