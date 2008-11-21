@@ -715,8 +715,8 @@ TCAtom* TUnitCell::FindOverlappingAtom(vec3d& pos, double delta) const  {
   double minD = 1000;
   delta *= delta;
   const TAsymmUnit& au = GetLattice().GetAsymmUnit();
-  int ac = au.AtomCount(),
-      mc = Matrices.Count();
+  const int ac = au.AtomCount(),
+            mc = Matrices.Count();
   for( int i=0; i < mc; i++ )  {
     const smatd& matr = GetMatrix(i);
     V1 = matr * pos;
