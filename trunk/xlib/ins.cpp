@@ -1149,9 +1149,9 @@ TCAtom* TIns::_ParseAtom(TStrList& Toks, ParseContext& cx, TCAtom* atom)  {
     }
   }
   // initialise uncertanties using average cell error
-  atom->ccrdEsd()[0] = fabs(atom->ccrd()[0]*Error);
-  atom->ccrdEsd()[1] = fabs(atom->ccrd()[1]*Error);
-  atom->ccrdEsd()[2] = fabs(atom->ccrd()[2]*Error);
+  //atom->ccrdEsd()[0] = fabs(atom->ccrd()[0]*Error);
+  //atom->ccrdEsd()[1] = fabs(atom->ccrd()[1]*Error);
+  //atom->ccrdEsd()[2] = fabs(atom->ccrd()[2]*Error);
   atom->SetPart( cx.Part );
   // update the context
   cx.Last = atom;

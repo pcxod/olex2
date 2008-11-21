@@ -179,15 +179,28 @@ void TCAtom::UpdateEllp(const TEllipsoid &NV ) {
 void TCAtom::ToDataItem(TDataItem& item) const  {
   item.AddField("label", FLabel );
   item.AddField("type", FAtomInfo->GetSymbol() );
-  item.AddField("x", TEValue<double>(Center[0], Esd[0]).ToString());
-  item.AddField("y", TEValue<double>(Center[1], Esd[1]).ToString());
-  item.AddField("z", TEValue<double>(Center[2], Esd[2]).ToString());
   if( Part != 0 )
     item.AddField("part", Part);
   if( EllpId == -1 )
-    item.AddField("Uiso", Uiso);
-  else
-    item.AddField("ellp_id", EllpId);
+    item.AddField("Uiso", (GetUisoVar() != 0) ? GetUisoVar() : Uiso);
+  else  {
+    double Q[6], E[6];
+    GetEllipsoid()->GetQuad(Q, E);
+    TDataItem& elp = item.AddItem("adp");
+    elp.AddField("xx", TEValue<double>(Q[0]+FFixedValues[UisoFixedValuesOffset+0], E[0]).ToString());
+    elp.AddField("yy", TEValue<double>(Q[1]+FFixedValues[UisoFixedValuesOffset+1], E[1]).ToString());
+    elp.AddField("zz", TEValue<double>(Q[2]+FFixedValues[UisoFixedValuesOffset+2], E[2]).ToString());
+    elp.AddField("yz", TEValue<double>(Q[3]+FFixedValues[UisoFixedValuesOffset+3], E[3]).ToString());
+    elp.AddField("xz", TEValue<double>(Q[4]+FFixedValues[UisoFixedValuesOffset+4], E[4]).ToString());
+    elp.AddField("xy", TEValue<double>(Q[5]+FFixedValues[UisoFixedValuesOffset+5], E[5]).ToString());
+  }
+  item.AddField("occu", (GetOccpVar() != 0 && GetOccpVar() != 10) ? 
+    GetOccpVar() : GetOccpVar() + GetOccp());
+  
+  item.AddField("x", TEValue<double>(Center[0]+FFixedValues[TCAtom::CrdFixedValuesOffset+0], Esd[0]).ToString());
+  item.AddField("y", TEValue<double>(Center[1]+FFixedValues[TCAtom::CrdFixedValuesOffset+1], Esd[1]).ToString());
+  item.AddField("z", TEValue<double>(Center[2]+FFixedValues[TCAtom::CrdFixedValuesOffset+2], Esd[2]).ToString());
+  
 }
 //..............................................................................
 void TCAtom::FromDataItem(TDataItem& item)  {

@@ -163,9 +163,9 @@ void AConstraintGenerator::GenerateAtom( TCAtomPList& created, TAtomEnvi& envi,
       if( !AnglesEqual )  {
         int c = 0;
         for( int i=0; i < envi.Count(); i++ )  {
-          if( envi.GetCrd(i).DistanceTo( envi.GetBase().crd() ) > 1.95 &&
-            envi.GetBAI(i) != 34 ) // bromine
-            continue;
+//          if( envi.GetCrd(i).DistanceTo( envi.GetBase().crd() ) > 1.95 &&
+//            envi.GetBAI(i) != 34 ) // bromine
+//            continue;
           Vec1 += (envi.GetCrd(i) - envi.GetBase().crd()).Normalise();
           c++;
         }
