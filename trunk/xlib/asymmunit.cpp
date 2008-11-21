@@ -691,6 +691,18 @@ void TAsymmUnit::ToDataItem(TDataItem& item) const  {
       sfac.AddField(SfacData.GetComparable(i), str);
     }
   }
+  TDataItem& elps = item.AddItem("tda");
+  double Q[6], E[6];
+  for( int i=0; i < Ellipsoids.Count(); i++ )  {
+    Ellipsoids[i]->GetQuad(Q, E);
+    TDataItem& elp = elps.AddItem(i);
+    elp.AddField("xx", TEValue<double>(Q[0], E[0]).ToString() );
+    elp.AddField("yy", TEValue<double>(Q[1], E[1]).ToString() );
+    elp.AddField("zz", TEValue<double>(Q[2], E[2]).ToString() );
+    elp.AddField("yz", TEValue<double>(Q[3], E[3]).ToString() );
+    elp.AddField("xz", TEValue<double>(Q[4], E[4]).ToString() );
+    elp.AddField("xy", TEValue<double>(Q[5], E[5]).ToString() );
+  }
   TDataItem& resi = item.AddItem("residues");
   int atom_id = 0;
   for( int i=-1; i < Residues.Count(); i++ )  {
@@ -710,8 +722,22 @@ void TAsymmUnit::ToDataItem(TDataItem& item) const  {
       r[j].ToDataItem(ri->AddItem(atom_id++));
     }
   }
+  // save used equivalent positions
+  TDataItem& eqiv = item.AddItem("eqiv");
+  for( int i=0; i < UsedSymm.Count(); i++ )  
+    eqiv.AddItem(i, TSymmParser::MatrixToSymmEx(UsedSymm[i]));
+
   AfixGroups.ToDataItem(item.AddItem("afix"));
   ExyzGroups.ToDataItem(item.AddItem("exyz"));
+  rDfix.ToDataItem(item.AddItem("dfix"));
+  rAfix.ToDataItem(item.AddItem("dang"));
+  rDsim.ToDataItem(item.AddItem("sadi"));
+  rVfix.ToDataItem(item.AddItem("chiv"));
+  rPfix.ToDataItem(item.AddItem("flat"));
+  rRBnd.ToDataItem(item.AddItem("delu"));
+  rUsim.ToDataItem(item.AddItem("simu"));
+  rUiso.ToDataItem(item.AddItem("isor"));
+  rEADP.ToDataItem(item.AddItem("eadp"));
 }
 //..............................................................................
 void TAsymmUnit::FromDataItem(TDataItem& item)  {

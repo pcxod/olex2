@@ -180,6 +180,24 @@ bool TSimpleRestraint::ContainsAtom(TCAtom* ca) const {
   return false;
 }
 //..............................................................................
+void TSimpleRestraint::ToDataItem(TDataItem& item) const {
+  item.AddField("allNonH", AllNonHAtoms);
+  item.AddField("esd", Esd);
+  item.AddField("esd1", Esd1);
+  TDataItem& atoms = item.AddItem("atoms");
+  int atom_id=0;
+  for( int i=0; i < InvolvedAtoms.Count(); i++ )  {
+    if( InvolvedAtoms[i].GetAtom()->IsDeleted() )  continue;
+    TDataItem& atom = atoms.AddItem(atom_id++);
+    atom.AddField("atom_id", InvolvedAtoms[i].GetAtom()->GetTag());
+    atom.AddField("eqiv_id", InvolvedAtoms[i].GetMatrix() == NULL ? -1 : InvolvedAtoms[i].GetMatrix()->GetTag());
+  }
+}
+//..............................................................................
+void TSimpleRestraint::FromDataItem(TDataItem& item) {
+  throw TNotImplementedException(__OlxSourceInfo);
+}
+//..............................................................................
 //..............................................................................
 //..............................................................................
 //..............................................................................
@@ -232,6 +250,36 @@ void TSRestraintList::Release(TSimpleRestraint& sr)  {
   }
 }
 //..............................................................................
+void TSRestraintList::ToDataItem(TDataItem& item) const {
+  olxstr list_type;
+  switch( RestraintListType )  {
+    case rltNone:
+      list_type = "none";
+      break;
+    case rltAtoms:
+      list_type = "atoms";
+      break;
+    case rltBonds:
+      list_type = "bonds";
+      break;
+    case rltAngles:
+      list_type = "angles";
+      break;
+    case rltGroup:
+      list_type = "group";
+      break;
+  }
+  item.AddField("list_type", list_type);
+  int rs_id = 0;
+  for( int i=0; i < Restraints.Count(); i++ )  {
+    if( !Restraints[i].IsAllNonHAtoms() && Restraints[i].AtomCount() == 0 )  continue;
+    Restraints[i].ToDataItem( item.AddItem(rs_id++) );
+  }
+}
+//..............................................................................
+void TSRestraintList::FromDataItem(TDataItem& item) {
+  throw TNotImplementedException(__OlxSourceInfo);
+}
 //..............................................................................
 
 

@@ -177,10 +177,17 @@ void TCAtom::UpdateEllp(const TEllipsoid &NV ) {
 }
 //..............................................................................
 void TCAtom::ToDataItem(TDataItem& item) const  {
+  item.AddField("label", FLabel );
   item.AddField("type", FAtomInfo->GetSymbol() );
-  item.AddField("x", Center[0]);
-  item.AddField("y", Center[1]);
-  item.AddField("z", Center[2]);
+  item.AddField("x", TEValue<double>(Center[0], Esd[0]).ToString());
+  item.AddField("y", TEValue<double>(Center[1], Esd[1]).ToString());
+  item.AddField("z", TEValue<double>(Center[2], Esd[2]).ToString());
+  if( Part != 0 )
+    item.AddField("part", Part);
+  if( EllpId == -1 )
+    item.AddField("Uiso", Uiso);
+  else
+    item.AddField("ellp_id", EllpId);
 }
 //..............................................................................
 void TCAtom::FromDataItem(TDataItem& item)  {
