@@ -1683,15 +1683,55 @@ void TLattice::SetAnis( const TCAtomPList& atoms, bool anis )  {
 }
 //..............................................................................
 void TLattice::ToDataItem(TDataItem& item) const  {
-  GetAsymmUnit().ToDataItem(item);
+  GetAsymmUnit().ToDataItem(item.AddItem("aunit"));
   TDataItem& latt = item.AddItem("lattice");
-  if( !Matrices.IsEmpty() )  {
-    TDataItem& mat = latt.AddItem("matrices", Matrices.Count());
-    for( int i=0; i < Matrices.Count(); i++ )
-      mat.AddItem(i, TSymmParser::MatrixToSymmEx(*Matrices[i]));
+  latt.AddField("delta", Delta);
+  latt.AddField("deltai", DeltaI);
+  TDataItem& mat = latt.AddItem("matrices", Matrices.Count());
+  const int mat_c = Matrices.Count();
+  // save matrices, change matrix tags to the position in the list and remember old tags
+  TIntList m_tags(mat_c);
+  for( int i=0; i < mat_c; i++ )  {
+    mat.AddItem(i, TSymmParser::MatrixToSymmEx(*Matrices[i]));
+    m_tags[i] = Matrices[i]->GetTag();
+    Matrices[i]->SetTag(i);
   }
+  // save satoms - only the original CAtom Tag and the generating matrix tag
+  TDataItem& atoms = item.AddItem("atoms");
+  int satom_tag = 0;
   for( int i=0; i < Atoms.Count(); i++ )  {
-    ;
+    if( Atoms[i]->IsDeleted() )  continue;
+    TDataItem& ai = atoms.AddItem(satom_tag++);
+    ai.AddField("atom_id", Atoms[i]->CAtom().GetTag());
+    ai.AddField("matrix_id", Atoms[i]->GetMatrix(0).GetTag());
+    Atoms[i]->SetTag(satom_tag);
+  }
+  // restore original matrix tags 
+  for( int i=0; i < mat_c; i++ )
+    Matrices[i]->SetTag(m_tags[i]);
+  // save planes
+  TSPlanePList valid_planes;
+  for( int i=0; i < Planes.Count(); i++ )  {
+    if( Planes[i]->IsDeleted() ) continue;
+    int p_ac = 0;  
+    for( int j=0; j < Planes[i]->Count(); j++ ) 
+      if( !Planes[i]->Atom(j).IsDeleted() )
+        p_ac++;
+    if( p_ac >= 3 ) // a plane must contain at least three atoms
+      valid_planes.Add( Planes[i] );
+  }
+  if( !valid_planes.IsEmpty() )  {
+    TDataItem& planes = item.AddItem("planes", valid_planes.Count());
+    for( int i=0; i < valid_planes.Count(); i++ )  {
+      TDataItem& plane = planes.AddItem(i);
+      int p_a_id = 0;
+      for( int j=0; j < valid_planes[i]->Count(); j++ )  {
+        if( valid_planes[i]->Atom(j).IsDeleted() )  continue;
+        TDataItem& pa = plane.AddItem(p_a_id++);
+        pa.AddField("atom_id", valid_planes[i]->Atom(j).GetTag());
+        pa.AddField("weight", valid_planes[i]->Weight(j));
+      }
+    }
   }
 }
 //..............................................................................

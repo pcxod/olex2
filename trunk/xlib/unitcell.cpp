@@ -105,15 +105,13 @@ int TUnitCell::GetMatrixMultiplier(short Latt)  {
 }
 //..............................................................................
 void  TUnitCell::InitMatrices()  {
-  int ac;
-  TCAtom *A1;
-  vec3d Vec, Vec1, Vec2;
-  TEVPointD EP;
   TEStrBuffer Tmp;
+  TAsymmUnit& au = GetLattice().GetAsymmUnit();
   Matrices.Clear();
+  Matrices.SetCapacity( GetMatrixMultiplier(au.GetLatt())*au.MatrixCount());
   // check if the E matrix is in the list
-  for( int i=0;  i < GetLattice().GetAsymmUnit().MatrixCount(); i++ )  {
-    const smatd& m = GetLattice().GetAsymmUnit().GetMatrix(i);
+  for( int i=0;  i < au.MatrixCount(); i++ )  {
+    const smatd& m = au.GetMatrix(i);
     if( m.r.IsI() )  continue;  // will need to insert the identity matrix at position 0
     Matrices.AddNew( m );
   }
@@ -124,7 +122,7 @@ void  TUnitCell::InitMatrices()  {
 
   for( int i=0; i < Matrices.Count(); i++ )  {
     smatd& m = Matrices[i];
-    switch( abs(GetLattice().GetAsymmUnit().GetLatt()) )  {
+    switch( abs(au.GetLatt()) )  {
       case 1: break;
       case 2:      // Body Centered (I)
         M = new smatd(m);
@@ -178,7 +176,7 @@ void  TUnitCell::InitMatrices()  {
         throw TInvalidArgumentException(__OlxSourceInfo, "LATT");
     }
   }
-  if( GetLattice().GetAsymmUnit().GetLatt() > 0 )  {
+  if( au.GetLatt() > 0 )  {
     for( int i=0; i < Matrices.Count(); i++ )  {
       M = new smatd(Matrices[i]);
       *M *= -1;
@@ -187,34 +185,30 @@ void  TUnitCell::InitMatrices()  {
     }
   }
 
-  ac = GetLattice().GetAsymmUnit().AtomCount();
+  const int ac = au.AtomCount();
+  const int mc = Matrices.Count();
 
-  mat3d abc2xyz( GetLattice().GetAsymmUnit().GetCellToCartesian()),
-           xyz2abc( GetLattice().GetAsymmUnit().GetCartesianToCell());
-  abc2xyz.Transpose();
-  xyz2abc.Transpose();
+  mat3d abc2xyz( mat3d::Transpose(au.GetCellToCartesian()) ),
+        xyz2abc( mat3d::Transpose(au.GetCartesianToCell()) );
 
-  TEllipsoid *E;
   Ellipsoids.Clear();
   Ellipsoids.SetCount(ac);
   for( int i=0; i < ac; i++ )  {
-    Ellipsoids[i].SetCapacity(Matrices.Count());
-    for( int j=0; j < Matrices.Count(); j++ )
-      Ellipsoids[i].Add( NULL );
-  }
-  for( int i=0; i < ac; i++ )  {
-    A1 = &GetLattice().GetAsymmUnit().GetAtom(i);
-    for( int j=0; j < Matrices.Count(); j++ )  {
-      if( A1->GetEllipsoid() != NULL )  {
-        E = new TEllipsoid;
-        E->SetId( j*ac+A1->GetId() );
-        *E = *A1->GetEllipsoid();
+    TCAtom& A1 = au.GetAtom(i);
+    Ellipsoids[i].SetCount(mc);
+    for( int j=0; j < mc; j++ )  {
+      if( A1.GetEllpId() != -1 )  {
+        TEllipsoid* E = new TEllipsoid;
+        E->SetId( j*ac+A1.GetId() );
+        *E = *A1.GetEllipsoid();
         E->MultMatrix( abc2xyz*Matrices[j].r*xyz2abc );
         Ellipsoids[i][j] = E;
       }
+      else
+        Ellipsoids[i][j] = NULL;
     }
   }
-  for( int i=0; i < Matrices.Count(); i++ )
+  for( int i=0; i < mc; i++ )
     Matrices[i].SetTag(i);
 }
 //..............................................................................

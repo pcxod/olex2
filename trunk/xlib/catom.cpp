@@ -178,7 +178,9 @@ void TCAtom::UpdateEllp(const TEllipsoid &NV ) {
 //..............................................................................
 void TCAtom::ToDataItem(TDataItem& item) const  {
   item.AddField("type", FAtomInfo->GetSymbol() );
-  item.AddField("ccrd", olxstr(Center[0]) << ',' << Center[1] << ',' << Center[2] );
+  item.AddField("x", Center[0]);
+  item.AddField("y", Center[1]);
+  item.AddField("z", Center[2]);
 }
 //..............................................................................
 void TCAtom::FromDataItem(TDataItem& item)  {
