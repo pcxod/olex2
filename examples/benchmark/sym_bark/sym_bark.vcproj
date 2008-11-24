@@ -197,15 +197,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\repository\olxvar.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\xrlib\restraints.cpp"
 				>
 			</File>
 			<File
 				RelativePath=".\sym_bark.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\xrlib\xins.cpp"
 				>
 			</File>
 			<File
