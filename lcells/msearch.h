@@ -52,7 +52,7 @@ __published:  // IDE-managed Components
   void __fastcall iQueryClick(TObject *Sender);
   void __fastcall bbSearchTitleClick(TObject *Sender);
 private:  // User declarations
-  void _fastcall AddResults(const TTypeList<TConFile*>& Res);
+  void _fastcall AddResults(const TPtrList<TConFile>& Res);
 public:    // User declarations
   class TOrganiser *Organiser;
   class TConIndex *CIndex;

@@ -14,8 +14,8 @@
       build\xfiles.obj build\xlcongen.obj build\xyz.obj build\tls.obj 
       build\scat_it.obj build\srestraint.obj build\auto.obj build\pdb.obj 
       build\symmtest.obj build\xapp.obj build\graphsr.obj build\brushhkl.obj 
-      build\sg.obj build\xmacro.obj build\wilson.obj build\testsymm.obj 
-      build\imp_auto.obj build\seval.obj build\samegroup.obj"/>
+      build\sg.obj build\xmacro.obj build\wilson.obj build\imp_auto.obj 
+      build\seval.obj build\samegroup.obj"/>
     <RESFILES value=""/>
     <DEFFILE value=""/>
     <RESDEPEN value="$(RESFILES)"/>
@@ -30,8 +30,8 @@
     <USERDEFINES value="_DEBUG;_NO_PYTHON"/>
     <SYSDEFINES value="NO_STRICT"/>
     <MAINSOURCE value="xlib.bpf"/>
-    <INCLUDEPATH value="..\..\..\xlib\macro;&quot;C:\Program Files\Borland\CBuilder6\Projects&quot;;..\..\..\sdl;..\..\..\xlib;$(BCB)\include;$(BCB)\include\vcl;..\..\..\alglib;..\..\..\repository"/>
-    <LIBPATH value="..\..\..\xlib\macro;&quot;C:\Program Files\Borland\CBuilder6\Projects&quot;;..\..\..\xlib;$(BCB)\lib\obj;$(BCB)\lib"/>
+    <INCLUDEPATH value="..\;..;..\..\..\xlib\macro;&quot;C:\Program Files\Borland\CBuilder6\Projects&quot;;..\..\..\sdl;..\..\..\xlib;$(BCB)\include;$(BCB)\include\vcl;..\..\..\alglib;..\..\..\repository"/>
+    <LIBPATH value="..\;..;..\..\..\xlib\macro;&quot;C:\Program Files\Borland\CBuilder6\Projects&quot;;..\..\..\xlib;$(BCB)\lib\obj;$(BCB)\lib"/>
     <WARNINGS value="-w-par"/>
     <LISTFILE value=""/>
     <OTHERFILES value=""/>
@@ -94,7 +94,6 @@
       <FILE FILENAME="..\..\..\xlib\macro\sg.cpp" FORMNAME="" UNITNAME="sg" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\xlib\xmacro.cpp" FORMNAME="" UNITNAME="xmacro" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\xlib\macro\wilson.cpp" FORMNAME="" UNITNAME="wilson" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
-      <FILE FILENAME="..\..\..\xlib\macro\testsymm.cpp" FORMNAME="" UNITNAME="testsymm" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\xlib\macro\imp_auto.cpp" FORMNAME="" UNITNAME="imp_auto" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\xlib\seval.cpp" FORMNAME="" UNITNAME="seval" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\xlib\samegroup.cpp" FORMNAME="" UNITNAME="samegroup" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
@@ -131,20 +130,22 @@ ProductVersion=1.0.0.0
 Comments=
 
 [HistoryLists\hlIncludePath]
-Count=7
-Item0=..\..\..\xlib\macro;C:\Program Files\Borland\CBuilder6\Projects;..\..\..\sdl;..\..\..\xlib;$(BCB)\include;$(BCB)\include\vcl;..\..\..\alglib;..\..\..\repository
-Item1=..\..\..\xlib\macro;C:\Program Files\Borland\CBuilder6\Projects;..\..\..\sdl;..\..\..\xlib;$(BCB)\include;$(BCB)\include\vcl;..\..\..\alglib
-Item2=C:\Program Files\Borland\CBuilder6\Projects;..\..\..\sdl;..\..\..\xlib;$(BCB)\include;$(BCB)\include\vcl;..\..\..\alglib
-Item3=..\..\..\sdl;..\..\..\xlib;$(BCB)\include;$(BCB)\include\vcl;..\..\..\alglib
-Item4=C:\Program Files\Borland\CBuilder6\Projects;..\..\..\xlib;$(BCB)\include;$(BCB)\include\vcl;..\..\..\sdl
-Item5=..\..\..\xlib;$(BCB)\include;$(BCB)\include\vcl;..\..\..\sdl
-Item6=..\..\..\xlib;$(BCB)\include;$(BCB)\include\vcl
+Count=8
+Item0=..\;..\..\..\xlib\macro;C:\Program Files\Borland\CBuilder6\Projects;..\..\..\sdl;..\..\..\xlib;$(BCB)\include;$(BCB)\include\vcl;..\..\..\alglib;..\..\..\repository
+Item1=..\..\..\xlib\macro;C:\Program Files\Borland\CBuilder6\Projects;..\..\..\sdl;..\..\..\xlib;$(BCB)\include;$(BCB)\include\vcl;..\..\..\alglib;..\..\..\repository
+Item2=..\..\..\xlib\macro;C:\Program Files\Borland\CBuilder6\Projects;..\..\..\sdl;..\..\..\xlib;$(BCB)\include;$(BCB)\include\vcl;..\..\..\alglib
+Item3=C:\Program Files\Borland\CBuilder6\Projects;..\..\..\sdl;..\..\..\xlib;$(BCB)\include;$(BCB)\include\vcl;..\..\..\alglib
+Item4=..\..\..\sdl;..\..\..\xlib;$(BCB)\include;$(BCB)\include\vcl;..\..\..\alglib
+Item5=C:\Program Files\Borland\CBuilder6\Projects;..\..\..\xlib;$(BCB)\include;$(BCB)\include\vcl;..\..\..\sdl
+Item6=..\..\..\xlib;$(BCB)\include;$(BCB)\include\vcl;..\..\..\sdl
+Item7=..\..\..\xlib;$(BCB)\include;$(BCB)\include\vcl
 
 [HistoryLists\hlLibraryPath]
-Count=3
-Item0=..\..\..\xlib\macro;C:\Program Files\Borland\CBuilder6\Projects;..\..\..\xlib;$(BCB)\lib\obj;$(BCB)\lib
-Item1=C:\Program Files\Borland\CBuilder6\Projects;..\..\..\xlib;$(BCB)\lib\obj;$(BCB)\lib
-Item2=..\..\..\xlib;$(BCB)\lib\obj;$(BCB)\lib
+Count=4
+Item0=..\;..\..\..\xlib\macro;C:\Program Files\Borland\CBuilder6\Projects;..\..\..\xlib;$(BCB)\lib\obj;$(BCB)\lib
+Item1=..\..\..\xlib\macro;C:\Program Files\Borland\CBuilder6\Projects;..\..\..\xlib;$(BCB)\lib\obj;$(BCB)\lib
+Item2=C:\Program Files\Borland\CBuilder6\Projects;..\..\..\xlib;$(BCB)\lib\obj;$(BCB)\lib
+Item3=..\..\..\xlib;$(BCB)\lib\obj;$(BCB)\lib
 
 [HistoryLists\hlDebugSourcePath]
 Count=1
@@ -196,10 +197,5 @@ RemoteDebug=0
 ShowInfoMsgs=0
 LinkDebugVcl=0
 LinkCGLIB=0
-
-[Language]
-ActiveLang=
-ProjectLang=
-RootDir=
   </IDEOPTIONS>
 </PROJECT>

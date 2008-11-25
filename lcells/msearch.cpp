@@ -57,7 +57,7 @@ void __fastcall TdlgSearch::sbPasteClick(TObject *Sender)  {
 //---------------------------------------------------------------------------
 void __fastcall TdlgSearch::bbSearchClick(TObject *Sender)  {
   TNet *N = new TNet;
-  TTypeList<TConFile*> Res;
+  TPtrList<TConFile> Res;
   N->Assign( Organiser->XFile->GetLattice() );
   CIndex->Search(NULL, N, Res);
   AddResults(Res);
@@ -138,7 +138,7 @@ void __fastcall TdlgSearch::iQueryClick(TObject *Sender)
 }
 //---------------------------------------------------------------------------
 
-void _fastcall TdlgSearch::AddResults(const TTypeList<TConFile*>& Res)  {
+void _fastcall TdlgSearch::AddResults(const TPtrList<TConFile>& Res)  {
   dlgMain->lvList->Items->BeginUpdate();
   dlgMain->lvList->Clear();
   dlgMain->lvList->Items->EndUpdate();
@@ -207,7 +207,7 @@ void __fastcall TdlgSearch::bbSearchTitleClick(TObject *Sender)  {
   dlgMain->lvList->Items->BeginUpdate();
   dlgMain->lvList->Clear();
   dlgMain->lvList->Items->EndUpdate();
-  TTypeList<TConFile*> Res;
+  TPtrList<TConFile> Res;
   short what = 0;
   AnsiString txt;
   if( Sender == bbSearchTitle )  {
