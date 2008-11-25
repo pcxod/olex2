@@ -59,6 +59,7 @@ void TNetwork::TDisassembleTaskRemoveSymmEq::Run(long index)  {
   }
 }
 void TNetwork::TDisassembleTaskCheckConnectivity::Run(long index)  {
+  const int this_p = Atoms[index]->CAtom().GetPart();
   for( int i=index+1; i < Atoms.Count(); i++ )  {
     if( (Distances[0][i] - Distances[0][index]) > dcMaxCBLength ||
         (Distances[0][i] - Distances[0][index]) < -dcMaxCBLength )  return;
@@ -72,18 +73,15 @@ void TNetwork::TDisassembleTaskCheckConnectivity::Run(long index)  {
     double D = Atoms[index]->crd().QDistanceTo( Atoms[i]->crd());
     double D1 = (double)(Atoms[index]->GetAtomInfo().GetRad1() + Atoms[i]->GetAtomInfo().GetRad1() + Delta);
     D1 *= D1;
+    const int that_p = Atoms[i]->CAtom().GetPart();
     if(  D < D1 )  {
-      if( (Atoms[index]->CAtom().GetPart() == 0) ||
-          (Atoms[i]->CAtom().GetPart() == 0) )  {
+      if( this_p == 0 || that_p == 0 )  {
         Atoms[index]->AddNode(*Atoms[i]);
         Atoms[i]->AddNode(*Atoms[index]);  // crosslinking
-        continue;
       }
-      if( (Atoms[index]->CAtom().GetPart() == Atoms[i]->CAtom().GetPart()) &&
-           (Atoms[index]->CAtom().GetPart() != 0)  )  {
+      else if( (this_p == that_p) && (this_p > 0)  )  {
         Atoms[index]->AddNode(*Atoms[i]);
         Atoms[i]->AddNode(*Atoms[index]);  // crosslinking
-        continue;
       }
     }
   }
@@ -209,6 +207,8 @@ void TNetwork::THBondSearchTask::Run(long ind)  {
 
   if( AA == NULL && DA == NULL )  return;
 
+  const int this_p = A1->CAtom().GetPart();
+
   for( int i=ind+1; i < Atoms.Count(); i++ )  {
     if( (Distances[0][ind] - Distances[0][i]) > dcMaxCBLength ||
         (Distances[0][ind] - Distances[0][i]) < -dcMaxCBLength )  return;
@@ -241,10 +241,12 @@ void TNetwork::THBondSearchTask::Run(long ind)  {
       }
       if( connected )  continue;
 
-      double D = A1->crd().DistanceTo( Atoms[i]->crd() );
-      if(  D < (A1->GetAtomInfo().GetRad1() + Atoms[i]->GetAtomInfo().GetRad1() + Delta) )  {
-         if( (A1->CAtom().GetPart() == Atoms[i]->CAtom().GetPart()) ||
-              A1->CAtom().GetPart() == 0 || Atoms[i]->CAtom().GetPart() == 0 )  {
+      const int that_p = Atoms[i]->CAtom().GetPart();
+      const double D = A1->crd().QDistanceTo( Atoms[i]->crd() );
+      double D1 = A1->GetAtomInfo().GetRad1() + Atoms[i]->GetAtomInfo().GetRad1() + Delta;
+      D1 *= D1;
+      if(  D < D1 )  {
+         if( (this_p == that_p && this_p >= 0) || this_p == 0 || that_p == 0 )  {
           TSBond* B = new TSBond(&A1->GetNetwork());
           B->SetType(sotHBond);
           B->SetA(*A1);
@@ -256,10 +258,12 @@ void TNetwork::THBondSearchTask::Run(long ind)  {
       }
     }
     else  {
-      double D = A1->crd().DistanceTo( Atoms[i]->crd() );
-      if(  D < (A1->GetAtomInfo().GetRad1() + Atoms[i]->GetAtomInfo().GetRad1() + Delta) )  {
-        if( (A1->CAtom().GetPart() == Atoms[i]->CAtom().GetPart()) ||
-             A1->CAtom().GetPart() == 0 || Atoms[i]->CAtom().GetPart() == 0 )  {
+      const int that_p = Atoms[i]->CAtom().GetPart();
+      const double D = A1->crd().QDistanceTo( Atoms[i]->crd() );
+      double D1 = A1->GetAtomInfo().GetRad1() + Atoms[i]->GetAtomInfo().GetRad1() + Delta;
+      D1 *= D1;
+      if(  D < D1 )  {
+        if( (this_p == that_p && this_p >= 0) || this_p == 0 || that_p == 0 )  {
           TSBond* B = new TSBond( &A1->GetNetwork() );
           B->SetType(sotHBond);
           B->SetA(*A1);
@@ -274,7 +278,8 @@ void TNetwork::THBondSearchTask::Run(long ind)  {
 //..............................................................................
 bool TNetwork::CBondExists(const TCAtom& CA1, const TCAtom& CA2, double D) const  {
   if(  D < (CA1.GetAtomInfo().GetRad1() + CA2.GetAtomInfo().GetRad1() + GetLattice().GetDelta() ) )  {
-    if( (CA1.GetPart() == CA2.GetPart()) || !CA1.GetPart() ||!CA2.GetPart() )
+    if( (CA1.GetPart() == CA2.GetPart() && CA2.GetPart() >= 0 ) || 
+         CA1.GetPart() == 0 ||CA2.GetPart() == 0 )
       return true;
   }
   return false;
@@ -282,7 +287,8 @@ bool TNetwork::CBondExists(const TCAtom& CA1, const TCAtom& CA2, double D) const
 //..............................................................................
 bool TNetwork::HBondExists(const TCAtom& CA1, const TCAtom& CA2, double D) const  {
   if(  D < (CA1.GetAtomInfo().GetRad1() + CA2.GetAtomInfo().GetRad1() + GetLattice().GetDeltaI() ) )  {
-    if( (CA1.GetPart() == CA2.GetPart()) || !CA1.GetPart() ||!CA2.GetPart() )
+    if( (CA1.GetPart() == CA2.GetPart() && CA2.GetPart() >=0 ) || 
+      CA1.GetPart() == 0 || CA2.GetPart() == 0 )
       return true;
   }
   return false;
