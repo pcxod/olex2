@@ -4,16 +4,16 @@
 #include "threex3.h"
 BeginXlibNamespace()
 
-class ExperimentalDetails {
+class TExperimentalDetails {
   double Radiation;
   double Temperature;
   vec3d CrystalSize;
 public:
-  ExperimentalDetails() : Radiation(0.71073), Temperature(150) {}
-  ExperimentalDetails(const ExperimentalDetails& ed)  {
+  TExperimentalDetails() : Radiation(0.71073), Temperature(150) {}
+  TExperimentalDetails(const ExperimentalDetails& ed)  {
     *this = ed;
   }
-  ExperimentalDetails& operator = (const ExperimentalDetails& ed) {
+  TExperimentalDetails& operator = (const TExperimentalDetails& ed) {
     Radiation = ed.Radiation;
     Temperature = ed.Temperature;
     CrystalSize = ed.CrystalSize;
@@ -26,22 +26,6 @@ public:
     CrystalSize = vec3d(x,y,z);
   }
 };
-/* the idea here:
- atoms have the FVarRelation array
-*/
-class FVar : public AReferencible  {
-  double Value;
-};
-
-const short 
-  fvarVal = 1,
-  fvarOneMinuVal = 2;    
-
-struct FVarRelation {
-  short Relation;
-  FVar* Variable;
-};
-
 
 EndXlibNamespace()
 #endif
