@@ -19,38 +19,35 @@
 const int MaxPaths = 400;
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
-_fastcall TConInfo::TConInfo()  {
+TConInfo::TConInfo()  {
   GraphRadius = 0;
   Rings = 0;
   Center = NULL;
 }
-_fastcall TConInfo::~TConInfo()  {
+TConInfo::~TConInfo()  {
   Clear();
 }
-void _fastcall TConInfo::Clear()  {
-  for( int i=0; i < Paths.Count(); i++ )
-    delete Paths[i];
+void TConInfo::Clear()  {
   Paths.Clear();
 }
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
-int NodesSort(TConNode * const &I, TConNode * const &I1)  {
+int NodesSort(const TConNode* I, const TConNode* I1)  {
   return I->Nodes.Count() - I1->Nodes.Count();
 }
 //---------------------------------------------------------------------------
-int _fastcall NodesSortMr(void *I, void *I1)
-{
-  return ((TConNode*)I)->AtomType - ((TConNode*)I1)->AtomType;
-}
+//int NodesSortMr(void *I, void *I1)  {
+//  return ((TConNode*)I)->AtomType - ((TConNode*)I1)->AtomType;
+//}
 //---------------------------------------------------------------------------
-void __fastcall TConNode::Analyse(TNet *Parent, TConInfo *CI)  {
-  TConNode *N, *N1;
-  TTypeList<TConNode*> L;
+void TConNode::Analyse(TNet* Parent, TConInfo* CI)  {
+  TPtrList<TConNode> L,
+    p_nodes = Parent->Nodes();
   CI->GraphRadius = 0;
   CI->Rings = 0;
-  for( int i=0; i < Parent->Nodes.Count(); i++ )  {
-    N = Parent->Nodes[i];
+  for( int i=0; i < p_nodes.Count(); i++ )  {
+    TConNode* N = p_nodes[i];
     N->Id = -1;
     N->Used = false;   //
     N->Used1 = false;
@@ -59,14 +56,14 @@ void __fastcall TConNode::Analyse(TNet *Parent, TConInfo *CI)  {
   for( int i=0; i < Nodes.Count(); i++ )  {
     if( i == 0 )  CI->GraphRadius = 1;
     Nodes[i]->Id = 1;
-    L.AddACopy( Nodes[i] );
+    L.Add( Nodes[i] );
   }
   for( int i=0; i < L.Count(); i++ )  {
-    N = L[i];
+    TConNode* N = L[i];
     for( int j=0; j < N->Nodes.Count(); j++ )  {
-      N1 = N->Nodes[j];
+      TConNode* N1 = N->Nodes[j];
       if( N1->Id == -1 )  {
-        L.AddACopy(N1);
+        L.Add(N1);
         N1->Id = N->Id + 1;
         CI->GraphRadius = N1->Id;
 //        CI->Rings--;
@@ -76,7 +73,7 @@ void __fastcall TConNode::Analyse(TNet *Parent, TConInfo *CI)  {
     }
   }
 }
-void _fastcall TConNode::SetUsed1True()  {
+void TConNode::SetUsed1True()  {
   if( Used1 )  return;
   if( !Id )  return;
   Used1 = true;
@@ -86,7 +83,7 @@ void _fastcall TConNode::SetUsed1True()  {
       Nodes[i]->SetUsed1True();
   }
 }
-void _fastcall TConNode::FindPaths(TConNode *Parent, TConInfo *CI, TTypeList<TConNode*> *Path)
+void TConNode::FindPaths(TConNode *Parent, TConInfo *CI, TPtrList<TConNode> *Path)
 {
 // USED should be preset to false
 // ID should be initialised using ANLALYSE function
@@ -97,17 +94,15 @@ void _fastcall TConNode::FindPaths(TConNode *Parent, TConInfo *CI, TTypeList<TCo
     if( Id <= Parent->Id )
       return;
   }
-  TConNode *N, *N1;
-  TTypeList<TConNode*>* L;
   int added = 0;
 //  this->Used = true;
-  if( !Path )  {
-    Path = new TTypeList<TConNode*>();
-    CI->Paths.AddACopy(Path);
+  if( Path == NULL )  {
+    Path = new TPtrList<TConNode>();
+    CI->Paths.Add(Path);
   }
-  Path->AddACopy(this);
+  Path->Add(this);
   for( int i=0; i < Nodes.Count(); i++ )  {
-    N = Nodes[i];
+    TConNode* N = Nodes[i];
     if( N->Id > CI->GraphRadius )
       continue;
     if( Parent != NULL )  {
@@ -121,19 +116,18 @@ void _fastcall TConNode::FindPaths(TConNode *Parent, TConInfo *CI, TTypeList<TCo
       added++;
     }
     else  {
-      L = new TTypeList<TConNode*>();
-      L->SetCapacity(Id+1);
+      TPtrList<TConNode>* L = new TPtrList<TConNode>(Id+1);
       for( int j=0; j < Id+1; j++ )  // have to copy at least one node
-        L->AddACopy( Path->Item(j) );
-      CI->Paths.AddACopy(L);
+        (*L)[j] = Path->Item(j);
+      CI->Paths.Add(L);
       N->FindPaths(this, CI, L);
     }
   }
 }
-void _fastcall TConNode::FillList(int lastindex, TTypeList<TConNode*>& L)  {
+void TConNode::FillList(int lastindex, TPtrList<TConNode>& L)  {
   if( this->Used )  return;
   if( Id <= lastindex )  {
-    L.AddACopy(this);
+    L.Add(this);
     this->Used = true;
     for( int i=0; i < Nodes.Count(); i++ )  {
       if( Nodes[i]->Used )  continue;
@@ -143,24 +137,21 @@ void _fastcall TConNode::FillList(int lastindex, TTypeList<TConNode*>& L)  {
   }
 }
 
-bool _fastcall TConNode::IsSimilar(TConNode *N)
-{
-  if( (Id == -1) || (N->Id == -1) )
+bool TConNode::IsSimilar(const TConNode& N) const {
+  if( (Id == -1) || (N.Id == -1) )
     return false;
-  if( N->AtomType != AtomType )    return false;
-  if( N->Id != Id )          return false;
-  if( Nodes.Count() > N->Nodes.Count() )return false;
+  if( N.AtomType != AtomType )           return false;
+  if( N.Id != Id )                       return false;
+  if( Nodes.Count() > N.Nodes.Count() )  return false;
 
-  TConNode *Nd, *Nd1;
-  bool found;
-  for( int i=0; i < N->Nodes.Count(); i++ )
-    N->Nodes[i]->Used1 = false;
+  for( int i=0; i < N.Nodes.Count(); i++ )
+    N.Nodes[i]->Used1 = false;
 
   for( int i=0; i < Nodes.Count(); i++ )  {
-    Nd = Nodes[i];
-    found = false;
-    for( int j=0; j < N->Nodes.Count(); j++ )  {
-      Nd1 = N->Nodes[j];
+    TConNode* Nd = Nodes[i];
+    bool found = false;
+    for( int j=0; j < N.Nodes.Count(); j++ )  {
+      TConNode* Nd1 = N.Nodes[j];
       if( Nd1->Used1 )
         continue;
       if( Nd->AtomType != Nd1->AtomType )
@@ -178,19 +169,19 @@ bool _fastcall TConNode::IsSimilar(TConNode *N)
 }
 
 //---------------------------------------------------------------------------
-_fastcall TNet::TNet()  {
+TNet::TNet()  {
 }
-void _fastcall TNet::Clear()  {
+void TNet::Clear()  {
   for( int i=0; i < FNodes.Count(); i++ )
     delete FNodes[i];
   FNodes.Clear();
 }
-_fastcall TNet::~TNet()  {
+TNet::~TNet()  {
   for( int i=0; i < FNodes.Count(); i++ )
     delete FNodes[i];
 }
 
-void _fastcall TNet::Analyse()
+void TNet::Analyse()
 {
 /*  if( FNodes.Count() )
   {
@@ -224,14 +215,12 @@ olxstr TNet::GetDebugInfo()  {
   }
   return T;
 }
-void _fastcall TNet::Assign(TLattice& latt)  {
+void TNet::Assign(TLattice& latt)  {
   Clear();
   for( int i=0; i < latt.AtomCount(); i++ )  {
     if( latt.GetAtom(i).GetAtomInfo() == iQPeakIndex )  continue;
     latt.GetAtom(i).SetTag(FNodes.Count());
-    TConNode *N = new TConNode;
-    FNodes.AddACopy(N);
-    N->AtomType = latt.GetAtom(i).GetAtomInfo().GetIndex();
+    FNodes.Add(new TConNode)->AtomType = latt.GetAtom(i).GetAtomInfo().GetIndex();
   }
   int ni=0;
   for( int i=0; i < latt.AtomCount(); i++ )  {
@@ -244,11 +233,11 @@ void _fastcall TNet::Assign(TLattice& latt)  {
     }
     ni++;
   }
-  TTypeList<TConNode*>::QuickSorter.SortSF(FNodes, NodesSort);
+  TPtrList<TConNode>::QuickSorter.SortSF(FNodes, NodesSort);
   Analyse();
 }
 
-bool _fastcall TNet::IsSubstructureA(TNet *N)
+bool TNet::IsSubstructureA(TNet *N)
 {
 /*  if( (N->Nodes.Count() < FNodes.Count()) )
     return false;
@@ -303,24 +292,22 @@ bool _fastcall TNet::IsSubstructureA(TNet *N)
   */
   return false;
 }
-bool _fastcall TNet::IsSubstructure(TConInfo *CI, TNet *N)
-{
+bool TNet::IsSubstructure(TConInfo *CI, TNet *N)  {
 // CI should be initialised before the function call
-  TConNode *Nd1, *Nd2;
+  TPtrList<TConNode>& n_nodes = N->Nodes();
   bool found_path, found_node, res = false;
   int PathsFound;
-  if( !FNodes.Count() )            return false;
-  if( FNodes.Count() > N->Nodes.Count() )    return false;
+  if( FNodes.IsEmpty() )                   return false;
+  if( FNodes.Count() > n_nodes.Count() )  return false;
   TConInfo *CI1 = new TConInfo;
-  TTypeList<TConNode*> *L, *L1;
-  for( int i = N->Nodes.Count()-1; i >= 0 ; i-- )  {
-    Nd1 = N->Nodes[i];
+  for( int i = n_nodes.Count()-1; i >= 0 ; i-- )  {
+    TConNode* Nd1 = n_nodes[i];
     if( Nd1->Nodes.Count() < CI->Center->Nodes.Count() )    // nodes supposed to be sorted in ascending order
       break;
     if( CI->Center->AtomType != Nd1->AtomType )
       continue;
     Nd1->Analyse(N, CI1);
-    if( !CI->Center->IsSimilar(Nd1) )    continue;
+    if( !CI->Center->IsSimilar(*Nd1) )    continue;
     CI1->Center = Nd1;
     if( CI->GraphRadius > CI1->GraphRadius )  continue;  // !shorter! graph
     if( CI->Rings > CI1->Rings )        continue;  // !shorter! graph
@@ -335,18 +322,18 @@ bool _fastcall TNet::IsSubstructure(TConInfo *CI, TNet *N)
     if( CI->Paths.Count() > CI1->Paths.Count() )  continue;  // !shorter! graph
     PathsFound = 0;
     for( int j = 0; j < CI->Paths.Count(); j++ )  {
-      L = CI->Paths[j];
+      const TPtrList<TConNode>& L = CI->Paths[j];
       for( int k = 0; k < CI1->Paths.Count(); k++ )  {
-        L1 = CI1->Paths[k];
-        if( L1->Count() < L->Count() )  continue;
+        const TPtrList<TConNode>& L1 = CI1->Paths[k];
+        if( L1.Count() < L.Count() )  continue;
         found_path = true;
-        for( int l=0; l < L->Count(); l++ )  {
+        for( int l=0; l < L.Count(); l++ )  {
 /*          if( Nd1->AtomType != Nd2->AtomType )
           {
             found_path = false;
             break;
           }*/
-          if( !L->Item(l)->IsSimilar( L1->Item(l) ) )  {
+          if( !L[l]->IsSimilar( *L1[l] ) )  {
             found_path = false;
             break;
           }
@@ -367,7 +354,7 @@ exit:
   return res;
 }
 
-void _fastcall TNet::operator >> (IDataOutputStream& S)  {
+void TNet::operator >> (IDataOutputStream& S)  {
   TConNode *N;
   for( int i = 0; i < FNodes.Count(); i++ )
     FNodes[i]->Id = i;
@@ -385,7 +372,7 @@ void _fastcall TNet::operator >> (IDataOutputStream& S)  {
   }
 }
 
-void _fastcall TNet::operator << (IDataInputStream& S)  {
+void TNet::operator << (IDataInputStream& S)  {
   TConNode *N, *N1;
   int32_t count;
   short Id;
@@ -396,7 +383,7 @@ void _fastcall TNet::operator << (IDataInputStream& S)  {
     N = new TConNode;
     S >> N->Id;
     S.Read(&N->AtomType, 1);
-    FNodes.AddACopy( N );
+    FNodes.Add( N );
 //    Mr += N->AtomType;
   }
   for( int i = 0; i < FNodes.Count(); i++ )  {
@@ -413,15 +400,15 @@ void _fastcall TNet::operator << (IDataInputStream& S)  {
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
-_fastcall TConFile::TConFile()  {
+TConFile::TConFile()  {
   FFileAge = 0;
   FNet = new TNet;
   FParent = NULL;
 }
-_fastcall TConFile::~TConFile()  {
+TConFile::~TConFile()  {
   delete FNet;
 }
-void _fastcall TConFile::operator >> (IDataOutputStream& S)  {
+void TConFile::operator >> (IDataOutputStream& S)  {
   S << FFileAge;
   S << FTitle;
   S << FFileName;
@@ -429,7 +416,7 @@ void _fastcall TConFile::operator >> (IDataOutputStream& S)  {
   S << FInstructions;
   *FNet >> S;
 }
-void _fastcall TConFile::operator << (IDataInputStream& S)  {
+void TConFile::operator << (IDataInputStream& S)  {
   S >> FFileAge;
   S >> FTitle;
   S >> FFileName;
@@ -440,32 +427,32 @@ void _fastcall TConFile::operator << (IDataInputStream& S)  {
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
-_fastcall TConZip::TConZip()  {
+TConZip::TConZip()  {
   FIndex = new TConIndex;
   FIndex->Parent = this;
   FFileAge = 0;
 }
-_fastcall TConZip::~TConZip()  {
+TConZip::~TConZip()  {
   delete FIndex;
 }
-void _fastcall TConZip::operator >> (IDataOutputStream& S)  {
+void TConZip::operator >> (IDataOutputStream& S)  {
   S << FFileName;
   S << FFileAge;
   *FIndex >> S;
 }
-void _fastcall TConZip::operator << (IDataInputStream& S)  {
+void TConZip::operator << (IDataInputStream& S)  {
   S >> FFileName;
   S >> FFileAge;
   *FIndex << S;
   for( int i=0; i < FIndex->ConFiles.Count(); i++ )
     FIndex->ConFiles[i]->Parent = this;
 }
-void _fastcall TConZip::Clear()  {
+void TConZip::Clear()  {
   FIndex->Clear();
   FFileName = "";
   FFileAge = 0;
 }
-void _fastcall TConZip::Assign(TZipFile *ZF, TXFile& xf)  {
+void TConZip::Assign(TZipFile *ZF, TXFile& xf)  {
   olxstr FN;
   bool res;
   TConFile *CF;
@@ -530,7 +517,7 @@ void _fastcall TConZip::Assign(TZipFile *ZF, TXFile& xf)  {
     FIndex->ConFiles.AddACopy(CF);
   }
 }
-bool _fastcall TConZip::Update(TZipFile *ZF, TXFile& xf)  {
+bool TConZip::Update(TZipFile *ZF, TXFile& xf)  {
   Assign(ZF, xf);
   return true;
 }
@@ -538,12 +525,12 @@ bool _fastcall TConZip::Update(TZipFile *ZF, TXFile& xf)  {
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
-__fastcall TConIndex::TConIndex()  {
+TConIndex::TConIndex()  {
 }
-__fastcall TConIndex::~TConIndex() {
+TConIndex::~TConIndex() {
   Clear();
 }
-void _fastcall TConIndex::Clear()
+void TConIndex::Clear()
 {
   for( int i=0; i < FConFiles.Count(); i++ )
     delete FConFiles[i];
@@ -553,7 +540,7 @@ void _fastcall TConIndex::Clear()
   FZipFiles.Clear();
 }
 
-void _fastcall TConIndex::Update(const TStrList& IndexFiles, TXFile& xf)  {
+void TConIndex::Update(const TStrList& IndexFiles, TXFile& xf)  {
   TCifIndex *Index = new TCifIndex();
   TConFile *ConF;
   TCifFile *CifF;
@@ -695,27 +682,26 @@ exit:
   delete Index;
   delete dlgProg;
 }
-void _fastcall TConIndex::SaveToFile(const olxstr& FN)  {
+void TConIndex::SaveToFile(const olxstr& FN)  {
   TEFile f(FN, "wb+");
   //S->Size = S->Size + GetCount()*(sizeof(TConFile)+800);
   *this >> f;
 }
-void _fastcall TConIndex::LoadFromFile(const olxstr& FN)  {
+void TConIndex::LoadFromFile(const olxstr& FN)  {
   TEFile inf( FN, "rb");
   if( inf.GetSize() == 0 )  return;
   *this << inf;
 }
-void _fastcall TConIndex::Search(TConInfo *CI, TNet *N, TTypeList<TConFile*>& Results, bool Silent)
-{
+void TConIndex::Search(TConInfo *CI, TNet *N, TPtrList<TConFile>& Results, bool Silent) {
   TConFile *CF;
   TConZip *CZ;
   bool Cancel = false;
   TdlgProgress *dlgProg;
-  if( !N->Nodes.Count() )  return;
+  if( N->Nodes().IsEmpty() )  return;
   bool DelCI = false;
   if( CI == NULL )  {
     CI = new TConInfo;
-    CI->Center = (TConNode*)N->Nodes[N->Nodes.Count()-1];
+    CI->Center = N->Nodes().Last();
     CI->Center->Analyse(N, CI);
     CI->Center->FindPaths(NULL, CI, NULL);
     DelCI = true;
@@ -741,7 +727,7 @@ void _fastcall TConIndex::Search(TConInfo *CI, TNet *N, TTypeList<TConFile*>& Re
         goto exit;
     }
     if( N->IsSubstructure(CI, CF->Net) )
-      Results.AddACopy(CF);
+      Results.Add(CF);
   }
   if( !Silent )
     dlgProg->Caption = "Seacrhing ZIP Files...";
@@ -765,7 +751,7 @@ exit:
 //  Debug->SaveToFile("d:\\debug.dat");
 //  delete Debug;
 }
-TConFile * _fastcall TConIndex::GetRecord(const olxstr& FileName)  {
+TConFile * TConIndex::GetRecord(const olxstr& FileName)  {
   TConFile *CF;
   TConZip *CZ;
   for( int i=0; i < FConFiles.Count(); i++ )
@@ -779,7 +765,7 @@ TConFile * _fastcall TConIndex::GetRecord(const olxstr& FileName)  {
   }
   return NULL;
 }
-void _fastcall TConIndex::Search(const short What, const olxstr& Text, TTypeList<TConFile*>& Results, bool Silent)  {
+void TConIndex::Search(const short What, const olxstr& Text, TPtrList<TConFile>& Results, bool Silent)  {
   TConFile *CF;
   TConZip *CZ;
   bool Cancel = false;
@@ -803,11 +789,11 @@ void _fastcall TConIndex::Search(const short What, const olxstr& Text, TTypeList
         goto exit;
     }
     if( (What & ssTitle) != 0 &&  CF->Title.FirstIndexOfi(Text, 0) != -1 )
-        Results.AddACopy(CF);
+        Results.Add(CF);
     if( (What & ssSG) != 0 && !CF->SpaceGroup.Comparei(Text) )
-        Results.AddACopy(CF);
+        Results.Add(CF);
     if( (What & ssIns) != 0 && CF->Instructions.FirstIndexOfi(Text, 0) != -1 )
-        Results.AddACopy(CF);
+        Results.Add(CF);
   }
   if( !Silent )  dlgProg->Caption = "Seacrhing ZIP Files...";
   for( int i=0; i < FZipFiles.Count(); i++ )  {
@@ -826,7 +812,7 @@ void _fastcall TConIndex::Search(const short What, const olxstr& Text, TTypeList
 exit:
   if( !Silent )  delete dlgProg;
 }
-void _fastcall TConIndex::operator >> (IDataOutputStream& S)  {
+void TConIndex::operator >> (IDataOutputStream& S)  {
   S << FConFiles.Count();
   for( int i=0; i < FConFiles.Count(); i++)
     *FConFiles[i] >> S;
@@ -835,7 +821,7 @@ void _fastcall TConIndex::operator >> (IDataOutputStream& S)  {
   for( int i=0; i < FZipFiles.Count(); i++)
     *FZipFiles[i] >> S;
 }
-void _fastcall TConIndex::operator << (IDataInputStream& S)  {
+void TConIndex::operator << (IDataInputStream& S)  {
   int count;
   Clear();
   TConFile *CF;
@@ -866,4 +852,5 @@ int TConIndex::GetCount()  {
 //---------------------------------------------------------------------------
 
 #pragma package(smart_init)
+
 

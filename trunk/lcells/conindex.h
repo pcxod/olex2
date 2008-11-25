@@ -12,37 +12,36 @@ struct TConNode  {
   bool  Used, Used1;
   void *Data;
   uint8_t AtomType;
-  void __fastcall Analyse(class TNet *Parent, struct TConInfo *CI);
-  void _fastcall FillList(int lastindex, TTypeList<TConNode*>& L);
-  void _fastcall FindPaths(TConNode *Parent, TConInfo* CI, TTypeList<TConNode*>* Path);
-  bool _fastcall IsSimilar(TConNode *N);
-  void _fastcall SetUsed1True();
+  void Analyse(class TNet *Parent, struct TConInfo *CI);
+  void FillList(int lastindex, TPtrList<TConNode>& L);
+  void FindPaths(TConNode *Parent, TConInfo* CI, TPtrList<TConNode>* Path);
+  bool IsSimilar(const TConNode& N) const;
+  void SetUsed1True();
 };
 
 struct TConInfo  {
-  TTypeList< TTypeList<TConNode*>* > Paths;
+  TTypeList< TPtrList<TConNode> > Paths;
   int    GraphRadius;
   short  Rings;
   class  TConNode *Center;
-  _fastcall TConInfo();
-  _fastcall ~TConInfo();
-  void _fastcall Clear();
+  TConInfo();
+  ~TConInfo();
+  void Clear();
 };
 
 class TNet  {
-  TTypeList<TConNode*> FNodes;
-  void _fastcall Analyse();
-  void _fastcall Clear();
+  TPtrList<TConNode> FNodes;
+  void Analyse();
+  void Clear();
 public:
-  _fastcall TNet();
-  _fastcall ~TNet();
-  void _fastcall Assign(TLattice& latt);
-  bool _fastcall IsSubstructure(TConInfo *CI, TNet *N);
-  bool _fastcall IsSubstructureA(TNet *N);  // an old veriosn
-
-  __property TTypeList<TConNode*> Nodes     = {read = FNodes};
-  void _fastcall operator >> (IDataOutputStream &S);
-  void _fastcall operator << (IDataInputStream& S);
+  TNet();
+  ~TNet();
+  void Assign(TLattice& latt);
+  bool IsSubstructure(TConInfo *CI, TNet *N);
+  bool IsSubstructureA(TNet *N);  // an old veriosn
+  TPtrList<TConNode>& Nodes() {  return FNodes;  }
+  void operator >> (IDataOutputStream &S);
+  void operator << (IDataInputStream& S);
   olxstr GetDebugInfo();
 };
 
@@ -53,8 +52,8 @@ class TConFile  {
   TNet  *FNet;
   class TConZip *FParent;
 public:
-  _fastcall TConFile();
-  _fastcall ~TConFile();
+  TConFile();
+  ~TConFile();
   __property TNet *Net      = {read = FNet};
   __property olxstr Title    =  {read = FTitle, write = FTitle};
   __property olxstr FileName  =  {read = FFileName, write = FFileName};
@@ -62,8 +61,8 @@ public:
   __property olxstr Instructions  =  {read = FInstructions, write = FInstructions};
   __property int FileAge      =   {read = FFileAge, write = FFileAge};
   __property TConZip*  Parent    = {read = FParent, write = FParent};
-  void _fastcall operator >> (IDataOutputStream& S);
-  void _fastcall operator << (IDataInputStream& S);
+  void operator >> (IDataOutputStream& S);
+  void operator << (IDataInputStream& S);
 };
 
 class TConZip  {
@@ -71,13 +70,13 @@ class TConZip  {
   int FFileAge;
   olxstr FFileName;
 public:
-  _fastcall TConZip();
-  _fastcall ~TConZip();
-  bool _fastcall Update(class TZipFile *ZF, TXFile& xf);
-  void _fastcall Assign(class TZipFile *ZF, TXFile& xf);
-  void _fastcall Clear();
-  void _fastcall operator >> (IDataOutputStream& S);
-  void _fastcall operator << (IDataInputStream& S);
+  TConZip();
+  ~TConZip();
+  bool Update(class TZipFile *ZF, TXFile& xf);
+  void Assign(class TZipFile *ZF, TXFile& xf);
+  void Clear();
+  void operator >> (IDataOutputStream& S);
+  void operator << (IDataInputStream& S);
 
   __property TConIndex *Index = {read = FIndex};
   __property int FileAge = {read = FFileAge};
@@ -93,21 +92,21 @@ class TConIndex  {
   TTypeList<TConZip*> FZipFiles;
   TConZip *FParent;
 public:
-  __fastcall TConIndex();
-  __fastcall ~TConIndex();
+  TConIndex();
+  ~TConIndex();
   __property TTypeList<TConFile*> ConFiles  = {read = FConFiles};
   __property TTypeList<TConZip*> ZipFiles  = {read = FZipFiles};
   __property TConZip*  Parent    = {read = FParent, write = FParent};
 
-  void _fastcall Clear();
-  void _fastcall Update(const TStrList& IndexFiles, TXFile& xf);
-  void _fastcall SaveToFile(const olxstr& FN);
-  void _fastcall LoadFromFile(const olxstr& FN);
-  void _fastcall Search(TConInfo *CI, TNet *N, TTypeList<TConFile*>& Results, bool Silent=false);
-  void _fastcall Search(const short What, const olxstr& Text, TTypeList<TConFile*>& Results, bool Silent=false);
-  TConFile * _fastcall GetRecord(const olxstr& FileName);
-  void _fastcall operator >> (IDataOutputStream& S);
-  void _fastcall operator << (IDataInputStream& S);
+  void Clear();
+  void Update(const TStrList& IndexFiles, TXFile& xf);
+  void SaveToFile(const olxstr& FN);
+  void LoadFromFile(const olxstr& FN);
+  void Search(TConInfo *CI, TNet *N, TPtrList<TConFile>& Results, bool Silent=false);
+  void Search(const short What, const olxstr& Text, TPtrList<TConFile>& Results, bool Silent=false);
+  TConFile * GetRecord(const olxstr& FileName);
+  void operator >> (IDataOutputStream& S);
+  void operator << (IDataInputStream& S);
   int GetCount();
 };
 #endif
