@@ -27,7 +27,7 @@
     <PATHRC value=".;"/>
     <PATHASM value=".;"/>
     <LINKER value="TLib"/>
-    <USERDEFINES value="_DEBUG;"/>
+    <USERDEFINES value="_DEBUG;_NO_PYTHON"/>
     <SYSDEFINES value="NO_STRICT"/>
     <MAINSOURCE value="xlib.bpf"/>
     <INCLUDEPATH value="..\..\..\xlib\macro;&quot;C:\Program Files\Borland\CBuilder6\Projects&quot;;..\..\..\sdl;..\..\..\xlib;$(BCB)\include;$(BCB)\include\vcl;..\..\..\alglib;..\..\..\repository"/>
@@ -41,7 +41,7 @@
       -vi- -c -tW -tWM"/>
     <PFLAGS value="-N2build -N0build -$YD -$W -$O- -$A8 -v -JPHNE -M"/>
     <AFLAGS value="/mx /w2 /zi"/>
-    <LFLAGS value="/P512 /C"/>
+    <LFLAGS value="/P1024 /C"/>
     <OTHERFILES value=""/>
   </OPTIONS>
   <LINKER>
@@ -151,11 +151,12 @@ Count=1
 Item0=$(BCB)\source\vcl
 
 [HistoryLists\hlConditionals]
-Count=4
-Item0=_DEBUG;
-Item1=_DEBUG;_UNICODE;
-Item2=_DEBUG;_UNICODE
-Item3=_DEBUG
+Count=5
+Item0=_DEBUG;_NO_PYTHON
+Item1=_DEBUG;
+Item2=_DEBUG;_UNICODE;
+Item3=_DEBUG;_UNICODE
+Item4=_DEBUG
 
 [HistoryLists\hlIntOutputDir]
 Count=1
@@ -167,13 +168,14 @@ Item0=lib\
 Item1=lib
 
 [HistoryLists\hlTlibPageSize]
-Count=6
-Item0=0x0200
-Item1=0x0100
-Item2=0x0080
-Item3=0x0040
-Item4=0x0020
-Item5=0x0010
+Count=7
+Item0=0x0400
+Item1=0x0200
+Item2=0x0100
+Item3=0x0080
+Item4=0x0040
+Item5=0x0020
+Item6=0x0010
 
 [Debugging]
 DebugSourceDirs=$(BCB)\source\vcl
@@ -194,5 +196,10 @@ RemoteDebug=0
 ShowInfoMsgs=0
 LinkDebugVcl=0
 LinkCGLIB=0
+
+[Language]
+ActiveLang=
+ProjectLang=
+RootDir=
   </IDEOPTIONS>
 </PROJECT>

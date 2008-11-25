@@ -51,7 +51,7 @@ __fastcall TOrganiser::~TOrganiser()  {
 }
 //..............................................................................
 void _fastcall TOrganiser::CalcZoom()  {
-  if( XFile->GetLastLoader() == NULL )  return;
+  if( XFile->LastLoader() == NULL )  return;
 
   int AC = XFile->GetLattice().AtomCount();
   if( AC == 0  )  {
@@ -115,7 +115,7 @@ void _fastcall TOrganiser::Update()  {
 }
 //..............................................................................
 void _fastcall TOrganiser::Draw()  {
-  if( XFile->GetLastLoader() == NULL )  return;
+  if( XFile->LastLoader() == NULL )  return;
 
   TSAtom *A;
   TSBond *B;

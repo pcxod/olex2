@@ -438,7 +438,7 @@ public:
            data[0][2]*(data[1][0]*data[2][1] - data[1][1]*data[2][0]);
   }
   inline TMatrix33<T> Inverse()  const {
-	return TMatrix33( data[2][2]*data[1][1] - data[2][1]*data[1][2],
+	return TMatrix33<T>( data[2][2]*data[1][1] - data[2][1]*data[1][2],
 			          data[2][1]*data[0][2] - data[2][2]*data[0][1],
 			          data[1][2]*data[0][1] - data[1][1]*data[0][2],
 			          data[2][0]*data[1][2] - data[2][2]*data[1][0],
