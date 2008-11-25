@@ -2952,8 +2952,9 @@ void TMainForm::macSump(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 }
 //..............................................................................
 void TMainForm::macPart(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  const static int NoPart = -10345;
   TIns& Ins = FXApp->XFile().GetLastLoader<TIns>();
-  int part = -1, partCount = Options.FindValue("p", "1").ToInt();
+  int part = NoPart, partCount = Options.FindValue("p", "1").ToInt();
   XLibMacros::ParseNumbers<int>(Cmds, 1, &part);
   bool linkOccu = Options.Contains("lo");
 
@@ -2978,7 +2979,8 @@ void TMainForm::macPart(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     }
   }
 
-  if( part == -1 ) part = FXApp->XFile().GetLattice().GetAsymmUnit().GetMaxPart();
+  if( part == NoPart ) 
+    part = FXApp->XFile().GetLattice().GetAsymmUnit().GetMaxPart();
 
   for( int i=0; i < partCount; i++ )  {
     for( int j=(Atoms.Count()/partCount)*i; j < (Atoms.Count()/partCount)*(i+1); j++ )  {
