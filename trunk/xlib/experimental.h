@@ -26,6 +26,22 @@ public:
     CrystalSize = vec3d(x,y,z);
   }
 };
+/* the idea here:
+ atoms have the FVarRelation array
+*/
+class FVar : public AReferencible  {
+  double Value;
+};
+
+const short 
+  fvarVal = 1,
+  fvarOneMinuVal = 2;    
+
+struct FVarRelation {
+  short Relation;
+  FVar* Variable;
+};
+
 
 EndXlibNamespace()
 #endif

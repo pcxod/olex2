@@ -504,7 +504,7 @@ void _fastcall TConZip::Assign(TZipFile *ZF, TXFile& xf)  {
     CF = new TConFile;
     CF->Parent = this;
     CF->Net->Assign( xf.GetLattice() );
-    CF->Title = xf.GetLastLoader()->GetTitle();
+    CF->Title = xf.LastLoader()->GetTitle();
     CF->FileName = FN;
     CF->FileAge = 0; // CifF->FileAge;
     TSpaceGroup* sg = TSymmLib::GetInstance()->FindSG( xf.GetAsymmUnit() );
@@ -512,8 +512,8 @@ void _fastcall TConZip::Assign(TZipFile *ZF, TXFile& xf)  {
       CF->SpaceGroup = sg->GetName();
     else
       CF->SpaceGroup = "U";
-    if(  EsdlInstanceOf( *xf.GetLastLoader(), TIns ) )  {
-      TIns* ins = (TIns*)xf.GetLastLoader();
+    if(  EsdlInstanceOf( *xf.LastLoader(), TIns ) )  {
+      TIns* ins = &xf.GetLastLoader<TIns>();
       for( int j=0; j < ins->InsCount(); j++ )  {
 
         if( !ins->InsName(j).Length() ||
@@ -603,7 +603,7 @@ void _fastcall TConIndex::Update(const TStrList& IndexFiles, TXFile& xf)  {
 //      dlgMain->AddMessage("Done");
       ConF = new TConFile;
       ConF->Net->Assign( xf.GetLattice() );
-      ConF->Title = xf.GetLastLoader()->GetTitle();
+      ConF->Title = xf.LastLoader()->GetTitle();
       ConF->FileName = CifF->Name;
       ConF->FileAge = CifF->FileAge;
 
@@ -613,8 +613,8 @@ void _fastcall TConIndex::Update(const TStrList& IndexFiles, TXFile& xf)  {
       else
         ConF->SpaceGroup = "U";
 
-      if(  EsdlInstanceOf( *xf.GetLastLoader(), TIns ) )  {
-        TIns* ins = (TIns*)xf.GetLastLoader();
+      if(  EsdlInstanceOf( *xf.LastLoader(), TIns ) )  {
+        TIns* ins = &xf.GetLastLoader<TIns>();
         for( int j=0; j < ins->InsCount(); j++ )  {
 
           if( !ins->InsName(j).Length() ||

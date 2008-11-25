@@ -963,7 +963,7 @@ void TdlgMain::LoadCurrentFile()  {
       //Organiser->XFile->GetLattice().GrowAtoms(toGrow, false, NULL);
       //Organiser->XFile->GetLattice().GenerateWholeContent(NULL);
       FExt = "LCELLS: ";
-      FExt << Organiser->XFile->GetLastLoader()->GetTitle();
+      FExt << Organiser->XFile->LastLoader()->GetTitle();
       dlgMolDraw->Caption = FExt.c_str();
       Organiser->Update(); // do zoom and mpln calculations
       if( !dlgMolDraw->Visible )

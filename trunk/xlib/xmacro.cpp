@@ -245,7 +245,7 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options, TMacroErr
         double c_a = v1.CAngle(v2);
         if( c_a < min_ang )  {  // > 150 degrees
           if( sa.GetAtomInfo() == iCarbonIndex )  {
-            olxstr rtab_d("RTAB ", 80);
+            olxstr rtab_d((const char*)"RTAB ", 80);
             rtab_d << sa.GetAtomInfo().GetSymbol() << ca.GetAtomInfo().GetSymbol() << // codename
               ' ' <<sa.GetLabel() << ' ' << ca.GetLabel();
             const smatd& mt = all[j].GetB();
@@ -257,7 +257,7 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options, TMacroErr
             ins.AddIns(rtab_d);
             TBasicApp::GetLog() << rtab_d << " d=" << olxstr::FormatFloat(3, d) << '\n';
 
-            olxstr rtab_a("RTAB ", 80);
+            olxstr rtab_a((const char*)"RTAB ", 80);
             rtab_a << sa.GetAtomInfo().GetSymbol() << ca.GetAtomInfo().GetSymbol() << // codename
               ' ' << sa.GetLabel() << ' ' << sa.Node(h_indexes[k]).GetLabel() << ' ' << ca.GetLabel();
             if( !(mt.t.IsNull() && mt.r.IsI()) )  {
@@ -269,7 +269,7 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options, TMacroErr
             TBasicApp::GetLog() << rtab_a << " a=" << olxstr::FormatFloat(3, acos(c_a)*180.0/M_PI) << '\n';
           }
           else  {
-            olxstr htab("HTAB ", 80);
+            olxstr htab((const char*)"HTAB ", 80);
             htab << sa.GetLabel() << ' ' << ca.GetLabel();
             const smatd& mt = all[j].GetB();
             if( !(mt.t.IsNull() && mt.r.IsI()) )  {
@@ -1327,7 +1327,8 @@ void XLibMacros::funIns(const TStrObjList& Params, TMacroError &E)  {
     return;
   }
   if( Params[0].Comparei("ls") == 0 )  {
-    E.SetRetVal( I.GetLSV().Count() == 0 ? NAString : olxstr(I.GetIterations()) );
+    olxstr rv = I.GetLSV().Count() == 0 ? NAString : olxstr(I.GetIterations()) ;
+    E.SetRetVal( rv );
     return;
   }
   if( Params[0].Comparei("plan") == 0)  {
@@ -1339,11 +1340,13 @@ void XLibMacros::funIns(const TStrObjList& Params, TMacroError &E)  {
     return;
   }
   if( Params[0].Comparei("qnum") == 0)  {
-    E.SetRetVal( I.GetPlanV().Count() == 0 ? NAString : olxstr(I.GetPlan()) );
+  olxstr rv = I.GetPlanV().Count() == 0 ? NAString : olxstr(I.GetPlan());
+    E.SetRetVal( rv );
     return;
   }
   if( Params[0].Comparei("R1") == 0)  {
-    E.SetRetVal( I.GetR1() < 0 ? NAString : olxstr(I.GetR1()) );
+    olxstr rv = I.GetR1() < 0 ? NAString : olxstr(I.GetR1());
+    E.SetRetVal( rv );
     return;
   }
   if( !I.InsExists(Params[0]) )  {
