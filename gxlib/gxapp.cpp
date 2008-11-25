@@ -970,11 +970,33 @@ int TGXApp::InvertFragmentsList(const TNetPList& SF, TNetPList& Result)  {
 //..............................................................................
 void TGXApp::AllVisible(bool V)  {
   OnFragmentVisible->Enter(dynamic_cast<TBasicApp*>(this), NULL);
-  for( int i=0; i < XAtoms.Count(); i++ )
-    XAtoms[i].Visible(V);
+  for( int i=0; i < XAtoms.Count(); i++ )  {
+    TXAtom& a = XAtoms[i];
+    if( a.Atom().GetAtomInfo() == iQPeakIndex )
+      a.Visible(FQPeaksVisible);
+    else if( a.Atom().GetAtomInfo() == iHydrogenIndex )
+      a.Visible(FHydrogensVisible);
+    else
+      a.Visible(V);
+  }
 
-  for( int i=0; i < XBonds.Count(); i++ )
-    XBonds[i].Visible(V);
+  for( int i=0; i < XBonds.Count(); i++ )  {
+    TXBond& b = XBonds[i];
+    if( (b.Bond().A().GetAtomInfo() == iQPeakIndex) ||
+        (b.Bond().B().GetAtomInfo() == iQPeakIndex)  )
+      b.Visible(FQPeakBondsVisible);
+    else if( XBonds[i].Bond().GetType() == sotHBond )
+      b.Visible(FHBondsVisible);
+    else if( ((b.Bond().A().GetAtomInfo() == iHydrogenIndex) ||
+              (b.Bond().B().GetAtomInfo() == iHydrogenIndex)) &&
+             ((b.Bond().A().GetAtomInfo() != iQPeakIndex) &&
+              (b.Bond().B().GetAtomInfo() != iQPeakIndex)) )
+    {
+      b.Visible(FHydrogensVisible);
+    }
+    else
+      b.Visible(V);
+  }
 
   OnFragmentVisible->Exit(dynamic_cast<TBasicApp*>(this), NULL);
   Draw();
@@ -2308,6 +2330,7 @@ void TGXApp::ClearGroups()  {
       delete (IEObject*)lG->Item(j);
     delete (bool*)lG->Item( lG->Count()-2 );
     delete (TGlMaterial*)lG->Item( lG->Count()-1 );
+    delete lG;
   }
   FOldGroups.Clear();
 }
@@ -2391,8 +2414,7 @@ void TGXApp::StoreVisibility()  {
     if( XPlanes[i].Visible() )
       FVisibility.SetTrue(XAtoms.Count() + XBonds.Count() + i);
 }
-void TGXApp::RestoreVisibility()
-{
+void TGXApp::RestoreVisibility()  {
   //atoms
   for( int i=0; i < XAtoms.Count(); i++ )
     XAtoms[i].Visible( FVisibility.Get(i) );
@@ -2427,12 +2449,12 @@ void TGXApp::FinishDrawBitmap()  {
   GetRender().Scene()->RestoreFontScale();
   CreateObjects( false, false );
   for( int i=0; i < XLabels.Count(); i++ )  XLabels[i].Create();
-  // restore visibility && clean up the memory
-  RestoreVisibility();
-  FVisibility.Clear();
   // recreate groups && clean up the memory
   RestoreGroups();
   ClearGroups();
+  // restore visibility && clean up the memory
+  RestoreVisibility();
+  FVisibility.Clear();
   //CenterView();
 }
 //..............................................................................
