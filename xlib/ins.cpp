@@ -255,8 +255,6 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx,
   }
   else if( Toks[0].Comparei("SYMM") == 0 && (Toks.Count() > 1))
     cx.Symm.Add( Toks.Text(EmptyString, 1) );
-  else if( Toks[0].Comparei("SIZE") == 0 && (Toks.Count() == 4))
-    cx.rm.expl.SetCrystalSize(Toks[1].ToDouble(), Toks[2].ToDouble(), Toks[3].ToDouble() );
   else if( Toks[0].Comparei("PART") == 0 && (Toks.Count() > 1) )  {
     cx.Part = (short)Toks[1].ToInt();
     if( cx.Part == 0 )  cx.PartOccu = 0;
@@ -640,12 +638,12 @@ void TIns::SaveToRefine(const olxstr& FileName, const olxstr& sMethod, const olx
   UnitIndex = SL.Count();  SL.Add(EmptyString);
 
   _SaveSizeTemp(SL);
-  _SaveHklSrc(SL);
+  _SaveHklInfo(SL);
   _SaveFVar(SL);
 
   SL.AddList(mtoks);
   SL.Add(EmptyString);
-  SL.Add("HKLF ") << RefMod.GetHKLF();
+  SL.Add("HKLF ") << RefMod.GetHKLFStr();
   SL.String(UnitIndex) = olxstr("UNIT ") << Unit;
   _SaveSfac( SL, SfacIndex );
   SL.Add("END");
@@ -808,7 +806,7 @@ void TIns::SaveToStrings(TStrList& SL)  {
     }
   }
   if( afix != 0 )  SL.Add("AFIX 0");
-  SL.Add("HKLF ") << RefMod.GetHKLF();
+  SL.Add("HKLF ") << RefMod.GetHKLFStr();
   SL.String(UnitIndex) = (olxstr("UNIT ") << Unit);
 //  SL.String(SfacIndex) = (olxstr("SFAC ") += FSfac);
   _SaveSfac(SL, SfacIndex);
@@ -1068,7 +1066,7 @@ void TIns::SavePattSolution(const olxstr& FileName, const TTypeList<TPattAtom>& 
     HypernateIns(Ins[i]+' ', Tmp, SL);
   }
 
-  _SaveHklSrc(SL);
+  _SaveHklInfo(SL);
 
   Tmp = "WGHT ";
   for( int i=0; i < RefMod.used_weight.Count(); i++ )  {
@@ -1093,7 +1091,7 @@ void TIns::SavePattSolution(const olxstr& FileName, const TTypeList<TPattAtom>& 
     Tmp << olxstr::FormatFloat(-5, V) << ' ';
     SL.Add(Tmp);
   }
-  SL.Add("HKLF ") << GetRM().GetHKLF();
+  SL.Add("HKLF ") << GetRM().GetHKLFStr();
   SL.Add(EmptyString);
 #ifdef _UNICODE
   TCStrList(SL).SaveToFile(FileName);
@@ -1330,7 +1328,18 @@ void TIns::_SaveRefMethod(TStrList& SL)  {
   }
 }
 //..............................................................................
-void TIns::_SaveHklSrc(TStrList& SL)  {
+void TIns::_SaveHklInfo(TStrList& SL)  {
+  SL.Add("MERG ") << GetRM().GetMERG();
+  if( !GetRM().GetBASF().IsEmpty() )
+    SL.Add("BASF ") << GetRM().GetBASFStr();
+  if( GetRM().HasOMIT() )
+    SL.Add("OMIT ") << GetRM().GetOMITStr();
+  if( GetRM().HasTWIN() )
+    SL.Add("TWIN ") << GetRM().GetTWINStr();
+  for( int i=0; i < GetRM().OmittedCount(); i++ )  {
+    const vec3i& r = GetRM().GetOmitted(i);
+    SL.Add("OMIT ") << r[0] << ' ' << r[1] << ' ' << r[2];
+  }
   if( !GetRM().GetHKLSource().IsEmpty() )  {  // update html source string
     olxstr Tmp( GetRM().GetHKLSource() );
     Tmp.Replace(' ', "%20");
@@ -1554,7 +1563,7 @@ void TIns::SaveHeader(TStrList& SL, int* SfacIndex, int* UnitIndex)  {
   SL << Skipped;
 //  for( int i=0; i < Skipepd.Count(); i++ )
 
-  _SaveHklSrc(SL);
+  _SaveHklInfo(SL);
 
   olxstr& wght = SL.Add("WGHT ");
   for( int i=0; i < RefMod.used_weight.Count(); i++ )  {

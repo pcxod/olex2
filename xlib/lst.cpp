@@ -340,19 +340,15 @@ bool TLst::ExportHTML( const short Param, TStrList &Html, bool TableDef)  {
   return false;
 }
 //..............................................................................
-void TLst::SynchroniseOmits(TIns* ins)  {
+void TLst::SynchroniseOmits(RefinementModel& rm)  {
   for( int i=0; i < FDRefs.Count(); i++ )  
     FDRefs[i].Deleted = false;
-  for( int i=0; i < ins->InsCount(); i++ )  {
-    if( ins->InsName(i).Comparei("omit") == 0 )  {
-      const TInsList& ip = ins->InsParams(i);
-      if( ip.Count() != 3 )  continue;
-      vec3d hkl(ip[0].ToInt(), ip[1].ToInt(), ip[2].ToInt());
-      for( int j=0; j < FDRefs.Count(); j++ )  {
-        if( FDRefs[j].H == hkl[0] && FDRefs[j].K == hkl[1] && FDRefs[j].L == hkl[2] )  {
-          FDRefs[j].Deleted = true;
-          break;
-        }
+  for( int i=0; i < rm.OmittedCount(); i++ )  {
+    const vec3i& r = rm.GetOmitted(i);
+    for( int j=0; j < FDRefs.Count(); j++ )  {
+      if( FDRefs[j].H == r[0] && FDRefs[j].K == r[1] && FDRefs[j].L == r[2] )  {
+        FDRefs[j].Deleted = true;
+        break;
       }
     }
   }

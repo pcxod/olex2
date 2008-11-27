@@ -2113,18 +2113,16 @@ void TMainForm::macOmit(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   if( Cmds.Count() == 1 )  {
     if( Cmds[0].IsNumber() )  {
       double th = Cmds[0].ToDouble();
-      TStrList o(3);
       for( int i=0; i < Lst.DRefCount(); i++ )  {
         TLstRef& r = Lst.DRef(i);
         if( !r.Deleted && r.DF >= th )  {
-          o[0] = r.H;  o[1] = r.K;  o[2] = r.L;
-          IF.AddIns("OMIT", o, FXApp->XFile().GetRM(), false);
+          FXApp->XFile().GetRM().Omit( vec3i(r.H, r.K, r.L) );
         }
       }
     }
   }
   else 
-    IF.AddIns("OMIT", Cmds, FXApp->XFile().GetRM() );
+    FXApp->XFile().GetRM().AddOMIT(Cmds);
 
   BadReflectionsTable(false);
   executeMacro("html.updatehtml");
@@ -4057,7 +4055,7 @@ void TMainForm::macEditIns(TStrObjList &Cmds, const TParamList &Options, TMacroE
   TStrList SL;
   FXApp->XFile().UpdateAsymmUnit();  // synchronise au's
   Ins.SaveHeader(SL);
-  SL.Add("HKLF ") << Ins.GetRM().GetHKLF();
+  SL.Add("HKLF ") << Ins.GetRM().GetHKLFStr();
 
   TdlgEdit *dlg = new TdlgEdit(this, true);
   dlg->SetText( SL.Text('\n') );

@@ -469,6 +469,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\xlib\leq.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\xlib\lst.cpp"
 				>
 			</File>
@@ -688,6 +692,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\xlib\lattice.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\xlib\leq.h"
 				>
 			</File>
 			<File
