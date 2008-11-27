@@ -3875,9 +3875,7 @@ void TMainForm::macSplit(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   }
   for( int i=0; i < ProcessedAtoms.Count(); i++ )
     ProcessedAtoms[i]->AssignEllp(NULL);
-  FXApp->XFile().EndUpdate();
-  // copy new atoms to the XF AU
-  FXApp->XFile().UpdateAsymmUnit();
+  FXApp->XFile().GetLattice().SetAnis(ProcessedAtoms, false);
 }
 //..............................................................................
 void TMainForm::macShowP(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
