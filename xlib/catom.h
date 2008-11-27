@@ -193,7 +193,7 @@ public:
   DefPropP(TCAtom*, Atom)
   inline const smatd* GetMatrix() const {  return Matrix;  }
   DefPropC(olxstr, Name)
-  olxstr GetFullLabel() const;
+  olxstr GetFullLabel(class RefinementModel& rm) const;
 };
 //....................................................................................
 class TAfixGroup : public ACollectionItem {

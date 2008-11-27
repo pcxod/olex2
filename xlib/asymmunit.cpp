@@ -35,11 +35,8 @@ public:
 //----------------------------------------------------------------------------//
 // TAsymmetricUnit function bodies
 //----------------------------------------------------------------------------//
-TAsymmUnit::TAsymmUnit(TLattice *L, TAtomsInfo *AI) : 
-  rDfix(rltBonds), rAfix(rltBonds), rDsim(rltBonds), rVfix(rltAtoms), rPfix(rltGroup),
-    rRBnd(rltAtoms), rUsim(rltAtoms), rUiso(rltAtoms), rEADP(rltAtoms), MainResidue(*this, -1)
-  {
-  AtomsInfo = AI;
+TAsymmUnit::TAsymmUnit(TLattice *L) : MainResidue(*this, -1)  {
+  AtomsInfo = &TAtomsInfo::GetInstance();
   Lattice   = L;
   Latt = -1;
   Z = 1;
@@ -50,9 +47,6 @@ TAsymmUnit::TAsymmUnit(TLattice *L, TAtomsInfo *AI) :
 TAsymmUnit::~TAsymmUnit() {  Clear();  }
 //..............................................................................
 void  TAsymmUnit::Clear()  {
-  ClearRestraints();
-  AfixGroups.Clear();
-  rSAME.Clear();
   Matrices.Clear();
   for( int i=0; i < CAtoms.Count(); i++ )
     delete CAtoms[i];
@@ -74,20 +68,6 @@ void  TAsymmUnit::Clear()  {
   Latt = -1;
   Z = 1;
   ContainsEquivalents = false;
-}
-//..............................................................................
-void TAsymmUnit::ClearRestraints()  {
-  rDfix.Clear();
-  rAfix.Clear();
-  rDsim.Clear();
-  rVfix.Clear();
-  rPfix.Clear();
-  rRBnd.Clear();
-  rUsim.Clear();
-  rUiso.Clear();
-  rEADP.Clear();
-  ExyzGroups.Clear();
-  UsedSymm.Clear();
 }
 //..............................................................................
 void TAsymmUnit::Assign(const TAsymmUnit& C)  {
@@ -132,27 +112,6 @@ void TAsymmUnit::Assign(const TAsymmUnit& C)  {
   SetContainsEquivalents( C.DoesContainEquivalents() );
   MaxQPeak = C.GetMaxQPeak();
   MinQPeak = C.GetMinQPeak();
-  for( int i=0; i < C.SfacCount(); i++ )  {
-    if( C.GetSfacData(i).IsBuiltIn() )
-      SfacData.Add(C.GetSfacLabel(i), &C.GetSfacData(i) );
-    else
-      SfacData.Add(C.GetSfacLabel(i), new TLibScatterer(C.GetSfacData(i)) );
-  }
-  rDfix.Assign(*this, C.rDfix);
-  rAfix.Assign(*this, C.rAfix);
-  rDsim.Assign(*this, C.rDsim);
-  rVfix.Assign(*this, C.rVfix);
-  rPfix.Assign(*this, C.rPfix);
-  rRBnd.Assign(*this, C.rRBnd);
-  rUsim.Assign(*this, C.rUsim);
-  rUiso.Assign(*this, C.rUiso);
-  rEADP.Assign(*this, C.rEADP);
-  rSAME.Assign(*this, C.rSAME);
-  ExyzGroups.Assign(*this, C.ExyzGroups);
-  AfixGroups.Assign(*this, C.AfixGroups);
-
-  for( int i=0; i < C.UsedSymm.Count(); i++ )
-    UsedSymm.AddCCopy( C.UsedSymm[i] );
 }
 //..............................................................................
 void  TAsymmUnit::InitMatrices()  {
@@ -601,50 +560,6 @@ void TAsymmUnit::ChangeSpaceGroup(const TSpaceGroup& sg)  {
     Matrices.AddCCopy( sg.GetMatrix(i) );
 }
 //..............................................................................
-void TAsymmUnit::AddNewSfac(const olxstr& label,
-                        double a1, double a2, double a3, double a4,
-                        double b1, double b2, double b3, double b4,
-                        double c)  {
-  if( SfacData.IndexOfComparable(label) != -1 )
-    throw TInvalidArgumentException(__OlxSourceInfo, "dublicate scatterer");
-  SfacData.Add( label, new TLibScatterer(a1,a2,a3,a4,b1,b2,b3,b4,c) );
-}
-//..............................................................................
-const smatd& TAsymmUnit::AddUsedSymm(const smatd& matr)  {
-  int ind = UsedSymm.IndexOf(matr);
-  smatd* rv = NULL;
-  if( ind == -1 )  {
-    rv = &UsedSymm.Add( *(new smatd(matr)) );
-    rv->SetTag(1);
-  }
-  else  {
-    UsedSymm[ind].IncTag();
-    rv = &UsedSymm[ind];
-  }
-  return *rv;
-}
-//..............................................................................
-void TAsymmUnit::RemUsedSymm(const smatd& matr)  {
-  int ind = UsedSymm.IndexOf(matr);
-  if( ind == -1 )
-    throw TInvalidArgumentException(__OlxSourceInfo, "matrix is not in the list");
-  UsedSymm[ind].DecTag();
-  if( UsedSymm[ind].GetTag() == 0 )
-    UsedSymm.Delete(ind);
-}
-//..............................................................................
-double TAsymmUnit::FindRestrainedDistance(const TCAtom& a1, const TCAtom& a2)  {
-  for(int i=0; i < rDfix.Count(); i++ )  {
-    for( int j=0; j < rDfix[i].AtomCount(); j+=2 )  {
-      if( (rDfix[i].GetAtom(j).GetAtom() == &a1 && rDfix[i].GetAtom(j+1).GetAtom() == &a2) ||
-          (rDfix[i].GetAtom(j).GetAtom() == &a2 && rDfix[i].GetAtom(j+1).GetAtom() == &a1) )  {
-        return rDfix[i].GetValue();
-      }
-    }
-  }
-  return -1;
-}
-//..............................................................................
 void TAsymmUnit::OnCAtomCrdChange( TCAtom* ca, const smatd& matr )  {
   throw TNotImplementedException(__OlxSourceInfo);
 }
@@ -710,22 +625,6 @@ void TAsymmUnit::ToDataItem(TDataItem& item) const  {
       r[j].ToDataItem(ri->AddItem(atom_id++));
     }
   }
-  // save used equivalent positions
-  TDataItem& eqiv = item.AddItem("eqiv");
-  for( int i=0; i < UsedSymm.Count(); i++ )  
-    eqiv.AddItem(i, TSymmParser::MatrixToSymmEx(UsedSymm[i]));
-
-  AfixGroups.ToDataItem(item.AddItem("afix"));
-  ExyzGroups.ToDataItem(item.AddItem("exyz"));
-  rDfix.ToDataItem(item.AddItem("dfix"));
-  rAfix.ToDataItem(item.AddItem("dang"));
-  rDsim.ToDataItem(item.AddItem("sadi"));
-  rVfix.ToDataItem(item.AddItem("chiv"));
-  rPfix.ToDataItem(item.AddItem("flat"));
-  rRBnd.ToDataItem(item.AddItem("delu"));
-  rUsim.ToDataItem(item.AddItem("simu"));
-  rUiso.ToDataItem(item.AddItem("isor"));
-  rEADP.ToDataItem(item.AddItem("eadp"));
 }
 //..............................................................................
 void TAsymmUnit::FromDataItem(TDataItem& item)  {

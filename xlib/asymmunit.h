@@ -103,24 +103,9 @@ protected:
   TActionQList Actions;
   TPtrList<TResidue> Residues;
   TResidue MainResidue;
-  // in INS file is EQUV command
-  smatd_list UsedSymm;
-  TSRestraintList rDfix,  // restrained distances (DFIX)
-                  rAfix,  // restrained angles (DANG)
-                  rDsim,  // similar distances (SADI)
-                  rVfix,  // restrained atomic volume (CHIV)
-                  rPfix,  // planar groups (FLAT)
-                  rRBnd,  // rigid bond restraints (DELU)
-                  rUsim,  // similar Uij (SIMU)
-                  rUiso,  // Uij components approximate to isotropic behavior (ISOR)
-                  rEADP;  // equivalent adp, constraint
-                 
-  TSameGroupList  rSAME;
-  TAfixGroups AfixGroups;
-  TExyzGroups ExyzGroups;
 public:
 
-  TAsymmUnit(TLattice *L, TAtomsInfo *AI);
+  TAsymmUnit(TLattice *L);
   virtual ~TAsymmUnit();
 
   inline TLattice& GetLattice()       const {  return *Lattice;  }
@@ -209,22 +194,6 @@ public:
   TCAtom* FindCAtom(const olxstr &Label, TResidue* resi = NULL) const;
   //returns an atom by LoaderId
   TCAtom* FindCAtomByLoaderId(int li) const;
-  // searches for sfac data, first by atom label, then by
-  //TVectorD* FindSfacData(const TCAtom& atom) const;
-  void AddNewSfac(const olxstr& label,
-                  double a1, double a2, double a3, double a4,
-                  double b1, double b2, double b3, double b4,
-                  double c);
-  inline int SfacCount()  const  {  return SfacData.Count();  }
-  inline const olxstr& GetSfacLabel(size_t index) const  {
-    return SfacData.GetComparable(index);
-  }
-  inline TLibScatterer& GetSfacData(size_t index) const  {
-    return *SfacData.GetObject(index);
-  }
-  inline TLibScatterer* FindSfacData(const olxstr& label) const  {
-    return SfacData[label];
-  }
 
   void DelAtom( size_t index );
   /* deletes the atom in the list and assigns corresponding of the list to NULL
@@ -285,46 +254,11 @@ public:
   inline double GetMaxQPeak()    const {  return MaxQPeak;  }
   inline double GetMinQPeak()    const {  return MinQPeak;  }
 
-  const smatd& AddUsedSymm(const smatd& matr);
-  void RemUsedSymm(const smatd& matr);
-  inline int UsedSymmCount()     const {  return UsedSymm.Count();  }
-  inline const smatd& GetUsedSymm(size_t ind)  {  return UsedSymm[ind];  }
-  inline int UsedSymmIndex(const smatd& matr)  const {  return UsedSymm.IndexOf(matr);  }
-  inline void ClearUsedSymm()          {  UsedSymm.Clear();  }
-
-
   /*this is to be called by TLattice when compaq or other procedurs, changing
     coordinates of atoms are called. This is to handle restraints in a correct
     way
   */
   void OnCAtomCrdChange( TCAtom* ca, const smatd& matr );
-  // clears restraints and constraints
-  void ClearRestraints();
-  // DFIX equivalent
-  inline TSRestraintList& RestrainedDistances() {  return rDfix;  }
-  // if there is a restrained distance betweem the atoms - returns it or -1 otherwise
-  double FindRestrainedDistance(const TCAtom& a1, const TCAtom& a2);
-  // DANG equivalent
-  inline TSRestraintList& RestrainedAngles()    {  return rAfix;  }
-  // SADI equivalent
-  inline TSRestraintList& SimilarDistances()    {  return rDsim;  }
-  // CHIV equivalent
-  inline TSRestraintList& RestrainedVolumes()   {  return rVfix;  }
-  // FLAT equivalent
-  inline TSRestraintList& RestrainedPlanarity() {  return rPfix;  }
-  // DELU
-  inline TSRestraintList& RigidBonds()          {  return rRBnd;  }
-  // SIMU
-  inline TSRestraintList& SimilarU()            {  return rUsim;  }
-  // ISOR
-  inline TSRestraintList& RestranedUaAsUi()     {  return rUiso;  }
-  // EADP
-  inline TSRestraintList& EquivalentU()         {  return rEADP;  }
-  // SAME
-  inline TSameGroupList& SimilarFragments()     {  return rSAME;  }
-  // EXYZ
-  inline TExyzGroups& SharedSites()             {  return ExyzGroups;  }
-  inline TAfixGroups& GetAfixGroups()           {  return AfixGroups;  }
 
   // returns next available part istruction in atoms
   int GetMaxPart() const;

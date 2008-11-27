@@ -116,7 +116,7 @@ bool THklFile::LoadFromFile(const olxstr& FN, TIns* ins)  {
             Toks.Strtok(line, ' ');
             if( Toks.Count() != 8 )
               throw TFunctionFailedException(__OlxSourceInfo, "invalid CELL format");
-            ins->SetRadiation( Toks[1].ToDouble() );
+            ins->GetRM().expl.SetRadiation( Toks[1].ToDouble() );
             ins->GetAsymmUnit().Axes()[0] = Toks[2];
             ins->GetAsymmUnit().Axes()[1] = Toks[3];
             ins->GetAsymmUnit().Axes()[2] = Toks[4];
@@ -137,11 +137,11 @@ bool THklFile::LoadFromFile(const olxstr& FN, TIns* ins)  {
             ins->SetUnit( unit );
           }
           else if( line.StartFromi("TEMP") )
-            ins->AddIns(line);
+            ins->AddIns(line, ins->GetRM());
           else if( line.StartFromi("SIZE") )
-            ins->AddIns(line);
+            ins->AddIns(line, ins->GetRM());
           else if( line.StartFromi("REM") )
-            ins->AddIns(line);
+            ins->AddIns(line, ins->GetRM());
           else if( line.StartFromi("UNIT") )
             ins->SetUnit( line.SubStringFrom(5) );
         }

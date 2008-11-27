@@ -29,8 +29,6 @@
 #include "unitcell.h"
 #include "symmparser.h"
 
-#include "hkl.h"
-
 #include "efile.h"
 #include "ecast.h"
 
@@ -1253,6 +1251,7 @@ void TGXApp::FindXAtoms(const olxstr &Atoms, TXAtomPList& List, bool ClearSelect
   olxstr Tmp;
   Toks.Strtok(Atoms, ' ');
   TBasicAtomInfo *BAI;
+  TAtomsInfo& AtomsInfo = TAtomsInfo::GetInstance();
   for( int i = 0; i < Toks.Count(); i++ )  {
     Tmp = Toks[i];
     if( !Tmp.Comparei("sel") )  {
@@ -1289,7 +1288,7 @@ void TGXApp::FindXAtoms(const olxstr &Atoms, TXAtomPList& List, bool ClearSelect
     if( Tmp.CharAt(0) == '$' )  {
       Tmp = Tmp.SubStringFrom(1);
       if( !Tmp.IsEmpty() )  {
-        BAI = AtomsInfo()->FindAtomInfoBySymbol(Tmp);
+        BAI = AtomsInfo.FindAtomInfoBySymbol(Tmp);
         if( BAI == NULL )
           throw TInvalidArgumentException(__OlxSourceInfo, olxstr("atom type=") << Tmp);
         XAtomsByType(*BAI, List, FindHidden);
@@ -1616,6 +1615,7 @@ TXAtom* TGXApp::AddAtom(TXAtom* templ)  {
   vec3d center;
   if( templ != NULL )
     center = templ->Atom().CAtom().ccrd();
+  TAtomsInfo& AtomsInfo = TAtomsInfo::GetInstance();
   TSAtom *A = XFile().GetLattice().NewAtom( center );
   if( A != NULL )  {
     olxstr colName;
@@ -1624,7 +1624,7 @@ TXAtom* TGXApp::AddAtom(TXAtom* templ)  {
       A->CAtom().AtomInfo( &templ->Atom().GetAtomInfo() );
     }
     else  {
-      A->CAtom().AtomInfo( &AtomsInfo()->GetAtomInfo(6) );
+      A->CAtom().AtomInfo( &AtomsInfo.GetAtomInfo(6) );
     }
     TXAtom& XA = XAtoms.Add( new TXAtom(colName, *A, FGlRender) );
     XA.Create();
@@ -1939,7 +1939,7 @@ void TGXApp::FindCAtoms(const olxstr &Atoms, TCAtomPList& List, bool ClearSelect
   TStrList Toks(Atoms, ' ');
   olxstr Tmp;
   TBasicAtomInfo *BAI;
-  TCAtom *A;
+  TAtomsInfo& AtomsInfo = TAtomsInfo::GetInstance();
   for( int i = 0; i < Toks.Count(); i++ )  {
     Tmp = Toks[i];
     if( !Tmp.Comparei("sel") )  {
@@ -1949,7 +1949,7 @@ void TGXApp::FindCAtoms(const olxstr &Atoms, TCAtomPList& List, bool ClearSelect
     if( Tmp.CharAt(0) == '$' )  {
       Tmp = Tmp.SubStringFrom(1);
       if( Tmp.Length() != 0 )  {
-        BAI = AtomsInfo()->FindAtomInfoBySymbol(Tmp);
+        BAI = AtomsInfo.FindAtomInfoBySymbol(Tmp);
         if( BAI == NULL )
           throw TInvalidArgumentException(__OlxSourceInfo, olxstr("atom type=") << Tmp);
         CAtomsByType(*BAI, List);
@@ -1969,7 +1969,7 @@ void TGXApp::FindCAtoms(const olxstr &Atoms, TCAtomPList& List, bool ClearSelect
       CAtomsByMask(Tmp, mask, List);
       continue;
     }
-    A = XFile().GetAsymmUnit().FindCAtom(Tmp);
+    TCAtom* A = XFile().GetAsymmUnit().FindCAtom(Tmp);
     if( A != NULL )
       if( !A->IsDeleted() )  List.Add(A);
   }
@@ -2699,9 +2699,9 @@ void TGXApp::HklVisible(bool v)  {
     if( !FHklFile->RefCount() )  {
       if( !FXFile->HasLastLoader() )
       {  Log->Error("Cannot display HKL - file is not loaded");  return;  }
-      if( !TEFile::FileExists(FXFile->LastLoader()->GetHKLSource()) )
+      if( !TEFile::FileExists(FXFile->LastLoader()->GetRM().GetHKLSource()) )
       {  Log->Error("Cannot display HKL - could locate HKL file");  return;  }
-      if( !FHklFile->LoadFromFile(FXFile->LastLoader()->GetHKLSource()) )
+      if( !FHklFile->LoadFromFile(FXFile->LastLoader()->GetRM().GetHKLSource()) )
       {  Log->Error("Cannot display HKL - could load HKL file");  return;  }
     }
     CreateXRefs();

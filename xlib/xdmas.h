@@ -15,17 +15,15 @@
 BeginXlibNamespace()
 
 class TXDMas: public TBasicCFile  {
-  double Error, Radiation;
+  double Radiation;
 public:
-  TXDMas(TAtomsInfo *S) : TBasicCFile(S)  {  Error = 0; }
+  TXDMas() : Radiation(0.71) {  }
   virtual void SaveToStrings(TStrList& Strings)  {  throw TNotImplementedException(__OlxSourceInfo);  }
   virtual void LoadFromStrings(const TStrList& Strings);
   virtual bool Adopt(TXFile *XF)  {  throw TNotImplementedException(__OlxSourceInfo);  }
   virtual void DeleteAtom(TCAtom *CA)  {  return;  }
-  virtual IEObject* Replicate()  const {  return new TXDMas(AtomsInfo);  }
+  virtual IEObject* Replicate()  const {  return new TXDMas;  }
   DefPropP(double, Radiation)
-  DefPropP(double, Error)
-
 };
 
 EndXlibNamespace()

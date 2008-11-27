@@ -27,7 +27,7 @@ TXApp::TXApp(const olxstr &basedir, ASelectionOwner* selOwner) :
   catch( const TIOExceptionBase &exc )  {
     throw TFunctionFailedException(__OlxSourceInfo, exc);
   }
-  FXFile = new TXFile(FAtomsInfo);
+  FXFile = new TXFile;
 
   DefineState( psFileLoaded, "Loaded file is expected");
   DefineState( psCheckFileTypeIns, "INS file is expected");
@@ -48,7 +48,7 @@ TXApp::~TXApp()  {
 const olxstr& TXApp::LocateHklFile()  {
   if( !XFile().HasLastLoader() )  return EmptyString;
 
-  olxstr &HklFN = TEGC::New<olxstr>( XFile().LastLoader()->GetHKLSource() );
+  olxstr &HklFN = TEGC::New<olxstr>( XFile().GetRM().GetHKLSource() );
   if( TEFile::FileExists( HklFN ) )  return HklFN;
   HklFN = TEFile::ChangeFileExt(XFile().GetFileName(), "hkl");
   if( TEFile::FileExists( HklFN ) )  return HklFN;
@@ -397,7 +397,7 @@ bool TXApp::FindSAtoms(const olxstr& condition, TSAtomPList& res, bool ReturnAll
     }
     TAtomReference ar(toks.Text(' '), SelectionOwner);      
     int atomAGroup;
-    ar.Expand(XFile().GetAsymmUnit(), ag, EmptyString, atomAGroup);
+    ar.Expand(XFile().GetRM(), ag, EmptyString, atomAGroup);
   }
   else if( ag.IsEmpty() && ReturnAll ) {
     res.SetCapacity( XFile().GetLattice().AtomCount() );
@@ -479,7 +479,7 @@ void TXApp::ProcessRingAfix(TSAtomPList& ring, int afix, bool pivot_last)  {
   TBasicApp::GetLog() << (info << ". Chosen pivot atom is " << ring[pivot]->GetLabel() << '\n');
   if( ring[pivot]->CAtom().GetDependentAfixGroup() != NULL )
     ring[pivot]->CAtom().GetDependentAfixGroup()->Clear();
-  TAfixGroup& ag = FXFile->GetAsymmUnit().GetAfixGroups().New( &ring[pivot]->CAtom(), afix);
+  TAfixGroup& ag = FXFile->GetRM().AfixGroups.New( &ring[pivot]->CAtom(), afix);
   for( int i=0; i < ring.Count(); i++ )  {  
     if( i == pivot )  continue;  // do not want to delete just created!
     TCAtom& ca = ring[i]->CAtom();

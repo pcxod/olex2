@@ -7,7 +7,7 @@
 
 #include "symmlib.h"
 
-TCRSFile::TCRSFile() : TBasicCFile(NULL)  {
+TCRSFile::TCRSFile()  {
   Radiation = 0.71;
   SGInitialised = false;
 }
@@ -64,7 +64,7 @@ void TCRSFile::LoadFromStrings(const TStrList& Strings)  {
   olxstr Tmp, TmpUC, Cell, Zerr, Sg, fcId("FACE");
   TStrList toks;
   TStrPObjList<olxstr, olxstr*> params;
-  params.Add("TITL",  &FTitle);
+  params.Add("TITL",  &Title);
   params.Add("CELL",   &Cell);
   params.Add("ZERR",  &Zerr);
   params.Add("SFAC",    &Sfac);
@@ -144,12 +144,12 @@ bool TCRSFile::Adopt(TXFile* f)  {
   f->GetAsymmUnit().SummFormula(BasicAtoms, Sfac, Unit);
 
   if( f->HasLastLoader() )  {
-    FTitle = f->LastLoader()->GetTitle();
-    SetHKLSource( f->LastLoader()->GetHKLSource() );
+    Title = f->LastLoader()->GetTitle();
+    GetRM().SetHKLSource( f->LastLoader()->GetRM().GetHKLSource() );
   }
   else  {
-    FHKLSource = EmptyString;
-    FTitle = "?";
+    GetRM().SetHKLSource(EmptyString);
+    Title = "?";
   }
 
   return true;

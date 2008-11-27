@@ -185,6 +185,7 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       max_d = 2.9;
   }
   TIntList bais;
+  TAtomsInfo& AtomsInfo = TAtomsInfo::GetInstance();
   bais.Add(iNitrogenIndex);
   bais.Add(iOxygenIndex);
   bais.Add(iFluorineIndex);
@@ -195,7 +196,7 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   if( Options.Contains('t') )  {
     TStrList elm(Options.FindValue('t'), ',');
     for( int i=0; i < elm.Count(); i++ )  {
-      TBasicAtomInfo* bai = TAtomsInfo::GetInstance()->FindAtomInfoBySymbol(elm[i]);
+      TBasicAtomInfo* bai = AtomsInfo.FindAtomInfoBySymbol(elm[i]);
       if( bai == NULL )
         TBasicApp::GetLog() << (olxstr("Unknown element type: ") << elm[i] << '\n');
       else if( bais.IndexOf(bai->GetIndex()) == -1 )
@@ -203,6 +204,7 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     }
   }
   TAsymmUnit& au = TXApp::GetInstance().XFile().GetAsymmUnit();
+  RefinementModel& rm = TXApp::GetInstance().XFile().GetRM();
   TUnitCell& uc = TXApp::GetInstance().XFile().GetUnitCell();
   TLattice& lat = TXApp::GetInstance().XFile().GetLattice();
   TIns& ins = TXApp::GetInstance().XFile().GetLastLoader<TIns>();
@@ -250,22 +252,22 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options, TMacroErr
               ' ' <<sa.GetLabel() << ' ' << ca.GetLabel();
             const smatd& mt = all[j].GetB();
             if( !(mt.t.IsNull() && mt.r.IsI()) )  {
-              const smatd& eqiv = au.AddUsedSymm(mt);
-              int ei = au.UsedSymmIndex(eqiv);
+              const smatd& eqiv = rm.AddUsedSymm(mt);
+              int ei = rm.UsedSymmIndex(eqiv);
               rtab_d << "_$" << ei+1;
             }
-            ins.AddIns(rtab_d);
+            ins.AddIns(rtab_d, rm);
             TBasicApp::GetLog() << rtab_d << " d=" << olxstr::FormatFloat(3, d) << '\n';
 
             olxstr rtab_a((const char*)"RTAB ", 80);
             rtab_a << sa.GetAtomInfo().GetSymbol() << ca.GetAtomInfo().GetSymbol() << // codename
               ' ' << sa.GetLabel() << ' ' << sa.Node(h_indexes[k]).GetLabel() << ' ' << ca.GetLabel();
             if( !(mt.t.IsNull() && mt.r.IsI()) )  {
-              const smatd& eqiv = au.AddUsedSymm(mt);
-              int ei = au.UsedSymmIndex(eqiv);
+              const smatd& eqiv = rm.AddUsedSymm(mt);
+              int ei = rm.UsedSymmIndex(eqiv);
               rtab_a << "_$" << ei+1;
             }
-            ins.AddIns(rtab_a);
+            ins.AddIns(rtab_a, rm);
             TBasicApp::GetLog() << rtab_a << " a=" << olxstr::FormatFloat(3, acos(c_a)*180.0/M_PI) << '\n';
           }
           else  {
@@ -273,11 +275,11 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options, TMacroErr
             htab << sa.GetLabel() << ' ' << ca.GetLabel();
             const smatd& mt = all[j].GetB();
             if( !(mt.t.IsNull() && mt.r.IsI()) )  {
-              const smatd& eqiv = au.AddUsedSymm(mt);
-              int ei = au.UsedSymmIndex(eqiv);
+              const smatd& eqiv = rm.AddUsedSymm(mt);
+              int ei = rm.UsedSymmIndex(eqiv);
               htab << "_$" << ei+1;
             }
-            ins.AddIns(htab);
+            ins.AddIns(htab, rm);
             TBasicApp::GetLog() << htab << " d=" << olxstr::FormatFloat(3, d) << '\n';
           }
         }
@@ -290,7 +292,7 @@ void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   TXApp& XApp = TXApp::GetInstance();
   TSAtomPList satoms;
   XApp.FindSAtoms( Cmds.Text(' '), satoms, true );
-  TXlConGen xlcg( &XApp.XFile().GetLastLoader<TIns>() );
+  TXlConGen xlcg( XApp.XFile().GetRM() );
   XApp.XFile().GetLattice().AnalyseHAdd( xlcg, satoms );
   XApp.XFile().EndUpdate();
   delete XApp.FixHL();
@@ -483,8 +485,9 @@ void XLibMacros::macLstIns(TStrObjList &Cmds, const TParamList &Options, TMacroE
 }
 //..............................................................................
 void XLibMacros::macAddIns(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+  // if instruction is parsed, it goes to current model, otherwise i stays in the ins file
   TIns& Ins = TXApp::GetInstance().XFile().GetLastLoader<TIns>();
-  if( !Ins.AddIns(TStrList(Cmds)) )  {
+  if( !Ins.AddIns(TStrList(Cmds), TXApp::GetInstance().XFile().GetRM()) )  {
     Error.ProcessingError(__OlxSrcInfo, olxstr("could not add instruction: ") << Cmds.Text(' ') );
     return;
   }
@@ -510,22 +513,23 @@ void XLibMacros::macDelIns(TStrObjList &Cmds, const TParamList &Options, TMacroE
 }
 //..............................................................................
 void XLibMacros::macLS(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  TIns& iF = TXApp::GetInstance().XFile().GetLastLoader<TIns>();
   int ls = -1;
   XLibMacros::ParseNumbers<int>(Cmds, 1, &ls);
-  if( ls != -1 )  iF.SetIterations( (int)ls);
+  if( ls != -1 )  
+    TXApp::GetInstance().XFile().GetRM().SetIterations( (int)ls);
   if( !Cmds.IsEmpty() )
-    iF.SetRefinementMethod( Cmds[0] );
+    TXApp::GetInstance().XFile().GetRM().SetRefinementMethod( Cmds[0] );
 }
 //..............................................................................
 void XLibMacros::macUpdateWght(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  TIns& I = TXApp::GetInstance().XFile().GetLastLoader<TIns>();
-  if( I.Wght1().Count() == 0 )  return;
-  if( Cmds.IsEmpty() )  { I.Wght() = I.Wght1();  }
+  RefinementModel& rm = TXApp::GetInstance().XFile().GetRM();
+  if( rm.proposed_weight.Count() == 0 )  return;
+  if( Cmds.IsEmpty() )  
+    rm.used_weight = rm.proposed_weight;
   else  {
-    I.Wght().Resize(Cmds.Count());
+    rm.used_weight.Resize(Cmds.Count());
     for( int i=0; i < Cmds.Count(); i++ )  
-      I.Wght()[i] = Cmds[i].ToDouble();
+      rm.used_weight[i] = Cmds[i].ToDouble();
   }
 }
 //..............................................................................
@@ -688,7 +692,7 @@ void XLibMacros::ChangeCell(const mat3d& tm, const TSpaceGroup& new_sg)  {
     olxstr new_hkl_fn( TEFile::ExtractFilePath(hkl_fn) );
     TEFile::AddTrailingBackslashI(new_hkl_fn) << "test.hkl";
     hklf.SaveToFile( new_hkl_fn );
-    xapp.XFile().LastLoader()->SetHKLSource(new_hkl_fn);
+    xapp.XFile().GetRM().SetHKLSource(new_hkl_fn);
   }
   au.ChangeSpaceGroup(new_sg);
   au.InitMatrices();
@@ -840,7 +844,7 @@ void XLibMacros::macLstFS(TStrObjList &Cmds, const TParamList &Options, TMacroEr
 void XLibMacros::macPlan(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error) {
   int plan = Cmds[0].ToInt();
   if( plan == -1 )  return; // leave like it is
-  TXApp::GetInstance().XFile().GetLastLoader<TIns>().SetPlan( plan );
+  TXApp::GetInstance().XFile().GetRM().SetPlan( plan );
 }
 //..............................................................................
 class TFixUnit_Sorter  {
@@ -917,7 +921,7 @@ void XLibMacros::macEXYZ(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   
   }
   else  {
-    TExyzGroup& sr = xapp.XFile().GetAsymmUnit().SharedSites().New();
+    TExyzGroup& sr = xapp.XFile().GetRM().ExyzGroups.New();
     for( int i=0; i < atoms.Count(); i++ )
       sr.Add(atoms[i]->CAtom());
   }
@@ -933,16 +937,16 @@ void XLibMacros::macEADP(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   }
   // validate that atoms of the same type
   bool allIso = (atoms[0]->GetEllipsoid() == NULL);
-  for( int i=1; i < atoms.Count(); i++ )
+  for( int i=1; i < atoms.Count(); i++ )  {
     if( (atoms[i]->GetEllipsoid() == NULL) != allIso )  {
       E.ProcessingError(__OlxSrcInfo, "mixed atoms types (aniso and iso)" );
       return;
     }
-
-  TSimpleRestraint& sr = xapp.XFile().GetAsymmUnit().EquivalentU().AddNew();
+  }
+  TSimpleRestraint& sr = xapp.XFile().GetRM().rEADP.AddNew();
   for( int i=0; i < atoms.Count(); i++ )
     sr.AddAtom(atoms[i]->CAtom(), NULL);
-  xapp.XFile().GetAsymmUnit().EquivalentU().ValidateRestraint(sr);
+  xapp.XFile().GetRM().rEADP.ValidateRestraint(sr);
 }
 //..............................................................................
 void XLibMacros::macAddSE(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
@@ -1073,15 +1077,15 @@ void XLibMacros::macEnvi(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     E.ProcessingError(__OlxSrcInfo, "no atoms provided" );
     return;
   }
-
+  TAtomsInfo& AtomsInfo = TAtomsInfo::GetInstance();
   TStrList output;
   TPtrList<TBasicAtomInfo> Exceptions;
-  Exceptions.Add(xapp.AtomsInfo()->FindAtomInfoBySymbol("Q"));
-  Exceptions.Add(xapp.AtomsInfo()->FindAtomInfoBySymbol("H"));
+  Exceptions.Add(AtomsInfo.FindAtomInfoBySymbol("Q"));
+  Exceptions.Add(AtomsInfo.FindAtomInfoBySymbol("H"));
   if( Options.Contains('q') )
-    Exceptions.Remove(xapp.AtomsInfo()->FindAtomInfoBySymbol("Q"));
+    Exceptions.Remove(AtomsInfo.FindAtomInfoBySymbol("Q"));
   if( Options.Contains('h') )
-    Exceptions.Remove(xapp.AtomsInfo()->FindAtomInfoBySymbol("H"));
+    Exceptions.Remove(AtomsInfo.FindAtomInfoBySymbol("H"));
 
   TSAtom& SA = *atoms[0];
   TLattice& latt = TXApp::GetInstance().XFile().GetLattice();
@@ -1296,79 +1300,75 @@ void XLibMacros::funBaseDir(const TStrObjList& Params, TMacroError &E)  {
 }
 //..............................................................................
 void XLibMacros::funLSM(const TStrObjList& Params, TMacroError &E) {
-  E.SetRetVal( TXApp::GetInstance().XFile().GetLastLoader<TIns>().GetRefinementMethod() );
+  E.SetRetVal( TXApp::GetInstance().XFile().GetRM().GetRefinementMethod() );
 }
 //..............................................................................
 void XLibMacros::funIns(const TStrObjList& Params, TMacroError &E)  {
-  TIns& I = TXApp::GetInstance().XFile().GetLastLoader<TIns>();
+  RefinementModel& rm = TXApp::GetInstance().XFile().GetRM();
   olxstr tmp;
   if( Params[0].Comparei("weight") == 0 || Params[0].Comparei("wght") == 0 )  {
-    for( int j=0; j < I.Wght().Count(); j++ )  {
-      tmp << I.Wght()[j];
-      if( (j+1) < I.Wght().Count() )  tmp << ' ';
+    for( int j=0; j < rm.used_weight.Count(); j++ )  {
+      tmp << rm.used_weight[j];
+      if( (j+1) < rm.used_weight.Count() )  tmp << ' ';
     }
     E.SetRetVal( tmp );
-    return;
   }
-  if( !Params[0].Comparei("weight1") )  {
-    for( int j=0; j < I.Wght1().Count(); j++ )  {
-      tmp << I.Wght1()[j];
-      if( (j+1) < I.Wght1().Count() )  tmp << ' ';
+  else if( !Params[0].Comparei("weight1") )  {
+    for( int j=0; j < rm.proposed_weight.Count(); j++ )  {
+      tmp << rm.proposed_weight[j];
+      if( (j+1) < rm.proposed_weight.Count() )  tmp << ' ';
     }
     E.SetRetVal( tmp );
-    return;
   }
-  if( (Params[0].Comparei("L.S.") == 0) || (Params[0].Comparei("CGLS") == 0) )  {
-    for( int i=0; i < I.GetLSV().Count(); i++ )  {
-      tmp << I.GetLSV()[i];
-      if( (i+1) < I.GetLSV().Count() )  tmp << ' ';
+  else if( (Params[0].Comparei("L.S.") == 0) || (Params[0].Comparei("CGLS") == 0) )  {
+    for( int i=0; i < rm.LS.Count(); i++ )  {
+      tmp << rm.LS[i];
+      if( (i+1) < rm.LS.Count() )  tmp << ' ';
     }
-    E.SetRetVal( I.GetLSV().Count() == 0 ? NAString : tmp );
-    return;
+    E.SetRetVal( rm.LS.Count() == 0 ? NAString : tmp );
   }
-  if( Params[0].Comparei("ls") == 0 )  {
-    olxstr rv = I.GetLSV().Count() == 0 ? NAString : olxstr(I.GetIterations()) ;
+  else if( Params[0].Comparei("ls") == 0 )  {
+    olxstr rv = rm.LS.Count() == 0 ? NAString : olxstr(rm.LS[0]) ;
     E.SetRetVal( rv );
-    return;
   }
-  if( Params[0].Comparei("plan") == 0)  {
-    for( int i=0; i < I.GetPlanV().Count(); i++ )  {
-      tmp << ((i < 1) ? Round(I.GetPlanV()[i]) : I.GetPlanV()[i]);
-      if( (i+1) < I.GetPlanV().Count() )  tmp << ' ';
+  else if( Params[0].Comparei("plan") == 0)  {
+    for( int i=0; i < rm.PLAN.Count(); i++ )  {
+      tmp << ((i < 1) ? Round(rm.PLAN[i]) : rm.PLAN[i]);
+      if( (i+1) < rm.PLAN.Count() )  tmp << ' ';
     }
-    E.SetRetVal( I.GetPlanV().Count() == 0 ? NAString : tmp );
-    return;
+    E.SetRetVal( rm.PLAN.Count() == 0 ? NAString : tmp );
   }
-  if( Params[0].Comparei("qnum") == 0)  {
-  olxstr rv = I.GetPlanV().Count() == 0 ? NAString : olxstr(I.GetPlan());
-    E.SetRetVal( rv );
-    return;
+  else if( Params[0].Comparei("qnum") == 0)  {
+    tmp = rm.PLAN.Count() == 0 ? NAString : olxstr(rm.PLAN[0]);
+    E.SetRetVal( tmp );
   }
-  if( Params[0].Comparei("R1") == 0)  {
-    olxstr rv = I.GetR1() < 0 ? NAString : olxstr(I.GetR1());
-    E.SetRetVal( rv );
-    return;
-  }
-  if( !I.InsExists(Params[0]) )  {
-    E.SetRetVal( NAString );
-    return;
-  }
-//  FXApp->XFile().UpdateAsymmUnit();
-//  I->UpdateParams();
+  else  {
+    TIns& I = TXApp::GetInstance().XFile().GetLastLoader<TIns>();
+    if( Params[0].Comparei("R1") == 0)  {
+      olxstr rv = I.GetR1() < 0 ? NAString : olxstr(I.GetR1());
+      E.SetRetVal( rv );
+    }
+    if( !I.InsExists(Params[0]) )  {
+      E.SetRetVal( NAString );
+      return;
+    }
+    //  FXApp->XFile().UpdateAsymmUnit();
+    //  I->UpdateParams();
 
-  TInsList* insv = I.FindIns( Params[0] );
-  if( insv != 0 )
-    E.SetRetVal( insv->Text(' ') );
-  else
-    E.SetRetVal( EmptyString );
+    TInsList* insv = I.FindIns( Params[0] );
+    if( insv != 0 )
+      E.SetRetVal( insv->Text(' ') );
+    else
+      E.SetRetVal( EmptyString );
+  }
 }
 //..............................................................................
 void XLibMacros::funSSM(const TStrObjList& Params, TMacroError &E) {
-  TIns& I = TXApp::GetInstance().XFile().GetLastLoader<TIns>();
-  if( I.GetSolutionMethod().IsEmpty() && Params.Count() == 1 )
+  RefinementModel& rm  = TXApp::GetInstance().XFile().GetRM();
+  if( rm.GetSolutionMethod().IsEmpty() && Params.Count() == 1 )
     E.SetRetVal( Params[0] );
   else
-    E.SetRetVal( I.GetSolutionMethod() );
+    E.SetRetVal( rm.GetSolutionMethod() );
 }
 //..............................................................................
 olxstr XLibMacros_funSGNameToHtml(const olxstr& name)  {
@@ -1440,9 +1440,9 @@ void XLibMacros::funSGS(const TStrObjList &Cmds, TMacroError &E)  {
 //..............................................................................
 void XLibMacros::funHKLSrc(const TStrObjList& Params, TMacroError &E)  {
   if( Params.Count() == 1 )
-    TXApp::GetInstance().XFile().LastLoader()->SetHKLSource( Params[0] );
+    TXApp::GetInstance().XFile().GetRM().SetHKLSource( Params[0] );
   else
-    E.SetRetVal( TXApp::GetInstance().XFile().LastLoader()->GetHKLSource() );
+    E.SetRetVal( TXApp::GetInstance().XFile().GetRM().GetHKLSource() );
 }
 //..............................................................................
 void XLibMacros::macCif2Doc(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
@@ -1472,7 +1472,7 @@ void XLibMacros::macCif2Doc(TStrObjList &Cmds, const TParamList &Options, TMacro
     return;
   }
 
-  TCif *Cif, Cif1(xapp.AtomsInfo());
+  TCif *Cif, Cif1;
   if( xapp.CheckFileType<TCif>() )
     Cif = &xapp.XFile().GetLastLoader<TCif>();
   else  {
@@ -1529,7 +1529,7 @@ void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options, TMacro
     }
     return;
   }
-  TCif *Cif, Cif1(xapp.AtomsInfo());
+  TCif *Cif, Cif1;
 
   if( xapp.CheckFileType<TCif>() )
     Cif = &xapp.XFile().GetLastLoader<TCif>();
@@ -1707,7 +1707,7 @@ void XLibMacros::MergePublTableData(TCifLoopTable& to, TCifLoopTable& from)  {
 //..............................................................................
 void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   TXApp& xapp = TXApp::GetInstance();
-  TCif *Cif, Cif1(xapp.AtomsInfo()), Cif2(xapp.AtomsInfo());
+  TCif *Cif, Cif1, Cif2;
 
   if( xapp.CheckFileType<TCif>() )
     Cif = &xapp.XFile().GetLastLoader<TCif>();
@@ -1796,7 +1796,7 @@ void XLibMacros::macCifExtract(TStrObjList &Cmds, const TParamList &Options, TMa
     }
   }
 
-  TCif In(xapp.AtomsInfo()),  Out(xapp.AtomsInfo()), *Cif, Cif1(xapp.AtomsInfo());
+  TCif In,  Out, *Cif, Cif1;
 
   if( xapp.CheckFileType<TCif>() )
     Cif = &xapp.XFile().GetLastLoader<TCif>();
@@ -1866,7 +1866,7 @@ void XLibMacros::macVoidE(TStrObjList &Cmds, const TParamList &Options, TMacroEr
       return;
     }
   }
-  TCif cif( XApp.AtomsInfo() );
+  TCif cif;
   cif.LoadFromFile( fcffn );
 //  F000 = cif.GetSParam("_exptl_crystal_F_000").ToDouble();
   TCifLoop* hklLoop = cif.FindLoop("_refln");

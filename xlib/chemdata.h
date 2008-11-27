@@ -6,16 +6,20 @@
 
 // atomic number of some atoms
 static const short 
-  iHydrogenZ = 1,
-  iBoronZ    = 5,  
-  iCarbonZ   = 6,
-  iNitrogenZ = 7,
-  iOxygenZ   = 8,
-  iFluorineZ = 9,
-  iSiliconZ  = 14,
+  iHydrogenZ   = 1,
+  iBoronZ      = 5,  
+  iCarbonZ     = 6,
+  iNitrogenZ   = 7,
+  iOxygenZ     = 8,
+  iFluorineZ   = 9,
+  iSodumZ      = 11,
+  iMagnesiumZ  = 12,
+  iSiliconZ    = 14,
   iPhosphorusZ = 15,
   iSulphurZ    = 16,
   iChlorineZ   = 17,
+  iPotassiumZ  = 19,
+  iCalciumZ    = 20,
   iQPeakZ      = -1;
 
 /*
@@ -67,6 +71,12 @@ struct cm_Gaussians {
   inline double calc_sq(double sqv) const {
     return a1*exp(b1*sqv) + a2*exp(b2*sqv) + a3*exp(b3*sqv) + a4*exp(b4*sqv) + c;
   }
+  cm_Gaussians& operator = (const cm_Gaussians& g)  {
+    a1 = g.a1;  a2 = g.a2;  a3 = g.a3;  a4 = g.a4;
+    b1 = g.b1;  b2 = g.b2;  b3 = g.b3;  b4 = g.b4;
+    c = g.c;
+    return *this;
+  }
 };
 
 struct cm_Element {
@@ -113,6 +123,14 @@ struct cm_Element {
     }
     throw TFunctionFailedException(__OlxSourceInfo, "cannot happen");
   }
+  double CalcMr() const {
+    if( isotope_count == 0 )
+      throw TFunctionFailedException(__OlxSourceInfo, "no data available");
+    double rv = 0;
+    for( int i=0; i < isotope_count; i++ )
+      rv += isotopes[i].Mr*isotopes[i].W;
+    return rv;
+  }
   inline bool operator >  (const cm_Element& ce) const {  return z >  ce.z;  }
   inline bool operator >= (const cm_Element& ce) const {  return z >= ce.z;  }
   inline bool operator <  (const cm_Element& ce) const {  return z <  ce.z;  }
@@ -127,6 +145,10 @@ struct cm_Element {
 
 class XElementLib {
 public:
+  static double Wavelength2eV(double lambda) {
+    static const double ev_angstrom  = 6626.0755 * 2.99792458 / 1.60217733;
+    return ev_angstrom/lambda;
+  }
   // and exact symbol as C or Cr is expected
   static cm_Element* FindBySymbol(const olxstr& symbol);
   // a label might be passed as C1 or Cr2

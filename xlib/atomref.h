@@ -1,6 +1,6 @@
 #ifndef __OLX__ATOM_GROUP
 #define __OLX__ATOM_GROUP
-#include "asymmunit.h"
+#include "refmodel.h"
 
 BeginXlibNamespace()
 /* Possible Shelx syntax
@@ -35,12 +35,12 @@ public:
   TAtomReference(const olxstr& expression, ASelectionOwner* selectionOwner = NULL) : 
       Expression(expression), SelectionOwner(selectionOwner)  {  }
   const olxstr& GetExpression() const {  return Expression;  }
-  int _Expand(TAsymmUnit& au, TCAtomGroup& atoms, TAsymmUnit::TResidue* CurrResi)  {
+  int _Expand(RefinementModel& rm, TCAtomGroup& atoms, TAsymmUnit::TResidue* CurrResi)  {
     int ac = atoms.Count();
     if( Expression.IsEmpty() )  {  // all atoms of au
-      atoms.SetCapacity( atoms.Count() + au.AtomCount() );
-      for( int i=0; i < au.AtomCount(); i++ )  {
-        TCAtom* ca = &au.GetAtom(i);
+      atoms.SetCapacity( atoms.Count() + rm.aunit.AtomCount() );
+      for( int i=0; i < rm.aunit.AtomCount(); i++ )  {
+        TCAtom* ca = &rm.aunit.GetAtom(i);
         if( IsValidAtom(ca) )
           atoms.AddNew( ca );
       }
@@ -54,34 +54,34 @@ public:
       return atoms.Count()-ac;
     }
     else if( Expression.Comparei("first") == 0 )  { 
-      if( au.AtomCount() == 0 )  return 0;
+      if( rm.aunit.AtomCount() == 0 )  return 0;
       int i=0;
-      TCAtom* ca = &au.GetAtom(i);
-      while( (i+1) < au.AtomCount() && !IsValidAtom(ca) )  {
+      TCAtom* ca = &rm.aunit.GetAtom(i);
+      while( (i+1) < rm.aunit.AtomCount() && !IsValidAtom(ca) )  {
         i++;
-        ca = &au.GetAtom(i);
+        ca = &rm.aunit.GetAtom(i);
       }
       if( !IsValidAtom(ca) )  return 0;
       atoms.AddNew( ca );
       return 1;
     }
     else if( Expression.StartsFrom("#c") )  { 
-      if( au.AtomCount() == 0 )  return 0;
+      if( rm.aunit.AtomCount() == 0 )  return 0;
       int i= Expression.SubStringFrom(2).ToInt();
-      if( i < 0 || i >= au.AtomCount() )
+      if( i < 0 || i >= rm.aunit.AtomCount() )
         throw TInvalidArgumentException(__OlxSourceInfo, "catom id");
-      TCAtom* ca = &au.GetAtom(i);
+      TCAtom* ca = &rm.aunit.GetAtom(i);
       if( !IsValidAtom(ca) )  return 0;
       atoms.AddNew( ca );
       return 1;
     }
     else if( Expression.Comparei("last") == 0 )  { 
-      if( au.AtomCount() == 0 )  return 0;
-      int i=au.AtomCount()-1;
-      TCAtom* ca = &au.GetAtom(i);
+      if( rm.aunit.AtomCount() == 0 )  return 0;
+      int i=rm.aunit.AtomCount()-1;
+      TCAtom* ca = &rm.aunit.GetAtom(i);
       while( i > 0 && !IsValidAtom(ca) )  {
         i--;
-        ca = &au.GetAtom(i);
+        ca = &rm.aunit.GetAtom(i);
       }
       if( !IsValidAtom(ca) )  return 0;
       atoms.AddNew( ca );
@@ -93,12 +93,12 @@ public:
     if( gs_ind != -1 || ls_ind != -1 )  {
       TCAtomGroup from, to;
       if( gs_ind != -1 )  {  // it is inverted in shelx ...
-        TAtomReference(Expression.SubStringTo(gs_ind).Trim(' '))._Expand(au, from, CurrResi);
-        TAtomReference(Expression.SubStringFrom(gs_ind+1).Trim(' '))._Expand(au, to, CurrResi);
+        TAtomReference(Expression.SubStringTo(gs_ind).Trim(' '))._Expand(rm, from, CurrResi);
+        TAtomReference(Expression.SubStringFrom(gs_ind+1).Trim(' '))._Expand(rm, to, CurrResi);
       }
       else  {
-        TAtomReference(Expression.SubStringTo(ls_ind).Trim(' '))._Expand(au, to, CurrResi);
-        TAtomReference(Expression.SubStringFrom(ls_ind+1).Trim(' '))._Expand(au, from, CurrResi);
+        TAtomReference(Expression.SubStringTo(ls_ind).Trim(' '))._Expand(rm, to, CurrResi);
+        TAtomReference(Expression.SubStringFrom(ls_ind+1).Trim(' '))._Expand(rm, from, CurrResi);
       }
       if( to.Count() != 1 || from.Count() != 1 )
         throw TFunctionFailedException(__OlxSourceInfo, "failed to expand >/< expression");
@@ -108,14 +108,14 @@ public:
         throw TFunctionFailedException(__OlxSourceInfo, "EQIV must be the same in >/< expresion");
       if( gs_ind != -1 )  {
         for( int i=from[0].GetAtom()->GetId(); i <= to[0].GetAtom()->GetId(); i++ )  {
-          TCAtom* ca = &au.GetAtom(i);
+          TCAtom* ca = &rm.aunit.GetAtom(i);
           if( !IsValidAtom(ca) )  continue;
           atoms.AddNew( ca, from[0].GetMatrix() );
         }
       }
       else  {
         for( int i=to[0].GetAtom()->GetId(); i >= from[0].GetAtom()->GetId(); i-- )  {
-          TCAtom* ca = &au.GetAtom(i);
+          TCAtom* ca = &rm.aunit.GetAtom(i);
           if( !IsValidAtom(ca) )  continue;
           atoms.AddNew( ca, from[0].GetMatrix() );
         }
@@ -132,26 +132,26 @@ public:
       olxstr str_eqiv( resi_name.SubStringFrom(eqiv_ind+1) );
       if( !str_eqiv.IsNumber() )  throw TInvalidArgumentException(__OlxSourceInfo, olxstr("equivalent id: ") << str_eqiv);
       int eqi = str_eqiv.ToInt()-1;
-      if( eqi < 0 || eqi >= au.UsedSymmCount() )  throw TInvalidArgumentException(__OlxSourceInfo, olxstr("equivalent index: ") << str_eqiv);
-      eqiv = &au.GetUsedSymm(eqi);
+      if( eqi < 0 || eqi >= rm.UsedSymmCount() )  throw TInvalidArgumentException(__OlxSourceInfo, olxstr("equivalent index: ") << str_eqiv);
+      eqiv = &rm.GetUsedSymm(eqi);
       resi_name = resi_name.SubStringTo(eqiv_ind);
     }
     // validate syntax
     TPtrList<TAsymmUnit::TResidue> residues;
     if( !resi_name.IsEmpty() && (resi_name.CharAt(0) == '+' || resi_name.CharAt(0) == '-') )  {
       if( CurrResi == NULL )  throw TInvalidArgumentException(__OlxSourceInfo, "current residue");
-      if( resi_name.CharAt(0) == '+' )  residues.Add(au.NextResidue(*CurrResi));
-      else                              residues.Add(au.PrevResidue(*CurrResi));
+      if( resi_name.CharAt(0) == '+' )  residues.Add(rm.aunit.NextResidue(*CurrResi));
+      else                              residues.Add(rm.aunit.PrevResidue(*CurrResi));
     }
     else  {
       if( CurrResi != NULL )  residues.Add(CurrResi);
       if( !resi_name.IsEmpty() )  // empty resi name refers to all atom outside RESI
-        au.FindResidues(resi_name, residues);  
+        rm.aunit.FindResidues(resi_name, residues);  
       if( residues.IsEmpty() )  throw TInvalidArgumentException(__OlxSourceInfo, olxstr("invalid residue class/number: ") << resi_name);
     }
     if( Expression.CharAt(0) == '$' )  {  // sfac type
       olxstr sfac = ((resi_ind == -1) ? Expression.SubStringFrom(1) : Expression.SubString(1, resi_ind-1));
-      TBasicAtomInfo* bai = au.GetAtomsInfo()->FindAtomInfoBySymbol(sfac);
+      TBasicAtomInfo* bai = rm.aunit.GetAtomsInfo()->FindAtomInfoBySymbol(sfac);
       if( bai == NULL )  throw TInvalidArgumentException(__OlxSourceInfo, olxstr("sfac=") << sfac);
       for( int i=0; i < residues.Count(); i++ )  {
         for( int j=0; j < residues[i]->Count(); j++ )  {
@@ -177,7 +177,7 @@ public:
     return atoms.Count() - ac;
   }
   // prcesses shelx expressions and returns unprocessed expressions (like sel)
-  olxstr Expand(TAsymmUnit& au, TCAtomGroup& atoms, const olxstr& DefResi, int& atomAGroup)  {
+  olxstr Expand(RefinementModel& rm, TCAtomGroup& atoms, const olxstr& DefResi, int& atomAGroup)  {
     olxstr nexp, exp( olxstr::DeleteSequencesOf(Expression, ' ').Trim(' ') );
     nexp.SetCapacity( exp.Length() );
     // remove spaces from arounf >< chars for strtok
@@ -191,12 +191,12 @@ public:
     atomAGroup = 0;
     TCAtomGroup tmp_atoms;
     TPtrList<TAsymmUnit::TResidue> residues;
-    au.FindResidues(DefResi, residues);  // empty resi name refers to all atom outside RESI
+    rm.aunit.FindResidues(DefResi, residues);  // empty resi name refers to all atom outside RESI
     TStrList toks(nexp, ' '), unprocessed;
     for( int i=0; i < residues.Count(); i++ )  {
       bool succeded = true;
       for( int j=0; j < toks.Count(); j++ )  {
-        if( TAtomReference(toks[j], SelectionOwner)._Expand(au, tmp_atoms, residues[i]) == 0 )  {
+        if( TAtomReference(toks[j], SelectionOwner)._Expand(rm, tmp_atoms, residues[i]) == 0 )  {
           if( i == 0 )  unprocessed.Add( toks[j] );
           succeded = false;
           break;

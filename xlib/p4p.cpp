@@ -6,7 +6,7 @@
 #include "asymmunit.h"
 #include "symmlib.h"
 
-TP4PFile::TP4PFile():TBasicCFile(NULL)  {
+TP4PFile::TP4PFile() {
   Radiation = 0.71;
 }
 
@@ -60,7 +60,7 @@ void TP4PFile::LoadFromStrings(const TStrList& Strings)  {
   params.Add("SOURCE",   &Source);
   params.Add("CELL",   &Cell);
   params.Add("CELLSD",   &CellSd);
-  params.Add("TITLE",   &FTitle);
+  params.Add("TITLE",   &Title);
   params.Add("SG",   &SG);
   for( int i=0; i < Strings.Count(); i++ )  {
     Tmp = olxstr::DeleteSequencesOf<char>( Strings[i], ' ' );
@@ -126,12 +126,12 @@ bool TP4PFile::Adopt(TXFile* f)  {
   GetAsymmUnit().Angles() = f->GetAsymmUnit().Angles();
   GetAsymmUnit().Axes()   = f->GetAsymmUnit().Axes();
   if( f->HasLastLoader() )  {
-    FTitle = f->LastLoader()->GetTitle();
-    SetHKLSource( f->LastLoader()->GetHKLSource() );
+    Title = f->LastLoader()->GetTitle();
+    GetRM().SetHKLSource( f->LastLoader()->GetRM().GetHKLSource() );
   }
   else  {
-    FTitle = "?";
-    SetHKLSource( EmptyString );
+    Title = "?";
+    GetRM().SetHKLSource( EmptyString );
   }
 
   SiteId  = "?";

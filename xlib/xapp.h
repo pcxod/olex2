@@ -44,7 +44,6 @@ protected:
 public:
   TXApp(const olxstr &basedir, ASelectionOwner* selOwner=NULL);
   virtual ~TXApp();
-  inline TAtomsInfo* AtomsInfo() {  return FAtomsInfo; }
   inline TXFile& XFile()         {  return *FXFile; }
   
   DefPropC(olxstr, CifTemplatesDir)

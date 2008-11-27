@@ -18,8 +18,8 @@ template <class ComparableClass, class ObjectClass, class Comparator>
       FObject = o;
     }
     TSortedListEntry(const TSortedListEntry& entry)  {
-      FComparable = entry.Comparable;
-      FObject = entry.Object;
+      FComparable = entry.FComparable;
+      FObject = entry.FObject;
     }
     TSortedListEntry()  {  }
     virtual ~TSortedListEntry()  {  }

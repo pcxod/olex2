@@ -273,7 +273,7 @@ void TCifDataManager::Clear()  {  Items.Clear();  }
 //----------------------------------------------------------------------------//
 // TCif function bodies
 //----------------------------------------------------------------------------//
-TCif::TCif(TAtomsInfo *AI):TBasicCFile(AI)  {  FDataNameUpperCase = true;  }
+TCif::TCif() : FDataNameUpperCase(true)  {  }
 //..............................................................................
 TCif::~TCif()  {  Clear();  }
 //..............................................................................
@@ -293,7 +293,7 @@ void TCif::Clear()  {
     delete Loops.Object(i);
   Loops.Clear();
   GetAsymmUnit().Clear();
-  FHKLSource = EmptyString;
+  GetRM().Clear();
 }
 //..............................................................................
 void TCif::Format()  {
@@ -776,8 +776,8 @@ void TCif::Initialize()  {
       throw TFunctionFailedException(__OlxSourceInfo, "invalid space group");
     }
   }
-  this->FTitle = FDataName.UpperCase();
-  this->FTitle << " OLEX: imported from CIF";
+  this->Title = FDataName.UpperCase();
+  this->Title << " OLEX: imported from CIF";
 
   ALoop = FindLoop("_atom_site");
   if( !ALoop )  return;
@@ -789,12 +789,12 @@ void TCif::Initialize()  {
   int ACUiso =  ALoop->Table().ColIndex("_atom_site_U_iso_or_equiv");
   int ASymbol = ALoop->Table().ColIndex("_atom_site_type_symbol");
   if( ALabel < 0 || ACx < 0 || ACy < 0 || ACz < 0 || ASymbol < 0)  return;
-
+  TAtomsInfo& atoms_info = TAtomsInfo::GetInstance();
   for( int i=0; i < ALoop->Table().RowCount(); i++ )  {
     A = &GetAsymmUnit().NewAtom();
     A->SetLoaderId(GetAsymmUnit().AtomCount()-1);
     A->SetLabel( ALoop->Table()[i][ALabel] );
-    A->AtomInfo( AtomsInfo->FindAtomInfoBySymbol(ALoop->Table()[i][ASymbol]) );
+    A->AtomInfo( atoms_info.FindAtomInfoBySymbol(ALoop->Table()[i][ASymbol]) );
     EValue = ALoop->Table()[i][ACx];
     A->ccrd()[0] = EValue.GetV();  A->ccrdEsd()[0] = EValue.GetE();
     EValue = ALoop->Table()[i].String(ACy);
@@ -946,9 +946,9 @@ bool TCif::Adopt(TXFile *XF)  {
 
   GetAsymmUnit().Assign( XF->GetAsymmUnit() );
   GetAsymmUnit().SetZ( (short)XF->GetLattice().GetUnitCell().MatrixCount());
-  FTitle = "CIFEXP";
+  Title = "CIFEXP";
 
-  SetDataName(FTitle);
+  SetDataName(Title);
   AddParam("_cell_length_a", GetAsymmUnit().Axes()[0].ToString(), false);
   AddParam("_cell_length_b", GetAsymmUnit().Axes()[1].ToString(), false);
   AddParam("_cell_length_c", GetAsymmUnit().Axes()[2].ToString(), false);
@@ -1032,7 +1032,7 @@ bool TCif::Adopt(TXFile *XF)  {
     }
   }
   if( XF->HasLastLoader() )
-    SetHKLSource( XF->LastLoader()->GetHKLSource() );
+    GetRM().SetHKLSource( XF->LastLoader()->GetRM().GetHKLSource() );
 
   return true;
 }

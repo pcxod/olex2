@@ -10,7 +10,7 @@
 //----------------------------------------------------------------------------//
 // TMol function bodies
 //----------------------------------------------------------------------------//
-TPdb::TPdb(TAtomsInfo *S):TBasicCFile(S)  {   }
+TPdb::TPdb()  {   }
 //..............................................................................
 TPdb::~TPdb()  {  Clear();    }
 //..............................................................................
@@ -80,7 +80,7 @@ void TPdb::LoadFromStrings(const TStrList& Strings)  {
   AnisF.Add(2);  // Charge
 
 
-  FTitle = "OLEX: imported from PDB";
+  Title = "OLEX: imported from PDB";
   for(int i=0; i < Strings.Count(); i++ )  {
     int spi = Strings[i].FirstIndexOf(' ');
     if( spi <=0 )  continue;

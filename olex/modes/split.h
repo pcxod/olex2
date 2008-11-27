@@ -47,13 +47,15 @@ public:
   }
   ~TSplitMode() {
     TXAtomPList Atoms;
+    TCAtomPList to_isot;
     vec3d c;
     TIns& Ins = TGlXApp::GetGXApp()->XFile().GetLastLoader<TIns>();
-    Ins.AddVar(0.5);
-    int Var = Ins.Vars().Count()*10+1;
+    TAsymmUnit& au = TGlXApp::GetGXApp()->XFile().GetAsymmUnit();
+    RefinementModel& rm = TGlXApp::GetGXApp()->XFile().GetRM();
+    rm.FVAR.Add(0.5);
+    int Var = rm.FVAR.Count()*10+1;
     UpdateSelectionCrds();
     TGlXApp::GetGXApp()->FindXAtoms(EmptyString, Atoms, false);
-    TAsymmUnit& au = TGlXApp::GetGXApp()->XFile().GetAsymmUnit();
     for( int i=0; i < Atoms.Count(); i++ )  {
       Atoms[i]->Moveable(false);
       Atoms[i]->Roteable(false);
@@ -66,6 +68,7 @@ public:
       Atoms[i]->Atom().CAtom().ccrd() = c;
     }
     for( int i=0; i < SplitAtoms.Count(); i++ )  {
+      to_isot.Add(&SplitAtoms[i].A()->Atom().CAtom());
       SplitAtoms[i].A()->Atom().CAtom().SetOccpVar( Var );
       SplitAtoms[i].B()->Atom().CAtom().SetOccpVar( -Var );
       int part = SplitAtoms[i].A()->Atom().CAtom().GetPart();
@@ -75,18 +78,19 @@ public:
       TSimpleRestraint* sr = NULL;
       if( ReCon.IsEmpty() );
       else if( ReCon == "eadp" )
-        sr = &au.EquivalentU().AddNew();
+        sr = &rm.rEADP.AddNew();
       else if( ReCon == "isor" )
-        sr = &au.RestranedUaAsUi().AddNew();
+        sr = &rm.rISOR.AddNew();
       else if( ReCon == "simu" )
-        sr = &au.SimilarU().AddNew();
+        sr = &rm.rSIMU.AddNew();
       if( sr != NULL )
         sr->AddAtomPair(SplitAtoms[i].A()->Atom().CAtom(), NULL, SplitAtoms[i].B()->Atom().CAtom(), NULL);
       //TGlXApp::GetMainForm()->executeMacro(
       //  olxstr("addins EADP ") << SplitAtoms[i].A()->Atom().GetLabel() << ' ' <<
       //  SplitAtoms[i].B()->Atom().GetLabel());
     }
-    TGlXApp::GetMainForm()->executeMacro("fuse");
+    TGlXApp::GetGXApp()->XFile().GetLattice().SetAnis(to_isot, false);
+    //TGlXApp::GetMainForm()->executeMacro("fuse");
   }
   virtual bool OnObject(AGDrawObject &obj)  {
     if( EsdlInstanceOf( obj, TXAtom) )  {

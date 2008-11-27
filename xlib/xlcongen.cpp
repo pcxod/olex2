@@ -6,17 +6,12 @@
 #include "unitcell.h"
 
 //..............................................................................
-TXlConGen::TXlConGen(TIns* ins )  {
-  InsFile = ins;
-}
-//..............................................................................
 bool TXlConGen::FixParam(const short paramMask, TStrList& res, const TCAtomPList& atoms, const TFixedValueList& values)  {
   throw TNotImplementedException( __OlxSourceInfo );
 }
 //..............................................................................
-bool TXlConGen::FixAtom( TAtomEnvi& envi, const short Group, const TBasicAtomInfo& atomType, TAtomEnvi* pivoting, TCAtomPList* generated)  {
+bool TXlConGen::FixAtom(TAtomEnvi& envi, const short Group, const TBasicAtomInfo& atomType, TAtomEnvi* pivoting, TCAtomPList* generated)  {
   try  {
-    TAsymmUnit& au = *envi.GetBase().CAtom().GetParent();
     TSimpleRestraint* sr;
     TCAtomPList CreatedAtoms;
     TAtomEnvi NEnvi;
@@ -58,19 +53,19 @@ bool TXlConGen::FixAtom( TAtomEnvi& envi, const short Group, const TBasicAtomInf
         break;
       case fgOH2:
         if( CreatedAtoms.Count() == 2 )  {
-          sr = &au.RestrainedDistances().AddNew();
+          sr = &RefMod.rDFIX.AddNew();
           sr->SetEsd(0.02);
           sr->SetValue(0.85);
           sr->AddAtomPair(envi.GetBase().CAtom(), NULL, *CreatedAtoms[0], NULL);
           sr->AddAtomPair(envi.GetBase().CAtom(), NULL, *CreatedAtoms[1], NULL);
 
-          sr = &au.RestrainedAngles().AddNew();
+          sr = &RefMod.rDANG.AddNew();
           sr->SetEsd(0.04);
           sr->SetValue(1.39);
           sr->AddAtomPair(*CreatedAtoms[1], NULL, *CreatedAtoms[0], NULL);
 
           if( envi.Count() == 1 )  {
-            sr = &au.SimilarDistances().AddNew();
+            sr = &RefMod.rSADI.AddNew();
             sr->SetEsd(0.02);
             sr->AddAtomPair(envi.GetCAtom(0), NULL, *CreatedAtoms[0], NULL);
             sr->AddAtomPair(envi.GetCAtom(0), NULL, *CreatedAtoms[1], NULL);
@@ -90,19 +85,19 @@ bool TXlConGen::FixAtom( TAtomEnvi& envi, const short Group, const TBasicAtomInf
             afix = 93;
           else  {
             if( CreatedAtoms.Count() == 2 )  {
-              sr = &au.RestrainedDistances().AddNew();
+              sr = &RefMod.rDFIX.AddNew();
               sr->SetEsd(0.02);
               sr->SetValue(0.86);
               sr->AddAtomPair(envi.GetBase().CAtom(), NULL, *CreatedAtoms[0], NULL);
               sr->AddAtomPair(envi.GetBase().CAtom(), NULL, *CreatedAtoms[1], NULL);
 
-              sr = &au.RestrainedAngles().AddNew();
+              sr = &RefMod.rDANG.AddNew();
               sr->SetEsd(0.04);
               sr->SetValue(1.40);
               sr->AddAtomPair(*CreatedAtoms[1], NULL, *CreatedAtoms[0], NULL);
 
               if( envi.Count() == 1 )  {
-                sr = &au.SimilarDistances().AddNew();
+                sr = &RefMod.rSADI.AddNew();
                 sr->SetEsd(0.02);
                 sr->AddAtomPair(envi.GetCAtom(0), NULL, *CreatedAtoms[0], NULL);
                 sr->AddAtomPair(envi.GetCAtom(0), NULL, *CreatedAtoms[1], NULL);
@@ -125,7 +120,7 @@ bool TXlConGen::FixAtom( TAtomEnvi& envi, const short Group, const TBasicAtomInf
         break;
     }
     if( afix != 0 )  {
-      TAfixGroup& ag = au.GetAfixGroups().New( &envi.GetBase().CAtom(), afix );
+      TAfixGroup& ag = RefMod.AfixGroups.New( &envi.GetBase().CAtom(), afix );
       for( int i=0; i < CreatedAtoms.Count(); i++ )
         ag.AddDependent(*CreatedAtoms[i]);
     }

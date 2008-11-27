@@ -36,11 +36,10 @@ int TLattice_SortFragments(const TNetwork* n1, const TNetwork* n2)  {
 //---------------------------------------------------------------------------
 // TLattice function bodies
 //---------------------------------------------------------------------------
-TLattice::TLattice(TAtomsInfo *Info)  {
-  AtomsInfo = Info;
+TLattice::TLattice() : AtomsInfo(TAtomsInfo::GetInstance()) {
   Generated = false;
 
-  AsymmUnit   = new TAsymmUnit(this, Info);
+  AsymmUnit   = new TAsymmUnit(this);
   UnitCell    = new TUnitCell(this);
   Network     = new TNetwork(this, NULL);
   Delta    = 0.5f;
@@ -1167,7 +1166,7 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPL
     return false;
   ProcessingAtoms.Add( &atom );
 
-  TBasicAtomInfo& HAI = AtomsInfo->GetAtomInfo(iHydrogenIndex);
+  TBasicAtomInfo& HAI = AtomsInfo.GetAtomInfo(iHydrogenIndex);
   TAtomEnvi AE;
   UnitCell->GetAtomEnviList(atom, AE, false, part);
   //if( atom.GetAtomInfo() == iCarbonIndex )  { // treat hapta bonds
@@ -1493,7 +1492,7 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPL
 //..............................................................................
 void TLattice::_ProcessRingHAdd(AConstraintGenerator& cg, const TPtrList<TBasicAtomInfo>& rcont) {
   TTypeList< TSAtomPList > rings;
-  TBasicAtomInfo& HAI = AtomsInfo->GetAtomInfo(iHydrogenIndex);
+  TBasicAtomInfo& HAI = AtomsInfo.GetAtomInfo(iHydrogenIndex);
   for( int i=0; i < FragmentCount(); i++ )
     GetFragment(i).FindRings(rcont, rings);
   TAtomEnvi AE;
@@ -1527,12 +1526,12 @@ void TLattice::_ProcessRingHAdd(AConstraintGenerator& cg, const TPtrList<TBasicA
 void TLattice::AnalyseHAdd(AConstraintGenerator& cg, const TSAtomPList& atoms)  {
 
   TPtrList<TBasicAtomInfo> CTypes;
-  CTypes.Add( &AtomsInfo->GetAtomInfo(iCarbonIndex) );
-  CTypes.Add( &AtomsInfo->GetAtomInfo(iNitrogenIndex) );
-  CTypes.Add( &AtomsInfo->GetAtomInfo(iOxygenIndex) );
-  CTypes.Add( &AtomsInfo->GetAtomInfo(iBoronIndex) );
-  CTypes.Add( &AtomsInfo->GetAtomInfo(iSiliconIndex) );
-  CTypes.Add( &AtomsInfo->GetAtomInfo(iSulphurIndex) );
+  CTypes.Add( &AtomsInfo.GetAtomInfo(iCarbonIndex) );
+  CTypes.Add( &AtomsInfo.GetAtomInfo(iNitrogenIndex) );
+  CTypes.Add( &AtomsInfo.GetAtomInfo(iOxygenIndex) );
+  CTypes.Add( &AtomsInfo.GetAtomInfo(iBoronIndex) );
+  CTypes.Add( &AtomsInfo.GetAtomInfo(iSiliconIndex) );
+  CTypes.Add( &AtomsInfo.GetAtomInfo(iSulphurIndex) );
   TSAtomPList ProcessingAtoms;
 
   for( int i=0; i < atoms.Count(); i++ )
@@ -1540,13 +1539,13 @@ void TLattice::AnalyseHAdd(AConstraintGenerator& cg, const TSAtomPList& atoms)  
 
   // treat rings
   TPtrList<TBasicAtomInfo> rcont;
-  rcont.Add( &AtomsInfo->GetAtomInfo(iCarbonIndex) );
+  rcont.Add( &AtomsInfo.GetAtomInfo(iCarbonIndex) );
   for( int i=0; i < 4; i++ )  
     rcont.Add( rcont[0] );
   _ProcessRingHAdd(cg, rcont); // Cp
   rcont.Add( rcont[0] );
   _ProcessRingHAdd(cg, rcont); // Ph
-  rcont.Last() = &AtomsInfo->GetAtomInfo(iNitrogenIndex);
+  rcont.Last() = &AtomsInfo.GetAtomInfo(iNitrogenIndex);
   _ProcessRingHAdd(cg, rcont); // Py
 
   for( int i=0; i < atoms.Count(); i++ )  {
@@ -1585,7 +1584,7 @@ void TLattice::RemoveNonHBonding(TAtomEnvi& Envi)  {
     TSAtom* SA = FindSAtom( Envi.GetLabel(i) );
     AE.Clear();
     UnitCell->GetAtomEnviList(*SA, AE);
-    if( SA->GetAtomInfo() == AtomsInfo->GetAtomInfo(iOxygenIndex) )  {
+    if( SA->GetAtomInfo() == AtomsInfo.GetAtomInfo(iOxygenIndex) )  {
     /* this case needs an investigation, but currently the same atom cannot be a pivoting one ...*/
       if( SA->CAtom() == Envi.GetBase().CAtom() )  {
         Envi.Exclude( SA->CAtom() );
@@ -1608,7 +1607,7 @@ void TLattice::RemoveNonHBonding(TAtomEnvi& Envi)  {
         Envi.Exclude( SA->CAtom() );
       }
     }
-    else if( SA->GetAtomInfo() == AtomsInfo->GetAtomInfo(iNitrogenIndex) )  {
+    else if( SA->GetAtomInfo() == AtomsInfo.GetAtomInfo(iNitrogenIndex) )  {
       if( AE.Count() > 3 )
           Envi.Exclude( SA->CAtom() );
     }

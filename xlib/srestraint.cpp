@@ -3,13 +3,12 @@
 #endif
 
 #include "srestraint.h"
-#include "asymmunit.h"
+#include "refmodel.h"
 
-TSimpleRestraint::TSimpleRestraint(TSRestraintList* parent, const short listType)  {
+TSimpleRestraint::TSimpleRestraint(TSRestraintList& parent, const short listType) : Parent(parent)  {
   Value = 0;
   Esd = Esd1 = 0;
   ListType = listType;
-  Parent = parent;
   AllNonHAtoms = false;
 }
 //..............................................................................
@@ -28,10 +27,12 @@ void TSimpleRestraint::AddAtoms(const TCAtomGroup& atoms)  {
 }
 //..............................................................................
 void TSimpleRestraint::AddAtom(TCAtom& aa, const smatd* ma)  {
+  if( aa.GetParent() != &Parent.GetRM().aunit  )
+    throw TInvalidArgumentException(__OlxSourceInfo, "mismatching asymmetric unit");
   const smatd* tm = NULL;
   if( ma != NULL )  {
     if( !ma->r.IsI() || ma->t.QLength() != 0 ) 
-      tm = &aa.GetParent()->AddUsedSymm( *ma );
+      tm = &Parent.GetRM().AddUsedSymm( *ma );
   }
   InvolvedAtoms.AddNew( &aa, tm );
 }
@@ -47,37 +48,37 @@ void TSimpleRestraint::Validate()  {
     if( InvolvedAtoms.IsNull(i) )  continue;
     if( InvolvedAtoms[i].GetAtom()->IsDeleted() )  {
       if( InvolvedAtoms[i].GetMatrix() != NULL )
-        InvolvedAtoms[i].GetAtom()->GetParent()->RemUsedSymm( *InvolvedAtoms[i].GetMatrix() );
+        Parent.GetRM().RemUsedSymm( *InvolvedAtoms[i].GetMatrix() );
       InvolvedAtoms.NullItem(i);
       if( ListType == rltBonds )  {
         int ei = i + ((i%2)==0 ? 1 : -1);
         if( InvolvedAtoms[ei].GetMatrix() != NULL )
-          InvolvedAtoms[ei].GetAtom()->GetParent()->RemUsedSymm( *InvolvedAtoms[ei].GetMatrix() );
+          Parent.GetRM().RemUsedSymm( *InvolvedAtoms[ei].GetMatrix() );
         InvolvedAtoms.NullItem(ei);
       }
       else if( ListType == rltAngles )  {
         if( (i%3) == 0 )  {
           if( InvolvedAtoms[i+1].GetMatrix() != NULL )
-            InvolvedAtoms[i+1].GetAtom()->GetParent()->RemUsedSymm( *InvolvedAtoms[i+1].GetMatrix() );
+            Parent.GetRM().RemUsedSymm( *InvolvedAtoms[i+1].GetMatrix() );
           InvolvedAtoms.NullItem(i+2);
           if( InvolvedAtoms[i+2].GetMatrix() != NULL )
-            InvolvedAtoms[i+2].GetAtom()->GetParent()->RemUsedSymm( *InvolvedAtoms[i+2].GetMatrix() );
+            Parent.GetRM().RemUsedSymm( *InvolvedAtoms[i+2].GetMatrix() );
           InvolvedAtoms.NullItem(i+2);
         }
         else if( (i%3) == 1 )  {
           if( InvolvedAtoms[i-1].GetMatrix() != NULL )
-            InvolvedAtoms[i-1].GetAtom()->GetParent()->RemUsedSymm( *InvolvedAtoms[i-1].GetMatrix() );
+            Parent.GetRM().RemUsedSymm( *InvolvedAtoms[i-1].GetMatrix() );
           InvolvedAtoms.NullItem(i+1);
           if( InvolvedAtoms[i+1].GetMatrix() != NULL )
-            InvolvedAtoms[i+1].GetAtom()->GetParent()->RemUsedSymm( *InvolvedAtoms[i+1].GetMatrix() );
+            Parent.GetRM().RemUsedSymm( *InvolvedAtoms[i+1].GetMatrix() );
           InvolvedAtoms.NullItem(i+1);
         }
         else if( (i%3) == 2 )  {
           if( InvolvedAtoms[i-1].GetMatrix() != NULL )
-            InvolvedAtoms[i-1].GetAtom()->GetParent()->RemUsedSymm( *InvolvedAtoms[i-1].GetMatrix() );
+            Parent.GetRM().RemUsedSymm( *InvolvedAtoms[i-1].GetMatrix() );
           InvolvedAtoms.NullItem(i-2);
           if( InvolvedAtoms[i-2].GetMatrix() != NULL )
-            InvolvedAtoms[i-2].GetAtom()->GetParent()->RemUsedSymm( *InvolvedAtoms[i-2].GetMatrix() );
+            Parent.GetRM().RemUsedSymm( *InvolvedAtoms[i-2].GetMatrix() );
           InvolvedAtoms.NullItem(i-2);
         }
       }
@@ -88,14 +89,14 @@ void TSimpleRestraint::Validate()  {
 //..............................................................................
 void TSimpleRestraint::RemoveAtom(int i)  {
   if( InvolvedAtoms[i].GetMatrix() != NULL )
-    InvolvedAtoms[i].GetAtom()->GetParent()->RemUsedSymm( *InvolvedAtoms[i].GetMatrix() );
+    Parent.GetRM().RemUsedSymm( *InvolvedAtoms[i].GetMatrix() );
   InvolvedAtoms.Delete(i);
 }
 //..............................................................................
 void TSimpleRestraint::Delete()  {
   for( int i=0; i < InvolvedAtoms.Count(); i++ )  {
     if( InvolvedAtoms[i].GetMatrix() != NULL )
-      InvolvedAtoms[i].GetAtom()->GetParent()->RemUsedSymm( *InvolvedAtoms[i].GetMatrix() );
+      Parent.GetRM().RemUsedSymm( *InvolvedAtoms[i].GetMatrix() );
   }
   InvolvedAtoms.Clear();
 }
@@ -113,7 +114,7 @@ const TSimpleRestraint& TSimpleRestraint::operator = ( const TSimpleRestraint& s
 }
 */
 //..............................................................................
-void TSimpleRestraint::Assign(TAsymmUnit& tau, const TSimpleRestraint& sr)  {
+void TSimpleRestraint::Assign(const TSimpleRestraint& sr)  {
   Clear();
   ListType = sr.GetListType();
   Value = sr.Value;
@@ -123,9 +124,10 @@ void TSimpleRestraint::Assign(TAsymmUnit& tau, const TSimpleRestraint& sr)  {
 
   if( sr.AtomCount() == 0 )  return;
 
-  TAsymmUnit * au = sr.GetAtom(0).GetAtom()->GetParent();
+  TAsymmUnit& au = sr.Parent.GetRM().aunit;
+  TAsymmUnit& tau = Parent.GetRM().aunit;
 
-  if( au == &tau )  {
+  if( &au == &tau )  {
     for(int i=0; i < sr.InvolvedAtoms.Count(); i++ )
       AddAtom( *sr.InvolvedAtoms[i].GetAtom(), sr.InvolvedAtoms[i].GetMatrix() );
   }
@@ -203,13 +205,13 @@ void TSimpleRestraint::FromDataItem(TDataItem& item) {
 //..............................................................................
 //..............................................................................
 //..............................................................................
-void TSRestraintList::Assign(TAsymmUnit& au, const TSRestraintList& rl)  {
+void TSRestraintList::Assign(const TSRestraintList& rl)  {
   if( rl.GetRestraintListType() != RestraintListType )
     throw TInvalidArgumentException(__OlxSourceInfo, "list type mismatch");
 
   Clear();
   for(int i=0; i < rl.Count(); i++)  {
-    AddNew().Assign(au, rl.Restraints[i]);
+    AddNew().Assign(rl.Restraints[i]);
   }
 }
 //..............................................................................

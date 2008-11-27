@@ -8,6 +8,8 @@ BeginXlibNamespace()
 // I am really tired of this bshyt
 #undef AddAtom
 class TAsymmUnit;
+class RefinementModel;
+class TSRestraintList;
 // restraint atom list types
 const short rltNone   = 0, //default value for the constructor...
             rltAtoms  = 1, // set of independent atoms
@@ -29,9 +31,9 @@ class TSimpleRestraint : public IEObject  {
     }
     return false;
   }
-  class TSRestraintList* Parent;
+  TSRestraintList& Parent;
 public:
-  TSimpleRestraint(TSRestraintList* parent, const short listType);
+  TSimpleRestraint(TSRestraintList& parent, const short listType);
 
   virtual ~TSimpleRestraint();
   void AddAtoms(const TCAtomGroup& atoms);
@@ -39,7 +41,8 @@ public:
   void AddAtomPair(TCAtom& aa, const smatd* ma,
                    TCAtom& ab, const smatd* mb);
 
-  inline TSRestraintList* GetParent()  {  return Parent;  }
+  inline const TSRestraintList& GetParent() const {  return Parent;  }
+  inline TSRestraintList& GetParent()             {  return Parent;  }
 
   void RemoveAtom(int i);
   void Delete();
@@ -52,7 +55,7 @@ public:
   void Substruct( TSimpleRestraint& sr);
 
   // copies data from a restraon, but with atoms from the thisAU
-  void Assign( TAsymmUnit& thisAU, const TSimpleRestraint& );
+  void Assign(const TSimpleRestraint& );
   //const TSimpleRestraint& operator = ( const TSimpleRestraint& );
 
   inline int AtomCount()  const  {  return InvolvedAtoms.Count();  }
@@ -73,10 +76,13 @@ public:
 class TSRestraintList : public IEObject  {
   TTypeList<TSimpleRestraint> Restraints;
   short RestraintListType;
+  RefinementModel& RefMod;
 public:
-  TSRestraintList(const short restraintListType)  {  RestraintListType = restraintListType;  }
+  TSRestraintList(RefinementModel& rm, const short restraintListType) : RefMod(rm) {
+    RestraintListType = restraintListType;  
+  }
   virtual ~TSRestraintList()  {}
-  TSimpleRestraint& AddNew()  {  return Restraints.AddNew(this, RestraintListType);  }
+  TSimpleRestraint& AddNew()  {  return Restraints.Add( new TSimpleRestraint(*this, RestraintListType));  }
   // function checks uniquesness of the restraint data - previously defined values are removed
   void ValidateRestraint( TSimpleRestraint& sr);
 
@@ -84,9 +90,12 @@ public:
   void Release(TSimpleRestraint& sr);
   inline void Restore(TSimpleRestraint& sr)  {  Restraints.Add(sr);  }
 
+  const RefinementModel& GetRM() const {  return RefMod;  }
+  RefinementModel& GetRM()             {  return RefMod;  }
+
   void OnCAtomCrdChange( TCAtom* ca, const smatd& matr );
   
-  void Assign(TAsymmUnit& au, const TSRestraintList& rl);
+  void Assign(const TSRestraintList& rl);
   inline void Clear()  {  Restraints.Clear();  }
   inline int Count() const {  return Restraints.Count();  }
   inline TSimpleRestraint& operator [] (int i){  return Restraints[i];  }

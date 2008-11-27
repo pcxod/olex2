@@ -33,7 +33,7 @@ private:
 protected:
   TActionQList Actions;
   bool Generated;
-  TAtomsInfo* AtomsInfo;  // a pointer only
+  TAtomsInfo& AtomsInfo;  // reference to TAtomsInfo::Instance
   void Generate(TCAtomPList* Template, bool ClearCont, bool IncludeQ);  // generates atoms using current matrices list
   void GenerateAtoms( const TSAtomPList& atoms, TSAtomPList& result, const smatd_plist& matrices);
   void ClearFragments();
@@ -59,7 +59,7 @@ protected:
   void Disassemble();
   void RestoreCoordinates();
 public:
-  TLattice(TAtomsInfo *Info);
+  TLattice();
   virtual ~TLattice();
 
   TActionQueue* OnStructureGrow, *OnStructureUniq;
@@ -114,7 +114,6 @@ public:
 
   void SetAnis( const TCAtomPList& atoms, bool anis );
 
-  inline TAtomsInfo& GetAtomsInfo()         const {  return *AtomsInfo; }
   inline TUnitCell& GetUnitCell()           const {  return *UnitCell; }
   inline TAsymmUnit& GetAsymmUnit()         const {  return *AsymmUnit; }
   void UpdateAsymmUnit();

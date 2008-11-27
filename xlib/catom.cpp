@@ -11,6 +11,7 @@
 #include "asymmunit.h"
 #include "exception.h"
 #include "estrlist.h"
+#include "refmodel.h"
 
 const short TCAtom::CrdFixedValuesOffset  = 0;
 const short TCAtom::OccpFixedValuesOffset = 3;
@@ -204,7 +205,7 @@ void TCAtom::ToDataItem(TDataItem& item) const  {
 }
 //..............................................................................
 void TCAtom::FromDataItem(TDataItem& item)  {
-  FAtomInfo = TAtomsInfo::GetInstance()->FindAtomInfoBySymbol( item.GetFieldValue("type") );
+  FAtomInfo = TAtomsInfo::GetInstance().FindAtomInfoBySymbol( item.GetFieldValue("type") );
   if( FAtomInfo == NULL )
     throw TFunctionFailedException(__OlxSourceInfo, "invalid atom type");
 
@@ -270,16 +271,16 @@ void TCAtom::AttachAtomI(TCAtom *CA)  {
 //..............................................................................
 //..............................................................................
 //..............................................................................
-olxstr TGroupCAtom::GetFullLabel() const  {
+olxstr TGroupCAtom::GetFullLabel(RefinementModel& rm) const  {
   olxstr name(Atom->GetLabel());
   if( Atom->GetResiId() == -1 )  {
     if( Matrix != 0 )
-      name << "_$" << (Atom->GetParent()->UsedSymmIndex(*Matrix) + 1);
+      name << "_$" << (rm.UsedSymmIndex(*Matrix) + 1);
   }
   else  {
     name << '_' << Atom->GetParent()->GetResidue(Atom->GetResiId()).GetNumber();
     if( Matrix != 0 )
-      name << '$' << (Atom->GetParent()->UsedSymmIndex(*Matrix) + 1);
+      name << '$' << (rm.UsedSymmIndex(*Matrix) + 1);
   }
   return name;
 }

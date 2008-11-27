@@ -1736,7 +1736,7 @@ void TMainForm::OnAtomTypePTable(wxCommandEvent& event)  {
   if( XA->Selected() )  Tmp << "sel";
   else                  Tmp << "#x" << XA->GetXAppId();
   Tmp << ' ';
-  TPTableDlg *Dlg = new TPTableDlg(this, FXApp->AtomsInfo());
+  TPTableDlg *Dlg = new TPTableDlg(this, &TAtomsInfo::GetInstance());
   if( Dlg->ShowModal() == wxID_OK )  {
     Tmp << Dlg->Selected()->GetSymbol();
     Tmp << XA->Atom().GetLabel().SubStringFrom( XA->Atom().GetAtomInfo().GetSymbol().Length() );

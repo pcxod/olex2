@@ -173,10 +173,10 @@ public:
     count
   */
   void ParseElementString(const olxstr& su, TTypeList<AnAssociation2<olxstr, int> >& res) const;
-  inline static TAtomsInfo* GetInstance() {
+  inline static TAtomsInfo& GetInstance() {
     if( Instance == NULL )
       throw TFunctionFailedException(__OlxSourceInfo, "object is not initialised");
-    return Instance;
+    return *Instance;
   }
   // combines dublicate types and expands shortcuts such as Me, Ph and Cp
   olxstr& NormaliseAtomString(olxstr& str) const;

@@ -27,14 +27,6 @@ void TXDMas::LoadFromStrings(const TStrList& Strings)  {
       GetAsymmUnit().Angles()[0].E() = toks[4].ToDouble();
       GetAsymmUnit().Angles()[1].E() = toks[5].ToDouble();
       GetAsymmUnit().Angles()[2].E() = toks[6].ToDouble();
-      int j = 0;
-      if( GetAsymmUnit().Axes()[0].GetE() != 0 )  {  Error += GetAsymmUnit().Axes()[0].GetE()/GetAsymmUnit().Axes()[0].GetV(); j++; }
-      if( GetAsymmUnit().Axes()[1].GetE() != 0 )  {  Error += GetAsymmUnit().Axes()[1].GetE()/GetAsymmUnit().Axes()[1].GetV(); j++; }
-      if( GetAsymmUnit().Axes()[2].GetE() != 0 )  {  Error += GetAsymmUnit().Axes()[2].GetE()/GetAsymmUnit().Axes()[2].GetV(); j++; }
-      if( GetAsymmUnit().Angles()[0].GetE() != 0 ){  Error += GetAsymmUnit().Angles()[0].GetE()/GetAsymmUnit().Angles()[0].GetV(); j++; }
-      if( GetAsymmUnit().Angles()[1].GetE() != 0 ){  Error += GetAsymmUnit().Angles()[1].GetE()/GetAsymmUnit().Angles()[1].GetV(); j++; }
-      if( GetAsymmUnit().Angles()[2].GetE() != 0 ){  Error += GetAsymmUnit().Angles()[2].GetE()/GetAsymmUnit().Angles()[2].GetV(); j++; }
-      if( j != 0 )  Error /= j;
     }
     else if( Strings[i].StartFromi("CELL") )  {
       toks.Clear();
@@ -100,10 +92,6 @@ void TXDMas::LoadFromStrings(const TStrList& Strings)  {
         atom.ccrd()[0] = toks[12].ToDouble();
         atom.ccrd()[1] = toks[13].ToDouble();
         atom.ccrd()[2] = toks[14].ToDouble();
-        // initialise uncertanties using average cell error
-        atom.ccrdEsd()[0] = fabs(atom.ccrd()[0]*Error);
-        atom.ccrdEsd()[1] = fabs(atom.ccrd()[1]*Error);
-        atom.ccrdEsd()[2] = fabs(atom.ccrd()[2]*Error);
         if( (i+1) < crds.Count() && crds[i+1].IndexOf('(') == -1 )  {
           toks.Clear();
           toks.Strtok( crds[i+1], ' ');

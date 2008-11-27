@@ -16,7 +16,7 @@
 //----------------------------------------------------------------------------//
 // TMol function bodies
 //----------------------------------------------------------------------------//
-TMol::TMol(TAtomsInfo *S):TBasicCFile(S)  {   }
+TMol::TMol()  {   }
 //..............................................................................
 TMol::~TMol()  {  Clear();    }
 //..............................................................................
@@ -87,8 +87,8 @@ void TMol::LoadFromStrings(const TStrList& Strings)  {
 
   olxstr Tmp1, Tmp, Msg;
   vec3d StrCenter;
-  FTitle = "OLEX: imported from MDL MOL";
-
+  Title = "OLEX: imported from MDL MOL";
+  TAtomsInfo& AtomsInfo = TAtomsInfo::GetInstance();
   GetAsymmUnit().Axes()[0] = 1;
   GetAsymmUnit().Axes()[1] = 1;
   GetAsymmUnit().Axes()[2] = 1;
@@ -108,7 +108,7 @@ void TMol::LoadFromStrings(const TStrList& Strings)  {
       Ay = Tmp.SubString(10, 10).ToDouble();
       Az = Tmp.SubString(20, 10).ToDouble();
       Tmp1 = Tmp.SubString(31, 3).Trim(' ');
-      if( AtomsInfo->IsAtom(Tmp1) )  {
+      if( AtomsInfo.IsAtom(Tmp1) )  {
         TCAtom& CA = GetAsymmUnit().NewAtom();
         CA.ccrd()[0] = Ax;
         CA.ccrd()[1] = Ay;

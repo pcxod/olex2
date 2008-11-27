@@ -184,21 +184,21 @@ bool TGlXApp::OnInit()  {
   TProgress *P = new TProgress;
   XApp->OnProgress->Add(P);
 
-  TCif *Cif = new TCif(XApp->AtomsInfo());  // the objects will be automatically removed by the XApp
+  TCif *Cif = new TCif;  // the objects will be automatically removed by the XApp
   XApp->RegisterXFileFormat(Cif, "cif");
   XApp->RegisterXFileFormat(Cif, "fcf");
   XApp->RegisterXFileFormat(Cif, "fco");
-  TMol *Mol = new TMol(XApp->AtomsInfo());  // the objects will be automatically removed by the XApp
+  TMol *Mol = new TMol;  // the objects will be automatically removed by the XApp
   XApp->RegisterXFileFormat(Mol, "mol");
-  TIns *Ins = new TIns(XApp->AtomsInfo());
+  TIns *Ins = new TIns;
   XApp->RegisterXFileFormat(Ins, "ins");
   XApp->RegisterXFileFormat(Ins, "res");
-  TXyz *Xyz = new TXyz(XApp->AtomsInfo());
+  TXyz *Xyz = new TXyz;
   XApp->RegisterXFileFormat(Xyz, "xyz");
-  XApp->RegisterXFileFormat(new TP4PFile(), "p4p");
-  XApp->RegisterXFileFormat(new TCRSFile(), "crs");
-  XApp->RegisterXFileFormat(new TPdb(XApp->AtomsInfo()), "pdb");
-  XApp->RegisterXFileFormat(new TXDMas(XApp->AtomsInfo()), "mas");
+  XApp->RegisterXFileFormat(new TP4PFile, "p4p");
+  XApp->RegisterXFileFormat(new TCRSFile, "crs");
+  XApp->RegisterXFileFormat(new TPdb, "pdb");
+  XApp->RegisterXFileFormat(new TXDMas, "mas");
 
   // set backgrownd color of the GlRender
   XApp->ClearColor(0x3f3f3f);
