@@ -91,11 +91,12 @@ public:
     res[2] = (CC)(H*mat.r[2][0] + K*mat.r[2][1] + L*mat.r[2][2]);
   }
 //..............................................................................
-  /* replaces hkl with standard hkl accroding to provieded matrices, calculates
-   reflection multiplicity and if it is centric or systematically absent
-  */
-  void Standardise(const smatd_list &ml, bool CheckInversion)  {
+  /* replaces hkl with standard hkl accroding to provided matrices. Initialises Absent flag */
+  void Standardise(const smatd_list &ml)  {
     vec3i hklv;
+    Multiplicity = 1;
+    Centric = false;
+    Absent = false;
     for(int i=0; i < ml.Count(); i++ )  {
       MulHkl(hklv, ml[i]);
       if( (hklv[2] > L) ||        // sdandardise then ...
@@ -107,15 +108,6 @@ public:
         if( !Absent )  {
           double l = PhaseShift(ml[i]);
           Absent = (fabs( l - Round(l) ) > 0.01);
-        }
-      }
-
-      if( CheckInversion )  {
-        hklv *= -1;
-        if( (hklv[2] > L) ||
-          ((hklv[2] == L) && (hklv[1] > K) ) ||
-          ((hklv[2] == L) && (hklv[1] == K) && (hklv[0] > H)) )   {
-          H = hklv[0];  K = hklv[1];  L = hklv[2];
         }
       }
     }
@@ -140,10 +132,9 @@ public:
           Absent = (fabs( l - Round(l) ) > 0.01);
         }
       }
-      else if( EqNegHkl(hklv) )  {  // centrocymmetric reflection
-        IncDegeneracy();
+      else if( EqNegHkl(hklv) )  // centrocymmetric reflection
         Centric = true;
-      }
+        //IncDegeneracy();
     }
   }
 //..............................................................................

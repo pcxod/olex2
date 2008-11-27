@@ -70,7 +70,7 @@ public:
   void Clear();
   virtual ~TLst();
   bool LoadFromFile(const olxstr &FN);
-  void SynchroniseOmits(class TIns* ins);
+  void SynchroniseOmits(class RefinementModel& rm);
   bool ExportHTML( const short Param, TStrList &Html, bool TableDef=true);
   inline int DRefCount() const {  return FDRefs.Count(); }
   inline TLstRef& DRef(int i)  {  return FDRefs[i]; }

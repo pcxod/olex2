@@ -129,16 +129,17 @@ template <class RefListMerger>
 
     stats.FriedelOppositesMerged = (inverseMatIndex != -1);
     // standartise reflection indexes according to provieded list of symmetry operators
-    for( int i=0; i < refs.Count(); i++ )
-      refs[i]->Standardise(ml, stats.FriedelOppositesMerged);
+    const int ref_cnt = refs.Count();
+    for( int i=0; i < ref_cnt; i++ )
+      refs[i]->Standardise(ml);
     // sort the list
     TReflection::SortPList(refs);
     // merge reflections
     double Sdiff = 0, SI = 0;
     toMerge.Add(refs[0]);  // reference reflection
-    output.SetCapacity( refs.Count() ); // better more that none :)
-    for( int i=0; i < refs.Count(); )  {
-      while( (++i < refs.Count()) && (toMerge[0]->CompareTo(*refs[i]) == 0) )
+    output.SetCapacity( ref_cnt ); // better more that none :)
+    for( int i=0; i < ref_cnt; )  {
+      while( (++i < ref_cnt) && (toMerge[0]->CompareTo(*refs[i]) == 0) )
         toMerge.Add( refs[i] );
 
       if( !toMerge[0]->IsAbsent() )  {
@@ -163,13 +164,13 @@ template <class RefListMerger>
       else
         stats.SystematicAbsentcesRemoved++;
 
-      if( i >= refs.Count() )  break;
+      if( i >= ref_cnt )  break;
 
       toMerge.Clear();
       toMerge.Add( refs[i] );
     }
 
-    for( int i=0; i < refs.Count(); i++ )
+    for( int i=0; i < ref_cnt; i++ )
       delete refs[i];
 
     stats.Rint = (SI != 0) ? Sdiff/SI : 0.0;

@@ -64,7 +64,7 @@ protected:
   void _SaveFVar(TStrList& SL);
   void _SaveSymm(TStrList& SL);
   void _SaveSizeTemp(TStrList& SL);
-  void _SaveHklSrc(TStrList& SL);
+  void _SaveHklInfo(TStrList& SL);
   void _SaveRefMethod(TStrList& SL);
   void _ProcessAfix(TCAtom& a, ParseContext& cx);
   // if atoms is saved, its Tag is added to the index (if not NULL) 
@@ -335,10 +335,20 @@ public:
       }
       else if( Toks[0].Comparei("TITL") == 0 )
         Title = Toks.Text(' ', 1);
+      else if( Toks[0].Comparei("MERG") == 0 && Toks.Count() == 2 )
+        rm.SetMERG( Toks[1].ToInt() );
+      else if( Toks[0].Comparei("SIZE") == 0 && (Toks.Count() == 4) )
+        rm.expl.SetCrystalSize(Toks[1].ToDouble(), Toks[2].ToDouble(), Toks[3].ToDouble() );
+      else if( Toks[0].Comparei("BASF") == 0 && (Toks.Count() < 1) )
+        rm.SetBASF( Toks.SubListFrom(1) );
+      else if( Toks[0].Comparei("OMIT") == 0 )
+        rm.AddOMIT( Toks.SubListFrom(1) );
+      else if( Toks[0].Comparei("TWIN") == 0 )
+        rm.SetTWIN( Toks.SubListFrom(1) );
       else if( Toks[0].Comparei("TEMP") == 0 && Toks.Count() == 2 )
         rm.expl.SetTemperature( Toks[1].ToDouble() );
       else if( Toks[0].Comparei("HKLF") == 0 && (Toks.Count() > 1) )
-        rm.SetHKLF( Toks.Text(' ', 1) );
+        rm.SetHKLF( Toks.SubListFrom(1) );
       else if( Toks[0].Comparei("L.S.") == 0  || Toks[0].Comparei("CGLS") == 0 )  {
         rm.SetRefinementMethod(Toks[0]);
         rm.LS.Resize( Toks.Count() - 1 );

@@ -498,14 +498,16 @@ void XLibMacros::macDelIns(TStrObjList &Cmds, const TParamList &Options, TMacroE
   TIns& Ins = TXApp::GetInstance().XFile().GetLastLoader<TIns>();
   if( Cmds[0].IsNumber() )  {
     int insIndex = Cmds[0].ToInt();
-    if( Ins.InsName(insIndex).Comparei("OMIT") == 0 )
-      isOmit = true;
     Ins.DelIns(insIndex);
   }
   else  {
-    for( int i=0; i < Ins.InsCount(); i++ )  {
-      if( Ins.InsName(i).Comparei(Cmds[0]) == 0 )  {
-        Ins.DelIns(i);  i--;  continue;
+    if( Cmds[0].Comparei("OMIT") == 0 )
+      TXApp::GetInstance().XFile().GetRM().ClearOmits();
+    else  {
+      for( int i=0; i < Ins.InsCount(); i++ )  {
+        if( Ins.InsName(i).Comparei(Cmds[0]) == 0 )  {
+          Ins.DelIns(i);  i--;  continue;
+        }
       }
     }
   }

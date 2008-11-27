@@ -2970,7 +2970,7 @@ bool TMainForm::QPeaksTable(const olxstr &FN, bool TableDef)  {
 //..............................................................................
 void TMainForm::BadReflectionsTable(bool TableDef)  {
   if( FXApp->CheckFileType<TIns>() )
-    Lst.SynchroniseOmits( &FXApp->XFile().GetLastLoader<TIns>() );
+    Lst.SynchroniseOmits( FXApp->XFile().GetRM() );
 
   TTTable<TStrList> Table;
   TStrList Output;

@@ -1,12 +1,27 @@
 #include "refmodel.h"
 #include "lattice.h"
 #include "symmparser.h"
+#include "hkl.h"
 
 RefinementModel::RefinementModel(TAsymmUnit& au) : rDFIX(*this, rltBonds), rDANG(*this, rltBonds), 
   rSADI(*this, rltBonds), rCHIV(*this, rltAtoms), rFLAT(*this, rltGroup), rDELU(*this, rltAtoms), 
   rSIMU(*this, rltAtoms), rISOR(*this, rltAtoms), rEADP(*this, rltAtoms), 
   aunit(au)  {
-  HKLF = "4";
+  SetDefaults();
+}
+//....................................................................................................
+void RefinementModel::SetDefaults() {
+  HKLF = 4;
+  HKLF_s = def_HKLF_s;
+  HKLF_mat.I();
+  HKLF_wt = def_HKLF_wt;
+  HKLF_m = def_HKLF_m;
+  MERG = def_MERG;
+  OMIT_s = def_OMIT_s;
+  OMIT_2t = def_OMIT_2t;
+  OMIT_set = TWIN_set = false;
+  TWIN_n = def_TWIN_n;
+  TWIN_mat.I() *= -1;
 }
 //....................................................................................................
 void RefinementModel::Clear() {
@@ -29,11 +44,13 @@ void RefinementModel::Clear() {
   used_weight.Resize(0);
   proposed_weight.Resize(0);
   FVAR.Clear();
-  HKLF = "4";
   expl.Clear();
   RefinementMethod = "L.S.";
   SolutionMethod = EmptyString;
   HKLSource = EmptyString;
+  Omits.Clear();
+  BASF.Clear();
+  SetDefaults();
 }
 //....................................................................................................
 const smatd& RefinementModel::AddUsedSymm(const smatd& matr) {
@@ -66,6 +83,19 @@ RefinementModel& RefinementModel::Assign(const RefinementModel& rm, bool AssignA
   LS = rm.LS;
   PLAN = rm.PLAN;
   HKLF = rm.HKLF;
+  HKLF_s = rm.HKLF_s;
+  HKLF_mat = rm.HKLF_mat;
+  HKLF_wt = rm.HKLF_wt;
+  HKLF_m = rm.HKLF_m;
+  MERG = rm.MERG;
+  OMIT_s = rm.OMIT_s;
+  OMIT_2t = rm.OMIT_2t;
+  OMIT_set = rm.OMIT_set;
+  Omits = rm.Omits;
+  TWIN_mat = rm.TWIN_mat;
+  TWIN_n = rm.TWIN_n;
+  TWIN_set = rm.TWIN_set;
+  BASF = rm.BASF;
   HKLSource = rm.HKLSource;
   RefinementMethod = rm.RefinementMethod;
   SolutionMethod = rm.SolutionMethod;
@@ -125,6 +155,16 @@ double RefinementModel::FindRestrainedDistance(const TCAtom& a1, const TCAtom& a
     }
   }
   return -1;
+}
+//....................................................................................................
+void RefinementModel::SetHKLSource(const olxstr& src) {
+  if( HKLSource == src )  return;
+  HKLSource = src;
+  //if( TEFile::FileExists(src) )  {
+  //  THklFile hf;
+  //  hf.LoadFromFile(src);
+  //  hf.
+  //}
 }
 //....................................................................................................
 void RefinementModel::ToDataItem(TDataItem& item) const {

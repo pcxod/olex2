@@ -141,9 +141,20 @@ public:
     Strings.DeleteRange(From, To);
   }
 
-  void SubList(int offset, int count, TTStrList& SL) const  {
+  TTStrList& SubList(int offset, int count, TTStrList& SL) const  {
     for(int i=offset; i < offset+count; i++ )
       SL.Add( String(i) );
+    return SL;
+  }
+
+  TTStrList SubListFrom(int offset) const  {
+    TTStrList SL;
+    return SubList(offset, Strings.Count()-offset, SL);
+  }
+
+  TTStrList SubListTo(int to) const  {
+    TTStrList SL;
+    return SubList(0, to, SL);
   }
 
   template <class SC1, class T1>
@@ -446,9 +457,20 @@ public:
   }
   virtual ~TTOStringList()  {  }
 
-  void SubList(int offset, int count, TTOStringList& SL) const  {
+  TTOStringList& SubList(int offset, int count, TTOStringList& SL) const  {
     for(int i=offset; i < offset+count; i++ )
       SL.Add( TTStrList<SC,GC>::String(i), Object(i));
+    return SL;
+  }
+
+  TTOStringList SubListFrom(int offset) const  {
+    TTOStringList SL;
+    return SubList(offset, TTStrList<SC,GC>::Count()-offset, SL);
+  }
+
+  TTOStringList SubListTo(int to) const  {
+    TTOStringList SL;
+    return SubList(0, to, SL);
   }
 
   template <class SC1, class T1>
