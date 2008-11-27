@@ -144,6 +144,12 @@ public:
   inline TEComplex operator - (const T a) const {  return TEComplex<T>(_A-a, _B);  }
   inline TEComplex operator * (const T a) const {  return TEComplex<T>(_A*a, _B*a);  }
   inline TEComplex operator / (const T a) const {  return TEComplex<T>(_A/a, _B/a);  }
+  inline bool operator == (const TEComplex& _compl) const {
+    return (_A == _compl._A && _B == _compl._B);
+  }
+  inline bool operator != (const TEComplex& _compl) const {
+    return (_A != _compl._A || _B != _compl._B);
+  }
 
 };
 

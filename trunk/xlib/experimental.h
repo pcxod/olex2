@@ -4,26 +4,39 @@
 #include "threex3.h"
 BeginXlibNamespace()
 
-class TExperimentalDetails {
-  double Radiation;
+class ExperimentalDetails {
+  double Radiation, RadiationEnergy;
   double Temperature;
   vec3d CrystalSize;
 public:
-  TExperimentalDetails() : Radiation(0.71073), Temperature(150) {}
-  TExperimentalDetails(const ExperimentalDetails& ed)  {
+  ExperimentalDetails() : Temperature(0) {
+    SetRadiation(0.71073);
+  }
+  ExperimentalDetails(const ExperimentalDetails& ed)  {
     *this = ed;
   }
-  TExperimentalDetails& operator = (const TExperimentalDetails& ed) {
+  ExperimentalDetails& operator = (const ExperimentalDetails& ed) {
     Radiation = ed.Radiation;
     Temperature = ed.Temperature;
     CrystalSize = ed.CrystalSize;
     return *this;
   }
-  DefPropP(double, Radiation)
+  double GetRadiation() const {  return Radiation;  }
+  void SetRadiation(double lambda) {
+    Radiation = lambda;
+    RadiationEnergy = XElementLib::Wavelength2eV(Radiation);
+  }
+  double GetRadiationEnergy() const {  return RadiationEnergy;  }
+
   DefPropP(double, Temperature)
   DefPropC(vec3d, CrystalSize)
   void SetCrystalSize(double x, double y, double z)  {
     CrystalSize = vec3d(x,y,z);
+  }
+  void Clear() {
+    SetRadiation(0.71073);
+    CrystalSize.Null();
+    Temperature = 0;
   }
 };
 

@@ -13,7 +13,7 @@ public:
   bool Init(TStrObjList &Cmds, const TParamList &Options) {
     if( !TGlXApp::GetGXApp()->CheckFileType<TIns>() )  return false;
     Hfix = Cmds.IsEmpty() ? 0 : Cmds[0].ToInt();
-    xlConGen = new TXlConGen( &TGlXApp::GetGXApp()->XFile().GetLastLoader<TIns>() );
+    xlConGen = new TXlConGen( TGlXApp::GetGXApp()->XFile().GetRM() );
     TGlXApp::GetMainForm()->SetUserCursor( Hfix, "hfix");
     TGlXApp::GetMainForm()->executeMacro("labels -a -h");
     return true;
@@ -54,7 +54,7 @@ public:
         if( parts.IsEmpty() )  {
           int afix = TXlConGen::ShelxToOlex(Hfix, AE);
           if( afix != -1 )  {
-            xlConGen->FixAtom(AE, afix, TAtomsInfo::GetInstance()->GetAtomInfo(iHydrogenIndex));
+            xlConGen->FixAtom(AE, afix, TAtomsInfo::GetInstance().GetAtomInfo(iHydrogenIndex));
             TGlXApp::GetMainForm()->executeMacro("fuse");
           }
         }
@@ -78,15 +78,16 @@ public:
             }
             if( eqiv != NULL )  {
               TIns& ins = TGlXApp::GetGXApp()->XFile().GetLastLoader<TIns>();
-              const smatd& e = TGlXApp::GetGXApp()->XFile().GetAsymmUnit().AddUsedSymm(*eqiv);
-              int ei = TGlXApp::GetGXApp()->XFile().GetAsymmUnit().UsedSymmIndex(e)+1;
-              ins.AddIns(olxstr("FREE ") << XA->Atom().GetLabel() << ' ' << XA->Atom().GetLabel() << "_$" << ei );
+              const smatd& e = TGlXApp::GetGXApp()->XFile().GetRM().AddUsedSymm(*eqiv);
+              int ei = TGlXApp::GetGXApp()->XFile().GetRM().UsedSymmIndex(e)+1;
+              ins.AddIns(olxstr("FREE ") << XA->Atom().GetLabel() << ' ' << XA->Atom().GetLabel() << "_$" << ei, 
+                TGlXApp::GetGXApp()->XFile().GetRM() );
               delete eqiv;
             }
             //
             int afix = TXlConGen::ShelxToOlex(Hfix, AE);
             if( afix != -1 )  {
-              xlConGen->FixAtom(AE, afix, TAtomsInfo::GetInstance()->GetAtomInfo(iHydrogenIndex), false, &generated);
+              xlConGen->FixAtom(AE, afix, TAtomsInfo::GetInstance().GetAtomInfo(iHydrogenIndex), false, &generated);
               if( !generated.IsEmpty() )  {
                 for( int j=0; j < generated.Count(); j++ )  {
                   generated[j]->SetPart( parts[i] );

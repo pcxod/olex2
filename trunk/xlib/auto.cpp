@@ -522,7 +522,7 @@ int SearchCompareFunc( const TAutoDBNode* a, const TAutoDBNode* b )  {
 TAutoDB* TAutoDB::Instance = NULL;
 
 
-TAutoDB::TAutoDB(TXFile& xfile, ALibraryContainer& lc) : XFile(xfile)  {
+TAutoDB::TAutoDB(TXFile& xfile, ALibraryContainer& lc) : XFile(xfile), AtomsInfo(TAtomsInfo::GetInstance())  {
   if( Instance != NULL )
     throw TFunctionFailedException(__OlxSourceInfo, "dublicated object instance");
   Instance = this;
@@ -1183,7 +1183,7 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
   for(int i=0; i < sn_count; i++ )  {
     if( sn->Node(i).GetTag() != -1 && guesses[i].atom->GetAtomInfo() != sn->Node(i).GetTag() )  {
       int change_evt = -1;
-      TBasicAtomInfo* l_bai = &XFile.GetAtomsInfo().GetAtomInfo(sn->Node(i).GetTag());
+      TBasicAtomInfo* l_bai = &AtomsInfo.GetAtomInfo(sn->Node(i).GetTag());
       if( proposed_atoms != NULL )  { // change to only provided atoms if in the guess list
         if( proposed_atoms->IndexOf( l_bai ) != -1 )  {
           change_evt = 0;

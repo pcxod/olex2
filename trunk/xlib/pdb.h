@@ -11,7 +11,7 @@ private:
   void Clear();
 protected:
 public:
-  TPdb(TAtomsInfo *S);
+  TPdb();
   virtual ~TPdb();
 
   virtual void SaveToStrings(TStrList& Strings);
@@ -19,7 +19,7 @@ public:
   virtual bool Adopt(TXFile *XF);
   void DeleteAtom(TCAtom *CA);
 
-  virtual IEObject* Replicate()  const {  return new TPdb(AtomsInfo);  }
+  virtual IEObject* Replicate()  const {  return new TPdb;  }
 };
 
 EndXlibNamespace()

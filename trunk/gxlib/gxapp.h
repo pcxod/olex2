@@ -27,6 +27,7 @@
 #include "splane.h"
 #include "glbitmap.h"
 #include "typelist.h"
+#include "hkl.h"
 
 #if defined __APPLE__ && defined __MACH__
   #define OLX_RESOURCES_FOLDER "olex2.app/Contents/Resources/"

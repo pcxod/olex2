@@ -42,7 +42,7 @@ void XLibMacros::macGraphSR(TStrObjList &Cmds, const TParamList &Options, TMacro
         return;
       }
     }
-    C = &TEGC::New<TCif>(XApp.AtomsInfo());
+    C = &TEGC::New<TCif>();
     C->LoadFromFile(fcffn);
   }
   TCifLoop* hklLoop = C->FindLoop("_refln");

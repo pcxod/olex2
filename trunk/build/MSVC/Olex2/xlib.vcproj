@@ -489,6 +489,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\xlib\refmodel.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\xlib\samegroup.cpp"
 				>
 			</File>
@@ -711,6 +715,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\xlib\refmodel.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\xlib\samegroup.h"
 				>
 			</File>
@@ -796,6 +804,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\xlib\xmacro.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\xlib\xscatterer.h"
 				>
 			</File>
 			<File

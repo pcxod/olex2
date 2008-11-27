@@ -172,21 +172,21 @@ public:
     FMacroItem = NULL;
     FProcess = NULL;
 
-    TCif *Cif = new TCif(XApp.AtomsInfo());  // the objects will be automatically removed by the XApp
+    TCif *Cif = new TCif;  // the objects will be automatically removed by the XApp
     XApp.XFile().RegisterFileFormat(Cif, "cif");
     XApp.XFile().RegisterFileFormat(Cif, "fcf");
     XApp.XFile().RegisterFileFormat(Cif, "fco");
-    TMol *Mol = new TMol(XApp.AtomsInfo());  // the objects will be automatically removed by the XApp
+    TMol *Mol = new TMol;  // the objects will be automatically removed by the XApp
     XApp.XFile().RegisterFileFormat(Mol, "mol");
-    TIns *Ins = new TIns(XApp.AtomsInfo());
+    TIns *Ins = new TIns;
     XApp.XFile().RegisterFileFormat(Ins, "ins");
     XApp.XFile().RegisterFileFormat(Ins, "res");
-    TXyz *Xyz = new TXyz(XApp.AtomsInfo());
+    TXyz *Xyz = new TXyz;
     XApp.XFile().RegisterFileFormat(Xyz, "xyz");
-    XApp.XFile().RegisterFileFormat(new TP4PFile(), "p4p");
-    XApp.XFile().RegisterFileFormat(new TCRSFile(), "crs");
-    XApp.XFile().RegisterFileFormat(new TPdb(XApp.AtomsInfo()), "pdb");
-    XApp.XFile().RegisterFileFormat(new TXDMas(XApp.AtomsInfo()), "mas");
+    XApp.XFile().RegisterFileFormat(new TP4PFile, "p4p");
+    XApp.XFile().RegisterFileFormat(new TCRSFile, "crs");
+    XApp.XFile().RegisterFileFormat(new TPdb, "pdb");
+    XApp.XFile().RegisterFileFormat(new TXDMas, "mas");
     XApp.XFile().GetLattice().OnStructureUniq->Add(this, ID_STRUCTURECHANGED);
     XApp.XFile().GetLattice().OnStructureGrow->Add(this, ID_STRUCTURECHANGED);
     XApp.XFile().OnFileLoad->Add(this, ID_STRUCTURECHANGED);

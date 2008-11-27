@@ -292,6 +292,7 @@ private:
   olxstr LastFileName;
   int BAIDelta; // maximim element promotion
   double URatio; // ratio beyond which search for element promotion
+  TAtomsInfo& AtomsInfo; 
 public:
   /* the instance must be created with Replcate to aoid any problems.
    It will be deleted by this object
@@ -314,7 +315,7 @@ public:
   inline const olxstr& GetLastFileName() const {  return LastFileName;  }
   void AnalyseNode(TSAtom& sa, TStrList& report);
   inline static TAutoDB* GetInstance()     {  return Instance;  }
-  inline static TAtomsInfo& GetAtomsInfo() {  return Instance->XFile.GetAtomsInfo();  }
+  inline static TAtomsInfo& GetAtomsInfo() {  return Instance->AtomsInfo;  }
   inline TAutoDBIdObject& Reference(int i) {  return LocateFile(i);  }
 //  inline TAutoDBFolder& Folder(int i)      {  return Folders.Object(i);  }
   inline TAutoDBNode* Node(int i)          {  return LocateNode(i);  }

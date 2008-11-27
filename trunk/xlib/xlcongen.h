@@ -6,11 +6,10 @@
 
 BeginXlibNamespace()
 class TXlConGen : public AConstraintGenerator {
-  TIns* InsFile;
 public:
-  TXlConGen(TIns* ins );
+  TXlConGen(RefinementModel& rm) : AConstraintGenerator(rm) {}
   virtual bool FixParam(const short paramMask, TStrList& res, const TCAtomPList& atoms, const TFixedValueList& values);
-  virtual bool FixAtom( TAtomEnvi& envi, const short Group, const TBasicAtomInfo& atomType, 
+  virtual bool FixAtom(TAtomEnvi& envi, const short Group, const TBasicAtomInfo& atomType, 
     TAtomEnvi* pivoting = NULL, TCAtomPList* generated = NULL);
   // translates shelxl AFIX, HFIX to olex2 notation
   static int OlexToShelx(short code, TAtomEnvi& envi, TAtomEnvi* pivot = NULL) {

@@ -121,7 +121,7 @@ private:
   void Initialize();
   TCifDataManager DataManager;
 public:
-  TCif(TAtomsInfo *AI);
+  TCif();
   virtual ~TCif();
 
   void Clear();  // Empties the content of current file
@@ -197,7 +197,7 @@ public:
   void Group();
   const TCifDataManager& GetDataManager()  const  {  return DataManager;  }
 
-  virtual IEObject* Replicate()  const {  return new TCif(AtomsInfo);  }
+  virtual IEObject* Replicate()  const {  return new TCif;  }
 
 };
 //---------------------------------------------------------------------------

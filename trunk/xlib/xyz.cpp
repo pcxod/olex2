@@ -15,13 +15,11 @@
 //----------------------------------------------------------------------------//
 // TMol function bodies
 //----------------------------------------------------------------------------//
-TXyz::TXyz(TAtomsInfo *S):TBasicCFile(S)
-{  ; }
+TXyz::TXyz() { }
 //..............................................................................
-TXyz::~TXyz(){  Clear();  }
+TXyz::~TXyz() {  Clear();  }
 //..............................................................................
-void TXyz::Clear()
-{
+void TXyz::Clear()  {
   GetAsymmUnit().Clear();
 }
 //..............................................................................
@@ -47,10 +45,10 @@ void TXyz::SaveToStrings(TStrList& Strings)  {
 //..............................................................................
 void TXyz::LoadFromStrings(const TStrList& Strings)  {
   Clear();
-
+  TAtomsInfo& AtomsInfo = TAtomsInfo::GetInstance();
   olxstr Tmp;
   vec3d StrCenter;
-  FTitle = "OLEX: imported from XYZ";
+  Title = "OLEX: imported from XYZ";
 
   GetAsymmUnit().Axes()[0] = 1;
   GetAsymmUnit().Axes()[1] = 1;
@@ -70,12 +68,12 @@ void TXyz::LoadFromStrings(const TStrList& Strings)  {
     Ax = toks.String(1).ToDouble();
     Ay = toks.String(2).ToDouble();
     Az = toks.String(3).ToDouble();
-    if( AtomsInfo->IsAtom(toks.String(0)) )  {
+    if( AtomsInfo.IsAtom(toks[0]) )  {
       TCAtom& CA = GetAsymmUnit().NewAtom();
       CA.ccrd()[0] = Ax;
       CA.ccrd()[1] = Ay;
       CA.ccrd()[2] = Az;
-      CA.SetLabel( (toks.String(0) + GetAsymmUnit().AtomCount()+1) );
+      CA.SetLabel( (toks[0] + GetAsymmUnit().AtomCount()+1) );
       CA.SetLoaderId(GetAsymmUnit().AtomCount()-1);
     }
   }
@@ -85,12 +83,12 @@ void TXyz::LoadFromStrings(const TStrList& Strings)  {
 bool TXyz::Adopt(TXFile *XF)  {
   Clear();
   if( XF->HasLastLoader() )  {
-    FTitle = XF->LastLoader()->GetTitle();
-    SetHKLSource( XF->LastLoader()->GetHKLSource() );
+    Title = XF->LastLoader()->GetTitle();
+    GetRM().SetHKLSource( XF->LastLoader()->GetRM().GetHKLSource() );
   }
   else  {
-    SetHKLSource(EmptyString);
-    FTitle = "?";
+    GetRM().SetHKLSource(EmptyString);
+    Title = "?";
   }
   GetAsymmUnit().Assign(XF->GetAsymmUnit());
   GetAsymmUnit().SetZ( (short)XF->GetLattice().GetUnitCell().MatrixCount() );

@@ -34,9 +34,7 @@
 //----------------------------------------------------------------------------//
 // TIns function bodies
 //----------------------------------------------------------------------------//
-TIns::TIns(TAtomsInfo *S) : TBasicCFile(S)  {
-  Radiation = 0.71073f;
-  HKLF = "4";
+TIns::TIns()  {
   LoadQPeaks = true;
 }
 //..............................................................................
@@ -45,28 +43,23 @@ TIns::~TIns()  {
 }
 //..............................................................................
 void TIns::Clear()  {
+  GetRM().Clear();
   GetAsymmUnit().Clear();
   for( int i=0; i < Ins.Count(); i++ )
     delete Ins.Object(i);
   Ins.Clear();
   Skipped.Clear();
-  FTitle = EmptyString;
-  FVars.Resize(0);
-  FWght.Resize(0);
-  FWght1.Resize(0);
-  FHKLSource = EmptyString;
-  FLS.Resize(0);
-  FPLAN.Resize(0);
-  Sfac = EmptyString;
-  Unit = EmptyString;
-  Error = 0;
+  Title = EmptyString;
   R1 = -1;
   Disp.Clear();
+  Sfac = EmptyString;
+  Unit = EmptyString;
 }
 //..............................................................................
 void TIns::LoadFromStrings(const TStrList& FileContent)  {
   Clear();
-  ParseContext cx(GetAsymmUnit());
+  ParseContext cx(GetRM());
+  TAtomsInfo& atomsInfo = TAtomsInfo::GetInstance();
   TStrList Toks, InsFile(FileContent);
   for( int i=0; i < InsFile.Count(); i++ )  // heh found it
     InsFile[i] = InsFile[i].Trim(' ');
@@ -108,7 +101,7 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
       }
       if( End && (olxstr::o_toupper(Toks[0].CharAt(0)) != 'Q') )  continue;
     // is a valid atom
-      if( !AtomsInfo->IsAtom(Toks[0]))  {  Ins.Add(InsFile[i]);  continue;  }
+      if( !atomsInfo.IsAtom(Toks[0]))  {  Ins.Add(InsFile[i]);  continue;  }
       if( !Toks[1].IsNumber() )         {  Ins.Add(InsFile[i]);  continue;  }
       int index  = Toks[1].ToInt();
       if( index < 1 || index > cx.BasicAtoms.Count() )  {  // wrong index in SFAC
@@ -132,7 +125,7 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
       _ProcessAfix(*atom, cx);
     }
   }
-  if( GetSfac().CharCount(' ') != GetUnit().CharCount(' ') )  {
+  if( Sfac.CharCount(' ') != Unit.CharCount(' ') )  {
     Clear();
     throw TFunctionFailedException(__OlxSourceInfo, "mismatching SFAC/UNIT");
   }
@@ -151,7 +144,7 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
   }
 
   Ins.Pack();
-  ParseRestraints(Ins, NULL);
+  ParseRestraints(Ins, GetRM());
   Ins.Pack();
   _ProcessSame(cx);
   _FinishParsing();
@@ -164,7 +157,7 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
 }
 //..............................................................................
 void TIns::_ProcessSame(ParseContext& cx)  {
-  TSameGroupList& sgl = cx.au.SimilarFragments();
+  TSameGroupList& sgl = cx.rm.rSAME;
   TStrList toks;
   for( int i=0; i < cx.Same.Count(); i++ )  {
     TCAtom* ca = cx.Same[i].B();
@@ -191,7 +184,7 @@ void TIns::_ProcessSame(ParseContext& cx)  {
        TAtomReference ar( toks.Text(' ', from_ind) );
        TCAtomGroup ag;
        int atomAGroup;
-       try  {  ar.Expand( cx.au, ag, resi, atomAGroup);  }
+       try  {  ar.Expand( cx.rm, ag, resi, atomAGroup);  }
        catch( const TExceptionBase& ex )  {
          throw TFunctionFailedException(__OlxSourceInfo, olxstr("invalid SAME instruction :") << ex.GetException()->GetError());
        }
@@ -242,25 +235,28 @@ void TIns::_FinishParsing()  {
 }
 //..............................................................................
 bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx, int& i)  {
-  if( _ParseIns(Toks) )
+  TAtomsInfo& atomsInfo = TAtomsInfo::GetInstance();
+  if( _ParseIns(cx.rm, Toks) )
     return true;
   else if( !cx.CellFound && Toks[0].Comparei("CELL") == 0 )  {
     if( Toks.Count() == 8 )  {
-      SetRadiation( Toks[1].ToDouble() );
-      GetAsymmUnit().Axes()[0] = Toks[2];
-      GetAsymmUnit().Axes()[1] = Toks[3];
-      GetAsymmUnit().Axes()[2] = Toks[4];
-      GetAsymmUnit().Angles()[0] = Toks[5];
-      GetAsymmUnit().Angles()[1] = Toks[6];
-      GetAsymmUnit().Angles()[2] = Toks[7];
+      cx.rm.expl.SetRadiation( Toks[1].ToDouble() );
+      cx.au.Axes()[0] = Toks[2];
+      cx.au.Axes()[1] = Toks[3];
+      cx.au.Axes()[2] = Toks[4];
+      cx.au.Angles()[0] = Toks[5];
+      cx.au.Angles()[1] = Toks[6];
+      cx.au.Angles()[2] = Toks[7];
       cx.CellFound = true;
-      GetAsymmUnit().InitMatrices();
+      cx.au.InitMatrices();
     }
     else  
       throw TFunctionFailedException(__OlxSourceInfo, "invalid Cell instruction");
   }
   else if( Toks[0].Comparei("SYMM") == 0 && (Toks.Count() > 1))
     cx.Symm.Add( Toks.Text(EmptyString, 1) );
+  else if( Toks[0].Comparei("SIZE") == 0 && (Toks.Count() == 4))
+    cx.rm.expl.SetCrystalSize(Toks[1].ToDouble(), Toks[2].ToDouble(), Toks[3].ToDouble() );
   else if( Toks[0].Comparei("PART") == 0 && (Toks.Count() > 1) )  {
     cx.Part = (short)Toks[1].ToInt();
     if( cx.Part == 0 )  cx.PartOccu = 0;
@@ -282,7 +278,7 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx,
       n = TAfixGroup::GetN(afix);
       m = TAfixGroup::GetM(afix);
       if( !TAfixGroup::IsDependent(afix) )
-        afixg = &cx.au.GetAfixGroups().New(NULL, afix, d, sof == 11 ? 0 : sof, u == 10.08 ? 0 : u);
+        afixg = &cx.rm.AfixGroups.New(NULL, afix, d, sof == 11 ? 0 : sof, u == 10.08 ? 0 : u);
       else {
         if( !cx.AfixGroups.IsEmpty() && !cx.AfixGroups.Current().B()->IsFitted() ) 
           cx.AfixGroups.Pop();
@@ -377,9 +373,9 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx,
     if( Toks.Count() < 3 )
       throw TInvalidArgumentException(__OlxSourceInfo, "wrong number of arguments for a residue");
     if( Toks[1].IsNumber() )
-      cx.Resi = &GetAsymmUnit().NewResidue(EmptyString, Toks[1].ToInt(), (Toks.Count() > 2) ? Toks[2] : EmptyString);
+      cx.Resi = &cx.au.NewResidue(EmptyString, Toks[1].ToInt(), (Toks.Count() > 2) ? Toks[2] : EmptyString);
     else
-      cx.Resi = &GetAsymmUnit().NewResidue(Toks[1], Toks[2].ToInt(), (Toks.Count() > 3) ? Toks[3] : EmptyString);
+      cx.Resi = &cx.au.NewResidue(Toks[1], Toks[2].ToInt(), (Toks.Count() > 3) ? Toks[3] : EmptyString);
   }
   else if( Toks[0].Comparei("SFAC") == 0 )  {
     bool expandedSfacProcessed = false;
@@ -397,20 +393,21 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx,
         so we keep it as it is to save in the ins file
         */
         Sfac << Toks[1] << ' ';
-        cx.BasicAtoms.Add( Toks[1], AtomsInfo->FindAtomInfoBySymbol(Toks[1]) );
+        cx.BasicAtoms.Add( Toks[1], atomsInfo.FindAtomInfoBySymbol(Toks[1]) );
         if( cx.BasicAtoms.Last().Object() == NULL )
           throw TFunctionFailedException(__OlxSourceInfo, olxstr("Could not find suitable scatterer for '") << Toks[1] << '\'' );
         expandedSfacProcessed = true;
-        GetAsymmUnit().AddNewSfac( Toks.String(1),
-          Toks[2].ToDouble(), Toks[3].ToDouble(), Toks[4].ToDouble(),
-          Toks[5].ToDouble(), Toks[6].ToDouble(), Toks[7].ToDouble(),
-          Toks[8].ToDouble(), Toks[9].ToDouble(), Toks[10].ToDouble() );
+        cx.rm.AddNewSfac( Toks[1],
+          Toks[2].ToDouble(),  Toks[3].ToDouble(),  Toks[4].ToDouble(),
+          Toks[5].ToDouble(),  Toks[6].ToDouble(),  Toks[7].ToDouble(),
+          Toks[8].ToDouble(),  Toks[9].ToDouble(),  Toks[10].ToDouble(),
+          Toks[11].ToDouble(), Toks[12].ToDouble(), Toks[13].ToDouble());
       }
     }
     if( !expandedSfacProcessed )  {
       for( int j=1; j < Toks.Count(); j++ )  {
-        if( AtomsInfo->IsAtom(Toks[j]) )  {
-          cx.BasicAtoms.Add(Toks[j], AtomsInfo->FindAtomInfoBySymbol(Toks[j]) );
+        if( atomsInfo.IsAtom(Toks[j]) )  {
+          cx.BasicAtoms.Add(Toks[j], atomsInfo.FindAtomInfoBySymbol(Toks[j]) );
           if( cx.BasicAtoms.Last().Object() == NULL )
             throw TFunctionFailedException(__OlxSourceInfo, olxstr("Could not find suitable scatterer for '") << Toks[j] << '\'' );
           Sfac << Toks[j] << ' ';
@@ -436,24 +433,25 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx,
         }
       } 
       else if( Toks[1].StartsFromi("<HKL>") )  {
-        FHKLSource = Toks.Text(' ', 1);
-        int index = FHKLSource.FirstIndexOf('>');
-        int iv = FHKLSource.IndexOf("</HKL>");
+        olxstr hklsrc = Toks.Text(' ', 1);
+        int index = hklsrc.FirstIndexOf('>');
+        int iv = hklsrc.IndexOf("</HKL>");
         if( iv == -1 )  {
           while( (i+1) < ins.Count() )  {
             i++;
             if( !ins[i].StartsFromi("rem") )  break;
-            FHKLSource << ins[i].SubStringFrom(4);
-            iv = FHKLSource.IndexOf("</HKL>");
+            hklsrc << ins[i].SubStringFrom(4);
+            iv = hklsrc.IndexOf("</HKL>");
             if( iv != -1 )  break;
           }
         }
         if( iv != -1 )  {
-          FHKLSource = FHKLSource.SubString(index+1, iv-index-1);
-          FHKLSource.Replace("%20", ' ');
+          hklsrc = hklsrc.SubString(index+1, iv-index-1);
+          hklsrc.Replace("%20", ' ');
         }
         else
-          FHKLSource = EmptyString;
+          hklsrc = EmptyString;
+        cx.rm.SetHKLSource(hklsrc);
       }
     }
   }
@@ -495,14 +493,9 @@ bool TIns::InsExists(const olxstr &Name)  {
   return FindIns(Name) != NULL;
 }
 //..............................................................................
-void TIns::AddVar(float val)  {
-  FVars.Resize(FVars.Count() + 1);
-  FVars[FVars.Count()-1] = val;
-}
-//..............................................................................
-bool TIns::AddIns(const TStrList& toks, bool CheckUniq)  {
+bool TIns::AddIns(const TStrList& toks, RefinementModel& rm, bool CheckUniq)  {
   // special instructions
-  if( _ParseIns(toks) )  return true;
+  if( _ParseIns(rm, toks) )  return true;
   // check for uniqueness
   if( CheckUniq )  {
     for( int i=0; i < Ins.Count(); i++ )  {
@@ -601,9 +594,9 @@ void TIns::SaveToRefine(const olxstr& FileName, const olxstr& sMethod, const olx
     mtoks.Strtok(sMethod, "\\n");
     int spi = mtoks[0].IndexOf(' ');
     if( spi >= 0)
-      SetSolutionMethod(mtoks[0].SubStringTo(spi));
+      RefMod.SetSolutionMethod(mtoks[0].SubStringTo(spi));
     else
-      SetSolutionMethod(mtoks[0]);
+      RefMod.SetSolutionMethod(mtoks[0]);
   }
 
   int UnitIndex, SfacIndex;
@@ -616,27 +609,28 @@ void TIns::SaveToRefine(const olxstr& FileName, const olxstr& sMethod, const olx
     SL.Add("REM ") << comments;
 // try to estimate Z'
   TTypeList< AnAssociation2<int,TBasicAtomInfo*> > sl;
-  TStrList sfac(GetSfac(), ' ');
-  TStrList unit(GetUnit(), ' ');
+  TStrList sfac(Sfac, ' ');
+  TStrList unit(Unit, ' ');
+  TAtomsInfo& atomsInfo = TAtomsInfo::GetInstance();
   if( sfac.Count() != unit.Count() )
     throw TFunctionFailedException(__OlxSourceInfo, "SFAC does not match UNIT");
   int ac = 0;
   for( int i=0; i < sfac.Count(); i++ )  {
     int cnt = unit[i].ToInt();
-    TBasicAtomInfo* bai = GetAtomsInfo().FindAtomInfoBySymbol(sfac[i]);
+    TBasicAtomInfo* bai = atomsInfo.FindAtomInfoBySymbol(sfac[i]);
     if( *bai == iHydrogenIndex )  continue;
     sl.AddNew( cnt, bai );
     ac += cnt;
   }
-  int newZ = Round(FAsymmUnit->EstimateZ(ac/FAsymmUnit->GetZ()));
+  int newZ = Round(AsymmUnit.EstimateZ(ac/AsymmUnit.GetZ()));
   Unit = EmptyString;
   for( int i=0; i < sfac.Count(); i++ )  {
     int cnt = unit[i].ToInt();
-    Unit << (double)cnt*newZ/FAsymmUnit->GetZ();
+    Unit << (double)cnt*newZ/AsymmUnit.GetZ();
     if( (i+1) < sfac.Count() )
       Unit << ' ';
   }
-  FAsymmUnit->SetZ( newZ );
+  AsymmUnit.SetZ( newZ );
 //
 
   SL.Add( _CellToString() );
@@ -645,21 +639,13 @@ void TIns::SaveToRefine(const olxstr& FileName, const olxstr& sMethod, const olx
   SfacIndex = SL.Count();  SL.Add(EmptyString);
   UnitIndex = SL.Count();  SL.Add(EmptyString);
 
-  for( int i=0; i < Ins.Count(); i++ )  {  // copy "unknown" instructions
-    L = Ins.Object(i);
-    if( Ins[i].Comparei("SIZE") == 0 || Ins[i].Comparei("TEMP") == 0 )  {
-      Tmp = EmptyString;
-      if( L->Count() != 0 )  Tmp << L->Text(' ');
-      HypernateIns(Ins[i]+' ', Tmp, SL);
-    }
-  }
-
+  _SaveSizeTemp(SL);
   _SaveHklSrc(SL);
   _SaveFVar(SL);
 
   SL.AddList(mtoks);
   SL.Add(EmptyString);
-  SL.Add("HKLF ") << HKLF;
+  SL.Add("HKLF ") << RefMod.GetHKLF();
   SL.String(UnitIndex) = olxstr("UNIT ") << Unit;
   _SaveSfac( SL, SfacIndex );
   SL.Add("END");
@@ -671,28 +657,25 @@ void TIns::SaveToRefine(const olxstr& FileName, const olxstr& sMethod, const olx
 }
 //..............................................................................
 void TIns::_SaveSfac(TStrList& list, int pos)  {
-  if( GetAsymmUnit().SfacCount() == 0 )
-    list.String(pos) = olxstr("SFAC ") << Sfac;
+  if( GetRM().SfacCount() == 0 )
+    list[pos] = olxstr("SFAC ") << Sfac;
   else  {
     TStrList toks(Sfac, ' '), lines;
     olxstr tmp, LeftOut;
     for( int i=0; i < toks.Count(); i++ )  {
-      TLibScatterer* sd = GetAsymmUnit().FindSfacData( toks.String(i) );
+      XScatterer* sd = GetRM().FindSfacData( toks[i] );
       if( sd != NULL )  {
         tmp = "SFAC ";
-        tmp << toks.String(i);
-        for( int j=0; j < sd->Size(); j++ )
-          tmp << ' ' << sd->GetData()[j];
-
+        tmp << sd->ToInsString();
         lines.Clear();
         HypernateIns(tmp, lines);
         for( int j=0; j < lines.Count(); j++ )  {
-          list.Insert(pos, lines.String(j) );
+          list.Insert(pos, lines[j] );
           pos++;
         }
       }
       else  {
-        LeftOut << ' ' << toks.String(i);
+        LeftOut << ' ' << toks[i];
       }
     }
     if( !LeftOut.IsEmpty() != 0 )  {
@@ -703,10 +686,11 @@ void TIns::_SaveSfac(TStrList& list, int pos)  {
     list.Insert(++pos, olxstr("DISP ") << Disp[i]);
 }
 //..............................................................................
-void TIns::_SaveAtom(TCAtom& a, int& part, int& afix, TStrPObjList<olxstr,TBasicAtomInfo*>* sfac, TStrList& sl, TIntList* index, bool checkSame)  {
+void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix, 
+                     TStrPObjList<olxstr,TBasicAtomInfo*>* sfac, TStrList& sl, TIntList* index, bool checkSame)  {
   if( a.IsDeleted() || a.IsSaved() )  return;
   if( checkSame && a.GetSameId() != -1 )  {  // "
-    TSameGroup& sg = a.GetParent()->SimilarFragments()[a.GetSameId()];
+    TSameGroup& sg = rm.rSAME[a.GetSameId()];
     for( int i=0; i < sg.DependentCount(); i++ )  {
       olxstr tmp( "SAME ");
       tmp << olxstr(sg.Esd12).TrimFloat() << ' ' << olxstr(sg.Esd13).TrimFloat();
@@ -715,7 +699,7 @@ void TIns::_SaveAtom(TCAtom& a, int& part, int& afix, TStrPObjList<olxstr,TBasic
       HypernateIns( tmp, sl );
     }
     for( int i=0; i < sg.Count(); i++ )
-      _SaveAtom(sg[i], part, afix, sfac, sl, index, false);
+      _SaveAtom(rm, sg[i], part, afix, sfac, sl, index, false);
     return;
   }
   if( a.GetPart() != part )  sl.Add("PART ") << a.GetPart();
@@ -751,21 +735,22 @@ void TIns::_SaveAtom(TCAtom& a, int& part, int& afix, TStrPObjList<olxstr,TBasic
   for( int i=0; i < a.DependentHfixGroupCount(); i++ )  {
     TAfixGroup& hg = a.GetDependentHfixGroup(i);
     for( int j=0; j < hg.Count(); j++ )
-      _SaveAtom( hg[j], part, afix, sfac, sl, index, checkSame);
+      _SaveAtom(rm, hg[j], part, afix, sfac, sl, index, checkSame);
   }
   if( ag != NULL )  {  // save dependent rigid group
     for( int i=0; i < ag->Count(); i++ )
-      _SaveAtom( (*ag)[i], part, afix, sfac, sl, index, checkSame);
+      _SaveAtom(rm, (*ag)[i], part, afix, sfac, sl, index, checkSame);
   }
 }
 //..............................................................................
 void TIns::SaveToStrings(TStrList& SL)  {
+  TAtomsInfo& atomsInfo = TAtomsInfo::GetInstance();
   int UnitIndex, SfacIndex;
   evecd QE;  // quadratic form of s thermal ellipsoid
   olxstr Tmp;
   TStrPObjList<olxstr,TBasicAtomInfo*> BasicAtoms(Sfac, ' ');
   for( int i=0; i < BasicAtoms.Count(); i++ )  {
-    TBasicAtomInfo* BAI = AtomsInfo->FindAtomInfoBySymbol( BasicAtoms.String(i) );
+    TBasicAtomInfo* BAI = atomsInfo.FindAtomInfoBySymbol( BasicAtoms.String(i) );
     if( BAI != NULL )  BasicAtoms.Object(i) = BAI;
     else
       throw TFunctionFailedException(__OlxSourceInfo, olxstr("Unknown element: ") << BasicAtoms.String(i));
@@ -780,7 +765,7 @@ void TIns::SaveToStrings(TStrList& SL)  {
       if( spindex == -1 )  {
         if( residue[j].GetAtomInfo() == iQPeakIndex )  {
           if( carbonBAIIndex == -1 )  {
-            BasicAtoms.Add( "C", &AtomsInfo->GetAtomInfo(iCarbonIndex) );
+            BasicAtoms.Add( "C", &atomsInfo.GetAtomInfo(iCarbonIndex) );
             carbonBAIIndex = BasicAtoms.Count() -1;
             Unit << ' ' << '1';
             Sfac << ' ' << 'C';
@@ -819,11 +804,11 @@ void TIns::SaveToStrings(TStrList& SL)  {
       }
       if( ac.GetParentAfixGroup() != NULL && 
          !ac.GetParentAfixGroup()->GetPivot().IsDeleted() )  continue;
-      _SaveAtom(ac, part, afix, &BasicAtoms, SL);
+      _SaveAtom(GetRM(), ac, part, afix, &BasicAtoms, SL);
     }
   }
   if( afix != 0 )  SL.Add("AFIX 0");
-  SL.Add("HKLF ") << HKLF;
+  SL.Add("HKLF ") << RefMod.GetHKLF();
   SL.String(UnitIndex) = (olxstr("UNIT ") << Unit);
 //  SL.String(SfacIndex) = (olxstr("SFAC ") += FSfac);
   _SaveSfac(SL, SfacIndex);
@@ -841,7 +826,7 @@ void TIns::SaveToStrings(TStrList& SL)  {
 
 void TIns::SetSfacUnit(const olxstr& su) {
   TTypeList<AnAssociation2<olxstr, int> > list;
-  AtomsInfo->ParseElementString(su, list);
+  TAtomsInfo::GetInstance().ParseElementString(su, list);
   Sfac = EmptyString;
   Unit = EmptyString;
   for( int i=0; i < list.Count(); i++ )  {
@@ -860,28 +845,32 @@ bool TIns::Adopt(TXFile *XF)  {
   GetAsymmUnit().SetZ( (short)XF->GetLattice().GetUnitCell().MatrixCount() );
   try  {
     TSpaceGroup& sg = XF->GetLastLoaderSG();
-    FTitle << "in" << sg.GetFullName();
+    Title << "in" << sg.GetFullName();
   }
   catch( ... )  {}
   if( XF->HasLastLoader() )  {
-    FTitle = XF->LastLoader()->GetTitle();
-    SetHKLSource( XF->LastLoader()->GetHKLSource() );
+    Title = XF->LastLoader()->GetTitle();
+    GetRM().SetHKLSource( XF->LastLoader()->GetRM().GetHKLSource() );
     
     if( EsdlInstanceOf(*XF->LastLoader(), TP4PFile) )  {
       TP4PFile& p4p = XF->GetLastLoader<TP4PFile>();
-      Radiation = p4p.GetRadiation();
+      RefMod.expl.SetRadiation( p4p.GetRadiation() );
       TStrList lst;
       olxstr tmp = p4p.GetSize();  
       if( tmp.IsEmpty() )  {
         tmp.Replace('?', '0');
         lst.Add("SIZE");
-        lst.Add( tmp );  AddIns(lst); lst.Clear();
+        lst.Add( tmp );  
+        AddIns(lst, GetRM()); 
+        lst.Clear();
       }
       tmp = p4p.GetTemp();
       if( !tmp.IsEmpty() )  {
         tmp.Replace('?', '0');
         lst.Add("TEMP");
-        lst.Add( tmp );  AddIns(lst); lst.Clear();
+        lst.Add( tmp );  
+        AddIns(lst, GetRM()); 
+        lst.Clear();
       }
       if( p4p.GetChem() != "?" )  {
         try  {  SetSfacUnit( p4p.GetChem() );  }
@@ -892,7 +881,7 @@ bool TIns::Adopt(TXFile *XF)  {
       TCRSFile& crs = XF->GetLastLoader<TCRSFile>();
       Sfac = crs.GetSfac();
       Unit = crs.GetUnit();
-      Radiation = crs.GetRadiation();
+      RefMod.expl.SetRadiation( crs.GetRadiation() );
     }
     else if( EsdlInstanceOf(*XF->LastLoader(), TCif) )  {
       TCif& cif = XF->GetLastLoader<TCif>();
@@ -905,8 +894,8 @@ bool TIns::Adopt(TXFile *XF)  {
         GetAsymmUnit().ChangeSpaceGroup(*sg);
     }
   }
-  if( RefinementMethod.IsEmpty() )
-    RefinementMethod = "L.S.";
+  if( RefMod.GetRefinementMethod().IsEmpty() )
+    RefMod.SetRefinementMethod( "L.S." );
   return true;
 }
 //..............................................................................
@@ -917,17 +906,18 @@ void TIns::DeleteAtom(TCAtom *CA)  {
   }
 }
 //..............................................................................
-void TIns::UpdateAtomsFromStrings(TCAtomPList& CAtoms, const TIntList& index, TStrList& SL, TStrList& Instructions) {
+void TIns::UpdateAtomsFromStrings(RefinementModel& rm, TCAtomPList& CAtoms, const TIntList& index, TStrList& SL, TStrList& Instructions) {
   if( CAtoms.Count() != index.Count() )
     throw TInvalidArgumentException(__OlxSourceInfo, "index");
   if( CAtoms.IsEmpty() )  return;
+  TAtomsInfo& atomsInfo = TAtomsInfo::GetInstance();
   TStrList Toks;
   olxstr Tmp, Tmp1;
   TCAtom *atom;
   int iv, atomCount = 0;
-  ParseContext cx(*CAtoms[0]->GetParent());
+  ParseContext cx(rm);
   SL.CombineLines('=');
-  FVars.Resize(0);
+  rm.FVAR.Clear();
   for( int i=0; i < CAtoms.Count(); i++ )  {
     if( CAtoms[i]->GetParentAfixGroup() != NULL )
       CAtoms[i]->GetParentAfixGroup()->Clear();
@@ -954,7 +944,7 @@ void TIns::UpdateAtomsFromStrings(TCAtomPList& CAtoms, const TIntList& index, TS
       ;
     else if( Toks.Count() < 6 )  // should be at least
       Instructions.Add(Tmp);
-    else if( !AtomsInfo->IsAtom(Tmp1) )  // is a valid atom
+    else if( !atomsInfo.IsAtom(Tmp1) )  // is a valid atom
       Instructions.Add(Tmp);
     else if( !Toks[1].IsNumber() )  // should be a number
       Instructions.Add(Tmp);
@@ -987,16 +977,17 @@ void TIns::UpdateAtomsFromStrings(TCAtomPList& CAtoms, const TIntList& index, TS
     }
   }
   _ProcessSame(cx);
-  ParseRestraints(Instructions, CAtoms[0]->GetParent());
+  ParseRestraints(Instructions, rm);
   Instructions.Pack();
 }
 //..............................................................................
-bool TIns::SaveAtomsToStrings(const TCAtomPList& CAtoms, TIntList& index, TStrList& SL, TSimpleRestraintPList* processed)  {
+bool TIns::SaveAtomsToStrings(RefinementModel& rm, const TCAtomPList& CAtoms, TIntList& index, 
+                              TStrList& SL, TSimpleRestraintPList* processed)  {
   if( CAtoms.IsEmpty() )  return false;
   int part = 0,
       afix = 0,
       resi = -2;
-  SaveRestraints(SL, &CAtoms, processed, CAtoms[0]->GetParent());
+  SaveRestraints(SL, &CAtoms, processed, rm);
   _SaveFVar(SL);
   for(int i=0; i < CAtoms.Count(); i++ )  {
     CAtoms[i]->SetSaved(false);
@@ -1011,7 +1002,7 @@ bool TIns::SaveAtomsToStrings(const TCAtomPList& CAtoms, TIntList& index, TStrLi
     TCAtom& ac = *CAtoms[i];
     if( ac.GetParentAfixGroup() != NULL && 
       !ac.GetParentAfixGroup()->GetPivot().IsDeleted() )  continue;
-    _SaveAtom( ac, part, afix, NULL, SL, &index);
+    _SaveAtom(rm, ac, part, afix, NULL, SL, &index);
   }
   return true;
 }
@@ -1024,9 +1015,9 @@ void TIns::SavePattSolution(const olxstr& FileName, const TTypeList<TPattAtom>& 
   double V;
   olxstr Tmp, Tmp1;
   TBasicAtomInfo *BAI;
-
+  TAtomsInfo& atomsInfo = TAtomsInfo::GetInstance();
   for( int i=0; i < atoms.Count(); i++ )  {
-    BAI = AtomsInfo->FindAtomInfoEx( atoms[i].GetName() );
+    BAI = atomsInfo.FindAtomInfoEx( atoms[i].GetName() );
     if( BAI == NULL )
       throw TFunctionFailedException(__OlxSourceInfo, olxstr("Unknown element: ") << atoms[i].GetName() );
     int index = BasicAtoms.IndexOf( BAI->GetSymbol() );
@@ -1065,6 +1056,7 @@ void TIns::SavePattSolution(const olxstr& FileName, const TTypeList<TPattAtom>& 
   SL.Add(Tmp1);
   
   _SaveRefMethod(SL);
+  _SaveSizeTemp(SL);
 
   // copy "unknown" instructions except rems
   for( int i=0; i < Ins.Count(); i++ )  {
@@ -1079,11 +1071,12 @@ void TIns::SavePattSolution(const olxstr& FileName, const TTypeList<TPattAtom>& 
   _SaveHklSrc(SL);
 
   Tmp = "WGHT ";
-  for( int i=0; i < FWght.Count(); i++ )  {
-    Tmp << FWght[i];
+  for( int i=0; i < RefMod.used_weight.Count(); i++ )  {
+    Tmp << RefMod.used_weight[i];
     Tmp.Format(Tmp.Length()+1, true, ' ');
   }
-  if( FWght.Count() == 0 )  Tmp << 1;
+  if( RefMod.used_weight.Count() == 0 )  
+    Tmp << "0.1";
   SL.Add(Tmp);
 
   Tmp = "FVAR 1";
@@ -1100,7 +1093,7 @@ void TIns::SavePattSolution(const olxstr& FileName, const TTypeList<TPattAtom>& 
     Tmp << olxstr::FormatFloat(-5, V) << ' ';
     SL.Add(Tmp);
   }
-  SL.Add(olxstr("HKLF ") << HKLF);
+  SL.Add("HKLF ") << GetRM().GetHKLF();
   SL.Add(EmptyString);
 #ifdef _UNICODE
   TCStrList(SL).SaveToFile(FileName);
@@ -1167,9 +1160,9 @@ TCAtom* TIns::_ParseAtom(TStrList& Toks, ParseContext& cx, TCAtom* atom)  {
     atom->SetOccpVar( iv );
     atom->SetOccp( fabs(atom->GetOccp() - iv) );
     iv = (int)(abs(iv)/10);            // do not need to store the sign anymore
-    if( (iv <= FVars.Count()) && iv > 1 )  {  // check if it is a free variable and not just equal to "1"
-      if( atom->GetOccpVar() < 0 )  atom->SetOccp( 1 - FVars[iv-1] );
-      else                          atom->SetOccp(FVars[iv-1]);
+    if( (iv <= cx.rm.FVAR.Count()) && iv > 1 )  {  // check if it is a free variable and not just equal to "1"
+      if( atom->GetOccpVar() < 0 )  atom->SetOccp( 1 - cx.rm.FVAR[iv-1] );
+      else                          atom->SetOccp(cx.rm.FVAR[iv-1]);
       // do not process - causes too many problems!!!
       if( cx.PartOccu != 0 )
         atom->SetOccpVar( cx.PartOccu );
@@ -1210,11 +1203,11 @@ TCAtom* TIns::_ParseAtom(TStrList& Toks, ParseContext& cx, TCAtom* atom)  {
       if( fabs(atom->GetUiso()) > 10 )  {
         atom->SetUisoVar( atom->GetUiso() );
         int iv = (int)atom->GetUiso()/10;
-        if( (iv <= FVars.Count()) && iv > 1 )  {  // check if it is a free variable and not just equal to "1"
+        if( (iv <= cx.rm.FVAR.Count()) && iv > 1 )  {  // check if it is a free variable and not just equal to "1"
           if( atom->GetUiso() < 0 )
-            atom->SetUiso( 1 - FVars[iv-1] );
+            atom->SetUiso( 1 - cx.rm.FVAR[iv-1] );
           else
-            atom->SetUiso( FVars[iv-1] );
+            atom->SetUiso( cx.rm.FVAR[iv-1] );
         }
         else  {  // simply fixed value
           iv *= 10;
@@ -1278,7 +1271,7 @@ olxstr TIns::_AtomToString(TCAtom* CA, int SfacIndex)  {
 //..............................................................................
 olxstr TIns::_CellToString()  {
   olxstr Tmp("CELL ");
-  Tmp << GetRadiation();
+  Tmp << RefMod.expl.GetRadiation();
   Tmp << ' ' << GetAsymmUnit().Axes()[0].GetV() <<
          ' ' << GetAsymmUnit().Axes()[1].GetV() <<
          ' ' << GetAsymmUnit().Axes()[2].GetV() <<
@@ -1290,11 +1283,11 @@ olxstr TIns::_CellToString()  {
 //..............................................................................
 void TIns::_SaveFVar(TStrList& SL)  {
   olxstr Tmp; // = "FVAR ";
-  for( int i=0; i < FVars.Count(); i++ )  {
-    Tmp << FVars[i];
+  for( int i=0; i < RefMod.FVAR.Count(); i++ )  {
+    Tmp << RefMod.FVAR[i];
     Tmp.Format(Tmp.Length()+1, true, ' ');
   }
-  if( FVars.Count() == 0 ) Tmp << 1;
+  if( RefMod.FVAR.Count() == 0 ) Tmp << 1;
   HypernateIns("FVAR ", Tmp, SL);
 }
 //..............................................................................
@@ -1323,23 +1316,23 @@ void TIns::_SaveSymm(TStrList& SL)  {
 }
 //..............................................................................
 void TIns::_SaveRefMethod(TStrList& SL)  {
-  if( !GetRefinementMethod().IsEmpty() )  {
-    if( FLS.Count() != 0 )  {
-      olxstr& rm = SL.Add( GetRefinementMethod() );
-      for( int i=0; i < FLS.Count(); i++ )
-        rm << ' ' << FLS[i];
+  if( !RefMod.GetRefinementMethod().IsEmpty() )  {
+    if( RefMod.LS.Count() != 0 )  {
+      olxstr& rm = SL.Add( RefMod.GetRefinementMethod() );
+      for( int i=0; i < RefMod.LS.Count(); i++ )
+        rm << ' ' << RefMod.LS[i];
     }
-    if( FPLAN.Count() != 0 )  {
+    if( RefMod.PLAN.Count() != 0 )  {
       olxstr& pn = SL.Add("PLAN ");
-      for( int i=0; i < FPLAN.Count(); i++ )
-        pn << ' ' << ((i < 1) ? Round(FPLAN[i]) : FPLAN[i]);
+      for( int i=0; i < RefMod.PLAN.Count(); i++ )
+        pn << ' ' << ((i < 1) ? Round(RefMod.PLAN[i]) : RefMod.PLAN[i]);
     }
   }
 }
 //..............................................................................
 void TIns::_SaveHklSrc(TStrList& SL)  {
-  if( FHKLSource.Length() != 0 )  {  // update html source string
-    olxstr Tmp( FHKLSource );
+  if( !GetRM().GetHKLSource().IsEmpty() )  {  // update html source string
+    olxstr Tmp( GetRM().GetHKLSource() );
     Tmp.Replace(' ', "%20");
     HypernateIns("REM ", olxstr("<HKL>") << Tmp << "</HKL>", SL);
   }
@@ -1353,153 +1346,150 @@ bool ProcessRestraint(const TCAtomPList* atoms, TSimpleRestraint& sr)  {
   return false;
 }
 
-void StoreUsedSymIndex(TIntList& il, const smatd* m, TAsymmUnit* au)  {
+void StoreUsedSymIndex(TIntList& il, const smatd* m, RefinementModel& rm)  {
   if( m == NULL )  return;
-  int ind = au->UsedSymmIndex( *m );
+  int ind = rm.UsedSymmIndex( *m );
   if( il.IndexOf(ind) == -1 )
     il.Add(ind);
 }
 
 void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
-                          TSimpleRestraintPList* processed, TAsymmUnit* au)  {
-  if( au == NULL )
-    au = &GetAsymmUnit();
-
+                          TSimpleRestraintPList* processed, RefinementModel& rm)  {
   int oindex = SL.Count();
 
   olxstr Tmp;
   TIntList usedSymm;
 
   // fixed distances
-  for( int i=0; i < au->RestrainedDistances().Count(); i++ )  {
-    TSimpleRestraint& sr = au->RestrainedDistances()[i];
+  for( int i=0; i < rm.rDFIX.Count(); i++ )  {
+    TSimpleRestraint& sr = rm.rDFIX[i];
     sr.Validate();
     if( !ProcessRestraint(atoms, sr) )  continue;
     Tmp = "DFIX ";
     Tmp << sr.GetValue() << ' ' << sr.GetEsd();
     for( int j=0; j < sr.AtomCount(); j++ )  {
-     Tmp << ' ' << sr.GetAtom(j).GetFullLabel();
-     StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), au);
+     Tmp << ' ' << sr.GetAtom(j).GetFullLabel(rm);
+     StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), rm);
     }
     HypernateIns(Tmp, SL);
     if( processed != 0 )  processed->Add( &sr );
   }
   // similar distances
-  for( int i=0; i < au->SimilarDistances().Count(); i++ )  {
-    TSimpleRestraint& sr = au->SimilarDistances()[i];
+  for( int i=0; i < rm.rSADI.Count(); i++ )  {
+    TSimpleRestraint& sr = rm.rSADI[i];
     sr.Validate();
     if( !ProcessRestraint(atoms, sr) )  continue;
     Tmp = "SADI ";
     Tmp << sr.GetEsd();
     for( int j=0; j < sr.AtomCount(); j++ )  {
-     Tmp << ' ' << sr.GetAtom(j).GetFullLabel();
-     StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), au);
+     Tmp << ' ' << sr.GetAtom(j).GetFullLabel(rm);
+     StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), rm);
     }
     HypernateIns(Tmp, SL);
     if( processed != 0 )  processed->Add( &sr );
   }
   // fixed "angles"
-  for( int i=0; i < au->RestrainedAngles().Count(); i++ )  {
-    TSimpleRestraint& sr = au->RestrainedAngles()[i];
+  for( int i=0; i < rm.rDANG.Count(); i++ )  {
+    TSimpleRestraint& sr = rm.rDANG[i];
     sr.Validate();
     if( !ProcessRestraint(atoms, sr) )  continue;
     Tmp = "DANG ";
     Tmp << olxstr::FormatFloat(3, sr.GetValue()) << ' ' << sr.GetEsd();
     for( int j=0; j < sr.AtomCount(); j++ )  {
-     Tmp << ' ' << sr.GetAtom(j).GetFullLabel();
-     StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), au);
+     Tmp << ' ' << sr.GetAtom(j).GetFullLabel(rm);
+     StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), rm);
     }
     HypernateIns(Tmp, SL);
     if( processed != 0 )  processed->Add( &sr );
   }
   // fixed chiral atomic volumes
-  for( int i=0; i < au->RestrainedVolumes().Count(); i++ )  {
-    TSimpleRestraint& sr = au->RestrainedVolumes()[i];
+  for( int i=0; i < rm.rCHIV.Count(); i++ )  {
+    TSimpleRestraint& sr = rm.rCHIV[i];
     sr.Validate();
     if( !ProcessRestraint(atoms, sr) )  continue;
     Tmp = "CHIV ";
     Tmp << sr.GetValue() << ' ' << sr.GetEsd();
     for( int j=0; j < sr.AtomCount(); j++ )  {
-     Tmp << ' ' << sr.GetAtom(j).GetFullLabel();
-     StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), au);
+     Tmp << ' ' << sr.GetAtom(j).GetFullLabel(rm);
+     StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), rm);
     }
     HypernateIns(Tmp, SL);
     if( processed != 0 )  processed->Add( &sr );
   }
   // planar groups
-  for( int i=0; i < au->RestrainedPlanarity().Count(); i++ )  {
-    TSimpleRestraint& sr = au->RestrainedPlanarity()[i];
+  for( int i=0; i < rm.rFLAT.Count(); i++ )  {
+    TSimpleRestraint& sr = rm.rFLAT[i];
     sr.Validate();
     if( !ProcessRestraint(atoms, sr) )  continue;
     if( sr.AtomCount() < 4 )  continue;
     Tmp = "FLAT ";
     Tmp << sr.GetEsd();
     for( int j=0; j < sr.AtomCount(); j++ )  {
-     Tmp << ' ' << sr.GetAtom(j).GetFullLabel();
-     StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), au);
+     Tmp << ' ' << sr.GetAtom(j).GetFullLabel(rm);
+     StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), rm);
     }
     HypernateIns(Tmp, SL);
     if( processed != 0 )  processed->Add( &sr );
   }
   // rigid bond restraint
-  for( int i=0; i < au->RigidBonds().Count(); i++ )  {
-    TSimpleRestraint& sr = au->RigidBonds()[i];
+  for( int i=0; i < rm.rDELU.Count(); i++ )  {
+    TSimpleRestraint& sr = rm.rDELU[i];
     sr.Validate();
     if( !ProcessRestraint(atoms, sr) )  continue;
     Tmp = "DELU ";
     Tmp << sr.GetEsd() << ' ' << sr.GetEsd1();
     for( int j=0; j < sr.AtomCount(); j++ )  {
-     Tmp << ' ' << sr.GetAtom(j).GetFullLabel();
-     StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), au);
+     Tmp << ' ' << sr.GetAtom(j).GetFullLabel(rm);
+     StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), rm);
     }
     HypernateIns(Tmp, SL);
     if( processed != 0 )  processed->Add( &sr );
   }
   // similar U restraint
-  for( int i=0; i < au->SimilarU().Count(); i++ )  {
-    TSimpleRestraint& sr = au->SimilarU()[i];
+  for( int i=0; i < rm.rSIMU.Count(); i++ )  {
+    TSimpleRestraint& sr = rm.rSIMU[i];
     sr.Validate();
     if( !ProcessRestraint(atoms, sr) )  continue;
     Tmp = "SIMU ";
     Tmp << sr.GetEsd() << ' ' << sr.GetEsd1() << ' ' << sr.GetValue();
     for( int j=0; j < sr.AtomCount(); j++ )  {
-     Tmp << ' ' << sr.GetAtom(j).GetFullLabel();
-     StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), au);
+     Tmp << ' ' << sr.GetAtom(j).GetFullLabel(rm);
+     StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), rm);
     }
     HypernateIns(Tmp, SL);
     if( processed != 0 )  processed->Add( &sr );
   }
   // Uanis restraint to behave like Uiso
-  for( int i=0; i < au->RestranedUaAsUi().Count(); i++ )  {
-    TSimpleRestraint& sr = au->RestranedUaAsUi()[i];
+  for( int i=0; i < rm.rISOR.Count(); i++ )  {
+    TSimpleRestraint& sr = rm.rISOR[i];
     sr.Validate();
     if( !ProcessRestraint(atoms, sr) )  continue;
     Tmp = "ISOR ";
     Tmp << sr.GetEsd() << ' ' << sr.GetEsd1();
     for( int j=0; j < sr.AtomCount(); j++ )  {
-     Tmp << ' ' << sr.GetAtom(j).GetFullLabel();
-     StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), au);
+     Tmp << ' ' << sr.GetAtom(j).GetFullLabel(rm);
+     StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), rm);
     }
     HypernateIns(Tmp, SL);
     if( processed != 0 )  processed->Add( &sr );
   }
   // equivalent EADP constraint
-  for( int i=0; i < au->EquivalentU().Count(); i++ )  {
-    TSimpleRestraint& sr = au->EquivalentU()[i];
+  for( int i=0; i < rm.rEADP.Count(); i++ )  {
+    TSimpleRestraint& sr = rm.rEADP[i];
     sr.Validate();
     if( !ProcessRestraint(atoms, sr) )  continue;
     if( sr.AtomCount() < 2 )  continue;
     Tmp = "EADP";
     for( int j=0; j < sr.AtomCount(); j++ )  {
      Tmp << ' ' << sr.GetAtom(j).GetAtom()->GetLabel();
-     StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), au);
+     StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), rm);
     }
     HypernateIns(Tmp, SL);
     if( processed != 0 )  processed->Add( &sr );
   }
   // equivalent EXYZ constraint
-  for( int i=0; i < au->SharedSites().Count(); i++ )  {
-    TExyzGroup& sr = au->SharedSites()[i];
+  for( int i=0; i < rm.ExyzGroups.Count(); i++ )  {
+    TExyzGroup& sr = rm.ExyzGroups[i];
     if( sr.IsEmpty() )  continue;
     Tmp = "EXYZ";
     for( int j=0; j < sr.Count(); j++ )
@@ -1507,12 +1497,12 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
     HypernateIns(Tmp, SL);
   }
   // store the rest of eqiv ...
-  for( int i=0; i < au->UsedSymmCount(); i++ )
-    StoreUsedSymIndex( usedSymm, &au->GetUsedSymm(i), au);
+  for( int i=0; i < rm.UsedSymmCount(); i++ )
+    StoreUsedSymIndex( usedSymm, &rm.GetUsedSymm(i), rm);
   // save
   for( int i=0; i < usedSymm.Count(); i++ )  {
     Tmp = "EQIV ";
-    Tmp << '$' << (i+1) << ' ' << TSymmParser::MatrixToSymm( au->GetUsedSymm(usedSymm[i]) );
+    Tmp << '$' << (i+1) << ' ' << TSymmParser::MatrixToSymm( rm.GetUsedSymm(usedSymm[i]) );
     SL.Insert(oindex+i, Tmp  );
   }
 }
@@ -1523,9 +1513,17 @@ void TIns::ClearIns()  {
   Ins.Clear();
 }
 //..............................................................................
-bool TIns::AddIns(const olxstr& Params)  {
+bool TIns::AddIns(const olxstr& Params, RefinementModel& rm)  {
   TStrList toks(Params, ' ');
-  return AddIns(toks);
+  return AddIns(toks, rm);
+}
+//..............................................................................
+void TIns::_SaveSizeTemp(TStrList& SL)  {
+  vec3d size( RefMod.expl.GetCrystalSize() );
+  if( !size.IsNull() )
+    SL.Add("SIZE ") << size[0] << ' ' << size[1] << ' ' << size[2];
+  if( RefMod.expl.GetTemperature() != 0 )
+    SL.Add("TEMP ") << RefMod.expl.GetTemperature();
 }
 //..............................................................................
 void TIns::SaveHeader(TStrList& SL, int* SfacIndex, int* UnitIndex)  {
@@ -1541,9 +1539,9 @@ void TIns::SaveHeader(TStrList& SL, int* SfacIndex, int* UnitIndex)  {
   }
   if( UnitIndex != NULL )  *UnitIndex = SL.Count();  
   SL.Add("UNIT ") << Unit;
-  SaveRestraints(SL, NULL, NULL, NULL);
+  SaveRestraints(SL, NULL, NULL, GetRM());
   _SaveRefMethod(SL);
-
+  _SaveSizeTemp(SL);
   // copy "unknown" instructions except rems
   for( int i=0; i < Ins.Count(); i++ )  {
     TInsList* L = Ins.Object(i);
@@ -1559,12 +1557,13 @@ void TIns::SaveHeader(TStrList& SL, int* SfacIndex, int* UnitIndex)  {
   _SaveHklSrc(SL);
 
   olxstr& wght = SL.Add("WGHT ");
-  for( int i=0; i < FWght.Count(); i++ )  {
-    wght << FWght[i];
-    if( i+1 < FWght.Count() )
+  for( int i=0; i < RefMod.used_weight.Count(); i++ )  {
+    wght << RefMod.used_weight[i];
+    if( i+1 < RefMod.used_weight.Count() )
       wght << ' ';
   }
-  if( FWght.Count() == 0 )  wght << "0.1";
+  if( RefMod.used_weight.Count() == 0 )  
+    wght << "0.1";
   _SaveFVar(SL);
 }
 //..............................................................................
@@ -1573,24 +1572,17 @@ void TIns::ParseHeader(const TStrList& in)  {
   for( int i=0; i < Ins.Count(); i++ )
     delete Ins.Object(i);
   Ins.Clear();
-  Skipped.Clear();
-  FTitle = EmptyString;
-  FVars.Resize(0);
-  FWght.Resize(0);
-  FWght1.Resize(0);
-  FHKLSource = EmptyString;
-  FLS.Resize(0);
-  FPLAN.Resize(0);
   Sfac = EmptyString;
   Unit = EmptyString;
+  Skipped.Clear();
+  Title = EmptyString;
   Disp.Clear();
-  Error = 0;
-  GetAsymmUnit().ClearRestraints();
+  GetRM().Clear();
   GetAsymmUnit().ClearMatrices();
 // end clear, start parsing
   olxstr Tmp;
   TStrList toks;
-  ParseContext cx(GetAsymmUnit());
+  ParseContext cx(GetRM());
   for( int i=0; i < in.Count(); i++ )  {
     Tmp = olxstr::DeleteSequencesOf<char>(in[i], ' ');
     if( Tmp.IsEmpty() )      continue;
@@ -1623,7 +1615,7 @@ void TIns::ParseHeader(const TStrList& in)  {
       GetAsymmUnit().AddMatrix(sm);
   }
   Ins.Pack();
-  ParseRestraints(Ins, NULL);
+  ParseRestraints(Ins, GetRM());
   Ins.Pack();
   _FinishParsing();
 }

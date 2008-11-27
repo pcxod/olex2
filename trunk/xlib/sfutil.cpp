@@ -45,7 +45,7 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
         return "please load fcf file or make sure the one exists in current folder";
     }
     sw.start("Loading CIF");
-    TCif cif( xapp.AtomsInfo() );
+    TCif cif;
     cif.LoadFromFile( fcffn );
     sw.stop();
     TCifLoop* hklLoop = cif.FindLoop("_refln");

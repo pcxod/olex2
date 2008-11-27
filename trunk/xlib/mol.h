@@ -18,7 +18,7 @@ protected:
   olxstr MOLAtom(TCAtom& CA);
   olxstr MOLBond(TMolBond& B);
 public:
-  TMol(TAtomsInfo *S);
+  TMol();
   virtual ~TMol();
 
   inline int BondCount() const     {  return Bonds.Count();  }
@@ -28,7 +28,7 @@ public:
   virtual bool Adopt(TXFile *XF);
   void DeleteAtom(TCAtom *CA);
 
-  virtual IEObject* Replicate()  const {  return new TMol(AtomsInfo);  }
+  virtual IEObject* Replicate()  const {  return new TMol;  }
 };
 
 EndXlibNamespace()

@@ -17,48 +17,40 @@
 
 #include "ins.h"
 #include "crs.h"
+#include "utf8file.h"
 
 //---------------------------------------------------------------------------
 // TBasicCFile function bodies
 //---------------------------------------------------------------------------
-TBasicCFile::TBasicCFile(TAtomsInfo *S)  {
-  FAsymmUnit   = new TAsymmUnit(NULL, S);
-  AtomsInfo = S;
-}
+TBasicCFile::TBasicCFile() : AsymmUnit(NULL), RefMod(AsymmUnit)  {  }
 //..............................................................................
-TBasicCFile::~TBasicCFile()  {
-  delete FAsymmUnit;
-}
+TBasicCFile::~TBasicCFile()  {  }
 //..............................................................................
-void TBasicCFile::SaveToFile(const olxstr &A)  {
+void TBasicCFile::SaveToFile(const olxstr& fn)  {
   TStrList L;
   SaveToStrings( L );
-#ifdef _UNICODE
-  TCStrList(L).SaveToFile( A );
-#else
-  L.SaveToFile( A );
-#endif
-  FFileName = A;
+  TUtf8File::WriteLines(fn, L, false); 
+  FileName = fn;
 };
 //..............................................................................
-void TBasicCFile::LoadFromFile(const olxstr &A)  {
-  TEFile::CheckFileExists(__OlxSourceInfo, A);
+void TBasicCFile::LoadFromFile(const olxstr& fn)  {
+  TEFile::CheckFileExists(__OlxSourceInfo, fn);
   TStrList L;
-  L.LoadFromFile( A );
+  L.LoadFromFile( fn );
   if( L.IsEmpty() )
-    throw TEmptyFileException(__OlxSourceInfo, A);
-  FFileName = A;
-  FHKLSource = EmptyString;
+    throw TEmptyFileException(__OlxSourceInfo, fn);
+  FileName = fn;
   try  {  LoadFromStrings(L);  }
   catch( const TExceptionBase& exc )  {  
-    FFileName = EmptyString;
+    FileName = EmptyString;
     throw TFunctionFailedException(__OlxSourceInfo, exc);  
   }
-  FFileName = A;
-  if( FHKLSource.IsEmpty() )  {
-    FHKLSource = TEFile::ChangeFileExt(A, "hkl");
-    if( !TEFile::FileExists(FHKLSource) )
-      FHKLSource = EmptyString;
+  FileName = fn;
+  if( GetRM().GetHKLSource().IsEmpty() )  {
+    olxstr src = TEFile::ChangeFileExt(fn, "hkl");
+    if( !TEFile::FileExists(src) )
+      src = EmptyString;
+    GetRM().SetHKLSource(src);
   }
   else  {
    /*
@@ -77,12 +69,9 @@ void TBasicCFile::LoadFromFile(const olxstr &A)  {
 //----------------------------------------------------------------------------//
 // TXFile function bodies
 //----------------------------------------------------------------------------//
-TXFile::TXFile(TAtomsInfo *S)  {
-  AtomsInfo = S;
-  FLattice = new TLattice(S);
-  FAsymmUnit = &GetLattice().GetAsymmUnit();
+TXFile::TXFile() : RefMod(Lattice.GetAsymmUnit())  {
   AActionHandler::SetToDelete(false);
-  FAsymmUnit->OnSGChange->Add(this); 
+  Lattice.GetAsymmUnit().OnSGChange->Add(this); 
   OnFileLoad = &Actions.NewQueue("XFILELOAD");
   OnFileSave = &Actions.NewQueue("XFILESAVE");
   FLastLoader = NULL;
@@ -90,17 +79,12 @@ TXFile::TXFile(TAtomsInfo *S)  {
 }
 //..............................................................................
 TXFile::~TXFile()  {
-////////////////////////////////////////////
 // finding uniq objects and deleting them
-  for( int i=0; i < FileFormats.Count(); i++ )  {
+  for( int i=0; i < FileFormats.Count(); i++ )
     FileFormats.Object(i)->SetTag(i);
-  }
-  for( int i=0; i < FileFormats.Count(); i++ )  {
+  for( int i=0; i < FileFormats.Count(); i++ )
     if( FileFormats.Object(i)->GetTag() == i )
       delete FileFormats.Object(i);
-  }
-////////////////////////////////////////////
-  delete FLattice;
 }
 //..............................................................................
 void TXFile::RegisterFileFormat(TBasicCFile *F, const olxstr &Ext)  {
@@ -120,8 +104,9 @@ void TXFile::LastLoaderChanged() {
   if( FLastLoader == NULL )  return;
   FSG = TSymmLib::GetInstance()->FindSG(FLastLoader->GetAsymmUnit());
   OnFileLoad->Enter(this);
+  GetRM().Clear();
   GetLattice().Clear(true);
-  GetAsymmUnit().Assign(FLastLoader->GetAsymmUnit());
+  GetRM().Assign(FLastLoader->GetRM(), true);
   GetLattice().Init();
   OnFileLoad->Exit(this);
 }
@@ -149,10 +134,11 @@ void TXFile::LoadFromFile(const olxstr & FN) {
     throw TFunctionFailedException(__OlxSourceInfo, exc.Replicate() );
   }
 
-  FFileName = FN;
   OnFileLoad->Enter(this);
+  
+  GetRM().Clear();
   GetLattice().Clear(true);
-  GetAsymmUnit().Assign(Loader->GetAsymmUnit());
+  GetRM().Assign(Loader->GetRM(), true);
   GetLattice().Init();
   FSG = TSymmLib::GetInstance()->FindSG(Loader->GetAsymmUnit());
   OnFileLoad->Exit(this);
@@ -205,21 +191,7 @@ void TXFile::UpdateAsymmUnit()  {
     }
   }
 
-  LL->GetAsymmUnit().RestrainedDistances().Assign(LL->GetAsymmUnit(), GetAsymmUnit().RestrainedDistances());
-  LL->GetAsymmUnit().RestrainedAngles().Assign(LL->GetAsymmUnit(), GetAsymmUnit().RestrainedAngles());
-  LL->GetAsymmUnit().SimilarDistances().Assign(LL->GetAsymmUnit(), GetAsymmUnit().SimilarDistances());
-  LL->GetAsymmUnit().RestrainedVolumes().Assign(LL->GetAsymmUnit(), GetAsymmUnit().RestrainedVolumes());
-  LL->GetAsymmUnit().RestrainedPlanarity().Assign(LL->GetAsymmUnit(), GetAsymmUnit().RestrainedPlanarity());
-  LL->GetAsymmUnit().RestranedUaAsUi().Assign(LL->GetAsymmUnit(), GetAsymmUnit().RestranedUaAsUi());
-  LL->GetAsymmUnit().RigidBonds().Assign(LL->GetAsymmUnit(), GetAsymmUnit().RigidBonds());
-  LL->GetAsymmUnit().SimilarU().Assign(LL->GetAsymmUnit(), GetAsymmUnit().SimilarU());
-  LL->GetAsymmUnit().EquivalentU().Assign(LL->GetAsymmUnit(), GetAsymmUnit().EquivalentU());
-  LL->GetAsymmUnit().SimilarFragments().Assign(LL->GetAsymmUnit(), GetAsymmUnit().SimilarFragments());
-  LL->GetAsymmUnit().SharedSites().Assign(LL->GetAsymmUnit(), GetAsymmUnit().SharedSites());
-  LL->GetAsymmUnit().GetAfixGroups().Assign(LL->GetAsymmUnit(), GetAsymmUnit().GetAfixGroups());
-  LL->GetAsymmUnit().ClearUsedSymm();
-  for( int i=0; i < GetAsymmUnit().UsedSymmCount(); i++ )
-    LL->GetAsymmUnit().AddUsedSymm( GetAsymmUnit().GetUsedSymm(i) );
+  LL->GetRM().Assign(RefMod, false);
   LL->GetAsymmUnit().SetZ( GetAsymmUnit().GetZ() );
 }
 //..............................................................................
@@ -239,10 +211,7 @@ void TXFile::SaveToFile(const olxstr & FN, bool Sort)  {
   if( Sort )  Loader->GetAsymmUnit().Sort();
   OnFileSave->Enter(this);
   IEObject* Cause = NULL;
-  try  {
-    Loader->SaveToFile(FN);
-    FFileName = FN;
-  }
+  try  {  Loader->SaveToFile(FN);  }
   catch( const TExceptionBase &exc )  {
     Cause = exc.Replicate();
   }
@@ -253,7 +222,7 @@ void TXFile::SaveToFile(const olxstr & FN, bool Sort)  {
 }
 //..............................................................................
 IEObject* TXFile::Replicate() const  {
-  TXFile* xf = new TXFile( this->AtomsInfo );
+  TXFile* xf = new TXFile;
   for( int i=0; i < FileFormats.Count(); i++ )  {
     xf->RegisterFileFormat( (TBasicCFile*)FileFormats.Object(i)->Replicate(), 
                               FileFormats.String(i) );
@@ -360,9 +329,10 @@ void TXFile::LibSetFormula(const TStrObjList& Params, TMacroError& E) {
   }
   TIns* ins = (TIns*)FLastLoader;
   olxstr Sfac, Unit;
+  TAtomsInfo& AtomsInfo = TAtomsInfo::GetInstance();
   if( Params[0].IndexOf(':') == -1 )  {
     TTypeList<AnAssociation2<olxstr, int> > res;
-    AtomsInfo->ParseElementString( Params[0], res);
+    AtomsInfo.ParseElementString( Params[0], res);
     if( res.IsEmpty() )  {
       E.ProcessingError(__OlxSrcInfo, "empty formula is not allowed" );
       return;
@@ -406,12 +376,12 @@ void TXFile::LibEndUpdate(const TStrObjList& Params, TMacroError& E)  {
 //..............................................................................
 void TXFile::LibSaveSolution(const TStrObjList& Params, TMacroError& E)  {
   TIns* oins = (TIns*)FLastLoader;
-  TIns ins(AtomsInfo);
-  ins.GetAsymmUnit().Assign( *FAsymmUnit );
-  ins.AddIns("FMAP 2");
-  ins.SetRefinementMethod("L.S.");
-  ins.SetIterations(4);
-  ins.SetPlan(20);
+  TIns ins;
+  ins.GetAsymmUnit().Assign( GetAsymmUnit() );
+  ins.AddIns("FMAP 2", ins.GetRM());
+  ins.GetRM().SetRefinementMethod("L.S.");
+  ins.GetRM().SetIterations(4);
+  ins.GetRM().SetPlan(20);
   ins.SetSfac( oins->GetSfac());
   ins.SetUnit( oins->GetUnit() );
   ins.SaveToFile( Params[0] );
@@ -433,9 +403,9 @@ TLibrary*  TXFile::ExportLibrary(const olxstr& name)  {
  update the program state") );
   lib->RegisterFunction<TXFile>( new TFunction<TXFile>(this,  &TXFile::LibSaveSolution, "SaveSolution", fpOne|psCheckFileTypeIns,
 "Saves current Q-peak model to provided file (res-file)") );
-  lib->AttachLibrary( FLattice->GetAsymmUnit().ExportLibrary() );
-  lib->AttachLibrary( FLattice->GetUnitCell().ExportLibrary() );
-  lib->AttachLibrary( FLattice->ExportLibrary() );
+  lib->AttachLibrary( Lattice.GetAsymmUnit().ExportLibrary() );
+  lib->AttachLibrary( Lattice.GetUnitCell().ExportLibrary() );
+  lib->AttachLibrary( Lattice.ExportLibrary() );
   return lib;
 }
 //..............................................................................

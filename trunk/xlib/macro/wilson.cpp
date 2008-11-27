@@ -85,11 +85,12 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
   TScattererLib scat_lib(9);
   TTypeList< AnAssociation2<TLibScatterer*, double> > scatterers;
   TPtrList<const TBasicAtomInfo> bais;
+  TAtomsInfo& AtomsInfo = TAtomsInfo::GetInstance();
   for( int i=0; i < au.AtomCount(); i++ )  {
     const TCAtom& ca = au.GetAtom(i);
     if( ca.IsDeleted() || ca.GetAtomInfo() == iQPeakIndex )  continue;
     const TBasicAtomInfo& bai = (ca.GetAtomInfo() == iDeuteriumIndex) ? 
-      TAtomsInfo::GetInstance()->GetAtomInfo(iHydrogenIndex) : ca.GetAtomInfo();
+      AtomsInfo.GetAtomInfo(iHydrogenIndex) : ca.GetAtomInfo();
     int ind = bais.IndexOf( &bai );
     if( ind == -1 )  {
       scatterers.AddNew<TLibScatterer*, int>(scat_lib.Find(bai.GetSymbol()), 0);
@@ -102,7 +103,7 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
     scatterers[ind].B() += ca.GetOccp();
   }
   if( scatterers.IsEmpty() )  {
-    bais.Add( &au.GetAtomsInfo()->GetAtomInfo(iCarbonIndex) );
+    bais.Add( &AtomsInfo.GetAtomInfo(iCarbonIndex) );
     int atomCount = (int)XApp.XFile().GetUnitCell().CalcVolume()/18;
     scatterers.AddNew<TLibScatterer*, int>(scat_lib.Find("C"), atomCount);
   }

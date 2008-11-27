@@ -64,13 +64,14 @@ void XLibMacros::funATA(const TStrObjList &Cmds, TMacroError &Error)  {
 
   TLattice& latt = xapp.XFile().GetLattice();
   TAsymmUnit& au = latt.GetAsymmUnit();
+  TAtomsInfo& atomsInfo = TAtomsInfo::GetInstance();
   TBAIPList bai_l;
   if( arg == 1 )  {
     if( xapp.CheckFileType<TIns>() )  {
       TIns& ins = xapp.XFile().GetLastLoader<TIns>();
       TStrList sl(ins.GetSfac(), ' ');
       for( int i=0; i < sl.Count(); i++ ) 
-        bai_l.Add( ins.GetAtomsInfo().FindAtomInfoBySymbol(sl[i]) );
+        bai_l.Add( atomsInfo.FindAtomInfoBySymbol(sl[i]) );
     }    
   }
   TAutoDB::AnalysisStat stat;
@@ -141,7 +142,7 @@ void helper_CleanBaiList(TStrPObjList<olxstr,TBasicAtomInfo*>& list, TSPtrList<T
     TIns& ins = xapp.XFile().GetLastLoader<TIns>();
     list.Clear();   
     list.Strtok(ins.GetSfac(), ' ');
-    TAtomsInfo& bai = *TAtomsInfo::GetInstance();
+    TAtomsInfo& bai = TAtomsInfo::GetInstance();
     for( int i=0; i < list.Count(); i++ )  { 
       list.Object(i) = bai.FindAtomInfoBySymbol(list[i]);
       au_bais.Add(list.Last().Object());
@@ -152,7 +153,7 @@ void helper_CleanBaiList(TStrPObjList<olxstr,TBasicAtomInfo*>& list, TSPtrList<T
 
 void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   TXApp& xapp = TXApp::GetInstance();
-  TAtomsInfo& AtomsInfo = *TAtomsInfo::GetInstance();
+  TAtomsInfo& AtomsInfo = TAtomsInfo::GetInstance();
   TStrPObjList<olxstr,TBasicAtomInfo*> sfac;
   TSPtrList<TBasicAtomInfo> AvailableTypes;
   static TPtrList<TBasicAtomInfo> StandAlone;
