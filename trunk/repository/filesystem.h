@@ -8,7 +8,7 @@
 #include "etime.h"
 #include "estlist.h"
 #include "etraverse.h"
-
+#undef GetObject
 class TFSIndex;
 class TFSItem;
 

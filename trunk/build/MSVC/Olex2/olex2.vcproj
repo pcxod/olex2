@@ -594,6 +594,18 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\repository\py_core.cpp"
+				>
+				<FileConfiguration
+					Name="Unicode|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)\py_core_wx.obj"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
 				RelativePath="..\..\..\repository\pyext.cpp"
 				>
 			</File>
@@ -668,6 +680,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\repository\eprocess.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\repository\fftn.h"
 				>
 			</File>
@@ -705,6 +721,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\olex\ptable.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\repository\py_core.h"
 				>
 			</File>
 			<File

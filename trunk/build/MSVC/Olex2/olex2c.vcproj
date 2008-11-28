@@ -417,6 +417,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\repository\py_core.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\repository\pyext.cpp"
 				>
 				<FileConfiguration

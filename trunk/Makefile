@@ -86,6 +86,7 @@ obj_repository : $(OBJ_DIR) $@
 	@cd $(OBJ_DIR); $(CC) $(SRC_DIR)repository/IsoSurface.cpp $(OPTS) $(CFLAGS)
 	@cd $(OBJ_DIR); $(CC) $(SRC_DIR)repository/eprocess.cpp $(OPTS) $(CFLAGS)
 	@cd $(OBJ_DIR); $(CC) $(SRC_DIR)repository/olxvar.cpp $(OPTS) $(CFLAGS)
+	@cd $(OBJ_DIR); $(CC) $(SRC_DIR)repository/py_core.cpp $(OPTS) $(CFLAGS)
 	@echo "[8] Done! Building repository object libraries"
 
 obj : $(OBJ_DIR) obj_alglib obj_sdl obj_sdl_smart obj_xlib obj_xlib_macro obj_glib obj_gxlib obj_repository
