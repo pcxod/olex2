@@ -99,6 +99,7 @@ public:
   virtual const olxstr& getDataDir() const;
   virtual const olxstr& getVar(const olxstr &name, const olxstr &defval=NullString) const;
   virtual void setVar(const olxstr &name, const olxstr &val) const;
+  virtual TStrList GetPluginList() const;
 
   void CallbackFunc(const olxstr& cbEvent, const olxstr& param);
   void CallbackFunc(const olxstr& cbEvent, TStrObjList& params);
@@ -512,11 +513,9 @@ private:
 //..............................................................................
 public:
   const olxstr&  TranslatePhrase(const olxstr& phrase);
-  void TranslateString(olxstr& phrase);
-
   virtual TLibrary& GetLibrary()  {  return FXApp->GetLibrary();  }
-  TDataItem* PluginItem() {  return FPluginItem;  }
-
+  virtual olxstr TranslateString(const olxstr& str) const;
+  virtual bool IsControl(const olxstr& cname) const;
   virtual void LockWindowDestruction(wxWindow* wnd);
   virtual void UnlockWindowDestruction(wxWindow* wnd);
 public:
@@ -603,8 +602,8 @@ public:
   void SaveScene(TDataItem *Root, TGlLightModel *FLM=NULL);
   const olxstr& GetStructureOlexFolder();
   float GetHtmlPanelWidth() const  {  return FHtmlPanelWidth;  }
-  inline THtml* GetHtml()  {  return FHtml; }
-  THtml* GetHtml(const olxstr& popupName);
+  inline THtml* GetHtml()  const {  return FHtml; }
+  THtml* GetHtml(const olxstr& popupName) const;
   inline const olxstr& GetCurrentLanguageEncodingStr()  const  {
     return Dictionary.GetCurrentLanguageEncodingStr();
   }

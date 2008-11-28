@@ -1052,7 +1052,7 @@ void THtml::CheckForSwitches(THtmlSwitch &Sender, bool izZip)  {
   olxstr Tmp;
   for( int i=0; i < Lst.Count(); i++ )  {
     // TRANSLATION START
-    TGlXApp::GetMainForm()->TranslateString( Lst[i] );
+    Lst[i] = TGlXApp::GetMainForm()->TranslateString( Lst[i] );
     if( Lst[i].IndexOf("$") >= 0 )
       TGlXApp::GetMainForm()->ProcessMacroFunc( Lst[i] );
     // TRANSLATIOn END
