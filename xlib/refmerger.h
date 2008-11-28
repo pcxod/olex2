@@ -131,7 +131,7 @@ template <class RefListMerger>
     TRefPList refs, toMerge;  // list of replicated reflections
     refs.SetCapacity( Refs.Count() );
     for( int i=0; i < Refs.Count(); i++ )  {
-      if( Refs[i]->GetTag() <= 0 )  continue;  // skip omited reflections
+      if( Refs[i].GetTag() <= 0 )  continue;  // skip omited reflections
       TReflection* ref = refs.Add( new TReflection(Refs[i]) );
       if( ref->GetI() < 0 )  ref->SetI(0);
     }
