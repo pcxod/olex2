@@ -77,7 +77,7 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
   //}
 
   TRefList Refs;
-  THklFile::MergeStats st = Hkl.Merge(*sg, true, Refs);
+  MergeStats st = Hkl.Merge(*sg, true, Refs);
   TTypeList<TWilsonBin> bins;
   TTypeList<TWilsonRef> refs;
   refs.SetCapacity(Refs.Count());

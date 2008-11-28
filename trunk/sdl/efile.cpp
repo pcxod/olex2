@@ -610,6 +610,21 @@ long TEFile::FileLength(const olxstr& fileName)  {
   return the_stat.st_size;
 }
 //..............................................................................
+TEFile::FileID TEFile::GetFileID(const olxstr& fileName)  {
+  olxstr _name( OLX_OS_PATH(fileName) );
+  time_t _timestamp = 0;
+  struct STAT_STR the_stat;
+  if( STAT(OLXSTR(_name), &the_stat) != 0 )
+    throw TInvalidArgumentException(__OlxSourceInfo, olxstr("Invalid file '") << _name << '\'');
+#if defined(__BORLANDC__) || defined(_MSC_VER) || defined(__GNUC__)
+  _timestamp = the_stat.st_mtime;
+#else
+  struct timespec& t = the_stat.st_mtimespec;
+  _timestamp = t.tv_nsec + t.tv_nsec*1e-9; // number of seconds since last modification
+#endif
+  return FileID(_name, the_stat.st_size, _timestamp);
+}
+//..............................................................................
 bool TEFile::ChangeDir(const olxstr& To)  {
   if( To.IsEmpty() )  return false;
   olxstr path = OLX_OS_PATH(To);

@@ -212,7 +212,7 @@ public:
 //..............................................................................
   // returns a string: h k l ...
   TIString ToString() const  {
-    char bf[128];
+    static char bf[128];
 #ifdef _MSC_VER
     if( Flag == NoFlagSet )  sprintf_s(bf, 128, "%4i%4i%4i%8.2lf%8.2lf", H, K, L, I, S);
     else                     sprintf_s(bf, 128, "%4i%4i%4i%8.2lf%8.2lf%4i", H, K, L, I, S, Flag);
@@ -231,6 +231,17 @@ public:
     //}
     //return Str;
     return olxstr(bf);
+  }
+  //writes string to the provided buffer (should be at least 32 bytes long)
+  char* ToCBuffer(char* bf) const  {
+#ifdef _MSC_VER
+    if( Flag == NoFlagSet )  sprintf_s(bf, 128, "%4i%4i%4i%8.2lf%8.2lf", H, K, L, I, S);
+    else                     sprintf_s(bf, 128, "%4i%4i%4i%8.2lf%8.2lf%4i", H, K, L, I, S, Flag);
+#else
+    if( Flag == NoFlagSet )  sprintf(bf, "%4i%4i%4i%8.2lf%8.2lf", H, K, L, I, S);
+    else                     sprintf(bf, "%4i%4i%4i%8.2lf%8.2lf%4i", H, K, L, I, S, Flag);
+#endif
+    return bf;
   }
 //..............................................................................
   // return a string like: tag. h k l ...

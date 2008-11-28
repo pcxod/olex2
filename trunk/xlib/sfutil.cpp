@@ -106,7 +106,7 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
       av += Hkl[i].GetI() < 0 ? 0 : Hkl[i].GetI();
     av /= Hkl.RefCount();
     sw.start("Merging HKL");
-    THklFile::MergeStats ms = Hkl.Merge( xapp.XFile().GetLastLoaderSG(), true, refs);
+    MergeStats ms = Hkl.Merge( xapp.XFile().GetLastLoaderSG(), true, refs);
     F.SetCount(refs.Count());
     sw.start("Calculation structure factors");
     xapp.CalcSF(refs, F);

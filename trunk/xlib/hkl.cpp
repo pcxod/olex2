@@ -293,38 +293,44 @@ bool THklFile::SaveToFile(const olxstr& FN, const TRefPList& refs, bool Append) 
     TReflection NullRef(0, 0, 0, 0, 0);
     if( refs[0]->GetFlag() != NoFlagSet )
       NullRef.SetFlag(0);
+    const int ref_str_len = NullRef.ToString().Length();
+    char* ref_bf = new char[ref_str_len+1];
     for( int i=0; i < refs.Count(); i++ )  {
       if( refs[i]->GetTag() > 0 )  
-        out.Writenl( CString(refs[i]->ToString()) );
+        out.Writenl( refs[i]->ToCBuffer(ref_bf), ref_str_len );
     }
-    out.Writenl( CString(NullRef.ToString()) );
+    out.Writenl( NullRef.ToCBuffer(ref_bf), ref_str_len );
     for( int i=0; i < refs.Count(); i++ )  {
-      if( refs[i]->GetTag() < 0 )  out.Writenl( CString(refs[i]->ToString()) );
+      if( refs[i]->GetTag() < 0 )  
+        out.Writenl( refs[i]->ToCBuffer(ref_bf), ref_str_len );
     }
+    delete [] ref_bf;
   }
   return true;
 }
 //..............................................................................
 bool THklFile::SaveToFile(const olxstr& FN, const TRefList& refs)  {
   if( refs.IsEmpty() )  return true;
-
   TEFile out(FN, "w+b");
   TReflection NullRef(0, 0, 0, 0, 0);
   if( refs[0].GetFlag() != NoFlagSet )
     NullRef.SetFlag(0);
+  const int ref_str_len = NullRef.ToString().Length();
+  char* ref_bf = new char[ref_str_len+1];
   for( int i=0; i < refs.Count(); i++ )  {
     if( refs[i].GetTag() > 0 )  
-      out.Writenl( CString(refs[i].ToString()) );
+      out.Writenl( refs[i].ToCBuffer(ref_bf), ref_str_len );
   }
-  out.Writenl( CString(NullRef.ToString()) );
+  out.Writenl( NullRef.ToCBuffer(ref_bf), ref_str_len );
   for( int i=0; i < refs.Count(); i++ )  {
     if( refs[i].GetTag() < 0 )  
-      out.Writenl( CString(refs[i].ToString()) );
+      out.Writenl( refs[i].ToCBuffer(ref_bf), ref_str_len );
   }
+  delete [] ref_bf;
   return true;
 }
 //..............................................................................
-THklFile::MergeStats THklFile::Merge(const TSpaceGroup& sg, bool MergeInverse, TRefList& output)  {
+MergeStats THklFile::Merge(const TSpaceGroup& sg, bool MergeInverse, TRefList& output) const {
   smatd_list ml;
   sg.GetMatrices(ml, mattAll^mattIdentity);
   if( MergeInverse && !sg.IsCentrosymmetric() )  {
@@ -332,7 +338,7 @@ THklFile::MergeStats THklFile::Merge(const TSpaceGroup& sg, bool MergeInverse, T
     im.r.I();
     im.r *= -1;
   }
-  THklFile::MergeStats rv = Merge<TSimpleMerger>(ml, output);
+  MergeStats rv = RefMerger::Merge<TSimpleMerger>(ml, Refs, output);
   if( MergeInverse && !sg.IsCentrosymmetric() )
     ml.Delete( ml.Count()-1 );
   for( int i=0; i < output.Count(); i++ )
