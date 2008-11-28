@@ -4097,7 +4097,7 @@ void TMainForm::macMergeHkl(TStrObjList &Cmds, const TParamList &Options, TMacro
     av += Hkl[i].GetI() < 0 ? 0 : Hkl[i].GetI();
   av /= Hkl.RefCount();
   TRefList refs;
-  THklFile::MergeStats ms = Hkl.Merge( *sg, !Options.Contains("i"), refs);
+  MergeStats ms = Hkl.Merge( *sg, !Options.Contains("i"), refs);
   TTTable<TStrList> tab(6, 2);
   tab[0][0] << "Total reflections"; 
   tab[0][1] << ms.TotalReflections;
@@ -7985,7 +7985,7 @@ void TMainForm::macCalcPatt(TStrObjList &Cmds, const TParamList &Options, TMacro
     av += Hkl[i].GetI() < 0 ? 0 : Hkl[i].GetI();
   av /= Hkl.RefCount();
 
-  THklFile::MergeStats ms = Hkl.Merge( *sg, true, refs);
+  MergeStats ms = Hkl.Merge( *sg, true, refs);
 
   double vol = FXApp->XFile().GetLattice().GetUnitCell().CalcVolume();
   int minH = 100,  minK = 100,  minL = 100;
