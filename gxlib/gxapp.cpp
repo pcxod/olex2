@@ -288,7 +288,7 @@ void TGXApp::CreateXRefs()  {
   catch(...)  {
     throw TFunctionFailedException(__OlxSourceInfo, "could not locate sapce group");
   }
-  THklFile::MergeStats ms = FHklFile->Merge( *sg, false, refs);
+  MergeStats ms = FHklFile->Merge( *sg, false, refs);
 
   vec3d Center;
   for( int i=0; i < refs.Count(); i++ )  {
