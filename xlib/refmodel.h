@@ -3,7 +3,7 @@
 #include "asymmunit.h"
 #include "xscatterer.h"
 #include "experimental.h"
-#include "hkl.h"
+#include "refmerger.h"
 
 BeginXlibNamespace()
 
@@ -35,8 +35,8 @@ protected:
   vec3i_list Omits;
   TDoubleList BASF;
   void SetDefaults();
-//  THkl::MergeStats HklStat;
-//  olxstr HklStatFile;  // if this is not the HKLSource, statistics is recalculated
+  MergeStats HklStat;
+  TEFile::FileID HklStatFileID;  // if this is not the HKLSource, statistics is recalculated
 public:
   RefinementModel(TAsymmUnit& au);
   virtual ~RefinementModel() {  Clear();  }
@@ -248,6 +248,8 @@ of components 1 ... m
   double FindRestrainedDistance(const TCAtom& a1, const TCAtom& a2);
   
   RefinementModel& Assign(const RefinementModel& rm, bool AssignAUnit);
+
+  const MergeStats& GetMergeStat();
 
   void ToDataItem(TDataItem& item) const;
   void FromDataItem(TDataItem& item);

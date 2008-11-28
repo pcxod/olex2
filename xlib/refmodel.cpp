@@ -2,11 +2,12 @@
 #include "lattice.h"
 #include "symmparser.h"
 #include "hkl.h"
+#include "symmlib.h"
 
 RefinementModel::RefinementModel(TAsymmUnit& au) : rDFIX(*this, rltBonds), rDANG(*this, rltBonds), 
   rSADI(*this, rltBonds), rCHIV(*this, rltAtoms), rFLAT(*this, rltGroup), rDELU(*this, rltAtoms), 
   rSIMU(*this, rltAtoms), rISOR(*this, rltAtoms), rEADP(*this, rltAtoms), 
-  aunit(au)  {
+  aunit(au), HklStatFileID(EmptyString, 0, 0)  {
   SetDefaults();
 }
 //....................................................................................................
@@ -160,11 +161,38 @@ double RefinementModel::FindRestrainedDistance(const TCAtom& a1, const TCAtom& a
 void RefinementModel::SetHKLSource(const olxstr& src) {
   if( HKLSource == src )  return;
   HKLSource = src;
-  //if( TEFile::FileExists(src) )  {
-  //  THklFile hf;
-  //  hf.LoadFromFile(src);
-  //  hf.
-  //}
+}
+//....................................................................................................
+const MergeStats& RefinementModel::GetMergeStat() {
+  // we need to take into the account MERG, HKLF and OMIT things here...
+  try {
+    TEFile::FileID hkl_src_id = TEFile::GetFileID(HKLSource);
+    if( hkl_src_id == HklStatFileID )
+      return HklStat;
+    else  {
+      THklFile hf;
+      hf.LoadFromFile(HKLSource);
+      HklStatFileID = hkl_src_id;
+      TSpaceGroup* sg = TSymmLib::GetInstance()->FindSG(aunit);
+      if( sg == NULL )  // will not be seen outside though
+        throw TFunctionFailedException(__OlxSourceInfo, "unknown space group");
+      TRefPList refs;
+      refs.SetCapacity( hf.RefCount() );
+      const mat3d& hkl2c = aunit.GetHklToCartesian();
+      if( HKLF_mat.IsI() )  {
+        const int ref_cnt = hf.RefCount();
+        for( int i=0; i < ref_cnt; i++ )  {
+          
+        }
+      }
+      else {
+      }
+    }
+  }
+  catch(TExceptionBase&)  {
+    HklStat.Reset();
+  }
+  return HklStat;
 }
 //....................................................................................................
 void RefinementModel::ToDataItem(TDataItem& item) const {

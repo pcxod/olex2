@@ -54,6 +54,41 @@ protected:
     FHandle = handle;
   }
 public:
+  // class for filtering files by mask. other platforms then win
+  class TFileNameMask  {
+    TStrList toks;
+    olxstr mask;
+    int toksEnd, toksStart;
+  public:
+    TFileNameMask(const olxstr& msk );
+    bool DoesMatch(const olxstr& str)  const;
+  };
+  // a simple file ID, validates file by modification time, name and the size...
+  struct FileID {
+    olxstr name;
+    size_t size;
+    time_t timestamp;
+    FileID(const olxstr& _name, size_t _size, time_t _timestamp) :
+      name(_name), size(_size), timestamp(_timestamp) { }
+    // copy constructor
+    FileID(const FileID& fi) : name(fi.name), size(fi.size), timestamp(fi.timestamp) {  }
+    // comparison operator
+    bool operator == (const FileID& fi)  {
+      return (timestamp == fi.timestamp && size == fi.size && name == fi.name);
+    }
+    // comparison operator
+    bool operator != (const FileID& fi)  {
+      return !(timestamp == fi.timestamp && size == fi.size && name == fi.name);
+    }
+    // assignment operator
+    FileID& operator = (const FileID& fi)  {
+      name = fi.name;
+      size = fi.size;
+      timestamp = fi.timestamp;
+      return *this;
+    }
+  };
+public:
   TEFile();
   TEFile(const olxstr &F, const olxstr &Attribs);
   TEFile(const olxstr &F, short Attribs);
@@ -155,20 +190,11 @@ public:
   static time_t FileAge(const olxstr& fileName);
   // function is based on stat;
   static long FileLength(const olxstr& fileName);
+  static FileID GetFileID(const olxstr& name);
 
   static void CheckFileExists(const olxstr& location, const olxstr& fileName);
 
   static class TLibrary*  ExportLibrary(const olxstr& name=EmptyString);
-public:
-  // class for filtering files by mask. other platforms then win
-  class TFileNameMask  {
-    TStrList toks;
-    olxstr mask;
-    int toksEnd, toksStart;
-  public:
-    TFileNameMask(const olxstr& msk );
-    bool DoesMatch(const olxstr& str)  const;
-  };
 };
 
 
