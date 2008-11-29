@@ -723,11 +723,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\xlib\refmerger.h"
+				RelativePath="..\..\..\xlib\refmodel.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\xlib\refmodel.h"
+				RelativePath="..\..\..\xlib\refutil.h"
 				>
 			</File>
 			<File

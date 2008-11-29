@@ -163,12 +163,12 @@ void RefinementModel::SetHKLSource(const olxstr& src) {
   HKLSource = src;
 }
 //....................................................................................................
-const MergeStats& RefinementModel::GetMergeStat() {
+const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
   // we need to take into the account MERG, HKLF and OMIT things here...
   try {
     TEFile::FileID hkl_src_id = TEFile::GetFileID(HKLSource);
     if( hkl_src_id == HklStatFileID )
-      return HklStat;
+      return _HklStat;
     else  {
       THklFile hf;
       hf.LoadFromFile(HKLSource);
@@ -179,20 +179,37 @@ const MergeStats& RefinementModel::GetMergeStat() {
       TRefPList refs;
       refs.SetCapacity( hf.RefCount() );
       const mat3d& hkl2c = aunit.GetHklToCartesian();
+      const double h_o_s = 0.5*OMIT_s;
+      double _2t_lim = 0.5*expl.GetRadiation()/sin(OMIT_2t*M_PI/180.0);
+      const double t2_lim = QRT(_2t_lim);
+      const int ref_cnt = hf.RefCount();
+      TRefPList Refs;
+      Refs.SetCapacity(hf.RefCount());
+      //apply OMIT transformation and filtering and calculate spacing limits
+      for( int i=0; i < ref_cnt; i++ )  {
+        TReflection& r = hf[i];
+        if( r.GetI() < h_o_s*r.GetS()*r.GetI() )
+          r.SetI( -h_o_s*r.GetI() );
+        vec3d hkl(r.GetH()*hkl2c[0][0],
+                  r.GetH()*hkl2c[0][1] + r.GetK()*hkl2c[1][1],
+                  r.GetH()*hkl2c[0][2] + r.GetK()*hkl2c[1][2] + r.GetL()*hkl2c[2][2]);
+        if( hkl.QLength() < t2_lim )  
+          Refs.Add(&r);
+      }
+      // use the OMIT filtering and calculate spacing limits
+      if( OMIT_2t != 180 )  {
+        
+      }
       if( HKLF_mat.IsI() )  {
-        const int ref_cnt = hf.RefCount();
-        for( int i=0; i < ref_cnt; i++ )  {
-          
-        }
       }
       else {
       }
     }
   }
   catch(TExceptionBase&)  {
-    HklStat.Reset();
+    _HklStat.SetDefaults();
   }
-  return HklStat;
+  return _HklStat;
 }
 //....................................................................................................
 void RefinementModel::ToDataItem(TDataItem& item) const {
