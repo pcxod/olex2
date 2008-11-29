@@ -3,7 +3,7 @@
 #include "asymmunit.h"
 #include "xscatterer.h"
 #include "experimental.h"
-#include "refmerger.h"
+#include "refutil.h"
 
 BeginXlibNamespace()
 
@@ -12,7 +12,7 @@ static const double
   def_HKLF_wt = 1,
   def_HKLF_m  = 0,
   def_OMIT_s  = -2,
-  def_OMIT_2t = M_PI;
+  def_OMIT_2t = 180.0;
 static const short 
  def_MERG   = 2,
  def_TWIN_n = 2;
@@ -35,8 +35,21 @@ protected:
   vec3i_list Omits;
   TDoubleList BASF;
   void SetDefaults();
-  MergeStats HklStat;
   TEFile::FileID HklStatFileID;  // if this is not the HKLSource, statistics is recalculated
+public:
+  // needs to be extended for the us of the batch numbers...
+  struct HklStat : public MergeStats {
+    double MaxD, MinD;
+    HklStat()  {
+      SetDefaults();
+    }
+    void SetDefaults()  {
+      MergeStats::SetDefaults();
+      MaxD = MinD = 0;
+    }
+  };
+protected:
+ HklStat _HklStat;
 public:
   RefinementModel(TAsymmUnit& au);
   virtual ~RefinementModel() {  Clear();  }
@@ -121,7 +134,7 @@ public:
   double GetOMIT_s()             const {  return OMIT_s;  }
   void SetOMIT_s(double v)             {  OMIT_s = v;  OMIT_set = true;  }
   double GetOMIT_2t()            const {  return OMIT_2t;  }
-  void SetOMIT_2t(double v)            {  OMIT_2t = v*M_PI/180.0;  OMIT_set = true;}
+  void SetOMIT_2t(double v)            {  OMIT_2t = v;  OMIT_set = true;}
   bool HasOMIT()                 const {  return OMIT_set;  }
   int OmittedCount()             const {  return Omits.Count();  }
   const vec3i& GetOmitted(int i) const {  return Omits[i];  }
@@ -135,12 +148,12 @@ public:
       if( omit.Count() > 0 )
         OMIT_s = omit[0].ToDouble();
       if( omit.Count() > 1 )
-        OMIT_2t = omit[1].ToDouble()*M_PI/180.0;
+        OMIT_2t = omit[1].ToDouble();
       OMIT_set = true;
     }
   }
   olxstr GetOMITStr() const {
-    return olxstr(OMIT_s) << ' ' << OMIT_2t*180.0/M_PI;
+    return olxstr(OMIT_s) << ' ' << OMIT_2t;
   }
 
   const TDoubleList& GetBASF() const {  return BASF;  }
@@ -249,7 +262,7 @@ of components 1 ... m
   
   RefinementModel& Assign(const RefinementModel& rm, bool AssignAUnit);
 
-  const MergeStats& GetMergeStat();
+  const HklStat& GetMergeStat();
 
   void ToDataItem(TDataItem& item) const;
   void FromDataItem(TDataItem& item);

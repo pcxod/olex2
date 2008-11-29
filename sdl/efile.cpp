@@ -622,7 +622,7 @@ TEFile::FileID TEFile::GetFileID(const olxstr& fileName)  {
   struct timespec& t = the_stat.st_mtimespec;
   _timestamp = t.tv_nsec + t.tv_nsec*1e-9; // number of seconds since last modification
 #endif
-  return FileID(_name, the_stat.st_size, _timestamp);
+  return FileID(ExtractFileName(_name), the_stat.st_size, _timestamp);
 }
 //..............................................................................
 bool TEFile::ChangeDir(const olxstr& To)  {
