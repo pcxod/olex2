@@ -2630,12 +2630,17 @@ void TMainForm::macHtmlPanelSwap(TStrObjList &Cmds, const TParamList &Options, T
 }
 //..............................................................................
 void TMainForm::macHtmlPanelVisible(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  if( Cmds.Count() == 1 )  {
+  if( Cmds.IsEmpty() )  {
+    FHtmlMinimized = !FHtmlMinimized;
+    OnResize();
+    miHtmlPanel->Check(!FHtmlMinimized);
+  }
+  else if( Cmds.Count() == 1 )  {
     FHtmlMinimized = !Cmds[0].ToBool();
     OnResize();
     miHtmlPanel->Check(!FHtmlMinimized);
   }
-  else  {
+  else if( Cmds.Count() == 2 ) {
     bool show = Cmds[0].ToBool();
     TPopupData *pd = GetPopup( Cmds[1] );
     if( pd != NULL )  {

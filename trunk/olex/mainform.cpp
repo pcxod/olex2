@@ -1371,7 +1371,8 @@ void TMainForm::SetProcess( AProcess *Process )  {
 //..............................................................................
 // view menu
 void TMainForm::OnHtmlPanel(wxCommandEvent& event)  {
-  Dispatch(ID_HTMLDBLCLICK, 0, (AEventsDispatcher*)this, NULL);
+  ProcessXPMacro("htmlpanelvisible", MacroError);
+  ProcessXPMacro("html.updatehtml", MacroError);
 }
 //..............................................................................
 void TMainForm::OnGenerate(wxCommandEvent& WXUNUSED(event))
