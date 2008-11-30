@@ -8759,3 +8759,4 @@ void TMainForm::macEsd(TStrObjList &Cmds, const TParamList &Options, TMacroError
     }
   }
 }
+
