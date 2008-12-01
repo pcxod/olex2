@@ -182,7 +182,7 @@ void TXAtom::Create(const olxstr& cName)  {
   if( FAtom->GetAtomInfo() == iQPeakIndex )  {
     Legend = GetLabelLegend(FAtom);
     GPC = FParent->FindCollection(Legend);
-    if( GPC == NULL )  {
+    if( GPC == NULL || GPC->ObjectCount() == 0 )  {  // if the collection is empty, need to fill it...
       GPC = FParent->NewCollection(Legend);
       GS = GPC->Style();
       GS->SetSaveable(false);
@@ -415,10 +415,9 @@ TGraphicsStyle* TXAtom::Style()  {
 }
 //..............................................................................
 void TXAtom::ApplyStyle(TGraphicsStyle *Style)  {
-  TGlPrimitive *GP;
   for( int i=0; i < Style->PrimitiveStyleCount(); i++ )  {
-    GP = Primitives()->PrimitiveByName( Style->PrimitiveStyle(i)->PrimitiveName() );
-    if( GP )
+    TGlPrimitive* GP = Primitives()->PrimitiveByName( Style->PrimitiveStyle(i)->PrimitiveName() );
+    if( GP != NULL )
       GP->SetProperties(Style->PrimitiveStyle(i)->GetProperties());
   } 
 }
@@ -625,10 +624,6 @@ void TXAtom::UpdatePrimitives(int32_t Mask)  {
   Primitives()->Style()->SetParameter("PMask", Mask);
   Primitives()->ClearPrimitives();
   Primitives()->RemoveObject(this);
-/*  if( Primitives()->ObejctCount() ) // have to create a new colection then
-  {
-    
-  }*/
   Create();
 }
 //..............................................................................
