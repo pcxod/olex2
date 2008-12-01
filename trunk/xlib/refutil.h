@@ -15,8 +15,21 @@ struct MergeStats  {
   MergeStats()  {
     SetDefaults();
   }
-  // no need to define assignment operator or copy constructor for this one...
-  // resets all values...
+  MergeStats(const MergeStats& ms) {
+    this->operator = (ms);
+  }
+  MergeStats& operator = (const MergeStats& ms) {
+    Rint = ms.Rint;
+    Rsigma = ms.Rsigma;
+    SystematicAbsentcesRemoved = ms.SystematicAbsentcesRemoved;
+    InconsistentEquivalents = ms.InconsistentEquivalents;
+    TotalReflections = ms.TotalReflections;
+    UniqueReflections = ms.UniqueReflections;
+    OmittedReflections = ms.OmittedReflections;
+    CentricReflections = ms.CentricReflections;
+    FriedelOppositesMerged = ms.FriedelOppositesMerged;
+    return *this;
+  }
   void SetDefaults()  {
     Rint = Rsigma = 0;
     TotalReflections = UniqueReflections = OmittedReflections = 0;

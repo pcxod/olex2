@@ -20,7 +20,7 @@ void RefinementModel::SetDefaults() {
   MERG = def_MERG;
   OMIT_s = def_OMIT_s;
   OMIT_2t = def_OMIT_2t;
-  OMIT_set = TWIN_set = false;
+  MERG_set = OMIT_set = TWIN_set = false;
   TWIN_n = def_TWIN_n;
   TWIN_mat.I() *= -1;
 }
@@ -89,6 +89,7 @@ RefinementModel& RefinementModel::Assign(const RefinementModel& rm, bool AssignA
   HKLF_wt = rm.HKLF_wt;
   HKLF_m = rm.HKLF_m;
   MERG = rm.MERG;
+  MERG_set = rm.MERG_set;
   OMIT_s = rm.OMIT_s;
   OMIT_2t = rm.OMIT_2t;
   OMIT_set = rm.OMIT_set;
@@ -167,8 +168,10 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
   // we need to take into the account MERG, HKLF and OMIT things here...
   try {
     TEFile::FileID hkl_src_id = TEFile::GetFileID(HKLSource);
-    if( hkl_src_id == HklStatFileID )
+    if( hkl_src_id == HklStatFileID )  {
+      _HklStat.OmittedByUser = Omits.Count();  // this might change beyond the HKL file!
       return _HklStat;
+    }
     else  {
       THklFile hf;
       hf.LoadFromFile(HKLSource);
@@ -180,30 +183,51 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
       refs.SetCapacity( hf.RefCount() );
       const mat3d& hkl2c = aunit.GetHklToCartesian();
       const double h_o_s = 0.5*OMIT_s;
-      double _2t_lim = 0.5*expl.GetRadiation()/sin(OMIT_2t*M_PI/180.0);
-      const double t2_lim = QRT(_2t_lim);
+      double max_d = 2*sin(OMIT_2t*M_PI/360.0)/expl.GetRadiation();
+      const double max_qd = QRT(max_d);  // maximum d squared
+      const bool transform_hkl = !HKLF_mat.IsI();
       const int ref_cnt = hf.RefCount();
+      _HklStat.MinD = 100;
+      _HklStat.MaxD = -100;
       TRefPList Refs;
       Refs.SetCapacity(hf.RefCount());
+      vec3d new_hkl;
       //apply OMIT transformation and filtering and calculate spacing limits
       for( int i=0; i < ref_cnt; i++ )  {
         TReflection& r = hf[i];
-        if( r.GetI() < h_o_s*r.GetS()*r.GetI() )
+        if( r.GetI() < h_o_s*r.GetS()*r.GetI() )  {
           r.SetI( -h_o_s*r.GetI() );
+          _HklStat.IntensityTransformed++;
+        }
+        if( transform_hkl )  {
+          r.MulHkl(new_hkl, HKLF_mat);
+          r.SetH( Round(new_hkl[0]) );
+          r.SetK( Round(new_hkl[1]) );
+          r.SetL( Round(new_hkl[2]) );
+        }
         vec3d hkl(r.GetH()*hkl2c[0][0],
                   r.GetH()*hkl2c[0][1] + r.GetK()*hkl2c[1][1],
                   r.GetH()*hkl2c[0][2] + r.GetK()*hkl2c[1][2] + r.GetL()*hkl2c[2][2]);
-        if( hkl.QLength() < t2_lim )  
+        const double qd = hkl.QLength();
+        if( qd < max_qd ) 
           Refs.Add(&r);
+        else
+          _HklStat.FilteredOff++;
+        if( qd > _HklStat.MaxD ) 
+          _HklStat.MaxD = qd;
+        if( qd < _HklStat.MinD ) 
+          _HklStat.MinD = qd;
       }
-      // use the OMIT filtering and calculate spacing limits
-      if( OMIT_2t != 180 )  {
-        
-      }
-      if( HKLF_mat.IsI() )  {
-      }
-      else {
-      }
+      _HklStat.LimD = sqrt(max_qd);
+      _HklStat.MaxD = sqrt(_HklStat.MaxD);
+      _HklStat.MinD = sqrt(_HklStat.MinD);
+      _HklStat.OmittedByUser = Omits.Count();
+      smatd_list ml;
+      TRefList output;
+      sg->GetMatrices(ml, mattAll^mattIdentity);
+      if( MERG == 4 && !sg->IsCentrosymmetric() )  // merge all
+        ml.AddNew().r.I() *= -1;
+      _HklStat = RefMerger::Merge<TSimpleMerger>(ml, Refs, output);
     }
   }
   catch(TExceptionBase&)  {

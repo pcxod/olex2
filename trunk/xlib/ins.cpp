@@ -1329,7 +1329,8 @@ void TIns::_SaveRefMethod(TStrList& SL)  {
 }
 //..............................................................................
 void TIns::_SaveHklInfo(TStrList& SL)  {
-  SL.Add("MERG ") << GetRM().GetMERG();
+  if( GetRM().HasMERG() )
+    SL.Add("MERG ") << GetRM().GetMERG();
   if( !GetRM().GetBASF().IsEmpty() )
     SL.Add("BASF ") << GetRM().GetBASFStr();
   if( GetRM().HasOMIT() )

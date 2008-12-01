@@ -31,7 +31,7 @@ protected:
   double OMIT_s, OMIT_2t;
   mat3d TWIN_mat;
   int TWIN_n;
-  bool TWIN_set, OMIT_set;
+  bool TWIN_set, OMIT_set, MERG_set;
   vec3i_list Omits;
   TDoubleList BASF;
   void SetDefaults();
@@ -39,13 +39,32 @@ protected:
 public:
   // needs to be extended for the us of the batch numbers...
   struct HklStat : public MergeStats {
-    double MaxD, MinD;
+    double MaxD, MinD, LimD;
+    int FilteredOff, // by LimD, OMIT_2t
+      OmittedByUser, // OMIT h k l 
+      IntensityTransformed;  // by OMIT_s
     HklStat()  {
       SetDefaults();
     }
+    HklStat( const HklStat& hs ) {
+      this->operator = (hs);
+    }
+    HklStat& operator = (const HklStat& hs)  {
+      MergeStats::operator = (hs);
+      MaxD = hs.MaxD;  MinD = hs.MinD;  LimD = hs.LimD;
+      FilteredOff = hs.FilteredOff;
+      IntensityTransformed = hs.IntensityTransformed;
+      OmittedByUser = hs.OmittedByUser;
+      return *this;
+    }
+    HklStat& operator = (const MergeStats& ms)  {
+      MergeStats::operator = (ms);
+      return *this;
+    }
     void SetDefaults()  {
       MergeStats::SetDefaults();
-      MaxD = MinD = 0;
+      MaxD = MinD = LimD = 0;
+      FilteredOff = IntensityTransformed = OmittedByUser = 0;
     }
   };
 protected:
@@ -128,8 +147,9 @@ public:
   double GetHKLF_m()         const {  return HKLF_m;  }
   void SetHKLF_m(double v)         {  HKLF_m = v;  }
 
-  int GetMERG() const {  return MERG;  }
-  void SetMERG(int v) {  MERG = v;  }
+  int GetMERG()  const {  return MERG;  }
+  void SetMERG(int v)  {  MERG = v;  MERG_set = true;  }
+  bool HasMERG() const {  return MERG_set;  }
   
   double GetOMIT_s()             const {  return OMIT_s;  }
   void SetOMIT_s(double v)             {  OMIT_s = v;  OMIT_set = true;  }
