@@ -2011,9 +2011,8 @@ void TMainForm::macMask(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     olxstr Tmp;
     TXBondPList Bonds;
     if( Cmds.Count() >= 3 )  {  // a atom drawing style is specified
-      for( int i=2; i <  Cmds.Count(); i++ )  {
+      for( int i=2; i <  Cmds.Count(); i++ )
         Tmp << Cmds[i] << ' ';
-      }
       FXApp->GetBonds(Tmp, Bonds);
       FXApp->UpdateBondPrimitives(Mask, &Bonds);
     }
@@ -2022,7 +2021,7 @@ void TMainForm::macMask(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     }
     return;
   }
-  int Mask = Cmds[Cmds.Count()-1].ToInt();
+  int Mask = Cmds.Last().String().ToInt();
   Cmds.Delete( Cmds.Count() - 1 );
   TGPCollection *GPC = FXApp->GetRender().FindCollection( Cmds.Text(' ') );
   if( GPC )  {
@@ -2031,7 +2030,7 @@ void TMainForm::macMask(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     }
   }
   else  {
-    Error.ProcessingError(__OlxSrcInfo, "undefined graphis" );
+    Error.ProcessingError(__OlxSrcInfo, "undefined graphics" );
     return;
   }
 }
