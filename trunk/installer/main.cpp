@@ -311,7 +311,9 @@ void __fastcall TfMain::bbInstallClick(TObject *Sender)  {
       Settings.UpdateParam("repository", reposPath + "update/");
       frMain->cbRepository->Text = AnsiString(reposPath.c_str()) + "update/";
     }
-    Settings.SaveSettings( installPath + TfMain::SettingsFile );
+    olxstr set_fn( installPath + TfMain::SettingsFile );
+    if( !TEFile::FileExists(set_fn) )  // keep settings if provided from the zip
+      Settings.SaveSettings( installPath + TfMain::SettingsFile );
   }
   catch( const TExceptionBase& exc )  {
     Application->MessageBox(exc.GetException()->GetFullMessage().c_str(), "Exception", MB_OK|MB_ICONERROR);
