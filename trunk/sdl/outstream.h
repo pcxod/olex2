@@ -16,11 +16,13 @@ protected:
   virtual size_t Write(const void* data, size_t len)  {
     throw TNotImplementedException(__OlxSourceInfo);
   }
+  bool SkipPost;
 public:
-  TOutStream()  {  }
+  TOutStream() : SkipPost(false)  {  }
   virtual ~TOutStream()  {}
   virtual size_t Write(const olxstr& str);
   virtual size_t Writenl(const olxstr& str);
+  DefPropP(bool, SkipPost)
 };
 
 EndEsdlNamespace()

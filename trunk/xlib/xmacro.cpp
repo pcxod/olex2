@@ -25,6 +25,7 @@
 #include "olxvar.h"
 #include "strmask.h"
 #include "sgset.h"
+#include "sfutil.h"
 
 #define xlib_InitMacro(macroName, validOptions, argc, desc)\
   lib.RegisterStaticMacro( new TStaticMacro(&XLibMacros::mac##macroName, #macroName, (validOptions), argc, desc))
@@ -46,6 +47,9 @@ void XLibMacros::Export(TLibrary& lib)  {
 //_________________________________________________________________________________________________________________________
   xlib_InitMacro(GraphSR, "b-number of bins", fpNone|fpOne|psFileLoaded,
 "Prints a scale vs resolution graph for current file (fcf file must exist in current folder)");
+  xlib_InitMacro(GraphPD, "r-resolution&;fcf-take structure factors from the FCF file, otherwise calculate from curent model\
+&;s-use simple scale when calculating structure factors from the mode, otherwise regression scaling will be used", fpNone|psFileLoaded,
+"Prints a intensity vs. 2 theta graph");
   xlib_InitMacro(Wilson, "b-number of bins&;p-uses linear vins for picture, otherwise uses spherical bins", 
     fpNone|fpOne|psFileLoaded, "Prints Wilson plot data");
 //_________________________________________________________________________________________________________________________
@@ -400,6 +404,43 @@ void XLibMacros::macFree(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 //..............................................................................
 void XLibMacros::macFixHL(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   delete TXApp::GetInstance().FixHL();
+}
+//..............................................................................
+int macGraphPD_Sort(const AnAssociation2<double,double>& a1, const AnAssociation2<double,double>& a2) {
+  const double df = a2.GetA() - a1.GetA();
+  if( df < 0 )  return -1;
+  if( df > 0 )  return 1;
+  return 0;
+}
+void XLibMacros::macGraphPD(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  TXApp& xapp = TXApp::GetInstance();
+  TRefList refs;
+  TArrayList<compd > F;
+  olxstr err( SFUtil::GetSF(refs, F, SFUtil::mapTypeObs, 
+    Options.Contains("fcf") ? SFUtil::sfOriginFcf : SFUtil::sfOriginOlex2, 
+    (Options.FindValue("s", "r").ToLowerCase().CharAt(0) == 'r') ? SFUtil::scaleRegression : SFUtil::scaleSimple) );
+  if( !err.IsEmpty() )  {
+    E.ProcessingError(__OlxSrcInfo, err);
+    return;
+  }
+  TEFile out( TEFile::ExtractFilePath(xapp.XFile().GetFileName()) << "olx_pd_calc.csv", "w+b");
+  const mat3d& hkl2c = xapp.XFile().GetAsymmUnit().GetHklToCartesian();
+  const double d_2_sin = xapp.XFile().GetRM().expl.GetRadiation()/2.0;
+  TTypeList< AnAssociation2<double,double> > gd;
+  gd.SetCapacity( refs.Count() );
+  for( int i=0; i < refs.Count(); i++ )  {
+    const TReflection& ref = refs[i];
+    vec3d d_hkl(ref.GetH(), ref.GetK(), ref.GetL());
+    vec3d hkl(d_hkl[0]*hkl2c[0][0],
+      d_hkl[0]*hkl2c[0][1] + d_hkl[1]*hkl2c[1][1],
+      d_hkl[0]*hkl2c[0][2] + d_hkl[1]*hkl2c[1][2] + d_hkl[2]*hkl2c[2][2]);
+    const double theta = asin(d_2_sin*hkl.Length());
+    gd.AddNew( 360*theta/M_PI, ref.GetI());
+  }
+  gd.QuickSorter.SortSF(gd, macGraphPD_Sort);
+  for( int i=0; i < refs.Count(); i++ )
+    out.Writenl( CString(gd[i].GetA(), 40) << ',' << gd[i].GetB());
+
 }
 //..............................................................................
 void XLibMacros::macFile(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {

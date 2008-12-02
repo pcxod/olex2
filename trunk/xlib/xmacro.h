@@ -15,6 +15,7 @@ class XLibMacros  {
   static DefMacro(SG)
   static DefMacro(SGE)
   static DefMacro(GraphSR)
+  static DefMacro(GraphPD)
   static DefMacro(Wilson)
   static DefMacro(TestSymm)
   static DefMacro(VATA) // validate atom type assignment
