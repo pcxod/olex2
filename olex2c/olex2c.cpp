@@ -108,6 +108,8 @@ class TOlex: public AEventsDispatcher, public olex::IOlexProcessor, public ASele
   HANDLE conin, conout;
   TDataFile PluginFile;
   TDataItem* Plugins;
+  bool Silent;
+  TOutStream* OutStream;
   CONSOLE_SCREEN_BUFFER_INFO TextAttrib;
   static unsigned long _stdcall TimerThreadRun(void* _instance) {
     while( true )  {
@@ -142,7 +144,9 @@ class TOlex: public AEventsDispatcher, public olex::IOlexProcessor, public ASele
 public:
   TOlex( const olxstr& basedir) : XApp(basedir, this), Macros(*this) {
     OlexInstance = this;
-    XApp.GetLog().AddStream( new TOutStream(), true );
+    Silent = true;
+    OutStream = new TOutStream();
+    XApp.GetLog().AddStream(OutStream , false );
     XApp.GetLog().OnInfo->Add(this, ID_INFO);
     XApp.GetLog().OnWarning->Add(this, ID_WARNING);
     XApp.GetLog().OnError->Add(this, ID_ERROR);
@@ -192,6 +196,7 @@ public:
     XApp.XFile().GetLattice().OnStructureGrow->Add(this, ID_STRUCTURECHANGED);
     XApp.XFile().OnFileLoad->Add(this, ID_STRUCTURECHANGED);
 
+    this_InitMacroD(Silent, "", fpOne, "Changes silent mode");
     this_InitMacroD(IF, "", fpAny, "if...");
     this_InitMacroD(Exec, "s&;o&;d&;q", fpAny^fpNone, "exec" );
     this_InitMacroD(Echo, "", fpAny, "echo" );
@@ -263,6 +268,7 @@ public:
     PythonExt::Finilise();
     CloseHandle(conin);
     CloseHandle(conout);
+    delete OutStream;
     OlexInstance = NULL;
   }
   HANDLE GetConin()  {  return conin;  }
@@ -276,6 +282,7 @@ public:
   }
   //..........................................................................................
   virtual void print(const olxstr& msg, const short MessageType = olex::mtNone)  {
+    if( Silent && MessageType == olex::mtInfo ) return;
     CONSOLE_SCREEN_BUFFER_INFO pi;
     GetConsoleScreenBufferInfo(conout, &pi); 
     switch( MessageType )  {
@@ -427,7 +434,8 @@ public:
           else if( MsgId == ID_ERROR )     mat = FOREGROUND_RED|FOREGROUND_INTENSITY;
           else if( MsgId == ID_EXCEPTION ) mat = FOREGROUND_RED|FOREGROUND_INTENSITY;
           SetConsoleTextAttribute(conout, mat);
-          res = false;  // propargate to other streams, logs in particular
+          OutStream->SetSkipPost(Silent && MsgId == ID_INFO);
+          res = false;  // propargate to other streams, logs in particular if not Silent
         }
       }
       else  if( MsgSubId == msiExit )  {
@@ -465,6 +473,15 @@ public:
   //..............................................................................
   void macQuit(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
     TerminateSignal = true;
+  }
+  //..............................................................................
+  void macSilent(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+    if( Cmds[0].Comparei("on") == 0 )
+      Silent = true;
+    else if( Cmds[0].Comparei("off") == 0 )
+      Silent = false;
+    else
+      Silent = Cmds[0].ToBool();
   }
   //..............................................................................
   void funSel(const TStrObjList& Params, TMacroError &E) {
@@ -1049,22 +1066,24 @@ int main(int argc, char* argv[])  {
       olex.executeMacro( olxstr("start_autochem '") << sf << '\'' );
     }
   }
-  char _cmd[512];
-  olxstr cmd;
-  //TBasicApp::GetInstance()->OnTimer->Add( new TTerminationListener );
-  while( true )  {
-    TBasicApp::GetInstance()->OnIdle->Execute(NULL);
-    cin.getline(_cmd, 512);
-    cmd = _cmd;
-    if( cmd.Comparei("quit") == 0 )  break;
-    else  {
-      try { olex.executeMacro(cmd);  }
-      catch( TExceptionBase& exc )  {
-        TBasicApp::GetLog() << exc.GetException()->GetError();
+  else  {
+    char _cmd[512];
+    olxstr cmd;
+    //TBasicApp::GetInstance()->OnTimer->Add( new TTerminationListener );
+    while( true )  {
+      TBasicApp::GetInstance()->OnIdle->Execute(NULL);
+      cin.getline(_cmd, 512);
+      cmd = _cmd;
+      if( cmd.Comparei("quit") == 0 )  break;
+      else  {
+        try { olex.executeMacro(cmd);  }
+        catch( TExceptionBase& exc )  {
+          TBasicApp::GetLog() << exc.GetException()->GetError();
+        }
       }
+      if( olex.TerminateSignal )  break;
+      cout << ">>";
     }
-    if( olex.TerminateSignal )  break;
-    cout << ">>";
   }
   TBasicApp::GetInstance()->OnIdle->Execute(NULL);
   return 0;

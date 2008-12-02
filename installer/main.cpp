@@ -260,10 +260,12 @@ void __fastcall TfMain::bbInstallClick(TObject *Sender)  {
   if( OlexInstalled )  {
     // forcr launch to update
     Settings.UpdateParam("lastupdate", EmptyString);
-    try  {
-      Settings.SaveSettings( installPath + TfMain::SettingsFile );  }
-    catch( TExceptionBase& exc )  {
-      Application->MessageBoxA("Was not able to save settings", "Exception", MB_OK|MB_ICONERROR);  }
+    if( !localInstall )  {
+      try  { Settings.SaveSettings( installPath + TfMain::SettingsFile );  }
+      catch( TExceptionBase& exc )  {
+        Application->MessageBoxA("Was not able to save settings", "Exception", MB_OK|MB_ICONERROR);
+      }
+    }
     TEFile::ChangeDir( OlexInstalledPath );
     LaunchFile(OlexInstalledPath + "olex2.exe", true);
     return;
@@ -313,7 +315,7 @@ void __fastcall TfMain::bbInstallClick(TObject *Sender)  {
     }
     olxstr set_fn( installPath + TfMain::SettingsFile );
     if( !TEFile::FileExists(set_fn) )  // keep settings if provided from the zip
-      Settings.SaveSettings( installPath + TfMain::SettingsFile );
+      Settings.SaveSettings( set_fn );
   }
   catch( const TExceptionBase& exc )  {
     Application->MessageBox(exc.GetException()->GetFullMessage().c_str(), "Exception", MB_OK|MB_ICONERROR);
