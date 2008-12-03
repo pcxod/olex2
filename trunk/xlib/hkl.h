@@ -33,11 +33,6 @@ public:
   // function has to be called to sort the list of reflections
   void EndAppend();
 
-  /*this function analyses if reflections are centric or non-centric and
-    their degeneracy
-   */
-  void AnalyseReflections( const TSpaceGroup& sg );
-
   inline TReflection& Reflection(int i)  const {  return *Refs[i];  }
   inline TReflection& operator [](int i) const {  return *Refs[i];  }
   inline int RefCount() const                  {  return Refs.Count();  }

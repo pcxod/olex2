@@ -104,7 +104,7 @@ public:
           ((hklv[2] == L) && (hklv[1] == K) && (hklv[0] > H)) )    {
           H = hklv[0];  K = hklv[1];  L = hklv[2];
       }
-      else if( EqHkl(hklv) )  {  // symmetric reflection
+      else if( EqHkl(hklv) )  {  // centric reflection
         if( !Absent )  {
           double l = PhaseShift(ml[i]);
           Absent = (fabs( l - Round(l) ) > 0.01);
@@ -132,9 +132,8 @@ public:
           Absent = (fabs( l - Round(l) ) > 0.01);
         }
       }
-      else if( EqNegHkl(hklv) )  // centrocymmetric reflection
+      else if( EqNegHkl(hklv) )  // centric reflection
         Centric = true;
-        //IncDegeneracy();
     }
   }
 //..............................................................................
@@ -232,11 +231,11 @@ public:
     //return Str;
     return olxstr(bf);
   }
-  //writes string to the provided buffer (should be at least 32 bytes long)
+  //writes string to the provided buffer (should be at least 33 bytes long)
   char* ToCBuffer(char* bf) const  {
 #ifdef _MSC_VER
-    if( Flag == NoFlagSet )  sprintf_s(bf, 128, "%4i%4i%4i%8.2lf%8.2lf", H, K, L, I, S);
-    else                     sprintf_s(bf, 128, "%4i%4i%4i%8.2lf%8.2lf%4i", H, K, L, I, S, Flag);
+    if( Flag == NoFlagSet )  sprintf_s(bf, 29, "%4i%4i%4i%8.2lf%8.2lf", H, K, L, I, S);
+    else                     sprintf_s(bf, 33, "%4i%4i%4i%8.2lf%8.2lf%4i", H, K, L, I, S, Flag);
 #else
     if( Flag == NoFlagSet )  sprintf(bf, "%4i%4i%4i%8.2lf%8.2lf", H, K, L, I, S);
     else                     sprintf(bf, "%4i%4i%4i%8.2lf%8.2lf%4i", H, K, L, I, S, Flag);

@@ -119,9 +119,9 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
     ref.ds = hkl.QLength()*0.25;
     if( ref.ds < minds )  minds = ref.ds;
     if( ref.ds > maxds )  maxds = ref.ds;
-    ref.Fo2 = Refs[i].GetI() * Refs[i].GetDegeneracy();
-    if( Refs[i].IsCentric() )
-      ref.Fo2 /= 2;
+    ref.Fo2 = Refs[i].GetI(); // * Refs[i].GetDegeneracy(); mergen in P-1 now, so no use
+//    if( Refs[i].IsCentric() ) 
+//      ref.Fo2 /= 2;
     for( int j=0; j < scatterers.Count(); j++ )  {
       double v = scatterers[j].GetA()->Calc_sq( ref.ds );
       ref.Fe2 += v*v*scatterers[j].GetB();

@@ -333,39 +333,18 @@ bool THklFile::SaveToFile(const olxstr& FN, const TRefList& refs)  {
 MergeStats THklFile::Merge(const TSpaceGroup& sg, bool MergeInverse, TRefList& output) const {
   smatd_list ml;
   sg.GetMatrices(ml, mattAll^mattIdentity);
-  if( MergeInverse && !sg.IsCentrosymmetric() )  {
+  if( MergeInverse && !sg.IsCentrosymmetric() )  {  // the -I is added to the list for CS groups
     smatd& im = ml.AddNew();
     im.r.I();
     im.r *= -1;
   }
   MergeStats rv = RefMerger::Merge<TSimpleMerger>(ml, Refs, output);
-  if( MergeInverse && !sg.IsCentrosymmetric() )
-    ml.Delete( ml.Count()-1 );
-  for( int i=0; i < output.Count(); i++ )
-    output[i].Analyse(ml);
+  // already done in Merge...
+  //if( MergeInverse && !sg.IsCentrosymmetric() )
+  //  ml.Delete( ml.Count()-1 );
+  //for( int i=0; i < output.Count(); i++ )
+  //  output[i].Analyse(ml);
   return rv;
-}
-//..............................................................................
-void THklFile::AnalyseReflections( const TSpaceGroup& sg )  {
-  smatd_list ml;
-  sg.GetMatrices(ml, mattAll ^ (mattInversion|mattIdentity) );
-  vec3d hklv;
-  for( int i=0; i < RefCount(); i++ )  {
-    Refs[i]->SetCentric(false);
-    Refs[i]->SetDegeneracy(1);
-    for( int j=0; j < ml.Count(); j++ )  {
-      Refs[i]->MulHkl(hklv, ml[j]);
-      if(  Refs[i]->EqHkl(hklv)  )  {
-        //if( !Ref(i)->IsCentric() )
-        //  Ref(i)->SetCentric(false);
-        Refs[i]->IncDegeneracy();
-      }
-      else if( Refs[i]->EqNegHkl(hklv) )  {
-        Refs[i]->SetCentric(true);
-        Refs[i]->IncDegeneracy();
-      }
-    }
-  }
 }
 //..............................................................................
 

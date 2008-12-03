@@ -6555,20 +6555,21 @@ void TMainForm::macHklStat(TStrObjList &Cmds, const TParamList &Options, TMacroE
   }
   if( Cmds.IsEmpty() )  {
     RefinementModel::HklStat hs = FXApp->XFile().GetRM().GetMergeStat();
-    TTTable<TStrList> tab(13, 2);
+    TTTable<TStrList> tab(14, 2);
     tab[0][0] << "Total reflections";             tab[0][1] << hs.TotalReflections;
     tab[1][0] << "Unique reflections";            tab[1][1] << hs.UniqueReflections;
-    tab[2][0] << "Friedel pairs merged";          tab[2][1] << hs.FriedelOppositesMerged;
-    tab[3][0] << "Inconsistent equaivalents";     tab[3][1] << hs.InconsistentEquivalents;
-    tab[4][0] << "Systematic absences removed";   tab[4][1] << hs.SystematicAbsentcesRemoved;
-    tab[5][0] << "Min resolution";                tab[5][1] << hs.MinD;
-    tab[6][0] << "Max resolution";                tab[6][1] << hs.MaxD;
-    tab[7][0] << "Limiting resolution";           tab[7][1] << hs.LimD;
-    tab[8][0] << "Filtered off reflections";      tab[8][1] << hs.FilteredOff;
-    tab[9][0] << "Reflections omitted by user";   tab[9][1] << hs.OmittedReflections + hs.OmittedByUser;
-    tab[10][0] << "Intensity transformed for";    tab[10][1] << hs.IntensityTransformed << " reflections";
-    tab[11][0] << "Rint";                         tab[11][1] << hs.Rint;
-    tab[12][0] << "Rsigma";                       tab[12][1] << hs.Rsigma;
+    tab[2][0] << "Centric reflections";           tab[2][1] << hs.CentricReflections;
+    tab[3][0] << "Friedel pairs merged";          tab[3][1] << hs.FriedelOppositesMerged;
+    tab[4][0] << "Inconsistent equaivalents";     tab[4][1] << hs.InconsistentEquivalents;
+    tab[5][0] << "Systematic absences removed";   tab[5][1] << hs.SystematicAbsentcesRemoved;
+    tab[6][0] << "Min resolution";                tab[6][1] << hs.MinD;
+    tab[7][0] << "Max resolution";                tab[7][1] << hs.MaxD;
+    tab[8][0] << "Limiting resolution";           tab[8][1] << hs.LimD;
+    tab[9][0] << "Filtered off reflections";      tab[9][1] << hs.FilteredOff;
+    tab[10][0] << "Reflections omitted by user";  tab[10][1] << hs.OmittedReflections + hs.OmittedByUser;
+    tab[11][0] << "Intensity transformed for";    tab[11][1] << hs.IntensityTransformed << " reflections";
+    tab[12][0] << "Rint";                         tab[12][1] << hs.Rint;
+    tab[13][0] << "Rsigma";                       tab[13][1] << hs.Rsigma;
     TStrList Output;
     tab.CreateTXTList(Output, olxstr("HKL statistics "), true, false, "  ");
     TBasicApp::GetLog() << Output << '\n';
