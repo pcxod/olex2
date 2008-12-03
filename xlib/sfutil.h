@@ -112,7 +112,7 @@ public:
         }
         if( atoms[j]->GetEllpId() == -1 )
           l *= exp( U[j*6]*d_s2 );
-        l *= atoms[j]->GetOccp();
+        l *= atoms[j]->GetOccu();
         l *= fo[ atoms[j]->GetTag() ];
         ir += l;
       }

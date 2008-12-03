@@ -42,13 +42,14 @@ public:
       }
       else  {
         TIntList parts;
-        TDoubleList occu, occu_var;
+        TDoubleList occu;
+        RefinementModel& rm = TGlXApp::GetGXApp()->XFile().GetRM();
+
         for( int i=0; i < AE.Count(); i++ )  {
           if( AE.GetCAtom(i).GetPart() != 0 && AE.GetCAtom(i).GetPart() != AE.GetBase().CAtom().GetPart() ) 
             if( parts.IndexOf(AE.GetCAtom(i).GetPart()) == -1 )  {
               parts.Add( AE.GetCAtom(i).GetPart() );
-              occu.Add( AE.GetCAtom(i).GetOccp() );
-              occu_var.Add( AE.GetCAtom(i).GetOccpVar() );
+              occu.Add( rm.Vars.GetAtomParam(AE.GetCAtom(i), var_name_Sof) );
             }
         }
         if( parts.IsEmpty() )  {
@@ -91,8 +92,7 @@ public:
               if( !generated.IsEmpty() )  {
                 for( int j=0; j < generated.Count(); j++ )  {
                   generated[j]->SetPart( parts[i] );
-                  generated[j]->SetOccp( occu[i] );
-                  generated[j]->SetOccpVar( occu_var[i] );
+                  rm.Vars.SetAtomParam(*generated[j], var_name_Sof, occu[i]);
                 }
                 generated.Clear();
               }

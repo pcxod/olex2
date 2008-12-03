@@ -15,6 +15,7 @@
 
 #include "xatom.h"
 #include "asymmunit.h"
+#include "refmodel.h"
 
 #include "glrender.h"
 #include "glscene.h"
@@ -68,7 +69,8 @@ void TXGlLabels::Clear()  {
 //..............................................................................
 bool TXGlLabels::Orient(TGlPrimitive *P)  {
   TGlFont *Fnt = Font();
-  if( Fnt == NULL )  return true;
+  const int ac = AtomCount();
+  if( Fnt == NULL || ac == 0 )  return true;
 
   vec3d V;
   bool currentGlM, matInited = false;
@@ -78,93 +80,86 @@ bool TXGlLabels::Orient(TGlPrimitive *P)  {
     glRasterPos3d(0, 0, 0);
     glCallList(Fnt->FontBase() + ' ');
   }
-  const int ac = AtomCount();
+  RefinementModel* rm = Atom(0)->Atom().CAtom().GetParent()->GetRefMod();
   for( int i=0; i < ac; i++ )  {
     TXAtom* XA = Atom(i);
     if( XA->Deleted() || (!XA->Visible()))  continue;
     if( !(FMode & lmHydr) && (XA->Atom().GetAtomInfo() == iHydrogenIndex ) )  continue;
     if( !(FMode & lmQPeak) && (XA->Atom().GetAtomInfo() == iQPeakIndex ) )  continue;
+    TCAtom& ca = XA->Atom().CAtom();
     olxstr Tmp(EmptyString, 48);
     if( FMode & lmLabels )  {
       Tmp << XA->Atom().GetLabel();
       if( XA->Atom().CAtom().GetResiId() != -1 )  {
-        int resi = XA->Atom().CAtom().GetParent()->GetResidue(XA->Atom().CAtom().GetResiId()).GetNumber();
+        int resi = ca.GetParent()->GetResidue(ca.GetResiId()).GetNumber();
         Tmp << '_' << resi;
       }
     }
     if( FMode & lmPart )  {
-      if( XA->Atom().CAtom().GetPart() != 0)  {
+      if( ca.GetPart() != 0)  {
         if( Tmp.Length() )  Tmp << ", ";
-        Tmp << XA->Atom().CAtom().GetPart();
+        Tmp << ca.GetPart();
       }
     }
     if( FMode & lmAfix )  {
-      if( XA->Atom().CAtom().GetAfix() != 0 ) {
+      if( ca.GetAfix() != 0 ) {
         if( Tmp.Length() )  Tmp << ", ";
-        Tmp << XA->Atom().CAtom().GetAfix();
+        Tmp << ca.GetAfix();
       }
     }
     if( FMode & lmOVar )  {
-      if( XA->Atom().CAtom().GetOccpVar() != 0 && XA->Atom().CAtom().GetOccpVar() != 10 )  {
-        if( Tmp.Length() )  Tmp << ", ";
-        Tmp << (int)XA->Atom().CAtom().GetOccpVar();
+      if( ca.GetVarRef(var_name_Sof) != NULL )  {
+        if( ca.GetVarRef(var_name_Sof)->relation_type != relation_None )  {
+          if( Tmp.Length() )  Tmp << ", ";
+          Tmp << ca.GetVarRef(var_name_Sof)->Parent.GetId();
+        }
       }
     }
     if( (FMode & lmQPeakI) && (XA->Atom().GetAtomInfo() == iQPeakIndex ) )  {
       if( !Tmp.IsEmpty() )  Tmp << ", ";
-      Tmp << olxstr::FormatFloat(1, XA->Atom().CAtom().GetQPeak());
+      Tmp << olxstr::FormatFloat(1, ca.GetQPeak());
     }
     if( FMode & lmAOcc )  {
       if( Tmp.Length() )  Tmp << ", ";
-      double v;
-      if( XA->Atom().CAtom().GetOccpVar() != 0 && XA->Atom().CAtom().GetOccpVar() != 10 )
-        v = XA->Atom().CAtom().GetOccpVar();
-      else
-        v = XA->Atom().CAtom().GetOccpVar() + XA->Atom().CAtom().GetOccp();
-      Tmp << olxstr::FormatFloat(2, v );
+      Tmp << olxstr::FormatFloat(2, rm->Vars.GetAtomParam(ca, var_name_Sof) );
     }
-    if( FMode & lmUiso )  {
-      if( XA->Atom().CAtom().GetUisoVar() != 0 )  {
-        if( !Tmp.IsEmpty() )  Tmp << ", ";
-          Tmp << olxstr::FormatFloat(2, XA->Atom().CAtom().GetUisoVar());
-      }
-      else  {
-        if( !Tmp.IsEmpty() )  Tmp << ", ";
-        Tmp << olxstr::FormatFloat(2, XA->Atom().CAtom().GetUiso());
-      }
+    if( FMode & lmUiso && ca.GetUisoOwner() == NULL )  {
+      if( !Tmp.IsEmpty() )  Tmp << ", ";
+        Tmp << olxstr::FormatFloat(2, rm->Vars.GetAtomParam(ca, var_name_Uiso));
     }
     if( FMode & lmUisR )  {
-      if( !Tmp.IsEmpty() )  Tmp << ", ";
-      if( XA->Atom().CAtom().GetUisoVar() < 0)
-        Tmp << olxstr::FormatFloat(2, XA->Atom().CAtom().GetUisoVar());
+      if( ca.GetUisoOwner() != NULL )  {
+        if( !Tmp.IsEmpty() )  Tmp << ", ";
+          Tmp << olxstr::FormatFloat(2, ca.GetUisoScale());
+      }
     }
     if( FMode & lmFixed )  {
       olxstr fXyz;
       for( int j=0; j < 3; j++ )  {
-        if( XA->Atom().CAtom().FixedValues()[TCAtom::CrdFixedValuesOffset + j] != 0 )
-          fXyz << (char)('X'+j);
+        if( ca.GetVarRef(var_name_X+j) != NULL && ca.GetVarRef(var_name_X+j)->relation_type == relation_None )
+          fXyz << (olxch)('X'+j);
       }
-      if( fXyz.Length() != 0 )  {
+      if( !fXyz.IsEmpty() )  {
         if( !Tmp.IsEmpty() )  Tmp << ", ";
         Tmp << fXyz;
       }
-      if( XA->Atom().CAtom().GetOccpVar() == 10 )  {
+      if( ca.GetVarRef(var_name_Sof) != NULL && ca.GetVarRef(var_name_Sof)->relation_type == relation_None )  {
         if( !Tmp.IsEmpty() )  Tmp << ", ";
         Tmp << "occu";
       }
-      if( XA->Atom().CAtom().GetUisoVar() != 0 )  {
+      if( ca.GetVarRef(var_name_Uiso) != NULL && ca.GetVarRef(var_name_Uiso)->relation_type == relation_None )  {
         if( !Tmp.IsEmpty() )  Tmp << ", ";
-        Tmp << "uiso";
+        Tmp << "Uiso";
       }
     }
     if( FMode & lmOccp )  {
       if( !Tmp.IsEmpty() )  Tmp << ", ";
-      if( XA->Atom().CAtom().GetOccp() != 1 )
-        Tmp << olxstr::FormatFloat(3, XA->Atom().CAtom().GetOccp() );
+      if( ca.GetOccu() != 1.0 )
+        Tmp << olxstr::FormatFloat(3, ca.GetOccu() );
     }
 #ifdef _DEBUG
-    if( XA->Atom().CAtom().GetSameId() != -1 )
-      Tmp << ':' << XA->Atom().CAtom().GetSameId();
+    if( ca.GetSameId() != -1 )
+      Tmp << ':' << ca.GetSameId();
 #endif
     if( Tmp.IsEmpty() )  continue;
     P->String(&Tmp);

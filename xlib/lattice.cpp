@@ -189,8 +189,6 @@ int CompareNets(const TNetwork* N, const TNetwork* N1)  {
 //..............................................................................
 void TLattice::InitBody()  {
   TNetwork *Frag;
-  int conIndex;
-
   smatd *M = new smatd; // create identity matrix
   *M = GetUnitCell().GetMatrix(0);
   M->SetTag(0);
@@ -631,9 +629,9 @@ TSAtom* TLattice::NewCentroid(const TSAtomPList& Atoms)  {
   vec3d cc, ce;
   double aan = 0;
   for( int i=0; i < Atoms.Count(); i++ )  {
-    cc += Atoms[i]->ccrd()*Atoms[i]->CAtom().GetOccp();
-    ce += vec3d::Qrt(Atoms[i]->CAtom().ccrdEsd())*Atoms[i]->CAtom().GetOccp();
-    aan += Atoms[i]->CAtom().GetOccp();
+    cc += Atoms[i]->ccrd()*Atoms[i]->CAtom().GetOccu();
+    ce += vec3d::Qrt(Atoms[i]->CAtom().ccrdEsd())*Atoms[i]->CAtom().GetOccu();
+    aan += Atoms[i]->CAtom().GetOccu();
   }
   if( aan == 0 )  return NULL;
   ce.Sqrt();
@@ -1180,13 +1178,13 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPL
   //}
   if( part == -1 )  {  // check for disorder
     TIntList parts;
-    TDoubleList occu, occu_var;
+    TDoubleList occu;
+    RefinementModel* rm = GetAsymmUnit().GetRefMod();
     for( int i=0; i < AE.Count(); i++ )  {
       if( AE.GetCAtom(i).GetPart() != 0 && AE.GetCAtom(i).GetPart() != AE.GetBase().CAtom().GetPart() ) 
         if( parts.IndexOf(AE.GetCAtom(i).GetPart()) == -1 )  {
           parts.Add( AE.GetCAtom(i).GetPart() );
-          occu.Add( AE.GetCAtom(i).GetOccp() );
-          occu_var.Add( AE.GetCAtom(i).GetOccpVar() );
+          occu.Add( rm->Vars.GetAtomParam(AE.GetCAtom(i), var_name_Sof) );
         }
     }
     if( !parts.IsEmpty() )  {  // here we go..
@@ -1196,8 +1194,7 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPL
         _AnalyseAtomHAdd(cg, atom, ProcessingAtoms, parts[i], &gen);
         for( int j=0; j < gen.Count(); j++ )  {
           gen[j]->SetPart( parts[i] );
-          gen[j]->SetOccp( occu[i] );
-          gen[j]->SetOccpVar( occu_var[i] );
+          rm->Vars.SetAtomParam(*gen[j], var_name_Sof, occu[i] );
         }
         gen.Clear();
       }

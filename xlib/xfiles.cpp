@@ -22,7 +22,9 @@
 //---------------------------------------------------------------------------
 // TBasicCFile function bodies
 //---------------------------------------------------------------------------
-TBasicCFile::TBasicCFile() : AsymmUnit(NULL), RefMod(AsymmUnit)  {  }
+TBasicCFile::TBasicCFile() : AsymmUnit(NULL), RefMod(AsymmUnit)  {  
+  AsymmUnit.SetRefMod(&RefMod);
+}
 //..............................................................................
 TBasicCFile::~TBasicCFile()  {  }
 //..............................................................................
@@ -70,6 +72,7 @@ void TBasicCFile::LoadFromFile(const olxstr& fn)  {
 // TXFile function bodies
 //----------------------------------------------------------------------------//
 TXFile::TXFile() : RefMod(Lattice.GetAsymmUnit())  {
+  Lattice.GetAsymmUnit().SetRefMod(&RefMod);
   AActionHandler::SetToDelete(false);
   Lattice.GetAsymmUnit().OnSGChange->Add(this); 
   OnFileLoad = &Actions.NewQueue("XFILELOAD");

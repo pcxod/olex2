@@ -19,6 +19,7 @@
 #include "estlist.h"
 #include "lattice.h"
 #include "symmparser.h"
+#include "refmodel.h"
 
 #undef GetObject
 
@@ -42,6 +43,7 @@ TAsymmUnit::TAsymmUnit(TLattice *L) : MainResidue(*this, -1)  {
   Z = 1;
   ContainsEquivalents = false;
   OnSGChange = &Actions.NewQueue("AU_SG_CHANGE");
+  RefMod = NULL;
 }
 //..............................................................................
 TAsymmUnit::~TAsymmUnit() {  Clear();  }
@@ -389,13 +391,13 @@ void TAsymmUnit::SummFormula(TStrPObjList<olxstr,TBasicAtomInfo*>& BasicAtoms, o
     bool Uniq = true;
     for( int j=0; j < BasicAtoms.Count(); j++)  {
       if( BasicAtoms.Object(j)->GetIndex() == A.GetAtomInfo().GetIndex() ) {  // already in the list ?
-        A.GetAtomInfo().SetSumm( A.GetAtomInfo().GetSumm() + A.GetOccp() );       // update the quantity
+        A.GetAtomInfo().SetSumm( A.GetAtomInfo().GetSumm() + A.GetOccu() );       // update the quantity
         Uniq = false;
         break;
       }
     }
     if( Uniq )  {
-      A.GetAtomInfo().SetSumm( A.GetOccp() );
+      A.GetAtomInfo().SetSumm( A.GetOccu() );
       if( A.GetAtomInfo().GetIndex() == iCarbonIndex )   Carbon = &A.GetAtomInfo();
       if( A.GetAtomInfo().GetIndex() == iHydrogenIndex )  Hydrogen = &A.GetAtomInfo();
       BasicAtoms.Add(A.GetAtomInfo().GetSymbol(), &A.GetAtomInfo());
@@ -439,13 +441,13 @@ olxstr TAsymmUnit::SummFormula(const olxstr &Sep, bool MultiplyZ) const  {
     Uniq = true;
     for( int j=0; j < UniqAtoms.Count(); j++)  {
       if( UniqAtoms[j]->GetAtomInfo().GetIndex() == A.GetAtomInfo().GetIndex() )  { // already in the list ?
-        A.GetAtomInfo().SetSumm( A.GetAtomInfo().GetSumm() + A.GetOccp() );       // update the quantity
+        A.GetAtomInfo().SetSumm( A.GetAtomInfo().GetSumm() + A.GetOccu() );       // update the quantity
         Uniq = false;
         break;
       }
     }
     if( Uniq )  {
-      A.GetAtomInfo().SetSumm( A.GetOccp() );
+      A.GetAtomInfo().SetSumm( A.GetOccu() );
       UniqAtoms.Add(&A);
     }
   }
@@ -731,9 +733,8 @@ void TAsymmUnit::LibSetAtomCrd(const TStrObjList& Params, TMacroError& E)  {
   int index = Params[0].ToInt();
   if( index < 0 || index >= AtomCount() )  throw TIndexOutOfRangeException(__OlxSourceInfo, index, 0, AtomCount());
   TCAtom& ca = GetAtom(index);
-  ca.ccrd()[0] = Params[1].ToDouble();
-  ca.ccrd()[1] = Params[2].ToDouble();
-  ca.ccrd()[2] = Params[3].ToDouble();
+  for( int i=0; i < 3; i++ )
+    GetRefMod()->Vars.SetAtomParam(ca, var_name_X+i, Params[i+1].ToDouble());
   E.SetRetVal(true);
 }
 //..............................................................................
@@ -788,7 +789,7 @@ void TAsymmUnit::LibIsAtomDeleted(const TStrObjList& Params, TMacroError& E)  {
 void TAsymmUnit::LibGetAtomOccu(const TStrObjList& Params, TMacroError& E)  {
   int index = Params[0].ToInt();
   if( index < 0 || index >= AtomCount() )  throw TIndexOutOfRangeException(__OlxSourceInfo, index, 0, AtomCount());
-  E.SetRetVal( GetAtom(index).GetOccp() );
+  E.SetRetVal( GetAtom(index).GetOccu() );
 }
 //..............................................................................
 void TAsymmUnit::LibGetAtomAfix(const TStrObjList& Params, TMacroError& E)  {
@@ -815,30 +816,27 @@ void TAsymmUnit::LibIsPeak(const TStrObjList& Params, TMacroError& E)  {
 void TAsymmUnit::LibSetAtomU(const TStrObjList& Params, TMacroError& E)  {
   int index = Params[0].ToInt();
   if( index < 0 || index >= AtomCount() )  throw TIndexOutOfRangeException(__OlxSourceInfo, index, 0, AtomCount());
+  TCAtom& ca = GetAtom(index);
   if( (GetAtom(index).GetEllipsoid() != NULL) && (Params.Count() == 7) )  {
-    double V[] = {Params[1].ToDouble(), Params[2].ToDouble(), Params[3].ToDouble(), 
-                  Params[4].ToDouble(), Params[5].ToDouble(), Params[6].ToDouble()};
-    GetAtom(index).GetEllipsoid()->Initialise( V );
+    double V[6];
+    for( int i=0; i < 6; i++ )
+      V[i] = GetRefMod()->Vars.SetAtomParam(ca, var_name_U11+i, Params[i+1].ToDouble());
+    ca.GetEllipsoid()->Initialise( V );
   }
-  else if( (GetAtom(index).GetEllipsoid() == NULL) && (Params.Count() == 2) ) {
-    GetAtom(index).SetUiso( Params[1].ToDouble() );
+  else if( (ca.GetEllipsoid() == NULL) && (Params.Count() == 2) ) {
+    GetRefMod()->Vars.SetAtomParam(ca, var_name_Uiso, Params[1].ToDouble());
   }
   else {
-    olxstr at = GetAtom(index).GetEllipsoid() == NULL ? "isotropic" : "anisotropic";
+    olxstr at = ca.GetEllipsoid() == NULL ? "isotropic" : "anisotropic";
     E.ProcessingError(__OlxSrcInfo, "invalid number of arguments: ") << Params.Count() << " for " <<
-      at << " atom " << GetAtom(index).Label();
+      at << " atom " << ca.Label();
   }
 }
 //..............................................................................
 void TAsymmUnit::LibSetAtomOccu(const TStrObjList& Params, TMacroError& E)  {
   int index = Params[0].ToInt();
   if( index < 0 || index >= AtomCount() )  throw TIndexOutOfRangeException(__OlxSourceInfo, index, 0, AtomCount());
-  double v = Params[1].ToDouble();
-  int iv = (int)v/10;
-  if( iv != 10 && iv != 0 )
-    throw TFunctionFailedException(__OlxSourceInfo, "usupported occupancy format");
-  GetAtom(index).SetOccp(v-iv);
-  GetAtom(index).SetOccpVar(iv);
+  GetRefMod()->Vars.SetAtomParam(GetAtom(index), var_name_Sof, Params[1].ToDouble());
 }
 //..............................................................................
 void TAsymmUnit::LibNewAtom(const TStrObjList& Params, TMacroError& E)  {
@@ -877,9 +875,10 @@ void TAsymmUnit::LibNewAtom(const TStrObjList& Params, TMacroError& E)  {
     ca.Label() = qLabel << olxstr(QPeakIndex);
     ca.AtomInfo( &AtomsInfo->GetAtomInfo(iQPeakIndex) );
     ca.SetQPeak( qPeak );
-    ca.SetOccp(11.0);
-    ca.SetUiso( 0.05 );
-    ca.ccrd() = crd;
+    GetRefMod()->Vars.SetAtomParam(ca, var_name_Sof, 11.0);
+    GetRefMod()->Vars.SetAtomParam(ca, var_name_Uiso, 0.5);
+    for( int i=0; i < 3; i++ )
+      GetRefMod()->Vars.SetAtomParam(ca, var_name_X+i, crd[i]);
   }
   else
     ca.SetLabel( Params[0] );

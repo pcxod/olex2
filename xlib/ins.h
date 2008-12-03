@@ -34,13 +34,15 @@ class TIns: public TBasicCFile  {
     int Part;
     esdl::TStack< AnAssociation3<int,TAfixGroup*, bool> > AfixGroups;  // number of atoms (left), pivot, Hydrogens or not
     double PartOccu;
-    TCAtom* Last;
+    TCAtom* Last, 
+      *LastWithU;  // thi sis used to evaluate riding H Uiso coded like -1.5
     TAsymmUnit::TResidue* Resi;
     TAsymmUnit& au;
     RefinementModel& rm;
     // SAME instructions and the first atom after it/them
     TTypeList< AnAssociation2<TStrList,TCAtom*> > Same;
-    ParseContext(RefinementModel& _rm) : rm(_rm), au(_rm.aunit), Resi(NULL), Last(NULL)  {
+    ParseContext(RefinementModel& _rm) : rm(_rm), au(_rm.aunit), 
+      Resi(NULL), Last(NULL), LastWithU(NULL)  {
       SetNextPivot = CellFound = false;
       PartOccu = 0;
       Part = 0;
@@ -58,7 +60,7 @@ private:
 protected:
   void _SaveSfac(TStrList& list, int pos);
   TCAtom* _ParseAtom(TStrList& toks, ParseContext& cx, TCAtom* atom = NULL);
-  olxstr _AtomToString(TCAtom* CA, int SfacIndex);
+  olxstr _AtomToString(RefinementModel& rm, TCAtom& CA, int SfacIndex);
   olxstr _CellToString();
   olxstr _ZerrToString();
   void _SaveFVar(TStrList& SL);
@@ -314,12 +316,10 @@ public:
   /* parses a single line instruction, which does not depend on context (as SYMM) 
     this is used internally by ParseIns and AddIns    */
     template <class StrLst> bool _ParseIns(RefinementModel& rm, const StrLst& Toks)  {
-      if( Toks[0].Comparei("FVAR") == 0 )  {
-        int VC = rm.FVAR.Count();
-        rm.FVAR.SetCount(VC+Toks.Count()-1);  // if the instruction is too long - can be dublicated
-        for( int j=1; j < Toks.Count(); j++ )
-          rm.FVAR[VC+j-1] = Toks[j].ToDouble();
-      }
+      if( Toks[0].Comparei("FVAR") == 0 )
+        rm.Vars.AddFVAR( Toks.SubListFrom(1) );
+      else if( Toks[0].Comparei("SUMP") == 0 )
+        rm.Vars.AddSUMP( Toks.SubListFrom(1) );
       else if( Toks[0].Comparei("WGHT") == 0 )  {
         if( rm.used_weight.Count() != 0 )  {
           rm.proposed_weight.Resize(Toks.Count()-1);
