@@ -463,8 +463,8 @@ void TGXApp::CenterModel()  {
   for( int i=0; i < ac; i++ )  {
     TSAtom& A = FXFile->GetLattice().GetAtom(i);
     if( !A.IsDeleted() )  {
-      Center += A.crd()*A.CAtom().GetOccp();
-      aan += A.CAtom().GetOccp();
+      Center += A.crd()*A.CAtom().GetOccu();
+      aan += A.CAtom().GetOccu();
     }
   }
   if( aan == 0 )  return;

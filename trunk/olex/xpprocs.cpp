@@ -2595,11 +2595,9 @@ void TMainForm::macOccu(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   }
   TXAtomPList xatoms;
   FindXAtoms(Cmds, xatoms, true, !Options.Contains("cs"));
-  for( int i=0; i < xatoms.Count(); i++ )  {
-    xatoms[i]->Atom().CAtom().SetOccp(occu);
-    // reset the variable as it has priority when saving to a file
-    xatoms[i]->Atom().CAtom().SetOccpVar(0);
-  }
+  RefinementModel& rm = FXApp->XFile().GetRM();
+  for( int i=0; i < xatoms.Count(); i++ )
+    rm.Vars.SetAtomParam(xatoms[i]->Atom().CAtom(), var_name_Sof, occu);
 }
 //..............................................................................
 void TMainForm::macHtmlPanelSwap(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
@@ -2895,9 +2893,8 @@ void TMainForm::macFvar(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   RefinementModel& rm = FXApp->XFile().GetRM();
   if( Cmds.IsEmpty() )  {
     olxstr tmp = "Free variables: ";
-    for( int i=0; i < rm.FVAR.Count(); i++ )
-      tmp << olxstr::FormatFloat(3, rm.FVAR[i]) << ' ';
-    TBasicApp::GetLog() << (tmp << '\n');
+    rm.Vars.Validate();
+    TBasicApp::GetLog() << (rm.Vars.GetFVARStr() << '\n');
     return;
   }
   double fvar = 0;
@@ -2905,24 +2902,17 @@ void TMainForm::macFvar(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   TXAtomPList xatoms;
   FindXAtoms(Cmds, xatoms, true, !Options.Contains("cs"));
   if( xatoms.Count() == 2 && fvar == 0 )  {
-    rm.FVAR.Add(0.5);
-    int num = rm.FVAR.Count();
-    xatoms[0]->Atom().CAtom().SetOccpVar(num*10+1);
-    xatoms[1]->Atom().CAtom().SetOccpVar(-num*10-1);
+    XVar& xv = rm.Vars.NewVar();
+    xv.AddReference(&xatoms[0]->Atom().CAtom(), var_name_Sof, relation_AsVar);
+    xv.AddReference(&xatoms[1]->Atom().CAtom(), var_name_Sof, relation_AsOneMinusVar);
   }
   else  {
     for(int i=0; i < xatoms.Count(); i++ )
-      xatoms[i]->Atom().CAtom().SetOccpVar(fvar);
-    if( fvar != 0)  {
-      int iv = (int)fabs(fvar/10);
-      while( rm.FVAR.Count() < iv )
-        rm.FVAR.Add(0.5);
-    }
+      rm.Vars.SetAtomParam(xatoms[i]->Atom().CAtom(), var_name_Sof, fvar);
   }
 }
 //..............................................................................
 void TMainForm::macSump(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
-  TIns& I = FXApp->XFile().GetLastLoader<TIns>();
   RefinementModel& rm = FXApp->XFile().GetRM();
   TCAtomPList CAtoms;
   FXApp->FindCAtoms(Cmds.Text(' '), CAtoms);
@@ -2930,28 +2920,16 @@ void TMainForm::macSump(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     E.ProcessingError(__OlxSrcInfo, "two atoms at least are expected" );
     return;
   }
-  olxstr sump;
+  double val = 1, esd = 0.01;
+  XLibMacros::ParseNumbers<double>(Cmds, 2, &val, &esd);
+  XLEQ xeq = rm.Vars.NewEquation(val, esd);
   for( int i=0; i < CAtoms.Count(); i++ )  {
-    if( CAtoms[i]->GetOccpVar() != 0 )  {
-      sump << ' ';
-      sump << CAtoms[i]->Label();
+    if( CAtoms[i]->GetVarRef(var_name_Sof) == NULL )  {
+      XVar& xv = rm.Vars.NewVar(1./CAtoms.Count());
+      xv.AddReference(CAtoms[i], var_name_Sof, relation_AsVar);
     }
+    xeq.AddMember( CAtoms[i]->GetVarRef(var_name_Sof)->Parent );
   }
-  if( !sump.IsEmpty() )  {
-    E.ProcessingError(__OlxSrcInfo, "these/this atom(s) already have assigned free variables -" ) << sump;
-    return;
-  }
-  sump = "1 0.01";
-  for( int i=0; i < CAtoms.Count(); i++ )  {
-    rm.FVAR.Add(1./CAtoms.Count());
-    CAtoms[i]->SetOccpVar( rm.FVAR.Count()*10+1 );
-    sump << ' ';
-    sump << "1.00 ";  // weight
-    sump << rm.FVAR.Count();  // variable
-  }
-  TStrList SL;
-  SL.Add(sump);
-  I.AddIns("SUMP", SL, rm);
 }
 //..............................................................................
 void TMainForm::macPart(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
@@ -2968,18 +2946,15 @@ void TMainForm::macPart(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     return;
   }
   int startVar;
+  XVar* xv = NULL;
+  XLEQ* leq = NULL;
   if( linkOccu )  {
     // -21 -> 21
-    if( partCount == 2 )  {
-      rm.FVAR.Add(0.5);
-      startVar = rm.FVAR.Count()*10+1;
-    }
+    if( partCount == 2 )
+      xv = &rm.Vars.NewVar(0.5);
     // SUMP
-    if( partCount > 2 )  {
-      startVar = rm.FVAR.Count()*10+1;
-      for( int i=0; i < partCount; i++ )  
-        rm.FVAR.Add(1./partCount);
-    }
+    if( partCount > 2 )
+      leq = &rm.Vars.NewEquation(1.0, 0.01);
   }
 
   if( part == NoPart ) 
@@ -2995,27 +2970,21 @@ void TMainForm::macPart(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       }
       if( linkOccu )  {
         if( partCount == 2 )  {
-          if( i )  Atoms[j]->Atom().CAtom().SetOccpVar(startVar);
-          else     Atoms[j]->Atom().CAtom().SetOccpVar(-startVar);
+          if( i )  
+            xv->AddReference(&Atoms[j]->Atom().CAtom(), var_name_Sof, relation_AsVar);
+          else     
+            xv->AddReference(&Atoms[j]->Atom().CAtom(), var_name_Sof, relation_AsOneMinusVar);
         }
         if( partCount > 2 )  {
-          Atoms[j]->Atom().CAtom().SetOccpVar(startVar + partCount*10);
+          if( Atoms[j]->Atom().CAtom().GetVarRef(var_name_Sof) == NULL )  {
+            XVar& nv = rm.Vars.NewVar(1./Atoms.Count());
+            nv.AddReference(&Atoms[j]->Atom().CAtom(), var_name_Sof, relation_AsVar);
+          }
+          leq->AddMember( Atoms[j]->Atom().CAtom().GetVarRef(var_name_Sof)->Parent);
         }
       }
     }
     part++;
-  }
-  if( linkOccu )  {
-    if( partCount > 2 )  {
-      olxstr Sump = "1 0.01 ";
-      for( int i=0; i < partCount; i++ )  {
-        Sump << "1.00 " << (startVar + i*10) << ' ';
-      }
-      TStrList SL;
-      SL.Add(Sump);
-      TIns& ins = FXApp->XFile().GetLastLoader<TIns>();
-      ins.AddIns("SUMP", SL, FXApp->XFile().GetRM());
-    }
   }
 }
 void TMainForm::macAfix(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
@@ -7490,7 +7459,7 @@ void TMainForm::macIT(TStrObjList &Cmds, const TParamList &Options, TMacroError 
     if( a.GetAtomInfo() == iQPeakIndex )  continue;
     c = a.crd();
     c -= cent;
-    double w = a.GetAtomInfo().GetMr()*a.CAtom().GetOccp();
+    double w = a.GetAtomInfo().GetMr()*a.CAtom().GetOccu();
     I[0][0] += w*( QRT(c[1]) + QRT(c[2]));
     I[0][1] -= w*c[0]*c[1];
     I[0][2] -= w*c[0]*c[2];

@@ -103,6 +103,7 @@ protected:
   TActionQList Actions;
   TPtrList<TResidue> Residues;
   TResidue MainResidue;
+  class RefinementModel* RefMod;
 public:
 
   TAsymmUnit(TLattice *L);
@@ -266,6 +267,8 @@ public:
    to the asymmetri unit and the ins file respectevely
   */
   int GetMaxLoaderId() const;
+
+  DefPropP(RefinementModel*, RefMod)
 
   void ToDataItem(TDataItem& item) const;
   void FromDataItem(TDataItem& item);

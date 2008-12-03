@@ -2,23 +2,25 @@
 #define __olx_liner_eq_h
 #include "xbase.h"
 #include "typelist.h"
+#include "dataitem.h"
 BeginXlibNamespace()
 
 const short  // variable names
   var_name_Scale = 0,
-  var_name_X     = 1,
+  var_name_X     = 1, // order matters var_name_X+i
   var_name_Y     = 2,
   var_name_Z     = 3,
   var_name_Sof   = 4,
   var_name_Uiso  = 5,
-  var_name_U11   = 6,
+  var_name_U11   = 6, // order maters var_name_U11+i
   var_name_U22   = 7,
   var_name_U33   = 8,
-  var_name_U12   = 9,
+  var_name_U23   = 9,
   var_name_U13   = 10,
-  var_name_U23   = 11;
+  var_name_U12   = 11;
 
 const short  // relation of parameters to variables
+  relation_None          = 0,  // fixed param
   relation_AsVar         = 1,
   relation_AsOneMinusVar = 2;
 
@@ -36,7 +38,10 @@ struct XVarReference {
   short var_name;  // one of the var_name
   short relation_type; // relationAsVar or relation_AsOneMinusVar
   double coefficient; // line 0.25 in 20.25
-  XVarReference(TCAtom* a, short _var_name, short _relation_type, double coeff=1.0) : 
+  XVar& Parent;
+  XVarReference(XVar& parent, TCAtom* a, short _var_name, 
+    short _relation_type, double coeff=1.0) : 
+    Parent(parent),
     atom(a), 
     var_name(_var_name), 
     relation_type(_relation_type), 
@@ -45,19 +50,18 @@ struct XVarReference {
 
 class XVar {
   double Value;
-  TTypeList<XVarReference> References;  
+  TPtrList<XVarReference> References;  // owed from the Parent
   TPtrList<XLEQ> Equations; // equations using this variable
   int Id;
+  XVarManager& Parent;
 public:
-  XVar() : Value(0.5), Id(-1) { }
+  XVar(XVarManager& parent, double val=0.5) : Parent(parent), Value(val), Id(-1) { }
   // adds a new atom, referencing this variable
-  XVarReference& AddReference(TCAtom* a, short var_name, short relation, double coefficient=1.0)  {
-    return References.AddNew(a, var_name, relation, coefficient);
-  }
+  XVarReference& AddReference(TCAtom* a, short var_name, short relation, double coefficient=1.0);
   // removes a refence, it is destroyed here!
   void RemoveReference(XVarReference& vr)  {
     for( int i=0; i < References.Count(); i++ )  {
-      if( &References[i] == &vr )  {
+      if( References[i] == &vr )  {
         References.Delete(i);
         break;
       }
@@ -85,7 +89,7 @@ class XLEQ {
   TPtrList<XVar> Variables;
 public:
   XLEQ(double val, double sig) : Value(val), Sigma(sig) { }
-  void AddMember(XVar& var, double coefficient) {
+  void AddMember(XVar& var, double coefficient=1.0) {
     Variables.Add(&var);
     Coefficients.Add(coefficient);
     var.AddEquation(*this);
@@ -115,19 +119,23 @@ public:
 class XVarManager {
   TTypeList<XVar> Vars;
   TTypeList<XLEQ> Equations;
+  TTypeList<XVarReference> References;  
   int NextVar;  // this controls there variables go in sebsequent calls
 public:
-  XVarManager() {
+
+  class TAsymmUnit& aunit;
+
+  XVarManager(TAsymmUnit& au) : aunit(au) {
     NextVar = 0;
   }
   
-  XVar& NewVar()                  {  return Vars.AddNew();  }
+  XVar& NewVar(double val = 0.5)  {  return Vars.Add( new XVar(*this, val) );  }
   // returns existing variable or creates a new one. Sets a limit of 1024 variables
   XVar& GetReferencedVar(int ind) {
     if( ind < 0 || ind > 1024 )
       throw TInvalidArgumentException(__OlxSourceInfo, "invalid variable reference");
     while( Vars.Count() <= ind )
-      Vars.AddNew();
+      Vars.Add( new XVar(*this) );
     return Vars[ind];
   }
   int VarCount()            const {  return Vars.Count();  }
@@ -142,6 +150,9 @@ public:
     Equations.Clear();
     Vars.Clear();
     NextVar = 0;  // the global scale factor
+  }
+  XVarReference& AddVarRef(XVar& caller, TCAtom* a, short var_name, short relation, double coefficient=1.0)  {
+    return References.Add( new XVarReference(caller, a, var_name, relation, coefficient) );
   }
   // removes all unused variables and invalid/incomplete equations
   void Validate() {
@@ -164,13 +175,19 @@ public:
     for( int i=0; i < Vars.Count(); i++ )
       Vars[i].SetId(i);
   }
-
+  // helps with parsing SHELX specific paramter representation, returns actual value of the param
+  double SetAtomParam(TCAtom& ca, short param_name, double val);
+  void FixAtomParam(TCAtom& ca, short param_name);
+  void FreeAtomParam(TCAtom& ca, short param_name);
+  // retruns a SHELX specific value like 20.5 or 11.0
+  double GetAtomParam(TCAtom& ca, short param_name, double* Q=NULL);
+  // parses FVAR and assignes variable values
   template <class list> void AddFVAR(const list& fvar) {
     for( int i=0; i < fvar.Count(); i++, NextVar++ )  {
       if( Vars.Count() <= NextVar )
-        Vars.AddNew(fvar[i].ToDouble());
+        Vars.Add( new XVar(*this, fvar[i].ToDouble()) );
       else
-        Vars[NextVar] = fvar[i].ToDouble();
+        Vars[NextVar].SetValue( fvar[i].ToDouble() );
     }
   }
   olxstr GetFVARStr() const {
@@ -183,7 +200,7 @@ public:
       throw TInvalidArgumentException(__OlxSourceInfo, "at least six parameters expected for SUMP");
     XLEQ& le = NewEquation(sump[0].ToDouble(), sump[1].ToDouble());
     for( int i=2; i < sump.Count(); i++ )  {
-      XVar& v = GetRerefencedVar(sump[i+1].ToInt());
+      XVar& v = GetReferencedVar(sump[i+1].ToInt());
       le.AddMember(v, sump[i].ToDouble());
     }
   }
@@ -196,6 +213,10 @@ public:
       rv << ' ' << le.GetCoefficient(i) << ' ' << le[i].GetId();
     return rv;
   }
+  void Assign(const XVarManager& vm);
+
+  void ToDataItem(TDataItem& item) const;
+  void FromDataItem(TDataItem& item);
 };
 
 

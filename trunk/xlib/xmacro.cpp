@@ -331,43 +331,35 @@ void XLibMacros::macFix(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     var_val = Cmds[0].ToDouble();
     Cmds.Delete(0);
   }
+  TXApp& xapp = TXApp::GetInstance();
   TSAtomPList atoms;
-  if( !TXApp::GetInstance().FindSAtoms(Cmds.Text(' '), atoms, true) )  return;
+  if( !xapp.FindSAtoms(Cmds.Text(' '), atoms, true) )  return;
   if( vars.Comparei( "XYZ" ) == 0 )  {
     for(int i=0; i < atoms.Count(); i++ )  {
       for( int j=0; j < 3; j++ )
-        atoms[i]->CAtom().FixedValues()[TCAtom::CrdFixedValuesOffset + j] = 10;
+        xapp.XFile().GetRM().Vars.FixAtomParam(atoms[i]->CAtom(), var_name_X+j);
     }
   }
   else if( vars.Comparei( "UISO" ) == 0 )  {
     for( int i=0; i < atoms.Count(); i++ )  {
       if( atoms[i]->GetEllipsoid() == NULL )  {  // isotropic atom
         if( var_val != 0 )  {
-          if( var_val < 10 )  {
-            atoms[i]->CAtom().SetUiso( var_val );
-            atoms[i]->CAtom().SetUisoVar( 10.0 + var_val );
-          }
-          else  {
-            int iv = (int) var_val;
-            atoms[i]->CAtom().SetUiso( var_val-iv );
-            atoms[i]->CAtom().SetUisoVar( var_val );
-          }
-        }
-        else  if( atoms[i]->CAtom().GetUisoVar() == 0 )  {  // have to skip riding atoms
-          atoms[i]->CAtom().SetUisoVar( 10 );
+          if( var_val < 10 )
+            var_val += 10;
+          xapp.XFile().GetRM().Vars.SetAtomParam(atoms[i]->CAtom(), var_name_Uiso, var_val);
         }
       }
       else  {
         for( int j=0; j < 6; j++ )
-          atoms[i]->CAtom().FixedValues()[TCAtom::UisoFixedValuesOffset + j] = 10;
+          xapp.XFile().GetRM().Vars.FixAtomParam(atoms[i]->CAtom(), var_name_U11+j);
       }
     }
   }
   else if( vars.Comparei( "OCCU" ) == 0 )  {
     for(int i=0; i < atoms.Count(); i++ )  {
       if( atoms[i]->CAtom().GetPart() == 0 )  {
-        atoms[i]->CAtom().SetOccp( 1./atoms[i]->CAtom().GetDegeneracy() );
-        atoms[i]->CAtom().SetOccpVar( 10 );
+        xapp.XFile().GetRM().Vars.SetAtomParam(atoms[i]->CAtom(), var_name_Sof, 
+          1./atoms[i]->CAtom().GetDegeneracy()+10);
       }
     }
   }
@@ -377,28 +369,28 @@ void XLibMacros::macFree(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   olxstr vars = Cmds[0];
   Cmds.Delete(0);
   TSAtomPList atoms;
-  if( !TXApp::GetInstance().FindSAtoms(Cmds.Text(' '), atoms, true) )  return;
+  TXApp& xapp = TXApp::GetInstance();
+  if( !xapp.FindSAtoms(Cmds.Text(' '), atoms, true) )  return;
   if( vars.Comparei( "XYZ" ) == 0 )  {
     for(int i=0; i < atoms.Count(); i++ )  {
       for( int j=0; j < 3; j++ )
-        atoms[i]->CAtom().FixedValues()[TCAtom::CrdFixedValuesOffset + j] = 0;
+        xapp.XFile().GetRM().Vars.FreeAtomParam(atoms[i]->CAtom(), var_name_X+j);
     }
   }
   else if( vars.Comparei( "UISO" ) == 0 )  {
     for(int i=0; i < atoms.Count(); i++ )  {
       if( atoms[i]->CAtom().GetEllipsoid() == NULL )  {  // isotropic atom
-          atoms[i]->CAtom().SetUisoVar( 0 );
+        xapp.XFile().GetRM().Vars.FreeAtomParam(atoms[i]->CAtom(), var_name_Uiso);
       }
       else  {
         for( int j=0; j < 6; j++ )
-          atoms[i]->CAtom().FixedValues()[TCAtom::UisoFixedValuesOffset + j] = 0;
+          xapp.XFile().GetRM().Vars.FreeAtomParam(atoms[i]->CAtom(), var_name_U11+j);
       }
     }
   }
   else if( vars.Comparei( "OCCU" ) == 0 )  {
-    for(int i=0; i < atoms.Count(); i++ )  {
-      atoms[i]->CAtom().SetOccpVar( 0 );
-    }
+    for(int i=0; i < atoms.Count(); i++ ) 
+      xapp.XFile().GetRM().Vars.FreeAtomParam(atoms[i]->CAtom(), var_name_Sof);
   }
 }
 //..............................................................................
@@ -932,12 +924,12 @@ void XLibMacros::macFixUnit(TStrObjList &Cmds, const TParamList &Options, TMacro
     int ind = content.IndexOf(&bai);
     if( ind == -1 )  {
       content.Add(&bai);
-      bai.SetSumm( ca.GetOccp() );
+      bai.SetSumm( ca.GetOccu() );
       if( cBai == NULL && bai == iCarbonIndex )    cBai = &bai;
       if( hBai == NULL && bai == iHydrogenIndex )  hBai = &bai;
     }
     else
-      bai.SetSumm( bai.GetSumm() + ca.GetOccp() );
+      bai.SetSumm( bai.GetSumm() + ca.GetOccu() );
   }
   int Z = Round(au.EstimateZ((int)((double)nhc/Zp)));
   au.SetZ(Z);
@@ -1913,7 +1905,7 @@ void XLibMacros::macVoidE(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     if( ca.IsDeleted() || ca.GetAtomInfo() == iQPeakIndex )  
       continue;
     int ec = (ca.GetAtomInfo() == iDeuteriumIndex) ? 1 : ca.GetAtomInfo().GetIndex()+1;
-    F000 += ec*uc.MatrixCount()*ca.GetOccp();
+    F000 += ec*uc.MatrixCount()*ca.GetOccu();
   }
   olxstr fcffn = TEFile::ChangeFileExt(XApp.XFile().GetFileName(), "fcf");
   if( !TEFile::FileExists(fcffn) )  {

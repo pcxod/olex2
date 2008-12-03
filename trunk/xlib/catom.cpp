@@ -13,16 +13,13 @@
 #include "estrlist.h"
 #include "refmodel.h"
 
-const short TCAtom::CrdFixedValuesOffset  = 0;
-const short TCAtom::OccpFixedValuesOffset = 3;
-const short TCAtom::UisoFixedValuesOffset = 4;
 //----------------------------------------------------------------------------//
 // TCAtom function bodies
 //----------------------------------------------------------------------------//
-TCAtom::TCAtom(TAsymmUnit *Parent)  {
+TCAtom::TCAtom(TAsymmUnit *Parent) : Vars(12)  {
   Part   = 0;
-  Occp   = 1;
-  QPeak  = -1;
+  Occu   = 1;
+  QPeak  = 0;
   SetId(0);
   SetResiId(-1);  // default residue is unnamed one
   SetSameId(-1);
@@ -30,13 +27,14 @@ TCAtom::TCAtom(TAsymmUnit *Parent)  {
   EllpId = -1;
   Uiso = caDefIso;
   UisoEsd = 0;
+  UisoScale = 0;
+  UisoOwner = NULL;
   LoaderId = -1;
   FragmentId = -1;
   CanBeGrown = Deleted = false;
   FAttachedAtoms = NULL;
   FAttachedAtomsI = NULL;
   Degeneracy = 1;
-  FFixedValues.Resize(10);
   HAttached = false;
   Saved = false;
   Tag = -1;
@@ -56,22 +54,22 @@ bool TCAtom::SetLabel(const olxstr &L)  {
     throw TInvalidArgumentException(__OlxSourceInfo, "empty label");
 
   olxstr Tmp;
-  TAtomsInfo *AI = AtomsInfo();
+  TAtomsInfo& AI = TAtomsInfo::GetInstance();
   TBasicAtomInfo *BAI = NULL;
   if( L.Length() >= 2 )  {
     Tmp = L.SubString(0, 2);
-    if( AI->IsElement(Tmp) )
-      BAI = AI->FindAtomInfoBySymbol( Tmp );
+    if( AI.IsElement(Tmp) )
+      BAI = AI.FindAtomInfoBySymbol( Tmp );
     else  {
       Tmp = L.SubString(0, 1);
-      if( AI->IsElement(Tmp) )
-        BAI = AI->FindAtomInfoBySymbol( Tmp );
+      if( AI.IsElement(Tmp) )
+        BAI = AI.FindAtomInfoBySymbol( Tmp );
     }
   }
   else  {
     Tmp = L.SubString(0, 1);
-    if( AI->IsElement(Tmp) )
-      BAI = AI->FindAtomInfoBySymbol( Tmp );
+    if( AI.IsElement(Tmp) )
+      BAI = AI.FindAtomInfoBySymbol( Tmp );
   }
   if( BAI == NULL )
     throw TInvalidArgumentException(__OlxSourceInfo, olxstr("Unknown element: '") << L << '\'' );
@@ -107,14 +105,20 @@ void TCAtom::Assign(const TCAtom& S)  {
   }
   ExyzGroup = NULL;  // also managed by the group
   SetPart( S.GetPart() );
-  SetOccp( S.GetOccp() );
-  SetOccpVar( S.GetOccpVar() );
+  SetOccu( S.GetOccu() );
   SetQPeak( S.GetQPeak() );
   SetResiId( S.GetResiId() );
   SetSameId( S.GetSameId() );
   EllpId = S.EllpId;
   SetUiso( S.GetUiso() );
-  SetUisoVar( S.GetUisoVar() );
+  SetUisoScale( S.GetUisoScale() );
+  if( S.UisoOwner != NULL )  {
+    UisoOwner = FParent->FindCAtomByLoaderId(S.UisoOwner->GetLoaderId());
+    if( UisoOwner == NULL )
+      throw TFunctionFailedException(__OlxSourceInfo, "asymmetric units mismatch");
+  }
+  else
+    UisoOwner = NULL;
   FLabel   = S.FLabel;
   FAtomInfo = &S.GetAtomInfo();
 //  Frag    = S.Frag;
@@ -142,7 +146,6 @@ void TCAtom::Assign(const TCAtom& S)  {
     if( FAttachedAtoms )  {  delete FAttachedAtoms;  FAttachedAtoms = NULL;  }
   }
   */
-  FFixedValues = S.GetFixedValues();
 }
 //..............................................................................
 int TCAtom::GetAfix() const {
@@ -158,8 +161,6 @@ int TCAtom::GetAfix() const {
   else
     return ParentAfixGroup->GetAfix();
 }
-//..............................................................................
-TAtomsInfo* TCAtom::AtomsInfo() const {  return FParent->GetAtomsInfo(); }
 //..............................................................................
 TEllipsoid* TCAtom::GetEllipsoid() const {  return EllpId == -1 ? NULL : &FParent->GetEllp(EllpId);  }
 //..............................................................................
@@ -182,25 +183,32 @@ void TCAtom::ToDataItem(TDataItem& item) const  {
   item.AddField("type", FAtomInfo->GetSymbol() );
   if( Part != 0 )
     item.AddField("part", Part);
-  if( EllpId == -1 )
-    item.AddField("Uiso", (GetUisoVar() != 0) ? GetUisoVar() : Uiso);
+  if( EllpId == -1 )  {
+    if( UisoOwner != NULL )
+      ;
+    else if( Vars[var_name_Uiso] != NULL )  {
+      ;
+    }
+    else  {
+      item.AddField("Uiso", Uiso);
+    }
+  }
   else  {
     double Q[6], E[6];
     GetEllipsoid()->GetQuad(Q, E);
     TDataItem& elp = item.AddItem("adp");
-    elp.AddField("xx", TEValue<double>(Q[0]+FFixedValues[UisoFixedValuesOffset+0], E[0]).ToString());
-    elp.AddField("yy", TEValue<double>(Q[1]+FFixedValues[UisoFixedValuesOffset+1], E[1]).ToString());
-    elp.AddField("zz", TEValue<double>(Q[2]+FFixedValues[UisoFixedValuesOffset+2], E[2]).ToString());
-    elp.AddField("yz", TEValue<double>(Q[3]+FFixedValues[UisoFixedValuesOffset+3], E[3]).ToString());
-    elp.AddField("xz", TEValue<double>(Q[4]+FFixedValues[UisoFixedValuesOffset+4], E[4]).ToString());
-    elp.AddField("xy", TEValue<double>(Q[5]+FFixedValues[UisoFixedValuesOffset+5], E[5]).ToString());
+    elp.AddField("xx", TEValue<double>(Q[0], E[0]).ToString());
+    elp.AddField("yy", TEValue<double>(Q[1], E[1]).ToString());
+    elp.AddField("zz", TEValue<double>(Q[2], E[2]).ToString());
+    elp.AddField("yz", TEValue<double>(Q[3], E[3]).ToString());
+    elp.AddField("xz", TEValue<double>(Q[4], E[4]).ToString());
+    elp.AddField("xy", TEValue<double>(Q[5], E[5]).ToString());
   }
-  item.AddField("occu", (GetOccpVar() != 0 && GetOccpVar() != 10) ? 
-    GetOccpVar() : GetOccpVar() + GetOccp());
+  item.AddField("occu", Occu);
   
-  item.AddField("x", TEValue<double>(Center[0]+FFixedValues[TCAtom::CrdFixedValuesOffset+0], Esd[0]).ToString());
-  item.AddField("y", TEValue<double>(Center[1]+FFixedValues[TCAtom::CrdFixedValuesOffset+1], Esd[1]).ToString());
-  item.AddField("z", TEValue<double>(Center[2]+FFixedValues[TCAtom::CrdFixedValuesOffset+2], Esd[2]).ToString());
+  item.AddField("x", TEValue<double>(Center[0], Esd[0]).ToString());
+  item.AddField("y", TEValue<double>(Center[1], Esd[1]).ToString());
+  item.AddField("z", TEValue<double>(Center[2], Esd[2]).ToString());
   
 }
 //..............................................................................

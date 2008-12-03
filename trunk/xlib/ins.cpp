@@ -81,9 +81,7 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
     Toks.Strtok(InsFile[i], ' ');
     if( Toks.IsEmpty() )  continue;
 
-    if( Toks[0].Comparei("SUMP") == 0 )  // can look like an atom !
-      Ins.Add(InsFile[i]);
-    else if( Toks[0].Comparei("MOLE") == 0 )  // these are dodgy
+    if( Toks[0].Comparei("MOLE") == 0 )  // these are dodgy
       continue;
     else if( ParseIns(InsFile, Toks, cx, i) )
       continue;
@@ -232,6 +230,11 @@ void TIns::_FinishParsing()  {
     for( int j=0; j < Param->Count(); j++ )
       Param->Object(j) = GetAsymmUnit().FindCAtom(Param->String(j));
   }
+  // TODO: an update of the values from the variables may be required...
+  //TAsymmUnit& au = GetAsymmUnit();
+  //for( int i=0; i < au.AtomCount(); i++ )  {
+  //  TCAtom& ca = au.GetAtom(i);
+  //}
 }
 //..............................................................................
 bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx, int& i)  {
@@ -585,7 +588,6 @@ void TIns::HypernateIns(const olxstr& Ins, TStrList& Res)  {
 //..............................................................................
 void TIns::SaveToRefine(const olxstr& FileName, const olxstr& sMethod, const olxstr& comments)  {
   TStrList SL, mtoks;
-  TInsList* L;
   if( sMethod.IsEmpty() )
     mtoks.Add("TREF");
   else  {
@@ -727,7 +729,7 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
     spindex = (sfac == NULL ? -2 : sfac->CIIndexOf('c') );
   else
     spindex = (sfac == NULL ? -2 : sfac->IndexOfObject( &a.GetAtomInfo() ));
-  HypernateIns( _AtomToString(&a, spindex+1), sl );
+  HypernateIns( _AtomToString(rm, a, spindex+1), sl );
   a.SetSaved(true);
   if( index != NULL )  index->Add(a.GetTag());
   for( int i=0; i < a.DependentHfixGroupCount(); i++ )  {
@@ -915,7 +917,7 @@ void TIns::UpdateAtomsFromStrings(RefinementModel& rm, TCAtomPList& CAtoms, cons
   int iv, atomCount = 0;
   ParseContext cx(rm);
   SL.CombineLines('=');
-  rm.FVAR.Clear();
+  //rm.FVAR.Clear();
   for( int i=0; i < CAtoms.Count(); i++ )  {
     if( CAtoms[i]->GetParentAfixGroup() != NULL )
       CAtoms[i]->GetParentAfixGroup()->Clear();
@@ -966,7 +968,7 @@ void TIns::UpdateAtomsFromStrings(RefinementModel& rm, TCAtomPList& CAtoms, cons
         if( cx.Resi != NULL )  cx.Resi->AddAtom(atom);
       }
       // clear fixed fixed values as they reread
-      atom->FixedValues().Null();
+      //atom->FixedValues().Null();
 
       _ParseAtom( Toks, cx, atom );
       atomCount++;
@@ -1133,137 +1135,78 @@ TCAtom* TIns::_ParseAtom(TStrList& Toks, ParseContext& cx, TCAtom* atom)  {
   atom->ccrd()[0] = Toks[2].ToDouble();
   atom->ccrd()[1] = Toks[3].ToDouble();
   atom->ccrd()[2] = Toks[4].ToDouble();
-  for( int j=0; j < 3; j ++ )  {
-    if( fabs(atom->ccrd()[j]) >= 5 )  {
-      atom->ccrd()[j] -= 10;
-      atom->FixedValues()[ TCAtom::CrdFixedValuesOffset + j ] = 10;
-    }
-  }
-  // initialise uncertanties using average cell error
-  //atom->ccrdEsd()[0] = fabs(atom->ccrd()[0]*Error);
-  //atom->ccrdEsd()[1] = fabs(atom->ccrd()[1]*Error);
-  //atom->ccrdEsd()[2] = fabs(atom->ccrd()[2]*Error);
+  for( int j=0; j < 3; j ++ )
+    cx.rm.Vars.SetAtomParam(*atom, var_name_X+j, atom->ccrd()[j]);
   atom->SetPart( cx.Part );
   // update the context
   cx.Last = atom;
   if( !cx.Same.IsEmpty() && cx.Same.Last().GetB() == NULL )
     cx.Same.Last().B() = atom;
-  if( cx.PartOccu != 0 )
-    atom->SetOccp( cx.PartOccu );
-  else
-    atom->SetOccp(  Toks[5].ToDouble() );
 
-  if( fabs(atom->GetOccp()) > 10 )  {  // a variable or fixed param
-    int iv = (int)(atom->GetOccp()/10); iv *= 10; // extract variable index
-    atom->SetOccpVar( iv );
-    atom->SetOccp( fabs(atom->GetOccp() - iv) );
-    iv = (int)(abs(iv)/10);            // do not need to store the sign anymore
-    if( (iv <= cx.rm.FVAR.Count()) && iv > 1 )  {  // check if it is a free variable and not just equal to "1"
-      if( atom->GetOccpVar() < 0 )  atom->SetOccp( 1 - cx.rm.FVAR[iv-1] );
-      else                          atom->SetOccp(cx.rm.FVAR[iv-1]);
-      // do not process - causes too many problems!!!
-      if( cx.PartOccu != 0 )
-        atom->SetOccpVar( cx.PartOccu );
-      else
-        atom->SetOccpVar(  Toks[5].ToDouble() );
-    }
-    if( iv != 1 )  // keep the value
-      atom->SetOccpVar(  Toks[5].ToDouble() );
-  }
+  cx.rm.Vars.SetAtomParam(*atom, var_name_Sof, cx.PartOccu == 0 ? Toks[5].ToDouble() : cx.PartOccu );
+
   if( Toks.Count() == 12 )  {  // full ellipsoid
-    QE[0] = Toks[6].ToDouble();
-    QE[1] = Toks[7].ToDouble();
-    QE[2] = Toks[8].ToDouble();
-    QE[3] = Toks[9].ToDouble();
-    QE[4] = Toks[10].ToDouble();
-    QE[5] = Toks[11].ToDouble();
-
-    for( int j=0; j < 6; j ++ )  {
-      if( fabs(QE[j]) > 10 )  {
-        int iv = (int)QE[j]/10;
-        iv *= 10;
-        QE[j] -= iv;
-        atom->FixedValues()[TCAtom::UisoFixedValuesOffset+j] = fabs((double)iv);
-      }
-    }
+    for( int j=0; j < 6; j ++ )
+      QE[j] = cx.rm.Vars.SetAtomParam(*atom, var_name_U11+j, Toks[j+6].ToDouble() );
     cx.au.UcifToUcart(QE);
     atom->AssignEllp( &cx.au.NewEllp().Initialise(QE) );
     if( atom->GetEllipsoid()->IsNPD() )  {
-      TBasicApp::GetLog().Info(olxstr("Not positevely defined: ") << atom->Label());
+      TBasicApp::GetLog().Info(olxstr("Not positevely defined: ") << atom->GetLabel());
       atom->SetUiso( 0 );
     }
     else
-      atom->SetUiso( (QE[0] +  QE[1] + QE[2])/3);
+      atom->SetUiso( atom->GetEllipsoid()->GetUiso() );
   }
   else  {
-    if( Toks.Count() > 6 )  {
-      atom->SetUiso( Toks[6].ToDouble() );
-      if( fabs(atom->GetUiso()) > 10 )  {
-        atom->SetUisoVar( atom->GetUiso() );
-        int iv = (int)atom->GetUiso()/10;
-        if( (iv <= cx.rm.FVAR.Count()) && iv > 1 )  {  // check if it is a free variable and not just equal to "1"
-          if( atom->GetUiso() < 0 )
-            atom->SetUiso( 1 - cx.rm.FVAR[iv-1] );
-          else
-            atom->SetUiso( cx.rm.FVAR[iv-1] );
-        }
-        else  {  // simply fixed value
-          iv *= 10;
-          atom->SetUiso( atom->GetUiso() - iv );
-          //atom->SetUisoVar( (double)iv );
-        }
-      }
-    }
-    else
+    if( Toks.Count() > 6 )
+      cx.rm.Vars.SetAtomParam(*atom, var_name_Uiso, Toks[6].ToDouble());
+    else // incomplete data...
       atom->SetUiso( 4*caDefIso*caDefIso );
     if( Toks.Count() >= 8 ) // some other data as Q-peak itensity
       atom->SetQPeak( Toks[7].ToDouble() );
     if( atom->GetUiso() < 0 )  {  // a value fixed to a bound atom value
-      atom->SetUisoVar(atom->GetUiso());
-      atom->SetUiso( 4*caDefIso*caDefIso );
+      if( cx.LastWithU == NULL )
+        throw TInvalidArgumentException(__OlxSourceInfo, olxstr("Invalid Uiso proxy for: ") << atom->GetLabel());
+      atom->SetUisoScale( fabs(atom->GetUiso()) );
+      atom->SetUisoOwner( cx.LastWithU );
+      //atom->SetUiso( 4*caDefIso*caDefIso );
+      atom->SetUiso( cx.LastWithU->GetUiso()*fabs(atom->GetUiso()) );
     }
+    else
+      cx.LastWithU = atom;
   }
   return atom;
 }
 //..............................................................................
-olxstr TIns::_AtomToString(TCAtom* CA, int SfacIndex)  {
+olxstr TIns::_AtomToString(RefinementModel& rm, TCAtom& CA, int SfacIndex)  {
   double v, Q[6];   // quadratic form of ellipsoid
-  olxstr Tmp = CA->Label();
+  olxstr Tmp( CA.Label() );
   Tmp.Format(6, true, ' ');
   Tmp << SfacIndex;
   Tmp.Format(Tmp.Length()+4, true, ' ');
-  for( int j=0; j < 3; j++ )  {
-    v = CA->ccrd()[j];
-    v += CA->FixedValues()[TCAtom::CrdFixedValuesOffset + j];
-    Tmp << olxstr::FormatFloat(-5, v ) << ' ';
-  }
+  for( int j=0; j < 3; j++ )
+    Tmp << olxstr::FormatFloat(-5, rm.Vars.GetAtomParam(CA, var_name_X+j)) << ' ';
+  
   // save occupancy
-  if( CA->GetOccpVar() != 0 && CA->GetOccpVar() != 10 )  v = CA->GetOccpVar();
-  else                                                   v = CA->GetOccpVar() + CA->GetOccp();
-  Tmp << olxstr::FormatFloat(-5, v) << ' ';
+  Tmp << olxstr::FormatFloat(-5, rm.Vars.GetAtomParam(CA, var_name_Sof)) << ' ';
   // save Uiso, Uanis
-  if( CA->GetEllipsoid() != NULL )  {
-    CA->GetEllipsoid()->GetQuad(Q);
+  if( CA.GetEllipsoid() != NULL )  {
+    CA.GetEllipsoid()->GetQuad(Q);
     GetAsymmUnit().UcartToUcif(Q);
 
-    for( int j = 0; j < 6; j++ )  {
-      v = Q[j];
-      v += (CA->FixedValues()[TCAtom::UisoFixedValuesOffset+j]*Sign(v));
-      Tmp << olxstr::FormatFloat(-5, v ) << ' ';
-    }
+    for( int j = 0; j < 6; j++ )
+      Tmp << olxstr::FormatFloat(-5, rm.Vars.GetAtomParam(CA, var_name_U11+j, Q)) << ' ';
   }
   else  {
-    if( CA->GetUisoVar() )  // riding atom
-      v = CA->GetUisoVar();
-    else  {
-      v = CA->GetUiso();
-      //v += CA->GetUisoVar() * Sign(v);
-    }
+    if( CA.GetUisoOwner() )  // riding atom
+      v = -CA.GetUisoScale();
+    else 
+      v = rm.Vars.GetAtomParam(CA, var_name_Uiso);
     Tmp << olxstr::FormatFloat(-5, v) << ' ';
   }
   // Q-Peak
-  if( CA->GetAtomInfo() == iQPeakIndex )
-    Tmp << olxstr::FormatFloat(-3, CA->GetQPeak());
+  if( CA.GetAtomInfo() == iQPeakIndex )
+    Tmp << olxstr::FormatFloat(-3, CA.GetQPeak());
   return Tmp;
 }
 //..............................................................................
@@ -1281,12 +1224,8 @@ olxstr TIns::_CellToString()  {
 //..............................................................................
 void TIns::_SaveFVar(TStrList& SL)  {
   olxstr Tmp; // = "FVAR ";
-  for( int i=0; i < RefMod.FVAR.Count(); i++ )  {
-    Tmp << RefMod.FVAR[i];
-    Tmp.Format(Tmp.Length()+1, true, ' ');
-  }
-  if( RefMod.FVAR.Count() == 0 ) Tmp << 1;
-  HypernateIns("FVAR ", Tmp, SL);
+  RefMod.Vars.Validate();
+  HypernateIns("FVAR ", RefMod.Vars.GetFVARStr(), SL);
 }
 //..............................................................................
 olxstr TIns::_ZerrToString()  {

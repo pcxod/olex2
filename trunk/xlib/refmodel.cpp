@@ -7,7 +7,7 @@
 RefinementModel::RefinementModel(TAsymmUnit& au) : rDFIX(*this, rltBonds), rDANG(*this, rltBonds), 
   rSADI(*this, rltBonds), rCHIV(*this, rltAtoms), rFLAT(*this, rltGroup), rDELU(*this, rltAtoms), 
   rSIMU(*this, rltAtoms), rISOR(*this, rltAtoms), rEADP(*this, rltAtoms), 
-  aunit(au), HklStatFileID(EmptyString, 0, 0)  {
+  aunit(au), HklStatFileID(EmptyString, 0, 0), Vars(au)  {
   SetDefaults();
 }
 //....................................................................................................
@@ -44,7 +44,6 @@ void RefinementModel::Clear() {
   UsedSymm.Clear();
   used_weight.Resize(0);
   proposed_weight.Resize(0);
-  FVAR.Clear();
   expl.Clear();
   RefinementMethod = "L.S.";
   SolutionMethod = EmptyString;
@@ -52,6 +51,8 @@ void RefinementModel::Clear() {
   Omits.Clear();
   BASF.Clear();
   SetDefaults();
+  expl.Clear();
+  Vars.Clear();
 }
 //....................................................................................................
 const smatd& RefinementModel::AddUsedSymm(const smatd& matr) {
@@ -101,7 +102,6 @@ RefinementModel& RefinementModel::Assign(const RefinementModel& rm, bool AssignA
   HKLSource = rm.HKLSource;
   RefinementMethod = rm.RefinementMethod;
   SolutionMethod = rm.SolutionMethod;
-  FVAR = rm.FVAR;
   if( AssignAUnit )
     aunit.Assign(rm.aunit);
   

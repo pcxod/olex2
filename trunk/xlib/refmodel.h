@@ -3,6 +3,7 @@
 #include "asymmunit.h"
 #include "xscatterer.h"
 #include "experimental.h"
+#include "leq.h"
 #include "refutil.h"
 
 BeginXlibNamespace()
@@ -73,6 +74,7 @@ public:
   RefinementModel(TAsymmUnit& au);
   virtual ~RefinementModel() {  Clear();  }
   ExperimentalDetails expl;
+  XVarManager Vars;
   TSRestraintList rDFIX,  // restrained distances (DFIX)
                   rDANG,  // restrained angles (DANG)
                   rSADI,  // similar distances (SADI)
@@ -82,7 +84,6 @@ public:
                   rSIMU,  // similar Uij (SIMU)
                   rISOR,  // Uij components approximate to isotropic behavior (ISOR)
                   rEADP;  // equivalent adp, constraint
-  TDoubleList FVAR;                 
   TSameGroupList  rSAME;
   TAfixGroups AfixGroups;
   TExyzGroups ExyzGroups;

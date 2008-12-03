@@ -47,13 +47,10 @@ public:
   }
   ~TSplitMode() {
     TXAtomPList Atoms;
-    TCAtomPList to_isot;
     vec3d c;
     TIns& Ins = TGlXApp::GetGXApp()->XFile().GetLastLoader<TIns>();
     TAsymmUnit& au = TGlXApp::GetGXApp()->XFile().GetAsymmUnit();
     RefinementModel& rm = TGlXApp::GetGXApp()->XFile().GetRM();
-    rm.FVAR.Add(0.5);
-    int Var = rm.FVAR.Count()*10+1;
     UpdateSelectionCrds();
     TGlXApp::GetGXApp()->FindXAtoms(EmptyString, Atoms, false);
     for( int i=0; i < Atoms.Count(); i++ )  {
@@ -67,10 +64,14 @@ public:
       Atoms[i]->Atom().ccrd() = c;
       Atoms[i]->Atom().CAtom().ccrd() = c;
     }
+    if( SplitAtoms.IsEmpty() )  return;
+
+    TCAtomPList to_isot;
+    XVar& xv = rm.Vars.NewVar(0.5);
     for( int i=0; i < SplitAtoms.Count(); i++ )  {
       to_isot.Add(&SplitAtoms[i].A()->Atom().CAtom());
-      SplitAtoms[i].A()->Atom().CAtom().SetOccpVar( Var );
-      SplitAtoms[i].B()->Atom().CAtom().SetOccpVar( -Var );
+      xv.AddReference(&SplitAtoms[i].A()->Atom().CAtom(), var_name_Sof, relation_AsVar);
+      xv.AddReference(&SplitAtoms[i].B()->Atom().CAtom(), var_name_Sof, relation_AsOneMinusVar);
       int part = SplitAtoms[i].A()->Atom().CAtom().GetPart();
       if( part == 0 )  part ++;
       SplitAtoms[i].A()->Atom().CAtom().SetPart( part );

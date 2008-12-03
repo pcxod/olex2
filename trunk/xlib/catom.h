@@ -8,6 +8,7 @@
 #include "typelist.h"
 #include "tptrlist.h"
 #include "dataitem.h"
+#include "leq.h"
 
 BeginXlibNamespace()
 
@@ -30,11 +31,14 @@ private:
   int     Id, Tag;       // c_atoms id; this is also used to identify if TSAtoms are the same
   int     LoaderId; // id of the atom in the asymmertic unit of the loader
   int     ResiId, SameId, EllpId;   // residue and SADI ID
-  double  Occp;     // occupancy and its variable
-  double  Uiso, QPeak, UisoEsd;    // isotropic thermal parameter; use it when Ellipsoid = NULL
+  double  Occu;     // occupancy and its variable
+  double  Uiso, // isotropic thermal parameter; use it when Ellipsoid = NULL
+    QPeak,      // if atom is a peak atom - this is not 0
+    UisoEsd,    //
+    UisoScale;  // for proxied Uiso (depending on the UisoOwner, this defines the scaled value
+  TCAtom* UisoOwner;  // the Uiso owner, if any
   int     FragmentId;   // this is used in asymmetric unit sort and initialised in TLatice::InitBody()
   vec3d Center, Esd;  // fractional coordinates and esds
-  evecd FFixedValues;  // at least five values (x,y,z, Occ, Uiso), may be 10, (x,y,z, Occ, Uij)
   short Part, Degeneracy;
   bool Deleted, 
     Saved;  // is true the atoms already saved (to work aroung SAME, AFIX)
@@ -45,6 +49,7 @@ private:
   TAfixGroup* DependentAfixGroup, *ParentAfixGroup;
   TPtrList<TAfixGroup>* DependentHfixGroups;
   TExyzGroup* ExyzGroup;
+  TPtrList<XVarReference> Vars;  // 12 variable pointers
 public:
   TCAtom(TAsymmUnit *Parent);
   virtual ~TCAtom();
@@ -91,7 +96,7 @@ public:
   inline bool operator != (const TCAtom& ca)  const  {  return this != &ca;  }
   inline bool operator != (const TCAtom* ca)  const  {  return this != ca;  }
 
-  TAtomsInfo *AtomsInfo() const;
+//  TAtomsInfo *AtomsInfo() const;
   void  Assign(const TCAtom& S);
 
   DefPropP(int, Id)
@@ -119,9 +124,11 @@ public:
     if( DependentHfixGroups == NULL )  DependentHfixGroups = new TPtrList<TAfixGroup>;
     DependentHfixGroups->Add(&hg);
   }
-  DefPropP(double, Occp)
+  DefPropP(double, Occu)
   DefPropP(double, Uiso)
   DefPropP(double, UisoEsd)
+  DefPropP(double, UisoScale)
+  DefPropP(TCAtom*, UisoOwner)
   DefPropP(double, QPeak)
   DefPropB(Deleted)
   DefPropB(HAttached)
@@ -129,15 +136,15 @@ public:
   // can be grown is set by UnitCell::Init
   DefPropP(bool, CanBeGrown)
 
-  inline double GetUisoVar()           const {  return FFixedValues[4]; }
-  inline void  SetUisoVar( double v)         {  FFixedValues[4] = v; };
-  inline double GetOccpVar()           const {  return FFixedValues[3]; }
-  inline void SetOccpVar( double v)          {  FFixedValues[3] = v; }
-
-  inline evecd& FixedValues()                {  return FFixedValues;  }
-  inline const evecd& GetFixedValues() const {  return FFixedValues;  }
-
-
+  void SetVarRef(XVarReference& vr)  {
+    Vars[vr.var_name] = &vr;
+  }
+  void NullVarRef(short param_name)  {
+    Vars[param_name] = NULL;
+  }
+  XVarReference* GetVarRef(short i) {
+    return Vars[i];
+  }
   TEllipsoid* GetEllipsoid() const;
   void UpdateEllp( const TEllipsoid& NV);
   void AssignEllp(TEllipsoid *NV);
@@ -151,9 +158,6 @@ public:
   void FromDataItem(TDataItem& item);
 
   static int CompareAtomLabels(const olxstr& S, const olxstr& S1);
-  static const short CrdFixedValuesOffset,
-                     OccpFixedValuesOffset,
-                     UisoFixedValuesOffset;
 };
 //..............................................................................
   typedef TPtrList<TCAtom> TCAtomPList;

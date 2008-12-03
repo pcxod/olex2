@@ -100,7 +100,7 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
       }
       bais.Add( &bai );
     }
-    scatterers[ind].B() += ca.GetOccp();
+    scatterers[ind].B() += ca.GetOccu();
   }
   if( scatterers.IsEmpty() )  {
     bais.Add( &AtomsInfo.GetAtomInfo(iCarbonIndex) );

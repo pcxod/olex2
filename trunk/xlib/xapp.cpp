@@ -212,7 +212,7 @@ void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F)  {
       if( alist[j]->GetEllipsoid() == NULL )
         scv *= exp( Ucifs[j*6]*d_s2 );
       
-      scv *= alist[j]->GetOccp();
+      scv *= alist[j]->GetOccu();
       scv *= l;
       ir += scv;
     }

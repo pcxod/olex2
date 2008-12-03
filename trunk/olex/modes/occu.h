@@ -6,18 +6,16 @@ class TOccuMode : public AModeWithLabels  {
 protected:
   class TOccuModeUndo : public TUndoData {
     TXAtom* Atom;
-    double Occu, Var;
+    double Occu;
   public:
     TOccuModeUndo(TXAtom* XA) :
         TUndoData(new TUndoActionImpl<TOccuModeUndo>(this, &TOccuModeUndo::undo))  {
       Atom = XA;
-      Occu = XA->Atom().CAtom().GetOccp();
-      Var = XA->Atom().CAtom().GetOccpVar();
+      Occu = XA->Atom().CAtom().GetParent()->GetRefMod()->Vars.GetAtomParam(XA->Atom().CAtom(), var_name_Sof);
     }
     void undo(TUndoData* data)  {
       TGlXApp::GetGXApp()->MarkLabel(Atom, false);
-      Atom->Atom().CAtom().SetOccp( Occu );
-      Atom->Atom().CAtom().SetOccpVar( Var );
+      Atom->Atom().CAtom().GetParent()->GetRefMod()->Vars.SetAtomParam(Atom->Atom().CAtom(), var_name_Sof, Occu);
     }
   };
 
@@ -34,18 +32,7 @@ public:
     if( EsdlInstanceOf( obj, TXAtom) )  {
       TXAtom *XA = &(TXAtom&)obj;
       TGlXApp::GetMainForm()->GetUndoStack()->Push( new TOccuModeUndo(XA) );
-      if( fabs(Occu) > 10 )  {
-        int iv = (int)Occu/10;  iv *= 10;
-        if( iv != 10 )
-          XA->Atom().CAtom().SetOccpVar( Occu );
-        else
-          XA->Atom().CAtom().SetOccpVar( 10 );
-        XA->Atom().CAtom().SetOccp( fabs(Occu - iv) );
-      }
-      else  {
-        XA->Atom().CAtom().SetOccpVar( 0 );
-        XA->Atom().CAtom().SetOccp( Occu );
-      }
+      XA->Atom().CAtom().GetParent()->GetRefMod()->Vars.SetAtomParam(XA->Atom().CAtom(), var_name_Sof, Occu);
       TGlXApp::GetGXApp()->MarkLabel(XA, true);
       return true;
     }

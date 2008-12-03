@@ -126,13 +126,14 @@ bool TXlConGen::FixAtom(TAtomEnvi& envi, const short Group, const TBasicAtomInfo
     }
     for( int i=0; i < CreatedAtoms.Count(); i++ )  {
       CreatedAtoms[i]->SetPart( envi.GetBase().CAtom().GetPart() );
+      CreatedAtoms[i]->SetUisoOwner( &envi.GetBase().CAtom() );
       if( envi.GetBase().GetAtomInfo() == iOxygenIndex || Group == fgCH3 )
-        CreatedAtoms[i]->SetUisoVar( -1.5 );
+        CreatedAtoms[i]->SetUisoScale( -1.5 );
       else
-        CreatedAtoms[i]->SetUisoVar( -1.2 );
+        CreatedAtoms[i]->SetUisoScale( -1.2 );
       CreatedAtoms[i]->SetUiso( 4*caDefIso*caDefIso );
-      CreatedAtoms[i]->SetOccpVar( envi.GetBase().CAtom().GetOccpVar() );
-      CreatedAtoms[i]->SetOccp( envi.GetBase().CAtom().GetOccp() );
+      RefMod.Vars.SetAtomParam( *CreatedAtoms[i], var_name_Sof, 
+        RefMod.Vars.GetAtomParam(envi.GetBase().CAtom(), var_name_Sof));
       if( generated != NULL )
         generated->Add(CreatedAtoms[i]);
     }

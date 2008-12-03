@@ -202,12 +202,12 @@ class TAtomModeUndo : public TUndoData {
   TXAtom* Atom;
   double Occu, Uiso;
   int Part;
-  evecd FixedValues;
+  //evecd FixedValues;
 public:
   TAtomModeUndo(IUndoAction* action, TXAtom* XA) : TUndoData(action)  {
     Atom = XA;
-    FixedValues = XA->Atom().CAtom().FixedValues();
-    Occu = XA->Atom().CAtom().GetOccp();
+    //FixedValues = XA->Atom().CAtom().FixedValues();
+    Occu = XA->Atom().CAtom().GetOccu();
     Uiso = XA->Atom().CAtom().GetUiso();
     Part = XA->Atom().CAtom().GetPart();
   }
@@ -215,7 +215,7 @@ public:
   inline double GetUiso()  const {  return Uiso;  }
   inline double GetOccu() const  {  return Occu;  }
   inline int GetPart()    const  {  return Part;  }
-  inline const evecd& GetFixedValues()  const  {  return FixedValues;  }
+  //inline const evecd& GetFixedValues()  const  {  return FixedValues;  }
   
 };
 
@@ -1640,7 +1640,7 @@ void TMainForm::ObjectUnderMouse( AGDrawObject *G)  {
       T << ": " << olxstr::FormatFloat(3, XA->Atom().CAtom().GetQPeak());
     }
     else  {
-      T << " Occu: " << olxstr::FormatFloat(3, XA->Atom().CAtom().GetOccp());
+      T << " Occu: " << olxstr::FormatFloat(3, XA->Atom().CAtom().GetOccu());
     }
     miAtomInfo->SetText( uiStr(T) );
     pmAtom->Enable(ID_AtomGrowShells, FXApp->AtomExpandable(XA));

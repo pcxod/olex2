@@ -383,6 +383,14 @@
 			<File
 				RelativePath="..\..\..\repository\filesystem.cpp"
 				>
+				<FileConfiguration
+					Name="Unicode-release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)\filesystem_nowx.obj"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\..\repository\fsext.cpp"
