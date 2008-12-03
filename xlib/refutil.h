@@ -85,7 +85,6 @@ template <class RefListMerger>
     for( int i=0; i < ref_cnt; )  {
       while( (++i < ref_cnt) && (toMerge[0]->CompareTo(*refs[i]) == 0) )
         toMerge.Add( refs[i] );
-
       if( !toMerge[0]->IsAbsent() )  {
         TReflection &rf = *RefListMerger::Merge( toMerge );
         if( toMerge.Count() > 1 )  {
@@ -175,7 +174,6 @@ template <class RefListMerger>
     for( int i=0; i < ref_cnt; )  {
       while( (++i < ref_cnt) && (toMerge[0]->CompareTo(*refs[i]) == 0) )
         toMerge.Add( refs[i] );
-
       if( !toMerge[0]->IsAbsent() )  {
         TReflection &rf = *RefListMerger::Merge( toMerge );
         if( toMerge.Count() > 1 )  {

@@ -47,7 +47,7 @@ void XLibMacros::Export(TLibrary& lib)  {
 //_________________________________________________________________________________________________________________________
   xlib_InitMacro(GraphSR, "b-number of bins", fpNone|fpOne|psFileLoaded,
 "Prints a scale vs resolution graph for current file (fcf file must exist in current folder)");
-  xlib_InitMacro(GraphPD, "r-resolution&;fcf-take structure factors from the FCF file, otherwise calculate from curent model\
+  xlib_InitMacro(GraphPD, "r-resolution in degrees [0.5]&;fcf-take structure factors from the FCF file, otherwise calculate from curent model\
 &;s-use simple scale when calculating structure factors from the mode, otherwise regression scaling will be used", fpNone|psFileLoaded,
 "Prints a intensity vs. 2 theta graph");
   xlib_InitMacro(Wilson, "b-number of bins&;p-uses linear vins for picture, otherwise uses spherical bins", 
@@ -406,8 +406,9 @@ void XLibMacros::macFixHL(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   delete TXApp::GetInstance().FixHL();
 }
 //..............................................................................
+// http://www.minsocam.org/ammin/AM78/AM78_1104.pdf
 int macGraphPD_Sort(const AnAssociation2<double,double>& a1, const AnAssociation2<double,double>& a2) {
-  const double df = a2.GetA() - a1.GetA();
+  const double df = a1.GetA() - a2.GetA();
   if( df < 0 )  return -1;
   if( df > 0 )  return 1;
   return 0;
@@ -415,6 +416,7 @@ int macGraphPD_Sort(const AnAssociation2<double,double>& a1, const AnAssociation
 void XLibMacros::macGraphPD(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   TXApp& xapp = TXApp::GetInstance();
   TRefList refs;
+  double res = Options.FindValue("r", "0.5").ToDouble();
   TArrayList<compd > F;
   olxstr err( SFUtil::GetSF(refs, F, SFUtil::mapTypeObs, 
     Options.Contains("fcf") ? SFUtil::sfOriginFcf : SFUtil::sfOriginOlex2, 
@@ -428,18 +430,30 @@ void XLibMacros::macGraphPD(TStrObjList &Cmds, const TParamList &Options, TMacro
   const double d_2_sin = xapp.XFile().GetRM().expl.GetRadiation()/2.0;
   TTypeList< AnAssociation2<double,double> > gd;
   gd.SetCapacity( refs.Count() );
+  double max_2t = 0, min_2t=180;
   for( int i=0; i < refs.Count(); i++ )  {
     const TReflection& ref = refs[i];
     vec3d d_hkl(ref.GetH(), ref.GetK(), ref.GetL());
     vec3d hkl(d_hkl[0]*hkl2c[0][0],
       d_hkl[0]*hkl2c[0][1] + d_hkl[1]*hkl2c[1][1],
       d_hkl[0]*hkl2c[0][2] + d_hkl[1]*hkl2c[1][2] + d_hkl[2]*hkl2c[2][2]);
-    const double theta = asin(d_2_sin*hkl.Length());
-    gd.AddNew( 360*theta/M_PI, ref.GetI());
+    const double theta_2 = 360*asin(d_2_sin*hkl.Length())/M_PI;
+    gd.AddNew( theta_2, ref.GetI()*ref.GetDegeneracy());
   }
   gd.QuickSorter.SortSF(gd, macGraphPD_Sort);
-  for( int i=0; i < refs.Count(); i++ )
-    out.Writenl( CString(gd[i].GetA(), 40) << ',' << gd[i].GetB());
+  min_2t = gd[0].GetA();
+  max_2t = gd.Last().GetA();
+  const double sig_0 = 1./80. + (max_2t-min_2t)/800.0;
+  const int ref_cnt = refs.Count();
+  for( double s = min_2t; s <= max_2t; s += res )  {
+    double y = 0.0001;  
+    for( int i=0; i < ref_cnt; i++ )  { 
+      const double sig = sig_0*(1.0+gd[i].GetA()/140.0);
+      const double qsig = sig*sig;
+      y += gd[i].GetB()*exp(-(s-gd[i].GetA())*(s-gd[i].GetA())/(2*qsig))/sig;
+    }
+    out.Writenl( CString(s, 40) << ',' << y);
+  }
 
 }
 //..............................................................................
