@@ -6,21 +6,32 @@ class TFixUMode : public AModeWithLabels  {
 protected:
   class TFixUModeUndo : public TUndoData {
     TXAtom* Atom;
-    double Uiso, Vars[6];
+    XVarReference* Uiso, *Vars[6];
 
   public:
     TFixUModeUndo(TXAtom* XA) :
         TUndoData(new TUndoActionImpl<TFixUModeUndo>(this, &TFixUModeUndo::undo))  {
       Atom = XA;
-      Uiso = XA->Atom().CAtom().GetUiso();
+      RefinementModel& rm = *XA->Atom().CAtom().GetParent()->GetRefMod();
+      Uiso = rm.Vars.ReleaseRef(XA->Atom().CAtom(), var_name_Uiso);
       for( int i=0; i < 6; i++ )
-        Vars[i] = XA->Atom().CAtom().FixedValues()[TCAtom::UisoFixedValuesOffset + i];
+        Vars[i] = rm.Vars.ReleaseRef(XA->Atom().CAtom(), var_name_U11+i);
+    }
+    ~TFixUModeUndo()  {
+      if( Uiso != NULL )  delete Uiso;
+      for( int i=0; i < 6; i++ )
+        if( Vars[i] != NULL )
+          delete Vars[i];
     }
     void undo(TUndoData* data)  {
       TGlXApp::GetGXApp()->MarkLabel(Atom, false);
-      Atom->Atom().CAtom().SetUiso( Uiso );
-      for( int i=0; i < 6; i++ )
-        Atom->Atom().CAtom().FixedValues()[TCAtom::UisoFixedValuesOffset + i] = Vars[i];
+      RefinementModel& rm = *Atom->Atom().CAtom().GetParent()->GetRefMod();
+      rm.Vars.RestoreRef(Atom->Atom().CAtom(), var_name_Uiso, Uiso);
+      Uiso = NULL;
+      for( int i=0; i < 6; i++ )  {
+        rm.Vars.RestoreRef(Atom->Atom().CAtom(), var_name_U11+i, Vars[i]);
+        Vars[i] = NULL;
+      }
     }
   };
 
@@ -39,27 +50,14 @@ public:
   virtual bool OnObject(AGDrawObject &obj)  {
     if( EsdlInstanceOf( obj, TXAtom) )  {
       TXAtom *XA = &(TXAtom&)obj;
-
       TGlXApp::GetMainForm()->GetUndoStack()->Push( new TFixUModeUndo(XA) );
-
-      if( Val != 0 )  {
-        if( XA->Atom().CAtom().GetEllipsoid() == NULL )  {
-          if( Val < 0 )  {  // riding atom
-            XA->Atom().CAtom().SetUisoVar( Val );
-            XA->Atom().CAtom().SetUiso( caDefIso );
-          }
-          else  {
-            int iv = (int)Val/10;  iv *= 10;
-            XA->Atom().CAtom().SetUisoVar( Val );
-            XA->Atom().CAtom().SetUiso( Val - iv );
-          }
-        }
-        else
-          TBasicApp::GetLog().Error("Do not know how to fix anisotropic atom U");
+      RefinementModel& rm = *XA->Atom().CAtom().GetParent()->GetRefMod();
+      if( XA->Atom().CAtom().GetEllipsoid() == NULL )  {
+        rm.Vars.SetAtomParam(XA->Atom().CAtom(), var_name_Uiso, Val);
       }
       else  {
         for( int i=0; i < 6; i++ )
-          XA->Atom().CAtom().FixedValues()[TCAtom::UisoFixedValuesOffset + i] = 10;
+          rm.Vars.FixAtomParam(XA->Atom().CAtom(), var_name_U11+i);
       }
       TGlXApp::GetGXApp()->MarkLabel(XA, true);
       return true;

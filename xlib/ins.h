@@ -63,7 +63,7 @@ protected:
   olxstr _AtomToString(RefinementModel& rm, TCAtom& CA, int SfacIndex);
   olxstr _CellToString();
   olxstr _ZerrToString();
-  void _SaveFVar(TStrList& SL);
+  void _SaveFVar(RefinementModel& rm, TStrList& SL);
   void _SaveSymm(TStrList& SL);
   void _SaveSizeTemp(TStrList& SL);
   void _SaveHklInfo(TStrList& SL);
@@ -74,7 +74,7 @@ protected:
     TStrPObjList<olxstr,TBasicAtomInfo*>* sfac, TStrList& sl, TIntList* index=NULL, bool checkSame=true);
   void _ProcessSame(ParseContext& cx);
   // initialises the unparsed instruction list
-  void _FinishParsing();
+  void _FinishParsing(RefinementModel& rm);
 public:
   TIns();
   virtual ~TIns();

@@ -2903,8 +2903,8 @@ void TMainForm::macFvar(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   FindXAtoms(Cmds, xatoms, true, !Options.Contains("cs"));
   if( xatoms.Count() == 2 && fvar == 0 )  {
     XVar& xv = rm.Vars.NewVar();
-    xv.AddReference(&xatoms[0]->Atom().CAtom(), var_name_Sof, relation_AsVar);
-    xv.AddReference(&xatoms[1]->Atom().CAtom(), var_name_Sof, relation_AsOneMinusVar);
+    rm.Vars.AddVarRef(xv, xatoms[0]->Atom().CAtom(), var_name_Sof, relation_AsVar);
+    rm.Vars.AddVarRef(xv, xatoms[1]->Atom().CAtom(), var_name_Sof, relation_AsOneMinusVar);
   }
   else  {
     for(int i=0; i < xatoms.Count(); i++ )
@@ -2926,7 +2926,7 @@ void TMainForm::macSump(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   for( int i=0; i < CAtoms.Count(); i++ )  {
     if( CAtoms[i]->GetVarRef(var_name_Sof) == NULL )  {
       XVar& xv = rm.Vars.NewVar(1./CAtoms.Count());
-      xv.AddReference(CAtoms[i], var_name_Sof, relation_AsVar);
+      rm.Vars.AddVarRef(xv, *CAtoms[i], var_name_Sof, relation_AsVar);
     }
     xeq.AddMember( CAtoms[i]->GetVarRef(var_name_Sof)->Parent );
   }
@@ -2971,14 +2971,14 @@ void TMainForm::macPart(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       if( linkOccu )  {
         if( partCount == 2 )  {
           if( i )  
-            xv->AddReference(&Atoms[j]->Atom().CAtom(), var_name_Sof, relation_AsVar);
+            rm.Vars.AddVarRef(*xv, Atoms[j]->Atom().CAtom(), var_name_Sof, relation_AsVar);
           else     
-            xv->AddReference(&Atoms[j]->Atom().CAtom(), var_name_Sof, relation_AsOneMinusVar);
+            rm.Vars.AddVarRef(*xv, Atoms[j]->Atom().CAtom(), var_name_Sof, relation_AsOneMinusVar);
         }
         if( partCount > 2 )  {
           if( Atoms[j]->Atom().CAtom().GetVarRef(var_name_Sof) == NULL )  {
             XVar& nv = rm.Vars.NewVar(1./Atoms.Count());
-            nv.AddReference(&Atoms[j]->Atom().CAtom(), var_name_Sof, relation_AsVar);
+            rm.Vars.AddVarRef(nv, Atoms[j]->Atom().CAtom(), var_name_Sof, relation_AsVar);
           }
           leq->AddMember( Atoms[j]->Atom().CAtom().GetVarRef(var_name_Sof)->Parent);
         }

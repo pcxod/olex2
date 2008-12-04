@@ -198,27 +198,6 @@ public:
   }
 };
 /******************************************************************************/
-class TAtomModeUndo : public TUndoData {
-  TXAtom* Atom;
-  double Occu, Uiso;
-  int Part;
-  //evecd FixedValues;
-public:
-  TAtomModeUndo(IUndoAction* action, TXAtom* XA) : TUndoData(action)  {
-    Atom = XA;
-    //FixedValues = XA->Atom().CAtom().FixedValues();
-    Occu = XA->Atom().CAtom().GetOccu();
-    Uiso = XA->Atom().CAtom().GetUiso();
-    Part = XA->Atom().CAtom().GetPart();
-  }
-  inline TXAtom* GetAtom() const {  return Atom;  }
-  inline double GetUiso()  const {  return Uiso;  }
-  inline double GetOccu() const  {  return Occu;  }
-  inline int GetPart()    const  {  return Part;  }
-  //inline const evecd& GetFixedValues()  const  {  return FixedValues;  }
-  
-};
-
 //----------------------------------------------------------------------------//
 // TMainForm function bodies
 //----------------------------------------------------------------------------//

@@ -44,6 +44,7 @@ TIns::~TIns()  {
 //..............................................................................
 void TIns::Clear()  {
   GetRM().Clear();
+  GetRM().Vars.ClearAll();
   GetAsymmUnit().Clear();
   for( int i=0; i < Ins.Count(); i++ )
     delete Ins.Object(i);
@@ -142,10 +143,10 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
   }
 
   Ins.Pack();
-  ParseRestraints(Ins, GetRM());
+  ParseRestraints(Ins, cx.rm);
   Ins.Pack();
   _ProcessSame(cx);
-  _FinishParsing();
+  _FinishParsing(cx.rm);
   // initialise asu data
   GetAsymmUnit().InitData();
   if( !cx.CellFound )  {  // in case there are no atoms
@@ -221,7 +222,7 @@ void TIns::_ProcessSame(ParseContext& cx)  {
   }
 }
 //..............................................................................
-void TIns::_FinishParsing()  {
+void TIns::_FinishParsing(RefinementModel& rm)  {
   for( int i =0; i < Ins.Count(); i++ )  {
     TInsList* Param = new TInsList(Ins[i], ' ');
     Ins.Object(i) = Param;
@@ -235,6 +236,7 @@ void TIns::_FinishParsing()  {
   //for( int i=0; i < au.AtomCount(); i++ )  {
   //  TCAtom& ca = au.GetAtom(i);
   //}
+  rm.Vars.Validate();
 }
 //..............................................................................
 bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx, int& i)  {
@@ -641,7 +643,7 @@ void TIns::SaveToRefine(const olxstr& FileName, const olxstr& sMethod, const olx
 
   _SaveSizeTemp(SL);
   _SaveHklInfo(SL);
-  _SaveFVar(SL);
+  _SaveFVar(RefMod, SL);
 
   SL.AddList(mtoks);
   SL.Add(EmptyString);
@@ -988,7 +990,7 @@ bool TIns::SaveAtomsToStrings(RefinementModel& rm, const TCAtomPList& CAtoms, TI
       afix = 0,
       resi = -2;
   SaveRestraints(SL, &CAtoms, processed, rm);
-  _SaveFVar(SL);
+  _SaveFVar(rm, SL);
   for(int i=0; i < CAtoms.Count(); i++ )  {
     CAtoms[i]->SetSaved(false);
     CAtoms[i]->SetTag(i);
@@ -1132,11 +1134,8 @@ TCAtom* TIns::_ParseAtom(TStrList& Toks, ParseContext& cx, TCAtom* atom)  {
     atom = &cx.au.NewAtom(cx.Resi);
     atom->SetLoaderId(cx.au.AtomCount()-1);
   }
-  atom->ccrd()[0] = Toks[2].ToDouble();
-  atom->ccrd()[1] = Toks[3].ToDouble();
-  atom->ccrd()[2] = Toks[4].ToDouble();
   for( int j=0; j < 3; j ++ )
-    cx.rm.Vars.SetAtomParam(*atom, var_name_X+j, atom->ccrd()[j]);
+    cx.rm.Vars.SetAtomParam(*atom, var_name_X+j, Toks[2+j].ToDouble());
   atom->SetPart( cx.Part );
   // update the context
   cx.Last = atom;
@@ -1151,11 +1150,12 @@ TCAtom* TIns::_ParseAtom(TStrList& Toks, ParseContext& cx, TCAtom* atom)  {
     cx.au.UcifToUcart(QE);
     atom->AssignEllp( &cx.au.NewEllp().Initialise(QE) );
     if( atom->GetEllipsoid()->IsNPD() )  {
-      TBasicApp::GetLog().Info(olxstr("Not positevely defined: ") << atom->GetLabel());
+      TBasicApp::GetLog().Info(olxstr("Not positevely defined: ") << Toks[0]);
       atom->SetUiso( 0 );
     }
     else
       atom->SetUiso( atom->GetEllipsoid()->GetUiso() );
+    cx.LastWithU = atom;
   }
   else  {
     if( Toks.Count() > 6 )
@@ -1166,7 +1166,7 @@ TCAtom* TIns::_ParseAtom(TStrList& Toks, ParseContext& cx, TCAtom* atom)  {
       atom->SetQPeak( Toks[7].ToDouble() );
     if( atom->GetUiso() < 0 )  {  // a value fixed to a bound atom value
       if( cx.LastWithU == NULL )
-        throw TInvalidArgumentException(__OlxSourceInfo, olxstr("Invalid Uiso proxy for: ") << atom->GetLabel());
+        throw TInvalidArgumentException(__OlxSourceInfo, olxstr("Invalid Uiso proxy for: ") << Toks[0]);
       atom->SetUisoScale( fabs(atom->GetUiso()) );
       atom->SetUisoOwner( cx.LastWithU );
       //atom->SetUiso( 4*caDefIso*caDefIso );
@@ -1222,10 +1222,10 @@ olxstr TIns::_CellToString()  {
   return Tmp;
 }
 //..............................................................................
-void TIns::_SaveFVar(TStrList& SL)  {
+void TIns::_SaveFVar(RefinementModel& rm, TStrList& SL)  {
   olxstr Tmp; // = "FVAR ";
-  RefMod.Vars.Validate();
-  HypernateIns("FVAR ", RefMod.Vars.GetFVARStr(), SL);
+  rm.Vars.Validate();
+  HypernateIns("FVAR ", rm.Vars.GetFVARStr(), SL);
 }
 //..............................................................................
 olxstr TIns::_ZerrToString()  {
@@ -1513,7 +1513,7 @@ void TIns::SaveHeader(TStrList& SL, int* SfacIndex, int* UnitIndex)  {
   }
   if( RefMod.used_weight.Count() == 0 )  
     wght << "0.1";
-  _SaveFVar(SL);
+  _SaveFVar(RefMod, SL);
 }
 //..............................................................................
 void TIns::ParseHeader(const TStrList& in)  {
@@ -1564,9 +1564,9 @@ void TIns::ParseHeader(const TStrList& in)  {
       GetAsymmUnit().AddMatrix(sm);
   }
   Ins.Pack();
-  ParseRestraints(Ins, GetRM());
+  ParseRestraints(Ins, cx.rm);
   Ins.Pack();
-  _FinishParsing();
+  _FinishParsing(cx.rm);
 }
 //..............................................................................
 

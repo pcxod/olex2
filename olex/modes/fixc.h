@@ -5,18 +5,27 @@ class TFixCMode : public AModeWithLabels  {
 protected:
   class TFixCModeUndo : public TUndoData {
     TXAtom* Atom;
-    double Vars[3];
+    XVarReference* Vars[3];
   public:
     TFixCModeUndo(TXAtom* XA) :
         TUndoData(new TUndoActionImpl<TFixCModeUndo>(this, &TFixCModeUndo::undo))  {
       Atom = XA;
+      RefinementModel& rm = *XA->Atom().CAtom().GetParent()->GetRefMod();
       for( int i=0; i < 3; i++ )
-        Vars[i] = XA->Atom().CAtom().FixedValues()[TCAtom::CrdFixedValuesOffset + i];
+        Vars[i] = rm.Vars.ReleaseRef(XA->Atom().CAtom(), var_name_X+i);
+    }
+    ~TFixCModeUndo() {
+      for( int i=0; i < 3; i++ )
+        if( Vars[i] != NULL )
+          delete Vars[i];
     }
     void undo(TUndoData* data)  {
       TGlXApp::GetGXApp()->MarkLabel(Atom, false);
-      for( int i=0; i < 3; i++ )
-        Atom->Atom().CAtom().FixedValues()[TCAtom::CrdFixedValuesOffset + i] = Vars[i];
+      RefinementModel& rm = *Atom->Atom().CAtom().GetParent()->GetRefMod();
+      for( int i=0; i < 3; i++ )  {
+        rm.Vars.RestoreRef(Atom->Atom().CAtom(), var_name_X+i, Vars[i]);
+        Vars[i] = NULL;
+      }
     }
   };
 
@@ -32,8 +41,9 @@ public:
     if( EsdlInstanceOf( obj, TXAtom) )  {
       TXAtom *XA = &(TXAtom&)obj;
       TGlXApp::GetMainForm()->GetUndoStack()->Push( new TFixCModeUndo(XA) );
+      RefinementModel& rm = *XA->Atom().CAtom().GetParent()->GetRefMod();
       for( int i=0; i < 3; i++ )
-        XA->Atom().CAtom().FixedValues()[TCAtom::CrdFixedValuesOffset + i] = 10;
+        rm.Vars.FixAtomParam(XA->Atom().CAtom(), var_name_X+i);
       TGlXApp::GetGXApp()->MarkLabel(XA, true);
       return true;
     }

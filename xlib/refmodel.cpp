@@ -104,7 +104,7 @@ RefinementModel& RefinementModel::Assign(const RefinementModel& rm, bool AssignA
   SolutionMethod = rm.SolutionMethod;
   if( AssignAUnit )
     aunit.Assign(rm.aunit);
-  
+  Vars.Assign( rm.Vars );
   rDFIX.Assign(rm.rDFIX);
   rDANG.Assign(rm.rDANG);
   rSADI.Assign(rm.rSADI);
