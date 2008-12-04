@@ -105,6 +105,9 @@ public:
   void EndUpdate();
   void LastLoaderChanged();  // performs complete reinitialisation
 
+  void ToDataItem(TDataItem& item) const;
+  void FromDataItem(TDataItem& item);
+
   void LibGetFormula(const TStrObjList& Params, TMacroError& E);
   void LibSetFormula(const TStrObjList& Params, TMacroError& E);
   void LibEndUpdate(const TStrObjList& Params, TMacroError& E);

@@ -242,6 +242,18 @@ void TXFile::EndUpdate()  {
   OnFileLoad->Exit(this);
 }
 //..............................................................................
+void TXFile::ToDataItem(TDataItem& item) const {
+  GetLattice().ToDataItem(item.AddItem("Lattice"));
+  GetRM().ToDataItem(item.AddItem("RefModel"));
+}
+//..............................................................................
+void TXFile::FromDataItem(TDataItem& item) {
+  TDataItem* latt = item.FindItem("Lattice");
+  GetLattice().FromDataItem(*latt);
+  TDataItem* rm = item.FindItem("RefModel");
+  GetRM().FromDataItem(*rm);
+}
+//..............................................................................
 //..............................................................................
 //..............................................................................
 void TXFile::LibGetFormula(const TStrObjList& Params, TMacroError& E)  {

@@ -187,6 +187,34 @@ olxstr TSymmParser::MatrixToSymmEx(const smatd& M)  {
   return T;
 }
 //..............................................................................
+olxstr TSymmParser::MatrixToSymmEx(const mat3d& M)  {
+  olxstr T, T1, T2;
+  char Axis[] = {'X','Y','Z'};
+  for( int j=0; j < 3; j ++ )  {
+    if( j != 0 )
+      T << ',';
+    for( int i=0; i < 3; i ++ )  {
+      if( i == j )  {
+        if( M[j][i] != 0 )  {
+          //if( M[j][3] != 0 )
+          T1 << CharSign(M[j][i]);
+          if( fabs(fabs(M[j][i])-1) > 1e-5 )
+            T1 << (double)M[j][i];
+          T1 << Axis[j];
+        }
+        continue;
+      }
+      if( M[j][i] != 0 )  {
+        T1.Insert(Axis[i], 0);
+        T1.Insert(CharSign(M[j][i]), 0);
+      }
+    }
+    T << T1;
+    T1 = EmptyString;
+  }
+  return T;
+}
+//..............................................................................
 smatd TSymmParser::SymmCodeToMatrixU(const TUnitCell& UC, const olxstr &Code)  {
   olxstr Tmp;
   TStrList Toks(Code, '_');

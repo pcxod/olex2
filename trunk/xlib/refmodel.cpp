@@ -241,7 +241,9 @@ void RefinementModel::ToDataItem(TDataItem& item) const {
   TDataItem& eqiv = item.AddItem("eqiv");
   for( int i=0; i < UsedSymm.Count(); i++ )  
     eqiv.AddItem(i, TSymmParser::MatrixToSymmEx(UsedSymm[i]));
-
+  
+  Vars.ToDataItem(item);
+  
   AfixGroups.ToDataItem(item.AddItem("afix"));
   ExyzGroups.ToDataItem(item.AddItem("exyz"));
   rSAME.ToDataItem(item.AddItem("same"));
@@ -255,6 +257,44 @@ void RefinementModel::ToDataItem(TDataItem& item) const {
   rISOR.ToDataItem(item.AddItem("isor"));
   rEADP.ToDataItem(item.AddItem("eadp"));
   
+  TDataItem& hklf = item.AddItem("HKLF", HKLF);
+  hklf.AddField("s", HKLF_s);
+  hklf.AddField("wt", HKLF_wt);
+  hklf.AddField("m", HKLF_m);
+  hklf.AddField("mat", TSymmParser::MatrixToSymmEx(HKLF_mat));
+
+  TDataItem& omits = item.AddItem("OMIT", OMIT_set);
+  omits.AddField("s", OMIT_s);
+  omits.AddField("2theta", OMIT_2t);
+  for( int i=0; i < Omits.Count(); i++ )  {
+    TDataItem& omit = omit.AddItem(i);
+    omit.AddField("h", Omits[i][0]);
+    omit.AddField("k", Omits[i][1]);
+    omit.AddField("l", Omits[i][2]);
+  }
+  if( TWIN_set )
+    item.AddItem("TWIN", TWIN_n).AddField("mat", TSymmParser::MatrixToSymmEx(TWIN_mat));
+  olxstr batch_s( BASF.IsEmpty() ? EmptyString : olxstr(BASF[0]));
+  for( int i=1; i < BASF.Count(); i++ )
+    batch_s << ' ' << BASF[i];
+  if( !batch_s.IsEmpty() )
+    item.AddField("BatchScales", batch_s);
+  if( MERG_set )
+    item.AddField("MERG", MERG);
+  item.AddField("RefMeth", RefinementMethod);
+  item.AddField("SolMeth", SolutionMethod);
+
+  olxstr ref_in_arg( LS.Count() == 0 ? EmptyString : olxstr(LS[0]));
+  for( int i=1; i < LS.Count(); i++ )
+    ref_in_arg << ' ' << LS[i];
+  item.AddField("RefInArg", ref_in_arg);
+
+  olxstr ref_out_arg( PLAN.Count() == 0 ? EmptyString : olxstr(PLAN[0]));
+  for( int i=1; i < PLAN.Count(); i++ )
+    ref_out_arg << ' ' << PLAN[i];
+  item.AddField("RefOutArg", ref_out_arg);
+  item.AddCodedField("HklSrc", HKLSource);
+
 }
 //....................................................................................................
 void RefinementModel::FromDataItem(TDataItem& item) {

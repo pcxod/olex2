@@ -610,6 +610,34 @@ void TXApp::AutoAfixRings(int afix, TSAtom* sa, bool TryPyridine)  {
   }
 }
 //..............................................................................
+void TXApp::SetAtomUiso(TSAtom& sa, double val) {
+  RefinementModel& rm = *sa.CAtom().GetParent()->GetRefMod();
+  if( sa.CAtom().GetEllipsoid() == NULL )  {
+    if( val <= -0.5 )  {
+      int ni = -1;
+      for( int i=0; i < sa.NodeCount(); i++ ) {
+        TSAtom& nd = sa.Node(i);
+        if( nd.IsDeleted() || nd.GetAtomInfo() == iQPeakIndex )
+          continue;
+        if( ni != -1 )  {  // to many bonds
+          ni = -1;
+          break;
+        }
+        ni = i;
+      }
+      // make sure that there is only one atom in the envi and it has proper Uiso
+      if( ni != -1 && sa.Node(ni).CAtom().GetUisoOwner() == NULL )  {
+        rm.Vars.FreeAtomParam(sa.CAtom(), var_name_Uiso);
+        sa.CAtom().SetUisoOwner(&sa.Node(ni).CAtom());
+        sa.CAtom().SetUisoScale(fabs(val));
+        sa.CAtom().SetUiso(fabs(val)*sa.Node(ni).CAtom().GetUiso());
+      }
+    }
+    else
+      rm.Vars.SetAtomParam(sa.CAtom(), var_name_Uiso, val);
+  }
+}
+//..............................................................................
 void TXApp::ToDataItem(TDataItem& item) const  {
   throw TNotImplementedException(__OlxSourceInfo);
 }

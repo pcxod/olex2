@@ -3159,7 +3159,7 @@ void TGXApp::InitFadeMode()  {
 }
 //..............................................................................
 void TGXApp::ToDataItem(TDataItem& item) const  {
-  FXFile->GetLattice().ToDataItem(item);
+  FXFile->ToDataItem(item);
 }
 //..............................................................................
 void TGXApp::FromDataItem(TDataItem& item)  {
