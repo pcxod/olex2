@@ -1067,7 +1067,7 @@ void TMainForm::macPict(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       vpWidth = FXApp->GetRender().GetWidth(),
       vpHeight = FXApp->GetRender().GetHeight();
 
-  float res = 2, aRes;
+  double res = 2, aRes;
   if( Cmds.Count() == 2 )  
     res = Cmds[1].ToDouble();
   if( res >= 100 )  // width provided
@@ -1075,7 +1075,7 @@ void TMainForm::macPict(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   if( res > 10 )
     res = 10;
   aRes = res;
-  if( res <= 1 )  res = 1;
+  //if( res <= 1 )  res = 1;
 
   int BmpHeight = vpHeight*res, BmpWidth = vpWidth*res;
 
@@ -1200,9 +1200,9 @@ void TMainForm::macPict(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     Error.ProcessingError(__OlxSrcInfo, "could not process image conversion" );
     return;
   }
-  if( aRes < 1 && aRes > 0 )
-    image.Scale(BmpWidth*aRes, BmpHeight*aRes).SaveFile( bmpFN.u_str() );
-  else
+//  if( aRes < 1 && aRes > 0 )
+//    image.Scale(BmpWidth*aRes, BmpHeight*aRes).SaveFile( bmpFN.u_str() );
+//  else
     image.SaveFile( bmpFN.u_str() );
 #else
   macPicta(Cmds, Options, Error);
@@ -1213,7 +1213,7 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   //wxProgressDialog progress(wxT("Rendering..."), wxT("Pass 1 out of 4"), 5, this, wxPD_AUTO_HIDE); 
   int orgHeight = FXApp->GetRender().GetHeight(),
       orgWidth  = FXApp->GetRender().GetWidth();
-  float res = 1, aRes;
+  double res = 1, aRes;
   if( Cmds.Count() == 2 )  
     res = Cmds[1].ToDouble();
   if( res >= 100 )  // width provided
@@ -1221,97 +1221,35 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   if( res > 10 )
     res = 10;
   aRes = res;
-  if( res <= 1 )  res = 1;
+  //if( res <= 1 )  res = 1;
 
-  int ScrHeight = (orgHeight/(res*2)-1)*res*2,
-      ScrWidth  = (orgWidth/(res*2)-1)*res*2;
+  int ScrHeight = (int)(((double)orgHeight/(res*2)-1.0)*res*2),
+      ScrWidth  = (int)(((double)orgWidth/(res*2)-1.0)*res*2);
   int BmpHeight = ScrHeight*res, BmpWidth = ScrWidth*res;
-
-  FXApp->GetRender().Resize(ScrWidth, ScrHeight); 
+  if( BmpHeight < ScrHeight )
+    ScrHeight = BmpHeight;
+  if( BmpWidth < ScrWidth )
+    ScrWidth = BmpWidth;
+  FXApp->GetRender().Resize(0, 0, ScrWidth, ScrHeight, res); 
 
   const int bmpSize = BmpHeight*BmpWidth*3;
   char* bmpData = (char*)malloc(bmpSize);
   FGlConsole->Visible(false);
   FXApp->GetRender().OnDraw->SetEnabled( false );
-  if( res > 1 )    {
+  if( res != 1 )    {
     FXApp->GetRender().Scene()->ScaleFonts(res);
     if( res >= 3 )
       FXApp->Quality(qaPict);
   }
   for( int i=0; i < res; i++ )  {
     for( int j=0; j < res; j++ )  {
-      FXApp->GetRender().LookAt(j, i, res);
+      FXApp->GetRender().LookAt(j, i, res < 1 ? 1 : res);
       FXApp->GetRender().Draw();
       char *PP = FXApp->GetRender().GetPixels(false, 1);
       int mj = j*ScrWidth;
       int mi = i*ScrHeight;
       for(int k=0; k < ScrWidth; k++ )  {
         for(int l=0; l < ScrHeight; l++ )  {
-          int indexA = (l*ScrWidth + k)*3;
-//          int indexB = (i*BmpWidth*ScrHeight + l*BmpWidth + j*ScrWidth + k)*3;
-//          int indexB = bmpSize - (i*BmpWidth*ScrHeight + l*BmpWidth + (BmpWidth-(j*ScrWidth + k - 1)) - 1)*3;
-          int indexB = bmpSize - (BmpWidth*(mi + l + 1) - mj - k)*3;
-          bmpData[indexB] = PP[indexA];
-          bmpData[indexB+1] = PP[indexA+1];
-          bmpData[indexB+2] = PP[indexA+2];
-        }
-      }
-      delete [] PP;
-    }
-  }
-  //progress.Update(2, wxT("Pass 2 out of 4"));
-  // x
-  for( double i=0; i < res; i++ )  {
-    for( double j=0.5; j < res-1; j++ )  {
-      FXApp->GetRender().LookAt(j, i, res);
-      FXApp->GetRender().Draw();
-      char *PP = FXApp->GetRender().GetPixels(false, 1);
-      int mj = (int)(j*ScrWidth);
-      int mi = (int)(i*ScrHeight);
-      for(int k=(int)(ScrWidth*0.25); k <= (int)(ScrWidth*0.75); k++ )  {
-        for(int l=(int)(ScrHeight*0.25); l < ScrHeight; l++ )  {
-          int indexA = (l*ScrWidth + k)*3;
-          int indexB = bmpSize - (BmpWidth*(mi + l + 1) - mj - k)*3;
-          bmpData[indexB] = PP[indexA];
-          bmpData[indexB+1] = PP[indexA+1];
-          bmpData[indexB+2] = PP[indexA+2];
-        }
-      }
-      delete [] PP;
-    }
-  }
-  // y
-  //progress.Update(3, wxT("Pass 3 out of 4"));
-  for( double i=0.5; i < res-1; i++ )  {
-    for( double j=0; j < res; j++ )  {
-      FXApp->GetRender().LookAt(j, i, res);
-      FXApp->GetRender().Draw();
-      char *PP = FXApp->GetRender().GetPixels(false, 1);
-      int mj = (int)(j*ScrWidth);
-      int mi = (int)(i*ScrHeight);
-      for(int k=(int)(ScrWidth*0.25); k < ScrWidth; k++ )  {
-        for(int l=(int)(0.25*ScrHeight); l <= (int)(ScrHeight*0.75); l++ )  {
-          int indexA = (l*ScrWidth + k)*3;
-          int indexB = bmpSize - (BmpWidth*(mi + l + 1) - mj - k)*3;
-          bmpData[indexB] = PP[indexA];
-          bmpData[indexB+1] = PP[indexA+1];
-          bmpData[indexB+2] = PP[indexA+2];
-        }
-      }
-      delete [] PP;
-    }
-  }
-  // x,y
-  //progress.Update(3, wxT("Pass 4 out of 4"));
-  for( double i=0.5; i < res-1; i++ )  {
-    for( double j=0.5; j < res-1; j++ )  {
-      FXApp->GetRender().LookAt(j, i, res);
-      FXApp->GetRender().Draw();
-      char *PP = FXApp->GetRender().GetPixels(false, 1);
-      int mj = (int)(j*ScrWidth);
-      int mi = (int)(i*ScrHeight);
-      for(int k=(int)(0.25*ScrWidth); k <= (int)(ScrWidth*0.75); k++ )  {
-        for(int l=(int)(0.25*ScrHeight); l <= (int)(ScrHeight*0.75); l++ )  {
           int indexA = (l*ScrWidth + k)*3;
           int indexB = bmpSize - (BmpWidth*(mi + l + 1) - mj - k)*3;
           bmpData[indexB] = PP[indexA];
@@ -1323,7 +1261,7 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     }
   }
   //progress.Update(4, wxT("Saving piture..."));
-  if( res > 1 ) {
+  if( res != 1 ) {
     FXApp->GetRender().Scene()->RestoreFontScale();
     if( res >= 3 ) 
       FXApp->Quality(qaMedium);
@@ -1344,9 +1282,9 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   wxImage image;
   image.SetData((unsigned char*)bmpData, BmpWidth, BmpHeight ); 
 //  image.Mirror(false).SaveFile( bmpFN.u_str() );
-  if( aRes < 1 && aRes > 0 )
-    image.Scale(BmpWidth*aRes, BmpHeight*aRes).SaveFile( bmpFN.u_str() );
-  else
+//  if( aRes < 1 && aRes > 0 )
+//    image.Scale(BmpWidth*aRes, BmpHeight*aRes).SaveFile( bmpFN.u_str() );
+//  else
     image.SaveFile( bmpFN.u_str() );
   //progress.Update(4, wxT("Done"));
 }

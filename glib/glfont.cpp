@@ -485,19 +485,3 @@ void TGlFont::SetMaterial(const TGlMaterial& m)  {
   }
 }
 //..............................................................................
-void TGlFont::DrawTextSafe(const vec3d& from, double scale, const olxstr& text)  {
-  int i=0;
-  double p[2] = {from[0], from[1]};
-  GLboolean raster_valid;
-  glRasterPos3d(p[0], p[1], from[2]);
-  glGetBooleanv(GL_CURRENT_RASTER_POSITION_VALID, &raster_valid);
-  while( !raster_valid && i < text.Length() )  {
-     p[0] += (double)FMaxWidth*scale;  
-     glRasterPos3d(p[0], p[1], from[2]);
-     glGetBooleanv(GL_CURRENT_RASTER_POSITION_VALID, &raster_valid);
-     i++;
-   }
-  for( ; i < text.Length(); i++ ) 
-    glCallList( FFontBase + text.CharAt(i) );
-}
-//..............................................................................
