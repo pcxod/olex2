@@ -49,10 +49,9 @@ void XVarManager::Assign(const XVarManager& vm) {
 //.................................................................................................
 XVarReference& XVarManager::AddVarRef(XVar& var, TCAtom& a, short var_name, short relation, double coeff)  {
   XVarReference* prf = a.GetVarRef(var_name);
-  if( prf != NULL )  {
+  if( prf != NULL && prf->GetId() != -1 )  {
     prf->Parent._RemRef(*prf);
-    if( prf->GetId() != -1 )  // is not released?
-      References.Delete(prf->GetId());
+    References.Delete(prf->GetId());
   }
   if( coeff == -10.0 )
     coeff = 1./a.GetDegeneracy();
@@ -61,12 +60,16 @@ XVarReference& XVarManager::AddVarRef(XVar& var, TCAtom& a, short var_name, shor
     References[i].SetId(i);
   var._AddRef(rf);
   a.SetVarRef(rf);
+  if( var_name == var_name_Uiso )
+    a.SetUisoOwner(NULL);
   return rf;
 }
 //.................................................................................................
 XVarReference* XVarManager::ReleaseRef(TCAtom& a, short var_name) {
   XVarReference* prf = a.GetVarRef(var_name);
   if( prf != NULL )  {
+    if( prf->GetId() == -1 )  
+      return NULL;
     prf->Parent._RemRef(*prf);
     References.Release(prf->GetId());
     for( int i=0; i < References.Count(); i++ )
@@ -141,21 +144,20 @@ double XVarManager::SetAtomParam(TCAtom& ca, short param_name, double val) {
 }
 //.................................................................................................
 void XVarManager::FixAtomParam(TCAtom& ca, short param_name) {
-  AddVarRef(Vars[0], ca, param_name, relation_None, 0);
+  AddVarRef(Vars[0], ca, param_name, relation_None, 1);
 }
 //.................................................................................................
 void XVarManager::FreeAtomParam(TCAtom& ca, short param_name) {
   XVarReference* vr = ca.GetVarRef(param_name);
-  if( vr != NULL )  {
+  if( vr != NULL && vr->GetId() != -1 )  {
     vr->Parent._RemRef( *vr );
     ca.NullVarRef(param_name);
     References.Delete(vr->GetId());
     for( int i=0; i < References.Count(); i++ )
       References[i].SetId(i);
   }
-  if( param_name == Uiso )  {
+  if( param_name == var_name_Uiso )
     ca.SetUisoOwner(NULL);
-  }
 }
 //.................................................................................................
 double XVarManager::GetAtomParam(TCAtom& ca, short param_name, double* Q) {
@@ -220,7 +222,7 @@ void XVarManager::Validate() {
 }
 //.................................................................................................
 void XVarManager::ToDataItem(TDataItem& item) const {
-  throw TNotImplementedException(__OlxSourceInfo);
+  item.AddItem("FVAR", GetFVARStr() );
 }
 //.................................................................................................
 void XVarManager::FromDataItem(TDataItem& item) {

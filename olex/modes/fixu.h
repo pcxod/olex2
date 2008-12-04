@@ -39,7 +39,7 @@ public:
   TFixUMode(int id) : AModeWithLabels(id)  {}
   bool Init(TStrObjList &Cmds, const TParamList &Options) {
     Val = Cmds.IsEmpty() ? 1 : Cmds[0].ToDouble();
-    TGlXApp::GetMainForm()->executeMacro("labels -f");
+    TGlXApp::GetMainForm()->executeMacro("labels -f -r -h");
     if( Val == 0 )
       TGlXApp::GetMainForm()->SetUserCursor( "<U>", "fix" );
     else
@@ -52,9 +52,8 @@ public:
       TXAtom *XA = &(TXAtom&)obj;
       TGlXApp::GetMainForm()->GetUndoStack()->Push( new TFixUModeUndo(XA) );
       RefinementModel& rm = *XA->Atom().CAtom().GetParent()->GetRefMod();
-      if( XA->Atom().CAtom().GetEllipsoid() == NULL )  {
-        rm.Vars.SetAtomParam(XA->Atom().CAtom(), var_name_Uiso, Val);
-      }
+      if( XA->Atom().CAtom().GetEllipsoid() == NULL )
+        TXApp::GetInstance().SetAtomUiso(XA->Atom(), Val);
       else  {
         for( int i=0; i < 6; i++ )
           rm.Vars.FixAtomParam(XA->Atom().CAtom(), var_name_U11+i);

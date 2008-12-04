@@ -342,13 +342,8 @@ void XLibMacros::macFix(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   }
   else if( vars.Comparei( "UISO" ) == 0 )  {
     for( int i=0; i < atoms.Count(); i++ )  {
-      if( atoms[i]->GetEllipsoid() == NULL )  {  // isotropic atom
-        if( var_val != 0 )  {
-          if( var_val < 10 )
-            var_val += 10;
-          xapp.XFile().GetRM().Vars.SetAtomParam(atoms[i]->CAtom(), var_name_Uiso, var_val);
-        }
-      }
+      if( atoms[i]->GetEllipsoid() == NULL )  // isotropic atom
+        xapp.SetAtomUiso(*atoms[i], var_val);
       else  {
         for( int j=0; j < 6; j++ )
           xapp.XFile().GetRM().Vars.FixAtomParam(atoms[i]->CAtom(), var_name_U11+j);
@@ -357,9 +352,8 @@ void XLibMacros::macFix(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   }
   else if( vars.Comparei( "OCCU" ) == 0 )  {
     for(int i=0; i < atoms.Count(); i++ )  {
-      if( atoms[i]->CAtom().GetPart() == 0 )  {
-        xapp.XFile().GetRM().Vars.SetAtomParam(atoms[i]->CAtom(), var_name_Sof, 
-          1./atoms[i]->CAtom().GetDegeneracy()+10);
+      if( atoms[i]->CAtom().GetPart() == 0 )  {  // it would be invalid for split atoms
+        xapp.XFile().GetRM().Vars.FixAtomParam(atoms[i]->CAtom(), var_name_Sof);
       }
     }
   }

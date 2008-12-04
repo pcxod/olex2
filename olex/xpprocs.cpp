@@ -2897,11 +2897,15 @@ void TMainForm::macFvar(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     TBasicApp::GetLog() << (rm.Vars.GetFVARStr() << '\n');
     return;
   }
-  double fvar = 0;
+  double fvar = -1101;
   XLibMacros::ParseNumbers<double>(Cmds, 1, &fvar);
   TXAtomPList xatoms;
   FindXAtoms(Cmds, xatoms, true, !Options.Contains("cs"));
-  if( xatoms.Count() == 2 && fvar == 0 )  {
+  if( fvar == 0 )  {
+    for(int i=0; i < xatoms.Count(); i++ )
+      rm.Vars.FreeAtomParam(xatoms[i]->Atom().CAtom(), var_name_Sof);
+  }
+  else if( xatoms.Count() == 2 && fvar == -1101 )  {
     XVar& xv = rm.Vars.NewVar();
     rm.Vars.AddVarRef(xv, xatoms[0]->Atom().CAtom(), var_name_Sof, relation_AsVar);
     rm.Vars.AddVarRef(xv, xatoms[1]->Atom().CAtom(), var_name_Sof, relation_AsOneMinusVar);
@@ -2917,7 +2921,7 @@ void TMainForm::macSump(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   TCAtomPList CAtoms;
   FXApp->FindCAtoms(Cmds.Text(' '), CAtoms);
   if( CAtoms.Count() < 2 )  {
-    E.ProcessingError(__OlxSrcInfo, "two atoms at least are expected" );
+    E.ProcessingError(__OlxSrcInfo, "at least two atoms are expected" );
     return;
   }
   double val = 1, esd = 0.01;
