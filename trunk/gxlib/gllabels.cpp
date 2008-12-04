@@ -108,10 +108,14 @@ bool TXGlLabels::Orient(TGlPrimitive *P)  {
       }
     }
     if( FMode & lmOVar )  {
-      if( ca.GetVarRef(var_name_Sof) != NULL )  {
-        if( ca.GetVarRef(var_name_Sof)->relation_type != relation_None )  {
+      const XVarReference* vr = ca.GetVarRef(var_name_Sof);
+      if( vr != NULL )  {
+        if( vr->relation_type != relation_None )  {
           if( Tmp.Length() )  Tmp << ", ";
-          Tmp << ca.GetVarRef(var_name_Sof)->Parent.GetId();
+          if( vr->relation_type == relation_AsVar )
+            Tmp << vr->Parent.GetId()+1;
+          else
+            Tmp << -(vr->Parent.GetId()+1);
         }
       }
     }
@@ -147,7 +151,23 @@ bool TXGlLabels::Orient(TGlPrimitive *P)  {
         if( !Tmp.IsEmpty() )  Tmp << ", ";
         Tmp << "occu";
       }
-      if( ca.GetVarRef(var_name_Uiso) != NULL && ca.GetVarRef(var_name_Uiso)->relation_type == relation_None )  {
+      if( ca.GetEllipsoid() != NULL )  {
+        olxstr eadp("Ua:", 40);
+        int ec=0;
+        for( int j=0; j < 6; j++ )  {
+          if( ca.GetVarRef(var_name_U11+j) != NULL && ca.GetVarRef(var_name_U11+j)->relation_type == relation_None )  {
+            ec++;
+            eadp << (olxch)('A'+j);
+          }
+        }
+        if( ec > 0 )  {
+          if( !Tmp.IsEmpty() )  Tmp << ", ";
+          if( ec == 6 )
+            Tmp << "Uani";
+          else Tmp << eadp;
+        }
+      }
+      else if( ca.GetVarRef(var_name_Uiso) != NULL && ca.GetVarRef(var_name_Uiso)->relation_type == relation_None )  {
         if( !Tmp.IsEmpty() )  Tmp << ", ";
         Tmp << "Uiso";
       }

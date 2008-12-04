@@ -70,8 +70,8 @@ public:
     XVar& xv = rm.Vars.NewVar(0.5);
     for( int i=0; i < SplitAtoms.Count(); i++ )  {
       to_isot.Add(&SplitAtoms[i].A()->Atom().CAtom());
-      xv.AddReference(&SplitAtoms[i].A()->Atom().CAtom(), var_name_Sof, relation_AsVar);
-      xv.AddReference(&SplitAtoms[i].B()->Atom().CAtom(), var_name_Sof, relation_AsOneMinusVar);
+      rm.Vars.AddVarRef(xv, SplitAtoms[i].A()->Atom().CAtom(), var_name_Sof, relation_AsVar);
+      rm.Vars.AddVarRef(xv, SplitAtoms[i].B()->Atom().CAtom(), var_name_Sof, relation_AsOneMinusVar);
       int part = SplitAtoms[i].A()->Atom().CAtom().GetPart();
       if( part == 0 )  part ++;
       SplitAtoms[i].A()->Atom().CAtom().SetPart( part );

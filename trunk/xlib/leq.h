@@ -6,6 +6,7 @@
 BeginXlibNamespace()
 
 const short  // variable names
+  var_name_First = 0,  // for iterations
   var_name_Scale = 0,
   var_name_X     = 1, // order matters var_name_X+i
   var_name_Y     = 2,
@@ -17,7 +18,8 @@ const short  // variable names
   var_name_U33   = 8,
   var_name_U23   = 9,
   var_name_U13   = 10,
-  var_name_U12   = 11;
+  var_name_U12   = 11,
+  var_name_Last  = 11;  // for iterations
 
 const short  // relation of parameters to variables
   relation_None          = 0,  // fixed param
@@ -34,6 +36,9 @@ class XVarManager;
 struct XVarReference;
 
 struct XVarReference {
+protected:
+  int Id;
+public:
   class TCAtom* atom;
   short var_name;  // one of the var_name
   short relation_type; // relationAsVar or relation_AsOneMinusVar
@@ -46,6 +51,7 @@ struct XVarReference {
     var_name(_var_name), 
     relation_type(_relation_type), 
     coefficient(coeff) { }
+  DefPropP(int, Id)
 };
 
 class XVar {
@@ -56,28 +62,25 @@ class XVar {
   XVarManager& Parent;
 public:
   XVar(XVarManager& parent, double val=0.5) : Parent(parent), Value(val), Id(-1) { }
-  // adds a new atom, referencing this variable
-  XVarReference& AddReference(TCAtom* a, short var_name, short relation, double coefficient=1.0);
-  // removes a refence, it is destroyed here!
-  void RemoveReference(XVarReference& vr)  {
-    for( int i=0; i < References.Count(); i++ )  {
-      if( References[i] == &vr )  {
-        References.Delete(i);
-        break;
-      }
-    }
-  }
+  // adds a new atom, referencing this variable, for internal use
+  XVarReference& _AddRef(XVarReference& vr)  {  return *References.Add(&vr);  }
+  // removes a refence, for internal use
+  void _RemRef(XVarReference& vr)  {  References.Remove(&vr);  }
   // calculates the number of atoms (excluding the deleted ones) using this variable
-  int ReferenceCount() const;
+  int RefCount() const;
+  XVarReference& GetRef(int i) const {  return *References[i];  }
 
   // adds a new equation, referencing this variable
-  void AddEquation(XLEQ& eq)  {  Equations.Add(&eq);  }
+  void _AddLeq(XLEQ& eq)  {  Equations.Add(&eq);  }
   // removes an equation, referencing this variable
-  void RemoveEquation(XLEQ& eq)  {  Equations.Remove(&eq);  }
+  void _RemLeq(XLEQ& eq)  {  Equations.Remove(&eq);  }
   // returns the number of equations, referencing this variable
-  int EquationCount() const {  return Equations.Count();  }
+  int LeqCount() const {  return Equations.Count();  }
   bool IsUsed() const {
-    return !(ReferenceCount() == 0 || EquationCount() == 0);
+    const int rc = RefCount();
+    if( LeqCount() == 0 )  
+      return !(rc < 2);
+    return true;
   }
   DefPropP(double, Value)
   DefPropP(int, Id)  
@@ -86,34 +89,41 @@ public:
 class XLEQ {
   double Value, Sigma;
   TDoubleList Coefficients;
-  TPtrList<XVar> Variables;
+  TPtrList<XVar> Vars;
+  XVarManager& Parent;
+  int Id;
 public:
-  XLEQ(double val, double sig) : Value(val), Sigma(sig) { }
+  XLEQ(XVarManager& parent, double val=1.0, double sig=0.01) : 
+      Parent(parent), 
+      Value(val), 
+      Sigma(sig) { }
+  // copies Coefficients and Vars, internal use
+  void _Assign(const XLEQ& leq);
   void AddMember(XVar& var, double coefficient=1.0) {
-    Variables.Add(&var);
+    Vars.Add(&var);
     Coefficients.Add(coefficient);
-    var.AddEquation(*this);
+    var._AddLeq(*this);
   }
-  int Count() const {  return Variables.Count();  }
-  const XVar& operator [] (int i) const {  return *Variables[i];  }
-  XVar& operator [] (int i) {  return *Variables[i];  }
+  int Count() const {  return Vars.Count();  }
+  const XVar& operator [] (int i) const {  return *Vars[i];  }
+  XVar& operator [] (int i) {  return *Vars[i];  }
   double GetCoefficient(int i) const {  Coefficients[i];  }
   // validates that the equation is valid, if not - releases the variables
   bool Validate() {
     int vc = 0;
-    for( int i=0; i < Variables.Count(); i++ )  {
-      if( Variables[i]->IsUsed() )
+    for( int i=0; i < Vars.Count(); i++ )  {
+      if( Vars[i]->IsUsed() )
         vc++;
     }
     if( vc < 2 )  {
-      for( int i=0; i < Variables.Count(); i++ )
-        Variables[i]->RemoveEquation(*this);
+      for( int i=0; i < Vars.Count(); i++ )
+        Vars[i]->_RemLeq(*this);
     }
     return vc >= 2;
   }
   DefPropP(double, Value)
   DefPropP(double, Sigma)
-
+  DefPropP(int, Id)
 };
 
 class XVarManager {
@@ -127,54 +137,53 @@ public:
 
   XVarManager(TAsymmUnit& au) : aunit(au) {
     NextVar = 0;
+    NewVar(1.0);
   }
   
-  XVar& NewVar(double val = 0.5)  {  return Vars.Add( new XVar(*this, val) );  }
+  XVar& NewVar(double val = 0.5)  {  
+    XVar* v = new XVar(*this, val);
+    v->SetId(Vars.Count());
+    return Vars.Add( v );  
+  }
   // returns existing variable or creates a new one. Sets a limit of 1024 variables
   XVar& GetReferencedVar(int ind) {
-    if( ind < 0 || ind > 1024 )
+    if( ind < 1 || ind > 1024 )
       throw TInvalidArgumentException(__OlxSourceInfo, "invalid variable reference");
-    while( Vars.Count() <= ind )
-      Vars.Add( new XVar(*this) );
-    return Vars[ind];
+    while( Vars.Count() < ind )
+      NewVar();
+    return Vars[ind-1];
   }
   int VarCount()            const {  return Vars.Count();  }
   const XVar& GetVar(int i) const {  return Vars[i];  }
   XVar& GetVar(int i)             {  return Vars[i];  }
 
-  XLEQ& NewEquation(double val, double sig)   {  return Equations.AddNew(val, sig);  }
+  XLEQ& NewEquation(double val=1.0, double sig=0.01)   {  
+    XLEQ* leq = new XLEQ(*this, val, sig);
+    leq->SetId(Equations.Count());
+    return Equations.Add(leq);  
+  }
   int EquationCount()       const {  return Equations.Count();  }
   const XLEQ& GetEquation(int i) const {  return Equations[i];  }
   XLEQ& GetEquation(int i)        {  return Equations[i];  }
-  void Clear()  {
-    Equations.Clear();
-    Vars.Clear();
+
+  int VarRefCount() const {  return References.Count();  }
+  XVarReference& GetVarRef(int i) {  return References[i];  }
+  const XVarReference& GetVarRef(int i) const {  return References[i];  }
+  // clears all the data and Nulls atoms' varrefs
+  void ClearAll();
+  void Clear() {  // does not clear the data, just resets the NextVar
     NextVar = 0;  // the global scale factor
   }
-  XVarReference& AddVarRef(XVar& caller, TCAtom* a, short var_name, short relation, double coefficient=1.0)  {
-    return References.Add( new XVarReference(caller, a, var_name, relation, coefficient) );
-  }
+  /* sets a relation between an atom parameter and a variable, if the coefficient is -10 (default value), 
+  the atom degenerocy is taken
+  */
+  XVarReference& AddVarRef(XVar& var, TCAtom& a, short var_name, short relation, double coefficient=-10.0);
+  // releases a reference to the variable, must be deleted, unless restored
+  XVarReference* ReleaseRef(TCAtom& a, short var_name); 
+  // restrores previously released var reference
+  void RestoreRef(TCAtom& a, short var_name, XVarReference* vr);
   // removes all unused variables and invalid/incomplete equations
-  void Validate() {
-    bool changes = true;
-    while( changes )  {
-      changes = false;
-      for( int i=0; i < Equations.Count(); i++ )  {
-        if( Equations.IsNull(i) )  continue;
-        if( !Equations[i].Validate() )  {
-          changes = true;
-          Equations.NullItem(i);
-        }
-      }
-    }
-    for( int i=1; i < Vars.Count(); i++ )  // start from 1 to leave global scale
-      if( !Vars[i].IsUsed() )
-        Vars.NullItem(i);
-    Equations.Pack();
-    Vars.Pack();
-    for( int i=0; i < Vars.Count(); i++ )
-      Vars[i].SetId(i);
-  }
+  void Validate();
   // helps with parsing SHELX specific paramter representation, returns actual value of the param
   double SetAtomParam(TCAtom& ca, short param_name, double val);
   void FixAtomParam(TCAtom& ca, short param_name);
@@ -185,7 +194,7 @@ public:
   template <class list> void AddFVAR(const list& fvar) {
     for( int i=0; i < fvar.Count(); i++, NextVar++ )  {
       if( Vars.Count() <= NextVar )
-        Vars.Add( new XVar(*this, fvar[i].ToDouble()) );
+        NewVar(fvar[i].ToDouble());
       else
         Vars[NextVar].SetValue( fvar[i].ToDouble() );
     }
@@ -194,6 +203,7 @@ public:
     olxstr rv(Vars.IsEmpty() ? 1.0 : Vars[0].GetValue());
     for( int i=1; i < Vars.Count(); i++ )
       rv << ' ' << Vars[i].GetValue();
+    return rv;
   }
   template <class list> void AddSUMP(const list& sump) {
     if( sump.Count() < 6 )
