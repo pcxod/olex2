@@ -94,23 +94,18 @@ void TGlText::Create(const olxstr& cName)  {
   CalcWH();
 }
 //..............................................................................
-bool TGlText::Orient(TGlPrimitive *P)
-{
+bool TGlText::Orient(TGlPrimitive *P)  {
   TGlFont *Fnt = Font();
-  if( !Fnt )  return false;
+  if( Fnt == NULL )  return false;
   P->Font(Fnt);
-  static vec3d T;
-  double Scale = FParent->GetScale();
-  T = Basis.GetCenter();
+  vec3d T( Basis.GetCenter() );
 //  if( StaticPos() )
 //  {
 //    T *= Scale;
 //    T *= FParent->Basis().Matrix();
 //  }
   if( P->Params()[0] < 0 )  {  // bitmap
-    if( IsStaticPos() )  T *= Scale;
-    Fnt->DrawTextSafe(T, Scale*FParent->GetViewZoom(), Text);
-    //glRasterPos2d(T[0], T[1]);
+    FParent->DrawTextSafe(T, Text, *Fnt ); 
     return true;
   }
   else  // ttf

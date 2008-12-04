@@ -99,26 +99,17 @@ bool TGlTextBox::Orient(TGlPrimitive *P)  {
     int th = Fnt->TextHeight(EmptyString);
     double Scale = FParent->GetScale();
     double GlLeft = ((double)Left - (double)FParent->GetWidth()/2 + Basis.GetCenter()[0]) + 0.1;
-    double GlTop = ((double)FParent->GetHeight()/2 - (Top-Basis.GetCenter()[1]))*FParent->GetExtraZoom() + 0.1;
+    double GlTop = ((double)FParent->GetHeight()/2 - (Top-Basis.GetCenter()[1])) + 0.1;
     double LineInc = (th*LineSpacing)*FParent->GetViewZoom();
     vec3d T;
     for(int i=0; i < FBuffer.Count() ; i++ )  {
       T[0] = GlLeft;
       T[1] = GlTop - (i+1)*LineInc;
-      T *= Scale;
       T[2] = Z;  
       TGlMaterial* GlM = FBuffer.Object(i);
       if( GlM != NULL ) 
         GlM->Init();
-      if( FParent->IsATI() )  {
-        glRasterPos3d(T[0], T[1], Z);
-        glCallList(Fnt->FontBase() + ' ');
-      }
-      Fnt->DrawTextSafe(T, Scale*FParent->GetViewZoom(), FBuffer[i] ); 
-//      glRasterPos3d(T[0], T[1], Z);
-//      stString = FBuffer.String(i);
-//      P->String( &stString );
-//      P->Draw();
+      FParent->DrawTextSafe(T, FBuffer[i], *Fnt ); 
     }
     return true;
   }
@@ -126,16 +117,16 @@ bool TGlTextBox::Orient(TGlPrimitive *P)  {
     double Scale = Parent()->GetScale();
     double hw = Parent()->GetWidth()*Scale/2;
     double hh = Parent()->GetHeight()*Scale/2;
-    Scale *= FParent->GetExtraZoom();
+    Scale = Scale*FParent->GetExtraZoom()*FParent->GetViewZoom();
     double xx = Basis.GetCenter()[0], xy = -Basis.GetCenter()[1];
     P->Data()[0][0] = (Left+Width+xx)*Scale-hw;  P->Data()[1][0] = hh-(Top+Height+xy)*Scale;
     P->Data()[0][1] = (Left+Width+xx)*Scale-hw;  P->Data()[1][1] = hh-(Top+xy)*Scale;
     P->Data()[0][2] = (Left+xx)*Scale-hw; P->Data()[1][2] = hh-(Top+xy)*Scale;
     P->Data()[0][3] = (Left+xx)*Scale-hw; P->Data()[1][3] = hh-(Top+Height+xy)*Scale;
-    P->Data()[2][0] = Z-0.1;
-    P->Data()[2][1] = Z-0.1;
-    P->Data()[2][2] = Z-0.1;
-    P->Data()[2][3] = Z-0.1;
+    P->Data()[2][0] = Z-1;
+    P->Data()[2][1] = Z-1;
+    P->Data()[2][2] = Z-1;
+    P->Data()[2][3] = Z-1;
     return false;
   }
 }
@@ -176,9 +167,9 @@ void TGlTextBox::PostText(const olxstr& S, TGlMaterial* M)  {
   int width = Font()->TextWidth(Tmp);
   if( width > Width )  Width = width + 3;
   if( FBuffer.Count() > 1 )
-    Height = (int)(Font()->TextHeight()*(LineSpacing)*FBuffer.Count());
+    Height = (int)(Font()->TextHeight()*(LineSpacing)*FBuffer.Count())+2;
   else
-    Height = Font()->TextHeight(FBuffer[0]);
+    Height = Font()->TextHeight(FBuffer[0])+2;
 }
 //..............................................................................
 void TGlTextBox::PostText(const TStrList &SL, TGlMaterial *M)  {

@@ -283,6 +283,8 @@ public:
   }
   // vendor specific, fixes for ATI
   void DrawText(TGlPrimitive& p, double x, double y, double z);
+  // avoids clipping the text as well as vendor specific, uses screen coordinates
+  void DrawTextSafe(const vec3d& pos, const olxstr& text, const class TGlFont& fnt);
   bool IsATI() const {  return ATI;  }
   inline void GlScale( const float S ) const {  glScalef(S, S, S);  }
   void EnableClipPlane(class TGlClipPlane *P, bool v);

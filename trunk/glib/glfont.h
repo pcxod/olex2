@@ -68,8 +68,6 @@ public:
   inline void CharOffset(short v) { FCharOffset = v; }
   inline int FontBase() const     {  return FFontBase; }
   void DrawGlText(const vec3d& from, const olxstr& text, bool FixedWidth);
-  // draws text safely, e.g. checks if raster positions are valid
-  void DrawTextSafe(const vec3d& from, double scale, const olxstr& text);
   void IdString(const olxstr &Str)              {  FIdString = Str; }
   inline const olxstr& IdString()         const {  return FIdString; }
   inline const olxstr& GetName()          const {  return Name; }

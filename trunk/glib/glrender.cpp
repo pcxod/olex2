@@ -1062,11 +1062,23 @@ void TGlRender::Compile(bool v)  {
 //..............................................................................
 void TGlRender::DrawText(TGlPrimitive& p, double x, double y, double z)  {
   if( ATI )  {
-    glRasterPos3d(x, y, z);
+    glRasterPos3d(0, 0, 0);
     glCallList(p.Font()->FontBase() + ' ');
   }
   glRasterPos3d(x, y, z);
   p.Draw();
+}
+//..............................................................................
+void TGlRender::DrawTextSafe(const vec3d& pos, const olxstr& text, const TGlFont& fnt) {
+  if( ATI )  {
+    glRasterPos3d(0, 0, 0);
+    glCallList(fnt.FontBase() + ' ');
+  }
+  // set a valid raster position
+  glRasterPos3d(0, 0, pos[2]*GetScale());
+  glBitmap(0, 0, 0, 0, (float)(pos[0]/FViewZoom), (float)(pos[1]/FViewZoom), NULL);
+  for( int i=0; i < text.Length(); i++ ) 
+    glCallList( fnt.FontBase() + text.CharAt(i) );
 }
 //..............................................................................
 //..............................................................................

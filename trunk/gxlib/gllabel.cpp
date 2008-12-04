@@ -77,26 +77,21 @@ void TXGlLabel::SetLabel(const olxstr& L)   {
 }
 //..............................................................................
 bool TXGlLabel::Orient(TGlPrimitive *P)  {
-  vec3d T;
-  double Scale = Parent()->GetScale();
+  vec3d T( Basis.GetCenter() );
+  const double Scale = FParent->GetScale();
   if( P->Type() == sgloText )  {
-    T = Basis.GetCenter();
     T += FParent->GetBasis().GetCenter();
     T *= FParent->GetBasis().GetMatrix();
-    T[0] -= OffsetX*Scale;
-    T[1] -= OffsetY*Scale;
     T[2] += 5;
-    if( FParent->IsATI() )  {
-      glRasterPos3d(T[0], T[1], T[2]);
-      glCallList(Font()->FontBase() + ' ');
-    } 
-    Font()->DrawTextSafe(T, Scale*Parent()->GetViewZoom(), FLabel);
+    T /= Scale;
+    T[0] -= OffsetX;
+    T[1] -= OffsetY;
+    FParent->DrawTextSafe(T, FLabel, *Font());
     return true;
   }
   else  {
     double xinc = OffsetX*Scale;
     double yinc = OffsetY*Scale;
-    T = Basis.GetCenter();
     T += FParent->GetBasis().GetCenter();
     T *= FParent->GetBasis().GetMatrix();
     //T[0] += 0.15;  T[1] += 0.15;
