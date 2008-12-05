@@ -107,7 +107,7 @@ void TXFile::LastLoaderChanged() {
   if( FLastLoader == NULL )  return;
   FSG = TSymmLib::GetInstance()->FindSG(FLastLoader->GetAsymmUnit());
   OnFileLoad->Enter(this);
-  GetRM().Clear();
+  GetRM().ClearAll();
   GetLattice().Clear(true);
   GetRM().Assign(FLastLoader->GetRM(), true);
   GetLattice().Init();
@@ -139,7 +139,7 @@ void TXFile::LoadFromFile(const olxstr & FN) {
 
   OnFileLoad->Enter(this);
   
-  GetRM().Clear();
+  GetRM().ClearAll();
   GetLattice().Clear(true);
   GetRM().Assign(Loader->GetRM(), true);
   GetLattice().Init();

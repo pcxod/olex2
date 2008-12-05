@@ -40,7 +40,7 @@ void RefinementModel::Clear() {
   rEADP.Clear();
   rSAME.Clear();
   ExyzGroups.Clear();
-  AfixGroups.Clear();
+  //AfixGroups.Clear();
   UsedSymm.Clear();
   used_weight.Resize(0);
   proposed_weight.Resize(0);
@@ -79,7 +79,7 @@ void RefinementModel::RemUsedSymm(const smatd& matr)  {
 }
 //....................................................................................................
 RefinementModel& RefinementModel::Assign(const RefinementModel& rm, bool AssignAUnit) {
-  Clear();
+  ClearAll();
   used_weight = rm.used_weight;
   proposed_weight = rm.proposed_weight;
   LS = rm.LS;
@@ -267,7 +267,7 @@ void RefinementModel::ToDataItem(TDataItem& item) const {
   omits.AddField("s", OMIT_s);
   omits.AddField("2theta", OMIT_2t);
   for( int i=0; i < Omits.Count(); i++ )  {
-    TDataItem& omit = omit.AddItem(i);
+    TDataItem& omit = omits.AddItem(i);
     omit.AddField("h", Omits[i][0]);
     omit.AddField("k", Omits[i][1]);
     omit.AddField("l", Omits[i][2]);

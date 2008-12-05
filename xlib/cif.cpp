@@ -293,7 +293,7 @@ void TCif::Clear()  {
     delete Loops.Object(i);
   Loops.Clear();
   GetAsymmUnit().Clear();
-  GetRM().Clear();
+  GetRM().ClearAll();
 }
 //..............................................................................
 void TCif::Format()  {

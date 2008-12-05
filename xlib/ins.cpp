@@ -43,8 +43,7 @@ TIns::~TIns()  {
 }
 //..............................................................................
 void TIns::Clear()  {
-  GetRM().Clear();
-  GetRM().Vars.ClearAll();
+  GetRM().ClearAll();
   GetAsymmUnit().Clear();
   for( int i=0; i < Ins.Count(); i++ )
     delete Ins.Object(i);
