@@ -244,8 +244,13 @@ of components 1 ... m
   }
 
   TAsymmUnit& aunit;
-  // clears restraints, SFAC and used symm
+  // clears restraints, SFAC and used symm but not AfixGroups and Vars
   void Clear();
+  void ClearAll()  {
+    Clear();
+    AfixGroups.Clear();
+    Vars.Clear();
+  }
   // adss new symmetry matrics, used in restraints/constraints 
   const smatd& AddUsedSymm(const smatd& matr);
   //removes the matrix or decriments the reference count
