@@ -2,6 +2,7 @@
 #define _olx_experimantal_H
 #include "xbase.h"
 #include "threex3.h"
+#include "chemdata.h"
 BeginXlibNamespace()
 
 class ExperimentalDetails {
@@ -38,6 +39,8 @@ public:
     CrystalSize.Null();
     Temperature = 0;
   }
+  void ToDataItem(class TDataItem& item) const;
+  void FromDataItem(const TDataItem& item);
 };
 
 EndXlibNamespace()

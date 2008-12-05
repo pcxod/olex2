@@ -604,6 +604,14 @@
 						ObjectFile="$(IntDir)\py_core_wx.obj"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="Unicode-release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)\py_core_wx.obj"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\..\repository\pyext.cpp"

@@ -437,6 +437,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\xlib\experimental.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\xlib\fastsymm.cpp"
 				>
 			</File>
