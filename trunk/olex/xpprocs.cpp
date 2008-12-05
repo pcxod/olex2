@@ -3612,8 +3612,22 @@ void TMainForm::macText(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 }
 //..............................................................................
 void TMainForm::macShowStr(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  if( Cmds.IsEmpty() )
-    FXApp->StructureVisible( !FXApp->StructureVisible() );
+  if( Cmds.IsEmpty() )  {  //S+C -> C -> S -> S+C
+    if( FXApp->StructureVisible() )  {
+      if( FGlConsole->ShowBuffer() )
+        FXApp->StructureVisible( false );
+      else
+        FGlConsole->ShowBuffer(true);
+    }
+    else {
+      if( FGlConsole->ShowBuffer() )  {
+        FXApp->StructureVisible( true );
+        FGlConsole->ShowBuffer(false);
+      }
+      else
+        FGlConsole->ShowBuffer(false);
+    }
+  }
   else
     FXApp->StructureVisible( Cmds[0].ToBool() );
   FXApp->CenterView();
