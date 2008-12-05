@@ -1,6 +1,10 @@
 #include "leq.h"
 #include "asymmunit.h"
 
+
+olxstr XVarManager::VarNames[] = {"Scale", "X", "Y", "Z", "Sof", "Uiso", "U11", "U22", "U33", "U23", "U13", "U12"};
+
+
 int XVar::RefCount() const {
   int rv = 0;
   for( int i=0; i < References.Count(); i++ )  
@@ -222,7 +226,28 @@ void XVarManager::Validate() {
 }
 //.................................................................................................
 void XVarManager::ToDataItem(TDataItem& item) const {
-  item.AddItem("FVAR", GetFVARStr() );
+  TDataItem& vars = item.AddItem("vars");
+  for( int i=0; i < Vars.Count(); i++ )  {
+    TDataItem& vi = vars.AddItem(Vars[i].GetId(), Vars[i].GetValue());
+    for( int j=0; j < Vars[i].RefCount(); j++ )  {
+      XVarReference& vr = Vars[i].GetRef(j);
+      TDataItem& ri = vi.AddItem(VarNames[vr.var_name]);
+      ri.AddField("atom_id", vr.atom->GetTag());
+      ri.AddField("coefficient", vr.coefficient);
+      ri.AddField("atom_id", (vr.relation_type == relation_None) ? "none" : (vr.relation_type == relation_AsVar ? "var" : "one_minus_var"));
+    }
+  }
+  TDataItem& leqs = item.AddItem("leqs");
+  for( int i=0; i < Equations.Count(); i++ )  {
+    TDataItem& li = leqs.AddItem("leq");
+    li.AddField("val", Equations[i].GetValue());
+    li.AddField("sig", Equations[i].GetSigma());
+    for( int j=0; j < Equations[i].Count(); j++ )  {
+      TDataItem& mi = li.AddItem("var");
+      mi.AddField("id", Equations[i][j].GetId());
+      mi.AddField("coefficient", Equations[i].GetCoefficient(j));
+    }
+  }
 }
 //.................................................................................................
 void XVarManager::FromDataItem(TDataItem& item) {
