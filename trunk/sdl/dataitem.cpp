@@ -213,8 +213,7 @@ void TDataItem::DeleteField(int index)  {
   Fields.Delete(index);
 }
 //..............................................................................
-void TDataItem::DeleteField(const olxstr& Name)
-{
+void TDataItem::DeleteField(const olxstr& Name) {
   int fieldIndex = FieldIndex(Name);
   if( fieldIndex != -1 )  DeleteField(fieldIndex);
 }

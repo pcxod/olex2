@@ -1,6 +1,6 @@
 #include "leq.h"
 #include "asymmunit.h"
-
+//#include "xldwriter.h"
 
 olxstr XVarManager::VarNames[] = {"Scale", "X", "Y", "Z", "Sof", "Uiso", "U11", "U22", "U33", "U23", "U13", "U12"};
 
@@ -226,6 +226,8 @@ void XVarManager::Validate() {
 }
 //.................................................................................................
 void XVarManager::ToDataItem(TDataItem& item) const {
+//  XldWriter<XVarManager> xldw(*this);
+  
   TDataItem& vars = item.AddItem("vars");
   for( int i=0; i < Vars.Count(); i++ )  {
     TDataItem& vi = vars.AddItem(Vars[i].GetId(), Vars[i].GetValue());
@@ -233,24 +235,27 @@ void XVarManager::ToDataItem(TDataItem& item) const {
       XVarReference& vr = Vars[i].GetRef(j);
       TDataItem& ri = vi.AddItem(VarNames[vr.var_name]);
       ri.AddField("atom_id", vr.atom->GetTag());
-      ri.AddField("coefficient", vr.coefficient);
+      ri.AddField("k", vr.coefficient);
       ri.AddField("atom_id", (vr.relation_type == relation_None) ? "none" : (vr.relation_type == relation_AsVar ? "var" : "one_minus_var"));
     }
   }
-  TDataItem& leqs = item.AddItem("leqs");
+  TDataItem& eqs = item.AddItem("eqs");
   for( int i=0; i < Equations.Count(); i++ )  {
-    TDataItem& li = leqs.AddItem("leq");
+    TDataItem& li = eqs.AddItem("leq");
     li.AddField("val", Equations[i].GetValue());
     li.AddField("sig", Equations[i].GetSigma());
     for( int j=0; j < Equations[i].Count(); j++ )  {
       TDataItem& mi = li.AddItem("var");
       mi.AddField("id", Equations[i][j].GetId());
-      mi.AddField("coefficient", Equations[i].GetCoefficient(j));
+      mi.AddField("k", Equations[i].GetCoefficient(j));
     }
   }
 }
 //.................................................................................................
 void XVarManager::FromDataItem(TDataItem& item) {
+  ClearAll();
+  TDataItem* it = item.FindItem("vars");
+
   throw TNotImplementedException(__OlxSourceInfo);
 }
 //.................................................................................................

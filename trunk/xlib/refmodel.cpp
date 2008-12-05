@@ -242,8 +242,9 @@ void RefinementModel::ToDataItem(TDataItem& item) const {
   for( int i=0; i < UsedSymm.Count(); i++ )  
     eqiv.AddItem(i, TSymmParser::MatrixToSymmEx(UsedSymm[i]));
   
-  Vars.ToDataItem(item.AddItem("vars"));
-  
+  Vars.ToDataItem(item.AddItem("leqs"));
+  expl.ToDataItem(item.AddItem("expl"));  
+
   AfixGroups.ToDataItem(item.AddItem("afix"));
   ExyzGroups.ToDataItem(item.AddItem("exyz"));
   rSAME.ToDataItem(item.AddItem("same"));

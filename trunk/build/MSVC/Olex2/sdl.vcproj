@@ -813,6 +813,10 @@
 				RelativePath="..\..\..\sdl\utf8file.h"
 				>
 			</File>
+			<File
+				RelativePath="..\..\..\sdl\xldwriter.h"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"
