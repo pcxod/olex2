@@ -2864,9 +2864,9 @@ void TMainForm::macSump(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   }
   double val = 1, esd = 0.01;
   XLibMacros::ParseNumbers<double>(Cmds, 2, &val, &esd);
-  XLEQ xeq = rm.Vars.NewEquation(val, esd);
+  XLEQ& xeq = rm.Vars.NewEquation(val, esd);
   for( int i=0; i < CAtoms.Count(); i++ )  {
-    if( CAtoms[i]->GetVarRef(var_name_Sof) == NULL )  {
+    if( CAtoms[i]->GetVarRef(var_name_Sof) == NULL || CAtoms[i]->GetVarRef(var_name_Sof)->relation_type == relation_None )  {
       XVar& xv = rm.Vars.NewVar(1./CAtoms.Count());
       rm.Vars.AddVarRef(xv, *CAtoms[i], var_name_Sof, relation_AsVar);
     }

@@ -107,7 +107,7 @@ public:
   int Count() const {  return Vars.Count();  }
   const XVar& operator [] (int i) const {  return *Vars[i];  }
   XVar& operator [] (int i) {  return *Vars[i];  }
-  double GetCoefficient(int i) const {  Coefficients[i];  }
+  double GetCoefficient(int i) const {  return Coefficients[i];  }
   // validates that the equation is valid, if not - releases the variables
   bool Validate() {
     int vc = 0;
@@ -131,6 +131,7 @@ class XVarManager {
   TTypeList<XLEQ> Equations;
   TTypeList<XVarReference> References;  
   int NextVar;  // this controls there variables go in sebsequent calls
+  static olxstr VarNames[];
 public:
 
   class TAsymmUnit& aunit;
@@ -173,6 +174,7 @@ public:
   void ClearAll();
   void Clear() {  // does not clear the data, just resets the NextVar
     NextVar = 0;  // the global scale factor
+    Equations.Clear(); // these are recreatable
   }
   /* sets a relation between an atom parameter and a variable, if the coefficient is -10 (default value), 
   the atom degenerocy is taken
@@ -195,7 +197,7 @@ public:
     for( int i=0; i < fvar.Count(); i++, NextVar++ )  {
       if( Vars.Count() <= NextVar )
         NewVar(fvar[i].ToDouble());
-      else
+      else 
         Vars[NextVar].SetValue( fvar[i].ToDouble() );
     }
   }
@@ -208,8 +210,10 @@ public:
   template <class list> void AddSUMP(const list& sump) {
     if( sump.Count() < 6 )
       throw TInvalidArgumentException(__OlxSourceInfo, "at least six parameters expected for SUMP");
+    if( (sump.Count()%2) != 0 )
+      throw TInvalidArgumentException(__OlxSourceInfo, "even number of arguments is expected for SUMP");
     XLEQ& le = NewEquation(sump[0].ToDouble(), sump[1].ToDouble());
-    for( int i=2; i < sump.Count(); i++ )  {
+    for( int i=2; i < sump.Count(); i+=2 )  {
       XVar& v = GetReferencedVar(sump[i+1].ToInt());
       le.AddMember(v, sump[i].ToDouble());
     }
@@ -220,7 +224,7 @@ public:
     olxstr rv(le.GetValue());
     rv << ' ' << le.GetSigma();
     for( int i=0; i < le.Count(); i++ ) 
-      rv << ' ' << le.GetCoefficient(i) << ' ' << le[i].GetId();
+      rv << ' ' << le.GetCoefficient(i) << ' ' << le[i].GetId()+1;
     return rv;
   }
   void Assign(const XVarManager& vm);

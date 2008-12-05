@@ -1454,6 +1454,8 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
     Tmp << '$' << (i+1) << ' ' << TSymmParser::MatrixToSymm( rm.GetUsedSymm(usedSymm[i]) );
     SL.Insert(oindex+i, Tmp  );
   }
+  for( int i=0; i < rm.Vars.EquationCount(); i++ )
+    SL.Add("SUMP ") << rm.Vars.GetSUMPStr(i);
 }
 //..............................................................................
 void TIns::ClearIns()  {
