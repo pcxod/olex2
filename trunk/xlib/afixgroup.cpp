@@ -40,8 +40,8 @@ void TAfixGroup::FromDataItem(TDataItem& item) {
   U = item.GetRequiredField("u").ToDouble();
   SetPivot( Parent.RM.aunit.GetAtom( item.GetRequiredField("pivot").ToInt() ) );
   TDataItem& dep = item.FindRequiredItem("dependent");
-  for( int i=0; i < dep.ItemCount(); i++ )
-    Dependent.Add( &Parent.RM.aunit.GetAtom(dep.GetItem(i).GetValue().ToInt()) );
+  for( int i=0; i < dep.FieldCount(); i++ )
+    Dependent.Add( &Parent.RM.aunit.GetAtom(dep.RawField(i).ToInt()) )->SetParentAfixGroup(this);
 }
 //..............................................................................
 //..............................................................................

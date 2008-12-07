@@ -3163,7 +3163,9 @@ void TGXApp::ToDataItem(TDataItem& item) const  {
 }
 //..............................................................................
 void TGXApp::FromDataItem(TDataItem& item)  {
-  throw TNotImplementedException(__OlxSourceInfo);
+  ClearXObjects();
+  FXFile->FromDataItem(item);
+  CreateObjects(true, true);
 }
 //..............................................................................
 //..............................................................................

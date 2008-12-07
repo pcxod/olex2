@@ -126,8 +126,6 @@ double TSPlane::Z(double X, double Y) const  {
 }
 //..............................................................................
 void TSPlane::ToDataItem(TDataItem& item) const {
-  item.AddCodedField("n", PersUtil::VecToStr(FNormal));
-  item.AddCodedField("d", FDistance);
   int cnt = 0;
   for( int i=0; i < Crds.Count(); i++ )  {
     if( Crds[i].GetA()->IsDeleted() )  continue;
@@ -137,11 +135,16 @@ void TSPlane::ToDataItem(TDataItem& item) const {
 //..............................................................................
 void TSPlane::FromDataItem(TDataItem& item) {
   Crds.Clear();
-  FNormal = PersUtil::FloatVecFromStr( item.GetRequiredField("n") );
-  FDistance = item.GetRequiredField("d").ToDouble();
   for( int i=0; i < item.ItemCount(); i++ )  {
     Crds.AddNew( &Network->GetLattice().GetAtom(item.GetItem(i).GetRequiredField("atom_id").ToInt()), 
       item.GetItem(i).GetValue().ToDouble());
   }
+  TTypeList< AnAssociation2<vec3d, double> > points;
+  points.SetCapacity(Crds.Count());
+  for( int i=0; i < Crds.Count(); i++ )
+    points.AddNew( Crds[i].GetA()->crd(), Crds[i].GetB());
+  CalcPlane(points, FNormal, FCenter);
+  FDistance = FNormal.DotProd(FCenter)/FNormal.Length();
+  FNormal.Normalise();
 }
 //..............................................................................

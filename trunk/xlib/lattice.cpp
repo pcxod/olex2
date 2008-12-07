@@ -1681,13 +1681,14 @@ void TLattice::SetAnis( const TCAtomPList& atoms, bool anis )  {
 void TLattice::ToDataItem(TDataItem& item) const  {
   item.AddCodedField("delta", Delta);
   item.AddCodedField("deltai", DeltaI);
+  item.AddCodedField("grown", Generated);
   GetAsymmUnit().ToDataItem(item.AddItem("aunit"));
   TDataItem& mat = item.AddItem("matrices");
   const int mat_c = Matrices.Count();
   // save matrices, change matrix tags to the position in the list and remember old tags
   TIntList m_tags(mat_c);
   for( int i=0; i < mat_c; i++ )  {
-    mat.AddItem(i, TSymmParser::MatrixToSymmEx(*Matrices[i]));
+    mat.AddItem(i, TSymmParser::MatrixToSymmEx(*Matrices[i])).AddField("tag", Matrices[i]->GetTag());
     m_tags[i] = Matrices[i]->GetTag();
     Matrices[i]->SetTag(i);
   }
@@ -1696,10 +1697,10 @@ void TLattice::ToDataItem(TDataItem& item) const  {
   int satom_tag = 0;
   for( int i=0; i < Atoms.Count(); i++ )  {
     if( Atoms[i]->IsDeleted() )  continue;
-    TDataItem& ai = atoms.AddItem(satom_tag++);
+    TDataItem& ai = atoms.AddItem(satom_tag);
     ai.AddField("atom_id", Atoms[i]->CAtom().GetTag());
     ai.AddField("matr_id", Atoms[i]->GetMatrix(0).GetTag());
-    Atoms[i]->SetTag(satom_tag);
+    Atoms[i]->SetTag(satom_tag++);
   }
   // restore original matrix tags 
   for( int i=0; i < mat_c; i++ )
@@ -1725,13 +1726,14 @@ void TLattice::FromDataItem(TDataItem& item)  {
 
   Delta = item.GetRequiredField("delta").ToDouble();
   DeltaI = item.GetRequiredField("deltai").ToDouble();
+  Generated = item.GetRequiredField("grown").ToDouble();
   GetAsymmUnit().FromDataItem( item.FindRequiredItem("aunit") );
   TDataItem& mat = item.FindRequiredItem("matrices");
   for( int i=0; i < mat.ItemCount(); i++ )  {
     smatd* m = new smatd;
     TSymmParser::SymmToMatrix(mat.GetItem(i).GetValue(), *m);
     Matrices.Add(m);
-    //TODO: assign proper tags...
+    m->SetTag( mat.GetItem(i).GetRequiredField("tag").ToInt() );
   }
   // save satoms - only the original CAtom Tag and the generating matrix tag
   TDataItem& atoms = item.FindRequiredItem("atoms");
@@ -1745,6 +1747,8 @@ void TLattice::FromDataItem(TDataItem& item)  {
     GetAsymmUnit().CellToCartesian(sa->ccrd(), sa->crd() );
     sa->AddMatrix( Matrices[mid] );
   }
+  GetUnitCell().InitMatrices();
+  Disassemble();
   TDataItem& planes = item.FindRequiredItem("planes");
   for( int i=0; i < planes.ItemCount(); i++ )
     Planes.Add( new TSPlane(Network) )->FromDataItem(planes.GetItem(i));

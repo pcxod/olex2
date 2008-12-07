@@ -316,6 +316,8 @@ void XVarManager::FromDataItem(const TDataItem& item) {
   TDataItem& eqs = item.FindRequiredItem("eqs");
   for( int i=0; i < eqs.ItemCount(); i++ )
     Equations.Add( XLEQ::FromDataItem(eqs.GetItem(i), *this)).SetId(Vars.Count());
+  for( int i=0; i < References.Count(); i++ )
+    References[i].atom->SetVarRef( References[i] );
 }
 //.................................................................................................
 

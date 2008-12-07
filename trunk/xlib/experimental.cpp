@@ -5,7 +5,7 @@
 //..................................................................................................
 void ExperimentalDetails::ToDataItem(TDataItem& item) const {
   item.AddCodedField("radiation", Radiation);
-  item.AddCodedField("temparature", Temperature);
+  item.AddCodedField("temperature", Temperature);
   item.AddCodedField("crystal_size", PersUtil::VecToStr(CrystalSize));
 }
 //..................................................................................................
