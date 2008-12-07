@@ -372,7 +372,7 @@ public:
     TStrList rv;
     if( Plugins != NULL )  {
       for( int i=0; i < Plugins->ItemCount(); i++ )
-        rv.Add(Plugins->Item(i).GetName());
+        rv.Add(Plugins->GetItem(i).GetName());
     }
     return rv;
   }

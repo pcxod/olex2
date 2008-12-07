@@ -24,7 +24,8 @@ const short  // variable names
 const short  // relation of parameters to variables
   relation_None          = 0,  // fixed param
   relation_AsVar         = 1,
-  relation_AsOneMinusVar = 2;
+  relation_AsOneMinusVar = 2,
+  relation_Last          = 2;  // for iterations
 
 /* Any single variable can be shared by several atom parameters (to make them equal) as well 
 as by several linear equations
@@ -52,6 +53,10 @@ public:
     relation_type(_relation_type), 
     coefficient(coeff) { }
   DefPropP(int, Id)
+
+  void ToDataItem(TDataItem& item) const;
+  // returns a new instance created with new
+  static XVarReference& FromDataItem(const TDataItem& item, XVar& parent);
 };
 
 class XVar {
@@ -59,8 +64,10 @@ class XVar {
   TPtrList<XVarReference> References;  // owed from the Parent
   TPtrList<XLEQ> Equations; // equations using this variable
   int Id;
-  XVarManager& Parent;
 public:
+
+  XVarManager& Parent;
+
   XVar(XVarManager& parent, double val=0.5) : Parent(parent), Value(val), Id(-1) { }
   // adds a new atom, referencing this variable, for internal use
   XVarReference& _AddRef(XVarReference& vr)  {  return *References.Add(&vr);  }
@@ -84,15 +91,20 @@ public:
   }
   DefPropP(double, Value)
   DefPropP(int, Id)  
+
+  void ToDataItem(TDataItem& item) const;
+  static XVar& FromDataItem(const TDataItem& item, XVarManager& parent);
 };
 
 class XLEQ {
   double Value, Sigma;
   TDoubleList Coefficients;
   TPtrList<XVar> Vars;
-  XVarManager& Parent;
   int Id;
 public:
+
+  XVarManager& Parent;
+
   XLEQ(XVarManager& parent, double val=1.0, double sig=0.01) : 
       Parent(parent), 
       Value(val), 
@@ -124,6 +136,8 @@ public:
   DefPropP(double, Value)
   DefPropP(double, Sigma)
   DefPropP(int, Id)
+  void ToDataItem(TDataItem& item) const;
+  static XLEQ& FromDataItem(const TDataItem& item, XVarManager& parent);
 };
 
 class XVarManager {
@@ -131,15 +145,16 @@ class XVarManager {
   TTypeList<XLEQ> Equations;
   TTypeList<XVarReference> References;  
   int NextVar;  // this controls there variables go in sebsequent calls
-  static olxstr VarNames[];
 public:
 
   class TAsymmUnit& aunit;
-
-  XVarManager(TAsymmUnit& au) : aunit(au) {
-    NextVar = 0;
-    NewVar(1.0);
-  }
+  
+  static olxstr VarNames[];
+  static olxstr RelationNames[];
+  static short VarNameIndex(const olxstr& vn);
+  static short RelationIndex(const olxstr& rn);
+  
+  XVarManager(TAsymmUnit& au);
   
   XVar& NewVar(double val = 0.5)  {  
     XVar* v = new XVar(*this, val);
@@ -180,6 +195,8 @@ public:
   the atom degenerocy is taken
   */
   XVarReference& AddVarRef(XVar& var, TCAtom& a, short var_name, short relation, double coefficient=-10.0);
+  // for parsing...
+  XVarReference& AddVarRef(XVarReference& ref) {  References.Add(ref).SetId(References.Count());  return ref;  }
   // releases a reference to the variable, must be deleted, unless restored
   XVarReference* ReleaseRef(TCAtom& a, short var_name); 
   // restrores previously released var reference
@@ -230,7 +247,7 @@ public:
   void Assign(const XVarManager& vm);
 
   void ToDataItem(TDataItem& item) const;
-  void FromDataItem(TDataItem& item);
+  void FromDataItem(const TDataItem& item);
 };
 
 

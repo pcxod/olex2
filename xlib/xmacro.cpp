@@ -570,7 +570,7 @@ void XLibMacros::macUpdateWght(TStrObjList &Cmds, const TParamList &Options, TMa
   if( Cmds.IsEmpty() )  
     rm.used_weight = rm.proposed_weight;
   else  {
-    rm.used_weight.Resize(Cmds.Count());
+    rm.used_weight.SetCount(Cmds.Count());
     for( int i=0; i < Cmds.Count(); i++ )  
       rm.used_weight[i] = Cmds[i].ToDouble();
   }
@@ -1560,9 +1560,9 @@ void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options, TMacro
       xapp.GetLog().Info("Found table definitions:");
       for( int i=0; i < Root->ItemCount(); i++ )  {
         Tmp = "Table "; 
-        Tmp << Root->Item(i).GetName()  << "(" << " #" << (int)i+1 <<  "): caption <---";
+        Tmp << Root->GetItem(i).GetName()  << "(" << " #" << (int)i+1 <<  "): caption <---";
         xapp.GetLog().Info(Tmp);
-        xapp.GetLog().Info(Root->Item(i).GetFieldValueCI("caption"));
+        xapp.GetLog().Info(Root->GetItem(i).GetFieldValueCI("caption"));
         xapp.GetLog().Info("--->");
       }
     }
@@ -1604,7 +1604,7 @@ void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options, TMacro
     if( Cmds[i].IsNumber() )  {
       int index = Cmds[i].ToInt();
       if( index >=0 && index < Root->ItemCount() )
-        TD = &Root->Item(index);
+        TD = &Root->GetItem(index);
     }
     if( TD == NULL  )
       TD = Root->FindItem(Cmds[i]);
@@ -1634,8 +1634,8 @@ void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options, TMacro
       CLA.Add( TD->GetFieldValue("tha", EmptyString) );
       THA.Add( TD->GetFieldValue("tha", EmptyString) );
       for( int j=0; j < TD->ItemCount(); j++ )  {
-        CLA.Add( TD->Item(j).GetFieldValue("cola", EmptyString) );
-        THA.Add( TD->Item(j).GetFieldValue("tha", EmptyString) );
+        CLA.Add( TD->GetItem(j).GetFieldValue("cola", EmptyString) );
+        THA.Add( TD->GetItem(j).GetFieldValue("tha", EmptyString) );
       }
 
       olxstr footer;

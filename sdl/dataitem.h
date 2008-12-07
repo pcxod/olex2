@@ -50,22 +50,28 @@ public:
   TDataItem& AddItem(const olxstr &Name, TDataItem *Reference);
   void DeleteItem(TDataItem *Item);
 
-  TDataItem* GetAnyItem(const olxstr& Name);
-  TDataItem* GetAnyItemCI(const olxstr& Name);
+  TDataItem* GetAnyItem(const olxstr& Name) const;
+  TDataItem* GetAnyItemCI(const olxstr& Name) const;
   // returns an item by name using recursive search within subitems as well
   // as in the current item
-  TDataItem* FindItemCI(const olxstr &Name) const {  return Items.FindObjectCI(Name);  }
-  TDataItem* FindItem(const olxstr &Name)   const {  return Items.FindObject(Name);  }
+  TDataItem* FindItemCI(const olxstr& Name) const {  return Items.FindObjectCI(Name);  }
+  TDataItem* FindItem(const olxstr& Name)   const {  return Items.FindObject(Name);  }
+  TDataItem& FindRequiredItem(const olxstr& Name)   const {  
+    int i = Items.IndexOf(Name);
+    if( i == -1 )
+      throw TFunctionFailedException(__OlxSourceInfo, olxstr("Required item does not exist: ") << Name);
+    return *Items.Object(i);  
+  }
 
-  TDataItem& Item(int index)                   {  return *Items.Object(index); }
+  TDataItem& GetItem(int index)                {  return *Items.Object(index); }
   const TDataItem& GetItem(int index)    const {  return *Items.Object(index); }
   void FindSimilarItems(const olxstr& StartsFrom, TPtrList<TDataItem>& List);
   inline int ItemCount() const                  {  return Items.Count(); }
   bool ItemExists(const olxstr &Name);
   int IndexOf(TDataItem *I) const               {  return Items.IndexOfObject(I); };
 
-  void AddField(const olxstr& Name, const olxstr& Data);
-  void AddCodedField(const olxstr& Name, const olxstr& Data);
+  TDataItem& AddField(const olxstr& Name, const olxstr& Data);
+  TDataItem& AddCodedField(const olxstr& Name, const olxstr& Data);
   inline int FieldCount() const                 {  return Fields.Count(); }
 
   int FieldIndex(const olxstr& Name)    const {  return Fields.IndexOf(Name);  }
@@ -80,8 +86,20 @@ public:
   void DeleteField(int index);
   void DeleteField(const olxstr& Name);
 
-  const olxstr& GetFieldValue( const olxstr &Name, const olxstr& Default=EmptyString ) const;
-  const olxstr& GetFieldValueCI( const olxstr &Name, const olxstr& Default=EmptyString ) const;
+  const olxstr& GetFieldValue( const olxstr& Name, const olxstr& Default=EmptyString ) const {
+    int i = Fields.IndexOf(Name);
+    return (i==-1) ? Default : Fields.Object(i);
+  }
+  const olxstr& GetFieldValueCI( const olxstr& Name, const olxstr& Default=EmptyString ) const {
+    int i = Fields.CIIndexOf(Name);
+    return (i==-1) ? Default : Fields.Object(i);
+  }
+  const olxstr& GetRequiredField( const olxstr& Name) const  {
+    int i = Fields.IndexOf(Name);
+    if( i == -1 )
+      throw TFunctionFailedException(__OlxSourceInfo, olxstr("Required attribute is missing: ") << Name);
+    return Fields.Object(i);
+  }
 
   bool FieldExists(const olxstr &Name);
 

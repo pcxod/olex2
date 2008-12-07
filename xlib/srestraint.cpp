@@ -183,9 +183,9 @@ bool TSimpleRestraint::ContainsAtom(TCAtom* ca) const {
 }
 //..............................................................................
 void TSimpleRestraint::ToDataItem(TDataItem& item) const {
-  item.AddField("allNonH", AllNonHAtoms);
-  item.AddField("esd", Esd);
-  item.AddField("esd1", Esd1);
+  item.AddCodedField("allNonH", AllNonHAtoms);
+  item.AddCodedField("esd", Esd);
+  item.AddCodedField("esd1", Esd1);
   TDataItem& atoms = item.AddItem("atoms");
   int atom_id=0;
   for( int i=0; i < InvolvedAtoms.Count(); i++ )  {
@@ -197,7 +197,16 @@ void TSimpleRestraint::ToDataItem(TDataItem& item) const {
 }
 //..............................................................................
 void TSimpleRestraint::FromDataItem(TDataItem& item) {
-  throw TNotImplementedException(__OlxSourceInfo);
+  AllNonHAtoms = item.GetRequiredField("allNonH").ToBool();
+  Esd = item.GetRequiredField("esd").ToDouble();
+  Esd1 = item.GetRequiredField("esd1").ToDouble();
+  TDataItem& atoms = item.FindRequiredItem("atoms");
+  for( int i=0; i < atoms.ItemCount(); i++ )  {
+    TDataItem& ai = atoms.GetItem(i);
+    int aid = ai.GetRequiredField("atom_id").ToInt();
+    int eid = ai.GetRequiredField("eqiv_id").ToInt();
+    AddAtom( Parent.GetRM().aunit.GetAtom(aid), eid == -1  ? NULL : &Parent.GetRM().GetUsedSymm(eid));
+  }
 }
 //..............................................................................
 //..............................................................................
@@ -253,25 +262,6 @@ void TSRestraintList::Release(TSimpleRestraint& sr)  {
 }
 //..............................................................................
 void TSRestraintList::ToDataItem(TDataItem& item) const {
-  olxstr list_type;
-  switch( RestraintListType )  {
-    case rltNone:
-      list_type = "none";
-      break;
-    case rltAtoms:
-      list_type = "atoms";
-      break;
-    case rltBonds:
-      list_type = "bonds";
-      break;
-    case rltAngles:
-      list_type = "angles";
-      break;
-    case rltGroup:
-      list_type = "group";
-      break;
-  }
-  item.AddField("list_type", list_type);
   int rs_id = 0;
   for( int i=0; i < Restraints.Count(); i++ )  {
     if( !Restraints[i].IsAllNonHAtoms() && Restraints[i].AtomCount() == 0 )  continue;
@@ -280,7 +270,8 @@ void TSRestraintList::ToDataItem(TDataItem& item) const {
 }
 //..............................................................................
 void TSRestraintList::FromDataItem(TDataItem& item) {
-  throw TNotImplementedException(__OlxSourceInfo);
+  for( int i=0; i < item.ItemCount(); i++ )
+    AddNew().FromDataItem( item.GetItem(i) );
 }
 //..............................................................................
 

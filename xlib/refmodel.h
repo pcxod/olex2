@@ -5,6 +5,8 @@
 #include "experimental.h"
 #include "leq.h"
 #include "refutil.h"
+#include "afixgroup.h"
+#include "exyzgroup.h"
 
 BeginXlibNamespace()
 
@@ -88,9 +90,9 @@ public:
   TAfixGroups AfixGroups;
   TExyzGroups ExyzGroups;
 
-  evecd used_weight, proposed_weight;
-  eveci LS;      // up to four params
-  evecd PLAN;  // up to three params
+  TDoubleList used_weight, proposed_weight;
+  TIntList LS;      // up to four params
+  TDoubleList PLAN;  // up to three params
   
   const olxstr& GetHKLSource() const {  return HKLSource;  }
   //TODO: handle the change
@@ -235,12 +237,16 @@ of components 1 ... m
   }
   
   void SetIterations( int v ) {  
-    if( LS.Count() == 0 ) LS.Resize(1);
-    LS[0] = v;  
+    if( LS.IsEmpty() == 0 ) 
+      LS.Add(v);
+    else
+      LS[0] = v;  
   }
   void SetPlan(int v)        {  
-    if( PLAN.Count() == 0 )  PLAN.Resize(1);
-    PLAN[0] = v;  
+    if( PLAN.IsEmpty() == 0 )  
+      PLAN.Add(v);
+    else
+      PLAN[0] = v;  
   }
 
   TAsymmUnit& aunit;
@@ -290,7 +296,7 @@ of components 1 ... m
 
   const HklStat& GetMergeStat();
 
-  void ToDataItem(TDataItem& item) const;
+  void ToDataItem(TDataItem& item);
   void FromDataItem(TDataItem& item);
 };
 

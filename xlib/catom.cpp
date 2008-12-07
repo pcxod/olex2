@@ -12,6 +12,7 @@
 #include "exception.h"
 #include "estrlist.h"
 #include "refmodel.h"
+#include "pers_util.h"
 
 //----------------------------------------------------------------------------//
 // TCAtom function bodies
@@ -179,44 +180,57 @@ void TCAtom::UpdateEllp(const TEllipsoid &NV ) {
 }
 //..............................................................................
 void TCAtom::ToDataItem(TDataItem& item) const  {
-  item.AddField("label", FLabel );
-  item.AddField("type", FAtomInfo->GetSymbol() );
-  if( Part != 0 )
-    item.AddField("part", Part);
-  if( EllpId == -1 )  {
-    if( UisoOwner != NULL )
-      ;
-    else if( Vars[var_name_Uiso] != NULL )  {
-      ;
-    }
-    else  {
-      item.AddField("Uiso", Uiso);
-    }
-  }
-  else  {
+  item.AddCodedField("label", FLabel );
+  item.AddCodedField("type", FAtomInfo->GetSymbol() );
+  item.AddCodedField("part", Part);
+  item.AddCodedField("Uiso", Uiso);
+  item.AddCodedField("sof", Occu);
+  item.AddCodedField("x", TEValue<double>(Center[0], Esd[0]).ToString());
+  item.AddCodedField("y", TEValue<double>(Center[1], Esd[1]).ToString());
+  item.AddCodedField("z", TEValue<double>(Center[2], Esd[2]).ToString());
+  if( EllpId != -1 )  {
     double Q[6], E[6];
     GetEllipsoid()->GetQuad(Q, E);
     TDataItem& elp = item.AddItem("adp");
-    elp.AddField("xx", TEValue<double>(Q[0], E[0]).ToString());
-    elp.AddField("yy", TEValue<double>(Q[1], E[1]).ToString());
-    elp.AddField("zz", TEValue<double>(Q[2], E[2]).ToString());
-    elp.AddField("yz", TEValue<double>(Q[3], E[3]).ToString());
-    elp.AddField("xz", TEValue<double>(Q[4], E[4]).ToString());
-    elp.AddField("xy", TEValue<double>(Q[5], E[5]).ToString());
+    elp.AddCodedField("xx", TEValue<double>(Q[0], E[0]).ToString());
+    elp.AddCodedField("yy", TEValue<double>(Q[1], E[1]).ToString());
+    elp.AddCodedField("zz", TEValue<double>(Q[2], E[2]).ToString());
+    elp.AddCodedField("yz", TEValue<double>(Q[3], E[3]).ToString());
+    elp.AddCodedField("xz", TEValue<double>(Q[4], E[4]).ToString());
+    elp.AddCodedField("xy", TEValue<double>(Q[5], E[5]).ToString());
   }
-  item.AddField("occu", Occu);
-  
-  item.AddField("x", TEValue<double>(Center[0], Esd[0]).ToString());
-  item.AddField("y", TEValue<double>(Center[1], Esd[1]).ToString());
-  item.AddField("z", TEValue<double>(Center[2], Esd[2]).ToString());
-  
 }
 //..............................................................................
 void TCAtom::FromDataItem(TDataItem& item)  {
-  FAtomInfo = TAtomsInfo::GetInstance().FindAtomInfoBySymbol( item.GetFieldValue("type") );
+  FAtomInfo = TAtomsInfo::GetInstance().FindAtomInfoBySymbol( item.GetRequiredField("type") );
   if( FAtomInfo == NULL )
     throw TFunctionFailedException(__OlxSourceInfo, "invalid atom type");
+  FLabel = item.GetRequiredField("label");
+  Part = item.GetRequiredField("part").ToInt();
+  Occu = item.GetRequiredField("sof").ToDouble();
+  Uiso = item.GetRequiredField("Uiso").ToDouble();
+  TEValue<double> ev;
+  ev = item.GetRequiredField("x");
+  Center[0] = ev.GetV();  Esd[0] = ev.GetE();
+  ev = item.GetRequiredField("y");
+  Center[1] = ev.GetV();  Esd[1] = ev.GetE();
+  ev = item.GetRequiredField("z");
+  Center[2] = ev.GetV();  Esd[2] = ev.GetE();
 
+  TDataItem* adp = item.FindItem("adp");
+  if( adp != NULL )  {
+    double Q[6], E[6];
+    if( adp->FieldCount() != 6 )
+      throw TInvalidArgumentException(__OlxSourceInfo, "6 parameters expecetd for the ADP");
+    for( int i=0; i < 6; i++ )  {
+      ev = adp->RawField(i);
+      E[i] = ev.GetE();
+      Q[i] = ev.GetV();
+    }
+    EllpId = FParent->NewEllp().Initialise(Q,E).GetId();
+  }
+  else
+    EllpId = -1;
 }
 //..............................................................................
 void DigitStrtok(const olxstr &str, TStrPObjList<olxstr,bool> &chars)  {
@@ -291,97 +305,5 @@ olxstr TGroupCAtom::GetFullLabel(RefinementModel& rm) const  {
       name << '$' << (rm.UsedSymmIndex(*Matrix) + 1);
   }
   return name;
-}
-//..............................................................................
-//..............................................................................
-//..............................................................................
-void TAfixGroup::Clear()  {  Parent.Delete(Id);  }
-//..............................................................................
-void TAfixGroup::Assign(TAsymmUnit& tau, const TAfixGroup& ag)  {
-  D = ag.D;
-  Sof = ag.Sof;
-  U = ag.U;
-  Afix = ag.Afix;
-  
-  Pivot = tau.FindCAtomByLoaderId(ag.Pivot->GetLoaderId());
-  if( Pivot == NULL )
-    throw TFunctionFailedException(__OlxSourceInfo, "asymmetric units mismatch");
-  SetPivot( *Pivot );
-  for( int i=0; i < ag.Dependent.Count(); i++ )  {
-    Dependent.Add( tau.FindCAtomByLoaderId( ag.Dependent[i]->GetLoaderId()) );
-    if( Dependent.Last() == NULL )
-      throw TFunctionFailedException(__OlxSourceInfo, "asymmetric units mismatch");
-    Dependent.Last()->SetParentAfixGroup(this);
-  }
-}
-//..............................................................................
-void TAfixGroup::ToDataItem(TDataItem& item) const {
-  item.AddField("afix", Afix);
-  item.AddField("d", D);
-  item.AddField("u", U);
-  item.AddField("pivot", Pivot->GetTag());
-  TDataItem& dep = item.AddItem("dependent");
-  int dep_id = 0;
-  for( int i=0; i < Dependent.Count(); i++ )  {
-    if( Dependent[i]->IsDeleted() )  continue;
-    dep.AddField(dep_id++, Dependent[i]->GetTag());
-  }
-}
-//..............................................................................
-void TAfixGroup::FromDataItem(TDataItem& item) {
-  throw TNotImplementedException(__OlxSourceInfo);
-}
-//..............................................................................
-//..............................................................................
-//..............................................................................
-void TAfixGroups::ToDataItem(TDataItem& item) const {
-  int group_id = 0;
-  for( int i=0; i < Groups.Count(); i++ )  {
-    if( Groups[i].IsEmpty() )  continue;
-    Groups[i].ToDataItem( item.AddItem(group_id++) );
-  }
-}
-//..............................................................................
-void TAfixGroups::FromDataItem(TDataItem& item) {
-  throw TNotImplementedException(__OlxSourceInfo);
-}
-//..............................................................................
-//..............................................................................
-//..............................................................................
-void TExyzGroup::Clear()  {  Parent.Delete(Id);  }
-//..............................................................................
-void TExyzGroup::Assign(TAsymmUnit& tau, const TExyzGroup& ag)  {
-  for( int i=0; i < ag.Atoms.Count(); i++ )  {
-    Atoms.Add( tau.FindCAtomByLoaderId( ag.Atoms[i]->GetLoaderId()) );
-    if( Atoms.Last() == NULL )
-      throw TFunctionFailedException(__OlxSourceInfo, "asymmetric units mismatch");
-    Atoms.Last()->SetExyzGroup(this);
-  }
-}
-//..............................................................................
-void TExyzGroup::ToDataItem(TDataItem& item) const {
-  int atom_id = 0;
-  for( int i=0; i < Atoms.Count(); i++ )  {
-    if( Atoms[i]->IsDeleted() )  continue;
-    item.AddField(atom_id++, Atoms[i]->GetTag());
-  }
-}
-//..............................................................................
-void TExyzGroup::FromDataItem(TDataItem& item) {
-  throw TNotImplementedException(__OlxSourceInfo);
-}
-//..............................................................................
-//..............................................................................
-//..............................................................................
-void TExyzGroups::ToDataItem(TDataItem& item) const {
-  int group_id = 0;
-  for( int i=0; i < Groups.Count(); i++ )  {
-    if( Groups[i].IsEmpty() )  continue;
-    Groups[i].ToDataItem( item.AddItem(group_id++) );
-  }
-}
-//..............................................................................
-void TExyzGroups::FromDataItem(TDataItem& item) {
-  throw TNotImplementedException(__OlxSourceInfo);
 }
 //..............................................................................

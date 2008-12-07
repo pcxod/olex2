@@ -114,32 +114,32 @@ protected:
     TDataItem* di = macro_def.FindItem("cmd");
     if( di != NULL )  {
       for( int i=0; i < di->ItemCount(); i++ )
-        if( ExtractItemVal(di->Item(i), Tmp) )
+        if( ExtractItemVal(di->GetItem(i), Tmp) )
           macro.AddCmd( Tmp );
     }
     di = macro_def.FindItem("args");
     if( di != NULL )  {
       for( int i=0; i < di->ItemCount(); i++ )  {
-        const TDataItem& tdi = di->Item(i);
+        const TDataItem& tdi = di->GetItem(i);
         macro.AddArg(tdi.GetFieldValue("name", EmptyString), tdi.GetFieldValue("def"));
       }
     }
     di = macro_def.FindItem("onterminate");
     if( di != NULL )  {
       for( int i=0; i < di->ItemCount(); i++ )
-        if( ExtractItemVal(di->Item(i), Tmp) )
+        if( ExtractItemVal(di->GetItem(i), Tmp) )
           macro.AddOnTerminateCmd( Tmp );
     }
     di = macro_def.FindItem("onlisten");
     if( di != NULL )  {
       for( int i=0; i < di->ItemCount(); i++ )
-        if( ExtractItemVal(di->Item(i), Tmp) )
+        if( ExtractItemVal(di->GetItem(i), Tmp) )
           macro.AddOnListenCmd( Tmp );
     }
     di = macro_def.FindItem("onabort");
     if( di != NULL )  {
       for( int i=0; i < di->ItemCount(); i++ ) 
-        if( ExtractItemVal(di->Item(i), Tmp) )
+        if( ExtractItemVal(di->GetItem(i), Tmp) )
         macro.AddOnAbortCmd( Tmp );
     }
   }

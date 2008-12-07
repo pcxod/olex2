@@ -1,5 +1,6 @@
 #include "samegroup.h"
 #include "asymmunit.h"
+#include "refmodel.h"
 
 void TSameGroup::Assign(TAsymmUnit& tau, const TSameGroup& sg)  {
   Clear();
@@ -26,12 +27,13 @@ void TSameGroup::Assign(TAsymmUnit& tau, const TSameGroup& sg)  {
 }
 //..........................................................................................
 void TSameGroup::ToDataItem(TDataItem& item) const {
-  item.AddField("esd12", Esd12);
-  item.AddField("esd13", Esd13);
+  item.AddCodedField("esd12", Esd12);
+  item.AddCodedField("esd13", Esd13);
   int atom_id = 0;
+  TDataItem& atoms = item.AddItem("atoms");
   for( int i=0; i < Atoms.Count(); i++ )  {
     if( Atoms[i]->IsDeleted() ) continue;
-    item.AddItem(atom_id++, Atoms[i]->GetTag() );
+    atoms.AddItem(atom_id++, Atoms[i]->GetTag() );
   }
   TDataItem& dep = item.AddItem("dependent");
   for( int i=0; i < Dependent.Count(); i++ )  {
@@ -40,19 +42,34 @@ void TSameGroup::ToDataItem(TDataItem& item) const {
 }
 //..........................................................................................
 void TSameGroup::FromDataItem(TDataItem& item) {
-  throw TNotImplementedException(__OlxSourceInfo);
+  Clear();
+  Esd12 = item.GetRequiredField("esd12").ToDouble();
+  Esd13 = item.GetRequiredField("esd13").ToDouble();
+  TDataItem& atoms = item.FindRequiredItem("atoms");
+  for( int i=0; i < atoms.ItemCount(); i++ )
+    Atoms.Add( &Parent.RM.aunit.GetAtom(atoms.GetItem(i).GetValue().ToInt()) );
+  TDataItem& dep = item.FindRequiredItem("dependent");
+  for( int i=0; i < dep.ItemCount(); i++ )
+    Dependent.Add( &Parent[dep.GetItem(i).GetValue().ToInt()] );
 }
 //..........................................................................................
 //..........................................................................................
 //..........................................................................................
 void TSameGroupList::ToDataItem(TDataItem& item) const {
-  int group_id = 0;
+  item.AddCodedField("n", Groups.Count());
   for( int i=0; i < Groups.Count(); i++ )  {
-    Groups[i].ToDataItem( item.AddItem(group_id++) );
+    Groups[i].ToDataItem( item.AddItem(i) );
   }
 }
 //..........................................................................................
 void TSameGroupList::FromDataItem(TDataItem& item) {
-  throw TNotImplementedException(__OlxSourceInfo);
+  Clear();
+  int n = item.GetRequiredField("n").ToInt();
+  if( n != item.ItemCount() )
+    throw TFunctionFailedException(__OlxSourceInfo, "number of groups doe snot match the number of items");
+  for( int i=0; i < n; i++ )
+    New();
+  for( int i=0; i < n; i++ )
+    Groups[i].FromDataItem(item.GetItem(i));
 }
 //..........................................................................................

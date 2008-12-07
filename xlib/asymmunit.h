@@ -43,7 +43,6 @@ class TAsymmUnit: public IEObject  {
   TEVPointD  FAngles;    // angles + errors
   vec3d   RAxes;     // reciprical axes
   vec3d   RAngles;    // reciprical angles
-  TCSTypeList<olxstr, TLibScatterer*> SfacData;  // label + params
   // this list holds the list of all atoms which are not deleted
 public:  // residue class implementation
   class TResidue : public IEObject  {

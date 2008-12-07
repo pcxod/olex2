@@ -737,7 +737,7 @@ void TMainForm::DecodeParams(TStrObjList &Cmds, const olxstr &Cmd)  {
   }
   else   {  // if no arguments defined, then nothing to do with this function
     for( int i=0; i < CmdI->ItemCount(); i++ )  {
-      TmpI = &CmdI->Item(i);
+      TmpI = &CmdI->GetItem(i);
       Tmp = TmpI->GetValue();
       if( Tmp.IsEmpty() )
         Tmp = TmpI->GetFieldValue("cmd", EmptyString);
@@ -751,7 +751,7 @@ void TMainForm::DecodeParams(TStrObjList &Cmds, const olxstr &Cmd)  {
   Args.SetCount(ArgsI->ItemCount());
   ArgP.SetCount(ArgsI->ItemCount());
   for( int i=0; i < ArgsI->ItemCount(); i++ )  {
-    TmpI = &ArgsI->Item(i);
+    TmpI = &ArgsI->GetItem(i);
     Tmp = TmpI->GetFieldValue("name", EmptyString); // name of the argument
     if( Tmp.IsEmpty() )
       TBasicApp::GetLog().Error(olxstr("Unnamed argument: ") << TmpI->GetName());
@@ -781,7 +781,7 @@ void TMainForm::DecodeParams(TStrObjList &Cmds, const olxstr &Cmd)  {
       ArgP[i-1] = Toks[i];
   }
   for( int i=0; i < CmdI->ItemCount(); i++ )  {
-    TmpI = &CmdI->Item(i);
+    TmpI = &CmdI->GetItem(i);
     Tmp = TmpI->GetValue();
     if( Tmp.IsEmpty() )
       Tmp = TmpI->GetFieldValue("cmd", EmptyString);
@@ -796,7 +796,7 @@ void TMainForm::DecodeParams(TStrObjList &Cmds, const olxstr &Cmd)  {
   if( CmdI != NULL )  {
     FOnTerminateMacroCmds.Clear();
     for( int i=0; i < CmdI->ItemCount(); i++ )  {
-      TmpI = &CmdI->Item(i);
+      TmpI = &CmdI->GetItem(i);
       Tmp = TmpI->GetValue();
       if( Tmp.IsEmpty() )
         Tmp = TmpI->GetFieldValue("cmd", EmptyString);
@@ -812,7 +812,7 @@ void TMainForm::DecodeParams(TStrObjList &Cmds, const olxstr &Cmd)  {
   FOnListenCmds.Clear();
   if( CmdI != NULL )  {
     for( int i=0; i < CmdI->ItemCount(); i++ )  {
-      TmpI = &CmdI->Item(i);
+      TmpI = &CmdI->GetItem(i);
       Tmp = TmpI->GetValue();
       if( Tmp.IsEmpty() )
         Tmp = TmpI->GetFieldValue("cmd", EmptyString);
@@ -828,7 +828,7 @@ void TMainForm::DecodeParams(TStrObjList &Cmds, const olxstr &Cmd)  {
   FOnAbortCmds.Clear();
   if( CmdI != NULL )  {
     for( int i=0; i < CmdI->ItemCount(); i++ )  {
-      TmpI = &CmdI->Item(i);
+      TmpI = &CmdI->GetItem(i);
       Tmp = TmpI->GetValue();
       if( Tmp.IsEmpty() )
         Tmp = TmpI->GetFieldValue("cmd", EmptyString);
@@ -1675,7 +1675,7 @@ void TMainForm::macHelp(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         for( int j=0; j < period; j++ )  {
           if( (i+j) >= FHelpItem->ItemCount() )
             break;
-          Tmp << FHelpItem->Item(i+j).GetName();
+          Tmp << FHelpItem->GetItem(i+j).GetName();
           Tmp.Format((j+1)*10, true, ' ');
         }
         FGlConsole->PrintText(Tmp);
@@ -1687,11 +1687,11 @@ void TMainForm::macHelp(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         TStrList Cats;
         TDataItem *Cat;
         for( int i=0; i < FHelpItem->ItemCount(); i++ )  {
-          Cat = FHelpItem->Item(i).FindItemCI("category");
+          Cat = FHelpItem->GetItem(i).FindItemCI("category");
           if( Cat == NULL )  continue;
           for( int j=0; j < Cat->ItemCount(); j++ )  {
-            if( Cats.IndexOf(Cat->Item(j).GetName()) == -1 )
-              Cats.Add(Cat->Item(j).GetName());
+            if( Cats.IndexOf(Cat->GetItem(j).GetName()) == -1 )
+              Cats.Add(Cat->GetItem(j).GetName());
           }
         }
         if( Cats.Count() )
@@ -1712,11 +1712,11 @@ void TMainForm::macHelp(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         FGlConsole->PrintText(olxstr("Macroses for category: ") << Cmds[0]);
         TDataItem *Cat;
         for( int i=0; i < FHelpItem->ItemCount(); i++ )  {
-          Cat = FHelpItem->Item(i).FindItemCI("category");
+          Cat = FHelpItem->GetItem(i).FindItemCI("category");
           if( Cat == NULL )  continue;
           for( int j=0; j < Cat->ItemCount(); j++ )  {
-            if( Cat->Item(j).GetName().Comparei(Cmds[0]) == 0 )  {
-              FGlConsole->PrintText(FHelpItem->Item(i).GetName());
+            if( Cat->GetItem(j).GetName().Comparei(Cmds[0]) == 0 )  {
+              FGlConsole->PrintText(FHelpItem->GetItem(i).GetName());
               break;
             }
           }

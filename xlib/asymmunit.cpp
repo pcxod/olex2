@@ -59,10 +59,6 @@ void  TAsymmUnit::Clear()  {
   for( int i=0; i < Ellipsoids.Count(); i++ )
     delete Ellipsoids[i];
   Ellipsoids.Clear();
-  for( int i=0; i < SfacData.Count(); i++ )
-    if( !SfacData.GetObject(i)->IsBuiltIn() )
-      delete SfacData.GetObject(i);
-  SfacData.Clear();
   for( int i=0; i < Residues.Count(); i++ )
     delete Residues[i];
   Residues.Clear();
@@ -582,32 +578,17 @@ double TAsymmUnit::EstimateZ(int atomCount) const  {
 //..............................................................................
 void TAsymmUnit::ToDataItem(TDataItem& item) const  {
   TDataItem& cell = item.AddItem("cell");
-  cell.AddField("a", FAxes[0].ToString());
-  cell.AddField("b", FAxes[1].ToString());
-  cell.AddField("c", FAxes[2].ToString());
-  cell.AddField("alpha", FAngles[0].ToString());
-  cell.AddField("beta",  FAngles[1].ToString());
-  cell.AddField("gamma", FAngles[2].ToString());
-  cell.AddField("Z", Z);
-  TDataItem& symm = item.AddItem("symm", Matrices.Count());
-  symm.AddField("latt", Latt);
+  cell.AddCodedField("a", FAxes[0].ToString());
+  cell.AddCodedField("b", FAxes[1].ToString());
+  cell.AddCodedField("c", FAxes[2].ToString());
+  cell.AddCodedField("alpha", FAngles[0].ToString());
+  cell.AddCodedField("beta",  FAngles[1].ToString());
+  cell.AddCodedField("gamma", FAngles[2].ToString());
+  cell.AddCodedField("Z", Z);
+  TDataItem& symm = item.AddItem("symm");
+  symm.AddCodedField("latt", Latt);
   for(int i=0; i < Matrices.Count(); i++ )  
     symm.AddItem(i, TSymmParser::MatrixToSymmEx(Matrices[i]) );
-  int sfac_cnt = 0;
-  for( int i=0; i < SfacData.Count(); i++ )
-    if( !SfacData.GetObject(i)->IsBuiltIn() )
-      sfac_cnt++;
-  if( sfac_cnt != 0 )  {
-    TDataItem& sfac = item.AddItem("sfac");
-    for( int i=0; i < SfacData.Count(); i++ )  {
-      const TLibScatterer& sf = *SfacData.GetObject(i);
-      if( sf.IsBuiltIn() )  continue;
-      olxstr str( sf.GetData()[0], 100);
-      for( int j=1; j < sf.Size(); j++ )
-        str << ' ' << sf.GetData()[j];
-      sfac.AddField(SfacData.GetComparable(i), str);
-    }
-  }
   TDataItem& resi = item.AddItem("residues");
   int atom_id = 0;
   for( int i=-1; i < Residues.Count(); i++ )  {
@@ -618,8 +599,8 @@ void TAsymmUnit::ToDataItem(TDataItem& item) const  {
       ri = &resi.AddItem("default");
     else  {
       ri = &resi.AddItem( r.GetNumber() );
-      ri->AddField("class_name", r.GetClassName());
-      ri->AddField("alias", r.GetAlias());
+      ri->AddCodedField("class_name", r.GetClassName());
+      ri->AddCodedField("alias", r.GetAlias());
     }
     for( int j=0; j < r.Count(); j++ )  {
       if( r[j].IsDeleted() )  continue;
@@ -630,7 +611,30 @@ void TAsymmUnit::ToDataItem(TDataItem& item) const  {
 }
 //..............................................................................
 void TAsymmUnit::FromDataItem(TDataItem& item)  {
-  throw TNotImplementedException(__OlxSourceInfo);
+  Clear();
+  TDataItem& cell = item.FindRequiredItem("cell");
+  FAxes[0] = cell.GetRequiredField("a");
+  FAxes[1] = cell.GetRequiredField("b");
+  FAxes[2] = cell.GetRequiredField("c");
+  FAngles[0] = cell.GetRequiredField("alpha");
+  FAngles[1] = cell.GetRequiredField("beta");
+  FAngles[2] = cell.GetRequiredField("gamma");
+  Z = cell.GetRequiredField("Z").ToInt();
+  TDataItem& symm = item.FindRequiredItem("symm");
+  Latt = symm.GetRequiredField("latt").ToInt();
+  for(int i=0; i < symm.ItemCount(); i++ )  
+    TSymmParser::SymmToMatrix(symm.GetItem(i).GetValue(), Matrices.AddNew());
+  TDataItem& resis = item.FindRequiredItem("residues");
+  for( int i=-1; i < resis.ItemCount(); i++ )  {
+    TDataItem& resi = resis.GetItem(i);
+    TResidue& r = (i==-1 ? MainResidue : NewResidue(resi.GetRequiredField("class_name"),
+      resi.GetValue().ToInt(), resi.GetRequiredField("alias")) );
+    for( int j=0; j < resi.ItemCount(); j++ )  {
+      NewAtom(&r).FromDataItem(resi.GetItem(j));
+    }
+  }
+  InitMatrices();
+  InitData();
 }
 //..............................................................................
 //..............................................................................

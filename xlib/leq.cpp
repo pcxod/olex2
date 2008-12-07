@@ -1,16 +1,50 @@
 #include "leq.h"
 #include "asymmunit.h"
-//#include "xldwriter.h"
 
 olxstr XVarManager::VarNames[] = {"Scale", "X", "Y", "Z", "Sof", "Uiso", "U11", "U22", "U33", "U23", "U13", "U12"};
+olxstr XVarManager::RelationNames[] = {"None", "var", "one_minus_var"};
 
 
+//.................................................................................................
+void XVarReference::ToDataItem(TDataItem& item) const {
+  item.AddCodedField("name", XVarManager::VarNames[var_name]);
+  item.AddCodedField("atom_id", atom->GetTag());
+  item.AddCodedField("k", coefficient);
+  item.AddCodedField("rel", XVarManager::RelationNames[relation_type]);
+}
+//.................................................................................................
+XVarReference& XVarReference::FromDataItem(const TDataItem& item, XVar& parent) {
+  int ai = item.GetFieldValue("atom_id").ToInt();
+  return *(new XVarReference(parent, &parent.Parent.aunit.GetAtom(ai), 
+    XVarManager::VarNameIndex(item.GetRequiredField("name")), 
+    XVarManager::RelationIndex(item.GetRequiredField("rel")),
+    item.GetRequiredField("k").ToDouble()));
+}
+//.................................................................................................
+//.................................................................................................
+//.................................................................................................
 int XVar::RefCount() const {
   int rv = 0;
   for( int i=0; i < References.Count(); i++ )  
     if( !References[i]->atom->IsDeleted() )
       rv++;
   return rv;
+}
+//.................................................................................................
+void XVar::ToDataItem(TDataItem& item) const {
+  item.AddCodedField("val", Value);
+  for( int i=0; i < References.Count(); i++ )
+    References[i]->ToDataItem(item.AddItem(i));
+}
+//.................................................................................................
+XVar& XVar::FromDataItem(const TDataItem& item, XVarManager& parent) {
+  XVar* var = new XVar(parent, item.GetRequiredField("val").ToDouble());
+  for( int i=0; i < item.ItemCount(); i++ )  {
+    XVarReference& rf = XVarReference::FromDataItem(item.GetItem(i), *var);
+    parent.AddVarRef(rf);
+    var->References.Add(&rf);
+  }
+  return *var;
 }
 //.................................................................................................
 //.................................................................................................
@@ -22,7 +56,33 @@ void XLEQ::_Assign(const XLEQ& leq)  {
   Sigma = leq.Sigma;
 }
 //.................................................................................................
+void XLEQ::ToDataItem(TDataItem& item) const {
+  item.AddCodedField("val", Value);
+  item.AddCodedField("sig", Sigma);
+  for( int i=0; i < Vars.Count(); i++ )  {
+    TDataItem& mi = item.AddItem("var");
+    mi.AddCodedField("id", Vars[i]->GetId());
+    mi.AddCodedField("k", Coefficients[i]);
+  }
+}
 //.................................................................................................
+XLEQ& XLEQ::FromDataItem(const TDataItem& item, XVarManager& parent) {
+  XLEQ* leq = new XLEQ(parent, item.GetRequiredField("val").ToDouble(), 
+    item.GetRequiredField("sig").ToDouble());
+  for( int i=0; i < item.ItemCount(); i++ )  {
+    const TDataItem& mi = item.GetItem(i);
+    leq->AddMember(parent.GetVar(mi.GetRequiredField("id").ToInt()), 
+      mi.GetRequiredField("k").ToDouble());
+  }
+  return *leq;
+}
+//.................................................................................................
+//.................................................................................................
+//.................................................................................................
+XVarManager::XVarManager(TAsymmUnit& au) : aunit(au) {
+  NextVar = 0;
+  NewVar(1.0);
+}
 //.................................................................................................
 void XVarManager::ClearAll()  {
   Equations.Clear();
@@ -225,38 +285,37 @@ void XVarManager::Validate() {
     Equations[i].SetId(i);
 }
 //.................................................................................................
-void XVarManager::ToDataItem(TDataItem& item) const {
-//  XldWriter<XVarManager> xldw(*this);
-  
-  TDataItem& vars = item.AddItem("vars");
-  for( int i=0; i < Vars.Count(); i++ )  {
-    TDataItem& vi = vars.AddItem(Vars[i].GetId(), Vars[i].GetValue());
-    for( int j=0; j < Vars[i].RefCount(); j++ )  {
-      XVarReference& vr = Vars[i].GetRef(j);
-      TDataItem& ri = vi.AddItem(VarNames[vr.var_name]);
-      ri.AddField("atom_id", vr.atom->GetTag());
-      ri.AddField("k", vr.coefficient);
-      ri.AddField("atom_id", (vr.relation_type == relation_None) ? "none" : (vr.relation_type == relation_AsVar ? "var" : "one_minus_var"));
-    }
-  }
-  TDataItem& eqs = item.AddItem("eqs");
-  for( int i=0; i < Equations.Count(); i++ )  {
-    TDataItem& li = eqs.AddItem("leq");
-    li.AddField("val", Equations[i].GetValue());
-    li.AddField("sig", Equations[i].GetSigma());
-    for( int j=0; j < Equations[i].Count(); j++ )  {
-      TDataItem& mi = li.AddItem("var");
-      mi.AddField("id", Equations[i][j].GetId());
-      mi.AddField("k", Equations[i].GetCoefficient(j));
-    }
-  }
+short XVarManager::VarNameIndex(const olxstr& vn)  {
+  for( short i=0; i <= var_name_Last; i++ )
+    if( VarNames[i] == vn )
+      return i;
+  throw TInvalidArgumentException(__OlxSourceInfo, "unknown variable name");
 }
 //.................................................................................................
-void XVarManager::FromDataItem(TDataItem& item) {
+short XVarManager::RelationIndex(const olxstr& rn) {
+  for( short i=0; i <= relation_Last; i++ )
+    if( RelationNames[i] == rn )
+      return i;
+  throw TInvalidArgumentException(__OlxSourceInfo, "unknown relation name");
+}
+//.................................................................................................
+void XVarManager::ToDataItem(TDataItem& item) const {
+  TDataItem& vars = item.AddItem("vars");
+  for( int i=0; i < Vars.Count(); i++ )
+    Vars[i].ToDataItem(vars.AddItem(i));
+  TDataItem& eqs = item.AddItem("eqs");
+  for( int i=0; i < Equations.Count(); i++ )
+    Equations[i].ToDataItem( eqs.AddItem(i) );
+}
+//.................................................................................................
+void XVarManager::FromDataItem(const TDataItem& item) {
   ClearAll();
-  TDataItem* it = item.FindItem("vars");
-
-  throw TNotImplementedException(__OlxSourceInfo);
+  TDataItem& vars = item.FindRequiredItem("vars");
+  for( int i=0; i < vars.ItemCount(); i++ )
+    Vars.Add(XVar::FromDataItem(vars.GetItem(i), *this)).SetId(Vars.Count());
+  TDataItem& eqs = item.FindRequiredItem("eqs");
+  for( int i=0; i < eqs.ItemCount(); i++ )
+    Equations.Add( XLEQ::FromDataItem(eqs.GetItem(i), *this)).SetId(Vars.Count());
 }
 //.................................................................................................
 

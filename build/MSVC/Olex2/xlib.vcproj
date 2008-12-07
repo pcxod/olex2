@@ -377,6 +377,10 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
+				RelativePath="..\..\..\xlib\afixgroup.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\xlib\asymmunit.cpp"
 				>
 			</File>
@@ -438,6 +442,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\xlib\experimental.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\xlib\exyzgroup.cpp"
 				>
 			</File>
 			<File
@@ -607,6 +615,10 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
+				RelativePath="..\..\..\xlib\afixgroup.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\xlib\asymmunit.h"
 				>
 			</File>
@@ -672,6 +684,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\xlib\experimental.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\xlib\exyzgroup.h"
 				>
 			</File>
 			<File
