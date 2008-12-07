@@ -1,20 +1,22 @@
 #ifndef _olx_xld_writer_H
 #define _olx_xld_writer_H
 #include "estlist.h"
-#include "dataitem.h"
+#include "threex3.h"
 
+BeginEsdlNamespace()
+
+/*
 template <class owner> class XldWriter {
   static type_info const* PTypes[];
-
+  static const int PTypes_size;
 public:
   bool static IsPType(const type_info& type)  {
-    static const int pt_sz = sizeof(PTypes)/sizeof(PTypes[0]);
-    for( int i=0; i < ptsz; i++ )
+    for( int i=0; i < PTypes_size; i++ )
       if( *PTypes[i] == type ) 
         return true;
     return false;
   }
-  template <typename _type> _type PTypeFromStr(const olxstr& val)  {
+  template <typename _type> static _type PTypeFromStr(const olxstr& val)  {
     static const type_info& bool_type = typeid(bool);             //1x
     static const type_info& char_type = typeid(char);             //2x
     static const type_info& uchar_type = typeid(unsigned char);   //3x
@@ -24,7 +26,7 @@ public:
     static const type_info& uint_type = typeid(unsigned int);     //7x
     static const type_info& long_type = typeid(long int);         //8x
     static const type_info& ulong_type = typeid(unsigned long int); //9x
-    static const type_info& llong_type = typeid(long long int);     //10
+    static const type_info& llong_type = typeid(long long int);     //10x
     static const type_info& ullong_type = typeid(unsigned long long int); //11x
     static const type_info& float_type = typeid(float);           //12x
     static const type_info& double_type = typeid(double);         //13x
@@ -40,13 +42,13 @@ public:
     if( vt == bool_type )     return val.ToBool();
     if( vt == ullong_type )     return val.RadInt<unsigned long long int>();
     if( vt == float_type )    return (float)val.ToDouble();
-    if( vt == uint_type )     return val.RadInt<unsigned int>ToInt();
+    if( vt == uint_type )     return val.RadInt<unsigned int>();
     if( vt == ushort_type )     return val.RadInt<unsigned short>();
     if( vt == char_type )     return val.CharAt(0);
     if( vt == uchar_type )     return (unsigned char)val.CharAt(0);
-    if( vt == long_type )     return val.RadInt<long int>ToInt();
-    if( vt == ulong_type )     return val.RadInt<unsigned long int>ToInt();
-    if( vt == llong_type )     return val.RadInt<long long int>ToInt();
+    if( vt == long_type )     return val.RadInt<long int>();
+    if( vt == ulong_type )     return val.RadInt<unsigned long int>();
+    if( vt == llong_type )     return val.RadInt<long long int>();
     throw TFunctionFailedException(__OlxSourceInfo, "could not convert to provieded");
   }
   struct IVar {
@@ -80,24 +82,82 @@ public:
     }
     virtual const olxstr& GetName() const {  return name;  }
   };
+  template <class list_class, typename var_type> struct LPVar : public IVar { // list of primitives
+    list_class& list;
+    olxstr name;
+    LPVar(const olxstr& _name, list_class& _list) : name(_name), list(_list) {}
+    virtual void ToDataItem(TDataItem& item) const {
+      TDataItem& li = item.AddItem(name, list.Count());
+      for( int i=0; i < list.Count(); i++ )
+        li.AddField(i, list[i]);
+    }
+    virtual void FromDataItem(const TDataItem& item)  {
+      const int ic = item.GetValue().ToInt();
+      if( ic != item.FieldCount() )
+        throw TFunctionFailedException(__OlxSourceInfo, "list size mismatch");
+      for( int i=0; i < ic; i++ )  
+        list.Add(PTypeFromStr<var_type>(item.Field(i)));
+    }
+    virtual const olxstr& GetName() const {  return name;  }
+  };
+  template <class list_class, typename var_class> struct LCVar : public IVar { // list of primitives
+    list_class& list;
+    olxstr name;
+    LCVar(const olxstr& _name, list_class& _list) : name(_name), list(_list) {}
+    virtual void ToDataItem(TDataItem& item) const {
+      TDataItem& li = item.AddItem(name, list.Count());
+      for( int i=0; i < list.Count(); i++ )
+        list[i].ToDataItem( li.AddItem(i) );
+    }
+    virtual void FromDataItem(const TDataItem& item)  {
+      const int ic = item.GetValue().ToInt();
+      if( ic != item.FieldCount() )
+        throw TFunctionFailedException(__OlxSourceInfo, "list size mismatch");
+      for( int i=0; i < ic; i++ )  
+        list.Add(var_class::FromDataItem(item.GetItem(i)));
+    }
+    virtual const olxstr& GetName() const {  return name;  }
+  };
 protected:
   owner& Instance;
   TSStrObjList<olxstr, IVar*, false> vars; 
 public:
 
 
-  XldWriter(owner& instance) : Instance(instance)  {
+  XldWriter(owner& instance) : Instance(instance)  {  }
+
+  template <typename var_type> void DefinePVar(const olxstr& name, var_type& var)  {
+    vars.Add(name, new PVar<var_type>(name, var) );
   }
-  template <typename var_type>
-  void DefinePrimitive(const olxstr& name, var_type& var)  {
-    const type_info& vt = typeid(var);
-    if( IsPType(vt) )
-      vars.Add(name, new PVar<var_type>(var) );
-    else
-      vars.Add(name, new CVar<var_type>(var) );
+  template <typename var_type> void DefineCVar(const olxstr& name, var_type& var)  {
+    vars.Add(name, new CVar<var_type>(name, var) );
+  }
+  template <class list_type, typename var_type> void DefinePList(const olxstr& name, list_type& list)  {
+    vars.Add(name, new LPVar<list_type,var_type>(name, list) );
+  }
+  template <class list_type, typename var_type> void DefineCList(const olxstr& name, list_type& list)  {
+    vars.Add(name, new LCVar<list_type,var_type>(name, list) );
   }
 };
 template <class T>
-  type_info const* XldWriter<T>::PTypes[] = {&typeid(double), &typeid(int), *typeid(short)};
+  type_info const* XldWriter<T>::PTypes[] = {
+    &typeid(double), 
+    &typeid(int), 
+    &typeid(short), 
+    &typeid(olxstr)
+    &typeid(bool)
+    &typeid(unsigned long long int)
+    &typeid(float)
+    &typeid(unsigned int)
+    &typeid(unsigned short)
+    &typeid(char)
+    &typeid(unsigned char)
+    &typeid(long int)
+    &typeid(unsigned long int)
+    &typeid(long long int)
+  };
 
+template <class T> const int XldWriter<T>::PTypes_size = 14;
+*/
+EndEsdlNamespace()
 #endif

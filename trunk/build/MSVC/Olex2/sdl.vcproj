@@ -754,6 +754,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\sdl\pers_util.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\sdl\poly.h"
 				>
 			</File>

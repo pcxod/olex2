@@ -3,10 +3,12 @@
 #include "symmparser.h"
 #include "hkl.h"
 #include "symmlib.h"
+#include "pers_util.h"
 
 RefinementModel::RefinementModel(TAsymmUnit& au) : rDFIX(*this, rltBonds), rDANG(*this, rltBonds), 
   rSADI(*this, rltBonds), rCHIV(*this, rltAtoms), rFLAT(*this, rltGroup), rDELU(*this, rltAtoms), 
-  rSIMU(*this, rltAtoms), rISOR(*this, rltAtoms), rEADP(*this, rltAtoms), 
+  rSIMU(*this, rltAtoms), rISOR(*this, rltAtoms), rEADP(*this, rltAtoms), ExyzGroups(*this), 
+  AfixGroups(*this), rSAME(*this),
   aunit(au), HklStatFileID(EmptyString, 0, 0), Vars(au)  {
   SetDefaults();
 }
@@ -42,8 +44,8 @@ void RefinementModel::Clear() {
   ExyzGroups.Clear();
   //AfixGroups.Clear();
   UsedSymm.Clear();
-  used_weight.Resize(0);
-  proposed_weight.Resize(0);
+  used_weight.Clear();
+  proposed_weight.Clear();
   expl.Clear();
   RefinementMethod = "L.S.";
   SolutionMethod = EmptyString;
@@ -115,8 +117,8 @@ RefinementModel& RefinementModel::Assign(const RefinementModel& rm, bool AssignA
   rISOR.Assign(rm.rISOR);
   rEADP.Assign(rm.rEADP);
   rSAME.Assign(aunit, rm.rSAME);
-  ExyzGroups.Assign(aunit, rm.ExyzGroups);
-  AfixGroups.Assign(aunit, rm.AfixGroups);
+  ExyzGroups.Assign(rm.ExyzGroups);
+  AfixGroups.Assign(rm.AfixGroups);
 
   for( int i=0; i < rm.UsedSymm.Count(); i++ )
     UsedSymm.AddCCopy( rm.UsedSymm[i] );
@@ -236,7 +238,15 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
   return _HklStat;
 }
 //....................................................................................................
-void RefinementModel::ToDataItem(TDataItem& item) const {
+void RefinementModel::ToDataItem(TDataItem& item) {
+  // fields
+  item.AddCodedField("RefOutArg", PersUtil::NumberListToStr(PLAN));
+  item.AddField("HklSrc", HKLSource);
+  item.AddCodedField("RefMeth", RefinementMethod);
+  item.AddCodedField("SolMeth", SolutionMethod);
+  item.AddCodedField("BatchScales", PersUtil::NumberListToStr(BASF));
+  item.AddCodedField("RefInArg", PersUtil::NumberListToStr(LS));
+
   // save used equivalent positions
   TDataItem& eqiv = item.AddItem("eqiv");
   for( int i=0; i < UsedSymm.Count(); i++ )  
@@ -259,46 +269,72 @@ void RefinementModel::ToDataItem(TDataItem& item) const {
   rEADP.ToDataItem(item.AddItem("eadp"));
   
   TDataItem& hklf = item.AddItem("HKLF", HKLF);
-  hklf.AddField("s", HKLF_s);
-  hklf.AddField("wt", HKLF_wt);
-  hklf.AddField("m", HKLF_m);
-  hklf.AddField("mat", TSymmParser::MatrixToSymmEx(HKLF_mat));
+  hklf.AddCodedField("s", HKLF_s);
+  hklf.AddCodedField("wt", HKLF_wt);
+  hklf.AddCodedField("m", HKLF_m);
+  hklf.AddCodedField("mat", TSymmParser::MatrixToSymmEx(HKLF_mat));
 
   TDataItem& omits = item.AddItem("OMIT", OMIT_set);
-  omits.AddField("s", OMIT_s);
-  omits.AddField("2theta", OMIT_2t);
-  for( int i=0; i < Omits.Count(); i++ )  {
-    TDataItem& omit = omits.AddItem(i);
-    omit.AddField("h", Omits[i][0]);
-    omit.AddField("k", Omits[i][1]);
-    omit.AddField("l", Omits[i][2]);
-  }
-  if( TWIN_set )
-    item.AddItem("TWIN", TWIN_n).AddField("mat", TSymmParser::MatrixToSymmEx(TWIN_mat));
-  olxstr batch_s( BASF.IsEmpty() ? EmptyString : olxstr(BASF[0]));
-  for( int i=1; i < BASF.Count(); i++ )
-    batch_s << ' ' << BASF[i];
-  if( !batch_s.IsEmpty() )
-    item.AddField("BatchScales", batch_s);
-  if( MERG_set )
-    item.AddField("MERG", MERG);
-  item.AddField("RefMeth", RefinementMethod);
-  item.AddField("SolMeth", SolutionMethod);
-
-  olxstr ref_in_arg( LS.Count() == 0 ? EmptyString : olxstr(LS[0]));
-  for( int i=1; i < LS.Count(); i++ )
-    ref_in_arg << ' ' << LS[i];
-  item.AddField("RefInArg", ref_in_arg);
-
-  olxstr ref_out_arg( PLAN.Count() == 0 ? EmptyString : olxstr(PLAN[0]));
-  for( int i=1; i < PLAN.Count(); i++ )
-    ref_out_arg << ' ' << PLAN[i];
-  item.AddField("RefOutArg", ref_out_arg);
-  item.AddCodedField("HklSrc", HKLSource);
-
+  omits.AddCodedField("s", OMIT_s);
+  omits.AddCodedField("2theta", OMIT_2t);
+  omits.AddCodedField("hkl", PersUtil::VecListToStr(Omits));
+  item.AddItem("TWIN", TWIN_set).AddCodedField("mat", TSymmParser::MatrixToSymmEx(TWIN_mat)).AddCodedField("n", TWIN_n);
+  item.AddItem("MERG", MERG_set).AddCodedField("val", MERG);
 }
 //....................................................................................................
 void RefinementModel::FromDataItem(TDataItem& item) {
-  throw TNotImplementedException(__OlxSourceInfo);
+  ClearAll();
+
+  PersUtil::FloatNumberListFromStr(item.GetRequiredField("RefOutArg"), PLAN);
+  HKLSource = item.GetRequiredField("HklSrc");
+  RefinementMethod = item.GetRequiredField("RefMeth");
+  SolutionMethod = item.GetRequiredField("SolMeth");
+  PersUtil::FloatNumberListFromStr(item.GetRequiredField("BatchScales"), BASF);
+  PersUtil::IntNumberListFromStr(item.GetRequiredField("RefInArg"), LS);
+
+  TDataItem& eqiv = item.FindRequiredItem("eqiv");
+  for( int i=0; i < eqiv.ItemCount(); i++ )  
+    TSymmParser::SymmToMatrix( eqiv.GetItem(i).GetValue(), UsedSymm.AddNew());
+
+  Vars.FromDataItem( item.FindRequiredItem("leqs") );
+  expl.FromDataItem(item.FindRequiredItem("expl"));  
+
+  AfixGroups.FromDataItem(item.FindRequiredItem("afix"));
+  ExyzGroups.FromDataItem(item.FindRequiredItem("exyz"));
+  rSAME.FromDataItem(item.FindRequiredItem("same"));
+  rDFIX.FromDataItem(item.FindRequiredItem("dfix"));
+  rDANG.FromDataItem(item.FindRequiredItem("dang"));
+  rSADI.FromDataItem(item.FindRequiredItem("sadi"));
+  rCHIV.FromDataItem(item.FindRequiredItem("chiv"));
+  rFLAT.FromDataItem(item.FindRequiredItem("flat"));
+  rDELU.FromDataItem(item.FindRequiredItem("delu"));
+  rSIMU.FromDataItem(item.FindRequiredItem("simu"));
+  rISOR.FromDataItem(item.FindRequiredItem("isor"));
+  rEADP.FromDataItem(item.FindRequiredItem("eadp"));
+  
+  TDataItem& hklf = item.FindRequiredItem("HKLF");
+  HKLF = hklf.GetValue().ToInt();
+  HKLF_s = hklf.GetRequiredField("s").ToDouble();
+  HKLF_wt = hklf.GetRequiredField("wt").ToDouble();
+  HKLF_m = hklf.GetRequiredField("m").ToDouble();
+  smatd tmp_m;
+  TSymmParser::SymmToMatrix(hklf.GetRequiredField("mat"), tmp_m);
+  HKLF_mat = tmp_m.r;
+
+  TDataItem& omits = item.FindRequiredItem("OMIT");
+  OMIT_set = omits.GetValue().ToBool();
+  OMIT_s = omits.GetRequiredField("s").ToDouble();
+  OMIT_2t = omits.GetRequiredField("2theta").ToDouble();
+  PersUtil::IntVecListFromStr(omits.GetRequiredField("hkl"), Omits);
+
+  TDataItem& twin = item.FindRequiredItem("TWIN");
+  TWIN_set = twin.GetValue().ToBool();
+  TSymmParser::SymmToMatrix(twin.GetRequiredField("mat"), tmp_m);
+  TWIN_mat = tmp_m.r;
+  TWIN_n = twin.GetRequiredField("n").ToInt();
+
+  TDataItem& merge = item.FindRequiredItem("MERG");
+  MERG_set = merge.GetValue().ToBool();
+  MERG = item.GetRequiredField("MERG").ToInt();
 }
 //....................................................................................................

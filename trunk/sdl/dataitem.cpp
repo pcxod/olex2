@@ -105,7 +105,7 @@ TDataItem *TDataItem::DotItem(const olxstr &DotName, TStrList* Log)  {
   return root;
 }
 //..............................................................................
-olxstr* TDataItem::DotField(const olxstr &DotName, olxstr &RefFieldName)  {
+olxstr* TDataItem::DotField(const olxstr& DotName, olxstr& RefFieldName)  {
   TDataItem* root = &Root(), *PrevItem;
   TStrList SL(DotName, '.');
   olxstr *Str=NULL;
@@ -121,22 +121,22 @@ olxstr* TDataItem::DotField(const olxstr &DotName, olxstr &RefFieldName)  {
   return Str;
 }
 //..............................................................................
-TDataItem *TDataItem::GetAnyItem(const olxstr &Name)  {
+TDataItem *TDataItem::GetAnyItem(const olxstr& Name) const {
   TDataItem *DI = Items.FindObject(Name);
   if( DI == NULL )  {
     for( int i=0; i < ItemCount(); i++ )  {
-      DI = Item(i).GetAnyItem(Name);
+      DI = GetItem(i).GetAnyItem(Name);
       if( DI != NULL )  return DI;
     }
   }
   return DI;
 }
 //..............................................................................
-TDataItem *TDataItem::GetAnyItemCI(const olxstr &Name)  {
+TDataItem *TDataItem::GetAnyItemCI(const olxstr &Name) const {
   TDataItem *DI = Items.FindObjectCI(Name);
   if( DI == NULL )  {
     for( int i=0; i < ItemCount(); i++ )  {
-      DI = Item(i).GetAnyItemCI(Name);
+      DI = GetItem(i).GetAnyItemCI(Name);
       if( DI != NULL )  return DI;
     }
   }
@@ -146,10 +146,10 @@ TDataItem *TDataItem::GetAnyItemCI(const olxstr &Name)  {
 void TDataItem::AddContent(TDataItem& DI)  {
   TDataItem *di;
   for( int i=0; i < DI.ItemCount(); i++ )  {
-    di = FindItem( DI.Item(i).GetName() );
+    di = FindItem( DI.GetItem(i).GetName() );
     if( di != NULL )
       DeleteItem(di);
-    AddItem( DI.Item(i) );
+    AddItem( DI.GetItem(i) );
   }
 }
 //..............................................................................
@@ -197,8 +197,9 @@ bool TDataItem::FieldExists(const olxstr &Name)  {
   return (Fields.IndexOf(Name) >=0 );
 }
 //..............................................................................
-void TDataItem::AddField(const olxstr &Name, const olxstr &Data)  {
+TDataItem&  TDataItem::AddField(const olxstr &Name, const olxstr &Data)  {
   AddCodedField(Name, CodeString(Data));
+  return *this;
 }
 //..............................................................................
 void TDataItem::SetFieldValue(const olxstr& fieldName, const olxstr &newValue)  {
@@ -218,22 +219,13 @@ void TDataItem::DeleteField(const olxstr& Name) {
   if( fieldIndex != -1 )  DeleteField(fieldIndex);
 }
 //..............................................................................
-const olxstr& TDataItem::GetFieldValue( const olxstr &Name, const olxstr &Default ) const  {
-  int i = Fields.IndexOf(Name);
-  return (i==-1) ? Default : Fields.Object(i);
-}
-//..............................................................................
-const olxstr& TDataItem::GetFieldValueCI( const olxstr &Name, const olxstr &Default ) const  {
-  int i = Fields.CIIndexOf(Name);
-  return (i==-1) ? Default : Fields.Object(i);
-}
-//..............................................................................
-void TDataItem::AddCodedField(const olxstr &Name, const olxstr &Data)  {
+TDataItem& TDataItem::AddCodedField(const olxstr &Name, const olxstr &Data)  {
 //  if( FieldExists(Name) )
 //  {
 //    BasicApp->Log->Exception(olxstr("TDataItem: dublicate field name: ") + Name, false);
 //  }
   Fields.Add(Name, Data);
+  return *this;
 }
 //..............................................................................
 int TDataItem::LoadFromString( int start, olxstr &Data, TStrList* Log)  {
@@ -368,8 +360,8 @@ void TDataItem::ResolveFields(TStrList* Log)  {  // resolves referenced fields
     }
   }
   for( int i=0; i < ItemCount(); i++ )  {
-    if( Item(i).GetParent() == this )
-      Item(i).ResolveFields(Log);
+    if( GetItem(i).GetParent() == this )
+      GetItem(i).ResolveFields(Log);
   }
 }
 //..............................................................................
@@ -388,12 +380,12 @@ void TDataItem::SaveToString(olxstr &Data)  {
   for( int i=0; i < fc; i++ )
     Data << Fields.String(i) << '=' << '\"' << RawField(i) << '\"' << ' ';
   for( int i=0; i < ic; i++ )  {
-    if( Item(i).GetParent() != this )  // dot operator
-      Data << Item(i).GetFullName()  << ' ';
+    if( GetItem(i).GetParent() != this )  // dot operator
+      Data << GetItem(i).GetFullName()  << ' ';
   }
   for( int i=0; i < ic; i++ )  {
-    if( Item(i).GetParent() == this )  {
-      Item(i).SaveToString(Data);
+    if( GetItem(i).GetParent() == this )  {
+      GetItem(i).SaveToString(Data);
       if( !itemsadded ) itemsadded = true;
     }
   }
@@ -428,13 +420,13 @@ void TDataItem::SaveToStrBuffer(TEStrBuffer &Data)  {
     Data << '\"' << RawField(i) << '\"' << ' ';
   }
   for( int i=0; i < ic; i++ )  {
-    if( Item(i).GetParent() != this )  {  // dot operator
-      Item(i).writeFullName(Data) << ' ';
+    if( GetItem(i).GetParent() != this )  {  // dot operator
+      GetItem(i).writeFullName(Data) << ' ';
     }
   }
   for( int i=0; i < ic; i++ )  {
-    if( Item(i).GetParent() == this )  {
-      Item(i).SaveToStrBuffer(Data);
+    if( GetItem(i).GetParent() == this )  {
+      GetItem(i).SaveToStrBuffer(Data);
       if( !itemsadded ) itemsadded = true;
     }
   }
@@ -480,14 +472,14 @@ void TDataItem::Sort()  {
 void TDataItem::Validate(TStrList& Log)  {
   olxstr Tmp;
   for( int i=0; i < ItemCount(); i++ )  {
-    if( Item(i).GetParent() != NULL && (Item(i).GetParent() != this) )  {
+    if( GetItem(i).GetParent() != NULL && (GetItem(i).GetParent() != this) )  {
       Tmp = "Reffered item from ";
-      Tmp << this->GetFullName() << "->" << Item(i).GetFullName();
+      Tmp << this->GetFullName() << "->" << GetItem(i).GetFullName();
       Log.Add( Tmp );
     }
-    if( Item(i).GetParent() == NULL )  {
+    if( GetItem(i).GetParent() == NULL )  {
       Tmp = "Item with null Parent: ";
-      Tmp << Item(i).GetFullName();
+      Tmp << GetItem(i).GetFullName();
       Log.Add( Tmp );
     }
   }

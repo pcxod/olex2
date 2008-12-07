@@ -1219,7 +1219,7 @@ void TMainForm::StartupInit()  {
       try  {
         olxstr cmd;
         for( int i=0; i < sh->ItemCount(); i++ )  {
-        TDataItem& item = sh->Item(i);
+        TDataItem& item = sh->GetItem(i);
         AccShortcuts.AddAccell( TranslateShortcut( item.GetFieldValue("key")), item.GetFieldValue("macro") );
         // cannot execute it through a macro - functions get evaluated...
         //ProcessXPMacro(cmd, MacroError);
@@ -1234,7 +1234,7 @@ void TMainForm::StartupInit()  {
     try  {
       olxstr cmd;
       for( int i=0; i < sh->ItemCount(); i++ )  {
-      TDataItem& item = sh->Item(i);
+      TDataItem& item = sh->GetItem(i);
       cmd = "createmenu \'";
       cmd << item.GetFieldValue("title") << "\' \'" <<
           item.GetFieldValue("macro") << '\'';
@@ -2120,7 +2120,7 @@ void TMainForm::PreviewHelp(const olxstr& Cmd)  {
           if( Cat != NULL  )  {
             olxstr Categories;
             for( int j=0; j < Cat->ItemCount(); j++ )  {
-              Categories << Cat->Item(j).GetName();
+              Categories << Cat->GetItem(j).GetName();
               if( (j+1) < Cat->ItemCount() )  Categories << ", ";
             }
             if( !Categories.IsEmpty() )  {
@@ -2530,7 +2530,7 @@ void TMainForm::PostCmdHelp(const olxstr &Cmd, bool Full)  {
       if( Cat != NULL )  {
         olxstr Cats;
         for( int i=0; i < Cat->ItemCount(); i++ )  {
-          Cats << Cat->Item(i).GetName();
+          Cats << Cat->GetItem(i).GetName();
           if( (i+1) < Cat->ItemCount() )
             Cats << ", ";
         }
@@ -2758,7 +2758,7 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
   I = DF.Root().FindItem("Stored_params");
   if( I )  {
     for( int i=0; i < I->ItemCount(); i++ )  {
-      TDataItem& pd = I->Item(i);
+      TDataItem& pd = I->GetItem(i);
       ProcessXPMacro( olxstr("storeparam ") << pd.GetName() << ' '
                         << '\'' << pd.GetFieldValue("value") << '\'' << ' '
                         << pd.GetFieldValue("process", EmptyString), MacroError );
@@ -2784,7 +2784,7 @@ void TMainForm::LoadScene(TDataItem *Root, TGlLightModel *FLM)  {
   I = Root->FindItem("Fonts");
   if( I == NULL )  return;
   for( int i=0; i < I->ItemCount(); i++ )  {
-    TDataItem& fi = I->Item(i);
+    TDataItem& fi = I->GetItem(i);
     FXApp->GetRender().Scene()->CreateFont(fi.GetName(), fi.GetFieldValue("id") );
   }
   I = Root->FindItem("Materials");
@@ -3689,7 +3689,7 @@ TStrList TMainForm::GetPluginList() const {
   TStrList rv;
   if( FPluginItem != NULL )  {
     for( int i=0; i < FPluginItem->ItemCount(); i++ )
-      rv.Add(FPluginItem->Item(i).GetName());
+      rv.Add(FPluginItem->GetItem(i).GetName());
   }
   return rv;
 }

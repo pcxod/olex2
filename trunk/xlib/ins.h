@@ -322,12 +322,12 @@ public:
         rm.Vars.AddSUMP( Toks.SubListFrom(1) );
       else if( Toks[0].Comparei("WGHT") == 0 )  {
         if( rm.used_weight.Count() != 0 )  {
-          rm.proposed_weight.Resize(Toks.Count()-1);
+          rm.proposed_weight.SetCount(Toks.Count()-1);
           for( int j=1; j < Toks.Count(); j++ )
             rm.proposed_weight[j-1] = Toks[j].ToDouble();
         }
         else  {
-          rm.used_weight.Resize(Toks.Count()-1);
+          rm.used_weight.SetCount(Toks.Count()-1);
           for( int j=1; j < Toks.Count(); j++ )
             rm.used_weight[j-1] = Toks[j].ToDouble();
           rm.proposed_weight = rm.used_weight;
@@ -351,12 +351,12 @@ public:
         rm.SetHKLF( Toks.SubListFrom(1) );
       else if( Toks[0].Comparei("L.S.") == 0  || Toks[0].Comparei("CGLS") == 0 )  {
         rm.SetRefinementMethod(Toks[0]);
-        rm.LS.Resize( Toks.Count() - 1 );
+        rm.LS.SetCount( Toks.Count() - 1 );
         for( int i=1; i < Toks.Count(); i++ )
           rm.LS[i-1] = Toks[i].ToInt();
       }
       else if( Toks[0].Comparei("PLAN") == 0  )  {
-        rm.PLAN.Resize( Toks.Count() - 1 );
+        rm.PLAN.SetCount( Toks.Count() - 1 );
         for( int i=1; i < Toks.Count(); i++ )
           rm.PLAN[i-1] = Toks[i].ToDouble();
       }

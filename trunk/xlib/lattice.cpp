@@ -1679,11 +1679,10 @@ void TLattice::SetAnis( const TCAtomPList& atoms, bool anis )  {
 }
 //..............................................................................
 void TLattice::ToDataItem(TDataItem& item) const  {
+  item.AddCodedField("delta", Delta);
+  item.AddCodedField("deltai", DeltaI);
   GetAsymmUnit().ToDataItem(item.AddItem("aunit"));
-  TDataItem& latt = item.AddItem("lattice");
-  latt.AddField("delta", Delta);
-  latt.AddField("deltai", DeltaI);
-  TDataItem& mat = latt.AddItem("matrices", Matrices.Count());
+  TDataItem& mat = item.AddItem("matrices");
   const int mat_c = Matrices.Count();
   // save matrices, change matrix tags to the position in the list and remember old tags
   TIntList m_tags(mat_c);
@@ -1699,7 +1698,7 @@ void TLattice::ToDataItem(TDataItem& item) const  {
     if( Atoms[i]->IsDeleted() )  continue;
     TDataItem& ai = atoms.AddItem(satom_tag++);
     ai.AddField("atom_id", Atoms[i]->CAtom().GetTag());
-    ai.AddField("matrix_id", Atoms[i]->GetMatrix(0).GetTag());
+    ai.AddField("matr_id", Atoms[i]->GetMatrix(0).GetTag());
     Atoms[i]->SetTag(satom_tag);
   }
   // restore original matrix tags 
@@ -1716,23 +1715,39 @@ void TLattice::ToDataItem(TDataItem& item) const  {
     if( p_ac >= 3 ) // a plane must contain at least three atoms
       valid_planes.Add( Planes[i] );
   }
-  if( !valid_planes.IsEmpty() )  {
-    TDataItem& planes = item.AddItem("planes", valid_planes.Count());
-    for( int i=0; i < valid_planes.Count(); i++ )  {
-      TDataItem& plane = planes.AddItem(i);
-      int p_a_id = 0;
-      for( int j=0; j < valid_planes[i]->Count(); j++ )  {
-        if( valid_planes[i]->Atom(j).IsDeleted() )  continue;
-        TDataItem& pa = plane.AddItem(p_a_id++);
-        pa.AddField("atom_id", valid_planes[i]->Atom(j).GetTag());
-        pa.AddField("weight", valid_planes[i]->Weight(j));
-      }
-    }
-  }
+  TDataItem& planes = item.AddItem("planes", valid_planes.Count());
+  for( int i=0; i < valid_planes.Count(); i++ )
+    valid_planes[i]->ToDataItem(planes.AddItem(i));  
 }
 //..............................................................................
 void TLattice::FromDataItem(TDataItem& item)  {
-  throw TNotImplementedException(__OlxSourceInfo);
+  Clear(true);
+
+  Delta = item.GetRequiredField("delta").ToDouble();
+  DeltaI = item.GetRequiredField("deltai").ToDouble();
+  GetAsymmUnit().FromDataItem( item.FindRequiredItem("aunit") );
+  TDataItem& mat = item.FindRequiredItem("matrices");
+  for( int i=0; i < mat.ItemCount(); i++ )  {
+    smatd* m = new smatd;
+    TSymmParser::SymmToMatrix(mat.GetItem(i).GetValue(), *m);
+    Matrices.Add(m);
+    //TODO: assign proper tags...
+  }
+  // save satoms - only the original CAtom Tag and the generating matrix tag
+  TDataItem& atoms = item.FindRequiredItem("atoms");
+  for( int i=0; i < atoms.ItemCount(); i++ )  {
+    TDataItem& atom = atoms.GetItem(i);
+    TSAtom* sa = Atoms.Add( new TSAtom(Network) );
+    sa->CAtom( GetAsymmUnit().GetAtom( atom.GetRequiredField("atom_id").ToInt() ) );
+    int mid = atom.GetRequiredField("matr_id").ToInt();
+    if( mid != 0 )  // identity matrix
+      sa->ccrd() = *Matrices[mid] * sa->CAtom().ccrd();
+    GetAsymmUnit().CellToCartesian(sa->ccrd(), sa->crd() );
+    sa->AddMatrix( Matrices[mid] );
+  }
+  TDataItem& planes = item.FindRequiredItem("planes");
+  for( int i=0; i < planes.ItemCount(); i++ )
+    Planes.Add( new TSPlane(Network) )->FromDataItem(planes.GetItem(i));
 }
 //..............................................................................
 //..............................................................................

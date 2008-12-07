@@ -52,6 +52,9 @@ public:
     vec3d& Params, vec3d& center);
   // returns sqrt(minimal eigen value/point.Count())
   static double CalcRMS(const TSAtomPList& atoms);
+
+  void ToDataItem(TDataItem& item) const;
+  void FromDataItem(TDataItem& item);
 };
 
   typedef TTypeList<TSPlane> TSPlaneList;

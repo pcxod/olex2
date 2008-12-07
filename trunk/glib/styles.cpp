@@ -42,7 +42,7 @@ bool TPrimitiveStyle::FromDataItem(const TDataItem& Item)  {
   TDataItem *MI = Item.FindItem("Material");
   if( MI != NULL )  {
     if( MI->ItemCount() != 0 )  {
-      TGlMaterial* GlM = FParent->GetMaterial(MI->Item(0));
+      TGlMaterial* GlM = FParent->GetMaterial(MI->GetItem(0));
       if( GlM != NULL )  SetProperties( GlM );
     }
   }
@@ -149,7 +149,7 @@ bool TGraphicsStyle::FromDataItem(const TDataItem& Item)  {
     off = 1;
     for( i=0; i < I->ItemCount(); i++ )  {
       GS = new TGraphicsStyle(FParent, this, EmptyString);
-      GS->FromDataItem(I->Item(i));
+      GS->FromDataItem(I->GetItem(i));
       FStyles.Add(GS);
     }
   }
@@ -316,8 +316,8 @@ bool TGraphicsStyles::FromDataItem(const TDataItem& Item)  {
   TPtrList<TGlMaterial> mats;
   for( int i=0; i < SI->ItemCount(); i++ )  {
     TGlMaterial* GlM = new TGlMaterial;
-    SI->Item(i).SetData( GlM );
-    GlM->FromDataItem( SI->Item(i) );
+    SI->GetItem(i).SetData( GlM );
+    GlM->FromDataItem( SI->GetItem(i) );
     mats.Add(GlM);
   }
   FName = Item.GetFieldValue("Name");

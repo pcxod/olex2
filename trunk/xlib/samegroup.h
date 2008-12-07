@@ -57,6 +57,10 @@ public:
 class TSameGroupList  {
   TTypeList<TSameGroup> Groups;
 public:
+
+  class RefinementModel& RM;
+
+  TSameGroupList(RefinementModel& parent) : RM(parent) {} 
   TSameGroup& New() {  return Groups.Add(new TSameGroup(Groups.Count(), *this));  }
   TSameGroup& NewDependent(TSameGroup& on) {  
     TSameGroup& rv = Groups.Add( new TSameGroup(Groups.Count(), *this) ); 

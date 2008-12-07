@@ -12,6 +12,8 @@
 #include "ematrix.h"
 #include "satom.h"
 #include "sbond.h"
+#include "lattice.h"
+#include "pers_util.h"
 
 //..............................................................................
 TSPlane::TSPlane(TNetwork* Parent):TSObject(Parent)  {
@@ -123,4 +125,23 @@ double TSPlane::Z(double X, double Y) const  {
   return (FNormal[0]*X + FNormal[1]*Y + FDistance)/FNormal[2];
 }
 //..............................................................................
- 
+void TSPlane::ToDataItem(TDataItem& item) const {
+  item.AddCodedField("n", PersUtil::VecToStr(FNormal));
+  item.AddCodedField("d", FDistance);
+  int cnt = 0;
+  for( int i=0; i < Crds.Count(); i++ )  {
+    if( Crds[i].GetA()->IsDeleted() )  continue;
+    item.AddItem(cnt++, Crds[i].GetB()).AddField("atom_id", Crds[i].GetA()->GetTag()); 
+  }
+}
+//..............................................................................
+void TSPlane::FromDataItem(TDataItem& item) {
+  Crds.Clear();
+  FNormal = PersUtil::FloatVecFromStr( item.GetRequiredField("n") );
+  FDistance = item.GetRequiredField("d").ToDouble();
+  for( int i=0; i < item.ItemCount(); i++ )  {
+    Crds.AddNew( &Network->GetLattice().GetAtom(item.GetItem(i).GetRequiredField("atom_id").ToInt()), 
+      item.GetItem(i).GetValue().ToDouble());
+  }
+}
+//..............................................................................
