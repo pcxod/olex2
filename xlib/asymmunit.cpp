@@ -625,12 +625,13 @@ void TAsymmUnit::FromDataItem(TDataItem& item)  {
   for(int i=0; i < symm.ItemCount(); i++ )  
     TSymmParser::SymmToMatrix(symm.GetItem(i).GetValue(), Matrices.AddNew());
   TDataItem& resis = item.FindRequiredItem("residues");
-  for( int i=-1; i < resis.ItemCount(); i++ )  {
+  for( int i=0; i < resis.ItemCount(); i++ )  {
     TDataItem& resi = resis.GetItem(i);
-    TResidue& r = (i==-1 ? MainResidue : NewResidue(resi.GetRequiredField("class_name"),
+    TResidue& r = (i==0 ? MainResidue : NewResidue(resi.GetRequiredField("class_name"),
       resi.GetValue().ToInt(), resi.GetRequiredField("alias")) );
     for( int j=0; j < resi.ItemCount(); j++ )  {
       NewAtom(&r).FromDataItem(resi.GetItem(j));
+      CAtoms.Last()->SetLoaderId(i);
     }
   }
   InitMatrices();

@@ -2219,8 +2219,7 @@ void TMainForm::macSave(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   }
 }
 //..............................................................................
-void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)
-{
+void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error) {
   olxstr Tmp = Cmds[0];
   Cmds.Delete(0);
   olxstr FN = Cmds.Text(' ');
@@ -2262,9 +2261,8 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       else
         TBasicApp::GetLog().Error(olxstr("Load::style: link file does not exist: ") << FN );
     }
-    return;
   }
-  if( Tmp == "scene" )  {
+  else if( Tmp == "scene" )  {
     if( FN.IsEmpty() )
       FN = PickFile("Load scene parameters", "Scene parameters|*.glsp", SParamDir, true);
     if( FN.IsEmpty() )  {
@@ -2291,9 +2289,8 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     TDataFile DF;
     DF.LoadFromXLFile(FN, NULL);
     LoadScene( &DF.Root() );
-    return;
   }
-  if( Tmp == "view" )  {
+  else if( Tmp == "view" )  {
     if( FXApp->XFile().HasLastLoader() )  {
       if( Cmds.Count() == 1 )
         Tmp = TEFile::ChangeFileExt(Cmds[0], "xlds");
@@ -2315,9 +2312,20 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       }
       FXApp->Draw();
     }
-    return;
   }
-  Error.ProcessingError(__OlxSrcInfo, "undefined parameter" );
+  else if( Tmp == "model" )  {
+    if( FXApp->XFile().HasLastLoader() )  {
+      Tmp = (Cmds.Count() == 1) ? TEFile::ChangeFileExt(Cmds[0], "oxm") :
+                                  TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), "oxm");
+      if( TEFile::FileExists(Tmp) )  {  
+        TDataFile DF;
+        DF.LoadFromXLFile(Tmp);
+        FXApp->FromDataItem(DF.Root().FindRequiredItem("olex_model"));
+      }
+    }
+  }
+  else
+    Error.ProcessingError(__OlxSrcInfo, "undefined parameter" );
 }
 //..............................................................................
 void TMainForm::macLink(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {

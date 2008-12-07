@@ -335,6 +335,6 @@ void RefinementModel::FromDataItem(TDataItem& item) {
 
   TDataItem& merge = item.FindRequiredItem("MERG");
   MERG_set = merge.GetValue().ToBool();
-  MERG = item.GetRequiredField("MERG").ToInt();
+  MERG = merge.GetRequiredField("val").ToInt();
 }
 //....................................................................................................

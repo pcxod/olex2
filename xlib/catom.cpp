@@ -183,12 +183,13 @@ void TCAtom::ToDataItem(TDataItem& item) const  {
   item.AddCodedField("label", FLabel );
   item.AddCodedField("type", FAtomInfo->GetSymbol() );
   item.AddCodedField("part", Part);
-  item.AddCodedField("Uiso", Uiso);
   item.AddCodedField("sof", Occu);
   item.AddCodedField("x", TEValue<double>(Center[0], Esd[0]).ToString());
   item.AddCodedField("y", TEValue<double>(Center[1], Esd[1]).ToString());
   item.AddCodedField("z", TEValue<double>(Center[2], Esd[2]).ToString());
-  if( EllpId != -1 )  {
+  if( EllpId == -1 )
+    item.AddCodedField("Uiso", Uiso);
+  else {
     double Q[6], E[6];
     GetEllipsoid()->GetQuad(Q, E);
     TDataItem& elp = item.AddItem("adp");
@@ -199,6 +200,9 @@ void TCAtom::ToDataItem(TDataItem& item) const  {
     elp.AddCodedField("xz", TEValue<double>(Q[4], E[4]).ToString());
     elp.AddCodedField("xy", TEValue<double>(Q[5], E[5]).ToString());
   }
+  if( *FAtomInfo == iQPeakIndex )
+    item.AddCodedField("peak", QPeak);
+
 }
 //..............................................................................
 void TCAtom::FromDataItem(TDataItem& item)  {
@@ -208,7 +212,6 @@ void TCAtom::FromDataItem(TDataItem& item)  {
   FLabel = item.GetRequiredField("label");
   Part = item.GetRequiredField("part").ToInt();
   Occu = item.GetRequiredField("sof").ToDouble();
-  Uiso = item.GetRequiredField("Uiso").ToDouble();
   TEValue<double> ev;
   ev = item.GetRequiredField("x");
   Center[0] = ev.GetV();  Esd[0] = ev.GetE();
@@ -228,9 +231,14 @@ void TCAtom::FromDataItem(TDataItem& item)  {
       Q[i] = ev.GetV();
     }
     EllpId = FParent->NewEllp().Initialise(Q,E).GetId();
+    Uiso = GetEllipsoid()->GetUiso();
   }
-  else
+  else  {
     EllpId = -1;
+    Uiso = item.GetRequiredField("Uiso").ToDouble();
+  }
+  if( *FAtomInfo == iQPeakIndex )
+    QPeak = item.GetRequiredField("peak").ToDouble();
 }
 //..............................................................................
 void DigitStrtok(const olxstr &str, TStrPObjList<olxstr,bool> &chars)  {

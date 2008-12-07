@@ -333,9 +333,9 @@ olxstr TSymmParser::MatrixToSymmCode(const TUnitCell& UC, const smatd& M)  {
   if( (abs(Trans[0]) > 4) || (abs(Trans[1]) > 4) || (abs(Trans[1]) > 4) )
     baseVal = 55;
 
-  char bf[32];
+  static char bf[64];
 #ifdef _MSC_VER
-  sprintf_s(bf, 32, "%i_%i%i%i", M.GetTag()+1, baseVal - Trans[0], baseVal - Trans[1], baseVal - Trans[2]);
+  sprintf_s(bf, 64, "%i_%i%i%i", M.GetTag()+1, baseVal - Trans[0], baseVal - Trans[1], baseVal - Trans[2]);
 #else
   sprintf(bf, "%i_%i%i%i", M.GetTag()+1, baseVal - Trans[0], baseVal - Trans[1], baseVal - Trans[2]);
 #endif
@@ -348,9 +348,9 @@ olxstr TSymmParser::MatrixToSymmCode(const smatd_list& ml, const smatd& M)  {
   if( (abs(Trans[0]) > 4) || (abs(Trans[1]) > 4) || (abs(Trans[1]) > 4) )
     baseVal = 55;
 
-  char bf[32];
+  static char bf[64];
 #ifdef _MSC_VER
-  sprintf_s(bf, 32, "%i_%i%i%i", M.GetTag()+1, baseVal - Trans[0], baseVal - Trans[1], baseVal - Trans[2]);
+  sprintf_s(bf, 64, "%i_%i%i%i", M.GetTag()+1, baseVal - Trans[0], baseVal - Trans[1], baseVal - Trans[2]);
 #else
   sprintf(bf, "%i_%i%i%i", M.GetTag()+1, baseVal - Trans[0], baseVal - Trans[1], baseVal - Trans[2]);
 #endif
