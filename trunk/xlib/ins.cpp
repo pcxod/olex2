@@ -142,10 +142,10 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
   }
 
   Ins.Pack();
-  ParseRestraints(Ins, cx.rm);
+  ParseRestraints(Ins, cx);
   Ins.Pack();
   _ProcessSame(cx);
-  _FinishParsing(cx.rm);
+  _FinishParsing(cx);
   // initialise asu data
   GetAsymmUnit().InitData();
   if( !cx.CellFound )  {  // in case there are no atoms
@@ -221,7 +221,7 @@ void TIns::_ProcessSame(ParseContext& cx)  {
   }
 }
 //..............................................................................
-void TIns::_FinishParsing(RefinementModel& rm)  {
+void TIns::_FinishParsing(ParseContext& cx)  {
   for( int i =0; i < Ins.Count(); i++ )  {
     TInsList* Param = new TInsList(Ins[i], ' ');
     Ins.Object(i) = Param;
@@ -235,7 +235,8 @@ void TIns::_FinishParsing(RefinementModel& rm)  {
   //for( int i=0; i < au.AtomCount(); i++ )  {
   //  TCAtom& ca = au.GetAtom(i);
   //}
-  rm.Vars.Validate();
+
+  cx.rm.Vars.Validate();
 }
 //..............................................................................
 bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx, int& i)  {
@@ -978,7 +979,7 @@ void TIns::UpdateAtomsFromStrings(RefinementModel& rm, TCAtomPList& CAtoms, cons
     }
   }
   _ProcessSame(cx);
-  ParseRestraints(Instructions, rm);
+  ParseRestraints(Instructions, cx);
   Instructions.Pack();
 }
 //..............................................................................
@@ -1565,9 +1566,9 @@ void TIns::ParseHeader(const TStrList& in)  {
       GetAsymmUnit().AddMatrix(sm);
   }
   Ins.Pack();
-  ParseRestraints(Ins, cx.rm);
+  ParseRestraints(Ins, cx);
   Ins.Pack();
-  _FinishParsing(cx.rm);
+  _FinishParsing(cx);
 }
 //..............................................................................
 

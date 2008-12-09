@@ -145,7 +145,7 @@ bool TGlXApp::OnInit()  {
   // see if the system variable OLEX2_DIR is define to override the default basedir
   wxString OlxPath; // we cannot use any TEFile functions, working eith c_str, as the TEGC is not initialised yet...
   if( wxGetEnv( wxT("OLEX2_DIR"), &OlxPath) )  {
-    if( wxDirExists(OlxPath) && wxIsAbsolutePath(OlxPath))  {
+    if( wxDirExists(OlxPath) )  {//&& wxIsAbsolutePath(OlxPath))  {
       olxstr olx_path(OlxPath.c_str() );
       BaseDir = TEFile::AddTrailingBackslashI(olx_path) << "dummy.txt";
     }

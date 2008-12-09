@@ -74,7 +74,7 @@ protected:
     TStrPObjList<olxstr,TBasicAtomInfo*>* sfac, TStrList& sl, TIntList* index=NULL, bool checkSame=true);
   void _ProcessSame(ParseContext& cx);
   // initialises the unparsed instruction list
-  void _FinishParsing(RefinementModel& rm);
+  void _FinishParsing(ParseContext& cx);
 public:
   TIns();
   virtual ~TIns();
@@ -137,7 +137,7 @@ public:
   */
   bool SaveAtomsToStrings(RefinementModel& rm, const TCAtomPList& CAtoms, TIntList& index, TStrList& SL, TSimpleRestraintPList* processed);
   void SaveRestraints(TStrList& SL, const TCAtomPList* atoms, TSimpleRestraintPList* processed, RefinementModel& rm);
-  template <class StrLst> void ParseRestraints(StrLst& SL, RefinementModel& rm)  {
+  template <class StrLst> void ParseRestraints(StrLst& SL, ParseContext& cx)  {
       TStrList Toks;
       olxstr resi;
       TSRestraintList* srl;
@@ -170,44 +170,49 @@ public:
             Toks.Delete(0);
             smatd* SymM = new smatd;
             TSymmParser::SymmToMatrix(Toks.Text(EmptyString), *SymM);
-            rm.AddUsedSymm(*SymM);
-            rm.AddUsedSymm( *SymM );
+            cx.rm.AddUsedSymm(*SymM);
+            cx.rm.AddUsedSymm( *SymM );
             delete SymM;
             SL[i] = EmptyString;
           }
         }
+        else if( Toks[0].Comparei("EXYZ") == 0 )  {
+          cx.rm.AddEXYZ( Toks.SubListFrom(1) );
+          SL[i] = EmptyString;
+          continue;
+        }
         else if( Toks[0].Comparei("DFIX") == 0 )  {
-          srl = &rm.rDFIX;
+          srl = &cx.rm.rDFIX;
           RequiredParams = 1;  AcceptsParams = 2;
           DefEsd = 0.02;
           Vals[0] = &DefVal;  Vals[1] = &DefEsd;
         }
         else if( Toks[0].Comparei("DANG") == 0 )  {
-          srl = &rm.rDANG;
+          srl = &cx.rm.rDANG;
           RequiredParams = 1;  AcceptsParams = 2;
           DefEsd = 0.04;
           Vals[0] = &DefVal;  Vals[1] = &DefEsd;
         }
         else if( Toks[0].Comparei("SADI") == 0 )  {
-          srl = &rm.rSADI;
+          srl = &cx.rm.rSADI;
           RequiredParams = 0;  AcceptsParams = 1;
           DefEsd = 0.02;
           Vals[0] = &DefEsd;
         }
         else if( Toks[0].Comparei("CHIV") == 0 )  {
-          srl = &rm.rCHIV;
+          srl = &cx.rm.rCHIV;
           RequiredParams = 1;  AcceptsParams = 2;
           DefEsd = 0.1;
           Vals[0] = &DefEsd;  Vals[1] = &DefVal;
         }
         else if( Toks[0].Comparei("FLAT") == 0 )  {
-          srl = &rm.rFLAT;
+          srl = &cx.rm.rFLAT;
           DefEsd = 0.1;
           RequiredParams = 0;  AcceptsParams = 1;
           Vals[0] = &DefEsd; ;
         }
         else if( Toks[0].Comparei("DELU") == 0 )  {
-          srl = &rm.rDELU;
+          srl = &cx.rm.rDELU;
           DefEsd = 0.01;  DefEsd1 = 0.01;
           Esd1Mult = 1;
           RequiredParams = 0;  AcceptsParams = 2;
@@ -215,7 +220,7 @@ public:
           AcceptsAll = true;
         }
         else if( Toks[0].Comparei("SIMU") == 0 )  {
-          srl = &rm.rSIMU;
+          srl = &cx.rm.rSIMU;
           DefEsd = 0.04;  DefEsd1 = 0.08;
           Esd1Mult = 2;
           DefVal = 1.7;
@@ -224,7 +229,7 @@ public:
           AcceptsAll = true;
         }
         else if( Toks[0].Comparei("ISOR") == 0 )  {
-          srl = &rm.rISOR;
+          srl = &cx.rm.rISOR;
           DefEsd = 0.1;  DefEsd1 = 0.2;
           Esd1Mult = 2;
           RequiredParams = 0;  AcceptsParams = 2;
@@ -232,13 +237,9 @@ public:
           AcceptsAll = true;
         }
         else if( Toks[0].Comparei("EADP") == 0 )  {
-          srl = &rm.rEADP;
+          srl = &cx.rm.rEADP;
           RequiredParams = 0;  AcceptsParams = 0;
         }
-        //else if( Toks[0].Comparei("EXYZ") == 0 )  {
-        //  srl = &au->SharedSites();
-        //  RequiredParams = 0;  AcceptsParams = 0;
-        //}
         else
           srl = NULL;
         if( srl != NULL )  {
@@ -282,7 +283,7 @@ public:
             TAtomReference aref(Toks.Text(' ', index));
             TCAtomGroup agroup;
             int atomAGroup;
-            try  {  aref.Expand(rm, agroup, resi, atomAGroup);  }
+            try  {  aref.Expand(cx.rm, agroup, resi, atomAGroup);  }
             catch( const TExceptionBase& ex )  {
               TBasicApp::GetLog().Exception( ex.GetException()->GetError() );
               continue;

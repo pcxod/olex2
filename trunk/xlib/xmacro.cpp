@@ -81,8 +81,10 @@ void XLibMacros::Export(TLibrary& lib)  {
 "Re-initialises the connectivity list" );
   xlib_InitMacro(Flush, EmptyString, fpNone|fpOne, "Flushes log streams" );
 //_________________________________________________________________________________________________________________________
-  xlib_InitMacro(EXYZ, "", fpAny|psCheckFileTypeIns,
-"Shares adds a new element to the give site" );
+  xlib_InitMacro(EXYZ, "eadp-sets the equivalent anisotropic parameter constraints for the shared sites\
+&;lo-links occupancies of all elements sharing the site", (fpAny^(fpNone|fpOne))|psCheckFileTypeIns,
+"Adds a new element to the give site. Takes the site identifier as the first parameter and element types\
+ as any subsequent argument" );
 //_________________________________________________________________________________________________________________________
   xlib_InitMacro(EADP, "", fpAny|psCheckFileTypeIns,
 "Forces EADP/Uiso of provided atoms to be constrained the same" );
@@ -952,22 +954,77 @@ void XLibMacros::macFixUnit(TStrObjList &Cmds, const TParamList &Options, TMacro
 }
 //..............................................................................
 void XLibMacros::macEXYZ(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
-  return;
   TSAtomPList atoms;
   TXApp& xapp = TXApp::GetInstance();
-  xapp.FindSAtoms(Cmds.Text(' '), atoms, false, false);
+  xapp.FindSAtoms(Cmds[0], atoms, false, true);
   if( atoms.Count() != 1 )  {
     E.ProcessingError(__OlxSrcInfo, "please provide one atom exactly" );
     return;
   }
-  if( atoms[0]->CAtom().GetExyzGroup() != NULL )  {
-  
+  bool set_eadp = Options.Contains("eadp");
+  bool link_occu = Options.Contains("lo");
+  TExyzGroup* eg;
+  TPtrList<TBasicAtomInfo> bais;
+  if( atoms[0]->CAtom().GetExyzGroup() != NULL ) {
+    eg = atoms[0]->CAtom().GetExyzGroup();
+    bais.Add( &atoms[0]->GetAtomInfo() );
   }
   else  {
-    TExyzGroup& sr = xapp.XFile().GetRM().ExyzGroups.New();
-    for( int i=0; i < atoms.Count(); i++ )
-      sr.Add(atoms[i]->CAtom());
+    eg = &xapp.XFile().GetRM().ExyzGroups.New();
+    eg->Add(atoms[0]->CAtom());
   }
+  TAtomsInfo& AtomsInfo = TAtomsInfo::GetInstance();
+  RefinementModel& rm = xapp.XFile().GetRM();
+  for( int i=1; i < Cmds.Count(); i++ )  {
+    bool uniq = true;
+    TBasicAtomInfo* bai = AtomsInfo.FindAtomInfoBySymbol(Cmds[i]);
+    if( bai == NULL )  {
+      xapp.GetLog().Error(olxstr("Unknown element: ") << Cmds[i]);
+      continue;
+    }
+    for( int j=0; j < bais.Count(); j++)  {
+      if( *bais[j] == *bai )  {
+        uniq = false;
+        break;
+      }
+    }
+    if( uniq )  {
+      TCAtom& ca = xapp.XFile().GetAsymmUnit().NewAtom();
+      ca.SetLoaderId(liNewAtom);
+      ca.ccrd() = atoms[0]->CAtom().ccrd();
+      ca.Label() = bai->GetSymbol() + atoms[0]->GetLabel().SubStringFrom( 
+        atoms[0]->GetAtomInfo().GetSymbol().Length());
+      ca.AtomInfo( bai );
+      rm.Vars.FixAtomParam(ca, var_name_Sof);
+      eg->Add(ca);
+    }
+  }
+  if( (set_eadp || link_occu) && eg->Count() > 1 )  {
+    TSimpleRestraint* sr = set_eadp ? &rm.rEADP.AddNew() : NULL;
+    XLEQ* leq = NULL;
+    if( link_occu )  {
+      if( eg->Count() == 2 )  {
+        XVar& vr = rm.Vars.NewVar();
+        rm.Vars.AddVarRef(vr, (*eg)[0], var_name_Sof, relation_AsVar); 
+        rm.Vars.AddVarRef(vr, (*eg)[1], var_name_Sof, relation_AsOneMinusVar); 
+      }
+      else
+        leq = &rm.Vars.NewEquation();
+    }
+    for( int i=0; i < eg->Count(); i++ )  {
+      if( leq != NULL )  {
+        XVar& vr = rm.Vars.NewVar( 1./eg->Count() );
+        rm.Vars.AddVarRef(vr, (*eg)[i], var_name_Sof, relation_AsVar, 1.0); 
+        leq->AddMember(vr);
+      }
+      if( sr != NULL )
+        sr->AddAtom((*eg)[i], NULL);
+    }
+  }
+  // force the split atom to become isotropic
+  TCAtomPList processed;
+  processed.Add( &atoms[0]->CAtom() );
+  xapp.XFile().GetLattice().SetAnis(processed, false);
 }
 //..............................................................................
 void XLibMacros::macEADP(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {

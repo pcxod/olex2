@@ -88,6 +88,17 @@ public:
   // fins Cp, Ph, Naph and Cp* rings and adds corresponding afixes
   void AutoAfixRings(int afix, TSAtom* sa = NULL, bool TryPyridine = false);
   void SetAtomUiso(TSAtom& sa, double val);
+  
+  template <class atom_list> static void UnifyPAtomList(atom_list& alist) {
+    const int ac = alist.Count();
+    for( int i=0; i < ac; i++ )
+      alist[i]->SetTag(i);
+    for( int i=0; i < ac; i++ )
+      if( alist[i]->GetTag() != i || alist[i]->IsDeleted() )
+        alist[i] = NULL;
+    alist.Pack();
+  }
+
   void ToDataItem(TDataItem& item) const;
   void FromDataItem(TDataItem& item);
 };
