@@ -3808,8 +3808,6 @@ void TMainForm::macSplit(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       sr->AddAtomPair(CA1, NULL, CA2, NULL);
     CA->SetDeleted(true);
   }
-  for( int i=0; i < ProcessedAtoms.Count(); i++ )
-    ProcessedAtoms[i]->AssignEllp(NULL);
   FXApp->XFile().GetLattice().SetAnis(ProcessedAtoms, false);
 }
 //..............................................................................
@@ -3843,9 +3841,18 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options, TMacro
   FXApp->XFile().UpdateAsymmUnit();
   Ins.UpdateParams();
   TSimpleRestraintPList restraints;
-  for(int i=0; i < Atoms.Count(); i++ )
-    CAtoms.Add( &Atoms[i]->Atom().CAtom() );
-
+  // get CAtoms and EXYZ equivalents
+  for(int i=0; i < Atoms.Count(); i++ )  {
+    TCAtom* ca = &Atoms[i]->Atom().CAtom();
+    CAtoms.Add( ca );
+    TExyzGroup* eg = ca->GetExyzGroup();
+    if( eg != NULL )  {
+      for( int j=0; j < eg->Count(); j++ )
+        if( !(*eg)[j].IsDeleted() )
+          CAtoms.Add( &(*eg)[j] );
+    }
+  }
+  TXApp::UnifyPAtomList(CAtoms);
   TPtrList<TSameGroup> processed;
   int ac = CAtoms.Count();  // to avoid recursion
   for( int i=0; i < ac; i++ )  {
@@ -3883,12 +3890,7 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options, TMacro
     }
   }
   // make sure that the list is unique
-  for( int i=0; i < CAtoms.Count(); i++ )
-    CAtoms[i]->SetTag(i);
-  for( int i=0; i < CAtoms.Count(); i++ )
-    if( CAtoms[i]->GetTag() != i || CAtoms[i]->IsDeleted() )  
-      CAtoms[i] = NULL;
-  CAtoms.Pack();
+  TXApp::UnifyPAtomList(CAtoms);
   FXApp->XFile().GetAsymmUnit().Sort( &CAtoms );
   TStrList SL, *InsParamsCopy, NewIns;
   TStrPObjList<olxstr, TStrList* > RemovedIns;

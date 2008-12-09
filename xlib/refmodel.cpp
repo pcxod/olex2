@@ -41,7 +41,7 @@ void RefinementModel::Clear() {
   rISOR.Clear();
   rEADP.Clear();
   rSAME.Clear();
-  ExyzGroups.Clear();
+  //ExyzGroups.Clear();
   //AfixGroups.Clear();
   UsedSymm.Clear();
   used_weight.Clear();

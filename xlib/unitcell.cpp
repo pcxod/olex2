@@ -226,7 +226,8 @@ TUnitCell::TSearchSymmEqTask::TSearchSymmEqTask(TPtrList<TCAtom>& atoms,
 //..............................................................................
 void TUnitCell::TSearchSymmEqTask::Run(long ind)  {
   vec3d Vec, Vec1;
-  for( int i=ind; i < Atoms.Count(); i++ )  {
+  const int ac = Atoms.Count();
+  for( int i=ind; i < ac; i++ )  {
     if( Atoms[i]->GetTag() == -1 )  continue;
     for( int j=0; j < Matrices.Count(); j++ )  {
       Vec1 = Matrices[j] * Atoms[i]->ccrd();

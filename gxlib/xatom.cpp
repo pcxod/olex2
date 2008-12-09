@@ -207,7 +207,7 @@ void TXAtom::Create(const olxstr& cName)  {
     }
     GS = GPC->Style();
   }
-  olxstr &SMask = GS->ParameterValue("PMask", EmptyString);
+  olxstr& SMask = GS->ParameterValue("PMask", EmptyString);
   if( SMask.IsEmpty() )  {
     if( FAtom->GetEllipsoid() != NULL )  {
       if( FAtom->GetEllipsoid()->IsNPD() )  {  SMask = DefNpdMask();  }
@@ -320,15 +320,15 @@ bool TXAtom::Orient(TGlPrimitive *GlP) {
 //    Parent()->GlScale(K);
 //    return false;
 //  }
-  if( FDrawStyle & adsEllipsoid )  {
+  if( (FDrawStyle & adsEllipsoid) != 0 )  {
     float TP = (float)(TelpProb()*FParams[1]);
     if( FAtom->GetEllipsoid() != NULL )  {
       if( FAtom->GetEllipsoid()->IsNPD() )  {
-        Parent()->GlScale(caDefIso*2*TP);
+        FParent->GlScale(caDefIso*2*TP);
       }
       else  {
-      Parent()->GlOrient( FAtom->GetEllipsoid()->GetMatrix() );
-      Parent()->GlScale(
+      FParent->GlOrient( FAtom->GetEllipsoid()->GetMatrix() );
+      FParent->GlScale(
           (float)(FAtom->GetEllipsoid()->GetSX()*TP),
           (float)(FAtom->GetEllipsoid()->GetSY()*TP),
           (float)(FAtom->GetEllipsoid()->GetSZ()*TP)
@@ -337,7 +337,7 @@ bool TXAtom::Orient(TGlPrimitive *GlP) {
     }
     return false;
   }
-  if( FDrawStyle & adsSphere )  {
+  if( (FDrawStyle & adsSphere) != 0 )  {
     float K = (float)(FParams[0]*FParams[1]*TelpProb());
     FParent->GlScale( K );
   }

@@ -15,8 +15,15 @@ public:
   }
   DefPropP(int, Id)
   TCAtom& Add(TCAtom& ca)  {
+    if( ca.GetExyzGroup() != NULL )
+      ca.GetExyzGroup()->Remove(ca);
     ca.SetExyzGroup(this);
+    Atoms.Add(&ca);
     return ca;
+  }
+  void Remove(TCAtom& ca)  {
+    Atoms.Remove(&ca);
+    ca.SetExyzGroup(NULL);
   }
   TCAtom& operator [] (int i) {  return *Atoms[i];  }
   const TCAtom& operator [] (int i) const {  return *Atoms[i];  }
@@ -25,7 +32,7 @@ public:
     int ac = 0;
     for( int i=0; i < Atoms.Count(); i++ )
       if( !Atoms[i]->IsDeleted() ) ac++;
-    return (ac > 1);
+    return (ac < 2);
   }
   void Assign(const TExyzGroup& ags);
   void Clear();

@@ -186,6 +186,7 @@ void TSimpleRestraint::ToDataItem(TDataItem& item) const {
   item.AddCodedField("allNonH", AllNonHAtoms);
   item.AddCodedField("esd", Esd);
   item.AddCodedField("esd1", Esd1);
+  item.AddCodedField("val", Value);
   TDataItem& atoms = item.AddItem("atoms");
   int atom_id=0;
   for( int i=0; i < InvolvedAtoms.Count(); i++ )  {
@@ -200,6 +201,7 @@ void TSimpleRestraint::FromDataItem(TDataItem& item) {
   AllNonHAtoms = item.GetRequiredField("allNonH").ToBool();
   Esd = item.GetRequiredField("esd").ToDouble();
   Esd1 = item.GetRequiredField("esd1").ToDouble();
+  Value = item.GetRequiredField("val").ToDouble();
   TDataItem& atoms = item.FindRequiredItem("atoms");
   for( int i=0; i < atoms.ItemCount(); i++ )  {
     TDataItem& ai = atoms.GetItem(i);

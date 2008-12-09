@@ -73,6 +73,9 @@ public:
 protected:
  HklStat _HklStat;
 public:
+
+  TAsymmUnit& aunit;
+
   RefinementModel(TAsymmUnit& au);
   virtual ~RefinementModel() {  Clear();  }
   ExperimentalDetails expl;
@@ -249,12 +252,12 @@ of components 1 ... m
       PLAN[0] = v;  
   }
 
-  TAsymmUnit& aunit;
-  // clears restraints, SFAC and used symm but not AfixGroups and Vars
+  // clears restraints, SFAC and used symm but not AfixGroups, Exyzroups and Vars
   void Clear();
   void ClearAll()  {
     Clear();
     AfixGroups.Clear();
+    ExyzGroups.Clear();
     Vars.Clear();
   }
   // adss new symmetry matrics, used in restraints/constraints 
@@ -291,7 +294,21 @@ of components 1 ... m
   }
   // returns the restrained distance or -1
   double FindRestrainedDistance(const TCAtom& a1, const TCAtom& a2);
-  
+
+  template <class list> void AddEXYZ(const list& exyz) {
+    if( exyz.Count() < 2 )
+      throw TFunctionFailedException(__OlxSourceInfo, "incomplete EXYZ group");
+    TExyzGroup& gr = ExyzGroups.New();
+    for( int i=0; i < exyz.Count(); i++ )  {
+      TCAtom* ca = aunit.FindCAtom(exyz[i]);
+      if( ca == NULL )  {
+        gr.Clear();
+        throw TFunctionFailedException(__OlxSourceInfo, olxstr("unknown atom: ") << exyz[i] );
+      }
+      gr.Add(*ca);
+    }
+  }
+
   RefinementModel& Assign(const RefinementModel& rm, bool AssignAUnit);
 
   const HklStat& GetMergeStat();
