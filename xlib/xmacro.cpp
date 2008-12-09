@@ -997,6 +997,7 @@ void XLibMacros::macEXYZ(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       ca.AtomInfo( bai );
       rm.Vars.FixAtomParam(ca, var_name_Sof);
       eg->Add(ca);
+      ca.SetUiso( atoms[0]->CAtom().GetUiso() );
     }
   }
   if( (set_eadp || link_occu) && eg->Count() > 1 )  {

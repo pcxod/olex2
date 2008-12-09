@@ -6790,6 +6790,17 @@ public:
 };
 #endif
 void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+  wxImage img;
+  img.LoadFile(wxT("c:/tmp/tex2d.jpg"));
+  int tex_id = FXApp->GetRender().GetTextureManager().Add2DTexture("shared_site", 1, img.GetWidth(), img.GetHeight(), 0, GL_RGB, img.GetData());
+  if( tex_id != -1 )  {
+    TXAtomPList xatoms;
+    FindXAtoms(Cmds, xatoms, true, true);
+    for( int i=0; i < xatoms.Count(); i++ )  {
+      xatoms[i]->Primitives()->Primitive(0)->Texture(tex_id); 
+    }
+  }
+  return;
   olxstr hklfn = FXApp->LocateHklFile();
   if( TEFile::FileExists(hklfn) )  {
     THklFile hf;

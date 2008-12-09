@@ -21,6 +21,7 @@
 #include "lattice.h"
 
 #include "glgroup.h"
+#include "exyzgroup.h"
 
 //..............................................................................
 bool TXAtomStylesClear::Enter(const IEObject *Sender, const IEObject *Data)  {  
@@ -298,7 +299,7 @@ bool TXAtom::Orient(TGlPrimitive *GlP) {
   if( Roteable() )  {
     vec3d cr;
     int ac = 0;
-    TGlGroup* gr = Parent()->Selection();
+    TGlGroup* gr = FParent->Selection();
     for( int i=0; i < gr->Count(); i++ )  {
       if( EsdlInstanceOf(*gr->Object(i), TXAtom) )  {
         cr += ((TXAtom*)gr->Object(i))->FAtom->crd();
@@ -313,6 +314,19 @@ bool TXAtom::Orient(TGlPrimitive *GlP) {
       c += cr;
     }
   }
+  //const TExyzGroup* eg = FAtom->CAtom().GetExyzGroup();
+  //if( eg != NULL )  {
+  //  //if( &(*eg)[0] != &FAtom->CAtom() )  return true;
+  //  if( eg->Count() == 2 )  {
+  //    const mat3d& m = FParent->GetBasis().GetMatrix();
+  //    vec3d v(m[0][0], m[1][0], m[2][0]);
+  //    if( &(*eg)[0] == &FAtom->CAtom() )  
+  //      c -= v*0.25;
+  //    else
+  //      c += v*0.25;
+  //  }
+  //}
+  
   FParent->GlTranslate(c);
 
 //  if( FAtom->GetAtomInfo() == iHydrogenIndex )  {
