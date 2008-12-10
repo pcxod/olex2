@@ -984,7 +984,7 @@ void TIns::UpdateAtomsFromStrings(RefinementModel& rm, TCAtomPList& CAtoms, cons
 }
 //..............................................................................
 bool TIns::SaveAtomsToStrings(RefinementModel& rm, const TCAtomPList& CAtoms, TIntList& index, 
-                              TStrList& SL, TSimpleRestraintPList* processed)  {
+                              TStrList& SL, RefinementModel::ReleasedItems* processed)  {
   if( CAtoms.IsEmpty() )  return false;
   int part = 0,
       afix = 0,
@@ -1294,7 +1294,6 @@ bool ProcessRestraint(const TCAtomPList* atoms, TSimpleRestraint& sr)  {
     if( sr.ContainsAtom( atoms->Item(i) ) )  return true;
   return false;
 }
-
 void StoreUsedSymIndex(TIntList& il, const smatd* m, RefinementModel& rm)  {
   if( m == NULL )  return;
   int ind = rm.UsedSymmIndex( *m );
@@ -1303,7 +1302,7 @@ void StoreUsedSymIndex(TIntList& il, const smatd* m, RefinementModel& rm)  {
 }
 
 void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
-                          TSimpleRestraintPList* processed, RefinementModel& rm)  {
+                          RefinementModel::ReleasedItems* processed, RefinementModel& rm)  {
   int oindex = SL.Count();
 
   olxstr Tmp;
@@ -1321,7 +1320,8 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
      StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), rm);
     }
     HypernateIns(Tmp, SL);
-    if( processed != 0 )  processed->Add( &sr );
+    if( processed != NULL )  
+      processed->restraints.Add( &sr );
   }
   // similar distances
   for( int i=0; i < rm.rSADI.Count(); i++ )  {
@@ -1335,7 +1335,8 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
      StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), rm);
     }
     HypernateIns(Tmp, SL);
-    if( processed != 0 )  processed->Add( &sr );
+    if( processed != NULL )  
+      processed->restraints.Add( &sr );
   }
   // fixed "angles"
   for( int i=0; i < rm.rDANG.Count(); i++ )  {
@@ -1349,7 +1350,8 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
      StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), rm);
     }
     HypernateIns(Tmp, SL);
-    if( processed != 0 )  processed->Add( &sr );
+    if( processed != NULL )  
+      processed->restraints.Add( &sr );
   }
   // fixed chiral atomic volumes
   for( int i=0; i < rm.rCHIV.Count(); i++ )  {
@@ -1363,7 +1365,8 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
      StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), rm);
     }
     HypernateIns(Tmp, SL);
-    if( processed != 0 )  processed->Add( &sr );
+    if( processed != NULL )  
+      processed->restraints.Add( &sr );
   }
   // planar groups
   for( int i=0; i < rm.rFLAT.Count(); i++ )  {
@@ -1378,7 +1381,8 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
      StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), rm);
     }
     HypernateIns(Tmp, SL);
-    if( processed != 0 )  processed->Add( &sr );
+    if( processed != NULL )  
+      processed->restraints.Add( &sr );
   }
   // rigid bond restraint
   for( int i=0; i < rm.rDELU.Count(); i++ )  {
@@ -1392,7 +1396,8 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
      StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), rm);
     }
     HypernateIns(Tmp, SL);
-    if( processed != 0 )  processed->Add( &sr );
+    if( processed != NULL )  
+      processed->restraints.Add( &sr );
   }
   // similar U restraint
   for( int i=0; i < rm.rSIMU.Count(); i++ )  {
@@ -1406,7 +1411,8 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
      StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), rm);
     }
     HypernateIns(Tmp, SL);
-    if( processed != 0 )  processed->Add( &sr );
+    if( processed != NULL )  
+      processed->restraints.Add( &sr );
   }
   // Uanis restraint to behave like Uiso
   for( int i=0; i < rm.rISOR.Count(); i++ )  {
@@ -1420,7 +1426,8 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
      StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), rm);
     }
     HypernateIns(Tmp, SL);
-    if( processed != 0 )  processed->Add( &sr );
+    if( processed != NULL )  
+      processed->restraints.Add( &sr );
   }
   // equivalent EADP constraint
   for( int i=0; i < rm.rEADP.Count(); i++ )  {
@@ -1434,7 +1441,8 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
      StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), rm);
     }
     HypernateIns(Tmp, SL);
-    if( processed != 0 )  processed->Add( &sr );
+    if( processed != NULL )  
+      processed->restraints.Add( &sr );
   }
   // equivalent EXYZ constraint
   for( int i=0; i < rm.ExyzGroups.Count(); i++ )  {
@@ -1442,7 +1450,8 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
     if( sr.IsEmpty() )  continue;
     Tmp = "EXYZ";
     for( int j=0; j < sr.Count(); j++ )
-     Tmp << ' ' << sr[j].GetLabel();
+      if( !sr[j].IsDeleted() )
+        Tmp << ' ' << sr[j].GetLabel();
     HypernateIns(Tmp, SL);
   }
   // store the rest of eqiv ...
@@ -1454,8 +1463,12 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
     Tmp << '$' << (i+1) << ' ' << TSymmParser::MatrixToSymm( rm.GetUsedSymm(usedSymm[i]) );
     SL.Insert(oindex+i, Tmp  );
   }
-  for( int i=0; i < rm.Vars.EquationCount(); i++ )
+  for( int i=0; i < rm.Vars.EquationCount(); i++ )  {
+    if( !rm.Vars.GetEquation(i).Validate() )  continue;
     SL.Add("SUMP ") << rm.Vars.GetSUMPStr(i);
+    //if( processed != NULL )  
+    //  processed->equations.Add( &rm.Vars.GetEquation(i) );
+  }
 }
 //..............................................................................
 void TIns::ClearIns()  {

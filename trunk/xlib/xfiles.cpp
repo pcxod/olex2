@@ -193,7 +193,7 @@ void TXFile::UpdateAsymmUnit()  {
       }
     }
   }
-
+  RefMod.Validate();
   LL->GetRM().Assign(RefMod, false);
   LL->GetAsymmUnit().SetZ( GetAsymmUnit().GetZ() );
 }

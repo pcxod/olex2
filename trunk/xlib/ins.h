@@ -135,8 +135,10 @@ public:
     UpdateAtomsFromStrings. index is initialised with the order in which atoms saved
     this must be passed to UpdateAtomsFromString
   */
-  bool SaveAtomsToStrings(RefinementModel& rm, const TCAtomPList& CAtoms, TIntList& index, TStrList& SL, TSimpleRestraintPList* processed);
-  void SaveRestraints(TStrList& SL, const TCAtomPList* atoms, TSimpleRestraintPList* processed, RefinementModel& rm);
+  bool SaveAtomsToStrings(RefinementModel& rm, const TCAtomPList& CAtoms, TIntList& index, TStrList& SL, 
+    RefinementModel::ReleasedItems* processed);
+  void SaveRestraints(TStrList& SL, const TCAtomPList* atoms, 
+    RefinementModel::ReleasedItems* processed, RefinementModel& rm);
   template <class StrLst> void ParseRestraints(StrLst& SL, ParseContext& cx)  {
       TStrList Toks;
       olxstr resi;

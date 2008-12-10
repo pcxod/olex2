@@ -93,6 +93,20 @@ public:
   TAfixGroups AfixGroups;
   TExyzGroups ExyzGroups;
 
+  void Validate() {
+    rDFIX.ValidateAll();
+    rDANG.ValidateAll();
+    rSADI.ValidateAll();
+    rCHIV.ValidateAll();
+    rFLAT.ValidateAll();
+    rDELU.ValidateAll();
+    rSIMU.ValidateAll();
+    rISOR.ValidateAll();
+    rEADP.ValidateAll();
+    ExyzGroups.ValidateAll();
+    Vars.Validate();
+  }
+
   TDoubleList used_weight, proposed_weight;
   TIntList LS;      // up to four params
   TDoubleList PLAN;  // up to three params
@@ -258,7 +272,7 @@ of components 1 ... m
     Clear();
     AfixGroups.Clear();
     ExyzGroups.Clear();
-    Vars.Clear();
+    Vars.ClearAll();
   }
   // adss new symmetry matrics, used in restraints/constraints 
   const smatd& AddUsedSymm(const smatd& matr);
@@ -315,6 +329,11 @@ of components 1 ... m
 
   void ToDataItem(TDataItem& item);
   void FromDataItem(TDataItem& item);
+  
+  struct ReleasedItems {
+    TSimpleRestraintPList restraints;
+    //TPtrList<XLEQ> equations;
+  };
 };
 
 EndXlibNamespace()

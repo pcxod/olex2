@@ -85,10 +85,9 @@ XVarManager::XVarManager(TAsymmUnit& au) : aunit(au) {
 }
 //.................................................................................................
 void XVarManager::ClearAll()  {
-  Equations.Clear();
+  Clear();
   Vars.Clear();
   References.Clear();
-  NextVar = 0;  // the global scale factor
   for( int i=0; i < aunit.AtomCount(); i++ )  {
     TCAtom& ca = aunit.GetAtom(i);
     for( short j=var_name_First; j <= var_name_Last; j++ )
@@ -270,19 +269,23 @@ void XVarManager::Validate() {
   for( int i=1; i < Vars.Count(); i++ )  {// start from 1 to leave global scale
     XVar& v = Vars[i];   
     if( !v.IsUsed() ) {
-      for( int j=0; j < v.RefCount(); j++ )  {
+      for( int j=0; j < v._RefCount(); j++ )  {
         XVarReference& vr = v.GetRef(j);
         vr.atom->NullVarRef(vr.var_name);
+        References.NullItem( vr.GetId() );
       }
       Vars.NullItem(i);
     }
   }
   Equations.Pack();
+  References.Pack();
   Vars.Pack();
   for( int i=0; i < Vars.Count(); i++ )
     Vars[i].SetId(i);
   for( int i=0; i < Equations.Count(); i++ )
     Equations[i].SetId(i);
+  for( int i=0; i < References.Count(); i++ )
+    References[i].SetId(i);
 }
 //.................................................................................................
 short XVarManager::VarNameIndex(const olxstr& vn)  {
