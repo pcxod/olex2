@@ -73,6 +73,7 @@ public:
   XVarReference& _AddRef(XVarReference& vr)  {  return *References.Add(&vr);  }
   // removes a refence, for internal use
   void _RemRef(XVarReference& vr)  {  References.Remove(&vr);  }
+  int _RefCount()  const {  return References.Count();  }
   // calculates the number of atoms (excluding the deleted ones) using this variable
   int RefCount() const;
   XVarReference& GetRef(int i) const {  return *References[i];  }
@@ -86,8 +87,8 @@ public:
   bool IsUsed() const {
     const int rc = RefCount();
     if( LeqCount() == 0 )  
-      return !(rc < 2);
-    return true;
+      return rc > 1;
+    return rc > 0;
   }
   DefPropP(double, Value)
   DefPropP(int, Id)  
@@ -109,6 +110,10 @@ public:
       Parent(parent), 
       Value(val), 
       Sigma(sig) { }
+  ~XLEQ() {
+    for( int i=0; i < Vars.Count(); i++ )
+      Vars[i]->_RemLeq(*this);
+  }
   // copies Coefficients and Vars, internal use
   void _Assign(const XLEQ& leq);
   void AddMember(XVar& var, double coefficient=1.0) {
@@ -130,6 +135,7 @@ public:
     if( vc < 2 )  {
       for( int i=0; i < Vars.Count(); i++ )
         Vars[i]->_RemLeq(*this);
+      Vars.Clear();
     }
     return vc >= 2;
   }
@@ -181,6 +187,13 @@ public:
   int EquationCount()       const {  return Equations.Count();  }
   const XLEQ& GetEquation(int i) const {  return Equations[i];  }
   XLEQ& GetEquation(int i)        {  return Equations[i];  }
+  XLEQ& ReleaseEquation(int i)    {  
+    Equations[i].SetId(-1);
+    XLEQ& eq = Equations.Release(i);
+    for( int i=0; i < Equations.Count(); i++ )
+      Equations[i].SetId(i);
+    return eq;
+  }
 
   int VarRefCount() const {  return References.Count();  }
   XVarReference& GetVarRef(int i) {  return References[i];  }

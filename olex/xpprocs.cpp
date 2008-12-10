@@ -3840,7 +3840,6 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options, TMacro
   // synchronise atom names etc
   FXApp->XFile().UpdateAsymmUnit();
   Ins.UpdateParams();
-  TSimpleRestraintPList restraints;
   // get CAtoms and EXYZ equivalents
   for(int i=0; i < Atoms.Count(); i++ )  {
     TCAtom* ca = &Atoms[i]->Atom().CAtom();
@@ -3933,9 +3932,10 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options, TMacro
   }
   SL.Add(EmptyString);
   TIntList atomIndex;
-  Ins.SaveAtomsToStrings(FXApp->XFile().GetRM(), CAtoms, atomIndex, SL, &restraints);
-  for( int i=0; i < restraints.Count(); i++ )
-    restraints[i]->GetParent().Release(*restraints[i]);
+  RefinementModel::ReleasedItems released;
+  Ins.SaveAtomsToStrings(FXApp->XFile().GetRM(), CAtoms, atomIndex, SL, &released);
+  for( int i=0; i < released.restraints.Count(); i++ )
+    released.restraints[i]->GetParent().Release(*released.restraints[i]);
 
   TdlgEdit *dlg = new TdlgEdit(this, true);
   Tmp = EmptyString;
@@ -3948,6 +3948,7 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options, TMacro
   try  {
     if( dlg->ShowModal() == wxID_OK )  {
       SL.Clear();
+      FXApp->XFile().GetRM().Vars.Clear();
       SL.Strtok(dlg->GetText(), '\n');
       Ins.UpdateAtomsFromStrings(FXApp->XFile().GetRM(), CAtoms, atomIndex, SL, NewIns);
       // add new instructions
@@ -3969,23 +3970,23 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options, TMacro
     else  {
       for( int i=0; i < RemovedIns.Count(); i++ )
         Ins.AddIns(RemovedIns[i], *RemovedIns.Object(i), FXApp->XFile().GetRM());
-      for( int i=0; i < restraints.Count(); i++ )
-        restraints[i]->GetParent().Restore(*restraints[i]);
-      restraints.Clear();
+      for( int i=0; i < released.restraints.Count(); i++ )
+        released.restraints[i]->GetParent().Restore(*released.restraints[i]);
+      released.restraints.Clear();
     }
   }
   catch(const TExceptionBase& exc )  {
     TBasicApp::GetLog().Exception( exc.GetException()->GetError() );
     for( int i=0; i < RemovedIns.Count(); i++ )
       Ins.AddIns(RemovedIns[i], *RemovedIns.Object(i), FXApp->XFile().GetRM());
-    for( int i=0; i < restraints.Count(); i++ )
-      restraints[i]->GetParent().Restore(*restraints[i]);
-    restraints.Clear();
+    for( int i=0; i < released.restraints.Count(); i++ )
+      released.restraints[i]->GetParent().Restore(*released.restraints[i]);
+    released.restraints.Clear();
   }
   for( int i=0; i < RemovedIns.Count(); i++ )
     delete (TStrList*)RemovedIns.Object(i);
-  for( int i=0; i < restraints.Count(); i++ )
-    delete restraints[i];
+  for( int i=0; i < released.restraints.Count(); i++ )
+    delete released.restraints[i];
   dlg->Destroy();
 }
 //..............................................................................

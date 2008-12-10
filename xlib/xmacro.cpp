@@ -1013,6 +1013,7 @@ void XLibMacros::macEXYZ(TStrObjList &Cmds, const TParamList &Options, TMacroErr
         leq = &rm.Vars.NewEquation();
     }
     for( int i=0; i < eg->Count(); i++ )  {
+      if( (*eg)[i].IsDeleted() )  continue;
       if( leq != NULL )  {
         XVar& vr = rm.Vars.NewVar( 1./eg->Count() );
         rm.Vars.AddVarRef(vr, (*eg)[i], var_name_Sof, relation_AsVar, 1.0); 

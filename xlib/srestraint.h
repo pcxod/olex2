@@ -85,6 +85,10 @@ public:
   TSimpleRestraint& AddNew()  {  return Restraints.Add( new TSimpleRestraint(*this, RestraintListType));  }
   // function checks uniquesness of the restraint data - previously defined values are removed
   void ValidateRestraint( TSimpleRestraint& sr);
+  void ValidateAll()  {
+    for( int i=0; i < Restraints.Count(); i++ )
+      Restraints[i].Validate();
+  }
 
   inline TSimpleRestraint& Release(int i)    {  return Restraints.Release(i);  }
   void Release(TSimpleRestraint& sr);

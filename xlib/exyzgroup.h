@@ -31,7 +31,8 @@ public:
   bool IsEmpty() const {
     int ac = 0;
     for( int i=0; i < Atoms.Count(); i++ )
-      if( !Atoms[i]->IsDeleted() ) ac++;
+      if( !Atoms[i]->IsDeleted() && Atoms[i]->GetExyzGroup() == this ) 
+        ac++;
     return (ac < 2);
   }
   void Assign(const TExyzGroup& ags);
@@ -65,6 +66,12 @@ public:
       if( ags[i].IsEmpty() )  continue;
       Groups.Add( new TExyzGroup(*this, Groups.Count()) ).Assign(ags[i]);
     }
+  }
+  void ValidateAll() {
+    for( int i=0; i < Groups.Count(); i++ )
+      if( Groups[i].IsEmpty() )
+        Groups.NullItem(i);
+    Groups.Pack();
   }
   void ToDataItem(TDataItem& item);
   void FromDataItem(TDataItem& item);
