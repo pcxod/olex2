@@ -3838,6 +3838,8 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options, TMacro
     return;
   }
   // synchronise atom names etc
+  TAsymmUnit& au = FXApp->XFile().GetAsymmUnit();
+  RefinementModel& rm = FXApp->XFile().GetRM();
   FXApp->XFile().UpdateAsymmUnit();
   Ins.UpdateParams();
   // get CAtoms and EXYZ equivalents
@@ -3863,8 +3865,6 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options, TMacro
         CAtoms.Add( &sg[j] );
     }
   }
-  TAsymmUnit& au = FXApp->XFile().GetAsymmUnit();
-  RefinementModel& rm = FXApp->XFile().GetRM();
   for( int i=0; i < rm.AfixGroups.Count(); i++ )
     rm.AfixGroups[i].SetTag(0);
   for(int i=0; i < CAtoms.Count(); i++ )  {  // add afixed mates and afix parents

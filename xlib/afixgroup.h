@@ -124,6 +124,12 @@ public:
       }
     }
   }
+  void ValidateAll() {
+    for( int i=0; i < Groups.Count(); i++ )
+      if( Groups[i].IsEmpty() )
+        Groups.NullItem(i);
+    Groups.Pack();
+  }
   void ToDataItem(TDataItem& item);
   void FromDataItem(TDataItem& item);
 };
