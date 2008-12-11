@@ -131,6 +131,11 @@ public:
     for( int i=0; i < Vars.Count(); i++ )  {
       if( Vars[i]->IsUsed() )
         vc++;
+      else  {
+        Vars[i]->_RemLeq(*this);
+        Vars.Delete(i);
+        i--;
+      }
     }
     if( vc < 2 )  {
       for( int i=0; i < Vars.Count(); i++ )

@@ -965,7 +965,7 @@ void XLibMacros::macEXYZ(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   bool link_occu = Options.Contains("lo");
   TExyzGroup* eg;
   TPtrList<TBasicAtomInfo> bais;
-  if( atoms[0]->CAtom().GetExyzGroup() != NULL ) {
+  if( atoms[0]->CAtom().GetExyzGroup() != NULL && !atoms[0]->CAtom().GetExyzGroup()->IsEmpty() ) {
     eg = atoms[0]->CAtom().GetExyzGroup();
     bais.Add( &atoms[0]->GetAtomInfo() );
   }

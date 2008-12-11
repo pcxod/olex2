@@ -104,6 +104,7 @@ public:
     rISOR.ValidateAll();
     rEADP.ValidateAll();
     ExyzGroups.ValidateAll();
+    AfixGroups.ValidateAll();
     Vars.Validate();
   }
 
