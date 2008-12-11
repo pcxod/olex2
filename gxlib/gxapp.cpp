@@ -2069,16 +2069,32 @@ void TGXApp::GetBonds(const olxstr &Bonds, TXBondPList& List)  {
 //..............................................................................
 void TGXApp::AtomRad(const olxstr& Rad, TXAtomPList* Atoms)  { // pers, sfil
   short DS = -1;
-  if( !Rad.Comparei("sfil") ){  DS = darPack;  TXAtom::DefRad(darPack); }
-  if( !Rad.Comparei("pers") ){  DS = darPers;  TXAtom::DefRad(darPers); }
-  if( !Rad.Comparei("isot") ){  DS = darIsot;  TXAtom::DefRad(darIsot); }
-  if( !Rad.Comparei("bond") ){  DS = darBond;  TXAtom::DefRad(darIsot); }
+  if( Rad.Comparei("sfil") == 0 ) {
+    DS = darPack;  
+    TXAtom::DefRad(darPack); 
+  }
+  else if( Rad.Comparei("pers") == 0 ) {  
+    DS = darPers;  
+    TXAtom::DefRad(darPers); 
+  }
+  else if( Rad.Comparei("isot") == 0 ) {  
+    DS = darIsot;  
+    TXAtom::DefRad(darIsot); 
+  }
+  else if( Rad.Comparei("isoth") == 0 ) {  
+    DS = darIsotH;  
+    TXAtom::DefRad(darIsotH); 
+  }
+  else if( Rad.Comparei("bond") == 0 ) {  
+    DS = darBond;  
+    TXAtom::DefRad(darIsot); 
+  }
   if( DS == -1 )
     throw TInvalidArgumentException(__OlxSourceInfo, "rad");
 
   if( Atoms != NULL )  {
     for( int i=0; i < Atoms->Count(); i++ )
-    Atoms->Item(i)->CalcRad(DS);
+      Atoms->Item(i)->CalcRad(DS);
   }
   else {
     for( int i=0; i < XAtoms.Count(); i++ )

@@ -107,6 +107,8 @@ public:
     AfixGroups.ValidateAll();
     Vars.Validate();
   }
+  // creates a human readable description of the refinement
+  void Describe(TStrList& lst);
 
   TDoubleList used_weight, proposed_weight;
   TIntList LS;      // up to four params

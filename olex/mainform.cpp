@@ -543,7 +543,7 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual accupancy\
   this_InitMacro(Cent, , fpAny ^ fpNone);
   this_InitMacro(Mask, , fpAny );
 
-  this_InitMacro(ARad, , fpOne );
+  this_InitMacroD(ARad, EmptyString, fpOne, "Changes how the atoms are drawn [sfil,pers,isot,isoth]" );
   this_InitMacro(ADS, , fpAny^(fpNone) );
   this_InitMacro(AZoom, , fpAny^fpNone );
   this_InitMacro(BRad, , fpOne );
@@ -1057,7 +1057,14 @@ separated values of Atom Type and radius, an entry a line" );
 
   TutorialDir = XA->BaseDir()+"etc/";
 //  DataDir = TutorialDir + "Olex_Data\\";
-  DataDir = TShellUtil::GetSpecialFolderLocation(fiAppData);
+  wxString data_dir; // we cannot use any TEFile functions, working eith c_str, as the TEGC is not initialised yet...
+  if( wxGetEnv( wxT("OLEX2_DATADIR"), &data_dir) )  {
+    if( wxDirExists(data_dir) )  {
+      DataDir = TEFile::AddTrailingBackslash(data_dir.c_str());
+    }
+  }
+  if( DataDir.IsEmpty() )
+    DataDir = TShellUtil::GetSpecialFolderLocation(fiAppData);
 #ifdef __WIN32__
   #ifdef _UNICODE
     DataDir << "Olex2u/";

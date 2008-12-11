@@ -1973,8 +1973,7 @@ void TMainForm::macMask(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   }
 }
 //..............................................................................
-void TMainForm::macARad(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)
-{
+void TMainForm::macARad(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   FXApp->AtomRad(Cmds[0]);
 }
 //..............................................................................
@@ -3752,6 +3751,7 @@ void TMainForm::macSplit(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   TAsymmUnit& au = FXApp->XFile().GetAsymmUnit();
   RefinementModel& rm = FXApp->XFile().GetRM();
   TCAtomPList ProcessedAtoms;
+  XVar& var = rm.Vars.NewVar();
   for( int i=0; i < Atoms.Count(); i++ )  {
     TCAtom* CA = Atoms[i];
     if( CA->GetEllipsoid() == NULL )  continue;
@@ -3788,6 +3788,8 @@ void TMainForm::macSplit(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     CA1.SetPart(1);
     CA1.ccrd() += direction;
     CA1.Label() = FXApp->XFile().GetAsymmUnit().CheckLabel(&CA1, lbl+'a');
+    // link occupancies
+    rm.Vars.AddVarRef(var, CA1, var_name_Sof, relation_AsVar); 
     ProcessedAtoms.Add( &CA1 );
     TCAtom& CA2 = FXApp->XFile().GetAsymmUnit().NewAtom();
     CA2.Assign(*CA);
@@ -3795,6 +3797,8 @@ void TMainForm::macSplit(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     CA2.SetPart(2);
     CA2.ccrd() -= direction;
     CA2.Label() = FXApp->XFile().GetAsymmUnit().CheckLabel(&CA2, lbl+'b');
+    // link occupancies
+    rm.Vars.AddVarRef(var, CA2, var_name_Sof, relation_AsOneMinusVar); 
     ProcessedAtoms.Add( &CA2 );
     TSimpleRestraint* sr = NULL;
     if( cr.IsEmpty() );
@@ -6791,17 +6795,17 @@ public:
 };
 #endif
 void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  wxImage img;
-  img.LoadFile(wxT("c:/tmp/tex2d.jpg"));
-  int tex_id = FXApp->GetRender().GetTextureManager().Add2DTexture("shared_site", 1, img.GetWidth(), img.GetHeight(), 0, GL_RGB, img.GetData());
-  if( tex_id != -1 )  {
-    TXAtomPList xatoms;
-    FindXAtoms(Cmds, xatoms, true, true);
-    for( int i=0; i < xatoms.Count(); i++ )  {
-      xatoms[i]->Primitives()->Primitive(0)->Texture(tex_id); 
-    }
-  }
-  return;
+  //wxImage img;
+  //img.LoadFile(wxT("c:/tmp/tex2d.jpg"));
+  //int tex_id = FXApp->GetRender().GetTextureManager().Add2DTexture("shared_site", 1, img.GetWidth(), img.GetHeight(), 0, GL_RGB, img.GetData());
+  //if( tex_id != -1 )  {
+  //  TXAtomPList xatoms;
+  //  FindXAtoms(Cmds, xatoms, true, true);
+  //  for( int i=0; i < xatoms.Count(); i++ )  {
+  //    xatoms[i]->Primitives()->Primitive(0)->Texture(tex_id); 
+  //  }
+  //}
+  //return;
   olxstr hklfn = FXApp->LocateHklFile();
   if( TEFile::FileExists(hklfn) )  {
     THklFile hf;

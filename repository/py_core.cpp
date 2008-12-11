@@ -2,7 +2,7 @@
 
 #include "py_core.h"
 
-#include "bapp.h"
+#include "xapp.h"
 #include "efile.h"
 #include "settingsfile.h"
 #include "url.h"
@@ -171,15 +171,10 @@ PyObject* pyTranslate(PyObject* self, PyObject* args)  {
   return PythonExt::BuildString(IOlexProcessor::GetInstance()->TranslateString(str));
 }
 //..............................................................................
-PyObject* depr_pyIsControl(PyObject* self, PyObject* args)  {
-  olxstr cname, pname;  // control and popup (if any) name
-  if( !PythonExt::ParseTuple(args, "w|w", &cname, &pname) )  {
-    Py_INCREF(Py_None);
-    return Py_None;
-  }
-  IOlexProcessor* olx = IOlexProcessor::GetInstance();
-  return Py_BuildValue("b", pname.IsEmpty() ? olx->IsControl(cname) : 
-    olx->IsControl(olxstr(pname) << "->" << cname));
+PyObject* pyDescRef(PyObject* self, PyObject* args)  {
+  TStrList rv;
+  TXApp::GetInstance().XFile().GetRM().Describe(rv);
+  return PythonExt::BuildString(rv.Text('\n'));
 }
 //..............................................................................
 PyObject* pyUpdateRepository(PyObject* self, PyObject* args)  {
@@ -241,7 +236,7 @@ the index file name, destination folder (relative to the basedir)"},
   {"VarName", pyGetVarName, METH_VARARGS, "returns name of specified variable"},
   {"FindVarName", pyFindGetVarName, METH_VARARGS, "returns name of variable name corresponding to provided object"},
   {"Translate", pyTranslate, METH_VARARGS, "returns translated version of provided string"},
-  {"IsControl", depr_pyIsControl, METH_VARARGS, "Takes HTML element name and optionaly popup name. Returns true/false if given control exists"},
+  {"DescribeRefinement", pyDescRef, METH_VARARGS, "Returns a string describing current refinement model"},
   {NULL, NULL, 0, NULL}
    };
 

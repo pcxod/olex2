@@ -25,12 +25,12 @@ void TAfixGroup::ToDataItem(TDataItem& item) const {
   item.AddCodedField("afix", Afix);
   item.AddCodedField("d", D);
   item.AddCodedField("u", U);
-  item.AddCodedField("pivot", Pivot->GetTag());
+  item.AddCodedField("pivot_atom_id", Pivot->GetTag());
   TDataItem& dep = item.AddItem("dependent");
   int dep_id = 0;
   for( int i=0; i < Dependent.Count(); i++ )  {
     if( Dependent[i]->IsDeleted() )  continue;
-    dep.AddField(dep_id++, Dependent[i]->GetTag());
+    dep.AddField(olxstr("atom_id_") << dep_id++, Dependent[i]->GetTag());
   }
 }
 //..............................................................................
@@ -38,7 +38,7 @@ void TAfixGroup::FromDataItem(TDataItem& item) {
   Afix = item.GetRequiredField("afix").ToInt();
   D = item.GetRequiredField("d").ToDouble();
   U = item.GetRequiredField("u").ToDouble();
-  SetPivot( Parent.RM.aunit.GetAtom( item.GetRequiredField("pivot").ToInt() ) );
+  SetPivot( Parent.RM.aunit.GetAtom( item.GetRequiredField("pivot_atom_id").ToInt() ) );
   TDataItem& dep = item.FindRequiredItem("dependent");
   for( int i=0; i < dep.FieldCount(); i++ )
     Dependent.Add( &Parent.RM.aunit.GetAtom(dep.RawField(i).ToInt()) )->SetParentAfixGroup(this);
