@@ -20,7 +20,8 @@ const short adsSphere    = 0x0001,  // atom draw styles
 const short darPers     = 0x0001, // default atom radii
             darIsot     = 0x0002,
             darPack     = 0x0004,
-            darBond     = 0x0008;
+            darBond     = 0x0008,
+            darIsotH    = 0x0010;  // only affects H, others as darIsot
 
 class TXAtomStylesClear: public AActionHandler  {
 public:

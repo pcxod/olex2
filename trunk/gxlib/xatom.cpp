@@ -140,19 +140,27 @@ void TXAtom::CalcRad(short DefRadius)  {
   /*  remember the value in the style */
   DefRad(DefRadius);
 
-  if( DefRadius == darPers )  {  Params()[0] = FAtom->GetAtomInfo().GetRad();   return;  }
-  if( DefRadius == darPack )  {  Params()[0] = FAtom->GetAtomInfo().GetRad2();  return;  }
-  if( DefRadius == darBond )  {  Params()[0] = sqrt(caDefIso)/2;  return;  }
-  if( DefRadius == darIsot )  {
-    if( FAtom->GetAtomInfo() == iHydrogenIndex )  {
+  if( DefRadius == darPers )  
+    Params()[0] = FAtom->GetAtomInfo().GetRad();   
+  else if( DefRadius == darPack )  
+    Params()[0] = FAtom->GetAtomInfo().GetRad2();
+  else if( DefRadius == darBond )  
+    Params()[0] = sqrt(caDefIso)/2;
+  else if( DefRadius == darIsot )  {
+    if( FAtom->GetAtomInfo() == iHydrogenIndex ) 
       Params()[0] = 2*caDefIso;
-    }
     else  {
       if( FAtom->CAtom().GetUiso() > 0 )
         Params()[0] = sqrt(FAtom->CAtom().GetUiso());
       else
         Params()[0] = 2*caDefIso; //sqrt(caDefIso);
     }
+  }
+  else if( DefRadius == darIsotH )  {
+    if( FAtom->CAtom().GetUiso() > 0 )
+      Params()[0] = sqrt(FAtom->CAtom().GetUiso());
+    else
+      Params()[0] = 2*caDefIso; //sqrt(caDefIso);
   }
 }
 //..............................................................................
