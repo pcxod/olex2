@@ -23,7 +23,7 @@ namespace PersUtil {
     return vec3i(toks[0].ToInt(), toks[2].ToInt(), toks[2].ToInt());
   }
   template <class lc> static olxstr NumberListToStr(const lc& v)  {
-    olxstr rv( v.IsEmpty() ? EmptyString : olxstr(v[0]));
+    olxstr rv = v.IsEmpty() ? EmptyString : olxstr(v[0]);
     for( int i=1; i < v.Count(); i++ )
       rv << ',' << v[i];
     return rv;

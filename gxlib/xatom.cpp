@@ -138,7 +138,7 @@ void TXAtom::ListParams(TStrList &List)  {
 //..............................................................................
 void TXAtom::CalcRad(short DefRadius)  {
   /*  remember the value in the style */
-  DefRad(DefRadius);
+  //DefRad(DefRadius);
 
   if( DefRadius == darPers )  
     Params()[0] = FAtom->GetAtomInfo().GetRad();   
@@ -445,7 +445,7 @@ void TXAtom::ApplyStyle(TGraphicsStyle *Style)  {
 }
 //..............................................................................
 void TXAtom::DrawStyle(short V)  {
-  olxstr &DS = Primitives()->Style()->ParameterValue("DS", CEmptyString);
+  olxstr &DS = Primitives()->Style()->ParameterValue("DS", EmptyString);
   if( V == adsEllipsoid )  {
     if( FAtom->GetEllipsoid() != NULL )  {
       if( FAtom->GetEllipsoid()->IsNPD() )  {
@@ -722,35 +722,35 @@ short TXAtom::DefDS()  {
 //..............................................................................
 int TXAtom::DefSphMask()  {
   ValidateAtomParams();
-  return FAtomParams->ParameterValue("DefSphM", 1).ToInt();
+  return FAtomParams->ParameterValue("DefSphM", "1").ToInt();
 }
 //..............................................................................
 int TXAtom::DefElpMask()  {
   ValidateAtomParams();
-  return  FAtomParams->ParameterValue("DefElpM", 5).ToInt();
+  return  FAtomParams->ParameterValue("DefElpM", "5").ToInt();
 }
 //..............................................................................
 int TXAtom::DefNpdMask()  {
   ValidateAtomParams();
-  return  FAtomParams->ParameterValue("DefNpdM", 6).ToInt();
+  return  FAtomParams->ParameterValue("DefNpdM", "6").ToInt();
 }
 //..............................................................................
 float TXAtom::TelpProb()  {
   if( FTelpProb )  return FTelpProb;
   ValidateAtomParams();
-  FTelpProb = (float)FAtomParams->ParameterValue("TelpP", 1).ToDouble();
+  FTelpProb = (float)FAtomParams->ParameterValue("TelpP", "1").ToDouble();
   return FTelpProb;
 }
 //..............................................................................
 float TXAtom::DefZoom()  {
   ValidateAtomParams();
-  return (float)FAtomParams->ParameterValue("DefZ", 1).ToDouble();
+  return (float)FAtomParams->ParameterValue("DefZ", "1").ToDouble();
 }
 //..............................................................................
 float TXAtom::QPeakScale()  {
   if( FQPeakScale )  return FQPeakScale;
   ValidateAtomParams();
-  return (float)FAtomParams->ParameterValue("QPeakScale", 3).ToDouble();
+  return (float)FAtomParams->ParameterValue("QPeakScale", "3").ToDouble();
 }
 //..............................................................................
 void TXAtom::QPeakScale(float V)  {

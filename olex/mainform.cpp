@@ -543,8 +543,8 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual accupancy\
   this_InitMacro(Cent, , fpAny ^ fpNone);
   this_InitMacro(Mask, , fpAny );
 
-  this_InitMacroD(ARad, EmptyString, fpOne, "Changes how the atoms are drawn [sfil,pers,isot,isoth]" );
-  this_InitMacro(ADS, , fpAny^(fpNone) );
+  this_InitMacroD(ARad, EmptyString, fpAny^fpNone, "Changes how the atoms are drawn [sfil,pers,isot,isoth]" );
+  this_InitMacroD(ADS, EmptyString, fpAny^(fpNone), "Changes atom draw style [sph,elp]" );
   this_InitMacro(AZoom, , fpAny^fpNone );
   this_InitMacro(BRad, , fpOne );
 
