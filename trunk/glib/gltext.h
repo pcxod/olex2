@@ -22,7 +22,7 @@ protected:
   void CalcWH();  // calculates width of the text
 public:
   TGlText(const olxstr& collectionName, TGlRender *Render, const olxstr &Text);
-  void Create(const olxstr& cName = EmptyString, const CreationParams* cpar = NULL);
+  void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
   virtual ~TGlText()  {  ;  }
 
   void SetText(const olxstr &T);

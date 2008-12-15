@@ -42,7 +42,7 @@ TXGrowLine::TXGrowLine(const olxstr& collectionName, TSAtom *A, TCAtom* CA,
   Transform = transform;
 }
 //..............................................................................
-void TXGrowLine::Create(const olxstr& cName, const CreationParams* cpar)  {
+void TXGrowLine::Create(const olxstr& cName, const ACreationParams* cpar)  {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
   TXBond::Create( GetCollectionName() );

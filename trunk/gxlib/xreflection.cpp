@@ -39,7 +39,7 @@ TXReflection::TXReflection(const olxstr& collectionName, THklFile& HklFile,
   if( Params()[0] > 0 )  Params()[0] = sqrt( Params()[0] ); 
 }
 //..............................................................................
-void TXReflection::Create(const olxstr& cName, const CreationParams* cpar) {
+void TXReflection::Create(const olxstr& cName, const ACreationParams* cpar) {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
 

@@ -25,7 +25,7 @@ TXGrowPoint::TXGrowPoint(const olxstr& collectionName, const vec3d& center,
   Center = center;
 }
 //..............................................................................
-void TXGrowPoint::Create(const olxstr& cName, const CreationParams* cpar) {
+void TXGrowPoint::Create(const olxstr& cName, const ACreationParams* cpar) {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
   TGPCollection* GPC = FParent->FindCollection( GetCollectionName() );

@@ -36,8 +36,8 @@ protected:
   static TXBondStylesClear *FXBondStylesClear;
 public:
   TXBond(const olxstr& collectionName, TSBond& B, TGlRender *Render);
-  void Create(const olxstr& cName = EmptyString, const CreationParams* cpar = NULL);
-  virtual CreationParams* GetCreationParams() const;
+  void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
+  virtual ACreationParams* GetACreationParams() const;
   virtual ~TXBond();
 
   static TStrPObjList<olxstr,TGlPrimitive*> FStaticObjects;
@@ -71,7 +71,7 @@ public:
   void Deleted(bool v)   {  AGDrawObject::Deleted(v);  FBond->SetDeleted(v); }
   void ListDrawingStyles(TStrList &List);
 
-  void UpdatePrimitives(int32_t Mask);
+  void UpdatePrimitives(int32_t Mask, const ACreationParams* cpar=NULL);
   static void DefMask(int V);
   static int  DefMask();
   inline short DrawStyle() const {  return FDrawStyle; }
@@ -87,6 +87,9 @@ public:
   }
 };
 
+struct BondCreationParams : public ACreationParams {
+  int mask;
+};
 
 EndGxlNamespace()
 #endif

@@ -74,7 +74,7 @@ public:
       return ED->Data[(int)v[0]][(int)v[1]][(int)v[2]];
     }
 
-  void Create(const olxstr& cName = EmptyString, const CreationParams* cpar = NULL);
+  void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
 
   bool Orient(TGlPrimitive *P);
   bool GetDimensions(vec3d &Max, vec3d &Min);

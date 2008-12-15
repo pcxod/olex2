@@ -61,7 +61,7 @@ void TXBond::BondUpdated()  {
   }
 }
 //..............................................................................
-void TXBond::Create(const olxstr& cName, const CreationParams* cpar)  {
+void TXBond::Create(const olxstr& cName, const ACreationParams* cpar)  {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
   olxstr NewL;
@@ -129,7 +129,7 @@ void TXBond::Create(const olxstr& cName, const CreationParams* cpar)  {
   return;
 }
 //..............................................................................
-CreationParams* TXBond::GetCreationParams() const {
+ACreationParams* TXBond::GetACreationParams() const {
   return NULL;
 }
 //..............................................................................
@@ -448,13 +448,13 @@ void TXBond::CreateStaticPrimitives()  {
   GlP->Params().Last() = ddsDefAtomA;
 }
 //..............................................................................
-void TXBond::UpdatePrimitives(int32_t Mask)  {
+void TXBond::UpdatePrimitives(int32_t Mask, const ACreationParams* cpar)  {
   int SMask = Primitives()->Style()->ParameterValue("PMask", "0").ToInt();
   if( SMask == Mask )  return;
   Primitives()->Style()->SetParameter("PMask", Mask);
   Primitives()->ClearPrimitives();
   Primitives()->RemoveObject(this);
-  Create();
+  Create(EmptyString, cpar);
 }
 //..............................................................................
 olxstr TXBond::GetLegend(const TSBond& Bnd, const short AtomALevel, const short AtomBLevel)  {

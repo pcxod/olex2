@@ -32,7 +32,7 @@ TXLine::TXLine(const olxstr& collectionName, const vec3d& base, const vec3d& edg
   }
 }
 //..............................................................................
-void TXLine::Create(const olxstr& cName, const CreationParams* cpar)  {
+void TXLine::Create(const olxstr& cName, const ACreationParams* cpar)  {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
 

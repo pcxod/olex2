@@ -1930,7 +1930,7 @@ void TMainForm::macMask(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       if( ADS )  {
         TXAtom *XA;
         for( int i=0; i < Atoms.Count(); i++ )  {
-          XA = (TXAtom*)Atoms[i];
+          XA = Atoms[i];
           if( XA->DrawStyle() != ADS )  
             Atoms[i] = NULL;
         }
@@ -1962,10 +1962,9 @@ void TMainForm::macMask(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   int Mask = Cmds.Last().String().ToInt();
   Cmds.Delete( Cmds.Count() - 1 );
   TGPCollection *GPC = FXApp->GetRender().FindCollection( Cmds.Text(' ') );
-  if( GPC )  {
-    if( GPC->ObjectCount() )  {
+  if( GPC != NULL )  {
+    if( GPC->ObjectCount() != 0 )
       GPC->Object(0)->UpdatePrimitives( Mask );
-    }
   }
   else  {
     Error.ProcessingError(__OlxSrcInfo, "undefined graphics" );

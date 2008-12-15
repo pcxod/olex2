@@ -33,7 +33,7 @@ TDFrame::~TDFrame()
   delete FActions;
 }
 //..............................................................................
-void TDFrame::Create(const olxstr& cName, const CreationParams* cpar) {
+void TDFrame::Create(const olxstr& cName, const ACreationParams* cpar) {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
   TGlMaterial GlM;

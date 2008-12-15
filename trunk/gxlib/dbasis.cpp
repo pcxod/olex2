@@ -24,7 +24,7 @@ TDBasis::TDBasis(const olxstr& collectionName, TGlRender *Render) : TGlMouseList
   Zoomable(true);
   Groupable(false);
 }
-void TDBasis::Create(const olxstr& cName, const CreationParams* cpar)  {
+void TDBasis::Create(const olxstr& cName, const ACreationParams* cpar)  {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
   ematd M, M1, M2;

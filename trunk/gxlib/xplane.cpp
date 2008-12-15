@@ -21,7 +21,7 @@ TXPlane::TXPlane(const olxstr& collectionName, TSPlane *Plane, TGlRender *Render
   FRectangular = false;
 }
 //..............................................................................
-void TXPlane::Create(const olxstr& cName, const CreationParams* cpar)  {
+void TXPlane::Create(const olxstr& cName, const ACreationParams* cpar)  {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
   TGlMaterial GlM, GlM1;

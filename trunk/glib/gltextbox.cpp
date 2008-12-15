@@ -41,7 +41,7 @@ TGlTextBox::TGlTextBox(const olxstr& collectionName, TGlRender *Render):
 TGlTextBox::~TGlTextBox()
 { Clear(); }
 //..............................................................................
-void TGlTextBox::Create(const olxstr& cName, const CreationParams* cpar)  {
+void TGlTextBox::Create(const olxstr& cName, const ACreationParams* cpar)  {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
   TGPCollection* GPC = FParent->FindCollection( GetCollectionName() );
