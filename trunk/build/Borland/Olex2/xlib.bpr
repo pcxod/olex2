@@ -15,7 +15,8 @@
       build\scat_it.obj build\srestraint.obj build\auto.obj build\pdb.obj 
       build\symmtest.obj build\xapp.obj build\graphsr.obj build\brushhkl.obj 
       build\sg.obj build\xmacro.obj build\wilson.obj build\imp_auto.obj 
-      build\seval.obj build\samegroup.obj"/>
+      build\seval.obj build\samegroup.obj build\afixgroup.obj 
+      build\exyzgroup.obj build\leq.obj build\refmodel.obj build\chemdata.obj"/>
     <RESFILES value=""/>
     <DEFFILE value=""/>
     <RESDEPEN value="$(RESFILES)"/>
@@ -97,6 +98,11 @@
       <FILE FILENAME="..\..\..\xlib\macro\imp_auto.cpp" FORMNAME="" UNITNAME="imp_auto" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\xlib\seval.cpp" FORMNAME="" UNITNAME="seval" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\xlib\samegroup.cpp" FORMNAME="" UNITNAME="samegroup" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\afixgroup.cpp" FORMNAME="" UNITNAME="afixgroup.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\exyzgroup.cpp" FORMNAME="" UNITNAME="exyzgroup.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\leq.cpp" FORMNAME="" UNITNAME="leq.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\refmodel.cpp" FORMNAME="" UNITNAME="refmodel.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\chemdata.cpp" FORMNAME="" UNITNAME="chemdata" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
   </FILELIST>
   <BUILDTOOLS>
   </BUILDTOOLS>

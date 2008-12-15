@@ -2071,23 +2071,28 @@ void TGXApp::AtomRad(const olxstr& Rad, TXAtomPList* Atoms)  { // pers, sfil
   short DS = -1;
   if( Rad.Comparei("sfil") == 0 ) {
     DS = darPack;  
-    TXAtom::DefRad(darPack); 
+    if( Atoms == NULL )
+      TXAtom::DefRad(darPack); 
   }
   else if( Rad.Comparei("pers") == 0 ) {  
     DS = darPers;  
-    TXAtom::DefRad(darPers); 
+    if( Atoms == NULL )
+      TXAtom::DefRad(darPers); 
   }
   else if( Rad.Comparei("isot") == 0 ) {  
     DS = darIsot;  
-    TXAtom::DefRad(darIsot); 
+    if( Atoms == NULL )
+      TXAtom::DefRad(darIsot); 
   }
   else if( Rad.Comparei("isoth") == 0 ) {  
     DS = darIsotH;  
-    TXAtom::DefRad(darIsotH); 
+    if( Atoms == NULL )
+      TXAtom::DefRad(darIsotH); 
   }
   else if( Rad.Comparei("bond") == 0 ) {  
     DS = darBond;  
-    TXAtom::DefRad(darIsot); 
+    if( Atoms == NULL )
+      TXAtom::DefRad(darIsot); 
   }
   if( DS == -1 )
     throw TInvalidArgumentException(__OlxSourceInfo, "rad");

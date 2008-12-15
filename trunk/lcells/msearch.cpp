@@ -59,7 +59,7 @@ void __fastcall TdlgSearch::bbSearchClick(TObject *Sender)  {
   TNet *N = new TNet;
   TPtrList<TConFile> Res;
   N->Assign( Organiser->XFile->GetLattice() );
-  CIndex->Search(NULL, N, Res);
+  CIndex->Search(NULL, *N, Res);
   AddResults(Res);
   delete N;
 }

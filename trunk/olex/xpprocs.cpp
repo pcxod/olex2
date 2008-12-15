@@ -1974,24 +1974,23 @@ void TMainForm::macMask(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 }
 //..............................................................................
 void TMainForm::macARad(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  FXApp->AtomRad(Cmds[0]);
+  olxstr arad( Cmds[0] );
+  Cmds.Delete(0);
+  TXAtomPList xatoms;
+  FindXAtoms(Cmds, xatoms, false, true);
+  FXApp->AtomRad(arad, xatoms.IsEmpty() ? NULL : &xatoms);
 }
 //..............................................................................
 void TMainForm::macADS(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   TXAtomPList Atoms;
-  if( Cmds[0] == "elp" )  {
-    Cmds.Delete(0);
-    FXApp->FindXAtoms(Cmds.Text(' '), Atoms);
-    FXApp->SetAtomDrawingStyle(adsEllipsoid, &Atoms);
+  short ads = (Cmds[0].Comparei("elp") == 0 ? adsEllipsoid : (Cmds[0].Comparei("sph") == 0 ? adsSphere : -1)); 
+  if( ads == -1 )  {
+    Error.ProcessingError(__OlxSrcInfo, "unknown atom type (elp/sph) supported only" );
     return;
   }
-  if( Cmds[0] == "sph" )  {
-    Cmds.Delete(0);
-    FXApp->FindXAtoms(Cmds.Text(' '), Atoms);
-    FXApp->SetAtomDrawingStyle(adsSphere, &Atoms);
-    return;
-  }
-  Error.ProcessingError(__OlxSrcInfo, "unknown atom type (elp/sph) supported only" );
+  Cmds.Delete(0);
+  FindXAtoms(Cmds, Atoms, false, true);
+  FXApp->SetAtomDrawingStyle(ads, Atoms.IsEmpty() ? NULL : &Atoms);
 }
 //..............................................................................
 void TMainForm::macAZoom(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
@@ -1999,7 +1998,7 @@ void TMainForm::macAZoom(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   if( Cmds.Count() >= 2 )  {
     olxstr Tmp = Cmds[0];  Cmds.Delete(0);
     TXAtomPList Atoms;
-    FXApp->FindXAtoms(Cmds.Text(' '), Atoms);
+    FindXAtoms(Cmds, Atoms, true, true);
     FXApp->AtomZoom(Tmp.ToDouble(), &Atoms);
   }
 }
@@ -5462,7 +5461,6 @@ void TMainForm::macTref(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   CurrentSolution = -1;
   FMode |= mSolve;
   SolutionFolder = EmptyString;
-  TIns& Ins = FXApp->XFile().GetLastLoader<TIns>();
 
   int reps = Cmds[0].ToInt();
   for( int i=0; i < Lst.TrefTryCount(); i++ )  {
@@ -5484,6 +5482,7 @@ void TMainForm::macTref(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   olxstr cresFN = TEFile::ChangeFileExt( FXApp->XFile().GetFileName(), "res" );
   olxstr clstFN = TEFile::ChangeFileExt( FXApp->XFile().GetFileName(), "lst" );
   for( int i=0; i < Solutions.Count(); i++ )  {
+    TIns& Ins = FXApp->XFile().GetLastLoader<TIns>();
     Ins.SaveToRefine( cinsFN, olxstr("TREF -") << Solutions[i], EmptyString);
     FXApp->LoadXFile( cinsFN );
     ProcessXPMacro( "solve", E );

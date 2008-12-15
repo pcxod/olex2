@@ -39,10 +39,10 @@ __fastcall TOrganiser::TOrganiser(Graphics::TBitmap *Bmp)  {
   FBitmap = Bmp;
 
   FAtomsInfo = new TAtomsInfo( TBasicApp::GetInstance()->BaseDir() + "ptablex.dat" );
-  FXFile = new TXFile( FAtomsInfo );
-  FXFile->RegisterFileFormat( new xlib::TCif(FAtomsInfo), "cif");
-  FXFile->RegisterFileFormat( new xlib::TMol(FAtomsInfo), "mol");
-  FXFile->RegisterFileFormat( new xlib::TIns(FAtomsInfo), "ins");
+  FXFile = new TXFile();
+  FXFile->RegisterFileFormat( new xlib::TCif, "cif");
+  FXFile->RegisterFileFormat( new xlib::TMol, "mol");
+  FXFile->RegisterFileFormat( new xlib::TIns, "ins");
 }
 //..............................................................................
 __fastcall TOrganiser::~TOrganiser()  {

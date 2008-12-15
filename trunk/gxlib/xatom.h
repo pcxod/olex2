@@ -50,7 +50,7 @@ protected:
 public:
   TXAtom(const olxstr& collectionName, TSAtom& A, TGlRender *Render);
   virtual ~TXAtom();
-  void Create(const olxstr& cName = CEmptyString);
+  void Create(const olxstr& cName = EmptyString);
 
   DefPropP(int, XAppId)
 
