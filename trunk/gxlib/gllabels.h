@@ -27,31 +27,30 @@ const short lmLabels   = 0x0001,  // atom label
             lmFixed    = 0x0800;  // fixed values
 
 class TXGlLabels: public AGDrawObject  {
-  TEList *FAtoms;
+  TPtrList<class TXAtom> FAtoms;
   short  FFontIndex;
   TGlMaterial FMarkMaterial;
-  TTypeList<bool> *FMarks;
-  short FMode;
+  TArrayList<bool> FMarks;
+  short Mode;
 public:
   TXGlLabels(const olxstr& collectionName, TGlRender *Render);
-  void Create(const olxstr& cName = EmptyString);
+  void Create(const olxstr& cName = EmptyString, const CreationParams* cpar = NULL);
   virtual ~TXGlLabels();
 
   void Clear();
   void ClearLabelMarks();
 
-  void Mode(short v);
-  short Mode()  {  return FMode;  }
+  DefPropP(short, Mode)
 
   void Selected(bool On);
 
   bool Orient(TGlPrimitive *P);
-  bool GetDimensions(vec3d &Max, vec3d &Min){  return false;};
+  bool GetDimensions(vec3d &Max, vec3d &Min) {  return false;  }
   void AddAtom(class TXAtom *A);
   void MarkLabel(TXAtom *A, bool v);
 
-  inline int AtomCount() const        {  return FAtoms->Count(); }
-  inline TXAtom*  Atom(int i)  const  {  return (TXAtom*)FAtoms->Item(i);  }
+  inline int AtomCount() const        {  return FAtoms.Count(); }
+  inline TXAtom*  Atom(int i)  const  {  return FAtoms[i];  }
 
   TGlFont *Font() const;
   void FontIndex(short FntIndex)  {  FFontIndex = FntIndex; }

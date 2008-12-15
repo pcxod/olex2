@@ -180,13 +180,10 @@ TXGrid::~TXGrid()  {
 //..............................................................................
 void TXGrid::Clear()  {  DeleteObjects();  }
 //..............................................................................
-void TXGrid::Create(const olxstr& cName)  {
-  if( cName.Length() != 0 )  SetCollectionName(cName);
-  TGlMaterial* GlM;
-  TGraphicsStyle *GS;
-  TGPCollection *GPC;
-
-  GPC = FParent->FindCollection( GetCollectionName() );
+void TXGrid::Create(const olxstr& cName, const CreationParams* cpar)  {
+  if( !cName.IsEmpty() )  
+    SetCollectionName(cName);
+  TGPCollection* GPC = FParent->FindCollection( GetCollectionName() );
   if( !GPC )
     GPC = FParent->NewCollection( GetCollectionName() );
   else  {
@@ -195,10 +192,10 @@ void TXGrid::Create(const olxstr& cName)  {
       return;
     }
   }
-  GS = GPC->Style();
+  TGraphicsStyle* GS = GPC->Style();
   GPC->AddObject(this);
   TGlPrimitive* GlP = GPC->NewPrimitive("eMap");
-  GlM = const_cast<TGlMaterial*>( GS->Material("eMap") );
+  TGlMaterial* GlM = const_cast<TGlMaterial*>( GS->Material("eMap") );
   if( GlM->Mark() )  {
     GlM->SetFlags(0);
     GlM->ShininessF = 128;

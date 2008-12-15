@@ -635,6 +635,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\gxlib\xlattice.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\gxlib\xline.h"
 				>
 			</File>

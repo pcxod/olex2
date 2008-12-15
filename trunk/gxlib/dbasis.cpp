@@ -24,11 +24,9 @@ TDBasis::TDBasis(const olxstr& collectionName, TGlRender *Render) : TGlMouseList
   Zoomable(true);
   Groupable(false);
 }
-void TDBasis::Create(const olxstr& cName)  {
-  if( cName.Length() != 0 )  SetCollectionName(cName);
-  TGlPrimitive *GlP;
-  TGPCollection *GPC;
-  TGraphicsStyle *GS;
+void TDBasis::Create(const olxstr& cName, const CreationParams* cpar)  {
+  if( !cName.IsEmpty() )  
+    SetCollectionName(cName);
   ematd M, M1, M2;
   M.Assign(FAU->GetCellToCartesian(), 3, 3);
   evecd V, V1;
@@ -47,16 +45,16 @@ void TDBasis::Create(const olxstr& cName)  {
 
   double ConeH = 0.8, ConeW = 0.2; // cylinder dimensions
   int CQ = 5; // cylinde quality
-  GPC = FParent->NewCollection( GetCollectionName() );
+  TGPCollection* GPC = FParent->NewCollection( GetCollectionName() );
   GPC->AddObject(this);
-  GS = GPC->Style();
+  TGraphicsStyle* GS = GPC->Style();
 
   GlM.SetFlags( sglmAmbientF|sglmDiffuseF|sglmSpecularF|
                 sglmAmbientB|sglmDiffuseB|sglmSpecularB);
   GlM1.SetFlags( sglmAmbientF|sglmDiffuseF|sglmSpecularF|  // non transluetn sphere
                 sglmAmbientB|sglmDiffuseB|sglmSpecularB);
 
-  GlP = GPC->NewPrimitive("Sphere");  // a sphere at the basis of the object {0,0,0}
+  TGlPrimitive* GlP = GPC->NewPrimitive("Sphere");  // a sphere at the basis of the object {0,0,0}
   GlM.AmbientF = 0x800f0f0f;
   GlP->SetProperties(&GlM1);
   GlP->Type(sgloSphere);

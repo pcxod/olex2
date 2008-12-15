@@ -10,7 +10,7 @@ class TXLine: public TXBond  {
   vec3d FBase, FEdge;
 public:
   TXLine(const olxstr& collectionName, const vec3d& base, const vec3d& edge, TGlRender *Render);
-  void Create(const olxstr& cName=EmptyString);
+  void Create(const olxstr& cName=EmptyString, const CreationParams* cpar = NULL);
   virtual ~TXLine();
 
   vec3d&  Base()  {  return FBase;  }

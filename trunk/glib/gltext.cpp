@@ -73,20 +73,20 @@ void TGlText::SetText(const olxstr &T)  {
   CalcWH();
 }
 //..............................................................................
-void TGlText::Create(const olxstr& cName)  {
-  if( cName.Length() != 0)  SetCollectionName(cName);
-  TGlPrimitive *GlP;
-  TGPCollection *GPC;
+void TGlText::Create(const olxstr& cName, const CreationParams* cpar)  {
+  if( !cName.IsEmpty() )  
+    SetCollectionName(cName);
   TGlMaterial GlM;
 //  GlM.SetFlags( sglmAmbientF|sglmDiffuseF|sglmSpecularF|sglmShininessF|
 //                sglmAmbientB|sglmDiffuseB|sglmSpecularB|sglmShininessB);
   GlM.SetFlags(sglmAmbientF|sglmIdentityDraw);
 
-  GPC = FParent->FindCollection( GetCollectionName() );
-  if( !GPC )    GPC = FParent->NewCollection( GetCollectionName() );
+  TGPCollection* GPC = FParent->FindCollection( GetCollectionName() );
+  if( GPC == NULL )    
+    GPC = FParent->NewCollection( GetCollectionName() );
   GPC->AddObject(this);
 
-  GlP = GPC->NewPrimitive("Text");
+  TGlPrimitive* GlP = GPC->NewPrimitive("Text");
   GlM.AmbientF = 0x7fff7f;
   GlP->SetProperties(&GlM);
   GlP->Type(sgloText);

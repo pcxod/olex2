@@ -16,7 +16,7 @@ protected:
   void InitMaterial() const;
 public:
   TGlGroup(const olxstr& collectionName, TGlRender *Parent);
-  virtual void Create(const olxstr& cName = EmptyString);
+  virtual void Create(const olxstr& cName = EmptyString, const CreationParams* cpar = NULL);
   virtual ~TGlGroup();
   void Clear();
   void Draw(bool SelectPrimitives, bool SelectObjects) const;

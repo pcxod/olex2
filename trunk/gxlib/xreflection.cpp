@@ -39,34 +39,27 @@ TXReflection::TXReflection(const olxstr& collectionName, THklFile& HklFile,
   if( Params()[0] > 0 )  Params()[0] = sqrt( Params()[0] ); 
 }
 //..............................................................................
-void TXReflection::Create(const olxstr& cName)
-{
-  if( cName.Length() != 0 )  SetCollectionName(cName);
-  TGlMaterial* GlM;
-  TGlPrimitive *GlP;
-  TGraphicsStyle *GS;
-  TGPCollection *GPC;
+void TXReflection::Create(const olxstr& cName, const CreationParams* cpar) {
+  if( !cName.IsEmpty() )  
+    SetCollectionName(cName);
 
-  GPC = FParent->FindCollection( GetCollectionName() );
-  if( !GPC )
+  TGPCollection* GPC = FParent->FindCollection( GetCollectionName() );
+  if( GPC == NULL )
     GPC = FParent->NewCollection( GetCollectionName() );
-  else
-  {
-    if( GPC->PrimitiveCount() )
-    {
+  else  {
+    if( GPC->PrimitiveCount() != 0 )  {
       GPC->AddObject(this);
       return;
     }
   }
-  GS = GPC->Style();
+  TGraphicsStyle* GS = GPC->Style();
   GPC->AddObject(this);
 
-  GlP = GPC->NewPrimitive("Reflection");
+  TGlPrimitive* GlP = GPC->NewPrimitive("Reflection");
 
-  GlM = const_cast<TGlMaterial*>(GS->Material("Reflection"));
+  TGlMaterial* GlM = const_cast<TGlMaterial*>(GS->Material("Reflection"));
 
-  if( GlM->Mark() )
-  {
+  if( GlM->Mark() )  {
     GlM->SetFlags( sglmAmbientF|sglmAmbientB);
     GlM->AmbientF = 0x000f00ff;
     GlM->DiffuseF = 0x000f00FF;

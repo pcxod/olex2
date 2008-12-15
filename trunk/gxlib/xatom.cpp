@@ -36,7 +36,7 @@ bool TXAtomStylesClear::Exit(const IEObject *Sender, const IEObject *Data)
 // TSAtom function bodies
 //----------------------------------------------------------------------------//
 TStrPObjList<olxstr,TGlPrimitive*> TXAtom::FStaticObjects;
-TEList  TXAtom::FPrimitiveParams;
+TTypeList<TGlPrimitiveParams> TXAtom::FPrimitiveParams;
 float  TXAtom::FTelpProb = 0;
 float  TXAtom::FQPeakScale = 0;
 TGraphicsStyle* TXAtom::FAtomParams=NULL;
@@ -63,11 +63,12 @@ TXAtom::TXAtom(const olxstr& collectionName, TSAtom& A, TGlRender *Render) :
   // the objects will be automatically deleted by the corresponding action collections
 }
 //..............................................................................
-void TXAtom::Quality(const short V )  {
+void TXAtom::Quality(const short V)  {
   olxstr Legend("Atoms");
   TGraphicsStyle *GS;
   GS = FParent->Styles()->Style(Legend);
-  if( !GS ) GS = FParent->Styles()->NewStyle(Legend);
+  if( GS == NULL ) 
+    GS = FParent->Styles()->NewStyle(Legend);
 
   olxstr &SphereQ   = GS->ParameterValue("SphereQ", EmptyString);
   olxstr &RimQ = GS->ParameterValue("RimQ", EmptyString);  // quality
@@ -118,17 +119,17 @@ void TXAtom::ListPrimitives(TStrList &List) const {
 }
 //..............................................................................
 TStrList* TXAtom::FindPrimitiveParams(TGlPrimitive *P)  {
-  TGlPrimitiveParams *GlPP;
   for( int i=0; i < FPrimitiveParams.Count(); i++ )  {
-    GlPP = (TGlPrimitiveParams*)FPrimitiveParams[i];
-    if( GlPP->GlP == P )  return &(GlPP->Params);
+    if( FPrimitiveParams[i].GlP == P )  
+      return &(FPrimitiveParams[i].Params);
   }
   return NULL;
 }
 //..............................................................................
 void TXAtom::ListParams(TStrList &List, TGlPrimitive *P)  {
   TStrList *L = FindPrimitiveParams(P);
-  if( L )  List.Assign(*L);
+  if( L != NULL )  
+    List.Assign(*L);
 }
 //..............................................................................
 void TXAtom::ListParams(TStrList &List)  {
@@ -173,19 +174,22 @@ void TXAtom::ValidateDS(TGraphicsStyle *GS)  {
   DrawStyle( GS->ParameterValue("DS", DefDS()).ToInt() );
 }
 //..............................................................................
-void TXAtom::Create(const olxstr& cName)  {
-  if( cName.Length() != 0 )  SetCollectionName(cName);
+void TXAtom::Create(const olxstr& cName, const CreationParams* cpar)  {
   olxstr Legend, NewL;
 
-  if( cName.Length() )  Legend = GetCollectionName();
-  else  Legend = GetLegend( Atom() );
+  if( !cName.IsEmpty() )  {
+    SetCollectionName(cName);
+    Legend = cName;
+  }
+  else  
+    Legend = GetLegend( *FAtom );
 
-  TGlMaterial *GlM, RGlM;
-  TGlPrimitive *GlP, *SGlP;
-  TGraphicsStyle *GS;
-  TGPCollection *GPC;
+  TGlMaterial RGlM;
+  TGraphicsStyle *GS = NULL;
+  TGPCollection *GPC = NULL;
   int off;
-  if( FStaticObjects.IsEmpty() )  CreateStaticPrimitives();
+  if( FStaticObjects.IsEmpty() )  
+    CreateStaticPrimitives();
 
   // find collection
   if( FAtom->GetAtomInfo() == iQPeakIndex )  {
@@ -209,8 +213,13 @@ void TXAtom::Create(const olxstr& cName)  {
     else  {
       if( GPC->PrimitiveCount() )  {
         GPC->AddObject(this);
-        ValidateRadius( GPC->Style() );
-        ValidateDS(GPC->Style());
+        if( cpar == NULL )  {
+          ValidateRadius( GPC->Style() );
+          ValidateDS(GPC->Style());
+        }
+        else  {
+          Params() = cpar->params;
+        }
         return;
       }
     }
@@ -227,17 +236,23 @@ void TXAtom::Create(const olxstr& cName)  {
   }
   int PrimitiveMask = SMask.ToInt();
   GPC->AddObject(this);
-  if( !PrimitiveMask )  return; // nothing to create then...
+  if( PrimitiveMask == 0 )  
+    return; // nothing to create then...
   // update primitives list
-  ValidateDS(GS);
-  ValidateRadius(GS);
+  if( cpar == NULL )  {
+    ValidateDS(GS);
+    ValidateRadius(GS);
+  }
+  else {
+    Params() = cpar->params;
+  }
 
   for( int i=0; i < FStaticObjects.Count(); i++ )  {
     off = 1;
     off = off << i;
     if( PrimitiveMask & off )  {
-      SGlP = (TGlPrimitive*)FStaticObjects.Object(i);
-      GlP = GPC->NewPrimitive(FStaticObjects.String(i));
+      TGlPrimitive* SGlP = FStaticObjects.Object(i);
+      TGlPrimitive* GlP = GPC->NewPrimitive(FStaticObjects.String(i));
       GlP->Type(sgloCommandList);
       /* copy the default drawing style tag*/
       GlP->Params().Resize(GlP->Params().Count()+1);
@@ -252,7 +267,7 @@ void TXAtom::Create(const olxstr& cName)  {
         GlP->SetProperties(&RGlM);
       }
       else  {
-        GlM = const_cast<TGlMaterial*>(GS->Material(FStaticObjects.String(i)));
+        TGlMaterial* GlM = const_cast<TGlMaterial*>(GS->Material(FStaticObjects.String(i)));
         if( GlM->Mark() )  {
           if( SGlP->Params().Last() == ddsDefSphere ) GetDefSphereMaterial(*FAtom, RGlM);
           if( SGlP->Params().Last() == ddsDefRim )    GetDefRimMaterial(*FAtom, RGlM);
@@ -267,12 +282,13 @@ void TXAtom::Create(const olxstr& cName)  {
   return; 
 }
 //..............................................................................
+CreationParams* TXAtom::GetCreationParams() const {
+  return NULL;
+}
+//..............................................................................
 TXAtom::~TXAtom()  {
-  if( !FPrimitiveParams.IsEmpty() )  {
-    for( int i=0; i < FPrimitiveParams.Count(); i++ )
-      delete (TGlPrimitiveParams*)FPrimitiveParams[i];
+  if( !FPrimitiveParams.IsEmpty() )
     FPrimitiveParams.Clear();
-  }
 }
 //..............................................................................
 olxstr TXAtom::GetLabelLegend(TSAtom *A)  {

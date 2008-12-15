@@ -21,6 +21,10 @@ const short  sgdoVisible   = 0x0001, // TGDrawObject flags
  the graphic core
 */
 //---------------------------------------------------------------------------
+struct CreationParams {
+  evecd params;
+  TArrayList<TGlMaterial> materials;
+};
 class AGDrawObject: public ACollectionItem  {
 protected:
   short FDrawStyle;
@@ -34,11 +38,14 @@ protected:
   inline void SetCollectionName(const olxstr& nn)  {  CollectionName = nn;  }
 public:
   AGDrawObject(const olxstr& collectionName);
-  virtual void Create(const olxstr& newCollectionName=EmptyString)  {  return;  }
+  // create object within the specified collection, using provided parameters
+  virtual void Create(const olxstr& newCollectionName=EmptyString, const CreationParams* cpar = NULL)  {  }
+  // this should return object created with new in order to recreate the objecs as it was
+  virtual CreationParams* GetCreationParams() const {  return NULL;  }
   virtual ~AGDrawObject();
 
   void  Primitives( TGPCollection *GPC);
-  inline TGPCollection * Primitives() {  return FPrimitives; };
+  inline TGPCollection * Primitives()  {  return FPrimitives;  }
 
   inline const olxstr& GetCollectionName()  const  {  return CollectionName;  }
 

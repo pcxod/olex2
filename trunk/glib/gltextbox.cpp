@@ -41,26 +41,21 @@ TGlTextBox::TGlTextBox(const olxstr& collectionName, TGlRender *Render):
 TGlTextBox::~TGlTextBox()
 { Clear(); }
 //..............................................................................
-void TGlTextBox::Create(const olxstr& cName)  {
-  if( cName.Length() != 0)  SetCollectionName(cName);
-  TGlPrimitive *GlP;
-  TGPCollection *GPC;
-  TGraphicsStyle *GS;
-
-  TGlMaterial *GlM;
-
-  GPC = FParent->FindCollection( GetCollectionName() );
-  if( !GPC )    GPC = FParent->NewCollection( GetCollectionName() );
+void TGlTextBox::Create(const olxstr& cName, const CreationParams* cpar)  {
+  if( !cName.IsEmpty() )  
+    SetCollectionName(cName);
+  TGPCollection* GPC = FParent->FindCollection( GetCollectionName() );
+  if( GPC == NULL )    GPC = FParent->NewCollection( GetCollectionName() );
   else  {
     GPC->AddObject(this);
     return;
   }
-  GS = GPC->Style();
+  TGraphicsStyle* GS = GPC->Style();
   GPC->AddObject(this);
   Left = GS->ParameterValue("Left", Left).ToInt();
   Top = GS->ParameterValue("Top", Top).ToInt();
 
-  GlM = const_cast<TGlMaterial*>(GS->Material("Plane"));
+  TGlMaterial* GlM = const_cast<TGlMaterial*>(GS->Material("Plane"));
   if( GlM->Mark() )  {
     GlM->SetFlags(0);   GlM->ShininessF = 128;
     GlM->SetFlags(sglmAmbientF|sglmDiffuseF|sglmIdentityDraw|sglmTransparent);
@@ -68,7 +63,7 @@ void TGlTextBox::Create(const olxstr& cName)  {
     GlM->DiffuseF = 0x800f0f0f;
   }
 
-  GlP = GPC->NewPrimitive("Plane");  // a sphere at the basis of the object {0,0,0}
+  TGlPrimitive* GlP = GPC->NewPrimitive("Plane");  // a sphere at the basis of the object {0,0,0}
   GlP->SetProperties(GlM);
   GlP->Type(sgloQuads);
   GlP->Data().Resize(3, 4);

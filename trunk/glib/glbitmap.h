@@ -17,7 +17,7 @@ public:
 
   void ReplaceData(int width, int height, unsigned char* RGB, GLenum format);
 
-  void Create(const olxstr& cName = EmptyString);
+  void Create(const olxstr& cName = EmptyString, const CreationParams* cpar = NULL);
   virtual ~TGlBitmap();
 
   void SetZ( double z );

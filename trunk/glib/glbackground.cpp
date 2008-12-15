@@ -27,9 +27,9 @@ TGlBackground::TGlBackground(const olxstr& collectionName, TGlRender *Render, bo
   Texture = NULL;
 }
 //..............................................................................
-void TGlBackground::Create(const olxstr& cName)
-{
-  if( cName.Length() )  SetCollectionName(cName);
+void TGlBackground::Create(const olxstr& cName, const CreationParams* cpar) {
+  if( !cName.IsEmpty() )  
+    SetCollectionName(cName);
   TGlPrimitive *GlP;
   TGPCollection *GPC;
   TGlMaterial GlM;

@@ -37,8 +37,9 @@ TGlBitmap::TGlBitmap(const olxstr& collectionName, TGlRender *Render,
   tex->SetMinFilter( tpFilterLinear );
   tex->SetEnabled( true );
 }
-void TGlBitmap::Create(const olxstr& cName)  {
-  if( cName.Length() != 0)  SetCollectionName(cName);
+void TGlBitmap::Create(const olxstr& cName, const CreationParams* cpar)  {
+  if( !cName.IsEmpty() )  
+    SetCollectionName(cName);
   TGlPrimitive *GlP;
   TGPCollection *GPC;
   TGraphicsStyle *GS;

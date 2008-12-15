@@ -34,8 +34,9 @@ TGlCursor::TGlCursor(const olxstr& collectionName, TGlRender *Render, bool TextS
 //..............................................................................
 TGlCursor::~TGlCursor() {  }
 //..............................................................................
-void TGlCursor::Create(const olxstr& cName)  {
-  if( cName.Length() != 0)  SetCollectionName(cName);
+void TGlCursor::Create(const olxstr& cName, const CreationParams* cpar)  {
+  if( !cName.IsEmpty() )  
+    SetCollectionName(cName);
   TGlPrimitive *GlP;
   TGPCollection *GPC;
 

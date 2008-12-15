@@ -33,16 +33,15 @@ TDFrame::~TDFrame()
   delete FActions;
 }
 //..............................................................................
-void TDFrame::Create(const olxstr& cName)
-{
-  if( cName.Length() != 0)  SetCollectionName(cName);
-  TGPCollection *GPC;
+void TDFrame::Create(const olxstr& cName, const CreationParams* cpar) {
+  if( !cName.IsEmpty() )  
+    SetCollectionName(cName);
   TGlMaterial GlM;
 //  GlM.SetFlags( sglmAmbientF|sglmDiffuseF|sglmSpecularF|sglmShininessF|
 //                sglmAmbientB|sglmDiffuseB|sglmSpecularB|sglmShininessB);
   GlM.SetFlags(sglmIdentityDraw);
 
-  GPC = FRender->NewCollection( GetCollectionName() );
+  TGPCollection* GPC = FRender->NewCollection( GetCollectionName() );
   GPC->AddObject(this);
 
   FPrimitive = GPC->NewPrimitive("Lines");

@@ -16,7 +16,7 @@ class TXGrowLine : public TXBond  {
 public:
   TXGrowLine(const olxstr& collectionName, TSAtom *A,
                TCAtom* CA, const smatd& transform, TGlRender *Render);
-  void Create(const olxstr& cName = EmptyString);
+  void Create(const olxstr& cName = EmptyString, const CreationParams* cpar = NULL);
   virtual ~TXGrowLine();
 
   bool GetDimensions(vec3d &Max, vec3d &Min){  return false; };

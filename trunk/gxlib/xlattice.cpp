@@ -23,20 +23,18 @@ TXLattice::TXLattice(const olxstr& collectionName, TGlRender *Render) :
 TXLattice::~TXLattice()  {
 }
 //..............................................................................
-void TXLattice::Create(const olxstr& cName)  {
-  if( cName.Length() != 0 )  SetCollectionName(cName);
-  TGPCollection *GPC;
-  TGraphicsStyle *GS;
+void TXLattice::Create(const olxstr& cName, const CreationParams* cpar)  {
+  if( !cName.IsEmpty() )  
+    SetCollectionName(cName);
   TGlMaterial GlM;
-  const TGlMaterial *SGlM;
   GlM.SetFlags(sglmAmbientF);
   GlM.AmbientF = 0;
-  GPC = Parent()->NewCollection( GetCollectionName() );
-  GS = GPC->Style();
+  TGPCollection* GPC = Parent()->NewCollection( GetCollectionName() );
+  TGraphicsStyle* GS = GPC->Style();
   GPC->AddObject(this);
 
   Lines = GPC->NewPrimitive("Lines");
-  SGlM = GS->Material("Lines");
+  const TGlMaterial* SGlM = GS->Material("Lines");
   if( !SGlM->Mark() )  Lines->SetProperties(SGlM);
   else  {
     GlM.SetIdentityDraw(false);

@@ -32,13 +32,13 @@ TXLine::TXLine(const olxstr& collectionName, const vec3d& base, const vec3d& edg
   }
 }
 //..............................................................................
-void TXLine::Create(const olxstr& cName)  {
-  if( cName.Length() != 0 )  SetCollectionName(cName);
+void TXLine::Create(const olxstr& cName, const CreationParams* cpar)  {
+  if( !cName.IsEmpty() )  
+    SetCollectionName(cName);
 
   TGPCollection* GPC = FParent->FindCollection( GetCollectionName() );
   if( GPC == NULL )  {
     TXBond::Create();
-
     TGraphicsStyle *GS = Primitives()->Style();
 
     for( int i=0; i < Primitives()->PrimitiveCount(); i++ )  {
@@ -48,9 +48,8 @@ void TXLine::Create(const olxstr& cName)  {
       GlP->SetProperties(GlM);
     }
   }
-  else  {
+  else  
     GPC->AddObject(this);
-  }
 }
 //..............................................................................
 TXLine::~TXLine(){}
