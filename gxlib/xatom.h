@@ -50,8 +50,8 @@ protected:
 public:
   TXAtom(const olxstr& collectionName, TSAtom& A, TGlRender *Render);
   virtual ~TXAtom();
-  void Create(const olxstr& cName = EmptyString, const CreationParams* cpar = NULL);
-  virtual CreationParams* GetCreationParams() const;
+  void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
+  virtual ACreationParams* GetCreationParams() const;
 
   DefPropP(int, XAppId)
 
@@ -106,7 +106,7 @@ public:
   void ListPrimitives(TStrList &List) const;
   // fills the list with proposal primitives to construct object
   TGraphicsStyle* Style();
-  void UpdatePrimitives(int32_t Mask);
+  void UpdatePrimitives(int32_t Mask, const ACreationParams* cpar=NULL);
 
   bool OnMouseDown(const IEObject *Sender, const TMouseData *Data);
   bool OnMouseUp(const IEObject *Sender, const TMouseData *Data);
@@ -126,6 +126,10 @@ public:
     if( FXAtomStylesClear == NULL ) 
       FXAtomStylesClear = new TXAtomStylesClear(glr);
   }
+};
+
+struct AtomCreationParams : public ACreationParams {
+  int mask;
 };
 
 EndGxlNamespace()

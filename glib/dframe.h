@@ -23,7 +23,7 @@ protected:
 public:
   TDFrame(const olxstr& collectionName, TGlRender *Render);
   virtual ~TDFrame();
-  void Create(const olxstr& cName = EmptyString, const CreationParams* cpar = NULL);
+  void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
   bool Orient(TGlPrimitive *P);
   bool GetDimensions(vec3d &Max, vec3d &Min){  return false;};
 

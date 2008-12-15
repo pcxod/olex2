@@ -165,6 +165,7 @@ public:
     // make sure that these are only cleared when file is loaded
     if( Sender && EsdlInstanceOf(*Sender, TXFile) )  {
       FParent->ClearIndividualCollections();
+      FParent->ClearAtomCreationParams();
       FParent->DUnitCell().ResetCentres();
       //FParent->XGrid().Clear();
     }
@@ -178,6 +179,7 @@ public:
     // lets make Horst HAPPY!
     //FParent->GetRender().CleanUpStyles();
     //  FParent->CenterModel();
+    FParent->UpdateAtomCreationParams();
     FParent->GetRender().SetBasis(B);
     FParent->CreateObjects(true);
     FParent->CenterView();
@@ -337,18 +339,17 @@ void TGXApp::CreateObjects(bool SyncBonds, bool centerModel)  {
   for( int i=0; i < FIndividualCollections.Count(); i++ )
     FGlRender->NewCollection( FIndividualCollections.String(i) );
 
-  TSAtomPList allAtoms;
   int totalACount = XFile().GetLattice().AtomCount();
   for( int i=0; i < OverlayedXFiles.Count(); i++ )
     totalACount += OverlayedXFiles[i].GetLattice().AtomCount();
-  allAtoms.SetCapacity( totalACount );
-
-  TSBondPList allBonds;
   int totalBCount = XFile().GetLattice().BondCount();
   for( int i=0; i < OverlayedXFiles.Count(); i++ )
     totalBCount += OverlayedXFiles[i].GetLattice().BondCount();
-  allBonds.SetCapacity( totalBCount );
 
+  GetRender().SetObjectsCapacity( totalACount + totalBCount + 512);
+
+  TSAtomPList allAtoms;
+  allAtoms.SetCapacity( totalACount );
   for( int i=0; i < XFile().GetLattice().AtomCount(); i++ )
     allAtoms.Add( &XFile().GetLattice().GetAtom(i) );
   for( int i=0; i < OverlayedXFiles.Count(); i++ )  {
@@ -356,25 +357,29 @@ void TGXApp::CreateObjects(bool SyncBonds, bool centerModel)  {
       allAtoms.Add( &OverlayedXFiles[i].GetLattice().GetAtom(j) );
   }
 
-  for( int i=0; i < XFile().GetLattice().BondCount(); i++ )
-    allBonds.Add( &XFile().GetLattice().GetBond(i) );
-  for( int i=0; i < OverlayedXFiles.Count(); i++ )  {
-    for( int j=0; j < OverlayedXFiles[i].GetLattice().BondCount(); j++ )
-      allBonds.Add( &OverlayedXFiles[i].GetLattice().GetBond(j) );
-  }
   XAtoms.SetCapacity( allAtoms.Count() );
-  GetRender().SetObjectsCapacity( allAtoms.Count() + allBonds.Count() + 512);
+  const int this_a_count = XFile().GetLattice().AtomCount();
   for( int i=0; i < allAtoms.Count(); i++ )  {
     allAtoms[i]->SetTag(i);
     TXAtom& XA = XAtoms.Add( *(new TXAtom(EmptyString, *allAtoms[i], FGlRender)) );
     if( allAtoms[i]->IsDeleted() )  XA.Deleted(true);
-    XA.Create();
+    XA.Create(EmptyString, (i < this_a_count && allAtoms[i]->CAtom().GetId() >= 0) ? &AtomCreationParams[allAtoms[i]->CAtom().GetId()] : NULL );
     XA.SetXAppId(i);
     if( !FStructureVisible )  {  XA.Visible(FStructureVisible);  continue;  }
     if( allAtoms[i]->GetAtomInfo() == iHydrogenIndex )    {  XA.Visible(FHydrogensVisible);  }
     if( allAtoms[i]->GetAtomInfo() == iQPeakIndex )       {  XA.Visible(FQPeaksVisible);  }
   }
   TBasicApp::GetLog().Info( olxstr("Atoms created in ") << (TETime::msNow()-st) << "ms" );
+  st = TETime::msNow();
+  
+  TSBondPList allBonds;
+  allBonds.SetCapacity( totalBCount );
+  for( int i=0; i < XFile().GetLattice().BondCount(); i++ )
+    allBonds.Add( &XFile().GetLattice().GetBond(i) );
+  for( int i=0; i < OverlayedXFiles.Count(); i++ )  {
+    for( int j=0; j < OverlayedXFiles[i].GetLattice().BondCount(); j++ )
+      allBonds.Add( &OverlayedXFiles[i].GetLattice().GetBond(j) );
+  }
   XBonds.SetCapacity( allBonds.Count() );
   for( int i=0; i < allBonds.Count(); i++ )  {
     TSBond* B = allBonds[i];
@@ -2098,8 +2103,13 @@ void TGXApp::AtomRad(const olxstr& Rad, TXAtomPList* Atoms)  { // pers, sfil
     throw TInvalidArgumentException(__OlxSourceInfo, "rad");
 
   if( Atoms != NULL )  {
-    for( int i=0; i < Atoms->Count(); i++ )
-      Atoms->Item(i)->CalcRad(DS);
+    for( int i=0; i < Atoms->Count(); i++ )  {
+      TXAtom& xa = *(*Atoms)[i];
+      xa.CalcRad(DS);
+      const int id = xa.Atom().CAtom().GetId();
+      if( id >= 0 )
+        AtomCreationParams.Set(id, *xa.GetCreationParams());
+    }
   }
   else {
     for( int i=0; i < XAtoms.Count(); i++ )
@@ -2202,8 +2212,7 @@ void TGXApp::BondRad(float R, TXBondPList* Bonds)  {
   }
 }
 //..............................................................................
-void TGXApp::UpdateAtomPrimitives(int Mask, TXAtomPList* Atoms)
-{
+void TGXApp::UpdateAtomPrimitives(int Mask, TXAtomPList* Atoms) {
   TXAtomPList atoms;
   FillXAtomList( atoms, Atoms );
   for( int i=0; i < atoms.Count(); i++ )
@@ -3179,6 +3188,13 @@ TXLattice& TGXApp::AddLattice(const olxstr& Name, const mat3d& basis)  {
 }
 //..............................................................................
 void TGXApp::InitFadeMode()  {
+}
+//..............................................................................
+void TGXApp::UpdateAtomCreationParams() {
+  TAsymmUnit& au = XFile().GetAsymmUnit();
+  AtomCreationParams.SetCapacity( au.AtomCount() );
+  while( AtomCreationParams.Count() < au.AtomCount() )
+    AtomCreationParams.Add(NULL);
 }
 //..............................................................................
 void TGXApp::ToDataItem(TDataItem& item) const  {

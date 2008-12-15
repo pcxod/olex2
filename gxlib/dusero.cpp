@@ -25,7 +25,7 @@ TDUserObj::TDUserObj(short type, ematd* data, const olxstr& collectionName, TGlR
   Groupable(false);
 }
 //...........................................................................
-void TDUserObj::Create(const olxstr& cName, const CreationParams* cpar)  {
+void TDUserObj::Create(const olxstr& cName, const ACreationParams* cpar)  {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
   olxstr NewL;

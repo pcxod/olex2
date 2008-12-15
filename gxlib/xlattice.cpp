@@ -23,7 +23,7 @@ TXLattice::TXLattice(const olxstr& collectionName, TGlRender *Render) :
 TXLattice::~TXLattice()  {
 }
 //..............................................................................
-void TXLattice::Create(const olxstr& cName, const CreationParams* cpar)  {
+void TXLattice::Create(const olxstr& cName, const ACreationParams* cpar)  {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
   TGlMaterial GlM;

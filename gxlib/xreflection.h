@@ -16,7 +16,7 @@ public:
   TXReflection(const olxstr& collectionName, THklFile& HklFile,
                  TReflection& R, TAsymmUnit* au, TGlRender *Render);
   virtual ~TXReflection();
-  void Create(const olxstr& cName = EmptyString, const CreationParams* cpar = NULL);
+  void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
 
   TReflection *Reflection()   {  return FReflection; }
   vec3d& Center()    {  return FCenter;  }

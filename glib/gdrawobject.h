@@ -21,9 +21,10 @@ const short  sgdoVisible   = 0x0001, // TGDrawObject flags
  the graphic core
 */
 //---------------------------------------------------------------------------
-struct CreationParams {
+struct ACreationParams {
   evecd params;
   TArrayList<TGlMaterial> materials;
+  virtual ~ACreationParams() {}
 };
 class AGDrawObject: public ACollectionItem  {
 protected:
@@ -39,13 +40,13 @@ protected:
 public:
   AGDrawObject(const olxstr& collectionName);
   // create object within the specified collection, using provided parameters
-  virtual void Create(const olxstr& newCollectionName=EmptyString, const CreationParams* cpar = NULL)  {  }
+  virtual void Create(const olxstr& newCollectionName=EmptyString, const ACreationParams* cpar = NULL)  {  }
   // this should return object created with new in order to recreate the objecs as it was
-  virtual CreationParams* GetCreationParams() const {  return NULL;  }
+  virtual ACreationParams* GetCreationParams() const {  return NULL;  }
   virtual ~AGDrawObject();
 
   void  Primitives( TGPCollection *GPC);
-  inline TGPCollection * Primitives()  {  return FPrimitives;  }
+  inline TGPCollection* Primitives()  const {  return FPrimitives;  }
 
   inline const olxstr& GetCollectionName()  const  {  return CollectionName;  }
 
@@ -105,7 +106,7 @@ public:
   // for internal object parameters
   virtual void ListPrimitives(TStrList &List) const {  return; }
   // fills the list with proposal primitives to construct object
-  virtual void UpdatePrimitives(int32_t Mask);
+  virtual void UpdatePrimitives(int32_t Mask, const ACreationParams* cpar=NULL);
   virtual void OnPrimitivesCleared();
 
   void LibVisible(const TStrObjList& Params, TMacroError& E);

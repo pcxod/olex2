@@ -171,7 +171,7 @@ void TDUnitCell::Reciprical(bool v )  {
   FReciprical = v;
 }
 
-void TDUnitCell::Create(const olxstr& cName, const CreationParams* cpar)  {
+void TDUnitCell::Create(const olxstr& cName, const ACreationParams* cpar)  {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
   olxstr NewL;

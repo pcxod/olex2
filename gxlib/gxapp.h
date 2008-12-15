@@ -154,11 +154,14 @@ public:
 private:
   double FPictureResolution;
   TSStrPObjList<olxstr,void*, false> FIndividualCollections;
+  TTypeList<ACreationParams> AtomCreationParams;
 public:
   void Quality(const short v);
   void Init();
 //..............................................................................
-  void ClearIndividualCollections()  {  FIndividualCollections.Clear();  }
+  void ClearIndividualCollections() {  FIndividualCollections.Clear();  }
+  void ClearAtomCreationParams()    {  AtomCreationParams.Clear();  }
+  void UpdateAtomCreationParams();
 //..............................................................................
 // GlRender interface
   void ClearColor(int Color) {  FGlRender->LightModel.ClearColor() = Color; }

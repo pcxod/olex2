@@ -13,7 +13,7 @@ class TXGlLabel: public TGlMouseListener  {
   double OffsetX, OffsetY;
 public:
   TXGlLabel(const olxstr& collectionName, TGlRender *Render);
-  void Create(const olxstr& cName = EmptyString, const CreationParams* cpar = NULL);
+  void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
   virtual ~TXGlLabel();
 
   bool Orient(TGlPrimitive *P);

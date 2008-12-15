@@ -36,7 +36,7 @@ TXGlLabels::TXGlLabels(const olxstr& collectionName, TGlRender *Render) :
 //..............................................................................
 TXGlLabels::~TXGlLabels() {}
 //..............................................................................
-void TXGlLabels::Create(const olxstr& cName, const CreationParams* cpar)  {
+void TXGlLabels::Create(const olxstr& cName, const ACreationParams* cpar)  {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
   

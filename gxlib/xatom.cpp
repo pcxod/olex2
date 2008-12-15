@@ -174,7 +174,7 @@ void TXAtom::ValidateDS(TGraphicsStyle *GS)  {
   DrawStyle( GS->ParameterValue("DS", DefDS()).ToInt() );
 }
 //..............................................................................
-void TXAtom::Create(const olxstr& cName, const CreationParams* cpar)  {
+void TXAtom::Create(const olxstr& cName, const ACreationParams* cpar)  {
   olxstr Legend, NewL;
 
   if( !cName.IsEmpty() )  {
@@ -225,18 +225,23 @@ void TXAtom::Create(const olxstr& cName, const CreationParams* cpar)  {
     }
     GS = GPC->Style();
   }
-  olxstr& SMask = GS->ParameterValue("PMask", EmptyString);
-  if( SMask.IsEmpty() )  {
-    if( FAtom->GetEllipsoid() != NULL )  {
-      if( FAtom->GetEllipsoid()->IsNPD() )  {  SMask = DefNpdMask();  }
-      else                                  {  SMask = DefElpMask();  }
+  int PMask = 0;
+  if( cpar == NULL )  {
+    olxstr& SMask = GS->ParameterValue("PMask", EmptyString);
+    if( SMask.IsEmpty() )  {
+      if( FAtom->GetEllipsoid() != NULL )  {
+        if( FAtom->GetEllipsoid()->IsNPD() )  {  SMask = DefNpdMask();  }
+        else                                  {  SMask = DefElpMask();  }
+      }
+      else
+        SMask = DefSphMask();
     }
-    else
-      SMask = DefSphMask();
+    PMask = SMask.ToInt();
   }
-  int PrimitiveMask = SMask.ToInt();
+  else
+    PMask = ((AtomCreationParams*)cpar)->mask;
   GPC->AddObject(this);
-  if( PrimitiveMask == 0 )  
+  if( PMask == 0 )  
     return; // nothing to create then...
   // update primitives list
   if( cpar == NULL )  {
@@ -250,7 +255,7 @@ void TXAtom::Create(const olxstr& cName, const CreationParams* cpar)  {
   for( int i=0; i < FStaticObjects.Count(); i++ )  {
     off = 1;
     off = off << i;
-    if( PrimitiveMask & off )  {
+    if( PMask & off )  {
       TGlPrimitive* SGlP = FStaticObjects.Object(i);
       TGlPrimitive* GlP = GPC->NewPrimitive(FStaticObjects.String(i));
       GlP->Type(sgloCommandList);
@@ -282,8 +287,25 @@ void TXAtom::Create(const olxstr& cName, const CreationParams* cpar)  {
   return; 
 }
 //..............................................................................
-CreationParams* TXAtom::GetCreationParams() const {
-  return NULL;
+ACreationParams* TXAtom::GetCreationParams() const {
+  TGPCollection* gp = Primitives();
+  TGraphicsStyle* gs = gp->Style();
+  AtomCreationParams& ap = *(new AtomCreationParams);
+  ap.mask = Primitives()->Style()->ParameterValue("PMask", 0).ToInt();
+  ap.params = FParams;
+  const int soc = FStaticObjects.Count();
+  int pc = 0;
+  for( int i=0; i < soc; i++ )  {
+    int off = 1;
+    off = off << i;
+    if( (ap.mask & off) != 0 )  {
+      if( gp->PrimitiveCount() < pc )
+        throw TFunctionFailedException(__OlxSourceInfo, "assert");
+      ap.materials.Add( *((TGlMaterial*)gp->Primitive(pc)->GetProperties()) );
+      pc++;
+    }
+  }
+  return &ap;
 }
 //..............................................................................
 TXAtom::~TXAtom()  {
@@ -479,8 +501,7 @@ void TXAtom::DrawStyle(short V)  {
   FDrawStyle = V;
 }
 //..............................................................................
-void TXAtom::UpdateStyle(TGraphicsStyle *Style )
-{
+void TXAtom::UpdateStyle(TGraphicsStyle *Style) {
 /*  TGraphicsStyle *GS=NULL;
   TGPCollection *GPC=NULL, *OGPC;
   TGDrawObject *GDO;
@@ -503,8 +524,7 @@ void TXAtom::ListDrawingStyles(TStrList &List)  {
   List.Add("Ellipsoid");
   List.Add("NPD Ellipsoid");
 }
-void UpdateDrawingStyle(int Index)
-{  
+void UpdateDrawingStyle(int Index) {  
   return; 
 };
 //..............................................................................
@@ -656,13 +676,13 @@ void TXAtom::CreateStaticPrimitives()  {
 //..............................
 }
 //..............................................................................
-void TXAtom::UpdatePrimitives(int32_t Mask)  {
+void TXAtom::UpdatePrimitives(int32_t Mask, const ACreationParams* cpar)  {
   int SMask = Primitives()->Style()->ParameterValue("PMask", 0).ToInt();
   if( SMask == Mask )  return;
   Primitives()->Style()->SetParameter("PMask", Mask);
   Primitives()->ClearPrimitives();
   Primitives()->RemoveObject(this);
-  Create();
+  Create(EmptyString, cpar);
 }
 //..............................................................................
 //float TXAtom::Radius(){  return FParams()[0]; }

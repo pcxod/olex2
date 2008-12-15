@@ -26,7 +26,7 @@ TXGlLabel::TXGlLabel(const olxstr& collectionName, TGlRender *Render) :
 };
 TXGlLabel::~TXGlLabel(){}
 
-void TXGlLabel::Create(const olxstr& cName, const CreationParams* cpar)  {
+void TXGlLabel::Create(const olxstr& cName, const ACreationParams* cpar)  {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
 

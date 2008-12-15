@@ -52,7 +52,7 @@ public:
   inline void Name(const olxstr &name)  {  FName = name;}
 
   virtual void Style(TGraphicsStyle *S);
-  inline TGraphicsStyle* Style()          {  return FStyle; }
+  inline TGraphicsStyle* Style() const {  return FStyle; }
 };
 
 

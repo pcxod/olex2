@@ -180,7 +180,7 @@ TXGrid::~TXGrid()  {
 //..............................................................................
 void TXGrid::Clear()  {  DeleteObjects();  }
 //..............................................................................
-void TXGrid::Create(const olxstr& cName, const CreationParams* cpar)  {
+void TXGrid::Create(const olxstr& cName, const ACreationParams* cpar)  {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
   TGPCollection* GPC = FParent->FindCollection( GetCollectionName() );

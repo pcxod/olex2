@@ -19,7 +19,7 @@ protected:
   bool Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, const IEObject *Data=NULL);
 public:
   TGlCursor(const olxstr& collectionName, TGlRender *Render, bool TextStyle = true);
-  void Create(const olxstr& cName = EmptyString, const CreationParams* cpar = NULL);
+  void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
   virtual ~TGlCursor();
 
   void SetPosition(float x, float y)  {  FX=x;  FY=y;  }

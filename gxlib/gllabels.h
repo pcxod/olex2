@@ -34,7 +34,7 @@ class TXGlLabels: public AGDrawObject  {
   short Mode;
 public:
   TXGlLabels(const olxstr& collectionName, TGlRender *Render);
-  void Create(const olxstr& cName = EmptyString, const CreationParams* cpar = NULL);
+  void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
   virtual ~TXGlLabels();
 
   void Clear();
