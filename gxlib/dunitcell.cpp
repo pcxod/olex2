@@ -171,8 +171,9 @@ void TDUnitCell::Reciprical(bool v )  {
   FReciprical = v;
 }
 
-void TDUnitCell::Create(const olxstr& cName)  {
-  if( !cName.IsEmpty() )  SetCollectionName(cName);
+void TDUnitCell::Create(const olxstr& cName, const CreationParams* cpar)  {
+  if( !cName.IsEmpty() )  
+    SetCollectionName(cName);
   olxstr NewL;
   TGlMaterial *SGlM;
   TGPCollection* GPC = FParent->CollectionX( GetCollectionName(), NewL);

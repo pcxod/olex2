@@ -5,7 +5,7 @@
 #include "actions.h"
 
 #include "glrender.h"
-//#include "gdrawobject.h"
+#include "glprimitive.h"
 #include "glmouselistener.h"
 #include "styles.h"
 
@@ -39,7 +39,7 @@ private:
   friend class TXAtomStylesClear;
 protected:
   TStrList* FindPrimitiveParams(TGlPrimitive *P);
-  static TEList FPrimitiveParams;
+  static TTypeList<TGlPrimitiveParams> FPrimitiveParams;
   void ValidateRadius(TGraphicsStyle *GS);
   void ValidateDS(TGraphicsStyle *GS);
   static void ValidateAtomParams();
@@ -50,7 +50,8 @@ protected:
 public:
   TXAtom(const olxstr& collectionName, TSAtom& A, TGlRender *Render);
   virtual ~TXAtom();
-  void Create(const olxstr& cName = EmptyString);
+  void Create(const olxstr& cName = EmptyString, const CreationParams* cpar = NULL);
+  virtual CreationParams* GetCreationParams() const;
 
   DefPropP(int, XAppId)
 

@@ -54,7 +54,7 @@ protected:
   virtual bool Execute(const IEObject *Sender, const IEObject *Data=NULL);
 public:
   TGlConsole(const olxstr& collectionName, TGlRender *Render);
-  void Create(const olxstr& cName = EmptyString);
+  void Create(const olxstr& cName = EmptyString, const CreationParams* cpar = NULL);
   virtual ~TGlConsole();
 
   olxstr GetCommand() const;

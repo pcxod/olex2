@@ -27,44 +27,36 @@ TXGlLabels::TXGlLabels(const olxstr& collectionName, TGlRender *Render) :
   AGDrawObject(collectionName)
 {
   AGDrawObject::Parent(Render);
-  FAtoms = new TEList;
   FFontIndex = -1;
   AGDrawObject::Groupable(false);
-
-  // this can be changed to the bitarray object for compactness
-  FMarks = new TTypeList<bool>();
 
   FMarkMaterial = *Render->Selection()->GlM();
   FMarkMaterial.SetFlags(sglmAmbientF|sglmIdentityDraw);
 }
 //..............................................................................
-void TXGlLabels::Create(const olxstr& cName)  {
-  if( cName.Length() != 0 )  SetCollectionName(cName);
-  TGlPrimitive *GlP;
-  TGPCollection *GPC;
-
-  GPC = FParent->FindCollection( GetCollectionName() );
-  if( !GPC )    GPC = FParent->NewCollection( GetCollectionName() );
+TXGlLabels::~TXGlLabels() {}
+//..............................................................................
+void TXGlLabels::Create(const olxstr& cName, const CreationParams* cpar)  {
+  if( !cName.IsEmpty() )  
+    SetCollectionName(cName);
+  
+  TGPCollection* GPC = FParent->FindCollection( GetCollectionName() );
+  if( GPC == NULL )    
+    GPC = FParent->NewCollection( GetCollectionName() );
   GPC->AddObject(this);
 
   TGlMaterial* GlM = const_cast<TGlMaterial*>(GPC->Style()->Material("Text"));
   if( GlM->Mark() )
     *GlM = Font()->GetMaterial();
-  GlP = GPC->NewPrimitive("Text");
+  TGlPrimitive* GlP = GPC->NewPrimitive("Text");
   GlP->SetProperties(GlM);
   GlP->Type(sgloText);
   GlP->Params()[0] = -1;  //bitmap; TTF by default
 }
 //..............................................................................
-TXGlLabels::~TXGlLabels()  {
-  Clear();
-  delete FAtoms;
-  delete FMarks;
-}
-//..............................................................................
 void TXGlLabels::Clear()  {
-  FAtoms->Clear();
-  FMarks->Clear();
+  FAtoms.Clear();
+  FMarks.Clear();
 }
 //..............................................................................
 bool TXGlLabels::Orient(TGlPrimitive *P)  {
@@ -84,30 +76,30 @@ bool TXGlLabels::Orient(TGlPrimitive *P)  {
   for( int i=0; i < ac; i++ )  {
     TXAtom* XA = Atom(i);
     if( XA->Deleted() || (!XA->Visible()))  continue;
-    if( !(FMode & lmHydr) && (XA->Atom().GetAtomInfo() == iHydrogenIndex ) )  continue;
-    if( !(FMode & lmQPeak) && (XA->Atom().GetAtomInfo() == iQPeakIndex ) )  continue;
+    if( !(Mode & lmHydr) && (XA->Atom().GetAtomInfo() == iHydrogenIndex ) )  continue;
+    if( !(Mode & lmQPeak) && (XA->Atom().GetAtomInfo() == iQPeakIndex ) )  continue;
     TCAtom& ca = XA->Atom().CAtom();
     olxstr Tmp(EmptyString, 48);
-    if( FMode & lmLabels )  {
+    if( Mode & lmLabels )  {
       Tmp << XA->Atom().GetLabel();
       if( XA->Atom().CAtom().GetResiId() != -1 )  {
         int resi = ca.GetParent()->GetResidue(ca.GetResiId()).GetNumber();
         Tmp << '_' << resi;
       }
     }
-    if( FMode & lmPart )  {
+    if( Mode & lmPart )  {
       if( ca.GetPart() != 0)  {
         if( Tmp.Length() )  Tmp << ", ";
         Tmp << ca.GetPart();
       }
     }
-    if( FMode & lmAfix )  {
+    if( Mode & lmAfix )  {
       if( ca.GetAfix() != 0 ) {
         if( Tmp.Length() )  Tmp << ", ";
         Tmp << ca.GetAfix();
       }
     }
-    if( FMode & lmOVar )  {
+    if( Mode & lmOVar )  {
       const XVarReference* vr = ca.GetVarRef(var_name_Sof);
       if( vr != NULL )  {
         if( vr->relation_type != relation_None )  {
@@ -119,25 +111,25 @@ bool TXGlLabels::Orient(TGlPrimitive *P)  {
         }
       }
     }
-    if( (FMode & lmQPeakI) && (XA->Atom().GetAtomInfo() == iQPeakIndex ) )  {
+    if( (Mode & lmQPeakI) && (XA->Atom().GetAtomInfo() == iQPeakIndex ) )  {
       if( !Tmp.IsEmpty() )  Tmp << ", ";
       Tmp << olxstr::FormatFloat(1, ca.GetQPeak());
     }
-    if( FMode & lmAOcc )  {
+    if( Mode & lmAOcc )  {
       if( Tmp.Length() )  Tmp << ", ";
       Tmp << olxstr::FormatFloat(2, rm->Vars.GetAtomParam(ca, var_name_Sof) );
     }
-    if( FMode & lmUiso && ca.GetUisoOwner() == NULL )  {
+    if( Mode & lmUiso && ca.GetUisoOwner() == NULL )  {
       if( !Tmp.IsEmpty() )  Tmp << ", ";
         Tmp << olxstr::FormatFloat(2, rm->Vars.GetAtomParam(ca, var_name_Uiso));
     }
-    if( FMode & lmUisR )  {
+    if( Mode & lmUisR )  {
       if( ca.GetUisoOwner() != NULL )  {
         if( !Tmp.IsEmpty() )  Tmp << ", ";
           Tmp << olxstr::FormatFloat(2, ca.GetUisoScale());
       }
     }
-    if( FMode & lmFixed )  {
+    if( Mode & lmFixed )  {
       olxstr fXyz;
       for( int j=0; j < 3; j++ )  {
         if( ca.GetVarRef(var_name_X+j) != NULL && ca.GetVarRef(var_name_X+j)->relation_type == relation_None )
@@ -172,7 +164,7 @@ bool TXGlLabels::Orient(TGlPrimitive *P)  {
         Tmp << "Uiso";
       }
     }
-    if( FMode & lmOccp )  {
+    if( Mode & lmOccp )  {
       if( !Tmp.IsEmpty() )  Tmp << ", ";
       if( ca.GetOccu() != 1.0 )
         Tmp << olxstr::FormatFloat(3, ca.GetOccu() );
@@ -184,7 +176,7 @@ bool TXGlLabels::Orient(TGlPrimitive *P)  {
     if( Tmp.IsEmpty() )  continue;
     P->String(&Tmp);
     if( !matInited )  {
-      if( FMarks->Item(i) == true ) {
+      if( FMarks[i] == true ) {
         FMarkMaterial.Init();
         currentGlM = false;
         if( FParent->IsATI() )  {
@@ -203,7 +195,7 @@ bool TXGlLabels::Orient(TGlPrimitive *P)  {
       matInited = true;
     }
     else  {
-      if( FMarks->Item(i) == true )  {
+      if( FMarks[i] )  {
         if( currentGlM )  {
           FMarkMaterial.Init();
           currentGlM = false;
@@ -234,25 +226,28 @@ bool TXGlLabels::Orient(TGlPrimitive *P)  {
   return true;
 }
 //..............................................................................
-void TXGlLabels::AddAtom(TXAtom *A)
-{  FAtoms->Add(A); FMarks->AddACopy(false);  }
+void TXGlLabels::AddAtom(TXAtom *A)  {
+  FAtoms.Add(A); 
+  FMarks.Add(false);  
+}
 //..............................................................................
-void TXGlLabels::Selected(bool On){  AGDrawObject::Selected(false);  return;  };
+void TXGlLabels::Selected(bool On) {  
+  AGDrawObject::Selected(false);  
+}
 //..............................................................................
-void TXGlLabels::Mode(short lmode){  FMode = lmode;  }
-//..............................................................................
-void TXGlLabels::ClearLabelMarks()
-{
-  for( int i=0; i < FMarks->Count(); i++ )
-    FMarks->Item(i) = false;;
+void TXGlLabels::ClearLabelMarks()  {
+  for( int i=0; i < FMarks.Count(); i++ )
+    FMarks[i] = false;;
 }
 //..............................................................................
 void TXGlLabels::MarkLabel(TXAtom *A, bool v)  {
-  int i = FAtoms->IndexOf(A);
-  if( i != -1 && 1 < FMarks->Count() )
-    FMarks->Item(i) = v;
+  int i = FAtoms.IndexOf(A);
+  if( i != -1 && 1 < FMarks.Count() )
+    FMarks[i] = v;
 }
 //..............................................................................
-TGlFont* TXGlLabels::Font() const {  return FParent->Scene()->Font(FFontIndex); }
+TGlFont* TXGlLabels::Font() const {  
+  return FParent->Scene()->Font(FFontIndex); 
+}
 //..............................................................................
 

@@ -19,7 +19,7 @@ class TGlTextBox: public TGlMouseListener  {
 protected:
 public:
   TGlTextBox(const olxstr& collectionName, TGlRender *Render);
-  void Create(const olxstr& cName = EmptyString);
+  void Create(const olxstr& cName = EmptyString, const CreationParams* cpar = NULL);
   virtual ~TGlTextBox();
 
   void Clear();

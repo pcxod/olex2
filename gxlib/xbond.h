@@ -36,7 +36,8 @@ protected:
   static TXBondStylesClear *FXBondStylesClear;
 public:
   TXBond(const olxstr& collectionName, TSBond& B, TGlRender *Render);
-  void Create(const olxstr& cName = EmptyString);
+  void Create(const olxstr& cName = EmptyString, const CreationParams* cpar = NULL);
+  virtual CreationParams* GetCreationParams() const;
   virtual ~TXBond();
 
   static TStrPObjList<olxstr,TGlPrimitive*> FStaticObjects;

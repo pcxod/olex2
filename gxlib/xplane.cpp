@@ -21,19 +21,18 @@ TXPlane::TXPlane(const olxstr& collectionName, TSPlane *Plane, TGlRender *Render
   FRectangular = false;
 }
 //..............................................................................
-void TXPlane::Create(const olxstr& cName)  {
-  if( !cName.IsEmpty() )  SetCollectionName(cName);
-  TGlPrimitive *GlP;
-  TGPCollection *GPC;
+void TXPlane::Create(const olxstr& cName, const CreationParams* cpar)  {
+  if( !cName.IsEmpty() )  
+    SetCollectionName(cName);
   TGlMaterial GlM, GlM1;
-  GPC = FParent->NewCollection( GetCollectionName() );
+  TGPCollection* GPC = FParent->NewCollection( GetCollectionName() );
   GPC->AddObject(this);
 
   GlM.SetFlags( sglmAmbientF|sglmDiffuseF|sglmAmbientB|sglmDiffuseB|sglmTransparent);
   GlM1.SetFlags( sglmAmbientF );
   GlM1.AmbientF = 0;
 
-  GlP = GPC->NewPrimitive("Plane");
+  TGlPrimitive* GlP = GPC->NewPrimitive("Plane");
   GlM.AmbientF = 0x7f00007f;
   GlM.DiffuseF = 0x7f3f3f3f;
   GlM.AmbientB = 0x7f00007f;

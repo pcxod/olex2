@@ -42,8 +42,9 @@ TXGrowLine::TXGrowLine(const olxstr& collectionName, TSAtom *A, TCAtom* CA,
   Transform = transform;
 }
 //..............................................................................
-void TXGrowLine::Create(const olxstr& cName)  {
-  if( cName.Length() != 0 )  SetCollectionName(cName);
+void TXGrowLine::Create(const olxstr& cName, const CreationParams* cpar)  {
+  if( !cName.IsEmpty() )  
+    SetCollectionName(cName);
   TXBond::Create( GetCollectionName() );
   TGPCollection* GPC = FParent->FindCollection( GetCollectionName() );
   GPC->AddObject(this);

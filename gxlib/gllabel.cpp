@@ -26,25 +26,22 @@ TXGlLabel::TXGlLabel(const olxstr& collectionName, TGlRender *Render) :
 };
 TXGlLabel::~TXGlLabel(){}
 
-void TXGlLabel::Create(const olxstr& cName)  {
-  if( cName.Length() != 0 )  SetCollectionName(cName);
-  TGlPrimitive *GlP;
-  TGPCollection *GPC;
-  TGraphicsStyle *GS;
+void TXGlLabel::Create(const olxstr& cName, const CreationParams* cpar)  {
+  if( !cName.IsEmpty() )  
+    SetCollectionName(cName);
 
-  TGlMaterial *GlM;
-
-  GPC = FParent->FindCollection( GetCollectionName() );
-  if( !GPC )   GPC = FParent->NewCollection( GetCollectionName() );
+  TGPCollection* GPC = FParent->FindCollection( GetCollectionName() );
+  if( GPC == NULL )   
+    GPC = FParent->NewCollection( GetCollectionName() );
   else  {
     GPC->AddObject(this);
     return;
   }
-  GS = GPC->Style();
+  TGraphicsStyle* GS = GPC->Style();
   GS->SetPersistent(true);
   GPC->AddObject(this);
 
-  GlM = const_cast<TGlMaterial*>(GS->Material("Plane"));
+  TGlMaterial* GlM = const_cast<TGlMaterial*>(GS->Material("Plane"));
   if( GlM->Mark() )  {
     GlM->SetFlags( sglmAmbientF|sglmIdentityDraw|sglmTransparent  );
     GlM->AmbientF = 0x800f0f0f;
@@ -52,7 +49,7 @@ void TXGlLabel::Create(const olxstr& cName)  {
     GlM->ShininessF = 128;
     GlM->Mark(false);
   }
-  GlP = GPC->NewPrimitive("Plane");  // a sphere at the basis of the object {0,0,0}
+  TGlPrimitive* GlP = GPC->NewPrimitive("Plane");  // a sphere at the basis of the object {0,0,0}
   GlP->SetProperties(GlM);
   GlP->Type(sgloQuads);
   GlP->Data().Resize(3, 4);

@@ -25,8 +25,9 @@ TGlGroup::TGlGroup(const olxstr& collectionName, TGlRender *P) :
   DefaultColor = true;
 }
 //..............................................................................
-void TGlGroup::Create(const olxstr& cName)  {
-  if( !cName.IsEmpty() )  SetCollectionName(cName);
+void TGlGroup::Create(const olxstr& cName, const CreationParams* cpar)  {
+  if( !cName.IsEmpty() )  
+    SetCollectionName(cName);
 
   TGPCollection *GPC = FParent->FindCollection( GetCollectionName() );
   if( GPC == NULL )  

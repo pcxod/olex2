@@ -61,19 +61,18 @@ void TXBond::BondUpdated()  {
   }
 }
 //..............................................................................
-void TXBond::Create(const olxstr& cName)  {
-  if( cName.Length() != 0 )  SetCollectionName(cName);
+void TXBond::Create(const olxstr& cName, const CreationParams* cpar)  {
+  if( !cName.IsEmpty() )  
+    SetCollectionName(cName);
   olxstr NewL;
 
-  TGlMaterial *GlM, RGlM;
-  TGlPrimitive *GlP, *SGlP;
-  TGraphicsStyle *GS;
-  TGPCollection *GPC;
+  TGlMaterial RGlM;
 
-  if( !FStaticObjects.Count() )  CreateStaticPrimitives();
+  if( FStaticObjects.IsEmpty() )  
+    CreateStaticPrimitives();
   // find collection
-  GPC = FParent->CollectionX( GetCollectionName(), NewL);
-  if( !GPC )
+  TGPCollection* GPC = FParent->CollectionX( GetCollectionName(), NewL);
+  if( GPC == NULL )
     GPC = FParent->NewCollection(NewL);
   else  {
     if( GPC->PrimitiveCount() )  {
@@ -82,7 +81,7 @@ void TXBond::Create(const olxstr& cName)  {
       return;
     }
   }
-  GS = GPC->Style();
+  TGraphicsStyle* GS = GPC->Style();
 
   int PrimitiveMask = GS->ParameterValue("PMask",
     (FBond && (FBond->GetType() == sotHBond)) ? 2048 : DefMask() ).ToInt();
@@ -96,8 +95,8 @@ void TXBond::Create(const olxstr& cName)  {
     int off = 1;
     off = off << i;
     if( PrimitiveMask & off )    {
-      SGlP = FStaticObjects.Object(i);
-      GlP = GPC->NewPrimitive(FStaticObjects.String(i));
+      TGlPrimitive* SGlP = FStaticObjects.Object(i);
+      TGlPrimitive* GlP = GPC->NewPrimitive(FStaticObjects.String(i));
 //      if( Params()[0] >= 180 )  {  SGlP->QuadricOrientation = GLU_INSIDE;  }
 //      else                    {  SGlP->QuadricOrientation = GLU_OUTSIDE;  }
       GlP->Type(sgloCommandList);
@@ -108,7 +107,7 @@ void TXBond::Create(const olxstr& cName)  {
       GlP->StartList();
       GlP->CallList(SGlP);
       GlP->EndList();
-      GlM = const_cast<TGlMaterial*>(GS->Material(FStaticObjects.String(i)));
+      TGlMaterial* GlM = const_cast<TGlMaterial*>(GS->Material(FStaticObjects.String(i)));
       if( GlM->Mark() && FBond )  {
         if( SGlP->Params().Last() == ddsDefAtomA )  {
           TXAtom::GetDefSphereMaterial(FBond->A(), RGlM);
@@ -128,6 +127,10 @@ void TXBond::Create(const olxstr& cName)  {
     }
   }
   return;
+}
+//..............................................................................
+CreationParams* TXBond::GetCreationParams() const {
+  return NULL;
 }
 //..............................................................................
 TXBond::~TXBond()  {  }

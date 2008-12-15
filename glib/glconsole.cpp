@@ -73,13 +73,13 @@ TGlConsole::~TGlConsole()  {
   delete FCursor;
 }
 //..............................................................................
-void TGlConsole::Create(const olxstr& cName)  {
-  if( cName.Length() != 0 )  SetCollectionName(cName);
-  TGlPrimitive *GlP;
-  TGPCollection *GPC;
+void TGlConsole::Create(const olxstr& cName, const CreationParams* cpar)  {
+  if( !cName.IsEmpty() )  
+    SetCollectionName(cName);
 
-  GPC = FParent->FindCollection( GetCollectionName() );
-  if( !GPC )    GPC = FParent->NewCollection( GetCollectionName() );
+  TGPCollection* GPC = FParent->FindCollection( GetCollectionName() );
+  if( GPC == NULL )    
+    GPC = FParent->NewCollection( GetCollectionName() );
   GPC->AddObject(this);
 
   TGraphicsStyle *GS = GPC->Style();
@@ -93,7 +93,7 @@ void TGlConsole::Create(const olxstr& cName)  {
   if( GlM->Mark() )
     *GlM = Font()->GetMaterial();
 
-  GlP = GPC->NewPrimitive("Text");
+  TGlPrimitive* GlP = GPC->NewPrimitive("Text");
   GlP->SetProperties(GlM);
   GlP->Type(sgloText);
   GlP->Params()[0] = -1;  //bitmap; TTF by default

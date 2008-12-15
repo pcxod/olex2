@@ -1979,9 +1979,9 @@ bool TGXApp::LabelsVisible()    const {  return FLabels->Visible(); }
 //..............................................................................
 void TGXApp::LabelsVisible(bool v)    {  FLabels->Visible(v); }
 //..............................................................................
-void TGXApp::LabelsMode(short lmode)  {  FLabels->Mode(lmode); }
+void TGXApp::LabelsMode(short lmode)  {  FLabels->SetMode(lmode); }
 //..............................................................................
-short TGXApp::LabelsMode()      const {  return FLabels->Mode(); }
+short TGXApp::LabelsMode()      const {  return FLabels->GetMode(); }
 //..............................................................................
 void TGXApp::LabelsFont(short Findex){  FLabels->FontIndex(Findex);  }
 //..............................................................................
@@ -2105,8 +2105,10 @@ void TGXApp::AtomRad(const olxstr& Rad, TXAtomPList* Atoms)  { // pers, sfil
     for( int i=0; i < XAtoms.Count(); i++ )
       XAtoms[i].CalcRad(DS);
   }
-  TXAtom::DefZoom(1);
-  TXAtom::TelpProb(1);
+  if( Atoms == NULL )  { // 
+    TXAtom::DefZoom(1);
+    TXAtom::TelpProb(1);
+  }
 }
 //..............................................................................
 void TGXApp::GetGPCollections(TPtrList<AGDrawObject>& GDObjects, TPtrList<TGPCollection>& Result)  {
@@ -2765,7 +2767,7 @@ void TGXApp::Individualise(TXAtom* XA)  {
   else  {
     if( indCol == NULL )  {
       indCol = FGlRender->NewCollection( leg );
-      FIndividualCollections.Add( leg );
+      FIndividualCollections.Add( leg, NULL );
     }
     XA->Create( leg );
     XA->Primitives()->RemoveObject(XA);
@@ -2792,7 +2794,7 @@ void TGXApp::Individualise(TXAtom* XA)  {
       else  {
         if( indCol == NULL )  {
           indCol = FGlRender->NewCollection( leg );
-          FIndividualCollections.Add( leg );
+          FIndividualCollections.Add( leg, NULL );
         }
         xbonds[i]->Primitives()->RemoveObject( xbonds[i] );
         xbonds[i]->Create(leg);

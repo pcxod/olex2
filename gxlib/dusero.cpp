@@ -25,18 +25,18 @@ TDUserObj::TDUserObj(short type, ematd* data, const olxstr& collectionName, TGlR
   Groupable(false);
 }
 //...........................................................................
-void TDUserObj::Create(const olxstr& cName)  {
-  if( !cName.IsEmpty() )  SetCollectionName(cName);
+void TDUserObj::Create(const olxstr& cName, const CreationParams* cpar)  {
+  if( !cName.IsEmpty() )  
+    SetCollectionName(cName);
   olxstr NewL;
   TGlMaterial GlM;
-  const TGlMaterial *SGlM;
   GlM.SetFlags(sglmAmbientF);
   GlM.AmbientF = 0;
   TGPCollection* GPC = FParent->CollectionX( GetCollectionName(), NewL);
-  if( !GPC )
+  if( GPC == NULL )
     GPC = FParent->NewCollection(NewL);
   else  {
-    if( GPC->PrimitiveCount() )  {
+    if( GPC->PrimitiveCount() != 0 )  {
       GPC->AddObject(this);
       return;
     }
@@ -45,7 +45,7 @@ void TDUserObj::Create(const olxstr& cName)  {
   GPC->AddObject(this);
 
   TGlPrimitive* FGlP = GPC->NewPrimitive("Object");
-  SGlM = GS->Material("Object");
+  const TGlMaterial* SGlM = GS->Material("Object");
   if( !SGlM->Mark() )  FGlP->SetProperties(SGlM);
   else  {
     GlM.SetIdentityDraw(false);
