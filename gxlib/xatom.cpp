@@ -55,7 +55,10 @@ TXAtom::TXAtom(const olxstr& collectionName, TSAtom& A, TGlRender *Render) :
   Moveable(false);
   Zoomable(false);
 
-  FDrawStyle = adsSphere;
+  if( A.GetEllipsoid() != NULL )
+    FDrawStyle = A.GetEllipsoid()->IsNPD() ? adsEllipsoidNPD : adsEllipsoid;
+  else
+    FDrawStyle = adsSphere;
   Params().Resize(2);
   Params()[0] = 1;
   Params()[1] = 1;
@@ -196,7 +199,8 @@ void TXAtom::Create(const olxstr& cName, const ACreationParams* cpar)  {
     Legend = GetLabelLegend(FAtom);
     GPC = FParent->FindCollection(Legend);
     if( GPC == NULL || GPC->ObjectCount() == 0 )  {  // if the collection is empty, need to fill it...
-      GPC = FParent->NewCollection(Legend);
+      if( GPC == NULL )
+        GPC = FParent->NewCollection(Legend);
       GS = GPC->Style();
       GS->SetSaveable(false);
     }

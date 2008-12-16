@@ -1914,12 +1914,12 @@ void TMainForm::macMask(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         AtomsStart = 3;
         TXAtom::DefElpMask(Mask);
       }
-      if( Cmds[2] == "sph" )  {
+      else if( Cmds[2] == "sph" )  {
         ADS |= adsSphere;
         AtomsStart = 3;
         TXAtom::DefSphMask(Mask);
       }
-      if( Cmds[2] == "npd" )  {
+      else if( Cmds[2] == "npd" )  {
         ADS |= adsEllipsoidNPD;
         AtomsStart = 3;
         TXAtom::DefNpdMask(Mask);
@@ -3550,7 +3550,7 @@ void TMainForm::macReset(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   olxstr newSg(Options.FindValue('s')), 
          content( olxstr::DeleteChars(Options.FindValue('c'), ' ')),
          fileName(Options.FindValue('f') );
-
+  FXApp->XFile().UpdateAsymmUnit();
   TIns *Ins = (TIns*)FXApp->XFile().FindFormat("ins");
   if( FXApp->CheckFileType<TP4PFile>() )  {
     if( !newSg.Length() )  {
