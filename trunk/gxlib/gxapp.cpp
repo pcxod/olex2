@@ -165,7 +165,6 @@ public:
     // make sure that these are only cleared when file is loaded
     if( Sender && EsdlInstanceOf(*Sender, TXFile) )  {
       FParent->ClearIndividualCollections();
-      FParent->ClearAtomCreationParams();
       FParent->DUnitCell().ResetCentres();
       //FParent->XGrid().Clear();
     }
@@ -179,7 +178,6 @@ public:
     // lets make Horst HAPPY!
     //FParent->GetRender().CleanUpStyles();
     //  FParent->CenterModel();
-    FParent->UpdateAtomCreationParams();
     FParent->GetRender().SetBasis(B);
     FParent->CreateObjects(true);
     FParent->CenterView();
@@ -336,8 +334,8 @@ void TGXApp::CreateObjects(bool SyncBonds, bool centerModel)  {
   ClearXObjects();
   FGlRender->SetSceneComplete(false);
 
-  for( int i=0; i < FIndividualCollections.Count(); i++ )
-    FGlRender->NewCollection( FIndividualCollections.String(i) );
+  for( int i=0; i < IndividualCollections.Count(); i++ )
+    FGlRender->NewCollection( IndividualCollections[i] );
 
   int totalACount = XFile().GetLattice().AtomCount();
   for( int i=0; i < OverlayedXFiles.Count(); i++ )
@@ -363,7 +361,7 @@ void TGXApp::CreateObjects(bool SyncBonds, bool centerModel)  {
     allAtoms[i]->SetTag(i);
     TXAtom& XA = XAtoms.Add( *(new TXAtom(EmptyString, *allAtoms[i], FGlRender)) );
     if( allAtoms[i]->IsDeleted() )  XA.Deleted(true);
-    XA.Create(EmptyString, (i < this_a_count && allAtoms[i]->CAtom().GetId() >= 0) ? &AtomCreationParams[allAtoms[i]->CAtom().GetId()] : NULL );
+    XA.Create(EmptyString);
     XA.SetXAppId(i);
     if( !FStructureVisible )  {  XA.Visible(FStructureVisible);  continue;  }
     if( allAtoms[i]->GetAtomInfo() == iHydrogenIndex )    {  XA.Visible(FHydrogensVisible);  }
@@ -1081,7 +1079,7 @@ void TGXApp::BackupSelection()  {
 void TGXApp::RestoreSelection()  {
   GetRender().SelectAll(false);
   for( int i=0; i < SelectionCopy.Count(); i++ )
-    GetRender().Select( (AGDrawObject*)SelectionCopy[i] );
+    GetRender().Select( SelectionCopy[i] );
   Draw();
 }
 //..............................................................................
@@ -2062,6 +2060,14 @@ void TGXApp::SAtoms2XAtoms(TSAtomPList& L, TXAtomPList& Res)  {
 }
 //..............................................................................
 void TGXApp::GetBonds(const olxstr &Bonds, TXBondPList& List)  {
+  if( Bonds.IsEmpty() || Bonds.Comparei("sel") == 0 )  {
+    TGlGroup* sel = GetRender().Selection();
+    for( int i=0; i < sel->Count(); i++ )  {
+      if( EsdlInstanceOf(*sel->Object(i), TXBond) )
+        List.Add( (TXBond*)sel->Object(i));
+    }
+    return;
+  }
   TGPCollection *GPC = GetRender().FindCollection(Bonds);
   if( GPC == NULL )  return;
   for( int i=0; i < GPC->ObjectCount(); i++ )  {
@@ -2106,9 +2112,6 @@ void TGXApp::AtomRad(const olxstr& Rad, TXAtomPList* Atoms)  { // pers, sfil
     for( int i=0; i < Atoms->Count(); i++ )  {
       TXAtom& xa = *(*Atoms)[i];
       xa.CalcRad(DS);
-      const int id = xa.Atom().CAtom().GetId();
-      if( id >= 0 )
-        AtomCreationParams.Set(id, *xa.GetCreationParams());
     }
   }
   else {
@@ -2240,9 +2243,10 @@ void TGXApp::SetAtomDrawingStyle(short ADS, TXAtomPList* Atoms)  {
   FillXAtomList(atoms, Atoms);
   for( int i=0; i < atoms.Count(); i++ )
     atoms[i]->DrawStyle(ADS);
-
-  CalcProbFactor(FProbFactor);
-  TXAtom::DefDS(ADS);
+  if( Atoms == NULL )  {
+    CalcProbFactor(FProbFactor);
+    TXAtom::DefDS(ADS);
+  }
 }
 //..............................................................................
 void TGXApp::XAtomDS2XBondDS(const olxstr &Source)  {
@@ -2772,14 +2776,15 @@ void TGXApp::Individualise(TXAtom* XA)  {
 
   olxstr leg = XA->GetLegend( XA->Atom(), level );
   TGPCollection* indCol = FGlRender->FindCollection( leg );
-  if( indCol != NULL && XA->Primitives() == indCol )  return;
+  if( indCol != NULL && XA->Primitives() == indCol )  
+    return;
   else  {
     if( indCol == NULL )  {
       indCol = FGlRender->NewCollection( leg );
-      FIndividualCollections.Add( leg, NULL );
+      IndividualCollections.Add(leg);
     }
-    XA->Create( leg );
     XA->Primitives()->RemoveObject(XA);
+    XA->Create( leg );
     TSAtomPList satoms;
     TSBondPList sbonds;
     TXAtomPList xatoms;
@@ -2799,11 +2804,12 @@ void TGXApp::Individualise(TXAtom* XA)  {
       else
         leg = xbonds[i]->GetLegend( xbonds[i]->Bond(), level, level1);
       indCol = FGlRender->FindCollection( leg );
-      if( indCol != NULL && xbonds[i]->Primitives() == indCol )  continue;
+      if( indCol != NULL && xbonds[i]->Primitives() == indCol )  
+        continue;
       else  {
         if( indCol == NULL )  {
           indCol = FGlRender->NewCollection( leg );
-          FIndividualCollections.Add( leg, NULL );
+          IndividualCollections.Add(leg);
         }
         xbonds[i]->Primitives()->RemoveObject( xbonds[i] );
         xbonds[i]->Create(leg);
@@ -2819,16 +2825,16 @@ void TGXApp::Collectivise(TXAtom* XA)  {
 
   olxstr leg = XA->GetLegend( XA->Atom(), level );
   TGPCollection* indCol = FGlRender->FindCollection( leg );
-  if( indCol != NULL && XA->Primitives() == indCol )  return;
-  else
-  {
+  if( indCol != NULL && XA->Primitives() == indCol )  
+    return;
+  else  {
     if( indCol == NULL )  indCol = FGlRender->NewCollection( leg );
 
     XA->Primitives()->RemoveObject(XA);
-    if( !XA->Primitives()->ObjectCount() )
-    {
-      int index = FIndividualCollections.IndexOfComparable( XA->Primitives()->Name() );
-      if( index >= 0 )  FIndividualCollections.Remove(index);
+    if( XA->Primitives()->ObjectCount() == 0 )  {
+      int index = IndividualCollections.IndexOf( XA->Primitives()->Name() );
+      if( index >= 0 )  
+        IndividualCollections.Delete(index);
     }
     XA->Create(leg);
     TSAtomPList satoms;
@@ -2850,13 +2856,16 @@ void TGXApp::Collectivise(TXAtom* XA)  {
       else
         leg = xbonds[i]->GetLegend( xbonds[i]->Bond(), level, level1);
       indCol = FGlRender->FindCollection( leg );
-      if( indCol != NULL && xbonds[i]->Primitives() == indCol )  continue;
+      if( indCol != NULL && xbonds[i]->Primitives() == indCol )  
+        continue;
       else  {
-        if( indCol == NULL )  indCol = FGlRender->NewCollection( leg );
+        if( indCol == NULL )  
+          indCol = FGlRender->NewCollection( leg );
         xbonds[i]->Primitives()->RemoveObject(xbonds[i]);
         if( xbonds[i]->Primitives()->ObjectCount() == 0 )  {
-          int index = FIndividualCollections.IndexOfComparable( xbonds[i]->Primitives()->Name() );
-          if( index >= 0 )  FIndividualCollections.Remove(index);
+          int index = IndividualCollections.IndexOf( xbonds[i]->Primitives()->Name() );
+          if( index >= 0 )  
+            IndividualCollections.Delete(index);
         }
         xbonds[i]->Create(leg);
       }
@@ -2864,8 +2873,7 @@ void TGXApp::Collectivise(TXAtom* XA)  {
   }
 }
 //..............................................................................
-int TGXApp::GetNextAvailableLabel(const olxstr& AtomType)
-{
+int TGXApp::GetNextAvailableLabel(const olxstr& AtomType) {
   int nextLabel = 0, currentLabel;
 
   TBasicAtomInfo *bai = FAtomsInfo->FindAtomInfoBySymbol(AtomType);
@@ -3164,7 +3172,6 @@ TXFile& TGXApp::NewOverlayedXFile() {
 }
 //..............................................................................
 void TGXApp::DeleteOverlayedXFile(int index) {
-
   ClearLabels();
   ClearSelectionCopy();
   OverlayedXFiles.Delete(index);
@@ -3188,13 +3195,6 @@ TXLattice& TGXApp::AddLattice(const olxstr& Name, const mat3d& basis)  {
 }
 //..............................................................................
 void TGXApp::InitFadeMode()  {
-}
-//..............................................................................
-void TGXApp::UpdateAtomCreationParams() {
-  TAsymmUnit& au = XFile().GetAsymmUnit();
-  AtomCreationParams.SetCapacity( au.AtomCount() );
-  while( AtomCreationParams.Count() < au.AtomCount() )
-    AtomCreationParams.Add(NULL);
 }
 //..............................................................................
 void TGXApp::ToDataItem(TDataItem& item) const  {

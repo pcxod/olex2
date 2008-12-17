@@ -37,8 +37,10 @@ bool TXAtomStylesClear::Exit(const IEObject *Sender, const IEObject *Data)
 //----------------------------------------------------------------------------//
 TStrPObjList<olxstr,TGlPrimitive*> TXAtom::FStaticObjects;
 TTypeList<TGlPrimitiveParams> TXAtom::FPrimitiveParams;
-float  TXAtom::FTelpProb = 0;
-float  TXAtom::FQPeakScale = 0;
+float TXAtom::FTelpProb = 0;
+float TXAtom::FQPeakScale = 0;
+short TXAtom::FDefRad = 0;
+short TXAtom::FDefDS = 0;
 TGraphicsStyle* TXAtom::FAtomParams=NULL;
 TXAtomStylesClear *TXAtom::FXAtomStylesClear=NULL;
 //..............................................................................
@@ -59,10 +61,12 @@ TXAtom::TXAtom(const olxstr& collectionName, TSAtom& A, TGlRender *Render) :
     FDrawStyle = A.GetEllipsoid()->IsNPD() ? adsEllipsoidNPD : adsEllipsoid;
   else
     FDrawStyle = adsSphere;
+  FRadius = darIsot;
   Params().Resize(2);
   Params()[0] = 1;
   Params()[1] = 1;
-  if( FStaticObjects.IsEmpty() )  CreateStaticPrimitives();
+  if( FStaticObjects.IsEmpty() )  
+    CreateStaticPrimitives();
   // the objects will be automatically deleted by the corresponding action collections
 }
 //..............................................................................
@@ -73,16 +77,16 @@ void TXAtom::Quality(const short V)  {
   if( GS == NULL ) 
     GS = FParent->Styles()->NewStyle(Legend);
 
-  olxstr &SphereQ   = GS->ParameterValue("SphereQ", EmptyString);
-  olxstr &RimQ = GS->ParameterValue("RimQ", EmptyString);  // quality
-  olxstr &DiskQ = GS->ParameterValue("DiskQ", EmptyString);  // quality
+  olxstr &SphereQ   = GS->ParameterValue("SphereQ", EmptyString, true);
+  olxstr &RimQ = GS->ParameterValue("RimQ", EmptyString, true);  // quality
+  olxstr &DiskQ = GS->ParameterValue("DiskQ", EmptyString, true);  // quality
 
-  olxstr &RimR = GS->ParameterValue("RimR", EmptyString);  // radius
-  olxstr &RimW = GS->ParameterValue("RimW", EmptyString);  // width
+  olxstr &RimR = GS->ParameterValue("RimR", EmptyString, true);  // radius
+  olxstr &RimW = GS->ParameterValue("RimW", EmptyString, true);  // width
 
   //olxstr &DiskIR = GS->ParameterValue("DiskIR", EmptyString);  // inner radius for disks
-  olxstr &DiskOR = GS->ParameterValue("DiskOR", EmptyString);  // outer radius
-  olxstr &DiskS = GS->ParameterValue("DiskS", EmptyString);  // separation
+  olxstr &DiskOR = GS->ParameterValue("DiskOR", EmptyString, true);  // outer radius
+  olxstr &DiskS = GS->ParameterValue("DiskS", EmptyString, true);  // separation
 
   RimR = 1.02;
   DiskQ  = RimQ;
@@ -143,35 +147,37 @@ void TXAtom::ListParams(TStrList &List)  {
 void TXAtom::CalcRad(short DefRadius)  {
   /*  remember the value in the style */
   //DefRad(DefRadius);
+  FRadius = DefRadius;
+  Primitives()->Style()->SetParameter("DR", DefRadius);
 
   if( DefRadius == darPers )  
-    Params()[0] = FAtom->GetAtomInfo().GetRad();   
+    FParams[0] = FAtom->GetAtomInfo().GetRad();   
   else if( DefRadius == darPack )  
-    Params()[0] = FAtom->GetAtomInfo().GetRad2();
+    FParams[0] = FAtom->GetAtomInfo().GetRad2();
   else if( DefRadius == darBond )  
-    Params()[0] = sqrt(caDefIso)/2;
+    FParams[0] = sqrt(caDefIso)/2;
   else if( DefRadius == darIsot )  {
     if( FAtom->GetAtomInfo() == iHydrogenIndex ) 
-      Params()[0] = 2*caDefIso;
+      FParams[0] = 2*caDefIso;
     else  {
       if( FAtom->CAtom().GetUiso() > 0 )
-        Params()[0] = sqrt(FAtom->CAtom().GetUiso());
+        FParams[0] = sqrt(FAtom->CAtom().GetUiso());
       else
-        Params()[0] = 2*caDefIso; //sqrt(caDefIso);
+        FParams[0] = 2*caDefIso; //sqrt(caDefIso);
     }
   }
   else if( DefRadius == darIsotH )  {
     if( FAtom->CAtom().GetUiso() > 0 )
-      Params()[0] = sqrt(FAtom->CAtom().GetUiso());
+      FParams[0] = sqrt(FAtom->CAtom().GetUiso());
     else
-      Params()[0] = 2*caDefIso; //sqrt(caDefIso);
+      FParams[0] = 2*caDefIso; //sqrt(caDefIso);
   }
 }
 //..............................................................................
 void TXAtom::ValidateRadius(TGraphicsStyle *GS)  {
   Params()[1] = GS->ParameterValue("Z", DefZoom()).ToDouble();
-  short DefRadius = DefRad();
-  CalcRad(DefRadius);
+  short dr = GS->ParameterValue("DR", DefRad()).ToInt();
+  CalcRad(dr);
 }
 void TXAtom::ValidateDS(TGraphicsStyle *GS)  {
   DrawStyle( GS->ParameterValue("DS", DefDS()).ToInt() );
@@ -190,7 +196,6 @@ void TXAtom::Create(const olxstr& cName, const ACreationParams* cpar)  {
   TGlMaterial RGlM;
   TGraphicsStyle *GS = NULL;
   TGPCollection *GPC = NULL;
-  int off;
   if( FStaticObjects.IsEmpty() )  
     CreateStaticPrimitives();
 
@@ -221,29 +226,27 @@ void TXAtom::Create(const olxstr& cName, const ACreationParams* cpar)  {
           ValidateRadius( GPC->Style() );
           ValidateDS(GPC->Style());
         }
-        else  {
+        else
           Params() = cpar->params;
-        }
         return;
       }
     }
     GS = GPC->Style();
   }
-  int PMask = 0;
-  if( cpar == NULL )  {
-    olxstr& SMask = GS->ParameterValue("PMask", EmptyString);
-    if( SMask.IsEmpty() )  {
-      if( FAtom->GetEllipsoid() != NULL )  {
-        if( FAtom->GetEllipsoid()->IsNPD() )  {  SMask = DefNpdMask();  }
-        else                                  {  SMask = DefElpMask();  }
-      }
-      else
-        SMask = DefSphMask();
+
+  GS->SetSaveable( GPC->Name().CharCount('.') == 0 );
+
+  olxstr& SMask = GS->ParameterValue("PMask", EmptyString);
+  if( SMask.IsEmpty() )  {
+    if( FAtom->GetEllipsoid() != NULL && FDefRad == darIsot )  {
+      if( FAtom->GetEllipsoid()->IsNPD() )  {  SMask = DefNpdMask();  }
+      else                                  {  SMask = DefElpMask();  }
     }
-    PMask = SMask.ToInt();
+    else
+      SMask = DefSphMask();
   }
-  else
-    PMask = ((AtomCreationParams*)cpar)->mask;
+  int PMask = SMask.ToInt();
+
   GPC->AddObject(this);
   if( PMask == 0 )  
     return; // nothing to create then...
@@ -257,8 +260,7 @@ void TXAtom::Create(const olxstr& cName, const ACreationParams* cpar)  {
   }
 
   for( int i=0; i < FStaticObjects.Count(); i++ )  {
-    off = 1;
-    off = off << i;
+    const int off = 1 << i;
     if( PMask & off )  {
       TGlPrimitive* SGlP = FStaticObjects.Object(i);
       TGlPrimitive* GlP = GPC->NewPrimitive(FStaticObjects.String(i));
@@ -292,23 +294,8 @@ void TXAtom::Create(const olxstr& cName, const ACreationParams* cpar)  {
 }
 //..............................................................................
 ACreationParams* TXAtom::GetCreationParams() const {
-  TGPCollection* gp = Primitives();
-  TGraphicsStyle* gs = gp->Style();
   AtomCreationParams& ap = *(new AtomCreationParams);
-  ap.mask = Primitives()->Style()->ParameterValue("PMask", 0).ToInt();
   ap.params = FParams;
-  const int soc = FStaticObjects.Count();
-  int pc = 0;
-  for( int i=0; i < soc; i++ )  {
-    int off = 1;
-    off = off << i;
-    if( (ap.mask & off) != 0 )  {
-      if( gp->PrimitiveCount() < pc )
-        throw TFunctionFailedException(__OlxSourceInfo, "assert");
-      ap.materials.Add( *((TGlMaterial*)gp->Primitive(pc)->GetProperties()) );
-      pc++;
-    }
-  }
   return &ap;
 }
 //..............................................................................
@@ -379,32 +366,28 @@ bool TXAtom::Orient(TGlPrimitive *GlP) {
   
   FParent->GlTranslate(c);
 
-//  if( FAtom->GetAtomInfo() == iHydrogenIndex )  {
-//    float K = (float)(qr*FParams[1]*TelpProb());
-//    Parent()->GlScale(K);
-//    return false;
-//  }
-  if( (FDrawStyle & adsEllipsoid) != 0 )  {
-    float TP = (float)(TelpProb()*FParams[1]);
+  double scale = FParams[1];
+  if( (FRadius & (darIsot|darIsotH)) != 0 )
+    scale *= TelpProb();
+
+  if( FDrawStyle == adsEllipsoid )  {
     if( FAtom->GetEllipsoid() != NULL )  {
       if( FAtom->GetEllipsoid()->IsNPD() )  {
-        FParent->GlScale(caDefIso*2*TP);
+        FParent->GlScale((float)(caDefIso*2*scale));
       }
       else  {
-      FParent->GlOrient( FAtom->GetEllipsoid()->GetMatrix() );
-      FParent->GlScale(
-          (float)(FAtom->GetEllipsoid()->GetSX()*TP),
-          (float)(FAtom->GetEllipsoid()->GetSY()*TP),
-          (float)(FAtom->GetEllipsoid()->GetSZ()*TP)
+        FParent->GlOrient( FAtom->GetEllipsoid()->GetMatrix() );
+        FParent->GlScale(
+          (float)(FAtom->GetEllipsoid()->GetSX()*scale),
+          (float)(FAtom->GetEllipsoid()->GetSY()*scale),
+          (float)(FAtom->GetEllipsoid()->GetSZ()*scale)
           );
       }
     }
     return false;
   }
-  if( (FDrawStyle & adsSphere) != 0 )  {
-    float K = (float)(FParams[0]*FParams[1]*TelpProb());
-    FParent->GlScale( K );
-  }
+  if( FDrawStyle == adsSphere )
+    FParent->GlScale( (float)(FParams[0]*scale) );
   return false;
 }
 //..............................................................................
@@ -568,15 +551,15 @@ void TXAtom::CreateStaticPrimitives()  {
   GS = FParent->Styles()->Style(Legend);
   if( !GS )
   {  GS = FParent->Styles()->NewStyle(Legend);  }
-  double SphereQ   = GS->ParameterValue("SphereQ", 15).ToDouble();
-  double RimR = GS->ParameterValue("RimR", 1.02).ToDouble();  // radius
-  double RimW = GS->ParameterValue("RimW", 0.05).ToDouble();  // width
-  double RimQ = GS->ParameterValue("RimQ", SphereQ).ToDouble();  // quality
+  double SphereQ   = GS->ParameterValue("SphereQ", "15", true).ToDouble();
+  double RimR = GS->ParameterValue("RimR", "1.02", true).ToDouble();  // radius
+  double RimW = GS->ParameterValue("RimW", "0.05", true).ToDouble();  // width
+  double RimQ = GS->ParameterValue("RimQ", SphereQ, true).ToDouble();  // quality
 
-  double DiskIR = GS->ParameterValue("DiskIR", 0).ToDouble();  // inner radius for disks
-  double DiskOR = GS->ParameterValue("DiskOR", RimR).ToDouble();  // outer radius
-  double DiskQ = GS->ParameterValue("DiskQ", RimQ).ToDouble();  // quality
-  double DiskS = GS->ParameterValue("DiskS", RimW).ToDouble();  // separation
+  double DiskIR = GS->ParameterValue("DiskIR", "0", true).ToDouble();  // inner radius for disks
+  double DiskOR = GS->ParameterValue("DiskOR", RimR, true).ToDouble();  // outer radius
+  double DiskQ = GS->ParameterValue("DiskQ", RimQ, true).ToDouble();  // quality
+  double DiskS = GS->ParameterValue("DiskS", RimW, true).ToDouble();  // separation
 
 //..............................
   // create sphere
@@ -681,7 +664,7 @@ void TXAtom::CreateStaticPrimitives()  {
 }
 //..............................................................................
 void TXAtom::UpdatePrimitives(int32_t Mask, const ACreationParams* cpar)  {
-  int SMask = Primitives()->Style()->ParameterValue("PMask", 0).ToInt();
+  int SMask = Primitives()->Style()->ParameterValue("PMask", "0").ToInt();
   if( SMask == Mask )  return;
   Primitives()->Style()->SetParameter("PMask", Mask);
   Primitives()->ClearPrimitives();
@@ -716,87 +699,96 @@ void TXAtom::OnPrimitivesCleared()  {
 //..............................................................................
 void TXAtom::DefRad(short V)  {
   ValidateAtomParams();
-  FAtomParams->SetParameter("DefR", V);
+  FAtomParams->SetParameter("DefR", V, true);
+  FDefRad = V;
 }
 //..............................................................................
 void TXAtom::DefDS(short V)  {
   ValidateAtomParams();
-  FAtomParams->SetParameter("DefDS", V);
+  FAtomParams->SetParameter("DefDS", V, true);
+  FDefDS = V;
 }
 //..............................................................................
 void TXAtom::DefSphMask(int V)  {
   ValidateAtomParams();
-  FAtomParams->SetParameter("DefSphM", V);
+  FAtomParams->SetParameter("DefSphM", V, true);
 }
 //..............................................................................
 void TXAtom::DefElpMask(int V)  {
   ValidateAtomParams();
-  FAtomParams->SetParameter("DefElpM", V);
+  FAtomParams->SetParameter("DefElpM", V, true);
 }
 //..............................................................................
 void TXAtom::DefNpdMask(int V)  {
   ValidateAtomParams();
-  FAtomParams->SetParameter("DefNpdM", V);
+  FAtomParams->SetParameter("DefNpdM", V, true);
 }
 //..............................................................................
 void TXAtom::DefZoom(float V)  {
   ValidateAtomParams();
-  FAtomParams->SetParameter("DefZ", V);
+  FAtomParams->SetParameter("DefZ", V, true);
 }
 //..............................................................................
 void TXAtom::TelpProb(float V)  {
   ValidateAtomParams();
-  FAtomParams->SetParameter("TelpP", V);
+  FAtomParams->SetParameter("TelpP", V, true);
   FTelpProb = V;
 }
 //..............................................................................
 short TXAtom::DefRad()  {
+  if( FDefRad != 0 )  
+    return FDefRad;
   ValidateAtomParams();
-  return FAtomParams->ParameterValue("DefR", darPers).ToInt();
+  FDefRad = FAtomParams->ParameterValue("DefR", darPers, true).ToInt();
+  return FDefRad;
 }
 //..............................................................................
 short TXAtom::DefDS()  {
+  if( FDefDS != 0 )  
+    return FDefDS;
   ValidateAtomParams();
-  return FAtomParams->ParameterValue("DefDS", adsSphere).ToInt();
+  FDefDS = FAtomParams->ParameterValue("DefDS", adsSphere, true).ToInt();
+  return FDefDS;
 }
 //..............................................................................
 int TXAtom::DefSphMask()  {
   ValidateAtomParams();
-  return FAtomParams->ParameterValue("DefSphM", "1").ToInt();
+  return FAtomParams->ParameterValue("DefSphM", "1", true).ToInt();
 }
 //..............................................................................
 int TXAtom::DefElpMask()  {
   ValidateAtomParams();
-  return  FAtomParams->ParameterValue("DefElpM", "5").ToInt();
+  return FAtomParams->ParameterValue("DefElpM", "5", true).ToInt();
 }
 //..............................................................................
 int TXAtom::DefNpdMask()  {
   ValidateAtomParams();
-  return  FAtomParams->ParameterValue("DefNpdM", "6").ToInt();
+  return FAtomParams->ParameterValue("DefNpdM", "6", true).ToInt();
 }
 //..............................................................................
 float TXAtom::TelpProb()  {
-  if( FTelpProb )  return FTelpProb;
+  if( FTelpProb != 0 )  
+    return FTelpProb;
   ValidateAtomParams();
-  FTelpProb = (float)FAtomParams->ParameterValue("TelpP", "1").ToDouble();
+  FTelpProb = (float)FAtomParams->ParameterValue("TelpP", "1", true).ToDouble();
   return FTelpProb;
 }
 //..............................................................................
 float TXAtom::DefZoom()  {
   ValidateAtomParams();
-  return (float)FAtomParams->ParameterValue("DefZ", "1").ToDouble();
+  return (float)FAtomParams->ParameterValue("DefZ", "1", true).ToDouble();
 }
 //..............................................................................
 float TXAtom::QPeakScale()  {
   if( FQPeakScale )  return FQPeakScale;
   ValidateAtomParams();
-  return (float)FAtomParams->ParameterValue("QPeakScale", "3").ToDouble();
+  return (float)FAtomParams->ParameterValue("QPeakScale", "3", true).ToDouble();
 }
 //..............................................................................
 void TXAtom::QPeakScale(float V)  {
   ValidateAtomParams();
   if( V < 1 )  V = 3;
-  FAtomParams->SetParameter("QPeakScale", V);
+  FAtomParams->SetParameter("QPeakScale", V, true);
   FQPeakScale = V;
 }
 //..............................................................................

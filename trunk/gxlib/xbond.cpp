@@ -82,12 +82,14 @@ void TXBond::Create(const olxstr& cName, const ACreationParams* cpar)  {
     }
   }
   TGraphicsStyle* GS = GPC->Style();
+  GS->SetSaveable( GPC->Name().CharCount('.') == 0 );
 
   int PrimitiveMask = GS->ParameterValue("PMask",
     (FBond && (FBond->GetType() == sotHBond)) ? 2048 : DefMask() ).ToInt();
 
   GPC->AddObject(this);
-  if( !PrimitiveMask )  return;  // nothing to create then...
+  if( PrimitiveMask == 0 )  
+    return;  // nothing to create then...
 
   Params()[4]= GS->ParameterValue("R", Params()[4]).ToDouble();
 
@@ -97,8 +99,6 @@ void TXBond::Create(const olxstr& cName, const ACreationParams* cpar)  {
     if( PrimitiveMask & off )    {
       TGlPrimitive* SGlP = FStaticObjects.Object(i);
       TGlPrimitive* GlP = GPC->NewPrimitive(FStaticObjects.String(i));
-//      if( Params()[0] >= 180 )  {  SGlP->QuadricOrientation = GLU_INSIDE;  }
-//      else                    {  SGlP->QuadricOrientation = GLU_OUTSIDE;  }
       GlP->Type(sgloCommandList);
       /* copy the default drawing style tag*/
       GlP->Params().Resize(GlP->Params().Count()+1);
@@ -188,11 +188,10 @@ void TXBond::CreateStaticPrimitives()  {
   TGlMaterial GlM;
   TGlPrimitive *GlP, *GlPRC1, *GlPRD1, *GlPRD2;
   olxstr Legend("Bonds");
-  TGraphicsStyle *GS;
-  GS = FParent->Styles()->Style(Legend);
+  TGraphicsStyle* GS = FParent->Styles()->Style(Legend);
   if( !GS ) GS = FParent->Styles()->NewStyle(Legend);
-  double ConeQ = GS->ParameterValue("ConeQ", 5).ToDouble();
-  double ConeStipples = GS->ParameterValue("ConeStipples", 6).ToDouble();
+  double ConeQ = GS->ParameterValue("ConeQ", "5", true).ToDouble();
+  double ConeStipples = GS->ParameterValue("ConeStipples", "6", true).ToDouble();
 //..............................
   // create single color cylinder
   GlP = (TGlPrimitive*)FStaticObjects.FindObject("Single cone");
@@ -476,23 +475,19 @@ olxstr TXBond::GetLegend(const TSBond& Bnd, const short AtomALevel, const short 
     }
   }
   olxstr LA, LB;
-  TStrList T, T1;
-  LA = TXAtom::GetLegend(*A, ALevel);
-  LB = TXAtom::GetLegend(*B, BLevel);
-  T.Strtok(LA, '.');
-  T1.Strtok(LB, '.');
+  TStrList T(TXAtom::GetLegend(*A, ALevel), '.'), 
+    T1(TXAtom::GetLegend(*B, BLevel), '.');
   int maxI = olx_max(T.Count(), T1.Count());
   for( int i=0; i < maxI; i++ )  {
-    if( i >= T.Count() )  LA = T.String( T.Count() -1 );
-    else                  LA = T.String(i);
-    if( i >= T1.Count() ) LB = T1.String( T1.Count()-1 );
-    else                  LB = T1.String(i);
+    LA = (i >= T.Count()) ? T.Last().String() : T[i];
+    LB = (i >= T1.Count()) ? T1.Last().String() : T1[i];
     if( LA.Compare(LB) < 0 )
       L << LA << '-' << LB;
     else
       L << LB << '-' << LA;
 
-    if( (i+1) < maxI ) L << '.';
+    if( (i+1) < maxI ) 
+      L << '.';
   }
   /*
   L = A->GetAtomInfo()->Symbol;
@@ -527,12 +522,12 @@ void TXBond::ValidateBondParams()  {
 //..............................................................................
 void TXBond::DefMask(int V)  {
   ValidateBondParams();
-  FBondParams->SetParameter("DefM", V);
+  FBondParams->SetParameter("DefM", V, true);
 }
 //..............................................................................
 int TXBond::DefMask()  {
   ValidateBondParams();
-  return FBondParams->ParameterValue("DefM", 7).ToInt();
+  return FBondParams->ParameterValue("DefM", "7", true).ToInt();
 }
 //..............................................................................
 bool TXBond::OnMouseDown(const IEObject *Sender, const TMouseData *Data)  {

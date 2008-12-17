@@ -255,8 +255,9 @@ public:
         return TSTypeList<SC, ObjectClass, olxstrComparator<caseinsensitive> >::GetComparable(i);
       }
 
-      inline void Add( const SC& s, const ObjectClass& v = *(ObjectClass*)NULL )  {
-        TSTypeList<SC, ObjectClass, olxstrComparator<caseinsensitive> >::Add(s, v);
+      inline TSortedListEntry<SC,ObjectClass,olxstrComparator<caseinsensitive> >& 
+        Add( const SC& s, const ObjectClass& v = *(ObjectClass*)NULL )  {
+          return TSTypeList<SC, ObjectClass, olxstrComparator<caseinsensitive> >::Add(s, v);
       }
       inline void Delete(int i)  {
         TSTypeList<SC, ObjectClass, olxstrComparator<caseinsensitive> >::Remove(i);

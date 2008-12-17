@@ -119,10 +119,16 @@ void TGraphicsStyle::ToDataItem(TDataItem& Item) const {
   Item.AddField("Name", FLabel);
   if( IsPersistent() )  
     Item.AddField("Persistent", TrueString);
-  for( int i=0; i < FParams.Count(); i++ )
-    Item.AddField(FParams.GetString(i), FParams.GetObject(i));
-
-  if( FStyles.Count() != 0 )  {
+  for( int i=0; i < FParams.Count(); i++ ) {
+    if( !FParams.GetObject(i).saveable )  continue;
+    Item.AddField(FParams.GetString(i), FParams.GetObject(i).val);
+  }
+  
+  int ssc = 0;
+  for( int i=0; i < FStyles.Count(); i++ )
+    if( FStyles[i]->IsSaveable() )  
+      ssc++;
+  if( ssc != 0 )  {
     TDataItem& RI = Item.AddItem("SubStyles");
     for( int i=0; i < FStyles.Count(); i++ )  {
       if( !FStyles[i]->IsSaveable() )  continue;
@@ -135,16 +141,14 @@ void TGraphicsStyle::ToDataItem(TDataItem& Item) const {
 //..............................................................................
 bool TGraphicsStyle::FromDataItem(const TDataItem& Item)  {
   TGraphicsStyle *GS;
-  int i, off;
   TPrimitiveStyle *PS;
   FLabel = Item.GetFieldValue("Name");
   SetPersistent( Item.GetFieldValue("Persistent", FalseString).ToBool() );
-  if( IsPersistent() ) i=2;
-  else i=1;
+  int i = IsPersistent() ? 2 : 1;
   for( ; i < Item.FieldCount(); i++ )
-    SetParameter(Item.FieldName(i), Item.Field(i) );
-  off = 0;
+    SetParameter(Item.FieldName(i), Item.Field(i), true );
   TDataItem* I = Item.FindItem("SubStyles");
+  int off = 0;
   if( I != NULL )  {
     off = 1;
     for( i=0; i < I->ItemCount(); i++ )  {
@@ -222,21 +226,6 @@ TGraphicsStyle *TGraphicsStyle::FindStyle(TGraphicsStyle *style)  {
     if( GS != NULL )  return GS;
   }
   return NULL;
-}
-//..............................................................................
-void TGraphicsStyle::SetParameter(const olxstr &Name, const olxstr& val)  {
-  int ind = FParams.IndexOf(Name);
-  if( ind >= 0 )  FParams.Object(ind) = val;
-  else            FParams.Add(Name, val);
-}
-//..............................................................................
-olxstr& TGraphicsStyle::ParameterValue(const olxstr &Name, const olxstr& defval)  {
-  int index = FParams.IndexOf(Name);
-  if( index == -1 )  {
-    FParams.Add(Name, defval);
-    return FParams.Object(FParams.Count()-1);
-  }
-  return FParams.Object(index);
 }
 //..............................................................................
 void TGraphicsStyle::DeleteStyle(TGraphicsStyle *Style)  {

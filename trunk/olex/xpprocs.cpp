@@ -1924,23 +1924,16 @@ void TMainForm::macMask(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         AtomsStart = 3;
         TXAtom::DefNpdMask(Mask);
       }
-      for( int i=AtomsStart; i <  Cmds.Count(); i++ )
-        Tmp << Cmds[i] << ' ';
-      FXApp->FindXAtoms(Tmp, Atoms);
-      if( ADS )  {
-        TXAtom *XA;
-        for( int i=0; i < Atoms.Count(); i++ )  {
-          XA = Atoms[i];
-          if( XA->DrawStyle() != ADS )  
-            Atoms[i] = NULL;
-        }
-        Atoms.Pack();
+    }
+    FindXAtoms(Cmds.SubListFrom(AtomsStart), Atoms, true, false);
+    if( ADS != 0 )  {
+      for( int i=0; i < Atoms.Count(); i++ )  {
+        if( Atoms[i]->DrawStyle() != ADS )  
+          Atoms[i] = NULL;
       }
-      FXApp->UpdateAtomPrimitives(Mask, &Atoms);
+      Atoms.Pack();
     }
-    else  {
-      FXApp->UpdateAtomPrimitives(Mask);
-    }
+    FXApp->UpdateAtomPrimitives(Mask, Atoms.IsEmpty() ? NULL : &Atoms);
     return;
   }
   if( Cmds[0] == "bonds" )  {
@@ -1948,15 +1941,12 @@ void TMainForm::macMask(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     TXBond::DefMask(Mask);
     olxstr Tmp;
     TXBondPList Bonds;
-    if( Cmds.Count() >= 3 )  {  // a atom drawing style is specified
+    if( Cmds.Count() >= 3 )  {
       for( int i=2; i <  Cmds.Count(); i++ )
         Tmp << Cmds[i] << ' ';
-      FXApp->GetBonds(Tmp, Bonds);
-      FXApp->UpdateBondPrimitives(Mask, &Bonds);
     }
-    else  {
-      FXApp->UpdateBondPrimitives(Mask);
-    }
+    FXApp->GetBonds(Tmp, Bonds);
+    FXApp->UpdateBondPrimitives(Mask, (Bonds.IsEmpty() && FXApp->Selection()->Count() == 0) ? NULL : &Bonds);
     return;
   }
   int Mask = Cmds.Last().String().ToInt();
@@ -1976,7 +1966,7 @@ void TMainForm::macARad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   olxstr arad( Cmds[0] );
   Cmds.Delete(0);
   TXAtomPList xatoms;
-  FindXAtoms(Cmds, xatoms, false, true);
+  FindXAtoms(Cmds, xatoms, false, false);
   FXApp->AtomRad(arad, xatoms.IsEmpty() ? NULL : &xatoms);
 }
 //..............................................................................
@@ -1988,7 +1978,7 @@ void TMainForm::macADS(TStrObjList &Cmds, const TParamList &Options, TMacroError
     return;
   }
   Cmds.Delete(0);
-  FindXAtoms(Cmds, Atoms, false, true);
+  FindXAtoms(Cmds, Atoms, false, false);
   FXApp->SetAtomDrawingStyle(ads, Atoms.IsEmpty() ? NULL : &Atoms);
 }
 //..............................................................................
@@ -7926,7 +7916,7 @@ void TMainForm::macLstGO(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       if( (j+1) < gpc->PrimitiveCount() )
         output.Last().String() << ';';
     }
-    output.Last().String() << ']';
+    output.Last().String() << "]->" << gpc->ObjectCount();
   }
   TBasicApp::GetLog() << ( output );
 }
