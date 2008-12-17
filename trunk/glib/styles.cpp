@@ -10,8 +10,7 @@
 #include "glmaterial.h"
 #include "glrender.h"
 
-UseGlNamespace();
-
+const short GraphicsStyleVersion = 1;
 //------------------------------------------------------------------------------
 //TPrimitiveStyle implementation
 //------------------------------------------------------------------------------
@@ -146,7 +145,8 @@ bool TGraphicsStyle::FromDataItem(const TDataItem& Item)  {
   SetPersistent( Item.GetFieldValue("Persistent", FalseString).ToBool() );
   int i = IsPersistent() ? 2 : 1;
   for( ; i < Item.FieldCount(); i++ )
-    SetParameter(Item.FieldName(i), Item.Field(i), true );
+    SetParam(Item.FieldName(i), Item.Field(i), true );
+//    SetParam(Item.FieldName(i), Item.Field(i), FParent->GetVersion() > 0 );
   TDataItem* I = Item.FindItem("SubStyles");
   int off = 0;
   if( I != NULL )  {
@@ -266,6 +266,7 @@ TGraphicsStyles::TGraphicsStyles(TGlRender *Render)  {
   FRoot = new TGraphicsStyle(this, NULL, "Root");
   FPStyles = new TObjectGroup;
   FRender = Render;
+  Version = 0;
 }
 //..............................................................................
 TGraphicsStyles::~TGraphicsStyles()  {
@@ -288,12 +289,14 @@ void TGraphicsStyles::ToDataItem(TDataItem& Item) const {
   TDataItem& SI = Item.AddItem("Materials");
   FDataItems.Clear();
   for( int i=0; i < FPStyles->PropCount(); i++ )  {
+//    if( FPStyles->Properties(i)->ObjectCount() == 0 )  continue;
     TDataItem& SI1 = SI.AddItem(olxstr("Prop")<<i);
     ((TGlMaterial*)FPStyles->Properties(i))->ToDataItem(SI1);
     FDataItems.Add(&SI1);
   }
   Item.AddField("Name", FName);
   Item.AddField("LinkFile", FLinkFile);
+  Item.AddField("Version", GraphicsStyleVersion);
   FRoot->ToDataItem(Item.AddItem("Root"));
   FDataItems.Clear();
 }
@@ -311,6 +314,7 @@ bool TGraphicsStyles::FromDataItem(const TDataItem& Item)  {
   }
   FName = Item.GetFieldValue("Name");
   FLinkFile = Item.GetFieldValue("LinkFile");
+  Version = Item.GetFieldValue("Version", "0").ToInt();
   SI = Item.FindItem("Root");
   if( SI != NULL )  
     FRoot->FromDataItem(*SI);

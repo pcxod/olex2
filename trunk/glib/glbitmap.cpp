@@ -57,9 +57,9 @@ void TGlBitmap::Create(const olxstr& cName, const ACreationParams* cpar)  {
 
   GS = GPC->Style();
   GPC->AddObject(this);
-  Left = GS->ParameterValue("Left", Left).ToInt();
-  Top = GS->ParameterValue("Top", Top).ToInt();
-  Z = GS->ParameterValue("Z", Z).ToDouble();
+  Left = GS->GetParam("Left", Left).ToInt();
+  Top = GS->GetParam("Top", Top).ToInt();
+  Z = GS->GetParam("Z", Z).ToDouble();
 
   GlM = const_cast<TGlMaterial*>( GS->Material("Plane") );
   if( GlM->Mark() )  {
@@ -123,15 +123,15 @@ void TGlBitmap::SetHeight(int w)  {
 }
 void TGlBitmap::SetLeft(int w)    {
   Left = w;
-  Primitives()->Style()->SetParameter("Left", w);
+  Primitives()->Style()->SetParam("Left", w);
 }
 void TGlBitmap::SetTop(int w)     {
   Top = w;
-  Primitives()->Style()->SetParameter("Top", w);
+  Primitives()->Style()->SetParam("Top", w);
 }
 void TGlBitmap::SetZ( double z )  {
   Z = z;
-  Primitives()->Style()->SetParameter("Z", z);
+  Primitives()->Style()->SetParam("Z", z);
 }
 
 int TGlBitmap::GetWidth() const   {  return (int)(Width*Basis.GetZoom());  }

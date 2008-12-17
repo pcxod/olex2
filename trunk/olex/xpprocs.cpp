@@ -1933,6 +1933,7 @@ void TMainForm::macMask(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       }
       Atoms.Pack();
     }
+    if( ADS != 0 && Atoms.IsEmpty() )  return;
     FXApp->UpdateAtomPrimitives(Mask, Atoms.IsEmpty() ? NULL : &Atoms);
     return;
   }
@@ -4484,18 +4485,16 @@ void TMainForm::macUndo(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 //..............................................................................
 void TMainForm::macIndividualise(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   TXAtomPList Atoms;
-  FXApp->FindXAtoms(Cmds.Text(' '), Atoms);
-  for( int i=0; i < Atoms.Count(); i++ )  {
+  FindXAtoms(Cmds, Atoms, false, false);
+  for( int i=0; i < Atoms.Count(); i++ )
     FXApp->Individualise( Atoms[i] );
-  }
 }
 //..............................................................................
 void TMainForm::macCollectivise(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   TXAtomPList Atoms;
-  FXApp->FindXAtoms(Cmds.Text(' '), Atoms);
-  for( int i=0; i < Atoms.Count(); i++ )  {
+  FindXAtoms(Cmds, Atoms, false, false);
+  for( int i=0; i < Atoms.Count(); i++ )
     FXApp->Collectivise( Atoms[i] );
-  }
 }
 //..............................................................................
 olxstr macSel_GetName2(const TSAtom& a1, const TSAtom& a2)  {

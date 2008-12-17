@@ -67,18 +67,21 @@ public:
 
   inline int PrimitiveStyleCount()              const {  return FPStyles.Count(); }
   inline TPrimitiveStyle* PrimitiveStyle(int i) const {  return FPStyles[i];  }
-
-  void SetParameter(const olxstr& name, const olxstr& val, bool saveable=false) {
+  
+  void SetParam(const olxstr& name, const olxstr& val, bool saveable=false) {
     int ind = FParams.IndexOf(name);
     if( ind >= 0 )  
       FParams.Object(ind).val = val;
     else            
       FParams.Add(name, TGSParam(val, saveable));
-  }
-  olxstr& ParameterValue(const olxstr& name, const olxstr& defval, bool saveable=false) {
+  }  /* returns value of specified parameter, if the parameter does not exist, a new one is created
+  using the default value and the saveable flag.
+  */
+  olxstr& GetParam(const olxstr& name, const olxstr& defval, bool saveable=false) {
     int index = FParams.IndexOf(name);
     if( index == -1 )
       return FParams.Add(name, TGSParam(defval, saveable)).Object().val;
+    FParams.Object(index).saveable = saveable;
     return FParams.Object(index).val;
   }
 
@@ -108,6 +111,7 @@ class TGraphicsStyles: public IEObject  {
 //  TEList *FStyles; // styles for indivisual objects, top level
   olxstr FName;
   olxstr FLinkFile;
+  short Version;
   TObjectGroup *FPStyles;
   mutable TPtrList<TDataItem> FDataItems;
   TGraphicsStyle *FRoot;
@@ -148,6 +152,8 @@ public:
 
   void SetStylesTag(int Tag); // sets ICollectionItem::Tag of styles to Tag
   void RemoveStylesByTag( int Tag); // removes Styles with Style::Tag == Tag
+
+  short GetVersion() const {  return Version;  }
 };
 
 EndGlNamespace()

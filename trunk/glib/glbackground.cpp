@@ -47,10 +47,10 @@ void TGlBackground::Create(const olxstr& cName, const ACreationParams* cpar) {
   GPC->AddObject(this);
 
   TGraphicsStyle *GS = GPC->Style();
-  FColors[0] = GS->ParameterValue("A", 0xffffffff, true).ToInt();
-  FColors[1] = GS->ParameterValue("B", 0xffffffff, true).ToInt();
-  FColors[2] = GS->ParameterValue("C", "0", true).ToInt();
-  FColors[3] = GS->ParameterValue("D", "0", true).ToInt();
+  FColors[0] = GS->GetParam("A", 0xffffffff, true).ToInt();
+  FColors[1] = GS->GetParam("B", 0xffffffff, true).ToInt();
+  FColors[2] = GS->GetParam("C", "0", true).ToInt();
+  FColors[3] = GS->GetParam("D", "0", true).ToInt();
 
   FPrimitive = GlP = GPC->NewPrimitive("Plane");
   GlP->SetProperties(&GlM);
@@ -106,22 +106,22 @@ bool TGlBackground::Orient(TGlPrimitive *P)  {
 }
 //..............................................................................
 void TGlBackground::LT(const TGlOption& v)  {
-  Primitives()->Style()->SetParameter("A", v.GetRGB(), true);
+  Primitives()->Style()->SetParam("A", v.GetRGB(), true);
   FColors[0] = v;
 }
 //..............................................................................
 void TGlBackground::RT(const TGlOption& v)  {
-  Primitives()->Style()->SetParameter("B", v.GetRGB(), true);
+  Primitives()->Style()->SetParam("B", v.GetRGB(), true);
   FColors[1] = v;
 }
 //..............................................................................
 void TGlBackground::RB(const TGlOption& v)  {
-  Primitives()->Style()->SetParameter("C", v.GetRGB(), true);
+  Primitives()->Style()->SetParam("C", v.GetRGB(), true);
   FColors[2] = v;
 }
 //..............................................................................
 void TGlBackground::LB(const TGlOption& v)  {
-  Primitives()->Style()->SetParameter("D", v.GetRGB(), true);
+  Primitives()->Style()->SetParam("D", v.GetRGB(), true);
   FColors[3] = v;
 }
 //..............................................................................

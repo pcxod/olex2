@@ -52,8 +52,8 @@ void TGlTextBox::Create(const olxstr& cName, const ACreationParams* cpar)  {
   }
   TGraphicsStyle* GS = GPC->Style();
   GPC->AddObject(this);
-  Left = GS->ParameterValue("Left", Left).ToInt();
-  Top = GS->ParameterValue("Top", Top).ToInt();
+  Left = GS->GetParam("Left", Left, true).ToInt();
+  Top = GS->GetParam("Top", Top, true).ToInt();
 
   TGlMaterial* GlM = const_cast<TGlMaterial*>(GS->Material("Plane"));
   if( GlM->Mark() )  {
@@ -181,12 +181,12 @@ void TGlTextBox::PostText(const TStrList &SL, TGlMaterial *M)  {
 //..............................................................................
 void TGlTextBox::SetLeft(int l)  {
   Left = l;
-  Primitives()->Style()->SetParameter("Left", Left);
+  Primitives()->Style()->SetParam("Left", Left, true);
 }
 //..............................................................................
 void TGlTextBox::SetTop(int t)  {
   Top = t;
-  Primitives()->Style()->SetParameter("Top", Top);
+  Primitives()->Style()->SetParam("Top", Top, true);
 }
 //..............................................................................
 bool TGlTextBox::OnMouseUp(const IEObject *Sender, const TMouseData *Data)  {
