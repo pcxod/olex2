@@ -77,21 +77,21 @@ void TXBond::Create(const olxstr& cName, const ACreationParams* cpar)  {
   else  {
     if( GPC->PrimitiveCount() )  {
       GPC->AddObject(this);
-      Params()[4] = GPC->Style()->ParameterValue("R", 1).ToDouble();
+      Params()[4] = GPC->Style()->GetParam("R", "1").ToDouble();
       return;
     }
   }
   TGraphicsStyle* GS = GPC->Style();
   GS->SetSaveable( GPC->Name().CharCount('.') == 0 );
 
-  int PrimitiveMask = GS->ParameterValue("PMask",
+  int PrimitiveMask = GS->GetParam("PMask",
     (FBond && (FBond->GetType() == sotHBond)) ? 2048 : DefMask() ).ToInt();
 
   GPC->AddObject(this);
   if( PrimitiveMask == 0 )  
     return;  // nothing to create then...
 
-  Params()[4]= GS->ParameterValue("R", Params()[4]).ToDouble();
+  Params()[4]= GS->GetParam("R", Params()[4]).ToDouble();
 
   for( int i=0; i < FStaticObjects.Count(); i++ )  {
     int off = 1;
@@ -158,8 +158,7 @@ void TXBond::UpdatePrimitiveParams(TGlPrimitive *Primitive)
 {
 }
 //..............................................................................
-void TXBond::ListPrimitives(TStrList &List) const
-{
+void TXBond::ListPrimitives(TStrList &List) const {
   List.Assign(FStaticObjects);
 }
 //..............................................................................
@@ -167,9 +166,10 @@ void TXBond::Quality(const short Val)  {
   olxstr Legend("Bonds");
   TGraphicsStyle *GS;
   GS = FParent->Styles()->Style(Legend);
-  if( !GS ) GS = FParent->Styles()->NewStyle(Legend);
+  if( GS == NULL ) 
+    GS = FParent->Styles()->NewStyle(Legend);
 
-  olxstr &ConeQ = GS->ParameterValue("ConeQ", 0);
+  olxstr& ConeQ = GS->GetParam("ConeQ", "0");
 //  double &ConeStipples = GS->ParameterValue("ConeStipples");
 
   switch( Val )  {
@@ -189,9 +189,10 @@ void TXBond::CreateStaticPrimitives()  {
   TGlPrimitive *GlP, *GlPRC1, *GlPRD1, *GlPRD2;
   olxstr Legend("Bonds");
   TGraphicsStyle* GS = FParent->Styles()->Style(Legend);
-  if( !GS ) GS = FParent->Styles()->NewStyle(Legend);
-  double ConeQ = GS->ParameterValue("ConeQ", "5", true).ToDouble();
-  double ConeStipples = GS->ParameterValue("ConeStipples", "6", true).ToDouble();
+  if( GS == NULL ) 
+    GS = FParent->Styles()->NewStyle(Legend);
+  double ConeQ = GS->GetParam("ConeQ", "5", true).ToDouble();
+  double ConeStipples = GS->GetParam("ConeStipples", "6", true).ToDouble();
 //..............................
   // create single color cylinder
   GlP = (TGlPrimitive*)FStaticObjects.FindObject("Single cone");
@@ -448,9 +449,9 @@ void TXBond::CreateStaticPrimitives()  {
 }
 //..............................................................................
 void TXBond::UpdatePrimitives(int32_t Mask, const ACreationParams* cpar)  {
-  int SMask = Primitives()->Style()->ParameterValue("PMask", "0").ToInt();
-  if( SMask == Mask )  return;
-  Primitives()->Style()->SetParameter("PMask", Mask);
+  olxstr& pm = Primitives()->Style()->GetParam("PMask", "0"); 
+  if( pm.ToInt() == Mask )  return;
+  Primitives()->Style()->SetParam("PMask", Mask);
   Primitives()->ClearPrimitives();
   Primitives()->RemoveObject(this);
   Create(EmptyString, cpar);
@@ -499,7 +500,7 @@ olxstr TXBond::GetLegend(const TSBond& Bnd, const short AtomALevel, const short 
 }
 //..............................................................................
 void TXBond::Radius(float V)  {
-  Params()[4] = Primitives()->Style()->ParameterValue("R", V).ToDouble();
+  Params()[4] = Primitives()->Style()->GetParam("R", V).ToDouble();
   // update radius for all members of the collection
   for( int i=0; i < Primitives()->ObjectCount(); i++ )
     Primitives()->Object(i)->Params()[4] = V;
@@ -522,12 +523,12 @@ void TXBond::ValidateBondParams()  {
 //..............................................................................
 void TXBond::DefMask(int V)  {
   ValidateBondParams();
-  FBondParams->SetParameter("DefM", V, true);
+  FBondParams->SetParam("DefM", V, true);
 }
 //..............................................................................
 int TXBond::DefMask()  {
   ValidateBondParams();
-  return FBondParams->ParameterValue("DefM", "7", true).ToInt();
+  return FBondParams->GetParam("DefM", "7", true).ToInt();
 }
 //..............................................................................
 bool TXBond::OnMouseDown(const IEObject *Sender, const TMouseData *Data)  {

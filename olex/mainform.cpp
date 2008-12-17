@@ -1583,7 +1583,7 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
         TBasicApp::GetLog().Info("The object does not support requested function...");
         return;
       }
-      i = FObjectUnderMouse->Primitives()->Style()->ParameterValue("PMask", 0).ToInt();
+      i = FObjectUnderMouse->Primitives()->Style()->GetParam("PMask", "0").ToInt();
       Primitives = new TdlgPrimitive(&Ps, i, this);
       if( Primitives->ShowModal() == wxID_OK )  {
         TmpStr = "mask ";

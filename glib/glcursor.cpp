@@ -44,7 +44,7 @@ void TGlCursor::Create(const olxstr& cName, const ACreationParams* cpar)  {
   if( !GPC )    GPC = FParent->NewCollection( GetCollectionName() );
   GPC->AddObject(this);
   TGraphicsStyle *GS = GPC->Style();
-  Symbol = GS->ParameterValue("Char", '|')[0];
+  Symbol = GS->GetParam("Char", '|', true)[0];
   TGlMaterial* FGlM = const_cast<TGlMaterial*>(GS->Material("On"));
   if( FGlM->Mark() )  {
     FGlM->SetFlags(sglmAmbientF|sglmIdentityDraw);
@@ -83,7 +83,7 @@ bool TGlCursor::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
 }
 //..............................................................................
 void TGlCursor::SetSymbol(olxch v)  {
-  Primitives()->Style()->SetParameter("Char", v);
+  Primitives()->Style()->SetParam("Char", v, true);
   Symbol = v;
 }
 //..............................................................................

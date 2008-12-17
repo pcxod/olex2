@@ -84,10 +84,10 @@ void TGlConsole::Create(const olxstr& cName, const ACreationParams* cpar)  {
 
   TGraphicsStyle *GS = GPC->Style();
 
-  FLineWidth = GS->ParameterValue("LineWidth", FLineWidth).ToInt();
-  FLinesToShow = GS->ParameterValue("LinesToShow", FLinesToShow).ToInt();
-  FLineSpacing = GS->ParameterValue("LineSpacing", "0").ToDouble();
-  InviteStr = GS->ParameterValue("Prompt", ">>");
+  FLineWidth = GS->GetParam("LineWidth", FLineWidth, true).ToInt();
+  FLinesToShow = GS->GetParam("LinesToShow", FLinesToShow, true).ToInt();
+  FLineSpacing = GS->GetParam("LineSpacing", "0", true).ToDouble();
+  InviteStr = GS->GetParam("Prompt", ">>", true);
 
   TGlMaterial* GlM = const_cast<TGlMaterial*>(GS->Material("Text"));
   if( GlM->Mark() )
@@ -544,7 +544,7 @@ void TGlConsole::SetPromptVisible(bool v)  {
 void TGlConsole::SetInviteString(const olxstr &S)  {
   InviteStr = S;
   InviteStr.Replace("\\(", '(');
-  Primitives()->Style()->SetParameter("Prompt", InviteStr);
+  Primitives()->Style()->SetParam("Prompt", InviteStr, true);
   olxstr cmd = GetCommand();
   olex::IOlexProcessor::GetInstance()->executeFunction(InviteStr, PromptStr);
   FCommand = PromptStr;
@@ -554,19 +554,19 @@ void TGlConsole::SetInviteString(const olxstr &S)  {
 //..............................................................................
 void TGlConsole::SetLinesToShow(int V)  {
   FLinesToShow = V;
-  Primitives()->Style()->SetParameter("LinesToShow", FLinesToShow);
+  Primitives()->Style()->SetParam("LinesToShow", FLinesToShow, true);
 }
 //..............................................................................
 void TGlConsole::SetLineSpacing(float v)  {
   FLineSpacing = olx_max(-0.9, v);
-  Primitives()->Style()->SetParameter("LineSpacing", FLineSpacing);
+  Primitives()->Style()->SetParam("LineSpacing", FLineSpacing, true);
 }
 //..............................................................................
 void TGlConsole::SetLineWidth(int V)  {
   if( V < 0 )
     V = Font()->MaxTextLength(FParent->GetWidth() - 5);
   FLineWidth = V;
-  Primitives()->Style()->SetParameter("LineWidth", FLineWidth);
+  Primitives()->Style()->SetParam("LineWidth", FLineWidth, true);
 }
 //..............................................................................
 size_t TGlConsole::Write(const void *Data, size_t size)  {
