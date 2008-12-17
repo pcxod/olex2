@@ -2108,10 +2108,15 @@ void TGXApp::AtomRad(const olxstr& Rad, TXAtomPList* Atoms)  { // pers, sfil
   if( DS == -1 )
     throw TInvalidArgumentException(__OlxSourceInfo, "rad");
 
-  if( Atoms != NULL )  {
+  if( Atoms != NULL )  {  // make sure all atoms of selected collections are updated
+    for( int i=0; i < Atoms->Count(); i++ )
+      (*Atoms)[i]->Primitives()->SetTag(i);
     for( int i=0; i < Atoms->Count(); i++ )  {
-      TXAtom& xa = *(*Atoms)[i];
-      xa.CalcRad(DS);
+      if( (*Atoms)[i]->Primitives()->GetTag() == i )  {
+        TGPCollection* gpc = (*Atoms)[i]->Primitives();
+        for( int j=0; j < gpc->ObjectCount(); j++ )
+          ((TXAtom*)gpc->Object(j))->CalcRad(DS);
+      }
     }
   }
   else {

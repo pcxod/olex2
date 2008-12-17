@@ -114,7 +114,10 @@ IDataInputStream* TWinHttpFileSystem::OpenFile(const olxstr& Source)  {
   TBasicApp::GetInstance()->OnProgress->Execute(this, &Progress);
 
   Tmp.Replace(" ", "%20");
-  sprintf(Request, "GET %s HTTP/1.0\n\n", Tmp.c_str());
+  sprintf(Request, "GET %s HTTP/1.0\r\n", Tmp.c_str());
+  if( !Url.GetUser().IsEmpty() && !Url.GetPassword().IsEmpty() )
+    sprintf(Request, "Authorization: %s\r\n", Url.GenerateHTTPAuthString().c_str());
+
   send(Socket, Request, strlen(Request), 0);
   while( ThisRead )  {
     ThisRead = recv(Socket, Buffer, BufferSize, 0);

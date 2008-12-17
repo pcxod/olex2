@@ -196,21 +196,20 @@ void DoRun()  {
     TBasicApp::GetLog() << "Could not locate settings file: " << SettingsFile << '\n';
     return;
   }
-  olxstr Proxy, Repository = "http://dimas.dur.ac.uk/olex-distro/update",
+  olxstr Proxy, ProxyUser, ProxyPasswd, 
+    Repository = "http://dimas.dur.ac.uk/olex-distro/update",
            UpdateInterval = "Always",
            ftpToSync, ftpUser, ftpPwd, syncSrc;
   int LastUpdate = 0;
   TStrList extensionsToSkip, filesToSkip;
   TFSItem::SkipOptions toSkip;
   settings.LoadSettings( SettingsFile );
-  if( settings.ParamExists("proxy") )
-    Proxy = settings.ParamValue("proxy");
-  if( settings.ParamExists("repository") )
-    Repository = settings.ParamValue("repository");
-  if( settings.ParamExists("update") )
-    UpdateInterval = settings.ParamValue("update");
-  if( settings.ParamExists("lastupdate") )
-    LastUpdate = settings.ParamValue("lastupdate", '0').RadInt<long>();
+  if( settings.ParamExists("proxy") )        Proxy = settings.ParamValue("proxy");
+  if( settings.ParamExists("proxy_user") )   ProxyUser = settings.ParamValue("proxy_user");
+  if( settings.ParamExists("proxy_passwd") ) ProxyPasswd = settings.ParamValue("proxy_passwd");
+  if( settings.ParamExists("repository") )   Repository = settings.ParamValue("repository");
+  if( settings.ParamExists("update") )       UpdateInterval = settings.ParamValue("update");
+  if( settings.ParamExists("lastupdate") )   LastUpdate = settings.ParamValue("lastupdate", '0').RadInt<long>();
   if( settings.ParamExists("exceptions") )  {
     extensionsToSkip.Strtok(settings.ParamValue("exceptions", EmptyString), ';');
     TBasicApp::GetLog() << "Skipping the following extensions: " << extensionsToSkip.Text(' ') << '\n';
@@ -247,7 +246,7 @@ void DoRun()  {
       TDataItem* PluginItem = df.Root().FindItem("Plugin");
       if( PluginItem != NULL )  {
         for( int i=0; i < PluginItem->ItemCount(); i++ )
-          props.Add( PluginItem->Item(i).GetName() );
+          props.Add( PluginItem->GetItem(i).GetName() );
       }
     }
     catch( TExceptionBase &e )  {  ;  }
@@ -272,6 +271,8 @@ void DoRun()  {
       Update = ((TETime::EpochTime() - LastUpdate ) > SecsADay*30 );
      
     TUrl url(Repository);
+    url.SetUser(ProxyUser);
+    url.SetPassword(ProxyPasswd);
     if( !Proxy.IsEmpty() )  url.SetProxy( Proxy );
       
     if( Update )  {

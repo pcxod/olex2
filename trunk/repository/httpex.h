@@ -42,8 +42,6 @@ protected:
   void SendHeaders();
   bool ParseHeaders();
 
-  wxString GenerateAuthString(const wxString& user, const wxString& pass) const;
-
   // deletes the header value strings
   void ClearHeaders();
   TCSTypeList<olxstr, olxstr> Headers;
