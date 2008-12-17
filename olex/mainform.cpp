@@ -2573,16 +2573,17 @@ void TMainForm::SaveSettings(const olxstr &FN)  {
     I->AddField("NormalFont", normal );
     I->AddField("FixedFont", fixed );
   }
-  
-  I = &DF.Root().AddItem("Window");
-  if( IsMaximized() )  I->AddField("Maximized", true);
-  int w_w = 0, w_h = 0;
-  GetSize(&w_w, &w_h);
-  I->AddField("Width", w_w);
-  I->AddField("Height", w_h);
-  GetPosition(&w_w, &w_h);
-  I->AddField("X", w_w);
-  I->AddField("Y", w_h);
+  if( !IsIconized() )  {  // otherwise left and top are -32000 causing all sort of problems...
+    I = &DF.Root().AddItem("Window");
+    if( IsMaximized() )  I->AddField("Maximized", true);
+    int w_w = 0, w_h = 0;
+    GetSize(&w_w, &w_h);
+    I->AddField("Width", w_w);
+    I->AddField("Height", w_h);
+    GetPosition(&w_w, &w_h);
+    I->AddField("X", w_w);
+    I->AddField("Y", w_h);
+  }
 
   I = &DF.Root().AddItem("Windows");
   I->AddField("Help", HelpWindowVisible);
@@ -2677,7 +2678,7 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
     if( I->GetFieldValue("Maximized", "false").ToBool() )  {
       int l = I->GetFieldValue("X", "0").ToInt(), 
           t = I->GetFieldValue("Y", "0").ToInt();
-      Move( l, t );
+        Move( l, t );
       Maximize();
     }
     else  {

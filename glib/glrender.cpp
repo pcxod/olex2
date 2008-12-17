@@ -228,34 +228,47 @@ TGPCollection *TGlRender::Collection(int ind)  {
   return FCollections.Object(ind);
 }
 //..............................................................................
-TGPCollection *TGlRender::CollectionX(const olxstr &Name, olxstr &CollName)  {
-  if( Name.FirstIndexOf('.') != -1 )  {
-
+int TGlRender_CollectionComparator(const olxstr& c1, const olxstr& c2) {
+  const int l = olx_min(c1.Length(), c2.Length());
+  int dc = 0, i=0;
+  for( ; i < l; i++ )  {
+    if( c1.CharAt(i) != c2.CharAt(i) )  break;
+    if( c1.CharAt(i) == '.' )
+      dc++;
+  }
+  if( i == l && c1.Length() == c2.Length() )
+    dc++;
+  else if( i == l && l < c1.Length() && c1.CharAt(l) == '.' )
+    dc++;
+  return dc;
+}
+TGPCollection *TGlRender::CollectionX(const olxstr& Name, olxstr& CollName)  {
+  const int di = Name.FirstIndexOf('.');
+  if( di != -1 )  {
     int ind = FCollections.IndexOfComparable(Name);
-    if( ind != -1 )  return FCollections.Object(ind);
+    if( ind != -1 )  
+      return FCollections.Object(ind);
 
-    TStrList Toks(Name, '.'), Toks1;
     TGPCollection *BestMatch=NULL;
-    short minToks, maxMatchLevels = 0;
+    short maxMatchLevels = 0;
     for( int i=0; i < FCollections.Count(); i++ )  {
-      Toks1.Clear();
-      Toks1.Strtok(FCollections.GetComparable(i), '.');
-      minToks = olx_min( Toks.Count(), Toks1.Count() );
-      if( minToks < maxMatchLevels )  continue;
-      for( int j=0; j < minToks; j++ )  {
-        if( Toks.String(j) != Toks1.String(j) )  break;
-        if( (j+1) > maxMatchLevels )  {
+      int dc = TGlRender_CollectionComparator(Name, FCollections.GetComparable(i));
+      if( dc == 0 || dc < maxMatchLevels )  continue;
+      if( BestMatch != NULL && dc == maxMatchLevels )  {  // keep the one with shortes name
+        if( BestMatch->Name().Length() > FCollections.GetComparable(i).Length() )
           BestMatch = FCollections.Object(i);
-          maxMatchLevels = j;
-        }
       }
+      else
+        BestMatch = FCollections.Object(i);
+      maxMatchLevels = dc;
     }
     if( BestMatch != NULL )  {
-      if( Name.StartsFrom( BestMatch->Name() ) )  return BestMatch;
-      CollName = Toks.String(0);
+      if( Name.StartsFrom( BestMatch->Name() ) )  
+        return BestMatch;
+      CollName = Name.SubStringTo(di);
       return NULL;
     }
-    CollName = Toks.String(0);
+    CollName = Name.SubStringTo(di);
     return NULL;
   }
   else  {

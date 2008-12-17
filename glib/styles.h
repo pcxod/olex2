@@ -32,13 +32,26 @@ public:
   bool FromDataItem(const TDataItem& Item);
 };
 
+struct TGSParam {
+  olxstr val;
+  bool saveable;
+  TGSParam() : saveable(false) {}
+  TGSParam(const olxstr& _val, bool _saveable=false) : val(_val), saveable(_saveable) {}
+  TGSParam(const TGSParam& gsp) : val(gsp.val), saveable(gsp.saveable) {}
+  TGSParam& operator = (const TGSParam& gsp) {
+    val = gsp.val;
+    saveable = gsp.saveable;
+    return *this;
+  }
+};
+
 class TGraphicsStyle: public ACollectionItem  {
   olxstr FLabel;
   TPtrList<TPrimitiveStyle> FPStyles;
   TPtrList<TGraphicsStyle> FStyles;  // a sublist of the tree
   TGraphicsStyle *FParentStyle;
   TGraphicsStyles *FParent;
-  TSStrStrList<olxstr,true> FParams;  // a list of parameters
+  TSStrObjList<olxstr, TGSParam, true> FParams;  // a list of parameters
   int FLevel;
   bool Saveable; // if the style is saveable to dataitems
   bool Persistent; // specifies if RemovesStylesByTag can delete it
@@ -55,8 +68,19 @@ public:
   inline int PrimitiveStyleCount()              const {  return FPStyles.Count(); }
   inline TPrimitiveStyle* PrimitiveStyle(int i) const {  return FPStyles[i];  }
 
-  void SetParameter(const olxstr &Name, const olxstr& val);
-  olxstr& ParameterValue(const olxstr &Name, const olxstr& defval);
+  void SetParameter(const olxstr& name, const olxstr& val, bool saveable=false) {
+    int ind = FParams.IndexOf(name);
+    if( ind >= 0 )  
+      FParams.Object(ind).val = val;
+    else            
+      FParams.Add(name, TGSParam(val, saveable));
+  }
+  olxstr& ParameterValue(const olxstr& name, const olxstr& defval, bool saveable=false) {
+    int index = FParams.IndexOf(name);
+    if( index == -1 )
+      return FParams.Add(name, TGSParam(defval, saveable)).Object().val;
+    return FParams.Object(index).val;
+  }
 
   bool operator == (const TGraphicsStyle &GS) const;
 

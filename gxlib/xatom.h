@@ -34,7 +34,7 @@ public:
 class TXAtom: public TGlMouseListener  {
 private:
   TSAtom *FAtom;
-  short FDrawStyle;
+  short FDrawStyle, FRadius;
   int XAppId;
   friend class TXAtomStylesClear;
 protected:
@@ -46,6 +46,7 @@ protected:
   static TXAtomStylesClear *FXAtomStylesClear;
 protected:
   static float FTelpProb, FQPeakScale;
+  static short FDefRad, FDefDS;
   static TGraphicsStyle *FAtomParams;
 public:
   TXAtom(const olxstr& collectionName, TSAtom& A, TGlRender *Render);
@@ -129,7 +130,6 @@ public:
 };
 
 struct AtomCreationParams : public ACreationParams {
-  int mask;
 };
 
 EndGxlNamespace()
