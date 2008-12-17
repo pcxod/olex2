@@ -13,6 +13,8 @@ class TwxHttpFileSystem: public AFileSystem, public IEObject  {
 public:
   TwxHttpFileSystem(const TUrl& url, TwxZipFileSystem* zipFS=NULL) : Url(url) {
     ZipFS = zipFS;
+    Http.SetUser( url.GetUser().u_str() );
+    Http.SetPassword( url.GetPassword().u_str() );
     if( !Http.Connect( (url.HasProxy() ? url.GetProxy().GetHost() : url.GetHost()).u_str(), 
                        url.HasProxy() ? url.GetProxy().GetPort() : url.GetPort() ) )  {
       throw TFunctionFailedException(__OlxSourceInfo, "connection failed");

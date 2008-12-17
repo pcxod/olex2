@@ -9,6 +9,7 @@
 #include <stdlib.h>
 
 #include "httpex.h"
+#include "url.h"
 
 #include "wx/string.h"
 #include "wx/app.h"
@@ -57,41 +58,9 @@ const olxstr& THttp::GetHeader(const olxstr& header) const  {
   return ind == -1 ? EmptyString : Headers.GetObject(ind);
 }
 //............................................................................//
-wxString THttp::GenerateAuthString(const wxString& user, const wxString& pass) const  {
-  static const char *base64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-
-  wxString buf;
-  wxString toencode;
-
-  buf.Printf(wxT("Basic "));
-
-  toencode.Printf(wxT("%s:%s"),user.c_str(),pass.c_str());
-
-  size_t len = toencode.length();
-  const wxChar *from = toencode.c_str();
-  while (len >= 3) { // encode full blocks first
-    buf << wxString::Format(wxT("%c%c"), base64[(from[0] >> 2) & 0x3f], base64[((from[0] << 4) & 0x30) | ((from[1] >> 4) & 0xf)]);
-    buf << wxString::Format(wxT("%c%c"), base64[((from[1] << 2) & 0x3c) | ((from[2] >> 6) & 0x3)], base64[from[2] & 0x3f]);
-    from += 3;
-    len -= 3;
-  }
-  if (len > 0) { // pad the remaining characters
-    buf << wxString::Format(wxT("%c"), base64[(from[0] >> 2) & 0x3f]);
-    if (len == 1) {
-      buf << wxString::Format(wxT("%c="), base64[(from[0] << 4) & 0x30]);
-    } else {
-      buf << wxString::Format(wxT("%c%c"), base64[(from[0] << 4) & 0x30] + ((from[1] >> 4) & 0xf), base64[(from[1] << 2) & 0x3c]);
-    }
-    buf << wxString::Format(wxT("="));
-  }
-
-  return buf;
-}
-//............................................................................//
 void THttp::SetPostBuffer(const olxstr& post_buf)  {  m_post_buf = post_buf;  }
 //............................................................................//
 void THttp::SendHeaders()  {
-  return;
   CString buf;
   for( int i=0; i < Headers.Count(); i++ )  {
     buf = Headers.GetComparable(i);  
@@ -182,7 +151,7 @@ bool THttp::BuildRequest(const wxString& path, wxHTTP_Req req)  {
 
   // Send authentication information
   if (!m_username.empty() || !m_password.empty()) {
-    SetHeader("Authorization", GenerateAuthString(m_username, m_password).c_str() );
+    SetHeader("Authorization", TUrl::GenerateHTTPAuthString(m_username.c_str(), m_password.c_str()) );
   }
 
   SaveState();

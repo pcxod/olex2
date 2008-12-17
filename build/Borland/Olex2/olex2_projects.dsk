@@ -9,15 +9,33 @@ File_6=SourceModule,'E:\SVN\src\v1.1u\olex2-tl\Olex2Impl.cpp',0,1,656,17,670,0,0
 File_7=SourceModule,'E:\SVN\src\v1.1u\olex2-tl\About.cpp',0,1,4,49,19,0,0
 
 [Modules]
-Module0=E:\SVN\olex2-sf\trunk\installer\main.cpp
-Module1=E:\wxWidgets-2.8.7\include\wx\wxchar.h
-Count=2
+Module0=E:\SVN\srcf-svn\trunk\repository\winhttpfs.cpp
+Module1=E:\SVN\srcf-svn\trunk\launch\main.cpp
+Module2=E:\SVN\srcf-svn\trunk\repository\url.cpp
+Module3=E:\SVN\srcf-svn\trunk\sdl\settingsfile.h
+Module4=E:\wxWidgets-2.8.7\include\wx\wxchar.h
+Count=5
 EditWindowCount=1
 TypeLibWindowCount=1
 
-[E:\SVN\olex2-sf\trunk\installer\main.cpp]
+[E:\SVN\srcf-svn\trunk\repository\winhttpfs.cpp]
+ModuleType=SourceModule
+FormState=0
+FormOnTop=0
+
+[E:\SVN\srcf-svn\trunk\launch\main.cpp]
 ModuleType=SourceModule
 FormState=1
+FormOnTop=0
+
+[E:\SVN\srcf-svn\trunk\repository\url.cpp]
+ModuleType=SourceModule
+FormState=0
+FormOnTop=0
+
+[E:\SVN\srcf-svn\trunk\sdl\settingsfile.h]
+ModuleType=SourceModule
+FormState=0
 FormOnTop=0
 
 [E:\wxWidgets-2.8.7\include\wx\wxchar.h]
@@ -25,100 +43,101 @@ ModuleType=SourceModule
 FormState=0
 FormOnTop=0
 
-[E:\SVN\olex2-sf\trunk\build\Borland\Olex2\olex2_projects.bpg]
+[E:\SVN\srcf-svn\trunk\olex2-tl\Olex2xProj.tlb]
+FormState=0
+FormOnTop=1
+
+[E:\SVN\srcf-svn\trunk\build\Borland\Olex2\olex2_projects.bpg]
 FormState=0
 FormOnTop=0
 
-[E:\SVN\olex2-sf\trunk\build\Borland\Olex2\sdl.bpr]
+[E:\SVN\srcf-svn\trunk\build\Borland\Olex2\sdl.bpr]
 FormState=0
 FormOnTop=0
 
-[E:\SVN\olex2-sf\trunk\build\Borland\Olex2\alglib.bpr]
+[E:\SVN\srcf-svn\trunk\build\Borland\Olex2\alglib.bpr]
 FormState=0
 FormOnTop=0
 
-[E:\SVN\olex2-sf\trunk\build\Borland\Olex2\gllib.bpr]
+[E:\SVN\srcf-svn\trunk\build\Borland\Olex2\gllib.bpr]
 FormState=0
 FormOnTop=0
 
-[E:\SVN\olex2-sf\trunk\build\Borland\Olex2\xlib.bpr]
+[E:\SVN\srcf-svn\trunk\build\Borland\Olex2\xlib.bpr]
 FormState=0
 FormOnTop=0
 
-[E:\SVN\olex2-sf\trunk\build\Borland\Olex2\gxlib.bpr]
+[E:\SVN\srcf-svn\trunk\build\Borland\Olex2\gxlib.bpr]
 FormState=0
 FormOnTop=0
 
-[E:\SVN\olex2-sf\trunk\build\Borland\Olex2\gxlib_npy.bpr]
+[E:\SVN\srcf-svn\trunk\build\Borland\Olex2\gxlib_npy.bpr]
 FormState=0
 FormOnTop=0
 
-[E:\SVN\olex2-sf\trunk\build\Borland\Olex2\olex2.bpr]
+[E:\SVN\srcf-svn\trunk\build\Borland\Olex2\olex2.bpr]
 FormState=0
 FormOnTop=0
 
-[E:\SVN\olex2-sf\trunk\build\Borland\Olex2\launch.bpr]
+[E:\SVN\srcf-svn\trunk\build\Borland\Olex2\launch.bpr]
 FormState=0
 FormOnTop=0
 
-[E:\SVN\olex2-sf\trunk\build\Borland\Olex2\installer.bpr]
+[E:\SVN\srcf-svn\trunk\build\Borland\Olex2\installer.bpr]
 FormState=0
 FormOnTop=0
 
-[E:\SVN\olex2-sf\trunk\build\Borland\Olex2\autorun.bpr]
+[E:\SVN\srcf-svn\trunk\build\Borland\Olex2\autorun.bpr]
 FormState=0
 FormOnTop=0
 
-[E:\SVN\olex2-sf\trunk\build\Borland\Olex2\olex2v.bpr]
+[E:\SVN\srcf-svn\trunk\build\Borland\Olex2\olex2v.bpr]
 FormState=0
 FormOnTop=0
 
-[E:\SVN\olex2-sf\trunk\olex2v-test\olex2vt.bpr]
+[E:\SVN\srcf-svn\trunk\olex2v-test\olex2vt.bpr]
 FormState=0
 FormOnTop=0
 
-[E:\SVN\olex2-sf\trunk\olex2-tl\Olex2xProj.bpr]
+[E:\SVN\srcf-svn\trunk\olex2-tl\Olex2xProj.bpr]
 FormState=0
 FormOnTop=0
 
-[E:\SVN\olex2-sf\trunk\olex2-tl\Olex2xProj.tlb]
-FormState=0
-FormOnTop=0
-
-[E:\SVN\olex2-sf\trunk\build\Borland\Olex2\olex2vj.bpr]
-FormState=0
-FormOnTop=0
-
-[E:\SVN\olex2-sf\trunk\build\Borland\Olex2\frame1.cpp]
+[E:\SVN\srcf-svn\trunk\build\Borland\Olex2\olex2vj.bpr]
 FormState=0
 FormOnTop=0
 
 [EditWindow0]
-ViewCount=2
-CurrentView=1
+ViewCount=5
+CurrentView=3
 View0=0
 View1=1
+View2=2
+View3=3
+View4=4
 CodeExplorer=CodeExplorer@EditWindow0
 MessageView=MessageView@EditWindow0
 ClassHierarchy=ClassHierarchy@EditWindow0
 Create=1
 Visible=1
-State=0
-Left=269
-Top=82
+State=2
+Left=1085
+Top=128
 Width=1207
-Height=1037
+Height=896
 MaxLeft=-4
 MaxTop=-4
-ClientWidth=1199
-ClientHeight=1003
+MaxWidth=908
+MaxHeight=1448
+ClientWidth=900
+ClientHeight=1426
 LeftPanelSize=0
 LeftPanelClients=CodeExplorer@EditWindow0
 LeftPanelData=00000400010000000C000000436F64654578706C6F726572000000000000000000000000000000000001000000000000000000000000FFFFFFFF
 RightPanelSize=0
 BottomPanelSize=0
 BottomPanelClients=MessageView@EditWindow0
-BottomPanelData=00000400010000000B0000004D65737361676556696577AF040000000000000297000000000000000100000000000000000000000001000000006E0400000000000001000000006E0400000000000001000000006E0400000000000001000000006E040000000000000100000000840300000000000001000000008403000000000000010000000084030000000000000100000000130700000000000001000000001307000000000000010000000013070000000000000100000000EB030000000000000100000000EB030000000000000100000000AF04000000000000FFFFFFFF
+BottomPanelData=00000400010000000B0000004D6573736167655669657784030000000000000297000000000000000100000000000000000000000001000000006E0400000000000001000000006E0400000000000001000000006E0400000000000001000000006E040000000000000100000000840300000000000001000000008403000000000000010000000084030000000000000100000000130700000000000001000000001307000000000000010000000013070000000000000100000000EB030000000000000100000000EB030000000000000100000000AF04000000000000010000000084030000000000000100000000840300000B0000004D65737361676556696577FFFFFFFF
 
 [View0]
 Module=E:\wxWidgets-2.8.7\include\wx\wxchar.h
@@ -128,25 +147,46 @@ TopLine=868
 LeftCol=1
 
 [View1]
-Module=E:\SVN\olex2-sf\trunk\installer\main.cpp
-CursorX=5
-CursorY=268
-TopLine=235
+Module=E:\SVN\srcf-svn\trunk\launch\main.cpp
+CursorX=18
+CursorY=180
+TopLine=127
+LeftCol=1
+
+[View2]
+Module=E:\SVN\srcf-svn\trunk\repository\url.cpp
+CursorX=11
+CursorY=81
+TopLine=46
+LeftCol=1
+
+[View3]
+Module=E:\SVN\srcf-svn\trunk\repository\winhttpfs.cpp
+CursorX=19
+CursorY=118
+TopLine=82
+LeftCol=1
+
+[View4]
+Module=E:\SVN\srcf-svn\trunk\sdl\settingsfile.h
+CursorX=1
+CursorY=8
+TopLine=1
 LeftCol=1
 
 [TypeLibEditWindow0]
 Create=1
 Visible=0
 State=0
-Left=200
-Top=110
+Left=189
+Top=133
 Width=650
-Height=453
+Height=441
 MaxLeft=-1
 MaxTop=-1
 ClientWidth=642
 ClientHeight=419
-Module=E:\SVN\olex2-sf\trunk\olex2-tl\Olex2xProj.tlb
+Module=E:\SVN\srcf-svn\trunk\olex2-tl\Olex2xProj.tlb
 
 [Watches]
 Count=0
@@ -165,12 +205,12 @@ State=2
 Left=0
 Top=0
 Width=1280
-Height=112
-MaxLeft=-4
-MaxTop=-4
-MaxWidth=1928
-MaxHeight=112
-ClientWidth=1920
+Height=100
+MaxLeft=-1
+MaxTop=-1
+MaxWidth=1288
+MaxHeight=100
+ClientWidth=1280
 ClientHeight=78
 
 [ProjectManager]
@@ -184,7 +224,7 @@ Height=696
 MaxLeft=-1
 MaxTop=-1
 ClientWidth=210
-ClientHeight=670
+ClientHeight=672
 TBDockHeight=313
 LRDockWidth=446
 Dockable=1
@@ -200,7 +240,7 @@ Height=353
 MaxLeft=-1
 MaxTop=-1
 ClientWidth=525
-ClientHeight=319
+ClientHeight=331
 DumpPane=79
 DisassemblyPane=187
 RegisterPane=231
@@ -210,14 +250,14 @@ FlagPane=64
 Create=1
 Visible=0
 State=0
-Left=-915
-Top=538
-Width=454
-Height=339
+Left=0
+Top=0
+Width=27
+Height=877
 MaxLeft=-1
 MaxTop=-1
-ClientWidth=446
-ClientHeight=313
+ClientWidth=19
+ClientHeight=853
 TBDockHeight=161
 LRDockWidth=294
 Dockable=1
@@ -229,7 +269,7 @@ State=0
 Left=200
 Top=122
 Width=156
-Height=84
+Height=82
 MaxLeft=-1
 MaxTop=-1
 ClientWidth=150
@@ -242,11 +282,11 @@ State=0
 Left=0
 Top=181
 Width=233
-Height=656
+Height=658
 MaxLeft=-1
 MaxTop=-1
 ClientWidth=233
-ClientHeight=656
+ClientHeight=658
 TBDockHeight=551
 LRDockWidth=233
 Dockable=1
@@ -283,7 +323,7 @@ Height=185
 MaxLeft=-1
 MaxTop=-1
 ClientWidth=440
-ClientHeight=159
+ClientHeight=161
 TBDockHeight=190
 LRDockWidth=448
 Dockable=1
@@ -299,7 +339,7 @@ Height=284
 MaxLeft=-1
 MaxTop=-1
 ClientWidth=395
-ClientHeight=258
+ClientHeight=260
 TBDockHeight=284
 LRDockWidth=403
 Dockable=1
@@ -330,11 +370,11 @@ Visible=0
 State=0
 Left=12
 Top=0
-Width=1187
+Width=888
 Height=151
 MaxLeft=-1
 MaxTop=-1
-ClientWidth=1187
+ClientWidth=888
 ClientHeight=151
 TBDockHeight=151
 LRDockWidth=443
@@ -355,13 +395,13 @@ Height=863
 MaxLeft=-1
 MaxTop=-1
 ClientWidth=233
-ClientHeight=837
+ClientHeight=839
 TBDockHeight=826
 LRDockWidth=190
 Dockable=1
 DockClients=ObjectTree,PropertyInspector
-DockSiteData=0000040000000000450300000000000001E9000000000000000100000000A90000000E0000004F626A65637454726565566965770100000000450300001100000050726F7065727479496E73706563746F72FFFFFFFF
+DockSiteData=0000040000000000470300000000000001E9000000000000000100000000A90000000E0000004F626A65637454726565566965770100000000470300001100000050726F7065727479496E73706563746F72FFFFFFFF
 
 [ActiveProject]
-ActiveProject=9
+ActiveProject=8
 

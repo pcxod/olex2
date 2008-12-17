@@ -6,7 +6,7 @@
 
 class TUrl : public IEObject  {
   unsigned int Port;
-  olxstr Protocol, Host, Path;
+  olxstr Protocol, Host, Path, User, Password;
   TUrl* Proxy;
 public:
   // default constructor, sets Port to 80
@@ -21,7 +21,7 @@ public:
       delete Proxy;
   }
 
-  const TUrl& operator = (const TUrl& url);
+  TUrl& operator = (const TUrl& url);
 
   olxstr GetFullAddress() const;
 
@@ -57,5 +57,13 @@ public:
     TInvalidUrlException(const olxstr& location) :
       TBasicException( location, EmptyString)  { }
   };
+
+  DefPropC(olxstr, User)
+  DefPropC(olxstr, Password)
+
+  static olxstr GenerateHTTPAuthString(const olxstr& user, const olxstr& pass);
+  olxstr GenerateHTTPAuthString()  {
+    return GenerateHTTPAuthString(User, Password);
+  }
 };
 #endif

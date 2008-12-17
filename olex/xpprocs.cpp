@@ -5992,7 +5992,7 @@ void TMainForm::macUpdateFile(TStrObjList &Cmds, const TParamList &Options, TMac
   olxstr SettingsFile( TBasicApp::GetInstance()->BaseDir() + "usettings.dat" );
   TEFile::CheckFileExists( __OlxSourceInfo, SettingsFile );
   TSettingsFile settings;
-  olxstr Proxy, Repository;
+  olxstr Proxy, Repository, ProxyUser, ProxyPasswd;
   bool Force = false;
   for( int i=0; i < Options.Count(); i++ )  {
     if( Options.GetName(i)[0] == 'f' )  {
@@ -6003,6 +6003,8 @@ void TMainForm::macUpdateFile(TStrObjList &Cmds, const TParamList &Options, TMac
 
   settings.LoadSettings( SettingsFile );
   if( settings.ParamExists("proxy") )        Proxy = settings.ParamValue("proxy");
+  if( settings.ParamExists("proxy_user") )   ProxyUser = settings.ParamValue("proxy_user");
+  if( settings.ParamExists("proxy_passwd") ) ProxyPasswd = settings.ParamValue("proxy_passwd");
   if( settings.ParamExists("repository") )   Repository = settings.ParamValue("repository");
   if( settings.ParamValue("update").Comparei("never") == 0 )  {
     TBasicApp::GetLog() << (olxstr("User settings prevented updating file: ") << Cmds[0]);
@@ -6011,6 +6013,8 @@ void TMainForm::macUpdateFile(TStrObjList &Cmds, const TParamList &Options, TMac
   if( !Repository.IsEmpty() && !Repository.EndsWith('/') )  Repository << '/';
 
   TUrl url(Repository);
+  url.SetUser(ProxyUser);
+  url.SetPassword(ProxyPasswd);
   if( !Proxy.IsEmpty() ) url.SetProxy( Proxy );
 
   TwxHttpFileSystem httpFS( url );
