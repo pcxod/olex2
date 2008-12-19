@@ -30,6 +30,14 @@ template <class A, class B>
     if( Set )  V |= Bit;
     else       V &= ~Bit;
   }
+template <class A, class B>
+  inline void SetBitTrue(A &V, const B Bit )  {
+    V |= Bit;
+  }
+template <class A, class B>
+  inline void SetBitFalse(A &V, const B Bit )  {
+    V &= ~Bit;
+  }
 
 template <class VC>
   double TetrahedronVolume(const VC& A, const VC& B,

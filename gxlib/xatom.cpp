@@ -210,8 +210,8 @@ void TXAtom::Create(const olxstr& cName, const ACreationParams* cpar)  {
       GS->SetSaveable(false);
     }
     else  {
-      ValidateRadius(GPC->Style());
       GPC->AddObject(this);
+      ValidateRadius(GPC->Style());
       return;
     }
   }

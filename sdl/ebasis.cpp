@@ -120,6 +120,7 @@ void TEBasis::ToDataItem(TDataItem& Item) const  {
   center.AddField("x", FCenter[0]);
   center.AddField("y", FCenter[1]);
   center.AddField("z", FCenter[2]);
+  Item.AddField("zoom", FZoom);
 }
 bool TEBasis::FromDataItem(const TDataItem& Item)  {
   TDataItem *matr = Item.FindItem("matrix");
@@ -140,6 +141,9 @@ bool TEBasis::FromDataItem(const TDataItem& Item)  {
   FCenter[1] = center->GetFieldValue("y").ToDouble();
   FCenter[2] = center->GetFieldValue("z").ToDouble();
   CopyMatrix();
+  double z = Item.GetFieldValue("zoom", "-1").ToDouble();
+  if( z != -1 )
+    FZoom = z;
   return true;
 }
 

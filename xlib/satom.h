@@ -11,6 +11,11 @@
 
 BeginXlibNamespace()
 
+const short 
+  satomDeleted    = 0x0001,
+  satomGrown      = 0x00002,
+  satomStandalone = 0x0004;
+
 class TSAtom : public TBasicNode<TSAtom, class TSBond>  {
 private:
   smatd_plist Matrices;
@@ -21,16 +26,19 @@ private:
   vec3d  FCCenter;     // atom center in cell coordinates
   vec3d  FCenter;          // atom center in cartesian coordinates
 protected:
-  bool Deleted, Grown;
+  short Flags;
 public:
   TSAtom(TNetwork *N);
   virtual ~TSAtom();
   void Assign(TSAtom *S);
 
-  DefPropB(Deleted)
+  bool IsDeleted()     const {  return (Flags & satomDeleted) != 0;  }
+  void SetDeleted(bool v)    {  SetBit(v, Flags, satomDeleted);  }
+  bool IsStandalone()  const {  return (Flags & satomStandalone) != 0;  }
+  void SetStandalone(bool v) {  SetBit(v, Flags, satomStandalone);  }
 
   bool IsGrown();
-  inline void SetGrown(bool v)  {  Grown = v;  }
+  inline void SetGrown(bool v)  {  SetBit(v, Flags, satomGrown);  }
 
   inline operator TCAtom* () const {  return FCAtom;  }
 

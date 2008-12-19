@@ -198,23 +198,14 @@ void TLattice::InitBody()  {
 
   OnDisassemble->Enter(this);
 
-  TSAtomPList matoms, *atoms;
   if( AtomMask.Count() == Atoms.Count() )  {
-    matoms.SetCapacity( Atoms.Count() );
     const int ac = Atoms.Count();
-    for( int i=0; i < ac; i++ )  {
-      if( AtomMask[i] )
-        matoms.Add( Atoms[i] );
-      else  // reset the network for not involved atoms
-        Atoms[i]->SetNetwork(*Network);
-    }
-    atoms = &matoms;
+    for( int i=0; i < ac; i++ )
+      Atoms[i]->SetStandalone(!AtomMask[i]);
     AtomMask.Clear();
   }
-  else
-    atoms = &Atoms;
 
-  Network->Disassemble(*atoms, Fragments, &Bonds);
+  Network->Disassemble(Atoms, Fragments, &Bonds);
   Fragments.QuickSorter.SortSF(Fragments, TLattice_SortFragments);
   for( int i=0; i < Atoms.Count(); i++ )
     Atoms[i]->SetLatId(i);
@@ -1146,24 +1137,9 @@ void TLattice::Disassemble()  {
   OnDisassemble->Enter(this);
   ClearBonds();
   ClearFragments();
-  TSAtomPList matoms, *atoms;
-  if( AtomMask.Count() == Atoms.Count() )  {
-    matoms.SetCapacity( Atoms.Count() );
-    const int ac = Atoms.Count();
-    for( int i=0; i < ac; i++ )  {
-      if( AtomMask[i] )
-        matoms.Add( Atoms[i] );
-      else  // reset the network for not involved atoms
-        Atoms[i]->SetNetwork(*Network);
-    }
-    atoms = &matoms;
-    AtomMask.Clear();
-  }
-  else
-    atoms = &Atoms;
 
   // find bonds & fragments
-  Network->Disassemble(*atoms, Fragments, &Bonds);
+  Network->Disassemble(Atoms, Fragments, &Bonds);
   Fragments.QuickSorter.SortSF(Fragments, TLattice_SortFragments);
   // restore latId, as some atoms might been removed ny the network
   for( int i=0; i < Atoms.Count(); i++ )
@@ -1786,6 +1762,9 @@ void TLattice::FromDataItem(TDataItem& item)  {
     sa->AddMatrix( Matrices[mid] );
   }
   GetUnitCell().InitMatrices();
+  TEStrBuffer tmp;
+  int eqc = GetUnitCell().FindSymmEq(tmp, 0.1, true, false, false); // find and not remove
+  GetAsymmUnit().SetContainsEquivalents( eqc != 0 );
   Disassemble();
   TDataItem& planes = item.FindRequiredItem("planes");
   for( int i=0; i < planes.ItemCount(); i++ )

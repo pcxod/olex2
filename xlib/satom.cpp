@@ -15,7 +15,7 @@
 
 TSAtom::TSAtom(TNetwork *N) : TBasicNode<TSAtom, TSBond>(N)  {
   SetType(sotAtom);
-  Grown = Deleted = false;
+  Flags = 0;
 }
 //..............................................................................
 TSAtom::~TSAtom()  {  }
@@ -38,19 +38,19 @@ void  TSAtom::Assign(TSAtom *S)  {
   FCenter    = S->crd();
   FCCenter   = S->ccrd();
   FCAtom     = &S->CAtom();
-  Grown     = S->IsGrown();
+  SetGrown( S->IsGrown() );
   Matrices.Assign(S->Matrices);
 }
 //..............................................................................
 bool TSAtom::IsGrown() {
-  if( !Grown )  return false;
+  if( (Flags & satomGrown) == 0 )  return false;
   int subs = 0;
   for( int i=0; i < Nodes.Count(); i++ )
     if( Nodes[i]->IsDeleted() )
       subs--;
   if( subs < 0 )
-    Grown = false;
-  return Grown;
+    SetGrown(false);
+  return (Flags & satomGrown) != 0;
 }
 //..............................................................................
 olxstr TSAtom::GetGuiLabel() const  {  

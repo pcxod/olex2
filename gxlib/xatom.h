@@ -127,6 +127,7 @@ public:
     if( FXAtomStylesClear == NULL ) 
       FXAtomStylesClear = new TXAtomStylesClear(glr);
   }
+  static TGraphicsStyle* GetParamStyle() {  return FAtomParams;  }
 };
 
 struct AtomCreationParams : public ACreationParams {

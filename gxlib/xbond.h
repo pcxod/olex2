@@ -85,6 +85,8 @@ public:
     if( FXBondStylesClear == NULL ) 
       FXBondStylesClear = new TXBondStylesClear(glr);
   }
+
+  static TGraphicsStyle* GetParamStyle() {  return FBondParams;  }
 };
 
 struct BondCreationParams : public ACreationParams {
