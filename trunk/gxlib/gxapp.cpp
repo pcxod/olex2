@@ -2694,12 +2694,15 @@ void TGXApp::StructureVisible(bool v)  {
   for( int i=0; i < LooseObjects.Count(); i++ )  LooseObjects[i]->Visible(v);
   for( int i=0; i < XPlanes.Count(); i++ )       XPlanes[i].Visible(v);
   for( int i=0; i < XLabels.Count(); i++ )       XLabels[i].Visible(v);
-
   if( v )  {
     QPeaksVisible(FQPeaksVisible);
     QPeakBondsVisible(FQPeakBondsVisible);
     HydrogensVisible(FHydrogensVisible);
-  }
+    if( !FXGrid->IsEmpty() )
+      FXGrid->Visible(true);
+  } 
+  else
+    FXGrid->Visible(false);
 }
 //..............................................................................
 void TGXApp::LoadXFile(const olxstr &fn)  {
