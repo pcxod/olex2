@@ -1671,8 +1671,8 @@ void TLattice::RemoveNonHBonding(TAtomEnvi& Envi)  {
 void TLattice::SetAnis( const TCAtomPList& atoms, bool anis )  {
   if( !anis )  {
     for( int i=0; i < atoms.Count(); i++ )  {
-      if( atoms[i]->GetEllipsoid() != NULL )  {
-         GetAsymmUnit().NullEllp( atoms[i]->GetEllipsoid()->GetId() );
+      if( atoms[i]->GetEllpId() != -1 )  {
+         GetAsymmUnit().NullEllp( atoms[i]->GetEllpId() );
          atoms[i]->AssignEllp( NULL );
       }
     }
@@ -1687,7 +1687,6 @@ void TLattice::SetAnis( const TCAtomPList& atoms, bool anis )  {
     }
   }
   OnStructureUniq->Enter(this);
-  GetUnitCell().ClearEllipsoids();
   Init();
   OnStructureUniq->Exit(this);
 }

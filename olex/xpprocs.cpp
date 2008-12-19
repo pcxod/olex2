@@ -3782,9 +3782,7 @@ void TMainForm::macSplit(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     // link occupancies
     rm.Vars.AddVarRef(var, CA1, var_name_Sof, relation_AsVar); 
     ProcessedAtoms.Add( &CA1 );
-    TCAtom& CA2 = FXApp->XFile().GetAsymmUnit().NewAtom();
-    CA2.Assign(*CA);
-    CA2.SetLoaderId(liNewAtom);
+    TCAtom& CA2 = *CA;
     CA2.SetPart(2);
     CA2.ccrd() -= direction;
     CA2.Label() = FXApp->XFile().GetAsymmUnit().CheckLabel(&CA2, lbl+'b');
@@ -3801,7 +3799,6 @@ void TMainForm::macSplit(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       sr = &rm.rSIMU.AddNew();
     if( sr != NULL )
       sr->AddAtomPair(CA1, NULL, CA2, NULL);
-    CA->SetDeleted(true);
   }
   FXApp->XFile().GetLattice().SetAnis(ProcessedAtoms, false);
 }
