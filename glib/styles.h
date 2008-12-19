@@ -10,10 +10,11 @@
 BeginGlNamespace()
 
 class TGraphicsStyles;
+class TGraphicsStyle;
 
 class TPrimitiveStyle: public AGroupObject  {
   olxstr FPrimitiveName;
-  class TGraphicsStyles *FParent;
+  TGraphicsStyles* FParent;
 protected:
   AGOProperties *NewProperties();
 public:
@@ -30,6 +31,7 @@ public:
   }
   void ToDataItem(TDataItem& Item) const;
   bool FromDataItem(const TDataItem& Item);
+  friend class TGraphicsStyle;
 };
 
 struct TGSParam {
@@ -56,18 +58,25 @@ class TGraphicsStyle: public ACollectionItem  {
   bool Saveable; // if the style is saveable to dataitems
   bool Persistent; // specifies if RemovesStylesByTag can delete it
 protected:
+  // does not delete the styles
+  void ReleaseStyles() {  FStyles.Clear();  }
+  void AddStyle(TGraphicsStyle* style)  {
+    FStyles.Add(style);
+  }
 public:
   TGraphicsStyle(TGraphicsStyles *S, TGraphicsStyle *Parent, const olxstr &ALabel);
   ~TGraphicsStyle();
   void Clear();
   inline const olxstr& Label() const {  return FLabel; }
-
-  const class TGlMaterial* Material(const olxstr &PName);
+  const class TGlMaterial* Material(const olxstr& PName);
   TGlMaterial* PrimitiveMaterial(const olxstr& PName, const TGlMaterial& GlM);
 
   inline int PrimitiveStyleCount()              const {  return FPStyles.Count(); }
   inline TPrimitiveStyle* PrimitiveStyle(int i) const {  return FPStyles[i];  }
   
+  inline int StyleCount() const {  return FStyles.Count();  }
+  inline TGraphicsStyle* GetStyle(int i) {  return FStyles[i];  }
+
   void SetParam(const olxstr& name, const olxstr& val, bool saveable=false) {
     int ind = FParams.IndexOf(name);
     if( ind >= 0 )  
@@ -79,32 +88,45 @@ public:
   */
   olxstr& GetParam(const olxstr& name, const olxstr& defval, bool saveable=false) {
     int index = FParams.IndexOf(name);
-    if( index == -1 )
+    if( index == -1 )  {
+      olxstr dv(defval);
+      TGraphicsStyle* gs = FParentStyle;
+      while( gs != NULL )  {
+        index = gs->FParams.IndexOf(name);
+        if( index != -1 )  {
+          dv = gs->FParams.Object(index).val;
+          break;
+        }
+        gs = gs->FParentStyle;
+      }
       return FParams.Add(name, TGSParam(defval, saveable)).Object().val;
+    }
     FParams.Object(index).saveable = saveable;
     return FParams.Object(index).val;
   }
 
-  bool operator == (const TGraphicsStyle &GS) const;
+  bool operator == (const TGraphicsStyle& GS) const;
 
-  TGraphicsStyle *Style(const olxstr &CollectionName);
-  TGraphicsStyle *FindStyle(TGraphicsStyle *Style);
-  void DeleteStyle(TGraphicsStyle *Style);
+  TGraphicsStyle *Style(const olxstr& CollectionName);
+  TGraphicsStyle *FindStyle(TGraphicsStyle* Style);
+  void DeleteStyle(TGraphicsStyle* Style);
 
   TGraphicsStyle *NewStyle(const olxstr& Name, bool Force=false);
   // if force = true, then whole path "a.b.c" will be created
   inline int Level() const {  return FLevel; }
 
-  inline TGraphicsStyle*  ParentStyle(){  return FParentStyle; }
+  inline TGraphicsStyle*  ParentStyle() const {  return FParentStyle; }
 
   DefPropB(Saveable)
   DefPropB(Persistent)
 
-  void ToDataItem(TDataItem& Item) const;
+  void ToDataItem(TDataItem& Item, bool saveAll=false) const;
   bool FromDataItem(const TDataItem& Item);
 
   void SetStylesTag(int Tag); // sets ICollectionItem::Tag of styles to Tag
   void RemoveStylesByTag( int Tag); // removes Styles with Style::Tag == Tag
+
+  friend class TGraphicsStyles;
 };
 
 class TGraphicsStyles: public IEObject  {
@@ -146,6 +168,8 @@ public:
 
   void ToDataItem(TDataItem& Item) const;
   bool FromDataItem(const TDataItem& Item);
+  // saves only provided styles
+  void ToDataItem(TDataItem& item, const TPtrList<TGraphicsStyle>& styles);
 
   inline const olxstr& LinkFile()  const {  return FLinkFile; }
   inline void LinkFile(const olxstr& F)  {  FLinkFile = F; }

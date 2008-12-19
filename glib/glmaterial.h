@@ -109,7 +109,7 @@ public:
   bool operator == (const TGlMaterial &G) const;
   bool operator == (const AGOProperties &G) const; // !!!
 
-  void ToDataItem(TDataItem& Item);
+  void ToDataItem(TDataItem& Item) const;
   bool FromDataItem(const TDataItem& Item);
 
   TIString ToString() const;

@@ -430,7 +430,7 @@ public:     void CalcProbFactor(float Prob);
   void AllVisible(bool V);
   void CenterModel();
 
-  void CenterView();
+  void CenterView(bool calcZoom = false);
 //..............................................................................
 // X interface
   void BangList(TXAtom *A, TStrList &L);

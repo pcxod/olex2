@@ -278,7 +278,7 @@ void TXAtom::Create(const olxstr& cName, const ACreationParams* cpar)  {
         GlP->SetProperties(&RGlM);
       }
       else  {
-        TGlMaterial* GlM = const_cast<TGlMaterial*>(GS->Material(FStaticObjects.String(i)));
+        const TGlMaterial* GlM = GS->Material(FStaticObjects.String(i));
         if( GlM->Mark() )  {
           if( SGlP->Params().Last() == ddsDefSphere ) GetDefSphereMaterial(*FAtom, RGlM);
           if( SGlP->Params().Last() == ddsDefRim )    GetDefRimMaterial(*FAtom, RGlM);

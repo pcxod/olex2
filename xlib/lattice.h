@@ -13,6 +13,7 @@
 
 #include "macroerror.h"
 #include "library.h"
+#include "bitarray.h"
 
 BeginXlibNamespace()
 
@@ -49,27 +50,34 @@ protected:
   class TUnitCell*  UnitCell;
   class TAsymmUnit* AsymmUnit;
   float    Delta, DeltaI;
-
+  // the mask to decide which atoms to be used in the connectivity
+  TEBitArray AtomMask;
+  // if Template is specified, the CAtoms are taken from there instead of AsymmUnit
   void DoGrow(const TSAtomPList& Atoms, bool GrowShell, TCAtomPList* Template);
-  void ListAsymmUnit(TSAtomPList& res, TCAtomPList* Template, bool IncludeQ);
-  void InitBody();
   // fills the list with atoms of asymmertic unit
   // the atoms have to be deleted with a call to delete
-  // if Template is specified, the CAtoms are taken from there instead of AsymmUnit
+  void ListAsymmUnit(TSAtomPList& res, TCAtomPList* Template, bool IncludeQ);
+  void InitBody();
   void Disassemble();
   void RestoreCoordinates();
 public:
   TLattice();
   virtual ~TLattice();
 
-  TActionQueue* OnStructureGrow, *OnStructureUniq;
+  TActionQueue* OnStructureGrow, *OnStructureUniq, *OnDisassemble;
 
   // this is does not have any usefull data - just for functions call!!!
   inline TNetwork& GetNetwork()  const  {  return *Network; }
 
   void Clear(bool ClearUnitCell);
   void Uniq(bool removeSymmEquivalents = false);
+  // to be called after the mask is set
+  void UpdateConnectivity(TEBitArray& amask) {  
+    AtomMask = amask;
+    Disassemble();  
+  }
   void Init();
+  void SetAtomMask(TEBitArray& ba)  {  AtomMask = ba;  }
   // generates atoms within specified volume
   void Generate(const vec3d& MFrom, const vec3d& MTo, TCAtomPList* Template,
     bool ClearCont, bool IncludeQ);
@@ -147,10 +155,8 @@ protected:
 public:
   void AnalyseHAdd(class AConstraintGenerator& cg, const TSAtomPList& atoms);
 
-  inline float GetDelta() const  {  return Delta; }
-  inline void SetDelta(float v)  {  Delta = v; }
-  inline float GetDeltaI() const {  return DeltaI; }
-  inline void SetDeltaI(float v) {  DeltaI = v; }
+  DefPropP(float, Delta)
+  DefPropP(float, DeltaI)
 
   void LibGetFragmentCount(const TStrObjList& Params, TMacroError& E);
   void LibGetFragmentAtoms(const TStrObjList& Params, TMacroError& E);

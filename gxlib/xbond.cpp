@@ -169,7 +169,7 @@ void TXBond::Quality(const short Val)  {
   if( GS == NULL ) 
     GS = FParent->Styles()->NewStyle(Legend);
 
-  olxstr& ConeQ = GS->GetParam("ConeQ", "0");
+  olxstr& ConeQ = GS->GetParam("ConeQ", "0", true);
 //  double &ConeStipples = GS->ParameterValue("ConeStipples");
 
   switch( Val )  {

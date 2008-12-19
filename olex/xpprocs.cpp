@@ -1363,9 +1363,7 @@ void TMainForm::macUniq(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 
     FXApp->InvertFragmentsList(L, L1);
     FXApp->FragmentsVisible(L1, false);
-    FXApp->CenterView();
-    FXApp->GetRender().Basis()->SetZoom( FXApp->GetRender().CalcZoom()*FXApp->GetExtraZoom() );
-
+    FXApp->CenterView(true);
     TimePerFrame = FXApp->Draw();
   }
 }
@@ -1939,7 +1937,6 @@ void TMainForm::macMask(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   }
   if( Cmds[0] == "bonds" )  {
     int Mask = Cmds[1].ToInt();
-    TXBond::DefMask(Mask);
     olxstr Tmp;
     TXBondPList Bonds;
     if( Cmds.Count() >= 3 )  {
@@ -1947,6 +1944,8 @@ void TMainForm::macMask(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         Tmp << Cmds[i] << ' ';
     }
     FXApp->GetBonds(Tmp, Bonds);
+    if( Bonds.IsEmpty() && FXApp->Selection()->Count() == 0 )
+      TXBond::DefMask(Mask);
     FXApp->UpdateBondPrimitives(Mask, (Bonds.IsEmpty() && FXApp->Selection()->Count() == 0) ? NULL : &Bonds);
     return;
   }
@@ -2001,7 +2000,8 @@ void TMainForm::macKill(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   if( Cmds.Count() == 1 && Cmds[0].Comparei("sel") == 0 )  {
     TPtrList<AGDrawObject> Objects;
     TGlGroup *sel = FXApp->Selection();
-    for( int i=0; i < sel->Count(); i++ )  Objects.Add( (AGDrawObject*)sel->Object(i) );
+    for( int i=0; i < sel->Count(); i++ )  
+      Objects.Add( (AGDrawObject*)sel->Object(i) );
     FUndoStack->Push( FXApp->DeleteXObjects( Objects ) );
     sel->RemoveDeleted();
   }
@@ -3438,6 +3438,8 @@ int TMainForm_macShowQ_QPeakSortD(const TXAtom* a, const TXAtom* b)  {
 void TMainForm::macShowQ(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   double wheel = Options.FindValue("wheel", '0').ToDouble();
   if( wheel != 0 )  {
+    if( !FXApp->QPeaksVisible() )
+      return;
     TXAtomPList xatoms;
     FXApp->FindXAtoms("$Q", xatoms, false, true);
     xatoms.QuickSorter.SortSF(xatoms, TMainForm_macShowQ_QPeakSortA);
@@ -5412,11 +5414,13 @@ void TMainForm::macDeleteBitmap(TStrObjList &Cmds, const TParamList &Options, TM
 }
 //..............................................................................
 void TMainForm::ChangeSolution( int sol )  {
-  if( !Lst.PattSolutionCount() )  {
-    if( !Solutions.Count() )  return;
+  if( Lst.PattSolutionCount() == 0 )  {
+    if( Solutions.IsEmpty() )  return;
 
-    if( sol < 0 )  sol = Solutions.Count()-1;
-    if( sol >= Solutions.Count() )  sol = 0;
+    if( sol < 0 )  
+      sol = Solutions.Count()-1;
+    if( sol >= Solutions.Count() )  
+      sol = 0;
     olxstr cf = olxstr(SolutionFolder) << Solutions[sol] << ".res";
     TEFile::Copy( cf, TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), "res"), true);
     TEFile::Copy( TEFile::ChangeFileExt(cf, "lst"),
@@ -5427,8 +5431,11 @@ void TMainForm::ChangeSolution( int sol )  {
     FXApp->Draw();
   }
   else  {
-    if( sol < 0 )  sol = Lst.PattSolutionCount()-1;
-    if( sol >= Lst.PattSolutionCount() )  sol = 0;
+    if( sol < 0 )  
+      sol = Lst.PattSolutionCount()-1;
+    if( sol >= Lst.PattSolutionCount() )  
+      sol = 0;
+
     TIns& Ins = FXApp->XFile().GetLastLoader<TIns>();
     Ins.SavePattSolution( TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), "res"),
       Lst.PattSolution(sol), olxstr("Solution #") << (sol+1) );
@@ -5449,6 +5456,8 @@ void TMainForm::macTref(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   CurrentSolution = -1;
   FMode |= mSolve;
   SolutionFolder = EmptyString;
+
+  FXApp->XFile().UpdateAsymmUnit();  // update the last loader RM
 
   int reps = Cmds[0].ToInt();
   for( int i=0; i < Lst.TrefTryCount(); i++ )  {
@@ -5486,8 +5495,7 @@ void TMainForm::macTref(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 }
 //..............................................................................
 void TMainForm::macPatt(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-
-  if( !Lst.PattSolutionCount() )  {
+  if( Lst.PattSolutionCount() == 0 )  {
     E.ProcessingError(__OlxSrcInfo, "lst file does not contain Patterson solutions");
     return;
   }
@@ -5495,8 +5503,8 @@ void TMainForm::macPatt(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   CurrentSolution = -1;
   FMode |= mSolve;
   SolutionFolder = EmptyString;
-//  TIns *Ins = (TIns*)FXApp->XFile().GetLastLoader();
 
+  FXApp->XFile().UpdateAsymmUnit();  // update the last loader RM
 }
 //..............................................................................
 void TMainForm::macExport(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {

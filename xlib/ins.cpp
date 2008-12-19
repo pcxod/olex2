@@ -65,6 +65,7 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
     InsFile[i] = InsFile[i].Trim(' ');
   InsFile.CombineLines('=');
   bool   End = false;// true if END instruction reached
+  TBasicAtomInfo& baiQPeak = atomsInfo.GetAtomInfo(iQPeakIndex);
   cx.Resi = &GetAsymmUnit().GetResidue(-1);
   for( int i=0; i < InsFile.Count(); i++ )
     InsFile[i] = olxstr::DeleteSequencesOf<char>(InsFile[i], ' ');
@@ -94,12 +95,11 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
     else if( Toks.Count() < 6 )  // atom sgould have at least 7 parameters
       Ins.Add(InsFile[i]);
     else {
-      if( olxstr::o_toupper(Toks[0].CharAt(0)) == 'Q' && !End )  {
-        if( !LoadQPeaks  )  continue;
-      }
-      if( End && (olxstr::o_toupper(Toks[0].CharAt(0)) != 'Q') )  continue;
-    // is a valid atom
-      if( !atomsInfo.IsAtom(Toks[0]))  {  Ins.Add(InsFile[i]);  continue;  }
+      bool qpeak = olxstr::o_toupper(Toks[0].CharAt(0)) == 'Q';
+      if( qpeak && !End && !LoadQPeaks )  continue;
+      if( End && !qpeak )  continue;
+      // is a valid atom
+      //if( !atomsInfo.IsAtom(Toks[0]))  {  Ins.Add(InsFile[i]);  continue;  }
       if( !Toks[1].IsNumber() )         {  Ins.Add(InsFile[i]);  continue;  }
       int index  = Toks[1].ToInt();
       if( index < 1 || index > cx.BasicAtoms.Count() )  {  // wrong index in SFAC
@@ -117,8 +117,10 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
         throw TFunctionFailedException(__OlxSourceInfo, "uninitialised cell");
       }
       TCAtom* atom = _ParseAtom(Toks, cx);
-      atom->SetLabel( Toks[0] );
-      if( atom->GetAtomInfo() != iQPeakIndex )  // the use sfac
+      atom->Label() = Toks[0];
+      if( qpeak ) 
+        atom->AtomInfo(&baiQPeak);
+      else
         atom->AtomInfo( cx.BasicAtoms.Object(Toks[1].ToInt()-1) );
       _ProcessAfix(*atom, cx);
     }
@@ -946,18 +948,16 @@ void TIns::UpdateAtomsFromStrings(RefinementModel& rm, TCAtomPList& CAtoms, cons
       ;
     else if( Toks.Count() < 6 )  // should be at least
       Instructions.Add(Tmp);
-    else if( !atomsInfo.IsAtom(Tmp1) )  // is a valid atom
-      Instructions.Add(Tmp);
-    else if( !Toks[1].IsNumber() )  // should be a number
+    else if( !atomsInfo.IsAtom(Toks[1]) )  // is a valid atom
       Instructions.Add(Tmp);
     else if( (!Toks[2].IsNumber()) || (!Toks[3].IsNumber()) || // should be four numbers
         (!Toks[4].IsNumber()) || (!Toks[5].IsNumber()) )  {
       Instructions.Add(Tmp);
     }
     else  {
-      iv  = Toks[1].ToInt();
-      if( iv != -1 ) // wrong index in SFAC, only -1 is supported
-        throw TInvalidArgumentException(__OlxSourceInfo, "wrong SFAC index, only -1 is supported");
+      TBasicAtomInfo* bai = atomsInfo.FindAtomInfoBySymbol(Toks[1]);
+      if( bai == NULL ) // wrong SFAC
+        throw TInvalidArgumentException(__OlxSourceInfo, "unknown element symbol");
 
       if( (atomCount+1) > CAtoms.Count() )  {
         if( atom && atom->GetParent() )  {
@@ -974,7 +974,8 @@ void TIns::UpdateAtomsFromStrings(RefinementModel& rm, TCAtomPList& CAtoms, cons
 
       _ParseAtom( Toks, cx, atom );
       atomCount++;
-      atom->SetLabel( Tmp1 );
+      atom->Label() = Tmp1;
+      atom->AtomInfo(bai);
       _ProcessAfix(*atom, cx);
     }
   }
@@ -1182,7 +1183,11 @@ olxstr TIns::_AtomToString(RefinementModel& rm, TCAtom& CA, int SfacIndex)  {
   double v, Q[6];   // quadratic form of ellipsoid
   olxstr Tmp( CA.Label() );
   Tmp.Format(6, true, ' ');
-  Tmp << SfacIndex;
+  if( SfacIndex < 0 )
+    Tmp << CA.GetAtomInfo().GetSymbol();
+  else
+    Tmp << SfacIndex;
+
   Tmp.Format(Tmp.Length()+4, true, ' ');
   for( int j=0; j < 3; j++ )
     Tmp << olxstr::FormatFloat(-5, rm.Vars.GetAtomParam(CA, var_name_X+j)) << ' ';

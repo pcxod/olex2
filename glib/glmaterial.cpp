@@ -169,7 +169,7 @@ const TGlMaterial& TGlMaterial::Intensity(TGlOption& ClearColor, double intensit
   return GlM;
 }
 //..............................................................................
-void TGlMaterial::ToDataItem(TDataItem& Item)  {
+void TGlMaterial::ToDataItem(TDataItem& Item) const {
   Item.SetValue( ToString() );
 //  Item->AddField("AmbientF", AmbientF.ToString());
 //  Item->AddField("AmbientB", AmbientB.ToString());

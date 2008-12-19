@@ -19,7 +19,8 @@ public:
   virtual ~TEBitArray();
   void Clear();
   void SetSize(int newSize);
-  inline int Count()  const        {  return (int)FCount;  }
+  inline int Count()    const {  return (int)FCount;  }
+  inline bool IsEmpty() const {  return FCount == 0;  }
   inline bool operator [] (int index) const  {
     int intIndex = index/8;
     int bitIndex = 1 << index%8;
