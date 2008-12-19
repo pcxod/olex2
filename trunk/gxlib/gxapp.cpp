@@ -2644,6 +2644,7 @@ void TGXApp::HydrogensVisible(bool v)  {
 void TGXApp::QPeaksVisible(bool v)  {
   FQPeaksVisible = v;
   TEBitArray amask;
+  ClearXObjects();
   XFile().GetLattice().UpdateConnectivity(amask);
   CreateObjects(false, false);
   CenterView(true);
