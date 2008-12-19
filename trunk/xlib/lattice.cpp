@@ -46,6 +46,7 @@ TLattice::TLattice() : AtomsInfo(TAtomsInfo::GetInstance()) {
   DeltaI    = 1.2f;
   OnStructureGrow = &Actions.NewQueue("STRGEN");
   OnStructureUniq = &Actions.NewQueue("STRUNIQ");
+  OnDisassemble= &Actions.NewQueue("DISASSEBLE");
 }
 //..............................................................................
 TLattice::~TLattice()  {
@@ -194,7 +195,26 @@ void TLattice::InitBody()  {
   M->SetTag(0);
   Matrices.Add( M );
   ListAsymmUnit(Atoms, NULL, true);
-  Network->Disassemble(Atoms, Fragments, &Bonds);
+
+  OnDisassemble->Enter(this);
+
+  TSAtomPList matoms, *atoms;
+  if( AtomMask.Count() == Atoms.Count() )  {
+    matoms.SetCapacity( Atoms.Count() );
+    const int ac = Atoms.Count();
+    for( int i=0; i < ac; i++ )  {
+      if( AtomMask[i] )
+        matoms.Add( Atoms[i] );
+      else  // reset the network for not involved atoms
+        Atoms[i]->SetNetwork(*Network);
+    }
+    atoms = &matoms;
+    AtomMask.Clear();
+  }
+  else
+    atoms = &Atoms;
+
+  Network->Disassemble(*atoms, Fragments, &Bonds);
   Fragments.QuickSorter.SortSF(Fragments, TLattice_SortFragments);
   for( int i=0; i < Atoms.Count(); i++ )
     Atoms[i]->SetLatId(i);
@@ -234,6 +254,7 @@ void TLattice::InitBody()  {
       //}
     }
   }
+  OnDisassemble->Exit(this);
 }
 void TLattice::Init()  {
   Clear(false);
@@ -353,6 +374,7 @@ void  TLattice::Generate(TCAtomPList* Template, bool ClearCont, bool IncludeQ)  
   GenerateAtoms(AtomsList, Atoms, Matrices);
   for( int i=0; i < AtomsList.Count(); i++ )
     delete AtomsList[i];
+
   Disassemble();
   Generated = true;
 }
@@ -392,10 +414,10 @@ void TLattice::DoGrow(const TSAtomPList& atoms, bool GrowShell, TCAtomPList* Tem
   // all matrices after MatrixCount are new and has to be used for generation
   int currentCount = MatrixCount();
   // the fragmens to grow by a particular matrix
-  TEList Fragments2Grow;
   smatd_list *BindingMatrices;
 
-  TTypeList<int> *ToGrow;
+  TIntList* ToGrow;
+  TTypeList<TIntList> Fragments2Grow;
   OnStructureGrow->Enter(this);
   for(int i=0; i < atoms.Count(); i++ )  {
     SA = atoms[i];
@@ -416,20 +438,21 @@ void TLattice::DoGrow(const TSAtomPList& atoms, bool GrowShell, TCAtomPList* Tem
           }
           if( !found )  {
             Matrices.Add( new smatd(M) );
-            ToGrow = new TTypeList<int>;
-            ToGrow->AddACopy( CA1.GetFragmentId() );
+            ToGrow = new TIntList;
+            ToGrow->Add( CA1.GetFragmentId() );
             Fragments2Grow.Add(ToGrow);
           }
           else  {
             if( l >= currentCount )  {
-              ToGrow = (TTypeList<int>*)Fragments2Grow[l-currentCount];
+              ToGrow = &Fragments2Grow[l-currentCount];
               found = false;
               for(int m=0; m < ToGrow->Count(); m++ )  {
                 if( ToGrow->Item(m) == CA1.GetFragmentId() )  {
                   found =false;  break;
                 }
               }
-              if( !found )  ToGrow->AddACopy( CA1.GetFragmentId() );
+              if( !found )  
+                ToGrow->Add( CA1.GetFragmentId() );
             }
           }
         }
@@ -439,7 +462,7 @@ void TLattice::DoGrow(const TSAtomPList& atoms, bool GrowShell, TCAtomPList* Tem
   }
   for(int i = currentCount; i < MatrixCount(); i++ )  {
     smatd* M = Matrices[i];
-    ToGrow = (TTypeList<int>*)Fragments2Grow[i-currentCount];
+    ToGrow = &Fragments2Grow[i-currentCount];
     for(int j=0; j < GetAsymmUnit().AtomCount(); j++ )  {
       for(int k=0; k < ToGrow->Count(); k++ )  {
         if( GetAsymmUnit().GetAtom(j).IsDeleted() )  continue;
@@ -454,8 +477,6 @@ void TLattice::DoGrow(const TSAtomPList& atoms, bool GrowShell, TCAtomPList* Tem
       }
     }
   }
-  for(int i=0; i < Fragments2Grow.Count(); i++ )
-    delete (TTypeList<int>*)Fragments2Grow[i];
 
   RestoreCoordinates();
   Disassemble();
@@ -1122,11 +1143,27 @@ void TLattice::TransformFragments(const TSAtomPList& fragAtoms, const smatd& tra
 //..............................................................................
 void TLattice::Disassemble()  {
   // clear bonds & fargments
+  OnDisassemble->Enter(this);
   ClearBonds();
   ClearFragments();
+  TSAtomPList matoms, *atoms;
+  if( AtomMask.Count() == Atoms.Count() )  {
+    matoms.SetCapacity( Atoms.Count() );
+    const int ac = Atoms.Count();
+    for( int i=0; i < ac; i++ )  {
+      if( AtomMask[i] )
+        matoms.Add( Atoms[i] );
+      else  // reset the network for not involved atoms
+        Atoms[i]->SetNetwork(*Network);
+    }
+    atoms = &matoms;
+    AtomMask.Clear();
+  }
+  else
+    atoms = &Atoms;
 
   // find bonds & fragments
-  Network->Disassemble(Atoms, Fragments, &Bonds);
+  Network->Disassemble(*atoms, Fragments, &Bonds);
   Fragments.QuickSorter.SortSF(Fragments, TLattice_SortFragments);
   // restore latId, as some atoms might been removed ny the network
   for( int i=0; i < Atoms.Count(); i++ )
@@ -1149,6 +1186,7 @@ void TLattice::Disassemble()  {
     for( int j=0; j < Frag->NodeCount(); j++ )
       Frag->Node(j).CAtom().SetFragmentId(i);
   }
+  OnDisassemble->Exit(this);
 }
 //..............................................................................
 void TLattice::RestoreCoordinates()  {

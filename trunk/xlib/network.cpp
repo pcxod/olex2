@@ -20,6 +20,7 @@
 #include "egraph.h"
 
 #include "olxmps.h"
+#include "estopwatch.h"
 
 #undef GetObject
 
@@ -49,7 +50,7 @@ void TNetwork::SortNodes()  {
 void TNetwork::TDisassembleTaskRemoveSymmEq::Run(long index)  {
   if( Atoms[index]->CAtom().GetExyzGroup() != NULL )  return;
   if( (Atoms[index]->GetTag() & 0x0002) != 0 )  return;
-  int ac = Atoms.Count();
+  const int ac = Atoms.Count();
   for( int i=index+1; i < ac; i++ )  {
     if( fabs(Distances[0][index] - Distances[0][i]) > 0.01 )  return;
     if( Atoms[index]->crd().QDistanceTo( Atoms[i]->crd() ) < 0.0001 )  {
@@ -60,7 +61,8 @@ void TNetwork::TDisassembleTaskRemoveSymmEq::Run(long index)  {
 }
 void TNetwork::TDisassembleTaskCheckConnectivity::Run(long index)  {
   const int this_p = Atoms[index]->CAtom().GetPart();
-  for( int i=index+1; i < Atoms.Count(); i++ )  {
+  const int ac = Atoms.Count();
+  for( int i=index+1; i < ac; i++ )  {
     if( (Distances[0][i] - Distances[0][index]) > dcMaxCBLength ||
         (Distances[0][i] - Distances[0][index]) < -dcMaxCBLength )  return;
     if( (Distances[1][i] - Distances[1][index]) > dcMaxCBLength ||
@@ -70,7 +72,7 @@ void TNetwork::TDisassembleTaskCheckConnectivity::Run(long index)  {
     if( (Distances[3][i] - Distances[3][index]) > dcMaxCBLength ||
         (Distances[3][i] - Distances[3][index]) < -dcMaxCBLength )  continue;
 
-    double D = Atoms[index]->crd().QDistanceTo( Atoms[i]->crd());
+    const double D = Atoms[index]->crd().QDistanceTo( Atoms[i]->crd());
     double D1 = (double)(Atoms[index]->GetAtomInfo().GetRad1() + Atoms[i]->GetAtomInfo().GetRad1() + Delta);
     D1 *= D1;
     const int that_p = Atoms[i]->CAtom().GetPart();
@@ -89,6 +91,8 @@ void TNetwork::TDisassembleTaskCheckConnectivity::Run(long index)  {
 //..............................................................................
 void TNetwork::Disassemble(TSAtomPList& Atoms, TNetPList& Frags, TSBondPList* InterBonds)  {
   if( Atoms.Count() < 2 )  return;
+  TStopWatch sw(__FUNC__);
+  sw.start("Initialising");
   TNetwork *Net;
   //TSAtom *A;
   int ac;
@@ -111,7 +115,7 @@ void TNetwork::Disassemble(TSAtomPList& Atoms, TNetPList& Frags, TSBondPList* In
     searchEqTask.Run(i);
   // removing symmetrical equivalents from the Atoms list (passes as param)
   //............................................
-  for( int i = 0; i < Atoms.Count(); i++ )  {
+  for( int i = 0; i < ac; i++ )  {
     if( (Atoms[i]->GetTag() & 0x0002) != 0 )  {
       delete Atoms[i];
       Atoms[i] = NULL;
@@ -136,14 +140,11 @@ void TNetwork::Disassemble(TSAtomPList& Atoms, TNetPList& Frags, TSBondPList* In
     Distances[2][i] = A->crd()[1];
     Distances[3][i] = A->crd()[2];
   }
-  int64_t st = TETime::msNow();
-  TBasicApp::GetLog().Info( olxstr("Starting search of connectivity") );
+  sw.start("Connectivity analysis");
   TDisassembleTaskCheckConnectivity searchConTask( Atoms, Distances, Delta);
   TListIteratorManager<TDisassembleTaskCheckConnectivity> searchCon(searchConTask, Atoms.Count(), tQuadraticTask, 100);
-  TBasicApp::GetLog().Info( olxstr("Completed in ") << (TETime::msNow()-st) << "ms" );
+  sw.start("Creating bonds");
   // creating bonds
-  TBasicApp::GetLog().Info( olxstr("Starting bond creation") );
-  st = TETime::msNow();
   for( int i=0; i < ac; i++ )  {
     TSAtom* A1 = Atoms[i];
     if( A1->GetTag() )  {
@@ -179,19 +180,19 @@ void TNetwork::Disassemble(TSAtomPList& Atoms, TNetPList& Frags, TSBondPList* In
       }
     }
   }
-  TBasicApp::GetLog().Info( olxstr("Completed in ") << (TETime::msNow()-st) << "ms" );
-  st = TETime::msNow();
-  TBasicApp::GetLog().Info( "Start search of hydrogen bonds" );
+  sw.start("Searching H-bonds");
   // preallocate 50 Hbonds per fragment
   if( InterBonds )  InterBonds->SetCapacity( InterBonds->Count() + Frags.Count()*50); 
   THBondSearchTask searchHBTask( Atoms, InterBonds, Distances, GetLattice().GetDeltaI());
   TListIteratorManager<THBondSearchTask> searchHB(searchHBTask, Atoms.Count(), tQuadraticTask, 100);
-  TBasicApp::GetLog().Info( olxstr("Completed in ") << (TETime::msNow()-st) << "ms" );
+  sw.start("Finalising");
   delete [] Distances[0];
   delete [] Distances[1];
   delete [] Distances[2];
   delete [] Distances[3];
   delete [] Distances;
+  sw.stop();
+  sw.print( TBasicApp::GetLog(), &TLog::Info );
 }
 //..............................................................................
 void TNetwork::THBondSearchTask::Run(long ind)  {
@@ -208,8 +209,8 @@ void TNetwork::THBondSearchTask::Run(long ind)  {
   if( AA == NULL && DA == NULL )  return;
 
   const int this_p = A1->CAtom().GetPart();
-
-  for( int i=ind+1; i < Atoms.Count(); i++ )  {
+  const int ac = Atoms.Count();
+  for( int i=ind+1; i < ac; i++ )  {
     if( (Distances[0][ind] - Distances[0][i]) > dcMaxCBLength ||
         (Distances[0][ind] - Distances[0][i]) < -dcMaxCBLength )  return;
     if( (Distances[1][ind] - Distances[1][i]) > dcMaxCBLength ||

@@ -660,8 +660,11 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual accupancy\
   this_InitMacro(ViewGrid, , fpNone|fpOne );
   this_InitMacro(Undo, , fpNone );
 
-  this_InitMacro(Individualise, , fpOne );
-  this_InitMacro(Collectivise, , fpOne );
+  this_InitMacroD(Individualise, EmptyString, fpAny, "Moves provided atoms to individual collections, so that the atom properties,\
+ such as draw style and appearence can be changed sperately of the group. The first call to this macro creates a group\
+ unique to the asymmetric unit, the second call makes the atom unique to the lattice" );
+  this_InitMacroD(Collectivise, EmptyString, fpAny, "Does the opposite to the Individialise. If provided atoms are unique to the lattice\
+ a call to this function makes them uniq to the asymmetric unit, the following call makes the uniq to the element type");
 
   this_InitMacro(Popup, w&;h&;t&;b&;x&;y&;d&;t&;r&;s&;c&;a&;i&;p, fpTwo );
 
