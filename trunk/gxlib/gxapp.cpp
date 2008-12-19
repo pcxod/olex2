@@ -37,6 +37,7 @@
 
 #include "gpcollection.h"
 #include "estopwatch.h"
+#include "pers_util.h"
 
 #ifdef __WXWIDGETS__
   #include "wxglscene.h"
@@ -2642,18 +2643,10 @@ void TGXApp::HydrogensVisible(bool v)  {
 //..............................................................................
 void TGXApp::QPeaksVisible(bool v)  {
   FQPeaksVisible = v;
-  if( !XFile().GetLattice().IsGenerated() )  {
-    TEBitArray amask;
-    XFile().GetLattice().UpdateConnectivity(amask);
-    CreateObjects(false, false);
-    CenterView(true);
-  }
-  else  {
-    for( int i=0; i < XAtoms.Count(); i++ )  {
-      if( XAtoms[i].Atom().GetAtomInfo() == iQPeakIndex )
-        XAtoms[i].Visible(FQPeaksVisible);
-    }
-  }
+  TEBitArray amask;
+  XFile().GetLattice().UpdateConnectivity(amask);
+  CreateObjects(false, false);
+  CenterView(true);
 }
 //..............................................................................
 void TGXApp::SyncQVisibility()  {
@@ -3067,7 +3060,7 @@ void TGXApp::SetGrowMode(short v, const olxstr& atoms)  {
 //..............................................................................
 void TGXApp::CreateXGrowLines()  {
   if( XGrowLines.Count() != 0 )  return;
-  int ac = FXFile->GetLattice().AtomCount();
+  const int ac = FXFile->GetLattice().AtomCount();
   TSAtomPList AtomsToProcess;
   if( AtomsToGrow.Length() != 0 )  {
     TXAtomPList xatoms;
@@ -3270,10 +3263,16 @@ void TGXApp::ToDataItem(TDataItem& item) const  {
     if( styles.IndexOf(gs) == -1 )
       styles.Add( gs );
   }
+  styles.Add( TXAtom::GetParamStyle() );
+  styles.Add( TXBond::GetParamStyle() );
   FGlRender->Styles()->ToDataItem(item.AddItem("Style"), styles);
   TDataItem& ind_col = item.AddItem("ICollections");
   for( int i=0; i < IndividualCollections.Count(); i++ )
     ind_col.AddField( olxstr("col_") << i, IndividualCollections[i]);
+  FGlRender->GetBasis().ToDataItem( item.AddItem("Basis"));
+  TDataItem& renderer = item.AddItem("Renderer");
+  renderer.AddField("Min", PersUtil::VecToStr( FGlRender->MinDim() ) );
+  renderer.AddField("Max", PersUtil::VecToStr( FGlRender->MaxDim() ) );
 }
 //..............................................................................
 void TGXApp::FromDataItem(TDataItem& item)  {
@@ -3285,7 +3284,13 @@ void TGXApp::FromDataItem(TDataItem& item)  {
   for( int i=0; i < ind_col.FieldCount(); i++ )
     IndividualCollections.Add(ind_col.Field(i));
   CreateObjects(true, true);
-  FGlRender->Basis()->SetZoom( FGlRender->CalcZoom() );
+
+  TDataItem& renderer = item.FindRequiredItem("Renderer");
+  vec3d min = PersUtil::FloatVecFromStr(renderer.GetRequiredField("Min"));
+  vec3d max = PersUtil::FloatVecFromStr(renderer.GetRequiredField("Max"));
+  FGlRender->ClearMinMax();
+  FGlRender->UpdateMaxMin(max, min);
+  FGlRender->Basis()->FromDataItem( item.FindRequiredItem("Basis") );
 }
 //..............................................................................
 //..............................................................................

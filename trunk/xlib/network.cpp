@@ -60,6 +60,7 @@ void TNetwork::TDisassembleTaskRemoveSymmEq::Run(long index)  {
   }
 }
 void TNetwork::TDisassembleTaskCheckConnectivity::Run(long index)  {
+  if( Atoms[index]->IsStandalone() )  return;
   const int this_p = Atoms[index]->CAtom().GetPart();
   const int ac = Atoms.Count();
   for( int i=index+1; i < ac; i++ )  {
@@ -145,9 +146,15 @@ void TNetwork::Disassemble(TSAtomPList& Atoms, TNetPList& Frags, TSBondPList* In
   TListIteratorManager<TDisassembleTaskCheckConnectivity> searchCon(searchConTask, Atoms.Count(), tQuadraticTask, 100);
   sw.start("Creating bonds");
   // creating bonds
+  TNetwork& defNet = *Frags.Add( new TNetwork(&GetLattice(), this) );
   for( int i=0; i < ac; i++ )  {
     TSAtom* A1 = Atoms[i];
-    if( A1->GetTag() )  {
+    if( A1->IsStandalone() )  {
+      defNet.AddNode(*A1);
+      A1->SetNetwork(defNet);
+      continue;
+    }
+    if( A1->GetTag() != 0 )  {
       Net = new TNetwork(&GetLattice(), this);
       Net->AddNode(*A1);
       Frags.Add( Net );
@@ -157,7 +164,7 @@ void TNetwork::Disassemble(TSAtomPList& Atoms, TNetPList& Frags, TSBondPList* In
         A2.SetTag(0);
         for( int k=0; k < A2.NodeCount(); k++ )  {
           TSAtom& A3 = A2.Node(k);
-          if( A3.GetTag() )  {
+          if( A3.GetTag() != 0 )  {
             Net->AddNode(A3);
             A3.SetNetwork(*Net);
             TSBond* B = new TSBond(Net);
