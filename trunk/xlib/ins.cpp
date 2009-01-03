@@ -397,7 +397,9 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx,
         /* here we do not check if the Toks.String(1) is atom - itcould be a label ...
         so we keep it as it is to save in the ins file
         */
-        Sfac << Toks[1] << ' ';
+        if( !Sfac.IsEmpty() )
+          Sfac << ' ';
+        Sfac << Toks[1];
         cx.BasicAtoms.Add( Toks[1], atomsInfo.FindAtomInfoBySymbol(Toks[1]) );
         if( cx.BasicAtoms.Last().Object() == NULL )
           throw TFunctionFailedException(__OlxSourceInfo, olxstr("Could not find suitable scatterer for '") << Toks[1] << '\'' );
@@ -415,11 +417,12 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx,
           cx.BasicAtoms.Add(Toks[j], atomsInfo.FindAtomInfoBySymbol(Toks[j]) );
           if( cx.BasicAtoms.Last().Object() == NULL )
             throw TFunctionFailedException(__OlxSourceInfo, olxstr("Could not find suitable scatterer for '") << Toks[j] << '\'' );
-          Sfac << Toks[j] << ' ';
+          if( !Sfac.IsEmpty() )
+            Sfac << ' ';
+          Sfac << Toks[j];
         }
       }
     }
-    Sfac = Sfac.Trim(' ');
   }
   else if( Toks[0].Comparei("DISP") == 0 )     {  
     Disp.Add( Toks.Text(' ', 1) );
