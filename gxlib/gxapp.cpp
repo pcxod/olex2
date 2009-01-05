@@ -487,7 +487,7 @@ void TGXApp::CenterModel()  {
 }
 //..............................................................................
 void TGXApp::CenterView(bool calcZoom)  {
-  int aan = 0;
+  double aan = 0;
   vec3d Center,
            maX(-100, -100, -100),
            miN(100, 100, 100);
@@ -501,13 +501,13 @@ void TGXApp::CenterView(bool calcZoom)  {
         if( XA.Atom().crd()[j] < miN[j] )
           miN[j] = XA.Atom().crd()[j];
       }
-      Center += XA.Atom().crd();
-      aan ++;
+      Center += XA.Atom().crd()*XA.Atom().CAtom().GetOccu();
+      aan += XA.Atom().CAtom().GetOccu();
     }
   }
   if( aan == 0 )  return;
 
-  Center /= (float)aan;
+  Center /= aan;
   Center *= -1;
   maX += Center;
   miN += Center;

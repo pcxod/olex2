@@ -89,9 +89,9 @@ void XLibMacros::Export(TLibrary& lib)  {
   xlib_InitMacro(EADP, "", fpAny|psCheckFileTypeIns,
 "Forces EADP/Uiso of provided atoms to be constrained the same" );
 //_________________________________________________________________________________________________________________________
-  xlib_InitMacro(Cif2Doc, "", fpNone|fpOne|psFileLoaded, "converts cif to a document" );
+  xlib_InitMacro(Cif2Doc, "n-output file name", fpNone|fpOne|psFileLoaded, "converts cif to a document" );
 //_________________________________________________________________________________________________________________________
-  xlib_InitMacro(Cif2Tab, "", fpAny|psFileLoaded, "creates a table from a cif" );
+  xlib_InitMacro(Cif2Tab, "n-output file name", fpAny|psFileLoaded, "creates a table from a cif" );
 //_________________________________________________________________________________________________________________________
   xlib_InitMacro(CifMerge, "", (fpAny^fpNone)|psFileLoaded,
   "Merges loaded or provided as first argument cif with other cif(s)" );
@@ -1589,7 +1589,13 @@ void XLibMacros::macCif2Doc(TStrObjList &Cmds, const TParamList &Options, TMacro
   }
 
   TStrList SL, Dic;
-  olxstr RF = TEFile::ChangeFileExt(Cif->GetFileName(), TEFile::ExtractFileExt(TN));
+  olxstr RF( Options.FindValue("n", EmptyString) );
+  if( RF.IsEmpty() )  {
+    RF = TEFile::ChangeFileExt(Cif->GetFileName(), EmptyString);
+    RF << "_doc";
+  }
+  RF = TEFile::ChangeFileExt(RF, TEFile::ExtractFileExt(TN));
+
   SL.LoadFromFile( TN );
   Dic.LoadFromFile( CifDictionaryFile );
   for( int i=0; i < SL.Count(); i++ )
@@ -1654,7 +1660,14 @@ void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options, TMacro
   DF.LoadFromXLFile(CifTablesFile, NULL);
   Dic.LoadFromFile( CifDictionaryFile );
 
-  olxstr RF = TEFile::ExtractFilePath(Cif->GetFileName()) + "tables.html", Tmp;
+  olxstr RF( Options.FindValue("n", EmptyString) ), 
+         Tmp;
+  if( RF.IsEmpty() )  {
+    RF = TEFile::ChangeFileExt(Cif->GetFileName(), EmptyString);
+    RF << "_tables";
+  }
+  RF = TEFile::ChangeFileExt(RF, "html");
+
   Root = DF.Root().FindItemCI("Cif_Tables");
   smatd_list SymmList;
   int tab_count = 1;
