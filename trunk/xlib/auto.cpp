@@ -1160,20 +1160,20 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
             if( proposed_atoms->IndexOf( type ) != -1 )  {
               stat.AtomTypeChanges++;
               guesses[i].atom->Label() =  (olxstr( type->GetSymbol() ) << (i+1));
-              guesses[i].atom->AtomInfo( type );
+              guesses[i].atom->SetAtomInfo( type );
             }
           }
           else if( BAIDelta != -1 )  {
             if( abs(type->GetIndex() - guesses[i].atom->GetAtomInfo().GetIndex()) < BAIDelta )  {
               stat.AtomTypeChanges++;
               guesses[i].atom->Label() =  (olxstr( type->GetSymbol() ) << (i+1));
-              guesses[i].atom->AtomInfo( type );
+              guesses[i].atom->SetAtomInfo( type );
             }
           }
           else  {
             stat.AtomTypeChanges++;
             guesses[i].atom->Label() =  (olxstr( type->GetSymbol() ) << (i+1));
-            guesses[i].atom->AtomInfo( type );
+            guesses[i].atom->SetAtomInfo( type );
           }
         }
       }
@@ -1188,20 +1188,20 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
         if( proposed_atoms->IndexOf( l_bai ) != -1 )  {
           change_evt = 0;
           guesses[i].atom->Label() = (olxstr( l_bai->GetSymbol() ) << (i+1));
-          guesses[i].atom->AtomInfo(l_bai);
+          guesses[i].atom->SetAtomInfo(l_bai);
         }
       }
       else  if( BAIDelta != -1 )  { // consider atom types within BAIDelta only
         if( abs(guesses[i].atom->GetAtomInfo().GetIndex() - sn->Node(i).GetTag()) < BAIDelta )  {
           change_evt = 1;
           guesses[i].atom->Label() = (olxstr( l_bai->GetSymbol() ) << (i+1));
-          guesses[i].atom->AtomInfo(l_bai);
+          guesses[i].atom->SetAtomInfo(l_bai);
         }
       }
       else  {  // unrestrained assignment
         change_evt = 2;
         guesses[i].atom->Label() = (olxstr( l_bai->GetSymbol() ) << (i+1));
-        guesses[i].atom->AtomInfo(l_bai);
+        guesses[i].atom->SetAtomInfo(l_bai);
       }
       if( change_evt != -1 )  {
         TBasicApp::GetLog().Info( olxstr("SN[") << change_evt << "] assignment " << guesses[i].atom->GetLabel() <<
@@ -1286,20 +1286,20 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
             if( proposed_atoms->IndexOf( type ) != -1 )  {
               stat.AtomTypeChanges++;
               guesses[i].atom->Label() =  (olxstr( type->GetSymbol() ) << (i+1));
-              guesses[i].atom->AtomInfo( type );
+              guesses[i].atom->SetAtomInfo( type );
             }
           }
           else if( BAIDelta != -1 )  {
             if( abs(type->GetIndex() - guesses[i].atom->GetAtomInfo().GetIndex()) < BAIDelta )  {
               stat.AtomTypeChanges++;
               guesses[i].atom->Label() =  (olxstr( type->GetSymbol() ) << (i+1));
-              guesses[i].atom->AtomInfo( type );
+              guesses[i].atom->SetAtomInfo( type );
             }
           }
           else  {
             stat.AtomTypeChanges++;
             guesses[i].atom->Label() =  (olxstr( type->GetSymbol() ) << (i+1));
-            guesses[i].atom->AtomInfo( type );
+            guesses[i].atom->SetAtomInfo( type );
           }
         }
         TBasicApp::GetLog().Info( tmp );

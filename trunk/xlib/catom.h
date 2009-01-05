@@ -55,7 +55,7 @@ public:
   virtual ~TCAtom();
   inline TAsymmUnit* GetParent()       const {  return FParent; }
   inline TBasicAtomInfo& GetAtomInfo() const {  return *FAtomInfo; }
-  void AtomInfo(TBasicAtomInfo*A);
+  void SetAtomInfo(TBasicAtomInfo* A);
 
   inline olxstr& Label()                   {  return FLabel; }
   // function validates and changes the atom type, use the syntax above just to set the label

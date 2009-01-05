@@ -86,14 +86,13 @@ bool TCAtom::SetLabel(const olxstr &L)  {
   return true;
 }
 //..............................................................................
-void TCAtom::AtomInfo(TBasicAtomInfo* A)  {
+void TCAtom::SetAtomInfo(TBasicAtomInfo* A)  {
   FAtomInfo = A;
   return;
   olxstr Tmp(A->GetSymbol());
   if( FLabel.Length() > Tmp.Length() )
     Tmp << FLabel.SubStringFrom(FAtomInfo->GetSymbol().Length());
 
-  FAtomInfo = A;
   FLabel = FParent->CheckLabel(this, Tmp);
 //  FLabel = Tmp;
 }

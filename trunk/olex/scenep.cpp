@@ -292,6 +292,7 @@ bool TdlgSceneProps::Execute(const IEObject *Sender, const IEObject *Data)  {
       wc = CD->GetColourData().GetColour();
       ((TTextEdit*)Sender)->WI.SetColor(RGB(wc.Red(), wc.Green(), wc.Blue()) );
     }
+    CD->Destroy();
   }
   if( (TComboBox*)Sender == cbLights )  {
     UpdateLight(FLightModel.Light(FCurrentLight));

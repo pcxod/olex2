@@ -794,7 +794,7 @@ void TCif::Initialize()  {
     A = &GetAsymmUnit().NewAtom();
     A->SetLoaderId(GetAsymmUnit().AtomCount()-1);
     A->SetLabel( ALoop->Table()[i][ALabel] );
-    A->AtomInfo( atoms_info.FindAtomInfoBySymbol(ALoop->Table()[i][ASymbol]) );
+    A->SetAtomInfo( atoms_info.FindAtomInfoBySymbol(ALoop->Table()[i][ASymbol]) );
     EValue = ALoop->Table()[i][ACx];
     A->ccrd()[0] = EValue.GetV();  A->ccrdEsd()[0] = EValue.GetE();
     EValue = ALoop->Table()[i].String(ACy);

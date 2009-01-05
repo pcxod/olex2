@@ -30,7 +30,7 @@ void AConstraintGenerator::DoGenerateAtom( TCAtomPList& created, TAsymmUnit& au,
       while( au.GetAtomsInfo()->IsElement(lbl) )
         lbl = StartingName + (char)('a' + ++j);
       CA->SetLabel( au.CheckLabel(CA, lbl) );
-      CA->AtomInfo( &au.GetAtomsInfo()->GetAtomInfo(iHydrogenIndex) );
+      CA->SetAtomInfo( &au.GetAtomsInfo()->GetAtomInfo(iHydrogenIndex) );
     }
     else
       CA->SetLabel( au.CheckLabel(CA, StartingName) );

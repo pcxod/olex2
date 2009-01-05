@@ -119,9 +119,9 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
       TCAtom* atom = _ParseAtom(Toks, cx);
       atom->Label() = Toks[0];
       if( qpeak ) 
-        atom->AtomInfo(&baiQPeak);
+        atom->SetAtomInfo(&baiQPeak);
       else
-        atom->AtomInfo( cx.BasicAtoms.Object(Toks[1].ToInt()-1) );
+        atom->SetAtomInfo( cx.BasicAtoms.Object(Toks[1].ToInt()-1) );
       _ProcessAfix(*atom, cx);
     }
   }
@@ -978,7 +978,7 @@ void TIns::UpdateAtomsFromStrings(RefinementModel& rm, TCAtomPList& CAtoms, cons
       _ParseAtom( Toks, cx, atom );
       atomCount++;
       atom->Label() = Tmp1;
-      atom->AtomInfo(bai);
+      atom->SetAtomInfo(bai);
       _ProcessAfix(*atom, cx);
     }
   }
