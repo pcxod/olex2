@@ -13,7 +13,8 @@ class XScatterer {
   bool builtIn;
 public:
   // creates a dummy scatterer
-  XScatterer() : mu(0), r(0), wt(0), source(NULL), gaussians(0,0,0,0,0,0,0,0,0), builtIn(false) {  }
+  //XScatterer() : mu(0), r(0), wt(0), source(NULL), gaussians(0,0,0,0,0,0,0,0,0), builtIn(false) {  }
+  
   // creates scatterer from the library
   XScatterer(cm_Element& src, double energy) : mu(0), builtIn(true), gaussians(0,0,0,0,0,0,0,0,0)  {  
     SetSource(src, energy);
@@ -26,19 +27,18 @@ public:
     SetSource(*src, energy);
   }
   // copy constructor
-  XScatterer(const XScatterer& sc) : gaussians(0,0,0,0,0,0,0,0,0)  {
-    gaussians = sc.gaussians;
-    mu = sc.mu;
-    r = sc.r;
-    wt = sc.wt;
-    source = sc.source;
-    Label = sc.Label;
-    builtIn = sc.builtIn;
-  }
+  XScatterer(const XScatterer& sc) : 
+    gaussians(sc.gaussians), 
+    mu(sc.mu),
+    r(sc.r),
+    wt(sc.wt),
+    Label(sc.Label),
+    source(sc.source),
+    builtIn(sc.builtIn) {  }
   // initialises data from the provided library element
   void SetSource(cm_Element& src, double energy)  {
     if( src.gaussians == NULL )
-      throw TInvalidArgumentException(__OlxSourceInfo, "given scatterer is only partially initialsed");
+      throw TInvalidArgumentException(__OlxSourceInfo, "given scatterer is only partially initialised");
     gaussians = *src.gaussians;
     Label = src.symbol;
     r = src.r_bonding;
@@ -93,6 +93,7 @@ public:
     if( gaussians.c != c )    {  gaussians.c = c;  builtIn = false;  }
   }
   DefPropC(olxstr, Label)
+  // return an INS file string representation
   olxstr ToInsString() const {
     olxstr rv(Label, 100);
     rv << ' ' << gaussians.a1 << ' ' << gaussians.a2 << ' ' << gaussians.a3 << ' ' << gaussians.a4 <<

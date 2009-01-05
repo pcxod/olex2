@@ -879,7 +879,7 @@ void TAsymmUnit::LibNewAtom(const TStrObjList& Params, TMacroError& E)  {
   TCAtom& ca = this->NewAtom();
   if( QPeakIndex >= 0 )  {
     ca.Label() = qLabel << olxstr(QPeakIndex);
-    ca.AtomInfo( &AtomsInfo->GetAtomInfo(iQPeakIndex) );
+    ca.SetAtomInfo( &AtomsInfo->GetAtomInfo(iQPeakIndex) );
     ca.SetQPeak( qPeak );
     GetRefMod()->Vars.SetAtomParam(ca, var_name_Sof, 11.0);
     GetRefMod()->Vars.SetAtomParam(ca, var_name_Uiso, 0.5);

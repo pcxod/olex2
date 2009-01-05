@@ -63,10 +63,15 @@ struct cm_Anomalous_Henke {
 };
 struct cm_Gaussians {  
   double a1, a2, a3, a4, b1, b2, b3, b4, c;  
+  // constructor, note that b values are inverted!
   cm_Gaussians(double _a1, double _a2, double _a3, double _a4, 
     double _b1, double _b2, double _b3, double _b4, double _c) :
     a1(_a1), a2(_a2), a3(_a3), a4(_a4), 
       b1(-_b1), b2(-_b2), b3(-_b3), b4(-_b4), c(_c)  {  }
+  // copy constructor
+  cm_Gaussians(const cm_Gaussians& g) :
+    a1(g.a1), a2(g.a2), a3(g.a3), a4(g.a4), 
+      b1(g.b1), b2(g.b2), b3(g.b3), b4(g.b4), c(g.c)  {  }
 
   inline double calc_sq(double sqv) const {
     return a1*exp(b1*sqv) + a2*exp(b2*sqv) + a3*exp(b3*sqv) + a4*exp(b4*sqv) + c;
@@ -136,11 +141,13 @@ struct cm_Element {
   inline bool operator <  (const cm_Element& ce) const {  return z <  ce.z;  }
   inline bool operator <= (const cm_Element& ce) const {  return z <= ce.z;  }
   inline bool operator == (const cm_Element& ce) const {  return z == ce.z;  }
+  inline bool operator != (const cm_Element& ce) const {  return z != ce.z;  }
   inline bool operator >  (short _z) const {  return z >  _z;  }
   inline bool operator >= (short _z) const {  return z >= _z;  }
   inline bool operator <  (short _z) const {  return z <  _z;  }
   inline bool operator <= (short _z) const {  return z <= _z;  }
   inline bool operator == (short _z) const {  return z == _z;  }
+  inline bool operator != (short _z) const {  return z != _z;  }
 };
 
 class XElementLib {

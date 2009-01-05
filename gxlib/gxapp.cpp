@@ -1652,10 +1652,10 @@ TXAtom* TGXApp::AddAtom(TXAtom* templ)  {
     olxstr colName;
     if( templ != NULL )  {
       colName = templ->GetCollectionName();
-      A->CAtom().AtomInfo( &templ->Atom().GetAtomInfo() );
+      A->CAtom().SetAtomInfo( &templ->Atom().GetAtomInfo() );
     }
     else  {
-      A->CAtom().AtomInfo( &AtomsInfo.GetAtomInfo(6) );
+      A->CAtom().SetAtomInfo( &AtomsInfo.GetAtomInfo(6) );
     }
     TXAtom& XA = XAtoms.Add( new TXAtom(colName, *A, FGlRender) );
     XA.Create();

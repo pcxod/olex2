@@ -135,12 +135,12 @@ void RefinementModel::AddNewSfac(const olxstr& label,
                   double b1, double b2, double b3, double b4,
                   double c, double mu, double r, double wt)  {
   olxstr lb(label.CharAt(0) == '$' ? label.SubStringFrom(1) : label);
-  cm_Element* src = XElementLib::FindBySymbol(lb);
+  cm_Element* src = XElementLib::FindBySymbolEx(lb);
   XScatterer* sc;
   if( src != NULL )
     sc = new XScatterer(*src, expl.GetRadiationEnergy());
   else
-    sc = new XScatterer;
+    throw TFunctionFailedException(__OlxSourceInfo, "could not locate reference chemical element");
   sc->SetLabel(lb);
   sc->SetGaussians(a1, a2, a3, a4, b1, b2, b3, b4, c);
   sc->SetAdsorptionCoefficient(mu);
