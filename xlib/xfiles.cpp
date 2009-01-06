@@ -393,7 +393,8 @@ void TXFile::LibEndUpdate(const TStrObjList& Params, TMacroError& E)  {
 void TXFile::LibSaveSolution(const TStrObjList& Params, TMacroError& E)  {
   TIns* oins = (TIns*)FLastLoader;
   TIns ins;
-  ins.GetAsymmUnit().Assign( GetAsymmUnit() );
+  UpdateAsymmUnit();  // needs to be called to assign the loaderIds for new atoms
+  ins.GetRM().Assign( GetRM(), true );
   ins.AddIns("FMAP 2", ins.GetRM());
   ins.GetRM().SetRefinementMethod("L.S.");
   ins.GetRM().SetIterations(4);

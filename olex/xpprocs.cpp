@@ -554,8 +554,15 @@ void TMainForm::funLoadDll(const TStrObjList &Cmds, TMacroError &E)  {
 }
 #endif // __WIN32__
 //..............................................................................
-bool TMainForm::ProcessMacroFunc(olxstr &Cmd)  {
+bool TMainForm::ProcessMacroFunc(olxstr& Cmd)  {
   if( Cmd.IndexOf('(') == -1 )  return true;
+
+  if( (FMode & mSilent) == 0 )  {
+    if( (!Cmd.StartsFromi("echo") && !Cmd.StartsFromi("post")) )
+      TBasicApp::GetLog() << Cmd << '\n';
+  }
+//  else  // too much info otherwise
+//    TBasicApp::GetLog().Info(Cmd);
 
   int specialFunctionIndex = Cmd.IndexOf('$');
   if( specialFunctionIndex != -1 )  {
@@ -850,11 +857,10 @@ void TMainForm::ProcessXPMacro(const olxstr &Cmd, TMacroError &Error, bool Proce
   the Cmd string is splitinto the lists: Cmds, Options and OptionParams
   Options and OptionParams always contain the same number of items
 */
-  if( !Cmd.Length() )  return;
+  if( Cmd.IsEmpty() )  return;
 
   if( (FMode & mSilent) == 0 )  {
-    olxstr s(Cmd.ToLowerCase());
-    if( (!s.StartsFrom("echo") && !s.StartsFrom("post")) )
+    if( (!Cmd.StartsFromi("echo") && !Cmd.StartsFromi("post")) )
       TBasicApp::GetLog() << Cmd << '\n';
   }
   else
