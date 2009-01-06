@@ -557,13 +557,6 @@ void TMainForm::funLoadDll(const TStrObjList &Cmds, TMacroError &E)  {
 bool TMainForm::ProcessMacroFunc(olxstr& Cmd)  {
   if( Cmd.IndexOf('(') == -1 )  return true;
 
-  if( (FMode & mSilent) == 0 )  {
-    if( (!Cmd.StartsFromi("echo") && !Cmd.StartsFromi("post")) )
-      TBasicApp::GetLog() << Cmd << '\n';
-  }
-//  else  // too much info otherwise
-//    TBasicApp::GetLog().Info(Cmd);
-
   int specialFunctionIndex = Cmd.IndexOf('$');
   if( specialFunctionIndex != -1 )  {
     olxstr spFunction;
@@ -654,10 +647,13 @@ bool TMainForm::ProcessMacroFunc(olxstr& Cmd)  {
       Cmd.Delete(fstart, fend-fstart);
       Function->Run(Params, E);
       AnalyseError( E );
-      if( !E.IsSuccessful() )  {
-        if( (FMode & mSilent) == 0 )
+      if( (FMode & mSilent) == 0 )  {
+        if( !E.IsSuccessful() )  {
           TBasicApp::GetLog() << ( olxstr("Last function call: '")  << Function->GetRuntimeSignature() << '\'' << '\n');
-        return false;
+          return false;
+        }
+        else
+          TBasicApp::GetLog().Info(Function->GetRuntimeSignature());
       }
       Cmd.Insert(E.GetRetVal(), fstart);
       i = fstart + E.GetRetVal().Length();
