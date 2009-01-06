@@ -115,7 +115,7 @@ IDataInputStream* TWinHttpFileSystem::OpenFile(const olxstr& Source)  {
 
   Tmp.Replace(" ", "%20");
   sprintf(Request, "GET %s HTTP/1.0\r\n", Tmp.c_str());
-  if( !Url.GetUser().IsEmpty() && !Url.GetPassword().IsEmpty() )
+  if( Url.HasProxy() && !Url.GetProxy().GetUser().IsEmpty() && !Url.GetProxy().GetPassword().IsEmpty() )
     sprintf(Request, "Authorization: %s\r\n", Url.GenerateHTTPAuthString().c_str());
 
   send(Socket, Request, strlen(Request), 0);

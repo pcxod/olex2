@@ -20,9 +20,7 @@ TdlgUpdateOptions::TdlgUpdateOptions(TMainFrame *ParentFrame) :
     SF.LoadSettings( SettingsFile );
   short Border = 0;
 
-  stProxy = new wxStaticText(this, -1, wxT("Proxy [if required]"), wxDefaultPosition, wxDefaultSize);
-  stProxyUser = new wxStaticText(this, -1, wxT("Proxy username"), wxDefaultPosition, wxDefaultSize);
-  stProxyPasswd = new wxStaticText(this, -1, wxT("Proxy password"), wxDefaultPosition, wxDefaultSize);
+  stProxy = new wxStaticText(this, -1, wxT("Proxy [if required, URL or user:password@URL]"), wxDefaultPosition, wxDefaultSize);
   stRepository = new wxStaticText(this, -1, wxT("Repository URL"), wxDefaultPosition, wxDefaultSize);
   stLastUpdated = new wxStaticText(this, -1, wxT("Last updated: unknown"), wxDefaultPosition, wxDefaultSize);
 
@@ -42,8 +40,6 @@ TdlgUpdateOptions::TdlgUpdateOptions(TMainFrame *ParentFrame) :
   wxT("http://dimas.dur.ac.uk/olex-distro-test/update/"),
   wxT("http://www.x-rayman.co.uk/olex2/olex-distro-test/update/")};
   tcProxy = new wxTextCtrl(this, -1, uiStr(SF.ParamValue("proxy")) , wxDefaultPosition, wxSize(320, 21), 0);
-  tcProxyUser = new wxTextCtrl(this, -1, uiStr(SF.ParamValue("proxy_user")) , wxDefaultPosition, wxSize(320, 21), 0);
-  tcProxyPasswd = new wxTextCtrl(this, -1, uiStr(SF.ParamValue("proxy_passwd")) , wxDefaultPosition, wxSize(320, 21), 0);
   cbRepository = new wxComboBox(this, -1, uiStr(SF.ParamValue("repository")), wxDefaultPosition, wxSize(320, 21), 3, choices);
 
   wxString options[] = {wxT("Always"), wxT("Daily"), wxT("Weekly"), wxT("Monthly"), wxT("Never")};
@@ -58,16 +54,6 @@ TdlgUpdateOptions::TdlgUpdateOptions(TMainFrame *ParentFrame) :
   ASizer->Add( stProxy, 0, wxALL, Border );
   wxBoxSizer *AASizer = new wxBoxSizer( wxHORIZONTAL );
   AASizer->Add( tcProxy, 1, wxALL, Border );
-
-  wxBoxSizer *ASizer1 = new wxBoxSizer( wxHORIZONTAL );
-  ASizer1->Add( stProxyUser, 0, wxALL, Border );
-  wxBoxSizer *AASizer1 = new wxBoxSizer( wxHORIZONTAL );
-  AASizer1->Add( tcProxyUser, 1, wxALL, Border );
-
-  wxBoxSizer *ASizer2 = new wxBoxSizer( wxHORIZONTAL );
-  ASizer2->Add( stProxyPasswd, 0, wxALL, Border );
-  wxBoxSizer *AASizer2 = new wxBoxSizer( wxHORIZONTAL );
-  AASizer2->Add( tcProxyPasswd, 1, wxALL, Border );
 
   wxBoxSizer *BSizer = new wxBoxSizer( wxHORIZONTAL );
   BSizer->Add( stRepository, 0, wxALL, Border );
@@ -88,10 +74,6 @@ TdlgUpdateOptions::TdlgUpdateOptions(TMainFrame *ParentFrame) :
 
   TopSiser->Add(ASizer, 0, wxALL, 0);
   TopSiser->Add(AASizer, 0, wxALL, 0);
-  TopSiser->Add(ASizer1, 0, wxALL, 0);
-  TopSiser->Add(AASizer1, 0, wxALL, 0);
-  TopSiser->Add(ASizer2, 0, wxALL, 0);
-  TopSiser->Add(AASizer2, 0, wxALL, 0);
   TopSiser->Add(BSizer, 0, wxALL, 0);
   TopSiser->Add(BBSizer, 0, wxALL, 0);
   TopSiser->Add(CSizer, 0, wxALL, 0);
@@ -112,8 +94,6 @@ TdlgUpdateOptions::~TdlgUpdateOptions() {
 //..............................................................................
 void TdlgUpdateOptions::OnOK(wxCommandEvent& event)  {
   SF.UpdateParam( "proxy", tcProxy->GetValue().c_str() );
-  SF.UpdateParam( "proxy_user", tcProxyUser->GetValue().c_str() );
-  SF.UpdateParam( "proxy_passwd", tcProxyPasswd->GetValue().c_str() );
   SF.UpdateParam( "repository", cbRepository->GetValue().c_str() );
   SF.UpdateParam( "update", rbUpdateInterval->GetStringSelection().c_str() );
   SF.SaveSettings( SettingsFile );

@@ -12,9 +12,10 @@ File_7=SourceModule,'E:\SVN\src\v1.1u\olex2-tl\About.cpp',0,1,4,49,19,0,0
 Module0=E:\SVN\srcf-svn\trunk\repository\winhttpfs.cpp
 Module1=E:\SVN\srcf-svn\trunk\launch\main.cpp
 Module2=E:\SVN\srcf-svn\trunk\repository\url.cpp
-Module3=E:\SVN\srcf-svn\trunk\sdl\settingsfile.h
-Module4=E:\wxWidgets-2.8.7\include\wx\wxchar.h
-Count=5
+Module3=E:\SVN\srcf-svn\trunk\installer\main.cpp
+Module4=E:\SVN\srcf-svn\trunk\sdl\settingsfile.h
+Module5=E:\wxWidgets-2.8.7\include\wx\wxchar.h
+Count=6
 EditWindowCount=1
 TypeLibWindowCount=1
 
@@ -33,6 +34,11 @@ ModuleType=SourceModule
 FormState=0
 FormOnTop=0
 
+[E:\SVN\srcf-svn\trunk\installer\main.cpp]
+ModuleType=SourceModule
+FormState=1
+FormOnTop=0
+
 [E:\SVN\srcf-svn\trunk\sdl\settingsfile.h]
 ModuleType=SourceModule
 FormState=0
@@ -42,10 +48,6 @@ FormOnTop=0
 ModuleType=SourceModule
 FormState=0
 FormOnTop=0
-
-[E:\SVN\srcf-svn\trunk\olex2-tl\Olex2xProj.tlb]
-FormState=0
-FormOnTop=1
 
 [E:\SVN\srcf-svn\trunk\build\Borland\Olex2\olex2_projects.bpg]
 FormState=0
@@ -103,18 +105,27 @@ FormOnTop=0
 FormState=0
 FormOnTop=0
 
+[E:\SVN\srcf-svn\trunk\olex2-tl\Olex2xProj.tlb]
+FormState=0
+FormOnTop=0
+
 [E:\SVN\srcf-svn\trunk\build\Borland\Olex2\olex2vj.bpr]
 FormState=0
 FormOnTop=0
 
+[E:\SVN\srcf-svn\trunk\build\Borland\Olex2\frame1.cpp]
+FormState=0
+FormOnTop=0
+
 [EditWindow0]
-ViewCount=5
-CurrentView=3
+ViewCount=6
+CurrentView=4
 View0=0
 View1=1
 View2=2
 View3=3
 View4=4
+View5=5
 CodeExplorer=CodeExplorer@EditWindow0
 MessageView=MessageView@EditWindow0
 ClassHierarchy=ClassHierarchy@EditWindow0
@@ -137,7 +148,7 @@ LeftPanelData=00000400010000000C000000436F64654578706C6F726572000000000000000000
 RightPanelSize=0
 BottomPanelSize=0
 BottomPanelClients=MessageView@EditWindow0
-BottomPanelData=00000400010000000B0000004D6573736167655669657784030000000000000297000000000000000100000000000000000000000001000000006E0400000000000001000000006E0400000000000001000000006E0400000000000001000000006E040000000000000100000000840300000000000001000000008403000000000000010000000084030000000000000100000000130700000000000001000000001307000000000000010000000013070000000000000100000000EB030000000000000100000000EB030000000000000100000000AF04000000000000010000000084030000000000000100000000840300000B0000004D65737361676556696577FFFFFFFF
+BottomPanelData=00000400010000000B0000004D6573736167655669657784030000000000000297000000000000000100000000000000000000000001000000006E0400000000000001000000006E0400000000000001000000006E0400000000000001000000006E040000000000000100000000840300000000000001000000008403000000000000010000000084030000000000000100000000130700000000000001000000001307000000000000010000000013070000000000000100000000EB030000000000000100000000EB030000000000000100000000AF0400000000000001000000008403000000000000010000000084030000000000000100000000840300000B0000004D65737361676556696577FFFFFFFF
 
 [View0]
 Module=E:\wxWidgets-2.8.7\include\wx\wxchar.h
@@ -148,26 +159,33 @@ LeftCol=1
 
 [View1]
 Module=E:\SVN\srcf-svn\trunk\launch\main.cpp
-CursorX=18
-CursorY=180
-TopLine=127
+CursorX=1
+CursorY=178
+TopLine=124
 LeftCol=1
 
 [View2]
-Module=E:\SVN\srcf-svn\trunk\repository\url.cpp
-CursorX=11
+Module=E:\SVN\srcf-svn\trunk\installer\main.cpp
+CursorX=1
 CursorY=81
 TopLine=46
 LeftCol=1
 
 [View3]
+Module=E:\SVN\srcf-svn\trunk\repository\url.cpp
+CursorX=47
+CursorY=29
+TopLine=1
+LeftCol=1
+
+[View4]
 Module=E:\SVN\srcf-svn\trunk\repository\winhttpfs.cpp
-CursorX=19
+CursorX=80
 CursorY=118
 TopLine=82
 LeftCol=1
 
-[View4]
+[View5]
 Module=E:\SVN\srcf-svn\trunk\sdl\settingsfile.h
 CursorX=1
 CursorY=8
@@ -217,8 +235,8 @@ ClientHeight=78
 Create=1
 Visible=1
 State=0
-Left=0
-Top=205
+Left=243
+Top=164
 Width=218
 Height=696
 MaxLeft=-1
@@ -292,7 +310,7 @@ LRDockWidth=233
 Dockable=1
 SplitPos=32
 ArrangeBy=Name
-SelectedItem=Caption
+SelectedItem=Text
 ExpandedItems=
 HiddenCategories=
 
@@ -403,5 +421,5 @@ DockClients=ObjectTree,PropertyInspector
 DockSiteData=0000040000000000470300000000000001E9000000000000000100000000A90000000E0000004F626A65637454726565566965770100000000470300001100000050726F7065727479496E73706563746F72FFFFFFFF
 
 [ActiveProject]
-ActiveProject=8
+ActiveProject=9
 
