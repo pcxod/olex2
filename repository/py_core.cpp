@@ -178,7 +178,7 @@ PyObject* pyDescRef(PyObject* self, PyObject* args)  {
 }
 //..............................................................................
 PyObject* pyUpdateRepository(PyObject* self, PyObject* args)  {
-  olxstr index, index_fn, repos, dest, proxy, proxy_user, proxy_passwd;
+  olxstr index, index_fn, repos, dest, proxy;
   if( !PythonExt::ParseTuple(args, "ww", &index, &dest) )  {
     Py_INCREF(Py_None);
     return Py_None;
@@ -188,10 +188,6 @@ PyObject* pyUpdateRepository(PyObject* self, PyObject* args)  {
   if( TEFile::FileExists(SettingsFile) )  {
     if( settings.ParamExists("proxy") )        
       proxy = settings.ParamValue("proxy");
-    if( settings.ParamExists("proxy_user") )        
-      proxy_user = settings.ParamValue("proxy_user");
-    if( settings.ParamExists("proxy_passwd") )        
-      proxy_passwd = settings.ParamValue("proxy_passwd");
   }
   int lsi = index.LastIndexOf('/');
   if( lsi == -1 )  {
@@ -206,8 +202,6 @@ PyObject* pyUpdateRepository(PyObject* self, PyObject* args)  {
   index_fn = index.SubStringFrom(lsi+1);
   repos = index.SubStringTo(lsi+1);
   TUrl url(repos);
-  url.SetUser(proxy_user);
-  url.SetPassword(proxy_passwd);
   if( !proxy.IsEmpty() )  
     url.SetProxy( TUrl(proxy) );
 #if defined(__WIN32__) && !defined(__WXWIDGETS__)

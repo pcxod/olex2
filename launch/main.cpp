@@ -123,13 +123,11 @@ __fastcall TdlgMain::TdlgMain(TComponent* Owner)
   olxstr SettingsFile( TBasicApp::GetInstance()->BaseDir() + "usettings.dat" );
   TSettingsFile settings;
   if( TEFile::FileExists(SettingsFile) )  {
-    olxstr Proxy, ProxyUser, ProxyPasswd, Repository = "http://dimas.dur.ac.uk/olex-distro/update",
+    olxstr Proxy, Repository = "http://dimas.dur.ac.uk/olex-distro/update",
              UpdateInterval = "Always";
     int LastUpdate = 0;
     settings.LoadSettings( SettingsFile );
     Proxy = settings.ParamValue("proxy");
-    ProxyUser = settings.ParamValue("proxy_user");
-    ProxyPasswd = settings.ParamValue("proxy_passwd");
     if( settings.ParamExists("repository") )
       Repository = settings.ParamValue("repository");
     if( settings.ParamExists("update") )
@@ -177,8 +175,6 @@ __fastcall TdlgMain::TdlgMain(TComponent* Owner)
         Update = ((TETime::EpochTime() - LastUpdate ) > SecsADay*30 );
 
       TUrl url(Repository);
-      url.SetUser(ProxyUser);
-      url.SetPassword(ProxyPasswd);
       if( !Proxy.IsEmpty() )  url.SetProxy( Proxy );
       if( Update )
         succeded = UpdateInstallationH( url, props );

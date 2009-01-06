@@ -1,6 +1,6 @@
 object fMain: TfMain
-  Left = -637
-  Top = 146
+  Left = 374
+  Top = 239
   AlphaBlendValue = 90
   BorderIcons = []
   BorderStyle = bsNone
@@ -6468,6 +6468,8 @@ object fMain: TfMain
       Height = 17
     end
     inherited cbProxy: TCheckBox
+      Width = 256
+      Caption = 'Use proxy server (URL or user:password@URL):'
       OnClick = cbProxyClick
       OnMouseDown = iSplashMouseDown
       OnMouseMove = iSplashMouseMove

@@ -9,8 +9,22 @@ TUrl::TUrl() : Proxy(NULL)  {
   Port = 80;
 }
 //..............................................................................
-TUrl::TUrl( const olxstr& url ) : Proxy(NULL)  {
+TUrl::TUrl( const olxstr& _url ) : Proxy(NULL)  {
   Port = 80;
+  olxstr url(_url);
+  // extract proxy user and password, if any
+  int useri = url.IndexOf("@");
+  if( useri != -1 )  {
+    olxstr up = url.SubStringTo(useri);
+    int pwdi = up.IndexOf(':');
+    if( pwdi != -1 )  {
+      Password = up.SubStringFrom(pwdi+1);
+      User = up.SubStringTo(pwdi);
+    }
+    else
+      User = up;
+    url = _url.SubStringFrom(useri+1);
+  }
   // prtocol index
   int pri = url.IndexOf("://");
   // check if the proxy is used and protocol is defined for the target, not the proxy

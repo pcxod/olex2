@@ -9,7 +9,7 @@
 class TdlgUpdateOptions: public TDialog  {
   wxStaticText *stProxy, *stProxyUser, *stProxyPasswd, 
     *stRepository, *stLastUpdated;
-  wxTextCtrl *tcProxy, *tcProxyUser, *tcProxyPasswd;
+  wxTextCtrl *tcProxy;
   wxComboBox* cbRepository;
   wxRadioBox *rbUpdateInterval;
 protected:
