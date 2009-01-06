@@ -169,7 +169,7 @@ void AConstraintGenerator::GenerateAtom( TCAtomPList& created, TAtomEnvi& envi,
           Vec1 += (envi.GetCrd(i) - envi.GetBase().crd()).Normalise();
           c++;
         }
-        crds.AddNew(Vec1.NormaliseTo( (c <= 2) ? -0.93 : -0.98 ) + envi.GetBase().crd());
+        crds.AddNew(Vec1.NormaliseTo( c == 1 ? -0.93 : (c == 2 ? -0.93 : -0.98) ) + envi.GetBase().crd());
       }
       break;
     case fgOH3:
