@@ -13,7 +13,7 @@
 class TWinHttpFileSystem: public AFileSystem, public IEObject  {
   TStrList TmpFiles;
   SOCKET  Socket;
-  bool Connected;
+  bool Connected, Successful;
   TUrl Url;
 protected:
   void GetAddress(struct sockaddr* Result);

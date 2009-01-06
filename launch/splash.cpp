@@ -4,6 +4,7 @@
 #pragma hdrstop
 
 #include "splash.h"
+#include "bapp.h"
 //---------------------------------------------------------------------------
 #pragma package(smart_init)
 #pragma resource "*.dfm"
@@ -12,9 +13,11 @@ TdlgSplash *dlgSplash;
 __fastcall TdlgSplash::TdlgSplash(TComponent* Owner)
   : TForm(Owner)
 {
-  if( FileExists("splash.jpg") )
+  AnsiString spf( TBasicApp::GetInstance()->BaseDir().c_str() );
+  spf += "splash.jpg";
+  if( FileExists(spf) )
   {
-    iImage->Picture->LoadFromFile("splash.jpg");
+    iImage->Picture->LoadFromFile(spf);
     this->Width = iImage->Picture->Width;
     this->Height = iImage->Picture->Height +
                    pOverall->Height +

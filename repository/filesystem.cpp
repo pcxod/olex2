@@ -465,13 +465,12 @@ TFSItem* TFSItem::FindByFullName(const olxstr& Name)  const {
 //..............................................................................
 TFSItem& TFSItem::NewItem(TFSItem* item)  {
   TPtrList<TFSItem> items;
-  TFSItem* ti = item;
   while( item != NULL && item->GetParent() != NULL )  {
     items.Add( item );
     item = item->GetParent();
   }
 // not in the items all path to the item
-  ti = this;
+  TFSItem* ti = this;
   for( int i = items.Count()-1; i >= 0;  i-- )  {
     TFSItem* nti = ti->UpdateFile( *items[i] );
     if( nti == NULL )

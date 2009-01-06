@@ -8,7 +8,9 @@
 
 TWinHttpFileSystem::TWinHttpFileSystem(const TUrl& url): Url(url){
   WSADATA  WsaData;
-  WSAStartup(0x0001, &WsaData);
+  Successful = (WSAStartup(0x0001, &WsaData) == 0);
+  if( !Successful )
+    throw TFunctionFailedException(__OlxSourceInfo, "could not initialise winsocks");
   SetBase( url.GetPath() );
   Connect();
 }
@@ -16,8 +18,8 @@ TWinHttpFileSystem::TWinHttpFileSystem(const TUrl& url): Url(url){
 TWinHttpFileSystem::~TWinHttpFileSystem()  {
   if( Connected )
     Disconnect();
-
-  WSACleanup();
+  if( Successful )
+    WSACleanup();
 
   for( int i=0; i < TmpFiles.Count(); i++ )
     TEFile::DelFile( TmpFiles.String(i) );
@@ -31,7 +33,6 @@ void TWinHttpFileSystem::GetAddress(struct sockaddr* Result)  {
   memset(&Address, 0, sizeof(Address));
 
   olxstr HostAdd = Url.HasProxy() ? Url.GetProxy().GetHost() : Url.GetHost();
-
   Host = gethostbyname( HostAdd.c_str() );
   if( Host != NULL )  {
     Address.sin_family  = AF_INET;
@@ -103,7 +104,7 @@ IDataInputStream* TWinHttpFileSystem::OpenFile(const olxstr& Source)  {
     ThisRead = 1,
     FileLength = -1;
   Buffer = new char[BufferSize];
-  char LengthId[] = "Content-Length:", EndTagId[]="ETag:";
+  static const char LengthId[] = "Content-Length:", EndTagId[]="ETag:";
 
   bool FileAttached = false;
 
@@ -114,9 +115,9 @@ IDataInputStream* TWinHttpFileSystem::OpenFile(const olxstr& Source)  {
   TBasicApp::GetInstance()->OnProgress->Execute(this, &Progress);
 
   Tmp.Replace(" ", "%20");
-  sprintf(Request, "GET %s HTTP/1.0\r\n", Tmp.c_str());
+  sprintf(Request, "GET %s HTTP/1.0\n\n", Tmp.c_str());
   if( Url.HasProxy() && !Url.GetProxy().GetUser().IsEmpty() && !Url.GetProxy().GetPassword().IsEmpty() )
-    sprintf(Request, "Authorization: %s\r\n", Url.GenerateHTTPAuthString().c_str());
+    sprintf(Request, "Authorization: %s\n\n", Url.GenerateHTTPAuthString().c_str());
 
   send(Socket, Request, strlen(Request), 0);
   while( ThisRead )  {

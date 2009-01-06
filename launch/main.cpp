@@ -74,12 +74,17 @@ const short uAlways  = 0,
 __fastcall TdlgMain::TdlgMain(TComponent* Owner)
   : TForm(Owner)
 {
-  dlgSplash = new TdlgSplash(this);
-
-  olxstr BaseDir = ParamStr(0).c_str();
+  olxstr BaseDir;
+  char* olex_dir = getenv("OLEX2_DIR");
+  if( olex_dir != NULL )
+    BaseDir = olxstr(olex_dir) << "/dummy.txt";
+  else
+    BaseDir = ParamStr(0).c_str();
   if( BaseDir.Length() > 0 && BaseDir[1] != ':' )
     BaseDir = TEFile::CurrentDir()+'\\';
   FBApp = new TBasicApp(BaseDir);
+
+  dlgSplash = new TdlgSplash(this);
 
   TProgress *P = new TProgress;
   TBasicApp::GetInstance()->OnProgress->Add(P);
