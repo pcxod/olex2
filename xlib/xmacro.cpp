@@ -114,8 +114,8 @@ void XLibMacros::Export(TLibrary& lib)  {
   xlib_InitMacro(DelIns, "", fpOne|psCheckFileTypeIns, "A number or the name (will remove all accurances) can be provided" );
   xlib_InitMacro(LstIns, "", fpNone|psCheckFileTypeIns, "Lists all instructions of currently loaded Ins file" );
   xlib_InitMacro(FixHL, "", fpNone|psFileLoaded, "Fixes hydgrogen atom labels" );
-  xlib_InitMacro(Fix, "", (fpAny^(fpNone|fpOne))|psCheckFileTypeIns, "Fixes specified parameters of atoms: XYZ, Uiso, Occu" );
-  xlib_InitMacro(Free, "", (fpAny^(fpNone|fpOne))|psCheckFileTypeIns, "Frees specified parameters of atoms: XYZ, Uiso, Occu" );
+  xlib_InitMacro(Fix, "", (fpAny^fpNone)|psCheckFileTypeIns, "Fixes specified parameters of atoms: XYZ, Uiso, Occu" );
+  xlib_InitMacro(Free, "", (fpAny^fpNone)|psCheckFileTypeIns, "Frees specified parameters of atoms: XYZ, Uiso, Occu" );
   xlib_InitMacro(Isot,"" , fpAny|psCheckFileTypeIns,
 "makes provided atoms isotropic, if no arguments provieded, current selection all atoms become isotropic");
   xlib_InitMacro(Anis,"h-adds hydrogen atoms" , (fpAny) | psCheckFileTypeIns, 
@@ -335,7 +335,7 @@ void XLibMacros::macFix(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   }
   TXApp& xapp = TXApp::GetInstance();
   TSAtomPList atoms;
-  if( !xapp.FindSAtoms(Cmds.Text(' '), atoms, true) )  return;
+  if( !xapp.FindSAtoms(Cmds.Text(' '), atoms, true, true) )  return;
   if( vars.Comparei( "XYZ" ) == 0 )  {
     for(int i=0; i < atoms.Count(); i++ )  {
       for( int j=0; j < 3; j++ )
@@ -356,6 +356,10 @@ void XLibMacros::macFix(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     for(int i=0; i < atoms.Count(); i++ )  {
       if( atoms[i]->CAtom().GetPart() == 0 )  {  // it would be invalid for split atoms
         xapp.XFile().GetRM().Vars.FixAtomParam(atoms[i]->CAtom(), var_name_Sof);
+        if( var_val == 0 )  
+          atoms[i]->CAtom().SetOccu( 1./atoms[i]->CAtom().GetDegeneracy() );
+        else
+          atoms[i]->CAtom().SetOccu( var_val );
       }
     }
   }
@@ -366,7 +370,7 @@ void XLibMacros::macFree(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   Cmds.Delete(0);
   TSAtomPList atoms;
   TXApp& xapp = TXApp::GetInstance();
-  if( !xapp.FindSAtoms(Cmds.Text(' '), atoms, true) )  return;
+  if( !xapp.FindSAtoms(Cmds.Text(' '), atoms, true, true) )  return;
   if( vars.Comparei( "XYZ" ) == 0 )  {
     for(int i=0; i < atoms.Count(); i++ )  {
       for( int j=0; j < 3; j++ )
