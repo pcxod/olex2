@@ -895,8 +895,8 @@ THtml::THtml(wxWindow *Parent, ALibraryContainer* LC):
   if( LC && ! THtml::Library )  {
     THtml::Library = LC->GetLibrary().AddLibrary("html");
 
-    InitMacroA( *THtml::Library, THtml, ItemState, ItemState, , fpAny^(fpNone|fpOne) );
-    InitMacro( LC->GetLibrary(), THtml, ItemState, , fpAny^(fpNone|fpOne) );
+    InitMacroA( *THtml::Library, THtml, ItemState, ItemState, u-does not update the html, fpAny^(fpNone|fpOne) );
+    InitMacro( LC->GetLibrary(), THtml, ItemState, u-does not update the html, fpAny^(fpNone|fpOne) );
 
     InitMacroA( *THtml::Library, THtml, UpdateHtml, UpdateHtml, , fpNone|fpOne );
     InitMacro( LC->GetLibrary(), THtml, UpdateHtml, , fpNone|fpOne );
@@ -1690,7 +1690,8 @@ void THtml::macItemState(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       }
     }
   }
-  html->UpdatePage();
+  if( !Options.Contains("u") )
+    html->UpdatePage();
   return;
 }
 //..............................................................................
