@@ -3272,8 +3272,35 @@ void TGXApp::ToDataItem(TDataItem& item) const  {
   FGlRender->Styles()->ToDataItem(item.AddItem("Style"), styles);
   TDataItem& ind_col = item.AddItem("ICollections");
   for( int i=0; i < IndividualCollections.Count(); i++ )
-    ind_col.AddField( olxstr("col_") << i, IndividualCollections[i]);
+    ind_col.AddCodedField( olxstr("col_") << i, IndividualCollections[i]);
   FGlRender->GetBasis().ToDataItem( item.AddItem("Basis"));
+
+  TDataItem& visibility = item.AddItem("Visibility");
+  visibility.AddCodedField("HAtoms", FHydrogensVisible);
+  visibility.AddCodedField("HBonds", FHBondsVisible);
+  visibility.AddCodedField("QAtoms", FQPeaksVisible);
+  visibility.AddCodedField("QBonds", FQPeakBondsVisible);
+
+  TDataItem& groups = item.AddItem("groups");
+  for( int i=0; i < FGlRender->GroupCount(); i++ )  {
+    TGlGroup* glG = FGlRender->Group(i);
+    TDataItem& group = groups.AddItem(i, glG->GetCollectionName());
+    group.AddCodedField("Visible", glG->Visible());
+    TDataItem& atoms = group.AddItem("Atoms");
+    TDataItem& bonds = group.AddItem("Bonds");
+    TDataItem& planes = group.AddItem("Planes");
+    for( int j=0; j < glG->Count(); j++ )  {
+      AGDrawObject* glO = glG->Object(j);
+      if( EsdlInstanceOf( *glO, TXAtom) )
+        atoms.AddCodedField("atom_id", ((TXAtom*)glO)->Atom().GetTag() );
+      if( EsdlInstanceOf( *glO, TXBond) )
+        bonds.AddCodedField("bond_id", ((TXBond*)glO)->Bond().GetTag() );
+      if( EsdlInstanceOf( *glO, TXPlane) )
+        planes.AddCodedField("plane_id", ((TXPlane*)glO)->Plane().GetTag() );
+    }
+  }
+
+
   TDataItem& renderer = item.AddItem("Renderer");
   renderer.AddField("Min", PersUtil::VecToStr( FGlRender->MinDim() ) );
   renderer.AddField("Max", PersUtil::VecToStr( FGlRender->MaxDim() ) );
@@ -3288,6 +3315,16 @@ void TGXApp::FromDataItem(TDataItem& item)  {
   for( int i=0; i < ind_col.FieldCount(); i++ )
     IndividualCollections.Add(ind_col.Field(i));
   CreateObjects(true, true);
+
+  TDataItem& visibility = item.FindRequiredItem("Visibility");
+  bool v = visibility.GetRequiredField("HAtoms").ToBool();
+  if( v != FHydrogensVisible )  HydrogensVisible(v);
+  v = visibility.GetRequiredField("HBonds").ToBool();
+  if( v != FHBondsVisible )  HBondsVisible(v);
+  v = visibility.GetRequiredField("QAtoms").ToBool();
+  if( v != FQPeaksVisible )  QPeaksVisible(v);
+  v = visibility.GetRequiredField("QBonds").ToBool();
+  if( v != FQPeakBondsVisible )  QPeakBondsVisible(v);
 
   TDataItem& renderer = item.FindRequiredItem("Renderer");
   vec3d min = PersUtil::FloatVecFromStr(renderer.GetRequiredField("Min"));

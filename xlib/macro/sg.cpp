@@ -365,7 +365,7 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
   TPtrList<TSpaceGroup> FoundSpaceGroups;
   if( PresentElements.Count() )  {
     for( int i=sortedSATestResults.Count()-1; i >= olx_max(0, sortedSATestResults.Count()-6) ; i-- )
-      if( sortedSATestResults.GetObject(i)->GetB() == maxElementFound )
+      if( sortedSATestResults.GetObject(i)->GetB() == maxElementFound ) 
         FoundSpaceGroups.Add( sortedSATestResults.GetObject(i)->GetA()->GetObject() );
   }
   else  {
