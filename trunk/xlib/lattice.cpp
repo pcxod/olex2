@@ -1705,8 +1705,14 @@ void TLattice::ToDataItem(TDataItem& item) const  {
     m_tags[i] = Matrices[i]->GetTag();
     Matrices[i]->SetTag(i);
   }
+  // initialise bond tags, no check for deleted, as all the bonds will be recreated
+//  for( int i=0; i < Bonds.Count(); i++ )  {
+//    if( Bonds[i]->IsDeleted() )  continue;
+//    Bonds
+//  }
   // save satoms - only the original CAtom Tag and the generating matrix tag
   TDataItem& atoms = item.AddItem("atoms");
+  
   int satom_tag = 0;
   for( int i=0; i < Atoms.Count(); i++ )  {
     if( Atoms[i]->IsDeleted() )  continue;

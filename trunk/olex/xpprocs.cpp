@@ -1539,27 +1539,21 @@ void TMainForm::macPack(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   vec3d To( 1.5, 1.5, 1.5);
 
   int number_count = 0;
-  for( int i=0; i < Cmds.Count(); i++ )
-    if( Cmds[i].IsNumber() )
+  for( int i=0; i < Cmds.Count(); i++ )  {
+    if( Cmds[i].IsNumber() )  {
+      if( !(number_count%2) )
+        From[number_count/2] = Cmds[i].ToDouble();
+      else
+        To[number_count/2]= Cmds[i].ToDouble();
       number_count++;
+      Cmds.Delete(i);
+      i--;
+    }
+  }
 
   if( number_count != 0 && number_count != 6 )  {
     Error.ProcessingError(__OlxSrcInfo, "please provide 6 numbers" );
     return;
-  }
-  if( number_count == 6 )  {
-    number_count = 0;
-    for( int i=0; i < Cmds.Count(); i++ )  {
-      if( Cmds[i].IsNumber() )  {
-        if( !(number_count%2) )
-          From[number_count/2] = Cmds[i].ToDouble();
-        else
-          To[number_count/2]= Cmds[i].ToDouble();
-        number_count++;
-        Cmds.Delete(i);
-        i--;
-      }
-    }
   }
 
   bool ClearCont = !Options.Contains("c");
