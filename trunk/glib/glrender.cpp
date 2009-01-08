@@ -789,6 +789,10 @@ TGlGroup * TGlRender::GroupSelection(const olxstr& groupName)  {
   return NULL;
 }
 //..............................................................................
+TGlGroup& TGlRender::NewGroup(const olxstr& collection_name) {  
+  return *FGroups.Add(new TGlGroup(collection_name, this));  
+}
+//..............................................................................
 void TGlRender::UnGroup(TGlGroup *OS)  {
   if( !OS->Group() )  return;
   FGroups.Remove(OS);
