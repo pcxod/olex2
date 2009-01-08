@@ -103,6 +103,7 @@ public:
 
   inline int MatrixCount()                  const {  return Matrices.Count();  }
   const smatd& GetMatrix(int i)             const {  return *Matrices[i];  }
+  smatd& GetMatrix(int i)                         {  return *Matrices[i];  }
 
   inline int AtomCount()                    const {  return Atoms.Count();  }
   inline TSAtom& GetAtom(int i)             const {  return *Atoms[i];  }

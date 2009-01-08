@@ -7,7 +7,7 @@
 #include "symmat.h"
 #include "typelist.h"
 #include "tptrlist.h"
-#include "catom.h"
+#include "satom.h"
 
 BeginXlibNamespace()
 

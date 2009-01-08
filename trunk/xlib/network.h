@@ -11,7 +11,7 @@ BeginXlibNamespace()
   typedef TTypeListExt<class TNetwork, IEObject> TNetList;
   typedef TPtrList<class TNetwork> TNetPList;
 
-class TNetwork: public TBasicNode<TSAtom, TSBond>  {
+class TNetwork: public TBasicNode<TNetwork, TSAtom, TSBond>  {
 protected:
   class TLattice  *Lattice;
   // sorts atoms by diatnce from {0,0,0}, must be called before search for Hbonds
@@ -93,6 +93,9 @@ public:
   */
   static void DoAlignAtoms(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& satomp,
                    const TSAtomPList& atomsToTransform, const smatd& S, bool Inverted);
+
+  void ToDataItem(TDataItem& item) const;
+  void FromDataItem(const TDataItem& item);
 
 protected:
   class TDisassembleTaskRemoveSymmEq  {
