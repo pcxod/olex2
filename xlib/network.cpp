@@ -27,7 +27,7 @@
 //---------------------------------------------------------------------------
 // TNetwork function bodies
 //---------------------------------------------------------------------------
-TNetwork::TNetwork(TLattice* P, TNetwork *N):TBasicNode<TSAtom, TSBond>(N)  {
+TNetwork::TNetwork(TLattice* P, TNetwork *N) : TBasicNode<TNetwork, TSAtom, TSBond>(N)  {
   Lattice = P;
 }
 //..............................................................................
@@ -852,8 +852,6 @@ void TNetwork::DoAlignAtoms(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& 
   }
 }
 //..............................................................................
-//..............................................................................
-//..............................................................................
 bool TNetwork::RingInfo::IsSingleCSubstituted() const  {
   for( int i=0; i < Substituents.Count(); i++ )  {
     if( Substituents[i].Count() != 1 )  return false;
@@ -869,3 +867,31 @@ bool TNetwork::RingInfo::IsSingleCSubstituted() const  {
   }
   return true;
 }
+//..............................................................................
+void TNetwork::ToDataItem(TDataItem& item) const {
+  item.AddCodedField("net_id", Network == NULL ? -1 : Network->GetTag());
+  TDataItem& nodes = item.AddItem("Nodes");
+  for( int i=0; i < Nodes.Count(); i++ )  {
+    if( Nodes[i]->IsDeleted() )  continue;
+    nodes.AddCodedField("node_id", Nodes[i]->GetTag());
+  }
+  TDataItem& bonds = item.AddItem("Bonds");
+  for( int i=0; i < Bonds.Count(); i++ )  {
+    if( Bonds[i]->IsDeleted() )  continue;
+    bonds.AddCodedField("bond_id", Bonds[i]->GetTag());
+  }
+}
+//..............................................................................
+void TNetwork::FromDataItem(const TDataItem& item) {
+  const int net_id = item.GetRequiredField("net_id").ToInt();
+  Network = net_id == -1 ? NULL : &Lattice->GetFragment(net_id);
+  const TDataItem& nodes = item.FindRequiredItem("Nodes");
+  Nodes.SetCapacity( nodes.FieldCount() );
+  for( int i=0; i < nodes.FieldCount(); i++ )
+    Nodes.Add(&Lattice->GetAtom(nodes.RawField(i).ToInt()));
+  const TDataItem& bonds = item.FindRequiredItem("Bonds");
+  Bonds.SetCapacity( bonds.FieldCount() );
+  for( int i=0; i < bonds.FieldCount(); i++ )
+    Bonds.Add(&Lattice->GetBond(bonds.RawField(i).ToInt()));
+}
+//..............................................................................

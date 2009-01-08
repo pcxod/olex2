@@ -9,7 +9,7 @@
 
 BeginXlibNamespace()
 
-class TSPlane : public TSObject  {
+class TSPlane : public TSObject<TNetwork>  {
 private:
   TTypeList< AnAssociation2<TSAtom*, double> > Crds;
   vec3d FNormal, FCenter;

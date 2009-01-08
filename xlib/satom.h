@@ -8,6 +8,7 @@
 #include "symmat.h"
 #include "typelist.h"
 #include "tptrlist.h"
+#include "sbond.h"
 
 BeginXlibNamespace()
 
@@ -16,11 +17,11 @@ const short
   satomGrown      = 0x00002,
   satomStandalone = 0x0004;
 
-class TSAtom : public TBasicNode<TSAtom, class TSBond>  {
+class TSAtom : public TBasicNode<TNetwork, TSAtom, TSBond>  {
 private:
   smatd_plist Matrices;
   // a list of pointers to matrices used for generation of atom
-  class TCAtom*  FCAtom;       // basic crystallographic information
+  TCAtom*  FCAtom;       // basic crystallographic information
 //  int FTag; // override TCollectioItem and TGDrawObject tags
   const class TEllipsoid*  FEllipsoid;   // a pointer to TEllipse object
   vec3d  FCCenter;     // atom center in cell coordinates
@@ -68,6 +69,9 @@ public:
   inline vec3d&  crd()              {  return FCenter;  }
   inline vec3d const&  ccrd() const {  return FCCenter;  }
   inline vec3d const&  crd()  const {  return FCenter;  }
+
+  virtual void ToDataItem(TDataItem& item) const;
+  virtual void FromDataItem(const TDataItem& item, class TLattice& parent);
 };
   typedef TTypeList<TSAtom> TSAtomList;
   typedef TPtrList<TSAtom> TSAtomPList;

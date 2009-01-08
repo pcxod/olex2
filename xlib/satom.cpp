@@ -13,7 +13,7 @@
 // TSAtom function bodies
 //----------------------------------------------------------------------------//
 
-TSAtom::TSAtom(TNetwork *N) : TBasicNode<TSAtom, TSBond>(N)  {
+TSAtom::TSAtom(TNetwork *N) : TBasicNode<TNetwork, TSAtom, TSBond>(N)  {
   SetType(sotAtom);
   Flags = 0;
 }
@@ -76,4 +76,51 @@ olxstr TSAtom::GetGuiLabelEx() const  {
   else
     return rv << '(' << TSymmParser::MatrixToSymmEx(*Matrices[0]) << ')';
 }
+//..............................................................................
+void TSAtom::ToDataItem(TDataItem& item) const {
+  item.AddCodedField("net_id", Network->GetTag());
+  TDataItem& nodes = item.AddItem("Nodes");
+  for( int i=0; i < Nodes.Count(); i++ )  {
+    if( Nodes[i]->IsDeleted() )  continue;
+    nodes.AddCodedField("node_id", Nodes[i]->GetTag());
+  }
+  TDataItem& bonds = item.AddItem("Bonds");
+  for( int i=0; i < Bonds.Count(); i++ )  {
+    if( Bonds[i]->IsDeleted() )  continue;
+    bonds.AddCodedField("bond_id", Bonds[i]->GetTag());
+  }
 
+  item.AddCodedField("atom_id", FCAtom->GetTag());
+  TDataItem& matrices = item.AddItem("Matrices");
+  for( int i=0; i < Matrices.Count(); i++ )
+    matrices.AddCodedField("matr_id", Matrices[i]->GetTag());
+}
+//..............................................................................
+void TSAtom::FromDataItem(const TDataItem& item, TLattice& parent) {
+  Network = &parent.GetFragment( item.GetRequiredField("net_id").ToInt() );
+  const TDataItem& nodes = item.FindRequiredItem("Nodes");
+  Nodes.SetCapacity( nodes.FieldCount() );
+  for( int i=0; i < nodes.FieldCount(); i++ )
+    Nodes.Add(&parent.GetAtom(nodes.RawField(i).ToInt()));
+  const TDataItem& bonds = item.FindRequiredItem("Bonds");
+  Bonds.SetCapacity( bonds.FieldCount() );
+  for( int i=0; i < bonds.FieldCount(); i++ )
+    Bonds.Add(&parent.GetBond(bonds.RawField(i).ToInt()));
+
+  TLattice& latt = Network->GetLattice();
+  int ca_id = item.GetRequiredField("atom_id").ToInt();
+  CAtom( latt.GetAsymmUnit().GetAtom(ca_id) );
+  const TDataItem& matrices = item.FindRequiredItem("Matrices");
+  Matrices.SetCapacity( matrices.FieldCount() );
+  int fm_id = -1;
+  for( int i=0; i < matrices.FieldCount(); i++ )  {
+    const int mi = matrices.RawField(i).ToInt();
+    Matrices.Add( &latt.GetMatrix(mi) );
+    if( i == 0 )
+      fm_id = mi;
+  }
+  if( fm_id != 0 )  // identity matrix
+    FCCenter = *Matrices[0] * FCCenter;
+  latt.GetAsymmUnit().CellToCartesian(FCCenter, FCenter);
+}
+//..............................................................................

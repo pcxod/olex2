@@ -14,6 +14,7 @@
 
 #include "ebase.h"
 #include "tptrlist.h"
+#include "dataitem.h"
 
 BeginXlibNamespace()
 
@@ -32,20 +33,26 @@ extern const float dcMaxCBLength, // 3.5 maximum length of a covalent bond
                    dcMaxHBLength; // 4.5 maximu length of a short interaction
 extern const float caDefIso;      // 0.05 default atom isotropic parameter;
 
-class TSObject: public ACollectionItem  {
+template <class Net> class TSObject: public ACollectionItem  {
 protected:
-  class TNetwork*  Network;  // a pointer to parrent Network
+  Net* Network;  // a pointer to parrent Network
   short   Type;    // object type: eg bond, atom, centroid, etc
   int     NetId;    // reference in network container
   int     LatId;    // reference in lattice container
   short   NodId;    // reference in node container
 public:
-  TSObject(TNetwork* Parent);
-  virtual ~TSObject();
-  void Assign(TSObject *S);
+  TSObject(Net* Parent) : Network(Parent), Type(sotNone) {  }
+  virtual ~TSObject() {  }
+  void Assign(TSObject* S) {
+    SetType( S->GetType() );
+    Network = &S->GetNetwork();
+    SetTag( S->GetTag() );
+    SetNetId( S->GetNetId() );
+    SetLatId( S->GetLatId() );
+  }
 
-  inline TNetwork& GetNetwork()  const  {  return *Network;  }
-  inline void SetNetwork(TNetwork& n)   {  Network = &n;  }
+  inline Net& GetNetwork()  const  {  return *Network;  }
+  inline void SetNetwork(Net& n)   {  Network = &n;  }
 
   DefPropP(int, NetId)
   DefPropP(int, LatId)
@@ -55,38 +62,41 @@ public:
 //---------------------------------------------------------------------------
 // TBasicNode - encapsulate basic bond
 //---------------------------------------------------------------------------
-class TBasicBond:public TSObject  {
+template <class Net, class Node>
+class TBasicBond : public TSObject<Net>  {
 protected:
-  class TSAtom *FA,      // first bond atom
-         *FB;    // second bond atom
+  Node *FA,      // first bond atom
+       *FB;    // second bond atom
   virtual void OnAtomSet() = 0;
 public:
-  TBasicBond(TNetwork *P);
-  virtual ~TBasicBond();
-  const TSAtom& GetA() const {  return *FA;  }
-  TSAtom& A()                {  return *FA;  }
-  void SetA(TSAtom &a)       {  FA = &a;  OnAtomSet();  }
+  TBasicBond(Net* P) : TSObject<Net>(P), FA(NULL), FB(NULL) {
+    Type = sotBBond;
+  }
+  virtual ~TBasicBond() {}
+  const Node& GetA() const {  return *FA;  }
+  Node& A()                {  return *FA;  }
+  void SetA(Node& a)       {  FA = &a;  OnAtomSet();  }
 
-  const TSAtom& GetB() const {  return *FB;  }
-  TSAtom& B()                {  return *FB;  }
-  void SetB(TSAtom &a)       {  FB = &a;  OnAtomSet();  }
+  const Node& GetB() const {  return *FB;  }
+  Node& B()                {  return *FB;  }
+  void SetB(Node& a)       {  FB = &a;  OnAtomSet();  }
 
-  TSAtom& Another(TSAtom &A) {  return (&A == FA) ? *FB : *FA; }
+  Node& Another(Node& A) {  return (&A == FA) ? *FB : *FA; }
 };
 //---------------------------------------------------------------------------
 // TBasicNode -  basic node
 //---------------------------------------------------------------------------
-template <class NodeType, class BondType>
-class TBasicNode : public TSObject  {
+template <class Net, class NodeType, class BondType>
+class TBasicNode : public TSObject<Net>  {
 protected:
   TPtrList<NodeType> Nodes;  // list of attached nodes
   TPtrList<BondType> Bonds;  // list of bonds. for quick referencing etc
 public:
-  TBasicNode(TNetwork *N) : TSObject(N) {  }
+  TBasicNode(Net* N) : TSObject<Net>(N) {  }
   virtual ~TBasicNode()  {  }
 
-  void Assign(const TBasicNode& S) {
-  }
+  void Assign(const TBasicNode& S) {  }
+  
   void Clear()  {
     Nodes.Clear();
     Bonds.Clear();

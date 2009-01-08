@@ -1695,8 +1695,8 @@ void TLattice::ToDataItem(TDataItem& item) const  {
   item.AddCodedField("delta", Delta);
   item.AddCodedField("deltai", DeltaI);
   item.AddCodedField("grown", Generated);
-  GetAsymmUnit().ToDataItem(item.AddItem("aunit"));
-  TDataItem& mat = item.AddItem("matrices");
+  GetAsymmUnit().ToDataItem(item.AddItem("AUnit"));
+  TDataItem& mat = item.AddItem("Matrices");
   const int mat_c = Matrices.Count();
   // save matrices, change matrix tags to the position in the list and remember old tags
   TIntList m_tags(mat_c);
@@ -1705,21 +1705,41 @@ void TLattice::ToDataItem(TDataItem& item) const  {
     m_tags[i] = Matrices[i]->GetTag();
     Matrices[i]->SetTag(i);
   }
-  // initialise bond tags, no check for deleted, as all the bonds will be recreated
-//  for( int i=0; i < Bonds.Count(); i++ )  {
-//    if( Bonds[i]->IsDeleted() )  continue;
-//    Bonds
-//  }
-  // save satoms - only the original CAtom Tag and the generating matrix tag
-  TDataItem& atoms = item.AddItem("atoms");
-  
+  // initialise bond tags
+  int sbond_tag = 0;
+  for( int i=0; i < Bonds.Count(); i++ )  {
+    if( Bonds[i]->IsDeleted() )  continue;
+    Bonds[i]->SetTag(sbond_tag++);
+  }
+  // initialise atom tags
   int satom_tag = 0;
   for( int i=0; i < Atoms.Count(); i++ )  {
     if( Atoms[i]->IsDeleted() )  continue;
-    TDataItem& ai = atoms.AddItem(satom_tag);
-    ai.AddField("atom_id", Atoms[i]->CAtom().GetTag());
-    ai.AddField("matr_id", Atoms[i]->GetMatrix(0).GetTag());
     Atoms[i]->SetTag(satom_tag++);
+  }
+  // initialise fragment tags
+  int frag_tag = 0;
+  for( int i=0; i < Fragments.Count(); i++ )  {
+    if( Fragments[i]->NodeCount() == 0 )  continue;
+    Fragments[i]->SetTag(frag_tag++);
+  }
+  // save satoms - only the original CAtom Tag and the generating matrix tag
+  TDataItem& atoms = item.AddItem("Atoms");
+  for( int i=0; i < Atoms.Count(); i++ )  {
+    if( Atoms[i]->IsDeleted() )  continue;
+    Atoms[i]->ToDataItem( atoms.AddItem("Atom") );
+  }
+  // save bonds
+  TDataItem& bonds = item.AddItem("Bonds");
+  for( int i=0; i < Bonds.Count(); i++ )  {
+    if( Bonds[i]->IsDeleted() )  continue;
+    Bonds[i]->ToDataItem( bonds.AddItem("Bond") );
+  }
+  // save fragments
+  TDataItem& frags = item.AddItem("Fragments");
+  for( int i=0; i < Fragments.Count(); i++ )  {
+    if( Fragments[i]->NodeCount() == 0 )  continue;
+    Fragments[i]->ToDataItem( frags.AddItem("Fragment") );
   }
   // restore original matrix tags 
   for( int i=0; i < mat_c; i++ )
@@ -1735,9 +1755,9 @@ void TLattice::ToDataItem(TDataItem& item) const  {
     if( p_ac >= 3 ) // a plane must contain at least three atoms
       valid_planes.Add( Planes[i] );
   }
-  TDataItem& planes = item.AddItem("planes", valid_planes.Count());
+  TDataItem& planes = item.AddItem("Planes");
   for( int i=0; i < valid_planes.Count(); i++ )
-    valid_planes[i]->ToDataItem(planes.AddItem(i));  
+    valid_planes[i]->ToDataItem(planes.AddItem("Plane"));  
 }
 //..............................................................................
 void TLattice::FromDataItem(TDataItem& item)  {
@@ -1746,32 +1766,44 @@ void TLattice::FromDataItem(TDataItem& item)  {
   Delta = item.GetRequiredField("delta").ToDouble();
   DeltaI = item.GetRequiredField("deltai").ToDouble();
   Generated = item.GetRequiredField("grown").ToDouble();
-  GetAsymmUnit().FromDataItem( item.FindRequiredItem("aunit") );
-  TDataItem& mat = item.FindRequiredItem("matrices");
+  GetAsymmUnit().FromDataItem( item.FindRequiredItem("AUnit") );
+  const TDataItem& mat = item.FindRequiredItem("Matrices");
+  Matrices.SetCapacity( mat.ItemCount() );
   for( int i=0; i < mat.ItemCount(); i++ )  {
     smatd* m = new smatd;
     TSymmParser::SymmToMatrix(mat.GetItem(i).GetValue(), *m);
     Matrices.Add(m);
     m->SetTag( mat.GetItem(i).GetRequiredField("tag").ToInt() );
   }
-  // save satoms - only the original CAtom Tag and the generating matrix tag
-  TDataItem& atoms = item.FindRequiredItem("atoms");
-  for( int i=0; i < atoms.ItemCount(); i++ )  {
-    TDataItem& atom = atoms.GetItem(i);
-    TSAtom* sa = Atoms.Add( new TSAtom(Network) );
-    sa->CAtom( GetAsymmUnit().GetAtom( atom.GetRequiredField("atom_id").ToInt() ) );
-    int mid = atom.GetRequiredField("matr_id").ToInt();
-    if( mid != 0 )  // identity matrix
-      sa->ccrd() = *Matrices[mid] * sa->CAtom().ccrd();
-    GetAsymmUnit().CellToCartesian(sa->ccrd(), sa->crd() );
-    sa->AddMatrix( Matrices[mid] );
-  }
+  // precreate fragments
+  const TDataItem& frags = item.FindRequiredItem("Fragments");
+  Fragments.SetCapacity( frags.ItemCount() );
+  for( int i=0; i < frags.ItemCount(); i++ )
+    Fragments.Add( new TNetwork(this, NULL) );
+  // precreate bonds
+  const TDataItem& bonds = item.FindRequiredItem("Bonds");
+  Bonds.SetCapacity(bonds.ItemCount());
+  for( int i=0; i < bonds.ItemCount(); i++ )
+    Bonds.Add( new TSBond(NULL) );
+  // precreate and load atoms
+  const TDataItem& atoms = item.FindRequiredItem("Atoms");
+  Atoms.SetCapacity( atoms.ItemCount() );
+  for( int i=0; i < atoms.ItemCount(); i++ )
+    Atoms.Add( new TSAtom(NULL) );
+  for( int i=0; i < atoms.ItemCount(); i++ )
+    Atoms[i]->FromDataItem(atoms.GetItem(i), *this);
+  // load bonds
+  for( int i=0; i < bonds.ItemCount(); i++ )
+    Bonds[i]->FromDataItem(bonds.GetItem(i), Fragments);
+  // load fragments
+  for( int i=0; i < frags.ItemCount(); i++ )
+    Fragments[i]->FromDataItem( frags.GetItem(i) );
   GetUnitCell().InitMatrices();
   TEStrBuffer tmp;
   int eqc = GetUnitCell().FindSymmEq(tmp, 0.1, true, false, false); // find and not remove
   GetAsymmUnit().SetContainsEquivalents( eqc != 0 );
-  Disassemble();
-  TDataItem& planes = item.FindRequiredItem("planes");
+  //Disassemble();
+  TDataItem& planes = item.FindRequiredItem("Planes");
   for( int i=0; i < planes.ItemCount(); i++ )
     Planes.Add( new TSPlane(Network) )->FromDataItem(planes.GetItem(i));
 }
