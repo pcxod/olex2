@@ -3281,11 +3281,16 @@ void TGXApp::ToDataItem(TDataItem& item) const  {
   visibility.AddCodedField("QAtoms", FQPeaksVisible);
   visibility.AddCodedField("QBonds", FQPeakBondsVisible);
 
-  TDataItem& groups = item.AddItem("groups");
+  FGlRender->Selection()->SetTag(-1);
+  for( int i=0; i < FGlRender->GroupCount(); i++ )
+    FGlRender->Group(i)->SetTag(i);
+  
+  TDataItem& groups = item.AddItem("Groups");
   for( int i=0; i < FGlRender->GroupCount(); i++ )  {
     TGlGroup* glG = FGlRender->Group(i);
     TDataItem& group = groups.AddItem(i, glG->GetCollectionName());
-    group.AddCodedField("Visible", glG->Visible());
+    group.AddCodedField("visible", glG->Visible());
+    group.AddCodedField("parent_id", glG->ParentGroup() == NULL ? -2 : glG->ParentGroup()->GetTag());
     TDataItem& atoms = group.AddItem("Atoms");
     TDataItem& bonds = group.AddItem("Bonds");
     TDataItem& planes = group.AddItem("Planes");
@@ -3325,6 +3330,32 @@ void TGXApp::FromDataItem(TDataItem& item)  {
   if( v != FQPeaksVisible )  QPeaksVisible(v);
   v = visibility.GetRequiredField("QBonds").ToBool();
   if( v != FQPeakBondsVisible )  QPeakBondsVisible(v);
+
+  const TDataItem& groups = item.FindRequiredItem("Groups");
+  // pre-create all groups
+  for( int i=0; i < groups.ItemCount(); i++ )
+    FGlRender->NewGroup( groups.GetItem(i).GetValue());
+  // load groups
+  for( int i=0; i < groups.ItemCount(); i++ )  {
+    const TDataItem& group = groups.GetItem(i);
+    TGlGroup& glG = *FGlRender->Group(i);
+    glG.Visible( group.GetRequiredField("visible").ToBool() );
+    const int p_id = group.GetRequiredField("parent_id").ToInt();
+    if( p_id == -1 )
+      FGlRender->Selection()->Add(&glG);
+    else if( p_id >= 0 )
+      FGlRender->Group(p_id)->Add(&glG);
+    TDataItem& atoms = group.FindRequiredItem("Atoms");
+    for( int j=0; j < atoms.FieldCount(); j++ )
+      glG.Add( &XAtoms[atoms.RawField(j).ToInt()] );
+    TDataItem& bonds = group.FindRequiredItem("Bonds");
+    for( int j=0; j < bonds.FieldCount(); j++ )
+      glG.Add( &XBonds[bonds.RawField(j).ToInt()] );
+    TDataItem& planes = group.FindRequiredItem("Planes");
+    for( int j=0; j < planes.FieldCount(); j++ )
+      glG.Add( &XPlanes[planes.RawField(j).ToInt()] );
+    glG.Create();
+  }
 
   TDataItem& renderer = item.FindRequiredItem("Renderer");
   vec3d min = PersUtil::FloatVecFromStr(renderer.GetRequiredField("Min"));

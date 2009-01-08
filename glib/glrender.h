@@ -203,6 +203,7 @@ public:
 
   inline int GroupCount() const {  return FGroups.Count(); }
   inline TGlGroup* Group(int i) {  return FGroups[i]; }
+  TGlGroup& NewGroup(const olxstr& collection_name);
   TGlGroup* FindGroupByName(const olxstr& colName);
   TGlGroup* FindObjectGroup(AGDrawObject *G);
   // groups current selection and returns the created group object
