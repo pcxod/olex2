@@ -3276,10 +3276,52 @@ void TGXApp::ToDataItem(TDataItem& item) const  {
   FGlRender->GetBasis().ToDataItem( item.AddItem("Basis"));
 
   TDataItem& visibility = item.AddItem("Visibility");
-  visibility.AddCodedField("HAtoms", FHydrogensVisible);
-  visibility.AddCodedField("HBonds", FHBondsVisible);
-  visibility.AddCodedField("QAtoms", FQPeaksVisible);
-  visibility.AddCodedField("QBonds", FQPeakBondsVisible);
+  visibility.AddCodedField("h_atoms", FHydrogensVisible);
+  visibility.AddCodedField("h_bonds", FHBondsVisible);
+  visibility.AddCodedField("q_atoms", FQPeaksVisible);
+  visibility.AddCodedField("q_bonds", FQPeakBondsVisible);
+  visibility.AddCodedField("basis", FDBasis->Visible());
+  visibility.AddCodedField("cell", FDUnitCell->Visible());
+  // store objects visibility
+  int a_cnt = 0;
+  for( int i=0; i < XAtoms.Count(); i++ )
+    if( !XAtoms[i].Atom().IsDeleted() )
+      a_cnt++;
+  TEBitArray vis( a_cnt );
+  a_cnt = 0;
+  for( int i=0; i < XAtoms.Count(); i++ )  {
+    if( !XAtoms[i].Atom().IsDeleted() )
+      vis.Set(a_cnt++, XAtoms[i].Visible());
+  }
+  visibility.AddCodedField("atoms", vis.ToHexString());
+  int b_cnt = 0;
+  for( int i=0; i < XBonds.Count(); i++ )
+    if( !XBonds[i].Bond().IsDeleted() )
+      b_cnt++;
+  vis.SetSize( b_cnt );
+  b_cnt = 0;
+  for( int i=0; i < XBonds.Count(); i++ )  {
+    if( !XBonds[i].Bond().IsDeleted() )
+      vis.Set(b_cnt++, XBonds[i].Visible() );
+  }
+  visibility.AddCodedField("bonds", vis.ToHexString());
+  int p_cnt = 0;
+  for( int i=0; i < XPlanes.Count(); i++ )
+    if( !XPlanes[i].Plane().IsDeleted() )
+      p_cnt++;
+  vis.SetSize( p_cnt );
+  p_cnt = 0;
+  for( int i=0; i < XPlanes.Count(); i++ )  {
+    if( !XPlanes[i].Plane().IsDeleted() )
+      vis.Set(p_cnt++, XPlanes[i].Visible() );
+  }
+  visibility.AddCodedField("planes", vis.ToHexString());
+
+  //visibility.AddCodedField("grid", FXGrid->Visible());
+
+  TDataItem& labels = item.AddItem("Labels");
+  for( int i=0; i < XLabels.Count(); i++ )
+    XLabels[i].ToDataItem( labels.AddItem("Label") );
 
   FGlRender->Selection()->SetTag(-1);
   for( int i=0; i < FGlRender->GroupCount(); i++ )
@@ -3307,8 +3349,8 @@ void TGXApp::ToDataItem(TDataItem& item) const  {
 
 
   TDataItem& renderer = item.AddItem("Renderer");
-  renderer.AddField("Min", PersUtil::VecToStr( FGlRender->MinDim() ) );
-  renderer.AddField("Max", PersUtil::VecToStr( FGlRender->MaxDim() ) );
+  renderer.AddField("min", PersUtil::VecToStr( FGlRender->MinDim() ) );
+  renderer.AddField("max", PersUtil::VecToStr( FGlRender->MaxDim() ) );
 }
 //..............................................................................
 void TGXApp::FromDataItem(TDataItem& item)  {
@@ -3322,14 +3364,33 @@ void TGXApp::FromDataItem(TDataItem& item)  {
   CreateObjects(true, true);
 
   TDataItem& visibility = item.FindRequiredItem("Visibility");
-  bool v = visibility.GetRequiredField("HAtoms").ToBool();
+  bool v = visibility.GetRequiredField("h_atoms").ToBool();
   if( v != FHydrogensVisible )  HydrogensVisible(v);
-  v = visibility.GetRequiredField("HBonds").ToBool();
+  v = visibility.GetRequiredField("h_bonds").ToBool();
   if( v != FHBondsVisible )  HBondsVisible(v);
-  v = visibility.GetRequiredField("QAtoms").ToBool();
+  v = visibility.GetRequiredField("q_atoms").ToBool();
   if( v != FQPeaksVisible )  QPeaksVisible(v);
-  v = visibility.GetRequiredField("QBonds").ToBool();
+  v = visibility.GetRequiredField("q_bonds").ToBool();
   if( v != FQPeakBondsVisible )  QPeakBondsVisible(v);
+  FDBasis->Visible(visibility.GetRequiredField("basis").ToBool());
+  FDUnitCell->Visible( visibility.GetRequiredField("cell").ToBool() );
+
+  TEBitArray vis;
+  vis.FromHexString( visibility.GetRequiredField("atoms") );
+  if( vis.Count() != XAtoms.Count() )
+    throw TFunctionFailedException(__OlxSourceInfo, "integrity is broken");
+  for( int i=0; i < vis.Count(); i++ )
+    XAtoms[i].Visible( vis[i] );
+  vis.FromHexString( visibility.GetRequiredField("bonds") );
+  if( vis.Count() != XBonds.Count() )
+    throw TFunctionFailedException(__OlxSourceInfo, "integrity is broken");
+  for( int i=0; i < vis.Count(); i++ )
+    XBonds[i].Visible( vis[i] );
+  vis.FromHexString( visibility.GetRequiredField("planes") );
+  if( vis.Count() != XPlanes.Count() )
+    throw TFunctionFailedException(__OlxSourceInfo, "integrity is broken");
+  for( int i=0; i < vis.Count(); i++ )
+    XPlanes[i].Visible( vis[i] );
 
   const TDataItem& groups = item.FindRequiredItem("Groups");
   // pre-create all groups
@@ -3358,8 +3419,8 @@ void TGXApp::FromDataItem(TDataItem& item)  {
   }
 
   TDataItem& renderer = item.FindRequiredItem("Renderer");
-  vec3d min = PersUtil::FloatVecFromStr(renderer.GetRequiredField("Min"));
-  vec3d max = PersUtil::FloatVecFromStr(renderer.GetRequiredField("Max"));
+  vec3d min = PersUtil::FloatVecFromStr(renderer.GetRequiredField("min"));
+  vec3d max = PersUtil::FloatVecFromStr(renderer.GetRequiredField("max"));
   FGlRender->ClearMinMax();
   FGlRender->UpdateMaxMin(max, min);
   FGlRender->Basis()->FromDataItem( item.FindRequiredItem("Basis") );

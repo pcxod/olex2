@@ -1754,6 +1754,8 @@ void TLattice::ToDataItem(TDataItem& item) const  {
         p_ac++;
     if( p_ac >= 3 ) // a plane must contain at least three atoms
       valid_planes.Add( Planes[i] );
+    else
+      Planes[i]->SetDeleted(true);
   }
   TDataItem& planes = item.AddItem("Planes");
   for( int i=0; i < valid_planes.Count(); i++ )
