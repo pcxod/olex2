@@ -29,6 +29,8 @@
 #include "typelist.h"
 #include "hkl.h"
 
+#include "wx/zipstrm.h"
+
 #if defined __APPLE__ && defined __MACH__
   #define OLX_RESOURCES_FOLDER "olex2.app/Contents/Resources/"
 #else
@@ -449,8 +451,11 @@ public:     void CalcProbFactor(float Prob);
   void SynchroniseBonds( TXAtomPList& XAtoms );
   double CalcVolume(const TSStrPObjList<olxstr,double, true> *volumes, olxstr &report);
 
-  void ToDataItem(TDataItem& item) const;
-  void FromDataItem(TDataItem& item);
+  void ToDataItem(TDataItem& item, wxOutputStream& zos) const;
+  void FromDataItem(TDataItem& item, wxInputStream& zis);
+
+  void SaveModel(const olxstr& file_name) const;
+  void LoadModel(const olxstr& file_name);
 //..............................................................................
   static TGXApp& GetInstance()  {
     TBasicApp *bai = TBasicApp::GetInstance();
