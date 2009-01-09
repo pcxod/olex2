@@ -430,12 +430,6 @@ bool TXGrid::GetDimensions(vec3d &Max, vec3d &Min)  {
   return false;
 };
 //..............................................................................
-void TXGrid::SetValue(int i, int j, int k, float v)  {
-  ED->Data[i][j][k] = v;
-  if( v > MaxVal )  MaxVal = v;
-  if( v < MinVal ) MinVal = v;
-}
-//..............................................................................
 void TXGrid::InitGrid(int maxX, int maxY, int maxZ)  {
   DeleteObjects();
   MaxX = maxX;
@@ -708,6 +702,51 @@ void TXGrid::LibPolygonMode(const TStrObjList& Params, TMacroError& E)  {
          olxstr("incorrect mode value: '") << Params[0] << '\'');
   if( PolygonMode == GL_POINT )  //create the points
     SetScale(Scale);
+}
+//..............................................................................
+void TXGrid::ToDataItem(TDataItem& item, wxOutputStream& zos) const {
+  item.AddField("empty", IsEmpty() );
+  if( !IsEmpty() )  {
+    item.AddField("visible", Visible());
+    item.AddField("3D", Mode3D);
+    item.AddField("moved", GridMoved);
+    item.AddField("draw_mode", PolygonMode);
+    item.AddField("max_val", MaxVal);
+    item.AddField("min_val", MinVal);
+    item.AddField("depth", Depth);
+    item.AddField("size", Size);
+    item.AddField("scale", Scale);
+    item.AddField("max_x", MaxX);
+    item.AddField("max_y", MaxY);
+    item.AddField("max_z", MaxZ);
+    for( int x=0; x < MaxX; x++ )  {
+      for( int y=0; y < MaxY; y++ )  {
+        zos.Write( ED->Data[x][y], sizeof(float)*MaxZ );
+      }
+    }
+  }
+}
+//..............................................................................
+void TXGrid::FromDataItem(const TDataItem& item, wxInputStream& zis) {
+  Clear();
+  bool empty = item.GetRequiredField("empty").ToBool();
+  if( empty )  return;
+  Visible( item.GetRequiredField("visible").ToBool() );
+  Mode3D = item.GetRequiredField("3D").ToBool();
+  GridMoved = item.GetRequiredField("moved").ToBool();
+  PolygonMode = item.GetRequiredField("draw_mode").ToInt();
+  MaxVal = item.GetRequiredField("max_val").ToDouble();
+  MinVal = item.GetRequiredField("min_val").ToDouble();
+  Depth = item.GetRequiredField("depth").ToDouble();
+  Size = item.GetRequiredField("size").ToDouble();
+  Scale = item.GetRequiredField("scale").ToDouble();
+  InitGrid( item.GetRequiredField("max_x").ToInt(), 
+            item.GetRequiredField("max_y").ToInt(),
+            item.GetRequiredField("max_z").ToInt() );
+  for( int x=0; x < MaxX; x++ )
+    for( int y=0; y < MaxY; y++ )
+      zis.Read( ED->Data[x][y], sizeof(float)*MaxZ );
+  InitIso(Mode3D);
 }
 //..............................................................................
 TLibrary*  TXGrid::ExportLibrary(const olxstr& name)  {

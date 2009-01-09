@@ -2195,10 +2195,10 @@ void TMainForm::macSave(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     if( FXApp->XFile().HasLastLoader() )  {
       Tmp = (Cmds.Count() == 1) ? TEFile::ChangeFileExt(Cmds[0], "oxm") :
                                   TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), "oxm");
-      TDataFile DF;
-      TDataItem& mi = DF.Root().AddItem("olex_model");
-      FXApp->ToDataItem(mi);
-      DF.SaveToXLFile(Tmp);
+      //TDataFile DF;
+      //TDataItem& mi = DF.Root().AddItem("olex_model");
+      FXApp->SaveModel(Tmp);
+      //DF.SaveToXLFile(Tmp);
     }
   }
 }
@@ -2302,9 +2302,10 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       Tmp = (Cmds.Count() == 1) ? TEFile::ChangeFileExt(Cmds[0], "oxm") :
                                   TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), "oxm");
       if( TEFile::FileExists(Tmp) )  {  
-        TDataFile DF;
-        DF.LoadFromXLFile(Tmp);
-        FXApp->FromDataItem(DF.Root().FindRequiredItem("olex_model"));
+        FXApp->LoadModel(Tmp);
+        //TDataFile DF;
+        //DF.LoadFromXLFile(Tmp);
+        //FXApp->FromDataItem(DF.Root().FindRequiredItem("olex_model"));
       }
     }
   }

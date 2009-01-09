@@ -13,6 +13,8 @@
 #include "gltexture.h"
 #include "glprimitive.h"
 
+#include "wx/zipstrm.h"
+
 BeginGxlNamespace()
 
 const short planeDrawModeOriginal = 1,
@@ -59,18 +61,22 @@ public:
 
   void InitIso(bool v = true);
   void InitGrid(int maxX, int maxY, int MaxZ);
-  void SetValue(int i, int j, int k, float v);
+  inline void SetValue(int i, int j, int k, float v) {
+    ED->Data[i][j][k] = v;
+    if( v > MaxVal )  MaxVal = v;
+    if( v < MinVal ) MinVal = v;
+  }
   inline double GetValue(int i, int j, int k) const {
     return ED->Data[i][j][k];
   }
   template <class T>
-    void SetValue(const TVector<T>& ind, float v)  {
+    void SetValue(const T& ind, float v)  {
       ED->Data[(int)ind[0]][(int)ind[1]][(int)ind[2]] = v;
       if( v > MaxVal )  MaxVal = v;
       if( v < MinVal )  MinVal = v;
     }
   template <class T>
-    inline double GetValue(const TVector<T>& v) const {
+    inline double GetValue(const T& v) const {
       return ED->Data[(int)v[0]][(int)v[1]][(int)v[2]];
     }
 
@@ -109,6 +115,8 @@ public:
 #ifndef _NO_PYTHON
   static void PyInit();
 #endif  
+  void ToDataItem(TDataItem& item, wxOutputStream& zos) const;
+  void FromDataItem(const TDataItem& item, wxInputStream& zis);
 };
 
 EndGxlNamespace()

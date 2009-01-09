@@ -34,6 +34,8 @@
 
 #include "xlattice.h"
 #include "egc.h"
+#include "eutf8.h"
+#include "ememstream.h"
 
 #include "gpcollection.h"
 #include "estopwatch.h"
@@ -43,6 +45,7 @@
   #include "wxglscene.h"
   #include "wx/string.h"
   #include "wx/fontutil.h"
+  #include "wx/wfstream.h"
 #endif
 #define ConeStipple  6.0
 #define LineStipple  0xf0f0
@@ -3259,7 +3262,7 @@ TXLattice& TGXApp::AddLattice(const olxstr& Name, const mat3d& basis)  {
 void TGXApp::InitFadeMode()  {
 }
 //..............................................................................
-void TGXApp::ToDataItem(TDataItem& item) const  {
+void TGXApp::ToDataItem(TDataItem& item, wxOutputStream& zos) const  {
   FXFile->ToDataItem(item.AddItem("XFile"));
   TPtrList<TGraphicsStyle> styles;
   for( int i=0; i < FGlRender->GObjectCount(); i++ )  {
@@ -3323,8 +3326,8 @@ void TGXApp::ToDataItem(TDataItem& item) const  {
       vis.Set(p_cnt++, XPlanes[i].Visible() );
   }
   visibility.AddField("planes", vis.ToHexString());
-
-  //visibility.AddField("grid", FXGrid->Visible());
+  
+  FXGrid->ToDataItem( item.AddItem("Grid"), zos);
 
   TDataItem& labels = item.AddItem("Labels");
   for( int i=0; i < XLabels.Count(); i++ )
@@ -3360,7 +3363,7 @@ void TGXApp::ToDataItem(TDataItem& item) const  {
   renderer.AddField("max", PersUtil::VecToStr( FGlRender->MaxDim() ) );
 }
 //..............................................................................
-void TGXApp::FromDataItem(TDataItem& item)  {
+void TGXApp::FromDataItem(TDataItem& item, wxInputStream& zis)  {
   FGlRender->Clear();
   ClearXObjects();
   FXFile->FromDataItem(item.FindRequiredItem("XFile"));
@@ -3375,6 +3378,7 @@ void TGXApp::FromDataItem(TDataItem& item)  {
   for( int i=0; i < labels.ItemCount(); i++ )
     XLabels.AddNew("PLabels", FGlRender).FromDataItem(labels.GetItem(i));
 
+  FXGrid->FromDataItem(item.FindRequiredItem("Grid"), zis);
   CreateObjects(true, true);
 
   TDataItem& visibility = item.FindRequiredItem("Visibility");
@@ -3440,4 +3444,65 @@ void TGXApp::FromDataItem(TDataItem& item)  {
   FGlRender->Basis()->FromDataItem( item.FindRequiredItem("Basis") );
 }
 //..............................................................................
+void TGXApp::SaveModel(const olxstr& fileName) const {
+  TDataFile df;
+  wxFileOutputStream fos( fileName.u_str() );
+  fos.Write("oxm", 3);
+  wxZipOutputStream zos(fos, 9);
+  TDataItem& mi = df.Root().AddItem("olex_model");
+  zos.PutNextEntry( wxT("grid") );
+  ToDataItem(mi, zos);
+  zos.CloseEntry();
+  zos.PutNextEntry( wxT("model") );
+  TEStrBuffer bf(1024*32);
+  df.Root().SaveToStrBuffer(bf);
+#ifdef _UNICODE
+  CString model( TUtf8::Encode(bf.ToString()) );
+#else
+  CString model( bf.ToString() );
+#endif
+  zos.Write(model.raw_str(), model.RawLen());
+  zos.CloseEntry();
+  zos.Close();
+  fos.Close();
+}
+//..............................................................................
+void TGXApp::LoadModel(const olxstr& fileName) {
+  wxFileInputStream fis( fileName.u_str() );
+  char sig[3];
+  wxZipInputStream* zin = new wxZipInputStream(fis);
+  fis.Read(sig, 3);
+  if( olxstr::o_memcmp(sig, "oxm", 3) != 0 )
+    throw TFunctionFailedException(__OlxSourceInfo, "invalid file signature");
+
+  wxZipEntry* model = NULL, *grid = NULL, *zen;
+  olxstr entryModel("model"), entryGrid("grid");
+
+  while( (zen = zin->GetNextEntry()) != NULL )  {
+    if( entryModel == zen->GetName().c_str() )
+      model = zen;
+    else if( entryGrid == zen->GetName().c_str() )
+      grid = zen;
+    else
+      delete zen;
+  }
+  if( model == NULL || grid == NULL )  {
+    delete zin;
+    throw TFunctionFailedException(__OlxSourceInfo, "invalid model file description");
+  }
+  zin->OpenEntry(*model);
+  int contentLen = zin->GetLength();
+  TEMemoryStream ms(contentLen);
+  unsigned char * bf = new unsigned char[ contentLen + 1];
+  zin->Read(bf, contentLen);
+  zin->CloseEntry();
+  ms.Write(bf, contentLen);
+  ms.SetPosition(0);
+  delete [] bf;
+  TDataFile df;
+  df.LoadFromTextStream(ms);
+  zin->OpenEntry(*grid);
+  FromDataItem( df.Root().FindRequiredItem("olex_model"), *zin );
+  delete zin;
+}
 //..............................................................................
