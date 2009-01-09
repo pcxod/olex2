@@ -56,11 +56,11 @@ public:
   // returns a label plus (if not identity) first matrix like label_resi(-2/3+X,Y,2-Z)
   olxstr GetGuiLabelEx() const;
 
-  inline int MatrixCount() const         {  return Matrices.Count();  }
+  inline int MatrixCount()             const {  return Matrices.Count();  }
   inline const smatd& GetMatrix(int i) const {  return *Matrices[i];  }
   inline void AddMatrix(smatd* M)            {  Matrices.Add(M);  }
   inline void AddMatrices(TSAtom *A)         {  Matrices.AddList(A->Matrices); }
-
+  inline void ClearMatrices()                {  Matrices.Clear();  }
   void ChangeType(const olxstr& Type);
 
   inline const TEllipsoid* GetEllipsoid() const {  return FEllipsoid;  }

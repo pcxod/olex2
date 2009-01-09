@@ -978,41 +978,41 @@ int TGXApp::InvertFragmentsList(const TNetPList& SF, TNetPList& Result)  {
 //..............................................................................
 void TGXApp::AllVisible(bool V)  {
   OnFragmentVisible->Enter(dynamic_cast<TBasicApp*>(this), NULL);
-  if( !XFile().GetLattice().IsGenerated() )  {
-    TEBitArray amask;
-    XFile().GetLattice().UpdateConnectivity(amask);
-    CreateObjects(false, false);
-    CenterView(true);
+  //if( !XFile().GetLattice().IsGenerated() )  {
+  //  TEBitArray amask;
+  //  XFile().GetLattice().UpdateConnectivity(amask);
+  //  CreateObjects(false, false);
+  //  CenterView(true);
+  //}
+  //else {
+  for( int i=0; i < XAtoms.Count(); i++ )  {
+    TXAtom& a = XAtoms[i];
+    if( a.Atom().GetAtomInfo() == iQPeakIndex )
+      a.Visible(FQPeaksVisible);
+    else if( a.Atom().GetAtomInfo() == iHydrogenIndex )
+      a.Visible(FHydrogensVisible);
+    else
+      a.Visible(V);
   }
-  else {
-    for( int i=0; i < XAtoms.Count(); i++ )  {
-      TXAtom& a = XAtoms[i];
-      if( a.Atom().GetAtomInfo() == iQPeakIndex )
-        a.Visible(FQPeaksVisible);
-      else if( a.Atom().GetAtomInfo() == iHydrogenIndex )
-        a.Visible(FHydrogensVisible);
-      else
-        a.Visible(V);
-    }
 
-    for( int i=0; i < XBonds.Count(); i++ )  {
-      TXBond& b = XBonds[i];
-      if( (b.Bond().A().GetAtomInfo() == iQPeakIndex) ||
-        (b.Bond().B().GetAtomInfo() == iQPeakIndex)  )
-        b.Visible(FQPeakBondsVisible);
-      else if( XBonds[i].Bond().GetType() == sotHBond )
-        b.Visible(FHBondsVisible);
-      else if( ((b.Bond().A().GetAtomInfo() == iHydrogenIndex) ||
-        (b.Bond().B().GetAtomInfo() == iHydrogenIndex)) &&
-        ((b.Bond().A().GetAtomInfo() != iQPeakIndex) &&
-        (b.Bond().B().GetAtomInfo() != iQPeakIndex)) )
-      {
-        b.Visible(FHydrogensVisible);
-      }
-      else
-        b.Visible(V);
+  for( int i=0; i < XBonds.Count(); i++ )  {
+    TXBond& b = XBonds[i];
+    if( (b.Bond().A().GetAtomInfo() == iQPeakIndex) ||
+      (b.Bond().B().GetAtomInfo() == iQPeakIndex)  )
+      b.Visible(FQPeakBondsVisible);
+    else if( XBonds[i].Bond().GetType() == sotHBond )
+      b.Visible(FHBondsVisible);
+    else if( ((b.Bond().A().GetAtomInfo() == iHydrogenIndex) ||
+      (b.Bond().B().GetAtomInfo() == iHydrogenIndex)) &&
+      ((b.Bond().A().GetAtomInfo() != iQPeakIndex) &&
+      (b.Bond().B().GetAtomInfo() != iQPeakIndex)) )
+    {
+      b.Visible(FHydrogensVisible);
     }
+    else
+      b.Visible(V);
   }
+  //  }
   OnFragmentVisible->Exit(dynamic_cast<TBasicApp*>(this), NULL);
   Draw();
 }
@@ -2646,11 +2646,15 @@ void TGXApp::HydrogensVisible(bool v)  {
 //..............................................................................
 void TGXApp::QPeaksVisible(bool v)  {
   FQPeaksVisible = v;
-  TEBitArray amask;
-  ClearXObjects();
-  XFile().GetLattice().UpdateConnectivity(amask);
-  CreateObjects(false, false);
-  CenterView(true);
+  for( int i=0; i < XAtoms.Count(); i++ )  {
+    if( XAtoms[i].Atom().GetAtomInfo() == iQPeakIndex )
+      XAtoms[i].Visible(v);
+  }
+  //TEBitArray amask;
+  //ClearXObjects();
+  //XFile().GetLattice().UpdateConnectivity(amask);
+  //CreateObjects(false, false);
+  //CenterView(true);
 }
 //..............................................................................
 void TGXApp::SyncQVisibility()  {
@@ -3357,10 +3361,12 @@ void TGXApp::ToDataItem(TDataItem& item) const  {
 }
 //..............................................................................
 void TGXApp::FromDataItem(TDataItem& item)  {
+  FGlRender->Clear();
   ClearXObjects();
   FXFile->FromDataItem(item.FindRequiredItem("XFile"));
-  FGlRender->Clear();
   FGlRender->Styles()->FromDataItem( item.FindRequiredItem("Style") );
+  
+  IndividualCollections.Clear();
   TDataItem& ind_col = item.FindRequiredItem("ICollections");
   for( int i=0; i < ind_col.FieldCount(); i++ )
     IndividualCollections.Add(ind_col.GetField(i));
