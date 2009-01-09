@@ -2531,11 +2531,11 @@ void TMainForm::PostCmdHelp(const olxstr &Cmd, bool Full)  {
       int helpIndex = Item->FieldIndexCI("help");
       if( helpIndex == -1 )  return;
       TDataItem *Cat = Item->FindItemCI("category");
-      FGlConsole->PrintText(Item->Field(helpIndex), &HelpFontColorTxt);
+      FGlConsole->PrintText(Item->GetField(helpIndex), &HelpFontColorTxt);
       FGlConsole->PrintText("Options:", &HelpFontColorCmd);
       for( int i=0; i < Item->FieldCount(); i++ )  {
         if( i == helpIndex )  continue;
-        FGlConsole->PrintText((Item->FieldName(i) + ": ") + Item->Field(i));
+        FGlConsole->PrintText((Item->FieldName(i) + ": ") + Item->GetField(i));
       }
       if( Cat != NULL )  {
         olxstr Cats;

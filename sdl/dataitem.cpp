@@ -56,7 +56,7 @@ TDataItem& TDataItem::Root()  {
   return *P;
 }
 //..............................................................................
-TEStrBuffer& TDataItem::writeFullName(TEStrBuffer& bf)  {
+TEStrBuffer& TDataItem::writeFullName(TEStrBuffer& bf) const {
   if( GetParent() == NULL )  {
     bf << Name;
   }
@@ -85,11 +85,6 @@ olxstr TDataItem::GetFullName()  {
     P = P->GetParent();
   }
   return SL.Text('.');
-}
-//..............................................................................
-olxstr* TDataItem::FieldPtr(const olxstr &Name)  {
-  int i = Fields.IndexOf(Name);
-  return (i != -1) ? &Fields.Object(i) : NULL;
 }
 //..............................................................................
 TDataItem *TDataItem::DotItem(const olxstr &DotName, TStrList* Log)  {
@@ -193,41 +188,6 @@ TDataItem& TDataItem::AddItem(const olxstr& name, const olxstr& val)  {
   return *DI;
 }
 //..............................................................................
-bool TDataItem::FieldExists(const olxstr &Name)  {
-  return (Fields.IndexOf(Name) >=0 );
-}
-//..............................................................................
-TDataItem&  TDataItem::AddField(const olxstr &Name, const olxstr &Data)  {
-  AddCodedField(Name, CodeString(Data));
-  return *this;
-}
-//..............................................................................
-void TDataItem::SetFieldValue(const olxstr& fieldName, const olxstr &newValue)  {
-  int i = Fields.IndexOf(fieldName);
-  if( i == -1 )
-    AddField(fieldName, newValue);
-  else
-  Fields.Object(i) = CodeString(newValue);
-}
-//..............................................................................
-void TDataItem::DeleteField(int index)  {
-  Fields.Delete(index);
-}
-//..............................................................................
-void TDataItem::DeleteField(const olxstr& Name) {
-  int fieldIndex = FieldIndex(Name);
-  if( fieldIndex != -1 )  DeleteField(fieldIndex);
-}
-//..............................................................................
-TDataItem& TDataItem::AddCodedField(const olxstr &Name, const olxstr &Data)  {
-//  if( FieldExists(Name) )
-//  {
-//    BasicApp->Log->Exception(olxstr("TDataItem: dublicate field name: ") + Name, false);
-//  }
-  Fields.Add(Name, Data);
-  return *this;
-}
-//..............................................................................
 int TDataItem::LoadFromString( int start, olxstr &Data, TStrList* Log)  {
   int sl = Data.Length();
   TDataItem *DI;
@@ -311,19 +271,14 @@ int TDataItem::LoadFromString( int start, olxstr &Data, TStrList* Log)  {
         if( DI != NULL )  AddItem(*DI); // unresolved so far if !DI
         else  {
           RefField = DotField(FieldName, RefFieldName);
-          if( RefField == NULL )  {
-            try{ AddField(FieldName, FieldValue); }
-            catch(...)  {  if( Log != NULL) Log->Add((this->GetName() + ':') << " cannot add field"); }
-          }
-          else  {
-            try{ AddField(RefFieldName, *RefField); }
-            catch(...){  if( Log != NULL )  Log->Add((this->GetName() + ':') << " cannot add field"); }
-          }
+          if( RefField == NULL )
+            _AddField(FieldName, FieldValue); 
+          else
+            _AddField(RefFieldName, *RefField);
         }
       }
       else  {
-        try{ AddField(FieldName, FieldValue); }
-        catch(...){  if( Log != NULL )  Log->Add((this->GetName() + ':') << " cannot add field"); }
+        _AddField(FieldName, FieldValue);
       }
       if( (i+1) >= sl ) return sl+1;
       if( Data.CharAt(i) == '>' )  return i;
@@ -365,43 +320,7 @@ void TDataItem::ResolveFields(TStrList* Log)  {  // resolves referenced fields
   }
 }
 //..............................................................................
-void TDataItem::SaveToString(olxstr &Data)  {
-  int fc, ic;
-  bool itemsadded = false;
-  if( GetParent() != NULL )  {
-    Data << '\r' << '\n';
-    for( int i=0; i < Level-1; i++ )    Data << ' ';
-    Data << '<' << Name << ' ';
-    if( !Value.IsEmpty() )
-      Data << '\"' << Value << "\" ";
-  }
-  fc = FieldCount();
-  ic = ItemCount();
-  for( int i=0; i < fc; i++ )
-    Data << Fields.String(i) << '=' << '\"' << RawField(i) << '\"' << ' ';
-  for( int i=0; i < ic; i++ )  {
-    if( GetItem(i).GetParent() != this )  // dot operator
-      Data << GetItem(i).GetFullName()  << ' ';
-  }
-  for( int i=0; i < ic; i++ )  {
-    if( GetItem(i).GetParent() == this )  {
-      GetItem(i).SaveToString(Data);
-      if( !itemsadded ) itemsadded = true;
-    }
-  }
-  if( GetParent() != NULL )  {
-    if( itemsadded )  {
-      Data << '\r' << '\n';
-      for( int i=0; i < Level-1; i++ )    Data << ' ';
-      Data << '>';
-    }
-    else  {
-      Data << '>';
-    }
-  }
-}
-//..............................................................................
-void TDataItem::SaveToStrBuffer(TEStrBuffer &Data)  {
+void TDataItem::SaveToStrBuffer(TEStrBuffer &Data) const {
   int fc, ic;
   bool itemsadded = false;
   if( GetParent() != NULL )  {
@@ -417,7 +336,7 @@ void TDataItem::SaveToStrBuffer(TEStrBuffer &Data)  {
   ic = ItemCount();
   for( int i=0; i < fc; i++ )  {
     Data << Fields.String(i) << '=';
-    Data << '\"' << RawField(i) << '\"' << ' ';
+    Data << '\"' << CodeString(Fields.Object(i)) << '\"' << ' ';
   }
   for( int i=0; i < ic; i++ )  {
     if( GetItem(i).GetParent() != this )  {  // dot operator

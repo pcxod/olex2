@@ -41,16 +41,16 @@ void TSBond::OnAtomSet()  {
 double TSBond::Length()  {  return FA->crd().DistanceTo(FB->crd()); }
 //..............................................................................
 void TSBond::ToDataItem(TDataItem& item) const {
-  item.AddCodedField("net_id", Network->GetTag());
-  item.AddCodedField("a_id", FA->GetTag());
-  item.AddCodedField("b_id", FB->GetTag());
+  item.AddField("net_id", Network->GetTag());
+  item.AddField("a_id", FA->GetTag());
+  item.AddField("b_id", FB->GetTag());
 }
 //..............................................................................
 void TSBond::FromDataItem(const TDataItem& item, TPtrList<TNetwork>& net_pool) {
   //if( item.FieldCount() != 2 )
   //  throw TInvalidArgumentException(__OlxSourceInfo, "data item");
-  Network = net_pool[item.RawField(0).ToInt()];
-  FA = &Network->GetLattice().GetAtom( item.RawField(1).ToInt() );
-  FB = &Network->GetLattice().GetAtom( item.RawField(2).ToInt() );
+  Network = net_pool[item.GetField(0).ToInt()];
+  FA = &Network->GetLattice().GetAtom( item.GetField(1).ToInt() );
+  FB = &Network->GetLattice().GetAtom( item.GetField(2).ToInt() );
 }
 //..............................................................................

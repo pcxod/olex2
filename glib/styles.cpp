@@ -164,7 +164,7 @@ bool TGraphicsStyle::FromDataItem(const TDataItem& Item)  {
   SetPersistent( Item.GetFieldValue("Persistent", FalseString).ToBool() );
   int i = IsPersistent() ? 2 : 1;
   for( ; i < Item.FieldCount(); i++ )
-    SetParam(Item.FieldName(i), Item.Field(i), FLevel < 2 );
+    SetParam(Item.FieldName(i), Item.GetField(i), FLevel < 2 );
 //    SetParam(Item.FieldName(i), Item.Field(i), FParent->GetVersion() > 0 );
   TDataItem* I = Item.FindItem("SubStyles");
   int off = 0;

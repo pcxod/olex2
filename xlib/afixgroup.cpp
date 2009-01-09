@@ -22,10 +22,10 @@ void TAfixGroup::Assign(const TAfixGroup& ag)  {
 }
 //..............................................................................
 void TAfixGroup::ToDataItem(TDataItem& item) const {
-  item.AddCodedField("afix", Afix);
-  item.AddCodedField("d", D);
-  item.AddCodedField("u", U);
-  item.AddCodedField("pivot_atom_id", Pivot->GetTag());
+  item.AddField("afix", Afix);
+  item.AddField("d", D);
+  item.AddField("u", U);
+  item.AddField("pivot_atom_id", Pivot->GetTag());
   TDataItem& dep = item.AddItem("dependent");
   int dep_id = 0;
   for( int i=0; i < Dependent.Count(); i++ )  {
@@ -41,7 +41,7 @@ void TAfixGroup::FromDataItem(TDataItem& item) {
   SetPivot( Parent.RM.aunit.GetAtom( item.GetRequiredField("pivot_atom_id").ToInt() ) );
   TDataItem& dep = item.FindRequiredItem("dependent");
   for( int i=0; i < dep.FieldCount(); i++ )
-    Dependent.Add( &Parent.RM.aunit.GetAtom(dep.RawField(i).ToInt()) )->SetParentAfixGroup(this);
+    Dependent.Add( &Parent.RM.aunit.GetAtom(dep.GetField(i).ToInt()) )->SetParentAfixGroup(this);
 }
 //..............................................................................
 //..............................................................................
@@ -56,7 +56,7 @@ void TAfixGroups::ToDataItem(TDataItem& item) {
     Groups[i].SetId(group_id++);
   }
   Groups.Pack();
-  item.AddCodedField("n", Groups.Count());
+  item.AddField("n", Groups.Count());
   for( int i=0; i < Groups.Count(); i++ )
     Groups[i].ToDataItem( item.AddItem(i) );
 }

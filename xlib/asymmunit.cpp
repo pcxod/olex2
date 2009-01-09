@@ -579,15 +579,15 @@ double TAsymmUnit::EstimateZ(int atomCount) const  {
 //..............................................................................
 void TAsymmUnit::ToDataItem(TDataItem& item) const  {
   TDataItem& cell = item.AddItem("cell");
-  cell.AddCodedField("a", FAxes[0].ToString());
-  cell.AddCodedField("b", FAxes[1].ToString());
-  cell.AddCodedField("c", FAxes[2].ToString());
-  cell.AddCodedField("alpha", FAngles[0].ToString());
-  cell.AddCodedField("beta",  FAngles[1].ToString());
-  cell.AddCodedField("gamma", FAngles[2].ToString());
-  cell.AddCodedField("Z", Z);
+  cell.AddField("a", FAxes[0].ToString());
+  cell.AddField("b", FAxes[1].ToString());
+  cell.AddField("c", FAxes[2].ToString());
+  cell.AddField("alpha", FAngles[0].ToString());
+  cell.AddField("beta",  FAngles[1].ToString());
+  cell.AddField("gamma", FAngles[2].ToString());
+  cell.AddField("Z", Z);
   TDataItem& symm = item.AddItem("symm");
-  symm.AddCodedField("latt", Latt);
+  symm.AddField("latt", Latt);
   for(int i=0; i < Matrices.Count(); i++ )  
     symm.AddItem(i, TSymmParser::MatrixToSymmEx(Matrices[i]) );
   TDataItem& resi = item.AddItem("residues");
@@ -600,8 +600,8 @@ void TAsymmUnit::ToDataItem(TDataItem& item) const  {
       ri = &resi.AddItem("default");
     else  {
       ri = &resi.AddItem( r.GetNumber() );
-      ri->AddCodedField("class_name", r.GetClassName());
-      ri->AddCodedField("alias", r.GetAlias());
+      ri->AddField("class_name", r.GetClassName());
+      ri->AddField("alias", r.GetAlias());
     }
     for( int j=0; j < r.Count(); j++ )  {
       if( r[j].IsDeleted() )  continue;

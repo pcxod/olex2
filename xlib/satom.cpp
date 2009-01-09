@@ -78,22 +78,22 @@ olxstr TSAtom::GetGuiLabelEx() const  {
 }
 //..............................................................................
 void TSAtom::ToDataItem(TDataItem& item) const {
-  item.AddCodedField("net_id", Network->GetTag());
+  item.AddField("net_id", Network->GetTag());
   TDataItem& nodes = item.AddItem("Nodes");
   for( int i=0; i < Nodes.Count(); i++ )  {
     if( Nodes[i]->IsDeleted() )  continue;
-    nodes.AddCodedField("node_id", Nodes[i]->GetTag());
+    nodes.AddField("node_id", Nodes[i]->GetTag());
   }
   TDataItem& bonds = item.AddItem("Bonds");
   for( int i=0; i < Bonds.Count(); i++ )  {
     if( Bonds[i]->IsDeleted() )  continue;
-    bonds.AddCodedField("bond_id", Bonds[i]->GetTag());
+    bonds.AddField("bond_id", Bonds[i]->GetTag());
   }
 
-  item.AddCodedField("atom_id", FCAtom->GetTag());
+  item.AddField("atom_id", FCAtom->GetTag());
   TDataItem& matrices = item.AddItem("Matrices");
   for( int i=0; i < Matrices.Count(); i++ )
-    matrices.AddCodedField("matr_id", Matrices[i]->GetTag());
+    matrices.AddField("matr_id", Matrices[i]->GetTag());
 }
 //..............................................................................
 void TSAtom::FromDataItem(const TDataItem& item, TLattice& parent) {
@@ -101,11 +101,11 @@ void TSAtom::FromDataItem(const TDataItem& item, TLattice& parent) {
   const TDataItem& nodes = item.FindRequiredItem("Nodes");
   Nodes.SetCapacity( nodes.FieldCount() );
   for( int i=0; i < nodes.FieldCount(); i++ )
-    Nodes.Add(&parent.GetAtom(nodes.RawField(i).ToInt()));
+    Nodes.Add(&parent.GetAtom(nodes.GetField(i).ToInt()));
   const TDataItem& bonds = item.FindRequiredItem("Bonds");
   Bonds.SetCapacity( bonds.FieldCount() );
   for( int i=0; i < bonds.FieldCount(); i++ )
-    Bonds.Add(&parent.GetBond(bonds.RawField(i).ToInt()));
+    Bonds.Add(&parent.GetBond(bonds.GetField(i).ToInt()));
 
   TLattice& latt = Network->GetLattice();
   int ca_id = item.GetRequiredField("atom_id").ToInt();
@@ -114,7 +114,7 @@ void TSAtom::FromDataItem(const TDataItem& item, TLattice& parent) {
   Matrices.SetCapacity( matrices.FieldCount() );
   int fm_id = -1;
   for( int i=0; i < matrices.FieldCount(); i++ )  {
-    const int mi = matrices.RawField(i).ToInt();
+    const int mi = matrices.GetField(i).ToInt();
     Matrices.Add( &latt.GetMatrix(mi) );
     if( i == 0 )
       fm_id = mi;
