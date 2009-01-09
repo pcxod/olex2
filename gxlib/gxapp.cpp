@@ -3503,6 +3503,8 @@ void TGXApp::LoadModel(const olxstr& fileName) {
   df.LoadFromTextStream(ms);
   zin->OpenEntry(*grid);
   FromDataItem( df.Root().FindRequiredItem("olex_model"), *zin );
+  delete model;
+  delete grid;
   delete zin;
 }
 //..............................................................................
