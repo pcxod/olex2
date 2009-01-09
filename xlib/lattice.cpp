@@ -995,11 +995,12 @@ void TLattice::MoveToCenter()  {
 //..............................................................................
 void TLattice::Compaq()  {
   if( Fragments.Count() < 2 )  return;
-  if( Generated )  {
-    TBasicApp::GetLog().Error("Please note that asymetric unit will not be updated: the structure is grown");
-    RestoreCoordinates();
-    OnStructureGrow->Enter(this);
-  }
+  if( Generated )  return;
+  //if( Generated )  {
+  //  TBasicApp::GetLog().Error("Please note that asymetric unit will not be updated: the structure is grown");
+  //  RestoreCoordinates();
+  //  OnStructureGrow->Enter(this);
+  //}
   vec3d molCenter, acenter;
   smatd* m;
 
@@ -1767,7 +1768,7 @@ void TLattice::FromDataItem(TDataItem& item)  {
 
   Delta = item.GetRequiredField("delta").ToDouble();
   DeltaI = item.GetRequiredField("deltai").ToDouble();
-  Generated = item.GetRequiredField("grown").ToDouble();
+  Generated = item.GetRequiredField("grown").ToBool();
   GetAsymmUnit().FromDataItem( item.FindRequiredItem("AUnit") );
   const TDataItem& mat = item.FindRequiredItem("Matrices");
   Matrices.SetCapacity( mat.ItemCount() );
@@ -1786,12 +1787,12 @@ void TLattice::FromDataItem(TDataItem& item)  {
   const TDataItem& bonds = item.FindRequiredItem("Bonds");
   Bonds.SetCapacity(bonds.ItemCount());
   for( int i=0; i < bonds.ItemCount(); i++ )
-    Bonds.Add( new TSBond(NULL) );
+    Bonds.Add( new TSBond(NULL) )->SetLatId(i);
   // precreate and load atoms
   const TDataItem& atoms = item.FindRequiredItem("Atoms");
   Atoms.SetCapacity( atoms.ItemCount() );
   for( int i=0; i < atoms.ItemCount(); i++ )
-    Atoms.Add( new TSAtom(NULL) );
+    Atoms.Add( new TSAtom(NULL) )->SetLatId(i);
   for( int i=0; i < atoms.ItemCount(); i++ )
     Atoms[i]->FromDataItem(atoms.GetItem(i), *this);
   // load bonds
