@@ -108,3 +108,15 @@ bool TXGlLabel::Orient(TGlPrimitive *P)  {
 //..............................................................................
 TGlFont* TXGlLabel::Font() const {  return FParent->Scene()->Font(FFontIndex); }
 //..............................................................................
+void TXGlLabel::ToDataItem(TDataItem& item) const {
+  item.AddField("text", FLabel);
+  item.AddCodedField("visible", Visible());
+  Basis.ToDataItem(item.AddItem("Basis"));
+}
+//..............................................................................
+void TXGlLabel::FromDataItem(const TDataItem& item) {
+  FLabel = item.GetRequiredField("text");
+  Visible( item.GetRequiredField("visible").ToBool() );
+  Basis.FromDataItem( item.FindRequiredItem("Basis") );
+}
+//..............................................................................

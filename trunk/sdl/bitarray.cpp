@@ -121,6 +121,33 @@ int TEBitArray::Compare(const TEBitArray& arr )  const {
     return arr.Compare(*this);
 }
 //..............................................................................
+olxstr TEBitArray::ToHexString() const {
+  olxstr rv(EmptyString, FCharCount*2+8);
+  olxch bf[2];
+  rv.Append( ByteToHex((char)FCount, bf), 2 );
+  rv.Append( ByteToHex((char)(FCount>>8), bf), 2 );
+  rv.Append( ByteToHex((char)(FCount>>16), bf), 2 );
+  rv.Append( ByteToHex((char)(FCount>>24), bf), 2 );
+  for( int i=0; i < FCharCount; i++ )
+    rv.Append( ByteToHex(FData[i], bf), 2 );
+  return rv;
+}
+//..............................................................................
+void TEBitArray::FromHexString(const olxstr& str) {
+  if( str.Length() < 8 ) 
+    throw TInvalidArgumentException(__OlxSourceInfo, "representation");
+  const olxch* s = str.raw_str();
+  uint32_t cnt = ByteFromHex(s);
+  cnt |= ( ByteFromHex(&s[2]) << 8 );
+  cnt |= ( ByteFromHex(&s[4]) << 16 );
+  cnt |= ( ByteFromHex(&s[6]) << 24 );
+  if( str.Length() < (cnt/8+1)*2+8 )
+    throw TInvalidArgumentException(__OlxSourceInfo, "representation");
+  SetSize(cnt);
+  for( int i=0; i < FCharCount; i++ )
+    FData[i] = ByteFromHex( &s[8+i*2] );
+}
+//..............................................................................
 TIString TEBitArray::ToString() const  {
   olxstr StrRepr(EmptyString, FCount+1);
   StrRepr.SetCapacity( Count() );

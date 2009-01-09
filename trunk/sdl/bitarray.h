@@ -10,6 +10,19 @@ BeginEsdlNamespace()
 class TEBitArray: public IEObject  {
   unsigned char *FData; 
   uint32_t FCount, FCharCount;
+  static inline olxch* ByteToHex(unsigned char bt, olxch* bf) {
+    bf[0] = (bt&0x0F);
+    bf[0] += bf[0] > 9 ? ('A'-10) : '0'; 
+    bf[1] = (bt>>4);
+    bf[1] += bf[1] > 9 ? ('A'-10) : '0'; 
+    return bf;
+  }
+  static inline unsigned char ByteFromHex(const olxch* bf) {
+    char rv = bf[0] - ((bf[0] >= '0' && bf[0] <= '9') ?  '0' : ('A'-10));
+    rv |= ( (bf[1] - ((bf[1] >= '0' && bf[1] <= '9') ?  '0' : ('A'-10))) << 4 );
+    return rv;
+  }
+
 public:
   TEBitArray();
   TEBitArray( const TEBitArray& arr);
@@ -72,6 +85,9 @@ public:
   TEBitArray& operator = (const TEBitArray& arr );
   bool operator == (const TEBitArray& arr )  const;
   int Compare(const TEBitArray& arr )  const;
+
+  olxstr ToHexString() const;
+  void FromHexString(const olxstr& str);
 
   virtual TIString ToString() const;
   olxstr FormatString( short bitsInSegment );

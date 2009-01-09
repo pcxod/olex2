@@ -4,6 +4,7 @@
 
 #include "glmouselistener.h"
 #include "glfont.h"
+#include "dataitem.h"
 
 BeginGxlNamespace()
 
@@ -24,6 +25,9 @@ public:
   TGlFont *Font() const;
   inline void FontIndex(short FntIndex)  {  FFontIndex = FntIndex; }
   inline short FontIndex() const         {  return FFontIndex; }
+
+  void ToDataItem(TDataItem& item) const;
+  void FromDataItem(const TDataItem& item);
 };
 
 EndGxlNamespace()
