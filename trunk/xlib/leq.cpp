@@ -7,10 +7,10 @@ olxstr XVarManager::RelationNames[] = {"None", "var", "one_minus_var"};
 
 //.................................................................................................
 void XVarReference::ToDataItem(TDataItem& item) const {
-  item.AddCodedField("name", XVarManager::VarNames[var_name]);
-  item.AddCodedField("atom_id", atom->GetTag());
-  item.AddCodedField("k", coefficient);
-  item.AddCodedField("rel", XVarManager::RelationNames[relation_type]);
+  item.AddField("name", XVarManager::VarNames[var_name]);
+  item.AddField("atom_id", atom->GetTag());
+  item.AddField("k", coefficient);
+  item.AddField("rel", XVarManager::RelationNames[relation_type]);
 }
 //.................................................................................................
 XVarReference& XVarReference::FromDataItem(const TDataItem& item, XVar& parent) {
@@ -32,7 +32,7 @@ int XVar::RefCount() const {
 }
 //.................................................................................................
 void XVar::ToDataItem(TDataItem& item) const {
-  item.AddCodedField("val", Value);
+  item.AddField("val", Value);
   for( int i=0; i < References.Count(); i++ )
     References[i]->ToDataItem(item.AddItem(i));
 }
@@ -57,12 +57,12 @@ void XLEQ::_Assign(const XLEQ& leq)  {
 }
 //.................................................................................................
 void XLEQ::ToDataItem(TDataItem& item) const {
-  item.AddCodedField("val", Value);
-  item.AddCodedField("sig", Sigma);
+  item.AddField("val", Value);
+  item.AddField("sig", Sigma);
   for( int i=0; i < Vars.Count(); i++ )  {
     TDataItem& mi = item.AddItem("var");
-    mi.AddCodedField("id", Vars[i]->GetId());
-    mi.AddCodedField("k", Coefficients[i]);
+    mi.AddField("id", Vars[i]->GetId());
+    mi.AddField("k", Coefficients[i]);
   }
 }
 //.................................................................................................

@@ -374,12 +374,12 @@ void RefinementModel::Describe(TStrList& lst) {
 //....................................................................................................
 void RefinementModel::ToDataItem(TDataItem& item) {
   // fields
-  item.AddCodedField("RefOutArg", PersUtil::NumberListToStr(PLAN));
+  item.AddField("RefOutArg", PersUtil::NumberListToStr(PLAN));
   item.AddField("HklSrc", HKLSource);
-  item.AddCodedField("RefMeth", RefinementMethod);
-  item.AddCodedField("SolMeth", SolutionMethod);
-  item.AddCodedField("BatchScales", PersUtil::NumberListToStr(BASF));
-  item.AddCodedField("RefInArg", PersUtil::NumberListToStr(LS));
+  item.AddField("RefMeth", RefinementMethod);
+  item.AddField("SolMeth", SolutionMethod);
+  item.AddField("BatchScales", PersUtil::NumberListToStr(BASF));
+  item.AddField("RefInArg", PersUtil::NumberListToStr(LS));
 
   // save used equivalent positions
   TDataItem& eqiv = item.AddItem("eqiv");
@@ -403,17 +403,17 @@ void RefinementModel::ToDataItem(TDataItem& item) {
   rEADP.ToDataItem(item.AddItem("eadp"));
   
   TDataItem& hklf = item.AddItem("HKLF", HKLF);
-  hklf.AddCodedField("s", HKLF_s);
-  hklf.AddCodedField("wt", HKLF_wt);
-  hklf.AddCodedField("m", HKLF_m);
-  hklf.AddCodedField("mat", TSymmParser::MatrixToSymmEx(HKLF_mat));
+  hklf.AddField("s", HKLF_s);
+  hklf.AddField("wt", HKLF_wt);
+  hklf.AddField("m", HKLF_m);
+  hklf.AddField("mat", TSymmParser::MatrixToSymmEx(HKLF_mat));
 
   TDataItem& omits = item.AddItem("OMIT", OMIT_set);
-  omits.AddCodedField("s", OMIT_s);
-  omits.AddCodedField("2theta", OMIT_2t);
-  omits.AddCodedField("hkl", PersUtil::VecListToStr(Omits));
-  item.AddItem("TWIN", TWIN_set).AddCodedField("mat", TSymmParser::MatrixToSymmEx(TWIN_mat)).AddCodedField("n", TWIN_n);
-  item.AddItem("MERG", MERG_set).AddCodedField("val", MERG);
+  omits.AddField("s", OMIT_s);
+  omits.AddField("2theta", OMIT_2t);
+  omits.AddField("hkl", PersUtil::VecListToStr(Omits));
+  item.AddItem("TWIN", TWIN_set).AddField("mat", TSymmParser::MatrixToSymmEx(TWIN_mat)).AddField("n", TWIN_n);
+  item.AddItem("MERG", MERG_set).AddField("val", MERG);
 }
 //....................................................................................................
 void RefinementModel::FromDataItem(TDataItem& item) {

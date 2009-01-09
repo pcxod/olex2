@@ -1692,9 +1692,9 @@ void TLattice::SetAnis( const TCAtomPList& atoms, bool anis )  {
 }
 //..............................................................................
 void TLattice::ToDataItem(TDataItem& item) const  {
-  item.AddCodedField("delta", Delta);
-  item.AddCodedField("deltai", DeltaI);
-  item.AddCodedField("grown", Generated);
+  item.AddField("delta", Delta);
+  item.AddField("deltai", DeltaI);
+  item.AddField("grown", Generated);
   GetAsymmUnit().ToDataItem(item.AddItem("AUnit"));
   TDataItem& mat = item.AddItem("Matrices");
   const int mat_c = Matrices.Count();

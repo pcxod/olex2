@@ -4,9 +4,9 @@
 
 //..................................................................................................
 void ExperimentalDetails::ToDataItem(TDataItem& item) const {
-  item.AddCodedField("radiation", Radiation);
-  item.AddCodedField("temperature", Temperature);
-  item.AddCodedField("crystal_size", PersUtil::VecToStr(CrystalSize));
+  item.AddField("radiation", Radiation);
+  item.AddField("temperature", Temperature);
+  item.AddField("crystal_size", PersUtil::VecToStr(CrystalSize));
 }
 //..................................................................................................
 void ExperimentalDetails::FromDataItem(const TDataItem& item) {

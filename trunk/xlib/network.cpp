@@ -869,16 +869,16 @@ bool TNetwork::RingInfo::IsSingleCSubstituted() const  {
 }
 //..............................................................................
 void TNetwork::ToDataItem(TDataItem& item) const {
-  item.AddCodedField("net_id", Network == NULL ? -1 : Network->GetTag());
+  item.AddField("net_id", Network == NULL ? -1 : Network->GetTag());
   TDataItem& nodes = item.AddItem("Nodes");
   for( int i=0; i < Nodes.Count(); i++ )  {
     if( Nodes[i]->IsDeleted() )  continue;
-    nodes.AddCodedField("node_id", Nodes[i]->GetTag());
+    nodes.AddField("node_id", Nodes[i]->GetTag());
   }
   TDataItem& bonds = item.AddItem("Bonds");
   for( int i=0; i < Bonds.Count(); i++ )  {
     if( Bonds[i]->IsDeleted() )  continue;
-    bonds.AddCodedField("bond_id", Bonds[i]->GetTag());
+    bonds.AddField("bond_id", Bonds[i]->GetTag());
   }
 }
 //..............................................................................
@@ -888,10 +888,10 @@ void TNetwork::FromDataItem(const TDataItem& item) {
   const TDataItem& nodes = item.FindRequiredItem("Nodes");
   Nodes.SetCapacity( nodes.FieldCount() );
   for( int i=0; i < nodes.FieldCount(); i++ )
-    Nodes.Add(&Lattice->GetAtom(nodes.RawField(i).ToInt()));
+    Nodes.Add(&Lattice->GetAtom(nodes.GetField(i).ToInt()));
   const TDataItem& bonds = item.FindRequiredItem("Bonds");
   Bonds.SetCapacity( bonds.FieldCount() );
   for( int i=0; i < bonds.FieldCount(); i++ )
-    Bonds.Add(&Lattice->GetBond(bonds.RawField(i).ToInt()));
+    Bonds.Add(&Lattice->GetBond(bonds.GetField(i).ToInt()));
 }
 //..............................................................................

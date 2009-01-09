@@ -110,13 +110,15 @@ TGlFont* TXGlLabel::Font() const {  return FParent->Scene()->Font(FFontIndex); }
 //..............................................................................
 void TXGlLabel::ToDataItem(TDataItem& item) const {
   item.AddField("text", FLabel);
-  item.AddCodedField("visible", Visible());
+  item.AddField("visible", Visible());
+  item.AddField("font_id", FFontIndex);
   Basis.ToDataItem(item.AddItem("Basis"));
 }
 //..............................................................................
 void TXGlLabel::FromDataItem(const TDataItem& item) {
-  FLabel = item.GetRequiredField("text");
   Visible( item.GetRequiredField("visible").ToBool() );
+  FFontIndex = item.GetRequiredField("font_id").ToInt();
+  SetLabel( item.GetRequiredField("text") );
   Basis.FromDataItem( item.FindRequiredItem("Basis") );
 }
 //..............................................................................

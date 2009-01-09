@@ -23,7 +23,7 @@ void TExyzGroup::ToDataItem(TDataItem& item) const {
 void TExyzGroup::FromDataItem(TDataItem& item) {
   Clear();
   for( int i=0; i < item.FieldCount(); i++ )
-    Atoms.Add( &Parent.RM.aunit.GetAtom( item.RawField(i).ToInt()) );
+    Atoms.Add( &Parent.RM.aunit.GetAtom( item.GetField(i).ToInt()) );
 }
 //..............................................................................
 //..............................................................................
@@ -38,7 +38,7 @@ void TExyzGroups::ToDataItem(TDataItem& item) {
     Groups[i].SetId(group_id++);
   }
   Groups.Pack();
-  item.AddCodedField("n", Groups.Count() );
+  item.AddField("n", Groups.Count() );
   for( int i=0; i < Groups.Count(); i++ )  {
     Groups[i].ToDataItem( item.AddItem(group_id++) );
   }

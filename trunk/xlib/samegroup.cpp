@@ -27,8 +27,8 @@ void TSameGroup::Assign(TAsymmUnit& tau, const TSameGroup& sg)  {
 }
 //..........................................................................................
 void TSameGroup::ToDataItem(TDataItem& item) const {
-  item.AddCodedField("esd12", Esd12);
-  item.AddCodedField("esd13", Esd13);
+  item.AddField("esd12", Esd12);
+  item.AddField("esd13", Esd13);
   int atom_id = 0;
   TDataItem& atoms = item.AddItem("atoms");
   for( int i=0; i < Atoms.Count(); i++ )  {
@@ -56,7 +56,7 @@ void TSameGroup::FromDataItem(TDataItem& item) {
 //..........................................................................................
 //..........................................................................................
 void TSameGroupList::ToDataItem(TDataItem& item) const {
-  item.AddCodedField("n", Groups.Count());
+  item.AddField("n", Groups.Count());
   for( int i=0; i < Groups.Count(); i++ )  {
     Groups[i].ToDataItem( item.AddItem(i) );
   }

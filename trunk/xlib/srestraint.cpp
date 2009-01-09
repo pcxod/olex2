@@ -183,10 +183,10 @@ bool TSimpleRestraint::ContainsAtom(TCAtom* ca) const {
 }
 //..............................................................................
 void TSimpleRestraint::ToDataItem(TDataItem& item) const {
-  item.AddCodedField("allNonH", AllNonHAtoms);
-  item.AddCodedField("esd", Esd);
-  item.AddCodedField("esd1", Esd1);
-  item.AddCodedField("val", Value);
+  item.AddField("allNonH", AllNonHAtoms);
+  item.AddField("esd", Esd);
+  item.AddField("esd1", Esd1);
+  item.AddField("val", Value);
   TDataItem& atoms = item.AddItem("atoms");
   int atom_id=0;
   for( int i=0; i < InvolvedAtoms.Count(); i++ )  {

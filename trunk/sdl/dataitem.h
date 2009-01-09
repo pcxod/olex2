@@ -31,9 +31,16 @@ protected:
   TDataItem *DotItem(const olxstr& DotName, TStrList* Log);
   olxstr *DotField(const olxstr& DotName, olxstr &RefFieldName);
   TDataItem& AddItem(TDataItem& Item);
-  olxstr* FieldPtr(const olxstr &Name);
+  olxstr* FieldPtr(const olxstr &Name) {
+    const int i = Fields.IndexOf(Name);
+    return (i != -1) ? &Fields.Object(i) : NULL;
+  }
+  // to be called from the parser
+  void _AddField(const olxstr& name, const olxstr& val) {
+    Fields.Add(name, DecodeString(val) );
+  }
   inline void SetParent(TDataItem* p)  {  Parent = p;  }
-  TEStrBuffer& writeFullName(TEStrBuffer& bf);
+  TEStrBuffer& writeFullName(TEStrBuffer& bf) const;
 public:
   TDataItem(TDataItem *Parent, const olxstr& Name, const olxstr& value=EmptyString);
   virtual ~TDataItem();
@@ -41,8 +48,7 @@ public:
   void Sort();  // sorts fields and items - improve the access by name performance
   void ResolveFields(TStrList* Log); // resolves referenced fields
   int LoadFromString( int start, olxstr &Data, TStrList* Log);
-  void SaveToString(olxstr &Data);
-  void SaveToStrBuffer(TEStrBuffer &Data);
+  void SaveToStrBuffer(TEStrBuffer &Data) const;
 
   TDataItem& AddItem(const olxstr& Name, const olxstr& value=EmptyString);
   void AddContent(TDataItem& DI);
@@ -70,21 +76,34 @@ public:
   bool ItemExists(const olxstr &Name);
   int IndexOf(TDataItem *I) const               {  return Items.IndexOfObject(I); };
 
-  TDataItem& AddField(const olxstr& Name, const olxstr& Data);
-  TDataItem& AddCodedField(const olxstr& Name, const olxstr& Data);
+  TDataItem& AddField(const olxstr& Name, const olxstr& Data)  {
+    Fields.Add(Name, Data);
+    return *this;
+  }
   inline int FieldCount() const                 {  return Fields.Count(); }
 
   int FieldIndex(const olxstr& Name)    const {  return Fields.IndexOf(Name);  }
   int FieldIndexCI(const olxstr& Name)  const {  return Fields.CIIndexOf(Name);  }
 
-  olxstr Field(int i)                   const {  return DecodeString(Fields.Object(i)); }
+  const olxstr& GetField(int i)         const {  return Fields.Object(i); }
   // the filed will not be decoded
-  const olxstr& RawField(int i)         const {  return Fields.Object(i); }
   const olxstr& FieldName(int i) const        {  return Fields.String(i); }
   // if field does not exist, a new one added
-  void SetFieldValue(const olxstr& fieldName, const olxstr& newValue);
-  void DeleteField(int index);
-  void DeleteField(const olxstr& Name);
+  void SetField(const olxstr& fieldName, const olxstr& newValue) {
+    const int i = Fields.IndexOf(fieldName);
+    if( i == -1 )
+      Fields.Add(fieldName, newValue);
+    else
+      Fields.Object(i) = newValue;
+  }
+  // deletes field by index
+  void DeleteField(int index)  {  Fields.Delete(index);  }
+  // deletes field by name, only deletes the first one if there are several with the same name
+  void DeleteField(const olxstr& Name) {
+    int fieldIndex = FieldIndex(Name);
+    if( fieldIndex != -1 )  
+      DeleteField(fieldIndex);
+  }
 
   const olxstr& GetFieldValue( const olxstr& Name, const olxstr& Default=EmptyString ) const {
     int i = Fields.IndexOf(Name);
@@ -101,7 +120,7 @@ public:
     return Fields.Object(i);
   }
 
-  bool FieldExists(const olxstr &Name);
+  bool FieldExists(const olxstr& Name)   {  return Fields.IndexOf(Name) != -1;  }
 
   TDataItem* GetParent() const           {  return Parent; }
   inline int GetLevel() const            {  return Level; }

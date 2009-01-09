@@ -179,28 +179,28 @@ void TCAtom::UpdateEllp(const TEllipsoid &NV ) {
 }
 //..............................................................................
 void TCAtom::ToDataItem(TDataItem& item) const  {
-  item.AddCodedField("label", FLabel );
-  item.AddCodedField("type", FAtomInfo->GetSymbol() );
-  item.AddCodedField("part", Part);
-  item.AddCodedField("sof", Occu);
-  item.AddCodedField("x", TEValue<double>(Center[0], Esd[0]).ToString());
-  item.AddCodedField("y", TEValue<double>(Center[1], Esd[1]).ToString());
-  item.AddCodedField("z", TEValue<double>(Center[2], Esd[2]).ToString());
+  item.AddField("label", FLabel );
+  item.AddField("type", FAtomInfo->GetSymbol() );
+  item.AddField("part", Part);
+  item.AddField("sof", Occu);
+  item.AddField("x", TEValue<double>(Center[0], Esd[0]).ToString());
+  item.AddField("y", TEValue<double>(Center[1], Esd[1]).ToString());
+  item.AddField("z", TEValue<double>(Center[2], Esd[2]).ToString());
   if( EllpId == -1 )
-    item.AddCodedField("Uiso", Uiso);
+    item.AddField("Uiso", Uiso);
   else {
     double Q[6], E[6];
     GetEllipsoid()->GetQuad(Q, E);
     TDataItem& elp = item.AddItem("adp");
-    elp.AddCodedField("xx", TEValue<double>(Q[0], E[0]).ToString());
-    elp.AddCodedField("yy", TEValue<double>(Q[1], E[1]).ToString());
-    elp.AddCodedField("zz", TEValue<double>(Q[2], E[2]).ToString());
-    elp.AddCodedField("yz", TEValue<double>(Q[3], E[3]).ToString());
-    elp.AddCodedField("xz", TEValue<double>(Q[4], E[4]).ToString());
-    elp.AddCodedField("xy", TEValue<double>(Q[5], E[5]).ToString());
+    elp.AddField("xx", TEValue<double>(Q[0], E[0]).ToString());
+    elp.AddField("yy", TEValue<double>(Q[1], E[1]).ToString());
+    elp.AddField("zz", TEValue<double>(Q[2], E[2]).ToString());
+    elp.AddField("yz", TEValue<double>(Q[3], E[3]).ToString());
+    elp.AddField("xz", TEValue<double>(Q[4], E[4]).ToString());
+    elp.AddField("xy", TEValue<double>(Q[5], E[5]).ToString());
   }
   if( *FAtomInfo == iQPeakIndex )
-    item.AddCodedField("peak", QPeak);
+    item.AddField("peak", QPeak);
 
 }
 //..............................................................................
@@ -225,7 +225,7 @@ void TCAtom::FromDataItem(TDataItem& item)  {
     if( adp->FieldCount() != 6 )
       throw TInvalidArgumentException(__OlxSourceInfo, "6 parameters expecetd for the ADP");
     for( int i=0; i < 6; i++ )  {
-      ev = adp->RawField(i);
+      ev = adp->GetField(i);
       E[i] = ev.GetE();
       Q[i] = ev.GetV();
     }

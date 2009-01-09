@@ -402,6 +402,9 @@ void TGXApp::CreateObjects(bool SyncBonds, bool centerModel)  {
     }
   }
   sw.start("Other objects creation");
+  for( int i=0; i < XLabels.Count(); i++ )
+    XLabels[i].Create();
+
   for( int i=0; i < FXFile->GetLattice().PlaneCount(); i++ )  {
     TSPlane& P = FXFile->GetLattice().GetPlane(i);
     TXPlane& XP = XPlanes.AddNew(olxstr("TXPlane") << i, &P, FGlRender);
@@ -3272,16 +3275,16 @@ void TGXApp::ToDataItem(TDataItem& item) const  {
   FGlRender->Styles()->ToDataItem(item.AddItem("Style"), styles);
   TDataItem& ind_col = item.AddItem("ICollections");
   for( int i=0; i < IndividualCollections.Count(); i++ )
-    ind_col.AddCodedField( olxstr("col_") << i, IndividualCollections[i]);
+    ind_col.AddField( olxstr("col_") << i, IndividualCollections[i]);
   FGlRender->GetBasis().ToDataItem( item.AddItem("Basis"));
 
   TDataItem& visibility = item.AddItem("Visibility");
-  visibility.AddCodedField("h_atoms", FHydrogensVisible);
-  visibility.AddCodedField("h_bonds", FHBondsVisible);
-  visibility.AddCodedField("q_atoms", FQPeaksVisible);
-  visibility.AddCodedField("q_bonds", FQPeakBondsVisible);
-  visibility.AddCodedField("basis", FDBasis->Visible());
-  visibility.AddCodedField("cell", FDUnitCell->Visible());
+  visibility.AddField("h_atoms", FHydrogensVisible);
+  visibility.AddField("h_bonds", FHBondsVisible);
+  visibility.AddField("q_atoms", FQPeaksVisible);
+  visibility.AddField("q_bonds", FQPeakBondsVisible);
+  visibility.AddField("basis", FDBasis->Visible());
+  visibility.AddField("cell", FDUnitCell->Visible());
   // store objects visibility
   int a_cnt = 0;
   for( int i=0; i < XAtoms.Count(); i++ )
@@ -3293,7 +3296,7 @@ void TGXApp::ToDataItem(TDataItem& item) const  {
     if( !XAtoms[i].Atom().IsDeleted() )
       vis.Set(a_cnt++, XAtoms[i].Visible());
   }
-  visibility.AddCodedField("atoms", vis.ToHexString());
+  visibility.AddField("atoms", vis.ToHexString());
   int b_cnt = 0;
   for( int i=0; i < XBonds.Count(); i++ )
     if( !XBonds[i].Bond().IsDeleted() )
@@ -3304,7 +3307,7 @@ void TGXApp::ToDataItem(TDataItem& item) const  {
     if( !XBonds[i].Bond().IsDeleted() )
       vis.Set(b_cnt++, XBonds[i].Visible() );
   }
-  visibility.AddCodedField("bonds", vis.ToHexString());
+  visibility.AddField("bonds", vis.ToHexString());
   int p_cnt = 0;
   for( int i=0; i < XPlanes.Count(); i++ )
     if( !XPlanes[i].Plane().IsDeleted() )
@@ -3315,9 +3318,9 @@ void TGXApp::ToDataItem(TDataItem& item) const  {
     if( !XPlanes[i].Plane().IsDeleted() )
       vis.Set(p_cnt++, XPlanes[i].Visible() );
   }
-  visibility.AddCodedField("planes", vis.ToHexString());
+  visibility.AddField("planes", vis.ToHexString());
 
-  //visibility.AddCodedField("grid", FXGrid->Visible());
+  //visibility.AddField("grid", FXGrid->Visible());
 
   TDataItem& labels = item.AddItem("Labels");
   for( int i=0; i < XLabels.Count(); i++ )
@@ -3331,19 +3334,19 @@ void TGXApp::ToDataItem(TDataItem& item) const  {
   for( int i=0; i < FGlRender->GroupCount(); i++ )  {
     TGlGroup* glG = FGlRender->Group(i);
     TDataItem& group = groups.AddItem(i, glG->GetCollectionName());
-    group.AddCodedField("visible", glG->Visible());
-    group.AddCodedField("parent_id", glG->ParentGroup() == NULL ? -2 : glG->ParentGroup()->GetTag());
+    group.AddField("visible", glG->Visible());
+    group.AddField("parent_id", glG->ParentGroup() == NULL ? -2 : glG->ParentGroup()->GetTag());
     TDataItem& atoms = group.AddItem("Atoms");
     TDataItem& bonds = group.AddItem("Bonds");
     TDataItem& planes = group.AddItem("Planes");
     for( int j=0; j < glG->Count(); j++ )  {
       AGDrawObject* glO = glG->Object(j);
       if( EsdlInstanceOf( *glO, TXAtom) )
-        atoms.AddCodedField("atom_id", ((TXAtom*)glO)->Atom().GetTag() );
+        atoms.AddField("atom_id", ((TXAtom*)glO)->Atom().GetTag() );
       if( EsdlInstanceOf( *glO, TXBond) )
-        bonds.AddCodedField("bond_id", ((TXBond*)glO)->Bond().GetTag() );
+        bonds.AddField("bond_id", ((TXBond*)glO)->Bond().GetTag() );
       if( EsdlInstanceOf( *glO, TXPlane) )
-        planes.AddCodedField("plane_id", ((TXPlane*)glO)->Plane().GetTag() );
+        planes.AddField("plane_id", ((TXPlane*)glO)->Plane().GetTag() );
     }
   }
 
@@ -3360,7 +3363,12 @@ void TGXApp::FromDataItem(TDataItem& item)  {
   FGlRender->Styles()->FromDataItem( item.FindRequiredItem("Style") );
   TDataItem& ind_col = item.FindRequiredItem("ICollections");
   for( int i=0; i < ind_col.FieldCount(); i++ )
-    IndividualCollections.Add(ind_col.Field(i));
+    IndividualCollections.Add(ind_col.GetField(i));
+
+  const TDataItem& labels = item.FindRequiredItem("Labels");
+  for( int i=0; i < labels.ItemCount(); i++ )
+    XLabels.AddNew("PLabels", FGlRender).FromDataItem(labels.GetItem(i));
+
   CreateObjects(true, true);
 
   TDataItem& visibility = item.FindRequiredItem("Visibility");
@@ -3408,13 +3416,13 @@ void TGXApp::FromDataItem(TDataItem& item)  {
       FGlRender->Group(p_id)->Add(&glG);
     TDataItem& atoms = group.FindRequiredItem("Atoms");
     for( int j=0; j < atoms.FieldCount(); j++ )
-      glG.Add( &XAtoms[atoms.RawField(j).ToInt()] );
+      glG.Add( &XAtoms[atoms.GetField(j).ToInt()] );
     TDataItem& bonds = group.FindRequiredItem("Bonds");
     for( int j=0; j < bonds.FieldCount(); j++ )
-      glG.Add( &XBonds[bonds.RawField(j).ToInt()] );
+      glG.Add( &XBonds[bonds.GetField(j).ToInt()] );
     TDataItem& planes = group.FindRequiredItem("Planes");
     for( int j=0; j < planes.FieldCount(); j++ )
-      glG.Add( &XPlanes[planes.RawField(j).ToInt()] );
+      glG.Add( &XPlanes[planes.GetField(j).ToInt()] );
     glG.Create();
   }
 
