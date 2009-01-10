@@ -707,7 +707,7 @@ void TXGrid::LibPolygonMode(const TStrObjList& Params, TMacroError& E)  {
 void TXGrid::ToDataItem(TDataItem& item, wxOutputStream& zos) const {
   item.AddField("empty", IsEmpty() );
   if( !IsEmpty() )  {
-    item.AddField("visible", Visible());
+    //item.AddField("visible", Visible());
     item.AddField("3D", Mode3D);
     item.AddField("moved", GridMoved);
     item.AddField("draw_mode", PolygonMode);
@@ -731,7 +731,8 @@ void TXGrid::FromDataItem(const TDataItem& item, wxInputStream& zis) {
   Clear();
   bool empty = item.GetRequiredField("empty").ToBool();
   if( empty )  return;
-  Visible( item.GetRequiredField("visible").ToBool() );
+  //Visible( item.GetRequiredField("visible").ToBool() );
+  Visible(true);
   Mode3D = item.GetRequiredField("3D").ToBool();
   GridMoved = item.GetRequiredField("moved").ToBool();
   PolygonMode = item.GetRequiredField("draw_mode").ToInt();

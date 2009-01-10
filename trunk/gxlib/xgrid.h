@@ -98,6 +98,13 @@ public:
 
   inline bool IsEmpty()  const  {  return ED == NULL;  }
 
+  inline bool Visible()   const {  return (Flags & sgdoVisible) == sgdoVisible; }
+  inline virtual void Visible(bool On) {  
+    AGDrawObject::Visible(On);  
+    if( !On )
+      Clear();
+  }
+
   bool OnMouseDown(const IEObject *Sender, const TMouseData *Data);
   bool OnMouseUp(const IEObject *Sender, const TMouseData *Data);
   bool OnMouseMove(const IEObject *Sender, const TMouseData *Data);
