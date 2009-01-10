@@ -33,7 +33,7 @@ void TSAtom::AtomInfo(TBasicAtomInfo* AI)  {
 }
 //..............................................................................
 void  TSAtom::Assign(TSAtom *S)  {
-  TSObject::Assign(S);
+  TSObject<TNetwork>::Assign(S);
   FEllipsoid = S->GetEllipsoid();
   FCenter    = S->crd();
   FCCenter   = S->ccrd();

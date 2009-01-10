@@ -16,7 +16,7 @@
 #include "pers_util.h"
 
 //..............................................................................
-TSPlane::TSPlane(TNetwork* Parent):TSObject(Parent)  {
+TSPlane::TSPlane(TNetwork* Parent):TSObject<TNetwork>(Parent)  {
   FDistance = 0;
   Deleted = false;
 }
