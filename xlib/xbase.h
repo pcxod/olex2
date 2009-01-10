@@ -70,7 +70,7 @@ protected:
   virtual void OnAtomSet() = 0;
 public:
   TBasicBond(Net* P) : TSObject<Net>(P), FA(NULL), FB(NULL) {
-    Type = sotBBond;
+    TSObject<Net>::Type = sotBBond;
   }
   virtual ~TBasicBond() {}
   const Node& GetA() const {  return *FA;  }

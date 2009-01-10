@@ -14,7 +14,7 @@
 //----------------------------------------------------------------------------//
 // TSBond function bodies
 //----------------------------------------------------------------------------//
-TSBond::TSBond(TNetwork *P) : TBasicBond(P)  {
+TSBond::TSBond(TNetwork *P) : TBasicBond<TNetwork,TSAtom>(P)  {
   SetType(sotBond);
   Deleted = false;
 }
