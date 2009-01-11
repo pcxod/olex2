@@ -86,8 +86,8 @@
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)\no-python"
 			ConfigurationType="4"
-			CharacterSet="1"
-			ManagedExtensions="1"
+			CharacterSet="0"
+			ManagedExtensions="0"
 			WholeProgramOptimization="1"
 			>
 			<Tool

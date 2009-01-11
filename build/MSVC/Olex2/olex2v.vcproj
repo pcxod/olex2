@@ -100,7 +100,8 @@
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)\dll"
 			IntermediateDirectory="$(ConfigurationName)\olex2v"
 			ConfigurationType="2"
-			CharacterSet="1"
+			CharacterSet="0"
+			ManagedExtensions="0"
 			WholeProgramOptimization="0"
 			>
 			<Tool
