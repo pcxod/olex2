@@ -2835,9 +2835,12 @@ bool TGXApp::ShowGrid(bool v, const olxstr& FN)  {
 //..............................................................................
 void TGXApp::Individualise(TXAtom* XA)  {
   if( XA->Primitives()->ObjectCount() == 1 )  return;
-  short level = XA->LegendLevel( XA->Primitives()->Name() );
-  if( level >= 2 )  return;
-  else  level++;
+  short level = XA->LegendLevel( XA->Primitives()->Name() ), 
+    required_level = FXFile->GetLattice().IsGenerated() ? 2 : 1;
+  
+  if( level >= required_level )  return;
+  else  
+    level = required_level;
 
   olxstr leg = XA->GetLegend( XA->Atom(), level );
   TGPCollection* indCol = FGlRender->FindCollection( leg );
@@ -3472,8 +3475,10 @@ void TGXApp::LoadModel(const olxstr& fileName) {
   char sig[3];
   wxZipInputStream* zin = new wxZipInputStream(fis);
   fis.Read(sig, 3);
-  if( olxstr::o_memcmp(sig, "oxm", 3) != 0 )
+  if( olxstr::o_memcmp(sig, "oxm", 3) != 0 )  {
+    delete zin;
     throw TFunctionFailedException(__OlxSourceInfo, "invalid file signature");
+  }
 
   wxZipEntry* model = NULL, *grid = NULL, *zen;
   olxstr entryModel("model"), entryGrid("grid");
@@ -3492,15 +3497,13 @@ void TGXApp::LoadModel(const olxstr& fileName) {
   }
   zin->OpenEntry(*model);
   int contentLen = zin->GetLength();
-  TEMemoryStream ms(contentLen);
   unsigned char * bf = new unsigned char[ contentLen + 1];
   zin->Read(bf, contentLen);
   zin->CloseEntry();
-  ms.Write(bf, contentLen);
-  ms.SetPosition(0);
-  delete [] bf;
+  TEMemoryInputStream ms(bf, contentLen);
   TDataFile df;
   df.LoadFromTextStream(ms);
+  delete [] bf;
   zin->OpenEntry(*grid);
   FromDataItem( df.Root().FindRequiredItem("olex_model"), *zin );
   delete model;

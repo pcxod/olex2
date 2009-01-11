@@ -236,10 +236,16 @@ int TGlRender_CollectionComparator(const olxstr& c1, const olxstr& c2) {
     if( c1.CharAt(i) == '.' )
       dc++;
   }
-  if( i == l && c1.Length() == c2.Length() )
-    dc++;
-  else if( i == l && l < c1.Length() && c1.CharAt(l) == '.' )
-    dc++;
+  if( i == l )  {
+    if( c1.Length() == c2.Length() )
+      dc++;
+    else {
+      if( l < c1.Length() && c1.CharAt(l) == '.' )
+        dc++;
+      else
+        dc--;
+    }
+  }
   return dc;
 }
 TGPCollection *TGlRender::CollectionX(const olxstr& Name, olxstr& CollName)  {

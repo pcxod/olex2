@@ -78,6 +78,34 @@ public:
     return *this;
   }
 };
+// a simple class to read from a memory array
+class TEMemoryInputStream : public IDataInputStream {
+  // borrowed pointed
+  unsigned char const* Data;
+  size_t Length;
+  long Position;
+public:
+  TEMemoryInputStream(const void* data, size_t length) : 
+      Data((unsigned char const*)data), 
+      Position(0),
+      Length(length) {  }
+  
+  virtual inline size_t GetSize() const        {  return Length;  }
+  virtual inline size_t GetPosition() const {  return Position;  }
+  virtual void SetPosition(size_t pos)  {
+#ifdef _OLX_DEBUG
+    TIndexOutOfRangeException::ValidateRange(__OlxSourceInfo, pos, 0, Length+1);
+#endif
+    Position = pos;
+  }
+  virtual void Read(void* to, size_t count)  {
+#ifdef _OLX_DEBUG
+    TIndexOutOfRangeException::ValidateRange(__OlxSourceInfo, Position+count, 0, Length+1);
+#endif
+    memcpy(to, &Data[Position], count);
+    Position += count;
+  }
+};
 
 EndEsdlNamespace()
 #endif
