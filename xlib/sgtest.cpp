@@ -170,8 +170,8 @@ void TSGTest::LatticeSATest(TTypeList<TElementStats<TCLattice*> >& latRes, TType
   NamedSE& Screw23 = SAElements.AddNew<TSymmElement*, TwoDoublesInt*>(sgLib->FindSymmElement("--21"), new TwoDoublesInt(0.0,0.0,0) );
 
   NamedSE& Screw41 = SAElements.AddNew<TSymmElement*, TwoDoublesInt*>(sgLib->FindSymmElement("41"), new TwoDoublesInt(0.0,0.0,0));
-  NamedSE& Screw42 = SAElements.AddNew<TSymmElement*, TwoDoublesInt*>(sgLib->FindSymmElement("41"), new TwoDoublesInt(0.0,0.0,0));
-  NamedSE& Screw43 = SAElements.AddNew<TSymmElement*, TwoDoublesInt*>(sgLib->FindSymmElement("41"), new TwoDoublesInt(0.0,0.0,0));
+  NamedSE& Screw42 = SAElements.AddNew<TSymmElement*, TwoDoublesInt*>(sgLib->FindSymmElement("42"), new TwoDoublesInt(0.0,0.0,0));
+  NamedSE& Screw43 = SAElements.AddNew<TSymmElement*, TwoDoublesInt*>(sgLib->FindSymmElement("43"), new TwoDoublesInt(0.0,0.0,0));
 
   NamedSE& Screw33 = SAElements.AddNew<TSymmElement*, TwoDoublesInt*>(sgLib->FindSymmElement("31"), new TwoDoublesInt(0.0,0.0,0));
   NamedSE& Screw63 = SAElements.AddNew<TSymmElement*, TwoDoublesInt*>(sgLib->FindSymmElement("61"), new TwoDoublesInt(0.0,0.0,0));

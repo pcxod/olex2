@@ -5574,7 +5574,7 @@ void TMainForm::funAlert(const TStrObjList& Params, TMacroError &E) {
 }
 //..............................................................................
 void TMainForm::macSGInfo(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  if( !Cmds.Count() )  {
+  if( Cmds.IsEmpty() )  {
     TPtrList<TSpaceGroup> sgList;
     for(int i=0; i < TSymmLib::GetInstance()->BravaisLatticeCount(); i++ )  {
       TBravaisLattice& bl = TSymmLib::GetInstance()->GetBravaisLattice(i);
@@ -5598,16 +5598,11 @@ void TMainForm::macSGInfo(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     }
     return;
   }
-  bool Identity = true, Centering = true;
-  for( int i=0; i < Options.Count(); i++ )
-  {
-    if( Options.GetName(i)[0] == 'c' )  Centering = false;
-    else
-      if( Options.GetName(i)[0] == 'i' )  Identity = false;
-  }
+  bool Identity = Options.Contains("i"), 
+    Centering = Options.Contains("i");
   TSpaceGroup* sg = TSymmLib::GetInstance()->FindGroup( Cmds[0] );
   bool LaueClassPG = false;
-  if( !sg )  {
+  if( sg == NULL )  {
     sg = TSymmLib::GetInstance()->FindGroup( olxstr("P") << Cmds[0] );
     if( !sg )  {
       E.ProcessingError(__OlxSrcInfo, "Could not find specified space group/Laue class/Point group: ") << Cmds[0];
@@ -5660,7 +5655,7 @@ void TMainForm::macSGInfo(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   TPtrList<TSpaceGroup> AllGroups;
   smatd_list SGMatrices;
 
-  TBasicApp::GetLog() << ( sg->IsCentrosymmetric() ? "Centrosymmetric" : "Non centrocymmetric") << '\n';
+  TBasicApp::GetLog() << ( sg->IsCentrosymmetric() ? "Centrosymmetric" : "Non centrosymmetric") << '\n';
   TBasicApp::GetLog() << ( olxstr("Hall symbol: ") << sg->GetHallSymbol() << '\n');
 
   TSymmLib::GetInstance()->GetGroupByNumber( sg->GetNumber(), AllGroups );
@@ -5685,22 +5680,23 @@ void TMainForm::macSGInfo(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   TTTable<TStrList> tab( SGMatrices.Count(), 2 );
 
   for( int i=0; i < SGMatrices.Count(); i++ )
-    tab[i][0] = TSymmParser::MatrixToSymm( SGMatrices[i] );
+    tab[i][0] = TSymmParser::MatrixToSymmEx( SGMatrices[i] );
 
-  for( int i=0; i < TSymmLib::GetInstance()->SymmElementCount(); i++ )  {
-    TSymmElement& se = TSymmLib::GetInstance()->GetSymmElement(i);
-    for( int j=0; j < SGMatrices.Count(); j++ )  SGMatrices[j].SetTag(0);
-    if( TSpaceGroup::ContainsElement( SGMatrices, &se ) )  {
-      for( int j=0; j < SGMatrices.Count(); j++ )  {
-        if( SGMatrices[j].GetTag() != 0 )  {
-          if( !tab[j][1].IsEmpty() )  tab[j][1] << ", ";
-          tab[j][1] << TSymmLib::GetInstance()->GetSymmElement(i).GetName();
-        }
-      }
-    }
-  }
   TStrList Output;
-  tab.CreateTXTList(Output, EmptyString, true, true, ' ');
+  tab.CreateTXTList(Output, "Symmetry operators", true, true, ' ');
+  // possible systematic absences
+  Output.Add("Elements causing systematic absences: ");
+  TPtrList<TSymmElement> ref, sg_elm;
+  for( int i=0; i < TSymmLib::GetInstance()->SymmElementCount(); i++ )
+    ref.Add( & TSymmLib::GetInstance()->GetSymmElement(i) );
+  sg->SplitIntoElements(ref, sg_elm);
+  if( sg_elm.IsEmpty() )
+    Output.Last().String() << "none";
+  else  {
+    for( int i=0; i < sg_elm.Count(); i++ )
+      Output.Last().String() << sg_elm[i]->GetName() << ' ';
+  }
+  Output.Add(EmptyString);
   TBasicApp::GetLog() << ( Output );
 }
 //..............................................................................

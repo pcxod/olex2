@@ -150,7 +150,7 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
   // evaluete and print systematic absences; also fill the Present elements list
   TPSTypeList<double, TCLattice*> SortedLatticeHits;
   TPtrList<TSpaceGroup>  SGToConsider;
-  TPtrList<TSymmElement>  PresentElements;
+  TPtrList<TSymmElement>  PresentElements, AllElements;
 
   double threshold = 0.02*SGTest.GetAverageI();
   TTypeList<TElementStats<TCLattice*> > LatticeHits;
@@ -163,6 +163,7 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
   saStat.ColName(3) = "Flag";
   for( int i=0; i < SAHits.Count(); i++ )  {
     saStat[i][0] = SAHits[i].GetSymmElement().GetName();
+    AllElements.Add( &SAHits[i].GetSymmElement() );
     if( SAHits[i].GetCount() != 0 )  {
       double v = SAHits[i].GetSummI()/SAHits[i].GetCount();
       saStat[i][1] << olxstr::FormatFloat(2, v) << '('
@@ -174,7 +175,7 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
         else
           PresentElements.Add( &SAHits[i].GetSymmElement() );
       }
-      else
+      else 
         saStat[i][3] = '-';
     }
     else
@@ -284,7 +285,7 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
   }
   TTypeList<TElementStats<TSpaceGroup*> > SATestResults;
   SGTest.WeakRefTest(SGToConsider, SATestResults);
-  TPSTypeList<double, AnAssociation2<TElementStats<TSpaceGroup*>*, int>* > sortedSATestResults;
+  TPSTypeList<double, AnAssociation3<TElementStats<TSpaceGroup*>*, int, int>* > sortedSATestResults;
 
   for( int i=0; i < SATestResults.Count(); i++ )  {
     if( SATestResults[i].GetWeakCount() == 0  ) continue;
@@ -294,10 +295,10 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
     while( v < 1 )  v ++;
     v *= mult;
 
-    sortedSATestResults.Add( SATestResults[i].GetWeakCount()/v, new AnAssociation2<TElementStats<TSpaceGroup*>*, int>(&SATestResults[i], 0));
+    sortedSATestResults.Add( SATestResults[i].GetWeakCount()/v, new AnAssociation3<TElementStats<TSpaceGroup*>*, int, int>(&SATestResults[i], 0, 0));
   }
 
-  TTTable<TStrList> sgTab(sortedSATestResults.Count(), 7);
+  TTTable<TStrList> sgTab(sortedSATestResults.Count(), 8);
   sgTab.ColName(0) = "SG";
   sgTab.ColName(1) = "Strong I/Count";
   sgTab.ColName(2) = "Count";
@@ -305,7 +306,9 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
   sgTab.ColName(4) = "Count";
   sgTab.ColName(5) = "Laue class";
   sgTab.ColName(6) = "SA match";
+  sgTab.ColName(7) = "SA/SG SA";
   int maxElementFound = 0;
+  bool FilterByElementCount = false;
   for( int i=0; i < sortedSATestResults.Count(); i++ )  {
     sgTab[i][0] = sortedSATestResults.GetObject(i)->GetA()->GetObject()->GetName();
     if( sortedSATestResults.GetObject(i)->GetA()->GetStrongCount() != 0 )  {
@@ -325,13 +328,14 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
     }
     sgTab[i][4] = sortedSATestResults.GetObject(i)->GetA()->GetWeakCount();
     sgTab[i][5] = sortedSATestResults.GetObject(i)->GetA()->GetObject()->GetLaueClass().GetBareName();
-    if( PresentElements.Count() )  {
+    if( !PresentElements.IsEmpty() )  {
       int ElementFound = 0;
       smatd_list sgMl;
+      sortedSATestResults.GetObject(i)->GetA()->GetObject()->GetMatrices( sgMl, mattAll);
+      TPtrList<TSymmElement> sgElm;
+      TSpaceGroup::SplitIntoElements(sgMl, AllElements, sgElm);
       for( int j=0; j < PresentElements.Count(); j++ )  {
-        if( !PresentElements[j] )  continue;
-        sgMl.Clear();
-        sortedSATestResults.GetObject(i)->GetA()->GetObject()->GetMatrices( sgMl, mattAll);
+        if( PresentElements[j] == NULL )  continue;
 
         if( PresentElements[j]->GetName() == "P1121" )  {
           if( sortedSATestResults.GetObject(i)->GetA()->GetObject()->GetBravaisLattice().GetName() == "Tetragonal" )  {
@@ -350,10 +354,18 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
         else
           if( TSpaceGroup::ContainsElement( sgMl, PresentElements[j] ) )  ElementFound++;
       }
-      sgTab[i][6] << olxstr::FormatFloat(0, 100*ElementFound/PresentElements.Count()) << '%';
+      sgTab[i][6] << olxstr::FormatFloat(0, (double)ElementFound*100/PresentElements.Count()) << '%';
       sortedSATestResults.GetObject(i)->B() = ElementFound;
+      sortedSATestResults.GetObject(i)->C() = sgElm.Count();
       if( ElementFound > maxElementFound )
         maxElementFound = ElementFound;
+      if( sgElm.Count() <= PresentElements.Count() )
+        FilterByElementCount = true;
+
+      if( !sgElm.IsEmpty() )
+        sgTab[i][7] << olxstr::FormatFloat(0, (double)ElementFound*100/sgElm.Count()) << '%';
+      else
+        sgTab[i][7] << '-';
     }
   }
   // print the result of analysis
@@ -363,10 +375,16 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
     XApp.GetLog() << ( Output );
   }
   TPtrList<TSpaceGroup> FoundSpaceGroups;
-  if( PresentElements.Count() )  {
+  if( !PresentElements.IsEmpty() )  {
     for( int i=sortedSATestResults.Count()-1; i >= olx_max(0, sortedSATestResults.Count()-6) ; i-- )
-      if( sortedSATestResults.GetObject(i)->GetB() == maxElementFound ) 
-        FoundSpaceGroups.Add( sortedSATestResults.GetObject(i)->GetA()->GetObject() );
+      if( sortedSATestResults.GetObject(i)->GetB() == maxElementFound )  { 
+        if( FilterByElementCount )  {
+          if( sortedSATestResults.GetObject(i)->GetC() <= PresentElements.Count() )
+            FoundSpaceGroups.Add( sortedSATestResults.GetObject(i)->GetA()->GetObject() );
+        }
+        else
+          FoundSpaceGroups.Add( sortedSATestResults.GetObject(i)->GetA()->GetObject() );
+      }
   }
   else  {
     // three hits from here
@@ -384,7 +402,7 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
       }
     }
   }
-  if( FoundSpaceGroups.Count() != 0 )  {
+  if( !FoundSpaceGroups.IsEmpty() )  {
     XApp.GetLog() << "Possible space groups:";
     olxstr tmp, sglist;
     TStrList Output1;
