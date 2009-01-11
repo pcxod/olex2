@@ -144,7 +144,7 @@ bool TXGlLabels::Orient(TGlPrimitive *P)  {
         Tmp << "occu";
       }
       if( ca.GetEllipsoid() != NULL )  {
-        olxstr eadp("Ua:", 40);
+        olxstr eadp((const char*)"Ua:", 40);
         int ec=0;
         for( int j=0; j < 6; j++ )  {
           if( ca.GetVarRef(var_name_U11+j) != NULL && ca.GetVarRef(var_name_U11+j)->relation_type == relation_None )  {
