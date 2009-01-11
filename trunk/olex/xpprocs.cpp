@@ -1993,21 +1993,30 @@ void TMainForm::macBRad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 }
 //..............................................................................
 void TMainForm::macKill(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  if( Cmds.Count() == 1 && Cmds[0].Comparei("sel") == 0 )  {
-    TPtrList<AGDrawObject> Objects;
-    TGlGroup *sel = FXApp->Selection();
-    for( int i=0; i < sel->Count(); i++ )  
-      Objects.Add( (AGDrawObject*)sel->Object(i) );
-    FUndoStack->Push( FXApp->DeleteXObjects( Objects ) );
-    sel->RemoveDeleted();
+  if( Cmds.Count() == 1 )  {
+    if( Cmds[0].Comparei("sel") == 0 )  {
+      TPtrList<AGDrawObject> Objects;
+      TGlGroup *sel = FXApp->Selection();
+      for( int i=0; i < sel->Count(); i++ )  
+        Objects.Add( (AGDrawObject*)sel->Object(i) );
+      FUndoStack->Push( FXApp->DeleteXObjects( Objects ) );
+      sel->RemoveDeleted();
+      return;
+    }
+    if( Cmds[0].Comparei("$Q") == 0 )  {
+      TXAtomPList Atoms;
+      FXApp->FindXAtoms("$Q", Atoms, true, true);
+      if( Atoms.IsEmpty() )  return;
+      delete FXApp->DeleteXAtoms(Atoms);
+      ProcessXPMacro("fuse", Error);
+      return;
+    }
   }
-  else  {
-    TXAtomPList Atoms;
-    FXApp->FindXAtoms(Cmds.Text(' '), Atoms, true, Options.Contains('h'));
-    if( Atoms.IsEmpty() )  return;
+  TXAtomPList Atoms;
+  FXApp->FindXAtoms(Cmds.Text(' '), Atoms, true, Options.Contains('h'));
+  if( Atoms.IsEmpty() )  return;
 
-    FUndoStack->Push( FXApp->DeleteXAtoms(Atoms) );
-  }
+  FUndoStack->Push( FXApp->DeleteXAtoms(Atoms) );
 }
 //..............................................................................
 void TMainForm::macHide(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {

@@ -1422,7 +1422,7 @@ void TMainForm::OnDrawStyleChange(wxCommandEvent& event)  {
     case ID_DSES: ProcessXPMacro("telp", MacroError);  break;
     case ID_DSSP: ProcessXPMacro("sfil", MacroError);  break;
     case ID_DSWF: ProcessXPMacro("proj", MacroError);  break;
-    case ID_DSST: ProcessXPMacro("sticks", MacroError);  break;
+    case ID_DSST: ProcessXPMacro("tubes                                                                                                  ", MacroError);  break;
     case ID_SceneProps:
       TdlgSceneProps *Dlg = new TdlgSceneProps(this, FXApp);
       if( Dlg->ShowModal() == wxID_OK )  {
