@@ -219,6 +219,12 @@ bool TWinProcess::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender, co
     }
     break;
   }
+  // Win98 fix...
+  unsigned long pec = 0;
+  if( !Terminated && GetExitCodeProcess(ProcessInfo.hProcess, &pec) != 0 )
+    if( pec != STILL_ACTIVE )
+      Terminated = true;
+  //
   if( Terminated )  {
     if( !Str.IsEmpty() )  {
       AddString(Str);
