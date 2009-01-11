@@ -88,7 +88,7 @@ public:
             //
             int afix = TXlConGen::ShelxToOlex(Hfix, AE);
             if( afix != -1 )  {
-              xlConGen->FixAtom(AE, afix, TAtomsInfo::GetInstance().GetAtomInfo(iHydrogenIndex), false, &generated);
+              xlConGen->FixAtom(AE, afix, TAtomsInfo::GetInstance().GetAtomInfo(iHydrogenIndex), NULL, &generated);
               if( !generated.IsEmpty() )  {
                 for( int j=0; j < generated.Count(); j++ )  {
                   generated[j]->SetPart( parts[i] );

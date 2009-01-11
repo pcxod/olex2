@@ -3707,8 +3707,8 @@ TStrList TMainForm::GetPluginList() const {
 //..............................................................................
 bool TMainForm::IsControl(const olxstr& _cname) const {
   int di = _cname.IndexOf("->");
-  olxstr pname( di == -1 ? EmptyString : _cname.SubStringTo(di));
-  olxstr cname( di == -1 ? _cname : _cname.SubStringFrom(di+2));
+  olxstr pname = (di == -1 ? EmptyString : _cname.SubStringTo(di));
+  olxstr cname = (di == -1 ? _cname : _cname.SubStringFrom(di+2));
   THtml* html = pname.IsEmpty() ? GetHtml() : GetHtml(pname);  
   return html == NULL ? false : (html->FindObject(cname) != NULL);
 }

@@ -181,6 +181,14 @@ public:
     data[0] *= v;  data[1] *= v;  data[2] *= v;
     return *this;
   }
+  inline TVector3<T>& operator += (double v)  {
+    data[0] += v;  data[1] += v;  data[2] += v;
+    return *this;
+  }
+  inline TVector3<T>& operator -= (double v)  {
+    data[0] -= v;  data[1] -= v;  data[2] -= v;
+    return *this;
+  }
 #endif
   template <class AT> inline TVector3<T>& operator /= (AT v)  {
     data[0] /= v;  data[1] /= v;  data[2] /= v;
