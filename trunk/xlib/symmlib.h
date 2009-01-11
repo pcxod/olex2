@@ -82,7 +82,10 @@ public:
 
   bool EqualsWithoutTranslation (const TSpaceGroup& sg) const;
   bool IsSubElement( TSpaceGroup* symme )  const;
-
+  // decomoses space group into symmetry elements using reference as the basis
+  void SplitIntoElements(TPtrList<TSymmElement>& reference, TPtrList<TSymmElement>& res);
+  static void SplitIntoElements(smatd_list& matrices, TPtrList<TSymmElement>& reference, TPtrList<TSymmElement>& res);
+  
   void AddMatrix(const smatd& m);
   void AddMatrix(double xx, double xy, double xz, 
                  double yx, double yy, double yz, 
@@ -114,18 +117,21 @@ public:
   bool ContainsGroup(TSpaceGroup* symme);
 };
 
-class TSymmElement  {
+class TSymmElement : public ACollectionItem {
   smatd_list Matrices;
   olxstr Name;
+  TSymmElement* SuperElement;
 public:
   TSymmElement(const olxstr& name, TSpaceGroup* sg);
-  TSymmElement(const olxstr& name)  {  Name = name;  }
+  TSymmElement(const olxstr& name) : Name(name), SuperElement(NULL)  {  }
   virtual ~TSymmElement()  {  }
 
   inline TSymmElement& AddMatrix(const smatd& m)  {  Matrices.AddCCopy(m);  return *this;  }
   inline int  MatrixCount()  const  {  return Matrices.Count();  }
   smatd&  GetMatrix(int i) const  {  return Matrices[i];  }
   const olxstr& GetName()  const   {  return Name;  }
+  inline TSymmElement* GetSuperElement() const {  return SuperElement;  }
+  friend class TSymmLib;
 };
 
 class TBravaisLattice  {

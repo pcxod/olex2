@@ -677,20 +677,12 @@ bool TSpaceGroup::ContainsElement( const smatd_list& matrices, TSymmElement* sym
 
   for( int i=0; i  < symme->MatrixCount(); i++ )  {
     bool found = false;
-    smatd& m = symme->GetMatrix(i);
+    const smatd& m = symme->GetMatrix(i);
     for( int j=0; j  < matrices.Count(); j++ )  {
       smatd& m1 = matrices[j];
       if( m1.GetTag() )  continue;
+      if( !(m.r == m1.r) )  continue;
       bool equal = true;
-//      for( int k=0; k < 3; k++ )  {
-//        for( int l=0; l < 3; l++ )  {
-//          if( m[k][l] != m1[k][l] )  {
-//            equal = false;
-//            break;
-//          }
-//        }
-      // have to consider sign change only for centrisymmetric groups
-      if( !equal )  continue;
       for( int k=0; k < 3; k++ )  {
         // check only if the necessary translations do exist
         if( m.t[k] == 0 )  continue;
@@ -771,6 +763,63 @@ bool TSpaceGroup::IsSubElement( TSpaceGroup* symme )  const  {
     if( !found )  return false;
   }
   return true;
+}
+//..............................................................................
+void TSpaceGroup::SplitIntoElements(TPtrList<TSymmElement>& ref, TPtrList<TSymmElement>& sgElm) {
+  smatd_list mat;
+  GetMatrices(mat, mattAll^mattIdentity);
+  SplitIntoElements(mat, ref, sgElm);
+}
+void TSpaceGroup::SplitIntoElements(smatd_list& mat, TPtrList<TSymmElement>& ref, TPtrList<TSymmElement>& sgElm) {
+  for( int i=0; i < mat.Count(); i++ )
+    mat[i].SetTag(0);
+  for( int i=0; i < ref.Count(); i++ )  {
+    ref[i]->SetTag(0);
+    if( mat.Count() < ref[i]->MatrixCount() )  continue;
+    bool elm_found = true;
+    for( int j=0; j < ref[i]->MatrixCount(); j++ )  {
+      bool found = false;
+      const smatd& m = ref[i]->GetMatrix(j);
+      for( int k=0; k < mat.Count(); k++ )  {
+        smatd& m1 = mat[k];
+        if( !(m.r == m1.r) )  continue;
+        bool equal = true;
+        for( int l=0; l < 3; l++ )  {
+          if( m.t[l] == 0 )  continue;
+          double diff = m.t[l] - m1.t[l];
+          double summ = m.t[l] + m1.t[l];
+          int iv = (int)diff;  diff -= iv;
+          iv = (int)summ;      summ -= iv;
+          if( fabs(diff) < 0.01 || fabs(diff) > 0.99 )  diff = 0;
+          if( fabs(summ) < 0.01 || fabs(summ) > 0.99 )  summ = 0;
+          if( diff < 0 )  diff += 1;
+          if( summ < 0 )  summ += 1;
+          if( diff > 0.01 && summ > 0.01 )  {
+            equal = false;
+            break;
+          }
+        }
+        if( equal )  {
+          found = true;
+          break;
+        }
+      }
+      if( !found )  {
+        elm_found = false;
+        break;
+      }
+    }
+    if( elm_found )  {
+      sgElm.Add( ref[i] );
+      ref[i]->SetTag(1);
+    }
+  }
+  // analyse the result
+  for( int i=0; i < sgElm.Count(); i++ )  {
+    if( sgElm[i]->GetSuperElement() != NULL && sgElm[i]->GetSuperElement()->GetTag() == 1 )
+      sgElm[i] = NULL;
+  }
+  sgElm.Pack();
 }
 //..............................................................................
 bool TSpaceGroup::EqualsWithoutTranslation (const TSpaceGroup& sg) const  {
@@ -1141,6 +1190,7 @@ int TBravaisLattice::FindSpaceGroups(TPtrList<TSpaceGroup>& SpaceGroups) const  
 TSymmElement::TSymmElement(const olxstr& name, TSpaceGroup* sg)  {
   sg->GetMatrices(Matrices, mattAll^mattIdentity);
   Name = name;
+  SuperElement = NULL;
 }
 //..............................................................................
 //..............................................................................
@@ -1249,35 +1299,57 @@ TSymmLib::TSymmLib(const olxstr& FN)  {
 //  SymmetryElements.AddNew<olxstr, TSpaceGroup*>("2--", FindGroup("P211") );
 //  SymmetryElements.AddNew<olxstr, TSpaceGroup*>("-2-", FindGroup("P2") );
 //  SymmetryElements.AddNew<olxstr, TSpaceGroup*>("--2", FindGroup("P112") );
-  SymmetryElements.AddNew<olxstr, TSpaceGroup*>("21--", FindGroup("P2111") );
-  SymmetryElements.AddNew<olxstr, TSpaceGroup*>("-21-", FindGroup("P21") );
-  SymmetryElements.AddNew<olxstr, TSpaceGroup*>("--21", FindGroup("P1121") );
+  // 0.5+X,-Y,-Z
+  TSymmElement& se_p2111 = SymmetryElements.AddNew<olxstr, TSpaceGroup*>("21--", FindGroup("P2111") );
+  // -X,0.5+Y,-Z
+  TSymmElement& se_p21 = SymmetryElements.AddNew<olxstr, TSpaceGroup*>("-21-", FindGroup("P21") );
+  // -X,-Y,0.5+Z
+  TSymmElement& se_p1121 = SymmetryElements.AddNew<olxstr, TSpaceGroup*>("--21", FindGroup("P1121") );
 //  SymmetryElements.AddNew<olxstr, TSpaceGroup*>("3", FindGroup("P3") );
+  //-Y,+X-Y,0.333+Z;+Y-X,-X,0.667+Z
   SymmetryElements.AddNew<olxstr, TSpaceGroup*>("31", FindGroup("P31") );
+  // -Y,+X-Y,0.667+Z;+Y-X,-X,0.333+Z
   SymmetryElements.AddNew<olxstr, TSpaceGroup*>("32", FindGroup("P32") );
 //  SymmetryElements.AddNew<olxstr, TSpaceGroup*>("4", FindGroup("P4") );
-  SymmetryElements.AddNew<olxstr, TSpaceGroup*>("41", FindGroup("P41") );
+  //-Y,+X,0.25+Z;-X,-Y,0.5+Z;+Y,-X,0.75+Z
+  TSymmElement& se_p41 = SymmetryElements.AddNew<olxstr, TSpaceGroup*>("41", FindGroup("P41") );
+  //-Y,+X,0.5+Z;-X,-Y,+Z;+Y,-X,0.5+Z
   SymmetryElements.AddNew<olxstr, TSpaceGroup*>("42", FindGroup("P42") );
+  // -Y,+X,0.75+Z;-X,-Y,0.5+Z;+Y,-X,0.25+Z
   SymmetryElements.AddNew<olxstr, TSpaceGroup*>("43", FindGroup("P43") );
 //  SymmetryElements.AddNew<olxstr, TSpaceGroup*>("6", FindGroup("P6") );
+  //-Y+X,+X,0.167+Z;-Y,+X-Y,0.333+Z;-X,-Y,0.5+Z;+Y-X,-X,0.667+Z;+Y,-X+Y,0.833+Z
   SymmetryElements.AddNew<olxstr, TSpaceGroup*>("61", FindGroup("P61") );
+  //-Y+X,+X,0.333+Z;-Y,+X-Y,0.667+Z;-X,-Y,+Z;+Y-X,-X,0.333+Z;+Y,-X+Y,0.667+Z
   SymmetryElements.AddNew<olxstr, TSpaceGroup*>("62", FindGroup("P62") );
+  //-Y+X,+X,0.5+Z;-Y,+X-Y,+Z;-X,-Y,0.5+Z;+Y-X,-X,+Z;+Y,-X+Y,0.5+Z
   SymmetryElements.AddNew<olxstr, TSpaceGroup*>("63", FindGroup("P63") );
+  //-Y+X,+X,0.667+Z;-Y,+X-Y,0.333+Z;-X,-Y,+Z;+Y-X,-X,0.667+Z;+Y,-X+Y,0.333+Z
   SymmetryElements.AddNew<olxstr, TSpaceGroup*>("64", FindGroup("P64") );
+  //-Y+X,+X,0.833+Z;-Y,+X-Y,0.667+Z;-X,-Y,0.5+Z;+Y-X,-X,0.333+Z;+Y,-X+Y,0.167+Z
   SymmetryElements.AddNew<olxstr, TSpaceGroup*>("65", FindGroup("P65") );
+  
+  // -X,0.5+Y,0.5+Z
+  TSymmElement* se_n11 = &SymmetryElements.AddNew<olxstr, TSpaceGroup*>("n--", FindGroup("Pn11") );
+  //0.5+X,-Y,0.5+Z
+  TSymmElement* se_n = &SymmetryElements.AddNew<olxstr, TSpaceGroup*>("-n-", FindGroup("Pn") );
+  //0.5+X,0.5+Y,-Z
+  TSymmElement* se_11n = &SymmetryElements.AddNew<olxstr, TSpaceGroup*>("--n", FindGroup("P11n") );
+  
+  // 0.5+X,-Y,+Z
+  SymmetryElements.AddNew<olxstr, TSpaceGroup*>("-a-", FindGroup("Pa") ).SuperElement = se_n;
+  //0.5+X,+Y,-Z
+  SymmetryElements.AddNew<olxstr, TSpaceGroup*>("--a", FindGroup("P11a") ).SuperElement = se_11n;
 
-  SymmetryElements.AddNew<olxstr, TSpaceGroup*>("n--", FindGroup("Pn11") );
-  SymmetryElements.AddNew<olxstr, TSpaceGroup*>("-n-", FindGroup("Pn") );
-  SymmetryElements.AddNew<olxstr, TSpaceGroup*>("--n", FindGroup("P11n") );
+  //-X,0.5+Y,+Z
+  SymmetryElements.AddNew<olxstr, TSpaceGroup*>("b--", FindGroup("Pb11") ).SuperElement = se_n11;
+  //+X,0.5+Y,-Z
+  SymmetryElements.AddNew<olxstr, TSpaceGroup*>("--b", FindGroup("P11b") ).SuperElement = se_11n;
 
-  SymmetryElements.AddNew<olxstr, TSpaceGroup*>("-a-", FindGroup("Pa") );
-  SymmetryElements.AddNew<olxstr, TSpaceGroup*>("--a", FindGroup("P11a") );
-
-  SymmetryElements.AddNew<olxstr, TSpaceGroup*>("b--", FindGroup("Pb11") );
-  SymmetryElements.AddNew<olxstr, TSpaceGroup*>("--b", FindGroup("P11b") );
-
-  SymmetryElements.AddNew<olxstr, TSpaceGroup*>("c--", FindGroup("Pc11") );
-  SymmetryElements.AddNew<olxstr, TSpaceGroup*>("-c-", FindGroup("Pc") );
+  //-X,+Y,0.5+Z
+  SymmetryElements.AddNew<olxstr, TSpaceGroup*>("c--", FindGroup("Pc11") ).SuperElement = se_n11;
+  //+X,-Y,0.5+Z
+  SymmetryElements.AddNew<olxstr, TSpaceGroup*>("-c-", FindGroup("Pc") ).SuperElement = se_n;
 
 //  SymmetryElements.AddNew<olxstr, TSpaceGroup*>("m--", FindGroup("Pm11") );
 //  SymmetryElements.AddNew<olxstr, TSpaceGroup*>("-m-", FindGroup("Pm") );
