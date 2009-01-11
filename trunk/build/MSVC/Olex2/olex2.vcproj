@@ -42,7 +42,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="0"
-				AdditionalIncludeDirectories="..\..\..\glib;..\..\..\gxlib;..\..\..\repository;..\..\..\xlib;..\..\..\olex;..\..\..\sdl;&quot;E:\wxWidgets-2.8.3\include&quot;;C:\Python25\include;&quot;E:\wxWidgets-2.8.3\lib\vc_lib\mswd&quot;"
+				AdditionalIncludeDirectories="..\..\..\glib;..\..\..\gxlib;..\..\..\repository;..\..\..\xlib;..\..\..\olex;..\..\..\sdl;&quot;E:\wxWidgets-2.8.7\include&quot;;C:\Python25\include;&quot;E:\wxWidgets-2.8.7\lib\vc_lib\mswd&quot;"
 				PreprocessorDefinitions="WIN32;_CRT_SECURE_NO_DEPRECATE;__WXMSW__;__WXWIDGETS__;__WXDEBUG__"
 				StringPooling="true"
 				MinimalRebuild="false"
@@ -71,7 +71,7 @@
 				UseUnicodeResponseFiles="true"
 				AdditionalDependencies="alglib.lib sdl.lib xlib.lib gllib.lib gxlib.lib wxbase28d.lib wxbase28d_net.lib wxbase28d_odbc.lib wxbase28d_xml.lib wxexpatd.lib wxjpegd.lib wxmsw28d_adv.lib wxmsw28d_aui.lib wxmsw28d_core.lib wxmsw28d_dbgrid.lib wxmsw28d_gl.lib wxmsw28d_media.lib wxmsw28d_qa.lib wxmsw28d_richtext.lib wxmsw28d_xrc.lib wxmsw28d_html.lib wxpngd.lib wxregexd.lib wxtiffd.lib wxzlibd.lib mapi32.lib glu32.lib user32.lib opengl32.lib gdi32.lib ole32.lib advapi32.lib comdlg32.lib comctl32.lib shell32.lib rpcrt4.lib oleaut32.lib kernel32.lib wsock32.lib $(NOINHERIT)"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="&quot;$(TargetDir)&quot;;&quot;E:\wxWidgets-2.8.3\lib\vc_lib&quot;;&quot;$(SolutionDir)$(ConfigurationName)&quot;;C:\Python25\Libs"
+				AdditionalLibraryDirectories="&quot;$(TargetDir)&quot;;&quot;E:\wxWidgets-2.8.7\lib\vc_lib&quot;;&quot;$(SolutionDir)$(ConfigurationName)&quot;;C:\Python25\Libs"
 				IgnoreAllDefaultLibraries="false"
 				IgnoreDefaultLibraryNames=""
 				GenerateDebugInformation="true"
@@ -112,8 +112,8 @@
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="1"
-			CharacterSet="1"
-			ManagedExtensions="2"
+			CharacterSet="0"
+			ManagedExtensions="0"
 			WholeProgramOptimization="1"
 			>
 			<Tool
@@ -133,7 +133,8 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				PreprocessorDefinitions="WIN32;NDEBUG"
+				AdditionalIncludeDirectories="..\..\..\glib;..\..\..\gxlib;..\..\..\repository;..\..\..\xlib;..\..\..\olex;..\..\..\sdl;&quot;E:\wxWidgets-2.8.7\include&quot;;C:\Python25\include;&quot;E:\wxWidgets-2.8.7\lib\vc_lib\msw&quot;"
+				PreprocessorDefinitions="WIN32;NDEBUG;__WXWIDGETS__"
 				RuntimeLibrary="2"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
@@ -150,11 +151,12 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="$(NoInherit)"
+				AdditionalDependencies="alglib.lib sdl.lib xlib.lib gllib.lib gxlib.lib wxbase28.lib wxbase28_net.lib wxbase28_xml.lib wxexpat.lib wxjpeg.lib wxmsw28_adv.lib wxmsw28_aui.lib wxmsw28_core.lib wxmsw28_dbgrid.lib wxmsw28_gl.lib wxmsw28_media.lib wxmsw28_qa.lib wxmsw28_richtext.lib wxmsw28_html.lib wxpng.lib wxregex.lib wxtiff.lib wxzlib.lib mapi32.lib glu32.lib user32.lib opengl32.lib gdi32.lib ole32.lib advapi32.lib comdlg32.lib comctl32.lib shell32.lib rpcrt4.lib oleaut32.lib kernel32.lib wsock32.lib $(NOINHERIT)"
 				LinkIncremental="1"
+				AdditionalLibraryDirectories="&quot;$(TargetDir)&quot;;&quot;E:\wxWidgets-2.8.7\lib\vc_lib&quot;;&quot;$(SolutionDir)$(ConfigurationName)&quot;;C:\Python25\Libs"
 				GenerateDebugInformation="true"
 				SubSystem="2"
-				EntryPointSymbol="main"
+				EntryPointSymbol=""
 				TargetMachine="1"
 			/>
 			<Tool

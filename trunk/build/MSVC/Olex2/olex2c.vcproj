@@ -97,7 +97,8 @@
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)\exe"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="1"
-			CharacterSet="1"
+			CharacterSet="0"
+			ManagedExtensions="0"
 			WholeProgramOptimization="0"
 			>
 			<Tool
