@@ -811,27 +811,22 @@ void TLattice::MoveFragment(const vec3d& to, TSAtom& fragAtom)  {
     TBasicApp::GetLog().Error("Cannot perform this operation on grown structure");
     return;
   }
-
-  mat3d abc2xyz( GetAsymmUnit().GetCellToCartesian()),
-           xyz2abc( GetAsymmUnit().GetCartesianToCell());
-  abc2xyz.Transpose();
-  xyz2abc.Transpose();
-
-  vec3d from;
-  from = fragAtom.ccrd();
+  vec3d from( fragAtom.ccrd() );
   smatd* m = GetUnitCell().GetClosest(to, from, true);
   if( m != NULL )  {
     for(int i=0; i < fragAtom.GetNetwork().NodeCount(); i++ )  {
       TSAtom& SA = fragAtom.GetNetwork().Node(i);
       SA.CAtom().ccrd() = *m * SA.CAtom().ccrd();
-      if( SA.CAtom().GetEllipsoid() != NULL )
-        SA.CAtom().GetEllipsoid()->MultMatrix( abc2xyz*m->r*xyz2abc );
+      if( SA.CAtom().GetEllipsoid() != NULL )  {
+        (*SA.CAtom().GetEllipsoid()) = GetUnitCell().GetEllipsoid(m->GetTag(), SA.CAtom().GetId());
+        // alternative, used below
+        //SA.CAtom().GetEllipsoid()->MultMatrix( abc2xyz*m->r*xyz2abc );
+      }
     }
     delete m;
     Uniq();
   }
-  else
-  {
+  else  {
     TBasicApp::GetLog().Info("Could not find closest matrix");
   }
 }
@@ -842,17 +837,15 @@ void TLattice::MoveFragment(TSAtom& to, TSAtom& fragAtom)  {
     return;
   }
 
-  mat3d abc2xyz( GetAsymmUnit().GetCellToCartesian()),
-           xyz2abc( GetAsymmUnit().GetCartesianToCell());
-  abc2xyz.Transpose();
-  xyz2abc.Transpose();
+  mat3d abc2xyz( mat3d::Transpose(GetAsymmUnit().GetCellToCartesian()) ),
+           xyz2abc( mat3d::Transpose(GetAsymmUnit().GetCartesianToCell()) );
 
   smatd* m = GetUnitCell().GetClosest(to.CAtom(), fragAtom.CAtom(), true);
   if( m != NULL )  {
     if( to.CAtom().GetFragmentId() == fragAtom.CAtom().GetFragmentId() )  {
       fragAtom.CAtom().ccrd() = *m * fragAtom.CAtom().ccrd();
       if( fragAtom.CAtom().GetEllipsoid() != NULL )
-        fragAtom.CAtom().GetEllipsoid()->MultMatrix(m->r);
+        fragAtom.CAtom().GetEllipsoid()->MultMatrix(abc2xyz*m->r*xyz2abc);
     }
     else  {  // move whole fragment then
       int fragId = fragAtom.CAtom().GetFragmentId();
@@ -900,8 +893,7 @@ void TLattice::MoveFragmentG(const vec3d& to, TSAtom& fragAtom)  {
 
     OnStructureGrow->Exit(this);
   }
-  else
-  {
+  else  {
     TBasicApp::GetLog().Info("Could not find closest matrix");
   }
 }
@@ -939,8 +931,7 @@ void TLattice::MoveFragmentG(TSAtom& to, TSAtom& fragAtom)  {
 
     OnStructureGrow->Exit(this);
   }
-  else
-  {
+  else  {
     TBasicApp::GetLog().Info("Could not find closest matrix");
   }
 }
@@ -951,10 +942,8 @@ void TLattice::MoveToCenter()  {
     OnStructureGrow->Enter(this);
   }
 
-  mat3d abc2xyz( GetAsymmUnit().GetCellToCartesian()),
-           xyz2abc( GetAsymmUnit().GetCartesianToCell());
-  abc2xyz.Transpose();
-  xyz2abc.Transpose();
+  mat3d abc2xyz( mat3d::Transpose(GetAsymmUnit().GetCellToCartesian()) ),
+           xyz2abc( mat3d::Transpose(GetAsymmUnit().GetCartesianToCell()) );
 
   vec3d molCenter;
   vec3d cnt, err;
@@ -985,7 +974,8 @@ void TLattice::MoveToCenter()  {
       delete m;
     }
   }
-  if( !Generated )  Uniq();
+  if( !Generated )  
+    Uniq();
   else  {
     RestoreCoordinates();
     Disassemble();
@@ -1004,10 +994,8 @@ void TLattice::Compaq()  {
   vec3d molCenter, acenter;
   smatd* m;
 
-  mat3d abc2xyz( GetAsymmUnit().GetCellToCartesian()),
-           xyz2abc( GetAsymmUnit().GetCartesianToCell());
-  abc2xyz.Transpose();
-  xyz2abc.Transpose();
+  mat3d abc2xyz( mat3d::Transpose(GetAsymmUnit().GetCellToCartesian()) ),
+           xyz2abc( mat3d::Transpose(GetAsymmUnit().GetCartesianToCell()) );
 
   molCenter[0] = 0;  molCenter[1] = 0;  molCenter[2] = 0;
   TNetwork* frag = Fragments[0];
@@ -1058,7 +1046,8 @@ void TLattice::Compaq()  {
       }
     }
   }
-  if( !Generated )  Uniq();
+  if( !Generated )  
+    Uniq();
   else  {
     Disassemble();
     OnStructureGrow->Exit(this);
@@ -1070,10 +1059,8 @@ void TLattice::CompaqAll()  {
 
   if( Fragments.Count() < 2 )  return;
 
-  mat3d abc2xyz( GetAsymmUnit().GetCellToCartesian()),
-           xyz2abc( GetAsymmUnit().GetCartesianToCell());
-  abc2xyz.Transpose();
-  xyz2abc.Transpose();
+  mat3d abc2xyz( mat3d::Transpose(GetAsymmUnit().GetCellToCartesian()) ),
+           xyz2abc( mat3d::Transpose(GetAsymmUnit().GetCartesianToCell()));
 
   smatd* m;
   for( int i=0; i < Fragments.Count(); i++ )  {
@@ -1111,10 +1098,8 @@ void TLattice::TransformFragments(const TSAtomPList& fragAtoms, const smatd& tra
     return;
   }
 
-  mat3d abc2xyz( GetAsymmUnit().GetCellToCartesian()),
-           xyz2abc( GetAsymmUnit().GetCartesianToCell());
-  abc2xyz.Transpose();
-  xyz2abc.Transpose();
+  mat3d abc2xyz( mat3d::Transpose(GetAsymmUnit().GetCellToCartesian()) ),
+           xyz2abc( mat3d::Transpose(GetAsymmUnit().GetCartesianToCell()) );
 
   for(int i=0; i < fragAtoms.Count(); i++ )
     fragAtoms[i]->GetNetwork().SetTag(i);
