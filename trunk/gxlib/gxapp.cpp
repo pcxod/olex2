@@ -167,7 +167,18 @@ public:
     FParent->ClearLabels();
     // make sure that these are only cleared when file is loaded
     if( Sender && EsdlInstanceOf(*Sender, TXFile) )  {
-      FParent->ClearIndividualCollections();
+      if( Data != NULL && EsdlInstanceOf(*Data, olxstr) )  {
+        olxstr s1( TEFile::UnixPath(TEFile::ChangeFileExt(*(olxstr*)Data, EmptyString)) );
+        olxstr s2( TEFile::UnixPath(TEFile::ChangeFileExt(FParent->XFile().GetFileName(), EmptyString)) );
+        if( s1 != s2 )  {
+          FParent->ClearIndividualCollections();
+          FParent->GetRender().GetStyles()->RemoveNamedStyles("Q");
+        }
+      }
+      else  {
+        FParent->ClearIndividualCollections();
+        FParent->GetRender().GetStyles()->RemoveNamedStyles("Q");
+      }
       FParent->DUnitCell().ResetCentres();
       //FParent->XGrid().Clear();
     }
@@ -3275,7 +3286,7 @@ void TGXApp::ToDataItem(TDataItem& item, wxOutputStream& zos) const  {
         break;
       gs = gs->ParentStyle();
     }
-    if( gs->Label() == "Q" )
+    if( gs->GetLabel() == "Q" )
       continue;
     if( styles.IndexOf(gs) == -1 )
       styles.Add( gs );
@@ -3442,9 +3453,11 @@ void TGXApp::FromDataItem(TDataItem& item, wxInputStream& zis)  {
   TDataItem& renderer = item.FindRequiredItem("Renderer");
   vec3d min = PersUtil::FloatVecFromStr(renderer.GetRequiredField("min"));
   vec3d max = PersUtil::FloatVecFromStr(renderer.GetRequiredField("max"));
+  FGlRender->SetSceneComplete(false);
   FGlRender->ClearMinMax();
   FGlRender->UpdateMaxMin(max, min);
   FGlRender->Basis()->FromDataItem( item.FindRequiredItem("Basis") );
+  FGlRender->SetSceneComplete(true);
 }
 //..............................................................................
 void TGXApp::SaveModel(const olxstr& fileName) const {

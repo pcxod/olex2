@@ -67,7 +67,7 @@ public:
   TGraphicsStyle(TGraphicsStyles *S, TGraphicsStyle *Parent, const olxstr &ALabel);
   ~TGraphicsStyle();
   void Clear();
-  inline const olxstr& Label() const {  return FLabel; }
+  inline const olxstr& GetLabel() const {  return FLabel; }
   const class TGlMaterial* Material(const olxstr& PName);
   TGlMaterial* PrimitiveMaterial(const olxstr& PName, const TGlMaterial& GlM);
 
@@ -122,10 +122,16 @@ public:
 
   void ToDataItem(TDataItem& Item, bool saveAll=false) const;
   bool FromDataItem(const TDataItem& Item);
-
-  void SetStylesTag(int Tag); // sets ICollectionItem::Tag of styles to Tag
-  void RemoveStylesByTag( int Tag); // removes Styles with Style::Tag == Tag
-
+  // sets ICollectionItem::Tag of styles to Tag
+  void SetStylesTag(int Tag); 
+  // removes Styles with Style::Tag == Tag
+  void RemoveStylesByTag( int Tag); 
+  // removes non-persistens styles
+  void RemoveNonPersistent();
+  // removes non-saveable styles
+  void RemoveNonSaveable();
+  //removes styles by name
+  void RemoveNamedStyles(const TStrList& toks);
   friend class TGraphicsStyles;
 };
 
@@ -173,11 +179,30 @@ public:
 
   inline const olxstr& LinkFile()  const {  return FLinkFile; }
   inline void LinkFile(const olxstr& F)  {  FLinkFile = F; }
+  
+  // sets ICollectionItem::Tag of styles to Tag
+  void SetStylesTag(int Tag)  {
+    FRoot->SetStylesTag(Tag);
+  }
+  // removes Styles with Style::Tag == Tag
+  void RemoveStylesByTag( int Tag)  {
+    FRoot->RemoveStylesByTag(Tag);
+  }
+  // removes non-persisten styles
+  void RemoveNonPersistent()  {
+    FRoot->RemoveNonPersistent();
+  }
+  // removes non-saveable styles
+  void RemoveNonSaveable()  {
+    FRoot->RemoveNonSaveable();
+  }
+  // removes named styles, case sensitive
+  void RemoveNamedStyles(const olxstr& name)  {
+    TStrList toks(name, '.');
+    FRoot->RemoveNamedStyles(toks);
+  }
 
-  void SetStylesTag(int Tag); // sets ICollectionItem::Tag of styles to Tag
-  void RemoveStylesByTag( int Tag); // removes Styles with Style::Tag == Tag
-
-  short GetVersion() const {  return Version;  }
+  inline short GetVersion() const {  return Version;  }
 };
 
 EndGlNamespace()
