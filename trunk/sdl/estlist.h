@@ -144,6 +144,15 @@ public:
     return addedc;
   }
 //..............................................................................
+  inline void NullItem(int i)  {
+    if( Data[i] != NULL )  {
+      delete Data[i];
+      Data[i] = NULL;
+    }
+  }
+//..............................................................................
+  inline void Pack()  {  Data.Pack();  }
+//..............................................................................
   inline void Remove(size_t i)   {  delete Data[i];  Data.Delete(i);  }
 //..............................................................................
   inline int Count()    const {  return Data.Count(); }

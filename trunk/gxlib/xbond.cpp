@@ -165,9 +165,7 @@ void TXBond::ListPrimitives(TStrList &List) const {
 void TXBond::Quality(const short Val)  {
   olxstr Legend("Bonds");
   TGraphicsStyle *GS;
-  GS = FParent->Styles()->Style(Legend);
-  if( GS == NULL ) 
-    GS = FParent->Styles()->NewStyle(Legend);
+  GS = FParent->Styles()->NewStyle(Legend, true);
 
   olxstr& ConeQ = GS->GetParam("ConeQ", "0", true);
 //  double &ConeStipples = GS->ParameterValue("ConeStipples");
@@ -188,9 +186,7 @@ void TXBond::CreateStaticPrimitives()  {
   TGlMaterial GlM;
   TGlPrimitive *GlP, *GlPRC1, *GlPRD1, *GlPRD2;
   olxstr Legend("Bonds");
-  TGraphicsStyle* GS = FParent->Styles()->Style(Legend);
-  if( GS == NULL ) 
-    GS = FParent->Styles()->NewStyle(Legend);
+  TGraphicsStyle* GS = FParent->Styles()->NewStyle(Legend, true);
   double ConeQ = GS->GetParam("ConeQ", "5", true).ToDouble();
   double ConeStipples = GS->GetParam("ConeStipples", "6", true).ToDouble();
 //..............................
@@ -513,11 +509,8 @@ void TXBond::OnPrimitivesCleared()  {
 //..............................................................................
 void TXBond::ValidateBondParams()  {
   if( !FBondParams )  {
-    FBondParams =   TGlRender::GetStyles()->Style("BondParams");
-    if( !FBondParams )    {
-      FBondParams = TGlRender::GetStyles()->NewStyle("BondParams");
-      FBondParams->SetPersistent(true);
-    }
+    FBondParams = TGlRender::GetStyles()->NewStyle("BondParams", true);
+    FBondParams->SetPersistent(true);
   }
 }
 //..............................................................................

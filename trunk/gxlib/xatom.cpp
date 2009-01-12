@@ -73,9 +73,7 @@ TXAtom::TXAtom(const olxstr& collectionName, TSAtom& A, TGlRender *Render) :
 void TXAtom::Quality(const short V)  {
   olxstr Legend("Atoms");
   TGraphicsStyle *GS;
-  GS = FParent->Styles()->Style(Legend);
-  if( GS == NULL ) 
-    GS = FParent->Styles()->NewStyle(Legend);
+  GS = FParent->Styles()->NewStyle(Legend, true);
 
   olxstr &SphereQ   = GS->GetParam("SphereQ", EmptyString, true);
   olxstr &RimQ = GS->GetParam("RimQ", EmptyString, true);  // quality
@@ -523,9 +521,7 @@ void TXAtom::UpdatePrimitiveParams(TGlPrimitive *GlP)  {
 
   olxstr Legend("Atoms");
   TGraphicsStyle *GS;
-  GS = FParent->Styles()->Style(Legend);
-  if( GS == NULL ) 
-    GS = FParent->Styles()->NewStyle(Legend);
+  GS = FParent->Styles()->NewStyle(Legend, true);
   if( FStaticObjects.String(ind) == "Sphere" )
     GS->SetParam("SphereQ", GlP->Params()[1], true);
   else if( FStaticObjects.String(ind) == "Small sphere" )
@@ -549,9 +545,7 @@ void TXAtom::CreateStaticPrimitives()  {
   TGlPrimitive *GlP, *GlPRim, *GlPRC1, *GlPRD1, *GlPRD2;
   olxstr Legend("Atoms");
   TGraphicsStyle *GS;
-  GS = FParent->Styles()->Style(Legend);
-  if( !GS )
-  {  GS = FParent->Styles()->NewStyle(Legend);  }
+  GS = FParent->Styles()->NewStyle(Legend, true);
   double SphereQ   = GS->GetParam("SphereQ", "15", true).ToDouble();
   double RimR = GS->GetParam("RimR", "1.02", true).ToDouble();  // radius
   double RimW = GS->GetParam("RimW", "0.05", true).ToDouble();  // width
@@ -677,11 +671,8 @@ void TXAtom::UpdatePrimitives(int32_t Mask, const ACreationParams* cpar)  {
 //..............................................................................
 void TXAtom::ValidateAtomParams() {
   if( FAtomParams == NULL )  {
-    FAtomParams =   TGlRender::GetStyles()->Style("AtomParams");
-    if( !FAtomParams )  {
-      FAtomParams = TGlRender::GetStyles()->NewStyle("AtomParams");
-      FAtomParams->SetPersistent(true);
-    }
+    FAtomParams = TGlRender::GetStyles()->NewStyle("AtomParams", true);
+    FAtomParams->SetPersistent(true);
   }
 }
 //..............................................................................
