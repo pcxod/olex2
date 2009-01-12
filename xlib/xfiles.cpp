@@ -137,7 +137,7 @@ void TXFile::LoadFromFile(const olxstr & FN) {
     throw TFunctionFailedException(__OlxSourceInfo, exc.Replicate() );
   }
 
-  OnFileLoad->Enter(this);
+  OnFileLoad->Enter(this, &FN);
   
   GetRM().ClearAll();
   GetLattice().Clear(true);
