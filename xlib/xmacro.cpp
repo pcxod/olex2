@@ -105,7 +105,10 @@ void XLibMacros::Export(TLibrary& lib)  {
   xlib_InitMacro(Htab, "t-adds extra elements (comma separated -t=Br,I) to the donor list. Defaults are [N,O,F,Cl,S]", fpNone|fpOne|fpTwo|psCheckFileTypeIns, 
     "Adds HTBA instructions to the ins file, maximum bond length [2.9] and minimal angle [150] might be provided" );
 //_________________________________________________________________________________________________________________________
-  xlib_InitMacro(HAdd, "", fpAny|psCheckFileTypeIns, "Adds hydrogen atoms to all or provided atoms" );
+  xlib_InitMacro(HAdd, "", fpAny|psCheckFileTypeIns, "Adds hydrogen atoms to all or provided atoms, however\
+ the ring atoms are treated separately and added all the time" );
+  xlib_InitMacro(HImp, "", (fpAny^fpNone)|psFileLoaded, "Increases, decreases length of H-bonds.\
+ Arguments: value [H atoms]. Value might be +/- to specify to increase/decrease current value" );
 //_________________________________________________________________________________________________________________________
   xlib_InitMacro(FixUnit,"", fpNone|fpOne|psCheckFileTypeIns, " Sets SFAc and UNIT to current content of the asymmetric unit.\
  Takes Z', with default value of 1.");
@@ -302,6 +305,63 @@ void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   XApp.XFile().GetLattice().AnalyseHAdd( xlcg, satoms );
   XApp.XFile().EndUpdate();
   delete XApp.FixHL();
+}
+//..............................................................................
+void XLibMacros::macHImp(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+  TXApp& XApp = TXApp::GetInstance();
+  if( XApp.XFile().GetLattice().IsGenerated() )  {
+    Error.ProcessingError(__OlxSrcInfo, "The procedure is not applicable for the grown structure");
+    return;
+  }
+  bool increase = false, 
+    decrease = false;
+  if( !Cmds[0].IsNumber() )  {
+    Error.ProcessingError(__OlxSrcInfo, "first arument should be a number or +/- number");
+    return;
+  }
+  double val = Cmds[0].ToDouble();
+  if( Cmds[0].CharAt(0) == '+' )
+    increase = true;
+  else if( Cmds[0].CharAt(0) == '-' )
+    decrease = true;
+  Cmds.Delete(0);
+
+  TSAtomPList satoms;
+  XApp.FindSAtoms( Cmds.Text(' '), satoms, true );
+  const double delta = XApp.XFile().GetLattice().GetDelta();
+  for( int i=0; i < satoms.Count(); i++ )  {
+    if( !(satoms[i]->GetAtomInfo() == iHydrogenIndex || satoms[i]->GetAtomInfo() == iDeuteriumIndex) )
+      continue;
+    TSAtom& h = *satoms[i], *attached = NULL;
+    int ac = 0;
+    for( int j=0; j < h.NodeCount(); j++ )  {
+      TSAtom& n = h.Node(j);
+      if( !(n.IsDeleted() || n.GetAtomInfo() == iQPeakIndex) )  {
+        ac++;
+        attached = &n;
+      }
+    }
+    if( ac > 1 || ac == 0 )  {
+      XApp.GetLog() << "Skipping " << h.GetLabel() << '\n';
+      continue;
+    }
+    vec3d v( h.crd() - attached->crd() );
+    if( increase || decrease )
+      v.NormaliseTo( v.Length() + val );
+    else
+      v.NormaliseTo(val);
+    v += attached->crd();
+    double qd1 = v.QDistanceTo( attached->crd() );
+    double qd2 =  attached->GetAtomInfo().GetRad1() + h.GetAtomInfo().GetRad1() + delta;
+    qd2 *= qd2;
+    if( qd1 >= qd2-0.01 )  {
+      XApp.GetLog() << "Skipping " << h.GetLabel() << '\n';
+      continue;
+    }
+    XApp.XFile().GetAsymmUnit().CartesianToCell(v);
+    h.CAtom().ccrd() = v;
+  }
+  XApp.XFile().EndUpdate();
 }
 //..............................................................................
 void XLibMacros::macAnis(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {

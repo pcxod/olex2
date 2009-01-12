@@ -4186,6 +4186,8 @@ void TMainForm::macCalcVoid(TStrObjList &Cmds, const TParamList &Options, TMacro
     }
   }
   double surfdis = Options.FindValue("d", "0.25").ToDouble();
+  TBasicApp::GetLog() << "Extra distance from the surface: " << surfdis << '\n';
+
   bool invert = Options.Contains("i");
   int mapX = 100, mapY = 100, mapZ = 100;
   FXApp->XGrid().InitGrid(mapX, mapY, mapZ);
@@ -4203,7 +4205,8 @@ void TMainForm::macCalcVoid(TStrObjList &Cmds, const TParamList &Options, TMacro
     olxstr::FormatFloat(2, voidCenter[1]) << ", "  <<
     olxstr::FormatFloat(2, voidCenter[2]) << ")\n");
   TBasicApp::GetLog() << ( olxstr("Largest spherical void is (A^3) ") << olxstr::FormatFloat(3, MaxLevel*MaxLevel*MaxLevel*4*M_PI/(3*mapVol)*vol) << '\n');
-  TBasicApp::GetLog() << ( olxstr("Structure occupies (A^3) ") << olxstr::FormatFloat(3, structureGridPoints*vol/mapVol) << '\n');
+  TBasicApp::GetLog() << ( olxstr("Structure occupies (A^3) ") << olxstr::FormatFloat(3, structureGridPoints*vol/mapVol) 
+    << " (" << olxstr::FormatFloat(2, structureGridPoints*100/mapVol) << "%)\n");
   int minLevel = Round( pow( 6*mapVol*3/(4*M_PI*vol), 1./3) );
   TBasicApp::GetLog() << ( olxstr("6A^3 level is ") << minLevel << '\n');
   TIntList levels(MaxLevel+ 2);

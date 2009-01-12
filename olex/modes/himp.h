@@ -35,8 +35,7 @@ public:
         if( aa != NULL )  {
           vec3d v(XA->Atom().crd());
           v -= aa->crd();
-          v.Normalise();
-          v *= BondLength;
+          v.NormaliseTo(BondLength);
           v += aa->crd();
           XA->Atom().crd() = v;
           TGlXApp::GetGXApp()->XFile().GetAsymmUnit().CartesianToCell(v);

@@ -35,6 +35,7 @@ class XLibMacros  {
   static DefMacro(AddIns)
   static DefMacro(Htab)
   static DefMacro(HAdd)
+  static DefMacro(HImp)
   static DefMacro(LS)
   static DefMacro(Plan)
   static DefMacro(UpdateWght)
