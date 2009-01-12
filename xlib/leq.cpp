@@ -239,9 +239,9 @@ double XVarManager::GetAtomParam(TCAtom& ca, short param_name, double* Q) {
     case var_name_U11:   val = Q[0];  break;
     case var_name_U22:   val = Q[1];  break;
     case var_name_U33:   val = Q[2];  break;
-    case var_name_U12:   val = Q[3];  break;
+    case var_name_U23:   val = Q[3];  break;
     case var_name_U13:   val = Q[4];  break;
-    case var_name_U23:   val = Q[5];  break;
+    case var_name_U12:   val = Q[5];  break;
     default:
       throw TInvalidArgumentException(__OlxSourceInfo, "parameter name");
   }
