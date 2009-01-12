@@ -375,8 +375,7 @@ void TdlgMatProp::OnOK(wxCommandEvent& event)
     }
     else  {
       if( GPCollection != NULL )  {
-        GS = FXApp->GetRender().Styles()->Style( GPCollection->Name() );
-        if( !GS )  GS = FXApp->GetRender().Styles()->NewStyle( GPCollection->Name() );
+        GS = FXApp->GetRender().Styles()->NewStyle( GPCollection->Name(), true);
         for( int i=0; i < GPCollection->PrimitiveCount(); i++ )  {
           GPCollection->Primitive(i)->SetProperties(&FMaterials[i]);
           GS->PrimitiveMaterial( GPCollection->Primitive(i)->Name(), FMaterials[i]);

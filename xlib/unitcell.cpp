@@ -185,16 +185,24 @@ void  TUnitCell::InitMatrices()  {
     }
   }
 
+  const int mc = Matrices.Count();
+  for( int i=0; i < mc; i++ )
+    Matrices[i].SetTag(i);
+  UpdateEllipsoids();
+}
+//..............................................................................
+void TUnitCell::UpdateEllipsoids()  {
+  const TAsymmUnit& au = GetLattice().GetAsymmUnit();
   const int ac = au.AtomCount();
   const int mc = Matrices.Count();
 
   mat3d abc2xyz( mat3d::Transpose(au.GetCellToCartesian()) ),
         xyz2abc( mat3d::Transpose(au.GetCartesianToCell()) );
 
-  Ellipsoids.Clear();
+  ClearEllipsoids();
   Ellipsoids.SetCount(ac);
   for( int i=0; i < ac; i++ )  {
-    TCAtom& A1 = au.GetAtom(i);
+    const TCAtom& A1 = au.GetAtom(i);
     Ellipsoids[i].SetCount(mc);
     for( int j=0; j < mc; j++ )  {
       if( A1.GetEllpId() != -1 )  {
@@ -208,8 +216,6 @@ void  TUnitCell::InitMatrices()  {
         Ellipsoids[i][j] = NULL;
     }
   }
-  for( int i=0; i < mc; i++ )
-    Matrices[i].SetTag(i);
 }
 //..............................................................................
 const TEllipsoid& TUnitCell::GetEllipsoid(int MatrixId, int AUId) const  {

@@ -814,16 +814,16 @@ void TLattice::MoveFragment(const vec3d& to, TSAtom& fragAtom)  {
   vec3d from( fragAtom.ccrd() );
   smatd* m = GetUnitCell().GetClosest(to, from, true);
   if( m != NULL )  {
+    mat3d abc2xyz( mat3d::Transpose(GetAsymmUnit().GetCellToCartesian()) ),
+          xyz2abc( mat3d::Transpose(GetAsymmUnit().GetCartesianToCell()) );
     for(int i=0; i < fragAtom.GetNetwork().NodeCount(); i++ )  {
       TSAtom& SA = fragAtom.GetNetwork().Node(i);
       SA.CAtom().ccrd() = *m * SA.CAtom().ccrd();
-      if( SA.CAtom().GetEllipsoid() != NULL )  {
-        (*SA.CAtom().GetEllipsoid()) = GetUnitCell().GetEllipsoid(m->GetTag(), SA.CAtom().GetId());
-        // alternative, used below
-        //SA.CAtom().GetEllipsoid()->MultMatrix( abc2xyz*m->r*xyz2abc );
-      }
+      if( SA.CAtom().GetEllipsoid() != NULL )
+        SA.CAtom().GetEllipsoid()->MultMatrix( abc2xyz*m->r*xyz2abc );
     }
     delete m;
+    GetUnitCell().UpdateEllipsoids();
     Uniq();
   }
   else  {
@@ -859,6 +859,7 @@ void TLattice::MoveFragment(TSAtom& to, TSAtom& fragAtom)  {
       }
     }
     delete m;
+    GetUnitCell().UpdateEllipsoids();
     Uniq();
   }
   else
@@ -974,8 +975,10 @@ void TLattice::MoveToCenter()  {
       delete m;
     }
   }
-  if( !Generated )  
+  if( !Generated )  {  
+    GetUnitCell().UpdateEllipsoids();
     Uniq();
+  }
   else  {
     RestoreCoordinates();
     Disassemble();
@@ -1046,8 +1049,10 @@ void TLattice::Compaq()  {
       }
     }
   }
-  if( !Generated )  
+  if( !Generated )  { 
+    GetUnitCell().UpdateEllipsoids();
     Uniq();
+  }
   else  {
     Disassemble();
     OnStructureGrow->Exit(this);
@@ -1089,6 +1094,7 @@ void TLattice::CompaqAll()  {
       delete m;
     }
   }
+  GetUnitCell().UpdateEllipsoids();
   Uniq();
 }
 //..............................................................................
@@ -1115,6 +1121,7 @@ void TLattice::TransformFragments(const TSAtomPList& fragAtoms, const smatd& tra
       }
     }
   }
+  GetUnitCell().UpdateEllipsoids();
   Uniq();
 }
 //..............................................................................
@@ -1152,10 +1159,9 @@ void TLattice::Disassemble()  {
 }
 //..............................................................................
 void TLattice::RestoreCoordinates()  {
-  for( int i=0; i < Atoms.Count(); i++ )  {
-    Atoms[i]->crd() = Atoms[i]->ccrd();
+  const int ac = Atoms.Count();
+  for( int i=0; i < ac; i++ )
     GetAsymmUnit().CellToCartesian(Atoms[i]->ccrd(), Atoms[i]->crd());
-  }
 }
 //..............................................................................
 bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPList& ProcessingAtoms, int part, TCAtomPList* generated)  {

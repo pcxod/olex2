@@ -50,7 +50,8 @@ struct TGSParam {
 class TGraphicsStyle: public ACollectionItem  {
   olxstr FLabel;
   TPtrList<TPrimitiveStyle> FPStyles;
-  TPtrList<TGraphicsStyle> FStyles;  // a sublist of the tree
+  //TPtrList<TGraphicsStyle> FStyles;  // a sublist of the tree
+  TSStrObjList<olxstr, TGraphicsStyle*, true> FStyles;  // a sublist of the tree
   TGraphicsStyle *FParentStyle;
   TGraphicsStyles *FParent;
   TSStrObjList<olxstr, TGSParam, true> FParams;  // a list of parameters
@@ -61,7 +62,11 @@ protected:
   // does not delete the styles
   void ReleaseStyles() {  FStyles.Clear();  }
   void AddStyle(TGraphicsStyle* style)  {
-    FStyles.Add(style);
+    FStyles.Add(style->GetLabel(), style);
+  }
+  TGraphicsStyle* FindLocalStyle(const olxstr& name)  {
+    int i = FStyles.IndexOf(name);
+    return i == -1 ? NULL : FStyles.Object(i);
   }
 public:
   TGraphicsStyle(TGraphicsStyles *S, TGraphicsStyle *Parent, const olxstr &ALabel);
@@ -75,7 +80,7 @@ public:
   inline TPrimitiveStyle* PrimitiveStyle(int i) const {  return FPStyles[i];  }
   
   inline int StyleCount() const {  return FStyles.Count();  }
-  inline TGraphicsStyle* GetStyle(int i) {  return FStyles[i];  }
+  inline TGraphicsStyle* GetStyle(int i) {  return FStyles.Object(i);  }
 
   void SetParam(const olxstr& name, const olxstr& val, bool saveable=false) {
     int ind = FParams.IndexOf(name);
@@ -107,8 +112,10 @@ public:
 
   bool operator == (const TGraphicsStyle& GS) const;
 
-  TGraphicsStyle *Style(const olxstr& CollectionName);
-  TGraphicsStyle *FindStyle(TGraphicsStyle* Style);
+  TGraphicsStyle* FindStyle(const olxstr& CollectionName);
+  // searches based on the comparison of the styles, not the pointers
+  TGraphicsStyle* FindStyle(TGraphicsStyle* Style);
+  // deletes by the pointer
   void DeleteStyle(TGraphicsStyle* Style);
 
   TGraphicsStyle *NewStyle(const olxstr& Name, bool Force=false);
@@ -160,7 +167,9 @@ public:
   TDataItem* GetDataItem(const TPrimitiveStyle* Style) const;
   TGlMaterial* GetMaterial(TDataItem& I) const;
   //
-  inline TGraphicsStyle* Style(const olxstr& collName)  {  return FRoot->Style(collName);  }
+  inline TGraphicsStyle* FindStyle(const olxstr& collName)  {  
+    return FRoot->FindStyle(collName);  
+  }
   TGraphicsStyle* FindStyle(TGraphicsStyle *Style)  { return FRoot->FindStyle(Style);  }
   TGraphicsStyle* NewStyle(const olxstr& Name, bool Force=false)  {
     return FRoot->NewStyle(Name, Force);

@@ -36,6 +36,7 @@ public:
   const TEllipsoid& GetEllipsoid(int MatrixId, int AUId) const;
   void AddEllipsoid(); // adds a new row to ellipsoids, intialised with NULLs
   void ClearEllipsoids();
+  void UpdateEllipsoids();
   // get an ellipsoid for an atom by asymmetric unit Id and a matrix associated with it
 
   void InitMatrices();
