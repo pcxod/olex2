@@ -4185,17 +4185,24 @@ void TMainForm::macCalcVoid(TStrObjList &Cmds, const TParamList &Options, TMacro
       }
     }
   }
+  TAsymmUnit& au = FXApp->XFile().GetAsymmUnit();
   double surfdis = Options.FindValue("d", "0.25").ToDouble();
   TBasicApp::GetLog() << "Extra distance from the surface: " << surfdis << '\n';
-
+  
   bool invert = Options.Contains("i");
-  int mapX = 100, mapY = 100, mapZ = 100;
+  double resolution = Options.FindValue("r", "0.1").ToDouble();
+  if( resolution < 0.01 )  
+    resolution = 0.01;
+  resolution = 1./resolution;
+  const int mapX = (int)(au.Axes()[0].GetV()*resolution),
+			mapY = (int)(au.Axes()[1].GetV()*resolution),
+			mapZ = (int)(au.Axes()[2].GetV()*resolution);
   FXApp->XGrid().InitGrid(mapX, mapY, mapZ);
   double mapVol = mapX*mapY*mapZ;
   TArray3D<short> map(0, mapX-1, 0, mapY-1, 0, mapZ-1);
   vec3d voidCenter;
   short*** D = map.Data;
-  long structureGridPoints = 0;
+  size_t structureGridPoints = 0;
   int MaxLevel = FXApp->CalcVoid(map, surfdis, -101, &structureGridPoints, voidCenter, 
     radii.IsEmpty() ? NULL : &radii);
   double vol = FXApp->XFile().GetLattice().GetUnitCell().CalcVolume();
@@ -4755,6 +4762,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     if( OverlayXFile )  {
       TXFile& xf = FXApp->NewOverlayedXFile();
       xf.LoadFromFile( FN );
+      ProcessXPMacro("fuse", Error);
       return;
     }
     Tmp = TEFile::ChangeFileExt(FN, "xlds");

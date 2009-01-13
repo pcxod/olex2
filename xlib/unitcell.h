@@ -89,7 +89,7 @@ public:
   Returns the number of grid points occupied by the structure to structurePoinst if no NULL
   */
   void BuildStructureMap( TArray3D<short>& map, double delta, short value, 
-    long* structurePoints, TPSTypeList<TBasicAtomInfo*, double>* radii );
+    size_t* structurePoints, TPSTypeList<TBasicAtomInfo*, double>* radii );
 protected:
   // helper function, association should be AnAssociation2+<vec3d,TCAtom*,+>
   template <class Association> 
