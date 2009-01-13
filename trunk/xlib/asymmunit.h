@@ -145,22 +145,26 @@ public:
   }
 
   // J App Cryst 2002, 35, 477-480
-  template <class T> T& UcifToUcart(T& v)  {
+  template <class T> T& UcifToUcart(T& v) const {
     mat3d M(v[0], v[5], v[4], v[1], v[3], v[2]);
     M = UcifToUxyz*M*UcifToUxyzT;
     v[0] = M[0][0];  v[1] = M[1][1];  v[2] = M[2][2];
     v[3] = M[1][2];  v[4] = M[0][2];  v[5] = M[0][1];
     return v;
   }
-  template <class T> T& UcartToUcif(T& v)  {
+  template <class T> T& UcartToUcif(T& v) const {
     mat3d M(v[0], v[5], v[4], v[1], v[3], v[2]);
     M = UxyzToUcif*M*UxyzToUcifT;
     v[0] = M[0][0];  v[1] = M[1][1];  v[2] = M[2][2];
     v[3] = M[1][2];  v[4] = M[0][2];  v[5] = M[0][1];
     return v;
   }
-  template <class T> T& CellToCart(T& v)  {
+  template <class T> T& CellToCart(T& v) const {
     v = UcifToUxyz*v*UcifToUxyzT;
+    return v;
+  }
+  template <class T> T& CartToCell(T& v) const {
+    v = UxyzToUcif*v*UxyzToUcifT;
     return v;
   }
 

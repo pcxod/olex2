@@ -11,17 +11,23 @@ File_8=SourceModule,'E:\SVN\src\v1.1u\olex2-tl\Olex2Impl.cpp',0,1,656,17,670,0,0
 File_9=SourceModule,'E:\SVN\src\v1.1u\olex2-tl\About.cpp',0,1,4,49,19,0,0
 
 [Modules]
-Module0=E:\SVN\olex2-sf\trunk\xlib\vcov.h
-Module1=E:\SVN\olex2-sf\trunk\xlib\xlcongen.cpp
-Module2=E:\SVN\olex2-sf\trunk\olex\modes\hfix.h
-Module3=E:\SVN\olex2-sf\trunk\olex\mainform.cpp
-Module4=E:\SVN\olex2-sf\trunk\gxlib\gllabels.cpp
-Module5=E:\SVN\olex2-sf\trunk\sdl\threex3.h
-Module6=E:\SVN\olex2-sf\trunk\gxlib\dunitcell.cpp
-Module7=E:\wxWidgets-2.8.7\include\wx\wxchar.h
-Count=8
+Module0=E:\SVN\olex2-sf\trunk\installer\main.cpp
+Module1=E:\SVN\olex2-sf\trunk\xlib\vcov.h
+Module2=E:\SVN\olex2-sf\trunk\xlib\xlcongen.cpp
+Module3=E:\SVN\olex2-sf\trunk\olex\modes\hfix.h
+Module4=E:\SVN\olex2-sf\trunk\olex\mainform.cpp
+Module5=E:\SVN\olex2-sf\trunk\gxlib\gllabels.cpp
+Module6=E:\SVN\olex2-sf\trunk\sdl\threex3.h
+Module7=E:\SVN\olex2-sf\trunk\gxlib\dunitcell.cpp
+Module8=E:\wxWidgets-2.8.7\include\wx\wxchar.h
+Count=9
 EditWindowCount=1
 TypeLibWindowCount=1
+
+[E:\SVN\olex2-sf\trunk\installer\main.cpp]
+ModuleType=SourceModule
+FormState=1
+FormOnTop=0
 
 [E:\SVN\olex2-sf\trunk\xlib\vcov.h]
 ModuleType=SourceModule
@@ -127,9 +133,13 @@ FormOnTop=0
 FormState=0
 FormOnTop=0
 
+[E:\SVN\olex2-sf\trunk\build\Borland\Olex2\frame1.cpp]
+FormState=0
+FormOnTop=0
+
 [EditWindow0]
-ViewCount=8
-CurrentView=6
+ViewCount=9
+CurrentView=7
 View0=0
 View1=1
 View2=2
@@ -138,6 +148,7 @@ View4=4
 View5=5
 View6=6
 View7=7
+View8=8
 CodeExplorer=CodeExplorer@EditWindow0
 MessageView=MessageView@EditWindow0
 ClassHierarchy=ClassHierarchy@EditWindow0
@@ -206,12 +217,19 @@ LeftCol=1
 
 [View6]
 Module=E:\SVN\olex2-sf\trunk\xlib\vcov.h
-CursorX=3
-CursorY=518
+CursorX=29
+CursorY=504
 TopLine=493
 LeftCol=1
 
 [View7]
+Module=E:\SVN\olex2-sf\trunk\installer\main.cpp
+CursorX=72
+CursorY=249
+TopLine=229
+LeftCol=1
+
+[View8]
 Module=E:\SVN\olex2-sf\trunk\xlib\xlcongen.cpp
 CursorX=1
 CursorY=1
@@ -336,7 +354,7 @@ LRDockWidth=233
 Dockable=1
 SplitPos=32
 ArrangeBy=Name
-SelectedItem=
+SelectedItem=Caption
 ExpandedItems=
 HiddenCategories=
 
@@ -447,5 +465,5 @@ DockClients=ObjectTree,PropertyInspector
 DockSiteData=0000040000000000450300000000000001E9000000000000000100000000A90000000E0000004F626A65637454726565566965770100000000450300001100000050726F7065727479496E73706563746F72FFFFFFFF
 
 [ActiveProject]
-ActiveProject=7
+ActiveProject=9
 

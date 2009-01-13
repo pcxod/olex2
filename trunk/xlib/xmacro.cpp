@@ -2217,7 +2217,7 @@ void XLibMacros::macVoidE(TStrObjList &Cmds, const TParamList &Options, TMacroEr
 //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
   // calculate the map
   double surfdis = Options.FindValue("d", "1.0").ToDouble();
-  long structurePoints = 0;
+  size_t structurePoints = 0;
   vec3d voidCenter;
   TArray3D<short> maskMap(0, mapX-1, 0, mapY-1, 0, mapZ-1);
   short MaxLevel = XApp.CalcVoid(maskMap, surfdis, -101, &structurePoints, voidCenter, NULL);

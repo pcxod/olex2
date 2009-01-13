@@ -797,36 +797,22 @@ TCAtom* TUnitCell::FindCAtom(const vec3d& center) const  {
 }
 //..............................................................................
 void TUnitCell::BuildStructureMap( TArray3D<short>& map, double delta, short val, 
-                                  long* structurePoints, TPSTypeList<TBasicAtomInfo*, double>* radii)  {
+                                  size_t* structurePoints, TPSTypeList<TBasicAtomInfo*, double>* radii)  {
 
-  TTypeList< AnAssociation2<vec3d,TCAtom*> > allAtoms;
+  TBasicApp::GetLog() << "Building structure map...\n";
+  TTypeList< AnAssociation3<vec3d,TCAtom*, double> > allAtoms;
+  vec3d center, center1;
   GenereteAtomCoordinates( allAtoms, true );
   
-  double da = map.Length1(),
-         db = map.Length2(),
-         dc = map.Length3();
-  int dim[] = {map.Length1(), map.Length2(), map.Length3() };
-  // angstrem per pixel
-  double capp = Lattice->GetAsymmUnit().Axes()[2].GetV()/dc,
-         bapp = Lattice->GetAsymmUnit().Axes()[1].GetV()/db,
-         aapp = Lattice->GetAsymmUnit().Axes()[0].GetV()/da;
-  // pixel per angstrem
-  double cppa = dc/Lattice->GetAsymmUnit().Axes()[2].GetV(),
-         bppa = db/Lattice->GetAsymmUnit().Axes()[1].GetV(),
-         appa = dc/Lattice->GetAsymmUnit().Axes()[0].GetV();
-  double scppa = cppa*cppa, 
-         sbppa = bppa*bppa,
-         sappa = appa*appa;
+  const int da = map.Length1(),
+            db = map.Length2(),
+            dc = map.Length3();
+  const int map_dim[] = {da, db, dc};
   map.FastInitWith(0);
   // precalculate the sphere/ellipsoid etc coordinates for all distinct scatterers
-  TAsymmUnit& au = GetLattice().GetAsymmUnit();
-  vec3d cart_id(au.Axes()[0].GetV(), au.Axes()[1].GetV(), au.Axes()[2].GetV());
-  au.CartesianToCell(cart_id);
-  double app = olx_min(aapp,bapp);
-  if( capp < app )
-    app = capp;
-  app /= 5;
-  TPSTypeList<int, double> scatterers;
+  const TAsymmUnit& au = GetLattice().GetAsymmUnit();
+
+  TPSTypeList<int, double > scatterers;
   for( int i=0; i < au.AtomCount(); i++ )  {
     if( au.GetAtom(i).IsDeleted() )  continue;
     int ind = scatterers.IndexOfComparable( au.GetAtom(i).GetAtomInfo().GetIndex() );
@@ -837,48 +823,46 @@ void TUnitCell::BuildStructureMap( TArray3D<short>& map, double delta, short val
       if( b_i != -1 )
         r = radii->GetObject(b_i) + delta;
     }
-    vec3d x(r+0.3, 0.3, 0.3), y(0.3, r+0.3, 0.3), z(0.3, 0.3, r+.3), p(r+.3,r+.3,r+.3);
-    au.CartesianToCell(x);
-    au.CartesianToCell(y);
-    au.CartesianToCell(z);
-    au.CartesianToCell(p);
-    vec3d test = x+y+z;
     scatterers.Add(au.GetAtom(i).GetAtomInfo().GetIndex(), r);
   }
-
   for( int i=0; i < allAtoms.Count(); i++ )  {
-    const double r = scatterers[ allAtoms[i].GetB()->GetAtomInfo().GetIndex() ];
-    const double sr = r*r;
-    vec3d center_cart(allAtoms[i].GetA());
-    au.CellToCartesian(center_cart);
-    for( double x = -r; x <= r; x += app )  {
-      for( double y = -r; y <= r; y += app )  {
-        for( double z = -r; z <= r; z += app )  {
-          if( x*x+y*y+z*z < sr )  {
-            vec3d v(center_cart[0]+x, center_cart[1]+y, center_cart[2]+z);
-            au.CartesianToCell(v);
-            vec3i iv(Round(v[0]*da), Round(v[1]*db), Round(v[2]*dc));
-            for( int m=0; m < 3; m++ )  {
-              if( iv[m] < 0 )        iv[m] += dim[m];
-              if( iv[m] >= dim[m] )  iv[m] -= dim[m];
-            }
-            map.Data[iv[0]][iv[1]][iv[2]] = val;
+    double sr = scatterers[ allAtoms[i].GetB()->GetAtomInfo().GetIndex() ];
+    sr *= sr;
+    allAtoms[i].C() = sr;
+    au.CellToCartesian(allAtoms[i].A());
+  }
+  const int ac = allAtoms.Count();
+  for( int j = 0; j < da; j ++ )  {
+    if( (j%5) == 0 )  {
+      TBasicApp::GetLog() << '\r' << j*100/da << '%';
+      TBasicApp::GetInstance()->Update();
+    }
+    for( int k = 0; k < db; k ++ )  {
+      for( int l = 0; l < dc; l ++ )  {
+        if( map.Data[j][k][l] == val )  continue;
+        vec3d pixel((double)j/da, (double)k/db, (double)l/dc);
+        au.CellToCartesian(pixel);
+        for( int i=0; i < ac; i++ )  {
+          if( pixel.QDistanceTo( allAtoms[i].GetA() ) <= allAtoms[i].GetC() )  {  
+            map.Data[j][k][l] = val;
+            break;
           }
         }
       }
     }
   }
   if( structurePoints != NULL )  {
-    long sp = 0;
-    int mapX = map.Length1(), mapY = map.Length2(), mapZ = map.Length3();
-    for(int i=0; i < mapX; i++ )
-      for(int j=0; j < mapY; j++ )
-        for(int k=0; k < mapZ; k++ )
-          if( map.Data[i][j][k] == val )  {
+    size_t sp = 0;
+    for(int i=0; i < da; i++ )  {
+      for(int j=0; j < db; j++ )
+        for(int k=0; k < dc; k++ )
+          if( map.Data[i][j][k] == val )
             sp ++;
-          }
+    }
     *structurePoints = sp;
   }
+  TBasicApp::GetLog() << '\r' << "Done\n";
+  TBasicApp::GetInstance()->Update();
 }
 //////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////
