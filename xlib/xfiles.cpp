@@ -145,12 +145,12 @@ void TXFile::LoadFromFile(const olxstr & FN) {
   GetLattice().Init();
   FSG = TSymmLib::GetInstance()->FindSG(Loader->GetAsymmUnit());
   // a hint by Ilia
-  if( FSG != NULL && !FSG->IsCentrosymmetric() )  {
-    if( GetRM().GetBASF().IsEmpty() )
-      GetRM().AddBASF(0.2);
-    if( !GetRM().HasTWIN() )
-      GetRM().SetTWIN_n(2);
-  }
+  //if( FSG != NULL && !FSG->IsCentrosymmetric() )  {
+  //  if( GetRM().GetBASF().IsEmpty() )
+  //    GetRM().AddBASF(0.2);
+  //  if( !GetRM().HasTWIN() )
+  //    GetRM().SetTWIN_n(2);
+  //}
   OnFileLoad->Exit(this);
   if( replicated )  {
     for( int i=0; i < FileFormats.Count(); i++ )
