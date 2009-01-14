@@ -342,7 +342,7 @@ public:
         rm.SetMERG( Toks[1].ToInt() );
       else if( Toks[0].Comparei("SIZE") == 0 && (Toks.Count() == 4) )
         rm.expl.SetCrystalSize(Toks[1].ToDouble(), Toks[2].ToDouble(), Toks[3].ToDouble() );
-      else if( Toks[0].Comparei("BASF") == 0 && (Toks.Count() < 1) )
+      else if( Toks[0].Comparei("BASF") == 0 && (Toks.Count() > 1) )
         rm.SetBASF( Toks.SubListFrom(1) );
       else if( Toks[0].Comparei("OMIT") == 0 )
         rm.AddOMIT( Toks.SubListFrom(1) );

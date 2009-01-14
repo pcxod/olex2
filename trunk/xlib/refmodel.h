@@ -225,8 +225,12 @@ public:
   }
   olxstr GetTWINStr() const {
     olxstr rv;
-    for( int i=0; i < 9; i++ )
-      rv << TWIN_mat[i/3][i%3] << ' ';
+    for( int i=0; i < 9; i++ )  {
+      if( TWIN_mat[i/3][i%3] == 0 )
+        rv << "0 ";
+      else
+        rv << TWIN_mat[i/3][i%3] << ' ';
+    }
     return rv << TWIN_n;
   }
   const mat3d& GetTWIN_mat()  const {  return TWIN_mat;  }
