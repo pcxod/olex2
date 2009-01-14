@@ -186,6 +186,7 @@ void TWinProcess::Writenl()  {
 //..............................................................................
 bool TWinProcess::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender, const IEObject *Data)  {
   DWORD dwAvail = 0;
+  static int wasted=0;  // acounter for how many times there is nothing to read in the pipe
   const int BfC=512;
   char Bf[BfC];
   DWORD dwRead = 0;
@@ -197,8 +198,11 @@ bool TWinProcess::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender, co
       Terminated = true;
       break;
     }
-    if( dwAvail == 0 )  // no data
+    if( dwAvail == 0 )  {  // no data
+      wasted++;
       break;
+    }
+    wasted = 0;
     dwRead = 0;
     if( !ReadFile(OutRead, Bf, olx_min(BfC-1, dwAvail), &dwRead, NULL) || dwRead == 0 )  { // error, the child might ended
       Terminated = true;
@@ -220,10 +224,13 @@ bool TWinProcess::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender, co
     break;
   }
   // Win98 fix... as PeekNamedPipe does not fail after the process is terminate
-  unsigned long pec = 0;
-  if( !Terminated && GetExitCodeProcess(ProcessInfo.hProcess, &pec) != 0 )
-    if( pec != STILL_ACTIVE )
-      Terminated = true;
+  if( wasted > 15 )  {
+    unsigned long pec = 0;
+    if( !Terminated && GetExitCodeProcess(ProcessInfo.hProcess, &pec) != 0 )
+      if( pec != STILL_ACTIVE )
+        Terminated = true;
+    wasted = 0;
+  }
   //
   if( Terminated )  {
     if( !Str.IsEmpty() )  {
@@ -235,6 +242,7 @@ bool TWinProcess::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender, co
     CloseHandle( ProcessInfo.hProcess );
     ProcessInfo.hProcess = NULL;
     Terminate();
+    wasted = 0;
   }
   return true;
 }

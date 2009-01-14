@@ -34,7 +34,7 @@ protected:
   double OMIT_s, OMIT_2t;
   mat3d TWIN_mat;
   int TWIN_n;
-  bool TWIN_set, OMIT_set, MERG_set;
+  bool TWIN_set, OMIT_set, MERG_set, HKLF_set;
   vec3i_list Omits;
   TDoubleList BASF;
   void SetDefaults();
@@ -160,15 +160,19 @@ public:
       HKLF_wt = hklf[11].ToDouble();
     if( hklf.Count() > 12 )
       HKLF_wt = hklf[12].ToDouble();
+    HKLF_set = true;
   }
+  const int GetHKLF()        const {  return HKLF;  }
+  void SetHKLF(int v)              {  HKLF = v;  HKLF_set = true;  }
   const mat3d GetHKLF_mat()  const {  return HKLF_mat;  }
-  void SetHKLF_mat(const mat3d& v) {  HKLF_mat = v;  }
+  void SetHKLF_mat(const mat3d& v) {  HKLF_mat = v;  HKLF_set = true;  }
   double GetHKLF_s()         const {  return HKLF_s;  }
-  void SetHKLF_s(double v)         {  HKLF_s = v;  }
+  void SetHKLF_s(double v)         {  HKLF_s = v;  HKLF_set = true;  }
   double GetHKLF_wt()        const {  return HKLF_wt;  }
-  void SetHKLF_wt(double v)        {  HKLF_wt = v;  }
+  void SetHKLF_wt(double v)        {  HKLF_wt = v;  HKLF_set = true;  }
   double GetHKLF_m()         const {  return HKLF_m;  }
-  void SetHKLF_m(double v)         {  HKLF_m = v;  }
+  void SetHKLF_m(double v)         {  HKLF_m = v;  HKLF_set = true;  }
+  bool IsHKLFSet()           const {  return HKLF_set;  }
 
   int GetMERG()  const {  return MERG;  }
   void SetMERG(int v)  {  MERG = v;  MERG_set = true;  }
@@ -241,6 +245,7 @@ of components 1 ... m
   void SetTWIN_n(int v)             {  TWIN_n = v;  TWIN_set = true;  }
   bool HasTWIN()              const {  return TWIN_set;  }
 
+  void AddBASF(double val)          {  BASF.Add(val);  }
   template <class list> void SetBASF(const list& bs) {
     BASF.SetCount(bs.Count());
     for( int i=0; i < bs.Count(); i++ )
