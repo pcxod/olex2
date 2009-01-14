@@ -809,6 +809,24 @@ void TUnitCell::BuildStructureMap( TArray3D<short>& map, double delta, short val
             dc = map.Length3();
   const int map_dim[] = {da, db, dc};
   map.FastInitWith(0);
+  // expand atom list to +/-1/2 of UC
+  allAtoms.SetCapacity( allAtoms.Count()*10 );
+  const int all_ac = allAtoms.Count();
+  for( int i=0; i < all_ac; i++ )  {
+    const vec3d& v = allAtoms[i].GetA();
+    if( v[0] < 1./3 )
+      allAtoms.AddNew(vec3d(v[0]+1, v[1], v[2]), allAtoms[i].B(), 0);
+    else if( v[0] > 2./3 )    
+      allAtoms.AddNew(vec3d(v[0]-1, v[1], v[2]), allAtoms[i].B(), 0);
+    if( v[1] < 1./3 )
+      allAtoms.AddNew(vec3d(v[0], v[1]+1, v[2]), allAtoms[i].B(), 0);
+    else if( v[1] > 2./3 )    
+      allAtoms.AddNew(vec3d(v[0], v[1]-1, v[2]), allAtoms[i].B(), 0);
+    if( v[2] < 1./3 )
+      allAtoms.AddNew(vec3d(v[0], v[1], v[2]+1), allAtoms[i].B(), 0);
+    else if( v[2] > 2./3 )    
+      allAtoms.AddNew(vec3d(v[0], v[1], v[2]-1), allAtoms[i].B(), 0);
+  }
   // precalculate the sphere/ellipsoid etc coordinates for all distinct scatterers
   const TAsymmUnit& au = GetLattice().GetAsymmUnit();
 
@@ -833,18 +851,21 @@ void TUnitCell::BuildStructureMap( TArray3D<short>& map, double delta, short val
   }
   const int ac = allAtoms.Count();
   for( int j = 0; j < da; j ++ )  {
+    const int ix = j;
     if( (j%5) == 0 )  {
       TBasicApp::GetLog() << '\r' << j*100/da << '%';
       TBasicApp::GetInstance()->Update();
     }
     for( int k = 0; k < db; k ++ )  {
+      const int iy = k;
       for( int l = 0; l < dc; l ++ )  {
-        if( map.Data[j][k][l] == val )  continue;
-        vec3d pixel((double)j/da, (double)k/db, (double)l/dc);
-        au.CellToCartesian(pixel);
+        const int iz = l;
+        if( map.Data[ix][iy][iz] == val )  continue;
+        vec3d p((double)j/da, (double)k/db, (double)l/dc);
+        au.CellToCartesian(p);
         for( int i=0; i < ac; i++ )  {
-          if( pixel.QDistanceTo( allAtoms[i].GetA() ) <= allAtoms[i].GetC() )  {  
-            map.Data[j][k][l] = val;
+          if( p.QDistanceTo( allAtoms[i].GetA() ) <= allAtoms[i].GetC() )  {  
+            map.Data[ix][iy][iz] = val;
             break;
           }
         }
@@ -864,6 +885,149 @@ void TUnitCell::BuildStructureMap( TArray3D<short>& map, double delta, short val
   TBasicApp::GetLog() << '\r' << "Done\n";
   TBasicApp::GetInstance()->Update();
 }
+//void TUnitCell::BuildStructureMap( TArray3D<short>& map, double delta, short val, 
+//                                  size_t* structurePoints, TPSTypeList<TBasicAtomInfo*, double>* radii)  {
+//
+//  TTypeList< AnAssociation2<vec3d,TCAtom*> > allAtoms;
+//  vec3d center, center1;
+//  GenereteAtomCoordinates( allAtoms, true );
+//  
+//  double da = map.Length1(),
+//         db = map.Length2(),
+//         dc = map.Length3();
+//  double dim[] = {da, db, dc};
+//  // angstrem per pixel
+//  double capp = Lattice->GetAsymmUnit().Axes()[2].GetV()/dc,
+//         bapp = Lattice->GetAsymmUnit().Axes()[1].GetV()/db,
+//         aapp = Lattice->GetAsymmUnit().Axes()[0].GetV()/da;
+//  // pixel per angstrem
+//  double cppa = dc/Lattice->GetAsymmUnit().Axes()[2].GetV(),
+//         bppa = db/Lattice->GetAsymmUnit().Axes()[1].GetV(),
+//         appa = dc/Lattice->GetAsymmUnit().Axes()[0].GetV();
+//  double scppa = cppa*cppa, 
+//         sbppa = bppa*bppa,
+//         sappa = appa*appa;
+//  map.FastInitWith(0);
+//  // precalculate the sphere/ellipsoid etc coordinates for all distinct scatterers
+//  const TAsymmUnit& au = GetLattice().GetAsymmUnit();
+//  TPSTypeList<int, TArray3D<bool>* > scatterers;
+//  for( int i=0; i < au.AtomCount(); i++ )  {
+//    if( au.GetAtom(i).IsDeleted() )  continue;
+//    int ind = scatterers.IndexOfComparable( au.GetAtom(i).GetAtomInfo().GetIndex() );
+//    if( ind != -1 )  continue;
+//    double r = au.GetAtom(i).GetAtomInfo().GetRad2() + delta;
+//    if( radii != NULL )  {
+//      int b_i = radii->IndexOfComparable( &au.GetAtom(i).GetAtomInfo() );
+//      if( b_i != -1 )
+//        r = radii->GetObject(b_i) + delta;
+//    }
+//    const double sr = r*r;
+//    vec3d cc(2*r, 2*r, 2*r);
+//    au.CartesianToCell(cc);
+//    TArray3D<bool>* spm = new TArray3D<bool>(0, Round(cc[0]*da), 0, Round(cc[1]*db), 0, Round(cc[2]*dc));
+//    for( int x=0; x < spm->Length1(); x ++ )  {
+//      for( int y=0; y < spm->Length2(); y ++ )  {
+//        for( int z=0; z < spm->Length3(); z ++ )  {
+//          vec3d v((double)x/da, (double)y/db, (double)z/dc);
+//          au.CellToCartesian(v);
+//          spm->Data[x][y][z] = (v.QLength() < sr);
+//        }
+//      }
+//    }
+//    scatterers.Add(au.GetAtom(i).GetAtomInfo().GetIndex(), spm);
+//  }
+//
+//  for( int i=0; i < allAtoms.Count(); i++ )  {
+//    TArray3D<bool>* spm = scatterers[ allAtoms[i].GetB()->GetAtomInfo().GetIndex() ];
+//    for( int j = 0; j < spm->Length1(); j ++ )  {
+//      for( int k = 0; k < spm->Length2(); k ++ )  {
+//        for( int l = 0; l < spm->Length3(); l ++ )  {
+//          if( !spm->Data[j][k][l] )  continue;
+//          // 1.+++
+//          center1 = allAtoms[i].GetA();
+//          center1[0] *= da; center1[1] *= db; center1[2] *= dc;
+//          center = center1;
+//          center[0] += j;  center[1] += k;  center[2] += l;
+//          for( int m=0; m < 3; m++ )  {
+//            if( center[m] < 0 )        center[m] += dim[m];
+//            if( center[m] >= dim[m] )  center[m] -= dim[m];
+//          }
+//          map.Data[(int)center[0]][(int)center[1]][(int)center[2]] = val;
+//          // 2.-++
+//          center = center1;
+//          center[0] -= j;  center[1] += k;  center[2] += l;
+//          for( int m=0; m < 3; m++ )  {
+//            if( center[m] < 0 )        center[m] += dim[m];
+//            if( center[m] >= dim[m] )  center[m] -= dim[m];
+//          }
+//          map.Data[(int)center[0]][(int)center[1]][(int)center[2]] = val;
+//          // 3.+-+
+//          center = center1;
+//          center[0] += j;  center[1] -= k;  center[2] += l;
+//          for( int m=0; m < 3; m++ )  {
+//            if( center[m] < 0 )        center[m] += dim[m];
+//            if( center[m] >= dim[m] )  center[m] -= dim[m];
+//          }
+//          map.Data[(int)center[0]][(int)center[1]][(int)center[2]] = val;
+//          // 4.++-
+//          center = center1;
+//          center[0] += j;  center[1] += k;  center[2] -= l;
+//          for( int m=0; m < 3; m++ )  {
+//            if( center[m] < 0 )        center[m] += dim[m];
+//            if( center[m] >= dim[m] )  center[m] -= dim[m];
+//          }
+//          map.Data[(int)center[0]][(int)center[1]][(int)center[2]] = val;
+//          // 5.--+
+//          center = center1;
+//          center[0] -= j;  center[1] -= k;  center[2] += l;
+//          for( int m=0; m < 3; m++ )  {
+//            if( center[m] < 0 )        center[m] += dim[m];
+//            if( center[m] >= dim[m] )  center[m] -= dim[m];
+//          }
+//          map.Data[(int)center[0]][(int)center[1]][(int)center[2]] = val;
+//          // 6.-+-
+//          center = center1;
+//          center[0] -= j;  center[1] += k;  center[2] -= l;
+//          for( int m=0; m < 3; m++ )  {
+//            if( center[m] < 0 )        center[m] += dim[m];
+//            if( center[m] >= dim[m] )  center[m] -= dim[m];
+//          }
+//          map.Data[(int)center[0]][(int)center[1]][(int)center[2]] = val;
+//          // 7.+--
+//          center = center1;
+//          center[0] += j;  center[1] -= k;  center[2] -= l;
+//          for( int m=0; m < 3; m++ )  {
+//            if( center[m] < 0 )        center[m] += dim[m];
+//            if( center[m] >= dim[m] )  center[m] -= dim[m];
+//          }
+//          map.Data[(int)center[0]][(int)center[1]][(int)center[2]] = val;
+//          // 8.---
+//          center = center1;
+//          center[0] -= j;  center[1] -= k;  center[2] -= l;
+//          for( int m=0; m < 3; m++ )  {
+//            if( center[m] < 0 )        center[m] += dim[m];
+//            if( center[m] >= dim[m] )  center[m] -= dim[m];
+//          }
+//          map.Data[(int)center[0]][(int)center[1]][(int)center[2]] = val;
+//        }
+//      }
+//    }
+//  }
+//  if( structurePoints != NULL )  {
+//    long sp = 0;
+//    int mapX = map.Length1(), mapY = map.Length2(), mapZ = map.Length3();
+//    for(int i=0; i < mapX; i++ )
+//      for(int j=0; j < mapY; j++ )
+//        for(int k=0; k < mapZ; k++ )
+//          if( map.Data[i][j][k] == val )  {
+//            sp ++;
+//          }
+//    *structurePoints = sp;
+//  }
+//
+//  for( int i=0; i < scatterers.Count(); i++ )
+//    delete scatterers.Object(i);
+//}
 //////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////

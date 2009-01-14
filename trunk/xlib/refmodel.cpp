@@ -22,7 +22,7 @@ void RefinementModel::SetDefaults() {
   MERG = def_MERG;
   OMIT_s = def_OMIT_s;
   OMIT_2t = def_OMIT_2t;
-  MERG_set = OMIT_set = TWIN_set = false;
+  HKLF_set = MERG_set = OMIT_set = TWIN_set = false;
   TWIN_n = def_TWIN_n;
   TWIN_mat.I() *= -1;
 }
@@ -46,7 +46,6 @@ void RefinementModel::Clear() {
   UsedSymm.Clear();
   used_weight.Clear();
   proposed_weight.Clear();
-  expl.Clear();
   RefinementMethod = "L.S.";
   SolutionMethod = EmptyString;
   HKLSource = EmptyString;
@@ -82,6 +81,7 @@ void RefinementModel::RemUsedSymm(const smatd& matr)  {
 //....................................................................................................
 RefinementModel& RefinementModel::Assign(const RefinementModel& rm, bool AssignAUnit) {
   ClearAll();
+  expl = rm.expl;
   used_weight = rm.used_weight;
   proposed_weight = rm.proposed_weight;
   LS = rm.LS;
@@ -91,6 +91,7 @@ RefinementModel& RefinementModel::Assign(const RefinementModel& rm, bool AssignA
   HKLF_mat = rm.HKLF_mat;
   HKLF_wt = rm.HKLF_wt;
   HKLF_m = rm.HKLF_m;
+  HKLF_set = rm.HKLF_set;
   MERG = rm.MERG;
   MERG_set = rm.MERG_set;
   OMIT_s = rm.OMIT_s;

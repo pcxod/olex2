@@ -3998,6 +3998,12 @@ void TMainForm::macEditIns(TStrObjList &Cmds, const TParamList &Options, TMacroE
   dlg->SetText( SL.Text('\n') );
   try  {
     if( dlg->ShowModal() == wxID_OK )  {
+      // clear rems, as they are recreated
+      for( int i=0; i < Ins.InsCount(); i++ )  {
+        if( Ins.InsName(i).Comparei("REM") == 0 )  {
+          Ins.DelIns(i);  i--;  continue;
+        }
+      }
       SL.Clear();
       SL.Strtok( dlg->GetText(), '\n' );
       Ins.ParseHeader(SL);

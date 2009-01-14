@@ -64,7 +64,6 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
   for( int i=0; i < InsFile.Count(); i++ )  // heh found it
     InsFile[i] = InsFile[i].Trim(' ');
   InsFile.CombineLines('=');
-  bool   End = false;// true if END instruction reached
   TBasicAtomInfo& baiQPeak = atomsInfo.GetAtomInfo(iQPeakIndex);
   cx.Resi = &GetAsymmUnit().GetResidue(-1);
   for( int i=0; i < InsFile.Count(); i++ )
@@ -86,8 +85,8 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
       continue;
     else if( ParseIns(InsFile, Toks, cx, i) )
       continue;
-    else if( Toks[0].Comparei("END") == 0 )     {   //reset RESI to default
-      End = true;  
+    else if( Toks[0].Comparei("END") == 0 )  {   //reset RESI to default
+      cx.End = true;  
       cx.Resi = &GetAsymmUnit().GetResidue(-1);
       cx.AfixGroups.Clear();
       cx.Part = 0;
@@ -96,8 +95,8 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
       Ins.Add(InsFile[i]);
     else {
       bool qpeak = olxstr::o_toupper(Toks[0].CharAt(0)) == 'Q';
-      if( qpeak && !End && !LoadQPeaks )  continue;
-      if( End && !qpeak )  continue;
+      if( qpeak && !cx.End && !LoadQPeaks )  continue;
+      if( cx.End && !qpeak )  continue;
       // is a valid atom
       //if( !atomsInfo.IsAtom(Toks[0]))  {  Ins.Add(InsFile[i]);  continue;  }
       if( !Toks[1].IsNumber() )         {  Ins.Add(InsFile[i]);  continue;  }
@@ -461,6 +460,8 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx,
           hklsrc = EmptyString;
         cx.rm.SetHKLSource(hklsrc);
       }
+      else if( !cx.End  && !cx.rm.IsHKLFSet() )
+        Ins.Add( Toks.Text(' ') ); 
     }
   }
   else if( Toks[0].Comparei("SAME") == 0 )  {
@@ -821,13 +822,6 @@ void TIns::SaveToStrings(TStrList& SL)  {
   _SaveSfac(SL, SfacIndex);
   SL.Add("END");
   SL.Add(EmptyString);
-  // put all REMS
-  for( int i=0; i < Ins.Count(); i++ )  {
-    TInsList* L = Ins.Object(i);
-    if( !Ins[i].StartsFrom("REM") )  continue;
-    olxstr tmp = L->IsEmpty() ? EmptyString : L->Text(' ');
-    HypernateIns(Ins.String(i)+' ', tmp, SL);
-  }
 }
 //..............................................................................
 
@@ -1519,7 +1513,7 @@ void TIns::SaveHeader(TStrList& SL, int* SfacIndex, int* UnitIndex)  {
     TInsList* L = Ins.Object(i);
     if( L == NULL )  continue;  // if load failed
     // skip rems and print them at the end
-    if( Ins[i].StartsFrom("REM") )  continue;
+    //if( Ins[i].StartsFrom("REM") )  continue;
     olxstr tmp = L->IsEmpty() ? EmptyString : L->Text(' ');
     HypernateIns(Ins[i]+' ', tmp , SL);
   }
