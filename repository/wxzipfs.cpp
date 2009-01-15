@@ -106,6 +106,22 @@ wxInputStream* TZipWrapper::OpenWxEntry(const olxstr &EN)  {
   return NULL;
 }
 //..............................................................................
+void TZipWrapper::ExtractAll(const olxstr& dest)  {
+  olxstr extractPath( TEFile::AddTrailingBackslash(dest) );
+  const size_t bf_sz = 1024*64;
+  char* bf = new char[bf_sz];
+  for( int i=0; i < FEntries.Count(); i++ )  {
+    if( !FInputStream->OpenEntry( *FEntries.Object(i) ) )
+      continue;
+    wxString fn(dest.u_str());
+    fn << FEntries.GetObject(i)->GetName();
+    wxFileOutputStream fos( fn );
+    while( FInputStream->Read(bf, bf_sz).LastRead() != 0 )
+      fos.Write(bf, FInputStream->LastRead());
+  }
+  delete [] bf;
+}
+//..............................................................................
 bool TZipWrapper::IsValidFileName(const olxstr &FN)  {
   int zi = FN.IndexOf(ZipUrlSignature);
   if( zi > 0 )  {
@@ -178,6 +194,10 @@ IDataInputStream* TwxZipFileSystem::OpenFile(const olxstr& Source)  {
 //  Progress.SetPos( TEFile::FileLength(TmpFN) );
   TBasicApp::GetInstance()->OnProgress->Exit(this, &Progress);
   return rv;
+}
+//..............................................................................
+void TwxZipFileSystem::ExtractAll(const olxstr& dest)  {
+  zip.ExtractAll(dest);
 }
 //..............................................................................
 

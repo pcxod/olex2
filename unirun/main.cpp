@@ -238,6 +238,11 @@ void DoRun()  {
   // evaluate properties
   TStrList props;
   props.Add("olex-update");
+  // updating ported executables
+  olxstr olex_port = settings.ParamValue("olex-port");
+  if( !olex_port.IsEmpty() )
+    props.Add(olex_port);
+  // end
   olxstr pluginFile = TBasicApp::GetInstance()->BaseDir() + "plugins.xld";
   if( TEFile::FileExists( pluginFile ) )  {
     try  {

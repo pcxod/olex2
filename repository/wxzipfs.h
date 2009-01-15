@@ -31,8 +31,9 @@ public:
   TZipWrapper(TEFile* zipName, bool useCache);
 
   ~TZipWrapper();
-  IDataInputStream* OpenEntry(const olxstr &EN);
-  wxInputStream* OpenWxEntry(const olxstr &EN);
+  IDataInputStream* OpenEntry(const olxstr& EN);
+  wxInputStream* OpenWxEntry(const olxstr& EN);
+  void ExtractAll(const olxstr& dest);
   inline int Count()               const {  return FEntries.Count();  }
   inline const olxstr& Name(int i) const {  return FEntries.GetString(i);  }
   inline time_t Timestamp(int i)   const {  return FEntries.GetObject(i)->GetDateTime().GetTicks();  } 
@@ -49,12 +50,13 @@ public:
 class TwxZipFileSystem: public AFileSystem, public IEObject  {
   TZipWrapper zip;
 public:
-  TwxZipFileSystem(const olxstr& filename, bool UseCache);
+  TwxZipFileSystem(const olxstr& filename, bool UseCache=false);
   TwxZipFileSystem(TEFile* file, bool UseCache);
   virtual ~TwxZipFileSystem() {}
 
   virtual IDataInputStream* OpenFile(const olxstr& zip_name);
   virtual bool FileExists(const olxstr& DN)  {  return zip.FileExists(DN);  }
+  void ExtractAll(const olxstr& dest);
 
   virtual bool DelFile(const olxstr& FN)     {  throw TNotImplementedException(__OlxSourceInfo);    }
   virtual bool DelDir(const olxstr& DN)      {  throw TNotImplementedException(__OlxSourceInfo);     }
