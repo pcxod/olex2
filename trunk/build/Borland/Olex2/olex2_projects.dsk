@@ -1,67 +1,42 @@
 [Closed Files]
 File_0=SourceModule,'E:\SVN\olex2-sf\trunk\xlib\vcov.cpp',0,1,1,1,1,0,0
-File_1=SourceModule,'E:\SVN\srcf-svn\trunk\installer\main.cpp',0,1,52,29,55,1,0
-File_2=SourceModule,'E:\SVN\v1.1u\olex2-tl\interface.h',0,1,1,3,12,0,0
-File_3=SourceModule,'E:\SVN\v1.1u\olex2v\implementation.cpp',0,1,1,47,11,0,0
-File_4=SourceModule,'E:\SVN\v1.1u\repository\wxzipfs.cpp',0,1,1,1,1,0,0
-File_5=SourceModule,'C:\Documents and Settings\Oleg\Desktop\olex2-tl\interface.h',0,1,10,9,27,0,0
-File_6=SourceModule,'C:\Documents and Settings\Oleg\Desktop\olex2-tl\Olex2xImpl.cpp',0,1,677,67,699,1,0
-File_7=TypeLibModule,'C:\Documents and Settings\Oleg\Desktop\olex2-tl\Olex2xProj.tlb',0,200,114,850,562,0
-File_8=SourceModule,'E:\SVN\src\v1.1u\olex2-tl\Olex2Impl.cpp',0,1,656,17,670,0,0
-File_9=SourceModule,'E:\SVN\src\v1.1u\olex2-tl\About.cpp',0,1,4,49,19,0,0
+File_1=SourceModule,'E:\SVN\v1.1u\olex2-tl\interface.h',0,1,1,3,12,0,0
+File_2=SourceModule,'E:\SVN\v1.1u\olex2v\implementation.cpp',0,1,1,47,11,0,0
+File_3=SourceModule,'E:\SVN\v1.1u\repository\wxzipfs.cpp',0,1,1,1,1,0,0
+File_4=SourceModule,'C:\Documents and Settings\Oleg\Desktop\olex2-tl\interface.h',0,1,10,9,27,0,0
+File_5=SourceModule,'C:\Documents and Settings\Oleg\Desktop\olex2-tl\Olex2xImpl.cpp',0,1,677,67,699,1,0
+File_6=TypeLibModule,'C:\Documents and Settings\Oleg\Desktop\olex2-tl\Olex2xProj.tlb',0,200,114,850,562,0
+File_7=SourceModule,'E:\SVN\src\v1.1u\olex2-tl\Olex2Impl.cpp',0,1,656,17,670,0,0
+File_8=SourceModule,'E:\SVN\src\v1.1u\olex2-tl\About.cpp',0,1,4,49,19,0,0
 
 [Modules]
-Module0=E:\SVN\olex2-sf\trunk\installer\main.cpp
-Module1=E:\SVN\olex2-sf\trunk\xlib\vcov.h
-Module2=E:\SVN\olex2-sf\trunk\xlib\xlcongen.cpp
-Module3=E:\SVN\olex2-sf\trunk\olex\modes\hfix.h
-Module4=E:\SVN\olex2-sf\trunk\olex\mainform.cpp
-Module5=E:\SVN\olex2-sf\trunk\gxlib\gllabels.cpp
-Module6=E:\SVN\olex2-sf\trunk\sdl\threex3.h
-Module7=E:\SVN\olex2-sf\trunk\gxlib\dunitcell.cpp
-Module8=E:\wxWidgets-2.8.7\include\wx\wxchar.h
-Count=9
+Module0=E:\SVN\srcf-svn\trunk\repository\filesystem.cpp
+Module1=E:\SVN\srcf-svn\trunk\repository\winzipfs.cpp
+Module2=E:\SVN\srcf-svn\trunk\repository\unzip.h
+Module3=E:\SVN\srcf-svn\trunk\installer\main.cpp
+Module4=E:\wxWidgets-2.8.7\include\wx\wxchar.h
+Count=5
 EditWindowCount=1
 TypeLibWindowCount=1
 
-[E:\SVN\olex2-sf\trunk\installer\main.cpp]
+[E:\SVN\srcf-svn\trunk\repository\filesystem.cpp]
+ModuleType=SourceModule
+FormState=0
+FormOnTop=0
+
+[E:\SVN\srcf-svn\trunk\repository\winzipfs.cpp]
+ModuleType=SourceModule
+FormState=0
+FormOnTop=0
+
+[E:\SVN\srcf-svn\trunk\repository\unzip.h]
+ModuleType=SourceModule
+FormState=0
+FormOnTop=0
+
+[E:\SVN\srcf-svn\trunk\installer\main.cpp]
 ModuleType=SourceModule
 FormState=1
-FormOnTop=0
-
-[E:\SVN\olex2-sf\trunk\xlib\vcov.h]
-ModuleType=SourceModule
-FormState=0
-FormOnTop=0
-
-[E:\SVN\olex2-sf\trunk\xlib\xlcongen.cpp]
-ModuleType=SourceModule
-FormState=0
-FormOnTop=0
-
-[E:\SVN\olex2-sf\trunk\olex\modes\hfix.h]
-ModuleType=SourceModule
-FormState=0
-FormOnTop=0
-
-[E:\SVN\olex2-sf\trunk\olex\mainform.cpp]
-ModuleType=SourceModule
-FormState=0
-FormOnTop=0
-
-[E:\SVN\olex2-sf\trunk\gxlib\gllabels.cpp]
-ModuleType=SourceModule
-FormState=0
-FormOnTop=0
-
-[E:\SVN\olex2-sf\trunk\sdl\threex3.h]
-ModuleType=SourceModule
-FormState=0
-FormOnTop=0
-
-[E:\SVN\olex2-sf\trunk\gxlib\dunitcell.cpp]
-ModuleType=SourceModule
-FormState=0
 FormOnTop=0
 
 [E:\wxWidgets-2.8.7\include\wx\wxchar.h]
@@ -69,109 +44,105 @@ ModuleType=SourceModule
 FormState=0
 FormOnTop=0
 
-[E:\SVN\olex2-sf\trunk\build\Borland\Olex2\olex2_projects.bpg]
+[E:\SVN\srcf-svn\trunk\build\Borland\Olex2\olex2_projects.bpg]
 FormState=0
 FormOnTop=0
 
-[E:\SVN\olex2-sf\trunk\build\Borland\Olex2\sdl.bpr]
+[E:\SVN\srcf-svn\trunk\build\Borland\Olex2\sdl.bpr]
 FormState=0
 FormOnTop=0
 
-[E:\SVN\olex2-sf\trunk\build\Borland\Olex2\alglib.bpr]
+[E:\SVN\srcf-svn\trunk\build\Borland\Olex2\alglib.bpr]
 FormState=0
 FormOnTop=0
 
-[E:\SVN\olex2-sf\trunk\build\Borland\Olex2\gllib.bpr]
+[E:\SVN\srcf-svn\trunk\build\Borland\Olex2\gllib.bpr]
 FormState=0
 FormOnTop=0
 
-[E:\SVN\olex2-sf\trunk\build\Borland\Olex2\xlib.bpr]
+[E:\SVN\srcf-svn\trunk\build\Borland\Olex2\xlib.bpr]
 FormState=0
 FormOnTop=0
 
-[E:\SVN\olex2-sf\trunk\build\Borland\Olex2\gxlib.bpr]
+[E:\SVN\srcf-svn\trunk\build\Borland\Olex2\gxlib.bpr]
 FormState=0
 FormOnTop=0
 
-[E:\SVN\olex2-sf\trunk\build\Borland\Olex2\gxlib_npy.bpr]
+[E:\SVN\srcf-svn\trunk\build\Borland\Olex2\gxlib_npy.bpr]
 FormState=0
 FormOnTop=0
 
-[E:\SVN\olex2-sf\trunk\build\Borland\Olex2\olex2.bpr]
+[E:\SVN\srcf-svn\trunk\build\Borland\Olex2\olex2.bpr]
 FormState=0
 FormOnTop=0
 
-[E:\SVN\olex2-sf\trunk\build\Borland\Olex2\launch.bpr]
+[E:\SVN\srcf-svn\trunk\build\Borland\Olex2\launch.bpr]
 FormState=0
 FormOnTop=0
 
-[E:\SVN\olex2-sf\trunk\build\Borland\Olex2\installer.bpr]
+[E:\SVN\srcf-svn\trunk\build\Borland\Olex2\installer.bpr]
 FormState=0
 FormOnTop=0
 
-[E:\SVN\olex2-sf\trunk\build\Borland\Olex2\autorun.bpr]
+[E:\SVN\srcf-svn\trunk\build\Borland\Olex2\autorun.bpr]
 FormState=0
 FormOnTop=0
 
-[E:\SVN\olex2-sf\trunk\build\Borland\Olex2\olex2v.bpr]
+[E:\SVN\srcf-svn\trunk\build\Borland\Olex2\olex2v.bpr]
 FormState=0
 FormOnTop=0
 
-[E:\SVN\olex2-sf\trunk\olex2v-test\olex2vt.bpr]
+[E:\SVN\srcf-svn\trunk\olex2v-test\olex2vt.bpr]
 FormState=0
 FormOnTop=0
 
-[E:\SVN\olex2-sf\trunk\olex2-tl\Olex2xProj.bpr]
+[E:\SVN\srcf-svn\trunk\olex2-tl\Olex2xProj.bpr]
 FormState=0
 FormOnTop=0
 
-[E:\SVN\olex2-sf\trunk\olex2-tl\Olex2xProj.tlb]
+[E:\SVN\srcf-svn\trunk\olex2-tl\Olex2xProj.tlb]
 FormState=0
 FormOnTop=0
 
-[E:\SVN\olex2-sf\trunk\build\Borland\Olex2\olex2vj.bpr]
+[E:\SVN\srcf-svn\trunk\build\Borland\Olex2\olex2vj.bpr]
 FormState=0
 FormOnTop=0
 
-[E:\SVN\olex2-sf\trunk\build\Borland\Olex2\frame1.cpp]
+[E:\SVN\srcf-svn\trunk\build\Borland\Olex2\frame1.cpp]
 FormState=0
 FormOnTop=0
 
 [EditWindow0]
-ViewCount=9
-CurrentView=7
+ViewCount=5
+CurrentView=2
 View0=0
 View1=1
 View2=2
 View3=3
 View4=4
-View5=5
-View6=6
-View7=7
-View8=8
 CodeExplorer=CodeExplorer@EditWindow0
 MessageView=MessageView@EditWindow0
 ClassHierarchy=ClassHierarchy@EditWindow0
 Create=1
 Visible=1
 State=2
-Left=1085
-Top=128
-Width=835
-Height=1072
-MaxLeft=-4
-MaxTop=104
-MaxWidth=1928
-MaxHeight=1100
-ClientWidth=1920
-ClientHeight=1066
+Left=1537
+Top=182
+Width=284
+Height=896
+MaxLeft=-1
+MaxTop=-4
+MaxWidth=908
+MaxHeight=1448
+ClientWidth=900
+ClientHeight=1426
 LeftPanelSize=0
 LeftPanelClients=CodeExplorer@EditWindow0
 LeftPanelData=00000400010000000C000000436F64654578706C6F726572000000000000000000000000000000000001000000000000000000000000FFFFFFFF
 RightPanelSize=0
-BottomPanelSize=151
+BottomPanelSize=0
 BottomPanelClients=MessageView@EditWindow0
-BottomPanelData=000004000000000080070000000000000297000000000000000100000000000000000000000001000000006E0400000000000001000000006E0400000000000001000000006E0400000000000001000000006E040000000000000100000000840300000000000001000000008403000000000000010000000084030000000000000100000000130700000000000001000000001307000000000000010000000013070000000000000100000000EB030000000000000100000000EB030000000000000100000000AF0400000000000001000000008403000000000000010000000084030000000000000100000000840300000000000001000000008403000000000000010000000084030000000000000100000000800700000B0000004D65737361676556696577FFFFFFFF
+BottomPanelData=00000400010000000B0000004D6573736167655669657784030000000000000297000000000000000100000000000000000000000001000000006E0400000000000001000000006E0400000000000001000000006E0400000000000001000000006E040000000000000100000000840300000000000001000000008403000000000000010000000084030000000000000100000000130700000000000001000000001307000000000000010000000013070000000000000100000000EB030000000000000100000000EB030000000000000100000000AF0400000000000001000000008403000000000000010000000084030000000000000100000000840300000000000001000000008403000000000000010000000084030000000000000100000000840300000B0000004D65737361676556696577FFFFFFFF
 
 [View0]
 Module=E:\wxWidgets-2.8.7\include\wx\wxchar.h
@@ -181,74 +152,46 @@ TopLine=868
 LeftCol=1
 
 [View1]
-Module=E:\SVN\olex2-sf\trunk\gxlib\dunitcell.cpp
-CursorX=1
-CursorY=1
-TopLine=1
+Module=E:\SVN\srcf-svn\trunk\repository\winzipfs.cpp
+CursorX=60
+CursorY=59
+TopLine=12
 LeftCol=1
 
 [View2]
-Module=E:\SVN\olex2-sf\trunk\sdl\threex3.h
-CursorX=77
-CursorY=170
-TopLine=148
+Module=E:\SVN\srcf-svn\trunk\repository\filesystem.cpp
+CursorX=40
+CursorY=50
+TopLine=1
 LeftCol=1
 
 [View3]
-Module=E:\SVN\olex2-sf\trunk\gxlib\gllabels.cpp
-CursorX=44
-CursorY=145
-TopLine=122
+Module=E:\SVN\srcf-svn\trunk\repository\unzip.h
+CursorX=1
+CursorY=64
+TopLine=13
 LeftCol=1
 
 [View4]
-Module=E:\SVN\olex2-sf\trunk\olex\mainform.cpp
-CursorX=67
-CursorY=3711
-TopLine=3686
-LeftCol=1
-
-[View5]
-Module=E:\SVN\olex2-sf\trunk\olex\modes\hfix.h
-CursorX=102
-CursorY=91
-TopLine=60
-LeftCol=1
-
-[View6]
-Module=E:\SVN\olex2-sf\trunk\xlib\vcov.h
-CursorX=29
-CursorY=504
-TopLine=493
-LeftCol=1
-
-[View7]
-Module=E:\SVN\olex2-sf\trunk\installer\main.cpp
-CursorX=72
-CursorY=249
-TopLine=229
-LeftCol=1
-
-[View8]
-Module=E:\SVN\olex2-sf\trunk\xlib\xlcongen.cpp
+Module=E:\SVN\srcf-svn\trunk\installer\main.cpp
 CursorX=1
-CursorY=1
-TopLine=1
+CursorY=187
+TopLine=148
 LeftCol=1
 
 [TypeLibEditWindow0]
 Create=1
 Visible=0
 State=0
-Left=200
-Top=110
+Left=189
+Top=133
 Width=650
-Height=453
+Height=441
 MaxLeft=-1
 MaxTop=-1
 ClientWidth=642
 ClientHeight=419
-Module=E:\SVN\olex2-sf\trunk\olex2-tl\Olex2xProj.tlb
+Module=E:\SVN\srcf-svn\trunk\olex2-tl\Olex2xProj.tlb
 
 [Watches]
 Count=0
@@ -266,27 +209,27 @@ Visible=1
 State=2
 Left=0
 Top=0
-Width=1920
-Height=112
+Width=1280
+Height=100
 MaxLeft=-4
 MaxTop=-4
-MaxWidth=1928
-MaxHeight=112
-ClientWidth=1920
+MaxWidth=1288
+MaxHeight=100
+ClientWidth=1280
 ClientHeight=78
 
 [ProjectManager]
 Create=1
 Visible=1
 State=0
-Left=-254
-Top=217
-Width=218
-Height=696
+Left=0
+Top=0
+Width=213
+Height=913
 MaxLeft=-1
 MaxTop=-1
-ClientWidth=210
-ClientHeight=670
+ClientWidth=205
+ClientHeight=889
 TBDockHeight=313
 LRDockWidth=446
 Dockable=1
@@ -302,7 +245,7 @@ Height=353
 MaxLeft=-1
 MaxTop=-1
 ClientWidth=525
-ClientHeight=319
+ClientHeight=331
 DumpPane=79
 DisassemblyPane=187
 RegisterPane=231
@@ -319,7 +262,7 @@ Height=877
 MaxLeft=-1
 MaxTop=-1
 ClientWidth=21
-ClientHeight=851
+ClientHeight=853
 TBDockHeight=161
 LRDockWidth=294
 Dockable=1
@@ -331,7 +274,7 @@ State=0
 Left=200
 Top=122
 Width=156
-Height=84
+Height=82
 MaxLeft=-1
 MaxTop=-1
 ClientWidth=150
@@ -344,11 +287,11 @@ State=0
 Left=0
 Top=181
 Width=233
-Height=656
+Height=658
 MaxLeft=-1
 MaxTop=-1
 ClientWidth=233
-ClientHeight=656
+ClientHeight=658
 TBDockHeight=551
 LRDockWidth=233
 Dockable=1
@@ -385,7 +328,7 @@ Height=185
 MaxLeft=-1
 MaxTop=-1
 ClientWidth=440
-ClientHeight=159
+ClientHeight=161
 TBDockHeight=190
 LRDockWidth=448
 Dockable=1
@@ -401,7 +344,7 @@ Height=284
 MaxLeft=-1
 MaxTop=-1
 ClientWidth=395
-ClientHeight=258
+ClientHeight=260
 TBDockHeight=284
 LRDockWidth=403
 Dockable=1
@@ -428,15 +371,15 @@ ClassViewDisplayMode=0
 
 [MessageView@EditWindow0]
 Create=1
-Visible=1
+Visible=0
 State=0
 Left=12
 Top=0
-Width=1908
+Width=888
 Height=151
 MaxLeft=-1
 MaxTop=-1
-ClientWidth=1908
+ClientWidth=888
 ClientHeight=151
 TBDockHeight=151
 LRDockWidth=443
@@ -457,13 +400,13 @@ Height=863
 MaxLeft=-1
 MaxTop=-1
 ClientWidth=233
-ClientHeight=837
+ClientHeight=839
 TBDockHeight=826
 LRDockWidth=190
 Dockable=1
 DockClients=ObjectTree,PropertyInspector
-DockSiteData=0000040000000000450300000000000001E9000000000000000100000000A90000000E0000004F626A65637454726565566965770100000000450300001100000050726F7065727479496E73706563746F72FFFFFFFF
+DockSiteData=0000040000000000470300000000000001E9000000000000000100000000A90000000E0000004F626A65637454726565566965770100000000470300001100000050726F7065727479496E73706563746F72FFFFFFFF
 
 [ActiveProject]
-ActiveProject=9
+ActiveProject=8
 

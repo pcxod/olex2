@@ -177,6 +177,10 @@ PyObject* pyDescRef(PyObject* self, PyObject* args)  {
   return PythonExt::BuildString(rv.Text('\n'));
 }
 //..............................................................................
+PyObject* pyRefModel(PyObject* self, PyObject* args)  {
+  return TXApp::GetInstance().XFile().GetRM().PyExport();
+}
+//..............................................................................
 PyObject* pyUpdateRepository(PyObject* self, PyObject* args)  {
   olxstr index, index_fn, repos, dest, proxy;
   if( !PythonExt::ParseTuple(args, "ww", &index, &dest) )  {
@@ -237,6 +241,7 @@ the index file name, destination folder (relative to the basedir)"},
   {"FindVarName", pyFindGetVarName, METH_VARARGS, "returns name of variable name corresponding to provided object"},
   {"Translate", pyTranslate, METH_VARARGS, "returns translated version of provided string"},
   {"DescribeRefinement", pyDescRef, METH_VARARGS, "Returns a string describing current refinement model"},
+  {"GetRefinementModel", pyRefModel, METH_VARARGS, "Returns refinement model as python object"},
   {NULL, NULL, 0, NULL}
    };
 
