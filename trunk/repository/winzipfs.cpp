@@ -54,4 +54,22 @@ IDataInputStream* TWinZipFileSystem::OpenFile(const olxstr& Source)  {
   return new TEFile( TmpFN, "rb" );
 }
 //..............................................................................
+void TWinZipFileSystem::ExtractAll(const olxstr& dest)  {
+  ZIPENTRY ze;
+  olxstr extractPath( TEFile::AddTrailingBackslash(dest) );
+  GetZipItem(zip, -1, &ze);
+  int numitems = ze.index;
+  TOnProgress Progress;
+  Progress.SetMax( numitems );
+  TBasicApp::GetInstance()->OnProgress->Enter( NULL, &Progress );
+  // -1 gives overall information about the zipfile
+  for( int zi=0; zi < numitems; zi++ )  {
+    ZIPENTRY ze;
+    GetZipItem(zip, zi, &ze); // fetch individual details
+    Progress.SetPos( zi );
+    Progress.SetAction( ze.name );
+    TBasicApp::GetInstance()->OnProgress->Execute( NULL, &Progress );
+    UnzipItem(zip, zi, (extractPath + ze.name).c_str() );         // e.g. the item's name.
+  }
+}
 

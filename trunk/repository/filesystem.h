@@ -9,6 +9,7 @@
 #include "estlist.h"
 #include "etraverse.h"
 #undef GetObject
+
 class TFSIndex;
 class TFSItem;
 
@@ -76,18 +77,27 @@ public:
   };
 private:
   olxstr Name;
-  long int Size, DateTime;
+  uint64_t Size, DateTime;
   bool Folder, Processed;
   TFSItem* Parent;
   TCSTypeList<olxstr, TFSItem*> Items;
-  TCSTypeList<olxstr, void*> Properties;
+  TStrList Properties, Actions;
   AFileSystem *FileSystem;
+  TFSIndex& Index;
 protected:
   void DoSetProcessed(bool V);
   void DeleteItem(TFSItem* item);
 public:
-  TFSItem(TFSItem* Parent, AFileSystem* FS, const olxstr& name);
-  virtual ~TFSItem();
+  TFSItem(TFSIndex& index, TFSItem* parent, AFileSystem* FS, const olxstr& name) :
+    Index(index), 
+    Parent(parent), 
+    FileSystem(FS) , 
+    Folder(false), 
+    Processed(false) ,
+    DateTime(0), 
+    Size(0), 
+    Name(name) {  }
+  virtual ~TFSItem()  {  Clear();  }
   void Clear();
   inline TFSItem* GetParent() const {  return Parent; }
 
@@ -109,34 +119,31 @@ public:
   void Remove(TFSItem& item);
 
   inline int PropertyCount()  const  {  return Properties.Count();  }
-  inline const olxstr& GetProperty(int ind)  const  {  return Properties.GetComparable(ind);  }
-  inline void AddProperty(const olxstr& p)  {  Properties.Add(p, NULL);  }
+  inline const olxstr& GetProperty(int ind)  const  {  return Properties[ind];  }
+  inline void AddProperty(const olxstr& p)  {  Properties.Add(p);  }
   inline bool HasProperty( const olxstr& pn )  const {
-    return Properties.IndexOfComparable(pn) != -1;
+    return Properties.IndexOf(pn) != -1;
   }
   inline bool ValidateProperties( const TStrList& prs )  const {
     if( Properties.IsEmpty() || prs.IsEmpty() )  return true;
     for( int i=0; i < prs.Count(); i++ )
-      if( Properties.IndexOfComparable(prs[i]) != -1 )
+      if( Properties.IndexOf(prs[i]) != -1 )
         return true;
     return false;
   }
-  void ListUniqueProperties(TCSTypeList<olxstr, void*>& Properties);
+  void ListUniqueProperties(TStrList& Properties);
 
-  inline bool IsFolder()  const     {  return Folder; }
-  inline void SetFolder(bool v)     {  Folder = v; }
+  const TStrList& GetActions() const {  return Actions;  }
+
+  DefPropB(Folder)
 
   inline const olxstr& GetName()  const      {  return Name;  }
 
   int GetLevel()  const;
   olxstr GetFullName() const;
 
-  inline void SetDateTime(long dt)  {  DateTime = dt;  }
-
-  inline long GetDateTime() const  {  return DateTime; }
-
-  inline long GetSize() const      {  return Size; }
-  inline void SetSize(long s)      {  Size = s; }
+  DefPropP(uint64_t, DateTime)
+  DefPropP(uint64_t, Size)
 
   TFSItem* FindByName(const olxstr& Name)  const {
     int ind = Items.IndexOfComparable(Name);
@@ -169,7 +176,7 @@ private:
   TFSItem *Root;
 protected:
   olxstr Source,  Destination;
-  TCSTypeList<olxstr, void*> Properties;
+  TStrList Properties;
 public:
   TFSIndex(AFileSystem& fs);
   virtual ~TFSIndex();
@@ -180,5 +187,6 @@ public:
   // returns true if the file is updated (added) and false otherwise
   bool UpdateFile(AFileSystem& To, const olxstr& fileName, bool Force, const olxstr& indexName="index.ind");
   inline TFSItem& GetRoot()  const {  return *Root; }
+  void ProcessActions(const TFSItem& item); 
 };
 #endif

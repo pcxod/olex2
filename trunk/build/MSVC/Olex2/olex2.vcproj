@@ -628,10 +628,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\repository\unzip.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\olex\updateoptions.cpp"
 				>
 			</File>
@@ -657,10 +653,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\olex\xpprocs.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\repository\zip.cpp"
 				>
 			</File>
 		</Filter>

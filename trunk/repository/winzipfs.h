@@ -15,7 +15,12 @@ public:
   virtual ~TWinZipFileSystem();
 
   virtual IDataInputStream* OpenFile(const olxstr& zip_name);
-  virtual bool FileExists(const olxstr& DN)  {  return true;  }
+  virtual bool FileExists(const olxstr& fn)  {
+    ZIPENTRY* ze = NULL;
+    int zindex = -1;
+    return FindZipItem(zip, fn.u_str(), true, &zindex, ze) == ZR_OK;
+  }
+  void ExtractAll(const olxstr& dest);
 
   virtual bool DelFile(const olxstr& FN)     {  throw TNotImplementedException(__OlxSourceInfo);    }
   virtual bool DelDir(const olxstr& DN)      {  throw TNotImplementedException(__OlxSourceInfo);     }

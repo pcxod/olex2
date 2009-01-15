@@ -7,7 +7,15 @@
 #include "bapp.h"
 #include "efile.h"
 #include "tptrlist.h"
+#include "estack.h"
 
+#ifdef __WXWIDGETS__
+  #include "wxzipfs.h"
+#elif __WIN32__
+  #include "winzipfs.h"
+#endif
+
+#undef GetObject
 
 olxstr TOSFileSystem::F__N;
 
@@ -106,18 +114,6 @@ bool TOSFileSystem::ChangeDir(const olxstr &DN)  {
 //..............................................................................
 //..............................................................................
 //..............................................................................
-TFSItem::TFSItem(TFSItem *parent, AFileSystem* FS, const olxstr& name) {
-  Parent = parent;
-  FileSystem = FS;
-  Folder = false;
-  Processed = false;
-  DateTime = Size = 0;
-  Name = name;
-}
-//..............................................................................
-TFSItem::~TFSItem()  {
-  Clear();
-}
 //..............................................................................
 void TFSItem::Clear()  {
   for( int i=0; i < Items.Count(); i++ )
@@ -134,9 +130,15 @@ void TFSItem::operator >> (TStrList& S) const  {
   str << DateTime;
   str << ',' << GetSize() << ',' << '{';
 
-  for( int i=0; i < PropertyCount(); i++ )  {
-    str << GetProperty(i);
-    if( (i+1) < PropertyCount() )  str << ';';
+  for( int i=0; i < Properties.Count(); i++ )  {
+    str << Properties[i];
+    if( (i+1) < Properties.Count() )  
+      str << ';';
+  }
+  for( int i=0; i < Actions.Count(); i++ )  {
+    str << Actions[i];
+    if( (i+1) < Actions.Count() )  
+      str << ';';
   }
   str << '}';
 
@@ -216,8 +218,12 @@ int TFSItem::ReadStrings(int& index, TFSItem* caller, TStrList& strings, const T
           olxstr tmp = toks[i].SubString(1, toks[i].Length()-2);
           propToks.Clear();
           propToks.Strtok(tmp, ';');
-          for( int j=0; j < propToks.Count(); j++ )
-            item->AddProperty( propToks[j] );
+          for( int j=0; j < propToks.Count(); j++ )  {
+            if( propToks[j].StartsFrom("action:") )
+              item->Actions.Add(propToks[j].SubStringFrom(7));
+            else
+              item->AddProperty( propToks[j] );
+          }
         }
       }
       toks.Clear();
@@ -238,7 +244,7 @@ int TFSItem::ReadStrings(int& index, TFSItem* caller, TStrList& strings, const T
 }
 //..............................................................................
 TFSItem& TFSItem::NewItem(const olxstr& name)  {
-  TFSItem *I = new TFSItem(this, &GetFileSystem(), name);
+  TFSItem *I = new TFSItem(Index, this, &GetFileSystem(), name);
   Items.Add(name, I);
   return *I;
 }
@@ -247,15 +253,16 @@ olxstr TFSItem::GetFullName() const  {
 // an alernative implementation can be done with olxstr::Insert ... to be considered
   TFSItem *FI = const_cast<TFSItem*>(this);
   olxstr Tmp;
-  TPtrList<TFSItem> L;
+  TStack<TFSItem*> stack;
   while( FI != NULL )  {
-    L.Add(FI);
+    stack.Push(FI);
     FI = FI->GetParent();
     if( !FI->GetParent() )  break;  //ROOT
   }
-  for( int i=L.Count()-1; i >= 0; i-- )  {
-    Tmp << L[i]->GetName();
-    if( i > 0 )  Tmp << '\\';
+  while( !stack.IsEmpty() )  {
+    Tmp << stack.Pop()->GetName();
+    if( !stack.IsEmpty() )  
+      Tmp << '\\';
   }
   return Tmp;
 }
@@ -315,7 +322,7 @@ double TFSItem::Synchronize(TFSItem* Caller, TFSItem& Dest, const TStrList& prop
     TFSItem& FI = Dest.Item(i);
     if( !Count )  {
       Progress.SetAction( FI.GetFullName() );
-      Progress.IncPos( FI.GetSize() );
+      Progress.IncPos( (double)FI.GetSize() );
       TBasicApp::GetInstance()->OnProgress->Execute(this, &Progress);
     } 
 
@@ -348,7 +355,7 @@ double TFSItem::Synchronize(TFSItem* Caller, TFSItem& Dest, const TStrList& prop
       continue;
     if( !Count )  {
       Progress.SetAction( FI.GetFullName() );
-      Progress.IncPos( FI.GetSize() );
+      Progress.IncPos( (double)FI.GetSize() );
       TBasicApp::GetInstance()->OnProgress->Execute(this, &Progress);
     }
 
@@ -398,6 +405,7 @@ TFSItem* TFSItem::UpdateFile(TFSItem& item)  {
           FI = &NewItem( item.GetName() );
       }
       *FI = item;
+      Index.ProcessActions(*FI);
       return FI;
     }
     catch( TExceptionBase& )  {  
@@ -437,17 +445,16 @@ TFSItem& TFSItem::operator = (const TFSItem& FI)  {
   Size = FI.GetSize();
   DateTime = FI.GetDateTime();
   Folder = FI.IsFolder();
-  Properties.Clear();
-  for( int i=0; i < FI.PropertyCount(); i++ )
-    AddProperty( FI.GetProperty(i) );
+  Properties = FI.Properties;
+  Actions = FI.Actions;
   return *this;
 }
 //..............................................................................
-void TFSItem::ListUniqueProperties(TCSTypeList<olxstr, void*>& uProps)  {
-  for( int i=0; i < PropertyCount(); i++ )
-    if( uProps.IndexOfComparable( GetProperty(i) ) == -1 )
-      uProps.Add( GetProperty(i), NULL);
-  for( int i=0; i < Count(); i++ )
+void TFSItem::ListUniqueProperties(TStrList& uProps)  {
+  for( int i=0; i < Properties.Count(); i++ )
+    if( uProps.IndexOf( Properties[i] ) == -1 )
+      uProps.Add( Properties[i] );
+  for( int i=0; i < Items.Count(); i++ )
     Item(i).ListUniqueProperties( uProps );
 }
 //..............................................................................
@@ -521,7 +528,7 @@ void TFSItem::ClearEmptyFolders()  {
 //..............................................................................
 //..............................................................................
 TFSIndex::TFSIndex(AFileSystem& fs)  {
-  Root = new TFSItem(NULL, &fs, "ROOT");
+  Root = new TFSItem(*this, NULL, &fs, "ROOT");
 }
 //..............................................................................
 TFSIndex::~TFSIndex()  {
@@ -627,4 +634,21 @@ bool TFSIndex::UpdateFile(AFileSystem& To, const olxstr& fileName, bool Force, c
   }
   return res;
 }
+//..............................................................................
+void TFSIndex::ProcessActions(const TFSItem& item)  {
+  const TStrList& actions = item.GetActions();
+#ifdef __WXWIDGETS__
+  typedef TwxZipFileSystem ZipFS;
+#elif __WIN32__
+  typedef TWinZipFileSystem ZipFS;
+#endif
+
+  for( int i=0; i < actions.Count(); i++ )  {
+    if( actions[i].StartsFrom("extract") )  {
+      ZipFS zp( item.GetFileSystem().GetBase() + item.GetFullName() );
+      zp.ExtractAll( item.GetFileSystem().GetBase() );
+    }
+  }
+}
+//..............................................................................
 
