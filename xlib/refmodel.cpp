@@ -171,7 +171,11 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
   // we need to take into the account MERG, HKLF and OMIT things here...
   try {
     TEFile::FileID hkl_src_id = TEFile::GetFileID(HKLSource);
-    if( hkl_src_id == HklStatFileID )  {
+    if( hkl_src_id == HklStatFileID &&
+      _HklStat.OMIT_s == OMIT_s &&
+      _HklStat.OMIT_2t == OMIT_2t &&
+      _HklStat.MERG == MERG )  
+    {
       _HklStat.OmittedByUser = Omits.Count();  // this might change beyond the HKL file!
       return _HklStat;
     }
@@ -179,6 +183,8 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
       THklFile hf;
       hf.LoadFromFile(HKLSource);
       HklStatFileID = hkl_src_id;
+      _HklStat.SetDefaults();
+
       TSpaceGroup* sg = TSymmLib::GetInstance()->FindSG(aunit);
       if( sg == NULL )  // will not be seen outside though
         throw TFunctionFailedException(__OlxSourceInfo, "unknown space group");
@@ -225,11 +231,18 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
       _HklStat.MaxD = sqrt(_HklStat.MaxD);
       _HklStat.MinD = sqrt(_HklStat.MinD);
       _HklStat.OmittedByUser = Omits.Count();
+      _HklStat.MERG = MERG;
+      _HklStat.OMIT_s = OMIT_s;
+      _HklStat.OMIT_2t = OMIT_2t;
       smatd_list ml;
       TRefList output;
       sg->GetMatrices(ml, mattAll^mattIdentity);
-      if( MERG == 4 && !sg->IsCentrosymmetric() )  // merge all
+      if( MERG == 4 && !sg->IsCentrosymmetric() )  {  // merge all
+        const int mc = ml.Count();
+        for( int i=0; i < mc; i++ )
+          ml.AddNew( ml[i] ).r *= -1;
         ml.AddNew().r.I() *= -1;
+      }
       _HklStat = RefMerger::Merge<TSimpleMerger>(ml, Refs, output);
     }
   }
@@ -473,3 +486,43 @@ void RefinementModel::FromDataItem(TDataItem& item) {
   MERG = merge.GetRequiredField("val").ToInt();
 }
 //....................................................................................................
+#ifndef _NO_PYTHON
+PyObject* RefinementModel::PyExport()  {
+  PyObject* main = PyDict_New(), *hklf, *explt;
+  PyDict_SetItemString(main, "hklf", hklf = PyDict_New() );
+    PyDict_SetItemString(hklf, "value", Py_BuildValue("i", HKLF));
+    PyDict_SetItemString(hklf, "s", Py_BuildValue("d", HKLF_s));
+    PyDict_SetItemString(hklf, "m", Py_BuildValue("d", HKLF_m));
+    PyDict_SetItemString(hklf, "wt", Py_BuildValue("d", HKLF_wt));
+    PyDict_SetItemString(hklf, "matrix", 
+      Py_BuildValue("(ddd)(ddd)(ddd)", HKLF_mat[0][0], HKLF_mat[0][1], HKLF_mat[0][2],
+        HKLF_mat[1][0], HKLF_mat[1][1], HKLF_mat[1][2],
+        HKLF_mat[2][0], HKLF_mat[2][1], HKLF_mat[2][2]));
+
+  PyDict_SetItemString(main, "explt", explt = PyDict_New() );
+    PyDict_SetItemString(explt, "radiation", Py_BuildValue("d", expl.GetRadiation()));
+    PyDict_SetItemString(explt, "temperature", Py_BuildValue("d", expl.GetTemperature()));
+    const vec3d size = expl.GetCrystalSize();
+    PyDict_SetItemString(explt, "size", Py_BuildValue("(ddd)", size[0], size[1], size[2]));
+    
+  if( OMIT_set )  {
+    PyObject* omit;
+    PyDict_SetItemString(main, "omit", omit = PyDict_New() );
+      PyDict_SetItemString(omit, "s", Py_BuildValue("d", OMIT_s));
+      PyDict_SetItemString(omit, "2theta", Py_BuildValue("d", OMIT_2t));
+  }
+  if( TWIN_set )  {
+    PyObject* twin, *basf;
+    PyDict_SetItemString(main, "twin", twin = PyDict_New() );
+      PyDict_SetItemString(twin, "n", Py_BuildValue("i", TWIN_n));
+      PyDict_SetItemString(twin, "matrix", 
+        Py_BuildValue("(ddd)(ddd)(ddd)", TWIN_mat[0][0], TWIN_mat[0][1], TWIN_mat[0][2],
+          TWIN_mat[1][0], TWIN_mat[1][1], TWIN_mat[1][2],
+          TWIN_mat[2][0], TWIN_mat[2][1], TWIN_mat[2][2]));
+      PyDict_SetItemString(twin, "basf", basf = PyTuple_New(BASF.Count()) );
+      for( int i=0; i < BASF.Count(); i++ )
+        PyTuple_SetItem(basf, i, Py_BuildValue("d", BASF[i]) );
+  }
+  return main;
+}
+#endif

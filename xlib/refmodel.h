@@ -8,6 +8,10 @@
 #include "afixgroup.h"
 #include "exyzgroup.h"
 
+#ifndef _NO_PYTHON
+  #include "pyext.h"
+#endif
+
 BeginXlibNamespace()
 
 static const double 
@@ -42,7 +46,8 @@ protected:
 public:
   // needs to be extended for the us of the batch numbers...
   struct HklStat : public MergeStats {
-    double MaxD, MinD, LimD;
+    double MaxD, MinD, LimD, OMIT_s, OMIT_2t;
+    int MERG;
     int FilteredOff, // by LimD, OMIT_2t
       OmittedByUser, // OMIT h k l 
       IntensityTransformed;  // by OMIT_s
@@ -68,6 +73,9 @@ public:
       MergeStats::SetDefaults();
       MaxD = MinD = LimD = 0;
       FilteredOff = IntensityTransformed = OmittedByUser = 0;
+      MERG = def_MERG;
+      OMIT_s = def_OMIT_s;
+      OMIT_2t = def_OMIT_2t;
     }
   };
 protected:
@@ -109,6 +117,9 @@ public:
   }
   // creates a human readable description of the refinement
   void Describe(TStrList& lst);
+#ifndef _NO_PYTHON
+  PyObject* PyExport();
+#endif
 
   TDoubleList used_weight, proposed_weight;
   TIntList LS;      // up to four params
