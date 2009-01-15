@@ -809,23 +809,32 @@ void TUnitCell::BuildStructureMap( TArray3D<short>& map, double delta, short val
             dc = map.Length3();
   const int map_dim[] = {da, db, dc};
   map.FastInitWith(0);
-  // expand atom list to +/-1/2 of UC
+  // expand atom list to +/-1/3 of UC
   allAtoms.SetCapacity( allAtoms.Count()*10 );
+  const double c_min = 1./3, c_max = 2./3;
   const int all_ac = allAtoms.Count();
   for( int i=0; i < all_ac; i++ )  {
     const vec3d& v = allAtoms[i].GetA();
-    if( v[0] < 1./3 )
-      allAtoms.AddNew(vec3d(v[0]+1, v[1], v[2]), allAtoms[i].B(), 0);
-    else if( v[0] > 2./3 )    
-      allAtoms.AddNew(vec3d(v[0]-1, v[1], v[2]), allAtoms[i].B(), 0);
-    if( v[1] < 1./3 )
-      allAtoms.AddNew(vec3d(v[0], v[1]+1, v[2]), allAtoms[i].B(), 0);
-    else if( v[1] > 2./3 )    
-      allAtoms.AddNew(vec3d(v[0], v[1]-1, v[2]), allAtoms[i].B(), 0);
-    if( v[2] < 1./3 )
-      allAtoms.AddNew(vec3d(v[0], v[1], v[2]+1), allAtoms[i].B(), 0);
-    else if( v[2] > 2./3 )    
-      allAtoms.AddNew(vec3d(v[0], v[1], v[2]-1), allAtoms[i].B(), 0);
+    const double xi = v[0] < c_min ? 1 : (v[0] > c_max ? -1 : 0);
+    const double yi = v[1] < c_min ? 1 : (v[1] > c_max ? -1 : 0);
+    const double zi = v[2] < c_min ? 1 : (v[2] > c_max ? -1 : 0);
+    if( xi != 0 )  {
+      allAtoms.AddNew(vec3d(v[0]+xi, v[1], v[2]), allAtoms[i].B(), 0);
+      if( yi != 0 )  {
+        allAtoms.AddNew(vec3d(v[0]+xi, v[1]+yi, v[2]), allAtoms[i].B(), 0);
+        if( zi != 0 )
+          allAtoms.AddNew(vec3d(v[0]+xi, v[1]+yi, v[2]+zi), allAtoms[i].B(), 0);
+      }
+      if( zi != 0 )
+        allAtoms.AddNew(vec3d(v[0]+xi, v[1], v[2]+zi), allAtoms[i].B(), 0);
+    }
+    if( yi != 0 )  {
+      allAtoms.AddNew(vec3d(v[0], v[1]+yi, v[2]), allAtoms[i].B(), 0);
+      if( zi != 0 )
+        allAtoms.AddNew(vec3d(v[0], v[1]+yi, v[2]+zi), allAtoms[i].B(), 0);
+    }
+    if( zi != 0 )
+      allAtoms.AddNew(vec3d(v[0], v[1], v[2]+zi), allAtoms[i].B(), 0);
   }
   // precalculate the sphere/ellipsoid etc coordinates for all distinct scatterers
   const TAsymmUnit& au = GetLattice().GetAsymmUnit();
