@@ -241,8 +241,10 @@ void DoRun()  {
 #if !defined(__MAC__) && !defined(__WIN32__)
   // updating ported executables
   olxstr olex_port = settings.ParamValue("olex-port");
-  if( !olex_port.IsEmpty() )
+  if( !olex_port.IsEmpty() )  {
     props.Add(olex_port);
+    TBasicApp::GetLog() << "Portable executable update tag: " << olex_port << '\n'; 
+  }
   // end
 #elif __MAC__
   props.Add("port-mac");
