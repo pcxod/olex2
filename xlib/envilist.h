@@ -42,7 +42,9 @@ public:
         break;
       }
   }
-
+#ifndef _NO_PYTHON
+  PyObject* PyExport(TPtrList<PyObject>& atoms);
+#endif
 };
 
   typedef TPtrList<TAtomEnvi>  TAtomEnviPList;

@@ -114,7 +114,7 @@ public:
   // creates a human readable description of the refinement
   void Describe(TStrList& lst);
 #ifndef _NO_PYTHON
-  PyObject* PyExport();
+  PyObject* PyExport(bool export_connectivity);
 #endif
 
   TDoubleList used_weight, proposed_weight;

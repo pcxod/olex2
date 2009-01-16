@@ -178,7 +178,14 @@ PyObject* pyDescRef(PyObject* self, PyObject* args)  {
 }
 //..............................................................................
 PyObject* pyRefModel(PyObject* self, PyObject* args)  {
-  return TXApp::GetInstance().XFile().GetRM().PyExport();
+  bool calc_connectivity = false;
+  if( PyTuple_Size(args) != 0 )  {
+    if( !PyArg_ParseTuple(args, "b", &calc_connectivity) )  {
+      Py_INCREF(Py_None);
+      return Py_None;
+    }
+  }
+  return TXApp::GetInstance().XFile().GetRM().PyExport(calc_connectivity);
 }
 //..............................................................................
 PyObject* pyUpdateRepository(PyObject* self, PyObject* args)  {
