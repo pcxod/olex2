@@ -34,6 +34,31 @@ void TAfixGroup::ToDataItem(TDataItem& item) const {
   }
 }
 //..............................................................................
+#ifndef _NO_PYTHON
+PyObject* TAfixGroup::PyExport(TPtrList<PyObject>& atoms)  {
+  PyObject* main = PyDict_New();
+  PyDict_SetItemString(main, "afix", Py_BuildValue("i", Afix)  );
+  PyDict_SetItemString(main, "d", Py_BuildValue("d", U) );
+  PyDict_SetItemString(main, "u", Py_BuildValue("d", D) );
+  Py_IncRef(atoms[Pivot->GetTag()]);
+  PyDict_SetItemString(main, "pivot", atoms[Pivot->GetTag()] );
+  int dep_cnt = 0;
+  for( int i=0; i < Dependent.Count(); i++ )  {
+    if( Dependent[i]->IsDeleted() )  continue;
+    dep_cnt++;
+  }
+  PyObject* dependent = PyTuple_New(dep_cnt);
+  dep_cnt = 0;
+  for( int i=0; i < Dependent.Count(); i++ )  {
+    if( Dependent[i]->IsDeleted() )  continue;
+    Py_IncRef(atoms[Dependent[i]->GetTag()]);
+    PyTuple_SetItem(dependent, dep_cnt++, atoms[Dependent[i]->GetTag()] );
+  }
+  PyDict_SetItemString(main, "dependent", dependent);
+  return main;
+}
+#endif
+//..............................................................................
 void TAfixGroup::FromDataItem(TDataItem& item) {
   Afix = item.GetRequiredField("afix").ToInt();
   D = item.GetRequiredField("d").ToDouble();
@@ -60,6 +85,26 @@ void TAfixGroups::ToDataItem(TDataItem& item) {
   for( int i=0; i < Groups.Count(); i++ )
     Groups[i].ToDataItem( item.AddItem(i) );
 }
+//..............................................................................
+#ifndef _NO_PYTHON
+PyObject* TAfixGroups::PyExport(TPtrList<PyObject>& atoms)  {
+  int group_id = 0;
+  for( int i=0; i < Groups.Count(); i++ )  {
+    if( Groups[i].IsEmpty() )  {
+      Groups.NullItem(i);
+      continue;
+    }
+    Groups[i].SetId(group_id++);
+  }
+  Groups.Pack();
+
+  PyObject* main = PyTuple_New( Groups.Count() );
+  for( int i=0; i < Groups.Count(); i++ )  {
+    PyTuple_SetItem(main, i, Groups[i].PyExport(atoms) );
+  }
+  return main;
+}
+#endif
 //..............................................................................
 void TAfixGroups::FromDataItem(TDataItem& item) {
   Clear();

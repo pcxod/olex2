@@ -3,6 +3,10 @@
 #include "xbase.h"
 #include "typelist.h"
 #include "dataitem.h"
+#ifndef _NO_PYTHON
+  #include "pyext.h"
+#endif
+
 BeginXlibNamespace()
 
 const short  // variable names
@@ -55,6 +59,9 @@ public:
   DefPropP(int, Id)
 
   void ToDataItem(TDataItem& item) const;
+#ifndef _NO_PYTHON
+  PyObject* PyExport(TPtrList<PyObject>& atoms);
+#endif
   // returns a new instance created with new
   static XVarReference& FromDataItem(const TDataItem& item, XVar& parent);
 };
@@ -94,6 +101,9 @@ public:
   DefPropP(int, Id)  
 
   void ToDataItem(TDataItem& item) const;
+#ifndef _NO_PYTHON
+  PyObject* PyExport(TPtrList<PyObject>& atoms);
+#endif
   static XVar& FromDataItem(const TDataItem& item, XVarManager& parent);
 };
 
@@ -148,6 +158,9 @@ public:
   DefPropP(double, Sigma)
   DefPropP(int, Id)
   void ToDataItem(TDataItem& item) const;
+#ifndef _NO_PYTHON
+  PyObject* PyExport(TPtrList<PyObject>& vars);
+#endif
   static XLEQ& FromDataItem(const TDataItem& item, XVarManager& parent);
 };
 
@@ -265,6 +278,9 @@ public:
   void Assign(const XVarManager& vm);
 
   void ToDataItem(TDataItem& item) const;
+#ifndef _NO_PYTHON
+  PyObject* PyExport(TPtrList<PyObject>& atoms);
+#endif
   void FromDataItem(const TDataItem& item);
 };
 

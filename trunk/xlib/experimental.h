@@ -3,6 +3,11 @@
 #include "xbase.h"
 #include "threex3.h"
 #include "chemdata.h"
+
+#ifndef _NO_PYTHON
+  #include "pyext.h"
+#endif
+
 BeginXlibNamespace()
 
 class ExperimentalDetails {
@@ -40,6 +45,9 @@ public:
     Temperature = 0;
   }
   void ToDataItem(class TDataItem& item) const;
+#ifndef _NO_PYTHON
+  PyObject* PyExport();
+#endif
   void FromDataItem(const TDataItem& item);
 };
 

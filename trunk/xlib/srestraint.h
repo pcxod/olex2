@@ -2,7 +2,6 @@
 #ifndef srestraintH
 #define srestraintH
 #include "catom.h"
-#include "ematrix.h"
 // covers DFIX, SADI, DANG
 BeginXlibNamespace()
 // I am really tired of this bshyt
@@ -70,6 +69,9 @@ public:
   DefPropB(AllNonHAtoms)
 
   void ToDataItem(TDataItem& item) const;
+#ifndef _NO_PYTHON
+  PyObject* PyExport(TPtrList<PyObject>& atoms, TPtrList<PyObject>& equiv);
+#endif
   void FromDataItem(TDataItem& item);
 };
 
@@ -106,6 +108,9 @@ public:
   inline short GetRestraintListType()  const  {  return RestraintListType;  }
 
   void ToDataItem(TDataItem& item) const;
+  #ifndef _NO_PYTHON
+  PyObject* PyExport(TPtrList<PyObject>& atoms, TPtrList<PyObject>& equiv);
+#endif
   void FromDataItem(TDataItem& item);
 };
 

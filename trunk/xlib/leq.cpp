@@ -12,6 +12,18 @@ void XVarReference::ToDataItem(TDataItem& item) const {
   item.AddField("k", coefficient);
   item.AddField("rel", XVarManager::RelationNames[relation_type]);
 }
+//..............................................................................
+#ifndef _NO_PYTHON
+PyObject* XVarReference::PyExport(TPtrList<PyObject>& atoms)  {
+  PyObject* main = PyDict_New();
+  Py_IncRef( atoms[atom->GetTag()] );
+  PyDict_SetItemString(main, "atom", atoms[atom->GetTag()]  );
+  PyDict_SetItemString(main, "name", PythonExt::BuildString(XVarManager::VarNames[var_name]) );
+  PyDict_SetItemString(main, "relation", PythonExt::BuildString(XVarManager::RelationNames[relation_type]) );
+  PyDict_SetItemString(main, "k", Py_BuildValue("d", coefficient) );
+  return main;
+}
+#endif
 //.................................................................................................
 XVarReference& XVarReference::FromDataItem(const TDataItem& item, XVar& parent) {
   int ai = item.GetFieldValue("atom_id").ToInt();
@@ -36,6 +48,18 @@ void XVar::ToDataItem(TDataItem& item) const {
   for( int i=0; i < References.Count(); i++ )
     References[i]->ToDataItem(item.AddItem(i));
 }
+//..............................................................................
+#ifndef _NO_PYTHON
+PyObject* XVar::PyExport(TPtrList<PyObject>& atoms)  {
+  PyObject* main = PyDict_New(), 
+    *refs = PyTuple_New(References.Count());
+  PyDict_SetItemString(main, "value", Py_BuildValue("d", Value) );
+  for( int i=0; i < References.Count(); i++ )
+    PyTuple_SetItem(refs, i, References[i]->PyExport(atoms) );
+  PyDict_SetItemString(main, "references", refs);
+  return main;
+}
+#endif
 //.................................................................................................
 XVar& XVar::FromDataItem(const TDataItem& item, XVarManager& parent) {
   XVar* var = new XVar(parent, item.GetRequiredField("val").ToDouble());
@@ -65,6 +89,21 @@ void XLEQ::ToDataItem(TDataItem& item) const {
     mi.AddField("k", Coefficients[i]);
   }
 }
+//..............................................................................
+#ifndef _NO_PYTHON
+PyObject* XLEQ::PyExport(TPtrList<PyObject>& _vars)  {
+  PyObject* main = PyDict_New();
+  PyDict_SetItemString(main, "value", Py_BuildValue("d", Value) );
+  PyDict_SetItemString(main, "sigma", Py_BuildValue("d", Sigma) );
+  PyObject* vars = PyTuple_New(Vars.Count());
+  for( int i=0; i < Vars.Count(); i++ )  {
+    Py_IncRef(_vars[Vars[i]->GetId()]);
+    PyTuple_SetItem(vars, i, _vars[Vars[i]->GetId()] );
+  }
+  PyDict_SetItemString(main, "variables", vars);
+  return main;
+}
+#endif
 //.................................................................................................
 XLEQ& XLEQ::FromDataItem(const TDataItem& item, XVarManager& parent) {
   XLEQ* leq = new XLEQ(parent, item.GetRequiredField("val").ToDouble(), 
@@ -310,6 +349,25 @@ void XVarManager::ToDataItem(TDataItem& item) const {
   for( int i=0; i < Equations.Count(); i++ )
     Equations[i].ToDataItem( eqs.AddItem(i) );
 }
+//.................................................................................................
+#ifndef _NO_PYTHON
+PyObject* XVarManager::PyExport(TPtrList<PyObject>& atoms)  {
+  PyObject* main = PyDict_New();
+  
+  TPtrList<PyObject> var_refs(Vars.Count());
+  PyObject* vars = PyTuple_New(Vars.Count());
+  for( int i=0; i < Vars.Count(); i++ )
+    PyTuple_SetItem(vars, i, var_refs[i] = Vars[i].PyExport(atoms) );
+  PyDict_SetItemString(main, "variables", vars);
+  
+  
+  PyObject* eqs = PyTuple_New(Equations.Count());
+  for( int i=0; i < Equations.Count(); i++ )
+    PyTuple_SetItem(eqs, i, Equations[i].PyExport(var_refs) );
+  PyDict_SetItemString(main, "equations", eqs);
+  return main;
+}
+#endif
 //.................................................................................................
 void XVarManager::FromDataItem(const TDataItem& item) {
   ClearAll();

@@ -197,6 +197,38 @@ void TSimpleRestraint::ToDataItem(TDataItem& item) const {
   }
 }
 //..............................................................................
+#ifndef _NO_PYTHON
+PyObject* TSimpleRestraint::PyExport(TPtrList<PyObject>& atoms, TPtrList<PyObject>& equiv)  {
+  PyObject* main = PyDict_New();
+  PyDict_SetItemString(main, "allNonH", Py_BuildValue("b", AllNonHAtoms)  );
+  PyDict_SetItemString(main, "esd1", Py_BuildValue("d", Esd) );
+  PyDict_SetItemString(main, "esd2", Py_BuildValue("d", Esd1) );
+  PyDict_SetItemString(main, "value", Py_BuildValue("d", Value) );
+
+  int atom_cnt=0;
+  for( int i=0; i < InvolvedAtoms.Count(); i++ )  {
+    if( InvolvedAtoms[i].GetAtom()->IsDeleted() )  continue;
+    atom_cnt++;
+  }
+
+  PyObject* involved = PyTuple_New(atom_cnt);
+  atom_cnt = 0;
+  for( int i=0; i < InvolvedAtoms.Count(); i++ )  {
+    if( InvolvedAtoms[i].GetAtom()->IsDeleted() )  continue;
+    PyObject* eq;
+    if( InvolvedAtoms[i].GetMatrix() == NULL )
+      eq = Py_None;
+    else
+      eq = equiv[InvolvedAtoms[i].GetMatrix()->GetTag()];
+    Py_IncRef(eq);
+    Py_IncRef(atoms[InvolvedAtoms[i].GetAtom()->GetTag()]);
+    PyTuple_SetItem(involved, atom_cnt++, 
+      Py_BuildValue("ss", atoms[InvolvedAtoms[i].GetAtom()->GetTag()], eq));
+  }
+  PyDict_SetItemString(main, "atoms", involved);
+  return main;
+}
+#endif//..............................................................................
 void TSimpleRestraint::FromDataItem(TDataItem& item) {
   AllNonHAtoms = item.GetRequiredField("allNonH").ToBool();
   Esd = item.GetRequiredField("esd").ToDouble();
@@ -271,6 +303,23 @@ void TSRestraintList::ToDataItem(TDataItem& item) const {
   }
 }
 //..............................................................................
+#ifndef _NO_PYTHON
+PyObject* TSRestraintList::PyExport(TPtrList<PyObject>& atoms, TPtrList<PyObject>& equiv)  {
+  int rs_cnt = 0;
+  for( int i=0; i < Restraints.Count(); i++ )  {
+    if( !Restraints[i].IsAllNonHAtoms() && Restraints[i].AtomCount() == 0 )  continue;
+    rs_cnt++;
+  }
+
+  PyObject* main = PyTuple_New( rs_cnt );
+  rs_cnt = 0;
+  for( int i=0; i < Restraints.Count(); i++ )  {
+    if( !Restraints[i].IsAllNonHAtoms() && Restraints[i].AtomCount() == 0 )  continue;
+    PyTuple_SetItem(main, rs_cnt++, Restraints[i].PyExport(atoms, equiv) );
+  }
+  return main;
+}
+#endif//..............................................................................
 void TSRestraintList::FromDataItem(TDataItem& item) {
   for( int i=0; i < item.ItemCount(); i++ )
     AddNew().FromDataItem( item.GetItem(i) );

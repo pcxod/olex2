@@ -92,6 +92,9 @@ public:
   const TCAtom& operator [] (int i) const {  return *Dependent[i];  }
 
   void ToDataItem(TDataItem& item) const;
+#ifndef _NO_PYTHON
+  PyObject* PyExport(TPtrList<PyObject>& atoms);
+#endif
   void FromDataItem(TDataItem& item);
 };
 //....................................................................................
@@ -131,6 +134,9 @@ public:
     Groups.Pack();
   }
   void ToDataItem(TDataItem& item);
+#ifndef _NO_PYTHON
+  PyObject* PyExport(TPtrList<PyObject>& atoms);
+#endif
   void FromDataItem(TDataItem& item);
 };
 

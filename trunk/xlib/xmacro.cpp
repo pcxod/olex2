@@ -67,7 +67,7 @@ void XLibMacros::Export(TLibrary& lib)  {
   xlib_InitMacro(AtomInfo, "", fpAny|psFileLoaded,
 "Searches information for given atoms in the database" );
 //_________________________________________________________________________________________________________________________
-  xlib_InitMacro(Compaq, "a-analyse connectivity on atom level, bu default fragment level is used", fpNone|psFileLoaded,
+  xlib_InitMacro(Compaq, "a-analyse connectivity on atom level, but default fragment level is used", fpNone|psFileLoaded,
 "Moves all atoms or fragments of the asymmetric unit as close to each other as possible." );
 //_________________________________________________________________________________________________________________________
   xlib_InitMacro(Envi, "q-adds Q-peaks to the list&;h-adds hydrogen atoms to the list&;cs-leaves selection unchanged",
