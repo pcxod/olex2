@@ -40,6 +40,30 @@ void TSameGroup::ToDataItem(TDataItem& item) const {
     item.AddItem(atom_id++, Dependent[i]->GetId() );
   }
 }
+//..............................................................................
+#ifndef _NO_PYTHON
+PyObject* TSameGroup::PyExport(PyObject* main, TPtrList<PyObject>& allGroups, TPtrList<PyObject>& _atoms)  {
+  PyDict_SetItemString(main, "esd12", Py_BuildValue("d", Esd12)  );
+  PyDict_SetItemString(main, "esd13", Py_BuildValue("d", Esd13)  );
+  int atom_cnt = 0;
+  for( int i=0; i < Atoms.Count(); i++ )  {
+    if( Atoms[i]->IsDeleted() )  continue;
+    atom_cnt++;
+  }
+  PyObject* atoms = PyTuple_New(atom_cnt);
+  atom_cnt = 0;
+  for( int i=0; i < Atoms.Count(); i++ )  {
+    if( Atoms[i]->IsDeleted() )  continue;
+    PyTuple_SetItem(atoms, atom_cnt++, _atoms[Atoms[i]->GetTag()] );
+  }
+  PyDict_SetItemString(main, "atoms", atoms);
+  PyObject* dependent = PyTuple_New(Dependent.Count());
+  for( int i=0; i < Dependent.Count(); i++ )
+    PyTuple_SetItem(dependent, i, allGroups[Dependent[i]->GetTag()] );
+  PyDict_SetItemString(main, "dependent", dependent);
+  return main;
+}
+#endif
 //..........................................................................................
 void TSameGroup::FromDataItem(TDataItem& item) {
   Clear();
@@ -61,6 +85,18 @@ void TSameGroupList::ToDataItem(TDataItem& item) const {
     Groups[i].ToDataItem( item.AddItem(i) );
   }
 }
+//..............................................................................
+#ifndef _NO_PYTHON
+PyObject* TSameGroupList::PyExport(TPtrList<PyObject>& _atoms)  {
+  PyObject* main = PyTuple_New( Groups.Count() );
+  TPtrList<PyObject> allGroups(Groups.Count());
+  for( int i=0; i < Groups.Count(); i++ )
+    PyTuple_SetItem(main, i, allGroups.Add( PyDict_New() ) );
+  for( int i=0; i < Groups.Count(); i++ )
+    Groups[i].PyExport(allGroups[i], allGroups, _atoms);
+  return main;
+}
+#endif
 //..........................................................................................
 void TSameGroupList::FromDataItem(TDataItem& item) {
   Clear();

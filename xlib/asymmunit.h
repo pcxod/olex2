@@ -274,6 +274,9 @@ public:
   DefPropP(RefinementModel*, RefMod)
 
   void ToDataItem(TDataItem& item) const;
+#ifndef _NO_PYTHON
+  PyObject* PyExport(TPtrList<PyObject>& atoms);
+#endif
   void FromDataItem(TDataItem& item);
 
   void LibNewAtom(const TStrObjList& Params, TMacroError& E);

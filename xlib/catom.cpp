@@ -204,6 +204,31 @@ void TCAtom::ToDataItem(TDataItem& item) const  {
 
 }
 //..............................................................................
+#ifndef _NO_PYTHON
+PyObject* TCAtom::PyExport()  {
+  PyObject* main = PyDict_New();
+  PyDict_SetItemString(main, "label", PythonExt::BuildString(FLabel) );
+  PyDict_SetItemString(main, "type", PythonExt::BuildString(FAtomInfo->GetSymbol()) );
+  PyDict_SetItemString(main, "part", Py_BuildValue("i", Part) );
+  PyDict_SetItemString(main, "occu", Py_BuildValue("d", Occu) );
+  PyDict_SetItemString(main, "crd", 
+    Py_BuildValue("(ddd)(ddd)", Center[0], Center[1], Center[2], Esd[0], Esd[1], Esd[2]) );
+  if( EllpId == -1 )
+    PyDict_SetItemString(main, "uiso", Py_BuildValue("d", Uiso) );
+  else  {
+    double Q[6], E[6];
+    GetEllipsoid()->GetQuad(Q, E);
+    PyDict_SetItemString(main, "adp", 
+      Py_BuildValue("(dddddd)(dddddd)", Q[0], Q[1], Q[2], Q[3], Q[4], Q[5], 
+       E[0], E[1], E[2], E[3], E[4], E[5]
+      ) );
+  }
+  if( *FAtomInfo == iQPeakIndex )
+    PyDict_SetItemString(main, "peak", Py_BuildValue("d", QPeak) );
+  return main;
+}
+#endif
+//..............................................................................
 void TCAtom::FromDataItem(TDataItem& item)  {
   FAtomInfo = TAtomsInfo::GetInstance().FindAtomInfoBySymbol( item.GetRequiredField("type") );
   if( FAtomInfo == NULL )

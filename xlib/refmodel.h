@@ -8,10 +8,6 @@
 #include "afixgroup.h"
 #include "exyzgroup.h"
 
-#ifndef _NO_PYTHON
-  #include "pyext.h"
-#endif
-
 BeginXlibNamespace()
 
 static const double 

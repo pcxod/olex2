@@ -20,6 +20,24 @@ void TExyzGroup::ToDataItem(TDataItem& item) const {
   }
 }
 //..............................................................................
+#ifndef _NO_PYTHON
+PyObject* TExyzGroup::PyExport(TPtrList<PyObject>& atoms)  {
+  int atom_cnt = 0;
+  for( int i=0; i < Atoms.Count(); i++ )  {
+    if( Atoms[i]->IsDeleted() )  continue;
+    atom_cnt++;
+  }
+  PyObject* main = PyTuple_New(atom_cnt);
+  atom_cnt = 0;
+  for( int i=0; i < Atoms.Count(); i++ )  {
+    if( Atoms[i]->IsDeleted() )  continue;
+    Py_IncRef(atoms[Atoms[i]->GetTag()]);
+    PyTuple_SetItem(main, atom_cnt++, atoms[Atoms[i]->GetTag()] );
+  }
+  return main;
+}
+#endif
+//..............................................................................
 void TExyzGroup::FromDataItem(TDataItem& item) {
   Clear();
   for( int i=0; i < item.FieldCount(); i++ )
@@ -39,10 +57,29 @@ void TExyzGroups::ToDataItem(TDataItem& item) {
   }
   Groups.Pack();
   item.AddField("n", Groups.Count() );
-  for( int i=0; i < Groups.Count(); i++ )  {
+  for( int i=0; i < Groups.Count(); i++ ) 
     Groups[i].ToDataItem( item.AddItem(group_id++) );
-  }
 }
+//..............................................................................
+#ifndef _NO_PYTHON
+PyObject* TExyzGroups::PyExport(TPtrList<PyObject>& atoms)  {
+  int group_id = 0;
+  for( int i=0; i < Groups.Count(); i++ )  {
+    if( Groups[i].IsEmpty() )  {
+      Groups.NullItem(i);
+      continue;
+    }
+    Groups[i].SetId(group_id++);
+  }
+  Groups.Pack();
+
+  PyObject* main = PyTuple_New( Groups.Count() );
+  for( int i=0; i < Groups.Count(); i++ )  {
+    PyTuple_SetItem(main, i, Groups[i].PyExport(atoms) );
+  }
+  return main;
+}
+#endif
 //..............................................................................
 void TExyzGroups::FromDataItem(TDataItem& item) {
   Clear();

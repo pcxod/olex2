@@ -488,22 +488,49 @@ void RefinementModel::FromDataItem(TDataItem& item) {
 //....................................................................................................
 #ifndef _NO_PYTHON
 PyObject* RefinementModel::PyExport()  {
-  PyObject* main = PyDict_New(), *hklf, *explt;
-  PyDict_SetItemString(main, "hklf", hklf = PyDict_New() );
-    PyDict_SetItemString(hklf, "value", Py_BuildValue("i", HKLF));
-    PyDict_SetItemString(hklf, "s", Py_BuildValue("d", HKLF_s));
-    PyDict_SetItemString(hklf, "m", Py_BuildValue("d", HKLF_m));
-    PyDict_SetItemString(hklf, "wt", Py_BuildValue("d", HKLF_wt));
-    PyDict_SetItemString(hklf, "matrix", 
-      Py_BuildValue("(ddd)(ddd)(ddd)", HKLF_mat[0][0], HKLF_mat[0][1], HKLF_mat[0][2],
-        HKLF_mat[1][0], HKLF_mat[1][1], HKLF_mat[1][2],
-        HKLF_mat[2][0], HKLF_mat[2][1], HKLF_mat[2][2]));
+  PyObject* main = PyDict_New(), 
+    *hklf = PyDict_New(), 
+    *eq = PyTuple_New(UsedSymm.Count());
+  TPtrList<PyObject> atoms, equivs;
+  PyDict_SetItemString(main, "aunit", aunit.PyExport(atoms) );
 
-  PyDict_SetItemString(main, "explt", explt = PyDict_New() );
-    PyDict_SetItemString(explt, "radiation", Py_BuildValue("d", expl.GetRadiation()));
-    PyDict_SetItemString(explt, "temperature", Py_BuildValue("d", expl.GetTemperature()));
-    const vec3d size = expl.GetCrystalSize();
-    PyDict_SetItemString(explt, "size", Py_BuildValue("(ddd)", size[0], size[1], size[2]));
+  for( int i=0; i < UsedSymm.Count(); i++ )  {
+    const smatd& m = UsedSymm[i];
+    PyTuple_SetItem(eq, i, 
+      equivs.Add(
+        Py_BuildValue("(ddd)(ddd)(ddd)(ddd)", m.r[0][0], m.r[0][1], m.r[0][2],
+          m.r[1][0], m.r[1][1], m.r[1][2],
+          m.r[2][0], m.r[2][1], m.r[2][2],
+          m.t[0], m.t[1], m.t[2]
+      )) );
+  }
+  PyDict_SetItemString(main, "equivalents", eq);
+
+  PyDict_SetItemString(main, "variables", Vars.PyExport(atoms) );
+  PyDict_SetItemString(main, "exptl", expl.PyExport() );
+  PyDict_SetItemString(main, "afix", AfixGroups.PyExport(atoms) );
+  PyDict_SetItemString(main, "exyz", ExyzGroups.PyExport(atoms) );
+  PyDict_SetItemString(main, "same", rSAME.PyExport(atoms) );
+  PyDict_SetItemString(main, "dfix", rDFIX.PyExport(atoms, equivs) );
+  PyDict_SetItemString(main, "dang", rDANG.PyExport(atoms, equivs) );
+  PyDict_SetItemString(main, "sadi", rSADI.PyExport(atoms, equivs) );
+  PyDict_SetItemString(main, "chiv", rCHIV.PyExport(atoms, equivs) );
+  PyDict_SetItemString(main, "flat", rFLAT.PyExport(atoms, equivs) );
+  PyDict_SetItemString(main, "delu", rDELU.PyExport(atoms, equivs) );
+  PyDict_SetItemString(main, "simu", rSIMU.PyExport(atoms, equivs) );
+  PyDict_SetItemString(main, "isor", rISOR.PyExport(atoms, equivs) );
+  PyDict_SetItemString(main, "eadp", rEADP.PyExport(atoms, equivs) );
+
+  PyDict_SetItemString(hklf, "value", Py_BuildValue("i", HKLF));
+  PyDict_SetItemString(hklf, "s", Py_BuildValue("d", HKLF_s));
+  PyDict_SetItemString(hklf, "m", Py_BuildValue("d", HKLF_m));
+  PyDict_SetItemString(hklf, "wt", Py_BuildValue("d", HKLF_wt));
+  PyDict_SetItemString(hklf, "matrix", 
+    Py_BuildValue("(ddd)(ddd)(ddd)", HKLF_mat[0][0], HKLF_mat[0][1], HKLF_mat[0][2],
+      HKLF_mat[1][0], HKLF_mat[1][1], HKLF_mat[1][2],
+      HKLF_mat[2][0], HKLF_mat[2][1], HKLF_mat[2][2]));
+  PyDict_SetItemString(main, "hklf", hklf );
+
     
   if( OMIT_set )  {
     PyObject* omit;
@@ -512,16 +539,17 @@ PyObject* RefinementModel::PyExport()  {
       PyDict_SetItemString(omit, "2theta", Py_BuildValue("d", OMIT_2t));
   }
   if( TWIN_set )  {
-    PyObject* twin, *basf;
-    PyDict_SetItemString(main, "twin", twin = PyDict_New() );
+    PyObject* twin = PyDict_New(), 
+      *basf = PyTuple_New(BASF.Count());
       PyDict_SetItemString(twin, "n", Py_BuildValue("i", TWIN_n));
       PyDict_SetItemString(twin, "matrix", 
         Py_BuildValue("(ddd)(ddd)(ddd)", TWIN_mat[0][0], TWIN_mat[0][1], TWIN_mat[0][2],
           TWIN_mat[1][0], TWIN_mat[1][1], TWIN_mat[1][2],
           TWIN_mat[2][0], TWIN_mat[2][1], TWIN_mat[2][2]));
-      PyDict_SetItemString(twin, "basf", basf = PyTuple_New(BASF.Count()) );
       for( int i=0; i < BASF.Count(); i++ )
         PyTuple_SetItem(basf, i, Py_BuildValue("d", BASF[i]) );
+    PyDict_SetItemString(twin, "basf", basf);
+    PyDict_SetItemString(main, "twin", twin );
   }
   return main;
 }

@@ -611,6 +611,59 @@ void TAsymmUnit::ToDataItem(TDataItem& item) const  {
   }
 }
 //..............................................................................
+#ifndef _NO_PYTHON
+PyObject* TAsymmUnit::PyExport(TPtrList<PyObject>& _atoms)  {
+  PyObject* main = PyDict_New(), *cell = PyDict_New();
+  PyDict_SetItemString(cell, "a", Py_BuildValue("(dd)", FAxes[0].GetV(), FAxes[0].GetE()));
+  PyDict_SetItemString(cell, "b", Py_BuildValue("(dd)", FAxes[1].GetV(), FAxes[1].GetE()));
+  PyDict_SetItemString(cell, "c", Py_BuildValue("(dd)", FAxes[2].GetV(), FAxes[2].GetE()));
+  PyDict_SetItemString(cell, "alpha", Py_BuildValue("(dd)", FAngles[0].GetV(), FAngles[0].GetE()));
+  PyDict_SetItemString(cell, "beta", Py_BuildValue("(dd)", FAngles[1].GetV(), FAngles[1].GetE()));
+  PyDict_SetItemString(cell, "gamma", Py_BuildValue("(dd)", FAngles[2].GetV(), FAngles[2].GetE()));
+  PyDict_SetItemString(cell, "z", Py_BuildValue("i", Z));
+  PyDict_SetItemString(main, "cell", cell);
+  int resi_cnt = 0;
+  for( int i=-1; i < Residues.Count(); i++ )  {
+    TResidue& r = GetResidue(i);
+    if( r.IsEmpty() )  continue;
+    resi_cnt++;
+  }
+  PyObject* residues = PyTuple_New(resi_cnt);
+  resi_cnt = 0;
+
+  int atom_id = 0;
+  for( int i=-1; i < Residues.Count(); i++ )  {
+    TResidue& r = GetResidue(i);
+    if( r.IsEmpty() )  continue;
+    int atom_cnt = 0;
+    for( int j=0; j < r.Count(); j++ )  {
+      if( r[j].IsDeleted() )  continue;
+      r[j].SetTag(atom_id++);
+      atom_cnt++;
+    }
+    PyObject* atoms = PyTuple_New(atom_cnt), 
+      *ri = PyDict_New();
+
+    if( i == -1 )
+      PyDict_SetItemString(ri, "class", PythonExt::BuildString("default"));
+    else  {
+      PyDict_SetItemString(ri, "class", PythonExt::BuildString(r.GetClassName()));
+      PyDict_SetItemString(ri, "alias", PythonExt::BuildString(r.GetAlias()));
+      PyDict_SetItemString(ri, "number", Py_BuildValue("i", r.GetNumber()));
+    }
+    atom_cnt = 0;
+    for( int j=0; j < r.Count(); j++ )  {
+      if( r[j].IsDeleted() )  continue;
+      PyTuple_SetItem(atoms, atom_cnt++, _atoms.Add(r[j].PyExport()) );
+    }
+    PyDict_SetItemString(ri, "atoms", atoms);
+    PyTuple_SetItem(residues, resi_cnt++, ri );
+  }
+  PyDict_SetItemString(main, "residues", residues);
+  return main;
+}
+#endif
+//..............................................................................
 void TAsymmUnit::FromDataItem(TDataItem& item)  {
   Clear();
   TDataItem& cell = item.FindRequiredItem("cell");

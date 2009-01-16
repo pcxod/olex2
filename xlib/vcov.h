@@ -535,6 +535,9 @@ public:
   // plane to a vector angle
   TEValue<double> CalcP2VAngle(const TSAtomPList& plane, const TSAtom& a1, const TSAtom& a2) {
     TSAtomPList satoms(plane);
+    weights1.SetCount(satoms.Count());
+    for( int i=0; i < satoms.Count(); i++ ) 
+      weights1[i] = 1.0;
     satoms.Add(const_cast<TSAtom*>(&a1));
     satoms.Add(const_cast<TSAtom*>(&a2));
     return DoCalc(satoms, &VcoVContainer::_calcP2BAngle);

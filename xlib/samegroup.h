@@ -51,6 +51,9 @@ public:
   double Esd12, Esd13;
 
   void ToDataItem(TDataItem& item) const;
+#ifndef _NO_PYTHON
+  PyObject* PyExport(PyObject* main, TPtrList<PyObject>& allGroups, TPtrList<PyObject>& atoms);
+#endif
   void FromDataItem(TDataItem& item);
 };
 
@@ -90,6 +93,9 @@ public:
   }
 
   void ToDataItem(TDataItem& item) const;
+#ifndef _NO_PYTHON
+  PyObject* PyExport(TPtrList<PyObject>& atoms);
+#endif
   void FromDataItem(TDataItem& item);
 };
 

@@ -10,6 +10,10 @@
 #include "dataitem.h"
 #include "leq.h"
 
+#ifndef _NO_PYTHON
+  #include "pyext.h"
+#endif
+
 BeginXlibNamespace()
 
 //struct Parameter  {
@@ -156,7 +160,9 @@ public:
 
   void ToDataItem(TDataItem& item) const;
   void FromDataItem(TDataItem& item);
-
+#ifndef _NO_PYTHON
+  PyObject* PyExport();
+#endif
   static int CompareAtomLabels(const olxstr& S, const olxstr& S1);
 };
 //..............................................................................
