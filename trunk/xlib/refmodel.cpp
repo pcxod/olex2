@@ -4,6 +4,7 @@
 #include "hkl.h"
 #include "symmlib.h"
 #include "pers_util.h"
+#include "unitcell.h"
 
 RefinementModel::RefinementModel(TAsymmUnit& au) : rDFIX(*this, rltBonds), rDANG(*this, rltBonds), 
   rSADI(*this, rltBonds), rCHIV(*this, rltAtoms), rFLAT(*this, rltGroup), rDELU(*this, rltAtoms), 
@@ -487,7 +488,7 @@ void RefinementModel::FromDataItem(TDataItem& item) {
 }
 //....................................................................................................
 #ifndef _NO_PYTHON
-PyObject* RefinementModel::PyExport()  {
+PyObject* RefinementModel::PyExport(bool export_connectivity)  {
   PyObject* main = PyDict_New(), 
     *hklf = PyDict_New(), 
     *eq = PyTuple_New(UsedSymm.Count());
@@ -551,6 +552,29 @@ PyObject* RefinementModel::PyExport()  {
     PyDict_SetItemString(twin, "basf", basf);
     PyDict_SetItemString(main, "twin", twin );
   }
+  // export the connectivity table...
+  if( export_connectivity )  {
+    TAtomEnvi ae;
+    TLattice& lat = aunit.GetLattice();
+    TUnitCell& uc = aunit.GetLattice().GetUnitCell();
+    int atom_cnt = 0;
+    for( int i=0; i < lat.AtomCount(); i++ )  {
+      TSAtom& sa = lat.GetAtom(i);
+      if( sa.IsDeleted() || sa.GetAtomInfo() == iQPeakIndex )  continue;
+      atom_cnt++;
+    }
+    PyObject* connectivity = PyTuple_New(atom_cnt);
+    atom_cnt = 0;
+    for( int i=0; i < lat.AtomCount(); i++ )  {
+      TSAtom& sa = lat.GetAtom(i);
+      if( sa.IsDeleted() || sa.GetAtomInfo() == iQPeakIndex )  continue;
+      uc.GetAtomEnviList(sa, ae);
+      PyTuple_SetItem(connectivity, atom_cnt++, ae.PyExport(atoms));
+      ae.Clear();
+    }
+    PyDict_SetItemString(main, "connectivity", connectivity);
+  }
+  //
   return main;
 }
 #endif
