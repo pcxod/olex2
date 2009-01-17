@@ -552,27 +552,20 @@ PyObject* RefinementModel::PyExport(bool export_connectivity)  {
     PyDict_SetItemString(twin, "basf", basf);
     PyDict_SetItemString(main, "twin", twin );
   }
-  // export the connectivity table...
+  // attach the connectivity...
   if( export_connectivity )  {
     TAtomEnvi ae;
     TLattice& lat = aunit.GetLattice();
     TUnitCell& uc = aunit.GetLattice().GetUnitCell();
-    int atom_cnt = 0;
-    for( int i=0; i < lat.AtomCount(); i++ )  {
-      TSAtom& sa = lat.GetAtom(i);
-      if( sa.IsDeleted() || sa.GetAtomInfo() == iQPeakIndex )  continue;
-      atom_cnt++;
-    }
-    PyObject* connectivity = PyTuple_New(atom_cnt);
-    atom_cnt = 0;
     for( int i=0; i < lat.AtomCount(); i++ )  {
       TSAtom& sa = lat.GetAtom(i);
       if( sa.IsDeleted() || sa.GetAtomInfo() == iQPeakIndex )  continue;
       uc.GetAtomEnviList(sa, ae);
-      PyTuple_SetItem(connectivity, atom_cnt++, ae.PyExport(atoms));
+      if( PyDict_GetItemString(atoms[sa.CAtom().GetTag()], "neighbours") != NULL )
+        continue;
+      PyDict_SetItemString(atoms[sa.CAtom().GetTag()], "neighbours", ae.PyExport(atoms) );
       ae.Clear();
     }
-    PyDict_SetItemString(main, "connectivity", connectivity);
   }
   //
   return main;

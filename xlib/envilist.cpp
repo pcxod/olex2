@@ -6,9 +6,6 @@
 
 #ifndef _NO_PYTHON
 PyObject* TAtomEnvi::PyExport(TPtrList<PyObject>& atoms)  {
-  PyObject* main = PyDict_New();
-  Py_IncRef( atoms[Base->GetTag()] );
-  PyDict_SetItemString(main, "base", atoms[Base->GetTag()]); 
   PyObject* neighbours = PyTuple_New( Envi.Count() );
   for( int i=0; i < Envi.Count(); i++ )  {
     PyObject* atom = atoms[Envi[i].GetA()->GetTag()];
@@ -26,8 +23,7 @@ PyObject* TAtomEnvi::PyExport(TPtrList<PyObject>& atoms)  {
        )
     );
   }
-  PyDict_SetItemString(main, "neighbours", neighbours); 
-  return main;
+  return neighbours;
 }
 #endif
 
