@@ -401,11 +401,17 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
   }
   else  {
     // three hits from here
-    for( int i=sortedSATestResults.Count()-1; i >= olx_max(0, sortedSATestResults.Count()-3) ; i-- )
+    for( int i=sortedSATestResults.Count()-1; i >= 0; i-- )  {
+      if( sortedSATestResults.GetObject(i)->GetA()->GetWeakCount() != 0 )  {
+        double v = sortedSATestResults.GetObject(i)->GetA()->GetSummWeakI()/sortedSATestResults.GetObject(i)->GetA()->GetWeakCount();
+        if( v > SGTest.GetAverageI()/5 )
+          break;
+      }
       FoundSpaceGroups.Add( sortedSATestResults.GetObject(i)->GetA()->GetObject() );
+    }
     // check all spacegroups without translations as well
     TPtrList<TSpaceGroup> laueClassGroups, possibleGroups;
-    for( int i=0; i < CalculatedLaueClasses.Count(); i++ )  {
+    for( int i=CalculatedLaueClasses.Count()-1; i >= 0 ; i-- )  {
       laueClassGroups.Clear();
       TSymmLib::GetInstance()->FindLaueClassGroups( *CalculatedLaueClasses[i], laueClassGroups);
       for( int j=0; j < laueClassGroups.Count(); j++ )  {
