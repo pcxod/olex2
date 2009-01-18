@@ -185,6 +185,37 @@ public:
         delete lst;
       }
     }
+    // the function fills the list with full file names
+    void ListFilesEx(TStrList& out, const TTypeList<TEFile::TFileNameMask>* _mask=NULL) const {
+      out.SetCapacity( out.Count() + Files.Count() );
+      if( _mask != NULL && !_mask->IsEmpty() )   {
+        for( int i=0; i < Files.Count(); i++ )  {
+          for( int j=0; j < _mask->Count(); j++ )  {
+            if( (*_mask)[j].DoesMatch( Files[i].GetName() ) )  {
+              out.Add(FullPath) << Files[i].GetName();
+              break;
+            }
+          }
+        }
+      }
+      else  {
+        for( int i=0; i < Files.Count(); i++ )  
+          out.Add(FullPath) << Files[i].GetName();
+      }
+      for( int i=0; i < Folders.Count(); i++ )
+        Folders[i].ListFilesEx(out, _mask);
+    }
+    void ListFiles(TStrList& out, const olxstr& _mask) const {
+      TStrList toks(_mask, ";");
+      if( !toks.IsEmpty() )  {
+        TTypeList<TEFile::TFileNameMask> mask;
+        for( int i=0; i < toks.Count(); i++ )
+          mask.AddNew( toks[i] );
+        ListFilesEx(out, &mask);
+      }
+      else
+        ListFilesEx(out, NULL);
+    }
   };
 ///////////////////////////////////////////////////////////////////////////////////////
   TActionQList Actions;
@@ -220,7 +251,7 @@ public:
     fl += MAXDWORD*fsHigh;
     const int bf_sz = 16*1024*1024;
     char* bf = new char[bf_sz];
-    pg.SetMax( fl );
+    pg.SetMax( (double)fl );
     pg.SetPos(0);
     pg.SetAction( from );
     DWORD read = 1;
@@ -250,7 +281,7 @@ public:
         OnFileCopy->Execute(NULL, &pg);
       }
     }
-    pg.SetPos( fl );
+    pg.SetPos( (double)fl );
     OnFileCopy->Execute(NULL, &pg);
     delete [] bf;
     CloseHandle(in);

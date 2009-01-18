@@ -109,11 +109,15 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				UseUnicodeResponseFiles="false"
+				InlineFunctionExpansion="2"
+				EnableIntrinsicFunctions="true"
+				FavorSizeOrSpeed="1"
 				PreprocessorDefinitions="WIN32;NDEBUG"
 				RuntimeLibrary="2"
 				UsePrecompiledHeader="0"
-				WarningLevel="3"
-				DebugInformationFormat="3"
+				WarningLevel="2"
+				DebugInformationFormat="0"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -150,6 +154,7 @@
 			ConfigurationType="4"
 			CharacterSet="1"
 			ManagedExtensions="0"
+			WholeProgramOptimization="0"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -171,6 +176,7 @@
 				Optimization="0"
 				InlineFunctionExpansion="0"
 				EnableIntrinsicFunctions="false"
+				WholeProgramOptimization="false"
 				PreprocessorDefinitions="_UNICODE;_DEBUG;"
 				StringPooling="true"
 				MinimalRebuild="true"

@@ -26,7 +26,7 @@
 ///////////////////////////////////////////////////////////////////////
 void ExportSymmLib();
 void ExportSymmLibB();  // MSVC crashes on this code...
-void ExportSymmLibC();
+//void ExportSymmLibC();
 void ExportSymmLibD();  // new fastsymm output
 void ExportBAI(TAtomsInfo& ais);
 void ExportBAIA(TAtomsInfo& ais, TScattererLib& scl);
@@ -51,7 +51,7 @@ int main(int argc, char* argv[])  {
     TSymmLib& sl = *TSymmLib::GetInstance();
     if( &sl == NULL ) 
       throw TFunctionFailedException(__OlxSourceInfo, "symmlib is not initialised");
-    TIns* ins = new TIns(&ai);
+    TIns* ins = new TIns;
     XApp.XFile().RegisterFileFormat( ins, "ins" );
     XApp.XFile().RegisterFileFormat( ins, "res" );
     XApp.XFile().LoadFromFile(sampleFolder + "/05srv085.ins");
@@ -80,7 +80,7 @@ int main(int argc, char* argv[])  {
     //ExportSymmLibA();
     //ExportBAI( *XApp.AtomsInfo() );
     //ExportBAIA( *XApp.AtomsInfo(), scl );
-    ExportSymmLibC();
+    //ExportSymmLibC();
     //ExportSymmLibD();
   }
   catch( TExceptionBase& exc )  {
@@ -927,7 +927,8 @@ void ExportBAIA(TAtomsInfo& ais, TScattererLib& scl)  {
   out.SaveToFile("e:/tmp/baiouta.h");
 }
 */
-//#include "bricks.h"
+/*
+#include "bricks.h"
 struct SGSM {
   double m[3];
 };
@@ -968,6 +969,7 @@ void ExportSymmLibC()  {
   }
   out.SaveToFile("e:/tmp/sgoutsx.h");
 }
+*/
 void ExportSymmLibB()  {
   TSymmLib& sl = *TSymmLib::GetInstance();
   TStrList out;

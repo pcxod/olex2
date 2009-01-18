@@ -1,6 +1,6 @@
 object fMain: TfMain
-  Left = 232
-  Top = 131
+  Left = 387
+  Top = 182
   Width = 686
   Height = 554
   Caption = 'Sync'

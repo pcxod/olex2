@@ -149,6 +149,7 @@
 			ConfigurationType="4"
 			CharacterSet="1"
 			ManagedExtensions="0"
+			WholeProgramOptimization="0"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -170,6 +171,7 @@
 				Optimization="0"
 				InlineFunctionExpansion="0"
 				EnableIntrinsicFunctions="false"
+				WholeProgramOptimization="false"
 				AdditionalIncludeDirectories="..\..\..\alglib;..\..\..\sdl;..\..\..\repository;..\..\..\xlib"
 				PreprocessorDefinitions="_UNICODE;_DEBUG;_NO_PYTHON"
 				StringPooling="true"
@@ -377,6 +379,10 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
+				RelativePath="..\..\..\xlib\afixgroup.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\xlib\asymmunit.cpp"
 				>
 			</File>
@@ -437,6 +443,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\xlib\experimental.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\xlib\exyzgroup.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\xlib\fastsymm.cpp"
 				>
 			</File>
@@ -469,6 +483,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\xlib\leq.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\xlib\lst.cpp"
 				>
 			</File>
@@ -486,6 +504,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\xlib\pdb.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\xlib\refmodel.cpp"
 				>
 			</File>
 			<File
@@ -550,6 +572,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\xlib\unitcell.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\xlib\vcov.cpp"
 				>
 			</File>
 			<File

@@ -102,7 +102,7 @@ int main(int argc, char* argv[])  {
   xm.NewScatterer("C1", 0.0, 0.0, 0.0).AddScatterer(&ai.GetAtomInfo(iCarbonIndex), &sc_c, 1);
   xm.NewScatterer("H1", 0.5, 0.5, 0.5).AddScatterer(&ai.GetAtomInfo(iHydrogenIndex), &sc_h, 1);
   xm.Scatterers[0].Occupancy = 1;
-  XVar& var = xm.Variables.AddNew(0.5);
+  xm_XVar& var = xm.Variables.AddNew(0.5);
   xm.Scatterers[1].Occupancy.options.SetVar( &var );
   xm.Scatterers[1].Occupancy.options.SetRefinable(false);
   xm.Scatterers[1].TDP.SetUani(NULL, &xm.Scatterers[0], 1.2);
