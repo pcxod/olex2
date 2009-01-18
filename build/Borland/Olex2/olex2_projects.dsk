@@ -19,7 +19,7 @@ TypeLibWindowCount=1
 [E:\SVN\olex2-sf\trunk\installer\main.cpp]
 ModuleType=SourceModule
 FormState=1
-FormOnTop=1
+FormOnTop=0
 
 [E:\wxWidgets-2.8.7\include\wx\wxchar.h]
 ModuleType=SourceModule
@@ -169,8 +169,8 @@ Left=0
 Top=0
 Width=1920
 Height=112
-MaxLeft=-1
-MaxTop=-1
+MaxLeft=-4
+MaxTop=-4
 MaxWidth=1928
 MaxHeight=112
 ClientWidth=1920
@@ -255,7 +255,7 @@ LRDockWidth=233
 Dockable=1
 SplitPos=32
 ArrangeBy=Name
-SelectedItem=Items
+SelectedItem=Caption
 ExpandedItems=
 HiddenCategories=
 

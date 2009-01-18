@@ -19,7 +19,26 @@ protected:
   double MaxI, MaxIS, MinI, MinIS;
   // the function must be caled before the reflection is added to the list, as
   // it needs to initialise the starting values of min and max
-  void UpdateMinMax(const TReflection& r);
+  inline void UpdateMinMax(const TReflection& r)  {
+    if( Refs.IsEmpty() )  {
+      // set starting values
+      MinHkl[0] = MaxHkl[0] = r.GetH();
+      MinHkl[1] = MaxHkl[1] = r.GetK();
+      MinHkl[2] = MaxHkl[2] = r.GetL();
+      MinI = MaxI = r.GetI();
+      MinIS = MaxIS = r.GetS();
+    }
+    else  {
+      if( r.GetH() < MinHkl[0] )  MinHkl[0] = r.GetH();
+      if( r.GetH() > MaxHkl[0] )  MaxHkl[0] = r.GetH();
+      if( r.GetK() < MinHkl[1] )  MinHkl[1] = r.GetK();
+      if( r.GetK() > MaxHkl[1] )  MaxHkl[1] = r.GetK();
+      if( r.GetL() < MinHkl[2] )  MinHkl[2] = r.GetL();
+      if( r.GetL() > MaxHkl[2] )  MaxHkl[2] = r.GetL();
+      if( r.GetI() < MinI )  {  MinI = r.GetI();  MinIS = r.GetS();  }
+      if( r.GetI() > MaxI )  {  MaxI = r.GetI();  MaxIS = r.GetS();  }
+    }
+  }
   void InitHkl3D();
   void Clear3D();
 public:

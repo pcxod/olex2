@@ -54,52 +54,48 @@ void THklFile::Clear3D()  {
 bool THklFile::LoadFromFile(const olxstr& FN, TIns* ins)  {
   Clear();
   TEFile::CheckFileExists(__OlxSourceInfo, FN);
-  TStrList SL, Toks;
-  TReflection *ref;
-  int h, k, l;
-  bool End = false, HklFinished = false;
-
+  TCStrList SL, Toks;
+  bool ZeroRead = false, 
+       HklFinished = false,
+       HasBatch = false,
+       FormatInitialised = false;
+  int Tag = 1;
   SL.LoadFromFile(FN);
-	SL.CombineLines('=');
-  int bf [] = {4,4,4,8,8};
-  TIntList Format(5, bf );
-  bool FormatInitialised = false;
-  for(int i=0; i < SL.Count(); i++ )  {
-    if( SL[i].Length() < 28 )  continue;
+
+  const int line_cnt = SL.Count();
+  Refs.SetCapacity( line_cnt );
+  for(int i=0; i < line_cnt; i++ )  {
+    const CString& line = SL[i];
+    if( line.Length() < 28 )  continue;
     if( !FormatInitialised )  {
-      if( SL[i].Length() >= 32 )
-        Format.Add(4);
+      if( line.Length() >= 32 && line.SubString(28,4).IsNumber() )
+        HasBatch = true;
       FormatInitialised = true;
     }
-    Toks.Clear();
-		try  {  Toks.StrtokF(SL[i], Format);  }
-		catch(...)  {
-		  if( !End )
-			  throw TFunctionFailedException(__OlxSourceInfo, "could not read th ehkl file");
-			HklFinished = true; 
-		}
-		if( End && !HklFinished )  {
-		  if( !Toks[0].IsNumber() || !Toks[1].IsNumber() || !Toks[2].IsNumber() || !Toks[3].IsNumber() || !Toks[4].IsNumber() )
+		if( ZeroRead && !HklFinished )  {
+      if( !line.SubString(0,4).IsNumber() || 
+          !line.SubString(4,4).IsNumber() || 
+          !line.SubString(8,4).IsNumber() || 
+          !line.SubString(12,8).IsNumber() || 
+          !line.SubString(20,8).IsNumber() )
 			  HklFinished = true; 
 		}
 		if( !HklFinished )  {
-      if( Toks.Count() >= Format.Count() )  {
-        h = Toks[0].ToInt();
-        k = Toks[1].ToInt();
-        l = Toks[2].ToInt();
-        if( (h|k|l) == 0 )  {  // end of the reflections included into calculations
-          End = true;
-          continue;
-        }
-        if( Format.Count() > 5 )
-          ref = new TReflection( h, k, l, Toks[3].ToDouble(), Toks[4].ToDouble(), Toks[5].ToInt() );
-        else
-          ref = new TReflection( h, k, l, Toks[3].ToDouble(), Toks[4].ToDouble() );
-
-        End ? ref->SetTag(-1) : ref->SetTag(1);
-        UpdateMinMax( *ref );
-        Refs.Add(ref);
+      const int h = line.SubString(0,4).ToInt(),
+                k = line.SubString(4,4).ToInt(),
+                l = line.SubString(8,4).ToInt();
+      if( (h|k|l) == 0 )  {  // end of the reflections included into calculations
+        ZeroRead = true;
+        Tag = -1;
+        continue;
       }
+      TReflection* ref = HasBatch ? 
+        new TReflection( h, k, l, line.SubString(12,8).ToDouble(), line.SubString(20,8).ToDouble(), line.SubString(28,4).ToInt() )
+        :
+        new TReflection( h, k, l, line.SubString(12,8).ToDouble(), line.SubString(20,8).ToDouble() );
+      ref->SetTag( Tag );
+      UpdateMinMax( *ref );
+      Refs.Add(ref);
 		}
 		else  {
 			if( ins == NULL )  break;
@@ -226,27 +222,6 @@ void THklFile::AllRefs(const TReflection& R, const TAsymmUnit& AU, TRefPList& Re
   for( int j=0; j < ri.Count(); j++ )  {
     TRefPList* r = Hkl3D->Value((int)ri[j][0], (int)ri[j][1], (int)ri[j][2]);
     if( r != NULL )  Res.AddList(*r);
-  }
-}
-//..............................................................................
-void THklFile::UpdateMinMax(const TReflection& r)  {
-  if( RefCount() == 0 )  {
-    // set starting values
-    MinHkl[0] = MaxHkl[0] = r.GetH();
-    MinHkl[1] = MaxHkl[1] = r.GetK();
-    MinHkl[2] = MaxHkl[2] = r.GetL();
-    MinI = MaxI = r.GetI();
-    MinIS = MaxIS = r.GetS();
-  }
-  else  {
-    if( r.GetH() < MinHkl[0] )  MinHkl[0] = r.GetH();
-    if( r.GetH() > MaxHkl[0] )  MaxHkl[0] = r.GetH();
-    if( r.GetK() < MinHkl[1] )  MinHkl[1] = r.GetK();
-    if( r.GetK() > MaxHkl[1] )  MaxHkl[1] = r.GetK();
-    if( r.GetL() < MinHkl[2] )  MinHkl[2] = r.GetL();
-    if( r.GetL() > MaxHkl[2] )  MaxHkl[2] = r.GetL();
-    if( r.GetI() < MinI )  {  MinI = r.GetI();  MinIS = r.GetS();  }
-    if( r.GetI() > MaxI )  {  MaxI = r.GetI();  MaxIS = r.GetS();  }
   }
 }
 //..............................................................................

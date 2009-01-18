@@ -347,15 +347,15 @@ public:
   inline int ReferenceCount() const        {  return References.Count();  }
 
   virtual int ScattererCount() const       {  return Scatterers.Count();  }
-  virtual XScatterer& GetScatterer(int i)  {  return Scatterers[i];  }
-  virtual XScatterer* FindScattererByName(const olxstr& name) {
+  virtual xm_XScatterer& GetScatterer(int i)  {  return Scatterers[i];  }
+  virtual xm_XScatterer* FindScattererByName(const olxstr& name) {
     for( int i=0; i < Scatterers.Count(); i++ )
       if( Scatterers[i].Label.Comparei(name) == 0 )
         return &Scatterers[i];
     return NULL;
   }
-  inline XScatterer& NewScatterer(const olxstr& label, double x, double y, double z)  {
-    return Scatterers.Add( new XScatterer(*this, label, x, y, z) );
+  inline xm_XScatterer& NewScatterer(const olxstr& label, double x, double y, double z)  {
+    return Scatterers.Add( new xm_XScatterer(*this, label, x, y, z) );
   }
   virtual inline XResidue* FindResidueByNumber(int Number) {
     for( int i=0; i < Residues.Count(); i++ )
@@ -422,9 +422,9 @@ public:
   }
   void ShareTDP(const TStrList& scatterers)  {
   }
-  virtual XVar& NewVar(double v, short type) {  return Variables.AddNew(v, type);  }
+  virtual xm_XVar& NewVar(double v, short type) {  return Variables.AddNew(v, type);  }
   virtual int VarCount() const {  return Variables.Count();  }
-  virtual XVar& GetVar(int index) {  return Variables[index];  }
+  virtual xm_XVar& GetVar(int index) {  return Variables[index];  }
   
   XScattererData& NewScattererData(const olxstr& symbol)  {
     static const double ev_angstrom  = 6626.0755 * 2.99792458 / 1.60217733;
@@ -482,7 +482,7 @@ public:
         return &Sfac[i];
     return NULL;
   }
-  olxstr CheckLabel(const XScatterer* xs, const olxstr& label)  {
+  olxstr CheckLabel(const xm_XScatterer* xs, const olxstr& label)  {
     throw TNotImplementedException(__OlxSourceInfo);
   }
 
@@ -494,11 +494,11 @@ public:
   TTypeList<XUani> TDPs;
   // a list of all residues with key - number
   TTypeList<XResidue> Residues;
-  TTypeList<XScatterer> Scatterers;
+  TTypeList<xm_XScatterer> Scatterers;
   TPSTypeList<int, XFrag*> References;
   TTypeList<XRigidGroup> RigidGroups;
   TTypeList<XLinearEquation> LinearEquations;
-  TTypeList<XVar> Variables;
+  TTypeList<xm_XVar> Variables;
   TTypeList<XScattererData> Sfac;
 
   TTypeList<Restraint_Ncsy> NCSY;

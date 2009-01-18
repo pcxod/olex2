@@ -149,6 +149,7 @@
 			ConfigurationType="4"
 			CharacterSet="1"
 			ManagedExtensions="0"
+			WholeProgramOptimization="0"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -170,6 +171,7 @@
 				Optimization="0"
 				InlineFunctionExpansion="0"
 				EnableIntrinsicFunctions="false"
+				WholeProgramOptimization="false"
 				AdditionalIncludeDirectories="..\..\..\alglib;..\..\..\sdl;..\..\..\repository;..\..\..\xlib;C:\Python25\include"
 				PreprocessorDefinitions="_UNICODE;_DEBUG;"
 				StringPooling="true"

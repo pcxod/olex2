@@ -2,9 +2,9 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="8.00"
-	Name="xlib_test"
-	ProjectGUID="{1A5E6632-E884-4B85-AB79-0AD4A73D8C6B}"
-	RootNamespace="xlib_test"
+	Name="tests"
+	ProjectGUID="{4952E16F-47DC-4BD2-BE93-36FC9CC3096B}"
+	RootNamespace="testst"
 	Keyword="Win32Proj"
 	>
 	<Platforms>
@@ -40,17 +40,15 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\..\..\xlib;..\..\..\sdl"
+				AdditionalIncludeDirectories="../../../sdl;../../../xlib"
 				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;_NO_PYTHON"
-				StringPooling="true"
 				MinimalRebuild="true"
-				BasicRuntimeChecks="1"
+				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
 				UsePrecompiledHeader="0"
-				BrowseInformation="1"
 				WarningLevel="2"
 				Detect64BitPortabilityProblems="true"
-				DebugInformationFormat="3"
+				DebugInformationFormat="4"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -63,8 +61,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				UseUnicodeResponseFiles="false"
-				AdditionalDependencies="sdl.lib xlib-np.lib mapi32.lib user32.lib"
+				AdditionalDependencies="sdl.lib xlib-np.lib"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="$(SolutionDir)$(ConfigurationName)"
 				GenerateDebugInformation="true"
@@ -101,7 +98,7 @@
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="1"
-			CharacterSet="1"
+			CharacterSet="0"
 			WholeProgramOptimization="1"
 			>
 			<Tool
@@ -121,18 +118,14 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				Optimization="2"
+				UseUnicodeResponseFiles="false"
 				InlineFunctionExpansion="2"
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
-				AdditionalIncludeDirectories="..\..\..\xlib;..\..\..\sdl"
-				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;_UNICODE;_NO_PYTHON"
-				StringPooling="true"
-				MinimalRebuild="true"
-				BasicRuntimeChecks="0"
+				WholeProgramOptimization="true"
+				AdditionalIncludeDirectories="../../../sdl;../../../xlib"
+				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;_NO_PYTHON"
 				RuntimeLibrary="2"
-				StructMemberAlignment="0"
-				BufferSecurityCheck="false"
 				FloatingPointModel="2"
 				UsePrecompiledHeader="0"
 				WarningLevel="2"
@@ -150,10 +143,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="sdl.lib xlib-np.lib mapi32.lib user32.lib"
+				AdditionalDependencies="sdl.lib xlib-np.lib"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="$(SolutionDir)$(ConfigurationName)"
-				GenerateDebugInformation="true"
+				GenerateDebugInformation="false"
 				SubSystem="1"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
@@ -212,17 +205,16 @@
 				Optimization="0"
 				InlineFunctionExpansion="0"
 				WholeProgramOptimization="false"
-				AdditionalIncludeDirectories="..\..\..\xlib;..\..\..\sdl"
+				AdditionalIncludeDirectories="../../../sdl;../../../xlib"
 				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;_NO_PYTHON"
 				StringPooling="true"
 				MinimalRebuild="true"
-				BasicRuntimeChecks="1"
+				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
 				UsePrecompiledHeader="0"
-				BrowseInformation="1"
 				WarningLevel="2"
 				Detect64BitPortabilityProblems="true"
-				DebugInformationFormat="3"
+				DebugInformationFormat="4"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -235,8 +227,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				UseUnicodeResponseFiles="false"
-				AdditionalDependencies="sdl.lib xlib-np.lib mapi32.lib user32.lib"
+				AdditionalDependencies="sdl.lib xlib-np.lib"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="$(SolutionDir)$(ConfigurationName)"
 				GenerateDebugInformation="true"
@@ -297,19 +288,13 @@
 				InlineFunctionExpansion="2"
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
-				AdditionalIncludeDirectories="..\..\..\xlib;..\..\..\sdl"
-				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;_UNICODE;_NO_PYTHON"
-				StringPooling="true"
-				MinimalRebuild="true"
-				BasicRuntimeChecks="0"
+				AdditionalIncludeDirectories="../../../sdl;../../../xlib"
+				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;_NO_PYTHON"
 				RuntimeLibrary="2"
-				StructMemberAlignment="0"
-				BufferSecurityCheck="false"
-				FloatingPointModel="2"
 				UsePrecompiledHeader="0"
 				WarningLevel="2"
-				Detect64BitPortabilityProblems="false"
-				DebugInformationFormat="0"
+				Detect64BitPortabilityProblems="true"
+				DebugInformationFormat="3"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -322,10 +307,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="sdl.lib xlib-np.lib mapi32.lib user32.lib"
+				AdditionalDependencies="sdl.lib xlib-np.lib"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="$(SolutionDir)$(ConfigurationName)"
-				GenerateDebugInformation="true"
+				GenerateDebugInformation="false"
 				SubSystem="1"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
@@ -376,9 +361,25 @@
 			<File
 				RelativePath="..\..\..\repository\olxvar.cpp"
 				>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						PreprocessorDefinitions="_NO_PYTHON"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Unicode-release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						PreprocessorDefinitions="_NO_PYTHON"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\xlib_test\testa.cpp"
+				RelativePath="..\..\tests\tests.cpp"
 				>
 			</File>
 		</Filter>
@@ -387,14 +388,6 @@
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
-			<File
-				RelativePath="..\..\xlib_test\henke.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\sdl\threex3.h"
-				>
-			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"

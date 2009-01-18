@@ -305,7 +305,7 @@ void TSGTest::LatticeSATest(TTypeList<TElementStats<TCLattice*> >& latRes, TType
     double Ssq = 0;
     for( int i=0; i < PresentElements.Count(); i++ )  {
       double v = PresentElements[i]->GetB()->GetA()/PresentElements[i]->GetB()->GetC();
-      //if( v < 0 )  v = fabs(v);
+      if( v < 0 )  v = 0;
       averageSAI += v;
     }
     averageSAI /= PresentElements.Count();

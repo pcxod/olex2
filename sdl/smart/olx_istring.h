@@ -414,6 +414,9 @@ public:
   inline bool EndsWith(const TTSString &v) const {
     return (v._Length > T::_Length ) ? false : (o_memcmp(&T::Data()[T::_Length-v._Length], v.Data(), v._Length) == 0);
   }
+  inline bool EndsWith(char ch) const {
+    return T::_Length == 0 ? false : T::Data()[T::_Length-1] == ch;
+  }
   //............................................................................
   template <typename AC> inline bool EndsWithi(const AC *v) const {
     size_t len = o_strlen(v);

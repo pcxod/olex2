@@ -69,7 +69,7 @@ public:
         TBasicApp::GetLog() << (olxstr("invalid residue '") << resi_name << "' in [" << expression << ']' );
         continue;
       }
-      XScatterer* xs = resi->FindScattererByName(aname);
+      xm_XScatterer* xs = resi->FindScattererByName(aname);
       if( xs == NULL )  {
         TBasicApp::GetLog() << (olxstr("invalid atom '") << aname << "' in [" << expression << ']' );
         continue;

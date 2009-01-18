@@ -8,12 +8,12 @@ BeginXlibNamespace()
 class TShelxAtomListParser : public IEObject  {
   olxstr Expression;
 protected:
-  inline bool IsValidScatterer(XScatterer& xs)  {
+  inline bool IsValidScatterer(xm_XScatterer& xs)  {
     return !(xs.IsType(iHydrogenIndex) ||
              xs.IsType(iDeuteriumIndex) ||
              xs.IsType(iQPeakIndex) );
   }
-  inline bool IsValidScatterer(XScatterer* xs)  {
+  inline bool IsValidScatterer(xm_XScatterer* xs)  {
     return !(xs->IsType(iHydrogenIndex) ||
              xs->IsType(iDeuteriumIndex) ||
              xs->IsType(iQPeakIndex) );
@@ -35,7 +35,7 @@ public:
     }
     else if( Expression.Comparei("first") == 0 )  { 
       int i=0;
-      XScatterer* xs = &(*resi)[i];
+      xm_XScatterer* xs = &(*resi)[i];
       while( (i+1) < resi->Count() && !IsValidScatterer(xs) )  {
         i++;
         xs = &(*resi)[i];
@@ -48,7 +48,7 @@ public:
     }
     else if( Expression.Comparei("last") == 0 )  { 
       int i = resi->Count()-1;
-      XScatterer* xs = &(*resi)[i];
+      xm_XScatterer* xs = &(*resi)[i];
       while( (i-1) >= 0 && !IsValidScatterer(xs) )  {
         i--;
         xs = &(*resi)[i];
@@ -134,7 +134,7 @@ public:
     }
     if( Expression.CharAt(0) == '$' )  {  // sfac type
       olxstr sfac = ((resi_ind == -1) ? Expression.SubStringFrom(1) : Expression.SubString(1, resi_ind-1));
-      TBasicAtomInfo* bai = TAtomsInfo::GetInstance()->FindAtomInfoBySymbol(sfac);
+      TBasicAtomInfo* bai = TAtomsInfo::GetInstance().FindAtomInfoBySymbol(sfac);
       if( bai == NULL )  
         throw TInvalidArgumentException(__OlxSourceInfo, olxstr("sfac=") << sfac);
       for( int i=0; i < residues.Count(); i++ )  {
@@ -147,7 +147,7 @@ public:
     else  {  // just an atom
       olxstr aname = ( (resi_ind == -1) ? Expression : Expression.SubStringTo(resi_ind) );
       for( int i=0; i < residues.Count(); i++ )  {
-        XScatterer* xs = residues[i]->FindScattererByName(aname);
+        xm_XScatterer* xs = residues[i]->FindScattererByName(aname);
         if( xs != NULL )  
           out.AddNew( xs, eqiv );
       }
