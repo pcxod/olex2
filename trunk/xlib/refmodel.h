@@ -171,7 +171,7 @@ public:
   }
   const int GetHKLF()        const {  return HKLF;  }
   void SetHKLF(int v)              {  HKLF = v;  HKLF_set = true;  }
-  const mat3d GetHKLF_mat()  const {  return HKLF_mat;  }
+  const mat3d& GetHKLF_mat() const {  return HKLF_mat;  }
   void SetHKLF_mat(const mat3d& v) {  HKLF_mat = v;  HKLF_set = true;  }
   double GetHKLF_s()         const {  return HKLF_s;  }
   void SetHKLF_s(double v)         {  HKLF_s = v;  HKLF_set = true;  }

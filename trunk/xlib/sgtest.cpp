@@ -278,21 +278,21 @@ void TSGTest::LatticeSATest(TTypeList<TElementStats<TCLattice*> >& latRes, TType
       if( (L%6) != 0 )    {  Screw63.GetB()->A() += ref.GetI();  Screw63.GetB()->B() += QRT(ref.GetS());  Screw63.GetB()->C()++;  }
     }
   }
-  double averageSAI = 0;
-  int saCount = 0;
-  for( int i=0; i < SAElements.Count(); i++ )  {
-    SAElements[i].GetB()->B() = sqrt( SAElements[i].GetB()->GetB() );
-    if( SAElements[i].GetB()->GetC() != 0 )  {
-      averageSAI += SAElements[i].GetB()->GetA()/SAElements[i].GetB()->GetC();
-      saCount++;
-    }
-  }
-  if( saCount )  averageSAI /= saCount;
+  //double averageSAI = 0;
+  //int saCount = 0;
+  //for( int i=0; i < SAElements.Count(); i++ )  {
+  //  SAElements[i].GetB()->B() = sqrt( SAElements[i].GetB()->GetB() );
+  //  if( SAElements[i].GetB()->GetC() != 0 )  {
+  //    averageSAI += SAElements[i].GetB()->GetA()/SAElements[i].GetB()->GetC();
+  //    saCount++;
+  //  }
+  //}
+  //if( saCount )  averageSAI /= saCount;
 
   for( int i=0; i < SAElements.Count(); i++ )  {
     if( SAElements[i].GetB()->GetC() != 0 )  {
       if( SAElements[i].GetB()->GetA() > 0 )  {
-        if( SAElements[i].GetB()->GetA()/SAElements[i].GetB()->GetC() < averageSAI/10 )
+        if( SAElements[i].GetB()->GetA()/SAElements[i].GetB()->GetC() < AverageI/5 )
           PresentElements.Add( &SAElements[i] );
       }
       else
@@ -301,7 +301,7 @@ void TSGTest::LatticeSATest(TTypeList<TElementStats<TCLattice*> >& latRes, TType
   }
   // second filtering ...
   if( PresentElements.Count() > 1 )  {
-    averageSAI = 0;
+    double averageSAI = 0;
     double Ssq = 0;
     for( int i=0; i < PresentElements.Count(); i++ )  {
       double v = PresentElements[i]->GetB()->GetA()/PresentElements[i]->GetB()->GetC();
@@ -313,9 +313,9 @@ void TSGTest::LatticeSATest(TTypeList<TElementStats<TCLattice*> >& latRes, TType
       double v = PresentElements[i]->GetB()->GetA()/PresentElements[i]->GetB()->GetC();
       Ssq += (v-averageSAI)*(v-averageSAI);
     }
-    Ssq /= (PresentElements.Count()-1);
+    Ssq /= ((PresentElements.Count()-1)*PresentElements.Count());
     Ssq = sqrt( Ssq );                
-    double maxInt = averageSAI + 0.95*Ssq/sqrt((double)PresentElements.Count());
+    double maxInt = 1.0*(averageSAI + 2*Ssq);
     for( int i=0; i < PresentElements.Count(); i++ )  {
       double v = PresentElements[i]->GetB()->GetA()/PresentElements[i]->GetB()->GetC();
       if( v > maxInt && v > 1 )  {
