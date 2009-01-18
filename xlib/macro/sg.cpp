@@ -172,8 +172,8 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
         saStat[i][3] = '+';
         if( SAHits[i].IsExcluded() )
           saStat[i][3] << '-';
-        else
-          PresentElements.Add( &SAHits[i].GetSymmElement() );
+        //else
+        PresentElements.Add( &SAHits[i].GetSymmElement() );
       }
       else 
         saStat[i][3] = '-';
@@ -376,7 +376,12 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
   }
   TPtrList<TSpaceGroup> FoundSpaceGroups;
   if( !PresentElements.IsEmpty() )  {
-    for( int i=sortedSATestResults.Count()-1; i >= olx_max(0, sortedSATestResults.Count()-6) ; i-- )  {
+    for( int i=sortedSATestResults.Count()-1; i >= 0; i-- )  {
+      if( sortedSATestResults.GetObject(i)->GetA()->GetWeakCount() != 0 )  {
+        double v = sortedSATestResults.GetObject(i)->GetA()->GetSummWeakI()/sortedSATestResults.GetObject(i)->GetA()->GetWeakCount();
+        if( v > SGTest.GetAverageI()/5 )
+          break;
+      }
       if( sortedSATestResults.GetObject(i)->GetB() == maxElementFound )  { 
         if( FilterByElementCount )  {
           if( sortedSATestResults.GetObject(i)->GetC() <= PresentElements.Count() )

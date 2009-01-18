@@ -50,7 +50,8 @@ int main(int argc, char* argv[])  {
     TStrObjList cmds;
     TParamList params;
     TPtrList<TSpaceGroup> sgs;
-    int TotalCount = 0, AgreedCount = 0;
+    int TotalCount = 0, AgreedCount = 0, 
+      WilsonTotalCount = 0, WilsonAgreedCount = 0;
     ABasicFunction* macSG = XApp.GetLibrary().FindMacro("SG");
     ABasicFunction* macWilson = XApp.GetLibrary().FindMacro("Wilson");
     if( macSG == NULL || macWilson == NULL )
@@ -72,6 +73,11 @@ int main(int argc, char* argv[])  {
           }
           if( file_sg != NULL )  {
             logf.Writenl(olxstr("File space group is: ") << file_sg->GetName());
+            mat3d hklfm(XApp.XFile().GetRM().GetHKLF_mat());
+            if( !(hklfm.IsI() || (hklfm *= -1).IsI()) )  {
+              logf.Writenl("File has HKLF transformation matrix, skipping...");
+              continue;
+            }
             TotalCount++;
           }
           me.SetRetVal(&sgs);
@@ -106,6 +112,12 @@ int main(int argc, char* argv[])  {
             }
             if( centro_set )  {
               TSpaceGroup* found_sg = NULL;
+              if( file_sg != NULL )  {
+                WilsonTotalCount++;
+                if( file_sg->IsCentrosymmetric() == centro )
+                  WilsonAgreedCount++;
+              }
+              
               for( int sgc=0; sgc < sgs.Count(); sgc++ )  {
                 if( sgs[sgc]->IsCentrosymmetric() == centro )  {
                   found_sg = sgs[sgc];
@@ -131,8 +143,10 @@ int main(int argc, char* argv[])  {
       }
     }
     if( TotalCount != 0 )  {
-      logf.Writenl( olxstr(TotalCount) << " files with SG info processed in " << TETime::msNow() - time_start << " s");
+      logf.Writenl( olxstr(TotalCount) << " files with SG info processed in " << TETime::msNow() - time_start << " ms");
       logf.Writenl( olxstr("Agreed calculations: ") << olxstr::FormatFloat(2, (double)AgreedCount*100/TotalCount) << '%');
+      if( WilsonTotalCount != 0 )
+        logf.Writenl( olxstr("Wilson agreed calculations: ") << olxstr::FormatFloat(2, (double)WilsonAgreedCount*100/WilsonTotalCount) << '%');
     }
   }
   catch( TExceptionBase& exc )  {
