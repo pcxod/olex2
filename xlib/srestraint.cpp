@@ -221,9 +221,8 @@ PyObject* TSimpleRestraint::PyExport(TPtrList<PyObject>& atoms, TPtrList<PyObjec
     else
       eq = equiv[InvolvedAtoms[i].GetMatrix()->GetTag()];
     Py_IncRef(eq);
-    Py_IncRef(atoms[InvolvedAtoms[i].GetAtom()->GetTag()]);
     PyTuple_SetItem(involved, atom_cnt++, 
-      Py_BuildValue("OO", atoms[InvolvedAtoms[i].GetAtom()->GetTag()], eq));
+      Py_BuildValue("OO", Py_BuildValue("i", InvolvedAtoms[i].GetAtom()->GetTag()), eq));
   }
   PyDict_SetItemString(main, "atoms", involved);
   return main;
