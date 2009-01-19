@@ -58,13 +58,13 @@ public:
     atom
   */
   virtual void Calculate(double waveLength, const TRefList& refs, TArrayList<compd>& F, 
-      const TPtrList<cm_Element> scatterers, const TCAtomPList& atoms, double* U) const = 0;
+      const TPtrList<cm_Element>& scatterers, const TCAtomPList& atoms, double* U) const = 0;
 };
 
 template <class sg> class SF_calculation : public ISF_calculation {
 public:
   virtual void Calculate(double waveLength, const TRefList& refs, TArrayList<compd>& F, 
-      const TPtrList<cm_Element> scatterers, const TCAtomPList& atoms, double* U) const {
+      const TPtrList<cm_Element>& scatterers, const TCAtomPList& atoms, double* U) const {
     TArrayList<vec3d> rv(sg::size);
     TArrayList<double> ps(sg::size);
     TArrayList<compd> fo(scatterers.Count()), fpfdp(scatterers.Count());

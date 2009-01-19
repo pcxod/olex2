@@ -16,8 +16,7 @@ void XVarReference::ToDataItem(TDataItem& item) const {
 #ifndef _NO_PYTHON
 PyObject* XVarReference::PyExport(TPtrList<PyObject>& atoms)  {
   PyObject* main = PyDict_New();
-  Py_IncRef( atoms[atom->GetTag()] );
-  PyDict_SetItemString(main, "atom", atoms[atom->GetTag()]  );
+  PyDict_SetItemString(main, "atom", Py_BuildValue("i", atom->GetTag())  );
   PyDict_SetItemString(main, "name", PythonExt::BuildString(XVarManager::VarNames[var_name]) );
   PyDict_SetItemString(main, "relation", PythonExt::BuildString(XVarManager::RelationNames[relation_type]) );
   PyDict_SetItemString(main, "k", Py_BuildValue("d", coefficient) );

@@ -211,6 +211,7 @@ PyObject* TCAtom::PyExport()  {
   PyDict_SetItemString(main, "type", PythonExt::BuildString(FAtomInfo->GetSymbol()) );
   PyDict_SetItemString(main, "part", Py_BuildValue("i", Part) );
   PyDict_SetItemString(main, "occu", Py_BuildValue("d", Occu) );
+  PyDict_SetItemString(main, "tag", Py_BuildValue("i", GetTag()) );
   PyDict_SetItemString(main, "crd", 
     Py_BuildValue("(ddd)(ddd)", Center[0], Center[1], Center[2], Esd[0], Esd[1], Esd[2]) );
   if( EllpId == -1 )

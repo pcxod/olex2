@@ -31,8 +31,7 @@ PyObject* TExyzGroup::PyExport(TPtrList<PyObject>& atoms)  {
   atom_cnt = 0;
   for( int i=0; i < Atoms.Count(); i++ )  {
     if( Atoms[i]->IsDeleted() )  continue;
-    Py_IncRef(atoms[Atoms[i]->GetTag()]);
-    PyTuple_SetItem(main, atom_cnt++, atoms[Atoms[i]->GetTag()] );
+    PyTuple_SetItem(main, atom_cnt++, Py_BuildValue("i", Atoms[i]->GetTag()) );
   }
   return main;
 }

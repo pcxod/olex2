@@ -44,6 +44,7 @@ public:
   struct HklStat : public MergeStats {
     double MaxD, MinD, LimD, OMIT_s, OMIT_2t;
     int MERG;
+    //vec3i maxInd, minInd;
     int FilteredOff, // by LimD, OMIT_2t
       OmittedByUser, // OMIT h k l 
       IntensityTransformed;  // by OMIT_s
