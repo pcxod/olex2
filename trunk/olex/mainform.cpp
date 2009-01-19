@@ -2209,7 +2209,7 @@ void TMainForm::OnChar( wxKeyEvent& m )  {
       return;
     }
   }
-  if( (Fl&sssCtrl) && m.GetKeyCode() == 'v'-'a'+1 )  {  // paste
+  if( (Fl&sssCtrl) && m.GetKeyCode() == 'v'-'a'+1 )  {  // paste Ctrl+V
     if( wxTheClipboard->Open() )  {
       if (wxTheClipboard->IsSupported(wxDF_TEXT) )  {
         wxTextDataObject data;
