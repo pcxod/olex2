@@ -1069,15 +1069,15 @@ void TMainForm::macPict(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       vpWidth = FXApp->GetRender().GetWidth(),
       vpHeight = FXApp->GetRender().GetHeight();
 
-  double res = 2, aRes;
-  if( Cmds.Count() == 2 )  
+  double res = 2;
+  if( Cmds.Count() == 2 && Cmds[1].IsNumber() )  
     res = Cmds[1].ToDouble();
   if( res >= 100 )  // width provided
     res /= vpWidth;
   if( res > 10 )
     res = 10;
-  aRes = res;
-  //if( res <= 1 )  res = 1;
+  if( res <= 0 )  
+    res = 1;
 
   int BmpHeight = vpHeight*res, BmpWidth = vpWidth*res;
 
@@ -1186,6 +1186,9 @@ void TMainForm::macPict(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     bmpFN = TEFile::ExtractFilePath(FXApp->XFile().GetFileName()) << TEFile::ExtractFileName( Cmds[0] );
   else
     bmpFN = Cmds[0];
+  // correct a common typo
+  if( !TEFile::ExtractFileExt(bmpFN).Comparei("jpeg") )
+    bmpFN = TEFile::ChangeFileExt(bmpFN, "jpg");
   TEFile BmpFile(bmpFN, "w+b");
   BmpFile.Write(&(BmpFHdr), sizeof(BITMAPFILEHEADER));
   BmpFile.Write(&(BmpInfo), sizeof(BITMAPINFOHEADER));
@@ -1194,7 +1197,7 @@ void TMainForm::macPict(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   BmpFile.Write(PP, (BmpWidth*3+extraBytes)*BmpHeight);
   DeleteObject(DIBmp);
   //check if the image is bmp
-  if( !BmpFile.ExtractFileExt(Cmds[0]).Comparei("bmp") )
+  if( !TEFile::ExtractFileExt(bmpFN).Comparei("bmp") )
     return;
   wxImage image;
   image.LoadFile( bmpFN.u_str(), wxBITMAP_TYPE_BMP);
@@ -1202,10 +1205,8 @@ void TMainForm::macPict(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     Error.ProcessingError(__OlxSrcInfo, "could not process image conversion" );
     return;
   }
-//  if( aRes < 1 && aRes > 0 )
-//    image.Scale(BmpWidth*aRes, BmpHeight*aRes).SaveFile( bmpFN.u_str() );
-//  else
-    image.SaveFile( bmpFN.u_str() );
+  
+  image.SaveFile( bmpFN.u_str() );
 #else
   macPicta(Cmds, Options, Error);
 #endif // __WIN32__
@@ -1215,15 +1216,15 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   //wxProgressDialog progress(wxT("Rendering..."), wxT("Pass 1 out of 4"), 5, this, wxPD_AUTO_HIDE); 
   int orgHeight = FXApp->GetRender().GetHeight(),
       orgWidth  = FXApp->GetRender().GetWidth();
-  double res = 1, aRes;
-  if( Cmds.Count() == 2 )  
+  double res = 1;
+  if( Cmds.Count() == 2 && Cmds[1].IsNumber() )  
     res = Cmds[1].ToDouble();
   if( res >= 100 )  // width provided
     res /= orgWidth;
   if( res > 10 )
     res = 10;
-  aRes = res;
-  //if( res <= 1 )  res = 1;
+  if( res <= 0 )  
+    res = 1;
 
   int ScrHeight = (int)(((double)orgHeight/(res*2)-1.0)*res*2),
       ScrWidth  = (int)(((double)orgWidth/(res*2)-1.0)*res*2);
@@ -1262,7 +1263,6 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       delete [] PP;
     }
   }
-  //progress.Update(4, wxT("Saving piture..."));
   if( res != 1 ) {
     FXApp->GetRender().Scene()->RestoreFontScale();
     if( res >= 3 ) 
@@ -1283,12 +1283,10 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     bmpFN = Cmds[0];
   wxImage image;
   image.SetData((unsigned char*)bmpData, BmpWidth, BmpHeight ); 
-//  image.Mirror(false).SaveFile( bmpFN.u_str() );
-//  if( aRes < 1 && aRes > 0 )
-//    image.Scale(BmpWidth*aRes, BmpHeight*aRes).SaveFile( bmpFN.u_str() );
-//  else
-    image.SaveFile( bmpFN.u_str() );
-  //progress.Update(4, wxT("Done"));
+  // correct a common typo
+  if( !TEFile::ExtractFileExt(bmpFN).Comparei("jpeg") )
+    bmpFN = TEFile::ChangeFileExt(bmpFN, "jpg");
+  image.SaveFile( bmpFN.u_str() );
 }
 //..............................................................................
 void TMainForm::macBang(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
