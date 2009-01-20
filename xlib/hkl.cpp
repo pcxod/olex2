@@ -309,16 +309,12 @@ MergeStats THklFile::Merge(const TSpaceGroup& sg, bool MergeInverse, TRefList& o
   smatd_list ml;
   sg.GetMatrices(ml, mattAll^mattIdentity);
   if( MergeInverse && !sg.IsCentrosymmetric() )  {  // the -I is added to the list for CS groups
-    smatd& im = ml.AddNew();
-    im.r.I();
-    im.r *= -1;
+    const int ml_cnt = ml.Count();
+    for( int i=0; i < ml_cnt; i++ )
+      ml.AddCCopy(ml[i]) *= -1;
+    ml.AddNew().I() *= -1;
   }
   MergeStats rv = RefMerger::Merge<TSimpleMerger>(ml, Refs, output);
-  // already done in Merge...
-  //if( MergeInverse && !sg.IsCentrosymmetric() )
-  //  ml.Delete( ml.Count()-1 );
-  //for( int i=0; i < output.Count(); i++ )
-  //  output[i].Analyse(ml);
   return rv;
 }
 //..............................................................................

@@ -153,12 +153,29 @@ TArray3D(int minWidth, int maxWidth, int minHeight,
   AE*** Data;
 
   inline AE& Value(int x, int y, int z)  {  return Data[x-MinWidth][y-MinHeight][z-MinDepth];  }
-  inline AE& operator () (int x, int y, int z)  {  return Data[x-MinWidth][y-MinHeight][z-MinDepth];  }
+  inline const AE& Value(int x, int y, int z) const  {  
+    return Data[x-MinWidth][y-MinHeight][z-MinDepth];  
+  }
+  inline AE& operator () (int x, int y, int z)  {  
+    return Data[x-MinWidth][y-MinHeight][z-MinDepth];  
+  }
+  
+  inline const AE& operator () (int x, int y, int z) const {  
+    return Data[x-MinWidth][y-MinHeight][z-MinDepth];  
+  }
 
-  template <class VC>
-    inline AE& Value(const TVector<VC>& ind)  {  return Data[(int)(ind[0]-MinWidth)][(int)(ind[1]-MinHeight)][(int)(ind[2]-MinDepth)];  }
-  template <class VC>
-    inline AE& operator () (const TVector<VC>& ind)  {  return Data[(int)(ind[0]-MinWidth)][(int)(ind[1]-MinHeight)][(int)(ind[2]-MinDepth)];  }
+  template <class VC> inline AE& Value(const VC& ind)  {  
+    return Data[(int)(ind[0]-MinWidth)][(int)(ind[1]-MinHeight)][(int)(ind[2]-MinDepth)];  
+  }
+  template <class VC> inline const AE& Value(const VC& ind) const {  
+    return Data[(int)(ind[0]-MinWidth)][(int)(ind[1]-MinHeight)][(int)(ind[2]-MinDepth)];  
+  }
+  template <class VC> inline AE& operator () (const VC& ind)  {  
+    return Data[(int)(ind[0]-MinWidth)][(int)(ind[1]-MinHeight)][(int)(ind[2]-MinDepth)];  
+  }
+  template <class VC> inline const AE& operator () (const VC& ind) const {  
+    return Data[(int)(ind[0]-MinWidth)][(int)(ind[1]-MinHeight)][(int)(ind[2]-MinDepth)];  
+  }
 };
 
 class  TArraysTest  {

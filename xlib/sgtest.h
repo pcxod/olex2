@@ -63,26 +63,32 @@ public:
 };
 
 class TSGTest  {
-  THklFile Hkl;
-  double TotalI, AverageI, AverageSI, TotalSI, AverageTestValue, VarianceTestValue;
+  TRefList Refs;  // P1 merged reflections
+  double TotalI, TotalIS, 
+         AverageI, AverageIS, 
+         MaxI, MaxIS, 
+         MinI, MinIS;
+  int HklRefCount; // number of read reflections
   long minH, maxH, minK, maxK, minL, maxL;
   TArray3D< TReflection* >* Hkl3DArray;
 public:
-  TSGTest( const olxstr& hklFileName );
+  TSGTest( const olxstr& hklFileName, const mat3d& hkl_tranform);
   virtual ~TSGTest();
   void MergeTest(const TPtrList<TSpaceGroup>& sgList, TTypeList<TSGStats>& res );
   void LatticeSATest(TTypeList<TElementStats<TCLattice*> >& latRes, TTypeList<TSAStats>& saRes );
   void WeakRefTest(const TPtrList<TSpaceGroup>& sgList, TTypeList<TElementStats<TSpaceGroup*> >& res);
 
-  inline THklFile& GetHklFile()  {  return Hkl;  }
+  inline int GetHklRefCount()   const {  return HklRefCount;  }
+  inline int GetP1RefCount()    const {  return Refs.Count();  }
 
-  inline double GetAverageI()  const  {  return AverageI;  }
-  inline double GetAverageSI()  const  {  return AverageSI;  }
-  inline double GetTotalI()  const  {  return TotalI;  }
-  inline double GetTotalSI()  const  {  return TotalSI;  }
-
-  inline double GetAverageTestValue()  const  {  return AverageTestValue;  }
-  inline double GetVarianceTestValue()  const  {  return VarianceTestValue;  }
+  inline double GetAverageI()   const  {  return AverageI;  }
+  inline double GetAverageIS()  const  {  return AverageIS;  }
+  inline double GetTotalI()     const  {  return TotalI;  }
+  inline double GetTotalIS()    const  {  return TotalIS;  }
+  inline double GetMaxI()       const  {  return MaxI;  }
+  inline double GetMaxIS()      const  {  return MaxIS;  }
+  inline double GetMinI()       const  {  return MinI;  }
+  inline double GetMinIS()      const  {  return MinIS;  }
 };
 
 EndXlibNamespace()

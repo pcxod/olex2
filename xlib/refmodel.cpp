@@ -241,8 +241,8 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
       if( MERG == 4 && !sg->IsCentrosymmetric() )  {  // merge all
         const int mc = ml.Count();
         for( int i=0; i < mc; i++ )
-          ml.AddNew( ml[i] ).r *= -1;
-        ml.AddNew().r.I() *= -1;
+          ml.AddNew( ml[i] ) *= -1;
+        ml.AddNew().I() *= -1;
       }
       _HklStat = RefMerger::Merge<TSimpleMerger>(ml, Refs, output);
     }
