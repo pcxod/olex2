@@ -197,7 +197,7 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
   latTab.ColName(3) = "Weak I/Count";
   latTab.ColName(4) = "Count";
   TPtrList<TCLattice>  ChosenLats;
-  const double threshold = SGTest.GetAverageI()/10;
+  const double threshold = SGTest.GetAverageI()/20;
   for( int i=0; i < LatticeHits.Count(); i++ )  {
     if( LatticeHits[i].GetStrongCount() != 0 )  {
       if( LatticeHits[i].GetWeakCount() != 0 )
