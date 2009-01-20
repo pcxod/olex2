@@ -20,6 +20,11 @@ public:
     r *= v;
     t *= v;
   }
+  inline TSymmMat<T>& I()  {
+    r.I();
+    t.Null();
+    return *this;
+  }
   inline TSymmMat<T>& Null()  {
     r.Null();
     t.Null();

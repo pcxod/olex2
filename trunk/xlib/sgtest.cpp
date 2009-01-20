@@ -6,45 +6,59 @@
 #include "edlist.h"
 #include "tptrlist.h"
 
-TSGTest::TSGTest( const olxstr& hklFileName )  {
+TSGTest::TSGTest( const olxstr& hklFileName, const mat3d& hkl_transform)  {
   Hkl3DArray = NULL;
-  Hkl.LoadFromFile( hklFileName );
-  minH = Hkl.GetMinHkl()[0];
-  maxH = Hkl.GetMaxHkl()[0];
-  minK = Hkl.GetMinHkl()[1];
-  maxK = Hkl.GetMaxHkl()[1];
-  minL = Hkl.GetMinHkl()[2];
-  maxL = Hkl.GetMaxHkl()[2];
+  THklFile* hkl = new THklFile;
+  try  {  hkl->LoadFromFile( hklFileName );  }
+  catch( const TExceptionBase& exc )  {
+    delete hkl;
+    throw TFunctionFailedException(__OlxSourceInfo, exc, "failed to load the HKL file");
+  }
+  hkl->SimpleMergeInP1(Refs);
+  const int ref_cnt = Refs.Count();
+  HklRefCount = hkl->RefCount();
+  MinI = hkl->GetMinI();  MinIS = hkl->GetMinIS();
+  MaxI = hkl->GetMaxI();  MaxIS = hkl->GetMaxIS();
+  if( hkl_transform.IsI() )  {
+    minH = hkl->GetMinHkl()[0];
+    maxH = hkl->GetMaxHkl()[0];
+    minK = hkl->GetMinHkl()[1];
+    maxK = hkl->GetMaxHkl()[1];
+    minL = hkl->GetMinHkl()[2];
+    maxL = hkl->GetMaxHkl()[2];
+  }
+  else  {
+    minH = minK = minL = 100;
+    maxH = maxK = maxL = -100;
+    vec3i hkl;
+    for( int i=0; i < ref_cnt; i++ )  {
+      Refs[i].MulHklR(hkl, hkl_transform);
+      Refs[i].SetH(hkl[0]);
+      Refs[i].SetK(hkl[1]);
+      Refs[i].SetL(hkl[2]);
+      if( hkl[0] < minH )  minH = hkl[0];
+      if( hkl[0] > maxH )  maxH = hkl[0];
+      if( hkl[1] < minK )  minK = hkl[1];
+      if( hkl[1] > maxK )  maxK = hkl[1];
+      if( hkl[2] < minL )  minL = hkl[2];
+      if( hkl[2] > maxL )  maxL = hkl[2];
+    }
+  }
+  delete hkl;
 
-  TotalI = AverageI = AverageSI = TotalSI = AverageTestValue = VarianceTestValue = 0;
+  TotalI = AverageI = AverageIS = TotalIS = 0;
   //long refCount = 0;
   Hkl3DArray = new TArray3D<TReflection*>(minH, maxH, minK, maxK, minL, maxL );
 
   TArray3D<TReflection*>& Hkl3D = *Hkl3DArray;
-  for( int i=0; i < Hkl.RefCount(); i++ )  {
-    TReflection& ref = Hkl[i];
+  for( int i=0; i < ref_cnt; i++ )  {
+    TReflection& ref = Refs[i];
     Hkl3D(ref.GetH(),ref.GetK(),ref.GetL()) = &ref;
-
     TotalI += ref.GetI() < 0 ? 0 : ref.GetI();
-    TotalSI += QRT(ref.GetS());
+    TotalIS += QRT(ref.GetS());
   }
-  AverageI  = TotalI/Hkl.RefCount();
-  AverageSI = sqrt(TotalSI/Hkl.RefCount());
-
-  for( int i=0; i < Hkl.RefCount(); i++ )  {
-    TReflection& ref = Hkl[i];
-    if( ref.GetI() > 0 )  {
-      double Z = ref.GetI()/AverageI;
-      AverageTestValue += sqrt(Z);
-      Z -= 1;
-      VarianceTestValue += Z*Z;
-    }
-  }
-  VarianceTestValue /= Hkl.RefCount();
-
-  AverageTestValue /= Hkl.RefCount();
-  AverageTestValue *= AverageTestValue;
-  //AverageTestValue = (SqZ / AvZ);
+  AverageI  = TotalI/ref_cnt;
+  AverageIS = sqrt(TotalIS/ref_cnt);
 }
 //..............................................................................
 TSGTest::~TSGTest()  {
@@ -52,81 +66,78 @@ TSGTest::~TSGTest()  {
 }
 //..............................................................................
 void TSGTest::MergeTest(const TPtrList<TSpaceGroup>& sgList,  TTypeList<TSGStats>& res )  {
-
-  typedef AnAssociation4<TSpaceGroup*, TwoDoublesInt*, TwoDoublesInt*, int> SGAss;
+  typedef AnAssociation4<TSpaceGroup*, TwoDoublesInt, TwoDoublesInt, int> SGAss;
   typedef TPtrList<SGAss>  SGpList;
-  typedef AnAssociation2<mat3d*, SGpList*> MatrixAss;
+  typedef AnAssociation2<mat3d, SGpList> MatrixAss;
   typedef TTypeList<SGAss>  SGList;
   TTypeList< MatrixAss > UniqMatricesNT;
   SGList SGHitsNT;
   smatd_list sgMl;
-  vec3d hklv;
-  TArray3D<TReflection*>& Hkl3D = *Hkl3DArray;
+
+  const TArray3D<TReflection*>& Hkl3D = *Hkl3DArray;
+
+  SGHitsNT.SetCapacity( sgList.Count() );
 
   for( int i=0; i < sgList.Count(); i++ )  {
     TSpaceGroup& sg = *sgList[i];
     SGAss& sgvNT =
-      SGHitsNT.AddNew<TSpaceGroup*, TwoDoublesInt*, TwoDoublesInt*, int > (
-                  &sg, new TwoDoublesInt(0.0,0.0,0), new TwoDoublesInt(0.0,0.0,0), 0);
+      SGHitsNT.AddNew<TSpaceGroup*, TwoDoublesInt, TwoDoublesInt, int > (
+                  &sg, TwoDoublesInt(0.0,0.0,0), TwoDoublesInt(0.0,0.0,0), 0);
     sgMl.Clear();
     sg.GetMatrices( sgMl, mattAll );
-    for( int j=0; j < sgMl.Count(); j++ )  {
+    const int sgml_cnt = sgMl.Count();
+    for( int j=0; j < sgml_cnt; j++ )  {
       smatd& m = sgMl[j];
       bool uniq = true;
-      for( int k=0; k < UniqMatricesNT.Count(); k++ )  {
-        if( *UniqMatricesNT[k].GetA() == m.r )  {
+      const int umnt_cnt = UniqMatricesNT.Count();
+      for( int k=0; k < umnt_cnt; k++ )  {
+        if( UniqMatricesNT[k].GetA() == m.r )  {
           uniq = false;
-          UniqMatricesNT[k].GetB()->Add( &sgvNT );
+          UniqMatricesNT[k].B().Add( &sgvNT );
           sgvNT.D() ++;
           break;
         }
       }
       if( uniq )  {
-        SGpList* l = new SGpList();
         sgvNT.D() ++;
-        l->Add(&sgvNT);
-        UniqMatricesNT.AddNew<mat3d*,SGpList*>(new mat3d(m.r), l);
+        UniqMatricesNT.AddNew<mat3d>(m.r).B().Add(&sgvNT);
       }
     }
   }
-  for( int i=0; i < UniqMatricesNT.Count(); i++ )  {
-    mat3d& m = *UniqMatricesNT[i].GetA();
-    for( int j=0; j < Hkl.RefCount(); j++ )  {
-      if( Hkl[j].GetI() < AverageI )  continue;
+  vec3i hklv;
+  const int umnt_cnt = UniqMatricesNT.Count();
+  for( int i=0; i < umnt_cnt; i++ )  {
+    const mat3d& m = UniqMatricesNT[i].GetA();
+    const int ref_cnt = Refs.Count();
+    for( int j=0; j < ref_cnt; j++ )  {
+      if( Refs[j].GetI() < AverageI )  continue;
 
-      Hkl[j].MulHkl(hklv, m);
+      Refs[j].MulHklR(hklv, m);
 
       if( hklv[0] < minH || hklv[0] > maxH )  continue;
       if( hklv[1] < minK || hklv[1] > maxK )  continue;
       if( hklv[2] < minL || hklv[2] > maxL )  continue;
 
-      if( !Hkl[j].EqHkl(hklv) )  {
-        TReflection* ref = Hkl3D((int)hklv[0], (int)hklv[1], (int)hklv[2]);
-        if( !ref )  continue;
+      if( !Refs[j].EqHkl(hklv) )  {
+        const TReflection* ref = Hkl3D(hklv);
+        if( ref == NULL )  
+          continue;
 
         //double weight = fabs(ref->Data()[0] - Hkl.Ref(j)->Data()[0]) / (fabs(ref->Data()[0]) +fabs(Hkl.Ref(j)->Data()[0]));
-        double diff = fabs(ref->GetI() - Hkl[j].GetI());
+        double diff = fabs(ref->GetI() - Refs[j].GetI());
         //double weight = diff * HklScaleFactor;
         // 5% of an average reflection itensity
-        for( int k=0; k < UniqMatricesNT[i].GetB()->Count(); k++ )  {
-          UniqMatricesNT[i].GetB()->Item(k)->GetC()->A() += diff;
-          UniqMatricesNT[i].GetB()->Item(k)->GetC()->B() += (QRT(ref->GetS()) + QRT(Hkl[j].GetS()));
-          UniqMatricesNT[i].GetB()->Item(k)->GetC()->C() ++;
+        for( int k=0; k < UniqMatricesNT[i].GetB().Count(); k++ )  {
+          UniqMatricesNT[i].GetB()[k]->C().A() += diff;
+          UniqMatricesNT[i].GetB()[k]->C().B() += (QRT(ref->GetS()) + QRT(Refs[j].GetS()));
+          UniqMatricesNT[i].GetB()[k]->C().C() ++;
         }
       }
     }
   }
   for( int i=0; i < SGHitsNT.Count(); i++ )  {
-    SGHitsNT[i].GetC()->B() = sqrt( SGHitsNT[i].GetC()->GetB() );
-    res.AddNew<TSpaceGroup*, TwoDoublesInt>( SGHitsNT[i].GetA(), *SGHitsNT[i].GetC());
-  }
-  for( int i=0; i < SGHitsNT.Count(); i++ )  {
-    delete SGHitsNT[i].GetB();
-    delete SGHitsNT[i].GetC();
-  }
-  for( int i=0; i < UniqMatricesNT.Count(); i++ )  {
-    delete UniqMatricesNT[i].GetA();
-    delete UniqMatricesNT[i].GetB();
+    SGHitsNT[i].C().B() = sqrt( SGHitsNT[i].GetC().GetB() );
+    res.AddNew<TSpaceGroup*, TwoDoublesInt>( SGHitsNT[i].GetA(), SGHitsNT[i].GetC());
   }
 }
 //..............................................................................
@@ -224,10 +235,12 @@ void TSGTest::LatticeSATest(TTypeList<TElementStats<TCLattice*> >& latRes, TType
 //  SAExclusions.AddNew<NamedSE*, TPtrList<NamedSE>*>(&GlideN3, &Glide3ExcG );
   SAExclusions.AddNew<NamedSE*, TPtrList<NamedSE>*>(&GlideD3, &Glide3ExcS );
 //  SAExclusions.AddNew<NamedSE*, TPtrList<NamedSE>*>(&GlideD3, &Glide3ExcGD );
-
-  for( int i=0; i < Hkl.RefCount(); i++ )  {
-    TReflection& ref = Hkl[i];
-    int H = ref.GetH(), K = ref.GetK(), L = ref.GetL();
+  const int ref_cnt = Refs.Count();
+  for( int i=0; i < ref_cnt; i++ )  {
+    const TReflection& ref = Refs[i];
+    int H = ref.GetH(), 
+        K = ref.GetK(), 
+        L = ref.GetL();
 
     if( ((H+K)%2) != 0 )  {  LattC.GetC()->A() += ref.GetI();  LattC.GetC()->B() += QRT(ref.GetS());  LattC.GetC()->C()++;  }
     else                  {  LattC.GetB()->A() += ref.GetI();  LattC.GetB()->B() += QRT(ref.GetS());  LattC.GetB()->C()++;  }
@@ -366,22 +379,22 @@ void TSGTest::LatticeSATest(TTypeList<TElementStats<TCLattice*> >& latRes, TType
 //..............................................................................
 void TSGTest::WeakRefTest(const TPtrList<TSpaceGroup>& sgList, TTypeList<TElementStats<TSpaceGroup*> >& res)  {
 
-  typedef AnAssociation4<TSpaceGroup*, TwoDoublesInt*, TwoDoublesInt*, int> SGAss;
+  typedef AnAssociation4<TSpaceGroup*, TwoDoublesInt, TwoDoublesInt, int> SGAss;
   typedef TPtrList<SGAss>  SGpList;
-  typedef AnAssociation2<smatd*, SGpList*> MatrixAss;
+  typedef AnAssociation2<smatd, SGpList> MatrixAss;
   typedef TTypeList<SGAss>  SGList;
   TTypeList< MatrixAss > UniqMatrices;
   SGList SGHits;
   smatd_list sgMl;
-  vec3d hklv;
-
+  SGHits.SetCapacity( sgList.Count() );
   for( int i=0; i < sgList.Count(); i++ )  {
     TSpaceGroup& sg = *sgList[i];
     SGAss& sgv =
-      SGHits.AddNew<TSpaceGroup*, TwoDoublesInt*, TwoDoublesInt*, int > (
-                    &sg, new TwoDoublesInt(0.0,0.0,0), new TwoDoublesInt(0.0,0.0,0), 0 );
+      SGHits.AddNew<TSpaceGroup*, TwoDoublesInt, TwoDoublesInt, int > (
+                    &sg, TwoDoublesInt(0.0,0.0,0), TwoDoublesInt(0.0,0.0,0), 0 );
     sg.GetMatrices( sgMl, mattAll);
-    for( int j=0; j < sgMl.Count(); j++ )  {
+    const int ml_cnt = sgMl.Count();
+    for( int j=0; j < ml_cnt; j++ )  {
       smatd& m = sgMl[j];
       // skip -I matrix
       if( m.r[0][0] == -1 && m.r[1][1] == -1 && m.r[2][2] == -1 &&
@@ -392,7 +405,7 @@ void TSGTest::WeakRefTest(const TPtrList<TSpaceGroup>& sgList, TTypeList<TElemen
       int iv = (int)m.t[0];  m.t[0] = fabs( m.t[0] - iv );
           iv = (int)m.t[1];  m.t[1] = fabs( m.t[1] - iv );
           iv = (int)m.t[2];  m.t[2] = fabs( m.t[2] - iv );
-      // mtrix should have a translation
+      // matrix should have a translation
       if( m.t[0] == 0 &&  m.t[1] == 0 && m.t[2] == 0 )
         continue;
 
@@ -402,42 +415,42 @@ void TSGTest::WeakRefTest(const TPtrList<TSpaceGroup>& sgList, TTypeList<TElemen
 
       bool uniq = true;
       for( int k=0; k < UniqMatrices.Count(); k++ )  {
-        if( *UniqMatrices[k].GetA() == m )  {
+        if( UniqMatrices[k].GetA() == m )  {
           uniq = false;
-          UniqMatrices[k].GetB()->Add( &sgv );
+          UniqMatrices[k].B().Add( &sgv );
           sgv.D() ++;
           break;
         }
       }
       if( uniq )  {
-        SGpList* l = new SGpList();
-        l->Add(&sgv);
         sgv.D() ++;
-        UniqMatrices.AddNew<smatd*,SGpList*>(new smatd(m), l);
+        UniqMatrices.AddNew<smatd>(m).B().Add(&sgv);
       }
     }
     sgMl.Clear();
   }
   // collect statistrics for the matrices and the spacegroups
-  for( int i=0; i < UniqMatrices.Count(); i++ )  {
-    smatd& m = *UniqMatrices[i].GetA();
-    for( int j=0; j < Hkl.RefCount(); j++ )  {
-      if(  Hkl[j].IsSymmetric(m)  )  {
-        double len = Hkl[j].PhaseShift(m);
+  const int um_cnt = UniqMatrices.Count();
+  for( int i=0; i < um_cnt; i++ )  {
+    const smatd& m = UniqMatrices[i].GetA();
+    const int ref_cnt = Refs.Count(); 
+    for( int j=0; j < ref_cnt; j++ )  {
+      if(  Refs[j].IsSymmetric(m)  )  {
+        double len = Refs[j].PhaseShift(m);
         int ilen = (int)len;
         len = fabs(len - ilen);
         if( len < 0.01 || len > 0.99 )  {
-          for( int k=0; k < UniqMatrices[i].GetB()->Count(); k++ )  {
-            UniqMatrices[i].GetB()->Item(k)->GetB()->A() += Hkl[j].GetI();
-            UniqMatrices[i].GetB()->Item(k)->GetB()->B() += Hkl[j].GetS();
-            UniqMatrices[i].GetB()->Item(k)->GetB()->C() ++;
+          for( int k=0; k < UniqMatrices[i].GetB().Count(); k++ )  {
+            UniqMatrices[i].GetB()[k]->B().A() += Refs[j].GetI();
+            UniqMatrices[i].GetB()[k]->B().B() += Refs[j].GetS();
+            UniqMatrices[i].GetB()[k]->B().C() ++;
           }
         }
         else  {
-          for( int k=0; k < UniqMatrices[i].GetB()->Count(); k++ )  {
-            UniqMatrices[i].GetB()->Item(k)->GetC()->A() += Hkl[j].GetI();
-            UniqMatrices[i].GetB()->Item(k)->GetC()->B() += Hkl[j].GetS();
-            UniqMatrices[i].GetB()->Item(k)->GetC()->C() ++;
+          for( int k=0; k < UniqMatrices[i].GetB().Count(); k++ )  {
+            UniqMatrices[i].GetB()[k]->C().A() += Refs[j].GetI();
+            UniqMatrices[i].GetB()[k]->C().B() += Refs[j].GetS();
+            UniqMatrices[i].GetB()[k]->C().C() ++;
           }
         }
       }
@@ -445,15 +458,8 @@ void TSGTest::WeakRefTest(const TPtrList<TSpaceGroup>& sgList, TTypeList<TElemen
   }
   for( int i=0; i < SGHits.Count(); i++ )  {
     res.AddNew<TSpaceGroup*, TwoDoublesInt, TwoDoublesInt>( SGHits[i].GetA(),
-      *SGHits[i].GetB(),
-      *SGHits[i].GetC() );
-    delete SGHits[i].GetB();
-    delete SGHits[i].GetC();
+      SGHits[i].GetB(),
+      SGHits[i].GetC() );
   }
-  for( int i=0; i < UniqMatrices.Count(); i++ )  {
-    delete UniqMatrices[i].GetA();
-    delete UniqMatrices[i].GetB();
-  }
-
 }
 

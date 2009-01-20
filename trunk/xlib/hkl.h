@@ -77,7 +77,7 @@ public:
     AllRefs(r, AU, Res);
   }
   template <class VC>
-    void AllRefs(const TVector<VC> &hkl, const TAsymmUnit& AU, TRefPList& Res)  {
+    void AllRefs(const VC& hkl, const TAsymmUnit& AU, TRefPList& Res)  {
       AllRefs(hkl[0], hkl[1], hkl[2],AU, Res);
     }
   void AllRefs(const TReflection& R, const TAsymmUnit& AU, TRefPList& Res);
@@ -87,6 +87,12 @@ public:
   MergeStats SimpleMerge(smatd_list& ml, TRefList& output) const {
     return  RefMerger::Merge<TSimpleMerger>(ml, Refs, output);
   }
+//..............................................................................
+  void SimpleMergeInP1(TRefList& output) const {
+    RefMerger::MergeInP1<TSimpleMerger>(Refs, output);
+  }
+//..............................................................................
+
 
   // saves to file a list of reflections
   static bool SaveToFile(const olxstr& FN, const TRefPList& Reflections, bool Append = true);

@@ -39,7 +39,7 @@ int main(int argc, char* argv[])  {
     TEFile logf(bd + "test.out", "w+b");
     TOnProgress pg;
     Listener listener;
-    TFileTree ft("E:/DATA");
+    TFileTree ft("E:/My Documents/Data");
     ft.OnExpand->Add(&listener);
     ft.Root.Expand(pg);
     ft.OnExpand->Remove(&listener);
@@ -73,11 +73,6 @@ int main(int argc, char* argv[])  {
           }
           if( file_sg != NULL )  {
             logf.Writenl(olxstr("File space group is: ") << file_sg->GetName());
-            mat3d hklfm(XApp.XFile().GetRM().GetHKLF_mat());
-            if( !(hklfm.IsI() || (hklfm *= -1).IsI()) )  {
-              logf.Writenl("File has HKLF transformation matrix, skipping...");
-              continue;
-            }
             TotalCount++;
           }
           me.SetRetVal(&sgs);

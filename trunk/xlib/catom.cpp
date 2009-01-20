@@ -215,7 +215,7 @@ PyObject* TCAtom::PyExport()  {
   PyDict_SetItemString(main, "crd", 
     Py_BuildValue("(ddd)(ddd)", Center[0], Center[1], Center[2], Esd[0], Esd[1], Esd[2]) );
   if( EllpId == -1 )
-    PyDict_SetItemString(main, "uiso", Py_BuildValue("d", Uiso) );
+    PyDict_SetItemString(main, "uiso", Py_BuildValue("(dd)", Uiso, UisoEsd) );
   else  {
     double Q[6], E[6];
     GetEllipsoid()->GetQuad(Q, E);

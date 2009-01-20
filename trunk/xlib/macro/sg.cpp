@@ -50,16 +50,17 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
       }
     }
   }
-  TSGTest  SGTest( HklFN );
+  TSGTest  SGTest( HklFN, XApp.XFile().GetRM().GetHKLF_mat() );
   XApp.GetLog() << '\n';
-  XApp.GetLog() << ( olxstr("HKL reflections count: ") << SGTest.GetHklFile().RefCount() ) << '\n';
-  XApp.GetLog() << ( olxstr("Maximum/minimum intensity: ") << SGTest.GetHklFile().GetMaxI() <<
-                            '('    << SGTest.GetHklFile().GetMaxIS() << ')'
-                            << '/' << SGTest.GetHklFile().GetMinI() << '('
-                            << SGTest.GetHklFile().GetMinIS() << ')') << '\n';
+  XApp.GetLog() << ( olxstr("HKL reflections count/ (unique in P1): ") << 
+    SGTest.GetHklRefCount() ) << '/' << SGTest.GetP1RefCount() << '\n';
+  XApp.GetLog() << ( olxstr("Maximum/minimum intensity: ") << SGTest.GetMaxI() <<
+                            '('    << SGTest.GetMaxIS() << ')'
+                            << '/' << SGTest.GetMinI() << '('
+                            << SGTest.GetMinIS() << ')') << '\n';
   XApp.GetLog() << ( olxstr("Average intensity/error: ")
                           << olxstr::FormatFloat(2, SGTest.GetAverageI()) << '/'
-                          << olxstr::FormatFloat(2, SGTest.GetAverageSI()) ) << '\n';
+                          << olxstr::FormatFloat(2, SGTest.GetAverageIS()) ) << '\n';
   TStrList Output;
 
   TPtrList<TSpaceGroup> LaueClasses;

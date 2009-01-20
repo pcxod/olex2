@@ -225,6 +225,46 @@ template <class RefListMerger>
     }
     return stats;
   }
+template <class RefListMerger>
+  static void MergeInP1(const TRefPList& Refs, TRefList& output)  {
+    // replicate reflections, to leave this object as it is
+    TPtrList<const TReflection> refs, toMerge;  // list of replicated reflections
+    refs.SetCapacity( Refs.Count() );
+    for( int i=0; i < Refs.Count(); i++ )  {
+      if( Refs[i]->GetTag() <= 0 )  continue;  // skip omited reflections
+      refs.Add( Refs[i] );
+    }
+    // sort the list
+    TReflection::SortPList(refs);
+    // merge reflections
+    double Sdiff = 0, SI = 0;
+    toMerge.Add(refs[0]);  // reference reflection
+    const int ref_cnt = refs.Count();
+    output.SetCapacity( ref_cnt ); // better more that none :)
+    for( int i=0; i < ref_cnt; )  {
+      while( (++i < ref_cnt) && (toMerge[0]->CompareTo(*refs[i]) == 0) )
+        toMerge.Add( refs[i] );
+      TReflection &rf = *RefListMerger::Merge( toMerge );
+      if( toMerge.Count() > 1 )  {
+        double esd = 0;
+        for( int l=0; l < toMerge.Count(); l++ )  {
+          double id = toMerge[l]->GetI() - rf.GetI();
+          esd += id*id;
+          Sdiff += fabs(id);
+          SI += toMerge[l]->GetI();
+        }
+        esd = sqrt(esd/(toMerge.Count()*(toMerge.Count()-1)));
+        if( esd > rf.GetS() )
+          rf.SetS( esd );
+      }
+      output.Add(rf);
+
+      if( i >= ref_cnt )  break;
+
+      toMerge.Clear();
+      toMerge.Add( refs[i] );
+    }
+  }
 };
 
 EndXlibNamespace()

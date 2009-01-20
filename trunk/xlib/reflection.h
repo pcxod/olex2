@@ -64,28 +64,29 @@ public:
       return ( ((int)v[0] == -H) && ((int)v[1] == -K) && ((int)v[2] == -L) );
     }
   // generates symmetry equivalent miller index and stores it in res
-  template <class VC, class MC>
-  void MulHkl(VC& res, const MC& mat) const {
+  template <class VC, class MC> void MulHkl(VC& res, const MC& mat) const {
     res[0] = (H*mat[0][0] + K*mat[1][0] + L*mat[2][0]);
     res[1] = (H*mat[0][1] + K*mat[1][1] + L*mat[2][1]);
     res[2] = (H*mat[0][2] + K*mat[1][2] + L*mat[2][2]);
   }
+  template <class VC, class MC> void MulHklR(VC& res, const MC& mat) const {
+    res[0] = Round(H*mat[0][0] + K*mat[1][0] + L*mat[2][0]);
+    res[1] = Round(H*mat[0][1] + K*mat[1][1] + L*mat[2][1]);
+    res[2] = Round(H*mat[0][2] + K*mat[1][2] + L*mat[2][2]);
+  }
   // generates symmetry equivalent miller index and stores it in res, uses transposed matrix
-  template <class VC, class MC>
-  void MulHklT(VC& res, const MC& mat) const {
+  template <class VC, class MC> void MulHklT(VC& res, const MC& mat) const {
     res[0] = (H*mat[0][0] + K*mat[0][1] + L*mat[0][2]);
     res[1] = (H*mat[1][0] + K*mat[1][1] + L*mat[1][2]);
     res[2] = (H*mat[2][0] + K*mat[2][1] + L*mat[2][2]);
   }
-  template <class CC>
-  void MulHkl(TVector3<CC>& res, const smatd& mat) const {
+  template <class CC> void MulHkl(TVector3<CC>& res, const smatd& mat) const {
     res[0] = (CC)(H*mat.r[0][0] + K*mat.r[1][0] + L*mat.r[2][0]);
     res[1] = (CC)(H*mat.r[0][1] + K*mat.r[1][1] + L*mat.r[2][1]);
     res[2] = (CC)(H*mat.r[0][2] + K*mat.r[1][2] + L*mat.r[2][2]);
   }
   // generates symmetry equivalent miller index and stores it in res, uses transposed matrix
-  template <class CC>
-  void MulHklT(TVector3<CC>& res, const smatd& mat) const {
+  template <class CC> void MulHklT(TVector3<CC>& res, const smatd& mat) const {
     res[0] = (CC)(H*mat.r[0][0] + K*mat.r[0][1] + L*mat.r[0][2]);
     res[1] = (CC)(H*mat.r[1][0] + K*mat.r[1][1] + L*mat.r[1][2]);
     res[2] = (CC)(H*mat.r[2][0] + K*mat.r[2][1] + L*mat.r[2][2]);
@@ -191,7 +192,9 @@ public:
     return a->CompareTo(*b);
   }
   static void SortList(TTypeList<TReflection>& lst)  {  lst.QuickSorter.SortSF(lst, TReflection::Compare);  }
-  static void SortPList(TPtrList<TReflection>& lst)  {  lst.QuickSorter.SortSF(lst, TReflection::CompareP);  }
+  template <class RefPList> static void SortPList(RefPList& lst)  {  
+    lst.QuickSorter.SortSF(lst, TReflection::CompareP);  
+  }
 //..............................................................................
   // these values are intialised by Hkl file function AnalyseReflections
   inline void SetCentric(bool v)         {  Centric = v;  }
@@ -292,17 +295,16 @@ typedef TTypeList<TReflection> TRefList;
 
 class TSimpleMerger  {
 public:
-  static TReflection* Merge(const TRefPList& rl)  {
+  template <class RefPList>
+  static TReflection* Merge(const RefPList& rl)  {
     if( rl.Count() == 0 )  throw TInvalidArgumentException(__OlxSourceInfo, "empty reflexion list");
     if( rl.Count() == 1 )  return new TReflection( *rl[0] );
     double mi = 0, ms = 0;
     for( int l=0; l < rl.Count(); l++ )  {
       mi += rl[l]->GetI();
       ms += 1./QRT(rl[l]->GetS());
-//      ms += QRT(rl[l]->GetS());
     }
     mi /= rl.Count();
-//    ms = sqrt(ms/rl.Count());
     ms = 1./sqrt(ms);
     return new TReflection( rl[0]->GetH(), rl[0]->GetK(), rl[0]->GetL(), mi, ms);
   }
