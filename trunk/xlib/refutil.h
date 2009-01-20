@@ -91,11 +91,11 @@ template <class RefListMerger>
           double esd = 0;
           for( int l=0; l < toMerge.Count(); l++ )  {
             double id = toMerge[l]->GetI() - rf.GetI();
-            esd += id*id;
+            esd += fabs(id);
             Sdiff += fabs(id);
             SI += toMerge[l]->GetI();
           }
-          esd = sqrt(esd/(toMerge.Count()*(toMerge.Count()-1)));
+          esd = esd/(toMerge.Count()*sqrt((double)toMerge.Count()-1.0));
           if( esd > rf.GetS() )  {
             if( esd > 5*rf.GetS() )
               stats.InconsistentEquivalents ++;
@@ -180,11 +180,11 @@ template <class RefListMerger>
           double esd = 0;
           for( int l=0; l < toMerge.Count(); l++ )  {
             double id = toMerge[l]->GetI() - rf.GetI();
-            esd += id*id;
+            esd += fabs(id);
             Sdiff += fabs(id);
             SI += toMerge[l]->GetI();
           }
-          esd = sqrt(esd/(toMerge.Count()*(toMerge.Count()-1)));
+          esd = esd/(toMerge.Count()*sqrt((double)toMerge.Count()-1.0));
           if( esd > rf.GetS() )  {
             if( esd > 5*rf.GetS() )
               stats.InconsistentEquivalents ++;
@@ -248,12 +248,10 @@ template <class RefListMerger>
       if( toMerge.Count() > 1 )  {
         double esd = 0;
         for( int l=0; l < toMerge.Count(); l++ )  {
-          double id = toMerge[l]->GetI() - rf.GetI();
-          esd += id*id;
-          Sdiff += fabs(id);
+          esd += fabs( toMerge[l]->GetI() - rf.GetI() );
           SI += toMerge[l]->GetI();
         }
-        esd = sqrt(esd/(toMerge.Count()*(toMerge.Count()-1)));
+        esd = esd/(toMerge.Count()*sqrt((double)toMerge.Count()-1.0));
         if( esd > rf.GetS() )
           rf.SetS( esd );
       }

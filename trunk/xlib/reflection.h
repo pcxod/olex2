@@ -299,12 +299,16 @@ public:
   static TReflection* Merge(const RefPList& rl)  {
     if( rl.Count() == 0 )  throw TInvalidArgumentException(__OlxSourceInfo, "empty reflexion list");
     if( rl.Count() == 1 )  return new TReflection( *rl[0] );
-    double mi = 0, ms = 0;
+    double mi = 0, ms = 0, ws = 0;
     for( int l=0; l < rl.Count(); l++ )  {
-      mi += rl[l]->GetI();
-      ms += 1./QRT(rl[l]->GetS());
+      const double s = rl[l]->GetS() != 0 ? rl[l]->GetS() : 0.001;
+      const double ooss = 1./(s*s);
+      const double w = (rl[l]->GetI() > 3*s) ? rl[l]->GetI()*ooss : 3./s;
+      mi += (w*rl[l]->GetI());
+      ms += ooss;
+      ws += w;
     }
-    mi /= rl.Count();
+    mi /= ws;
     ms = 1./sqrt(ms);
     return new TReflection( rl[0]->GetH(), rl[0]->GetK(), rl[0]->GetL(), mi, ms);
   }
