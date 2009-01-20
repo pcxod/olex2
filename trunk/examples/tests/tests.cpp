@@ -139,9 +139,13 @@ int main(int argc, char* argv[])  {
     }
     if( TotalCount != 0 )  {
       logf.Writenl( olxstr(TotalCount) << " files with SG info processed in " << TETime::msNow() - time_start << " ms");
-      logf.Writenl( olxstr("Agreed calculations: ") << olxstr::FormatFloat(2, (double)AgreedCount*100/TotalCount) << '%');
+      logf.Writenl( olxstr("Agreed calculations: ") << 
+        olxstr::FormatFloat(2, (double)AgreedCount*100/TotalCount) << '%' <<
+        " (" << TotalCount);
       if( WilsonTotalCount != 0 )
-        logf.Writenl( olxstr("Wilson agreed calculations: ") << olxstr::FormatFloat(2, (double)WilsonAgreedCount*100/WilsonTotalCount) << '%');
+        logf.Writenl( olxstr("Wilson agreed calculations: ") << 
+          olxstr::FormatFloat(2, (double)WilsonAgreedCount*100/WilsonTotalCount) << '%' <<
+          " (" << WilsonTotalCount << ')');
     }
   }
   catch( TExceptionBase& exc )  {
