@@ -85,11 +85,11 @@ public:
   MergeStats Merge(const class TSpaceGroup& AU, bool MergeInverse, TRefList& output) const;
 //..............................................................................
   MergeStats SimpleMerge(smatd_list& ml, TRefList& output) const {
-    return  RefMerger::Merge<TSimpleMerger>(ml, Refs, output);
+    return  RefMerger::Merge<RefMerger::StandardMerger>(ml, Refs, output);
   }
 //..............................................................................
   void SimpleMergeInP1(TRefList& output) const {
-    RefMerger::MergeInP1<TSimpleMerger>(Refs, output);
+    RefMerger::MergeInP1<RefMerger::StandardMerger>(Refs, output);
   }
 //..............................................................................
 

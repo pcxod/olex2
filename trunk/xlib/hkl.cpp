@@ -314,7 +314,7 @@ MergeStats THklFile::Merge(const TSpaceGroup& sg, bool MergeInverse, TRefList& o
       ml.AddCCopy(ml[i]) *= -1;
     ml.AddNew().I() *= -1;
   }
-  MergeStats rv = RefMerger::Merge<TSimpleMerger>(ml, Refs, output);
+  MergeStats rv = RefMerger::Merge<RefMerger::ShelxMerger>(ml, Refs, output);
   return rv;
 }
 //..............................................................................

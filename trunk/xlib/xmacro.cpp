@@ -135,6 +135,7 @@ xlib_InitMacro(File, "s-sort the main residue of the asymmetric unit", fpNone|fp
   xlib_InitMacro(LstFun, "h-Shows help", fpAny, "Lists all defined functions. Accepts * based masks" );
   xlib_InitMacro(LstFS, EmptyString, fpAny, "Prints out detailed content of virtual file system. Accepts * based masks");
   xlib_InitMacro(SGS, EmptyString, fpOne|fpTwo|psFileLoaded, "Changes current space group settings using provided cell setting (if aplicable) and axis");
+  xlib_InitMacro(ASR, EmptyString, fpNone^psFileLoaded, "Absolute structure refinement: adds TWIN and BASF to current model in the case of non-centrosymmetric structure");
 //_________________________________________________________________________________________________________________________
 //_________________________________________________________________________________________________________________________
 
@@ -2469,6 +2470,25 @@ void XLibMacros::macSGE(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       op->executeMacroEx(olxstr("solve"), E);
     E.SetRetVal<bool>(E.IsSuccessful());
   }
+}
+//..............................................................................
+void XLibMacros::macASR(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  TXApp& xapp = TXApp::GetInstance();
+  TSpaceGroup& sg = xapp.XFile().GetLastLoaderSG();
+  if( sg.IsCentrosymmetric() )  {
+    E.ProcessingError(__OlxSrcInfo, "not applicable to a non-centrosymmetric space groups");
+    return;
+  }
+  if( xapp.XFile().GetRM().GetHKLF() == 5 )  {
+    E.ProcessingError(__OlxSrcInfo, "not applicable to HKLF 5 data format");
+    return;
+  }
+  if( xapp.XFile().GetRM().GetBASF().IsEmpty() )
+    xapp.XFile().GetRM().AddBASF(0.2);
+  if( !xapp.XFile().GetRM().HasTWIN() )
+    xapp.XFile().GetRM().SetTWIN_n(2);
+  if( xapp.XFile().GetRM().HasMERG() && xapp.XFile().GetRM().GetMERG() == 4 )
+    xapp.GetLog() << "Please note, that currently Friedel pairs are merged\n";
 }
 //..............................................................................
 
