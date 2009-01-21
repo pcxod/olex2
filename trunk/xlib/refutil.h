@@ -197,7 +197,7 @@ template <class RefListMerger> static MergeStats MergeInP1(const TRefList& Refs,
     TPtrList<const TReflection> refs;
     refs.SetCapacity( Refs.Count() );
     for( int i=0; i < Refs.Count(); i++ )  {
-      if( Refs[i]->GetTag() <= 0 )  continue;  // skip omited reflections
+      if( Refs[i].GetTag() <= 0 )  continue;  // skip omited reflections
       refs.Add( &Refs[i] );
     }
     return DoMergeInP1<RefListMerger,TRefList>(refs, Refs, output);
