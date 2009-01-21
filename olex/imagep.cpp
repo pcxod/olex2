@@ -16,7 +16,7 @@ void TProcessImage::FilterBW(unsigned char *Image, int width, int height, int by
     for( int j=0; j < 3; j++ )
       filterW += Filter[i][j];
   if( !filterW )  filterW = 1;
-  filterW = fabs(filterW);
+  filterW = olx_abs(filterW);
   int index, index1, summ;
   int total = width*height*bytePerColour;
   int newImageMax = width*height;
@@ -75,7 +75,7 @@ void TProcessImage::FilterC(unsigned char *Image, int width, int height, int byt
     for( int j=0; j < 3; j++ )
       filterW += Filter[i][j];
   if( !filterW )  filterW = 1;
-  filterW = fabs(filterW);
+  filterW = olx_abs(filterW);
   int index, index1, summr, summg, summb;
   int total = width*height*bytePerColour;
   unsigned char * newImg = new unsigned char [total];

@@ -54,9 +54,8 @@ public:
   }
 */
 //..............................................................................
-  /* copy constuctor - creates new copies of the objest, be careful as the assignement
-   operator must exist  */
-  void AddList( const TTypeListExt& list )  {
+  /* creates new copies of the objest, be careful as the assignement operator must exist  */
+  void AddListA( const TTypeListExt& list )  {
     List.SetCapacity( list.Count() + List.Count() );
     for( int i=0; i < list.Count(); i++ )  {
       T* o = new T();
@@ -65,12 +64,18 @@ public:
     }
   }
 //..............................................................................
+  /* creates new copies of the objest, be careful as the copy constructor must exist  */
+  void AddListC( const TTypeListExt& list )  {
+    List.SetCapacity( list.Count() + List.Count() );
+    for( int i=0; i < list.Count(); i++ )
+      List.Add(new T(list[i]));
+  }
+//..............................................................................
 //  operator const TEList& () const { return *FList;  }
 //  TEList& c_list() { return *FList;  }
 //..............................................................................
   //adds a new object ito the list - will be deleted
   inline T& Add(T& Obj)  {  return *List.Add(&Obj);  }
-//..............................................................................
   //adds a new object ito the list - will be deleted
   inline T& Add(T* Obj)  {  return *List.Add(Obj);  }
 //..............................................................................
@@ -79,6 +84,12 @@ public:
     if( List[index] != NULL )
       delete (DestructCast*)List[index];
     return *(T*)(List[index] = &Obj);
+  }
+  //sets the list item to an object, which will be deleted
+  inline T& Set(size_t index, T* Obj)  {
+    if( List[index] != NULL )
+      delete (DestructCast*)List[index];
+    return *(T*)(List[index] = Obj);
   }
 //..............................................................................
   // adds a copy of the object with default constructor and assign operator "assigned copy"
@@ -115,6 +126,8 @@ public:
 //..............................................................................
   // insert anobject into thelist; the object will be deleted
   inline T& Insert(size_t index, T& Obj)  {  return *List.Insert(index, &Obj);  }
+  // insert anobject into thelist; the object will be deleted
+  inline T& Insert(size_t index, T* Obj)  {  return *List.Insert(index, Obj);  }
 //..............................................................................
   // copy constructor created copy is inserted
   inline const T& InsertCCopy(size_t index, const T& Obj)  {  return InsertNew<T>(index, Obj);  }

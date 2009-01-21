@@ -138,9 +138,9 @@ public:
       for( int j=i+1; j < tmpVecs.Count(); j++ )  {
         if( (radii[j] - qval) > stol )  break;
         if( tmpVecs.IsNull(j) )  continue;
-        if( fabs(tmpVecs[j].GetA()[0]-a[0])  < tol &&
-            fabs(tmpVecs[j].GetA()[1]-a[1])  < tol &&
-            fabs(tmpVecs[j].GetA()[2]-a[2])  < tol  )  {
+        if( olx_abs(tmpVecs[j].GetA()[0]-a[0])  < tol &&
+            olx_abs(tmpVecs[j].GetA()[1]-a[1])  < tol &&
+            olx_abs(tmpVecs[j].GetA()[2]-a[2])  < tol  )  {
           sd->Atoms.AddNew<int,int>( tmpVecs[j].GetB(), tmpVecs[j].GetC() );
           a *= 0.75;
           a += tmpVecs[j].GetA()*0.25;  // implement "crawling"
@@ -206,9 +206,9 @@ public:
       for( int j=i+1; j < tmpVecs.Count(); j++ )  {
         if( (radii[j] - qval) > stol )  break;
         if( tmpVecs.IsNull(j) )  continue;
-        if( fabs(tmpVecs[j].GetA()[0]-a[0])  < tol &&
-            fabs(tmpVecs[j].GetA()[1]-a[1])  < tol &&
-            fabs(tmpVecs[j].GetA()[2]-a[2])  < tol  )  {
+        if( olx_abs(tmpVecs[j].GetA()[0]-a[0])  < tol &&
+            olx_abs(tmpVecs[j].GetA()[1]-a[1])  < tol &&
+            olx_abs(tmpVecs[j].GetA()[2]-a[2])  < tol  )  {
           sd->Atoms.AddNew<int,int>( tmpVecs[j].GetB(), tmpVecs[j].GetC() );
           a *= 0.75;
           a += tmpVecs[j].GetA()*0.25;  // implement "crawling"

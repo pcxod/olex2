@@ -200,6 +200,7 @@ public:
   TGroupCAtom() : Atom(NULL), Matrix(NULL)  {  }
   TGroupCAtom(TCAtom* a, const smatd* m=NULL) : Atom(a), Matrix(m)  { }
   TGroupCAtom(const olxstr& name, TCAtom* a, const smatd* m=NULL) : Name(name), Atom(a), Matrix(m)  { }
+  TGroupCAtom(const TGroupCAtom& ga) : Atom(ga.Atom), Matrix(ga.Matrix), Name(ga.Name)  { }
   DefPropP(TCAtom*, Atom)
   inline const smatd* GetMatrix() const {  return Matrix;  }
   DefPropC(olxstr, Name)

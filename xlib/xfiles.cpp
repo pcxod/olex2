@@ -312,7 +312,7 @@ void TXFile::LibGetFormula(const TStrObjList& Params, TMacroError& E)  {
     if( tmp.IndexOf('.') != -1 )
       tmp.TrimFloat();
     if( html )  {
-      if( fabs(dv-1) > 0.01 && fabs(dv) > 0.01 )  {
+      if( olx_abs(dv-1) > 0.01 && olx_abs(dv) > 0.01 )  {
         rv << "<sub>" << tmp;
         subAdded = true;
       }

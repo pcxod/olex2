@@ -57,8 +57,8 @@ bool TGlMouse::MouseUp(int x, int y, short Shift, short button)  {
       PColl = FParent->FindObjectGroup(Handler);
       if( PColl ) { PColl->OnMouseUp(this, MData);    }
       else        { Handler->OnMouseUp(this, MData);  }
-      if( (fabs(MSVCC(MData->DownX-MData->UpX))<=2) &&
-          (fabs(MSVCC(MData->DownY-MData->UpY))<=2) && (Shift==0) )  // click
+      if( (olx_abs(MSVCC(MData->DownX-MData->UpX))<=2) &&
+          (olx_abs(MSVCC(MData->DownY-MData->UpY))<=2) && (Shift==0) )  // click
       {
         if( PColl ) { FParent->Select(PColl);      }
         else {  FParent->Select(Handler); }

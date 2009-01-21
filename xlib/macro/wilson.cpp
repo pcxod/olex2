@@ -77,7 +77,7 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
   //}
 
   TRefList Refs;
-  MergeStats st = Hkl.Merge(*sg, true, Refs);
+  Hkl.Merge<RefMerger::StandardMerger>(*sg, true, Refs);
   TTypeList<TWilsonBin> bins;
   TTypeList<TWilsonRef> refs;
   refs.SetCapacity(Refs.Count());
@@ -224,7 +224,7 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
       //refs[i].Fo2 /= (K*exp(-2*B*refs[i].ds)*Refs[i].GetDegeneracy()*refs[i].Fe2);
       if( refs[i].Fo2 < 0 )  refs[i].Fo2 = 0;
       SE2 += refs[i].Fo2;
-      E2 += fabs(refs[i].Fo2-1);
+      E2 += olx_abs(refs[i].Fo2-1);
       if( refs[i].Fo2 > 4 )  iE2GT2 ++;
     }
     E2 /= Refs.Count();

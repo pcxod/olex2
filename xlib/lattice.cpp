@@ -130,9 +130,9 @@ int TLattice::GenerateMatrices(smatd_plist& Result,
   Center = GetAsymmUnit().GetOCenter(true, false);
 
   Result.SetCapacity( (int)(GetUnitCell().MatrixCount()*
-                              (fabs(VTo[0]-VFrom[0])+1)*
-                              (fabs(VTo[1]-VFrom[1])+1)*
-                              (fabs(VTo[2]-VFrom[2])+1)) );
+                              (olx_abs(VTo[0]-VFrom[0])+1)*
+                              (olx_abs(VTo[1]-VFrom[1])+1)*
+                              (olx_abs(VTo[2]-VFrom[2])+1)) );
 
   for( int i=0; i < GetUnitCell().MatrixCount(); i++ )  {
     for( int j=(int)VFrom[0]; j <= (int)VTo[0]; j++ )
@@ -273,7 +273,7 @@ void TLattice::Init()  {
         {
           A1 = (TSAtom*)A->Node(0);
           if( !A1->CAtom()->UisoVar() )
-            CA->Uiso(A1->CAtom()->Uiso()*fabs(CA->UisoVar()));
+            CA->Uiso(A1->CAtom()->Uiso()*olx_abs(CA->UisoVar()));
         }
       }
     }
@@ -1650,7 +1650,7 @@ void TLattice::RemoveNonHBonding(TAtomEnvi& Envi)  {
     for( int i=0; i < Envi.Count(); i++ )  {
       vec2 = Envi.GetCrd(i);
       vec2 -= Envi.GetBase().crd();
-      hits.Add( fabs(-1 + vec2.CAngle(vec1)), &Envi.GetCAtom(i) );
+      hits.Add( olx_abs(-1 + vec2.CAngle(vec1)), &Envi.GetCAtom(i) );
     }
     while( hits.Count() > 1 )  {
       Envi.Exclude( *hits.GetObject( hits.Count() - 1 ) );

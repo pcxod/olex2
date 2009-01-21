@@ -751,10 +751,10 @@ void XLibMacros::ChangeCell(const mat3d& tm, const TSpaceGroup& new_sg)  {
   const mat3d i_tm( tm.Inverse() );
   mat3d f2c( mat3d::Transpose(xapp.XFile().GetAsymmUnit().GetCellToCartesian())*tm );
   mat3d ax_err;
-  ax_err[0] = vec3d(QRT(au.Axes()[0].GetE()), QRT(au.Axes()[1].GetE()), QRT(au.Axes()[2].GetE()));
+  ax_err[0] = vec3d(sqr(au.Axes()[0].GetE()), sqr(au.Axes()[1].GetE()), sqr(au.Axes()[2].GetE()));
   ax_err[1] = ax_err[0];  ax_err[2] = ax_err[0];
   mat3d an_err;
-  an_err[0] = vec3d(QRT(au.Angles()[0].GetE()), QRT(au.Angles()[1].GetE()), QRT(au.Angles()[2].GetE()));
+  an_err[0] = vec3d(sqr(au.Angles()[0].GetE()), sqr(au.Angles()[1].GetE()), sqr(au.Angles()[2].GetE()));
   an_err[1] = an_err[0];  an_err[2] = an_err[0];
   // prepare positive matrix for error estimation
   mat3d tm_p(tm);
@@ -2100,7 +2100,7 @@ void XLibMacros::macVoidE(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   for( int i=0; i < refs.Count(); i++ )  {
     const TReflection& ref = refs[i];
     for( int j=0; j < ml.Count(); j++, index++ )  {
-      ref.MulHklT(hkl, ml[j]);
+      ref.MulHkl(hkl, ml[j]);
       if( hkl[0] < minH )  minH = (int)hkl[0];
       if( hkl[1] < minK )  minK = (int)hkl[1];
       if( hkl[2] < minL )  minL = (int)hkl[2];
@@ -2479,8 +2479,8 @@ void XLibMacros::macASR(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     E.ProcessingError(__OlxSrcInfo, "not applicable to a non-centrosymmetric space groups");
     return;
   }
-  if( xapp.XFile().GetRM().GetHKLF() == 5 )  {
-    E.ProcessingError(__OlxSrcInfo, "not applicable to HKLF 5 data format");
+  if( xapp.XFile().GetRM().GetHKLF() == 5 || xapp.XFile().GetRM().GetHKLF() == 6 )  {
+    E.ProcessingError(__OlxSrcInfo, "not applicable to HKLF 5/6 data format");
     return;
   }
   if( xapp.XFile().GetRM().GetBASF().IsEmpty() )

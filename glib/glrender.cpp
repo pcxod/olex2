@@ -340,7 +340,7 @@ void TGlRender::SetView(short Res)  {
 }
 //..............................................................................
 void TGlRender::SetZoom(double V) {  
-  double MaxZ = olx_max(fabs(FMaxV.DistanceTo(FMinV)), 1);
+  double MaxZ = olx_max(olx_abs(FMaxV.DistanceTo(FMinV)), 1);
   double dv = V/MaxZ;
   if( dv < 0.01 )  //  need to fix the zoom
     FBasis->SetZoom( MaxZ*0.01);
@@ -376,7 +376,7 @@ void TGlRender::SetView(int x, int y, bool Select, short Res)  {
 //..............................................................................
 void TGlRender::SetBasis(bool Identity)  {
   static float Bf[4][4];
-  float MaxZ = (float)olx_max(fabs(FMaxV.DistanceTo(FMinV)), 1);
+  float MaxZ = (float)olx_max(olx_abs(FMaxV.DistanceTo(FMinV)), 1);
   if( !Identity )  {
     memcpy( &Bf[0][0], GetBasis().GetMData(), 12*sizeof(float));
     Bf[3][0] = Bf[3][1] = 0;

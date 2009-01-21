@@ -66,14 +66,14 @@ public:
   }
   // takes absolute value of the vector elements
   inline TVector3<T>& Abs()  {
-    data[0] = fabs(data[0]);
-    data[1] = fabs(data[1]);
-    data[2] = fabs(data[2]);
+    data[0] = olx_abs(data[0]);
+    data[1] = olx_abs(data[1]);
+    data[2] = olx_abs(data[2]);
     return *this;
   }
   // returns a vector with absolute values of provided one
   static inline TVector3<T> Abs(const TVector3<T>& v)  {
-    return TVector3<T>(fabs(v[0]), fabs(v[1]), fabs(v[2]));
+    return TVector3<T>(olx_abs(v[0]), olx_abs(v[1]), olx_abs(v[2]));
   }
   // returns sum of vector elements
   inline T Sum() const {
@@ -85,7 +85,7 @@ public:
   }
   // returns sum of absolute values of vector elements
   inline T AbsSum()  {
-    return fabs(data[0])+fabs(data[1])+fabs(data[2]);
+    return olx_abs(data[0])+olx_abs(data[1])+olx_abs(data[2]);
   }
   template <class AT> inline T DotProd(const TVector3<AT>& v) const {
     return data[0]*v[0] + data[1]*v[1] + data[2]*v[2];
@@ -464,7 +464,7 @@ public:
   static void  EigenValues(TMatrix33& A, TMatrix33& I)  {
     int i, j;
     double a = 2;
-    while( fabs(a) > 1e-15 )  {
+    while( olx_abs(a) > 1e-15 )  {
       MatMaxX( A, i, j );
       multMatrix( A, I, i, j );
       a = MatMaxX(A, i, j );
@@ -474,15 +474,15 @@ public:
       // used in the Jacoby eigenvalues search procedure
 protected: 
   static inline T MatMaxX(const TMatrix33& m, int &i, int &j )  {
-    double c = fabs(m[0][1]);
+    double c = olx_abs(m[0][1]);
     i = 0;  j = 1;
-    if( fabs(m[0][2]) > c )  {
+    if( olx_abs(m[0][2]) > c )  {
       j = 2;  
-      return fabs(m[0][2]);
+      return olx_abs(m[0][2]);
     }
-    if( fabs(m[1][2]) > c )  {
+    if( olx_abs(m[1][2]) > c )  {
        i = 1;  j = 2;
-       return fabs(m[1][2]);
+       return olx_abs(m[1][2]);
     }
     return c;
   }

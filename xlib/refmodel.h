@@ -7,6 +7,7 @@
 #include "refutil.h"
 #include "afixgroup.h"
 #include "exyzgroup.h"
+#include "reflection.h"
 
 BeginXlibNamespace()
 
@@ -15,7 +16,9 @@ static const double
   def_HKLF_wt = 1,
   def_HKLF_m  = 0,
   def_OMIT_s  = -2,
-  def_OMIT_2t = 180.0;
+  def_OMIT_2t = 180.0,
+  def_SHEL_hr = 0,
+  def_SHEL_lr = 100;  // ['infinity' in A]
 static const short 
  def_MERG   = 2,
  def_TWIN_n = 2;
@@ -32,9 +35,10 @@ protected:
   mat3d HKLF_mat;
   double HKLF_s, HKLF_wt, HKLF_m;
   double OMIT_s, OMIT_2t;
+  double SHEL_lr, SHEL_hr;
   mat3d TWIN_mat;
   int TWIN_n;
-  bool TWIN_set, OMIT_set, MERG_set, HKLF_set;
+  bool TWIN_set, OMIT_set, MERG_set, HKLF_set, SHEL_set, OMITs_Modified;
   vec3i_list Omits;
   TDoubleList BASF;
   void SetDefaults();
@@ -42,12 +46,13 @@ protected:
 public:
   // needs to be extended for the us of the batch numbers...
   struct HklStat : public MergeStats {
-    double MaxD, MinD, LimD, OMIT_s, OMIT_2t;
+    double MaxD, MinD, LimDmin, LimDmax, OMIT_s, OMIT_2t;
     int MERG;
     //vec3i maxInd, minInd;
-    int FilteredOff, // by LimD, OMIT_2t
+    int FilteredOff, // by LimD, OMIT_2t, SHEL_hr, SHEL_lr
       OmittedByUser, // OMIT h k l 
       IntensityTransformed;  // by OMIT_s
+    TRefList reflections;
     HklStat()  {
       SetDefaults();
     }
@@ -56,10 +61,14 @@ public:
     }
     HklStat& operator = (const HklStat& hs)  {
       MergeStats::operator = (hs);
-      MaxD = hs.MaxD;  MinD = hs.MinD;  LimD = hs.LimD;
+      MaxD = hs.MaxD;         MinD = hs.MinD; 
+      OMIT_s = hs.OMIT_s;     OMIT_2t = hs.OMIT_2t;
+      LimDmin = hs.LimDmin;   LimDmax = hs.LimDmax;
       FilteredOff = hs.FilteredOff;
       IntensityTransformed = hs.IntensityTransformed;
       OmittedByUser = hs.OmittedByUser;
+      reflections.Clear();
+      reflections.AddListC(hs.reflections);
       return *this;
     }
     HklStat& operator = (const MergeStats& ms)  {
@@ -68,11 +77,12 @@ public:
     }
     void SetDefaults()  {
       MergeStats::SetDefaults();
-      MaxD = MinD = LimD = 0;
+      MaxD = MinD = LimDmax = LimDmin = 0;
       FilteredOff = IntensityTransformed = OmittedByUser = 0;
       MERG = def_MERG;
       OMIT_s = def_OMIT_s;
       OMIT_2t = def_OMIT_2t;
+      reflections.Clear();
     }
   };
 protected:
@@ -183,6 +193,8 @@ public:
   bool IsHKLFSet()           const {  return HKLF_set;  }
 
   int GetMERG()  const {  return MERG;  }
+  // MERG 4 specifies not to use f''
+  bool UseFdp()  const {  return MERG != 4;  }
   void SetMERG(int v)  {  MERG = v;  MERG_set = true;  }
   bool HasMERG() const {  return MERG_set;  }
   
@@ -193,11 +205,12 @@ public:
   bool HasOMIT()                 const {  return OMIT_set;  }
   int OmittedCount()             const {  return Omits.Count();  }
   const vec3i& GetOmitted(int i) const {  return Omits[i];  }
-  void Omit(const vec3i& r)            {  Omits.AddCCopy(r);  }
-  void ClearOmits()                    {  Omits.Clear();  }
+  void Omit(const vec3i& r)            {  Omits.AddCCopy(r);  OMITs_Modified = true;  }
+  void ClearOmits()                    {  Omits.Clear();  OMITs_Modified = true;  }
   template <class list> void AddOMIT(const list& omit)  {
     if( omit.Count() == 3 )  {  // reflection omit
       Omits.AddNew( omit[0].ToInt(), omit[1].ToInt(), omit[2].ToInt());
+      OMITs_Modified = true;
     }
     else  {  // reflection transformation/filtering
       if( omit.Count() > 0 )
@@ -209,6 +222,26 @@ public:
   }
   olxstr GetOMITStr() const {
     return olxstr(OMIT_s) << ' ' << OMIT_2t;
+  }
+  // processed user omits (hkl) and returns the number of removed reflections
+  int ProcessOmits(TRefList& refs);
+
+  // SHEL reflection resolution filter low/high
+  double GetSHEL_lr()     const {  return SHEL_lr;  }
+  void SetSHEL_lr(double v)     {  SHEL_lr = v;  SHEL_set = true;  }
+  double GetSHEL_hr()     const {  return SHEL_hr;  }
+  void SetSHEL_hr(double v)     {  SHEL_hr = v;  SHEL_set = true;  }
+  bool HasSHEL()          const {  return SHEL_set;  }
+  template <class list> void SetSHEL(const list& shel)  {
+    if( shel.Count() > 0 )  {
+      SHEL_lr = shel[0].ToDouble();
+      if( shel.Count() > 1 )
+        SHEL_hr = shel[1].ToDouble();
+      SHEL_set = true;
+    }
+  }
+  olxstr GetSHELStr() const {
+    return olxstr(SHEL_lr) << ' ' << SHEL_hr;
   }
 
   const TDoubleList& GetBASF() const {  return BASF;  }

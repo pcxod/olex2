@@ -105,9 +105,9 @@ void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F)  {
   sg->GetMatrices(ml, mattAll);
 
   evecd quad(6);
-  const static double EQ_PI = 8*QRT(M_PI);
+  const static double EQ_PI = 8*M_PI*M_PI;
   const static double T_PI = 2*M_PI;
-  const static double TQ_PI = 2.0*QRT(M_PI);
+  const static double TQ_PI = 2.0*M_PI*M_PI;
   static const double ev_angstrom  = 6626.0755 * 2.99792458 / 1.60217733;
   double WaveLength = 0.71073;
 
@@ -162,7 +162,7 @@ void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F)  {
       //    delete [] Ucifs;
       //    throw TFunctionFailedException(__OlxSourceInfo, "bad Uiso");
       //  }
-      //  Ucifs[ind] = fabs(au.GetAtom(ai).GetUiso()*ca.GetUisoVar());
+      //  Ucifs[ind] = olx_abs(au.GetAtom(ai).GetUiso()*ca.GetUisoVar());
       //}
       //else
       Ucifs[ind] = ca.GetUiso();
@@ -629,13 +629,22 @@ void TXApp::SetAtomUiso(TSAtom& sa, double val) {
       if( ni != -1 && sa.Node(ni).CAtom().GetUisoOwner() == NULL )  {
         rm.Vars.FreeAtomParam(sa.CAtom(), var_name_Uiso);
         sa.CAtom().SetUisoOwner(&sa.Node(ni).CAtom());
-        sa.CAtom().SetUisoScale(fabs(val));
-        sa.CAtom().SetUiso(fabs(val)*sa.Node(ni).CAtom().GetUiso());
+        sa.CAtom().SetUisoScale(olx_abs(val));
+        sa.CAtom().SetUiso(olx_abs(val)*sa.Node(ni).CAtom().GetUiso());
       }
     }
     else
       rm.Vars.SetAtomParam(sa.CAtom(), var_name_Uiso, val);
   }
+}
+//..............................................................................
+void TXApp::GetSymm(smatd_list& ml) const {
+  if( !FXFile->HasLastLoader() )
+    throw TFunctionFailedException(__OlxSourceInfo, "a loaded file is expected");
+  const TUnitCell& uc = FXFile->GetUnitCell();
+  ml.SetCapacity( ml.Count() + uc.MatrixCount() );
+  for( int i=0; i < uc.MatrixCount(); i++ )
+    ml.AddCCopy( uc.GetMatrix(i) );
 }
 //..............................................................................
 void TXApp::ToDataItem(TDataItem& item) const  {

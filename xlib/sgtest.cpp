@@ -5,6 +5,7 @@
 #include "sgtest.h"
 #include "edlist.h"
 #include "tptrlist.h"
+#include "refutil.h"
 
 TSGTest::TSGTest( const olxstr& hklFileName, const mat3d& hkl_transform)  {
   Hkl3DArray = NULL;
@@ -14,7 +15,10 @@ TSGTest::TSGTest( const olxstr& hklFileName, const mat3d& hkl_transform)  {
     delete hkl;
     throw TFunctionFailedException(__OlxSourceInfo, exc, "failed to load the HKL file");
   }
-  hkl->SimpleMergeInP1(Refs);
+  // 84.47%, w: 86.32 hkl->MergeInP1<RefMerger::StandardMerger>(Refs);
+  // 84.47%, w: 86.32 hkl->MergeInP1<RefMerger::ShelxMerger>(Refs);
+  // 84.56%, w: 86.29% 
+  hkl->MergeInP1<RefMerger::UnitMerger>(Refs);
   const int ref_cnt = Refs.Count();
   HklRefCount = hkl->RefCount();
   MinI = hkl->GetMinI();  MinIS = hkl->GetMinIS();
@@ -55,7 +59,7 @@ TSGTest::TSGTest( const olxstr& hklFileName, const mat3d& hkl_transform)  {
     TReflection& ref = Refs[i];
     Hkl3D(ref.GetH(),ref.GetK(),ref.GetL()) = &ref;
     TotalI += ref.GetI() < 0 ? 0 : ref.GetI();
-    TotalIS += QRT(ref.GetS());
+    TotalIS += ref.GetS()*ref.GetS();
   }
   AverageI  = TotalI/ref_cnt;
   AverageIS = sqrt(TotalIS/ref_cnt);
@@ -68,7 +72,7 @@ TSGTest::~TSGTest()  {
 void TSGTest::MergeTest(const TPtrList<TSpaceGroup>& sgList,  TTypeList<TSGStats>& res )  {
   typedef AnAssociation4<TSpaceGroup*, TwoDoublesInt, TwoDoublesInt, int> SGAss;
   typedef TPtrList<SGAss>  SGpList;
-  typedef AnAssociation2<mat3d, SGpList> MatrixAss;
+  typedef AnAssociation2<mat3i, SGpList> MatrixAss;
   typedef TTypeList<SGAss>  SGList;
   TTypeList< MatrixAss > UniqMatricesNT;
   SGList SGHitsNT;
@@ -100,19 +104,19 @@ void TSGTest::MergeTest(const TPtrList<TSpaceGroup>& sgList,  TTypeList<TSGStats
       }
       if( uniq )  {
         sgvNT.D() ++;
-        UniqMatricesNT.AddNew<mat3d>(m.r).B().Add(&sgvNT);
+        UniqMatricesNT.AddNew<mat3i>(m.r).B().Add(&sgvNT);
       }
     }
   }
   vec3i hklv;
   const int umnt_cnt = UniqMatricesNT.Count();
   for( int i=0; i < umnt_cnt; i++ )  {
-    const mat3d& m = UniqMatricesNT[i].GetA();
+    const mat3i& m = UniqMatricesNT[i].GetA();
     const int ref_cnt = Refs.Count();
     for( int j=0; j < ref_cnt; j++ )  {
       if( Refs[j].GetI() < AverageI )  continue;
 
-      Refs[j].MulHklR(hklv, m);
+      Refs[j].MulHkl(hklv, m);
 
       if( hklv[0] < minH || hklv[0] > maxH )  continue;
       if( hklv[1] < minK || hklv[1] > maxK )  continue;
@@ -123,13 +127,13 @@ void TSGTest::MergeTest(const TPtrList<TSpaceGroup>& sgList,  TTypeList<TSGStats
         if( ref == NULL )  
           continue;
 
-        //double weight = fabs(ref->Data()[0] - Hkl.Ref(j)->Data()[0]) / (fabs(ref->Data()[0]) +fabs(Hkl.Ref(j)->Data()[0]));
-        double diff = fabs(ref->GetI() - Refs[j].GetI());
+        //double weight = olx_abs(ref->Data()[0] - Hkl.Ref(j)->Data()[0]) / (olx_abs(ref->Data()[0]) +olx_abs(Hkl.Ref(j)->Data()[0]));
+        double diff = olx_abs(ref->GetI() - Refs[j].GetI());
         //double weight = diff * HklScaleFactor;
         // 5% of an average reflection itensity
         for( int k=0; k < UniqMatricesNT[i].GetB().Count(); k++ )  {
           UniqMatricesNT[i].GetB()[k]->C().A() += diff;
-          UniqMatricesNT[i].GetB()[k]->C().B() += (QRT(ref->GetS()) + QRT(Refs[j].GetS()));
+          UniqMatricesNT[i].GetB()[k]->C().B() += (sqr(ref->GetS()) + sqr(Refs[j].GetS()));
           UniqMatricesNT[i].GetB()[k]->C().C() ++;
         }
       }
@@ -242,53 +246,53 @@ void TSGTest::LatticeSATest(TTypeList<TElementStats<TCLattice*> >& latRes, TType
         K = ref.GetK(), 
         L = ref.GetL();
 
-    if( ((H+K)%2) != 0 )  {  LattC.GetC()->A() += ref.GetI();  LattC.GetC()->B() += QRT(ref.GetS());  LattC.GetC()->C()++;  }
-    else                  {  LattC.GetB()->A() += ref.GetI();  LattC.GetB()->B() += QRT(ref.GetS());  LattC.GetB()->C()++;  }
-    if( ((H+L)%2) != 0 )  {  LattB.GetC()->A() += ref.GetI();  LattB.GetC()->B() += QRT(ref.GetS());  LattB.GetC()->C()++;  }
-    else                  {  LattB.GetB()->A() += ref.GetI();  LattB.GetB()->B() += QRT(ref.GetS());  LattB.GetB()->C()++;  }
-    if( ((K+L)%2) != 0 )  {  LattA.GetC()->A() += ref.GetI();  LattA.GetC()->B() += QRT(ref.GetS());  LattA.GetC()->C()++;  }
-    else                  {  LattA.GetB()->A() += ref.GetI();  LattA.GetB()->B() += QRT(ref.GetS());  LattA.GetB()->C()++;  }
-    if( ((H+K+L)%2) != 0 ){  LattI.GetC()->A() += ref.GetI();  LattI.GetC()->B() += QRT(ref.GetS());  LattI.GetC()->C()++;  }
-    else                  {  LattI.GetB()->A() += ref.GetI();  LattI.GetB()->B() += QRT(ref.GetS());  LattI.GetB()->C()++;  }
+    if( ((H+K)%2) != 0 )  {  LattC.GetC()->A() += ref.GetI();  LattC.GetC()->B() += sqr(ref.GetS());  LattC.GetC()->C()++;  }
+    else                  {  LattC.GetB()->A() += ref.GetI();  LattC.GetB()->B() += sqr(ref.GetS());  LattC.GetB()->C()++;  }
+    if( ((H+L)%2) != 0 )  {  LattB.GetC()->A() += ref.GetI();  LattB.GetC()->B() += sqr(ref.GetS());  LattB.GetC()->C()++;  }
+    else                  {  LattB.GetB()->A() += ref.GetI();  LattB.GetB()->B() += sqr(ref.GetS());  LattB.GetB()->C()++;  }
+    if( ((K+L)%2) != 0 )  {  LattA.GetC()->A() += ref.GetI();  LattA.GetC()->B() += sqr(ref.GetS());  LattA.GetC()->C()++;  }
+    else                  {  LattA.GetB()->A() += ref.GetI();  LattA.GetB()->B() += sqr(ref.GetS());  LattA.GetB()->C()++;  }
+    if( ((H+K+L)%2) != 0 ){  LattI.GetC()->A() += ref.GetI();  LattI.GetC()->B() += sqr(ref.GetS());  LattI.GetC()->C()++;  }
+    else                  {  LattI.GetB()->A() += ref.GetI();  LattI.GetB()->B() += sqr(ref.GetS());  LattI.GetB()->C()++;  }
     if( (((H+K)%2) != 0 && ((H+L)%2) !=0 && ((K+L)%2) != 0 )  ||
         ( (H%2)==0 && (K%2) == 0 && (L%2) == 0 )  ||
         ( (H%2)!=0 && (K%2) != 0 && (L%2) != 0 )  )
-                          {  LattF.GetB()->A() += ref.GetI();  LattF.GetB()->B() += QRT(ref.GetS());  LattF.GetB()->C()++;  }
-    else                   {  LattF.GetC()->A() += ref.GetI();  LattF.GetC()->B() += QRT(ref.GetS());  LattF.GetC()->C()++;  }
-    if( ((-H+K+L)%3) != 0 ){  LattR.GetC()->A() += ref.GetI();  LattR.GetC()->B() += QRT(ref.GetS());  LattR.GetC()->C()++;  }
-    else                   {  LattR.GetB()->A() += ref.GetI();  LattR.GetB()->B() += QRT(ref.GetS());  LattR.GetB()->C()++;  }
+                          {  LattF.GetB()->A() += ref.GetI();  LattF.GetB()->B() += sqr(ref.GetS());  LattF.GetB()->C()++;  }
+    else                   {  LattF.GetC()->A() += ref.GetI();  LattF.GetC()->B() += sqr(ref.GetS());  LattF.GetC()->C()++;  }
+    if( ((-H+K+L)%3) != 0 ){  LattR.GetC()->A() += ref.GetI();  LattR.GetC()->B() += sqr(ref.GetS());  LattR.GetC()->C()++;  }
+    else                   {  LattR.GetB()->A() += ref.GetI();  LattR.GetB()->B() += sqr(ref.GetS());  LattR.GetB()->C()++;  }
 
     if( H == 0 )  {
-      if( (K%2) != 0 )    {  GlideB1.GetB()->A() += ref.GetI();  GlideB1.GetB()->B() += QRT(ref.GetS());  GlideB1.GetB()->C()++;  }
-      if( (L%2) != 0 )    {  GlideC1.GetB()->A() += ref.GetI();  GlideC1.GetB()->B() += QRT(ref.GetS());  GlideC1.GetB()->C()++;  }
-      if( ((K+L)%2) != 0 ){  GlideN1.GetB()->A() += ref.GetI();  GlideN1.GetB()->B() += QRT(ref.GetS());  GlideN1.GetB()->C()++;  }
-      if( ((K+L)%4) != 0 ){  GlideD1.GetB()->A() += ref.GetI();  GlideD1.GetB()->B() += QRT(ref.GetS());  GlideD1.GetB()->C()++;  }
+      if( (K%2) != 0 )    {  GlideB1.GetB()->A() += ref.GetI();  GlideB1.GetB()->B() += sqr(ref.GetS());  GlideB1.GetB()->C()++;  }
+      if( (L%2) != 0 )    {  GlideC1.GetB()->A() += ref.GetI();  GlideC1.GetB()->B() += sqr(ref.GetS());  GlideC1.GetB()->C()++;  }
+      if( ((K+L)%2) != 0 ){  GlideN1.GetB()->A() += ref.GetI();  GlideN1.GetB()->B() += sqr(ref.GetS());  GlideN1.GetB()->C()++;  }
+      if( ((K+L)%4) != 0 ){  GlideD1.GetB()->A() += ref.GetI();  GlideD1.GetB()->B() += sqr(ref.GetS());  GlideD1.GetB()->C()++;  }
     }
     if( K == 0 )  {
-      if( (H%2) != 0 )    {  GlideA2.GetB()->A() += ref.GetI();  GlideA2.GetB()->B() += QRT(ref.GetS());  GlideA2.GetB()->C()++;  }
-      if( (L%2) != 0 )    {  GlideC2.GetB()->A() += ref.GetI();  GlideC2.GetB()->B() += QRT(ref.GetS());  GlideC2.GetB()->C()++;  }
-      if( ((H+L)%2) != 0 ){  GlideN2.GetB()->A() += ref.GetI();  GlideN2.GetB()->B() += QRT(ref.GetS());  GlideN2.GetB()->C()++;  }
-      if( ((H+L)%4) != 0 ){  GlideD2.GetB()->A() += ref.GetI();  GlideD2.GetB()->B() += QRT(ref.GetS());  GlideD2.GetB()->C()++;  }
+      if( (H%2) != 0 )    {  GlideA2.GetB()->A() += ref.GetI();  GlideA2.GetB()->B() += sqr(ref.GetS());  GlideA2.GetB()->C()++;  }
+      if( (L%2) != 0 )    {  GlideC2.GetB()->A() += ref.GetI();  GlideC2.GetB()->B() += sqr(ref.GetS());  GlideC2.GetB()->C()++;  }
+      if( ((H+L)%2) != 0 ){  GlideN2.GetB()->A() += ref.GetI();  GlideN2.GetB()->B() += sqr(ref.GetS());  GlideN2.GetB()->C()++;  }
+      if( ((H+L)%4) != 0 ){  GlideD2.GetB()->A() += ref.GetI();  GlideD2.GetB()->B() += sqr(ref.GetS());  GlideD2.GetB()->C()++;  }
     }
     if( L == 0 )  {
-      if( (K%2) != 0 )    {  GlideB3.GetB()->A() += ref.GetI();  GlideB3.GetB()->B() += QRT(ref.GetS());  GlideB3.GetB()->C()++;  }
-      if( (H%2) != 0 )    {  GlideA3.GetB()->A() += ref.GetI();  GlideA3.GetB()->B() += QRT(ref.GetS());  GlideA3.GetB()->C()++;  }
-      if( ((H+K)%2) != 0 ){  GlideN3.GetB()->A() += ref.GetI();  GlideN3.GetB()->B() += QRT(ref.GetS());  GlideN3.GetB()->C()++;  }
-      if( ((H+K)%4) != 0 ){  GlideD3.GetB()->A() += ref.GetI();  GlideD3.GetB()->B() += QRT(ref.GetS());  GlideD3.GetB()->C()++;  }
+      if( (K%2) != 0 )    {  GlideB3.GetB()->A() += ref.GetI();  GlideB3.GetB()->B() += sqr(ref.GetS());  GlideB3.GetB()->C()++;  }
+      if( (H%2) != 0 )    {  GlideA3.GetB()->A() += ref.GetI();  GlideA3.GetB()->B() += sqr(ref.GetS());  GlideA3.GetB()->C()++;  }
+      if( ((H+K)%2) != 0 ){  GlideN3.GetB()->A() += ref.GetI();  GlideN3.GetB()->B() += sqr(ref.GetS());  GlideN3.GetB()->C()++;  }
+      if( ((H+K)%4) != 0 ){  GlideD3.GetB()->A() += ref.GetI();  GlideD3.GetB()->B() += sqr(ref.GetS());  GlideD3.GetB()->C()++;  }
     }
     if( K == 0 && L == 0 )  {
-      if( (H%2) != 0 )    {  Screw21.GetB()->A() += ref.GetI();  Screw21.GetB()->B() += QRT(ref.GetS());  Screw21.GetB()->C()++;  }
-      if( (H%4) != 0 )    {  Screw41.GetB()->A() += ref.GetI();  Screw41.GetB()->B() += QRT(ref.GetS());  Screw41.GetB()->C()++;  }
+      if( (H%2) != 0 )    {  Screw21.GetB()->A() += ref.GetI();  Screw21.GetB()->B() += sqr(ref.GetS());  Screw21.GetB()->C()++;  }
+      if( (H%4) != 0 )    {  Screw41.GetB()->A() += ref.GetI();  Screw41.GetB()->B() += sqr(ref.GetS());  Screw41.GetB()->C()++;  }
     }
     if( H == 0 && L == 0 )  {
-      if( (K%2) != 0 )    {  Screw22.GetB()->A() += ref.GetI();  Screw22.GetB()->B() += QRT(ref.GetS());  Screw22.GetB()->C()++;  }
-      if( (K%4) != 0 )    {  Screw42.GetB()->A() += ref.GetI();  Screw42.GetB()->B() += QRT(ref.GetS());  Screw42.GetB()->C()++;  }
+      if( (K%2) != 0 )    {  Screw22.GetB()->A() += ref.GetI();  Screw22.GetB()->B() += sqr(ref.GetS());  Screw22.GetB()->C()++;  }
+      if( (K%4) != 0 )    {  Screw42.GetB()->A() += ref.GetI();  Screw42.GetB()->B() += sqr(ref.GetS());  Screw42.GetB()->C()++;  }
     }
     if( H == 0 && K == 0 )  {
-      if( (L%2) != 0 )    {  Screw23.GetB()->A() += ref.GetI();  Screw23.GetB()->B() += QRT(ref.GetS());  Screw23.GetB()->C()++;  }
-      if( (L%4) != 0 )    {  Screw43.GetB()->A() += ref.GetI();  Screw43.GetB()->B() += QRT(ref.GetS());  Screw43.GetB()->C()++;  }
-      if( (L%3) != 0 )    {  Screw33.GetB()->A() += ref.GetI();  Screw33.GetB()->B() += QRT(ref.GetS());  Screw33.GetB()->C()++;  }
-      if( (L%6) != 0 )    {  Screw63.GetB()->A() += ref.GetI();  Screw63.GetB()->B() += QRT(ref.GetS());  Screw63.GetB()->C()++;  }
+      if( (L%2) != 0 )    {  Screw23.GetB()->A() += ref.GetI();  Screw23.GetB()->B() += sqr(ref.GetS());  Screw23.GetB()->C()++;  }
+      if( (L%4) != 0 )    {  Screw43.GetB()->A() += ref.GetI();  Screw43.GetB()->B() += sqr(ref.GetS());  Screw43.GetB()->C()++;  }
+      if( (L%3) != 0 )    {  Screw33.GetB()->A() += ref.GetI();  Screw33.GetB()->B() += sqr(ref.GetS());  Screw33.GetB()->C()++;  }
+      if( (L%6) != 0 )    {  Screw63.GetB()->A() += ref.GetI();  Screw63.GetB()->B() += sqr(ref.GetS());  Screw63.GetB()->C()++;  }
     }
   }
   //double averageSAI = 0;
@@ -326,7 +330,7 @@ void TSGTest::LatticeSATest(TTypeList<TElementStats<TCLattice*> >& latRes, TType
     averageSAI /= PresentElements.Count();
     for( int i=0; i < PresentElements.Count(); i++ )  {
       double v = PresentElements[i]->GetB()->GetA()/PresentElements[i]->GetB()->GetC();
-      Ssq += fabs(v-averageSAI);
+      Ssq += olx_abs(v-averageSAI);
     }
     Ssq /= PresentElements.Count();
     Ssq = sqrt( Ssq );                
@@ -406,9 +410,9 @@ void TSGTest::WeakRefTest(const TPtrList<TSpaceGroup>& sgList, TTypeList<TElemen
           m.r[1][0] == 0 && m.r[1][2] == 0 &&
           m.r[2][0] == 0 && m.r[2][1] == 0 )
         continue;
-      int iv = (int)m.t[0];  m.t[0] = fabs( m.t[0] - iv );
-          iv = (int)m.t[1];  m.t[1] = fabs( m.t[1] - iv );
-          iv = (int)m.t[2];  m.t[2] = fabs( m.t[2] - iv );
+      int iv = (int)m.t[0];  m.t[0] = olx_abs( m.t[0] - iv );
+          iv = (int)m.t[1];  m.t[1] = olx_abs( m.t[1] - iv );
+          iv = (int)m.t[2];  m.t[2] = olx_abs( m.t[2] - iv );
       // matrix should have a translation
       if( m.t[0] == 0 &&  m.t[1] == 0 && m.t[2] == 0 )
         continue;
@@ -442,7 +446,7 @@ void TSGTest::WeakRefTest(const TPtrList<TSpaceGroup>& sgList, TTypeList<TElemen
       if(  Refs[j].IsSymmetric(m)  )  {
         double len = Refs[j].PhaseShift(m);
         int ilen = (int)len;
-        len = fabs(len - ilen);
+        len = olx_abs(len - ilen);
         if( len < 0.01 || len > 0.99 )  {
           for( int k=0; k < UniqMatrices[i].GetB().Count(); k++ )  {
             UniqMatrices[i].GetB()[k]->B().A() += Refs[j].GetI();

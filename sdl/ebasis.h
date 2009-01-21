@@ -95,15 +95,15 @@ public:
     vec3d X, Y, Z(normal), CX;
     X[0] = Z[1];
     X[1] = -Z[0];
-    if( fabs(X.Length()) < 1e-10 )  {
+    if( olx_abs(X.Length()) < 1e-10 )  {
       X[0] = 0;
       X[1] = Z[2];
       X[2] = -Z[1];
-      if( fabs(X.Length()) < 1e-10 )  {
+      if( olx_abs(X.Length()) < 1e-10 )  {
         X[0] = Z[2];
         X[1] = 0;
         X[2] = -Z[0];
-        if( fabs(X.Length()) < 1e-10 )
+        if( olx_abs(X.Length()) < 1e-10 )
           throw TFunctionFailedException(__OlxSourceInfo, "cannot set orientation");
       }
     }

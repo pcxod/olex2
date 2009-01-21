@@ -42,7 +42,7 @@ void TSPlane::Init(const TTypeList< AnAssociation2<TSAtom*, double> >& atoms)  {
   FDistance = FNormal.DotProd(FCenter)/FNormal.Length();
   FNormal.Normalise();
   Crds.Clear();
-  Crds.AddList(atoms);
+  Crds.AddListC(atoms);
 }
 //..............................................................................
 double TSPlane::CalcPlane(const TTypeList< AnAssociation2<vec3d, double> >& Points, 

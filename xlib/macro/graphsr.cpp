@@ -100,7 +100,7 @@ void XLibMacros::macGraphSR(TStrObjList &Cmds, const TParamList &Options, TMacro
     ref.ds = hkl.Length()*0.5;
 
     if( list == 3 )  {
-      ref.Fo = fabs(row[mfInd].ToDouble());
+      ref.Fo = olx_abs(row[mfInd].ToDouble());
       ref.Fc = TEComplex<double>(row[aInd].ToDouble(), row[bInd].ToDouble()).mod();
     }
     else if( list == 4 )  {

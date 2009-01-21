@@ -190,23 +190,9 @@ void THklFile::InitHkl3D()  {
   Hkl3D = &hkl3D;
 }
 //..............................................................................
-void THklFile::AllRefs(const TReflection& R, const TAsymmUnit& AU, TRefPList& Res)  {
-  TSpaceGroup* sg = TSymmLib::GetInstance()->FindSG(AU);
-  if( sg == NULL )
-    throw TFunctionFailedException(__OlxSourceInfo, "Undefined space group");
-  smatd_list ml;
-
-  sg->GetMatrices(ml, mattAll);
-
-  if( !sg->IsCentrosymmetric() )  {
-    smatd& m = ml.AddNew();
-    m.r.I();
-    m.r *= -1;
-  }
-
-  vec3d hklv;
-  vec3d_list ri;
-
+void THklFile::AllRefs(const TReflection& R, const smatd_list& ml, TRefPList& Res)  {
+  vec3i hklv;
+  vec3i_list ri;
   for( int i=0; i < ml.Count(); i++ )  {
     R.MulHkl(hklv, ml[i]);
     // check if the range of the reflection is valid
@@ -220,8 +206,9 @@ void THklFile::AllRefs(const TReflection& R, const TAsymmUnit& AU, TRefPList& Re
   InitHkl3D();
 
   for( int j=0; j < ri.Count(); j++ )  {
-    TRefPList* r = Hkl3D->Value((int)ri[j][0], (int)ri[j][1], (int)ri[j][2]);
-    if( r != NULL )  Res.AddList(*r);
+    TRefPList* r = Hkl3D->Value(ri[j]);
+    if( r != NULL )  
+      Res.AddList(*r);
   }
 }
 //..............................................................................
@@ -303,19 +290,6 @@ bool THklFile::SaveToFile(const olxstr& FN, const TRefList& refs)  {
   }
   delete [] ref_bf;
   return true;
-}
-//..............................................................................
-MergeStats THklFile::Merge(const TSpaceGroup& sg, bool MergeInverse, TRefList& output) const {
-  smatd_list ml;
-  sg.GetMatrices(ml, mattAll^mattIdentity);
-  if( MergeInverse && !sg.IsCentrosymmetric() )  {  // the -I is added to the list for CS groups
-    const int ml_cnt = ml.Count();
-    for( int i=0; i < ml_cnt; i++ )
-      ml.AddCCopy(ml[i]) *= -1;
-    ml.AddNew().I() *= -1;
-  }
-  MergeStats rv = RefMerger::Merge<RefMerger::ShelxMerger>(ml, Refs, output);
-  return rv;
 }
 //..............................................................................
 

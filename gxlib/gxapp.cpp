@@ -297,15 +297,11 @@ void TGXApp::Clear()  {
 }
 //..............................................................................
 void TGXApp::CreateXRefs()  {
-  if( XReflections.Count() != 0 )  return;
+  if( !XReflections.IsEmpty() )  return;
 
   TRefList refs;
-  TSpaceGroup* sg = NULL;
-  try  { sg = &XFile().GetLastLoaderSG();  }
-  catch(...)  {
-    throw TFunctionFailedException(__OlxSourceInfo, "could not locate sapce group");
-  }
-  MergeStats ms = FHklFile->Merge( *sg, false, refs);
+  TSpaceGroup& sg = XFile().GetLastLoaderSG();
+  MergeStats ms = FHklFile->Merge<RefMerger::StandardMerger>( sg, false, refs);
 
   vec3d Center;
   for( int i=0; i < refs.Count(); i++ )  {
@@ -315,7 +311,7 @@ void TGXApp::CreateXRefs()  {
     XReflections.Add( *xr );
     Center += xr->Center();
   }
-  if( refs.Count() )  Center /= refs.Count();
+  if( !refs.IsEmpty() )  Center /= refs.Count();
   Center += FGlRender->GetBasis().GetCenter();
   for( int i=0; i < XReflections.Count(); i++ )
     XReflections[i].Center() -= Center;
@@ -774,7 +770,7 @@ olxstr TGXApp::GetSelectionInfo()  {
 
         evecd::ArrayMin(&distances[0], minInd, 4);
         // check if the adjastent bonds
-        if( fabs(distances[minInd]) < 0.01 )  return rv;
+        if( olx_abs(distances[minInd]) < 0.01 )  return rv;
         vec3d V2, V3, V4, V5;
         switch( minInd )  {
           case 0:

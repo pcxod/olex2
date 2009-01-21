@@ -7,9 +7,7 @@
 #include "log.h"
 #include "evaln.h"
 #include "bapp.h"
-#ifndef M_PI
-  #define M_PI 3.14159265
-#endif
+#include "emath.h"
 
 //---------------------------------------------------------------------------
 TSOperation::TSOperation( TSOperation *P, TStrPObjList<olxstr, TSOperation*> *Vars,
@@ -203,7 +201,7 @@ void TSOperation::MDCalculate()  {
       case fNone:
         break;
       case fAbs:
-        V1 = fabs(V1);
+        V1 = olx_abs(V1);
         break;
       case fDefined:
         V1 = (*Evaluator)(V1, 0);

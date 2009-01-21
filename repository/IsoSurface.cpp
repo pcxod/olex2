@@ -464,11 +464,11 @@ void CIsoSurface<T>::AddSurfacePoint(unsigned int nX, unsigned int nY, unsigned 
   }
   T val1 = Points.Data[v1x][v1y][v1z];
   T val2 = Points.Data[v2x][v2y][v2z];
-  if( fabs((float)(m_tIsoLevel-val1)) < 0.001 )  
+  if( olx_abs((float)(m_tIsoLevel-val1)) < 0.001 )  
     IsoPoints.Add(nX, nY, nZ, nEdgeNo, (float)v1x, (float)v1y, (float)v1z);
-  else if( fabs((float)(m_tIsoLevel-val2)) < 0.001 )  
+  else if( olx_abs((float)(m_tIsoLevel-val2)) < 0.001 )  
     IsoPoints.Add(nX, nY, nZ, nEdgeNo, (float)v2x, (float)v2y, (float)v2z);
-  else if( fabs((float)(val1-val2)) < 0.001 )         
+  else if( olx_abs((float)(val1-val2)) < 0.001 )         
     IsoPoints.Add(nX, nY, nZ, nEdgeNo, (float)v1x, (float)v1y, (float)v1z);
   else  {
     T mu =  (m_tIsoLevel-val1)/(val2-val1);

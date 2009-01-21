@@ -3270,7 +3270,7 @@ void TMainForm::macTria(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     
 
     TSimpleRestraint* dang = &FXApp->XFile().GetRM().rDANG.AddNew();
-    dang->SetValue( sqrt(QRT(dfixLenA) + QRT(dfixLenB) - 2*dfixLenA*dfixLenB*cos(angle*M_PI/180)) );
+    dang->SetValue( sqrt(sqr(dfixLenA) + sqr(dfixLenB) - 2*dfixLenA*dfixLenB*cos(angle*M_PI/180)) );
     dang->SetEsd(esd*2);
     dang->AddAtom(satoms[i]->CAtom(), &satoms[i]->GetMatrix(0) );
     //dang->AddAtom(Atoms[i+1]->Atom().CAtom(), &Atoms[i+1]->Atom().GetMatrix(0) );
@@ -4040,7 +4040,7 @@ void TMainForm::macMergeHkl(TStrObjList &Cmds, const TParamList &Options, TMacro
   TSpaceGroup* sg = NULL;
   try  { sg = &FXApp->XFile().GetLastLoaderSG();  }
   catch(...)  {
-    E.ProcessingError(__OlxSrcInfo, "could not locate sapce group");
+    E.ProcessingError(__OlxSrcInfo, "could not locate space group");
     return;
   }
   THklFile Hkl;
@@ -4050,7 +4050,7 @@ void TMainForm::macMergeHkl(TStrObjList &Cmds, const TParamList &Options, TMacro
     av += Hkl[i].GetI() < 0 ? 0 : Hkl[i].GetI();
   av /= Hkl.RefCount();
   TRefList refs;
-  MergeStats ms = Hkl.Merge( *sg, !Options.Contains("i"), refs);
+  MergeStats ms = Hkl.Merge<RefMerger::StandardMerger>( *sg, !Options.Contains("i"), refs);
   TTTable<TStrList> tab(6, 2);
   tab[0][0] << "Total reflections"; 
   tab[0][1] << ms.TotalReflections;
@@ -4071,12 +4071,14 @@ void TMainForm::macMergeHkl(TStrObjList &Cmds, const TParamList &Options, TMacro
 }
 //..............................................................................
 void TMainForm::macEditHkl(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-
   olxstr HklFN( FXApp->LocateHklFile() );
   if( !TEFile::FileExists(HklFN) )  {
     E.ProcessingError(__OlxSrcInfo, "could not locate the HKL file" );
     return;
   }
+  smatd_list matrices;
+  FXApp->GetSymm(matrices);
+  TSpaceGroup& sg = FXApp->XFile().GetLastLoaderSG();
   THklFile Hkl;
   Hkl.LoadFromFile(HklFN);
   TRefPList Hkls;
@@ -4096,7 +4098,8 @@ void TMainForm::macEditHkl(TStrObjList &Cmds, const TParamList &Options, TMacroE
         Tmp << " Resolution=" << Lst.DRef(i).Res;
         SL.Add(Tmp);
         Hkls.Clear();
-        Hkl.AllRefs(Lst.DRef(i).H, Lst.DRef(i).K, Lst.DRef(i).L, FXApp->XFile().GetAsymmUnit(), Hkls);
+        TReflection ref(Lst.DRef(i).H, Lst.DRef(i).K, Lst.DRef(i).L);
+        Hkl.AllRefs(ref, matrices, Hkls);
 
         for( int j=0; j < Hkls.Count(); j++ )
           SL.Add( Hkls[j]->ToNString());
@@ -4108,7 +4111,7 @@ void TMainForm::macEditHkl(TStrObjList &Cmds, const TParamList &Options, TMacroE
   else  {
     TReflection Refl(Cmds[0].ToInt(), Cmds[1].ToInt(), Cmds[2].ToInt());
     Hkls.Clear();
-    Hkl.AllRefs(Refl, FXApp->XFile().GetAsymmUnit(), Hkls);
+    Hkl.AllRefs(Refl, matrices, Hkls);
     for( int i=0; i < Hkls.Count(); i++ )
       SL.Add( Hkls[i]->ToNString());
   }
@@ -4453,14 +4456,14 @@ void TMainForm::macDirection(TStrObjList &Cmds, const TParamList &Options, TMacr
              olxstr::FormatFloat(3, Z[1]) << "*K, " <<
              olxstr::FormatFloat(3, Z[2]) << "*L)";
       TBasicApp::GetLog() << (Tmp << '\n');
-      double H = fabs(Z[0]);  H *= H;
-      double K = fabs(Z[1]);  K *= K;
-      double L = fabs(Z[2]);  L *= L;
+      double H = olx_abs(Z[0]);  H *= H;
+      double K = olx_abs(Z[1]);  K *= K;
+      double L = olx_abs(Z[2]);  L *= L;
       if( H > 0.01 )  H = 1./H;
       if( K > 0.01 )  K = 1./K;
       if( L > 0.01 )  L = 1./L;
       int iH = Round(H), iK = Round(K), iL = Round(L);
-      double diff = fabs(H + K + L - iH - iK - iL)/3;
+      double diff = olx_abs(H + K + L - iH - iK - iL)/3;
       if( diff < 0.15 )  {
         Tmp = "View along (";
         TBasicApp::GetLog() << ( Tmp << iH << ", " << iK << ", " << iL << ')' << '\n');
@@ -4485,10 +4488,10 @@ void TMainForm::macDirection(TStrObjList &Cmds, const TParamList &Options, TMacr
       for( int i=0; i < Points.Count(); i++ )  {
         for( int j = i+1; j < Points.Count(); j++ )  {
           Z = (Points[j]-Points[i]).Normalise();
-          if( fabs( fabs(Z[2])-1 ) < 0.02 )  {  // 98 % coincidence
+          if( olx_abs( olx_abs(Z[2])-1 ) < 0.02 )  {  // 98 % coincidence
             Tmp = "View along ";
             Tmp << Dir[i] <<  '-' <<  Dir[j] << ' ' <<
-                   '(' << (int)(100.00-fabs(fabs(Z[2])-1)*100) <<  '%' << ')';
+                   '(' << (int)(100.00-olx_abs(olx_abs(Z[2])-1)*100) <<  '%' << ')';
             TBasicApp::GetLog() << (Tmp << '\n');
           }
         }
@@ -6072,12 +6075,12 @@ void TMainForm::macNextSolution(TStrObjList &Cmds, const TParamList &Options, TM
 //..............................................................................
 //..............................................................................
 double MatchAtomPairsQT(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atoms,
-                        smatd& res, bool InversionPossible, bool& InversionUsed)  {
+                        smatdd& res, bool InversionPossible, bool& InversionUsed)  {
   if( atoms.Count() < 4 )  return -1;
   double rms = TNetwork::FindAlignmentMatrix(atoms, res, false), rms1;
   InversionUsed = false;
   if( InversionPossible )  {
-    smatd lr;
+    smatdd lr;
     rms1 = TNetwork::FindAlignmentMatrix(atoms, lr, true);
     if( (rms1 < rms && rms1 >= 0) || (rms < 0 && rms1 >= 0) )  {
       res = lr;
@@ -6186,7 +6189,7 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options, TMacroErr
           for(int i=0; i < res.Count(); i++ )
             netB.Node( res[i].GetB()).SetLabel( netA.Node( res[i].GetA()).GetLabel() + suffix );
         }
-        smatd S;
+        smatdd S;
         double rms = MatchAtomPairsQT( satomp, S, false, Inverted);
         TBasicApp::GetLog() << ("Transformation matrix:\n");
         for( int i=0; i < 3; i++ )
@@ -6248,7 +6251,7 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options, TMacroErr
           atomsToTransform.Add( &atoms[i]->Atom() );
         }
       }
-      smatd S;
+      smatdd S;
       double rms = MatchAtomPairsQT( satomp, S, false, Inverted);
       TNetwork::DoAlignAtoms(satomp, atomsToTransform, S, Inverted);
       FXApp->UpdateBonds();
@@ -6263,7 +6266,7 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     TTypeList< AnAssociation2<int, int> > res;
     TTypeList< AnAssociation2<TSAtom*,TSAtom*> > satomp;
     TSAtomPList atomsToTransform;
-    smatd S;
+    smatdd S;
     for( int i=0; i < nets.Count(); i++ )  {
       if( i > 0 )  TryInvert = false;
       for( int j=i+1; j < nets.Count(); j++ )  {
@@ -6516,7 +6519,7 @@ void TMainForm::macHklStat(TStrObjList &Cmds, const TParamList &Options, TMacroE
   }
   if( Cmds.IsEmpty() )  {
     RefinementModel::HklStat hs = FXApp->XFile().GetRM().GetMergeStat();
-    TTTable<TStrList> tab(14, 2);
+    TTTable<TStrList> tab(15, 2);
     tab[0][0] << "Total reflections";             tab[0][1] << hs.TotalReflections;
     tab[1][0] << "Unique reflections";            tab[1][1] << hs.UniqueReflections;
     tab[2][0] << "Centric reflections";           tab[2][1] << hs.CentricReflections;
@@ -6525,12 +6528,13 @@ void TMainForm::macHklStat(TStrObjList &Cmds, const TParamList &Options, TMacroE
     tab[5][0] << "Systematic absences removed";   tab[5][1] << hs.SystematicAbsentcesRemoved;
     tab[6][0] << "Min resolution";                tab[6][1] << hs.MinD;
     tab[7][0] << "Max resolution";                tab[7][1] << hs.MaxD;
-    tab[8][0] << "Limiting resolution";           tab[8][1] << hs.LimD;
-    tab[9][0] << "Filtered off reflections";      tab[9][1] << hs.FilteredOff;
-    tab[10][0] << "Reflections omitted by user";  tab[10][1] << hs.OmittedReflections + hs.OmittedByUser;
-    tab[11][0] << "Intensity transformed for";    tab[11][1] << hs.IntensityTransformed << " reflections";
-    tab[12][0] << "Rint";                         tab[12][1] << hs.Rint;
-    tab[13][0] << "Rsigma";                       tab[13][1] << hs.Rsigma;
+    tab[8][0] << "Limiting resolution min";       tab[8][1] << hs.LimDmin;
+    tab[9][0] << "Limiting resolution max";       tab[9][1] << hs.LimDmax;
+    tab[10][0] << "Filtered off reflections";     tab[10][1] << hs.FilteredOff;
+    tab[11][0] << "Reflections omitted by user";  tab[11][1] << hs.OmittedReflections + hs.OmittedByUser;
+    tab[12][0] << "Intensity transformed for";    tab[12][1] << hs.IntensityTransformed << " reflections";
+    tab[13][0] << "Rint";                         tab[13][1] << hs.Rint;
+    tab[14][0] << "Rsigma";                       tab[14][1] << hs.Rsigma;
     TStrList Output;
     tab.CreateTXTList(Output, olxstr("HKL statistics "), true, false, "  ");
     TBasicApp::GetLog() << Output << '\n';
@@ -6632,7 +6636,7 @@ void TMainForm::macHklStat(TStrObjList &Cmds, const TParamList &Options, TMacroE
     if( !fulfilled )  continue;
     count ++;
     SI += Hkl[i].GetI();
-    SE += QRT(Hkl[i].GetS());
+    SE += sqr(Hkl[i].GetS());
     if( list )  {
       TBasicApp::GetLog() << Hkl[i].ToString()<< '\n';
     }
@@ -6832,7 +6836,7 @@ void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     THklFile hf;
     hf.LoadFromFile(hklfn);
     TRefList refsP, refsN;
-    hf.Merge( FXApp->XFile().GetLastLoaderSG(), true, refsP);
+    hf.Merge<RefMerger::StandardMerger>( FXApp->XFile().GetLastLoaderSG(), true, refsP);
     for( int i=0; i < refsP.Count(); i++ )  {
         refsN.AddNew(-refsP[i].GetH(),
           -refsP[i].GetK(),
@@ -7154,7 +7158,7 @@ void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   for( int i=0; i < Hkl.RefCount(); i++ )  {
     TReflection* ref = Hkl.Ref(i);
 
-    if( fabs(ref->Data()[0])/ref->Data()[1] > 3 )
+    if( olx_abs(ref->Data()[0])/ref->Data()[1] > 3 )
       continue;
 
     if( ref->Data()[0] < 0 )
@@ -7202,8 +7206,8 @@ void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     meanFs /= allRefs.Count();
 
   for( int i=0; i < allRefs.Count(); i++ )
-    integ += fabs( (allRefs[i]->GetA()/olx_max(allRefs[i]->GetB(), allRefs[i]->GetD()))/meanFs -1 );
-//    integ += fabs(allRefs[i]->GetA()/meanFs -1 );
+    integ += olx_abs( (allRefs[i]->GetA()/olx_max(allRefs[i]->GetB(), allRefs[i]->GetD()))/meanFs -1 );
+//    integ += olx_abs(allRefs[i]->GetA()/meanFs -1 );
 
   if( allRefs.Count() != 0 )
     integ /= allRefs.Count();
@@ -7463,15 +7467,15 @@ void TMainForm::macIT(TStrObjList &Cmds, const TParamList &Options, TMacroError 
     c = a.crd();
     c -= cent;
     double w = a.GetAtomInfo().GetMr()*a.CAtom().GetOccu();
-    I[0][0] += w*( QRT(c[1]) + QRT(c[2]));
+    I[0][0] += w*( sqr(c[1]) + sqr(c[2]));
     I[0][1] -= w*c[0]*c[1];
     I[0][2] -= w*c[0]*c[2];
     I[1][0] = I[0][1];
-    I[1][1] += w*( QRT(c[0]) + QRT(c[2]));
+    I[1][1] += w*( sqr(c[0]) + sqr(c[2]));
     I[1][2] -= w*c[1]*c[2];
     I[2][0] = I[0][2];
     I[2][1] = I[1][2];
-    I[2][2] += w*( QRT(c[0]) + QRT(c[1]));
+    I[2][2] += w*( sqr(c[0]) + sqr(c[1]));
   }
   TBasicApp::GetLog() << ("Inertion tensor:\n");
   for( int i=0; i < 3; i++ )
@@ -7966,7 +7970,7 @@ void TMainForm::macCalcPatt(TStrObjList &Cmds, const TParamList &Options, TMacro
   TSpaceGroup* sg = NULL;
   try  { sg = &FXApp->XFile().GetLastLoaderSG();  }
   catch(...)  {
-    E.ProcessingError(__OlxSrcInfo, "could not locate sapce group");
+    E.ProcessingError(__OlxSrcInfo, "could not locate space group");
     return;
   }
   smatd_list ml;
@@ -7983,7 +7987,7 @@ void TMainForm::macCalcPatt(TStrObjList &Cmds, const TParamList &Options, TMacro
     av += Hkl[i].GetI() < 0 ? 0 : Hkl[i].GetI();
   av /= Hkl.RefCount();
 
-  MergeStats ms = Hkl.Merge( *sg, true, refs);
+  MergeStats ms = Hkl.Merge<RefMerger::StandardMerger>( *sg, true, refs);
 
   double vol = FXApp->XFile().GetLattice().GetUnitCell().CalcVolume();
   int minH = 100,  minK = 100,  minL = 100;
@@ -7995,7 +7999,7 @@ void TMainForm::macCalcPatt(TStrObjList &Cmds, const TParamList &Options, TMacro
   for( int i=0; i < refs.Count(); i++ )  {
     const TReflection& ref = refs[i];
     for( int j=0; j < ml.Count(); j++, index++ )  {
-      ref.MulHklT(hkl, ml[j]);
+      ref.MulHkl(hkl, ml[j]);
       if( hkl[0] < minH )  minH = (int)hkl[0];
       if( hkl[1] < minK )  minK = (int)hkl[1];
       if( hkl[2] < minL )  minL = (int)hkl[2];

@@ -87,9 +87,9 @@ public:
   static void SplitIntoElements(smatd_list& matrices, TPtrList<TSymmElement>& reference, TPtrList<TSymmElement>& res);
   
   void AddMatrix(const smatd& m);
-  void AddMatrix(double xx, double xy, double xz, 
-                 double yx, double yy, double yz, 
-                 double zx, double zy, double zz,
+  void AddMatrix(int xx, int xy, int xz, 
+                 int yx, int yy, int yz, 
+                 int zx, int zy, int zz,
                  double tx, double ty, double tz);
   inline int MatrixCount()             const {  return Matrices.Count();  };
   inline smatd& GetMatrix(int i)       const {  return Matrices[i];  }

@@ -39,7 +39,8 @@ int main(int argc, char* argv[])  {
     TEFile logf(bd + "test.out", "w+b");
     TOnProgress pg;
     Listener listener;
-    TFileTree ft("E:/My Documents/Data");
+    //TFileTree ft("E:/My Documents/Data");
+    TFileTree ft("E:/Data");
     ft.OnExpand->Add(&listener);
     ft.Root.Expand(pg);
     ft.OnExpand->Remove(&listener);

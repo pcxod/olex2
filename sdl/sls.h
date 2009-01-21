@@ -39,7 +39,7 @@ public:
 
     double sdiff = 0, sval = 0;
     for(int i=0; i < data.Elements(); i++ ) {
-      double v = fabs(data[i][1] - func( data[i][0] ) );  // |Y - Ycalc|, f depends on colutions
+      double v = olx_abs(data[i][1] - func( data[i][0] ) );  // |Y - Ycalc|, f depends on colutions
       sdiff += v*v;
       sval += (data[i][1] * data[i][1]);  // Y^2
     }
@@ -69,7 +69,7 @@ public:
 
     double sdiff = 0, sval = 0;
     for(int i=0; i < data.Vectors(); i++ )  {
-      double v = fabs(data[i][2] - func( data[i][0], data[i][1] ) );  // |Y - Ycalc|, f depends on colutions
+      double v = olx_abs(data[i][2] - func( data[i][0], data[i][1] ) );  // |Y - Ycalc|, f depends on colutions
       sdiff = v*v;
       sval += (data[i][2] * data[i][2]);  // Y^2
     }
@@ -100,7 +100,7 @@ public:
 
     double sdiff = 0, sval = 0;
     for(int i=0; i < data.Vectors(); i++ )  {
-      double v = fabs(data[i][3] - func( data[i][0], data[i][1], data[i][2] ) );  // |Y - Ycalc|, f depends on colutions
+      double v = olx_abs(data[i][3] - func( data[i][0], data[i][1], data[i][2] ) );  // |Y - Ycalc|, f depends on colutions
       sdiff += v*v;
       sval += (data[i][3] * data[i][3]);  // Y^2
     }
@@ -131,7 +131,7 @@ public:
 
     double sdiff = 0, sval = 0;
     for(int i=0; i < data.Vectors(); i++ )  {
-      double v = fabs(data[i][data.Elements()-1] - func( data[i] ) );  // |Y - Ycalc|, f depends on colutions
+      double v = olx_abs(data[i][data.Elements()-1] - func( data[i] ) );  // |Y - Ycalc|, f depends on colutions
       sdiff += v*v;
       sval += (data[i][data.Elements()-1] * data[i][data.Elements()-1]);  // Y^2
     }

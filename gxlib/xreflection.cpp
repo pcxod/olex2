@@ -35,7 +35,7 @@ TXReflection::TXReflection(const olxstr& collectionName, THklFile& HklFile,
   v *= (2.0/scale);                    // extra scaling
   FCenter = v;
   Params().Resize(1);
-  Params()[0] = (R.GetI() - HklFile.GetMinI()) / (HklFile.GetMaxI() + fabs(HklFile.GetMaxI()));
+  Params()[0] = (R.GetI() - HklFile.GetMinI()) / (HklFile.GetMaxI() + olx_abs(HklFile.GetMaxI()));
   if( Params()[0] > 0 )  Params()[0] = sqrt( Params()[0] ); 
 }
 //..............................................................................

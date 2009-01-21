@@ -346,6 +346,8 @@ public:
         rm.SetBASF( Toks.SubListFrom(1) );
       else if( Toks[0].Comparei("OMIT") == 0 )
         rm.AddOMIT( Toks.SubListFrom(1) );
+      else if( Toks[0].Comparei("SHEL") == 0 )
+        rm.SetSHEL( Toks.SubListFrom(1) );
       else if( Toks[0].Comparei("TWIN") == 0 )
         rm.SetTWIN( Toks.SubListFrom(1) );
       else if( Toks[0].Comparei("TEMP") == 0 && Toks.Count() == 2 )

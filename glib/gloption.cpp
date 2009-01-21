@@ -8,10 +8,11 @@
 
 #include "gloption.h"
 #include "estrlist.h"
+#include "emath.h"
 
 //..............................................................................
 TIString TGlOption::ToString() const  {
-  if( fabs(data[0]) >= 1 || fabs(data[1]) >= 1 || fabs(data[2]) >= 1 || fabs(data[3]) >= 1 )  {
+  if( olx_abs(data[0]) >= 1 || olx_abs(data[1]) >= 1 || olx_abs(data[2]) >= 1 || olx_abs(data[3]) >= 1 )  {
     olxstr Tmp(olxstr::FormatFloat(3, data[0]), 24);
     Tmp << ',' << olxstr::FormatFloat(3, data[1]) <<
            ',' << olxstr::FormatFloat(3, data[2]) <<

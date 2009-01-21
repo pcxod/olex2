@@ -71,7 +71,7 @@ public:
 
   ~TLibScatterer()  {  delete [] Data;  }
 
-  inline double Calc(double Theta, double Lambda)  const {  return Calc(-QRT(sin(Theta)/Lambda));  }
+  inline double Calc(double Theta, double Lambda)  const {  return Calc(-sqr(sin(Theta)/Lambda));  }
   inline double Calc(double val)    const {  return (this->*evalFunc)(-val*val);  }
   inline double Calc_sq(double sqv) const {  return (this->*evalFunc)(-sqv);  }
 

@@ -652,7 +652,7 @@ void XLibMacros::funFATA(const TStrObjList &Cmds, TMacroError &E)  {
   for( int i=0; i < atoms.Count(); i++ )  {
     if( atoms[i].GetC() != 0 )  {
       double ed = atoms[i].GetB() / atoms[i].GetC();  
-      if( fabs(ed) < minEd )  continue;
+      if( olx_abs(ed) < minEd )  continue;
       TBasicApp::GetLog() << (olxstr("Atom type under consideration ") << atoms[i].GetA()->GetLabel() << 
           (ed < 0 ? olxstr(ed) : olxstr("+") << ed) << '\n');
     }
