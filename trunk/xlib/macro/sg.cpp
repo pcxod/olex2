@@ -295,7 +295,7 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
     if( SATestResults[i].GetWeakCount() == 0  ) continue;
     double v = SATestResults[i].GetSummWeakI()/SATestResults[i].GetWeakCount();
     if( v < 0 )  v = 0;
-    double mult = pow(10, olx_min(fabs(v)/threshold, 100.0) );
+    double mult = pow(10, olx_min(olx_abs(v)/threshold, 100.0) );
     while( v < 1 )  v ++;
     v *= mult;
 

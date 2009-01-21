@@ -77,7 +77,7 @@ static const vec3d ZAxis(0,0,1);
 int TAutoDBNode::SortMetricsFunc(const TAttachedNode& a, const TAttachedNode& b )  {
   double diff = TAutoDBNode::SortCenter.DistanceTo(b.GetCenter()) -
                 TAutoDBNode::SortCenter.DistanceTo(a.GetCenter());
-/*  if( fabs(diff) < 0.001 )  {
+/*  if( olx_abs(diff) < 0.001 )  {
     vec3d ap(a.crd()), bp(b.crd());
     ap -= TAutoDBNode::SortCenter;
     bp -= TAutoDBNode::SortCenter;
@@ -254,15 +254,15 @@ double TAutoDBNode::SearchCompare(const TAutoDBNode& dbn, double* fom) const  {
   for(int i=0; i < mc; i++ ) {
     double diff = Params[i] - dbn.Params[i];
     if( i < AttachedNodes.Count() )  {
-      if( fabs(diff) > LengthVar )
+      if( olx_abs(diff) > LengthVar )
         return diff;
     }
     else  {  // 5.7 degrees give about 0.1 deviation in distance for 1A bonds (b^2+a^2-2abcos)^1/2
-      if( fabs(diff) > AngleVar )
+      if( olx_abs(diff) > AngleVar )
         return diff/180;
       diff /= 180;
     }
-    _fom += QRT(diff);
+    _fom += diff*diff;
   }
   if( fom != NULL )
     *fom += _fom/Params.Count();
@@ -326,7 +326,7 @@ bool TAutoDBNode::IsSimilar(const TAutoDBNode& dbn) const  {
       }
       // check distance and angles
       for( int i=0; i < Params.Count(); i++ )  {
-        diff = fabs(Params[i] - dbn.Params[i]);
+        diff = olx_abs(Params[i] - dbn.Params[i]);
         if( i < AttachedNodes.Count() )  {
           if( diff > 0.005) return false;
         }
@@ -349,7 +349,7 @@ bool TAutoDBNode::IsMetricSimilar(const TAutoDBNode& dbn, double& fom) const  {
   int mc = (AttachedNodes.Count() > 4 ) ? AttachedNodes.Count() : Params.Count();
   for(int i=0; i < mc; i++ ) {
 //  for(int i=0; i < Params.Count(); i++ ) {
-    double diff = fabs(Params[i] - dbn.Params[i]);
+    double diff = olx_abs(Params[i] - dbn.Params[i]);
     if( i < AttachedNodes.Count() )  {
       if( diff > LengthVar )  return false;
     }
@@ -357,7 +357,7 @@ bool TAutoDBNode::IsMetricSimilar(const TAutoDBNode& dbn, double& fom) const  {
       if( diff > AngleVar ) return false;
       diff = diff/180.0;
     }
-    _fom += QRT(diff);
+    _fom += diff*diff;
   }
   fom += _fom/Params.Count();
   return true;
@@ -590,7 +590,7 @@ void TAutoDB::ProcessFolder(const olxstr& folder)  {
           continue;
         }
         olxstr gof = cif.GetSParam("_refine_ls_goodness_of_fit_ref");
-        if( gof.Length() && fabs(1-gof.ToDouble()) > 0.1 )  {
+        if( gof.Length() && olx_abs(1-gof.ToDouble()) > 0.1 )  {
           TBasicApp::GetLog().Info( olxstr("Skipped GOF=") << gof );
           continue;
         }
@@ -1042,7 +1042,7 @@ void TAutoDB::TAnalyseNetNodeTask::Run( long index )  {
       if( !found )
         gc.list1->AddNew(segnd.BAI(), &segnd, fom);
     }
-//    if( var == 0 || fabs(var) <= LengthVar*4 )  {
+//    if( var == 0 || olx_abs(var) <= LengthVar*4 )  {
 //      position += inc;
 //    }
 //    else  {  // no match
@@ -1508,9 +1508,9 @@ void TAtomTypePermutator::Permutate()  {
       TBasicAtomInfo* type = NULL;
       double minDelta = 1;
       for( int j=0; j < Atoms[i].Tries.Count(); j++ )  {
-        if( QRT(Atoms[i].Tries[j].GetB()-0.025) < minDelta )  {
+        if( sqr(Atoms[i].Tries[j].GetB()-0.025) < minDelta )  {
           type = Atoms[i].Tries[j].GetA();
-          minDelta = QRT(Atoms[i].Tries[j].GetB()-0.025);
+          minDelta = sqr(Atoms[i].Tries[j].GetB()-0.025);
         }
         TBasicApp::GetLog().Info( olxstr(Atoms[i].Atom->GetLabel()) << " permutation to " <<
           Atoms[i].Tries[j].GetA()->GetSymbol() << " leads to Uiso = " << Atoms[i].Tries[j].GetB() );

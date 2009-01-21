@@ -365,14 +365,14 @@ public:
   // static methods
   // searches for maximum element in matrix
   static MatType  MatMax(TMatrix& A,   int &i, int &j )  {
-    MatType c = (MatType)fabs(  MSVCC(A[0][0]) );
+    MatType c = (MatType)olx_abs(  MSVCC(A[0][0]) );
     for( int a = 0; a < A.Vectors(); a ++ )  {
       for( int b = 0; b < A.Elements(); b ++ )  {
         if( !a && !b )  continue;
-        if( fabs( MSVCC(A[a][b]) ) > c )  {
+        if( olx_abs( MSVCC(A[a][b]) ) > c )  {
           i = a;
           j = b;
-          c = (MatType)fabs( MSVCC(A[a][b]) );
+          c = (MatType)olx_abs( MSVCC(A[a][b]) );
         }
       }
     }
@@ -383,7 +383,7 @@ public:
   // searches for maximum element in matrix dialgonal matrix
   // without consideration of the main diagonal
   static MatType  MatMaxX(TMatrix& A,   int &i, int &j )  {
-    MatType c = (MatType)fabs( MSVCC(A[0][1]) );
+    MatType c = (MatType)olx_abs( MSVCC(A[0][1]) );
     i = 0;
     j = 1;
     if( A.Elements() == 2 )  {
@@ -393,10 +393,10 @@ public:
     }
     for( int a = 0; a < A.Elements(); a ++ )  {
       for( int b = a+1; b < A.Elements(); b ++ )  {
-        if( fabs( MSVCC(A[a][b]) ) > c ) {
+        if( olx_abs( MSVCC(A[a][b]) ) > c ) {
           i = a;
           j = b;
-          c = (MatType)fabs( MSVCC(A[a][b]) );
+          c = (MatType)olx_abs( MSVCC(A[a][b]) );
         }
       }
     }
@@ -406,12 +406,12 @@ public:
 
   // searches for maximum element in a matrix row
   static MatType  RowMax(TMatrix& A,   int i, int &j )  {
-    MatType c = (MatType)fabs( MSVCC(A[i][0]) );
+    MatType c = (MatType)olx_abs( MSVCC(A[i][0]) );
     j=0;
     for( int a = 1; a < A.Elements(); a ++ )  {
-      if( fabs( MSVCC(A[i][a]) ) > c )  {
+      if( olx_abs( MSVCC(A[i][a]) ) > c )  {
         j = a;
-        c = (MatType)fabs( MSVCC(A[i][a]) );
+        c = (MatType)olx_abs( MSVCC(A[i][a]) );
       }
     }
     return c;
@@ -432,12 +432,12 @@ public:
 
   // searches for maximum element in a matrix column
   static MatType  ColMax(TMatrix & A, int i, int &j )  {
-    MatType c = (MatType)fabs( MSVCC(A[0][i]) );
+    MatType c = (MatType)olx_abs( MSVCC(A[0][i]) );
     j=0;
     for( int a = 1; a < A.Vectors(); a ++ )  {
-      if( fabs( MSVCC(A[a][i]) ) > c )  {
+      if( olx_abs( MSVCC(A[a][i]) ) > c )  {
         j = a;
-        c = (MatType)fabs( MSVCC(A[a][i]) );
+        c = (MatType)olx_abs( MSVCC(A[a][i]) );
       }
     }
    return c;
@@ -475,7 +475,7 @@ public:
     bf = new MatType[dim];
     for( int i = 0; i < dim; i++ )  {
       for(int j = 0; j < dim; j++ )  {
-        bf[j] = (MatType)fabs( MSVCC(arr[j][i]) );
+        bf[j] = (MatType)olx_abs( MSVCC(arr[j][i]) );
       }
       TVector<MatType>::ArrayMax( bf, n, dim );
       if( n != i )  {
@@ -533,7 +533,7 @@ public:
     GauseSolve(s,r,param);
     double rms = 0;
     for(int i=0; i < xy.Elements(); i++ )
-      rms += QRT( xy[1][i]-TVector<MatType>::PolynomValue(param, xy[0][i]) );
+      rms += sqr( xy[1][i]-TVector<MatType>::PolynomValue(param, xy[0][i]) );
     return (rms > 0) ? sqrt(rms)/xy.Elements() : 0;
   }
 
@@ -561,7 +561,7 @@ public:
   static void  EigenValues(TMatrix& A, TMatrix &E)  {
     int i, j;
     MatType a = 2;
-    while( fabs( MSVCC(a) ) > 1e-15 )  {
+    while( olx_abs( MSVCC(a) ) > 1e-15 )  {
       MatMaxX( A, i, j );
       multMatrix( A, E, i, j );
       a = MatMaxX(A, i, j );
@@ -579,7 +579,7 @@ public:
     }
     else  {
       MatType tdf = 2*D[i][j]/(D[j][j] - D[i][i]);
-      MatType r = (MatType)QRT(tdf);
+      MatType r = (MatType)(tdf*tdf);
 
       cdf = (MatType)sqrt( MSVCC(1.0/(1+r)) );
       cf  = (MatType)sqrt( (1+cdf)/2.0);
@@ -591,8 +591,8 @@ public:
     ii = D[i][i];
     jj = D[j][j];
     D[i][j] = D[j][i] = 0;
-    D[i][i] = (MatType)(ii*QRT(cf) + jj*QRT(sf) - ij*sdf);
-    D[j][j] = (MatType)(ii*QRT(sf) + jj*QRT(cf) + ij*sdf);
+    D[i][i] = (MatType)(ii*cf*cf + jj*sf*sf - ij*sdf);
+    D[j][j] = (MatType)(ii*sf*sf + jj*cf*cf + ij*sdf);
 
     for( int a = 0; a < D.Vectors(); a++ )  {
       ij = E[i][a];

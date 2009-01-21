@@ -106,7 +106,7 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
       av += Hkl[i].GetI() < 0 ? 0 : Hkl[i].GetI();
     av /= Hkl.RefCount();
     sw.start("Merging HKL");
-    MergeStats ms = Hkl.Merge( xapp.XFile().GetLastLoaderSG(), xapp.XFile().GetLastLoaderSG().IsCentrosymmetric(), refs);
+    MergeStats ms = Hkl.Merge<RefMerger::ShelxMerger>( xapp.XFile().GetLastLoaderSG(), true, refs);
     F.SetCount(refs.Count());
     sw.start("Calculation structure factors");
     xapp.CalcSF(refs, F);
@@ -171,8 +171,8 @@ void SFUtil::CalcSF(TXFile& xfile, const TRefList& refs, TArrayList<TEComplex<do
   TAsymmUnit& au = xfile.GetAsymmUnit();
   const mat3d& hkl2c = au.GetHklToCartesian();
   double quad[6];
-  const static double EQ_PI = 8*QRT(M_PI);
-  const static double TQ_PI = 2*QRT(M_PI);
+  const static double EQ_PI = 8*M_PI*M_PI;
+  const static double TQ_PI = 2*M_PI*M_PI;
   double WaveLength = 0.71073;
 
   // the thermal ellipsoid scaling factors

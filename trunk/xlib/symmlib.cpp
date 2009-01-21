@@ -596,9 +596,9 @@ void TSpaceGroup::AddMatrix(const smatd& m)   {
   }
 }
 //..............................................................................
-void TSpaceGroup::AddMatrix(double xx, double xy, double xz, 
-                 double yx, double yy, double yz, 
-                 double zx, double zy, double zz,
+void TSpaceGroup::AddMatrix(int xx, int xy, int xz, 
+                 int yx, int yy, int yz, 
+                 int zx, int zy, int zz,
                  double tx, double ty, double tz)  {
   smatd& m = Matrices.AddNew();
   m.r[0][0] = xx;  m.r[0][1] = xy;  m.r[0][2] = xz;  m.t[0] = tx;
@@ -690,8 +690,8 @@ bool TSpaceGroup::ContainsElement( const smatd_list& matrices, TSymmElement* sym
         double summ = m.t[k] + m1.t[k];
         int iv = (int)diff;  diff -= iv;
         iv = (int)summ;      summ -= iv;
-        if( fabs(diff) < 0.01 || fabs(diff) > 0.99 )  diff = 0;
-        if( fabs(summ) < 0.01 || fabs(summ) > 0.99 )  summ = 0;
+        if( olx_abs(diff) < 0.01 || olx_abs(diff) > 0.99 )  diff = 0;
+        if( olx_abs(summ) < 0.01 || olx_abs(summ) > 0.99 )  summ = 0;
         if( diff < 0 )  diff += 1;
         if( summ < 0 )  summ += 1;
         if( diff > 0.01 && summ > 0.01 )  {
@@ -726,7 +726,7 @@ bool TSpaceGroup::IsSubElement( TSpaceGroup* symme )  const  {
         for( int l=0; l < 3; l++ )  {
           if( m1.r[k][l] != 0 )  matrixElements++;
           if( m.r[k][l] != m1.r[k][l] )  {
-            if( fabs(m.r[k][l]) != fabs(m1.r[k][l]) )  {
+            if( olx_abs(m.r[k][l]) != olx_abs(m1.r[k][l]) )  {
               equal = false;
               break;
             }
@@ -748,7 +748,7 @@ bool TSpaceGroup::IsSubElement( TSpaceGroup* symme )  const  {
         if( m.t[k] == 0 )  continue;
         double diff = m.t[k] - m1.t[k];
         int iv = (int)diff;  diff -= iv;
-        if( fabs(diff) < 0.01 || fabs(diff) > 0.99 )  diff = 0;
+        if( olx_abs(diff) < 0.01 || olx_abs(diff) > 0.99 )  diff = 0;
         if( diff < 0 )  diff += 1;
         if( diff > 0.01 )  {
           equal = false;
@@ -790,8 +790,8 @@ void TSpaceGroup::SplitIntoElements(smatd_list& mat, TPtrList<TSymmElement>& ref
           double summ = m.t[l] + m1.t[l];
           int iv = (int)diff;  diff -= iv;
           iv = (int)summ;      summ -= iv;
-          if( fabs(diff) < 0.01 || fabs(diff) > 0.99 )  diff = 0;
-          if( fabs(summ) < 0.01 || fabs(summ) > 0.99 )  summ = 0;
+          if( olx_abs(diff) < 0.01 || olx_abs(diff) > 0.99 )  diff = 0;
+          if( olx_abs(summ) < 0.01 || olx_abs(summ) > 0.99 )  summ = 0;
           if( diff < 0 )  diff += 1;
           if( summ < 0 )  summ += 1;
           if( diff > 0.01 && summ > 0.01 )  {
@@ -841,7 +841,7 @@ bool TSpaceGroup::EqualsWithoutTranslation (const TSpaceGroup& sg) const  {
         for( int l=0; l < 3; l++ )  {
           if( m1.r[k][l] != 0 )  matrixElements++;
           if( m.r[k][l] != m1.r[k][l] )  {
-            if( fabs(m.r[k][l]) != fabs(m1.r[k][l]) )  {
+            if( olx_abs(m.r[k][l]) != olx_abs(m1.r[k][l]) )  {
               equal = false;
               break;
             }
@@ -894,7 +894,7 @@ bool TSpaceGroup::Compare(const smatd_list& matrices, double& st) const  {
         for( int k=0; k < 3; k++ )  {
           translation[k] = m.t[k] - m1.t[k];
           int iv = (int)translation[k];  translation[k] -= iv;
-          if( fabs(translation[k]) < 0.01 || fabs(translation[k]) >= 0.99 )
+          if( olx_abs(translation[k]) < 0.01 || olx_abs(translation[k]) >= 0.99 )
             translation[k] = 0;
         }
         st += translation.QLength();
@@ -937,7 +937,7 @@ bool TSpaceGroup::operator == (const smatd_list& matrices) const  {
         for( int k=0; k < 3; k++ )  {
           translation[k] = m.t[k] - m1.t[k];
           int iv = (int)translation[k];  translation[k] -= iv;
-          if( fabs(translation[k]) < 0.01 || fabs(translation[k]) >= 0.99 )
+          if( olx_abs(translation[k]) < 0.01 || olx_abs(translation[k]) >= 0.99 )
             translation[k] = 0;
         }
         if( translation.QLength() < 0.004 )  {
@@ -977,7 +977,7 @@ bool TSpaceGroup::operator == (const TAsymmUnit& AU) const {
         for( int l=0; l < 3; l++ )  {
           if( m1.r[k][l] != 0 )  matrixElements++;
           if( m.r[k][l] != m1.r[k][l] )  {
-            if( fabs(m.r[k][l]) != fabs(m1.r[k][l]) )  {
+            if( olx_abs(m.r[k][l]) != olx_abs(m1.r[k][l]) )  {
               equal = false;
               break;
             }
@@ -997,7 +997,7 @@ bool TSpaceGroup::operator == (const TAsymmUnit& AU) const {
       for( int k=0; k < 3; k++ )  {
         translation[k] = m.t[k] - m1.t[k];
         iv = (int)translation[k];  translation[k] -= iv;
-        if( fabs(translation[k]) < 0.01 || fabs(translation[k]) >= 0.99 )
+        if( olx_abs(translation[k]) < 0.01 || olx_abs(translation[k]) >= 0.99 )
           translation[k] = 0;
         if( translation[k] < 0 )
           translation[k] += 1;
@@ -1019,7 +1019,7 @@ bool TSpaceGroup::operator == (const TAsymmUnit& AU) const {
         for( int k=0; k < 3; k++ )  {
           translation[k] = m.t[k] - m1.t[k];
           iv = (int)translation[k];  translation[k] -= iv;
-          if( fabs(translation[k]) < 0.01 || fabs(translation[k]) >= 0.99 )
+          if( olx_abs(translation[k]) < 0.01 || olx_abs(translation[k]) >= 0.99 )
             translation[k] = 0;
           if( translation[k] < 0 )
             translation[k] += 1;
@@ -1070,7 +1070,7 @@ bool TSpaceGroup::EqualsExpandedSG(const TAsymmUnit& AU) const  {
       for( int k=0; k < 3; k++ )  {
         translation[k] = m.t[k] - m1.t[k];
         int iv = (int)translation[k];  translation[k] -= iv;
-        if( fabs(translation[k]) < 0.01 || fabs(translation[k]) >= 0.99 )
+        if( olx_abs(translation[k]) < 0.01 || olx_abs(translation[k]) >= 0.99 )
           translation[k] = 0;
         if( translation[k] < 0 )
           translation[k] += 1;
@@ -1125,15 +1125,15 @@ void TSpaceGroup::GetMatrices(smatd_list& matrices, short Flags) const {
           smatd& mt = Matrices[i];
           double dv = mt.t[0] - v[0];
           int    iv = (int)dv;  dv -= iv;
-          if( fabs(dv) < 0.01 || fabs(dv) > 0.99 )  dv = 0;
+          if( olx_abs(dv) < 0.01 || olx_abs(dv) > 0.99 )  dv = 0;
           if( dv != 0 )  continue;
           dv = mt.t[1] - v[1];
           iv = (int)dv;    dv -= iv;
-          if( fabs(dv) < 0.01 || fabs(dv) > 0.99 )  dv = 0;
+          if( olx_abs(dv) < 0.01 || olx_abs(dv) > 0.99 )  dv = 0;
           if( dv != 0 )  continue;
           dv = mt.t[2] - v[2];
           iv = (int)dv;     dv -= iv;
-          if( fabs(dv) < 0.01 || fabs(dv) > 0.99 )  dv = 0;
+          if( olx_abs(dv) < 0.01 || olx_abs(dv) > 0.99 )  dv = 0;
           if( dv != 0 )  continue;
         }
         m1 = new smatd(*m);

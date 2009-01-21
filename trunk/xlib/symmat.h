@@ -2,17 +2,18 @@
 #define __olx_symmat
 #include "threex3.h"
 
-template <class T> class TSymmMat {
+template <class MC, class VC> class TSymmMat {
   int Tag;
 public:
   TSymmMat() { Tag = -1;  }
-  template <class AT>
-  TSymmMat(const TSymmMat<AT>& v) : r(v.r), t(v.t) { Tag = -1;  }
+  template <class AMC, class AVC> TSymmMat(const TSymmMat<AMC,AVC>& v) : 
+    r(v.r), 
+    t(v.t) { Tag = -1;  }
 
   template <class AT> TVector3<AT>  operator * (const TVector3<AT>& a) const  {
     return TVector3<AT>( r*a ).operator +=(t);
   }
-  inline bool operator == (const TSymmMat<T>& v) const {
+  inline bool operator == (const TSymmMat<MC,VC>& v) const {
     return r == v.r ? (t == v.t) : false;
   }
 
@@ -20,18 +21,18 @@ public:
     r *= v;
     t *= v;
   }
-  inline TSymmMat<T>& I()  {
+  inline TSymmMat<MC,VC>& I()  {
     r.I();
     t.Null();
     return *this;
   }
-  inline TSymmMat<T>& Null()  {
+  inline TSymmMat<MC,VC>& Null()  {
     r.Null();
     t.Null();
     return *this;
   }
-  TVector3<T> t;
-  TMatrix33<T> r;
+  TVector3<VC> t;
+  TMatrix33<MC> r;
 
   DefPropP(int, Tag)
 
@@ -39,8 +40,10 @@ public:
   inline int DecTag() {  return --Tag;  }
 };
 
-typedef TSymmMat<double>   smatd;
+typedef TSymmMat<int,double>   smatd;
 typedef TPtrList<smatd>    smatd_plist;
 typedef TTypeList<smatd>   smatd_list;
+typedef TSymmMat<int,double>   smatid;
+typedef TSymmMat<double,double>   smatdd;
 
 #endif

@@ -53,10 +53,13 @@ public:
   // locates related HKL file, processes raw or hkc file if necessary
   const olxstr& LocateHklFile();
 
+  // fills the list with the matrices of the UnitCell
+  void GetSymm(smatd_list& ml) const;
+
   template <class FT>
-    bool CheckFileType()  {
-      if( !XFile().HasLastLoader() )  return false;
-      return EsdlInstanceOf(*XFile().LastLoader(), FT);
+    bool CheckFileType() const {
+      if( !FXFile->HasLastLoader() )  return false;
+      return EsdlInstanceOf(*FXFile->LastLoader(), FT);
     }
 
   static TXApp& GetInstance()  {

@@ -57,15 +57,15 @@ public:
     if( mx == 0 )  return 0;
     T a = _A/mx,
       b = _B/mx;
-    return mx*sqrt( QRT(a) + QRT(b) );
+    return mx*sqrt( a*a + b*b );
   }
 
   inline T mod() const {
     if( _B == 0 )  return (_A < 0) ? -_A : _A;
-    return sqrt( QRT(_A) + QRT(_B) );
+    return sqrt( _A*_A + _B*_B );
   }
 
-  inline T qmod()  {  return QRT(_A) + QRT(_B);  }
+  inline T qmod()  {  return _A*_A + _B*_B;  }
 
   inline TEComplex inv()  const {
     TEComplex rv(*this);
@@ -114,7 +114,7 @@ public:
     _A = v;
   }
   inline void operator /= (const TEComplex& _compl)  {
-    T dv = QRT(_compl.A) + QRT(_compl._B),
+    T dv = _compl._A*_compl._A + _compl._B*_compl._B,
       oa = _A,
       ob = _B;
     _A = (oa*_compl._A + ob*_compl._B)/dv;
@@ -136,7 +136,7 @@ public:
     return TEComplex<T>(_A*_compl._A - _B*_compl._B ,_B*_compl._A + _A*_compl._B);
   }
   inline TEComplex operator / (const TEComplex& _compl)  const {
-    T dv = QRT(_compl.A) + QRT(_compl._B);
+    T dv = _compl._A*_compl._A + _compl._B*_compl._B;
     return TEComplex((_A*_compl._A + _B*_compl._B)/dv, (_B*_compl._A - _A*_compl._B)/dv);
   }
 

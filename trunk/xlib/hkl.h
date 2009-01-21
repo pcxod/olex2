@@ -7,6 +7,7 @@
 #include "asymmunit.h"
 
 #include "refutil.h"
+#include "symmlib.h"
 
 BeginXlibNamespace()
 
@@ -72,24 +73,27 @@ public:
   bool SaveToFile(const olxstr& FN);
   void UpdateRef(const TReflection& R);
   // returns reflections owned by this object
-  void AllRefs(int h, int k, int l, const TAsymmUnit& AU, TRefPList& Res)  {
-    TReflection r(h, k, l);
-    AllRefs(r, AU, Res);
-  }
-  template <class VC>
-    void AllRefs(const VC& hkl, const TAsymmUnit& AU, TRefPList& Res)  {
-      AllRefs(hkl[0], hkl[1], hkl[2],AU, Res);
+  void AllRefs(const TReflection& R, const smatd_list& sg, TRefPList& Res);
+//..............................................................................
+  template <class Merger> MergeStats Merge(const TSpaceGroup& sg, bool MergeInverse, TRefList& output) const {
+    smatd_list ml;
+    sg.GetMatrices(ml, mattAll^mattIdentity);
+    if( MergeInverse && !sg.IsCentrosymmetric() )  { 
+      const int ml_cnt = ml.Count();
+      for( int i=0; i < ml_cnt; i++ )
+        ml.AddCCopy(ml[i]) *= -1;
+      ml.AddNew().I() *= -1;
     }
-  void AllRefs(const TReflection& R, const TAsymmUnit& AU, TRefPList& Res);
-//..............................................................................
-  MergeStats Merge(const class TSpaceGroup& AU, bool MergeInverse, TRefList& output) const;
-//..............................................................................
-  MergeStats SimpleMerge(smatd_list& ml, TRefList& output) const {
-    return  RefMerger::Merge<RefMerger::StandardMerger>(ml, Refs, output);
+    MergeStats rv = RefMerger::Merge<Merger>(ml, Refs, output);
+    return rv;
   }
 //..............................................................................
-  void SimpleMergeInP1(TRefList& output) const {
-    RefMerger::MergeInP1<RefMerger::StandardMerger>(Refs, output);
+  template <class Merger> MergeStats Merge(smatd_list& ml, TRefList& output) const {
+    return  RefMerger::Merge<Merger>(ml, Refs, output);
+  }
+//..............................................................................
+  template <class Merger> void MergeInP1(TRefList& output) const {
+    RefMerger::MergeInP1<Merger>(Refs, output);
   }
 //..............................................................................
 

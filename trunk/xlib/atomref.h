@@ -203,7 +203,7 @@ public:
         }
       }
       if( succeded )  {
-        atoms.AddList(tmp_atoms);
+        atoms.AddListC(tmp_atoms);
         if( atomAGroup == 0 )
           atomAGroup = tmp_atoms.Count();
       }

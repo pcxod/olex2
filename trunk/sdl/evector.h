@@ -7,7 +7,7 @@
 #include "ebase.h"
 #include "typelist.h"
 #include "tptrlist.h"
-//#include "exception.h"
+#include "emath.h"
 #undef QLength
 
 BeginEsdlNamespace()
@@ -72,7 +72,7 @@ public:
     if( Fn == 0 )  throw TFunctionFailedException(__OlxSourceInfo, "empty vector");
     VecType l=0;
     for( int i=0; i < Fn; i++ )
-      l += QRT(FData[i]);
+      l += FData[i]*FData[i];
     return (VecType)sqrt(l);
   }
 
@@ -80,7 +80,7 @@ public:
     if( Fn == 0 )  throw TFunctionFailedException(__OlxSourceInfo, "empty vector");
     VecType l=0;
     for( int i=0; i < Fn; i++ )
-      l += QRT(FData[i]);
+      l += FData[i]*FData[i];
     return l;
   }
 
@@ -114,7 +114,7 @@ public:
     if( Fn != V.Fn )  throw TFunctionFailedException(__OlxSourceInfo, "vectors of different size");
     double v = 0;
     for( int i=0; i < Fn; i++ )
-      v += QRT(FData[i]-V.FData[i]);
+      v += sqr(FData[i]-V.FData[i]);
     return (VecType)sqrt(v);
   }
 

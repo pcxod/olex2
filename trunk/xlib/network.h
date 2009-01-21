@@ -85,14 +85,14 @@ public:
     the calculation
   */
   static double FindAlignmentMatrix(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atoms,
-                  smatd& res, bool TryInversion);
+                  smatdd& res, bool TryInversion);
   /* this fuction is used alonside the above one to allign the atoms using provided
    matrix. Also the Inverted has to be specified if the matric was calculated using
    the function above with the inverted flag on. The atomsToTransform are the atoms
    being transformed (typically, the atoms[n].GetA() is the subset of these atoms
   */
   static void DoAlignAtoms(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& satomp,
-                   const TSAtomPList& atomsToTransform, const smatd& S, bool Inverted);
+                   const TSAtomPList& atomsToTransform, const smatdd& S, bool Inverted);
 
   void ToDataItem(TDataItem& item) const;
   void FromDataItem(const TDataItem& item);

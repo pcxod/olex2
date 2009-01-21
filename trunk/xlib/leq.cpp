@@ -204,7 +204,7 @@ double XVarManager::SetAtomParam(TCAtom& ca, short param_name, double val) {
   short var_rel = relation_None;
   double coeff = 0, actual_val = val;
   XVar* var = NULL;
-  if( fabs(val) > 10 )  {
+  if( olx_abs(val) > 10 )  {
     int iv = (int)(val/10);
     int var_index = abs(iv);
     var = &GetReferencedVar(var_index);
@@ -216,7 +216,7 @@ double XVarManager::SetAtomParam(TCAtom& ca, short param_name, double val) {
       actual_val = coeff*var->GetValue();
       if( iv < 0 )
         actual_val += 1;
-      coeff = fabs(coeff);
+      coeff = olx_abs(coeff);
     }
   }
   switch( param_name )  {
@@ -285,7 +285,7 @@ double XVarManager::GetAtomParam(TCAtom& ca, short param_name, double* Q) {
   }
   if( vr == NULL )  return val;
   if( vr->relation_type == relation_None )
-    return Sign(val)*(fabs(val)+10);
+    return Sign(val)*(olx_abs(val)+10);
   if( vr->relation_type == relation_AsVar )
     return (vr->Parent.GetId()+1)*10+vr->coefficient;
   return -((vr->Parent.GetId()+1)*10+vr->coefficient);

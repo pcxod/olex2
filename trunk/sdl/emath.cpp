@@ -23,7 +23,7 @@ double GlobalEsdlFunction(NewtonSolve)( double (*f)(double), double (*df)(double
   long count=0;
   while( ex1 > 1e-5 )  {
     x1 = x - f(x)/df(x);
-    ex1 = fabs( f(x1));
+    ex1 = olx_abs( f(x1));
     x = x1;
     count++;
     if( count >= 15000 )

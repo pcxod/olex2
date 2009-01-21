@@ -10,6 +10,7 @@
 #include <math.h>
 #include "exception.h"
 #include "evalue.h"
+#include "emath.h"
 
 BeginEsdlNamespace()
 
@@ -98,7 +99,7 @@ public:
   template <class AType>
     TEValue& operator += (const TEValue<AType>& S)  {
       FV += S.FV;
-      FE = (EType)sqrt(QRT(S.FE)+QRT(FE));
+      FE = (EType)sqrt(S.FE*S.FE+FE*FE);
      return *this;
     }
 
@@ -107,7 +108,7 @@ public:
       if( FV == 0 || S.FV == 0 )
         throw TDivException(__OlxSourceInfo);
       if( FE != 0 || S.FE != 0 )
-        FE = (EType)(QRT(S.FE/S.FV) + QRT(FE/FV));
+        FE = (EType)(sqr(S.FE/S.FV) + sqr(FE/FV));
       FV *= S.FV;
       return *this;
     }
@@ -117,7 +118,7 @@ public:
       if( FV == 0 || S.FV == 0 )
         throw TDivException(__OlxSourceInfo);
       if( FE != 0 || S.FE != 0 )
-        FE = (EType)(QRT(S.FE/S.FV) + QRT(FE/FV));
+        FE = (EType)(sqr(S.FE/S.FV) + sqr(FE/FV));
       FV /= S.FV;
       return *this;
     }
@@ -125,7 +126,7 @@ public:
   template <class AType>
     TEValue& operator -= (const TEValue<AType>& S)  {
       FV -= S.FV;
-      FE = (EType)sqrt(QRT(S.FE)+QRT(FE));
+      FE = (EType)sqrt(sqr(S.FE)+sqr(FE));
       return *this;
     }
 
@@ -200,7 +201,7 @@ public:
     int pr=0, iv;
     double po = 1;
     if( FE != 0 )  {
-      while( fabs(FE*po) < 1 )  {  po *= 10;    pr ++;  }
+      while( olx_abs(FE*po) < 1 )  {  po *= 10;    pr ++;  }
       iv = Round(FE*po);
       if( pr != 0 )  {
         if( iv == 10 && pr > 1 )  {

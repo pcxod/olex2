@@ -14,7 +14,7 @@ public:
   static olxstr  MatrixToSymm(const smatd& M);
     // Transforms matrix to standard SYMM operation (INS, CIF files), using fractions of 12 for translations
   static olxstr  MatrixToSymmEx(const smatd& M);
-  static olxstr  MatrixToSymmEx(const mat3d& M);
+  static olxstr  MatrixToSymmEx(const mat3i& M);
     // Transforms standard SYMM operation (INS, CIF files) to matrix
   static bool SymmToMatrix(const olxstr& symm, smatd& M);
   // return a matrix representation of 1_555 or 1_555555 code for the unit cell

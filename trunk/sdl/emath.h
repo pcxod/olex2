@@ -24,6 +24,12 @@ inline long Round( double a )  {
   long b = (long)a;  // |b| is always smaller than a
   return ((a < 0) ? (((b-a) >= .5) ? --b : b) : (((a-b) >= .5) ? ++b : b));
 }
+// returns absolute value of a number
+template <class num> inline num olx_abs(num n)  {
+  return n < 0 ? -n : n;
+}
+// return pow2
+template <class num> inline num sqr(num n) {  return n*n;  } 
 
 template <class A, class B>
   inline void SetBit( const bool Set, A &V, const B Bit )  {
@@ -45,14 +51,14 @@ template <class VC>
     VC a(A-B),b(C-B),n;
     double d, caS, sa;
     caS = a.CAngle(b);
-    if( fabs(caS) > 0.9999 )  return 0;
+    if( olx_abs(caS) > 0.9999 )  return 0;
     sa = sqrt( 1- caS*caS);
     caS = a.Length() * b.Length() * sa / 2;
     n = a.XProdVec(b);
     d = n[2]*A[2] + n[1]*A[1] + n[0]*A[0];
     d = n[2]*D[2] + n[1]*D[1] + n[0]*D[0] - d;
     d /= n.Length();
-    return fabs( caS*d/3 );
+    return olx_abs( caS*d/3 );
   }
   // tosion angle in degrees
 template <class VC>
@@ -88,7 +94,7 @@ inline double SphereRad(double v)   {  return pow(v*3.0/(4.0*M_PI), 1./3.);  }
 template <class MC, class VC>
 void CreateRotationMatrix(MC& rm, const VC& rv, double ca)  {
   double sa;
-  if( fabs(ca) > 0.001 )  sa = sqrt(1-ca*ca);
+  if( olx_abs(ca) > 0.001 )  sa = sqrt(1-ca*ca);
   else                    sa = 0;
   double t = 1-ca;
   rm[0][0] = t*rv[0]*rv[0] + ca;

@@ -10,6 +10,7 @@
 #include "idistribution.h"
 #include "atominfo.h"
 #include "ipattern.h"
+#include "emath.h"
 
 //..............................................................................
 bool PAddEvaluator(TPolynomMember *PM)
@@ -235,7 +236,7 @@ void  TIDistribution::CombineSerie(TEList *S, double threshold)
     j++;
     if( j == S->Count() ) break;
     SP1 = (TSPoint*)S->Item(j);
-    while( fabs(SP->X - SP1->X) < threshold )
+    while( olx_abs(SP->X - SP1->X) < threshold )
     {
       SP->Y += SP1->Y;
       S->Item(j) = NULL;

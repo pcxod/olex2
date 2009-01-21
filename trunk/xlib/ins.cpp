@@ -1165,10 +1165,10 @@ TCAtom* TIns::_ParseAtom(TStrList& Toks, ParseContext& cx, TCAtom* atom)  {
     if( atom->GetUiso() < 0 )  {  // a value fixed to a bound atom value
       if( cx.LastWithU == NULL )
         throw TInvalidArgumentException(__OlxSourceInfo, olxstr("Invalid Uiso proxy for: ") << Toks[0]);
-      atom->SetUisoScale( fabs(atom->GetUiso()) );
+      atom->SetUisoScale( olx_abs(atom->GetUiso()) );
       atom->SetUisoOwner( cx.LastWithU );
       //atom->SetUiso( 4*caDefIso*caDefIso );
-      atom->SetUiso( cx.LastWithU->GetUiso()*fabs(atom->GetUiso()) );
+      atom->SetUiso( cx.LastWithU->GetUiso()*olx_abs(atom->GetUiso()) );
     }
     else
       cx.LastWithU = atom;
@@ -1276,6 +1276,8 @@ void TIns::_SaveHklInfo(TStrList& SL)  {
     SL.Add("BASF ") << GetRM().GetBASFStr();
   if( GetRM().HasOMIT() )
     SL.Add("OMIT ") << GetRM().GetOMITStr();
+  if( GetRM().HasSHEL() )
+    SL.Add("SHELL ") << GetRM().GetSHELStr();
   if( GetRM().HasTWIN() )
     SL.Add("TWIN ") << GetRM().GetTWINStr();
   for( int i=0; i < GetRM().OmittedCount(); i++ )  {

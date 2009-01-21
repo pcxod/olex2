@@ -24,6 +24,7 @@ public:
     I = S = 0;
     Absent = Centric = false;
     Multiplicity = 1;
+    SetTag(1);
     Flag = NoFlagSet;
   }
   TReflection(int h, int k, int l, double I, double S, int flag=NoFlagSet)  {
@@ -32,6 +33,7 @@ public:
     this->S = S;
     Absent = Centric = false;
     Multiplicity = 1;
+    SetTag(1);
     Flag = flag;
   }
   virtual ~TReflection()  {  }
@@ -69,27 +71,23 @@ public:
     res[1] = (H*mat[0][1] + K*mat[1][1] + L*mat[2][1]);
     res[2] = (H*mat[0][2] + K*mat[1][2] + L*mat[2][2]);
   }
+  // generates index of an equivalen reflection
+  template <class V> void MulHkl(V& res, const smatd& mat) const {
+    res[0] = (H*mat.r[0][0] + K*mat.r[1][0] + L*mat.r[2][0]);
+    res[1] = (H*mat.r[0][1] + K*mat.r[1][1] + L*mat.r[2][1]);
+    res[2] = (H*mat.r[0][2] + K*mat.r[1][2] + L*mat.r[2][2]);
+  }
+  // generates an equivalent using rounding on the resulting indexes
   template <class VC, class MC> void MulHklR(VC& res, const MC& mat) const {
     res[0] = Round(H*mat[0][0] + K*mat[1][0] + L*mat[2][0]);
     res[1] = Round(H*mat[0][1] + K*mat[1][1] + L*mat[2][1]);
     res[2] = Round(H*mat[0][2] + K*mat[1][2] + L*mat[2][2]);
   }
-  // generates symmetry equivalent miller index and stores it in res, uses transposed matrix
-  template <class VC, class MC> void MulHklT(VC& res, const MC& mat) const {
-    res[0] = (H*mat[0][0] + K*mat[0][1] + L*mat[0][2]);
-    res[1] = (H*mat[1][0] + K*mat[1][1] + L*mat[1][2]);
-    res[2] = (H*mat[2][0] + K*mat[2][1] + L*mat[2][2]);
-  }
-  template <class CC> void MulHkl(TVector3<CC>& res, const smatd& mat) const {
-    res[0] = (CC)(H*mat.r[0][0] + K*mat.r[1][0] + L*mat.r[2][0]);
-    res[1] = (CC)(H*mat.r[0][1] + K*mat.r[1][1] + L*mat.r[2][1]);
-    res[2] = (CC)(H*mat.r[0][2] + K*mat.r[1][2] + L*mat.r[2][2]);
-  }
-  // generates symmetry equivalent miller index and stores it in res, uses transposed matrix
-  template <class CC> void MulHklT(TVector3<CC>& res, const smatd& mat) const {
-    res[0] = (CC)(H*mat.r[0][0] + K*mat.r[0][1] + L*mat.r[0][2]);
-    res[1] = (CC)(H*mat.r[1][0] + K*mat.r[1][1] + L*mat.r[1][2]);
-    res[2] = (CC)(H*mat.r[2][0] + K*mat.r[2][1] + L*mat.r[2][2]);
+  // generates an equivalent using rounding on the resulting indexes
+  template <class V> void MulHklR(V& res, const smatdd& mat) const {
+    res[0] = Round(H*mat.r[0][0] + K*mat.r[1][0] + L*mat.r[2][0]);
+    res[1] = Round(H*mat.r[0][1] + K*mat.r[1][1] + L*mat.r[2][1]);
+    res[2] = Round(H*mat.r[0][2] + K*mat.r[1][2] + L*mat.r[2][2]);
   }
 //..............................................................................
   /* replaces hkl with standard hkl accroding to provided matrices. Initialises Absent flag */
@@ -108,7 +106,7 @@ public:
       else if( EqHkl(hklv) )  {  // centric reflection
         if( !Absent )  {
           double l = PhaseShift(ml[i]);
-          Absent = (fabs( l - Round(l) ) > 0.01);
+          Absent = (olx_abs( l - Round(l) ) > 0.01);
         }
       }
     }
@@ -119,7 +117,7 @@ public:
   }
 //..............................................................................
   /* analyses if this reflection is centric, systematically absent and its multiplicity */
-  void Analyse(const smatd_list &ml)  {
+  void Analyse(const smatd_list& ml)  {
     vec3i hklv;
     Multiplicity = 1;
     Centric = false;
@@ -130,7 +128,7 @@ public:
         IncDegeneracy();
         if( !Absent )  {
           double l = PhaseShift(ml[i]);
-          Absent = (fabs( l - Round(l) ) > 0.01);
+          Absent = (olx_abs( l - Round(l) ) > 0.01);
         }
       }
       else if( EqNegHkl(hklv) )  // centric reflection
@@ -170,7 +168,7 @@ public:
     for( int i=0; i < ml.Count(); i++ )  {
       if( r.IsSymmetric(ml[i]) )  {
         double l = r.PhaseShift(ml[i]);
-        if( fabs( l - Round(l) ) > 0.01 )  return true;
+        if( olx_abs( l - Round(l) ) > 0.01 )  return true;
       }
     }
     return false;

@@ -1830,7 +1830,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
       FXApp->GetRender().Basis()->RotateX(FXApp->GetRender().GetBasis().GetRX()+FRotationIncrement*FRotationVector[0]);
       FXApp->GetRender().Basis()->RotateY(FXApp->GetRender().GetBasis().GetRY()+FRotationIncrement*FRotationVector[1]);
       FXApp->GetRender().Basis()->RotateZ(FXApp->GetRender().GetBasis().GetRZ()+FRotationIncrement*FRotationVector[2]);
-      FRotationAngle -= fabs(FRotationVector.Length()*FRotationIncrement);
+      FRotationAngle -= olx_abs(FRotationVector.Length()*FRotationIncrement);
       if( FRotationAngle < 0 )  FMode ^= mRota;
       Draw = true;
     }
@@ -3013,13 +3013,13 @@ void TMainForm::RefineDataTable(bool TableDef)  {
     Table[1][1] = Lst.wR2();
 
   Table[1][2] = "GooF";
-  if( fabs(Lst.S()-1) > 0.5 )
+  if( olx_abs(Lst.S()-1) > 0.5 )
     Table[1][3] << "<font color=\'red\'>" << Lst.S() << "</font>";
   else
     Table[1][3] = Lst.S();  
 
   Table[2][0] = "GooF(Restr)";
-  if( fabs(Lst.RS()-1) > 0.5 )
+  if( olx_abs(Lst.RS()-1) > 0.5 )
     Table[2][1] << "<font color=\'red\'>" << Lst.RS() << "</font>";
   else
     Table[2][1] = Lst.RS();
@@ -3031,7 +3031,7 @@ void TMainForm::RefineDataTable(bool TableDef)  {
     Table[2][3] = Lst.Peak(); 
 
   Table[3][0] = "Deepest hole";
-  if( fabs(Lst.Hole()) > 1.5 )
+  if( olx_abs(Lst.Hole()) > 1.5 )
     Table[3][1] << "<font color=\'red\'>" << Lst.Hole() << "</font>";
   else
     Table[3][1] = Lst.Hole();
@@ -3113,7 +3113,7 @@ bool TMainForm::OnMouseUp(int x, int y, short Flags, short Buttons)  {
     if( K > 0.07 )  K = 1./K;
     if( L > 0.07 )  L = 1./L;
     int iH = Round(H), iK = Round(K), iL = Round(L);
-    double diff = sqrt(fabs(H + K + L - iH - iK - iL)/(H + K + L));
+    double diff = sqrt(olx_abs(H + K + L - iH - iK - iL)/(H + K + L));
     if( diff < 0.25 )  {
       cellM = au->GetHklToCartesian();
       Z.Null();

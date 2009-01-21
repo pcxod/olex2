@@ -23,10 +23,6 @@
   #define M_PI 3.14159265358979323846
 #endif
 
-#ifndef QRT
-  #define QRT(a) ((a)*(a))
-#endif
-
 #ifndef __WIN32__
   #ifdef __WINDOWS__  
     #define __WIN32__ 1

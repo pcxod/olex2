@@ -5,6 +5,7 @@
 #include "symmlib.h"
 #include "pers_util.h"
 #include "unitcell.h"
+#include "xapp.h"
 
 RefinementModel::RefinementModel(TAsymmUnit& au) : rDFIX(*this, rltBonds), rDANG(*this, rltBonds), 
   rSADI(*this, rltBonds), rCHIV(*this, rltAtoms), rFLAT(*this, rltGroup), rDELU(*this, rltAtoms), 
@@ -23,7 +24,10 @@ void RefinementModel::SetDefaults() {
   MERG = def_MERG;
   OMIT_s = def_OMIT_s;
   OMIT_2t = def_OMIT_2t;
-  HKLF_set = MERG_set = OMIT_set = TWIN_set = false;
+  OMITs_Modified = false;
+  SHEL_hr = def_SHEL_hr;
+  SHEL_lr = def_SHEL_lr;
+  HKLF_set = MERG_set = OMIT_set = TWIN_set = SHEL_set = false;
   TWIN_n = def_TWIN_n;
   TWIN_mat.I() *= -1;
 }
@@ -98,6 +102,10 @@ RefinementModel& RefinementModel::Assign(const RefinementModel& rm, bool AssignA
   OMIT_s = rm.OMIT_s;
   OMIT_2t = rm.OMIT_2t;
   OMIT_set = rm.OMIT_set;
+  OMITs_Modified = rm.OMITs_Modified;
+  SHEL_lr = rm.SHEL_lr;
+  SHEL_hr = rm.SHEL_hr;
+  SHEL_set = rm.SHEL_set;
   Omits = rm.Omits;
   TWIN_mat = rm.TWIN_mat;
   TWIN_n = rm.TWIN_n;
@@ -175,9 +183,8 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
     if( hkl_src_id == HklStatFileID &&
       _HklStat.OMIT_s == OMIT_s &&
       _HklStat.OMIT_2t == OMIT_2t &&
-      _HklStat.MERG == MERG )  
+      _HklStat.MERG == MERG && !OMITs_Modified )  
     {
-      _HklStat.OmittedByUser = Omits.Count();  // this might change beyond the HKL file!
       return _HklStat;
     }
     else  {
@@ -185,7 +192,7 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
       hf.LoadFromFile(HKLSource);
       HklStatFileID = hkl_src_id;
       _HklStat.SetDefaults();
-
+      // cannot use XFile, as we do not know which loader owns this object
       TSpaceGroup* sg = TSymmLib::GetInstance()->FindSG(aunit);
       if( sg == NULL )  // will not be seen outside though
         throw TFunctionFailedException(__OlxSourceInfo, "unknown space group");
@@ -194,19 +201,25 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
       const mat3d& hkl2c = aunit.GetHklToCartesian();
       const double h_o_s = 0.5*OMIT_s;
       double max_d = 2*sin(OMIT_2t*M_PI/360.0)/expl.GetRadiation();
-      const double max_qd = QRT(max_d);  // maximum d squared
+      if( SHEL_set && SHEL_lr > max_d )  {
+         if( SHEL_lr < 2./expl.GetRadiation() )
+           max_d = SHEL_lr;
+         else
+           max_d = 2./expl.GetRadiation();
+      }
+      const double max_qd = max_d*max_d;  // maximum d squared
+      const double min_qd = SHEL_hr*SHEL_hr;
       const bool transform_hkl = !HKLF_mat.IsI();
+      const bool limit_res = (OMIT_2t != def_OMIT_2t);
       const int ref_cnt = hf.RefCount();
       _HklStat.MinD = 100;
       _HklStat.MaxD = -100;
-      TRefPList Refs;
-      Refs.SetCapacity(hf.RefCount());
       vec3d new_hkl;
       //apply OMIT transformation and filtering and calculate spacing limits
       for( int i=0; i < ref_cnt; i++ )  {
         TReflection& r = hf[i];
         if( r.GetI() < h_o_s*r.GetS()*r.GetI() )  {
-          r.SetI( -h_o_s*r.GetI() );
+          r.SetI( h_o_s*r.GetI() );
           _HklStat.IntensityTransformed++;
         }
         if( transform_hkl )  {
@@ -219,8 +232,9 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
                   r.GetH()*hkl2c[0][1] + r.GetK()*hkl2c[1][1],
                   r.GetH()*hkl2c[0][2] + r.GetK()*hkl2c[1][2] + r.GetL()*hkl2c[2][2]);
         const double qd = hkl.QLength();
-        if( qd < max_qd ) 
-          Refs.Add(&r);
+        // OMIT filtering by res
+        if( qd < max_qd && qd > min_qd ) 
+          refs.Add(&r);
         else
           _HklStat.FilteredOff++;
         if( qd > _HklStat.MaxD ) 
@@ -228,29 +242,57 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
         if( qd < _HklStat.MinD ) 
           _HklStat.MinD = qd;
       }
-      _HklStat.LimD = sqrt(max_qd);
+      _HklStat.LimDmax = sqrt(max_qd);
+      _HklStat.LimDmin = sqrt(min_qd);
       _HklStat.MaxD = sqrt(_HklStat.MaxD);
       _HklStat.MinD = sqrt(_HklStat.MinD);
-      _HklStat.OmittedByUser = Omits.Count();
       _HklStat.MERG = MERG;
       _HklStat.OMIT_s = OMIT_s;
       _HklStat.OMIT_2t = OMIT_2t;
-      smatd_list ml;
-      TRefList output;
-      sg->GetMatrices(ml, mattAll^mattIdentity);
-      if( MERG == 4 && !sg->IsCentrosymmetric() )  {  // merge all
-        const int mc = ml.Count();
-        for( int i=0; i < mc; i++ )
-          ml.AddNew( ml[i] ) *= -1;
-        ml.AddNew().I() *= -1;
+      if( MERG != 0 )  {
+        smatd_list ml;
+        sg->GetMatrices(ml, mattAll^mattIdentity);
+        if( (MERG == 4 || MERG == 3) && !sg->IsCentrosymmetric() )  {  // merge all
+          const int mc = ml.Count();
+          for( int i=0; i < mc; i++ )
+            ml.AddNew( ml[i] ) *= -1;
+          ml.AddNew().I() *= -1;
+        }
+        _HklStat = RefMerger::Merge<RefMerger::ShelxMerger>(ml, refs, _HklStat.reflections);
       }
-      _HklStat = RefMerger::Merge<RefMerger::ShelxMerger>(ml, Refs, output);
+      else
+        _HklStat = RefMerger::MergeInP1<RefMerger::ShelxMerger>(refs, _HklStat.reflections);
+      if( OMITs_Modified )
+        _HklStat.OmittedByUser = ProcessOmits(_HklStat.reflections);
     }
   }
   catch(TExceptionBase&)  {
     _HklStat.SetDefaults();
   }
   return _HklStat;
+}
+//....................................................................................................
+int RefinementModel::ProcessOmits(TRefList& refs)  {
+  if( Omits.IsEmpty() )  return 0;
+  int processed = 0;
+  const int ref_c = refs.Count();
+  for( int i=0; i < ref_c; i++ )  {
+    const TReflection& r = refs[i];
+    const int omit_cnt = Omits.Count();
+    for( int j=0; j < omit_cnt; j++ )  {
+      if( r.GetH() == Omits[j][0] && 
+          r.GetK() == Omits[j][1] &&
+          r.GetL() == Omits[j][2] ) 
+      {
+        refs.NullItem(i);
+        processed++;
+        break;
+      }
+    }
+  }
+  if( processed != 0 )
+    _HklStat.reflections.Pack();
+  return processed;
 }
 //....................................................................................................
 void RefinementModel::Describe(TStrList& lst) {

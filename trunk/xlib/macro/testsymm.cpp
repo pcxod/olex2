@@ -14,12 +14,12 @@ bool NormalisevectorView(vec3d& v ) {
   for( int j=0; j < 3; j++ )  {
     if( v[j] < tol )  v[j] = 0;
     else if( (1-v[j]) < tol )  v[j] = 0;
-    else if( fabs(9./12-v[j]) < tol )  v[j] = 9./12;
-    else if( fabs(8./12-v[j]) < tol )  v[j] = 8./12;
-    else if( fabs(6./12-v[j]) < tol )  v[j] = 6./12;
-    else if( fabs(4./12-v[j]) < tol )  v[j] = 4./12;
-    else if( fabs(3./12-v[j]) < tol )  v[j] = 3./12;
-    else if( fabs(2./12-v[j]) < tol )  v[j] = 2./12;
+    else if( olx_abs(9./12-v[j]) < tol )  v[j] = 9./12;
+    else if( olx_abs(8./12-v[j]) < tol )  v[j] = 8./12;
+    else if( olx_abs(6./12-v[j]) < tol )  v[j] = 6./12;
+    else if( olx_abs(4./12-v[j]) < tol )  v[j] = 4./12;
+    else if( olx_abs(3./12-v[j]) < tol )  v[j] = 3./12;
+    else if( olx_abs(2./12-v[j]) < tol )  v[j] = 2./12;
     else
       res = false;
   }

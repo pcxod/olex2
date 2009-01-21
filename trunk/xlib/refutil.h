@@ -117,6 +117,45 @@ class RefMerger {
     }
     return stats;
   }
+  template <class RefListMerger, class RefList>
+  static MergeStats DoMergeInP1(TPtrList<const TReflection>& refs, const RefList& original, TRefList& output)  {
+    MergeStats stats;
+    // replicate reflections, to leave this object as it is
+    TPtrList<const TReflection> toMerge;  // list of replicated reflections
+    stats.TotalReflections = original.Count();
+    // sort the list
+    TReflection::SortPList(refs);
+    // merge reflections
+    toMerge.Add(refs[0]);  // reference reflection
+    const int ref_cnt = refs.Count();
+    output.SetCapacity( ref_cnt ); // better more that none :)
+    double Sdiff = 0, SI_tot = 0, SI = 0, SS = 0;
+    for( int i=0; i < ref_cnt; )  {
+      while( (++i < ref_cnt) && (toMerge[0]->CompareTo(*refs[i]) == 0) )
+        toMerge.Add( refs[i] );
+      MergerOut mo = RefListMerger::Merge( toMerge );
+      if( toMerge.Count() > 1 )  {
+        SI_tot += mo.sumI;
+        Sdiff += mo.sumDiff;
+        if( mo.sigInt > mo.ref->GetS() )  {
+          if( mo.sigInt > 5*mo.ref->GetS() )
+            stats.InconsistentEquivalents ++;
+          mo.ref->SetS( mo.sigInt );
+        }
+      }
+      output.Add(mo.ref);
+      SS += mo.ref->GetS();
+      SI += mo.ref->GetI();
+      if( i >= ref_cnt )  break;
+
+      toMerge.Clear();
+      toMerge.Add( refs[i] );
+    }
+    stats.Rint = (SI_tot != 0) ? Sdiff/SI_tot : 0.0;
+    stats.Rsigma = (SI != 0) ? SS/SI : 0.0;
+    stats.UniqueReflections = output.Count();
+    return stats;
+  }
 public:
 /* Function merges reflections of current hkl file (file data stays unchanged!)
  and fills the 'output' list with merged reflections. RefListmerger class must provide
@@ -143,39 +182,27 @@ template <class RefListMerger> static MergeStats Merge(smatd_list& ml, const TRe
       TReflection* ref = refs.Add( new TReflection(Refs[i]) );
       if( ref->GetI() < 0 )  ref->SetI(0);
     }
-    return DoMerge<RefListMerger, TRefPList>(ml, refs, Refs, output);
+    return DoMerge<RefListMerger, TRefList>(ml, refs, Refs, output);
   }
-template <class RefListMerger>
-  static void MergeInP1(const TRefPList& Refs, TRefList& output)  {
-    // replicate reflections, to leave this object as it is
-    TPtrList<const TReflection> refs, toMerge;  // list of replicated reflections
+template <class RefListMerger> static MergeStats MergeInP1(const TRefPList& Refs, TRefList& output)  {
+    TPtrList<const TReflection> refs;
     refs.SetCapacity( Refs.Count() );
     for( int i=0; i < Refs.Count(); i++ )  {
       if( Refs[i]->GetTag() <= 0 )  continue;  // skip omited reflections
       refs.Add( Refs[i] );
     }
-    // sort the list
-    TReflection::SortPList(refs);
-    // merge reflections
-    toMerge.Add(refs[0]);  // reference reflection
-    const int ref_cnt = refs.Count();
-    output.SetCapacity( ref_cnt ); // better more that none :)
-    for( int i=0; i < ref_cnt; )  {
-      while( (++i < ref_cnt) && (toMerge[0]->CompareTo(*refs[i]) == 0) )
-        toMerge.Add( refs[i] );
-      MergerOut mo = RefListMerger::Merge( toMerge );
-      if( toMerge.Count() > 1 )  {
-        if( mo.sigInt > mo.ref->GetS() )
-          mo.ref->SetS( mo.sigInt );
-      }
-      output.Add(mo.ref);
-
-      if( i >= ref_cnt )  break;
-
-      toMerge.Clear();
-      toMerge.Add( refs[i] );
-    }
+    return DoMergeInP1<RefListMerger,TRefPList>(refs, Refs, output);
   }
+template <class RefListMerger> static MergeStats MergeInP1(const TRefList& Refs, TRefList& output)  {
+    TPtrList<const TReflection> refs;
+    refs.SetCapacity( Refs.Count() );
+    for( int i=0; i < Refs.Count(); i++ )  {
+      if( Refs[i]->GetTag() <= 0 )  continue;  // skip omited reflections
+      refs.Add( &Refs[i] );
+    }
+    return DoMergeInP1<RefListMerger,TRefList>(refs, Refs, output);
+  }
+
   struct MergerOut  {
     TReflection* ref;
     double sigInt, sumI, sumDiff;

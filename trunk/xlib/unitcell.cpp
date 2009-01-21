@@ -77,12 +77,12 @@ TEValue<double> TUnitCell::CalcVolumeEx()  const  {
   double t = sqrt(1-cs.QLength() + 2*cs.Mul());
   double r = ax.Mul();
   double v = r*t;
-  double esd = sqrt( QRT(ax[1]*ax[2]*t*axe[0]) +  
-    QRT(ax[0]*ax[2]*t*axe[1]) +
-    QRT(ax[0]*ax[1]*t*axe[2]) +
-    QRT(r/t*ss[0]*(cs[0]-cs[1]*cs[2])*ange[0]) +
-    QRT(r/t*ss[1]*(cs[1]-cs[0]*cs[2])*ange[1]) +
-    QRT(r/t*ss[2]*(cs[2]-cs[0]*cs[1])*ange[2]) 
+  double esd = sqrt( sqr(ax[1]*ax[2]*t*axe[0]) +  
+    sqr(ax[0]*ax[2]*t*axe[1]) +
+    sqr(ax[0]*ax[1]*t*axe[2]) +
+    sqr(r/t*ss[0]*(cs[0]-cs[1]*cs[2])*ange[0]) +
+    sqr(r/t*ss[1]*(cs[1]-cs[0]*cs[2])*ange[1]) +
+    sqr(r/t*ss[2]*(cs[2]-cs[0]*cs[1])*ange[2]) 
     );
   return  TEValue<double>(v, esd);
 }

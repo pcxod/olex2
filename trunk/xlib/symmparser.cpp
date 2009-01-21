@@ -134,8 +134,8 @@ olxstr TSymmParser::MatrixToSymm(const smatd& M)  {
         if( M.r[j][i] != 0 )  {
           //if( M[j][3] != 0 )
           T1 << CharSign(M.r[j][i]);
-          if( fabs(fabs(M.r[j][i])-1) > 1e-5 )
-            T1 << (double)M.r[j][i];
+          //if( olx_abs(olx_abs(M.r[j][i])-1) > 1e-5 )
+          //  T1 << (double)M.r[j][i];
           T1 << Axis[j];
         }
         continue;
@@ -168,8 +168,8 @@ olxstr TSymmParser::MatrixToSymmEx(const smatd& M)  {
         if( M.r[j][i] != 0 )  {
           //if( M[j][3] != 0 )
           T1 << CharSign(M.r[j][i]);
-          if( fabs(fabs(M.r[j][i])-1) > 1e-5 )
-            T1 << (double)M.r[j][i];
+          //if( olx_abs(olx_abs(M.r[j][i])-1) > 1e-5 )
+          //  T1 << (double)M.r[j][i];
           T1 << Axis[j];
         }
         continue;
@@ -187,7 +187,7 @@ olxstr TSymmParser::MatrixToSymmEx(const smatd& M)  {
   return T;
 }
 //..............................................................................
-olxstr TSymmParser::MatrixToSymmEx(const mat3d& M)  {
+olxstr TSymmParser::MatrixToSymmEx(const mat3i& M)  {
   olxstr T, T1, T2;
   char Axis[] = {'X','Y','Z'};
   for( int j=0; j < 3; j ++ )  {
@@ -198,8 +198,8 @@ olxstr TSymmParser::MatrixToSymmEx(const mat3d& M)  {
         if( M[j][i] != 0 )  {
           //if( M[j][3] != 0 )
           T1 << CharSign(M[j][i]);
-          if( fabs(fabs(M[j][i])-1) > 1e-5 )
-            T1 << (double)M[j][i];
+          //if( olx_abs(olx_abs(M[j][i])-1) > 1e-5 )
+          //  T1 << (double)M[j][i];
           T1 << Axis[j];
         }
         continue;

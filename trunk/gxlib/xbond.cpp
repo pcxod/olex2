@@ -50,7 +50,7 @@ void TXBond::BondUpdated()  {
     Params()[3] = C.Length();
     C.Normalise();
     Params()[0] = (float)(acos(C[2])*180/M_PI);
-    if( fabs(Params()[0]-180) < 0.001 )  { // degenerate case with Pi rotation
+    if( olx_abs(Params()[0]-180) < 0.001 )  { // degenerate case with Pi rotation
       Params()[1] = 0;
       Params()[2] = 1;
     }
