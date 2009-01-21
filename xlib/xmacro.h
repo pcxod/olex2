@@ -51,6 +51,7 @@ class XLibMacros  {
   static DefMacro(LstFun)
   static DefMacro(LstVar)
   static DefMacro(LstFS)
+  static DefMacro(ASR)
 
   static DefMacro(Flush)
 

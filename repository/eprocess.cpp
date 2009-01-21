@@ -224,7 +224,7 @@ bool TWinProcess::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender, co
     break;
   }
   // Win98 fix... as PeekNamedPipe does not fail after the process is terminate
-  if( wasted > 15 )  {
+  if( wasted > 25 )  {
     unsigned long pec = 0;
     if( !Terminated && GetExitCodeProcess(ProcessInfo.hProcess, &pec) != 0 )
       if( pec != STILL_ACTIVE )

@@ -244,7 +244,7 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
           ml.AddNew( ml[i] ) *= -1;
         ml.AddNew().I() *= -1;
       }
-      _HklStat = RefMerger::Merge<TSimpleMerger>(ml, Refs, output);
+      _HklStat = RefMerger::Merge<RefMerger::ShelxMerger>(ml, Refs, output);
     }
   }
   catch(TExceptionBase&)  {
