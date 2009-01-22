@@ -1995,18 +1995,20 @@ void TMainForm::macKill(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     if( Cmds[0].Comparei("sel") == 0 )  {
       TPtrList<AGDrawObject> Objects;
       TGlGroup *sel = FXApp->Selection();
-      FXApp->GetLog() << "Deleting ";
+      olxstr out;
       for( int i=0; i < sel->Count(); i++ )  {
         Objects.Add( sel->Object(i) );
         if( EsdlInstanceOf(*sel->Object(i), TXAtom) )
-          FXApp->GetLog() << ((TXAtom*)sel->Object(i))->Atom().GetLabel();
+          out << ((TXAtom*)sel->Object(i))->Atom().GetLabel();
         else
-          FXApp->GetLog() << sel->Object(i)->GetCollectionName();
-        FXApp->GetLog() << ' ';
+          out << sel->Object(i)->GetCollectionName();
+        out << ' ';
       }
-      FXApp->GetLog() << '\n';
-      FUndoStack->Push( FXApp->DeleteXObjects( Objects ) );
-      sel->RemoveDeleted();
+      if( !out.IsEmpty()  )  {
+        FXApp->GetLog() << "Deleting " << out << '\n';
+        FUndoStack->Push( FXApp->DeleteXObjects( Objects ) );
+        sel->RemoveDeleted();
+      }
     }
     else if( Cmds[0].Comparei("$Q") == 0 )  {
       TXAtomPList Atoms;
@@ -2025,7 +2027,7 @@ void TMainForm::macKill(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   for( int i=0; i < Atoms.Count(); i++ )
     FXApp->GetLog() << Atoms[i]->Atom().GetLabel() << ' ';
   FXApp->GetLog() << '\n';
-  FXApp->GetLog() << "Please execute 'fuse' to recalculate the connectivity if using any functions using it";
+  FXApp->GetLog() << "Please execute 'fuse' to recalculate the connectivity if using any functions using it\n";
   FUndoStack->Push( FXApp->DeleteXAtoms(Atoms) );
 }
 //..............................................................................
