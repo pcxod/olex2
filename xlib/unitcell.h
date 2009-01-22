@@ -31,6 +31,7 @@ public:
   void Clear();
 
   inline int MatrixCount()             const {  return Matrices.Count();  }
+  // the identity matrix is always the first
   inline const smatd& GetMatrix(int i) const {  return Matrices[i];  }
 
   const TEllipsoid& GetEllipsoid(int MatrixId, int AUId) const;

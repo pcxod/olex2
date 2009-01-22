@@ -6,7 +6,7 @@
 #include "arrays.h"
 #include "asymmunit.h"
 
-#include "refutil.h"
+#include "refmerge.h"
 #include "symmlib.h"
 
 BeginXlibNamespace()

@@ -5,7 +5,7 @@
 #include "sgtest.h"
 #include "edlist.h"
 #include "tptrlist.h"
-#include "refutil.h"
+#include "refmerge.h"
 
 TSGTest::TSGTest( const olxstr& hklFileName, const mat3d& hkl_transform)  {
   Hkl3DArray = NULL;

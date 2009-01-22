@@ -6,6 +6,7 @@
 #include "pers_util.h"
 #include "unitcell.h"
 #include "xapp.h"
+#include "refmerge.h"
 
 RefinementModel::RefinementModel(TAsymmUnit& au) : rDFIX(*this, rltBonds), rDANG(*this, rltBonds), 
   rSADI(*this, rltBonds), rCHIV(*this, rltAtoms), rFLAT(*this, rltGroup), rDELU(*this, rltAtoms), 
@@ -183,6 +184,8 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
     if( hkl_src_id == HklStatFileID &&
       _HklStat.OMIT_s == OMIT_s &&
       _HklStat.OMIT_2t == OMIT_2t &&
+      _HklStat.SHEL_lr == SHEL_lr &&
+      _HklStat.SHEL_hr == SHEL_hr &&
       _HklStat.MERG == MERG && !OMITs_Modified )  
     {
       return _HklStat;
@@ -249,6 +252,8 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
       _HklStat.MERG = MERG;
       _HklStat.OMIT_s = OMIT_s;
       _HklStat.OMIT_2t = OMIT_2t;
+      _HklStat.SHEL_lr = SHEL_lr;
+      _HklStat.SHEL_hr = SHEL_hr;
       if( MERG != 0 )  {
         smatd_list ml;
         sg->GetMatrices(ml, mattAll^mattIdentity);
