@@ -173,7 +173,7 @@ public:
             smatd* SymM = new smatd;
             TSymmParser::SymmToMatrix(Toks.Text(EmptyString), *SymM);
             cx.rm.AddUsedSymm(*SymM);
-            cx.rm.AddUsedSymm( *SymM );
+            cx.rm.AddUsedSymm(*SymM);  // make it persistent, as it might be used where we no nothing about
             delete SymM;
             SL[i] = EmptyString;
           }

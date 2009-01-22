@@ -128,7 +128,7 @@ public:
     // check if it is just an equivalent position
     const smatd* eqiv = NULL;
     int eqiv_ind = resi_name.IndexOf('$');
-    if( eqiv_ind > 0 )  {  // 0 is for SFAC type
+    if( eqiv_ind >= 0 )  {  
       olxstr str_eqiv( resi_name.SubStringFrom(eqiv_ind+1) );
       if( !str_eqiv.IsNumber() )  throw TInvalidArgumentException(__OlxSourceInfo, olxstr("equivalent id: ") << str_eqiv);
       int eqi = str_eqiv.ToInt()-1;
