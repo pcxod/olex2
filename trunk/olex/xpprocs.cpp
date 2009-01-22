@@ -3110,7 +3110,7 @@ void TMainForm::macDfix(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   if( Atoms.IsEmpty() )  {
     TGlGroup* sel = FXApp->Selection();
     
-    if( sel->Count() > 1 ) {
+    if( sel->Count() > 0 ) {
       TSimpleRestraint *sr = &FXApp->XFile().GetRM().rDFIX.AddNew();
       sr->SetEsd( esd );
       sr->SetValue( fixLen );
