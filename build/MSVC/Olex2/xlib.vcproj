@@ -511,6 +511,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\xlib\refutil.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\xlib\samegroup.cpp"
 				>
 			</File>
@@ -742,6 +746,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\xlib\reflection.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\xlib\refmerge.h"
 				>
 			</File>
 			<File

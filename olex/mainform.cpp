@@ -2975,10 +2975,11 @@ void TMainForm::BadReflectionsTable(bool TableDef)  {
     Table[i][0] = Ref.H;
     Table[i][1] = Ref.K;
     Table[i][2] = Ref.L;
+    Table[i][3] << ((Ref.Fc > Ref.Fo) ? '+' : '-');
     if( Ref.DF >= 10 ) 
       Table[i][3] << "<font color=\'red\'>" << Ref.DF << "</font>";
-    else
-      Table[i][3] = Ref.DF;
+    else  
+      Table[i][3] << Ref.DF;
     if( Ref.Deleted )
       Table[i][4] << "Omitted";
     else
