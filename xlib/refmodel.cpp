@@ -131,8 +131,8 @@ RefinementModel& RefinementModel::Assign(const RefinementModel& rm, bool AssignA
   ExyzGroups.Assign(rm.ExyzGroups);
   AfixGroups.Assign(rm.AfixGroups);
 
-  for( int i=0; i < rm.UsedSymm.Count(); i++ )
-    UsedSymm.AddCCopy( rm.UsedSymm[i] );
+  for( int i=0; i < rm.UsedSymm.Count(); i++ )  // need to validate for duplication
+    AddUsedSymm( rm.UsedSymm[i] );
 
   for( int i=0; i < rm.SfacData.Count(); i++ )
     SfacData.Add(rm.SfacData.GetComparable(i), new XScatterer( *rm.SfacData.GetObject(i)) );
@@ -444,9 +444,13 @@ void RefinementModel::ToDataItem(TDataItem& item) {
   item.AddField("RefInArg", PersUtil::NumberListToStr(LS));
 
   // save used equivalent positions
+  TIntList mat_tags(UsedSymm.Count());
   TDataItem& eqiv = item.AddItem("eqiv");
-  for( int i=0; i < UsedSymm.Count(); i++ )  
+  for( int i=0; i < UsedSymm.Count(); i++ )  {
     eqiv.AddItem(i, TSymmParser::MatrixToSymmEx(UsedSymm[i]));
+    mat_tags[i] = UsedSymm[i].GetTag();
+    UsedSymm[i].SetTag(i);
+  }
   
   Vars.ToDataItem(item.AddItem("leqs"));
   expl.ToDataItem(item.AddItem("expl"));  
@@ -476,6 +480,9 @@ void RefinementModel::ToDataItem(TDataItem& item) {
   omits.AddField("hkl", PersUtil::VecListToStr(Omits));
   item.AddItem("TWIN", TWIN_set).AddField("mat", TSymmParser::MatrixToSymmEx(TWIN_mat)).AddField("n", TWIN_n);
   item.AddItem("MERG", MERG_set).AddField("val", MERG);
+  // restore matrix tags
+  for( int i=0; i < UsedSymm.Count(); i++ )
+    UsedSymm[i].SetTag( mat_tags[i] );
 }
 //....................................................................................................
 void RefinementModel::FromDataItem(TDataItem& item) {
@@ -541,16 +548,18 @@ PyObject* RefinementModel::PyExport(bool export_connectivity)  {
     *eq = PyTuple_New(UsedSymm.Count());
   TPtrList<PyObject> atoms, equivs;
   PyDict_SetItemString(main, "aunit", aunit.PyExport(atoms) );
-
+  TIntList mat_tags(UsedSymm.Count());
   for( int i=0; i < UsedSymm.Count(); i++ )  {
-    const smatd& m = UsedSymm[i];
+    smatd& m = UsedSymm[i];
     PyTuple_SetItem(eq, i, 
       equivs.Add(
-        Py_BuildValue("(ddd)(ddd)(ddd)(ddd)", m.r[0][0], m.r[0][1], m.r[0][2],
+        Py_BuildValue("(iii)(iii)(iii)(ddd)", m.r[0][0], m.r[0][1], m.r[0][2],
           m.r[1][0], m.r[1][1], m.r[1][2],
           m.r[2][0], m.r[2][1], m.r[2][2],
           m.t[0], m.t[1], m.t[2]
       )) );
+    mat_tags[i] = m.GetTag();
+    m.SetTag(i);
   }
   PyDict_SetItemString(main, "equivalents", eq);
 
@@ -615,6 +624,9 @@ PyObject* RefinementModel::PyExport(bool export_connectivity)  {
     }
   }
   //
+  // restore matrix tags
+  for( int i=0; i < UsedSymm.Count(); i++ )
+    UsedSymm[i].SetTag( mat_tags[i] );
   return main;
 }
 #endif

@@ -17,7 +17,7 @@ PyObject* TAtomEnvi::PyExport(TPtrList<PyObject>& atoms)  {
       PyTuple_SetItem(neighbours, i, 
         Py_BuildValue("OOO", Py_BuildValue("i", Envi[i].GetA()->GetTag()),
           Py_BuildValue("(ddd)", crd[0], crd[1], crd[2]),
-            Py_BuildValue("(ddd)(ddd)(ddd)(ddd)", 
+            Py_BuildValue("(iii)(iii)(iii)(ddd)", 
               mat.r[0][0], mat.r[0][1], mat.r[0][2],
               mat.r[1][0], mat.r[1][1], mat.r[1][2],
               mat.r[2][0], mat.r[2][1], mat.r[2][2],
