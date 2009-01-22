@@ -109,6 +109,7 @@ void  TUnitCell::InitMatrices()  {
   TAsymmUnit& au = GetLattice().GetAsymmUnit();
   Matrices.Clear();
   Matrices.SetCapacity( GetMatrixMultiplier(au.GetLatt())*au.MatrixCount());
+  Matrices.AddNew().r.I();
   // check if the E matrix is in the list
   for( int i=0;  i < au.MatrixCount(); i++ )  {
     const smatd& m = au.GetMatrix(i);
@@ -116,10 +117,7 @@ void  TUnitCell::InitMatrices()  {
     Matrices.AddNew( m );
   }
 
-  smatd* M = new smatd;  // insert the identity matrix at position 0
-  M->r.I();
-  Matrices.Insert(0, *M);  // I Matrix
-
+  smatd* M;
   for( int i=0; i < Matrices.Count(); i++ )  {
     smatd& m = Matrices[i];
     switch( abs(au.GetLatt()) )  {

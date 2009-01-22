@@ -4,7 +4,7 @@
 #include "xscatterer.h"
 #include "experimental.h"
 #include "leq.h"
-#include "refutil.h"
+#include "refmerge.h"
 #include "afixgroup.h"
 #include "exyzgroup.h"
 #include "reflection.h"
@@ -46,7 +46,8 @@ protected:
 public:
   // needs to be extended for the us of the batch numbers...
   struct HklStat : public MergeStats {
-    double MaxD, MinD, LimDmin, LimDmax, OMIT_s, OMIT_2t;
+    double MaxD, MinD, LimDmin, LimDmax, 
+      OMIT_s, OMIT_2t, SHEL_lr, SHEL_hr;
     int MERG;
     //vec3i maxInd, minInd;
     int FilteredOff, // by LimD, OMIT_2t, SHEL_hr, SHEL_lr
@@ -63,6 +64,7 @@ public:
       MergeStats::operator = (hs);
       MaxD = hs.MaxD;         MinD = hs.MinD; 
       OMIT_s = hs.OMIT_s;     OMIT_2t = hs.OMIT_2t;
+      SHEL_lr = hs.SHEL_lr;   SHEL_hr = hs.SHEL_hr;
       LimDmin = hs.LimDmin;   LimDmax = hs.LimDmax;
       FilteredOff = hs.FilteredOff;
       IntensityTransformed = hs.IntensityTransformed;
@@ -82,6 +84,8 @@ public:
       MERG = def_MERG;
       OMIT_s = def_OMIT_s;
       OMIT_2t = def_OMIT_2t;
+      SHEL_lr = def_SHEL_lr;
+      SHEL_hr = def_SHEL_hr;
       reflections.Clear();
     }
   };

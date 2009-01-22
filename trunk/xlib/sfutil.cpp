@@ -166,14 +166,14 @@ void SFUtil::CalcSF(TXFile& xfile, const TRefList& refs, TArrayList<TEComplex<do
   TSpaceGroup* sg = NULL;
   try  { sg = &xfile.GetLastLoaderSG();  }
   catch(...)  {
-    throw TFunctionFailedException(__OlxSourceInfo, "unknown spacegroup");
+    throw TFunctionFailedException(__OlxSourceInfo, "unknown space group");
   }
   TAsymmUnit& au = xfile.GetAsymmUnit();
   const mat3d& hkl2c = au.GetHklToCartesian();
   double quad[6];
   const static double EQ_PI = 8*M_PI*M_PI;
   const static double TQ_PI = 2*M_PI*M_PI;
-  double WaveLength = 0.71073;
+  double WaveLength = xfile.GetRM().expl.GetRadiation();
 
   // the thermal ellipsoid scaling factors
   double BM[6] = {hkl2c[0].Length(), hkl2c[1].Length(), hkl2c[2].Length(), 0, 0, 0};

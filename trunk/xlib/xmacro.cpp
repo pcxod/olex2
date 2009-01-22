@@ -491,7 +491,7 @@ void XLibMacros::macGraphPD(TStrObjList &Cmds, const TParamList &Options, TMacro
       d_hkl[0]*hkl2c[0][1] + d_hkl[1]*hkl2c[1][1],
       d_hkl[0]*hkl2c[0][2] + d_hkl[1]*hkl2c[1][2] + d_hkl[2]*hkl2c[2][2]);
     const double theta_2 = 360*asin(d_2_sin*hkl.Length())/M_PI;
-    gd.AddNew( theta_2, ref.GetI()*ref.GetDegeneracy());
+    gd.AddNew( theta_2, ref.GetI()*ref.GetMultiplicity());
   }
   gd.QuickSorter.SortSF(gd, macGraphPD_Sort);
   min_2t = gd[0].GetA();

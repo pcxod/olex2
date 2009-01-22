@@ -90,12 +90,12 @@ public:
     res[2] = Round(H*mat.r[0][2] + K*mat.r[1][2] + L*mat.r[2][2]);
   }
 //..............................................................................
-  /* replaces hkl with standard hkl accroding to provided matrices. Initialises Absent flag */
+  /* replaces hkl with standard hkl accroding to provided matrices. 
+  Also performs the reflection analysis, namely:
+  Initialises Absent flag
+  */
   void Standardise(const smatd_list &ml)  {
     vec3i hklv;
-    Multiplicity = 1;
-    Centric = false;
-    Absent = false;
     for(int i=0; i < ml.Count(); i++ )  {
       MulHkl(hklv, ml[i]);
       if( (hklv[2] > L) ||        // sdandardise then ...
@@ -103,11 +103,9 @@ public:
           ((hklv[2] == L) && (hklv[1] == K) && (hklv[0] > H)) )    {
           H = hklv[0];  K = hklv[1];  L = hklv[2];
       }
-      else if( EqHkl(hklv) )  {  // centric reflection
-        if( !Absent )  {
-          double l = PhaseShift(ml[i]);
-          Absent = (olx_abs( l - Round(l) ) > 0.01);
-        }
+      else if( !Absent && EqHkl(hklv) )  {  // only if there is no change
+        const double ps = PhaseShift(ml[i]);
+        Absent = (olx_abs( ps - Round(ps) ) > 0.01);
       }
     }
   }
@@ -125,13 +123,13 @@ public:
     for(int i=0; i < ml.Count(); i++ )  {
       MulHkl(hklv, ml[i]);
       if( EqHkl(hklv) )  {  // symmetric reflection
-        IncDegeneracy();
+        IncMultiplicity();
         if( !Absent )  {
           double l = PhaseShift(ml[i]);
           Absent = (olx_abs( l - Round(l) ) > 0.01);
         }
       }
-      else if( EqNegHkl(hklv) )  // centric reflection
+      else if( !Centric && EqNegHkl(hklv) )  // centric reflection
         Centric = true;
     }
   }
@@ -141,33 +139,17 @@ public:
     MulHkl(hklv, m);
     return EqHkl(hklv);
   }
-  static bool IsSymmetric(const TReflection& r, const smatd_list& ml)  {
-    vec3i hklv;
-    for( int i=0; i < ml.Count(); i++ )  {
-      r.MulHkl(hklv, ml[i]);
-      if( r.EqHkl(hklv) )  return true;
-    }
-    return false;
-  }
 //..............................................................................
   inline bool IsCentrosymmetric(const smatd& m) const {
     vec3i hklv;
     MulHkl(hklv, m);
     return EqNegHkl(hklv);
   }
-  inline static bool IsCentrosymmetric(const TReflection& r, const smatd_list &ml)  {
-    vec3i hklv;
-    for( int i=0; i < ml.Count(); i++ )  {
-      r.MulHkl(hklv, ml[i]);
-      if( r.EqNegHkl(hklv) )  return true;
-    }
-    return false;
-  }
 //..............................................................................
-  static bool IsSystematicallyAbsent(const TReflection& r, const smatd_list &ml)  {
+  bool IsAbsent(const smatd_list &ml) const {
     for( int i=0; i < ml.Count(); i++ )  {
-      if( r.IsSymmetric(ml[i]) )  {
-        double l = r.PhaseShift(ml[i]);
+      if( IsSymmetric(ml[i]) )  {
+        double l = PhaseShift(ml[i]);
         if( olx_abs( l - Round(l) ) > 0.01 )  return true;
       }
     }
@@ -189,26 +171,24 @@ public:
   static int CompareP(const TReflection *a, const TReflection *b)  {
     return a->CompareTo(*b);
   }
-  static void SortList(TTypeList<TReflection>& lst)  {  lst.QuickSorter.SortSF(lst, TReflection::Compare);  }
+  static void SortList(TTypeList<TReflection>& lst)  {  
+    lst.QuickSorter.SortSF(lst, TReflection::Compare);  
+  }
+  // could be list of pointers or list of const pointers
   template <class RefPList> static void SortPList(RefPList& lst)  {  
     lst.QuickSorter.SortSF(lst, TReflection::CompareP);  
   }
 //..............................................................................
-  // these values are intialised by Hkl file function AnalyseReflections
-  inline void SetCentric(bool v)         {  Centric = v;  }
-  inline bool IsCentric()          const {  return Centric;  }
-  inline bool IsAbsent()           const {  return Absent;  }
-  inline short GetDegeneracy()     const {  return Multiplicity;  }
-  inline void SetDegeneracy(short v)     {  Multiplicity = v;  }
-  inline void IncDegeneracy()            {  Multiplicity++;  }
+  // these values are intialised by Analyse
+  DefPropB(Centric)
+  DefPropB(Absent)
+  DefPropP(short, Multiplicity)
+  inline void IncMultiplicity()  {  Multiplicity++;  }
 //..............................................................................
-  inline int GetFlag()           const {  return Flag;  }
-  inline void SetFlag(short v)           {  Flag = v;  }
+  DefPropP(short, Flag)
 //..............................................................................
-  inline double GetI()             const {  return I;  }
-  inline void SetI(double v)             {  I = v;  }
-  inline double GetS()             const {  return S;  }
-  inline void SetS(double v)             {  S = v;  }
+  DefPropP(double, I)
+  DefPropP(double, S)
 //..............................................................................
   // returns a string: h k l ...
   TIString ToString() const  {

@@ -12,7 +12,7 @@ const short slstReflections = 1,
             slslRefineData  = 2;
 struct TLstRef  {
   short H, K, L;
-  double DF, Res;
+  double DF, Res, Fo, Fc;
   bool Deleted;
 };
 
