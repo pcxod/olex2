@@ -1,5 +1,5 @@
 #/bin/bash
-bin_dir=~/olex2
+bin_dir=~/test-build
 if [ ! -z $1 ] && [ -d $1 ] 
 then
   bin_dir=$1
