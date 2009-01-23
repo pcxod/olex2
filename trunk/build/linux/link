@@ -37,6 +37,7 @@ then
     echo "proxy="
     echo "repository=http://dimas.dur.ac.uk/olex-distro-test/update"
     echo "update=Always"
+    echo "exceptions=exe;dll;pyd;manifest"
   } > $usettings_file
 
   {
