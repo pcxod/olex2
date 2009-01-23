@@ -185,7 +185,7 @@ public:
   DefPropP(short, Multiplicity)
   inline void IncMultiplicity()  {  Multiplicity++;  }
 //..............................................................................
-  DefPropP(short, Flag)
+  DefPropP(int, Flag)
 //..............................................................................
   DefPropP(double, I)
   DefPropP(double, S)
