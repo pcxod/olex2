@@ -4206,6 +4206,27 @@ void TMainForm::macCalcVoid(TStrObjList &Cmds, const TParamList &Options, TMacro
       }
     }
   }
+  TCAtomPList catoms;
+  // consider the selection if any
+  TGlGroup* sel = FXApp->Selection();
+  for( int i=0; i < sel->Count(); i++ )  {
+    if( EsdlInstanceOf(*sel->Object(i), TXAtom) ) 
+      catoms.Add( &((TXAtom*)sel->Object(i))->Atom().CAtom() )->SetTag(catoms.Count());
+  }
+  for( int i=0; i < catoms.Count(); i++ )
+    if( catoms[i]->GetTag() != i )
+      catoms[i] = NULL;
+  catoms.Pack();
+  //
+  if( catoms.IsEmpty() )
+    TBasicApp::GetLog() << "Calculating for all atoms of the asymmetric unit\n";
+  else  {
+    olxstr atoms_str("Calculating for");
+    for( int i=0; i < catoms.Count(); i++ )
+      atoms_str << ' ' << catoms[i]->GetLabel();
+    FGlConsole->PrintText( atoms_str << " only" );
+  }
+
   TAsymmUnit& au = FXApp->XFile().GetAsymmUnit();
   double surfdis = Options.FindValue("d", "0.25").ToDouble();
   TBasicApp::GetLog() << "Extra distance from the surface: " << surfdis << '\n';
@@ -4213,7 +4234,7 @@ void TMainForm::macCalcVoid(TStrObjList &Cmds, const TParamList &Options, TMacro
   bool invert = Options.Contains("i");
   double resolution = Options.FindValue("r", "0.1").ToDouble();
   if( resolution < 0.01 )  
-    resolution = 0.01;
+    resolution = 0.02;
   resolution = 1./resolution;
   const int mapX = (int)(au.Axes()[0].GetV()*resolution),
 			mapY = (int)(au.Axes()[1].GetV()*resolution),
@@ -4222,10 +4243,12 @@ void TMainForm::macCalcVoid(TStrObjList &Cmds, const TParamList &Options, TMacro
   double mapVol = mapX*mapY*mapZ;
   TArray3D<short> map(0, mapX-1, 0, mapY-1, 0, mapZ-1);
   vec3d voidCenter;
-  short*** D = map.Data;
   size_t structureGridPoints = 0;
-  int MaxLevel = FXApp->CalcVoid(map, surfdis, -101, &structureGridPoints, voidCenter, 
-    radii.IsEmpty() ? NULL : &radii);
+
+  FXApp->XFile().GetUnitCell().BuildStructureMap(map, surfdis, -101, &structureGridPoints, 
+    radii.IsEmpty() ? NULL : &radii, catoms.IsEmpty() ? NULL : &catoms);
+  short MaxLevel = MapUtil::AnalyseVoids(map.Data, map.Length1(), map.Length2(), map.Length3(), voidCenter);
+
   double vol = FXApp->XFile().GetLattice().GetUnitCell().CalcVolume();
   TBasicApp::GetLog() << ( olxstr("Cell volume (A^3) ") << olxstr::FormatFloat(3, vol) << '\n');
   TBasicApp::GetLog() << ( olxstr("Max level reached ") << MaxLevel << '\n');
@@ -4233,7 +4256,8 @@ void TMainForm::macCalcVoid(TStrObjList &Cmds, const TParamList &Options, TMacro
     olxstr::FormatFloat(2, voidCenter[1]) << ", "  <<
     olxstr::FormatFloat(2, voidCenter[2]) << ")\n");
   TBasicApp::GetLog() << ( olxstr("Largest spherical void is (A^3) ") << olxstr::FormatFloat(3, MaxLevel*MaxLevel*MaxLevel*4*M_PI/(3*mapVol)*vol) << '\n');
-  TBasicApp::GetLog() << ( olxstr("Structure occupies (A^3) ") << olxstr::FormatFloat(3, structureGridPoints*vol/mapVol) 
+  TBasicApp::GetLog() << ( olxstr(catoms.IsEmpty() ? "Structure occupies" : "Selected atoms occupy") << " (A^3) "
+    << olxstr::FormatFloat(3, structureGridPoints*vol/mapVol) 
     << " (" << olxstr::FormatFloat(2, structureGridPoints*100/mapVol) << "%)\n");
   int minLevel = Round( pow( 6*mapVol*3/(4*M_PI*vol), 1./3) );
   TBasicApp::GetLog() << ( olxstr("6A^3 level is ") << minLevel << '\n');
@@ -4241,25 +4265,34 @@ void TMainForm::macCalcVoid(TStrObjList &Cmds, const TParamList &Options, TMacro
   for( int i=0; i < levels.Count(); i++ )
     levels[i] = 0;
   //FGlConsole->PostText( olxstr("0.5A level is ") << minLevel1 );
-  structureGridPoints = 0;
-  T3DIndexList allPoints;
-  allPoints.SetCapacity( (int)mapVol );
-  for(int i=0; i < mapX; i++ )  {
-    for(int j=0; j < mapY; j++ )  {
-      for(int k=0; k < mapZ; k++ )  {
-        if( D[i][j][k] > minLevel )
-          allPoints.Add( Main_3DIndex(i, j, k));
-        if( D[i][j][k] >= 0 )
-          levels[ D[i][j][k] ] ++;
+  short*** const D = map.Data;
+  if( catoms.IsEmpty() )  {  // makes no sense otherwise
+    structureGridPoints = 0;
+    T3DIndexList allPoints;
+    allPoints.SetCapacity( (int)mapVol );
+    for(int i=0; i < mapX; i++ )  {
+      for(int j=0; j < mapY; j++ )  {
+        for(int k=0; k < mapZ; k++ )  {
+          if( D[i][j][k] > minLevel )
+            allPoints.Add( Main_3DIndex(i, j, k));
+          if( D[i][j][k] >= 0 )
+            levels[ D[i][j][k] ] ++;
+        }
       }
     }
+    for( int i=0; i < allPoints.Count(); i++ )  {
+      if( InvestigateVoid(allPoints[i].x, allPoints[i].y, allPoints[i].z, map, allPoints) )
+        structureGridPoints ++;
+    }
+    allPoints.Clear();
+    TBasicApp::GetLog() << ( olxstr("Total solvent accessible area is (A^3) ") << olxstr::FormatFloat(3, structureGridPoints*vol/mapVol) << '\n');
+    double totalVol = 0;
+    for( int i=MaxLevel; i >= 0; i-- )  {
+      totalVol += levels[i];
+      TBasicApp::GetLog() << ( olxstr("Level ") << i << " corresponds to " <<
+        olxstr::FormatFloat(3, totalVol*vol/mapVol) << "(A^3)\n" );
+    }
   }
-  for( int i=0; i < allPoints.Count(); i++ )  {
-    if( InvestigateVoid(allPoints[i].x, allPoints[i].y, allPoints[i].z, map, allPoints) )
-      structureGridPoints ++;
-  }
-  allPoints.Clear();
-  TBasicApp::GetLog() << ( olxstr("Total solvent accessible area is (A^3) ") << olxstr::FormatFloat(3, structureGridPoints*vol/mapVol) << '\n');
   // set map to view voids
   if( invert )  {
     for(int i=0; i < mapX; i++ )  {
@@ -4285,14 +4318,9 @@ void TMainForm::macCalcVoid(TStrObjList &Cmds, const TParamList &Options, TMacro
       }
     }
   }
-  double totalVol = 0;
-  for( int i=MaxLevel; i >= 0; i-- )  {
-    totalVol += levels[i];
-    TBasicApp::GetLog() << ( olxstr("Level ") << i << " corresponds to " <<
-      olxstr::FormatFloat(3, totalVol*vol/mapVol) << "(A^3)\n" );
-  }
   //FXApp->XGrid().InitIso();
   FXApp->ShowGrid(true, EmptyString);
+  TBasicApp::GetLog() << '\n';
 }
 //..............................................................................
 void TMainForm::macViewGrid(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
