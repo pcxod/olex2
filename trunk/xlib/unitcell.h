@@ -87,49 +87,60 @@ public:
   /* This function creates a map of the unit cell with provided partioning.
   It uses Van-der-Waals atomic radii by defualt and adds delta to it. The grid points
   belonging to atoms have value 'value', the others - '0'
-  Returns the number of grid points occupied by the structure to structurePoinst if no NULL
+  Returns the number of grid points occupied by the structure to structurePoinst if not NULL.
+  If _template is provided - only these atoms are used int the calculation
   */
   void BuildStructureMap( TArray3D<short>& map, double delta, short value, 
-    size_t* structurePoints, TPSTypeList<TBasicAtomInfo*, double>* radii );
+    size_t* structurePoints, TPSTypeList<TBasicAtomInfo*, double>* radii, const TCAtomPList* _template = NULL );
 protected:
   // helper function, association should be AnAssociation2+<vec3d,TCAtom*,+>
   template <class Association> 
     static int AtomsSortByDistance(const Association& A1, const Association& A2)  {
-      double d = A1.GetA().QLength() - A2.GetA().QLength();
-      if( d < 0 )  return -1;
-      if( d > 0 )  return 1;
-      return 0;
+      const double d = A1.GetA().QLength() - A2.GetA().QLength();
+      return (d < 0 ? -1 : ((d > 0 ) ? 1 : 0));
     }
 public:
-  // association should be AnAssociation2+<vec3d,TCAtom*,+>
-  template <class Association> 
-  void GenereteAtomCoordinates(TTypeList<Association>& list, bool IncludeH) const  {
-    vec3d center;
-    list.SetCapacity(Lattice->GetAsymmUnit().AtomCount()*Matrices.Count());
-    for( int i=0; i < Lattice->GetAsymmUnit().AtomCount(); i++ )  {
-      TCAtom& ca = Lattice->GetAsymmUnit().GetAtom(i);
-      if( ca.GetAtomInfo() == iQPeakIndex || ca.IsDeleted() )  continue;
-      if( !IncludeH && ca.GetAtomInfo() == iHydrogenIndex )    continue;
+  // creates the array of matrices for a given aunit and lattice tyoe
+  static void GenerateMatrices(smatd_list& out, const TAsymmUnit& au, short lat);
+  // association should be AnAssociation2+<vec3d,TCAtom*,+>, generates all atoms of the aunit
+  template <class Association> void GenereteAtomCoordinates(TTypeList<Association>& list, bool IncludeH, 
+                    const TCAtomPList* _template = NULL) const  {
+    TCAtomPList& atoms = (_template == NULL ? *(new TCAtomPList) : *const_cast<TCAtomPList*>(_template));
+    if( _template == NULL )  {
+      list.SetCapacity(Lattice->GetAsymmUnit().AtomCount()*Matrices.Count());
+      for( int i=0; i < Lattice->GetAsymmUnit().AtomCount(); i++ )  {
+        TCAtom& ca = Lattice->GetAsymmUnit().GetAtom(i);
+        if( ca.GetAtomInfo() == iQPeakIndex || ca.IsDeleted() )  continue;
+        if( !IncludeH && ca.GetAtomInfo() == iHydrogenIndex )    continue;
+        atoms.Add(&ca);
+      }
+    }
+    list.SetCapacity(atoms.Count()*Matrices.Count());
+    const int atom_cnt = atoms.Count();
+    for( int i=0; i < atom_cnt; i++ )  {
+      TCAtom* ca = atoms[i];
+      if( ca->GetAtomInfo() == iQPeakIndex || ca->IsDeleted() )  continue;
       for( int j=0; j < Matrices.Count(); j++ )  {
-        center = Matrices[j] * ca.ccrd();
+        vec3d center = Matrices[j] * ca->ccrd();
         for( int k=0; k < 3; k++ )  {
           while( center[k] < 0 )  center[k] += 1;
           while( center[k] > 1 )  center[k] -= 1;
         }
-        list.AddNew(center, &ca);
+        list.AddNew(center, ca);
       }
     }
     // create a list of unique atoms
     float* distances = new float[ list.Count()+1 ];
     list.QuickSorter.SortSF( list, AtomsSortByDistance);
-    for( int i=0; i < list.Count(); i++ )
-      distances[i] = (float)list[i].GetA().Length();
+    const int lc = list.Count();
+    for( int i=0; i < lc; i++ )
+      distances[i] = (float)list[i].GetA().QLength();
 
-    for( int i=0; i < list.Count(); i++ )  {
+    for( int i=0; i < lc; i++ )  {
       if( list.IsNull(i) )  continue;
-      for( int j=i+1; j < list.Count(); j++ )  {
+      for( int j=i+1; j < lc; j++ )  {
         if( list.IsNull(j) )  continue;
-        if( (distances[j] - distances[i]) > 0.01 )  break;
+        if( (distances[j] - distances[i]) > 0.1 )  break;
         double d = list[i].GetA().QDistanceTo( list[j].GetA() );
         if( d < 0.00001 )  {
           list.NullItem(j);
@@ -139,6 +150,39 @@ public:
     }
     delete [] distances;
     list.Pack();
+    if( _template == NULL )
+      delete &atoms;
+  }
+  /* expands atom coordinates with +/-1 if one of the fractional coordinates is less the lim or greater than 1-lim
+  This function is used in the BuildStructure map function to take ito account atoms which are near the cell sides
+  */
+  template <class Association> void ExpandAtomCoordinates(TTypeList<Association>& list, const double lim)  {
+    list.SetCapacity( list.Count()*7 );
+    const double c_min = lim, c_max = 1.0 -lim;
+    const int all_ac = list.Count();
+    for( int i=0; i < all_ac; i++ )  {
+      const vec3d& v = list[i].GetA();
+      const double xi = v[0] < c_min ? 1 : (v[0] > c_max ? -1 : 0);
+      const double yi = v[1] < c_min ? 1 : (v[1] > c_max ? -1 : 0);
+      const double zi = v[2] < c_min ? 1 : (v[2] > c_max ? -1 : 0);
+      if( xi != 0 )  {
+        list.AddNew(vec3d(v[0]+xi, v[1], v[2]), list[i].B());
+        if( yi != 0 )  {
+          list.AddNew(vec3d(v[0]+xi, v[1]+yi, v[2]), list[i].B());
+          if( zi != 0 )
+            list.AddNew(vec3d(v[0]+xi, v[1]+yi, v[2]+zi), list[i].B());
+        }
+        if( zi != 0 )
+          list.AddNew(vec3d(v[0]+xi, v[1], v[2]+zi), list[i].B());
+      }
+      if( yi != 0 )  {
+        list.AddNew(vec3d(v[0], v[1]+yi, v[2]), list[i].B());
+        if( zi != 0 )
+          list.AddNew(vec3d(v[0], v[1]+yi, v[2]+zi), list[i].B());
+      }
+      if( zi != 0 )
+        list.AddNew(vec3d(v[0], v[1], v[2]+zi), list[i].B());
+    }
   }
   // returns true if the atom overlaps with another atom in the unit cell
   bool DoesOverlap(const TCAtom& ca, double R) const;

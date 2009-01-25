@@ -174,6 +174,57 @@ public:
     for( int level=0; level < maxLevel; level++ )
       delete SphereMask[level];
   }
+  /* Calculates the deepest hole and its fractional coordinates, initialising the map with 'levels'
+  expects a map with structure points marked as negative values and the rest - 0
+  */
+  template <typename map_type> static map_type AnalyseVoids(map_type*** map, int mapX, int mapY, int mapZ, 
+    vec3d& void_center)  {
+      int level = 0, MaxLevel = 0;
+      while( true )  {
+        bool levelUsed = false;
+        for(int i=0; i < mapX; i++ )  {
+          for(int j=0; j < mapY; j++ )  {
+            for(int k=0; k < mapZ; k++ )  {
+              // neigbouring points analysis
+              bool inside = true;
+              for(int ii = -1; ii <= 1; ii++)  {
+                for(int jj = -1; jj <= 1; jj++)  {
+                  for(int kk = -1; kk <= 1; kk++)  {
+                    int iind = i+ii, jind = j+jj, kind = k+kk;
+                    // index "rotation" step
+                    if( iind < 0 )  iind += mapX;
+                    if( jind < 0 )  jind += mapY;
+                    if( kind < 0 )  kind += mapZ;
+                    if( iind >= mapX )  iind -= mapX;
+                    if( jind >= mapY )  jind -= mapY;
+                    if( kind >= mapZ )  kind -= mapZ;
+                    // main condition
+                    if( map[iind][jind][kind] < level )  {
+                      inside = false;
+                      break;
+                    }
+                  }
+                  if( !inside )  break;
+                }
+                if( !inside )  break;
+              }
+              if( inside )  {
+                map[i][j][k] = level + 1;
+                levelUsed = true;
+                MaxLevel = level;
+                void_center[0] = (double)i/mapX;
+                void_center[1] = (double)j/mapY;
+                void_center[2] = (double)k/mapZ;
+              }
+            }
+          }
+        }
+        if( !levelUsed ) // reached the last point
+          break;
+        level ++;
+      }
+      return MaxLevel;
+  }
 };
 
 EndXlibNamespace()

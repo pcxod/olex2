@@ -105,69 +105,75 @@ int TUnitCell::GetMatrixMultiplier(short Latt)  {
 }
 //..............................................................................
 void  TUnitCell::InitMatrices()  {
-  TEStrBuffer Tmp;
-  TAsymmUnit& au = GetLattice().GetAsymmUnit();
   Matrices.Clear();
-  Matrices.SetCapacity( GetMatrixMultiplier(au.GetLatt())*au.MatrixCount());
-  Matrices.AddNew().r.I();
+  GenerateMatrices(Matrices, GetLattice().GetAsymmUnit(), GetLattice().GetAsymmUnit().GetLatt() );
+  const int mc = Matrices.Count();
+  for( int i=0; i < mc; i++ )
+    Matrices[i].SetTag(i);
+  UpdateEllipsoids();
+}
+//..............................................................................
+void TUnitCell::GenerateMatrices(smatd_list& out, const TAsymmUnit& au, short lat)  {
+  out.SetCapacity( GetMatrixMultiplier(au.GetLatt())*au.MatrixCount());
+  out.AddNew().r.I();
   // check if the E matrix is in the list
   for( int i=0;  i < au.MatrixCount(); i++ )  {
     const smatd& m = au.GetMatrix(i);
     if( m.r.IsI() )  continue;  // will need to insert the identity matrix at position 0
-    Matrices.AddNew( m );
+    out.AddNew( m );
   }
 
   smatd* M;
-  for( int i=0; i < Matrices.Count(); i++ )  {
-    smatd& m = Matrices[i];
-    switch( abs(au.GetLatt()) )  {
+  for( int i=0; i < out.Count(); i++ )  {
+    smatd& m = out[i];
+    switch( abs(lat) )  {
       case 1: break;
       case 2:      // Body Centered (I)
         M = new smatd(m);
         M->t[0] += 0.5f;     M->t[1] += 0.5f;     M->t[2] += 0.5f;
-        Matrices.Insert(i+1, *M);
+        out.Insert(i+1, *M);
         i++;
         break;
       case 3:      // R Centered
         M = new smatd(m);
         M->t[0] += (2./3.);  M->t[1] += (1./3.);  M->t[2] += (1./3.);
-        Matrices.Insert(i+1, *M);
+        out.Insert(i+1, *M);
         i++;
         M = new smatd(m);
         M->t[0] += (1./3.);  M->t[1] += (2./3.);  M->t[2] += (2./3.);
-        Matrices.Insert(i+1, *M);
+        out.Insert(i+1, *M);
         i++;
         break;
       case 4:      // Face Centered (F)
         M = new smatd(m);
         M->t[0] += 0.0;    M->t[1] += 0.5;  M->t[2] += 0.5;
-        Matrices.Insert(i+1, *M);
+        out.Insert(i+1, *M);
         i++;
         M = new smatd(m);
         M->t[0] += 0.5;  M->t[1] += 0;    M->t[2] += 0.5;
-        Matrices.Insert(i+1, *M);
+        out.Insert(i+1, *M);
         i++;
         M = new smatd(m);
         M->t[0] += 0.5;  M->t[1] += 0.5;  M->t[2] += 0;
-        Matrices.Insert(i+1, *M);
+        out.Insert(i+1, *M);
         i++;
         break;
       case 5:      // A Centered (A)
         M = new smatd(m);
         M->t[0] += 0;    M->t[1] += 0.5;  M->t[2] += 0.5;
-        Matrices.Insert(i+1, *M);
+        out.Insert(i+1, *M);
         i++;
         break;
       case 6:      // B Centered (B)
         M = new smatd(m);
         M->t[0] += 0.5;  M->t[1] += 0;    M->t[2] += 0.5;
-        Matrices.Insert(i+1, *M);
+        out.Insert(i+1, *M);
         i++;
         break;
       case 7:      // C Centered (C);
         M = new smatd(m);
         M->t[0] += 0.5;  M->t[1] += 0.5;  M->t[2] += 0;
-        Matrices.Insert(i+1, *M);
+        out.Insert(i+1, *M);
         i++;
         break;
       default:
@@ -175,18 +181,13 @@ void  TUnitCell::InitMatrices()  {
     }
   }
   if( au.GetLatt() > 0 )  {
-    for( int i=0; i < Matrices.Count(); i++ )  {
-      M = new smatd(Matrices[i]);
+    for( int i=0; i < out.Count(); i++ )  {
+      M = new smatd(out[i]);
       *M *= -1;
-      Matrices.Insert(i+1, *M);
+      out.Insert(i+1, *M);
       i++;
     }
   }
-
-  const int mc = Matrices.Count();
-  for( int i=0; i < mc; i++ )
-    Matrices[i].SetTag(i);
-  UpdateEllipsoids();
 }
 //..............................................................................
 void TUnitCell::UpdateEllipsoids()  {
@@ -795,12 +796,12 @@ TCAtom* TUnitCell::FindCAtom(const vec3d& center) const  {
 }
 //..............................................................................
 void TUnitCell::BuildStructureMap( TArray3D<short>& map, double delta, short val, 
-                                  size_t* structurePoints, TPSTypeList<TBasicAtomInfo*, double>* radii)  {
+                                  size_t* structurePoints, TPSTypeList<TBasicAtomInfo*, double>* radii,
+                                  const TCAtomPList* _template )  {
 
   TBasicApp::GetLog() << "Building structure map...\n";
   TTypeList< AnAssociation3<vec3d,TCAtom*, double> > allAtoms;
-  vec3d center, center1;
-  GenereteAtomCoordinates( allAtoms, true );
+  GenereteAtomCoordinates( allAtoms, true, _template );
   
   const int da = map.Length1(),
             db = map.Length2(),
@@ -808,32 +809,7 @@ void TUnitCell::BuildStructureMap( TArray3D<short>& map, double delta, short val
   const int map_dim[] = {da, db, dc};
   map.FastInitWith(0);
   // expand atom list to +/-1/3 of UC
-  allAtoms.SetCapacity( allAtoms.Count()*10 );
-  const double c_min = 1./3, c_max = 2./3;
-  const int all_ac = allAtoms.Count();
-  for( int i=0; i < all_ac; i++ )  {
-    const vec3d& v = allAtoms[i].GetA();
-    const double xi = v[0] < c_min ? 1 : (v[0] > c_max ? -1 : 0);
-    const double yi = v[1] < c_min ? 1 : (v[1] > c_max ? -1 : 0);
-    const double zi = v[2] < c_min ? 1 : (v[2] > c_max ? -1 : 0);
-    if( xi != 0 )  {
-      allAtoms.AddNew(vec3d(v[0]+xi, v[1], v[2]), allAtoms[i].B(), 0);
-      if( yi != 0 )  {
-        allAtoms.AddNew(vec3d(v[0]+xi, v[1]+yi, v[2]), allAtoms[i].B(), 0);
-        if( zi != 0 )
-          allAtoms.AddNew(vec3d(v[0]+xi, v[1]+yi, v[2]+zi), allAtoms[i].B(), 0);
-      }
-      if( zi != 0 )
-        allAtoms.AddNew(vec3d(v[0]+xi, v[1], v[2]+zi), allAtoms[i].B(), 0);
-    }
-    if( yi != 0 )  {
-      allAtoms.AddNew(vec3d(v[0], v[1]+yi, v[2]), allAtoms[i].B(), 0);
-      if( zi != 0 )
-        allAtoms.AddNew(vec3d(v[0], v[1]+yi, v[2]+zi), allAtoms[i].B(), 0);
-    }
-    if( zi != 0 )
-      allAtoms.AddNew(vec3d(v[0], v[1], v[2]+zi), allAtoms[i].B(), 0);
-  }
+  ExpandAtomCoordinates(allAtoms, 1./2);
   // precalculate the sphere/ellipsoid etc coordinates for all distinct scatterers
   const TAsymmUnit& au = GetLattice().GetAsymmUnit();
 
@@ -851,9 +827,8 @@ void TUnitCell::BuildStructureMap( TArray3D<short>& map, double delta, short val
     scatterers.Add(au.GetAtom(i).GetAtomInfo().GetIndex(), r);
   }
   for( int i=0; i < allAtoms.Count(); i++ )  {
-    double sr = scatterers[ allAtoms[i].GetB()->GetAtomInfo().GetIndex() ];
-    sr *= sr;
-    allAtoms[i].C() = sr;
+    const double sr = scatterers[ allAtoms[i].GetB()->GetAtomInfo().GetIndex() ];
+    allAtoms[i].C() = sr*sr;
     au.CellToCartesian(allAtoms[i].A());
   }
   const int ac = allAtoms.Count();
