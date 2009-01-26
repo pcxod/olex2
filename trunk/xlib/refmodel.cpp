@@ -304,8 +304,7 @@ void RefinementModel::Describe(TStrList& lst) {
   Validate();
   int sec_num = 0;
   if( (rDFIX.Count()|rDANG.Count()|rSADI.Count()) != 0 )  {
-    sec_num++;
-    lst.Add(olxstr(sec_num)) << ". Restrained distances";
+    lst.Add(olxstr(++sec_num)) << ". Restrained distances";
     for( int i=0; i < rDFIX.Count(); i++ )  {
       TSimpleRestraint& sr = rDFIX[i];
       olxstr& str = lst.Add(EmptyString);
@@ -338,8 +337,7 @@ void RefinementModel::Describe(TStrList& lst) {
     }
   }
   if( rCHIV.Count() != 0 )  {
-    sec_num++;
-    lst.Add(olxstr(sec_num)) << ". Restrained atomic chiral volume";
+    lst.Add(olxstr(++sec_num)) << ". Restrained atomic chiral volume";
     for( int i=0; i < rCHIV.Count(); i++ )  {
       TSimpleRestraint& sr = rCHIV[i];
       olxstr& str = lst.Add(EmptyString);
@@ -352,8 +350,7 @@ void RefinementModel::Describe(TStrList& lst) {
     }
   }
   if( rDELU.Count() != 0 )  {
-    sec_num++;
-    lst.Add(olxstr(sec_num)) << ". Rigid bond restraints";
+    lst.Add(olxstr(++sec_num)) << ". Rigid bond restraints";
     for( int i=0; i < rDELU.Count(); i++ )  {
       TSimpleRestraint& sr = rDELU[i];
       if( sr.GetEsd() == 0 || sr.GetEsd1() == 0 )  continue;
@@ -373,8 +370,7 @@ void RefinementModel::Describe(TStrList& lst) {
     }
   }
   if( (rSIMU.Count()|rISOR.Count()|rEADP.Count()) != 0 )  {
-    sec_num++;
-    lst.Add(olxstr(sec_num)) << ". Uiso/Uaniso restraints and constraints";
+    lst.Add(olxstr(++sec_num)) << ". Uiso/Uaniso restraints and constraints";
     for( int i=0; i < rSIMU.Count(); i++ )  {
       TSimpleRestraint& sr = rSIMU[i];
       olxstr& str = lst.Add(EmptyString);
@@ -411,16 +407,18 @@ void RefinementModel::Describe(TStrList& lst) {
       TSimpleRestraint& sr = rEADP[i];
       olxstr& str = lst.Add(EmptyString);
       for( int j=0; j < sr.AtomCount(); j++ )  {
-        if( sr.GetAtom(j).GetAtom()->GetEllipsoid() == NULL )  continue;
-        str << "U(" << sr.GetAtom(j).GetFullLabel(*this) << ')';
+        if( sr.GetAtom(j).GetAtom()->GetEllipsoid() == NULL )
+          str << "Uiso(";
+        else 
+          str << "Uanis(";
+        str << sr.GetAtom(j).GetFullLabel(*this) << ')';
         if( (j+1) < sr.AtomCount() )
           str << " = ";
       }
     }
   }
   if( ExyzGroups.Count() != 0 )  {
-    sec_num++;
-    lst.Add(olxstr(sec_num)) << ". Shared sites";
+    lst.Add(olxstr(++sec_num)) << ". Shared sites";
     for( int i=0; i < ExyzGroups.Count(); i++ )  {
       TExyzGroup& sr = ExyzGroups[i];
       olxstr& str = lst.Add('{');
@@ -431,6 +429,12 @@ void RefinementModel::Describe(TStrList& lst) {
       }
       str << '}';
     }
+  }
+  TStrList vars;
+  Vars.Describe(vars);
+  if( !vars.IsEmpty() )  {
+    lst.Add(++sec_num) << ". Other restraints";
+    lst.AddList(vars);
   }
 }
 //....................................................................................................

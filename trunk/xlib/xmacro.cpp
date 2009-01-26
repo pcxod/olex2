@@ -136,6 +136,7 @@ xlib_InitMacro(File, "s-sort the main residue of the asymmetric unit", fpNone|fp
   xlib_InitMacro(LstFS, EmptyString, fpAny, "Prints out detailed content of virtual file system. Accepts * based masks");
   xlib_InitMacro(SGS, EmptyString, fpOne|fpTwo|psFileLoaded, "Changes current space group settings using provided cell setting (if aplicable) and axis");
   xlib_InitMacro(ASR, EmptyString, fpNone^psFileLoaded, "Absolute structure refinement: adds TWIN and BASF to current model in the case of non-centrosymmetric structure");
+  xlib_InitMacro(Describe, EmptyString, fpNone^psFileLoaded, "Describes current refinement in a human readable form");
 //_________________________________________________________________________________________________________________________
 //_________________________________________________________________________________________________________________________
 
@@ -1060,6 +1061,7 @@ void XLibMacros::macEXYZ(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       ca.Label() = bai->GetSymbol() + atoms[0]->GetLabel().SubStringFrom( 
         atoms[0]->GetAtomInfo().GetSymbol().Length());
       ca.SetAtomInfo( bai );
+      ca.SetDegeneracy( atoms[0]->CAtom().GetDegeneracy() );
       rm.Vars.FixAtomParam(ca, var_name_Sof);
       eg->Add(ca);
       ca.SetUiso( atoms[0]->CAtom().GetUiso() );
@@ -2489,6 +2491,13 @@ void XLibMacros::macASR(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     xapp.XFile().GetRM().SetTWIN_n(2);
   if( xapp.XFile().GetRM().HasMERG() && xapp.XFile().GetRM().GetMERG() == 4 )
     xapp.GetLog() << "Please note, that currently Friedel pairs are merged\n";
+}
+//..............................................................................
+void XLibMacros::macDescribe(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  TXApp& xapp = TXApp::GetInstance();
+  TStrList lst;
+  xapp.XFile().GetRM().Describe(lst);
+  xapp.GetLog() << lst << '\n'; 
 }
 //..............................................................................
 

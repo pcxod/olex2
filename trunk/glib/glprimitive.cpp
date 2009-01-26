@@ -339,8 +339,19 @@ void TGlPrimitive::Draw()  {
   }
   else if( FType == sgloTriangles )  {
     glBegin(GL_TRIANGLES);
-    for( int i=0; i < FData.Elements(); i++ )
-      glVertex3d(FData[0][i], FData[1][i], FData[2][i]);
+    if( FData.Vectors() == 3 )  {
+      for( int i=0; i < FData.Elements(); i++ )
+        glVertex3d(FData[0][i], FData[1][i], FData[2][i]);
+    }
+    else if( FData.Vectors() == 4 )  {  //+normal
+      for( int i=0; i < FData.Elements(); i++ )  {
+        if( (i%3) == 0 )  {
+          const int ni = i/3;
+          glNormal3d(FData[3][ni], FData[3][ni+1], FData[3][ni+2]);
+        }
+        glVertex3d(FData[0][i], FData[1][i], FData[2][i]);
+      }
+    }
     glEnd();
   }
   else if( FType == sgloQuads )  {
