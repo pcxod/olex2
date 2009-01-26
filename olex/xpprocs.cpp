@@ -1180,15 +1180,16 @@ void TMainForm::macPict(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     }
   }
 
-  olxstr bmpFN;
+  olxstr bmpFN, outFN;
 
   if( FXApp->XFile().HasLastLoader() && !TEFile::IsAbsolutePath(Cmds[0]) )
-    bmpFN = TEFile::ExtractFilePath(FXApp->XFile().GetFileName()) << TEFile::ExtractFileName( Cmds[0] );
+    outFN = TEFile::ExtractFilePath(FXApp->XFile().GetFileName()) << TEFile::ExtractFileName( Cmds[0] );
   else
-    bmpFN = Cmds[0];
+    outFN = Cmds[0];
   // correct a common typo
-  if( !TEFile::ExtractFileExt(bmpFN).Comparei("jpeg") )
-    bmpFN = TEFile::ChangeFileExt(bmpFN, "jpg");
+  if( !TEFile::ExtractFileExt(outFN).Comparei("jpeg") )
+    outFN = TEFile::ChangeFileExt(outFN, "jpg");
+  bmpFN = TEFile::ChangeFileExt(outFN, "bmp");
   TEFile BmpFile(bmpFN, "w+b");
   BmpFile.Write(&(BmpFHdr), sizeof(BITMAPFILEHEADER));
   BmpFile.Write(&(BmpInfo), sizeof(BITMAPINFOHEADER));
@@ -1197,7 +1198,7 @@ void TMainForm::macPict(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   BmpFile.Write(PP, (BmpWidth*3+extraBytes)*BmpHeight);
   DeleteObject(DIBmp);
   //check if the image is bmp
-  if( !TEFile::ExtractFileExt(bmpFN).Comparei("bmp") )
+  if( !TEFile::ExtractFileExt(outFN).Comparei("bmp") )
     return;
   wxImage image;
   image.LoadFile( bmpFN.u_str(), wxBITMAP_TYPE_BMP);
@@ -1205,8 +1206,8 @@ void TMainForm::macPict(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     Error.ProcessingError(__OlxSrcInfo, "could not process image conversion" );
     return;
   }
-  
-  image.SaveFile( bmpFN.u_str() );
+  image.SetOption(wxT("quality"), 85);
+  image.SaveFile( outFN.u_str() );
 #else
   macPicta(Cmds, Options, Error);
 #endif // __WIN32__

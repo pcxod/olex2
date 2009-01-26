@@ -3162,6 +3162,7 @@ void TGXApp::CreateXGrowLines()  {
           if( sa->CAtom().GetLoaderId() == aa->GetLoaderId() )  {
             if( TransformedCrds[k].QDistanceTo( sa->crd() ) < 0.01 )  {
               transforms->Delete(k);
+              break;
             }
           }
         }

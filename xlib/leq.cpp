@@ -6,6 +6,29 @@ olxstr XVarManager::RelationNames[] = {"None", "var", "one_minus_var"};
 
 
 //.................................................................................................
+double XVarReference::GetActualValue() const {
+  double q[6];
+  switch( var_name )  {
+    case var_name_X:     return atom->ccrd()[0];
+    case var_name_Y:     return atom->ccrd()[1];
+    case var_name_Z:     return atom->ccrd()[2];
+    case var_name_Sof:   return atom->GetOccu();
+    case var_name_Uiso:  return atom->GetUiso();  
+    case var_name_U11:
+    case var_name_U22:
+    case var_name_U33:
+    case var_name_U23:
+    case var_name_U13:
+    case var_name_U12:
+      if( atom->GetEllpId() == -1 )
+        throw TInvalidArgumentException(__OlxSourceInfo, "Uanis is not defined");
+      atom->GetEllipsoid()->GetQuad(q);
+      return q[var_name-var_name_U11];
+    default:
+      throw TInvalidArgumentException(__OlxSourceInfo, "parameter name");
+  }
+}
+//.................................................................................................
 void XVarReference::ToDataItem(TDataItem& item) const {
   item.AddField("name", XVarManager::VarNames[var_name]);
   item.AddField("atom_id", atom->GetTag());
@@ -119,7 +142,7 @@ XLEQ& XLEQ::FromDataItem(const TDataItem& item, XVarManager& parent) {
 //.................................................................................................
 XVarManager::XVarManager(TAsymmUnit& au) : aunit(au) {
   NextVar = 0;
-  NewVar(1.0);
+  NewVar(1.0).SetId(0);
 }
 //.................................................................................................
 void XVarManager::ClearAll()  {
@@ -338,6 +361,58 @@ short XVarManager::RelationIndex(const olxstr& rn) {
     if( RelationNames[i] == rn )
       return i;
   throw TInvalidArgumentException(__OlxSourceInfo, "unknown relation name");
+}
+//.................................................................................................
+void XVarManager::Describe(TStrList& lst)  {
+  Validate();
+  for( int i=0; i < Equations.Count(); i++ )  {
+    olxstr eq_des;
+    int var_added  = 0;
+    for( int j=0; j < Equations[i].Count(); j++ )  {
+      if( var_added++ != 0 && Equations[i].GetCoefficient(j) >= 0 )
+        eq_des << '+';
+      eq_des << Equations[i].GetCoefficient(j) << "*[";
+      int ref_added = 0;
+      for( int k=0; k < Equations[i][j]._RefCount(); k++ )  {
+        XVarReference& vr = Equations[i][j].GetRef(k);
+        if( ref_added++ != 0 )
+          eq_des << '+';
+        eq_des << VarNames[vr.var_name] << '(' << vr.atom->GetLabel() << ')';
+      }
+      eq_des << ']';
+    }
+    lst.Add(eq_des) << '=' << Equations[i].GetValue() << " with esd of " << Equations[i].GetSigma();
+  }
+  for( int i=1; i < Vars.Count(); i++ )  {
+    if( Vars[i]._RefCount() == 2 )  {
+      if( (Vars[i].GetRef(0).relation_type == relation_AsVar && 
+           Vars[i].GetRef(1).relation_type == relation_AsOneMinusVar) ||
+          (Vars[i].GetRef(1).relation_type == relation_AsVar && 
+           Vars[i].GetRef(0).relation_type == relation_AsOneMinusVar) )  
+      {
+        if( Vars[i].GetRef(0).relation_type == relation_AsVar )
+          lst.Add( VarNames[Vars[i].GetRef(0).var_name] ) << '(' << Vars[i].GetRef(0).atom->GetLabel() 
+            << ")=1-" << VarNames[Vars[i].GetRef(1).var_name] << '(' << Vars[i].GetRef(1).atom->GetLabel() << ')';
+        else
+          lst.Add( VarNames[Vars[i].GetRef(1).var_name] ) << '(' << Vars[i].GetRef(1).atom->GetLabel() 
+            << ")=1-" << VarNames[Vars[i].GetRef(0).var_name] << '(' << Vars[i].GetRef(0).atom->GetLabel() << ')';
+        continue;
+      }
+    }
+  }
+  // fixed params...
+  TPSTypeList<short, olxstr> fixed;
+  for( int i=0; i < Vars[0]._RefCount(); i++ )  {
+    int ind = fixed.IndexOfComparable(Vars[0].GetRef(i).var_name);
+    if( ind == -1 )
+      fixed.Add(Vars[0].GetRef(i).var_name, olxstr(Vars[0].GetRef(i).atom->GetLabel()) << '(' 
+        << Vars[0].GetRef(i).GetActualValue() << ')');
+    else
+      fixed.Object(ind) << ' ' << Vars[0].GetRef(i).atom->GetLabel() << '(' 
+        << Vars[0].GetRef(i).GetActualValue() << ')';
+  }
+  for( int i=0; i < fixed.Count(); i++ )
+    lst.Add( "Fixed " ) << VarNames[fixed.GetComparable(i)] << ": " << fixed.GetObject(i);
 }
 //.................................................................................................
 void XVarManager::ToDataItem(TDataItem& item) const {

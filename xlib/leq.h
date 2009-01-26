@@ -57,7 +57,8 @@ public:
     relation_type(_relation_type), 
     coefficient(coeff) { }
   DefPropP(int, Id)
-
+  // returns the value of the atom parameter associated with this reference
+  double GetActualValue() const;
   void ToDataItem(TDataItem& item) const;
 #ifndef _NO_PYTHON
   PyObject* PyExport(TPtrList<PyObject>& atoms);
@@ -276,6 +277,8 @@ public:
     return rv;
   }
   void Assign(const XVarManager& vm);
+
+  void Describe(TStrList& lst);
 
   void ToDataItem(TDataItem& item) const;
 #ifndef _NO_PYTHON
