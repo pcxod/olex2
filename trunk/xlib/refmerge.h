@@ -79,8 +79,10 @@ class RefMerger {
           SI_tot += mo.sumI;
           Sdiff += mo.sumDiff;
           if( mo.sigInt > mo.ref->GetS() )  {
-            if( mo.sigInt > 5*mo.ref->GetS() )
+            if( mo.sigInt > 5*mo.ref->GetS() )  {
               stats.InconsistentEquivalents ++;
+              mo.ref->SetTag(-1);  // mark as unusable
+            }
             mo.ref->SetS( mo.sigInt );
           }
           mo.ref->SetFlag( toMerge[0]->GetFlag() );
@@ -135,10 +137,13 @@ class RefMerger {
         SI_tot += mo.sumI;
         Sdiff += mo.sumDiff;
         if( mo.sigInt > mo.ref->GetS() )  {
-          if( mo.sigInt > 5*mo.ref->GetS() )
+          if( mo.sigInt > 5*mo.ref->GetS() )  {
             stats.InconsistentEquivalents ++;
+            mo.ref->SetTag(-1);  // mark as unusable
+          }
           mo.ref->SetS( mo.sigInt );
         }
+        mo.ref->SetFlag( toMerge[0]->GetFlag() );
       }
       output.Add(mo.ref);
       SS += mo.ref->GetS();
