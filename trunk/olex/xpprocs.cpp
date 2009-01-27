@@ -6877,29 +6877,25 @@ void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroErro
           );
     }
     TArrayList<compd> FP(refsP.Count()), FN(refsP.Count());
-    SFUtil::CalcSF(FXApp->XFile(), refsP, FP, true);
-    SFUtil::CalcSF(FXApp->XFile(), refsN, FN, true);
+    double scale1 = SFUtil::CalcSF(FXApp->XFile(), refsP, FP, true, true);
+    double scale2 = SFUtil::CalcSF(FXApp->XFile(), refsN, FN, true, true);
     //for( int i=0; i < FP.Count(); i++ )  {
     //  vec3i r(refsP[i].GetH(), refsP[i].GetK(), refsP[i].GetL());
     //  TBasicApp::GetLog() << (olxstr(refsP[i].ToString(), 70) << '\t' << 
     //      olxstr::FormatFloat(3, FP[i].qmod()) << '\t' << 
     //      olxstr::FormatFloat(3, FN[i].qmod()) << '\n');
     //}
-    double up = 0, dn = 0;
+    double sxy = 0, sx = 0, sy = 0, sxs = 0, so = 0;
     for( int i=0; i < FP.Count(); i++ )  {
-      double pi = FP[i].qmod(),
-        ni = FN[i].qmod(),
-        oi = refsP[i].GetI();
-      for( int j=0; j < FP.Count(); j++ )  {
-        double pj = FP[j].qmod(),
-          nj = FN[j].qmod(),
-          oj = refsP[j].GetI();
-        up += (oi - pi)*(nj - pj);
-        dn += (pi - ni)*(pj - nj);
-      }
+      double pi = FP[i].mod(),
+        ni = FN[i].mod(),
+        oi = refsP[i].GetI() < 0 ? 0 : sqrt(refsP[i].GetI());
+      sy += olx_abs(oi-pi);
+      so += oi;
     }
-    if( dn != 0 )  up /= dn;
-    TBasicApp::GetLog() << up << '\n';
+    double x = sy*100/so;
+//    double x = (sxy - sx*sy/FP.Count())/(sxs-sx*sx/FP.Count());
+    TBasicApp::GetLog() << x << '\n';
   }
   return;
   TSymmLib& sl = *TSymmLib::GetInstance();

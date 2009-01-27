@@ -135,7 +135,8 @@ namespace SFUtil {
   // prepares the list of hkl and structure factors, return error message or empty string
   olxstr GetSF(TRefList& refs, TArrayList<compd>& F, 
     short mapType, short sfOrigin = sfOriginOlex2, short scaleType = scaleSimple);
-  void CalcSF(TXFile& xfile, const TRefList& refs, TArrayList<compd>& F, bool useFpDfp);
+  // calculates the structure factors for given reflections and returns simple scale
+  double CalcSF(TXFile& xfile, const TRefList& refs, TArrayList<compd>& F, bool useFpDfp, bool scale);
 };
 
 EndXlibNamespace()
