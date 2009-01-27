@@ -110,6 +110,8 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
     F.SetCount(refs.Count());
     sw.start("Calculation structure factors");
     xapp.CalcSF(refs, F);
+    //sw.start("Calculation structure factors A");
+    //CalcSF(xapp.XFile(), refs, F, true, false);
     sw.start("Scaling structure factors");
     if( mapType != mapTypeCalc )  {
       // find a linear scale between F
@@ -119,6 +121,8 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
       if( scaleType == scaleRegression )  {
         ematd points(2, f_cnt );
         for( int i=0; i < f_cnt; i++ )  {
+          if( refs[i].GetI() < 0 )
+            refs[i].SetI(0);
           points[0][i] = sqrt(refs[i].GetI());
           points[1][i] = F[i].mod();
         }
@@ -162,7 +166,7 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
   return EmptyString;
 }
 //...........................................................................................
-void SFUtil::CalcSF(TXFile& xfile, const TRefList& refs, TArrayList<TEComplex<double> >& F, bool useFpDfp)  {
+double SFUtil::CalcSF(TXFile& xfile, const TRefList& refs, TArrayList<TEComplex<double> >& F, bool useFpDfp, bool scale)  {
   TSpaceGroup* sg = NULL;
   try  { sg = &xfile.GetLastLoaderSG();  }
   catch(...)  {
@@ -238,7 +242,10 @@ void SFUtil::CalcSF(TXFile& xfile, const TRefList& refs, TArrayList<TEComplex<do
     sF2c += F[i].qmod();
   }
   double simple_scale = sF2o/sF2c;
-  for( int i=0; i < f_cnt; i++ ) 
-    refs[i].SetI( refs[i].GetI()/simple_scale );
+  if( scale )  {
+    for( int i=0; i < f_cnt; i++ ) 
+      refs[i].SetI( refs[i].GetI()/simple_scale );
+  }
   delete [] U;
+  return simple_scale;
 }
