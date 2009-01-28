@@ -42,18 +42,17 @@ protected:
   vec3i_list Omits;
   TDoubleList BASF;
   void SetDefaults();
-  TEFile::FileID HklStatFileID;  // if this is not the HKLSource, statistics is recalculated
 public:
   // needs to be extended for the us of the batch numbers...
   struct HklStat : public MergeStats {
     double MaxD, MinD, LimDmin, LimDmax, 
-      OMIT_s, OMIT_2t, SHEL_lr, SHEL_hr;
+      OMIT_s, OMIT_2t, SHEL_lr, SHEL_hr, MaxI, MinI;
     int MERG;
     //vec3i maxInd, minInd;
     int FilteredOff, // by LimD, OMIT_2t, SHEL_hr, SHEL_lr
-      OmittedByUser, // OMIT h k l 
+      OmittedReflections, // refs after 0 0 0
+      TotalReflections, // reflections read = OmittedRefs + TotalRefs
       IntensityTransformed;  // by OMIT_s
-    TRefList reflections;
     HklStat()  {
       SetDefaults();
     }
@@ -66,11 +65,12 @@ public:
       OMIT_s = hs.OMIT_s;     OMIT_2t = hs.OMIT_2t;
       SHEL_lr = hs.SHEL_lr;   SHEL_hr = hs.SHEL_hr;
       LimDmin = hs.LimDmin;   LimDmax = hs.LimDmax;
+      MaxI = hs.MaxI;         MinI = hs.MinI;
       FilteredOff = hs.FilteredOff;
       IntensityTransformed = hs.IntensityTransformed;
-      OmittedByUser = hs.OmittedByUser;
-      reflections.Clear();
-      reflections.AddListC(hs.reflections);
+      TotalReflections = hs.TotalReflections;
+      OmittedReflections = hs.OmittedReflections;
+      MERG = hs.MERG;
       return *this;
     }
     HklStat& operator = (const MergeStats& ms)  {
@@ -80,17 +80,23 @@ public:
     void SetDefaults()  {
       MergeStats::SetDefaults();
       MaxD = MinD = LimDmax = LimDmin = 0;
+      MaxI = MinI = 0;
       FilteredOff = IntensityTransformed = OmittedByUser = 0;
+      TotalReflections = OmittedReflections = 0;
       MERG = def_MERG;
       OMIT_s = def_OMIT_s;
       OMIT_2t = def_OMIT_2t;
       SHEL_lr = def_SHEL_lr;
       SHEL_hr = def_SHEL_hr;
-      reflections.Clear();
     }
+    int GetReadReflections() const {  return TotalReflections+OmittedReflections;  }
   };
 protected:
  HklStat _HklStat;
+ mutable TRefList _Reflections;  // ALL un-merged reflections
+ mutable TEFile::FileID HklStatFileID, HklFileID;  // if this is not the HKLSource, statistics is recalculated
+ const TRefList& GetReflections() const;
+ HklStat& FilterHkl(TRefList& out, HklStat& stats);
 public:
 
   TAsymmUnit& aunit;
@@ -383,6 +389,12 @@ of components 1 ... m
   RefinementModel& Assign(const RefinementModel& rm, bool AssignAUnit);
 
   const HklStat& GetMergeStat();
+  // merged according to MERG
+  HklStat GetRefinementRefList(const TSpaceGroup& sg, TRefList& out);
+  // Friedel pairs always merged
+  HklStat GetFourierRefList(const TSpaceGroup& sg, TRefList& out);
+  // P-1 merged
+  HklStat GetWilsonRefList(TRefList& out);
 
   void ToDataItem(TDataItem& item);
   void FromDataItem(TDataItem& item);

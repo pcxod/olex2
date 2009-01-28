@@ -266,6 +266,15 @@ public:
     }
     return false;
   }
+  // standartisation functions
+  static inline const TReflection& GetRef(const TReflection& r) {  return r;  }
+  static inline const TReflection& GetRef(const TReflection* r) {  return *r;  }
+  static inline const TReflection* GetRefP(const TReflection& r) {  return &r;  }
+  static inline const TReflection* GetRefP(const TReflection* r) {  return r;  }
+  static inline TReflection& Ref(TReflection& r) {  return r;  }
+  static inline TReflection& Ref(TReflection* r) {  return *r;  }
+  static inline TReflection* RefP(TReflection& r) {  return &r;  }
+  static inline TReflection* RefP(TReflection* r) {  return r;  }
 };
 
 typedef TPtrList<TReflection> TRefPList;

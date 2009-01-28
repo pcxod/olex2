@@ -20,14 +20,15 @@
 //----------------------------------------------------------------------------//
 // TXReflection function bodies
 //----------------------------------------------------------------------------//
-TXReflection::TXReflection(const olxstr& collectionName, THklFile& HklFile,
-                            TReflection& R, TAsymmUnit* au, TGlRender *P) :
+TXReflection::TXReflection(const olxstr& collectionName, double minI, double maxI,
+                            const TReflection& R, TAsymmUnit* au, TGlRender *P) :
   AGDrawObject(collectionName)
 {
   FParent = P;
-  FReflection = &R;
+  hkl = vec3i( R.GetH(), R.GetK(), R.GetL() );
+  I = R.GetI();
   // scaling has to be optimised, but as it is for now
-  vec3d v(R.GetH(), R.GetK(), R.GetL()), scaleV;
+  vec3d v(hkl), scaleV;
   scaleV[0] = scaleV[1] = scaleV[2] = 0.3;
   v = au->GetHklToCartesian()*v;
   scaleV = (au->GetHklToCartesian())*scaleV;
@@ -35,8 +36,9 @@ TXReflection::TXReflection(const olxstr& collectionName, THklFile& HklFile,
   v *= (2.0/scale);                    // extra scaling
   FCenter = v;
   Params().Resize(1);
-  Params()[0] = (R.GetI() - HklFile.GetMinI()) / (HklFile.GetMaxI() + olx_abs(HklFile.GetMaxI()));
-  if( Params()[0] > 0 )  Params()[0] = sqrt( Params()[0] ); 
+  Params()[0] = (R.GetI() - maxI) / (maxI + olx_abs(minI));
+  if( Params()[0] > 0 )  
+    Params()[0] = sqrt( Params()[0] ); 
 }
 //..............................................................................
 void TXReflection::Create(const olxstr& cName, const ACreationParams* cpar) {

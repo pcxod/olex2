@@ -75,25 +75,26 @@ public:
   // returns reflections owned by this object
   void AllRefs(const TReflection& R, const smatd_list& sg, TRefPList& Res);
 //..............................................................................
-  template <class Merger> MergeStats Merge(const TSpaceGroup& sg, bool MergeInverse, TRefList& output) const {
-    smatd_list ml;
-    sg.GetMatrices(ml, mattAll^mattIdentity);
-    if( MergeInverse && !sg.IsCentrosymmetric() )  { 
-      const int ml_cnt = ml.Count();
-      for( int i=0; i < ml_cnt; i++ )
-        ml.AddCCopy(ml[i]) *= -1;
-      ml.AddNew().I() *= -1;
-    }
-    MergeStats rv = RefMerger::Merge<Merger>(ml, Refs, output);
-    return rv;
-  }
-//..............................................................................
-  template <class Merger> MergeStats Merge(smatd_list& ml, TRefList& output) const {
-    return  RefMerger::Merge<Merger>(ml, Refs, output);
-  }
+//  template <class Merger> MergeStats Merge(const TSpaceGroup& sg, bool MergeInverse, TRefList& output) const {
+//    smatd_list ml;
+//    sg.GetMatrices(ml, mattAll^mattIdentity);
+//    if( MergeInverse && !sg.IsCentrosymmetric() )  { 
+//      const int ml_cnt = ml.Count();
+//      for( int i=0; i < ml_cnt; i++ )
+//        ml.AddCCopy(ml[i]) *= -1;
+//      ml.AddNew().I() *= -1;
+//    }
+//    MergeStats rv = RefMerger::Merge<Merger>(ml, Refs, output);
+//    return rv;
+//  }
+////..............................................................................
+//  template <class Merger> MergeStats Merge(smatd_list& ml, TRefList& output) const {
+//    return  RefMerger::Merge<Merger>(ml, Refs, output);
+//  }
 //..............................................................................
   template <class Merger> void MergeInP1(TRefList& output) const {
-    RefMerger::MergeInP1<Merger>(Refs, output);
+    vec3i_list omits;
+    RefMerger::MergeInP1<Merger>(Refs, output, omits);
   }
 //..............................................................................
 

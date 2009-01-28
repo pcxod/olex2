@@ -300,12 +300,10 @@ void TGXApp::CreateXRefs()  {
   if( !XReflections.IsEmpty() )  return;
 
   TRefList refs;
-  TSpaceGroup& sg = XFile().GetLastLoaderSG();
-  MergeStats ms = FHklFile->Merge<RefMerger::StandardMerger>( sg, false, refs);
-
+  RefinementModel::HklStat stats = XFile().GetRM().GetRefinementRefList(XFile().GetLastLoaderSG(), refs);
   vec3d Center;
   for( int i=0; i < refs.Count(); i++ )  {
-    TXReflection* xr = new TXReflection("XReflection", *FHklFile, refs[i],
+    TXReflection* xr = new TXReflection("XReflection", stats.MinI, stats.MaxI, refs[i],
       &FXFile->GetAsymmUnit(), FGlRender);
     xr->Create();
     XReflections.Add( *xr );

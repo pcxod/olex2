@@ -646,7 +646,7 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual accupancy\
   this_InitMacro(EditHkl, , fpNone|fpOne|fpThree );
   this_InitMacro(ViewHkl, , fpNone|fpOne );
   this_InitMacro(ExtractHkl, , fpOne|psFileLoaded );
-  this_InitMacro(MergeHkl,f-do not merge Fiedel pairs , fpNone|fpOne|psFileLoaded );
+  this_InitMacro(MergeHkl, , fpNone|fpOne|psFileLoaded );
   // not implemented
   this_InitMacroD(AppendHkl, "h&;k&;l&;c", fpAny, "moves reflection back into the refinement list\
  See excludeHkl for more details" );
@@ -1893,11 +1893,11 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
           Tip << '-' << ((TXBond*)G)->Bond().GetB().GetLabel() << ": ";
           Tip << olxstr::FormatFloat(3, ((TXBond*)G)->Bond().Length());
         } else if( EsdlInstanceOf( *G, TXReflection) )  {
-          Tip = ((TXReflection*)G)->Reflection()->GetH();
+          Tip = ((TXReflection*)G)->GetHKL()[0];
           Tip << ' ';
-          Tip << ((TXReflection*)G)->Reflection()->GetK() << ' ';
-          Tip << ((TXReflection*)G)->Reflection()->GetL() << ": ";
-          Tip << ((TXReflection*)G)->Reflection()->GetI();
+          Tip << ((TXReflection*)G)->GetHKL()[1] << ' ';
+          Tip << ((TXReflection*)G)->GetHKL()[2] << ": ";
+          Tip << ((TXReflection*)G)->GetI();
         }
         else if( EsdlInstanceOf( *G, TXLine) )  {
           Tip = olxstr::FormatFloat(3, ((TXLine*)G)->Length());

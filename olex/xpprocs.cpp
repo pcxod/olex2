@@ -4033,44 +4033,26 @@ void TMainForm::macEditIns(TStrObjList &Cmds, const TParamList &Options, TMacroE
 }
 //..............................................................................
 void TMainForm::macMergeHkl(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  olxstr hklFileName( FXApp->LocateHklFile() );
-  if( !TEFile::FileExists(hklFileName) )  {
-    E.ProcessingError(__OlxSrcInfo, "could not locate hkl file");
-    return;
-  }
-  TAsymmUnit& au = FXApp->XFile().GetAsymmUnit();
-  // space group matrix list
   TSpaceGroup* sg = NULL;
   try  { sg = &FXApp->XFile().GetLastLoaderSG();  }
   catch(...)  {
     E.ProcessingError(__OlxSrcInfo, "could not locate space group");
     return;
   }
-  THklFile Hkl;
-  Hkl.LoadFromFile(hklFileName);
-  double av = 0;
-  for( int i=0; i < Hkl.RefCount(); i++ )
-    av += Hkl[i].GetI() < 0 ? 0 : Hkl[i].GetI();
-  av /= Hkl.RefCount();
   TRefList refs;
-  MergeStats ms = Hkl.Merge<RefMerger::StandardMerger>( *sg, !Options.Contains("i"), refs);
+  RefinementModel::HklStat ms = FXApp->XFile().GetRM().GetRefinementRefList(*sg, refs);
   TTTable<TStrList> tab(6, 2);
-  tab[0][0] << "Total reflections"; 
-  tab[0][1] << ms.TotalReflections;
-  tab[1][0] << "Unique reflections"; 
-  tab[1][1] << ms.UniqueReflections;
-  tab[2][0] << "Inconsistent equaivalents"; 
-  tab[2][1] << ms.InconsistentEquivalents;
-  tab[3][0] << "Systematic absences removed"; 
-  tab[3][1] << ms.SystematicAbsentcesRemoved;
-  tab[4][0] << "Rint"; 
-  tab[4][1] << ms.Rint;
-  tab[5][0] << "Rsigma"; 
-  tab[5][1] << ms.Rsigma;
+  tab[0][0] << "Total reflections";             tab[0][1] << ms.GetReadReflections();
+  tab[1][0] << "Unique reflections";            tab[1][1] << ms.UniqueReflections;
+  tab[2][0] << "Inconsistent equaivalents";     tab[2][1] << ms.InconsistentEquivalents;
+  tab[3][0] << "Systematic absences removed";   tab[3][1] << ms.SystematicAbsentcesRemoved;
+  tab[4][0] << "Rint";                          tab[4][1] << ms.Rint;
+  tab[5][0] << "Rsigma";                        tab[5][1] << ms.Rsigma;
   TStrList Output;
   tab.CreateTXTList(Output, olxstr("Merging statistics "), true, false, "  ");
   TBasicApp::GetLog() << Output << '\n';
-  Hkl.SaveToFile( Cmds.IsEmpty() ? hklFileName : Cmds[0], refs);
+  olxstr hklFileName = FXApp->XFile().GetRM().GetHKLSource();
+  THklFile::SaveToFile( Cmds.IsEmpty() ? hklFileName : Cmds[0], refs);
 }
 //..............................................................................
 void TMainForm::macEditHkl(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
@@ -4336,8 +4318,9 @@ void TMainForm::macViewGrid(TStrObjList &Cmds, const TParamList &Options, TMacro
 }
 //..............................................................................
 void TMainForm::macExtractHkl(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  throw TNotImplementedException(__OlxSourceInfo);
   TGlGroup* sel = FXApp->Selection();
-  if( !sel )  {
+  if( sel == NULL || sel->Count() == 0 )  {
     E.ProcessingError(__OlxSrcInfo, "please select some reflections" );
     return;
   }
@@ -4346,7 +4329,7 @@ void TMainForm::macExtractHkl(TStrObjList &Cmds, const TParamList &Options, TMac
   for(int i=0; i < sel->Count(); i++ )  {
     obj = sel->Object(i);
     if( EsdlInstanceOf(*obj, TXReflection) )
-      Refs.Add( ((TXReflection*)obj)->Reflection() );
+      ;//Refs.Add( ((TXReflection*)obj)->Reflection() );
   }
   if( Refs.IsEmpty() )  {
     E.ProcessingError(__OlxSrcInfo, "please select some reflections" );
@@ -6864,32 +6847,15 @@ void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   //return;
   olxstr hklfn = FXApp->LocateHklFile();
   if( TEFile::FileExists(hklfn) )  {
-    THklFile hf;
-    hf.LoadFromFile(hklfn);
-    TRefList refsP, refsN;
-    hf.Merge<RefMerger::StandardMerger>( FXApp->XFile().GetLastLoaderSG(), true, refsP);
-    for( int i=0; i < refsP.Count(); i++ )  {
-        refsN.AddNew(-refsP[i].GetH(),
-          -refsP[i].GetK(),
-          -refsP[i].GetL(),
-          refsP[i].GetI(),
-          refsP[i].GetS()
-          );
-    }
-    TArrayList<compd> FP(refsP.Count()), FN(refsP.Count());
-    double scale1 = SFUtil::CalcSF(FXApp->XFile(), refsP, FP, true, true);
-    double scale2 = SFUtil::CalcSF(FXApp->XFile(), refsN, FN, true, true);
-    //for( int i=0; i < FP.Count(); i++ )  {
-    //  vec3i r(refsP[i].GetH(), refsP[i].GetK(), refsP[i].GetL());
-    //  TBasicApp::GetLog() << (olxstr(refsP[i].ToString(), 70) << '\t' << 
-    //      olxstr::FormatFloat(3, FP[i].qmod()) << '\t' << 
-    //      olxstr::FormatFloat(3, FN[i].qmod()) << '\n');
-    //}
-    double sxy = 0, sx = 0, sy = 0, sxs = 0, so = 0;
+    TRefList refs;
+    RefinementModel::HklStat stat = FXApp->XFile().GetRM().GetRefinementRefList(FXApp->XFile().GetLastLoaderSG(), refs);
+    TArrayList<compd> FP(refs.Count());
+    SFUtil::CalcSF(FXApp->XFile(), refs, FP, true);
+    double scale = SFUtil::CalcFScale(FP, refs);
+    double sy = 0, so = 0;
     for( int i=0; i < FP.Count(); i++ )  {
       double pi = FP[i].mod(),
-        ni = FN[i].mod(),
-        oi = refsP[i].GetI() < 0 ? 0 : sqrt(refsP[i].GetI());
+        oi = scale*sqrt(refs[i].GetI());
       sy += olx_abs(oi-pi);
       so += oi;
     }
@@ -7991,7 +7957,6 @@ struct Main_StrFPatt  {
   compd v;
 };
 void TMainForm::macCalcPatt(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  TRefList refs;
   TAsymmUnit& au = FXApp->XFile().GetAsymmUnit();
   // space group matrix list
   TSpaceGroup* sg = NULL;
@@ -8007,14 +7972,9 @@ void TMainForm::macCalcPatt(TStrObjList &Cmds, const TParamList &Options, TMacro
     E.ProcessingError(__OlxSrcInfo, "could not locate hkl file");
     return;
   }
-  THklFile Hkl;
-  Hkl.LoadFromFile(hklFileName);
-  double av = 0;
-  for( int i=0; i < Hkl.RefCount(); i++ )
-    av += Hkl[i].GetI() < 0 ? 0 : Hkl[i].GetI();
-  av /= Hkl.RefCount();
 
-  MergeStats ms = Hkl.Merge<RefMerger::StandardMerger>( *sg, true, refs);
+  TRefList refs;
+  RefinementModel::HklStat stats = FXApp->XFile().GetRM().GetFourierRefList( *sg, refs);
 
   double vol = FXApp->XFile().GetLattice().GetUnitCell().CalcVolume();
   int minH = 100,  minK = 100,  minL = 100;
@@ -8169,7 +8129,7 @@ void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMa
   TArrayList<compd > F;
   olxstr err( SFUtil::GetSF(refs, F, mapType, 
     Options.Contains("fcf") ? SFUtil::sfOriginFcf : SFUtil::sfOriginOlex2, 
-    (Options.FindValue("s", "r").ToLowerCase().CharAt(0) == 'r') ? SFUtil::scaleRegression : SFUtil::scaleSimple) );
+    (Options.FindValue("scale", "r").ToLowerCase().CharAt(0) == 'r') ? SFUtil::scaleRegression : SFUtil::scaleSimple) );
   if( !err.IsEmpty() )  {
     E.ProcessingError(__OlxSrcInfo, err);
     return;
@@ -8182,7 +8142,7 @@ void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMa
     E.ProcessingError(__OlxSrcInfo, "could not locate sapce group");
     return;
   }
-  TArrayList<StructureFactor> P1SF;
+  TArrayList<SFUtil::StructureFactor> P1SF;
   TArrayList<vec3i> hkl(refs.Count());
   for( int i=0; i < refs.Count(); i++ )  {
     hkl[i][0] = refs[i].GetH();

@@ -12,7 +12,11 @@ RefinementModel::RefinementModel(TAsymmUnit& au) : rDFIX(*this, rltBonds), rDANG
   rSADI(*this, rltBonds), rCHIV(*this, rltAtoms), rFLAT(*this, rltGroup), rDELU(*this, rltAtoms), 
   rSIMU(*this, rltAtoms), rISOR(*this, rltAtoms), rEADP(*this, rltAtoms), ExyzGroups(*this), 
   AfixGroups(*this), rSAME(*this),
-  aunit(au), HklStatFileID(EmptyString, 0, 0), Vars(au)  {
+  aunit(au), 
+  HklStatFileID(EmptyString, 0, 0), 
+  HklFileID(EmptyString, 0, 0), 
+  Vars(au)  
+{
   SetDefaults();
 }
 //....................................................................................................
@@ -177,11 +181,32 @@ void RefinementModel::SetHKLSource(const olxstr& src) {
   HKLSource = src;
 }
 //....................................................................................................
+const TRefList& RefinementModel::GetReflections() const {
+  try {
+    TEFile::FileID hkl_src_id = TEFile::GetFileID(HKLSource);
+    if( !_Reflections.IsEmpty() && hkl_src_id == HklFileID )
+      return _Reflections;
+    THklFile hf;
+    hf.LoadFromFile(HKLSource);
+    HklFileID = hkl_src_id;
+    const int hkl_cnt = hf.RefCount();
+    _Reflections.Clear();
+    _Reflections.SetCapacity(hkl_cnt);
+    for( int i=0; i < hkl_cnt; i++ ) 
+      _Reflections.AddNew( hf[i] );
+    return _Reflections;
+  }
+  catch(TExceptionBase& exc)  {
+    throw TFunctionFailedException(__OlxSourceInfo, exc);
+  }
+}
+//....................................................................................................
 const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
   // we need to take into the account MERG, HKLF and OMIT things here...
   try {
-    TEFile::FileID hkl_src_id = TEFile::GetFileID(HKLSource);
-    if( hkl_src_id == HklStatFileID &&
+    const TRefList& all_refs = GetReflections();
+    bool update = (HklStatFileID != HklFileID);
+    if( !update && 
       _HklStat.OMIT_s == OMIT_s &&
       _HklStat.OMIT_2t == OMIT_2t &&
       _HklStat.SHEL_lr == SHEL_lr &&
@@ -191,69 +216,14 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
       return _HklStat;
     }
     else  {
-      THklFile hf;
-      hf.LoadFromFile(HKLSource);
-      HklStatFileID = hkl_src_id;
+      HklStatFileID = HklFileID;
       _HklStat.SetDefaults();
       // cannot use XFile, as we do not know which loader owns this object
       TSpaceGroup* sg = TSymmLib::GetInstance()->FindSG(aunit);
       if( sg == NULL )  // will not be seen outside though
         throw TFunctionFailedException(__OlxSourceInfo, "unknown space group");
-      TRefPList refs;
-      refs.SetCapacity( hf.RefCount() );
-      const mat3d& hkl2c = aunit.GetHklToCartesian();
-      const double h_o_s = 0.5*OMIT_s;
-      double max_d = 2*sin(OMIT_2t*M_PI/360.0)/expl.GetRadiation();
-      if( SHEL_set && SHEL_lr > max_d )  {
-         if( SHEL_lr < 2./expl.GetRadiation() )
-           max_d = SHEL_lr;
-         else
-           max_d = 2./expl.GetRadiation();
-      }
-      const double max_qd = max_d*max_d;  // maximum d squared
-      const double min_qd = SHEL_hr*SHEL_hr;
-      const bool transform_hkl = !HKLF_mat.IsI();
-      const bool limit_res = (OMIT_2t != def_OMIT_2t);
-      const int ref_cnt = hf.RefCount();
-      _HklStat.MinD = 100;
-      _HklStat.MaxD = -100;
-      vec3d new_hkl;
-      //apply OMIT transformation and filtering and calculate spacing limits
-      for( int i=0; i < ref_cnt; i++ )  {
-        TReflection& r = hf[i];
-        if( r.GetI() < h_o_s*r.GetS()*r.GetI() )  {
-          r.SetI( h_o_s*r.GetI() );
-          _HklStat.IntensityTransformed++;
-        }
-        if( transform_hkl )  {
-          r.MulHkl(new_hkl, HKLF_mat);
-          r.SetH( Round(new_hkl[0]) );
-          r.SetK( Round(new_hkl[1]) );
-          r.SetL( Round(new_hkl[2]) );
-        }
-        vec3d hkl(r.GetH()*hkl2c[0][0],
-                  r.GetH()*hkl2c[0][1] + r.GetK()*hkl2c[1][1],
-                  r.GetH()*hkl2c[0][2] + r.GetK()*hkl2c[1][2] + r.GetL()*hkl2c[2][2]);
-        const double qd = hkl.QLength();
-        // OMIT filtering by res
-        if( qd < max_qd && qd > min_qd ) 
-          refs.Add(&r);
-        else
-          _HklStat.FilteredOff++;
-        if( qd > _HklStat.MaxD ) 
-          _HklStat.MaxD = qd;
-        if( qd < _HklStat.MinD ) 
-          _HklStat.MinD = qd;
-      }
-      _HklStat.LimDmax = sqrt(max_qd);
-      _HklStat.LimDmin = sqrt(min_qd);
-      _HklStat.MaxD = sqrt(_HklStat.MaxD);
-      _HklStat.MinD = sqrt(_HklStat.MinD);
-      _HklStat.MERG = MERG;
-      _HklStat.OMIT_s = OMIT_s;
-      _HklStat.OMIT_2t = OMIT_2t;
-      _HklStat.SHEL_lr = SHEL_lr;
-      _HklStat.SHEL_hr = SHEL_hr;
+      TRefList refs;
+      FilterHkl(refs, _HklStat);
       if( MERG != 0 )  {
         smatd_list ml;
         sg->GetMatrices(ml, mattAll^mattIdentity);
@@ -263,18 +233,133 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
             ml.AddNew( ml[i] ) *= -1;
           ml.AddNew().I() *= -1;
         }
-        _HklStat = RefMerger::Merge<RefMerger::ShelxMerger>(ml, refs, _HklStat.reflections);
+        _HklStat = RefMerger::DryMerge<RefMerger::ShelxMerger>(ml, refs, Omits);
       }
       else
-        _HklStat = RefMerger::MergeInP1<RefMerger::ShelxMerger>(refs, _HklStat.reflections);
-      if( OMITs_Modified )
-        _HklStat.OmittedByUser = ProcessOmits(_HklStat.reflections);
+        _HklStat = RefMerger::DryMergeInP1<RefMerger::ShelxMerger>(refs, Omits);
     }
   }
   catch(TExceptionBase&)  {
     _HklStat.SetDefaults();
   }
   return _HklStat;
+}
+//....................................................................................................
+RefinementModel::HklStat& RefinementModel::FilterHkl(TRefList& out, RefinementModel::HklStat& stats)  {
+  const TRefList& all_refs = GetReflections();
+  const mat3d& hkl2c = aunit.GetHklToCartesian();
+  const double h_o_s = 0.5*OMIT_s;
+  double max_d = 2*sin(OMIT_2t*M_PI/360.0)/expl.GetRadiation();
+  if( SHEL_set && SHEL_lr > max_d )  {
+    if( SHEL_lr < 2./expl.GetRadiation() )
+      max_d = SHEL_lr;
+    else
+      max_d = 2./expl.GetRadiation();
+  }
+  const double max_qd = max_d*max_d;  // maximum d squared
+  const double min_qd = SHEL_hr*SHEL_hr;
+  const bool transform_hkl = !HKLF_mat.IsI();
+  const bool limit_res = (OMIT_2t != def_OMIT_2t);
+
+  const int ref_cnt = all_refs.Count();
+  out.SetCapacity( ref_cnt );
+  stats.MinD = 100;
+  stats.MaxD = -100;
+  stats.MaxI = -100;
+  stats.MinI = 100;
+  //apply OMIT transformation and filtering and calculate spacing limits
+  for( int i=0; i < ref_cnt; i++ )  {
+    const TReflection& r = all_refs[i];
+    if( r.GetTag() < 0 )  {
+      _HklStat.OmittedReflections++;
+      continue;
+    }
+    vec3i chkl(r.GetH(), r.GetK(), r.GetL());
+    if( transform_hkl )
+      r.MulHklR(chkl, HKLF_mat);
+
+    vec3d hkl(chkl[0]*hkl2c[0][0],
+      chkl[0]*hkl2c[0][1] + chkl[1]*hkl2c[1][1],
+      chkl[0]*hkl2c[0][2] + chkl[1]*hkl2c[1][2] + chkl[2]*hkl2c[2][2]);
+    const double qd = hkl.QLength();
+    if( qd > _HklStat.MaxD )  stats.MaxD = qd;
+    if( qd < _HklStat.MinD )  stats.MinD = qd;
+    // OMIT and SHEL filtering by res 
+    if( h_o_s > 0 && r.GetI() < h_o_s*r.GetS() )  {
+      stats.FilteredOff++;
+      continue;
+    }
+    if( qd < max_qd && qd > min_qd )  {
+      TReflection& new_ref = out.AddNew(r);
+      if( r.GetI() < h_o_s*r.GetS() )  {
+        new_ref.SetI( h_o_s*r.GetS() );
+        stats.IntensityTransformed++;
+      }
+      if( new_ref.GetI() < 0 )
+        new_ref.SetI(0);
+      if( new_ref.GetI() > stats.MaxI )  stats.MaxI = new_ref.GetI();
+      if( new_ref.GetI() < stats.MinI )  stats.MinI = new_ref.GetI();
+    }
+    else
+      stats.FilteredOff++;
+  }
+  stats.LimDmax = sqrt(max_qd);
+  stats.LimDmin = sqrt(min_qd);
+  stats.MaxD = sqrt(stats.MaxD);
+  stats.MinD = sqrt(stats.MinD);
+  stats.MERG = MERG;
+  stats.OMIT_s = OMIT_s;
+  stats.OMIT_2t = OMIT_2t;
+  stats.SHEL_lr = SHEL_lr;
+  stats.SHEL_hr = SHEL_hr;
+  stats.TotalReflections = out.Count();
+  return stats;
+}
+//....................................................................................................
+RefinementModel::HklStat RefinementModel::GetRefinementRefList(const TSpaceGroup& sg, TRefList& out) {
+  HklStat stats;
+  TRefList refs;
+  FilterHkl(refs, stats);
+  if( MERG != 0 )  {
+    smatd_list ml;
+    sg.GetMatrices(ml, mattAll^mattIdentity);
+    if( (MERG == 4 || MERG == 3) && !sg.IsCentrosymmetric() )  {  // merge all
+      const int mc = ml.Count();
+      for( int i=0; i < mc; i++ )
+        ml.AddNew( ml[i] ) *= -1;
+      ml.AddNew().I() *= -1;
+    }
+    stats = RefMerger::Merge<RefMerger::ShelxMerger>(ml, refs, out, Omits);
+  }
+  else
+    stats = RefMerger::MergeInP1<RefMerger::ShelxMerger>(refs, out, Omits);
+  return stats;
+}
+//....................................................................................................
+RefinementModel::HklStat RefinementModel::GetFourierRefList(const TSpaceGroup& sg, TRefList& out) {
+  HklStat stats;
+  TRefList refs;
+  FilterHkl(refs, stats);
+  smatd_list ml;
+  sg.GetMatrices(ml, mattAll^mattIdentity);
+  if( !sg.IsCentrosymmetric() )  {  // merge all
+    const int mc = ml.Count();
+    for( int i=0; i < mc; i++ )
+      ml.AddNew( ml[i] ) *= -1;
+    ml.AddNew().I() *= -1;
+  }
+  stats = RefMerger::Merge<RefMerger::StandardMerger>(ml, refs, out, Omits);
+  return stats;
+}
+//....................................................................................................
+RefinementModel::HklStat RefinementModel::GetWilsonRefList(TRefList& out) {
+  HklStat stats;
+  TRefList refs;
+  FilterHkl(refs, stats);
+  smatd_list ml;
+  ml.AddNew() *= -1;
+  stats = RefMerger::Merge<RefMerger::StandardMerger>(ml, refs, out, Omits);
+  return stats;
 }
 //....................................................................................................
 int RefinementModel::ProcessOmits(TRefList& refs)  {
@@ -296,7 +381,7 @@ int RefinementModel::ProcessOmits(TRefList& refs)  {
     }
   }
   if( processed != 0 )
-    _HklStat.reflections.Pack();
+    refs.Pack();
   return processed;
 }
 //....................................................................................................
