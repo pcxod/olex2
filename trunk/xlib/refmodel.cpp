@@ -248,18 +248,19 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
 RefinementModel::HklStat& RefinementModel::FilterHkl(TRefList& out, RefinementModel::HklStat& stats)  {
   const TRefList& all_refs = GetReflections();
   const mat3d& hkl2c = aunit.GetHklToCartesian();
-  const double h_o_s = 0.5*OMIT_s;
-  double max_d = 2*sin(OMIT_2t*M_PI/360.0)/expl.GetRadiation();
-  if( SHEL_set && SHEL_lr > max_d )  {
-    if( SHEL_lr < 2./expl.GetRadiation() )
-      max_d = SHEL_lr;
-    else
-      max_d = 2./expl.GetRadiation();
+  // swap the values if in wrong order
+  if( SHEL_hr > SHEL_lr )  {
+    double tmp = SHEL_hr;
+    SHEL_hr = SHEL_lr;
+    SHEL_lr = tmp;
   }
-  const double max_qd = max_d*max_d;  // maximum d squared
-  const double min_qd = SHEL_hr*SHEL_hr;
+  const double h_o_s = 0.5*OMIT_s, two_sin_2t = 2*sin(OMIT_2t*M_PI/360.0);
+  double min_d = expl.GetRadiation()/( two_sin_2t == 0 ? 1e-6 : two_sin_2t);
+  if( SHEL_set && SHEL_hr > min_d )
+    min_d = SHEL_hr;
+  const double min_qd = min_d*min_d;  // maximum d squared
+  const double max_qd = SHEL_lr*SHEL_lr;
   const bool transform_hkl = !HKLF_mat.IsI();
-  const bool limit_res = (OMIT_2t != def_OMIT_2t);
 
   const int ref_cnt = all_refs.Count();
   out.SetCapacity( ref_cnt );
@@ -281,7 +282,7 @@ RefinementModel::HklStat& RefinementModel::FilterHkl(TRefList& out, RefinementMo
     vec3d hkl(chkl[0]*hkl2c[0][0],
       chkl[0]*hkl2c[0][1] + chkl[1]*hkl2c[1][1],
       chkl[0]*hkl2c[0][2] + chkl[1]*hkl2c[1][2] + chkl[2]*hkl2c[2][2]);
-    const double qd = hkl.QLength();
+    const double qd = 1./hkl.QLength();
     if( qd > _HklStat.MaxD )  stats.MaxD = qd;
     if( qd < _HklStat.MinD )  stats.MinD = qd;
     // OMIT and SHEL filtering by res 
