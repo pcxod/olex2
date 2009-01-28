@@ -143,14 +143,10 @@ public:
   }
 
 protected:
-  template <class RefListMerger, class RefList> 
-  static MergeStats DoMerge(TRefPList& refs, const RefList& original, TRefList& output)  {
+  template <class RefListMerger> 
+  static MergeStats DoMerge(TRefPList& refs, const vec3i_list& omits, TRefList& output)  {
     MergeStats stats;
     RefUtil rf;
-    // replicate reflections, to leave this object as it is
-    TRefPList toMerge;  // list of replicated reflections
-    stats.TotalReflections = original.Count();
-    stats.OmittedReflections = original.Count() - refs.Count();
     stats.FriedelOppositesMerged = rf.IsCentrosymmetric();
     // standartise reflection indexes according to provieded list of symmetry operators
     rf.Standardize(refs);
@@ -158,44 +154,53 @@ protected:
     TReflection::SortPList(refs);
     // merge reflections
     double Sdiff = 0, SI_tot = 0, SI = 0, SS = 0;
-    toMerge.Add(refs[0]);  // reference reflection
     const int ref_cnt = refs.Count();
     output.SetCapacity( ref_cnt ); // better more that none :)
+    TReflection* ref = refs[0];
     for( int i=0; i < ref_cnt; )  {
-      while( (++i < ref_cnt) && (toMerge[0]->CompareTo(*refs[i]) == 0) )
-        toMerge.Add( refs[i] );
-      if( !toMerge[0]->IsAbsent() )  {
-        RefMerger::MergerOut mo = RefListMerger::Merge( toMerge );
-        if( toMerge.Count() > 1 )  {
-          SI_tot += mo.sumI;
-          Sdiff += mo.sumDiff;
-          if( mo.sigInt > mo.ref->GetS() )  {
-            if( mo.sigInt > 5*mo.ref->GetS() )
-              stats.InconsistentEquivalents ++;
-            mo.ref->SetS( mo.sigInt );
-          }
-          if( toMerge[0]->IsCentric() )  {
-            stats.CentricReflections++;
-            mo.ref->SetCentric(true);
-          }
-          mo.ref->SetMultiplicity( toMerge[0]->GetMultiplicity() );
-          mo.ref->SetFlag( toMerge[0]->GetFlag() );
+      const int from = i;
+      while( (++i < ref_cnt) && (ref->CompareTo(*refs[i]) == 0) )
+        ;
+      bool omitted = false;
+      const int merged_count = i - from;
+      for( int j=0; j < omits.Count(); j++ )  {
+        if( ref->GetH() == omits[j][0] &&
+            ref->GetK() == omits[j][1] &&
+            ref->GetL() == omits[j][2] )  
+        {
+          omitted = true;
+          stats.OmittedByUser += merged_count;
+          break;
         }
-        output.Add(mo.ref);
-        SS += mo.ref->GetS();
-        SI += mo.ref->GetI();
       }
-      else
-        stats.SystematicAbsentcesRemoved++;
-
+      if( !omitted )  {
+        if( !ref->IsAbsent() )  {
+          RefMerger::MergerOut mo = RefListMerger::Merge( refs, from, i );
+          if( merged_count > 1 )  {
+            SI_tot += mo.sumI;
+            Sdiff += mo.sumDiff;
+            if( mo.sigInt > mo.ref->GetS() )  {
+              if( mo.sigInt > 5*mo.ref->GetS() )
+                stats.InconsistentEquivalents ++;
+              mo.ref->SetS( mo.sigInt );
+            }
+            if( ref->IsCentric() )  {
+              stats.CentricReflections++;
+              mo.ref->SetCentric(true);
+            }
+            mo.ref->SetMultiplicity( ref->GetMultiplicity() );
+            mo.ref->SetFlag( ref->GetFlag() );
+          }
+          output.Add(mo.ref);
+          SS += mo.ref->GetS();
+          SI += mo.ref->GetI();
+        }
+        else
+          stats.SystematicAbsentcesRemoved++;
+      }
       if( i >= ref_cnt )  break;
-
-      toMerge.Clear();
-      toMerge.Add( refs[i] );
+      ref = refs[i];
     }
-
-    for( int i=0; i < ref_cnt; i++ )
-      delete refs[i];
 
     stats.Rint = (SI_tot != 0) ? Sdiff/SI_tot : 0.0;
     stats.Rsigma = (SI != 0) ? SS/SI : 0.0;
@@ -203,27 +208,14 @@ protected:
     return stats;
   }
 public:
-  template <class RefListMerger> static MergeStats Merge(const TRefList& Refs, TRefList& output)  {
+  template <class RefListMerger, class RefList> 
+  static MergeStats Merge(RefList& Refs, const vec3i_list& omits, TRefList& output)  {
     // replicate reflections, to leave this object as it is
-    TRefPList refs;  // list of replicated reflections
-    refs.SetCapacity( Refs.Count() );
-    for( int i=0; i < Refs.Count(); i++ )  {
-      if( Refs[i].GetTag() <= 0 )  continue;  // skip omited reflections
-      refs.Add( new TReflection(Refs[i]) );
-    }
-    return DoMerge<RefListMerger, TRefList>(refs, Refs, output);
+    TRefPList refs(Refs.Count());  // list of replicated reflections
+    for( int i=0; i < Refs.Count(); i++ )
+      refs[i] = TReflection::RefP(Refs[i]);
+    return DoMerge<RefListMerger>(refs, omits, output);
   }
-  template <class RefListMerger> static MergeStats Merge(const TRefPList& Refs, TRefList& output)  {
-    // replicate reflections, to leave this object as it is
-    TRefPList refs;  // list of replicated reflections
-    refs.SetCapacity( Refs.Count() );
-    for( int i=0; i < Refs.Count(); i++ )  {
-      if( Refs[i]->GetTag() <= 0 )  continue;  // skip omited reflections
-      refs.Add( new TReflection(*Refs[i]) );
-    }
-    return DoMerge<RefListMerger, TRefPList>(refs, Refs, output);
-  }
-
 };
 
 EndXlibNamespace()
