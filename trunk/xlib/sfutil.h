@@ -86,8 +86,8 @@ namespace SFUtil {
       const double qm = F[i].qmod();
       sx += I;
       sy += qm;
-      sxy += ref.GetI()*qm;
-      sxs += ref.GetI()*ref.GetI();
+      sxy += I*qm;
+      sxs += I*ref.I;
     }
     k = (sxy - sx*sy/f_cnt)/(sxs - sx*sx/f_cnt);
     a = (sy - k*sx)/f_cnt;
