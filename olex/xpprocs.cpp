@@ -6540,10 +6540,10 @@ void TMainForm::macHklStat(TStrObjList &Cmds, const TParamList &Options, TMacroE
     tab[3][0] << "Friedel pairs merged";          tab[3][1] << hs.FriedelOppositesMerged;
     tab[4][0] << "Inconsistent equaivalents";     tab[4][1] << hs.InconsistentEquivalents;
     tab[5][0] << "Systematic absences removed";   tab[5][1] << hs.SystematicAbsentcesRemoved;
-    tab[6][0] << "Min resolution";                tab[6][1] << hs.MinD;
-    tab[7][0] << "Max resolution";                tab[7][1] << hs.MaxD;
-    tab[8][0] << "Limiting resolution min";       tab[8][1] << hs.LimDmin;
-    tab[9][0] << "Limiting resolution max";       tab[9][1] << hs.LimDmax;
+    tab[6][0] << "Min d";                tab[6][1] << hs.MinD;
+    tab[7][0] << "Max d";                tab[7][1] << hs.MaxD;
+    tab[8][0] << "Limiting d min";       tab[8][1] << hs.LimDmin;
+    tab[9][0] << "Limiting d max";       tab[9][1] << hs.LimDmax;
     tab[10][0] << "Filtered off reflections";     tab[10][1] << hs.FilteredOff;
     tab[11][0] << "Reflections omitted by user";  tab[11][1] << hs.OmittedReflections + hs.OmittedByUser;
     tab[12][0] << "Intensity transformed for";    tab[12][1] << hs.IntensityTransformed << " reflections";

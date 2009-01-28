@@ -87,7 +87,7 @@ namespace SFUtil {
       sx += I;
       sy += qm;
       sxy += I*qm;
-      sxs += I*ref.I;
+      sxs += I*I;
     }
     k = (sxy - sx*sy/f_cnt)/(sxs - sx*sx/f_cnt);
     a = (sy - k*sx)/f_cnt;
