@@ -84,7 +84,7 @@ namespace SFUtil {
     for( int i=0; i < f_cnt; i++ )  {
       const double I = GetReflectionF2(refs[i]);
       const double qm = F[i].qmod();
-      sx += ref.GetI();
+      sx += I;
       sy += qm;
       sxy += ref.GetI()*qm;
       sxs += ref.GetI()*ref.GetI();
