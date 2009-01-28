@@ -75,7 +75,7 @@ public:
   /* the space group is initialised upon file loading
    if the space group is unknow, TFunctionFailedException is thrown
   */
-  inline TSpaceGroup& GetLastLoaderSG() {  
+  inline TSpaceGroup& GetLastLoaderSG() const {  
     if( FSG == NULL )
       throw TFunctionFailedException(__OlxSourceInfo, "unknown space group");
     return *FSG; 

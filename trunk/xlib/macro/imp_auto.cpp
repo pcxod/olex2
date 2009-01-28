@@ -598,7 +598,7 @@ void XLibMacros::funFATA(const TStrObjList &Cmds, TMacroError &E)  {
     E.ProcessingError(__OlxSrcInfo, "could not locate space group");
     return;
   }
-  TArrayList<StructureFactor> P1SF;
+  TArrayList<SFUtil::StructureFactor> P1SF;
   TArrayList<vec3i> hkl(refs.Count());
   for( int i=0; i < refs.Count(); i++ )  {
     hkl[i][0] = refs[i].GetH();

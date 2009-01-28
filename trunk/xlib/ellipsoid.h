@@ -61,7 +61,8 @@ public:
   inline double GetSX()               const {  return SX;  }
   inline double GetSY()               const {  return SY;  }
   inline double GetSZ()               const {  return SZ;  }
-  inline double GetUiso()             const {  return (SX*SX+SY*SY+SZ*SZ)/3;  }
+  //inline double GetUiso()             const {  return (SX*SX+SY*SY+SZ*SZ)/3;  }
+  inline double GetUiso()             const {  return (FQuad[0]+FQuad[1]+FQuad[2])/3;  }
   inline const mat3d&  GetMatrix()    const {  return Matrix;  }
 
   DefPropP(int, Id)

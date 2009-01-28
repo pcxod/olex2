@@ -1277,7 +1277,7 @@ void TIns::_SaveHklInfo(TStrList& SL)  {
   if( GetRM().HasOMIT() )
     SL.Add("OMIT ") << GetRM().GetOMITStr();
   if( GetRM().HasSHEL() )
-    SL.Add("SHELL ") << GetRM().GetSHELStr();
+    SL.Add("SHEL ") << GetRM().GetSHELStr();
   if( GetRM().HasTWIN() )
     SL.Add("TWIN ") << GetRM().GetTWINStr();
   for( int i=0; i < GetRM().OmittedCount(); i++ )  {

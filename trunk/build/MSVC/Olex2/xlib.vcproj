@@ -745,6 +745,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\xlib\packutil.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\xlib\reflection.h"
 				>
 			</File>

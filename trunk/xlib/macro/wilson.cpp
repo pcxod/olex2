@@ -55,10 +55,6 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
     E.ProcessingError(__OlxSrcInfo, "could not locate the HKL file" );
     return;
   }
-  THklFile Hkl;
-  vec3d hkl;
-  Hkl.LoadFromFile(HklFN);
-
   olxstr outputFileName;
   if( Cmds.Count() != 0 )
     outputFileName = Cmds[0];
@@ -69,15 +65,8 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
   TAsymmUnit& au = XApp.XFile().GetAsymmUnit();
   const mat3d& hkl2c = au.GetHklToCartesian();
 
-  TSpaceGroup* sg = TSymmLib::GetInstance()->FindGroup("P-1");
-  //try  { sg = &XApp.XFile().GetLastLoaderSG();  }
-  //catch(...)  {
-  //  E.ProcessingError(__OlxSrcInfo, "Undefined space group" );
-  //  return;
-  //}
-
   TRefList Refs;
-  Hkl.Merge<RefMerger::StandardMerger>(*sg, true, Refs);
+  XApp.XFile().GetRM().GetWilsonRefList(Refs);
   TTypeList<TWilsonBin> bins;
   TTypeList<TWilsonRef> refs;
   refs.SetCapacity(Refs.Count());
@@ -113,13 +102,17 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
   }
 
   double minds=100, maxds=0;
-  for( int i=0; i < Refs.Count(); i++ )  {
-    Refs[i].MulHkl(hkl, hkl2c);
+  const int refs_cnt = Refs.Count();
+  for( int i=0; i < refs_cnt; i++ )  {
+    const TReflection& r = Refs[i];
+    vec3d hkl(r.GetH()*hkl2c[0][0],
+              r.GetH()*hkl2c[0][1] + r.GetK()*hkl2c[1][1],
+              r.GetH()*hkl2c[0][2] + r.GetK()*hkl2c[1][2] + r.GetL()*hkl2c[2][2]);
     TWilsonRef& ref = refs.AddNew();
     ref.ds = hkl.QLength()*0.25;
     if( ref.ds < minds )  minds = ref.ds;
     if( ref.ds > maxds )  maxds = ref.ds;
-    ref.Fo2 = Refs[i].GetI(); // * Refs[i].GetDegeneracy(); mergen in P-1 now, so no use
+    ref.Fo2 = Refs[i].GetI(); // * Refs[i].GetDegeneracy(); merged in P-1 now, so no use
 //    if( Refs[i].IsCentric() ) 
 //      ref.Fo2 /= 2;
     for( int j=0; j < scatterers.Count(); j++ )  {

@@ -11,14 +11,20 @@ File_8=SourceModule,'E:\SVN\src\v1.1u\olex2-tl\About.cpp',0,1,4,49,19,0,0
 
 [Modules]
 Module0=E:\SVN\olex2-sf\trunk\installer\main.cpp
-Module1=E:\wxWidgets-2.8.7\include\wx\wxchar.h
-Count=2
+Module1=E:\SVN\olex2-sf\trunk\repository\shellutil.cpp
+Module2=E:\wxWidgets-2.8.7\include\wx\wxchar.h
+Count=3
 EditWindowCount=1
 TypeLibWindowCount=1
 
 [E:\SVN\olex2-sf\trunk\installer\main.cpp]
 ModuleType=SourceModule
 FormState=1
+FormOnTop=1
+
+[E:\SVN\olex2-sf\trunk\repository\shellutil.cpp]
+ModuleType=SourceModule
+FormState=0
 FormOnTop=0
 
 [E:\wxWidgets-2.8.7\include\wx\wxchar.h]
@@ -95,10 +101,11 @@ FormState=0
 FormOnTop=0
 
 [EditWindow0]
-ViewCount=2
+ViewCount=3
 CurrentView=1
 View0=0
 View1=1
+View2=2
 CodeExplorer=CodeExplorer@EditWindow0
 MessageView=MessageView@EditWindow0
 ClassHierarchy=ClassHierarchy@EditWindow0
@@ -109,11 +116,11 @@ Left=1537
 Top=182
 Width=383
 Height=1018
-MaxLeft=-4
-MaxTop=104
-MaxWidth=1928
+MaxLeft=0
+MaxTop=100
+MaxWidth=1920
 MaxHeight=1100
-ClientWidth=1920
+ClientWidth=1912
 ClientHeight=1066
 LeftPanelSize=0
 LeftPanelClients=CodeExplorer@EditWindow0
@@ -133,8 +140,15 @@ LeftCol=1
 [View1]
 Module=E:\SVN\olex2-sf\trunk\installer\main.cpp
 CursorX=1
-CursorY=1
-TopLine=1
+CursorY=116
+TopLine=112
+LeftCol=1
+
+[View2]
+Module=E:\SVN\olex2-sf\trunk\repository\shellutil.cpp
+CursorX=54
+CursorY=25
+TopLine=16
 LeftCol=1
 
 [TypeLibEditWindow0]
@@ -169,11 +183,11 @@ Left=0
 Top=0
 Width=1920
 Height=112
-MaxLeft=-4
-MaxTop=-4
-MaxWidth=1928
+MaxLeft=-1
+MaxTop=-1
+MaxWidth=1920
 MaxHeight=112
-ClientWidth=1920
+ClientWidth=1912
 ClientHeight=78
 
 [ProjectManager]
@@ -253,9 +267,9 @@ ClientHeight=656
 TBDockHeight=551
 LRDockWidth=233
 Dockable=1
-SplitPos=32
+SplitPos=93
 ArrangeBy=Name
-SelectedItem=Caption
+SelectedItem=Color
 ExpandedItems=
 HiddenCategories=
 
@@ -351,8 +365,8 @@ DockSiteType=0
 Create=1
 Visible=1
 State=0
-Left=0
-Top=161
+Left=-295
+Top=175
 Width=241
 Height=863
 MaxLeft=-1

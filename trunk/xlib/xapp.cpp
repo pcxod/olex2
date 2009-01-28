@@ -157,17 +157,7 @@ void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F)  {
         Ucifs[ind+k] = -TQ_PI*quad[k]*BM[k];
     }
     else  {
-      //if( ca.GetAtomInfo() == iHydrogenIndex && ca.GetUisoVar() < 0 )  {
-      //  int ai = ca.GetAfixAtomId();
-      //  if( ai == -1 )  {
-      //    delete [] Ucifs;
-      //    throw TFunctionFailedException(__OlxSourceInfo, "bad Uiso");
-      //  }
-      //  Ucifs[ind] = olx_abs(au.GetAtom(ai).GetUiso()*ca.GetUisoVar());
-      //}
-      //else
-      Ucifs[ind] = ca.GetUiso();
-      //Ucifs[ind] *= Ucifs[ind]; 
+      Ucifs[ind] = ca.GetUiso()*ca.GetUiso();
       Ucifs[ind] *= -EQ_PI;
     }
   }
@@ -181,7 +171,7 @@ void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F)  {
     const double d_s2 = hkl.QLength()*0.25;
     for( int j=0; j < scatterers.Count(); j++)  {
       scatterers[j].B() = scatterers[j].GetA()->gaussians->calc_sq(d_s2);
-      //scatterers[j].B() += scatterers[j].GetC();
+      scatterers[j].B() += scatterers[j].GetC();
     }
     compd ir;
     for( int j=0; j < a_cnt; j++ )  {
@@ -194,7 +184,7 @@ void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F)  {
         double ca, sa;
         SinCos(tv, &sa, &ca);
         if( alist[j]->GetEllipsoid() != NULL )  {
-          double* Q = &Ucifs[j*6];  // pick up the correct ellipsoid
+          const double* Q = &Ucifs[j*6];  // pick up the correct ellipsoid
           //double B = (Q[0]*hkl[0]*hkl[0] + Q[1]*hkl[1]*hkl[1] + Q[2]*hkl[2]*hkl[2] + 
           //  Q[3]*hkl[1]*hkl[2] + Q[4]*hkl[0]*hkl[2] + Q[5]*hkl[0]*hkl[1]);
           double B = (hkl[0]*(Q[0]*hkl[0]+Q[4]*hkl[2]+Q[5]*hkl[1]) + 

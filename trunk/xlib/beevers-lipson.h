@@ -16,7 +16,7 @@ public:
   struct MapInfo  {
     double sigma, minVal, maxVal;
   };
-  template <class FloatT> static MapInfo CalcEDM(const TArrayList<StructureFactor>& F, 
+  template <class FloatT> static MapInfo CalcEDM(const TArrayList<SFUtil::StructureFactor>& F, 
       FloatT*** map, int mapX, int mapY, int mapZ, double vol)  {
     vec3i min, max;
     SFUtil::FindMinMax(F, min, max); 
@@ -93,7 +93,7 @@ public:
     const int f_count = F.Count();
     for( int ix=0; ix < mapX; ix++ )  {
       for( int i=0; i < f_count; i++ )  {
-        const StructureFactor& sf = F[i];
+        const SFUtil::StructureFactor& sf = F[i];
         S[sf.hkl[1]-min[1]][sf.hkl[2]-min[2]] += sf.val*sin_cosX[ix][sf.hkl[0]-minInd];
       }
       for( int iy=0; iy < mapY; iy++ )  {
