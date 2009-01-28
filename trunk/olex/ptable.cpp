@@ -10,7 +10,6 @@
 //..............................................................................
 TPTableDlg::TPTableDlg(TMainFrame *Parent, TAtomsInfo *AI)
 :TDialog(Parent, wxT("Periodic table"), uiStrT(EsdlClassNameT(TPTableDlg)) )  {
-  ButtonsList = new TEList;
   AActionHandler::SetToDelete(false);
   FAI = AI;
   for( int i=0; i < 9; i++ )  {
@@ -42,26 +41,29 @@ TPTableDlg::TPTableDlg(TMainFrame *Parent, TAtomsInfo *AI)
 
   for( int i=iQPeakIndex+1; i < FAI->Count(); i++ )
     CreateButton(9, i-iQPeakIndex-1, 5 );  // q peak
+  wxDialog::Fit();
   wxDialog::Center();
 }
 TPTableDlg::~TPTableDlg()  {
-  for( int i =0; i < ButtonsList->Count(); i++ )  {
-    TButton *B =  (TButton*)ButtonsList->Item(i);
-    B->OnClick->Clear();
-    delete B;
+  for( int i =0; i < ButtonsList.Count(); i++ )  {
+    ButtonsList[i]->OnClick->Clear();
+    ButtonsList[i];
   }
-  delete ButtonsList;
 }
 //..............................................................................
 void TPTableDlg::CreateButton(int i, int j, int offset )  {
   TButton *B = new TButton(this); // q peak
+#ifdef __MAC__
+  short bd = 36;
+#else
   short bd = 22;
+#endif
   B->WI.SetLeft( j*(bd+1));
   B->WI.SetTop(   i*(bd+1)+offset);
   B->WI.SetWidth( bd );
   B->WI.SetHeight( bd );
-  ButtonsList->Add(B);
-  int ii = ButtonsList->Count();
+  ButtonsList.Add(B);
+  int ii = ButtonsList.Count();
   B->SetTag( ii-1 );
   if( ii == 57 || ii == 75 )
     return;
