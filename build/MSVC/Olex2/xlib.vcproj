@@ -511,10 +511,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\xlib\refutil.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\xlib\samegroup.cpp"
 				>
 			</File>
