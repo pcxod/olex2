@@ -12,7 +12,7 @@ class TPTableDlg: public TDialog, public AActionHandler
 {
 protected:
   void CreateButton(int i, int j, int offset);
-  TEList *ButtonsList;
+  TPtrList<TButton> ButtonsList;
   TAtomsInfo *FAI;
   TBasicAtomInfo *FSelected;
   class TMainFrame *FParent;
