@@ -7,6 +7,7 @@
 #include "mainform.h"
 
 #include "xatom.h"
+#include "xbond.h"
 #include "modes/name.h"
 
 #include "glgroup.h"

@@ -326,10 +326,19 @@ public:
   void FindCAtoms(const olxstr& Atoms, TCAtomPList& List, bool ClearSelection=true);
   void FindXAtoms(const olxstr& Atoms, TXAtomPList& List, bool ClearSelection=true, 
     bool FindHidden=false);
+
+  TXAtom& GetAtom(int i) {  return XAtoms[i];  }
+  const TXAtom& GetAtom(int i) const {  return XAtoms[i];  }
+  inline int AtomCount() const {  return XAtoms.Count();  }
+
+  TXBond& GetBond(int i) {  return XBonds[i];  }
+  const TXBond& GetBond(int i) const {  return XBonds[i];  }
+  inline int BondCount() const {  return XBonds.Count();  }
+
+protected:
   /* the function simply checks if there are any invisible bonds connectd to the
    atom. Normally this happens when a Q-peak is renamed
   */
-protected:
   void CheckQBonds(TXAtom& Atom);
 public:
   void ClearSelectionCopy();

@@ -706,7 +706,7 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual accupancy\
   this_InitMacro(ShowWindow, ,fpOne|fpTwo );
 
   this_InitMacro(DelOFile, ,fpOne );
-  this_InitMacro(CalcVol, cs,fpOne );
+  this_InitMacro(CalcVol, cs, fpOne );
 
   this_InitMacro(ChangeLanguage, ,fpOne );
 
