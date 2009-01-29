@@ -454,11 +454,19 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\repository\unzip.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\repository\url.cpp"
 				>
 			</File>
 			<File
 				RelativePath="..\..\..\repository\winhttpfs.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\repository\winzipfs.cpp"
 				>
 			</File>
 		</Filter>
