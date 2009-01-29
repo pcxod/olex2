@@ -75,8 +75,10 @@
 
 #ifdef _UNICODE
   typedef wchar_t olxch;
+  #define olx_T(a) (La)
 #else
   typedef char olxch;
+  #define olx_T(a) (a)
 #endif
 
 #define bool_defined

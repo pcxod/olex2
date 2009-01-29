@@ -441,7 +441,7 @@ public:
         sum_i += rl[i]->GetI();
         sum_sig_sq += rl[i]->GetS()*rl[i]->GetS();
       }
-      const double mean = sum_i/rl.Count();
+      const double mean = sum_i/cnt;
       double sum_diff = 0, sum_diff_sq = 0;
       for( int i=from; i < to; i++ )  {
         const double diff = rl[i]->GetI() - mean;

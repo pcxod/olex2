@@ -1,3 +1,5 @@
+#ifdef __WIN32__
+
 #ifdef __BORLANDC__
   #pragma hdrstop
 #endif
@@ -29,8 +31,8 @@ IDataInputStream* TWinZipFileSystem::OpenFile(const olxstr& Source)  {
 
   olxch TmpFN[512];
   GetTempPath(512, TmpFN);
-  olxstr Tmp(TmpFN), ext("zip");
-  GetTempFileName(Tmp.u_str(), ext.u_str(), 0, TmpFN);
+  olxstr Tmp(TmpFN);
+  GetTempFileName(Tmp.u_str(), olx_T("zip"), 0, TmpFN);
   olxstr tmp_fn(TmpFN);
   int zindex = -1;
   ZIPENTRY* ze = NULL;
@@ -73,4 +75,4 @@ void TWinZipFileSystem::ExtractAll(const olxstr& dest)  {
     UnzipItem(zip, zi, (extractPath + ze.name).u_str() );         // e.g. the item's name.
   }
 }
-
+#endif // __WIN32__

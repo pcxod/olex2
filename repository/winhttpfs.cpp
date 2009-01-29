@@ -1,3 +1,5 @@
+#ifdef __WIN32__
+
 #ifdef __BORLANDC__
   #pragma hdrstop
 #endif
@@ -189,4 +191,5 @@ IDataInputStream* TWinHttpFileSystem::OpenFile(const olxstr& Source)  {
   }
 }
 //..............................................................................
+#endif  // __WIN32__
 
