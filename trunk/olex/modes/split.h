@@ -34,35 +34,34 @@ protected:
 public:
   TSplitMode(int id) : AMode(id)  {}
   bool Init(TStrObjList &Cmds, const TParamList &Options) {
-    if( !TGlXApp::GetGXApp()->CheckFileType<TIns>() )  return false;
+    TGXApp& app = *TGlXApp::GetGXApp();
+    if( !app.CheckFileType<TIns>() )  return false;
     ReCon = Options.FindValue("r", EmptyString).ToLowerCase();
     TGlXApp::GetMainForm()->executeMacro("cursor(hand)");
-    TXAtomPList Atoms;
-    TGlXApp::GetGXApp()->FindXAtoms(EmptyString, Atoms, false);
-    for( int i=0; i < Atoms.Count(); i++ )  {
+    for( int i=0; i < app.AtomCount(); i++ )  {
       //if( Atoms[i]->Atom().GetAtomInfo() != iQPeakIndex )
-      Atoms[i]->Moveable(true);
+      app.GetAtom(i).Moveable(true);
     }
     return true;
   }
   ~TSplitMode() {
-    TXAtomPList Atoms;
+    TGXApp& app = *TGlXApp::GetGXApp();
     vec3d c;
-    TIns& Ins = TGlXApp::GetGXApp()->XFile().GetLastLoader<TIns>();
-    TAsymmUnit& au = TGlXApp::GetGXApp()->XFile().GetAsymmUnit();
-    RefinementModel& rm = TGlXApp::GetGXApp()->XFile().GetRM();
+    TIns& Ins = app.XFile().GetLastLoader<TIns>();
+    TAsymmUnit& au = app.XFile().GetAsymmUnit();
+    RefinementModel& rm = app.XFile().GetRM();
     UpdateSelectionCrds();
-    TGlXApp::GetGXApp()->FindXAtoms(EmptyString, Atoms, false);
-    for( int i=0; i < Atoms.Count(); i++ )  {
-      Atoms[i]->Moveable(false);
-      Atoms[i]->Roteable(false);
+    for( int i=0; i < app.AtomCount(); i++ )  {
+      TXAtom& xa = app.GetAtom(i);
+      xa.Moveable(false);
+      xa.Roteable(false);
       // summ the translations
-      Atoms[i]->Atom().crd() += Atoms[i]->Basis.GetCenter();
-      Atoms[i]->Basis.NullCenter();
-      c = Atoms[i]->Atom().crd();
-      TGlXApp::GetGXApp()->XFile().GetAsymmUnit().CartesianToCell(c);
-      Atoms[i]->Atom().ccrd() = c;
-      Atoms[i]->Atom().CAtom().ccrd() = c;
+      xa.Atom().crd() += xa.Basis.GetCenter();
+      xa.Basis.NullCenter();
+      c = xa.Atom().crd();
+      au.CartesianToCell(c);
+      xa.Atom().ccrd() = c;
+      xa.Atom().CAtom().ccrd() = c;
     }
     if( SplitAtoms.IsEmpty() )  return;
 
@@ -90,7 +89,7 @@ public:
       //  olxstr("addins EADP ") << SplitAtoms[i].A()->Atom().GetLabel() << ' ' <<
       //  SplitAtoms[i].B()->Atom().GetLabel());
     }
-    TGlXApp::GetGXApp()->XFile().GetLattice().SetAnis(to_isot, false);
+    app.XFile().GetLattice().SetAnis(to_isot, false);
     //TGlXApp::GetMainForm()->executeMacro("fuse");
   }
   virtual bool OnObject(AGDrawObject &obj)  {
