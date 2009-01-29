@@ -162,8 +162,8 @@ public:
 
     unsigned long thread_id;
     TimerThreadHandle = CreateThread(NULL, 0, TimerThreadRun, this, 0, &thread_id);
-    conin = CreateFile(L"CONIN$", GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL); 
-    conout  = CreateFile(L"CONOUT$", GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    conin = CreateFile(olx_T("CONIN$"), GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL); 
+    conout  = CreateFile(olx_T("CONOUT$"), GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
     GetConsoleScreenBufferInfo(conout, &TextAttrib); 
     DataDir = TShellUtil::GetSpecialFolderLocation(fiAppData);
 #ifdef __WIN32__
@@ -1053,7 +1053,7 @@ int main(int argc, char* argv[])  {
     bd << "dummy.txt";
   }
   TOlex olex(bd);
-  SetConsoleTitle(L"Olex2 Console");
+  SetConsoleTitle(olx_T("Olex2 Console"));
   TLibrary &Library = olex.GetLibrary();
   cout << "Welcome to Olex2 console\n";
   cout << "GUI basedir is: " << TBasicApp::GetInstance()->BaseDir().c_str() << '\n';
