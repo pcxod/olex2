@@ -27,10 +27,11 @@ IDataInputStream* TWinZipFileSystem::OpenFile(const olxstr& Source)  {
   TOnProgress Progress;
   olxstr fn( TEFile::UnixPath(Source) );
 
-  char  TmpFN[512];
+  olxch TmpFN[512];
   GetTempPath(512, TmpFN);
-  olxstr Tmp(TmpFN);
-  GetTempFileName(Tmp.u_str(), "zip", 0, TmpFN);
+  olxstr Tmp(TmpFN), ext("zip");
+  GetTempFileName(Tmp.u_str(), ext.u_str(), 0, TmpFN);
+  olxstr tmp_fn(TmpFN);
   int zindex = -1;
   ZIPENTRY* ze = NULL;
   FindZipItem(zip, fn.u_str(), true, &zindex, ze);
@@ -43,13 +44,13 @@ IDataInputStream* TWinZipFileSystem::OpenFile(const olxstr& Source)  {
   Progress.SetPos(0);
   Progress.SetMax(1);
 
-  UnzipItem(zip, zindex, TmpFN );
-  chmod( TmpFN, S_IREAD|S_IWRITE);
+  UnzipItem(zip, zindex, tmp_fn.u_str() );
+  chmod( tmp_fn.c_str(), S_IREAD|S_IWRITE);
 
-  Progress.SetMax(TEFile::FileLength(TmpFN));
+  Progress.SetMax(TEFile::FileLength(tmp_fn));
   TBasicApp::GetInstance()->OnProgress->Enter(this, &Progress);
   Progress.SetAction("Done");
-  Progress.SetPos( TEFile::FileLength(TmpFN) );
+  Progress.SetPos( TEFile::FileLength(tmp_fn) );
   TBasicApp::GetInstance()->OnProgress->Exit(this, &Progress);
   return new TEFile( TmpFN, "rb" );
 }
@@ -69,7 +70,7 @@ void TWinZipFileSystem::ExtractAll(const olxstr& dest)  {
     Progress.SetPos( zi );
     Progress.SetAction( ze.name );
     TBasicApp::GetInstance()->OnProgress->Execute( NULL, &Progress );
-    UnzipItem(zip, zi, (extractPath + ze.name).c_str() );         // e.g. the item's name.
+    UnzipItem(zip, zi, (extractPath + ze.name).u_str() );         // e.g. the item's name.
   }
 }
 
