@@ -8,6 +8,7 @@
 #include "afixgroup.h"
 #include "exyzgroup.h"
 #include "reflection.h"
+#include "fragment.h"
 
 BeginXlibNamespace()
 
@@ -27,6 +28,7 @@ class RefinementModel  {
   // in INS file is EQUV command
   smatd_list UsedSymm;
   TCSTypeList<olxstr, XScatterer*> SfacData;  // label + params
+  TPSTypeList<int, Fragment*> Frags;
 protected:
   olxstr HKLSource;
   olxstr RefinementMethod,  // L.S. or CGLS
@@ -92,11 +94,9 @@ public:
     int GetReadReflections() const {  return TotalReflections+OmittedReflections;  }
   };
 protected:
- HklStat _HklStat;
- mutable TRefList _Reflections;  // ALL un-merged reflections
- mutable TEFile::FileID HklStatFileID, HklFileID;  // if this is not the HKLSource, statistics is recalculated
- const TRefList& GetReflections() const;
- HklStat& FilterHkl(TRefList& out, HklStat& stats);
+  HklStat _HklStat;
+  mutable TRefList _Reflections;  // ALL un-merged reflections
+  mutable TEFile::FileID HklStatFileID, HklFileID;  // if this is not the HKLSource, statistics is recalculated
 public:
 
   TAsymmUnit& aunit;
@@ -217,6 +217,7 @@ public:
   const vec3i& GetOmitted(int i) const {  return Omits[i];  }
   void Omit(const vec3i& r)            {  Omits.AddCCopy(r);  OMITs_Modified = true;  }
   void ClearOmits()                    {  Omits.Clear();  OMITs_Modified = true;  }
+  const vec3i_list& GetOmits()   const {  return Omits;  }
   template <class list> void AddOMIT(const list& omit)  {
     if( omit.Count() == 3 )  {  // reflection omit
       Omits.AddNew( omit[0].ToInt(), omit[1].ToInt(), omit[2].ToInt());
@@ -388,14 +389,104 @@ of components 1 ... m
 
   RefinementModel& Assign(const RefinementModel& rm, bool AssignAUnit);
 
+  int FragCount() const {  return Frags.Count();  }
+  Fragment& GetFrag(int i) {  return *Frags.Object(i);  }
+  const Fragment& GetFrag(int i) const {  return *Frags.GetObject(i);  }
+  Fragment* FindFragByCode(int code) {
+    int ind = Frags.IndexOfComparable(code);
+    return ind == -1 ? NULL : Frags.GetObject(ind);
+  }
+  Fragment& AddFrag(int code, double a=1, double b=1, double c=1, double al=90, double be=90, double ga=90) {
+    int ind = Frags.IndexOfComparable(code);
+    if( ind != -1 )
+      throw TFunctionFailedException(__OlxSourceInfo, "dublicated FRAG instruction");
+    return *Frags.Add(code, new Fragment(code, a, b, c, al, be, ga)).Object();
+  }
+  // the function does the atom fitting and clears the fragments
+  void ProcessFrags();
+
   const HklStat& GetMergeStat();
   // merged according to MERG
-  HklStat GetRefinementRefList(const TSpaceGroup& sg, TRefList& out);
+  template <class Merger> HklStat GetRefinementRefList(const TSpaceGroup& sg, TRefList& out)  {
+    HklStat stats;
+    TRefList refs;
+    FilterHkl(refs, stats);
+    if( MERG != 0 )  {
+      smatd_list ml;
+      sg.GetMatrices(ml, mattAll^mattIdentity);
+      if( (MERG == 4 || MERG == 3) && !sg.IsCentrosymmetric() )  {  // merge all
+        const int mc = ml.Count();
+        for( int i=0; i < mc; i++ )
+          ml.AddNew( ml[i] ) *= -1;
+        ml.AddNew().I() *= -1;
+      }
+      stats = RefMerger::Merge<Merger>(ml, refs, out, Omits);
+    }
+    else
+      stats = RefMerger::MergeInP1<Merger>(refs, out, Omits);
+    return stats;
+  }
   // Friedel pairs always merged
-  HklStat GetFourierRefList(const TSpaceGroup& sg, TRefList& out);
-  // P-1 merged
-  HklStat GetWilsonRefList(TRefList& out);
-
+  template <class Merger> HklStat GetFourierRefList(const TSpaceGroup& sg, TRefList& out) {
+    HklStat stats;
+    TRefList refs;
+    FilterHkl(refs, stats);
+    smatd_list ml;
+    sg.GetMatrices(ml, mattAll^mattIdentity);
+    if( !sg.IsCentrosymmetric() )  {  // merge all
+      const int mc = ml.Count();
+      for( int i=0; i < mc; i++ )
+        ml.AddNew( ml[i] ) *= -1;
+      ml.AddNew().I() *= -1;
+    }
+    stats = RefMerger::Merge<Merger>(ml, refs, out, Omits);
+    return stats;
+  }
+  // P-1 merged, filtered
+  template <class Merger> HklStat GetWilsonRefList(TRefList& out) {
+    HklStat stats;
+    TRefList refs;
+    FilterHkl(refs, stats);
+    smatd_list ml;
+    ml.AddNew().I() *= -1;
+    stats = RefMerger::Merge<Merger>(ml, refs, out, Omits);
+    return stats;
+  }
+  // P1 merged, unfiltered
+  template <class Merger> HklStat GetAllP1RefList(TRefList& out)  {
+    HklStat stats;
+    TRefList refs( GetReflections() );
+    ApplyMatrix(refs, HKLF_mat);
+    vec3i_list empty_omits;
+    stats = RefMerger::MergeInP1<Merger>(refs, out, empty_omits);
+    return stats;
+  }
+  // P1 merged, filtered
+  template <class Merger> HklStat GetFilteredP1RefList(TRefList& out)  {
+    HklStat stats;
+    TRefList refs;
+    FilterHkl(refs, stats);
+    stats = RefMerger::MergeInP1<Merger>(refs, out, Omits);
+    return stats;
+  }
+  // if none of the above functions help, try this ones
+  // return complete list of unmerged reflections (HKLF matrix, if any is NOT applied)
+  const TRefList& GetReflections() const;
+  // filters the reflections according to the parameters
+  HklStat& FilterHkl(TRefList& out, HklStat& stats);
+  // applies the HKLF matrix trnsformation
+  void ApplyMatrix(TRefList& refs, const mat3d& m)  {
+    if( m.IsI() )  return;
+    const int rc = refs.Count();
+    int hkl[3];
+    for( int i=0; i < rc; i++ )  {
+      TReflection& ref = refs[i];
+      ref.MulHklR(hkl, HKLF_mat);  // indexe rounded
+      ref.SetH(hkl[0]);
+      ref.SetK(hkl[1]);
+      ref.SetL(hkl[2]);
+    }
+  }
   void ToDataItem(TDataItem& item);
   void FromDataItem(TDataItem& item);
   

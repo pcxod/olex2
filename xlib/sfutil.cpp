@@ -99,7 +99,7 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
     double av = 0;
     sw.start("Loading/Filtering/Merging HKL");
     const TSpaceGroup& sg = xapp.XFile().GetLastLoaderSG();
-    RefinementModel::HklStat ms = xapp.XFile().GetRM().GetFourierRefList(sg, refs);
+    RefinementModel::HklStat ms = xapp.XFile().GetRM().GetFourierRefList<RefMerger::ShelxMerger>(sg, refs);
     F.SetCount(refs.Count());
     sw.start("Calculation structure factors");
     //xapp.CalcSF(refs, F);

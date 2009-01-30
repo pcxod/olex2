@@ -68,17 +68,15 @@ class TSGTest  {
          AverageI, AverageIS, 
          MaxI, MaxIS, 
          MinI, MinIS;
-  int HklRefCount; // number of read reflections
   long minH, maxH, minK, maxK, minL, maxL;
   TArray3D< TReflection* >* Hkl3DArray;
 public:
-  TSGTest( const olxstr& hklFileName, const mat3d& hkl_tranform);
+  TSGTest();
   virtual ~TSGTest();
   void MergeTest(const TPtrList<TSpaceGroup>& sgList, TTypeList<TSGStats>& res );
   void LatticeSATest(TTypeList<TElementStats<TCLattice*> >& latRes, TTypeList<TSAStats>& saRes );
   void WeakRefTest(const TPtrList<TSpaceGroup>& sgList, TTypeList<TElementStats<TSpaceGroup*> >& res);
 
-  inline int GetHklRefCount()   const {  return HklRefCount;  }
   inline int GetP1RefCount()    const {  return Refs.Count();  }
 
   inline double GetAverageI()   const  {  return AverageI;  }

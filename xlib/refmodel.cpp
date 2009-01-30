@@ -41,6 +41,11 @@ void RefinementModel::Clear() {
   for( int i=0; i < SfacData.Count(); i++ )
     delete SfacData.Object(i);
   SfacData.Clear();
+
+  for( int i=0; i < Frags.Count(); i++ )
+    delete Frags.Object(i);
+  Frags.Clear();
+
   rDFIX.Clear();
   rDANG.Clear();
   rSADI.Clear();
@@ -119,6 +124,10 @@ RefinementModel& RefinementModel::Assign(const RefinementModel& rm, bool AssignA
   HKLSource = rm.HKLSource;
   RefinementMethod = rm.RefinementMethod;
   SolutionMethod = rm.SolutionMethod;
+
+  for( int i=0; i < rm.Frags.Count(); i++ )
+    Frags.Add( rm.Frags.GetComparable(i), new Fragment( *rm.Frags.GetObject(i) ) );
+
   if( AssignAUnit )
     aunit.Assign(rm.aunit);
   Vars.Assign( rm.Vars );
@@ -317,52 +326,6 @@ RefinementModel::HklStat& RefinementModel::FilterHkl(TRefList& out, RefinementMo
   return stats;
 }
 //....................................................................................................
-RefinementModel::HklStat RefinementModel::GetRefinementRefList(const TSpaceGroup& sg, TRefList& out) {
-  HklStat stats;
-  TRefList refs;
-  FilterHkl(refs, stats);
-  if( MERG != 0 )  {
-    smatd_list ml;
-    sg.GetMatrices(ml, mattAll^mattIdentity);
-    if( (MERG == 4 || MERG == 3) && !sg.IsCentrosymmetric() )  {  // merge all
-      const int mc = ml.Count();
-      for( int i=0; i < mc; i++ )
-        ml.AddNew( ml[i] ) *= -1;
-      ml.AddNew().I() *= -1;
-    }
-    stats = RefMerger::Merge<RefMerger::ShelxMerger>(ml, refs, out, Omits);
-  }
-  else
-    stats = RefMerger::MergeInP1<RefMerger::ShelxMerger>(refs, out, Omits);
-  return stats;
-}
-//....................................................................................................
-RefinementModel::HklStat RefinementModel::GetFourierRefList(const TSpaceGroup& sg, TRefList& out) {
-  HklStat stats;
-  TRefList refs;
-  FilterHkl(refs, stats);
-  smatd_list ml;
-  sg.GetMatrices(ml, mattAll^mattIdentity);
-  if( !sg.IsCentrosymmetric() )  {  // merge all
-    const int mc = ml.Count();
-    for( int i=0; i < mc; i++ )
-      ml.AddNew( ml[i] ) *= -1;
-    ml.AddNew().I() *= -1;
-  }
-  stats = RefMerger::Merge<RefMerger::StandardMerger>(ml, refs, out, Omits);
-  return stats;
-}
-//....................................................................................................
-RefinementModel::HklStat RefinementModel::GetWilsonRefList(TRefList& out) {
-  HklStat stats;
-  TRefList refs;
-  FilterHkl(refs, stats);
-  smatd_list ml;
-  ml.AddNew() *= -1;
-  stats = RefMerger::Merge<RefMerger::StandardMerger>(ml, refs, out, Omits);
-  return stats;
-}
-//....................................................................................................
 int RefinementModel::ProcessOmits(TRefList& refs)  {
   if( Omits.IsEmpty() )  return 0;
   int processed = 0;
@@ -521,6 +484,63 @@ void RefinementModel::Describe(TStrList& lst) {
   if( !vars.IsEmpty() )  {
     lst.Add(++sec_num) << ". Other restraints";
     lst.AddList(vars);
+  }
+}
+//....................................................................................................
+void RefinementModel::ProcessFrags()  {
+  for( int i=0; i < Frags.Count(); i++ )  {
+    Fragment* frag = Frags.Object(i);
+    for( int j=0; j < AfixGroups.Count(); j++ )  {
+      TAfixGroup& ag = AfixGroups[j];
+      if( ag.GetM() == frag->GetCode() && (ag.Count()+1) == frag->Count() )  {
+        TTypeList< AnAssociation2<vec3d, vec3d> > crds, icrds;
+        TCAtomPList atoms;
+        atoms.Add( &ag.GetPivot() );
+        for( int k=0; k < ag.Count(); k++ )
+          atoms.Add( &ag[k] );
+        for( int k=0; k < atoms.Count(); k++ )  {
+          if( atoms[k]->ccrd().QLength() > 0.00001 )  {
+            crds.AddNew( (*frag)[k].crd, atoms[k]->ccrd() );
+            icrds.AddNew((*frag)[k].crd );
+          }
+        }
+        if( crds.Count() < 3 )
+          throw TFunctionFailedException(__OlxSourceInfo, "Not enough atoms in fitted group");
+        smatdd tm;
+        vec3d tr, tri;
+        for( int k=0; k < crds.Count(); k++ )  {
+          icrds[k].B() = aunit.CellToCartesian( crds[k].B() );
+          aunit.CartesianToCell( icrds[k].A() ) *= -1;
+          aunit.CellToCartesian( icrds[k].A() );
+          tm.t += crds[k].B();
+          tr += crds[k].GetA();
+          tri += icrds[k].GetA();
+        }
+        tm.t /= crds.Count();
+        tr /= crds.Count();
+        tri /= crds.Count();
+        bool invert = false;
+        double rms = TNetwork::FindAlignmentMatrix(crds, tm);
+        double irms = TNetwork::FindAlignmentMatrix(icrds, tm);
+        if( irms < rms && irms >= 0 )  {
+          tr = tri;
+          invert = true;
+        }
+        for( int k=0; k < atoms.Count(); k++ )  {
+          vec3d v = (*frag)[k].crd;
+          if( invert )  {
+            aunit.CartesianToCell(v);
+            v *= -1;
+            aunit.CellToCartesian(v);
+          }
+          v -= tr;
+          v *= tm.r;
+          v += tm.t;
+          atoms[k]->ccrd() = aunit.CartesianToCell(v);
+        }
+        ag.SetAfix( ag.GetN() );
+      }
+    }
   }
 }
 //....................................................................................................

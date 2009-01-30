@@ -1037,7 +1037,7 @@ public:
       exit(0);
       DWORD w=0;
       WriteConsole(TOlex::OlexInstance->GetConin(),
-        L"\n", 1, &w, NULL); 
+        olx_T("\n"), 1, &w, NULL); 
     }
     return false; 
   }

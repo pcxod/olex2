@@ -6,54 +6,39 @@
 #include "edlist.h"
 #include "tptrlist.h"
 #include "refmerge.h"
+#include "xapp.h"
 
-TSGTest::TSGTest( const olxstr& hklFileName, const mat3d& hkl_transform)  {
+TSGTest::TSGTest()  {
   Hkl3DArray = NULL;
-  THklFile* hkl = new THklFile;
-  try  {  hkl->LoadFromFile( hklFileName );  }
-  catch( const TExceptionBase& exc )  {
-    delete hkl;
-    throw TFunctionFailedException(__OlxSourceInfo, exc, "failed to load the HKL file");
-  }
   // 84.47%, w: 86.32 hkl->MergeInP1<RefMerger::StandardMerger>(Refs);
   // 84.47%, w: 86.32 hkl->MergeInP1<RefMerger::ShelxMerger>(Refs);
-  // 84.56%, w: 86.29% 
-  hkl->MergeInP1<RefMerger::UnitMerger>(Refs);
+  // 84.56%, w: 86.29%
+  TXApp::GetInstance().XFile().GetRM().GetAllP1RefList<RefMerger::UnitMerger>(Refs);
   const int ref_cnt = Refs.Count();
-  HklRefCount = hkl->RefCount();
-  MinI = hkl->GetMinI();  MinIS = hkl->GetMinIS();
-  MaxI = hkl->GetMaxI();  MaxIS = hkl->GetMaxIS();
-  if( hkl_transform.IsI() )  {
-    minH = hkl->GetMinHkl()[0];
-    maxH = hkl->GetMaxHkl()[0];
-    minK = hkl->GetMinHkl()[1];
-    maxK = hkl->GetMaxHkl()[1];
-    minL = hkl->GetMinHkl()[2];
-    maxL = hkl->GetMaxHkl()[2];
-  }
-  else  {
-    minH = minK = minL = 100;
-    maxH = maxK = maxL = -100;
-    vec3i hkl;
-    for( int i=0; i < ref_cnt; i++ )  {
-      Refs[i].MulHklR(hkl, hkl_transform);
-      Refs[i].SetH(hkl[0]);
-      Refs[i].SetK(hkl[1]);
-      Refs[i].SetL(hkl[2]);
-      if( hkl[0] < minH )  minH = hkl[0];
-      if( hkl[0] > maxH )  maxH = hkl[0];
-      if( hkl[1] < minK )  minK = hkl[1];
-      if( hkl[1] > maxK )  maxK = hkl[1];
-      if( hkl[2] < minL )  minL = hkl[2];
-      if( hkl[2] > maxL )  maxL = hkl[2];
+  MinI = 1000;
+  MaxI = -1000;
+  minH = minK = minL = 100;
+  maxH = maxK = maxL = -100;
+  TotalI = AverageI = AverageIS = TotalIS = 0;
+  vec3i hkl;
+  for( int i=0; i < ref_cnt; i++ )  {
+    vec3i hkl(Refs[i].GetH(), Refs[i].GetK(), Refs[i].GetL() );
+    if( hkl[0] < minH )  minH = hkl[0];
+    if( hkl[0] > maxH )  maxH = hkl[0];
+    if( hkl[1] < minK )  minK = hkl[1];
+    if( hkl[1] > maxK )  maxK = hkl[1];
+    if( hkl[2] < minL )  minL = hkl[2];
+    if( hkl[2] > maxL )  maxL = hkl[2];
+    if( Refs[i].GetI() > MaxI )  {
+      MaxI = Refs[i].GetI();
+      MaxIS = Refs[i].GetS();
+    }
+    if( Refs[i].GetI() < MinI )  {
+      MinI = Refs[i].GetI();
+      MinIS = Refs[i].GetS();
     }
   }
-  delete hkl;
-
-  TotalI = AverageI = AverageIS = TotalIS = 0;
-  //long refCount = 0;
   Hkl3DArray = new TArray3D<TReflection*>(minH, maxH, minK, maxK, minL, maxL );
-
   TArray3D<TReflection*>& Hkl3D = *Hkl3DArray;
   for( int i=0; i < ref_cnt; i++ )  {
     TReflection& ref = Refs[i];
@@ -66,7 +51,8 @@ TSGTest::TSGTest( const olxstr& hklFileName, const mat3d& hkl_transform)  {
 }
 //..............................................................................
 TSGTest::~TSGTest()  {
-  if( Hkl3DArray != NULL )  delete Hkl3DArray;
+  if( Hkl3DArray != NULL )  
+    delete Hkl3DArray;
 }
 //..............................................................................
 void TSGTest::MergeTest(const TPtrList<TSpaceGroup>& sgList,  TTypeList<TSGStats>& res )  {

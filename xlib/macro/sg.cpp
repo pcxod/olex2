@@ -23,12 +23,6 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
   if( olx_inst != NULL )
     olx_inst->setVar( IOlexProcessor::SGListVarName, EmptyString );
 
-  olxstr HklFN( XApp.LocateHklFile() );
-
-  if( HklFN.IsEmpty() )  {
-    E.ProcessingError(__OlxSrcInfo, "could not locate HKL file" );
-    return;
-  }
   TTypeList<TBravaisLatticeRef> BravaisLattices;
   if( XApp.XFile().HasLastLoader() )  {
     TSymmLib::GetInstance()->FindBravaisLattices( XApp.XFile().GetAsymmUnit(), BravaisLattices );
@@ -50,10 +44,9 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
       }
     }
   }
-  TSGTest  SGTest( HklFN, XApp.XFile().GetRM().GetHKLF_mat() );
+  TSGTest SGTest;
   XApp.GetLog() << '\n';
-  XApp.GetLog() << ( olxstr("HKL reflections count/ (unique in P1): ") << 
-    SGTest.GetHklRefCount() ) << '/' << SGTest.GetP1RefCount() << '\n';
+  XApp.GetLog() << ( olxstr("Reflections count(unique in P1): ") << SGTest.GetP1RefCount() << '\n');
   XApp.GetLog() << ( olxstr("Maximum/minimum intensity: ") << SGTest.GetMaxI() <<
                             '('    << SGTest.GetMaxIS() << ')'
                             << '/' << SGTest.GetMinI() << '('

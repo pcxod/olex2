@@ -4040,7 +4040,7 @@ void TMainForm::macMergeHkl(TStrObjList &Cmds, const TParamList &Options, TMacro
     return;
   }
   TRefList refs;
-  RefinementModel::HklStat ms = FXApp->XFile().GetRM().GetRefinementRefList(*sg, refs);
+  RefinementModel::HklStat ms = FXApp->XFile().GetRM().GetRefinementRefList<RefMerger::StandardMerger>(*sg, refs);
   TTTable<TStrList> tab(6, 2);
   tab[0][0] << "Total reflections";             tab[0][1] << ms.GetReadReflections();
   tab[1][0] << "Unique reflections";            tab[1][1] << ms.UniqueReflections;
@@ -6282,7 +6282,8 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     TSAtomPList atomsToTransform;
     smatdd S;
     for( int i=0; i < nets.Count(); i++ )  {
-      if( i > 0 )  TryInvert = false;
+      // why is this one here?
+      //if( i > 0 )  TryInvert = false;
       for( int j=i+1; j < nets.Count(); j++ )  {
         res.Clear();
         if( nets[i]->DoMatch( *nets[j], res ) )  {
@@ -6533,22 +6534,32 @@ void TMainForm::macHklStat(TStrObjList &Cmds, const TParamList &Options, TMacroE
   }
   if( Cmds.IsEmpty() )  {
     RefinementModel::HklStat hs = FXApp->XFile().GetRM().GetMergeStat();
-    TTTable<TStrList> tab(15, 2);
-    tab[0][0] << "Total reflections";             tab[0][1] << hs.TotalReflections;
-    tab[1][0] << "Unique reflections";            tab[1][1] << hs.UniqueReflections;
-    tab[2][0] << "Centric reflections";           tab[2][1] << hs.CentricReflections;
-    tab[3][0] << "Friedel pairs merged";          tab[3][1] << hs.FriedelOppositesMerged;
-    tab[4][0] << "Inconsistent equaivalents";     tab[4][1] << hs.InconsistentEquivalents;
-    tab[5][0] << "Systematic absences removed";   tab[5][1] << hs.SystematicAbsentcesRemoved;
-    tab[6][0] << "Min d";                tab[6][1] << hs.MinD;
-    tab[7][0] << "Max d";                tab[7][1] << hs.MaxD;
-    tab[8][0] << "Limiting d min";       tab[8][1] << hs.LimDmin;
-    tab[9][0] << "Limiting d max";       tab[9][1] << hs.LimDmax;
-    tab[10][0] << "Filtered off reflections";     tab[10][1] << hs.FilteredOff;
-    tab[11][0] << "Reflections omitted by user";  tab[11][1] << hs.OmittedReflections + hs.OmittedByUser;
-    tab[12][0] << "Intensity transformed for";    tab[12][1] << hs.IntensityTransformed << " reflections";
-    tab[13][0] << "Rint";                         tab[13][1] << hs.Rint;
-    tab[14][0] << "Rsigma";                       tab[14][1] << hs.Rsigma;
+    TTTable<TStrList> tab(21, 2);
+    tab[0][0] << "Read reflections";              tab[0][1] << FXApp->XFile().GetRM().GetReflections().Count();
+    tab[1][0] << "Total reflections";             tab[1][1] << hs.TotalReflections;
+    tab[2][0] << "Unique reflections";            tab[2][1] << hs.UniqueReflections;
+    tab[3][0] << "Centric reflections";           tab[3][1] << hs.CentricReflections;
+    tab[4][0] << "Friedel pairs merged";          tab[4][1] << hs.FriedelOppositesMerged;
+    tab[5][0] << "Inconsistent equaivalents";     tab[5][1] << hs.InconsistentEquivalents;
+    tab[6][0] << "Systematic absences removed";   tab[6][1] << hs.SystematicAbsentcesRemoved;
+    tab[7][0] << "Min d";                         tab[7][1] << olxstr::FormatFloat(3, hs.MinD);
+    tab[8][0] << "Max d";                         tab[8][1] << olxstr::FormatFloat(3, hs.MaxD);
+    tab[9][0] << "Limiting d min (SHEL)";         tab[9][1] << olxstr::FormatFloat(3, hs.LimDmin);
+    tab[10][0] << "Limiting d max (SHEL/OMIT_2t)";    tab[10][1] << hs.LimDmax;
+    tab[11][0] << "Filtered off reflections (SHEL/OMIT_s/OMIT_2t)";  tab[11][1] << hs.FilteredOff;
+    tab[12][0] << "Reflections omitted by user (OMIT_hkl)";   tab[12][1] << hs.OmittedByUser;
+    tab[13][0] << "Reflections skipped (after 0 0 0)";        tab[13][1] << hs.OmittedReflections;
+    tab[14][0] << "Intensity transformed for (OMIT_s)";       tab[14][1] << hs.IntensityTransformed << " reflections";
+    tab[15][0] << "Rint";                         tab[15][1] << olxstr::FormatFloat(3, hs.Rint);
+    tab[16][0] << "Rsigma";                       tab[16][1] << olxstr::FormatFloat(3, hs.Rsigma);
+    tab[17][0] << "Mean I/sig";                   tab[17][1] << olxstr::FormatFloat(3, hs.MeanIOverSigma);
+    tab[18][0] << "HKL range";                    
+    tab[18][1] << "h=[" << hs.MinIndexes[0] << ',' << hs.MaxIndexes[0] << "] "
+               << "k=[" << hs.MinIndexes[1] << ',' << hs.MaxIndexes[1] << "] "
+               << "l=[" << hs.MinIndexes[2] << ',' << hs.MaxIndexes[2] << "] ";
+    tab[19][0] << "Maximum redundance (+symm eqivs)";    tab[19][1] << hs.ReflectionAPotMax;
+    tab[20][0] << "Average redundance (+symm eqivs)";    tab[20][1] << olxstr::FormatFloat(2, (double)hs.TotalReflections/hs.UniqueReflections);
+
     TStrList Output;
     tab.CreateTXTList(Output, olxstr("HKL statistics "), true, false, "  ");
     TBasicApp::GetLog() << Output << '\n';
@@ -6848,7 +6859,8 @@ void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   olxstr hklfn = FXApp->LocateHklFile();
   if( TEFile::FileExists(hklfn) )  {
     TRefList refs;
-    RefinementModel::HklStat stat = FXApp->XFile().GetRM().GetRefinementRefList(FXApp->XFile().GetLastLoaderSG(), refs);
+    RefinementModel::HklStat stat = 
+      FXApp->XFile().GetRM().GetRefinementRefList<RefMerger::ShelxMerger>(FXApp->XFile().GetLastLoaderSG(), refs);
     TArrayList<compd> FP(refs.Count());
     SFUtil::CalcSF(FXApp->XFile(), refs, FP, true);
     double scale = SFUtil::CalcFScale(FP, refs);
@@ -7974,7 +7986,7 @@ void TMainForm::macCalcPatt(TStrObjList &Cmds, const TParamList &Options, TMacro
   }
 
   TRefList refs;
-  RefinementModel::HklStat stats = FXApp->XFile().GetRM().GetFourierRefList( *sg, refs);
+  RefinementModel::HklStat stats = FXApp->XFile().GetRM().GetFourierRefList<RefMerger::StandardMerger>( *sg, refs);
 
   double vol = FXApp->XFile().GetLattice().GetUnitCell().CalcVolume();
   int minH = 100,  minK = 100,  minL = 100;

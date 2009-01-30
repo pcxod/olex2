@@ -697,6 +697,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\xlib\fragment.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\xlib\hkl.h"
 				>
 			</File>

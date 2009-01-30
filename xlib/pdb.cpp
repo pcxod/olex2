@@ -132,9 +132,9 @@ void TPdb::LoadFromStrings(const TStrList& Strings)  {
       QE[0] = toks[10].ToDouble();
       QE[1] = toks[11].ToDouble();
       QE[2] = toks[12].ToDouble();
-      QE[3] = toks[13].ToDouble();
+      QE[3] = toks[15].ToDouble();
       QE[4] = toks[14].ToDouble();
-      QE[5] = toks[15].ToDouble();
+      QE[5] = toks[13].ToDouble();
       QE /= 10000;
       TCAtom* ca = GetAsymmUnit().FindCAtomByLoaderId( toks[1].ToInt() );
       if( ca != NULL )  {

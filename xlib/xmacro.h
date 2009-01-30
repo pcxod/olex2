@@ -97,7 +97,7 @@ public:
   static const olxstr NAString;
   static olxstr CurrentDir;
   // finds numbers and removes them from the list and returns the number of found numbers
-  template <typename nt> static int ParseNumbers(TStrObjList& Cmds, int cnt, ...)  {
+  template <typename nt, class list> static int ParseNumbers(list& Cmds, int cnt, ...)  {
     va_list argptr;
     va_start(argptr, cnt);
     if( cnt <= 0 )  {  va_end(argptr);  return 0;  }
@@ -110,6 +110,20 @@ public:
         if( fc >= cnt )  break;
         i--;
       }
+    }
+    va_end(argptr);
+    return fc;
+  }
+  // finds numbers in the list and returns the number of found numbers
+  template <typename nt, class list> static int ParseOnlyNumbers(const list& Cmds, int cnt, int from=0, ...)  {
+    va_list argptr;
+    va_start(argptr, from);
+    if( cnt <= 0 )  {  va_end(argptr);  return 0;  }
+    int fc=0;
+    for( int i=from; i < Cmds.Count(); i++ )  {
+      *va_arg(argptr, nt*) = (nt)Cmds[i].ToDouble();
+      fc++;
+      if( fc >= cnt )  break;
     }
     va_end(argptr);
     return fc;

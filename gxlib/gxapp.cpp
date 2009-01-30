@@ -300,7 +300,7 @@ void TGXApp::CreateXRefs()  {
   if( !XReflections.IsEmpty() )  return;
 
   TRefList refs;
-  RefinementModel::HklStat stats = XFile().GetRM().GetRefinementRefList(XFile().GetLastLoaderSG(), refs);
+  RefinementModel::HklStat stats = XFile().GetRM().GetRefinementRefList<RefMerger::StandardMerger>(XFile().GetLastLoaderSG(), refs);
   vec3d Center;
   for( int i=0; i < refs.Count(); i++ )  {
     TXReflection* xr = new TXReflection("XReflection", stats.MinI, stats.MaxI, refs[i],
