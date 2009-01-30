@@ -49,7 +49,7 @@ protected:
 
   class TUnitCell*  UnitCell;
   class TAsymmUnit* AsymmUnit;
-  float    Delta, DeltaI;
+  double Delta, DeltaI;
   // the mask to decide which atoms to be used in the connectivity
   TEBitArray AtomMask;
   // if Template is specified, the CAtoms are taken from there instead of AsymmUnit
@@ -156,8 +156,8 @@ protected:
 public:
   void AnalyseHAdd(class AConstraintGenerator& cg, const TSAtomPList& atoms);
 
-  DefPropP(float, Delta)
-  DefPropP(float, DeltaI)
+  DefPropP(double, Delta)
+  DefPropP(double, DeltaI)
 
   void LibGetFragmentCount(const TStrObjList& Params, TMacroError& E);
   void LibGetFragmentAtoms(const TStrObjList& Params, TMacroError& E);

@@ -83,6 +83,7 @@ public:
   void SetAfix(int a)  {
     if( a == 0 )
       Clear();
+    Afix = a;
   }
   void Clear();
   bool IsEmpty()  const {  return (Pivot == NULL || Pivot->IsDeleted() || 

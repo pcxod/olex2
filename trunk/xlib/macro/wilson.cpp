@@ -66,7 +66,7 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
   const mat3d& hkl2c = au.GetHklToCartesian();
 
   TRefList Refs;
-  XApp.XFile().GetRM().GetWilsonRefList(Refs);
+  XApp.XFile().GetRM().GetWilsonRefList<RefMerger::StandardMerger>(Refs);
   TTypeList<TWilsonBin> bins;
   TTypeList<TWilsonRef> refs;
   refs.SetCapacity(Refs.Count());

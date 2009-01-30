@@ -86,6 +86,8 @@ public:
   */
   static double FindAlignmentMatrix(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atoms,
                   smatdd& res, bool TryInversion);
+  // finds allignment matrix for given coordinates
+  static double FindAlignmentMatrix(const TTypeList< AnAssociation2<vec3d,vec3d> >& crds, smatdd& res);
   /* this fuction is used alonside the above one to allign the atoms using provided
    matrix. Also the Inverted has to be specified if the matric was calculated using
    the function above with the inverted flag on. The atomsToTransform are the atoms

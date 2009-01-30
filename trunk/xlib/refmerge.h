@@ -4,13 +4,15 @@
 BeginXlibNamespace()
 
 struct MergeStats  {
-  double Rint, Rsigma;
+  double Rint, Rsigma, MeanIOverSigma;
   int SystematicAbsentcesRemoved,
     InconsistentEquivalents,
     UniqueReflections,
     CentricReflections,
+    ReflectionAPotMax,
     OmittedByUser;      // OMIT h k l, all equivs
   bool FriedelOppositesMerged;
+  vec3i MinIndexes, MaxIndexes;
   MergeStats()  {
     SetDefaults();
   }
@@ -20,18 +22,26 @@ struct MergeStats  {
   MergeStats& operator = (const MergeStats& ms) {
     Rint = ms.Rint;
     Rsigma = ms.Rsigma;
+    MeanIOverSigma = ms.MeanIOverSigma;
     SystematicAbsentcesRemoved = ms.SystematicAbsentcesRemoved;
     InconsistentEquivalents = ms.InconsistentEquivalents;
     UniqueReflections = ms.UniqueReflections;
     OmittedByUser = ms.OmittedByUser;
     CentricReflections = ms.CentricReflections;
     FriedelOppositesMerged = ms.FriedelOppositesMerged;
+    ReflectionAPotMax = ms.ReflectionAPotMax;
+    MinIndexes = ms.MinIndexes;
+    MaxIndexes = ms.MaxIndexes;
     return *this;
   }
   void SetDefaults()  {
     Rint = Rsigma = 0;
+    MeanIOverSigma = 0;
+    MinIndexes[0] = MinIndexes[1] = MinIndexes[2] = 100;
+    MaxIndexes[0] = MaxIndexes[1] = MaxIndexes[2] = -100;
     OmittedByUser = UniqueReflections = 0;
     CentricReflections = SystematicAbsentcesRemoved = InconsistentEquivalents = 0;
+    ReflectionAPotMax = 0;
     FriedelOppositesMerged = false;
   }
   //bool IsEmpty() const {  return TotalReflections == 0;  }
@@ -79,6 +89,8 @@ class RefMerger {
         }
       }
       if( !omitted )  {
+        if( merged_count > stats.ReflectionAPotMax )
+          stats.ReflectionAPotMax = merged_count;
         if( !ref->IsAbsent() )  {
           // the reflection is replicated if only one in the list
           MergerOut mo = RefListMerger::Merge( refs, from, i );
@@ -99,6 +111,13 @@ class RefMerger {
             stats.CentricReflections++;
           SS += mo.ref->GetS();
           SI += mo.ref->GetI();
+          stats.MeanIOverSigma += mo.ref->GetI()/mo.ref->GetS();
+          if( ref->GetH() > stats.MaxIndexes[0] )  stats.MaxIndexes[0] = ref->GetH();
+          if( ref->GetK() > stats.MaxIndexes[1] )  stats.MaxIndexes[1] = ref->GetK();
+          if( ref->GetL() > stats.MaxIndexes[2] )  stats.MaxIndexes[2] = ref->GetL();
+          if( ref->GetH() < stats.MinIndexes[0] )  stats.MinIndexes[0] = ref->GetH();
+          if( ref->GetK() < stats.MinIndexes[1] )  stats.MinIndexes[1] = ref->GetK();
+          if( ref->GetL() < stats.MinIndexes[2] )  stats.MinIndexes[2] = ref->GetL();
         }
         else
           stats.SystematicAbsentcesRemoved += merged_count;
@@ -109,6 +128,8 @@ class RefMerger {
     stats.Rint = (SI_tot != 0) ? Sdiff/SI_tot : 0.0;
     stats.Rsigma = (SI != 0) ? SS/SI : 0.0;
     stats.UniqueReflections = output.Count();
+    if( stats.UniqueReflections != 0 )
+      stats.MeanIOverSigma /= stats.UniqueReflections;
     return stats;
   }
   template <class RefListMerger> 
@@ -151,6 +172,8 @@ class RefMerger {
         }
       }
       if( !omitted )  {
+        if( merged_count > stats.ReflectionAPotMax )
+          stats.ReflectionAPotMax = merged_count;
         if( !ref->IsAbsent() )  {
           // the reflection is replicated if only one in the list
           DryMergerOut mo = RefListMerger::DryMerge( refs, from, i );
@@ -168,6 +191,13 @@ class RefMerger {
             stats.CentricReflections++;
           SS += mo.rSig;
           SI += mo.rI;
+          stats.MeanIOverSigma += mo.rI/mo.rSig;
+          if( ref->GetH() > stats.MaxIndexes[0] )  stats.MaxIndexes[0] = ref->GetH();
+          if( ref->GetK() > stats.MaxIndexes[1] )  stats.MaxIndexes[1] = ref->GetK();
+          if( ref->GetL() > stats.MaxIndexes[2] )  stats.MaxIndexes[2] = ref->GetL();
+          if( ref->GetH() < stats.MinIndexes[0] )  stats.MinIndexes[0] = ref->GetH();
+          if( ref->GetK() < stats.MinIndexes[1] )  stats.MinIndexes[1] = ref->GetK();
+          if( ref->GetL() < stats.MinIndexes[2] )  stats.MinIndexes[2] = ref->GetL();
           stats.UniqueReflections++;
         }
         else
@@ -178,6 +208,8 @@ class RefMerger {
     }
     stats.Rint = (SI_tot != 0) ? Sdiff/SI_tot : 0.0;
     stats.Rsigma = (SI != 0) ? SS/SI : 0.0;
+    if( stats.UniqueReflections != 0 )
+      stats.MeanIOverSigma /= stats.UniqueReflections;
     return stats;
   }
 
@@ -208,6 +240,8 @@ class RefMerger {
         }
       }
       if( !omitted )  {
+        if( merged_count > stats.ReflectionAPotMax )
+          stats.ReflectionAPotMax = merged_count;
         MergerOut mo = RefListMerger::Merge( refs, from, i );
         if( merged_count > 1 )  {
           SI_tot += mo.sumI;
@@ -224,6 +258,13 @@ class RefMerger {
         output.Add(mo.ref);
         SS += mo.ref->GetS();
         SI += mo.ref->GetI();
+        stats.MeanIOverSigma += mo.ref->GetI()/mo.ref->GetS();
+        if( ref->GetH() > stats.MaxIndexes[0] )  stats.MaxIndexes[0] = ref->GetH();
+        if( ref->GetK() > stats.MaxIndexes[1] )  stats.MaxIndexes[1] = ref->GetK();
+        if( ref->GetL() > stats.MaxIndexes[2] )  stats.MaxIndexes[2] = ref->GetL();
+        if( ref->GetH() < stats.MinIndexes[0] )  stats.MinIndexes[0] = ref->GetH();
+        if( ref->GetK() < stats.MinIndexes[1] )  stats.MinIndexes[1] = ref->GetK();
+        if( ref->GetL() < stats.MinIndexes[2] )  stats.MinIndexes[2] = ref->GetL();
       }
       if( i >= ref_cnt )  break;
       ref = refs[i];
@@ -231,6 +272,8 @@ class RefMerger {
     stats.Rint = (SI_tot != 0) ? Sdiff/SI_tot : 0.0;
     stats.Rsigma = (SI != 0) ? SS/SI : 0.0;
     stats.UniqueReflections = output.Count();
+    if( stats.UniqueReflections != 0 )
+      stats.MeanIOverSigma /= stats.UniqueReflections;
     return stats;
   }
   template <class RefListMerger>
@@ -259,6 +302,8 @@ class RefMerger {
         }
       }
       if( !omitted )  {
+        if( merged_count > stats.ReflectionAPotMax )
+          stats.ReflectionAPotMax = merged_count;
         DryMergerOut mo = RefListMerger::DryMerge( refs, from, i );
         if( merged_count > 1 )  {
           SI_tot += mo.sumI;
@@ -270,6 +315,13 @@ class RefMerger {
         }
         SS += mo.rSig;
         SI += mo.rI;
+        stats.MeanIOverSigma += mo.rI/mo.rSig;
+        if( ref->GetH() > stats.MaxIndexes[0] )  stats.MaxIndexes[0] = ref->GetH();
+        if( ref->GetK() > stats.MaxIndexes[1] )  stats.MaxIndexes[1] = ref->GetK();
+        if( ref->GetL() > stats.MaxIndexes[2] )  stats.MaxIndexes[2] = ref->GetL();
+        if( ref->GetH() < stats.MinIndexes[0] )  stats.MinIndexes[0] = ref->GetH();
+        if( ref->GetK() < stats.MinIndexes[1] )  stats.MinIndexes[1] = ref->GetK();
+        if( ref->GetL() < stats.MinIndexes[2] )  stats.MinIndexes[2] = ref->GetL();
         stats.UniqueReflections++;
       }
       if( i >= ref_cnt )  break;
@@ -277,6 +329,8 @@ class RefMerger {
     }
     stats.Rint = (SI_tot != 0) ? Sdiff/SI_tot : 0.0;
     stats.Rsigma = (SI != 0) ? SS/SI : 0.0;
+    if( stats.UniqueReflections != 0 )
+      stats.MeanIOverSigma /= stats.UniqueReflections;
     return stats;
   }
 public:

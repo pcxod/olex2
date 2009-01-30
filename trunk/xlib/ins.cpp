@@ -26,6 +26,8 @@
 #include "symmlib.h"
 #include "typelist.h"
 #include "egc.h"
+#include "xmacro.h"
+#include "sptrlist.h"
 
 #undef AddAtom
 #undef GetObject
@@ -238,6 +240,7 @@ void TIns::_FinishParsing(ParseContext& cx)  {
   //}
 
   cx.rm.Vars.Validate();
+  cx.rm.ProcessFrags();
 }
 //..............................................................................
 bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx, int& i)  {
@@ -261,6 +264,28 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx,
   }
   else if( Toks[0].Comparei("SYMM") == 0 && (Toks.Count() > 1))
     cx.Symm.Add( Toks.Text(EmptyString, 1) );
+  else if( Toks[0].Comparei("FRAG") == 0 && (Toks.Count() > 1))  {
+   int code = Toks[1].ToInt();
+    if( code < 17 )
+      throw TInvalidArgumentException(__OlxSourceInfo, "FRAG code must be more than 16");
+    double a=1, b=1, c=1, al=90, be=90, ga=90;
+    XLibMacros::ParseOnlyNumbers<double>(Toks, 6, 2, &a, &b, &c, &al, &be, &ga);
+    Fragment* frag = cx.rm.FindFragByCode(code);
+    if( frag == NULL )
+      frag = &cx.rm.AddFrag(Toks[1].ToInt(), a, b, c, al, be, ga);
+    else
+      frag->Reset(a, b, c, al, be, ga);
+    TStrList f_toks;
+    while( ++i < ins.Count() && !ins[i].StartFromi("FEND") )  {
+      if( ins[i].IsEmpty() )  continue;
+      f_toks.Strtok(ins[i], ' ');
+      if( f_toks.Count() > 4 )
+        frag->Add(f_toks[0], f_toks[2].ToDouble(), f_toks[3].ToDouble(), f_toks[4].ToDouble());
+      else
+        throw TFunctionFailedException(__OlxSourceInfo, "invalid FRAG atom");
+      f_toks.Clear();
+    }
+  }
   else if( Toks[0].Comparei("PART") == 0 && (Toks.Count() > 1) )  {
     cx.Part = (short)Toks[1].ToInt();
     if( cx.Part == 0 )  cx.PartOccu = 0;
@@ -346,7 +371,14 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx,
           cx.AfixGroups.Push( AnAssociation3<int,TAfixGroup*,bool>(6, afixg, false) );
           break;
         }
-        if( m == 0 && !TAfixGroup::IsDependent(afix) )  {  // generic container then, beside, 5 is dependent atom of rigid group
+        if( m > 16 )  {  // FRAG
+          Fragment* frag = cx.rm.FindFragByCode(m);
+          if( frag == NULL )
+            throw TInvalidArgumentException(__OlxSourceInfo, "fitted group should be preceeded by the FRAG..FEND with the same code");
+          cx.AfixGroups.Push( AnAssociation3<int,TAfixGroup*,bool>(frag->Count()-1, afixg, false) );
+          cx.SetNextPivot = true;
+        }
+        else if( m == 0 && !TAfixGroup::IsDependent(afix) )  {  // generic container then, beside, 5 is dependent atom of rigid group
           cx.AfixGroups.Push( AnAssociation3<int,TAfixGroup*,bool>(-1, afixg, false) );
           cx.SetNextPivot = !TAfixGroup::IsRiding(afix); // if not riding
         }
@@ -915,7 +947,7 @@ void TIns::UpdateAtomsFromStrings(RefinementModel& rm, TCAtomPList& CAtoms, cons
   TStrList Toks;
   olxstr Tmp, Tmp1;
   TCAtom *atom;
-  int iv, atomCount = 0;
+  int atomCount = 0;
   ParseContext cx(rm);
   SL.CombineLines('=');
   //rm.FVAR.Clear();
@@ -940,7 +972,8 @@ void TIns::UpdateAtomsFromStrings(RefinementModel& rm, TCAtomPList& CAtoms, cons
     Toks.Strtok(Tmp, ' ');
     if( Toks.IsEmpty() )  continue;
     Tmp1 = Toks[0];
-    if( Tmp1 == "REM" )  ;
+    if( Tmp1 == "REM" )  
+      ;
     else if( ParseIns(SL, Toks, cx, i) )  
       ;
     else if( Toks.Count() < 6 )  // should be at least
@@ -1162,7 +1195,7 @@ TCAtom* TIns::_ParseAtom(TStrList& Toks, ParseContext& cx, TCAtom* atom)  {
       atom->SetUiso( 4*caDefIso*caDefIso );
     if( Toks.Count() >= 8 ) // some other data as Q-peak itensity
       atom->SetQPeak( Toks[7].ToDouble() );
-    if( atom->GetUiso() < 0 )  {  // a value fixed to a bound atom value
+    if( atom->GetUiso() <= -0.5 )  {  // a value fixed to a bound atom value
       if( cx.LastWithU == NULL )
         throw TInvalidArgumentException(__OlxSourceInfo, olxstr("Invalid Uiso proxy for: ") << Toks[0]);
       atom->SetUisoScale( olx_abs(atom->GetUiso()) );
@@ -1291,7 +1324,7 @@ void TIns::_SaveHklInfo(TStrList& SL)  {
   }
 }
 //..............................................................................
-bool ProcessRestraint(const TCAtomPList* atoms, TSimpleRestraint& sr)  {
+bool Ins_ProcessRestraint(const TCAtomPList* atoms, TSimpleRestraint& sr)  {
   if( sr.AtomCount() == 0 && !sr.IsAllNonHAtoms() )  return false;
   if( atoms == NULL )  return true;
   for(int i=0; i < atoms->Count(); i++ )
@@ -1316,7 +1349,7 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
   for( int i=0; i < rm.rDFIX.Count(); i++ )  {
     TSimpleRestraint& sr = rm.rDFIX[i];
     sr.Validate();
-    if( !ProcessRestraint(atoms, sr) )  continue;
+    if( !Ins_ProcessRestraint(atoms, sr) )  continue;
     Tmp = "DFIX ";
     Tmp << sr.GetValue() << ' ' << sr.GetEsd();
     for( int j=0; j < sr.AtomCount(); j++ )  {
@@ -1331,7 +1364,7 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
   for( int i=0; i < rm.rSADI.Count(); i++ )  {
     TSimpleRestraint& sr = rm.rSADI[i];
     sr.Validate();
-    if( !ProcessRestraint(atoms, sr) )  continue;
+    if( !Ins_ProcessRestraint(atoms, sr) )  continue;
     Tmp = "SADI ";
     Tmp << sr.GetEsd();
     for( int j=0; j < sr.AtomCount(); j++ )  {
@@ -1346,7 +1379,7 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
   for( int i=0; i < rm.rDANG.Count(); i++ )  {
     TSimpleRestraint& sr = rm.rDANG[i];
     sr.Validate();
-    if( !ProcessRestraint(atoms, sr) )  continue;
+    if( !Ins_ProcessRestraint(atoms, sr) )  continue;
     Tmp = "DANG ";
     Tmp << olxstr::FormatFloat(3, sr.GetValue()) << ' ' << sr.GetEsd();
     for( int j=0; j < sr.AtomCount(); j++ )  {
@@ -1361,7 +1394,7 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
   for( int i=0; i < rm.rCHIV.Count(); i++ )  {
     TSimpleRestraint& sr = rm.rCHIV[i];
     sr.Validate();
-    if( !ProcessRestraint(atoms, sr) )  continue;
+    if( !Ins_ProcessRestraint(atoms, sr) )  continue;
     Tmp = "CHIV ";
     Tmp << sr.GetValue() << ' ' << sr.GetEsd();
     for( int j=0; j < sr.AtomCount(); j++ )  {
@@ -1376,7 +1409,7 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
   for( int i=0; i < rm.rFLAT.Count(); i++ )  {
     TSimpleRestraint& sr = rm.rFLAT[i];
     sr.Validate();
-    if( !ProcessRestraint(atoms, sr) )  continue;
+    if( !Ins_ProcessRestraint(atoms, sr) )  continue;
     if( sr.AtomCount() < 4 )  continue;
     Tmp = "FLAT ";
     Tmp << sr.GetEsd();
@@ -1392,7 +1425,7 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
   for( int i=0; i < rm.rDELU.Count(); i++ )  {
     TSimpleRestraint& sr = rm.rDELU[i];
     sr.Validate();
-    if( !ProcessRestraint(atoms, sr) )  continue;
+    if( !Ins_ProcessRestraint(atoms, sr) )  continue;
     Tmp = "DELU ";
     Tmp << sr.GetEsd() << ' ' << sr.GetEsd1();
     for( int j=0; j < sr.AtomCount(); j++ )  {
@@ -1407,7 +1440,7 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
   for( int i=0; i < rm.rSIMU.Count(); i++ )  {
     TSimpleRestraint& sr = rm.rSIMU[i];
     sr.Validate();
-    if( !ProcessRestraint(atoms, sr) )  continue;
+    if( !Ins_ProcessRestraint(atoms, sr) )  continue;
     Tmp = "SIMU ";
     Tmp << sr.GetEsd() << ' ' << sr.GetEsd1() << ' ' << sr.GetValue();
     for( int j=0; j < sr.AtomCount(); j++ )  {
@@ -1422,7 +1455,7 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
   for( int i=0; i < rm.rISOR.Count(); i++ )  {
     TSimpleRestraint& sr = rm.rISOR[i];
     sr.Validate();
-    if( !ProcessRestraint(atoms, sr) )  continue;
+    if( !Ins_ProcessRestraint(atoms, sr) )  continue;
     Tmp = "ISOR ";
     Tmp << sr.GetEsd() << ' ' << sr.GetEsd1();
     for( int j=0; j < sr.AtomCount(); j++ )  {
@@ -1437,7 +1470,7 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
   for( int i=0; i < rm.rEADP.Count(); i++ )  {
     TSimpleRestraint& sr = rm.rEADP[i];
     sr.Validate();
-    if( !ProcessRestraint(atoms, sr) )  continue;
+    if( !Ins_ProcessRestraint(atoms, sr) )  continue;
     if( sr.AtomCount() < 2 )  continue;
     Tmp = "EADP";
     for( int j=0; j < sr.AtomCount(); j++ )  {
@@ -1473,6 +1506,25 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
     //if( processed != NULL )  
     //  processed->equations.Add( &rm.Vars.GetEquation(i) );
   }
+  SL.Add(EmptyString);
+  if( atoms == NULL )  {
+    for( int i=0; i < rm.FragCount(); i++ )
+      rm.GetFrag(i).ToStrings(SL);
+  }
+  else  {
+    TSPtrList<Fragment> saved; 
+    for( int i=0; i < atoms->Count(); i++ )  {
+      const int m = TAfixGroup::GetM( (*atoms)[i]->GetAfix() );
+      if( m < 17 )  continue;
+      Fragment* frag = rm.FindFragByCode(m);
+      if( frag == NULL )
+        throw TFunctionFailedException(__OlxSourceInfo, "could not locate the FRAG for fitted group");
+      if( saved.IndexOf(frag) != -1 )  continue;
+      saved.Add(frag);
+      frag->ToStrings(SL);
+    }
+  }
+  SL.Add(EmptyString);
 }
 //..............................................................................
 void TIns::ClearIns()  {
@@ -1549,19 +1601,12 @@ void TIns::ParseHeader(const TStrList& in)  {
   GetAsymmUnit().ClearMatrices();
 // end clear, start parsing
   olxstr Tmp;
-  TStrList toks;
+  TStrList toks, lst(in);
+  lst.CombineLines("=");
   ParseContext cx(GetRM());
-  for( int i=0; i < in.Count(); i++ )  {
-    Tmp = olxstr::DeleteSequencesOf<char>(in[i], ' ');
+  for( int i=0; i < lst.Count(); i++ )  {
+    Tmp = olxstr::DeleteSequencesOf<char>(lst[i], ' ');
     if( Tmp.IsEmpty() )      continue;
-
-    while( Tmp[Tmp.Length()-1] == '=' )   {  // hypernation sign
-      Tmp.SetLength(Tmp.Length()-1);
-      // this will remove empty lines (in case of linux/dos mixup
-      while( i++ && (i+1) < in.Count() && in[i].IsEmpty() )
-        ;
-      Tmp << in[i];
-    }
     for( int j=0; j < Tmp.Length(); j++ )  {
       if( Tmp[j] == '!' )  {  // comment sign
         Tmp.SetLength(j-1);
@@ -1572,10 +1617,10 @@ void TIns::ParseHeader(const TStrList& in)  {
     toks.Strtok(Tmp, ' ');
     if( toks.IsEmpty() )  continue;
 
-    if( ParseIns(in, toks, cx, i) )
+    if( ParseIns(lst, toks, cx, i) )
       continue;
     else
-      Ins.Add(in[i]);
+      Ins.Add(lst[i]);
   }
   smatd sm;
   for( int i=0; i < cx.Symm.Count(); i++ )  {

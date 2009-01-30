@@ -75,7 +75,7 @@
 
 #ifdef _UNICODE
   typedef wchar_t olxch;
-  #define olx_T(a) (La)
+#define olx_T(a) (L##a)
 #else
   typedef char olxch;
   #define olx_T(a) (a)
