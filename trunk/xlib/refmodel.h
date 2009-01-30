@@ -9,6 +9,7 @@
 #include "exyzgroup.h"
 #include "reflection.h"
 #include "fragment.h"
+#include "symmlib.h"
 
 BeginXlibNamespace()
 
