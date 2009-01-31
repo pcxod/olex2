@@ -403,8 +403,6 @@ private:
   DefMacro(CalcVol)
   DefMacro(ChangeLanguage)
 
-  DefMacro(HklStat)
-
   DefMacro(Schedule)
   DefMacro(Tls)
   DefMacro(Test)

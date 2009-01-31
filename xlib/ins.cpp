@@ -1160,6 +1160,9 @@ void TIns::_ProcessAfix(TCAtom& a, ParseContext& cx)  {
 }
 //..............................................................................
 TCAtom* TIns::_ParseAtom(TStrList& Toks, ParseContext& cx, TCAtom* atom)  {
+  mat3d abc2xyz( mat3d::Transpose(GetAsymmUnit().GetCellToCartesian()) ),
+           xyz2abc( mat3d::Transpose(GetAsymmUnit().GetCartesianToCell())), I;
+  I.I();
   double QE[6];
   if( atom == NULL )  {
     atom = &cx.au.NewAtom(cx.Resi);
@@ -1179,7 +1182,9 @@ TCAtom* TIns::_ParseAtom(TStrList& Toks, ParseContext& cx, TCAtom* atom)  {
     for( int j=0; j < 6; j ++ )
       QE[j] = cx.rm.Vars.SetAtomParam(*atom, var_name_U11+j, Toks[j+6].ToDouble() );
     cx.au.UcifToUcart(QE);
-    atom->AssignEllp( &cx.au.NewEllp().Initialise(QE) );
+    TEllipsoid& elp = cx.au.NewEllp().Initialise(QE);
+    elp.MultMatrix(abc2xyz*I*xyz2abc);
+    atom->AssignEllp( &elp );
     if( atom->GetEllipsoid()->IsNPD() )  {
       TBasicApp::GetLog().Info(olxstr("Not positevely defined: ") << Toks[0]);
       atom->SetUiso( 0 );

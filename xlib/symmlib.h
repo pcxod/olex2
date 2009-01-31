@@ -61,6 +61,8 @@ class TSpaceGroup : public IEObject {
   bool CentroSymmetric, Translations;
   TBravaisLattice* BravaisLattice;
   TSpaceGroup* LaueClass, *PointGroup;
+  // initialised by the SymLib 
+  vec3d InversionCenter;
 public:
   TSpaceGroup(const olxstr& Name, const olxstr& FullName, const olxstr HallSymbol, 
               const olxstr& Axis, int Number, TCLattice& L, bool Centrosymmetric);
@@ -104,6 +106,10 @@ public:
   inline bool IsCentrosymmetric()        const {  return CentroSymmetric;  }
   // retruns true if any matrix of the SG has a nonzero translation
   inline bool HasTranslations()          const {  return Translations;  }
+  /* it is NOT (0,0,0) for Fdd2, I41, I4122, I4132, I41md, I41cd, I-42d! 
+  http://xrayweb.chem.ou.edu/notes/symmetry.html
+  */
+  inline const vec3d& GetInversionCenter() const {  return InversionCenter;  }
 
   void GetMatrices(smatd_list& matrices, short Flags) const;
   // fills a list of uniq transformations (3,3) without translation and returns
@@ -115,6 +121,7 @@ public:
   // this function is used to assign point groups to the space group
   bool ContainsElement(TSymmElement* symme);
   bool ContainsGroup(TSpaceGroup* symme);
+  friend class TSymmLib;
 };
 
 class TSymmElement : public ACollectionItem {

@@ -181,7 +181,7 @@ void THklFile::InitHkl3D()  {
 
   for( int i=0; i < Refs.Count(); i++ )  {
     TReflection *r1 = Refs[i];
-    TRefPList *&rl = hkl3D(r1->GetH(), r1->GetK(), r1->GetL());
+    TRefPList *&rl = hkl3D(r1->GetHkl());
 
     if( rl == NULL )
       rl = new TRefPList();
@@ -196,10 +196,7 @@ void THklFile::AllRefs(const TReflection& R, const smatd_list& ml, TRefPList& Re
   for( int i=0; i < ml.Count(); i++ )  {
     R.MulHkl(hklv, ml[i]);
     // check if the range of the reflection is valid
-    if( hklv[0] < MinHkl[0] || hklv[0] > MaxHkl[0] )  continue;
-    if( hklv[1] < MinHkl[1] || hklv[1] > MaxHkl[1] )  continue;
-    if( hklv[2] < MinHkl[2] || hklv[2] > MaxHkl[2] )  continue;
-
+    if( !vec3i::IsInRangeExc(hklv, MinHkl, MaxHkl) )  continue;
     if( ri.IndexOf(hklv) == -1 )  ri.AddCCopy(hklv);
   }
 

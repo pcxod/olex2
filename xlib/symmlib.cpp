@@ -1237,6 +1237,21 @@ TSymmLib::TSymmLib(const olxstr& FN)  {
       TSymmParser::SymmToMatrix(toks[j], M);
       SG->AddMatrix(M);
     }
+    if( SG->GetName() == "Fdd2" )
+      SG->InversionCenter = vec3d(1./8, 1./8, 1./2);
+    else if( SG->GetName() == "I41" )
+      SG->InversionCenter = vec3d(1./2, 1./4, 1./2);
+    else if( SG->GetName() == "I4122" )
+      SG->InversionCenter = vec3d(1./2, 1./4, 1./8);
+    else if( SG->GetName() == "I4132" )
+      SG->InversionCenter = vec3d(1./8, 1./8, 1./8);
+    else if( SG->GetName() == "I41md" )
+      SG->InversionCenter = vec3d(1./2, 1./4, 1./2);
+    else if( SG->GetName() == "I41cd" )
+      SG->InversionCenter = vec3d(1./2, 1./4, 1./2);
+    else if( SG->GetName() == "I-42d" )
+      SG->InversionCenter = vec3d(1./2, 1./4, 1./8);
+
     toks.Clear();
   }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////

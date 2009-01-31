@@ -248,6 +248,32 @@ public:
     data[0] = bf[0];  data[1] = bf[1];  data[2] = bf[2];
     return *this;
   }
+  // updates Min/Max in a vector/array
+  template <typename Avec, typename Bvec>
+  static void UpdateMinMax(const TVector3<T>& src, Avec& min, Bvec& max) {
+    if( src[0] > max[0] )  max[0] = src[0];
+    if( src[1] > max[1] )  max[1] = src[1];
+    if( src[2] > max[2] )  max[2] = src[2];
+    if( src[0] < min[0] )  min[0] = src[0];
+    if( src[1] < min[1] )  min[1] = src[1];
+    if( src[2] < min[2] )  min[2] = src[2];
+  }
+  // returns true if the value in in the range inclusive the boundaries
+  template <typename Avec, typename Bvec>
+  static bool IsInRangeExc(const TVector3<T>& src, const Avec& min, const Bvec& max) {
+    if( src[0] >= max[0] || src[0] <= min[0] )  return false;
+    if( src[1] >= max[1] || src[1] <= min[1] )  return false;
+    if( src[2] >= max[2] || src[2] <= min[2] )  return false;
+    return true;
+  }
+  // returns true if the value in in the range exclusive the boundaries
+  template <typename Avec, typename Bvec>
+  static bool IsInRangeInc(const TVector3<T>& src, const Avec& min, const Bvec& max) {
+    if( src[0] > max[0] || src[0] < min[0] )  return false;
+    if( src[1] > max[1] || src[1] < min[1] )  return false;
+    if( src[2] > max[2] || src[2] < min[2] )  return false;
+    return true;
+  }
   template <class SC> SC StrRepr() const  {
     SC rv(data[0], 100);
     return rv << ", " << data[1] << ", " << data[2];
