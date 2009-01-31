@@ -6,29 +6,23 @@ BeginXlibNamespace()
 const int NoFlagSet = 0xF0FA;
 
 class TReflection: public ACollectionItem  {
-  int H, K, L;
+  vec3i hkl;
   double I, S;
   bool Centric, Absent;
   short Multiplicity;
   int Flag;  // shelx 'batch number'
 public:
-//  TReflectionN(const struct TLstRef& r)  {
-//    FH = r.H;  FK = r.K;  FL = r.L;
-//    i = r.DF;  Sigma = r.Res;
-//  }
   TReflection(const TReflection& r)  {
     *this = r;
   }
-  TReflection(int h, int k, int l)  {
-    H = h;  K = k;  L = l;
+  TReflection(int h, int k, int l) : hkl(h,k,l)  {
     I = S = 0;
     Absent = Centric = false;
     Multiplicity = 1;
     SetTag(1);
     Flag = NoFlagSet;
   }
-  TReflection(int h, int k, int l, double I, double S, int flag=NoFlagSet)  {
-    H = h;  K = k;  L = l;
+  TReflection(int h, int k, int l, double I, double S, int flag=NoFlagSet) : hkl(h,k,l) {
     this->I = I;
     this->S = S;
     Absent = Centric = false;
@@ -39,7 +33,7 @@ public:
   virtual ~TReflection()  {  }
   //TReflection& operator = (const TLstRef& R);
   TReflection& operator = (const TReflection &r)  {
-    H = r.H;  K = r.K;  L = r.L;
+    hkl = r.hkl;
     I = r.I;  S = r.S;
     Centric = r.Centric;
     Absent = r.Absent;
@@ -50,44 +44,44 @@ public:
   }
   //bool operator == (const TReflection &r) const {  return CompareTo(r) == 0; }
 
-  inline int GetH()  const  {  return H;  }
-  inline void SetH(int v)   {  H = v;  }
-  inline int GetK()  const  {  return K;  }
-  inline void SetK(int v)   {  K = v;  }
-  inline int GetL()  const  {  return L;  }
-  inline void SetL(int v)   {  L = v;  }
+  inline int GetH()  const  {  return hkl[0];  }
+  inline void SetH(int v)   {  hkl[0] = v;  }
+  inline int GetK()  const  {  return hkl[1];  }
+  inline void SetK(int v)   {  hkl[1] = v;  }
+  inline int GetL()  const  {  return hkl[2];  }
+  inline void SetL(int v)   {  hkl[2] = v;  }
 
   template <class VC>
     inline bool EqHkl (const VC& v) const {
-      return ( ((int)v[0] == H) && ((int)v[1] == K) && ((int)v[2] == L) );
+      return ( ((int)v[0] == hkl[0]) && ((int)v[1] == hkl[1]) && ((int)v[2] == hkl[2]) );
     }
   template <class VC>
     inline bool EqNegHkl (const VC& v) const {
-      return ( ((int)v[0] == -H) && ((int)v[1] == -K) && ((int)v[2] == -L) );
+      return ( ((int)v[0] == -hkl[0]) && ((int)v[1] == -hkl[1]) && ((int)v[2] == -hkl[2]) );
     }
   // generates symmetry equivalent miller index and stores it in res
   template <class VC, class MC> void MulHkl(VC& res, const MC& mat) const {
-    res[0] = (H*mat[0][0] + K*mat[1][0] + L*mat[2][0]);
-    res[1] = (H*mat[0][1] + K*mat[1][1] + L*mat[2][1]);
-    res[2] = (H*mat[0][2] + K*mat[1][2] + L*mat[2][2]);
+    res[0] = (hkl[0]*mat[0][0] + hkl[1]*mat[1][0] + hkl[2]*mat[2][0]);
+    res[1] = (hkl[0]*mat[0][1] + hkl[1]*mat[1][1] + hkl[2]*mat[2][1]);
+    res[2] = (hkl[0]*mat[0][2] + hkl[1]*mat[1][2] + hkl[2]*mat[2][2]);
   }
   // generates index of an equivalen reflection
   template <class V> void MulHkl(V& res, const smatd& mat) const {
-    res[0] = (H*mat.r[0][0] + K*mat.r[1][0] + L*mat.r[2][0]);
-    res[1] = (H*mat.r[0][1] + K*mat.r[1][1] + L*mat.r[2][1]);
-    res[2] = (H*mat.r[0][2] + K*mat.r[1][2] + L*mat.r[2][2]);
+    res[0] = (hkl[0]*mat.r[0][0] + hkl[1]*mat.r[1][0] + hkl[2]*mat.r[2][0]);
+    res[1] = (hkl[0]*mat.r[0][1] + hkl[1]*mat.r[1][1] + hkl[2]*mat.r[2][1]);
+    res[2] = (hkl[0]*mat.r[0][2] + hkl[1]*mat.r[1][2] + hkl[2]*mat.r[2][2]);
   }
   // generates an equivalent using rounding on the resulting indexes
   template <class VC, class MC> void MulHklR(VC& res, const MC& mat) const {
-    res[0] = Round(H*mat[0][0] + K*mat[1][0] + L*mat[2][0]);
-    res[1] = Round(H*mat[0][1] + K*mat[1][1] + L*mat[2][1]);
-    res[2] = Round(H*mat[0][2] + K*mat[1][2] + L*mat[2][2]);
+    res[0] = Round(hkl[0]*mat[0][0] + hkl[1]*mat[1][0] + hkl[2]*mat[2][0]);
+    res[1] = Round(hkl[0]*mat[0][1] + hkl[1]*mat[1][1] + hkl[2]*mat[2][1]);
+    res[2] = Round(hkl[0]*mat[0][2] + hkl[1]*mat[1][2] + hkl[2]*mat[2][2]);
   }
   // generates an equivalent using rounding on the resulting indexes
   template <class V> void MulHklR(V& res, const smatdd& mat) const {
-    res[0] = Round(H*mat.r[0][0] + K*mat.r[1][0] + L*mat.r[2][0]);
-    res[1] = Round(H*mat.r[0][1] + K*mat.r[1][1] + L*mat.r[2][1]);
-    res[2] = Round(H*mat.r[0][2] + K*mat.r[1][2] + L*mat.r[2][2]);
+    res[0] = Round(hkl[0]*mat.r[0][0] + hkl[1]*mat.r[1][0] + hkl[2]*mat.r[2][0]);
+    res[1] = Round(hkl[0]*mat.r[0][1] + hkl[1]*mat.r[1][1] + hkl[2]*mat.r[2][1]);
+    res[2] = Round(hkl[0]*mat.r[0][2] + hkl[1]*mat.r[1][2] + hkl[2]*mat.r[2][2]);
   }
 //..............................................................................
   /* replaces hkl with standard hkl accroding to provided matrices. 
@@ -98,10 +92,10 @@ public:
     vec3i hklv;
     for(int i=0; i < ml.Count(); i++ )  {
       MulHkl(hklv, ml[i]);
-      if( (hklv[2] > L) ||        // sdandardise then ...
-          ((hklv[2] == L) && (hklv[1] > K)) ||
-          ((hklv[2] == L) && (hklv[1] == K) && (hklv[0] > H)) )    {
-          H = hklv[0];  K = hklv[1];  L = hklv[2];
+      if( (hklv[2] > hkl[2]) ||        // sdandardise then ...
+          ((hklv[2] == hkl[2]) && (hklv[1] > hkl[1])) ||
+          ((hklv[2] == hkl[2]) && (hklv[1] == hkl[1]) && (hklv[0] > hkl[0])) )    {
+          hkl = hklv;
       }
       else if( !Absent && EqHkl(hklv) )  {  // only if there is no change
         const double ps = PhaseShift(ml[i]);
@@ -110,8 +104,8 @@ public:
     }
   }
 //..............................................................................
-  inline double PhaseShift(const smatd& m) const {
-    return H*m.t[0] +  K*m.t[1] + L*m.t[2];
+  inline double PhaseShift(const smatd& m) const {  
+    return m.t.DotProd(hkl);  
   }
 //..............................................................................
   /* analyses if this reflection is centric, systematically absent and its multiplicity */
@@ -157,11 +151,11 @@ public:
   }
 //..............................................................................
   int CompareTo(const TReflection &r ) const {
-    int res = L - r.L;
+    int res = hkl[2] - r.hkl[2];
     if( res == 0 )  {
-      res = K - r.K;
+      res = hkl[1] - r.hkl[1];
       if( res == 0 )
-        res = H - r.H;
+        res = hkl[0] - r.hkl[0];
     }
     return res;
   }
@@ -187,6 +181,10 @@ public:
 //..............................................................................
   DefPropP(int, Flag)
 //..............................................................................
+  vec3i& GetHkl()             {  return hkl;  }
+  const vec3i& GetHkl() const {  return hkl;  }
+  TReflection& SetHkl(const vec3i& _hkl) {  hkl = _hkl;  return *this;  }
+  
   DefPropP(double, I)
   DefPropP(double, S)
 //..............................................................................
@@ -194,32 +192,22 @@ public:
   TIString ToString() const  {
     static char bf[128];
 #ifdef _MSC_VER
-    if( Flag == NoFlagSet )  sprintf_s(bf, 128, "%4i%4i%4i%8.2lf%8.2lf", H, K, L, I, S);
-    else                     sprintf_s(bf, 128, "%4i%4i%4i%8.2lf%8.2lf%4i", H, K, L, I, S, Flag);
+    if( Flag == NoFlagSet )  sprintf_s(bf, 128, "%4i%4i%4i%8.2lf%8.2lf", hkl[0], hkl[1], hkl[2], I, S);
+    else                     sprintf_s(bf, 128, "%4i%4i%4i%8.2lf%8.2lf%4i", hkl[0], hkl[1], hkl[2], I, S, Flag);
 #else
-    if( Flag == NoFlagSet )  sprintf(bf, "%4i%4i%4i%8.2lf%8.2lf", H, K, L, I, S);
-    else                     sprintf(bf, "%4i%4i%4i%8.2lf%8.2lf%4i", H, K, L, I, S, Flag);
+    if( Flag == NoFlagSet )  sprintf(bf, "%4i%4i%4i%8.2lf%8.2lf", hkl[0], hkl[1], hkl[2], I, S);
+    else                     sprintf(bf, "%4i%4i%4i%8.2lf%8.2lf%4i", hkl[0], hkl[1], hkl[2], I, S, Flag);
 #endif
-    //olxstr Res(H);
-    //olxstr Str( Res.Format(4, false, ' ') );
-    //Res = K;  Str << Res.Format(4, false, ' ');
-    //Res = L;  Str << Res.Format(4, false, ' ');
-    //Res = olxstr::FormatFloat(2, I);  Str << Res.Format(8, false, ' ');
-    //Res = olxstr::FormatFloat(2, S);  Str << Res.Format(8, false, ' ');
-    //if( Flag != NoFlagSet )  {
-    //  Res = Flag;  Str << Res.Format(4, false, ' '); 
-    //}
-    //return Str;
     return olxstr(bf);
   }
   //writes string to the provided buffer (should be at least 33 bytes long)
   char* ToCBuffer(char* bf) const  {
 #ifdef _MSC_VER
-    if( Flag == NoFlagSet )  sprintf_s(bf, 29, "%4i%4i%4i%8.2lf%8.2lf", H, K, L, I, S);
-    else                     sprintf_s(bf, 33, "%4i%4i%4i%8.2lf%8.2lf%4i", H, K, L, I, S, Flag);
+    if( Flag == NoFlagSet )  sprintf_s(bf, 29, "%4i%4i%4i%8.2lf%8.2lf", hkl[0], hkl[1], hkl[2], I, S);
+    else                     sprintf_s(bf, 33, "%4i%4i%4i%8.2lf%8.2lf%4i", hkl[0], hkl[1], hkl[2], I, S, Flag);
 #else
-    if( Flag == NoFlagSet )  sprintf(bf, "%4i%4i%4i%8.2lf%8.2lf", H, K, L, I, S);
-    else                     sprintf(bf, "%4i%4i%4i%8.2lf%8.2lf%4i", H, K, L, I, S, Flag);
+    if( Flag == NoFlagSet )  sprintf(bf, "%4i%4i%4i%8.2lf%8.2lf", hkl[0], hkl[1], hkl[2], I, S);
+    else                     sprintf(bf, "%4i%4i%4i%8.2lf%8.2lf%4i", hkl[0], hkl[1], hkl[2], I, S, Flag);
 #endif
     return bf;
   }
@@ -235,9 +223,9 @@ public:
   bool FromString(const olxstr& Str)  {
     TStrList Toks(Str, ' ');
     if( Toks.Count() > 5 )  {
-      H = Toks[1].ToInt();
-      K = Toks[2].ToInt();
-      L = Toks[3].ToInt();
+      hkl[0] = Toks[1].ToInt();
+      hkl[1] = Toks[2].ToInt();
+      hkl[2] = Toks[3].ToInt();
       I = Toks[4].ToDouble();
       S = Toks[5].ToDouble();
       if( Toks.Count() > 6 )
@@ -255,9 +243,9 @@ public:
 
       SetTag(Toks[0].ToInt());
 
-      H = Toks[1].ToInt();
-      K = Toks[2].ToInt();
-      L = Toks[3].ToInt();
+      hkl[0] = Toks[1].ToInt();
+      hkl[1] = Toks[2].ToInt();
+      hkl[2] = Toks[3].ToInt();
       I = Toks[4].ToDouble();
       S = Toks[5].ToDouble();
       if( Toks.Count() > 6 )
@@ -265,6 +253,14 @@ public:
       return true;
     }
     return false;
+  }
+  // a top diagonal matrix is expected
+  vec3d ToCart(const mat3d& m) const {
+    return vec3d(
+      hkl[0]*m[0][0],
+      hkl[0]*m[0][1] + hkl[1]*m[1][1],
+      hkl[0]*m[0][2] + hkl[1]*m[1][2] + hkl[2]*m[2][2]
+    );
   }
   // standartisation functions
   static inline const TReflection& GetRef(const TReflection& r) {  return r;  }

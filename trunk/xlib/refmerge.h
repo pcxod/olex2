@@ -79,10 +79,7 @@ class RefMerger {
       const int merged_count = i - from;
       bool omitted = false;
       for( int j=0; j < omits.Count(); j++ )  {
-        if( ref->GetH() == omits[j][0] &&
-          ref->GetK() == omits[j][1] &&
-          ref->GetL() == omits[j][2] )  
-        {
+        if( ref->GetHkl() == omits[j] )  {
           stats.OmittedByUser += merged_count;
           omitted = true;
           break;
@@ -112,12 +109,7 @@ class RefMerger {
           SS += mo.ref->GetS();
           SI += mo.ref->GetI();
           stats.MeanIOverSigma += mo.ref->GetI()/mo.ref->GetS();
-          if( ref->GetH() > stats.MaxIndexes[0] )  stats.MaxIndexes[0] = ref->GetH();
-          if( ref->GetK() > stats.MaxIndexes[1] )  stats.MaxIndexes[1] = ref->GetK();
-          if( ref->GetL() > stats.MaxIndexes[2] )  stats.MaxIndexes[2] = ref->GetL();
-          if( ref->GetH() < stats.MinIndexes[0] )  stats.MinIndexes[0] = ref->GetH();
-          if( ref->GetK() < stats.MinIndexes[1] )  stats.MinIndexes[1] = ref->GetK();
-          if( ref->GetL() < stats.MinIndexes[2] )  stats.MinIndexes[2] = ref->GetL();
+          vec3i::UpdateMinMax(ref->GetHkl(), stats.MinIndexes, stats.MaxIndexes);
         }
         else
           stats.SystematicAbsentcesRemoved += merged_count;
@@ -162,10 +154,7 @@ class RefMerger {
       bool omitted = false;
       const int merged_count = i - from;
       for( int j=0; j < omits.Count(); j++ )  {
-        if( ref->GetH() == omits[j][0] &&
-          ref->GetK() == omits[j][1] &&
-          ref->GetL() == omits[j][2] )  
-        {
+        if( ref->GetHkl() == omits[j] )  {
           stats.OmittedByUser += merged_count;
           omitted = true;
           break;
@@ -192,12 +181,7 @@ class RefMerger {
           SS += mo.rSig;
           SI += mo.rI;
           stats.MeanIOverSigma += mo.rI/mo.rSig;
-          if( ref->GetH() > stats.MaxIndexes[0] )  stats.MaxIndexes[0] = ref->GetH();
-          if( ref->GetK() > stats.MaxIndexes[1] )  stats.MaxIndexes[1] = ref->GetK();
-          if( ref->GetL() > stats.MaxIndexes[2] )  stats.MaxIndexes[2] = ref->GetL();
-          if( ref->GetH() < stats.MinIndexes[0] )  stats.MinIndexes[0] = ref->GetH();
-          if( ref->GetK() < stats.MinIndexes[1] )  stats.MinIndexes[1] = ref->GetK();
-          if( ref->GetL() < stats.MinIndexes[2] )  stats.MinIndexes[2] = ref->GetL();
+          vec3i::UpdateMinMax(ref->GetHkl(), stats.MinIndexes, stats.MaxIndexes);
           stats.UniqueReflections++;
         }
         else
@@ -230,10 +214,7 @@ class RefMerger {
       const int merged_count = i - from;
       bool omitted = false;
       for( int j=0; j < omits.Count(); j++ )  {
-        if( ref->GetH() == omits[j][0] &&
-            ref->GetK() == omits[j][1] &&
-            ref->GetL() == omits[j][2] )  
-        {
+        if( ref->GetHkl() == omits[j] )  {
           stats.OmittedByUser += merged_count;
           omitted = true;
           break;
@@ -259,12 +240,7 @@ class RefMerger {
         SS += mo.ref->GetS();
         SI += mo.ref->GetI();
         stats.MeanIOverSigma += mo.ref->GetI()/mo.ref->GetS();
-        if( ref->GetH() > stats.MaxIndexes[0] )  stats.MaxIndexes[0] = ref->GetH();
-        if( ref->GetK() > stats.MaxIndexes[1] )  stats.MaxIndexes[1] = ref->GetK();
-        if( ref->GetL() > stats.MaxIndexes[2] )  stats.MaxIndexes[2] = ref->GetL();
-        if( ref->GetH() < stats.MinIndexes[0] )  stats.MinIndexes[0] = ref->GetH();
-        if( ref->GetK() < stats.MinIndexes[1] )  stats.MinIndexes[1] = ref->GetK();
-        if( ref->GetL() < stats.MinIndexes[2] )  stats.MinIndexes[2] = ref->GetL();
+        vec3i::UpdateMinMax(ref->GetHkl(), stats.MinIndexes, stats.MaxIndexes);
       }
       if( i >= ref_cnt )  break;
       ref = refs[i];
@@ -292,10 +268,7 @@ class RefMerger {
       const int merged_count = i - from;
       bool omitted = false;
       for( int j=0; j < omits.Count(); j++ )  {
-        if( ref->GetH() == omits[j][0] &&
-            ref->GetK() == omits[j][1] &&
-            ref->GetL() == omits[j][2] )  
-        {
+        if( ref->GetHkl() == omits[j] )  {
           stats.OmittedByUser += merged_count;
           omitted = true;
           break;
@@ -316,12 +289,7 @@ class RefMerger {
         SS += mo.rSig;
         SI += mo.rI;
         stats.MeanIOverSigma += mo.rI/mo.rSig;
-        if( ref->GetH() > stats.MaxIndexes[0] )  stats.MaxIndexes[0] = ref->GetH();
-        if( ref->GetK() > stats.MaxIndexes[1] )  stats.MaxIndexes[1] = ref->GetK();
-        if( ref->GetL() > stats.MaxIndexes[2] )  stats.MaxIndexes[2] = ref->GetL();
-        if( ref->GetH() < stats.MinIndexes[0] )  stats.MinIndexes[0] = ref->GetH();
-        if( ref->GetK() < stats.MinIndexes[1] )  stats.MinIndexes[1] = ref->GetK();
-        if( ref->GetL() < stats.MinIndexes[2] )  stats.MinIndexes[2] = ref->GetL();
+        vec3i::UpdateMinMax(ref->GetHkl(), stats.MinIndexes, stats.MaxIndexes);
         stats.UniqueReflections++;
       }
       if( i >= ref_cnt )  break;

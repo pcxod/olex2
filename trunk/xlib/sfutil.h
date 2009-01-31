@@ -135,10 +135,8 @@ namespace SFUtil {
       }
       for( int i=0; i < refs.Count(); i++ )  {
         const TReflection& ref = TReflection::GetRef(refs[i]);
-        vec3d d_hkl(ref.GetH(), ref.GetK(), ref.GetL());
-        vec3d hkl(d_hkl[0]*hkl2c[0][0],
-          d_hkl[0]*hkl2c[0][1] + d_hkl[1]*hkl2c[1][1],
-          d_hkl[0]*hkl2c[0][2] + d_hkl[1]*hkl2c[1][2] + d_hkl[2]*hkl2c[2][2]);
+        const vec3d& d_hkl = ref.GetHkl();
+        vec3d hkl = ref.ToCart(hkl2c);
         const double d_s2 = hkl.QLength()*0.25;
         sg::GenHkl(d_hkl, rv, ps);
         for( int j=0; j < scatterers.Count(); j++)  {
@@ -187,10 +185,8 @@ namespace SFUtil {
       TArrayList<compd> fo(scatterers.Count());
       for( int i=0; i < refs.Count(); i++ )  {
         const TReflection& ref = TReflection::GetRef(refs[i]);
-        vec3d d_hkl(ref.GetH(), ref.GetK(), ref.GetL());
-        vec3d hkl(d_hkl[0]*hkl2c[0][0],
-          d_hkl[0]*hkl2c[0][1] + d_hkl[1]*hkl2c[1][1],
-          d_hkl[0]*hkl2c[0][2] + d_hkl[1]*hkl2c[1][2] + d_hkl[2]*hkl2c[2][2]);
+        const vec3d& d_hkl = ref.GetHkl();
+        vec3d hkl = ref.ToCart(hkl2c);
         const double d_s2 = hkl.QLength()*0.25;
         sg::GenHkl(d_hkl, rv, ps);
         for( int j=0; j < scatterers.Count(); j++)

@@ -68,7 +68,7 @@ class TSGTest  {
          AverageI, AverageIS, 
          MaxI, MaxIS, 
          MinI, MinIS;
-  long minH, maxH, minK, maxK, minL, maxL;
+  vec3i minInd, maxInd;
   TArray3D< TReflection* >* Hkl3DArray;
 public:
   TSGTest();

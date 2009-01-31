@@ -8,7 +8,7 @@
 #include "refmerge.h"
 #include "xapp.h"
 
-TSGTest::TSGTest()  {
+TSGTest::TSGTest() : minInd(100, 100, 100), maxInd(-100, -100, -100) {
   Hkl3DArray = NULL;
   // 84.47%, w: 86.32 hkl->MergeInP1<RefMerger::StandardMerger>(Refs);
   // 84.47%, w: 86.32 hkl->MergeInP1<RefMerger::ShelxMerger>(Refs);
@@ -17,18 +17,9 @@ TSGTest::TSGTest()  {
   const int ref_cnt = Refs.Count();
   MinI = 1000;
   MaxI = -1000;
-  minH = minK = minL = 100;
-  maxH = maxK = maxL = -100;
   TotalI = AverageI = AverageIS = TotalIS = 0;
-  vec3i hkl;
   for( int i=0; i < ref_cnt; i++ )  {
-    vec3i hkl(Refs[i].GetH(), Refs[i].GetK(), Refs[i].GetL() );
-    if( hkl[0] < minH )  minH = hkl[0];
-    if( hkl[0] > maxH )  maxH = hkl[0];
-    if( hkl[1] < minK )  minK = hkl[1];
-    if( hkl[1] > maxK )  maxK = hkl[1];
-    if( hkl[2] < minL )  minL = hkl[2];
-    if( hkl[2] > maxL )  maxL = hkl[2];
+    vec3i::UpdateMinMax(Refs[i].GetHkl(), minInd, maxInd);
     if( Refs[i].GetI() > MaxI )  {
       MaxI = Refs[i].GetI();
       MaxIS = Refs[i].GetS();
@@ -38,11 +29,15 @@ TSGTest::TSGTest()  {
       MinIS = Refs[i].GetS();
     }
   }
-  Hkl3DArray = new TArray3D<TReflection*>(minH, maxH, minK, maxK, minL, maxL );
+  Hkl3DArray = new TArray3D<TReflection*>(
+    minInd[0], maxInd[0], 
+    minInd[1], maxInd[1], 
+    minInd[2], maxInd[2] 
+  );
   TArray3D<TReflection*>& Hkl3D = *Hkl3DArray;
   for( int i=0; i < ref_cnt; i++ )  {
     TReflection& ref = Refs[i];
-    Hkl3D(ref.GetH(),ref.GetK(),ref.GetL()) = &ref;
+    Hkl3D(ref.GetHkl()) = &ref;
     TotalI += ref.GetI() < 0 ? 0 : ref.GetI();
     TotalIS += ref.GetS()*ref.GetS();
   }
@@ -103,10 +98,7 @@ void TSGTest::MergeTest(const TPtrList<TSpaceGroup>& sgList,  TTypeList<TSGStats
       if( Refs[j].GetI() < AverageI )  continue;
 
       Refs[j].MulHkl(hklv, m);
-
-      if( hklv[0] < minH || hklv[0] > maxH )  continue;
-      if( hklv[1] < minK || hklv[1] > maxK )  continue;
-      if( hklv[2] < minL || hklv[2] > maxL )  continue;
+      if( !vec3i::IsInRangeExc(hklv, minInd, maxInd) )  continue;
 
       if( !Refs[j].EqHkl(hklv) )  {
         const TReflection* ref = Hkl3D(hklv);
@@ -400,7 +392,7 @@ void TSGTest::WeakRefTest(const TPtrList<TSpaceGroup>& sgList, TTypeList<TElemen
           iv = (int)m.t[1];  m.t[1] = olx_abs( m.t[1] - iv );
           iv = (int)m.t[2];  m.t[2] = olx_abs( m.t[2] - iv );
       // matrix should have a translation
-      if( m.t[0] == 0 &&  m.t[1] == 0 && m.t[2] == 0 )
+      if( m.t.IsNull() )
         continue;
 
       if( m.t[0] > 0.5 )  m.t[0] = 1 - m.t[0];

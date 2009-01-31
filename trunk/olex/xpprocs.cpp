@@ -5737,6 +5737,11 @@ void TMainForm::macSGInfo(TStrObjList &Cmds, const TParamList &Options, TMacroEr
 
   TStrList Output;
   tab.CreateTXTList(Output, "Symmetry operators", true, true, ' ');
+  if( !sg->GetInversionCenter().IsNull() )  {
+    const vec3d& ic = sg->GetInversionCenter();
+    TBasicApp::GetLog() << "Inversion center position: " << olxstr::FormatFloat(3, ic[0])
+      << ", " << olxstr::FormatFloat(3, ic[1]) << ", " << olxstr::FormatFloat(3, ic[2]);
+  }
   // possible systematic absences
   Output.Add("Elements causing systematic absences: ");
   TPtrList<TSymmElement> ref, sg_elm;
@@ -6524,158 +6529,6 @@ void TMainForm::funIsCurrentLanguage(const TStrObjList& Params, TMacroError &E) 
     }
   }
   E.SetRetVal( false );
-}
-//..............................................................................
-void TMainForm::macHklStat(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  olxstr hklSrc = FXApp->LocateHklFile();
-  if( !TEFile::FileExists( hklSrc ) )  {
-    Error.ProcessingError(__OlxSrcInfo, "could not find hkl file: ") << hklSrc;
-    return;
-  }
-  if( Cmds.IsEmpty() )  {
-    RefinementModel::HklStat hs = FXApp->XFile().GetRM().GetMergeStat();
-    TTTable<TStrList> tab(21, 2);
-    tab[0][0] << "Read reflections";              tab[0][1] << FXApp->XFile().GetRM().GetReflections().Count();
-    tab[1][0] << "Total reflections";             tab[1][1] << hs.TotalReflections;
-    tab[2][0] << "Unique reflections";            tab[2][1] << hs.UniqueReflections;
-    tab[3][0] << "Centric reflections";           tab[3][1] << hs.CentricReflections;
-    tab[4][0] << "Friedel pairs merged";          tab[4][1] << hs.FriedelOppositesMerged;
-    tab[5][0] << "Inconsistent equaivalents";     tab[5][1] << hs.InconsistentEquivalents;
-    tab[6][0] << "Systematic absences removed";   tab[6][1] << hs.SystematicAbsentcesRemoved;
-    tab[7][0] << "Min d";                         tab[7][1] << olxstr::FormatFloat(3, hs.MinD);
-    tab[8][0] << "Max d";                         tab[8][1] << olxstr::FormatFloat(3, hs.MaxD);
-    tab[9][0] << "Limiting d min (SHEL)";         tab[9][1] << olxstr::FormatFloat(3, hs.LimDmin);
-    tab[10][0] << "Limiting d max (SHEL/OMIT_2t)";    tab[10][1] << hs.LimDmax;
-    tab[11][0] << "Filtered off reflections (SHEL/OMIT_s/OMIT_2t)";  tab[11][1] << hs.FilteredOff;
-    tab[12][0] << "Reflections omitted by user (OMIT_hkl)";   tab[12][1] << hs.OmittedByUser;
-    tab[13][0] << "Reflections skipped (after 0 0 0)";        tab[13][1] << hs.OmittedReflections;
-    tab[14][0] << "Intensity transformed for (OMIT_s)";       tab[14][1] << hs.IntensityTransformed << " reflections";
-    tab[15][0] << "Rint";                         tab[15][1] << olxstr::FormatFloat(3, hs.Rint);
-    tab[16][0] << "Rsigma";                       tab[16][1] << olxstr::FormatFloat(3, hs.Rsigma);
-    tab[17][0] << "Mean I/sig";                   tab[17][1] << olxstr::FormatFloat(3, hs.MeanIOverSigma);
-    tab[18][0] << "HKL range";                    
-    tab[18][1] << "h=[" << hs.MinIndexes[0] << ',' << hs.MaxIndexes[0] << "] "
-               << "k=[" << hs.MinIndexes[1] << ',' << hs.MaxIndexes[1] << "] "
-               << "l=[" << hs.MinIndexes[2] << ',' << hs.MaxIndexes[2] << "] ";
-    tab[19][0] << "Maximum redundance (+symm eqivs)";    tab[19][1] << hs.ReflectionAPotMax;
-    tab[20][0] << "Average redundance (+symm eqivs)";    tab[20][1] << olxstr::FormatFloat(2, (double)hs.TotalReflections/hs.UniqueReflections);
-
-    TStrList Output;
-    tab.CreateTXTList(Output, olxstr("HKL statistics "), true, false, "  ");
-    TBasicApp::GetLog() << Output << '\n';
-    return;
-  }
-
-  bool list = false;
-  for( int i=0; i < Options.Count(); i++ )
-    if( Options.GetName(i)[0] == 'l' )  {  list = true;  continue;  }
-
-  TTypeList<olxstr> Cons;
-  olxstr Tmp, strV;
-  for( int i=0; i < Cmds.Count(); i++ )
-    Cons.AddNew( Cmds[i] );
-
-  THklFile Hkl;
-  Hkl.LoadFromFile( hklSrc );
-  evecd_list con;
-
-  for( int i=0; i < Cons.Count(); i++ )  {
-    int obi = Cons[i].FirstIndexOf('[');
-    if( obi == -1 || !Cons[i].EndsWith(']') )  {
-      Error.ProcessingError(__OlxSrcInfo, "incorrect construct: ") << Cons[i];
-      return;
-    }
-    con.AddNew(4);
-    Tmp = Cons[i].SubStringTo(obi);
-    con[i][3] = Tmp.ToInt();
-    Tmp = Cons[i].SubString(obi+1, Cons[i].Length() - obi - 2);
-    int hkli=-1;
-    for( int j=Tmp.Length()-1; j >= 0; j-- ) {
-      if( Tmp.CharAt(j) == 'l' )  hkli = 2;
-      else if( Tmp.CharAt(j) == 'k' )  hkli = 1;
-      else if( Tmp.CharAt(j) == 'h' )  hkli = 0;
-      if( hkli == -1 )  {
-        Error.ProcessingError(__OlxSrcInfo, "incorrect construct: ") << Cons[i];
-        return;
-      }
-      j--;
-      strV = EmptyString;
-      while( j >= 0 && !(Tmp[j] >= 'a' && Tmp[j] <= 'z' ) )  {
-        strV.Insert( (olxch)Tmp[j], 0 );
-        j--;
-      }
-      if( !strV.IsEmpty() && !(strV == "+") && !(strV == "-") )
-        con[i][hkli] = strV.ToDouble();
-      else  {
-        if( strV.Length() && strV == "-" )
-          con[i][hkli] = -1.0;
-        else
-          con[i][hkli] = 1.0;
-      }
-      if( con[i][hkli] == 0 )  {
-        Error.ProcessingError(__OlxSrcInfo, "illegal value: ") << Cons[i];
-        return;
-      }
-      j++;
-    }
-  }
-
-/*  TArray3D< TReflection* > Hkl3D;
-  long minH = (long)Hkl.GetMinValues()[0];
-  long maxH = (long)Hkl.GetMaxValues()[0];
-  long minK = (long)Hkl.GetMinValues()[1];
-  long maxK = (long)Hkl.GetMaxValues()[1];
-  long minL = (long)Hkl.GetMinValues()[2];
-  long maxL = (long)Hkl.GetMaxValues()[2];
-
-  for( int i=0; i < Hkl.RefCount(); i++ )
-    Hkl3D[ref->H()][ref->K()][ref->L()] = Hkl.Ref(i);
-*/
-  double SI = 0, SE = 0;
-  int count = 0;
-  for( int i=0; i < Hkl.RefCount(); i++ )  {
-    bool fulfilled = true;
-    for( int j=0; j < Cons.Count(); j ++ )  {
-      int v = (int)(Hkl[i].GetH()*con[j][0] +
-                    Hkl[i].GetK()*con[j][1] +
-                    Hkl[i].GetL()*con[j][2] );
-      if( con[j][3] == 0 )  {
-        if( v != 0 ) {
-          fulfilled = false;
-          break;
-        }
-      }
-      else if( con[j][3] < 0 )  {
-        if( (v%(int)con[j][3]) == 0 )  {
-          fulfilled = false;
-          break;
-        }
-      }
-      else if( con[j][3] > 0 )  {
-        if( (v%(int)con[j][3]) != 0 )  {
-          fulfilled = false;
-          break;
-        }
-      }
-    }
-    if( !fulfilled )  continue;
-    count ++;
-    SI += Hkl[i].GetI();
-    SE += sqr(Hkl[i].GetS());
-    if( list )  {
-      TBasicApp::GetLog() << Hkl[i].ToString()<< '\n';
-    }
-  }
-  if( count == 0 )  {
-    TBasicApp::GetLog() << ("Could not find any reflections fulfilling given condition\n");
-    return;
-  }
-  SI /= count;
-  SE = sqrt(SE)/count;
-
-  TBasicApp::GetLog() << ( olxstr("Found " ) << count << " reflections fulfilling given condition\n");
-  TBasicApp::GetLog() << ( olxstr("I/s is ") << olxstr::FormatFloat(3, SI) << '/' << olxstr::FormatFloat(3, SE) << '\n' );
-
 }
 //..............................................................................
 void TMainForm::macSchedule(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {

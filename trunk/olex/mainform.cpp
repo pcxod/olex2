@@ -710,8 +710,6 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual accupancy\
 
   this_InitMacro(ChangeLanguage, ,fpOne );
 
-  this_InitMacro(HklStat, l,fpAny|psFileLoaded );
-
   this_InitMacroD(Schedule, "r-repeatable", fpAny^(fpNone|fpOne),
 "Schedules a particular macro (second argument) to be executed within provided\
  interval (first argument)" );

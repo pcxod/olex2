@@ -39,6 +39,12 @@ TActionQList XLibMacros::Actions;
 TActionQueue* XLibMacros::OnDelIns = &XLibMacros::Actions.NewQueue("OnDelIns");
 
 void XLibMacros::Export(TLibrary& lib)  {
+  xlib_InitMacro(HklStat, "l-list the reflections&;m-merge reflection in current space group", fpAny|psFileLoaded, 
+    "If no arguments provided, prints the statistics on the the reflections as wel as the ones used in the refinement.\
+ If an expressions (condition) is given in the following form: x[ahbkcl], meaning that x=ah+bk+cl;\
+ the subsequent expressions are combined using logical 'and' operator. For insatnce 0[2l] expression means: to find all\
+ reflections where 2l = 0. The function operates on all P1 merged reflections after\
+ filtering by SHEL and OMIT, -m option merges the reflections in curresnt space group");
   xlib_InitMacro(BrushHkl, "f-consider Friedel law", fpAny, "for high redundancy\
  data sets, removes equivalents with high sigma");
 //_________________________________________________________________________________________________________________________
@@ -180,6 +186,191 @@ xlib_InitMacro(File, "s-sort the main residue of the asymmetric unit", fpNone|fp
 //_________________________________________________________________________________________________________________________
 }
 //..............................................................................
+void XLibMacros::macHklStat(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+  TXApp& xapp = TXApp::GetInstance();
+  olxstr hklSrc = xapp.LocateHklFile();
+  if( !TEFile::FileExists( hklSrc ) )  {
+    Error.ProcessingError(__OlxSrcInfo, "could not find hkl file: ") << hklSrc;
+    return;
+  }
+  if( Cmds.IsEmpty() )  {
+    RefinementModel::HklStat hs = xapp.XFile().GetRM().GetMergeStat();
+    TTTable<TStrList> tab(21, 2);
+    tab[0][0] << "Total reflections (after filtering)";   tab[0][1] << hs.TotalReflections;
+    tab[1][0] << "Unique reflections";            tab[1][1] << hs.UniqueReflections;
+    tab[2][0] << "Centric reflections";           tab[2][1] << hs.CentricReflections;
+    tab[3][0] << "Friedel pairs merged";          tab[3][1] << hs.FriedelOppositesMerged;
+    tab[4][0] << "Inconsistent equaivalents";     tab[4][1] << hs.InconsistentEquivalents;
+    tab[5][0] << "Systematic absences removed";   tab[5][1] << hs.SystematicAbsentcesRemoved;
+    tab[6][0] << "Min d";                         tab[6][1] << olxstr::FormatFloat(3, hs.MinD);
+    tab[7][0] << "Max d";                         tab[7][1] << olxstr::FormatFloat(3, hs.MaxD);
+    tab[8][0] << "Limiting d min (SHEL)";         tab[8][1] << olxstr::FormatFloat(3, hs.LimDmin);
+    tab[9][0] << "Limiting d max (SHEL/OMIT_2t)";    tab[9][1] << hs.LimDmax;
+    tab[10][0] << "Filtered off reflections (SHEL/OMIT_s/OMIT_2t)";  tab[10][1] << hs.FilteredOff;
+    tab[11][0] << "Reflections omitted by user (OMIT_hkl)";   tab[11][1] << hs.OmittedByUser;
+    tab[12][0] << "Reflections skipped (after 0 0 0)";        tab[12][1] << hs.OmittedReflections;
+    tab[13][0] << "Intensity transformed for (OMIT_s)";       tab[13][1] << hs.IntensityTransformed << " reflections";
+    tab[14][0] << "Rint";                         tab[14][1] << olxstr::FormatFloat(3, hs.Rint);
+    tab[15][0] << "Rsigma";                       tab[15][1] << olxstr::FormatFloat(3, hs.Rsigma);
+    tab[16][0] << "Mean I/sig";                   tab[16][1] << olxstr::FormatFloat(3, hs.MeanIOverSigma);
+    tab[17][0] << "HKL range";                    
+    tab[17][1] << "h=[" << hs.MinIndexes[0] << ',' << hs.MaxIndexes[0] << "] "
+               << "k=[" << hs.MinIndexes[1] << ',' << hs.MaxIndexes[1] << "] "
+               << "l=[" << hs.MinIndexes[2] << ',' << hs.MaxIndexes[2] << "] ";
+    tab[18][0] << "Maximum redundance (+symm eqivs)";    tab[18][1] << hs.ReflectionAPotMax;
+    tab[19][0] << "Average redundance (+symm eqivs)";    tab[19][1] << olxstr::FormatFloat(2, (double)hs.TotalReflections/hs.UniqueReflections);
+
+    TStrList Output;
+    tab.CreateTXTList(Output, olxstr("Refinement reflection statistsics"), true, false, "  ");
+    xapp.GetLog() << Output << '\n';
+    const mat3d& hkl2c = xapp.XFile().GetAsymmUnit().GetHklToCartesian();
+    double sI = 0, ssS = 0, maxRes = 0, minRes = 100;
+    vec3i minInd(100,100,100), 
+      maxInd(-100, -100, -100);
+    int maxRedundancy = 0, FriedelPairs = 0;
+    const TRefList& all_refs = xapp.XFile().GetRM().GetReflections();
+    for( int i=0; i < all_refs.Count(); i++ )  {
+      const TReflection& r = all_refs[i];
+      vec3i::UpdateMinMax(r.GetHkl(), minInd, maxInd);
+      sI += r.GetI();
+      ssS += sqr(r.GetS());
+    }
+    //tab[0][0] << "Read reflections";              tab[0][1] << refs.Count();
+    TArray3D< TPtrList<const TReflection>* > hkl3d(minInd[0], maxInd[0], minInd[1], maxInd[1], minInd[2], maxInd[2]);
+    TArray3D<float> res3d(minInd[0], maxInd[0], minInd[1], maxInd[1], minInd[2], maxInd[2]);
+    hkl3d.FastInitWith(0);
+    for( int i=0; i < all_refs.Count(); i++ )  {
+      const TReflection& r = all_refs[i];
+      if( hkl3d(r.GetHkl()) == NULL )  {
+        hkl3d(r.GetHkl()) = new TPtrList<const TReflection>;
+        const double res = r.ToCart(hkl2c).QLength();
+        res3d(r.GetHkl()) = res;
+        if( res > maxRes ) maxRes = res;
+        if( res < minRes ) minRes = res;
+      }
+      hkl3d(r.GetHkl())->Add(&r);
+      if( hkl3d(r.GetHkl())->Count() > maxRedundancy )
+        maxRedundancy = hkl3d(r.GetHkl())->Count();
+    }
+    evecd redundancy(maxRedundancy);
+    for( int h=minInd[0]; h <= maxInd[0]; h++ )  {
+      for( int k=minInd[1]; k <= maxInd[1]; k++ )  {
+        for( int l=minInd[2]; l <= maxInd[2]; l++ )  {
+          if( (h|k|l) >= 0 )  {
+            vec3i ind(-h,-k,-l);
+            if( vec3i::IsInRangeInc(ind, minInd, maxInd) )  {
+              if( hkl3d(ind) != NULL )
+                FriedelPairs++;
+            }
+          }
+          if( hkl3d(h, k, l) != NULL )  {
+            redundancy[hkl3d(h, k, l)->Count()-1]++;
+            delete hkl3d(h, k, l);
+          }
+        }
+      }
+    }
+    xapp.GetLog() << "Redundancy \n";
+    for( int i=0; i < redundancy.Count(); i++ )
+      xapp.GetLog() << i+1 << ' ' << redundancy[i] << '\n';
+    xapp.GetLog() << "Friedel pairs measured: " << FriedelPairs << '\n';
+    return;
+  }
+  bool list = Options.Contains("l"), 
+       merge = Options.Contains("m");
+  TRefList Refs;
+  if( merge )
+    xapp.XFile().GetRM().GetRefinementRefList<RefMerger::StandardMerger>(xapp.XFile().GetLastLoaderSG(), Refs);
+  else
+    xapp.XFile().GetRM().GetFilteredP1RefList<RefMerger::StandardMerger>(Refs);
+  evecd_list con;
+
+  for( int i=0; i < Cmds.Count(); i++ )  {
+    int obi = Cmds[i].FirstIndexOf('[');
+    if( obi == -1 || !Cmds[i].EndsWith(']') )  {
+      Error.ProcessingError(__OlxSrcInfo, "incorrect construct: ") << Cmds[i];
+      return;
+    }
+    con.AddNew(4);
+    con[i][3] = Cmds[i].SubStringTo(obi).ToInt();
+    olxstr tmp = Cmds[i].SubString(obi+1, Cmds[i].Length() - obi - 2);
+    int hkli=-1;
+    for( int j=tmp.Length()-1; j >= 0; j-- ) {
+      if( tmp.CharAt(j) == 'l' )  hkli = 2;
+      else if( tmp.CharAt(j) == 'k' )  hkli = 1;
+      else if( tmp.CharAt(j) == 'h' )  hkli = 0;
+      if( hkli == -1 )  {
+        Error.ProcessingError(__OlxSrcInfo, "incorrect construct: ") << Cmds[i];
+        return;
+      }
+      j--;
+      olxstr strV;
+      while( j >= 0 && !(tmp[j] >= 'a' && tmp[j] <= 'z' ) )  {
+        strV.Insert( (olxch)tmp[j], 0 );
+        j--;
+      }
+      if( !strV.IsEmpty() && !(strV == "+") && !(strV == "-") )
+        con[i][hkli] = strV.ToDouble();
+      else  {
+        if( !strV.IsEmpty() && strV == "-" )
+          con[i][hkli] = -1.0;
+        else
+          con[i][hkli] = 1.0;
+      }
+      if( con[i][hkli] == 0 )  {
+        Error.ProcessingError(__OlxSrcInfo, "illegal value: ") << Cmds[i];
+        return;
+      }
+      j++;
+    }
+  }
+  double SI = 0, SE = 0;
+  int count = 0;
+  for( int i=0; i < Refs.Count(); i++ )  {
+    bool fulfilled = true;
+    const TReflection& ref = Refs[i];
+    for( int j=0; j < Cmds.Count(); j ++ )  {
+      int v = Round(ref.GetH()*con[j][0] +
+                    ref.GetK()*con[j][1] +
+                    ref.GetL()*con[j][2] );
+      if( con[j][3] == 0 )  {
+        if( v != 0 ) {
+          fulfilled = false;
+          break;
+        }
+      }
+      else if( con[j][3] < 0 )  {
+        if( (v%(int)con[j][3]) == 0 )  {
+          fulfilled = false;
+          break;
+        }
+      }
+      else if( con[j][3] > 0 )  {
+        if( (v%(int)con[j][3]) != 0 )  {
+          fulfilled = false;
+          break;
+        }
+      }
+    }
+    if( !fulfilled )  continue;
+    count ++;
+    SI += ref.GetI();
+    SE += sqr(ref.GetS());
+    if( list )  {
+      TBasicApp::GetLog() << ref.ToString()<< '\n';
+    }
+  }
+  if( count == 0 )  {
+    TBasicApp::GetLog() << ("Could not find any reflections fulfilling given condition\n");
+    return;
+  }
+  SI /= count;
+  SE = sqrt(SE/count);
+
+  xapp.GetLog() << ( olxstr("Found " ) << count << " reflections fulfilling given condition\n");
+  xapp.GetLog() << ( olxstr("I(s) is ") << olxstr::FormatFloat(3, SI) << '(' << olxstr::FormatFloat(3, SE) << ")\n" );
+
+}
 //..............................................................................
 void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
   if( TXApp::GetInstance().XFile().GetLattice().IsGenerated() )  {
@@ -487,10 +678,8 @@ void XLibMacros::macGraphPD(TStrObjList &Cmds, const TParamList &Options, TMacro
   double max_2t = 0, min_2t=180;
   for( int i=0; i < refs.Count(); i++ )  {
     const TReflection& ref = refs[i];
-    vec3d d_hkl(ref.GetH(), ref.GetK(), ref.GetL());
-    vec3d hkl(d_hkl[0]*hkl2c[0][0],
-      d_hkl[0]*hkl2c[0][1] + d_hkl[1]*hkl2c[1][1],
-      d_hkl[0]*hkl2c[0][2] + d_hkl[1]*hkl2c[1][2] + d_hkl[2]*hkl2c[2][2]);
+    const vec3d& d_hkl = ref.GetHkl();
+    vec3d hkl = ref.ToCart(hkl2c);
     const double theta_2 = 360*asin(d_2_sin*hkl.Length())/M_PI;
     gd.AddNew( theta_2, ref.GetI()*ref.GetMultiplicity());
   }

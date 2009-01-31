@@ -105,9 +105,7 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
   const int refs_cnt = Refs.Count();
   for( int i=0; i < refs_cnt; i++ )  {
     const TReflection& r = Refs[i];
-    vec3d hkl(r.GetH()*hkl2c[0][0],
-              r.GetH()*hkl2c[0][1] + r.GetK()*hkl2c[1][1],
-              r.GetH()*hkl2c[0][2] + r.GetK()*hkl2c[1][2] + r.GetL()*hkl2c[2][2]);
+    vec3d hkl = r.ToCart(hkl2c);
     TWilsonRef& ref = refs.AddNew();
     ref.ds = hkl.QLength()*0.25;
     if( ref.ds < minds )  minds = ref.ds;

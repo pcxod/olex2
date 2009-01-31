@@ -12,6 +12,7 @@
 
 class XLibMacros  {
   static DefMacro(BrushHkl)
+  static DefMacro(HklStat)
   static DefMacro(SG)
   static DefMacro(SGE)
   static DefMacro(GraphSR)
