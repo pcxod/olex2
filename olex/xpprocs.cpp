@@ -5740,7 +5740,7 @@ void TMainForm::macSGInfo(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   if( !sg->GetInversionCenter().IsNull() )  {
     const vec3d& ic = sg->GetInversionCenter();
     TBasicApp::GetLog() << "Inversion center position: " << olxstr::FormatFloat(3, ic[0])
-      << ", " << olxstr::FormatFloat(3, ic[1]) << ", " << olxstr::FormatFloat(3, ic[2]);
+      << ", " << olxstr::FormatFloat(3, ic[1]) << ", " << olxstr::FormatFloat(3, ic[2]) << '\n';
   }
   // possible systematic absences
   Output.Add("Elements causing systematic absences: ");

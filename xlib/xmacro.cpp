@@ -1738,8 +1738,8 @@ olxstr XLibMacros_funSGNameToHtml(const olxstr& name)  {
         if( name[i] != '1' )  {
           res << name[i] << "<sub>" << name[i+1] << "</sub>";
           i++;
+          continue;
         } 
-        continue;
       }
     }
     res << name[i];
