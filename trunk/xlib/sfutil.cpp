@@ -183,7 +183,7 @@ void SFUtil::PrepareCalcSF(const TAsymmUnit& au, double* U, TPtrList<cm_Element>
         U[ind+k] = -TQ_PI*quad[k]*BM[k];
     }
     else  {
-      U[ind] = ca.GetUiso()*ca.GetUiso();
+      U[ind] = ca.GetUiso();//*ca.GetUiso();
       U[ind] *= -EQ_PI;
     }
   }
