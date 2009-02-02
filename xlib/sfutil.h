@@ -126,7 +126,7 @@ namespace SFUtil {
                                     const TPtrList<cm_Element>& scatterers, const TCAtomPList& atoms, 
                                     const double* U)
     {
-      TArrayList<vec3d> rv(sg::size);
+      TArrayList<vec3i> rv(sg::size);
       TArrayList<double> ps(sg::size);
       TArrayList<compd> fo(scatterers.Count()), fpfdp(scatterers.Count());
       for( int i=0; i < scatterers.Count(); i++ )  {
@@ -135,29 +135,25 @@ namespace SFUtil {
       }
       for( int i=0; i < refs.Count(); i++ )  {
         const TReflection& ref = TReflection::GetRef(refs[i]);
-        const vec3d& d_hkl = ref.GetHkl();
-        vec3d hkl = ref.ToCart(hkl2c);
-        const double d_s2 = hkl.QLength()*0.25;
-        sg::GenHkl(d_hkl, rv, ps);
+        const double d_s2 = ref.ToCart(hkl2c).QLength()*0.25;
+        sg::GenHkl(ref.GetHkl(), rv, ps);
         for( int j=0; j < scatterers.Count(); j++)  {
           fo[j] = scatterers[j]->gaussians->calc_sq(d_s2);
           fo[j] += fpfdp[j];
         }
         compd ir;
         for( int j=0; j < atoms.Count(); j++ )  {
-          const vec3d& crd = atoms[j]->ccrd();
           compd l;
           for( int k=0; k < sg::size; k++ )  {
-            const vec3d& o_hkl = rv[k];
-            double tv =  SFUtil::T_PI*(crd.DotProd(o_hkl)+ps[k]);  // scattering vector + phase shift
+            double tv =  SFUtil::T_PI*(atoms[j]->ccrd().DotProd(rv[k])+ps[k]);  // scattering vector + phase shift
             double ca, sa;
             SinCos(tv, &sa, &ca);
             if( atoms[j]->GetEllpId() != -1 )  {
               const double* Q = &U[j*6];  // pick up the correct ellipsoid
               const double B = exp(
-                (Q[0]*o_hkl[0]+Q[4]*o_hkl[2]+Q[5]*o_hkl[1])*o_hkl[0] + 
-                (Q[1]*o_hkl[1]+Q[3]*o_hkl[2])*o_hkl[1] + 
-                (Q[2]*o_hkl[2])*o_hkl[2] );
+                (Q[0]*rv[k][0]+Q[4]*rv[k][2]+Q[5]*rv[k][1])*rv[k][0] + 
+                (Q[1]*rv[k][1]+Q[3]*rv[k][2])*rv[k][1] + 
+                (Q[2]*rv[k][2])*rv[k][2] );
               l.Re() += ca*B;
               l.Im() += sa*B;
             }
@@ -180,33 +176,29 @@ namespace SFUtil {
                                       const TPtrList<cm_Element>& scatterers, const TCAtomPList& atoms, 
                                       const double* U) 
     {
-      TArrayList<vec3d> rv(sg::size);
+      TArrayList<vec3i> rv(sg::size);
       TArrayList<double> ps(sg::size);
-      TArrayList<compd> fo(scatterers.Count());
+      TArrayList<double> fo(scatterers.Count());
       for( int i=0; i < refs.Count(); i++ )  {
         const TReflection& ref = TReflection::GetRef(refs[i]);
-        const vec3d& d_hkl = ref.GetHkl();
-        vec3d hkl = ref.ToCart(hkl2c);
-        const double d_s2 = hkl.QLength()*0.25;
-        sg::GenHkl(d_hkl, rv, ps);
+        const double d_s2 = ref.ToCart(hkl2c).QLength()*0.25;
+        sg::GenHkl(ref.GetHkl(), rv, ps);
         for( int j=0; j < scatterers.Count(); j++)
           fo[j] = scatterers[j]->gaussians->calc_sq(d_s2);
 
         compd ir;
         for( int j=0; j < atoms.Count(); j++ )  {
-          const vec3d& crd = atoms[j]->ccrd();
           compd l;
           for( int k=0; k < sg::size; k++ )  {
-            const vec3d& o_hkl = rv[k];
-            double tv =  SFUtil::T_PI*(crd.DotProd(o_hkl)+ps[k]);  // scattering vector + phase shift
+            double tv =  SFUtil::T_PI*(atoms[j]->ccrd().DotProd(rv[k])+ps[k]);  // scattering vector + phase shift
             double ca, sa;
             SinCos(tv, &sa, &ca);
             if( atoms[j]->GetEllpId() != -1 )  {
               const double* Q = &U[j*6];  // pick up the correct ellipsoid
               const double B = exp(
-                (Q[0]*o_hkl[0]+Q[4]*o_hkl[2]+Q[5]*o_hkl[1])*o_hkl[0] + 
-                (Q[1]*o_hkl[1]+Q[3]*o_hkl[2])*o_hkl[1] + 
-                (Q[2]*o_hkl[2])*o_hkl[2] );
+                (Q[0]*rv[k][0]+Q[4]*rv[k][2]+Q[5]*rv[k][1])*rv[k][0] + 
+                (Q[1]*rv[k][1]+Q[3]*rv[k][2])*rv[k][1] + 
+                (Q[2]*rv[k][2])*rv[k][2] );
               l.Re() += ca*B;
               l.Im() += sa*B;
             }

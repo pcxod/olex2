@@ -421,6 +421,9 @@ private:
   DefMacro(AddObject)
   DefMacro(DelObject)
 
+  DefMacro(ImportFrag)
+  DefMacro(ExportFrag)
+
   DefMacro(OnRefine)
   DefMacro(TestMT)
   DefMacro(SetFont)

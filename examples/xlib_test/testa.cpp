@@ -81,7 +81,7 @@ int main(int argc, char* argv[])  {
     //ExportBAI( *XApp.AtomsInfo() );
     //ExportBAIA( *XApp.AtomsInfo(), scl );
     //ExportSymmLibC();
-    //ExportSymmLibD();
+    ExportSymmLibD();
   }
   catch( TExceptionBase& exc )  {
     printf("An exception occured: %s\n", EsdlObjectName(exc).c_str() );
@@ -478,8 +478,8 @@ int CodeGen(TSpaceGroup& sg, TStrList& out, olxstr& hs)  {
       olxstr& str = out.Add("    res[") << i << "][" << j << "] = ";
       bool added = false;
       for( int k=0; k < 3; k++ )  {
-        if( m.r[k][j] != 0 )  {  // transposed form for hkl
-          str << ((m.r[k][j] > 0) ? (added ? (olxstr("+v[") << k << ']') : (olxstr("v[") << k << ']')) : (olxstr("-v[") << k << ']'));
+        if( m.r[j][k] != 0 )  {  // normal form here for hkl
+          str << ((m.r[j][k] > 0) ? (added ? (olxstr("+v[") << k << ']') : (olxstr("v[") << k << ']')) : (olxstr("-v[") << k << ']'));
           added = true;
         }
       }

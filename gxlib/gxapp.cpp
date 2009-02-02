@@ -1653,6 +1653,23 @@ TXAtom * TGXApp::AddCentroid(TXAtomPList& Atoms)  {
   return NULL;
 }
 //..............................................................................
+void TGXApp::AdoptAtoms(const TAsymmUnit& au, TXAtomPList& xatoms) {
+  for( int i=0; i < au.AtomCount(); i++ )  {
+    const TCAtom& ca = au.GetAtom(i);
+    vec3d center = ca.ccrd();
+    XFile().GetAsymmUnit().CartesianToCell(center);
+    TSAtom *A = XFile().GetLattice().NewAtom( center );
+    if( A != NULL )  {
+      A->CAtom().SetAtomInfo( &ca.GetAtomInfo() );
+      TXAtom& XA = XAtoms.Add( new TXAtom(EmptyString, *A, FGlRender) );
+      XA.Create();
+      XA.SetXAppId( XAtoms.Count() - 1 );
+      XA.Params()[0] = (float)A->GetAtomInfo().GetRad();
+      xatoms.Add(&XA);
+    }
+  }
+}
+//..............................................................................
 TXAtom* TGXApp::AddAtom(TXAtom* templ)  {
   vec3d center;
   if( templ != NULL )
@@ -1664,6 +1681,8 @@ TXAtom* TGXApp::AddAtom(TXAtom* templ)  {
     if( templ != NULL )  {
       colName = templ->GetCollectionName();
       A->CAtom().SetAtomInfo( &templ->Atom().GetAtomInfo() );
+      if( templ->Atom().GetAtomInfo() == iQPeakIndex )
+        A->CAtom().SetQPeak(1.0);
     }
     else  {
       A->CAtom().SetAtomInfo( &AtomsInfo.GetAtomInfo(6) );

@@ -1195,7 +1195,7 @@ void XLibMacros::macFixUnit(TStrObjList &Cmds, const TParamList &Options, TMacro
 
   for( int i=0; i < content.Count(); i++ )  {
     sfac << content[i]->GetSymbol();
-    unit << content[i]->GetSumm()*Z;
+    unit << (content[i]->GetSumm()*Z)/Zp;
     n_c << content[i]->GetSymbol() << olxstr::FormatFloat(3,(double)content[i]->GetSumm()/Zp).TrimFloat();
     if( (i+1) < content.Count() )  {
       sfac << ' ';

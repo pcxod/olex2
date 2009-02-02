@@ -769,6 +769,8 @@ separated values of Atom Type and radius, an entry a line" );
   this_InitMacroD(TestStat, EmptyString, fpOne, "Test: runs statistical tests on structures in current folder. Expects a file name" );
   this_InitMacroD(ExportFont, EmptyString, fpTwo, "" );
   this_InitMacroD(ImportFont, EmptyString, fpTwo, "" );
+  this_InitMacroD(ImportFrag, EmptyString, fpOne|psFileLoaded, "Import a fragment to current structure" );
+  this_InitMacroD(ExportFrag, EmptyString, fpNone|psFileLoaded, "Exports selected fragment to an external file" );
   // FUNCTIONS _________________________________________________________________
 
   this_InitFunc(FileLast, fpNone|fpOne);

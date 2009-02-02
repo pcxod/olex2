@@ -59,6 +59,7 @@
 #include "p4p.h"
 #include "mol.h"
 #include "crs.h"
+#include "xyz.h"
 
 #include "fsext.h"
 #include "htmlext.h"
@@ -1189,16 +1190,20 @@ void TMainForm::macPict(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   // correct a common typo
   if( !TEFile::ExtractFileExt(outFN).Comparei("jpeg") )
     outFN = TEFile::ChangeFileExt(outFN, "jpg");
-  bmpFN = TEFile::ChangeFileExt(outFN, "bmp");
-  TEFile BmpFile(bmpFN, "w+b");
-  BmpFile.Write(&(BmpFHdr), sizeof(BITMAPFILEHEADER));
-  BmpFile.Write(&(BmpInfo), sizeof(BITMAPINFOHEADER));
 
+  if( TEFile::ExtractFileExt(outFN).Comparei("bmp") == 0 )
+    bmpFN = TEFile::ChangeFileExt(outFN, "bmp");
+  else
+    bmpFN = TEFile::ChangeFileExt(outFN, "bmp.tmp");
+  TEFile* BmpFile = new TEFile(bmpFN, "w+b");
+  BmpFile->Write(&(BmpFHdr), sizeof(BITMAPFILEHEADER));
+  BmpFile->Write(&(BmpInfo), sizeof(BITMAPINFOHEADER));
   char *PP = DIBits;
-  BmpFile.Write(PP, (BmpWidth*3+extraBytes)*BmpHeight);
+  BmpFile->Write(PP, (BmpWidth*3+extraBytes)*BmpHeight);
   DeleteObject(DIBmp);
+  delete BmpFile;
   //check if the image is bmp
-  if( !TEFile::ExtractFileExt(outFN).Comparei("bmp") )
+  if( TEFile::ExtractFileExt(outFN).Comparei("bmp") == 0 )
     return;
   wxImage image;
   image.LoadFile( bmpFN.u_str(), wxBITMAP_TYPE_BMP);
@@ -1208,6 +1213,8 @@ void TMainForm::macPict(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   }
   image.SetOption(wxT("quality"), 85);
   image.SaveFile( outFN.u_str() );
+  image.Destroy();
+  TEFile::DelFile(bmpFN);
 #else
   macPicta(Cmds, Options, Error);
 #endif // __WIN32__
@@ -4813,9 +4820,14 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     if( TEFile::ExtractFileExt(FN).Comparei("hkl") == 0 )  {
       if( !TEFile::FileExists( TEFile::ChangeFileExt(FN, "ins") ) )  {
         THklFile hkl;
+        bool ins_initialised = false;
         TIns* ins = (TIns*)FXApp->XFile().FindFormat("ins");
         //ins->Clear();
-        hkl.LoadFromFile(FN, ins);
+        hkl.LoadFromFile(FN, ins, &ins_initialised);
+        if( !ins_initialised )  {
+          Error.ProcessingError(__OlxSrcInfo, "could not initialise CELL/SFAC from the hkl file");
+          return;
+        }
         FXApp->XFile().SetLastLoader(ins);
         ins->Clear();
         FXApp->XFile().GetRM().SetHKLSource(FN);  // make sure tha SGE finds the related HKL
@@ -6719,6 +6731,7 @@ void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     double scale = SFUtil::CalcFScale(FP, refs);
     double sy = 0, so = 0;
     for( int i=0; i < FP.Count(); i++ )  {
+      //TBasicApp::GetLog() << refs[i].GetHkl().ToString() << ' ' << FP[i].GetA() << ' ' << FP[i].GetB() << '\n';
       double pi = FP[i].mod(),
         oi = scale*sqrt(refs[i].GetI());
       sy += olx_abs(oi-pi);
@@ -8613,4 +8626,58 @@ void TMainForm::macEsd(TStrObjList &Cmds, const TParamList &Options, TMacroError
     }
   }
 }
+//..............................................................................
+void TMainForm::macImportFrag(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  olxstr FN = PickFile("Load Fragment",
+    "XYZ files (*.xyz)|*.xyz",
+    XLibMacros::CurrentDir, true);
+  if( FN.IsEmpty() ) 
+    return;
+  TXyz xyz;
+  xyz.LoadFromFile(FN);
+  TXAtomPList xatoms;
+  FXApp->AdoptAtoms(xyz.GetAsymmUnit(), xatoms);
+  for( int i=0; i < xatoms.Count(); i++ )  {
+    xatoms[i]->Moveable(true);
+    xatoms[i]->Roteable(true);
+    FXApp->Selection()->Add(xatoms[i]);
+  }
+  ProcessXPMacro("mode split", E);
+}
+//..............................................................................
+void TMainForm::macExportFrag(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  olxstr FN = PickFile("Save Fragment as...",
+    "XYZ files (*.xyz)|*.xyz",
+    XLibMacros::CurrentDir, false);
+  if( FN.IsEmpty() ) 
+    return;
+  TXAtomPList xatoms;
+  TGlGroup* glg = FXApp->Selection();
+  for( int i=0; i < glg->Count(); i++ )  {
+    if( EsdlInstanceOf(*glg->Object(i), TXAtom) )
+      xatoms.Add( (TXAtom*)glg->Object(i) );
+  }
+  TNetPList nets;
+  for( int i=0; i < xatoms.Count(); i++ )  {
+    TNetwork* net = &xatoms[i]->Atom().GetNetwork();
+    if( nets.IndexOf(net) == -1 )
+      nets.Add(net);
+  }
+  if( nets.Count() != 1 )  {
+    E.ProcessingError(__OlxSrcInfo, "please select one fragment or one atom only");
+    return;
+  }
+  TXyz xyz;
+  
+  for( int i=0; i < nets[0]->NodeCount(); i++ )  {
+    if( nets[0]->Node(i).IsDeleted() || nets[0]->Node(i).GetAtomInfo() == iQPeakIndex )
+      continue;
+    TCAtom& ca = xyz.GetAsymmUnit().NewAtom();
+    ca.ccrd() = nets[0]->Node(i).crd();
+    ca.SetAtomInfo( &nets[0]->Node(i).GetAtomInfo() );
+  }
+  xyz.SaveToFile(FN);
+}
+//..............................................................................
+//..............................................................................
 
