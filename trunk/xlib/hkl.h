@@ -67,9 +67,10 @@ public:
   void Clear();
   inline void Sort()  {  Refs.QuickSorter.SortSF(Refs, HklCmp);  }
   /* if ins loader is passed and the hkl file has CELL and SFAC in it, 
-  it will be initalised
+  it will be initalised and if the ins_initialised is provided - it will be set True if the 
+  CELL and SFAC are found
   */
-  bool LoadFromFile(const olxstr& FN, class TIns* ins = NULL);
+  bool LoadFromFile(const olxstr& FN, class TIns* ins = NULL, bool* ins_initialised=NULL);
   bool SaveToFile(const olxstr& FN);
   void UpdateRef(const TReflection& R);
   // returns reflections owned by this object

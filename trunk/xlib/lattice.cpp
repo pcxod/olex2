@@ -1330,6 +1330,10 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPL
           TBasicApp::GetLog().Info( olxstr(atom.GetLabel()) << ": RNH(2)M" );
           cg.FixAtom( AE, fgNH2, HAI, NULL, generated);
         }
+        else if( d1 > 1.72 && d2 > 1.72 )  {
+          TBasicApp::GetLog().Info( olxstr(atom.GetLabel()) << ": XX'NH" );
+          cg.FixAtom( AE, fgNH1, HAI, NULL, generated);
+        }
       }
       else if( v < 120 && d1 > 1.45 && d2 > 1.45 )  {
         TBasicApp::GetLog().Info( olxstr(atom.GetLabel()) << ": R2NH2+" );

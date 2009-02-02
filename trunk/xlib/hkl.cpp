@@ -51,7 +51,7 @@ void THklFile::Clear3D()  {
   Hkl3D = NULL;
 }
 
-bool THklFile::LoadFromFile(const olxstr& FN, TIns* ins)  {
+bool THklFile::LoadFromFile(const olxstr& FN, TIns* ins, bool* ins_initialised)  {
   Clear();
   TEFile::CheckFileExists(__OlxSourceInfo, FN);
   TCStrList SL, Toks;
@@ -99,51 +99,54 @@ bool THklFile::LoadFromFile(const olxstr& FN, TIns* ins)  {
 		}
 		else  {
 			if( ins == NULL )  break;
-        ins->Clear();
-        ins->SetTitle( TEFile::ChangeFileExt(TEFile::ExtractFileName(FN), EmptyString) << " imported from HKL file" );
-        olxstr line;
-        bool cell_found = false;
-        ins->SetSfac(EmptyString);
-        for( int j=i; i < SL.Count(); j++ )  {
-          line = SL[j].Trim(' ');
-          if( line.IsEmpty() )  continue;
-          Toks.Clear();
-          if( line.StartFromi("CELL") )  {
-            Toks.Strtok(line, ' ');
-            if( Toks.Count() != 8 )
-              throw TFunctionFailedException(__OlxSourceInfo, "invalid CELL format");
-            ins->GetRM().expl.SetRadiation( Toks[1].ToDouble() );
-            ins->GetAsymmUnit().Axes()[0] = Toks[2];
-            ins->GetAsymmUnit().Axes()[1] = Toks[3];
-            ins->GetAsymmUnit().Axes()[2] = Toks[4];
-            ins->GetAsymmUnit().Angles()[0] = Toks[5];
-            ins->GetAsymmUnit().Angles()[1] = Toks[6];
-            ins->GetAsymmUnit().Angles()[2] = Toks[7];
-            cell_found = true;
-          }
-          else if( line.StartFromi("SFAC") )  {
-            Toks.Strtok(line, ' ');  // do the validation
-            olxstr unit;
-            for( int k=1; k < Toks.Count(); k++ )  {
-              if( !ins->GetAsymmUnit().GetAtomsInfo()->IsAtom(Toks[k]) )
-                throw TFunctionFailedException(__OlxSourceInfo, olxstr("invalid element ") << Toks[k]);
-              unit << "1 ";
-            }
-            ins->SetSfac( line.SubStringFrom(5) );
-            ins->SetUnit( unit );
-          }
-          else if( line.StartFromi("TEMP") )
-            ins->AddIns(line, ins->GetRM());
-          else if( line.StartFromi("SIZE") )
-            ins->AddIns(line, ins->GetRM());
-          else if( line.StartFromi("REM") )
-            ins->AddIns(line, ins->GetRM());
-          else if( line.StartFromi("UNIT") )
-            ins->SetUnit( line.SubStringFrom(5) );
+      ins->Clear();
+      ins->SetTitle( TEFile::ChangeFileExt(TEFile::ExtractFileName(FN), EmptyString) << " imported from HKL file" );
+      olxstr line;
+      bool cell_found = false, sfac_found = false;
+      ins->SetSfac(EmptyString);
+      for( int j=i; i < SL.Count(); j++ )  {
+        line = SL[j].Trim(' ');
+        if( line.IsEmpty() )  continue;
+        Toks.Clear();
+        if( line.StartFromi("CELL") )  {
+          Toks.Strtok(line, ' ');
+          if( Toks.Count() != 8 )
+            throw TFunctionFailedException(__OlxSourceInfo, "invalid CELL format");
+          ins->GetRM().expl.SetRadiation( Toks[1].ToDouble() );
+          ins->GetAsymmUnit().Axes()[0] = Toks[2];
+          ins->GetAsymmUnit().Axes()[1] = Toks[3];
+          ins->GetAsymmUnit().Axes()[2] = Toks[4];
+          ins->GetAsymmUnit().Angles()[0] = Toks[5];
+          ins->GetAsymmUnit().Angles()[1] = Toks[6];
+          ins->GetAsymmUnit().Angles()[2] = Toks[7];
+          cell_found = true;
         }
-        if( !cell_found )
-          throw TFunctionFailedException(__OlxSourceInfo, "could no locate valid CELL instruction");
-        break;
+        else if( line.StartFromi("SFAC") )  {
+          Toks.Strtok(line, ' ');  // do the validation
+          olxstr unit;
+          for( int k=1; k < Toks.Count(); k++ )  {
+            if( !ins->GetAsymmUnit().GetAtomsInfo()->IsAtom(Toks[k]) )
+              throw TFunctionFailedException(__OlxSourceInfo, olxstr("invalid element ") << Toks[k]);
+            unit << "1 ";
+          }
+          ins->SetSfac( line.SubStringFrom(5) );
+          ins->SetUnit( unit );
+          sfac_found = true;
+        }
+        else if( line.StartFromi("TEMP") )
+          ins->AddIns(line, ins->GetRM());
+        else if( line.StartFromi("SIZE") )
+          ins->AddIns(line, ins->GetRM());
+        else if( line.StartFromi("REM") )
+          ins->AddIns(line, ins->GetRM());
+        else if( line.StartFromi("UNIT") )
+          ins->SetUnit( line.SubStringFrom(5) );
+      }
+      if( !cell_found || !sfac_found )
+        throw TFunctionFailedException(__OlxSourceInfo, "could no locate valid CELL/SFAC instructions");
+      if( ins_initialised != NULL )
+        *ins_initialised = true;
+      break;
 		}
   }
   for( int i=0; i < Refs.Count(); i++ )

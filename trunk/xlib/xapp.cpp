@@ -162,31 +162,26 @@ void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F)  {
     }
   }
   
-  vec3d hkl, crd;
   const int a_cnt = alist.Count(),
             m_cnt = ml.Count();
   for( int i=0; i < refs.Count(); i++ )  {
     const TReflection& ref = refs[i];
-    ref.MulHkl(hkl, hkl2c);
-    const double d_s2 = hkl.QLength()*0.25;
+    const double d_s2 = ref.ToCart(hkl2c).QLength()*0.25;
     for( int j=0; j < scatterers.Count(); j++)  {
       scatterers[j].B() = scatterers[j].GetA()->gaussians->calc_sq(d_s2);
       scatterers[j].B() += scatterers[j].GetC();
     }
     compd ir;
     for( int j=0; j < a_cnt; j++ )  {
-      crd = alist[j]->ccrd();
       compd l;
       for( int k=0; k < m_cnt; k++ )  {
-        const smatd& mt = ml[k];
-        ref.MulHkl(hkl, mt);
-        double tv =  T_PI*hkl.DotProd(mt.t+crd);  // scattering vector + phase shift
+        // it must not be the transposed form here!!!
+        const vec3d hkl = ml[k].r*ref.GetHkl();
+        double tv =  T_PI*hkl.DotProd(ml[k].t + alist[j]->ccrd());  // scattering vector + phase shift
         double ca, sa;
         SinCos(tv, &sa, &ca);
         if( alist[j]->GetEllipsoid() != NULL )  {
           const double* Q = &Ucifs[j*6];  // pick up the correct ellipsoid
-          //double B = (Q[0]*hkl[0]*hkl[0] + Q[1]*hkl[1]*hkl[1] + Q[2]*hkl[2]*hkl[2] + 
-          //  Q[3]*hkl[1]*hkl[2] + Q[4]*hkl[0]*hkl[2] + Q[5]*hkl[0]*hkl[1]);
           double B = (hkl[0]*(Q[0]*hkl[0]+Q[4]*hkl[2]+Q[5]*hkl[1]) + 
                       hkl[1]*(Q[1]*hkl[1]+Q[3]*hkl[2]) + 
                       hkl[2]*(Q[2]*hkl[2]) );

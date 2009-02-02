@@ -13,6 +13,26 @@ void SFUtil::ExpandToP1(const TArrayList<vec3i>& hkl, const TArrayList<compd>& F
   if( sf_util == NULL )
     throw TFunctionFailedException(__OlxSourceInfo, "invalid space group");
   out.SetCount( sf_util->GetSGOrder()* hkl.Count() );
+  // test
+  //smatd_list ml;
+  //sg.GetMatrices(ml, mattAll);
+  //const int ml_cnt = ml.Count();
+  //for( int i=0; i < hkl.Count(); i++ )  {
+  //  const int off = i*ml_cnt;
+  //  for( int j=0; j < ml_cnt; j++ )  {
+  //    const int ind = off+j;
+  //    out[ind].hkl = hkl[i]*ml[j].r;
+  //    out[ind].ps = ml[j].t.DotProd(hkl[i]);
+  //    if( out[ind].ps != 0 )  {
+  //      double ca=1, sa=0;
+  //      SinCos(T_PI*out[ind].ps, &sa, &ca);
+  //      out[ind].val = F[i]*compd(ca,sa);
+  //    }
+  //    else
+  //      out[ind].val = F[i];
+  //  }  
+  //}
+  //end test
   sf_util->Expand(hkl, F, out);
   delete sf_util;
 }
@@ -104,7 +124,8 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
     sw.start("Calculation structure factors");
     //xapp.CalcSF(refs, F);
     //sw.start("Calculation structure factors A");
-    CalcSF(xapp.XFile(), refs, F, sg.IsCentrosymmetric() );
+    // fastsymm version is just about 10% faster...
+    CalcSF(xapp.XFile(), refs, F, !sg.IsCentrosymmetric() );
     sw.start("Scaling structure factors");
     if( mapType != mapTypeCalc )  {
       // find a linear scale between F
@@ -160,15 +181,16 @@ void SFUtil::PrepareCalcSF(const TAsymmUnit& au, double* U, TPtrList<cm_Element>
     if( ca.IsDeleted() || ca.GetAtomInfo() == iQPeakIndex )  continue;
     int ind = bais.IndexOf( &ca.GetAtomInfo() );
     if( ind == -1 )  {
+      cm_Element* elm;
       if( ca.GetAtomInfo() == iDeuteriumIndex ) // treat D as H
-        scatterers.Add(XElementLib::FindBySymbol("H"));
+        elm = XElementLib::FindBySymbol("H");
       else 
-        scatterers.Add(XElementLib::FindBySymbol(ca.GetAtomInfo().GetSymbol()));
-     
-      if( scatterers.Last() == NULL ) {
+        elm = XElementLib::FindBySymbol(ca.GetAtomInfo().GetSymbol());
+      if( elm == NULL ) {
         delete [] U;
         throw TFunctionFailedException(__OlxSourceInfo, olxstr("could not locate scatterer: ") << ca.GetAtomInfo().GetSymbol() );
       }
+      scatterers.Add(elm);
       bais.Add( &ca.GetAtomInfo() );
       ind = scatterers.Count() - 1;
     }
@@ -206,7 +228,8 @@ void SFUtil::CalcSF(const TXFile& xfile, const TRefList& refs, TArrayList<TEComp
 
   sf_util->Calculate(
     xfile.GetRM().expl.GetRadiationEnergy(), 
-    refs, au.GetHklToCartesian(), 
+    refs, 
+    au.GetHklToCartesian(), 
     F, scatterers, 
     alist, 
     U, 

@@ -15,7 +15,16 @@
 //----------------------------------------------------------------------------//
 // TMol function bodies
 //----------------------------------------------------------------------------//
-TXyz::TXyz() { }
+TXyz::TXyz() { 
+  TAsymmUnit& au = GetAsymmUnit();
+  au.Axes()[0].V() = 1;
+  au.Axes()[1].V() = 1;
+  au.Axes()[2].V() = 1;
+  au.Angles()[0].V() = 90;
+  au.Angles()[1].V() = 90;
+  au.Angles()[2].V() = 90;
+  au.InitMatrices();
+}
 //..............................................................................
 TXyz::~TXyz() {  Clear();  }
 //..............................................................................
@@ -60,20 +69,20 @@ void TXyz::LoadFromStrings(const TStrList& Strings)  {
   double Ax, Ay, Az;
   TStrList toks;
   for( int i=0; i < Strings.Count(); i++ )  {
-    Tmp = Strings.String(i).UpperCase();
+    Tmp = Strings[i].UpperCase();
     if( Tmp.IsEmpty() )  continue;
     toks.Clear();
     toks.Strtok(Tmp, ' ');
     if( toks.Count() != 4 )  continue;
-    Ax = toks.String(1).ToDouble();
-    Ay = toks.String(2).ToDouble();
-    Az = toks.String(3).ToDouble();
+    Ax = toks[1].ToDouble();
+    Ay = toks[2].ToDouble();
+    Az = toks[3].ToDouble();
     if( AtomsInfo.IsAtom(toks[0]) )  {
       TCAtom& CA = GetAsymmUnit().NewAtom();
       CA.ccrd()[0] = Ax;
       CA.ccrd()[1] = Ay;
       CA.ccrd()[2] = Az;
-      CA.SetLabel( (toks[0] + GetAsymmUnit().AtomCount()+1) );
+      CA.SetLabel( toks[0] << (GetAsymmUnit().AtomCount()+1) );
       CA.SetLoaderId(GetAsymmUnit().AtomCount()-1);
     }
   }
