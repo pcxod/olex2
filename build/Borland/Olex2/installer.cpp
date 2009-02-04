@@ -3,8 +3,9 @@
 #include <vcl.h>
 #pragma hdrstop
 //---------------------------------------------------------------------------
-USEFORM("main.cpp", fMain);
-USEFORM("licence.cpp", dlgLicence);
+USEFORM("..\..\..\installer\licence.cpp", dlgLicence);
+USEFORM("..\..\..\installer\main.cpp", fMain);
+USEFORM("frame1.cpp", frMain); /* TFrame: File Type */
 //---------------------------------------------------------------------------
 WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 {

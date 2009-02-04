@@ -107,6 +107,7 @@ __fastcall TfMain::TfMain(TComponent* Owner)
 //---------------------------------------------------------------------------
 __fastcall TfMain::~TfMain()
 {
+  Bapp->OnIdle->Execute(NULL, NULL);
   delete Bapp;
 }
 //---------------------------------------------------------------------------

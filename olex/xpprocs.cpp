@@ -6731,23 +6731,46 @@ void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   //return;
   olxstr hklfn = FXApp->LocateHklFile();
   if( TEFile::FileExists(hklfn) )  {
-    TRefList refs;
-    RefinementModel::HklStat stat = 
-      FXApp->XFile().GetRM().GetRefinementRefList<RefMerger::ShelxMerger>(FXApp->XFile().GetLastLoaderSG(), refs);
-    TArrayList<compd> FP(refs.Count());
+    const TRefPList& fpp = FXApp->XFile().GetRM().GetFriedelPairs();
+    if( fpp.IsEmpty() )  return;
+
+    TRefList refs, nrefs, fp;
+    fp.SetCapacity(fpp.Count());
+    for( int i=0; i < fpp.Count(); i++ )
+      fp.AddNew( *fpp[i] );
+    const vec3i_list empty_omits;
+    smatd_list ml;
+    FXApp->XFile().GetLastLoaderSG().GetMatrices(ml, mattAll);
+    MergeStats stat = RefMerger::Merge<RefMerger::ShelxMerger>(ml, fp, refs, empty_omits);
+    nrefs.SetCapacity(refs.Count());
+    for( int i=0; i < refs.Count(); i++ ) 
+      nrefs.AddNew(refs[i]).GetHkl() *= -1;
+    TArrayList<compd> FP(refs.Count()), FN(refs.Count());
     SFUtil::CalcSF(FXApp->XFile(), refs, FP, true);
-    double scale = SFUtil::CalcFScale(FP, refs);
-    double sy = 0, so = 0;
-    for( int i=0; i < FP.Count(); i++ )  {
-      //TBasicApp::GetLog() << refs[i].GetHkl().ToString() << ' ' << FP[i].GetA() << ' ' << FP[i].GetB() << '\n';
-      double pi = FP[i].mod(),
-        oi = scale*sqrt(refs[i].GetI());
-      sy += olx_abs(oi-pi);
-      so += oi;
+    SFUtil::CalcSF(FXApp->XFile(), nrefs, FN, true);
+    double pscale = SFUtil::CalcFScale(FP, refs);
+    double nscale = SFUtil::CalcFScale(FN, nrefs);
+    double sx = 0, sy = 0, sxs = 0, sxy = 0;
+    const int f_cnt = FP.Count();
+    for( int i=0; i < f_cnt; i++ )  {
+      const double I = pscale*pscale*refs[i].GetI();
+      const double pqm = FP[i].qmod();
+      const double nqm = FN[i].qmod();
+      sx += (nqm - pqm);
+      sy += (I - pqm);
+      sxy += (nqm - pqm)*(I - pqm);
+      sxs += (nqm - pqm)*(nqm - pqm);
     }
-    double x = sy*100/so;
-//    double x = (sxy - sx*sy/FP.Count())/(sxs-sx*sx/FP.Count());
-    TBasicApp::GetLog() << x << '\n';
+    double k = (sxy - sx*sy/f_cnt)/(sxs - sx*sx/f_cnt);
+    double a = (sy - k*sx)/f_cnt;  
+    double sdiff = 0;
+    for( int i=0; i < f_cnt; i++ )  {
+      const double I = pscale*pscale*refs[i].GetI();
+      const double pqm = FP[i].qmod();
+      const double nqm = FN[i].qmod();
+      sdiff += sqr((I - pqm) - k*(nqm - pqm) - a);
+    }
+    TBasicApp::GetLog() << "K: " << TEValue<double>(k, sqrt(sdiff/(f_cnt*(f_cnt-1)))).ToString() << '\n';
   }
   return;
   TSymmLib& sl = *TSymmLib::GetInstance();
