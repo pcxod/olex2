@@ -1661,6 +1661,7 @@ void TGXApp::AdoptAtoms(const TAsymmUnit& au, TXAtomPList& xatoms) {
     TSAtom *A = XFile().GetLattice().NewAtom( center );
     if( A != NULL )  {
       A->CAtom().SetAtomInfo( &ca.GetAtomInfo() );
+      A->CAtom().Label() = ca.GetLabel();
       TXAtom& XA = XAtoms.Add( new TXAtom(EmptyString, *A, FGlRender) );
       XA.Create();
       XA.SetXAppId( XAtoms.Count() - 1 );
@@ -3288,6 +3289,51 @@ TXLattice& TGXApp::AddLattice(const olxstr& Name, const mat3d& basis)  {
 }
 //..............................................................................
 void TGXApp::InitFadeMode()  {
+}
+//..............................................................................
+void TGXApp::BuildSceneMask(FractMask& mask)  {
+  TAsymmUnit& au = XFile().GetAsymmUnit();
+  vec3d mn(100, 100, 100), 
+        mx(-100, -100, -100),
+        norms(
+          au.Axes()[0].GetV(), 
+          au.Axes()[1].GetV(),
+          au.Axes()[2].GetV()
+        );
+  TTypeList<AnAssociation2<vec3d,double> > atoms;
+  atoms.SetCapacity( XAtoms.Count() );
+  for( int i=0; i < XAtoms.Count(); i++ )  {
+    if( XAtoms[i].Deleted() || !XAtoms[i].Visible() )  continue;
+    if( XAtoms[i].Atom().GetAtomInfo() == iQPeakIndex )  continue;
+    vec3d::UpdateMinMax(XAtoms[i].Atom().ccrd(), mn, mx);
+    atoms.AddNew( XAtoms[i].Atom().crd(), sqr(XAtoms[i].Atom().GetAtomInfo().GetRad2())+1.0 );
+  }
+  mask.Init(mn, mx, norms, 1);
+  TArray3D<bool>* mdata = mask.GetMask();
+  mdata->FastInitWith(0);
+  const int da = mdata->Length1(),
+            db = mdata->Length2(),
+            dc = mdata->Length3();
+  const int ac = atoms.Count();
+  //for( int i=0; i < ac; i++ ) 
+  //  atoms[i].A() -= mn;
+  for( int j = 0; j < da; j++ )  {
+    const double dx = (double)j/norms[0];
+    for( int k = 0; k < db; k++ )  {
+      const double dy = (double)k/norms[1];
+      for( int l = 0; l < dc; l++ )  {
+        vec3d p(dx, dy, (double)l/norms[2]);
+        p += mn;
+        au.CellToCartesian(p);
+        for( int i=0; i < ac; i++ )  {
+          if( p.QDistanceTo( atoms[i].GetA() ) <= atoms[i].GetB() )  {  
+            mdata->Data[j][k][l] = true;
+            break;
+          }
+        }
+      }
+    }
+  }
 }
 //..............................................................................
 void TGXApp::ToDataItem(TDataItem& item, wxOutputStream& zos) const  {

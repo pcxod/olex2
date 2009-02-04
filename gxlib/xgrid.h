@@ -14,6 +14,7 @@
 #include "glprimitive.h"
 
 #include "wx/zipstrm.h"
+#include "fracmask.h"
 
 BeginGxlNamespace()
 
@@ -24,7 +25,7 @@ class TXGrid: public TGlMouseListener  {
   //TVectorDList AllPoints;
   TArray3D<float>* ED;
   CIsoSurface<float>* IS;
-  vec3d GridStranslation;
+  FractMask* Mask;
   char *TextData;
   //TGlPrimitive *FPrimitive;
   class TGXApp * XApp;
@@ -38,11 +39,10 @@ class TXGrid: public TGlMouseListener  {
   int PolygonMode;
   bool Mode3D;
   TGlPrimitive* glpP, *glpN;
-  // these will keep the negative surface, the Isosurface - the positive
-  TArrayList<vec3f> vertices;
-  TArrayList<vec3f> normals;
-  TArrayList<IsoTriangle> triangles;
-  bool GridMoved;
+  // these will keep the masked objects
+  TTypeList<vec3f> p_vertices, n_vertices;
+  TTypeList<vec3f> p_normals, n_normals;
+  TTypeList<IsoTriangle> p_triangles, n_triangles;
 protected:
   float MaxVal, MinVal, Depth, Size, Scale;
   int MaxX, MaxY, MaxZ, MaxDim; 
@@ -87,7 +87,9 @@ public:
 
   void SetScale(float v);
   inline double GetScale()  const {  return Scale;  }
-  
+  // this object will be deleted
+  void SetMask(FractMask& fm) {  Mask = &fm;  }
+
   void SetDepth(float v);
   void SetDepth(const vec3d& v);
 

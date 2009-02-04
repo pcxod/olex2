@@ -833,21 +833,19 @@ void TUnitCell::BuildStructureMap( TArray3D<short>& map, double delta, short val
   }
   const int ac = allAtoms.Count();
   for( int j = 0; j < da; j ++ )  {
-    const int ix = j;
+    const double dx = (double)j/da;
     if( (j%5) == 0 )  {
       TBasicApp::GetLog() << '\r' << j*100/da << '%';
       TBasicApp::GetInstance()->Update();
     }
     for( int k = 0; k < db; k ++ )  {
-      const int iy = k;
+      const double dy = (double)k/db;
       for( int l = 0; l < dc; l ++ )  {
-        const int iz = l;
-        if( map.Data[ix][iy][iz] == val )  continue;
-        vec3d p((double)j/da, (double)k/db, (double)l/dc);
+        vec3d p(dx, dy, (double)l/dc);
         au.CellToCartesian(p);
         for( int i=0; i < ac; i++ )  {
           if( p.QDistanceTo( allAtoms[i].GetA() ) <= allAtoms[i].GetC() )  {  
-            map.Data[ix][iy][iz] = val;
+            map.Data[j][k][l] = val;
             break;
           }
         }

@@ -60,8 +60,8 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
   TTypeList<TSGStats> LaueClassStats;
   for( int i=0; i < TSymmLib::GetInstance()->BravaisLatticeCount(); i++ )  {
     for( int j=0; j < TSymmLib::GetInstance()->GetBravaisLattice(i).SymmetryCount(); j++ )
-    if( LaueClasses.IndexOf( &(TSymmLib::GetInstance()->GetBravaisLattice(i).GetSymmetry(j)) ) == -1 )
-      LaueClasses.Add( &(TSymmLib::GetInstance()->GetBravaisLattice(i).GetSymmetry(j)) );
+      if( LaueClasses.IndexOf( &(TSymmLib::GetInstance()->GetBravaisLattice(i).GetSymmetry(j)) ) == -1 )
+        LaueClasses.Add( &(TSymmLib::GetInstance()->GetBravaisLattice(i).GetSymmetry(j)) );
   }
 //  for( int i=0; i < TSymmLib::GetInstance()->PointGroupCount(); i++ )  {
 //    LaueClasses.AddACopy( &(TSymmLib::GetInstance()->GetPointGroup(i)) );
@@ -280,151 +280,201 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
       XApp.GetLog() << ( olxstr("Testing ") << SGToConsider.Count() << " selected space groups\n");
     }
   }
-  TTypeList<TElementStats<TSpaceGroup*> > SATestResults;
-  SGTest.WeakRefTest(SGToConsider, SATestResults);
-  TPSTypeList<double, AnAssociation3<TElementStats<TSpaceGroup*>*, int, int>* > sortedSATestResults;
-
-  for( int i=0; i < SATestResults.Count(); i++ )  {
-    if( SATestResults[i].GetWeakCount() == 0  ) continue;
-    double v = SATestResults[i].GetSummWeakI()/SATestResults[i].GetWeakCount();
-    if( v < 0 )  v = 0;
-    double mult = pow(10, olx_min(olx_abs(v)/threshold, 100.0) );
-    while( v < 1 )  v ++;
-    v *= mult;
-
-    sortedSATestResults.Add( SATestResults[i].GetWeakCount()/v, new AnAssociation3<TElementStats<TSpaceGroup*>*, int, int>(&SATestResults[i], 0, 0));
-  }
-
-  //TPtrList< AnAssociation3<TElementStats<TSpaceGroup*>*, int, int> >  
-  TTTable<TStrList> sgTab(sortedSATestResults.Count(), 8);
-  sgTab.ColName(0) = "SG";
-  sgTab.ColName(1) = "Strong I/Count";
-  sgTab.ColName(2) = "Count";
-  sgTab.ColName(3) = "Weak I/Count";
-  sgTab.ColName(4) = "Count";
-  sgTab.ColName(5) = "Laue class";
-  sgTab.ColName(6) = "SA match";
-  sgTab.ColName(7) = "SA/SG SA";
-  int maxElementFound = 0, maxUniqueElementFound = 0;
-  bool FilterByElementCount = false;
-  for( int i=0; i < sortedSATestResults.Count(); i++ )  {
-    sgTab[i][0] = sortedSATestResults.GetObject(i)->GetA()->GetObject()->GetName();
-    if( sortedSATestResults.GetObject(i)->GetA()->GetStrongCount() != 0 )  {
-      sgTab[i][1] = olxstr::FormatFloat(2,
-              sortedSATestResults.GetObject(i)->GetA()->GetSummStrongI()/sortedSATestResults.GetObject(i)->GetA()->GetStrongCount() );
-    }
-    else  {
-      sgTab[i][1] = '-';
-    }
-    sgTab[i][2] = sortedSATestResults.GetObject(i)->GetA()->GetStrongCount();
-    if( sortedSATestResults.GetObject(i)->GetA()->GetWeakCount() != 0 )  {
-      sgTab[i][3] = olxstr::FormatFloat(2,
-              sortedSATestResults.GetObject(i)->GetA()->GetSummWeakI()/sortedSATestResults.GetObject(i)->GetA()->GetWeakCount() );
-    }
-    else  {
-      sgTab[i][3] = '-';
-    }
-    sgTab[i][4] = sortedSATestResults.GetObject(i)->GetA()->GetWeakCount();
-    sgTab[i][5] = sortedSATestResults.GetObject(i)->GetA()->GetObject()->GetLaueClass().GetBareName();
-    if( !PresentElements.IsEmpty() )  {
-      smatd_list sgMl;
-      sortedSATestResults.GetObject(i)->GetA()->GetObject()->GetMatrices( sgMl, mattAll);
-      TPtrList<TSymmElement> sgElmAll, sgElmFound;
-      TSpaceGroup::SplitIntoElements(sgMl, AllElements, sgElmAll);
-      TSpaceGroup::SplitIntoElements(sgMl, PresentElements, sgElmFound);
-      // validate all sg elements are in the list of present ones
-      bool all_present = true;
-      for( int j=0; j < sgElmAll.Count(); j++ )  {
-        if( PresentElements.IndexOf(sgElmAll[j]) == -1 )  {
-          all_present = false;
-          break;
-        }
-      }
-      sgTab[i][6] << olxstr::FormatFloat(0, (double)sgElmFound.Count()*100/PresentElements.Count()) << '%';
-      if( all_present )  {
-        int unique_elm = 0;
-        for( int j=0; j < sgElmFound.Count(); j++ )
-          if( UniqueElements.IndexOf(sgElmFound[j]) >= 0 )
-            unique_elm++;
-        if( unique_elm > maxUniqueElementFound )
-          maxUniqueElementFound = unique_elm;
-        if( sgElmFound.Count() > maxElementFound )
-          maxElementFound = sgElmFound.Count();
-        if( sgElmFound.Count() <= maxElementFound )
-          FilterByElementCount = true;
-        sgTab[i][7] << '+';
-        sortedSATestResults.GetObject(i)->B() = sgElmFound.Count();
-        sortedSATestResults.GetObject(i)->C() = unique_elm;
-      }
-      else  {
-        sgTab[i][7] << '-';
-        sortedSATestResults.GetObject(i)->B() = 0;
-        sortedSATestResults.GetObject(i)->C() = 0;
-      }
-    }
-  }
-  // print the result of analysis
-  if( sortedSATestResults.Count() != 0 )  {
-    Output.Clear();
-    sgTab.CreateTXTList(Output, "4. Space group test", true, true, ' ');
-    XApp.GetLog() << ( Output );
-  }
   TPtrList<TSpaceGroup> FoundSpaceGroups;
-  if( !PresentElements.IsEmpty() )  {
-    TPtrList<TSpaceGroup> ToAppend;  // alternative groups, but lower probability
-    for( int i=sortedSATestResults.Count()-1; i >= 0; i-- )  {
-      if( sortedSATestResults.GetObject(i)->GetA()->GetWeakCount() != 0 )  {
-        double v = sortedSATestResults.GetObject(i)->GetA()->GetSummWeakI()/sortedSATestResults.GetObject(i)->GetA()->GetWeakCount();
-        if( v > SGTest.GetAverageI()/5 )
-          break;
-      }
-      if( FilterByElementCount )  {
-        if( maxElementFound > UniqueElements.Count() )  {
-          if( sortedSATestResults.GetObject(i)->GetC() == maxUniqueElementFound )  {
-            FoundSpaceGroups.Add( sortedSATestResults.GetObject(i)->GetA()->GetObject() );
-          }  // this is still a good match!
-          else if( sortedSATestResults.GetObject(i)->GetB() == maxElementFound )
-            ToAppend.Add( sortedSATestResults.GetObject(i)->GetA()->GetObject() );
-        }
-        else  {
-          if( sortedSATestResults.GetObject(i)->GetB() == maxElementFound )
-            FoundSpaceGroups.Add( sortedSATestResults.GetObject(i)->GetA()->GetObject() );
-        }
-      }
-      else
-        FoundSpaceGroups.Add( sortedSATestResults.GetObject(i)->GetA()->GetObject() );
+  // merge test is the only way then...
+  if( UniqueElements.IsEmpty() && !PresentElements.IsEmpty() )  {
+    TTypeList<TSGStats> sgMergeStat;
+    SGTest.MergeTest(SGToConsider, sgMergeStat);
+    TPSTypeList<double, TSGStats*> sortedSGMergeResults;
+    for( int i=0; i < SGToConsider.Count(); i++ )  {
+      if( sgMergeStat[i].GetCount() == 0 )  continue;
+      double dv = sgMergeStat[i].GetSummI()/sgMergeStat[i].GetCount();
+      const TSpaceGroup& sg = sgMergeStat[i].GetSpaceGroup();
+      double k = (sg.MatrixCount()+1)*(sg.GetLattice().VectorCount()+1);
+      if( sg.IsCentrosymmetric() ) // add just 1, not multiply by 2 - leads to distrortion
+        k++;
+      dv /= k;
+      //if( dv < 0 )  dv = 0;
+      //double mult = pow(10, olx_min(olx_abs(dv)/threshold, 100.0) );
+      //while( dv < 1 )  dv ++;
+      //dv *= mult;
+      sortedSGMergeResults.Add( dv, &sgMergeStat[i] );
     }
-    FoundSpaceGroups.AddList( ToAppend );
-    // try to recover...
-    if( FilterByElementCount && FoundSpaceGroups.IsEmpty() )  {
-      for( int i=sortedSATestResults.Count()-1; i >= olx_max(0, sortedSATestResults.Count()-6) ; i-- )  {
-        if( sortedSATestResults.GetObject(i)->GetB() == maxElementFound )
-          FoundSpaceGroups.Add( sortedSATestResults.GetObject(i)->GetA()->GetObject() );
+    TTTable<TStrList> sgTab(sortedSGMergeResults.Count(), 3);
+    sgTab.ColName(0) = "Class";
+    sgTab.ColName(1) = "(I-Ieq)/Count";
+    sgTab.ColName(2) = "Count";
+    for( int i=sortedSGMergeResults.Count()-1; i >=0; i-- )  {
+      sgTab[i][0] = sortedSGMergeResults.GetObject(i)->GetSpaceGroup().GetName();
+      sgTab[i][1] = olxstr::FormatFloat(2, 
+        sortedSGMergeResults.GetObject(i)->GetSummI()/sortedSGMergeResults.GetObject(i)->GetCount() );
+      sgTab[i][1] << '(' << olxstr::FormatFloat(2, 
+        sortedSGMergeResults.GetObject(i)->GetSummSI()/sortedSGMergeResults.GetObject(i)->GetCount() ) << ')';
+      sgTab[i][2] = sortedSGMergeResults.GetObject(i)->GetCount();
+    }
+    XApp.GetLog() << ( EmptyString );
+    Output.Clear();
+    sgTab.CreateTXTList(Output, "4. Merge test (no unique systematic absences found)", true, true, ' ');
+    XApp.GetLog() << ( Output );
+    int cs_cnt = 0, noncs_cnt = 0;
+    for( int i=0; i < sortedSGMergeResults.Count(); i++ )  {
+      if( cs_cnt < 3 && sortedSGMergeResults.GetObject(i)->GetSpaceGroup().IsCentrosymmetric() )  {
+        FoundSpaceGroups.Add( &sortedSGMergeResults.GetObject(i)->GetSpaceGroup() );
+        cs_cnt++;
+      }
+      if( noncs_cnt < 3 && !sortedSGMergeResults.GetObject(i)->GetSpaceGroup().IsCentrosymmetric() )  {
+        FoundSpaceGroups.Add( &sortedSGMergeResults.GetObject(i)->GetSpaceGroup() );
+        noncs_cnt++;
       }
     }
   }
   else  {
-    // three hits from here
-    for( int i=sortedSATestResults.Count()-1; i >= 0; i-- )  {
+    TTypeList<TElementStats<TSpaceGroup*> > SATestResults;
+    SGTest.WeakRefTest(SGToConsider, SATestResults);
+    TPSTypeList<double, AnAssociation3<TElementStats<TSpaceGroup*>*, int, int>* > sortedSATestResults;
+
+    for( int i=0; i < SATestResults.Count(); i++ )  {
+      if( SATestResults[i].GetWeakCount() == 0  ) continue;
+      double v = SATestResults[i].GetSummWeakI()/(SATestResults[i].GetWeakCount());
+      if( v < 0 )  v = 0;
+      double mult = pow(10, olx_min(olx_abs(v)/threshold, 100.0) );
+      while( v < 1 )  v ++;
+      v *= mult;
+      sortedSATestResults.Add( SATestResults[i].GetWeakCount()/v, new AnAssociation3<TElementStats<TSpaceGroup*>*, int, int>(&SATestResults[i], 0, 0));
+    }
+
+    //TPtrList< AnAssociation3<TElementStats<TSpaceGroup*>*, int, int> >  
+    TTTable<TStrList> sgTab(sortedSATestResults.Count(), 8);
+    sgTab.ColName(0) = "SG";
+    sgTab.ColName(1) = "Strong I/Count";
+    sgTab.ColName(2) = "Count";
+    sgTab.ColName(3) = "Weak I/Count";
+    sgTab.ColName(4) = "Count";
+    sgTab.ColName(5) = "Laue class";
+    sgTab.ColName(6) = "SA match";
+    sgTab.ColName(7) = "SA/SG SA";
+    int maxElementFound = 0, maxUniqueElementFound = 0;
+    bool FilterByElementCount = false;
+    for( int i=0; i < sortedSATestResults.Count(); i++ )  {
+      sgTab[i][0] = sortedSATestResults.GetObject(i)->GetA()->GetObject()->GetName();
+      if( sortedSATestResults.GetObject(i)->GetA()->GetStrongCount() != 0 )  {
+        sgTab[i][1] = olxstr::FormatFloat(2,
+          sortedSATestResults.GetObject(i)->GetA()->GetSummStrongI()/sortedSATestResults.GetObject(i)->GetA()->GetStrongCount() );
+      }
+      else  {
+        sgTab[i][1] = '-';
+      }
+      sgTab[i][2] = sortedSATestResults.GetObject(i)->GetA()->GetStrongCount();
       if( sortedSATestResults.GetObject(i)->GetA()->GetWeakCount() != 0 )  {
-        double v = sortedSATestResults.GetObject(i)->GetA()->GetSummWeakI()/sortedSATestResults.GetObject(i)->GetA()->GetWeakCount();
-        if( v > SGTest.GetAverageI()/5 )
-          break;
+        sgTab[i][3] = olxstr::FormatFloat(2,
+          sortedSATestResults.GetObject(i)->GetA()->GetSummWeakI()/sortedSATestResults.GetObject(i)->GetA()->GetWeakCount() );
       }
-      FoundSpaceGroups.Add( sortedSATestResults.GetObject(i)->GetA()->GetObject() );
-    }
-    // check all spacegroups without translations as well
-    TPtrList<TSpaceGroup> laueClassGroups, possibleGroups;
-    for( int i=CalculatedLaueClasses.Count()-1; i >= 0 ; i-- )  {
-      laueClassGroups.Clear();
-      TSymmLib::GetInstance()->FindLaueClassGroups( *CalculatedLaueClasses[i], laueClassGroups);
-      for( int j=0; j < laueClassGroups.Count(); j++ )  {
-        if( ChosenLats.IndexOf( &laueClassGroups[j]->GetLattice() ) == -1 )  continue;
-        if( !laueClassGroups[j]->HasTranslations() )
-          FoundSpaceGroups.Add( laueClassGroups[j] );
+      else  {
+        sgTab[i][3] = '-';
+      }
+      sgTab[i][4] = sortedSATestResults.GetObject(i)->GetA()->GetWeakCount();
+      sgTab[i][5] = sortedSATestResults.GetObject(i)->GetA()->GetObject()->GetLaueClass().GetBareName();
+      if( !PresentElements.IsEmpty() )  {
+        smatd_list sgMl;
+        sortedSATestResults.GetObject(i)->GetA()->GetObject()->GetMatrices( sgMl, mattAll);
+        TPtrList<TSymmElement> sgElmAll, sgElmFound;
+        TSpaceGroup::SplitIntoElements(sgMl, AllElements, sgElmAll);
+        TSpaceGroup::SplitIntoElements(sgMl, PresentElements, sgElmFound);
+        // validate all sg elements are in the list of present ones
+        bool all_present = true;
+        for( int j=0; j < sgElmAll.Count(); j++ )  {
+          if( PresentElements.IndexOf(sgElmAll[j]) == -1 )  {
+            all_present = false;
+            break;
+          }
+        }
+        sgTab[i][6] << olxstr::FormatFloat(0, (double)sgElmFound.Count()*100/PresentElements.Count()) << '%';
+        if( all_present )  {
+          int unique_elm = 0;
+          for( int j=0; j < sgElmFound.Count(); j++ )
+            if( UniqueElements.IndexOf(sgElmFound[j]) >= 0 )
+              unique_elm++;
+          if( unique_elm > maxUniqueElementFound )
+            maxUniqueElementFound = unique_elm;
+          if( sgElmFound.Count() > maxElementFound )
+            maxElementFound = sgElmFound.Count();
+          if( sgElmFound.Count() <= maxElementFound )
+            FilterByElementCount = true;
+          sgTab[i][7] << '+';
+          sortedSATestResults.GetObject(i)->B() = sgElmFound.Count();
+          sortedSATestResults.GetObject(i)->C() = unique_elm;
+        }
+        else  {
+          sgTab[i][7] << '-';
+          sortedSATestResults.GetObject(i)->B() = 0;
+          sortedSATestResults.GetObject(i)->C() = 0;
+        }
       }
     }
-  }
+    // print the result of analysis
+    if( sortedSATestResults.Count() != 0 )  {
+      Output.Clear();
+      sgTab.CreateTXTList(Output, "4. Space group test", true, true, ' ');
+      XApp.GetLog() << ( Output );
+    }
+    if( !PresentElements.IsEmpty() )  {
+      TPtrList<TSpaceGroup> ToAppend;  // alternative groups, but lower probability
+      for( int i=sortedSATestResults.Count()-1; i >= 0; i-- )  {
+        if( sortedSATestResults.GetObject(i)->GetA()->GetWeakCount() != 0 )  {
+          double v = sortedSATestResults.GetObject(i)->GetA()->GetSummWeakI()/sortedSATestResults.GetObject(i)->GetA()->GetWeakCount();
+          if( v > SGTest.GetAverageI()/5 )
+            break;
+        }
+        if( FilterByElementCount )  {
+          if( maxElementFound > UniqueElements.Count() )  {
+            if( sortedSATestResults.GetObject(i)->GetC() == maxUniqueElementFound )  {
+              FoundSpaceGroups.Add( sortedSATestResults.GetObject(i)->GetA()->GetObject() );
+            }  // this is still a good match!
+            else if( sortedSATestResults.GetObject(i)->GetB() == maxElementFound )
+              ToAppend.Add( sortedSATestResults.GetObject(i)->GetA()->GetObject() );
+          }
+          else  {
+            if( sortedSATestResults.GetObject(i)->GetB() == maxElementFound )
+              FoundSpaceGroups.Add( sortedSATestResults.GetObject(i)->GetA()->GetObject() );
+          }
+        }
+        else
+          FoundSpaceGroups.Add( sortedSATestResults.GetObject(i)->GetA()->GetObject() );
+      }
+      FoundSpaceGroups.AddList( ToAppend );
+      // try to recover...
+      if( FilterByElementCount && FoundSpaceGroups.IsEmpty() )  {
+        for( int i=sortedSATestResults.Count()-1; i >= olx_max(0, sortedSATestResults.Count()-6) ; i-- )  {
+          if( sortedSATestResults.GetObject(i)->GetB() == maxElementFound )
+            FoundSpaceGroups.Add( sortedSATestResults.GetObject(i)->GetA()->GetObject() );
+        }
+      }
+    }
+    else  {
+      // three hits from here
+      for( int i=sortedSATestResults.Count()-1; i >= 0; i-- )  {
+        if( sortedSATestResults.GetObject(i)->GetA()->GetWeakCount() != 0 )  {
+          double v = sortedSATestResults.GetObject(i)->GetA()->GetSummWeakI()/sortedSATestResults.GetObject(i)->GetA()->GetWeakCount();
+          if( v > SGTest.GetAverageI()/5 )
+            break;
+        }
+        FoundSpaceGroups.Add( sortedSATestResults.GetObject(i)->GetA()->GetObject() );
+      }
+      // check all spacegroups without translations as well
+      TPtrList<TSpaceGroup> laueClassGroups, possibleGroups;
+      for( int i=CalculatedLaueClasses.Count()-1; i >= 0 ; i-- )  {
+        laueClassGroups.Clear();
+        TSymmLib::GetInstance()->FindLaueClassGroups( *CalculatedLaueClasses[i], laueClassGroups);
+        for( int j=0; j < laueClassGroups.Count(); j++ )  {
+          if( ChosenLats.IndexOf( &laueClassGroups[j]->GetLattice() ) == -1 )  continue;
+          if( !laueClassGroups[j]->HasTranslations() )
+            FoundSpaceGroups.Add( laueClassGroups[j] );
+        }
+      }
+    }
+    for( int i=0; i < sortedSATestResults.Count(); i++ )
+      delete sortedSATestResults.GetObject(i);
+  } // Unique elements present
   if( !FoundSpaceGroups.IsEmpty() )  {
     XApp.GetLog() << "Possible space groups:";
     olxstr tmp, sglist;
@@ -493,19 +543,4 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
   }
   if( olx_inst != NULL )
     TCStrList(Output).SaveToFile(olx_inst->getDataDir()+"spacegroups.htm");
-
-  for( int i=0; i < sortedSATestResults.Count(); i++ )
-    delete sortedSATestResults.GetObject(i);
-/* // does not work as necessary yet
-
-  XApp.GetLog() << ("  --  CENTER OF SYMMETRY SEARCH  --  " );
-  XApp.GetLog() << ( olxstr("Average test (0.637 for cs and 0.785 for non-cs): ") << olxstr::FormatFloat(3, SGTest.GetAverageTestValue()) );
-  XApp.GetLog() << ( olxstr("Variance test (2 for cs and 1 for non-cs): ") << olxstr::FormatFloat(2, SGTest.GetVarianceTestValue()) );
-
-  if( CheckFileType<TCRSFile>() )  {
-    TSpaceGroup* sg = ((TCRSFile*)XApp.XFile().GetLastLoader())->GetSG();
-    if( sg != NULL )
-      XApp.GetLog() << ( olxstr("The procedure might have failed as the hkl file was preprocessed for ") << sg->GetName(), &ErrorFontColor);
-  }
-*/
 }

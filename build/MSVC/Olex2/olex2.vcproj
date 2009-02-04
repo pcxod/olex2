@@ -774,6 +774,10 @@
 			Name="modes"
 			>
 			<File
+				RelativePath="..\..\..\olex\modes\fit.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\olex\modes\fixc.h"
 				>
 			</File>

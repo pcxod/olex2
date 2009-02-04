@@ -486,6 +486,14 @@
 				RelativePath="..\..\..\repository\filesystem.cpp"
 				>
 				<FileConfiguration
+					Name="Unicode|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)\filesystem_no_wx.obj"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
 					Name="Unicode-release|Win32"
 					>
 					<Tool

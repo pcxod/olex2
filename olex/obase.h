@@ -1,7 +1,7 @@
 #ifndef obaseH
 #define obaseH
 #include "estlist.h"
-#include "gdrawobject.h"
+#include "xatom.h"
 
 // mouse modes
 const unsigned short mmNone   = 0;
@@ -38,6 +38,8 @@ public:
   virtual void OnGraphicsDestroy()  {  return;  }
   //if the mode processes the key - true should be returned to skip the event
   virtual bool OnKey(int keyId, short shiftState)  {  return false;  }
+  // if the function supported - returns true
+  virtual bool AddAtoms(const TPtrList<TXAtom>& atoms) {  return false;  }
   inline int GetId()  const  {  return Id;  }
 };
 //..............................................................................

@@ -761,7 +761,7 @@ separated values of Atom Type and radius, an entry a line" );
   difference map&;abs-calculates modulus of the electron density&;tomc-calculates 2Fo-Fc\
   map&;obs-calculates observer emap&;calc-calculates calculated emap&;scale-scle to use\
   for difference maps, corrently available simple(s) sum(Fo^2)/sum(Fc^2) for Fo^2/sigme > 3)\
-  and regression(r)&;r-resolution in Angstrems&;i-integrates the map", fpNone|psFileLoaded,
+  and regression(r)&;r-resolution in Angstrems&;i-integrates the map&;m-mask the structure", fpNone|psFileLoaded,
 "Calculates fourier map" );
   this_InitMacroD(TestBinding, EmptyString, fpNone, "Internal tests" );
   this_InitMacroD(ShowSymm, EmptyString, fpNone|fpOne, "Shows symmetry elements of the unitcell" );
@@ -769,7 +769,7 @@ separated values of Atom Type and radius, an entry a line" );
   this_InitMacroD(TestStat, EmptyString, fpOne, "Test: runs statistical tests on structures in current folder. Expects a file name" );
   this_InitMacroD(ExportFont, EmptyString, fpTwo, "" );
   this_InitMacroD(ImportFont, EmptyString, fpTwo, "" );
-  this_InitMacroD(ImportFrag, EmptyString, fpOne|psFileLoaded, "Import a fragment to current structure" );
+  this_InitMacroD(ImportFrag, "p-part to assign", fpNone|psFileLoaded, "Import a fragment to current structure" );
   this_InitMacroD(ExportFrag, EmptyString, fpNone|psFileLoaded, "Exports selected fragment to an external file" );
   // FUNCTIONS _________________________________________________________________
 

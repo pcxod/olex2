@@ -139,6 +139,7 @@ using namespace _xl_Controls;
 static const olxstr NAString("n/a");
 static const olxstr StartMatchCBName("startmatch");
 static const olxstr OnMatchCBName("onmatch");
+static const olxstr OnModeChangeCBName("modechange");
 static const olxstr NoneString("none");
 
 int CalcL( int v )  {
@@ -943,12 +944,12 @@ void TMainForm::ProcessXPMacro(const olxstr &Cmd, TMacroError &Error, bool Proce
         return;
     }
     else  {
-      Error.NonexitingMacroError( Command );
-      AnalyseError( Error );
+      //Error.NonexitingMacroError( Command );
+      //AnalyseError( Error );
+      //2009.02.03 - just a warning added instead of the error, related to non-existent custom macros...
+      FXApp->GetLog().Warning(olxstr("Macro does not exist: ") << Command);
       return;
     }
-    //Error.NonexitingMacroError( Command );
-    //if( ProcessFunctions )  AnalyseError( Error );
     return;
   }
   for( int i=0; i < Cmds.Count(); i++ )  {
@@ -2028,15 +2029,19 @@ void TMainForm::macKill(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       return;
     }
   }
-  TXAtomPList Atoms;
+  TXAtomPList Atoms, Selected;
   FXApp->FindXAtoms(Cmds.Text(' '), Atoms, true, Options.Contains('h'));
   if( Atoms.IsEmpty() )  return;
-  FXApp->GetLog() << "Deleting ";
   for( int i=0; i < Atoms.Count(); i++ )
-    FXApp->GetLog() << Atoms[i]->Atom().GetLabel() << ' ';
+    if( Atoms[i]->Selected() )
+      Selected.Add(Atoms[i]);
+  TXAtomPList& todel = Selected.IsEmpty() ? Atoms : Selected;
+  FXApp->GetLog() << "Deleting ";
+  for( int i=0; i < todel.Count(); i++ )
+    FXApp->GetLog() << todel[i]->Atom().GetLabel() << ' ';
   FXApp->GetLog() << '\n';
   FXApp->GetLog() << "Please execute 'fuse' to recalculate the connectivity if using any functions using it\n";
-  FUndoStack->Push( FXApp->DeleteXAtoms(Atoms) );
+  FUndoStack->Push( FXApp->DeleteXAtoms(todel) );
 }
 //..............................................................................
 void TMainForm::macHide(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
@@ -3553,6 +3558,7 @@ void TMainForm::macMode(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   static bool ChangingMode = false;
   if( ChangingMode )  return;
   AMode *md = Modes->SetMode( Cmds[0] );
+  CallbackFunc(OnModeChangeCBName, Cmds);
   if( md != NULL )  {
     Cmds.Delete(0);
     md->Init(Cmds, Options);
@@ -4805,6 +4811,8 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       ProcessXPMacro("fuse", Error);
       return;
     }
+    if( Modes->GetCurrent() != NULL )
+      ProcessXPMacro("mode off", Error);
     Tmp = TEFile::ChangeFileExt(FN, "xlds");
     if( TEFile::FileExists(Tmp) )  {
       ProcessXPMacro(olxstr("load view '") << TEFile::ChangeFileExt(FN, EmptyString) << '\'', Error);
@@ -8080,6 +8088,11 @@ void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMa
     au.InitData();
     FXApp->XFile().EndUpdate();
   }  // integration
+  FractMask* fm = new FractMask;
+  if( Options.Contains("m") )  {
+    FXApp->BuildSceneMask(*fm);
+    FXApp->XGrid().SetMask(*fm);
+  }
   FXApp->XGrid().InitIso(false);
   FXApp->ShowGrid(true, EmptyString);
 }
@@ -8637,12 +8650,15 @@ void TMainForm::macImportFrag(TStrObjList &Cmds, const TParamList &Options, TMac
   xyz.LoadFromFile(FN);
   TXAtomPList xatoms;
   FXApp->AdoptAtoms(xyz.GetAsymmUnit(), xatoms);
-  for( int i=0; i < xatoms.Count(); i++ )  {
-    xatoms[i]->Moveable(true);
-    xatoms[i]->Roteable(true);
-    FXApp->Selection()->Add(xatoms[i]);
+  int part = Options.FindValue("p", "-100").ToInt();
+  if( part != -100 )  {
+    for( int i=0; i < xatoms.Count(); i++ )
+      xatoms[i]->Atom().CAtom().SetPart(part);
   }
-  ProcessXPMacro("mode split", E);
+  ProcessXPMacro("mode fit", E);
+  AMode *md = Modes->GetCurrent();
+  if( md != NULL  )
+    md->AddAtoms(xatoms);
 }
 //..............................................................................
 void TMainForm::macExportFrag(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
