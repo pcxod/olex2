@@ -27,6 +27,7 @@
 #include "xgrowpoint.h"
 #include "modes/pack.h"
 #include "modes/move.h"
+#include "modes/fit.h"
 
 
 AMode::AMode(int id) : Id(id)  {
@@ -71,6 +72,7 @@ TModes::TModes() {
   Modes.Add( "grow",   (AModeFactory* const &)(new TModeFactory<TGrowMode>(Modes.Count()+1)));
   Modes.Add( "pack",   (AModeFactory* const &)(new TModeFactory<TPackMode>(Modes.Count()+1)));
   Modes.Add( "move",   (AModeFactory* const &)(new TModeFactory<TMoveMode>(Modes.Count()+1)));
+  Modes.Add( "fit",   (AModeFactory* const &)(new TModeFactory<TFitMode>(Modes.Count()+1)));
   CurrentMode = NULL;
 }
 //..............................................................................

@@ -66,7 +66,7 @@ bool THklFile::LoadFromFile(const olxstr& FN, TIns* ins, bool* ins_initialised) 
   Refs.SetCapacity( line_cnt );
   for(int i=0; i < line_cnt; i++ )  {
     const CString& line = SL[i];
-    if( line.Length() < 28 )  continue;
+    if( !ZeroRead && line.Length() < 28 )  continue;
     if( !FormatInitialised )  {
       if( line.Length() >= 32 && line.SubString(28,4).IsNumber() )
         HasBatch = true;
@@ -77,8 +77,11 @@ bool THklFile::LoadFromFile(const olxstr& FN, TIns* ins, bool* ins_initialised) 
           !line.SubString(4,4).IsNumber() || 
           !line.SubString(8,4).IsNumber() || 
           !line.SubString(12,8).IsNumber() || 
-          !line.SubString(20,8).IsNumber() )
+          !line.SubString(20,8).IsNumber() )  
+      {
 			  HklFinished = true; 
+        i--;  // reset to the non-hkl line
+      }
 		}
 		if( !HklFinished )  {
       const int h = line.SubString(0,4).ToInt(),
@@ -104,7 +107,7 @@ bool THklFile::LoadFromFile(const olxstr& FN, TIns* ins, bool* ins_initialised) 
       olxstr line;
       bool cell_found = false, sfac_found = false;
       ins->SetSfac(EmptyString);
-      for( int j=i; i < SL.Count(); j++ )  {
+      for( int j=i; j < SL.Count(); j++ )  {
         line = SL[j].Trim(' ');
         if( line.IsEmpty() )  continue;
         Toks.Clear();

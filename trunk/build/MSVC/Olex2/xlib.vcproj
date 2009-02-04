@@ -697,6 +697,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\xlib\fracmask.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\xlib\fragment.h"
 				>
 			</File>

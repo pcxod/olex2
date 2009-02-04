@@ -28,6 +28,7 @@
 #include "glbitmap.h"
 #include "typelist.h"
 #include "hkl.h"
+#include "fracmask.h"
 
 #include "wx/zipstrm.h"
 
@@ -444,6 +445,8 @@ public:     void CalcProbFactor(float Prob);
   void CenterModel();
 
   void CenterView(bool calcZoom = false);
+  // creates a mask of visible scene
+  void BuildSceneMask(FractMask& mask);
 //..............................................................................
 // X interface
   void BangList(TXAtom *A, TStrList &L);

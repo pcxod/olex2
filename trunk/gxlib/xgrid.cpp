@@ -143,7 +143,7 @@ TXGrid::TXGrid(const olxstr& collectionName, TGXApp* xapp) :
                      TGlMouseListener(collectionName, &xapp->GetRender())  {
   if( Instance != NULL )
     throw TFunctionFailedException(__OlxSourceInfo, "singleton");
-
+  Mask = NULL;
   Instance = this;
   Mode3D = false;
   PolygonMode = GL_FILL;
@@ -169,7 +169,6 @@ TXGrid::TXGrid(const olxstr& collectionName, TGXApp* xapp) :
   MaxX = MaxY = MaxZ = 0;
   MaxVal = MinVal = 0;
   MinHole = MaxHole = 0;
-  GridMoved = false;
 }
 //..............................................................................
 TXGrid::~TXGrid()  {
@@ -234,39 +233,43 @@ void TXGrid::CalcColorRGB(double v, double& R, double& G, double& B) {
   //if( v == 0 )
   // v = MaxVal;
   double cs;
-  if( v < 0 )  {
-    if( v < MinVal/Scale )
-      cs = -1;
-    else
-      cs = -v*(Scale)/MinVal;
+  if( Scale < 0 )  {  // show both
+    cs = v/(-Scale + 0.001);
+    if( cs < -0.5 )  {
+      R = 1;
+      G = -sin(M_PI*cs);
+      B = G;
+    }
+    else if( cs < 0 ) {
+      R = -sin(M_PI*cs/2);
+      G = R;
+      B = R;
+    }
+    else if( cs < 0.5 ) {
+      G = sin(M_PI*cs/2);
+      R = G;
+      B = G;
+    }
+    else {
+      R = sin(M_PI*cs);
+      G = 1;
+      B = R;
+    }
   }
   else  {
-    if( v > MaxVal/Scale )
-      cs = 1;
-    else
-      cs = v*(Scale)/MaxVal;
+    cs = olx_abs(v)/(Scale+0.001);
+    if( cs < 0.5 ) {
+      R = sin(M_PI*cs);
+      G = 1;
+      B = 1;
+    }
+    else {
+      R = 1;
+      G = sin(M_PI*cs);
+      B = 0;
+    }
   }
 
-  if( cs < -0.5 )  {
-    R = 0;
-    G = -(float)sin(M_PI*cs);
-    B = 1;
-  }
-  else if( cs < 0 ) {
-    R = 0;
-    G = 1;
-    B = -(float)sin(M_PI*cs);
-  }
-  else if( cs < 0.5 ) {
-    R = (float)sin(M_PI*cs);
-    G = 1;
-    B = 0;
-  }
-  else {
-    R = 1;
-    G = (float)sin(M_PI*cs);
-    B = 0;
-  }
   R *=255;
   G *=255;
   B *=255;
@@ -313,11 +316,11 @@ void TXGrid::CalcColor(double v) {
 bool TXGrid::Orient(TGlPrimitive *GlP)  {
   if( ED == NULL )  return true;
 
-  if( IS != NULL && Mode3D && (IS->TriangleList().Count() > 25 || triangles.Count() > 25) )  {
+  if( IS != NULL && Mode3D && (p_triangles.Count() > 25 || n_triangles.Count() > 25) )  {
     if( GlP != glpP && GlP != glpN )  return true;
-    const TArrayList<vec3f>& verts( (GlP == glpP) ? IS->VertexList() : vertices );
-    const TArrayList<vec3f>& norms( (GlP == glpP) ? IS->NormalList() : normals );
-    const TArrayList<IsoTriangle>& trians(  (GlP == glpP) ? IS->TriangleList() : triangles );
+    const TTypeList<vec3f>& verts( (GlP == glpP) ? n_vertices : p_vertices );
+    const TTypeList<vec3f>& norms( (GlP == glpP) ? n_normals : p_normals );
+    const TTypeList<IsoTriangle>& trians(  (GlP == glpP) ? n_triangles : p_triangles );
     glPolygonMode(GL_FRONT_AND_BACK, PolygonMode);
     glBegin(GL_TRIANGLES);
     for( int i=0; i < trians.Count(); i++ )  {
@@ -365,7 +368,6 @@ bool TXGrid::Orient(TGlPrimitive *GlP)  {
       p = bm * p;
       p -= Parent()->GetBasis().GetCenter();
       p *= c2c;
-      p -= GridStranslation;
       p[0] *= MaxX;  p[0] = Round(p[0]);
       p[1] *= MaxY;  p[1] = Round(p[1]);
       p[2] *= MaxZ;  p[2] = Round(p[2]);
@@ -440,8 +442,6 @@ void TXGrid::InitGrid(int maxX, int maxY, int maxZ)  {
     delete ED;
   ED = new TArray3D<float>(0, MaxX-1, 0,MaxY-1, 0, MaxZ-1);
   TextData = new char[MaxDim*MaxDim*3+1];
-  GridMoved = false;
-  GridStranslation.Null();
   MaxHole = MinHole = 0;
 }
 //..............................................................................
@@ -456,10 +456,17 @@ void TXGrid::DeleteObjects()  {
   }
   if( IS != NULL )  {
     delete IS;
-    triangles.Clear();
-    normals.Clear();
-    vertices.Clear();
+    p_triangles.Clear();
+    p_normals.Clear();
+    p_vertices.Clear();
+    n_triangles.Clear();
+    n_normals.Clear();
+    n_vertices.Clear();
     IS = NULL;
+  }
+  if( Mask != NULL )  {
+    delete Mask;
+    Mask = NULL;
   }
 }
 //..............................................................................
@@ -495,22 +502,28 @@ bool TXGrid::LoadFromFile(const olxstr& GridFile)  {
 }
 //..............................................................................
 void TXGrid::SetScale(float v)  {
-  if( MinHole != MaxHole )  {
+  if( Mode3D && MinHole != MaxHole )  {
     if( v >= MinHole && v <= MaxHole )  return;
   }
   Scale = v;
   Info->Clear();
   Info->PostText( olxstr("Current level is ") << Scale);
   if( IS != NULL && Mode3D )  {
-    triangles.Clear();
-    normals.Clear();
-    vertices.Clear();
+    p_triangles.Clear();
+    p_normals.Clear();
+    p_vertices.Clear();
+    n_triangles.Clear();
+    n_normals.Clear();
+    n_vertices.Clear();
     IS->GenerateSurface( Scale );
+    p_vertices = IS->VertexList();
+    p_normals = IS->NormalList();
+    p_triangles = IS->TriangleList();
     if( Scale < 0 )  {
-      vertices.Assign( IS->VertexList() );
-      normals.Assign( IS->NormalList() );
-      triangles.Assign( IS->TriangleList() );
       IS->GenerateSurface( -Scale );
+      n_vertices = IS->VertexList();
+      n_normals = IS->NormalList();
+      n_triangles = IS->TriangleList();
     }
     RescaleSurface();
   }
@@ -553,9 +566,11 @@ bool TXGrid::OnMouseMove(const IEObject *Sender, const TMouseData *Data)  {
   }
   else  {
     if( (Data->Shift & sssShift) != 0 )  {
-      Scale += (float)(LastMouseX - Data->X);
-      Scale += (float)(LastMouseY - Data->Y);
-      if( Scale < MinVal )  Scale = MinVal;
+      double step = (MaxVal-MinVal)/250.0;
+      Scale -= step*(LastMouseX - Data->X);
+      Scale += step*(LastMouseY - Data->Y);
+      if( olx_abs(Scale) > olx_max(MaxVal,MinVal)  )
+        Scale = Sign(Scale)*olx_max(MaxVal,MinVal);
     }
     else  {
       Size += (float)(LastMouseX - Data->X)/15;
@@ -576,24 +591,72 @@ bool TXGrid::OnMouseMove(const IEObject *Sender, const TMouseData *Data)  {
 //..............................................................................
 
 void TXGrid::RescaleSurface()  {
-  const mat3d& c2ca =  XApp->XFile().GetAsymmUnit().GetCellToCartesian();
-
-  TArrayList<vec3f>& verts = IS->VertexList();
-  for( int i=0; i < verts.Count(); i++ )  {
-    vec3f& p = verts[i];
-    p[0] /= MaxX;
-    p[1] /= MaxY;
-    p[2] /= MaxZ;
-    p += GridStranslation;
-    p *= c2ca;
+  const TAsymmUnit& au =  XApp->XFile().GetAsymmUnit();
+  if( Mask != NULL )  {
+    const int pv_cnt = p_vertices.Count();
+    for( int i=0; i < pv_cnt; i++ )  {
+      vec3f& p = p_vertices[i];
+      p[0] /= MaxX;
+      p[1] /= MaxY;
+      p[2] /= MaxZ;
+      if( !Mask->Get(p) )  {
+        p_vertices.NullItem(i);
+        p_normals.NullItem(i);
+      }
+      else
+        au.CellToCartesian(p);
+    }
+    for( int i=0; i < p_triangles.Count(); i++ )  {
+      for( int j=0; j < 3; j++ )  {
+        if( p_vertices.IsNull(p_triangles[i].pointID[j]) )  {
+          p_triangles.NullItem(i);
+          break;
+        }
+      }
+    }
+    //p_vertices.Pack();
+    p_triangles.Pack();
+    //p_normals.Pack();
+    const int nv_cnt = n_vertices.Count();
+    for( int i=0; i < nv_cnt; i++ )  {
+      vec3f& p = n_vertices[i];
+      p[0] /= MaxX;
+      p[1] /= MaxY;
+      p[2] /= MaxZ;
+      if( !Mask->Get(p) )  {
+        n_vertices.NullItem(i);
+        n_normals.NullItem(i);
+      }
+      else
+        au.CellToCartesian(p);
+    }
+    for( int i=0; i < n_triangles.Count(); i++ )  {
+      for( int j=0; j < 3; j++ )  {
+        if( n_vertices.IsNull(n_triangles[i].pointID[j]) )  {
+          n_triangles.NullItem(i);
+          break;
+        }
+      }
+    }
+    //n_vertices.Pack();
+    n_triangles.Pack();
+    //n_normals.Pack();
   }
-  for( int i=0; i < vertices.Count(); i++ )  {
-    vec3f& p = vertices[i];
-    p[0] /= MaxX;
-    p[1] /= MaxY;
-    p[2] /= MaxZ;
-    p += GridStranslation;
-    p *= c2ca;
+  else  {
+    for( int i=0; i < p_vertices.Count(); i++ )  {
+      vec3f& p = p_vertices[i];
+      p[0] /= MaxX;
+      p[1] /= MaxY;
+      p[2] /= MaxZ;
+      au.CellToCartesian(p);
+    }
+    for( int i=0; i < n_vertices.Count(); i++ )  {
+      vec3f& p = n_vertices[i];
+      p[0] /= MaxX;
+      p[1] /= MaxY;
+      p[2] /= MaxZ;
+      au.CellToCartesian(p);
+    }
   }
 }
 //..............................................................................
@@ -607,46 +670,6 @@ void TXGrid::InitIso(bool v)  {
   else  {
     if( ED == NULL )  return;
     if( IS != NULL )  delete IS;
-    if( !GridMoved )  {
-      GridMoved = true;
-      const TLattice& latt = XApp->XFile().GetLattice();
-      vec3d cnt;
-      int ac = 0;
-      for( int i=0; i < latt.AtomCount(); i++ )  {
-        const TSAtom& a = latt.GetAtom(i);
-        if( a.IsDeleted() || a.GetAtomInfo() == iQPeakIndex )  continue;
-        cnt += a.ccrd();
-        ac ++;
-      }
-      if( ac != 0 )  cnt /= ac;
-      //    cnt *= -1;
-      cnt -= 0.5;
-      GridStranslation = cnt;
-      cnt[0] *= MaxX;  cnt[0] = Round(cnt[0]);
-      cnt[1] *= MaxY;  cnt[1] = Round(cnt[1]);
-      cnt[2] *= MaxZ;  cnt[2] = Round(cnt[2]);
-      // expanding the box by 5A of the UC
-      TArray3D<float> *nA = new TArray3D<float>(0, MaxX-1, 0, MaxY-1, 0, MaxZ-1);
-      // fill the new array with data
-      for( int ix=0; ix < MaxX; ix++ )  {
-        int x = ix + (int)cnt[0];
-        while( x < 0 )  x += MaxX;
-        while( x >= MaxX ) x -= MaxX;  
-        for( int iy=0; iy < MaxY; iy++ )  {
-          int y = iy + (int)cnt[1];
-          while( y < 0 )  y += MaxY;
-          while( y >= MaxY ) y -= MaxY;  
-          for( int iz=0; iz < MaxZ; iz++ )  {
-            int z = iz + (int)cnt[2];
-            while( z < 0 )  z += MaxZ;
-            while( z >= MaxZ ) z -= MaxZ;  
-            nA->Value(ix,iy,iz) = ED->Data[x][y][z];
-          }
-        }
-      }
-      delete ED;
-      ED = nA;
-    }
     IS = new CIsoSurface<float>(*ED);
     SetScale(Scale);
   }
@@ -709,7 +732,6 @@ void TXGrid::ToDataItem(TDataItem& item, wxOutputStream& zos) const {
   if( !IsEmpty() )  {
     //item.AddField("visible", Visible());
     item.AddField("3D", Mode3D);
-    item.AddField("moved", GridMoved);
     item.AddField("draw_mode", PolygonMode);
     item.AddField("max_val", MaxVal);
     item.AddField("min_val", MinVal);
@@ -734,7 +756,6 @@ void TXGrid::FromDataItem(const TDataItem& item, wxInputStream& zis) {
   //Visible( item.GetRequiredField("visible").ToBool() );
   Visible(true);
   Mode3D = item.GetRequiredField("3D").ToBool();
-  GridMoved = item.GetRequiredField("moved").ToBool();
   PolygonMode = item.GetRequiredField("draw_mode").ToInt();
   MaxVal = item.GetRequiredField("max_val").ToDouble();
   MinVal = item.GetRequiredField("min_val").ToDouble();

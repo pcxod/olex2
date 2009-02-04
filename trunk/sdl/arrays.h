@@ -39,6 +39,7 @@ public:
   AE* Data;
 
   inline int Length()  const  {  return _Length;  }
+  inline bool IsInRange(int ind) const {  return ind >= MinIndex && ((ind-MinIndex) < _Length);  }
   inline AE& operator [] (int index)  const {  return Data[index-MinIndex];  }
   inline AE& Value(int index)  const {  return Data[index-MinIndex];  }
 };
@@ -79,6 +80,10 @@ public:
       memset( Data[i], val, Height*sizeof(AE) );
   }
 
+  inline bool IsInRange(int x, int y) const {  
+    return (x >= MinWidth && ((x-MinWidth) < Width)) &&
+           (y >= MinHeight && ((y-MinHeight) < Height));  
+  }
   inline int GetWidth()  const  {  return Width;  }
   inline int Length1()   const  {  return Width;  }
   inline int GetHeight() const  {  return Height;  }
@@ -142,6 +147,16 @@ TArray3D(int minWidth, int maxWidth, int minHeight,
         memset( Data[i][j], val, Depth*sizeof(AE) );
   }
 
+  inline bool IsInRange(int x, int y, int z) const {  
+    return (x >= MinWidth && ((x-MinWidth) < Width)) &&
+           (y >= MinHeight && ((y-MinHeight) < Height)) &&
+           (z >= MinDepth && ((z-MinDepth) < Depth));  
+  }
+  template <class vec> inline bool IsInRange(const vec& ind) const {  
+    return (ind[0] >= MinWidth && ((ind[0]-MinWidth) < Width)) &&
+           (ind[1] >= MinHeight && ((ind[1]-MinHeight) < Height)) &&
+           (ind[2] >= MinDepth && ((ind[2]-MinDepth) < Depth));  
+  }
   inline int GetWidth()  const  {  return Width;  }
   inline int Length1()   const  {  return Width;  }
   inline int GetHeight() const  {  return Height;  }

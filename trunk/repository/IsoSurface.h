@@ -18,12 +18,6 @@
 
 struct IsoTriangle {
   int pointID[3];
-  const IsoTriangle& operator = (const IsoTriangle& it)  {
-    pointID[0] = it.pointID[0];
-    pointID[1] = it.pointID[1];
-    pointID[2] = it.pointID[2];
-    return *this;
-  }
 };
 
 template <class T> class CIsoSurface {

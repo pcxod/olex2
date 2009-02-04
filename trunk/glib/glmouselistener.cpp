@@ -84,7 +84,7 @@ bool TGlMouseListener::OnMouseMove(const IEObject *Sender, const TMouseData *Dat
       res = true;
     }
     if( !Data->Shift )  {// rotate XY
-      double RX = (double)(dy)/FRotationDiv;
+      double RX = -(double)(dy)/FRotationDiv;
       double RY = (double)(dx)/FRotationDiv;
       if( RX != 0 ) 
         Basis.Rotate(mat3d::CramerSolve(basis, vec3d(1,0,0)).Normalise(), RX*M_PI/180);

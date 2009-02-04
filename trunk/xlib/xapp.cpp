@@ -212,7 +212,11 @@ void TXApp::NameHydrogens(TSAtom& SA, TUndoData* ud, bool CheckLabel)  {
   TNameUndo* nu = static_cast<TNameUndo*>(ud);
   olxstr Labl;
   int hcount=0, allH = 0, processedH = 0;
-  olxstr Name( SA.GetLabel().SubStringFrom( SA.GetAtomInfo().GetSymbol().Length() ) );
+  olxstr Name( SA.GetLabel().StartsFromi(SA.GetAtomInfo().GetSymbol()) ? 
+    SA.GetLabel().SubStringFrom( SA.GetAtomInfo().GetSymbol().Length() )
+    :
+    EmptyString
+  );
   TCAtom* CA;
   for( int i=0; i < SA.NodeCount(); i++ )  {
     const TSAtom& sa = SA.Node(i);

@@ -28,6 +28,13 @@ public:
       List[i] =  new T(list[i]);
   }
 //..............................................................................
+  /* copy constuctor - creates new copies of the objest, be careful as the copy
+   constructor must exist for nonpointer objects */
+  template <class alist> TTypeListExt(const alist& list ) : List(list.Count())  {
+    for( int i=0; i < list.Count(); i++ )
+      List[i] =  new T(list[i]);
+  }
+//..............................................................................
   /* copies values from an array of size elements  */
   TTypeListExt( size_t size, const T* array ) : List(size)  {
     for( size_t i=0; i < size; i++ )
@@ -40,10 +47,11 @@ public:
   }
 //..............................................................................
   //deletes the objects and clears the list
-  void Clear()  {
+  TTypeListExt& Clear()  {
     for( int i=0; i < List.Count(); i++ )
       delete (DestructCast*)List[i];
     List.Clear();
+    return *this;
   }
 //..............................................................................
 /*  virtual IEObject* Replicate() const  {
@@ -55,7 +63,7 @@ public:
 */
 //..............................................................................
   /* creates new copies of the objest, be careful as the assignement operator must exist  */
-  void AddListA( const TTypeListExt& list )  {
+  template <class alist> void AddListA(const alist& list)  {
     List.SetCapacity( list.Count() + List.Count() );
     for( int i=0; i < list.Count(); i++ )  {
       T* o = new T();
@@ -65,7 +73,7 @@ public:
   }
 //..............................................................................
   /* creates new copies of the objest, be careful as the copy constructor must exist  */
-  void AddListC( const TTypeListExt& list )  {
+  template <class alist> void AddListC(const alist& list)  {
     List.SetCapacity( list.Count() + List.Count() );
     for( int i=0; i < list.Count(); i++ )
       List.Add(new T(list[i]));
@@ -223,13 +231,24 @@ public:
 //..............................................................................
   /* copy - creates new copies of the objest, be careful as the copy constructor
    must exist  */
-  const TTypeListExt& operator = ( const TTypeListExt& list )  {
+  TTypeListExt& operator = (const TTypeListExt& list)  {
     for( int i=0; i < List.Count(); i++ )
       delete (DestructCast*)List[i];
     List.SetCount( list.Count() );
     for( int i=0; i < list.Count(); i++ ) 
       List[i] =  new T(list[i]);
-    return list;
+    return *this;
+  }
+//..............................................................................
+  /* copy - creates new copies of the objest, be careful as the copy constructor
+   must exist  */
+  template <class alist> TTypeListExt& operator = (const alist& list )  {
+    for( int i=0; i < List.Count(); i++ )
+      delete (DestructCast*)List[i];
+    List.SetCount( list.Count() );
+    for( int i=0; i < list.Count(); i++ ) 
+      List[i] =  new T(list[i]);
+    return *this;
   }
 //..............................................................................
   inline void SetCapacity(size_t v)   {  List.SetCapacity(v);  }
@@ -328,20 +347,17 @@ template <class T, class DC>
 template <class T>
   class TTypeList : public TTypeListExt<T,T>  {
   public:
-   TTypeList() : TTypeListExt<T,T>()  {  ;  }
-   TTypeList(const size_t size) : TTypeListExt<T,T>(size)  {  ;  }
-   TTypeList(const TTypeList& list) : TTypeListExt<T,T>(list)  {  ;  }
-   TTypeList(size_t size, const T* array) : TTypeListExt<T,T>(size, array)  {  ;  }
-};
-
-template <>
-  class TTypeList<int> : public TTypeListExt<int,int>  {
-  public:
-   TTypeList() : TTypeListExt<int,int>()  {  ;  }
-   TTypeList(const int size) : TTypeListExt<int,int>(size)  {  ;  }
-   TTypeList(const TTypeList& list) : TTypeListExt<int,int>(list)  {  ;  }
-   TTypeList(int size, const int* array) : TTypeListExt<int,int>(size, array)  {  ;  }
-};
+    TTypeList() : TTypeListExt<T,T>()  {  }
+    TTypeList(const size_t size) : TTypeListExt<T,T>(size)  {  }
+    TTypeList(const TTypeList& list) : TTypeListExt<T,T>(list)  {  }
+    template <class alist> TTypeList(const alist& list ) : TTypeListExt<T,T>(list)  {  }
+    TTypeList(size_t size, const T* array) : TTypeListExt<T,T>(size, array)  {  }
+    TTypeList& operator = (const TTypeList& list)  { TTypeListExt<T,T>::operator = (list);  return *this;  }
+    template <class alist> TTypeList& operator = (const alist& list)  { 
+      TTypeListExt<T,T>::operator = (list);  
+      return *this;  
+    }
+  };
 
 EndEsdlNamespace()
 #endif

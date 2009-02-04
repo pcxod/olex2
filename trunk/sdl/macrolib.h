@@ -386,13 +386,11 @@ public:
           return;
       }
       else  {
-        Error.NonexitingMacroError( Command );
+        // 2009.02.03 commented - cutom macros might not exist, so just keep quiet
+        //Error.NonexitingMacroError( Command );
+        TBasicApp::GetLog().Warning( olxstr("Non-existing macro: ") << Command );
         return;
       }
-      return;
-    }
-    if( macro == NULL )  {
-      Error.ProcessingError(__OlxSrcInfo, "Undefined/empty macro: ") << Command;
       return;
     }
     TStrList onAbort, onTerminate, onListen;
