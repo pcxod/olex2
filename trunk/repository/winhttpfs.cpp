@@ -178,6 +178,7 @@ IDataInputStream* TWinHttpFileSystem::OpenFile(const olxstr& Source)  {
     Progress.SetAction("Download complete");
     Progress.SetPos(FileLength);
     TBasicApp::GetInstance()->OnProgress->Exit(this, &Progress);
+    delete [] Buffer;
     return File1;
   }
   else  {
@@ -186,6 +187,7 @@ IDataInputStream* TWinHttpFileSystem::OpenFile(const olxstr& Source)  {
     TBasicApp::GetInstance()->OnProgress->Execute(this, &Progress);
     File1->Delete();
     File.Delete();
+    delete [] Buffer;
     delete File1;
     return NULL;
   }

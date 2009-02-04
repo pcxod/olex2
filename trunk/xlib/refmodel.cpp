@@ -197,12 +197,58 @@ const TRefList& RefinementModel::GetReflections() const {
       return _Reflections;
     THklFile hf;
     hf.LoadFromFile(HKLSource);
+    const vec3i minInd(hf.GetMinHkl()), maxInd(hf.GetMaxHkl());
+    TArray3D<TRefPList*> hkl3d(
+      minInd[0], maxInd[0],
+      minInd[1], maxInd[1],
+      minInd[2], maxInd[2]
+    );
+    hkl3d.FastInitWith(0);
     HklFileID = hkl_src_id;
     const int hkl_cnt = hf.RefCount();
+    int maxRedundancy = 0;
     _Reflections.Clear();
+    _FriedelPairs.Clear();
+    _Redundancy.Clear();
     _Reflections.SetCapacity(hkl_cnt);
-    for( int i=0; i < hkl_cnt; i++ ) 
-      _Reflections.AddNew( hf[i] );
+    for( int i=0; i < hkl_cnt; i++ )  {
+      TReflection& r = _Reflections.AddNew( hf[i] );
+      TRefPList* rl = hkl3d(hf[i].GetHkl());
+      if(  rl == NULL )
+        hkl3d(hf[i].GetHkl()) = rl = new TRefPList;
+      rl->Add(&r);
+      if( rl->Count() > maxRedundancy )
+        maxRedundancy = rl->Count();
+    }
+    _Redundancy.SetCount(maxRedundancy);
+    for( int i=0; i < maxRedundancy; i++ )
+      _Redundancy[i] = 0;
+    for( int h=minInd[0]; h <= maxInd[0]; h++ )  {
+      for( int k=minInd[1]; k <= maxInd[1]; k++ )  {
+        for( int l=minInd[2]; l <= maxInd[2]; l++ )  {
+          TRefPList* rl = hkl3d(h, k, l);
+          if(  rl == NULL )  continue;
+          if( (h|k|l) >= 0 )  {
+            vec3i ind(-h,-k,-l);
+            if( vec3i::IsInRangeInc(ind, minInd, maxInd) )  {
+              if( hkl3d(ind) != NULL )  {
+                _FriedelPairs.AddList(*hkl3d(ind));
+                _FriedelPairs.AddList(*rl);
+              }
+            }
+          }
+          _Redundancy[rl->Count()-1]++;
+        }
+      }
+    }
+    for( int h=minInd[0]; h <= maxInd[0]; h++ )  {
+      for( int k=minInd[1]; k <= maxInd[1]; k++ )  {
+        for( int l=minInd[2]; l <= maxInd[2]; l++ )  {
+          if( hkl3d(h, k, l) != NULL )
+            delete hkl3d(h, k, l);
+        }
+      }
+    }
     return _Reflections;
   }
   catch(TExceptionBase& exc)  {

@@ -223,57 +223,20 @@ void XLibMacros::macHklStat(TStrObjList &Cmds, const TParamList &Options, TMacro
     TStrList Output;
     tab.CreateTXTList(Output, olxstr("Refinement reflection statistsics"), true, false, "  ");
     xapp.GetLog() << Output << '\n';
-    const mat3d& hkl2c = xapp.XFile().GetAsymmUnit().GetHklToCartesian();
-    double sI = 0, ssS = 0, maxRes = 0, minRes = 100;
-    vec3i minInd(100,100,100), 
-      maxInd(-100, -100, -100);
-    int maxRedundancy = 0, FriedelPairs = 0;
-    const TRefList& all_refs = xapp.XFile().GetRM().GetReflections();
-    for( int i=0; i < all_refs.Count(); i++ )  {
-      const TReflection& r = all_refs[i];
-      vec3i::UpdateMinMax(r.GetHkl(), minInd, maxInd);
-      sI += r.GetI();
-      ssS += sqr(r.GetS());
+    const TIntList& redInfo = xapp.XFile().GetRM().GetRedundancyInfo();
+    tab.Resize( redInfo.Count(), 2 );
+    tab.ColName(0) = "Times measured";
+    tab.ColName(0) = "Count";
+    for( int i=0; i < redInfo.Count(); i++ )  {
+      tab[i][0] = i+1;
+      tab[i][1] = redInfo[i];
     }
-    //tab[0][0] << "Read reflections";              tab[0][1] << refs.Count();
-    TArray3D< TPtrList<const TReflection>* > hkl3d(minInd[0], maxInd[0], minInd[1], maxInd[1], minInd[2], maxInd[2]);
-    TArray3D<float> res3d(minInd[0], maxInd[0], minInd[1], maxInd[1], minInd[2], maxInd[2]);
-    hkl3d.FastInitWith(0);
-    for( int i=0; i < all_refs.Count(); i++ )  {
-      const TReflection& r = all_refs[i];
-      if( hkl3d(r.GetHkl()) == NULL )  {
-        hkl3d(r.GetHkl()) = new TPtrList<const TReflection>;
-        const double res = r.ToCart(hkl2c).QLength();
-        res3d(r.GetHkl()) = res;
-        if( res > maxRes ) maxRes = res;
-        if( res < minRes ) minRes = res;
-      }
-      hkl3d(r.GetHkl())->Add(&r);
-      if( hkl3d(r.GetHkl())->Count() > maxRedundancy )
-        maxRedundancy = hkl3d(r.GetHkl())->Count();
-    }
-    evecd redundancy(maxRedundancy);
-    for( int h=minInd[0]; h <= maxInd[0]; h++ )  {
-      for( int k=minInd[1]; k <= maxInd[1]; k++ )  {
-        for( int l=minInd[2]; l <= maxInd[2]; l++ )  {
-          if( (h|k|l) >= 0 )  {
-            vec3i ind(-h,-k,-l);
-            if( vec3i::IsInRangeInc(ind, minInd, maxInd) )  {
-              if( hkl3d(ind) != NULL )
-                FriedelPairs++;
-            }
-          }
-          if( hkl3d(h, k, l) != NULL )  {
-            redundancy[hkl3d(h, k, l)->Count()-1]++;
-            delete hkl3d(h, k, l);
-          }
-        }
-      }
-    }
-    xapp.GetLog() << "Redundancy \n";
-    for( int i=0; i < redundancy.Count(); i++ )
-      xapp.GetLog() << i+1 << ' ' << redundancy[i] << '\n';
-    xapp.GetLog() << "Friedel pairs measured: " << FriedelPairs << '\n';
+    Output.Clear();
+    tab.CreateTXTList(Output, olxstr("All reflection statistics"), true, false, "  ");
+    xapp.GetLog() << Output << '\n';
+    const vec3i_list empty_omits;
+    MergeStats fr_ms = RefMerger::DryMergeInP1<RefMerger::UnitMerger>(xapp.XFile().GetRM().GetFriedelPairs(), empty_omits);
+    xapp.GetLog() << "Friedel pairs measured: " << fr_ms.UniqueReflections << '\n';
     return;
   }
   bool list = Options.Contains("l"), 

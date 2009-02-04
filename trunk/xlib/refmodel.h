@@ -97,7 +97,9 @@ public:
 protected:
   HklStat _HklStat;
   mutable TRefList _Reflections;  // ALL un-merged reflections
+  mutable TRefPList _FriedelPairs;  // references form the _Reflections
   mutable TEFile::FileID HklStatFileID, HklFileID;  // if this is not the HKLSource, statistics is recalculated
+  mutable TIntList _Redundancy;
 public:
 
   TAsymmUnit& aunit;
@@ -475,6 +477,17 @@ of components 1 ... m
   const TRefList& GetReflections() const;
   // filters the reflections according to the parameters
   HklStat& FilterHkl(TRefList& out, HklStat& stats);
+  // returns un-filtered, un-merged list of the Friedel pairs
+  const TRefPList& GetFriedelPairs() const  {
+    GetReflections();
+    return _FriedelPairs;
+  }
+  /* returns redundancy information, like list[0] is the number of reflections collected once
+     list[1] = number of reflections collected wtice etc */
+  const TIntList& GetRedundancyInfo() const {
+    GetReflections();
+    return _Redundancy;
+  }
   // applies the HKLF matrix trnsformation
   void ApplyMatrix(TRefList& refs, const mat3d& m)  {
     if( m.IsI() )  return;

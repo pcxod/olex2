@@ -493,7 +493,7 @@ public:
         sum_diff += (diff < 0 ? -diff : diff);
         sum_diff_sq += diff*diff;
       }
-      return MergerOut( 
+      return DryMergerOut( 
         mean, 
         sqrt(sum_sig_sq/cnt), 
         sqrt(sum_diff_sq/(cnt*(cnt-1))), 
