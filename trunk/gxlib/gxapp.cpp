@@ -1406,8 +1406,8 @@ TUndoData* TGXApp::Name(TXAtom& XA, const olxstr &Name, bool CheckLabel)  {
 
   if( oldL != XA.Atom().GetLabel() )
     undo->AddAtom( XA.Atom(), oldL );
-
-  NameHydrogens(XA.Atom(), undo, CheckLabel);
+  // Dima's complaint - leave all in for manual naming
+  //NameHydrogens(XA.Atom(), undo, CheckLabel);
   if( checkBonds )  CheckQBonds(XA);
   if( recreate )  {
     XA.Primitives()->RemoveObject(&XA);
