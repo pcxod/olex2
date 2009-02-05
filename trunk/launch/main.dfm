@@ -18,6 +18,7 @@ object dlgMain: TdlgMain
   TextHeight = 13
   object tTimer: TTimer
     Enabled = False
-    Interval = 1500
+    Interval = 50
+    OnTimer = tTimerTimer
   end
 end

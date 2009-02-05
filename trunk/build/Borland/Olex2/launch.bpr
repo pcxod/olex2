@@ -94,9 +94,6 @@ ProductVersion=1.0.0.0
 Comments=
 SpecialBuild=
 
-[Excluded Packages]
-c:\program files\borland\cbuilder6\Bin\dclite60.bpl=Borland Integrated Translation Environment
-
 [HistoryLists\hlIncludePath]
 Count=7
 Item0=..\..\..\launch;..\..\..\repository;$(BCB)\include;$(BCB)\include\vcl;..\..\..\sdl
@@ -155,5 +152,10 @@ RemoteDebug=0
 ShowInfoMsgs=0
 LinkDebugVcl=0
 LinkCGLIB=0
+
+[Language]
+ActiveLang=
+ProjectLang=
+RootDir=
   </IDEOPTIONS>
 </PROJECT>

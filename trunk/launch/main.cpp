@@ -125,6 +125,16 @@ __fastcall TdlgMain::TdlgMain(TComponent* Owner)
     } 
   }
   dlgSplash->Show();
+  dlgSplash->Repaint();
+  olxstr checkFN(FBApp->BaseDir()+"index.ind");
+  if( !SetFileAttributes(checkFN.c_str(), FILE_ATTRIBUTE_SYSTEM) )  {
+    Application->MessageBox("Please make sure that you have enough right to modify the installation folder",
+      "Scheduled update failed", MB_OK|MB_ICONINFORMATION);
+    Application->Terminate();
+    return;
+  }
+  else
+    SetFileAttributes(checkFN.c_str(), FILE_ATTRIBUTE_NORMAL);
   olxstr SettingsFile( TBasicApp::GetInstance()->BaseDir() + "usettings.dat" );
   TSettingsFile settings;
   if( TEFile::FileExists(SettingsFile) )  {
@@ -194,14 +204,17 @@ __fastcall TdlgMain::TdlgMain(TComponent* Owner)
   dlgSplash->pbFProgress->Position = dlgSplash->pbFProgress->Max;
 
   Launch();
+  dlgSplash->stFileName->Caption = "Done. Launching Olex2";
   dlgSplash->Repaint();
-  SleepEx(1000, FALSE);
+  SleepEx(4000, FALSE);
   Application->Terminate();
 }
 //---------------------------------------------------------------------------
 __fastcall TdlgMain::~TdlgMain()
 {
+  FBApp->OnIdle->Execute(NULL, NULL);
   delete FBApp;
+  FBApp = NULL;
   delete dlgSplash;
 }
 //---------------------------------------------------------------------------
@@ -249,7 +262,8 @@ bool TdlgMain::UpdateInstallationH( const TUrl& url, const TStrList& properties 
   }
   catch( TExceptionBase& exc )  {
     TStrList out;
-    Application->MessageBox("Please make sure that your computer is online and/or\nyou have enough right to modify the installation folder",
+    Application->MessageBox("Please make sure that your computer is online and/or you have enough right to modify the installation folder\
+\nAlso the Olex2 repository might be down - once Olex2 is running you may choose another one from 'Update Options' in the 'Help' menu",
       "Scheduled update failed", MB_OK|MB_ICONINFORMATION);
     return false;
   }
@@ -276,4 +290,11 @@ bool TdlgMain::UpdateInstallationZ( const olxstr& zip_name, const TStrList& prop
     return false;
   }
 }
+
+void __fastcall TdlgMain::tTimerTimer(TObject *Sender)
+{
+  // force the GC to free temporray obejcts
+  FBApp->OnIdle->Execute(NULL, NULL);
+}
+//---------------------------------------------------------------------------
 

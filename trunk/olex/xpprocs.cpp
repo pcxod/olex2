@@ -1986,13 +1986,15 @@ void TMainForm::macADS(TStrObjList &Cmds, const TParamList &Options, TMacroError
 }
 //..............................................................................
 void TMainForm::macAZoom(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  if( Cmds.Count() == 1 )  FXApp->AtomZoom(Cmds[0].ToDouble());
-  if( Cmds.Count() >= 2 )  {
-    olxstr Tmp = Cmds[0];  Cmds.Delete(0);
-    TXAtomPList Atoms;
-    FindXAtoms(Cmds, Atoms, true, true);
-    FXApp->AtomZoom(Tmp.ToDouble(), &Atoms);
+  if( !Cmds[0].IsNumber() )  {
+    Error.ProcessingError(__OlxSrcInfo, "a number is expected as first argument" );
+    return;
   }
+  double zoom = Cmds[0].ToDouble();
+  Cmds.Delete(0);
+  TXAtomPList Atoms;
+  FindXAtoms(Cmds, Atoms, false, false);
+  FXApp->AtomZoom(zoom, Atoms.IsEmpty() ? NULL : &Atoms);
 }
 //..............................................................................
 void TMainForm::macBRad(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
