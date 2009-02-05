@@ -100,6 +100,7 @@ protected:
   mutable TRefPList _FriedelPairs;  // references form the _Reflections
   mutable TEFile::FileID HklStatFileID, HklFileID;  // if this is not the HKLSource, statistics is recalculated
   mutable TIntList _Redundancy;
+  mutable int _FriedelPairCount;  // the numbe of pairs only
 public:
 
   TAsymmUnit& aunit;
@@ -487,6 +488,11 @@ of components 1 ... m
   const TIntList& GetRedundancyInfo() const {
     GetReflections();
     return _Redundancy;
+  }
+  // returns the number of pairs - has no relation to the lsi of
+  int GetFriedelPairCount() const {
+    GetReflections();
+    return _FriedelPairCount;
   }
   // applies the HKLF matrix trnsformation
   void ApplyMatrix(TRefList& refs, const mat3d& m)  {

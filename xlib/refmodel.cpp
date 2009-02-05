@@ -210,6 +210,7 @@ const TRefList& RefinementModel::GetReflections() const {
     _Reflections.Clear();
     _FriedelPairs.Clear();
     _Redundancy.Clear();
+    _FriedelPairCount = 0;
     _Reflections.SetCapacity(hkl_cnt);
     for( int i=0; i < hkl_cnt; i++ )  {
       TReflection& r = _Reflections.AddNew( hf[i] );
@@ -234,6 +235,7 @@ const TRefList& RefinementModel::GetReflections() const {
               if( hkl3d(ind) != NULL )  {
                 _FriedelPairs.AddList(*hkl3d(ind));
                 _FriedelPairs.AddList(*rl);
+                _FriedelPairCount++;
               }
             }
           }

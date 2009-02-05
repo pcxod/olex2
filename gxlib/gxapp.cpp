@@ -3306,17 +3306,19 @@ void TGXApp::BuildSceneMask(FractMask& mask)  {
     if( XAtoms[i].Deleted() || !XAtoms[i].Visible() )  continue;
     if( XAtoms[i].Atom().GetAtomInfo() == iQPeakIndex )  continue;
     vec3d::UpdateMinMax(XAtoms[i].Atom().ccrd(), mn, mx);
-    atoms.AddNew( XAtoms[i].Atom().crd(), sqr(XAtoms[i].Atom().GetAtomInfo().GetRad2())+1.0 );
+    atoms.AddNew( XAtoms[i].Atom().crd(), sqr(XAtoms[i].Atom().GetAtomInfo().GetRad2())+1 );
   }
-  mask.Init(mn, mx, norms, 1);
+  mn -= 1./4;
+  mx += 1./4;
+  float res = 0.5;
+  mask.Init(mn, mx, norms, res);
+  norms /= res;
   TArray3D<bool>* mdata = mask.GetMask();
   mdata->FastInitWith(0);
   const int da = mdata->Length1(),
             db = mdata->Length2(),
             dc = mdata->Length3();
   const int ac = atoms.Count();
-  //for( int i=0; i < ac; i++ ) 
-  //  atoms[i].A() -= mn;
   for( int j = 0; j < da; j++ )  {
     const double dx = (double)j/norms[0];
     for( int k = 0; k < db; k++ )  {
