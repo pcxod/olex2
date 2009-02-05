@@ -52,6 +52,22 @@ bool TShellUtil::CreateShortcut(const olxstr& ShortcutPath,
       // Ensure that the string is Unicode.
       MultiByteToWideChar(CP_ACP, 0, ShortcutPath.u_str(), -1, wsz, MAX_PATH);
       // Save the link by calling IPersistFile::Save.
+      // set admin rights
+      // Look for IShellLinkDataList interface
+      IShellLinkDataList* pdl;
+      hres = psl->QueryInterface(IID_IShellLinkDataList, (void**)&pdl);
+      if( SUCCEEDED(hres) ) {
+        DWORD dwFlags = 0;
+        hres = pdl->GetFlags(&dwFlags);
+        if( SUCCEEDED(hres) ) {
+          // Only set SLDF_RUNAS_USER if it's not set, otherwise
+          // SetFlags returns an error.
+          if ((SLDF_RUNAS_USER & dwFlags) != SLDF_RUNAS_USER) {
+            hres = pdl->SetFlags(SLDF_RUNAS_USER | dwFlags);
+          }
+        }
+        pdl->Release();
+      }
       hres = ppf->Save(wsz, TRUE);
 #else
       hres = ppf->Save(ShortcutPath.u_str(), TRUE);

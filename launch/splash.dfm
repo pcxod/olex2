@@ -66,7 +66,7 @@ object dlgSplash: TdlgSplash
       Height = 12
       Align = alClient
       AutoSize = False
-      Caption = ' Current file'
+      Caption = 'Starting up...'
       Font.Charset = ANSI_CHARSET
       Font.Color = clGray
       Font.Height = -9

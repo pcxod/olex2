@@ -210,12 +210,14 @@ bool TEFile::Open(const olxstr& F, const olxstr& Attribs)  {
   return true;
 }
 //..............................................................................
-void TEFile::Close()  {
+bool TEFile::Close()  {
   if( FHandle != NULL )  {
     if( fclose(FHandle) != 0 )
       throw TFileExceptionBase(__OlxSourceInfo, FName, "fclose failed");
+    FHandle = NULL;
+    return true;
   }
-  FHandle = NULL;
+  return false;
 }
 //..............................................................................
 bool TEFile::Delete()  {
@@ -284,7 +286,11 @@ void TEFile::Seek( long Position, const int From)  {
 }
 //..............................................................................
 bool TEFile::FileExists(const olxstr& F)  {
-  return (access( OLXSTR(OLX_OS_PATH(F)), 0)  == -1 ) ? false : true;
+  return (access( OLXSTR(OLX_OS_PATH(F)), 0) != -1);
+}
+//..............................................................................
+bool TEFile::Access(const olxstr& F, const short Flags)  {
+  return (access(OLXSTR(OLX_OS_PATH(F)), Flags) != -1);
 }
 //..............................................................................
 olxstr TEFile::ExtractFilePath(const olxstr &F)  {

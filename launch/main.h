@@ -19,6 +19,7 @@ class TdlgMain : public TForm
 {
 __published:  // IDE-managed Components
   TTimer *tTimer;
+  void __fastcall tTimerTimer(TObject *Sender);
 private: // User declarations
   TBasicApp *FBApp;
   void Launch();

@@ -243,11 +243,11 @@ void __fastcall TfMain::bbInstallClick(TObject *Sender)  {
 
   installPath = frMain->eInstallationPath->Text.c_str();
   installPath = TEFile::WinPath( installPath );
-  if( installPath.Length() && !installPath.EndsWith('\\') )  installPath << '\\';
+  if( !installPath.IsEmpty() && !installPath.EndsWith('\\') )  installPath << '\\';
 
   if( !OlexInstalled && !TEFile::FileExists( installPath ) )  {
     if( !ForceDirectories( installPath.c_str() ) )  {
-      Application->MessageBoxA("Could not create installation directory", "IO Error", MB_OK|MB_ICONERROR);
+      Application->MessageBoxA("Could not create installation directory", "Installation failed", MB_OK|MB_ICONERROR);
       return;
     }
   }
@@ -280,7 +280,7 @@ void __fastcall TfMain::bbInstallClick(TObject *Sender)  {
       TWinHttpFileSystem repos(url);
       TEFile* zipf = repos.OpenFileAsFile( url.GetPath() + "olex2.zip");
       if( zipf == NULL )  {
-        Application->MessageBoxA("Could not locate the olex distribution", "Zip file fetching error", MB_OK|MB_ICONERROR);
+        Application->MessageBoxA("Could not locate the olex distribution.\nPlease try another repository.", "Zip file fetching error", MB_OK|MB_ICONERROR);
         return;
       }
       olxstr zipName( zipf->GetName() );

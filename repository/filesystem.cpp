@@ -117,7 +117,7 @@ bool TOSFileSystem::ChangeDir(const olxstr &DN)  {
 //..............................................................................
 void TFSItem::Clear()  {
   for( int i=0; i < Items.Count(); i++ )
-    delete Items.GetObject(i);
+    delete Items.GetObject(i);  // destructor calls Clear()
   Items.Clear();
   Name = EmptyString;
   DateTime = 0;
@@ -493,6 +493,7 @@ void TFSItem::ClearNonexisting()  {
   for( int i=0; i < Count(); i++ )  {
     if( !Item(i).IsFolder() )  {
       if( !GetFileSystem().FileExists( GetFileSystem().GetBase() + Item(i).GetFullName()) )  {
+        delete Items.Object(i);
         Items.Remove(i);
         i--;
       }

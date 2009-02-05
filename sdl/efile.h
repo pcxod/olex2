@@ -39,7 +39,11 @@ const uint16_t fofText   = 0x0001,
                fofAppend = 0x0010,
                fofCreate = 0x0020,
                fofReadWrite = 0x000C;
-
+// access check constants, POSIX values
+const short accessExists = 0x0000,
+            accessExec   = 0x0001,
+            accessWrite  = 0x0002,
+            accessRead   = 0x0004;
 
 class TEFile: public IEObject, public IDataInputStream,
                                public IDataOutputStream  {
@@ -47,7 +51,6 @@ class TEFile: public IEObject, public IDataInputStream,
   olxstr FName;
   bool Temporary; //tmpnam or tmpfile to use
   void CheckHandle() const;
-  void Close();  // closes current file
 protected:
   TEFile(const olxstr& name, FILE* handle)  {  // a temporray file
     FName = name;
@@ -94,6 +97,8 @@ public:
   TEFile(const olxstr &F, short Attribs);
   virtual ~TEFile();
   bool Open(const olxstr &F, const olxstr &Attribs);
+  // closes the file, if was open - returns true, might throw an exception if fclose failed
+  bool Close();
   long Length() const;
   virtual void Flush();
   void Seek(long Position, const int From);
@@ -130,6 +135,7 @@ public:
   inline const olxstr& GetName()  const  {  return FName; }
   bool Delete();
 
+  static bool Access(const olxstr& F, const short Flags);
   static bool FileExists(const olxstr &F);
   static bool DelFile(const olxstr &F);
   static bool DelDir(const olxstr &F);

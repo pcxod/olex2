@@ -67,6 +67,9 @@ bool TWinHttpFileSystem::Connect()  {
     Connected = true;
   else
     throw TFunctionFailedException(__OlxSourceInfo, olxstr("connection failed: ") << WSAGetLastError());
+  int timeout = 2000; // ms ?
+  if( setsockopt(Socket, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeout, sizeof(int)) != 0 )
+    throw TFunctionFailedException(__OlxSourceInfo, olxstr("Failed to setup timeout: ") << WSAGetLastError());
   return Connected;
 }
 //..............................................................................
