@@ -1386,33 +1386,7 @@ void TMainForm::OnAbout(wxCommandEvent& WXUNUSED(event))  {
 void TMainForm::OnFileOpen(wxCommandEvent& event)  {
   if( event.GetId() >= ID_FILE0 && event.GetId() <= (ID_FILE0+9) )  {
     wxMenuItem *mi = FRecentFiles.Object(event.GetId() - ID_FILE0);
-    if( TEFile::ExtractFileExt(FRecentFiles[event.GetId() - ID_FILE0]).IsEmpty() )  {
-      olxstr fn( TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), EmptyString) );
-      TEFile::OSPathI(fn);
-      if( fn != FRecentFiles[event.GetId() - ID_FILE0] )  {
-        olxstr ins_fn( TEFile::ChangeFileExt(FRecentFiles[event.GetId() - ID_FILE0], "ins") );
-        olxstr res_fn( TEFile::ChangeFileExt(FRecentFiles[event.GetId() - ID_FILE0], "res") );
-        if( TEFile::FileExists(ins_fn) && TEFile::FileExists(res_fn) )  {
-          if( TEFile::FileAge(ins_fn) > TEFile::FileAge(res_fn) )
-            fn = ins_fn;
-          else
-            fn = res_fn;
-        }
-        else if( TEFile::FileExists(res_fn) )
-          fn = res_fn;
-        else if( TEFile::FileExists(ins_fn) )
-          fn = ins_fn;
-        else  {
-          FXApp->GetLog().Error("Could not locate ins/res file");
-          return;
-        }
-      }
-      else  // just reopen
-        fn = FXApp->XFile().GetFileName();
-      ProcessXPMacro(olxstr("reap \'") << fn << '\'', MacroError);
-    }
-    else
-      ProcessXPMacro(olxstr("reap \'") << FRecentFiles[event.GetId() - ID_FILE0] << '\'', MacroError);
+    ProcessXPMacro(olxstr("reap \'") << FRecentFiles[event.GetId() - ID_FILE0] << '\'', MacroError);
   }
 }
 //..............................................................................

@@ -307,7 +307,7 @@ template <class T> const unsigned int CIsoSurface<T>::m_triTable[256][16] = {
 
 template <class T> CIsoSurface<T>::CIsoSurface(TArray3D<T>& points) : 
     Points(points), 
-    DimmZ(points.Length3()-1), DimmY(points.Length2()-1), DimmX(points.Length1()-1),
+    DimmZ(points.Length3()), DimmY(points.Length2()), DimmX(points.Length1()),
     ZSlice(DimmY*DimmX) {
   m_tIsoLevel = 0;
   m_bValidSurface = false;
@@ -320,13 +320,13 @@ template <class T> void CIsoSurface<T>::GenerateSurface(T tIsoLevel)  {
 
   m_tIsoLevel = tIsoLevel;
   T*** D = Points.Data;
-  const int xmo = DimmX-1,
-            ymo = DimmY-1,
-            zmo = DimmZ-1;
+  const int xmo = DimmX-2,
+            ymo = DimmY-2,
+            zmo = DimmZ-2;
   // Generate isosurface.
-  for( int x = 0; x < DimmX; x++)
-    for( int y = 0; y < DimmY; y++)
-      for( int z = 0; z < DimmZ; z++) {
+  for( int x = 0; x < DimmX-1; x++)
+    for( int y = 0; y < DimmY-1; y++)
+      for( int z = 0; z < DimmZ-1; z++) {
         // Calculate table lookup index from those vertices which are below the isolevel.
         unsigned int tableIndex = 0;
         if( m_tIsoLevel > 0 )  {

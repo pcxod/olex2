@@ -169,11 +169,14 @@ TXGrid::TXGrid(const olxstr& collectionName, TGXApp* xapp) :
   MaxX = MaxY = MaxZ = 0;
   MaxVal = MinVal = 0;
   MinHole = MaxHole = 0;
+  PListId = NListId = -1;
 }
 //..............................................................................
 TXGrid::~TXGrid()  {
   Clear();
   DeleteObjects();
+  if( PListId != -1 )
+    glDeleteLists(PListId, 2);
   delete Info;
 }
 //..............................................................................
@@ -316,23 +319,11 @@ void TXGrid::CalcColor(double v) {
 bool TXGrid::Orient(TGlPrimitive *GlP)  {
   if( ED == NULL )  return true;
 
-  if( IS != NULL && Mode3D && (p_triangles.Count() > 25 || n_triangles.Count() > 25) )  {
-    if( GlP != glpP && GlP != glpN )  return true;
-    const TTypeList<vec3f>& verts( (GlP == glpP) ? n_vertices : p_vertices );
-    const TTypeList<vec3f>& norms( (GlP == glpP) ? n_normals : p_normals );
-    const TTypeList<IsoTriangle>& trians(  (GlP == glpP) ? n_triangles : p_triangles );
-    glPolygonMode(GL_FRONT_AND_BACK, PolygonMode);
-    glBegin(GL_TRIANGLES);
-    for( int i=0; i < trians.Count(); i++ )  {
-      for( int j=0; j < 3; j++ )  {
-        const vec3f& nr = norms[trians[i].pointID[j]];
-        glNormal3f( nr[0], nr[1], nr[2] );
-        const vec3f& p = verts[trians[i].pointID[j]];
-        glVertex3f(p[0], p[1], p[2]);
-      }
-    }
-    glEnd();
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+  if( IS != NULL && Mode3D )  {
+    if( GlP == glpN )  // draw once only
+      glCallList(PListId);
+    else if( GlP == glpP )  // draw once only
+      glCallList(NListId);
     return true;
   }
   if( GlP == glpP || GlP == glpN )  return true;
@@ -355,10 +346,6 @@ bool TXGrid::Orient(TGlPrimitive *GlP)  {
   p3 = bm * p3;  p3 -= Parent()->GetBasis().GetCenter();
   p4 = bm * p4;  p4 -= Parent()->GetBasis().GetCenter();
 
-  const int maxX = ED->Length1(),
-            maxY = ED->Length2(),
-            maxZ = ED->Length3();
-
   for( int i=0; i < MaxDim; i++ )  {
     for( int j=0; j < MaxDim; j++ )  {  // (i,j,Depth)        
       p[0] = (double)(i-hh)/Size;
@@ -372,12 +359,12 @@ bool TXGrid::Orient(TGlPrimitive *GlP)  {
       p[1] *= MaxY;  p[1] = Round(p[1]);
       p[2] *= MaxZ;  p[2] = Round(p[2]);
 
-      while( p[0] < 0 )     p[0] += maxX;
-      while( p[0] >= maxX )  p[0] -= maxX;
-      while( p[1] < 0 )     p[1] += maxY;
-      while( p[1] >= maxY )  p[1] -= maxY;
-      while( p[2] < 0 )     p[2] += maxZ;
-      while( p[2] >= maxZ )  p[2] -= maxZ;
+      while( p[0] < 0 )     p[0] += MaxX;
+      while( p[0] >= MaxX )  p[0] -= MaxX;
+      while( p[1] < 0 )     p[1] += MaxY;
+      while( p[1] >= MaxY )  p[1] -= MaxY;
+      while( p[2] < 0 )     p[2] += MaxZ;
+      while( p[2] >= MaxZ )  p[2] -= MaxZ;
       float val = ED->Data[(int)p[0]][(int)p[1]][(int)p[2]];
       CalcColorRGB(val, R, G, B);
       const int off = (i+j*MaxDim)*3; 
@@ -440,7 +427,7 @@ void TXGrid::InitGrid(int maxX, int maxY, int maxZ)  {
   MaxVal = MinVal = 0;
   if( ED != NULL )
     delete ED;
-  ED = new TArray3D<float>(0, MaxX-1, 0,MaxY-1, 0, MaxZ-1);
+  ED = new TArray3D<float>(0, MaxX, 0,MaxY, 0, MaxZ);
   TextData = new char[MaxDim*MaxDim*3+1];
   MaxHole = MinHole = 0;
 }
@@ -467,6 +454,10 @@ void TXGrid::DeleteObjects()  {
   if( Mask != NULL )  {
     delete Mask;
     Mask = NULL;
+  }
+  if( PListId != -1 )  {
+    glDeleteLists(PListId, 2);
+    PListId = NListId = -1;
   }
 }
 //..............................................................................
@@ -592,71 +583,85 @@ bool TXGrid::OnMouseMove(const IEObject *Sender, const TMouseData *Data)  {
 
 void TXGrid::RescaleSurface()  {
   const TAsymmUnit& au =  XApp->XFile().GetAsymmUnit();
+  if( PListId == -1 )  {
+    PListId = glGenLists(2);
+    NListId = PListId+1;
+  }
   if( Mask != NULL )  {
-    const int pv_cnt = p_vertices.Count();
-    for( int i=0; i < pv_cnt; i++ )  {
-      vec3f& p = p_vertices[i];
-      p[0] /= MaxX;
-      p[1] /= MaxY;
-      p[2] /= MaxZ;
-      if( !Mask->Get(p) )  {
-        p_vertices.NullItem(i);
-        p_normals.NullItem(i);
-      }
-      else
-        au.CellToCartesian(p);
-    }
-    for( int i=0; i < p_triangles.Count(); i++ )  {
-      for( int j=0; j < 3; j++ )  {
-        if( p_vertices.IsNull(p_triangles[i].pointID[j]) )  {
-          p_triangles.NullItem(i);
-          break;
+    vec3d pts[3];
+    for( int li = 0; li <= 1; li++ )  {
+      const TTypeList<vec3f>& verts = (li == 0 ? p_vertices : n_vertices);
+      const TTypeList<vec3f>& norms = (li == 0 ? p_normals : n_normals);
+      const TTypeList<IsoTriangle>& trians = (li == 0 ? p_triangles : n_triangles);
+      glNewList(li == 0 ? PListId : NListId, GL_COMPILE_AND_EXECUTE);
+      glPolygonMode(GL_FRONT_AND_BACK, PolygonMode);
+      glBegin(GL_TRIANGLES);
+      for( int x=-1; x <= 1; x++ )  {
+        for( int y=-1; y <= 1; y++ )  {
+          for( int z=-1; z <= 1; z++ )  {
+            for( int i=0; i < trians.Count(); i++ )  {
+              bool draw = true;
+              for( int j=0; j < 3; j++ )  {
+                pts[j] = verts[trians[i].pointID[j]];
+                pts[j][0] /= MaxX;  pts[j][1] /= MaxY;  pts[j][2] /= MaxZ;
+                pts[j][0] += x;     pts[j][1] += y;     pts[j][2] += z;
+                if( !Mask->Get(pts[j]) )  {
+                  draw = false;
+                  break;
+                }
+                au.CellToCartesian(pts[j]);
+              }
+              if( !draw )  continue;
+              for( int j=0; j < 3; j++ )  {
+                const vec3f& nr = norms[trians[i].pointID[j]];
+                glNormal3f( nr[0], nr[1], nr[2] );
+                glVertex3f(pts[j][0], pts[j][1], pts[j][2]);
+              }
+            }
+          }
         }
       }
+      glEnd();
+      glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+      glEndList();
     }
-    //p_vertices.Pack();
-    p_triangles.Pack();
-    //p_normals.Pack();
-    const int nv_cnt = n_vertices.Count();
-    for( int i=0; i < nv_cnt; i++ )  {
-      vec3f& p = n_vertices[i];
-      p[0] /= MaxX;
-      p[1] /= MaxY;
-      p[2] /= MaxZ;
-      if( !Mask->Get(p) )  {
-        n_vertices.NullItem(i);
-        n_normals.NullItem(i);
-      }
-      else
-        au.CellToCartesian(p);
-    }
-    for( int i=0; i < n_triangles.Count(); i++ )  {
-      for( int j=0; j < 3; j++ )  {
-        if( n_vertices.IsNull(n_triangles[i].pointID[j]) )  {
-          n_triangles.NullItem(i);
-          break;
-        }
-      }
-    }
-    //n_vertices.Pack();
-    n_triangles.Pack();
-    //n_normals.Pack();
+    p_vertices.Clear();
+    p_triangles.Clear();
+    p_normals.Clear();
+    n_vertices.Clear();
+    n_triangles.Clear();
+    n_normals.Clear();
   }
   else  {
-    for( int i=0; i < p_vertices.Count(); i++ )  {
-      vec3f& p = p_vertices[i];
-      p[0] /= MaxX;
-      p[1] /= MaxY;
-      p[2] /= MaxZ;
-      au.CellToCartesian(p);
+    for( int li = 0; li <= 1; li++ )  {
+      TTypeList<vec3f>& verts = (li == 0 ? p_vertices : n_vertices);
+      const TTypeList<vec3f>& norms = (li == 0 ? p_normals : n_normals);
+      const TTypeList<IsoTriangle>& trians = (li == 0 ? p_triangles : n_triangles);
+      for( int i=0; i < verts.Count(); i++ )  {
+        verts[i][0] /= MaxX;  verts[i][1] /= MaxY;  verts[i][2] /= MaxZ;
+        au.CellToCartesian(verts[i]);
+      }
+      glNewList(li == 0 ? PListId : NListId, GL_COMPILE_AND_EXECUTE);
+      glPolygonMode(GL_FRONT_AND_BACK, PolygonMode);
+      glBegin(GL_TRIANGLES);
+      for( int i=0; i < trians.Count(); i++ )  {
+        for( int j=0; j < 3; j++ )  {
+          const vec3f& nr = norms[trians[i].pointID[j]];
+          glNormal3f( nr[0], nr[1], nr[2] );
+          const vec3f& p = verts[trians[i].pointID[j]];
+          glVertex3f(p[0], p[1], p[2]);
+        }
+      }
+      glEnd();
+      glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+      glEndList();
     }
-    for( int i=0; i < n_vertices.Count(); i++ )  {
-      vec3f& p = n_vertices[i];
-      p[0] /= MaxX;
-      p[1] /= MaxY;
-      p[2] /= MaxZ;
-      au.CellToCartesian(p);
-    }
+    p_vertices.Clear();
+    p_triangles.Clear();
+    p_normals.Clear();
+    n_vertices.Clear();
+    n_triangles.Clear();
+    n_normals.Clear();
   }
 }
 //..............................................................................
@@ -718,12 +723,14 @@ void TXGrid::LibPolygonMode(const TStrObjList& Params, TMacroError& E)  {
     else if( PolygonMode == GL_LINE )  E.SetRetVal<olxstr>("line");
     return;
   }
+  int pm = PolygonMode;
   if( Params[0] == "fill" )  PolygonMode = GL_FILL;
   else if( Params[0] == "point" )  PolygonMode = GL_POINT;
   else if( Params[0] == "line" )  PolygonMode = GL_LINE;
   else throw TInvalidArgumentException(__OlxSourceInfo,
          olxstr("incorrect mode value: '") << Params[0] << '\'');
-  if( PolygonMode == GL_POINT )  //create the points
+  // have to recreate
+  if( pm != PolygonMode )
     SetScale(Scale);
 }
 //..............................................................................

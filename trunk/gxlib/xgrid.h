@@ -26,6 +26,8 @@ class TXGrid: public TGlMouseListener  {
   TArray3D<float>* ED;
   CIsoSurface<float>* IS;
   FractMask* Mask;
+  // if mask is specified
+  int PListId, NListId;
   char *TextData;
   //TGlPrimitive *FPrimitive;
   class TGXApp * XApp;
@@ -63,8 +65,6 @@ public:
   void InitGrid(int maxX, int maxY, int MaxZ);
   inline void SetValue(int i, int j, int k, float v) {
     ED->Data[i][j][k] = v;
-    if( v > MaxVal )  MaxVal = v;
-    if( v < MinVal ) MinVal = v;
   }
   inline double GetValue(int i, int j, int k) const {
     return ED->Data[i][j][k];
@@ -72,8 +72,6 @@ public:
   template <class T>
     void SetValue(const T& ind, float v)  {
       ED->Data[(int)ind[0]][(int)ind[1]][(int)ind[2]] = v;
-      if( v > MaxVal )  MaxVal = v;
-      if( v < MinVal )  MinVal = v;
     }
   template <class T>
     inline double GetValue(const T& v) const {
@@ -103,6 +101,7 @@ public:
   inline bool Visible()   const {  return (Flags & sgdoVisible) == sgdoVisible; }
   inline virtual void Visible(bool On) {  
     AGDrawObject::Visible(On);  
+    Info->Visible(On);
     if( !On )
       Clear();
   }

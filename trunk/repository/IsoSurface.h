@@ -58,7 +58,7 @@ protected:
     IsoPointListX Data;
     int Count;
   public:
-    T4DIndex()   {  Count = 0;  }
+    T4DIndex() : Count(0) {  }
     ~T4DIndex()  {  Clear();  }
     void Add(int x, int y, int z, int edgeId, float vx, float vy, float vz)  {
       adjust(x,y,z,edgeId);

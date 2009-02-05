@@ -4246,6 +4246,8 @@ void TMainForm::macCalcVoid(TStrObjList &Cmds, const TParamList &Options, TMacro
   FXApp->XFile().GetUnitCell().BuildStructureMap(map, surfdis, -101, &structureGridPoints, 
     radii.IsEmpty() ? NULL : &radii, catoms.IsEmpty() ? NULL : &catoms);
   short MaxLevel = MapUtil::AnalyseVoids(map.Data, map.Length1(), map.Length2(), map.Length3(), voidCenter);
+  FXApp->XGrid().SetMinVal(0);
+  FXApp->XGrid().SetMaxVal(MaxLevel);
 
   double vol = FXApp->XFile().GetLattice().GetUnitCell().CalcVolume();
   TBasicApp::GetLog() << ( olxstr("Cell volume (A^3) ") << olxstr::FormatFloat(3, vol) << '\n');
@@ -4773,6 +4775,16 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   bool OverlayXFile = Options.Contains('*');
   if( Cmds.Count() >= 1 )  {  // merge the file name if a long one...
     FN = Cmds.Text(' ');
+    if( TEFile::ExtractFileExt(FN).IsEmpty() )  {
+      olxstr res_fn = TEFile::ChangeFileExt(FN, "res"),
+             ins_fn = TEFile::ChangeFileExt(FN, "ins");
+      if( TEFile::FileExists(res_fn) )  {
+        if( TEFile::FileExists(ins_fn) )
+          FN = TEFile::FileAge(ins_fn) < TEFile::FileAge(res_fn) ? res_fn : ins_fn;
+      }
+      else
+        FN = ins_fn;
+    }
 #ifdef __WIN32__ // tackle short path names problem
     WIN32_FIND_DATAA wfd;
     ZeroMemory(&wfd, sizeof(wfd));
@@ -8067,23 +8079,36 @@ void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMa
   const int mapX = (int)(au.Axes()[0].GetV()*resolution),
 			mapY = (int)(au.Axes()[1].GetV()*resolution),
 			mapZ = (int)(au.Axes()[2].GetV()*resolution);
-//  const int mapX =100, mapY = 100, mapZ = 10;
-  FXApp->XGrid().InitGrid(mapX, mapY, mapZ);
-  FXApp->XGrid().SetMaxHole(0.49);
-  FXApp->XGrid().SetMinHole(-0.49);
-  mi = BVFourier::CalcEDM(P1SF, FXApp->XGrid().Data()->Data, mapX, mapY, mapZ, vol);
+  TArray3D<float> map(0, mapX-1, 0, mapY-1, 0, mapZ-1);
+  mi = BVFourier::CalcEDM(P1SF, map.Data, mapX, mapY, mapZ, vol);
 //////////////////////////////////////////////////////////////////////////////////////////
+  FXApp->XGrid().InitGrid(mapX, mapY, mapZ);
+
   FXApp->XGrid().SetMaxHole( mi.sigma*1.4);
   FXApp->XGrid().SetMinHole(-mi.sigma*1.4);
   FXApp->XGrid().SetScale( -mi.sigma*4 );
   FXApp->XGrid().SetMinVal( mi.minVal );
   FXApp->XGrid().SetMaxVal( mi.maxVal );
+  for( int i=0; i < mapX; i++ )
+    for( int j=0; j < mapY; j++ )
+      for( int k=0; k < mapZ; k++ )
+        FXApp->XGrid().SetValue(i,j,k, map.Data[i][j][k]);
+  for( int i=0; i < mapX; i++ )
+    for( int j=0; j < mapY; j++ )
+        FXApp->XGrid().SetValue(i,j,mapZ, map.Data[i][j][0]);
+  for( int i=0; i < mapX; i++ )
+    for( int j=0; j < mapZ; j++ )
+        FXApp->XGrid().SetValue(i,mapY,j, map.Data[i][0][j]);
+  for( int i=0; i < mapY; i++ )
+    for( int j=0; j < mapZ; j++ )
+        FXApp->XGrid().SetValue(mapX,i,j, map.Data[0][i][j]);
+
   TBasicApp::GetLog() << (olxstr("Map max val ") << olxstr::FormatFloat(3, mi.maxVal) << 
     " min val " << olxstr::FormatFloat(3, mi.minVal) << '\n');
   // map integration
   if( Options.Contains('i') )  {
     TArrayList<MapUtil::peak> Peaks;
-    MapUtil::Integrate<float>(FXApp->XGrid().Data()->Data, mapX, mapY, mapZ, mi.minVal, mi.maxVal, mi.sigma, Peaks);
+    MapUtil::Integrate<float>(map.Data, mapX, mapY, mapZ, mi.minVal, mi.maxVal, mi.sigma, Peaks);
     int PointCount = mapX*mapY*mapZ;
     for( int i=0; i < Peaks.Count(); i++ )  {
       const MapUtil::peak& peak = Peaks[i];

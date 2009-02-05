@@ -234,9 +234,9 @@ void XLibMacros::macHklStat(TStrObjList &Cmds, const TParamList &Options, TMacro
     Output.Clear();
     tab.CreateTXTList(Output, olxstr("All reflection statistics"), true, false, "  ");
     xapp.GetLog() << Output << '\n';
-    const vec3i_list empty_omits;
-    MergeStats fr_ms = RefMerger::DryMergeInP1<RefMerger::UnitMerger>(xapp.XFile().GetRM().GetFriedelPairs(), empty_omits);
-    xapp.GetLog() << "Friedel pairs measured: " << fr_ms.UniqueReflections << '\n';
+    //const vec3i_list empty_omits;
+    //MergeStats fr_ms = RefMerger::DryMergeInP1<RefMerger::UnitMerger>(xapp.XFile().GetRM().GetFriedelPairs(), empty_omits);
+    xapp.GetLog() << "Friedel pairs measured: " << xapp.XFile().GetRM().GetFriedelPairCount() << '\n';
     return;
   }
   bool list = Options.Contains("l"), 
