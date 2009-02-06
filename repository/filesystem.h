@@ -111,7 +111,7 @@ public:
   TFSItem& operator = (const TFSItem& FI);
   inline TFSItem& Item(int i) const {  return *Items.GetObject(i); }
   inline int Count()          const {  return Items.Count(); }
-  inline bool IsEmpty()       const {  return (Items.Count() == 0); }
+  inline bool IsEmpty()       const {  return Items.IsEmpty(); }
   TFSItem& NewItem(const olxstr& name);
   // recreates specified item in current context
   TFSItem& NewItem(TFSItem* item);
@@ -147,8 +147,7 @@ public:
 
   TFSItem* FindByName(const olxstr& Name)  const {
     int ind = Items.IndexOfComparable(Name);
-    if( ind == -1 )  return NULL;
-    return Items.GetObject(ind);
+    return (ind == -1) ? NULL : Items.GetObject(ind);
   }
 	// does a search of /parent_folder/parent_folder/file_name
   TFSItem* FindByFullName(const olxstr& Name) const;

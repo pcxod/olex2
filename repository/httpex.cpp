@@ -163,6 +163,7 @@ bool THttp::BuildRequest(const wxString& path, wxHTTP_Req req)  {
 
   wxString buf;
   buf.Printf(wxT("%s %s HTTP/1.0\n\n"), request, path.c_str());
+  // wxWidgets leaks memory here in unirun - dunno how to delete that global object!
   const wxWX2MBbuf pathbuf = wxConvLocal.cWX2MB(buf);
   Write(pathbuf, strlen(wxMBSTRINGCAST pathbuf));
   SendHeaders();

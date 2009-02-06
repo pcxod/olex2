@@ -77,7 +77,9 @@ public:
     inline double GetValue(const T& v) const {
       return ED->Data[(int)v[0]][(int)v[1]][(int)v[2]];
     }
-
+  
+  // copies the 0yz x0z and xy0 layers to Maxyz xMaxyz and xyMaxZ
+  void AdjustMap();
   void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
 
   bool Orient(TGlPrimitive *P);

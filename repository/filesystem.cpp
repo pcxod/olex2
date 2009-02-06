@@ -244,9 +244,7 @@ int TFSItem::ReadStrings(int& index, TFSItem* caller, TStrList& strings, const T
 }
 //..............................................................................
 TFSItem& TFSItem::NewItem(const olxstr& name)  {
-  TFSItem *I = new TFSItem(Index, this, &GetFileSystem(), name);
-  Items.Add(name, I);
-  return *I;
+  return *Items.Add(name, new TFSItem(Index, this, &GetFileSystem(), name)).Object();
 }
 //..............................................................................
 olxstr TFSItem::GetFullName() const  {
@@ -511,13 +509,10 @@ void TFSItem::ClearNonexisting()  {
 //..............................................................................
 void TFSItem::ClearEmptyFolders()  {
   for( int i=0; i < Count(); i++ )  {
-    if( Item(i).IsFolder() )
+    if( Item(i).IsFolder() )  {
       if( Item(i).Count() > 0 )
         Item(i).ClearEmptyFolders();
-  }
-  for( int i=0; i < Count(); i++ )  {
-    if( Item(i).IsFolder() )  {
-      if( Item(i).IsEmpty() )  {
+      if( Item(i).IsEmpty() == 0 )  {
         delete Items.Object(i);
         Items.Remove(i);
         i--;
