@@ -665,6 +665,21 @@ void TXGrid::RescaleSurface()  {
   }
 }
 //..............................................................................
+void TXGrid::AdjustMap()  {
+  if( ED == NULL )  
+    return;
+  for( int i=0; i < MaxX; i++ )
+    for( int j=0; j < MaxY; j++ )
+        ED->Data[i][j][MaxZ] = ED->Data[i][j][0];
+  for( int i=0; i < MaxX; i++ )
+    for( int j=0; j < MaxZ; j++ )
+        ED->Data[i][MaxY][j] = ED->Data[i][0][j];
+  for( int i=0; i < MaxY; i++ )
+    for( int j=0; j < MaxZ; j++ )
+        ED->Data[MaxX][i][j] = ED->Data[0][i][j];
+  ED->Data[MaxX][MaxY][MaxZ] = ED->Data[0][0][0];
+}
+//..............................................................................
 void TXGrid::InitIso(bool v)  {
   if( !v )  {
     if( IS != NULL )  {

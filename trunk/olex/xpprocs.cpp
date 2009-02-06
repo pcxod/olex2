@@ -4318,6 +4318,7 @@ void TMainForm::macCalcVoid(TStrObjList &Cmds, const TParamList &Options, TMacro
       }
     }
   }
+  FXApp->XGrid().AdjustMap();
   //FXApp->XGrid().InitIso();
   FXApp->ShowGrid(true, EmptyString);
   TBasicApp::GetLog() << '\n';
@@ -8089,19 +8090,8 @@ void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMa
   FXApp->XGrid().SetScale( -mi.sigma*4 );
   FXApp->XGrid().SetMinVal( mi.minVal );
   FXApp->XGrid().SetMaxVal( mi.maxVal );
-  for( int i=0; i < mapX; i++ )
-    for( int j=0; j < mapY; j++ )
-      for( int k=0; k < mapZ; k++ )
-        FXApp->XGrid().SetValue(i,j,k, map.Data[i][j][k]);
-  for( int i=0; i < mapX; i++ )
-    for( int j=0; j < mapY; j++ )
-        FXApp->XGrid().SetValue(i,j,mapZ, map.Data[i][j][0]);
-  for( int i=0; i < mapX; i++ )
-    for( int j=0; j < mapZ; j++ )
-        FXApp->XGrid().SetValue(i,mapY,j, map.Data[i][0][j]);
-  for( int i=0; i < mapY; i++ )
-    for( int j=0; j < mapZ; j++ )
-        FXApp->XGrid().SetValue(mapX,i,j, map.Data[0][i][j]);
+
+  FXApp->XGrid().AdjustMap();
 
   TBasicApp::GetLog() << (olxstr("Map max val ") << olxstr::FormatFloat(3, mi.maxVal) << 
     " min val " << olxstr::FormatFloat(3, mi.minVal) << '\n');

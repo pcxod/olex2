@@ -153,7 +153,7 @@ int main(int argc, char** argv)  {
         log << "Usage: unirun [olex2_gui_dir]\n";
         log << "If no arguments provided, the system variable OLEX2_DIR will be checked first, if the variable is not set,\
                current folder will be updated\n";
-        log << "(c) Oleg V. Dolomanov 2007-2008\n";
+        log << "(c) Oleg V. Dolomanov 2007-2009\n";
         return 0;
       }
       bapp = new TBasicApp(arg << "/dummy.txt");
@@ -169,17 +169,12 @@ int main(int argc, char** argv)  {
     }
     res = 1;
   }
-  if( bapp != 0 )  {
+  if( bapp != NULL )  {
     bapp->GetLog() << "\nFinished\n";
     delete bapp;
   }
   else  {
     cout << "\nFinished\n";
-//#ifdef _UNICODE
-//    wprintf( L"\nFinished\n");
-//#else
-//    printf("\nFinished\n");
-//#endif
   }
   return res;
 }

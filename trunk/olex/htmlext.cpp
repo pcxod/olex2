@@ -1452,6 +1452,12 @@ THtmlImageCell::THtmlImageCell(wxWindow *window, wxFSFile *input,
           wxImage image(*s, wxBITMAP_TYPE_ANY);
           if( image.Ok() )
             SetImage(image);
+          else  {
+            if( mapname.IsEmpty() )
+              TBasicApp::GetLog().Error( olxstr("Invalid image"));
+            else
+              TBasicApp::GetLog().Error( olxstr("Invalid image with map: ") << mapname.c_str());
+          }
         }
       }
     }
