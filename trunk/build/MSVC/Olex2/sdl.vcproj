@@ -780,11 +780,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\sdl\sparser.h"
+				RelativePath="..\..\..\sdl\sortedlist.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\sdl\sptrlist.h"
+				RelativePath="..\..\..\sdl\sparser.h"
 				>
 			</File>
 			<File

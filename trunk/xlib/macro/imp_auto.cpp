@@ -6,12 +6,13 @@
 
 #include "integration.h"
 #include "xmacro.h"
-#include "sptrlist.h"
+#include "sortedlist.h"
 #include "beevers-lipson.h"
 #include "arrays.h"
 #include "maputil.h"
 #include "estopwatch.h"
 
+typedef SortedPtrList<TBasicAtomInfo, TPointerComparator> SortedBAIList;
 
 void XLibMacros::funATA(const TStrObjList &Cmds, TMacroError &Error)  {
   TXApp& xapp = TXApp::GetInstance();
@@ -136,17 +137,15 @@ struct Main_BaiComparator {
       return a->GetObject()->GetIndex() - b->GetObject()->GetIndex();
   }
 };
-void helper_CleanBaiList(TStrPObjList<olxstr,TBasicAtomInfo*>& list, TSPtrList<TBasicAtomInfo>& au_bais)  {
+void helper_CleanBaiList(TStrPObjList<olxstr,TBasicAtomInfo*>& list, SortedBAIList& au_bais)  {
   TXApp& xapp = TXApp::GetInstance();
   if( xapp.CheckFileType<TIns>() )  {
     TIns& ins = xapp.XFile().GetLastLoader<TIns>();
     list.Clear();   
     list.Strtok(ins.GetSfac(), ' ');
     TAtomsInfo& bai = TAtomsInfo::GetInstance();
-    for( int i=0; i < list.Count(); i++ )  { 
-      list.Object(i) = bai.FindAtomInfoBySymbol(list[i]);
-      au_bais.Add(list.Last().Object());
-    }
+    for( int i=0; i < list.Count(); i++ ) 
+      au_bais.Add( list.Object(i) = bai.FindAtomInfoBySymbol(list[i]) );
     list.QuickSort<Main_BaiComparator>();
   }
 }
@@ -155,7 +154,7 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   TXApp& xapp = TXApp::GetInstance();
   TAtomsInfo& AtomsInfo = TAtomsInfo::GetInstance();
   TStrPObjList<olxstr,TBasicAtomInfo*> sfac;
-  TSPtrList<TBasicAtomInfo> AvailableTypes;
+  SortedBAIList AvailableTypes;
   static TPtrList<TBasicAtomInfo> StandAlone;
   if( StandAlone.IsEmpty() )  {
     StandAlone.Add( &AtomsInfo.GetAtomInfo(iOxygenIndex) );
