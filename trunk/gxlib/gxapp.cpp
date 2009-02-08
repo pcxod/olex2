@@ -3291,7 +3291,7 @@ TXLattice& TGXApp::AddLattice(const olxstr& Name, const mat3d& basis)  {
 void TGXApp::InitFadeMode()  {
 }
 //..............................................................................
-void TGXApp::BuildSceneMask(FractMask& mask)  {
+void TGXApp::BuildSceneMask(FractMask& mask, double inc)  {
   TAsymmUnit& au = XFile().GetAsymmUnit();
   vec3d mn(100, 100, 100), 
         mx(-100, -100, -100),
@@ -3306,7 +3306,7 @@ void TGXApp::BuildSceneMask(FractMask& mask)  {
     if( XAtoms[i].Deleted() || !XAtoms[i].Visible() )  continue;
     if( XAtoms[i].Atom().GetAtomInfo() == iQPeakIndex )  continue;
     vec3d::UpdateMinMax(XAtoms[i].Atom().ccrd(), mn, mx);
-    atoms.AddNew( XAtoms[i].Atom().crd(), sqr(XAtoms[i].Atom().GetAtomInfo().GetRad2())+1 );
+    atoms.AddNew( XAtoms[i].Atom().crd(), sqr(XAtoms[i].Atom().GetAtomInfo().GetRad2())+inc );
   }
   mn -= 1./4;
   mx += 1./4;

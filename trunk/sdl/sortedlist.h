@@ -211,7 +211,7 @@ public:
   }
   void Delete(int ind)  {
     if( list[ind] != NULL )
-      delete list[ind]
+      delete list[ind];
     list.Delete(ind);
   }
   void SetCapacity( int cap)   {  list.SetCapacity(cap);  }

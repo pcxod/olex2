@@ -37,7 +37,7 @@ TNetwork::~TNetwork()  {
 //..............................................................................
 // sorts atoms according to the distcance from {0,0,0}
 int AtomsSortByDistance(const TSAtom* A, const TSAtom* A1)  {
-  double d = A->crd().QLength() - A1->crd().QLength();
+  const double d = A->crd().QLength() - A1->crd().QLength();
   if( d < 0 )  return -1;
   if( d > 0 )  return 1;
   return 0;
