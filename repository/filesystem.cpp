@@ -171,14 +171,16 @@ int TFSItem::ReadStrings(int& index, TFSItem* caller, TStrList& strings, const T
             }
           }
           if( skip )  {
-            index++;
-            for( int i=index+1; i < strings.Count(); i+=2 )  {
+            index+=2;
+            for( int i=index; i < strings.Count(); i+=2 )  {
               nextlevel = strings[i].LeadingCharCount('\t');
               if( nextlevel <= level )  {
                 index = i;
                 break;
               }
             }
+            if( nextlevel > level )  //reached the end
+              return 0;
             if( nextlevel < level )  
               return  nextlevel;
             continue;
