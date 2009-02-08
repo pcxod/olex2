@@ -160,21 +160,21 @@ public:
   template <class BaseClass>
     static void SortMF(ListClass& list, BaseClass& baseClassInstance,
                        int (BaseClass::*f)(const ItemClass* a, const ItemClass* b) )  {
-      Sort_MemberFunctionWrapper<BaseClass, const ItemClass*> cpm(baseClassInstance, f);
-      QuickSort(cpm, 0, list.Count()-1, list);
+      Sort_MemberFunctionWrapper<BaseClass, const ItemClass*> cmp(baseClassInstance, f);
+      QuickSort(cmp, 0, list.Count()-1, list);
     }
   template <class BaseClass>
     static void SortMF(ListClass& list, BaseClass& baseClassInstance,
                        int (BaseClass::*f)(const ItemClass* a, const ItemClass* b) const )  {
-      Sort_ConstMemberFunctionWrapper<BaseClass, const ItemClass*> cpm(baseClassInstance, f);
-      QuickSort(cpm, 0, list.Count()-1, list);
+      Sort_ConstMemberFunctionWrapper<BaseClass, const ItemClass*> cmp(baseClassInstance, f);
+      QuickSort(cmp, 0, list.Count()-1, list);
     }
   template <class BaseClass, class ListClassA>
     static void SortMF(ListClass& list, ListClassA& list1, BaseClass& baseClassInstance,
                        int (BaseClass::*f)(const ItemClass* a, const ItemClass* b) )  {
       if( list.Count() != list1.Count() )
         TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "list size mismatch");
-      Sort_MemberFunctionWrapper<BaseClass, const ItemClass*> cpm(baseClassInstance, f);
+      Sort_MemberFunctionWrapper<BaseClass, const ItemClass*> cmp(baseClassInstance, f);
       QuickSort(cmp, 0, list.Count()-1, list, list1);
     }
   template <class BaseClass, class ListClassA>
@@ -182,7 +182,7 @@ public:
                        int (BaseClass::*f)(const ItemClass* a, const ItemClass* b) const )  {
       if( list.Count() != list1.Count() )
         TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "list size mismatch");
-      Sort_ConstMemberFunctionWrapper<BaseClass, const ItemClass*> cpm(baseClassInstance, f);
+      Sort_ConstMemberFunctionWrapper<BaseClass, const ItemClass*> cmp(baseClassInstance, f);
       QuickSort(cmp, 0, list.Count()-1, list, list1);
     }
 };
@@ -341,7 +341,7 @@ public:
                        int (BaseClass::*f)(const ItemClass& a, const ItemClass& b) const )  {
       if( list.Count() != list1.Count() )
         TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "list size mismatch");
-      Sort_ConstMemberFunctionWrapper<BaseClass, const ItemClass&> cmp(basiClassInstance, f);
+      Sort_ConstMemberFunctionWrapper<BaseClass, const ItemClass&> cmp(baseClassInstance, f);
       QuickSort(cmp, 0, list.Count()-1, list, list1);
     }
   template <class BaseClass, class ListClassA>
@@ -349,7 +349,7 @@ public:
                        int (BaseClass::*f)(const ItemClass& a, const ItemClass& b) )  {
       if( list.Count() != list1.Count() )
         TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "list size mismatch");
-      Sort_MemberFunctionWrapper<BaseClass, const ItemClass&> cmp(basiClassInstance, f);
+      Sort_MemberFunctionWrapper<BaseClass, const ItemClass&> cmp(baseClassInstance, f);
       QuickSort(cmp, 0, list.Count()-1, list, list1);
     }
 };
@@ -518,7 +518,7 @@ public:
                        int (BaseClass::*f)(const ItemClass& a, const ItemClass& b) const )  {
       if( list.Count() != list1.Count() )
         TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "list size mismatch");
-      ConstMemberFunctionWrapper<BaseClass, const ItemClass&> cmp(baseClassInstance, f);
+      Sort_ConstMemberFunctionWrapper<BaseClass, const ItemClass&> cmp(baseClassInstance, f);
       QuickSort(cmp, 0, list.Count()-1, list, list1);
     }
   template <class BaseClass, class ListClassA>
