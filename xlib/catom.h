@@ -171,7 +171,7 @@ public:
 //..............................................................................
 class TCAtomPComparator  {
 public:
-  static int Compare(TCAtom* a1, TCAtom* a2)  {
+  static int Compare(const TCAtom* a1, const TCAtom* a2)  {
     if( a1->GetFragmentId() != a2->GetFragmentId() )  return a1->GetFragmentId() - a2->GetFragmentId();
     if( a1->GetResiId() != a2->GetResiId() )          return a1->GetResiId() - a2->GetResiId();
     // asc sort by label

@@ -27,7 +27,7 @@
 #include "typelist.h"
 #include "egc.h"
 #include "xmacro.h"
-#include "sptrlist.h"
+#include "sortedlist.h"
 
 #undef AddAtom
 #undef GetObject
@@ -64,7 +64,7 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
   TAtomsInfo& atomsInfo = TAtomsInfo::GetInstance();
   TStrList Toks, InsFile(FileContent);
   for( int i=0; i < InsFile.Count(); i++ )  // heh found it
-    InsFile[i] = InsFile[i].Trim(' ');
+    InsFile[i] = InsFile[i].Trim(' ').Trim('\0');
   InsFile.CombineLines('=');
   TBasicAtomInfo& baiQPeak = atomsInfo.GetAtomInfo(iQPeakIndex);
   cx.Resi = &GetAsymmUnit().GetResidue(-1);
@@ -1513,7 +1513,7 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
       rm.GetFrag(i).ToStrings(SL);
   }
   else  {
-    TSPtrList<Fragment> saved; 
+    SortedPtrList<Fragment, TPointerComparator> saved; 
     for( int i=0; i < atoms->Count(); i++ )  {
       const int m = TAfixGroup::GetM( (*atoms)[i]->GetAfix() );
       if( m < 17 )  continue;
