@@ -512,7 +512,7 @@ void TFSItem::ClearEmptyFolders()  {
     if( Item(i).IsFolder() )  {
       if( Item(i).Count() > 0 )
         Item(i).ClearEmptyFolders();
-      if( Item(i).IsEmpty() == 0 )  {
+      if( Item(i).IsEmpty() )  {
         delete Items.Object(i);
         Items.Remove(i);
         i--;
