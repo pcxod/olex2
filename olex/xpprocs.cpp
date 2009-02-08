@@ -8041,7 +8041,8 @@ void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMa
 // scale type
   static const short stSimple     = 0x0001,
                      stRegression = 0x0002;
-  double resolution = Options.FindValue("r", "0.25").ToDouble();
+  double resolution = Options.FindValue("r", "0.25").ToDouble(), 
+    maskInc = 1.0;
   if( resolution < 0.1 )  resolution = 0.1;
   resolution = 1./resolution;
   short mapType = SFUtil::mapTypeCalc;
@@ -8051,6 +8052,9 @@ void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMa
     mapType = SFUtil::mapTypeObs;
   else if( Options.Contains("diff") )
     mapType = SFUtil::mapTypeDiff;
+  olxstr strMaskInc = Options.FindValue("m");
+  if( !strMaskInc.IsEmpty() )
+    maskInc = strMaskInc.ToDouble();
   TRefList refs;
   TArrayList<compd > F;
   olxstr err( SFUtil::GetSF(refs, F, mapType, 
@@ -8092,7 +8096,12 @@ void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMa
   FXApp->XGrid().SetScale( -mi.sigma*4 );
   FXApp->XGrid().SetMinVal( mi.minVal );
   FXApp->XGrid().SetMaxVal( mi.maxVal );
-
+  // copy map
+  float*** XData = FXApp->XGrid().Data()->Data;
+  for( int i=0; i < mapX; i++ )
+    for( int j=0; j < mapY; j++ )
+      for( int k=0; k < mapZ; k++ )
+        XData[i][j][k] = map.Data[i][j][k]; 
   FXApp->XGrid().AdjustMap();
 
   TBasicApp::GetLog() << (olxstr("Map max val ") << olxstr::FormatFloat(3, mi.maxVal) << 
@@ -8100,11 +8109,19 @@ void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMa
   // map integration
   if( Options.Contains('i') )  {
     TArrayList<MapUtil::peak> Peaks;
-    MapUtil::Integrate<float>(map.Data, mapX, mapY, mapZ, mi.minVal, mi.maxVal, mi.sigma, Peaks);
+    TTypeList<MapUtil::peak> MergedPeaks;
+    smatd_list ml;
+    vec3d norm(1./mapX, 1./mapY, 1./mapZ);
+    sg->GetMatrices(ml, mattAll^mattIdentity);
+    MapUtil::Integrate<float>(map.Data, mapX, mapY, mapZ, mi.minVal, mi.maxVal, mi.sigma, 1./resolution, Peaks);
+    MapUtil::MergePeaks(ml, au.GetCellToCartesian(), norm, Peaks, MergedPeaks);
+    MergedPeaks.QuickSorter.SortSF(MergedPeaks, MapUtil::PeakSortBySum);
     int PointCount = mapX*mapY*mapZ;
-    for( int i=0; i < Peaks.Count(); i++ )  {
-      const MapUtil::peak& peak = Peaks[i];
-      if( peak.count >= 64 )  {
+    int minR = Round((3*1.5/(4*M_PI))*resolution);  // at least 1.5 A^3
+    int minPointCount = Round(SphereVol(minR));
+    for( int i=0; i < MergedPeaks.Count(); i++ )  {
+      const MapUtil::peak& peak = MergedPeaks[i];
+      if( peak.count >= minPointCount )  {
         vec3d cnt((double)peak.x/mapX, (double)peak.y/mapY, (double)peak.z/mapZ); 
         double pv = (double)peak.count*vol/PointCount;
         double ed = peak.summ/(pv*218);
@@ -8130,12 +8147,12 @@ void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMa
     au.InitData();
     FXApp->XFile().EndUpdate();
   }  // integration
-  FractMask* fm = new FractMask;
   if( Options.Contains("m") )  {
-    FXApp->BuildSceneMask(*fm);
+    FractMask* fm = new FractMask;
+    FXApp->BuildSceneMask(*fm, maskInc);
     FXApp->XGrid().SetMask(*fm);
   }
-  FXApp->XGrid().InitIso(false);
+  //FXApp->XGrid().InitIso(false);
   FXApp->ShowGrid(true, EmptyString);
 }
 //..............................................................................

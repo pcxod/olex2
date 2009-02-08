@@ -186,10 +186,9 @@ void TAsymmUnit::InitData()  {
   // init QPeak intensities
   MaxQPeak = -1000;
   MinQPeak = 1000;
-  double qpeak;
   for( int i =0; i < AtomCount(); i++ )  {
-    if( CAtoms[i]->GetAtomInfo() == iQPeakIndex )  {
-      qpeak = CAtoms[i]->GetQPeak();
+    if( !CAtoms[i]->IsDeleted() && CAtoms[i]->GetAtomInfo() == iQPeakIndex )  {
+      const double qpeak = CAtoms[i]->GetQPeak();
       if( qpeak < MinQPeak )  MinQPeak = qpeak;
       if( qpeak > MaxQPeak )  MaxQPeak = qpeak;
     }

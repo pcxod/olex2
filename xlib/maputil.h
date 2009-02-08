@@ -28,7 +28,7 @@ protected:
       return false;
     }
   };
-  template <typename FloatT> static void peak_search( FloatT*** const data, int mapX, int mapY, int mapZ,
+  template <typename MapT> static void peak_search(MapT*** const data, int mapX, int mapY, int mapZ,
     const TArray3D<bool>& Mask, const TPtrList< TTypeList<level> >& SphereMask, TArrayList<peak>& maxima)  {
       bool*** const mask = Mask.Data;
       int lev = 1;
@@ -70,10 +70,10 @@ protected:
 
 public:
   // a simple map integration, considering the peaks and holes as spheres
-  template <typename FloatT> static void Integrate(FloatT*** const map, int mapX, int mapY, int mapZ, 
-    FloatT mapMin, FloatT mapMax, FloatT mapSig, TArrayList<MapUtil::peak>& Peaks)  {
+  template <typename MapT, typename FloatT> static void Integrate(MapT*** const map, int mapX, int mapY, int mapZ, 
+    FloatT mapMin, FloatT mapMax, FloatT mapSig, FloatT resolution, TArrayList<MapUtil::peak>& Peaks)  {
     TPtrList< TTypeList<level> > SphereMask;
-    const int maxLevel = 11;
+    const int maxLevel = Round(2./resolution);
     for( int l=0; l < maxLevel; l++ )
       SphereMask.Add( new TTypeList<level> );
 
@@ -81,7 +81,7 @@ public:
       for( int y=-maxLevel+1; y < maxLevel; y++ )  {
         for( int z=-maxLevel+1; z < maxLevel; z++ )  {
           int r = Round(sqrt((double)(x*x + y*y + z*z)));
-          if( r < 11 && r > 0 )  // skip 0
+          if( r < maxLevel && r > 0 )  // skip 0
             SphereMask[r]->AddNew(x,y,z);
         }
       }
@@ -89,7 +89,7 @@ public:
     // eliminate duplicate indexes
     for( int i=0; i < maxLevel; i++ )  {
       TTypeList<level>& l1 = *SphereMask[i];
-      for( int j= i+1; j < 11; j++ )  {
+      for( int j= i+1; j < maxLevel; j++ )  {
         TTypeList<level>& l2 = *SphereMask[j];
         for( int k=0; k < l1.Count(); k++ )  {
           if( l1.IsNull(k) )  continue;
@@ -171,8 +171,8 @@ public:
     }
     //int PointCount = mapX*mapY*mapZ;
     peak_search(map, mapX, mapY, mapZ, Mask, SphereMask, Peaks);
-    for( int level=0; level < maxLevel; level++ )
-      delete SphereMask[level];
+    for( int i=0; i < maxLevel; i++ )
+      delete SphereMask[i];
   }
   /* Calculates the deepest hole and its fractional coordinates, initialising the map with 'levels'
   expects a map with structure points marked as negative values and the rest - 0
@@ -224,6 +224,81 @@ public:
         level ++;
       }
       return MaxLevel;
+  }
+  static int PeakSortByCount(const MapUtil::peak& a, const MapUtil::peak& b)  {
+    return b.count - a.count;
+  }
+  static int PeakSortBySum(const MapUtil::peak& a, const MapUtil::peak& b)  {
+    double diff = b.summ - a.summ;
+    return diff < 0 ? -1 : (diff > 0 ? 1 : 0); 
+  }
+protected:
+  static int SortByDistance(const vec3d& a, const vec3d& b)  {
+    const double d = a.QLength() - b.QLength();
+    return d < 0 ? -1 : (d > 0 ? 1 : 0);
+  }
+  static void StandardiseVec(vec3d& v, const smatd_list& ml)  {
+    vec3d tmp;
+    for( int i=0; i < ml.Count(); i++ )  {
+      tmp = ml[i]*v;
+      for( int j=0; j < 3; j++ )  {
+        while( tmp[j] < 0 )  tmp[j] += 1.0;
+        while( tmp[j] > 1.0 )  tmp[j] -= 1.0;
+      }
+      if( (tmp[0] < v[0]) ||        // sdandardise then ...
+          ( olx_abs(tmp[0]-v[0]) < 1e-5 && (tmp[1] < v[1])) ||
+          (olx_abs(tmp[0]-v[0]) < 1e-5 && olx_abs(tmp[1]-v[1]) < 1e-5 && (tmp[2] < v[2])) )    {
+          v = tmp;
+      }
+    }
+  }
+public:
+  static void MergePeaks(const smatd_list& ml, const mat3d& cell2cart, const vec3d& norm, TArrayList<MapUtil::peak>& Peaks, TTypeList<MapUtil::peak>& out)  {
+    const int cnt = Peaks.Count();
+    TTypeList<vec3d> crds;
+    mat3d cart2cell = cell2cart.Inverse();
+    crds.SetCapacity(cnt);
+    for( int i=0; i < cnt; i++ )  {
+      crds.AddNew(Peaks[i].x, Peaks[i].y, Peaks[i].z) *= norm;
+      Peaks[i].process = true;
+    }
+    
+    for( int i=0; i < cnt; i++ )  {
+      StandardiseVec(crds[i], ml);
+      crds[i] *= cell2cart;
+    }
+    crds.QuickSorter.SyncSortSF(crds, Peaks, SortByDistance);
+    double* Distances = new double[ cnt + 1];
+    TPtrList<MapUtil::peak> toMerge;
+    for( int i=0; i < cnt; i++ )
+      Distances[i] = crds[i].Length();
+    for( int i=0; i < cnt; i++ )  {
+      if( !Peaks[i].process )  continue;
+      toMerge.Clear();
+      toMerge.Add( &Peaks[i] ); 
+      vec3d center(crds[i]);
+      for( int j=i+1; j < cnt; j++ )  {
+        if( olx_abs(Distances[i]-Distances[j]) > 0.01 )  break;
+        if( !Peaks[j].process )  continue;
+        if( crds[i].QDistanceTo(crds[j]) < 0.0001 )  {
+          toMerge.Add( &Peaks[j] );
+          center += crds[j];
+          Peaks[j].process = false;
+        }
+      }
+      MapUtil::peak& p = out.AddNew();
+      for( int j=0; j < toMerge.Count(); j++ )  {
+        p.count += toMerge[j]->count;
+        p.summ += toMerge[j]->summ;
+      }
+      center /= toMerge.Count();
+      center *= cart2cell;
+      center /= norm;
+      p.x = Round(center[0]);
+      p.y = Round(center[1]);
+      p.z = Round(center[2]);
+    }
+    delete [] Distances;
   }
 };
 

@@ -621,7 +621,7 @@ void XLibMacros::funFATA(const TStrObjList &Cmds, TMacroError &E)  {
   // map integration
   TArrayList<MapUtil::peak> Peaks;
   sw.start("Integrating P1 map: ");
-  MapUtil::Integrate<float>(map.Data, mapX, mapY, mapZ, mi.minVal, mi.maxVal, mi.sigma, Peaks);
+  MapUtil::Integrate<float>(map.Data, mapX, mapY, mapZ, mi.minVal, mi.maxVal, mi.sigma, 1./resolution, Peaks);
   sw.stop();
   int PointCount = mapX*mapY*mapZ;
   int minR = Round((3*1.5/(4*M_PI))*resolution);  // at least 1.5 A^3
@@ -648,16 +648,20 @@ void XLibMacros::funFATA(const TStrObjList &Cmds, TMacroError &E)  {
     continue;
   }
   double minEd = mi.sigma*3;
+  int found_cnt = 0;
   for( int i=0; i < atoms.Count(); i++ )  {
     if( atoms[i].GetC() != 0 )  {
       double ed = atoms[i].GetB() / atoms[i].GetC();  
       if( olx_abs(ed) < minEd )  continue;
-      TBasicApp::GetLog() << (olxstr("Atom type under consideration ") << atoms[i].GetA()->GetLabel() << 
-          (ed < 0 ? olxstr(ed) : olxstr("+") << ed) << '\n');
+      TBasicApp::GetLog() << (olxstr("Atom type under consideration ") << atoms[i].GetA()->GetLabel() << ": "
+          << (ed < 0 ? olxstr(ed) : olxstr("+") << ed) << '\n');
+      found_cnt++;
     }
 
   }
   sw.print( xapp.GetLog(), &TLog::Info );
+  if( found_cnt == 0 )  
+    TBasicApp::GetLog() << "No problems were found\n";
   E.SetRetVal(false);
   //au.InitData();
 //  xapp.XFile().EndUpdate();

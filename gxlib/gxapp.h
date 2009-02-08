@@ -445,8 +445,8 @@ public:     void CalcProbFactor(float Prob);
   void CenterModel();
 
   void CenterView(bool calcZoom = false);
-  // creates a mask of visible scene
-  void BuildSceneMask(FractMask& mask);
+  // creates a mask of visible scene, Inc is the extra added to atomic Van-der-Waals radii
+  void BuildSceneMask(FractMask& mask, double Inc);
 //..............................................................................
 // X interface
   void BangList(TXAtom *A, TStrList &L);
