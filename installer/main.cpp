@@ -319,7 +319,8 @@ void __fastcall TfMain::bbInstallClick(TObject *Sender)  {
       Settings.SaveSettings( set_fn );
   }
   catch( const TExceptionBase& exc )  {
-    Application->MessageBox(exc.GetException()->GetFullMessage().c_str(), "Exception", MB_OK|MB_ICONERROR);
+    Application->MessageBox("The installation has failed. If using online installation please check, that\
+your computers is online.", "Installation failed", MB_OK|MB_ICONERROR);
   }
   OlexInstalled = CheckOlexInstalled( OlexInstalledPath );
   if( OlexInstalled )  {
