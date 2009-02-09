@@ -14,6 +14,7 @@ TWinHttpFileSystem::TWinHttpFileSystem(const TUrl& url): Url(url){
   if( !Successful )
     throw TFunctionFailedException(__OlxSourceInfo, "could not initialise winsocks");
   SetBase( url.GetPath() );
+  Connected = false;
   Connect();
 }
 //..............................................................................
