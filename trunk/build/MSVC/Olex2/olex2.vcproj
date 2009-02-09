@@ -246,6 +246,7 @@
 				GenerateManifest="true"
 				IgnoreAllDefaultLibraries="false"
 				IgnoreDefaultLibraryNames=""
+				DelayLoadDLLs="python25.dll"
 				GenerateDebugInformation="true"
 				AssemblyDebug="1"
 				SubSystem="2"

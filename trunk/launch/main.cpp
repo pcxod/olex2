@@ -220,6 +220,22 @@ __fastcall TdlgMain::~TdlgMain()
 //---------------------------------------------------------------------------
 void TdlgMain::Launch()
 {
+  // modify th epath to set the basedir to the basedir, so that correct python25.dll is loaded
+  char* bf = new char [1024];
+  bf[0] = '\0';
+  int rv = GetEnvironmentVariable("PATH", bf, 1024);
+  if( rv > 1024 )  {
+    delete [] bf;
+    bf = new char [rv+1];
+    rv = GetEnvironmentVariable("PATH", bf, rv+1);
+  }
+  olxstr path(bf), bd = TBasicApp::GetInstance()->BaseDir();
+  delete [] bf;
+  path.Insert(bd.SubStringTo(bd.Length()-1) + ';', 0);
+  SetEnvironmentVariable("PATH", path.c_str());
+  olxstr py_path = TBasicApp::GetInstance()->BaseDir() + "util\\pyUtil\\PythonLib";
+  SetEnvironmentVariable("PYTHONHOME", py_path.c_str());
+
   STARTUPINFO si;
   PROCESS_INFORMATION ProcessInfo;
   AnsiString Tmp;
