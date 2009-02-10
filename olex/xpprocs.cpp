@@ -3562,7 +3562,10 @@ void TMainForm::macMode(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   static bool ChangingMode = false;
   if( ChangingMode )  return;
   AMode *md = Modes->SetMode( Cmds[0] );
-  CallbackFunc(OnModeChangeCBName, Cmds);
+  olxstr cmds = Cmds.Text(' ');
+  for( int i=0; i < Options.Count(); i++ )
+    cmds << " -" << Options.GetName(i) << '=' << Options.GetValue(i);
+  CallbackFunc(OnModeChangeCBName, cmds);
   if( md != NULL )  {
     Cmds.Delete(0);
     md->Init(Cmds, Options);
