@@ -22,6 +22,7 @@
 #include "crs.h"
 #include "pdb.h"
 #include "xdmas.h"
+#include "oxmfile.h"
 #include "datafile.h"
 #include "wxzipfs.h"
 
@@ -199,6 +200,7 @@ bool TGlXApp::OnInit()  {
   XApp->RegisterXFileFormat(new TCRSFile, "crs");
   XApp->RegisterXFileFormat(new TPdb, "pdb");
   XApp->RegisterXFileFormat(new TXDMas, "mas");
+  XApp->RegisterXFileFormat(new TOXMFile(*XApp), "oxm");
 
   // set backgrownd color of the GlRender
   XApp->ClearColor(0x3f3f3f);

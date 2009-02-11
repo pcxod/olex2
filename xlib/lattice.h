@@ -81,6 +81,9 @@ public:
   // generates atoms within specified volume
   void Generate(const vec3d& MFrom, const vec3d& MTo, TCAtomPList* Template,
     bool ClearCont, bool IncludeQ);
+  // generates atoms within sphere volume at center
+  void Generate(const vec3d& center, double rad, TCAtomPList* Template,
+    bool ClearCont, bool IncludeQ);
   // checks if the data alreade have been generated
   inline bool IsGenerated() const  {  return Generated;  }
 

@@ -1560,7 +1560,7 @@ void TMainForm::macPack(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     }
   }
 
-  if( number_count != 0 && number_count != 6 )  {
+  if( number_count != 0 && !(number_count == 6 || number_count == 1) )  {
     Error.ProcessingError(__OlxSrcInfo, "please provide 6 numbers" );
     return;
   }
@@ -1568,14 +1568,22 @@ void TMainForm::macPack(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   bool ClearCont = !Options.Contains("c");
   bool IncludeQ = Options.Contains("q");
   TCAtomPList TemplAtoms;
-  if( Cmds.Count() != 0 )
+  if( !Cmds.IsEmpty() )
     FXApp->FindCAtoms(Cmds.Text(' '), TemplAtoms);
 
   int64_t st = TETime::msNow();
-  if( TemplAtoms.Count() != 0 )
-    FXApp->Generate(From, To, &TemplAtoms, ClearCont, IncludeQ);
-  else
-    FXApp->Generate(From, To, NULL, ClearCont, IncludeQ);
+  if( number_count == 6 )
+    FXApp->Generate(From, To, TemplAtoms.IsEmpty() ? NULL : &TemplAtoms, ClearCont, IncludeQ);
+  else  {
+    TXAtomPList xatoms;
+    FindXAtoms(Cmds, xatoms, true, true);
+    vec3d cent;
+    for( int i=0; i < xatoms.Count(); i++ )
+      cent += xatoms[i]->Atom().ccrd();
+    if( !xatoms.IsEmpty() )
+      cent /= xatoms.Count();
+    FXApp->Generate(cent, From[0], TemplAtoms.IsEmpty() ? NULL : &TemplAtoms, ClearCont, IncludeQ);
+  }
 
   TBasicApp::GetLog().Info( olxstr(FXApp->XFile().GetLattice().AtomCount()) << " atoms and " <<
      FXApp->XFile().GetLattice().BondCount() << " bonds generated in " <<
@@ -4579,6 +4587,13 @@ olxstr macSel_GetName4(const TSAtom& a1, const TSAtom& a2, const TSAtom& a3, con
 olxstr macSel_GetName4a(const TSAtom& a1, const TSAtom& a2, const TSAtom& a3, const TSAtom& a4)  {
   return olxstr(a1.GetGuiLabel()) << '-' << a2.GetGuiLabel() << ' ' << a3.GetGuiLabel() << '-' << a4.GetGuiLabel();
 }
+olxstr macSel_GetPlaneName(const TSPlane& p)  {
+  if( p.Count() == 0 )  return EmptyString;
+  olxstr rv(p.GetAtom(0).GetGuiLabel());
+  for( int i=1; i < p.Count(); i++ )
+    rv << ' ' << p.GetAtom(i).GetGuiLabel();
+  return rv;
+}
 void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   if( Options.Count() == 0 )  {  // print labels of selected atoms
     olxstr Tmp("sel");
@@ -4697,11 +4712,19 @@ void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError
       }
       if( EsdlInstanceOf(*Sel->Object(1), TXPlane) &&
           EsdlInstanceOf(*Sel->Object(0), TXPlane) )  {
+        TSPlane &a = ((TXPlane*)Sel->Object(0))->Plane(),
+                &b = ((TXPlane*)Sel->Object(1))->Plane();
         Tmp = "Angle (plane-plane): ";
-        v = ((TXPlane*)Sel->Object(0))->Plane().Angle(((TXPlane*)Sel->Object(1))->Plane());
+        v = a.Angle(b);
         TBasicApp::GetLog() << ( Tmp << olxstr::FormatFloat(3, v) << '\n');
         Tmp = "Distance (plane centroid-plane centroid): ";
-        v = ((TXPlane*)Sel->Object(0))->Plane().Center().DistanceTo(((TXPlane*)Sel->Object(1))->Plane().Center());
+        v = a.Center().DistanceTo(b.Center());
+        TBasicApp::GetLog() << ( Tmp << olxstr::FormatFloat(3, v) << '\n');
+        (Tmp = "Distance ") << macSel_GetPlaneName(a) << " to another plane centroid: ";
+        v = a.DistanceTo(b.Center());
+        TBasicApp::GetLog() << ( Tmp << olxstr::FormatFloat(3, v) << '\n');
+        (Tmp = "Distance ") << macSel_GetPlaneName(b) << " to another plane centroid: ";
+        v = b.DistanceTo(a.Center());
         TBasicApp::GetLog() << ( Tmp << olxstr::FormatFloat(3, v) << '\n');
         return;
       }
@@ -4805,8 +4828,9 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   }
   else  {
     FN = PickFile("Open File",
-        olxstr("All supported files|*.ins;*.cif;*res;*.mol;*.xyz;*.p4p;*.mas;*.crs;*pdb;*.fco;*.fcf;*.hkl")  <<
+        olxstr("All supported files|*.ins;*.cif;*res;*.mol;*.xyz;*.p4p;*.mas;*.crs;*pdb;*.fco;*.fcf;*.hkl;*.oxm")  <<
           "|INS files (*.ins)|*.ins"  <<
+          "|Olex2 model files (*.oxm)|*.oxm"  <<
           "|CIF files (*.cif)|*.cif" <<
           "|MDL MOL files (*.mol)|*.mol" <<
           "|XYZ files (*.xyz)|*.xyz" <<
@@ -8740,10 +8764,14 @@ void TMainForm::macEsd(TStrObjList &Cmds, const TParamList &Options, TMacroError
           p2.Add( &xp2->Plane().Atom(i) );
           pld2 << p2.Last()->GetLabel() << ' ';
         }
-        TBasicApp::GetLog() << (olxstr("Plane ") << pld1 << "to plane " << pld2<< "angle: " <<
+        TBasicApp::GetLog() << (olxstr("Plane ") << pld1 << "to plane another plane angle: " <<
           vcovc.CalcP2PAngle(p1, p2).ToString() << '\n' );
-        TBasicApp::GetLog() << (olxstr("Plane ") << pld1 << "centroid to plane " << pld2 << "centroid distance: " <<
+        TBasicApp::GetLog() << (olxstr("Plane ") << pld1 << "centroid to another plane centroid distance: " <<
           vcovc.CalcPC2PCDistance(p1, p2).ToString() << '\n' );
+        TBasicApp::GetLog() << (olxstr("Plane ") << pld1 << " to another plane centroid distance: " <<
+          vcovc.CalcP2PCDistance(p1, p2).ToString() << '\n' );
+        TBasicApp::GetLog() << (olxstr("Plane ") << pld2 << " to another plane centroid distance: " <<
+          vcovc.CalcP2PCDistance(p2, p1).ToString() << '\n' );
       }
     }
     else if( sel.Count() == 3 )  {

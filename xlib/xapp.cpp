@@ -81,7 +81,10 @@ bool TXApp::CheckProgramState(unsigned int specialCheck)  {
  if( specialCheck & psFileLoaded )
    return XFile().HasLastLoader();
  else if( specialCheck & psCheckFileTypeIns )
-   return (!XFile().HasLastLoader()) ? false : EsdlInstanceOf(*XFile().LastLoader(), TIns);
+   return (!XFile().HasLastLoader()) ? false : (
+   EsdlInstanceOf(*XFile().LastLoader(), TIns) || 
+   XFile().LastLoader()->IsNative()
+   );
  else if( specialCheck & psCheckFileTypeP4P )
    return (!XFile().HasLastLoader()) ? false : EsdlInstanceOf(*XFile().LastLoader(), TP4PFile);
  else if( specialCheck & psCheckFileTypeCRS )

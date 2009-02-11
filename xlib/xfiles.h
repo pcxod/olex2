@@ -35,8 +35,10 @@ public:
 
   virtual void SaveToStrings(TStrList& Strings) = 0;
   virtual void LoadFromStrings(const TStrList& Strings) = 0;
-  void SaveToFile(const olxstr &A);
-  void LoadFromFile(const olxstr &A);
+  virtual void SaveToFile(const olxstr &A);
+  virtual void LoadFromFile(const olxstr &A);
+  // only oxm loader is native
+  virtual bool IsNative() const {  return false;  }
   // adopts the content of the AsemmUnit to the virtual format
   virtual bool Adopt(class TXFile *) = 0;
   virtual void DeleteAtom(TCAtom *A) = 0;

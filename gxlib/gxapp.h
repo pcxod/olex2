@@ -269,6 +269,9 @@ public:
   void Generate( const vec3d &From, const vec3d &To,
     TCAtomPList* Template, bool ClearPrevCont, bool IncludeQ)
   {    FXFile->GetLattice().Generate(From, To, Template, ClearPrevCont, IncludeQ);  }
+  void Generate( const vec3d& center, double rad,
+    TCAtomPList* Template, bool ClearPrevCont, bool IncludeQ)
+  {    FXFile->GetLattice().Generate(center, rad, Template, ClearPrevCont, IncludeQ);  }
   void Uniq(bool remEqs=false)  {    FXFile->GetLattice().Uniq(remEqs);  }
   void GrowFragments(bool Shell, TCAtomPList* Template=NULL)
   {    FXFile->GetLattice().GrowFragments(Shell, Template);  }

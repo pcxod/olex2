@@ -137,21 +137,15 @@ void TXFile::LoadFromFile(const olxstr & FN) {
     throw TFunctionFailedException(__OlxSourceInfo, exc.Replicate() );
   }
 
-  OnFileLoad->Enter(this, &FN);
-  
-  GetRM().ClearAll();
-  GetLattice().Clear(true);
-  GetRM().Assign(Loader->GetRM(), true);
-  GetLattice().Init();
+  if( !Loader->IsNative() )  {
+    OnFileLoad->Enter(this, &FN);
+    GetRM().ClearAll();
+    GetLattice().Clear(true);
+    GetRM().Assign(Loader->GetRM(), true);
+    GetLattice().Init();
+    OnFileLoad->Exit(this);
+  }
   FSG = TSymmLib::GetInstance()->FindSG(Loader->GetAsymmUnit());
-  // a hint by Ilia
-  //if( FSG != NULL && !FSG->IsCentrosymmetric() )  {
-  //  if( GetRM().GetBASF().IsEmpty() )
-  //    GetRM().AddBASF(0.2);
-  //  if( !GetRM().HasTWIN() )
-  //    GetRM().SetTWIN_n(2);
-  //}
-  OnFileLoad->Exit(this);
   if( replicated )  {
     for( int i=0; i < FileFormats.Count(); i++ )
       if( FileFormats.Object(i) == FLastLoader )
@@ -212,15 +206,16 @@ void TXFile::SaveToFile(const olxstr & FN, bool Sort)  {
   TBasicCFile *Loader = FindFormat(Ext);
 
   TBasicCFile *LL = FLastLoader;
-
-  if( LL != Loader )  {
-    if( !Loader->Adopt(this) )
-      throw TFunctionFailedException(__OlxSourceInfo, "could not adopt specified file format");
+  if( !Loader->IsNative() )  {
+    if( LL != Loader ) {
+      if( !Loader->Adopt(this) )
+        throw TFunctionFailedException(__OlxSourceInfo, "could not adopt specified file format");
+    }
+    else 
+      UpdateAsymmUnit();
+    if( Sort )  
+      Loader->GetAsymmUnit().Sort();
   }
-  else  {
-    UpdateAsymmUnit();
-  }
-  if( Sort )  Loader->GetAsymmUnit().Sort();
   OnFileSave->Enter(this);
   IEObject* Cause = NULL;
   try  {  Loader->SaveToFile(FN);  }
@@ -260,6 +255,9 @@ void TXFile::FromDataItem(TDataItem& item) {
   GetRM().ClearAll();
   GetLattice().FromDataItem( item.FindRequiredItem("Lattice"));
   GetRM().FromDataItem(item.FindRequiredItem("RefModel"));
+  //if( FLastLoader != NULL )  {
+  //  FLastLoader->
+  //}
 }
 //..............................................................................
 //..............................................................................

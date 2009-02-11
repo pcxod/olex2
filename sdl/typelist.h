@@ -290,6 +290,8 @@ public:
     List.Delete(index);
     return *v;
   }
+  // the memory has to be delalocated by calling process
+  void ReleaseAll()  {  List.Clear();  }
 //..............................................................................
   void Remove(const T& Obj)  {
     int ind = IndexOf(Obj);

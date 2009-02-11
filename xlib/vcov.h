@@ -217,6 +217,22 @@ protected:
     _calcPlane<2>(p2);
     return acos(plane_param1.CAngle(plane_param2))*180.0/M_PI;
   }
+  // plane to plane centroid distance
+  double _calcP2PCDistance(const vec3d_alist& points, int fpc)  {
+    vec3d_alist p1(fpc);
+    vec3d crd;
+    for( int i=0; i < points.Count(); i++ )  {
+      if( i < fpc )
+        p1[i] = points[i];
+      else
+        crd += points[i];
+    }
+    crd /= (points.Count()-fpc);
+    _calcPlane<1>(p1);
+    double d = plane_param1.DotProd(plane_center1)/plane_param1.Length();
+    plane_param1.Normalise();
+    return crd.DotProd(plane_param1) - d;
+  }
   // plane to bond angle in degrees
   double _calcP2BAngle(const vec3d_alist& points)  {
     vec3d_alist p1(points.Count()-2);
@@ -565,6 +581,15 @@ public:
     TSAtomPList atoms(p1);
     atoms.AddList(p2);
     return DoCalcEx(atoms, &VcoVContainer::_calcPC2PCDistance, p1.Count());
+  }
+  //plane to another centroid centroid distance
+  TEValue<double> CalcP2PCDistance(const TSAtomPList& p1, const TSAtomPList& p2) {
+    weights1.SetCount(p1.Count());
+    for( int i=0; i < p1.Count(); i++ ) 
+      weights1[i] = 1.0;
+    TSAtomPList atoms(p1);
+    atoms.AddList(p2);
+    return DoCalcEx(atoms, &VcoVContainer::_calcP2PCDistance, p1.Count());
   }
   // tetrahedron volume
   TEValue<double> CalcTetrahedronVolume(const TSAtom& a1, const TSAtom& a2, const TSAtom& a3, const TSAtom& a4) {

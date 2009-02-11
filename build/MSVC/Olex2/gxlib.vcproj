@@ -591,6 +591,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\gxlib\oxmfile.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\gxlib\wglscene.h"
 				>
 			</File>

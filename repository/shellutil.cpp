@@ -26,7 +26,7 @@
 
 //..............................................................................
 bool TShellUtil::CreateShortcut(const olxstr& ShortcutPath,
-       const olxstr& ObjectPath,const olxstr& description)  {
+       const olxstr& ObjectPath,const olxstr& description, bool AddRunAs)  {
 #ifdef __WIN32__
   HRESULT hres;
   IShellLink* psl;
@@ -45,14 +45,7 @@ bool TShellUtil::CreateShortcut(const olxstr& ShortcutPath,
     // Query IShellLink for the IPersistFile interface for saving the
     // shortcut in persistent storage.
     hres = psl->QueryInterface(IID_IPersistFile, (LPVOID*)&ppf);
-
-    if( SUCCEEDED(hres) )  {
-#if !defined(_UNICODE ) || !defined(UNICODE)
-      WCHAR wsz[MAX_PATH];
-      // Ensure that the string is Unicode.
-      MultiByteToWideChar(CP_ACP, 0, ShortcutPath.u_str(), -1, wsz, MAX_PATH);
-      // Save the link by calling IPersistFile::Save.
-      // set admin rights
+    if( AddRunAs )  {   // set admin rights
       // Look for IShellLinkDataList interface
       IShellLinkDataList* pdl;
       hres = psl->QueryInterface(IID_IShellLinkDataList, (void**)&pdl);
@@ -60,14 +53,19 @@ bool TShellUtil::CreateShortcut(const olxstr& ShortcutPath,
         DWORD dwFlags = 0;
         hres = pdl->GetFlags(&dwFlags);
         if( SUCCEEDED(hres) ) {
-          // Only set SLDF_RUNAS_USER if it's not set, otherwise
-          // SetFlags returns an error.
-          if ((SLDF_RUNAS_USER & dwFlags) != SLDF_RUNAS_USER) {
+          // Only set SLDF_RUNAS_USER if it's not set, otherwise SetFlags returns an error.
+          if ((SLDF_RUNAS_USER & dwFlags) != SLDF_RUNAS_USER)
             hres = pdl->SetFlags(SLDF_RUNAS_USER | dwFlags);
-          }
         }
         pdl->Release();
       }
+    }
+    // Save the link by calling IPersistFile::Save.
+    if( SUCCEEDED(hres) )  {
+#if !defined(_UNICODE ) || !defined(UNICODE)
+      WCHAR wsz[MAX_PATH];
+      // Ensure that the string is Unicode.
+      MultiByteToWideChar(CP_ACP, 0, ShortcutPath.u_str(), -1, wsz, MAX_PATH);
       hres = ppf->Save(wsz, TRUE);
 #else
       hres = ppf->Save(ShortcutPath.u_str(), TRUE);
