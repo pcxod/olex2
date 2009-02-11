@@ -21,11 +21,14 @@ class TLattice: public IEObject  {
 private:
   TNetwork* Network;  // for internal use only
 private:
+  /* generates matrices in volume {VFrom, VTo} and leaves only matrices, which
+  transform the center of gravity of the asymmertic unit within {MFrom, MTo} volume
+  useually VFrom = Round(MFrom), VTo = Round(VFrom)
+  */
   int GenerateMatrices(const vec3d& VFrom, const vec3d& VTo,
         const vec3d& MFrom, const vec3d& MTo);
-  // generates matrices in volume {VFrom, VTo} and leaves only matrices, which
-  //transform the center of gravity of the asymmertic unit within {MFrom, MTo} volume
-  // useually VFrom = Round(MFrom), VTo = Round(VFrom)
+  // generates matrices from -4 to 4 which generate aunit within the rad sphere
+  int GenerateMatrices(smatd_plist& Result, const vec3d& center, double rad);
   smatd_plist Matrices;    // list of all matrices
   TSAtomPList  Atoms;      // list of all atoms
   TSBondPList  Bonds;      // list of all nework nodes; some of them are equal to Atoms

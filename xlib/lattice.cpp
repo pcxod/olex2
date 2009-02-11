@@ -123,58 +123,85 @@ int TLattice::GenerateMatrices(const vec3d& VFrom, const vec3d& VTo,
 int TLattice::GenerateMatrices(smatd_plist& Result,
      const vec3d& VFrom, const vec3d& VTo,
      const vec3d& MFrom, const vec3d& MTo)  {
-  olxstr Tmp;
-  smatd *M, *M1;
-  int mstart = Result.Count();
-  vec3d Center, C;
-  Center = GetAsymmUnit().GetOCenter(true, false);
+  const int mstart = Result.Count();
+  const vec3d Center = GetAsymmUnit().GetOCenter(true, false);
 
   Result.SetCapacity( (int)(GetUnitCell().MatrixCount()*
                               (olx_abs(VTo[0]-VFrom[0])+1)*
                               (olx_abs(VTo[1]-VFrom[1])+1)*
                               (olx_abs(VTo[2]-VFrom[2])+1)) );
 
-  for( int i=0; i < GetUnitCell().MatrixCount(); i++ )  {
+  const int uc_mc = GetUnitCell().MatrixCount();
+  for( int i=0; i < uc_mc; i++ )  {
     for( int j=(int)VFrom[0]; j <= (int)VTo[0]; j++ )
       for( int k=(int)VFrom[1]; k <= (int)VTo[1]; k++ )
       for( int l=(int)VFrom[2]; l <= (int)VTo[2]; l++ )  {
-        M = new smatd(GetUnitCell().GetMatrix(i));
+        smatd* M = Result.Add(new smatd(GetUnitCell().GetMatrix(i)));
         M->SetTag(i);  // set Tag to identify the matrix (and ellipsoids) in the UnitCell
         M->t[0] += j;
         M->t[1] += k;
         M->t[2] += l;
-        Result.Add(M);
       }
   }
 
 // Analysis of matrixes: check if the center of gravity of the asymmetric unit
 // is inside the generation volume
   for( int i=mstart; i < Result.Count(); i++ )  {
-    M = Result[i];
-    C = *M * Center;
-    if( C[0] > MTo[0] || C[0] < MFrom[0])  {
+    if( !vec3d::IsInRangeInc(*Result[i]* Center, MFrom, MTo) )  {
+      delete Result[i];
       Result[i] = NULL;
-      delete M;   continue;
-    }
-    if(  C[1] > MTo[1] || C[1] < MFrom[1] )  {
-      Result[i] = NULL;
-      delete M;   continue;
-    }
-    if( C[2] > MTo[2] || C[2] < MFrom[2] )  {
-      Result[i] = NULL;
-      delete M;   continue;
     }
   }
   Result.Pack();
+  const int res_cnt = Result.Count();
   for( int i=0; i < mstart; i++ )  {  // check if al matrices are uniq
-    M = Result[i];
-    for( int j=mstart; j < Result.Count(); j++ )  {
-      M1 = Result[j];
-      if( !M1 )  continue;
+    smatd* M = Result[i];
+    if( M == NULL )  continue;
+    for( int j=mstart; j < res_cnt; j++ )  {
+      smatd* M1 = Result[j];
+      if( M1 == NULL )  continue;
       if( M1->GetTag() == M->GetTag() )  {
         if( M->t == M1->t )  {
           delete M1;
-          Result.Delete(j);
+          Result[j] = NULL;
+          break;
+        }
+      }
+    }
+  }
+  Result.Pack();
+  return Result.Count();
+}
+//..............................................................................
+int TLattice::GenerateMatrices(smatd_plist& Result, const vec3d& center, double rad)  {
+  const TAsymmUnit& au = GetAsymmUnit();
+  const vec3d cnt = au.GetOCenter(true, false);
+  const int uc_mc = GetUnitCell().MatrixCount();
+  const double qrad = rad*rad;
+  const int mstart = Result.Count();
+  for( int i=0; i < uc_mc; i++ )  {
+    for( int j=-4; j <= 4; j++ )
+      for( int k=-4; k <= 4; k++ )
+        for( int l=-4; l <= 4; l++ )  {
+          smatd m = GetUnitCell().GetMatrix(i);
+          m.t[0] += j;  m.t[1] += k;  m.t[2] += l;
+          vec3d rs = m * cnt;
+          au.CellToCartesian(rs);
+          if( center.QDistanceTo(rs) > qrad )  continue;
+          Result.Add(new smatd(m))->SetTag(i);  // set Tag to identify the matrix (and ellipsoids) in the UnitCell
+        }
+  }
+  const int res_cnt = Result.Count();
+  for( int i=0; i < mstart; i++ )  {  // check if al matrices are uniq
+    smatd* m = Result[i];
+    if( m == NULL )  continue;
+    for( int j=mstart; j < res_cnt; j++ )  {
+      smatd* m1 = Result[j];
+      if( m1 == NULL )  continue;
+      if( m1->GetTag() == m->GetTag() )  {
+        if( m->t == m1->t )  {
+          delete m1;
+          Result[j] = NULL;
           break;
         }
       }
@@ -398,16 +425,7 @@ void TLattice::Generate(const vec3d& center, double rad, TCAtomPList* Template,
     TBasicApp::GetLog().Error("TLattice:: Asymmetric unit contains symmetrical equivalents.");
     return;
   }
-  smatd_list to_skip;
-  to_skip.SetCapacity( Matrices.Count() );
-  for( int i=0; i < Matrices.Count(); i++ )
-    to_skip.AddNew( *Matrices[i] );
-  smatd_list* transforms = GetUnitCell().GetInRangeEx(center, center, rad, false, to_skip);
-  if( transforms == NULL )  return;
-  for( int i=0; i < transforms->Count(); i++ )
-    Matrices.Add( &(*transforms)[i] );
-  transforms->ReleaseAll();
-  delete transforms;
+  GenerateMatrices(Matrices, center, rad);
   OnStructureGrow->Enter(this);
   Generate(Template, ClearCont, IncludeQ);
   OnStructureGrow->Exit(this);
