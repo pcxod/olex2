@@ -1098,6 +1098,10 @@ void TLattice::Compaq()  {
   }
 }
 //..............................................................................
+int TLattice_CompaqAllSort(const AnAssociation2<double, smatd*>& a, const AnAssociation2<double, smatd*>& b)  {
+  double d = a.GetA() - b.GetA();
+  return d < 0 ? -1 : (d > 0 ? 1 : 0);
+}
 void TLattice::CompaqAll()  {
   if( Generated )  return;
 
@@ -1106,11 +1110,9 @@ void TLattice::CompaqAll()  {
   mat3d abc2xyz( mat3d::Transpose(GetAsymmUnit().GetCellToCartesian()) ),
            xyz2abc( mat3d::Transpose(GetAsymmUnit().GetCartesianToCell()));
 
-  smatd* m;
   for( int i=0; i < Fragments.Count(); i++ )  {
     for( int j=i+1; j < Fragments.Count(); j++ )  {
-      m = NULL;
-
+      smatd* m = NULL;
       for(int k=0; k < Fragments[i]->NodeCount(); k++ )  {
         TSAtom& fa = Fragments[i]->Node(k);
         for( int l=0; l < Fragments[j]->NodeCount(); l++ )  {
@@ -1121,7 +1123,6 @@ void TLattice::CompaqAll()  {
         }
         if( m != NULL )  break;
       }
-
       if( m == NULL )  continue;
       for(int k=0; k < Fragments[j]->NodeCount(); k++ )  {
         TSAtom& SA = Fragments[j]->Node(k);
@@ -1131,6 +1132,40 @@ void TLattice::CompaqAll()  {
           SA.CAtom().GetEllipsoid()->MultMatrix( abc2xyz*m->r*xyz2abc );
       }
       delete m;
+    }
+  }
+  GetUnitCell().UpdateEllipsoids();
+  Disassemble();
+  // hard bit here
+  TTypeList<AnAssociation2<double, smatd*> > dst;
+  const int fr_cnt = Fragments.Count();
+  TNetwork* largest_net = Fragments[0];
+  const int frl_cnt = largest_net->NodeCount();
+  for( int i=1; i < fr_cnt; i++ )  {
+    TNetwork* fragi = Fragments[i];
+    const int fri_cnt = fragi->NodeCount();
+    for( int j=0; j < frl_cnt; j++ )  {
+      TSAtom& fa = largest_net->Node(j);
+      for( int k=0; k < fri_cnt; k++ )  {
+        TSAtom& fb = fragi->Node(k);
+        double d = 0;
+        smatd* m = GetUnitCell().GetClosest(fa.CAtom().ccrd(), fb.CAtom().ccrd(), false, &d);
+        if( m == NULL )  continue;
+        dst.AddNew( d, m );
+      }
+      if( dst.IsEmpty() )  continue;
+      dst.QuickSorter.SortSF(dst, TLattice_CompaqAllSort);
+      mat3d etm = abc2xyz*dst[0].B()->r*xyz2abc;
+      for( int k=0; k < fri_cnt; k++ )  {
+        TSAtom& fb = fragi->Node(k);
+        if( fb.IsDeleted() )  continue;
+        fb.CAtom().ccrd() = *dst[0].GetB() * fb.CAtom().ccrd();
+        if( fb.CAtom().GetEllipsoid() != NULL )
+          fb.CAtom().GetEllipsoid()->MultMatrix( etm );
+      }
+      for( int k=0; k < dst.Count(); k++ )
+        delete dst[k].B();
+      dst.Clear();
     }
   }
   GetUnitCell().UpdateEllipsoids();

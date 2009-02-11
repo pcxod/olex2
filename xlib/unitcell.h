@@ -50,9 +50,8 @@ public:
   // the funciton searches a matrix which moves "atom" to "to" so that the
   // distance between them is shortest and return the matrix, which if not NULL
   // has to be deleted with delete
-  smatd* GetClosest(const class TCAtom& to, const TCAtom& atom, bool ConsiderOriginal) const;
-
-  smatd* GetClosest(const vec3d& to, const vec3d& from, bool ConsiderOriginal) const;
+  smatd* GetClosest(const class TCAtom& to, const TCAtom& atom, bool ConsiderOriginal, double* dist=NULL) const;
+  smatd* GetClosest(const vec3d& to, const vec3d& from, bool ConsiderOriginal, double* dist=NULL) const;
 
   smatd_list* GetInRange(const vec3d& to, const vec3d& from, double R, bool IncludeI) const;
 
