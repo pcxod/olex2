@@ -1572,7 +1572,7 @@ void TMainForm::macPack(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     FXApp->FindCAtoms(Cmds.Text(' '), TemplAtoms);
 
   int64_t st = TETime::msNow();
-  if( number_count == 6 )
+  if( number_count == 6 || number_count == 0 )
     FXApp->Generate(From, To, TemplAtoms.IsEmpty() ? NULL : &TemplAtoms, ClearCont, IncludeQ);
   else  {
     TXAtomPList xatoms;
