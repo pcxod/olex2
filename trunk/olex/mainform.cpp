@@ -1664,7 +1664,7 @@ void TMainForm::ObjectUnderMouse( AGDrawObject *G)  {
 void TMainForm::OnAtomTypeChange(wxCommandEvent& event)  {
   TXAtom *XA = (TXAtom*)FObjectUnderMouse;
   if( XA == NULL )  return;
-  olxstr Tmp("name ");
+  olxstr Tmp("name -c ");
   if( XA->Selected() )  Tmp << "sel";
   else                  Tmp << "#x" << XA->GetXAppId();
   Tmp << ' ';

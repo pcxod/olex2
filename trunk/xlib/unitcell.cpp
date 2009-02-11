@@ -331,11 +331,11 @@ int TUnitCell::FindSymmEq(TEStrBuffer &Msg, double tol, bool Initialise, bool re
   return report.Count();
 }
 //..............................................................................
-smatd* TUnitCell::GetClosest(const TCAtom& to, const TCAtom& atom, bool ConsiderOriginal) const  {
-  return GetClosest(to.ccrd(), atom.ccrd(), ConsiderOriginal);
+smatd* TUnitCell::GetClosest(const TCAtom& to, const TCAtom& atom, bool ConsiderOriginal, double* dist) const  {
+  return GetClosest(to.ccrd(), atom.ccrd(), ConsiderOriginal, dist);
 }
 //..............................................................................
-smatd* TUnitCell::GetClosest(const vec3d& to, const vec3d& from, bool ConsiderOriginal) const  {
+smatd* TUnitCell::GetClosest(const vec3d& to, const vec3d& from, bool ConsiderOriginal, double* dist) const  {
   const smatd* minMatr = NULL;
   vec3d V1;
   int minix, miniy, miniz;
@@ -373,6 +373,8 @@ smatd* TUnitCell::GetClosest(const vec3d& to, const vec3d& from, bool ConsiderOr
     retVal->t[0] -= minix;
     retVal->t[1] -= miniy;
     retVal->t[2] -= miniz;
+    if( dist != NULL )
+      *dist = minD;
     return retVal;
   }
   return NULL;

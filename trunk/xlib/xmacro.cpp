@@ -338,6 +338,7 @@ void XLibMacros::macHklStat(TStrObjList &Cmds, const TParamList &Options, TMacro
 void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
   if( TXApp::GetInstance().XFile().GetLattice().IsGenerated() )  {
     E.ProcessingError(__OlxSrcInfo, "operation is not applicable to the grown structure");
+    return;
   }
   double max_d = 2.9, min_ang = 150.0;
   int cnt = XLibMacros::ParseNumbers<double>(Cmds, 2, &max_d, &min_ang);
@@ -400,7 +401,7 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       vec3d bond( cvec );
       bond -= sa.ccrd();
       au.CellToCartesian(bond);
-      double d = bond.Length();
+      const double d = bond.Length();
       if( (bai.GetRad1() + bai1.GetRad1() + 0.45) > d )  continue;  // coval bond
       // analyse angles
       for( int k=0; k < hc; k++ )  {
@@ -409,7 +410,7 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options, TMacroErr
         vec3d v2 = cvec - base;
         au.CellToCartesian(v1);
         au.CellToCartesian(v2);
-        double c_a = v1.CAngle(v2);
+        const double c_a = v1.CAngle(v2);
         if( c_a < min_ang )  {  // > 150 degrees
           if( sa.GetAtomInfo() == iCarbonIndex )  {
             olxstr rtab_d((const char*)"RTAB ", 80);
