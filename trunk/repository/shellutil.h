@@ -17,7 +17,7 @@ class TShellUtil
 {
 public:
   static bool CreateShortcut(const olxstr& ShortcutPath,
-                     const olxstr& ObjectPath, const olxstr& description);
+                     const olxstr& ObjectPath, const olxstr& description, bool AddRunAs);
 
   static olxstr GetSpecialFolderLocation( short folderId );
 

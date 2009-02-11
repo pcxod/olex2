@@ -303,13 +303,19 @@ void __fastcall TfMain::bbInstallClick(TObject *Sender)  {
       LaunchFile( redist_path, false );
     frMain->stAction->Caption = "Done";
     InitRegistry( installPath.c_str() );
+    OSVERSIONINFO veri;
+    memset(&veri, 0, sizeof(veri));
+    veri.dwOSVersionInfoSize = sizeof(veri);
+    GetVersionEx(&veri);
+    // only after XP
+    bool SetRunAs = veri.dwMajorVersion > 5;
     // create shortcuts
     if( frMain->cbCreateShortcut->Checked )
       TShellUtil::CreateShortcut(TShellUtil::GetSpecialFolderLocation(fiStartMenu) + "Olex2.lnk",
-                                 installPath + "olex2.exe", "Olex2 launcher");
+                                 installPath + "olex2.exe", "Olex2 launcher", SetRunAs);
     if( frMain->cbCreateDesktopShortcut->Checked )
       TShellUtil::CreateShortcut(TShellUtil::GetSpecialFolderLocation(fiDesktop) + "Olex2.lnk",
-                                 installPath + "olex2.exe", "Olex2 launcher");
+                                 installPath + "olex2.exe", "Olex2 launcher", SetRunAs);
     if( !localInstall )  {
       Settings.UpdateParam("repository", reposPath + "update/");
       frMain->cbRepository->Text = AnsiString(reposPath.c_str()) + "update/";

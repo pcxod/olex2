@@ -392,6 +392,27 @@ void TLattice::Generate(const vec3d& MFrom, const vec3d& MTo, TCAtomPList* Templ
   OnStructureGrow->Exit(this);
 }
 //..............................................................................
+void TLattice::Generate(const vec3d& center, double rad, TCAtomPList* Template,
+       bool ClearCont, bool IncludeQ)  {
+  if( GetAsymmUnit().DoesContainEquivalents() )  {
+    TBasicApp::GetLog().Error("TLattice:: Asymmetric unit contains symmetrical equivalents.");
+    return;
+  }
+  smatd_list to_skip;
+  to_skip.SetCapacity( Matrices.Count() );
+  for( int i=0; i < Matrices.Count(); i++ )
+    to_skip.AddNew( *Matrices[i] );
+  smatd_list* transforms = GetUnitCell().GetInRangeEx(center, center, rad, false, to_skip);
+  if( transforms == NULL )  return;
+  for( int i=0; i < transforms->Count(); i++ )
+    Matrices.Add( &(*transforms)[i] );
+  transforms->ReleaseAll();
+  delete transforms;
+  OnStructureGrow->Enter(this);
+  Generate(Template, ClearCont, IncludeQ);
+  OnStructureGrow->Exit(this);
+}
+//..............................................................................
 bool TLattice::IsExpandable(TSAtom& A) const {
   return (A.CAtom().GetCanBeGrown() && !A.IsGrown());
 }

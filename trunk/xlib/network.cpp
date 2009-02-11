@@ -251,8 +251,7 @@ void TNetwork::THBondSearchTask::Run(long ind)  {
 
       const int that_p = Atoms[i]->CAtom().GetPart();
       const double D = A1->crd().QDistanceTo( Atoms[i]->crd() );
-      double D1 = A1->GetAtomInfo().GetRad1() + Atoms[i]->GetAtomInfo().GetRad1() + Delta;
-      D1 *= D1;
+      const double D1 = sqr(A1->GetAtomInfo().GetRad1() + Atoms[i]->GetAtomInfo().GetRad1() + Delta);
       if(  D < D1 )  {
          if( (this_p == that_p && this_p >= 0) || this_p == 0 || that_p == 0 )  {
           TSBond* B = new TSBond(&A1->GetNetwork());
@@ -268,8 +267,7 @@ void TNetwork::THBondSearchTask::Run(long ind)  {
     else  {
       const int that_p = Atoms[i]->CAtom().GetPart();
       const double D = A1->crd().QDistanceTo( Atoms[i]->crd() );
-      double D1 = A1->GetAtomInfo().GetRad1() + Atoms[i]->GetAtomInfo().GetRad1() + Delta;
-      D1 *= D1;
+      const double D1 = sqr(A1->GetAtomInfo().GetRad1() + Atoms[i]->GetAtomInfo().GetRad1() + Delta);
       if(  D < D1 )  {
         if( (this_p == that_p && this_p >= 0) || this_p == 0 || that_p == 0 )  {
           TSBond* B = new TSBond( &A1->GetNetwork() );
