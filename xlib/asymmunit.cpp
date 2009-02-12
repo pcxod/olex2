@@ -362,17 +362,17 @@ void TAsymmUnit::NullEllp(size_t i)  {
 //..............................................................................
 vec3d TAsymmUnit::GetOCenter(bool IncludeQ, bool IncludeH) const {
   vec3d P;
-  int ac = 0;
+  double wght = 0;
   for( int i=0; i < AtomCount(); i++ )  {
     if( CAtoms[i]->IsDeleted() )  continue;
     if( !IncludeQ && CAtoms[i]->GetAtomInfo() == iQPeakIndex )  continue;
     if( !IncludeH && CAtoms[i]->GetAtomInfo() == iHydrogenIndex )  continue;
-    P += CAtoms[i]->ccrd();
-    ac++;
+    P += CAtoms[i]->ccrd()*CAtoms[i]->GetOccu();
+    wght += CAtoms[i]->GetOccu();
   }
 
-  if( ac > 0 )
-    P /= ac;
+  if( wght != 0 )
+    P /= wght;
   return P;
 }
 //..............................................................................

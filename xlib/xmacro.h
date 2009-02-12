@@ -11,6 +11,7 @@
 //simply a macro registry
 
 class XLibMacros  {
+  static DefMacro(Run)
   static DefMacro(BrushHkl)
   static DefMacro(HklStat)
   static DefMacro(SG)

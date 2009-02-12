@@ -29,7 +29,7 @@ TXFader::~TXFader()  {
     delete [] Foreground;
 }
 //..............................................................................
-void TXFader::Create(const olxstr& cName)  {
+void TXFader::Create(const olxstr& cName, const ACreationParams* cpar)  {
   if( cName.Length() )  SetCollectionName(cName);
   TGlPrimitive *GlP;
   TGPCollection *GPC;
@@ -51,7 +51,7 @@ void TXFader::Create(const olxstr& cName)  {
 bool TXFader::Orient(TGlPrimitive *P)  {
   if( Background == NULL && Foreground == NULL )  return true;
   double MaxZ = FParent->GetMaxRasterZ();
-//  MaxZ -= 0.015;
+  //MaxZ = 0;
   double Scale = FParent->GetScale();
   glPixelStorei(GL_PACK_ALIGNMENT, 4);
   //glDrawBuffer(GL_BACK);

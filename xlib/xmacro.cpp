@@ -39,6 +39,7 @@ TActionQList XLibMacros::Actions;
 TActionQueue* XLibMacros::OnDelIns = &XLibMacros::Actions.NewQueue("OnDelIns");
 
 void XLibMacros::Export(TLibrary& lib)  {
+  xlib_InitMacro(Run, "", fpAny^fpNone, "Runs provided macros (combined by '>>')");
   xlib_InitMacro(HklStat, "l-list the reflections&;m-merge reflection in current space group", fpAny|psFileLoaded, 
     "If no arguments provided, prints the statistics on the the reflections as wel as the ones used in the refinement.\
  If an expressions (condition) is given in the following form: x[ahbkcl], meaning that x=ah+bk+cl;\
@@ -186,6 +187,23 @@ xlib_InitMacro(File, "s-sort the main residue of the asymmetric unit", fpNone|fp
 //_________________________________________________________________________________________________________________________
   xlib_InitFunc(RemoveSE, fpOne|psFileLoaded, "Returns a new space group name without provided element");
 //_________________________________________________________________________________________________________________________
+}
+//..............................................................................
+void XLibMacros::macRun(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+  using namespace olex;
+  IOlexProcessor* op = IOlexProcessor::GetInstance();
+  if( op == NULL )
+    throw TFunctionFailedException(__OlxSourceInfo, "this function requires Olex2 processor implementation");
+  TStrList allCmds(Cmds.Text(' '), ">>");
+  for( int i=0; i < allCmds.Count(); i++ )  {
+    op->executeMacroEx(allCmds[i], Error);
+    if( !Error.IsSuccessful() )  {
+      if( (i+1) < allCmds.Count() )
+        op->print("Not all macros in the provided list were executed", olex::mtError);
+      break;
+    }
+  }
+  Error.Reset(); // to avoide duplicate messages
 }
 //..............................................................................
 void XLibMacros::macHklStat(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
