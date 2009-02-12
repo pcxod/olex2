@@ -1115,49 +1115,63 @@ void TLattice::CompaqClosest()  {
               xyz2abc( mat3d::Transpose(GetAsymmUnit().GetCartesianToCell()));
 
   const int fr_cnt = Fragments.Count();
-  TNetwork* largest_net = Fragments[0];
-  const int frl_cnt = largest_net->NodeCount();
-  for( int i=1; i < fr_cnt; i++ )  {
-    TNetwork* fragi = Fragments[i];
-    const int fri_cnt = fragi->NodeCount();
-    double minQD = 10000;
-    smatd* transform = NULL;
-    for( int j=0; j < frl_cnt; j++ )  {
-      const TSAtom& fa = largest_net->Node(j);
-      for( int k=0; k < fri_cnt; k++ )  {
-        const TSAtom& fb = fragi->Node(k);
-        double qd = 0;
-        smatd* m = GetUnitCell().GetClosest(fa.CAtom().ccrd(), fb.CAtom().ccrd(), true, &qd);
-        if( m == NULL )  {
-          if( qd < minQD )  { // still remember the minimal distance
-            minQD = qd;
-            if( transform != NULL )  {  // reset the transform as well
-              delete transform;
-              transform = NULL;
+  TDoubleList vminQD(fr_cnt);
+  for( int i = 0; i < fr_cnt; i++ )
+    vminQD[i] = 100000;
+  for( int fi = 0; fi < fr_cnt; fi++ )  {
+    TNetwork* neta = Fragments[fi];
+    const int neta_cnt = neta->NodeCount();
+    for( int i=fi+1; i < fr_cnt; i++ )  {
+      //for( int j=0; j < fr_cnt; j++ )
+      //  TBasicApp::GetLog() << olxstr::FormatFloat(3, vminQD[j]) << ' ';
+      //TBasicApp::GetLog() << '\n';
+      TNetwork* netb = Fragments[i];
+      const int netb_cnt = netb->NodeCount();
+      double minQD = 100000;
+      smatd* transform = NULL;
+      for( int j=0; j < neta_cnt; j++ )  {
+        const vec3d& crda = neta->Node(j).CAtom().ccrd();
+        for( int k=0; k < netb_cnt; k++ )  {
+          const vec3d& crdb = netb->Node(k).CAtom().ccrd();
+          double qd = 0;
+          smatd* m = GetUnitCell().GetClosest(crda, crdb, true, &qd);
+          if( m == NULL )  {
+            if( qd < minQD )  { // still remember the minimal distance
+              minQD = qd;
+              if( transform != NULL )  {  // reset the transform as well
+                delete transform;
+                transform = NULL;
+              }
             }
+            continue;
           }
-          continue;
+          if( qd < minQD )  {
+            minQD = qd;
+            if( transform != NULL )
+              delete transform;
+            transform = m;
+          }
+          else
+            delete m;
         }
-        if( qd < minQD )  {
-          minQD = qd;
-          if( transform != NULL )
-            delete transform;
-          transform = m;
-        }
-        else
-          delete m;
       }
+      if( vminQD[i] <= minQD )  {
+        if( transform )
+          delete transform;
+        continue;
+      }
+      vminQD[i] = minQD;
+      if( transform == NULL )  continue;
+      mat3d etm = abc2xyz*transform->r*xyz2abc;
+      for( int k=0; k < netb_cnt; k++ )  {
+        TSAtom& fb = netb->Node(k);
+        if( fb.IsDeleted() )  continue;
+        fb.CAtom().ccrd() = *transform * fb.CAtom().ccrd();
+        if( fb.CAtom().GetEllipsoid() != NULL )
+          fb.CAtom().GetEllipsoid()->MultMatrix( etm );
+      }
+      delete transform;
     }
-    if( transform == NULL )  continue;
-    mat3d etm = abc2xyz*transform->r*xyz2abc;
-    for( int k=0; k < fri_cnt; k++ )  {
-      TSAtom& fb = fragi->Node(k);
-      if( fb.IsDeleted() )  continue;
-      fb.CAtom().ccrd() = *transform * fb.CAtom().ccrd();
-      if( fb.CAtom().GetEllipsoid() != NULL )
-        fb.CAtom().GetEllipsoid()->MultMatrix( etm );
-    }
-    delete transform;
   }
   GetUnitCell().UpdateEllipsoids();
   Uniq();
