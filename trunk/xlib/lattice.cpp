@@ -132,15 +132,16 @@ int TLattice::GenerateMatrices(smatd_plist& Result,
                               (olx_abs(VTo[2]-VFrom[2])+1)) );
 
   const int uc_mc = GetUnitCell().MatrixCount();
+  smatd tmp_mat;
   for( int i=0; i < uc_mc; i++ )  {
     for( int j=(int)VFrom[0]; j <= (int)VTo[0]; j++ )
       for( int k=(int)VFrom[1]; k <= (int)VTo[1]; k++ )
       for( int l=(int)VFrom[2]; l <= (int)VTo[2]; l++ )  {
-        smatd* M = Result.Add(new smatd(GetUnitCell().GetMatrix(i)));
-        M->SetTag(i);  // set Tag to identify the matrix (and ellipsoids) in the UnitCell
-        M->t[0] += j;
-        M->t[1] += k;
-        M->t[2] += l;
+        tmp_mat = GetUnitCell().GetMatrix(i);
+        tmp_mat.t[0] += j;  tmp_mat.t[1] += k;  tmp_mat.t[2] += l;
+        if( !vec3d::IsInRangeInc(tmp_mat * Center, MFrom, MTo) )
+          continue;
+        Result.Add(new smatd(tmp_mat))->SetTag(i);  // set Tag to identify the matrix (and ellipsoids) in the UnitCell
       }
   }
 
@@ -160,12 +161,10 @@ int TLattice::GenerateMatrices(smatd_plist& Result,
     for( int j=mstart; j < res_cnt; j++ )  {
       smatd* M1 = Result[j];
       if( M1 == NULL )  continue;
-      if( M1->GetTag() == M->GetTag() )  {
-        if( M->t == M1->t )  {
-          delete M1;
-          Result[j] = NULL;
-          break;
-        }
+      if( (M1->GetTag() == M->GetTag()) && (M->t == M1->t) )  {
+        delete M1;
+        Result[j] = NULL;
+        break;
       }
     }
   }
@@ -180,9 +179,9 @@ int TLattice::GenerateMatrices(smatd_plist& Result, const vec3d& center, double 
   const double qrad = rad*rad;
   const int mstart = Result.Count();
   for( int i=0; i < uc_mc; i++ )  {
-    for( int j=-4; j <= 4; j++ )
-      for( int k=-4; k <= 4; k++ )
-        for( int l=-4; l <= 4; l++ )  {
+    for( int j=-5; j <= 5; j++ )
+      for( int k=-5; k <= 5; k++ )
+        for( int l=-5; l <= 5; l++ )  {
           smatd m = GetUnitCell().GetMatrix(i);
           m.t[0] += j;  m.t[1] += k;  m.t[2] += l;
           vec3d rs = m * cnt;
@@ -198,12 +197,10 @@ int TLattice::GenerateMatrices(smatd_plist& Result, const vec3d& center, double 
     for( int j=mstart; j < res_cnt; j++ )  {
       smatd* m1 = Result[j];
       if( m1 == NULL )  continue;
-      if( m1->GetTag() == m->GetTag() )  {
-        if( m->t == m1->t )  {
-          delete m1;
-          Result[j] = NULL;
-          break;
-        }
+      if( (m1->GetTag() == m->GetTag()) && (m->t == m1->t) )  {
+        delete m1;
+        Result[j] = NULL;
+        break;
       }
     }
   }
@@ -413,6 +410,10 @@ void TLattice::Generate(const vec3d& MFrom, const vec3d& MTo, TCAtomPList* Templ
   VTo[0] = Round(MTo[0]+1);     VTo[1] = Round(MTo[1]+1);     VTo[2] = Round(MTo[2]+1);
   VFrom[0] = Round(MFrom[0]-1); VFrom[1] = Round(MFrom[1]-1); VFrom[2] = Round(MFrom[2]-1);
 
+  if( ClearCont )  {
+    ClearAtoms();
+    ClearMatrices();
+  }
   GenerateMatrices(VFrom, VTo, MFrom, MTo);
   OnStructureGrow->Enter(this);
   Generate(Template, ClearCont, IncludeQ);
@@ -424,6 +425,10 @@ void TLattice::Generate(const vec3d& center, double rad, TCAtomPList* Template,
   if( GetAsymmUnit().DoesContainEquivalents() )  {
     TBasicApp::GetLog().Error("TLattice:: Asymmetric unit contains symmetrical equivalents.");
     return;
+  }
+  if( ClearCont )  {
+    ClearAtoms();
+    ClearMatrices();
   }
   GenerateMatrices(Matrices, center, rad);
   OnStructureGrow->Enter(this);

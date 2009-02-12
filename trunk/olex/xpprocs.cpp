@@ -923,11 +923,9 @@ void TMainForm::ProcessXPMacro(const olxstr &Cmd, TMacroError &Error, bool Proce
   ABasicFunction *MF = GetLibrary().FindMacro(Command);//, Cmds.Count());
   if( MF != NULL )  {
     if( !Command.Comparei("if") )  {
-      ABasicFunction *MF = GetLibrary().FindMacro(Command);
-      if( MF )  {
-        MF->Run(Cmds, Options, Error);
-        if( ProcessFunctions )  AnalyseError( Error );
-      }
+      MF->Run(Cmds, Options, Error);
+      if( ProcessFunctions )  
+        AnalyseError( Error );
       return;
     }
     for( int i=0; i < Cmds.Count(); i++ )  {
@@ -1578,10 +1576,13 @@ void TMainForm::macPack(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     TXAtomPList xatoms;
     FindXAtoms(Cmds, xatoms, true, true);
     vec3d cent;
-    for( int i=0; i < xatoms.Count(); i++ )
-      cent += xatoms[i]->Atom().ccrd();
-    if( !xatoms.IsEmpty() )
-      cent /= xatoms.Count();
+    double wght = 0;
+    for( int i=0; i < xatoms.Count(); i++ )  {
+      cent += xatoms[i]->Atom().crd()*xatoms[i]->Atom().CAtom().GetOccu();
+      wght += xatoms[i]->Atom().CAtom().GetOccu();
+    }
+    if( wght != 0 )
+      cent /= wght;
     FXApp->Generate(cent, From[0], TemplAtoms.IsEmpty() ? NULL : &TemplAtoms, ClearCont, IncludeQ);
   }
 

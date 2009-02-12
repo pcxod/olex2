@@ -1379,7 +1379,7 @@ void TMainForm::OnGenerate(wxCommandEvent& WXUNUSED(event))
 }
 //..............................................................................
 void TMainForm::OnAbout(wxCommandEvent& WXUNUSED(event))  {
-  wxMessageBox( wxT("OLEX 2\n(c) Oleg V. Dolomanov, Horst Puschmann and Richard J. Gildea, 2004-2008\nDurham University"),
+  wxMessageBox( wxT("OLEX 2\n(c) Oleg V. Dolomanov, Horst Puschmann and Richard J. Gildea, 2004-2009\nDurham University"),
     wxT("About"), wxOK | wxICON_INFORMATION, this);
 }
 //..............................................................................
@@ -1843,11 +1843,9 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
       }
     }
     if( FXApp->GetFader().Visible() )  {
-      if( !FXApp->GetFader().Increment() )  {
-       //FXApp->GetFader().Visible(false);
-      }
-      else
-        Draw = true;
+      if( !FXApp->GetFader().Increment() )
+         FXApp->GetFader().Visible(false);
+      Draw = true;
     }
     if( MouseMoveTimeElapsed < 2500 )
       MouseMoveTimeElapsed += FTimer->GetInterval();

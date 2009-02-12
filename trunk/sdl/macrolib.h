@@ -357,10 +357,9 @@ public:
     ABasicFunction *MF = OlexProcessor.GetLibrary().FindMacro(Command);//, Cmds.Count());
     if( MF != NULL )  {
       if( Command.Comparei("if") == 0 )  {
-        ABasicFunction *MF = OlexProcessor.GetLibrary().FindMacro(Command);
-        if( MF != NULL )
-          MF->Run(Cmds, Options, Error);
-        if( Error.IsSuccessful() && Error.GetStack() != NULL )  Error.GetStack()->Pop();
+        MF->Run(Cmds, Options, Error);
+        if( Error.IsSuccessful() && Error.GetStack() != NULL )  
+          Error.GetStack()->Pop();
         return;
       }
       for( int i=0; i < Cmds.Count(); i++ )  {
