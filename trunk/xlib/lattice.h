@@ -139,8 +139,12 @@ public:
   void MoveFragmentG(const vec3d& to, TSAtom& fragAtom);
   void MoveFragmentG(TSAtom& to, TSAtom& fragAtom);
   void MoveToCenterG();
+  // assembles fragments around the largest one
   void Compaq();
+  // assembles broken fragments
   void CompaqAll();
+  // similar to Compaq, but considers atom to atom distances, not fragment centres
+  void CompaqClosest();
   void TransformFragments(const TSAtomPList& fragAtoms, const smatd& transform);
 
   // beware - only pointers are compared
