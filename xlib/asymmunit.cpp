@@ -478,9 +478,9 @@ olxstr TAsymmUnit::CheckLabel(const TCAtom* ca, const olxstr &Label, char a, cha
   if( ca != NULL )  {
     const TResidue& resi = GetResidue(ca->GetResiId() );
     for( int i=0; i < resi.Count(); i++ )  {
-      TCAtom& atom = resi[i];
-      if( atom.GetPart() != ca->GetPart() )  continue;
-      if( !atom.IsDeleted() && (atom.Label().Comparei(Label) == 0) && 
+      const TCAtom& atom = resi[i];
+      if( atom.GetPart() != ca->GetPart() && atom.GetPart() != 0 && ca->GetPart() != 0 )  continue;
+      if( !atom.IsDeleted() && (atom.GetLabel().Comparei(Label) == 0) && 
         (atom.GetLoaderId() != ca->GetLoaderId()) )  {
         LB = atom.GetAtomInfo().GetSymbol();
         if( LB.Length() == 2 )  LB[0] = LB.o_toupper(LB[0]);
@@ -495,8 +495,8 @@ olxstr TAsymmUnit::CheckLabel(const TCAtom* ca, const olxstr &Label, char a, cha
     return LB;
   }
   for( int i=0; i < AtomCount(); i++ )  {
-    TCAtom& CA = GetAtom(i);
-    if( !CA.IsDeleted() && (CA.Label().Comparei(Label) == 0) )  {
+    const TCAtom& CA = GetAtom(i);
+    if( !CA.IsDeleted() && (CA.GetLabel().Comparei(Label) == 0) )  {
       LB = CA.GetAtomInfo().GetSymbol();
       if( LB.Length() == 2 )  LB[0] = LB.o_toupper(LB[0]);
       LB << a << b;

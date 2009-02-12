@@ -819,9 +819,12 @@ void TIns::SaveToStrings(TStrList& SL)  {
             carbonBAIIndex = BasicAtoms.Count() - 1;
         }
       }
+      if( residue[j].GetLabel().Length() > 4 ) 
+        residue[j].Label() = GetAsymmUnit().CheckLabel(&residue[j], residue[j].GetLabel() );
       for( int k=j+1; k < residue.Count(); k++ )  {
         if( residue[k].IsDeleted() )  continue;
-        if( residue[j].GetPart() != residue[k].GetPart() )  continue;
+        if( residue[j].GetPart() != residue[k].GetPart() && 
+            residue[j].GetPart() != 0 && residue[k].GetPart() != 0 )  continue;
         if( residue[j].GetLabel().Comparei(residue[k].GetLabel()) == 0 ) 
           residue[k].Label() = GetAsymmUnit().CheckLabel(&residue[k], residue[k].GetLabel() );
       }
@@ -1345,7 +1348,6 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
 
   olxstr Tmp;
   TIntList usedSymm;
-
   // fixed distances
   for( int i=0; i < rm.rDFIX.Count(); i++ )  {
     TSimpleRestraint& sr = rm.rDFIX[i];
@@ -1354,8 +1356,9 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
     Tmp = "DFIX ";
     Tmp << sr.GetValue() << ' ' << sr.GetEsd();
     for( int j=0; j < sr.AtomCount(); j++ )  {
-     Tmp << ' ' << sr.GetAtom(j).GetFullLabel(rm);
-     StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), rm);
+      sr.GetAtom(j).GetAtom()->Label() = rm.aunit.CheckLabel(NULL, sr.GetAtom(j).GetAtom()->GetLabel());   
+      Tmp << ' ' << sr.GetAtom(j).GetFullLabel(rm);
+      StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), rm);
     }
     HypernateIns(Tmp, SL);
     if( processed != NULL )  
@@ -1369,8 +1372,9 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
     Tmp = "SADI ";
     Tmp << sr.GetEsd();
     for( int j=0; j < sr.AtomCount(); j++ )  {
-     Tmp << ' ' << sr.GetAtom(j).GetFullLabel(rm);
-     StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), rm);
+      sr.GetAtom(j).GetAtom()->Label() = rm.aunit.CheckLabel(NULL, sr.GetAtom(j).GetAtom()->GetLabel());   
+      Tmp << ' ' << sr.GetAtom(j).GetFullLabel(rm);
+      StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), rm);
     }
     HypernateIns(Tmp, SL);
     if( processed != NULL )  
@@ -1384,8 +1388,9 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
     Tmp = "DANG ";
     Tmp << olxstr::FormatFloat(3, sr.GetValue()) << ' ' << sr.GetEsd();
     for( int j=0; j < sr.AtomCount(); j++ )  {
-     Tmp << ' ' << sr.GetAtom(j).GetFullLabel(rm);
-     StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), rm);
+      sr.GetAtom(j).GetAtom()->Label() = rm.aunit.CheckLabel(NULL, sr.GetAtom(j).GetAtom()->GetLabel());   
+      Tmp << ' ' << sr.GetAtom(j).GetFullLabel(rm);
+      StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), rm);
     }
     HypernateIns(Tmp, SL);
     if( processed != NULL )  
@@ -1399,8 +1404,9 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
     Tmp = "CHIV ";
     Tmp << sr.GetValue() << ' ' << sr.GetEsd();
     for( int j=0; j < sr.AtomCount(); j++ )  {
-     Tmp << ' ' << sr.GetAtom(j).GetFullLabel(rm);
-     StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), rm);
+      sr.GetAtom(j).GetAtom()->Label() = rm.aunit.CheckLabel(NULL, sr.GetAtom(j).GetAtom()->GetLabel());   
+      Tmp << ' ' << sr.GetAtom(j).GetFullLabel(rm);
+      StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), rm);
     }
     HypernateIns(Tmp, SL);
     if( processed != NULL )  
@@ -1415,8 +1421,9 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
     Tmp = "FLAT ";
     Tmp << sr.GetEsd();
     for( int j=0; j < sr.AtomCount(); j++ )  {
-     Tmp << ' ' << sr.GetAtom(j).GetFullLabel(rm);
-     StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), rm);
+      sr.GetAtom(j).GetAtom()->Label() = rm.aunit.CheckLabel(NULL, sr.GetAtom(j).GetAtom()->GetLabel());   
+      Tmp << ' ' << sr.GetAtom(j).GetFullLabel(rm);
+      StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), rm);
     }
     HypernateIns(Tmp, SL);
     if( processed != NULL )  
@@ -1430,8 +1437,9 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
     Tmp = "DELU ";
     Tmp << sr.GetEsd() << ' ' << sr.GetEsd1();
     for( int j=0; j < sr.AtomCount(); j++ )  {
-     Tmp << ' ' << sr.GetAtom(j).GetFullLabel(rm);
-     StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), rm);
+      sr.GetAtom(j).GetAtom()->Label() = rm.aunit.CheckLabel(NULL, sr.GetAtom(j).GetAtom()->GetLabel());   
+      Tmp << ' ' << sr.GetAtom(j).GetFullLabel(rm);
+      StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), rm);
     }
     HypernateIns(Tmp, SL);
     if( processed != NULL )  
@@ -1445,8 +1453,9 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
     Tmp = "SIMU ";
     Tmp << sr.GetEsd() << ' ' << sr.GetEsd1() << ' ' << sr.GetValue();
     for( int j=0; j < sr.AtomCount(); j++ )  {
-     Tmp << ' ' << sr.GetAtom(j).GetFullLabel(rm);
-     StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), rm);
+      sr.GetAtom(j).GetAtom()->Label() = rm.aunit.CheckLabel(NULL, sr.GetAtom(j).GetAtom()->GetLabel());   
+      Tmp << ' ' << sr.GetAtom(j).GetFullLabel(rm);
+      StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), rm);
     }
     HypernateIns(Tmp, SL);
     if( processed != NULL )  
@@ -1460,8 +1469,9 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
     Tmp = "ISOR ";
     Tmp << sr.GetEsd() << ' ' << sr.GetEsd1();
     for( int j=0; j < sr.AtomCount(); j++ )  {
-     Tmp << ' ' << sr.GetAtom(j).GetFullLabel(rm);
-     StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), rm);
+      sr.GetAtom(j).GetAtom()->Label() = rm.aunit.CheckLabel(NULL, sr.GetAtom(j).GetAtom()->GetLabel());   
+      Tmp << ' ' << sr.GetAtom(j).GetFullLabel(rm);
+      StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), rm);
     }
     HypernateIns(Tmp, SL);
     if( processed != NULL )  
@@ -1475,8 +1485,9 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
     if( sr.AtomCount() < 2 )  continue;
     Tmp = "EADP";
     for( int j=0; j < sr.AtomCount(); j++ )  {
-     Tmp << ' ' << sr.GetAtom(j).GetAtom()->GetLabel();
-     StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), rm);
+      sr.GetAtom(j).GetAtom()->Label() = rm.aunit.CheckLabel(NULL, sr.GetAtom(j).GetAtom()->GetLabel());   
+      Tmp << ' ' << sr.GetAtom(j).GetAtom()->GetLabel();
+      StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), rm);
     }
     HypernateIns(Tmp, SL);
     if( processed != NULL )  
@@ -1487,9 +1498,11 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
     TExyzGroup& sr = rm.ExyzGroups[i];
     if( sr.IsEmpty() )  continue;
     Tmp = "EXYZ";
-    for( int j=0; j < sr.Count(); j++ )
-      if( !sr[j].IsDeleted() )
-        Tmp << ' ' << sr[j].GetLabel();
+    for( int j=0; j < sr.Count(); j++ )  {
+      if( sr[j].IsDeleted() )  continue;
+      sr[j].Label() = rm.aunit.CheckLabel(NULL, sr[j].GetLabel());   
+      Tmp << ' ' << sr[j].GetLabel();
+    }
     HypernateIns(Tmp, SL);
   }
   // store the rest of eqiv ...

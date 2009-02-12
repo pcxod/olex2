@@ -59,6 +59,7 @@ public:
 
   inline int AtomCount()  const  {  return InvolvedAtoms.Count();  }
   inline const TGroupCAtom& GetAtom(int i)  const {  return InvolvedAtoms[i];  }
+  inline TGroupCAtom& GetAtom(int i)  {  return InvolvedAtoms[i];  }
   bool ContainsAtom(TCAtom* ca) const;
 
   inline short GetListType()  const  {  return ListType;  }
