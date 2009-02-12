@@ -1026,18 +1026,12 @@ void TLattice::MoveToCenter()  {
 }
 //..............................................................................
 void TLattice::Compaq()  {
-  if( Fragments.Count() < 2 )  return;
-  if( Generated )  return;
-  //if( Generated )  {
-  //  TBasicApp::GetLog().Error("Please note that asymetric unit will not be updated: the structure is grown");
-  //  RestoreCoordinates();
-  //  OnStructureGrow->Enter(this);
-  //}
+  if( Generated || Fragments.Count() < 2 )  return;
   vec3d molCenter, acenter;
   smatd* m;
 
-  mat3d abc2xyz( mat3d::Transpose(GetAsymmUnit().GetCellToCartesian()) ),
-           xyz2abc( mat3d::Transpose(GetAsymmUnit().GetCartesianToCell()) );
+  const mat3d abc2xyz( mat3d::Transpose(GetAsymmUnit().GetCellToCartesian()) ),
+              xyz2abc( mat3d::Transpose(GetAsymmUnit().GetCartesianToCell()) );
 
   molCenter[0] = 0;  molCenter[1] = 0;  molCenter[2] = 0;
   TNetwork* frag = Fragments[0];
@@ -1059,56 +1053,33 @@ void TLattice::Compaq()  {
       if( m != NULL )  break;
     }
     if( m == NULL )  {
-      molCenter[0] = 0;  molCenter[1] = 0;  molCenter[2] = 0;
+      molCenter.Null();
       for( int j=0; j < frag->NodeCount(); j++ )
         molCenter += frag->Node(j).ccrd();
-      if( frag->NodeCount() )  molCenter /= frag->NodeCount();
+      if( frag->NodeCount() != 0 )  
+        molCenter /= frag->NodeCount();
       m = GetUnitCell().GetClosest(acenter, molCenter, true);
     }
     if( m != NULL )  {
-      if( !Generated )  {
-        for(int j=0; j < frag->NodeCount(); j++ )  {
-          TSAtom& SA = frag->Node(j);
-          if( SA.IsDeleted() )  continue;
-          SA.CAtom().ccrd() = *m * SA.CAtom().ccrd();
-          if( SA.CAtom().GetEllipsoid() != NULL ) 
-            SA.CAtom().GetEllipsoid()->MultMatrix( abc2xyz*m->r*xyz2abc );
-        }
-        delete m;
+      const mat3d etm = abc2xyz*m->r*xyz2abc;
+      for(int j=0; j < frag->NodeCount(); j++ )  {
+        TSAtom& SA = frag->Node(j);
+        if( SA.IsDeleted() )  continue;
+        SA.CAtom().ccrd() = *m * SA.CAtom().ccrd();
+        if( SA.CAtom().GetEllipsoid() != NULL ) 
+          SA.CAtom().GetEllipsoid()->MultMatrix( etm );
       }
-      else  {
-        for(int j=0; j < frag->NodeCount(); j++ )  {
-          TSAtom& SA = frag->Node(j);
-          if( SA.IsDeleted() )  continue;
-          SA.ccrd() = *m * SA.ccrd();
-          SA.AddMatrix(m);
-          GetAsymmUnit().CellToCartesian(SA.ccrd(), SA.crd());
-        }
-        Matrices.Add(m);
-      }
+      delete m;
     }
   }
-  if( !Generated )  { 
-    GetUnitCell().UpdateEllipsoids();
-    Uniq();
-  }
-  else  {
-    Disassemble();
-    OnStructureGrow->Exit(this);
-  }
+  GetUnitCell().UpdateEllipsoids();
+  Uniq();
 }
 //..............................................................................
-int TLattice_CompaqAllSort(const AnAssociation2<double, smatd*>& a, const AnAssociation2<double, smatd*>& b)  {
-  double d = a.GetA() - b.GetA();
-  return d < 0 ? -1 : (d > 0 ? 1 : 0);
-}
 void TLattice::CompaqAll()  {
-  if( Generated )  return;
-
-  if( Fragments.Count() < 2 )  return;
-
-  mat3d abc2xyz( mat3d::Transpose(GetAsymmUnit().GetCellToCartesian()) ),
-           xyz2abc( mat3d::Transpose(GetAsymmUnit().GetCartesianToCell()));
+  if( Generated || Fragments.Count() < 2 )  return;
+  const mat3d abc2xyz( mat3d::Transpose(GetAsymmUnit().GetCellToCartesian()) ),
+              xyz2abc( mat3d::Transpose(GetAsymmUnit().GetCartesianToCell()));
 
   for( int i=0; i < Fragments.Count(); i++ )  {
     for( int j=i+1; j < Fragments.Count(); j++ )  {
@@ -1135,38 +1106,58 @@ void TLattice::CompaqAll()  {
     }
   }
   GetUnitCell().UpdateEllipsoids();
-  Disassemble();
-  // hard bit here
-  TTypeList<AnAssociation2<double, smatd*> > dst;
+  Uniq();
+}
+//..............................................................................
+void TLattice::CompaqClosest()  {
+  if( Generated || Fragments.Count() < 2 )  return;
+  const mat3d abc2xyz( mat3d::Transpose(GetAsymmUnit().GetCellToCartesian()) ),
+              xyz2abc( mat3d::Transpose(GetAsymmUnit().GetCartesianToCell()));
+
   const int fr_cnt = Fragments.Count();
   TNetwork* largest_net = Fragments[0];
   const int frl_cnt = largest_net->NodeCount();
   for( int i=1; i < fr_cnt; i++ )  {
     TNetwork* fragi = Fragments[i];
     const int fri_cnt = fragi->NodeCount();
+    double minQD = 10000;
+    smatd* transform = NULL;
     for( int j=0; j < frl_cnt; j++ )  {
-      TSAtom& fa = largest_net->Node(j);
+      const TSAtom& fa = largest_net->Node(j);
       for( int k=0; k < fri_cnt; k++ )  {
-        TSAtom& fb = fragi->Node(k);
-        double d = 0;
-        smatd* m = GetUnitCell().GetClosest(fa.CAtom().ccrd(), fb.CAtom().ccrd(), false, &d);
-        if( m == NULL )  continue;
-        dst.AddNew( d, m );
+        const TSAtom& fb = fragi->Node(k);
+        double qd = 0;
+        smatd* m = GetUnitCell().GetClosest(fa.CAtom().ccrd(), fb.CAtom().ccrd(), true, &qd);
+        if( m == NULL )  {
+          if( qd < minQD )  { // still remember the minimal distance
+            minQD = qd;
+            if( transform != NULL )  {  // reset the transform as well
+              delete transform;
+              transform = NULL;
+            }
+          }
+          continue;
+        }
+        if( qd < minQD )  {
+          minQD = qd;
+          if( transform != NULL )
+            delete transform;
+          transform = m;
+        }
+        else
+          delete m;
       }
-      if( dst.IsEmpty() )  continue;
-      dst.QuickSorter.SortSF(dst, TLattice_CompaqAllSort);
-      mat3d etm = abc2xyz*dst[0].B()->r*xyz2abc;
-      for( int k=0; k < fri_cnt; k++ )  {
-        TSAtom& fb = fragi->Node(k);
-        if( fb.IsDeleted() )  continue;
-        fb.CAtom().ccrd() = *dst[0].GetB() * fb.CAtom().ccrd();
-        if( fb.CAtom().GetEllipsoid() != NULL )
-          fb.CAtom().GetEllipsoid()->MultMatrix( etm );
-      }
-      for( int k=0; k < dst.Count(); k++ )
-        delete dst[k].B();
-      dst.Clear();
     }
+    if( transform == NULL )  continue;
+    mat3d etm = abc2xyz*transform->r*xyz2abc;
+    for( int k=0; k < fri_cnt; k++ )  {
+      TSAtom& fb = fragi->Node(k);
+      if( fb.IsDeleted() )  continue;
+      fb.CAtom().ccrd() = *transform * fb.CAtom().ccrd();
+      if( fb.CAtom().GetEllipsoid() != NULL )
+        fb.CAtom().GetEllipsoid()->MultMatrix( etm );
+    }
+    delete transform;
   }
   GetUnitCell().UpdateEllipsoids();
   Uniq();

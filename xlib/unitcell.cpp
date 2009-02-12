@@ -339,23 +339,24 @@ smatd* TUnitCell::GetClosest(const vec3d& to, const vec3d& from, bool ConsiderOr
   const smatd* minMatr = NULL;
   vec3d V1;
   int minix, miniy, miniz;
-  double minD=1000;
+  double minD=10000;
   if( ConsiderOriginal )  {
     V1 = from-to;
-    GetLattice().GetAsymmUnit().CellToCartesian(V1);
-    minD = V1.QLength();
+    minD = GetLattice().GetAsymmUnit().CellToCartesian(V1).QLength();
+    if( dist != NULL )
+      *dist = minD;
   }
   for( int i=0; i < Matrices.Count(); i++ )  {
     const smatd& matr = Matrices[i];
     V1 = matr * from;
     V1 -= to;
-    int ix = Round(V1[0]);  V1[0] -= (ix);  // find closest distance
-    int iy = Round(V1[1]);  V1[1] -= (iy);
-    int iz = Round(V1[2]);  V1[2] -= (iz);
+    const int ix = Round(V1[0]);  V1[0] -= (ix);  // find closest distance
+    const int iy = Round(V1[1]);  V1[1] -= (iy);
+    const int iz = Round(V1[2]);  V1[2] -= (iz);
     // check for identity matrix
-    if( !i && !ix && !iy && !iz )  continue;
+    if( i == 0 && (ix|iy|iz) == 0 )  continue;
     GetLattice().GetAsymmUnit().CellToCartesian(V1);
-    double D = V1.QLength();
+    const double D = V1.QLength();
     if( D < minD )  {
       minD = D;
       minMatr = &matr;

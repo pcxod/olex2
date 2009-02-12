@@ -73,8 +73,10 @@ void XLibMacros::Export(TLibrary& lib)  {
   xlib_InitMacro(AtomInfo, "", fpAny|psFileLoaded,
 "Searches information for given atoms in the database" );
 //_________________________________________________________________________________________________________________________
-  xlib_InitMacro(Compaq, "a-analyse connectivity on atom level, but default fragment level is used", fpNone|psFileLoaded,
-"Moves all atoms or fragments of the asymmetric unit as close to each other as possible." );
+  xlib_InitMacro(Compaq, "a-assembles broken fragments&;c-similar as with no options, but considers atom-to-atom distances", 
+    fpNone|psFileLoaded,
+"Moves all atoms or fragments of the asymmetric unit as close to each other as possible. If no options provided, all fragments\
+ are assembled around the largest one." );
 //_________________________________________________________________________________________________________________________
   xlib_InitMacro(Envi, "q-adds Q-peaks to the list&;h-adds hydrogen atoms to the list&;cs-leaves selection unchanged",
     fpNone|fpOne|fpTwo,
@@ -1382,6 +1384,8 @@ void XLibMacros::macAddSE(TStrObjList &Cmds, const TParamList &Options, TMacroEr
 void XLibMacros::macCompaq(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
   if( Options.Contains("a") )  
     TXApp::GetInstance().XFile().GetLattice().CompaqAll();
+  else if( Options.Contains("c") )  
+    TXApp::GetInstance().XFile().GetLattice().CompaqClosest();
   else
     TXApp::GetInstance().XFile().GetLattice().Compaq();
 }
