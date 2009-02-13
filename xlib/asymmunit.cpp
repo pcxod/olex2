@@ -510,6 +510,19 @@ olxstr TAsymmUnit::CheckLabel(const TCAtom* ca, const olxstr &Label, char a, cha
   return LB;
 }
 //..............................................................................
+olxstr TAsymmUnit::ValidateLabel(const olxstr &Label) const  {
+  olxstr LB( (Label.Length() > 4) ? Label.SubStringTo(4) : Label );
+  int cnt=0;
+  for( int i=0; i < AtomCount(); i++ )  {
+    const TCAtom& CA = GetAtom(i);
+    if( !CA.IsDeleted() && (CA.GetLabel().Comparei(Label) == 0) )
+       cnt++;
+    if( cnt > 1 )
+      return CheckLabel(NULL, LB);
+  }
+  return LB;
+}
+//..............................................................................
 size_t TAsymmUnit::CountElements(const olxstr &Symbol) const  {
   TBasicAtomInfo *BAI = GetAtomsInfo()->FindAtomInfoBySymbol(Symbol);
   if( BAI == NULL )

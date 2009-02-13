@@ -830,9 +830,10 @@ void TIns::SaveToStrings(TStrList& SL)  {
       }
     }
   }
-
+  
+  ValidateRestraintsAtomNames( GetRM() );
   UpdateParams();
-  SaveHeader(SL, &SfacIndex, &UnitIndex);
+  SaveHeader(SL, false, &SfacIndex, &UnitIndex);
   SL.Add(EmptyString);
   int afix = 0, part = 0, fragmentId = 0;
   for( int i=-1; i < GetAsymmUnit().ResidueCount(); i++ )  {
@@ -1356,7 +1357,6 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
     Tmp = "DFIX ";
     Tmp << sr.GetValue() << ' ' << sr.GetEsd();
     for( int j=0; j < sr.AtomCount(); j++ )  {
-      sr.GetAtom(j).GetAtom()->Label() = rm.aunit.CheckLabel(NULL, sr.GetAtom(j).GetAtom()->GetLabel());   
       Tmp << ' ' << sr.GetAtom(j).GetFullLabel(rm);
       StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), rm);
     }
@@ -1372,7 +1372,6 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
     Tmp = "SADI ";
     Tmp << sr.GetEsd();
     for( int j=0; j < sr.AtomCount(); j++ )  {
-      sr.GetAtom(j).GetAtom()->Label() = rm.aunit.CheckLabel(NULL, sr.GetAtom(j).GetAtom()->GetLabel());   
       Tmp << ' ' << sr.GetAtom(j).GetFullLabel(rm);
       StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), rm);
     }
@@ -1388,7 +1387,6 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
     Tmp = "DANG ";
     Tmp << olxstr::FormatFloat(3, sr.GetValue()) << ' ' << sr.GetEsd();
     for( int j=0; j < sr.AtomCount(); j++ )  {
-      sr.GetAtom(j).GetAtom()->Label() = rm.aunit.CheckLabel(NULL, sr.GetAtom(j).GetAtom()->GetLabel());   
       Tmp << ' ' << sr.GetAtom(j).GetFullLabel(rm);
       StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), rm);
     }
@@ -1404,7 +1402,6 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
     Tmp = "CHIV ";
     Tmp << sr.GetValue() << ' ' << sr.GetEsd();
     for( int j=0; j < sr.AtomCount(); j++ )  {
-      sr.GetAtom(j).GetAtom()->Label() = rm.aunit.CheckLabel(NULL, sr.GetAtom(j).GetAtom()->GetLabel());   
       Tmp << ' ' << sr.GetAtom(j).GetFullLabel(rm);
       StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), rm);
     }
@@ -1421,7 +1418,6 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
     Tmp = "FLAT ";
     Tmp << sr.GetEsd();
     for( int j=0; j < sr.AtomCount(); j++ )  {
-      sr.GetAtom(j).GetAtom()->Label() = rm.aunit.CheckLabel(NULL, sr.GetAtom(j).GetAtom()->GetLabel());   
       Tmp << ' ' << sr.GetAtom(j).GetFullLabel(rm);
       StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), rm);
     }
@@ -1437,7 +1433,6 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
     Tmp = "DELU ";
     Tmp << sr.GetEsd() << ' ' << sr.GetEsd1();
     for( int j=0; j < sr.AtomCount(); j++ )  {
-      sr.GetAtom(j).GetAtom()->Label() = rm.aunit.CheckLabel(NULL, sr.GetAtom(j).GetAtom()->GetLabel());   
       Tmp << ' ' << sr.GetAtom(j).GetFullLabel(rm);
       StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), rm);
     }
@@ -1453,7 +1448,6 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
     Tmp = "SIMU ";
     Tmp << sr.GetEsd() << ' ' << sr.GetEsd1() << ' ' << sr.GetValue();
     for( int j=0; j < sr.AtomCount(); j++ )  {
-      sr.GetAtom(j).GetAtom()->Label() = rm.aunit.CheckLabel(NULL, sr.GetAtom(j).GetAtom()->GetLabel());   
       Tmp << ' ' << sr.GetAtom(j).GetFullLabel(rm);
       StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), rm);
     }
@@ -1469,7 +1463,6 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
     Tmp = "ISOR ";
     Tmp << sr.GetEsd() << ' ' << sr.GetEsd1();
     for( int j=0; j < sr.AtomCount(); j++ )  {
-      sr.GetAtom(j).GetAtom()->Label() = rm.aunit.CheckLabel(NULL, sr.GetAtom(j).GetAtom()->GetLabel());   
       Tmp << ' ' << sr.GetAtom(j).GetFullLabel(rm);
       StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), rm);
     }
@@ -1485,7 +1478,6 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
     if( sr.AtomCount() < 2 )  continue;
     Tmp = "EADP";
     for( int j=0; j < sr.AtomCount(); j++ )  {
-      sr.GetAtom(j).GetAtom()->Label() = rm.aunit.CheckLabel(NULL, sr.GetAtom(j).GetAtom()->GetLabel());   
       Tmp << ' ' << sr.GetAtom(j).GetAtom()->GetLabel();
       StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), rm);
     }
@@ -1500,7 +1492,6 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
     Tmp = "EXYZ";
     for( int j=0; j < sr.Count(); j++ )  {
       if( sr[j].IsDeleted() )  continue;
-      sr[j].Label() = rm.aunit.CheckLabel(NULL, sr[j].GetLabel());   
       Tmp << ' ' << sr[j].GetLabel();
     }
     HypernateIns(Tmp, SL);
@@ -1541,6 +1532,34 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
   SL.Add(EmptyString);
 }
 //..............................................................................
+void TIns::ValidateRestraintsAtomNames(RefinementModel& rm)  {
+  // fixed distances
+  TPtrList<TSRestraintList> restraints;
+  restraints.Add( &rm.rDFIX ); 
+  restraints.Add( &rm.rSADI ); 
+  restraints.Add( &rm.rDANG ); 
+  restraints.Add( &rm.rCHIV ); 
+  restraints.Add( &rm.rFLAT ); 
+  restraints.Add( &rm.rDELU ); 
+  restraints.Add( &rm.rSIMU ); 
+  restraints.Add( &rm.rISOR ); 
+  restraints.Add( &rm.rEADP ); 
+  for( int i=0; i < restraints.Count(); i++ )  {
+    TSRestraintList& srl = *restraints[i];
+    for( int j=0; j < srl.Count(); j++ )  {
+      TSimpleRestraint& sr = srl[j];
+      for( int k=0; k < sr.AtomCount(); k++ )
+        sr.GetAtom(k).GetAtom()->Label() = rm.aunit.ValidateLabel(sr.GetAtom(k).GetAtom()->GetLabel());   
+    }
+  }
+  // equivalent EXYZ constraint
+  for( int i=0; i < rm.ExyzGroups.Count(); i++ )  {
+    TExyzGroup& sr = rm.ExyzGroups[i];
+    for( int j=0; j < sr.Count(); j++ )
+      sr[j].Label() = rm.aunit.ValidateLabel(sr[j].GetLabel());   
+  }
+}
+//..............................................................................
 void TIns::ClearIns()  {
   for( int i=0; i < Ins.Count(); i++ )
     delete Ins.Object(i);
@@ -1560,7 +1579,7 @@ void TIns::_SaveSizeTemp(TStrList& SL)  {
     SL.Add("TEMP ") << RefMod.expl.GetTemperature();
 }
 //..............................................................................
-void TIns::SaveHeader(TStrList& SL, int* SfacIndex, int* UnitIndex)  {
+void TIns::SaveHeader(TStrList& SL, bool ValidateRestraintNames, int* SfacIndex, int* UnitIndex)  {
   SL.Add("TITL ") << GetTitle();
   SL.Add( _CellToString() );
   SL.Add( _ZerrToString() );
@@ -1573,6 +1592,8 @@ void TIns::SaveHeader(TStrList& SL, int* SfacIndex, int* UnitIndex)  {
   }
   if( UnitIndex != NULL )  *UnitIndex = SL.Count();  
   SL.Add("UNIT ") << Unit;
+  if( ValidateRestraintNames )
+    ValidateRestraintsAtomNames( GetRM() );
   SaveRestraints(SL, NULL, NULL, GetRM());
   _SaveRefMethod(SL);
   _SaveSizeTemp(SL);
