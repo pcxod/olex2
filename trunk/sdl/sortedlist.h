@@ -6,10 +6,32 @@
 template <class ListClass, class Comparator, typename TypeClass> class TTSortedList {
   ListClass list;
 protected:
-  int FindInsertIndex(const TypeClass& entity, bool& exists) const {
+  int FindInsertIndex(const TypeClass& entity) const {
     int from = 0, to = list.Count()-1;
     while( true )  {
       if( (to-from) == 1 )  return to;
+      const int index = (to+from)/2;
+      const int cr = Comparator::Compare(list[index], entity);
+      if( cr < 0 )  
+        from = index;
+      else  {
+        if( cr > 0 )  
+          to  = index;
+        else
+          if( cr == 0 )  
+            return index;  
+      }
+    }
+    return -1;  // shold never happen - infinite loop above!
+  }
+  int FindInsertIndexEx(const TypeClass& entity, bool& exists) const {
+    int from = 0, to = list.Count()-1;
+    while( true )  {
+      if( (to-from) == 1 )  {  
+        if( Comparator::Compare(list[from], entity) == 0 || Comparator::Compare(list[to], entity) )
+          exists = true;
+        return to;
+      }
       const int index = (to+from)/2;
       const int cr = Comparator::Compare(list[index], entity);
       if( cr < 0 )  
@@ -26,12 +48,11 @@ protected:
     }
     return -1;  // shold never happen - infinite loop above!
   }
-
-  int FindIndexOf(const TypeClass& entity) const {
-    if( list.IsEmpty() == 0 )  
+  template <class KeyC> int FindIndexOf(const KeyC& entity) const {
+    if( list.IsEmpty() )  
       return -1;
     if( list.Count() == 1 )  
-      return (list[0] == entity) ? 0 : -1;
+      return Comparator::Compare(list[0],entity) == 0 ? 0 : -1;
     int from = 0, to = list.Count()-1;
     const int from_cr = Comparator::Compare(list[from], entity);
     if( from_cr == 0 )  return from;
@@ -95,8 +116,7 @@ public:
     if( Comparator::Compare(list.Last(), entry) <=0 )  {  list.Add(entry);  return list.Count()-1; }
     // an easy case then with two items
     if( list.Count() == 2 )       {  list.Insert(1, entry);  return 1; }
-    bool exists = false;
-    int pos = FindInsertIndex( entry, exists );
+    const int pos = FindInsertIndex(entry);
     list.Insert(pos, entry);
     return pos;
   }
@@ -114,8 +134,7 @@ public:
     if( Comparator::Compare(list.Last(), entry) <=0 )  {  list.Add(entry);  return list.Count()-1; }
     // an easy case then with two items
     if( list.Count() == 2 )       {  list.Insert(1, entry);  return 1; }
-    bool exists = false;
-    int pos = FindInsertIndex( entry, exists );
+    const int pos = FindInsertIndex(entry);
     list.Insert(pos, entry);
     return pos;
   }
@@ -133,7 +152,7 @@ public:
     // larger than the last
     if( Comparator::Compare(list.Last(), entry) < 0 )  {  list.Add(entry);  return list.Count()-1; }
     bool exists = false;
-    int pos = FindInsertIndex( entry, exists );
+    int pos = FindInsertIndexEx( entry, exists );
     if( exists )  return -1;
     list.Insert(pos, entry);
     return pos;
@@ -151,12 +170,13 @@ public:
     // larger than the last
     if( Comparator::Compare(list.Last(), entry) < 0 )  {  list.Add(entry);  return list.Count()-1; }
     bool exists = false;
-    int pos = FindInsertIndex( entry, exists );
+    int pos = FindInsertIndexEx( entry, exists );
     if( exists )  return -1;
     list.Insert(pos, entry);
     return pos;
   }
-  int IndexOf(const TypeClass& entity) const {  return FindIndexOf(entity);  }
+  template <class KeyC>
+  int IndexOf(const KeyC& entity) const {  return FindIndexOf(entity);  }
   // removes specified entry from the list and returns true if the entry was in the list
   bool Remove(const TypeClass& entity)  {
     int ind = FindIndexOf(entity);

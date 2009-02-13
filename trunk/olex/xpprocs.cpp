@@ -8188,35 +8188,38 @@ void TMainForm::macShowSymm(TStrObjList &Cmds, const TParamList &Options, TMacro
   throw TNotImplementedException(__OlxSourceInfo);
 }
 //..............................................................................
-class main_TestR  {
-public:
-  int Sort(const double& v, const double& v1 )   {  return ( v < v1 ) ? -1 : (( v1 > v ) ? 1 : 0);  }
-  int Sortp(const double* v, const double* v1 )   {  return (*v < *v1) ? -1 : (( *v1 > *v ) ? 1 : 0);  }
-  int PtrSort(const double* v, const double* v1 )   {  return (v < v1) ? -1 : (( v1 > v ) ? 1 : 0);  }
-  int CSort(const double& v, const double& v1 ) const  {  return ( v < v1 ) ? -1 : (( v1 > v ) ? 1 : 0);  }
-  int CSortp(const double* v, const double* v1 ) const  {  return ( *v < *v1 ) ? -1 : (( *v1 < *v ) ? 1 : 0);  }
-  int CPtrSort(const double* v, const double* v1 ) const   {  return (v < v1) ? -1 : (( v1 > v ) ? 1 : 0);  }
-  static int SSort(const double& v, const double& v1 )  {  return ( v < v1 ) ? -1 : (( v1 > v ) ? 1 : 0);  }
-  static int SSortp(const double* v, const double* v1 )  {  return ( *v < *v1 ) ? -1 : (( *v1 > *v ) ? 1 : 0);  }
-  static int SPtrSort(const double* v, const double* v1 )  {  return ( v < v1 ) ? -1 : (( v1 > v ) ? 1 : 0);  }
+struct main_TestSL  {
+  olxstr key;
+  mutable olxstr val;
+  int Compare(const main_TestSL& sl) const {
+    return this->key.Compare(sl.key);
+  }
+  int Compare(const char* key) const {
+    return this->key.Compare(key);
+  }
+  int Compare(const olxstr& key) const {
+    return this->key.Compare(key);
+  }
+  main_TestSL(const main_TestSL& v) : key(v.key), val(v.val) {  }
+  main_TestSL(const olxstr& k, const olxstr& v) : key(k), val(v) {  }
+  main_TestSL(const olxstr& k) : key(k) {  }
+  main_TestSL(const char* k) : key(k) {  }
+  main_TestSL& operator = (const main_TestSL& v) {  
+    key = v.key;
+    val = v.val;
+  }
 };
-class main_TestR1 {
-  double v;
-  static int cmp(const main_TestR1& a, const main_TestR1& b)  {
-    return (a.v < b.v) ? -1 : ( a.v > b.v ? 1 : 0 );
-  }
-  static int cmp(const main_TestR1* a, const main_TestR1* b)  {
-    return (a->v < b->v) ? -1 : ( a->v > b->v ? 1 : 0 );
-  }
+template <class ItemC, class Comparator> class main_Dict :
+public SortedObjectList<ItemC, Comparator> {
 public:
-  main_TestR1(double _v) : v(_v) {}
-  int Sort(const main_TestR1& a, const main_TestR1& b )   {  return cmp(a,b);  }
-  int CSort(const main_TestR1& a, const main_TestR1& b ) const  {  return cmp(a,b);  }
-  static int SSort(const main_TestR1& a, const main_TestR1& b )  {  return cmp(a,b);  }
-  int Sortp(const main_TestR1* a, const main_TestR1* b )   {  return cmp(a,b);  }
-  int CSortp(const main_TestR1* a, const main_TestR1* b ) const  {  return cmp(a,b);  }
-  static int SSortp(const main_TestR1* a, const main_TestR1* b )  {  return cmp(a,b);  }
-  int Compare(const main_TestR1& s) const {  return cmp(*this, s);  }
+  main_Dict() {}
+  template <class KeyC>
+  const ItemC& operator [] (const KeyC& key) {
+    int ind = SortedObjectList<ItemC, Comparator>::IndexOf(key);
+    if( ind == -1 )
+      throw 1;
+    return SortedObjectList<ItemC, Comparator>::operator[] (ind);
+  }
 };
 void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   SortedObjectList<olxstr, olxstrComparator<true> > l, l1;
@@ -8228,81 +8231,13 @@ void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options, TMa
   olxstr t2(l[1]);
   olxstr t3 = t1;
 
-      TTypeList<double> AA;
-      AA.AddACopy(10.0);
-      AA.AddACopy(1.0);
-      AA.AddACopy(70.0);
-      AA.AddACopy(7.0);
+  main_Dict< main_TestSL, TComparableComparator > l3;
+  l3.AddUnique("a");
+  l3.AddUnique("b");
+  l3.AddUnique("a");
+  l3.AddUnique("c");
+  l3["a"].val = "x";
 
-      main_TestR  testR;
-      main_TestR1  testR1(0);
-
-      TTypeList<double>::BubleSorter.SortSF(AA, &main_TestR::SSort);
-      TTypeList<double>::BubleSorter.SortMF(AA, testR, &main_TestR::Sort);
-      TTypeList<double>::BubleSorter.SortMF(AA, testR, &main_TestR::CSort);
-      TTypeList<double>::BubleSorter.Sort<TPrimitiveComparator>(AA);
-      TTypeList<double>::BubleSorter.Sort<TPointerComparator>(AA);
-
-      TTypeList<double>::QuickSorter.SortSF(AA, &main_TestR::SSort);
-      TTypeList<double>::QuickSorter.SortMF(AA, testR, &main_TestR::Sort);
-      TTypeList<double>::QuickSorter.SortMF(AA, testR, &main_TestR::CSort);
-      TTypeList<double>::QuickSorter.Sort<TPrimitiveComparator>(AA);
-
-      TArrayList<double>  da;
-      TArrayList<double>::BubleSorter.SortSF(da, &main_TestR::SSort);
-      TArrayList<double>::BubleSorter.SortMF(da, testR, &main_TestR::Sort);
-      TArrayList<double>::BubleSorter.SortMF(da, testR, &main_TestR::CSort);
-      TArrayList<double>::BubleSorter.Sort<TPrimitiveComparator>(da);
-
-      TArrayList<double>::QuickSorter.SortSF(da, &main_TestR::SSort);
-      TArrayList<double>::QuickSorter.SortMF(da, testR, &main_TestR::Sort);
-      TArrayList<double>::QuickSorter.SortMF(da, testR, &main_TestR::CSort);
-      TArrayList<double>::QuickSorter.Sort<TPrimitiveComparator>(da);
-
-      TTypeList<main_TestR1> r1l;
-      r1l.AddNew(10);
-      r1l.AddNew(1);
-      r1l.AddNew(2);
-      r1l.AddNew(5);
-      r1l.AddNew(3);
-      TTypeList<main_TestR1>::BubleSorter.SortSF(r1l, &main_TestR1::SSort);
-      TTypeList<main_TestR1>::BubleSorter.SortMF(r1l, testR1, &main_TestR1::Sort);
-      TTypeList<main_TestR1>::BubleSorter.SortMF(r1l, testR1, &main_TestR1::CSort);
-      TTypeList<main_TestR1>::BubleSorter.Sort<TComparableComparator>(r1l);
-
-      TTypeList<main_TestR1>::QuickSorter.SortSF(r1l, &main_TestR1::SSort);
-      TTypeList<main_TestR1>::QuickSorter.SortMF(r1l, testR1, &main_TestR1::Sort);
-      TTypeList<main_TestR1>::QuickSorter.SortMF(r1l, testR1, &main_TestR1::CSort);
-      TTypeList<main_TestR1>::QuickSorter.Sort<TComparableComparator>(r1l);
-
-      TPtrList<main_TestR1> ptrl;
-      for( int i=0; i < r1l.Count(); i++ )
-        ptrl.Add( &r1l[i] );
-      TPtrList<main_TestR1>::BubleSorter.SortSF(ptrl, &main_TestR1::SSortp);
-      TPtrList<main_TestR1>::BubleSorter.SortMF(ptrl, testR1, &main_TestR1::Sortp);
-      TPtrList<main_TestR1>::BubleSorter.SortMF(ptrl, testR1, &main_TestR1::CSortp);
-      TPtrList<main_TestR1>::BubleSorter.Sort<TComparableComparator>(ptrl);
-
-      TPtrList<main_TestR1>::QuickSorter.SortSF(ptrl, &main_TestR1::SSortp);
-      TPtrList<main_TestR1>::QuickSorter.SortMF(ptrl, testR1, &main_TestR1::Sortp);
-      TPtrList<main_TestR1>::QuickSorter.SortMF(ptrl, testR1, &main_TestR1::CSortp);
-      TPtrList<main_TestR1>::QuickSorter.Sort<TComparableComparator>(ptrl);
-
-      TPtrList<double> pptrl;
-      for( int i=0; i < AA.Count(); i++ )
-        pptrl.Add( &AA[i] );
-      TPtrList<double>::BubleSorter.SortSF(pptrl, &main_TestR::SSortp);
-      TPtrList<double>::BubleSorter.SortSF(pptrl, &main_TestR::SPtrSort);
-      TPtrList<double>::BubleSorter.SortMF(pptrl, testR, &main_TestR::Sortp);
-      TPtrList<double>::BubleSorter.SortMF(pptrl, testR, &main_TestR::CSortp);
-      TPtrList<double>::BubleSorter.Sort<TPrimitiveComparator>(pptrl);
-      TPtrList<double>::BubleSorter.Sort<TPointerComparator>(pptrl);
-
-      TPtrList<double>::QuickSorter.SortSF(pptrl, &main_TestR::SSortp);
-      TPtrList<double>::QuickSorter.SortMF(pptrl, testR, &main_TestR::Sortp);
-      TPtrList<double>::QuickSorter.SortMF(pptrl, testR, &main_TestR::CSortp);
-      // Comparator dereference the pointers
-      TPtrList<double>::QuickSorter.Sort<TPrimitiveComparator>(pptrl);
 }
 //..............................................................................
 double Main_FindClosestDistance(const smatd_list& ml, vec3d& o_from, const TCAtom& a_to) {
