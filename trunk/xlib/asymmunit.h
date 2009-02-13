@@ -251,6 +251,8 @@ public:
   void Sort(TCAtomPList* list = NULL);
 
   olxstr CheckLabel(const TCAtom* ca, const olxstr &Label, char a='0', char b='a', char c='a') const;
+  // checks of no maore than one atom has this label, if more than one - returns CheckLabel
+  olxstr ValidateLabel(const olxstr &Label) const;
 
   bool DoesContainEquivalents() const  {  return ContainsEquivalents; }
   void SetContainsEquivalents(bool v)  {  ContainsEquivalents = v; }
