@@ -169,7 +169,7 @@ xlib_InitMacro(File, "s-sort the main residue of the asymmetric unit", fpNone|fp
  and an argument is provided, that argument is returned");
   xlib_InitFunc(Ins, fpOne|psCheckFileTypeIns, "Returns instruction value (all data after the instruction). In case the instruction\
  does not exist it return 'n/a' string");
-  xlib_InitFunc(SG, fpNone|fpOne|psFileLoaded, "Returns space group of currently loaded file.\
+  xlib_InitFunc(SG, fpNone|fpOne, "Returns space group of currently loaded file.\
  Also takes a string template, where %# is replaced with SG number, %n - short name,\
  %N - full name, %h - html representation of the short name, %H - same as %h for full name,\
  %s - syngony, %HS -Hall symbol" );

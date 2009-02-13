@@ -14,14 +14,14 @@ BeginEsdlNamespace()
 
 class TPrimitiveComparator  {
 public:
-  template <class Comparable>
-  static inline int Compare(const Comparable& A, const Comparable& B )  {
+  template <class ComparableA, class ComparableB>
+  static inline int Compare(const ComparableA& A, const ComparableB& B )  {
     if( A < B )  return -1;
     if( A > B )  return 1;
     return 0;
   }
-  template <class Comparable>
-  static inline int Compare(const Comparable* A, const Comparable* B )  {
+  template <class ComparableA, class ComparableB>
+  static inline int Compare(const ComparableA* A, const ComparableB* B )  {
     if( *A < *B )  return -1;
     if( *A > *B )  return 1;
     return 0;
@@ -30,17 +30,29 @@ public:
 
 class TPointerComparator  {
 public:
-  template <class Comparable>
-  static inline int Compare(const Comparable& A, const Comparable& B )  {
+  template <class ComparableA, class ComparableB>
+  static inline int Compare(const ComparableA& A, const ComparableB& B )  {
     if( &A < &B )  return -1;
     if( &A > &B )  return 1;
     return 0;
   }
-  template <class Comparable>
-  static inline int Compare(const Comparable* A, const Comparable* B )  {
+  template <class ComparableA, class ComparableB>
+  static inline int Compare(const ComparableA* A, const ComparableB* B )  {
     if( A < B )  return -1;
     if( A > B )  return 1;
     return 0;
+  }
+};
+
+class TComparableComparator  {
+public:
+  template <class ComparableA, class ComparableB>
+  static inline int Compare(const ComparableA& A, const ComparableB& B )  {
+    return A.Compare(B);
+  }
+  template <class ComparableA, class ComparableB>
+  static inline int Compare(const ComparableA* A, const ComparableB* B )  {
+    return A->Compare(*B);
   }
 };
 
@@ -79,17 +91,6 @@ template <typename ItemClass> struct Sort_StaticFunctionWrapper  {
   }
 };
 
-class TComparableComparator  {
-public:
-  template <class Comparable>
-  static inline int Compare(const Comparable& A, const Comparable& B )  {
-    return A.Compare(B);
-  }
-  template <class Comparable>
-  static inline int Compare(const Comparable* A, const Comparable* B )  {
-    return A->Compare(*B);
-  }
-};
 //.........................................................................................................................
 template <class ListClass, class ItemClass >  class TQuickPtrSorter  {
   // static comparator sort
