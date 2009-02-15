@@ -13,9 +13,10 @@
 
 BeginGxlNamespace()
 
-const short adsSphere    = 0x0001,  // atom draw styles
-            adsEllipsoid = 0x0002,
-            adsEllipsoidNPD = 0x0003;
+const short adsSphere       = 1,  // atom draw styles
+            adsEllipsoid    = 2,
+            adsEllipsoidNPD = 3,
+            adsStandalone   = 4;
 
 const short darPers     = 0x0001, // default atom radii
             darIsot     = 0x0002,

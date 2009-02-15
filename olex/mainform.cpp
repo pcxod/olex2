@@ -526,10 +526,8 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual accupancy\
   this_InitMacroD(SetEnv, EmptyString, fpTwo,
 "Sets an envomental variable");
 
-  this_InitMacroD(Activate, EmptyString, fpOne,
-"Sets current normal to the normal of the selected plane");
-  this_InitMacroD(Info, EmptyString, fpAny,
-"Prints out information on provided atoms ");
+  this_InitMacroD(Activate, EmptyString, fpOne, "Sets current normal to the normal of the selected plane");
+  this_InitMacroD(Info, "s-sorts the atom list", fpAny, "Prints out information for provided [all] atoms");
   this_InitMacroD(Help, "c-specifies commands category", fpAny,
 "Prints available information. If no arguments provided prints available commands");
   this_InitMacroD(Matr, EmptyString, fpNone|fpOne|fpNine,
@@ -539,18 +537,21 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual accupancy\
 
   this_InitMacro(Line, , fpOne|fpTwo|fpThree);
   this_InitMacro(AddLabel, , fpThree|fpFive);
-  this_InitMacro(Mpln, n&;r&;we, fpAny);
-  this_InitMacro(Cent, , fpAny ^ fpNone);
-  this_InitMacro(Mask, , fpAny );
+  this_InitMacroD(Mpln, "n-just orient, do not create plane&;r&-create reqular plane;we-use weights proportional to the (atomic weight)^we", 
+    fpAny, "sets current view along the normal of the best plane");
+  this_InitMacroD(Cent, EmptyString, fpAny^fpNone, "creates a centroid for given atoms");
+  this_InitMacroD(Mask, EmptyString, fpAny, "sets primitives for atoms or bonds according to privided mask" );
 
   this_InitMacroD(ARad, EmptyString, fpAny^fpNone, "Changes how the atoms are drawn [sfil,pers,isot,isoth]" );
   this_InitMacroD(ADS, EmptyString, fpAny^(fpNone), "Changes atom draw style [sph,elp]" );
-  this_InitMacro(AZoom, , fpAny^fpNone );
-  this_InitMacro(BRad, , fpOne );
+  this_InitMacroD(AZoom, EmptyString, fpAny^fpNone, "modifies given atoms [all] radius. The first argument is the new radius in %");
+  this_InitMacroD(BRad, EmptyString, fpOne, "sets bond radius to given number" );
 
   this_InitMacro(Hide, , fpAny^fpNone );
-  this_InitMacro(Kill, h-kill hidden atoms, fpAny^fpNone );
-  this_InitMacro(Omit, , fpOne|fpThree | psCheckFileTypeIns);
+  this_InitMacroD(Kill, "h-kill hidden atoms", fpAny^fpNone, "deletes provided [selected] atoms" );
+  this_InitMacroD(Omit, EmptyString, fpOne|fpThree|psCheckFileTypeIns, 
+    "removes any particular reflection from the refinement list. If a single number is provided,\
+ all reflections with delta(F^2)/esd greater than given number are omitted");
 
   this_InitMacroD(Exec, "s-syncronise&;o-detached&;d-output dub file name&;q-do not post output to console", fpAny^fpNone, "Executes external command" );
   this_InitMacroD(Shell, "", fpNone|fpOne, "if no arguments launches a new interactive shell,\
@@ -631,8 +632,8 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual accupancy\
 (fpAny^fpNone)|psFileLoaded, 
     "Turns specified mode on. Valid mode: fixu, fixc, grow, himp, match, move, name, occu, pack, part, split");
 
-  this_InitMacro(Text, , fpNone );
-  this_InitMacro(ShowStr, , fpNone|fpOne|psFileLoaded );
+  this_InitMacroD(Text, EmptyString, fpNone, "shows the console buffer in an external editor, defined by defeditor variable" );
+  this_InitMacroD(ShowStr, EmptyString, fpNone|fpOne|psFileLoaded, "shows/hides structure and console buffer" );
   // not implemented
   this_InitMacro(Bind, , fpTwo );
 
@@ -655,7 +656,7 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual accupancy\
  indexes in any reflection. The default is in any one reflection" , fpAny, "excludes reflections with give indexes\
  from the hkl file -h=1;2 : all reflections where h=1 or 2. " );
 
-  this_InitMacro(Direction, , fpNone );
+  this_InitMacroD(Direction, EmptyString, fpNone, "prints current orientation of the model in factional coordinates");
 
   this_InitMacro(ViewGrid, , fpNone|fpOne );
   this_InitMacro(Undo, , fpNone );

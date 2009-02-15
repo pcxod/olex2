@@ -33,6 +33,9 @@
 int TLattice_SortFragments(const TNetwork* n1, const TNetwork* n2)  {
   return n2->NodeCount() - n1->NodeCount();
 }
+int TLattice_SortAtomsByLoaderId(const TSAtom* a1, const TSAtom* a2)  {
+  return a1->CAtom().GetLoaderId() - a2->CAtom().GetLoaderId();
+}
 //---------------------------------------------------------------------------
 // TLattice function bodies
 //---------------------------------------------------------------------------
@@ -248,27 +251,9 @@ void TLattice::InitBody()  {
       TSAtom& SAtom = Frag->Node(j);
       TCAtom& CAtom = SAtom.CAtom();
       CAtom.SetFragmentId(i);
-      //if( CAtom.GetAfix() )  {
-      //  if( SAtom.NodeCount() == 1 )
-      //    CAtom.SetAfixAtomId( SAtom.Node(0).CAtom().GetLoaderId() );
-      //  else  {
-      //    conIndex = 0;
-      //    for( int k=0; k < SAtom.NodeCount(); k++ )  {
-      //      if( SAtom.Node(k).GetAtomInfo() != iQPeakIndex )  {
-      //        conIndex ++;
-      //        CAtom.SetAfixAtomId( SAtom.Node(k).CAtom().GetLoaderId() );
-      //      }
-      //    }
-      //    if( conIndex > 1 )  {
-      //      //TBasicApp::GetLog()->CriticalInfo( (olxstr("Bad connectivity for: ") << SAtom->GetLabel()) <<
-      //      //  ". Please fix the problem and reload file"
-      //      //);
-      //      CAtom.SetAfixAtomId(-1);
-      //    }
-      //  }
-      //}
     }
   }
+  TSAtomPList::QuickSorter.SortSF(Atoms, TLattice_SortAtomsByLoaderId);
   OnDisassemble->Exit(this);
 }
 void TLattice::Init()  {
@@ -279,36 +264,6 @@ void TLattice::Init()  {
   TEStrBuffer tmp;
   int eqc = GetUnitCell().FindSymmEq(tmp, 0.1, true, false, false); // find and not remove
   GetAsymmUnit().SetContainsEquivalents( eqc != 0 );
-
-/*  // decode fixed Uiso parameters
-  for( i=0; i < AtomCount(); i++ )
-  {
-    A = Atom(i);
-    CA = A->CAtom();
-    if( CA->UisoVar() )
-    {
-      if( CA->AtomInfo()->Index == iHydrogenIndex ) // "special" treatment for H
-      {
-        CA->Uiso(4*caDefIso*caDefIso);
-      }
-      else
-      {
-        if( A->NodeCount() == 1 )
-        {
-          A1 = (TSAtom*)A->Node(0);
-          if( !A1->CAtom()->UisoVar() )
-            CA->Uiso(A1->CAtom()->Uiso()*olx_abs(CA->UisoVar()));
-        }
-      }
-    }
-  }*/
-  /*
-  for( int i=0; i < Atoms.Count(); i++ )  {
-    TCAtom* CA = Atoms[i]->CAtom();
-    if( CA->GetAtomInfo()->GetIndex() == iHydrogenIndex ) // "special" treatment for H
-      CA->SetUiso(4*caDefIso*caDefIso);
-  }
-  */
   Generated = false;
 }
 //..............................................................................
@@ -813,6 +768,7 @@ void TLattice::UpdateAsymmUnit()  {
 void TLattice::ListAsymmUnit(TSAtomPList& L, TCAtomPList* Template, bool IncludeQ)  {
   ClearPlanes();
   if( Template != NULL )  {
+    L.SetCapacity( L.Count() + Template->Count() );
     for( int i=0; i < Template->Count(); i++ )  {
       if( Template->Item(i)->IsDeleted() )  continue;
       TSAtom* A = new TSAtom( Network );
@@ -824,6 +780,7 @@ void TLattice::ListAsymmUnit(TSAtomPList& L, TCAtomPList* Template, bool Include
     }
   }
   else  {
+    L.SetCapacity( L.Count() + GetAsymmUnit().AtomCount() + GetAsymmUnit().CentroidCount() );
     for( int i=0; i < GetAsymmUnit().AtomCount(); i++ )    {
       TCAtom& CA = GetAsymmUnit().GetAtom(i);
       if( CA.IsDeleted() )  continue;
@@ -1239,6 +1196,7 @@ void TLattice::Disassemble()  {
     for( int j=0; j < Frag->NodeCount(); j++ )
       Frag->Node(j).CAtom().SetFragmentId(i);
   }
+  TSAtomPList::QuickSorter.SortSF(Atoms, TLattice_SortAtomsByLoaderId);
   OnDisassemble->Exit(this);
 }
 //..............................................................................
