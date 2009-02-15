@@ -134,7 +134,7 @@
 
 #include "sfutil.h"
 // FOR DEBUG only
-#include "sortedlist.h"
+#include "edict.h"
 
 using namespace _xl_Controls;
 
@@ -1664,10 +1664,7 @@ void TMainForm::macActivate(TStrObjList &Cmds, const TParamList &Options, TMacro
 //..............................................................................
 void TMainForm::macInfo(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   TStrList Output;
-  if( Cmds.IsEmpty() )
-    FXApp->InfoList(EmptyString, Output);
-  else
-    FXApp->InfoList(Cmds.Text(' '), Output);
+  FXApp->InfoList(Cmds.IsEmpty() ? EmptyString : Cmds.Text(' '), Output, Options.Contains("s"));
   TBasicApp::GetLog() << Output;
 }
 //..............................................................................
@@ -1828,20 +1825,11 @@ void TMainForm::macLine(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 //..............................................................................
 void TMainForm::macMpln(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   TSPlane* plane = NULL;
-  bool orientOnly = false,
-       rectangular = false;
-  int weightExtent = 0;
+  bool orientOnly = Options.Contains("n"),
+    rectangular = Options.Contains("r");
+  int weightExtent = Options.FindValue("we", "0").ToInt();
   olxstr planeName;
-  for(int i=0; i < Options.Count(); i++ )  {
-    if( !Options.GetName(i).Comparei("n") )
-      orientOnly = true;
-    else if( !Options.GetName(i).Comparei("r") )
-      rectangular = true;
-    else if( !Options.GetName(i).Comparei("we") )
-      weightExtent = Options.GetValue(i).ToInt();
-  }
   TXAtomPList Atoms;
-
   if( Cmds.IsEmpty() )  {
     if( orientOnly )  {
       FXApp->FindXAtoms( EmptyString, Atoms );
@@ -1922,26 +1910,46 @@ void TMainForm::macMask(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     TXAtomPList Atoms;
     if( Cmds.Count() >= 3 )  {  // a atom drawing style is specified
       if( Cmds[2] == "elp" )  {
-        ADS |= adsEllipsoid;
+        ADS = adsEllipsoid;
         AtomsStart = 3;
         TXAtom::DefElpMask(Mask);
       }
       else if( Cmds[2] == "sph" )  {
-        ADS |= adsSphere;
+        ADS = adsSphere;
         AtomsStart = 3;
         TXAtom::DefSphMask(Mask);
       }
       else if( Cmds[2] == "npd" )  {
-        ADS |= adsEllipsoidNPD;
+        ADS = adsEllipsoidNPD;
+        AtomsStart = 3;
+        TXAtom::DefNpdMask(Mask);
+      }
+      else if( Cmds[2] == "std" )  {
+        ADS = adsStandalone;
         AtomsStart = 3;
         TXAtom::DefNpdMask(Mask);
       }
     }
     FindXAtoms(Cmds.SubListFrom(AtomsStart), Atoms, true, false);
     if( ADS != 0 )  {
-      for( int i=0; i < Atoms.Count(); i++ )  {
-        if( Atoms[i]->DrawStyle() != ADS )  
-          Atoms[i] = NULL;
+      if( ADS == adsStandalone )  {
+        for( int i=0; i < Atoms.Count(); i++ )  {
+          bool process = true;
+          for( int j=0; j < Atoms[i]->Atom().NodeCount(); j++ )  {
+            if( !Atoms[i]->Atom().Node(j).IsDeleted() )  {
+              process = false;
+              break;
+            }
+          }
+          if( !process )  
+            Atoms[i] = NULL;
+        }
+      }
+      else  {
+        for( int i=0; i < Atoms.Count(); i++ )  {
+          if( Atoms[i]->DrawStyle() != ADS )  
+            Atoms[i] = NULL;
+        }
       }
       Atoms.Pack();
     }
@@ -1951,13 +1959,8 @@ void TMainForm::macMask(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   }
   if( Cmds[0] == "bonds" )  {
     int Mask = Cmds[1].ToInt();
-    olxstr Tmp;
     TXBondPList Bonds;
-    if( Cmds.Count() >= 3 )  {
-      for( int i=2; i <  Cmds.Count(); i++ )
-        Tmp << Cmds[i] << ' ';
-    }
-    FXApp->GetBonds(Tmp, Bonds);
+    FXApp->GetBonds(Cmds.Text(' ', 2), Bonds);
     if( Bonds.IsEmpty() && FXApp->Selection()->Count() == 0 )
       TXBond::DefMask(Mask);
     FXApp->UpdateBondPrimitives(Mask, (Bonds.IsEmpty() && FXApp->Selection()->Count() == 0) ? NULL : &Bonds);
@@ -8188,39 +8191,6 @@ void TMainForm::macShowSymm(TStrObjList &Cmds, const TParamList &Options, TMacro
   throw TNotImplementedException(__OlxSourceInfo);
 }
 //..............................................................................
-struct main_TestSL  {
-  olxstr key;
-  mutable olxstr val;
-  int Compare(const main_TestSL& sl) const {
-    return this->key.Compare(sl.key);
-  }
-  int Compare(const char* key) const {
-    return this->key.Compare(key);
-  }
-  int Compare(const olxstr& key) const {
-    return this->key.Compare(key);
-  }
-  main_TestSL(const main_TestSL& v) : key(v.key), val(v.val) {  }
-  main_TestSL(const olxstr& k, const olxstr& v) : key(k), val(v) {  }
-  main_TestSL(const olxstr& k) : key(k) {  }
-  main_TestSL(const char* k) : key(k) {  }
-  main_TestSL& operator = (const main_TestSL& v) {  
-    key = v.key;
-    val = v.val;
-  }
-};
-template <class ItemC, class Comparator> class main_Dict :
-public SortedObjectList<ItemC, Comparator> {
-public:
-  main_Dict() {}
-  template <class KeyC>
-  const ItemC& operator [] (const KeyC& key) {
-    int ind = SortedObjectList<ItemC, Comparator>::IndexOf(key);
-    if( ind == -1 )
-      throw 1;
-    return SortedObjectList<ItemC, Comparator>::operator[] (ind);
-  }
-};
 void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   SortedObjectList<olxstr, olxstrComparator<true> > l, l1;
   l.Add("c");
@@ -8231,13 +8201,20 @@ void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options, TMa
   olxstr t2(l[1]);
   olxstr t3 = t1;
 
-  main_Dict< main_TestSL, TComparableComparator > l3;
-  l3.AddUnique("a");
-  l3.AddUnique("b");
-  l3.AddUnique("a");
-  l3.AddUnique("c");
-  l3["a"].val = "x";
-
+  olxdict<olxstr, olxstr, TComparableComparator > l3;
+  l3.Add("a");
+  l3.Add("b");
+  l3.Add("a");
+  l3.Add("c");
+  l3["a"] = "x";
+  l3['b'] = "x";
+  l3('d', "d -value");
+  l3.Remove('a');
+  olxdict<int, olxstr, TPrimitiveComparator> l4;
+  l4(0, "null");
+  l4(2, "two");
+  l4(1, "one");
+  l4[4] = "four";
 }
 //..............................................................................
 double Main_FindClosestDistance(const smatd_list& ml, vec3d& o_from, const TCAtom& a_to) {

@@ -584,6 +584,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\sdl\edict.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\sdl\edlist.h"
 				>
 			</File>

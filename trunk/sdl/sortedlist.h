@@ -138,42 +138,85 @@ public:
     list.Insert(pos, entry);
     return pos;
   }
-  // adds an item only if not already in the list, returns its index or -1, if the item exists
-  int AddUnique(TypeClass& entry)  {
-    if( list.IsEmpty() )     {  list.Add(entry);  return 0;  }
+  /* adds an item only if not already in the list, returns true if the item is added, pos is is 
+  initialised with the item index */
+  bool AddUnique(TypeClass& entry, int& pos)  {
+    if( list.IsEmpty() )  {  
+      list.Add(entry);  
+      pos = 0;
+      return true;  
+    }
     if( list.Count() == 1 )  {
       const int cmp_val = Comparator::Compare(list[0], entry);
-      if(  cmp_val < 0 )     {  list.Add(entry);  return 1;  }
-      else if( cmp_val > 0 ) {  list.Insert(0, entry);  return 0;  }
-      else                   {  return -1;  }
+      if(  cmp_val < 0 )  {  
+        list.Add(entry);  
+        pos = 1;
+        return true;  
+      }
+      else if( cmp_val > 0 )  {  
+        list.Insert(0, entry);  
+        pos = 0;      
+        return true;  
+      }
+      else  {  
+        pos = 0;
+        return false;  
+      }
     }
-    // smaller than the first
-    if( Comparator::Compare(list[0],entry) > 0 )  {  list.Insert(0, entry);  return 0; }
-    // larger than the last
-    if( Comparator::Compare(list.Last(), entry) < 0 )  {  list.Add(entry);  return list.Count()-1; }
+    if( Comparator::Compare(list[0],entry) > 0 )  {  // smaller than the first
+      list.Insert(0, entry);  
+      pos = 0;
+      return true; 
+    }
+    if( Comparator::Compare(list.Last(), entry) < 0 )  {  // larger than the last
+      list.Add(entry);  
+      pos = list.Count()-1;
+      return true; 
+    }
     bool exists = false;
-    int pos = FindInsertIndexEx( entry, exists );
-    if( exists )  return -1;
+    pos = FindInsertIndexEx( entry, exists );
+    if( exists )  return false;
     list.Insert(pos, entry);
-    return pos;
+    return true;
   }
-  int AddUnique(const TypeClass& entry)  {
-    if( list.IsEmpty() )     {  list.Add(entry);  return 0;  }
+  int AddUnique(const TypeClass& entry, int& pos)  {
+    if( list.IsEmpty() )  {  
+      list.Add(entry);  
+      pos = 0;
+      return true;  
+    }
     if( list.Count() == 1 )  {
       const int cmp_val = Comparator::Compare(list[0], entry);
-      if(  cmp_val < 0 )     {  list.Add(entry);  return 1;  }
-      else if( cmp_val > 0 ) {  list.Insert(0, entry);  return 0;  }
-      else                   {  return -1;  }
+      if(  cmp_val < 0 )  {  
+        list.Add(entry);  
+        pos = 1;
+        return true;  
+      }
+      else if( cmp_val > 0 )  {  
+        list.Insert(0, entry);  
+        pos = 0;      
+        return true;  
+      }
+      else  {  
+        pos = 0;
+        return false;  
+      }
     }
-    // smaller than the first
-    if( Comparator::Compare(list[0],entry) > 0 )  {  list.Insert(0, entry);  return 0; }
-    // larger than the last
-    if( Comparator::Compare(list.Last(), entry) < 0 )  {  list.Add(entry);  return list.Count()-1; }
+    if( Comparator::Compare(list[0],entry) > 0 )  {  // smaller than the first
+      list.Insert(0, entry);  
+      pos = 0;
+      return true; 
+    }
+    if( Comparator::Compare(list.Last(), entry) < 0 )  {  // larger than the last
+      list.Add(entry);  
+      pos = list.Count()-1;
+      return true; 
+    }
     bool exists = false;
-    int pos = FindInsertIndexEx( entry, exists );
-    if( exists )  return -1;
+    pos = FindInsertIndexEx( entry, exists );
+    if( exists )  return false;
     list.Insert(pos, entry);
-    return pos;
+    return true;
   }
   template <class KeyC>
   int IndexOf(const KeyC& entity) const {  return FindIndexOf(entity);  }

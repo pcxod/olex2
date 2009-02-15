@@ -466,7 +466,12 @@ AGOProperties * TGlPrimitive::SetProperties( const AGOProperties *C)
 //..............................................................................
 void TGlPrimitive::StartList(){  glNewList(FId, GL_COMPILE_AND_EXECUTE); }
 //..............................................................................
-void TGlPrimitive::CallList( TGlPrimitive *GlP ){  glCallList(GlP->Id()); }
+void TGlPrimitive::CallList( TGlPrimitive *GlP ){  
+  if( GlP->FList )
+    glCallList(GlP->Id()); 
+  else
+    GlP->Draw();
+}
 //..............................................................................
 void TGlPrimitive::EndList()        {  glEndList(); }
 //..............................................................................

@@ -563,16 +563,14 @@ void TXAtom::CreateStaticPrimitives()  {
     GlP = FParent->NewPrimitive();  GlP->Type(sgloSphere);
     FStaticObjects.Add("Sphere", GlP);
   }
-  else
   GlP->Params()[0] = 1;  GlP->Params()[1] = SphereQ; GlP->Params()[2] = SphereQ;
   GlP->Compile();
   GlP->Params().Resize(GlP->Params().Count()+1);
   GlP->Params().Last() = ddsDefSphere;
 //..............................
   // create a small sphere
-  GlP = (TGlPrimitive*)FStaticObjects.FindObject("Small sphere");
-  if( !GlP )
-  {
+  GlP = FStaticObjects.FindObject("Small sphere");
+  if( GlP == NULL )  {
     GlP = FParent->NewPrimitive();  GlP->Type(sgloSphere);
     FStaticObjects.Add("Small sphere", GlP);
   }
@@ -588,9 +586,8 @@ void TXAtom::CreateStaticPrimitives()  {
     GlPRC1->Params()[3] = RimQ; GlPRC1->Params()[4] = 1;
   GlPRC1->Compile();
 
-  GlPRim = (TGlPrimitive*)FStaticObjects.FindObject("Rims");
-  if( !GlPRim )
-  {  
+  GlPRim = FStaticObjects.FindObject("Rims");
+  if( GlPRim == NULL )  {  
     GlPRim = FParent->NewPrimitive();  GlPRim->Type(sgloCommandList); 
     FStaticObjects.Add("Rims", GlPRim);
   }
@@ -626,8 +623,8 @@ void TXAtom::CreateStaticPrimitives()  {
   GlPRD2->Params()[2] = DiskQ;   GlPRD1->Params()[3] = 1;
   GlPRD2->Compile();
 
-  GlPRim = (TGlPrimitive*)FStaticObjects.FindObject("Disks");
-  if( !GlPRim )  {
+  GlPRim = FStaticObjects.FindObject("Disks");
+  if( GlPRim == NULL )  {
     GlPRim = FParent->NewPrimitive();  GlPRim->Type(sgloCommandList); 
     FStaticObjects.Add("Disks", GlPRim);
   }
@@ -655,6 +652,23 @@ void TXAtom::CreateStaticPrimitives()  {
   PParams->Params.Add("Slices");
   PParams->Params.Add("Separation");
   FPrimitiveParams.Add(PParams);
+//..............................
+  // create cross
+  GlP = FStaticObjects.FindObject("Cross");
+  if( GlP == NULL )  {
+    GlP = FParent->NewPrimitive();  GlP->Type(sgloLines);
+    FStaticObjects.Add("Cross", GlP);
+  }
+  GlP->Data().Resize(3, 6);
+  GlP->Data()[0][0] = -1; 
+  GlP->Data()[0][1] =  1; 
+  GlP->Data()[1][2] = -1; 
+  GlP->Data()[1][3] =  1; 
+  GlP->Data()[2][4] = -1; 
+  GlP->Data()[2][5] =  1; 
+  GlP->Params()[0] = 1.0;
+  GlP->Params().Resize(GlP->Params().Count()+1);
+  GlP->Params().Last() = ddsDefSphere;
 //..............................
 }
 //..............................................................................
