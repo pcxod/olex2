@@ -989,11 +989,11 @@ TLibrary* TAsymmUnit::ExportLibrary(const olxstr& name) {
 "Adds a new atom to the asymmetric unit and return its ID, by which it can be reffered.\
  The function takes the atom name and ccordinates, if -1 is returned, the atom is not created") );
   lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,  &TAsymmUnit::LibGetAtomCount, "GetAtomCount", fpNone,
-"Returns the atom count in the asymmetric untit") );
+"Returns the atom count in the asymmetric unit") );
   lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,  &TAsymmUnit::LibGetSymm, "GetCellSymm", fpNone,
 "Returns spacegroup of currently loaded file as name: 'C2', 'I41/amd', etc") );
   lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,  &TAsymmUnit::LibGetAtomCrd, "GetAtomCrd", fpOne,
-"Returns a comma sperated list of fractional acoordinates for the specified atom") );
+"Returns a comma separated list of fractional coordinates for the specified atom") );
   lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,  &TAsymmUnit::LibGetAtomName, "GetAtomName", fpOne,
 "Returns atom label") );
   lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,  &TAsymmUnit::LibGetAtomType, "GetAtomType", fpOne,
@@ -1019,12 +1019,12 @@ TLibrary* TAsymmUnit::ExportLibrary(const olxstr& name) {
   lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,  &TAsymmUnit::LibSetAtomU, "SetAtomU", fpSeven | fpTwo,
 "Sets atoms Uiso/anis first paramater is the atom ID followed by 1 or six parameters"  ) );
   lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,  &TAsymmUnit::LibSetAtomOccu, "SetAtomOccu", fpTwo,
-"Sets atom's occupancy; first paramater is the atom ID followed by occupancy"  ) );
+"Sets atom's occupancy; first parameter is the atom ID followed by occupancy"  ) );
   lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,  &TAsymmUnit::LibSetAtomLabel, "SetAtomlabel", fpTwo,
 "Sets atom labels to provided value. The first parameter is the atom ID") );
   lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,  &TAsymmUnit::LibGetAtomLabel, "GetAtomlabel", fpTwo,
 "The takes two arguments - the atom ID and increment. The increment is used to navigate through\
- the periodic table, so increment +1 will return nex element and -1 the privious element in the\
+ the periodic table, so increment +1 will return next element and -1 the previous element in the\
  periodic table"  ) );
   lib->RegisterFunction<TAsymmUnit>( new TFunction<TAsymmUnit>(this,  &TAsymmUnit::LibIsAtomDeleted, "IsAtomDeleted", fpOne,
 "Checks status of specified atom"  ) );

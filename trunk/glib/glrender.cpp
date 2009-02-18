@@ -1159,7 +1159,7 @@ TLibrary*  TGlRender::ExportLibrary(const olxstr& name)  {
     EmptyString, fpNone|fpTwo, "Un/Sets fog") );
   lib->RegisterMacro<TGlRender>( new TMacro<TGlRender>(this,  &TGlRender::LibZoom, "Zoom",
     EmptyString, fpNone|fpOne, "If no arguments provided - resets zoom to fit to screen, otherwise increments/\
-decrements current zoom by rovided value") );
+decrements current zoom by provided value") );
 
   return lib;
 }

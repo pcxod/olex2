@@ -91,6 +91,8 @@ public:
   */
   void BuildStructureMap( TArray3D<short>& map, double delta, short value, 
     size_t* structurePoints, TPSTypeList<TBasicAtomInfo*, double>* radii, const TCAtomPList* _template = NULL );
+  void BuildStructureMapEx( TArray3D<short>& map, double resolution, double delta, short value, 
+    size_t* structurePoints, TPSTypeList<TBasicAtomInfo*, double>* radii, const TCAtomPList* _template = NULL );
 protected:
   // helper function, association should be AnAssociation2+<vec3d,TCAtom*,+>
   template <class Association> 

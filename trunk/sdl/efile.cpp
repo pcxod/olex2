@@ -927,9 +927,9 @@ TLibrary*  TEFile::ExportLibrary(const olxstr& name)
   lib->RegisterStaticFunction( new TStaticFunction( ::FileExt, "GetExt", fpOne,
 "Returns file extension") );
   lib->RegisterStaticFunction( new TStaticFunction( ::ChangeFileExt, "ChangeExt", fpTwo,
-"Returns file name with changed extention") );
+"Returns file name with changed extension") );
   lib->RegisterStaticFunction( new TStaticFunction( ::Copy, "Copy", fpTwo,
-"Copies file provieded as first argument into the file provided as second argument") );
+"Copies file provided as first argument into the file provided as second argument") );
   lib->RegisterStaticFunction( new TStaticFunction( ::Delete, "Delete", fpOne,
 "Deletes specified file") );
   lib->RegisterStaticFunction( new TStaticFunction( ::Rename, "Rename", fpTwo,
@@ -937,18 +937,18 @@ TLibrary*  TEFile::ExportLibrary(const olxstr& name)
   lib->RegisterStaticFunction( new TStaticFunction( ::CurDir, "CurDir", fpNone,
 "Returns current folder") );
   lib->RegisterStaticFunction( new TStaticFunction( ::ChDir, "ChDir", fpOne,
-"Changes current folder to provieded folder") );
+"Changes current folder to provided folder") );
   lib->RegisterStaticFunction( new TStaticFunction( ::MkDir, "MkDir", fpOne,
 "Creates specified folder") );
   lib->RegisterStaticFunction( new TStaticFunction( ::OSPath, "ospath", fpOne,
 "Returns OS specific path for provided path") );
   lib->RegisterStaticFunction( new TStaticFunction( ::Which, "Which", fpOne,
-"Tries to find a particular file looking at curent folder, PATH and program folder") );
+"Tries to find a particular file looking at current folder, PATH and program folder") );
   lib->RegisterStaticFunction( new TStaticFunction( ::Age, "Age", fpOne|fpTwo,
-"Returns file age for provided file using formating string (if provided)") );
+"Returns file age for provided file using formatting string (if provided)") );
   lib->RegisterStaticFunction( new TStaticFunction( ::ListDirForGUI, "ListDirForGUI", fpTwo|fpThree,
-"Returns a ready to use in gui list of files, matching provided mask(s) separated by semicolumn.\
- The third, optional argument [f,d,fd] specifies what shoul dbe included into the list") );
+"Returns a ready to use in GUI list of files, matching provided mask(s) separated by semicolon.\
+ The third, optional argument [f,d,fd] specifies what should be included into the list") );
   return lib;
 }
 

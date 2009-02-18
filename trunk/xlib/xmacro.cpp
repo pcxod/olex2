@@ -41,11 +41,11 @@ TActionQueue* XLibMacros::OnDelIns = &XLibMacros::Actions.NewQueue("OnDelIns");
 void XLibMacros::Export(TLibrary& lib)  {
   xlib_InitMacro(Run, "", fpAny^fpNone, "Runs provided macros (combined by '>>')");
   xlib_InitMacro(HklStat, "l-list the reflections&;m-merge reflection in current space group", fpAny|psFileLoaded, 
-    "If no arguments provided, prints the statistics on the the reflections as wel as the ones used in the refinement.\
+    "If no arguments provided, prints the statistics on the reflections as well as the ones used in the refinement.\
  If an expressions (condition) is given in the following form: x[ahbkcl], meaning that x=ah+bk+cl;\
- the subsequent expressions are combined using logical 'and' operator. For insatnce 0[2l] expression means: to find all\
+ the subsequent expressions are combined using logical 'and' operator. For instance 0[2l] expression means: to find all\
  reflections where 2l = 0. The function operates on all P1 merged reflections after\
- filtering by SHEL and OMIT, -m option merges the reflections in curresnt space group");
+ filtering by SHEL and OMIT, -m option merges the reflections in current space group");
   xlib_InitMacro(BrushHkl, "f-consider Friedel law", fpAny, "for high redundancy\
  data sets, removes equivalents with high sigma");
 //_________________________________________________________________________________________________________________________
@@ -54,10 +54,10 @@ void XLibMacros::Export(TLibrary& lib)  {
 //_________________________________________________________________________________________________________________________
   xlib_InitMacro(GraphSR, "b-number of bins", fpNone|fpOne|psFileLoaded,
 "Prints a scale vs resolution graph for current file (fcf file must exist in current folder)");
-  xlib_InitMacro(GraphPD, "r-resolution in degrees [0.5]&;fcf-take structure factors from the FCF file, otherwise calculate from curent model\
+  xlib_InitMacro(GraphPD, "r-resolution in degrees [0.5]&;fcf-take structure factors from the FCF file, otherwise calculate from current model\
 &;s-use simple scale when calculating structure factors from the mode, otherwise regression scaling will be used", fpNone|psFileLoaded,
 "Prints a intensity vs. 2 theta graph");
-  xlib_InitMacro(Wilson, "b-number of bins&;p-uses linear vins for picture, otherwise uses spherical bins", 
+  xlib_InitMacro(Wilson, "b-number of bins&;p-uses linear bins for picture, otherwise uses spherical bins", 
     fpNone|fpOne|psFileLoaded, "Prints Wilson plot data");
 //_________________________________________________________________________________________________________________________
   xlib_InitMacro(TestSymm, "e-tolerance limit", fpNone|psFileLoaded, "Tests current \
@@ -125,17 +125,17 @@ void XLibMacros::Export(TLibrary& lib)  {
   xlib_InitMacro(AddIns,"", (fpAny^fpNone)|psCheckFileTypeIns, "Adds an instruction to the INS file" );
   xlib_InitMacro(DelIns, "", fpOne|psCheckFileTypeIns, "A number or the name (will remove all accurances) can be provided" );
   xlib_InitMacro(LstIns, "", fpNone|psCheckFileTypeIns, "Lists all instructions of currently loaded Ins file" );
-  xlib_InitMacro(FixHL, "", fpNone|psFileLoaded, "Fixes hydgrogen atom labels" );
+  xlib_InitMacro(FixHL, "", fpNone|psFileLoaded, "Fixes hydrogen atom labels" );
   xlib_InitMacro(Fix, "", (fpAny^fpNone)|psCheckFileTypeIns, "Fixes specified parameters of atoms: XYZ, Uiso, Occu" );
   xlib_InitMacro(Free, "", (fpAny^fpNone)|psCheckFileTypeIns, "Frees specified parameters of atoms: XYZ, Uiso, Occu" );
   xlib_InitMacro(Isot,"" , fpAny|psCheckFileTypeIns,
-"makes provided atoms isotropic, if no arguments provieded, current selection all atoms become isotropic");
+"makes provided atoms isotropic, if no arguments provided, current selection or all atoms become isotropic");
   xlib_InitMacro(Anis,"h-adds hydrogen atoms" , (fpAny) | psCheckFileTypeIns, 
 "makes provided atoms anisotropic if no arguments provided current selection or all atoms are considered" );
 xlib_InitMacro(File, "s-sort the main residue of the asymmetric unit", fpNone|fpOne|psFileLoaded, 
     "Saves current model to a file. By default an ins file is saved and loaded" );
   xlib_InitMacro(LS, "", fpOne|fpTwo|psCheckFileTypeIns, "Sets refinement method and/or the number of iterations.");
-  xlib_InitMacro(Plan, "", fpOne|psCheckFileTypeIns, "Sets the number of Fuorier peaks to be found from the difference map");
+  xlib_InitMacro(Plan, "", fpOne|psCheckFileTypeIns, "Sets the number of Fourier peaks to be found from the difference map");
   xlib_InitMacro(UpdateWght, "", fpAny|psCheckFileTypeIns, "Copies proposed weight to current");
   xlib_InitMacro(User, "", fpNone|fpOne, "Changes current folder");
   xlib_InitMacro(Dir, "", fpNone|fpOne, "Lists current folder. A file name mask may be provided");
@@ -143,7 +143,7 @@ xlib_InitMacro(File, "s-sort the main residue of the asymmetric unit", fpNone|fp
   xlib_InitMacro(LstMac, "h-Shows help", fpAny, "Lists all defined macros. Accepts * based masks" );
   xlib_InitMacro(LstFun, "h-Shows help", fpAny, "Lists all defined functions. Accepts * based masks" );
   xlib_InitMacro(LstFS, EmptyString, fpAny, "Prints out detailed content of virtual file system. Accepts * based masks");
-  xlib_InitMacro(SGS, EmptyString, fpOne|fpTwo|psFileLoaded, "Changes current space group settings using provided cell setting (if aplicable) and axis");
+  xlib_InitMacro(SGS, EmptyString, fpOne|fpTwo|psFileLoaded, "Changes current space group settings using provided cell setting (if applicable) and axis");
   xlib_InitMacro(ASR, EmptyString, fpNone^psFileLoaded, "Absolute structure refinement: adds TWIN and BASF to current model in the case of non-centrosymmetric structure");
   xlib_InitMacro(Describe, EmptyString, fpNone^psFileLoaded, "Describes current refinement in a human readable form");
 //_________________________________________________________________________________________________________________________
@@ -153,11 +153,11 @@ xlib_InitMacro(File, "s-sort the main residue of the asymmetric unit", fpNone|fp
 "If no arguments provided, returns file name of currently loaded file, for one\
  argument returns extracted file name");
 //_________________________________________________________________________________________________________________________
-  xlib_InitFunc(FileExt, fpNone|fpOne, "Retursn file extension. If no arguments provided - of currently loaded file");
+  xlib_InitFunc(FileExt, fpNone|fpOne, "Returns file extension. If no arguments provided - of currently loaded file");
   xlib_InitFunc(FilePath, fpNone|fpOne, "Returns file path. If no arguments provided - of currently loaded file");
   xlib_InitFunc(FileFull, fpNone, "Returns full path of currently loaded file");
   xlib_InitFunc(FileDrive, fpNone|fpOne, "Returns file drive. If no arguments provided - of currently loaded file");
-  xlib_InitFunc(Title, fpNone|fpOne, "If the file is laoded, returns it's title else if a parameter passed, it is returned");
+  xlib_InitFunc(Title, fpNone|fpOne, "If the file is loaded, returns it's title else if a parameter passed, it is returned");
   xlib_InitFunc(IsFileLoaded, fpNone, "Returns true/false");
   xlib_InitFunc(IsFileType, fpOne, "Checks type of currently loaded file [ins,res,ires,cif,mol,xyz]");
 //_________________________________________________________________________________________________________________________
@@ -175,14 +175,14 @@ xlib_InitMacro(File, "s-sort the main residue of the asymmetric unit", fpNone|fp
  %s - syngony, %HS -Hall symbol" );
   xlib_InitFunc(SGS, fpNone|fpOne|psFileLoaded, "Returns current space settings" );
 //_________________________________________________________________________________________________________________________
-  xlib_InitFunc(ATA, fpAny|psFileLoaded, "Test current structure agains database.\
+  xlib_InitFunc(ATA, fpAny|psFileLoaded, "Test current structure against database.\
   (Atom Type Assignment). Returns true if any atom type changed" );
 //_________________________________________________________________________________________________________________________
-  xlib_InitFunc(FATA, fpAny|psFileLoaded, "Calculates the diff fourier map and integrates it to find artefacts around atoms.\
-  (Fouriesr Atom Type Assignment). Returns true if any atom type changed" );
+  xlib_InitFunc(FATA, fpAny|psFileLoaded, "Calculates the diff Fourier map and integrates it to find artifacts around atoms.\
+  (Fourier Atom Type Analysis). Returns true if any atom type changed" );
 //_________________________________________________________________________________________________________________________
   xlib_InitFunc(VSS, fpOne|psFileLoaded, "Validate Structure or Solution.\
-  Takes a boolean value. if value is true, the number of tested atoms is limited\
+  Takes a boolean value. If value is true, the number of tested atoms is limited\
  by the 18A rule. Returns proportion of know atom types to the all atoms number." );
 //_________________________________________________________________________________________________________________________
   xlib_InitFunc(RemoveSE, fpOne|psFileLoaded, "Returns a new space group name without provided element");
@@ -1166,7 +1166,8 @@ void XLibMacros::macFixUnit(TStrObjList &Cmds, const TParamList &Options, TMacro
     else
       bai.SetSumm( bai.GetSumm() + ca.GetOccu() );
   }
-  int Z = Round(au.EstimateZ((int)((double)nhc/Zp)));
+  int Z_est = Round(au.EstimateZ(nhc));
+  int Z = Round(Z_est*Zp);
   au.SetZ(Z);
   TBasicApp::GetLog() << (olxstr("for Z'=") << olxstr::FormatFloat(2, Zp).TrimFloat() <<
     " and " << nhc << " non hydrogen atoms Z is estimated to be " << Z << '\n');
@@ -1179,7 +1180,7 @@ void XLibMacros::macFixUnit(TStrObjList &Cmds, const TParamList &Options, TMacro
 
   for( int i=0; i < content.Count(); i++ )  {
     sfac << content[i]->GetSymbol();
-    unit << (content[i]->GetSumm()*Z)/Zp;
+    unit << (content[i]->GetSumm()*Z_est);
     n_c << content[i]->GetSymbol() << olxstr::FormatFloat(3,(double)content[i]->GetSumm()/Zp).TrimFloat();
     if( (i+1) < content.Count() )  {
       sfac << ' ';

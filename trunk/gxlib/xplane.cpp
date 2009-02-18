@@ -41,7 +41,8 @@ void TXPlane::Create(const olxstr& cName, const ACreationParams* cpar)  {
   GlP->Type(sgloPolygon);
   if( !FRectangular )  GlP->Data().Resize(3, FPlane->CrdCount());
   else                 GlP->Data().Resize(3, 5);
-  vec3d Center( FPlane->Center() ), org(FPlane->GetAtom(0).crd()-FPlane->Center()), vec;
+  vec3d Center( FPlane->Center() ), 
+        org(FPlane->GetAtom(0).crd()-FPlane->Center()), vec;
   TPSTypeList<double, vec3d const*> sortedPlane;
   sortedPlane.Add( 0, &FPlane->GetAtom(0).crd() );
 
