@@ -22,6 +22,7 @@
 
 #include "glgroup.h"
 #include "exyzgroup.h"
+#include "glutil.h"
 
 //..............................................................................
 bool TXAtomStylesClear::Enter(const IEObject *Sender, const IEObject *Data)  {  
@@ -41,6 +42,7 @@ float TXAtom::FTelpProb = 0;
 float TXAtom::FQPeakScale = 0;
 short TXAtom::FDefRad = 0;
 short TXAtom::FDefDS = 0;
+int TXAtom::OrtepSpheres = -1;
 TGraphicsStyle* TXAtom::FAtomParams=NULL;
 TXAtomStylesClear *TXAtom::FXAtomStylesClear=NULL;
 //..............................................................................
@@ -263,6 +265,7 @@ void TXAtom::Create(const olxstr& cName, const ACreationParams* cpar)  {
       TGlPrimitive* SGlP = FStaticObjects.Object(i);
       TGlPrimitive* GlP = GPC->NewPrimitive(FStaticObjects.String(i));
       GlP->Type(sgloCommandList);
+      GlP->SetTag( FStaticObjects.String(i) == "Sphere" ? 1 : 0);
       /* copy the default drawing style tag*/
       GlP->Params().Resize(GlP->Params().Count()+1);
       GlP->Params().Last() = SGlP->Params().Last();
@@ -300,6 +303,10 @@ ACreationParams* TXAtom::GetCreationParams() const {
 TXAtom::~TXAtom()  {
   if( !FPrimitiveParams.IsEmpty() )
     FPrimitiveParams.Clear();
+  if( OrtepSpheres != -1 )  {
+    glDeleteLists(OrtepSpheres, 8);
+    OrtepSpheres = -1;
+  }
 }
 //..............................................................................
 olxstr TXAtom::GetLabelLegend(TSAtom *A)  {
@@ -368,7 +375,7 @@ bool TXAtom::Orient(TGlPrimitive *GlP) {
   if( (FRadius & (darIsot|darIsotH)) != 0 )
     scale *= TelpProb();
 
-  if( FDrawStyle == adsEllipsoid )  {
+  if( FDrawStyle == adsEllipsoid || FDrawStyle == adsOrtep )  {
     if( FAtom->GetEllipsoid() != NULL )  {
       if( FAtom->GetEllipsoid()->IsNPD() )  {
         FParent->GlScale((float)(caDefIso*2*scale));
@@ -380,6 +387,16 @@ bool TXAtom::Orient(TGlPrimitive *GlP) {
           (float)(FAtom->GetEllipsoid()->GetSY()*scale),
           (float)(FAtom->GetEllipsoid()->GetSZ()*scale)
           );
+        if( FDrawStyle == adsOrtep && GlP->GetTag() == 1 )  {
+          short mask = 0;
+          const mat3d mat = FAtom->GetEllipsoid()->GetMatrix()*FParent->GetBasis().GetMatrix();
+          for( int i=0; i < 3; i++ )  {
+            if( mat[i][2] < 0 )
+              mask |= (1<<i);
+          }
+          glCallList(OrtepSpheres+mask);
+          return true;
+        }
       }
     }
     return false;
@@ -469,7 +486,7 @@ void TXAtom::ApplyStyle(TGraphicsStyle *Style)  {
 //..............................................................................
 void TXAtom::DrawStyle(short V)  {
   olxstr &DS = Primitives()->Style()->GetParam("DS", EmptyString);
-  if( V == adsEllipsoid )  {
+  if( V == adsEllipsoid || V == adsOrtep )  {
     if( FAtom->GetEllipsoid() != NULL )  {
       if( FAtom->GetEllipsoid()->IsNPD() )  {
         FDrawStyle = adsEllipsoidNPD;
@@ -670,6 +687,38 @@ void TXAtom::CreateStaticPrimitives()  {
   GlP->Params().Resize(GlP->Params().Count()+1);
   GlP->Params().Last() = ddsDefSphere;
 //..............................
+  GlSphereEx gls;
+  TTypeList<vec3f> vecs;
+  TTypeList<GlTriangle> triags;
+  TArrayList<vec3f> norms;
+  gls.Generate(1, Round(log(SphereQ)+0.5), vecs, triags, norms);
+  if( OrtepSpheres == -1 )
+    OrtepSpheres = glGenLists(8);
+  
+  glNewList(OrtepSpheres, GL_COMPILE_AND_EXECUTE);
+  gls.RenderEx(vecs, triags, norms, vec3f(0,0,0), vec3f(1,1,1));
+  glEndList();  
+  glNewList(OrtepSpheres+1, GL_COMPILE_AND_EXECUTE);
+  gls.RenderEx(vecs, triags, norms, vec3f(-1,0,0), vec3f(0,1,1));
+  glEndList();  
+  glNewList(OrtepSpheres+2, GL_COMPILE_AND_EXECUTE);
+  gls.RenderEx(vecs, triags, norms, vec3f(0,-1,0), vec3f(1,0,1));
+  glEndList();  
+  glNewList(OrtepSpheres+3, GL_COMPILE_AND_EXECUTE);
+  gls.RenderEx(vecs, triags, norms, vec3f(-1,-1,0), vec3f(0,0,1));
+  glEndList();  
+  glNewList(OrtepSpheres+4, GL_COMPILE_AND_EXECUTE);
+  gls.RenderEx(vecs, triags, norms, vec3f(0,0,-1), vec3f(1,1,0));
+  glEndList();  
+  glNewList(OrtepSpheres+5, GL_COMPILE_AND_EXECUTE);
+  gls.RenderEx(vecs, triags, norms, vec3f(-1,0,-1), vec3f(0,1,0));
+  glEndList();  
+  glNewList(OrtepSpheres+6, GL_COMPILE_AND_EXECUTE);
+  gls.RenderEx(vecs, triags, norms, vec3f(0,-1,-1), vec3f(1,0,0));
+  glEndList();  
+  glNewList(OrtepSpheres+7, GL_COMPILE_AND_EXECUTE);
+  gls.RenderEx(vecs, triags, norms, vec3f(-1,-1,-1), vec3f(0,0,0));
+  glEndList();  
 }
 //..............................................................................
 void TXAtom::UpdatePrimitives(int32_t Mask, const ACreationParams* cpar)  {

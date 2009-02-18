@@ -108,7 +108,6 @@
 #endif
 
 #include "dusero.h"
-//#include "gl2ps.h"
 
 #ifdef __GNUC__
   #ifdef Bool
@@ -135,6 +134,8 @@
 #include "sfutil.h"
 // FOR DEBUG only
 #include "edict.h"
+#include "base_2d.h"
+//#include "gl2ps/gl2ps.c"
 
 using namespace _xl_Controls;
 
@@ -1133,34 +1134,41 @@ void TMainForm::macPict(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     int PixelFormat = ChoosePixelFormat(dDC, &pfd);
     SetPixelFormat(dDC, PixelFormat, &pfd);
   HGLRC dglc = wglCreateContext(dDC);
+  // gl2ps test
+  //int vp[] = {0,0,BmpWidth,BmpHeight};
+  //TEFile pdfout("c:/olex2.pdf", "w+b");
+  //int state = GL2PS_OVERFLOW, buffersize = 0;
 
+  //while( state == GL2PS_OVERFLOW )  {
+  //  buffersize += 1024*1024;
+  //  state = gl2psBeginPage( "Olex2 output", "Olex2",
+  //                  vp,
+  //                  GL2PS_PDF,
+  //                  GL2PS_SIMPLE_SORT,
+  //                  GL2PS_USE_CURRENT_VIEWPORT | GL2PS_DRAW_BACKGROUND,
+  //                  GL_RGBA, 0,
+  //                  NULL,
+  //                  0, 0, 0,
+  //                  buffersize,
+  //                  pdfout.Handle(),
+  //                  "pdfout"
+  //                  );
+  //  FXApp->Draw();
+  //  GdiFlush();
+  //  state = gl2psEndPage();
+  //}
+  // end gl2ps test
   FXApp->GetRender().Resize(0, 0, BmpWidth, BmpHeight, res);
   wglMakeCurrent(dDC, dglc);
   FBitmapDraw = true;
   FGlConsole->Visible(false);
   FXApp->BeginDrawBitmap(res);
-  int vp[] = {0,0,BmpWidth,BmpHeight};
-//  TEFile pdfout("c:/olex2.pdf", "w+b");
-/*  gl2psBeginPage( "Olex2 output", "Olex2",
-                  vp,
-                  GL2PS_PDF,
-                  GL2PS_SIMPLE_SORT,
-                  GL2PS_USE_CURRENT_VIEWPORT | GL2PS_SILENT |
-                   GL2PS_SIMPLE_LINE_OFFSET | GL2PS_OCCLUSION_CULL | GL2PS_BEST_ROOT,
-                  GL_RGBA, 0,
-                  NULL,
-                  0, 0, 0,
-                  1024*1024*10,
-                  pdfout.Handle(),
-                  "pdfout");
-*/
   FXApp->GetRender().EnableFog( FXApp->GetRender().IsFogEnabled() );
 
   FXApp->Draw();
   GdiFlush();
   FBitmapDraw = false;
 
-//  gl2psEndPage();
 
   wglDeleteContext(dglc);
   DeleteDC(dDC);
@@ -1296,6 +1304,85 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   if( !TEFile::ExtractFileExt(bmpFN).Comparei("jpeg") )
     bmpFN = TEFile::ChangeFileExt(bmpFN, "jpg");
   image.SaveFile( bmpFN.u_str() );
+}
+//..............................................................................
+void TMainForm::macPictPS(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+  wxPrintData pd;
+  pd.SetFilename(Cmds[0].u_str());
+  pd.SetPrintMode(wxPRINT_MODE_FILE);
+  wxPostScriptDC out(pd);
+  out.StartDoc(wxT("Test"));
+  out.SetPen( *wxBLACK_PEN );
+  int Width = 0, Height = 0;
+  out.GetSize(&Width, &Height);
+  double view_port[4];
+  glGetDoublev(GL_VIEWPORT, view_port);
+  double scale = olx_max((double)Width/view_port[2], (double)Height/view_port[3])/FXApp->GetRender().GetScale(),
+    arad_scale = 10;
+  TEBasis basis = FXApp->GetRender().GetBasis();
+  vec3d origin((double)Width/2, Height/2, 0);
+  static const int spline_pts = 5;
+  wxPoint arc_points[spline_pts];
+  for( int i=0; i < FXApp->AtomCount(); i++ )  {
+    const TSAtom& sa = FXApp->GetAtom(i).Atom();
+    vec3d p = sa.crd() + basis.GetCenter();
+    p *= basis.GetMatrix();
+    p *= scale;
+    p += origin;
+    if( true || sa.GetEllipsoid() == NULL )  {
+      p[1] = Height - p[1];
+      out.SetBrush( wxBrush(sa.GetAtomInfo().GetDefColor()) );
+      out.DrawCircle(p[0], p[1], arad_scale*sa.GetAtomInfo().GetRad1());
+    }
+    else  {
+      out.SetBrush( wxNullBrush );
+      mat3d elpm( sa.GetEllipsoid()->GetMatrix() );
+      elpm[0] *= sa.GetEllipsoid()->GetSX()*scale;
+      elpm[1] *= sa.GetEllipsoid()->GetSY()*scale;
+      elpm[2] *= sa.GetEllipsoid()->GetSZ()*scale;
+      TEllipse2D elp(elpm, basis.GetMatrix());
+      for( int j=0; j < 6; j++ )  {
+        const double ra = -elp.GetArc(j).GetAngle()/(spline_pts-1);
+        const double ca = cos(ra);
+        const double sa = sin(ra);
+        const vec2d& cnt = elp.GetArc(j).GetCenter();
+        vec2d pn = elp.GetArc(j).GetFrom() - cnt;
+        for( int k=0; k < spline_pts; k++ )  {
+          arc_points[k].x = pn[0] + cnt[0] + p[0];  
+          arc_points[k].y = Height - (pn[1] + cnt[1] + p[1]);
+          const double x = pn[0];
+          pn[0] = x*ca + pn[1]*sa;
+          pn[1] = pn[1]*ca - x*sa;
+        }
+        // it draw a pie....
+        //vec2d p1 = elp.GetArc(j).GetFrom() + p;
+        //p1[1] = Height - p1[1];
+        //vec2d p2 = elp.GetArc(j).GetTo() + p;
+        //p2[1] = Height - p2[1];
+        //vec2d p3 = elp.GetArc(j).GetCenter() + p;
+        //p3[1] = Height - p3[1];
+        //out.DrawArc( p1[0], p1[1], p2[0], p2[1], p3[0], p3[1]);
+
+        out.DrawSpline(5, arc_points);
+      }
+    }
+  }
+  for( int i=0; i < FXApp->BondCount(); i++ )  {
+    const TSBond& bn = FXApp->GetBond(i).Bond();
+    vec3d p1 = bn.GetA().crd() + basis.GetCenter();
+    p1 *= basis.GetMatrix();
+    p1 *= scale;
+    p1 += origin;
+    p1[1] = Height - p1[1];
+    vec3d p2 = bn.GetB().crd() + basis.GetCenter();
+    p2 *= basis.GetMatrix();
+    p2 *= scale;
+    p2 += origin;
+    p2[1] = Height - p2[1];
+    out.DrawLine(p1[0], p1[1], p2[0], p2[1]);
+  }
+  out.EndDoc();
+  
 }
 //..............................................................................
 void TMainForm::macBang(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
@@ -1603,7 +1690,21 @@ void TMainForm::macName(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       FUndoStack->Push( FXApp->ChangeSuffix(xatoms, Options.FindValue("s"), checkLabels) );
   }
   else  {
-    FUndoStack->Push( FXApp->Name(Cmds[0], Cmds[1], checkLabels, !Options.Contains("cs")) );
+    bool processed = false;
+    if( Cmds.Count() == 1 )  { // bug #49
+      int spi = Cmds[0].IndexOf(' ');
+      if( spi != -1 )  {
+        FUndoStack->Push( FXApp->Name(Cmds[0].SubStringTo(spi), Cmds[0].SubStringFrom(spi+1), checkLabels, !Options.Contains("cs")) );
+        processed = true;
+      }
+    }
+    else if( Cmds.Count() == 2 )  {
+      FUndoStack->Push( FXApp->Name(Cmds[0], Cmds[1], checkLabels, !Options.Contains("cs")) );
+      processed = true;
+    }
+    if( !processed )  {
+      Error.ProcessingError(__OlxSrcInfo, olxstr("invalid syntax: ") << Cmds.Text(' ') );
+    }
   }
 }
 //..............................................................................
@@ -1989,7 +2090,13 @@ void TMainForm::macARad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 //..............................................................................
 void TMainForm::macADS(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   TXAtomPList Atoms;
-  short ads = (Cmds[0].Comparei("elp") == 0 ? adsEllipsoid : (Cmds[0].Comparei("sph") == 0 ? adsSphere : -1)); 
+  short ads = -1;
+  if( Cmds[0].Comparei("elp") == 0 )
+    ads = adsEllipsoid;
+  else if( Cmds[0].Comparei("sph") == 0 )
+    ads = adsSphere;
+  else if( Cmds[0].Comparei("ort") == 0 )
+    ads = adsOrtep;
   if( ads == -1 )  {
     Error.ProcessingError(__OlxSrcInfo, "unknown atom type (elp/sph) supported only" );
     return;
@@ -4247,7 +4354,7 @@ void TMainForm::macCalcVoid(TStrObjList &Cmds, const TParamList &Options, TMacro
   TBasicApp::GetLog() << "Extra distance from the surface: " << surfdis << '\n';
   
   bool invert = Options.Contains("i");
-  double resolution = Options.FindValue("r", "0.1").ToDouble();
+  double resolution = Options.FindValue("r", "0.2").ToDouble();
   if( resolution < 0.01 )  
     resolution = 0.02;
   resolution = 1./resolution;
@@ -8191,30 +8298,53 @@ void TMainForm::macShowSymm(TStrObjList &Cmds, const TParamList &Options, TMacro
   throw TNotImplementedException(__OlxSourceInfo);
 }
 //..............................................................................
+void TMainForm::macProjSph(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  TXAtomPList xatoms;
+  FindXAtoms(Cmds, xatoms, false, true);
+  if( xatoms.Count() != 1 )  {
+    E.ProcessingError(__OlxSourceInfo, "one atom is expected");
+    return;
+  }
+  double R = Options.FindValue("r", "5").ToDouble();
+  vec3d shift = xatoms[0]->Atom().crd();
+  TNetwork& net = xatoms[0]->Atom().GetNetwork();
+  for( int i=0; i < net.NodeCount(); i++ )  {
+    TSAtom& sa = net.Node(i);
+    sa.crd() -= shift;
+    if( &sa != &xatoms[0]->Atom() )
+      sa.crd().NormaliseTo(R);
+  }
+  FXApp->GetRender().Basis()->NullCenter();
+  for( int i=0; i < FXApp->BondCount(); i++ )
+    FXApp->GetBond(i).BondUpdated();
+}
+//..............................................................................
 void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  SortedObjectList<olxstr, olxstrComparator<true> > l, l1;
-  l.Add("c");
-  l.Add("a");
-  l.Add("b");
-  l1 = l;
-  olxstr t1(l[0]);
-  olxstr t2(l[1]);
-  olxstr t3 = t1;
+  vec2d p1(-1, 0), p2(0, 0.01), p3(1, 0);
+  TArc2D arc(p1, p2, p3);
+  //SortedObjectList<olxstr, olxstrComparator<true> > l, l1;
+  //l.Add("c");
+  //l.Add("a");
+  //l.Add("b");
+  //l1 = l;
+  //olxstr t1(l[0]);
+  //olxstr t2(l[1]);
+  //olxstr t3 = t1;
 
-  olxdict<olxstr, olxstr, TComparableComparator > l3;
-  l3.Add("a");
-  l3.Add("b");
-  l3.Add("a");
-  l3.Add("c");
-  l3["a"] = "x";
-  l3['b'] = "x";
-  l3('d', "d -value");
-  l3.Remove('a');
-  olxdict<int, olxstr, TPrimitiveComparator> l4;
-  l4(0, "null");
-  l4(2, "two");
-  l4(1, "one");
-  l4[4] = "four";
+  //olxdict<olxstr, olxstr, TComparableComparator > l3;
+  //l3.Add("a");
+  //l3.Add("b");
+  //l3.Add("a");
+  //l3.Add("c");
+  //l3["a"] = "x";
+  //l3['b'] = "x";
+  //l3('d', "d -value");
+  //l3.Remove('a');
+  //olxdict<int, olxstr, TPrimitiveComparator> l4;
+  //l4(0, "null");
+  //l4(2, "two");
+  //l4(1, "one");
+  //l4[4] = "four";
 }
 //..............................................................................
 double Main_FindClosestDistance(const smatd_list& ml, vec3d& o_from, const TCAtom& a_to) {

@@ -808,7 +808,7 @@ TLibrary*  TXGrid::ExportLibrary(const olxstr& name)  {
   lib->RegisterFunction<TXGrid>( new TFunction<TXGrid>(this,  &TXGrid::LibIsvalid, "IsValid",
     fpNone|fpOne, "Returns true if grid data is initialised") );
   lib->RegisterFunction<TXGrid>( new TFunction<TXGrid>(this,  &TXGrid::LibPolygonMode, "FillMode",
-    fpNone|fpOne, "Returns/sets polygom mode for 3D display. Supported values: point, line, fill") );
+    fpNone|fpOne, "Returns/sets polygon mode for 3D display. Supported values: point, line, fill") );
 
   AGDrawObject::ExportLibrary( *lib );
   return lib;

@@ -16,7 +16,8 @@ BeginGxlNamespace()
 const short adsSphere       = 1,  // atom draw styles
             adsEllipsoid    = 2,
             adsEllipsoidNPD = 3,
-            adsStandalone   = 4;
+            adsStandalone   = 4,
+            adsOrtep        = 5;
 
 const short darPers     = 0x0001, // default atom radii
             darIsot     = 0x0002,
@@ -45,6 +46,7 @@ protected:
   void ValidateDS(TGraphicsStyle *GS);
   static void ValidateAtomParams();
   static TXAtomStylesClear *FXAtomStylesClear;
+  static int OrtepSpheres;  // 8 glLists
 protected:
   static float FTelpProb, FQPeakScale;
   static short FDefRad, FDefDS;

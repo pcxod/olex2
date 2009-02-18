@@ -73,7 +73,7 @@ void AGDrawObject::LibGetName(const TStrObjList& Params, TMacroError& E)  {
 //..............................................................................
 void AGDrawObject::ExportLibrary(TLibrary& lib)  {
   lib.RegisterFunction<AGDrawObject>( new TFunction<AGDrawObject>(this,  &AGDrawObject::LibVisible,
-  "Visible", fpNone|fpOne, "Changes/returns object visiblity") );
+  "Visible", fpNone|fpOne, "Changes/returns object visibility") );
   lib.RegisterFunction<AGDrawObject>( new TFunction<AGDrawObject>(this,  &AGDrawObject::LibIsGrouped,
   "IsGrouped", fpNone, "Returns true if the object is in a group") );
   lib.RegisterFunction<AGDrawObject>( new TFunction<AGDrawObject>(this,  &AGDrawObject::LibIsSelected,
