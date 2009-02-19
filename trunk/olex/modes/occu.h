@@ -14,7 +14,7 @@ protected:
       Occu = XA->Atom().CAtom().GetParent()->GetRefMod()->Vars.GetAtomParam(XA->Atom().CAtom(), var_name_Sof);
     }
     void undo(TUndoData* data)  {
-      TGlXApp::GetGXApp()->MarkLabel(Atom, false);
+      TGlXApp::GetGXApp()->MarkLabel(*Atom, false);
       Atom->Atom().CAtom().GetParent()->GetRefMod()->Vars.SetAtomParam(Atom->Atom().CAtom(), var_name_Sof, Occu);
     }
   };
@@ -30,9 +30,9 @@ public:
   ~TOccuMode() {  }
   virtual bool OnObject(AGDrawObject &obj)  {
     if( EsdlInstanceOf( obj, TXAtom) )  {
-      TXAtom *XA = &(TXAtom&)obj;
-      TGlXApp::GetMainForm()->GetUndoStack()->Push( new TOccuModeUndo(XA) );
-      XA->Atom().CAtom().GetParent()->GetRefMod()->Vars.SetAtomParam(XA->Atom().CAtom(), var_name_Sof, Occu);
+      TXAtom& XA = (TXAtom&)obj;
+      TGlXApp::GetMainForm()->GetUndoStack()->Push( new TOccuModeUndo(&XA) );
+      XA.Atom().CAtom().GetParent()->GetRefMod()->Vars.SetAtomParam(XA.Atom().CAtom(), var_name_Sof, Occu);
       TGlXApp::GetGXApp()->MarkLabel(XA, true);
       return true;
     }

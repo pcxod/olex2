@@ -18,7 +18,7 @@ class TGlCursor: public AGDrawObject, AEventsDispatcher  {
 protected:
   bool Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, const IEObject *Data=NULL);
 public:
-  TGlCursor(const olxstr& collectionName, TGlRender *Render, bool TextStyle = true);
+  TGlCursor(const olxstr& collectionName, TGlRenderer *Render, bool TextStyle = true);
   void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
   virtual ~TGlCursor();
 

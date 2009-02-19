@@ -10,7 +10,7 @@ class TDUserObj: public TGlMouseListener  {
   short Type;
   ematd* Data;
 public:
-  TDUserObj(short type, ematd* data, const olxstr& collectionName, TGlRender *Render);
+  TDUserObj(short type, ematd* data, const olxstr& collectionName, TGlRenderer *Render);
   virtual ~TDUserObj()  {  
     if( Data != NULL )  delete Data;
   }

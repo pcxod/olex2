@@ -19,7 +19,7 @@
 #include "styles.h"
 
 
-TDUnitCell::TDUnitCell(const olxstr& collectionName, TGlRender *Render) : AGDrawObject(collectionName) {
+TDUnitCell::TDUnitCell(const olxstr& collectionName, TGlRenderer *Render) : AGDrawObject(collectionName) {
   FParent = Render;
   Groupable(false);
   FReciprical = false;
@@ -95,78 +95,78 @@ void TDUnitCell::Reciprical(bool v )  {
       FCenter = FOldCenter;
   }
 
-  FGlP->Data()[0][1] = M[0][0];  //000-A
-  FGlP->Data()[1][1] = M[0][1];
-  FGlP->Data()[2][1] = M[0][2];
-  FGlP->Data()[0][3] = M[1][0];  //000-B
-  FGlP->Data()[1][3] = M[1][1];
-  FGlP->Data()[2][3] = M[1][2];
-  FGlP->Data()[0][5] = M[2][0];  //000-C
-  FGlP->Data()[1][5] = M[2][1];
-  FGlP->Data()[2][5] = M[2][2];
+  FGlP->Data[0][1] = M[0][0];  //000-A
+  FGlP->Data[1][1] = M[0][1];
+  FGlP->Data[2][1] = M[0][2];
+  FGlP->Data[0][3] = M[1][0];  //000-B
+  FGlP->Data[1][3] = M[1][1];
+  FGlP->Data[2][3] = M[1][2];
+  FGlP->Data[0][5] = M[2][0];  //000-C
+  FGlP->Data[1][5] = M[2][1];
+  FGlP->Data[2][5] = M[2][2];
 
-  FGlP->Data()[0][6] = M[0][0];  //A
-  FGlP->Data()[1][6] = M[0][1];
-  FGlP->Data()[2][6] = M[0][2];
-  FGlP->Data()[0][7] = M[1][0]+M[0][0];  //AB
-  FGlP->Data()[1][7] = M[1][1]+M[0][1];
-  FGlP->Data()[2][7] = M[1][2]+M[0][2];
+  FGlP->Data[0][6] = M[0][0];  //A
+  FGlP->Data[1][6] = M[0][1];
+  FGlP->Data[2][6] = M[0][2];
+  FGlP->Data[0][7] = M[1][0]+M[0][0];  //AB
+  FGlP->Data[1][7] = M[1][1]+M[0][1];
+  FGlP->Data[2][7] = M[1][2]+M[0][2];
 
-  FGlP->Data()[0][8] = M[0][0];  //A
-  FGlP->Data()[1][8] = M[0][1];
-  FGlP->Data()[2][8] = M[0][2];
-  FGlP->Data()[0][9] = M[2][0]+M[0][0];  //AC
-  FGlP->Data()[1][9] = M[2][1]+M[0][1];
-  FGlP->Data()[2][9] = M[2][2]+M[0][2];
+  FGlP->Data[0][8] = M[0][0];  //A
+  FGlP->Data[1][8] = M[0][1];
+  FGlP->Data[2][8] = M[0][2];
+  FGlP->Data[0][9] = M[2][0]+M[0][0];  //AC
+  FGlP->Data[1][9] = M[2][1]+M[0][1];
+  FGlP->Data[2][9] = M[2][2]+M[0][2];
 
-  FGlP->Data()[0][10] = M[1][0];  //B
-  FGlP->Data()[1][10] = M[1][1];
-  FGlP->Data()[2][10] = M[1][2];
-  FGlP->Data()[0][11] = M[1][0]+M[0][0];  //AB
-  FGlP->Data()[1][11] = M[1][1]+M[0][1];
-  FGlP->Data()[2][11] = M[1][2]+M[0][2];
+  FGlP->Data[0][10] = M[1][0];  //B
+  FGlP->Data[1][10] = M[1][1];
+  FGlP->Data[2][10] = M[1][2];
+  FGlP->Data[0][11] = M[1][0]+M[0][0];  //AB
+  FGlP->Data[1][11] = M[1][1]+M[0][1];
+  FGlP->Data[2][11] = M[1][2]+M[0][2];
 
-  FGlP->Data()[0][12] = M[1][0];  //B
-  FGlP->Data()[1][12] = M[1][1];
-  FGlP->Data()[2][12] = M[1][2];
-  FGlP->Data()[0][13] = M[2][0]+M[1][0];  //BC
-  FGlP->Data()[1][13] = M[2][1]+M[1][1];
-  FGlP->Data()[2][13] = M[2][2]+M[1][2];
+  FGlP->Data[0][12] = M[1][0];  //B
+  FGlP->Data[1][12] = M[1][1];
+  FGlP->Data[2][12] = M[1][2];
+  FGlP->Data[0][13] = M[2][0]+M[1][0];  //BC
+  FGlP->Data[1][13] = M[2][1]+M[1][1];
+  FGlP->Data[2][13] = M[2][2]+M[1][2];
 
-  FGlP->Data()[0][14] = M[2][0];  //C
-  FGlP->Data()[1][14] = M[2][1];
-  FGlP->Data()[2][14] = M[2][2];
-  FGlP->Data()[0][15] = M[2][0]+M[0][0];  //AC
-  FGlP->Data()[1][15] = M[2][1]+M[0][1];
-  FGlP->Data()[2][15] = M[2][2]+M[0][2];
+  FGlP->Data[0][14] = M[2][0];  //C
+  FGlP->Data[1][14] = M[2][1];
+  FGlP->Data[2][14] = M[2][2];
+  FGlP->Data[0][15] = M[2][0]+M[0][0];  //AC
+  FGlP->Data[1][15] = M[2][1]+M[0][1];
+  FGlP->Data[2][15] = M[2][2]+M[0][2];
 
-  FGlP->Data()[0][16] = M[2][0];  //C
-  FGlP->Data()[1][16] = M[2][1];
-  FGlP->Data()[2][16] = M[2][2];
-  FGlP->Data()[0][17] = M[2][0]+M[1][0];  //BC
-  FGlP->Data()[1][17] = M[2][1]+M[1][1];
-  FGlP->Data()[2][17] = M[2][2]+M[1][2];
+  FGlP->Data[0][16] = M[2][0];  //C
+  FGlP->Data[1][16] = M[2][1];
+  FGlP->Data[2][16] = M[2][2];
+  FGlP->Data[0][17] = M[2][0]+M[1][0];  //BC
+  FGlP->Data[1][17] = M[2][1]+M[1][1];
+  FGlP->Data[2][17] = M[2][2]+M[1][2];
 
-  FGlP->Data()[0][18] = M[1][0]+M[0][0];  //AB
-  FGlP->Data()[1][18] = M[1][1]+M[0][1];
-  FGlP->Data()[2][18] = M[1][2]+M[0][2];
-  FGlP->Data()[0][19] = M[2][0]+M[0][0]+M[1][0] ;  //ABC
-  FGlP->Data()[1][19] = M[2][1]+M[1][1]+M[0][1];
-  FGlP->Data()[2][19] = M[2][2]+M[1][2]+M[0][2];
+  FGlP->Data[0][18] = M[1][0]+M[0][0];  //AB
+  FGlP->Data[1][18] = M[1][1]+M[0][1];
+  FGlP->Data[2][18] = M[1][2]+M[0][2];
+  FGlP->Data[0][19] = M[2][0]+M[0][0]+M[1][0] ;  //ABC
+  FGlP->Data[1][19] = M[2][1]+M[1][1]+M[0][1];
+  FGlP->Data[2][19] = M[2][2]+M[1][2]+M[0][2];
 
-  FGlP->Data()[0][20] = M[2][0]+M[1][0];  //BC
-  FGlP->Data()[1][20] = M[2][1]+M[1][1];
-  FGlP->Data()[2][20] = M[2][2]+M[1][2];
-  FGlP->Data()[0][21] = M[2][0]+M[1][0]+M[0][0] ;  //ABC
-  FGlP->Data()[1][21] = M[2][1]+M[1][1]+M[0][1];
-  FGlP->Data()[2][21] = M[2][2]+M[1][2]+M[0][2];
+  FGlP->Data[0][20] = M[2][0]+M[1][0];  //BC
+  FGlP->Data[1][20] = M[2][1]+M[1][1];
+  FGlP->Data[2][20] = M[2][2]+M[1][2];
+  FGlP->Data[0][21] = M[2][0]+M[1][0]+M[0][0] ;  //ABC
+  FGlP->Data[1][21] = M[2][1]+M[1][1]+M[0][1];
+  FGlP->Data[2][21] = M[2][2]+M[1][2]+M[0][2];
 
-  FGlP->Data()[0][22] = M[2][0]+M[0][0];  //AC
-  FGlP->Data()[1][22] = M[2][1]+M[0][1];
-  FGlP->Data()[2][22] = M[2][2]+M[0][2];
-  FGlP->Data()[0][23] = M[2][0]+M[1][0]+M[0][0];  //ABC
-  FGlP->Data()[1][23] = M[2][1]+M[1][1]+M[0][1];
-  FGlP->Data()[2][23] = M[2][2]+M[1][2]+M[0][2];
+  FGlP->Data[0][22] = M[2][0]+M[0][0];  //AC
+  FGlP->Data[1][22] = M[2][1]+M[0][1];
+  FGlP->Data[2][22] = M[2][2]+M[0][2];
+  FGlP->Data[0][23] = M[2][0]+M[1][0]+M[0][0];  //ABC
+  FGlP->Data[1][23] = M[2][1]+M[1][1]+M[0][1];
+  FGlP->Data[2][23] = M[2][2]+M[1][2]+M[0][2];
 
   FReciprical = v;
 }
@@ -188,7 +188,7 @@ void TDUnitCell::Create(const olxstr& cName, const ACreationParams* cpar)  {
   TGraphicsStyle* GS = GPC->Style();
   GPC->AddObject(this);
 
-  FGlP = GPC->NewPrimitive("Lines");
+  FGlP = GPC->NewPrimitive("Lines", sgloLines);
   SGlM = const_cast<TGlMaterial*>(GS->Material("Lines"));
   if( SGlM->Mark() )  {
     SGlM->SetFlags(sglmAmbientF);
@@ -196,11 +196,10 @@ void TDUnitCell::Create(const olxstr& cName, const ACreationParams* cpar)  {
   }
   FGlP->SetProperties(SGlM);
 
-  FGlP->Type(sgloLines);
-  FGlP->Data().Resize(3, 24);
+  FGlP->Data.Resize(3, 24);
   Reciprical(FReciprical);
 
-  TGlPrimitive* GlP = GPC->NewPrimitive("Label");  // labels
+  TGlPrimitive* GlP = GPC->NewPrimitive("Label", sgloText);  // labels
   SGlM = const_cast<TGlMaterial*>(GS->Material("Label"));
   if( SGlM->Mark() )  {
     SGlM->SetFlags(sglmAmbientF);
@@ -209,22 +208,21 @@ void TDUnitCell::Create(const olxstr& cName, const ACreationParams* cpar)  {
   }
   GlP->SetProperties(SGlM);
 
-  GlP->Type(sgloText);
-  GlP->Font( Parent()->Scene()->DefFont() );
+  GlP->SetFont( Parent()->Scene()->DefFont() );
 }
 //..............................................................................
 bool TDUnitCell::GetDimensions(vec3d &Max, vec3d &Min)  {
-  //Min[0] = FGlP->Data()[0][1];  
-  //Min[1] = FGlP->Data()[1][1];  
-  //Min[2] = FGlP->Data()[2][1];
-  //Max[0] = FGlP->Data()[0][23];  
-  //Max[1] = FGlP->Data()[1][23];  
-  //Max[2] = FGlP->Data()[2][23];
+  //Min[0] = FGlP->Data[0][1];  
+  //Min[1] = FGlP->Data[1][1];  
+  //Min[2] = FGlP->Data[2][1];
+  //Max[0] = FGlP->Data[0][23];  
+  //Max[1] = FGlP->Data[1][23];  
+  //Max[2] = FGlP->Data[2][23];
   return false;
 }
 //..............................................................................
 bool TDUnitCell::Orient(TGlPrimitive *P)  {
-  if( P->Type() == sgloText )  {
+  if( P->GetType() == sgloText )  {
     olxstr Str;
     vec3d T;
     double tr = 0.3;
@@ -235,34 +233,34 @@ bool TDUnitCell::Orient(TGlPrimitive *P)  {
     T *= FParent->GetBasis().GetMatrix();
     glRasterPos3d(T[0], T[1], T[2]);
     Str = "O";
-    P->String(&Str);
+    P->SetString(&Str);
     P->Draw();
     //A
-    T[0] = FGlP->Data()[0][1];  T[1] = FGlP->Data()[1][1];  T[2] = FGlP->Data()[2][1];
+    T[0] = FGlP->Data[0][1];  T[1] = FGlP->Data[1][1];  T[2] = FGlP->Data[2][1];
     T[0] += tr;  T[1] -= tr;  T[2] -=tr;
     T += Center;
     T *= FParent->GetBasis().GetMatrix();
     glRasterPos3d(T[0], T[1], T[2]);
     Str = "a";
-    P->String(&Str);
+    P->SetString(&Str);
     P->Draw();
     //B
-    T[0] = FGlP->Data()[0][3];  T[1] = FGlP->Data()[1][3];  T[2] = FGlP->Data()[2][3];
+    T[0] = FGlP->Data[0][3];  T[1] = FGlP->Data[1][3];  T[2] = FGlP->Data[2][3];
     T[0] -= tr;  T[1] += tr;  T[2] -=tr;
     T += Center;
     T *= FParent->GetBasis().GetMatrix();
     glRasterPos3d(T[0], T[1], T[2]);
     Str = "b";
-    P->String(&Str);
+    P->SetString(&Str);
     P->Draw();
     //C
-    T[0] = FGlP->Data()[0][5];  T[1] = FGlP->Data()[1][5];  T[2] = FGlP->Data()[2][5];
+    T[0] = FGlP->Data[0][5];  T[1] = FGlP->Data[1][5];  T[2] = FGlP->Data[2][5];
     T[0] -= tr;  T[1] -= tr;  T[2] +=tr;
     T += Center;
     T *= FParent->GetBasis().GetMatrix();
     glRasterPos3d(T[0], T[1], T[2]);
     Str = "c";
-    P->String(&Str);
+    P->SetString(&Str);
     P->Draw();
     return true;
   }

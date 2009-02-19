@@ -240,7 +240,7 @@ public:
   void FixAtomParam(TCAtom& ca, short param_name);
   void FreeAtomParam(TCAtom& ca, short param_name);
   // retruns a SHELX specific value like 20.5 or 11.0
-  double GetAtomParam(TCAtom& ca, short param_name, double* Q=NULL);
+  double GetAtomParam(const TCAtom& ca, short param_name, double* Q=NULL) const;
   // parses FVAR and assignes variable values
   template <class list> void AddFVAR(const list& fvar) {
     for( int i=0; i < fvar.Count(); i++, NextVar++ )  {

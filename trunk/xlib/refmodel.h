@@ -137,7 +137,7 @@ public:
     Vars.Validate();
   }
   // creates a human readable description of the refinement
-  void Describe(TStrList& lst);
+  void Describe(TStrList& lst, TPtrList<TCAtom>* a_res = NULL, TPtrList<TSimpleRestraint>* b_res = NULL);
 #ifndef _NO_PYTHON
   PyObject* PyExport(bool export_connectivity);
 #endif

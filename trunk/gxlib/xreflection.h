@@ -15,7 +15,7 @@ private:
   double I;
 public:
   TXReflection(const olxstr& collectionName, double minI, double maxI,
-                 const TReflection& R, TAsymmUnit* au, TGlRender *Render);
+                 const TReflection& R, TAsymmUnit* au, TGlRenderer *Render);
   virtual ~TXReflection();
   void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
 

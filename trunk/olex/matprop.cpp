@@ -66,10 +66,10 @@ TdlgMatProp::TdlgMatProp(TMainFrame *ParentFrame, TGPCollection *GPC, TGXApp *XA
     FMaterials = new TGlMaterial[GPC->PrimitiveCount()+1];
     for( int i=0; i < GPC->PrimitiveCount(); i++ )  {
       GlP = GPC->Primitive(i);
-      cbPrimitives->AddObject(GlP->Name(), GlP);
+      cbPrimitives->AddObject(GlP->GetName(), GlP);
       FMaterials[i] = *(TGlMaterial*)GlP->GetProperties();
     }
-    cbPrimitives->SetValue( uiStr(GPC->Primitive(0)->Name()));
+    cbPrimitives->SetValue( uiStr(GPC->Primitive(0)->GetName()));
     cbPrimitives->OnChange->Add(this);
     FCurrentMaterial = 0;
   }
@@ -130,7 +130,7 @@ TdlgMatProp::TdlgMatProp(TMainFrame *ParentFrame, TGPCollection *GPC, TGXApp *XA
     Sizer0->Add( new wxButton( this, ID_COPY, wxT("Copy  Mat.") ), 0, wxALL, Border );
     Sizer0->Add( new wxButton( this, ID_PASTE, wxT("Paste Mat.") ), 0, wxALL, Border );
     bEditFont = new wxButton( this, ID_EDITFONT, wxT("Edit Font") );
-    bEditFont->Enable( GPC->Primitive(0)->Font() != NULL );
+    bEditFont->Enable( GPC->Primitive(0)->GetFont() != NULL );
     Sizer0->Add( bEditFont, 0, wxALL, Border );
   }
 
@@ -237,7 +237,7 @@ bool TdlgMatProp::Execute(const IEObject *Sender, const IEObject *Data)  {
       FCurrentMaterial = i;
       Init(FMaterials[FCurrentMaterial]);
       const TGlPrimitive* glp = (const TGlPrimitive*)cbPrimitives->GetObject(i);
-      bEditFont->Enable( glp->Font() != NULL );
+      bEditFont->Enable( glp->GetFont() != NULL );
     }
   }
   if( (TSpinCtrl*)Sender == scTrans )  {
@@ -378,7 +378,7 @@ void TdlgMatProp::OnOK(wxCommandEvent& event)
         GS = FXApp->GetRender().Styles()->NewStyle( GPCollection->Name(), true);
         for( int i=0; i < GPCollection->PrimitiveCount(); i++ )  {
           GPCollection->Primitive(i)->SetProperties(&FMaterials[i]);
-          GS->PrimitiveMaterial( GPCollection->Primitive(i)->Name(), FMaterials[i]);
+          GS->PrimitiveMaterial( GPCollection->Primitive(i)->GetName(), FMaterials[i]);
         }
       }
     }
@@ -398,7 +398,7 @@ void TdlgMatProp::OnPaste(wxCommandEvent& event)  {
 }
 //..............................................................................
 void TdlgMatProp::OnEditFont(wxCommandEvent& event)  {
-  FXApp->GetRender().Scene()->ShowFontDialog( GPCollection->Primitive(FCurrentMaterial)->Font() );
+  FXApp->GetRender().Scene()->ShowFontDialog( GPCollection->Primitive(FCurrentMaterial)->GetFont() );
 }
 //..............................................................................
 

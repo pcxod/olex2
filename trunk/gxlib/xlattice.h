@@ -14,7 +14,7 @@ class TXLattice: public TGlMouseListener  {
   class TGlPrimitive* Lines;
   mat3d LatticeBasis;
 public:
-  TXLattice(const olxstr& collectionName, TGlRender *Render);
+  TXLattice(const olxstr& collectionName, TGlRenderer *Render);
   virtual ~TXLattice();
   void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
 

@@ -13,7 +13,7 @@
 #include "estlist.h"
 
 //..............................................................................
-TXPlane::TXPlane(const olxstr& collectionName, TSPlane *Plane, TGlRender *Render) :
+TXPlane::TXPlane(const olxstr& collectionName, TSPlane *Plane, TGlRenderer *Render) :
   AGDrawObject(collectionName)
 {
   FPlane = Plane;
@@ -32,15 +32,14 @@ void TXPlane::Create(const olxstr& cName, const ACreationParams* cpar)  {
   GlM1.SetFlags( sglmAmbientF );
   GlM1.AmbientF = 0;
 
-  TGlPrimitive* GlP = GPC->NewPrimitive("Plane");
+  TGlPrimitive* GlP = GPC->NewPrimitive("Plane", sgloPolygon);
   GlM.AmbientF = 0x7f00007f;
   GlM.DiffuseF = 0x7f3f3f3f;
   GlM.AmbientB = 0x7f00007f;
   GlM.DiffuseB = 0x7f3f3f3f;
   GlP->SetProperties(&GlM);
-  GlP->Type(sgloPolygon);
-  if( !FRectangular )  GlP->Data().Resize(3, FPlane->CrdCount());
-  else                 GlP->Data().Resize(3, 5);
+  if( !FRectangular )  GlP->Data.Resize(3, FPlane->CrdCount());
+  else                 GlP->Data.Resize(3, 5);
   vec3d Center( FPlane->Center() ), 
         org(FPlane->GetAtom(0).crd()-FPlane->Center()), vec;
   TPSTypeList<double, vec3d const*> sortedPlane;
@@ -75,9 +74,9 @@ void TXPlane::Create(const olxstr& cName, const ACreationParams* cpar)  {
       double d = FPlane->DistanceTo(*crd);
       vec = *crd - FPlane->Normal()*d;
       vec -= Center;
-      GlP->Data()[0][i] = vec[0];
-      GlP->Data()[1][i] = vec[1];
-      GlP->Data()[2][i] = vec[2];
+      GlP->Data[0][i] = vec[0];
+      GlP->Data[1][i] = vec[1];
+      GlP->Data[2][i] = vec[2];
     }
   }
   else  {
@@ -97,16 +96,15 @@ void TXPlane::Create(const olxstr& cName, const ACreationParams* cpar)  {
     mat3d rm;
     CreateRotationMatrix(rm, FPlane->Normal(), cos(M_PI*72.0/180) );
     for( int i=0; i < 5; i++ )  {
-      GlP->Data()[0][i] = marv[0];    
-      GlP->Data()[1][i] = marv[1];
-      GlP->Data()[2][i] = marv[2];
+      GlP->Data[0][i] = marv[0];    
+      GlP->Data[1][i] = marv[1];
+      GlP->Data[2][i] = marv[2];
       marv *= rm;
     }
   }
-  GlP = GPC->NewPrimitive("Centroid");
+  GlP = GPC->NewPrimitive("Centroid", sgloSphere);
   GlP->SetProperties(&GlM1);
-  GlP->Type(sgloSphere);
-  GlP->Params()[0] = 1./FParent->GetZoom();  GlP->Params()[1] = 6;  GlP->Params()[2] = 6;
+  GlP->Params[0] = 1./FParent->GetZoom();  GlP->Params[1] = 6;  GlP->Params[2] = 6;
   GlP->Compile();
 }
 //..............................................................................

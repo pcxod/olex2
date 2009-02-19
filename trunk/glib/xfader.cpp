@@ -12,7 +12,7 @@ UseGlNamespace()
 //..............................................................................
 //..............................................................................
 
-TXFader::TXFader(const olxstr& collectionName, TGlRender *Render):
+TXFader::TXFader(const olxstr& collectionName, TGlRenderer *Render):
     AGDrawObject(collectionName)  {
   AGDrawObject::Parent(Render);
   Groupable(false);
@@ -42,10 +42,9 @@ void TXFader::Create(const olxstr& cName, const ACreationParams* cpar)  {
   GPC->AddObject(this);
 
   //glBitmap
-  GlP = GPC->NewPrimitive("Quad");
+  GlP = GPC->NewPrimitive("Quad", sgloQuads);
   GlP->SetProperties( &GlM );
-  GlP->Type(sgloQuads);
-  GlP->Data().Resize(4, 4);
+  GlP->Data.Resize(4, 4);
 }
 //..............................................................................
 bool TXFader::Orient(TGlPrimitive *P)  {

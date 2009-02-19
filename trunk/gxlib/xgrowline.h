@@ -15,7 +15,7 @@ class TXGrowLine : public TXBond  {
   vec3d  FEdge, FBase;
 public:
   TXGrowLine(const olxstr& collectionName, TSAtom *A,
-               TCAtom* CA, const smatd& transform, TGlRender *Render);
+               TCAtom* CA, const smatd& transform, TGlRenderer *Render);
   void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
   virtual ~TXGrowLine();
 

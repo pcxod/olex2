@@ -14,7 +14,7 @@
 UseGlNamespace();
 //..............................................................................
 //..............................................................................
-TGPCollection::TGPCollection( TGlRender *P)  {
+TGPCollection::TGPCollection( TGlRenderer *P)  {
   FParent = P;
 }
 //..............................................................................
@@ -32,17 +32,17 @@ void TGPCollection::ClearPrimitives()  {
   Primitives.Clear();
 }
 //..............................................................................
-TGlPrimitive* TGPCollection::NewPrimitive(const olxstr &Name)  {
-  TGlPrimitive *GlP = FParent->NewPrimitive();
-  GlP->Name(Name);
+TGlPrimitive* TGPCollection::NewPrimitive(const olxstr& Name, short type)  {
+  TGlPrimitive *GlP = FParent->NewPrimitive(type);
+  GlP->SetName(Name);
   AddPrimitive(GlP);
-  GlP->ParentCollection(this);
+  GlP->SetParentCollection(this);
   return GlP;
 };
 //..............................................................................
-TGlPrimitive *TGPCollection::PrimitiveByName(const olxstr &Name)  {
+TGlPrimitive* TGPCollection::FindPrimitiveByName(const olxstr &Name) const {
   for( int i = 0; i < Primitives.Count(); i++ )
-    if( Primitives[i]->Name() == Name )  return Primitives[i];
+    if( Primitives[i]->GetName() == Name )  return Primitives[i];
   return NULL;
 }
 //..............................................................................
@@ -75,8 +75,8 @@ void TGPCollection::Style(TGraphicsStyle *S)  {
   for( int i=0; i < PrimitiveCount(); i++ )  {
     GlP = Primitive(i);
     GlM = (TGlMaterial*)GlP->GetProperties();
-    if( S->Material(GlP->Name())->Mark() )
-      S->PrimitiveMaterial(GlP->Name(), *GlM);
+    if( S->Material(GlP->GetName())->Mark() )
+      S->PrimitiveMaterial(GlP->GetName(), *GlM);
   }
 }
 

@@ -39,7 +39,7 @@ public:
   inline int GetList(int index) const {  return Lists[index]; }
 };
 
-class TGlRender : public IEObject  {
+class TGlRenderer : public IEObject  {
   TObjectGroup *FPrimitives;  // a list of all groups of primitives
   TSStrPObjList<CString,class TGPCollection*, false> FCollections;
 //  TPtrList<class TGPCollection> FCollections; // a named list of collections (TGPCollection)
@@ -88,8 +88,8 @@ protected:
   mutable double CalculatedZoom;
   bool ATI;
 public:
-  TGlRender(AGlScene *S, int width, int height);
-  virtual ~TGlRender();
+  TGlRenderer(AGlScene *S, int width, int height);
+  virtual ~TGlRenderer();
   void Clear();
   void ClearPrimitives();
   inline AGlScene* Scene()            const {  return FScene; }
@@ -219,7 +219,7 @@ public:
   void InvertSelection();
   inline int NewListId()  {  return FListManager.NewList(); }
 
-  void operator = (const TGlRender &G);
+  void operator = (const TGlRenderer &G);
   class TGPCollection *NewCollection(const olxstr &Name);
   TGPCollection* Collection(int index);
   TGPCollection* FindCollection(const olxstr &Name);
@@ -236,7 +236,7 @@ public:
 
   inline int PrimitiveCount() const {  return FPrimitives->ObjectCount(); }
   TGlPrimitive* Primitive(int i)    {  return (TGlPrimitive*)FPrimitives->Object(i); }
-  TGlPrimitive * NewPrimitive(); // do not call directly, use GPCollection's method instead
+  TGlPrimitive* NewPrimitive(short type); // do not call directly, use GPCollection's method instead
   void RemovePrimitive(int in);
   void OnSetProperties( const TGlMaterial *P);
   void SetProperties( TGlMaterial *P);  // tracks transluent and identity objects

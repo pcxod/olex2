@@ -10,7 +10,7 @@ class TDBasis: public TGlMouseListener  {
   TAsymmUnit *FAU;
 protected:
 public:
-  TDBasis(const olxstr& collectionName, TGlRender *Render);
+  TDBasis(const olxstr& collectionName, TGlRenderer *Render);
   virtual ~TDBasis() {  }
   void AsymmUnit(TAsymmUnit *AU){  FAU = AU; }
   void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);

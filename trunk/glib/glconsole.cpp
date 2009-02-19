@@ -35,7 +35,7 @@ UseGlNamespace()
 //..............................................................................
 //..............................................................................
 
-TGlConsole::TGlConsole(const olxstr& collectionName, TGlRender *Render) :
+TGlConsole::TGlConsole(const olxstr& collectionName, TGlRenderer *Render) :
   AGDrawObject(collectionName)  {
 
   AGDrawObject::Parent(Render);
@@ -93,10 +93,9 @@ void TGlConsole::Create(const olxstr& cName, const ACreationParams* cpar)  {
   if( GlM->Mark() )
     *GlM = Font()->GetMaterial();
 
-  TGlPrimitive* GlP = GPC->NewPrimitive("Text");
+  TGlPrimitive* GlP = GPC->NewPrimitive("Text", sgloText);
   GlP->SetProperties(GlM);
-  GlP->Type(sgloText);
-  GlP->Params()[0] = -1;  //bitmap; TTF by default
+  GlP->Params[0] = -1;  //bitmap; TTF by default
   FCursor->Create();
   olex::IOlexProcessor::GetInstance()->executeFunction(InviteStr, PromptStr);
   FCommand = PromptStr;
@@ -109,7 +108,7 @@ bool TGlConsole::Orient(TGlPrimitive *P)  {
   TGlFont *Fnt = Font();
   if( Fnt == NULL )  return true;
 //  Fnt->DrawGlText( vec3d(0,0,0), "HELLW_O", true);
-  P->Font(Fnt);
+  P->SetFont(Fnt);
 
   if( FParent->GetWidth() < 100 )  return true;
   int th = Fnt->TextHeight(EmptyString), lc, ii;
@@ -170,9 +169,9 @@ bool TGlConsole::Orient(TGlPrimitive *P)  {
       }
       else
         OGlM->Init();
-      P->String( &line );
+      P->SetString( &line );
       FParent->DrawText(*P, T[0], T[1], MaxZ); 
-      P->String(NULL);
+      P->SetString(NULL);
     }
   }
   if( PromptVisible )  {
@@ -181,9 +180,9 @@ bool TGlConsole::Orient(TGlPrimitive *P)  {
     if( Cmds.Count() == 1 )  {
       T[0] = GlLeft;  T[1] = GlTop;
       T *= Scale;
-      P->String(&FCommand);
+      P->SetString(&FCommand);
       FParent->DrawText(*P, T[0], T[1], MaxZ); 
-      P->String(NULL);
+      P->SetString(NULL);
     }
     else  {
       for( int i=Cmds.Count()-1; i >= 0 ; i-- )  {
@@ -191,9 +190,9 @@ bool TGlConsole::Orient(TGlPrimitive *P)  {
         ii = Cmds.Count()-i-1;
         T[0] = GlLeft;  T[1] = GlTop + ii*LineInc;
         T *= Scale;
-        P->String(&Cmds[i]);
+        P->SetString(&Cmds[i]);
         FParent->DrawText(*P, T[0], T[1], MaxZ); 
-        P->String(NULL);
+        P->SetString(NULL);
       }
     }
   }
@@ -402,9 +401,9 @@ void TGlConsole::PrintText(const TStrList &SL, TGlMaterial *M, bool Hypernate)  
   TStrList Txt;
   olxstr Tmp;
   for( int i=0; i < SL.Count(); i++ )  {
-    Tmp = SL.String(i);
+    Tmp = SL[i];
     for(int j=0; j < Tmp.Length(); j++ )  {
-      if( Tmp[j] == '\t' )  {
+      if( Tmp.CharAt(j) == '\t' )  {
         Tmp[j] = ' ';
         int count = 8-j%8-1;
         if( count > 0 ) Tmp.Insert(' ', j, count);
@@ -417,11 +416,11 @@ void TGlConsole::PrintText(const TStrList &SL, TGlMaterial *M, bool Hypernate)  
         TGlMaterial *GlM = NULL;
         if( M != NULL )  {  GlM = new TGlMaterial;  *GlM = *M;  }
         if( j == 0 && !FBuffer.IsEmpty() && FBuffer.LastStr().IsEmpty() )  {
-          FBuffer.Last().String() = Tmp;
+          FBuffer.Last().String() = Txt[j];
           FBuffer.Last().Object() = GlM;
         }
         else
-          FBuffer.Add(Tmp, GlM);
+          FBuffer.Add(Txt[j], GlM);
         OnPost->Execute(dynamic_cast<IEObject*>((AActionHandler*)this), &Txt[j] );
       }
     }

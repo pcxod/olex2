@@ -20,9 +20,9 @@
 
 UseGlNamespace();
 //..............................................................................
-TGraphicsStyles* TGlRender::FStyles = NULL;
+TGraphicsStyles* TGlRenderer::FStyles = NULL;
 //..............................................................................
-TGlRender::TGlRender(AGlScene *S, int width, int height)  {
+TGlRenderer::TGlRenderer(AGlScene *S, int width, int height)  {
   CompiledListId = -1;
   FScene = S;
   FZoom = 1;
@@ -70,7 +70,7 @@ TGlRender::TGlRender(AGlScene *S, int width, int height)  {
   FGObjects.SetIncrement(512);
 }
 //..............................................................................
-TGlRender::~TGlRender()  {
+TGlRenderer::~TGlRenderer()  {
   Clear();
   //GraphicsStyles = NULL;
   delete FStyles;
@@ -84,7 +84,7 @@ TGlRender::~TGlRender()  {
   delete TextureManager;
 }
 //..............................................................................
-void TGlRender::Initialise()  {
+void TGlRenderer::Initialise()  {
   TGlPrimitive *GlP;
   InitLights();
   for( int i=0; i < FPrimitives->ObjectCount(); i++ )  {
@@ -97,7 +97,7 @@ void TGlRender::Initialise()  {
   ATI = vendor.StartsFrom("ATI");
 }
 //..............................................................................
-void TGlRender::InitLights()  {
+void TGlRenderer::InitLights()  {
   glEnable(GL_LIGHTING);
   glEnable(GL_DEPTH_TEST);
   glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
@@ -106,7 +106,7 @@ void TGlRender::InitLights()  {
   LightModel.Init();
 }
 //..............................................................................
-void TGlRender::ClearPrimitives()  {
+void TGlRenderer::ClearPrimitives()  {
   ClearGroups();
   FListManager.ClearLists();
   if( CompiledListId != -1 )  {
@@ -129,7 +129,7 @@ void TGlRender::ClearPrimitives()  {
   ReleaseGlImage();
 }
 //..............................................................................
-void TGlRender::Clear()  {
+void TGlRenderer::Clear()  {
   FSelection->Selected(false);
   FSelection->Clear();
   for( int i=0; i < FGroups.Count(); i++ )
@@ -158,14 +158,14 @@ void TGlRender::Clear()  {
   ReleaseGlImage();
 }
 //..............................................................................
-void TGlRender::ReleaseGlImage()  {
+void TGlRenderer::ReleaseGlImage()  {
   if( FGlImage != NULL )  {
     delete [] FGlImage;
     FGlImage = NULL;
   }
 }
 //..............................................................................
-void TGlRender::UpdateGlImage()  {
+void TGlRenderer::UpdateGlImage()  {
   ReleaseGlImage();
   FGlImage = GetPixels();
   FGlImageHeight = FHeight;
@@ -173,13 +173,13 @@ void TGlRender::UpdateGlImage()  {
   FGlImageChanged = false;
 }
 //..............................................................................
-void TGlRender::ClearMinMax()  {
+void TGlRenderer::ClearMinMax()  {
   FMaxV[0] = FMaxV[1] = FMaxV[2] = -100;
   FMinV[0] = FMinV[1] = FMinV[2] = +100;
   CalculatedZoom = -1;
 }
 //..............................................................................
-void TGlRender::UpdateMaxMin( const vec3d &Max, const vec3d &Min)  {
+void TGlRenderer::UpdateMaxMin( const vec3d &Max, const vec3d &Min)  {
   if( Max[0] > FMaxV[0] )  FMaxV[0] = Max[0];
   if( Max[1] > FMaxV[1] )  FMaxV[1] = Max[1];
   if( Max[2] > FMaxV[2] )  FMaxV[2] = Max[2];
@@ -190,15 +190,15 @@ void TGlRender::UpdateMaxMin( const vec3d &Max, const vec3d &Min)  {
   SetChanged( true );
 }
 //..............................................................................
-void TGlRender::operator = (const TGlRender &G)  { ; }
+void TGlRenderer::operator = (const TGlRenderer &G)  { ; }
 //..............................................................................
-void TGlRender::_OnStylesClear()  {
+void TGlRenderer::_OnStylesClear()  {
   OnStylesClear->Enter(this);
   for( int i=0; i < FCollections.Count(); i++ )
     FCollections.Object(i)->Style(NULL);
 }
 //..............................................................................
-void TGlRender::_OnStylesLoaded()  {
+void TGlRenderer::_OnStylesLoaded()  {
   for( int i=0; i < FCollections.Count(); i++ )  {
     FCollections.Object(i)->Style( FStyles->NewStyle(FCollections.Object(i)->Name(), true) );
   }
@@ -211,7 +211,7 @@ void TGlRender::_OnStylesLoaded()  {
   OnStylesClear->Exit(this);
 }
 //..............................................................................
-TGPCollection *TGlRender::NewCollection(const olxstr &Name)  {
+TGPCollection *TGlRenderer::NewCollection(const olxstr &Name)  {
   TGPCollection *GPC = new TGPCollection(this);
   GPC->Name(Name);
   FCollections.Add(Name, GPC);
@@ -219,16 +219,16 @@ TGPCollection *TGlRender::NewCollection(const olxstr &Name)  {
   return GPC;
 }
 //..............................................................................
-TGPCollection *TGlRender::FindCollection(const olxstr &Name)  {
+TGPCollection *TGlRenderer::FindCollection(const olxstr &Name)  {
   int ind = FCollections.IndexOfComparable(Name);
   return (ind != -1) ? FCollections.Object(ind) : NULL;
 }
 //..............................................................................
-TGPCollection *TGlRender::Collection(int ind)  {
+TGPCollection *TGlRenderer::Collection(int ind)  {
   return FCollections.Object(ind);
 }
 //..............................................................................
-int TGlRender_CollectionComparator(const olxstr& c1, const olxstr& c2) {
+int TGlRenderer_CollectionComparator(const olxstr& c1, const olxstr& c2) {
   const int l = olx_min(c1.Length(), c2.Length());
   int dc = 0, i=0;
   for( ; i < l; i++ )  {
@@ -248,7 +248,7 @@ int TGlRender_CollectionComparator(const olxstr& c1, const olxstr& c2) {
   }
   return dc;
 }
-TGPCollection *TGlRender::CollectionX(const olxstr& Name, olxstr& CollName)  {
+TGPCollection *TGlRenderer::CollectionX(const olxstr& Name, olxstr& CollName)  {
   const int di = Name.FirstIndexOf('.');
   if( di != -1 )  {
     int ind = FCollections.IndexOfComparable(Name);
@@ -258,7 +258,7 @@ TGPCollection *TGlRender::CollectionX(const olxstr& Name, olxstr& CollName)  {
     TGPCollection *BestMatch=NULL;
     short maxMatchLevels = 0;
     for( int i=0; i < FCollections.Count(); i++ )  {
-      int dc = TGlRender_CollectionComparator(Name, FCollections.GetComparable(i));
+      int dc = TGlRenderer_CollectionComparator(Name, FCollections.GetComparable(i));
       if( dc == 0 || dc < maxMatchLevels )  continue;
       if( BestMatch != NULL && dc == maxMatchLevels )  {  // keep the one with shortes name
         if( BestMatch->Name().Length() > FCollections.GetComparable(i).Length() )
@@ -283,14 +283,13 @@ TGPCollection *TGlRender::CollectionX(const olxstr& Name, olxstr& CollName)  {
   }
 }
 //..............................................................................
-TGlPrimitive * TGlRender::NewPrimitive()  {
-  TGlPrimitive *GlP = new TGlPrimitive(FPrimitives, this);
-  GlP->Id(FPrimitives->ObjectCount());
+TGlPrimitive * TGlRenderer::NewPrimitive(short type)  {
+  TGlPrimitive *GlP = new TGlPrimitive(FPrimitives, this, type);
   FPrimitives->AddObject(GlP);
   return GlP;
 }
 //..............................................................................
-void TGlRender::EnableFog(bool Set)  {
+void TGlRenderer::EnableFog(bool Set)  {
   glFogi( GL_FOG_MODE, FFogType);
   glFogf( GL_FOG_DENSITY, (float)FFogDensity);
   glFogfv( GL_FOG_COLOR, FFogColor.Data());
@@ -303,13 +302,13 @@ void TGlRender::EnableFog(bool Set)  {
   FFog = Set;
 }
 //..............................................................................
-void TGlRender::EnablePerspective(bool Set)  {
+void TGlRenderer::EnablePerspective(bool Set)  {
   if( Set == FPerspective )  return;
   FPerspective = Set;
   SetChanged(true);
 }
 //..............................................................................
-void TGlRender::SetPerspectiveAngle(double angle)  {
+void TGlRenderer::SetPerspectiveAngle(double angle)  {
   if( FPerspective )  SetChanged(true);
   int ang = (int)angle;
   if( !(angle - ang) )  {
@@ -323,11 +322,11 @@ void TGlRender::SetPerspectiveAngle(double angle)  {
   FPAngle = (float)tan(ang*M_PI/180);
 }
 //..............................................................................
-void TGlRender::Resize(int w, int h)  {
+void TGlRenderer::Resize(int w, int h)  {
   Resize(0, 0, w, h, 1);
 }
 //..............................................................................
-void TGlRender::Resize(int l, int t, int w, int h, float Zoom)  {
+void TGlRenderer::Resize(int l, int t, int w, int h, float Zoom)  {
   FLeft = l;    FTop = t;
   FWidth = w;  FHeight = h;
   FZoom = Zoom;
@@ -335,11 +334,11 @@ void TGlRender::Resize(int l, int t, int w, int h, float Zoom)  {
   SetChanged(true);
 }
 //..............................................................................
-void TGlRender::SetView(short Res)  {
+void TGlRenderer::SetView(short Res)  {
   SetView(0, 0, false, Res);
 }
 //..............................................................................
-void TGlRender::SetZoom(double V) {  
+void TGlRenderer::SetZoom(double V) {  
   double MaxZ = olx_max(olx_abs(FMaxV.DistanceTo(FMinV)), 1);
   double dv = V/MaxZ;
   if( dv < 0.01 )  //  need to fix the zoom
@@ -348,7 +347,7 @@ void TGlRender::SetZoom(double V) {
     FBasis->SetZoom(V); 
 }
 //..............................................................................
-void TGlRender::SetView(int x, int y, bool Select, short Res)  {
+void TGlRenderer::SetView(int x, int y, bool Select, short Res)  {
   glViewport(FLeft*Res, FTop*Res, FWidth*Res, FHeight*Res);
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
@@ -374,7 +373,7 @@ void TGlRender::SetView(int x, int y, bool Select, short Res)  {
   glMatrixMode(GL_MODELVIEW);
 }
 //..............................................................................
-void TGlRender::SetBasis(bool Identity)  {
+void TGlRenderer::SetBasis(bool Identity)  {
   static float Bf[4][4];
   float MaxZ = (float)olx_max(olx_abs(FMaxV.DistanceTo(FMinV)), 1);
   if( !Identity )  {
@@ -398,7 +397,7 @@ void TGlRender::SetBasis(bool Identity)  {
   }
 }
 //..............................................................................
-void TGlRender::DrawObject(AGDrawObject *Object, bool DrawImage)  {
+void TGlRenderer::DrawObject(AGDrawObject *Object, bool DrawImage)  {
   if( DrawImage )  {
     if( GlImageChanged() )  {
 //      BasicApp->Log->Info("Image updated");
@@ -454,7 +453,7 @@ void TGlRender::DrawObject(AGDrawObject *Object, bool DrawImage)  {
   if( DrawImage || Object )  OnDraw->Execute(this);
 }
 //..............................................................................
-void TGlRender::Draw()  {
+void TGlRenderer::Draw()  {
   static double BZoom = 0;
 
   if( FWidth < 50 || !TBasicApp::GetInstance()->IsMainFormVisible() )  return;
@@ -478,7 +477,7 @@ void TGlRender::Draw()  {
   OnDraw->Execute(this);
 }
 //..............................................................................
-void TGlRender::DrawObjects( bool SelectPrimitives, bool SelectObjects)  {
+void TGlRenderer::DrawObjects( bool SelectPrimitives, bool SelectObjects)  {
   bool Select = SelectPrimitives || SelectObjects, Pers=false;
   const int DrawMask = sgdoVisible|sgdoSelected|sgdoDeleted|sgdoGrouped;
   if( FIdentityObjects.Count() != 0 )  {
@@ -495,7 +494,7 @@ void TGlRender::DrawObjects( bool SelectPrimitives, bool SelectObjects)  {
       const int obj_count = GlM->ObjectCount();
       for( int j=0; j < obj_count; j++ )  {
         TGlPrimitive* GlP = (TGlPrimitive*)GlM->Object(j);
-        TGPCollection* GPC = GlP->ParentCollection();
+        TGPCollection* GPC = GlP->GetParentCollection();
         const int c_obj_count = GPC->ObjectCount();
         for( int k=0; k < c_obj_count; k++ )  {
           AGDrawObject* GDO = GPC->Object(k);
@@ -530,7 +529,7 @@ void TGlRender::DrawObjects( bool SelectPrimitives, bool SelectObjects)  {
       const int obj_count = GlM->ObjectCount();
       for( int j=0; j < obj_count; j++ )  {
         TGlPrimitive* GlP = (TGlPrimitive*)GlM->Object(j);
-        TGPCollection* GPC = GlP->ParentCollection();
+        TGPCollection* GPC = GlP->GetParentCollection();
         if( GPC == NULL )  continue;
         const int c_obj_count = GPC->ObjectCount();
         for( int k=0; k < c_obj_count; k++ )  {
@@ -554,7 +553,7 @@ void TGlRender::DrawObjects( bool SelectPrimitives, bool SelectObjects)  {
     const int obj_count = GlM->ObjectCount();
     for( int j=0; j < obj_count; j++ )  {
       TGlPrimitive* GlP = (TGlPrimitive*)GlM->Object(j);
-      TGPCollection* GPC = GlP->ParentCollection();
+      TGPCollection* GPC = GlP->GetParentCollection();
       const int c_obj_count = GPC->ObjectCount();
       for( int k=0; k < c_obj_count; k++ )  {
         AGDrawObject* GDO = GPC->Object(k);
@@ -590,7 +589,7 @@ void TGlRender::DrawObjects( bool SelectPrimitives, bool SelectObjects)  {
       const int obj_count = GlM->ObjectCount(); 
       for( int j=0; j < obj_count; j++ )  {
         TGlPrimitive* GlP = (TGlPrimitive*)GlM->Object(j);
-        TGPCollection* GPC = GlP->ParentCollection();
+        TGPCollection* GPC = GlP->GetParentCollection();
         const int c_obj_count = GPC->ObjectCount();
         for( int k=0; k < c_obj_count; k++ )  {
           AGDrawObject* GDO = GPC->Object(k);
@@ -609,7 +608,7 @@ void TGlRender::DrawObjects( bool SelectPrimitives, bool SelectObjects)  {
   }
 }
 //..............................................................................
-AGDrawObject* TGlRender::SelectObject(int x, int y, int depth)  {
+AGDrawObject* TGlRenderer::SelectObject(int x, int y, int depth)  {
   if( !FWidth || !FHeight )  return NULL;
 
   AGDrawObject *Result = NULL;
@@ -650,7 +649,7 @@ AGDrawObject* TGlRender::SelectObject(int x, int y, int depth)  {
   return Result;
 }
 //..............................................................................
-TGlPrimitive* TGlRender::SelectPrimitive(int x, int y)  {
+TGlPrimitive* TGlRenderer::SelectPrimitive(int x, int y)  {
   if( (FWidth&FHeight) == 0 )  // test for 0
     return NULL;
 
@@ -691,7 +690,7 @@ TGlPrimitive* TGlRender::SelectPrimitive(int x, int y)  {
   return Result;
 }
 //..............................................................................
-TGlGroup *TGlRender::FindObjectGroup(AGDrawObject *G)  {
+TGlGroup *TGlRenderer::FindObjectGroup(AGDrawObject *G)  {
   // get the topmost group
   if( G == NULL )  return NULL;
   TGlGroup *G1 = G->ParentGroup();
@@ -704,16 +703,16 @@ TGlGroup *TGlRender::FindObjectGroup(AGDrawObject *G)  {
   return G1;
 }
 //..............................................................................
-void TGlRender::Select(AGDrawObject *G)  {
+void TGlRenderer::Select(AGDrawObject *G)  {
   if( !G->Groupable() )  return;
   G->Selected( FSelection->Add(G));
 }
 //..............................................................................
-void TGlRender::DeSelect(AGDrawObject *G)  {
+void TGlRenderer::DeSelect(AGDrawObject *G)  {
   FSelection->Remove(G);
 }
 //..............................................................................
-void TGlRender::InvertSelection()  {
+void TGlRenderer::InvertSelection()  {
   TPtrList<AGDrawObject> Selected;
   const int oc = FGObjects.Count();
   for( int i=0; i < oc; i++ )  {
@@ -730,7 +729,7 @@ void TGlRender::InvertSelection()  {
   }
 }
 //..............................................................................
-void TGlRender::SelectAll(bool Select)  {
+void TGlRenderer::SelectAll(bool Select)  {
   FSelection->Selected(false);
   FSelection->Clear();
   if( Select )  {
@@ -757,7 +756,7 @@ void TGlRender::SelectAll(bool Select)  {
   FSelection->Selected(true);
 }
 //..............................................................................
-void TGlRender::ClearGroups()  {
+void TGlRenderer::ClearGroups()  {
   for( int i=0; i < FGroups.Count(); i++ )  {
     if( FGroups[i]->Selected() )  DeSelect(FGroups[i]);
     FGroups[i]->Clear();
@@ -768,18 +767,18 @@ void TGlRender::ClearGroups()  {
   FGroups.Clear();
 }
 //..............................................................................
-TGlGroup* TGlRender::FindGroupByName(const olxstr& colName)  {
+TGlGroup* TGlRenderer::FindGroupByName(const olxstr& colName)  {
   for( int i=0; i < FGroups.Count(); i++ )
     if( FGroups[i]->GetCollectionName() == colName )
       return FGroups[i];
   return NULL;
 }
 //..............................................................................
-void TGlRender::ClearSelection()  {
+void TGlRenderer::ClearSelection()  {
   FSelection->Clear();
 }
 //..............................................................................
-TGlGroup * TGlRender::GroupSelection(const olxstr& groupName)  {
+TGlGroup * TGlRenderer::GroupSelection(const olxstr& groupName)  {
   if( FSelection->Count() > 1 )  {
     TGlGroup *OS = FSelection;
     FGroups.Add(FSelection);
@@ -795,11 +794,11 @@ TGlGroup * TGlRender::GroupSelection(const olxstr& groupName)  {
   return NULL;
 }
 //..............................................................................
-TGlGroup& TGlRender::NewGroup(const olxstr& collection_name) {  
+TGlGroup& TGlRenderer::NewGroup(const olxstr& collection_name) {  
   return *FGroups.Add(new TGlGroup(collection_name, this));  
 }
 //..............................................................................
-void TGlRender::UnGroup(TGlGroup *OS)  {
+void TGlRenderer::UnGroup(TGlGroup *OS)  {
   if( !OS->Group() )  return;
   FGroups.Remove(OS);
   if( FSelection->Contains(OS) )
@@ -816,7 +815,7 @@ void TGlRender::UnGroup(TGlGroup *OS)  {
   FSelection->Selected(true);
 }
 //..............................................................................
-void TGlRender::UnGroupSelection()  {
+void TGlRenderer::UnGroupSelection()  {
   if( FSelection->Count() >= 1 )  {
     TGlGroup *OS;
     AGDrawObject *GDO;
@@ -830,7 +829,7 @@ void TGlRender::UnGroupSelection()  {
   }
 }
 //..............................................................................
-void TGlRender::EnableClipPlane(TGlClipPlane *P, bool v)  {
+void TGlRenderer::EnableClipPlane(TGlClipPlane *P, bool v)  {
   if( v )  {
     double v[4];
     v[0] = P->Equation()[0];
@@ -844,7 +843,7 @@ void TGlRender::EnableClipPlane(TGlClipPlane *P, bool v)  {
     glDisable(P->Id());
 }
 //..............................................................................
-void TGlRender::SetProperties(TGlMaterial *P)  {  // tracks transluent and identity objects
+void TGlRenderer::SetProperties(TGlMaterial *P)  {  // tracks transluent and identity objects
   if( P->GetTransparent() && P->GetIdentityDraw() )  {
     FTransluentIdentityObjects.AddUnique(P);
     return;
@@ -859,7 +858,7 @@ void TGlRender::SetProperties(TGlMaterial *P)  {  // tracks transluent and ident
   }
 }
 //..............................................................................
-void TGlRender::OnSetProperties(const TGlMaterial *P)  {  // tracks transluent and identity objects
+void TGlRenderer::OnSetProperties(const TGlMaterial *P)  {  // tracks transluent and identity objects
   if( P == NULL )  return;
   if( P->ObjectCount() > 1 )  return; // the properties will not be removde
   if( P->GetTransparent() && P->GetIdentityDraw() )  {
@@ -879,7 +878,7 @@ void TGlRender::OnSetProperties(const TGlMaterial *P)  {  // tracks transluent a
   }
 }
 //..............................................................................
-void TGlRender::AddGObject(AGDrawObject *G)  {
+void TGlRenderer::AddGObject(AGDrawObject *G)  {
   FGObjects.Add(G);
   if( FSceneComplete || !G->Visible() )  return;
   vec3d MaxV, MinV;
@@ -890,14 +889,14 @@ void TGlRender::AddGObject(AGDrawObject *G)  {
 }
 //..............................................................................
 /*
-void TGlRender::ReplacePrimitives(TEList *CurObj, TEList *NewObj)
+void TGlRenderer::ReplacePrimitives(TEList *CurObj, TEList *NewObj)
 {
   if( CurObj->Count() != NewObj->Count() )
-    BasicApp->Log->Exception("TGlRender:: lists count does not much!", true);
+    BasicApp->Log->Exception("TGlRenderer:: lists count does not much!", true);
   FPrimitives->ReplaceObjects(CurObj, NewObj);
 } */
 //..............................................................................
-void TGlRender::RemoveCollection(TGPCollection *GP)  {
+void TGlRenderer::RemoveCollection(TGPCollection *GP)  {
   FTransluentIdentityObjects.Clear();
   FTransluentObjects.Clear();
   FIdentityObjects.Clear();
@@ -921,7 +920,7 @@ void TGlRender::RemoveCollection(TGPCollection *GP)  {
   delete GP;
 }
 //..............................................................................
-void TGlRender::RemoveCollections(const TPtrList<TGPCollection>& Colls)  {
+void TGlRenderer::RemoveCollections(const TPtrList<TGPCollection>& Colls)  {
   if( Colls.Count() == 0 )  return;
 
   FTransluentIdentityObjects.Clear();
@@ -948,7 +947,7 @@ void TGlRender::RemoveCollections(const TPtrList<TGPCollection>& Colls)  {
   }
 }
 //..............................................................................
-void TGlRender::LookAt(double x, double y, short res)  {
+void TGlRenderer::LookAt(double x, double y, short res)  {
   FViewZoom = (float)(1.0/res);
   FProjectionLeft = (float)(x/(double)res - 0.5);
   FProjectionRight = (float)((x+1)/(double)res - 0.5);
@@ -957,7 +956,7 @@ void TGlRender::LookAt(double x, double y, short res)  {
   SetChanged(true);
 }
 //..............................................................................
-char* TGlRender::GetPixels(bool useMalloc, short aligment)  {
+char* TGlRenderer::GetPixels(bool useMalloc, short aligment)  {
   char *Bf;
   short extraBytes = (4-(FWidth*3)%4)%4;  //for bitmaps with 4 bytes aligment
   if( useMalloc )  {
@@ -974,7 +973,7 @@ char* TGlRender::GetPixels(bool useMalloc, short aligment)  {
   return Bf;
 }
 //..............................................................................
-void TGlRender::RemovePrimitive(int in)  {
+void TGlRenderer::RemovePrimitive(int in)  {
   FPrimitives->RemoveObjectsByTag(in);
   FTransluentIdentityObjects.Clear();
   FTransluentObjects.Clear();
@@ -988,7 +987,7 @@ void TGlRender::RemovePrimitive(int in)  {
   }
 }
 //..............................................................................
-void TGlRender::CleanUpStyles() // removes styles, which are not used by any collection
+void TGlRenderer::CleanUpStyles() // removes styles, which are not used by any collection
 {
   OnStylesClear->Enter(this);
   Styles()->SetStylesTag(0);
@@ -1034,13 +1033,13 @@ void TGlListManager::ReserveRange(int count)  {
   FPos = Lists.Count();
 }
 //..............................................................................
-TGraphicsStyles* TGlRender::GetStyles()  {
-  if( TGlRender::FStyles == NULL )
+TGraphicsStyles* TGlRenderer::GetStyles()  {
+  if( TGlRenderer::FStyles == NULL )
     throw TFunctionFailedException(__OlxSourceInfo, "Object is not initialised");
-  return TGlRender::FStyles;
+  return TGlRenderer::FStyles;
 }
 //..............................................................................
-void TGlRender::Compile(bool v)  {
+void TGlRenderer::Compile(bool v)  {
   /* remark: it works, but gives no performance boost ...
 
   */
@@ -1057,7 +1056,7 @@ void TGlRender::Compile(bool v)  {
       GlM->Init();
       for( int j=0; j < GlM->ObjectCount(); j++ )  {
         TGlPrimitive* GlP = (TGlPrimitive*)GlM->Object(j);
-        TGPCollection* GPC = GlP->ParentCollection();
+        TGPCollection* GPC = GlP->GetParentCollection();
         if( GPC == NULL )  continue;
         for( int k=0; k < GPC->ObjectCount(); k++ )  {
           AGDrawObject* GDO = GPC->Object(k);
@@ -1083,16 +1082,16 @@ void TGlRender::Compile(bool v)  {
   }
 }
 //..............................................................................
-void TGlRender::DrawText(TGlPrimitive& p, double x, double y, double z)  {
+void TGlRenderer::DrawText(TGlPrimitive& p, double x, double y, double z)  {
   if( ATI )  {
     glRasterPos3d(0, 0, 0);
-    glCallList(p.Font()->FontBase() + ' ');
+    glCallList(p.GetFont()->FontBase() + ' ');
   }
   glRasterPos3d(x, y, z);
   p.Draw();
 }
 //..............................................................................
-void TGlRender::DrawTextSafe(const vec3d& pos, const olxstr& text, const TGlFont& fnt) {
+void TGlRenderer::DrawTextSafe(const vec3d& pos, const olxstr& text, const TGlFont& fnt) {
   if( ATI )  {
     glRasterPos3d(0, 0, 0);
     glCallList(fnt.FontBase() + ' ');
@@ -1107,11 +1106,11 @@ void TGlRender::DrawTextSafe(const vec3d& pos, const olxstr& text, const TGlFont
 //..............................................................................
 //..............................................................................
 
-void TGlRender::LibCompile(const TStrObjList& Params, TMacroError& E)  {
+void TGlRenderer::LibCompile(const TStrObjList& Params, TMacroError& E)  {
   Compile( Params[0].ToBool() );
 }
 //..............................................................................
-void TGlRender::LibPerspective(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+void TGlRenderer::LibPerspective(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   if( Cmds.IsEmpty() )  {  EnablePerspective(false);  return;  }
   if( !Cmds[0].IsNumber() )  {
     E.ProcessingError(__OlxSrcInfo, "please specify a number in range [1-90]" );
@@ -1125,7 +1124,7 @@ void TGlRender::LibPerspective(TStrObjList &Cmds, const TParamList &Options, TMa
   EnablePerspective(true);
 }
 //..............................................................................
-void TGlRender::LibFog(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+void TGlRenderer::LibFog(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   if( Cmds.Count() == 2 )  {
     SetFogType(GL_EXP);
     SetFogDensity( (float)Cmds[0].ToDouble() );
@@ -1136,7 +1135,7 @@ void TGlRender::LibFog(TStrObjList &Cmds, const TParamList &Options, TMacroError
     EnableFog(false);
 }
 //..............................................................................
-void TGlRender::LibZoom(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+void TGlRenderer::LibZoom(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   if( Cmds.IsEmpty() )  {
     SetZoom( CalcZoom()*1.3);
   }
@@ -1148,16 +1147,16 @@ void TGlRender::LibZoom(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   return;
 }
 //..............................................................................
-TLibrary*  TGlRender::ExportLibrary(const olxstr& name)  {
+TLibrary*  TGlRenderer::ExportLibrary(const olxstr& name)  {
   TLibrary* lib = new TLibrary( name.IsEmpty() ? olxstr("gl") : name);
-  lib->RegisterFunction<TGlRender>( new TFunction<TGlRender>(this,  &TGlRender::LibCompile, "Compile",
+  lib->RegisterFunction<TGlRenderer>( new TFunction<TGlRenderer>(this,  &TGlRenderer::LibCompile, "Compile",
     fpOne, "Compiles or decompiles the model according to the boolean parameter") );
 
-  lib->RegisterMacro<TGlRender>( new TMacro<TGlRender>(this,  &TGlRender::LibPerspective, "Perspective",
+  lib->RegisterMacro<TGlRenderer>( new TMacro<TGlRenderer>(this,  &TGlRenderer::LibPerspective, "Perspective",
     EmptyString, fpNone|fpOne, "Un/Sets perspective view") );
-  lib->RegisterMacro<TGlRender>( new TMacro<TGlRender>(this,  &TGlRender::LibFog, "Fog",
+  lib->RegisterMacro<TGlRenderer>( new TMacro<TGlRenderer>(this,  &TGlRenderer::LibFog, "Fog",
     EmptyString, fpNone|fpTwo, "Un/Sets fog") );
-  lib->RegisterMacro<TGlRender>( new TMacro<TGlRender>(this,  &TGlRender::LibZoom, "Zoom",
+  lib->RegisterMacro<TGlRenderer>( new TMacro<TGlRenderer>(this,  &TGlRenderer::LibZoom, "Zoom",
     EmptyString, fpNone|fpOne, "If no arguments provided - resets zoom to fit to screen, otherwise increments/\
 decrements current zoom by provided value") );
 

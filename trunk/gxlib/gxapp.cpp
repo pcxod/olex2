@@ -219,7 +219,7 @@ TGXApp::TGXApp(const olxstr &FileName) : TXApp(FileName, this)  {
   FGrowMode = gmCovalent;
 //  TWGlScene *GlScene = new TWGlScene;
 //  TGlScene *GlScene = new TGlScene;
-  FGlRender = new TGlRender(GlScene, 1,1);
+  FGlRender = new TGlRenderer(GlScene, 1,1);
   FDFrame = new TDFrame("DFrame", FGlRender);
   Fader = new TXFader("Fader", FGlRender);
   FDFrame->OnSelect->Add(this, ID_OnSelect);
@@ -441,7 +441,7 @@ void TGXApp::CreateObjects(bool SyncBonds, bool centerModel)  {
     LooseObjects[i]->Create();
   }
 
-  InitLabels();
+  FLabels->Init();
   FLabels->Create();
 
   if( FXGrowLinesVisible )  CreateXGrowLines();
@@ -1573,7 +1573,7 @@ void TGXApp::InfoList(const olxstr &Atoms, TStrList &Info, bool sort)  {
 //..............................................................................
 TXGlLabel *TGXApp::AddLabel(const olxstr& Name, const vec3d& center, const olxstr& T)  {
   TXGlLabel* gl = new TXGlLabel(Name, FGlRender);
-  gl->FontIndex( FLabels->FontIndex() );
+  gl->FontIndex( FLabels->GetFontIndex() );
   gl->SetLabel( T );
   gl->Basis.SetCenter( center );
   gl->Create();
@@ -2046,29 +2046,17 @@ void TGXApp::LabelsMode(short lmode)  {  FLabels->SetMode(lmode); }
 //..............................................................................
 short TGXApp::LabelsMode()      const {  return FLabels->GetMode(); }
 //..............................................................................
-void TGXApp::LabelsFont(short Findex){  FLabels->FontIndex(Findex);  }
+void TGXApp::LabelsFont(short Findex){  FLabels->SetFontIndex(Findex);  }
 //..............................................................................
-TGlMaterial & TGXApp::LabelsMarkMaterial()  {  return FLabels->MarkMaterial();  }
+TGlMaterial& TGXApp::LabelsMarkMaterial()  {  return FLabels->MarkMaterial();  }
 //..............................................................................
-void TGXApp::MarkLabel(TXAtom *A, bool v)  {  FLabels->MarkLabel(A, v);  }
+void TGXApp::MarkLabel(const TXAtom& A, bool v)  {  FLabels->MarkLabel(A, v);  }
 //..............................................................................
 void TGXApp::ClearLabelMarks()  {  FLabels->ClearLabelMarks();  }
 //..............................................................................
 void TGXApp::ClearLabels()  {
   FLabels->Clear();
   XLabels.Clear();
-}
-//..............................................................................
-void TGXApp::InitLabels(TXAtomPList* Atoms)  {
-  if( Atoms != NULL )  {
-    for( int i=0; i < Atoms->Count(); i++ )
-      FLabels->AddAtom( Atoms->Item(i) );
-  }
-  else  {
-    FLabels->Clear();
-    for( int i=0; i < XAtoms.Count(); i++ )
-      FLabels->AddAtom( &XAtoms[i] );
-  }
 }
 //..............................................................................
 void TGXApp::SBonds2XBonds(TSBondPList& L, TXBondPList& Res)  {
@@ -2346,32 +2334,32 @@ void TGXApp::XAtomDS2XBondDS(const olxstr &Source)  {
     TXBond* XB = &XBonds[i];
     TXAtom* XA = &XAtoms[ XB->Bond().A().GetTag() ];
 
-    AGlP = XA->Primitives()->PrimitiveByName(Source);
+    AGlP = XA->Primitives()->FindPrimitiveByName(Source);
     if( !AGlP )  continue;
     TGlMaterial* GlMA = (TGlMaterial*)AGlP->GetProperties();
 
     XA = &XAtoms[ XB->Bond().B().GetTag() ];
-    BGlP = XA->Primitives()->PrimitiveByName(Source);
+    BGlP = XA->Primitives()->FindPrimitiveByName(Source);
     if( !BGlP )  continue;
     TGlMaterial* GlMB = (TGlMaterial*)BGlP->GetProperties();
 
     for( int j=0; j < XB->Primitives()->PrimitiveCount(); j++ )  {
       TGlPrimitive* GlP = XBonds[i].Primitives()->Primitive(j);
-      if( GlP->Params().Count() >= 1 )  {
-        dds = (int)GlP->Params().Last();
+      if( GlP->Params.Count() >= 1 )  {
+        dds = (int)GlP->Params.Last();
         if( dds == ddsDefAtomA )  {  // from atom A
           GlP->SetProperties(GlMA);
-          XB->Primitives()->Style()->PrimitiveMaterial(GlP->Name(), *GlMA);
+          XB->Primitives()->Style()->PrimitiveMaterial(GlP->GetName(), *GlMA);
           continue;
         }
         if( dds == ddsDef )  {  // from haviest atom
           GlP->SetProperties(GlMA);
-          XB->Primitives()->Style()->PrimitiveMaterial(GlP->Name(), *GlMA);
+          XB->Primitives()->Style()->PrimitiveMaterial(GlP->GetName(), *GlMA);
           continue;
         }
         if( dds == ddsDefAtomB )  {
           GlP->SetProperties(GlMB);
-          XB->Primitives()->Style()->PrimitiveMaterial(GlP->Name(), *GlMB);
+          XB->Primitives()->Style()->PrimitiveMaterial(GlP->GetName(), *GlMB);
           continue;
         }
       }

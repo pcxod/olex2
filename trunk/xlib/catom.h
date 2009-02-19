@@ -146,7 +146,7 @@ public:
   void NullVarRef(short param_name)  {
     Vars[param_name] = NULL;
   }
-  XVarReference* GetVarRef(short i) {
+  XVarReference* GetVarRef(short i) const {
     return Vars[i];
   }
   TEllipsoid* GetEllipsoid() const;

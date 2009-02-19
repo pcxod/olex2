@@ -150,11 +150,11 @@ class TGraphicsStyles: public IEObject  {
   TObjectGroup *FPStyles;
   mutable TPtrList<TDataItem> FDataItems;
   TGraphicsStyle *FRoot;
-  class TGlRender *FRender;
+  class TGlRenderer *FRender;
 protected:
   void Clear();
 public:
-  TGraphicsStyles(TGlRender *R);
+  TGraphicsStyles(TGlRenderer *R);
   virtual ~TGraphicsStyles();
 
   bool LoadFromFile(const olxstr &FN);

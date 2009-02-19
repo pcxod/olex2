@@ -11,7 +11,7 @@ class TGlBitmap : public TGlMouseListener  {
   double Z;
 public:
 
-  TGlBitmap(const olxstr& collectionName, TGlRender *Render,
+  TGlBitmap(const olxstr& collectionName, TGlRenderer *Render,
     int left, int top, int width, int height,
       unsigned char* RGB, GLenum format);
 

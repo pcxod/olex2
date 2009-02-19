@@ -53,7 +53,7 @@ protected:
 
   virtual bool Execute(const IEObject *Sender, const IEObject *Data=NULL);
 public:
-  TGlConsole(const olxstr& collectionName, TGlRender *Render);
+  TGlConsole(const olxstr& collectionName, TGlRenderer *Render);
   void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
   virtual ~TGlConsole();
 

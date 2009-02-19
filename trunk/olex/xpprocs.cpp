@@ -4706,6 +4706,47 @@ olxstr macSel_GetPlaneName(const TSPlane& p)  {
   return rv;
 }
 void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+  if( Cmds.Count() == 1 && Cmds[0].Comparei("res") == 0 )  {
+    FXApp->GetRender().ClearSelection();
+    TStrList out;
+    TCAtomPList a_res;
+    TPtrList<TSimpleRestraint> b_res;
+    RefinementModel& rm = FXApp->XFile().GetRM();
+    rm.Describe(out, &a_res, &b_res);
+    for( int i=0 ; i < FXApp->AtomCount(); i++ )
+      FXApp->GetAtom(i).Atom().CAtom().SetTag(0);
+    for( int i=0; i < a_res.Count(); i++ )
+      a_res[i]->SetTag(1);
+    for( int i=0; i < FXApp->AtomCount(); i++ )  {
+      TXAtom& xa = FXApp->GetAtom(i);
+      if( xa.Atom().CAtom().GetTag() != 1 )  continue;
+      if( xa.Selected() )  continue;
+      FXApp->GetRender().Select( &xa );
+    }
+    for( int i=0; i < b_res.Count(); i++ )  {
+      const TSimpleRestraint& res = *b_res[i];
+      for( int j=0; j < res.AtomCount(); j+=2 )  {
+        if( res.GetAtom(j).GetMatrix() != NULL || res.GetAtom(j+1).GetMatrix() != NULL )  continue;
+        const int id1 = res.GetAtom(j).GetAtom()->GetId();
+        const int id2 = res.GetAtom(j+1).GetAtom()->GetId();
+        for( int k=0; k < FXApp->BondCount(); k++ )  {
+          TXBond& xb = FXApp->GetBond(k);
+          if( xb.Selected() )  continue;
+          const TCAtom& ca1 = xb.Bond().GetA().CAtom();
+          const TCAtom& ca2 = xb.Bond().GetB().CAtom();
+          if( (ca1.GetId() == id1 && ca2.GetId() == id2) ||
+              (ca1.GetId() == id2 && ca2.GetId() == id1) )  
+          {
+            FXApp->GetRender().Select( &xb );
+            break;
+          }
+        }
+      }
+    }
+    FGlConsole->PrintText(out);
+    FXApp->GetLog() << '\n';
+    return;
+  }
   if( Options.Count() == 0 )  {  // print labels of selected atoms
     olxstr Tmp("sel");
     int period=5;
@@ -7937,7 +7978,7 @@ void TMainForm::macSetMaterial(TStrObjList &Cmds, const TParamList &Options, TMa
     if( di != -1 )  {
       gpc = FXApp->GetRender().FindCollection(Cmds[0].SubStringTo(di));
       if( gpc != NULL )  {
-        TGlPrimitive* glp = gpc->PrimitiveByName(Cmds[0].SubStringFrom(di+1));
+        TGlPrimitive* glp = gpc->FindPrimitiveByName(Cmds[0].SubStringFrom(di+1));
         if( glp != NULL )  {
           mat = const_cast<TGlMaterial*>((const TGlMaterial*)glp->GetProperties());
           smat = const_cast<TGlMaterial*>(gpc->Style()->Material(Cmds[0].SubStringFrom(di+1)));
@@ -7985,7 +8026,7 @@ void TMainForm::funGetMaterial(const TStrObjList &Params, TMacroError &E)  {
     if( di != -1 )  {
       TGPCollection* gpc = FXApp->GetRender().FindCollection(Params[0].SubStringTo(di));
       if( gpc != NULL )  {
-        TGlPrimitive* glp = gpc->PrimitiveByName(Params[0].SubStringFrom(di+1));
+        TGlPrimitive* glp = gpc->FindPrimitiveByName(Params[0].SubStringFrom(di+1));
         if( glp != NULL )
           mat = const_cast<TGlMaterial*>((const TGlMaterial*)glp->GetProperties());
       }
@@ -8006,7 +8047,7 @@ void TMainForm::macLstGO(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     TGPCollection* gpc = FXApp->GetRender().Collection(i);
     output.Add( gpc->Name() ) << '[';
     for( int j=0; j < gpc->PrimitiveCount(); j++ )  {
-      output.Last().String() << gpc->Primitive(j)->Name();
+      output.Last().String() << gpc->Primitive(j)->GetName();
       if( (j+1) < gpc->PrimitiveCount() )
         output.Last().String() << ';';
     }

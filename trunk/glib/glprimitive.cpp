@@ -15,99 +15,95 @@
 
 UseGlNamespace();
 //..............................................................................
-TGlPrimitive::TGlPrimitive(TObjectGroup *ParentG, TGlRender *ParentR):
+TGlPrimitive::TGlPrimitive(TObjectGroup *ParentG, TGlRenderer *ParentR, short type):
   AGroupObject(ParentG)
 {
-  FQuadric = NULL;
-  FEval = NULL;
-  FParentRender = ParentR;
-  FTexture = -1;
-  FQuadricDrawStyle = GLU_FILL;
-  FQuadricNormals = GLU_SMOOTH;
-  FQuadricOrientation = GLU_OUTSIDE;
-  FList = false;
-  FCompiled = false;
-  FParentCollection = NULL;
-  FGlClipPlanes = NULL;
-  FBasis = NULL;
-  FString = NULL;
-  FFont = NULL;
+  Quadric = NULL;
+  Evaluator = NULL;
+  Renderer = ParentR;
+  TextureId = ListId = OwnerId = -1;
+  QuadricDrawStyle = GLU_FILL;
+  QuadricNormals = GLU_SMOOTH;
+  QuadricOrientation = GLU_OUTSIDE;
+  Compiled = false;
+  ParentCollection = NULL;
+  ClipPlanes = NULL;
+  Basis = NULL;
+  String = NULL;
+  Font = NULL;
+  SetType(type);
 }
 //..............................................................................
 TGlPrimitive::~TGlPrimitive()  {
-  if( FQuadric )  gluDeleteQuadric(FQuadric);
-  if( FBasis )     delete FBasis;
-  if( FGlClipPlanes )  delete FGlClipPlanes;
+  if( Quadric != NULL )  
+    gluDeleteQuadric(Quadric);
+  if( Basis != NULL )     
+    delete Basis;
+  if( ClipPlanes != NULL )  
+    delete ClipPlanes;
 }
 //..............................................................................
-AGOProperties *TGlPrimitive::NewProperties()  {
-  TGlMaterial *GlM = new TGlMaterial;
-  return GlM;
-}
+AGOProperties *TGlPrimitive::NewProperties()  {  return new TGlMaterial;  }
 //..............................................................................
 void TGlPrimitive::CreateQuadric()  {
-  if( FQuadric )  return;
-  FQuadric = gluNewQuadric();
-  if( !FQuadric )
+  if( Quadric != NULL )  return;
+  Quadric = gluNewQuadric();
+  if( Quadric == NULL )
     throw TOutOfMemoryException(__OlxSourceInfo);
-  if( FTexture != -1 )  {
-    glBindTexture(GL_TEXTURE_2D, FTexture);
-    gluQuadricTexture(FQuadric, GL_TRUE);
+  if( TextureId != -1 )  {
+    glBindTexture(GL_TEXTURE_2D, TextureId);
+    gluQuadricTexture(Quadric, GL_TRUE);
   }
   else
-    gluQuadricTexture(FQuadric, GL_FALSE);
+    gluQuadricTexture(Quadric, GL_FALSE);
 
-  gluQuadricOrientation( FQuadric, FQuadricOrientation);
-  gluQuadricDrawStyle( FQuadric, FQuadricDrawStyle);
-  gluQuadricNormals( FQuadric, FQuadricNormals);
+  gluQuadricOrientation( Quadric, QuadricOrientation);
+  gluQuadricDrawStyle( Quadric, QuadricDrawStyle);
+  gluQuadricNormals( Quadric, QuadricNormals);
 }
 //..............................................................................
-void TGlPrimitive::Type(short T)  {
-  FType = T;
-  switch( FType )  {
+void TGlPrimitive::SetType(short T)  {
+  Type = T;
+  switch( Type )  {
     case sgloText:
-      FParams.Resize(4);
-      FParams[0] = 1;  FParams[1] = 1;  FParams[2] = 1; FParams[3] = 1;
-      FList = false;
+      Params.Resize(4);
+      Params[0] = 1;  Params[1] = 1;  Params[2] = 1; Params[3] = 1;
       break;
     case sgloSphere:
-      FParams.Resize(3);
-      FParams[0] = 1;  FParams[1] = 5;  FParams[2] = 5;
-      FList = true;
+      Params.Resize(3);
+      Params[0] = 1;  Params[1] = 5;  Params[2] = 5;
       break;
     case sgloDisk:
-      FParams.Resize(4);
-      FParams[0] = 0;  FParams[1] = 1;  FParams[2] = 5;  FParams[3] = 5;
-      FList = true;
+      Params.Resize(4);
+      Params[0] = 0;  Params[1] = 1;  Params[2] = 5;  Params[3] = 5;
       break;
     case sgloDiskSlice:
-      FParams.Resize(6);
-      FParams[0] = 0;  FParams[1] = 1;  FParams[2] = 5;  FParams[3] = 5;
-      FParams[4] = 0;  FParams[5] = 90;
-      FList = true;
+      Params.Resize(6);
+      Params[0] = 0;  Params[1] = 1;  Params[2] = 5;  Params[3] = 5;
+      Params[4] = 0;  Params[5] = 90;
       break;
     case sgloCylinder:
-      FParams.Resize(5);
-      FParams[0] = 0;  FParams[1] = 1;  FParams[2] = 1;  FParams[3] = 5;
-      FParams[4] = 5;
-      FList = true;
+      Params.Resize(5);
+      Params[0] = 0;  Params[1] = 1;  Params[2] = 1;  Params[3] = 5;
+      Params[4] = 5;
       break;
     case sgloCommandList:
-      FList = true;
-      FCompiled = true;
+      Compiled = true;
       break;
     default:
-      FParams.Resize(1); // point size or line width
-      FParams[0] = 1;  // default point size and line width
-      FList = false;
+      Params.Resize(1); // point size or line width
+      Params[0] = 1;  // default point size and line width
       break;
   }
-  if( FList )  FId = FParentRender->NewListId();
+  if( Type == sgloDisk || Type == sgloDiskSlice ||
+      Type == sgloCylinder || Type == sgloSphere ||
+      Type == sgloCommandList )  
+    ListId = Renderer->NewListId();
 
 }
 //..............................................................................
 void TGlPrimitive::ListParams(TStrList &List)  {
-  switch( FType )  {
+  switch( Type )  {
     case sgloSphere:
       List.Add("Radius");
       List.Add("Slices");
@@ -141,340 +137,310 @@ void TGlPrimitive::ListParams(TStrList &List)  {
       List.Add("Line width");
       break;
     default:
-      FParentCollection->ListParams(List, this);
+      ParentCollection->ListParams(List, this);
       break;    
   }
 }
 //..............................................................................
 void TGlPrimitive::Compile()  {
 //  if( Compiled() )  return;
-  switch( FType )  {
+  switch( Type )  {
     case sgloSphere:
-      glNewList(FId, GL_COMPILE);
-      if( GlClipPlanes() )  GlClipPlanes()->Enable(true);
-      if( Basis() )         glMultMatrixf( Basis()->GetMData() );
+      glNewList(ListId, GL_COMPILE);
+      if( ClipPlanes != NULL )  ClipPlanes->Enable(true);
+      if( Basis != NULL  )      glMultMatrixf( Basis->GetMData() );
       CreateQuadric();
-      gluSphere(FQuadric, FParams[0], (int)FParams[1], (int)FParams[2]);
-      if( GlClipPlanes() )  GlClipPlanes()->Enable(false);
+      gluSphere(Quadric, Params[0], (int)Params[1], (int)Params[2]);
+      if( ClipPlanes != NULL )  ClipPlanes->Enable(false);
       glEndList();
-      FCompiled = true;
+      Compiled = true;
       break;
     case sgloDisk:
-      glNewList(FId, GL_COMPILE);
-      if( GlClipPlanes() )  GlClipPlanes()->Enable(true);
-      if( Basis() )         glMultMatrixf( Basis()->GetMData() );
+      glNewList(ListId, GL_COMPILE);
+      if( ClipPlanes != NULL )  ClipPlanes->Enable(true);
+      if( Basis != NULL )       glMultMatrixf( Basis->GetMData() );
       CreateQuadric();
-      gluDisk(FQuadric, FParams[0], FParams[1], (int)FParams[2], (int)FParams[3]);
-      if( GlClipPlanes() )  GlClipPlanes()->Enable(false);
+      gluDisk(Quadric, Params[0], Params[1], (int)Params[2], (int)Params[3]);
+      if( ClipPlanes != NULL )  ClipPlanes->Enable(false);
       glEndList();
-      FCompiled = true;
+      Compiled = true;
       break;
     case sgloDiskSlice:
-      glNewList(FId, GL_COMPILE);
-      if( GlClipPlanes() )  GlClipPlanes()->Enable(true);
-      if( Basis() )         glMultMatrixf( Basis()->GetMData() );
+      glNewList(ListId, GL_COMPILE);
+      if( ClipPlanes != NULL )  ClipPlanes->Enable(true);
+      if( Basis != NULL )       glMultMatrixf( Basis->GetMData() );
       CreateQuadric();
-      gluPartialDisk(FQuadric, FParams[0], FParams[1], (int)FParams[2], (int)FParams[3], FParams[4], FParams[5]);
-      if( GlClipPlanes() )  GlClipPlanes()->Enable(false);
+      gluPartialDisk(Quadric, Params[0], Params[1], (int)Params[2], (int)Params[3], Params[4], Params[5]);
+      if( ClipPlanes != NULL )  ClipPlanes->Enable(false);
       glEndList();
-      FCompiled = true;
+      Compiled = true;
       break;
     case sgloCylinder:
-      glNewList(FId, GL_COMPILE);
-      if( GlClipPlanes() )  GlClipPlanes()->Enable(true);
-      if( Basis() )         glMultMatrixf( Basis()->GetMData() );
+      glNewList(ListId, GL_COMPILE);
+      if( ClipPlanes != NULL )  ClipPlanes->Enable(true);
+      if( Basis != NULL )       glMultMatrixf( Basis->GetMData() );
       CreateQuadric();
-      gluCylinder(FQuadric, FParams[0], FParams[1], FParams[2], (int)FParams[3], (int)FParams[4]);
-      if( GlClipPlanes() )  GlClipPlanes()->Enable(false);
+      gluCylinder(Quadric, Params[0], Params[1], Params[2], (int)Params[3], (int)Params[4]);
+      if( ClipPlanes != NULL )  ClipPlanes->Enable(false);
       glEndList();
-      FCompiled = true;
+      Compiled = true;
       break;
     case sgloCommandList:
-      FCompiled = true;
-      FList = true;
+      Compiled = true;
       break;
     default:
-      FCompiled = false;
+      Compiled = false;
   }
 }
 //..............................................................................
 void TGlPrimitive::Draw()  {
-  if( FList )  {  glCallList(FId);  return;  }
+  if( Compiled )  {  
+    glCallList(ListId);  
+    return;  
+  }
 
-  if( Basis() )  glMultMatrixf( Basis()->GetMData() );
-  if( GlClipPlanes() )  GlClipPlanes()->Enable(true);
+  if( Basis != NULL )       glMultMatrixf( Basis->GetMData() );
+  if( ClipPlanes != NULL )  ClipPlanes->Enable(true);
   TGlTexture* currentTexture = NULL;
-  if( FTexture != -1 )  {
-    TGlTexture* tex = FParentRender->GetTextureManager().FindTexture( FTexture );
+  if( TextureId != -1 )  {
+    TGlTexture* tex = Renderer->GetTextureManager().FindTexture( TextureId );
     currentTexture = new TGlTexture();
     tex->ReadCurrent( *currentTexture );
     tex->SetCurrent();
   }
 
-  if( FType == sgloText )  {
-    if( FString == NULL )   return;
-    if( FFont == NULL )     return;
-    const int fontbase = FFont->FontBase();
+  if( Type == sgloText )  {
+    if( String == NULL || Font == NULL )   return;
+    const int fontbase = Font->FontBase();
     /* each character of different colour */
-    int StrLen = FString->Length();
-    if( FData.Elements() == StrLen )  {
+    const int StrLen = String->Length();
+    if( Data.Elements() == StrLen )  {
       for( int i=0; i < StrLen; i++ )  {
-        int Cl = (int)FData[0][i];
+        const int Cl = (int)Data[0][i];
         glColor4b(  GetRValue(Cl), GetGValue(Cl), GetBValue(Cl), GetAValue(Cl));
-        glCallList( fontbase + FString->CharAt(i) );
+        glCallList( fontbase + String->CharAt(i) );
       }
     }
     else  {  /* all characters of the same colour */
-      for( int i=0; i < StrLen; i++ )  {
-        glCallList( fontbase + FString->CharAt(i) );
-//        raster_pos[0] += Font()->MaxWidth();  
-//        glRasterPos3d(raster_pos[0], raster_pos[1], raster_pos[2]);
-      }
-      //switch( olxstr::CharSize )  {
-      //  case 1:
-      //    glCallLists(StrLen, GL_UNSIGNED_BYTE, FString->raw_str() );
-      //  case 2:
-      //    glCallLists(StrLen, GL_UNSIGNED_SHORT, FString->raw_str() );
-      //  case 4:
-      //    glCallLists(StrLen, GL_UNSIGNED_INT, FString->raw_str() );
-      //  default:
-      //    glCallLists(StrLen, GL_UNSIGNED_BYTE, FString->c_str() );
-      //}
+      for( int i=0; i < StrLen; i++ )
+        glCallList( fontbase + String->CharAt(i) );
     }
   }
-  else if( FType == sgloPoints )  {
-    glPointSize( (float)FParams[0]);
-    if( FData.Vectors() == 3 )  {
+  else if( Type == sgloPoints )  {
+    glPointSize( (float)Params[0]);
+    if( Data.Vectors() == 3 )  {
       glBegin(GL_POINTS);
-      for( int  i=0; i < FData.Elements(); i++ )
-        glVertex3d( FData[0][i], FData[1][i], FData[2][i] );
+      for( int  i=0; i < Data.Elements(); i++ )
+        glVertex3d( Data[0][i], Data[1][i], Data[2][i] );
       glEnd();
     }
-    else if( FData.Vectors() == 4 )  {
+    else if( Data.Vectors() == 4 )  {
       glEnable(GL_COLOR_MATERIAL);
       glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
       glBegin(GL_POINTS);
-      for( int i=0; i < FData.Elements(); i++ )  {
+      for( int i=0; i < Data.Elements(); i++ )  {
         glEnable(GL_COLOR_MATERIAL);
-        int Cl = (int)FData[3][i];
+        const int Cl = (int)Data[3][i];
         glColor4d(  (double)GetRValue(Cl)/255, (double)GetGValue(Cl)/255, 
           (double)GetBValue(Cl)/255, (double)GetAValue(Cl)/255);
-        glVertex3d( FData[0][i], FData[1][i], FData[2][i] );
+        glVertex3d( Data[0][i], Data[1][i], Data[2][i] );
       }
       glEnd();
       glDisable(GL_COLOR_MATERIAL);
     }
   }
-  else if( FType == sgloLines )  {
+  else if( Type == sgloLines )  {
     float LW = 0;
-    if( FParams[0] != 1 )  {
+    if( Params[0] != 1 )  {
       glGetFloatv(GL_LINE_WIDTH, &LW);
-      glLineWidth( (float)(FParams[0]*LW) );
+      glLineWidth( (float)(Params[0]*LW) );
     }
-    if( FData.Vectors() == 3 )  {
+    if( Data.Vectors() == 3 )  {
       glBegin(GL_LINES);
-      for( int i=0; i < FData.Elements(); i++ )
-        glVertex3d(FData[0][i], FData[1][i], FData[2][i]);
+      for( int i=0; i < Data.Elements(); i++ )
+        glVertex3d(Data[0][i], Data[1][i], Data[2][i]);
       glEnd();
     }
-    else if( FData.Vectors() == 4 )  {
+    else if( Data.Vectors() == 4 )  {
       glPushAttrib(GL_ALL_ATTRIB_BITS);
       glDisable(GL_LIGHTING);
       glEnable(GL_COLOR_MATERIAL);
       glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
       glBegin(GL_LINES);
-      for( int i=0; i < FData.Elements(); i++ )  {
+      for( int i=0; i < Data.Elements(); i++ )  {
         if( !(i%2) )  {
-          int Cl = (int)FData[3][i];
+          int Cl = (int)Data[3][i];
           glColor4d(  (double)GetRValue(Cl)/255, (double)GetGValue(Cl)/255, 
             (double)GetBValue(Cl)/255, (double)GetAValue(Cl)/255);
         }
-        glVertex3d(FData[0][i], FData[1][i], FData[2][i]);
+        glVertex3d(Data[0][i], Data[1][i], Data[2][i]);
       }
       glEnd();
       glPopAttrib();
     }
     if( LW != 0 ) glLineWidth( (float)LW );
   }
-  else if( FType == sgloLineStrip )  {
+  else if( Type == sgloLineStrip )  {
     float LW = 0;
-    if( FParams[0] != 1 )  {
+    if( Params[0] != 1 )  {
       glGetFloatv(GL_LINE_WIDTH, &LW);
-      glLineWidth( (float)(FParams[0]*LW) );
+      glLineWidth( (float)(Params[0]*LW) );
     }
     glBegin(GL_LINE_STRIP);
-    for( int i=0; i < FData.Elements(); i++ )
-      glVertex3d(FData[0][i], FData[1][i], FData[2][i]);
+    for( int i=0; i < Data.Elements(); i++ )
+      glVertex3d(Data[0][i], Data[1][i], Data[2][i]);
     glEnd();
     if( LW != 0 ) glLineWidth( (float)LW );
   }
-  else if( FType == sgloLineLoop )  {
+  else if( Type == sgloLineLoop )  {
     float LW = 0;
-    if( FParams[0] != 1 )  {
+    if( Params[0] != 1 )  {
       glGetFloatv(GL_LINE_WIDTH, &LW);
-      glLineWidth( (float)(FParams[0]*LW) );
+      glLineWidth( (float)(Params[0]*LW) );
     }
-    if( FData.Vectors() == 3 )  {
+    if( Data.Vectors() == 3 )  {
       glBegin(GL_LINE_LOOP);
-      for( int i=0; i < FData.Elements(); i++ )
-        glVertex3d(FData[0][i], FData[1][i], FData[2][i]);
+      for( int i=0; i < Data.Elements(); i++ )
+        glVertex3d(Data[0][i], Data[1][i], Data[2][i]);
       glEnd();
     }
-    else if( FData.Vectors() == 4 )  {
+    else if( Data.Vectors() == 4 )  {
       glPushAttrib(GL_ALL_ATTRIB_BITS);
       glDisable(GL_LIGHTING);
       glEnable(GL_COLOR_MATERIAL);
       glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
       glBegin(GL_LINE_LOOP);
-      for( int i=0; i < FData.Elements(); i++ )  {
-        int Cl = (unsigned int)(FData[3][i]);
+      for( int i=0; i < Data.Elements(); i++ )  {
+        int Cl = (unsigned int)(Data[3][i]);
         glColor4d(  (double)GetRValue(Cl)/255, (double)GetGValue(Cl)/255, 
           (double)GetBValue(Cl)/255, (double)GetAValue(Cl)/255);
-        glVertex3d(FData[0][i], FData[1][i], FData[2][i]);
+        glVertex3d(Data[0][i], Data[1][i], Data[2][i]);
       }
       glEnd();
       glPopAttrib();
     }
     if( LW != 0 ) glLineWidth( (float)LW );
   }
-  else if( FType == sgloTriangles )  {
+  else if( Type == sgloTriangles )  {
     glBegin(GL_TRIANGLES);
-    if( FData.Vectors() == 3 )  {
-      for( int i=0; i < FData.Elements(); i++ )
-        glVertex3d(FData[0][i], FData[1][i], FData[2][i]);
+    if( Data.Vectors() == 3 )  {
+      for( int i=0; i < Data.Elements(); i++ )
+        glVertex3d(Data[0][i], Data[1][i], Data[2][i]);
     }
-    else if( FData.Vectors() == 4 )  {  //+normal
-      for( int i=0; i < FData.Elements(); i++ )  {
+    else if( Data.Vectors() == 4 )  {  //+normal
+      for( int i=0; i < Data.Elements(); i++ )  {
         if( (i%3) == 0 )  {
           const int ni = i/3;
-          glNormal3d(FData[3][ni], FData[3][ni+1], FData[3][ni+2]);
+          glNormal3d(Data[3][ni], Data[3][ni+1], Data[3][ni+2]);
         }
-        glVertex3d(FData[0][i], FData[1][i], FData[2][i]);
+        glVertex3d(Data[0][i], Data[1][i], Data[2][i]);
       }
     }
     glEnd();
   }
-  else if( FType == sgloQuads )  {
-    if( FData.Vectors() == 3 )  {
+  else if( Type == sgloQuads )  {
+    if( Data.Vectors() == 3 )  {
       glBegin(GL_QUADS);
-      for( int i=0; i < FData.Elements(); i++ )
-        glVertex3d(FData[0][i], FData[1][i], FData[2][i]);
+      for( int i=0; i < Data.Elements(); i++ )
+        glVertex3d(Data[0][i], Data[1][i], Data[2][i]);
       glEnd();
     }
-    else  if( FData.Vectors() == 5 )  {
+    else  if( Data.Vectors() == 5 )  {
       glBegin(GL_QUADS);
-      if( FTexture != -1 )  {
-        for( int i=0; i < FData.Elements(); i++ )  {
-          glTexCoord2d( FData[3][i], FData[4][i] );
-          glVertex3d(FData[0][i], FData[1][i], FData[2][i]);
+      if( TextureId != -1 )  {
+        for( int i=0; i < Data.Elements(); i++ )  {
+          glTexCoord2d( Data[3][i], Data[4][i] );
+          glVertex3d(Data[0][i], Data[1][i], Data[2][i]);
         }
       }
       else  {
-        for( int i=0; i < FData.Elements(); i++ )  {
-          glVertex3d(FData[0][i], FData[1][i], FData[2][i]);
-        }
+        for( int i=0; i < Data.Elements(); i++ )
+          glVertex3d(Data[0][i], Data[1][i], Data[2][i]);
       }
       glEnd();
     }
-    else  if( FData.Vectors() == 4 )  {
+    else  if( Data.Vectors() == 4 )  {
       glPushAttrib(GL_ALL_ATTRIB_BITS);
       glDisable(GL_LIGHTING);
       glEnable(GL_COLOR_MATERIAL);
       glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
       glBegin(GL_QUADS);
-      for( int i=0; i < FData.Elements(); i++ )  {
-        int Cl = (int)(FData[3][i]);
+      for( int i=0; i < Data.Elements(); i++ )  {
+        int Cl = (int)(Data[3][i]);
         glColor4d(  (double)GetRValue(Cl)/255, (double)GetGValue(Cl)/255, 
           (double)GetBValue(Cl)/255, (double)GetAValue(Cl)/255);
-        glVertex3d(FData[0][i], FData[1][i], FData[2][i]);
+        glVertex3d(Data[0][i], Data[1][i], Data[2][i]);
       }
       glEnd();
       glPopAttrib();
     }
-    else  if( FData.Vectors() == 6 )  {
+    else  if( Data.Vectors() == 6 )  {
       glPushAttrib(GL_ALL_ATTRIB_BITS);
       glDisable(GL_LIGHTING);
       glEnable(GL_COLOR_MATERIAL);
       glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
       glBegin(GL_QUADS);
-      if( FTexture != -1 )  {
-        for( int i=0; i < FData.Elements(); i++ )  {
-          int Cl = (int)(FData[3][i]);
+      if( TextureId != -1 )  {
+        for( int i=0; i < Data.Elements(); i++ )  {
+          int Cl = (int)(Data[3][i]);
           glColor4d(  (double)GetRValue(Cl)/255, (double)GetGValue(Cl)/255, 
             (double)GetBValue(Cl)/255, (double)GetAValue(Cl)/255);
-          glTexCoord2d( FData[4][i], FData[5][i] );
-          glVertex3d(FData[0][i], FData[1][i], FData[2][i]);
+          glTexCoord2d( Data[4][i], Data[5][i] );
+          glVertex3d(Data[0][i], Data[1][i], Data[2][i]);
         }
       }
       else  {
-        for( int i=0; i < FData.Elements(); i++ )  {
-          int Cl = (int)(FData[3][i]);
+        for( int i=0; i < Data.Elements(); i++ )  {
+          int Cl = (int)(Data[3][i]);
           glColor4d(  (double)GetRValue(Cl)/255, (double)GetGValue(Cl)/255, 
             (double)GetBValue(Cl)/255, (double)GetAValue(Cl)/255);
-          glVertex3d(FData[0][i], FData[1][i], FData[2][i]);
+          glVertex3d(Data[0][i], Data[1][i], Data[2][i]);
         }
       }
       glEnd();
       glPopAttrib();
     }
   }
-  else if( FType == sgloPolygon )  {
+  else if( Type == sgloPolygon )  {
     GLboolean v = glIsEnabled(GL_CULL_FACE);
     if( v )  glDisable(GL_CULL_FACE);
-    if( FData.Vectors() == 3 )  {
+    if( Data.Vectors() == 3 )  {
       glBegin(GL_POLYGON);
-      for( int i=0; i < FData.Elements(); i++ )
-        glVertex3d(FData[0][i], FData[1][i], FData[2][i]);
+      for( int i=0; i < Data.Elements(); i++ )
+        glVertex3d(Data[0][i], Data[1][i], Data[2][i]);
       glEnd();
     }
-    else if( FData.Vectors() == 4 )  {
+    else if( Data.Vectors() == 4 )  {
       glEnable(GL_COLOR_MATERIAL);
       glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
       glBegin(GL_POLYGON);
-      for( int i=0; i < FData.Elements(); i++ )  {
-        int Cl = (int)(FData[3][i]);
+      for( int i=0; i < Data.Elements(); i++ )  {
+        int Cl = (int)(Data[3][i]);
         glColor4d(  (double)GetRValue(Cl)/255, (double)GetGValue(Cl)/255, 
           (double)GetBValue(Cl)/255, (double)GetAValue(Cl)/255);
-        glVertex3d(FData[0][i], FData[1][i], FData[2][i]);
+        glVertex3d(Data[0][i], Data[1][i], Data[2][i]);
       }
       glDisable(GL_COLOR_MATERIAL);
       glEnd();
     }
     if( v )  glEnable(GL_CULL_FACE);
   }
-  if( GlClipPlanes() )  GlClipPlanes()->Enable(false);
-  if( currentTexture )  {
+  if( ClipPlanes != NULL )  ClipPlanes->Enable(false);
+  if( currentTexture != NULL )  {
     currentTexture->SetCurrent();
     delete currentTexture;
   }
 //  glEnable(GL_LIGHTING);
 }
 //..............................................................................
-AGOProperties * TGlPrimitive::SetProperties( const AGOProperties *C)
-{
-  if( GetProperties() )
-  {
+AGOProperties * TGlPrimitive::SetProperties(const AGOProperties *C)  {
+  if( GetProperties() != NULL )  {
     if( !(*C == *GetProperties()) )  // properties will be removed if ObjectCount == 1
-    {
-      Render()->OnSetProperties((TGlMaterial*)GetProperties());
-    }
+      Renderer->OnSetProperties((TGlMaterial*)GetProperties());
   }
   TGlMaterial* Props = (TGlMaterial*)AGroupObject::SetProperties(C);
-  Render()->SetProperties(Props);
+  Renderer->SetProperties(Props);
   return Props;
 }
-//..............................................................................
-void TGlPrimitive::StartList(){  glNewList(FId, GL_COMPILE_AND_EXECUTE); }
-//..............................................................................
-void TGlPrimitive::CallList( TGlPrimitive *GlP ){  
-  if( GlP->FList )
-    glCallList(GlP->Id()); 
-  else
-    GlP->Draw();
-}
-//..............................................................................
-void TGlPrimitive::EndList()        {  glEndList(); }
-//..............................................................................
-bool TGlPrimitive::Compiled() const {  return FCompiled; }
 //..............................................................................
 

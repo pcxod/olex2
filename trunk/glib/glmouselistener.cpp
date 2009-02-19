@@ -16,7 +16,7 @@ UseGlNamespace();
 //..............................................................................
 //..............................................................................
 
-TGlMouseListener::TGlMouseListener(const olxstr& collectionName, TGlRender *R) :
+TGlMouseListener::TGlMouseListener(const olxstr& collectionName, TGlRenderer *R) :
   AGDrawObject(collectionName)
 {
   FParent = R;

@@ -18,14 +18,14 @@ BeginGlNamespace()
 class AGlScene: public IEObject  {
 private:
 protected:
-  class TGlRender *FParent;
+  class TGlRenderer *FParent;
   TPtrList<TGlFont> Fonts;
 public:
   AGlScene();
   virtual ~AGlScene();
-  inline TGlRender *Parent()  {  return FParent; }
+  inline TGlRenderer *Parent()  {  return FParent; }
   /* must be called by TGlrender */
-  void Parent(TGlRender *P)   {  FParent = P; }
+  void Parent(TGlRenderer *P)   {  FParent = P; }
   /* The function creates or replaces a font (if exists under the same name)  */
   virtual TGlFont* CreateFont(const olxstr& name, const olxstr& fntDescription, short Flags=TGlFont::fntBmp) = 0;
   // used to scale font when drawing on a scaled surface
