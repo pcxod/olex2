@@ -32,9 +32,9 @@ protected:
   short FDrawStyle;
   short Flags;
   class TGlGroup *FParentGroup;  // parent collection
-//  friend class TGlRender;
+//  friend class TGlRenderer;
   class TGPCollection *FPrimitives;
-  class TGlRender *FParent;   // initialised owhen the collection is assigned
+  class TGlRenderer *FParent;   // initialised owhen the collection is assigned
   evecd FParams;
   olxstr CollectionName;
   inline void SetCollectionName(const olxstr& nn)  {  CollectionName = nn;  }
@@ -53,8 +53,8 @@ public:
 
   inline evecd& Params()           {  return FParams;  }
 
-  inline TGlRender *Parent()  const  {  return FParent;}
-  inline void Parent(TGlRender *P)   {  FParent = P;}
+  inline TGlRenderer *Parent()  const  {  return FParent;}
+  inline void Parent(TGlRenderer *P)   {  FParent = P;}
   virtual bool Orient(class TGlPrimitive *P) = 0;
 //  inline virtual void OrientAfterDraw(TGlPrimitive *P){  return; };
   virtual bool GetDimensions(vec3d &Max, vec3d &Min)=0;

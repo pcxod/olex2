@@ -51,7 +51,7 @@ struct TGlMMoveEvent  {
 };
 
 class TGlMouse: public IEObject  {
-  class TGlRender *FParent;
+  class TGlRenderer *FParent;
   class TDFrame *FDFrame;
 protected:
   int FSX, FSY;
@@ -61,7 +61,7 @@ protected:
   class TMouseData *MData;
   short FAction;
 public:
-  TGlMouse(TGlRender *Parent, TDFrame *Frame);
+  TGlMouse(TGlRenderer *Parent, TDFrame *Frame);
   virtual ~TGlMouse();
 
   bool MouseUp(int x, int y, short Shift, short button);
@@ -69,7 +69,7 @@ public:
   void ResetMouseState();
   bool MouseDown(int x, int y, short Shift, short button);
   bool MouseMove(int x, int y, short Shift);
-  inline TGlRender* Parent()  const {  return FParent;};
+  inline TGlRenderer* Parent()  const {  return FParent;};
   inline int SX() const             {  return FSX; }
   inline int SY() const             {  return FSY; }
   void SetHandler( const short Button, const short Shift, MMoveHandler MH);

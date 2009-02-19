@@ -9,7 +9,7 @@ BeginGxlNamespace()
 class TXLine: public TXBond  {
   vec3d FBase, FEdge;
 public:
-  TXLine(const olxstr& collectionName, const vec3d& base, const vec3d& edge, TGlRender *Render);
+  TXLine(const olxstr& collectionName, const vec3d& base, const vec3d& edge, TGlRenderer *Render);
   void Create(const olxstr& cName=EmptyString, const ACreationParams* cpar = NULL);
   virtual ~TXLine();
 

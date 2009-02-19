@@ -9,26 +9,26 @@
 BeginGlNamespace()
 
 class TGPCollection: public ACollectionItem  {
-  class TGlRender *FParent;
+  class TGlRenderer *FParent;
   TPtrList<class TGlPrimitive> Primitives; // a list of primitives in the collection
   TPtrList<AGDrawObject> GObjects;   // a list of all objects using this collection
   olxstr FName;
   class TGraphicsStyle *FStyle;
 public:
-  TGPCollection(TGlRender *Parent);
+  TGPCollection(TGlRenderer *Parent);
   virtual ~TGPCollection();
   // clears the content of the colelction and removes primitives
   // use it to change the content of the collection
   void ClearPrimitives();
 
-  inline int PrimitiveCount() const        {  return Primitives.Count();  }
-  inline TGlPrimitive *Primitive(int index) const {  return Primitives[index];  }
-  TGlPrimitive* PrimitiveByName(const olxstr &Name);
+  inline int PrimitiveCount() const {  return Primitives.Count();  }
+  inline TGlPrimitive* Primitive(int index) const {  return Primitives[index];  }
+  TGlPrimitive* FindPrimitiveByName(const olxstr& Name) const;
 
-  TGlPrimitive* NewPrimitive(const olxstr &Name);
+  TGlPrimitive* NewPrimitive(const olxstr& Name, short type);
 
-  inline const olxstr& PrimitiveName(int index) const {  return Primitives[index]->Name();  }
-  void AddPrimitive(TGlPrimitive *P)                    {  Primitives.Add(P);  }
+  inline const olxstr& PrimitiveName(int index) const {  return Primitives[index]->GetName();  }
+  void AddPrimitive(TGlPrimitive* P)                  {  Primitives.Add(P);  }
 
   void RemovePrimitive(int index) {  Primitives.Delete(index); }
   void RemovePrimitive(TGlPrimitive *GlP)  {  Primitives.Remove(GlP);  }
@@ -47,7 +47,7 @@ public:
 
   void ListParams(TStrList &List, TGlPrimitive *Primitive);
 
-  inline TGlRender *Parent()              {  return FParent; }
+  inline TGlRenderer *Parent()              {  return FParent; }
   inline const olxstr& Name() const     {  return FName; }
   inline void Name(const olxstr &name)  {  FName = name;}
 

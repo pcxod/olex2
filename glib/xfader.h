@@ -15,7 +15,7 @@ class TXFader: public AGDrawObject  {
   TGlMaterial GlM;
   double Step, Position;
 public:
-  TXFader(const olxstr& collectionName, TGlRender *Render);
+  TXFader(const olxstr& collectionName, TGlRenderer *Render);
   virtual ~TXFader();
   void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
   bool Orient(TGlPrimitive *P);

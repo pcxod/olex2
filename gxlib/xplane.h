@@ -18,7 +18,7 @@ private:
     TSPlane * plane;
   };
 public:
-  TXPlane(const olxstr& collectionName, TSPlane *Plane, TGlRender *Render);
+  TXPlane(const olxstr& collectionName, TSPlane *Plane, TGlRenderer *Render);
   void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
   virtual ~TXPlane();
 

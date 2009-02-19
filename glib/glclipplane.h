@@ -26,11 +26,11 @@ public:
 
 class TGlClipPlanes  {
   TPtrList<TGlClipPlane> FPlanes;
-  class TGlRender *FParent;
+  class TGlRenderer *FParent;
 public:
-  TGlClipPlanes(TGlRender *R);
+  TGlClipPlanes(TGlRenderer *R);
   ~TGlClipPlanes();
-  inline TGlRender *Parent()         {  return FParent;  }
+  inline TGlRenderer *Parent()         {  return FParent;  }
   inline TGlClipPlane *Plane(int i)  {  return FPlanes[i];  }
   inline int PlaneCount() const      {  return FPlanes.Count();  }
   void Enable(bool v);

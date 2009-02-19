@@ -16,7 +16,7 @@ protected:
 
   void undo(TUndoData* data)  {
     TNameModeUndo* undo = static_cast<TNameMode::TNameModeUndo*>(data);
-    TGlXApp::GetGXApp()->MarkLabel(undo->GetAtom(), false);
+    TGlXApp::GetGXApp()->MarkLabel(*undo->GetAtom(), false);
     Index--;
     SetCursor();
   }
@@ -60,7 +60,7 @@ public:
         new TNameModeUndo(
           new TUndoActionImpl<TNameMode>(this, &TNameMode::undo), &XA) )->AddAction(
             TGlXApp::GetGXApp()->Name(XA, Labl, false) );
-      TGlXApp::GetGXApp()->MarkLabel(&XA, true);
+      TGlXApp::GetGXApp()->MarkLabel(XA, true);
       Index++;
       SetCursor();
       return true;

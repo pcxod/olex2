@@ -284,7 +284,7 @@ void XVarManager::FreeAtomParam(TCAtom& ca, short param_name) {
     ca.SetUisoOwner(NULL);
 }
 //.................................................................................................
-double XVarManager::GetAtomParam(TCAtom& ca, short param_name, double* Q) {
+double XVarManager::GetAtomParam(const TCAtom& ca, short param_name, double* Q) const {
   XVarReference* vr = ca.GetVarRef(param_name);
   double val = 0;
   if( param_name >= var_name_U11 && param_name <= var_name_U23 && Q == NULL )
@@ -403,6 +403,7 @@ void XVarManager::Describe(TStrList& lst)  {
   // fixed params...
   TPSTypeList<short, olxstr> fixed;
   for( int i=0; i < Vars[0]._RefCount(); i++ )  {
+    if( Vars[0].GetRef(i).atom->GetAtomInfo() == iQPeakIndex )  continue;
     int ind = fixed.IndexOfComparable(Vars[0].GetRef(i).var_name);
     if( ind == -1 )
       fixed.Add(Vars[0].GetRef(i).var_name, olxstr(Vars[0].GetRef(i).atom->GetLabel()) << '(' 

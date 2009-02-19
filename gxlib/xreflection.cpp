@@ -21,7 +21,7 @@
 // TXReflection function bodies
 //----------------------------------------------------------------------------//
 TXReflection::TXReflection(const olxstr& collectionName, double minI, double maxI,
-                            const TReflection& R, TAsymmUnit* au, TGlRender *P) :
+                            const TReflection& R, TAsymmUnit* au, TGlRenderer *P) :
   AGDrawObject(collectionName)
 {
   FParent = P;
@@ -57,7 +57,7 @@ void TXReflection::Create(const olxstr& cName, const ACreationParams* cpar) {
   TGraphicsStyle* GS = GPC->Style();
   GPC->AddObject(this);
 
-  TGlPrimitive* GlP = GPC->NewPrimitive("Reflection");
+  TGlPrimitive* GlP = GPC->NewPrimitive("Reflection", sgloTriangles);
 
   TGlMaterial* GlM = const_cast<TGlMaterial*>(GS->Material("Reflection"));
 
@@ -73,42 +73,41 @@ void TXReflection::Create(const olxstr& cName, const ACreationParams* cpar) {
   double sz = 0.5;
 /*
   GlP->Type(sgloQuads);
-  GlP->Data().Resize(3, 12);  // three rectangles
+  GlP->Data.Resize(3, 12);  // three rectangles
   // xy
-  GlP->Data()[0][0] = -sz;  GlP->Data()[1][0] = sz;
-  GlP->Data()[0][1] = sz;  GlP->Data()[1][1] = sz;
-  GlP->Data()[0][2] = sz;  GlP->Data()[1][2] = -sz;
-  GlP->Data()[0][3] = -sz;  GlP->Data()[1][3] = -sz;
+  GlP->Data[0][0] = -sz;  GlP->Data[1][0] = sz;
+  GlP->Data[0][1] = sz;  GlP->Data[1][1] = sz;
+  GlP->Data[0][2] = sz;  GlP->Data[1][2] = -sz;
+  GlP->Data[0][3] = -sz;  GlP->Data[1][3] = -sz;
   // xz plane
-  GlP->Data()[0][4] = -sz;  GlP->Data()[2][4] = sz;
-  GlP->Data()[0][5] = sz;  GlP->Data()[2][5] = sz;
-  GlP->Data()[0][6] = sz;  GlP->Data()[2][6] = -sz;
-  GlP->Data()[0][7] = -sz;  GlP->Data()[2][7] = -sz;
+  GlP->Data[0][4] = -sz;  GlP->Data[2][4] = sz;
+  GlP->Data[0][5] = sz;  GlP->Data[2][5] = sz;
+  GlP->Data[0][6] = sz;  GlP->Data[2][6] = -sz;
+  GlP->Data[0][7] = -sz;  GlP->Data[2][7] = -sz;
   // zy plane x
-  GlP->Data()[2][8] = -sz;  GlP->Data()[1][8] = sz;
-  GlP->Data()[2][9] = sz;  GlP->Data()[1][9] = sz;
-  GlP->Data()[2][10] = sz;  GlP->Data()[1][10] = -sz;
-  GlP->Data()[2][11] = -sz;  GlP->Data()[1][11] = -sz;
+  GlP->Data[2][8] = -sz;  GlP->Data[1][8] = sz;
+  GlP->Data[2][9] = sz;  GlP->Data[1][9] = sz;
+  GlP->Data[2][10] = sz;  GlP->Data[1][10] = -sz;
+  GlP->Data[2][11] = -sz;  GlP->Data[1][11] = -sz;
   */
-  GlP->Type(sgloTriangles);
-  GlP->Data().Resize(3, 12);  // four rectangles
+  GlP->Data.Resize(3, 12);  // four rectangles
   double v = sqrt(3.0)/2;
   // bottom
-  GlP->Data()[0][0] = 0;      GlP->Data()[1][0] = sz;
-  GlP->Data()[0][1] = sz*v;   GlP->Data()[1][1] = -sz*v;
-  GlP->Data()[0][2] = -sz*v;  GlP->Data()[1][2] = -sz*v;
+  GlP->Data[0][0] = 0;      GlP->Data[1][0] = sz;
+  GlP->Data[0][1] = sz*v;   GlP->Data[1][1] = -sz*v;
+  GlP->Data[0][2] = -sz*v;  GlP->Data[1][2] = -sz*v;
 
-  GlP->Data()[0][3] = 0;      GlP->Data()[1][3] = sz;
-  GlP->Data()[0][4] = sz*v;   GlP->Data()[1][4] = -sz*v;
-  GlP->Data()[0][5] = 0;      GlP->Data()[1][5] = 0;         GlP->Data()[2][5] = sz;
+  GlP->Data[0][3] = 0;      GlP->Data[1][3] = sz;
+  GlP->Data[0][4] = sz*v;   GlP->Data[1][4] = -sz*v;
+  GlP->Data[0][5] = 0;      GlP->Data[1][5] = 0;         GlP->Data[2][5] = sz;
 
-  GlP->Data()[0][6] = 0;      GlP->Data()[1][6] = sz;
-  GlP->Data()[0][7] = -sz*v;  GlP->Data()[1][7] = -sz*v;
-  GlP->Data()[0][8] = 0;      GlP->Data()[1][8] = 0;         GlP->Data()[2][8] = sz;
+  GlP->Data[0][6] = 0;      GlP->Data[1][6] = sz;
+  GlP->Data[0][7] = -sz*v;  GlP->Data[1][7] = -sz*v;
+  GlP->Data[0][8] = 0;      GlP->Data[1][8] = 0;         GlP->Data[2][8] = sz;
 
-  GlP->Data()[0][9] = sz*v;   GlP->Data()[1][9] = -sz*v;
-  GlP->Data()[0][10] = -sz*v; GlP->Data()[1][10] = -sz*v;
-  GlP->Data()[0][11] = 0;     GlP->Data()[1][11] = 0;        GlP->Data()[2][11] = sz;
+  GlP->Data[0][9] = sz*v;   GlP->Data[1][9] = -sz*v;
+  GlP->Data[0][10] = -sz*v; GlP->Data[1][10] = -sz*v;
+  GlP->Data[0][11] = 0;     GlP->Data[1][11] = 0;        GlP->Data[2][11] = sz;
 
 }
 //..............................................................................

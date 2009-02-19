@@ -15,7 +15,7 @@ BeginGxlNamespace()
 
 class TXBondStylesClear: public AActionHandler  {
 public:
-  TXBondStylesClear(TGlRender *Render)  {  Render->OnStylesClear->Add(this);  }
+  TXBondStylesClear(TGlRenderer *Render)  {  Render->OnStylesClear->Add(this);  }
   virtual ~TXBondStylesClear();
   bool Enter(const IEObject *Sender, const IEObject *Data=NULL);
   bool Exit(const IEObject *Sender, const IEObject *Data=NULL);
@@ -35,7 +35,7 @@ protected:
   static TGraphicsStyle *FBondParams;
   static TXBondStylesClear *FXBondStylesClear;
 public:
-  TXBond(const olxstr& collectionName, TSBond& B, TGlRender *Render);
+  TXBond(const olxstr& collectionName, TSBond& B, TGlRenderer *Render);
   void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
   virtual ACreationParams* GetACreationParams() const;
   virtual ~TXBond();
@@ -81,7 +81,7 @@ public:
   void Quality(const short Val);
   void BondUpdated();
 
-  static void Init(TGlRender* glr)  {
+  static void Init(TGlRenderer* glr)  {
     if( FXBondStylesClear == NULL ) 
       FXBondStylesClear = new TXBondStylesClear(glr);
   }

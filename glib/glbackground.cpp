@@ -18,7 +18,7 @@ UseGlNamespace()
 //..............................................................................
 //..............................................................................
 
-TGlBackground::TGlBackground(const olxstr& collectionName, TGlRender *Render, bool ceiling):
+TGlBackground::TGlBackground(const olxstr& collectionName, TGlRenderer *Render, bool ceiling):
   AGDrawObject(collectionName)
 {
   AGDrawObject::Parent(Render);
@@ -30,8 +30,6 @@ TGlBackground::TGlBackground(const olxstr& collectionName, TGlRender *Render, bo
 void TGlBackground::Create(const olxstr& cName, const ACreationParams* cpar) {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
-  TGlPrimitive *GlP;
-  TGPCollection *GPC;
   TGlMaterial GlM;
   if( FCeiling )
     GlM.SetFlags(sglmAmbientF|sglmDiffuseF|sglmTransparent|sglmIdentityDraw);
@@ -42,8 +40,9 @@ void TGlBackground::Create(const olxstr& cName, const ACreationParams* cpar) {
   GlM.AmbientB = 0x7f4f4f4f;
   GlM.DiffuseB = 0x7f4f4f4f;
 
-  GPC = FParent->FindCollection( GetCollectionName() );
-  if( !GPC )    GPC = FParent->NewCollection( GetCollectionName() );
+  TGPCollection* GPC = FParent->FindCollection( GetCollectionName() );
+  if( GPC == NULL )    
+    GPC = FParent->NewCollection( GetCollectionName() );
   GPC->AddObject(this);
 
   TGraphicsStyle *GS = GPC->Style();
@@ -52,23 +51,22 @@ void TGlBackground::Create(const olxstr& cName, const ACreationParams* cpar) {
   FColors[2] = GS->GetParam("C", "0", true).ToInt();
   FColors[3] = GS->GetParam("D", "0", true).ToInt();
 
-  FPrimitive = GlP = GPC->NewPrimitive("Plane");
+  TGlPrimitive* GlP = FPrimitive = GPC->NewPrimitive("Plane", sgloQuads);
   GlP->SetProperties(&GlM);
-  GlP->Type(sgloQuads);
-  GlP->Data().Resize(6, 4);
+  GlP->Data.Resize(6, 4);
   // texture coordinates
-  GlP->Data()[4][0] = 1;  GlP->Data()[5][0] = 1;
-  GlP->Data()[4][1] = 0;  GlP->Data()[5][1] = 1;
-  GlP->Data()[4][2] = 0;  GlP->Data()[5][2] = 0;
-  GlP->Data()[4][3] = 1;  GlP->Data()[5][3] = 0;
+  GlP->Data[4][0] = 1;  GlP->Data[5][0] = 1;
+  GlP->Data[4][1] = 0;  GlP->Data[5][1] = 1;
+  GlP->Data[4][2] = 0;  GlP->Data[5][2] = 0;
+  GlP->Data[4][3] = 1;  GlP->Data[5][3] = 0;
   if( Texture != NULL )
-    GlP->Texture( Texture->GetId() );
+    GlP->SetTextureId( Texture->GetId() );
   Orient(GlP);
 }
 //..............................................................................
 void TGlBackground::SetTexture(TGlTexture* tx)  {  
   Texture = tx;
-  FPrimitive->Texture( (tx != NULL) ? tx->GetId() : -1 );  
+  FPrimitive->SetTextureId( (tx != NULL) ? tx->GetId() : -1 );  
 }
 //..............................................................................
 bool TGlBackground::Orient(TGlPrimitive *P)  {
@@ -83,25 +81,25 @@ bool TGlBackground::Orient(TGlPrimitive *P)  {
 //  if( !MaxZ )  MaxZ = -0.0001;
   if( !FCeiling )  MaxZ = -MaxZ;
 
-  P->Data()[0][0] = -HW;
-  P->Data()[1][0] = -HH;
-  P->Data()[2][0] = MaxZ;
-  P->Data()[3][0] = FColors[0].GetRGB();
+  P->Data[0][0] = -HW;
+  P->Data[1][0] = -HH;
+  P->Data[2][0] = MaxZ;
+  P->Data[3][0] = FColors[0].GetRGB();
 
-  P->Data()[0][1] = HW;
-  P->Data()[1][1] = -HH;
-  P->Data()[2][1] = MaxZ;
-  P->Data()[3][1] = FColors[1].GetRGB();
+  P->Data[0][1] = HW;
+  P->Data[1][1] = -HH;
+  P->Data[2][1] = MaxZ;
+  P->Data[3][1] = FColors[1].GetRGB();
 
-  P->Data()[0][2] = HW;
-  P->Data()[1][2] = HH;
-  P->Data()[2][2] = MaxZ;
-  P->Data()[3][2] = FColors[2].GetRGB();
+  P->Data[0][2] = HW;
+  P->Data[1][2] = HH;
+  P->Data[2][2] = MaxZ;
+  P->Data[3][2] = FColors[2].GetRGB();
 
-  P->Data()[0][3] = -HW;
-  P->Data()[1][3] = HH;
-  P->Data()[2][3] = MaxZ;
-  P->Data()[3][3] = FColors[3].GetRGB();
+  P->Data[0][3] = -HW;
+  P->Data[1][3] = HH;
+  P->Data[2][3] = MaxZ;
+  P->Data[3][3] = FColors[3].GetRGB();
   return false;
 }
 //..............................................................................

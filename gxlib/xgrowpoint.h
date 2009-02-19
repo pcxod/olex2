@@ -13,7 +13,7 @@ class TXGrowPoint : public AGDrawObject  {
   vec3d Center;
 public:
   TXGrowPoint(const olxstr& collectionName,
-               const vec3d& center, const smatd& transform, TGlRender *Render);
+               const vec3d& center, const smatd& transform, TGlRenderer *Render);
   void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
   virtual ~TXGrowPoint();
 

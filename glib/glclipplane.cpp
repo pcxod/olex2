@@ -30,7 +30,7 @@ void TGlClipPlane::Enabled(bool v)  {
 //----------------------------------------------------------------------------//
 // TGlClipPlanes
 //----------------------------------------------------------------------------//
-TGlClipPlanes::TGlClipPlanes(TGlRender *R)  {
+TGlClipPlanes::TGlClipPlanes(TGlRenderer *R)  {
   FParent = R;
   for( int i=0; i < GL_MAX_CLIP_PLANES; i++ )  {
     FPlanes.Add( new TGlClipPlane(GL_CLIP_PLANE0 +i, this, 0, 0, 0, 0) );

@@ -18,7 +18,7 @@ class TGlTextBox: public TGlMouseListener  {
   int MaxStringLength;
 protected:
 public:
-  TGlTextBox(const olxstr& collectionName, TGlRender *Render);
+  TGlTextBox(const olxstr& collectionName, TGlRenderer *Render);
   void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
   virtual ~TGlTextBox();
 

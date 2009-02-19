@@ -9,7 +9,7 @@
 #include "gltexture.h"
 
 
-TGlBitmap::TGlBitmap(const olxstr& collectionName, TGlRender *Render, 
+TGlBitmap::TGlBitmap(const olxstr& collectionName, TGlRenderer *Render, 
   int left, int top, int width, int height,
   unsigned char* RGB, GLenum format) : TGlMouseListener(collectionName, Render)  {
 
@@ -69,16 +69,15 @@ void TGlBitmap::Create(const olxstr& cName, const ACreationParams* cpar)  {
     GlM->DiffuseF = 0x800f0f0f;
   }
 
-  GlP = GPC->NewPrimitive("Plane");  //
-  GlP->Texture( TextureId );
+  GlP = GPC->NewPrimitive("Plane", sgloQuads);  //
+  GlP->SetTextureId( TextureId );
   GlP->SetProperties(GlM);
-  GlP->Type(sgloQuads);
-  GlP->Data().Resize(5, 4);
+  GlP->Data.Resize(5, 4);
   // texture coordinates
-  GlP->Data()[3][0] = 0;  GlP->Data()[4][0] = 1;
-  GlP->Data()[3][1] = 0;  GlP->Data()[4][1] = 0;
-  GlP->Data()[3][2] = 1;  GlP->Data()[4][2] = 0;
-  GlP->Data()[3][3] = 1;  GlP->Data()[4][3] = 1;
+  GlP->Data[3][0] = 0;  GlP->Data[4][0] = 1;
+  GlP->Data[3][1] = 0;  GlP->Data[4][1] = 0;
+  GlP->Data[3][2] = 1;  GlP->Data[4][2] = 0;
+  GlP->Data[3][3] = 1;  GlP->Data[4][3] = 1;
 }
 
 TGlBitmap::~TGlBitmap()  {
@@ -90,20 +89,20 @@ void TGlBitmap::ReplaceData(int width, int height, unsigned char* RGB, GLenum fo
                          format, RGB);
 }
 bool TGlBitmap::Orient(TGlPrimitive *P)  {
-  P->Texture( TextureId );
+  P->SetTextureId( TextureId );
   double hw = Parent()->GetWidth()/2;
   double hh = Parent()->GetHeight()/2;
   double xx = Basis.GetCenter()[0],
          xy = -Basis.GetCenter()[1],
          zm = Basis.GetZoom();
-  P->Data()[0][0] = (Left+Width*zm)-hw + xx;  P->Data()[1][0] = hh-(Top+Height*zm) - xy ;
-  P->Data()[0][1] = P->Data()[0][0];             P->Data()[1][1] = hh-Top - xy;
-  P->Data()[0][2] = Left-hw + xx;          P->Data()[1][2] = P->Data()[1][1];
-  P->Data()[0][3] = P->Data()[0][2];             P->Data()[1][3] = P->Data()[1][0];
-  P->Data()[2][0] = Z;
-  P->Data()[2][1] = Z;
-  P->Data()[2][2] = Z;
-  P->Data()[2][3] = Z;
+  P->Data[0][0] = (Left+Width*zm)-hw + xx;  P->Data[1][0] = hh-(Top+Height*zm) - xy ;
+  P->Data[0][1] = P->Data[0][0];            P->Data[1][1] = hh-Top - xy;
+  P->Data[0][2] = Left-hw + xx;             P->Data[1][2] = P->Data[1][1];
+  P->Data[0][3] = P->Data[0][2];            P->Data[1][3] = P->Data[1][0];
+  P->Data[2][0] = Z;
+  P->Data[2][1] = Z;
+  P->Data[2][2] = Z;
+  P->Data[2][3] = Z;
 
   Parent()->GlScale( (float)(FParent->GetScale()*FParent->GetExtraZoom()) );
   return false;

@@ -21,7 +21,7 @@ class TGlText: public TGlMouseListener  {
 protected:
   void CalcWH();  // calculates width of the text
 public:
-  TGlText(const olxstr& collectionName, TGlRender *Render, const olxstr &Text);
+  TGlText(const olxstr& collectionName, TGlRenderer *Render, const olxstr &Text);
   void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
   virtual ~TGlText()  {  ;  }
 

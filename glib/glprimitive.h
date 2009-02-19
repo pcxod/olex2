@@ -27,6 +27,10 @@ const short sgloPoints    = 1,
             sgloMacro     = 14,
             sgloCommandList = 15;
 
+class TGlFont;
+class TGPCollection;
+class TGlrenderer;
+
 class AEvaluator  { // a prototype for the calculation of expressions
   int FMinX, FMaxX, FMinY, FMaxY;
 public:
@@ -45,26 +49,83 @@ public:
 };
 
 class TGlPrimitive: public AGroupObject  {
-  class TGlRender *FParentRender;
-  olxstr  FName;
+  TGlRenderer* Renderer;
+  olxstr  Name;
 protected:
-  GLUquadricObj *FQuadric;
-  bool FList, FCompiled;
-  short FType;
+  GLUquadricObj* Quadric;
+  bool Compiled;
+  short Type;
   AGOProperties *NewProperties();
-  TGlClipPlanes *FGlClipPlanes;
-  AEvaluator *FEval;
-  class TGPCollection *FParentCollection;
-  olxstr *FString; // for text object, nut be initialised with a proper pointer
-  TEBasis *FBasis;
-  class TGlFont *FFont;
+  TGlClipPlanes* ClipPlanes;
+  AEvaluator* Evaluator;
+  TGPCollection* ParentCollection;
+  olxstr* String; // for text object, nut be initialised with a proper pointer
+  TGlFont* Font;
   /* if Basis is NULL, then the orientation od the primitive is default
    to use asign it a value Basis = new TEBasis; the object will free memory
    automatically
   */
+  TEBasis* Basis;
   void CreateQuadric();
+  int ListId, 
+      TextureId, 
+      OwnerId, 
+      QuadricDrawStyle, 
+      QuadricNormals, 
+      QuadricOrientation;
+  void SetType(short T);
+public:
+  TGlPrimitive(TObjectGroup *ParentG, TGlRenderer *ParentR, short type);
+  ~TGlPrimitive();
+
+  TGlRenderer* GetRenderer()  const {  return Renderer;  }
+  void Compile();
+  void Draw();
+
+  DefPropP(int, ListId)
+  DefPropP(int, TextureId)
+  DefPropP(int, OwnerId) // to be used by the owner of the object
+
+  DefPropP(int, QuadricDrawStyle)
+  DefPropP(int, QuadricNormals)
+  DefPropP(int, QuadricOrientation)
+
+
+  /* fills the list woth parameter names */
+  virtual void ListParams(TStrList& List);
+
+  /* sets the type and expands Params vector*/
+  short GetType() const {  return Type;  }
+
+  DefPropP(TGlClipPlanes*, ClipPlanes)
+  DefPropP(olxstr*, String)
+  DefPropP(TGlFont*, Font)
+  DefPropP(TEBasis*, Basis)
+  DefPropP(AEvaluator*, Evaluator)
+  DefPropP(TGPCollection*, ParentCollection)
+
+  DefPropC(olxstr, Name)
+
+  AGOProperties* SetProperties(const AGOProperties* C);
+  
+  inline void CallList(TGlPrimitive* GlP)  {
+    if( GlP->IsList() )
+      glCallList(GlP->GetListId()); 
+    else
+      GlP->Draw();
+  }
+  inline void CallList(int i)  {  glCallList(i); };
+  inline void StartList()  {
+    if( ListId == -1 )
+      throw TInvalidArgumentException(__OlxSourceInfo, "ListId");
+    glNewList(ListId, GL_COMPILE_AND_EXECUTE);
+  }
+  inline void EndList()  { glEndList();  }
+  inline bool IsCompiled() const {  return Compiled;  }
+  inline bool IsList()     const {  return Type == sgloCommandList;  }
+
   /* the data and parameters of the primitive */
-  ematd FData;
+  ematd Data;
   /* Params:
    Disk: inner radius, outer radius, slices, loops
    DiskSlice: inner radius, outer radius, slices, loops, start angle, sweep angle
@@ -73,65 +134,7 @@ protected:
    Text(4): [0]<0 - bitmap font, [0] > 0 - ttf, [1]-zoom x, [2]-zoom y, [3]-zoom z
    note that the String must be initialised with a pointer to a proper string
   */
-  evecd FParams;
-  int FId, FTexture, FQuadricDrawStyle, FQuadricNormals, FQuadricOrientation;
-public:
-  TGlPrimitive(TObjectGroup *ParentG, TGlRender *ParentR);
-  ~TGlPrimitive();
-
-  TGlRender* Render()       {  return FParentRender; };
-  void Compile();
-  void Draw();
-
-  /* sets the type and expands Params vector*/
-  void Type(short T);
-
-  int Id() const            {  return FId;  }
-  void Id(int v)            {  FId = v;  }
-  int Texture() const       {  return FTexture;  }
-  void Texture(int v)       {  FTexture = v;  }
-  int QuadricDrawStyle() const      {  return FQuadricDrawStyle;  }
-  void QuadricDrawStyle(int v)      {  FQuadricDrawStyle = v;  }
-  int QuadricNormals() const        {  return FQuadricNormals;  }
-  void QuadricNormals(int v)        {  FQuadricNormals = v;  }
-  int QuadricOrientation() const    {  return FQuadricOrientation;  }
-  void QuadricOrientation(int v)    {  FQuadricOrientation = v;  }
-
-  inline ematd& Data()    {  return FData;  }
-  inline evecd& Params()  {  return FParams;  }
-
-  /* fills the list woth parameter names */
-  virtual void ListParams(TStrList &List);
-
-  short Type() const        {  return FType; };
-
-  void GlClipPlanes(TGlClipPlanes *GCP)  {  FGlClipPlanes = GCP; }
-  TGlClipPlanes *GlClipPlanes()          {  return FGlClipPlanes; }
-
-  void String(olxstr *P)               { FString = P; }
-  olxstr *String()                     {  return FString; }
-
-  void Font(TGlFont *Fnt)                { FFont = Fnt; }
-  TGlFont *Font()                  const {  return FFont; }
-
-  void Basis(TEBasis *p)                 {  FBasis = p; }
-  TEBasis *Basis()                       { return FBasis; }
-
-  void Evaluator(AEvaluator *Ev)         {  FEval = Ev; }
-  AEvaluator *Evaluator()                {  return FEval; }
-
-  void ParentCollection(TGPCollection *PGC){ FParentCollection = PGC; }
-  TGPCollection *ParentCollection()        {  return FParentCollection; }
-
-  const olxstr&  Name()         {  return FName; }
-  void Name(const olxstr &name) {  FName = name; }
-
-  AGOProperties * SetProperties( const AGOProperties *C);
-  void CallList(TGlPrimitive *GlP);
-  void CallList( int i )          {  glCallList(i); };
-  void StartList();
-  void EndList();
-  bool Compiled() const;
+  evecd Params;
 };
 
 // a structure to describe primitive parameters

@@ -1,6 +1,8 @@
 #ifndef gllabelsH
 #define gllabelsH
+
 #include "gxbase.h"
+#include "bitarray.h"
 
 #include "glmouselistener.h"
 #include "glfont.h"
@@ -24,16 +26,15 @@ const short lmLabels   = 0x0001,  // atom label
             lmHydr     = 0x0100,  // include hydrogens
             lmQPeak    = 0x0200,  // include Q-peaks
             lmQPeakI   = 0x0400,  // Q-peaks intensity
-            lmFixed    = 0x0800;  // fixed values
-
+            lmFixed    = 0x0800,  // fixed values
+            lmConRes   = 0x1000;  // restraints, constraints
 class TXGlLabels: public AGDrawObject  {
-  TPtrList<class TXAtom> FAtoms;
-  short  FFontIndex;
+  short  FontIndex;
   TGlMaterial FMarkMaterial;
-  TArrayList<bool> FMarks;
+  TEBitArray Marks;
   short Mode;
 public:
-  TXGlLabels(const olxstr& collectionName, TGlRender *Render);
+  TXGlLabels(const olxstr& collectionName, TGlRenderer *Render);
   void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
   virtual ~TXGlLabels();
 
@@ -46,15 +47,12 @@ public:
 
   bool Orient(TGlPrimitive *P);
   bool GetDimensions(vec3d &Max, vec3d &Min) {  return false;  }
-  void AddAtom(class TXAtom *A);
-  void MarkLabel(TXAtom *A, bool v);
-
-  inline int AtomCount() const        {  return FAtoms.Count(); }
-  inline TXAtom*  Atom(int i)  const  {  return FAtoms[i];  }
-
+  
+  void Init();
+  void MarkLabel(const class TXAtom& A, bool v);
+  
   TGlFont *Font() const;
-  void FontIndex(short FntIndex)  {  FFontIndex = FntIndex; }
-  short FontIndex() const         {  return FFontIndex; }
+  DefPropP(short, FontIndex)
 
   TGlMaterial& MarkMaterial()     {  return FMarkMaterial; }
 };

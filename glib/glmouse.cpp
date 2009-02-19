@@ -22,7 +22,7 @@ UseGlNamespace()
 //..............................................................................
 //..............................................................................
 
-TGlMouse::TGlMouse(TGlRender *Parent, TDFrame *Frame)  {
+TGlMouse::TGlMouse(TGlRenderer *Parent, TDFrame *Frame)  {
   FSX = FSY = 0;
   FDblClick = FButtonDown = false;
   FParent = Parent;
@@ -200,7 +200,7 @@ void TGlMouse::SetHandler( const short Button, const short Shift, MMoveHandler M
 }
 //..............................................................................
 void GlobalGlFunction( meMoveXY(TGlMouse *G, int dx, int dy) )  {
-  TGlRender *R = G->Parent();
+  TGlRenderer *R = G->Parent();
   double v = R->GetScale();
   R->TranslateX(dx*v);
   R->TranslateY(dy*v);
@@ -208,14 +208,14 @@ void GlobalGlFunction( meMoveXY(TGlMouse *G, int dx, int dy) )  {
 }
 //..............................................................................
 void GlobalGlFunction( meMoveZ(TGlMouse *G, int dx, int dy) )  {
-  TGlRender *R = G->Parent();
+  TGlRenderer *R = G->Parent();
   double v = R->GetScale();
   R->TranslateZ(dx*v + dy*v);
   G->Action(glmaTranslateZ);
 }
 //..............................................................................
 void GlobalGlFunction( meRotateXY(TGlMouse *G, int dx, int dy) )  {
-  TGlRender *R = G->Parent();
+  TGlRenderer *R = G->Parent();
   double RX = R->GetBasis().GetRX() + (double)dy/FRotationDiv;;
   double RY = R->GetBasis().GetRY() + (double)dx/FRotationDiv;;
   if( RX > 360 )  RX = 0;
@@ -228,7 +228,7 @@ void GlobalGlFunction( meRotateXY(TGlMouse *G, int dx, int dy) )  {
 }
 //..............................................................................
 void GlobalGlFunction( meRotateZ(TGlMouse *G, int dx, int dy) )  {
-  TGlRender *R = G->Parent();
+  TGlRenderer *R = G->Parent();
   double RZ = R->GetBasis().GetRZ();
   if( G->SX() > R->GetWidth()/2 )
     RZ -= (double)dy/FRotationDiv;
@@ -247,7 +247,7 @@ void GlobalGlFunction( meRotateZ(TGlMouse *G, int dx, int dy) )  {
 }
 //..............................................................................
 void GlobalGlFunction( meZoom(TGlMouse *G, int dx, int dy) )  {
-  TGlRender *R = G->Parent();
+  TGlRenderer *R = G->Parent();
   R->SetZoom( R->GetZoom() + (double)dx/FZoomDiv - (double)dy/FZoomDiv);
   G->Action(glmaZoom);
 }

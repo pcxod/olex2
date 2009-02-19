@@ -8,7 +8,7 @@
 #include "gpcollection.h"
 #include "glscene.h"
 
-TXLattice::TXLattice(const olxstr& collectionName, TGlRender *Render) :
+TXLattice::TXLattice(const olxstr& collectionName, TGlRenderer *Render) :
   TGlMouseListener(collectionName, Render) {
 
   Fixed = false;
@@ -33,7 +33,7 @@ void TXLattice::Create(const olxstr& cName, const ACreationParams* cpar)  {
   TGraphicsStyle* GS = GPC->Style();
   GPC->AddObject(this);
 
-  Lines = GPC->NewPrimitive("Lines");
+  Lines = GPC->NewPrimitive("Lines", sgloLines);
   const TGlMaterial* SGlM = GS->Material("Lines");
   if( !SGlM->Mark() )  Lines->SetProperties(SGlM);
   else  {
@@ -42,11 +42,10 @@ void TXLattice::Create(const olxstr& cName, const ACreationParams* cpar)  {
     Lines->SetProperties(&GlM);
   }
 
-  Lines->Type(sgloLines);
   // initialise data
   SetSize( GetSize() );
 
-  TGlPrimitive* GlP = GPC->NewPrimitive("Label");  // labels
+  TGlPrimitive* GlP = GPC->NewPrimitive("Label", sgloText);  // labels
   SGlM = GS->Material("Label");
   if( !SGlM->Mark() )  GlP->SetProperties(SGlM);
   else  {
@@ -54,8 +53,7 @@ void TXLattice::Create(const olxstr& cName, const ACreationParams* cpar)  {
     GlM.SetTransparent(false);
     GlP->SetProperties(&GlM);
   }
-  GlP->Type(sgloText);
-  GlP->Font( Parent()->Scene()->DefFont() );
+  GlP->SetFont( Parent()->Scene()->DefFont() );
 }
 //..............................................................................
 bool TXLattice::Orient(TGlPrimitive *P)  {
@@ -76,7 +74,7 @@ bool TXLattice::Orient(TGlPrimitive *P)  {
     Parent()->GlTranslate( Basis.GetCenter() );
   }
   vec3d vec;
-  if( P->Type() == sgloLines )  {
+  if( P->GetType() == sgloLines )  {
     glPointSize(5);
     glBegin(GL_POINTS);
     for( int i=-Size; i  < Size; i++ )  {

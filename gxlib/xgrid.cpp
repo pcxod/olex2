@@ -196,7 +196,7 @@ void TXGrid::Create(const olxstr& cName, const ACreationParams* cpar)  {
   }
   TGraphicsStyle* GS = GPC->Style();
   GPC->AddObject(this);
-  TGlPrimitive* GlP = GPC->NewPrimitive("eMap");
+  TGlPrimitive* GlP = GPC->NewPrimitive("eMap", sgloQuads);
   TGlMaterial* GlM = const_cast<TGlMaterial*>( GS->Material("eMap") );
   if( GlM->Mark() )  {
     GlM->SetFlags(0);
@@ -206,30 +206,27 @@ void TXGrid::Create(const olxstr& cName, const ACreationParams* cpar)  {
     GlM->DiffuseF = 0xD80f0f0f;
   }
   TextIndex = -1;
-  GlP->Texture( -1 );
+  GlP->SetTextureId( -1 );
 
   GlP->SetProperties(GlM);
-  GlP->Type(sgloQuads);
-  GlP->Data().Resize(5, 4);
+  GlP->Data.Resize(5, 4);
   // texture coordinates
-  GlP->Data()[3][0] = 0;  GlP->Data()[4][0] = 0;
-  GlP->Data()[3][1] = 1;  GlP->Data()[4][1] = 0;
-  GlP->Data()[3][2] = 1;  GlP->Data()[4][2] = 1;
-  GlP->Data()[3][3] = 0;  GlP->Data()[4][3] = 1;
+  GlP->Data[3][0] = 0;  GlP->Data[4][0] = 0;
+  GlP->Data[3][1] = 1;  GlP->Data[4][1] = 0;
+  GlP->Data[3][2] = 1;  GlP->Data[4][2] = 1;
+  GlP->Data[3][3] = 0;  GlP->Data[4][3] = 1;
   Info->Create();
   // create dummy primitives
-  glpP = GPC->NewPrimitive("+Surface");
+  glpP = GPC->NewPrimitive("+Surface", sgloQuads);
   GlM = const_cast<TGlMaterial*>( GS->Material("+Surface") );
   if( GlM->Mark() )
     GlM->FromString("85;0.000,1.000,0.000,0.850;3632300160;1.000,1.000,1.000,0.500;36");
   glpP->SetProperties(GlM);
-  glpP->Type(sgloQuads);
-  glpN = GPC->NewPrimitive("-Surface");
+  glpN = GPC->NewPrimitive("-Surface", sgloQuads);
   GlM = const_cast<TGlMaterial*>( GS->Material("-Surface") );
   if( GlM->Mark() ) 
     GlM->FromString("85;1.000,0.000,0.000,0.850;3632300160;1.000,1.000,1.000,0.500;36");
   glpN->SetProperties(GlM);
-  glpN->Type(sgloQuads);
 }
 //..............................................................................
 void TXGrid::CalcColorRGB(double v, double& R, double& G, double& B) {
@@ -390,23 +387,23 @@ bool TXGrid::Orient(TGlPrimitive *GlP)  {
       Replace2DTexture(*FParent->GetTextureManager().
       FindTexture(TextIndex), 0, MaxDim, MaxDim, 0, GL_RGB, TextData);
 
-  GlP->Data()[0][0] = p1[0];
-  GlP->Data()[1][0] = p1[1];
-  GlP->Data()[2][0] = p1[2];
+  GlP->Data[0][0] = p1[0];
+  GlP->Data[1][0] = p1[1];
+  GlP->Data[2][0] = p1[2];
 
-  GlP->Data()[0][1] = p2[0];
-  GlP->Data()[1][1] = p2[1];
-  GlP->Data()[2][1] = p2[2];
+  GlP->Data[0][1] = p2[0];
+  GlP->Data[1][1] = p2[1];
+  GlP->Data[2][1] = p2[2];
 
-  GlP->Data()[0][2] = p3[0];
-  GlP->Data()[1][2] = p3[1];
-  GlP->Data()[2][2] = p3[2];
+  GlP->Data[0][2] = p3[0];
+  GlP->Data[1][2] = p3[1];
+  GlP->Data[2][2] = p3[2];
 
-  GlP->Data()[0][3] = p4[0];
-  GlP->Data()[1][3] = p4[1];
-  GlP->Data()[2][3] = p4[2];
+  GlP->Data[0][3] = p4[0];
+  GlP->Data[1][3] = p4[1];
+  GlP->Data[2][3] = p4[2];
 
-  GlP->Texture( TextIndex );
+  GlP->SetTextureId( TextIndex );
 //  glNormal3d(bm[0][2], bm[1][2], bm[2][2]);
   glNormal3d(0, 0, 1);
 

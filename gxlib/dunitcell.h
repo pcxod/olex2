@@ -12,7 +12,7 @@ class TDUnitCell: public AGDrawObject  {
   TGlPrimitive *FGlP;
   mat3d CellToCartesian, HklToCartesian;
 public:
-  TDUnitCell(const olxstr& collectionName, TGlRender *Render);
+  TDUnitCell(const olxstr& collectionName, TGlRenderer *Render);
   virtual ~TDUnitCell() {  }
   void Init(const double cell_params[6]);
   void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);

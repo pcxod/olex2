@@ -16,12 +16,12 @@ public:
 
 class TDFrame: public AGDrawObject  {
 protected:
-  class TGlRender *FRender;
+  class TGlRenderer *FRender;
   class TGlPrimitive *FPrimitive;
   vec3d Translation;
   TActionQList *FActions;
 public:
-  TDFrame(const olxstr& collectionName, TGlRender *Render);
+  TDFrame(const olxstr& collectionName, TGlRenderer *Render);
   virtual ~TDFrame();
   void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
   bool Orient(TGlPrimitive *P);

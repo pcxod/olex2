@@ -19,7 +19,7 @@
 // TXGrowLine function bodies
 //----------------------------------------------------------------------------//
 TXGrowLine::TXGrowLine(const olxstr& collectionName, TSAtom *A, TCAtom* CA,
-                         const smatd& transform, TGlRender *Render) :
+                         const smatd& transform, TGlRenderer *Render) :
   TXBond(collectionName, *(TSBond*)NULL, Render)
 {
   AGDrawObject::Groupable(false);
@@ -54,17 +54,16 @@ TXGrowLine::~TXGrowLine()  {
   ;
 }
 //..............................................................................
-bool TXGrowLine::Orient(TGlPrimitive *GlP)
-{
+bool TXGrowLine::Orient(TGlPrimitive *GlP)  {
   static olxstr Length;
-  if( GlP->Type() == sgloText )  {
+  if( GlP->GetType() == sgloText )  {
     Length = olxstr::FormatFloat(3, Params()[3]);
     vec3d V;
     V = (FEdge+FBase)/2;
     V += FParent->GetBasis().GetCenter();
     V = FParent->GetBasis().GetMatrix()*V;
     glRasterPos3d(V[0]+0.15, V[1]+0.15, V[2]+5);
-    GlP->String(&Length);
+    GlP->SetString(&Length);
     GlP->Draw();
     return true;
   }

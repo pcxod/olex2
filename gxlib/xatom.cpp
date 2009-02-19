@@ -47,7 +47,7 @@ TGraphicsStyle* TXAtom::FAtomParams=NULL;
 TXAtomStylesClear *TXAtom::FXAtomStylesClear=NULL;
 //..............................................................................
 
-TXAtom::TXAtom(const olxstr& collectionName, TSAtom& A, TGlRender *Render) :
+TXAtom::TXAtom(const olxstr& collectionName, TSAtom& A, TGlRenderer *Render) :
   //AGDrawObject(collectionName)
   TGlMouseListener(collectionName, Render)
 {
@@ -263,12 +263,11 @@ void TXAtom::Create(const olxstr& cName, const ACreationParams* cpar)  {
     const int off = 1 << i;
     if( PMask & off )  {
       TGlPrimitive* SGlP = FStaticObjects.Object(i);
-      TGlPrimitive* GlP = GPC->NewPrimitive(FStaticObjects.String(i));
-      GlP->Type(sgloCommandList);
-      GlP->SetTag( FStaticObjects.String(i) == "Sphere" ? 1 : 0);
+      TGlPrimitive* GlP = GPC->NewPrimitive(FStaticObjects.String(i), sgloCommandList);
+      GlP->SetOwnerId( FStaticObjects.String(i) == "Sphere" ? 1 : 0);
       /* copy the default drawing style tag*/
-      GlP->Params().Resize(GlP->Params().Count()+1);
-      GlP->Params().Last() = SGlP->Params().Last();
+      GlP->Params.Resize(GlP->Params.Count()+1);
+      GlP->Params.Last() = SGlP->Params.Last();
 
       GlP->StartList();
       GlP->CallList(SGlP);
@@ -281,8 +280,8 @@ void TXAtom::Create(const olxstr& cName, const ACreationParams* cpar)  {
       else  {
         const TGlMaterial* GlM = GS->Material(FStaticObjects.String(i));
         if( GlM->Mark() )  {
-          if( SGlP->Params().Last() == ddsDefSphere ) GetDefSphereMaterial(*FAtom, RGlM);
-          if( SGlP->Params().Last() == ddsDefRim )    GetDefRimMaterial(*FAtom, RGlM);
+          if( SGlP->Params.Last() == ddsDefSphere ) GetDefSphereMaterial(*FAtom, RGlM);
+          if( SGlP->Params.Last() == ddsDefRim )    GetDefRimMaterial(*FAtom, RGlM);
           GS->PrimitiveMaterial(FStaticObjects.String(i), RGlM);
           GlP->SetProperties(&RGlM);
         }
@@ -387,7 +386,7 @@ bool TXAtom::Orient(TGlPrimitive *GlP) {
           (float)(FAtom->GetEllipsoid()->GetSY()*scale),
           (float)(FAtom->GetEllipsoid()->GetSZ()*scale)
           );
-        if( FDrawStyle == adsOrtep && GlP->GetTag() == 1 )  {
+        if( FDrawStyle == adsOrtep && GlP->GetOwnerId() == 1 )  {
           short mask = 0;
           const mat3d mat = FAtom->GetEllipsoid()->GetMatrix()*FParent->GetBasis().GetMatrix();
           for( int i=0; i < 3; i++ )  {
@@ -478,7 +477,7 @@ TGraphicsStyle* TXAtom::Style()  {
 //..............................................................................
 void TXAtom::ApplyStyle(TGraphicsStyle *Style)  {
   for( int i=0; i < Style->PrimitiveStyleCount(); i++ )  {
-    TGlPrimitive* GP = Primitives()->PrimitiveByName( Style->PrimitiveStyle(i)->PrimitiveName() );
+    TGlPrimitive* GP = Primitives()->FindPrimitiveByName( Style->PrimitiveStyle(i)->PrimitiveName() );
     if( GP != NULL )
       GP->SetProperties(Style->PrimitiveStyle(i)->GetProperties());
   } 
@@ -540,19 +539,19 @@ void TXAtom::UpdatePrimitiveParams(TGlPrimitive *GlP)  {
   TGraphicsStyle *GS;
   GS = FParent->Styles()->NewStyle(Legend, true);
   if( FStaticObjects.String(ind) == "Sphere" )
-    GS->SetParam("SphereQ", GlP->Params()[1], true);
+    GS->SetParam("SphereQ", GlP->Params[1], true);
   else if( FStaticObjects.String(ind) == "Small sphere" )
-    GS->SetParam("SphereQ", GlP->Params()[1], true);
+    GS->SetParam("SphereQ", GlP->Params[1], true);
   else if( FStaticObjects.String(ind) == "Rims" )  {
-    GS->SetParam("RimR", GlP->Params()[0], true);
-    GS->SetParam("RimW", GlP->Params()[1], true);
-    GS->SetParam("RimQ", GlP->Params()[2], true);
+    GS->SetParam("RimR", GlP->Params[0], true);
+    GS->SetParam("RimW", GlP->Params[1], true);
+    GS->SetParam("RimQ", GlP->Params[2], true);
   }
   else if( FStaticObjects.String(ind) == "Disks" )  {
-    GS->SetParam("DiskIR", GlP->Params()[0], true);
-    GS->SetParam("DiskOR", GlP->Params()[1], true);
-    GS->SetParam("DiskQ", GlP->Params()[2], true);
-    GS->SetParam("DiskS", GlP->Params()[3], true);
+    GS->SetParam("DiskIR", GlP->Params[0], true);
+    GS->SetParam("DiskOR", GlP->Params[1], true);
+    GS->SetParam("DiskQ", GlP->Params[2], true);
+    GS->SetParam("DiskS", GlP->Params[3], true);
   }
 }
 //..............................................................................
@@ -577,35 +576,34 @@ void TXAtom::CreateStaticPrimitives()  {
   // create sphere
   GlP = FStaticObjects.FindObject("Sphere");
   if( GlP == NULL )  {
-    GlP = FParent->NewPrimitive();  GlP->Type(sgloSphere);
+    GlP = FParent->NewPrimitive(sgloSphere);
     FStaticObjects.Add("Sphere", GlP);
   }
-  GlP->Params()[0] = 1;  GlP->Params()[1] = SphereQ; GlP->Params()[2] = SphereQ;
+  GlP->Params[0] = 1;  GlP->Params[1] = SphereQ; GlP->Params[2] = SphereQ;
   GlP->Compile();
-  GlP->Params().Resize(GlP->Params().Count()+1);
-  GlP->Params().Last() = ddsDefSphere;
+  GlP->Params.Resize(GlP->Params.Count()+1);
+  GlP->Params.Last() = ddsDefSphere;
 //..............................
   // create a small sphere
   GlP = FStaticObjects.FindObject("Small sphere");
   if( GlP == NULL )  {
-    GlP = FParent->NewPrimitive();  GlP->Type(sgloSphere);
+    GlP = FParent->NewPrimitive(sgloSphere);
     FStaticObjects.Add("Small sphere", GlP);
   }
-  GlP->Params()[0] = 0.5;  GlP->Params()[1] = SphereQ; GlP->Params()[2] = SphereQ;
+  GlP->Params[0] = 0.5;  GlP->Params[1] = SphereQ; GlP->Params[2] = SphereQ;
   GlP->Compile();
-  GlP->Params().Resize(GlP->Params().Count()+1);
-  GlP->Params().Last() = ddsDefSphere;
+  GlP->Params.Resize(GlP->Params.Count()+1);
+  GlP->Params.Last() = ddsDefSphere;
 //..............................
   // create simple rims
-  GlPRC1 = FParent->NewPrimitive();
-  GlPRC1->Type(sgloCylinder);
-  GlPRC1->Params()[0] = RimR;  GlPRC1->Params()[1] = RimR;  GlPRC1->Params()[2] = RimW;
-    GlPRC1->Params()[3] = RimQ; GlPRC1->Params()[4] = 1;
+  GlPRC1 = FParent->NewPrimitive(sgloCylinder);
+  GlPRC1->Params[0] = RimR;  GlPRC1->Params[1] = RimR;  GlPRC1->Params[2] = RimW;
+    GlPRC1->Params[3] = RimQ; GlPRC1->Params[4] = 1;
   GlPRC1->Compile();
 
   GlPRim = FStaticObjects.FindObject("Rims");
   if( GlPRim == NULL )  {  
-    GlPRim = FParent->NewPrimitive();  GlPRim->Type(sgloCommandList); 
+    GlPRim = FParent->NewPrimitive(sgloCommandList);
     FStaticObjects.Add("Rims", GlPRim);
   }
   GlPRim->StartList();
@@ -615,11 +613,11 @@ void TXAtom::CreateStaticPrimitives()  {
   FParent->GlRotate(90, 0, 1, 0);
   GlPRim->CallList(GlPRC1);
   GlPRim->EndList();
-  GlPRim->Params().Resize(3+1);  // radius, height, quality
-  GlPRim->Params()[0] = RimR;
-  GlPRim->Params()[1] = RimW;
-  GlPRim->Params()[2] = RimQ;
-  GlPRim->Params()[3] = ddsDefRim;
+  GlPRim->Params.Resize(3+1);  // radius, height, quality
+  GlPRim->Params[0] = RimR;
+  GlPRim->Params[1] = RimW;
+  GlPRim->Params[2] = RimQ;
+  GlPRim->Params[3] = ddsDefRim;
   PParams = new TGlPrimitiveParams;
   PParams->Params.Add("Radius");
   PParams->Params.Add("Width");
@@ -627,22 +625,20 @@ void TXAtom::CreateStaticPrimitives()  {
   FPrimitiveParams.Add(PParams);
 //..............................
   // create disks
-  GlPRD1 = FParent->NewPrimitive();
-  GlPRD1->Type(sgloDisk);
-  GlPRD1->Params()[0] = DiskIR;  GlPRD1->Params()[1] = DiskOR;
-  GlPRD1->Params()[2] = DiskQ;   GlPRD1->Params()[3] = 1;
+  GlPRD1 = FParent->NewPrimitive(sgloDisk);
+  GlPRD1->Params[0] = DiskIR;  GlPRD1->Params[1] = DiskOR;
+  GlPRD1->Params[2] = DiskQ;   GlPRD1->Params[3] = 1;
   GlPRD1->Compile();
 
-  GlPRD2 = FParent->NewPrimitive();
-  GlPRD2->Type(sgloDisk);
-  GlPRD2->QuadricOrientation(GLU_INSIDE);
-  GlPRD2->Params()[0] = DiskIR;  GlPRD1->Params()[1] = DiskOR;
-  GlPRD2->Params()[2] = DiskQ;   GlPRD1->Params()[3] = 1;
+  GlPRD2 = FParent->NewPrimitive(sgloDisk);
+  GlPRD2->SetQuadricOrientation(GLU_INSIDE);
+  GlPRD2->Params[0] = DiskIR;  GlPRD1->Params[1] = DiskOR;
+  GlPRD2->Params[2] = DiskQ;   GlPRD1->Params[3] = 1;
   GlPRD2->Compile();
 
   GlPRim = FStaticObjects.FindObject("Disks");
   if( GlPRim == NULL )  {
-    GlPRim = FParent->NewPrimitive();  GlPRim->Type(sgloCommandList); 
+    GlPRim = FParent->NewPrimitive(sgloCommandList);
     FStaticObjects.Add("Disks", GlPRim);
   }
   GlPRim->StartList();
@@ -657,12 +653,12 @@ void TXAtom::CreateStaticPrimitives()  {
   GlPRim->CallList(GlPRD2);
   FParent->GlTranslate(0, 0, (float)DiskS);    GlPRim->CallList(GlPRD1);
   GlPRim->EndList();
-  GlPRim->Params().Resize(4+1);  // inner radius, outer radius, Quality, offset
-  GlPRim->Params()[0] = DiskIR;
-  GlPRim->Params()[1] = DiskOR;
-  GlPRim->Params()[2] = DiskQ;
-  GlPRim->Params()[3] = DiskS;
-  GlPRim->Params()[4] = ddsDefRim;
+  GlPRim->Params.Resize(4+1);  // inner radius, outer radius, Quality, offset
+  GlPRim->Params[0] = DiskIR;
+  GlPRim->Params[1] = DiskOR;
+  GlPRim->Params[2] = DiskQ;
+  GlPRim->Params[3] = DiskS;
+  GlPRim->Params[4] = ddsDefRim;
   PParams = new TGlPrimitiveParams;
   PParams->Params.Add("Inner radius");
   PParams->Params.Add("Outer radius");
@@ -673,19 +669,19 @@ void TXAtom::CreateStaticPrimitives()  {
   // create cross
   GlP = FStaticObjects.FindObject("Cross");
   if( GlP == NULL )  {
-    GlP = FParent->NewPrimitive();  GlP->Type(sgloLines);
+    GlP = FParent->NewPrimitive(sgloLines);
     FStaticObjects.Add("Cross", GlP);
   }
-  GlP->Data().Resize(3, 6);
-  GlP->Data()[0][0] = -1; 
-  GlP->Data()[0][1] =  1; 
-  GlP->Data()[1][2] = -1; 
-  GlP->Data()[1][3] =  1; 
-  GlP->Data()[2][4] = -1; 
-  GlP->Data()[2][5] =  1; 
-  GlP->Params()[0] = 1.0;
-  GlP->Params().Resize(GlP->Params().Count()+1);
-  GlP->Params().Last() = ddsDefSphere;
+  GlP->Data.Resize(3, 6);
+  GlP->Data[0][0] = -1; 
+  GlP->Data[0][1] =  1; 
+  GlP->Data[1][2] = -1; 
+  GlP->Data[1][3] =  1; 
+  GlP->Data[2][4] = -1; 
+  GlP->Data[2][5] =  1; 
+  GlP->Params[0] = 1.0;
+  GlP->Params.Resize(GlP->Params.Count()+1);
+  GlP->Params.Last() = ddsDefSphere;
 //..............................
   GlSphereEx gls;
   TTypeList<vec3f> vecs;
@@ -734,7 +730,7 @@ void TXAtom::UpdatePrimitives(int32_t Mask, const ACreationParams* cpar)  {
 //..............................................................................
 void TXAtom::ValidateAtomParams() {
   if( FAtomParams == NULL )  {
-    FAtomParams = TGlRender::GetStyles()->NewStyle("AtomParams", true);
+    FAtomParams = TGlRenderer::GetStyles()->NewStyle("AtomParams", true);
     FAtomParams->SetPersistent(true);
   }
 }

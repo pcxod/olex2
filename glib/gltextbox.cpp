@@ -19,7 +19,7 @@ UseGlNamespace()
 //..............................................................................
 //..............................................................................
 
-TGlTextBox::TGlTextBox(const olxstr& collectionName, TGlRender *Render):
+TGlTextBox::TGlTextBox(const olxstr& collectionName, TGlRenderer *Render):
   TGlMouseListener(collectionName, Render)
 {
   Move2D(true);
@@ -63,19 +63,17 @@ void TGlTextBox::Create(const olxstr& cName, const ACreationParams* cpar)  {
     GlM->DiffuseF = 0x800f0f0f;
   }
 
-  TGlPrimitive* GlP = GPC->NewPrimitive("Plane");  // a sphere at the basis of the object {0,0,0}
+  TGlPrimitive* GlP = GPC->NewPrimitive("Plane", sgloQuads);  // a sphere at the basis of the object {0,0,0}
   GlP->SetProperties(GlM);
-  GlP->Type(sgloQuads);
-  GlP->Data().Resize(3, 4);
+  GlP->Data.Resize(3, 4);
 
   GlM = const_cast<TGlMaterial*>(GS->Material("Text"));
   if( GlM->Mark() )
     *GlM = Font()->GetMaterial();
 
-  GlP = GPC->NewPrimitive("Text");
+  GlP = GPC->NewPrimitive("Text", sgloText);
   GlP->SetProperties(GlM);
-  GlP->Type(sgloText);
-  GlP->Params()[0] = -1;  //bitmap; TTF by default
+  GlP->Params[0] = -1;  //bitmap; TTF by default
 }
 //..............................................................................
 bool TGlTextBox::Orient(TGlPrimitive *P)  {
@@ -89,8 +87,8 @@ bool TGlTextBox::Orient(TGlPrimitive *P)  {
   TGlFont *Fnt = Font();
   if( Fnt == NULL )  return true;
 
-  if( P->Type() == sgloText )  {
-    P->Font(Fnt);
+  if( P->GetType() == sgloText )  {
+    P->SetFont(Fnt);
     int th = Fnt->TextHeight(EmptyString);
     double Scale = FParent->GetScale();
     double GlLeft = ((double)Left - (double)FParent->GetWidth()/2 + Basis.GetCenter()[0]) + 0.1;
@@ -114,14 +112,14 @@ bool TGlTextBox::Orient(TGlPrimitive *P)  {
     double hh = Parent()->GetHeight()*Scale/2;
     Scale = Scale*FParent->GetExtraZoom()*FParent->GetViewZoom();
     double xx = Basis.GetCenter()[0], xy = -Basis.GetCenter()[1];
-    P->Data()[0][0] = (Left+Width+xx)*Scale-hw;  P->Data()[1][0] = hh-(Top+Height+xy)*Scale;
-    P->Data()[0][1] = (Left+Width+xx)*Scale-hw;  P->Data()[1][1] = hh-(Top+xy)*Scale;
-    P->Data()[0][2] = (Left+xx)*Scale-hw; P->Data()[1][2] = hh-(Top+xy)*Scale;
-    P->Data()[0][3] = (Left+xx)*Scale-hw; P->Data()[1][3] = hh-(Top+Height+xy)*Scale;
-    P->Data()[2][0] = Z-1;
-    P->Data()[2][1] = Z-1;
-    P->Data()[2][2] = Z-1;
-    P->Data()[2][3] = Z-1;
+    P->Data[0][0] = (Left+Width+xx)*Scale-hw;  P->Data[1][0] = hh-(Top+Height+xy)*Scale;
+    P->Data[0][1] = (Left+Width+xx)*Scale-hw;  P->Data[1][1] = hh-(Top+xy)*Scale;
+    P->Data[0][2] = (Left+xx)*Scale-hw;        P->Data[1][2] = hh-(Top+xy)*Scale;
+    P->Data[0][3] = (Left+xx)*Scale-hw;        P->Data[1][3] = hh-(Top+Height+xy)*Scale;
+    P->Data[2][0] = Z-1;
+    P->Data[2][1] = Z-1;
+    P->Data[2][2] = Z-1;
+    P->Data[2][3] = Z-1;
     return false;
   }
 }

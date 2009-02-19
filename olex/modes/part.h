@@ -14,7 +14,7 @@ protected:
       Part = XA->Atom().CAtom().GetPart();
     }
     void undo(TUndoData* data)  {
-      TGlXApp::GetGXApp()->MarkLabel(Atom, false);
+      TGlXApp::GetGXApp()->MarkLabel(*Atom, false);
       Atom->Atom().CAtom().SetPart( Part );
     }
   };
@@ -32,9 +32,9 @@ public:
   }
   virtual bool OnObject(AGDrawObject &obj)  {
     if( EsdlInstanceOf( obj, TXAtom) )  {
-      TXAtom *XA = &(TXAtom&)obj;
-      TGlXApp::GetMainForm()->GetUndoStack()->Push( new TPartModeUndo(XA) );
-      XA->Atom().CAtom().SetPart(Part);
+      TXAtom& XA = (TXAtom&)obj;
+      TGlXApp::GetMainForm()->GetUndoStack()->Push( new TPartModeUndo(&XA) );
+      XA.Atom().CAtom().SetPart(Part);
       TGlXApp::GetGXApp()->MarkLabel(XA, true);
       return true;
     }

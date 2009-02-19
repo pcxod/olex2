@@ -112,7 +112,7 @@ class TGXApp : public TXApp, AEventsDispatcher, public ASelectionOwner  {
   void CreateXGrowPoints();
 
 protected:
-  TGlRender *FGlRender;
+  TGlRenderer *FGlRender;
   TXFader *Fader;
   TTypeList<TXFile> OverlayedXFiles;
 
@@ -166,7 +166,7 @@ public:
 // GlRender interface
   void ClearColor(int Color) {  FGlRender->LightModel.ClearColor() = Color; }
   inline int ClearColor()           {  return FGlRender->LightModel.ClearColor().GetRGB(); }
-  inline TGlRender& GetRender()     {  return *FGlRender; }
+  inline TGlRenderer& GetRender()     {  return *FGlRender; }
   inline TXFader& GetFader()      {  return *Fader; }
   void InitFadeMode();
 
@@ -246,9 +246,8 @@ public:
   short LabelsMode() const;
   void LabelsFont(short FontIndex);
   TGlMaterial & LabelsMarkMaterial();
-  void MarkLabel(TXAtom *A, bool mark);
+  void MarkLabel(const TXAtom& A, bool mark);
   void ClearLabelMarks();
-  void InitLabels(TXAtomPList* Atoms=NULL);
   int GetNextAvailableLabel(const olxstr& AtomType);
 
   // moving atom from/to collection

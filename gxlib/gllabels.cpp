@@ -14,6 +14,7 @@
 #include "gpcollection.h"
 
 #include "xatom.h"
+#include "gxapp.h"
 #include "asymmunit.h"
 #include "refmodel.h"
 
@@ -23,11 +24,11 @@
 //----------------------------------------------------------------------------//
 // TXGlLabels function bodies
 //----------------------------------------------------------------------------//
-TXGlLabels::TXGlLabels(const olxstr& collectionName, TGlRender *Render) :
+TXGlLabels::TXGlLabels(const olxstr& collectionName, TGlRenderer *Render) :
   AGDrawObject(collectionName)
 {
   AGDrawObject::Parent(Render);
-  FFontIndex = -1;
+  FontIndex = -1;
   AGDrawObject::Groupable(false);
 
   FMarkMaterial = *Render->Selection()->GlM();
@@ -48,41 +49,38 @@ void TXGlLabels::Create(const olxstr& cName, const ACreationParams* cpar)  {
   TGlMaterial* GlM = const_cast<TGlMaterial*>(GPC->Style()->Material("Text"));
   if( GlM->Mark() )
     *GlM = Font()->GetMaterial();
-  TGlPrimitive* GlP = GPC->NewPrimitive("Text");
+  TGlPrimitive* GlP = GPC->NewPrimitive("Text", sgloText);
   GlP->SetProperties(GlM);
-  GlP->Type(sgloText);
-  GlP->Params()[0] = -1;  //bitmap; TTF by default
+  GlP->Params[0] = -1;  //bitmap; TTF by default
 }
 //..............................................................................
-void TXGlLabels::Clear()  {
-  FAtoms.Clear();
-  FMarks.Clear();
-}
+void TXGlLabels::Clear()  {  Marks.Clear();  }
 //..............................................................................
 bool TXGlLabels::Orient(TGlPrimitive *P)  {
   TGlFont *Fnt = Font();
-  const int ac = AtomCount();
+  TGXApp& app = TGXApp::GetInstance();
+  const int ac = app.AtomCount();
   if( Fnt == NULL || ac == 0 )  return true;
 
   vec3d V;
   bool currentGlM, matInited = false;
-  P->Font(Fnt);
+  P->SetFont(Fnt);
   TGlMaterial *OGlM = (TGlMaterial*)P->GetProperties();
   if( FParent->IsATI() )  {
     glRasterPos3d(0, 0, 0);
     glCallList(Fnt->FontBase() + ' ');
   }
-  RefinementModel* rm = Atom(0)->Atom().CAtom().GetParent()->GetRefMod();
+  const RefinementModel& rm = app.XFile().GetRM();
   for( int i=0; i < ac; i++ )  {
-    TXAtom* XA = Atom(i);
-    if( XA->Deleted() || (!XA->Visible()))  continue;
-    if( !(Mode & lmHydr) && (XA->Atom().GetAtomInfo() == iHydrogenIndex ) )  continue;
-    if( !(Mode & lmQPeak) && (XA->Atom().GetAtomInfo() == iQPeakIndex ) )  continue;
-    TCAtom& ca = XA->Atom().CAtom();
+    const TXAtom& XA = app.GetAtom(i);
+    if( XA.Deleted() || (!XA.Visible()))  continue;
+    if( !(Mode & lmHydr) && (XA.Atom().GetAtomInfo() == iHydrogenIndex ) )  continue;
+    if( !(Mode & lmQPeak) && (XA.Atom().GetAtomInfo() == iQPeakIndex ) )  continue;
+    const TCAtom& ca = XA.Atom().CAtom();
     olxstr Tmp(EmptyString, 48);
     if( Mode & lmLabels )  {
-      Tmp << XA->Atom().GetLabel();
-      if( XA->Atom().CAtom().GetResiId() != -1 )  {
+      Tmp << XA.Atom().GetLabel();
+      if( XA.Atom().CAtom().GetResiId() != -1 )  {
         int resi = ca.GetParent()->GetResidue(ca.GetResiId()).GetNumber();
         Tmp << '_' << resi;
       }
@@ -111,17 +109,17 @@ bool TXGlLabels::Orient(TGlPrimitive *P)  {
         }
       }
     }
-    if( (Mode & lmQPeakI) && (XA->Atom().GetAtomInfo() == iQPeakIndex ) )  {
+    if( (Mode & lmQPeakI) && (XA.Atom().GetAtomInfo() == iQPeakIndex ) )  {
       if( !Tmp.IsEmpty() )  Tmp << ", ";
       Tmp << olxstr::FormatFloat(1, ca.GetQPeak());
     }
     if( Mode & lmAOcc )  {
       if( Tmp.Length() )  Tmp << ", ";
-      Tmp << olxstr::FormatFloat(2, rm->Vars.GetAtomParam(ca, var_name_Sof) );
+      Tmp << olxstr::FormatFloat(2, rm.Vars.GetAtomParam(ca, var_name_Sof) );
     }
     if( Mode & lmUiso && ca.GetUisoOwner() == NULL )  {
       if( !Tmp.IsEmpty() )  Tmp << ", ";
-        Tmp << olxstr::FormatFloat(2, rm->Vars.GetAtomParam(ca, var_name_Uiso));
+        Tmp << olxstr::FormatFloat(2, rm.Vars.GetAtomParam(ca, var_name_Uiso));
     }
     if( Mode & lmUisR )  {
       if( ca.GetUisoOwner() != NULL )  {
@@ -169,14 +167,19 @@ bool TXGlLabels::Orient(TGlPrimitive *P)  {
       if( ca.GetOccu() != 1.0 )
         Tmp << olxstr::FormatFloat(3, ca.GetOccu() );
     }
+    if( Mode & lmConRes )  {
+      if( !Tmp.IsEmpty() )  Tmp << ", ";
+      if( ca.GetOccu() != 1.0 )
+        Tmp << olxstr::FormatFloat(3, ca.GetOccu() );
+    }
 #ifdef _DEBUG
     if( ca.GetSameId() != -1 )
       Tmp << ':' << ca.GetSameId();
 #endif
     if( Tmp.IsEmpty() )  continue;
-    P->String(&Tmp);
+    P->SetString(&Tmp);
     if( !matInited )  {
-      if( FMarks[i] == true ) {
+      if( Marks[i] ) {
         FMarkMaterial.Init();
         currentGlM = false;
         if( FParent->IsATI() )  {
@@ -195,7 +198,7 @@ bool TXGlLabels::Orient(TGlPrimitive *P)  {
       matInited = true;
     }
     else  {
-      if( FMarks[i] )  {
+      if( Marks[i] )  {
         if( currentGlM )  {
           FMarkMaterial.Init();
           currentGlM = false;
@@ -216,7 +219,7 @@ bool TXGlLabels::Orient(TGlPrimitive *P)  {
         }
       }
     }
-    V = XA->Atom().crd();
+    V = XA.Atom().crd();
     V += FParent->GetBasis().GetCenter();
     V *= FParent->GetBasis().GetMatrix();
     glRasterPos3d(V[0]+0.15, V[1]+0.15, V[2]+5);
@@ -226,9 +229,9 @@ bool TXGlLabels::Orient(TGlPrimitive *P)  {
   return true;
 }
 //..............................................................................
-void TXGlLabels::AddAtom(TXAtom *A)  {
-  FAtoms.Add(A); 
-  FMarks.Add(false);  
+void TXGlLabels::Init()  {
+  TGXApp& app = TGXApp::GetInstance();
+  Marks.SetSize( app.AtomCount() );
 }
 //..............................................................................
 void TXGlLabels::Selected(bool On) {  
@@ -236,18 +239,16 @@ void TXGlLabels::Selected(bool On) {
 }
 //..............................................................................
 void TXGlLabels::ClearLabelMarks()  {
-  for( int i=0; i < FMarks.Count(); i++ )
-    FMarks[i] = false;;
+  Marks.SetAll(false);
 }
 //..............................................................................
-void TXGlLabels::MarkLabel(TXAtom *A, bool v)  {
-  int i = FAtoms.IndexOf(A);
-  if( i != -1 && 1 < FMarks.Count() )
-    FMarks[i] = v;
+void TXGlLabels::MarkLabel(const TXAtom& A, bool v)  {
+  if( A.GetXAppId() < Marks.Count() )
+    Marks.Set(A.GetXAppId(), v);
 }
 //..............................................................................
 TGlFont* TXGlLabels::Font() const {  
-  return FParent->Scene()->Font(FFontIndex); 
+  return FParent->Scene()->Font(FontIndex); 
 }
 //..............................................................................
 

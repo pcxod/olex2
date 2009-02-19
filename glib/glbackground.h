@@ -15,7 +15,7 @@ class TGlBackground: public AGDrawObject  {
   TGlPrimitive *FPrimitive;
   TGlTexture* Texture;
 public:
-  TGlBackground(const olxstr& collectionName, TGlRender *Render, bool Ceiling);
+  TGlBackground(const olxstr& collectionName, TGlRenderer *Render, bool Ceiling);
   virtual ~TGlBackground(){  return; };
   void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
   bool Orient(TGlPrimitive *P);

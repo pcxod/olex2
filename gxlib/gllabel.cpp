@@ -15,7 +15,7 @@
 #include "glrender.h"
 #include "glscene.h"
 
-TXGlLabel::TXGlLabel(const olxstr& collectionName, TGlRender *Render) :
+TXGlLabel::TXGlLabel(const olxstr& collectionName, TGlRenderer *Render) :
     TGlMouseListener(collectionName, Render)  {
   Move2D(false);
   Moveable(true);
@@ -49,20 +49,18 @@ void TXGlLabel::Create(const olxstr& cName, const ACreationParams* cpar)  {
     GlM->ShininessF = 128;
     GlM->Mark(false);
   }
-  TGlPrimitive* GlP = GPC->NewPrimitive("Plane");  // a sphere at the basis of the object {0,0,0}
+  TGlPrimitive* GlP = GPC->NewPrimitive("Plane", sgloQuads);  // a sphere at the basis of the object {0,0,0}
   GlP->SetProperties(GlM);
-  GlP->Type(sgloQuads);
-  GlP->Data().Resize(3, 4);
+  GlP->Data.Resize(3, 4);
 
   GlM = const_cast<TGlMaterial*>(GS->Material("Text"));
   if( GlM->Mark() )
     *GlM = Font()->GetMaterial();
 
-  GlP = GPC->NewPrimitive("Text");
+  GlP = GPC->NewPrimitive("Text", sgloText);
   GlP->SetProperties(GlM);
-  GlP->Type(sgloText);
-  GlP->Params()[0] = -1;  //bitmap; TTF by default
-  GlP->Font(Font());
+  GlP->Params[0] = -1;  //bitmap; TTF by default
+  GlP->SetFont(Font());
 }
 //..............................................................................
 void TXGlLabel::SetLabel(const olxstr& L)   {
@@ -76,7 +74,7 @@ void TXGlLabel::SetLabel(const olxstr& L)   {
 bool TXGlLabel::Orient(TGlPrimitive *P)  {
   vec3d T( Basis.GetCenter() );
   const double Scale = FParent->GetScale();
-  if( P->Type() == sgloText )  {
+  if( P->GetType() == sgloText )  {
     T += FParent->GetBasis().GetCenter();
     T *= FParent->GetBasis().GetMatrix();
     T[2] += 5;
@@ -94,14 +92,14 @@ bool TXGlLabel::Orient(TGlPrimitive *P)  {
     //T[0] += 0.15;  T[1] += 0.15;
     T[2] += 4.8;
     Parent()->GlTranslate(T);
-    P->Data()[0][0] = -xinc;  P->Data()[1][0] = yinc;
-    P->Data()[0][1] = xinc;   P->Data()[1][1] = yinc;
-    P->Data()[0][2] = xinc;   P->Data()[1][2] = -yinc;
-    P->Data()[0][3] = -xinc;  P->Data()[1][3] = -yinc;
-    P->Data()[2][0] = -0.1;
-    P->Data()[2][1] = -0.1;
-    P->Data()[2][2] = -0.1;
-    P->Data()[2][3] = -0.1;
+    P->Data[0][0] = -xinc;  P->Data[1][0] = yinc;
+    P->Data[0][1] = xinc;   P->Data[1][1] = yinc;
+    P->Data[0][2] = xinc;   P->Data[1][2] = -yinc;
+    P->Data[0][3] = -xinc;  P->Data[1][3] = -yinc;
+    P->Data[2][0] = -0.1;
+    P->Data[2][1] = -0.1;
+    P->Data[2][2] = -0.1;
+    P->Data[2][3] = -0.1;
   }
   return false;
 }

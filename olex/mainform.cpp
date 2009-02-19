@@ -2011,7 +2011,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
   else if( MsgId == ID_TEXTPOST )  {
     if( Data != NULL )  {
       FGlConsole->SetSkipPosting(true);
-      TBasicApp::GetLog() << Data->ToString() << '\n';
+      TBasicApp::GetLog() << (olxstr(Data->ToString()) << '\n');
       FGlConsole->SetSkipPosting(false);
       if( ActiveLogFile != NULL )
         ActiveLogFile->Writenl( Data->ToString() );

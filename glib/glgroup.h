@@ -15,7 +15,7 @@ class TGlGroup: public AGDrawObject {
 protected:
   void InitMaterial() const;
 public:
-  TGlGroup(const olxstr& collectionName, TGlRender *Parent);
+  TGlGroup(const olxstr& collectionName, TGlRenderer *Parent);
   virtual void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
   virtual ~TGlGroup();
   void Clear();

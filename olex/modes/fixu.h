@@ -24,7 +24,7 @@ protected:
           delete Vars[i];
     }
     void undo(TUndoData* data)  {
-      TGlXApp::GetGXApp()->MarkLabel(Atom, false);
+      TGlXApp::GetGXApp()->MarkLabel(*Atom, false);
       RefinementModel& rm = *Atom->Atom().CAtom().GetParent()->GetRefMod();
       rm.Vars.RestoreRef(Atom->Atom().CAtom(), var_name_Uiso, Uiso);
       Uiso = NULL;
@@ -49,14 +49,14 @@ public:
   ~TFixUMode() {  }
   virtual bool OnObject(AGDrawObject &obj)  {
     if( EsdlInstanceOf( obj, TXAtom) )  {
-      TXAtom *XA = &(TXAtom&)obj;
-      TGlXApp::GetMainForm()->GetUndoStack()->Push( new TFixUModeUndo(XA) );
-      RefinementModel& rm = *XA->Atom().CAtom().GetParent()->GetRefMod();
-      if( XA->Atom().CAtom().GetEllipsoid() == NULL )
-        TXApp::GetInstance().SetAtomUiso(XA->Atom(), Val);
+      TXAtom& XA = (TXAtom&)obj;
+      TGlXApp::GetMainForm()->GetUndoStack()->Push( new TFixUModeUndo(&XA) );
+      RefinementModel& rm = *XA.Atom().CAtom().GetParent()->GetRefMod();
+      if( XA.Atom().CAtom().GetEllipsoid() == NULL )
+        TXApp::GetInstance().SetAtomUiso(XA.Atom(), Val);
       else  {
         for( int i=0; i < 6; i++ )
-          rm.Vars.FixAtomParam(XA->Atom().CAtom(), var_name_U11+i);
+          rm.Vars.FixAtomParam(XA.Atom().CAtom(), var_name_U11+i);
       }
       TGlXApp::GetGXApp()->MarkLabel(XA, true);
       return true;

@@ -27,7 +27,7 @@ const short darPers     = 0x0001, // default atom radii
 
 class TXAtomStylesClear: public AActionHandler  {
 public:
-  TXAtomStylesClear(TGlRender *Render)  {  Render->OnStylesClear->Add(this);  }
+  TXAtomStylesClear(TGlRenderer *Render)  {  Render->OnStylesClear->Add(this);  }
   virtual ~TXAtomStylesClear()  {  ;  }
   bool Enter(const IEObject *Sender, const IEObject *Data=NULL);
   bool Exit(const IEObject *Sender, const IEObject *Data=NULL);
@@ -52,7 +52,7 @@ protected:
   static short FDefRad, FDefDS;
   static TGraphicsStyle *FAtomParams;
 public:
-  TXAtom(const olxstr& collectionName, TSAtom& A, TGlRender *Render);
+  TXAtom(const olxstr& collectionName, TSAtom& A, TGlRenderer *Render);
   virtual ~TXAtom();
   void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
   virtual ACreationParams* GetCreationParams() const;
@@ -126,7 +126,7 @@ public:
   void OnPrimitivesCleared();
   void Quality(const short Val);
 
-  static void Init(TGlRender* glr)  {
+  static void Init(TGlRenderer* glr)  {
     if( FXAtomStylesClear == NULL ) 
       FXAtomStylesClear = new TXAtomStylesClear(glr);
   }

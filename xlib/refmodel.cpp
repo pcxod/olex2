@@ -397,13 +397,14 @@ int RefinementModel::ProcessOmits(TRefList& refs)  {
   return processed;
 }
 //....................................................................................................
-void RefinementModel::Describe(TStrList& lst) {
+void RefinementModel::Describe(TStrList& lst, TPtrList<TCAtom>* a_res, TPtrList<TSimpleRestraint>* b_res) {
   Validate();
   int sec_num = 0;
   if( (rDFIX.Count()|rDANG.Count()|rSADI.Count()) != 0 )  {
     lst.Add(olxstr(++sec_num)) << ". Restrained distances";
     for( int i=0; i < rDFIX.Count(); i++ )  {
       TSimpleRestraint& sr = rDFIX[i];
+      if( b_res != NULL )  b_res->Add(&sr);
       olxstr& str = lst.Add(EmptyString);
       for( int j=0; j < sr.AtomCount(); j+=2 )  {
         str << sr.GetAtom(j).GetFullLabel(*this) << '-' << sr.GetAtom(j+1).GetFullLabel(*this);
@@ -414,6 +415,7 @@ void RefinementModel::Describe(TStrList& lst) {
     }
     for( int i=0; i < rDANG.Count(); i++ )  {
       TSimpleRestraint& sr = rDANG[i];
+      if( b_res != NULL )  b_res->Add(&sr);
       olxstr& str = lst.Add(EmptyString);
       for( int j=0; j < sr.AtomCount(); j+=2 )  {
         str << sr.GetAtom(j).GetFullLabel(*this) << '-' << sr.GetAtom(j+1).GetFullLabel(*this);
@@ -424,6 +426,7 @@ void RefinementModel::Describe(TStrList& lst) {
     }
     for( int i=0; i < rSADI.Count(); i++ )  {
       TSimpleRestraint& sr = rSADI[i];
+      if( b_res != NULL )  b_res->Add(&sr);
       olxstr& str = lst.Add(EmptyString);
       for( int j=0; j < sr.AtomCount(); j+=2 )  {
         str << sr.GetAtom(j).GetFullLabel(*this) << '-' << sr.GetAtom(j+1).GetFullLabel(*this);
@@ -439,6 +442,7 @@ void RefinementModel::Describe(TStrList& lst) {
       TSimpleRestraint& sr = rCHIV[i];
       olxstr& str = lst.Add(EmptyString);
       for( int j=0; j < sr.AtomCount(); j++ )  {
+        if( a_res != NULL && sr.GetAtom(j).GetMatrix() == NULL )  a_res->Add( sr.GetAtom(j).GetAtom() ); 
         str << sr.GetAtom(j).GetFullLabel(*this);
         if( (j+1) < sr.AtomCount() )
           str << ", ";
@@ -446,11 +450,26 @@ void RefinementModel::Describe(TStrList& lst) {
       str << ": fixed at " << sr.GetValue() << " with sigma of " << sr.GetEsd();
     }
   }
+  if( rFLAT.Count() != 0 )  {
+    lst.Add(olxstr(++sec_num)) << ". Restrained planarity";
+    for( int i=0; i < rFLAT.Count(); i++ )  {
+      TSimpleRestraint& sr = rFLAT[i];
+      olxstr& str = lst.Add(EmptyString);
+      for( int j=0; j < sr.AtomCount(); j++ )  {
+        if( a_res != NULL && sr.GetAtom(j).GetMatrix() == NULL )  a_res->Add( sr.GetAtom(j).GetAtom() ); 
+        str << sr.GetAtom(j).GetFullLabel(*this);
+        if( (j+1) < sr.AtomCount() )
+          str << ", ";
+      }
+      str << ": with sigma of " << sr.GetEsd();
+    }
+  }
   if( rDELU.Count() != 0 )  {
     lst.Add(olxstr(++sec_num)) << ". Rigid bond restraints";
     for( int i=0; i < rDELU.Count(); i++ )  {
       TSimpleRestraint& sr = rDELU[i];
       if( sr.GetEsd() == 0 || sr.GetEsd1() == 0 )  continue;
+      if( b_res != NULL )  b_res->Add(&sr);
       olxstr& str = lst.Add(EmptyString);
       if( sr.IsAllNonHAtoms() )  {
         str << "All non-hydrogen atoms";
@@ -476,6 +495,7 @@ void RefinementModel::Describe(TStrList& lst) {
       }
       else {
         for( int j=0; j < sr.AtomCount(); j++ )  {
+          if( a_res != NULL && sr.GetAtom(j).GetMatrix() == NULL )  a_res->Add( sr.GetAtom(j).GetAtom() ); 
           str << "U(" << sr.GetAtom(j).GetFullLabel(*this) << ')';
           if( (j+2) < sr.AtomCount() )
             str << " ~ ";
@@ -493,6 +513,7 @@ void RefinementModel::Describe(TStrList& lst) {
       else {
         for( int j=0; j < sr.AtomCount(); j++ )  {
           if( sr.GetAtom(j).GetAtom()->GetEllipsoid() == NULL )  continue;
+          if( a_res != NULL && sr.GetAtom(j).GetMatrix() == NULL )  a_res->Add( sr.GetAtom(j).GetAtom() ); 
           str << "Uanis(" << sr.GetAtom(j).GetFullLabel(*this) << ") ~ Uiso";
           if( (j+1) < sr.AtomCount() )
             str << ", ";
@@ -504,6 +525,7 @@ void RefinementModel::Describe(TStrList& lst) {
       TSimpleRestraint& sr = rEADP[i];
       olxstr& str = lst.Add(EmptyString);
       for( int j=0; j < sr.AtomCount(); j++ )  {
+        if( a_res != NULL && sr.GetAtom(j).GetMatrix() == NULL )  a_res->Add( sr.GetAtom(j).GetAtom() ); 
         if( sr.GetAtom(j).GetAtom()->GetEllipsoid() == NULL )
           str << "Uiso(";
         else 
@@ -520,6 +542,7 @@ void RefinementModel::Describe(TStrList& lst) {
       TExyzGroup& sr = ExyzGroups[i];
       olxstr& str = lst.Add('{');
       for( int j=0; j < sr.Count(); j++ )  {
+        if( a_res != NULL )  a_res->Add( &sr[j] ); 
         str << sr[j].GetLabel();
         if( (j+1) < sr.Count() )
           str << ", ";

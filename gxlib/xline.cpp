@@ -17,7 +17,7 @@
 //----------------------------------------------------------------------------//
 // TXLine function bodies
 //----------------------------------------------------------------------------//
-TXLine::TXLine(const olxstr& collectionName, const vec3d& base, const vec3d& edge, TGlRender *Render): 
+TXLine::TXLine(const olxstr& collectionName, const vec3d& base, const vec3d& edge, TGlRenderer *Render): 
   TXBond(collectionName, *(TSBond*)NULL, Render)
 {
   FBase = base;
@@ -43,7 +43,7 @@ void TXLine::Create(const olxstr& cName, const ACreationParams* cpar)  {
 
     for( int i=0; i < Primitives()->PrimitiveCount(); i++ )  {
       TGlPrimitive* GlP = Primitives()->Primitive(i);
-      TGlMaterial* GlM = const_cast<TGlMaterial*>(GS->Material(GlP->Name()));
+      TGlMaterial* GlM = const_cast<TGlMaterial*>(GS->Material(GlP->GetName()));
       GlM->SetIdentityDraw( false );
       GlP->SetProperties(GlM);
     }
@@ -54,19 +54,17 @@ void TXLine::Create(const olxstr& cName, const ACreationParams* cpar)  {
 //..............................................................................
 TXLine::~TXLine(){}
 //..............................................................................
-bool TXLine::Orient(TGlPrimitive *GlP)
-{
-  static olxstr Length;
-  Length = olxstr::FormatFloat(3, Params()[3]);
-  if( GlP->Type() == sgloText )
-  {
+bool TXLine::Orient(TGlPrimitive *GlP)  {
+  olxstr Length = olxstr::FormatFloat(3, Params()[3]);
+  if( GlP->GetType() == sgloText )  {
     vec3d V;
     V = (FEdge+FBase)/2;
     V += FParent->GetBasis().GetCenter();
     V = FParent->GetBasis().GetMatrix()*V;
     glRasterPos3d(V[0]+0.15, V[1]+0.15, V[2]+5);
-    GlP->String(&Length);
+    GlP->SetString(&Length);
     GlP->Draw();
+    GlP->SetString(NULL);
     return true;
   }
   else
@@ -78,13 +76,11 @@ bool TXLine::Orient(TGlPrimitive *GlP)
   return false;
 } 
 //..............................................................................
-void TXLine::Radius(float V)
-{
+void TXLine::Radius(float V)  {
   Params()[4] = V;
 }
 //..............................................................................
-void TXLine::Length(float V)
-{
+void TXLine::Length(float V)  {
   Params()[3] = V;
 }
 //..............................................................................

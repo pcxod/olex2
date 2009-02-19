@@ -18,7 +18,7 @@ UseGlNamespace()
 //..............................................................................
 //..............................................................................
 
-TDFrame::TDFrame(const olxstr& collectionName, TGlRender *Render) :
+TDFrame::TDFrame(const olxstr& collectionName, TGlRenderer *Render) :
   AGDrawObject(collectionName)
 {
   FPrimitive = NULL;
@@ -44,11 +44,10 @@ void TDFrame::Create(const olxstr& cName, const ACreationParams* cpar) {
   TGPCollection* GPC = FRender->NewCollection( GetCollectionName() );
   GPC->AddObject(this);
 
-  FPrimitive = GPC->NewPrimitive("Lines");
+  FPrimitive = GPC->NewPrimitive("Lines", sgloLineLoop);
   FPrimitive->SetProperties(&GlM);
-  FPrimitive->Type(sgloLineLoop);
-  FPrimitive->Data().Resize(4, 4);
-  FPrimitive->Params()[0] = 1;              // line width
+  FPrimitive->Data.Resize(4, 4);
+  FPrimitive->Params[0] = 1;              // line width
 }
 //..............................................................................
 bool TDFrame::OnMouseDown(const IEObject *Sender, const TMouseData *Data)  {
@@ -60,22 +59,22 @@ bool TDFrame::OnMouseDown(const IEObject *Sender, const TMouseData *Data)  {
 //  Translation.Null(); // = FRender->Basis().Center();
 //  Translation *= FRender->GetBasis().GetMatrix();
 
-  FPrimitive->Data()[0][0] = (-hW + Data->X)*Scale - Translation[0];
-  FPrimitive->Data()[1][0] = (+hH - Data->Y)*Scale - Translation[1];
+  FPrimitive->Data[0][0] = (-hW + Data->X)*Scale - Translation[0];
+  FPrimitive->Data[1][0] = (+hH - Data->Y)*Scale - Translation[1];
 
-  FPrimitive->Data()[1][1] = (hH - Data->Y)*Scale - Translation[1];
-  FPrimitive->Data()[0][3] = (-hW + Data->X)*Scale - Translation[0];
+  FPrimitive->Data[1][1] = (hH - Data->Y)*Scale - Translation[1];
+  FPrimitive->Data[0][3] = (-hW + Data->X)*Scale - Translation[0];
 
-  FPrimitive->Data()[0][2] = (-hW + Data->X)*Scale - Translation[0];
-  FPrimitive->Data()[1][2] = (hH - Data->Y)*Scale - Translation[1];
+  FPrimitive->Data[0][2] = (-hW + Data->X)*Scale - Translation[0];
+  FPrimitive->Data[1][2] = (hH - Data->Y)*Scale - Translation[1];
 
-  FPrimitive->Data()[0][1] = (-hW + Data->X)*Scale - Translation[0];
-  FPrimitive->Data()[1][3] = (hH - Data->Y)*Scale - Translation[1];
+  FPrimitive->Data[0][1] = (-hW + Data->X)*Scale - Translation[0];
+  FPrimitive->Data[1][3] = (hH - Data->Y)*Scale - Translation[1];
 
-  FPrimitive->Data()[3][0] = 0x000000ff;
-  FPrimitive->Data()[3][1] = 0x00ff0000;
-  FPrimitive->Data()[3][2] = 0x00000000;
-  FPrimitive->Data()[3][3] = 0x0000ff00;
+  FPrimitive->Data[3][0] = 0x000000ff;
+  FPrimitive->Data[3][1] = 0x00ff0000;
+  FPrimitive->Data[3][2] = 0x00000000;
+  FPrimitive->Data[3][3] = 0x0000ff00;
 
   Visible( true );
   return true;
@@ -87,11 +86,11 @@ bool TDFrame::OnMouseUp(const IEObject *Sender, const TMouseData *Data)
   Visible( false );
   FRender->Draw();
   TSelectionInfo SI;
-  SI.From[0] = olx_min(FPrimitive->Data()[0][0], FPrimitive->Data()[0][2]);
-  SI.From[1] = olx_min(FPrimitive->Data()[1][0], FPrimitive->Data()[1][2]);
+  SI.From[0] = olx_min(FPrimitive->Data[0][0], FPrimitive->Data[0][2]);
+  SI.From[1] = olx_min(FPrimitive->Data[1][0], FPrimitive->Data[1][2]);
 
-  SI.To[0] = olx_max(FPrimitive->Data()[0][0], FPrimitive->Data()[0][2]);
-  SI.To[1] = olx_max(FPrimitive->Data()[1][0], FPrimitive->Data()[1][2]);
+  SI.To[0] = olx_max(FPrimitive->Data[0][0], FPrimitive->Data[0][2]);
+  SI.To[1] = olx_max(FPrimitive->Data[1][0], FPrimitive->Data[1][2]);
 
   OnSelect->Execute(this, &SI);
   return true;
@@ -103,11 +102,11 @@ bool TDFrame::OnMouseMove(const IEObject *Sender, const TMouseData *Data)
   double Scale = FRender->GetScale();
   int hW = FRender->GetWidth()/2 + FRender->GetLeft(),
       hH = FRender->GetHeight()/2 - FRender->GetTop();
-  FPrimitive->Data()[0][2] = (-hW + Data->X)*Scale - Translation[0];
-  FPrimitive->Data()[1][2] = (hH - Data->Y )*Scale - Translation[1];
+  FPrimitive->Data[0][2] = (-hW + Data->X)*Scale - Translation[0];
+  FPrimitive->Data[1][2] = (hH - Data->Y )*Scale - Translation[1];
 
-  FPrimitive->Data()[0][1] = (-hW + Data->X)*Scale - Translation[0];
-  FPrimitive->Data()[1][3] = (hH - Data->Y)*Scale - Translation[1];
+  FPrimitive->Data[0][1] = (-hW + Data->X)*Scale - Translation[0];
+  FPrimitive->Data[1][3] = (hH - Data->Y)*Scale - Translation[1];
 //  FRender->Draw();
   return true;
 }

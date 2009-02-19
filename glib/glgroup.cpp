@@ -16,7 +16,7 @@ UseGlNamespace()
 //..............................................................................
 //..............................................................................
 
-TGlGroup::TGlGroup(const olxstr& collectionName, TGlRender *P) :
+TGlGroup::TGlGroup(const olxstr& collectionName, TGlRenderer *P) :
   AGDrawObject(collectionName)  {
 
   FGlM = NULL;

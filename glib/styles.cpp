@@ -324,7 +324,7 @@ void TGraphicsStyle::RemoveNamedStyles(const TStrList& toks)  {
 //TGraphicsStyles implementation
 //------------------------------------------------------------------------------
 //..............................................................................
-TGraphicsStyles::TGraphicsStyles(TGlRender *Render)  {
+TGraphicsStyles::TGraphicsStyles(TGlRenderer *Render)  {
   FRoot = new TGraphicsStyle(this, NULL, "Root");
   FPStyles = new TObjectGroup;
   FRender = Render;

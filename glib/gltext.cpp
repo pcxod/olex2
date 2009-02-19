@@ -17,7 +17,7 @@ UseGlNamespace()
 //..............................................................................
 //..............................................................................
 
-TGlText::TGlText(const olxstr& collectionName, TGlRender *Render, const olxstr& Text):
+TGlText::TGlText(const olxstr& collectionName, TGlRenderer *Render, const olxstr& Text):
     TGlMouseListener(collectionName, Render)  {
   this->Text = Text;
   Move2D(false);
@@ -86,25 +86,24 @@ void TGlText::Create(const olxstr& cName, const ACreationParams* cpar)  {
     GPC = FParent->NewCollection( GetCollectionName() );
   GPC->AddObject(this);
 
-  TGlPrimitive* GlP = GPC->NewPrimitive("Text");
+  TGlPrimitive* GlP = GPC->NewPrimitive("Text", sgloText);
   GlM.AmbientF = 0x7fff7f;
   GlP->SetProperties(&GlM);
-  GlP->Type(sgloText);
-  GlP->Params()[0] = -1;  //bitmap; TTF by default
+  GlP->Params[0] = -1;  //bitmap; TTF by default
   CalcWH();
 }
 //..............................................................................
 bool TGlText::Orient(TGlPrimitive *P)  {
   TGlFont *Fnt = Font();
   if( Fnt == NULL )  return false;
-  P->Font(Fnt);
+  P->SetFont(Fnt);
   vec3d T( Basis.GetCenter() );
 //  if( StaticPos() )
 //  {
 //    T *= Scale;
 //    T *= FParent->Basis().Matrix();
 //  }
-  if( P->Params()[0] < 0 )  {  // bitmap
+  if( P->Params[0] < 0 )  {  // bitmap
     FParent->DrawTextSafe(T, Text, *Fnt ); 
     return true;
   }
@@ -131,7 +130,7 @@ bool TGlText::Orient(TGlPrimitive *P)  {
     M = Basis.Matrix()*M;
     Parent()->GlOrient(M);
   }            */
-  P->String(&Text);
+  P->SetString(&Text);
   return false;
 }
 //..............................................................................
