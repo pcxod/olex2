@@ -480,7 +480,7 @@ void TGlRenderer::Draw()  {
 void TGlRenderer::DrawObjects( bool SelectPrimitives, bool SelectObjects)  {
   bool Select = SelectPrimitives || SelectObjects, Pers=false;
   const int DrawMask = sgdoVisible|sgdoSelected|sgdoDeleted|sgdoGrouped;
-  if( FIdentityObjects.Count() != 0 )  {
+  if( !FIdentityObjects.IsEmpty() )  {
     if( FPerspective )  {
       FPerspective = false;
       SetView();
@@ -1048,7 +1048,7 @@ void TGlRenderer::Compile(bool v)  {
     if( CompiledListId == -1 )  {
       CompiledListId = glGenLists(1);
     }
-    glNewList(CompiledListId, GL_COMPILE_AND_EXECUTE);
+    glNewList(CompiledListId, GL_COMPILE);
     for( int i=0; i < FPrimitives->PropCount(); i++ )  {
       TGlMaterial* GlM = (TGlMaterial*)FPrimitives->Properties(i);
       if( GlM->GetIdentityDraw() ) continue;  // already drawn

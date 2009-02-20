@@ -550,8 +550,8 @@ private:
   // class TIOExt* FIOExt;
   TTimer *FTimer;
   unsigned short FMode;
-  long TimePerFrame,    // this is evaluated by FXApp->Draw()
-       DrawSceneTimer;  // this is set for onTimer to check when the scene has to be drawn
+  uint64_t TimePerFrame,    // this is evaluated by FXApp->Draw()
+           DrawSceneTimer;  // this is set for onTimer to check when the scene has to be drawn
 
   double FRotationIncrement, FRotationAngle;
   vec3d FRotationVector;

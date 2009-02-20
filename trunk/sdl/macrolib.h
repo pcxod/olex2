@@ -303,7 +303,8 @@ public:
     TStrObjList Cmds;
     TStrList MCmds;
     TParamList Options;
-    olxstr Command(Cmd);
+    olxstr Command(Cmd.Trim(' '));
+    if( Command.IsEmpty() )  return;
     // processing environment variables
     int ind = Command.FirstIndexOf('|'), ind1;
     while( ind >= 0 )  {

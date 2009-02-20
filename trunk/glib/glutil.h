@@ -12,10 +12,6 @@ struct GlTriangle {
 };
 
 class GlSphereEx {
-
-  //typedef TArrayList<vec3f> float_list;
-  //typedef TArrayList<triangle> triangle_list;
-
   vec3d v_oh[6];
   GlTriangle t_oh[8];
 public:
@@ -75,24 +71,31 @@ public:
     }
     // normalise the vertices
     for( int i=0; i < vo.Count(); i++ )
-      vo[i].NormaliseTo(rad);
-    // generate normals
+      vo[i].Normalise();
+    // initialise normals
     normals.SetCount(vo.Count());
-    for( int i=0; i < to.Count(); i++ )  {
-      const GlTriangle& t = to[i];
-      const vec3f normal = (vo[t.verts[1]] - vo[t.verts[0]]).XProdVec(vo[t.verts[2]] - vo[t.verts[0]]).Normalise();
-      normals[t.verts[0]] += normal;
-      normals[t.verts[1]] += normal;
-      normals[t.verts[2]] += normal;
+    for( int i=0; i < vo.Count(); i++ )  {
+      normals[i] = vo[i];
+      vo[i] *= rad;
     }
-    for( int i=0; i < normals.Count(); i++ )
-      normals[i].Normalise();
   }
   void Render(float rad, int ext) const {
     TTypeList<vec3f> vecs;
     TTypeList<GlTriangle> triags;
     TArrayList<vec3f> norms;
     Generate(rad, ext, vecs, triags, norms);
+    const int tc = triags.Count();
+    glBegin(GL_TRIANGLES);
+    for( int i = 0; i < tc; i++ )  {
+      const GlTriangle& t = triags[i];
+      for( int j=0; j < 3; j++ )  {
+        glNormal3f( norms[t.verts[j]][0], norms[t.verts[j]][1], norms[t.verts[j]][2]); 
+        glVertex3f( vecs[t.verts[j]][0], vecs[t.verts[j]][1], vecs[t.verts[j]][2]); 
+      }
+    }
+    glEnd();
+  }
+  void Render(const TTypeList<vec3f>& vecs, const TTypeList<GlTriangle>& triags, const TArrayList<vec3f>& norms) const {
     const int tc = triags.Count();
     glBegin(GL_TRIANGLES);
     for( int i = 0; i < tc; i++ )  {

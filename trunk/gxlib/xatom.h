@@ -102,6 +102,7 @@ public:
   inline double Zoom()  {  return Params()[1]; }
 
   bool Orient(TGlPrimitive *P);
+  bool DrawStencil();
   bool GetDimensions(vec3d &Max, vec3d &Min);
 
   void ListParams(TStrList &List, TGlPrimitive *Primitive);

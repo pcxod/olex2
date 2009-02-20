@@ -118,7 +118,7 @@ public:
   inline void StartList()  {
     if( ListId == -1 )
       throw TInvalidArgumentException(__OlxSourceInfo, "ListId");
-    glNewList(ListId, GL_COMPILE_AND_EXECUTE);
+    glNewList(ListId, GL_COMPILE);
   }
   inline void EndList()  { glEndList();  }
   inline bool IsCompiled() const {  return Compiled;  }
