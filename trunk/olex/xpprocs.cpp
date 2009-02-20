@@ -133,6 +133,7 @@
 
 #include "sfutil.h"
 #include "glutil.h"
+#include "ps_writer.h"
 // FOR DEBUG only
 #include "edict.h"
 #include "base_2d.h"
@@ -1330,25 +1331,16 @@ void TMainForm::macPictPS(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     sf[1] = (float)(sf[1]*cos_a - x*sin_a);
   }
 
-  wxPrintData pd;
-  pd.SetFilename(Cmds[0].u_str());
-  pd.SetPrintMode(wxPRINT_MODE_FILE);
-  wxPostScriptDC out(pd);
-  out.StartDoc(wxT("Test"));
-  out.SetPen( *wxBLACK_PEN );
-  out.SetLogicalScale(0.1, 0.1);
-  int Width = 0, Height = 0;
-  out.GetSize(&Width, &Height);
-  out.SetResolution(600);
+  PSWriter pw(Cmds[0]);
+  int width = 596,
+      height = 842;
   double view_port[4];
   glGetDoublev(GL_VIEWPORT, view_port);
   const TEBasis& basis = FXApp->GetRender().GetBasis();
-  double scale = olx_max((double)Width/view_port[2], (double)Height/view_port[3])/FXApp->GetRender().GetScale()*10,
-    arad_scale = 0.25/FXApp->GetRender().GetScale()*10;
-  vec3d origin(Width*5, Height*5, 0);
-  static const int spline_pts = 5;
-  wxPoint arc_points[spline_pts], 
-    circle_points[73], 
+  double scale = olx_min((double)width/view_port[2], (double)height/view_port[3]) /FXApp->GetRender().GetScale(),
+    arad_scale = 0.25/FXApp->GetRender().GetScale();
+  vec3d origin(width/2, height/2, 0);
+  wxPoint circle_points[73], 
     rimxy_points[73], rimzx_points[73], rimyz_points[73];
   int xy_cnt, zx_cnt, yz_cnt;
   for( int i=0; i < FXApp->AtomCount(); i++ )  {
@@ -1358,11 +1350,10 @@ void TMainForm::macPictPS(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     p *= scale;
     p += origin;
     if( sa.GetEllipsoid() == NULL )  {
-      out.SetBrush( wxBrush(sa.GetAtomInfo().GetDefColor()) );
-      out.DrawCircle(p[0], p[1], arad_scale*sa.GetAtomInfo().GetRad1());
+      //out.SetBrush( wxBrush(sa.GetAtomInfo().GetDefColor()) );
+      pw.circle(p, arad_scale*sa.GetAtomInfo().GetRad1());
     }
     else  {
-      out.SetPen( *wxBLACK_PEN );
       mat3d elpm( sa.GetEllipsoid()->GetMatrix() );
       elpm[0] *= sa.GetEllipsoid()->GetSX()*scale;
       elpm[1] *= sa.GetEllipsoid()->GetSY()*scale;
@@ -1370,7 +1361,9 @@ void TMainForm::macPictPS(TStrObjList &Cmds, const TParamList &Options, TMacroEr
       elpm *= basis.GetMatrix();
       mat3d ielpm( (sa.GetEllipsoid()->GetMatrix() * basis.GetMatrix() ).Inverse() );
       ielpm *= elpm;
-      vec3f rv;
+      //vec3f elpx = vec3f(1, 0, 0)*ielpm;
+      //vec3f elpy = vec3f(0, 1, 0)*ielpm;
+      pw.ellipse(p, ielpm);
       //for( int j=0; j < triags.Count(); j++ )  {
       //  for( int k=0; k < 3; k++ )  {
       //    rv = verts[triags[j].verts[k]] * elpm;
@@ -1380,29 +1373,30 @@ void TMainForm::macPictPS(TStrObjList &Cmds, const TParamList &Options, TMacroEr
       //  }
       //  out.DrawLines(3, arc_points);
       //}
-      xy_cnt = zx_cnt = yz_cnt = 0;
-      for( int j=0; j <= 36; j++ )  {
-        rv = circle[j] * ielpm;
-        circle_points[j].x = rv[0] + p[0];
-        circle_points[j].y = rv[1] + p[1];
-        //if( j >= 18 )  continue;
-        rv = rimxy[j] * elpm;
-        //if( rv[2] >= 0 )  {
-          rimxy_points[xy_cnt].x = rv[0] + p[0];
-          rimxy_points[xy_cnt++].y = rv[1] + p[1];
-        //}
-        rv = rimzx[j] * elpm;
-        //if( rv[2] >=0 )  {
-          rimzx_points[zx_cnt].x = rv[0] + p[0];
-          rimzx_points[zx_cnt++].y = rv[1]+p[1];
-        //}
-        rv = rimyz[j] * elpm;
-        //if( rv[2] >= 0 )  {
-          rimyz_points[yz_cnt].x = rv[0] + p[0];
-          rimyz_points[yz_cnt++].y = rv[1]+p[1];
-        //}
-      }
-      out.DrawLines(37, circle_points);
+
+      //xy_cnt = zx_cnt = yz_cnt = 0;
+      //for( int j=0; j <= 36; j++ )  {
+      //  rv = circle[j] * ielpm;
+      //  circle_points[j].x = rv[0] + p[0];
+      //  circle_points[j].y = rv[1] + p[1];
+      //  //if( j >= 18 )  continue;
+      //  rv = rimxy[j] * elpm;
+      //  //if( rv[2] >= 0 )  {
+      //    rimxy_points[xy_cnt].x = rv[0] + p[0];
+      //    rimxy_points[xy_cnt++].y = rv[1] + p[1];
+      //  //}
+      //  rv = rimzx[j] * elpm;
+      //  //if( rv[2] >=0 )  {
+      //    rimzx_points[zx_cnt].x = rv[0] + p[0];
+      //    rimzx_points[zx_cnt++].y = rv[1]+p[1];
+      //  //}
+      //  rv = rimyz[j] * elpm;
+      //  //if( rv[2] >= 0 )  {
+      //    rimyz_points[yz_cnt].x = rv[0] + p[0];
+      //    rimyz_points[yz_cnt++].y = rv[1]+p[1];
+      //  //}
+      //}
+      //out.DrawLines(37, circle_points);
       //for( int j=0; j < xy_cnt-1; j++ )  
       //  out.DrawLine(rimxy_points[j], rimxy_points[j+1]);
       //for( int j=0; j < zx_cnt-1; j++ )  
@@ -1447,10 +1441,8 @@ void TMainForm::macPictPS(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     p2 *= basis.GetMatrix();
     p2 *= scale;
     p2 += origin;
-    out.DrawLine(p1[0], p1[1], p2[0], p2[1]);
+    pw.line(p1, p2);
   }
-  out.EndDoc();
-  
 }
 //..............................................................................
 void TMainForm::macBang(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
