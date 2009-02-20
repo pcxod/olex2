@@ -72,6 +72,15 @@ TXAtom::TXAtom(const olxstr& collectionName, TSAtom& A, TGlRenderer *Render) :
   // the objects will be automatically deleted by the corresponding action collections
 }
 //..............................................................................
+TXAtom::~TXAtom()  {
+  if( !FPrimitiveParams.IsEmpty() )
+    FPrimitiveParams.Clear();
+  if( OrtepSpheres != -1 )  {
+    glDeleteLists(OrtepSpheres, 9);
+    OrtepSpheres = -1;
+  }
+}
+//..............................................................................
 void TXAtom::Quality(const short V)  {
   olxstr Legend("Atoms");
   TGraphicsStyle *GS;
@@ -299,15 +308,6 @@ ACreationParams* TXAtom::GetCreationParams() const {
   return &ap;
 }
 //..............................................................................
-TXAtom::~TXAtom()  {
-  if( !FPrimitiveParams.IsEmpty() )
-    FPrimitiveParams.Clear();
-  if( OrtepSpheres != -1 )  {
-    glDeleteLists(OrtepSpheres, 8);
-    OrtepSpheres = -1;
-  }
-}
-//..............................................................................
 olxstr TXAtom::GetLabelLegend(TSAtom *A)  {
   olxstr L = A->GetAtomInfo().GetSymbol();
   L << '.' << A->CAtom().Label();
@@ -402,6 +402,29 @@ bool TXAtom::Orient(TGlPrimitive *GlP) {
   }
   if( FDrawStyle == adsSphere )
     FParent->GlScale( (float)(FParams[0]*scale) );
+  return false;
+}
+//..............................................................................
+bool TXAtom::DrawStencil()  {
+  double scale = FParams[1];
+  if( (FRadius & (darIsot|darIsotH)) != 0 )
+    scale *= TelpProb();
+
+  if( FDrawStyle == adsEllipsoid || FDrawStyle == adsOrtep )  {
+    if( FAtom->GetEllipsoid() != NULL )  {
+      glPushMatrix();  
+      FParent->GlTranslate(Basis.GetCenter()+ FAtom->crd());
+      FParent->GlOrient( FAtom->GetEllipsoid()->GetMatrix() );
+      FParent->GlScale(
+        (float)(FAtom->GetEllipsoid()->GetSX()*scale),
+        (float)(FAtom->GetEllipsoid()->GetSY()*scale),
+        (float)(FAtom->GetEllipsoid()->GetSZ()*scale)
+        );
+      glCallList(OrtepSpheres+8);
+      glPopMatrix();
+      return true;
+    }
+  }
   return false;
 }
 //..............................................................................
@@ -689,31 +712,34 @@ void TXAtom::CreateStaticPrimitives()  {
   TArrayList<vec3f> norms;
   gls.Generate(1, Round(log(SphereQ)+0.5), vecs, triags, norms);
   if( OrtepSpheres == -1 )
-    OrtepSpheres = glGenLists(8);
+    OrtepSpheres = glGenLists(9);
   
-  glNewList(OrtepSpheres, GL_COMPILE_AND_EXECUTE);
+  glNewList(OrtepSpheres, GL_COMPILE);
   gls.RenderEx(vecs, triags, norms, vec3f(0,0,0), vec3f(1,1,1));
   glEndList();  
-  glNewList(OrtepSpheres+1, GL_COMPILE_AND_EXECUTE);
+  glNewList(OrtepSpheres+1, GL_COMPILE);
   gls.RenderEx(vecs, triags, norms, vec3f(-1,0,0), vec3f(0,1,1));
   glEndList();  
-  glNewList(OrtepSpheres+2, GL_COMPILE_AND_EXECUTE);
+  glNewList(OrtepSpheres+2, GL_COMPILE);
   gls.RenderEx(vecs, triags, norms, vec3f(0,-1,0), vec3f(1,0,1));
   glEndList();  
-  glNewList(OrtepSpheres+3, GL_COMPILE_AND_EXECUTE);
+  glNewList(OrtepSpheres+3, GL_COMPILE);
   gls.RenderEx(vecs, triags, norms, vec3f(-1,-1,0), vec3f(0,0,1));
   glEndList();  
-  glNewList(OrtepSpheres+4, GL_COMPILE_AND_EXECUTE);
+  glNewList(OrtepSpheres+4, GL_COMPILE);
   gls.RenderEx(vecs, triags, norms, vec3f(0,0,-1), vec3f(1,1,0));
   glEndList();  
-  glNewList(OrtepSpheres+5, GL_COMPILE_AND_EXECUTE);
+  glNewList(OrtepSpheres+5, GL_COMPILE);
   gls.RenderEx(vecs, triags, norms, vec3f(-1,0,-1), vec3f(0,1,0));
   glEndList();  
-  glNewList(OrtepSpheres+6, GL_COMPILE_AND_EXECUTE);
+  glNewList(OrtepSpheres+6, GL_COMPILE);
   gls.RenderEx(vecs, triags, norms, vec3f(0,-1,-1), vec3f(1,0,0));
   glEndList();  
-  glNewList(OrtepSpheres+7, GL_COMPILE_AND_EXECUTE);
+  glNewList(OrtepSpheres+7, GL_COMPILE);
   gls.RenderEx(vecs, triags, norms, vec3f(-1,-1,-1), vec3f(0,0,0));
+  glEndList();  
+  glNewList(OrtepSpheres+8, GL_COMPILE);
+  gls.Render(vecs, triags, norms);
   glEndList();  
 }
 //..............................................................................

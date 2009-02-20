@@ -173,7 +173,7 @@ public:
   // implementation of BasicApp function - renders the scene
   virtual void Update()  {  Draw();  }
 
-  long Draw();
+  uint64_t Draw();
   void BeginDrawBitmap(double res);
   void FinishDrawBitmap();
   void Resize(int new_w, int new_h)            {  FGlRender->Resize(new_w, new_h); }

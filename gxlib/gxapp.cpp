@@ -2585,23 +2585,10 @@ TXGlLabel* TGXApp::CreateLabel(TXAtom *A, int FontIndex)  {
   return &L;
 }
 //..............................................................................
-long TGXApp::Draw()  {
-//  TDrawThread *th = new TDrawThread(Render());
-//  th->Create();
-//  th->Run();
-
-// this line is for a visual test when drawing happens
-//  GetRender().InvertSelection();
-  static int64_t mspf = 0, lastcall = 0;
-  int64_t st = TETime::msNow();
-//  if( lastcall != 0 && ((st-lastcall) < mspf) )  {
-    //lastcall = st;
-//    return 0;
-//  }
+uint64_t TGXApp::Draw()  {
+  uint64_t st = TETime::msNow();
   GetRender().Draw();
-  lastcall = TETime::msNow();
-  mspf = lastcall - st;
-  return mspf;
+  return TETime::msNow() - st;
 }
 //..............................................................................
 void TGXApp::MoveFragment(TXAtom* to, TXAtom* fragAtom, bool copy)  {
