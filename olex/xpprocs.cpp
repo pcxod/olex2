@@ -1311,26 +1311,59 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   image.SaveFile( bmpFN.u_str() );
 }
 //..............................................................................
-void TMainForm::macPictPS(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  GlSphereEx sph;
-  TTypeList<vec3f> verts, circle, rimxy, rimzx, rimyz;
-  TTypeList<GlTriangle> triags; 
-  TArrayList<vec3f> normals;
-  sph.Generate(1, 2, verts, triags, normals);
-  
-  vec3f sf(1, 0, 0);
-  double sin_a, cos_a, angle = 2*M_PI/36;
-  SinCos(angle, &sin_a, &cos_a);
-  for( int i=0; i <= 36; i++ )  {
-    circle.AddNew(sf[0], sf[1], 0);
-    rimxy.AddNew(sf[0], sf[1], 0);
-    rimzx.AddNew(sf[1],0,  sf[0]);
-    rimyz.AddNew(0, sf[0], sf[1]);
-    float x = sf[0];
-    sf[0] = (float)(x*cos_a + sf[1]*sin_a);
-    sf[1] = (float)(sf[1]*cos_a - x*sin_a);
+template <class InC, class OutC>
+int PrepareArc(const InC& in, OutC& out, const double& ref_z, const double& q_treshold)  {
+  static TArrayList<vec3f> tmp(36);
+  int shift=-1, cnt = 0;
+  for( int i=0; i < in.Count(); i++ )  {
+    if( in[i][2] >= ref_z )  {
+      if( cnt > 0 && shift == -1 )  {
+        if( tmp[cnt-1].QDistanceTo(in[i]) > q_treshold )
+          shift = cnt;
+      }
+      tmp[cnt++] = in[i];
+    }
   }
-
+  if( shift != -1 )  {  
+    for( int i=shift; i < cnt; i++ )
+      out[i-shift] = tmp[i];
+    for( int i=0; i < shift; i++ )
+      out[cnt-shift+i] = tmp[i];
+  }
+  else  {
+    for( int i=0; i < cnt; i++ )
+      out[i] = tmp[i];
+  }
+  return cnt;
+}
+void TMainForm::macPictPS(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+  //GlSphereEx sph;
+  //TTypeList<vec3f> verts;
+  //TTypeList<GlTriangle> triags; 
+  //TArrayList<vec3f> normals;
+  //sph.Generate(1, 2, verts, triags, normals);
+  const int arc_cnt = 36, pie_cnt = 4;
+  TArrayList<vec3f> arc_crd(arc_cnt), 
+                    arc(arc_cnt), 
+                    arc_out(arc_cnt),
+                    pie(pie_cnt);
+  double sin_a, cos_a;
+  SinCos(2*M_PI/arc_cnt, &sin_a, &cos_a);
+  vec3f ps(1, 0, 0);
+  for( int i=0; i < arc_cnt; i++ )  {
+    arc_crd[i] = ps;
+    float x = ps[0];
+    ps[0] = cos_a*x + sin_a*ps[1];
+    ps[1] = cos_a*ps[1] - sin_a*x;
+  }
+  // shaded pie, 18 degrees, 0 to 90
+  SinCos(M_PI/(2*pie_cnt), &sin_a, &cos_a);
+  ps = vec3f(1, 0, 0);
+  for( int i=0; i < pie_cnt; i++ )  {
+    pie[i] = ps;
+    ps[0] = (double)(pie_cnt-i-1)/pie_cnt;
+    ps[1] = sqrt(1.0-ps[0]*ps[0]);
+  }
   PSWriter pw(Cmds[0]);
   int width = 596,
       height = 842;
@@ -1340,106 +1373,92 @@ void TMainForm::macPictPS(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   double scale = olx_min((double)width/view_port[2], (double)height/view_port[3]) /FXApp->GetRender().GetScale(),
     arad_scale = 0.25/FXApp->GetRender().GetScale();
   vec3d origin(width/2, height/2, 0);
-  wxPoint circle_points[73], 
-    rimxy_points[73], rimzx_points[73], rimyz_points[73];
-  int xy_cnt, zx_cnt, yz_cnt;
+  mat3d proj_mat = basis.GetMatrix()*scale;  
   for( int i=0; i < FXApp->AtomCount(); i++ )  {
     const TSAtom& sa = FXApp->GetAtom(i).Atom();
     vec3d p = sa.crd() + basis.GetCenter();
-    p *= basis.GetMatrix();
-    p *= scale;
+    p *= proj_mat;
     p += origin;
+    //pw.color( sa.GetAtomInfo().GetDefColor() != ~1 ? sa.GetAtomInfo().GetDefColor() : 0 );
     if( sa.GetEllipsoid() == NULL )  {
-      //out.SetBrush( wxBrush(sa.GetAtomInfo().GetDefColor()) );
       pw.circle(p, arad_scale*sa.GetAtomInfo().GetRad1());
     }
     else  {
       mat3d elpm( sa.GetEllipsoid()->GetMatrix() );
-      elpm[0] *= sa.GetEllipsoid()->GetSX()*scale;
-      elpm[1] *= sa.GetEllipsoid()->GetSY()*scale;
-      elpm[2] *= sa.GetEllipsoid()->GetSZ()*scale;
-      elpm *= basis.GetMatrix();
+      elpm[0] *= sa.GetEllipsoid()->GetSX();
+      elpm[1] *= sa.GetEllipsoid()->GetSY();
+      elpm[2] *= sa.GetEllipsoid()->GetSZ();
+      elpm *= proj_mat;
       mat3d ielpm( (sa.GetEllipsoid()->GetMatrix() * basis.GetMatrix() ).Inverse() );
       ielpm *= elpm;
-      //vec3f elpx = vec3f(1, 0, 0)*ielpm;
-      //vec3f elpy = vec3f(0, 1, 0)*ielpm;
       pw.ellipse(p, ielpm);
-      //for( int j=0; j < triags.Count(); j++ )  {
-      //  for( int k=0; k < 3; k++ )  {
-      //    rv = verts[triags[j].verts[k]] * elpm;
-      //    rv += p;
-      //    arc_points[k].x = rv[0];
-      //    arc_points[k].y = Height - rv[1];
-      //  }
-      //  out.DrawLines(3, arc_points);
-      //}
+      for( int j=0; j < arc_cnt; j++ )
+        arc[j] = arc_crd[j]*elpm;
+      int pts_cnt = PrepareArc(arc, arc_out, -0.1, sqr(elpm[2].Length()/2) );
+      for( int j=0; j < pts_cnt; j++ )
+        arc_out[j] += p;
+      pw.lines(arc_out, pts_cnt, false);
+      vec3f pos_x = (elpm[0][2] >= 0 ? elpm[0] : -elpm[0]);
+      pw.line(p, p + pos_x);
 
-      //xy_cnt = zx_cnt = yz_cnt = 0;
-      //for( int j=0; j <= 36; j++ )  {
-      //  rv = circle[j] * ielpm;
-      //  circle_points[j].x = rv[0] + p[0];
-      //  circle_points[j].y = rv[1] + p[1];
-      //  //if( j >= 18 )  continue;
-      //  rv = rimxy[j] * elpm;
-      //  //if( rv[2] >= 0 )  {
-      //    rimxy_points[xy_cnt].x = rv[0] + p[0];
-      //    rimxy_points[xy_cnt++].y = rv[1] + p[1];
-      //  //}
-      //  rv = rimzx[j] * elpm;
-      //  //if( rv[2] >=0 )  {
-      //    rimzx_points[zx_cnt].x = rv[0] + p[0];
-      //    rimzx_points[zx_cnt++].y = rv[1]+p[1];
-      //  //}
-      //  rv = rimyz[j] * elpm;
-      //  //if( rv[2] >= 0 )  {
-      //    rimyz_points[yz_cnt].x = rv[0] + p[0];
-      //    rimyz_points[yz_cnt++].y = rv[1]+p[1];
-      //  //}
-      //}
-      //out.DrawLines(37, circle_points);
-      //for( int j=0; j < xy_cnt-1; j++ )  
-      //  out.DrawLine(rimxy_points[j], rimxy_points[j+1]);
-      //for( int j=0; j < zx_cnt-1; j++ )  
-      //  out.DrawLine(rimzx_points[j], rimzx_points[j+1]);
-      //for( int j=0; j < yz_cnt-1; j++ )  
-      //  out.DrawLine(rimyz_points[j], rimyz_points[j+1]);
-      //out.SetBrush( wxNullBrush );
-      //TEllipse2D elp(elpm, basis.GetMatrix());
-      //for( int j=0; j < 6; j++ )  {
-      //  const double ra = -elp.GetArc(j).GetAngle()/(spline_pts-1);
-      //  const double ca = cos(ra);
-      //  const double sa = sin(ra);
-      //  const vec2d& cnt = elp.GetArc(j).GetCenter();
-      //  vec2d pn = elp.GetArc(j).GetFrom() - cnt;
-      //  for( int k=0; k < spline_pts; k++ )  {
-      //    arc_points[k].x = pn[0] + cnt[0] + p[0];  
-      //    arc_points[k].y = Height - (pn[1] + cnt[1] + p[1]);
-      //    const double x = pn[0];
-      //    pn[0] = x*ca + pn[1]*sa;
-      //    pn[1] = pn[1]*ca - x*sa;
-      //  }
-        // it draw a pie....
-        //vec2d p1 = elp.GetArc(j).GetFrom() + p;
-        //p1[1] = Height - p1[1];
-        //vec2d p2 = elp.GetArc(j).GetTo() + p;
-        //p2[1] = Height - p2[1];
-        //vec2d p3 = elp.GetArc(j).GetCenter() + p;
-        //p3[1] = Height - p3[1];
-        //out.DrawArc( p1[0], p1[1], p2[0], p2[1], p3[0], p3[1]);
+      for( int j=0; j < arc_cnt; j++ )
+        arc[j] = vec3f(arc_crd[j][1], 0, arc_crd[j][0])*elpm;
+      pts_cnt = PrepareArc(arc, arc_out, -0.1, sqr(elpm[1].Length()/2) );
+      for( int j=0; j < pts_cnt; j++ )
+        arc_out[j] += p;
+      pw.lines(arc_out, pts_cnt, false);
+      vec3f pos_y = (elpm[1][2] >= 0 ? elpm[1] : -elpm[1]);
+      pw.line(p, p + pos_y);
 
-        //out.DrawSpline(5, arc_points);
-       //}
+      for( int j=0; j < arc_cnt; j++ )
+        arc[j] = vec3f(0, arc_crd[j][0], arc_crd[j][1])*elpm;
+      pts_cnt = PrepareArc(arc, arc_out, -0.1, sqr(elpm[0].Length()/2) );
+      for( int j=0; j < pts_cnt; j++ )
+        arc_out[j] += p;
+      pw.lines(arc_out, pts_cnt, false);
+      vec3f pos_z = (elpm[2][2] >= 0 ? elpm[2] : -elpm[2]);
+      pw.line(p, p + pos_z);
+
+      mat3d pelpm(pos_x, pos_y, pos_z);
+      for( int j=0; j < pie_cnt; j++ )
+        pw.line( pie[j]*pelpm + p, pos_x*((double)(pie_cnt-j)/pie_cnt)+p);
+      for( int j=0; j < pie_cnt; j++ )
+        pw.line( vec3f(0, pie[j][0], pie[j][1])*pelpm + p, pos_y*((double)(pie_cnt-j)/pie_cnt)+p);
+      for( int j=0; j < pie_cnt; j++ )
+        pw.line( vec3f(pie[j][1], 0, pie[j][0])*pelpm + p, pos_z*((double)(pie_cnt-j)/pie_cnt)+p);
     }
   }
   for( int i=0; i < FXApp->BondCount(); i++ )  {
     const TSBond& bn = FXApp->GetBond(i).Bond();
-    vec3d p1 = bn.GetA().crd() + basis.GetCenter();
-    p1 *= basis.GetMatrix();
-    p1 *= scale;
+    vec3d p1 = (bn.GetA().crd() + basis.GetCenter())*proj_mat;
+    vec3d p2 = (bn.GetB().crd() + basis.GetCenter())*proj_mat;
+    if( bn.GetA().GetEllipsoid() == NULL )
+      p1 += (p2-p1).NormaliseTo(arad_scale*bn.GetA().GetAtomInfo().GetRad1());
+    else  {
+      mat3d elpm( bn.GetA().GetEllipsoid()->GetMatrix() );
+      elpm[0] *= bn.GetA().GetEllipsoid()->GetSX();
+      elpm[1] *= bn.GetA().GetEllipsoid()->GetSY();
+      elpm[2] *= bn.GetA().GetEllipsoid()->GetSZ();
+      elpm *= proj_mat;
+      mat3d ielpm( (bn.GetA().GetEllipsoid()->GetMatrix() * basis.GetMatrix() ).Inverse() );
+      ielpm *= elpm;
+      vec3f p = (p2-p1).Normalise();
+      p1 += p*(p.Normalise()*ielpm).Length();
+    }
+    if( bn.GetB().GetEllipsoid() == NULL )  
+      p2 += (p1-p2).NormaliseTo(arad_scale*bn.GetB().GetAtomInfo().GetRad1());
+    else  {
+      mat3d elpm( bn.GetB().GetEllipsoid()->GetMatrix() );
+      elpm[0] *= bn.GetB().GetEllipsoid()->GetSX();
+      elpm[1] *= bn.GetB().GetEllipsoid()->GetSY();
+      elpm[2] *= bn.GetB().GetEllipsoid()->GetSZ();
+      elpm *= proj_mat;
+      mat3d ielpm( (bn.GetB().GetEllipsoid()->GetMatrix() * basis.GetMatrix() ).Inverse() );
+      ielpm *= elpm;
+      vec3f p = (p1-p2).Normalise();
+      p2 += p*(p.Normalise()*ielpm).Length();
+    }
     p1 += origin;
-    vec3d p2 = bn.GetB().crd() + basis.GetCenter();
-    p2 *= basis.GetMatrix();
-    p2 *= scale;
     p2 += origin;
     pw.line(p1, p2);
   }
