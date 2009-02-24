@@ -81,7 +81,8 @@ public:
   Node& B()                {  return *FB;  }
   void SetB(Node& a)       {  FB = &a;  OnAtomSet();  }
 
-  Node& Another(Node& A) {  return (&A == FA) ? *FB : *FA; }
+  Node& Another(const Node& A) {  return (&A == FA) ? *FB : *FA; }
+  const Node& Another(const Node& A) const {  return (&A == FA) ? *FB : *FA; }
 };
 //---------------------------------------------------------------------------
 // TBasicNode -  basic node
@@ -111,6 +112,7 @@ public:
 
   inline int BondCount()            const {  return Bonds.Count(); }
   inline BondType& Bond(int i)            {  return *Bonds[i]; }
+  inline const BondType& Bond(int i) const{  return *Bonds[i]; }
   inline void AddBond(BondType& N)        {  N.SetNodId(Bonds.Count());  Bonds.Add(&N);  }
   inline void PackBonds()                 {  Bonds.Pack(); };
 

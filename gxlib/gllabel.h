@@ -21,6 +21,7 @@ public:
   bool GetDimensions(vec3d &Max, vec3d &Min){  return false;  }
   inline const olxstr& GetLabel() const   {  return FLabel;  }
   void SetLabel(const olxstr& L);
+  vec3d GetRasterPosition() const;
 
   TGlFont *Font() const;
   inline void FontIndex(short FntIndex)  {  FFontIndex = FntIndex; }

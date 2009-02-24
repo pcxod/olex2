@@ -400,6 +400,8 @@ public:     void CalcProbFactor(float Prob);
   
   TXGlLabel* CreateLabel(TXAtom *A, int FontIndex);
   // recreated all labels (if any) in case if font size etc changed
+  int LabelCount() const {  return XLabels.Count();  }
+  const TXGlLabel& GetLabel(int i) const {  return XLabels[i];  }
   void UpdateLabels();
 
 //..............................................................................
