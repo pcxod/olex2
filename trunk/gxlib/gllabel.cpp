@@ -71,6 +71,17 @@ void TXGlLabel::SetLabel(const olxstr& L)   {
   }
 }
 //..............................................................................
+vec3d TXGlLabel::GetRasterPosition() const {
+  vec3d T( Basis.GetCenter() );
+  T += FParent->GetBasis().GetCenter();
+  T *= FParent->GetBasis().GetMatrix();
+  T[2] += 5;
+  T /= FParent->GetScale();
+  T[0] -= OffsetX;
+  T[1] -= OffsetY;
+  return T;
+}
+//..............................................................................
 bool TXGlLabel::Orient(TGlPrimitive *P)  {
   vec3d T( Basis.GetCenter() );
   const double Scale = FParent->GetScale();
