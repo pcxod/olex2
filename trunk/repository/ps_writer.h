@@ -8,9 +8,11 @@ class PSWriter  {
   TEFile out;
   char bf[80];
   uint32_t CurrentColor;
+  float CurrentLineWidth;
 public:
   PSWriter(const olxstr& fileName) {
     CurrentColor = 0;
+    CurrentLineWidth = 1;
     out.Open(fileName, "w+b");
     out.Writenl("%!PS-Adobe-2.0");
     out.Writenl( "%%Title: Olex2 test" );
@@ -18,7 +20,6 @@ public:
     out.Writenl( "%%Orientation: Portrait" );
     out.Writenl( "%%DocumentPaperSizes: A4" );
     out.Writenl( "%%EndComments" );
-    out.Writenl( "0.5 setlinewidth" );
   }
   //..........................................................................
   void color(uint32_t rgb)  {
@@ -41,6 +42,14 @@ public:
   void translate(const float_t& x, const float_t& y)  {
     sprintf(bf, "%f %f translate", (float)x, (float)y);
     out.Writenl( bf );
+  }
+  //..........................................................................
+  template <typename float_t> 
+  void lineWidth(const float_t& lw)  {
+    if( lw == CurrentLineWidth )  return;
+    sprintf(bf, "%f setlinewidth", (float)lw);
+    out.Writenl( bf );
+    CurrentLineWidth = (float)lw;
   }
   //..........................................................................
   template <typename vec_t> 
