@@ -1312,11 +1312,11 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 }
 //..............................................................................
 template <class InC, class OutC>
-int PrepareArc(const InC& in, OutC& out, const vec3f& ref)  {
+int PrepareArc(const InC& in, OutC& out, const vec3f& normal)  {
   int start=-1, cnt=0;
   for( int i=0; i < in.Count(); i++ )  {
     const int next_i = ((i+1) >= in.Count() ? i-in.Count() : i) + 1;
-    if( in[i][2] < 0 && in[next_i][2] > 0 )  {
+    if( in[i].DotProd(normal) < 0 && in[next_i].DotProd(normal) >= 0 )  {
       start = next_i;
       break;
     }
@@ -1325,7 +1325,9 @@ int PrepareArc(const InC& in, OutC& out, const vec3f& ref)  {
     return 0;
   for( int i=start; i < start+in.Count(); i++ )  {
     const int ind = (i >= in.Count() ? i-in.Count() : i);
-    if( in[ind][2] >= 0 || cnt == 0 )
+    if( cnt+1 >= in.Count() )
+      break;
+    if( in[ind].DotProd(normal) >= 0  )
       out[cnt++] = in[ind];
     else  {
       //out[cnt++] = in[ind];
@@ -1405,7 +1407,7 @@ void TMainForm::macPictPS(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     ps[0] = cos_a*x + sin_a*ps[1];
     ps[1] = cos_a*ps[1] - sin_a*x;
   }
-  // shaded pie, 18 degrees, 0 to 90
+  // shaded pie
   ps = vec3f(1, 0, 0);
   for( int i=0; i < pie_cnt; i++ )  {
     pie[i] = ps;
@@ -1442,6 +1444,7 @@ void TMainForm::macPictPS(TStrObjList &Cmds, const TParamList &Options, TMacroEr
       atoms.AddNew(&sa, (sa.crd() + basis.GetCenter())*proj_mat+origin);
   }
   atoms.QuickSorter.SortSF(atoms, SAtomZSort);
+  pw.lineWidth(0.5);
   pw.custom("/Helvetica findfont 12 scalefont setfont");
   for( int i=0; i < atoms.Count(); i++ )  {
     const TSAtom& sa = *atoms[i].atom;
@@ -1478,17 +1481,17 @@ void TMainForm::macPictPS(TStrObjList &Cmds, const TParamList &Options, TMacroEr
       pw.fill();
       pw.color(0);
       pw.drawEllipse(p, ielpm);
-      //for( int j=0; j < arc_cnt; j++ )
-      //  arc[j] = arc_crd[j]*ielpm + p;
-      //pw.drawLines(arc, arc_cnt);
-  
-      mat3f pelpm(elpm[0][2] >= 0 ? elpm[0] : -elpm[0], 
-        elpm[1][2] >= 0 ? elpm[1] : -elpm[1], 
-        elpm[2][2] >= 0 ? elpm[2] : -elpm[2]);
 
+      pw.lineWidth(0.25);
+      mat3f pelpm(elpm[0][2] < 0 ? -elpm[0] : elpm[0],
+                  elpm[1][2] < 0 ? -elpm[1] : elpm[1],
+                  elpm[2][2] < 0 ? -elpm[2] : elpm[2]);
+      vec3f norm_vec = (arc_crd[0]*ielpm).XProdVec(arc_crd[1]*ielpm);
+      if( norm_vec[2] < 0 )
+        norm_vec *= -1;
       for( int j=0; j < arc_cnt; j++ )
         arc[j] = arc_crd[j]*elpm;
-      int pts_cnt = PrepareArc(arc, arc_out, elpm[2] );
+      int pts_cnt = PrepareArc(arc, arc_out, norm_vec);
       for( int j=0; j < pts_cnt; j++ )
         arc_out[j] += p;
       pw.drawLines(arc_out, pts_cnt, false);
@@ -1496,7 +1499,7 @@ void TMainForm::macPictPS(TStrObjList &Cmds, const TParamList &Options, TMacroEr
 
       for( int j=0; j < arc_cnt; j++ )
         arc[j] = vec3f(arc_crd[j][1], 0, arc_crd[j][0])*elpm;
-      pts_cnt = PrepareArc(arc, arc_out, elpm[1]);
+      pts_cnt = PrepareArc(arc, arc_out, norm_vec);
       for( int j=0; j < pts_cnt; j++ )
         arc_out[j] += p;
       pw.drawLines(arc_out, pts_cnt, false);
@@ -1504,7 +1507,7 @@ void TMainForm::macPictPS(TStrObjList &Cmds, const TParamList &Options, TMacroEr
 
       for( int j=0; j < arc_cnt; j++ )
         arc[j] = vec3f(0, arc_crd[j][0], arc_crd[j][1])*elpm;
-      pts_cnt = PrepareArc(arc, arc_out, elpm[0] );
+      pts_cnt = PrepareArc(arc, arc_out, norm_vec);
       for( int j=0; j < pts_cnt; j++ )
         arc_out[j] += p;
       pw.drawLines(arc_out, pts_cnt, false);
@@ -1516,6 +1519,7 @@ void TMainForm::macPictPS(TStrObjList &Cmds, const TParamList &Options, TMacroEr
         pw.drawLine( vec3f(0, pie[j][0], pie[j][1])*pelpm + p, pelpm[1]*((double)(pie_cnt-j)/pie_cnt)+p);
       for( int j=0; j < pie_cnt; j++ )
         pw.drawLine( vec3f(pie[j][1], 0, pie[j][0])*pelpm + p, pelpm[2]*((double)(pie_cnt-j)/pie_cnt)+p);
+      pw.lineWidth(0.5);
     }
     for( int j=0; j < sa.BondCount(); j++ )  {
       pw.color(0);
@@ -1530,6 +1534,15 @@ void TMainForm::macPictPS(TStrObjList &Cmds, const TParamList &Options, TMacroEr
         p2 = (p1-p).Normalise();
         p2 = p2*(p2*(*atoms[i].elpm)).Length();
       }
+      //
+      //pw.custom("matrix currentmatrix");
+      //p2 = p - p1;
+      //vec3f xp2(-p2[1], p2[0], 0);
+      //xp2.Normalise();
+      //pw.custom((CString("[") << p2[0] << ' ' << p2[1] << ' ' << xp2[0] << ' ' << xp2[1] << ' ' << p[0] << ' ' << p[1] << "] concat").c_str());
+      //pw.drawLine(vec3f(0,0,0), vec3f(1,1,0) );
+      //pw.custom("setmatrix");
+      //
       pw.drawLine(p + p2, (p1+p)/2);
     }
   }
