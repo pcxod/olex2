@@ -1458,7 +1458,7 @@ void XLibMacros::macEnvi(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       L = latt.GetUnitCell().GetInRange(SA.ccrd(), allAtoms[i]->ccrd(), r, false);
     else
       L = latt.GetUnitCell().GetInRange(SA.ccrd(), allAtoms[i]->ccrd(), r, true);
-    if( L->Count() != 0 )  {
+    if( !L->IsEmpty() )  {
       for( int j=0; j < L->Count(); j++ )  {
         const smatd& m = L->Item(j);
         V = m * allAtoms[i]->ccrd() - SA.ccrd();

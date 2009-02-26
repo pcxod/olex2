@@ -449,8 +449,8 @@ smatd_list* TUnitCell::GetInRange(const vec3d& to, const vec3d& from, double R, 
     int iy = Round(V1[1]);  V1[1] -= iy;
     int iz = Round(V1[2]);  V1[2] -= iz;
     // check for identity matrix
-    if( !IncludeI && !i )
-      if( !ix && !iy && !iz )  continue;
+    if( !IncludeI && i == 0 )
+      if( (ix|iy|iz) == 0 )  continue;
     GetLattice().GetAsymmUnit().CellToCartesian(V1);
     double D = V1.QLength();
     if( D < R )  {
@@ -459,6 +459,27 @@ smatd_list* TUnitCell::GetInRange(const vec3d& to, const vec3d& from, double R, 
       retMatr->t[1] -= iy;
       retMatr->t[2] -= iz;
       retVal->Add(*retMatr);
+    }
+  }
+  for( int i=-1; i <= 1; i++ )  {
+    for( int j=-1; j <= 1; j++ ) {
+      for( int k=-1; k <= 1; k++ )  {
+        if( (i|j|k) == 0 )  continue;
+        V1[0] = from[0] + i;
+        V1[1] = from[1] + j;
+        V1[2] = from[2] + k;
+        V1 -= to;
+        GetLattice().GetAsymmUnit().CellToCartesian(V1);
+        double D = V1.QLength();
+        if( D < R )  {
+          retMatr = new smatd;
+          retMatr->I();
+          retMatr->t[0] -= i;
+          retMatr->t[1] -= j;
+          retMatr->t[2] -= k;
+          retVal->Add(*retMatr);
+        }
+      }
     }
   }
   return retVal;
@@ -483,6 +504,22 @@ void TUnitCell::FindInRange(const vec3d& to, double R,
       double D = V1.QLength();
       if( D < R && D > 0.01 )  {
         res.Add( AnAssociation2<TCAtom const*, vec3d>(&a, V1) );
+      }
+    }
+    for( int ii=-1; ii <= 1; ii++ )  {
+      for( int ij=-1; ij <= 1; ij++ ) {
+        for( int ik=-1; ik <= 1; ik++ )  {
+          if( (ii|ij|ik) == 0 )  continue;
+          V1[0] = a.ccrd()[0] + ii;
+          V1[1] = a.ccrd()[1] + ij;
+          V1[2] = a.ccrd()[2] + ik;
+          V1 -= to;
+          GetLattice().GetAsymmUnit().CellToCartesian(V1);
+          double D = V1.QLength();
+          if( D < R && D > 0.01 )  {
+            res.Add( AnAssociation2<TCAtom const*, vec3d>(&a, V1) );
+          }
+        }
       }
     }
   }
@@ -511,6 +548,26 @@ void TUnitCell::FindInRange(const vec3d& to, double R,
         m.t[0] -= ix;
         m.t[1] -= iy;
         m.t[2] -= iz;
+      }
+    }
+    for( int ii=-1; ii <= 1; ii++ )  {
+      for( int ij=-1; ij <= 1; ij++ ) {
+        for( int ik=-1; ik <= 1; ik++ )  {
+          if( (ii|ij|ik) == 0 )  continue;
+          V1[0] = a.ccrd()[0] + ii;
+          V1[1] = a.ccrd()[1] + ij;
+          V1[2] = a.ccrd()[2] + ik;
+          V1 -= to;
+          GetLattice().GetAsymmUnit().CellToCartesian(V1);
+          double D = V1.QLength();
+          if( D < R )  {
+            res.Add( AnAssociation2<TCAtom const*, smatd>(&a) );
+            smatd& m = res.Last().B().I();
+            m.t[0] += ii;
+            m.t[1] += ij;
+            m.t[2] += ik;
+          }
+        }
       }
     }
   }
