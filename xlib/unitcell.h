@@ -17,10 +17,11 @@ BeginXlibNamespace()
 
 class TUnitCell: public IEObject  {
   TNetwork*  Network;  // for internal use only
-private:
   smatd_list Matrices;  // list of unique matrices; FMatrices + centering
   TArrayList<TEllpPList> Ellipsoids;  // i - atoms index, j - matrix index 
   class TLattice*  Lattice;    // parent lattice
+  // a macro FindInRange
+  void _FindInRange(const vec3d& center, double R, TTypeList< AnAssociation3<TCAtom const*, smatd, vec3d> >& res) const;
 public:
   TUnitCell(TLattice* L);
   virtual ~TUnitCell();
@@ -34,46 +35,90 @@ public:
   // the identity matrix is always the first
   inline const smatd& GetMatrix(int i) const {  return Matrices[i];  }
 
+  // gets an ellipsoid for an atom by asymmetric unit Id and a matrix associated with it
   const TEllipsoid& GetEllipsoid(int MatrixId, int AUId) const;
   void AddEllipsoid(); // adds a new row to ellipsoids, intialised with NULLs
   void ClearEllipsoids();
+  // (r-)caches the ellipsoids from the aunit
   void UpdateEllipsoids();
-  // get an ellipsoid for an atom by asymmetric unit Id and a matrix associated with it
-
+  // expands the lattice centering and '-1' and caches ellipsoids for all symmetry operators
   void InitMatrices();
 
-  // returns the number of symmetrical equivalents present within the atoms
-  // in this case Msg will be initialised with a message, set remove to false
-  //to leave equivalents, otherwise they will be removed from the content
-  int FindSymmEq(TEStrBuffer &Msg, double tol, bool Initialize, bool remove, bool markDeleted) const;
+  /* returns the number of symmetrical equivalents present within the atoms
+   Optional Msg parameter might be provided for logging 
+   use 'remove' controls if equivalent atoms will be removed or left
+  */
+  int FindSymmEq(double tol, bool Initialize, bool remove, bool markDeleted, TEStrBuffer* Msg=NULL) const;
 
-  // the funciton searches a matrix which moves "atom" to "to" so that the
-  // distance between them is shortest and return the matrix, which if not NULL
-  // has to be deleted with delete
-  smatd* GetClosest(const class TCAtom& to, const TCAtom& atom, bool ConsiderOriginal, double* dist=NULL) const;
+  /* the funciton searches a matrix which moves "atom" to "to" so that the
+   distance between them is shortest and return the matrix, which if not NULL
+   has to be deleted with delete
+  */
+  smatd* GetClosest(const class TCAtom& to, const TCAtom& atom, bool ConsiderOriginal, double* dist=NULL) const {
+    return GetClosest(to.ccrd(), atom.ccrd(), ConsiderOriginal, dist);
+  }
   smatd* GetClosest(const vec3d& to, const vec3d& from, bool ConsiderOriginal, double* dist=NULL) const;
-
+  
+  /* Finds matrices UNIQ to the unit cell (besides the I matrix, see below) which move point 
+  'from' to 'to' within R. 
+  Always returns a valid object to be deleted with delete. For the identity matrix additionally checks the 
+  translational symmetry (in some cases the atom within the aunit is closer than the translational 
+  symmetry generated one), so there might be a two I matrices with different translations
+  */ 
   smatd_list* GetInRange(const vec3d& to, const vec3d& from, double R, bool IncludeI) const;
 
-  // returns a list of all closest (in all directions) matrices
-  smatd_list* GetInRangeEx(const vec3d& to, const vec3d& from, float R, bool IncludeI, const smatd_list& ToSkip) const;
-  // returns a list of all biding matrices
+  /* function operates as the one above, however for each matrix also searches translations
+  within [-1..+1] range, so returned list might have multiple matrices of the unit cell with
+  different translations. It also checks if the matrix is already in the ToSkip list before adding it
+  to the results. The return value is always a valid object to be deleted with a call to delete
+  */
+  smatd_list* GetInRangeEx(const vec3d& to, const vec3d& from, double R, bool IncludeI, const smatd_list& ToSkip) const;
+  
+  /* The function finds all atoms and symmetry operators generating them within the sphere of 
+  radius R. Note that only matrices unique to the unit cell are used (besides that the I matrics is 
+  checked within [-1..+1] range in all directions), so only limited R values are supported. 
+  Expects a list of Assiciation2+<TCAtom const*, smatd,...>
+  */
+  template <class association> void FindInRangeAM(const vec3d& center, double R, TArrayList<association>& out) const {
+    TTypeList< AnAssociation3<TCAtom const*,smatd,vec3d> > res;
+    _FindInRange(center, R, res);
+    out.SetCount( res.Count() );
+    for( int i=0; i < res.Count(); i++ )  {
+      out[i].A() = res[i].A();
+      out[i].B() = res[i].GetB(); 
+    }
+  }
+  /* As above but provides an association of atoms with the cartesian coordinates 
+  instead of the matrices 
+  Expects a list of Assiciation2+<TCAtom const*, vec3d,...>
+  */
+  template <class association> void FindInRangeAC(const vec3d& center, double R, TArrayList<association>& out) const {
+    TTypeList< AnAssociation3<TCAtom const*,smatd,vec3d> > res;
+    _FindInRange(center, R, res);
+    out.SetCount( res.Count() );
+    for( int i=0; i < res.Count(); i++ )  {
+      out[i].A() = res[i].A();
+      out[i].B() = res[i].GetC(); 
+    }
+  }
+
+  /* returns a list of all matrices which lead to covalent/hydrogen bonds, 
+  the return value is alwas an object to be deleted with delete 
+  */
   smatd_list* GetBinding(const TCAtom& toA, const TCAtom& fromA,
     const vec3d& to, const vec3d& from, bool IncludeI, bool IncludeHBonds) const;
-
+  
+  // returns the closest distance between two atoms considering the unit cell symmetry
   double FindClosestDistance(const class TCAtom& to, const TCAtom& atom) const;
-  // finds all atoms and their ccordinates inside the sphere of radius R
-  void FindInRange(const vec3d& center, double R, 
-    TArrayList< AnAssociation2<TCAtom const*, vec3d> >& res) const;
-  // finds all atoms and their ccordinates inside the sphere of radius R
-  void FindInRange(const vec3d& center, double R, 
-    TArrayList< AnAssociation2<TCAtom const*, smatd> >& res) const;
+  
   /* finds all atoms (+symm attached) and Q-peaks, if specfied; if part is not -1, part 0 and 
   the specified part are only placed
   */
   void GetAtomEnviList(TSAtom& atom, TAtomEnvi& envi, bool IncludeQ = false, int part=-1) const;
+  
   // finds only q-peaks in the environment of specified atom
   void GetAtomQEnviList(TSAtom& atom, TAtomEnvi& envi);
+  
   /* finds "pivoting" atoms for possible h-bonds, considering O and N only with
     distances within 2.9A and angles 89-130 deg
   */
@@ -91,6 +136,7 @@ public:
   */
   void BuildStructureMap( TArray3D<short>& map, double delta, short value, 
     size_t* structurePoints, TPSTypeList<TBasicAtomInfo*, double>* radii, const TCAtomPList* _template = NULL );
+  // for internal tests...
   void BuildStructureMapEx( TArray3D<short>& map, double resolution, double delta, short value, 
     size_t* structurePoints, TPSTypeList<TBasicAtomInfo*, double>* radii, const TCAtomPList* _template = NULL );
 protected:
@@ -185,12 +231,10 @@ public:
         list.AddNew(vec3d(v[0], v[1], v[2]+zi), list[i].B());
     }
   }
-  // returns true if the atom overlaps with another atom in the unit cell
-  bool DoesOverlap(const TCAtom& ca, double R) const;
   // finds an atom at given position
   TCAtom* FindCAtom(const vec3d& center) const;
-  /* finds an atom within delta of the given position, ! the position is updated to the closest match found */
-  TCAtom* FindOverlappingAtom(vec3d& position, double delta) const;
+  /* finds an atom within delta of the given position */
+  TCAtom* FindOverlappingAtom(const vec3d& position, double delta) const;
 protected:
   class TSearchSymmEqTask  {
     TPtrList<TCAtom>& Atoms;

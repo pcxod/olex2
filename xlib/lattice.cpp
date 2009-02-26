@@ -261,8 +261,7 @@ void TLattice::Init()  {
   GetUnitCell().ClearEllipsoids();
   GetUnitCell().InitMatrices();
   InitBody();
-  TEStrBuffer tmp;
-  int eqc = GetUnitCell().FindSymmEq(tmp, 0.1, true, false, false); // find and not remove
+  int eqc = GetUnitCell().FindSymmEq(0.1, true, false, false); // find and not remove
   GetAsymmUnit().SetContainsEquivalents( eqc != 0 );
   Generated = false;
 }
@@ -275,8 +274,7 @@ void  TLattice::Uniq(bool remEqv)  {
   Clear(false);
   ClearMatrices();
   if( GetAsymmUnit().DoesContainEquivalents() && remEqv )  {
-    TEStrBuffer Msg;
-    GetUnitCell().FindSymmEq(Msg, 0.1, true, false, true);
+    GetUnitCell().FindSymmEq(0.1, true, false, true);
     //TBasicApp::GetLog()->CriticalInfo(olxstr("Symmetrical counterparts were removed for: ") << Msg.ToString() );
     GetAsymmUnit().SetContainsEquivalents(false);
     Init();
@@ -760,9 +758,8 @@ void TLattice::UpdateAsymmUnit()  {
     }
     CA.ccrd() = OA->ccrd();
   }
-  TEStrBuffer Rep;
   if( GetAsymmUnit().DoesContainEquivalents() )
-    AsymmUnit->SetContainsEquivalents( UnitCell->FindSymmEq(Rep, 0.1, false, false, false) != 0 );
+    AsymmUnit->SetContainsEquivalents( UnitCell->FindSymmEq(0.1, false, false, false) != 0 );
 }
 //..............................................................................
 void TLattice::ListAsymmUnit(TSAtomPList& L, TCAtomPList* Template, bool IncludeQ)  {
@@ -1839,8 +1836,7 @@ void TLattice::FromDataItem(TDataItem& item)  {
   for( int i=0; i < frags.ItemCount(); i++ )
     Fragments[i]->FromDataItem( frags.GetItem(i) );
   GetUnitCell().InitMatrices();
-  TEStrBuffer tmp;
-  int eqc = GetUnitCell().FindSymmEq(tmp, 0.1, true, false, false); // find and not remove
+  int eqc = GetUnitCell().FindSymmEq(0.1, true, false, false); // find and not remove
   GetAsymmUnit().SetContainsEquivalents( eqc != 0 );
   //Disassemble();
   TDataItem& planes = item.FindRequiredItem("Planes");

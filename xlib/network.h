@@ -35,8 +35,8 @@ public:
   // does not affect current net
   void Disassemble(TSAtomPList& Atoms, TNetPList& Frags, TSBondPList* InterBonds);
 
-  bool CBondExists(const class TCAtom& CA1, const TCAtom& CA2, double D) const;
-  bool HBondExists(const TCAtom& CA1, const TCAtom& CA2, double D) const;
+  bool CBondExists(const class TCAtom& CA1, const TCAtom& CA2, const double& D) const;
+  bool HBondExists(const TCAtom& CA1, const TCAtom& CA2, const double& D) const;
 
   // only pointers are compared!!
   inline bool operator == (const TNetwork& n) const  {  return this == &n;  }
