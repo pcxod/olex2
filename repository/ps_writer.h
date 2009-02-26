@@ -74,6 +74,12 @@ public:
   //..........................................................................
   void fill()   {  out.Writenl("fill");  }
   //..........................................................................
+  // default scale, A4
+  int GetWidth() const {  return 596;  }
+  //..........................................................................
+  // default scale A4
+  int GetHeight() const {  return 842;  }
+  //..........................................................................
   template <typename vec_t> 
   void line(const vec_t& from, const vec_t& to)  {
     sprintf(bf, "%f %f moveto", (float)from[0], (float)from[1]);
@@ -108,6 +114,29 @@ public:
   void drawLines(const list_t& list, int cnt = -1, bool join=false)  {
     newPath();
     lines(list, cnt, join);
+    stroke();
+  }
+  //..........................................................................
+  template <typename list_t> 
+  void lines_vp(const list_t& list, int cnt = -1, bool join=false)  {
+    if( cnt == -1 )  cnt = list.Count();
+    if( cnt < 2 )  return;
+    sprintf(bf, "%f %f moveto", (float)(*list[0])[0], (float)(*list[0])[1]);
+    out.Writenl( bf );
+    for( int i=1; i < cnt; i++ )  {
+      sprintf(bf, "%f %f lineto", (float)(*list[i])[0], (float)(*list[i])[1]);
+      out.Writenl( bf );
+    }
+    if( join && cnt > 2 )  {
+      sprintf(bf, "%f %f lineto", (float)(*list[0])[0], (float)(*list[0])[1]);
+      out.Writenl( bf );
+      out.Writenl("closepath");
+    }
+  }
+  template <typename list_t> 
+  void drawLines_vp(const list_t& list, int cnt = -1, bool join=false)  {
+    newPath();
+    lines_vp(list, cnt, join);
     stroke();
   }
   //..........................................................................
