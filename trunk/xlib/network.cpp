@@ -282,7 +282,7 @@ void TNetwork::THBondSearchTask::Run(long ind)  {
   }
 }
 //..............................................................................
-bool TNetwork::CBondExists(const TCAtom& CA1, const TCAtom& CA2, double D) const  {
+bool TNetwork::CBondExists(const TCAtom& CA1, const TCAtom& CA2, const double& D) const  {
   if(  D < (CA1.GetAtomInfo().GetRad1() + CA2.GetAtomInfo().GetRad1() + GetLattice().GetDelta() ) )  {
     if( (CA1.GetPart() == CA2.GetPart() && CA2.GetPart() >= 0 ) || 
          CA1.GetPart() == 0 ||CA2.GetPart() == 0 )
@@ -291,7 +291,7 @@ bool TNetwork::CBondExists(const TCAtom& CA1, const TCAtom& CA2, double D) const
   return false;
 }
 //..............................................................................
-bool TNetwork::HBondExists(const TCAtom& CA1, const TCAtom& CA2, double D) const  {
+bool TNetwork::HBondExists(const TCAtom& CA1, const TCAtom& CA2, const double& D) const  {
   if(  D < (CA1.GetAtomInfo().GetRad1() + CA2.GetAtomInfo().GetRad1() + GetLattice().GetDeltaI() ) )  {
     if( (CA1.GetPart() == CA2.GetPart() && CA2.GetPart() >=0 ) || 
       CA1.GetPart() == 0 || CA2.GetPart() == 0 )

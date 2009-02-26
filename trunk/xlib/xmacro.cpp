@@ -412,7 +412,7 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     }
     if( hc == 0 || hc >= 4 )  continue;
     all.Clear();
-    uc.FindInRange(sa.ccrd(), max_d+bai.GetRad1()-0.6, all);
+    uc.FindInRangeAM(sa.ccrd(), max_d+bai.GetRad1()-0.6, all);
     for( int j=0; j < all.Count(); j++ )  {
       const TCAtom& ca = *all[j].GetA();
       const TBasicAtomInfo& bai1 = ca.GetAtomInfo();
