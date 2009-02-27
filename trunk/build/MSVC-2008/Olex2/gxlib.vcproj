@@ -18,7 +18,7 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)\lib"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="4"
 			CharacterSet="0"
@@ -42,7 +42,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="2"
-				AdditionalIncludeDirectories="&quot;E:\wxWidgets-2.8.7\lib\vc_lib\mswd&quot;;&quot;E:\wxWidgets-2.8.7\include&quot;;..\..\..\glib;..\..\..\xlib;..\..\..\repository;C:\Python25\include;..\..\..\sdl"
+				AdditionalIncludeDirectories="&quot;E:\wxWidgets-2.8.9\lib\vc_lib\mswd&quot;;&quot;E:\wxWidgets-2.8.9\include&quot;;..\..\..\glib;..\..\..\xlib;..\..\..\repository;C:\Python25\include;..\..\..\sdl"
 				PreprocessorDefinitions="_DEBUG;__WXWIDGETS__"
 				StringPooling="true"
 				BasicRuntimeChecks="0"
@@ -83,9 +83,9 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)\lib"
 			IntermediateDirectory="$(ConfigurationName)"
-			ConfigurationType="2"
+			ConfigurationType="4"
 			CharacterSet="0"
 			ManagedExtensions="0"
 			WholeProgramOptimization="1"
@@ -107,26 +107,20 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				UseUnicodeResponseFiles="false"
-				Optimization="3"
+				Optimization="2"
 				InlineFunctionExpansion="2"
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
-				OmitFramePointers="true"
 				WholeProgramOptimization="true"
-				AdditionalIncludeDirectories="&quot;E:\wxWidgets-2.8.7\lib\vc_lib\mswd&quot;;&quot;E:\wxWidgets-2.8.7\include&quot;;..\..\..\glib;..\..\..\xlib;..\..\..\repository;C:\Python25\include;..\..\..\sdl"
-				PreprocessorDefinitions="WIN32;NDEBUG"
+				AdditionalIncludeDirectories="&quot;E:\wxWidgets-2.8.9\lib\vc_lib\msw&quot;;&quot;E:\wxWidgets-2.8.9\include&quot;;..\..\..\glib;..\..\..\xlib;..\..\..\repository;C:\Python25\include;..\..\..\sdl"
+				PreprocessorDefinitions="WIN32;NDEBUG;__WXWIDGETS__"
 				StringPooling="true"
-				BasicRuntimeChecks="0"
 				RuntimeLibrary="2"
-				BufferSecurityCheck="false"
-				EnableFunctionLevelLinking="true"
 				EnableEnhancedInstructionSet="2"
 				FloatingPointModel="2"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
-				Detect64BitPortabilityProblems="false"
-				DebugInformationFormat="0"
+				DebugInformationFormat="3"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -138,19 +132,10 @@
 				Name="VCPreLinkEventTool"
 			/>
 			<Tool
-				Name="VCLinkerTool"
-				AdditionalDependencies="$(NoInherit)"
-				LinkIncremental="1"
-				GenerateDebugInformation="true"
-				RandomizedBaseAddress="1"
-				DataExecutionPrevention="0"
-				TargetMachine="1"
+				Name="VCLibrarianTool"
 			/>
 			<Tool
 				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCManifestTool"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -162,15 +147,12 @@
 				Name="VCFxCopTool"
 			/>
 			<Tool
-				Name="VCAppVerifierTool"
-			/>
-			<Tool
 				Name="VCPostBuildEventTool"
 			/>
 		</Configuration>
 		<Configuration
-			Name="Unicode|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			Name="Unicode-debug|Win32"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)\lib"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="4"
 			CharacterSet="1"
@@ -196,7 +178,7 @@
 				Optimization="0"
 				InlineFunctionExpansion="0"
 				EnableIntrinsicFunctions="false"
-				AdditionalIncludeDirectories="&quot;E:\wxWidgets-2.8.7\lib\vc_lib\mswud&quot;;&quot;E:\wxWidgets-2.8.7\include&quot;;..\..\..\glib;..\..\..\xlib;..\..\..\repository;C:\Python25\include;..\..\..\sdl"
+				AdditionalIncludeDirectories="&quot;E:\wxWidgets-2.8.9\lib\vc_lib\mswud&quot;;&quot;E:\wxWidgets-2.8.9\include&quot;;..\..\..\glib;..\..\..\xlib;..\..\..\repository;C:\Python25\include;..\..\..\sdl"
 				PreprocessorDefinitions="__WXWIDGETS__;__WXDEBUG__;_UNICODE;_DEBUG;"
 				StringPooling="true"
 				MinimalRebuild="true"
@@ -238,7 +220,7 @@
 		</Configuration>
 		<Configuration
 			Name="Unicode-release|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)\lib"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="4"
 			CharacterSet="1"
@@ -264,14 +246,15 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="2"
-				EnableIntrinsicFunctions="false"
+				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
-				AdditionalIncludeDirectories="&quot;E:\wxWidgets-2.8.7\lib\vc_lib\mswud&quot;;&quot;E:\wxWidgets-2.8.7\include&quot;;..\..\..\glib;..\..\..\xlib;..\..\..\repository;C:\Python25\include;..\..\..\sdl"
+				AdditionalIncludeDirectories="&quot;E:\wxWidgets-2.8.9\lib\vc_lib\mswud&quot;;&quot;E:\wxWidgets-2.8.9\include&quot;;..\..\..\glib;..\..\..\xlib;..\..\..\repository;C:\Python25\include;..\..\..\sdl"
 				PreprocessorDefinitions="__WXWIDGETS__;_UNICODE"
 				StringPooling="true"
 				MinimalRebuild="false"
 				BasicRuntimeChecks="0"
 				RuntimeLibrary="2"
+				EnableEnhancedInstructionSet="2"
 				FloatingPointModel="2"
 				UsePrecompiledHeader="0"
 				BrowseInformation="0"
@@ -337,7 +320,7 @@
 				InlineFunctionExpansion="2"
 				EnableIntrinsicFunctions="false"
 				FavorSizeOrSpeed="1"
-				AdditionalIncludeDirectories="&quot;E:\wxWidgets-2.8.7\lib\vc_lib\mswud&quot;;&quot;E:\wxWidgets-2.8.7\include&quot;;..\..\..\glib;..\..\..\xlib;..\..\..\repository;C:\Python25\include;..\..\..\sdl"
+				AdditionalIncludeDirectories="&quot;E:\wxWidgets-2.8.9\lib\vc_lib\mswud&quot;;&quot;E:\wxWidgets-2.8.9\include&quot;;..\..\..\glib;..\..\..\xlib;..\..\..\repository;C:\Python25\include;..\..\..\sdl"
 				PreprocessorDefinitions="__WXWIDGETS__;_UNICODE;_NO_PYTHON"
 				StringPooling="true"
 				MinimalRebuild="false"
@@ -380,7 +363,7 @@
 		</Configuration>
 		<Configuration
 			Name="Unicode-release-static|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)\lib"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="4"
 			CharacterSet="1"
@@ -404,16 +387,157 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				Optimization="3"
+				Optimization="2"
 				InlineFunctionExpansion="2"
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
-				AdditionalIncludeDirectories="&quot;E:\wxWidgets-2.8.7\lib\vc_lib\mswud&quot;;&quot;E:\wxWidgets-2.8.7\include&quot;;..\..\..\glib;..\..\..\xlib;..\..\..\repository;C:\Python25\include;..\..\..\sdl"
+				AdditionalIncludeDirectories="&quot;E:\wxWidgets-2.8.9\lib\vc_lib\mswud&quot;;&quot;E:\wxWidgets-2.8.9\include&quot;;..\..\..\glib;..\..\..\xlib;..\..\..\repository;C:\Python25\include;..\..\..\sdl"
 				PreprocessorDefinitions="__WXWIDGETS__;_UNICODE"
 				StringPooling="true"
 				MinimalRebuild="false"
 				BasicRuntimeChecks="0"
 				RuntimeLibrary="0"
+				EnableEnhancedInstructionSet="2"
+				FloatingPointModel="2"
+				UsePrecompiledHeader="0"
+				BrowseInformation="0"
+				WarningLevel="3"
+				DebugInformationFormat="0"
+				CallingConvention="0"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLibrarianTool"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+			/>
+		</Configuration>
+		<Configuration
+			Name="Unicode-debug-py26|Win32"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)\lib"
+			IntermediateDirectory="$(ConfigurationName)"
+			ConfigurationType="4"
+			CharacterSet="1"
+			ManagedExtensions="0"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="0"
+				InlineFunctionExpansion="0"
+				EnableIntrinsicFunctions="false"
+				AdditionalIncludeDirectories="&quot;E:\wxWidgets-2.8.9\lib\vc_lib\mswud&quot;;&quot;E:\wxWidgets-2.8.9\include&quot;;..\..\..\glib;..\..\..\xlib;..\..\..\repository;C:\Python26\include;..\..\..\sdl"
+				PreprocessorDefinitions="__WXWIDGETS__;__WXDEBUG__;_UNICODE;_DEBUG;"
+				StringPooling="true"
+				MinimalRebuild="true"
+				BasicRuntimeChecks="3"
+				RuntimeLibrary="3"
+				FloatingPointModel="2"
+				UsePrecompiledHeader="0"
+				BrowseInformation="1"
+				WarningLevel="3"
+				DebugInformationFormat="3"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLibrarianTool"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+			/>
+		</Configuration>
+		<Configuration
+			Name="Unicode-release-py26|Win32"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)\lib"
+			IntermediateDirectory="$(ConfigurationName)"
+			ConfigurationType="4"
+			CharacterSet="1"
+			ManagedExtensions="0"
+			WholeProgramOptimization="1"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="2"
+				InlineFunctionExpansion="2"
+				EnableIntrinsicFunctions="true"
+				FavorSizeOrSpeed="1"
+				AdditionalIncludeDirectories="&quot;E:\wxWidgets-2.8.9\lib\vc_lib\mswud&quot;;&quot;E:\wxWidgets-2.8.9\include&quot;;..\..\..\glib;..\..\..\xlib;..\..\..\repository;C:\Python26\include;..\..\..\sdl"
+				PreprocessorDefinitions="__WXWIDGETS__;_UNICODE"
+				StringPooling="true"
+				MinimalRebuild="false"
+				BasicRuntimeChecks="0"
+				RuntimeLibrary="2"
+				EnableEnhancedInstructionSet="2"
 				FloatingPointModel="2"
 				UsePrecompiledHeader="0"
 				BrowseInformation="0"
@@ -521,7 +645,7 @@
 				RelativePath="..\..\..\gxlib\xgrid.cpp"
 				>
 				<FileConfiguration
-					Name="Unicode|Win32"
+					Name="Unicode-debug|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -550,6 +674,25 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Unicode-release-static|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="3"
+						BasicRuntimeChecks="0"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Unicode-debug-py26|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						BasicRuntimeChecks="3"
+						ObjectFile="$(IntDir)\"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Unicode-release-py26|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -613,11 +756,23 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\glib\glutil.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\gxlib\gxapp.h"
 				>
 			</File>
 			<File
 				RelativePath="..\..\..\gxlib\gxbase.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\gxlib\ortdraw.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\gxlib\oxmfile.h"
 				>
 			</File>
 			<File
@@ -650,6 +805,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\gxlib\xgrowpoint.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\gxlib\xlattice.h"
 				>
 			</File>
 			<File

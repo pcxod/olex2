@@ -51,6 +51,11 @@ class TOlexViewer : public olex::IOlexProcessor {
   static TGXApp* GXApp;
   TEBasis Basis;
   bool LabelsVisible;
+protected:
+  virtual TStrList GetPluginList() const {  return TStrList();  }
+  virtual olxstr TranslateString(const olxstr& str) const {  return EmptyString;  }
+  virtual bool IsControl(const olxstr& cname) const {  return false;  }
+  virtual bool executeMacroEx(const olxstr& cmdLine, TMacroError& er) {  return false;  }
 public:
   TOlexViewer(int w, int h);
   ~TOlexViewer();

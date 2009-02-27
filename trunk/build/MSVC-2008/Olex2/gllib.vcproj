@@ -6,7 +6,7 @@
 	ProjectGUID="{F91183CE-E72E-4B45-A7E3-EE23C4B62338}"
 	RootNamespace="gllib"
 	Keyword="ManagedCProj"
-	TargetFrameworkVersion="196613"
+	TargetFrameworkVersion="131072"
 	>
 	<Platforms>
 		<Platform
@@ -18,7 +18,7 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			OutputDirectory="$(SolutionDir)\lib_d"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="4"
 			CharacterSet="0"
@@ -42,12 +42,82 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="2"
-				AdditionalIncludeDirectories="&quot;E:\wxWidgets-2.8.7\lib\vc_lib\mswd&quot;;&quot;E:\wxWidgets-2.8.7\include&quot;;..\..\..\repository;..\..\..\sdl"
+				AdditionalIncludeDirectories="&quot;E:\wxWidgets-2.8.9\lib\vc_lib\mswd&quot;;&quot;E:\wxWidgets-2.8.9\include&quot;;..\..\..\repository;..\..\..\sdl"
 				PreprocessorDefinitions="WIN32;"
 				StringPooling="true"
 				BasicRuntimeChecks="0"
 				RuntimeLibrary="3"
 				EnableEnhancedInstructionSet="2"
+				UsePrecompiledHeader="0"
+				WarningLevel="3"
+				DebugInformationFormat="3"
+				UndefinePreprocessorDefinitions="_UNICODE"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLibrarianTool"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+			/>
+		</Configuration>
+		<Configuration
+			Name="Release|Win32"
+			OutputDirectory="$(SolutionDir)\lib"
+			IntermediateDirectory="$(ConfigurationName)"
+			ConfigurationType="4"
+			CharacterSet="0"
+			ManagedExtensions="0"
+			WholeProgramOptimization="1"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="2"
+				InlineFunctionExpansion="2"
+				EnableIntrinsicFunctions="true"
+				FavorSizeOrSpeed="1"
+				WholeProgramOptimization="true"
+				AdditionalIncludeDirectories="&quot;E:\wxWidgets-2.8.9\lib\vc_lib\msw&quot;;&quot;E:\wxWidgets-2.8.9\include&quot;;..\..\..\repository;..\..\..\sdl"
+				PreprocessorDefinitions="WIN32;NDEBUG"
+				StringPooling="true"
+				RuntimeLibrary="2"
+				EnableEnhancedInstructionSet="2"
+				FloatingPointModel="2"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				DebugInformationFormat="3"
@@ -81,95 +151,8 @@
 			/>
 		</Configuration>
 		<Configuration
-			Name="Release|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
-			IntermediateDirectory="$(ConfigurationName)"
-			ConfigurationType="2"
-			CharacterSet="0"
-			ManagedExtensions="0"
-			WholeProgramOptimization="1"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-			/>
-			<Tool
-				Name="VCCLCompilerTool"
-				UseUnicodeResponseFiles="false"
-				Optimization="3"
-				InlineFunctionExpansion="2"
-				EnableIntrinsicFunctions="true"
-				FavorSizeOrSpeed="1"
-				OmitFramePointers="true"
-				WholeProgramOptimization="true"
-				AdditionalIncludeDirectories="&quot;E:\wxWidgets-2.8.7\lib\vc_lib\mswd&quot;;&quot;E:\wxWidgets-2.8.7\include&quot;;..\..\..\repository;..\..\..\sdl"
-				PreprocessorDefinitions="WIN32;NDEBUG"
-				StringPooling="true"
-				BasicRuntimeChecks="0"
-				RuntimeLibrary="2"
-				BufferSecurityCheck="false"
-				EnableFunctionLevelLinking="true"
-				EnableEnhancedInstructionSet="2"
-				FloatingPointModel="2"
-				UsePrecompiledHeader="0"
-				WarningLevel="3"
-				Detect64BitPortabilityProblems="false"
-				DebugInformationFormat="0"
-			/>
-			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
-			<Tool
-				Name="VCLinkerTool"
-				AdditionalDependencies="$(NoInherit)"
-				LinkIncremental="1"
-				GenerateDebugInformation="true"
-				RandomizedBaseAddress="1"
-				DataExecutionPrevention="0"
-				TargetMachine="1"
-			/>
-			<Tool
-				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCManifestTool"
-			/>
-			<Tool
-				Name="VCXDCMakeTool"
-			/>
-			<Tool
-				Name="VCBscMakeTool"
-			/>
-			<Tool
-				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCPostBuildEventTool"
-			/>
-		</Configuration>
-		<Configuration
-			Name="Unicode|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			Name="Unicode-debug|Win32"
+			OutputDirectory="$(SolutionDir)\lib_ud"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="4"
 			CharacterSet="1"
@@ -195,7 +178,7 @@
 				Optimization="0"
 				InlineFunctionExpansion="0"
 				EnableIntrinsicFunctions="false"
-				AdditionalIncludeDirectories="&quot;E:\wxWidgets-2.8.7\lib\vc_lib\mswud&quot;;&quot;E:\wxWidgets-2.8.7\include&quot;;..\..\..\repository;..\..\..\sdl"
+				AdditionalIncludeDirectories="&quot;E:\wxWidgets-2.8.9\lib\vc_lib\mswud&quot;;&quot;E:\wxWidgets-2.8.9\include&quot;;..\..\..\repository;..\..\..\sdl"
 				PreprocessorDefinitions="_UNICODE;_DEBUG;"
 				StringPooling="true"
 				MinimalRebuild="true"
@@ -237,7 +220,7 @@
 		</Configuration>
 		<Configuration
 			Name="Unicode-release|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			OutputDirectory="$(SolutionDir)\lib_u"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="4"
 			CharacterSet="1"
@@ -263,14 +246,15 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="2"
-				EnableIntrinsicFunctions="false"
+				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
-				AdditionalIncludeDirectories="&quot;E:\wxWidgets-2.8.7\lib\vc_lib\mswud&quot;;&quot;E:\wxWidgets-2.8.7\include&quot;;..\..\..\repository;..\..\..\sdl"
+				AdditionalIncludeDirectories="&quot;E:\wxWidgets-2.8.9\lib\vc_lib\mswud&quot;;&quot;E:\wxWidgets-2.8.9\include&quot;;..\..\..\repository;..\..\..\sdl"
 				PreprocessorDefinitions="_UNICODE;"
 				StringPooling="true"
 				MinimalRebuild="false"
 				BasicRuntimeChecks="0"
 				RuntimeLibrary="2"
+				EnableEnhancedInstructionSet="2"
 				FloatingPointModel="2"
 				UsePrecompiledHeader="0"
 				BrowseInformation="0"
@@ -308,7 +292,7 @@
 		</Configuration>
 		<Configuration
 			Name="Unicode-release-static|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			OutputDirectory="$(SolutionDir)\lib_us"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="4"
 			CharacterSet="1"
@@ -332,16 +316,17 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				Optimization="3"
+				Optimization="2"
 				InlineFunctionExpansion="2"
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
-				AdditionalIncludeDirectories="&quot;E:\wxWidgets-2.8.7\lib\vc_lib\mswud&quot;;&quot;E:\wxWidgets-2.8.7\include&quot;;..\..\..\repository;..\..\..\sdl"
+				AdditionalIncludeDirectories="&quot;E:\wxWidgets-2.8.9\lib\vc_lib\mswud&quot;;&quot;E:\wxWidgets-2.8.9\include&quot;;..\..\..\repository;..\..\..\sdl"
 				PreprocessorDefinitions="_UNICODE;"
 				StringPooling="true"
 				MinimalRebuild="false"
 				BasicRuntimeChecks="0"
 				RuntimeLibrary="0"
+				EnableEnhancedInstructionSet="2"
 				FloatingPointModel="2"
 				UsePrecompiledHeader="0"
 				BrowseInformation="0"
@@ -499,6 +484,10 @@
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
+			<File
+				RelativePath="..\..\..\glib\base_2d.h"
+				>
+			</File>
 			<File
 				RelativePath="..\..\..\glib\dframe.h"
 				>

@@ -18,7 +18,7 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)\lib"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="4"
 			CharacterSet="0"
@@ -84,7 +84,7 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)\lib"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="4"
 			CharacterSet="0"
@@ -108,26 +108,20 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				UseUnicodeResponseFiles="false"
-				Optimization="3"
+				Optimization="2"
 				InlineFunctionExpansion="2"
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
-				OmitFramePointers="true"
 				WholeProgramOptimization="true"
 				AdditionalIncludeDirectories="..\..\..\alglib;..\..\..\sdl;..\..\..\repository;..\..\..\xlib;C:\Python25\include"
 				PreprocessorDefinitions="WIN32;NDEBUG"
 				StringPooling="true"
-				BasicRuntimeChecks="0"
 				RuntimeLibrary="2"
-				BufferSecurityCheck="false"
-				EnableFunctionLevelLinking="true"
 				EnableEnhancedInstructionSet="2"
 				FloatingPointModel="2"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
-				Detect64BitPortabilityProblems="false"
-				DebugInformationFormat="0"
+				DebugInformationFormat="3"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -158,12 +152,13 @@
 			/>
 		</Configuration>
 		<Configuration
-			Name="Unicode|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			Name="Unicode-debug|Win32"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)\lib"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="4"
 			CharacterSet="1"
 			ManagedExtensions="0"
+			WholeProgramOptimization="0"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -185,6 +180,7 @@
 				Optimization="0"
 				InlineFunctionExpansion="0"
 				EnableIntrinsicFunctions="false"
+				WholeProgramOptimization="false"
 				AdditionalIncludeDirectories="..\..\..\alglib;..\..\..\sdl;..\..\..\repository;..\..\..\xlib;C:\Python25\include"
 				PreprocessorDefinitions="_UNICODE;_DEBUG;"
 				StringPooling="true"
@@ -228,7 +224,7 @@
 		</Configuration>
 		<Configuration
 			Name="Unicode-release|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)\lib"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="4"
 			CharacterSet="1"
@@ -263,6 +259,7 @@
 				BasicRuntimeChecks="0"
 				RuntimeLibrary="2"
 				BufferSecurityCheck="false"
+				EnableEnhancedInstructionSet="2"
 				FloatingPointModel="2"
 				UsePrecompiledHeader="0"
 				BrowseInformation="0"
@@ -300,7 +297,7 @@
 		</Configuration>
 		<Configuration
 			Name="Unicode-release-static|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)\lib"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="4"
 			CharacterSet="1"
@@ -324,7 +321,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				Optimization="3"
+				Optimization="2"
 				InlineFunctionExpansion="2"
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
@@ -335,6 +332,151 @@
 				BasicRuntimeChecks="0"
 				RuntimeLibrary="0"
 				BufferSecurityCheck="false"
+				EnableEnhancedInstructionSet="2"
+				FloatingPointModel="2"
+				UsePrecompiledHeader="0"
+				BrowseInformation="0"
+				WarningLevel="3"
+				DebugInformationFormat="0"
+				CallingConvention="0"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLibrarianTool"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+			/>
+		</Configuration>
+		<Configuration
+			Name="Unicode-debug-py26|Win32"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)\lib"
+			IntermediateDirectory="$(ConfigurationName)"
+			ConfigurationType="4"
+			CharacterSet="1"
+			ManagedExtensions="0"
+			WholeProgramOptimization="0"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="0"
+				InlineFunctionExpansion="0"
+				EnableIntrinsicFunctions="false"
+				WholeProgramOptimization="false"
+				AdditionalIncludeDirectories="..\..\..\alglib;..\..\..\sdl;..\..\..\repository;..\..\..\xlib;C:\Python26\include"
+				PreprocessorDefinitions="_UNICODE;_DEBUG;"
+				StringPooling="true"
+				MinimalRebuild="true"
+				BasicRuntimeChecks="3"
+				RuntimeLibrary="3"
+				StructMemberAlignment="0"
+				FloatingPointModel="2"
+				UsePrecompiledHeader="0"
+				BrowseInformation="1"
+				WarningLevel="2"
+				DebugInformationFormat="3"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLibrarianTool"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+			/>
+		</Configuration>
+		<Configuration
+			Name="Unicode-release-py26|Win32"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)\lib"
+			IntermediateDirectory="$(ConfigurationName)"
+			ConfigurationType="4"
+			CharacterSet="1"
+			ManagedExtensions="0"
+			WholeProgramOptimization="1"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="2"
+				InlineFunctionExpansion="2"
+				EnableIntrinsicFunctions="true"
+				FavorSizeOrSpeed="1"
+				AdditionalIncludeDirectories="..\..\..\alglib;..\..\..\sdl;..\..\..\repository;..\..\..\xlib;C:\Python26\include"
+				PreprocessorDefinitions="_UNICODE;"
+				StringPooling="true"
+				MinimalRebuild="false"
+				BasicRuntimeChecks="0"
+				RuntimeLibrary="2"
+				BufferSecurityCheck="false"
+				EnableEnhancedInstructionSet="2"
 				FloatingPointModel="2"
 				UsePrecompiledHeader="0"
 				BrowseInformation="0"
@@ -395,6 +537,10 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
+				RelativePath="..\..\..\xlib\afixgroup.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\xlib\asymmunit.cpp"
 				>
 			</File>
@@ -418,7 +564,15 @@
 				RelativePath="..\..\..\xlib\chemdata.cpp"
 				>
 				<FileConfiguration
-					Name="Unicode|Win32"
+					Name="Unicode-debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalOptions="/bigobj"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Unicode-debug-py26|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -455,6 +609,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\xlib\experimental.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\xlib\exyzgroup.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\xlib\fastsymm.cpp"
 				>
 			</File>
@@ -487,6 +649,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\xlib\leq.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\xlib\lst.cpp"
 				>
 			</File>
@@ -504,6 +670,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\xlib\pdb.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\xlib\refmodel.cpp"
 				>
 			</File>
 			<File
@@ -571,6 +741,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\xlib\vcov.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\xlib\macro\wilson.cpp"
 				>
 			</File>
@@ -608,6 +782,10 @@
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
+			<File
+				RelativePath="..\..\..\xlib\afixgroup.h"
+				>
+			</File>
 			<File
 				RelativePath="..\..\..\xlib\asymmunit.h"
 				>
@@ -673,7 +851,23 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\xlib\experimental.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\xlib\exyzgroup.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\xlib\fastsymm.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\xlib\fracmask.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\xlib\fragment.h"
 				>
 			</File>
 			<File
@@ -697,6 +891,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\xlib\leq.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\xlib\lst.h"
 				>
 			</File>
@@ -717,7 +915,23 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\xlib\packutil.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\xlib\reflection.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\xlib\refmerge.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\xlib\refmodel.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\xlib\refutil.h"
 				>
 			</File>
 			<File
@@ -781,6 +995,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\xlib\vcov.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\xlib\xapp.h"
 				>
 			</File>
@@ -802,6 +1020,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\xlib\xmacro.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\xlib\xscatterer.h"
 				>
 			</File>
 			<File

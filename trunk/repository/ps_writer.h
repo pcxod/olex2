@@ -15,7 +15,9 @@ public:
     CurrentLineWidth = 1;
     out.Open(fileName, "w+b");
     out.Writenl("%!PS-Adobe-2.0");
-    out.Writenl( "%%Title: Olex2 test" );
+    out.Writenl( "%%Title: Olex2 2D diagram" );
+    out.Writenl( "%%Pages: 1" );
+    out.Writenl( "%%Page: 1 1" );
     out.Writenl( CString( "%%CreationDate: ") << TETime::FormatDateTime(TETime::Now()) );
     out.Writenl( "%%Orientation: Portrait" );
     out.Writenl( "%%DocumentPaperSizes: A4" );

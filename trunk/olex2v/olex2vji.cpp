@@ -45,17 +45,17 @@ TOlexViewer::TOlexViewer(int w, int h) {
   wxFont Font(*wxNORMAL_FONT);//|wxFONTFLAG_ANTIALIASED);
 //  wxFont Font(10, wxMODERN, wxNORMAL, wxNORMAL);//|wxFONTFLAG_ANTIALIASED);
   // create 4 fonts
-  TGlFont *fnt = GXApp->GetRender().Scene()->CreateFont("Labels", &Font, NULL, true, true);
+  TGlFont *fnt = GXApp->GetRender().Scene()->CreateFont("Labels", Font.GetNativeFontInfoDesc().c_str());
   fnt->Material().SetFlags(sglmAmbientF|sglmEmissionF|sglmIdentityDraw);
   fnt->Material().AmbientF = 0x7fff7f;
   fnt->Material().EmissionF = 0x1f2f1f;
   
   GXApp->LabelsFont(0);
   
-  TIns *Ins = new TIns(GXApp->AtomsInfo());
+  TIns *Ins = new TIns;
   GXApp->RegisterXFileFormat(Ins, "ins");
   GXApp->RegisterXFileFormat(Ins, "res");
-  GXApp->RegisterXFileFormat(new TCif(GXApp->AtomsInfo()), "cif");
+  GXApp->RegisterXFileFormat(new TCif, "cif");
   GXApp->SetMainFormVisible(true);
   GXApp->AtomRad("isot");
   //GXApp->SetAtomDrawingStyle(adsEllipsoid);
