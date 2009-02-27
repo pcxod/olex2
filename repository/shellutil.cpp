@@ -8,6 +8,7 @@
 
 //#undef __WIN32__
 
+
 #ifdef __WIN32__
   #include <windows.h>
   #include <objbase.h>
@@ -62,7 +63,7 @@ bool TShellUtil::CreateShortcut(const olxstr& ShortcutPath,
     }
     // Save the link by calling IPersistFile::Save.
     if( SUCCEEDED(hres) )  {
-#if !defined(_UNICODE ) || !defined(UNICODE)
+#if !defined(_UNICODE )
       WCHAR wsz[MAX_PATH];
       // Ensure that the string is Unicode.
       MultiByteToWideChar(CP_ACP, 0, ShortcutPath.u_str(), -1, wsz, MAX_PATH);

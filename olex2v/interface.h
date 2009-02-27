@@ -1,10 +1,10 @@
 #ifndef  _olx_viewer
 #define _olx_viewer
 
-#include <windows.h>
 #include "gxapp.h"
 #include "integration.h"
 #include "exception.h"
+#include <windows.h>
 
 #ifdef _MSC_VER
   #define DllImport   __declspec( dllimport )
@@ -76,6 +76,10 @@ class TOlexViewer : public olex::IOlexProcessor {
   TGXApp* GXApp;
   short DefDS;
   olxstr DataDir;
+protected:
+  virtual TStrList GetPluginList() const {  return TStrList();  }
+  virtual olxstr TranslateString(const olxstr& str) const {  return EmptyString;  }
+  virtual bool IsControl(const olxstr& cname) const {  return false;  }
 public:
   TOlexViewer(HDC windowDC, int w, int h);
   ~TOlexViewer();

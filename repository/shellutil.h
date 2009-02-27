@@ -1,7 +1,7 @@
 #ifndef shellutilH
 #define shellutilH
 
-#include "smart/ostring.h"
+#include "ebase.h"
 //---------------------------------------------------------------------------
 
 const short  fiDesktop       = 1,

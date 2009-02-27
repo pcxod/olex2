@@ -1,13 +1,14 @@
 #include "interface.h"
+
 #include <GL/gl.h>
 #include <GL/glu.h>
 
 #include "ins.h"
 #include "olxvar.h"
+#include "wx/wx.h"
 //#include "wx/fontmap.h"
 #include "wx/font.h"
 #include "wx/settings.h"
-#include "wx/wx.h"
 
 #include "xatom.h"
 #include "xbond.h"
@@ -57,7 +58,7 @@ TOlexViewer::TOlexViewer(HDC windowDC, int w, int h) : WindowDC(windowDC) {
   
   GXApp->LabelsFont(0);
 
-  TIns *Ins = new TIns(GXApp->AtomsInfo());
+  TIns *Ins = new TIns;
   GXApp->RegisterXFileFormat(Ins, "ins");
   GXApp->RegisterXFileFormat(Ins, "res");
   GXApp->SetMainFormVisible(true);
