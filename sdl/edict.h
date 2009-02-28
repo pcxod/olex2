@@ -39,6 +39,9 @@ public:
       throw TInvalidArgumentException(__OlxSourceInfo, "key");
     return SortedL::operator[] (ind).val;
   }
+  inline VType& GetObject(int ind) {  return SortedL::operator[] (ind).val;  }
+  inline const VType& GetObject(int ind) const {  return SortedL::operator[] (ind).val;  }
+
   template <typename T> VType& operator () (const T& key, const VType& def) {
     return Add(key, def);
   }
@@ -55,7 +58,7 @@ public:
   }
   template <class T> int IndexOf(const T& key) const {  return SortedL::IndexOf(key);  }
   template <class T> int IndexOfValue(const T& val) const {  
-    for( int i=0; i < Count(); i++ )
+    for( int i=0; i < SortedL::Count(); i++ )
       if( SortedL::operator [] (i).val == val )
         return i;
     return -1;
