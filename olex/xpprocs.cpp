@@ -135,7 +135,7 @@
 #include "ortdraw.h"
 // FOR DEBUG only
 #include "edict.h"
-#include "base_2d.h"
+//#include "base_2d.h"
 //#include "gl2ps/gl2ps.c"
 
 using namespace _xl_Controls;
@@ -8293,9 +8293,9 @@ void TMainForm::macProjSph(TStrObjList &Cmds, const TParamList &Options, TMacroE
 }
 //..............................................................................
 void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  vec2d p1(-1, 0), p2(0, 0.01), p3(1, 0);
-  TArc2D arc(p1, p2, p3);
-  //SortedObjectList<olxstr, olxstrComparator<true> > l, l1;
+  //vec2d p1(-1, 0), p2(0, 0.01), p3(1, 0);
+  //TArc2D arc(p1, p2, p3);
+  SortedObjectList<olxstr, olxstrComparator<true> > l, l1;
   //l.Add("c");
   //l.Add("a");
   //l.Add("b");
@@ -8304,7 +8304,7 @@ void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options, TMa
   //olxstr t2(l[1]);
   //olxstr t3 = t1;
 
-  //olxdict<olxstr, olxstr, TComparableComparator > l3;
+ olxdict<olxstr, olxstr, TComparableComparator > l3;
   //l3.Add("a");
   //l3.Add("b");
   //l3.Add("a");
