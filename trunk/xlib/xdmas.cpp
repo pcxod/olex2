@@ -84,7 +84,6 @@ void TXDMas::LoadFromStrings(const TStrList& Strings)  {
       toks.Strtok(crds[i], ' ');
       if( toks.Count() == 16 )  {
         TCAtom& atom = GetAsymmUnit().NewAtom();
-        atom.SetLoaderId(GetAsymmUnit().AtomCount()-1);
         atom.SetUiso( 4*caDefIso*caDefIso );
         toks[0].DeleteChars(')');
         toks[0].DeleteChars('(');

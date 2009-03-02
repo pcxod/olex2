@@ -59,12 +59,13 @@ protected:
   double FR1, FR1a, FwR2, FS, FRS, FRint, FRsig;
   int FParams, FTotalRefs, FUniqRefs, FRefs4sig;
   double FPeak, FHole;
+  TEValue<double> FlackParam;
   TTypeList<TLstRef> FDRefs;
   TTypeList<TTrefTry> TrefTries;
   TTypeList< TTypeList<TPattAtom> > PattSolutions;
   TTypeList<TLstSplitAtom> FSplitAtoms;
   TTypeList< AnAssociation2<olxstr, olxstr> > ErrorMsgs;
-  bool FLoaded;
+  bool FLoaded, _HasFlack;
 public:
   TLst();
   void Clear();
@@ -102,6 +103,8 @@ public:
   inline int Refs4sig() const {  return FRefs4sig; }
   inline double Peak() const   {  return FPeak; }
   inline double Hole() const   {  return FHole; }
+  inline bool HasFlack() const {  return _HasFlack; }
+  inline const TEValue<double>& Flack() const {  return FlackParam;  }
 };
 
 EndXlibNamespace()

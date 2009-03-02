@@ -146,6 +146,11 @@ xlib_InitMacro(File, "s-sort the main residue of the asymmetric unit", fpNone|fp
   xlib_InitMacro(SGS, EmptyString, fpOne|fpTwo|psFileLoaded, "Changes current space group settings using provided cell setting (if applicable) and axis");
   xlib_InitMacro(ASR, EmptyString, fpNone^psFileLoaded, "Absolute structure refinement: adds TWIN and BASF to current model in the case of non-centrosymmetric structure");
   xlib_InitMacro(Describe, EmptyString, fpNone^psFileLoaded, "Describes current refinement in a human readable form");
+  xlib_InitMacro(Sort, EmptyString, fpAny^psFileLoaded, "Sorts atoms of the default residue. Atom sort arguments:\
+ Mw - atomic weight, L - label, considering numbers, L1 - simple string comparison, MwL - atomic weight and label.\
+ Moety sort arguments: S - size, H - by heaviest atom, Mw - molecular weight. Usage: sort [atom_sort_type] or [Atoms] [moety [moety sort type] [moety atoms]].\
+ If just 'moety' is provided - the atoms will be split into the moeties without sorting.\
+ Example: sort mwl F2 F1 moety s - will sort atoms by atomic weight and label, put F1 after F2 and form moeties sorted by size");
 //_________________________________________________________________________________________________________________________
 //_________________________________________________________________________________________________________________________
 
@@ -187,6 +192,10 @@ xlib_InitMacro(File, "s-sort the main residue of the asymmetric unit", fpNone|fp
 //_________________________________________________________________________________________________________________________
   xlib_InitFunc(RemoveSE, fpOne|psFileLoaded, "Returns a new space group name without provided element");
 //_________________________________________________________________________________________________________________________
+}
+//..............................................................................
+void XLibMacros::macSort(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+  TXApp::GetInstance().XFile().Sort(TStrList(Cmds));
 }
 //..............................................................................
 void XLibMacros::macRun(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
@@ -576,7 +585,7 @@ void XLibMacros::macFix(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   if( vars.Comparei( "XYZ" ) == 0 )  {
     for(int i=0; i < atoms.Count(); i++ )  {
       for( int j=0; j < 3; j++ )
-        xapp.XFile().GetRM().Vars.FixAtomParam(atoms[i]->CAtom(), var_name_X+j);
+        xapp.XFile().GetRM().Vars.FixParam(atoms[i]->CAtom(), catom_var_name_X+j);
     }
   }
   else if( vars.Comparei( "UISO" ) == 0 )  {
@@ -585,14 +594,14 @@ void XLibMacros::macFix(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         xapp.SetAtomUiso(*atoms[i], var_val);
       else  {
         for( int j=0; j < 6; j++ )
-          xapp.XFile().GetRM().Vars.FixAtomParam(atoms[i]->CAtom(), var_name_U11+j);
+          xapp.XFile().GetRM().Vars.FixParam(atoms[i]->CAtom(), catom_var_name_U11+j);
       }
     }
   }
   else if( vars.Comparei( "OCCU" ) == 0 )  {
     for(int i=0; i < atoms.Count(); i++ )  {
       if( atoms[i]->CAtom().GetPart() == 0 )  {  // it would be invalid for split atoms
-        xapp.XFile().GetRM().Vars.FixAtomParam(atoms[i]->CAtom(), var_name_Sof);
+        xapp.XFile().GetRM().Vars.FixParam(atoms[i]->CAtom(), catom_var_name_Sof);
         if( var_val == 0 )  
           atoms[i]->CAtom().SetOccu( 1./atoms[i]->CAtom().GetDegeneracy() );
         else
@@ -611,23 +620,24 @@ void XLibMacros::macFree(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   if( vars.Comparei( "XYZ" ) == 0 )  {
     for(int i=0; i < atoms.Count(); i++ )  {
       for( int j=0; j < 3; j++ )
-        xapp.XFile().GetRM().Vars.FreeAtomParam(atoms[i]->CAtom(), var_name_X+j);
+        xapp.XFile().GetRM().Vars.FreeParam(atoms[i]->CAtom(), catom_var_name_X+j);
     }
   }
   else if( vars.Comparei( "UISO" ) == 0 )  {
     for(int i=0; i < atoms.Count(); i++ )  {
       if( atoms[i]->CAtom().GetEllipsoid() == NULL )  {  // isotropic atom
-        xapp.XFile().GetRM().Vars.FreeAtomParam(atoms[i]->CAtom(), var_name_Uiso);
+        xapp.XFile().GetRM().Vars.FreeParam(atoms[i]->CAtom(), catom_var_name_Uiso);
       }
       else  {
         for( int j=0; j < 6; j++ )
-          xapp.XFile().GetRM().Vars.FreeAtomParam(atoms[i]->CAtom(), var_name_U11+j);
+          xapp.XFile().GetRM().Vars.FreeParam(atoms[i]->CAtom(), catom_var_name_U11+j);
       }
+      atoms[i]->CAtom().SetUisoOwner(NULL);
     }
   }
   else if( vars.Comparei( "OCCU" ) == 0 )  {
     for(int i=0; i < atoms.Count(); i++ ) 
-      xapp.XFile().GetRM().Vars.FreeAtomParam(atoms[i]->CAtom(), var_name_Sof);
+      xapp.XFile().GetRM().Vars.FreeParam(atoms[i]->CAtom(), catom_var_name_Sof);
   }
 }
 //..............................................................................
@@ -1230,13 +1240,12 @@ void XLibMacros::macEXYZ(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     }
     if( uniq )  {
       TCAtom& ca = xapp.XFile().GetAsymmUnit().NewAtom();
-      ca.SetLoaderId(liNewAtom);
       ca.ccrd() = atoms[0]->CAtom().ccrd();
       ca.Label() = bai->GetSymbol() + atoms[0]->GetLabel().SubStringFrom( 
         atoms[0]->GetAtomInfo().GetSymbol().Length());
       ca.SetAtomInfo( bai );
       ca.SetDegeneracy( atoms[0]->CAtom().GetDegeneracy() );
-      rm.Vars.FixAtomParam(ca, var_name_Sof);
+      rm.Vars.FixParam(ca, catom_var_name_Sof);
       eg->Add(ca);
       ca.SetUiso( atoms[0]->CAtom().GetUiso() );
     }
@@ -1247,8 +1256,8 @@ void XLibMacros::macEXYZ(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     if( link_occu )  {
       if( eg->Count() == 2 )  {
         XVar& vr = rm.Vars.NewVar();
-        rm.Vars.AddVarRef(vr, (*eg)[0], var_name_Sof, relation_AsVar); 
-        rm.Vars.AddVarRef(vr, (*eg)[1], var_name_Sof, relation_AsOneMinusVar); 
+        rm.Vars.AddVarRef(vr, (*eg)[0], catom_var_name_Sof, relation_AsVar, 1.0); 
+        rm.Vars.AddVarRef(vr, (*eg)[1], catom_var_name_Sof, relation_AsOneMinusVar, 1.0); 
       }
       else
         leq = &rm.Vars.NewEquation();
@@ -1257,7 +1266,7 @@ void XLibMacros::macEXYZ(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       if( (*eg)[i].IsDeleted() )  continue;
       if( leq != NULL )  {
         XVar& vr = rm.Vars.NewVar( 1./eg->Count() );
-        rm.Vars.AddVarRef(vr, (*eg)[i], var_name_Sof, relation_AsVar, 1.0); 
+        rm.Vars.AddVarRef(vr, (*eg)[i], catom_var_name_Sof, relation_AsVar, 1.0); 
         leq->AddMember(vr);
       }
       if( sr != NULL )
@@ -1448,10 +1457,6 @@ void XLibMacros::macEnvi(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       {  skip = true;  break;  }
     }
     if( !skip )  allAtoms.Add( &au.GetAtom(i) );
-  }
-  for( int i=0; i < au.CentroidCount(); i++ )  {
-    if( au.GetCentroid(i).IsDeleted() )  continue;
-    allAtoms.Add( &au.GetCentroid(i) );
   }
   for( int i=0; i < allAtoms.Count(); i++ )  {
     if( SA.CAtom().GetId() == allAtoms[i]->GetId() )
@@ -2570,7 +2575,6 @@ void XLibMacros::macChangeSG(TStrObjList &Cmds, const TParamList &Options, TMacr
     if( list[i].GetB()->GetTag() > 0 )  {
       ca = &au.NewAtom();
       ca->Assign( *list[i].GetB() );
-      ca->SetLoaderId(liNewAtom);
     }
     else  {
       ca = list[i].GetB();
@@ -2583,7 +2587,6 @@ void XLibMacros::macChangeSG(TStrObjList &Cmds, const TParamList &Options, TMacr
     if( au.GetAtom(i).GetTag() == 0 )
       au.GetAtom(i).SetDeleted(true);
   }
-  au.InitAtomIds();
   au.ChangeSpaceGroup(*sg);
   xapp.XFile().LastLoader()->GetAsymmUnit().ChangeSpaceGroup(*sg);
   latt.Init();

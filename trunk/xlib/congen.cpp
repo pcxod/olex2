@@ -20,8 +20,6 @@ void AConstraintGenerator::DoGenerateAtom( TCAtomPList& created, TAsymmUnit& au,
     au.CartesianToCell(v);
 
     TCAtom* CA = &au.NewAtom();
-    CA->SetId( au.AtomCount()-1 );
-    CA->SetLoaderId(liNewAtom);
     if( IncLabel )  {
       int j = i;
       olxstr lbl;

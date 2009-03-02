@@ -33,8 +33,8 @@
 int TLattice_SortFragments(const TNetwork* n1, const TNetwork* n2)  {
   return n2->NodeCount() - n1->NodeCount();
 }
-int TLattice_SortAtomsByLoaderId(const TSAtom* a1, const TSAtom* a2)  {
-  return a1->CAtom().GetLoaderId() - a2->CAtom().GetLoaderId();
+int TLattice_SortAtomsById(const TSAtom* a1, const TSAtom* a2)  {
+  return a1->CAtom().GetId() - a2->CAtom().GetId();
 }
 //---------------------------------------------------------------------------
 // TLattice function bodies
@@ -253,7 +253,7 @@ void TLattice::InitBody()  {
       CAtom.SetFragmentId(i);
     }
   }
-  TSAtomPList::QuickSorter.SortSF(Atoms, TLattice_SortAtomsByLoaderId);
+  TSAtomPList::QuickSorter.SortSF(Atoms, TLattice_SortAtomsById);
   OnDisassemble->Exit(this);
 }
 void TLattice::Init()  {
@@ -298,7 +298,6 @@ void TLattice::GenerateAtoms(const TSAtomPList& atoms, TSAtomPList& result, cons
       A->CAtom( atoms[j]->CAtom() );
       A->ccrd() = *M * A->ccrd();
       GetAsymmUnit().CellToCartesian( A->ccrd(), A->crd() );
-      if( atoms[j]->CAtom().GetLoaderId() != -1 )   // for a centroid or whatsoever == -1
       A->SetEllipsoid( &GetUnitCell().GetEllipsoid(M->GetTag(), atoms[j]->CAtom().GetId()) );
       A->AddMatrix(M);
       result.Add(A);
@@ -628,7 +627,7 @@ TSAtom* TLattice::FindSAtom(const olxstr& Label) const {
 //..............................................................................
 TSAtom* TLattice::FindSAtom(const TCAtom& ca) const {
   for( int i =0; i < Atoms.Count(); i++ )
-    if( ca.GetLoaderId() == Atoms[i]->CAtom().GetLoaderId() )  
+    if( ca.GetId() == Atoms[i]->CAtom().GetId() )  
       return Atoms[i];
   return NULL;
 }
@@ -666,7 +665,6 @@ TSAtom* TLattice::NewAtom(const vec3d& center)  {
   catch(const TExceptionBase& exc)  {
     throw TFunctionFailedException(__OlxSourceInfo, exc.Replicate());
   }
-  ca->SetLoaderId( liNewAtom );
   ca->ccrd() = center;
   TSAtom* a = new TSAtom( Network );
   a->CAtom(*ca);
@@ -711,27 +709,21 @@ TSPlane* TLattice::TmpPlane(const TSAtomPList& atoms, int weightExtent)  {
 //..............................................................................
 void TLattice::UpdateAsymmUnit()  {
   if( Atoms.IsEmpty() )  return;
-  GetAsymmUnit().InitAtomIds();
   TTypeList<TSAtomPList> AUAtoms;
   TSAtom* OA;
   const int ac = GetAsymmUnit().AtomCount();
-  const int lc = ac + GetAsymmUnit().CentroidCount();
-  for( int i=0; i < lc; i++ )  // create lists to store atom groups
+  for( int i=0; i < ac; i++ )  // create lists to store atom groups
     AUAtoms.AddNew();
   const int lat_ac = Atoms.Count();
   for( int i=0; i < lat_ac; i++ )  {
     TSAtom* A = Atoms[i];
     if( A->IsDeleted() )  continue;
-    TSAtomPList& l = (A->CAtom().GetLoaderId() == liCentroid) ?  
-      AUAtoms[GetAsymmUnit().AtomCount() + A->CAtom().GetId()] :
-      AUAtoms[A->CAtom().GetId()];
-    l.Add(A);
+    AUAtoms[A->CAtom().GetId()].Add(A);
   }
-  for( int i=0; i < lc; i++ )  {  // create lists to store atom groups
+  for( int i=0; i < ac; i++ )  {  // create lists to store atom groups
     TSAtomPList& l = AUAtoms[i];
     if( l.IsEmpty() )  {  // all atoms are deleted
-      if( i >= ac ) AsymmUnit->GetCentroid(i-ac).SetDeleted(true);
-      else          AsymmUnit->GetAtom(i).SetDeleted(true);
+      AsymmUnit->GetAtom(i).SetDeleted(true);
       continue;
     }
     // find the original atom, or symmetry equivalent if removed
@@ -751,7 +743,7 @@ void TLattice::UpdateAsymmUnit()  {
     }
     if( OA == NULL )
       OA = l[0];
-    TCAtom& CA = (i >= ac) ? GetAsymmUnit().GetCentroid(i-ac) : GetAsymmUnit().GetAtom(i);
+    TCAtom& CA = GetAsymmUnit().GetAtom(i);
     CA.SetDeleted(false);
     if( OA->GetEllipsoid() )  {
       CA.UpdateEllp(*OA->GetEllipsoid());
@@ -777,26 +769,14 @@ void TLattice::ListAsymmUnit(TSAtomPList& L, TCAtomPList* Template, bool Include
     }
   }
   else  {
-    L.SetCapacity( L.Count() + GetAsymmUnit().AtomCount() + GetAsymmUnit().CentroidCount() );
+    L.SetCapacity( L.Count() + GetAsymmUnit().AtomCount() );
     for( int i=0; i < GetAsymmUnit().AtomCount(); i++ )    {
       TCAtom& CA = GetAsymmUnit().GetAtom(i);
       if( CA.IsDeleted() )  continue;
       if( !IncludeQ && CA.GetAtomInfo() == iQPeakIndex )  continue;
       TSAtom* A = new TSAtom( Network );
       A->CAtom(CA);
-      if( CA.GetLoaderId() >=0 )
-        A->SetEllipsoid( &GetUnitCell().GetEllipsoid(0, CA.GetId()) ); // ellipsoid for the identity matrix
-      A->AddMatrix( Matrices[0] );
-      A->SetLatId( L.Count() );
-      L.Add(A);
-    }
-    //AsymmUnit()->CollapseExyz();
-    for( int i=0; i < GetAsymmUnit().CentroidCount(); i++ )  {
-      TCAtom& CA = GetAsymmUnit().GetCentroid(i);
-      if( CA.IsDeleted() )  continue;
-      TSAtom* A = new TSAtom( Network );
-      A->CAtom(CA);
-      //A->SetEllipsoid( &GetUnitCell().GetEllipsoid(0, CA->GetId() )); // ellipsoid for the identity matrix
+      A->SetEllipsoid( &GetUnitCell().GetEllipsoid(0, CA.GetId()) ); // ellipsoid for the identity matrix
       A->AddMatrix( Matrices[0] );
       A->SetLatId( L.Count() );
       L.Add(A);
@@ -963,11 +943,12 @@ void TLattice::MoveToCenter()  {
         }
       }
       else  {
+        const mat3d etm = abc2xyz*m->r*xyz2abc;
         for(int j=0; j < frag->NodeCount(); j++ )  {
           TSAtom& SA = frag->Node(j);
           SA.CAtom().ccrd() = *m * SA.CAtom().ccrd();
           if( SA.CAtom().GetEllipsoid() != NULL ) 
-            SA.CAtom().GetEllipsoid()->MultMatrix( abc2xyz*m->r*xyz2abc );
+            SA.CAtom().GetEllipsoid()->MultMatrix( etm );
         }
       }
       delete m;
@@ -1193,7 +1174,7 @@ void TLattice::Disassemble()  {
     for( int j=0; j < Frag->NodeCount(); j++ )
       Frag->Node(j).CAtom().SetFragmentId(i);
   }
-  TSAtomPList::QuickSorter.SortSF(Atoms, TLattice_SortAtomsByLoaderId);
+  TSAtomPList::QuickSorter.SortSF(Atoms, TLattice_SortAtomsById);
   OnDisassemble->Exit(this);
 }
 //..............................................................................
@@ -1229,7 +1210,7 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPL
       if( AE.GetCAtom(i).GetPart() != 0 && AE.GetCAtom(i).GetPart() != AE.GetBase().CAtom().GetPart() ) 
         if( parts.IndexOf(AE.GetCAtom(i).GetPart()) == -1 )  {
           parts.Add( AE.GetCAtom(i).GetPart() );
-          occu.Add( rm->Vars.GetAtomParam(AE.GetCAtom(i), var_name_Sof) );
+          occu.Add( rm->Vars.GetParam(AE.GetCAtom(i), catom_var_name_Sof) );
         }
     }
     if( !parts.IsEmpty() )  {  // here we go..
@@ -1239,7 +1220,7 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPL
         _AnalyseAtomHAdd(cg, atom, ProcessingAtoms, parts[i], &gen);
         for( int j=0; j < gen.Count(); j++ )  {
           gen[j]->SetPart( parts[i] );
-          rm->Vars.SetAtomParam(*gen[j], var_name_Sof, occu[i] );
+          rm->Vars.SetParam(*gen[j], catom_var_name_Sof, occu[i] );
         }
         gen.Clear();
       }

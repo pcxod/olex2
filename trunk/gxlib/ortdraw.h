@@ -27,6 +27,7 @@ private:
   float AradScale, BradScale, DrawScale, BondRad;
   mat3f ProjMatr, UnProjMatr;
   vec3f DrawOrigin, SceneOrigin;
+  TGXApp& app;
 protected:
   short ElpDiv, PieDiv, BondDiv;
   TArrayList<vec3f> ElpCrd, PieCrd, Arc, BondCrd, Bond;
@@ -57,17 +58,21 @@ protected:
     }
     return cnt;
   }
-  void DrawBonds(PSWriter& pw, const OrtAtom& oa) const  {
+  void DoDrawBonds(PSWriter& pw, const OrtAtom& oa, uint32_t color, float scalex) const  {
     pw.lineWidth(BondLineWidth);
-    pw.color(0);
+    pw.color(color);
     const TSAtom& sa = *oa.atom;
     for( int j=0; j < sa.BondCount(); j++ )  {
       const TSBond& bn = sa.Bond(j);
+      if( app.GetBond( bn.GetTag() ).Deleted() || !app.GetBond( bn.GetTag() ).Visible() )
+        continue;
       vec3f p1 = (bn.Another(sa).crd() + SceneOrigin)*ProjMatr+DrawOrigin;
       if( p1[2] <= oa.crd[2] )  // goes into the plane - drawn
         continue; 
+      if( bn.GetType() == sotHBond )
+        pw.custom("[3] 0 setdash");
       const vec3f dir_vec( (p1-oa.crd).Normalise() );
-      const float pers_scale = sqrt(1.0-sqr(dir_vec[2]));
+      const float pers_scale = 1.0-sqr(dir_vec[2]);
       float brad = (bn.GetA().GetAtomInfo() < 4 || bn.GetB().GetAtomInfo() < 4) ? 
         BondRad/2 : BondRad;
       vec3f touch_point = (bn.Another(sa).crd()-oa.atom->crd()).Normalise();
@@ -82,12 +87,11 @@ protected:
       pw.newPath();
       for( int j=0; j < BondDiv; j++ )  {
         Bond[j] = BondCrd[j]*proj_mat;
-        vec3f v1 = Bond[j].NormaliseTo(brad*(1+pers_scale));
-        vec3f v2 = Bond[j].NormaliseTo(brad*2);
+        vec3f v1 = Bond[j].NormaliseTo(brad*(1+pers_scale)*scalex);
+        vec3f v2 = Bond[j].NormaliseTo(brad*2*scalex);
         if( sa.GetEllipsoid() != NULL )  {
-          //vec3f v3 = ((BondCrd[j]*rot_mat+touch_point)*(*oa.elpm));//.NormaliseTo(brad*(1+pers_scale));
-          vec3f v3 = (((BondCrd[j]*rot_mat+touch_point)*ProjMatr).Normalise()*(*oa.ielpm));//.NormaliseTo(brad*(1+pers_scale));
-          off_vec = dir_vec*v3.Length()*0.95;
+          vec3f v3 = (((BondCrd[j]*rot_mat+touch_point)*ProjMatr).Normalise()*(*oa.ielpm));
+          off_vec = dir_vec*v3.Length();//*0.80;
         }
         else
           off_vec = dir_vec*off_len;
@@ -96,9 +100,15 @@ protected:
       pw.stroke();
       //pw.drawLines(Bond, BondDiv, true);
       pw.translate(-oa.crd);      
+      if( bn.GetType() == sotHBond )
+        pw.custom("[] 0 setdash");
     }
   }
-  void DrawRimsAndQuad(PSWriter& pw, const OrtAtom& oa)  {
+  void DrawBonds(PSWriter& pw, const OrtAtom& oa) const  {
+    DoDrawBonds(pw, oa, ~0, 1.2);
+    DoDrawBonds(pw, oa, 0, 1);
+  }
+  void DrawRimsAndQuad(PSWriter& pw, const OrtAtom& oa, bool drawQuad)  {
     pw.lineWidth(QuadLineWidth);
     pw.translate(oa.crd);
     static const vec3f center(0,0,0);
@@ -115,34 +125,35 @@ protected:
     int pts_cnt = PrepareArc(Arc, FilteredArc, norm_vec);
     //pw.color(0x0000ff);
     pw.drawLines_vp(FilteredArc, pts_cnt, false);
-    pw.drawLine(center, pelpm[0]);
 
     for( int j=0; j < ElpDiv; j++ )
       Arc[j] = vec3f(ElpCrd[j][1], 0, ElpCrd[j][0])*pelpm;
     pts_cnt = PrepareArc(Arc, FilteredArc, norm_vec);
     //pw.color(0x00ff00);
     pw.drawLines_vp(FilteredArc, pts_cnt, false);
-    pw.drawLine(center, pelpm[1]);
 
     for( int j=0; j < ElpDiv; j++ )
       Arc[j] = vec3f(0, ElpCrd[j][0], ElpCrd[j][1])*pelpm;
     pts_cnt = PrepareArc(Arc, FilteredArc, norm_vec);
     //pw.color(0xff0000);
     pw.drawLines_vp(FilteredArc, pts_cnt, false);
-    pw.drawLine(center, pelpm[2]);
 
     //pw.color(0);
-
-    for( int j=0; j < PieDiv; j++ )
-      pw.drawLine( PieCrd[j]*pelpm, pelpm[0]*((float)(PieDiv-j)/PieDiv));
-    for( int j=0; j < PieDiv; j++ )
-      pw.drawLine( vec3f(0, PieCrd[j][0], PieCrd[j][1])*pelpm, pelpm[1]*((float)(PieDiv-j)/PieDiv));
-    for( int j=0; j < PieDiv; j++ )
-      pw.drawLine( vec3f(PieCrd[j][1], 0, PieCrd[j][0])*pelpm, pelpm[2]*((float)(PieDiv-j)/PieDiv));
+    if( drawQuad )  {
+      pw.drawLine(center, pelpm[0]);
+      pw.drawLine(center, pelpm[1]);
+      pw.drawLine(center, pelpm[2]);
+      for( int j=0; j < PieDiv; j++ )
+        pw.drawLine( PieCrd[j]*pelpm, pelpm[0]*((float)(PieDiv-j)/PieDiv));
+      for( int j=0; j < PieDiv; j++ )
+        pw.drawLine( vec3f(0, PieCrd[j][0], PieCrd[j][1])*pelpm, pelpm[1]*((float)(PieDiv-j)/PieDiv));
+      for( int j=0; j < PieDiv; j++ )
+        pw.drawLine( vec3f(PieCrd[j][1], 0, PieCrd[j][0])*pelpm, pelpm[2]*((float)(PieDiv-j)/PieDiv));
+    }
     pw.translate(-oa.crd);
   }
 public:
-  OrtDraw() {  
+  OrtDraw() : app(TGXApp::GetInstance()) {  
     ElpDiv = 36;
     BondDiv = 24;
     PieDiv = 4;
@@ -197,11 +208,12 @@ public:
     PSWriter pw(fileName);
     pw.custom("/Helvetica findfont 12 scalefont setfont");
     Init(pw);
-    TGXApp& app = TGXApp::GetInstance();
     const TEBasis& basis = app.GetRender().GetBasis();
     TTypeList<OrtDraw::OrtAtom> atoms;
     atoms.SetCapacity(app.AtomCount());
     for( int i=0; i < app.AtomCount(); i++ )  {
+      if( app.GetAtom(i).Deleted() || !app.GetAtom(i).Visible() )
+        continue;
       const TSAtom& sa = app.GetAtom(i).Atom();
       if( sa.GetEllipsoid() != NULL )  {
         mat3f& elpm = *(new mat3f(sa.GetEllipsoid()->GetMatrix()) );
@@ -215,6 +227,10 @@ public:
       }
       else
         atoms.AddNew(&sa, (sa.crd() + SceneOrigin)*ProjMatr+DrawOrigin);
+    }
+    for( int i=0; i < app.BondCount(); i++ )  {
+      app.GetBond(i).SetTag(i);
+      app.GetBond(i).Bond().SetTag(i);
     }
     atoms.QuickSorter.SortSF(atoms, OrtAtomZSort);
 
@@ -240,7 +256,7 @@ public:
         pw.fill();
         pw.color(0);
         pw.drawEllipse(p, ielpm);
-        DrawRimsAndQuad(pw, atoms[i]);
+        DrawRimsAndQuad(pw, atoms[i], sa.GetAtomInfo() != iCarbonIndex);
       }
       //DrawUpperBonds(pw, atoms[i]);
       DrawBonds(pw, atoms[i]);

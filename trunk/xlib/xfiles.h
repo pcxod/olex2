@@ -14,7 +14,7 @@ BeginXlibNamespace()
 const short slltLength = 0x0001,  // sorts by bond length
             slltName   = 0x0002,  // sorts by atom name
             slltMw     = 0x0004;  // sorts by atom moleculr weight
-            
+
 class TBasicCFile: public ACollectionItem  {
 private:
 protected:
@@ -99,6 +99,10 @@ public:
   // returns lat loader object to access properties of the base class if type is not required
   TBasicCFile* LastLoader()                  const {  return FLastLoader;  }
   void UpdateAsymmUnit();
+  /* Generic sort procedure, taking string instructions...
+    instructions: Mw, Label, Label1, moety size, weight, heaviest 
+  */
+  void Sort(const TStrList& instructions);
   void LoadFromFile(const olxstr & FN);
   void SaveToFile(const olxstr & FN, bool Sort);
   // return 

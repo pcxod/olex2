@@ -9,12 +9,12 @@ void TAfixGroup::Assign(const TAfixGroup& ag)  {
   U = ag.U;
   Afix = ag.Afix;
   
-  Pivot = Parent.RM.aunit.FindCAtomByLoaderId(ag.Pivot->GetLoaderId());
+  Pivot = Parent.RM.aunit.FindCAtomById(ag.Pivot->GetId());
   if( Pivot == NULL )
     throw TFunctionFailedException(__OlxSourceInfo, "asymmetric units mismatch");
   SetPivot( *Pivot );
   for( int i=0; i < ag.Dependent.Count(); i++ )  {
-    Dependent.Add( Parent.RM.aunit.FindCAtomByLoaderId( ag.Dependent[i]->GetLoaderId()) );
+    Dependent.Add( Parent.RM.aunit.FindCAtomById( ag.Dependent[i]->GetId()) );
     if( Dependent.Last() == NULL )
       throw TFunctionFailedException(__OlxSourceInfo, "asymmetric units mismatch");
     Dependent.Last()->SetParentAfixGroup(this);

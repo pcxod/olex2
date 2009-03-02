@@ -25,9 +25,6 @@ const  short sotNone  = 0x0000,
              sotSCBond = 0x0004,
              sotTBond = 0x0005,
              sotBBond = 0x0006;
-// LoaderId values for CAtom             
-const short  liCentroid = -1,
-             liNewAtom  = -2;
 
 extern const float dcMaxCBLength, // 3.5 maximum length of a covalent bond
                    dcMaxHBLength; // 4.5 maximu length of a short interaction

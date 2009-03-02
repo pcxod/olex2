@@ -1,6 +1,7 @@
 #ifndef __olx_liner_eq_h
 #define __olx_liner_eq_h
 #include "xbase.h"
+#include "rm_base.h"
 #include "typelist.h"
 #include "dataitem.h"
 #ifndef _NO_PYTHON
@@ -8,22 +9,6 @@
 #endif
 
 BeginXlibNamespace()
-
-const short  // variable names
-  var_name_First = 0,  // for iterations
-  var_name_Scale = 0,
-  var_name_X     = 1, // order matters var_name_X+i
-  var_name_Y     = 2,
-  var_name_Z     = 3,
-  var_name_Sof   = 4,
-  var_name_Uiso  = 5,
-  var_name_U11   = 6, // order maters var_name_U11+i
-  var_name_U22   = 7,
-  var_name_U33   = 8,
-  var_name_U23   = 9,
-  var_name_U13   = 10,
-  var_name_U12   = 11,
-  var_name_Last  = 11;  // for iterations
 
 const short  // relation of parameters to variables
   relation_None          = 0,  // fixed param
@@ -40,28 +25,30 @@ class XVar;
 class XVarManager;
 struct XVarReference;
 
+//class IXVar
+
 struct XVarReference {
 protected:
   int Id;
 public:
-  class TCAtom* atom;
-  short var_name;  // one of the var_name
+  IXVarReferencer* referencer;
+  short var_index;  // one of the var_name
   short relation_type; // relationAsVar or relation_AsOneMinusVar
-  double coefficient; // line 0.25 in 20.25
+  double coefficient; // like 0.25 in 20.25
   XVar& Parent;
-  XVarReference(XVar& parent, TCAtom* a, short _var_name, 
+  XVarReference(XVar& parent, IXVarReferencer* r, short _var_index, 
     short _relation_type, double coeff=1.0) : 
     Parent(parent),
-    atom(a), 
-    var_name(_var_name), 
+    referencer(r), 
+    var_index(_var_index), 
     relation_type(_relation_type), 
     coefficient(coeff) { }
   DefPropP(int, Id)
   // returns the value of the atom parameter associated with this reference
-  double GetActualValue() const;
+  double GetActualValue() const {  return referencer->GetValue(var_index);  }
   void ToDataItem(TDataItem& item) const;
 #ifndef _NO_PYTHON
-  PyObject* PyExport(TPtrList<PyObject>& atoms);
+  PyObject* PyExport(TPtrList<PyObject>& referrers);
 #endif
   // returns a new instance created with new
   static XVarReference& FromDataItem(const TDataItem& item, XVar& parent);
@@ -172,14 +159,12 @@ class XVarManager {
   int NextVar;  // this controls there variables go in sebsequent calls
 public:
 
-  class TAsymmUnit& aunit;
+  class RefinementModel& RM;
   
-  static olxstr VarNames[];
   static olxstr RelationNames[];
-  static short VarNameIndex(const olxstr& vn);
   static short RelationIndex(const olxstr& rn);
   
-  XVarManager(TAsymmUnit& au);
+  XVarManager(RefinementModel& rm);
   
   XVar& NewVar(double val = 0.5)  {  
     XVar* v = new XVar(*this, val);
@@ -226,21 +211,25 @@ public:
   /* sets a relation between an atom parameter and a variable, if the coefficient is -10 (default value), 
   the atom degenerocy is taken
   */
-  XVarReference& AddVarRef(XVar& var, TCAtom& a, short var_name, short relation, double coefficient=-10.0);
+  XVarReference& AddVarRef(XVar& var, IXVarReferencer& r, short var_name, short relation, double coefficient);
   // for parsing...
   XVarReference& AddVarRef(XVarReference& ref) {  References.Add(ref).SetId(References.Count());  return ref;  }
   // releases a reference to the variable, must be deleted, unless restored
-  XVarReference* ReleaseRef(TCAtom& a, short var_name); 
+  XVarReference* ReleaseRef(IXVarReferencer& r, short var_name); 
   // restrores previously released var reference
-  void RestoreRef(TCAtom& a, short var_name, XVarReference* vr);
+  void RestoreRef(IXVarReferencer& r, short var_name, XVarReference* vr);
   // removes all unused variables and invalid/incomplete equations
   void Validate();
   // helps with parsing SHELX specific paramter representation, returns actual value of the param
-  double SetAtomParam(TCAtom& ca, short param_name, double val);
-  void FixAtomParam(TCAtom& ca, short param_name);
-  void FreeAtomParam(TCAtom& ca, short param_name);
+  double SetParam(IXVarReferencer& r, short param_name, double val);
+  void FixParam(IXVarReferencer& r, short param_name);
+  void FreeParam(IXVarReferencer& r, short param_name);
   // retruns a SHELX specific value like 20.5 or 11.0
-  double GetAtomParam(const TCAtom& ca, short param_name, double* Q=NULL) const;
+  double GetParam(const IXVarReferencer& r, short param_name) const {
+    return GetParam(r, param_name, r.GetValue(param_name));
+  }
+  // uses the override_val instead of the call to GetValue(param_name)
+  double GetParam(const IXVarReferencer& r, short param_name, double override_val) const;
   // parses FVAR and assignes variable values
   template <class list> void AddFVAR(const list& fvar) {
     for( int i=0; i < fvar.Count(); i++, NextVar++ )  {

@@ -10,6 +10,7 @@ TSimpleRestraint::TSimpleRestraint(TSRestraintList& parent, const short listType
   Esd = Esd1 = 0;
   ListType = listType;
   AllNonHAtoms = false;
+  VarRef = NULL;
 }
 //..............................................................................
 TSimpleRestraint::~TSimpleRestraint()  {
@@ -133,7 +134,7 @@ void TSimpleRestraint::Assign(const TSimpleRestraint& sr)  {
   }
   else  {
     for(int i=0; i < sr.InvolvedAtoms.Count(); i++ )  {
-      TCAtom* aa = tau.FindCAtomByLoaderId( sr.InvolvedAtoms[i].GetAtom()->GetLoaderId() );
+      TCAtom* aa = tau.FindCAtomById( sr.InvolvedAtoms[i].GetAtom()->GetId() );
       if( aa == NULL )
         throw TFunctionFailedException(__OlxSourceInfo, "asymmetric units do not match");
       AddAtom( *aa, sr.InvolvedAtoms[i].GetMatrix() );
@@ -242,7 +243,16 @@ void TSimpleRestraint::FromDataItem(TDataItem& item) {
   }
 }
 //..............................................................................
+IXVarReferencerContainer& TSimpleRestraint::GetParentContainer() {  return Parent;  }
 //..............................................................................
+olxstr TSimpleRestraint::GetIdName() const {  return Parent.GetIdName();  }
+//..............................................................................
+olxstr TSimpleRestraint::GetVarName(short var_index) const {  
+  const static olxstr vm("1");
+  if( var_index != 0 )
+    throw TInvalidArgumentException(__OlxSourceInfo, "var index");
+  return vm;  
+}
 //..............................................................................
 //..............................................................................
 //..............................................................................
@@ -285,13 +295,31 @@ void TSRestraintList::OnCAtomCrdChange( TCAtom* ca, const smatd& matr )  {
   throw TNotImplementedException(__OlxSourceInfo);
 }
 //..............................................................................
-void TSRestraintList::Release(TSimpleRestraint& sr)  {
-  for(int i=0; i < Restraints.Count(); i++ )  {
-    if( &Restraints[i] == &sr )  {
-      Restraints.Release(i);
-      return;
-    }
+void TSRestraintList::Clear()  {  
+  for( int i=0; i < Restraints.Count(); i++ )  {
+    if( Restraints[i].GetVarRef(0) != NULL )
+      delete RefMod.Vars.ReleaseRef(Restraints[i], 0);
   }
+  Restraints.Clear();  
+}
+//..............................................................................
+TSimpleRestraint& TSRestraintList::Release(int i)    {  
+  if( Restraints[i].GetVarRef(0) != NULL )
+    RefMod.Vars.ReleaseRef(Restraints[i], 0);
+  return Restraints.Release(i);  
+}
+//..............................................................................
+void TSRestraintList::Restore(TSimpleRestraint& sr)  {  
+  Restraints.Add(sr);  
+  if( sr.GetVarRef(0) != NULL )
+    RefMod.Vars.RestoreRef(sr, 0, sr.GetVarRef(0));
+}
+//..............................................................................
+void TSRestraintList::Release(TSimpleRestraint& sr)  {
+  int ind = Restraints.IndexOf(sr);
+  if( ind == -1 )
+    throw TInvalidArgumentException(__OlxSourceInfo, "restraint");
+  Release(ind);
 }
 //..............................................................................
 void TSRestraintList::ToDataItem(TDataItem& item) const {

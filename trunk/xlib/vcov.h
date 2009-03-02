@@ -35,7 +35,7 @@ protected:
   }
   int FindAtomIndex(const TCAtom& a) const {
     for( int i=0; i < Index.Count(); i++ )
-      if( Index[i].GetC() == a.GetLoaderId() )
+      if( Index[i].GetC() == a.GetId() )
         return i;
     return -1;
   }
@@ -73,7 +73,7 @@ public:
     }
     for( int i=0; i < a_indexes.Count(); i++ )  {
       if( a_indexes[i] == -1 )  continue;
-      for( int j=a_indexes[i]; j < Index.Count() && Index[j].GetC() == atoms[i]->CAtom().GetLoaderId(); j++ )  {
+      for( int j=a_indexes[i]; j < Index.Count() && Index[j].GetC() == atoms[i]->CAtom().GetId(); j++ )  {
         if( Index[j].GetB() == vcoviX )
           indexes[i][0] = j;
         else if( Index[j].GetB() == vcoviY )

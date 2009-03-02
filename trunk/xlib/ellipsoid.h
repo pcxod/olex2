@@ -57,7 +57,7 @@ public:
       E[i] = FEsd[i];
     }
   }
-
+  const double& GetQuadVal(short ind) const {  return FQuad[ind];  }
   inline double GetSX()               const {  return SX;  }
   inline double GetSY()               const {  return SY;  }
   inline double GetSZ()               const {  return SZ;  }

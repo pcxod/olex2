@@ -16,8 +16,9 @@ const short rltNone   = 0, //default value for the constructor...
             rltAngles = 3, // set of "angles" - atom triples
             rltGroup  = 4; // atoms represent a group
 
-class TSimpleRestraint : public IEObject  {
+class TSimpleRestraint : public IEObject, public IXVarReferencer  {
   double Value, Esd, Esd1;
+  XVarReference* VarRef;
   bool AllNonHAtoms;
   short ListType;
   TCAtomGroup InvolvedAtoms;
@@ -69,6 +70,41 @@ public:
   DefPropP(double, Esd1)
   DefPropB(AllNonHAtoms)
 
+  // compares pointer addresses only!
+  bool operator == (const TSimpleRestraint& sr) const {  return this == &sr;  }
+// IXVarReferencer implementation
+  virtual short VarCount() const {  return 1;  }
+  virtual const XVarReference* GetVarRef(short var_index) const {  
+    if( var_index != 0 )
+      throw TInvalidArgumentException(__OlxSourceInfo, "var index");
+    return VarRef;  
+  }
+  virtual XVarReference* GetVarRef(short var_index)  {  
+    if( var_index != 0 )
+      throw TInvalidArgumentException(__OlxSourceInfo, "var index");
+    return VarRef;  
+  }
+  virtual olxstr GetVarName(short var_index) const;
+  virtual void SetVarRef(short var_index, XVarReference* var_ref) {  
+    if( var_index != 0 )
+      throw TInvalidArgumentException(__OlxSourceInfo, "var index");
+    VarRef = var_ref;  
+  }
+  virtual IXVarReferencerContainer& GetParentContainer();
+  virtual double GetValue(short var_index) const {  
+    if( var_index != 0 )
+      throw TInvalidArgumentException(__OlxSourceInfo, "var index");
+    return Value;  
+  }
+  virtual void SetValue(short var_index, const double& val) {  
+    if( var_index != 0 )
+      throw TInvalidArgumentException(__OlxSourceInfo, "var index");
+    Value = val;  
+  }
+  virtual bool IsValid() const {  return true;  }
+  virtual olxstr GetIdName() const;
+//
+
   void ToDataItem(TDataItem& item) const;
 #ifndef _NO_PYTHON
   PyObject* PyExport(TPtrList<PyObject>& atoms, TPtrList<PyObject>& equiv);
@@ -76,12 +112,14 @@ public:
   void FromDataItem(TDataItem& item);
 };
 
-class TSRestraintList : public IEObject  {
+class TSRestraintList : public IEObject, public IXVarReferencerContainer  {
   TTypeList<TSimpleRestraint> Restraints;
   short RestraintListType;
   RefinementModel& RefMod;
+  olxstr IdName;
 public:
-  TSRestraintList(RefinementModel& rm, const short restraintListType) : RefMod(rm) {
+  TSRestraintList(RefinementModel& rm, const short restraintListType, const olxstr& id_name) : 
+      RefMod(rm), IdName(id_name) {
     RestraintListType = restraintListType;  
   }
   virtual ~TSRestraintList()  {}
@@ -93,9 +131,9 @@ public:
       Restraints[i].Validate();
   }
 
-  inline TSimpleRestraint& Release(int i)    {  return Restraints.Release(i);  }
+  TSimpleRestraint& Release(int i);
   void Release(TSimpleRestraint& sr);
-  inline void Restore(TSimpleRestraint& sr)  {  Restraints.Add(sr);  }
+  void Restore(TSimpleRestraint& sr);
 
   const RefinementModel& GetRM() const {  return RefMod;  }
   RefinementModel& GetRM()             {  return RefMod;  }
@@ -103,10 +141,26 @@ public:
   void OnCAtomCrdChange( TCAtom* ca, const smatd& matr );
   
   void Assign(const TSRestraintList& rl);
-  inline void Clear()  {  Restraints.Clear();  }
+  void Clear();
   inline int Count() const {  return Restraints.Count();  }
   inline TSimpleRestraint& operator [] (int i){  return Restraints[i];  }
   inline short GetRestraintListType()  const  {  return RestraintListType;  }
+
+// IXVarReferencerContainer implementation
+  virtual olxstr GetIdName() const {  return IdName;  }
+  // note - possibly unsafe, type is not checked
+  virtual int GetReferencerId(const IXVarReferencer& vr) const {
+    int ind = Restraints.IndexOf((TSimpleRestraint&)vr);
+    if( ind == -1 )
+      throw TInvalidArgumentException(__OlxSourceInfo, "var rereferencer");
+    return ind;
+  }
+  // note - possibly unsafe, range is unchecked
+  virtual IXVarReferencer* GetReferencer(int id) {
+    return &Restraints[id];
+  }
+  virtual int ReferencerCount() const {  return Restraints.Count();  }
+//
 
   void ToDataItem(TDataItem& item) const;
   #ifndef _NO_PYTHON
@@ -114,23 +168,6 @@ public:
 #endif
   void FromDataItem(TDataItem& item);
 };
-
-//
-//class TSameGroups  {
-//  TTypeList< TArrayList< AnAssociation2<TCAtom*, smatd const*> > >  atoms;
-//};
-//
-///* AFIX m=5 (d=1.42, pentagon), 
-//  6(d=1.39, hexagon),
-//  7(similar to 6),
-//  10 (Cp*, 5 ring atoms (d=1.42), follwed by 5 Me (d=1.63) in cyclic order)
-//  11 - ntaphtalene group (d=1.39), figure 0f 8 starting from alpha C
-//  */
-//class TRidgidGroup  {
-//  TGroupCAtom Pivot;
-//  TCAtomGroup DependentAtoms;
-//  short ShelxId;
-//};
 
 typedef TTypeList<TSimpleRestraint> TSimpleRestraintList;
 typedef TPtrList<TSimpleRestraint> TSimpleRestraintPList;

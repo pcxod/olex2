@@ -49,7 +49,7 @@ public:
           if( AE.GetCAtom(i).GetPart() != 0 && AE.GetCAtom(i).GetPart() != AE.GetBase().CAtom().GetPart() ) 
             if( parts.IndexOf(AE.GetCAtom(i).GetPart()) == -1 )  {
               parts.Add( AE.GetCAtom(i).GetPart() );
-              occu.Add( rm.Vars.GetAtomParam(AE.GetCAtom(i), var_name_Sof) );
+              occu.Add( rm.Vars.GetParam(AE.GetCAtom(i), catom_var_name_Sof) );
             }
         }
         if( parts.IsEmpty() )  {
@@ -92,7 +92,7 @@ public:
               if( !generated.IsEmpty() )  {
                 for( int j=0; j < generated.Count(); j++ )  {
                   generated[j]->SetPart( parts[i] );
-                  rm.Vars.SetAtomParam(*generated[j], var_name_Sof, occu[i]);
+                  rm.Vars.SetParam(*generated[j], catom_var_name_Sof, occu[i]);
                 }
                 generated.Clear();
               }

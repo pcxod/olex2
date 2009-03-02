@@ -667,9 +667,9 @@ void TAutoDB::ProcessNodes( TAutoDBIdObject* currentFile, TNetwork& net )  {
       fragment
     */
     for( int i=0; i < net.GetLattice().GetAsymmUnit().AtomCount(); i++ )
-      net.GetLattice().GetAsymmUnit().GetAtom(i).SetId(-1);
+      net.GetLattice().GetAsymmUnit().GetAtom(i).SetTag(-1);
     for( int i=0; i < netMatch.Count(); i++ )
-      netMatch[i]->Atom->CAtom().SetId(i);
+      netMatch[i]->Atom->CAtom().SetTag(i);
     TAutoDBNet& net = Nets.AddNew( currentFile );
     // precreate nodes
     for( int i=0; i < netMatch.Count(); i++ )  {
@@ -679,8 +679,8 @@ void TAutoDB::ProcessNodes( TAutoDBIdObject* currentFile, TNetwork& net )  {
     // build connectivity
     for( int i=0; i < netMatch.Count(); i++ )  {
       for( int j=0; j < netMatch[i]->neighbours->Count(); j++ )  {
-        if( netMatch[i]->neighbours->Item(j).A()->GetId() < 0 )  continue;
-        net.Node(i).AttachNode( &net.Node(netMatch[i]->neighbours->Item(j).A()->GetId()) );
+        if( netMatch[i]->neighbours->Item(j).A()->GetTag() < 0 )  continue;
+        net.Node(i).AttachNode( &net.Node(netMatch[i]->neighbours->Item(j).A()->GetTag()) );
       }
     }
     for( int i=0; i < netMatch.Count(); i++ ) {
@@ -723,25 +723,23 @@ TAutoDBNet* TAutoDB::BuildSearchNet( TNetwork& net, TSAtomPList& cas )  {
   // construct the network
   if( netMatch.Count() > 0 )  {
     for( int i=0; i < net.GetLattice().GetAsymmUnit().AtomCount(); i++ )
-      net.GetLattice().GetAsymmUnit().GetAtom(i).SetId(-1);
+      net.GetLattice().GetAsymmUnit().GetAtom(i).SetTag(-1);
     TAutoDBNet* dbnet = new TAutoDBNet(NULL);
     for( int i=0; i < netMatch.Count(); i++ )  {
       dbnet->NewNode(netMatch[i]->Node);
       cas.Add( netMatch[i]->Atom );
-      netMatch[i]->Atom->CAtom().SetId(i);
+      netMatch[i]->Atom->CAtom().SetTag(i);
     }
     for( int i=0; i < netMatch.Count(); i++ )  {
       for( int j=0; j < netMatch[i]->neighbours->Count(); j++ )  {
-        if( netMatch[i]->neighbours->Item(j).A()->GetId() < 0 )  continue;
-        dbnet->Node(i).AttachNode( &dbnet->Node(netMatch[i]->neighbours->Item(j).A()->GetId()) );
+        if( netMatch[i]->neighbours->Item(j).A()->GetTag() < 0 )  continue;
+        dbnet->Node(i).AttachNode( &dbnet->Node(netMatch[i]->neighbours->Item(j).A()->GetTag()) );
       }
     }
     for( int i=0; i < netMatch.Count(); i++ ) {
       delete netMatch[i]->neighbours;
       delete netMatch[i];
     }
-    // must restore data!
-    net.GetLattice().GetAsymmUnit().InitAtomIds();
     return dbnet;
   }
   return NULL;
@@ -1369,7 +1367,7 @@ void TAutoDB::ValidateResult(const olxstr& fileName, const TLattice& latt, TStrL
   TAsymmUnit& au = latt.GetAsymmUnit();
 
   for( int i=0; i < XFile.GetAsymmUnit().AtomCount(); i++ )
-    XFile.GetAsymmUnit().GetAtom(i).SetId(-1);
+    XFile.GetAsymmUnit().GetAtom(i).SetTag(-1);
 
   for( int i=0; i < au.AtomCount(); i++ )  {
     if( au.GetAtom(i).GetAtomInfo() == iQPeakIndex || au.GetAtom(i).GetAtomInfo() == iHydrogenIndex )
@@ -1382,14 +1380,14 @@ void TAutoDB::ValidateResult(const olxstr& fileName, const TLattice& latt, TStrL
       extraAtoms++;
       continue;
     }
-    ca->SetId(i);
+    ca->SetTag(i);
     if( ca->GetAtomInfo() != au.GetAtom(i).GetAtomInfo() )  {
       report.Add( olxstr("Atom type changed from '") << ca->Label() <<
         "' to '" << au.GetAtom(i).GetLabel() << '\'' );
     }
   }
   for( int i=0; i < XFile.GetAsymmUnit().AtomCount(); i++ )  {
-    if( XFile.GetAsymmUnit().GetAtom(i).GetId() == -1 &&
+    if( XFile.GetAsymmUnit().GetAtom(i).GetTag() == -1 &&
         XFile.GetAsymmUnit().GetAtom(i).GetAtomInfo() != iHydrogenIndex )  {
       report.Add( olxstr("Missing atom '") << XFile.GetAsymmUnit().GetAtom(i).GetLabel() << '\'');
       missingAtoms++;

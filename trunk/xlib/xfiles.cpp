@@ -18,11 +18,12 @@
 #include "ins.h"
 #include "crs.h"
 #include "utf8file.h"
+#include "atomsort.h"
 
 //---------------------------------------------------------------------------
 // TBasicCFile function bodies
 //---------------------------------------------------------------------------
-TBasicCFile::TBasicCFile() : AsymmUnit(NULL), RefMod(AsymmUnit)  {  
+TBasicCFile::TBasicCFile() : RefMod(AsymmUnit), AsymmUnit(NULL)  {  
   AsymmUnit.SetRefMod(&RefMod);
 }
 //..............................................................................
@@ -168,37 +169,80 @@ void TXFile::UpdateAsymmUnit()  {
     TAsymmUnit::TResidue& resi = GetAsymmUnit().GetResidue(i);
     LL->GetAsymmUnit().NewResidue(resi.GetClassName(), resi.GetNumber(), resi.GetAlias() );
   }
-  int loaderid = GetAsymmUnit().GetMaxLoaderId();
-  // find new atoms 
-  int nc=0;
   for( int i=0; i < GetAsymmUnit().AtomCount(); i++ )  {
     TCAtom& CA = GetAsymmUnit().GetAtom(i);
-    if( CA.GetLoaderId() == liNewAtom )  {  //&& CA.GetAtomInfo() != iQPeakIndex )  {
-      TCAtom& CA1 = LL->GetAsymmUnit().NewAtom();
-      CA1.SetLoaderId(loaderid+nc);
-      CA.SetLoaderId(loaderid+nc);
-      nc++;
-    }
+    TCAtom& CA1 = LL->GetAsymmUnit().AtomCount() <= i ? 
+      LL->GetAsymmUnit().NewAtom() : LL->GetAsymmUnit().GetAtom(i);
+    CA1.Assign(CA);
+    //LL->GetAsymmUnit().GetResidue(CA.GetResiId()).AddAtom(&CA1);
   }
-  GetAsymmUnit().InitAtomIds();
-  LL->GetAsymmUnit().InitAtomIds();
-  for(int i=0; i < LL->GetAsymmUnit().AtomCount(); i++ )  {
-    TCAtom& CA = LL->GetAsymmUnit().GetAtom(i);
-    for( int j=0; j < GetAsymmUnit().AtomCount(); j++ )  {
-      TCAtom& CA1 = GetAsymmUnit().GetAtom(j);
-      if( (CA1.GetLoaderId() == CA.GetLoaderId()) && (CA1.GetLoaderId() != liNewAtom) )  {
-//        if( CA1.GetAtomInfo() == iQPeakIndex )  { // automatic delete Q-peaks
-//          CA.SetDeleted(true);  break;
-//        }
-        CA.Assign(CA1);
-        LL->GetAsymmUnit().GetResidue(CA1.GetResiId()).AddAtom(&CA);
-        break;
-      }
-    }
+  //keep the resudue atoms order
+  for( int i=-1; i < GetAsymmUnit().ResidueCount(); i++ )  {
+    const TAsymmUnit::TResidue& resi = GetAsymmUnit().GetResidue(i);
+    TAsymmUnit::TResidue& resi1 = LL->GetAsymmUnit().GetResidue(i);
+    for( int j=0; j < resi.Count(); j++ )  
+      resi1.AddAtom( &LL->GetAsymmUnit().GetAtom(resi[j].GetId()) );
   }
   RefMod.Validate();
   LL->GetRM().Assign(RefMod, false);
   LL->GetAsymmUnit().SetZ( GetAsymmUnit().GetZ() );
+}
+//..............................................................................
+void TXFile::Sort(const TStrList& ins)  {
+  if( FLastLoader == NULL )  return;
+  if( !FLastLoader->IsNative() )
+    UpdateAsymmUnit();
+  TStrList labels;
+  TCAtomPList &list = GetAsymmUnit().GetResidue(-1).AtomList();
+  int moety_index = -1;
+  bool keeph = true;
+  try {
+    for( int i=0; i < ins.Count(); i++ )  {
+      if( ins[i].Comparei("Mw") == 0 )
+        AtomSorter::Sort(list, AtomSorter::atom_cmp_Mw);
+      else if( ins[i].Comparei("l") == 0 )
+        AtomSorter::Sort(list, AtomSorter::atom_cmp_Label);
+      else if( ins[i].Comparei("MwL") == 0 )
+        AtomSorter::Sort(list, AtomSorter::atom_cmp_Mw_Label);
+      else if( ins[i].Comparei("l1") == 0 )
+        AtomSorter::Sort(list, AtomSorter::atom_cmp_Label1);
+      else if( ins[i].Comparei("moety") == 0 )  {
+        moety_index = i;
+        break;
+      }
+      else
+        labels.Add(ins[i]);
+    }
+    if( !labels.IsEmpty() )  {
+      AtomSorter::SortByName(list, labels);
+      labels.Clear();
+    }
+    if( moety_index != -1 )  {
+      if( moety_index+1 < ins.Count() )  {
+        for( int i=moety_index+1; i < ins.Count(); i++ )  {
+          if( ins[i].Comparei("s") == 0 )  
+            MoetySorter::SortBySize(list);
+          else if( ins[i].Comparei("h") == 0 )  
+            MoetySorter::SortByHeaviestElement(list);
+          else if( ins[i].Comparei("Mw") == 0 )  
+            MoetySorter::SortByWeight(list);
+          else
+            labels.Add(ins[i]);
+        }
+        if( !labels.IsEmpty() )
+          MoetySorter::SortByMoetyAtom(list, labels);
+      }
+      else
+        MoetySorter::CreateMoeties(list);
+    }
+    if( keeph )
+      AtomSorter::KeepH(list,GetLattice(),  NULL);
+  }
+  catch(const TExceptionBase& exc)  {
+    TBasicApp::GetLog().Error( exc.GetException()->GetError() );
+  }
+  if( !FLastLoader->IsNative() )
+    AtomSorter::SyncLists(list, FLastLoader->GetAsymmUnit().GetResidue(-1).AtomList());
 }
 //..............................................................................
 void TXFile::SaveToFile(const olxstr & FN, bool Sort)  {

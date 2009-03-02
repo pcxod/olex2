@@ -257,7 +257,7 @@ TCifValue* TCifDataManager::Match( const TSAtomPList& Atoms )  {
     for( int j=0; j < Atoms.Count(); j++ )  {
       bool found = false;
       for( int k=0; k < Atoms.Count(); k++ )  {
-        if( Atoms[k]->CAtom().GetLoaderId() == Items[i].GetAtom(k).GetLoaderId() )  {
+        if( Atoms[k]->CAtom().GetId() == Items[i].GetAtom(k).GetId() )  {
           found = true;
           break;
         }
@@ -792,7 +792,6 @@ void TCif::Initialize()  {
   TAtomsInfo& atoms_info = TAtomsInfo::GetInstance();
   for( int i=0; i < ALoop->Table().RowCount(); i++ )  {
     A = &GetAsymmUnit().NewAtom();
-    A->SetLoaderId(GetAsymmUnit().AtomCount()-1);
     A->SetLabel( ALoop->Table()[i][ALabel] );
     A->SetAtomInfo( atoms_info.FindAtomInfoBySymbol(ALoop->Table()[i][ASymbol]) );
     EValue = ALoop->Table()[i][ACx];

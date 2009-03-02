@@ -132,8 +132,8 @@ bool TXlConGen::FixAtom(TAtomEnvi& envi, const short Group, const TBasicAtomInfo
       else
         CreatedAtoms[i]->SetUisoScale( 1.2 );
       CreatedAtoms[i]->SetUiso( 4*caDefIso*caDefIso );
-      RefMod.Vars.SetAtomParam( *CreatedAtoms[i], var_name_Sof, 
-        RefMod.Vars.GetAtomParam(envi.GetBase().CAtom(), var_name_Sof));
+      RefMod.Vars.SetParam( *CreatedAtoms[i], catom_var_name_Sof, 
+        RefMod.Vars.GetParam(envi.GetBase().CAtom(), catom_var_name_Sof));
       if( generated != NULL )
         generated->Add(CreatedAtoms[i]);
     }

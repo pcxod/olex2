@@ -10,6 +10,7 @@
 #include "reflection.h"
 #include "fragment.h"
 #include "symmlib.h"
+#include "edict.h"
 
 BeginXlibNamespace()
 
@@ -25,11 +26,11 @@ static const short
  def_MERG   = 2,
  def_TWIN_n = 2;
 
-class RefinementModel  {
+class RefinementModel : public IXVarReferencerContainer, public IXVarReferencer {
   // in INS file is EQUV command
   smatd_list UsedSymm;
-  TCSTypeList<olxstr, XScatterer*> SfacData;  // label + params
-  TPSTypeList<int, Fragment*> Frags;
+  olxdict<olxstr,XScatterer*, olxstrComparator<false> > SfacData;  // label + params
+  olxdict<int, Fragment*, TPrimitiveComparator> Frags;
 protected:
   olxstr HKLSource;
   olxstr RefinementMethod,  // L.S. or CGLS
@@ -44,6 +45,9 @@ protected:
   bool TWIN_set, OMIT_set, MERG_set, HKLF_set, SHEL_set, OMITs_Modified;
   vec3i_list Omits;
   TDoubleList BASF;
+  TPtrList<XVarReference> BASF_Vars;
+  olxstr VarRefrencerId;
+  olxdict<olxstr, IXVarReferencerContainer*, olxstrComparator<false> > RefContainers;
   void SetDefaults();
 public:
   // needs to be extended for the us of the batch numbers...
@@ -263,7 +267,7 @@ public:
   olxstr GetBASFStr() const {
     olxstr rv;
     for( int i=0; i < BASF.Count(); i++ )  {
-      rv << BASF[i];
+      rv << Vars.GetParam(*this, i);
       if( (i+1) < BASF.Count() )
         rv << ' ';
     }
@@ -305,11 +309,17 @@ of components 1 ... m
   void SetTWIN_n(int v)             {  TWIN_n = v;  TWIN_set = true;  }
   bool HasTWIN()              const {  return TWIN_set;  }
 
-  void AddBASF(double val)          {  BASF.Add(val);  }
+  void AddBASF(double val)          {  
+    BASF.Add(val);  
+    BASF_Vars.Add(NULL);
+  }
   template <class list> void SetBASF(const list& bs) {
     BASF.SetCount(bs.Count());
-    for( int i=0; i < bs.Count(); i++ )
-      BASF[i] = bs[i].ToDouble();
+    BASF_Vars.SetCount(bs.Count());
+    for( int i=0; i < bs.Count(); i++ )  {
+      BASF_Vars[i] = NULL;
+      BASF[i] = Vars.SetParam(*this, i, bs[i].ToDouble());
+    }
   }
   const olxstr& GetRefinementMethod() const {  return RefinementMethod;  }
   void SetRefinementMethod(const olxstr& rm) {
@@ -336,6 +346,8 @@ of components 1 ... m
 
   // clears restraints, SFAC and used symm but not AfixGroups, Exyzroups and Vars
   void Clear();
+  // to be called by the Vars
+  void ClearVarRefs();
   void ClearAll()  {
     Clear();
     AfixGroups.Clear();
@@ -364,11 +376,11 @@ of components 1 ... m
   inline int SfacCount()  const  {  return SfacData.Count();  }
   // returns scatterer label at specified index
   inline const olxstr& GetSfacLabel(size_t index) const  {
-    return SfacData.GetComparable(index);
+    return SfacData.GetKey(index);
   }
   // returns scatterer at specified index
   inline XScatterer& GetSfacData(size_t index) const  {
-    return *SfacData.GetObject(index);
+    return *SfacData.GetValue(index);
   }
   // finds scatterer by label, returns NULL if nothing found
   inline XScatterer* FindSfacData(const olxstr& label) const  {
@@ -393,18 +405,18 @@ of components 1 ... m
 
   RefinementModel& Assign(const RefinementModel& rm, bool AssignAUnit);
 
-  int FragCount() const {  return Frags.Count();  }
-  Fragment& GetFrag(int i) {  return *Frags.Object(i);  }
-  const Fragment& GetFrag(int i) const {  return *Frags.GetObject(i);  }
+  int FragCount()                const {  return Frags.Count();  }
+  Fragment& GetFrag(int i)             {  return *Frags.GetValue(i);  }
+  const Fragment& GetFrag(int i) const {  return *Frags.GetValue(i);  }
   Fragment* FindFragByCode(int code) {
-    int ind = Frags.IndexOfComparable(code);
-    return ind == -1 ? NULL : Frags.GetObject(ind);
+    int ind = Frags.IndexOf(code);
+    return ind == -1 ? NULL : Frags.GetValue(ind);
   }
   Fragment& AddFrag(int code, double a=1, double b=1, double c=1, double al=90, double be=90, double ga=90) {
-    int ind = Frags.IndexOfComparable(code);
+    int ind = Frags.IndexOf(code);
     if( ind != -1 )
       throw TFunctionFailedException(__OlxSourceInfo, "dublicated FRAG instruction");
-    return *Frags.Add(code, new Fragment(code, a, b, c, al, be, ga)).Object();
+    return *Frags.Add(code, new Fragment(code, a, b, c, al, be, ga));
   }
   // the function does the atom fitting and clears the fragments
   void ProcessFrags();
@@ -507,6 +519,59 @@ of components 1 ... m
       ref.SetL(hkl[2]);
     }
   }
+  IXVarReferencerContainer& GetRefContainer(const olxstr& id_name)  {
+    try {  return *RefContainers[id_name];  }
+    catch(...)  {
+      throw TInvalidArgumentException(__OlxSourceInfo, "container id");
+    }
+  }
+// IXVarReferencer implementation
+  virtual short VarCount()                           const {  return BASF.Count();  }
+  virtual const XVarReference* GetVarRef(short i)    const {  
+    if( i < 0 || i >= BASF_Vars.Count() )
+      throw TInvalidArgumentException(__OlxSourceInfo, "var index");
+    return BASF_Vars[i];  
+  }
+  virtual olxstr GetVarName(short i)                 const {  
+    if( i < 0 || i >= BASF_Vars.Count() )
+      throw TInvalidArgumentException(__OlxSourceInfo, "var index");
+    return olxstr("k") << (i+1);  
+  }
+  virtual XVarReference* GetVarRef(short i)                {  
+    if( i < 0 || i >= BASF_Vars.Count() )
+      throw TInvalidArgumentException(__OlxSourceInfo, "var index");
+    return BASF_Vars[i];  
+  }
+  virtual void SetVarRef(short i, XVarReference* var_ref)  {  
+    if( i < 0 || i >= BASF_Vars.Count() )
+      throw TInvalidArgumentException(__OlxSourceInfo, "var index");
+    BASF_Vars[i] = var_ref;  
+  }
+  virtual IXVarReferencerContainer& GetParentContainer() {  return *this;  }
+  virtual double GetValue(short var_index) const {  
+    if( var_index < 0 || var_index > BASF.Count() )
+      throw TInvalidArgumentException(__OlxSourceInfo, "var_index");
+    return BASF[var_index];  
+  }
+  virtual void SetValue(short var_index, const double& val) {  
+    if( var_index < 0 || var_index > BASF.Count() )
+      throw TInvalidArgumentException(__OlxSourceInfo, "var_index");
+    BASF[var_index] = val;  
+  }
+  virtual bool IsValid() const {  return true;  }
+//
+// IXVarReferencerContainer implementation
+  virtual olxstr GetIdName() const { 
+    return VarRefrencerId;
+  }
+  virtual int GetReferencerId(const IXVarReferencer& vr) const {
+    return 0;
+  }
+  virtual IXVarReferencer* GetReferencer(int id) {
+    return this;
+  }
+  virtual int ReferencerCount() const {  return 1;  }
+//
   void ToDataItem(TDataItem& item);
   void FromDataItem(TDataItem& item);
   

@@ -30,7 +30,7 @@ TLst::TLst()  {
   FR1 = FwR2 = FS = FRS = 0;
   FParams = FTotalRefs = FUniqRefs = 0;
   FPeak = FHole = 0;
-  FLoaded = false;
+  _HasFlack = FLoaded = false;
 }
 //..............................................................................
 TLst::~TLst()  {  return;  }
@@ -45,7 +45,7 @@ void TLst::Clear()  {
   FPeak = FHole = 0;
 
   ErrorMsgs.Clear();
-  FLoaded = false;
+  _HasFlack = FLoaded = false;
 }
 //..............................................................................
 bool TLst::LoadFromFile(const olxstr &FN)  {
@@ -61,7 +61,8 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
        RIS    = false,
        SA     = false, // split atoms
        TrefT  = false,
-       PattS  = false;
+       PattS  = false,
+       FlackF = false;
   TStrList Toks;
   Clear();
   SL.LoadFromFile( FN );
@@ -274,6 +275,19 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
         }
         SA = true;
         continue;
+      }
+    }
+    if( !FlackF )  {
+      ind = SL[i].FirstIndexOf("Flack x parameter");
+      if( ind >= 0 )  {
+        Toks.Clear();
+        Toks.Strtok(SL[i], ' ');
+        if( Toks.Count() == 8 )  {
+          FlackParam.V() = Toks[4].ToDouble();
+          FlackParam.E() = Toks[7].ToDouble();
+          _HasFlack = true;
+        }
+        FlackF = true;
       }
     }
     // errors

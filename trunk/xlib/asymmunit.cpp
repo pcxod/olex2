@@ -1,5 +1,5 @@
 //----------------------------------------------------------------------------//
-// namespace TXClasses: crystallographic core
+// namespace: crystallographic core
 // TAsymmUnit: a collection of symmetry independent atoms
 // (c) Oleg V. Dolomanov, 2004
 //----------------------------------------------------------------------------//
@@ -23,7 +23,7 @@
 
 #undef GetObject
 
-class TSfacSorter  {
+class TAU_SfacSorter  {
 public:
   static int Compare(const TPrimitiveStrListData<olxstr,TBasicAtomInfo*>* s1, 
                     const TPrimitiveStrListData<olxstr,TBasicAtomInfo*>* s2)  {
@@ -33,6 +33,9 @@ public:
     return 0;
   }
 };
+
+const olxstr TAsymmUnit::IdName("catom");
+
 //----------------------------------------------------------------------------//
 // TAsymmetricUnit function bodies
 //----------------------------------------------------------------------------//
@@ -90,7 +93,6 @@ void TAsymmUnit::Assign(const TAsymmUnit& C)  {
   for( int i = 0; i < C.AtomCount(); i++ )  {
     TCAtom& CA = this->NewAtom();
     CA.SetId(i);
-    CA.SetLoaderId( C.GetAtom(i).GetLoaderId() ); // this is used in Assign!
     if( C.GetAtom(i).GetResiId() != -1 )  // main residue
       GetResidue(C.GetAtom(i).GetResiId()).AddAtom(&CA);
   }
@@ -264,19 +266,10 @@ TCAtom& TAsymmUnit::NewAtom(TResidue* resi)  {
 }
 //..............................................................................
 TCAtom& TAsymmUnit::NewCentroid(const vec3d& CCenter)  {
-  for( int i=0; i < CentroidCount(); i++ )  {
-    if( Centroids[i]->ccrd().QDistanceTo(CCenter) < 0.001 ) // already exists
-      return *Centroids[i];
-  }
-  TCAtom *A = new TCAtom(this);
-  olxstr Label("Cnt");
-  Label << CentroidCount();
-  A->ccrd() = CCenter;
-  A->SetId( Centroids.Count() );
-  A->SetLoaderId( liCentroid );
-  Centroids.Add(A);
-  A->SetLabel( Label );
-  return *A;
+  TCAtom& A = NewAtom();
+  A.ccrd() = CCenter;
+  A.SetLabel( olxstr("Cnt") << CAtoms.Count() );
+  return A;
 }
 //..............................................................................
 TCAtom * TAsymmUnit::FindCAtom(const olxstr &Label, TResidue* resi)  const {
@@ -303,21 +296,18 @@ TCAtom * TAsymmUnit::FindCAtom(const olxstr &Label, TResidue* resi)  const {
   return NULL;
 }
 //..............................................................................
-TCAtom* TAsymmUnit::FindCAtomByLoaderId(int li) const  {
-  for( int i=0; i < AtomCount(); i++ )
-    if( CAtoms[i]->GetLoaderId() == li )
-      return CAtoms[i];
-  return NULL;
-}
-//..............................................................................
 void TAsymmUnit::InitAtomIds()  {  // initialises atom ids if any were added or removed
-  for( int i=0; i < AtomCount(); i++ )    GetAtom(i).SetId(i);
-  for( int i=0; i < EllpCount(); i++ )    GetEllp(i).SetId(i);
+  for( int i=0; i < AtomCount(); i++ )    
+    GetAtom(i).SetId(i);
+  for( int i=0; i < EllpCount(); i++ )    
+    GetEllp(i).SetId(i);
 }
 //..............................................................................
 void TAsymmUnit::DelAtom( size_t index )  {
   delete CAtoms[index];
   CAtoms.Delete(index);
+  for( int i=0; i < AtomCount(); i++ )    
+    GetAtom(i).SetId(i);
 }
 //..............................................................................
 void TAsymmUnit::NullAtom( size_t index )  {
@@ -360,6 +350,14 @@ void TAsymmUnit::NullEllp(size_t i)  {
   }
 }
 //..............................................................................
+void TAsymmUnit::ClearEllps()  {
+  for( int i=0; i < Ellipsoids.Count(); i++ )
+    delete Ellipsoids[i];
+  for( int i=0; i < CAtoms.Count(); i++ )
+    CAtoms[i]->AssignEllp(NULL);
+  Ellipsoids.Clear();
+}
+//..............................................................................
 vec3d TAsymmUnit::GetOCenter(bool IncludeQ, bool IncludeH) const {
   vec3d P;
   double wght = 0;
@@ -399,7 +397,7 @@ void TAsymmUnit::SummFormula(TStrPObjList<olxstr,TBasicAtomInfo*>& BasicAtoms, o
       BasicAtoms.Add(A.GetAtomInfo().GetSymbol(), &A.GetAtomInfo());
     }
   }
-  BasicAtoms.QuickSort<TSfacSorter>();
+  BasicAtoms.QuickSort<TAU_SfacSorter>();
   if( Carbon != NULL )
     BasicAtoms.Swap(0, BasicAtoms.IndexOfObject(Carbon));
   if( Hydrogen != NULL && BasicAtoms.Count() > 1 )
@@ -481,7 +479,7 @@ olxstr TAsymmUnit::CheckLabel(const TCAtom* ca, const olxstr &Label, char a, cha
       const TCAtom& atom = resi[i];
       if( atom.GetPart() != ca->GetPart() && atom.GetPart() != 0 && ca->GetPart() != 0 )  continue;
       if( !atom.IsDeleted() && (atom.GetLabel().Comparei(Label) == 0) && 
-        (atom.GetLoaderId() != ca->GetLoaderId()) )  {
+        (atom.GetId() != ca->GetId()) )  {
         LB = atom.GetAtomInfo().GetSymbol();
         if( LB.Length() == 2 )  LB[0] = LB.o_toupper(LB[0]);
         LB << a << b;
@@ -534,7 +532,7 @@ size_t TAsymmUnit::CountElements(const olxstr &Symbol) const  {
   return cnt;
 }
 //..............................................................................
-void TAsymmUnit::Sort(TCAtomPList* list)  {
+void TAsymmUnit::Sort(TCAtomPList* list) {
  // sorting by four params
   if( list == NULL )  list = &MainResidue.AtomList();
  TCAtomPList::QuickSorter.Sort<TCAtomPComparator>(*list);
@@ -543,22 +541,13 @@ void TAsymmUnit::Sort(TCAtomPList* list)  {
  TCAtomPList::QuickSorter.Sort<TCAtomPComparator>(*list);
 }
 //..............................................................................
-int TAsymmUnit::GetMaxPart()  const {
+int TAsymmUnit::GetNextPart() const {
   int part = 0;
   for( int i=0; i < AtomCount(); i++ )
     if( GetAtom(i).GetPart() > part )
       part = GetAtom(i).GetPart();
 
   return part+1;
-}
-//..............................................................................
-int TAsymmUnit::GetMaxLoaderId() const  {
-  int id = 0;
-  for( int i=0; i < AtomCount(); i++ )
-    if( GetAtom(i).GetLoaderId() > id )
-      id = GetAtom(i).GetLoaderId();
-
-  return id+1;
 }
 //..............................................................................
 void TAsymmUnit::ChangeSpaceGroup(const TSpaceGroup& sg)  {
@@ -618,9 +607,12 @@ void TAsymmUnit::ToDataItem(TDataItem& item) const  {
     for( int j=0; j < r.Count(); j++ )  {
       if( r[j].IsDeleted() )  continue;
       r[j].SetTag(atom_id);
+      r[j].SetId(atom_id);
       r[j].ToDataItem(ri->AddItem(atom_id++));
     }
   }
+  for( int i=0; i < CAtoms.Count(); i++ )
+    CAtoms[i]->SetId(i);
 }
 //..............................................................................
 #ifndef _NO_PYTHON
@@ -701,7 +693,6 @@ void TAsymmUnit::FromDataItem(TDataItem& item)  {
       resi.GetValue().ToInt(), resi.GetRequiredField("alias")) );
     for( int j=0; j < resi.ItemCount(); j++ )  {
       NewAtom(&r).FromDataItem(resi.GetItem(j));
-      CAtoms.Last()->SetLoaderId(i);
     }
   }
   InitMatrices();
@@ -809,7 +800,7 @@ void TAsymmUnit::LibSetAtomCrd(const TStrObjList& Params, TMacroError& E)  {
   if( index < 0 || index >= AtomCount() )  throw TIndexOutOfRangeException(__OlxSourceInfo, index, 0, AtomCount());
   TCAtom& ca = GetAtom(index);
   for( int i=0; i < 3; i++ )
-    GetRefMod()->Vars.SetAtomParam(ca, var_name_X+i, Params[i+1].ToDouble());
+    GetRefMod()->Vars.SetParam(ca, catom_var_name_X+i, Params[i+1].ToDouble());
   E.SetRetVal(true);
 }
 //..............................................................................
@@ -895,11 +886,11 @@ void TAsymmUnit::LibSetAtomU(const TStrObjList& Params, TMacroError& E)  {
   if( (GetAtom(index).GetEllipsoid() != NULL) && (Params.Count() == 7) )  {
     double V[6];
     for( int i=0; i < 6; i++ )
-      V[i] = GetRefMod()->Vars.SetAtomParam(ca, var_name_U11+i, Params[i+1].ToDouble());
+      V[i] = GetRefMod()->Vars.SetParam(ca, catom_var_name_U11+i, Params[i+1].ToDouble());
     ca.GetEllipsoid()->Initialise( V );
   }
   else if( (ca.GetEllipsoid() == NULL) && (Params.Count() == 2) ) {
-    GetRefMod()->Vars.SetAtomParam(ca, var_name_Uiso, Params[1].ToDouble());
+    GetRefMod()->Vars.SetParam(ca, catom_var_name_Uiso, Params[1].ToDouble());
   }
   else {
     olxstr at = ca.GetEllipsoid() == NULL ? "isotropic" : "anisotropic";
@@ -911,7 +902,7 @@ void TAsymmUnit::LibSetAtomU(const TStrObjList& Params, TMacroError& E)  {
 void TAsymmUnit::LibSetAtomOccu(const TStrObjList& Params, TMacroError& E)  {
   int index = Params[0].ToInt();
   if( index < 0 || index >= AtomCount() )  throw TIndexOutOfRangeException(__OlxSourceInfo, index, 0, AtomCount());
-  GetRefMod()->Vars.SetAtomParam(GetAtom(index), var_name_Sof, Params[1].ToDouble());
+  GetRefMod()->Vars.SetParam(GetAtom(index), catom_var_name_Sof, Params[1].ToDouble());
 }
 //..............................................................................
 void TAsymmUnit::LibNewAtom(const TStrObjList& Params, TMacroError& E)  {
@@ -950,14 +941,13 @@ void TAsymmUnit::LibNewAtom(const TStrObjList& Params, TMacroError& E)  {
     ca.Label() = qLabel << olxstr(QPeakIndex);
     ca.SetAtomInfo( &AtomsInfo->GetAtomInfo(iQPeakIndex) );
     ca.SetQPeak( qPeak );
-    GetRefMod()->Vars.SetAtomParam(ca, var_name_Sof, 11.0);
-    GetRefMod()->Vars.SetAtomParam(ca, var_name_Uiso, 0.5);
+    GetRefMod()->Vars.SetParam(ca, catom_var_name_Sof, 11.0);
+    GetRefMod()->Vars.SetParam(ca, catom_var_name_Uiso, 0.5);
     for( int i=0; i < 3; i++ )
-      GetRefMod()->Vars.SetAtomParam(ca, var_name_X+i, crd[i]);
+      GetRefMod()->Vars.SetParam(ca, catom_var_name_X+i, crd[i]);
   }
   else
     ca.SetLabel( Params[0] );
-  ca.SetLoaderId( liNewAtom );
   E.SetRetVal( AtomCount() -1 );
   ca.AssignEllp( NULL );
 }
