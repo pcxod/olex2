@@ -1077,21 +1077,21 @@ bool TGXApp::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender, const I
   }
   else if( MsgId == ID_OnDisassemble ) {
     if( MsgSubId == msiEnter )  {
-      if( !FQPeaksVisible )  {
-        TLattice& latt = XFile().GetLattice();
-        const int ac = latt.AtomCount();
-        int mc=0;
-        TEBitArray amask(ac);
-        amask.SetAll(true);
-        for( int i=0; i < ac; i++ )  {
-          if( latt.GetAtom(i).GetAtomInfo() == iQPeakIndex )  {
-            amask.Set(i,  false);
-            mc++;
-          }
-        }
-        if( mc != 0 )
-          latt.SetAtomMask(amask);
-      }
+      //if( !FQPeaksVisible )  {
+      //  TLattice& latt = XFile().GetLattice();
+      //  const int ac = latt.AtomCount();
+      //  int mc=0;
+      //  TEBitArray amask(ac);
+      //  amask.SetAll(true);
+      //  for( int i=0; i < ac; i++ )  {
+      //    if( latt.GetAtom(i).GetAtomInfo() == iQPeakIndex )  {
+      //      amask.Set(i,  false);
+      //      mc++;
+      //    }
+      //  }
+      //  if( mc != 0 )
+      //    latt.SetAtomMask(amask);
+      //}
     }
   }
   return false;

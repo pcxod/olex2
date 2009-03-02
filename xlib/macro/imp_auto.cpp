@@ -92,6 +92,8 @@ void XLibMacros::funATA(const TStrObjList &Cmds, TMacroError &Error)  {
         a.GetAtomInfo() == iDeuteriumIndex || a.GetAtomInfo() == iQPeakIndex )  continue;
     ac++;
   }
+  if( ac == 0 )  // clearly something is wron when it happens...
+    ac = 1;
   Error.SetRetVal( olxstr(stat.AtomTypeChanges!=0) << ';' << 
     (double)stat.ConfidentAtomTypes*100/ac );
 }
@@ -200,7 +202,7 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     if( cnt != 0 )
       avQPeak /= cnt;
     cnt = 0;
-    if( SortedQPeaks.Count() != 0 )  {
+    if( !SortedQPeaks.IsEmpty() )  {
       vals.AddNew<double, TCAtomPList*>(0, new TCAtomPList);
       for(int i=SortedQPeaks.Count()-1; i >=1; i-- )  {
         if( (SortedQPeaks.GetComparable(i) - SortedQPeaks.GetComparable(i-1))/SortedQPeaks.GetComparable(i) > 0.05 )  {
@@ -279,6 +281,7 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options, TMacroEr
         else {
           QPeaks[i]->SetDeleted(true);
           QPeaks[i]->CAtom().SetDeleted(true);
+          continue;
         }
       }
       if( nd.GetDistance(j) > 1.8 )  {
@@ -332,6 +335,7 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options, TMacroEr
           TSAtom& sa = latt.GetFragment(i).Node(j);
           if( sa.IsDeleted() || sa.GetAtomInfo() == iHydrogenIndex )  continue;
           if( sa.GetAtomInfo() != iQPeakIndex && sa.CAtom().GetUiso() > Uisos[i]*3)  {
+            TBasicApp::GetLog().Info(olxstr(sa.GetLabel()) << " too large, deleting");
             sa.SetDeleted(true);
             sa.CAtom().SetDeleted(true);
             continue;
