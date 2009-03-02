@@ -3,7 +3,7 @@ object Form1: TForm1
   Top = 286
   Width = 777
   Height = 583
-  Caption = 'Form1'
+  Caption = 'Olex2 Viewer'
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -24,8 +24,8 @@ object Form1: TForm1
   TextHeight = 13
   object sbStatus: TStatusBar
     Left = 0
-    Top = 508
-    Width = 761
+    Top = 510
+    Width = 769
     Height = 19
     Panels = <
       item

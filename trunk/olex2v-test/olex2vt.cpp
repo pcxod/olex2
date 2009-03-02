@@ -10,6 +10,7 @@ WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
   try
   {
      Application->Initialize();
+     Application->Title = "Olex2 Viewer";
      Application->CreateForm(__classid(TForm1), &Form1);
      Application->Run();
   }
