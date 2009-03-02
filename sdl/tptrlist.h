@@ -232,12 +232,12 @@ public:
 #endif
     T *D = Items[from];
     if( from > to )  {
-      for( size_t i =from-1; i >= to; i-- )
-      Items[i+1] = Items[i];
+      for( size_t i = from; i > to; i-- )
+        Items[i] = Items[i-1];
     }
     else  {
-      for( size_t i=from+1; i <= to; i++ )
-        Items[i-1] = Items[i];
+      for( size_t i=from; i < to; i++ )
+        Items[i] = Items[i+1];
     }
     Items[to] = D;
   }

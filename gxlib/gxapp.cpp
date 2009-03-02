@@ -1543,10 +1543,10 @@ int XAtomLabelSort(const TXAtom* I1, const TXAtom* I2)  {
 //..............................................................................
 void TGXApp::InfoList(const olxstr &Atoms, TStrList &Info, bool sort)  {
   olxstr Tmp;
-  TXAtomPList AtomsList;
-  FindXAtoms(Atoms, AtomsList, false);
-  if( sort )
-    AtomsList.QuickSorter.SortSF(AtomsList, XAtomLabelSort);
+  TCAtomPList AtomsList;
+  FindCAtoms(Atoms, AtomsList, false);
+  //if( sort )
+  //  AtomsList.QuickSorter.SortSF(AtomsList, XAtomLabelSort);
   TTTable<TStrList> Table(AtomsList.Count(), 7);
   Table.ColName(0) = "Atom";
   Table.ColName(1) = "Type";
@@ -1556,15 +1556,15 @@ void TGXApp::InfoList(const olxstr &Atoms, TStrList &Info, bool sort)  {
   Table.ColName(5) = "Ueq";
   Table.ColName(6) = "Peak";
   for(int i = 0; i < AtomsList.Count(); i++ )  {
-    const TSAtom& A = AtomsList[i]->Atom();
+    const TCAtom& A = *AtomsList[i];
     Table[i][0] = A.GetLabel();
     Table[i][1] = A.GetAtomInfo().GetSymbol();
     Table[i][2] = olxstr::FormatFloat(3, A.ccrd()[0]);
     Table[i][3] = olxstr::FormatFloat(3, A.ccrd()[1]);
     Table[i][4] = olxstr::FormatFloat(3, A.ccrd()[2]);
-    Table[i][5] = olxstr::FormatFloat(3, A.CAtom().GetUiso());
+    Table[i][5] = olxstr::FormatFloat(3, A.GetUiso());
     if( A.GetAtomInfo() == iQPeakIndex  )
-      Table[i][6] = olxstr::FormatFloat(3, A.CAtom().GetQPeak());
+      Table[i][6] = olxstr::FormatFloat(3, A.GetQPeak());
     else
       Table[i][6] = '-';
   }
@@ -1993,9 +1993,13 @@ void TGXApp::ExpandSelection(TCAtomGroup& atoms)  {
 void TGXApp::FindCAtoms(const olxstr &Atoms, TCAtomPList& List, bool ClearSelection)  {
   if( Atoms.IsEmpty() )  {
     TAsymmUnit& AU = XFile().GetLattice().GetAsymmUnit();
-    for(int i=0; i < AU.AtomCount(); i++ )  {
-      if( !AU.GetAtom(i).IsDeleted() )
-        List.Add( &AU.GetAtom(i) );
+    List.SetCapacity( List.Count() + AU.AtomCount() );
+    for(int i=-1; i < AU.ResidueCount(); i++ )  {
+      TAsymmUnit::TResidue& resi = AU.GetResidue(i);
+      for( int j=0; j < resi.Count(); j++ )  {
+        if( !resi[j].IsDeleted() )
+          List.Add( &resi[j] );
+      }
     }
     return;
   }
@@ -3153,7 +3157,7 @@ void TGXApp::CreateXGrowLines()  {
       for( int k=0; k < transforms->Count(); k++ )  {
         for( int l = 0; l < A->NodeCount(); l++ )  {
           TSAtom *sa = &A->Node(l);
-          if( sa->CAtom().GetLoaderId() == aa->GetLoaderId() )  {
+          if( sa->CAtom().GetId() == aa->GetId() )  {
             if( TransformedCrds[k].QDistanceTo( sa->crd() ) < 0.01 )  {
               transforms->Delete(k);
               break;

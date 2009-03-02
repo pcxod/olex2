@@ -14,7 +14,7 @@ void TSameGroup::Assign(TAsymmUnit& tau, const TSameGroup& sg)  {
   }
   else  {
     for(int i=0; i < sg.Count(); i++ )  {
-      TCAtom* aa = tau.FindCAtomByLoaderId( sg[i].GetLoaderId() );
+      TCAtom* aa = tau.FindCAtomById( sg[i].GetId() );
       if( aa == NULL )
         throw TFunctionFailedException(__OlxSourceInfo, "asymmetric units do not match");
       Add( *aa );

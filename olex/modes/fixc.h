@@ -12,7 +12,7 @@ protected:
       Atom = XA;
       RefinementModel& rm = *XA->Atom().CAtom().GetParent()->GetRefMod();
       for( int i=0; i < 3; i++ )
-        Vars[i] = rm.Vars.ReleaseRef(XA->Atom().CAtom(), var_name_X+i);
+        Vars[i] = rm.Vars.ReleaseRef(XA->Atom().CAtom(), catom_var_name_X+i);
     }
     ~TFixCModeUndo() {
       for( int i=0; i < 3; i++ )
@@ -23,7 +23,7 @@ protected:
       TGlXApp::GetGXApp()->MarkLabel(*Atom, false);
       RefinementModel& rm = *Atom->Atom().CAtom().GetParent()->GetRefMod();
       for( int i=0; i < 3; i++ )  {
-        rm.Vars.RestoreRef(Atom->Atom().CAtom(), var_name_X+i, Vars[i]);
+        rm.Vars.RestoreRef(Atom->Atom().CAtom(), catom_var_name_X+i, Vars[i]);
         Vars[i] = NULL;
       }
     }
@@ -43,7 +43,7 @@ public:
       TGlXApp::GetMainForm()->GetUndoStack()->Push( new TFixCModeUndo(&XA) );
       RefinementModel& rm = *XA.Atom().CAtom().GetParent()->GetRefMod();
       for( int i=0; i < 3; i++ )
-        rm.Vars.FixAtomParam(XA.Atom().CAtom(), var_name_X+i);
+        rm.Vars.FixParam(XA.Atom().CAtom(), catom_var_name_X+i);
       TGlXApp::GetGXApp()->MarkLabel(XA, true);
       return true;
     }

@@ -16,10 +16,19 @@
 
 BeginXlibNamespace()
 
-//struct Parameter  {
-//  double Value;
-//  bool Refinable;
-//};
+const short
+  catom_var_name_Scale = 0,
+  catom_var_name_X     = 1, // order matters var_name_X+i
+  catom_var_name_Y     = 2,
+  catom_var_name_Z     = 3,
+  catom_var_name_Sof   = 4,
+  catom_var_name_Uiso  = 5,
+  catom_var_name_U11   = 6, // order maters var_name_U11+i
+  catom_var_name_U22   = 7,
+  catom_var_name_U33   = 8,
+  catom_var_name_U23   = 9,
+  catom_var_name_U13   = 10,
+  catom_var_name_U12   = 11;
 
 class TEllipsoid;
 class TAfixGroup;
@@ -27,13 +36,12 @@ class TAfixGroups;
 class TExyzGroup;
 class TExyzGroups;
 
-class TCAtom: public ACollectionItem  {
+class TCAtom: public ACollectionItem, public IXVarReferencer  {
 private:
   class TAsymmUnit *FParent;
   TBasicAtomInfo*  FAtomInfo;    // a pointer to TBasisAtomInfo object
   olxstr FLabel;    // atom's label
   int     Id, Tag;       // c_atoms id; this is also used to identify if TSAtoms are the same
-  int     LoaderId; // id of the atom in the asymmertic unit of the loader
   int     ResiId, SameId, EllpId;   // residue and SADI ID
   double  Occu;     // occupancy and its variable
   double  Uiso, // isotropic thermal parameter; use it when Ellipsoid = NULL
@@ -53,7 +61,9 @@ private:
   TAfixGroup* DependentAfixGroup, *ParentAfixGroup;
   TPtrList<TAfixGroup>* DependentHfixGroups;
   TExyzGroup* ExyzGroup;
-  TPtrList<XVarReference> Vars;  // 12 variable pointers
+  XVarReference* Vars[12]; //x,y,z,occu,uiso,U
+  static olxstr VarNames[];
+  inline void SetId(int id) {  Id = id;  }
 public:
   TCAtom(TAsymmUnit *Parent);
   virtual ~TCAtom();
@@ -103,9 +113,8 @@ public:
 //  TAtomsInfo *AtomsInfo() const;
   void  Assign(const TCAtom& S);
 
-  DefPropP(int, Id)
+  inline int GetId() const {  return Id;  }
   DefPropP(int, Tag)
-  DefPropP(int, LoaderId)
   DefPropP(int, ResiId)
   DefPropP(int, SameId)
   DefPropP(int, EllpId)
@@ -140,15 +149,6 @@ public:
   // can be grown is set by UnitCell::Init
   DefPropP(bool, CanBeGrown)
 
-  void SetVarRef(XVarReference& vr)  {
-    Vars[vr.var_name] = &vr;
-  }
-  void NullVarRef(short param_name)  {
-    Vars[param_name] = NULL;
-  }
-  XVarReference* GetVarRef(short i) const {
-    return Vars[i];
-  }
   TEllipsoid* GetEllipsoid() const;
   void UpdateEllp( const TEllipsoid& NV);
   void AssignEllp(TEllipsoid *NV);
@@ -157,13 +157,41 @@ public:
   inline vec3d const& ccrd()    const {  return Center;  }
   inline vec3d& ccrdEsd()             {  return Esd;  }
   inline vec3d const& ccrdEsd() const {  return Esd;  }
-
+// IXVarReferencer implementation
+  virtual short VarCount()                          const {  return 12;  }
+  virtual const XVarReference* GetVarRef(short i)   const {  
+    if( i < 0 || i >= VarCount() )
+      throw TInvalidArgumentException(__OlxSourceInfo, "var index");
+    return Vars[i];  
+  }
+  virtual XVarReference* GetVarRef(short i)               {  
+    if( i < 0 || i >= VarCount() )
+      throw TInvalidArgumentException(__OlxSourceInfo, "var index");
+    return Vars[i];  
+  }
+  virtual olxstr GetVarName(short i)                const { 
+    if( i < 0 || i >= VarCount() )
+      throw TInvalidArgumentException(__OlxSourceInfo, "var index");
+    return VarNames[i];  
+  }
+  virtual void SetVarRef(short i, XVarReference* var_ref) {  
+    if( i < 0 || i >= VarCount() )
+      throw TInvalidArgumentException(__OlxSourceInfo, "var index");
+    Vars[i] = var_ref;  
+  }
+  virtual IXVarReferencerContainer& GetParentContainer();
+  virtual double GetValue(short var_index) const;
+  virtual void SetValue(short var_index, const double& val);
+  virtual bool IsValid() const {  return !IsDeleted();  }
+  virtual olxstr GetIdName() const {  return FLabel;  }
+//
   void ToDataItem(TDataItem& item) const;
   void FromDataItem(TDataItem& item);
 #ifndef _NO_PYTHON
   PyObject* PyExport();
 #endif
   static int CompareAtomLabels(const olxstr& S, const olxstr& S1);
+  friend class TAsymmUnit;
 };
 //..............................................................................
   typedef TPtrList<TCAtom> TCAtomPList;

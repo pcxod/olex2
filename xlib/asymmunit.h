@@ -3,7 +3,6 @@
 
 #include "xbase.h"
 #include "atominfo.h"
-#include "elist.h"
 #include "ematrix.h"
 #include "threex3.h"
 
@@ -22,7 +21,7 @@
 
 BeginXlibNamespace()
 
-class TAsymmUnit: public IEObject  {
+class TAsymmUnit: public IXVarReferencerContainer, public IEObject  {
   TCAtomPList CAtoms;      // list of TCAtoms
   smatd_list  Matrices;  // list of matrices (excluding ones after centering)
   TEllpPList Ellipsoids;
@@ -53,56 +52,58 @@ public:  // residue class implementation
   public:
     TResidue(TAsymmUnit& parent, int id, const olxstr& cl=EmptyString, int number = 0, const olxstr& alias=EmptyString) : 
         Parent(parent), Id(id), ClassName(cl), Number(number), Alias(alias) {  }
-      DefPropC(olxstr, ClassName)
-      DefPropC(olxstr, Alias)
-      DefPropP(int, Number)
-      inline int GetId()          const {  return Id;  }
-      inline TAsymmUnit& GetParent()    {  return Parent;  }
-      TCAtomPList& AtomList()           {  return Atoms;  }
-      virtual TIString ToString() const {
-        if( Id == -1 )  return EmptyString;
-        olxstr rv("RESI ");
-        rv << ClassName;
-        if( Number != 0 )  rv << ' ' << Number;
-        return (rv << (Alias.IsEmpty() ? EmptyString : (olxstr(' ') << Alias)));
+    DefPropC(olxstr, ClassName)
+    DefPropC(olxstr, Alias)
+    DefPropP(int, Number)
+    inline int GetId()          const {  return Id;  }
+    inline TAsymmUnit& GetParent()    {  return Parent;  }
+    TCAtomPList& AtomList()           {  return Atoms;  }
+    virtual TIString ToString() const {
+      if( Id == -1 )  return EmptyString;
+      olxstr rv("RESI ");
+      rv << ClassName;
+      if( Number != 0 )  rv << ' ' << Number;
+      return (rv << (Alias.IsEmpty() ? EmptyString : (olxstr(' ') << Alias)));
+    }
+    inline int Count()                 const {  return Atoms.Count();  }  
+    inline TCAtom& GetAtom(int i)      const {  return *Atoms[i];  }
+    inline TCAtom& operator [] (int i) const {  return *Atoms[i]; }
+    inline void Clear()                      {  Atoms.Clear();  } 
+    inline void Remove(TCAtom* ca)           {
+      int i = Atoms.IndexOf(ca);
+      if( i != -1 )  Atoms.Delete(i);
+    }
+    inline void AddAtom( TCAtom* ca )        {
+      Atoms.Add( ca );
+      ca->SetResiId( Id );
+    }
+    inline void SetCapacity(int c)  {  Atoms.SetCapacity(c);  }
+    bool IsEmpty() const {
+      for( int i=0; i < Atoms.Count(); i++ )
+        if( !Atoms[i]->IsDeleted() )  return false;
+      return true;
+    }
+    // this assumes that atoms and their Ids of the Parent already assigned 
+    const TResidue& operator = (const TResidue& res)  {
+      Atoms.Clear();
+      Atoms.SetCapacity(res.Count() );
+      for( int i=0; i < res.Count(); i++ )  {
+        if( res[i].GetId() >= 0 && res[i].GetId() < Parent.AtomCount() )
+          AddAtom( &Parent.GetAtom( res[i].GetId() ) );
       }
-      inline int Count()                 const {  return Atoms.Count();  }  
-      inline TCAtom& GetAtom(int i)      const {  return *Atoms[i];  }
-      inline TCAtom& operator [] (int i) const {  return *Atoms[i]; }
-      inline void Clear()                      {  Atoms.Clear();  } 
-      inline void Remove(TCAtom* ca)           {
-        int i = Atoms.IndexOf(ca);
-        if( i != -1 )  Atoms.Delete(i);
-      }
-      inline void AddAtom( TCAtom* ca )        {
-        Atoms.Add( ca );
-        ca->SetResiId( Id );
-      }
-      inline void SetCapacity(int c)  {  Atoms.SetCapacity(c);  }
-      bool IsEmpty() const {
-        for( int i=0; i < Atoms.Count(); i++ )
-          if( !Atoms[i]->IsDeleted() )  return false;
-        return true;
-      }
-      // this assumes that atoms and their Ids of the Parent already assigned 
-      const TResidue& operator = (const TResidue& res)  {
-        Atoms.Clear();
-        Atoms.SetCapacity(res.Count() );
-        for( int i=0; i < res.Count(); i++ )  {
-          if( res[i].GetId() >= 0 && res[i].GetId() < Parent.AtomCount() )
-            AddAtom( &Parent.GetAtom( res[i].GetId() ) );
-        }
-        this->ClassName = res.ClassName;
-        this->Number = res.Number;
-        this->Alias = res.Alias;
-        return *this;
-      }
+      this->ClassName = res.ClassName;
+      this->Number = res.Number;
+      this->Alias = res.Alias;
+      return *this;
+    }
   };
 protected:
   TActionQList Actions;
   TPtrList<TResidue> Residues;
   TResidue MainResidue;
   class RefinementModel* RefMod;
+  void InitAtomIds(); // initialises atom ids if any were added or removed
+  static const olxstr IdName;
 public:
 
   TAsymmUnit(TLattice *L);
@@ -197,7 +198,9 @@ public:
   //returns an atom by label; if the label is not unique, returns the first found
   TCAtom* FindCAtom(const olxstr &Label, TResidue* resi = NULL) const;
   //returns an atom by LoaderId
-  TCAtom* FindCAtomByLoaderId(int li) const;
+  TCAtom* FindCAtomById(int id) const  {
+    return (id < 0 || id >= CAtoms.Count()) ? NULL : CAtoms[id];
+  }
 
   void DelAtom( size_t index );
   /* deletes the atom in the list and assigns corresponding of the list to NULL
@@ -210,25 +213,16 @@ public:
   void PackAtoms();
   inline TCAtom& GetAtom(size_t i)     const {  return *CAtoms[i];  }
   inline int AtomCount()               const { return CAtoms.Count();};
-  inline int CentroidCount()           const {  return Centroids.Count(); }
-  inline TCAtom& GetCentroid(size_t i) const {  return *Centroids[i]; }
-  void InitAtomIds(); // initialises atom ids if any were added or removed
 
-  inline int MatrixCount()                   const {  return Matrices.Count();  }
+  inline int MatrixCount()                const {  return Matrices.Count();  }
   inline const smatd& GetMatrix(size_t i) const {  return Matrices[i];  }
-  void ClearMatrices()                             {  Matrices.Clear();  }
+  void ClearMatrices()                          {  Matrices.Clear();  }
   void AddMatrix(const smatd& a);
 
   inline int EllpCount()               const {  return Ellipsoids.Count(); }
   inline TEllipsoid& GetEllp(size_t i) const {  return *Ellipsoids[i]; }
   void NullEllp(size_t i);
-  void ClearEllps()  {
-    for( int i=0; i < Ellipsoids.Count(); i++ )
-      delete Ellipsoids[i];
-    for( int i=0; i < CAtoms.Count(); i++ )
-      CAtoms[i]->AssignEllp(NULL);
-    Ellipsoids.Clear();
-  }
+  void ClearEllps();
   void PackEllps();
   // Q - six values representing quadratic form of a thermal ellipsoid
   TEllipsoid& NewEllp();  // initialisation performed manually !
@@ -267,13 +261,27 @@ public:
   void OnCAtomCrdChange( TCAtom* ca, const smatd& matr );
 
   // returns next available part istruction in atoms
-  int GetMaxPart() const;
-  /* returns next available LoaderId. Can be used to add enw atoms
-   to the asymmetri unit and the ins file respectevely
-  */
-  int GetMaxLoaderId() const;
+  int GetNextPart() const;
 
   DefPropP(RefinementModel*, RefMod)
+// IXVarReferencerContainer implementation
+  static const olxstr& _GetIdName() {  return IdName;  }
+  
+  virtual olxstr GetIdName() const {  return IdName;  }
+  // note - possibly unsafe, type is not checked
+  virtual int GetReferencerId(const IXVarReferencer& vr) const {  
+    if( !EsdlInstanceOf(vr, TCAtom) )
+      throw TInvalidArgumentException(__OlxSourceInfo, "referencer");
+    return ((TCAtom&)vr).GetId();
+  }
+  // note - possibly unsafe, range is unchecked
+  virtual IXVarReferencer* GetReferencer(int id) {
+    if( id < 0 || id > CAtoms.Count() )
+      throw TInvalidArgumentException(__OlxSourceInfo, "id");
+    return CAtoms[id];
+  }
+  virtual int ReferencerCount() const {  return CAtoms.Count();  }
+//
 
   void ToDataItem(TDataItem& item) const;
 #ifndef _NO_PYTHON

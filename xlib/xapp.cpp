@@ -208,7 +208,6 @@ void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F)  {
     F[i] = ir;
   }
   delete [] Ucifs;
-  au.InitAtomIds();
 }
 //..............................................................................
 void TXApp::NameHydrogens(TSAtom& SA, TUndoData* ud, bool CheckLabel)  {
@@ -574,14 +573,14 @@ void TXApp::SetAtomUiso(TSAtom& sa, double val) {
       }
       // make sure that there is only one atom in the envi and it has proper Uiso
       if( ni != -1 && sa.Node(ni).CAtom().GetUisoOwner() == NULL )  {
-        rm.Vars.FreeAtomParam(sa.CAtom(), var_name_Uiso);
+        rm.Vars.FreeParam(sa.CAtom(), catom_var_name_Uiso);
         sa.CAtom().SetUisoOwner(&sa.Node(ni).CAtom());
         sa.CAtom().SetUisoScale(olx_abs(val));
         sa.CAtom().SetUiso(olx_abs(val)*sa.Node(ni).CAtom().GetUiso());
       }
     }
     else
-      rm.Vars.SetAtomParam(sa.CAtom(), var_name_Uiso, val);
+      rm.Vars.SetParam(sa.CAtom(), catom_var_name_Uiso, val);
   }
 }
 //..............................................................................

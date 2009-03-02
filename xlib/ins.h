@@ -273,7 +273,7 @@ public:
               index = 2; 
             }
           }
-          sr.SetValue( DefVal );
+          cx.rm.Vars.SetParam(sr, 0, DefVal );
           sr.SetEsd( DefEsd );
           if( Vals[0] == &DefEsd )
             sr.SetEsd1( (index <= 2) ? DefEsd*Esd1Mult : DefEsd1 );

@@ -5,7 +5,7 @@ void TExyzGroup::Clear()  {  Parent.Delete(Id);  }
 //..............................................................................
 void TExyzGroup::Assign(const TExyzGroup& ag)  {
   for( int i=0; i < ag.Atoms.Count(); i++ )  {
-    Atoms.Add( Parent.RM.aunit.FindCAtomByLoaderId( ag.Atoms[i]->GetLoaderId()) );
+    Atoms.Add( Parent.RM.aunit.FindCAtomById( ag.Atoms[i]->GetId()) );
     if( Atoms.Last() == NULL )
       throw TFunctionFailedException(__OlxSourceInfo, "asymmetric units mismatch");
     Atoms.Last()->SetExyzGroup(this);

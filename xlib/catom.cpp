@@ -14,10 +14,11 @@
 #include "refmodel.h"
 #include "pers_util.h"
 
+olxstr TCAtom::VarNames[] = {"Scale", "X", "Y", "Z", "Sof", "Uiso", "U11", "U22", "U33", "U23", "U13", "U12"};
 //----------------------------------------------------------------------------//
 // TCAtom function bodies
 //----------------------------------------------------------------------------//
-TCAtom::TCAtom(TAsymmUnit *Parent) : Vars(12)  {
+TCAtom::TCAtom(TAsymmUnit *Parent)  {
   Part   = 0;
   Occu   = 1;
   QPeak  = 0;
@@ -30,7 +31,6 @@ TCAtom::TCAtom(TAsymmUnit *Parent) : Vars(12)  {
   UisoEsd = 0;
   UisoScale = 0;
   UisoOwner = NULL;
-  LoaderId = -1;
   FragmentId = -1;
   CanBeGrown = Deleted = false;
   FAttachedAtoms = NULL;
@@ -42,6 +42,7 @@ TCAtom::TCAtom(TAsymmUnit *Parent) : Vars(12)  {
   DependentAfixGroup = ParentAfixGroup = NULL;
   DependentHfixGroups = NULL;
   ExyzGroup = NULL;
+  memset(Vars, 0, sizeof(Vars));
 }
 //..............................................................................
 TCAtom::~TCAtom()  {
@@ -113,7 +114,7 @@ void TCAtom::Assign(const TCAtom& S)  {
   SetUiso( S.GetUiso() );
   SetUisoScale( S.GetUisoScale() );
   if( S.UisoOwner != NULL )  {
-    UisoOwner = FParent->FindCAtomByLoaderId(S.UisoOwner->GetLoaderId());
+    UisoOwner = FParent->FindCAtomById(S.UisoOwner->GetId());
     if( UisoOwner == NULL )
       throw TFunctionFailedException(__OlxSourceInfo, "asymmetric units mismatch");
   }
@@ -122,7 +123,6 @@ void TCAtom::Assign(const TCAtom& S)  {
   FLabel   = S.FLabel;
   FAtomInfo = &S.GetAtomInfo();
 //  Frag    = S.Frag;
-  LoaderId = S.GetLoaderId();
   Id = S.GetId();
   FragmentId = S.GetFragmentId();
   Center = S.Center;
@@ -266,7 +266,7 @@ void TCAtom::FromDataItem(TDataItem& item)  {
     QPeak = item.GetRequiredField("peak").ToDouble();
 }
 //..............................................................................
-void DigitStrtok(const olxstr &str, TStrPObjList<olxstr,bool> &chars)  {
+void DigitStrtok(const olxstr &str, TStrPObjList<olxstr,bool>& chars)  {
   olxstr Dig, Char;
   for(int i=0; i < str.Length(); i++ )  {
     if( str[i] <= '9' && str[i] >= '0' )  {
@@ -340,3 +340,45 @@ olxstr TGroupCAtom::GetFullLabel(RefinementModel& rm) const  {
   return name;
 }
 //..............................................................................
+IXVarReferencerContainer& TCAtom::GetParentContainer()  {  return *FParent;  }
+//..............................................................................
+double TCAtom::GetValue(short var_index) const {
+  switch( var_index)  {
+    case catom_var_name_X:     return Center[0];
+    case catom_var_name_Y:     return Center[1];
+    case catom_var_name_Z:     return Center[2];
+    case catom_var_name_Sof:   return Occu;
+    case catom_var_name_Uiso:  return Uiso;  
+    case catom_var_name_U11:
+    case catom_var_name_U22:
+    case catom_var_name_U33:
+    case catom_var_name_U23:
+    case catom_var_name_U13:
+    case catom_var_name_U12:
+      if( EllpId == -1 )
+        throw TInvalidArgumentException(__OlxSourceInfo, "Uanis is not defined");
+      return FParent->GetEllp(EllpId).GetQuadVal(var_index-catom_var_name_U11);
+    default:
+      throw TInvalidArgumentException(__OlxSourceInfo, "parameter name");
+  }
+}
+//..............................................................................
+void TCAtom::SetValue(short var_index, const double& val) {
+  static double q[6];
+  switch( var_index)  {
+    case catom_var_name_X:     Center[0] = val;  break;
+    case catom_var_name_Y:     Center[1] = val;  break;
+    case catom_var_name_Z:     Center[2] = val;  break;
+    case catom_var_name_Sof:   Occu = val;  break;
+    case catom_var_name_Uiso:  Uiso = val;  break;  
+    case catom_var_name_U11:
+    case catom_var_name_U22:
+    case catom_var_name_U33:
+    case catom_var_name_U23:
+    case catom_var_name_U13:
+    case catom_var_name_U12:
+      break;
+    default:
+      throw TInvalidArgumentException(__OlxSourceInfo, "parameter name");
+  }
+}

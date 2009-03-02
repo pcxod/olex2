@@ -996,7 +996,6 @@ void TIns::UpdateAtomsFromStrings(RefinementModel& rm, TCAtomPList& CAtoms, cons
       if( (atomCount+1) > CAtoms.Count() )  {
         if( atom && atom->GetParent() )  {
           atom = &atom->GetParent()->NewAtom(cx.Resi);
-          atom->SetLoaderId( liNewAtom );
         }
       }
       else  {
@@ -1167,23 +1166,21 @@ TCAtom* TIns::_ParseAtom(TStrList& Toks, ParseContext& cx, TCAtom* atom)  {
   double QE[6];
   if( atom == NULL )  {
     atom = &cx.au.NewAtom(cx.Resi);
-    atom->SetLoaderId(cx.au.AtomCount()-1);
   }
   for( int j=0; j < 3; j ++ )
-    cx.rm.Vars.SetAtomParam(*atom, var_name_X+j, Toks[2+j].ToDouble());
+    cx.rm.Vars.SetParam(*atom, catom_var_name_X+j, Toks[2+j].ToDouble());
   atom->SetPart( cx.Part );
   // update the context
   cx.Last = atom;
   if( !cx.Same.IsEmpty() && cx.Same.Last().GetB() == NULL )
     cx.Same.Last().B() = atom;
 
-  cx.rm.Vars.SetAtomParam(*atom, var_name_Sof, cx.PartOccu == 0 ? Toks[5].ToDouble() : cx.PartOccu );
+  cx.rm.Vars.SetParam(*atom, catom_var_name_Sof, cx.PartOccu == 0 ? Toks[5].ToDouble() : cx.PartOccu );
 
   if( Toks.Count() == 12 )  {  // full ellipsoid
     for( int j=0; j < 6; j ++ )
-      QE[j] = cx.rm.Vars.SetAtomParam(*atom, var_name_U11+j, Toks[j+6].ToDouble() );
-    cx.au.UcifToUcart(QE);
-    TEllipsoid& elp = cx.au.NewEllp().Initialise(QE);
+      QE[j] = cx.rm.Vars.SetParam(*atom, catom_var_name_U11+j, Toks[j+6].ToDouble() );
+    TEllipsoid& elp = cx.au.NewEllp().Initialise(cx.au.UcifToUcart(QE));
     atom->AssignEllp( &elp );
     if( atom->GetEllipsoid()->IsNPD() )  {
       TBasicApp::GetLog().Info(olxstr("Not positevely defined: ") << Toks[0]);
@@ -1195,7 +1192,7 @@ TCAtom* TIns::_ParseAtom(TStrList& Toks, ParseContext& cx, TCAtom* atom)  {
   }
   else  {
     if( Toks.Count() > 6 )
-      cx.rm.Vars.SetAtomParam(*atom, var_name_Uiso, Toks[6].ToDouble());
+      cx.rm.Vars.SetParam(*atom, catom_var_name_Uiso, Toks[6].ToDouble());
     else // incomplete data...
       atom->SetUiso( 4*caDefIso*caDefIso );
     if( Toks.Count() >= 8 ) // some other data as Q-peak itensity
@@ -1225,23 +1222,23 @@ olxstr TIns::_AtomToString(RefinementModel& rm, TCAtom& CA, int SfacIndex)  {
 
   Tmp.Format(Tmp.Length()+4, true, ' ');
   for( int j=0; j < 3; j++ )
-    Tmp << olxstr::FormatFloat(-5, rm.Vars.GetAtomParam(CA, var_name_X+j)) << ' ';
+    Tmp << olxstr::FormatFloat(-5, rm.Vars.GetParam(CA, catom_var_name_X+j)) << ' ';
   
   // save occupancy
-  Tmp << olxstr::FormatFloat(-5, rm.Vars.GetAtomParam(CA, var_name_Sof)) << ' ';
+  Tmp << olxstr::FormatFloat(-5, rm.Vars.GetParam(CA, catom_var_name_Sof)) << ' ';
   // save Uiso, Uanis
   if( CA.GetEllipsoid() != NULL )  {
     CA.GetEllipsoid()->GetQuad(Q);
     GetAsymmUnit().UcartToUcif(Q);
 
     for( int j = 0; j < 6; j++ )
-      Tmp << olxstr::FormatFloat(-5, rm.Vars.GetAtomParam(CA, var_name_U11+j, Q)) << ' ';
+      Tmp << olxstr::FormatFloat(-5, rm.Vars.GetParam(CA, catom_var_name_U11+j, Q[j])) << ' ';
   }
   else  {
     if( CA.GetUisoOwner() )  // riding atom
       v = -CA.GetUisoScale();
     else 
-      v = rm.Vars.GetAtomParam(CA, var_name_Uiso);
+      v = rm.Vars.GetParam(CA, catom_var_name_Uiso);
     Tmp << olxstr::FormatFloat(-5, v) << ' ';
   }
   // Q-Peak
@@ -1355,7 +1352,7 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
     sr.Validate();
     if( !Ins_ProcessRestraint(atoms, sr) )  continue;
     Tmp = "DFIX ";
-    Tmp << sr.GetValue() << ' ' << sr.GetEsd();
+    Tmp << rm.Vars.GetParam(sr, 0) << ' ' << sr.GetEsd();
     for( int j=0; j < sr.AtomCount(); j++ )  {
       Tmp << ' ' << sr.GetAtom(j).GetFullLabel(rm);
       StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), rm);
@@ -1385,7 +1382,7 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
     sr.Validate();
     if( !Ins_ProcessRestraint(atoms, sr) )  continue;
     Tmp = "DANG ";
-    Tmp << olxstr::FormatFloat(3, sr.GetValue()) << ' ' << sr.GetEsd();
+    Tmp << olxstr::FormatFloat(3, rm.Vars.GetParam(sr, 0)) << ' ' << sr.GetEsd();
     for( int j=0; j < sr.AtomCount(); j++ )  {
       Tmp << ' ' << sr.GetAtom(j).GetFullLabel(rm);
       StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), rm);
@@ -1400,7 +1397,7 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
     sr.Validate();
     if( !Ins_ProcessRestraint(atoms, sr) )  continue;
     Tmp = "CHIV ";
-    Tmp << sr.GetValue() << ' ' << sr.GetEsd();
+    Tmp << rm.Vars.GetParam(sr, 0) << ' ' << sr.GetEsd();
     for( int j=0; j < sr.AtomCount(); j++ )  {
       Tmp << ' ' << sr.GetAtom(j).GetFullLabel(rm);
       StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), rm);

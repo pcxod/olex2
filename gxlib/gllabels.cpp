@@ -98,7 +98,7 @@ bool TXGlLabels::Orient(TGlPrimitive *P)  {
       }
     }
     if( Mode & lmOVar )  {
-      const XVarReference* vr = ca.GetVarRef(var_name_Sof);
+      const XVarReference* vr = ca.GetVarRef(catom_var_name_Sof);
       if( vr != NULL )  {
         if( vr->relation_type != relation_None )  {
           if( Tmp.Length() )  Tmp << ", ";
@@ -115,11 +115,11 @@ bool TXGlLabels::Orient(TGlPrimitive *P)  {
     }
     if( Mode & lmAOcc )  {
       if( Tmp.Length() )  Tmp << ", ";
-      Tmp << olxstr::FormatFloat(2, rm.Vars.GetAtomParam(ca, var_name_Sof) );
+      Tmp << olxstr::FormatFloat(2, rm.Vars.GetParam(ca, catom_var_name_Sof) );
     }
     if( Mode & lmUiso && ca.GetUisoOwner() == NULL )  {
       if( !Tmp.IsEmpty() )  Tmp << ", ";
-        Tmp << olxstr::FormatFloat(2, rm.Vars.GetAtomParam(ca, var_name_Uiso));
+        Tmp << olxstr::FormatFloat(2, rm.Vars.GetParam(ca, catom_var_name_Uiso));
     }
     if( Mode & lmUisR )  {
       if( ca.GetUisoOwner() != NULL )  {
@@ -130,14 +130,14 @@ bool TXGlLabels::Orient(TGlPrimitive *P)  {
     if( Mode & lmFixed )  {
       olxstr fXyz;
       for( int j=0; j < 3; j++ )  {
-        if( ca.GetVarRef(var_name_X+j) != NULL && ca.GetVarRef(var_name_X+j)->relation_type == relation_None )
+        if( ca.GetVarRef(catom_var_name_X+j) != NULL && ca.GetVarRef(catom_var_name_X+j)->relation_type == relation_None )
           fXyz << (olxch)('X'+j);
       }
       if( !fXyz.IsEmpty() )  {
         if( !Tmp.IsEmpty() )  Tmp << ", ";
         Tmp << fXyz;
       }
-      if( ca.GetVarRef(var_name_Sof) != NULL && ca.GetVarRef(var_name_Sof)->relation_type == relation_None )  {
+      if( ca.GetVarRef(catom_var_name_Sof) != NULL && ca.GetVarRef(catom_var_name_Sof)->relation_type == relation_None )  {
         if( !Tmp.IsEmpty() )  Tmp << ", ";
         Tmp << "occu";
       }
@@ -145,7 +145,7 @@ bool TXGlLabels::Orient(TGlPrimitive *P)  {
         olxstr eadp((const char*)"Ua:", 40);
         int ec=0;
         for( int j=0; j < 6; j++ )  {
-          if( ca.GetVarRef(var_name_U11+j) != NULL && ca.GetVarRef(var_name_U11+j)->relation_type == relation_None )  {
+          if( ca.GetVarRef(catom_var_name_U11+j) != NULL && ca.GetVarRef(catom_var_name_U11+j)->relation_type == relation_None )  {
             ec++;
             eadp << (olxch)('A'+j);
           }
@@ -157,7 +157,7 @@ bool TXGlLabels::Orient(TGlPrimitive *P)  {
           else Tmp << eadp;
         }
       }
-      else if( ca.GetVarRef(var_name_Uiso) != NULL && ca.GetVarRef(var_name_Uiso)->relation_type == relation_None )  {
+      else if( ca.GetVarRef(catom_var_name_Uiso) != NULL && ca.GetVarRef(catom_var_name_Uiso)->relation_type == relation_None )  {
         if( !Tmp.IsEmpty() )  Tmp << ", ";
         Tmp << "Uiso";
       }

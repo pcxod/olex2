@@ -799,6 +799,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\xlib\atomsort.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\xlib\auto.h"
 				>
 			</File>
@@ -932,6 +936,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\xlib\refutil.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\xlib\rm_base.h"
 				>
 			</File>
 			<File

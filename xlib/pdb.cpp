@@ -122,7 +122,6 @@ void TPdb::LoadFromStrings(const TStrList& Strings)  {
 
       Tmp << '_' << toks[5].Trim(' ') << '_' << toks[8].Trim(' ');
       CA.SetLabel( Tmp );
-      CA.SetLoaderId( toks[1].ToInt() );
     }
     else if( Tmp == "ANISOU" )  {
       toks.Clear();
@@ -136,7 +135,7 @@ void TPdb::LoadFromStrings(const TStrList& Strings)  {
       QE[4] = toks[14].ToDouble();
       QE[5] = toks[13].ToDouble();
       QE /= 10000;
-      TCAtom* ca = GetAsymmUnit().FindCAtomByLoaderId( toks[1].ToInt() );
+      TCAtom* ca = GetAsymmUnit().FindCAtomById( toks[1].ToInt() );
       if( ca != NULL )  {
         ca->UpdateEllp(QE);
         if( ca->GetEllipsoid()->IsNPD() )

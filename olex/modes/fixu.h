@@ -13,9 +13,9 @@ protected:
         TUndoData(new TUndoActionImpl<TFixUModeUndo>(this, &TFixUModeUndo::undo))  {
       Atom = XA;
       RefinementModel& rm = *XA->Atom().CAtom().GetParent()->GetRefMod();
-      Uiso = rm.Vars.ReleaseRef(XA->Atom().CAtom(), var_name_Uiso);
+      Uiso = rm.Vars.ReleaseRef(XA->Atom().CAtom(), catom_var_name_Uiso);
       for( int i=0; i < 6; i++ )
-        Vars[i] = rm.Vars.ReleaseRef(XA->Atom().CAtom(), var_name_U11+i);
+        Vars[i] = rm.Vars.ReleaseRef(XA->Atom().CAtom(), catom_var_name_U11+i);
     }
     ~TFixUModeUndo()  {
       if( Uiso != NULL )  delete Uiso;
@@ -26,10 +26,10 @@ protected:
     void undo(TUndoData* data)  {
       TGlXApp::GetGXApp()->MarkLabel(*Atom, false);
       RefinementModel& rm = *Atom->Atom().CAtom().GetParent()->GetRefMod();
-      rm.Vars.RestoreRef(Atom->Atom().CAtom(), var_name_Uiso, Uiso);
+      rm.Vars.RestoreRef(Atom->Atom().CAtom(), catom_var_name_Uiso, Uiso);
       Uiso = NULL;
       for( int i=0; i < 6; i++ )  {
-        rm.Vars.RestoreRef(Atom->Atom().CAtom(), var_name_U11+i, Vars[i]);
+        rm.Vars.RestoreRef(Atom->Atom().CAtom(), catom_var_name_U11+i, Vars[i]);
         Vars[i] = NULL;
       }
     }
@@ -56,7 +56,7 @@ public:
         TXApp::GetInstance().SetAtomUiso(XA.Atom(), Val);
       else  {
         for( int i=0; i < 6; i++ )
-          rm.Vars.FixAtomParam(XA.Atom().CAtom(), var_name_U11+i);
+          rm.Vars.FixParam(XA.Atom().CAtom(), catom_var_name_U11+i);
       }
       TGlXApp::GetGXApp()->MarkLabel(XA, true);
       return true;

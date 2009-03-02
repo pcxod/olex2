@@ -8,16 +8,31 @@
 #include "xapp.h"
 #include "refmerge.h"
 
-RefinementModel::RefinementModel(TAsymmUnit& au) : rDFIX(*this, rltBonds), rDANG(*this, rltBonds), 
-  rSADI(*this, rltBonds), rCHIV(*this, rltAtoms), rFLAT(*this, rltGroup), rDELU(*this, rltAtoms), 
-  rSIMU(*this, rltAtoms), rISOR(*this, rltAtoms), rEADP(*this, rltAtoms), ExyzGroups(*this), 
-  AfixGroups(*this), rSAME(*this),
+RefinementModel::RefinementModel(TAsymmUnit& au) : 
+  rDFIX(*this, rltBonds, "dfix"), 
+  rDANG(*this, rltBonds, "dang"), 
+  rSADI(*this, rltBonds, "sadi"), 
+  rCHIV(*this, rltAtoms, "chiv"), 
+  rFLAT(*this, rltGroup, "flat"), 
+  rDELU(*this, rltAtoms, "delu"), 
+  rSIMU(*this, rltAtoms, "simu"), 
+  rISOR(*this, rltAtoms, "isor"), 
+  rEADP(*this, rltAtoms, "eadp"), 
+  ExyzGroups(*this), 
+  AfixGroups(*this), 
+  rSAME(*this),
   aunit(au), 
   HklStatFileID(EmptyString, 0, 0), 
   HklFileID(EmptyString, 0, 0), 
-  Vars(au)  
+  Vars(*this),
+  VarRefrencerId("basf")
 {
   SetDefaults();
+  RefContainers(rDFIX.GetIdName(), &rDFIX);
+  RefContainers(rDANG.GetIdName(), &rDANG);
+  RefContainers("catom", &aunit);
+  //RefContainers(aunit.GetIdName(), &aunit);
+  RefContainers(GetIdName(), this);
 }
 //....................................................................................................
 void RefinementModel::SetDefaults() {
@@ -39,11 +54,11 @@ void RefinementModel::SetDefaults() {
 //....................................................................................................
 void RefinementModel::Clear() {
   for( int i=0; i < SfacData.Count(); i++ )
-    delete SfacData.Object(i);
+    delete SfacData.GetValue(i);
   SfacData.Clear();
 
   for( int i=0; i < Frags.Count(); i++ )
-    delete Frags.Object(i);
+    delete Frags.GetValue(i);
   Frags.Clear();
 
   rDFIX.Clear();
@@ -66,9 +81,21 @@ void RefinementModel::Clear() {
   HKLSource = EmptyString;
   Omits.Clear();
   BASF.Clear();
+  BASF_Vars.Clear();
   SetDefaults();
   expl.Clear();
   Vars.Clear();
+}
+//....................................................................................................
+void RefinementModel::ClearVarRefs() {
+  for( int i=0; i < RefContainers.Count(); i++ )  {
+    IXVarReferencerContainer* rc = RefContainers.GetValue(i);
+    for( int j=0; j < rc->ReferencerCount(); j++ )  {
+      IXVarReferencer* vr = rc->GetReferencer(j);
+      for( int k=0; k < vr->VarCount(); k++ )
+        vr->SetVarRef(k, NULL);
+    }
+  }
 }
 //....................................................................................................
 const smatd& RefinementModel::AddUsedSymm(const smatd& matr) {
@@ -121,16 +148,17 @@ RefinementModel& RefinementModel::Assign(const RefinementModel& rm, bool AssignA
   TWIN_n = rm.TWIN_n;
   TWIN_set = rm.TWIN_set;
   BASF = rm.BASF;
+  for( int i=0; i < BASF.Count(); i++ )
+    BASF_Vars.Add(NULL);
   HKLSource = rm.HKLSource;
   RefinementMethod = rm.RefinementMethod;
   SolutionMethod = rm.SolutionMethod;
 
   for( int i=0; i < rm.Frags.Count(); i++ )
-    Frags.Add( rm.Frags.GetComparable(i), new Fragment( *rm.Frags.GetObject(i) ) );
+    Frags(rm.Frags.GetKey(i), new Fragment( *rm.Frags.GetValue(i) ) );
 
   if( AssignAUnit )
     aunit.Assign(rm.aunit);
-  Vars.Assign( rm.Vars );
   rDFIX.Assign(rm.rDFIX);
   rDANG.Assign(rm.rDANG);
   rSADI.Assign(rm.rSADI);
@@ -143,12 +171,14 @@ RefinementModel& RefinementModel::Assign(const RefinementModel& rm, bool AssignA
   rSAME.Assign(aunit, rm.rSAME);
   ExyzGroups.Assign(rm.ExyzGroups);
   AfixGroups.Assign(rm.AfixGroups);
+  // restraunts have to be copied first, as some may refer to vars
+  Vars.Assign( rm.Vars );
 
   for( int i=0; i < rm.UsedSymm.Count(); i++ )  // need to validate for duplication
     AddUsedSymm( rm.UsedSymm[i] );
 
   for( int i=0; i < rm.SfacData.Count(); i++ )
-    SfacData.Add(rm.SfacData.GetComparable(i), new XScatterer( *rm.SfacData.GetObject(i)) );
+    SfacData(rm.SfacData.GetKey(i), new XScatterer( *rm.SfacData.GetValue(i)) );
   
   
   return *this;
@@ -560,7 +590,7 @@ void RefinementModel::Describe(TStrList& lst, TPtrList<TCAtom>* a_res, TPtrList<
 //....................................................................................................
 void RefinementModel::ProcessFrags()  {
   for( int i=0; i < Frags.Count(); i++ )  {
-    Fragment* frag = Frags.Object(i);
+    Fragment* frag = Frags.GetValue(i);
     for( int j=0; j < AfixGroups.Count(); j++ )  {
       TAfixGroup& ag = AfixGroups[j];
       if( ag.GetM() == frag->GetCode() && (ag.Count()+1) == frag->Count() )  {
@@ -680,7 +710,6 @@ void RefinementModel::FromDataItem(TDataItem& item) {
   for( int i=0; i < eqiv.ItemCount(); i++ )  
     TSymmParser::SymmToMatrix( eqiv.GetItem(i).GetValue(), UsedSymm.AddNew());
 
-  Vars.FromDataItem( item.FindRequiredItem("leqs") );
   expl.FromDataItem(item.FindRequiredItem("expl"));  
 
   AfixGroups.FromDataItem(item.FindRequiredItem("afix"));
@@ -695,7 +724,9 @@ void RefinementModel::FromDataItem(TDataItem& item) {
   rSIMU.FromDataItem(item.FindRequiredItem("simu"));
   rISOR.FromDataItem(item.FindRequiredItem("isor"));
   rEADP.FromDataItem(item.FindRequiredItem("eadp"));
-  
+  // restraints may use some of the vars...  
+  Vars.FromDataItem( item.FindRequiredItem("leqs") );
+
   TDataItem& hklf = item.FindRequiredItem("HKLF");
   HKLF = hklf.GetValue().ToInt();
   HKLF_s = hklf.GetRequiredField("s").ToDouble();

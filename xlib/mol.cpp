@@ -114,7 +114,6 @@ void TMol::LoadFromStrings(const TStrList& Strings)  {
         CA.ccrd()[1] = Ay;
         CA.ccrd()[2] = Az;
         CA.SetLabel( (Tmp1 + GetAsymmUnit().AtomCount()+1) );
-        CA.SetLoaderId(GetAsymmUnit().AtomCount()-1);
       }
       AC--;
       if( AC <= 0 )  {
