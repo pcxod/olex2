@@ -653,6 +653,12 @@ public:
       E.SetRetVal( Lst.Peak() );
     else if( !Cmds[0].Comparei("hole") )
       E.SetRetVal( Lst.Hole() );
+    else if( !Cmds[0].Comparei("flack") )  {
+      if( Lst.HasFlack() )
+        E.SetRetVal( Lst.Flack().ToString() );
+      else
+        E.SetRetVal( NAString );
+    }
     else
       E.SetRetVal<olxstr>( NAString );
   }
