@@ -4031,10 +4031,6 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options, TMacro
         if( NewIns[i].IsEmpty() )  continue;
         Ins.AddIns(NewIns[i], FXApp->XFile().GetRM());
       }
-      // synchronisation for new instructions
-      FXApp->XFile().UpdateAsymmUnit();
-      // update instruction parameters
-      Ins.UpdateParams();
       // emulate loading a new file
       FXApp->XFile().EndUpdate();
     }

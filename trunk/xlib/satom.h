@@ -14,7 +14,7 @@ BeginXlibNamespace()
 
 const short 
   satomDeleted    = 0x0001,
-  satomGrown      = 0x00002,
+  satomGrown      = 0x0002,
   satomStandalone = 0x0004;
 
 class TSAtom : public TBasicNode<TNetwork, TSAtom, TSBond>  {

@@ -241,7 +241,7 @@ void TLattice::InitBody()  {
   int bondCnt = Bonds.Count();
   for(int i=0; i < Fragments.Count(); i++ )
     bondCnt += Fragments[i]->BondCount();
-  Bonds.SetCapacity( bondCnt );
+  Bonds.SetCapacity( bondCnt + 1);
   // end
   for(int i=0; i < Fragments.Count(); i++ )  {
     Frag = Fragments[i];

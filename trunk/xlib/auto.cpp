@@ -524,7 +524,7 @@ TAutoDB* TAutoDB::Instance = NULL;
 
 TAutoDB::TAutoDB(TXFile& xfile, ALibraryContainer& lc) : XFile(xfile), AtomsInfo(TAtomsInfo::GetInstance())  {
   if( Instance != NULL )
-    throw TFunctionFailedException(__OlxSourceInfo, "dublicated object instance");
+    throw TFunctionFailedException(__OlxSourceInfo, "duplicated object instance");
   Instance = this;
   for( int i=0; i < MaxConnectivity-1; i++ )
     Nodes.AddNew();
@@ -1184,13 +1184,17 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
       TBasicAtomInfo* l_bai = &AtomsInfo.GetAtomInfo(sn->Node(i).GetTag());
       if( proposed_atoms != NULL )  { // change to only provided atoms if in the guess list
         if( proposed_atoms->IndexOf( l_bai ) != -1 )  {
-          change_evt = 0;
-          guesses[i].atom->Label() = (olxstr( l_bai->GetSymbol() ) << (i+1));
-          guesses[i].atom->SetAtomInfo(l_bai);
+          double delta_z = guesses[i].atom->GetAtomInfo().GetIndex() - l_bai->GetIndex();
+          double ref_val = guesses[i].atom->GetUiso() - 0.0025*delta_z;
+          if(  ref_val > 0.01 && ref_val < 0.075)  {
+            change_evt = 0;
+            guesses[i].atom->Label() = (olxstr( l_bai->GetSymbol() ) << (i+1));
+            guesses[i].atom->SetAtomInfo(l_bai);
+          }
         }
       }
       else  if( BAIDelta != -1 )  { // consider atom types within BAIDelta only
-        if( abs(guesses[i].atom->GetAtomInfo().GetIndex() - sn->Node(i).GetTag()) < BAIDelta )  {
+        if( olx_abs(guesses[i].atom->GetAtomInfo().GetIndex() - sn->Node(i).GetTag()) < BAIDelta )  {
           change_evt = 1;
           guesses[i].atom->Label() = (olxstr( l_bai->GetSymbol() ) << (i+1));
           guesses[i].atom->SetAtomInfo(l_bai);

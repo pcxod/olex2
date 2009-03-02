@@ -64,20 +64,15 @@ void TNetwork::TDisassembleTaskCheckConnectivity::Run(long index)  {
   const int this_p = Atoms[index]->CAtom().GetPart();
   const int ac = Atoms.Count();
   for( int i=index+1; i < ac; i++ )  {
-    if( (Distances[0][i] - Distances[0][index]) > dcMaxCBLength ||
-        (Distances[0][i] - Distances[0][index]) < -dcMaxCBLength )  return;
-    if( (Distances[1][i] - Distances[1][index]) > dcMaxCBLength ||
-        (Distances[1][i] - Distances[1][index]) < -dcMaxCBLength )  continue;
-    if( (Distances[2][i] - Distances[2][index]) > dcMaxCBLength ||
-        (Distances[2][i] - Distances[2][index]) < -dcMaxCBLength )  continue;
-    if( (Distances[3][i] - Distances[3][index]) > dcMaxCBLength ||
-        (Distances[3][i] - Distances[3][index]) < -dcMaxCBLength )  continue;
+    if( olx_abs(Distances[0][i] - Distances[0][index]) > dcMaxCBLength )  return;
+    if( olx_abs(Distances[1][i] - Distances[1][index]) > dcMaxCBLength )  continue;
+    if( olx_abs(Distances[2][i] - Distances[2][index]) > dcMaxCBLength )  continue;
+    if( olx_abs(Distances[3][i] - Distances[3][index]) > dcMaxCBLength  )  continue;
 
     const double D = Atoms[index]->crd().QDistanceTo( Atoms[i]->crd());
-    double D1 = (double)(Atoms[index]->GetAtomInfo().GetRad1() + Atoms[i]->GetAtomInfo().GetRad1() + Delta);
-    D1 *= D1;
-    const int that_p = Atoms[i]->CAtom().GetPart();
+    const double D1 = sqr(Atoms[index]->GetAtomInfo().GetRad1() + Atoms[i]->GetAtomInfo().GetRad1() + Delta);
     if(  D < D1 )  {
+      const int that_p = Atoms[i]->CAtom().GetPart();
       if( this_p == 0 || that_p == 0 )  {
         Atoms[index]->AddNode(*Atoms[i]);
         Atoms[i]->AddNode(*Atoms[index]);  // crosslinking
@@ -159,10 +154,11 @@ void TNetwork::Disassemble(TSAtomPList& Atoms, TNetPList& Frags, TSBondPList* In
       Net->AddNode(*A1);
       Frags.Add( Net );
       A1->SetNetwork(*Net);
+      A1->SetTag(0);
       for( int j=0; j < Net->NodeCount(); j++ )  {
         TSAtom& A2 = Net->Node(j);
-        A2.SetTag(0);
-        for( int k=0; k < A2.NodeCount(); k++ )  {
+        const int a2_cnt = A2.NodeCount(); 
+        for( int k=0; k < a2_cnt; k++ )  {
           TSAtom& A3 = A2.Node(k);
           if( A3.GetTag() != 0 )  {
             Net->AddNode(A3);
@@ -173,10 +169,8 @@ void TNetwork::Disassemble(TSAtomPList& Atoms, TNetPList& Frags, TSBondPList* In
             A2.AddBond(*B);  A3.AddBond(*B);
             Net->AddBond(*B);
             A3.SetTag(0);
-            A2.SetTag(0);
-            continue;
           }
-          if( A3.GetNetId() > j && A3.GetTag() == 0 )  {  // the atom is in the list, but has not been processes
+          else if( A3.GetNetId() > j )  {  // the atom is in the list, but has not been processes
             TSBond* B = new TSBond(Net);                  // in this case we need to create a bond
             B->SetType(sotBond);
             B->SetA(A2); B->SetB(A3);
