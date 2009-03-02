@@ -514,6 +514,12 @@ void TMainForm::funLst(const TStrObjList &Cmds, TMacroError &E)  {
     E.SetRetVal( Lst.Peak() );
   else if( !Cmds[0].Comparei("hole") )
     E.SetRetVal( Lst.Hole() );
+  else if( !Cmds[0].Comparei("flack") )  {
+    if( Lst.HasFlack() )
+      E.SetRetVal( Lst.Flack().ToString() );
+    else
+      E.SetRetVal( NAString );
+  }
   else
     E.SetRetVal( NAString );
 }
@@ -2615,7 +2621,7 @@ void TMainForm::macOccu(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   FindXAtoms(Cmds, xatoms, true, !Options.Contains("cs"));
   RefinementModel& rm = FXApp->XFile().GetRM();
   for( int i=0; i < xatoms.Count(); i++ )
-    rm.Vars.SetAtomParam(xatoms[i]->Atom().CAtom(), var_name_Sof, occu);
+    rm.Vars.SetParam(xatoms[i]->Atom().CAtom(), catom_var_name_Sof, occu);
 }
 //..............................................................................
 void TMainForm::macHtmlPanelSwap(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
@@ -2921,16 +2927,16 @@ void TMainForm::macFvar(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   FindXAtoms(Cmds, xatoms, true, !Options.Contains("cs"));
   if( fvar == 0 )  {
     for(int i=0; i < xatoms.Count(); i++ )
-      rm.Vars.FreeAtomParam(xatoms[i]->Atom().CAtom(), var_name_Sof);
+      rm.Vars.FreeParam(xatoms[i]->Atom().CAtom(), catom_var_name_Sof);
   }
   else if( xatoms.Count() == 2 && fvar == -1101 )  {
     XVar& xv = rm.Vars.NewVar();
-    rm.Vars.AddVarRef(xv, xatoms[0]->Atom().CAtom(), var_name_Sof, relation_AsVar);
-    rm.Vars.AddVarRef(xv, xatoms[1]->Atom().CAtom(), var_name_Sof, relation_AsOneMinusVar);
+    rm.Vars.AddVarRef(xv, xatoms[0]->Atom().CAtom(), catom_var_name_Sof, relation_AsVar, 1.0);
+    rm.Vars.AddVarRef(xv, xatoms[1]->Atom().CAtom(), catom_var_name_Sof, relation_AsOneMinusVar, 1.0);
   }
   else  {
     for(int i=0; i < xatoms.Count(); i++ )
-      rm.Vars.SetAtomParam(xatoms[i]->Atom().CAtom(), var_name_Sof, fvar);
+      rm.Vars.SetParam(xatoms[i]->Atom().CAtom(), catom_var_name_Sof, fvar);
   }
 }
 //..............................................................................
@@ -2946,11 +2952,13 @@ void TMainForm::macSump(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   XLibMacros::ParseNumbers<double>(Cmds, 2, &val, &esd);
   XLEQ& xeq = rm.Vars.NewEquation(val, esd);
   for( int i=0; i < CAtoms.Count(); i++ )  {
-    if( CAtoms[i]->GetVarRef(var_name_Sof) == NULL || CAtoms[i]->GetVarRef(var_name_Sof)->relation_type == relation_None )  {
+    if( CAtoms[i]->GetVarRef(catom_var_name_Sof) == NULL || 
+      CAtoms[i]->GetVarRef(catom_var_name_Sof)->relation_type == relation_None )  
+    {
       XVar& xv = rm.Vars.NewVar(1./CAtoms.Count());
-      rm.Vars.AddVarRef(xv, *CAtoms[i], var_name_Sof, relation_AsVar);
+      rm.Vars.AddVarRef(xv, *CAtoms[i], catom_var_name_Sof, relation_AsVar, 1.0);
     }
-    xeq.AddMember( CAtoms[i]->GetVarRef(var_name_Sof)->Parent );
+    xeq.AddMember( CAtoms[i]->GetVarRef(catom_var_name_Sof)->Parent );
   }
 }
 //..............................................................................
@@ -2979,7 +2987,7 @@ void TMainForm::macPart(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   }
 
   if( part == NoPart ) 
-    part = FXApp->XFile().GetLattice().GetAsymmUnit().GetMaxPart();
+    part = FXApp->XFile().GetLattice().GetAsymmUnit().GetNextPart();
 
   for( int i=0; i < partCount; i++ )  {
     for( int j=(Atoms.Count()/partCount)*i; j < (Atoms.Count()/partCount)*(i+1); j++ )  {
@@ -2992,16 +3000,16 @@ void TMainForm::macPart(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       if( linkOccu )  {
         if( partCount == 2 )  {
           if( i )  
-            rm.Vars.AddVarRef(*xv, Atoms[j]->Atom().CAtom(), var_name_Sof, relation_AsVar);
+            rm.Vars.AddVarRef(*xv, Atoms[j]->Atom().CAtom(), catom_var_name_Sof, relation_AsVar, 1.0);
           else     
-            rm.Vars.AddVarRef(*xv, Atoms[j]->Atom().CAtom(), var_name_Sof, relation_AsOneMinusVar);
+            rm.Vars.AddVarRef(*xv, Atoms[j]->Atom().CAtom(), catom_var_name_Sof, relation_AsOneMinusVar, 1.0);
         }
         if( partCount > 2 )  {
-          if( Atoms[j]->Atom().CAtom().GetVarRef(var_name_Sof) == NULL )  {
+          if( Atoms[j]->Atom().CAtom().GetVarRef(catom_var_name_Sof) == NULL )  {
             XVar& nv = rm.Vars.NewVar(1./Atoms.Count());
-            rm.Vars.AddVarRef(nv, Atoms[j]->Atom().CAtom(), var_name_Sof, relation_AsVar);
+            rm.Vars.AddVarRef(nv, Atoms[j]->Atom().CAtom(), catom_var_name_Sof, relation_AsVar, 1.0);
           }
-          leq->AddMember( Atoms[j]->Atom().CAtom().GetVarRef(var_name_Sof)->Parent);
+          leq->AddMember( Atoms[j]->Atom().CAtom().GetVarRef(catom_var_name_Sof)->Parent);
         }
       }
     }
@@ -3862,19 +3870,18 @@ void TMainForm::macSplit(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 
     TCAtom& CA1 = FXApp->XFile().GetAsymmUnit().NewAtom();
     CA1.Assign(*CA);
-    CA1.SetLoaderId(liNewAtom);
     CA1.SetPart(1);
     CA1.ccrd() += direction;
     CA1.Label() = FXApp->XFile().GetAsymmUnit().CheckLabel(&CA1, lbl+'a');
     // link occupancies
-    rm.Vars.AddVarRef(var, CA1, var_name_Sof, relation_AsVar); 
+    rm.Vars.AddVarRef(var, CA1, catom_var_name_Sof, relation_AsVar, 1.0); 
     ProcessedAtoms.Add( &CA1 );
     TCAtom& CA2 = *CA;
     CA2.SetPart(2);
     CA2.ccrd() -= direction;
     CA2.Label() = FXApp->XFile().GetAsymmUnit().CheckLabel(&CA2, lbl+'b');
     // link occupancies
-    rm.Vars.AddVarRef(var, CA2, var_name_Sof, relation_AsOneMinusVar); 
+    rm.Vars.AddVarRef(var, CA2, catom_var_name_Sof, relation_AsOneMinusVar, 1.0); 
     ProcessedAtoms.Add( &CA2 );
     TSimpleRestraint* sr = NULL;
     if( cr.IsEmpty() );
@@ -3973,28 +3980,28 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options, TMacro
   TStrList SL, *InsParamsCopy, NewIns;
   TStrPObjList<olxstr, TStrList* > RemovedIns;
   const TInsList* InsParams;
-  olxstr Tmp;
-  bool found;
+  SL.Add("REM please do not modify atom names inside the instructions - they will be updated ");
+  SL.Add("REM by Olex2 automatically, though you can change any parameters");
+  SL.Add("REM Also do not change the atoms order");
   // go through instructions
   for(int i=0; i < Ins.InsCount(); i++ )  {
     // do not process remarks
     if( Ins.InsName(i).Comparei("rem") != 0 )  {
       InsParams = &Ins.InsParams(i);
-      found = false;
+      bool found = false;
       for( int j=0; j < InsParams->Count(); j++ )  {
         if( !InsParams->Object(j) )  continue;
         TCAtom* CA1 = InsParams->Object(j);
         for( int k=0; k < CAtoms.Count(); k++ )  {
           TCAtom* CA = CAtoms[k];
-          if( !CA->Label().Comparei(CA1->Label()) )  {
+          if( CA->Label().Comparei(CA1->Label()) == 0 )  {
             found = true;  break;
           }
         }
         if( found )  break;
       }
       if( found )  {
-        Tmp = Ins.InsName(i);  Tmp << ' ' << InsParams->Text(' ');
-        SL.Add(Tmp);
+        SL.Add(Ins.InsName(i)) << ' ' << InsParams->Text(' ');
         InsParamsCopy = new TStrList();
         InsParamsCopy->Assign(*InsParams);
         RemovedIns.Add(Ins.InsName(i), InsParamsCopy);
@@ -4002,12 +4009,6 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options, TMacro
         i--;
       }
     }
-  }
-    // add some remarks
-  if( SL.Count() != 0 )  {
-    SL.Insert(0, EmptyString);
-    SL.Insert(0, "REM please do not modify atom names inside the instructions - they will be updated ");
-    SL.Insert(0, "REM by Olex2 automatically, though you can change any parameters");
   }
   SL.Add(EmptyString);
   TIntList atomIndex;
@@ -4017,13 +4018,7 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options, TMacro
     released.restraints[i]->GetParent().Release(*released.restraints[i]);
 
   TdlgEdit *dlg = new TdlgEdit(this, true);
-  Tmp = EmptyString;
-  for( int i=0; i < SL.Count(); i++ )  {
-    Tmp << SL[i];
-    if( (i+1) < SL.Count() )
-      Tmp << '\n';
-  }
-  dlg->SetText( Tmp );
+  dlg->SetText( SL.Text('\n') );
   try  {
     if( dlg->ShowModal() == wxID_OK )  {
       SL.Clear();
@@ -4032,12 +4027,9 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options, TMacro
       Ins.UpdateAtomsFromStrings(FXApp->XFile().GetRM(), CAtoms, atomIndex, SL, NewIns);
       // add new instructions
       for( int i=0; i < NewIns.Count(); i++ )  {
-        SL.Clear();
-        SL.Strtok(NewIns[i], ' ');
-        if( SL.IsEmpty() )  continue;
-        Tmp = SL[0];
-        SL.Delete(0);
-        Ins.AddIns(Tmp, SL, FXApp->XFile().GetRM());
+        NewIns[i] = NewIns[i].Trim(' ');
+        if( NewIns[i].IsEmpty() )  continue;
+        Ins.AddIns(NewIns[i], FXApp->XFile().GetRM());
       }
       // synchronisation for new instructions
       FXApp->XFile().UpdateAsymmUnit();
@@ -4064,8 +4056,11 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options, TMacro
   }
   for( int i=0; i < RemovedIns.Count(); i++ )
     delete (TStrList*)RemovedIns.Object(i);
-  for( int i=0; i < released.restraints.Count(); i++ )
+  for( int i=0; i < released.restraints.Count(); i++ )  {
+    if( released.restraints[i]->GetVarRef(0) != NULL )
+      delete released.restraints[i]->GetVarRef(0);
     delete released.restraints[i];
+  }
   dlg->Destroy();
 }
 //..............................................................................
@@ -8252,7 +8247,6 @@ void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMa
         ca.SetLabel(olxstr("Q") << olxstr((100+i)));
         ca.ccrd() = cnt;
         ca.SetQPeak( ed );
-        ca.SetLoaderId( liNewAtom );
       }
     }
     au.InitData();
@@ -8295,7 +8289,7 @@ void TMainForm::macProjSph(TStrObjList &Cmds, const TParamList &Options, TMacroE
 void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   //vec2d p1(-1, 0), p2(0, 0.01), p3(1, 0);
   //TArc2D arc(p1, p2, p3);
-  SortedObjectList<olxstr, olxstrComparator<true> > l, l1;
+  //SortedObjectList<olxstr, olxstrComparator<true> > l, l1;
   //l.Add("c");
   //l.Add("a");
   //l.Add("b");
@@ -8304,7 +8298,7 @@ void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options, TMa
   //olxstr t2(l[1]);
   //olxstr t3 = t1;
 
- olxdict<olxstr, olxstr, TComparableComparator > l3;
+  //olxdict<olxstr, olxstr, TComparableComparator > l3;
   //l3.Add("a");
   //l3.Add("b");
   //l3.Add("a");
@@ -8376,17 +8370,17 @@ public:
     vec3d diff;
     for( int j=0; j < au.AtomCount(); j++ )  {
       TCAtom& a1 = au.GetAtom(j);
-      if( a1.GetId() == -1 )  continue;
+      if( a1.GetTag() == -1 )  continue;
       if( a1.GetAtomInfo() == iHydrogenIndex )  continue;
       for( int k=j+1; k < au.AtomCount(); k++ )  {
         TCAtom& a2 = au.GetAtom(k);
-        if( a2.GetId() == -1 )  continue;
+        if( a2.GetTag() == -1 )  continue;
         cc ++;
         if( a2.GetAtomInfo() == iHydrogenIndex )  continue;
         vec3d from(a1.ccrd()), to(a2.ccrd());
         int d = Round(Main_FindClosestDistance(ml, from, a2)*100);
         if( d < 1 )  {  // symm eq
-          a2.SetId(-1);
+          a2.SetTag(-1);
           continue;
         }
         // XYZ
@@ -8467,7 +8461,7 @@ void TMainForm::macTestStat(TStrObjList &Cmds, const TParamList &Options, TMacro
     sg->GetMatrices(ml, mattAll);
     for( int j=0; j < au.AtomCount(); j++ )  {
       TCAtom& a1 = au.GetAtom(j);
-      if( a1.GetId() == -1 )  continue;
+      if( a1.GetTag() == -1 )  continue;
       if( a1.GetAtomInfo() == iHydrogenIndex )  continue;
       int ai = atomTypes.IndexOfComparable(&a1.GetAtomInfo());
       double* data = ((ai == -1) ? new double[601] : atomTypes.Object(ai));
@@ -8478,7 +8472,7 @@ void TMainForm::macTestStat(TStrObjList &Cmds, const TParamList &Options, TMacro
       vec3d from(a1.ccrd());
       for( int k=j+1; k < au.AtomCount(); k++ )  {
         TCAtom& a2 = au.GetAtom(k);
-        if( a2.GetId() == -1 )  continue;
+        if( a2.GetTag() == -1 )  continue;
         if( a2.GetAtomInfo() == iHydrogenIndex )  continue;
         vec3d to(a2.ccrd());
         memset(tmp_data, 0, sizeof(double)*600);
@@ -8488,13 +8482,13 @@ void TMainForm::macTestStat(TStrObjList &Cmds, const TParamList &Options, TMacro
           au.CellToCartesian(v1);
           double d = v1.Length();
           if( d <= 0.01 )  {
-            a2.SetId(-1);
+            a2.SetTag(-1);
             break;
           }
           if( d < 6 )
             tmp_data[Round(d*100)] ++;
         }
-        if( a2.GetId() != -1 )  {
+        if( a2.GetTag() != -1 )  {
           for( int l=0; l < 600; l++ )
             data[l] += tmp_data[l];
         }
