@@ -200,7 +200,7 @@ public:
     this_InitMacroD(IF, "", fpAny, "if...");
     this_InitMacroD(Exec, "s&;o&;d&;q", fpAny^fpNone, "exec" );
     this_InitMacroD(Echo, "", fpAny, "echo" );
-    this_InitMacroDA(Reap, @reap, "", fpOne, "reap" );
+    this_InitMacroDA(Reap, @reap, "", fpAny^fpNone, "reap" );
     this_InitMacroD(Name, "", fpAny^(fpNone|fpOne)|psFileLoaded, "name" );
     this_InitMacroD(Info, "", fpAny, "info" );
     this_InitMacroDA(Python, @py, "", fpAny^fpNone, "Runs python script" );
@@ -930,7 +930,7 @@ public:
   //..............................................................................
   void macReap(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
     Lst.Clear();
-    XApp.XFile().LoadFromFile( Cmds[0] );
+    XApp.XFile().LoadFromFile( Cmds.Text(' ') );
     olxstr lstfn( TEFile::ChangeFileExt(Cmds[0], "lst") );
     if( TEFile::FileExists(lstfn) )
       Lst.LoadFromFile(lstfn);

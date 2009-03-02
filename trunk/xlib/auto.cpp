@@ -947,6 +947,9 @@ void TAutoDB::AnalyseStructure(const olxstr& lastFileName, TLattice& latt,
   Uisos.Clear();
   for( int i=0; i < latt.FragmentCount(); i++ )  {
     Uisos.Add(0.0);
+    // for two atoms we cannot decide which ne is which, for one - no reason at all :)
+    if( latt.GetFragment(i).NodeCount() < 3 )
+      continue;
     AnalyseNet( latt.GetFragment(i), permutator, Uisos[Uisos.Count()-1], stat, proposed_atoms );
   }
   LastStat = stat;
@@ -1123,6 +1126,10 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
     stat.ConfidentAtomTypes++;
   }
   if( UisoCnt != 0 )  Uiso /= UisoCnt;
+  if( Uiso < 0.015 || Uiso > 0.075 )  {  // override silly values if happens
+    Uiso = 0;
+    UisoCnt = 0;
+  }
   if( UisoCnt != 0 )
     TBasicApp::GetLog().Info( olxstr("Mean Uiso for confident atom types is ") << olxstr::FormatFloat(3,Uiso) );
   else
