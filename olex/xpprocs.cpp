@@ -6319,8 +6319,8 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   olxstr suffix = Options.FindValue("n");
   bool name = !suffix.IsEmpty();
   bool align = Options.Contains("a");
-  if( Cmds.Count() )  {
-    FXApp->FindXAtoms( Cmds.Text(' '), atoms);
+  FindXAtoms(Cmds, atoms, false, true);
+  if( !atoms.IsEmpty() )  {
     if( atoms.Count() == 2 )  {
       TTypeList< AnAssociation2<int, int> > res;
       TIntList sk;
