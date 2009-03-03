@@ -896,13 +896,13 @@ void TAutoDB::AnalyseNode(TSAtom& sa, TStrList& report)  {
       }
     }
   }
-  if( S1Match.Count() != 0 )  {
+  if( !S1Match.IsEmpty() )  {
     report.Add( "S1 matches:" );
     for(int i=0; i < S1Match.Count(); i++ )  {
       report.Add( olxstr("   ") << S1Match[i].GetA()->ToString() <<
         ' ' << S1Match[i].GetB() << " hits" );
     }
-    if( S2Match.Count() != 0 )  {
+    if( !S2Match.IsEmpty() )  {
       report.Add( "S2 matches:" );
       for(int i=0; i < S2Match.Count(); i++ )  {
         report.Add( olxstr("   ") << S2Match[i].GetA()->ToString(1) <<
@@ -914,7 +914,7 @@ void TAutoDB::AnalyseNode(TSAtom& sa, TStrList& report)  {
         report.Add( tmp << ']' );
         delete S2Match[i].GetC();
       }
-      if( S3Match.Count() != 0 )  {
+      if( !S3Match.IsEmpty() )  {
         report.Add( "S3 matches:" );
         for(int i=0; i < S3Match.Count(); i++ )  {
           report.Add( olxstr("   ") << S3Match[i].GetA()->ToString(2) <<
@@ -947,9 +947,6 @@ void TAutoDB::AnalyseStructure(const olxstr& lastFileName, TLattice& latt,
   Uisos.Clear();
   for( int i=0; i < latt.FragmentCount(); i++ )  {
     Uisos.Add(0.0);
-    // for two atoms we cannot decide which ne is which, for one - no reason at all :)
-    if( latt.GetFragment(i).NodeCount() < 3 )
-      continue;
     AnalyseNet( latt.GetFragment(i), permutator, Uisos[Uisos.Count()-1], stat, proposed_atoms );
   }
   LastStat = stat;
@@ -1067,6 +1064,14 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
     net.Node(i).SetTag(-1);
   if( sn == NULL )  return;
   const int sn_count = sn->Count();
+  // for two atoms we cannot decide which one is which, for one - no reason at all :)
+  if( sn_count < 3 )  {
+    if( sn_count == 2 )  { // C-O or C-N?
+    }
+    delete sn;
+    return;
+  }
+
   TTypeList< TGuessCount > guesses;
   guesses.SetCapacity( sn_count);
   for( int i=0; i < sn_count; i++ )  {

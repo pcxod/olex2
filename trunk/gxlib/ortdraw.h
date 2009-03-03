@@ -24,13 +24,13 @@ private:
     const float diff = a1.crd[2] - a2.crd[2];
     return diff < 0 ? -1 : (diff > 0 ? 1 : 0);
   }
-  float AradScale, BradScale, DrawScale, BondRad;
+  float AradScale, DrawScale, BondRad;
   mat3f ProjMatr, UnProjMatr;
   vec3f DrawOrigin, SceneOrigin;
   TGXApp& app;
 protected:
   short ElpDiv, PieDiv, BondDiv;
-  TArrayList<vec3f> ElpCrd, PieCrd, Arc, BondCrd, Bond;
+  TArrayList<vec3f> ElpCrd, PieCrd, Arc, BondCrd, BondProjF, BondProjT;
   TPtrList<const vec3f> FilteredArc;
   float PieLineWidth, 
     ElpLineWidth, 
@@ -62,6 +62,8 @@ protected:
     pw.lineWidth(BondLineWidth);
     pw.color(color);
     const TSAtom& sa = *oa.atom;
+    vec3f dir_vec, touch_point, touch_point_proj, off_vec, bproj_cnt;
+    mat3f proj_mat, rot_mat;
     for( int j=0; j < sa.BondCount(); j++ )  {
       const TSBond& bn = sa.Bond(j);
       if( app.GetBond( bn.GetTag() ).Deleted() || !app.GetBond( bn.GetTag() ).Visible() )
@@ -69,39 +71,44 @@ protected:
       vec3f p1 = (bn.Another(sa).crd() + SceneOrigin)*ProjMatr+DrawOrigin;
       if( p1[2] <= oa.crd[2] )  // goes into the plane - drawn
         continue; 
-      if( bn.GetType() == sotHBond )
-        pw.custom("[3] 0 setdash");
-      const vec3f dir_vec( (p1-oa.crd).Normalise() );
+      dir_vec = (p1-oa.crd).Normalise();
       const float pers_scale = 1.0-sqr(dir_vec[2]);
       float brad = (bn.GetA().GetAtomInfo() < 4 || bn.GetB().GetAtomInfo() < 4) ? 
         BondRad/2 : BondRad;
-      vec3f touch_point = (bn.Another(sa).crd()-oa.atom->crd()).Normalise();
-      mat3f proj_mat, rot_mat;
-      vec3f rot_vec(-touch_point[1], touch_point[0], 0), off_vec;
+      if( bn.GetType() == sotHBond )  //even thiner H-bonds
+        brad /= 2;
+      touch_point = (bn.Another(sa).crd()-oa.atom->crd()).Normalise();
+      vec3f rot_vec(-touch_point[1], touch_point[0], 0);
       CreateRotationMatrix(rot_mat, rot_vec.Normalise(), touch_point[2]);
       proj_mat = rot_mat*ProjMatr;
-      float b_len = (p1-oa.crd).Length();
+      const float b_len = (p1-oa.crd).Length();
       pw.translate(oa.crd); 
-      float off_len = (sa.GetEllipsoid() == NULL) ? AradScale*sa.GetAtomInfo().GetRad1()/2 : 
-        (dir_vec*(*oa.ielpm)).Length();
-      pw.newPath();
-      for( int j=0; j < BondDiv; j++ )  {
-        Bond[j] = BondCrd[j]*proj_mat;
-        vec3f v1 = Bond[j].NormaliseTo(brad*(1+pers_scale)*scalex);
-        vec3f v2 = Bond[j].NormaliseTo(brad*2*scalex);
-        if( sa.GetEllipsoid() != NULL )  {
-          vec3f v3 = (((BondCrd[j]*rot_mat+touch_point)*ProjMatr).Normalise()*(*oa.ielpm));
-          off_vec = dir_vec*v3.Length();//*0.80;
+      if( sa.GetEllipsoid() != NULL )  {
+        bproj_cnt.Null();
+        touch_point_proj = dir_vec*(*oa.ielpm);
+        for( int j=0; j < BondDiv; j++ )  {
+          BondProjF[j] = (((BondCrd[j]*rot_mat+touch_point)*ProjMatr).Normalise()*(*oa.ielpm));
+          bproj_cnt += BondProjF[j];
         }
-        else
-          off_vec = dir_vec*off_len;
-        pw.line(v1 + off_vec, v2+dir_vec*b_len);
+        bproj_cnt /= BondDiv;
+        for( int j=0; j < BondDiv; j++ )  {
+          BondProjF[j] = (BondProjF[j]-bproj_cnt).NormaliseTo(brad*(1+pers_scale)*scalex) + bproj_cnt;
+          BondProjT[j] = (BondCrd[j]*proj_mat).NormaliseTo(brad*2*scalex) + dir_vec*b_len;
+        }
       }
-      pw.stroke();
-      //pw.drawLines(Bond, BondDiv, true);
-      pw.translate(-oa.crd);      
+      else  {
+        const float off_len = AradScale*sa.GetAtomInfo().GetRad1()/2;
+        for( int j=0; j < BondDiv; j++ )  {
+          BondProjT[j] = BondProjF[j] = (BondCrd[j]*proj_mat).NormaliseTo(brad*(1+pers_scale)*scalex); 
+          BondProjT[j].NormaliseTo(brad*2*scalex) += dir_vec*b_len;
+          BondProjF[j] += dir_vec*off_len;
+        }
+      }
       if( bn.GetType() == sotHBond )
-        pw.custom("[] 0 setdash");
+        pw.drawQuads(BondProjF, BondProjT, 16, &PSWriter::fill);
+      else
+        pw.drawQuads(BondProjF, BondProjT, &PSWriter::fill);
+      pw.translate(-oa.crd);      
     }
   }
   void DrawBonds(PSWriter& pw, const OrtAtom& oa) const  {
@@ -155,11 +162,11 @@ protected:
 public:
   OrtDraw() : app(TGXApp::GetInstance()) {  
     ElpDiv = 36;
-    BondDiv = 24;
+    BondDiv = 12;
     PieDiv = 4;
     QuadLineWidth = PieLineWidth = 0.5;
-    BondLineWidth = 0.75;
-    BondRad = 1.5;
+    BondLineWidth = 1.3;
+    BondRad = 1;
   }
   // create ellipse and pie coordinates
   void Init(const PSWriter& pw)  {
@@ -168,7 +175,8 @@ public:
     PieCrd.SetCount(PieDiv);
     FilteredArc.SetCount(ElpDiv);
     BondCrd.SetCount(BondDiv);
-    Bond.SetCount(BondDiv);
+    BondProjF.SetCount(BondDiv);
+    BondProjT.SetCount(BondDiv);
     double sin_a, cos_a;
     SinCos(2*M_PI/ElpDiv, &sin_a, &cos_a);
     vec3f ps(cos_a, -sin_a, 0);
@@ -198,7 +206,7 @@ public:
     const TEBasis& basis = app.GetRender().GetBasis();
     DrawScale = olx_min((float)pw.GetWidth()/vp[2], (double)pw.GetHeight()/vp[3]) /app.GetRender().GetScale();
     AradScale = 0.25/app.GetRender().GetScale(),
-    BradScale = 0.05/app.GetRender().GetScale();
+    BondRad = 0.025/app.GetRender().GetScale();
     SceneOrigin = basis.GetCenter();
     DrawOrigin = vec3f(pw.GetWidth()/2, pw.GetHeight()/2, 0);
     ProjMatr = basis.GetMatrix()*DrawScale;  
