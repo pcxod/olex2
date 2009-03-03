@@ -774,8 +774,8 @@ separated values of Atom Type and radius, an entry a line" );
   this_InitMacroD(ExportFrag, EmptyString, fpNone|psFileLoaded, "Exports selected fragment to an external file" );
   this_InitMacroD(ProjSph, "r-radius of the projection spehere [5]", fpNone|fpOne|psFileLoaded, 
     "Creates a projection of the fragment of the provided atom onto a spehere" );
-  this_InitMacroD(PictPS, "", fpOne|psFileLoaded, 
-    "Experimental postscrip rendering" );
+  this_InitMacroD(PictPS, "color_line-lines&;color_fill-ellipses are filled", fpOne|psFileLoaded, 
+    "Experimental postscript rendering" );
   // FUNCTIONS _________________________________________________________________
 
   this_InitFunc(FileLast, fpNone|fpOne);

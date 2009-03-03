@@ -1318,6 +1318,12 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 //..............................................................................
 void TMainForm::macPictPS(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   OrtDraw od;
+  short color_mode = ortep_color_None;
+  if( Options.Contains("color_fill") )
+    color_mode = ortep_color_Fill;
+  else if( Options.Contains("color_line") )
+    color_mode = ortep_color_Lines;
+  od.SetColorMode(color_mode);
   od.Render(Cmds[0]);
 }
 //..............................................................................

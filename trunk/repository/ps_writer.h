@@ -1,3 +1,6 @@
+/* A simple postscript file interface 
+(c) Oleg Dolomanov, 2009
+*/
 #ifndef _olx_ps_writerH
 #define _olx_ps_writerH
 #include "efile.h"
@@ -10,6 +13,7 @@ class PSWriter  {
   uint32_t CurrentColor;
   float CurrentLineWidth;
 public:
+  typedef void (PSWriter::*RenderFunc)();
   PSWriter(const olxstr& fileName) {
     CurrentColor = 0;
     CurrentLineWidth = 1;
@@ -78,6 +82,10 @@ public:
   //..........................................................................
   void fill()   {  out.Writenl("fill");  }
   //..........................................................................
+  void gsave() {  out.Writenl("gsave");  }
+  //..........................................................................
+  void grestore() {  out.Writenl("grestore");  }
+  //..........................................................................
   // default scale, A4
   int GetWidth() const {  return 596;  }
   //..........................................................................
@@ -130,10 +138,10 @@ public:
       lineto(list[0]);
   }
   template <typename list_t> 
-  void drawLines(const list_t& list, int cnt = -1, bool join=false)  {
+  void drawLines(const list_t& list, int cnt = -1, bool join=false, RenderFunc rf = &PSWriter::stroke)  {
     newPath();
     lines(list, cnt, join);
-    stroke();
+    (this->*rf)();
   }
   //..........................................................................
   template <typename list_t> 
@@ -147,10 +155,10 @@ public:
       lineto(*list[0]);
   }
   template <typename list_t> 
-  void drawLines_vp(const list_t& list, int cnt = -1, bool join=false)  {
+  void drawLines_vp(const list_t& list, int cnt = -1, bool join=false, RenderFunc rf = &PSWriter::stroke)  {
     newPath();
     lines_vp(list, cnt, join);
-    stroke();
+    (this->*rf)();
   }
   //..........................................................................
   template <typename vec_t, typename mat_t> 
@@ -168,10 +176,10 @@ public:
     out.Writenl("setmatrix");
   }
   template <typename vec_t, typename mat_t> 
-  void drawEllipse(const vec_t& center, const mat_t& basis)  {
+  void drawEllipse(const vec_t& center, const mat_t& basis, RenderFunc rf = &PSWriter::stroke)  {
     newPath();
     ellipse(center, basis);
-    stroke();
+    (this->*rf)();
   }
   //..........................................................................
   template <typename vec_t, typename float_t> 
@@ -183,10 +191,10 @@ public:
     out.Writenl( bf );
   }
   template <typename vec_t, typename float_t> 
-  void drawCircle(const vec_t& center, const float_t& rad)  {
+  void drawCircle(const vec_t& center, const float_t& rad, RenderFunc rf = &PSWriter::stroke)  {
     newPath();
     circle(center, rad);
-    stroke();
+    (this->*rf)();
   }
   //..........................................................................
   template <class vec_t>
@@ -207,7 +215,7 @@ public:
   //..........................................................................
   template <class vec_t>
   void stippledQuad(const vec_t& p1, const vec_t& p2, 
-    const vec_t& p3, const vec_t& p4, int div, void (PSWriter::*func)() ) 
+    const vec_t& p3, const vec_t& p4, int div, RenderFunc func ) 
   {
     const float x_inc1 = (p2[0]-p1[0])/div;
     const float x_inc2 = (p3[0]-p4[0])/div;
@@ -233,7 +241,7 @@ public:
   //..........................................................................
   //draws a cone using sidea and sideb points and calling func after every quadraterial
   template <class vec_lt>
-  void drawQuads(const vec_lt& sidea, const vec_lt& sideb, void (PSWriter::*func)())  {
+  void drawQuads(const vec_lt& sidea, const vec_lt& sideb, RenderFunc func)  {
     if( sidea.Count() != sideb.Count() )
       throw TFunctionFailedException(__OlxSourceInfo, "lists mismatch");
     if( sidea.Count() < 2 )
@@ -250,7 +258,7 @@ public:
   //..........................................................................
   template <class vec_lt>
   void drawQuads(const vec_lt& sidea, const vec_lt& sideb, 
-    int parts, void (PSWriter::*func)())  
+    int parts, RenderFunc func)  
   {
     if( sidea.Count() != sideb.Count() )
       throw TFunctionFailedException(__OlxSourceInfo, "lists mismatch");

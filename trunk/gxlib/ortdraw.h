@@ -2,6 +2,10 @@
 #define __olx_ort_Draw_H
 #include "gxapp.h"
 #include "ps_writer.h"
+static const short
+  ortep_color_None = 0,
+  ortep_color_Lines = 1,
+  ortep_color_Fill = 2;
 
 class OrtDraw  {
 private:
@@ -28,14 +32,15 @@ private:
   mat3f ProjMatr, UnProjMatr;
   vec3f DrawOrigin, SceneOrigin;
   TGXApp& app;
+  const vec3f NullVec;
+  short ColorMode;
 protected:
   short ElpDiv, PieDiv, BondDiv;
   TArrayList<vec3f> ElpCrd, PieCrd, Arc, BondCrd, BondProjF, BondProjT;
   TPtrList<const vec3f> FilteredArc;
   float PieLineWidth, 
     ElpLineWidth, 
-    QuadLineWidth, 
-    BondLineWidth;
+    QuadLineWidth;
 
   int PrepareArc(const TArrayList<vec3f>& in, TPtrList<const vec3f>& out, const vec3f& normal)  {
     int start=-1, cnt=0;
@@ -59,7 +64,6 @@ protected:
     return cnt;
   }
   void DoDrawBonds(PSWriter& pw, const OrtAtom& oa, uint32_t color, float scalex) const  {
-    pw.lineWidth(BondLineWidth);
     pw.color(color);
     const TSAtom& sa = *oa.atom;
     vec3f dir_vec, touch_point, touch_point_proj, off_vec, bproj_cnt;
@@ -82,7 +86,6 @@ protected:
       CreateRotationMatrix(rot_mat, rot_vec.Normalise(), touch_point[2]);
       proj_mat = rot_mat*ProjMatr;
       const float b_len = (p1-oa.crd).Length();
-      pw.translate(oa.crd); 
       if( sa.GetEllipsoid() != NULL )  {
         bproj_cnt.Null();
         touch_point_proj = dir_vec*(*oa.ielpm);
@@ -108,7 +111,6 @@ protected:
         pw.drawQuads(BondProjF, BondProjT, 16, &PSWriter::fill);
       else
         pw.drawQuads(BondProjF, BondProjT, &PSWriter::fill);
-      pw.translate(-oa.crd);      
     }
   }
   void DrawBonds(PSWriter& pw, const OrtAtom& oa) const  {
@@ -117,8 +119,6 @@ protected:
   }
   void DrawRimsAndQuad(PSWriter& pw, const OrtAtom& oa, bool drawQuad)  {
     pw.lineWidth(QuadLineWidth);
-    pw.translate(oa.crd);
-    static const vec3f center(0,0,0);
     const mat3f& elpm = *oa.elpm;
     const mat3f& ielpm = *oa.ielpm;
     mat3f pelpm(elpm[0][2] < 0 ? -elpm[0] : elpm[0],
@@ -147,9 +147,9 @@ protected:
 
     //pw.color(0);
     if( drawQuad )  {
-      pw.drawLine(center, pelpm[0]);
-      pw.drawLine(center, pelpm[1]);
-      pw.drawLine(center, pelpm[2]);
+      pw.drawLine(NullVec, pelpm[0]);
+      pw.drawLine(NullVec, pelpm[1]);
+      pw.drawLine(NullVec, pelpm[2]);
       for( int j=0; j < PieDiv; j++ )
         pw.drawLine( PieCrd[j]*pelpm, pelpm[0]*((float)(PieDiv-j)/PieDiv));
       for( int j=0; j < PieDiv; j++ )
@@ -157,7 +157,6 @@ protected:
       for( int j=0; j < PieDiv; j++ )
         pw.drawLine( vec3f(PieCrd[j][1], 0, PieCrd[j][0])*pelpm, pelpm[2]*((float)(PieDiv-j)/PieDiv));
     }
-    pw.translate(-oa.crd);
   }
 public:
   OrtDraw() : app(TGXApp::GetInstance()) {  
@@ -165,8 +164,8 @@ public:
     BondDiv = 12;
     PieDiv = 4;
     QuadLineWidth = PieLineWidth = 0.5;
-    BondLineWidth = 1.3;
     BondRad = 1;
+    ColorMode = ortep_color_None;
   }
   // create ellipse and pie coordinates
   void Init(const PSWriter& pw)  {
@@ -245,29 +244,55 @@ public:
     for( int i=0; i < atoms.Count(); i++ )  {
       const TSAtom& sa = *atoms[i].atom;
       const vec3d& p = atoms[i].crd;
-      //DrawBottomBonds(pw, atoms[i]);
-      //pw.color( sa.GetAtomInfo().GetDefColor() != ~1 ? sa.GetAtomInfo().GetDefColor() : 0 );
+      pw.translate(p);
       pw.lineWidth(0.5);
       pw.color(~0);
       if( sa.GetEllipsoid() == NULL )  {
-        pw.newPath();
-        pw.circle(p, AradScale*sa.GetAtomInfo().GetRad1()*1.05);
-        pw.fill();
-        pw.color(0);
-        pw.drawCircle(p, AradScale*sa.GetAtomInfo().GetRad1());
+        pw.drawCircle(NullVec, AradScale*sa.GetAtomInfo().GetRad1()*1.05, &PSWriter::fill);
+        if( ColorMode == ortep_color_None )  {
+          pw.color(0);
+          pw.drawCircle(NullVec, AradScale*sa.GetAtomInfo().GetRad1());
+        }
+        else if( ColorMode == ortep_color_Fill )  {
+          pw.newPath();
+          pw.circle(NullVec, AradScale*sa.GetAtomInfo().GetRad1());
+          pw.gsave();
+          pw.color(sa.GetAtomInfo().GetDefColor());
+          pw.fill();
+          pw.grestore();
+          pw.color(0);
+          pw.stroke();
+        }
+        else if( ColorMode == ortep_color_Lines )  {
+          pw.color(  sa.GetAtomInfo().GetDefColor() == 0xffffff ? 0 : sa.GetAtomInfo().GetDefColor() );
+          pw.drawCircle(NullVec, AradScale*sa.GetAtomInfo().GetRad1());
+        }
       }
       else  {
-        const mat3f& elpm = *atoms[i].elpm;
         const mat3f& ielpm = *atoms[i].ielpm;
-        pw.newPath();
-        pw.ellipse(p, ielpm*1.05);
-        pw.fill();
-        pw.color(0);
-        pw.drawEllipse(p, ielpm);
+        pw.drawEllipse(NullVec, ielpm*1.05, &PSWriter::fill);
+        if( ColorMode == ortep_color_None )  {
+          pw.color(0);
+          pw.drawEllipse(NullVec, ielpm);
+        }
+        else if( ColorMode == ortep_color_Fill )  {
+          pw.newPath();
+          pw.ellipse(NullVec, ielpm);
+          pw.gsave();
+          pw.color(sa.GetAtomInfo().GetDefColor());
+          pw.fill();
+          pw.grestore();
+          pw.color(0);
+          pw.stroke();
+        }
+        else if( ColorMode == ortep_color_Lines )  {
+          pw.color(  sa.GetAtomInfo().GetDefColor() == 0xffffff ? 0 : sa.GetAtomInfo().GetDefColor() );
+          pw.drawEllipse(NullVec, ielpm);
+        }
         DrawRimsAndQuad(pw, atoms[i], sa.GetAtomInfo() != iCarbonIndex);
       }
-      //DrawUpperBonds(pw, atoms[i]);
       DrawBonds(pw, atoms[i]);
+      pw.translate(-p);
     }
     for( int i=0; i < app.LabelCount(); i++ )  {
       const TXGlLabel& glxl = app.GetLabel(i);
@@ -279,7 +304,7 @@ public:
 
   DefPropP(short, ElpDiv)
   DefPropP(short, PieDiv) 
-
+  DefPropP(short, ColorMode)
 };
 
 
