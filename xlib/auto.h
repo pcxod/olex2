@@ -306,6 +306,8 @@ public:
 protected:
   void AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator, 
     double& Uiso, AnalysisStat& stat, TBAIPList* proposed_atoms = NULL);
+  // a helper function to check C-O and C-N
+  void A2Pemutate(TCAtom& a1, TCAtom& a2, TBasicAtomInfo& ai1, TBasicAtomInfo& ai2, double threshold);
 public:
   void AnalyseStructure(const olxstr& LastFileName, TLattice& latt, 
     TAtomTypePermutator* permutator, AnalysisStat& stat, TBAIPList* proposed_atoms = NULL);
