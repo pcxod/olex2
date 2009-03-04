@@ -1054,6 +1054,30 @@ void TAutoDB::TAnalyseNetNodeTask::Run( long index )  {
   }
 }
 //..............................................................................
+void TAutoDB::A2Pemutate(TCAtom& a1, TCAtom& a2, TBasicAtomInfo& ai1, TBasicAtomInfo& ai2, double threshold)  {
+  const double ratio = a1.GetUiso()/(olx_abs(a2.GetUiso())+0.001);
+  if( ratio > (1.0 + threshold) )  {
+    if( a1.GetAtomInfo() != ai1 )  {
+      TBasicApp::GetLog().Info( olxstr("A2 assignment: ") << a1.GetLabel() << " -> " << ai1.GetSymbol() );
+      a1.SetAtomInfo( &ai1 );
+    }
+    if( a2.GetAtomInfo() != ai2 )  {
+      TBasicApp::GetLog().Info( olxstr("A2 assignment: ") << a2.GetLabel() << " -> " << ai2.GetSymbol() );
+      a2.SetAtomInfo( &ai2 );
+    }
+  }
+  else if( ratio < (1.0-threshold) )  {
+    if( a2.GetAtomInfo() != ai1 )  {
+      TBasicApp::GetLog().Info( olxstr("A2 assignment: ") << a2.GetLabel() << " -> " << ai1.GetSymbol() );
+      a2.SetAtomInfo( &ai1 );
+    }
+    if( a1.GetAtomInfo() != ai2 )  {
+      TBasicApp::GetLog().Info( olxstr("A2 assignment: ") << a1.GetLabel() << " -> " << ai2.GetSymbol() );
+      a1.SetAtomInfo( &ai2 );
+    }
+  }
+}
+//..............................................................................
 void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator, 
                          double& Uiso, TAutoDB::AnalysisStat& stat, TBAIPList* proposed_atoms)  {
   //TPSTypeList<double, TAutoDBNode*> hits;
@@ -1067,7 +1091,14 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
   // for two atoms we cannot decide which one is which, for one - no reason at all :)
   if( sn_count < 3 )  {
     if( sn_count == 2 )  { // C-O or C-N?
+      TAtomsInfo& ai = TAtomsInfo::GetInstance();
+      if( sn->Node(0).Center()->GetDistance(0) < 1.3 )  // C-N
+        A2Pemutate(cas[0]->CAtom(), cas[1]->CAtom(), ai.GetAtomInfo(iCarbonIndex), ai.GetAtomInfo(iNitrogenIndex), 0.2);
+      else  // C-O
+        A2Pemutate(cas[0]->CAtom(), cas[1]->CAtom(), ai.GetAtomInfo(iCarbonIndex), ai.GetAtomInfo(iOxygenIndex), 0.2);
     }
+    for( int i=0; i < sn_count; i++ )
+      delete sn->Node(i).Center();
     delete sn;
     return;
   }
