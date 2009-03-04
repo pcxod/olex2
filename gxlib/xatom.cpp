@@ -459,7 +459,10 @@ void TXAtom::GetDefSphereMaterial(const TSAtom& Atom, TGlMaterial& M)  {
       M.AmbientF = 0x7f007f;
       M.SpecularF = 0xffffff;
       M.ShininessF = 36;
-      M.AmbientF[3] = (float)(atan(-QPeakScale()*peak/Atom.CAtom().GetParent()->GetMaxQPeak())*2/M_PI);
+      if( Atom.CAtom().GetParent()->GetMaxQPeak() < 0 )
+        M.AmbientF[3] = (float)(atan(QPeakScale()*peak/Atom.CAtom().GetParent()->GetMinQPeak())*2/M_PI);
+      else
+        M.AmbientF[3] = (float)(atan(-QPeakScale()*peak/Atom.CAtom().GetParent()->GetMaxQPeak())*2/M_PI);
       M.DiffuseF[3] = M.AmbientF[3];
     }
     return;
