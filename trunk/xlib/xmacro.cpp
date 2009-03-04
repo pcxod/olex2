@@ -253,12 +253,18 @@ void XLibMacros::macHklStat(TStrObjList &Cmds, const TParamList &Options, TMacro
     tab.CreateTXTList(Output, olxstr("Refinement reflection statistsics"), true, false, "  ");
     xapp.GetLog() << Output << '\n';
     const TIntList& redInfo = xapp.XFile().GetRM().GetRedundancyInfo();
-    tab.Resize( redInfo.Count(), 2 );
+    int red_cnt = 0;
+    for( int i=0; i < redInfo.Count(); i++ )
+      if( redInfo[i] != 0 )
+        red_cnt++;
+    tab.Resize( red_cnt, 2 );
     tab.ColName(0) = "Times measured";
-    tab.ColName(0) = "Count";
+    tab.ColName(1) = "Count";
+    red_cnt = 0;
     for( int i=0; i < redInfo.Count(); i++ )  {
-      tab[i][0] = i+1;
-      tab[i][1] = redInfo[i];
+      if( redInfo[i] == 0 )  continue;
+      tab[red_cnt][0] = i+1;
+      tab[red_cnt++][1] = redInfo[i];
     }
     Output.Clear();
     tab.CreateTXTList(Output, olxstr("All reflection statistics"), true, false, "  ");
