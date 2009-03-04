@@ -6350,8 +6350,38 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options, TMacroErr
           }
         }
         if( name )  {
-          for(int i=0; i < res.Count(); i++ )
-            netB.Node( res[i].GetB()).SetLabel( netA.Node( res[i].GetA()).GetLabel() + suffix );
+          if( suffix.Length() > 1 && suffix.CharAt(0) == '$' )  {  // change CXXX to CSuffix+whatever left of XXX
+            olxstr new_l;
+            const olxstr l_val = suffix.SubStringFrom(1);
+            for(int i=0; i < res.Count(); i++ )  {
+              const olxstr& old_l = netA.Node(res[i].GetA()).GetLabel();
+              const TBasicAtomInfo& bai = netA.Node(res[i].GetA()).GetAtomInfo();
+              const int l_d = old_l.Length() - bai.GetSymbol().Length();
+              if( l_d <= l_val.Length() ) 
+                new_l = bai.GetSymbol() + l_val;
+              else if( l_d > l_val.Length() )
+                new_l = olxstr(bai.GetSymbol()) << l_val << old_l.SubStringFrom(bai.GetSymbol().Length()+l_val.Length());
+              netB.Node(res[i].GetB()).CAtom().Label() = new_l;
+            }
+          }
+          else if( suffix.Length() > 1 && suffix.CharAt(0) == '-' )  {  // change the ending
+            olxstr new_l;
+            const olxstr l_val = suffix.SubStringFrom(1);
+            for(int i=0; i < res.Count(); i++ )  {
+              const olxstr& old_l = netA.Node(res[i].GetA()).GetLabel();
+              const TBasicAtomInfo& bai = netA.Node(res[i].GetA()).GetAtomInfo();
+              const int l_d = old_l.Length() - bai.GetSymbol().Length();
+              if( l_d <= l_val.Length() ) 
+                new_l = bai.GetSymbol() + l_val;
+              else if( l_d > l_val.Length() )
+                new_l = old_l.SubStringTo(old_l.Length()-l_val.Length()) << l_val;
+              netB.Node(res[i].GetB()).CAtom().Label() = new_l;
+            }
+          }
+          else  {
+            for(int i=0; i < res.Count(); i++ )
+              netB.Node(res[i].GetB()).CAtom().Label() = netA.Node(res[i].GetA()).GetLabel() + suffix;
+          }
         }
         smatdd S;
         double rms = MatchAtomPairsQT( satomp, S, false, Inverted);
