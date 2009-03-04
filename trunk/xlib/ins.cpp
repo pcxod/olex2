@@ -1580,7 +1580,7 @@ void TIns::SaveHeader(TStrList& SL, bool ValidateRestraintNames)  {
   SL.Add( _CellToString() );
   SL.Add( _ZerrToString() );
   _SaveSymm(SL);
-  _SaveSfac(SL, SL.Count()-1);
+  _SaveSfac(SL, SL.Count());
   SL.Add("UNIT ") << Unit;
   if( ValidateRestraintNames )
     ValidateRestraintsAtomNames( GetRM() );
