@@ -710,10 +710,8 @@ void TIns::_SaveSfac(TStrList& list, int pos)  {
         tmp << sd->ToInsString();
         lines.Clear();
         HypernateIns(tmp, lines);
-        for( int j=0; j < lines.Count(); j++ )  {
-          list.Insert(pos, lines[j] );
-          pos++;
-        }
+        for( int j=0; j < lines.Count(); j++ )
+          list.Insert(pos++, lines[j] );
       }
       else  {
         LeftOut << ' ' << toks[i];
@@ -1580,7 +1578,8 @@ void TIns::SaveHeader(TStrList& SL, bool ValidateRestraintNames)  {
   SL.Add( _CellToString() );
   SL.Add( _ZerrToString() );
   _SaveSymm(SL);
-  _SaveSfac(SL, SL.Count());
+  SL.Add(EmptyString);
+  _SaveSfac(SL, SL.Count()-1);
   SL.Add("UNIT ") << Unit;
   if( ValidateRestraintNames )
     ValidateRestraintsAtomNames( GetRM() );
