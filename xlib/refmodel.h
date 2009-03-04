@@ -385,7 +385,8 @@ of components 1 ... m
   }
   // finds scatterer by label, returns NULL if nothing found
   inline XScatterer* FindSfacData(const olxstr& label) const  {
-    return SfacData[label];
+    int ind = SfacData.IndexOf(label);
+    return ind == -1 ? NULL : SfacData.GetValue(ind);
   }
   // returns the restrained distance or -1
   double FindRestrainedDistance(const TCAtom& a1, const TCAtom& a2);
