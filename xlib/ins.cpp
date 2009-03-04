@@ -439,7 +439,8 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx,
           Toks[2].ToDouble(),  Toks[3].ToDouble(),  Toks[4].ToDouble(),
           Toks[5].ToDouble(),  Toks[6].ToDouble(),  Toks[7].ToDouble(),
           Toks[8].ToDouble(),  Toks[9].ToDouble(),  Toks[10].ToDouble(),
-          Toks[11].ToDouble(), Toks[12].ToDouble(), Toks[13].ToDouble());
+          Toks[11].ToDouble(), Toks[12].ToDouble(), Toks[13].ToDouble(),
+          Toks[14].ToDouble(), Toks[15].ToDouble() );
       }
     }
     if( !expandedSfacProcessed )  {
@@ -662,15 +663,15 @@ void TIns::SaveToRefine(const olxstr& FileName, const olxstr& sMethod, const olx
     sl.AddNew( cnt, bai );
     ac += cnt;
   }
-  int newZ = Round(AsymmUnit.EstimateZ(ac/AsymmUnit.GetZ()));
-  Unit = EmptyString;
-  for( int i=0; i < sfac.Count(); i++ )  {
-    int cnt = unit[i].ToInt();
-    Unit << (double)cnt*newZ/AsymmUnit.GetZ();
-    if( (i+1) < sfac.Count() )
-      Unit << ' ';
-  }
-  AsymmUnit.SetZ( newZ );
+  //int newZ = Round(AsymmUnit.EstimateZ(ac/AsymmUnit.GetZ()));
+  //Unit = EmptyString;
+  //for( int i=0; i < sfac.Count(); i++ )  {
+  //  int cnt = unit[i].ToInt();
+  //  Unit << (double)cnt*newZ/AsymmUnit.GetZ();
+  //  if( (i+1) < sfac.Count() )
+  //    Unit << ' ';
+  //}
+  //AsymmUnit.SetZ( newZ );
 //
 
   SL.Add( _CellToString() );
@@ -680,7 +681,7 @@ void TIns::SaveToRefine(const olxstr& FileName, const olxstr& sMethod, const olx
   UnitIndex = SL.Count();  SL.Add(EmptyString);
 
   _SaveSizeTemp(SL);
-  _SaveHklInfo(SL);
+  _SaveHklInfo(SL, true);
   _SaveFVar(RefMod, SL);
 
   SL.AddList(mtoks);
@@ -785,7 +786,6 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
 //..............................................................................
 void TIns::SaveToStrings(TStrList& SL)  {
   TAtomsInfo& atomsInfo = TAtomsInfo::GetInstance();
-  int UnitIndex, SfacIndex;
   evecd QE;  // quadratic form of s thermal ellipsoid
   olxstr Tmp;
   TStrPObjList<olxstr,TBasicAtomInfo*> BasicAtoms(Sfac, ' ');
@@ -833,7 +833,7 @@ void TIns::SaveToStrings(TStrList& SL)  {
   
   ValidateRestraintsAtomNames( GetRM() );
   UpdateParams();
-  SaveHeader(SL, false, &SfacIndex, &UnitIndex);
+  SaveHeader(SL, false);
   SL.Add(EmptyString);
   int afix = 0, part = 0, fragmentId = 0;
   for( int i=-1; i < GetAsymmUnit().ResidueCount(); i++ )  {
@@ -853,9 +853,6 @@ void TIns::SaveToStrings(TStrList& SL)  {
   }
   if( afix != 0 )  SL.Add("AFIX 0");
   SL.Add("HKLF ") << RefMod.GetHKLFStr();
-  SL.String(UnitIndex) = (olxstr("UNIT ") << Unit);
-//  SL.String(SfacIndex) = (olxstr("SFAC ") += FSfac);
-  _SaveSfac(SL, SfacIndex);
   SL.Add("END");
   SL.Add(EmptyString);
 }
@@ -1104,7 +1101,7 @@ void TIns::SavePattSolution(const olxstr& FileName, const TTypeList<TPattAtom>& 
     HypernateIns(Ins[i]+' ', Tmp, SL);
   }
 
-  _SaveHklInfo(SL);
+  _SaveHklInfo(SL, false);
 
   Tmp = "WGHT ";
   for( int i=0; i < RefMod.used_weight.Count(); i++ )  {
@@ -1304,17 +1301,19 @@ void TIns::_SaveRefMethod(TStrList& SL)  {
   }
 }
 //..............................................................................
-void TIns::_SaveHklInfo(TStrList& SL)  {
-  if( GetRM().HasMERG() )
-    SL.Add("MERG ") << GetRM().GetMERG();
-  if( !GetRM().GetBASF().IsEmpty() )
-    SL.Add("BASF ") << GetRM().GetBASFStr();
+void TIns::_SaveHklInfo(TStrList& SL, bool solution)  {
+  if( !solution )  {
+    if( GetRM().HasMERG() )
+      SL.Add("MERG ") << GetRM().GetMERG();
+    if( !GetRM().GetBASF().IsEmpty() )
+      SL.Add("BASF ") << GetRM().GetBASFStr();
+    if( GetRM().HasSHEL() )
+      SL.Add("SHEL ") << GetRM().GetSHELStr();
+    if( GetRM().HasTWIN() )
+      SL.Add("TWIN ") << GetRM().GetTWINStr();
+  }
   if( GetRM().HasOMIT() )
     SL.Add("OMIT ") << GetRM().GetOMITStr();
-  if( GetRM().HasSHEL() )
-    SL.Add("SHEL ") << GetRM().GetSHELStr();
-  if( GetRM().HasTWIN() )
-    SL.Add("TWIN ") << GetRM().GetTWINStr();
   for( int i=0; i < GetRM().OmittedCount(); i++ )  {
     const vec3i& r = GetRM().GetOmitted(i);
     SL.Add("OMIT ") << r[0] << ' ' << r[1] << ' ' << r[2];
@@ -1576,18 +1575,12 @@ void TIns::_SaveSizeTemp(TStrList& SL)  {
     SL.Add("TEMP ") << RefMod.expl.GetTemperature();
 }
 //..............................................................................
-void TIns::SaveHeader(TStrList& SL, bool ValidateRestraintNames, int* SfacIndex, int* UnitIndex)  {
+void TIns::SaveHeader(TStrList& SL, bool ValidateRestraintNames)  {
   SL.Add("TITL ") << GetTitle();
   SL.Add( _CellToString() );
   SL.Add( _ZerrToString() );
   _SaveSymm(SL);
-  if( SfacIndex != NULL )  *SfacIndex = SL.Count();  
-  SL.Add("SFAC ") << Sfac;
-  if( SfacIndex == NULL )  {
-    for( int i=0; i < Disp.Count(); i++ )
-      SL.Add("DISP ") << Disp[i];
-  }
-  if( UnitIndex != NULL )  *UnitIndex = SL.Count();  
+  _SaveSfac(SL, SL.Count()-1);
   SL.Add("UNIT ") << Unit;
   if( ValidateRestraintNames )
     ValidateRestraintsAtomNames( GetRM() );
@@ -1606,7 +1599,7 @@ void TIns::SaveHeader(TStrList& SL, bool ValidateRestraintNames, int* SfacIndex,
   SL << Skipped;
 //  for( int i=0; i < Skipepd.Count(); i++ )
 
-  _SaveHklInfo(SL);
+  _SaveHklInfo(SL, false);
 
   olxstr& wght = SL.Add("WGHT ");
   for( int i=0; i < RefMod.used_weight.Count(); i++ )  {

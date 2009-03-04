@@ -97,7 +97,7 @@ public:
   olxstr ToInsString() const {
     olxstr rv(Label, 100);
     rv << ' ' << gaussians.a1 << ' ' << gaussians.a2 << ' ' << gaussians.a3 << ' ' << gaussians.a4 <<
-          ' ' << gaussians.b1 << ' ' << gaussians.b2 << ' ' << gaussians.b3 << ' ' << gaussians.b4 <<
+          ' ' << -gaussians.b1 << ' ' << -gaussians.b2 << ' ' << -gaussians.b3 << ' ' << -gaussians.b4 <<
           ' ' << gaussians.c << 
           ' ' << fpfdp.GetRe() << ' ' << fpfdp.GetIm() << ' ' << mu << ' ' << r << ' ' << wt;
     return rv;
