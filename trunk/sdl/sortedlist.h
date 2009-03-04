@@ -28,7 +28,7 @@ protected:
     int from = 0, to = list.Count()-1;
     while( true )  {
       if( (to-from) == 1 )  {  
-        if( Comparator::Compare(list[from], entity) == 0 || Comparator::Compare(list[to], entity) )
+        if( Comparator::Compare(list[from], entity) == 0 || Comparator::Compare(list[to], entity) == 0 )
           exists = true;
         return to;
       }
