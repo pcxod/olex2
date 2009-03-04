@@ -24,7 +24,8 @@ template <typename key_c, typename val_c, class Comparator> struct DictEntry {
 
 template <typename KType, typename VType, class Comparator> class olxdict :
 protected SortedObjectList<DictEntry<KType,VType,Comparator>, TComparableComparator> {
-  typedef SortedObjectList<DictEntry<KType,VType,Comparator>, TComparableComparator> SortedL;
+  typedef DictEntry<KType,VType,Comparator> EntryType;
+  typedef SortedObjectList<EntryType, TComparableComparator> SortedL;
 public:
 
   olxdict() {}
@@ -53,8 +54,7 @@ public:
   }
   template <typename T> VType& Add(const T& key, const VType& def) {
     int ind = -1;
-    if( SortedL::AddUnique(key, ind) )
-     SortedL::operator[] (ind).val = def;
+    SortedL::AddUnique(EntryType(key, def), ind);
     return SortedL::operator[] (ind).val;
   }
   template <typename T> VType& Add(const T& key) {

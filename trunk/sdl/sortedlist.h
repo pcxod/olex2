@@ -271,6 +271,7 @@ public:
   void Clear()  {
     for( int i=0; i < list.Count(); i++ )
       delete list[i];
+    list.Clear();
   }
   void Delete(int ind)  {
     if( list[ind] != NULL )

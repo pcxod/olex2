@@ -371,7 +371,8 @@ of components 1 ... m
   void AddNewSfac(const olxstr& label,
                   double a1, double a2, double a3, double a4,
                   double b1, double b2, double b3, double b4,
-                  double c, double mu, double r, double wt);
+                  double c, double fp, double fdp, double mu, 
+                  double r, double wt);
   // returns number of custom scatterers
   inline int SfacCount()  const  {  return SfacData.Count();  }
   // returns scatterer label at specified index

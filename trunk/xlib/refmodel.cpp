@@ -187,7 +187,7 @@ RefinementModel& RefinementModel::Assign(const RefinementModel& rm, bool AssignA
 void RefinementModel::AddNewSfac(const olxstr& label,
                   double a1, double a2, double a3, double a4,
                   double b1, double b2, double b3, double b4,
-                  double c, double mu, double r, double wt)  {
+                  double c, double fp, double fdp, double mu, double r, double wt)  {
   olxstr lb(label.CharAt(0) == '$' ? label.SubStringFrom(1) : label);
   cm_Element* src = XElementLib::FindBySymbolEx(lb);
   XScatterer* sc;
@@ -200,6 +200,7 @@ void RefinementModel::AddNewSfac(const olxstr& label,
   sc->SetAdsorptionCoefficient(mu);
   sc->SetBondingR(r);
   sc->SetWeight(wt);
+  sc->SetFpFdp( compd(fp, fdp) );
   SfacData.Add(label, sc);
 }
 //....................................................................................................

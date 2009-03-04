@@ -13,6 +13,17 @@
 #include "estopwatch.h"
 
 typedef SortedPtrList<TBasicAtomInfo, TPointerComparator> SortedBAIList;
+// helper function
+int imp_auto_AtomCount(const TAsymmUnit& au)  {
+  int ac = 0;
+  for( int i=0; i < au.AtomCount(); i++ )  {
+    const TCAtom& a = au.GetAtom(i);
+      if( a.IsDeleted() || a.GetAtomInfo() == iHydrogenIndex || 
+        a.GetAtomInfo() == iDeuteriumIndex || a.GetAtomInfo() == iQPeakIndex )  continue;
+    ac++;
+  }
+  return ac;
+}
 
 void XLibMacros::funATA(const TStrObjList &Cmds, TMacroError &Error)  {
   TXApp& xapp = TXApp::GetInstance();
@@ -85,14 +96,8 @@ void XLibMacros::funATA(const TStrObjList &Cmds, TMacroError &Error)  {
 //  if( AtomPermutator.IsActive() )  AtomPermutator.Permutate();
   if( olex::IOlexProcessor::GetInstance() != NULL )
     olex::IOlexProcessor::GetInstance()->executeMacro("fuse");
-  int ac = 0;
-  for( int i=0; i < au.AtomCount(); i++ )  {
-    TCAtom& a = au.GetAtom(i);
-      if( a.IsDeleted() || a.GetAtomInfo() == iHydrogenIndex || 
-        a.GetAtomInfo() == iDeuteriumIndex || a.GetAtomInfo() == iQPeakIndex )  continue;
-    ac++;
-  }
-  if( ac == 0 )  // clearly something is wron when it happens...
+  int ac = imp_auto_AtomCount(au);
+  if( ac == 0 )  // clearly something is wron gwhen it happens...
     ac = 1;
   Error.SetRetVal( olxstr(stat.AtomTypeChanges!=0) << ';' << 
     (double)stat.ConfidentAtomTypes*100/ac );
@@ -355,7 +360,10 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options, TMacroEr
         if( alone )  {
           bool assignHeaviest = false, assignLightest = false;
           const TAutoDB::AnalysisStat& stat = TAutoDB::GetInstance()->GetStats();
-          if( stat.SNAtomTypeAssignments == 0 )  { // now we can make up types
+          int ac = imp_auto_AtomCount(au);
+          if( ac == 0 ) // this would be really strange
+            ac++;
+          if( stat.SNAtomTypeAssignments == 0 && ((double)stat.ConfidentAtomTypes/ac) > 0.5 )  { // now we can make up types
             bool found = false;
             for( int j=0; j < StandAlone.Count(); j++ )  {
               if( sa.GetAtomInfo() == *StandAlone[j] )  {

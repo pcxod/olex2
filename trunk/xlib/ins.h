@@ -66,7 +66,8 @@ protected:
   void _SaveFVar(RefinementModel& rm, TStrList& SL);
   void _SaveSymm(TStrList& SL);
   void _SaveSizeTemp(TStrList& SL);
-  void _SaveHklInfo(TStrList& SL);
+  // if solution specified, only OMIT's and HKLSrc are saved 
+  void _SaveHklInfo(TStrList& SL, bool solution);
   void _SaveRefMethod(TStrList& SL);
   void _ProcessAfix(TCAtom& a, ParseContext& cx);
   // if atoms is saved, its Tag is added to the index (if not NULL) 
@@ -83,31 +84,6 @@ public:
 
   DefPropB(LoadQPeaks)
   
-  //int GetIterations() const  {  
-  //  if( FLS.Count() == 0 )
-  //    throw TFunctionFailedException(__OlxSourceInfo, "undefined number of iterations");
-  //  return FLS[0];  
-  //}
-  //int GetPlan()       const  {  
-  //  if( FPLAN.Count() == 0 )
-  //    throw TFunctionFailedException(__OlxSourceInfo, "undefined number of Fourier peaks");
-  //  return Round(FPLAN[0]);  
-  //}
-  //const eveci& GetLSV() const {  return FLS;  }
-  //void SetIterations( int v ) {  
-  //  if( FLS.Count() == 0 ) FLS.Resize(1);
-  //  FLS[0] = v;  
-  //}
-  //void SetPlan(int v)        {  
-  //  if( FPLAN.Count() == 0 )  FPLAN.Resize(1);
-  //  FPLAN[0] = v;  
-  //}
-  //const evecd& GetPlanV() const {  return FPLAN;  }
-
-  //inline evecd& Wght()   {  return FWght;  }
-  //inline evecd& Wght1()  {  return FWght1;  }
-  //inline evecd& Vars()   {  return FVars;  }
-  //inline olxstr& Hklf()  { return HKLF;  }
   // this is -1 if not in the file like REM R1 = ...
   inline double GetR1() const {  return R1;  }
 
@@ -411,7 +387,7 @@ protected:
   bool ParseIns(const TStrList& ins, const TStrList& toks, ParseContext& cx, int& index);
 public:
   // spits out all instructions, including CELL, FVAR, etc
-  void SaveHeader(TStrList& out, bool ValidateRestraintNames, int* SfacIndex=NULL, int* UnitIndex=NULL);
+  void SaveHeader(TStrList& out, bool ValidateRestraintNames);
   // Parses all instructions, exclusing atoms, throws if fails
   void ParseHeader(const TStrList& in);
 
