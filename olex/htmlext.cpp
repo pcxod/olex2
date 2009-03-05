@@ -1652,7 +1652,14 @@ void THtml::macItemState(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   olxstr itemName( Cmds[0] );
   for( int i=1; i < Cmds.Count(); i++ )  {
     Switches.Clear();
-    if( itemName.FirstIndexOf('*') == -1 )  {
+    if( itemName.EndsWith('.') )  {  // special treatment of any particular index
+      THtmlSwitch* sw = rootSwitch->FindSwitch(itemName.SubStringTo(itemName.Length()-1));
+      if( sw == NULL )
+        return;
+      for( int j=0; j < sw->SwitchCount(); j++ )
+        Switches.Add(&sw->Switch(j));
+    }
+    else if( itemName.FirstIndexOf('*') == -1 )  {
       THtmlSwitch* sw = rootSwitch->FindSwitch(itemName);
       if( sw == NULL )  {
         Error.ProcessingError(__OlxSrcInfo, "could not locate specified switch: ") << itemName;
