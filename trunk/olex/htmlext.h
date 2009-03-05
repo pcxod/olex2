@@ -151,6 +151,7 @@ public:
   inline THtmlSwitch& Switch(int ind)  {  return FSwitches[ind]; }
   THtmlSwitch*  FindSwitch(const olxstr &IName);
   int FindSimilar(const olxstr& start, const olxstr& end, TPtrList<THtmlSwitch>& ret);
+  void Expand(TPtrList<THtmlSwitch>& ret);
   THtmlSwitch& NewSwitch();
 
   void AddParam(const olxstr& name, const olxstr& value){  FParams.AddParam(name, value);  };
