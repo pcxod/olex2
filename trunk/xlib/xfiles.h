@@ -57,6 +57,7 @@ protected:
   TSpaceGroup* FSG;
   // on SG change of the asymmetric unit
   virtual bool Execute(const IEObject *Sender, const IEObject *Data);
+  void ValidateTabs();
 public:
   TXFile();
   virtual ~TXFile();

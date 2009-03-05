@@ -19,6 +19,7 @@
 #include "crs.h"
 #include "utf8file.h"
 #include "atomsort.h"
+#include "infotab.h"
 
 //---------------------------------------------------------------------------
 // TBasicCFile function bodies
@@ -184,6 +185,7 @@ void TXFile::UpdateAsymmUnit()  {
       resi1.AddAtom( &LL->GetAsymmUnit().GetAtom(resi[j].GetId()) );
   }
   RefMod.Validate();
+  ValidateTabs();
   LL->GetRM().Assign(RefMod, false);
   LL->GetAsymmUnit().SetZ( GetAsymmUnit().GetZ() );
 }
@@ -206,6 +208,8 @@ void TXFile::Sort(const TStrList& ins)  {
         AtomSorter::Sort(list, AtomSorter::atom_cmp_Mw_Label);
       else if( ins[i].Comparei("l1") == 0 )
         AtomSorter::Sort(list, AtomSorter::atom_cmp_Label1);
+      else if( ins[i].Comparei("h-") == 0 )
+        keeph = false;
       else if( ins[i].Comparei("moety") == 0 )  {
         moety_index = i;
         break;
@@ -245,7 +249,38 @@ void TXFile::Sort(const TStrList& ins)  {
     AtomSorter::SyncLists(list, FLastLoader->GetAsymmUnit().GetResidue(-1).AtomList());
 }
 //..............................................................................
-void TXFile::SaveToFile(const olxstr & FN, bool Sort)  {
+void TXFile::ValidateTabs()  {
+  for( int i=0; i < RefMod.InfoTabCount(); i++ )  {
+    if( RefMod.GetInfoTab(i).GetType() != infotab_htab )
+      continue;
+    if( RefMod.GetInfoTab(i).Count() != 2 )  // already invalid
+      continue;
+    TSAtom* sa = NULL;
+    for( int j=0; j < Lattice.AtomCount(); j++ )  {
+      if( Lattice.GetAtom(j).CAtom().GetId() == RefMod.GetInfoTab(i).GetAtom(0).GetAtom()->GetId() )  {
+        sa = &Lattice.GetAtom(j);
+        break;
+      }
+    }
+    if( sa == NULL )  {
+      RefMod.DeleteInfoTab(i--);
+      continue;
+    }
+    bool hasH = false;
+    for( int j=0; j < sa->NodeCount(); j++ )  {
+      if( sa->Node(j).GetAtomInfo() == iHydrogenIndex || sa->Node(j).GetAtomInfo() == iDeuteriumIndex )  {
+        hasH = true;
+        break;
+      }
+    }
+    if( !hasH )  {
+      RefMod.DeleteInfoTab(i--);
+      continue;
+    }
+  }
+}
+//..............................................................................
+void TXFile::SaveToFile(const olxstr &FN, bool Sort)  {
   olxstr Ext = TEFile::ExtractFileExt(FN);
   TBasicCFile *Loader = FindFormat(Ext);
 
@@ -255,7 +290,7 @@ void TXFile::SaveToFile(const olxstr & FN, bool Sort)  {
       if( !Loader->Adopt(this) )
         throw TFunctionFailedException(__OlxSourceInfo, "could not adopt specified file format");
     }
-    else 
+    else
       UpdateAsymmUnit();
     if( Sort )  
       Loader->GetAsymmUnit().Sort();

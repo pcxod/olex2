@@ -26,6 +26,7 @@
 #include "strmask.h"
 #include "sgset.h"
 #include "sfutil.h"
+#include "infotab.h"
 
 #define xlib_InitMacro(macroName, validOptions, argc, desc)\
   lib.RegisterStaticMacro( new TStaticMacro(&XLibMacros::mac##macroName, #macroName, (validOptions), argc, desc))
@@ -147,7 +148,8 @@ xlib_InitMacro(File, "s-sort the main residue of the asymmetric unit", fpNone|fp
   xlib_InitMacro(ASR, EmptyString, fpNone^psFileLoaded, "Absolute structure refinement: adds TWIN and BASF to current model in the case of non-centrosymmetric structure");
   xlib_InitMacro(Describe, EmptyString, fpNone^psFileLoaded, "Describes current refinement in a human readable form");
   xlib_InitMacro(Sort, EmptyString, fpAny^psFileLoaded, "Sorts atoms of the default residue. Atom sort arguments:\
- Mw - atomic weight, L - label, considering numbers, L1 - simple string comparison, MwL - atomic weight and label.\
+ Mw - atomic weight, L - label, considering numbers, L1 - simple string comparison, MwL - atomic weight and label,\
+ h- - to treat hydrogen atoms independent of the pivot atom.\
  Moety sort arguments: S - size, H - by heaviest atom, Mw - molecular weight. Usage: sort [atom_sort_type] or [Atoms] [moety [moety sort type] [moety atoms]].\
  If just 'moety' is provided - the atoms will be split into the moeties without sorting.\
  Example: sort mwl F2 F1 moety s - will sort atoms by atomic weight and label, put F1 after F2 and form moeties sorted by size");
@@ -681,40 +683,27 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options, TMacroErr
         const double c_a = v1.CAngle(v2);
         if( c_a < min_ang )  {  // > 150 degrees
           if( sa.GetAtomInfo() == iCarbonIndex )  {
-            olxstr rtab_d((const char*)"RTAB ", 80);
-            rtab_d << sa.GetAtomInfo().GetSymbol() << ca.GetAtomInfo().GetSymbol() << // codename
-              ' ' <<sa.GetLabel() << ' ' << ca.GetLabel();
-            const smatd& mt = all[j].GetB();
-            if( !(mt.t.IsNull() && mt.r.IsI()) )  {
-              const smatd& eqiv = rm.AddUsedSymm(mt);
-              int ei = rm.UsedSymmIndex(eqiv);
-              rtab_d << "_$" << ei+1;
-            }
-            ins.AddIns(rtab_d, rm);
-            TBasicApp::GetLog() << rtab_d << " d=" << olxstr::FormatFloat(3, d) << '\n';
+            InfoTab& it_d = rm.AddRTAB(sa.GetAtomInfo().GetSymbol() + ca.GetAtomInfo().GetSymbol());
+            it_d.AddAtom( &sa.CAtom(), NULL );
+            const smatd* mt = (!(all[j].GetB().t.IsNull() && all[j].GetB().r.IsI()) ? &all[j].GetB() : NULL);
+            it_d.AddAtom(const_cast<TCAtom*>(&ca), mt);
+            if( rm.ValidateInfoTab(it_d) )
+              TBasicApp::GetLog() << it_d.InsStr() << " d=" << olxstr::FormatFloat(3, d) << '\n';
 
-            olxstr rtab_a((const char*)"RTAB ", 80);
-            rtab_a << sa.GetAtomInfo().GetSymbol() << ca.GetAtomInfo().GetSymbol() << // codename
-              ' ' << sa.GetLabel() << ' ' << sa.Node(h_indexes[k]).GetLabel() << ' ' << ca.GetLabel();
-            if( !(mt.t.IsNull() && mt.r.IsI()) )  {
-              const smatd& eqiv = rm.AddUsedSymm(mt);
-              int ei = rm.UsedSymmIndex(eqiv);
-              rtab_a << "_$" << ei+1;
-            }
-            ins.AddIns(rtab_a, rm);
-            TBasicApp::GetLog() << rtab_a << " a=" << olxstr::FormatFloat(3, acos(c_a)*180.0/M_PI) << '\n';
+            InfoTab& it_a = rm.AddRTAB(sa.GetAtomInfo().GetSymbol() + ca.GetAtomInfo().GetSymbol());
+            it_a.AddAtom( &sa.CAtom(), NULL );
+            it_a.AddAtom( &sa.Node(h_indexes[k]).CAtom(), NULL );
+            it_a.AddAtom(const_cast<TCAtom*>(&ca), mt);
+            if( rm.ValidateInfoTab(it_a) )
+              TBasicApp::GetLog() << it_a.InsStr() << " a=" << olxstr::FormatFloat(3, acos(c_a)*180.0/M_PI) << '\n';
           }
           else  {
-            olxstr htab((const char*)"HTAB ", 80);
-            htab << sa.GetLabel() << ' ' << ca.GetLabel();
-            const smatd& mt = all[j].GetB();
-            if( !(mt.t.IsNull() && mt.r.IsI()) )  {
-              const smatd& eqiv = rm.AddUsedSymm(mt);
-              int ei = rm.UsedSymmIndex(eqiv);
-              htab << "_$" << ei+1;
-            }
-            ins.AddIns(htab, rm);
-            TBasicApp::GetLog() << htab << " d=" << olxstr::FormatFloat(3, d) << '\n';
+            InfoTab& it = rm.AddHTAB();
+            it.AddAtom(&sa.CAtom(), NULL);
+            const smatd* mt = (!(all[j].GetB().t.IsNull() && all[j].GetB().r.IsI()) ? &all[j].GetB() : NULL);
+            it.AddAtom(const_cast<TCAtom*>(&ca), mt);
+            if( rm.ValidateInfoTab(it) )
+              TBasicApp::GetLog() << it.InsStr() << " d=" << olxstr::FormatFloat(3, d) << '\n';
           }
         }
       }

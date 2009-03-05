@@ -129,11 +129,10 @@ public:
     const smatd* eqiv = NULL;
     int eqiv_ind = resi_name.IndexOf('$');
     if( eqiv_ind >= 0 )  {  
-      olxstr str_eqiv( resi_name.SubStringFrom(eqiv_ind+1) );
-      if( !str_eqiv.IsNumber() )  throw TInvalidArgumentException(__OlxSourceInfo, olxstr("equivalent id: ") << str_eqiv);
-      int eqi = str_eqiv.ToInt()-1;
-      if( eqi < 0 || eqi >= rm.UsedSymmCount() )  throw TInvalidArgumentException(__OlxSourceInfo, olxstr("equivalent index: ") << str_eqiv);
-      eqiv = &rm.GetUsedSymm(eqi);
+      olxstr str_eqiv = resi_name.SubStringFrom(eqiv_ind);
+      eqiv = rm.FindUsedSymm(str_eqiv);
+      if( eqiv == NULL )  
+        throw TInvalidArgumentException(__OlxSourceInfo, olxstr("Equivalent id: ") << str_eqiv);
       resi_name = resi_name.SubStringTo(eqiv_ind);
     }
     // validate syntax

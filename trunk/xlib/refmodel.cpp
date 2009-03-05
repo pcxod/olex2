@@ -7,6 +7,7 @@
 #include "unitcell.h"
 #include "xapp.h"
 #include "refmerge.h"
+#include "infotab.h"
 
 RefinementModel::RefinementModel(TAsymmUnit& au) : 
   rDFIX(*this, rltBonds, "dfix"), 
@@ -73,6 +74,7 @@ void RefinementModel::Clear() {
   rSAME.Clear();
   ExyzGroups.Clear();
   //AfixGroups.Clear();
+  InfoTables.Clear();
   UsedSymm.Clear();
   used_weight.Clear();
   proposed_weight.Clear();
@@ -98,27 +100,30 @@ void RefinementModel::ClearVarRefs() {
   }
 }
 //....................................................................................................
-const smatd& RefinementModel::AddUsedSymm(const smatd& matr) {
-  int ind = UsedSymm.IndexOf(matr);
+const smatd& RefinementModel::AddUsedSymm(const smatd& matr, const olxstr& id) {
+  int ind = UsedSymm.IndexOfValue(matr);
   smatd* rv = NULL;
   if( ind == -1 )  {
-    rv = &UsedSymm.Add( *(new smatd(matr)) );
-    rv->SetTag(1);
+    if( id.IsEmpty() ) 
+      rv = &UsedSymm.Add( olxstr("$") << UsedSymm.Count(), matr );
+    else
+      rv = &UsedSymm.Add( id, matr );
+    rv->SetTag(0); // do not lock it
   }
   else  {
-    UsedSymm[ind].IncTag();
-    rv = &UsedSymm[ind];
+    rv = &UsedSymm.GetValue(ind);
+    rv->IncTag();
   }
   return *rv;
 }
 //....................................................................................................
 void RefinementModel::RemUsedSymm(const smatd& matr)  {
-  int ind = UsedSymm.IndexOf(matr);
+  int ind = UsedSymm.IndexOfValue(matr);
   if( ind == -1 )
     throw TInvalidArgumentException(__OlxSourceInfo, "matrix is not in the list");
-  UsedSymm[ind].DecTag();
-  if( UsedSymm[ind].GetTag() == 0 )
-    UsedSymm.Delete(ind);
+  UsedSymm.GetValue(ind).DecTag();
+  //if( UsedSymm.GetValue(ind).GetTag() == 0 )
+  //  UsedSymm.Delete(ind);
 }
 //....................................................................................................
 RefinementModel& RefinementModel::Assign(const RefinementModel& rm, bool AssignAUnit) {
@@ -174,12 +179,21 @@ RefinementModel& RefinementModel::Assign(const RefinementModel& rm, bool AssignA
   // restraunts have to be copied first, as some may refer to vars
   Vars.Assign( rm.Vars );
 
-  for( int i=0; i < rm.UsedSymm.Count(); i++ )  // need to validate for duplication
-    AddUsedSymm( rm.UsedSymm[i] );
+  for( int i=0; i < rm.UsedSymm.Count(); i++ )
+    AddUsedSymm( rm.UsedSymm.GetValue(i), rm.UsedSymm.GetKey(i) );
+
+  for( int i=0; i < rm.InfoTables.Count(); i++ )  {
+    if( rm.InfoTables[i].IsValid() )
+      InfoTables.Add( new InfoTab(*this, rm.InfoTables[i]) );
+  }
 
   for( int i=0; i < rm.SfacData.Count(); i++ )
     SfacData(rm.SfacData.GetKey(i), new XScatterer( *rm.SfacData.GetValue(i)) );
-  
+  // check if all EQIV are used
+  for( int i=0; i < UsedSymm.Count(); i++ )  {
+    if( UsedSymm.GetValue(i).GetTag() <= 0 )
+      UsedSymm.Delete(i--);
+  }
   
   return *this;
 }
@@ -202,6 +216,69 @@ void RefinementModel::AddNewSfac(const olxstr& label,
   sc->SetWeight(wt);
   sc->SetFpFdp( compd(fp, fdp) );
   SfacData.Add(label, sc);
+}
+//....................................................................................................
+InfoTab& RefinementModel::AddHTAB() {
+  return InfoTables.Add( new InfoTab(*this, infotab_htab) );
+}
+//....................................................................................................
+InfoTab& RefinementModel::AddRTAB(const olxstr& codename, const olxstr& resi) {
+  return InfoTables.Add( new InfoTab(*this, infotab_rtab, codename, resi) );
+}
+//....................................................................................................
+bool RefinementModel::ValidateInfoTab(const InfoTab& it)  {
+  int it_ind = -1;
+  bool unique = true;
+  for( int i=0; i < InfoTables.Count(); i++ )  {
+    if( &InfoTables[i] == &it )
+      it_ind = i;
+    else  {
+      if( unique && (InfoTables[i] == it) )  
+        unique = false;
+    }
+  }
+  if( !unique || !it.IsValid() )  {
+    if( it_ind != -1 )
+      InfoTables.Delete(it_ind);
+    return false;
+  }
+  return true;
+}
+//....................................................................................................
+void RefinementModel::AddInfoTab(const TStrList& l)  {
+  int atom_start = 1;
+  int resi_ind = l[0].IndexOf('_');
+  olxstr tab_name = (resi_ind == -1 ? l[0] : l[0].SubStringTo(resi_ind));
+  olxstr resi_name = (resi_ind == -1 ? EmptyString : l[0].SubStringFrom(resi_ind+1));
+  if( tab_name.Comparei("HTAB") == 0 )
+    InfoTables.Add( new InfoTab(*this, infotab_htab, EmptyString, resi_name) );
+  else if( tab_name.Comparei("RTAB") == 0 )
+    InfoTables.Add( new InfoTab(*this, infotab_rtab, l[atom_start++], resi_name) );
+  else
+    throw TInvalidArgumentException(__OlxSourceInfo, "unknown information table name");
+
+  TAtomReference ar( l.Text(' ', atom_start) );
+  TCAtomGroup ag;
+  int atomAGroup;
+  try  {  ar.Expand( *this, ag, resi_name, atomAGroup);  }
+  catch( const TExceptionBase& ex )  {
+    TBasicApp::GetLog().Error(olxstr("Invalid info table atoms: ") << l.Text(' '));
+    InfoTables.Delete( InfoTables.Count()-1 );
+    return;
+  }
+  InfoTables.Last().AssignAtoms( ag );
+  if( !InfoTables.Last().IsValid() )  {
+    TBasicApp::GetLog().Error(olxstr("Invalid info table: ") << l.Text(' '));
+    InfoTables.Delete( InfoTables.Count()-1 );
+    return;
+  }
+  for( int i=0; i < InfoTables.Count()-1; i++ )  {
+    if( InfoTables[i] == InfoTables.Last() )  {
+      TBasicApp::GetLog().Error(olxstr("Duplicate info table: ") << l.Text(' '));
+      InfoTables.Delete( InfoTables.Count()-1 );
+      return;
+    }
+  }
 }
 //....................................................................................................
 double RefinementModel::FindRestrainedDistance(const TCAtom& a1, const TCAtom& a2)  {
@@ -659,9 +736,9 @@ void RefinementModel::ToDataItem(TDataItem& item) {
   TIntList mat_tags(UsedSymm.Count());
   TDataItem& eqiv = item.AddItem("eqiv");
   for( int i=0; i < UsedSymm.Count(); i++ )  {
-    eqiv.AddItem(i, TSymmParser::MatrixToSymmEx(UsedSymm[i]));
-    mat_tags[i] = UsedSymm[i].GetTag();
-    UsedSymm[i].SetTag(i);
+    eqiv.AddItem(UsedSymm.GetKey(i), TSymmParser::MatrixToSymmEx(UsedSymm.GetValue(i)));
+    mat_tags[i] = UsedSymm.GetValue(i).GetTag();
+    UsedSymm.GetValue(i).SetTag(i);
   }
   
   Vars.ToDataItem(item.AddItem("leqs"));
@@ -694,7 +771,7 @@ void RefinementModel::ToDataItem(TDataItem& item) {
   item.AddItem("MERG", MERG_set).AddField("val", MERG);
   // restore matrix tags
   for( int i=0; i < UsedSymm.Count(); i++ )
-    UsedSymm[i].SetTag( mat_tags[i] );
+    UsedSymm.GetValue(i).SetTag( mat_tags[i] );
 }
 //....................................................................................................
 void RefinementModel::FromDataItem(TDataItem& item) {
@@ -708,8 +785,9 @@ void RefinementModel::FromDataItem(TDataItem& item) {
   PersUtil::IntNumberListFromStr(item.GetRequiredField("RefInArg"), LS);
 
   TDataItem& eqiv = item.FindRequiredItem("eqiv");
-  for( int i=0; i < eqiv.ItemCount(); i++ )  
-    TSymmParser::SymmToMatrix( eqiv.GetItem(i).GetValue(), UsedSymm.AddNew());
+  for( int i=0; i < eqiv.ItemCount(); i++ )
+    TSymmParser::SymmToMatrix( eqiv.GetItem(i).GetValue(), UsedSymm.Add(eqiv.GetName()));
+  
 
   expl.FromDataItem(item.FindRequiredItem("expl"));  
 
@@ -763,7 +841,7 @@ PyObject* RefinementModel::PyExport(bool export_connectivity)  {
   PyDict_SetItemString(main, "aunit", aunit.PyExport(atoms) );
   TIntList mat_tags(UsedSymm.Count());
   for( int i=0; i < UsedSymm.Count(); i++ )  {
-    smatd& m = UsedSymm[i];
+    smatd& m = UsedSymm.GetValue(i);
     PyTuple_SetItem(eq, i, 
       equivs.Add(
         Py_BuildValue("(iii)(iii)(iii)(ddd)", m.r[0][0], m.r[0][1], m.r[0][2],
@@ -839,7 +917,7 @@ PyObject* RefinementModel::PyExport(bool export_connectivity)  {
   //
   // restore matrix tags
   for( int i=0; i < UsedSymm.Count(); i++ )
-    UsedSymm[i].SetTag( mat_tags[i] );
+    UsedSymm.GetValue(i).SetTag( mat_tags[i] );
   return main;
 }
 #endif
