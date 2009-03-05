@@ -742,15 +742,22 @@ int THtmlSwitch::FindSimilar(const olxstr& start, const olxstr& end, TPtrList<TH
     if( end.IsEmpty() )  {
       if( I.Name().StartsFrom(start) )  {
         ret.Add( &I );
-        cnt += (I.FindSimilar(start, end, ret) + 1);
+        cnt++;
+      }
+    }
+    else if( start.IsEmpty() )  {
+      if( I.Name().EndsWith(end) )  {
+        ret.Add( &I );
+        cnt++;
       }
     }
     else {
       if( I.Name().StartsFrom(start) &&  I.Name().EndsWith(end) )  {
         ret.Add( &I );
-        cnt += (I.FindSimilar(start, end, ret) + 1);
+        cnt++;
       }
     }
+    cnt += I.FindSimilar(start, end, ret);
   }
   return cnt;
 }
