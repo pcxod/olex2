@@ -383,7 +383,6 @@ private:
 
   DefMacro(CreateBitmap)
   DefMacro(DeleteBitmap)
-  DefMacro(SGInfo)
   DefMacro(Tref)
   DefMacro(Patt)
   DefMacro(Export)

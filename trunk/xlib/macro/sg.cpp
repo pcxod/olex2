@@ -449,6 +449,22 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
             FoundSpaceGroups.Add( sortedSATestResults.GetObject(i)->GetA()->GetObject() );
         }
       }
+      olxstr amb_sg;
+      for( int i=0; i < SATestResults.Count(); i++ )  {
+        if( SATestResults[i].GetWeakCount() == 0 && 
+          (SATestResults[i].GetObject()->HasTranslations() || SATestResults[i].GetObject()->GetLattice().VectorCount() != 0) ) 
+        {
+          if( !amb_sg.IsEmpty() )
+            amb_sg << ", ";
+          amb_sg << SATestResults[i].GetObject()->GetName();
+        }
+      }
+      if( !amb_sg.IsEmpty() )  {
+        XApp.GetLog() << "Ambiguous space groups (statistics incomplete to determine):\n";
+        Output.Clear();
+        Output.Hypernate(amb_sg, 80);
+        XApp.GetLog() << Output << '\n';
+      }
     }
     else  {
       // three hits from here
