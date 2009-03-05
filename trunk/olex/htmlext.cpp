@@ -762,6 +762,13 @@ int THtmlSwitch::FindSimilar(const olxstr& start, const olxstr& end, TPtrList<TH
   return cnt;
 }
 //..............................................................................
+void THtmlSwitch::Expand(TPtrList<THtmlSwitch>& ret)  {
+  for( int i=0; i < FSwitches.Count(); i++ )  {
+    ret.Add( &FSwitches[i] );
+    FSwitches[i].Expand(ret);
+  }
+}
+//..............................................................................
 THtmlSwitch*  THtmlSwitch::FindSwitch(const olxstr &IName)  {
   for( int i=0; i < FSwitches.Count(); i++ )  {
     if( FSwitches[i].Name().Comparei(IName) == 0 )
@@ -1657,7 +1664,8 @@ void THtml::macItemState(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       if( sw == NULL )
         return;
       for( int j=0; j < sw->SwitchCount(); j++ )
-        Switches.Add(&sw->Switch(j));
+        Switches.Add( &sw->Switch(j) );
+      //sw->Expand(Switches);
     }
     else if( itemName.FirstIndexOf('*') == -1 )  {
       THtmlSwitch* sw = rootSwitch->FindSwitch(itemName);
