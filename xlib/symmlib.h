@@ -216,7 +216,7 @@ public:
   inline TSpaceGroup& GetPointGroup(int i) const {  return *PointGroups[i];  }
 
   inline int BravaisLatticeCount() const    {  return BravaisLattices.Count();  }
-  inline TBravaisLattice&  GetBravaisLattice(int i)  {  return *BravaisLattices.Object(i);  }
+  inline TBravaisLattice&  GetBravaisLattice(int i) const {  return *BravaisLattices.Object(i);  }
   inline TBravaisLattice *  FindBravaisLattice(const olxstr& Name)  const {
     return BravaisLattices.FindObjectCI(Name);
   }

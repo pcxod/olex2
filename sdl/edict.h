@@ -45,6 +45,7 @@ public:
   inline VType& GetValue(int ind)             {  return SortedL::operator[] (ind).val;  }
   inline const VType& GetValue(int ind) const {  return SortedL::operator[] (ind).val;  }
   inline const KType& GetKey(int ind)   const {  return SortedL::operator[] (ind).key;  }
+  inline const EntryType& GetEntry(int ind) const {  return SortedL::operator[] (ind);  }
   template <class T> inline bool HasKey(const T& key) const {
     return SortedL::IndexOf(key) != -1;
   }
@@ -54,7 +55,8 @@ public:
   }
   template <typename T> VType& Add(const T& key, const VType& def) {
     int ind = -1;
-    SortedL::AddUnique(EntryType(key, def), ind);
+    if( SortedL::AddUnique(key, ind) ) // new entry?
+      SortedL::operator[] (ind).val = def;
     return SortedL::operator[] (ind).val;
   }
   template <typename T> VType& Add(const T& key) {

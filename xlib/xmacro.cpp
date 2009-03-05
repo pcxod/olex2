@@ -151,6 +151,9 @@ xlib_InitMacro(File, "s-sort the main residue of the asymmetric unit", fpNone|fp
  Moety sort arguments: S - size, H - by heaviest atom, Mw - molecular weight. Usage: sort [atom_sort_type] or [Atoms] [moety [moety sort type] [moety atoms]].\
  If just 'moety' is provided - the atoms will be split into the moeties without sorting.\
  Example: sort mwl F2 F1 moety s - will sort atoms by atomic weight and label, put F1 after F2 and form moeties sorted by size");
+  xlib_InitMacro(SGInfo, "c-include lattice centering matrices&;i-include inversion generated matrices if any", fpNone|fpOne, 
+    "Prints space group information.");
+  xlib_InitMacro(SAInfo, EmptyString, fpAny, "Finds and prints space groups which include any of the provided systematic absences in the form 'b~~', '~b~' or '~~b'");
 //_________________________________________________________________________________________________________________________
 //_________________________________________________________________________________________________________________________
 
@@ -192,6 +195,236 @@ xlib_InitMacro(File, "s-sort the main residue of the asymmetric unit", fpNone|fp
 //_________________________________________________________________________________________________________________________
   xlib_InitFunc(RemoveSE, fpOne|psFileLoaded, "Returns a new space group name without provided element");
 //_________________________________________________________________________________________________________________________
+}
+//..............................................................................
+void XLibMacros::macSAInfo(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  const TSymmLib& sl = *TSymmLib::GetInstance();
+  TLog& log = TBasicApp::GetLog();
+  TPtrList<TSymmElement> ref, sg_elm;
+  if( Cmds.IsEmpty() )  {
+    TPtrList<TSpaceGroup> hits, bl_hits;
+    for( int i=0; i < sl.SymmElementCount(); i++ )
+      ref.Add( & sl.GetSymmElement(i) );
+    for( int i=0; i < sl.SGCount(); i++ )  {
+      sl.GetGroup(i).SplitIntoElements(ref, sg_elm);
+      if( sg_elm.IsEmpty() )
+        hits.Add( &sl.GetGroup(i) );
+      else
+        sg_elm.Clear();
+    }
+    TStrList output;
+    for( int i=0; i < sl.BravaisLatticeCount(); i++ )  {
+      for( int j=0; j < hits.Count(); j++ )  {
+        if( &hits[j]->GetBravaisLattice() == &sl.GetBravaisLattice(i) )
+          bl_hits.Add(hits[j]);
+      }
+      if( bl_hits.IsEmpty() )  continue;
+      TTTable<TStrList> tab( bl_hits.Count()/6+((bl_hits.Count()%6) != 0 ? 1 : 0), 6 );
+      for( int j=0; j < bl_hits.Count(); j++ )
+        tab[j/6][j%6] = bl_hits[j]->GetName();
+      tab.CreateTXTList(output, sl.GetBravaisLattice(i).GetName(), false, false, "  ");
+      log << output << '\n';
+      output.Clear();
+      bl_hits.Clear();
+    }
+  }
+  else  {
+    TPSTypeList<int, TSpaceGroup*> hits, bl_hits;
+    for( int i=0; i < Cmds.Count(); i++ )  {
+      olxstr se_name(Cmds[i]);
+      se_name.Replace('~', '-');
+      TSymmElement* se = sl.FindSymmElement( se_name );
+      if( se == NULL )  {
+        E.ProcessingError(__OlxSrcInfo, olxstr("Unknown symmetry element: ") << Cmds[i]);
+        return;
+      }
+      ref.Add(se);
+    }
+    for( int i=0; i < sl.SGCount(); i++ )  {
+      sl.GetGroup(i).SplitIntoElements(ref, sg_elm);
+      if( !sg_elm.IsEmpty() )  {
+        hits.Add( sg_elm.Count(), &sl.GetGroup(i) );
+        sg_elm.Clear();
+      }
+    }
+    TStrList output;
+    for( int i=0; i < sl.BravaisLatticeCount(); i++ )  {
+      for( int j=0; j < hits.Count(); j++ )  {
+        if( &hits.GetObject(j)->GetBravaisLattice() == &sl.GetBravaisLattice(i) )
+          bl_hits.Add(hits.GetComparable(j), hits.GetObject(j));
+      }
+      if( bl_hits.IsEmpty() )  continue;
+      TTTable<TStrList> tab( bl_hits.Count()/5+((bl_hits.Count()%5) != 0 ? 1 : 0), 5);
+      olxstr tmp;
+      for( int j=0; j < bl_hits.Count(); j++ )  {
+        tmp = bl_hits.GetObject(j)->GetName();
+        tmp.Format(10, true, ' ');
+        tab[j/5][j%5] << tmp << ' ' << bl_hits.GetComparable(j) << '/' << ref.Count();
+      }
+      tab.CreateTXTList(output, sl.GetBravaisLattice(i).GetName(), false, false, "  ");
+      log << output  << '\n';
+      output.Clear();
+      bl_hits.Clear();
+    }
+    log << "Exact matche(s)\n"; 
+    TPtrList<TSymmElement> all_elm;
+    for( int i=0; i < sl.SymmElementCount(); i++ )
+      all_elm.Add( & sl.GetSymmElement(i) );
+    olxstr exact_match;
+    for( int i=0; i < hits.Count(); i++ )  {
+      if( hits.GetComparable(i) == ref.Count() )  {
+        if( !exact_match.IsEmpty() )
+          exact_match << ", ";
+        hits.GetObject(i)->SplitIntoElements(all_elm, sg_elm);
+        bool exact = true;
+        for( int j=0; j < sg_elm.Count(); j++ )  {
+          if( ref.IndexOf( sg_elm[j] ) == -1 )  {
+            exact = false;
+            break;
+          }
+        }
+        if( exact )  exact_match << '[';
+        exact_match << hits.GetObject(i)->GetName();
+        if( exact )  exact_match << ']';
+        sg_elm.Clear();
+      }
+    }
+    output.Hypernate(exact_match, 80);
+    log << (output << '\n');
+    log << "Space groups inclosed in [] have exact match to the provided elements\n";
+  }
+}
+//..............................................................................
+void XLibMacros::macSGInfo(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  if( Cmds.IsEmpty() )  {
+    TPtrList<TSpaceGroup> sgList;
+    for(int i=0; i < TSymmLib::GetInstance()->BravaisLatticeCount(); i++ )  {
+      TBravaisLattice& bl = TSymmLib::GetInstance()->GetBravaisLattice(i);
+      bl.FindSpaceGroups( sgList );
+      TBasicApp::GetLog() << (olxstr("------------------- ") << bl.GetName() << " --- "  << sgList.Count() << '\n' );
+      olxstr tmp, tmp1;
+      TPSTypeList<int, TSpaceGroup*> SortedSG;
+      for( int j=0; j < sgList.Count(); j++ )
+        SortedSG.Add( sgList[j]->GetNumber(), sgList[j] );
+      for( int j=0; j < SortedSG.Count(); j++ )  {
+        tmp1 << SortedSG.GetObject(j)->GetName() << "(#" << SortedSG.GetComparable(j) << ')';
+        tmp <<tmp1.Format(15, true, ' ');
+        tmp1 = EmptyString;
+        if( tmp.Length() > 60 )  {
+          TBasicApp::GetLog() << ( tmp << '\n' );
+          tmp = EmptyString;
+        }
+      }
+      TBasicApp::GetLog() << ( tmp << '\n' );
+      sgList.Clear();
+    }
+    return;
+  }
+  bool Identity = Options.Contains("i"), 
+       Centering = Options.Contains("c");
+  TSpaceGroup* sg = TSymmLib::GetInstance()->FindGroup( Cmds[0] );
+  bool LaueClassPG = false;
+  if( sg == NULL )  {
+    sg = TSymmLib::GetInstance()->FindGroup( olxstr("P") << Cmds[0] );
+    if( !sg )  {
+      E.ProcessingError(__OlxSrcInfo, "Could not find specified space group/Laue class/Point group: ") << Cmds[0];
+      return;
+    }
+    LaueClassPG = true;
+  }
+  if( LaueClassPG )  {
+    TPtrList<TSpaceGroup> sgList;
+    TPSTypeList<int, TSpaceGroup*> SortedSG;
+    if( &sg->GetLaueClass() == sg )  {
+      TBasicApp::GetLog() << ( olxstr("Space groups of the Laue class ") << sg->GetBareName() << '\n');
+      TSymmLib::GetInstance()->FindLaueClassGroups( *sg, sgList);
+      for( int j=0; j < sgList.Count(); j++ )
+        SortedSG.Add( sgList[j]->GetNumber(), sgList[j] );
+      olxstr tmp, tmp1;
+      for( int j=0; j < SortedSG.Count(); j++ )  {
+        tmp1 << SortedSG.GetObject(j)->GetName() << "(#" << SortedSG.GetComparable(j) << ')';
+        tmp << tmp1.Format(15, true, ' ');
+        tmp1 = EmptyString;
+        if( tmp.Length() > 60 )  {
+          TBasicApp::GetLog() << ( tmp << '\n' );
+          tmp = EmptyString;
+        }
+      }
+      TBasicApp::GetLog() << ( tmp << '\n' );
+    }
+    if( &sg->GetPointGroup() == sg )  {
+      sgList.Clear();
+      SortedSG.Clear();
+      olxstr tmp, tmp1;
+      TBasicApp::GetLog() << ( olxstr("Space groups of the point group ") << sg->GetBareName() << '\n');
+      TSymmLib::GetInstance()->FindPointGroupGroups( *sg, sgList);
+      TPSTypeList<int, TSpaceGroup*> SortedSG;
+      for( int j=0; j < sgList.Count(); j++ )
+        SortedSG.Add( sgList[j]->GetNumber(), sgList[j] );
+      for( int j=0; j < SortedSG.Count(); j++ )  {
+        tmp1 << SortedSG.GetObject(j)->GetName() << "(#" << SortedSG.GetComparable(j) << ')';
+        tmp << tmp1.Format(15, true, ' ');
+        tmp1 = EmptyString;
+        if( tmp.Length() > 60 )  {
+          TBasicApp::GetLog() << ( tmp << '\n' );
+          tmp = EmptyString;
+        }
+      }
+      TBasicApp::GetLog() << ( tmp << '\n' );
+    }
+    return;
+  }
+  TPtrList<TSpaceGroup> AllGroups;
+  smatd_list SGMatrices;
+
+  TBasicApp::GetLog() << ( sg->IsCentrosymmetric() ? "Centrosymmetric" : "Non centrosymmetric") << '\n';
+  TBasicApp::GetLog() << ( olxstr("Hall symbol: ") << sg->GetHallSymbol() << '\n');
+
+  TSymmLib::GetInstance()->GetGroupByNumber( sg->GetNumber(), AllGroups );
+  if( AllGroups.Count() > 1 )  {
+    TBasicApp::GetLog() << ("Alternative settings:\n");
+    olxstr tmp;
+    for( int i=0; i < AllGroups.Count(); i++ )  {
+      if( AllGroups[i] == sg )  continue;
+      tmp << AllGroups[i]->GetName() << '(' << AllGroups[i]->GetFullName() <<  ") ";
+    }
+    TBasicApp::GetLog() << (tmp << '\n');
+  }
+  TBasicApp::GetLog() << ( olxstr("Space group number: ") << sg->GetNumber() << '\n');
+  TBasicApp::GetLog() << ( olxstr("Crystal system: ") << sg->GetBravaisLattice().GetName() << '\n');
+  TBasicApp::GetLog() << ( olxstr("Laue class: ") << sg->GetLaueClass().GetBareName() << '\n');
+  TBasicApp::GetLog() << ( olxstr("Point group: ") << sg->GetPointGroup().GetBareName() << '\n');
+  short Flags = mattAll;
+  if( !Centering )  Flags ^= (mattCentering|mattTranslation);
+  if( !Identity )  Flags ^= mattIdentity;
+  sg->GetMatrices( SGMatrices, Flags );
+
+  TTTable<TStrList> tab( SGMatrices.Count(), 2 );
+
+  for( int i=0; i < SGMatrices.Count(); i++ )
+    tab[i][0] = TSymmParser::MatrixToSymmEx( SGMatrices[i] );
+
+  TStrList Output;
+  tab.CreateTXTList(Output, "Symmetry operators", true, true, ' ');
+  if( !sg->GetInversionCenter().IsNull() )  {
+    const vec3d& ic = sg->GetInversionCenter();
+    TBasicApp::GetLog() << "Inversion center position: " << olxstr::FormatFloat(3, ic[0])
+      << ", " << olxstr::FormatFloat(3, ic[1]) << ", " << olxstr::FormatFloat(3, ic[2]) << '\n';
+  }
+  // possible systematic absences
+  Output.Add("Elements causing systematic absences: ");
+  TPtrList<TSymmElement> ref, sg_elm;
+  for( int i=0; i < TSymmLib::GetInstance()->SymmElementCount(); i++ )
+    ref.Add( & TSymmLib::GetInstance()->GetSymmElement(i) );
+  sg->SplitIntoElements(ref, sg_elm);
+  if( sg_elm.IsEmpty() )
+    Output.Last().String() << "none";
+  else  {
+    for( int i=0; i < sg_elm.Count(); i++ )
+      Output.Last().String() << sg_elm[i]->GetName() << ' ';
+  }
+  Output.Add(EmptyString);
+  TBasicApp::GetLog() << ( Output );
 }
 //..............................................................................
 void XLibMacros::macSort(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {

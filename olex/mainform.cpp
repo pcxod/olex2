@@ -692,7 +692,6 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual occupancy\
 
   this_InitMacro(CreateBitmap, r, fpTwo );
   this_InitMacro(DeleteBitmap, , fpOne );
-  this_InitMacro(SGInfo, c&;i, fpNone|fpOne );
   this_InitMacro(Tref, ,fpOne|fpTwo|psCheckFileTypeIns );
   this_InitMacro(Patt, ,fpNone|psCheckFileTypeIns );
   this_InitMacro(Export, ,fpNone|fpOne|psCheckFileTypeCif );
