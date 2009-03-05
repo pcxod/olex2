@@ -28,6 +28,7 @@
 #include "egc.h"
 #include "xmacro.h"
 #include "sortedlist.h"
+#include "infotab.h"
 
 #undef AddAtom
 #undef GetObject
@@ -1586,6 +1587,10 @@ void TIns::SaveHeader(TStrList& SL, bool ValidateRestraintNames)  {
   SaveRestraints(SL, NULL, NULL, GetRM());
   _SaveRefMethod(SL);
   _SaveSizeTemp(SL);
+  for( int i=0; i < GetRM().InfoTabCount(); i++ )  {
+    if( GetRM().GetInfoTab(i).IsValid() )
+      SL.Add( GetRM().GetInfoTab(i).InsStr() );
+  }
   // copy "unknown" instructions except rems
   for( int i=0; i < Ins.Count(); i++ )  {
     TInsList* L = Ins.Object(i);

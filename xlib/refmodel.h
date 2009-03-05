@@ -28,7 +28,7 @@ static const short
 
 class RefinementModel : public IXVarReferencerContainer, public IXVarReferencer {
   // in INS file is EQUV command
-  smatd_list UsedSymm;
+  olxdict<olxstr,smatd,olxstrComparator<false> > UsedSymm;
   olxdict<olxstr,XScatterer*, olxstrComparator<false> > SfacData;  // label + params
   olxdict<int, Fragment*, TPrimitiveComparator> Frags;
 protected:
@@ -49,6 +49,7 @@ protected:
   olxstr VarRefrencerId;
   olxdict<olxstr, IXVarReferencerContainer*, olxstrComparator<false> > RefContainers;
   void SetDefaults();
+  TTypeListExt<class InfoTab, IEObject> InfoTables;
 public:
   // needs to be extended for the us of the batch numbers...
   struct HklStat : public MergeStats {
@@ -354,18 +355,31 @@ of components 1 ... m
     ExyzGroups.Clear();
     Vars.ClearAll();
   }
+
+  void AddInfoTab(const TStrList& l);
+  int InfoTabCount()                const {  return InfoTables.Count();  }
+  const InfoTab& GetInfoTab(int i)  const {  return InfoTables[i];  }
+  InfoTab& GetInfoTab(int i)              {  return InfoTables[i];  }
+  void DeleteInfoTab(int i)               {  InfoTables.Delete(i);  }
+  InfoTab& AddHTAB();
+  InfoTab& AddRTAB(const olxstr& codename, const olxstr& resi=EmptyString);
+  bool ValidateInfoTab(const InfoTab& it);
   // adss new symmetry matrics, used in restraints/constraints 
-  const smatd& AddUsedSymm(const smatd& matr);
+  const smatd& AddUsedSymm(const smatd& matr, const olxstr& id=EmptyString);
   //removes the matrix or decriments the reference count
   void RemUsedSymm(const smatd& matr);
   // returns the number of the used symmetry matrices
   inline int UsedSymmCount()     const {  return UsedSymm.Count();  }
   // returns used symmetry matric at specified index
-  inline const smatd& GetUsedSymm(size_t ind)  {  return UsedSymm[ind];  }
+  inline const smatd& GetUsedSymm(size_t ind) const {  return UsedSymm.GetValue(ind);  }
   // return index of given symmetry matrix in the list or -1, if it is not in the list
-  inline int UsedSymmIndex(const smatd& matr)  const {  return UsedSymm.IndexOf(matr);  }
+  inline int UsedSymmIndex(const smatd& matr)  const {  return UsedSymm.IndexOfValue(matr);  }
   // deletes all used symmetry matrices
   inline void ClearUsedSymm()          {  UsedSymm.Clear();  }
+  inline const smatd* FindUsedSymm(const olxstr& name)  {
+    int i = UsedSymm.IndexOf(name);
+    return i == -1 ? NULL : &UsedSymm.GetValue(i);
+  }
   
   // adds new custom scatterer
   void AddNewSfac(const olxstr& label,

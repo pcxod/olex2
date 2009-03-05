@@ -883,6 +883,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\xlib\infotab.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\xlib\ins.h"
 				>
 			</File>

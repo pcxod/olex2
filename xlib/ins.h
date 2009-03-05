@@ -125,12 +125,25 @@ public:
       bool AcceptsAll; // all atoms
       short AcceptsParams, RequiredParams;
       for( int i =0; i < SL.Count(); i++ )  {
+        Toks.Clear();
+        Toks.Strtok( SL[i], ' ');
+        if( Toks[0].Comparei("EQIV") == 0 && Toks.Count() == 3 )  {
+          smatd SymM;
+          TSymmParser::SymmToMatrix(Toks.Text(EmptyString, 2), SymM);
+          cx.rm.AddUsedSymm(SymM, Toks[1]);
+          SL[i] = EmptyString;
+          continue;
+        }
+        if( (Toks[0].Comparei("HTAB") == 0 || Toks[0].Comparei("RTAB") == 0) && Toks.Count() > 2 )  {
+          cx.rm.AddInfoTab( Toks );
+          SL[i] = EmptyString;
+          continue;
+        }
+        srl = NULL;
         RequiredParams = AcceptsParams = 1;
         AcceptsAll = false;
         Esd1Mult = DefVal = DefEsd = DefEsd1 = 0;
         Vals[0] = &DefVal;  Vals[1] = &DefEsd;  Vals[2] = &DefEsd1;
-        Toks.Clear();
-        Toks.Strtok( SL[i], ' ');
         int resi_ind = Toks[0].IndexOf('_');
         if( resi_ind != -1 )  {
           resi = Toks[0].SubStringFrom(resi_ind+1);
@@ -138,24 +151,8 @@ public:
         }
         else
           resi = EmptyString;
-        if( Toks[0].Comparei("EQIV") == 0 )  {
-          if( Toks.Count() > 2 )  {
-            srl = NULL;
-            olxstr Tmp = Toks.String(1).SubStringFrom(1);  // $1 -> 1
-            if( !Tmp.IsNumber() )
-              throw TInvalidArgumentException(__OlxSourceInfo,
-              olxstr("A number is expected, \'") << Tmp << "\' is provided");
-            Toks.Delete(0);
-            Toks.Delete(0);
-            smatd* SymM = new smatd;
-            TSymmParser::SymmToMatrix(Toks.Text(EmptyString), *SymM);
-            cx.rm.AddUsedSymm(*SymM);
-            cx.rm.AddUsedSymm(*SymM);  // make it persistent, as it might be used where we no nothing about
-            delete SymM;
-            SL[i] = EmptyString;
-          }
-        }
-        else if( Toks[0].Comparei("EXYZ") == 0 )  {
+
+        if( Toks[0].Comparei("EXYZ") == 0 )  {
           cx.rm.AddEXYZ( Toks.SubListFrom(1) );
           SL[i] = EmptyString;
           continue;
