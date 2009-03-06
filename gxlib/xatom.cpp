@@ -19,6 +19,8 @@
 #include "asymmunit.h"
 #include "unitcell.h"
 #include "lattice.h"
+#include "splane.h"
+#include "planesort.h"
 
 #include "glgroup.h"
 #include "exyzgroup.h"
@@ -351,7 +353,6 @@ short TXAtom::LegendLevel(const olxstr& legend)  {
 bool TXAtom::Orient(TGlPrimitive *GlP) {
   if( GlP->GetOwnerId() == xatom_PolyId )  {
     if( Polyhedron == NULL )  return true;
-    FParent->GlTranslate( Basis.GetCenter() + FAtom->crd() );
     glBegin(GL_TRIANGLES);
     const TXAtom::Poly& pl = *Polyhedron;
     for( int j=0; j < pl.faces.Count(); j++ )  {
@@ -928,7 +929,7 @@ void TXAtom::CreatePolyhedron(bool v)  {
   if( FAtom->NodeCount() < 4 )  return;
   if( FAtom->IsDeleted() || FAtom->GetAtomInfo() == iQPeakIndex )
     return;
-  TPtrList<const TSAtom> bound;
+  TPtrList<TSAtom> bound;
   for( int i=0; i < FAtom->NodeCount(); i++ )  {
     if( FAtom->Node(i).IsDeleted() || 
       FAtom->Node(i).GetAtomInfo() == iHydrogenIndex ||
@@ -940,23 +941,56 @@ void TXAtom::CreatePolyhedron(bool v)  {
   if( bound.Count() < 4 )  return;
   TXAtom::Poly& pl = *(Polyhedron = new TXAtom::Poly);
   pl.vecs.SetCount( bound.Count() );
-  for( int i=0; i < bound.Count(); i++ ) 
-    pl.vecs[i] = bound[i]->crd() - FAtom->crd();
-  if( bound.Count() == 4 )  {  // easy case
-    pl.faces.AddNew( 0, 1, 2 );
-    pl.faces.AddNew( 0, 2, 3 );
-    pl.faces.AddNew( 0, 3, 1 );
-    pl.faces.AddNew( 1, 2, 3 );
+  vec3f sv;
+  double sd = 0;
+  for( int i=0; i < bound.Count(); i++ )  {
+    pl.vecs[i] = bound[i]->crd();
+    vec3d nd = bound[i]->crd() - FAtom->crd();
+    sd += nd.Length();
+    sv += nd.Normalise();
   }
-  else  {
-    for( int i=0; i < bound.Count(); i++ )  {
-      for( int j=i+1; j < bound.Count(); j++ )  {
-        for( int k=j+1; k < bound.Count(); k++ )  {
-          if( TetrahedronVolume(FAtom->crd(), bound[i]->crd(), bound[j]->crd(), bound[k]->crd() ) > 0.1 )
-            pl.faces.AddNew(i, j, k);
+  sv /= bound.Count();
+  sd /= bound.Count();
+  double ratio = sv.Length()/sd;
+  if( ratio < 0.2 )  {
+    if( bound.Count() == 4 )  {  // easy case
+      pl.faces.AddNew( 0, 1, 2 );
+      pl.faces.AddNew( 0, 2, 3 );
+      pl.faces.AddNew( 0, 3, 1 );
+      pl.faces.AddNew( 1, 2, 3 );
+    }
+    else  {
+      for( int i=0; i < bound.Count(); i++ )  {
+        for( int j=i+1; j < bound.Count(); j++ )  {
+          for( int k=j+1; k < bound.Count(); k++ )  {
+            if( TetrahedronVolume(FAtom->crd(), bound[i]->crd(), bound[j]->crd(), bound[k]->crd() ) > 0.1 )
+              pl.faces.AddNew(i, j, k);
+          }
         }
       }
     }
+  }
+  else  {
+    TSPlane plane(NULL);
+    TTypeList< AnAssociation2<TSAtom*, double> > pa;
+    for( int i=0; i < bound.Count(); i++ )
+      pa.AddNew( bound[i], 1 );
+    plane.Init(pa);
+    PlaneSort::Sorter sp(plane);
+    // change the crds
+    pl.vecs.SetCount(bound.Count()+2);
+    pl.vecs[0] = FAtom->crd();
+    pl.vecs[1] = plane.GetCenter();
+    for( int i=0; i < sp.sortedPlane.Count(); i++ )
+      pl.vecs[i+2] = *sp.sortedPlane.GetObject(i);
+    // create the base
+    for( int i=0; i < sp.sortedPlane.Count()-1; i++ )
+      pl.faces.AddNew(1, i+2, i+3);
+    pl.faces.AddNew(1, 2, sp.sortedPlane.Count()+1);
+    // and the rest to close the polyhedron
+    for( int i=0; i < sp.sortedPlane.Count()-1; i++ )
+      pl.faces.AddNew(0, i+2, i+3);
+    pl.faces.AddNew(0, 2, sp.sortedPlane.Count()+1);
   }
   pl.norms.SetCount( pl.faces.Count() );
   for( int i=0; i < pl.faces.Count(); i++ )  {

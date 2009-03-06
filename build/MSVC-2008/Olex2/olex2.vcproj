@@ -945,6 +945,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\repository\planesort.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\olex\primtvs.h"
 				>
 			</File>

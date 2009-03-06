@@ -146,6 +146,7 @@ enum
 
   ID_FragmentHide,  // fragment menu
   ID_FragmentShowOnly,
+  ID_Disassemble,
 
   ID_View100,   // vew menu
   ID_View010,
@@ -537,7 +538,7 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual occupancy\
 
   this_InitMacro(Line, , fpOne|fpTwo|fpThree);
   this_InitMacro(AddLabel, , fpThree|fpFive);
-  this_InitMacroD(Mpln, "n-just orient, do not create plane&;r&-create regular plane;we-use weights proportional to the (atomic weight)^we", 
+  this_InitMacroD(Mpln, "n-just orient, do not create plane&;r-create regular plane;we-use weights proportional to the (atomic weight)^we", 
     fpAny, "sets current view along the normal of the best plane");
   this_InitMacroD(Cent, EmptyString, fpAny^fpNone, "creates a centroid for given atoms");
   this_InitMacroD(Mask, EmptyString, fpAny, "sets primitives for atoms or bonds according to provided mask" );
@@ -1153,6 +1154,7 @@ separated values of Atom Type and radius, an entry a line" );
 
   FTimer->OnTimer()->Add( TBasicApp::GetInstance()->OnTimer );
   TBasicApp::GetInstance()->OnTimer->Add(this, ID_TIMER);
+  FXApp->XFile().GetLattice().OnDisassemble->Add(this, ID_Disassemble);
   // synchronise if value is different in settings file...
   miHtmlPanel->Check( !FHtmlMinimized );
 #if defined(__WIN32__) || defined(__MAC__)
@@ -1917,6 +1919,10 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
   }
   else if( MsgId == ID_XOBJECTSDESTROY )  {
     if( Modes->GetCurrent() != NULL ) Modes->GetCurrent()->OnGraphicsDestroy();
+  }
+  else if( MsgId == ID_Disassemble )  {
+    if( MsgSubId == msiEnter )
+      FUndoStack->Clear();
   }
   else if( MsgId == ID_CMDLINECHAR )  {
     if( Data != NULL && EsdlInstanceOf(*Data, TKeyEvent) )

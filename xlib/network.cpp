@@ -318,7 +318,7 @@ void ResultCollector( TEGraphNode<int,TSAtom*>& subRoot,
                         TEGraphNode<int,TSAtom*>& Root,
                         TTypeList< AnAssociation2<int, int> >& res )  {
   res.AddNew( subRoot.GetObject()->GetNetId(), Root.GetObject()->GetNetId() );
-  for( int i=0; i < subRoot.Count(); i++ )
+  for( int i=0; i < olx_min(subRoot.Count(),Root.Count()); i++ )
     ResultCollector( subRoot.Item(i), Root.Item(i), res );
 }
 

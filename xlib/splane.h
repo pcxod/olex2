@@ -14,7 +14,7 @@ private:
   TTypeList< AnAssociation2<TSAtom*, double> > Crds;
   vec3d FNormal, FCenter;
   double FDistance;
-  bool  Deleted;
+  bool  Deleted, Regular;
 public:
   TSPlane(TNetwork* Parent);
   virtual ~TSPlane();
@@ -25,8 +25,6 @@ public:
   // an association point, weight is provided
   void Init(const TTypeList< AnAssociation2<TSAtom*, double> >& Points);
 
-  inline vec3d& Normal()                {  return FNormal; }
-  inline vec3d& Center()                {  return FCenter; }
   inline const vec3d& GetNormal() const {  return FNormal; }
   inline const vec3d& GetCenter() const {  return FCenter; }
 
@@ -42,6 +40,10 @@ public:
   const TSAtom& GetAtom(int i) const {  return *Crds[i].GetA();  }
   TSAtom& Atom(int i) {  return *Crds[i].A();  }
   double Weight(int i) const {  return Crds[i].GetB();  }
+
+  // this is justa flag for the owner - is not used by the object itself
+  DefPropB(Regular)
+
 // static members
   /* calculates the A,B and C for the best plane Ax*By*Cz+D=0, D can be calculated as
    D = center.DotProd({A,B,C})

@@ -18,7 +18,7 @@
 //..............................................................................
 TSPlane::TSPlane(TNetwork* Parent):TSObject<TNetwork>(Parent)  {
   FDistance = 0;
-  Deleted = false;
+  Regular = Deleted = false;
 }
 //..............................................................................
 TSPlane::~TSPlane()  {  }

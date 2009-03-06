@@ -11,6 +11,7 @@
 #include "xplane.h"
 #include "gpcollection.h"
 #include "estlist.h"
+#include "planesort.h"
 
 //..............................................................................
 TXPlane::TXPlane(const olxstr& collectionName, TSPlane *Plane, TGlRenderer *Render) :
@@ -18,7 +19,6 @@ TXPlane::TXPlane(const olxstr& collectionName, TSPlane *Plane, TGlRenderer *Rend
 {
   FPlane = Plane;
   FParent = Render;
-  FRectangular = false;
 }
 //..............................................................................
 void TXPlane::Create(const olxstr& cName, const ACreationParams* cpar)  {
@@ -38,42 +38,18 @@ void TXPlane::Create(const olxstr& cName, const ACreationParams* cpar)  {
   GlM.AmbientB = 0x7f00007f;
   GlM.DiffuseB = 0x7f3f3f3f;
   GlP->SetProperties(&GlM);
-  if( !FRectangular )  GlP->Data.Resize(3, FPlane->CrdCount());
-  else                 GlP->Data.Resize(3, 5);
-  vec3d Center( FPlane->Center() ), 
-        org(FPlane->GetAtom(0).crd()-FPlane->Center()), vec;
-  TPSTypeList<double, vec3d const*> sortedPlane;
-  sortedPlane.Add( 0, &FPlane->GetAtom(0).crd() );
+  if( !FPlane->IsRegular() )  
+    GlP->Data.Resize(3, FPlane->CrdCount());
+  else                 
+    GlP->Data.Resize(3, 5);
 
-  for( int i=1; i < FPlane->CrdCount(); i++ )  {
-    vec = FPlane->GetAtom(i).crd() - Center;
-    double ca = org.CAngle(vec);
-    vec = org.XProdVec(vec);
-    // negative - vec is on the right, positive - on the left
-    double vo = vec.CAngle(FPlane->Normal());
-    if( ca >= 0 )  { // -90 to 90
-       if( vo < 0 )  // -90 to 0 3->4
-         sortedPlane.Add( 3.0 + ca, &FPlane->GetAtom(i).crd() );
-       else  // 0 to 90 0->1
-         sortedPlane.Add( 1.0 - ca, &FPlane->GetAtom(i).crd() );
-    }
-    else if( ca > -1 ) {  // 90-270
-       if( vo < 0 )  // 180 to 270 2->3
-         sortedPlane.Add( 3.0 + ca, &FPlane->GetAtom(i).crd() );
-       else  // 90 to 180 1->2
-         sortedPlane.Add( 1.0 - ca, &FPlane->GetAtom(i).crd() );
-    }
-    else  {  //-1, special case
-      sortedPlane.Add( 2, &FPlane->GetAtom(i).crd() );
-    }
-  }
-
-  if( !FRectangular )  {
-    for( int i=0; i < sortedPlane.Count(); i++ )  {
-      vec3d const* crd = sortedPlane.Object(i);
+  PlaneSort::Sorter sp( *FPlane );
+  if( !FPlane->IsRegular() )  {
+    for( int i=0; i < sp.sortedPlane.Count(); i++ )  {
+      const vec3d* crd = sp.sortedPlane.Object(i);
       double d = FPlane->DistanceTo(*crd);
-      vec = *crd - FPlane->Normal()*d;
-      vec -= Center;
+      vec3d vec = *crd - FPlane->GetNormal()*d;
+      vec -= FPlane->GetCenter();
       GlP->Data[0][i] = vec[0];
       GlP->Data[1][i] = vec[1];
       GlP->Data[2][i] = vec[2];
@@ -82,11 +58,11 @@ void TXPlane::Create(const olxstr& cName, const ACreationParams* cpar)  {
   else  {
     vec3d marv;
     double maxr = 0;
-    for( int i=0; i < sortedPlane.Count(); i++ )  {
-      vec = *sortedPlane.Object(i);
+    for( int i=0; i < sp.sortedPlane.Count(); i++ )  {
+      vec3d vec = *sp.sortedPlane.Object(i);
       double d = FPlane->DistanceTo(vec);
-      vec -= FPlane->Normal()*d;
-      vec -= Center;
+      vec -= FPlane->GetNormal()*d;
+      vec -= FPlane->GetCenter();
       d = vec.Length();
       if( d > maxr )  {
         maxr = d;
@@ -94,7 +70,7 @@ void TXPlane::Create(const olxstr& cName, const ACreationParams* cpar)  {
       }
     }
     mat3d rm;
-    CreateRotationMatrix(rm, FPlane->Normal(), cos(M_PI*72.0/180) );
+    CreateRotationMatrix(rm, FPlane->GetNormal(), cos(M_PI*72.0/180) );
     for( int i=0; i < 5; i++ )  {
       GlP->Data[0][i] = marv[0];    
       GlP->Data[1][i] = marv[1];
@@ -104,7 +80,7 @@ void TXPlane::Create(const olxstr& cName, const ACreationParams* cpar)  {
   }
   GlP = GPC->NewPrimitive("Centroid", sgloSphere);
   GlP->SetProperties(&GlM1);
-  GlP->Params[0] = 1./FParent->GetZoom();  GlP->Params[1] = 6;  GlP->Params[2] = 6;
+  GlP->Params[0] = 0.25;  GlP->Params[1] = 6;  GlP->Params[2] = 6;
   GlP->Compile();
 }
 //..............................................................................
@@ -112,7 +88,8 @@ TXPlane::~TXPlane()
 {  ;  }
 //..............................................................................
 bool TXPlane::Orient(TGlPrimitive *P)  {
-  FParent->GlTranslate(FPlane->Center());
+  FParent->GlTranslate(FPlane->GetCenter());
+  glNormal3d(FPlane->GetNormal()[0], FPlane->GetNormal()[1], FPlane->GetNormal()[2]);
   return false;
 }
 //..............................................................................
