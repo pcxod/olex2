@@ -12,11 +12,6 @@ BeginGxlNamespace()
 class TXPlane: public AGDrawObject  {
 private:
   TSPlane *FPlane;
-  bool FRectangular;
-  struct PlaneSort  {  // used in sort of plane points
-    vec3d* crd;
-    TSPlane * plane;
-  };
 public:
   TXPlane(const olxstr& collectionName, TSPlane *Plane, TGlRenderer *Render);
   void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
@@ -34,10 +29,6 @@ public:
 
   inline bool Deleted()  const {  return AGDrawObject::Deleted(); }
   void Deleted(bool v){  AGDrawObject::Deleted(v);  FPlane->SetDeleted(v); }
-
-  /*setting rectangulr after the plane was created does not make any change*/
-  void Rectangular(bool v) {  FRectangular = v;  }
-  bool Rectangular() {  return FRectangular; }
 };
 
 EndGxlNamespace()

@@ -1694,9 +1694,7 @@ void TMainForm::macSetEnv(TStrObjList &Cmds, const TParamList &Options, TMacroEr
 void TMainForm::macActivate(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   TXPlane *XP = FXApp->XPlane(Cmds[0]);
   if( XP != NULL )  {
-    vec3d V;
-    V = XP->Plane().Normal();
-    FXApp->GetRender().Basis()->OrientNormal(V);
+    FXApp->GetRender().Basis()->OrientNormal(XP->Plane().GetNormal());
     FXApp->Draw();
   }
   else  {
@@ -1873,43 +1871,27 @@ void TMainForm::macMpln(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   int weightExtent = Options.FindValue("we", "0").ToInt();
   olxstr planeName;
   TXAtomPList Atoms;
-  if( Cmds.IsEmpty() )  {
-    if( orientOnly )  {
-      FXApp->FindXAtoms( EmptyString, Atoms );
-      plane = FXApp->TmpPlane(NULL, weightExtent);
-      if( plane != NULL )  {
-        FXApp->GetRender().Basis()->OrientNormal( plane->Normal() );
-        planeName = "All atoms";
-      }
-    }
-    else  {
-      Error.ProcessingError(__OlxSrcInfo, "wrong arguments" );
-      return;
+  FindXAtoms(Cmds, Atoms, true, true);
+  for( int i=0; i < Atoms.Count(); i++ )  {
+    planeName << Atoms[i]->Atom().GetLabel();
+    if( i+1 < Atoms.Count() )
+      planeName << ' ';
+  }
+
+  if( Atoms.Count() < 3 )  {
+    Error.ProcessingError(__OlxSrcInfo, "wrong atom count" );
+    return;
+  }
+  if( orientOnly )  {
+    plane = FXApp->TmpPlane(&Atoms, weightExtent);
+    if( plane != NULL )  {
+      FXApp->GetRender().Basis()->OrientNormal( plane->GetNormal() );
     }
   }
   else  {
-    FXApp->FindXAtoms(Cmds.Text(' '), Atoms);
-    for( int i=0; i < Atoms.Count(); i++ )  {
-      planeName << Atoms[i]->Atom().GetLabel();
-      if( i+1 < Atoms.Count() )
-        planeName << ' ';
-    }
-
-    if( Atoms.Count() < 3 )  {
-      Error.ProcessingError(__OlxSrcInfo, "wrong atom count" );
-      return;
-    }
-    if( orientOnly )  {
-      plane = FXApp->TmpPlane(&Atoms, weightExtent);
-      if( plane != NULL )  {
-        FXApp->GetRender().Basis()->OrientNormal( plane->Normal() );
-      }
-    }
-    else  {
-       TXPlane* xp = FXApp->AddPlane(Atoms, rectangular, weightExtent);
-        if( xp != NULL )
-          plane = &xp->Plane();
-    }
+    TXPlane* xp = FXApp->AddPlane(Atoms, rectangular, weightExtent);
+    if( xp != NULL )
+      plane = &xp->Plane();
   }
   if( plane != NULL )  {
     int colCount = 3;
@@ -1930,7 +1912,7 @@ void TMainForm::macMpln(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     TStrList Output;
     tab.CreateTXTList(Output, olxstr("Atom-to-plane distances for ") << planeName, true, false, "  | ");
     TBasicApp::GetLog() << ( Output );
-    TBasicApp::GetLog() << ( olxstr("Plane normal: ") << plane->Normal().ToString() << '\n');
+    TBasicApp::GetLog() << ( olxstr("Plane normal: ") << plane->GetNormal().ToString() << '\n');
     vec3d center;
     for( int i=0; i < Atoms.Count(); i++ )
       center += Atoms[i]->Atom().crd();
@@ -4761,7 +4743,7 @@ void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError
         v = ((TXPlane*)Sel->Object(0))->Plane().DistanceTo(((TXAtom*)Sel->Object(1))->Atom());
         TBasicApp::GetLog() << ( Tmp << olxstr::FormatFloat(3, v) << '\n');
         Tmp = "Distance (plane centroid-atom): ";
-        v = ((TXPlane*)Sel->Object(0))->Plane().Center().DistanceTo(((TXAtom*)Sel->Object(1))->Atom().crd());
+        v = ((TXPlane*)Sel->Object(0))->Plane().GetCenter().DistanceTo(((TXAtom*)Sel->Object(1))->Atom().crd());
         TBasicApp::GetLog() << ( Tmp << olxstr::FormatFloat(3, v) << '\n');
         return;
       }
@@ -4771,7 +4753,7 @@ void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError
         v = ((TXPlane*)Sel->Object(1))->Plane().DistanceTo(((TXAtom*)Sel->Object(0))->Atom());
         TBasicApp::GetLog() << ( Tmp << olxstr::FormatFloat(3, v) << '\n');
         Tmp = "Distance (plane centroid-atom): ";
-        v = ((TXPlane*)Sel->Object(1))->Plane().Center().DistanceTo(((TXAtom*)Sel->Object(0))->Atom().crd());
+        v = ((TXPlane*)Sel->Object(1))->Plane().GetCenter().DistanceTo(((TXAtom*)Sel->Object(0))->Atom().crd());
         TBasicApp::GetLog() << ( Tmp << olxstr::FormatFloat(3, v) << '\n');
         return;
       }
@@ -4797,13 +4779,13 @@ void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError
         v = a.Angle(b);
         TBasicApp::GetLog() << ( Tmp << olxstr::FormatFloat(3, v) << '\n');
         Tmp = "Distance (plane centroid-plane centroid): ";
-        v = a.Center().DistanceTo(b.Center());
+        v = a.GetCenter().DistanceTo(b.GetCenter());
         TBasicApp::GetLog() << ( Tmp << olxstr::FormatFloat(3, v) << '\n');
         (Tmp = "Distance ") << macSel_GetPlaneName(a) << " to another plane centroid: ";
-        v = a.DistanceTo(b.Center());
+        v = a.DistanceTo(b.GetCenter());
         TBasicApp::GetLog() << ( Tmp << olxstr::FormatFloat(3, v) << '\n');
         (Tmp = "Distance ") << macSel_GetPlaneName(b) << " to another plane centroid: ";
-        v = b.DistanceTo(a.Center());
+        v = b.DistanceTo(a.GetCenter());
         TBasicApp::GetLog() << ( Tmp << olxstr::FormatFloat(3, v) << '\n');
         return;
       }
@@ -5032,7 +5014,6 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       return;
     }
     if( FXApp->XFile().HasLastLoader() )  {
-      FUndoStack->Clear();
       FInfoBox->Clear();
       TEFile::DelFile(BadRefsFile);
       TEFile::DelFile(RefineDataFile);
@@ -6200,6 +6181,10 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       TIntList sk;
       TNetwork &netA = atoms[0]->Atom().GetNetwork(),
                &netB = atoms[1]->Atom().GetNetwork();
+      if( &netA == &netB )  {
+        E.ProcessingError(__OlxSrcInfo, "Please select different fragments");
+        return;
+      }
       bool match = subgraph ? netA.IsSubgraphOf( netB, res, sk ) :
                               netA.DoMatch( netB, res );
       TBasicApp::GetLog() << ( olxstr("Graphs match: ") << match << '\n' );

@@ -47,7 +47,6 @@ private:
     TArrayList<vec3f> vecs;
     TArrayList<vec3f> norms;
     TTypeList<vec3i> faces;
-    class TXAtom* atom;
   };
   Poly* Polyhedron;
   void CreatePolyhedron(bool v);

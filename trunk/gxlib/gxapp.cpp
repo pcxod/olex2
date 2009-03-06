@@ -809,7 +809,7 @@ olxstr TGXApp::GetSelectionInfo()  {
         v = ((TXPlane*)Sel->Object(0))->Plane().DistanceTo(((TXAtom*)Sel->Object(1))->Atom());
         rv << olxstr::FormatFloat(3, v);
         rv << "\nDistance (plane centroid-atom): ";
-        v = ((TXPlane*)Sel->Object(0))->Plane().Center().DistanceTo(((TXAtom*)Sel->Object(1))->Atom().crd());
+        v = ((TXPlane*)Sel->Object(0))->Plane().GetCenter().DistanceTo(((TXAtom*)Sel->Object(1))->Atom().crd());
         rv << olxstr::FormatFloat(3, v);
     }
     else if( EsdlInstanceOf(*Sel->Object(0), TXAtom) &&
@@ -818,7 +818,7 @@ olxstr TGXApp::GetSelectionInfo()  {
         v = ((TXPlane*)Sel->Object(1))->Plane().DistanceTo(((TXAtom*)Sel->Object(0))->Atom());
         rv << olxstr::FormatFloat(3, v);
         rv << "\nDistance (plane centroid-atom): ";
-        v = ((TXPlane*)Sel->Object(1))->Plane().Center().DistanceTo(((TXAtom*)Sel->Object(0))->Atom().crd());
+        v = ((TXPlane*)Sel->Object(1))->Plane().GetCenter().DistanceTo(((TXAtom*)Sel->Object(0))->Atom().crd());
         rv << olxstr::FormatFloat(3, v);
     }
     else if( EsdlInstanceOf(*Sel->Object(0), TXBond) &&
@@ -839,7 +839,7 @@ olxstr TGXApp::GetSelectionInfo()  {
         v = ((TXPlane*)Sel->Object(0))->Plane().Angle(((TXPlane*)Sel->Object(1))->Plane());
         rv << olxstr::FormatFloat(3, v);
         rv << "\nDistance (plane centroid-plane centroid): ";
-        v = ((TXPlane*)Sel->Object(0))->Plane().Center().DistanceTo(((TXPlane*)Sel->Object(1))->Plane().Center());
+        v = ((TXPlane*)Sel->Object(0))->Plane().GetCenter().DistanceTo(((TXPlane*)Sel->Object(1))->Plane().GetCenter());
         rv << olxstr::FormatFloat(3, v);
     }
   }
@@ -1614,7 +1614,7 @@ TXPlane * TGXApp::AddPlane(TXAtomPList &Atoms, bool Rectangular, int weightExten
   TSPlane *S = XFile().GetLattice().NewPlane(SAtoms, weightExtent);
   if( S )  {
     TXPlane& XP = XPlanes.AddNew(olxstr("TXPlane") << XPlanes.Count(), S, FGlRender);
-    XP.Rectangular(Rectangular);
+    S->SetRegular(Rectangular);
     XP.Create();
     return &XP;
   }
