@@ -31,7 +31,7 @@ RefinementModel::RefinementModel(TAsymmUnit& au) :
   SetDefaults();
   RefContainers(rDFIX.GetIdName(), &rDFIX);
   RefContainers(rDANG.GetIdName(), &rDANG);
-  RefContainers("catom", &aunit);
+  RefContainers(TAsymmUnit::_GetIdName(), &aunit);
   //RefContainers(aunit.GetIdName(), &aunit);
   RefContainers(GetIdName(), this);
 }

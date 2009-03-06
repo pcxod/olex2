@@ -117,7 +117,6 @@ protected:
   TTypeList<TXFile> OverlayedXFiles;
 
   THklFile *FHklFile;
-
   TGlMouse*   FGlMouse;
   TDUnitCell* FDUnitCell;
   TDBasis* FDBasis;
@@ -198,7 +197,7 @@ public:
   TXFile& NewOverlayedXFile();
   void DeleteOverlayedXFile(int index);
 
-  void Select(const vec3d& From, const vec3d& To );
+  void Select(const vec3d& From, const vec3d& To);
   void SelectAll(bool Select)  {
     if( !Select )  BackupSelection();
     GetRender().SelectAll(Select);
@@ -237,7 +236,8 @@ protected:
        FStructureVisible,
        FHklVisible,
        FXGrowLinesVisible,
-       XGrowPointsVisible;
+       XGrowPointsVisible,
+       FXPolyVisible;
   short FGrowMode, PackMode;
 public:
   bool LabelsVisible() const;
@@ -288,28 +288,29 @@ public:
   void MoveToCenter();
   void Compaq(bool AtomicLevel);
   void HydrogensVisible(bool v);
-  bool HydrogensVisible()    {  return FHydrogensVisible;  };
+  bool HydrogensVisible()    {  return FHydrogensVisible;  }
   void HBondsVisible(bool v);
-  bool HBondsVisible()       {  return FHBondsVisible;  };
+  bool HBondsVisible()       {  return FHBondsVisible;  }
   void QPeaksVisible(bool v);
-  bool QPeaksVisible()       {  return FQPeaksVisible;  };
+  bool QPeaksVisible()       {  return FQPeaksVisible;  }
   void QPeakBondsVisible(bool v);
-  bool QPeakBondsVisible()   {  return FQPeakBondsVisible;  };
+  bool QPeakBondsVisible()   {  return FQPeakBondsVisible;  }
+
   // hides all bonds for all hidden q-peaks
   void SyncQVisibility();
   void StructureVisible(bool v);
   void HklVisible(bool v);
-  bool HklVisible()          {  return FHklVisible;  };
-  bool StructureVisible()    {  return FStructureVisible;  };
+  bool HklVisible()          {  return FHklVisible;  }
+  bool StructureVisible()    {  return FStructureVisible;  }
   void ShowPart(const TIntList& parts, bool show);
 
   void SetXGrowLinesVisible(bool v);
-  bool GetXGrowLinesVisible()   {  return FXGrowLinesVisible;  };
+  bool GetXGrowLinesVisible()   {  return FXGrowLinesVisible;  }
   inline short GetGrowMode()  const {  return FGrowMode;  }
   void SetGrowMode(short v, const olxstr& atoms);
   //
   void SetXGrowPointsVisible(bool v);
-  bool GetXGrowPointsVisible()      {  return XGrowPointsVisible;  };
+  bool GetXGrowPointsVisible()      {  return XGrowPointsVisible;  }
   inline short GetPackMode()  const {  return PackMode;  }
   void SetPackMode(short v, const olxstr& atoms);
   //

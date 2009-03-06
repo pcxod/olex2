@@ -25,6 +25,9 @@ const short darPers     = 0x0001, // default atom radii
             darBond     = 0x0008,
             darIsotH    = 0x0010;  // only affects H, others as darIsot
 
+const int xatom_PolyId   = 1,
+          xatom_SphereId = 2;
+
 class TXAtomStylesClear: public AActionHandler  {
 public:
   TXAtomStylesClear(TGlRenderer *Render)  {  Render->OnStylesClear->Add(this);  }
@@ -38,7 +41,16 @@ private:
   TSAtom *FAtom;
   short FDrawStyle, FRadius;
   int XAppId;
+  static short PolyhedronIndex, SphereIndex;
   friend class TXAtomStylesClear;
+  struct Poly {
+    TArrayList<vec3f> vecs;
+    TArrayList<vec3f> norms;
+    TTypeList<vec3i> faces;
+    class TXAtom* atom;
+  };
+  Poly* Polyhedron;
+  void CreatePolyhedron(bool v);
 protected:
   TStrList* FindPrimitiveParams(TGlPrimitive *P);
   static TTypeList<TGlPrimitiveParams> FPrimitiveParams;

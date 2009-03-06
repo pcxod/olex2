@@ -9,9 +9,6 @@
 
 #include "glmaterial.h"
 
-// I am really tired of this bshyt
-#undef AddAtom
-
 BeginGxlNamespace()
 
 // label modes
