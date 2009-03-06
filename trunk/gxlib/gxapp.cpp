@@ -214,6 +214,7 @@ enum  {
 TGXApp::TGXApp(const olxstr &FileName) : TXApp(FileName, this)  {
   FStructureVisible = FQPeaksVisible = FHydrogensVisible =  FHBondsVisible = true;
   XGrowPointsVisible = FXGrowLinesVisible = FQPeakBondsVisible = false;
+  FXPolyVisible = true;
 
   TwxGlScene *GlScene = new TwxGlScene( BaseDir() + "etc/Fonts/" );
   FGrowMode = gmCovalent;
@@ -234,7 +235,6 @@ TGXApp::TGXApp(const olxstr &FileName) : TXApp(FileName, this)  {
   ExtraZoom = 1.25;
 
   FLabels = new TXGlLabels("Labels", FGlRender);
-
   ObjectsToCreate.Add( FDBasis );
   ObjectsToCreate.Add( FDUnitCell );
   ObjectsToCreate.Add( FDFrame );
@@ -446,7 +446,6 @@ void TGXApp::CreateObjects(bool SyncBonds, bool centerModel)  {
 
   if( FXGrowLinesVisible )  CreateXGrowLines();
   if( XGrowPointsVisible )  CreateXGrowPoints();
-
   FXGrid->Create();
 
   // create hkls
