@@ -6108,7 +6108,7 @@ void TMainForm::macNextSolution(TStrObjList &Cmds, const TParamList &Options, TM
 //..............................................................................
 double MatchAtomPairsQT(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atoms,
                         smatdd& res, bool InversionPossible, bool& InversionUsed)  {
-  if( atoms.Count() < 4 )  return -1;
+  if( atoms.Count() < 3 )  return -1;
   double rms = TNetwork::FindAlignmentMatrix(atoms, res, false), rms1;
   InversionUsed = false;
   if( InversionPossible )  {
