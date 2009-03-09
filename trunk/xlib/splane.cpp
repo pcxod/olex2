@@ -46,10 +46,9 @@ void TSPlane::Init(const TTypeList< AnAssociation2<TSAtom*, double> >& atoms)  {
 }
 //..............................................................................
 double TSPlane::CalcPlane(const TTypeList< AnAssociation2<vec3d, double> >& Points, 
-                        vec3d& Params, vec3d& center)  {
+                        vec3d& Params, vec3d& center, const short type)  {
   if( Points.Count() < 3 )  return 0;
   mat3d m, vecs;
-  vec3d p, t;
   double mass = 0;
   center.Null();
   for( int i=0; i < Points.Count(); i++ )  {
@@ -59,7 +58,7 @@ double TSPlane::CalcPlane(const TTypeList< AnAssociation2<vec3d, double> >& Poin
   center /= mass;
 
   for( int i=0; i < Points.Count(); i++ )  {
-    t = Points[i].GetA() - center;
+    vec3d t = Points[i].GetA() - center;
     double wght = Points[i].GetB()*Points[i].GetB();
     m[0][0] += (t[0]*t[0]*wght);
     m[0][1] += (t[0]*t[1]*wght);
@@ -74,24 +73,118 @@ double TSPlane::CalcPlane(const TTypeList< AnAssociation2<vec3d, double> >& Poin
   m[2][0] = m[0][2];
   m[2][1] = m[1][2];
   mat3d::EigenValues(m, vecs.I());
-  if( m[0][0] < m[1][1] )  {
-    if( m[0][0] < m[2][2] )  {  
-      Params = vecs[0];
-      return sqrt(m[0][0]/Points.Count());
+  if( type == plane_best )  {
+    if( m[0][0] < m[1][1] )  {
+      if( m[0][0] < m[2][2] )  {  
+        Params = vecs[0];
+        return sqrt(m[0][0]/Points.Count());
+      }
+      else  {
+        Params = vecs[2];
+        return sqrt(m[2][2]/Points.Count());
+      }
     }
     else  {
-      Params = vecs[2];
-      return sqrt(m[2][2]/Points.Count());
+      if( m[1][1] < m[2][2] )  {
+        Params = vecs[1];
+        return sqrt(m[1][1]/Points.Count());
+      }
+      else  {
+        Params = vecs[2];
+        return sqrt(m[2][2]/Points.Count());
+      }
     }
   }
   else  {
-    if( m[1][1] < m[2][2] )  {
-      Params = vecs[1];
-      return sqrt(m[1][1]/Points.Count());
+    if( m[0][0] > m[1][1] )  {
+      if( m[0][0] > m[2][2] )  {  
+        Params = vecs[0];
+        return sqrt(m[0][0]/Points.Count());
+      }
+      else  {
+        Params = vecs[2];
+        return sqrt(m[2][2]/Points.Count());
+      }
     }
     else  {
-      Params = vecs[2];
-      return sqrt(m[2][2]/Points.Count());
+      if( m[1][1] > m[2][2] )  {
+        Params = vecs[1];
+        return sqrt(m[1][1]/Points.Count());
+      }
+      else  {
+        Params = vecs[2];
+        return sqrt(m[2][2]/Points.Count());
+      }
+    }
+  }
+}
+//..............................................................................
+double TSPlane::CalcPlane(const TSAtomPList& atoms, 
+                        vec3d& Params, vec3d& center, const short type)  {
+  if( atoms.Count() < 3 )  return 0;
+  mat3d m, vecs;
+  center.Null();
+  for( int i=0; i < atoms.Count(); i++ )
+    center += atoms[i]->crd();
+  center /= atoms.Count();
+
+  for( int i=0; i < atoms.Count(); i++ )  {
+    vec3d t = atoms[i]->crd() - center;
+    m[0][0] += (t[0]*t[0]);
+    m[0][1] += (t[0]*t[1]);
+    m[0][2] += (t[0]*t[2]);
+
+    m[1][1] += (t[1]*t[1]);
+    m[1][2] += (t[1]*t[2]);
+
+    m[2][2] += (t[2]*t[2]);
+  } // equ: d = s[0]*x + s[1]*y + s[2]*z
+  m[1][0] = m[0][1];
+  m[2][0] = m[0][2];
+  m[2][1] = m[1][2];
+  mat3d::EigenValues(m, vecs.I());
+  if( type == plane_best )  {
+    if( m[0][0] < m[1][1] )  {
+      if( m[0][0] < m[2][2] )  {  
+        Params = vecs[0];
+        return sqrt(m[0][0]/atoms.Count());
+      }
+      else  {
+        Params = vecs[2];
+        return sqrt(m[2][2]/atoms.Count());
+      }
+    }
+    else  {
+      if( m[1][1] < m[2][2] )  {
+        Params = vecs[1];
+        return sqrt(m[1][1]/atoms.Count());
+      }
+      else  {
+        Params = vecs[2];
+        return sqrt(m[2][2]/atoms.Count());
+      }
+    }
+  }
+  else  {
+    if( m[0][0] > m[1][1] )  {
+      if( m[0][0] > m[2][2] )  {  
+        Params = vecs[0];
+        return sqrt(m[0][0]/atoms.Count());
+      }
+      else  {
+        Params = vecs[2];
+        return sqrt(m[2][2]/atoms.Count());
+      }
+    }
+    else  {
+      if( m[1][1] > m[2][2] )  {
+        Params = vecs[1];
+        return sqrt(m[1][1]/atoms.Count());
+      }
+      else  {
+        Params = vecs[2];
+        return sqrt(m[2][2]/atoms.Count());
+      }
     }
   }
 }
