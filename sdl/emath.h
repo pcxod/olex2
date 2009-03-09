@@ -19,35 +19,40 @@ inline int  Sign(double a)  {  return (a<0)? -1 : 1;  }
 extern double NewtonSolve( double (*f)(double), double (*df)(double), double point);
   // calculates factorila of a number
 double Factorial(int a);
-  // rounds a floating point number
-inline long Round( double a )  {
+// rounds a floating point number
+template <typename float_t> inline long Round(const float_t a)  {
   long b = (long)a;  // |b| is always smaller than a
   return ((a < 0) ? (((b-a) >= .5) ? --b : b) : (((a-b) >= .5) ? ++b : b));
 }
 // returns absolute value of a number
-template <class num> inline num olx_abs(num n)  {
+template <typename num> inline num olx_abs(num n)  {
   return n < 0 ? -n : n;
 }
+// returns absolute value of a number
+template <typename obj> inline void olx_swap(obj& o1, obj& o2)  {
+  obj tmp = o1;
+  o1 = o2;
+  o2 = tmp;
+}
 // return pow2
-template <class num> inline num sqr(num n) {  return n*n;  } 
+template <typename num> inline num sqr(num n) {  return n*n;  } 
 
-template <class A, class B>
+template <typename A, typename B>
   inline void SetBit( const bool Set, A &V, const B Bit )  {
     if( Set )  V |= Bit;
     else       V &= ~Bit;
   }
-template <class A, class B>
+template <typename A, typename B>
   inline void SetBitTrue(A &V, const B Bit )  {
     V |= Bit;
   }
-template <class A, class B>
+template <typename A, typename B>
   inline void SetBitFalse(A &V, const B Bit )  {
     V &= ~Bit;
   }
 
 template <class VC>
-  double TetrahedronVolume(const VC& A, const VC& B,
-                           const VC& C,const VC& D )  {
+  double TetrahedronVolume(const VC& A, const VC& B, const VC& C,const VC& D )  {
     VC a(A-B),b(C-B),n;
     double d, caS, sa;
     caS = a.CAngle(b);
@@ -60,7 +65,7 @@ template <class VC>
     d /= n.Length();
     return olx_abs( caS*d/3 );
   }
-  // tosion angle in degrees
+  // torsion angle in degrees
 template <class VC>
   double TorsionAngle(const VC& v1, const VC& v2, const VC& v3, const VC& v4)  {
     VC V1(v1 - v2), 
@@ -91,7 +96,7 @@ inline double SphereVol(double r)  {  return 4.*M_PI/3.0*r*r*r;  }
 //returns radius of a sphere of volume v
 inline double SphereRad(double v)   {  return pow(v*3.0/(4.0*M_PI), 1./3.);  }
 // creates a 3D rotation matrix aroung rv vector, providin cosine of the rotation angle
-template <class MC, class VC>
+template <typename MC, typename VC>
 void CreateRotationMatrix(MC& rm, const VC& rv, double ca)  {
   double sa;
   if( olx_abs(ca) > 0.001 )  sa = sqrt(1-ca*ca);
@@ -109,7 +114,7 @@ void CreateRotationMatrix(MC& rm, const VC& rv, double ca)  {
   rm[2][1] = t*rv[1]*rv[2] - sa*rv[0];
   rm[2][2] = t*rv[2]*rv[2] + ca;
 }
-template <class MC, class VC>
+template <typename MC, typename VC>
 void CreateRotationMatrix(MC& rm, const VC& rv, double ca, double sa)  {
   double t = 1-ca;
   rm[0][0] = t*rv[0]*rv[0] + ca;

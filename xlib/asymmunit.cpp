@@ -477,7 +477,7 @@ olxstr TAsymmUnit::CheckLabel(const TCAtom* ca, const olxstr &Label, char a, cha
     const TResidue& resi = GetResidue(ca->GetResiId() );
     for( int i=0; i < resi.Count(); i++ )  {
       const TCAtom& atom = resi[i];
-      if( atom.GetPart() != ca->GetPart() && atom.GetPart() != 0 && ca->GetPart() != 0 )  continue;
+      if( atom.GetPart() != ca->GetPart() && (atom.GetPart()|ca->GetPart()) != 0 )  continue;
       if( !atom.IsDeleted() && (atom.GetLabel().Comparei(Label) == 0) && 
         (atom.GetId() != ca->GetId()) )  {
         LB = atom.GetAtomInfo().GetSymbol();

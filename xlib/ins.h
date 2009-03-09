@@ -70,6 +70,8 @@ protected:
   void _SaveHklInfo(TStrList& SL, bool solution);
   void _SaveRefMethod(TStrList& SL);
   void _ProcessAfix(TCAtom& a, ParseContext& cx);
+  // validates existing AFIX'es and clears the stack
+  void _ProcessAfix0(ParseContext& cx);
   // if atoms is saved, its Tag is added to the index (if not NULL) 
   void _SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix, 
     TStrPObjList<olxstr,TBasicAtomInfo*>* sfac, TStrList& sl, TIntList* index=NULL, bool checkSame=true);
