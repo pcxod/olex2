@@ -257,7 +257,7 @@ void TXFile::Sort(const TStrList& ins)  {
         MoietySorter::CreateMoieties(list);
     }
     if( keeph )
-      AtomSorter::KeepH(list,GetLattice(),  NULL);
+      AtomSorter::KeepH(list,GetLattice(), AtomSorter::atom_cmp_Label);
   }
   catch(const TExceptionBase& exc)  {
     TBasicApp::GetLog().Error( exc.GetException()->GetError() );
