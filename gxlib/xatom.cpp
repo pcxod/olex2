@@ -942,7 +942,7 @@ void TXAtom::TriangulateType2(Poly& pl, TSAtomPList& atoms)  {
 }
 //..............................................................................
 void TXAtom::CreatePolyhedron(bool v)  {
-  static const double cos75 = cos(75.0*M_PI/180);
+  const vec3d NullVec;
   if( Polyhedron != NULL )  {
     delete Polyhedron;
     Polyhedron = NULL;
@@ -991,17 +991,24 @@ void TXAtom::CreatePolyhedron(bool v)  {
       mat3d normals;
       TSPlane::CalcPlanes(bound, normals, rms, pc);
       const double pd = normals[0].DotProd(pc)/normals[0].Length();
+      const double pd_x = normals[2].DotProd(pc)/normals[2].Length();
       normals.Normalise();
-      int deviating = 0;
+      int deviating = 0, deviating_x = 0;
       for( int i=0; i < bound.Count(); i++ )  {
         if( olx_abs(bound[i]->crd().DotProd(normals[0]) - pd) > rms[0] )
           deviating++;
+        if( olx_abs(bound[i]->crd().DotProd(normals[2]) - pd_x) > rms[2] )
+          deviating_x++;
       }
-      if( deviating < 3 )  {  // a proepr polyhedra
+      if( deviating < 3 || deviating_x < 3 )  {  // a proepr polyhedra
         for( int i=0; i < bound.Count(); i++ )  {
           for( int j=i+1; j < bound.Count(); j++ )  {
             for( int k=j+1; k < bound.Count(); k++ )  {
-              if( TetrahedronVolume(FAtom->crd(), bound[i]->crd(), bound[j]->crd(), bound[k]->crd() ) > 0.1 )
+              if( TetrahedronVolume(
+                NullVec, 
+                (bound[i]->crd()-FAtom->crd()).Normalise(), 
+                (bound[j]->crd()-FAtom->crd()).Normalise(), 
+                (bound[k]->crd()-FAtom->crd()).Normalise() ) > 0.03 )  // reagualr octahedron vol would be ~0.47A^3
                 pl.faces.AddNew(i, j, k);
             }
           }

@@ -4781,10 +4781,10 @@ void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError
         Tmp = "Distance (plane centroid-plane centroid): ";
         v = a.GetCenter().DistanceTo(b.GetCenter());
         TBasicApp::GetLog() << ( Tmp << olxstr::FormatFloat(3, v) << '\n');
-        (Tmp = "Distance ") << macSel_GetPlaneName(a) << " to another plane centroid: ";
+        (Tmp = "Distance (plane[") << macSel_GetPlaneName(a) << "]-centroid): ";
         v = a.DistanceTo(b.GetCenter());
         TBasicApp::GetLog() << ( Tmp << olxstr::FormatFloat(3, v) << '\n');
-        (Tmp = "Distance ") << macSel_GetPlaneName(b) << " to another plane centroid: ";
+        (Tmp = "Distance (plane[") << macSel_GetPlaneName(b) << "]-centroid): ";
         v = b.DistanceTo(a.GetCenter());
         TBasicApp::GetLog() << ( Tmp << olxstr::FormatFloat(3, v) << '\n');
         return;
@@ -8670,13 +8670,13 @@ void TMainForm::macEsd(TStrObjList &Cmds, const TParamList &Options, TMacroError
           p2.Add( &xp2->Plane().Atom(i) );
           pld2 << p2.Last()->GetLabel() << ' ';
         }
-        TBasicApp::GetLog() << (olxstr("Plane ") << pld1 << "to plane another plane angle: " <<
+        TBasicApp::GetLog() << (olxstr("Plane ") << pld1 << "to plane angle: " <<
           vcovc.CalcP2PAngle(p1, p2).ToString() << '\n' );
-        TBasicApp::GetLog() << (olxstr("Plane ") << pld1 << "centroid to another plane centroid distance: " <<
+        TBasicApp::GetLog() << (olxstr("Plane centroid to plane centroid distance: ") <<
           vcovc.CalcPC2PCDistance(p1, p2).ToString() << '\n' );
-        TBasicApp::GetLog() << (olxstr("Plane ") << pld1 << " to another plane centroid distance: " <<
+        TBasicApp::GetLog() << (olxstr("Plane [") << pld1 << "] to plane centroid distance: " <<
           vcovc.CalcP2PCDistance(p1, p2).ToString() << '\n' );
-        TBasicApp::GetLog() << (olxstr("Plane ") << pld2 << " to another plane centroid distance: " <<
+        TBasicApp::GetLog() << (olxstr("Plane [") << pld2 << "] to plane centroid distance: " <<
           vcovc.CalcP2PCDistance(p2, p1).ToString() << '\n' );
       }
     }

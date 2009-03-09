@@ -266,6 +266,7 @@ void  TLattice::Uniq(bool remEqv)  {
   // will not be executed as Atoms->Count() = 0
   Clear(false);
   ClearMatrices();
+  GetUnitCell().UpdateEllipsoids();  // if new atoms are created...
   if( GetAsymmUnit().DoesContainEquivalents() && remEqv )  {
     GetUnitCell().FindSymmEq(0.1, true, false, true);
     //TBasicApp::GetLog()->CriticalInfo(olxstr("Symmetrical counterparts were removed for: ") << Msg.ToString() );

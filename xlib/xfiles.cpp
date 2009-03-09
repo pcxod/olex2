@@ -175,12 +175,13 @@ void TXFile::UpdateAsymmUnit()  {
     TCAtom& CA1 = LL->GetAsymmUnit().AtomCount() <= i ? 
       LL->GetAsymmUnit().NewAtom() : LL->GetAsymmUnit().GetAtom(i);
     CA1.Assign(CA);
-    //LL->GetAsymmUnit().GetResidue(CA.GetResiId()).AddAtom(&CA1);
   }
   //keep the resudue atoms order
+  LL->GetAsymmUnit().GetResidue(-1).Clear(); // new atoms end up here
   for( int i=-1; i < GetAsymmUnit().ResidueCount(); i++ )  {
     const TAsymmUnit::TResidue& resi = GetAsymmUnit().GetResidue(i);
     TAsymmUnit::TResidue& resi1 = LL->GetAsymmUnit().GetResidue(i);
+    resi1.SetCapacity( resi.Count() );
     for( int j=0; j < resi.Count(); j++ )  
       resi1.AddAtom( &LL->GetAsymmUnit().GetAtom(resi[j].GetId()) );
   }
@@ -196,8 +197,24 @@ void TXFile::Sort(const TStrList& ins)  {
     UpdateAsymmUnit();
   TStrList labels;
   TCAtomPList &list = GetAsymmUnit().GetResidue(-1).AtomList();
-  int moiety_index = -1;
+  int moiety_index = -1, h_cnt=0, del_h_cnt = 0, free_h_cnt = 0;
   bool keeph = true;
+  for( int i=0; i < list.Count(); i++ )  {
+    if( list[i]->GetAtomInfo() == iHydrogenIndex || list[i]->GetAtomInfo() == iHydrogenIndex )  {
+      if( !list[i]->IsDeleted() )  {
+        h_cnt++;
+        if( list[i]->GetParentAfixGroup() == NULL )
+          free_h_cnt++;
+      }
+      else
+        del_h_cnt++;
+    }
+  }
+  if( h_cnt == 0 || del_h_cnt != 0 )  {
+    keeph = false;
+    if( del_h_cnt != 0 && free_h_cnt != 0 )
+      TBasicApp::GetLog().Error("Hydrogen atoms, which are not attached using AFIX will not be kept with pivot atom until the file is reloaded");
+  }
   try {
     for( int i=0; i < ins.Count(); i++ )  {
       if( ins[i].Comparei("Mw") == 0 )

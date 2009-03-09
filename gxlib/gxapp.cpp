@@ -467,7 +467,8 @@ void TGXApp::CreateObjects(bool SyncBonds, bool centerModel)  {
   GetRender().Initialise();
   FGlRender->SetSceneComplete(true);
   sw.stop();
-  sw.print(GetLog(), &TLog::Info);
+  if( IsProfiling() )
+    sw.print(GetLog(), &TLog::Info);
 }
 //..............................................................................
 void TGXApp::CenterModel()  {
