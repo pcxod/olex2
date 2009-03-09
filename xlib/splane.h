@@ -9,6 +9,9 @@
 
 BeginXlibNamespace()
 
+const short plane_best = 1,
+            plane_worst = 2;
+
 class TSPlane : public TSObject<TNetwork>  {
 private:
   TTypeList< AnAssociation2<TSAtom*, double> > Crds;
@@ -51,7 +54,9 @@ public:
    returns sqrt(minimal eigen value/point.Count())
   */
   static double CalcPlane(const TTypeList< AnAssociation2<vec3d, double> >& Points, 
-    vec3d& Params, vec3d& center);
+    vec3d& Params, vec3d& center, const short plane_type = plane_best);
+  static double CalcPlane(const TSAtomPList& Points, 
+    vec3d& Params, vec3d& center, const short plane_type = plane_best);
   // returns sqrt(minimal eigen value/point.Count())
   static double CalcRMS(const TSAtomPList& atoms);
 

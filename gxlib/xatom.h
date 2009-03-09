@@ -50,6 +50,7 @@ private:
   };
   Poly* Polyhedron;
   void CreatePolyhedron(bool v);
+  void TriangulateType2(Poly& p, TSAtomPList& atoms);
 protected:
   TStrList* FindPrimitiveParams(TGlPrimitive *P);
   static TTypeList<TGlPrimitiveParams> FPrimitiveParams;

@@ -918,7 +918,31 @@ bool TXAtom::OnMouseMove(const IEObject *Sender, const TMouseData *Data)  {
   return true;
 }
 //..............................................................................
+void TXAtom::TriangulateType2(Poly& pl, TSAtomPList& atoms)  {
+  TSPlane plane(NULL);
+  TTypeList< AnAssociation2<TSAtom*, double> > pa;
+  for( int i=0; i < atoms.Count(); i++ )
+    pa.AddNew( atoms[i], 1 );
+  plane.Init(pa);
+  PlaneSort::Sorter sp(plane);
+  const int start = pl.vecs.Count();
+  pl.vecs.SetCount(pl.vecs.Count()+atoms.Count()+2);
+  pl.vecs[start] = FAtom->crd();
+  pl.vecs[start+1] = plane.GetCenter();
+  for( int i=0; i < sp.sortedPlane.Count(); i++ )
+    pl.vecs[start+i+2] = *sp.sortedPlane.GetObject(i);
+  // create the base
+  for( int i=0; i < sp.sortedPlane.Count()-1; i++ )
+    pl.faces.AddNew(start+1, start+i+2, start+i+3);
+  pl.faces.AddNew(start+1, start+2, start+sp.sortedPlane.Count()+1);
+  // and the rest to close the polyhedron
+  for( int i=0; i < sp.sortedPlane.Count()-1; i++ )
+    pl.faces.AddNew(start, start+i+2, start+i+3);
+  pl.faces.AddNew(start, start+2, start+sp.sortedPlane.Count()+1);
+}
+//..............................................................................
 void TXAtom::CreatePolyhedron(bool v)  {
+  static const double cos75 = cos(75.0*M_PI/180);
   if( Polyhedron != NULL )  {
     delete Polyhedron;
     Polyhedron = NULL;
@@ -936,6 +960,8 @@ void TXAtom::CreatePolyhedron(bool v)  {
       FAtom->Node(i).GetAtomInfo() == iDeuteriumIndex || 
       FAtom->Node(i).GetAtomInfo() == iQPeakIndex )
       continue;
+    //if( FAtom->Node(i).NodeCount() > FAtom->NodeCount() )
+    //  continue;
     bound.Add( &FAtom->Node(i) );
   }
   if( bound.Count() < 4 )  return;
@@ -952,7 +978,7 @@ void TXAtom::CreatePolyhedron(bool v)  {
   sv /= bound.Count();
   sd /= bound.Count();
   double ratio = sv.Length()/sd;
-  if( ratio < 0.2 )  {
+  if( ratio < 0.2 )  {  // atom is inside
     if( bound.Count() == 4 )  {  // easy case
       pl.faces.AddNew( 0, 1, 2 );
       pl.faces.AddNew( 0, 2, 3 );
@@ -960,37 +986,47 @@ void TXAtom::CreatePolyhedron(bool v)  {
       pl.faces.AddNew( 1, 2, 3 );
     }
     else  {
+      // test for Cp-kind polyhedron, should be drawn as two of the other kind (atom outside)
+      vec3d pn, pc;
+      const double rms = TSPlane::CalcPlane(bound, pn, pc, plane_best);
+      const double pd = pc.DotProd(pn)/pn.Length();
+      pn.Normalise();
+      int deviating = 0;
       for( int i=0; i < bound.Count(); i++ )  {
-        for( int j=i+1; j < bound.Count(); j++ )  {
-          for( int k=j+1; k < bound.Count(); k++ )  {
-            if( TetrahedronVolume(FAtom->crd(), bound[i]->crd(), bound[j]->crd(), bound[k]->crd() ) > 0.1 )
-              pl.faces.AddNew(i, j, k);
+        if( olx_abs(bound[i]->crd().DotProd(pn) - pd) > rms )
+          deviating++;
+      }
+      if( deviating < 3 )  {  // a proepr polyhedra
+        for( int i=0; i < bound.Count(); i++ )  {
+          for( int j=i+1; j < bound.Count(); j++ )  {
+            for( int k=j+1; k < bound.Count(); k++ )  {
+              if( TetrahedronVolume(FAtom->crd(), bound[i]->crd(), bound[j]->crd(), bound[k]->crd() ) > 0.1 )
+                pl.faces.AddNew(i, j, k);
+            }
           }
         }
       }
+      else  {  // two polyhedra of atom outside..
+        TSAtomPList sidea, sideb;
+        TSPlane::CalcPlane(bound, pn, pc, plane_worst);
+        pl.vecs.Clear();
+        for( int i=0; i < bound.Count(); i++ )  {
+          const double ca = pn.CAngle(bound[i]->crd() - pc);
+          if( ca >= 0 )
+            sidea.Add(bound[i]);
+          else
+            sideb.Add(bound[i]);
+        }
+        if( sidea.Count() > 2 )
+          TriangulateType2(pl, sidea);
+        if( sideb.Count() > 2 )
+          TriangulateType2(pl, sideb);
+      }
     }
   }
-  else  {
-    TSPlane plane(NULL);
-    TTypeList< AnAssociation2<TSAtom*, double> > pa;
-    for( int i=0; i < bound.Count(); i++ )
-      pa.AddNew( bound[i], 1 );
-    plane.Init(pa);
-    PlaneSort::Sorter sp(plane);
-    // change the crds
-    pl.vecs.SetCount(bound.Count()+2);
-    pl.vecs[0] = FAtom->crd();
-    pl.vecs[1] = plane.GetCenter();
-    for( int i=0; i < sp.sortedPlane.Count(); i++ )
-      pl.vecs[i+2] = *sp.sortedPlane.GetObject(i);
-    // create the base
-    for( int i=0; i < sp.sortedPlane.Count()-1; i++ )
-      pl.faces.AddNew(1, i+2, i+3);
-    pl.faces.AddNew(1, 2, sp.sortedPlane.Count()+1);
-    // and the rest to close the polyhedron
-    for( int i=0; i < sp.sortedPlane.Count()-1; i++ )
-      pl.faces.AddNew(0, i+2, i+3);
-    pl.faces.AddNew(0, 2, sp.sortedPlane.Count()+1);
+  else  {  // atom outside
+    pl.vecs.Clear();
+    TriangulateType2(pl, bound);
   }
   pl.norms.SetCount( pl.faces.Count() );
   for( int i=0; i < pl.faces.Count(); i++ )  {
