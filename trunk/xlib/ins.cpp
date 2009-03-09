@@ -244,6 +244,24 @@ void TIns::_FinishParsing(ParseContext& cx)  {
   cx.rm.ProcessFrags();
 }
 //..............................................................................
+void TIns::_ProcessAfix0(ParseContext& cx)  {
+  if( !cx.AfixGroups.IsEmpty() )  {
+    int old_m = cx.AfixGroups.Current().GetB()->GetM();
+    if( cx.AfixGroups.Current().GetA() > 0 )  {
+      if( old_m != 0 )
+        throw TFunctionFailedException(__OlxSourceInfo, olxstr("incomplete AFIX group") <<
+        (cx.Last != NULL ? (olxstr(" at ") << cx.Last->GetLabel()) : EmptyString) );
+      else
+        TBasicApp::GetLog().Warning( olxstr("Possibly incorrect AFIX ") << cx.AfixGroups.Current().GetB()->GetAfix() <<
+        (cx.Last != NULL ? (olxstr(" at ") << cx.Last->GetLabel()) : EmptyString) );
+    }
+    if( cx.AfixGroups.Current().GetB()->GetPivot() == NULL )
+      throw TFunctionFailedException(__OlxSourceInfo, "undefined pivot atom for a fitted group");
+    while( !cx.AfixGroups.IsEmpty() && cx.AfixGroups.Current().GetA() <= 0 )  // pop all out  
+      cx.AfixGroups.Pop();
+  }
+}
+//..............................................................................
 bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx, int& i)  {
   TAtomsInfo& atomsInfo = TAtomsInfo::GetInstance();
   if( _ParseIns(cx.rm, Toks) )
@@ -292,6 +310,8 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx,
     if( cx.Part == 0 )  cx.PartOccu = 0;
     if( Toks.Count() == 3 )
       cx.PartOccu = Toks[2].ToDouble();
+    // TODO: validate if appropriate here...
+    //_ProcessAfix0(cx);
   }
   else if( Toks[0].Comparei("AFIX") == 0 && (Toks.Count() > 1) )  {
     int afix = Toks[1].ToInt();
@@ -315,23 +335,8 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx,
       }
     }
     // Shelx manual: n is always a single digit; m may be two, one or zero digits (the last corresponds to m = 0).
-    if( afix == 0 )  {
-      if( !cx.AfixGroups.IsEmpty() )  {
-        int old_m = cx.AfixGroups.Current().GetB()->GetM();
-        if( cx.AfixGroups.Current().GetA() > 0 )  {
-          if( old_m != 0 )
-            throw TFunctionFailedException(__OlxSourceInfo, olxstr("incomplete AFIX group") <<
-              (cx.Last != NULL ? (olxstr(" at ") << cx.Last->GetLabel()) : EmptyString) );
-          else
-            TBasicApp::GetLog().Warning( olxstr("Possibly incorrect AFIX ") << cx.AfixGroups.Current().GetB()->GetAfix() <<
-              (cx.Last != NULL ? (olxstr(" at ") << cx.Last->GetLabel()) : EmptyString) );
-        }
-        if( cx.AfixGroups.Current().GetB()->GetPivot() == NULL )
-          throw TFunctionFailedException(__OlxSourceInfo, "undefined pivot atom for a fitted group");
-        while( !cx.AfixGroups.IsEmpty() && cx.AfixGroups.Current().GetA() <= 0 )  // pop all out  
-          cx.AfixGroups.Pop();
-      }
-    }
+    if( afix == 0 )
+      _ProcessAfix0(cx);
     else  {
       if( !cx.AfixGroups.IsEmpty() && cx.AfixGroups.Current().GetA() == 0 )  {  // pop m =0 as well
         cx.AfixGroups.Pop();

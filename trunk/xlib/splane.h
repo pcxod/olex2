@@ -48,16 +48,25 @@ public:
   DefPropB(Regular)
 
 // static members
-  /* calculates the A,B and C for the best plane Ax*By*Cz+D=0, D can be calculated as
+  /* calculates all three planes - best, worst and the complimentary, 
+  the normals are sorted by rms ascending, so the best plane is at [0] and the worst - at [2]
+  returns true if the function succeded (point cound > 2)
+  */
+  static bool CalcPlanes(const TTypeList< AnAssociation2<vec3d, double> >& Points, 
+    mat3d& params, vec3d& rms, vec3d& center);
+  // a convinience function for non-weighted plane
+  static bool CalcPlanes(const TSAtomPList& atoms, mat3d& params, vec3d& rms, vec3d& center);
+  /* calculates the A,B and C for the best/worst plane Ax*By*Cz+D=0, D can be calculated as
    D = center.DotProd({A,B,C})
    for the point, weight association
-   returns sqrt(minimal eigen value/point.Count())
+   returns sqrt(smallest eigen value/point.Count())
   */
   static double CalcPlane(const TTypeList< AnAssociation2<vec3d, double> >& Points, 
     vec3d& Params, vec3d& center, const short plane_type = plane_best);
+  // a convinience function for non-weighted planes
   static double CalcPlane(const TSAtomPList& Points, 
     vec3d& Params, vec3d& center, const short plane_type = plane_best);
-  // returns sqrt(minimal eigen value/point.Count())
+  // returns sqrt(smallest eigen value/point.Count())
   static double CalcRMS(const TSAtomPList& atoms);
 
   void ToDataItem(TDataItem& item) const;

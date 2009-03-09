@@ -987,13 +987,14 @@ void TXAtom::CreatePolyhedron(bool v)  {
     }
     else  {
       // test for Cp-kind polyhedron, should be drawn as two of the other kind (atom outside)
-      vec3d pn, pc;
-      const double rms = TSPlane::CalcPlane(bound, pn, pc, plane_best);
-      const double pd = pc.DotProd(pn)/pn.Length();
-      pn.Normalise();
+      vec3d pc, rms;
+      mat3d normals;
+      TSPlane::CalcPlanes(bound, normals, rms, pc);
+      const double pd = normals[0].DotProd(pc)/normals[0].Length();
+      normals.Normalise();
       int deviating = 0;
       for( int i=0; i < bound.Count(); i++ )  {
-        if( olx_abs(bound[i]->crd().DotProd(pn) - pd) > rms )
+        if( olx_abs(bound[i]->crd().DotProd(normals[0]) - pd) > rms[0] )
           deviating++;
       }
       if( deviating < 3 )  {  // a proepr polyhedra
@@ -1008,10 +1009,9 @@ void TXAtom::CreatePolyhedron(bool v)  {
       }
       else  {  // two polyhedra of atom outside..
         TSAtomPList sidea, sideb;
-        TSPlane::CalcPlane(bound, pn, pc, plane_worst);
         pl.vecs.Clear();
         for( int i=0; i < bound.Count(); i++ )  {
-          const double ca = pn.CAngle(bound[i]->crd() - pc);
+          const double ca = normals[2].CAngle(bound[i]->crd() - pc);
           if( ca >= 0 )
             sidea.Add(bound[i]);
           else

@@ -112,7 +112,13 @@ public:
           c = xa->Atom().crd();
           TGlXApp::GetGXApp()->XFile().GetAsymmUnit().CartesianToCell(c);
           xa->Atom().CAtom().ccrd() = c;
-          xa->Atom().CAtom().Label() = TGlXApp::GetGXApp()->XFile().GetAsymmUnit().CheckLabel(&xa->Atom().CAtom(), XA->Atom().GetLabel()+'b');
+          olxstr new_l = XA->Atom().GetLabel();
+          olxch lc = olxstr::o_tolower(new_l.Last() );
+          if( lc >= 'a' && lc <= 'z' )
+            new_l[new_l.Length()-1] = ++lc;
+          else
+            new_l << 'a';
+          xa->Atom().CAtom().Label() = TGlXApp::GetGXApp()->XFile().GetAsymmUnit().CheckLabel(&xa->Atom().CAtom(), new_l);
           if( xa->Atom().GetAtomInfo() == iQPeakIndex )
             xa->Atom().CAtom().SetQPeak(1.0);
         }
