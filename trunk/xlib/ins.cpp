@@ -74,12 +74,10 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
   for( int i=0; i < InsFile.Count(); i++ )  {
     if( InsFile[i].IsEmpty() )      continue;
 
-    for( int j=0; j < InsFile[i].Length(); j++ )  {
-      if( InsFile[i].CharAt(j) == '!' )  {  // comment sign
-        InsFile[i].SetLength(j-1);
-        break;
-      }
-    }
+    const int exi = InsFile[i].IndexOf('!');
+    if( exi != -1 )
+      InsFile[i].SetLength(exi);
+
     Toks.Clear();
     Toks.Strtok(InsFile[i], ' ');
     if( Toks.IsEmpty() )  continue;
@@ -968,11 +966,10 @@ void TIns::UpdateAtomsFromStrings(RefinementModel& rm, TCAtomPList& CAtoms, cons
     Tmp = olxstr::DeleteSequencesOf<char>(SL[i].UpperCase(), true);
     if( Tmp.IsEmpty() )  continue;
 
-    for( int j=0; j < Tmp.Length(); j++ )  {
-      if( Tmp[j] == '!' )  {  // comment sign
-        Tmp.SetLength(j-1);  break;
-      }
-    }
+    const int exi = Tmp.IndexOf('!');
+    if( exi != -1 )
+      Tmp.SetLength(exi);
+
     Toks.Clear();
     Toks.Strtok(Tmp, ' ');
     if( Toks.IsEmpty() )  continue;
