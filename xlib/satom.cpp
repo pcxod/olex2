@@ -32,24 +32,24 @@ void TSAtom::AtomInfo(TBasicAtomInfo* AI)  {
   FCAtom->SetAtomInfo(AI);
 }
 //..............................................................................
-void  TSAtom::Assign(TSAtom *S)  {
+void  TSAtom::Assign(const TSAtom& S)  {
   TSObject<TNetwork>::Assign(S);
-  FEllipsoid = S->GetEllipsoid();
-  FCenter    = S->crd();
-  FCCenter   = S->ccrd();
-  FCAtom     = &S->CAtom();
-  SetGrown( S->IsGrown() );
-  Matrices.Assign(S->Matrices);
+  FEllipsoid = S.GetEllipsoid();
+  FCenter    = S.crd();
+  FCCenter   = S.ccrd();
+  FCAtom     = &S.CAtom();
+  SetGrown( S.IsGrown() );
+  Matrices.Assign(S.Matrices);
 }
 //..............................................................................
-bool TSAtom::IsGrown() {
+bool TSAtom::IsGrown() const {
   if( (Flags & satomGrown) == 0 )  return false;
   int subs = 0;
   for( int i=0; i < Nodes.Count(); i++ )
     if( Nodes[i]->IsDeleted() )
       subs--;
   if( subs < 0 )
-    SetGrown(false);
+    SetBit(false, Flags, satomGrown);
   return (Flags & satomGrown) != 0;
 }
 //..............................................................................

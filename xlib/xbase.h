@@ -33,27 +33,25 @@ extern const float caDefIso;      // 0.05 default atom isotropic parameter;
 template <class Net> class TSObject: public ACollectionItem  {
 protected:
   Net* Network;  // a pointer to parrent Network
-  short   Type;    // object type: eg bond, atom, centroid, etc
+  short   Type;    // object type: eg bond, atom, etc
   int     NetId;    // reference in network container
-  int     LatId;    // reference in lattice container
-  short   NodId;    // reference in node container
+  int     LattId;    // reference in lattice container
 public:
   TSObject(Net* Parent) : Network(Parent), Type(sotNone) {  }
   virtual ~TSObject() {  }
-  void Assign(TSObject* S) {
-    SetType( S->GetType() );
-    Network = &S->GetNetwork();
-    SetTag( S->GetTag() );
-    SetNetId( S->GetNetId() );
-    SetLatId( S->GetLatId() );
+  void Assign(const TSObject& S) {
+    SetType( S.GetType() );
+    Network = &S.GetNetwork();
+    SetTag( S.GetTag() );
+    SetNetId( S.GetNetId() );
+    SetLattId( S.GetLattId() );
   }
 
   inline Net& GetNetwork()  const  {  return *Network;  }
   inline void SetNetwork(Net& n)   {  Network = &n;  }
 
   DefPropP(int, NetId)
-  DefPropP(int, LatId)
-  DefPropP(int, NodId)
+  DefPropP(int, LattId)
   DefPropP(int, Type)
 };
 //---------------------------------------------------------------------------
@@ -70,16 +68,13 @@ public:
     TSObject<Net>::Type = sotBBond;
   }
   virtual ~TBasicBond() {}
-  const Node& GetA() const {  return *FA;  }
-  Node& A()                {  return *FA;  }
-  void SetA(Node& a)       {  FA = &a;  OnAtomSet();  }
+  Node& A()    const {  return *FA;  }
+  void SetA(Node& a) {  FA = &a;  OnAtomSet();  }
 
-  const Node& GetB() const {  return *FB;  }
-  Node& B()                {  return *FB;  }
-  void SetB(Node& a)       {  FB = &a;  OnAtomSet();  }
+  Node& B()    const {  return *FB;  }
+  void SetB(Node& a) {  FB = &a;  OnAtomSet();  }
 
-  Node& Another(const Node& A) {  return (&A == FA) ? *FB : *FA; }
-  const Node& Another(const Node& A) const {  return (&A == FA) ? *FB : *FA; }
+  Node& Another(const Node& A) const {  return (&A == FA) ? *FB : *FA; }
 };
 //---------------------------------------------------------------------------
 // TBasicNode -  basic node
@@ -101,19 +96,40 @@ public:
   }
 
   inline int NodeCount()            const {  return Nodes.Count(); }
-  inline NodeType& Node(int i)            {  return *Nodes[i]; }
-  inline void AddNode(NodeType& N)        {  N.SetNodId(Nodes.Count());  Nodes.Add(&N);  }
-  inline bool IsConnectedTo(NodeType &N)  {  return Nodes.IndexOf(&N)!=-1;  }
+  inline NodeType& Node(int i)      const {  return *Nodes[i]; }
+  inline NodeType& AddNode(NodeType& N)   {  Nodes.Add(&N);  return N;  }
+  inline bool IsConnectedTo(NodeType &N)  {  return Nodes.IndexOf(&N) != -1;  }
   inline void NullNode(int i)             {  Nodes[i] = NULL; }
-  inline void PackNodes()                 {  Nodes.Pack(); }
+  inline bool NullNode(const NodeType& N) {  
+    int ind = Nodes.IndexOf(&N);
+    if( ind != -1 )  {
+      Nodes[ind] = NULL; 
+      return true;
+    }
+    return false;
+  }
+  inline void PackNodes()                 {  Nodes.Pack();  }
+  inline void ClearNodes()                {  Nodes.Clear();  }
 
   inline int BondCount()            const {  return Bonds.Count(); }
-  inline BondType& Bond(int i)            {  return *Bonds[i]; }
-  inline const BondType& Bond(int i) const{  return *Bonds[i]; }
-  inline void AddBond(BondType& N)        {  N.SetNodId(Bonds.Count());  Bonds.Add(&N);  }
-  inline void PackBonds()                 {  Bonds.Pack(); };
+  inline BondType& Bond(int i)      const {  return *Bonds[i]; }
+  inline BondType& AddBond(BondType& N)   {  Bonds.Add(&N);  return N;  }
+  inline void NullBond(int i)             {  Bonds[i] = NULL;  }
+  inline bool NullBond(const BondType& N) {  
+    int ind = Bonds.IndexOf(&N);
+    if( ind != -1 )  {
+      Bonds[ind] = NULL; 
+      return true;
+    }
+    return false;
+  }
+  inline void PackBonds()                 {  Bonds.Pack();  } 
+  inline void ClearBonds()                {  Bonds.Clear();  }
 
-  inline void SetCapacity(int v)          {  Nodes.SetCapacity(v);  Bonds.SetCapacity(v);  }
+  inline void SetCapacity(int v)          {  
+    Nodes.SetCapacity(v);  
+    Bonds.SetCapacity(v);  
+  }
 };
 
 

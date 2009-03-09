@@ -1075,23 +1075,6 @@ bool TGXApp::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender, const I
       Select(SData->From, SData->To);
   }
   else if( MsgId == ID_OnDisassemble ) {
-    if( MsgSubId == msiEnter )  {
-      //if( !FQPeaksVisible )  {
-      //  TLattice& latt = XFile().GetLattice();
-      //  const int ac = latt.AtomCount();
-      //  int mc=0;
-      //  TEBitArray amask(ac);
-      //  amask.SetAll(true);
-      //  for( int i=0; i < ac; i++ )  {
-      //    if( latt.GetAtom(i).GetAtomInfo() == iQPeakIndex )  {
-      //      amask.Set(i,  false);
-      //      mc++;
-      //    }
-      //  }
-      //  if( mc != 0 )
-      //    latt.SetAtomMask(amask);
-      //}
-    }
   }
   return false;
 }
@@ -1214,7 +1197,7 @@ void TGXApp::GetXAtoms(const olxstr& AtomName, TXAtomPList& res)  {
   else if( AtomName.StartsFrom("#s") )  {  // SAtom.LatId
     int id = AtomName.SubStringFrom(2).ToInt();
     for( int i=0; i < xac; i++ )  {
-      if(XAtoms[i].Atom().GetLatId() == id )  { // only one is possible
+      if(XAtoms[i].Atom().GetLattId() == id )  { // only one is possible
         if( XAtoms[i].MaskFlags(SelMask) == sgdoVisible )  
           res.Add( &XAtoms[i] );
         break;

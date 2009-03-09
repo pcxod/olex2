@@ -20,7 +20,7 @@ public:
 
   DefPropB(Deleted)
 
-  double Length();
+  double Length() const;
 
   void ToDataItem(TDataItem& item) const;
   void FromDataItem(const TDataItem& item, TPtrList<TNetwork>& net_pool);

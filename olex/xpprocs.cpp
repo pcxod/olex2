@@ -4641,8 +4641,8 @@ void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError
         for( int k=0; k < FXApp->BondCount(); k++ )  {
           TXBond& xb = FXApp->GetBond(k);
           if( xb.Selected() )  continue;
-          const TCAtom& ca1 = xb.Bond().GetA().CAtom();
-          const TCAtom& ca2 = xb.Bond().GetB().CAtom();
+          const TCAtom& ca1 = xb.Bond().A().CAtom();
+          const TCAtom& ca2 = xb.Bond().B().CAtom();
           if( (ca1.GetId() == id1 && ca2.GetId() == id2) ||
               (ca1.GetId() == id2 && ca2.GetId() == id1) )  
           {
@@ -6153,6 +6153,17 @@ void TMainForm::CallMatchCallbacks(TNetwork& netA, TNetwork& netB, double RMS)  
 }
 //..............................................................................
 void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  if( Options.Contains("u") )  {
+    TLattice& latt = FXApp->XFile().GetLattice();
+    const TAsymmUnit& au = FXApp->XFile().GetAsymmUnit();
+    for( int i=0; i < latt.AtomCount(); i++ )  {
+      TSAtom& sa = latt.GetAtom(i);
+      au.CellToCartesian(sa.ccrd(), sa.crd());
+    }
+    FXApp->UpdateBonds();
+    FXApp->CenterView();
+    return;
+  }
   CallbackFunc(StartMatchCBName, EmptyString);
   // ivertion test
   bool TryInvert = Options.Contains("i"), Inverted;
@@ -8775,5 +8786,64 @@ void TMainForm::macExportFrag(TStrObjList &Cmds, const TParamList &Options, TMac
   xyz.SaveToFile(FN);
 }
 //..............................................................................
+void TMainForm::macConn(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  int con = Cmds[0].ToInt();
+  TXAtomPList xatoms;
+  FindXAtoms(Cmds.SubListFrom(1), xatoms, false, true);
+  if( xatoms.IsEmpty() )  {
+    E.ProcessingError(__OlxSrcInfo, "no atoms provided");
+    return;
+  }
+  TLattice& latt = FXApp->XFile().GetLattice();
+  if( con == 0 )  {
+    for( int i=0; i < latt.AtomCount(); i++ )  {
+      TSAtom& sa = latt.GetAtom(i);
+      for( int j=0; j < xatoms.Count(); j++ )  {
+        if( &sa == &xatoms[j]->Atom() ) {
+          for( int k=0; k < sa.NodeCount(); k++ )  {
+            if( sa.Node(k).NullNode(xatoms[j]->Atom()) )
+              sa.Node(k).PackNodes();
+          }
+          sa.ClearNodes();
+        }
+      }
+    }
+  }
+  else  {
+    TPSTypeList<double, TSBond*> bonds;
+    for( int i=0; i < latt.AtomCount(); i++ )  {
+      TSAtom& sa = latt.GetAtom(i);
+      for( int j=0; j < xatoms.Count(); j++ )  {
+        if( &sa == &xatoms[j]->Atom() ) {
+          if( sa.BondCount() > olx_abs(con) )  {
+            for( int k=0; k < sa.BondCount(); k++ )
+              bonds.Add( sa.Bond(k).Length(), &sa.Bond(k));
+            if( con < 0 )  {
+              con = olx_abs(con);
+              for( int k=bonds.Count()-con-1; k >=0 ; k-- )  {
+                TSAtom& aa = bonds.Object(k)->Another(sa); 
+                aa.NullNode(sa);
+                aa.PackNodes();
+                sa.NullNode( aa );
+              }
+              sa.PackNodes();
+            }
+            else  {
+              for( int k=con; k < bonds.Count(); k++ )  {
+                TSAtom& aa = bonds.Object(k)->Another(sa); 
+                aa.NullNode(sa);
+                aa.PackNodes();
+                sa.NullNode( aa );
+              }
+              sa.PackNodes();
+            }
+          }
+        }
+      }
+    }
+  }
+  latt.UpdateConnectivity();
+  FXApp->CreateObjects(false, false);
+}
 //..............................................................................
 

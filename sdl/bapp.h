@@ -15,7 +15,7 @@ protected:
   static TBasicApp* Instance;
   class TLog* Log;
   short MaxThreadCount;
-  bool MainFormVisible;
+  bool MainFormVisible, Profiling;
 public:
   TParamList ParamList;
   TStrObjList Arguments;
@@ -37,6 +37,7 @@ public:
   inline TActionQList& Actions() const {  return *FActions; }
 
   DefPropB(MainFormVisible)
+  DefPropB(Profiling)
 
   // default implementtaion is POSIX and windows
   void Sleep(long msec);

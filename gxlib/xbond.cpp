@@ -43,7 +43,7 @@ TXBond::TXBond(const olxstr& collectionName, TSBond& B, TGlRenderer *R) :
 }
 //..............................................................................
 void TXBond::BondUpdated()  {
-  vec3d C( FBond->GetB().crd() - FBond->GetA().crd() );
+  vec3d C( FBond->B().crd() - FBond->A().crd() );
   if( C.IsNull() )  
     Params().Null();
   else  {
@@ -135,7 +135,7 @@ ACreationParams* TXBond::GetACreationParams() const {
 TXBond::~TXBond()  {  }
 //..............................................................................
 bool TXBond::Orient(TGlPrimitive *GlP)  {
-  FParent->GlTranslate( FBond->GetA().crd() );
+  FParent->GlTranslate( FBond->A().crd() );
   FParent->GlRotate((float)Params()[0], (float)Params()[1], (float)Params()[2], 0.0);
   FParent->GlScale((float)Params()[4], (float)Params()[4], (float)Params()[3]);
   return false;
@@ -454,25 +454,24 @@ void TXBond::UpdatePrimitives(int32_t Mask, const ACreationParams* cpar)  {
 //..............................................................................
 olxstr TXBond::GetLegend(const TSBond& Bnd, const short AtomALevel, const short AtomBLevel)  {
   olxstr L;
-  const TSAtom *A = &Bnd.GetA(),
-               *B = &Bnd.GetB();
+  const TSAtom *A = &Bnd.A(),
+               *B = &Bnd.B();
   short ALevel = AtomALevel, BLevel = AtomBLevel;
-  if( A->GetAtomInfo().GetMr() != B->GetAtomInfo().GetMr() )
-  {
+  if( A->GetAtomInfo().GetMr() != B->GetAtomInfo().GetMr() )  {
     if( A->GetAtomInfo().GetMr() < B->GetAtomInfo().GetMr() )  {
-      A = &Bnd.GetB();      B = &Bnd.GetA();
+      A = &Bnd.B();      B = &Bnd.A();
       ALevel = AtomBLevel;  BLevel = AtomALevel;
     }
   }
   else  {
     if( A->GetLabel().Compare( B->GetLabel() ) < 0 )  {
-      A = &Bnd.GetB();      B = &Bnd.GetA();
+      A = &Bnd.B();      B = &Bnd.A();
       ALevel = AtomBLevel;  BLevel = AtomALevel;
     }
   }
   olxstr LA, LB;
   TStrList T(TXAtom::GetLegend(*A, ALevel), '.'), 
-    T1(TXAtom::GetLegend(*B, BLevel), '.');
+           T1(TXAtom::GetLegend(*B, BLevel), '.');
   int maxI = olx_max(T.Count(), T1.Count());
   for( int i=0; i < maxI; i++ )  {
     LA = (i >= T.Count()) ? T.Last().String() : T[i];

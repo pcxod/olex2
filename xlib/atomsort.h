@@ -8,12 +8,12 @@ const short
   atom_sort_Mw        = 0x0001,
   atom_sort_Label     = 0x0002,  // clever sort C1a1  
   atom_sort_Label1    = 0x0004, // string comparison sort
-  atom_sort_MoetySize = 0x0008,  // fgrament size
+  atom_sort_MoietySize = 0x0008,  // fgrament size
   atom_sort_KeepH     = 0x0010,  // keeps H atoms after the pivoting one
-  moety_sort_Create   = 0x0020,
-  moety_sort_Size     = 0x0040,
-  moety_sort_Weight   = 0x0080,
-  moety_sort_Heaviest = 0x0100;  // sorts moeties by heaviest element of the moety
+  moiety_sort_Create   = 0x0020,
+  moiety_sort_Size     = 0x0040,
+  moiety_sort_Weight   = 0x0080,
+  moiety_sort_Heaviest = 0x0100;  // sorts moieties by heaviest element of the moiety
 
 class AtomSorter {
 public:
@@ -30,7 +30,7 @@ public:
   static int atom_cmp_Label1(const TCAtom* a1, const TCAtom* a2) {
     return a1->GetLabel().Comparei(a2->GetLabel());
   }
-  static int atom_cmp_MoetySize(const TCAtom* a1, const TCAtom* a2) {
+  static int atom_cmp_MoietySize(const TCAtom* a1, const TCAtom* a2) {
     return a1->GetFragmentId() - a2->GetFragmentId();
   }
   static int atom_cmp_Mw_Label(const TCAtom* a1, const TCAtom* a2) {
@@ -137,44 +137,44 @@ public:
   }
 };
 
-class MoetySorter {
-  static int moety_cmp_Mr(const AnAssociation3<int,double,TCAtomPList>& m1, 
+class MoietySorter {
+  static int moiety_cmp_Mr(const AnAssociation3<int,double,TCAtomPList>& m1, 
     const AnAssociation3<int,double,TCAtomPList>& m2) 
   {
     const double diff = m2.GetB() - m1.GetB();
     return diff < 0 ? -1 : ( diff > 0 ? 1 : 0);
   }
-  static int moety_cmp_size(const AnAssociation2<int,TCAtomPList>& m1, 
+  static int moiety_cmp_size(const AnAssociation2<int,TCAtomPList>& m1, 
     const AnAssociation2<int,TCAtomPList>& m2) 
   {
     return m2.GetB().Count() - m1.GetB().Count();
   }
 public:
-  static void SortByMoetyAtom(TCAtomPList& list, const TStrList& atom_names)  {
+  static void SortByMoietyAtom(TCAtomPList& list, const TStrList& atom_names)  {
     if( atom_names.Count() < 2 )
       return;
-    typedef AnAssociation2<TCAtom*, TCAtomPList> moety;
-    TTypeList<moety> moeties;
+    typedef AnAssociation2<TCAtom*, TCAtomPList> moiety;
+    TTypeList<moiety> moieties;
     for( int i=0; i < list.Count(); i++ )
       list[i]->SetTag(-1);
     for( int i=0; i < atom_names.Count(); i++ )  {
       for( int j=0; j < list.Count(); j++ )  {
         if( list[j]->GetLabel().Comparei(atom_names[i]) == 0 )  {
-          if( list[j]->GetTag() == -1 )  {  // avoid duplicated moeties
-            list[j]->SetTag(moeties.Count());
-            moeties.Add( new moety(list[j]) );
+          if( list[j]->GetTag() == -1 )  {  // avoid duplicated moieties
+            list[j]->SetTag(moieties.Count());
+            moieties.Add( new moiety(list[j]) );
           }
         }
       }
     }
-    if( moeties.IsEmpty() )
+    if( moieties.IsEmpty() )
       return;
-    for( int i=0; i < moeties.Count(); i++ )  {
-      const int moety_id = moeties[i].GetA()->GetFragmentId();
+    for( int i=0; i < moieties.Count(); i++ )  {
+      const int moiety_id = moieties[i].GetA()->GetFragmentId();
       for( int j=0; j < list.Count(); j++ )  {
-        if( moety_id == list[j]->GetFragmentId() && list[j]->GetTag() == -1 )  {
+        if( moiety_id == list[j]->GetFragmentId() && list[j]->GetTag() == -1 )  {
           list[j]->SetTag(i);
-          moeties[i].B().Add(list[j]);
+          moieties[i].B().Add(list[j]);
         }
       }
     }
@@ -183,107 +183,107 @@ public:
         list[i] = NULL;
     }
     list.Pack();
-    for( int i=0; i < moeties.Count(); i++ )  {
-      moety& mt = moeties[i];
+    for( int i=0; i < moieties.Count(); i++ )  {
+      moiety& mt = moieties[i];
       list.Add( mt.A() );
       for( int j=0; j < mt.GetB().Count(); j++ )
         list.Add( mt.GetB()[j] );
     }
   }
-  // does not do the sorting - just organises atoms into moeties
-  static void CreateMoeties(TCAtomPList& list)  {
-    // dictionary will not do here - the moety order will be destroyed...
-    typedef AnAssociation2<int, TCAtomPList> moety;
-    TTypeList<moety> moeties;
+  // does not do the sorting - just organises atoms into moieties
+  static void CreateMoieties(TCAtomPList& list)  {
+    // dictionary will not do here - the moiety order will be destroyed...
+    typedef AnAssociation2<int, TCAtomPList> moiety;
+    TTypeList<moiety> moieties;
     for( int i=0; i < list.Count(); i++ )  {
       TCAtomPList* ca_list = NULL;
-      for( int j=0; j < moeties.Count(); j++ )  {
-        if( moeties[j].GetA() == list[i]->GetFragmentId() )  {
-          ca_list = &moeties[j].B();
+      for( int j=0; j < moieties.Count(); j++ )  {
+        if( moieties[j].GetA() == list[i]->GetFragmentId() )  {
+          ca_list = &moieties[j].B();
           break;
         }
       }
       if( ca_list == NULL )
-        ca_list = &moeties.Add( new moety(list[i]->GetFragmentId()) ).B();
+        ca_list = &moieties.Add( new moiety(list[i]->GetFragmentId()) ).B();
       ca_list->Add(list[i]);
     }
-    if( moeties.Count() < 2 )  return;
+    if( moieties.Count() < 2 )  return;
     int atom_cnt = 0;
-    for( int i=0; i < moeties.Count(); i++ )  {
-      for( int j=0; j < moeties[i].GetB().Count(); j++ )
-        list[atom_cnt++] = moeties[i].GetB()[j];
+    for( int i=0; i < moieties.Count(); i++ )  {
+      for( int j=0; j < moieties[i].GetB().Count(); j++ )
+        list[atom_cnt++] = moieties[i].GetB()[j];
     }
   }
   static void SortByHeaviestElement(TCAtomPList& list)  {
-    typedef AnAssociation3<int, double, TCAtomPList> moety;
-    TTypeList<moety> moeties;
+    typedef AnAssociation3<int, double, TCAtomPList> moiety;
+    TTypeList<moiety> moieties;
     for( int i=0; i < list.Count(); i++ )  {
       TCAtomPList* ca_list = NULL;
-      for( int j=0; j < moeties.Count(); j++ )  {
-        if( moeties[j].GetA() == list[i]->GetFragmentId() )  {
-          ca_list = &moeties[j].C();
-          if( list[i]->GetAtomInfo().GetMr() > moeties[j].GetB() )
-            moeties[j].B() = list[i]->GetAtomInfo().GetMr();
+      for( int j=0; j < moieties.Count(); j++ )  {
+        if( moieties[j].GetA() == list[i]->GetFragmentId() )  {
+          ca_list = &moieties[j].C();
+          if( list[i]->GetAtomInfo().GetMr() > moieties[j].GetB() )
+            moieties[j].B() = list[i]->GetAtomInfo().GetMr();
           break;
         }
       }
       if( ca_list == NULL )
-        ca_list = &moeties.Add( new moety(list[i]->GetFragmentId(), list[i]->GetAtomInfo().GetMr()) ).C();
+        ca_list = &moieties.Add( new moiety(list[i]->GetFragmentId(), list[i]->GetAtomInfo().GetMr()) ).C();
       ca_list->Add(list[i]);
     }
-    if( moeties.Count() < 2 )  return;
-    moeties.QuickSorter.SortSF(moeties, moety_cmp_Mr);
+    if( moieties.Count() < 2 )  return;
+    moieties.QuickSorter.SortSF(moieties, moiety_cmp_Mr);
     int atom_cnt = 0;
-    for( int i=0; i < moeties.Count(); i++ )  {
-      for( int j=0; j < moeties[i].GetC().Count(); j++ )
-        list[atom_cnt++] = moeties[i].GetC()[j];
+    for( int i=0; i < moieties.Count(); i++ )  {
+      for( int j=0; j < moieties[i].GetC().Count(); j++ )
+        list[atom_cnt++] = moieties[i].GetC()[j];
     }
   }
   static void SortByWeight(TCAtomPList& list)  {
-    typedef AnAssociation3<int, double, TCAtomPList> moety;
-    TTypeList<moety> moeties;
+    typedef AnAssociation3<int, double, TCAtomPList> moiety;
+    TTypeList<moiety> moieties;
     for( int i=0; i < list.Count(); i++ )  {
       TCAtomPList* ca_list = NULL;
-      for( int j=0; j < moeties.Count(); j++ )  {
-        if( moeties[j].GetA() == list[i]->GetFragmentId() )  {
-          ca_list = &moeties[j].C();
-          moeties[j].B() += list[i]->GetAtomInfo().GetMr();
+      for( int j=0; j < moieties.Count(); j++ )  {
+        if( moieties[j].GetA() == list[i]->GetFragmentId() )  {
+          ca_list = &moieties[j].C();
+          moieties[j].B() += list[i]->GetAtomInfo().GetMr();
           break;
         }
       }
       if( ca_list == NULL )
-        ca_list = &moeties.Add( new moety(list[i]->GetFragmentId(), list[i]->GetAtomInfo().GetMr()) ).C();
+        ca_list = &moieties.Add( new moiety(list[i]->GetFragmentId(), list[i]->GetAtomInfo().GetMr()) ).C();
       ca_list->Add(list[i]);
     }
-    if( moeties.Count() < 2 )  return;
-    moeties.QuickSorter.SortSF(moeties, moety_cmp_Mr);
+    if( moieties.Count() < 2 )  return;
+    moieties.QuickSorter.SortSF(moieties, moiety_cmp_Mr);
     int atom_cnt = 0;
-    for( int i=0; i < moeties.Count(); i++ )  {
-      for( int j=0; j < moeties[i].GetC().Count(); j++ )
-        list[atom_cnt++] = moeties[i].GetC()[j];
+    for( int i=0; i < moieties.Count(); i++ )  {
+      for( int j=0; j < moieties[i].GetC().Count(); j++ )
+        list[atom_cnt++] = moieties[i].GetC()[j];
     }
   }
   static void SortBySize(TCAtomPList& list)  {
-    typedef AnAssociation2<int, TCAtomPList> moety;
-    TTypeList<moety> moeties;
+    typedef AnAssociation2<int, TCAtomPList> moiety;
+    TTypeList<moiety> moieties;
     for( int i=0; i < list.Count(); i++ )  {
       TCAtomPList* ca_list = NULL;
-      for( int j=0; j < moeties.Count(); j++ )  {
-        if( moeties[j].GetA() == list[i]->GetFragmentId() )  {
-          ca_list = &moeties[j].B();
+      for( int j=0; j < moieties.Count(); j++ )  {
+        if( moieties[j].GetA() == list[i]->GetFragmentId() )  {
+          ca_list = &moieties[j].B();
           break;
         }
       }
       if( ca_list == NULL )
-        ca_list = &moeties.Add( new moety(list[i]->GetFragmentId()) ).B();
+        ca_list = &moieties.Add( new moiety(list[i]->GetFragmentId()) ).B();
       ca_list->Add(list[i]);
     }
-    if( moeties.Count() < 2 )  return;
-    moeties.QuickSorter.SortSF(moeties, moety_cmp_size);
+    if( moieties.Count() < 2 )  return;
+    moieties.QuickSorter.SortSF(moieties, moiety_cmp_size);
     int atom_cnt = 0;
-    for( int i=0; i < moeties.Count(); i++ )  {
-      for( int j=0; j < moeties[i].GetB().Count(); j++ )
-        list[atom_cnt++] = moeties[i].GetB()[j];
+    for( int i=0; i < moieties.Count(); i++ )  {
+      for( int j=0; j < moieties[i].GetB().Count(); j++ )
+        list[atom_cnt++] = moieties[i].GetB()[j];
     }
   }
 };

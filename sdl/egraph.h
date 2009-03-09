@@ -56,16 +56,14 @@ public:
     return true;
   }
 
-  bool IsSubgraphOf( TEGraphNode& node )  const {
+  bool IsSubgraphOf( TEGraphNode& node ) const {
     if( node.GetData() != GetData() )  return false;
-    //if( IsRingNode() )  return true;
     if( node.Count() < Count() )  return false;
     for( int i=0; i < node.Count(); i++ )
       node[i].SetPassed( false );
     for( int i=0; i < Count(); i++ )  {
       bool Matched = false;
       for( int j=0; j < node.Count(); j++ )  {  // Count may not equal for nodes
-        if( node[j].IsPassed() )  continue;
         if( Nodes[i].IsSubgraphOf( node[j] ) )  {
           node[j].SetPassed( true );
           if( i != j )  node.SwapItems(i, j);  // sorting the nodes to match
@@ -73,7 +71,8 @@ public:
           break;
         }
       }
-      if( !Matched )  return false;
+      if( !Matched )
+        return false;
     }
     return true;
   }

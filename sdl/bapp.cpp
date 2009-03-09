@@ -37,7 +37,7 @@ TBasicApp::TBasicApp(const olxstr & FileName)  {
   OnProgress = &FActions->NewQueue("PROGRESS");
   OnTimer    = &FActions->NewQueue("TIMER");
   OnIdle     = &FActions->NewQueue("IDLE");
-  MainFormVisible = false;
+  Profiling = MainFormVisible = false;
 }
 //..............................................................................
 TBasicApp::~TBasicApp()  {

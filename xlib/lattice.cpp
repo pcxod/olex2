@@ -103,17 +103,17 @@ void  TLattice::Clear(bool ClearUnitCell)  {
 }
 //..............................................................................
 void TLattice::AddSBond(TSBond *B)  {
-  B->SetLatId( Bonds.Count() );
+  B->SetLattId( Bonds.Count() );
   Bonds.Add( B );
 }
 //..............................................................................
 void TLattice::AddSAtom(TSAtom *A)  {
-  A->SetLatId( Atoms.Count() );
+  A->SetLattId( Atoms.Count() );
   Atoms.Add(A);
 }
 //..............................................................................
 void TLattice::AddSPlane(TSPlane *P)  {
-  P->SetLatId( Planes.Count() );
+  P->SetLattId( Planes.Count() );
   Planes.Add(P);
 }
 //..............................................................................
@@ -225,17 +225,10 @@ void TLattice::InitBody()  {
 
   OnDisassemble->Enter(this);
 
-  if( AtomMask.Count() == Atoms.Count() )  {
-    const int ac = Atoms.Count();
-    for( int i=0; i < ac; i++ )
-      Atoms[i]->SetStandalone(!AtomMask[i]);
-    AtomMask.Clear();
-  }
-
   Network->Disassemble(Atoms, Fragments, &Bonds);
   Fragments.QuickSorter.SortSF(Fragments, TLattice_SortFragments);
   for( int i=0; i < Atoms.Count(); i++ )
-    Atoms[i]->SetLatId(i);
+    Atoms[i]->SetLattId(i);
   TNetPList::QuickSorter.SortSF(Fragments, CompareNets);
   // precalculate memory usage
   int bondCnt = Bonds.Count();
@@ -764,7 +757,7 @@ void TLattice::ListAsymmUnit(TSAtomPList& L, TCAtomPList* Template, bool Include
       A->CAtom( *Template->Item(i) );
       A->SetEllipsoid( &GetUnitCell().GetEllipsoid(0, Template->Item(i)->GetId()) ); // ellipsoid for the identity matrix
       A->AddMatrix( Matrices[0] );
-      A->SetLatId( L.Count() );
+      A->SetLattId( L.Count() );
       L.Add(A);
     }
   }
@@ -778,7 +771,7 @@ void TLattice::ListAsymmUnit(TSAtomPList& L, TCAtomPList* Template, bool Include
       A->CAtom(CA);
       A->SetEllipsoid( &GetUnitCell().GetEllipsoid(0, CA.GetId()) ); // ellipsoid for the identity matrix
       A->AddMatrix( Matrices[0] );
-      A->SetLatId( L.Count() );
+      A->SetLattId( L.Count() );
       L.Add(A);
     }
   }
@@ -1144,6 +1137,41 @@ void TLattice::TransformFragments(const TSAtomPList& fragAtoms, const smatd& tra
   Uniq();
 }
 //..............................................................................
+void TLattice::UpdateConnectivity()  {
+  OnDisassemble->Enter(this);
+  // clear all covalent bonds
+  for( int i=0; i < Bonds.Count(); i++ )  {
+    if( Bonds[i]->GetType() == sotBond )  {
+      delete Bonds[i];
+      Bonds[i] = NULL;
+    }
+  }
+  Bonds.Pack();
+  ClearFragments();
+  const int ac = Atoms.Count();
+  for( int i = 0; i < ac; i++ )  {
+    Atoms[i]->SetTag(1);
+    Atoms[i]->SetNetId(-1);
+    Atoms[i]->ClearBonds();
+  }
+  Network->CreateBondsAndFragments(Atoms, Fragments);
+  // precalculate memory usage
+  int bondCnt = Bonds.Count();
+  for(int i=0; i < Fragments.Count(); i++ )
+    bondCnt += Fragments[i]->BondCount();
+  Bonds.SetCapacity( bondCnt );
+  // end
+
+  for( int i=0; i < Fragments.Count(); i++ )  {
+    TNetwork* Frag = Fragments[i];
+    for( int j=0; j < Frag->BondCount(); j++ )
+      AddSBond( &Frag->Bond(j) );
+    for( int j=0; j < Frag->NodeCount(); j++ )
+      Frag->Node(j).CAtom().SetFragmentId(i);
+  }
+  OnDisassemble->Exit(this);
+}
+//..............................................................................
 void TLattice::Disassemble()  {
   // clear bonds & fargments
   OnDisassemble->Enter(this);
@@ -1155,26 +1183,23 @@ void TLattice::Disassemble()  {
   Fragments.QuickSorter.SortSF(Fragments, TLattice_SortFragments);
   // restore latId, as some atoms might been removed ny the network
   for( int i=0; i < Atoms.Count(); i++ )
-    Atoms[i]->SetLatId(i);
+    Atoms[i]->SetLattId(i);
 
   // precalculate memory usage
   int bondCnt = Bonds.Count();
-  for(int i=0; i < Fragments.Count(); i++ )  {
-    for( int j=0; j < Fragments[i]->BondCount(); j++ )
-      bondCnt ++;
-  }
+  for(int i=0; i < Fragments.Count(); i++ )
+    bondCnt += Fragments[i]->BondCount();
   Bonds.SetCapacity( bondCnt );
   // end
 
   for( int i=0; i < Fragments.Count(); i++ )  {
     TNetwork* Frag = Fragments[i];
-    for( int j=0; j < Frag->BondCount(); j++ )  {
+    for( int j=0; j < Frag->BondCount(); j++ )
       AddSBond( &Frag->Bond(j) );
-    }
     for( int j=0; j < Frag->NodeCount(); j++ )
       Frag->Node(j).CAtom().SetFragmentId(i);
   }
-  TSAtomPList::QuickSorter.SortSF(Atoms, TLattice_SortAtomsById);
+  //TSAtomPList::QuickSorter.SortSF(Atoms, TLattice_SortAtomsById);
   OnDisassemble->Exit(this);
 }
 //..............................................................................
@@ -1802,12 +1827,12 @@ void TLattice::FromDataItem(TDataItem& item)  {
   const TDataItem& bonds = item.FindRequiredItem("Bonds");
   Bonds.SetCapacity(bonds.ItemCount());
   for( int i=0; i < bonds.ItemCount(); i++ )
-    Bonds.Add( new TSBond(NULL) )->SetLatId(i);
+    Bonds.Add( new TSBond(NULL) )->SetLattId(i);
   // precreate and load atoms
   const TDataItem& atoms = item.FindRequiredItem("Atoms");
   Atoms.SetCapacity( atoms.ItemCount() );
   for( int i=0; i < atoms.ItemCount(); i++ )
-    Atoms.Add( new TSAtom(NULL) )->SetLatId(i);
+    Atoms.Add( new TSAtom(NULL) )->SetLattId(i);
   for( int i=0; i < atoms.ItemCount(); i++ )
     Atoms[i]->FromDataItem(atoms.GetItem(i), *this);
   // load bonds
