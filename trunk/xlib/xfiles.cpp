@@ -196,7 +196,7 @@ void TXFile::Sort(const TStrList& ins)  {
     UpdateAsymmUnit();
   TStrList labels;
   TCAtomPList &list = GetAsymmUnit().GetResidue(-1).AtomList();
-  int moety_index = -1;
+  int moiety_index = -1;
   bool keeph = true;
   try {
     for( int i=0; i < ins.Count(); i++ )  {
@@ -210,8 +210,8 @@ void TXFile::Sort(const TStrList& ins)  {
         AtomSorter::Sort(list, AtomSorter::atom_cmp_Label1);
       else if( ins[i].Comparei("h-") == 0 )
         keeph = false;
-      else if( ins[i].Comparei("moety") == 0 )  {
-        moety_index = i;
+      else if( ins[i].Comparei("moiety") == 0 )  {
+        moiety_index = i;
         break;
       }
       else
@@ -221,23 +221,23 @@ void TXFile::Sort(const TStrList& ins)  {
       AtomSorter::SortByName(list, labels);
       labels.Clear();
     }
-    if( moety_index != -1 )  {
-      if( moety_index+1 < ins.Count() )  {
-        for( int i=moety_index+1; i < ins.Count(); i++ )  {
+    if( moiety_index != -1 )  {
+      if( moiety_index+1 < ins.Count() )  {
+        for( int i=moiety_index+1; i < ins.Count(); i++ )  {
           if( ins[i].Comparei("s") == 0 )  
-            MoetySorter::SortBySize(list);
+            MoietySorter::SortBySize(list);
           else if( ins[i].Comparei("h") == 0 )  
-            MoetySorter::SortByHeaviestElement(list);
+            MoietySorter::SortByHeaviestElement(list);
           else if( ins[i].Comparei("Mw") == 0 )  
-            MoetySorter::SortByWeight(list);
+            MoietySorter::SortByWeight(list);
           else
             labels.Add(ins[i]);
         }
         if( !labels.IsEmpty() )
-          MoetySorter::SortByMoetyAtom(list, labels);
+          MoietySorter::SortByMoietyAtom(list, labels);
       }
       else
-        MoetySorter::CreateMoeties(list);
+        MoietySorter::CreateMoieties(list);
     }
     if( keeph )
       AtomSorter::KeepH(list,GetLattice(),  NULL);

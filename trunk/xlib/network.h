@@ -31,9 +31,12 @@ public:
   // copies the content of S to the net
   void Assign(TNetwork& S);
 
-  // disassembles the list of Atoms into the fragments; 
-  // does not affect current net
+  /* disassembles the list of Atoms into the fragments; does not affect current net
+   
+  */
   void Disassemble(TSAtomPList& Atoms, TNetPList& Frags, TSBondPList* InterBonds);
+  /* creates bonds and fragments for atoms initialised by Disassemble */
+  void CreateBondsAndFragments(TSAtomPList& Atoms, TNetPList& Frags);
 
   bool CBondExists(const class TCAtom& CA1, const TCAtom& CA2, const double& D) const;
   bool HBondExists(const TCAtom& CA1, const TCAtom& CA2, const double& D) const;

@@ -53,8 +53,6 @@ protected:
   class TUnitCell*  UnitCell;
   class TAsymmUnit* AsymmUnit;
   double Delta, DeltaI;
-  // the mask to decide which atoms to be used in the connectivity
-  TEBitArray AtomMask;
   // if Template is specified, the CAtoms are taken from there instead of AsymmUnit
   void DoGrow(const TSAtomPList& Atoms, bool GrowShell, TCAtomPList* Template);
   // fills the list with atoms of asymmertic unit
@@ -74,13 +72,9 @@ public:
 
   void Clear(bool ClearUnitCell);
   void Uniq(bool removeSymmEquivalents = false);
-  // to be called after the mask is set
-  void UpdateConnectivity(TEBitArray& amask) {  
-    AtomMask = amask;
-    Disassemble();  
-  }
+  // used if the connectivity ifosrmation was altered externally
+  void UpdateConnectivity();
   void Init();
-  void SetAtomMask(TEBitArray& ba)  {  AtomMask = ba;  }
   // generates atoms within specified volume
   void Generate(const vec3d& MFrom, const vec3d& MTo, TCAtomPList* Template,
     bool ClearCont, bool IncludeQ);

@@ -288,7 +288,7 @@ bool RingsEq(const TSAtomPList& r1, const TSAtomPList& r2 )  {
   for( int i=0; i < r1.Count(); i++ )  {
     bool found = false;
     for( int j=0; j < r2.Count(); j++ )  {
-      if( r2[j]->GetLatId() == r1[i]->GetLatId() )  {
+      if( r2[j]->GetLattId() == r1[i]->GetLattId() )  {
         found = true;
         break;
       }

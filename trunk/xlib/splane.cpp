@@ -112,7 +112,7 @@ double TSPlane::Angle( const vec3d &A,  const vec3d &B) const  {
 }
 //..............................................................................
 double TSPlane::Angle(const TSBond& Bd) const  {
-  return Angle(Bd.GetA().crd(), Bd.GetB().crd());
+  return Angle(Bd.A().crd(), Bd.B().crd());
 }
 //..............................................................................
 double TSPlane::Angle(const TSPlane& P) const  {

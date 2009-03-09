@@ -77,7 +77,7 @@ protected:
         continue; 
       dir_vec = (p1-oa.crd).Normalise();
       const float pers_scale = 1.0-sqr(dir_vec[2]);
-      float brad = (bn.GetA().GetAtomInfo() < 4 || bn.GetB().GetAtomInfo() < 4) ? 
+      float brad = (bn.A().GetAtomInfo() < 4 || bn.B().GetAtomInfo() < 4) ? 
         BondRad/2 : BondRad;
       if( bn.GetType() == sotHBond )  //even thiner H-bonds
         brad /= 2;

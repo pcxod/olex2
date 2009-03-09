@@ -101,7 +101,7 @@ public:
   TBasicCFile* LastLoader()                  const {  return FLastLoader;  }
   void UpdateAsymmUnit();
   /* Generic sort procedure, taking string instructions...
-    instructions: Mw, Label, Label1, moety size, weight, heaviest 
+    instructions: Mw, Label, Label1, moiety size, weight, heaviest 
   */
   void Sort(const TStrList& instructions);
   void LoadFromFile(const olxstr & FN);

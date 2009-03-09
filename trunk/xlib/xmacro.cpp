@@ -150,9 +150,9 @@ xlib_InitMacro(File, "s-sort the main residue of the asymmetric unit", fpNone|fp
   xlib_InitMacro(Sort, EmptyString, fpAny^psFileLoaded, "Sorts atoms of the default residue. Atom sort arguments:\
  Mw - atomic weight, L - label, considering numbers, L1 - simple string comparison, MwL - atomic weight and label,\
  h- - to treat hydrogen atoms independent of the pivot atom.\
- Moety sort arguments: S - size, H - by heaviest atom, Mw - molecular weight. Usage: sort [atom_sort_type] or [Atoms] [moety [moety sort type] [moety atoms]].\
- If just 'moety' is provided - the atoms will be split into the moeties without sorting.\
- Example: sort mwl F2 F1 moety s - will sort atoms by atomic weight and label, put F1 after F2 and form moeties sorted by size");
+ Moiety sort arguments: S - size, H - by heaviest atom, Mw - molecular weight. Usage: sort [atom_sort_type] or [Atoms] [moiety [moety sort type] [moiety atoms]].\
+ If just 'moiety' is provided - the atoms will be split into the moieties without sorting.\
+ Example: sort mwl F2 F1 moiety s - will sort atoms by atomic weight and label, put F1 after F2 and form moieties sorted by size");
   xlib_InitMacro(SGInfo, "c-include lattice centering matrices&;i-include inversion generated matrices if any", fpNone|fpOne, 
     "Prints space group information.");
   xlib_InitMacro(SAInfo, EmptyString, fpAny, "Finds and prints space groups which include any of the provided systematic absences in the form 'b~~', '~b~' or '~~b'");

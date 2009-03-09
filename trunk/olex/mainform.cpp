@@ -703,9 +703,12 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual occupancy\
   this_InitMacro(UpdateFile, f,fpOne );
   this_InitMacro(NextSolution, ,fpNone );
 
-  this_InitMacro(Match, s&;n&;a&;i,fpNone|fpOne|fpTwo );
+  this_InitMacroD(Match, "s-subgraph match&;n-naming. If the value a symbol [or set of]\
+ this is appended to the label, '$xx' replaces the symbols after the atom type symbol with xx, leving the ending,\
+ '-xx' - changes the ending of the label with xx&;a-align&;i-try inversion&;u-unmatch", fpNone|fpOne|fpTwo, "Fragment matching, alignment and label transfer routine" );
+  this_InitMacroD(Conn, EmptyString, fpAny^fpNone, "Changes provided atom(s) connectivity (only until next connectivity modifying operation for now). First parameter is the new connectivity" );
   this_InitMacro(ShowWindow, ,fpOne|fpTwo );
-
+  
   this_InitMacro(DelOFile, ,fpOne );
   this_InitMacro(CalcVol, cs, fpOne );
 
@@ -1575,6 +1578,7 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
 //        FObjectUnderMouse->UpdatePrimitives(Primitives->Mask);
       }
       Primitives->Destroy();
+      TimePerFrame = FXApp->Draw();
       break;
     case ID_FixLattice:
       if( EsdlInstanceOf(*FObjectUnderMouse, TXLattice) )  {
@@ -1628,8 +1632,8 @@ void TMainForm::ObjectUnderMouse( AGDrawObject *G)  {
       pmTang->Append(0, uiStr(SL[i]));
 
     pmBond->Enable(ID_MenuTang, SL.Count() != 0 );
-    T = XB->Bond().GetA().GetLabel();
-    T << '-' << XB->Bond().GetB().GetLabel() << ':' << ' '
+    T = XB->Bond().A().GetLabel();
+    T << '-' << XB->Bond().B().GetLabel() << ':' << ' '
       << olxstr::FormatFloat(3, XB->Bond().Length());
     miBondInfo->SetText( uiStr(T) );
     pmBond->Enable(ID_Selection, G->Selected());
@@ -1747,7 +1751,7 @@ void TMainForm::OnFragmentShowOnly(wxCommandEvent& event)  {
     A = &((TXBond*)FObjectUnderMouse)->Bond().A();
   else
     return;
-  ProcessXPMacro(olxstr("uniq #s") << A->GetLatId(), MacroError);
+  ProcessXPMacro(olxstr("uniq #s") << A->GetLattId(), MacroError);
 }
 //..............................................................................
 bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, const IEObject *Data)  {
@@ -1867,8 +1871,8 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
           }
         }
         else  if( EsdlInstanceOf( *G, TXBond) )  {
-          Tip = ((TXBond*)G)->Bond().GetA().GetLabel();
-          Tip << '-' << ((TXBond*)G)->Bond().GetB().GetLabel() << ": ";
+          Tip = ((TXBond*)G)->Bond().A().GetLabel();
+          Tip << '-' << ((TXBond*)G)->Bond().B().GetLabel() << ": ";
           Tip << olxstr::FormatFloat(3, ((TXBond*)G)->Bond().Length());
         } else if( EsdlInstanceOf( *G, TXReflection) )  {
           Tip = ((TXReflection*)G)->GetHKL()[0];

@@ -60,7 +60,6 @@ void TNetwork::TDisassembleTaskRemoveSymmEq::Run(long index)  {
   }
 }
 void TNetwork::TDisassembleTaskCheckConnectivity::Run(long index)  {
-  if( Atoms[index]->IsStandalone() )  return;
   const int this_p = Atoms[index]->CAtom().GetPart();
   const int ac = Atoms.Count();
   for( int i=index+1; i < ac; i++ )  {
@@ -140,17 +139,31 @@ void TNetwork::Disassemble(TSAtomPList& Atoms, TNetPList& Frags, TSBondPList* In
   TDisassembleTaskCheckConnectivity searchConTask( Atoms, Distances, Delta);
   TListIteratorManager<TDisassembleTaskCheckConnectivity> searchCon(searchConTask, Atoms.Count(), tQuadraticTask, 100);
   sw.start("Creating bonds");
+  CreateBondsAndFragments(Atoms, Frags);
+  sw.start("Searching H-bonds");
+  // preallocate 50 Hbonds per fragment
+  if( InterBonds != NULL )  
+    InterBonds->SetCapacity( InterBonds->Count() + Frags.Count()*50); 
+  THBondSearchTask searchHBTask( Atoms, InterBonds, Distances, GetLattice().GetDeltaI());
+  TListIteratorManager<THBondSearchTask> searchHB(searchHBTask, Atoms.Count(), tQuadraticTask, 100);
+  sw.start("Finalising");
+  delete [] Distances[0];
+  delete [] Distances[1];
+  delete [] Distances[2];
+  delete [] Distances[3];
+  delete [] Distances;
+  sw.stop();
+  if( TBasicApp::GetInstance()->IsProfiling() )
+    sw.print( TBasicApp::GetLog(), &TLog::Info );
+}
+//..............................................................................
+void TNetwork::CreateBondsAndFragments(TSAtomPList& Atoms, TNetPList& Frags)  {
   // creating bonds
-  TNetwork& defNet = *Frags.Add( new TNetwork(&GetLattice(), this) );
+  const int ac = Atoms.Count();
   for( int i=0; i < ac; i++ )  {
     TSAtom* A1 = Atoms[i];
-    if( A1->IsStandalone() )  {
-      defNet.AddNode(*A1);
-      A1->SetNetwork(defNet);
-      continue;
-    }
     if( A1->GetTag() != 0 )  {
-      Net = new TNetwork(&GetLattice(), this);
+      TNetwork* Net = new TNetwork(&GetLattice(), this);
       Net->AddNode(*A1);
       Frags.Add( Net );
       A1->SetNetwork(*Net);
@@ -181,19 +194,6 @@ void TNetwork::Disassemble(TSAtomPList& Atoms, TNetPList& Frags, TSBondPList* In
       }
     }
   }
-  sw.start("Searching H-bonds");
-  // preallocate 50 Hbonds per fragment
-  if( InterBonds )  InterBonds->SetCapacity( InterBonds->Count() + Frags.Count()*50); 
-  THBondSearchTask searchHBTask( Atoms, InterBonds, Distances, GetLattice().GetDeltaI());
-  TListIteratorManager<THBondSearchTask> searchHB(searchHBTask, Atoms.Count(), tQuadraticTask, 100);
-  sw.start("Finalising");
-  delete [] Distances[0];
-  delete [] Distances[1];
-  delete [] Distances[2];
-  delete [] Distances[3];
-  delete [] Distances;
-  sw.stop();
-  sw.print( TBasicApp::GetLog(), &TLog::Info );
 }
 //..............................................................................
 void TNetwork::THBondSearchTask::Run(long ind)  {
