@@ -6110,6 +6110,22 @@ double MatchAtomPairsQT(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atom
     TBasicApp::GetLog() << ( olxstr("Summ(distances)/N is ") << olxstr::FormatFloat(3, rms) << '\n');
   return rms;
 }
+double MatchAtomPairsQT_(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atoms,
+                        smatdd& res, bool InversionPossible, bool& InversionUsed)  {
+  if( atoms.Count() < 3 )  return -1;
+  const TAsymmUnit& au = *atoms[0].GetA()->CAtom().GetParent();
+  double rms = TNetwork::FindAlignmentMatrix(atoms, res, false);
+  TBasicApp::GetLog() << rms << " (current)\n";
+  vec3d v;
+  for( int a=0; a < atoms.Count(); a++ )  {
+    TSAtom* sa = atoms[a].A();
+    atoms[a].A() = atoms[a].B();
+    atoms[a].B() = sa;
+  }
+  rms = TNetwork::FindAlignmentMatrix(atoms, res, false);
+  TBasicApp::GetLog() << rms << " (1)\n";
+  return -1;
+}
 //..............................................................................
 //void MatchAtomPairsULS(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atoms, smatd& res)  {
 //  TMatrixD gs(4,4), lm(atoms.Count(), 4), lmt(4, atoms.Count());
@@ -6341,8 +6357,8 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options, TMacroErr
                                              &nets[i]->Node( res[k].GetA()));
             }
           }
+          satomp.ShiftR( satomp.Count()/2 );
           double rms = MatchAtomPairsQT( satomp, S, TryInvert, Inverted);
-//          double rms = MatchAtomPairsQT( satomp, S, false, Inverted);
           CallMatchCallbacks(*nets[i], *nets[j], rms);
           if( rms >= 0 )
             TNetwork::DoAlignAtoms(satomp, atomsToTransform, S, Inverted);

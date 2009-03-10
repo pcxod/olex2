@@ -705,21 +705,21 @@ void RefinementModel::ProcessFrags()  {
         if( crds.Count() < 3 )
           throw TFunctionFailedException(__OlxSourceInfo, "Not enough atoms in fitted group");
         smatdd tm;
-        vec3d tr, tri;
+        vec3d tr, tri, t;
         for( int k=0; k < crds.Count(); k++ )  {
           icrds[k].B() = aunit.CellToCartesian( crds[k].B() );
           aunit.CartesianToCell( icrds[k].A() ) *= -1;
           aunit.CellToCartesian( icrds[k].A() );
-          tm.t += crds[k].B();
+          t += crds[k].B();
           tr += crds[k].GetA();
           tri += icrds[k].GetA();
         }
-        tm.t /= crds.Count();
+        t /= crds.Count();
         tr /= crds.Count();
         tri /= crds.Count();
         bool invert = false;
-        double rms = TNetwork::FindAlignmentMatrix(crds, tm);
-        double irms = TNetwork::FindAlignmentMatrix(icrds, tm);
+        double rms = TNetwork::FindAlignmentMatrix(crds, tm, tr, t);
+        double irms = TNetwork::FindAlignmentMatrix(icrds, tm, tri, t);
         if( irms < rms && irms >= 0 )  {
           tr = tri;
           invert = true;
@@ -732,9 +732,7 @@ void RefinementModel::ProcessFrags()  {
             aunit.CellToCartesian(v);
           }
           v -= tr;
-          v *= tm.r;
-          v += tm.t;
-          atoms[k]->ccrd() = aunit.CartesianToCell(v);
+          atoms[k]->ccrd() = aunit.CartesianToCell(tm*v);
         }
         ag.SetAfix( ag.GetN() );
       }

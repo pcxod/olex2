@@ -1525,33 +1525,58 @@ int XAtomLabelSort(const TXAtom* I1, const TXAtom* I2)  {
 }
 //..............................................................................
 void TGXApp::InfoList(const olxstr &Atoms, TStrList &Info, bool sort)  {
-  olxstr Tmp;
-  TCAtomPList AtomsList;
-  FindCAtoms(Atoms, AtomsList, false);
-  //if( sort )
-  //  AtomsList.QuickSorter.SortSF(AtomsList, XAtomLabelSort);
-  TTTable<TStrList> Table(AtomsList.Count(), 7);
-  Table.ColName(0) = "Atom";
-  Table.ColName(1) = "Type";
-  Table.ColName(2) = "X";
-  Table.ColName(3) = "Y";
-  Table.ColName(4) = "Z";
-  Table.ColName(5) = "Ueq";
-  Table.ColName(6) = "Peak";
-  for(int i = 0; i < AtomsList.Count(); i++ )  {
-    const TCAtom& A = *AtomsList[i];
-    Table[i][0] = A.GetLabel();
-    Table[i][1] = A.GetAtomInfo().GetSymbol();
-    Table[i][2] = olxstr::FormatFloat(3, A.ccrd()[0]);
-    Table[i][3] = olxstr::FormatFloat(3, A.ccrd()[1]);
-    Table[i][4] = olxstr::FormatFloat(3, A.ccrd()[2]);
-    Table[i][5] = olxstr::FormatFloat(3, A.GetUiso());
-    if( A.GetAtomInfo() == iQPeakIndex  )
-      Table[i][6] = olxstr::FormatFloat(3, A.GetQPeak());
-    else
-      Table[i][6] = '-';
+  if( !XFile().GetLattice().IsGenerated() )  {
+    TCAtomPList AtomsList;
+    FindCAtoms(Atoms, AtomsList, false);
+    TTTable<TStrList> Table(AtomsList.Count(), 7);
+    Table.ColName(0) = "Atom";
+    Table.ColName(1) = "Type";
+    Table.ColName(2) = "X";
+    Table.ColName(3) = "Y";
+    Table.ColName(4) = "Z";
+    Table.ColName(5) = "Ueq";
+    Table.ColName(6) = "Peak";
+    for(int i = 0; i < AtomsList.Count(); i++ )  {
+      const TCAtom& A = *AtomsList[i];
+      Table[i][0] = A.GetLabel();
+      Table[i][1] = A.GetAtomInfo().GetSymbol();
+      Table[i][2] = olxstr::FormatFloat(3, A.ccrd()[0]);
+      Table[i][3] = olxstr::FormatFloat(3, A.ccrd()[1]);
+      Table[i][4] = olxstr::FormatFloat(3, A.ccrd()[2]);
+      Table[i][5] = olxstr::FormatFloat(3, A.GetUiso());
+      if( A.GetAtomInfo() == iQPeakIndex  )
+        Table[i][6] = olxstr::FormatFloat(3, A.GetQPeak());
+      else
+        Table[i][6] = '-';
+    }
+    Table.CreateTXTList(Info, "Atom information", true, true, ' ');
   }
-  Table.CreateTXTList(Info, "Atom information", true, true, ' ');
+  else  {
+    TXAtomPList AtomsList;
+    FindXAtoms(Atoms, AtomsList, false);
+    TTTable<TStrList> Table(AtomsList.Count(), 7);
+    Table.ColName(0) = "Atom";
+    Table.ColName(1) = "Type";
+    Table.ColName(2) = "X";
+    Table.ColName(3) = "Y";
+    Table.ColName(4) = "Z";
+    Table.ColName(5) = "Ueq";
+    Table.ColName(6) = "Peak";
+    for(int i = 0; i < AtomsList.Count(); i++ )  {
+      const TCAtom& A = AtomsList[i]->Atom().CAtom();
+      Table[i][0] = A.GetLabel();
+      Table[i][1] = A.GetAtomInfo().GetSymbol();
+      Table[i][2] = olxstr::FormatFloat(3, A.ccrd()[0]);
+      Table[i][3] = olxstr::FormatFloat(3, A.ccrd()[1]);
+      Table[i][4] = olxstr::FormatFloat(3, A.ccrd()[2]);
+      Table[i][5] = olxstr::FormatFloat(3, A.GetUiso());
+      if( A.GetAtomInfo() == iQPeakIndex  )
+        Table[i][6] = olxstr::FormatFloat(3, A.GetQPeak());
+      else
+        Table[i][6] = '-';
+    }
+    Table.CreateTXTList(Info, "Atom information", true, true, ' ');
+  }
 }
 //..............................................................................
 TXGlLabel *TGXApp::AddLabel(const olxstr& Name, const vec3d& center, const olxstr& T)  {
