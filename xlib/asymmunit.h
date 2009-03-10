@@ -202,14 +202,7 @@ public:
     return (id < 0 || id >= CAtoms.Count()) ? NULL : CAtoms[id];
   }
 
-  void DelAtom( size_t index );
-  /* deletes the atom in the list and assigns corresponding of the list to NULL
-   is used to optimize deletion procedure (for example in the Uniq procedure)
-   use Pack function to remove NULL pointers after several iterations
-  */
-  void NullAtom( size_t index );
-
-  /* removes NULL atoms (from the call to Null Atom) */
+  /* removes all atoms marked as deleted */
   void PackAtoms();
   inline TCAtom& GetAtom(size_t i)     const {  return *CAtoms[i];  }
   inline int AtomCount()               const { return CAtoms.Count();};

@@ -1577,7 +1577,6 @@ void TLattice::_ProcessRingHAdd(AConstraintGenerator& cg, const TPtrList<TBasicA
 }
 //..............................................................................
 void TLattice::AnalyseHAdd(AConstraintGenerator& cg, const TSAtomPList& atoms)  {
-
   TPtrList<TBasicAtomInfo> CTypes;
   CTypes.Add( &AtomsInfo.GetAtomInfo(iCarbonIndex) );
   CTypes.Add( &AtomsInfo.GetAtomInfo(iNitrogenIndex) );

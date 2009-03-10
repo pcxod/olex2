@@ -46,7 +46,7 @@ public:
 //---------------------------------------------------------------------------
 
 //---------------------------------------------------------------------------
-class TXFile: public AActionHandler {
+class TXFile: public AEventsDispatcher {
 private:
   TLattice Lattice;
   RefinementModel RefMod;
@@ -55,8 +55,7 @@ protected:
   TStrPObjList<olxstr,TBasicCFile*> FileFormats;
   TBasicCFile *FLastLoader;
   TSpaceGroup* FSG;
-  // on SG change of the asymmetric unit
-  virtual bool Execute(const IEObject *Sender, const IEObject *Data);
+  virtual bool Dispatch(int MsgId, short MsgSubId, const IEObject *Sender, const IEObject *Data=NULL);
   void ValidateTabs();
 public:
   TXFile();

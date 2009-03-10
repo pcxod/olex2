@@ -113,7 +113,7 @@ void XLibMacros::Export(TLibrary& lib)  {
   xlib_InitMacro(ChangeSG, "", fpOne|fpFour|psFileLoaded, "[shift] SG Changes space group of current structure" );
 //_________________________________________________________________________________________________________________________
   xlib_InitMacro(Htab, "t-adds extra elements (comma separated -t=Br,I) to the donor list. Defaults are [N,O,F,Cl,S]", fpNone|fpOne|fpTwo|psCheckFileTypeIns, 
-    "Adds HTBA instructions to the ins file, maximum bond length [2.9] and minimal angle [150] might be provided" );
+    "Adds HTAB instructions to the ins file, maximum bond length [2.9] and minimal angle [150] might be provided" );
 //_________________________________________________________________________________________________________________________
   xlib_InitMacro(HAdd, "", fpAny|psCheckFileTypeIns, "Adds hydrogen atoms to all or provided atoms, however\
  the ring atoms are treated separately and added all the time" );
@@ -148,11 +148,12 @@ xlib_InitMacro(File, "s-sort the main residue of the asymmetric unit", fpNone|fp
   xlib_InitMacro(ASR, EmptyString, fpNone^psFileLoaded, "Absolute structure refinement: adds TWIN and BASF to current model in the case of non-centrosymmetric structure");
   xlib_InitMacro(Describe, EmptyString, fpNone^psFileLoaded, "Describes current refinement in a human readable form");
   xlib_InitMacro(Sort, EmptyString, fpAny^psFileLoaded, "Sorts atoms of the default residue. Atom sort arguments:\
- Mw - atomic weight, L - label, considering numbers, L1 - simple string comparison, MwL - atomic weight and label,\
- h- - to treat hydrogen atoms independent of the pivot atom.\
- Moiety sort arguments: S - size, H - by heaviest atom, Mw - molecular weight. Usage: sort [atom_sort_type] or [Atoms] [moiety [moety sort type] [moiety atoms]].\
+ m - atomic weight; l - label, considering numbers; p - part, 0 is first followed by all positive parts in ascending order and then negative ones;\
+ h - to treat hydrogen atoms independent of the pivot atom.\
+ Moiety sort arguments: s - size, h - by heaviest atom, m - molecular weight. Usage: sort [+atom_sort_type] or [Atoms] [moiety [+moety sort type] [moiety atoms]].\
  If just 'moiety' is provided - the atoms will be split into the moieties without sorting.\
- Example: sort mwl F2 F1 moiety s - will sort atoms by atomic weight and label, put F1 after F2 and form moieties sorted by size");
+ Example: sort +ml F2 F1 moiety +s - will sort atoms by atomic weight and label, put F1 after F2 and form moieties sorted by size.\
+ Note that when sorting atoms, any subsequent sort type operates inside the groups created by the preceeding sort types.");
   xlib_InitMacro(SGInfo, "c-include lattice centering matrices&;i-include inversion generated matrices if any", fpNone|fpOne, 
     "Prints space group information.");
   xlib_InitMacro(SAInfo, EmptyString, fpAny, "Finds and prints space groups which include any of the provided systematic absences in the form 'b~~', '~b~' or '~~b'");

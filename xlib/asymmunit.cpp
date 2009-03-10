@@ -303,21 +303,23 @@ void TAsymmUnit::InitAtomIds()  {  // initialises atom ids if any were added or 
     GetEllp(i).SetId(i);
 }
 //..............................................................................
-void TAsymmUnit::DelAtom( size_t index )  {
-  delete CAtoms[index];
-  CAtoms.Delete(index);
-  for( int i=0; i < AtomCount(); i++ )    
-    GetAtom(i).SetId(i);
-}
-//..............................................................................
-void TAsymmUnit::NullAtom( size_t index )  {
-  delete CAtoms[index];
-  CAtoms[index] = NULL;
-}
-//..............................................................................
 void TAsymmUnit::PackAtoms()  {
+  for( int i=-1; i < Residues.Count(); i++ )  {
+    TAsymmUnit::TResidue& resi = GetResidue(i);
+    for( int j=0; j < resi.Count(); j++ )
+      if( resi[j].IsDeleted() )
+        resi.AtomList()[j] = NULL;
+    resi.AtomList().Pack();
+  }
+  for( int i=0; i < CAtoms.Count(); i++ )  {
+    if( CAtoms[i]->IsDeleted() )  {
+      delete CAtoms[i];
+      CAtoms[i] = NULL;
+    }
+  }
   CAtoms.Pack();
-  InitAtomIds();
+  for( int i=0; i < CAtoms.Count(); i++ )
+    CAtoms[i]->SetId(i);
 }
 //..............................................................................
 TEllipsoid& TAsymmUnit::NewEllp() {
