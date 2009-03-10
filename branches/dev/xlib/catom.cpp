@@ -123,7 +123,7 @@ void TCAtom::Assign(const TCAtom& S)  {
   FLabel   = S.FLabel;
   FAtomInfo = &S.GetAtomInfo();
 //  Frag    = S.Frag;
-  Id = S.GetId();
+  //Id = S.GetId();
   FragmentId = S.GetFragmentId();
   Center = S.Center;
   Esd = S.Esd;
