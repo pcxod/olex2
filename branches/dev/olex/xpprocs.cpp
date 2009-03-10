@@ -6115,15 +6115,15 @@ double MatchAtomPairsQT_(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& ato
   if( atoms.Count() < 3 )  return -1;
   const TAsymmUnit& au = *atoms[0].GetA()->CAtom().GetParent();
   double rms = TNetwork::FindAlignmentMatrix(atoms, res, false);
-  TBasicApp::GetLog() << rms << " (current)\n";
-  vec3d v;
-  for( int a=0; a < atoms.Count(); a++ )  {
-    TSAtom* sa = atoms[a].A();
-    atoms[a].A() = atoms[a].B();
-    atoms[a].B() = sa;
+  TBasicApp::GetLog() << rms << " (start)\n";
+  TTypeList< AnAssociation2<TSAtom*,TSAtom*> > _atoms (atoms);
+  for( int i=0; i < atoms.Count()*10; i++ )  {
+    int ind1 = rand()%atoms.Count();
+    int ind2 = rand()%atoms.Count();
+    _atoms.Swap(ind1, ind2);
   }
-  rms = TNetwork::FindAlignmentMatrix(atoms, res, false);
-  TBasicApp::GetLog() << rms << " (1)\n";
+  rms = TNetwork::FindAlignmentMatrix(_atoms, res, false);
+  TBasicApp::GetLog() << rms << " (" << 0 << ")\n";
   return -1;
 }
 //..............................................................................
@@ -6357,7 +6357,6 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options, TMacroErr
                                              &nets[i]->Node( res[k].GetA()));
             }
           }
-          satomp.ShiftR( satomp.Count()/2 );
           double rms = MatchAtomPairsQT( satomp, S, TryInvert, Inverted);
           CallMatchCallbacks(*nets[i], *nets[j], rms);
           if( rms >= 0 )
