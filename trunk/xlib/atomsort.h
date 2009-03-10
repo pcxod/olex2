@@ -17,6 +17,13 @@ const short
 
 class AtomSorter {
 public:
+  static int atom_cmp_Part(const TCAtom* a1, const TCAtom* a2) {
+    if( a2->GetPart() < 0 && a1->GetPart() >= 0 )
+      return -1;
+    if( a2->GetPart() >= 0 && a1->GetPart() < 0 )
+      return 1;
+    return a1->GetPart() - a2->GetPart();  // smallest goes first
+  }
   static int atom_cmp_Mw(const TCAtom* a1, const TCAtom* a2) {
     const double diff = a2->GetAtomInfo().GetMr() - a1->GetAtomInfo().GetMr();
     return diff < 0 ? -1 : (diff > 0 ? 1 : 0);
@@ -33,10 +40,19 @@ public:
   static int atom_cmp_MoietySize(const TCAtom* a1, const TCAtom* a2) {
     return a1->GetFragmentId() - a2->GetFragmentId();
   }
-  static int atom_cmp_Mw_Label(const TCAtom* a1, const TCAtom* a2) {
-    int rv = atom_cmp_Mw(a1,a2);
-    return (rv == 0) ? atom_cmp_Label(a1,a2) : rv;
-  }
+
+  struct CombiSort {
+    //typedef int (*sort_func)(const TCAtom*, const TCAtom*);
+    TArrayList<int (*)(const TCAtom*, const TCAtom*)> sequence;
+    int atom_cmp(const TCAtom* a1, const TCAtom* a2) const {
+      for( int i=0; i < sequence.Count(); i++ )  {
+        int res = (*sequence[i])(a1, a2);
+        if( res != 0 )
+          return res;
+      }
+      return 0;
+    }
+  };
 
   static void KeepH(TCAtomPList& l1, const TLattice& latt, int (*sort_func)(const TCAtom*, const TCAtom*))  {
     typedef AnAssociation2<TCAtom*,TCAtomPList> tree_node;
@@ -74,7 +90,7 @@ public:
       atom_count += (ca_list.Count() + 1);
     }
     if( atom_count != l1.Count() )
-      throw TFunctionFailedException(__OlxSourceInfo, "atom list does not match the lattice");
+      throw TFunctionFailedException(__OlxSourceInfo, "atom list does not match the lattice, could not keep H atoms next to pivot atom");
     atom_count = 0;
     for( int i=0; i < atom_tree.Count(); i++ )  {
       l1[atom_count++] = atom_tree[i].A();
@@ -134,6 +150,9 @@ public:
   }
   static void Sort(TCAtomPList& list, int (*sort_func)(const TCAtom*, const TCAtom*))  {
     TCAtomPList::QuickSorter.SortSF(list, sort_func);
+  }
+  static void Sort(TCAtomPList& list, AtomSorter::CombiSort& cs)  {
+    TCAtomPList::QuickSorter.SortMF<AtomSorter::CombiSort>(list, cs, &AtomSorter::CombiSort::atom_cmp);
   }
 };
 

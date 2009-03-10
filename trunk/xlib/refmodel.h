@@ -127,20 +127,8 @@ public:
   TAfixGroups AfixGroups;
   TExyzGroups ExyzGroups;
 
-  void Validate() {
-    rDFIX.ValidateAll();
-    rDANG.ValidateAll();
-    rSADI.ValidateAll();
-    rCHIV.ValidateAll();
-    rFLAT.ValidateAll();
-    rDELU.ValidateAll();
-    rSIMU.ValidateAll();
-    rISOR.ValidateAll();
-    rEADP.ValidateAll();
-    ExyzGroups.ValidateAll();
-    AfixGroups.ValidateAll();
-    Vars.Validate();
-  }
+  // removes references to all deleted atoms
+  void Validate();
   // creates a human readable description of the refinement
   void Describe(TStrList& lst, TPtrList<TCAtom>* a_res = NULL, TPtrList<TSimpleRestraint>* b_res = NULL);
 #ifndef _NO_PYTHON

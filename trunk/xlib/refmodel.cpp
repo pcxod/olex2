@@ -226,6 +226,25 @@ InfoTab& RefinementModel::AddRTAB(const olxstr& codename, const olxstr& resi) {
   return InfoTables.Add( new InfoTab(*this, infotab_rtab, codename, resi) );
 }
 //....................................................................................................
+void RefinementModel::Validate() {
+  rDFIX.ValidateAll();
+  rDANG.ValidateAll();
+  rSADI.ValidateAll();
+  rCHIV.ValidateAll();
+  rFLAT.ValidateAll();
+  rDELU.ValidateAll();
+  rSIMU.ValidateAll();
+  rISOR.ValidateAll();
+  rEADP.ValidateAll();
+  ExyzGroups.ValidateAll();
+  AfixGroups.ValidateAll();
+  Vars.Validate();
+  for( int i=0; i < InfoTables.Count(); i++ )  {
+    if( InfoTables[i].HasDeletedAtom() )
+      InfoTables.Delete(i--);
+  }
+}
+//....................................................................................................
 bool RefinementModel::ValidateInfoTab(const InfoTab& it)  {
   int it_ind = -1;
   bool unique = true;

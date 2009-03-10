@@ -76,6 +76,12 @@ public:
 
   short GetType() const {  return Type;  }
 
+  bool HasDeletedAtom() const {
+    for( int i=0; i < atoms.Count(); i++ )
+      if( atoms[i].GetAtom()->IsDeleted() )
+        return true;
+    return false;
+  }
   bool IsValid() const {
     int ac = 0;
     for( int i=0; i < atoms.Count(); i++ )

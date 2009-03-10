@@ -312,18 +312,18 @@ int TUnitCell::FindSymmEq(double tol, bool Initialise, bool remove, bool markDel
 
   TListIteratorManager<TSearchSymmEqTask> searchm(searchTask, ACA.Count(), tQuadraticTask, 1000);
 
-  if( remove )  {
-    for( int i=0; i < ACA.Count(); i++ )
-      if( ACA[i]->GetTag() == -1 )
-        GetLattice().GetAsymmUnit().NullAtom( ACA[i]->GetId() );
-    GetLattice().GetAsymmUnit().PackAtoms(); // remove the NULL pointers
-  }
-  else if( markDeleted )  {
-    for( int i=0; i < ACA.Count(); i++ )
-      if( ACA[i]->GetTag() == -1 )
-        GetLattice().GetAsymmUnit().NullAtom( ACA[i]->GetId() );
-    GetLattice().GetAsymmUnit().PackAtoms(); // remove the NULL pointers
-  }
+  //if( remove )  {
+  //  for( int i=0; i < ACA.Count(); i++ )
+  //    if( ACA[i]->GetTag() == -1 )
+  //      GetLattice().GetAsymmUnit().NullAtom( ACA[i]->GetId() );
+  //  GetLattice().GetAsymmUnit().PackAtoms(); // remove the NULL pointers
+  //}
+  //else if( markDeleted )  {
+  //  for( int i=0; i < ACA.Count(); i++ )
+  //    if( ACA[i]->GetTag() == -1 )
+  //      GetLattice().GetAsymmUnit().NullAtom( ACA[i]->GetId() );
+  //  GetLattice().GetAsymmUnit().PackAtoms(); // remove the NULL pointers
+  //}
   if( !report.IsEmpty() && Msg != NULL )  {
     (*Msg) << "Symmetrical equivalents: ";
     (*Msg) << report.Text(';');

@@ -21,6 +21,10 @@
 #include "atomsort.h"
 #include "infotab.h"
 
+enum {
+  XFILE_SG_Change,
+  XFILE_UNIQ
+};
 //---------------------------------------------------------------------------
 // TBasicCFile function bodies
 //---------------------------------------------------------------------------
@@ -75,10 +79,10 @@ void TBasicCFile::LoadFromFile(const olxstr& fn)  {
 //----------------------------------------------------------------------------//
 TXFile::TXFile() : RefMod(Lattice.GetAsymmUnit())  {
   Lattice.GetAsymmUnit().SetRefMod(&RefMod);
-  AActionHandler::SetToDelete(false);
-  Lattice.GetAsymmUnit().OnSGChange->Add(this); 
+  Lattice.GetAsymmUnit().OnSGChange->Add(this, XFILE_SG_Change); 
   OnFileLoad = &Actions.NewQueue("XFILELOAD");
   OnFileSave = &Actions.NewQueue("XFILESAVE");
+  Lattice.OnStructureUniq->Add(this, XFILE_UNIQ);
   FLastLoader = NULL;
   FSG = NULL;
 }
@@ -116,10 +120,23 @@ void TXFile::LastLoaderChanged() {
   OnFileLoad->Exit(this);
 }
 //..............................................................................
-bool TXFile::Execute(const IEObject *Sender, const IEObject *Data)  {
-  if( Data == NULL || !EsdlInstanceOf(*Data, TSpaceGroup) )
-    throw TInvalidArgumentException(__OlxSourceInfo, "space group");
-  FSG = const_cast<TSpaceGroup*>( dynamic_cast<const TSpaceGroup*>(Data) );
+bool TXFile::Dispatch(int MsgId, short MsgSubId, const IEObject* Sender, const IEObject* Data) {
+  if( MsgId == XFILE_SG_Change )  {
+    if( Data == NULL || !EsdlInstanceOf(*Data, TSpaceGroup) )
+      throw TInvalidArgumentException(__OlxSourceInfo, "space group");
+    FSG = const_cast<TSpaceGroup*>( dynamic_cast<const TSpaceGroup*>(Data) );
+  }
+  else if( MsgId == XFILE_UNIQ && MsgSubId == msiEnter )  {
+    //RefMod.Validate();
+    //UpdateAsymmUnit();
+    //GetAsymmUnit().PackAtoms();
+    //if( !FLastLoader->IsNative() )  {
+    //  FLastLoader->GetRM().Validate();
+    //  FLastLoader->GetAsymmUnit().PackAtoms();
+    //}
+  }
+  else
+    return false;
   return true;
 }
 //..............................................................................
@@ -161,6 +178,8 @@ void TXFile::LoadFromFile(const olxstr & FN) {
 void TXFile::UpdateAsymmUnit()  {
   //TLattice *L = GetLattice();
   TBasicCFile* LL = FLastLoader;
+  if( LL->IsNative() )
+    return;
   GetLattice().UpdateAsymmUnit();
   LL->GetAsymmUnit().ClearResidues(false);
   LL->GetAsymmUnit().ClearEllps();
@@ -216,17 +235,11 @@ void TXFile::Sort(const TStrList& ins)  {
       TBasicApp::GetLog().Error("Hydrogen atoms, which are not attached using AFIX will not be kept with pivot atom until the file is reloaded");
   }
   try {
+    AtomSorter::CombiSort cs;
+    olxstr sort;
     for( int i=0; i < ins.Count(); i++ )  {
-      if( ins[i].Comparei("Mw") == 0 )
-        AtomSorter::Sort(list, AtomSorter::atom_cmp_Mw);
-      else if( ins[i].Comparei("l") == 0 )
-        AtomSorter::Sort(list, AtomSorter::atom_cmp_Label);
-      else if( ins[i].Comparei("MwL") == 0 )
-        AtomSorter::Sort(list, AtomSorter::atom_cmp_Mw_Label);
-      else if( ins[i].Comparei("l1") == 0 )
-        AtomSorter::Sort(list, AtomSorter::atom_cmp_Label1);
-      else if( ins[i].Comparei("h-") == 0 )
-        keeph = false;
+      if( ins[i].CharAt(0) == '+' )
+        sort << ins[i].SubStringFrom(i);
       else if( ins[i].Comparei("moiety") == 0 )  {
         moiety_index = i;
         break;
@@ -234,21 +247,38 @@ void TXFile::Sort(const TStrList& ins)  {
       else
         labels.Add(ins[i]);
     }
+    for( int i=0; i < sort.Length(); i++ )  {
+      if( sort.CharAt(i) == 'm' )
+        cs.sequence.Add(&AtomSorter::atom_cmp_Mw);
+      else if( sort.CharAt(i) == 'l' )
+        cs.sequence.Add(&AtomSorter::atom_cmp_Label);
+      else if( sort.CharAt(i) == 'p' )
+        cs.sequence.Add(&AtomSorter::atom_cmp_Part);
+      else if( sort.CharAt(i) == 'h' )
+        keeph = false;
+    }
+    if( !cs.sequence.IsEmpty() )
+      AtomSorter::Sort(list, cs);
     if( !labels.IsEmpty() )  {
       AtomSorter::SortByName(list, labels);
       labels.Clear();
     }
     if( moiety_index != -1 )  {
+      sort = EmptyString;
       if( moiety_index+1 < ins.Count() )  {
         for( int i=moiety_index+1; i < ins.Count(); i++ )  {
-          if( ins[i].Comparei("s") == 0 )  
-            MoietySorter::SortBySize(list);
-          else if( ins[i].Comparei("h") == 0 )  
-            MoietySorter::SortByHeaviestElement(list);
-          else if( ins[i].Comparei("Mw") == 0 )  
-            MoietySorter::SortByWeight(list);
+          if( ins[i].CharAt(0) == '+' )
+            sort << ins[i].SubStringFrom(1);
           else
             labels.Add(ins[i]);
+        }
+        for( int i=0; i < sort.Length(); i++ )  {
+          if( sort.CharAt(i) == 's' )
+            MoietySorter::SortBySize(list);
+          else if( sort.CharAt(i) == 'h' )
+            MoietySorter::SortByHeaviestElement(list);
+          else if( sort.CharAt(i) == 'm' )  
+            MoietySorter::SortByWeight(list);
         }
         if( !labels.IsEmpty() )
           MoietySorter::SortByMoietyAtom(list, labels);
