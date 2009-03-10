@@ -1,0 +1,308 @@
+<?xml version='1.0' encoding='utf-8' ?>
+<!-- C++Builder XML Project -->
+<PROJECT>
+  <MACROS>
+    <VERSION value="BCB.06.00"/>
+    <PROJECT value="exe\olex2.exe"/>
+    <OBJFILES value="build\cmdline.obj build\ctrls.obj build\dgenopt.obj build\dgrad.obj 
+      build\edit.obj build\htmlext.obj build\imagep.obj build\mainform.obj 
+      build\matprop.obj build\obase.obj build\primtvs.obj build\ptable.obj 
+      build\scenep.obj build\updateoptions.obj build\xglapp.obj 
+      build\xglcanv.obj build\xpprocs.obj build\eaccell.obj build\filesystem.obj 
+      build\httpex.obj build\pyext.obj build\shellutil.obj build\url.obj 
+      build\wxhttpfs.obj build\integration.obj build\IsoSurface.obj 
+      build\langdict.obj build\fsext.obj build\eprocess.obj build\olxvar.obj"/>
+    <RESFILES value="..\..\..\olex\olex2.res"/>
+    <DEFFILE value=""/>
+    <RESDEPEN value="$(RESFILES)"/>
+    <LIBFILES value="lib\gllib.lib lib\sdl.lib lib\xlib.lib lib\gxlib.lib lib\python25.lib 
+      &quot;C:\Program Files\Borland\CBuilder6\Lib\cw32mt.lib&quot; lib\alglib.lib 
+      E:\wxWidgets-2.8.7\lib\bcc_lib\wxmsw28d_html.lib 
+      E:\wxWidgets-2.8.7\lib\bcc_lib\wxbase28d.lib 
+      E:\wxWidgets-2.8.7\lib\bcc_lib\wxmsw28d_gl.lib 
+      E:\wxWidgets-2.8.7\lib\bcc_lib\wxbase28d_net.lib 
+      E:\wxWidgets-2.8.7\lib\bcc_lib\wxbase28d_xml.lib 
+      E:\wxWidgets-2.8.7\lib\bcc_lib\wxexpatd.lib 
+      E:\wxWidgets-2.8.7\lib\bcc_lib\wxjpegd.lib 
+      E:\wxWidgets-2.8.7\lib\bcc_lib\wxmsw28d_adv.lib 
+      E:\wxWidgets-2.8.7\lib\bcc_lib\wxmsw28d_aui.lib 
+      E:\wxWidgets-2.8.7\lib\bcc_lib\wxmsw28d_core.lib 
+      E:\wxWidgets-2.8.7\lib\bcc_lib\wxmsw28d_media.lib 
+      E:\wxWidgets-2.8.7\lib\bcc_lib\wxmsw28d_richtext.lib 
+      E:\wxWidgets-2.8.7\lib\bcc_lib\wxmsw28d_xrc.lib 
+      E:\wxWidgets-2.8.7\lib\bcc_lib\wxpngd.lib 
+      E:\wxWidgets-2.8.7\lib\bcc_lib\wxregexd.lib 
+      E:\wxWidgets-2.8.7\lib\bcc_lib\wxtiffd.lib 
+      E:\wxWidgets-2.8.7\lib\bcc_lib\wxzlibd.lib"/>
+    <LIBRARIES value="rtl.lib"/>
+    <SPARELIBS value="rtl.lib"/>
+    <PACKAGES value="vcl.bpi rtl.bpi vclx.bpi bcbsmp.bpi dbrtl.bpi adortl.bpi vcldb.bpi 
+      qrpt.bpi bdertl.bpi vcldbx.bpi dsnap.bpi cds.bpi bdecds.bpi teeui.bpi 
+      teedb.bpi tee.bpi teeqr.bpi ibxpress.bpi visualclx.bpi visualdbclx.bpi 
+      vclie.bpi xmlrtl.bpi inet.bpi inetdbbde.bpi inetdbxpress.bpi nmfast.bpi 
+      bcbie.bpi soaprtl.bpi dclocx.bpi dbexpress.bpi dbxcds.bpi indy.bpi 
+      bcb2kaxserver.bpi dclusr.bpi inetdb.bpi"/>
+    <PATHCPP value=".;..\..\..\olex;..\..\..\repository"/>
+    <PATHPAS value=".;"/>
+    <PATHRC value=".;"/>
+    <PATHASM value=".;"/>
+    <DEBUGLIBPATH value="$(BCB)\lib\debug"/>
+    <RELEASELIBPATH value="$(BCB)\lib\release"/>
+    <LINKER value="ilink32"/>
+    <USERDEFINES value=";__WINDOWS__;__WXMSW__;__WXWIDGETS__;__WXDEBUG__;__OD_BUILD__;_DEBUG;"/>
+    <SYSDEFINES value="NO_STRICT;_NO_VCL"/>
+    <MAINSOURCE value="olex2.bpf"/>
+    <INCLUDEPATH value="..\..\..\olex\macro;..\..\..\olex;..\..\..\sdl;&quot;C:\Program Files\Borland\CBuilder6\Projects&quot;;..\..\..\repository;..\..\..\glib;..\..\..\xlib;..\..\..\gxlib;..\..;$(BCB)\include;$(BCB)\include\vcl;E:\wxWidgets-2.8.7\include;E:\wxWidgets-2.8.7\lib\bcc_lib\mswd;C:\Python25\include"/>
+    <LIBPATH value="..\..\..\xlib;..\..\..\olex\macro;&quot;C:\Program Files\Borland\CBuilder6\Projects&quot;;..\..\..\repository;..\..\..\olex;..\..;$(BCB)\Projects\Lib;$(BCB)\lib\obj;$(BCB)\lib;&quot;E:\wxWidgets-2.8.7\lib\bcc_lib&quot;"/>
+    <WARNINGS value="-w8092 -w8091 -wucp -wstv -w-par -wnod -wnak -wdef -wamb"/>
+    <OTHERFILES value=""/>
+  </MACROS>
+  <OPTIONS>
+    <CFLAG1 value="-vGc -vGt -vGd -Od -H=$(BCB)\lib\vcl60.csm -Hc -Vx -Ve -xp -ff -X- -r- -a8 
+      -6 -b -d -k -y -v -vi- -tW -tWM- -c"/>
+    <PFLAGS value="-N2build -N0build -$Y+ -$W -$O- -$A8 -v -JPHNE -M -tWM"/>
+    <RFLAGS value=""/>
+    <AFLAGS value="/mx /w2 /zi"/>
+    <LFLAGS value="-Ibuild -D&quot;&quot; -c- -H:0x200000 -S:0x200000 -aa -Tpe -x -Gn -v"/>
+    <OTHERFILES value=""/>
+  </OPTIONS>
+  <LINKER>
+    <ALLOBJ value="c0w32.obj $(OBJFILES)"/>
+    <ALLRES value="$(RESFILES)"/>
+    <ALLLIB value="cg32.lib $(LIBFILES) $(LIBRARIES) import32.lib cw32.lib"/>
+    <OTHERFILES value=""/>
+  </LINKER>
+  <FILELIST>
+      <FILE FILENAME="olex2.bpf" FORMNAME="" UNITNAME="olex2" CONTAINERID="BPF" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\olex\cmdline.cpp" FORMNAME="" UNITNAME="cmdline.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\olex\ctrls.cpp" FORMNAME="" UNITNAME="ctrls.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\olex\dgenopt.cpp" FORMNAME="" UNITNAME="dgenopt.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\olex\dgrad.cpp" FORMNAME="" UNITNAME="dgrad.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\olex\edit.cpp" FORMNAME="" UNITNAME="edit.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\olex\htmlext.cpp" FORMNAME="" UNITNAME="htmlext.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\olex\imagep.cpp" FORMNAME="" UNITNAME="imagep.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\olex\mainform.cpp" FORMNAME="" UNITNAME="mainform.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\olex\matprop.cpp" FORMNAME="" UNITNAME="matprop.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\olex\obase.cpp" FORMNAME="" UNITNAME="obase.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\olex\primtvs.cpp" FORMNAME="" UNITNAME="primtvs.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\olex\ptable.cpp" FORMNAME="" UNITNAME="ptable.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\olex\scenep.cpp" FORMNAME="" UNITNAME="scenep.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\olex\updateoptions.cpp" FORMNAME="" UNITNAME="updateoptions.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\olex\xglapp.cpp" FORMNAME="" UNITNAME="xglapp.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\olex\xglcanv.cpp" FORMNAME="" UNITNAME="xglcanv.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\olex\xpprocs.cpp" FORMNAME="" UNITNAME="xpprocs.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\repository\eaccell.cpp" FORMNAME="" UNITNAME="eaccell.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\repository\filesystem.cpp" FORMNAME="" UNITNAME="filesystem.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\repository\httpex.cpp" FORMNAME="" UNITNAME="httpex.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\repository\pyext.cpp" FORMNAME="" UNITNAME="pyext.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\repository\shellutil.cpp" FORMNAME="" UNITNAME="shellutil.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\repository\url.cpp" FORMNAME="" UNITNAME="url.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\repository\wxhttpfs.cpp" FORMNAME="" UNITNAME="wxhttpfs.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="lib\gllib.lib" FORMNAME="" UNITNAME="gllib.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="lib\sdl.lib" FORMNAME="" UNITNAME="sdl.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="lib\xlib.lib" FORMNAME="" UNITNAME="xlib.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="lib\gxlib.lib" FORMNAME="" UNITNAME="gxlib.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="lib\python25.lib" FORMNAME="" UNITNAME="python25.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\olex\olex2.res" FORMNAME="" UNITNAME="olex2.res" CONTAINERID="ResTool" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="C:\Program Files\Borland\CBuilder6\Lib\cw32mt.lib" FORMNAME="" UNITNAME="cw32mt.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="lib\alglib.lib" FORMNAME="" UNITNAME="alglib.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\repository\integration.cpp" FORMNAME="" UNITNAME="integration" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\repository\IsoSurface.cpp" FORMNAME="" UNITNAME="IsoSurface" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\olex\langdict.cpp" FORMNAME="" UNITNAME="langdict" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\repository\fsext.cpp" FORMNAME="" UNITNAME="fsext" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\repository\eprocess.cpp" FORMNAME="" UNITNAME="eprocess" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\repository\olxvar.cpp" FORMNAME="" UNITNAME="olxvar" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="E:\wxWidgets-2.8.7\lib\bcc_lib\wxmsw28d_html.lib" FORMNAME="" UNITNAME="wxmsw28d_html.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="E:\wxWidgets-2.8.7\lib\bcc_lib\wxbase28d.lib" FORMNAME="" UNITNAME="wxbase28d.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="E:\wxWidgets-2.8.7\lib\bcc_lib\wxmsw28d_gl.lib" FORMNAME="" UNITNAME="wxmsw28d_gl.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="E:\wxWidgets-2.8.7\lib\bcc_lib\wxbase28d_net.lib" FORMNAME="" UNITNAME="wxbase28d_net.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="E:\wxWidgets-2.8.7\lib\bcc_lib\wxbase28d_xml.lib" FORMNAME="" UNITNAME="wxbase28d_xml.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="E:\wxWidgets-2.8.7\lib\bcc_lib\wxexpatd.lib" FORMNAME="" UNITNAME="wxexpatd.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="E:\wxWidgets-2.8.7\lib\bcc_lib\wxjpegd.lib" FORMNAME="" UNITNAME="wxjpegd.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="E:\wxWidgets-2.8.7\lib\bcc_lib\wxmsw28d_adv.lib" FORMNAME="" UNITNAME="wxmsw28d_adv.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="E:\wxWidgets-2.8.7\lib\bcc_lib\wxmsw28d_aui.lib" FORMNAME="" UNITNAME="wxmsw28d_aui.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="E:\wxWidgets-2.8.7\lib\bcc_lib\wxmsw28d_core.lib" FORMNAME="" UNITNAME="wxmsw28d_core.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="E:\wxWidgets-2.8.7\lib\bcc_lib\wxmsw28d_media.lib" FORMNAME="" UNITNAME="wxmsw28d_media.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="E:\wxWidgets-2.8.7\lib\bcc_lib\wxmsw28d_richtext.lib" FORMNAME="" UNITNAME="wxmsw28d_richtext.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="E:\wxWidgets-2.8.7\lib\bcc_lib\wxmsw28d_xrc.lib" FORMNAME="" UNITNAME="wxmsw28d_xrc.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="E:\wxWidgets-2.8.7\lib\bcc_lib\wxpngd.lib" FORMNAME="" UNITNAME="wxpngd.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="E:\wxWidgets-2.8.7\lib\bcc_lib\wxregexd.lib" FORMNAME="" UNITNAME="wxregexd.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="E:\wxWidgets-2.8.7\lib\bcc_lib\wxtiffd.lib" FORMNAME="" UNITNAME="wxtiffd.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="E:\wxWidgets-2.8.7\lib\bcc_lib\wxzlibd.lib" FORMNAME="" UNITNAME="wxzlibd.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
+  </FILELIST>
+  <BUILDTOOLS>
+  </BUILDTOOLS>
+
+  <IDEOPTIONS>
+[Version Info]
+IncludeVerInfo=1
+AutoIncBuild=1
+MajorVer=1
+MinorVer=1
+Release=2
+Build=6
+Debug=1
+PreRelease=1
+Special=0
+Private=0
+DLL=0
+Locale=2057
+CodePage=1252
+
+[Version Info Keys]
+CompanyName=University of Durham
+FileDescription=OLEX II
+FileVersion=1.1.2.6
+InternalName=OLEX II
+LegalCopyright=Oleg Dolomanov, Horst Puschmann
+LegalTrademarks=
+OriginalFilename=olex2.exe
+ProductName=OLEX II
+ProductVersion=1.0.0.0
+Comments=
+
+[Excluded Packages]
+c:\program files\borland\cbuilder6\Bin\dclite60.bpl=Borland Integrated Translation Environment
+
+[HistoryLists\hlIncludePath]
+Count=30
+Item0=..\..\..\olex\macro;..\..\..\olex;..\..\..\sdl;C:\Program Files\Borland\CBuilder6\Projects;..\..\..\repository;..\..\..\glib;..\..\..\xlib;..\..\..\gxlib;..\..;$(BCB)\include;$(BCB)\include\vcl;E:\wxWidgets-2.8.7\include;E:\wxWidgets-2.8.7\lib\bcc_lib\mswd;C:\Python25\include
+Item1=..\..\..\olex\macro;..\..\..\olex;..\..\..\sdl;C:\Program Files\Borland\CBuilder6\Projects;..\..\..\repository;..\..\..\glib;..\..\..\xlib;..\..\..\gxlib;..\..;$(BCB)\include;$(BCB)\include\vcl;E:\wxWidgets-2.8.7\include;E:\wxWidgets-2.8.7\lib\bcc_lib\mswud;C:\Python25\include
+Item2=..\..\..\olex\macro;..\..\..\olex;..\..\..\sdl;C:\Program Files\Borland\CBuilder6\Projects;..\..\..\repository;..\..\..\glib;..\..\..\xlib;..\..\..\gxlib;..\..;$(BCB)\include;$(BCB)\include\vcl;E:\wxWidgets-2.8.3\include;E:\wxWidgets-2.8.3\include\wx;E:\wxWidgets-2.8.3\lib\bcc_lib\mswud;C:\Python25\include
+Item3=..\..\..\olex\macro;..\..\..\olex;..\..\..\sdl;C:\Program Files\Borland\CBuilder6\Projects;..\..\..\repository;..\..\..\glib;..\..\..\xlib;..\..\..\gxlib;..\..;$(BCB)\include;$(BCB)\include\vcl;E:\wxWidgets-2.8.3\include;E:\wxWidgets-2.8.3\include\wx;E:\wxWidgets-2.8.3\lib\bcc_lib\mswd;C:\Python25\include
+Item4=..\..\..\olex\macro;..\..\..\olex;..\..\..\sdl;C:\Program Files\Borland\CBuilder6\Projects;..\..\..\repository;..\..\..\glib;..\..\..\xlib;..\..\..\gxlib;..\..;$(BCB)\include;$(BCB)\include\vcl;E:\wxWidgets-2.8.7\include;E:\wxWidgets-2.8.7\include\wx;E:\wxWidgets-2.8.7\lib\bcc_lib\mswud;C:\Python25\include
+Item5=..\..\..\olex\macro;..\..\..\olex;..\..\..\sdl;C:\Program Files\Borland\CBuilder6\Projects;..\..\..\repository;..\..\..\glib;..\..\..\xlib;..\..\..\gxlib;..\..;$(BCB)\include;$(BCB)\include\vcl;E:\wxWidgets-2.8.7\include;E:\wxWidgets-2.8.7\include\wx;E:\wxWidgets-2.8.7\lib\bcc_lib\mswd;C:\Python25\include
+Item6=..\..\..\olex\macro;..\..\..\olex;..\..\..\sdl;C:\Program Files\Borland\CBuilder6\Projects;..\..\..\repository;..\..\..\glib;..\..\..\xlib;..\..\..\gxlib;..\..;$(BCB)\include;$(BCB)\include\vcl;E:\wxWidgets-2.8.7\include;E:\wxWidgets-2.8.7\include\wx;E:\wxWidgets-2.8.7\lib\bcc_lib\msud;C:\Python25\include
+Item7=..\..\..\olex\macro;C:\Program Files\Borland\CBuilder6\Projects;..\..\..\olex;..\..\..\sdl;..\..\..\repository;..\..\..\glib;..\..\..\xlib;..\..\..\gxlib;..\..;$(BCB)\include;$(BCB)\include\vcl;E:\wxWidgets-2.8.7\include;E:\wxWidgets-2.8.7\include\wx;E:\wxWidgets-2.8.7\lib\bcc_lib\mswd;C:\Python25\include
+Item8=..\..\..\olex\macro;C:\Program Files\Borland\CBuilder6\Projects;C:\Program Files (x86)\Borland\CBuilder6\Projects;..\..\..\olex;..\..\..\sdl;..\..\..\repository;..\..\..\glib;..\..\..\xlib;..\..\..\gxlib;..\..;$(BCB)\include;$(BCB)\include\vcl;E:\wxWidgets-2.8.3\include;E:\wxWidgets-2.8.3\include\wx;E:\wxWidgets-2.8.3\lib\bcc_lib\mswd;C:\Python25\include
+Item9=C:\Program Files\Borland\CBuilder6\Projects;C:\Program Files (x86)\Borland\CBuilder6\Projects;..\..\..\olex;..\..\..\sdl;..\..\..\repository;..\..\..\glib;..\..\..\xlib;..\..\..\gxlib;..\..;$(BCB)\include;$(BCB)\include\vcl;E:\wxWidgets-2.8.3\include;E:\wxWidgets-2.8.3\include\wx;E:\wxWidgets-2.8.3\lib\bcc_lib\mswd;C:\Python25\include
+Item10=C:\Program Files (x86)\Borland\CBuilder6\Projects;..\..\..\olex;..\..\..\sdl;..\..\..\repository;..\..\..\glib;..\..\..\xlib;..\..\..\gxlib;..\..;$(BCB)\include;$(BCB)\include\vcl;E:\wxWidgets-2.8.3\include;E:\wxWidgets-2.8.3\include\wx;E:\wxWidgets-2.8.3\lib\bcc_lib\mswd;C:\Python25\include
+Item11=..\..\..\olex;..\..\..\sdl;..\..\..\repository;..\..\..\glib;..\..\..\xlib;..\..\..\gxlib;..\..;$(BCB)\include;$(BCB)\include\vcl;E:\wxWidgets-2.8.3\include;E:\wxWidgets-2.8.3\include\wx;E:\wxWidgets-2.8.3\lib\bcc_lib\mswd;C:\Python25\include
+Item12=..\..\..\olex;..\..\..\sdl;..\..\..\repository;..\..\..\glib;..\..\..\xlib;..\..\..\gxlib;..\..;$(BCB)\include;$(BCB)\include\vcl;E:\wxWidgets-2.8.4\include;E:\wxWidgets-2.8.4\include\wx;E:\wxWidgets-2.8.4\lib\bcc_lib\mswd;C:\Python25\include
+Item13=..\..\..\..\repository;..\..\..\olex;..\..\..\sdl;..\..\..\repository;..\..\..\glib;..\..\..\xlib;..\..\..\gxlib;..\..;$(BCB)\include;$(BCB)\include\vcl;E:\wxWidgets-2.8.3\include;E:\wxWidgets-2.8.3\include\wx;E:\wxWidgets-2.8.3\lib\bcc_lib\mswd;C:\Python25\include
+Item14=..\..\..\..\repository;..\..\..\olex;..\..\X-net\sdl;..\..\repository;..\..\X-net\gllib;..\..\X-net\xlib;..\..\X-net\gxlib;..\..;$(BCB)\include;$(BCB)\include\vcl;E:\wxWidgets-2.8.0\include;E:\wxWidgets-2.8.0\include\wx;E:\wxWidgets-2.8.0\lib\bcc_lib\mswd;C:\Python25\include
+Item15=..\..\X-net\sdl;..\..\repository;..\..\X-net\gllib;..\..\X-net\xlib;..\..\X-net\gxlib;..\..;$(BCB)\include;$(BCB)\include\vcl;E:\wxWidgets-2.8.0\include;E:\wxWidgets-2.8.0\include\wx;E:\wxWidgets-2.8.0\lib\bcc_lib\mswd;C:\Python25\include
+Item16=..\..\X-net\sdl;..\..\repository;..\..\X-net\gllib;..\..\X-net\xlib;..\..\X-net\gxlib;..\..;$(BCB)\include;$(BCB)\include\vcl;E:\wxWidgets-2.7.0-1\include;E:\wxWidgets-2.7.0-1\include\wx;E:\wxWidgets-2.7.0-1\lib\bcc_lib\mswd;C:\Python25\include
+Item17=..\..\X-net\sdl;..\..\repository;..\..\X-net\gllib;..\..\X-net\xlib;..\..\X-net\gxlib;..\..;$(BCB)\include;$(BCB)\include\vcl;E:\wxWidgets-2.7.0-1\include;E:\wxWidgets-2.7.0-1\include\wx;E:\wxWidgets-2.7.0-1\lib\bcc_lib\mswd;C:\Python24\include
+Item18=..\..\repository;..\..\X-net\gllib;..\..\X-net\xlib;..\..\X-net\gxlib;..\..;$(BCB)\include;$(BCB)\include\vcl;E:\wxWidgets-2.7.0-1\include;E:\wxWidgets-2.7.0-1\include\wx;E:\wxWidgets-2.7.0-1\lib\bcc_lib\mswd;C:\Python24\include;..\..\X-net\sdl
+Item19=..\..\repository;..\..\X-net\gllib;..\..\X-net\xlib;..\..\X-net\gxlib;..\..;$(BCB)\include;$(BCB)\include\vcl;C:\Program Files\Borland\CBuilder6\Projects\X-net\sdl;E:\wxWidgets-2.7.0-1\include;E:\wxWidgets-2.7.0-1\include\wx;E:\wxWidgets-2.7.0-1\lib\bcc_lib\mswd;C:\Python24\include
+Item20=..\..\repository;..\..\X-net\gllib;..\..\X-net\xlib;..\..\X-net\gxlib;..\..;$(BCB)\include;$(BCB)\include\vcl;C:\Program Files\Borland\CBuilder6\Projects\X-net\sdl;E:\wxWidgets-2.7.0-1\include;E:\wxWidgets-2.7.0-1\include\wx;E:\wxWidgets-2.7.0-1\lib\bcc_lib\mswd;C:\Program Files\Borland\CBuilder6\Projects\repository;C:\Python24\include
+Item21=..\..\X-net\gllib;..\..\X-net\xlib;..\..\X-net\gxlib;..\..;$(BCB)\include;$(BCB)\include\vcl;C:\Program Files\Borland\CBuilder6\Projects\X-net\sdl;E:\wxWidgets-2.7.0-1\include;E:\wxWidgets-2.7.0-1\include\wx;E:\wxWidgets-2.7.0-1\lib\bcc_lib\mswd;C:\Program Files\Borland\CBuilder6\Projects\repository;C:\Python24\include
+Item22=..\..\X-net\gllib;..\..\X-net\xlib;..\..\X-net\gxlib;..\..;$(BCB)\include;$(BCB)\include\vcl;C:\Program Files\Borland\CBuilder6\Projects\X-net\sdl;E:\wxWidgets-2.7.0-1\include;E:\wxWidgets-2.7.0-1\include\wx;E:\wxWidgets-2.7.0-1\lib\bcc_lib\mswd;C:\Program Files\Borland\CBuilder6\Projects\repository
+Item23=..\..\X-net\gllib;..\..\X-net\xlib;..\..\X-net\gxlib;..\..;$(BCB)\include;$(BCB)\include\vcl;C:\Program Files\Borland\CBuilder6\Projects\X-net\sdl;E:\wxWidgets-2.7.0-1\include;E:\wxWidgets-2.7.0-1\include\wx;E:\wxWidgets-2.7.0-1\lib\bcc_lib\mswd
+Item24=..\..;$(BCB)\include;$(BCB)\include\vcl;C:\Program Files\Borland\CBuilder6\Projects\X-net\sdl;E:\wxWidgets-2.7.0-1\include;E:\wxWidgets-2.7.0-1\include\wx;E:\wxWidgets-2.7.0-1\lib\bcc_lib\mswd;..\..\X-net\xlib;..\..\X-net\gllib
+Item25=..\..;$(BCB)\include;$(BCB)\include\vcl;C:\Program Files\Borland\CBuilder6\Projects\X-net\sdl;E:\wxWidgets-2.5.3\include;E:\wxWidgets-2.5.3\include\wx;E:\wxWidgets-2.5.3\lib\bcc_lib\mswd;..\..\X-net\xlib;..\..\X-net\gllib
+Item26=..\..;$(BCB)\include;$(BCB)\include\vcl;C:\Program Files\Borland\CBuilder6\Projects\X-net\sdl;E:\wxWidgets-2.5.3\include;E:\wxWidgets-2.5.3\include\wx;E:\wxWidgets-2.5.3\lib\bcc_lib\mswd;..\..\X-net\xlib;..\..\X-net\gllib;..\..\X-net\sdl
+Item27=..\..\X-net\stdl;..\..;$(BCB)\include;$(BCB)\include\vcl;C:\Program Files\Borland\CBuilder6\Projects\X-net\sdl;E:\wxWidgets-2.5.3\include;E:\wxWidgets-2.5.3\include\wx;E:\wxWidgets-2.5.3\lib\bcc_lib\mswd
+Item28=..\..\X-net\stdl;..\..;Test\wx;$(BCB)\include;$(BCB)\include\vcl;E:\wxWindows\include;E:\wxWindows-2.4.2\include;E:\wxWindows-2.4.2\lib\msw;E:\wxWindows\lib\msw;C:\Program Files\Borland\CBuilder6\Projects\X-net\sdl
+Item29=..\..\X-net\stdl;..\..;Test\wx;$(BCB)\include;$(BCB)\include\vcl;E:\wxWindows\include;E:\wxWindows-2.4.2\include;E:\wxWindows-2.4.2\lib\msw;E:\wxWindows\lib\msw
+
+[HistoryLists\hlLibraryPath]
+Count=18
+Item0=..\..\..\xlib;..\..\..\olex\macro;C:\Program Files\Borland\CBuilder6\Projects;..\..\..\repository;..\..\..\olex;..\..;$(BCB)\Projects\Lib;$(BCB)\lib\obj;$(BCB)\lib;E:\wxWidgets-2.8.7\lib\bcc_lib
+Item1=..\..\..\xlib;..\..\..\olex\macro;C:\Program Files\Borland\CBuilder6\Projects;C:\Program Files (x86)\Borland\CBuilder6\Projects;..\..\..\repository;..\..\..\..\repository;..\..\..\olex;..\..\X-net\sdl;..\..\repository;..\..;$(BCB)\Projects\Lib;$(BCB)\lib\obj;$(BCB)\lib;E:\wxWidgets-2.5.3\lib\bcc_lib
+Item2=C:\Program Files\Borland\CBuilder6\Projects;C:\Program Files (x86)\Borland\CBuilder6\Projects;..\..\..\repository;..\..\..\..\repository;..\..\..\olex;..\..\X-net\sdl;..\..\repository;..\..;$(BCB)\Projects\Lib;$(BCB)\lib\obj;$(BCB)\lib;E:\wxWidgets-2.5.3\lib\bcc_lib
+Item3=C:\Program Files (x86)\Borland\CBuilder6\Projects;..\..\..\repository;..\..\..\..\repository;..\..\..\olex;..\..\X-net\sdl;..\..\repository;..\..;$(BCB)\Projects\Lib;$(BCB)\lib\obj;$(BCB)\lib;E:\wxWidgets-2.5.3\lib\bcc_lib
+Item4=..\..\..\repository;..\..\..\..\repository;..\..\..\olex;..\..\X-net\sdl;..\..\repository;..\..;$(BCB)\Projects\Lib;$(BCB)\lib\obj;$(BCB)\lib;E:\wxWidgets-2.5.3\lib\bcc_lib
+Item5=..\..\..\..\repository;..\..\..\olex;..\..\X-net\sdl;..\..\repository;..\..;$(BCB)\Projects\Lib;$(BCB)\lib\obj;$(BCB)\lib;E:\wxWidgets-2.5.3\lib\bcc_lib
+Item6=..\..\X-net\sdl;..\..\repository;..\..;$(BCB)\Projects\Lib;$(BCB)\lib\obj;$(BCB)\lib;E:\wxWidgets-2.5.3\lib\bcc_lib
+Item7=..\..;$(BCB)\Projects\Lib;$(BCB)\lib\obj;$(BCB)\lib;E:\wxWidgets-2.5.3\lib\bcc_lib
+Item8=$(BCB)\Projects\Lib;$(BCB)\lib\obj;$(BCB)\lib;E:\wxWidgets-2.5.3\lib\bcc_lib
+Item9=..\..\X-net\stdl;..\..;$(BCB)\Projects\Lib;$(BCB)\lib\obj;$(BCB)\lib;E:\wxWidgets-2.5.3\lib\bcc_lib;C:\Program Files\Borland\CBuilder6\Lib\Debug
+Item10=..\..\X-net\stdl;..\..;$(BCB)\Projects\Lib;$(BCB)\lib\obj;$(BCB)\lib;E:\wxWidgets-2.5.3\lib\bcc_lib
+Item11=..\..\X-net\stdl;..\..;$(BCB)\Projects\Lib;Test\wx;$(BCB)\lib\obj;$(BCB)\lib;E:\wxWindows\lib;E:\wxWindows\lib\bcc_lib;E:\Program Files\Borland\CBuilder6\Lib\Psdk
+Item12=..\..\X-net\stdl;..\..;$(BCB)\Projects\Lib;Test\wx;$(BCB)\lib\obj;$(BCB)\lib;E:\wxWindows\lib;E:\wxWindows\lib\bcc_lib
+Item13=..\..\X-net\stdl;..\..;$(BCB)\Projects\Lib;Test\wx;$(BCB)\lib\obj;$(BCB)\lib;E:\wxWindows\lib
+Item14=..\..;$(BCB)\Projects\Lib;Test\wx;$(BCB)\lib\obj;$(BCB)\lib;E:\wxWindows\lib
+Item15=$(BCB)\Projects\Lib;Test\wx;$(BCB)\lib\obj;$(BCB)\lib;E:\wxWindows\lib
+Item16=$(BCB)\Projects\Lib;Test\wx;$(BCB)\lib\obj;$(BCB)\lib;E:\wxWindows-2.4.2\lib
+Item17=$(BCB)\Projects\Lib;Test\wx;$(BCB)\lib\obj;$(BCB)\lib
+
+[HistoryLists\hlDebugSourcePath]
+Count=22
+Item0=$(BCB)\source\vcl;E:\wxWidgets-2.8.7\src\common\;E:\wxWidgets-2.8.7\src\generic\;E:\wxWidgets-2.8.7\src\msw\;E:\wxWidgets-2.8.7\src\html\;E:\wxWidgets-2.8.7\include\wx\;E:\wxWidgets-2.8.7\include\wx\html\
+Item1=$(BCB)\source\vcl;E:\wxWidgets-2.8.3\src\common\;E:\wxWidgets-2.8.3\src\generic\;E:\wxWidgets-2.8.3\src\msw\;E:\wxWidgets-2.8.3\src\html\;E:\wxWidgets-2.8.3\include\wx\;E:\wxWidgets-2.8.3\include\wx\html\
+Item2=$(BCB)\source\vcl;E:\wxWidgets-2.8.3\src\common\;E:\wxWidgets-2.8.3\src\generic\;E:\wxWidgets-2.8.3\src\msw\;E:\wxWidgets-2.8.3\src\html\
+Item3=$(BCB)\source\vcl
+Item4=$(BCB)\source\vcl;C:\Program Files\Borland\CBuilder6\Projects\X-net\sdl\;C:\Program Files\Borland\CBuilder6\Projects\X-net\gllib\;C:\Program Files\Borland\CBuilder6\Projects\X-net\xlib\;E:\wxWidgets-2.8.0\src\msw\;E:\wxWidgets-2.8.0\src\html\;E:\wxWidgets-2.8.0\src\generic\;E:\wxWidgets-2.8.0\src\common\;E:\wxWidgets-2.8.0\include\wx\;E:\wxWidgets-2.8.0\include\wx\protocol\
+Item5=$(BCB)\source\vcl;C:\Program Files\Borland\CBuilder6\Projects\X-net\sdl\;C:\Program Files\Borland\CBuilder6\Projects\X-net\gllib\;C:\Program Files\Borland\CBuilder6\Projects\X-net\xlib\;E:\wxWidgets-2.8.0\src\msw\;E:\wxWidgets-2.8.0\src\html\;E:\wxWidgets-2.8.0\src\generic\;E:\wxWidgets-2.8.0\src\common\
+Item6=$(BCB)\source\vcl;C:\Program Files\Borland\CBuilder6\Projects\X-net\sdl\;C:\Program Files\Borland\CBuilder6\Projects\X-net\gllib\;C:\Program Files\Borland\CBuilder6\Projects\X-net\xlib\;E:\wxWidgets-2.8.0\src\msw\
+Item7=$(BCB)\source\vcl;C:\Program Files\Borland\CBuilder6\Projects\X-net\sdl\;C:\Program Files\Borland\CBuilder6\Projects\X-net\gllib\;C:\Program Files\Borland\CBuilder6\Projects\X-net\xlib\
+Item8=$(BCB)\source\vcl;E:\wxWindows-2.4.2\src\msw\;E:\wxWindows-2.4.2\src\common\;E:\wxWindows\src\msw\;E:\wxWindows\src\common\;E:\wxWindows\src\generic\;E:\wxWindows\src\msw\;E:\wxWidgets-2.5.3\src\common\;E:\wxWidgets-2.5.3\src\msw\;E:\wxWidgets-2.5.3\src\generic\;E:\wxWidgets-2.5.3\include\wx\generic\;E:\wxWidgets-2.5.3\include\wx\;E:\wxWidgets-2.5.3\src\html\;C:\Program Files\Borland\CBuilder6\Projects\X-net\sdl\;C:\Program Files\Borland\CBuilder6\Projects\X-net\gllib\;E:\wxWidgets-2.5.3\include\wx\msw\;C:\Program Files\Borland\CBuilder6\Projects\X-net\xlib\
+Item9=$(BCB)\source\vcl;E:\wxWindows-2.4.2\src\msw\;E:\wxWindows-2.4.2\src\common\;E:\wxWindows\src\msw\;E:\wxWindows\src\common\;E:\wxWindows\src\generic\;E:\wxWindows\src\msw\;E:\wxWidgets-2.5.3\src\common\;E:\wxWidgets-2.5.3\src\msw\;E:\wxWidgets-2.5.3\src\generic\;E:\wxWidgets-2.5.3\include\wx\generic\;E:\wxWidgets-2.5.3\include\wx\;E:\wxWidgets-2.5.3\src\html\;C:\Program Files\Borland\CBuilder6\Projects\X-net\sdl\;C:\Program Files\Borland\CBuilder6\Projects\X-net\gllib\;E:\wxWidgets-2.5.3\include\wx\msw\
+Item10=$(BCB)\source\vcl;E:\wxWindows-2.4.2\src\msw\;E:\wxWindows-2.4.2\src\common\;E:\wxWindows\src\msw\;E:\wxWindows\src\common\;E:\wxWindows\src\generic\;E:\wxWindows\src\msw\;E:\wxWidgets-2.5.3\src\common\;E:\wxWidgets-2.5.3\src\msw\;E:\wxWidgets-2.5.3\src\generic\;E:\wxWidgets-2.5.3\include\wx\generic\;E:\wxWidgets-2.5.3\include\wx\;E:\wxWidgets-2.5.3\src\html\;C:\Program Files\Borland\CBuilder6\Projects\X-net\sdl\;C:\Program Files\Borland\CBuilder6\Projects\X-net\gllib\
+Item11=$(BCB)\source\vcl;E:\wxWindows-2.4.2\src\msw\;E:\wxWindows-2.4.2\src\common\;E:\wxWindows\src\msw\;E:\wxWindows\src\common\;E:\wxWindows\src\generic\;E:\wxWindows\src\msw\;E:\wxWidgets-2.5.3\src\common\;E:\wxWidgets-2.5.3\src\msw\;E:\wxWidgets-2.5.3\src\generic\;E:\wxWidgets-2.5.3\include\wx\generic\;E:\wxWidgets-2.5.3\include\wx\;E:\wxWidgets-2.5.3\src\html\;C:\Program Files\Borland\CBuilder6\Projects\X-net\sdl\
+Item12=$(BCB)\source\vcl;E:\wxWindows-2.4.2\src\msw\;E:\wxWindows-2.4.2\src\common\;E:\wxWindows\src\msw\;E:\wxWindows\src\common\;E:\wxWindows\src\generic\;E:\wxWindows\src\msw\;E:\wxWidgets-2.5.3\src\common\;E:\wxWidgets-2.5.3\src\msw\;E:\wxWidgets-2.5.3\src\generic\;E:\wxWidgets-2.5.3\include\wx\generic\;E:\wxWidgets-2.5.3\include\wx\;E:\wxWidgets-2.5.3\src\html\
+Item13=$(BCB)\source\vcl;E:\wxWindows-2.4.2\src\msw\;E:\wxWindows-2.4.2\src\common\;E:\wxWindows\src\msw\;E:\wxWindows\src\common\;E:\wxWindows\src\generic\;E:\wxWindows\src\msw\;E:\wxWidgets-2.5.3\src\common\;E:\wxWidgets-2.5.3\src\msw\;E:\wxWidgets-2.5.3\src\generic\;E:\wxWidgets-2.5.3\include\wx\generic\;E:\wxWidgets-2.5.3\include\wx\
+Item14=$(BCB)\source\vcl;E:\wxWindows-2.4.2\src\msw\;E:\wxWindows-2.4.2\src\common\;E:\wxWindows\src\msw\;E:\wxWindows\src\common\;E:\wxWindows\src\generic\;E:\wxWindows\src\msw\;E:\wxWidgets-2.5.3\src\common\;E:\wxWidgets-2.5.3\src\msw\;E:\wxWidgets-2.5.3\src\generic\;E:\wxWidgets-2.5.3\include\wx\generic\
+Item15=$(BCB)\source\vcl;E:\wxWindows-2.4.2\src\msw\;E:\wxWindows-2.4.2\src\common\;E:\wxWindows\src\msw\;E:\wxWindows\src\common\;E:\wxWindows\src\generic\;E:\wxWindows\src\msw\;E:\wxWidgets-2.5.3\src\common\;E:\wxWidgets-2.5.3\src\msw\
+Item16=$(BCB)\source\vcl;E:\wxWindows-2.4.2\src\msw\;E:\wxWindows-2.4.2\src\common\;E:\wxWindows\src\msw\;E:\wxWindows\src\common\;E:\wxWindows\src\generic\;E:\wxWindows\src\msw\;E:\wxWidgets-2.5.3\src\common\
+Item17=$(BCB)\source\vcl;E:\wxWindows-2.4.2\src\msw\;E:\wxWindows-2.4.2\src\common\;E:\wxWindows\src\msw\;E:\wxWindows\src\common\;E:\wxWindows\src\generic\;E:\wxWindows\src\msw\
+Item18=$(BCB)\source\vcl;E:\wxWindows-2.4.2\src\msw\;E:\wxWindows-2.4.2\src\common\;E:\wxWindows\src\msw\;E:\wxWindows\src\common\;E:\wxWindows\src\generic\
+Item19=$(BCB)\source\vcl;E:\wxWindows-2.4.2\src\msw\;E:\wxWindows-2.4.2\src\common\;E:\wxWindows\src\msw\;E:\wxWindows\src\common\
+Item20=$(BCB)\source\vcl;E:\wxWindows-2.4.2\src\msw\;E:\wxWindows-2.4.2\src\common\;E:\wxWindows\src\msw\
+Item21=$(BCB)\source\vcl;E:\wxWindows-2.4.2\src\msw\;E:\wxWindows-2.4.2\src\common\
+
+[HistoryLists\hlConditionals]
+Count=30
+Item0=;__WINDOWS__;__WXMSW__;__WXWIDGETS__;__WXDEBUG__;__OD_BUILD__;_DEBUG;
+Item1=;__WINDOWS__;__WXMSW__;__WXWIDGETS__;__WXDEBUG__;__OD_BUILD__;_DEBUG;_UNICODE;
+Item2=;__WINDOWS__;__WXMSW__;__WXWIDGETS__;__WXDEBUG__;__OD_BUILD__;_DEBUG;_UNICODE
+Item3=;__WINDOWS__;__WXMSW__;__WXWIDGETS__;__WXDEBUG__;__OD_BUILD__;_DEBUG
+Item4=;__WINDOWS__;__WXMSW__;__WXWIDGETS__;__WXDEBUG__;__OD_BUILD__
+Item5=;__WINDOWS__;__WXMSW__;__WXWIDGETS__;__WXDEBUG__
+Item6=WIN32;_WINDOWS;__WINDOWS__;__WXMSW__;__WXWIDGETS__;__WXDEBUG__
+Item7=WIN32;_WINDOWS;__WINDOWS__;__WXMSW__;__WXWIDGETS__;__WXDEBUG__;_DEBUG
+Item8=WIN32;_WINDOWS;__WINDOWS__;__WXMSW__;__WXWIDGETS__;__WXDEBUG__;;_DEBUG
+Item9=WIN32;_WINDOWS;__WINDOWS__;__WXMSW__;__WXWIDGETS__;__WXDEBUG__;
+Item10=WIN32;_WINDOWS;__WINDOWS__;__WXMSW__;__WXWIDGETS__;__WXDEBUG__;__HTTPFS__;
+Item11=WIN32;_WINDOWS;__WINDOWS__;__WXMSW__;__WXWIDGETS__;__WXDEBUG__;__HTTPFS__;_DEBUG
+Item12=WIN32;_WINDOWS;__WINDOWS__;__WXMSW__;__WXWIDGETS__;__WXDEBUG__;__HTTPFS__
+Item13=_DEBUG;WIN32;_WINDOWS;__WINDOWS__;__WXMSW__;__WXWIDGETS__;__WXDEBUG__;__HTTPFS__
+Item14=_DEBUG;WIN32;_WINDOWS;__WINDOWS__;__WXMSW__;__WXWIDGETS__;__WXDEBUG__;
+Item15=WIN32;_WINDOWS;__WINDOWS__;__WXMSW__;__WXWIDGETS__;
+Item16=WIN32;_WINDOWS;__WINDOWS__;__WXMSW__;__WXWIDGETS__
+Item17=WIN32;_WINDOWS;__WINDOWS__;__WXMSW__;__WXDEBUG__;__WXWIDGETS__
+Item18=WIN32;_WINDOWS;__WINDOWS__;__WXMSW__;__WXDEBUG__;__WXWIDGETS__;_DEBUG
+Item19=_DEBUG;WIN32;_WINDOWS;__WINDOWS__;__WXMSW__;__WXDEBUG__;__WXWIDGETS__
+Item20=_DEBUG;WIN32;_WINDOWS;__WINDOWS__;__WXMSW__;__WXDEBUG__;__WXWIDGETS__;WXWIN_COMPATIBILITY_2_2=0;WXWIN_COMPATIBILITY_2_4=1
+Item21=_DEBUG;WIN32;_WINDOWS;__WINDOWS__;__WXMSW__;__WXDEBUG__;__WXWIDGETS__;WXWIN_COMPATIBILITY_2_2=0
+Item22=_DEBUG;WIN32;_WINDOWS;__WINDOWS__;__WXMSW__;__WXDEBUG__;__WXWIDGETS__;WXWIN_COMPATIBILITY_2_4=0;WXWIN_COMPATIBILITY_2_2=0
+Item23=_DEBUG;WIN32;_WINDOWS;__WINDOWS__;__WXMSW__;__WXDEBUG__;__WXWIDGETS__;WXWIN_COMPATIBILITY_2_4=1;WXWIN_COMPATIBILITY_2_2=0
+Item24=_DEBUG;WIN32;_WINDOWS;__WINDOWS__;__WXMSW__;__WXDEBUG__;__WXWIDGETS__;WXWIN_COMPATIBILITY_2_4=1
+Item25=_DEBUG;WIN32;_WINDOWS;__WINDOWS__;__WXMSW__;__WXDEBUG__;__WXWIDGETS__;WXWIN_COMPATIBILITY_2_4
+Item26=_DEBUG;WIN32;_WINDOWS;__WINDOWS__;__WXMSW__;__WXDEBUG__;__WXWIDGETS__;
+Item27=_DEBUG;WIN32;_WINDOWS;__WINDOWS__;__WXMSW__;__WXDEBUG__;WXDEBUG=1;__WIN95__;__WIN32__;WINVER=0x0400;STRICT
+Item28=_DEBUG
+Item29=_DEBUG;wx_msw;__WXMSW__;WXWIN2=1;__WIN95__
+
+[HistoryLists\hlIntOutputDir]
+Count=1
+Item0=build
+
+[HistoryLists\hlFinalOutputDir]
+Count=2
+Item0=exe\
+Item1=exe
+
+[Debugging]
+DebugSourceDirs=$(BCB)\source\vcl;E:\wxWidgets-2.8.7\src\common\;E:\wxWidgets-2.8.7\src\generic\;E:\wxWidgets-2.8.7\src\msw\;E:\wxWidgets-2.8.7\src\html\;E:\wxWidgets-2.8.7\include\wx\;E:\wxWidgets-2.8.7\include\wx\html\
+
+[Parameters]
+RunParams=
+Launcher=
+UseLauncher=0
+DebugCWD=
+HostApplication=
+RemoteHost=
+RemotePath=
+RemoteLauncher=
+RemoteCWD=
+RemoteDebug=0
+
+[Compiler]
+ShowInfoMsgs=0
+LinkDebugVcl=1
+LinkCGLIB=1
+  </IDEOPTIONS>
+</PROJECT>

@@ -1,0 +1,73 @@
+#!/bin/bash
+. ./paths ""
+if [ ! -d "$bin_dir/exe" ]
+then
+  echo Creating $bin_dir/exe ...
+  mkdir $bin_dir/exe
+fi
+export PATH=/usr/local/bin:$PATH
+if [ -z "$1" ]
+then
+  echo linking $bin_dir/exe/unirun ...
+  g++ ./obj/unirun/*.s ./obj/*.s -o $bin_dir/exe/unirun -framework IOKit -framework Carbon -framework Cocoa -framework System -framework QuickTime \
+  `wx-config --libs gl,core,html,net,aui,adv --unicode --static` `python-config --includes` \
+  -framework OpenGL -framework AGL -framework Python -lz -lpthread -liconv -O3
+
+  echo linking $bin_dir/exe/olex2 ...
+  g++ ./obj/olex/*.s ./obj/*.s -o $bin_dir/exe/olex2 -framework IOKit -framework Carbon -framework Cocoa -framework System -framework QuickTime \
+  `wx-config --libs gl,core,html,net,aui,adv --unicode --static` `python-config --includes` \
+  -framework OpenGL -framework AGL -framework Python -lz -lpthread -liconv -O3
+
+  if [ ! -f "$bin_dir/exe/paths" ] 
+  then
+    echo "Copying paths file to $bin_dir"
+    cp paths $bin_dir/exe/.
+  fi
+
+  # write the startup script
+  startup_file=$bin_dir/exe/startup
+  if [ -f "$startup_file" ] 
+  then
+    rm "$startup_file"
+  fi
+  #create default update settings
+  usettings_file=$bin_dir/exe/usettings.dat
+  if [ -f "$usettings_file" ] 
+  then
+    rm "$usettings_file"
+  fi
+
+  {
+    echo "proxy="
+    echo "repository=http://dimas.dur.ac.uk/olex-distro-test/update"
+    echo "update=Always"
+    echo "exceptions=pyd;exe;dll;manifest"
+  } > $usettings_file
+
+  {
+    echo "path=."
+    echo "if [ ! -z \$1 ]"
+    echo "then"
+    echo "  path=\$1"
+    echo "fi"
+    echo ". \$path/exe/paths \"\$path\""
+    echo "\$path/exe/unirun \"\$path/exe\""
+    echo "\$path/exe/olex2 &"
+  } > $startup_file
+  chmod +x $startup_file
+elif [ "$1" = "olex" ] 
+then
+  echo linking $bin_dir/exe/olex2 ...
+  g++ ./obj/olex/*.s ./obj/*.s -o $bin_dir/exe/olex2 -framework IOKit -framework Carbon -framework Cocoa -framework System -framework QuickTime \
+  `wx-config --libs gl,core,html,net,aui,adv --unicode --static` `python-config --includes` \
+  -framework OpenGL -framework AGL -framework Python -lz -lpthread -liconv -O3
+elif [ "$1" = "unirun" ]
+then
+  echo linking $bin_dir/exe/unirun ...
+  g++ ./obj/unirun/*.s ./obj/*.s -o $bin_dir/exe/unirun -framework IOKit -framework Carbon -framework Cocoa -framework System -framework QuickTime \
+  `wx-config --libs gl,core,html,net,aui,adv --unicode --static` `python-config --includes` \
+  -framework OpenGL -framework AGL -framework Python -lz -lpthread -liconv -O3
+else
+  echo "Unknown argument"
+fi
+
