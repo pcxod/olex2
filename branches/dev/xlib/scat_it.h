@@ -99,13 +99,12 @@ public:
 
   inline TLibScatterer* Find(const olxstr& name)  {
     int ind = Data.IndexOfComparable( name );
-    if( ind == -1 )  return NULL;
-    return Data.Object(ind);
+    return (ind == -1) ? NULL : Data.GetObject(ind);
   }
 
   inline int Count()  const {  return Data.Count();  }
   // Scatterer GetId() can be used to access elements directly ...
-  inline TLibScatterer* operator [] (int index)  {  return Data.Object(index);  }
+  inline TLibScatterer* operator [] (int index) const {  return Data.GetObject(index);  }
 };
 
 

@@ -141,7 +141,7 @@ void XLibMacros::macVATA(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 struct Main_BaiComparator {
   static int Compare(const TPrimitiveStrListData<olxstr,TBasicAtomInfo*>* a, 
                      const TPrimitiveStrListData<olxstr,TBasicAtomInfo*>* b)  {
-      return a->GetObject()->GetIndex() - b->GetObject()->GetIndex();
+      return a->Object->GetIndex() - b->Object->GetIndex();
   }
 };
 void helper_CleanBaiList(TStrPObjList<olxstr,TBasicAtomInfo*>& list, SortedBAIList& au_bais)  {
@@ -152,7 +152,7 @@ void helper_CleanBaiList(TStrPObjList<olxstr,TBasicAtomInfo*>& list, SortedBAILi
     list.Strtok(ins.GetSfac(), ' ');
     TAtomsInfo& bai = TAtomsInfo::GetInstance();
     for( int i=0; i < list.Count(); i++ ) 
-      au_bais.Add( list.Object(i) = bai.FindAtomInfoBySymbol(list[i]) );
+      au_bais.Add( list.GetObject(i) = bai.FindAtomInfoBySymbol(list[i]) );
     list.QuickSort<Main_BaiComparator>();
   }
 }
@@ -244,7 +244,7 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options, TMacroEr
           SortedQPeaks.GetObject(0)->SetDeleted(true);
       }
       else  {
-        double wght = (SortedQPeaks.Last().Comparable()-avQPeak)/
+        double wght = (SortedQPeaks.Last().Comparable-avQPeak)/
           (avQPeak-SortedQPeaks.GetComparable(0));
         for( int i=vals.Count()-1; i >= 0; i-- )  {
           if( vals[i].GetA() < thVal )  {
@@ -451,7 +451,7 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options, TMacroEr
         (sa.CAtom().GetUiso() <= 0.005) )  {
           int ind = sfac.IndexOfObject( &sa.GetAtomInfo() );
           if( ind >= 0 && ((ind+1) < sfac.Count()) )  {
-            sa.CAtom().SetAtomInfo( sfac.Object(ind+1) );
+            sa.CAtom().SetAtomInfo( sfac.GetObject(ind+1) );
           }
       }
     }
@@ -521,9 +521,9 @@ void XLibMacros::funVSS(const TStrObjList &Cmds, TMacroError &Error)  {
         while( sl[i].GetA() > 0 )  {
           if( SortedQPeaks.IsEmpty() )  break;
           sl[i].A() --;
-          SortedQPeaks.Last().Object()->Label() = (olxstr(sl[i].GetB()->GetSymbol()) << i);
-          SortedQPeaks.Last().Object()->SetAtomInfo( sl[i].B() );
-          SortedQPeaks.Last().Object()->SetQPeak(0);
+          SortedQPeaks.Last().Object->Label() = (olxstr(sl[i].GetB()->GetSymbol()) << i);
+          SortedQPeaks.Last().Object->SetAtomInfo( sl[i].B() );
+          SortedQPeaks.Last().Object->SetQPeak(0);
           SortedQPeaks.Remove( SortedQPeaks.Count()-1);
         }
         if( SortedQPeaks.IsEmpty() ) break;
@@ -578,7 +578,7 @@ void XLibMacros::funVSS(const TStrObjList &Cmds, TMacroError &Error)  {
           SortedQPeaks.Add( au.GetAtom(i).GetQPeak(), &au.GetAtom(i));
       }
       for( int i=0; i < olx_min(to_delete,SortedQPeaks.Count()); i++ )
-        SortedQPeaks.Object(i)->SetDeleted(true);
+        SortedQPeaks.GetObject(i)->SetDeleted(true);
     }
     xapp.XFile().EndUpdate();
   }

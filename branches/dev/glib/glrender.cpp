@@ -114,7 +114,7 @@ void TGlRenderer::ClearPrimitives()  {
     CompiledListId = -1;
   }
   for( int i=0; i < FCollections.Count(); i++ )
-    delete FCollections.Object(i);
+    delete FCollections.GetObject(i);
   FCollections.Clear();
   for( int i=0; i < FPrimitives->ObjectCount(); i++ )
     delete FPrimitives->Object(i);
@@ -141,7 +141,7 @@ void TGlRenderer::Clear()  {
     CompiledListId = -1;
   }
   for( int i=0; i < FCollections.Count(); i++ )
-    delete FCollections.Object(i);
+    delete FCollections.GetObject(i);
   FCollections.Clear();
   for( int i=0; i < FPrimitives->ObjectCount(); i++ )
     delete FPrimitives->Object(i);
@@ -195,13 +195,12 @@ void TGlRenderer::operator = (const TGlRenderer &G)  { ; }
 void TGlRenderer::_OnStylesClear()  {
   OnStylesClear->Enter(this);
   for( int i=0; i < FCollections.Count(); i++ )
-    FCollections.Object(i)->Style(NULL);
+    FCollections.GetObject(i)->Style(NULL);
 }
 //..............................................................................
 void TGlRenderer::_OnStylesLoaded()  {
-  for( int i=0; i < FCollections.Count(); i++ )  {
-    FCollections.Object(i)->Style( FStyles->NewStyle(FCollections.Object(i)->Name(), true) );
-  }
+  for( int i=0; i < FCollections.Count(); i++ )
+    FCollections.GetObject(i)->Style( FStyles->NewStyle(FCollections.GetObject(i)->Name(), true) );
   TPtrList<AGDrawObject> GO( FGObjects );
   for( int i=0; i < GO.Count(); i++ )
     GO[i]->OnPrimitivesCleared();
@@ -221,11 +220,11 @@ TGPCollection *TGlRenderer::NewCollection(const olxstr &Name)  {
 //..............................................................................
 TGPCollection *TGlRenderer::FindCollection(const olxstr &Name)  {
   int ind = FCollections.IndexOfComparable(Name);
-  return (ind != -1) ? FCollections.Object(ind) : NULL;
+  return (ind != -1) ? FCollections.GetObject(ind) : NULL;
 }
 //..............................................................................
 TGPCollection *TGlRenderer::Collection(int ind)  {
-  return FCollections.Object(ind);
+  return FCollections.GetObject(ind);
 }
 //..............................................................................
 int TGlRenderer_CollectionComparator(const olxstr& c1, const olxstr& c2) {
@@ -253,7 +252,7 @@ TGPCollection *TGlRenderer::CollectionX(const olxstr& Name, olxstr& CollName)  {
   if( di != -1 )  {
     int ind = FCollections.IndexOfComparable(Name);
     if( ind != -1 )  
-      return FCollections.Object(ind);
+      return FCollections.GetObject(ind);
 
     TGPCollection *BestMatch=NULL;
     short maxMatchLevels = 0;
@@ -262,10 +261,10 @@ TGPCollection *TGlRenderer::CollectionX(const olxstr& Name, olxstr& CollName)  {
       if( dc == 0 || dc < maxMatchLevels )  continue;
       if( BestMatch != NULL && dc == maxMatchLevels )  {  // keep the one with shortes name
         if( BestMatch->Name().Length() > FCollections.GetComparable(i).Length() )
-          BestMatch = FCollections.Object(i);
+          BestMatch = FCollections.GetObject(i);
       }
       else
-        BestMatch = FCollections.Object(i);
+        BestMatch = FCollections.GetObject(i);
       maxMatchLevels = dc;
     }
     if( BestMatch != NULL )  {

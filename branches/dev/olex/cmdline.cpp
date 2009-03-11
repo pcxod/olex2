@@ -39,7 +39,7 @@ bool TCmdLine::ProcessKey( wxKeyEvent& evt )  {
         CmdIndex = 0;
       }
       if( CmdIndex < Commands.Count() )
-        SetCommand( Commands.String(CmdIndex) );
+        SetCommand( Commands[CmdIndex] );
       return true;
   }
   else if( (evt.GetKeyCode() == WXK_DOWN) )  {
@@ -47,7 +47,7 @@ bool TCmdLine::ProcessKey( wxKeyEvent& evt )  {
         CmdIndex = Commands.Count()-1;
       }
       if( CmdIndex < Commands.Count() && Commands.Count() != 0 )
-        SetCommand( Commands.String(CmdIndex) );
+        SetCommand( Commands[CmdIndex] );
       return true;
   }
   else if( (evt.GetKeyCode() == WXK_RETURN) && evt.GetModifiers() == 0 )  {

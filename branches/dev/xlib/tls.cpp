@@ -49,7 +49,7 @@ TLS::TLS(const TSAtomPList &atoms, const double *const cellParameters)
 
 	{
 		ematd temp(3,3);
-		temp.E();
+		temp.I();
 		RtoLaxes = temp; //intialise as identity for calcUij
 	}
 
@@ -443,7 +443,7 @@ void TLS::RotateLaxes(){
 	//rotation matrix, RtoLaxes.
 
 	ematd rotate_to_L_axes(3,3);	
-	rotate_to_L_axes.E();
+	rotate_to_L_axes.I();
 	Lmat.EigenValues(Lmat,rotate_to_L_axes); //diagonalise Lmatrix
 
 	// std::cout << "L eigenvectors (rotation matrix to L-principle axes): " << std::endl;

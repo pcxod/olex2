@@ -28,7 +28,7 @@ TdlgPrimitive::TdlgPrimitive(TStrList *L, int mask, TMainForm *P) :
   wxSize DefS(150, 21);
   wxCheckBox *Box;
   for( int i=0; i < L->Count(); i++ )  {
-    Box = new wxCheckBox(this, -1, uiStr(L->String(i)), wxDefaultPosition, DefS);
+    Box = new wxCheckBox(this, -1, uiStr(L->GetString(i)), wxDefaultPosition, DefS);
     TopSizer->Add( Box,     0, wxALL, 1);
     FBoxes.Add(Box);
     off = 1;

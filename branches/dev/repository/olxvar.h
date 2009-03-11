@@ -70,7 +70,7 @@ class TOlxVars : public IEObject  {
   inline void _SetVar(const olxstr& name, const olxstr& value)  {
     int ind = Vars.IndexOfComparable(name);
     try  {
-      if( ind >= 0 )  Vars.Object(ind).Set(value);
+      if( ind >= 0 )  Vars.GetObject(ind).Set(value);
       else            Vars.Add(name, value);
     }
     catch( const TExceptionBase& exc)  {
@@ -82,7 +82,7 @@ class TOlxVars : public IEObject  {
     int ind = Vars.IndexOfComparable(name);
     try  {
       if( ind >= 0 )
-        Vars.Object(ind).Set(value);
+        Vars.GetObject(ind).Set(value);
       else
         Vars.Add(name, value);
     }
@@ -94,7 +94,7 @@ class TOlxVars : public IEObject  {
 
   inline const olxstr& _FindName(PyObject* value)  {
     for( int i=0; i < Vars.Count(); i++ )
-      if( Vars.Object(i).GetObj()  == value )
+      if( Vars.GetObject(i).GetObj()  == value )
         return Vars.GetString(i);
     return EmptyString;
   }
@@ -113,10 +113,10 @@ public:
   static inline int VarCount()  {  return Instance != NULL ? Instance->Vars.Count() : 0;  }
 
   static inline PyObject* GetVarValue(int index) {
-    return Instance->Vars.Object(index).GetObjVal();
+    return Instance->Vars.GetObject(index).GetObjVal();
   }
   static inline PyObject* GetVarWrapper(int index) {
-    return Instance->Vars.Object(index).GetObj();
+    return Instance->Vars.GetObject(index).GetObj();
   }
   static const olxstr& GetVarStr(int index);
 

@@ -27,8 +27,8 @@ olxstr TCHNExp::SummFormula(const olxstr &Separator)  {
   olxstr Res;
   double v;
   for( int i=0; i < E1.Count(); i++ )  {
-    Res << E1.String(i);
-    v = E1.Object(i);
+    Res << E1[i];
+    v = E1.GetObject(i);
     if( v != 1 )
       Res << v;
     Res << Separator;
@@ -42,8 +42,8 @@ double TCHNExp::MolWeight()  {
   double w = 0;
   TBasicAtomInfo *I;
   for( int i=0; i < E1.Count(); i++ )  {
-    I = AtomsInfo()->FindAtomInfoBySymbol( E1.String(i) );
-    w += (E1.Object(i) * I->GetMr());
+    I = AtomsInfo()->FindAtomInfoBySymbol( E1[i] );
+    w += (E1.GetObject(i) * I->GetMr());
   }
   return w;
 }
@@ -54,18 +54,18 @@ void TCHNExp::CHN(double &C, double &H, double &N, double &Mr)  {
   double w = 0;
   TBasicAtomInfo *I;
   for( int i=0; i < E1.Count(); i++ )  {
-    I = AtomsInfo()->FindAtomInfoBySymbol( E1.String(i) );
-    w += (E1.Object(i) * I->GetMr() );
+    I = AtomsInfo()->FindAtomInfoBySymbol( E1[i] );
+    w += (E1.GetObject(i) * I->GetMr() );
   }
   if( w == 0 )  w = 1;  // if w == 0 then all components are zero, so ... why not?
   for( int i=0; i < E1.Count(); i++ )  {
-    I = AtomsInfo()->FindAtomInfoBySymbol(E1.String(i));
+    I = AtomsInfo()->FindAtomInfoBySymbol(E1[i]);
     if( I->GetIndex() == iCarbonIndex )
-      C = E1.Object(i) * I->GetMr();
+      C = E1.GetObject(i) * I->GetMr();
     else if( I->GetIndex() == iHydrogenIndex )
-      H = E1.Object(i) * I->GetMr();
+      H = E1.GetObject(i) * I->GetMr();
     else if( I->GetIndex() == iNitrogenIndex )
-      N = E1.Object(i) * I->GetMr();
+      N = E1.GetObject(i) * I->GetMr();
   }
   Mr = w;
 }
@@ -77,15 +77,15 @@ olxstr TCHNExp::Composition()  {
   olxstr Res("Calculated ("), SF;
   TBasicAtomInfo *I;
   for( int i=0; i < E1.Count(); i++ )  {
-    I = AtomsInfo()->FindAtomInfoBySymbol( E1.String(i) );
-    SF << E1.String(i) << E1.Object(i) <<  ' ';
-    w += (E1.Object(i) * I->GetMr() );
+    I = AtomsInfo()->FindAtomInfoBySymbol( E1[i] );
+    SF << E1[i] << E1.GetObject(i) <<  ' ';
+    w += (E1.GetObject(i) * I->GetMr() );
   }
   Res << SF << "): ";
   if( w == 0 )  w = 1;  // if w == 0 then all components are zero, so ... why not?
   for( int i=0; i < E1.Count(); i++ )  {
-    I = AtomsInfo()->FindAtomInfoBySymbol( E1.String(i) );
-    v = (E1.Object(i) * I->GetMr());
+    I = AtomsInfo()->FindAtomInfoBySymbol( E1[i] );
+    v = (E1.GetObject(i) * I->GetMr());
     Res << E1[i] <<  ": " << olxstr::FormatFloat(2, v/w*100) << "; ";
   }
   return Res;
@@ -97,27 +97,27 @@ void TCHNExp::CalcSummFormula(TStrPObjList<olxstr,double>& E)  {
   for( int i=0; i < Exp.Count(); i++ )  {
     Added = false;
     for( int j=0; j < E1.Count(); j++ )  {
-      if( E1.String(j) == Exp.String(i) )  {
-        E1.Object(j) += Exp.Object(i);
+      if( E1[j] == Exp[i] )  {
+        E1.GetObject(j) += Exp.GetObject(i);
         Added = true;
       }
     }
     if( !Added )
-      E1.Add(Exp.String(i), Exp.Object(i));
+      E1.Add(Exp[i], Exp.GetObject(i));
   }
   for( int i=0; i < Dependencies.Count(); i++ )
     Dependencies[i].CalcSummFormula(E1);
   for( int i=0; i < E1.Count(); i++ )  {
     Added = false;
     for( int j=0; j < E.Count(); j++ )  {
-      if( E.String(j) == E1.String(i) )  {
+      if( E[j] == E1[i] )  {
         Added = true;
-        E.Object(j) += (E1.Object(i)*FMult);
+        E.GetObject(j) += (E1.GetObject(i)*FMult);
         break;
       }
     }
     if( !Added )
-      E.Add(E1.String(i), E1.Object(i)*FMult);
+      E.Add(E1[i], E1.GetObject(i)*FMult);
   }
 }
 //..............................................................................

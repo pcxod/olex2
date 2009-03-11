@@ -48,9 +48,9 @@ TSyntaxParser::~TSyntaxParser()  {
   for( int i=0; i < Evaluators.Count(); i++ )
     delete (IEvaluator*)Evaluators[i];
   for( int i=0; i < LogicalOperators.Count(); i++ )
-    delete LogicalOperators.Object(i);
+    delete LogicalOperators.GetObject(i);
   for( int i=0; i < ComparisonOperators.Count(); i++ )
-    delete ComparisonOperators.Object(i);
+    delete ComparisonOperators.GetObject(i);
 }
 /*
 olxstr Anlalyse(const olxstr& Expression)
@@ -251,15 +251,15 @@ IEvaluable* TSyntaxParser::SimpleParse(const olxstr& Exp)  {
     if( !coFactory && (i < Exp.Length()) )  {
       for( int j=0; j < ComparisonOperators.Count(); j++ )  {
         index = -1;
-        while( (++index < ComparisonOperators.String(j).Length()) &&
-               (ComparisonOperators.String(j)[index] == Char)  )
+        while( (++index < ComparisonOperators.GetString(j).Length()) &&
+               (ComparisonOperators.GetString(j).CharAt(index) == Char)  )
         {
           if( (i+index+1) >= Exp.Length() )  break;
           Char = Exp[i+index+1];
         }
-        if( index == ComparisonOperators.String(j).Length() )  {
+        if( index == ComparisonOperators.GetString(j).Length() )  {
           i += (index-1);
-          coFactory = (TObjectFactory<IEvaluable>*)ComparisonOperators.Object(j);
+          coFactory = ComparisonOperators.GetObject(j);
           break;
         }
         Char = Exp[i];           // roll back the character
@@ -269,15 +269,15 @@ IEvaluable* TSyntaxParser::SimpleParse(const olxstr& Exp)  {
     if( !loFactory && (i < Exp.Length()) )  {
       for( int j=0; j < LogicalOperators.Count(); j++ )  {
         index = -1;
-        while( (++index < LogicalOperators.String(j).Length()) &&
-               (LogicalOperators.String(j)[index] == Char)  )
+        while( (++index < LogicalOperators.GetString(j).Length()) &&
+               (LogicalOperators.GetString(j).CharAt(index) == Char)  )
         {
           if( (i+index+1) >= Exp.Length() )  break;
           Char = Exp[i+index+1];
         }
-        if( index == LogicalOperators.String(j).Length() )  {
+        if( index == LogicalOperators.GetString(j).Length() )  {
           i+= (index-1);
-          loFactory = (TObjectFactory<IEvaluable>*)LogicalOperators.Object(j);
+          loFactory = LogicalOperators.GetObject(j);
           break;
         }
         Char = Exp[i];           // roll back the character

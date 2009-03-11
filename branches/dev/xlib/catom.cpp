@@ -294,11 +294,11 @@ int TCAtom::CompareAtomLabels(const olxstr& S, const olxstr& S1)  {
   DigitStrtok(S, Chars1);
   DigitStrtok(S1, Chars2);
   for( int i=0; i < olx_min(Chars1.Count(), Chars2.Count()); i++ )  {
-    if( Chars1.Object(i) && Chars2.Object(i) )  {
-      int res = Chars1.String(i).Comparei(Chars2.String(i));
+    if( Chars1.GetObject(i) && Chars2.GetObject(i) )  {
+      int res = Chars1[i].Comparei(Chars2[i]);
       if( res != 0 )  return res;
     }
-    if( !Chars1.Object(i) && !Chars2.Object(i) )  {
+    if( !Chars1.GetObject(i) && !Chars2.GetObject(i) )  {
       int res = Chars1[i].ToInt() - Chars2[i].ToInt();
       //if( !res )  // to tackle 01 < 1
       //{  res = Chars1->String(i).Length() - Chars2->String(i).Length();  }
@@ -308,8 +308,8 @@ int TCAtom::CompareAtomLabels(const olxstr& S, const olxstr& S1)  {
       if( res != 0 )  return res;
     }
 
-    if( !Chars1.Object(i) && Chars2.Object(i) )  return 1;
-    if( Chars1.Object(i) && !Chars2.Object(i) )  return -1;
+    if( !Chars1.GetObject(i) && Chars2.GetObject(i) )  return 1;
+    if( Chars1.GetObject(i) && !Chars2.GetObject(i) )  return -1;
   }
   return Chars1.Count() - Chars2.Count();
 }

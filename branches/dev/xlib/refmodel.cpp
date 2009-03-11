@@ -718,8 +718,8 @@ void RefinementModel::ProcessFrags()  {
         tr /= crds.Count();
         tri /= crds.Count();
         bool invert = false;
-        double rms = TNetwork::FindAlignmentMatrix(crds, tm, tr, t);
-        double irms = TNetwork::FindAlignmentMatrix(icrds, tm, tri, t);
+        double rms = TNetwork::FindAlignmentMatrix(crds, tr, t, tm);
+        double irms = TNetwork::FindAlignmentMatrix(icrds, tri, t, tm);
         if( irms < rms && irms >= 0 )  {
           tr = tri;
           invert = true;

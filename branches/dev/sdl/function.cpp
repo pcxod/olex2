@@ -67,11 +67,11 @@ void ABasicFunction::ParseOptions(const olxstr& Options, TCSTypeList<olxstr,olxs
   if( Options.IsEmpty() )  return;
   TStrList toks(Options, "&;");
   for( int i=0; i < toks.Count(); i++ )  {
-    int mi = toks.String(i).IndexOf('-');
+    int mi = toks[i].IndexOf('-');
     if( mi != -1 )
-      list.Add( toks.String(i).SubStringTo(mi), olxstr(toks.String(i).SubStringFrom(mi+1)));
+      list.Add( toks[i].SubStringTo(mi), olxstr(toks[i].SubStringFrom(mi+1)));
     else
-      list.Add( toks.String(i), EmptyString);
+      list.Add( toks[i], EmptyString);
   }
 }
 //..............................................................................

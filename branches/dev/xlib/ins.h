@@ -391,9 +391,9 @@ public:
   void ParseHeader(const TStrList& in);
 
   bool InsExists(const olxstr &Name);
-  inline int InsCount()  const                {  return Ins.Count();  }
-  inline const olxstr& InsName(int i) const {  return Ins.String(i);  }
-  inline const TInsList& InsParams(int i)     {  return *Ins.Object(i); }
+  inline int InsCount()  const              {  return Ins.Count();  }
+  inline const olxstr& InsName(int i) const {  return Ins[i];  }
+  inline const TInsList& InsParams(int i)   {  return *Ins.GetObject(i); }
   void DelIns(int i);
   void DeleteAtom(TCAtom *CA);
 

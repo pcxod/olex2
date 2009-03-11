@@ -693,12 +693,12 @@ bool TNetwork::IsRingRegular(const TSAtomPList& ring)  {
   return true;
 }
 //..............................................................................
-// quaternion method, Acta A45 (1989), 208
-double TNetwork::FindAlignmentMatrix(const TTypeList< AnAssociation2<vec3d,vec3d> >& crds, smatdd& res, 
-                                     const vec3d& centA, const vec3d& centB)  {
-  ematd evm(4,4), ev(4,4);
+void TNetwork::FindAlignmentQuaternions(const TTypeList< AnAssociation2<vec3d,vec3d> >& crds, 
+  const vec3d& centA, const vec3d& centB, ematd& quaternions, evecd& rms)  
+{
+  ematd evm(4,4);
   for( int i=0; i < crds.Count(); i++ )  {
-    const vec3d v = crds[i].GetA() - centA;
+    vec3d v = crds[i].GetA() - centA;
     const double 
       xm = v[0] - (crds[i].GetB()[0]-centB[0]),
       xp = v[0] + (crds[i].GetB()[0]-centB[0]),
@@ -723,36 +723,34 @@ double TNetwork::FindAlignmentMatrix(const TTypeList< AnAssociation2<vec3d,vec3d
       evm[3][2] = evm[2][3];
       evm[3][3] += (xp*xp + yp*yp + zm*zm);
   }
-
-  ev.E();
-  ematd::EigenValues(evm, ev);
-  double minVal = evm[0][0], maxVal = evm[0][0];
-  int minInd = 0, maxInd = 0;
-  for(int i=1; i < 4; i++ )  {
-    if( evm[i][i] < minVal )  {
-      minInd = i;
-      minVal = evm[i][i];
-    }
-    if( evm[i][i] > maxVal )  {
-      maxInd = i;
-      maxVal = evm[i][i];
+  ematd::EigenValues(evm, quaternions.Resize(4,4).I());
+  rms.Resize(4);
+  for( int i=0; i < 4; i++ )  {
+    if( evm[i][i] < 0 )
+      rms[i] = -1;
+    else
+      rms[i] = sqrt(evm[i][i]/crds.Count());
+  }
+  bool changes = true;
+  while( changes )  {
+    changes = false;
+    for( int i=0; i < 3; i++ )  {
+      if( rms[i+1] < rms[i] )  {
+        quaternions.SwapRows(i, i+1);
+        olx_swap(rms[i], rms[i+i]);
+      }
     }
   }
-  if( minInd < 0 )  return -1;
-  const evecd& qt = ev[minInd];
-  res.r[0][0] = qt[0]*qt[0] + qt[1]*qt[1] - qt[2]*qt[2] - qt[3]*qt[3];
-  res.r[0][1] = 2*(qt[1]*qt[2] - qt[0]*qt[3]);
-  res.r[0][2] = 2*(qt[1]*qt[3] + qt[0]*qt[2]);
-
-  res.r[1][0] = 2*(qt[1]*qt[2] + qt[0]*qt[3]);
-  res.r[1][1] = qt[0]*qt[0] + qt[2]*qt[2] - qt[1]*qt[1] - qt[3]*qt[3];
-  res.r[1][2] = 2*(qt[2]*qt[3] - qt[0]*qt[1]);
-
-  res.r[2][0] = 2*(qt[1]*qt[3] - qt[0]*qt[2]);
-  res.r[2][1] = 2*(qt[2]*qt[3] + qt[0]*qt[1]);
-  res.r[2][2] = qt[0]*qt[0] + qt[3]*qt[3] - qt[1]*qt[1] - qt[2]*qt[2];
-  res.t = centB;
-  return (minVal <= 0) ? 0 : sqrt(minVal/crds.Count());
+}
+//..............................................................................
+double TNetwork::FindAlignmentMatrix(const TTypeList<AnAssociation2<vec3d,vec3d> >& crds, 
+  const vec3d& centA, const vec3d& centB, smatdd& res)  
+{
+  ematd quaternions(4,4);
+  evecd rms(4);
+  FindAlignmentQuaternions(crds, centA, centB, quaternions, rms);
+  QuaternionToMatrix(quaternions[0], res.r);
+  return rms[0];
 }
 double TNetwork_FindAlignmentMatrix(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atoms, smatdd& res, bool TryInversion)  {
   TTypeList< AnAssociation2<vec3d,vec3d> > crds;
@@ -768,15 +766,16 @@ double TNetwork_FindAlignmentMatrix(const TTypeList< AnAssociation2<TSAtom*,TSAt
     for( int i=0; i < atoms.Count(); i++ )
       crds.AddNew(atoms[i].GetA()->crd(), atoms[i].GetB()->crd() );
   }
-  double summA=0, summB = 0;
+  double sumA=0, sumB = 0;
   vec3d centA, centB;
   for( int i=0; i < atoms.Count(); i++ )  {
     centB += atoms[i].GetB()->crd()*atoms[i].GetB()->CAtom().GetOccu()*atoms[i].GetB()->GetAtomInfo().GetMr();
-    summB += atoms[i].GetB()->CAtom().GetOccu()*atoms[i].GetB()->GetAtomInfo().GetMr();
+    sumB += atoms[i].GetB()->CAtom().GetOccu()*atoms[i].GetB()->GetAtomInfo().GetMr();
     centA += atoms[i].GetA()->crd()*atoms[i].GetA()->CAtom().GetOccu()*atoms[i].GetA()->GetAtomInfo().GetMr();
-    summA += atoms[i].GetA()->CAtom().GetOccu()*atoms[i].GetA()->GetAtomInfo().GetMr();
+    sumA += atoms[i].GetA()->CAtom().GetOccu()*atoms[i].GetA()->GetAtomInfo().GetMr();
   }
-  return TNetwork::FindAlignmentMatrix(crds, res, centA/summA, centB/summB);
+  res.t = centB;
+  return TNetwork::FindAlignmentMatrix(crds, centA/sumA, centB/sumB, res);
 }
 void TNetwork_CalcAMDiff(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atoms,
                          smatdd& res, mat3d& df, bool TryInversion)  {

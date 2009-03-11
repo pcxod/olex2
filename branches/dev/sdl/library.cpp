@@ -94,7 +94,7 @@ size_t TLibrary::LocateMacros(const olxstr& name, TBasicFunctionPList& store)  {
 //..............................................................................
 ABasicFunction* TLibrary::LocateFunction(const olxstr& name, unsigned int argc)  {
   if( argc == 0 )  {
-    int index = Functions.IndexOfComparable(name);
+    int index = Functions.IndexOf(name);
     return (index != -1) ? Functions.GetObject( index ) : NULL;
   }
   else  {
@@ -129,10 +129,11 @@ ABasicFunction* TLibrary::FindFunction(const olxstr& name, unsigned int argc)  {
     TLibrary* searchLib = this;
     TStrList libPath( name, '.') ;
     for( int i=0; i < libPath.Count()-1; i++ )  {
-      searchLib = searchLib->GetLibraryByName( libPath.String(i) );
+      searchLib = searchLib->GetLibraryByName( libPath[i] );
       if( !searchLib )  break;
     }
-    return (searchLib) ? searchLib->LocateFunction( libPath.String(libPath.Count()-1), argc ) : NULL;
+    return (searchLib) ? searchLib->LocateFunction( libPath[libPath.Count()-1], argc ) 
+      : NULL;
   }
   else
     return this->LocateFunction( name, argc );
@@ -143,10 +144,10 @@ ABasicFunction* TLibrary::FindMacro(const olxstr& name, unsigned int argc)  {
     TLibrary* searchLib = this;
     TStrList libPath(name, '.');
     for( int i=0; i < libPath.Count()-1; i++ )  {
-      searchLib = searchLib->GetLibraryByName( libPath.String(i) );
+      searchLib = searchLib->GetLibraryByName( libPath[i] );
       if( !searchLib )  break;
     }
-    return (searchLib) ? searchLib->LocateMacro( libPath.String(libPath.Count()-1), argc ) : NULL;
+    return (searchLib) ? searchLib->LocateMacro( libPath[libPath.Count()-1], argc ) : NULL;
   }
   else
     return this->LocateMacro( name, argc );
@@ -156,7 +157,7 @@ size_t TLibrary::LocateSimilarFunctions(const olxstr& name, TBasicFunctionPList&
   size_t cnt = store.Count();
   for( int i=0; i < Functions.Count(); i++ )
     if( Functions.GetString(i).StartFromi(name) )
-      store.Add( Functions.Object(i) );
+      store.Add( Functions.GetObject(i) );
   return Functions.Count() - cnt;
 }
 //..............................................................................
@@ -164,7 +165,7 @@ size_t TLibrary::LocateSimilarMacros(const olxstr& name, TBasicFunctionPList& st
   size_t cnt = store.Count();
   for( int i=0; i < Macros.Count(); i++ )
     if( Macros.GetString(i).StartFromi(name) )
-      store.Add( Macros.Object(i) );
+      store.Add( Macros.GetObject(i) );
   return Macros.Count() - cnt;
 }
 //..............................................................................
@@ -173,10 +174,11 @@ size_t TLibrary::FindSimilarFunctions(const olxstr& name, TBasicFunctionPList& s
     TLibrary* searchLib = this;
     TStrList libPath( name, '.') ;
     for( int i=0; i < libPath.Count()-1; i++ )  {
-      searchLib = searchLib->GetLibraryByName( libPath.String(i) );
+      searchLib = searchLib->GetLibraryByName( libPath[i] );
       if( !searchLib )  break;
     }
-    return (searchLib) ? searchLib->LocateSimilarFunctions( libPath.String(libPath.Count()-1), store ) : 0;
+    return searchLib ? 
+      searchLib->LocateSimilarFunctions( libPath[libPath.Count()-1], store ) : 0;
   }
   else
     return this->LocateSimilarFunctions( name, store );
@@ -187,10 +189,11 @@ size_t TLibrary::FindSimilarMacros(const olxstr& name, TBasicFunctionPList& stor
     TLibrary* searchLib = this;
     TStrList libPath(name, '.');
     for( int i=0; i < libPath.Count()-1; i++ )  {
-      searchLib = searchLib->GetLibraryByName( libPath.String(i) );
+      searchLib = searchLib->GetLibraryByName( libPath[i] );
       if( !searchLib )  break;
     }
-    return (searchLib) ? searchLib->LocateSimilarMacros( libPath.String(libPath.Count()-1), store ) : 0;
+    return searchLib ? 
+      searchLib->LocateSimilarMacros( libPath[libPath.Count()-1], store ) : 0;
   }
   else
     return this->LocateSimilarMacros( name, store );

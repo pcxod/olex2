@@ -99,7 +99,7 @@ bool TGlTextBox::Orient(TGlPrimitive *P)  {
       T[0] = GlLeft;
       T[1] = GlTop - (i+1)*LineInc;
       T[2] = Z;  
-      TGlMaterial* GlM = FBuffer.Object(i);
+      TGlMaterial* GlM = FBuffer.GetObject(i);
       if( GlM != NULL ) 
         GlM->Init();
       FParent->DrawTextSafe(T, FBuffer[i], *Fnt ); 
@@ -126,8 +126,8 @@ bool TGlTextBox::Orient(TGlPrimitive *P)  {
 //..............................................................................
 void TGlTextBox::Clear()  {
   for( int i=0; i < FBuffer.Count(); i++ )
-    if( FBuffer.Object(i) != NULL )
-      delete FBuffer.Object(i);
+    if( FBuffer.GetObject(i) != NULL )
+      delete FBuffer.GetObject(i);
 
   FBuffer.Clear();
   Width = Height = 0;
@@ -173,7 +173,7 @@ void TGlTextBox::PostText(const TStrList &SL, TGlMaterial *M)  {
     TGlMaterial *GlM = new TGlMaterial;
     *GlM = *M;
 //    FBuffer.Object(FBuffer.Count()-1) = GlM;
-    FBuffer.Object(position) = GlM;
+    FBuffer.GetObject(position) = GlM;
   }
 }
 //..............................................................................

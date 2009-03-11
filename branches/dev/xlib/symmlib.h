@@ -207,18 +207,18 @@ public:
   TSymmElement*  FindSymmElement(const olxstr& name)  const;
 
   inline int LatticeCount() const           {  return Lattices.Count();  }
-  inline TCLattice& GetLattice(int i) const {  return *Lattices.Object(i);  }
+  inline TCLattice& GetLattice(int i) const {  return *Lattices.GetObject(i);  }
   inline TCLattice* FindLattice(const olxstr& Symbol) const {
-    return Lattices.FindObjectCI(Symbol);
+    return Lattices.FindObjecti(Symbol);
   }
 
   inline int PointGroupCount() const             {  return PointGroups.Count();  }
   inline TSpaceGroup& GetPointGroup(int i) const {  return *PointGroups[i];  }
 
   inline int BravaisLatticeCount() const    {  return BravaisLattices.Count();  }
-  inline TBravaisLattice&  GetBravaisLattice(int i) const {  return *BravaisLattices.Object(i);  }
+  inline TBravaisLattice&  GetBravaisLattice(int i) const {  return *BravaisLattices.GetObject(i);  }
   inline TBravaisLattice *  FindBravaisLattice(const olxstr& Name)  const {
-    return BravaisLattices.FindObjectCI(Name);
+    return BravaisLattices.FindObjecti(Name);
   }
 
   static TSymmLib*  GetInstance()  {  return Instance;  }

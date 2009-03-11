@@ -31,9 +31,8 @@ void TParamList::FromString(const olxstr &S, char Sep) {  // -t=op
   if( SL.Count() == 1 )
     AddParam(SL[0], EmptyString);
   else if( SL.Count() > 1 )  {
-    olxstr Tmp = SL.String(1);
-    ProcessStringParam(Tmp);
-    AddParam(SL[0], Tmp);
+    ProcessStringParam(SL[1]);
+    AddParam(SL[0], SL[1]);
   }
 }
 //..............................................................................
@@ -41,17 +40,11 @@ void TParamList::AddParam(const olxstr &Name, const olxstr &Val, bool Check)  {
   if( Check )  {
     int index = IndexOf(Name);
     if( index != -1 )  {
-      Object(index) = Val;
+      GetObject(index) = Val;
       return;
     }
   }
   TStrStrList::Add(Name, Val);
-}
-//..............................................................................
-const olxstr& TParamList::FindValue(const olxstr &Name, const olxstr &defv) const  {
-  int i = IndexOf(Name);
-  if( i >= 0 )  return Object(i);
-  return defv;
 }
 //..............................................................................
 bool TParamList::ProcessStringParam(olxstr &Param)  {

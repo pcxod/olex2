@@ -198,13 +198,13 @@ olxstr TComboBox::ItemsToString(const olxstr &sep)  {
 //..............................................................................
 void TComboBox::AddItems(const TStrList& EL) {
   for( int i=0; i < EL.Count(); i++ )  {
-    int ind = EL.String(i).IndexOf( "<-" );
+    int ind = EL[i].IndexOf( "<-" );
     if(  ind != -1 )  {
-      olxstr tmp = EL.String(i).SubStringFrom(ind + 2);
-      _AddObject( EL.String(i).SubStringTo(ind), tmp.Replicate(), true);
+      olxstr tmp = EL[i].SubStringFrom(ind + 2);
+      _AddObject( EL[i].SubStringTo(ind), tmp.Replicate(), true);
     }
     else
-      _AddObject( EL.String(i), NULL, false );
+      _AddObject( EL[i], NULL, false );
   }
 }
 //..............................................................................
@@ -239,7 +239,7 @@ TMainFrame::TMainFrame(const wxString& title, const wxPoint& pos, const wxSize& 
 }
 TMainFrame::~TMainFrame()  {
   for( int i=0; i < FWindowPos.Count(); i++ )
-    delete FWindowPos.Object(i);
+    delete FWindowPos.GetObject(i);
 }
 //..............................................................................
 /*void TMainFrame::Maximize()
@@ -820,17 +820,17 @@ void TTreeView::SelectionEvent(wxTreeEvent& event) {
 //..............................................................................
 int TTreeView::ReadStrings(int& index, const wxTreeItemId* thisCaller, TStrList& strings)  {
   while( (index + 2) <= strings.Count() )  {
-    int level = strings.String(index).LeadingCharCount( '\t' );
+    int level = strings[index].LeadingCharCount( '\t' );
     index++;  // now index is on data string
     wxTreeItemId item;
-    if( strings.String(index).Trim('\t').IsEmpty() )
-      item = AppendItem( *thisCaller, uiStr(strings.String(index-1).Trim('\t')) );
+    if( strings[index].Trim('\t').IsEmpty() )
+      item = AppendItem( *thisCaller, strings[index-1].Trim('\t').u_str() );
     else
-      item = AppendItem( *thisCaller, uiStr(strings.String(index-1).Trim('\t')), -1, -1,
-         new TTreeNodeData(new olxstr(strings.String(index))) );
+      item = AppendItem( *thisCaller, strings[index-1].Trim('\t').u_str(), -1, -1,
+         new TTreeNodeData(new olxstr(strings[index])) );
     index++;  // and now on the next item
     if( index < strings.Count() )  {
-      int nextlevel = strings.String(index).LeadingCharCount('\t');
+      int nextlevel = strings[index].LeadingCharCount('\t');
       if( nextlevel > level )  {
         int slevel = ReadStrings(index, &item, strings);
         if( slevel != level )
@@ -860,6 +860,7 @@ bool TTreeView::LoadFromStrings(TStrList &strings)  {
 //----------------------------------------------------------------------------//
 BEGIN_EVENT_TABLE(TTrackBar, wxSlider)
   EVT_SCROLL(TTrackBar::ScrollEvent)
+  EVT_SCROLL_THUMBRELEASE(TTrackBar::ThumbReleaseEvent)
 END_EVENT_TABLE()
 //..............................................................................
 TTrackBar::TTrackBar(wxWindow *Parent):wxSlider(Parent, -1, 0, 0, 100, wxDefaultPosition, wxDefaultSize, wxSL_HORIZONTAL|wxSL_AUTOTICKS),
@@ -867,6 +868,7 @@ TTrackBar::TTrackBar(wxWindow *Parent):wxSlider(Parent, -1, 0, 0, 100, wxDefault
   if( Parent->IsFrozen() )  Hide();
   FActions = new TActionQList;
   OnChange = &FActions->NewQueue("ONCHANGE");
+  OnThumbRelease = &FActions->NewQueue("ONTHUMBRELEASE");
   SetValue(0);
   this_Val = 0;
 }
@@ -879,6 +881,15 @@ void TTrackBar::ScrollEvent(wxScrollEvent& event)  {
   if( !Data.IsEmpty() )  TOlxVars::SetVar(Data, this_Val);
   StartEvtProcessing()
     OnChange->Execute(this, &TEGC::New<olxstr>(GetOnChangeStr()));
+  EndEvtProcessing()
+}
+//..............................................................................
+void TTrackBar::ThumbReleaseEvent(wxScrollEvent& event)  {
+  if( this_Val == GetValue() )  return;
+  this_Val = GetValue();
+  if( !Data.IsEmpty() )  TOlxVars::SetVar(Data, this_Val);
+  StartEvtProcessing()
+    OnThumbRelease->Execute(this, &TEGC::New<olxstr>(GetOnThumbReleaseStr()));
   EndEvtProcessing()
 }
 //..............................................................................

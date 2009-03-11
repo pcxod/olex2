@@ -66,7 +66,7 @@ TGraphicsStyle::~TGraphicsStyle()  {
 //..............................................................................
 void TGraphicsStyle::Clear()  {
   for( int i =0; i < FStyles.Count(); i++ )
-    delete FStyles.Object(i);
+    delete FStyles.GetObject(i);
   FStyles.Clear();
   FParams.Clear();
 }
@@ -227,13 +227,13 @@ TGraphicsStyle *TGraphicsStyle::NewStyle(const olxstr& Name, bool Force)  {
   }
   else  {
     TGraphicsStyle* gs = FindLocalStyle(Name);
-    return gs != NULL ? gs : FStyles.Add(Name, new TGraphicsStyle(FParent, this, Name) ).Object();
+    return gs != NULL ? gs : FStyles.Add(Name, new TGraphicsStyle(FParent, this, Name) ).Object;
   }
 }
 //..............................................................................
 TGraphicsStyle *TGraphicsStyle::FindStyle(TGraphicsStyle* style)  {
   for( int i=0; i < FStyles.Count(); i++ )  {
-    TGraphicsStyle* GS = FStyles.Object(i);
+    TGraphicsStyle* GS = FStyles.GetObject(i);
     if( *GS == *style )  
       return GS;
     GS = GS->FindStyle(style);
@@ -254,13 +254,13 @@ void TGraphicsStyle::SetStylesTag(int Tag)  {  // sets TCollectionItem::Tag of s
   SetTag(Tag);
   const int sc = FStyles.Count();
   for( int i=0; i < sc; i++ )
-    FStyles.Object(i)->SetStylesTag(Tag);
+    FStyles.GetObject(i)->SetStylesTag(Tag);
 }
 //..............................................................................
 void TGraphicsStyle::RemoveStylesByTag(int Tag)  {  // removes Styles with Style::Tag == Tag
   bool changed = false;
   for( int i=0; i < FStyles.Count(); i++ )  {
-    TGraphicsStyle* GS = FStyles.Object(i);
+    TGraphicsStyle* GS = FStyles.GetObject(i);
     if( GS->GetTag() == Tag )  {
       if( GS->FStyles.Count() != 0 )
         GS->RemoveStylesByTag(Tag);
@@ -278,7 +278,7 @@ void TGraphicsStyle::RemoveStylesByTag(int Tag)  {  // removes Styles with Style
 void TGraphicsStyle::RemoveNonPersistent() {
   bool changed = false;
   for( int i=0; i < FStyles.Count(); i++ )  {
-    TGraphicsStyle* GS = FStyles.Object(i);
+    TGraphicsStyle* GS = FStyles.GetObject(i);
     if( GS->FStyles.Count() != 0 )
       GS->RemoveNonPersistent();
     if( !GS->IsPersistent() )  {
@@ -294,7 +294,7 @@ void TGraphicsStyle::RemoveNonPersistent() {
 void TGraphicsStyle::RemoveNonSaveable() {
   bool changed = false;
   for( int i=0; i < FStyles.Count(); i++ )  {
-    TGraphicsStyle* GS = FStyles.Object(i);
+    TGraphicsStyle* GS = FStyles.GetObject(i);
     if( GS->FStyles.Count() != 0 )
       GS->RemoveNonSaveable();
     if( !GS->IsSaveable() )  {
@@ -312,11 +312,11 @@ void TGraphicsStyle::RemoveNamedStyles(const TStrList& toks)  {
   int i = FStyles.IndexOfComparable(toks[FLevel]);
   if( i != -1 )  {
     if( toks.Count() == FLevel+1 )  {
-      delete FStyles.Object(i);
+      delete FStyles.GetObject(i);
       FStyles.Delete(i);
     }
-    else if( FStyles.Object(i)->FStyles.Count() != 0 )
-      FStyles.Object(i)->RemoveNamedStyles(toks);
+    else if( FStyles.GetObject(i)->FStyles.Count() != 0 )
+      FStyles.GetObject(i)->RemoveNamedStyles(toks);
   }
 }
 //..............................................................................

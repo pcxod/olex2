@@ -464,13 +464,15 @@ private:
   TActionQList *FActions;
 protected:
   void ScrollEvent(wxScrollEvent& event);
-  olxstr OnChangeStr, Data;
+  void ThumbReleaseEvent(wxScrollEvent& event);
+  olxstr OnChangeStr, OnThumbReleaseStr, Data;
   int this_Val;  // needed to call events only if value has changed
 public:
   TTrackBar(wxWindow *Parent);
   virtual ~TTrackBar();
 
   DefPropC(olxstr, OnChangeStr) // this is passed to the OnChange event
+  DefPropC(olxstr, OnThumbReleaseStr) // this is passed to the OnChange event
   DefPropC(olxstr, Data) // data associated with the object
 
   inline int GetValue() const {  return wxSlider::GetValue(); }
@@ -480,7 +482,7 @@ public:
   inline int GetMax()   const {  return wxSlider::GetMax(); }
   inline void SetMax( int v ) { wxSlider::SetRange(v, this->GetMin()); }
 
-  TActionQueue *OnChange;
+  TActionQueue *OnChange, *OnThumbRelease;
 
   TWindowInterface WI;
 

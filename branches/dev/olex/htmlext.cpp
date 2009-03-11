@@ -466,6 +466,10 @@ TAG_HANDLER_PROC(tag)  {
       Track->SetOnChangeStr(tag.GetParam(wxT("ONCHANGE")).c_str());
       Track->OnChange->Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
     }
+    if( tag.HasParam(wxT("ONTHUMBRELEASE")) )  {
+      Track->SetOnThumbReleaseStr(tag.GetParam(wxT("ONTHUMBRELEASE")).c_str());
+      Track->OnThumbRelease->Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
+    }
     if( !Label.IsEmpty() )  {
       wxHtmlContainerCell* contC = new wxHtmlContainerCell(m_WParser->GetContainer());
       THtmlWordCell* wc = new THtmlWordCell( uiStr(Label), *m_WParser->GetDC());
@@ -694,7 +698,7 @@ void THtmlSwitch::UpdateFileIndex()  {
   Clear();
   if( FFileIndex >= FileCount() || FFileIndex < 0 )  return;
 
-  olxstr FN = FFiles.String(FFileIndex);
+  olxstr FN = FFiles[FFileIndex];
   IInputStream *is = TFileHandlerManager::GetInputStream(FN);
   if( is == NULL )  {
     TBasicApp::GetLog().Error( olxstr("THtmlSwitch::File does not exist: ") << FN );
@@ -711,10 +715,10 @@ bool THtmlSwitch::ToFile()  {
   if( FSwitches.IsEmpty() )  return true;
   if( FFileName.IsEmpty() )  return true;
   for( int i=0; i < FStrings.Count(); i++ )  {
-    if( FStrings.Object(i) )  {
-      AHtmlObject* HO = FStrings.Object(i);
+    if( FStrings.GetObject(i) )  {
+      AHtmlObject* HO = FStrings.GetObject(i);
       if( EsdlInstanceOf(*HO, THtmlSwitch) )  {
-        FParentHtml->UpdateSwitchState(*(THtmlSwitch*)HO, FStrings.String(i));
+        FParentHtml->UpdateSwitchState(*(THtmlSwitch*)HO, FStrings[i]);
         ((THtmlSwitch*)HO)->ToFile();
       }
     }
@@ -786,18 +790,16 @@ void THtmlSwitch::ToStrings(TStrList &List)  {
   AHtmlObject *HO;
   if( FFileIndex >= 0 && FFileIndex < FFiles.Count() )  {
     Tmp = "<SWITCHINFOS SRC=\"";
-    Tmp << FFiles.String(FFileIndex) << "\">";
+    Tmp << FFiles[FFileIndex] << "\">";
     List.Add(Tmp);
   }
   for( int i=0; i < FStrings.Count(); i++ )  {
-    if( FStrings.Object(i) != NULL )  {
-      HO = FStrings.Object(i);
-      HO->ToStrings(List);
-    }
+    if( FStrings.GetObject(i) != NULL )
+      FStrings.GetObject(i)->ToStrings(List);
     else  {
       // replace the parameters with their values
-      if( FStrings.String(i).IndexOf('#') != -1 )  {
-        Tmp = FStrings.String(i);
+      if( FStrings[i].IndexOf('#') != -1 )  {
+        Tmp = FStrings[i];
         // "key word parameter"
         Tmp.Replace( "#switch_name", FName );
         if( FParent != NULL )
@@ -811,7 +813,7 @@ void THtmlSwitch::ToStrings(TStrList &List)  {
 
       } // end of parameter replcaement
       else
-        List.Add( FStrings.String(i) );
+        List.Add( FStrings[i] );
     }
   }
   if( FFileIndex >= 0 && FFileIndex < FFiles.Count() )
@@ -981,7 +983,7 @@ void THtml::SetSwitchState(THtmlSwitch& sw, int state)  {
   if( ind == -1 )
     FSwitchStates.Add(sw.Name(), state);
   else
-    FSwitchStates.Object(ind) = state;
+    FSwitchStates.GetObject(ind) = state;
 }
 //..............................................................................
 int THtml::GetSwitchState(const olxstr& switchName)  {
@@ -1091,7 +1093,7 @@ void THtml::CheckForSwitches(THtmlSwitch &Sender, bool izZip)  {
         Toks.Delete(0);
       }
       THtmlSwitch* Sw = &Sender.NewSwitch();
-      Lst.Object(i) = Sw;
+      Lst.GetObject(i) = Sw;
       Sw->Name(Toks[0]);
       Toks.Delete(0);
       Toks.Delete(Toks.Count()-1);
@@ -1104,15 +1106,15 @@ void THtml::CheckForSwitches(THtmlSwitch &Sender, bool izZip)  {
       }
 
       for( int j=0; j < Toks.Count()-1; j++ )  {
-        if( Toks.String(j).FirstIndexOf('=') == -1 )  {
-          if( izZip && !TZipWrapper::IsZipFile(Toks.String(j)) )  {
-            if( Toks.String(j).StartsFrom('\\') || Toks.String(j).StartsFrom('/') )
-              Tmp = Toks.String(j).SubStringFrom(1);
+        if( Toks[j].FirstIndexOf('=') == -1 )  {
+          if( izZip && !TZipWrapper::IsZipFile(Toks[j]) )  {
+            if( Toks[j].StartsFrom('\\') || Toks[j].StartsFrom('/') )
+              Tmp = Toks[j].SubStringFrom(1);
             else
-              Tmp = TZipWrapper::ComposeFileName(Sender.File(Sender.FileIndex()), Toks.String(j));
+              Tmp = TZipWrapper::ComposeFileName(Sender.File(Sender.FileIndex()), Toks[j]);
           }
           else
-            Tmp = Toks.String(j);
+            Tmp = Toks[j];
 
           TGlXApp::GetMainForm()->ProcessMacroFunc( Tmp );
           Sw->AddFile(Tmp);
@@ -1120,7 +1122,7 @@ void THtml::CheckForSwitches(THtmlSwitch &Sender, bool izZip)  {
         else  {
           // check for parameters
           if( Toks[j].IndexOf('#') != -1 )  {
-            olxstr Tmp = Toks.String(j), Tmp1;
+            olxstr Tmp = Toks[j], Tmp1;
             for( int k=0; k < Sender.Params().Count(); k++ )  {
               Tmp1 = '#';  Tmp1 << Sender.Params().GetName(k);
               Tmp.Replace( Tmp1, Sender.Params().GetValue(k) );
@@ -1128,7 +1130,7 @@ void THtml::CheckForSwitches(THtmlSwitch &Sender, bool izZip)  {
             Sw->AddParam(Tmp);
           }
           else
-            Sw->AddParam(Toks.String(j));
+            Sw->AddParam(Toks[j]);
         }
       }
 
@@ -1150,10 +1152,10 @@ void THtml::CheckForSwitches(THtmlSwitch &Sender, bool izZip)  {
       if( Toks.Count() < 3 )  continue;
       THtmlSwitch* Sw = FRoot->FindSwitch(Toks[0]);
       if( Sw == NULL )  {
-        TBasicApp::GetLog().Error(olxstr("THtml::CheckForSwitches: Unresolved: ") << Toks.String(0));
+        TBasicApp::GetLog().Error(olxstr("THtml::CheckForSwitches: Unresolved: ") << Toks[0]);
         continue;
       }
-      Sw->FileIndex(Toks.String(1).ToInt()-1);
+      Sw->FileIndex(Toks[1].ToInt()-1);
     }
     if( Lst[i].StartsFrom(Tag2) )  {
       Toks.Clear();  
@@ -1161,8 +1163,8 @@ void THtml::CheckForSwitches(THtmlSwitch &Sender, bool izZip)  {
       Toks.Strtok(Tmp, ' '); // extract item name
       if( Toks.Count() < 2 )  continue;
       THtmlFunc* Fn = &Sender.NewFunc();
-      Lst.Object(i) = Fn;
-      Fn->Func(Toks.String(0));
+      Lst.GetObject(i) = Fn;
+      Fn->Func(Toks[0]);
 //      if( OnCmd->Execute(this, &(Toks.String(0))) )
 //      { Lst[i] = Toks.String(0); }
     }
@@ -1173,7 +1175,7 @@ void THtml::CheckForSwitches(THtmlSwitch &Sender, bool izZip)  {
       if( Toks.Count() < 2 )  continue;
       Toks.Delete(Toks.Count()-1);  // delete --!>
       THtmlLink* Lk = &Sender.NewLink();
-      Lst.Object(i) = Lk;
+      Lst.GetObject(i) = Lk;
       Lk->FileName(Toks.Text(' '));
 //      if( OnCmd->Execute(this, &(Toks.String(0))) )
 //      { Lst[i] = Toks.String(0); }
@@ -1268,7 +1270,7 @@ bool THtml::UpdatePage()  {
   wxWindow* focusedControl = FindFocus();
   if( focusedControl != NULL )  {
     for( int i=0; i < FObjects.Count(); i++ )  {
-      if( FObjects.Object(i).GetB() == focusedControl )  {
+      if( FObjects.GetObject(i).GetB() == focusedControl )  {
         focusedControlName = FObjects.GetComparable(i);
         break;
       }
@@ -1301,9 +1303,9 @@ bool THtml::UpdatePage()  {
     if( FObjects.GetObject(i).GetB() != NULL )  {
       // this i the only way to not show the bloody control at (0,0) on windows!
 #ifndef __MAC__
-      FObjects.Object(i).B()->Move(2000, 2000);
+      FObjects.GetObject(i).B()->Move(2000, 2000);
 #endif      
-      FObjects.Object(i).B()->Show(true);
+      FObjects.GetObject(i).B()->Show(true);
     }
   }
   // reset global data
@@ -1325,7 +1327,7 @@ bool THtml::UpdatePage()  {
     int ind = FObjects.IndexOf( FocusedControl );
     FocusedControl = EmptyString;
     if( ind != -1 )  {
-      wxWindow* wnd = FObjects.Object(ind).B();
+      wxWindow* wnd = FObjects.GetObject(ind).B();
       if( EsdlInstanceOf(*wnd, TTextEdit) )
         ((TTextEdit*)wnd)->SetSelection(-1,-1);
       else if( EsdlInstanceOf(*wnd, TComboBox) )  {
@@ -1768,19 +1770,19 @@ void THtml::macTooltips(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     return;
   }
   if( Cmds.Count() == 1 )  {
-    if( !Cmds.String(0).Comparei("true") || ! Cmds.String(0).Comparei("false") )  {
+    if( !Cmds[0].Comparei("true") || ! Cmds[0].Comparei("false") )  {
       this->SetShowTooltips( Cmds[0].ToBool() );
       return;
     }
     else  {
-      THtml* html = TGlXApp::GetMainForm()->GetHtml( Cmds.String(0) );
+      THtml* html = TGlXApp::GetMainForm()->GetHtml( Cmds[0] );
       if( html == NULL )  return;
       html->SetShowTooltips( !html->GetShowTooltips() );
       return;
     }
   }
 
-  THtml* html = TGlXApp::GetMainForm()->GetHtml( Cmds.String(0) );
+  THtml* html = TGlXApp::GetMainForm()->GetHtml( Cmds[0] );
   if( html != NULL )  {
     html->SetShowTooltips( Cmds[1].ToBool() );
   }
@@ -1805,7 +1807,7 @@ void THtml::macSetBorders(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     E.ProcessingError(__OlxSrcInfo, "undefined html window");
     return;
   }
-  html->SetBorders( Cmds.Last().String().ToInt() );
+  html->SetBorders( Cmds.Last().String.ToInt() );
 }
 //..............................................................................
 void THtml::macHtmlHome(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
@@ -1832,7 +1834,7 @@ void THtml::macHtmlLoad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     E.ProcessingError(__OlxSrcInfo, "undefined html window");
     return;
   }
-  html->LoadPage( Cmds.Last().String().u_str() );
+  html->LoadPage( Cmds.Last().String.u_str() );
 }
 //..............................................................................
 void THtml::macHide(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
@@ -1852,7 +1854,7 @@ void THtml::macHtmlDump(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   }
   TStrList SL;
   html->Root()->ToStrings( SL );
-  TUtf8File::WriteLines(Cmds.Last().String(), SL);
+  TUtf8File::WriteLines(Cmds.Last().String, SL);
 }
 //..............................................................................
 void THtml::macDefineControl(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
@@ -1869,38 +1871,38 @@ void THtml::macDefineControl(TStrObjList &Cmds, const TParamList &Options, TMacr
   }
   else if( Cmds[1].Comparei("button") == 0 )  {
     props = ObjectsState.DefineControl(Cmds[0], typeid(TButton) );
-    props->Item("checked") = Options.FindValue("c", "false");
+    (*props)["checked"] = Options.FindValue("c", "false");
   }
   else if( Cmds[1].Comparei("combo") == 0 )  {
     props = ObjectsState.DefineControl(Cmds[0], typeid(TComboBox) );
-    props->Item("items") = Options.FindValue("i");
+    (*props)["items"] = Options.FindValue("i");
   }
   else if( Cmds[1].Comparei("spin") == 0 )  {
     props = ObjectsState.DefineControl(Cmds[0], typeid(TSpinCtrl) );
-    props->Item("min") = Options.FindValue("min", "0");
-    props->Item("max") = Options.FindValue("max", "100");
+    (*props)["min"] = Options.FindValue("min", "0");
+    (*props)["max"] = Options.FindValue("max", "100");
   }
   else if( Cmds[1].Comparei("slider") == 0 )  {
     props = ObjectsState.DefineControl(Cmds[0], typeid(TTrackBar) );
-    props->Item("min") = Options.FindValue("min", "0");
-    props->Item("max") = Options.FindValue("max", "100");
+    (*props)["min"] = Options.FindValue("min", "0");
+    (*props)["max"] = Options.FindValue("max", "100");
   }
   else if( Cmds[1].Comparei("checkbox") == 0 )  {
     props = ObjectsState.DefineControl(Cmds[0], typeid(TCheckBox) );
-    props->Item("checked") = Options.FindValue("c", "false");
+    (*props)["checked"] = Options.FindValue("c", "false");
   }
   else if( Cmds[1].Comparei("tree") == 0 )  {
     props = ObjectsState.DefineControl(Cmds[0], typeid(TTreeView) );
   }
   else if( Cmds[1].Comparei("list") == 0 )  {
     props = ObjectsState.DefineControl(Cmds[0], typeid(TListBox) );
-    props->Item("items") = Options.FindValue("i");
+    (*props)["items"] = Options.FindValue("i");
   }
   if( props != NULL )
-    props->Item("bg") = Options.FindValue("bg");
-    props->Item("fg") = Options.FindValue("fg");
+    (*props)["bg"] = Options.FindValue("bg");
+    (*props)["fg"] = Options.FindValue("fg");
     if( props->IndexOfComparable("val") != -1 )
-      props->Item("val") = Options.FindValue("v");
+      (*props)["val"] = Options.FindValue("v");
 }
 //..............................................................................
 //..............................................................................
@@ -1932,7 +1934,7 @@ void THtml::funGetValue(const TStrObjList &Params, TMacroError &E)  {
       E.ProcessingError(__OlxSrcInfo,  "object definition does not have value for: ") << Params[0];
       return;
     }
-    E.SetRetVal( props->Item("val") );
+    E.SetRetVal( (*props)["val"] );
   }
   else
     E.SetRetVal( GetObjectValue(Obj) );
@@ -1980,17 +1982,17 @@ void THtml::funSetValue(const TStrObjList &Params, TMacroError &E)  {
       E.ProcessingError(__OlxSrcInfo,  "object definition does not accept value for: ") << Params[0];
       return;
     }
-    if( props->Item("type") == EsdlClassName(TTrackBar) || props->Item("type") == EsdlClassName(TSpinCtrl) )  {
+    if( (*props)["type"] == EsdlClassName(TTrackBar) || (*props)["type"] == EsdlClassName(TSpinCtrl) )  {
       int si = Params[1].IndexOf(',');
       if( si == -1 )
-        props->Item("val") = Params[1];
+        (*props)["val"] = Params[1];
       else  {
-        props->Item("min") = Params[1].SubStringTo(si);
-        props->Item("max") = Params[1].SubStringFrom(si+1);
+        (*props)["min"] = Params[1].SubStringTo(si);
+        (*props)["max"] = Params[1].SubStringFrom(si+1);
       }
     }
     else
-      props->Item("val") = Params[1];
+      (*props)["val"] = Params[1];
   }
   else  {
     SetObjectValue(Obj, Params[1]);
@@ -2130,7 +2132,7 @@ void THtml::funGetState(const TStrObjList &Params, TMacroError &E)  {
       E.ProcessingError(__OlxSrcInfo,  "wrong html object name: ") << Params[0];
       return;
     }
-    E.SetRetVal( props->Item("checked") );
+    E.SetRetVal( (*props)["checked"] );
   }
   else
     E.SetRetVal( GetObjectState(Obj) );
@@ -2201,7 +2203,7 @@ void THtml::funSetFocus(const TStrObjList &Params, TMacroError &E)  {
   if( ind == -1 )  {
     return;
   }
-  wxWindow* wnd = FObjects.Object(ind).B();
+  wxWindow* wnd = FObjects.GetObject(ind).B();
   if( EsdlInstanceOf(*wnd, TTextEdit) )
     ((TTextEdit*)wnd)->SetSelection(-1,-1);
   else if( EsdlInstanceOf(*wnd, TComboBox) )  {
@@ -2227,7 +2229,7 @@ void THtml::funSetState(const TStrObjList &Params, TMacroError &E)  {
       E.ProcessingError(__OlxSrcInfo,  "object definition does have state for: ") << Params[0];
       return;
     }
-    props->Item("checked") = Params[1];
+    (*props)["checked"] = Params[1];
   }
   else
     SetObjectState(Obj, Params[1].ToBool());
@@ -2263,7 +2265,7 @@ void THtml::funSetFG(const TStrObjList &Params, TMacroError &E)  {
     E.ProcessingError(__OlxSrcInfo, "wrong html object name: ")  << Params[0];
     return;
   }
-  wxWindow* wxw = FObjects.Object(ind).B();
+  wxWindow* wxw = FObjects.GetObject(ind).B();
   if( wxw != NULL )  {
     if( EsdlInstanceOf(*wxw, TComboBox) )  {
       TComboBox* Box = (TComboBox*)wxw;
@@ -2288,7 +2290,7 @@ void THtml::funSetBG(const TStrObjList &Params, TMacroError &E)  {
     E.ProcessingError(__OlxSrcInfo, "wrong html object name: ")  << Params[0];
     return;
   }
-  wxWindow* wxw = FObjects.Object(ind).B();
+  wxWindow* wxw = FObjects.GetObject(ind).B();
   if( wxw != NULL )  {
     if( EsdlInstanceOf(*wxw, TComboBox) )  {
       TComboBox* Box = (TComboBox*)wxw;
@@ -2320,7 +2322,7 @@ void THtml::funGetBorders(const TStrObjList &Params, TMacroError &E)  {
 //..............................................................................
 THtml::TObjectsState::~TObjectsState()  {
   for( int i=0; i < Objects.Count(); i++ )
-    delete Objects.Object(i);
+    delete Objects.GetObject(i);
 }
 //..............................................................................
 void THtml::TObjectsState::SaveState()  {
@@ -2335,7 +2337,7 @@ void THtml::TObjectsState::SaveState()  {
       Objects.Add(html.GetObjectName(i), props);
     }
     else  {
-      props = Objects.Object(ind);
+      props = Objects.GetObject(ind);
       props->Clear();
     }
     props->Add("type", EsdlClassName(*obj));  // type
@@ -2406,7 +2408,7 @@ void THtml::TObjectsState::RestoreState()  {
     IEObject* obj = html.GetObject(i);
     wxWindow* win = html.GetWindow(i);
     if( ind == -1 )  continue;
-    TSStrStrList<olxstr,false>& props = *Objects.Object(ind);
+    TSStrStrList<olxstr,false>& props = *Objects.GetObject(ind);
     if( props["type"] != EsdlClassName(*obj) )  {
       TBasicApp::GetLog().Error(olxstr("Object type changed for: ") << Objects.GetString(ind) );
       continue;

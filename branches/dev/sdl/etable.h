@@ -115,28 +115,28 @@ public:
   void EmptyContent(bool EmptyCaptions)  {
     for( int i=0; i < Rows.Count(); i++ )  {
       for( int j=0; j < Rows[i].Count(); j++ )
-        Rows[i].String(j) = EmptyString;
+        Rows[i][j] = EmptyString;
     }
     if( EmptyCaptions )  {
       for( int j=0; j < ColNames.Count(); j++ )
-        ColNames.String(j) = EmptyString;
+        ColNames[j] = EmptyString;
       for( int j=0; j < RowNames.Count(); j++ )
-        RowNames.String(j) = EmptyString;
+        RowNames[j] = EmptyString;
     }
   }
 
   void EmptyRow(int index, bool EmptyCaption)  {
     for( int j=0; j < Rows[index].Count(); j++ )
-      Rows[index].String(j) = EmptyString;
+      Rows[index][j] = EmptyString;
     if( EmptyCaption )
-      RowNames.String(index) = EmptyString;
+      RowNames[index] = EmptyString;
   }
 
   void EmptyCol(int index, bool EmptyCaption)  {
     for( int i=0; i < RowCount(); i++ )
-      Rows[i].String(index) = EmptyString;
+      Rows[i][index] = EmptyString;
     if( EmptyCaption )
-      ColNames.String(index) = EmptyString;
+      ColNames[index] = EmptyString;
   }
 
   void DelRow(int index)  {
@@ -192,7 +192,7 @@ public:
     for( int i=0; i < Rows.Count(); i++ )  {
       Tmp = "<tr>";
       if( rowNames )
-        Tmp << "<td>" << RowNames.String(i) << "</td>";
+        Tmp << "<td>" << RowNames[i] << "</td>";
       for( int j=0; j < ColNames.Count(); j++ )
         Tmp << "<td>" << Rows[i][j] << "</td>";
       L.Add( (Tmp << "</tr>") );

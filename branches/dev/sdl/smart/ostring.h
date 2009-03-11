@@ -34,7 +34,7 @@ extern const WString &WNullString;
 
 template <bool CaseInsensetive>  class olxstrComparator  {
 public:
-  template <class comparable>  static inline int Compare(const comparable& A, const comparable& B )  {
+  template <class S1, class S2>  static inline int Compare(const S1& A, const S2& B )  {
     return (CaseInsensetive) ? A.Comparei( B ): A.Compare( B );
   }
 };

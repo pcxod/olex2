@@ -49,7 +49,7 @@ void TIns::Clear()  {
   GetRM().ClearAll();
   GetAsymmUnit().Clear();
   for( int i=0; i < Ins.Count(); i++ )
-    delete Ins.Object(i);
+    delete Ins.GetObject(i);
   Ins.Clear();
   Skipped.Clear();
   Title = EmptyString;
@@ -121,7 +121,7 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
       if( qpeak ) 
         atom->SetAtomInfo(&baiQPeak);
       else
-        atom->SetAtomInfo( cx.BasicAtoms.Object(Toks[1].ToInt()-1) );
+        atom->SetAtomInfo( cx.BasicAtoms.GetObject(Toks[1].ToInt()-1) );
       _ProcessAfix(*atom, cx);
     }
   }
@@ -136,7 +136,7 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
   }
   // remove dublicated instructtions, rems etc
   for( int i = 0; i < Ins.Count(); i++ )  {
-    if( Ins.String(i).IsEmpty() )  continue;
+    if( Ins[i].IsEmpty() )  continue;
     for( int j = i+1; j < Ins.Count(); j++ )  {
       if( Ins[i] == Ins[j] )
         Ins[j] = EmptyString;
@@ -226,11 +226,11 @@ void TIns::_ProcessSame(ParseContext& cx)  {
 void TIns::_FinishParsing(ParseContext& cx)  {
   for( int i =0; i < Ins.Count(); i++ )  {
     TInsList* Param = new TInsList(Ins[i], ' ');
-    Ins.Object(i) = Param;
-    Ins[i] = Param->String(0);
+    Ins.GetObject(i) = Param;
+    Ins[i] = Param->GetString(0);
     Param->Delete(0);
     for( int j=0; j < Param->Count(); j++ )
-      Param->Object(j) = GetAsymmUnit().FindCAtom(Param->String(j));
+      Param->GetObject(j) = GetAsymmUnit().FindCAtom(Param->GetString(j));
   }
   // TODO: an update of the values from the variables may be required...
   //TAsymmUnit& au = GetAsymmUnit();
@@ -436,7 +436,7 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx,
           Sfac << ' ';
         Sfac << Toks[1];
         cx.BasicAtoms.Add( Toks[1], atomsInfo.FindAtomInfoBySymbol(Toks[1]) );
-        if( cx.BasicAtoms.Last().Object() == NULL )
+        if( cx.BasicAtoms.Last().Object == NULL )
           throw TFunctionFailedException(__OlxSourceInfo, olxstr("Could not find suitable scatterer for '") << Toks[1] << '\'' );
         expandedSfacProcessed = true;
         cx.rm.AddNewSfac( Toks[1],
@@ -451,7 +451,7 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx,
       for( int j=1; j < Toks.Count(); j++ )  {
         if( atomsInfo.IsAtom(Toks[j]) )  {
           cx.BasicAtoms.Add(Toks[j], atomsInfo.FindAtomInfoBySymbol(Toks[j]) );
-          if( cx.BasicAtoms.Last().Object() == NULL )
+          if( cx.BasicAtoms.Last().Object == NULL )
             throw TFunctionFailedException(__OlxSourceInfo, olxstr("Could not find suitable scatterer for '") << Toks[j] << '\'' );
           if( !Sfac.IsEmpty() )
             Sfac << ' ';
@@ -517,22 +517,22 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx,
 //..............................................................................
 void TIns::UpdateParams()  {
   for( int i =0; i < Ins.Count(); i++ )  {
-    if( Ins.Object(i) == NULL )  continue;  // might happen if load failed
-    for( int j=0; j < Ins.Object(i)->Count(); j++ )  {
-      if( Ins.Object(i)->Object(j) != NULL )
-        Ins.Object(i)->String(j) = Ins.Object(i)->Object(j)->GetLabel();
+    if( Ins.GetObject(i) == NULL )  continue;  // might happen if load failed
+    for( int j=0; j < Ins.GetObject(i)->Count(); j++ )  {
+      if( Ins.GetObject(i)->GetObject(j) != NULL )
+        Ins.GetObject(i)->GetString(j) = Ins.GetObject(i)->GetObject(j)->GetLabel();
     }
   }
 }
 //..............................................................................
 void TIns::DelIns(int i)  {
-  delete Ins.Object(i);
+  delete Ins.GetObject(i);
   Ins.Delete(i);
 }
 //..............................................................................
 TInsList* TIns::FindIns(const olxstr &Name)  {
-  int i = Ins.CIIndexOf(Name);
-  return i >= 0 ? Ins.Object(i) : NULL;
+  int i = Ins.IndexOfi(Name);
+  return i >= 0 ? Ins.GetObject(i) : NULL;
 }
 //..............................................................................
 bool TIns::InsExists(const olxstr &Name)  {
@@ -546,11 +546,11 @@ bool TIns::AddIns(const TStrList& toks, RefinementModel& rm, bool CheckUniq)  {
   if( CheckUniq )  {
     for( int i=0; i < Ins.Count(); i++ )  {
       if( !Ins[i].Comparei(toks[0]) )  {
-        TInsList *ps = Ins.Object(i);
+        TInsList *ps = Ins.GetObject(i);
         if( ps->Count() == (toks.Count()-1) )  {
           bool unique = false;
           for( int j=0; j < ps->Count(); j++ )  {
-            if( ps->String(j).Comparei(toks[j+1]) != 0 )  {
+            if( ps->GetString(j).Comparei(toks[j+1]) != 0 )  {
               unique = true;
               break;
             }
@@ -564,7 +564,7 @@ bool TIns::AddIns(const TStrList& toks, RefinementModel& rm, bool CheckUniq)  {
   TInsList& Params = *(new TInsList(toks.Count()-1));
   for( int i=1; i < toks.Count(); i++ )  {
     Params[i-1] = toks[i];
-    Params.Object(i-1) = GetAsymmUnit().FindCAtom(toks[i]);
+    Params.GetObject(i-1) = GetAsymmUnit().FindCAtom(toks[i]);
   }
   // end
   Ins.Add(toks[0], &Params);
@@ -691,7 +691,7 @@ void TIns::SaveToRefine(const olxstr& FileName, const olxstr& sMethod, const olx
   SL.AddList(mtoks);
   SL.Add(EmptyString);
   SL.Add("HKLF ") << RefMod.GetHKLFStr();
-  SL.String(UnitIndex) = olxstr("UNIT ") << Unit;
+  SL[UnitIndex] = olxstr("UNIT ") << Unit;
   _SaveSfac( SL, SfacIndex );
   SL.Add("END");
 #ifdef _UNICODE
@@ -769,7 +769,7 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
   part = a.GetPart();
   int spindex;
   if( a.GetAtomInfo() == iQPeakIndex )
-    spindex = (sfac == NULL ? -2 : sfac->CIIndexOf('c') );
+    spindex = (sfac == NULL ? -2 : sfac->IndexOfi('c') );
   else
     spindex = (sfac == NULL ? -2 : sfac->IndexOfObject( &a.GetAtomInfo() ));
   HypernateIns( _AtomToString(rm, a, spindex+1), sl );
@@ -792,12 +792,12 @@ void TIns::SaveToStrings(TStrList& SL)  {
   olxstr Tmp;
   TStrPObjList<olxstr,TBasicAtomInfo*> BasicAtoms(Sfac, ' ');
   for( int i=0; i < BasicAtoms.Count(); i++ )  {
-    TBasicAtomInfo* BAI = atomsInfo.FindAtomInfoBySymbol( BasicAtoms.String(i) );
-    if( BAI != NULL )  BasicAtoms.Object(i) = BAI;
+    TBasicAtomInfo* BAI = atomsInfo.FindAtomInfoBySymbol( BasicAtoms[i] );
+    if( BAI != NULL )  BasicAtoms.GetObject(i) = BAI;
     else
-      throw TFunctionFailedException(__OlxSourceInfo, olxstr("Unknown element: ") << BasicAtoms.String(i));
+      throw TFunctionFailedException(__OlxSourceInfo, olxstr("Unknown element: ") << BasicAtoms[i]);
   }
-  int carbonBAIIndex = BasicAtoms.CIIndexOf('c');  // for Q-peaks
+  int carbonBAIIndex = BasicAtoms.IndexOfi('c');  // for Q-peaks
   for( int i=-1; i < GetAsymmUnit().ResidueCount(); i++ )  {
     TAsymmUnit::TResidue& residue = GetAsymmUnit().GetResidue(i);
     for( int j=0; j < residue.Count(); j++ )  {
@@ -937,8 +937,9 @@ bool TIns::Adopt(TXFile *XF)  {
 //..............................................................................
 void TIns::DeleteAtom(TCAtom *CA)  {
   for( int i =0; i < Ins.Count(); i++ )  {
-    for( int j=0; j < Ins.Object(i)->Count(); j++ ) 
-      if( Ins.Object(i)->Object(j) == CA )  Ins.Object(i)->Object(j) = NULL;
+    for( int j=0; j < Ins.GetObject(i)->Count(); j++ ) 
+      if( Ins.GetObject(i)->GetObject(j) == CA )  
+        Ins.GetObject(i)->GetObject(j) = NULL;
   }
 }
 //..............................................................................
@@ -1078,7 +1079,7 @@ void TIns::SavePattSolution(const olxstr& FileName, const TTypeList<TPattAtom>& 
   Tmp = EmptyString;
   Tmp1 = "UNIT ";
   for( int i=0; i < BasicAtoms.Count(); i++ )  {
-    Tmp  << BasicAtoms.String(i) << ' ';
+    Tmp  << BasicAtoms[i] << ' ';
     Tmp1 << Unit[i] << ' ';
   }
   olxstr lastSfac = Sfac;
@@ -1094,7 +1095,7 @@ void TIns::SavePattSolution(const olxstr& FileName, const TTypeList<TPattAtom>& 
 
   // copy "unknown" instructions except rems
   for( int i=0; i < Ins.Count(); i++ )  {
-    L = Ins.Object(i);
+    L = Ins.GetObject(i);
     // skip rems and print them at the end
     if( Ins[i].StartsFrom("REM") )  continue;
     Tmp = EmptyString;
@@ -1559,7 +1560,7 @@ void TIns::ValidateRestraintsAtomNames(RefinementModel& rm)  {
 //..............................................................................
 void TIns::ClearIns()  {
   for( int i=0; i < Ins.Count(); i++ )
-    delete Ins.Object(i);
+    delete Ins.GetObject(i);
   Ins.Clear();
 }
 //..............................................................................
@@ -1595,7 +1596,7 @@ void TIns::SaveHeader(TStrList& SL, bool ValidateRestraintNames)  {
   }
   // copy "unknown" instructions except rems
   for( int i=0; i < Ins.Count(); i++ )  {
-    TInsList* L = Ins.Object(i);
+    TInsList* L = Ins.GetObject(i);
     if( L == NULL )  continue;  // if load failed
     // skip rems and print them at the end
     //if( Ins[i].StartsFrom("REM") )  continue;
@@ -1621,7 +1622,7 @@ void TIns::SaveHeader(TStrList& SL, bool ValidateRestraintNames)  {
 void TIns::ParseHeader(const TStrList& in)  {
   // clear all but the atoms
   for( int i=0; i < Ins.Count(); i++ )
-    delete Ins.Object(i);
+    delete Ins.GetObject(i);
   Ins.Clear();
   Sfac = EmptyString;
   Unit = EmptyString;

@@ -43,7 +43,7 @@ public:
   TAutoDBFolder(const TAutoDBFolder& dbf)  {  *this = dbf;  }
   ~TAutoDBFolder()  {
     for( int i=0; i < Files.Count(); i++ )
-      delete Files.Object(i);
+      delete Files.GetObject(i);
   }
   inline const TAutoDBFolder& operator = (const TAutoDBFolder& dbf)  {
     Files.SetCapacity( dbf.Files.Count() );
@@ -59,7 +59,7 @@ public:
     return *df;
   }
   inline long Count() const  {  return Files.Count();  }
-  inline TAutoDBIdObject& GetIdObject(int ind)  {  return *Files.Object(ind);  }
+  inline TAutoDBIdObject& GetIdObject(int ind) const {  return *Files.GetObject(ind);  }
   inline const olxstr& GetObjectName(int ind) {  return Files.GetComparable(ind);  }
   void AssignIds( long base )  {
     for( int i=0; i < Files.Count(); i++ )
@@ -244,9 +244,9 @@ protected:
   //............................................................................
   TAutoDBIdObject& LocateFile(int index) {
     for( int i=0; i < Folders.Count(); i++ )  {
-      index -= Folders.Object(i)->Count();
+      index -= Folders.GetObject(i)->Count();
       if( index < 0 )  {
-        TAutoDBFolder* fld = Folders.Object(i);
+        TAutoDBFolder* fld = Folders.GetObject(i);
         int ind = fld->Count() + index;
         return fld->GetIdObject( ind );
       }
@@ -257,9 +257,9 @@ protected:
   const olxstr& LocateFileName(const TAutoDBIdObject& file) {
     int32_t index = file.GetId();
     for( int i=0; i < Folders.Count(); i++ )  {
-      index -= Folders.Object(i)->Count();
+      index -= Folders.GetObject(i)->Count();
       if( index < 0 )  {
-        TAutoDBFolder* fld = Folders.Object(i);
+        TAutoDBFolder* fld = Folders.GetObject(i);
         int ind = fld->Count() + index;
         return fld->GetObjectName( ind );
       }
@@ -270,8 +270,9 @@ protected:
   TAutoDBFolder& LocateFileFolder(const TAutoDBIdObject& file) {
     int32_t index = file.GetId();
     for( int i=0; i < Folders.Count(); i++ )  {
-      index -= Folders.Object(i)->Count();
-      if( index < 0 )  return *Folders.Object(i);
+      index -= Folders.GetObject(i)->Count();
+      if( index < 0 )  
+        return *Folders.GetObject(i);
     }
     throw TInvalidArgumentException(__OlxSourceInfo, "index");
   }

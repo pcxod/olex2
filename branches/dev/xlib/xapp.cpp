@@ -338,7 +338,7 @@ void TXApp::RingContentFromStr(const olxstr& Condition, TPtrList<TBasicAtomInfo>
   for( int i=0; i < toks.Count(); i++ )  {
     TBasicAtomInfo* bai = FAtomsInfo->FindAtomInfoBySymbol( toks[i] );
     if( bai == NULL )
-      throw TInvalidArgumentException(__OlxSourceInfo, olxstr("Unknown element: ") << toks.String(i) );
+      throw TInvalidArgumentException(__OlxSourceInfo, olxstr("Unknown element: ") << toks[i] );
     ringDesc.Add( bai );
   }
 }

@@ -45,7 +45,7 @@ public:
   bool IsQuite()                   const  {  return (Flags & spfQuite) != 0;  }
 
   inline int StrCount()           const {  return Output.Count();  }
-  const olxstr& GetString(int i)  const {  return Output.String(i);  }
+  const olxstr& GetString(int i)  const {  return Output[i];  }
   TStrList& GetOutput()           {  return Output;  }
   void DeleteStr(int i)           {  Output.Delete(i);  }
   void AddString(const olxstr& S) {  

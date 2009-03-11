@@ -24,7 +24,7 @@ TLangDict::~TLangDict()  {  Clear();  }
 //..............................................................................
 void TLangDict::Clear()  {
   for( int i=0; i < Records.Count(); i++ )
-    delete Records.Object(i);
+    delete Records.GetObject(i);
 }
 //..............................................................................
 const olxstr& TLangDict::Translate(const olxstr& Phrase) const  {

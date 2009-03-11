@@ -246,7 +246,7 @@ int TFSItem::ReadStrings(int& index, TFSItem* caller, TStrList& strings, const T
 }
 //..............................................................................
 TFSItem& TFSItem::NewItem(const olxstr& name)  {
-  return *Items.Add(name, new TFSItem(Index, this, &GetFileSystem(), name)).Object();
+  return *Items.Add(name, new TFSItem(Index, this, &GetFileSystem(), name)).Object;
 }
 //..............................................................................
 olxstr TFSItem::GetFullName() const  {
@@ -464,7 +464,7 @@ TFSItem* TFSItem::FindByFullName(const olxstr& Name)  const {
 
   TFSItem* root = const_cast<TFSItem*>(this);
   for(int i=0; i < toks.Count(); i++ )  {
-    root = root->FindByName( toks.String(i) );
+    root = root->FindByName( toks[i] );
     if( root == NULL )  return root;
   }
   return root;
@@ -493,7 +493,7 @@ void TFSItem::ClearNonexisting()  {
   for( int i=0; i < Count(); i++ )  {
     if( !Item(i).IsFolder() )  {
       if( !GetFileSystem().FileExists( GetFileSystem().GetBase() + Item(i).GetFullName()) )  {
-        delete Items.Object(i);
+        delete Items.GetObject(i);
         Items.Remove(i);
         i--;
       }
@@ -501,7 +501,7 @@ void TFSItem::ClearNonexisting()  {
     else  {
       Item(i).ClearNonexisting();
       if( Item(i).IsEmpty() )  {
-        delete Items.Object(i);
+        delete Items.GetObject(i);
         Items.Remove(i);
         i--;
       }
@@ -515,7 +515,7 @@ void TFSItem::ClearEmptyFolders()  {
       if( Item(i).Count() > 0 )
         Item(i).ClearEmptyFolders();
       if( Item(i).IsEmpty() )  {
-        delete Items.Object(i);
+        delete Items.GetObject(i);
         Items.Remove(i);
         i--;
       }

@@ -538,7 +538,7 @@ TAutoDB::~TAutoDB()  {
     for( int j=0; j < Nodes[i].Count(); j++ )
       delete Nodes[i][j];
   for( int i=0; i < Folders.Count(); i++ )
-    delete Folders.Object(i);
+    delete Folders.GetObject(i);
   Instance = NULL;
   delete &XFile;
 }
@@ -559,7 +559,7 @@ void TAutoDB::ProcessFolder(const olxstr& folder)  {
 
   TAutoDBFolder* dbfolder = NULL;
   int folderIndex = Folders.IndexOfComparable(uf);
-  if( folderIndex != -1 ) dbfolder = Folders.Object(folderIndex);
+  if( folderIndex != -1 ) dbfolder = Folders.GetObject(folderIndex);
   if( dbfolder == NULL )  {
     dbfolder = new TAutoDBFolder;
     Folders.Add( uf, dbfolder );

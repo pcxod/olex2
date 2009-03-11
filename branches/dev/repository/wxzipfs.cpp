@@ -66,12 +66,12 @@ TZipWrapper::TZipWrapper(TEFile* file, bool useCache)  {
 TZipWrapper::~TZipWrapper()  {
   TMemoryBlock *mb;
   for( int i=0; i < FMemoryBlocks.Count(); i++ )  {
-    mb = FMemoryBlocks.Object(i);
+    mb = FMemoryBlocks.GetObject(i);
     delete [] mb->Buffer;
     delete mb;
   }
   for( int i=0; i < FEntries.Count(); i++ )
-    delete FEntries.Object(i);
+    delete FEntries.GetObject(i);
   if( FInputStream != NULL )  delete FInputStream;
   if( wxfile != NULL )   {
     wxfile->Detach();
@@ -111,7 +111,7 @@ void TZipWrapper::ExtractAll(const olxstr& dest)  {
   const size_t bf_sz = 1024*64;
   char* bf = new char[bf_sz];
   for( int i=0; i < FEntries.Count(); i++ )  {
-    if( !FInputStream->OpenEntry( *FEntries.Object(i) ) )
+    if( !FInputStream->OpenEntry( *FEntries.GetObject(i) ) )
       continue;
     wxString fn(dest.u_str());
     fn << FEntries.GetObject(i)->GetName();

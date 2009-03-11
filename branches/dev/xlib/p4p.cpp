@@ -67,8 +67,8 @@ void TP4PFile::LoadFromStrings(const TStrList& Strings)  {
     if( Tmp.IsEmpty() )  continue;
     TmpUC = Tmp.UpperCase();
     for( int j=0; j < params.Count(); j++ )  {
-      if( TmpUC.StartsFrom( params.String(j) ) ) {
-        *params.Object(j) = Tmp.SubStringFrom( params.String(j).Length() ).Trim(' ');
+      if( TmpUC.StartsFrom( params[j] ) ) {
+        *params.GetObject(j) = Tmp.SubStringFrom( params[j].Length() ).Trim(' ');
         params.Delete(j);
         break;
       }

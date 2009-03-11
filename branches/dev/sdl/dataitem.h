@@ -33,7 +33,7 @@ protected:
   TDataItem& AddItem(TDataItem& Item);
   olxstr* FieldPtr(const olxstr &Name) {
     const int i = Fields.IndexOf(Name);
-    return (i != -1) ? &Fields.Object(i) : NULL;
+    return (i != -1) ? &Fields.GetObject(i) : NULL;
   }
   // to be called from the parser
   void _AddField(const olxstr& name, const olxstr& val) {
@@ -60,17 +60,17 @@ public:
   TDataItem* GetAnyItemCI(const olxstr& Name) const;
   // returns an item by name using recursive search within subitems as well
   // as in the current item
-  TDataItem* FindItemCI(const olxstr& Name) const {  return Items.FindObjectCI(Name);  }
-  TDataItem* FindItem(const olxstr& Name)   const {  return Items.FindObject(Name);  }
+  TDataItem* FindItemi(const olxstr& Name) const {  return Items.FindObjecti(Name);  }
+  TDataItem* FindItem(const olxstr& Name)  const {  return Items.FindObject(Name);  }
   TDataItem& FindRequiredItem(const olxstr& Name)   const {  
     int i = Items.IndexOf(Name);
     if( i == -1 )
       throw TFunctionFailedException(__OlxSourceInfo, olxstr("Required item does not exist: ") << Name);
-    return *Items.Object(i);  
+    return *Items.GetObject(i);  
   }
 
-  TDataItem& GetItem(int index)                {  return *Items.Object(index); }
-  const TDataItem& GetItem(int index)    const {  return *Items.Object(index); }
+  TDataItem& GetItem(int index)                {  return *Items.GetObject(index); }
+  const TDataItem& GetItem(int index)    const {  return *Items.GetObject(index); }
   void FindSimilarItems(const olxstr& StartsFrom, TPtrList<TDataItem>& List);
   inline int ItemCount() const                  {  return Items.Count(); }
   bool ItemExists(const olxstr &Name);
@@ -82,19 +82,19 @@ public:
   }
   inline int FieldCount() const                 {  return Fields.Count(); }
 
-  int FieldIndex(const olxstr& Name)    const {  return Fields.IndexOf(Name);  }
-  int FieldIndexCI(const olxstr& Name)  const {  return Fields.CIIndexOf(Name);  }
+  int FieldIndex(const olxstr& Name)   const {  return Fields.IndexOf(Name);  }
+  int FieldIndexi(const olxstr& Name)  const {  return Fields.IndexOfi(Name);  }
 
-  const olxstr& GetField(int i)         const {  return Fields.Object(i); }
+  const olxstr& GetField(int i)         const {  return Fields.GetObject(i); }
   // the filed will not be decoded
-  const olxstr& FieldName(int i) const        {  return Fields.String(i); }
+  const olxstr& FieldName(int i) const        {  return Fields.GetString(i); }
   // if field does not exist, a new one added
   void SetField(const olxstr& fieldName, const olxstr& newValue) {
     const int i = Fields.IndexOf(fieldName);
     if( i == -1 )
       Fields.Add(fieldName, newValue);
     else
-      Fields.Object(i) = newValue;
+      Fields.GetObject(i) = newValue;
   }
   // deletes field by index
   void DeleteField(int index)  {  Fields.Delete(index);  }
@@ -107,17 +107,17 @@ public:
 
   const olxstr& GetFieldValue( const olxstr& Name, const olxstr& Default=EmptyString ) const {
     int i = Fields.IndexOf(Name);
-    return (i==-1) ? Default : Fields.Object(i);
+    return (i==-1) ? Default : Fields.GetObject(i);
   }
   const olxstr& GetFieldValueCI( const olxstr& Name, const olxstr& Default=EmptyString ) const {
-    int i = Fields.CIIndexOf(Name);
-    return (i==-1) ? Default : Fields.Object(i);
+    int i = Fields.IndexOfi(Name);
+    return (i==-1) ? Default : Fields.GetObject(i);
   }
   const olxstr& GetRequiredField( const olxstr& Name) const  {
     int i = Fields.IndexOf(Name);
     if( i == -1 )
       throw TFunctionFailedException(__OlxSourceInfo, olxstr("Required attribute is missing: ") << Name);
-    return Fields.Object(i);
+    return Fields.GetObject(i);
   }
 
   bool FieldExists(const olxstr& Name)   {  return Fields.IndexOf(Name) != -1;  }

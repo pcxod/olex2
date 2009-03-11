@@ -67,7 +67,7 @@ public:
   void SetPromptVisible(bool v);
 
   inline int GetCommandCount()  const  {  return FCommands.Count();  }
-  inline const olxstr& GetCommandByIndex(int i)  {  return FCommands.String(i);  }
+  inline const olxstr& GetCommandByIndex(int i)  {  return FCommands[i];  }
   inline int GetCommandIndex() const  {  return FCmdPos;  }
   inline void SetCommandIndex( int i) {  FCmdPos = i;  }
 

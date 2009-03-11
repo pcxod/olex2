@@ -142,7 +142,7 @@ public:
   void  FileIndex(short ind);
   void UpdateFileIndex();
   inline int FileCount() const {  return FFiles.Count(); }
-  const olxstr &File(int ind) const {  return FFiles.String(ind); }
+  const olxstr &File(int ind) const {  return FFiles[ind]; }
   void ClearFiles()  {  FFiles.Clear(); }
   void AddFile(const olxstr &FN){ FFiles.Add(FN); }
 
@@ -211,7 +211,7 @@ protected:
     ~TObjectsState();
     TSStrStrList<olxstr,false>* FindProperties(const olxstr& cname) {
       int ind = Objects.IndexOf(cname);
-      return (ind == -1) ? NULL : Objects.Object(ind);
+      return (ind == -1) ? NULL : Objects.GetObject(ind);
     }
     TSStrStrList<olxstr,false>* DefineControl(const olxstr& name, const std::type_info& type);
     void SaveState();
@@ -316,12 +316,11 @@ public:
   bool AddObject(const olxstr& Name, IEObject *Obj, wxWindow* wxObj, bool Manage = false);
   IEObject *FindObject(const olxstr& Name)  {
     int ind = FObjects.IndexOf(Name);
-    if( ind == -1 )  return NULL;
-    return FObjects.Object(ind).A();
+    return (ind == -1) ? NULL : FObjects.GetObject(ind).A();
   }
   inline int ObjectCount()          const {  return FObjects.Count();  }
-  inline IEObject* GetObject(int i)       {  return FObjects.Object(i).A();  }
-  inline wxWindow* GetWindow(int i)       {  return FObjects.Object(i).B();  }
+  inline IEObject* GetObject(int i)       {  return FObjects.GetObject(i).A();  }
+  inline wxWindow* GetWindow(int i)       {  return FObjects.GetObject(i).B();  }
   inline const olxstr& GetObjectName(int i) const {  return FObjects.GetString(i);  }
   inline bool IsObjectManageble(int i) const      {  return FObjects.GetObject(i).GetC();  }
   //

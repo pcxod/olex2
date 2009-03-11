@@ -1233,7 +1233,7 @@ void TMainForm::StartupInit()  {
   if( TEFile::FileExists(FXApp->BaseDir() + "settings.xld") )  {
     TDataFile settings;
     settings.LoadFromXLFile( FXApp->BaseDir() + "settings.xld", NULL );
-    TDataItem* sh = settings.Root().FindItemCI("shortcuts");
+    TDataItem* sh = settings.Root().FindItemi("shortcuts");
     if( sh != NULL )  {
       try  {
         olxstr cmd;
@@ -1248,7 +1248,7 @@ void TMainForm::StartupInit()  {
         TBasicApp::GetLog().Exception( exc.GetException()->GetFullMessage() );
       }
     }
-    sh = settings.Root().FindItemCI("menus");
+    sh = settings.Root().FindItemi("menus");
     if( sh != NULL )  {
     try  {
       olxstr cmd;
@@ -1319,7 +1319,7 @@ void TMainForm::StartupInit()  {
 
   if( FXApp->Arguments.Count() == 1 )  {
     olxstr openCmd = "reap \'";
-    openCmd << FXApp->Arguments.String(0) << '\'';
+    openCmd << FXApp->Arguments[0] << '\'';
     ProcessXPMacro(openCmd, MacroError);
   }
 }
@@ -1340,7 +1340,7 @@ void TMainForm::SetProcess( AProcess *Process )  {
     olxstr Cmd;
     TMacroError err;
     while( FProcess->OnTerminateCmds().Count() ) {
-      Cmd = FProcess->OnTerminateCmds().String(0);
+      Cmd = FProcess->OnTerminateCmds()[0];
       FProcess->OnTerminateCmds().Delete(0);
       ProcessXPMacro(Cmd, err);
       if( !err.IsSuccessful() )  {
@@ -1394,7 +1394,7 @@ void TMainForm::OnAbout(wxCommandEvent& WXUNUSED(event))  {
 //..............................................................................
 void TMainForm::OnFileOpen(wxCommandEvent& event)  {
   if( event.GetId() >= ID_FILE0 && event.GetId() <= (ID_FILE0+9) )  {
-    wxMenuItem *mi = FRecentFiles.Object(event.GetId() - ID_FILE0);
+    wxMenuItem *mi = FRecentFiles.GetObject(event.GetId() - ID_FILE0);
     ProcessXPMacro(olxstr("reap \'") << FRecentFiles[event.GetId() - ID_FILE0] << '\'', MacroError);
   }
 }
@@ -1803,7 +1803,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
         // for debug purposes
         if( TEFile::FileExists(DefStyle) )  FXApp->GetRender().Styles()->LoadFromFile(DefStyle);
         for( int i=0; i < FOnListenCmds.Count(); i++ )  {
-          ProcessXPMacro(FOnListenCmds.String(i), MacroError);
+          ProcessXPMacro(FOnListenCmds[i], MacroError);
           if( !MacroError.IsSuccessful() )  break;
         }
         FileMT = FileT;
@@ -2005,7 +2005,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
   else if( MsgId == ID_HTMLDBLCLICK )  {
     TPopupData *pd = NULL;
     for( int i=0; i < FPopups.Count(); i++ )  {
-      pd = FPopups.Object(i);
+      pd = FPopups.GetObject(i);
       if( dynamic_cast<const THtml*>(Sender) == pd->Html  )  break;
     }
     bool processed = false;
@@ -2514,9 +2514,9 @@ void TMainForm::PostCmdHelp(const olxstr &Cmd, bool Full)  {
     if( !Full)
       FGlConsole->PrintText(Item->GetFieldValue("help"));
     else  {
-      int helpIndex = Item->FieldIndexCI("help");
+      int helpIndex = Item->FieldIndexi("help");
       if( helpIndex == -1 )  return;
-      TDataItem *Cat = Item->FindItemCI("category");
+      TDataItem *Cat = Item->FindItemi("category");
       FGlConsole->PrintText(Item->GetField(helpIndex), &HelpFontColorTxt);
       FGlConsole->PrintText("Options:", &HelpFontColorCmd);
       for( int i=0; i < Item->FieldCount(); i++ )  {
@@ -2834,7 +2834,7 @@ void TMainForm::SaveScene(TDataItem *Root, TGlLightModel *FLM)  {
 void TMainForm::UpdateRecentFile(const olxstr& fn)  {
   if( fn.IsEmpty() )  {
     for( int i=0; i < FRecentFiles.Count(); i++ )  {  // change item captions
-      wxMenuItem* mi = FRecentFiles.Object(i);
+      wxMenuItem* mi = FRecentFiles.GetObject(i);
       if( mi != NULL )  mi->Check(false);
     }
     return;
@@ -2851,28 +2851,29 @@ void TMainForm::UpdateRecentFile(const olxstr& fn)  {
       mi = MenuFile->FindItemByPosition(MenuFile->GetMenuItemCount()-1);
     }
     FRecentFiles.Insert(0, FN);
-    FRecentFiles.Object(0) = mi;
+    FRecentFiles.GetObject(0) = mi;
   }
   else  {
-    mi = FRecentFiles.Object(index);
+    mi = FRecentFiles.GetObject(index);
     FRecentFiles.Delete(index);
     FRecentFiles.Insert(0, FN);
-    FRecentFiles.Object(0) = mi;
+    FRecentFiles.GetObject(0) = mi;
   }
   for( int i=0; i < FRecentFiles.Count(); i++ )
-    Items.Add( FRecentFiles.Object(i) ); 
+    Items.Add( FRecentFiles.GetObject(i) ); 
   for( int i=0; i < FRecentFiles.Count(); i++ )  {  // put items in the right position
     mi = Items[i];
-    if( mi != NULL )  FRecentFiles.Object(mi->GetId()-ID_FILE0) = mi;
+    if( mi != NULL )  
+      FRecentFiles.GetObject(mi->GetId()-ID_FILE0) = mi;
   }
   for( int i=0; i < FRecentFiles.Count(); i++ )  {  // change item captions
-    mi = FRecentFiles.Object(i);
+    mi = FRecentFiles.GetObject(i);
     if( mi != NULL )  {
       mi->SetText( FRecentFiles[i].u_str() ) ;
       mi->Check(false);
     }
   }
-  FRecentFiles.Object(0)->Check( true );
+  FRecentFiles.GetObject(0)->Check( true );
   if( FRecentFiles.Count() >= FRecentFilesToShow )
     FRecentFiles.SetCount(FRecentFilesToShow);
 }
@@ -2888,7 +2889,7 @@ bool TMainForm::RecentFilesTable(const olxstr &FN, bool TableDef)  {
     Tmp = "<a href=\"reap \'";
     Tmp << TEFile::OSPath(FRecentFiles[i]) << "\'\">";
     Tmp << TEFile::ExtractFileName(FRecentFiles[i]) << "</a>";
-    Table[i/3].String(i%3) = Tmp;
+    Table[i/3][i%3] = Tmp;
   }
   Table.CreateHTMLList(Output, EmptyString, false, false, false);
   TUtf8File::WriteLines( FN, Output, false );
@@ -2909,12 +2910,12 @@ bool TMainForm::QPeaksTable(const olxstr &FN, bool TableDef)  {
   FXApp->FindXAtoms("$Q", Atoms);
   if( Atoms.IsEmpty() )  {
     Table.Resize(1, 3);
-    Table[0].String(0) = "N/A";
-    Table[0].String(1) = "N/A";
+    Table[0][0] = "N/A";
+    Table[0][1] = "N/A";
     if( FXApp->CheckFileType<TIns>() )
-      Table[0].String(2) = "No Q-Peaks";
+      Table[0][2] = "No Q-Peaks";
     else
-      Table[0].String(1) = "N/A in this file format";
+      Table[0][1] = "N/A in this file format";
     Table.CreateHTMLList(Output, EmptyString, false, false, TableDef);
     TUtf8File::WriteLines( FN, Output, false );
     return false;
@@ -2925,8 +2926,8 @@ bool TMainForm::QPeaksTable(const olxstr &FN, bool TableDef)  {
   int rowIndex = 0;
   for( int i=0; i < Atoms.Count(); i++, rowIndex++ )  {
     if( i > 8 )  i = Atoms.Count() -1;
-    Table[rowIndex].String(0) = Atoms[i]->Atom().GetLabel();
-    Table[rowIndex].String(1) = olxstr::FormatFloat(3, Atoms[i]->Atom().CAtom().GetQPeak());
+    Table[rowIndex][0] = Atoms[i]->Atom().GetLabel();
+    Table[rowIndex][1] = olxstr::FormatFloat(3, Atoms[i]->Atom().CAtom().GetQPeak());
     Tmp = "<a href=\"sel -i ";
     if( i > rowIndex )
       Tmp << Atoms[rowIndex]->Atom().GetLabel() << " to ";
@@ -2937,7 +2938,7 @@ bool TMainForm::QPeaksTable(const olxstr &FN, bool TableDef)  {
       Tmp << "\"><img border=\"0\" src=\"gui/images/bar_large.gif\" height=\"10\" width=\"";
     Tmp << olxstr::FormatFloat(1, Atoms[i]->Atom().CAtom().GetQPeak()*100/LQP);
     Tmp << "%\"></a>";
-    Table[rowIndex].String(2) = Tmp;
+    Table[rowIndex][2] = Tmp;
   }
 
   Table.CreateHTMLList(Output, EmptyString, false, false, TableDef);
@@ -3134,8 +3135,8 @@ bool TMainForm::OnMouseUp(int x, int y, short Flags, short Buttons)  {
 //..............................................................................
 void TMainForm::ClearPopups()  {
   for( int i=0; i < FPopups.Count(); i++ )  {
-    delete FPopups.Object(i)->Dialog;
-    delete FPopups.Object(i);
+    delete FPopups.GetObject(i)->Dialog;
+    delete FPopups.GetObject(i);
   }
   FPopups.Clear();
 }
@@ -3387,7 +3388,7 @@ int TMainForm::TranslateShortcut(const olxstr& sk)  {
     if( ((Shift&sssShift)==0) && toks[i].Comparei("Shift")==0 )  {  Shift |= sssShift;  continue;  }
     if( ((Shift&sssAlt)==0) && toks[i].Comparei("Alt") )    {  Shift |= sssAlt;  continue;  }
   }
-  olxstr charStr = toks.String( toks.Count() -1 );
+  olxstr charStr = toks.LastStr();
   // a char
   if( charStr.Length() == 1 ) {
     Char = charStr[0];

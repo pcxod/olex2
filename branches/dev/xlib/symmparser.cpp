@@ -216,7 +216,6 @@ olxstr TSymmParser::MatrixToSymmEx(const mat3i& M)  {
 }
 //..............................................................................
 smatd TSymmParser::SymmCodeToMatrixU(const TUnitCell& UC, const olxstr &Code)  {
-  olxstr Tmp;
   TStrList Toks(Code, '_');
   int isymm;
   smatd mSymm;
@@ -228,67 +227,59 @@ smatd TSymmParser::SymmCodeToMatrixU(const TUnitCell& UC, const olxstr &Code)  {
   }
   if( Toks.Count() != 2 )
     throw TFunctionFailedException(__OlxSourceInfo, olxstr("wrong Code: ") << Code);
-  isymm = Toks.String(0).ToInt()-1;
+  isymm = Toks[0].ToInt()-1;
   if( isymm < 0 || isymm >= UC.MatrixCount() )
     throw TFunctionFailedException(__OlxSourceInfo, olxstr("wrong matrix index: ") << isymm);
   mSymm = UC.GetMatrix(isymm);
 
-  if( (Toks.String(1).Length() != 3) && (Toks.String(1).Length() != 6))
-    throw TFunctionFailedException(__OlxSourceInfo, olxstr("wrong matrix code: ") << Toks.String(1));
-  if( Toks.String(1).Length() == 3 )  {
-    mSymm.t[0] += (int)(Toks.String(1)[0]-'5');
-    mSymm.t[1] += (int)(Toks.String(1)[1]-'5');
-    mSymm.t[2] += (int)(Toks.String(1)[2]-'5');
+  if( (Toks[1].Length() != 3) && (Toks[1].Length() != 6))
+    throw TFunctionFailedException(__OlxSourceInfo, olxstr("wrong matrix code: ") << Toks[1]);
+  if( Toks[1].Length() == 3 )  {
+    mSymm.t[0] += (int)(Toks[1].CharAt(0)-'5');
+    mSymm.t[1] += (int)(Toks[1].CharAt(1)-'5');
+    mSymm.t[2] += (int)(Toks[1].CharAt(2)-'5');
   }
   else  {
-    Tmp = Toks.String(1).SubString(0, 2);
-    mSymm.t[0] += (Tmp.ToInt()-55);
-    Tmp = Toks.String(1).SubString(2, 2);
-    mSymm.t[1] += (Tmp.ToInt()-55);
-    Tmp = Toks.String(1).SubString(4, 2);
-    mSymm.t[2] += (Tmp.ToInt()-55);
+    mSymm.t[0] += (Toks[1].SubString(0, 2).ToInt()-55);
+    mSymm.t[1] += (Toks[1].SubString(2, 2).ToInt()-55);
+    mSymm.t[2] += (Toks[1].SubString(4, 2).ToInt()-55);
   }
   return mSymm;
 }
 //..............................................................................
 smatd TSymmParser::SymmCodeToMatrixA(const TAsymmUnit& AU, const olxstr &Code)  {
-  olxstr Tmp;
   TStrList Toks(Code, '_');
   int isymm;
   smatd mSymm;
   if( Toks.Count() == 1 )  {
-    isymm = Toks.String(0).ToInt()-1;
+    isymm = Toks[0].ToInt()-1;
     if( isymm < 0 || isymm >= AU.MatrixCount() )
       throw TFunctionFailedException(__OlxSourceInfo, olxstr("wrong matrix index: ") << isymm);
     return AU.GetMatrix(isymm);
   }
   if( Toks.Count() != 2 )
     throw TFunctionFailedException(__OlxSourceInfo, olxstr("wrong Code: ") << Code);
-  isymm = Toks.String(0).ToInt()-1;
+  isymm = Toks[0].ToInt()-1;
   if( isymm < 0 || isymm >= AU.MatrixCount() )
     throw TFunctionFailedException(__OlxSourceInfo, olxstr("wrong matrix index: ") << isymm);
   mSymm = AU.GetMatrix(isymm);
 
-  if( (Toks.String(1).Length() != 3) && (Toks.String(1).Length() != 6))
-    throw TFunctionFailedException(__OlxSourceInfo, olxstr("wrong matrix code: ") << Toks.String(1));
-  if( Toks.String(1).Length() == 3 )  {
-    mSymm.t[0] += (int)(Toks.String(1)[0]-'5');
-    mSymm.t[1] += (int)(Toks.String(1)[1]-'5');
-    mSymm.t[2] += (int)(Toks.String(1)[2]-'5');
+  if( (Toks[1].Length() != 3) && (Toks[1].Length() != 6))
+    throw TFunctionFailedException(__OlxSourceInfo, olxstr("wrong matrix code: ") << Toks[1]);
+  if( Toks[1].Length() == 3 )  {
+    mSymm.t[0] += (int)(Toks[1].CharAt(0)-'5');
+    mSymm.t[1] += (int)(Toks[1].CharAt(1)-'5');
+    mSymm.t[2] += (int)(Toks[1].CharAt(2)-'5');
   }
   else  {
-    Tmp = Toks.String(1).SubString(0, 2);
-    mSymm.t[0] += (Tmp.ToInt()-55);
-    Tmp = Toks.String(1).SubString(2, 2);
-    mSymm.t[1] += (Tmp.ToInt()-55);
-    Tmp = Toks.String(1).SubString(4, 2);
-    mSymm.t[2] += (Tmp.ToInt()-55);
+    mSymm.t[0] += (Toks[1].SubString(0, 2).ToInt()-55);
+    mSymm.t[1] += (Toks[1].SubString(2, 2).ToInt()-55);
+    mSymm.t[2] += (Toks[1].SubString(4, 2).ToInt()-55);
   }
   return mSymm;
 }
 //..............................................................................
 smatd TSymmParser::SymmCodeToMatrix(const smatd_list& ml, const olxstr &Code)  {
-  olxstr Tmp;
   TStrList Toks(Code, '_');
   int isymm;
   smatd mSymm;
@@ -306,20 +297,17 @@ smatd TSymmParser::SymmCodeToMatrix(const smatd_list& ml, const olxstr &Code)  {
     throw TFunctionFailedException(__OlxSourceInfo, olxstr("wrong matrix index: ") << isymm);
   mSymm = ml[isymm];
 
-  if( (Toks.String(1).Length() != 3) && (Toks.String(1).Length() != 6))
-    throw TFunctionFailedException(__OlxSourceInfo, olxstr("wrong matrix code: ") << Toks.String(1));
-  if( Toks.String(1).Length() == 3 )  {
-    mSymm.t[0] += (int)(Toks.String(1)[0]-'5');
-    mSymm.t[1] += (int)(Toks.String(1)[1]-'5');
-    mSymm.t[2] += (int)(Toks.String(1)[2]-'5');
+  if( (Toks[1].Length() != 3) && (Toks[1].Length() != 6))
+    throw TFunctionFailedException(__OlxSourceInfo, olxstr("wrong matrix code: ") << Toks[1]);
+  if( Toks[1].Length() == 3 )  {
+    mSymm.t[0] += (int)(Toks[1].CharAt(0)-'5');
+    mSymm.t[1] += (int)(Toks[1].CharAt(1)-'5');
+    mSymm.t[2] += (int)(Toks[1].CharAt(2)-'5');
   }
   else  {
-    Tmp = Toks.String(1).SubString(0, 2);
-    mSymm.t[0] += (Tmp.ToInt()-55);
-    Tmp = Toks.String(1).SubString(2, 2);
-    mSymm.t[1] += (Tmp.ToInt()-55);
-    Tmp = Toks.String(1).SubString(4, 2);
-    mSymm.t[2] += (Tmp.ToInt()-55);
+    mSymm.t[0] += (Toks[1].SubString(0, 2).ToInt()-55);
+    mSymm.t[1] += (Toks[1].SubString(2, 2).ToInt()-55);
+    mSymm.t[2] += (Toks[1].SubString(4, 2).ToInt()-55);
   }
   mSymm.SetTag( isymm );
   return mSymm;

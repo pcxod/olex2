@@ -7,11 +7,11 @@
 /* automaticaly generated code  */
 TSFactoryRegister::~TSFactoryRegister()  {
   for( int i=0; i < Factories.Count(); i++ )
-    delete (IEvaluatorFactory*)Factories.Object(i);
+    delete Factories.GetObject(i);
 }
 IEvaluator *TSFactoryRegister::Evaluator(const olxstr& name)  {
   TStrList toks(name, '.');
-  IEvaluatorFactory* factory = FactoryMap[toks.String(0)];
+  IEvaluatorFactory* factory = FactoryMap[toks[0]];
   toks.Delete(0);
   return factory?factory->Evaluator(toks.Text('.')):NULL;
 }

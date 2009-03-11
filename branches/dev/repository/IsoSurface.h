@@ -65,23 +65,23 @@ protected:
       IsoPoint* ip;
       int yi = Data.IndexOfComparable(x);
       if( yi == -1 )  {
-        ip = &Data.Add(x, new IsoPointListY).Object()->Add(y, new IsoPointListZ).
-          Object()->Add(z, Points3() ).Object().ps[edgeId]; 
+        ip = &Data.Add(x, new IsoPointListY).Object->Add(y, new IsoPointListZ).
+          Object->Add(z, Points3() ).Object.ps[edgeId]; 
       }
       else  {
-        IsoPointListY* ly = Data.Object(yi);
+        IsoPointListY* ly = Data.GetObject(yi);
         int zi = ly->IndexOfComparable(y);
         if( zi == -1 )  {
-          ip = &ly->Add(y, new IsoPointListZ).Object()->Add(z, Points3() ).Object().ps[edgeId]; 
+          ip = &ly->Add(y, new IsoPointListZ).Object->Add(z, Points3() ).Object.ps[edgeId]; 
         }
         else  {
-          IsoPointListZ* lz = ly->Object(zi);
+          IsoPointListZ* lz = ly->GetObject(zi);
           int pi = lz->IndexOfComparable(z);
           if( pi == -1 )  {
-            ip = &lz->Add(z, Points3() ).Object().ps[edgeId]; 
+            ip = &lz->Add(z, Points3() ).Object.ps[edgeId]; 
           }
           else  {
-            ip = &lz->Object(pi).ps[edgeId];
+            ip = &lz->GetObject(pi).ps[edgeId];
           }
         }
       }
@@ -92,18 +92,18 @@ protected:
       Count++;
     }
     const IsoPoint& Get(int x, int y, int z, int extra) const {
-      return Data[x]->Item(y)->Item(z).ps[extra];
+      return (*(*Data[x])[y])[z].ps[extra];
     }
     const IsoPoint& Get(uint32_t crd) const {
       int x, y, z, e;
       decode(crd, x, y, z, e);
-      return Data[x]->Item(y)->Item(z).ps[e];
+      return (*(*Data[x])[y])[z].ps[e];
     }
     void Clear()  {
       for( int i=0; i < Data.Count(); i++ )  {
-        IsoPointListY* ly = Data.Object(i);
+        IsoPointListY* ly = Data.GetObject(i);
         for( int j=0; j < ly->Count(); j++ ) 
-          delete ly->Object(j);
+          delete ly->GetObject(j);
         delete ly;
       }
       Data.Clear();
@@ -113,11 +113,11 @@ protected:
       v.SetCount(Count);
       int ind = 0;
       for( int i=0; i < Data.Count(); i++ )  {
-        IsoPointListY* ly = Data.Object(i);
+        IsoPointListY* ly = Data.GetObject(i);
         for( int j=0; j < ly->Count(); j++ )  {
-          IsoPointListZ* lz = ly->Object(j);
+          IsoPointListZ* lz = ly->GetObject(j);
           for( int k=0; k < lz->Count(); k++ )  {
-            Points3& p = lz->Object(k);
+            Points3& p = lz->GetObject(k);
             for(int l=0; l < 3; l++ )  {
               if( p.ps[l].initialised )  {
                 p.ps[l].newID = ind;

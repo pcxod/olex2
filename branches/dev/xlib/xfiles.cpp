@@ -90,10 +90,10 @@ TXFile::TXFile() : RefMod(Lattice.GetAsymmUnit())  {
 TXFile::~TXFile()  {
 // finding uniq objects and deleting them
   for( int i=0; i < FileFormats.Count(); i++ )
-    FileFormats.Object(i)->SetTag(i);
+    FileFormats.GetObject(i)->SetTag(i);
   for( int i=0; i < FileFormats.Count(); i++ )
-    if( FileFormats.Object(i)->GetTag() == i )
-      delete FileFormats.Object(i);
+    if( FileFormats.GetObject(i)->GetTag() == i )
+      delete FileFormats.GetObject(i);
 }
 //..............................................................................
 void TXFile::RegisterFileFormat(TBasicCFile *F, const olxstr &Ext)  {
@@ -106,7 +106,7 @@ TBasicCFile *TXFile::FindFormat(const olxstr &Ext)  {
   int i= FileFormats.IndexOf(olxstr::LowerCase(Ext));
   if( i == -1 )
     throw TInvalidArgumentException(__OlxSourceInfo, "unknown file format");
-  return FileFormats.Object(i);
+  return FileFormats.GetObject(i);
 }
 //..............................................................................
 void TXFile::LastLoaderChanged() {
@@ -167,8 +167,8 @@ void TXFile::LoadFromFile(const olxstr & FN) {
   FSG = TSymmLib::GetInstance()->FindSG(Loader->GetAsymmUnit());
   if( replicated )  {
     for( int i=0; i < FileFormats.Count(); i++ )
-      if( FileFormats.Object(i) == FLastLoader )
-        FileFormats.Object(i) = Loader;
+      if( FileFormats.GetObject(i) == FLastLoader )
+        FileFormats.GetObject(i) = Loader;
     delete FLastLoader;
   }
 
@@ -357,8 +357,8 @@ void TXFile::SaveToFile(const olxstr &FN, bool Sort)  {
 IEObject* TXFile::Replicate() const  {
   TXFile* xf = new TXFile;
   for( int i=0; i < FileFormats.Count(); i++ )  {
-    xf->RegisterFileFormat( (TBasicCFile*)FileFormats.Object(i)->Replicate(), 
-                              FileFormats.String(i) );
+    xf->RegisterFileFormat( (TBasicCFile*)FileFormats.GetObject(i)->Replicate(), 
+                              FileFormats[i] );
   }
   return xf;
 }
@@ -412,9 +412,9 @@ void TXFile::LibGetFormula(const TStrObjList& Params, TMacroError& E)  {
   bool list = false, html = false;
   int digits = -1;
   if( Params.Count() > 0 )  {
-    if( Params.String(0).Comparei("list") == 0 )
+    if( Params[0].Comparei("list") == 0 )
       list = true;
-    else if( Params.String(0).Comparei("html") == 0 )
+    else if( Params[0].Comparei("html") == 0 )
       html = true;
   }
   if( Params.Count() == 2 )
@@ -496,7 +496,7 @@ void TXFile::LibSetFormula(const TStrObjList& Params, TMacroError& E) {
   else  {
     TCStrList toks(Params[0], ',');
     for( int i=0; i < toks.Count(); i++ )  {
-      int ind = toks.String(i).FirstIndexOf(':');
+      int ind = toks[i].FirstIndexOf(':');
       if( ind == -1 )  {
         E.ProcessingError(__OlxSrcInfo, "invalid formula syntax" );
         return;

@@ -33,7 +33,7 @@ TCifLoop::~TCifLoop()  {  Clear();  }
 void  TCifLoop::Clear()  {
   for(int i=0; i < FTable.RowCount(); i++ )  {
     for(int j=0; j < FTable.ColCount(); j++ )
-      delete FTable[i].Object(j);
+      delete FTable[i].GetObject(j);
   }
   FTable.Clear();
   FComments = EmptyString;
@@ -43,10 +43,10 @@ void TCifLoop::DeleteAtom( TCAtom *A )  {
   TCifLoopData *CD;
   for(int i=0; i < FTable.RowCount(); i++ )  {
     for(int j=0; j < FTable.ColCount(); j++ )  {
-      CD = FTable[i].Object(j);
+      CD = FTable[i].GetObject(j);
       if( CD->CA == A )  {
         for(int k=0; k < FTable.ColCount(); k++ )
-          delete FTable[i].Object(k);
+          delete FTable[i].GetObject(k);
         FTable.DelRow(i);
         i--;
         break;
@@ -64,7 +64,7 @@ void TCifLoop::Format(TStrList& Data)  {
     if( Data[i].IsEmpty() )  continue;
     if( Data[i].CharAt(0) == '#' )  {
       FComments << Data[i] << '\n';
-      Data.String(i) = EmptyString;
+      Data[i] = EmptyString;
     }
   }
   D = Data.Text(" \\n ");
@@ -118,8 +118,8 @@ end_cyc:;
   FTable.SetRowCount(RowCount);
   for( int i=0; i < RowCount; i++ )  {
     for( int j=0; j < ColCount; j++ )  {
-      FTable[i].Object(j) = Params.Object(i*ColCount+j);
-      FTable[i].String(j) = Params.String(i*ColCount+j);
+      FTable[i].GetObject(j) = Params.GetObject(i*ColCount+j);
+      FTable[i][j] = Params[i*ColCount+j];
     }
   }
 }
@@ -134,14 +134,14 @@ void TCifLoop::SaveToStrings( TStrList& Strings )  {
   for( int i=0; i < FTable.RowCount(); i++ ) {  // loop content
     Tmp = EmptyString;
     for( int j=0; j < FTable.ColCount(); j++ )  {
-      CLD = FTable[i].Object(j);
+      CLD = FTable[i].GetObject(j);
       if( CLD->CA )  {
         if( CLD->CA->IsDeleted() )  {  // skip deleted atom
           Tmp = EmptyString;  break;
         }
       }
       // according to the cif rules, the strings cannot be hypernated ...
-      str = FTable[i].String(j);
+      str = FTable[i][j];
       if( str.EndsWith("\\n") )  str.SetLength( str.Length()-2 );
       if( CLD->String )  {
         if( str.IndexOf("\\n") != -1 )  {
@@ -224,8 +224,8 @@ olxstr TCifLoop::ShortColumnName(int in)  {
 void TCifLoop::UpdateTable()  {
   for(int i=0; i < FTable.RowCount(); i++ )  {
     for(int j=0; j < FTable.ColCount(); j++ )  {
-      if( FTable[i].Object(j)->CA )
-        FTable[i].String(j) = FTable[i].Object(j)->CA->Label();                                      
+      if( FTable[i].GetObject(j)->CA )
+        FTable[i][j] = FTable[i].GetObject(j)->CA->Label();                                      
     }
   }
 }
@@ -279,9 +279,9 @@ TCif::~TCif()  {  Clear();  }
 //..............................................................................
 void TCif::Clear()  {
   for( int i=0; i < Lines.Count(); i++ )  {
-    if( Lines.Object(i) != NULL )  {
-      delete Lines.Object(i)->Data;
-      delete Lines.Object(i);
+    if( Lines.GetObject(i) != NULL )  {
+      delete Lines.GetObject(i)->Data;
+      delete Lines.GetObject(i);
     }
   }
   Lines.Clear();
@@ -290,7 +290,7 @@ void TCif::Clear()  {
   FWeightA = EmptyString;
   FWeightB = EmptyString;
   for( int i=0; i < Loops.Count(); i++ )
-    delete Loops.Object(i);
+    delete Loops.GetObject(i);
   Loops.Clear();
   GetAsymmUnit().Clear();
   GetRM().ClearAll();
@@ -302,51 +302,51 @@ void TCif::Format()  {
   TStrList toks;
   TStrList *NewData;
   int DL, li;
-  olxch Char;
   bool AddSpace;
   for( int i=0; i < Lines.Count()-1; i++ )  {
     if( Lines[i].Length() == 0  && Lines[i+1].Length() == 0 )  {
-      if( Lines.Object(i) != NULL )
-        delete Lines.Object(i);
+      if( Lines.GetObject(i) != NULL )
+        delete Lines.GetObject(i);
     }
   }
   Lines.Pack();
   for( int i=0; i < Lines.Count(); i++ )  {
-    if( Lines.Object(i) != NULL )  {
+    if( Lines.GetObject(i) != NULL )  {
       li = 0;
-      D = Lines.Object(i);
+      D = Lines.GetObject(i);
       for( int j=0; j < D->Data->Count(); j++ )  {
-        DL = D->Data->String(j).Length();
+        DL = D->Data->GetString(j).Length();
         for( int k=0; k < DL; k++ )  {
-          Char = D->Data->String(j)[k];
+          const olxch Char = D->Data->GetString(j).CharAt(k);
           if( Char == '\'' || Char == '"' || Char == ';')  {
-            D->Data->String(j)[k] = ' ';
+            D->Data->GetString(j)[k] = ' ';
             D->String = true;
           }
         }
-        D->Data->String(j) = olxstr::DeleteSequencesOf(D->Data->String(j), ' ').Trim(' ');
-        if( D->Data->String(j).Length() )  li++;
+        D->Data->GetString(j) = olxstr::DeleteSequencesOf(D->Data->GetString(j), ' ').Trim(' ');
+        if( !D->Data->GetString(j).IsEmpty() )  
+          li++;
       }
       // check if a space should be added at the beginning of line
       AddSpace = false;
       if( li > 1 )  AddSpace = true;
       else  {
         if( D->Data->Count() == 1 )  {
-          if( D->Data->String(0).Length() > 80 )
+          if( D->Data->GetString(0).Length() > 80 )
             AddSpace = true;
         }
       }
 
       NewData = new TStrList;
       for( int j=0; j < D->Data->Count(); j++ )  {
-        DL = D->Data->String(j).Length();
+        DL = D->Data->GetString(j).Length();
         if( DL != 0 )  {
           toks.Clear();
-          toks.Hypernate(D->Data->String(j), 78);
+          toks.Hypernate(D->Data->GetString(j), 78);
           for( int k=0; k < toks.Count(); k++ )  {
             if( AddSpace )  Tmp = ' '; // if a space should be added at the beginning of line
             else            Tmp = EmptyString;
-            Tmp << toks.String(k);
+            Tmp << toks[k];
             NewData->Add(Tmp);
           }
         }
@@ -399,7 +399,7 @@ next_loop:
         i++;
         if( i >= Lines.Count() )  {  // // end of file?
           Loop->Format(LoopData); // parse the loop
-          Loops.String(Loops.Count()-1) = Loop->GetLoopName();
+          Loops[Loops.Count()-1] = Loop->GetLoopName();
           goto exit;
         }
         Tmp = olxstr::DeleteSequencesOf<char>( Lines[i], ' ' );
@@ -425,7 +425,7 @@ next_loop:
 
         if( i >= Lines.Count() )  {
           Loop->Format(LoopData);
-          Loops.Last().String() = Loop->GetLoopName();
+          Loops.Last().String = Loop->GetLoopName();
           goto exit;
         }
         Tmp = olxstr::DeleteSequencesOf<char>(Lines[i], ' ');
@@ -435,7 +435,7 @@ next_loop:
       }
 finalize_loop:
       Loop->Format(LoopData);
-      Loops.Last().String() = Loop->GetLoopName();
+      Loops.Last().String = Loop->GetLoopName();
       if( Tmp == "loop_" )
         goto next_loop;
     }
@@ -454,7 +454,7 @@ finalize_loop:
       D = new TCifData;
       D->Data = new TStrList;
       D->String = false;
-      Lines.Object(i) = D;
+      Lines.GetObject(i) = D;
       Parameters.Add(Param, D);
       if( !Val.IsEmpty() )
         D->Data->Add(Val);
@@ -509,7 +509,7 @@ exit:
   D = FindParam( "_refine_ls_weighting_details");
   if( D != NULL)  {
     if( D->Data->Count() == 1 )  {
-      const olxstr& tmp = D->Data->String(0);
+      const olxstr& tmp = D->Data->GetString(0);
       for( int k=0; k < tmp.Length(); k++ )  {
         if( tmp[k] == '+' )  {
           if( FWeightA.IsEmpty() )  {
@@ -535,7 +535,7 @@ exit:
   }
   /******************************************************************/
   for( int i=0; i < Lines.Count()-1; i++ )  {
-    if( !Lines.String(i).Length() && !Lines.String(i+1).Length() )  {
+    if( (Lines.GetString(i).Length()|Lines.GetString(i+1).Length()) == 0 )  {
       Lines.Delete(i+1);
       i--;
     }
@@ -622,11 +622,11 @@ void TCif::SaveToStrings(TStrList& Strings)  {
     Tmp1 = olxstr::DeleteSequencesOf<char>(Tmp.ToLowerCase(), ' ');
     if( Tmp1.LowerCase() == "loop_" )  {
       if( loopc < Loops.Count() )  {
-        Loops.Object(loopc)->UpdateTable();
+        Loops.GetObject(loopc)->UpdateTable();
         // skip empty loops, as they break the format
-        if( Loops.Object(loopc)->Table().RowCount() != 0 )  {
+        if( Loops.GetObject(loopc)->Table().RowCount() != 0 )  {
           Strings.Add("loop_");
-          Loops.Object(loopc)->SaveToStrings(Strings);
+          Loops.GetObject(loopc)->SaveToStrings(Strings);
         }
       }
       loopc++;
@@ -634,30 +634,30 @@ void TCif::SaveToStrings(TStrList& Strings)  {
         Strings.Add(EmptyString);
       continue;
     }
-    if( Lines.Object(i) != NULL )  {
+    if( Lines.GetObject(i) != NULL )  {
       Tmp.Format(34, true, ' ');
-      TCifData* D = Lines.Object(i);
+      TCifData* D = Lines.GetObject(i);
       if( D->Data->Count() > 1 )  {
         Strings.Add(Tmp);
         Strings.Add(";");
         for( int j=0; j < D->Data->Count(); j++ )
-          Strings.Add( D->Data->String(j) );
+          Strings.Add( D->Data->GetString(j) );
         Strings.Add(";");
       }
       else  {
         if( D->Data->Count() == 1 )  {
-          if( (D->Data->String(0).Length() + 34) >= 80 )  {
+          if( (D->Data->GetString(0).Length() + 34) >= 80 )  {
             Strings.Add(Tmp);
             Strings.Add(";");
-            Strings.Add(D->Data->String(0));
+            Strings.Add(D->Data->GetString(0));
             Strings.Add(";");
           }
           else  {
             if( D->String )  {
-              Tmp << '\'' << D->Data->String(0) << '\'';
+              Tmp << '\'' << D->Data->GetString(0) << '\'';
             }
             else
-              Tmp << D->Data->String(0);
+              Tmp << D->Data->GetString(0);
             Strings.Add(Tmp);
 
           }
@@ -685,8 +685,8 @@ const olxstr& TCif::GetSParam(const olxstr &Param) const {
     return EmptyString;
   int i = Lines.IndexOf(Param);
   if( i >= 0 )  {
-    if( Lines.Object(i)->Data->Count() >= 1 )
-      return Lines.Object(i)->Data->String(0);
+    if( Lines.GetObject(i)->Data->Count() >= 1 )
+      return Lines.GetObject(i)->Data->GetString(0);
     return EmptyString;
   }
   return EmptyString;
@@ -696,14 +696,14 @@ TCifData *TCif::FindParam(const olxstr &Param)  {
   if( Param[0] != '_' )
     return NULL;
   int i = Lines.IndexOf(Param);
-  return (i == -1 ) ? NULL : Lines.Object(i);
+  return (i == -1 ) ? NULL : Lines.GetObject(i);
 }
 //..............................................................................
 bool TCif::SetParam(const olxstr &Param, TCifData *Params)  {
   int i = Lines.IndexOf(Param);
   if( i >= 0 )  {
-    Lines.Object(i)->Data->Assign(*(Params->Data));
-    Lines.Object(i)->String = Params->String;
+    Lines.GetObject(i)->Data->Assign(*(Params->Data));
+    Lines.GetObject(i)->String = Params->String;
     return true;
   }
   return false;
@@ -761,7 +761,7 @@ void TCif::Initialize()  {
     if( sindex >= 0 )  {
       for( int i=0; i < Loop->Table().RowCount(); i++ )  {
         smatd Matrix;
-        if( TSymmParser::SymmToMatrix(Loop->Table()[i].String(sindex), Matrix) )  {
+        if( TSymmParser::SymmToMatrix(Loop->Table()[i][sindex], Matrix) )  {
           GetAsymmUnit().AddMatrix(Matrix);
         }
         else
@@ -796,29 +796,29 @@ void TCif::Initialize()  {
     A->SetAtomInfo( atoms_info.FindAtomInfoBySymbol(ALoop->Table()[i][ASymbol]) );
     EValue = ALoop->Table()[i][ACx];
     A->ccrd()[0] = EValue.GetV();  A->ccrdEsd()[0] = EValue.GetE();
-    EValue = ALoop->Table()[i].String(ACy);
+    EValue = ALoop->Table()[i][ACy];
     A->ccrd()[1] = EValue.GetV();  A->ccrdEsd()[1] = EValue.GetE();
-    EValue = ALoop->Table()[i].String(ACz);
+    EValue = ALoop->Table()[i][ACz];
     A->ccrd()[2] = EValue.GetV();  A->ccrdEsd()[2] = EValue.GetE();
     if( ACUiso >= 0 )    {
-      EValue = ALoop->Table()[i].String(ACUiso);
+      EValue = ALoop->Table()[i][ACUiso];
       A->SetUisoEsd( EValue.GetE() );
       A->SetUiso( EValue.GetV() );
     }
 
 //    if( !A->Info ) ;
-    ALoop->Table()[i].Object(ALabel)->CA = A;
+    ALoop->Table()[i].GetObject(ALabel)->CA = A;
   }
   for( int i=0; i < Loops.Count(); i++ )  {
-    if( Loops.Object(i) == ALoop )  continue;
-    for( int j=0; j < Loops.Object(i)->Table().ColCount(); j++ )  {
-      ALabel1 = Loops.Object(i)->Table().ColName(j).IndexOf("atom_site" );
-      ALabel2 = Loops.Object(i)->Table().ColName(j).IndexOf("label" );
+    if( Loops.GetObject(i) == ALoop )  continue;
+    for( int j=0; j < Loops.GetObject(i)->Table().ColCount(); j++ )  {
+      ALabel1 = Loops.GetObject(i)->Table().ColName(j).IndexOf("atom_site" );
+      ALabel2 = Loops.GetObject(i)->Table().ColName(j).IndexOf("label" );
       if(  ALabel1 >= 0 && ALabel2 >= 0 )  {
-        for( int k=0; k < Loops.Object(i)->Table().RowCount(); k++ )  {
+        for( int k=0; k < Loops.GetObject(i)->Table().RowCount(); k++ )  {
           ALabel1 = ALabel;
-          Loops.Object(i)->Table()[k].Object(j)->CA =
-               GetAsymmUnit().FindCAtom( Loops.Object(i)->Table()[k].String(j) );
+          Loops.GetObject(i)->Table()[k].GetObject(j)->CA =
+               GetAsymmUnit().FindCAtom( Loops.GetObject(i)->Table()[k][j] );
         }
       }
     }
@@ -836,7 +836,7 @@ void TCif::Initialize()  {
   U12 =     ALoop->Table().ColIndex("_atom_site_aniso_U_12");
   if( ALabel < 0 || U11 < 0 || U22 < 0 || U33 < 0 || U23 < 0 || U13 < 0 || U12 < 0 )  return;
   for( int i=0; i < ALoop->Table().RowCount(); i++ )  {
-    A = GetAsymmUnit().FindCAtom( ALoop->Table()[i].String(ALabel) );
+    A = GetAsymmUnit().FindCAtom( ALoop->Table()[i][ALabel] );
     if( A == NULL )
       throw TInvalidArgumentException(__OlxSourceInfo, olxstr("wrong atom in the aniso loop ") << ALabel);
     EValue = ALoop->Table()[i][U11];  Q[0] = EValue.GetV();  E[0] = EValue.GetE();
@@ -886,12 +886,12 @@ void TCif::Initialize()  {
 }
 //..............................................................................
 TCifLoop& TCif::Loop(int i) {
-  return *Loops.Object(i);
+  return *Loops.GetObject(i);
 };
 //..............................................................................
 TCifLoop *TCif::FindLoop(const olxstr &L)  {
   int i = Loops.IndexOf(L);
-  return (i == -1) ? NULL : Loops.Object(i);
+  return (i == -1) ? NULL : Loops.GetObject(i);
 }
 //..............................................................................
 TCifLoop& TCif::AddLoop(const olxstr &Name)  {
@@ -978,7 +978,7 @@ bool TCif::Adopt(TXFile *XF)  {
   for( int i=0; i < matrices.Count(); i++ )  {
     TStrPObjList<olxstr,TCifLoopData*>& Row = Table->AddRow(EmptyString);
     Row[0] = TSymmParser::MatrixToSymm( matrices[i] );
-    Row.Object(0) = new TCifLoopData(true);
+    Row.GetObject(0) = new TCifLoopData(true);
   }
 
   Loop = &AddLoop("_atom_site");
@@ -1010,23 +1010,23 @@ bool TCif::Adopt(TXFile *XF)  {
   for( int i = 0; i < GetAsymmUnit().AtomCount(); i++ )  {
     A = &GetAsymmUnit().GetAtom(i);
     TStrPObjList<olxstr,TCifLoopData*>& Row = Table->AddRow(EmptyString);
-    Row[0] = A->Label();  Row.Object(0) = new TCifLoopData(A);
-    Row[1] = A->GetAtomInfo().GetSymbol();  Row.Object(1) = new TCifLoopData;
+    Row[0] = A->Label();  Row.GetObject(0) = new TCifLoopData(A);
+    Row[1] = A->GetAtomInfo().GetSymbol();  Row.GetObject(1) = new TCifLoopData;
     for( int j=0; j < 3; j++ )  {
       EValue.V() = A->ccrd()[j];  EValue.E() = A->ccrdEsd()[j];
       Row[j+2] = EValue.ToCStr();
-      Row.Object(j+2) = new TCifLoopData;
+      Row.GetObject(j+2) = new TCifLoopData;
     }      
     if( A->GetEllipsoid() != NULL )  {
       A->GetEllipsoid()->GetQuad(Q, E);
       GetAsymmUnit().UcartToUcif(Q);
 
       TStrPObjList<olxstr,TCifLoopData*>& Row1 = ATable->AddRow(EmptyString);
-      Row1[0] = A->Label();  Row1.Object(0) = new TCifLoopData(A);
+      Row1[0] = A->Label();  Row1.GetObject(0) = new TCifLoopData(A);
       for( int j=0; j < 3; j++ )  {
         EValue.V() = Q[j];  EValue.E() = E[j];
         Row1[j+1] = EValue.ToCStr();
-        Row1.Object(j+1) = new TCifLoopData;
+        Row1.GetObject(j+1) = new TCifLoopData;
       }
     }
   }
@@ -1307,15 +1307,15 @@ TTTable<TStrList>* TLinkedLoopTable::MakeTable(const olxstr &Atom)  {
 
     Table.RowName(i) = Tmp;
 
-    Table[i].String(0) = LB->Value;
+    Table[i][0] = LB->Value;
     for( int j=0; j < bc-1; j++ )  {
       LB1 = (TLBond*)A->Bonds->Item(j);
       if( i==j )  {
-        Table[i].String(j+1) = "-";
+        Table[i][j+1] = "-";
         continue;
       }
       if( i < j )  {
-        Table[i].String(j+1) = EmptyString;
+        Table[i][j+1] = EmptyString;
         continue;
       }
       found = false;
@@ -1323,18 +1323,18 @@ TTTable<TStrList>* TLinkedLoopTable::MakeTable(const olxstr &Atom)  {
         LA = (TLAngle*)A->Angles->Item(k);
         if( LA->FormedBy(LB, LB1) )  {
           found = true;
-          Table[i].String(j+1) = LA->Value;
+          Table[i][j+1] = LA->Value;
           break;
         }
       }
       if( !found )
-        Table[i].String(j+1) = '?';
+        Table[i][j+1] = '?';
     }
   }
   Tmp = EmptyString;
   for( int i=0; i < Symm.Count(); i++ )  {
-    if( Symm.String(i).Length() > 0 &&  (Symm.String(i) != ".") )  {
-      Tmp1 = SymmCodeToSymm(FCif, Symm.String(i));
+    if( Symm[i].Length() > 0 &&  (Symm[i] != ".") )  {
+      Tmp1 = SymmCodeToSymm(FCif, Symm[i]);
       if( Tmp1.Length() )  {
         Tmp << "<sup>" << i << "</sup>" << ": " << Tmp1;
         if( i < (Symm.Count()-1) )
@@ -1342,7 +1342,7 @@ TTTable<TStrList>* TLinkedLoopTable::MakeTable(const olxstr &Atom)  {
       }
     }
   }
-  Table[A->Bonds->Count()].String(0) = Tmp;
+  Table[A->Bonds->Count()][0] = Tmp;
   return &Table;
 }
 //..............................................................................
@@ -1364,11 +1364,11 @@ olxstr TLinkedLoopTable::SymmCodeToSymm(TCif *Cif, const olxstr &Code)  {
   if( Toks.Count() != 2 )  return Symm;
   isymm = Toks[0].ToInt()-1;
   if( isymm < 0 || isymm >= LT->RowCount() )  return Symm;
-  if( Toks.String(1).Length() != 3 )  return Symm;
+  if( Toks[1].Length() != 3 )  return Symm;
   TSymmParser::SymmToMatrix((*LT)[isymm][0], mSymm);
-  mSymm.t[0] += (int)(Toks.String(1)[0]-'5');
-  mSymm.t[1] += (int)(Toks.String(1)[1]-'5');
-  mSymm.t[2] += (int)(Toks.String(1)[2]-'5');
+  mSymm.t[0] += (int)(Toks[1].CharAt(0)-'5');
+  mSymm.t[1] += (int)(Toks[1].CharAt(1)-'5');
+  mSymm.t[2] += (int)(Toks[1].CharAt(2)-'5');
   Symm = TSymmParser::MatrixToSymm(mSymm);
   return Symm;
 }
@@ -1432,7 +1432,7 @@ bool TCif::ResolveParamsFromDictionary(TStrList &Dic, olxstr &String,
             if( Params == NULL || Params->Data->IsEmpty() )  
               Tmp = 'N';
             else
-              Tmp = Params->Data->String(0);
+              Tmp = Params->Data->GetString(0);
             String.Delete(start, end-start+1);
             String.Insert(Tmp, start);
             i = start + Tmp.Length() - 1;
@@ -1466,7 +1466,7 @@ bool TCif::ResolveParamsFromDictionary(TStrList &Dic, olxstr &String,
           TBasicApp::GetLog().Error(olxstr("Wrong parameter index ") << index);
         else  {  // resolve indexes
           String.Delete(start, end-start+1);
-          SVal = Dic.String(index-1);
+          SVal = Dic[index-1];
           Tmp = EmptyString;
           if( SVal.Length() != 0 )  {
             if( SVal.Comparei("date") == 0 )  {
@@ -1497,16 +1497,16 @@ bool TCif::ResolveParamsFromDictionary(TStrList &Dic, olxstr &String,
                   Tmp = "none";
               }
               else if( Params->Data->Count() == 1 )  {
-                if( Params->Data->String(0).IsEmpty() )  {
+                if( Params->Data->GetString(0).IsEmpty() )  {
                   TBasicApp::GetLog().Info(olxstr("Value of parameter \'") << SVal << "' is not found");
                   Tmp = "none";
                 }
-                else if( Params->Data->String(0)[0] == '?' )  {
+                else if( Params->Data->GetString(0).CharAt(0) == '?' )  {
                   TBasicApp::GetLog().Info(olxstr("Value of parameter \'") << SVal << "' is not defined");
                   Tmp = "?";
                 }
                 else
-                  Tmp = Params->Data->String(0);
+                  Tmp = Params->Data->GetString(0);
               }
               else if( index == 13 || index == 14 || index == 30 )  {
                 if( DoubleTheta )  {
@@ -1580,12 +1580,12 @@ bool TCif::CreateTable(TDataItem *TD, TTTable<TStrList> &Table, smatd_list& Symm
   SymmList.Clear();
 
   for( int i=0; i < Loops.Count(); i++ )  {
-    Loop = Loops.Object(i);
+    Loop = Loops.GetObject(i);
     LT = &Loop->Table();
     if( LT->ColCount() < TD->ItemCount() )  continue;
     defcnt = 0;
     for( int j=0; j < LT->ColCount(); j++ )  {
-      if( TD->FindItemCI(LT->ColName(j)) != NULL )
+      if( TD->FindItemi(LT->ColName(j)) != NULL )
         defcnt ++;
     }
     if( defcnt == TD->ItemCount() )  break;
@@ -1600,7 +1600,7 @@ bool TCif::CreateTable(TDataItem *TD, TTTable<TStrList> &Table, smatd_list& Symm
   for( int i=0; i < LT->RowCount(); i++ )  {
     AddRow = true;
     for( int j=0; j < LT->ColCount(); j++ )  {
-      DI = TD->FindItemCI( LT->ColName(j) );
+      DI = TD->FindItemi( LT->ColName(j) );
 
       if( sindex >=0 && LT->ColName(j).IndexOf("site_symmetry") != -1 )  {
         // 1_555
@@ -1618,7 +1618,7 @@ bool TCif::CreateTable(TDataItem *TD, TTTable<TStrList> &Table, smatd_list& Symm
           }
           for( int k=0; k < LT->ColCount(); k++ )  {
             if( LT->ColName(k).EndsWith( Tmp ) )  {
-              Table[i].String(k) << "<sup>" << (matIndex+1) << "</sup>";
+              Table[i][k] << "<sup>" << (matIndex+1) << "</sup>";
               break;
             }
           }
@@ -1631,12 +1631,12 @@ bool TCif::CreateTable(TDataItem *TD, TTTable<TStrList> &Table, smatd_list& Symm
       Tmp = DI->GetFieldValue("mustequal", EmptyString);
       Toks.Clear();
       Toks.Strtok(Tmp, ';');
-      if( !Tmp.IsEmpty() && (Toks.CIIndexOf(Val)==-1) ) // equal to
+      if( !Tmp.IsEmpty() && (Toks.IndexOfi(Val)==-1) ) // equal to
       {  AddRow = false;  break;  }
 
       Tmp = DI->GetFieldValue("atypeequal", EmptyString);
       if( !Tmp.IsEmpty() )  {  // check for atom type equals to
-        TCifLoopData* CD = (TCifLoopData*)(*LT)[i].Object(j);
+        TCifLoopData* CD = (*LT)[i].GetObject(j);
         if( CD != NULL && CD->CA != NULL )
           if( CD->CA->GetAtomInfo().GetSymbol().Comparei( Tmp ) )  {
             AddRow = false;
@@ -1645,7 +1645,7 @@ bool TCif::CreateTable(TDataItem *TD, TTTable<TStrList> &Table, smatd_list& Symm
       }
       Tmp = DI->GetFieldValue("atypenotequal", EmptyString);
       if( !Tmp.IsEmpty() )  {  // check for atom type equals to
-        TCifLoopData* CD = (TCifLoopData*)(*LT)[i].Object(j);
+        TCifLoopData* CD = (*LT)[i].GetObject(j);
         if( CD != NULL && CD->CA != NULL )
           if( !CD->CA->GetAtomInfo().GetSymbol().Comparei( Tmp ) )  {
             AddRow = false;
@@ -1656,7 +1656,7 @@ bool TCif::CreateTable(TDataItem *TD, TTTable<TStrList> &Table, smatd_list& Symm
       Tmp = DI->GetFieldValue("mustnotequal", EmptyString);
       Toks.Clear();
       Toks.Strtok(Tmp, ';');
-      if( Tmp.Length() && ( Toks.CIIndexOf(Val)!=-1) ) // not equal to
+      if( Tmp.Length() && ( Toks.IndexOfi(Val)!=-1) ) // not equal to
       {  AddRow = false;  break;  }
 
       Tmp = DI->GetFieldValue("multiplier", EmptyString);
@@ -1673,7 +1673,7 @@ bool TCif::CreateTable(TDataItem *TD, TTTable<TStrList> &Table, smatd_list& Symm
   }
   // process columns
   for( int i=0; i < LT->ColCount(); i++ )  {
-    DI = TD->FindItemCI( LT->ColName(i) );
+    DI = TD->FindItemi( LT->ColName(i) );
     if( DI != NULL )  {
       Table.ColName(i-ColDeleted) = DI->GetFieldValueCI("caption");
       if( !DI->GetFieldValueCI("visible", FalseString).ToBool() )  {

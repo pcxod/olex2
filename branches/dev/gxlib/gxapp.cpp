@@ -613,13 +613,13 @@ void TGXApp::BangTable(TXAtom *XA, TTTable<TStrList>& Table)
 
   for( int i=0; i < A->BondCount(); i++ )  {
     B = &A->Bond(i);
-    Table[i].String(0) = olxstr::FormatFloat(3, B->Length());
+    Table[i][0] = olxstr::FormatFloat(3, B->Length());
     Table.RowName(i) = B->Another(*A).GetLabel();
     for( int j=0; j < A->BondCount()-1; j++ )  {
       B1 = &A->Bond(j);
 
-      if( i == j )  { Table[i].String(j+1) = '-'; continue; }
-      if( i <= j )  { Table[i].String(j+1) = '-'; continue; }
+      if( i == j )  { Table[i][j+1] = '-'; continue; }
+      if( i <= j )  { Table[i][j+1] = '-'; continue; }
 
       V = B->Another(*A).crd() - A->crd();
       V1 = B1->Another(*A).crd() - A->crd();
@@ -733,8 +733,8 @@ void TGXApp::TangList(TXBond *XMiddle, TStrList &L)  {
     }
   }
   for( int i=0; i < L.Count(); i++ )  {
-    int j = L.String(i).IndexOf(':');
-    L.String(i).Insert(' ', j, maxl-j);  
+    int j = L[i].IndexOf(':');
+    L[i].Insert(' ', j, maxl-j);  
   }
 }
 //..............................................................................
