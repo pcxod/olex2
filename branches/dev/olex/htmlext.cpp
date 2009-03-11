@@ -996,9 +996,9 @@ void THtml::ClearSwitchStates()  {
 }
 //..............................................................................
 void THtml::OnMouseDown(wxMouseEvent& event)  {
+  event.Skip();
   FMouseX = event.GetX();
   FMouseY = event.GetY();
-  event.Skip();
   if( FMovable )  {
     SetCursor( wxCursor(wxCURSOR_SIZING) );
     FMouseDown = true;
@@ -1014,8 +1014,10 @@ void THtml::OnMouseUp(wxMouseEvent& event)  {
 }
 //..............................................................................
 void THtml::OnMouseMotion(wxMouseEvent& event)  {
-  event.Skip();
-  if( !FMovable || !FMouseDown )  return;
+  if( !FMovable || !FMouseDown )  {
+    event.Skip();
+    return;
+  }
   int dx = event.GetX() - FMouseX;
   int dy = event.GetY() - FMouseY;
   if( !dx && !dy )  return;
@@ -1363,12 +1365,12 @@ void THtml::ScrollWindow(int dx, int dy, const wxRect* rect)  {
 #ifdef __WXGTK__
   if( dx == 0 && dy == 0 )  return;
   Freeze();
-  wxWindow::ScrollWindow(dx,dy,rect);
+  wxHtmlWindow::ScrollWindow(dx,dy,rect);
   Thaw();
   this->Refresh();
   this->Update();
 #else
-  wxWindow::ScrollWindow(dx,dy,rect);
+  wxHtmlWindow::ScrollWindow(dx,dy,rect);
 #endif
 }
 //..............................................................................

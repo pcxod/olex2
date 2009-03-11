@@ -2704,11 +2704,11 @@ void TMainForm::macQPeakScale(TStrObjList &Cmds, const TParamList &Options, TMac
     return;
   }
   if( Cmds.Count() == 1 )  {
-    if( FXApp->XFile().HasLastLoader() )  {
+    if( !FXApp->XFile().HasLastLoader() )  {
       E.ProcessingError(__OlxSrcInfo, "file is not loaded" );
       return;
     }
-    float scale = Cmds[0].ToDouble();
+    double scale = Cmds[0].ToDouble();
     FXApp->QPeakScale(scale);
     return;
   }
