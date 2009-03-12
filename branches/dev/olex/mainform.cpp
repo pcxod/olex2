@@ -767,7 +767,7 @@ separated values of Atom Type and radius, an entry a line" );
   for difference maps, currently available simple(s) sum(Fo^2)/sum(Fc^2) for Fo^2/sigme > 3)\
   and regression(r)&;r-resolution in Angstrems&;i-integrates the map&;m-mask the structure", fpNone|psFileLoaded,
 "Calculates fourier map" );
-  this_InitMacroD(TestBinding, EmptyString, fpNone, "Internal tests" );
+  this_InitMacroD(TestBinding, EmptyString, fpAny, "Internal tests" );
   this_InitMacroD(ShowSymm, EmptyString, fpNone|fpOne, "Shows symmetry elements of the unitcell" );
   this_InitMacroD(Textm, EmptyString, fpOne, "Runs subsequent commands stored in a text file" );
   this_InitMacroD(TestStat, EmptyString, fpOne, "Test: runs statistical tests on structures in current folder. Expects a file name" );

@@ -12,9 +12,10 @@
 UseEsdlNamespace()
 
 //..............................................................................
-double Factorial( int a)  {
+double GlobalEsdlFunction(Factorial)(int a)  {
   double b=1;
-  for(int i=1; i<=a; i++ )   b*=i;
+  for(int i=2; i <= a; i++ )   
+    b*=i;
   return b;
 }
 //..............................................................................

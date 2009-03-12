@@ -6110,22 +6110,6 @@ double MatchAtomPairsQT(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atom
     TBasicApp::GetLog() << ( olxstr("RMS is ") << olxstr::FormatFloat(3, rms) << '\n');
   return rms;
 }
-double MatchAtomPairsQT_(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atoms,
-                        smatdd& res, bool InversionPossible, bool& InversionUsed)  {
-  if( atoms.Count() < 3 )  return -1;
-  const TAsymmUnit& au = *atoms[0].GetA()->CAtom().GetParent();
-  double rms = TNetwork::FindAlignmentMatrix(atoms, res, false);
-  TBasicApp::GetLog() << rms << " (start)\n";
-  TTypeList< AnAssociation2<TSAtom*,TSAtom*> > _atoms (atoms);
-  for( int i=0; i < atoms.Count()*10; i++ )  {
-    int ind1 = rand()%atoms.Count();
-    int ind2 = rand()%atoms.Count();
-    _atoms.Swap(ind1, ind2);
-  }
-  rms = TNetwork::FindAlignmentMatrix(_atoms, res, false);
-  TBasicApp::GetLog() << rms << " (" << 0 << ")\n";
-  return -1;
-}
 //..............................................................................
 //void MatchAtomPairsULS(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atoms, smatd& res)  {
 //  TMatrixD gs(4,4), lm(atoms.Count(), 4), lmt(4, atoms.Count());
@@ -8199,31 +8183,24 @@ void TMainForm::macProjSph(TStrObjList &Cmds, const TParamList &Options, TMacroE
 }
 //..............................................................................
 void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  //vec2d p1(-1, 0), p2(0, 0.01), p3(1, 0);
-  //TArc2D arc(p1, p2, p3);
-  //SortedObjectList<olxstr, olxstrComparator<true> > l, l1;
-  //l.Add("c");
-  //l.Add("a");
-  //l.Add("b");
-  //l1 = l;
-  //olxstr t1(l[0]);
-  //olxstr t2(l[1]);
-  //olxstr t3 = t1;
-
-  //olxdict<olxstr, olxstr, TComparableComparator > l3;
-  //l3.Add("a");
-  //l3.Add("b");
-  //l3.Add("a");
-  //l3.Add("c");
-  //l3["a"] = "x";
-  //l3['b'] = "x";
-  //l3('d', "d -value");
-  //l3.Remove('a');
-  //olxdict<int, olxstr, TPrimitiveComparator> l4;
-  //l4(0, "null");
-  //l4(2, "two");
-  //l4(1, "one");
-  //l4[4] = "four";
+  if( !Cmds.IsEmpty() ) {
+    TIntList lv(Cmds[0].ToInt());
+    for( int i=0; i < lv.Count(); i++ )
+      lv[i] = i+1;
+    int n=0;
+    int f = Factorial(lv.Count()), last_n=1;
+    for( int i=0; i < f; i++, n++ )  {
+      if( n == 2 )  {
+        n = 0;
+        lv.ShiftR(1);
+      }
+      lv.Swap(0, 1);
+      olxstr out = lv[0];
+      for( int j=1; j < lv.Count(); j++ )
+        out << ' ' << lv[j];
+      TBasicApp::GetLog() << (out << '\n');
+    }
+  }
 }
 //..............................................................................
 double Main_FindClosestDistance(const smatd_list& ml, vec3d& o_from, const TCAtom& a_to) {
