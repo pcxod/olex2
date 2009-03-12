@@ -156,7 +156,7 @@ class TOlxVars : public IEObject  {
   TSStrObjList<olxstr,olxstr, true> Vars;
   inline void _SetVar(const olxstr& name, const olxstr& value)  {
     int ind = Vars.IndexOfComparable(name);
-    if( ind >= 0 )  Vars.Object(ind) = value;
+    if( ind >= 0 )  Vars.GetObject(ind) = value;
     else            Vars.Add(name, value);
   }
   inline void _UnsetVar(const olxstr& name)  {

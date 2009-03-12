@@ -283,13 +283,16 @@ void TSGTest::LatticeSATest(TTypeList<TElementStats<TCLattice*> >& latRes, TType
   //  }
   //}
   //if( saCount )  averageSAI /= saCount;
-
+  //for( int i=0; i < SAElements.Count(); i++ )  {
+  //  SAElements[i].GetB()->A() /= 100;
+  //  SAElements[i].GetB()->B() = sqrt( SAElements[i].GetB()->GetB() )/100;
+  //}
   for( int i=0; i < SAElements.Count(); i++ )  {
     SAElements[i].GetB()->B() = sqrt( SAElements[i].GetB()->GetB() );
     if( SAElements[i].GetB()->GetC() != 0 )  {
       if( SAElements[i].GetB()->GetA() > 0 )  {
         if( SAElements[i].GetB()->GetA()/SAElements[i].GetB()->GetC() < AverageI/7.5 || 
-            SAElements[i].GetB()->GetA() < 3*SAElements[i].GetB()->GetB() )
+            SAElements[i].GetB()->GetA() < 4*SAElements[i].GetB()->GetB() )
           PresentElements.Add( &SAElements[i] );
       }
       else
@@ -315,7 +318,7 @@ void TSGTest::LatticeSATest(TTypeList<TElementStats<TCLattice*> >& latRes, TType
     double maxInt = 1.0*(averageSAI + 2*Ssq);
     for( int i=0; i < PresentElements.Count(); i++ )  {
       double v = PresentElements[i]->GetB()->GetA()/PresentElements[i]->GetB()->GetC();
-      if( v > maxInt && v > 1 && PresentElements[i]->GetB()->GetA() > 3*PresentElements[i]->GetB()->GetB() )  {
+      if( v > maxInt && v > 1 && PresentElements[i]->GetB()->GetA() > 4*PresentElements[i]->GetB()->GetB() )  {
         PresentElements.Delete(i);
         i--;
       }

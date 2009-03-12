@@ -860,7 +860,7 @@ bool TTreeView::LoadFromStrings(TStrList &strings)  {
 //----------------------------------------------------------------------------//
 BEGIN_EVENT_TABLE(TTrackBar, wxSlider)
   EVT_SCROLL(TTrackBar::ScrollEvent)
-  EVT_SCROLL_THUMBRELEASE(TTrackBar::ThumbReleaseEvent)
+  EVT_LEFT_UP(TTrackBar::MouseUpEvent)
 END_EVENT_TABLE()
 //..............................................................................
 TTrackBar::TTrackBar(wxWindow *Parent):wxSlider(Parent, -1, 0, 0, 100, wxDefaultPosition, wxDefaultSize, wxSL_HORIZONTAL|wxSL_AUTOTICKS),
@@ -868,14 +868,14 @@ TTrackBar::TTrackBar(wxWindow *Parent):wxSlider(Parent, -1, 0, 0, 100, wxDefault
   //if( Parent->IsFrozen() )  Hide();
   FActions = new TActionQList;
   OnChange = &FActions->NewQueue("ONCHANGE");
-  OnThumbRelease = &FActions->NewQueue("ONTHUMBRELEASE");
+  OnMouseUp = &FActions->NewQueue("ONMOUSEUP");
   SetValue(0);
   this_Val = 0;
 }
 //..............................................................................
 TTrackBar::~TTrackBar()  {  delete FActions;  }
 //..............................................................................
-void TTrackBar::ScrollEvent(wxScrollEvent& event)  {
+void TTrackBar::ScrollEvent(wxScrollEvent& evt)  {
   if( this_Val == GetValue() )  return;
   this_Val = GetValue();
   if( !Data.IsEmpty() )  TOlxVars::SetVar(Data, this_Val);
@@ -884,12 +884,10 @@ void TTrackBar::ScrollEvent(wxScrollEvent& event)  {
   EndEvtProcessing()
 }
 //..............................................................................
-void TTrackBar::ThumbReleaseEvent(wxScrollEvent& event)  {
-  if( this_Val == GetValue() )  return;
-  this_Val = GetValue();
-  if( !Data.IsEmpty() )  TOlxVars::SetVar(Data, this_Val);
+void TTrackBar::MouseUpEvent(wxMouseEvent& evt)  {
+  evt.Skip();
   StartEvtProcessing()
-    OnThumbRelease->Execute(this, &TEGC::New<olxstr>(GetOnThumbReleaseStr()));
+    OnMouseUp->Execute(this, &TEGC::New<olxstr>(GetOnMouseUpStr()));
   EndEvtProcessing()
 }
 //..............................................................................

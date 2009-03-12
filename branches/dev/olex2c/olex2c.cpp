@@ -708,7 +708,7 @@ public:
       olxstr Cmd;
       TMacroError err;
       while( FProcess->OnTerminateCmds().Count() ) {
-        Cmd = FProcess->OnTerminateCmds().String(0);
+        Cmd = FProcess->OnTerminateCmds()[0];
         FProcess->OnTerminateCmds().Delete(0);
         Macros.ProcessMacro(Cmd, err);
         if( !err.IsSuccessful() )  {

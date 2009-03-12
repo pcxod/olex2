@@ -55,11 +55,11 @@ public:
     }
     TStrList argV( Args.Count() );
     for( int i=0; i < argV.Count(); i++ )  {
-      if( !Args.Object(i).IsEmpty() && Args.Object(i).IndexOf('(') != -1 )  {
-        olex_processor.executeFunction(Args.Object(i), argV[i]);
+      if( !Args.GetObject(i).IsEmpty() && Args.GetObject(i).IndexOf('(') != -1 )  {
+        olex_processor.executeFunction(Args.GetObject(i), argV[i]);
       }
       else // set the defaults!!
-        argV[i] = Args.Object(i);
+        argV[i] = Args.GetObject(i);
     }
     for( int i=0; i < args.Count(); i++ )  {
       int eqsi = args[i].FirstIndexOf('=');
@@ -163,7 +163,7 @@ public:
   }
   void Clear()  {
     for( int i=0; i < Macros.Count(); i++ )
-      delete Macros.Object(i);
+      delete Macros.GetObject(i);
     Macros.Clear();
   }
   

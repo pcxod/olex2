@@ -466,9 +466,9 @@ TAG_HANDLER_PROC(tag)  {
       Track->SetOnChangeStr(tag.GetParam(wxT("ONCHANGE")).c_str());
       Track->OnChange->Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
     }
-    if( tag.HasParam(wxT("ONTHUMBRELEASE")) )  {
-      Track->SetOnThumbReleaseStr(tag.GetParam(wxT("ONTHUMBRELEASE")).c_str());
-      Track->OnThumbRelease->Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
+    if( tag.HasParam(wxT("ONMOUSEUP")) )  {
+      Track->SetOnMouseUpStr(tag.GetParam(wxT("ONMOUSEUP")).c_str());
+      Track->OnMouseUp->Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
     }
     if( !Label.IsEmpty() )  {
       wxHtmlContainerCell* contC = new wxHtmlContainerCell(m_WParser->GetContainer());
