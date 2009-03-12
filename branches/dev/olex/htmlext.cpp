@@ -997,6 +997,7 @@ void THtml::ClearSwitchStates()  {
 //..............................................................................
 void THtml::OnMouseDown(wxMouseEvent& event)  {
   event.Skip();
+  this->SetFocusIgnoringChildren();
   FMouseX = event.GetX();
   FMouseY = event.GetY();
   if( FMovable )  {
@@ -1299,20 +1300,22 @@ bool THtml::UpdatePage()  {
   wxHtmlWindow::Freeze();
 //  GetParser()->SetInputEncoding( wxFONTENCODING_UTF8 );
   SetPage( Res.Text(' ').u_str() );
+  // looks like it is "fixed" in 2.8.9...
+//  for( int i=0; i < FObjects.Count(); i++ )  {
+//    if( FObjects.GetObject(i).GetB() != NULL )  {
+//      // this i the only way to not show the bloody control at (0,0) on windows!
+//#ifndef __MAC__
+//      FObjects.GetObject(i).B()->Move(2000, 2000);
+//#endif      
+//      FObjects.GetObject(i).B()->Show(true);
+//    }
+//  }
+  ObjectsState.RestoreState();
+
   wxHtmlWindow::Scroll(xPos, yPos);
   wxHtmlWindow::Thaw();
-  for( int i=0; i < FObjects.Count(); i++ )  {
-    if( FObjects.GetObject(i).GetB() != NULL )  {
-      // this i the only way to not show the bloody control at (0,0) on windows!
-#ifndef __MAC__
-      FObjects.GetObject(i).B()->Move(2000, 2000);
-#endif      
-      FObjects.GetObject(i).B()->Show(true);
-    }
-  }
-  // reset global data
-  //TFileHandlerManager::Clear();
-  ObjectsState.RestoreState();
+  wxHtmlWindow::GetViewStart(&xPos, &yPos);
+
   SwitchSources.Clear();
   SwitchSource  = EmptyString;
   TEFile::ChangeDir(oldPath);
@@ -1337,7 +1340,6 @@ bool THtml::UpdatePage()  {
 #ifndef __MAC__
         if( cb->GetTextCtrl() != NULL )  {
           cb->GetTextCtrl()->SetInsertionPoint(0);
-//          wnd = cb->GetTextCtrl();
         }
 #endif				
 			  wnd = cb;
@@ -1350,11 +1352,10 @@ bool THtml::UpdatePage()  {
       wnd->SetFocus();
     }
   }
-
   return true;
 }
 //..............................................................................
-void THtml::OnScroll(wxScrollEvent& evt)  {  // this is vever called at least on GTK
+void THtml::OnScroll(wxScrollEvent& evt)  {  // this is never called at least on GTK
   evt.Skip();
 #ifdef __WXGTK__
   this->Update();
