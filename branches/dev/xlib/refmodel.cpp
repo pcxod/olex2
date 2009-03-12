@@ -731,8 +731,8 @@ void RefinementModel::ProcessFrags()  {
             v *= -1;
             aunit.CellToCartesian(v);
           }
-          v -= tr;
-          atoms[k]->ccrd() = aunit.CartesianToCell(tm*v);
+          v = tm*(tr-v);
+          atoms[k]->ccrd() = aunit.CartesianToCell(v);
         }
         ag.SetAfix( ag.GetN() );
       }

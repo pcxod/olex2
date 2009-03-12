@@ -449,7 +449,7 @@ bool TEFile::ListCurrentDirEx(TFileList &Out, const olxstr &Mask, const unsigned
   TTypeList<AnAssociation2<TEFile::TFileNameMask*, TEFile::TFileNameMask*> > masks;
   olxstr tmp, fn;
   for(int i=0; i < ml.Count(); i++ )  {
-    olxstr& t = ml.String(i);
+    olxstr& t = ml[i];
     tmp = TEFile::ExtractFileExt( t );
     masks.AddNew( new TEFile::TFileNameMask(t.SubStringTo(t.Length() - tmp.Length() - (tmp.Length()!=0 ? 1 : 0))),
                   new TEFile::TFileNameMask(tmp) );
@@ -518,7 +518,7 @@ bool TEFile::ListCurrentDir(TStrList &Out, const olxstr &Mask, const unsigned sh
   TTypeList<AnAssociation2<TEFile::TFileNameMask*, TEFile::TFileNameMask*> > masks;
   olxstr tmp, fn;
   for(int i=0; i < ml.Count(); i++ )  {
-    olxstr& t = ml.String(i);
+    olxstr& t = ml[i];
     tmp = TEFile::ExtractFileExt( t );
     masks.AddNew( new TEFile::TFileNameMask(t.SubStringTo(t.Length() - tmp.Length() - (tmp.Length()!=0 ? 1 : 0))),
                   new TEFile::TFileNameMask(tmp) );

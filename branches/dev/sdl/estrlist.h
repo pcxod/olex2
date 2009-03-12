@@ -385,7 +385,7 @@ struct TPrimitiveStrListData : public TSingleStringWrapper<SC>  {
 
 template <class SC, typename OC> struct TObjectStrListData : public TSingleStringWrapper<SC>  {
   OC Object;
-  TObjectStrListData() : {  }
+  TObjectStrListData() {  }
   template <class S> TObjectStrListData(const S& str ) : TSingleStringWrapper<SC>(str)  {  }
   template <class S> TObjectStrListData(const S& str, const OC& obj ) : 
     TSingleStringWrapper<SC>(str),

@@ -319,7 +319,7 @@ public:
       SL.QuickSort<comparator>();
       TIntList indexes( RowCount() );
       for( int i=0; i < RowCount(); i++ )
-        indexes[i] = SL.Object(i);
+        indexes[i] = SL.GetObject(i);
       RowNames.Rearrange( indexes );
       Rows.Rearrange( indexes );
     }
