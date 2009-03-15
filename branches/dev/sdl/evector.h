@@ -58,9 +58,9 @@ public:
   inline int Count() const {  return Fn;  }
   inline int Size()  const {  return Fn;  }
 
-  TVector& Null()  {  // setmem would be an alternative ...
-    if( Fn != 0 )
-      memset(FData, 0, sizeof(VecType)*Fn);
+  TVector& Null()  {  
+    for( int i=0; i < Fn; i++ )
+      FData[i] = 0;
     return *this;
   }
 

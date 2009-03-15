@@ -32,16 +32,14 @@ TCAtom::TCAtom(TAsymmUnit *Parent)  {
   UisoScale = 0;
   UisoOwner = NULL;
   FragmentId = -1;
-  CanBeGrown = Deleted = false;
   FAttachedAtoms = NULL;
   FAttachedAtomsI = NULL;
   Degeneracy = 1;
-  HAttached = false;
-  Saved = false;
   Tag = -1;
   DependentAfixGroup = ParentAfixGroup = NULL;
   DependentHfixGroups = NULL;
   ExyzGroup = NULL;
+  Flags = 0;
   memset(Vars, 0, sizeof(Vars));
 }
 //..............................................................................
@@ -127,25 +125,9 @@ void TCAtom::Assign(const TCAtom& S)  {
   FragmentId = S.GetFragmentId();
   Center = S.Center;
   Esd = S.Esd;
-  SetDeleted( S.IsDeleted() );
-  SetCanBeGrown( S.GetCanBeGrown() );
   Degeneracy = S.GetDegeneracy();
   UisoEsd = S.GetUisoEsd();
-
-  /*
-  if( FAttachedAtoms )  FAttachedAtomS.Clear();
-  if( S.AttachedAtomCount() )
-  {
-    for(int i=0; i < S.AttachedAtomCount(); i++ )
-    {
-      AddAttachedAtom( FParent->Atom(S.AttachedAtom(i)->Label()));
-    }
-  }
-  else
-  {
-    if( FAttachedAtoms )  {  delete FAttachedAtoms;  FAttachedAtoms = NULL;  }
-  }
-  */
+  Flags = S.Flags;
 }
 //..............................................................................
 int TCAtom::GetAfix() const {

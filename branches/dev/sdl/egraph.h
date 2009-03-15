@@ -12,7 +12,9 @@ template <class IC, class AssociatedOC> class TEGraphNode  {
 protected:
   inline bool IsPassed()  const  {  return Passed;  }
   inline void SetPassed(bool v)  {  Passed = v;  }
-  void SwapItems(int i, int j )  {  Nodes.Swap(i,j);  }
+  static int _SortNodesByTag(const TEGraphNode<IC, AssociatedOC>& n1, const TEGraphNode<IC, AssociatedOC>& n2) {
+    return n1.GetTag() - n2.GetTag();
+  }
 public:
   TEGraphNode( const IC& data, const AssociatedOC& object )  {
     Data = data;
@@ -25,7 +27,9 @@ public:
   inline TEGraphNode& NewNode(const IC& Data, const AssociatedOC& obj )  {
     return Nodes.AddNew(Data, obj);
   }
-
+  void SortNodesByTag() {
+    Nodes.BubleSorter.SortSF(Nodes, &TEGraphNode::_SortNodesByTag);
+  }
   inline const IC& GetData()  const {  return Data;  }
   inline const AssociatedOC& GetObject()  const {  return Object;  }
 
@@ -33,6 +37,7 @@ public:
   // this is for the traverser
   inline TEGraphNode& Item(int i)  const   {  return  Nodes[i];  }
   inline TEGraphNode& operator [](int i)  const {  return  Nodes[i];  }
+  void SwapItems(int i, int j )  {  Nodes.Swap(i,j);  }
 
   bool DoMatch( TEGraphNode& node )  const {
     if( node.GetData() != GetData() )  return false;
@@ -42,7 +47,7 @@ public:
       node[i].SetPassed( false );
     for( int i=0; i < Count(); i++ )  {
       bool Matched = false;
-      for( int j=0; j < node.Count(); j++ )  {  // Count equals for both nodes
+      for( int j=0; j < Count(); j++ )  {  // Count equals for both nodes
         if( node[j].IsPassed() )  continue;
         if( node[j].DoMatch( Nodes[i] ) )  {
           node[j].SetPassed( true );
@@ -52,6 +57,22 @@ public:
         }
       }
       if( !Matched )  return false;
+    }
+    return true;
+  }
+
+  template <class Analyser> bool FullMatch(TEGraphNode& node, Analyser& analyser) const {
+    if( node.GetData() != GetData() )  return false;
+    if( node.Count() != Count() )  return false;
+    for( int i=0; i < Count(); i++ )  {
+      int mc=0;
+      for( int j=0; j < Count(); j++ )  {  // Count equals for both nodes
+        if( Nodes[i].FullMatch( node[j], analyser ) )  {
+          analyser.OnMatch(*this, node, i, j);
+          mc++;
+        }
+      }
+      if( mc == 0 )  return false;
     }
     return true;
   }

@@ -8187,17 +8187,16 @@ void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options, TMa
     TIntList lv(Cmds[0].ToInt());
     for( int i=0; i < lv.Count(); i++ )
       lv[i] = i+1;
-    int n=0;
-    int f = Factorial(lv.Count()), last_n=1;
-    for( int i=0; i < f; i++, n++ )  {
-      if( n == 2 )  {
-        n = 0;
-        lv.ShiftR(1);
+    int f = Factorial(lv.Count());
+    for( int i=0; i < f; i++ )  {
+      int n = i;
+      for( int j = 2; j <= lv.Count(); j++ )  {
+        lv.Swap( (i%j), j-2 );
+        n /= j;
       }
-      lv.Swap(0, 1);
       olxstr out = lv[0];
-      for( int j=1; j < lv.Count(); j++ )
-        out << ' ' << lv[j];
+      for( int _b=1; _b < lv.Count(); _b++ )
+        out << ' ' << lv[_b];
       TBasicApp::GetLog() << (out << '\n');
     }
   }

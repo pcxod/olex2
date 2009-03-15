@@ -28,9 +28,16 @@ protected:
     int from = 0, to = list.Count()-1;
     while( true )  {
       if( (to-from) == 1 )  {  
-        if( Comparator::Compare(list[from], entity) == 0 || Comparator::Compare(list[to], entity) == 0 )
+        if( Comparator::Compare(list[from], entity) == 0 )  {
           exists = true;
-        return to;
+          return from;
+        }
+        else if( Comparator::Compare(list[to], entity) == 0 )  {
+          exists = true;
+          return to;
+        }
+        else
+          return to;
       }
       const int index = (to+from)/2;
       const int cr = Comparator::Compare(list[index], entity);
@@ -92,7 +99,7 @@ protected:
   Proxy GetProxyObject(int i)  {  return Proxy(list[i]);  }
 public:
   TTSortedList() {}
-  TTSortedList(const TTSortedList& l) : list(l)  {  }
+  TTSortedList(const TTSortedList& l) : list(l.list)  {  }
 
   bool IsEmpty()                const {  return list.IsEmpty();  }
   int Count()                   const {  return list.Count();  }
@@ -291,7 +298,7 @@ class SortedObjectList : public TTSortedList<TObjectList<ObjectClass>, Comparato
 public:
   SortedObjectList() {  }
   SortedObjectList(const SortedObjectList& l) : 
-    TTSortedList<TTypeList<ObjectClass>, Comparator, ObjectClass>(l) {  }
+    TTSortedList<TObjectList<ObjectClass>, Comparator, ObjectClass>(l) {  }
   SortedObjectList& operator = (const SortedObjectList& l)  {
     TTSortedList<TObjectList<ObjectClass>, Comparator, ObjectClass>::operator = (l);
     return *this;

@@ -269,11 +269,11 @@ void TUnitCell::TSearchSymmEqTask::Run(long ind)  {
       else  {
         if( !Initialise )  continue;
         if( Latt->GetNetwork().CBondExists(*Atoms[ind], *Atoms[i], Dis) )  {
-          Atoms[ind]->SetCanBeGrown(true);
+          Atoms[ind]->SetGrowable(true);
           if( Atoms[ind]->IsAttachedTo( *Atoms[i] ) )  continue;
           Atoms[ind]->AttachAtom( Atoms[i] );
           if( i != ind )  {
-            Atoms[i]->SetCanBeGrown(true);
+            Atoms[i]->SetGrowable(true);
             Atoms[i]->AttachAtom(Atoms[ind]);
           }
         }

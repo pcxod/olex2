@@ -30,6 +30,12 @@ const short
   catom_var_name_U13   = 10,
   catom_var_name_U12   = 11;
 
+const short 
+  catom_flag_Deleted    = 0x0001,
+  catom_flag_Growable   = 0x0002,
+  catom_flag_HAttached  = 0x0004,
+  catom_flag_Saved      = 0x0008;
+
 class TEllipsoid;
 class TAfixGroup;
 class TAfixGroups;
@@ -51,11 +57,7 @@ private:
   TCAtom* UisoOwner;  // the Uiso owner, if any
   int     FragmentId;   // this is used in asymmetric unit sort and initialised in TLatice::InitBody()
   vec3d Center, Esd;  // fractional coordinates and esds
-  short Part, Degeneracy;
-  bool Deleted, 
-    Saved;  // is true the atoms already saved (to work aroung SAME, AFIX)
-  bool CanBeGrown,
-       HAttached;  // used for the hadd command
+  short Part, Degeneracy, Flags;
   TPtrList<TCAtom>* FAttachedAtoms, *FAttachedAtomsI;
   /* Afix group is a fitted group, Hfix group the immediate dependent group */
   TAfixGroup* DependentAfixGroup, *ParentAfixGroup;
@@ -143,11 +145,14 @@ public:
   DefPropP(double, UisoScale)
   DefPropP(TCAtom*, UisoOwner)
   DefPropP(double, QPeak)
-  DefPropB(Deleted)
-  DefPropB(HAttached)
-  DefPropB(Saved)
-  // can be grown is set by UnitCell::Init
-  DefPropP(bool, CanBeGrown)
+  inline bool IsDeleted()     const {  return (Flags & catom_flag_Deleted) != 0;  }
+  inline bool IsSaved()       const {  return (Flags & catom_flag_Saved) != 0;  }
+  inline bool IsHAttached()   const {  return (Flags & catom_flag_HAttached) != 0;  }
+  inline bool IsGrowable()    const {  return (Flags & catom_flag_Growable) != 0;  }
+  inline void SetDeleted(bool v)    {  SetBit(v, Flags, catom_flag_Deleted);  }
+  inline void SetSaved(bool v)      {  SetBit(v, Flags, catom_flag_Saved);  }
+  inline void SetHAttached(bool v)  {  SetBit(v, Flags, catom_flag_HAttached);  }
+  inline void SetGrowable(bool v)   {  SetBit(v, Flags, catom_flag_Growable);  }
 
   TEllipsoid* GetEllipsoid() const;
   void UpdateEllp( const TEllipsoid& NV);

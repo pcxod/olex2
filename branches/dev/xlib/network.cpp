@@ -21,6 +21,8 @@
 
 #include "olxmps.h"
 #include "estopwatch.h"
+#include "edict.h"
+#include "emath.h"
 
 #undef GetObject
 
@@ -375,6 +377,120 @@ void BuildGraph( TEGraphNode<int,TSAtom*>& graphNode, TSAtom* node)  {
   ExpandGraphNode(graphNode);
 }
 
+struct GraphAnalyser  {
+  struct NodeMatch  {
+    //TTypeList<AnAssociation2<int,int> > indexes;
+    olxdict<int, TIntList, TPrimitiveComparator> indexes;
+    const TEGraphNode<int,TSAtom*>* src;
+    TEGraphNode<int,TSAtom*>* dest;
+    NodeMatch() : src(NULL), dest(NULL) {}
+    NodeMatch(const TEGraphNode<int,TSAtom*>* _src, TEGraphNode<int,TSAtom*>* _dest) : src(_src), dest(_dest) {}
+    NodeMatch(const NodeMatch& nm) : src(nm.src), dest(nm.dest), indexes(nm.indexes) {}
+    NodeMatch& operator = (const NodeMatch& nm)  {
+      indexes = nm.indexes;
+      src = nm.src;
+      dest = nm.dest;
+      return *this;
+    }
+  };
+  struct PermutableSE  {
+    TIntList dest_ind, src_ind;
+    TPtrList<NodeMatch> all_matches;
+  };
+  TTypeList<PermutableSE> CombinedIndex;
+  // the graph might have several nodes corresponding to one SAtom
+  olxdict<const TEGraphNode<int,TSAtom*>*, NodeMatch, TPointerComparator> mc;
+  void OnMatch(const TEGraphNode<int,TSAtom*>& src, TEGraphNode<int,TSAtom*>& dest, int _i, int _j) {
+    NodeMatch& nm = mc.Add(&src, NodeMatch(&src, &dest) );
+    TIntList& il = nm.indexes.Add(_i);
+    if( il.IndexOf(_j) == -1 )
+      il.Add(_j);
+  }
+  void Analyse()  { // remove entries which are encountered only once
+    for( int i=0; i < mc.Count(); i++ )  {
+      NodeMatch& nm = mc.GetValue(i);
+      for( int j=0; j < nm.indexes.Count(); j++ )
+        if( nm.indexes.GetValue(j).Count() == 1 )  {
+          nm.indexes.Delete(j--);
+        }
+      if( nm.indexes.IsEmpty() )
+        mc.Delete(i--);
+    }
+    // create combined index
+    for( int i=0; i < mc.Count(); i++ )  {
+      NodeMatch& nm = mc.GetValue(i);
+      PermutableSE* _pse = NULL;
+      for( int j=0; j < CombinedIndex.Count(); j++ )  {
+        for( int k=0; k < CombinedIndex[j].all_matches.Count(); k++ )  {
+          if( CombinedIndex[j].all_matches[k]->src->GetObject()->GetLattId() == nm.src->GetObject()->GetLattId() )  {
+            _pse = &CombinedIndex[j];
+            break;
+          }
+        }
+      }
+      if( _pse != NULL )  {
+        _pse->all_matches.Add(&nm);
+        continue;
+      }
+      for( int j=0; j < nm.indexes.Count(); j++ )  {
+        if( nm.indexes.GetValue(j).IsEmpty() )
+          continue;
+        PermutableSE& pse = CombinedIndex.AddNew();
+        pse.src_ind.Add(nm.indexes.GetKey(j));
+        pse.dest_ind.AddList( nm.indexes.GetValue(j) );
+        pse.all_matches.Add(&nm);
+        for( int k=j+1; k < nm.indexes.Count(); k++ )  {
+          if( nm.indexes.GetValue(j).IndexOf(nm.indexes.GetValue(k)[0]) != -1 )  {
+            pse.src_ind.Add(nm.indexes.GetKey(k));
+            nm.indexes.GetValue(k).Clear();
+          }
+        }
+      }
+    }
+  }
+  void Print() {
+    Analyse();
+    for( int i=0; i < CombinedIndex.Count(); i++ )  {
+      const PermutableSE& pse = CombinedIndex[i];
+      NodeMatch& nm = *pse.all_matches[0];
+      TBasicApp::GetLog() << (olxstr("Node match information for: ") << nm.src->GetObject()->GetLabel() 
+        << ". Permutations: " << Factorial(pse.src_ind.Count())<< '\n');
+      for( int j=0; j < pse.src_ind.Count(); j++ )  {
+        TBasicApp::GetLog() << (*nm.src)[pse.src_ind[j]].GetObject()->GetLabel() << " -> " << 
+          (*nm.dest)[pse.dest_ind[j]].GetObject()->GetLabel() << ".\n";
+      }
+    }
+  }
+  bool Permutate(int node, int seq)  {
+    bool permuted = false;
+    const PermutableSE& pse = CombinedIndex[node];
+    NodeMatch& nm = *pse.all_matches[0];
+    if( pse.src_ind.Count() == 2 )  {
+      if( seq == 0 )  {
+        for( int i=0; i < pse.all_matches.Count(); i++ )  {
+          if( pse.dest_ind[0] != pse.src_ind[0] )
+            pse.all_matches[i]->dest->SwapItems(pse.dest_ind[0], pse.src_ind[0]);
+          if( pse.dest_ind[1] != pse.src_ind[1] )
+            pse.all_matches[i]->dest->SwapItems(pse.dest_ind[1], pse.src_ind[1]);
+        }
+        return true;
+      }
+      else if( seq == 1 )  {
+        for( int i=0; i < pse.all_matches.Count(); i++ )  {
+          pse.all_matches[i]->dest->SwapItems(pse.src_ind[0], pse.dest_ind[0]);
+          pse.all_matches[i]->dest->SwapItems(pse.src_ind[1], pse.dest_ind[1]);
+          pse.all_matches[i]->dest->SwapItems(pse.dest_ind[1], pse.src_ind[0]);
+          pse.all_matches[i]->dest->SwapItems(pse.dest_ind[0], pse.src_ind[1]);
+        }
+        return true;
+      }
+      else
+        return false;
+    }
+    return false;
+  }
+};
+
 //..............................................................................
 bool TNetwork::DoMatch( TNetwork& net, TTypeList< AnAssociation2<int, int> >& res )  {
   if( NodeCount() != net.NodeCount() )  return false;
@@ -417,6 +533,11 @@ bool TNetwork::DoMatch( TNetwork& net, TTypeList< AnAssociation2<int, int> >& re
     thatGraph.GetRoot().Traverser.LevelTraverse(thatGraph.GetRoot(), trav);
     TBasicApp::GetLog().Info( trav.GetData() );
     if( thisGraph.GetRoot().DoMatch( thatGraph.GetRoot() ) )  {
+    //GraphAnalyser ga;
+    //if( thisGraph.GetRoot().FullMatch( thatGraph.GetRoot(), ga ) )  {
+      //ga.Print();
+      //for( int i=0; i < ga.CombinedIndex.Count(); i++ )
+      //  ga.Permutate(i, 0);
       trav.ClearData();
       trav.OnItem( thatGraph.GetRoot() );
       thatGraph.GetRoot().Traverser.LevelTraverse(thatGraph.GetRoot(), trav);
@@ -737,7 +858,8 @@ void TNetwork::FindAlignmentQuaternions(const TTypeList< AnAssociation2<vec3d,ve
     for( int i=0; i < 3; i++ )  {
       if( rms[i+1] < rms[i] )  {
         quaternions.SwapRows(i, i+1);
-        olx_swap(rms[i], rms[i+i]);
+        olx_swap(rms[i], rms[i+1]);
+        changes = true;
       }
     }
   }
@@ -766,7 +888,7 @@ double TNetwork_FindAlignmentMatrix(const TTypeList< AnAssociation2<TSAtom*,TSAt
     for( int i=0; i < atoms.Count(); i++ )
       crds.AddNew(atoms[i].GetA()->crd(), atoms[i].GetB()->crd() );
   }
-  double sumA=0, sumB = 0;
+  double sumA = 0, sumB = 0;
   vec3d centA, centB;
   for( int i=0; i < atoms.Count(); i++ )  {
     centB += atoms[i].GetB()->crd()*atoms[i].GetB()->CAtom().GetOccu()*atoms[i].GetB()->GetAtomInfo().GetMr();
@@ -774,8 +896,8 @@ double TNetwork_FindAlignmentMatrix(const TTypeList< AnAssociation2<TSAtom*,TSAt
     centA += atoms[i].GetA()->crd()*atoms[i].GetA()->CAtom().GetOccu()*atoms[i].GetA()->GetAtomInfo().GetMr();
     sumA += atoms[i].GetA()->CAtom().GetOccu()*atoms[i].GetA()->GetAtomInfo().GetMr();
   }
-  res.t = centB;
-  return TNetwork::FindAlignmentMatrix(crds, centA/sumA, centB/sumB, res);
+  res.t = centB/sumB;
+  return TNetwork::FindAlignmentMatrix(crds, centA/sumA, res.t, res);
 }
 void TNetwork_CalcAMDiff(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atoms,
                          smatdd& res, mat3d& df, bool TryInversion)  {
@@ -817,13 +939,6 @@ double TNetwork_CalcAM(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atoms
 double TNetwork::FindAlignmentMatrix(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atoms,
                          smatdd& res, bool TryInversion)  {
   res.t.Null();
-  double summ=0;
-  for( int i=0; i < atoms.Count(); i++ )  {
-    res.t += atoms[i].GetB()->crd()*atoms[i].GetB()->CAtom().GetOccu();
-    summ += atoms[i].GetB()->CAtom().GetOccu();
-  }
-  res.t /= summ;
-  //return TNetwork_CalcAM(atoms, res, TryInversion);
   return TNetwork_FindAlignmentMatrix(atoms, res, TryInversion);
 }
 //..............................................................................
