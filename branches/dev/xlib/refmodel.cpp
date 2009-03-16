@@ -786,6 +786,7 @@ void RefinementModel::ToDataItem(TDataItem& item) {
   omits.AddField("hkl", PersUtil::VecListToStr(Omits));
   item.AddItem("TWIN", TWIN_set).AddField("mat", TSymmParser::MatrixToSymmEx(TWIN_mat)).AddField("n", TWIN_n);
   item.AddItem("MERG", MERG_set).AddField("val", MERG);
+  item.AddItem("SHEL", SHEL_set).AddField("high", SHEL_hr).AddField("low", SHEL_lr);
   // restore matrix tags
   for( int i=0; i < UsedSymm.Count(); i++ )
     UsedSymm.GetValue(i).SetTag( mat_tags[i] );
@@ -847,6 +848,13 @@ void RefinementModel::FromDataItem(TDataItem& item) {
   TDataItem& merge = item.FindRequiredItem("MERG");
   MERG_set = merge.GetValue().ToBool();
   MERG = merge.GetRequiredField("val").ToInt();
+
+  TDataItem& shel = *item.FindItem("SHEL");
+  if( &shel != NULL )  {
+    SHEL_set = shel.GetValue().ToBool();
+    SHEL_lr = shel.GetRequiredField("low").ToDouble();
+    SHEL_hr = shel.GetRequiredField("high").ToDouble();
+  }
 }
 //....................................................................................................
 #ifndef _NO_PYTHON
@@ -915,6 +923,12 @@ PyObject* RefinementModel::PyExport(bool export_connectivity)  {
         PyTuple_SetItem(basf, i, Py_BuildValue("d", BASF[i]) );
     PyDict_SetItemString(twin, "basf", basf);
     PyDict_SetItemString(main, "twin", twin );
+  }
+  if( SHEL_set )  {
+    PyObject* shel;
+    PyDict_SetItemString(main, "shel", shel = PyDict_New() );
+      PyDict_SetItemString(shel, "low", Py_BuildValue("d", SHEL_lr));
+      PyDict_SetItemString(shel, "high", Py_BuildValue("d", SHEL_hr));
   }
   // attach the connectivity...
   if( export_connectivity )  {

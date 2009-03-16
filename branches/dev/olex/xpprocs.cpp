@@ -4986,6 +4986,8 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       FXApp->LoadXFile(FN);
       st = TETime::msNow() - st;
       TBasicApp::GetLog().Info( olxstr("Structure loaded in ") << st << " ms\n");
+      TFileHandlerManager::AddMemoryBlock(RefineDataFile, NULL, 0, plStructure);
+      TFileHandlerManager::AddMemoryBlock(BadRefsFile, NULL, 0, plStructure);
       LoadVFS(plStructure);  // load virtual fs file
     }
     catch(TEmptyFileException)  {
@@ -5071,7 +5073,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       }
       if( !Blind )  UpdateRecentFile(FN);
       //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-      QPeaksTable(DataDir+"qpeaks.htm", false);
+      QPeaksTable("qpeaks.htm", false);
       RecentFilesTable(DataDir+"recent_files.htm", false);
       olxstr lstFileName = TEFile::ChangeFileExt(FN, "lst");
       if( TEFile::FileExists(lstFileName)  )  {

@@ -1084,8 +1084,8 @@ separated values of Atom Type and radius, an entry a line" );
   #endif
 #endif
 
-  BadRefsFile = DataDir + "badrefs.htm";
-  RefineDataFile = DataDir + "refinedata.htm";
+  BadRefsFile = "badrefs.htm";
+  RefineDataFile = "refinedata.htm";
   DictionaryFile = XA->BaseDir() + "dictionary.txt";
   PluginFile =  XA->BaseDir() + "plugins.xld";
   FHtmlIndexFile = TutorialDir+"index.htm";
@@ -2942,7 +2942,9 @@ bool TMainForm::QPeaksTable(const olxstr &FN, bool TableDef)  {
   }
 
   Table.CreateHTMLList(Output, EmptyString, false, false, TableDef);
-  TUtf8File::WriteLines( FN, Output, false );
+  CString cst = TUtf8::Encode(Output.Text('\n'));
+  TFileHandlerManager::AddMemoryBlock(FN, cst.c_str(), cst.Length(), plStructure);
+  //TUtf8File::WriteLines( FN, Output, false );
   return true;
 }
 //..............................................................................
@@ -2973,7 +2975,9 @@ void TMainForm::BadReflectionsTable(bool TableDef)  {
       Table[i][4] << "<a href='omit " << Ref.H <<  ' ' << Ref.K << ' ' << Ref.L << "\'>" << "omit" << "</a>";
   }
   Table.CreateHTMLList(Output, EmptyString, true, false, TableDef);
-  TUtf8File::WriteLines( BadRefsFile, Output, false );
+  CString cst = TUtf8::Encode(Output.Text('\n'));
+  TFileHandlerManager::AddMemoryBlock(BadRefsFile, cst.c_str(), cst.Length(), plStructure);
+  //TUtf8File::WriteLines( BadRefsFile, Output, false );
 }
 //..............................................................................
 void TMainForm::RefineDataTable(bool TableDef)  {
@@ -3032,7 +3036,9 @@ void TMainForm::RefineDataTable(bool TableDef)  {
   Table[6][0] = "R(sigma)";           Table[6][1] = Lst.Rsigma();
 
   Table.CreateHTMLList(Output, EmptyString, false, false, TableDef);
-  TUtf8File::WriteLines( RefineDataFile, Output, false );
+  CString cst = TUtf8::Encode(Output.Text('\n'));
+  TFileHandlerManager::AddMemoryBlock(RefineDataFile, cst.c_str(), cst.Length(), plStructure);
+  //TUtf8File::WriteLines( RefineDataFile, Output, false );
 }
 //..............................................................................
 void TMainForm::OnMouseWheel(int x, int y, double delta)  {

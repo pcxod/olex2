@@ -254,7 +254,7 @@ void TFileHandlerManager::AddBaseDir(const olxstr& bd)  {
   BaseDirs.Add( TEFile::AddTrailingBackslash( bd )  );
 }
 //..............................................................................
-void TFileHandlerManager::_AddMemoryBlock(const olxstr& name, char *bf,
+void TFileHandlerManager::_AddMemoryBlock(const olxstr& name, const char *bf,
                                                 int length, short persistenceId)  {
   olxstr fileName = TEFile::UnixPath(name);
   TMemoryBlock *mb = FMemoryBlocks[fileName];
@@ -271,12 +271,13 @@ void TFileHandlerManager::_AddMemoryBlock(const olxstr& name, char *bf,
   mb->Length = length;
   mb->DateTime = TETime::Now();
   mb->PersistenceId = persistenceId;
-  memcpy( mb->Buffer, bf, length );
+  if( length != 0 )
+    memcpy( mb->Buffer, bf, length );
 }
 //..............................................................................
-void TFileHandlerManager::AddMemoryBlock(const olxstr& name, char *bf,
+void TFileHandlerManager::AddMemoryBlock(const olxstr& name, const char *bf,
                                                int length, short persistenceId)  {
-  if( length <= 0 )  return;
+  //if( length <= 0 )  return;
 
   if( FHandler == NULL )  FHandler = &TEGC::NewG<TFileHandlerManager>();
   return FHandler->_AddMemoryBlock(name, bf, length, persistenceId );

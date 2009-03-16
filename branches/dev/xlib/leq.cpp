@@ -32,7 +32,8 @@ PyObject* XVarReference::PyExport(TPtrList<PyObject>& atoms)  {
 //.................................................................................................
 XVarReference& XVarReference::FromDataItem(const TDataItem& item, XVar& parent) {
   IXVarReferencerContainer& rc = parent.Parent.RM.GetRefContainer( item.GetRequiredField("id_name"));
-  return *(new XVarReference(parent, rc.GetReferencer(item.GetRequiredField("owner_id").ToInt()), 
+  IXVarReferencer* ref = rc.GetReferencer(item.GetRequiredField("owner_id").ToInt());
+  return *(new XVarReference(parent, ref, 
     item.GetRequiredField("var_index").ToInt(), 
     XVarManager::RelationIndex(item.GetRequiredField("rel")),
     item.GetRequiredField("k").ToDouble()));
@@ -50,8 +51,9 @@ int XVar::RefCount() const {
 //.................................................................................................
 void XVar::ToDataItem(TDataItem& item) const {
   item.AddField("val", Value);
-  for( int i=0; i < References.Count(); i++ )
-    References[i]->ToDataItem(item.AddItem(i));
+  for( int i=0; i < References.Count(); i++ ) 
+    if( References[i]->referencer->IsValid() )
+      References[i]->ToDataItem(item.AddItem(i));
 }
 //..............................................................................
 #ifndef _NO_PYTHON

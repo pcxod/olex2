@@ -112,15 +112,11 @@ void TSAtom::FromDataItem(const TDataItem& item, TLattice& parent) {
   CAtom( latt.GetAsymmUnit().GetAtom(ca_id) );
   const TDataItem& matrices = item.FindRequiredItem("Matrices");
   Matrices.SetCapacity( matrices.FieldCount() );
-  int fm_id = -1;
   for( int i=0; i < matrices.FieldCount(); i++ )  {
     const int mi = matrices.GetField(i).ToInt();
     Matrices.Add( &latt.GetMatrix(mi) );
-    if( i == 0 )
-      fm_id = mi;
   }
-  if( fm_id != 0 )  // identity matrix
-    FCCenter = *Matrices[0] * FCCenter;
+  FCCenter = *Matrices[0] * FCCenter;
   latt.GetAsymmUnit().CellToCartesian(FCCenter, FCenter);
 }
 //..............................................................................
