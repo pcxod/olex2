@@ -6,13 +6,14 @@
 
 template <class IC, class AssociatedOC> class TEGraphNode  {
   IC Data;
-  TTypeList<TEGraphNode<IC, AssociatedOC> > Nodes;
+  typedef TEGraphNode<IC, AssociatedOC> NodeType;
+  TTypeList<NodeType> Nodes;
   bool RingNode, Passed;
   AssociatedOC Object;
 protected:
   inline bool IsPassed()  const  {  return Passed;  }
   inline void SetPassed(bool v)  {  Passed = v;  }
-  static int _SortNodesByTag(const TEGraphNode<IC, AssociatedOC>& n1, const TEGraphNode<IC, AssociatedOC>& n2) {
+  static int _SortNodesByTag(const NodeType& n1, const NodeType& n2) {
     return n1.GetTag() - n2.GetTag();
   }
 public:
@@ -67,12 +68,45 @@ public:
     for( int i=0; i < Count(); i++ )  {
       int mc=0;
       for( int j=0; j < Count(); j++ )  {  // Count equals for both nodes
+        // we cannot do node swapping here, since it will invalidate the matching indexes
         if( Nodes[i].FullMatch( node[j], analyser ) )  {
-          analyser.OnMatch(*this, node, i, j);
+           analyser.OnMatch(*this, node, i, j);
+           mc++;
+        }
+      }
+      if( mc == 0 )  return false;
+    }
+    return true;
+  }
+  template <class Analyser> bool FullMatchEx(TEGraphNode& node, Analyser& analyser) const {
+    if( node.GetData() != GetData() )  return false;
+    if( node.Count() != Count() )  return false;
+    for( int i=0; i < Count(); i++ )  {
+      int mc=0, bestIndex = -1;
+      double minRMS = 0;
+      for( int j=0; j < Count(); j++ )  {  // Count equals for both nodes
+        if( Nodes[i].FullMatchEx( node[j], analyser ) )  {
+          if( mc == 0 )
+            bestIndex = j;
+          else  {
+            if( mc == 1 )  {  // calculate the RMS only if more than 1 matches
+              node.SwapItems(i, bestIndex);
+              minRMS = analyser.CalcRMS();
+              node.SwapItems(i, bestIndex);
+            }
+            node.SwapItems(i, j);
+            const double RMS = analyser.CalcRMS();
+            if( RMS < minRMS )  {
+              bestIndex = j;
+              minRMS = RMS;
+            }
+            node.SwapItems(i, j);  // restore the node order
+          }
           mc++;
         }
       }
       if( mc == 0 )  return false;
+      node.SwapItems(i, bestIndex);
     }
     return true;
   }

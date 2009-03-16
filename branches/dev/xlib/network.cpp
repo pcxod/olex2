@@ -323,6 +323,13 @@ void ResultCollector( TEGraphNode<int,TSAtom*>& subRoot,
   for( int i=0; i < olx_min(subRoot.Count(),Root.Count()); i++ )
     ResultCollector( subRoot.Item(i), Root.Item(i), res );
 }
+void ResultCollector( TEGraphNode<int,TSAtom*>& subRoot,
+                        TEGraphNode<int,TSAtom*>& Root,
+                        TTypeList< AnAssociation2<TSAtom*, TSAtom*> >& res )  {
+  res.AddNew( subRoot.GetObject(), Root.GetObject());
+  for( int i=0; i < olx_min(subRoot.Count(),Root.Count()); i++ )
+    ResultCollector( subRoot.Item(i), Root.Item(i), res );
+}
 
 /*
 void ExpandGraphNode( TTypeList< TEGraphNode<int,TSAtom*>* >& allNodes, TEGraphNode<int,TSAtom*>& graphNode, TSAtom* node)  {
@@ -364,7 +371,6 @@ void BreadthFirstTags(TSAtom* sa)  {
 }
 
 void ExpandGraphNode(TEGraphNode<int,TSAtom*>& graphNode)  {
-
   for( int i=0; i < graphNode.GetObject()->NodeCount(); i++ )  {
     TSAtom& sa = graphNode.GetObject()->Node(i);
     if( sa.GetTag() <= graphNode.GetObject()->GetTag() )  continue;
@@ -378,116 +384,17 @@ void BuildGraph( TEGraphNode<int,TSAtom*>& graphNode, TSAtom* node)  {
 }
 
 struct GraphAnalyser  {
-  struct NodeMatch  {
-    //TTypeList<AnAssociation2<int,int> > indexes;
-    olxdict<int, TIntList, TPrimitiveComparator> indexes;
-    const TEGraphNode<int,TSAtom*>* src;
-    TEGraphNode<int,TSAtom*>* dest;
-    NodeMatch() : src(NULL), dest(NULL) {}
-    NodeMatch(const TEGraphNode<int,TSAtom*>* _src, TEGraphNode<int,TSAtom*>* _dest) : src(_src), dest(_dest) {}
-    NodeMatch(const NodeMatch& nm) : src(nm.src), dest(nm.dest), indexes(nm.indexes) {}
-    NodeMatch& operator = (const NodeMatch& nm)  {
-      indexes = nm.indexes;
-      src = nm.src;
-      dest = nm.dest;
-      return *this;
-    }
-  };
-  struct PermutableSE  {
-    TIntList dest_ind, src_ind;
-    TPtrList<NodeMatch> all_matches;
-  };
-  TTypeList<PermutableSE> CombinedIndex;
-  // the graph might have several nodes corresponding to one SAtom
-  olxdict<const TEGraphNode<int,TSAtom*>*, NodeMatch, TPointerComparator> mc;
-  void OnMatch(const TEGraphNode<int,TSAtom*>& src, TEGraphNode<int,TSAtom*>& dest, int _i, int _j) {
-    NodeMatch& nm = mc.Add(&src, NodeMatch(&src, &dest) );
-    TIntList& il = nm.indexes.Add(_i);
-    if( il.IndexOf(_j) == -1 )
-      il.Add(_j);
-  }
-  void Analyse()  { // remove entries which are encountered only once
-    for( int i=0; i < mc.Count(); i++ )  {
-      NodeMatch& nm = mc.GetValue(i);
-      for( int j=0; j < nm.indexes.Count(); j++ )
-        if( nm.indexes.GetValue(j).Count() == 1 )  {
-          nm.indexes.Delete(j--);
-        }
-      if( nm.indexes.IsEmpty() )
-        mc.Delete(i--);
-    }
-    // create combined index
-    for( int i=0; i < mc.Count(); i++ )  {
-      NodeMatch& nm = mc.GetValue(i);
-      PermutableSE* _pse = NULL;
-      for( int j=0; j < CombinedIndex.Count(); j++ )  {
-        for( int k=0; k < CombinedIndex[j].all_matches.Count(); k++ )  {
-          if( CombinedIndex[j].all_matches[k]->src->GetObject()->GetLattId() == nm.src->GetObject()->GetLattId() )  {
-            _pse = &CombinedIndex[j];
-            break;
-          }
-        }
-      }
-      if( _pse != NULL )  {
-        _pse->all_matches.Add(&nm);
-        continue;
-      }
-      for( int j=0; j < nm.indexes.Count(); j++ )  {
-        if( nm.indexes.GetValue(j).IsEmpty() )
-          continue;
-        PermutableSE& pse = CombinedIndex.AddNew();
-        pse.src_ind.Add(nm.indexes.GetKey(j));
-        pse.dest_ind.AddList( nm.indexes.GetValue(j) );
-        pse.all_matches.Add(&nm);
-        for( int k=j+1; k < nm.indexes.Count(); k++ )  {
-          if( nm.indexes.GetValue(j).IndexOf(nm.indexes.GetValue(k)[0]) != -1 )  {
-            pse.src_ind.Add(nm.indexes.GetKey(k));
-            nm.indexes.GetValue(k).Clear();
-          }
-        }
-      }
-    }
-  }
-  void Print() {
-    Analyse();
-    for( int i=0; i < CombinedIndex.Count(); i++ )  {
-      const PermutableSE& pse = CombinedIndex[i];
-      NodeMatch& nm = *pse.all_matches[0];
-      TBasicApp::GetLog() << (olxstr("Node match information for: ") << nm.src->GetObject()->GetLabel() 
-        << ". Permutations: " << Factorial(pse.src_ind.Count())<< '\n');
-      for( int j=0; j < pse.src_ind.Count(); j++ )  {
-        TBasicApp::GetLog() << (*nm.src)[pse.src_ind[j]].GetObject()->GetLabel() << " -> " << 
-          (*nm.dest)[pse.dest_ind[j]].GetObject()->GetLabel() << ".\n";
-      }
-    }
-  }
-  bool Permutate(int node, int seq)  {
-    bool permuted = false;
-    const PermutableSE& pse = CombinedIndex[node];
-    NodeMatch& nm = *pse.all_matches[0];
-    if( pse.src_ind.Count() == 2 )  {
-      if( seq == 0 )  {
-        for( int i=0; i < pse.all_matches.Count(); i++ )  {
-          if( pse.dest_ind[0] != pse.src_ind[0] )
-            pse.all_matches[i]->dest->SwapItems(pse.dest_ind[0], pse.src_ind[0]);
-          if( pse.dest_ind[1] != pse.src_ind[1] )
-            pse.all_matches[i]->dest->SwapItems(pse.dest_ind[1], pse.src_ind[1]);
-        }
-        return true;
-      }
-      else if( seq == 1 )  {
-        for( int i=0; i < pse.all_matches.Count(); i++ )  {
-          pse.all_matches[i]->dest->SwapItems(pse.src_ind[0], pse.dest_ind[0]);
-          pse.all_matches[i]->dest->SwapItems(pse.src_ind[1], pse.dest_ind[1]);
-          pse.all_matches[i]->dest->SwapItems(pse.dest_ind[1], pse.src_ind[0]);
-          pse.all_matches[i]->dest->SwapItems(pse.dest_ind[0], pse.src_ind[1]);
-        }
-        return true;
-      }
-      else
-        return false;
-    }
-    return false;
+  TEGraphNode<int,TSAtom*> &RootA, &RootB; 
+  int CallsCount;
+  GraphAnalyser(TEGraphNode<int,TSAtom*>& rootA,TEGraphNode<int,TSAtom*>& rootB) :
+    RootA(rootA), RootB(rootB), CallsCount(0) {}
+
+  double CalcRMS()  {
+    TTypeList< AnAssociation2<TSAtom*,TSAtom*> > matchedAtoms;
+    smatdd alignmentMatrix;
+    ResultCollector( RootA, RootB, matchedAtoms);
+    CallsCount++;
+    return TNetwork::FindAlignmentMatrix(matchedAtoms, alignmentMatrix, false);
   }
 };
 
@@ -532,16 +439,14 @@ bool TNetwork::DoMatch( TNetwork& net, TTypeList< AnAssociation2<int, int> >& re
     trav.OnItem( thatGraph.GetRoot() );
     thatGraph.GetRoot().Traverser.LevelTraverse(thatGraph.GetRoot(), trav);
     TBasicApp::GetLog().Info( trav.GetData() );
-    if( thisGraph.GetRoot().DoMatch( thatGraph.GetRoot() ) )  {
-    //GraphAnalyser ga;
-    //if( thisGraph.GetRoot().FullMatch( thatGraph.GetRoot(), ga ) )  {
-      //ga.Print();
-      //for( int i=0; i < ga.CombinedIndex.Count(); i++ )
-      //  ga.Permutate(i, 0);
+    //if( thisGraph.GetRoot().DoMatch( thatGraph.GetRoot() ) )  {
+    GraphAnalyser ga(thisGraph.GetRoot(), thatGraph.GetRoot());
+    if( thisGraph.GetRoot().FullMatchEx( thatGraph.GetRoot(), ga ) )  {
       trav.ClearData();
       trav.OnItem( thatGraph.GetRoot() );
       thatGraph.GetRoot().Traverser.LevelTraverse(thatGraph.GetRoot(), trav);
       TBasicApp::GetLog().Info( trav.GetData() );
+      TBasicApp::GetLog().Info( olxstr("Number of permutations: ") << ga.CallsCount );
       ResultCollector( thisGraph.GetRoot(), thatGraph.GetRoot(), res);
       return true;
     }
@@ -951,14 +856,15 @@ void TNetwork::DoAlignAtoms(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& 
       au.CellToCartesian(atomsToTransform[i]->ccrd() * -1, atomsToTransform[i]->crd());
   }
 
-  for(int i=0; i < satomp.Count(); i++ )
-    mcent += satomp[i].GetA()->crd();
-  mcent /= satomp.Count();
-
-  for( int i=0; i < atomsToTransform.Count(); i++ )  {
-    vec3d acent = atomsToTransform[i]->crd() - mcent;
-    atomsToTransform[i]->crd() = S*acent;
+  double sum  = 0;
+  for(int i=0; i < satomp.Count(); i++ )  {
+    mcent += satomp[i].GetA()->crd()*satomp[i].GetA()->CAtom().GetOccu()*satomp[i].GetB()->GetAtomInfo().GetMr();
+    sum += satomp[i].GetA()->CAtom().GetOccu()*satomp[i].GetB()->GetAtomInfo().GetMr();
   }
+  mcent /= sum;
+
+  for( int i=0; i < atomsToTransform.Count(); i++ )
+    atomsToTransform[i]->crd() = S*(atomsToTransform[i]->crd() - mcent);
 }
 //..............................................................................
 bool TNetwork::RingInfo::IsSingleCSubstituted() const  {
