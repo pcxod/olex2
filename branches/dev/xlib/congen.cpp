@@ -22,16 +22,12 @@ void AConstraintGenerator::DoGenerateAtom( TCAtomPList& created, TAsymmUnit& au,
     TCAtom* CA = &au.NewAtom();
     if( IncLabel )  {
       int j = i;
-      olxstr lbl;
-      lbl = (StartingName + (char)('a' + j));
-
-      while( au.GetAtomsInfo()->IsElement(lbl) )
-        lbl = StartingName + (char)('a' + ++j);
-      CA->SetLabel( au.CheckLabel(CA, lbl) );
-      CA->SetAtomInfo( &au.GetAtomsInfo()->GetAtomInfo(iHydrogenIndex) );
+      olxstr lbl = (StartingName + (char)('a' + j));
+      CA->Label() = au.CheckLabel(CA, lbl);
     }
     else
-      CA->SetLabel( au.CheckLabel(CA, StartingName) );
+      CA->Label() = au.CheckLabel(CA, StartingName);
+    CA->SetAtomInfo( &au.GetAtomsInfo()->GetAtomInfo(iHydrogenIndex) );
     CA->ccrd() = v;
     created.Add( CA );
   }

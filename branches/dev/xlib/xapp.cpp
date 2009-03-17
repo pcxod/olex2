@@ -225,7 +225,7 @@ void TXApp::NameHydrogens(TSAtom& SA, TUndoData* ud, bool CheckLabel)  {
     if( !sa.IsDeleted() && sa.GetAtomInfo() == iHydrogenIndex )
       allH ++;
   }
-
+  olxdict<int,int,TPrimitiveComparator> parts;
   for( int i=0; i < SA.NodeCount(); i++ )  {
     TSAtom& SA1 = SA.Node(i);
     if( SA1.IsDeleted() )  continue;
@@ -234,15 +234,15 @@ void TXApp::NameHydrogens(TSAtom& SA, TUndoData* ud, bool CheckLabel)  {
       // the suffix matters only for multiple hydrogen atoms attached
       if( allH > 1 )  {
         if( Labl.Length() >= 4 )  Labl.SetLength(3);
-        Labl << (char)('a' + hcount);
+        Labl << (char)('a' + parts(SA1.CAtom().GetPart(), 0)++);
       }
       if(  CheckLabel )  {
-        while( (CA = XFile().GetAsymmUnit().FindCAtom(Labl)) != NULL )  {
+        while( (CA = XFile().GetAsymmUnit().FindCAtom(Labl)) != NULL && CA->GetPart() ==SA1.CAtom().GetPart() )  {
           if( CA == &SA1.CAtom() || CA->IsDeleted() )  break;
           hcount++;
           Labl = SA1.GetAtomInfo().GetSymbol()+Name;
           if( Labl.Length() >= 4 )  Labl.SetLength(3);
-          Labl << (char)('a' + hcount);
+          Labl << (char)('a' +  + parts(SA1.CAtom().GetPart(), 0)++);
         }
       }
       if( SA1.GetLabel() != Labl )  {
