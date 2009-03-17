@@ -122,6 +122,8 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
         atom->SetAtomInfo(&baiQPeak);
       else
         atom->SetAtomInfo( cx.BasicAtoms.GetObject(Toks[1].ToInt()-1) );
+      if( atom->GetAtomInfo().GetMr() > 3.5 )
+        cx.LastNonH = atom;
       _ProcessAfix(*atom, cx);
     }
   }
@@ -387,24 +389,10 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx,
           cx.SetNextPivot = !TAfixGroup::IsRiding(afix); // if not riding
         }
         if( !cx.SetNextPivot )  {
-          if( cx.Last == NULL  )
+          if( cx.LastNonH == NULL  )
             throw TFunctionFailedException(__OlxSourceInfo, "undefined pivot atom for a fitted group");
           // have to check if several afixes for one atom (if the last is H)
-          TCAtom* pivot = NULL;
-          if( cx.Last->GetAtomInfo().GetMr() < 3.5 )  { // locate previous non H
-            for( int i=cx.Last->GetId()-1; i >=0; i-- )  {
-              TCAtom& ca = cx.au.GetAtom(i);
-              if( ca.GetAtomInfo().GetMr() > 3.5 )  {
-                pivot = &ca;
-                break;
-              }
-            }
-          }
-          else
-            pivot = cx.Last;
-          if( pivot == NULL  )
-            throw TFunctionFailedException(__OlxSourceInfo, "undefined pivot atom for a fitted group");
-          afixg->SetPivot(*pivot);
+          afixg->SetPivot(*cx.LastNonH);
         }
       }
     }
@@ -745,12 +733,17 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
       _SaveAtom(rm, sg[i], part, afix, sfac, sl, index, false);
     return;
   }
-  if( a.GetPart() != part )  sl.Add("PART ") << a.GetPart();
+  if( a.GetPart() != part )  {
+    if( part != 0 && a.GetPart() != 0 )
+      sl.Add("PART 0");
+    sl.Add("PART ") << a.GetPart();
+  }
   TAfixGroup* ag = a.GetDependentAfixGroup();
   int atom_afix = a.GetAfix();
   if( atom_afix != afix || afix == 1 || afix == 2 )  { 
     if( !TAfixGroup::HasExcplicitPivot(afix) || !TAfixGroup::IsDependent(atom_afix) )  {
       if( ag != NULL )  {
+        sl.Add("AFIX ") << atom_afix;
         olxstr& str = sl.Add("AFIX ") << atom_afix;
         if( ag->GetD() != 0 )  {
           str << ' ' << ag->GetD();
@@ -762,7 +755,7 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
         }
       }
       else
-        sl.Add("AFIX ") << atom_afix;
+        sl.Add("AFIX ") << atom_afix;    
     }
   }
   afix = atom_afix;
@@ -777,12 +770,30 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
   if( index != NULL )  index->Add(a.GetTag());
   for( int i=0; i < a.DependentHfixGroupCount(); i++ )  {
     TAfixGroup& hg = a.GetDependentHfixGroup(i);
-    for( int j=0; j < hg.Count(); j++ )
-      _SaveAtom(rm, hg[j], part, afix, sfac, sl, index, checkSame);
+    int sc = 0;
+    for( int j=0; j < hg.Count(); j++ )  {
+      if( !hg[j].IsDeleted() && !hg[j].IsSaved() )  {
+        _SaveAtom(rm, hg[j], part, afix, sfac, sl, index, checkSame);
+        sc++;
+      }
+    }
+    if( sc != 0 )  {
+      sl.Add("AFIX 0");
+      afix = 0;
+    }
   }
   if( ag != NULL )  {  // save dependent rigid group
-    for( int i=0; i < ag->Count(); i++ )
-      _SaveAtom(rm, (*ag)[i], part, afix, sfac, sl, index, checkSame);
+    int sc = 0;
+    for( int i=0; i < ag->Count(); i++ )  {
+      if( !(*ag)[i].IsDeleted() && !(*ag)[i].IsSaved() )  {
+        _SaveAtom(rm, (*ag)[i], part, afix, sfac, sl, index, checkSame);
+        sc++;
+      }
+    }
+    if( sc != 0 )  {
+      sl.Add("AFIX 0");
+      afix = 0;
+    }
   }
 }
 //..............................................................................
@@ -1008,6 +1019,8 @@ void TIns::UpdateAtomsFromStrings(RefinementModel& rm, TCAtomPList& CAtoms, cons
       atomCount++;
       atom->Label() = Tmp1;
       atom->SetAtomInfo(bai);
+      if( atom->GetAtomInfo().GetMr() > 3.5 )
+        cx.LastNonH = atom;
       _ProcessAfix(*atom, cx);
     }
   }

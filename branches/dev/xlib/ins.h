@@ -35,14 +35,14 @@ class TIns: public TBasicCFile  {
     esdl::TStack< AnAssociation3<int,TAfixGroup*, bool> > AfixGroups;  // number of atoms (left), pivot, Hydrogens or not
     double PartOccu;
     TCAtom* Last, 
-      *LastWithU;  // thi sis used to evaluate riding H Uiso coded like -1.5
+      *LastWithU, *LastNonH;  // thi sis used to evaluate riding H Uiso coded like -1.5
     TAsymmUnit::TResidue* Resi;
     TAsymmUnit& au;
     RefinementModel& rm;
     // SAME instructions and the first atom after it/them
     TTypeList< AnAssociation2<TStrList,TCAtom*> > Same;
     ParseContext(RefinementModel& _rm) : rm(_rm), au(_rm.aunit), 
-      Resi(NULL), Last(NULL), LastWithU(NULL)  {
+      Resi(NULL), Last(NULL), LastWithU(NULL), LastNonH(NULL)  {
       End = SetNextPivot = CellFound = false;
       PartOccu = 0;
       Part = 0;
