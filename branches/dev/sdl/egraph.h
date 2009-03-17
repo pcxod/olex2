@@ -2,9 +2,10 @@
 #define egraphH
 #include "typelist.h"
 #include "etraverse.h"
+#include "emath.h"
 //---------------------------------------------------------------------------
 
-template <class IC, class AssociatedOC> class TEGraphNode  {
+template <class IC, class AssociatedOC> class TEGraphNode : ACollectionItem  {
   IC Data;
   typedef TEGraphNode<IC, AssociatedOC> NodeType;
   TTypeList<NodeType> Nodes;
@@ -26,7 +27,9 @@ public:
   inline bool IsRingNode()  const  {  return RingNode;  }
   inline void SetRIngNode()  {  RingNode = true;  }
   inline TEGraphNode& NewNode(const IC& Data, const AssociatedOC& obj )  {
-    return Nodes.AddNew(Data, obj);
+    TEGraphNode& nd = Nodes.AddNew(Data, obj);
+    nd.SetTag(Nodes.Count()-1);
+    return nd;
   }
   void SortNodesByTag() {
     Nodes.BubleSorter.SortSF(Nodes, &TEGraphNode::_SortNodesByTag);
@@ -38,7 +41,10 @@ public:
   // this is for the traverser
   inline TEGraphNode& Item(int i)  const   {  return  Nodes[i];  }
   inline TEGraphNode& operator [](int i)  const {  return  Nodes[i];  }
-  void SwapItems(int i, int j )  {  Nodes.Swap(i,j);  }
+  void SwapItems(int i, int j )  {  
+    if( i != j )
+      Nodes.Swap(i,j);  
+  }
 
   bool DoMatch( TEGraphNode& node )  const {
     if( node.GetData() != GetData() )  return false;
@@ -78,38 +84,129 @@ public:
     }
     return true;
   }
-  template <class Analyser> bool FullMatchEx(TEGraphNode& node, Analyser& analyser) const {
+  template <class Analyser> bool FullMatchEx(TEGraphNode& node, Analyser& analyser, bool analyse = true) const {
     if( node.GetData() != GetData() )  return false;
     if( node.Count() != Count() )  return false;
+    if( Count() == 0 )  return true;
+    if( !analyse )
+      return DoMatch(node);
+    typedef AnAssociation2<TIntList,TIntList> ConnInfo;
+    TTypeList< ConnInfo > conn;
+    TIntList permutation, permuted;
     for( int i=0; i < Count(); i++ )  {
-      int mc=0, bestIndex = -1;
-      double minRMS = 0;
       for( int j=0; j < Count(); j++ )  {  // Count equals for both nodes
-        if( Nodes[i].FullMatchEx( node[j], analyser ) )  {
-          if( mc == 0 )
-            bestIndex = j;
-          else  {
-            if( mc == 1 )  {  // calculate the RMS only if more than 1 matches
-              node.SwapItems(i, bestIndex);
-              minRMS = analyser.CalcRMS();
-              node.SwapItems(i, bestIndex);
+        if( Nodes[i].FullMatchEx( node[j], analyser, false ) )  {
+          bool found = false;
+          for( int k=0; k < conn.Count(); k++ )  {
+            if( conn[k].GetA().IndexOf(i) != -1 )  {
+              if( conn[k].GetB().IndexOf(j) == -1 )
+                conn[k].B().Add(j);
+              found = true;
+              break;
             }
-            node.SwapItems(i, j);
-            const double RMS = analyser.CalcRMS();
-            if( RMS < minRMS )  {
-              bestIndex = j;
-              minRMS = RMS;
+            else if( conn[k].GetB().IndexOf(j) != -1 )  {
+              if( conn[k].GetA().IndexOf(i) == -1 )
+                conn[k].A().Add(i);
+              found = true;
+              break;
             }
-            node.SwapItems(i, j);  // restore the node order
           }
-          mc++;
+          if( !found )  {
+            ConnInfo& ci = conn.AddNew();
+            ci.A().Add(i);
+            ci.B().Add(j);
+          }
         }
       }
-      if( mc == 0 )  return false;
-      node.SwapItems(i, bestIndex);
+    }
+    if( conn.IsEmpty() )
+      return false;
+    for( int i=0; i < conn.Count(); i++ )  {
+      ConnInfo& ci = conn[i];
+      if( ci.GetA().Count() != ci.GetB().Count() )
+        throw 1;
+      if( ci.GetA().Count() == 1 )  // one to one match
+        node.SwapItems( ci.GetA()[0], ci.GetB()[0] );
+      else  {
+        const int perm_cnt = (int)Factorial(ci.GetA().Count());
+        int best_perm = -1;
+        double minRms = 0;
+        for( int j=0; j < perm_cnt; j++ )  {
+          permutation = ci.GetB();
+          GeneratePermutation(permutation, j);
+          permuted.Clear();
+          for( int k=0; k < permutation.Count(); k++ )  {
+            if( permuted.IndexOf(ci.GetA()[k]) == -1 )  {
+              node.SwapItems(ci.GetA()[k], permutation[k]);
+              permuted.Add(ci.GetA()[k]);
+              if( permuted.IndexOf(permutation[k]) == -1 )
+                permuted.Add(permutation[k]);
+            }
+          }
+    
+          for( int k=0; k < permutation.Count(); k++ )
+            Nodes[ci.GetA()[k]].FullMatchEx(node[ci.GetA()[k]], analyser, true);
+          if( j == 0 )  {
+            minRms = analyser.CalcRMS();
+            best_perm = j;
+          }
+          else  {
+            const double rms = analyser.CalcRMS();
+            if( rms < minRms )  {
+              minRms = rms;
+              best_perm = j;
+            }
+          }
+          // rewind...
+          for( int k=0; k < permutation.Count(); k++ )  {
+            if( permuted.IndexOf(ci.GetA()[k]) == -1 )
+              node.SwapItems(ci.GetA()[k], permutation[k]);
+          }
+        }
+        permutation = ci.GetB();
+        GeneratePermutation(permutation, best_perm);
+        for( int k=0; k < permutation.Count(); k++ )
+          node.SwapItems(ci.GetA()[k], permutation[k]);
+      }
     }
     return true;
   }
+  //template <class Analyser> bool FullMatchEx(TEGraphNode& node, Analyser& analyser) const {
+  //  if( node.GetData() != GetData() )  return false;
+  //  if( node.Count() != Count() )  return false;
+  //  for( int i=0; i < Count(); i++ )
+  //    node[i].SetPassed(false);
+  //  for( int i=0; i < Count(); i++ )  {
+  //    int mc=0, bestIndex = -1;
+  //    double minRMS = 0;
+  //    for( int j=0; j < Count(); j++ )  {  // Count equals for both nodes
+  //      if( node[j].IsPassed() )  continue;
+  //      if( Nodes[i].FullMatchEx( node[j], analyser ) )  {
+  //        if( mc == 0 )
+  //          bestIndex = j;
+  //        else  {
+  //          if( mc == 1 )  {  // calculate the RMS only if more than 1 matches
+  //            node.SwapItems(i, bestIndex);
+  //            minRMS = analyser.CalcRMS();
+  //            node.SwapItems(i, bestIndex);
+  //          }
+  //          node.SwapItems(i, j);
+  //          const double RMS = analyser.CalcRMS();
+  //          if( RMS < minRMS )  {
+  //            bestIndex = j;
+  //            minRMS = RMS;
+  //          }
+  //          node.SwapItems(i, j);  // restore the node order
+  //        }
+  //        mc++;
+  //      }
+  //    }
+  //    if( mc == 0 )  return false;
+  //    node[bestIndex].SetPassed(true);
+  //    node.SwapItems(i, bestIndex);
+  //  }
+  //  return true;
+  //}
 
   bool IsSubgraphOf( TEGraphNode& node ) const {
     if( node.GetData() != GetData() )  return false;

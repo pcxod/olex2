@@ -437,6 +437,7 @@ smatd_list* TUnitCell::GetBinding(const TCAtom& toA, const TCAtom& fromA,
           retMatr.t[0] += i;
           retMatr.t[1] += j;
           retMatr.t[2] += k;
+          retMatr.SetTag(0);
         }
         else if( IncludeHBonds )  {
           if( GetLattice().GetNetwork().HBondExists(toA, fromA, D) )  {
@@ -444,6 +445,7 @@ smatd_list* TUnitCell::GetBinding(const TCAtom& toA, const TCAtom& fromA,
             retMatr.t[0] += i;
             retMatr.t[1] += j;
             retMatr.t[2] += k;
+            retMatr.SetTag(0);
           }
         }
       }
@@ -483,6 +485,7 @@ smatd_list* TUnitCell::GetInRange(const vec3d& to, const vec3d& from, double R, 
           retMatr.t[0] += i;
           retMatr.t[1] += j;
           retMatr.t[2] += k;
+          retMatr.SetTag(0);
         }
       }
     }
@@ -566,6 +569,7 @@ void TUnitCell::_FindInRange(const vec3d& to, double R,
             m.t[0] += ii;
             m.t[1] += ij;
             m.t[2] += ik;
+            m.SetTag(0);
             res.Last().C() = V1;
           }
         }
@@ -581,7 +585,7 @@ void TUnitCell::GetAtomEnviList(TSAtom& atom, TAtomEnvi& envi, bool IncludeQ, in
   envi.SetBase( atom );
 
   smatd I;
-  I.r.I();
+  I.I().SetTag(0);
 
   for( int i=0; i < atom.NodeCount(); i++ )  {
     TSAtom& A = atom.Node(i);
@@ -590,7 +594,6 @@ void TUnitCell::GetAtomEnviList(TSAtom& atom, TAtomEnvi& envi, bool IncludeQ, in
     if( part == -1 || (A.CAtom().GetPart() == 0 || A.CAtom().GetPart() == part) )
       envi.Add( A.CAtom(), I, A.crd() );
   }
-  vec3d v;
   for( int i=0; i < atom.CAtom().AttachedAtomCount(); i++ )  {
     TCAtom& A = atom.CAtom().GetAttachedAtom(i);
     if( A.IsDeleted() || (!IncludeQ && A.GetAtomInfo() == iQPeakIndex) )  continue;
@@ -598,7 +601,7 @@ void TUnitCell::GetAtomEnviList(TSAtom& atom, TAtomEnvi& envi, bool IncludeQ, in
     smatd* m = GetClosest( atom.ccrd(), A.ccrd(), false );
     if( m == NULL )
       throw TFunctionFailedException(__OlxSourceInfo, "Could not find symmetry generated atom");
-    v = *m * A.ccrd();
+    vec3d v = *m * A.ccrd();
     this->GetLattice().GetAsymmUnit().CellToCartesian(v);
     // make sure that atoms on center of symmetry are not counted twice
     bool Add = true;
@@ -623,7 +626,7 @@ void TUnitCell::GetAtomQEnviList(TSAtom& atom, TAtomEnvi& envi)  {
   envi.SetBase( atom );
 
   smatd I;
-  I.r.I();
+  I.I().SetTag(0);
 
   for( int i=0; i < atom.NodeCount(); i++ )  {
     TSAtom& A = atom.Node(i);
@@ -631,7 +634,6 @@ void TUnitCell::GetAtomQEnviList(TSAtom& atom, TAtomEnvi& envi)  {
     if( A.GetAtomInfo() == iQPeakIndex )
       envi.Add( A.CAtom(), I, A.crd() );
   }
-  vec3d v;
   for( int i=0; i < atom.CAtom().AttachedAtomCount(); i++ )  {
     TCAtom& A = atom.CAtom().GetAttachedAtom(i);
     if( A.IsDeleted() || A.GetAtomInfo() != iQPeakIndex )  continue;
@@ -639,7 +641,7 @@ void TUnitCell::GetAtomQEnviList(TSAtom& atom, TAtomEnvi& envi)  {
     smatd* m = GetClosest( atom.ccrd(), A.ccrd(), false );
     if( m == NULL )
       throw TFunctionFailedException(__OlxSourceInfo, "Could not find symmetry generated atom");
-    v = *m * A.ccrd();
+    vec3d v = *m * A.ccrd();
     GetLattice().GetAsymmUnit().CellToCartesian(v);
     // make sure that atoms on center of symmetry are not counted twice
     bool Add = true;
@@ -661,12 +663,8 @@ void TUnitCell::GetAtomPossibleHBonds(const TAtomEnvi& ae, TAtomEnvi& envi)  {
 
   envi.SetBase( ae.GetBase() );
 
-  smatd I;
-  I.r.I();
-
   TAsymmUnit& au = GetLattice().GetAsymmUnit();
 
-  vec3d v, v1, v2;
   const int ac = au.AtomCount();
   for( int i=0; i < ac; i++ )  {
     TCAtom& A = au.GetAtom(i);
@@ -680,13 +678,13 @@ void TUnitCell::GetAtomPossibleHBonds(const TAtomEnvi& ae, TAtomEnvi& envi)  {
     smatd_list& ms = *GetInRange( ae.GetBase().ccrd(), A.ccrd(), 2.9, considerI );
 
     for( int j=0; j < ms.Count(); j++ )  {
-      v = ms[j] * A.ccrd();
+      vec3d v = ms[j] * A.ccrd();
       au.CellToCartesian(v);
       const double d = v.QDistanceTo( ae.GetBase().crd() );
       if(  d < 2*2 || d > 2.9*2.9 )  continue;
       if( ae.Count() == 1 )  {
-        v1 = ae.GetCrd(0);  v1 -= ae.GetBase().crd();
-        v2 = v;             v2 -= ae.GetBase().crd();
+        vec3d v1 = ae.GetCrd(0) - ae.GetBase().crd();
+        vec3d v2 = v - ae.GetBase().crd();
         // 89 - 130 degrees
         const double ca = v1.CAngle(v2);
         if( ca > 0.01 || ca < -0.64 )  continue;

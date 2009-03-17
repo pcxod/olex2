@@ -282,6 +282,7 @@ void RefinementModel::AddInfoTab(const TStrList& l)  {
   try  {  ar.Expand( *this, ag, resi_name, atomAGroup);  }
   catch( const TExceptionBase& ex )  {
     TBasicApp::GetLog().Error(olxstr("Invalid info table atoms: ") << l.Text(' '));
+    TBasicApp::GetLog().Error(ex.GetException()->GetFullMessage());
     InfoTables.Delete( InfoTables.Count()-1 );
     return;
   }

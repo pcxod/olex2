@@ -8184,22 +8184,30 @@ void TMainForm::macProjSph(TStrObjList &Cmds, const TParamList &Options, TMacroE
     FXApp->GetBond(i).BondUpdated();
 }
 //..............................................................................
+void PermutationGenerator(const TIntList& in, TIntList& out, int perm)  {
+  int fc = Factorial(out.Count()-1);
+  out = in;
+  for( int i=0; i < out.Count()-1; i++ )  {
+    int ti = (perm/fc) % (out.Count() - i);
+    int tv = out[i+ti];
+    for( int j = i+ti; j > i; j-- )
+      out[j] = out[j-1];
+    out[i] = tv;
+    fc /= (out.Count()-i-1);
+  }
+}
 void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   if( !Cmds.IsEmpty() ) {
-    TIntList lv(Cmds[0].ToInt());
+    TIntList lv(Cmds[0].ToInt()), out(lv.Count());
     for( int i=0; i < lv.Count(); i++ )
       lv[i] = i+1;
     int f = Factorial(lv.Count());
     for( int i=0; i < f; i++ )  {
-      int n = i;
-      for( int j = 2; j <= lv.Count(); j++ )  {
-        lv.Swap( (i%j), j-2 );
-        n /= j;
-      }
-      olxstr out = lv[0];
-      for( int _b=1; _b < lv.Count(); _b++ )
-        out << ' ' << lv[_b];
-      TBasicApp::GetLog() << (out << '\n');
+      PermutationGenerator(lv, out, i);
+      olxstr outstr = out[0];
+      for( int _b=1; _b < out.Count(); _b++ )
+        outstr << ' ' << out[_b];
+      TBasicApp::GetLog() << (outstr << '\n');
     }
   }
 }

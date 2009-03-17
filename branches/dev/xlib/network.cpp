@@ -439,9 +439,8 @@ bool TNetwork::DoMatch( TNetwork& net, TTypeList< AnAssociation2<int, int> >& re
     trav.OnItem( thatGraph.GetRoot() );
     thatGraph.GetRoot().Traverser.LevelTraverse(thatGraph.GetRoot(), trav);
     TBasicApp::GetLog().Info( trav.GetData() );
-    //if( thisGraph.GetRoot().DoMatch( thatGraph.GetRoot() ) )  {
     GraphAnalyser ga(thisGraph.GetRoot(), thatGraph.GetRoot());
-    if( thisGraph.GetRoot().FullMatchEx( thatGraph.GetRoot(), ga ) )  {
+    if( thisGraph.GetRoot().FullMatchEx( thatGraph.GetRoot(), ga ) )  {  // match 
       trav.ClearData();
       trav.OnItem( thatGraph.GetRoot() );
       thatGraph.GetRoot().Traverser.LevelTraverse(thatGraph.GetRoot(), trav);

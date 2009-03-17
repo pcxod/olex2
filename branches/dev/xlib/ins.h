@@ -129,7 +129,7 @@ public:
       for( int i =0; i < SL.Count(); i++ )  {
         Toks.Clear();
         Toks.Strtok( SL[i], ' ');
-        if( Toks[0].Comparei("EQIV") == 0 && Toks.Count() == 3 )  {
+        if( Toks[0].Comparei("EQIV") == 0 && Toks.Count() >= 3 )  {
           smatd SymM;
           TSymmParser::SymmToMatrix(Toks.Text(EmptyString, 2), SymM);
           cx.rm.AddUsedSymm(SymM, Toks[1]);

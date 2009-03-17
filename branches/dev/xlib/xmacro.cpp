@@ -668,12 +668,11 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       const TCAtom& ca = *all[j].GetA();
       const TBasicAtomInfo& bai1 = ca.GetAtomInfo();
       if(  bais.IndexOf(bai1.GetIndex()) == -1 )  continue;
-      vec3d cvec( all[j].GetB()*ca.ccrd() ); 
-      vec3d bond( cvec );
-      bond -= sa.ccrd();
-      au.CellToCartesian(bond);
-      const double d = bond.Length();
-      if( (bai.GetRad1() + bai1.GetRad1() + 0.45) > d )  continue;  // coval bond
+      vec3d cvec( all[j].GetB()*ca.ccrd() ),
+            bond( cvec - sa.ccrd() );
+      const double d = au.CellToCartesian(bond).Length();
+      if( d < (bai.GetRad1() + bai1.GetRad1() + 0.4) ) // coval bond
+        continue;  
       // analyse angles
       for( int k=0; k < hc; k++ )  {
         vec3d base = sa.Node(h_indexes[k]).ccrd();
@@ -1715,7 +1714,7 @@ void XLibMacros::macEnvi(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     if( rd.GetC().r.IsI() && rd.GetC().t.IsNull() )
      table[i][1] = 'I';  // identity
     else
-      table[i][1] = TSymmParser::MatrixToSymm( rd.GetC() );
+      table[i][1] = TSymmParser::MatrixToSymmCode(xapp.XFile().GetUnitCell(), rd.GetC() );
     table[i][0] = olxstr::FormatFloat(2, rd.GetB().Length());
     for( int j=0; j < rowData.Count(); j++ )  {
       if( i == j )  { table[i][j+2] = '-'; continue; }

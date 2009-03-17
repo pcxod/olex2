@@ -143,6 +143,22 @@ template <class MC, class VC> MC& QuaternionToMatrix(const VC& qt, MC& matr)  {
   matr[2][2] = qt[0]*qt[0] + qt[3]*qt[3] - qt[1]*qt[1] - qt[2]*qt[2];
   return matr;
 }
+/* 
+generates a new permutation from the original list 
+http://en.wikipedia.org/wiki/Permutation
+*/
+template <class List> void GeneratePermutation(List& out, int perm)  {
+  const int cnt = out.Count();
+  int fc = (int)Factorial(cnt-1);
+  for( int i=0; i < cnt-1; i++ )  {
+    int ti = (perm/fc) % (cnt - i);
+    int tv = out[i+ti];
+    for( int j = i+ti; j > i; j-- )
+      out[j] = out[j-1];
+    out[i] = tv;
+    fc /= (cnt-i-1);
+  }
+}
 
 static void SinCos(const double ang, double *sina, double *cosa)  {
 #ifdef __WIN32__
