@@ -12,6 +12,7 @@ template <class IC, class AssociatedOC> class TEGraphNode : ACollectionItem  {
   TPtrList<NodeType> Nodes;
   bool RingNode, Root;
   mutable bool Passed, Mutable;
+  mutable TEGraphNode* PassedFor;
   AssociatedOC Object;
 protected:
   inline bool IsPassed()  const  {  return Passed;  }
@@ -19,11 +20,34 @@ protected:
   static int _SortNodesByTag(const NodeType* n1, const NodeType* n2) {
     return n1->GetTag() - n2->GetTag();
   }
+  void GeneratePermutations(const TTypeList<ConnInfo>& conn, TTypeList<TIntList>& res)  {
+    TTypeList<TIntList> op;
+    TIntList permutation;
+    int total_perm = 1;
+    for( int i=0; i < conn.Count(); i++ )
+      total_perm *= (int)Factorial(conn[i].GetA().Count());
+    // precreate the lists
+    for( int i=0; i < total_perm; i++ )
+      res.AddNew();
+    for( int i=0; i < conn.Count(); i++ )  {
+      const ConnInfo& ci = conn[i];
+      const int perm_cnt = (int)Factorial(ci.GetA().Count());
+      total_perm /= perm_count;
+      int list_ind = 0;
+      for( int j=0; j < perm_cnt; j++ )  {
+        permutation = ci.GetA();
+        GeneratePermutation(permutation, j);
+        for( int k=0; k < total_perm; k++ )
+          res[list_ind++].AddList(permutation);
+      }
+    }
+  }
 public:
   TEGraphNode( const IC& data, const AssociatedOC& object )  {
     Data = data;
     Mutable = Root = Passed = RingNode = false;
     Object = object;
+    PassedFor = NULL;
   }
   ~TEGraphNode()  {
     for( int i=0; i < Nodes.Count(); i++ )
@@ -110,31 +134,32 @@ public:
   template <class Analyser> bool FullMatchEx(TEGraphNode& node, Analyser& analyser, bool analyse = false) const {
     if( IsRoot() )
       this->AnalyseMutability(node);
+    if( PassedFor == &node )  return true;
     const int node_cnt = Count();
     if( node.GetData() != GetData() )  return false;
     if( node.Count() != node_cnt )  return false;
-    if( node_cnt == 0 )  return true;
+    if( node_cnt == 0  )  return true;
     if( (!analyse && !IsRoot()) || !Mutable )  {
       for( int i=0; i < node_cnt; i++ )
         node[i].SetPassed( false );
+      TIntList matches(node_cnt);
       for( int i=0; i < node_cnt; i++ )  {
         bool Matched = false;
         for( int j=0; j < node_cnt; j++ )  {  // Count equals for both nodes
           if( node[j].IsPassed() )  continue;
           if( Nodes[i]->FullMatchEx(node[j], analyser, analyse) )  {
             node[j].SetPassed( true );
-            if( i != j )  
-              node.SwapItems(i, j);  // sorting the nodes to match
+            matches[j] = i;
             Matched = true;
             break;
           }
         }
         if( !Matched )  return false;
       }
+      node.Nodes.Rearrange(matches);
       return true;
     }
     TTypeList< ConnInfo > conn;
-    TIntList permutation;
     for( int i=0; i < node_cnt; i++ )  {
       for( int j=0; j < node_cnt; j++ )  {  // Count equals for both nodes
         if( Nodes[i]->FullMatchEx( node[j], analyser, false ) )  {
@@ -178,7 +203,9 @@ public:
       return true;
     }
     TPtrList<TEGraphNode> ond(node.Nodes);
-    for( int i=0; i < conn.Count(); i++ )  {
+    TTypeList<TIntList> permutations;
+    GeneratePermutations(conn, permutations);
+    for( int i=0; i < permutations.Count(); i++ )  {
       const ConnInfo& ci = conn[i];
       const int perm_cnt = (int)Factorial(ci.GetA().Count());
       int best_perm = -1;
@@ -188,19 +215,16 @@ public:
         GeneratePermutation(permutation, j);
         for( int k=0; k < permutation.Count(); k++ )
           node.Nodes[ci.GetA()[k]] = ond[permutation[k]];
-
-        for( int k=0; k < node_cnt; k++ )
-          Nodes[k]->FullMatchEx(node[k], analyser, true);
+        for( int k=0; k < permutation.Count(); k++ )
+          Nodes[ci.GetA()[k]]->FullMatchEx(node[ci.GetA()[k]], analyser, true);
+        const double rms = analyser.CalcRMS();
         if( j == 0 )  {
-          minRms = analyser.CalcRMS();
+          minRms = rms;
           best_perm = j;
         }
-        else  {
-          const double rms = analyser.CalcRMS();
-          if( rms < minRms )  {
-            minRms = rms;
-            best_perm = j;
-          }
+        else if( rms < minRms )  {
+          minRms = rms;
+          best_perm = j;
         }
       }
       if( best_perm != perm_cnt-1 )  {
@@ -209,9 +233,10 @@ public:
         for( int k=0; k < permutation.Count(); k++ )
           node.Nodes[ci.GetA()[k]] = ond[permutation[k]];
         for( int k=0; k < node_cnt; k++ )
-          Nodes[k]->FullMatchEx(node[k], analyser, analyse);
+          Nodes[k]->FullMatchEx(node[k], analyser, true);
       }
     }
+    PassedFor = &node;
     return true;
   }
   //template <class Analyser> bool FullMatchEx(TEGraphNode& node, Analyser& analyser) const {

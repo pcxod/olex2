@@ -49,8 +49,8 @@ public:
 
   // returns true if the ring is regular (distances from centroid and angles) 
   static bool IsRingRegular(const TSAtomPList& ring);
-
-  bool DoMatch( TNetwork& net, TTypeList< AnAssociation2<int, int> >& res );
+  // inverttion must be specified for the permutational graph match
+  bool DoMatch( TNetwork& net, TTypeList< AnAssociation2<int, int> >& res, bool Invert );
   bool IsSubgraphOf( TNetwork& net, TTypeList< AnAssociation2<int, int> >& res, const TIntList& rootsToSkip);
 
   void FindRings(const TPtrList<TBasicAtomInfo>& ringContent,

@@ -215,7 +215,7 @@ TGXApp::TGXApp(const olxstr &FileName) : TXApp(FileName, this)  {
   FStructureVisible = FQPeaksVisible = FHydrogensVisible =  FHBondsVisible = true;
   XGrowPointsVisible = FXGrowLinesVisible = FQPeakBondsVisible = false;
   FXPolyVisible = true;
-
+  DeltaV = 3;
   TwxGlScene *GlScene = new TwxGlScene( BaseDir() + "etc/Fonts/" );
   FGrowMode = gmCovalent;
 //  TWGlScene *GlScene = new TWGlScene;
@@ -3088,27 +3088,38 @@ void TGXApp::SetGrowMode(short v, const olxstr& atoms)  {
   UsedTransforms.Clear();
 }
 //..............................................................................
+struct TGXApp_Transform {
+  TCAtom* to;
+  TSAtom* from;
+  double dist;
+  smatd transform;
+  TGXApp_Transform() : to(NULL), from(NULL), dist(0) { }
+};
 void TGXApp::CreateXGrowLines()  {
-  if( XGrowLines.Count() != 0 )  return;
-  const int ac = FXFile->GetLattice().AtomCount();
+  if( !XGrowLines.IsEmpty() )  return;
+  if( FGrowMode & gmVanDerWaals )  {
+    _CreateXGrowVLines();
+    return;
+  }
+  const TAsymmUnit& au = FXFile->GetAsymmUnit();
+  const TUnitCell& uc = FXFile->GetUnitCell();
   TSAtomPList AtomsToProcess;
-  if( AtomsToGrow.Length() != 0 )  {
+  if( !AtomsToGrow.IsEmpty() )  {
     TXAtomPList xatoms;
     FindXAtoms(AtomsToGrow, xatoms);
     TListCaster::POP( xatoms, AtomsToProcess );
   }
   else  {
+    const int ac = FXFile->GetLattice().AtomCount();
     for( int i=0; i < ac; i++ )  {
-      TSAtom* A = &FXFile->GetLattice().GetAtom(i);
-      if( A->IsDeleted() )  continue;
-      AtomsToProcess.Add( A );
+      TSAtom& A = FXFile->GetLattice().GetAtom(i);
+      if( A.IsDeleted() )  continue;
+      AtomsToProcess.Add( &A );
     }
   }
-
-  vec3d cnt;
   TPtrList<TCAtom> AttachedAtoms;
-  vec3d cc;
-  TTypeList<vec3d> TransformedCrds;
+  typedef TTypeList<TGXApp_Transform> tr_list;
+  olxdict<int, tr_list, TPrimitiveComparator> net_tr;
   for( int i=0; i < AtomsToProcess.Count(); i++ )  {
     TSAtom* A = AtomsToProcess[i];
     if( A->IsDeleted() )  continue;
@@ -3127,68 +3138,153 @@ void TGXApp::CreateXGrowLines()  {
       AttachedAtoms.Add( &A->CAtom() );
 
     if( AttachedAtoms.IsEmpty() )  continue;
+
     for( int j=0; j < AttachedAtoms.Count(); j++ )  {
       TCAtom *aa = AttachedAtoms[j];
-      cc = aa->ccrd();
+      const vec3d& cc = aa->ccrd();
       smatd_list *transforms;
       if( FGrowMode & gmSameAtoms )  {
 //        transforms = FXFile->GetLattice().GetUnitCell()->Getclosest(A->ccrd(), cc, false );
-        transforms = FXFile->GetLattice().GetUnitCell().GetInRangeEx(A->ccrd(), cc,
-                             A->GetAtomInfo().GetRad1() + aa->GetAtomInfo().GetRad1() + 15,
-                             false, UsedTransforms );
+        transforms = uc.GetInRangeEx(A->ccrd(), cc,
+                       A->GetAtomInfo().GetRad1() + aa->GetAtomInfo().GetRad1() + 15,
+                       false, UsedTransforms );
       }
       else if( FGrowMode & gmSInteractions )  {
-        transforms = FXFile->GetLattice().GetUnitCell().GetInRange(A->ccrd(), cc,
-                             A->GetAtomInfo().GetRad1() + aa->GetAtomInfo().GetRad1() + FXFile->GetLattice().GetDeltaI(),
-                             false );
+        transforms = uc.GetInRange(A->ccrd(), cc,
+                       A->GetAtomInfo().GetRad1() + aa->GetAtomInfo().GetRad1() + FXFile->GetLattice().GetDeltaI(),
+                       false );
       }
       else  {
-        transforms = FXFile->GetLattice().GetUnitCell().GetInRange(A->ccrd(), cc,
-                             A->GetAtomInfo().GetRad1() + aa->GetAtomInfo().GetRad1() + FXFile->GetLattice().GetDelta(),
-                             false );
+        transforms = uc.GetInRange(A->ccrd(), cc,
+                       A->GetAtomInfo().GetRad1() + aa->GetAtomInfo().GetRad1() + FXFile->GetLattice().GetDelta(),
+                       false );
       }
       if( transforms->IsEmpty() )  {  delete transforms;  continue;  }
-      // remove identity transforms
-      TransformedCrds.Clear();
       for( int k=0; k < transforms->Count(); k++ )  {
         smatd& transform = transforms->Item(k);
-        cc *= transform.r;
-        cc += transform.t;
-        XFile().GetAsymmUnit().CellToCartesian(cc);
-        TransformedCrds.AddCCopy( cc );
-        if( cc.QDistanceTo( A->crd() ) < 0.01 )  {
-          transforms->NullItem(k);
-        }
-        cc = aa->ccrd();
-      }
-      transforms->Pack();
-      for( int k=0; k < transforms->Count(); k++ )  {
-        for( int l = 0; l < A->NodeCount(); l++ )  {
-          TSAtom *sa = &A->Node(l);
-          if( sa->CAtom().GetId() == aa->GetId() )  {
-            if( TransformedCrds[k].QDistanceTo( sa->crd() ) < 0.01 )  {
-              transforms->Delete(k);
-              break;
+        vec3d tc = transform*cc;
+        au.CellToCartesian(tc);
+        const double dist = tc.DistanceTo( A->crd() );
+        tr_list& ntl = net_tr.Add(aa->GetFragmentId());
+        bool uniq = true;
+        for( int l=0; l < ntl.Count(); l++ )  {
+          if( ntl[l].transform == transform )  {
+            if( ntl[l].dist > dist )  {
+              ntl[l].transform = transform;
+              ntl[l].dist = dist;
+              ntl[l].to = aa;
+              ntl[l].from = A;
             }
+            uniq = false;
+            break;
           }
         }
-      }
-      for( int k=0; k < transforms->Count(); k++ )  {
-        smatd& transform = transforms->Item(k);
-        TXGrowLine& gl = XGrowLines.AddNew(EmptyString, A, aa, transform, FGlRender );
-
-        if( (A->GetAtomInfo() == iQPeakIndex || aa->GetAtomInfo() == iQPeakIndex ) && !QPeakBondsVisible() )
-          gl.Visible(false);
-        if( (A->GetAtomInfo() == iHydrogenIndex || aa->GetAtomInfo() == iHydrogenIndex) && !HBondsVisible() )
-          gl.Visible(false);
-
-        double dist = TransformedCrds[k].DistanceTo( A->crd() );
-        if( dist < (A->GetAtomInfo().GetRad1() + aa->GetAtomInfo().GetRad1() + FXFile->GetLattice().GetDelta()) )
-          gl.Create("COV");
-        else
-          gl.Create("SI");
+        if( uniq )  {
+          TGXApp_Transform& nt = ntl.AddNew();
+          nt.transform = transform;
+          nt.dist = dist;
+          nt.to = aa;
+          nt.from = A;
+        }
       }
       delete transforms;
+    }
+  }
+  for( int i=0; i < net_tr.Count(); i++ )  {
+    const tr_list& ntl = net_tr.GetValue(i);
+    for( int j=0; j < ntl.Count(); j++ )  {
+      TGXApp_Transform& nt = ntl[j];
+      TXGrowLine& gl = XGrowLines.AddNew(EmptyString, nt.from, nt.to, nt.transform, FGlRender );
+
+      if( !QPeakBondsVisible() &&
+        (nt.from->GetAtomInfo() == iQPeakIndex || nt.to->GetAtomInfo() == iQPeakIndex ) )
+        gl.Visible(false);
+      if( !HBondsVisible() && 
+        (nt.from->GetAtomInfo() == iHydrogenIndex || nt.to->GetAtomInfo() == iHydrogenIndex) )
+        gl.Visible(false);
+
+      if( nt.dist < (nt.from->GetAtomInfo().GetRad1() + nt.to->GetAtomInfo().GetRad1() + 
+        FXFile->GetLattice().GetDelta()) )
+        gl.Create("COV");
+      else
+        gl.Create("SI");
+    }
+  }
+}
+//..............................................................................
+void TGXApp::_CreateXGrowVLines()  {
+  if( !XGrowLines.IsEmpty() )  return;
+  const TAsymmUnit& au = FXFile->GetAsymmUnit();
+  const TUnitCell& uc = FXFile->GetUnitCell();
+  TSAtomPList AtomsToProcess;
+  if( !AtomsToGrow.IsEmpty() )  {
+    TXAtomPList xatoms;
+    FindXAtoms(AtomsToGrow, xatoms);
+    TListCaster::POP( xatoms, AtomsToProcess );
+  }
+  else  {
+    const int ac = FXFile->GetLattice().AtomCount();
+    for( int i=0; i < ac; i++ )  {
+      TSAtom& A = FXFile->GetLattice().GetAtom(i);
+      if( A.IsDeleted() )  continue;
+      AtomsToProcess.Add( &A );
+    }
+  }
+  typedef TTypeList<TGXApp_Transform> tr_list;
+  olxdict<int, tr_list, TPrimitiveComparator> net_tr;
+  for( int i=0; i < AtomsToProcess.Count(); i++ )  {
+    TSAtom* A = AtomsToProcess[i];
+    if( A->IsDeleted() )  continue;
+    TArrayList< AnAssociation2<TCAtom const*,smatd> > envi;
+    uc.FindInRangeAM(A->ccrd(), 5, envi);
+    for( int j=0; j < envi.Count(); j++ )  {
+      TCAtom *aa = const_cast<TCAtom*>(envi[j].GetA());
+      const vec3d& cc = aa->ccrd();
+      const smatd& transform = envi[j].GetB();
+      vec3d tc = transform*cc;
+      au.CellToCartesian(tc);
+      const double dist = tc.DistanceTo( A->crd() );
+      tr_list& ntl = net_tr.Add(aa->GetFragmentId());
+      bool uniq = true;
+      for( int l=0; l < ntl.Count(); l++ )  {
+        if( ntl[l].transform == transform )  {
+          if( ntl[l].dist > dist )  {
+            ntl[l].transform = transform;
+            ntl[l].dist = dist;
+            ntl[l].to = aa;
+            ntl[l].from = A;
+          }
+          uniq = false;
+          break;
+        }
+      }
+      if( uniq )  {
+        TGXApp_Transform& nt = ntl.AddNew();
+        nt.transform = transform;
+        nt.dist = dist;
+        nt.to = aa;
+        nt.from = A;
+      }
+    }
+  }
+  for( int i=0; i < net_tr.Count(); i++ )  {
+    const tr_list& ntl = net_tr.GetValue(i);
+    for( int j=0; j < ntl.Count(); j++ )  {
+      TGXApp_Transform& nt = ntl[j];
+      TXGrowLine& gl = XGrowLines.AddNew(EmptyString, nt.from, nt.to, nt.transform, FGlRender );
+
+      if( !QPeakBondsVisible() &&
+        (nt.from->GetAtomInfo() == iQPeakIndex || nt.to->GetAtomInfo() == iQPeakIndex ) )
+        gl.Visible(false);
+      if( !HBondsVisible() && 
+        (nt.from->GetAtomInfo() == iHydrogenIndex || nt.to->GetAtomInfo() == iHydrogenIndex) )
+        gl.Visible(false);
+
+      if( nt.dist < (nt.from->GetAtomInfo().GetRad1() + nt.to->GetAtomInfo().GetRad1() + 
+        FXFile->GetLattice().GetDelta()) )
+        gl.Create("COV");
+      else
+        gl.Create("SI");
     }
   }
 }

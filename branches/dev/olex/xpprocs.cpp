@@ -5226,7 +5226,10 @@ void TMainForm::macDelta(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 void TMainForm::macDeltaI(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   if( Cmds.Count() == 1 )  {
     float deltai = Cmds[0].ToDouble();
-    if( deltai < 0.9 || deltai > 1.7 )  deltai = 1.2;
+    if( deltai < 0.9 )
+      deltai = 0.9;
+    else if( deltai > 3 )  
+      deltai = 3;
     FXApp->XFile().GetLattice().SetDeltaI( deltai );
     return;
   }
@@ -6091,25 +6094,10 @@ void TMainForm::macNextSolution(TStrObjList &Cmds, const TParamList &Options, TM
 //..............................................................................
 //..............................................................................
 double MatchAtomPairsQT(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atoms,
-                        smatdd& res, bool InversionPossible, bool& InversionUsed)  {
+                        smatdd& res, bool TryInversion)  {
   if( atoms.Count() < 3 )  return -1;
-  double rms = TNetwork::FindAlignmentMatrix(atoms, res, false), rms1;
-  InversionUsed = false;
-  if( InversionPossible )  {
-    smatdd lr;
-    rms1 = TNetwork::FindAlignmentMatrix(atoms, lr, true);
-    if( (rms1 < rms && rms1 >= 0) || (rms < 0 && rms1 >= 0) )  {
-      res = lr;
-      InversionUsed = true;
-    }
-  }
-  if( InversionUsed )  {
-    TBasicApp::GetLog() << ( olxstr("RMS is ") << olxstr::FormatFloat(3, rms1) <<
-                    " with inversion vs." << olxstr::FormatFloat(3, rms) << '\n');
-    rms = rms1;
-  }
-  else
-    TBasicApp::GetLog() << ( olxstr("RMS is ") << olxstr::FormatFloat(3, rms) << '\n');
+  double rms = TNetwork::FindAlignmentMatrix(atoms, res, TryInversion);
+  TBasicApp::GetLog() << ( olxstr("RMS is ") << olxstr::FormatFloat(3, rms) << '\n');
   return rms;
 }
 //..............................................................................
@@ -6169,7 +6157,7 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   }
   CallbackFunc(StartMatchCBName, EmptyString);
   // ivertion test
-  bool TryInvert = Options.Contains("i"), Inverted;
+  bool TryInvert = Options.Contains("i");
 /*
   if( TryInvert )  {
     TSpaceGroup* sg = TSymmLib::GetInstance()->FindSG( FXApp->XFile().GetLastLoader()->GetAsymmUnit() );
@@ -6200,7 +6188,7 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options, TMacroErr
         return;
       }
       bool match = subgraph ? netA.IsSubgraphOf( netB, res, sk ) :
-                              netA.DoMatch( netB, res );
+                              netA.DoMatch( netB, res, TryInvert );
       TBasicApp::GetLog() << ( olxstr("Graphs match: ") << match << '\n' );
       if( match )  {
         TTypeList< AnAssociation2<TSAtom*,TSAtom*> > satomp;
@@ -6251,7 +6239,7 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options, TMacroErr
           }
         }
         smatdd S;
-        double rms = MatchAtomPairsQT( satomp, S, false, Inverted);
+        double rms = MatchAtomPairsQT( satomp, S, TryInvert);
         TBasicApp::GetLog() << ("Transformation matrix:\n");
         for( int i=0; i < 3; i++ )
           TBasicApp::GetLog() << S.r[i].ToString() << ' ' << S.t[i] << '\n' ;
@@ -6259,7 +6247,7 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options, TMacroErr
         CallMatchCallbacks(netA, netB, rms);
         // ends execute callback
         if( align && rms >= 0 )  {
-          TNetwork::DoAlignAtoms(satomp, atomsToTransform, S, Inverted);
+          TNetwork::DoAlignAtoms(satomp, atomsToTransform, S, TryInvert);
           FXApp->UpdateBonds();
           FXApp->CenterView();
         }
@@ -6313,8 +6301,8 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options, TMacroErr
         }
       }
       smatdd S;
-      double rms = MatchAtomPairsQT( satomp, S, false, Inverted);
-      TNetwork::DoAlignAtoms(satomp, atomsToTransform, S, Inverted);
+      double rms = MatchAtomPairsQT( satomp, S, TryInvert);
+      TNetwork::DoAlignAtoms(satomp, atomsToTransform, S, TryInvert);
       FXApp->UpdateBonds();
       FXApp->CenterView();
 
@@ -6333,20 +6321,20 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       //if( i > 0 )  TryInvert = false;
       for( int j=i+1; j < nets.Count(); j++ )  {
         res.Clear();
-        if( nets[i]->DoMatch( *nets[j], res ) )  {
+        if( nets[i]->DoMatch( *nets[j], res, TryInvert ) )  {
           satomp.Clear();
           atomsToTransform.Clear();
           for(int k=0; k < res.Count(); k++ )  {
             if( atomsToTransform.IndexOf( &nets[j]->Node(res[k].GetB()) ) == -1 )  {
               atomsToTransform.Add( &nets[j]->Node( res[k].GetB()) );
-              satomp.AddNew<TSAtom*,TSAtom*>(&nets[j]->Node( res[k].GetB()),
-                                             &nets[i]->Node( res[k].GetA()));
+              satomp.AddNew<TSAtom*,TSAtom*>(&nets[i]->Node( res[k].GetA()),
+                                             &nets[j]->Node( res[k].GetB()));
             }
           }
-          double rms = MatchAtomPairsQT( satomp, S, TryInvert, Inverted);
+          double rms = MatchAtomPairsQT( satomp, S, TryInvert);
           CallMatchCallbacks(*nets[i], *nets[j], rms);
           if( rms >= 0 )
-            TNetwork::DoAlignAtoms(satomp, atomsToTransform, S, Inverted);
+            TNetwork::DoAlignAtoms(satomp, atomsToTransform, S, TryInvert);
 
         }
       }
