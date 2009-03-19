@@ -134,7 +134,7 @@
 #include "sfutil.h"
 #include "ortdraw.h"
 // FOR DEBUG only
-#include "edict.h"
+#include "egraph.h"
 //#include "base_2d.h"
 //#include "gl2ps/gl2ps.c"
 
@@ -8172,31 +8172,32 @@ void TMainForm::macProjSph(TStrObjList &Cmds, const TParamList &Options, TMacroE
     FXApp->GetBond(i).BondUpdated();
 }
 //..............................................................................
-void PermutationGenerator(const TIntList& in, TIntList& out, int perm)  {
-  int fc = Factorial(out.Count()-1);
-  out = in;
-  for( int i=0; i < out.Count()-1; i++ )  {
-    int ti = (perm/fc) % (out.Count() - i);
-    int tv = out[i+ti];
-    for( int j = i+ti; j > i; j-- )
-      out[j] = out[j-1];
-    out[i] = tv;
-    fc /= (out.Count()-i-1);
-  }
-}
 void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  if( !Cmds.IsEmpty() ) {
-    TIntList lv(Cmds[0].ToInt()), out(lv.Count());
-    for( int i=0; i < lv.Count(); i++ )
-      lv[i] = i+1;
-    int f = Factorial(lv.Count());
-    for( int i=0; i < f; i++ )  {
-      PermutationGenerator(lv, out, i);
-      olxstr outstr = out[0];
-      for( int _b=1; _b < out.Count(); _b++ )
-        outstr << ' ' << out[_b];
-      TBasicApp::GetLog() << (outstr << '\n');
-    }
+  typedef AnAssociation2<TIntList,TIntList> con_info;
+  TTypeList< AnAssociation2<TIntList,TIntList> > conn_l;
+  con_info& conn1 = conn_l.AddNew();
+  conn1.A().SetCount(2);
+  conn1.A()[0] = 1;
+  conn1.A()[1] = 2;
+  con_info& conn2 = conn_l.AddNew();
+  conn2.A().SetCount(3);
+  conn2.A()[0] = 3;
+  conn2.A()[1] = 4;
+  conn2.A()[2] = 5;
+
+  con_info& conn3 = conn_l.AddNew();
+  conn3.A().SetCount(2);
+  conn3.A()[0] = 6;
+  conn3.A()[1] = 7;
+
+  TTypeList<TIntList> out;
+  TEGraphNode<int,int>::GeneratePermutations(conn_l, out);
+  for( int i=0; i < out.Count(); i++ )  {
+    const TIntList& pm = out[i];
+    olxstr str = pm[0];
+    for( int j=1; j < pm.Count(); j++ )
+      str << ' ' << pm[j];
+    TBasicApp::GetLog() << (str << '\n');
   }
 }
 //..............................................................................
