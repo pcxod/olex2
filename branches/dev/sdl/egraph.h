@@ -12,6 +12,7 @@ template <class IC, class AssociatedOC> class TEGraphNode : ACollectionItem  {
   TPtrList<NodeType> Nodes;
   bool RingNode, Root;
   mutable bool Passed, Mutable;
+  mutable TEGraphNode* PassedFor;
   AssociatedOC Object;
 protected:
   inline bool IsPassed()  const  {  return Passed;  }
@@ -58,6 +59,7 @@ public:
     Data = data;
     Mutable = Root = Passed = RingNode = false;
     Object = object;
+    PassedFor = NULL;
   }
   ~TEGraphNode()  {
     for( int i=0; i < Nodes.Count(); i++ )
@@ -149,6 +151,11 @@ public:
     if( node.Count() != node_cnt )  return false;
     if( node_cnt == 0  )  return true;
     if( (!analyse && !IsRoot()) || !Mutable )  {
+      if( PassedFor == &node )  {
+        for( int i=0; i < node_cnt; i++ )
+          Nodes[i]->FullMatchEx(node[i], analyser, analyse);
+        return true;
+      }
       for( int i=0; i < node_cnt; i++ )
         node[i].SetPassed( false );
       TIntList matches(node_cnt);
@@ -166,12 +173,13 @@ public:
         if( !Matched )  return false;
       }
       node.Nodes.Rearrange(matches);
+      PassedFor = &node;
       return true;
     }
     TTypeList< ConnInfo > conn;
     for( int i=0; i < node_cnt; i++ )  {
       for( int j=0; j < node_cnt; j++ )  {  // Count equals for both nodes
-        if( Nodes[i]->FullMatchEx( node[j], analyser, analyse ) )  {
+        if( Nodes[i]->FullMatchEx( node[j], analyser, false ) )  {
           bool found = false;
           for( int k=0; k < conn.Count(); k++ )  {
             if( conn[k].GetA().IndexOf(i) != -1 )  {
@@ -225,8 +233,8 @@ public:
           node.Nodes[ci.GetA()[j]] = ond[permutation[j]];
         for( int j=0; j < node_cnt; j++ )
           Nodes[j]->FullMatchEx(node[j], analyser, true);
-        //const double rms = analyser.CalcRMS(*this, node);
-        const double rms = analyser.CalcRMS();
+        const double rms = analyser.CalcRMS(*this, node);
+        //const double rms = analyser.CalcRMS();
         if( i == 0 )
           minRms = rms;
         else if( rms < minRms )  {
@@ -241,6 +249,7 @@ public:
           node.Nodes[ci.GetA()[j]] = ond[permutation[j]];
         for( int j=0; j < node_cnt; j++ )
           Nodes[j]->FullMatchEx(node[j], analyser, true);
+        analyser.CalcRMS();
       }
     }
     else  {
@@ -271,6 +280,7 @@ public:
           node.Nodes[original_perm[j]] = ond[permutation[j]];
         for( int j=0; j < node_cnt; j++ )
           Nodes[j]->FullMatchEx(node[j], analyser, true);
+        analyser.CalcRMS();
       }
     }
     return true;

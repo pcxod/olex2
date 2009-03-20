@@ -436,35 +436,47 @@ struct GraphAnalyser  {
   int CallsCount;
   bool Invert;
   vec3d bCent, aCent;
-  smatdd alignmentMatrix;
+  smatdd alignmentMatrix, bestMatrix;
+  double minRms;
   GraphAnalyser(TEGraphNode<int,TSAtom*>& rootA, TEGraphNode<int,TSAtom*>& rootB, 
     const vec3d& acent, const vec3d& bcent) :
-    RootA(rootA), RootB(rootB), CallsCount(0), Invert(false), aCent(acent), bCent(bcent) {}
+    RootA(rootA), RootB(rootB), CallsCount(0), Invert(false), aCent(acent), bCent(bcent) {
+      minRms = -1;
+    }
 
   double CalcRMS()  {
     TTypeList< AnAssociation2<TSAtom*,TSAtom*> > matchedAtoms;
     matchedAtoms.SetCapacity(1024);
     ResultCollector( RootA, RootB, matchedAtoms);
     CallsCount++;
-    return TNetwork_FindAlignmentMatrix(matchedAtoms, alignmentMatrix, aCent, bCent, Invert);
-    return TNetwork::FindAlignmentMatrix(matchedAtoms, alignmentMatrix, Invert);
+    //const double rms = TNetwork_FindAlignmentMatrix(matchedAtoms, alignmentMatrix, aCent, bCent, Invert);
+    const double rms = TNetwork_FindAlignmentMatrix(matchedAtoms, alignmentMatrix, Invert);
+    if( minRms == -1 || rms < minRms )  {
+      minRms = rms;
+      bestMatrix = alignmentMatrix;
+    }
+    return rms;
+    //return TNetwork::FindAlignmentMatrix(matchedAtoms, alignmentMatrix, Invert);
   }
   double CalcRMS(const TEGraphNode<int,TSAtom*>& src, const TEGraphNode<int,TSAtom*>& dest)  {
-    if( alignmentMatrix.r.Trace() == 0 )
+    if( src[0].Count() != 0  )
+      return CalcRMS();
+    if( bestMatrix.r.Trace() == 0 )
       CalcRMS();
+    //alignmentMatrix.t = aCent;
     CallsCount++;
     const TAsymmUnit& au = *dest[0].GetObject()->CAtom().GetParent();
     double rsum = 0;
     if( !Invert )  {
       for( int i=0; i < src.Count(); i++ )  {
-        vec3d v = alignmentMatrix*(dest[i].GetObject()->crd()-bCent);
+        vec3d v = bestMatrix*(dest[i].GetObject()->crd() - bCent);
         rsum += v.QDistanceTo( src[i].GetObject()->crd() );
       }
     }
     else  {
       for( int i=0; i < src.Count(); i++ )  {
         vec3d v = dest[i].GetObject()->ccrd() * -1;
-        v = alignmentMatrix*(au.CellToCartesian(v)-bCent);
+        v = bestMatrix*(au.CellToCartesian(v) - bCent );
         rsum += v.QDistanceTo( src[i].GetObject()->crd() );
       }
     }
