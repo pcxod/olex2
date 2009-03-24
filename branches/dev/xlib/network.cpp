@@ -374,11 +374,12 @@ void ResultCollector( TEGraphNode<int,TSAtom*>& subRoot,
 void ResultCollector( TEGraphNode<int,TSAtom*>& subRoot,
                         TEGraphNode<int,TSAtom*>& Root,
                         TTypeList< AnAssociation2<TSAtom*, TSAtom*> >& res )  {
+  if( !subRoot.IsShallowEqual(Root) )
+    return;
   res.AddNew( subRoot.GetObject(), Root.GetObject());
-  for( int i=0; i < olx_min(subRoot.Count(),Root.Count()); i++ )
+  for( int i=0; i < subRoot.Count(); i++ )
     ResultCollector( subRoot.Item(i), Root.Item(i), res );
 }
-
 /*
 void ExpandGraphNode( TTypeList< TEGraphNode<int,TSAtom*>* >& allNodes, TEGraphNode<int,TSAtom*>& graphNode, TSAtom* node)  {
   if( node->GetTag() == 1 )  return;
@@ -438,6 +439,7 @@ struct GraphAnalyser  {
   vec3d bCent, aCent;
   smatdd alignmentMatrix, bestMatrix;
   double minRms;
+  int atomsToMatch;
   GraphAnalyser(TEGraphNode<int,TSAtom*>& rootA, TEGraphNode<int,TSAtom*>& rootB, 
     const vec3d& acent, const vec3d& bcent) :
     RootA(rootA), RootB(rootB), CallsCount(0), Invert(false), aCent(acent), bCent(bcent) {
@@ -449,6 +451,8 @@ struct GraphAnalyser  {
     matchedAtoms.SetCapacity(1024);
     ResultCollector( RootA, RootB, matchedAtoms);
     CallsCount++;
+    if( matchedAtoms.Count() < atomsToMatch )
+      return -1;
     //const double rms = TNetwork_FindAlignmentMatrix(matchedAtoms, alignmentMatrix, aCent, bCent, Invert);
     const double rms = TNetwork_FindAlignmentMatrix(matchedAtoms, alignmentMatrix, Invert);
     if( minRms == -1 || rms < minRms )  {
@@ -459,9 +463,9 @@ struct GraphAnalyser  {
     //return TNetwork::FindAlignmentMatrix(matchedAtoms, alignmentMatrix, Invert);
   }
   double CalcRMS(const TEGraphNode<int,TSAtom*>& src, const TEGraphNode<int,TSAtom*>& dest)  {
-    if( src[0].Count() != 0  )
+    if( src[0].GetData() != iHydrogenIndex || src[0].GetData() != iDeuteriumIndex )
       return CalcRMS();
-    if( bestMatrix.r.Trace() == 0 )
+    if( alignmentMatrix.r.Trace() == 0 )
       CalcRMS();
     //alignmentMatrix.t = aCent;
     CallsCount++;
@@ -481,6 +485,16 @@ struct GraphAnalyser  {
       }
     }
     return rsum;
+  }
+  void OnFinish()  {
+    
+  }
+  // since the H-atoms are given a smaller weight...
+  void HValidator( TEGraphNode<int,TSAtom*>& n1, TEGraphNode<int,TSAtom*>& n2)  {
+    if( !n1.IsShallowEqual(n2) )
+      return;
+    for( int i=0; i < n1.Count(); i++ )
+      HValidator( n1[i], n2[i] );
   }
 };
 
@@ -549,6 +563,7 @@ bool TNetwork::DoMatch( TNetwork& net, TTypeList< AnAssociation2<int, int> >& re
     if( thisGraph.GetRoot().DoMatch( thatGraph.GetRoot()) )  {  // match 
       GraphAnalyser ga(thisGraph.GetRoot(), thatGraph.GetRoot(), centa, centb);
       ga.Invert = Invert;
+      ga.atomsToMatch = NodeCount();
       thisGraph.GetRoot().FullMatchEx( thatGraph.GetRoot(), ga);
     
       trav.ClearData();

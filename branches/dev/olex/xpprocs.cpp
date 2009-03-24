@@ -6097,7 +6097,7 @@ double MatchAtomPairsQT(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atom
                         smatdd& res, bool TryInversion)  {
   if( atoms.Count() < 3 )  return -1;
   double rms = TNetwork::FindAlignmentMatrix(atoms, res, TryInversion);
-  TBasicApp::GetLog() << ( olxstr("RMS is ") << olxstr::FormatFloat(3, rms) << '\n');
+  TBasicApp::GetLog() << ( olxstr("RMS is ") << olxstr::FormatFloat(3, rms) << " A\n");
   return rms;
 }
 //..............................................................................
@@ -6240,7 +6240,8 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options, TMacroErr
         }
         smatdd S;
         double rms = MatchAtomPairsQT( satomp, S, TryInvert);
-        TBasicApp::GetLog() << ("Transformation matrix:\n");
+        S.r.Transpose();
+        TBasicApp::GetLog() << ("Transformation matrix B to A):\n");
         for( int i=0; i < 3; i++ )
           TBasicApp::GetLog() << S.r[i].ToString() << ' ' << S.t[i] << '\n' ;
         // execute callback function
@@ -6296,12 +6297,12 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options, TMacroErr
           atomsToTransform.Add( &netA.Node(i) );
       }
       else  {
-        for(int i=0; i < atoms.Count()/2; i++ )  {
+        for(int i=0; i < atoms.Count()/2; i++ )
           atomsToTransform.Add( &atoms[i]->Atom() );
-        }
       }
       smatdd S;
       double rms = MatchAtomPairsQT( satomp, S, TryInvert);
+      S.r.Transpose();
       TNetwork::DoAlignAtoms(satomp, atomsToTransform, S, TryInvert);
       FXApp->UpdateBonds();
       FXApp->CenterView();
@@ -6333,8 +6334,10 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options, TMacroErr
           }
           double rms = MatchAtomPairsQT( satomp, S, TryInvert);
           CallMatchCallbacks(*nets[i], *nets[j], rms);
-          if( rms >= 0 )
+          if( rms >= 0 )  {
+            S.r.Transpose();
             TNetwork::DoAlignAtoms(satomp, atomsToTransform, S, TryInvert);
+          }
 
         }
       }
@@ -8189,6 +8192,10 @@ void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options, TMa
   conn3.A().SetCount(2);
   conn3.A()[0] = 6;
   conn3.A()[1] = 7;
+
+  con_info& conn4 = conn_l.AddNew();
+  conn4.A().SetCount(1);
+  conn4.A()[0] = 8;
 
   TTypeList<TIntList> out;
   TEGraphNode<int,int>::GeneratePermutations(conn_l, out);
