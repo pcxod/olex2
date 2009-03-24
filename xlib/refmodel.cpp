@@ -282,6 +282,7 @@ void RefinementModel::AddInfoTab(const TStrList& l)  {
   try  {  ar.Expand( *this, ag, resi_name, atomAGroup);  }
   catch( const TExceptionBase& ex )  {
     TBasicApp::GetLog().Error(olxstr("Invalid info table atoms: ") << l.Text(' '));
+    TBasicApp::GetLog().Error(ex.GetException()->GetFullMessage());
     InfoTables.Delete( InfoTables.Count()-1 );
     return;
   }
@@ -705,21 +706,21 @@ void RefinementModel::ProcessFrags()  {
         if( crds.Count() < 3 )
           throw TFunctionFailedException(__OlxSourceInfo, "Not enough atoms in fitted group");
         smatdd tm;
-        vec3d tr, tri;
+        vec3d tr, tri, t;
         for( int k=0; k < crds.Count(); k++ )  {
           icrds[k].B() = aunit.CellToCartesian( crds[k].B() );
           aunit.CartesianToCell( icrds[k].A() ) *= -1;
           aunit.CellToCartesian( icrds[k].A() );
-          tm.t += crds[k].B();
+          t += crds[k].B();
           tr += crds[k].GetA();
           tri += icrds[k].GetA();
         }
-        tm.t /= crds.Count();
+        t /= crds.Count();
         tr /= crds.Count();
         tri /= crds.Count();
         bool invert = false;
-        double rms = TNetwork::FindAlignmentMatrix(crds, tm);
-        double irms = TNetwork::FindAlignmentMatrix(icrds, tm);
+        double rms = TNetwork::FindAlignmentMatrix(crds, tr, t, tm);
+        double irms = TNetwork::FindAlignmentMatrix(icrds, tri, t, tm);
         if( irms < rms && irms >= 0 )  {
           tr = tri;
           invert = true;
@@ -731,9 +732,7 @@ void RefinementModel::ProcessFrags()  {
             v *= -1;
             aunit.CellToCartesian(v);
           }
-          v -= tr;
-          v *= tm.r;
-          v += tm.t;
+          v = tm*(tr-v);
           atoms[k]->ccrd() = aunit.CartesianToCell(v);
         }
         ag.SetAfix( ag.GetN() );
@@ -788,6 +787,7 @@ void RefinementModel::ToDataItem(TDataItem& item) {
   omits.AddField("hkl", PersUtil::VecListToStr(Omits));
   item.AddItem("TWIN", TWIN_set).AddField("mat", TSymmParser::MatrixToSymmEx(TWIN_mat)).AddField("n", TWIN_n);
   item.AddItem("MERG", MERG_set).AddField("val", MERG);
+  item.AddItem("SHEL", SHEL_set).AddField("high", SHEL_hr).AddField("low", SHEL_lr);
   // restore matrix tags
   for( int i=0; i < UsedSymm.Count(); i++ )
     UsedSymm.GetValue(i).SetTag( mat_tags[i] );
@@ -849,6 +849,13 @@ void RefinementModel::FromDataItem(TDataItem& item) {
   TDataItem& merge = item.FindRequiredItem("MERG");
   MERG_set = merge.GetValue().ToBool();
   MERG = merge.GetRequiredField("val").ToInt();
+
+  TDataItem& shel = *item.FindItem("SHEL");
+  if( &shel != NULL )  {
+    SHEL_set = shel.GetValue().ToBool();
+    SHEL_lr = shel.GetRequiredField("low").ToDouble();
+    SHEL_hr = shel.GetRequiredField("high").ToDouble();
+  }
 }
 //....................................................................................................
 #ifndef _NO_PYTHON
@@ -917,6 +924,12 @@ PyObject* RefinementModel::PyExport(bool export_connectivity)  {
         PyTuple_SetItem(basf, i, Py_BuildValue("d", BASF[i]) );
     PyDict_SetItemString(twin, "basf", basf);
     PyDict_SetItemString(main, "twin", twin );
+  }
+  if( SHEL_set )  {
+    PyObject* shel;
+    PyDict_SetItemString(main, "shel", shel = PyDict_New() );
+      PyDict_SetItemString(shel, "low", Py_BuildValue("d", SHEL_lr));
+      PyDict_SetItemString(shel, "high", Py_BuildValue("d", SHEL_hr));
   }
   // attach the connectivity...
   if( export_connectivity )  {

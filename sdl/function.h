@@ -183,7 +183,7 @@ template <class Base>
       }
       try  {
          for(int i=0; i < argC; i++ )  {
-           RunSignature << '[' << Params.String(i) << ']';
+           RunSignature << '[' << Params[i] << ']';
            if( i < (argC-1) )  RunSignature << ", ";
          }
          RunSignature << ')';
@@ -239,7 +239,7 @@ template <class Base>
       }
       try  {
          for(int i=0; i < argC; i++ )  {
-           RunSignature << '['  << Params.String(i) << ']';
+           RunSignature << '['  << Params[i] << ']';
            if( i < (argC-1) )  RunSignature << ", ";
          }
          RunSignature << ')';
@@ -308,7 +308,7 @@ template <class Base>
       }
       try  {
          for(int i=0; i < argC; i++ )  {
-           RunSignature << '[' << Params.String(i) << ']';
+           RunSignature << '[' << Params[i] << ']';
            if( i < (argC-1) )  RunSignature << ", ";
          }
          RunSignature << ' ';
@@ -388,7 +388,7 @@ template <class Base>
       }
       try  {
          for(int i=0; i < argC; i++ )  {
-           RunSignature << '[' << Params.String(i) <<  ']';
+           RunSignature << '[' << Params[i] <<  ']';
            if( i < (argC-1) )  RunSignature << ", ";
          }
          RunSignature << ' ';

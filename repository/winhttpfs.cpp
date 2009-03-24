@@ -25,7 +25,7 @@ TWinHttpFileSystem::~TWinHttpFileSystem()  {
     WSACleanup();
 
   for( int i=0; i < TmpFiles.Count(); i++ )
-    TEFile::DelFile( TmpFiles.String(i) );
+    TEFile::DelFile( TmpFiles[i] );
 }
 //..............................................................................
 void TWinHttpFileSystem::GetAddress(struct sockaddr* Result)  {

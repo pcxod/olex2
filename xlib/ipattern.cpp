@@ -61,8 +61,8 @@ bool TIPattern::Calc(olxstr Exp, olxstr &Msg, bool Combine, double Delta)  {
   }
   CHN.CalcSummFormula(SL);
   for( int i=0; i < SL.Count(); i++ )  {
-    AI = AtomsInfo->FindAtomInfoBySymbol( SL.String(i) );
-    int occupancy = (int)SL.Object(i);
+    AI = AtomsInfo->FindAtomInfoBySymbol( SL[i] );
+    int occupancy = (int)SL.GetObject(i);
     if( occupancy == 0 )  {
       occupancy++;
       TBasicApp::GetLog().Error(

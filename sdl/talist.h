@@ -82,7 +82,7 @@ public:
 //..............................................................................
   const T& Insert(size_t index, const T& Obj)  {
     if( FCapacity == FCount )  SetCapacity((long)(1.5*FCount + FIncrement));
-    for( size_t i=FCount-1; i >= index; i-- )
+    for( int i=FCount-1; i >= index; i-- )
       Items[i+1] = Items[i];
     Items[index] = Obj;
     FCount++;
@@ -191,7 +191,7 @@ public:
 
     if( sv == 1 )  {  // special case
       T D = Items[FCount-1];
-      for( size_t i=FCount-2; i >= 0; i-- )
+      for( int i=FCount-2; i >= 0; i-- )
         Items[i+1] = Items[i];
       Items[0] = D;
     }
@@ -199,7 +199,7 @@ public:
       T* D = new T[sv];
       for( size_t i=0; i < sv; i++ )
         D[i] = Items[FCount-sv+i];
-      for( size_t i=FCount-sv-1; i >= 0; i-- )
+      for( int i=FCount-sv-1; i >= 0; i-- )
         Items[i+sv] = Items[i];
       for( size_t i=0; i < sv; i++ )
         Items[i] = D[i];
@@ -224,7 +224,7 @@ public:
 #endif
     T D = Items[from];
     if( from > to )  {
-      for( size_t i=from-1; i >= to; i-- )
+      for( int i=from-1; i >= to; i-- )
       Items[i+1] = Items[i];
     }
     else  {

@@ -138,10 +138,9 @@ public:
   /* throws exception if the queue does not exist */
   inline TActionQueue* FindQueue(const olxstr &Name)  const {  return Queues[Name];  }
   // queue by index
-  inline TActionQueue& Queue(int index)                 {  return *Queues.Object(index);  }
-  inline const TActionQueue& GetQueue(int index)  const {  return *Queues.GetObject(index);  }
+  inline TActionQueue& GetQueue(int index) const {  return *Queues.GetObject(index);  }
   // returns the number of queues
-  inline int Count()                           const {  return Queues.Count();  }
+  inline int Count()                       const {  return Queues.Count();  }
   // empties the list
   void Clear();
 };

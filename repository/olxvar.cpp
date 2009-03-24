@@ -170,7 +170,7 @@ void TOlxPyVar::Set(const olxstr& str)  {
 }
 //..............................................................................
 const olxstr& TOlxVars::GetVarStr(int index)  {
-  TOlxPyVar& oo = Instance->Vars.Object(index);
+  TOlxPyVar& oo = Instance->Vars.GetObject(index);
   if( oo.GetStr() != NULL )  return *oo.GetStr();
   PyObject *po = oo.GetObjVal();
   double fv;

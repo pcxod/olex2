@@ -81,7 +81,7 @@ TComboBox::TComboBox(wxWindow *Parent, bool ReadOnly, const wxSize& sz) :
     wxCB_DROPDOWN|(ReadOnly?wxCB_READONLY:0)|wxTE_PROCESS_ENTER), WI(this)
 #endif
 {
-  if( Parent->IsFrozen() )  Hide();
+  //if( Parent->IsFrozen() )  Hide();
 
   FActions = new TActionQList;
   OnChange = &FActions->NewQueue("ONCHANGE");
@@ -198,13 +198,13 @@ olxstr TComboBox::ItemsToString(const olxstr &sep)  {
 //..............................................................................
 void TComboBox::AddItems(const TStrList& EL) {
   for( int i=0; i < EL.Count(); i++ )  {
-    int ind = EL.String(i).IndexOf( "<-" );
+    int ind = EL[i].IndexOf( "<-" );
     if(  ind != -1 )  {
-      olxstr tmp = EL.String(i).SubStringFrom(ind + 2);
-      _AddObject( EL.String(i).SubStringTo(ind), tmp.Replicate(), true);
+      olxstr tmp = EL[i].SubStringFrom(ind + 2);
+      _AddObject( EL[i].SubStringTo(ind), tmp.Replicate(), true);
     }
     else
-      _AddObject( EL.String(i), NULL, false );
+      _AddObject( EL[i], NULL, false );
   }
 }
 //..............................................................................
@@ -239,7 +239,7 @@ TMainFrame::TMainFrame(const wxString& title, const wxPoint& pos, const wxSize& 
 }
 TMainFrame::~TMainFrame()  {
   for( int i=0; i < FWindowPos.Count(); i++ )
-    delete FWindowPos.Object(i);
+    delete FWindowPos.GetObject(i);
 }
 //..............................................................................
 /*void TMainFrame::Maximize()
@@ -465,7 +465,7 @@ END_EVENT_TABLE()
 TButton::TButton(wxWindow* P, wxWindowID id, const wxString& label, const wxPoint& pos, 
     const wxSize& size, long style) : 
     wxButton(P, id, label, pos, size, style), WI(this)  {
-  if( P->IsFrozen() )  Hide();
+  //if( P->IsFrozen() )  Hide();
 }
 //..............................................................................
 TButton::~TButton()  {  ;  }
@@ -491,7 +491,7 @@ END_EVENT_TABLE()
 TBmpButton::TBmpButton(wxWindow* P, wxWindowID id, const wxBitmap& bitmap, const wxPoint& pos, 
     const wxSize& size, long style) : 
     wxBitmapButton(P, -1, bitmap, pos, size, style), WI(this)  {
-  if( P->IsFrozen() )  Hide();
+  //if( P->IsFrozen() )  Hide();
 }
 //..............................................................................
 TBmpButton::~TBmpButton()  {  ;  }
@@ -514,7 +514,7 @@ BEGIN_EVENT_TABLE(TCheckBox, wxCheckBox)
 END_EVENT_TABLE()
 
 TCheckBox::TCheckBox(wxWindow *P):wxCheckBox(P, -1, wxString()), WI(this)  {
-  if( P->IsFrozen() )  Hide();
+  //if( P->IsFrozen() )  Hide();
   FActions = new TActionQList;
   OnClick = &FActions->NewQueue("ONCLICK");
   OnCheck = &FActions->NewQueue("ONCHECK");
@@ -574,7 +574,7 @@ BEGIN_EVENT_TABLE(TLabel, wxStaticText)
 END_EVENT_TABLE()
 
 TLabel::TLabel(wxWindow *P):wxStaticText(P, -1, wxString()), WI(this)  {
-  if( P->IsFrozen() )  Hide();
+  //if( P->IsFrozen() )  Hide();
   FActions = new TActionQList;
   OnClick = &FActions->NewQueue("ONCLICK");
 }
@@ -606,7 +606,7 @@ END_EVENT_TABLE()
 //..............................................................................
 TTextEdit::TTextEdit(wxWindow *Parent, int style):
     wxTextCtrl(Parent, -1, wxString(), wxDefaultPosition, wxDefaultSize, style), WI(this)  {
-  if( Parent->IsFrozen() )  Hide();
+  //if( Parent->IsFrozen() )  Hide();
   FActions = new TActionQList;
   OnChange = &FActions->NewQueue("ONCHANGE");
   OnClick = &FActions->NewQueue("ONCLICK");
@@ -689,7 +689,7 @@ BEGIN_EVENT_TABLE(TListBox, wxListBox)
 END_EVENT_TABLE()
 //..............................................................................
 TListBox::TListBox(wxWindow *Parent): wxListBox(Parent, -1), WI(this)  {
-  if( Parent->IsFrozen() )  Hide();
+  //if( Parent->IsFrozen() )  Hide();
   FActions = new TActionQList;
   OnSelect = &FActions->NewQueue("ONSELECT");
   OnDblClick = &FActions->NewQueue("ONCLICK");
@@ -740,7 +740,7 @@ BEGIN_EVENT_TABLE(TSpinCtrl, wxSpinCtrl)
 END_EVENT_TABLE()
 //..............................................................................
 TSpinCtrl::TSpinCtrl(wxWindow *Parent): wxSpinCtrl(Parent), WI(this)  {
-  if( Parent->IsFrozen() )  Hide();
+  //if( Parent->IsFrozen() )  Hide();
   FActions = new TActionQList;
   OnChange = &FActions->NewQueue("ONCHANGE");
 }
@@ -795,7 +795,7 @@ BEGIN_EVENT_TABLE(TTreeView, wxGenericTreeCtrl)
 END_EVENT_TABLE()
 
 TTreeView::TTreeView(wxWindow* Parent): wxGenericTreeCtrl(Parent), WI(this)  {
-  if( Parent->IsFrozen() )  Hide();
+  //if( Parent->IsFrozen() )  Hide();
   FActions = new TActionQList;
   OnSelect = &FActions->NewQueue("ONSELECT");
   OnDblClick = &FActions->NewQueue("ONCLICK");
@@ -820,17 +820,17 @@ void TTreeView::SelectionEvent(wxTreeEvent& event) {
 //..............................................................................
 int TTreeView::ReadStrings(int& index, const wxTreeItemId* thisCaller, TStrList& strings)  {
   while( (index + 2) <= strings.Count() )  {
-    int level = strings.String(index).LeadingCharCount( '\t' );
+    int level = strings[index].LeadingCharCount( '\t' );
     index++;  // now index is on data string
     wxTreeItemId item;
-    if( strings.String(index).Trim('\t').IsEmpty() )
-      item = AppendItem( *thisCaller, uiStr(strings.String(index-1).Trim('\t')) );
+    if( strings[index].Trim('\t').IsEmpty() )
+      item = AppendItem( *thisCaller, strings[index-1].Trim('\t').u_str() );
     else
-      item = AppendItem( *thisCaller, uiStr(strings.String(index-1).Trim('\t')), -1, -1,
-         new TTreeNodeData(new olxstr(strings.String(index))) );
+      item = AppendItem( *thisCaller, strings[index-1].Trim('\t').u_str(), -1, -1,
+         new TTreeNodeData(new olxstr(strings[index])) );
     index++;  // and now on the next item
     if( index < strings.Count() )  {
-      int nextlevel = strings.String(index).LeadingCharCount('\t');
+      int nextlevel = strings[index].LeadingCharCount('\t');
       if( nextlevel > level )  {
         int slevel = ReadStrings(index, &item, strings);
         if( slevel != level )
@@ -860,25 +860,34 @@ bool TTreeView::LoadFromStrings(TStrList &strings)  {
 //----------------------------------------------------------------------------//
 BEGIN_EVENT_TABLE(TTrackBar, wxSlider)
   EVT_SCROLL(TTrackBar::ScrollEvent)
+  EVT_LEFT_UP(TTrackBar::MouseUpEvent)
 END_EVENT_TABLE()
 //..............................................................................
 TTrackBar::TTrackBar(wxWindow *Parent):wxSlider(Parent, -1, 0, 0, 100, wxDefaultPosition, wxDefaultSize, wxSL_HORIZONTAL|wxSL_AUTOTICKS),
                                        WI(this)  {
-  if( Parent->IsFrozen() )  Hide();
+  //if( Parent->IsFrozen() )  Hide();
   FActions = new TActionQList;
   OnChange = &FActions->NewQueue("ONCHANGE");
+  OnMouseUp = &FActions->NewQueue("ONMOUSEUP");
   SetValue(0);
   this_Val = 0;
 }
 //..............................................................................
 TTrackBar::~TTrackBar()  {  delete FActions;  }
 //..............................................................................
-void TTrackBar::ScrollEvent(wxScrollEvent& event)  {
+void TTrackBar::ScrollEvent(wxScrollEvent& evt)  {
   if( this_Val == GetValue() )  return;
   this_Val = GetValue();
   if( !Data.IsEmpty() )  TOlxVars::SetVar(Data, this_Val);
   StartEvtProcessing()
     OnChange->Execute(this, &TEGC::New<olxstr>(GetOnChangeStr()));
+  EndEvtProcessing()
+}
+//..............................................................................
+void TTrackBar::MouseUpEvent(wxMouseEvent& evt)  {
+  evt.Skip();
+  StartEvtProcessing()
+    OnMouseUp->Execute(this, &TEGC::New<olxstr>(GetOnMouseUpStr()));
   EndEvtProcessing()
 }
 //..............................................................................

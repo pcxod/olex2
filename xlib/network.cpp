@@ -21,8 +21,58 @@
 
 #include "olxmps.h"
 #include "estopwatch.h"
+#include "edict.h"
+#include "emath.h"
 
 #undef GetObject
+
+double TNetwork_FindAlignmentMatrix(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atoms, 
+                                    smatdd& res, const vec3d& centA, const vec3d centB, bool TryInversion)  {
+  TTypeList< AnAssociation2<vec3d,vec3d> > crds;
+  crds.SetCapacity( atoms.Count() );
+  const TAsymmUnit& au = atoms[0].GetA()->GetNetwork().GetLattice().GetAsymmUnit();
+  if( TryInversion )  {
+    for( int i=0; i < atoms.Count(); i++ )  {
+      vec3d v = atoms[i].GetB()->ccrd() * -1;
+      crds.AddNew(atoms[i].GetA()->crd(), au.CellToCartesian(v) );
+    }
+  }
+  else  {
+    for( int i=0; i < atoms.Count(); i++ )  {
+      vec3d v = atoms[i].GetB()->ccrd();
+      crds.AddNew( atoms[i].GetA()->crd(), au.CellToCartesian(v) );
+    }
+  }
+  res.t = centA;
+  return TNetwork::FindAlignmentMatrix(crds, res.t, centB, res);
+}
+double TNetwork_FindAlignmentMatrix(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atoms, smatdd& res, bool TryInversion)  {
+  TTypeList< AnAssociation2<vec3d,vec3d> > crds;
+  crds.SetCapacity( atoms.Count() );
+  const TAsymmUnit& au = atoms[0].GetA()->GetNetwork().GetLattice().GetAsymmUnit();
+  if( TryInversion )  {
+    for( int i=0; i < atoms.Count(); i++ )  {
+      vec3d v = atoms[i].GetB()->ccrd() * -1;
+      crds.AddNew(atoms[i].GetA()->crd(), au.CellToCartesian(v) );
+    }
+  }
+  else  {
+    for( int i=0; i < atoms.Count(); i++ )  {
+      vec3d v = atoms[i].GetB()->ccrd();
+      crds.AddNew( atoms[i].GetA()->crd(), au.CellToCartesian(v) );
+    }
+  }
+  double sumA = 0, sumB = 0;
+  vec3d centA, centB;
+  for( int i=0; i < atoms.Count(); i++ )  {
+    centA += crds[i].GetA()*atoms[i].GetA()->CAtom().GetOccu()*atoms[i].GetA()->GetAtomInfo().GetMr();
+    sumA += atoms[i].GetA()->CAtom().GetOccu()*atoms[i].GetA()->GetAtomInfo().GetMr();
+    centB += crds[i].GetB()*atoms[i].GetB()->CAtom().GetOccu()*atoms[i].GetB()->GetAtomInfo().GetMr();
+    sumB += atoms[i].GetB()->CAtom().GetOccu()*atoms[i].GetB()->GetAtomInfo().GetMr();
+  }
+  res.t = centA/sumA;
+  return TNetwork::FindAlignmentMatrix(crds, res.t, centB/sumB, res);
+}
 
 //---------------------------------------------------------------------------
 // TNetwork function bodies
@@ -321,7 +371,15 @@ void ResultCollector( TEGraphNode<int,TSAtom*>& subRoot,
   for( int i=0; i < olx_min(subRoot.Count(),Root.Count()); i++ )
     ResultCollector( subRoot.Item(i), Root.Item(i), res );
 }
-
+void ResultCollector( TEGraphNode<int,TSAtom*>& subRoot,
+                        TEGraphNode<int,TSAtom*>& Root,
+                        TTypeList< AnAssociation2<TSAtom*, TSAtom*> >& res )  {
+  if( !subRoot.IsShallowEqual(Root) )
+    return;
+  res.AddNew( subRoot.GetObject(), Root.GetObject());
+  for( int i=0; i < subRoot.Count(); i++ )
+    ResultCollector( subRoot[i], Root[i], res );
+}
 /*
 void ExpandGraphNode( TTypeList< TEGraphNode<int,TSAtom*>* >& allNodes, TEGraphNode<int,TSAtom*>& graphNode, TSAtom* node)  {
   if( node->GetTag() == 1 )  return;
@@ -362,7 +420,6 @@ void BreadthFirstTags(TSAtom* sa)  {
 }
 
 void ExpandGraphNode(TEGraphNode<int,TSAtom*>& graphNode)  {
-
   for( int i=0; i < graphNode.GetObject()->NodeCount(); i++ )  {
     TSAtom& sa = graphNode.GetObject()->Node(i);
     if( sa.GetTag() <= graphNode.GetObject()->GetTag() )  continue;
@@ -375,12 +432,133 @@ void BuildGraph( TEGraphNode<int,TSAtom*>& graphNode, TSAtom* node)  {
   ExpandGraphNode(graphNode);
 }
 
+struct GraphAnalyser  {
+  TEGraphNode<int,TSAtom*> &RootA, &RootB; 
+  int CallsCount;
+  bool Invert;
+  vec3d bCent, aCent;
+  smatdd alignmentMatrix, bestMatrix;
+  double minRms;
+  int atomsToMatch;
+  GraphAnalyser(TEGraphNode<int,TSAtom*>& rootA, TEGraphNode<int,TSAtom*>& rootB, 
+    const vec3d& acent, const vec3d& bcent) :
+    RootA(rootA), RootB(rootB), CallsCount(0), Invert(false), aCent(acent), bCent(bcent) {
+      minRms = -1;
+    }
+
+  double CalcRMS()  {
+    TTypeList< AnAssociation2<TSAtom*,TSAtom*> > matchedAtoms;
+    matchedAtoms.SetCapacity(1024);
+    ResultCollector( RootA, RootB, matchedAtoms);
+    for( int i=0; i < matchedAtoms.Count(); i++ )
+      matchedAtoms[i].A()->SetTag(i);
+    for( int i=0; i < matchedAtoms.Count(); i++ )
+      if( matchedAtoms[i].A()->GetTag() != i )
+        matchedAtoms.NullItem(i);
+    matchedAtoms.Pack();
+    CallsCount++;
+//    if( matchedAtoms.Count() != atomsToMatch )
+//      return -1;
+    //const double rms = TNetwork_FindAlignmentMatrix(matchedAtoms, alignmentMatrix, aCent, bCent, Invert);
+    const double rms = TNetwork_FindAlignmentMatrix(matchedAtoms, alignmentMatrix, Invert);
+    if( minRms == -1 || rms < minRms )  {
+      minRms = rms;
+      bestMatrix = alignmentMatrix;
+    }
+    return rms;
+  }
+  double CalcRMS(const TEGraphNode<int,TSAtom*>& src, const TEGraphNode<int,TSAtom*>& dest)  {
+    int h_cnt = 0;
+    for( int i=0; i < src.Count(); i++ )
+      if( src[i].GetData() == iHydrogenIndex || src[i].GetData() == iDeuteriumIndex )
+        h_cnt++;
+    if( h_cnt < 2 )
+      return CalcRMS();
+    if( alignmentMatrix.r.Trace() == 0 )
+      CalcRMS();
+    //alignmentMatrix.t = aCent;
+    CallsCount++;
+    const TAsymmUnit& au = *dest[0].GetObject()->CAtom().GetParent();
+    double rsum = 0;
+    if( !Invert )  {
+      for( int i=0; i < src.Count(); i++ )  {
+        vec3d v = bestMatrix*(dest[i].GetObject()->crd() - bCent);
+        rsum += v.QDistanceTo( src[i].GetObject()->crd() );
+      }
+    }
+    else  {
+      for( int i=0; i < src.Count(); i++ )  {
+        vec3d v = dest[i].GetObject()->ccrd() * -1;
+        v = bestMatrix*(au.CellToCartesian(v) - bCent );
+        rsum += v.QDistanceTo( src[i].GetObject()->crd() );
+      }
+    }
+    return rsum;
+  }
+  void OnFinish()  {
+    CalcRMS();
+    HValidator(RootA, RootB);
+  }
+  // since the H-atoms are given a smaller weights...
+  void HValidator( TEGraphNode<int,TSAtom*>& n1, TEGraphNode<int,TSAtom*>& n2)  {
+    if( !n1.IsShallowEqual(n2) )
+      return;
+    TIntList hpos;
+    for( int i=0; i < n1.Count(); i++ )  {
+      if( n1[i].GetData() == iHydrogenIndex )
+        hpos.Add(i);
+      HValidator( n1[i], n2[i] );
+    }
+    if( hpos.Count() < 2 )  return;
+    const TAsymmUnit& au = *n1[0].GetObject()->CAtom().GetParent();
+    TIntList new_pos(hpos.Count()), Used;
+    for( int i=0; i < hpos.Count(); i++ )  {
+      vec3d v = n2[hpos[i]].GetObject()->ccrd(); 
+      if( Invert )
+        v*= -1;
+      v = bestMatrix*(au.CellToCartesian(v) - bCent );
+      double minQD = 1000;
+      int best_pos = 0;
+      for( int j=0; j < hpos.Count(); j++ )  {
+        if( Used.IndexOf(j) != -1 )  continue;
+        const double qd = v.QDistanceTo(n1[hpos[j]].GetObject()->crd());
+        if( qd < minQD )  {
+          minQD = qd;
+          best_pos = j;
+        }
+      }
+      Used.Add(best_pos);
+      new_pos[i] = hpos[best_pos];
+    }
+    TPtrList< TEGraphNode<int,TSAtom*> > nodes( n2.GetNodes() );
+    for( int i=0; i < hpos.Count(); i++ )
+      n2.GetNodes()[new_pos[i]] = nodes[hpos[i]];
+  } 
+};
+
 //..............................................................................
-bool TNetwork::DoMatch( TNetwork& net, TTypeList< AnAssociation2<int, int> >& res )  {
+bool TNetwork::DoMatch( TNetwork& net, TTypeList< AnAssociation2<int, int> >& res, bool Invert)  {
   if( NodeCount() != net.NodeCount() )  return false;
   TSAtom* thisSa = NULL;
   int maxbc = 0;
   double maxMw = 0;
+  vec3d centb, centa;
+  double centa_wght = 0, centb_wght = 0;
+  const TAsymmUnit& au = this->GetLattice().GetAsymmUnit();
+  for( int i=0; i < net.NodeCount(); i++ )  {
+    if( Invert )  {
+      vec3d v = net.Node(i).ccrd() * -1;
+      au.CellToCartesian(v);
+      centb += v*net.Node(i).CAtom().GetOccu()*net.Node(i).GetAtomInfo().GetMr();
+      centb_wght += net.Node(i).CAtom().GetOccu()*net.Node(i).GetAtomInfo().GetMr();
+    }
+    else  {
+      centb += net.Node(i).crd()*net.Node(i).CAtom().GetOccu()*net.Node(i).GetAtomInfo().GetMr();
+      centb_wght += net.Node(i).CAtom().GetOccu()*net.Node(i).GetAtomInfo().GetMr();
+    }
+  }
+  centb /= centb_wght;
+
   for( int i=0; i < NodeCount(); i++ )  {
     Node(i).SetTag(0);
     if( Node(i).NodeCount() > maxbc )  {
@@ -394,7 +572,11 @@ bool TNetwork::DoMatch( TNetwork& net, TTypeList< AnAssociation2<int, int> >& re
         maxMw = thisSa->GetAtomInfo().GetMr();
       }
     }
+    centa += Node(i).crd()*Node(i).CAtom().GetOccu()*Node(i).GetAtomInfo().GetMr();
+    centa_wght += Node(i).CAtom().GetOccu()*Node(i).GetAtomInfo().GetMr();
   }
+  centa /= centa_wght;
+
   if( thisSa == NULL )  return false;
   TEGraph<int, TSAtom*> thisGraph( thisSa->GetAtomInfo().GetIndex(), thisSa );
 //  TEGraph<int, TSAtom*> thisGraph( 0, thisSa );
@@ -416,11 +598,18 @@ bool TNetwork::DoMatch( TNetwork& net, TTypeList< AnAssociation2<int, int> >& re
     trav.OnItem( thatGraph.GetRoot() );
     thatGraph.GetRoot().Traverser.LevelTraverse(thatGraph.GetRoot(), trav);
     TBasicApp::GetLog().Info( trav.GetData() );
-    if( thisGraph.GetRoot().DoMatch( thatGraph.GetRoot() ) )  {
+    if( thisGraph.GetRoot().DoMatch( thatGraph.GetRoot()) )  {  // match 
+      GraphAnalyser ga(thisGraph.GetRoot(), thatGraph.GetRoot(), centa, centb);
+      ga.Invert = Invert;
+      ga.atomsToMatch = NodeCount();
+      if( !thisGraph.GetRoot().FullMatchEx( thatGraph.GetRoot(), ga) ) // weird, roll back
+        thisGraph.GetRoot().DoMatch( thatGraph.GetRoot());
+    
       trav.ClearData();
       trav.OnItem( thatGraph.GetRoot() );
       thatGraph.GetRoot().Traverser.LevelTraverse(thatGraph.GetRoot(), trav);
       TBasicApp::GetLog().Info( trav.GetData() );
+      TBasicApp::GetLog().Info( olxstr("Number of permutations: ") << ga.CallsCount );
       ResultCollector( thisGraph.GetRoot(), thatGraph.GetRoot(), res);
       return true;
     }
@@ -693,15 +882,13 @@ bool TNetwork::IsRingRegular(const TSAtomPList& ring)  {
   return true;
 }
 //..............................................................................
-// quaternion method, Acta A45 (1989), 208
-double TNetwork::FindAlignmentMatrix(const TTypeList< AnAssociation2<vec3d,vec3d> >& crds, smatdd& res)  {
-  ematd evm(4,4), ev(4,4);
-  vec3d centA, centB(res.t), v;
-  for( int i=0; i < crds.Count(); i++ )
-    centA += crds[i].GetA();
-  centA /= crds.Count();
+// finds quaternions to map B to A
+void TNetwork::FindAlignmentQuaternions(const TTypeList< AnAssociation2<vec3d,vec3d> >& crds, 
+  const vec3d& centA, const vec3d& centB, ematd& quaternions, evecd& rms)  
+{
+  ematd evm(4,4);
   for( int i=0; i < crds.Count(); i++ )  {
-    v = crds[i].GetA() - centA;
+    vec3d v = crds[i].GetA() - centA;
     const double 
       xm = v[0] - (crds[i].GetB()[0]-centB[0]),
       xp = v[0] + (crds[i].GetB()[0]-centB[0]),
@@ -726,122 +913,69 @@ double TNetwork::FindAlignmentMatrix(const TTypeList< AnAssociation2<vec3d,vec3d
       evm[3][2] = evm[2][3];
       evm[3][3] += (xp*xp + yp*yp + zm*zm);
   }
-
-  ev.E();
-  ematd::EigenValues(evm, ev);
-  double minVal = 1000;
-  int minInd = -1;
-  for(int i=0; i < 4; i++ )  {
-    if( evm[i][i] < minVal )  {
-      minInd = i;
-      minVal = evm[i][i];
+  ematd::EigenValues(evm, quaternions.Resize(4,4).I());
+  rms.Resize(4);
+  for( int i=0; i < 4; i++ )  {
+    if( evm[i][i] < 0 )
+      rms[i] = 0;
+    else
+      rms[i] = sqrt(evm[i][i]/crds.Count());
+  }
+  bool changes = true;
+  while( changes )  {
+    changes = false;
+    for( int i=0; i < 3; i++ )  {
+      if( rms[i+1] < rms[i] )  {
+        quaternions.SwapRows(i, i+1);
+        olx_swap(rms[i], rms[i+1]);
+        changes = true;
+      }
     }
   }
-  if( minInd < 0 )  return -1;
-  const evecd& qt = ev[minInd];
-  res.r[0][0] = qt[0]*qt[0] + qt[1]*qt[1] - qt[2]*qt[2] - qt[3]*qt[3];
-  res.r[0][1] = 2*(qt[1]*qt[2] + qt[0]*qt[3]);
-  res.r[0][2] = 2*(qt[1]*qt[3] - qt[0]*qt[2]);
-
-  res.r[1][0] = 2*(qt[1]*qt[2] - qt[0]*qt[3]);
-  res.r[1][1] = qt[0]*qt[0] + qt[2]*qt[2] - qt[1]*qt[1] - qt[3]*qt[3];
-  res.r[1][2] = 2*(qt[2]*qt[3] + qt[0]*qt[1]);
-
-  res.r[2][0] = 2*(qt[1]*qt[3] + qt[0]*qt[2]);
-  res.r[2][1] = 2*(qt[2]*qt[3] - qt[0]*qt[1]);
-  res.r[2][2] = qt[0]*qt[0] + qt[3]*qt[3] - qt[1]*qt[1] - qt[2]*qt[2];
-  res.t = centB;
-  return (minVal <= 0) ? 0 : sqrt(minVal/crds.Count());
 }
-double TNetwork_FindAlignmentMatrix(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atoms, smatdd& res, bool TryInversion)  {
-  TTypeList< AnAssociation2<vec3d,vec3d> > crds;
-  crds.SetCapacity( atoms.Count() );
-  if( TryInversion )  {
-    const TAsymmUnit& au = atoms[0].GetA()->GetNetwork().GetLattice().GetAsymmUnit();
-    for( int i=0; i < atoms.Count(); i++ )  {
-      vec3d v = atoms[i].GetA()->ccrd() * -1;
-      au.CellToCartesian(v);
-      crds.AddNew(v, atoms[i].GetB()->crd() );
-    }
-  }
-  else  {
-    for( int i=0; i < atoms.Count(); i++ )
-      crds.AddNew(atoms[i].GetA()->crd(), atoms[i].GetB()->crd() );
-  }
-  return TNetwork::FindAlignmentMatrix(crds, res);
-}
-void TNetwork_CalcAMDiff(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atoms,
-                         smatdd& res, mat3d& df, bool TryInversion)  {
-  static const double delta = 1e-10;
-  vec3d v(res.t), d;
-  for( int i=0; i < 3; i++ )  {
-    v[i] += delta;
-    res.t = v;
-    double df1 = TNetwork_FindAlignmentMatrix(atoms, res, TryInversion);
-    v[i] -= 2*delta;
-    res.t = v;
-    double df2 = TNetwork_FindAlignmentMatrix(atoms, res, TryInversion);
-    v[i] += delta;
-    d[i] = (df1 - df2)/(2*delta);
-  }
-  for( int i=0; i < 3; i++ )  {
-    for( int j=i; j < 3; j++ )  {
-      df[i][j] = d[i]*d[j];
-      df[j][i] = df[i][j];
-    }
-  }
-  res.t = v;  // restore
-}
-double TNetwork_CalcAM(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atoms,
-                         smatdd& res, bool TryInversion) {
-  mat3d df;
-  vec3d v(0.01, 0.01, 0.01), sn(res.t), so(-100, -100, -100);
-  while( sn.DistanceTo(so) > 1e-10 )  {
-    so = sn;
-    res.t = sn;
-    TNetwork_CalcAMDiff(atoms, res, df, TryInversion);
-    sn = so - df*v;
-  }
-  return TNetwork_FindAlignmentMatrix(atoms, res, TryInversion);
+//..............................................................................
+double TNetwork::FindAlignmentMatrix(const TTypeList<AnAssociation2<vec3d,vec3d> >& crds, 
+  const vec3d& centA, const vec3d& centB, smatdd& res)  
+{
+  ematd quaternions(4,4);
+  evecd rms(4);
+  FindAlignmentQuaternions(crds, centA, centB, quaternions, rms);
+  QuaternionToMatrix(quaternions[0], res.r);
+  return rms[0];
 }
 /* gradient descent shows that the procedure does converge and needs no refinement */
 double TNetwork::FindAlignmentMatrix(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atoms,
                          smatdd& res, bool TryInversion)  {
-  vec3d centB;
-  TAsymmUnit& au = atoms[0].GetA()->GetNetwork().GetLattice().GetAsymmUnit();
-  for( int i=0; i < atoms.Count(); i++ )
-    centB += atoms[i].GetB()->crd();
-  centB /= atoms.Count();
-  res.t = centB;
-  //return TNetwork_CalcAM(atoms, res, TryInversion);
   return TNetwork_FindAlignmentMatrix(atoms, res, TryInversion);
 }
 //..............................................................................
 void TNetwork::DoAlignAtoms(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& satomp,
                             const TSAtomPList& atomsToTransform, const smatdd& S, bool Inverted)  {
-  vec3d acent, mcent, v;
-  TAsymmUnit& au = satomp[0].GetA()->GetNetwork().GetLattice().GetAsymmUnit();
+  vec3d mcent;
+  const TAsymmUnit& au = satomp[0].GetA()->GetNetwork().GetLattice().GetAsymmUnit();
+  double sum  = 0;
   if( Inverted )  {
-    for( int i=0; i < atomsToTransform.Count(); i++ )  {
-      //atomsToTransform[i]->ccrd() *= -1;
-      v = atomsToTransform[i]->ccrd();
-      v *= -1;
+    for( int i=0; i < atomsToTransform.Count(); i++ )
+      au.CellToCartesian(atomsToTransform[i]->ccrd() * -1, atomsToTransform[i]->crd());
+    for(int i=0; i < satomp.Count(); i++ )  {
+      vec3d v = satomp[i].GetB()->ccrd() * -1;
       au.CellToCartesian(v);
-      atomsToTransform[i]->crd() = v;
+      mcent += v*satomp[i].GetB()->CAtom().GetOccu()*satomp[i].GetB()->GetAtomInfo().GetMr();
+      sum += satomp[i].GetB()->CAtom().GetOccu()*satomp[i].GetB()->GetAtomInfo().GetMr();
     }
   }
+  else  {
+    for( int i=0; i < atomsToTransform.Count(); i++ )
+      au.CellToCartesian(atomsToTransform[i]->ccrd(), atomsToTransform[i]->crd());
+    for(int i=0; i < satomp.Count(); i++ )  {
+      mcent += satomp[i].GetB()->crd()*satomp[i].GetB()->CAtom().GetOccu()*satomp[i].GetB()->GetAtomInfo().GetMr();
+      sum += satomp[i].GetB()->CAtom().GetOccu()*satomp[i].GetB()->GetAtomInfo().GetMr();
+    }
+  }
+  mcent /= sum;
 
-  for(int i=0; i < satomp.Count(); i++ )  {
-    mcent += satomp[i].GetA()->crd();
-  }
-  mcent /= satomp.Count();
-  for( int i=0; i < atomsToTransform.Count(); i++ )  {
-    acent = atomsToTransform[i]->crd();
-    acent -= mcent;
-    acent *= S.r;
-    acent += S.t;
-    atomsToTransform[i]->crd() = acent;
-  }
+  for( int i=0; i < atomsToTransform.Count(); i++ )
+    atomsToTransform[i]->crd() = S*(atomsToTransform[i]->crd() - mcent);
 }
 //..............................................................................
 bool TNetwork::RingInfo::IsSingleCSubstituted() const  {

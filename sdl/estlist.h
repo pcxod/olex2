@@ -9,71 +9,71 @@ BeginEsdlNamespace()
 //---------------------------------------------------------------------------
 
 template <class ComparableClass, class ObjectClass, class Comparator>
-  class TSortedListEntry {
-  ComparableClass FComparable;
-  ObjectClass FObject;
-  public:
-    TSortedListEntry(const ComparableClass& c, const ObjectClass& o )  {
-      FComparable = c;
-      FObject = o;
-    }
-    TSortedListEntry(const TSortedListEntry& entry)  {
-      FComparable = entry.FComparable;
-      FObject = entry.FObject;
-    }
-    TSortedListEntry()  {  }
+  struct TSortedListEntry {
+    ComparableClass Comparable;
+    mutable ObjectClass Object;
+    TSortedListEntry(const ComparableClass& c, const ObjectClass& o ) :
+      Comparable(c), 
+      Object(o) { }
+    TSortedListEntry(const TSortedListEntry& entry) :
+      Comparable(entry.Comparable),
+      Object(entry.Object)  { }
     virtual ~TSortedListEntry()  {  }
 
-    inline const TSortedListEntry& operator = (const TSortedListEntry& entry)  {
-      FComparable = entry.FComparable;
-      FObject = entry.FObject;
-      return entry;
+    inline TSortedListEntry& operator = (const TSortedListEntry& entry)  {
+      Comparable = entry.Comparable;
+      Object = entry.Object;
+      return *this;
     }
-    inline ComparableClass& Comparable()       {  return FComparable;  }
-    inline ObjectClass& Object()               {  return FObject;  }
+    inline int Compare(TSortedListEntry& entry) const {
+      return Comparator::Compare(Comparable, entry.Comparable );  
+    }
 
-    inline int Compare( TSortedListEntry& entry ) const {
-      return Comparator::template Compare<ComparableClass>(FComparable, entry.FComparable );  }
-
-    inline int Compare( const ComparableClass& entity ) const {
-      return Comparator::template Compare<ComparableClass>(FComparable, entity );  }
+    template <class T>
+    inline int Compare(const T& key ) const {
+      return Comparator::Compare(Comparable, key);  }
 
 };
 //---------------------------------------------------------------------------
 template <class A, class B, class ComparatorType>
   class TSTypeList : public IEObject  {
     // no arraylist - inserts are too 'heavy' 
-    TPtrList< TSortedListEntry<A,B,ComparatorType> > Data;
+    typedef TSortedListEntry<A,B,ComparatorType> EntryType;
+    TPtrList<EntryType> Data;
   protected:
-    int FindInsertIndex(const A& entity, int from=-1, int to=-1) {
+    template <class T>
+    int FindInsertIndex(const T& key, int from=-1, int to=-1) {
       if( from == -1 ) from = 0;
       if( to == -1 )   to = Count()-1;
       if( to == from ) return to;
       if( (to-from) == 1 )  return from;
-      int resfrom = Data[from]->Compare(entity),
-          resto   = Data[to]->Compare(entity);
+      int resfrom = Data[from]->Compare(key),
+          resto   = Data[to]->Compare(key);
       if( resfrom == 0 )  return from;
       if( resto == 0 )    return to;
       if( resfrom < 0 && resto > 0 )  {
         int index = (to+from)/2;
-        int res = Data[index]->Compare(entity);
-        if( res < 0 )  return FindInsertIndex(entity, index, to);
-        if( res > 0 )  return FindInsertIndex(entity, from, index);
+        int res = Data[index]->Compare(key);
+        if( res < 0 )  return FindInsertIndex(key, index, to);
+        if( res > 0 )  return FindInsertIndex(key, from, index);
         if( res == 0 ) return index;
       }
       return -1;
     }
-
-    int FindIndexOf(const A& entity) const {
-      if( Data.Count() == 0 )  return -1;
-      if( Data.Count() == 1 )  return (!Data[0]->Compare(entity)) ? 0 : -1;
+    template <class T>
+    int FindIndexOf(const T& key) const {
+      if( Data.IsEmpty() )  
+        return -1;
+      if( Data.Count() == 1 )  
+        return (!Data[0]->Compare(key)) ? 0 : -1;
       int from = 0, to = Count()-1;
-      if( !Data[from]->Compare(entity) )  return from;
-      if( !Data[to]->Compare(entity)   )  return to;
+      if( !Data[from]->Compare(key) )  return from;
+      if( !Data[to]->Compare(key)   )  return to;
       while( true ) {
         int index = (to+from)/2;
-        int res = Data[index]->Compare(entity);
-        if( index == from || index == to)  return -1;
+        int res = Data[index]->Compare(key);
+        if( index == from || index == to)  
+          return -1;
         if( res < 0 )  from = index;
         else
           if( res > 0 )  to  = index;
@@ -96,7 +96,7 @@ public:
   TSTypeList(const TSTypeList& list)  {
     Data.SetCount( list.Count() );
     for( int i=0; i < list.Data.Count(); i++ )
-      Data[i] = new TSortedListEntry<A,B,ComparatorType>(*list.Data[i]);
+      Data[i] = new EntryType(*list.Data[i]);
   }
 
   virtual ~TSTypeList()  {  Clear();  }
@@ -107,36 +107,41 @@ public:
     Data.Clear();
   }
 //..............................................................................
-  int IndexOfComparable(const A& cmpbl) const {  return FindIndexOf(cmpbl);  }
+  template <class T>
+  int IndexOfComparable(const T& cmpbl) const {  
+    return FindIndexOf(cmpbl);  
+  }
 //..............................................................................
-  int IndexOfObject(const B& v)  const  {
+  int IndexOfObject(const B& v) const  {
     for( int i=0; i < Data.Count(); i++ )
-      if( Data[i]->Object() == v )  return i;
+      if( Data[i]->Object == v )  
+        return i;
     return -1;
   }
 //..............................................................................
   // retrives indexes of all entries with same key and returns the number of added entries
-  int GetIndexes(const A& cmpbl, TIntList& il)  {
+  template <class T>
+  int GetIndexes(const T& key, TIntList& il)  {
     if( Data.IsEmpty() )  return 0;
     if( Data.Count() == 1 )  {
-      if( Data[0]->Compare(cmpbl) != 0 )  return 0;
+      if( Data[0]->Compare(key) != 0 )  return 0;
       il.Add( 0 );
       return 1;
     }
 
-    int index =  IndexOfComparable(cmpbl);
+    int index =  IndexOfComparable(key);
     if( index == -1 )  return 0;
     il.Add( index );
     int i = index+1, addedc = 1;
     // go forward
-    while( i < Data.Count() && (Data[i]->Compare(cmpbl) == 0) )  {
+    while( i < Data.Count() && (Data[i]->Compare(key) == 0) )  {
       il.Add( i );
       i++;
       addedc++;
     }
     // go backwards
     i = index-1;
-    while( i >= 0 && (Data[i]->Compare(cmpbl) == 0) )  {
+    while( i >= 0 && (Data[i]->Compare(key) == 0) )  {
       il.Add( i );
       i--;
       addedc++;
@@ -153,59 +158,59 @@ public:
 //..............................................................................
   inline void Pack()  {  Data.Pack();  }
 //..............................................................................
-  inline void Remove(size_t i)   {  delete Data[i];  Data.Delete(i);  }
+  inline void Remove(size_t i)   {  
+    delete Data[i];  
+    Data.Delete(i);  
+  }
 //..............................................................................
   inline int Count()    const {  return Data.Count(); }
 //..............................................................................
   inline bool IsEmpty() const {  return Data.IsEmpty();  }
 //..............................................................................
-  // TODO: a check has to be done if the value changed -> Resort
-  inline A&  GetComparable(int index)   const {  return Data[index]->Comparable();  }
+  inline const A& GetComparable(int index) const {  return Data[index]->Comparable;  }
 //..............................................................................
-  inline const B&  GetObject(int index) const {  return Data[index]->Object();  }
+  inline B& GetObject(int index) const {  return Data[index]->Object;  }
 //..............................................................................
-  inline B&  Object(int index)                {  return Data[index]->Object();  }
 //..............................................................................
-  inline TSortedListEntry<A,B,ComparatorType>&  Last() {  return *Data.Last();  }
+  inline const EntryType& Last() const {  return *Data.Last();  }
 //..............................................................................
-  inline void SetCapacity(size_t v)              {  Data.SetCapacity(v);  }
+  inline void SetCapacity(size_t v)  {  Data.SetCapacity(v);  }
 //..............................................................................
-  inline void SetIncrement(size_t v)             {  Data.SetIncrement(v);  }
+  inline void SetIncrement(size_t v) {  Data.SetIncrement(v);  }
 //..............................................................................
-  inline B&  operator [] (const A& Comparable) const   {
-    int ind = IndexOfComparable(Comparable);
-    if( ind >= 0 )  return Data[ind]->Object();
+  template <class T>
+  inline B& operator [] (const T& key) const   {
+    int ind = IndexOfComparable(key);
+    if( ind >= 0 )  return Data[ind]->Object;
     throw TFunctionFailedException(__OlxSourceInfo, "no object at specified location" );
   }
 //..............................................................................
-  inline B&  Item(const A& Comparable) const   {
-    int ind = IndexOfComparable(Comparable);
-    if( ind >= 0 )  return Data[ind]->Object();
-    throw TFunctionFailedException(__OlxSourceInfo, "no object at specified location" );
-  }
-//..............................................................................
-  TSortedListEntry<A,B,ComparatorType>& Add( const A& Comparable, const B& Object )  {
-    TSortedListEntry<A,B,ComparatorType> *entry = new TSortedListEntry<A,B,ComparatorType>(Comparable, Object);
-    int pos;
-    if( Data.IsEmpty() )  {
+  const EntryType& Add(const A& key, const B& Object )  {
+    EntryType *entry = new EntryType(key, Object);
+    if( Data.IsEmpty() )
       Data.Add( entry);
-      return *entry;
+    else if( Data.Count() == 1 )  {
+      if(  Data[0]->Compare(*entry) < 0 )  
+        Data.Add(entry);
+      else                                 
+        Data.Insert(0, entry);
     }
-    if( Data.Count() == 1 )  {
-      if(  Data[0]->Compare(*entry) < 0 )  Data.Add(entry);
-      else                                 Data.Insert(0, entry);
-      return *entry;
+    else  {
+      if( Data[0]->Compare(*entry) >= 0 ) // smaller than the first
+        Data.Insert(0, entry);
+      else if( Data.Last()->Compare(*entry) <= 0 ) // larger than the last 
+        Data.Add(entry);  
+      else if( Data.Count() == 2 ) // an easy case then with two items 
+        Data.Insert(1, entry);
+      else  {
+        const int pos = FindInsertIndex(key);
+        if( pos == -1 )  {
+          delete entry;
+          throw TIndexOutOfRangeException(__OlxSourceInfo, pos, 0, Count()-1);
+        }
+        Data.Insert(pos+1, entry);
+      }
     }
-    // smaller than the first
-    if( Data[0]->Compare(*entry) >= 0 )     {  Data.Insert(0, entry);  return *entry; }
-    // larger than the last
-    if( Data.Last()->Compare(*entry) <= 0 )  {  Data.Add(entry);  return *entry; }
-    // an easy case then with two items
-    if( Data.Count() == 2 )  {  Data.Insert(1, entry);  return *entry; }
-    pos = FindInsertIndex( Comparable );
-    if( pos == -1 )
-      throw TIndexOutOfRangeException(__OlxSourceInfo, pos, 0, Count()-1);
-    Data.Insert(pos+1, entry);
     return *entry;
   }
 };
@@ -228,27 +233,19 @@ public:
   // specified comparable exist, beware it returns '0' for primitive types
   template <class SC, typename ObjectClass, bool caseinsensitive>
     class TSStrPObjList : public TSTypeList<SC, ObjectClass, olxstrComparator<caseinsensitive> >  {
+      typedef TSTypeList<SC,ObjectClass, olxstrComparator<caseinsensitive> > PList;
+      typedef TSortedListEntry<SC,ObjectClass,olxstrComparator<caseinsensitive> > PListEntry;
     public:
-      inline const olxstr& GetString(int i)    const {
-        return TSTypeList<SC, ObjectClass, olxstrComparator<caseinsensitive> >::GetComparable(i);
+      inline const olxstr& GetString(int i) const {  return PList::GetComparable(i);  }
+      inline const PListEntry& Add(const SC& s, const ObjectClass& v = *(ObjectClass*)NULL )  {
+        return PList::Add(s, v);
       }
-      inline SC& String(int i)                   {
-        return TSTypeList<SC, ObjectClass, olxstrComparator<caseinsensitive> >::GetComparable(i);
-      }
-
-      inline void Add( const SC& s, const ObjectClass& v = *(ObjectClass*)NULL )  {
-        TSTypeList<SC, ObjectClass, olxstrComparator<caseinsensitive> >::Add(s, v);
-      }
-      inline void Delete(int i)  {
-        TSTypeList<SC, ObjectClass, olxstrComparator<caseinsensitive> >::Remove(i);
-      }
-      inline int IndexOf(const SC& v)  const  {
-        return TSTypeList<SC, ObjectClass, olxstrComparator<caseinsensitive> >::IndexOfComparable(v);
-      }
-
-      inline ObjectClass  operator [] (const olxstr& Comparable) const   {
-        int ind = TSTypeList<SC, ObjectClass, olxstrComparator<caseinsensitive> >::IndexOfComparable(Comparable);
-        return (ind >= 0)  ? TSTypeList<SC, ObjectClass, olxstrComparator<caseinsensitive> >::GetObject(ind) : NULL;
+      inline void Delete(int i)  {  PList::Remove(i);  }
+      inline int IndexOf(const SC& v)  const  {  return PList::IndexOfComparable(v);  }
+      template <class T>
+      inline ObjectClass operator [] (const T& key) const {
+        int ind = PList::IndexOfComparable(key);
+        return (ind >= 0)  ? PList::GetObject(ind) : NULL;
       }
     };
 //..............................................................................
@@ -256,23 +253,16 @@ public:
   // just a string to obj specialisation
   template <class SC, typename ObjectClass, bool caseinsensitive>
     class TSStrObjList : public TSTypeList<SC, ObjectClass, olxstrComparator<caseinsensitive> >  {
+      typedef TSTypeList<SC, ObjectClass, olxstrComparator<caseinsensitive> > PList;
+      typedef TSortedListEntry<SC,ObjectClass,olxstrComparator<caseinsensitive> > PListEntry;
     public:
-      inline const SC& GetString(int i)    const {
-        return TSTypeList<SC, ObjectClass, olxstrComparator<caseinsensitive> >::GetComparable(i);
+      inline const SC& GetString(int i) const {  return PList::GetComparable(i);  }
+      inline const PListEntry& Add(const SC& s, const ObjectClass& v = *(ObjectClass*)NULL )  {
+        return PList::Add(s, v);
       }
-      inline olxstr& String(int i)                   {
-        return TSTypeList<SC, ObjectClass, olxstrComparator<caseinsensitive> >::GetComparable(i);
-      }
-
-      inline TSortedListEntry<SC,ObjectClass,olxstrComparator<caseinsensitive> >& 
-        Add( const SC& s, const ObjectClass& v = *(ObjectClass*)NULL )  {
-          return TSTypeList<SC, ObjectClass, olxstrComparator<caseinsensitive> >::Add(s, v);
-      }
-      inline void Delete(int i)  {
-        TSTypeList<SC, ObjectClass, olxstrComparator<caseinsensitive> >::Remove(i);
-      }
-      inline int IndexOf(const SC& v)  const  {
-        return TSTypeList<SC, ObjectClass, olxstrComparator<caseinsensitive> >::IndexOfComparable(v);
+      inline void Delete(int i)  { PList::Remove(i);  }
+      template <class T> inline int IndexOf(const T& v) const {  
+        return PList::IndexOfComparable(v);  
       }
     };
 //..............................................................................
@@ -280,22 +270,17 @@ public:
   // string - string map specialisation ...
   template <class SC, bool caseinsensitive>
     class TSStrStrList : public TSTypeList<SC, SC, olxstrComparator<caseinsensitive> >  {
+      typedef TSTypeList<SC, SC, olxstrComparator<caseinsensitive> > PList;
+      typedef TSortedListEntry<SC,SC,olxstrComparator<caseinsensitive> > PListEntry;
     public:
-      inline const olxstr& GetString(int i)    const {
-        return TSTypeList<SC, SC, olxstrComparator<caseinsensitive> >::GetComparable(i);
+      inline const SC& GetString(int i) const {  return PList::GetComparable(i);  }
+      template <class T>
+      inline const PListEntry& Add(const T& key, const SC& v = EmptyString )  {
+        return PList::Add(key, v);
       }
-      inline SC& String(int i)                   {
-        return TSTypeList<SC, SC, olxstrComparator<caseinsensitive> >::GetComparable(i);
-      }
-
-      inline void Add( const SC& s, const olxstr & v = EmptyString )  {
-        TSTypeList<SC, SC, olxstrComparator<caseinsensitive> >::Add(s, v);
-      }
-      inline void Delete(int i)  {
-        TSTypeList<SC, SC, olxstrComparator<caseinsensitive> >::Remove(i);
-      }
-      inline int IndexOf(const SC& v)  const  {
-        return TSTypeList<SC, SC, olxstrComparator<caseinsensitive> >::IndexOfComparable(v);
+      inline void Delete(int i)  {  PList::Remove(i);  }
+      template <class T>  inline int IndexOf(const T& v) const {  
+        return PList::IndexOfComparable(v);
       }
     };
 

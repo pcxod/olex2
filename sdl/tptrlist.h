@@ -232,7 +232,7 @@ public:
 #endif
     T *D = Items[from];
     if( from > to )  {
-      for( size_t i = from; i > to; i-- )
+      for( int i = from; i > to; i-- )
         Items[i] = Items[i-1];
     }
     else  {

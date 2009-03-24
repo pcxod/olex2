@@ -101,7 +101,7 @@ void TMol::LoadFromStrings(const TStrList& Strings)  {
   TMolBond *MB;
   double Ax, Ay, Az;
   for( int i=0; i < Strings.Count(); i++ )  {
-    Tmp = Strings.String(i).UpperCase();
+    Tmp = Strings[i].UpperCase();
     if( !Tmp.Length() )  continue;
     if( AtomsCycle && (Tmp.Length() > 33) )  {
       Ax = Tmp.SubString(0, 9).ToDouble();

@@ -75,8 +75,8 @@ void TCRSFile::LoadFromStrings(const TStrList& Strings)  {
     if( Tmp.IsEmpty() )  continue;
     TmpUC = Tmp.UpperCase();
     for( int j=0; j < params.Count(); j++ )  {
-      if( TmpUC.StartsFrom( params.String(j) ) ) {
-        *params.Object(j) = Tmp.SubStringFrom( params.String(j).Length() );
+      if( TmpUC.StartsFrom( params[j] ) ) {
+        *params.GetObject(j) = Tmp.SubStringFrom( params[j].Length() );
         params.Delete(j);
         break;
       }

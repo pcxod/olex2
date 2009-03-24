@@ -66,7 +66,7 @@ protected:
   }
   TGraphicsStyle* FindLocalStyle(const olxstr& name)  {
     int i = FStyles.IndexOf(name);
-    return i == -1 ? NULL : FStyles.Object(i);
+    return i == -1 ? NULL : FStyles.GetObject(i);
   }
 public:
   TGraphicsStyle(TGraphicsStyles *S, TGraphicsStyle *Parent, const olxstr &ALabel);
@@ -80,12 +80,12 @@ public:
   inline TPrimitiveStyle* PrimitiveStyle(int i) const {  return FPStyles[i];  }
   
   inline int StyleCount() const {  return FStyles.Count();  }
-  inline TGraphicsStyle* GetStyle(int i) {  return FStyles.Object(i);  }
+  inline TGraphicsStyle* GetStyle(int i) const {  return FStyles.GetObject(i);  }
 
   void SetParam(const olxstr& name, const olxstr& val, bool saveable=false) {
     int ind = FParams.IndexOf(name);
     if( ind >= 0 )  
-      FParams.Object(ind).val = val;
+      FParams.GetObject(ind).val = val;
     else            
       FParams.Add(name, TGSParam(val, saveable));
   }  /* returns value of specified parameter, if the parameter does not exist, a new one is created
@@ -99,15 +99,15 @@ public:
       while( gs != NULL )  {
         index = gs->FParams.IndexOf(name);
         if( index != -1 )  {
-          dv = gs->FParams.Object(index).val;
+          dv = gs->FParams.GetObject(index).val;
           break;
         }
         gs = gs->FParentStyle;
       }
-      return FParams.Add(name, TGSParam(defval, saveable)).Object().val;
+      return FParams.Add(name, TGSParam(defval, saveable)).Object.val;
     }
-    FParams.Object(index).saveable = saveable;
-    return FParams.Object(index).val;
+    FParams.GetObject(index).saveable = saveable;
+    return FParams.GetObject(index).val;
   }
 
   bool operator == (const TGraphicsStyle& GS) const;

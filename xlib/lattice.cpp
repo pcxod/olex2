@@ -383,7 +383,7 @@ void TLattice::Generate(const vec3d& center, double rad, TCAtomPList* Template,
 }
 //..............................................................................
 bool TLattice::IsExpandable(TSAtom& A) const {
-  return (A.CAtom().GetCanBeGrown() && !A.IsGrown());
+  return (A.CAtom().IsGrowable() && !A.IsGrown());
 }
 //..............................................................................
 //..............................................................................
@@ -1761,7 +1761,7 @@ void TLattice::ToDataItem(TDataItem& item) const  {
   // initialise fragment tags
   int frag_tag = 0;
   for( int i=0; i < Fragments.Count(); i++ )  {
-    if( Fragments[i]->NodeCount() == 0 )  continue;
+    //if( Fragments[i]->NodeCount() == 0 )  continue;
     Fragments[i]->SetTag(frag_tag++);
   }
   // save satoms - only the original CAtom Tag and the generating matrix tag
@@ -1779,7 +1779,7 @@ void TLattice::ToDataItem(TDataItem& item) const  {
   // save fragments
   TDataItem& frags = item.AddItem("Fragments");
   for( int i=0; i < Fragments.Count(); i++ )  {
-    if( Fragments[i]->NodeCount() == 0 )  continue;
+    //if( Fragments[i]->NodeCount() == 0 )  continue;
     Fragments[i]->ToDataItem( frags.AddItem("Fragment") );
   }
   // restore original matrix tags 

@@ -50,7 +50,7 @@ void THttp::SetHeader(const olxstr& header, const olxstr& h_data)  {
   if( ind == -1 )
     Headers.Add(header, h_data);
   else
-    Headers.Object(ind) = h_data;
+    Headers.GetObject(ind) = h_data;
 }
 //............................................................................//
 const olxstr& THttp::GetHeader(const olxstr& header) const  {

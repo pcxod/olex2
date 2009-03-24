@@ -416,7 +416,7 @@ public:
   }
 protected:
   IEvaluator* ProcessProperties(IClassDefinition *classDef, TStrList props)  {
-    short memberType = classDef->GetMemberType( props.String(0) );
+    short memberType = classDef->GetMemberType( props[0] );
     switch( memberType )  {
       case mtProperty:
         break;

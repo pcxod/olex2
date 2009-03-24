@@ -35,14 +35,14 @@ class TIns: public TBasicCFile  {
     esdl::TStack< AnAssociation3<int,TAfixGroup*, bool> > AfixGroups;  // number of atoms (left), pivot, Hydrogens or not
     double PartOccu;
     TCAtom* Last, 
-      *LastWithU;  // thi sis used to evaluate riding H Uiso coded like -1.5
+      *LastWithU, *LastNonH;  // thi sis used to evaluate riding H Uiso coded like -1.5
     TAsymmUnit::TResidue* Resi;
     TAsymmUnit& au;
     RefinementModel& rm;
     // SAME instructions and the first atom after it/them
     TTypeList< AnAssociation2<TStrList,TCAtom*> > Same;
     ParseContext(RefinementModel& _rm) : rm(_rm), au(_rm.aunit), 
-      Resi(NULL), Last(NULL), LastWithU(NULL)  {
+      Resi(NULL), Last(NULL), LastWithU(NULL), LastNonH(NULL)  {
       End = SetNextPivot = CellFound = false;
       PartOccu = 0;
       Part = 0;
@@ -129,7 +129,7 @@ public:
       for( int i =0; i < SL.Count(); i++ )  {
         Toks.Clear();
         Toks.Strtok( SL[i], ' ');
-        if( Toks[0].Comparei("EQIV") == 0 && Toks.Count() == 3 )  {
+        if( Toks[0].Comparei("EQIV") == 0 && Toks.Count() >= 3 )  {
           smatd SymM;
           TSymmParser::SymmToMatrix(Toks.Text(EmptyString, 2), SymM);
           cx.rm.AddUsedSymm(SymM, Toks[1]);
@@ -391,9 +391,9 @@ public:
   void ParseHeader(const TStrList& in);
 
   bool InsExists(const olxstr &Name);
-  inline int InsCount()  const                {  return Ins.Count();  }
-  inline const olxstr& InsName(int i) const {  return Ins.String(i);  }
-  inline const TInsList& InsParams(int i)     {  return *Ins.Object(i); }
+  inline int InsCount()  const              {  return Ins.Count();  }
+  inline const olxstr& InsName(int i) const {  return Ins[i];  }
+  inline const TInsList& InsParams(int i)   {  return *Ins.GetObject(i); }
   void DelIns(int i);
   void DeleteAtom(TCAtom *CA);
 

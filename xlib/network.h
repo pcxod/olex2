@@ -49,8 +49,8 @@ public:
 
   // returns true if the ring is regular (distances from centroid and angles) 
   static bool IsRingRegular(const TSAtomPList& ring);
-
-  bool DoMatch( TNetwork& net, TTypeList< AnAssociation2<int, int> >& res );
+  // inverttion must be specified for the permutational graph match
+  bool DoMatch( TNetwork& net, TTypeList< AnAssociation2<int, int> >& res, bool Invert );
   bool IsSubgraphOf( TNetwork& net, TTypeList< AnAssociation2<int, int> >& res, const TIntList& rootsToSkip);
 
   void FindRings(const TPtrList<TBasicAtomInfo>& ringContent,
@@ -89,8 +89,14 @@ public:
   */
   static double FindAlignmentMatrix(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atoms,
                   smatdd& res, bool TryInversion);
-  // finds allignment matrix for given coordinates
-  static double FindAlignmentMatrix(const TTypeList< AnAssociation2<vec3d,vec3d> >& crds, smatdd& res);
+  /* finds allignment quaternions for given coordinates and specified centers of these coordinates 
+  the quaternions and the rms are sorted ascending 
+  Acta A45 (1989), 208 */
+  static void FindAlignmentQuaternions(const TTypeList< AnAssociation2<vec3d,vec3d> >& crds, 
+	  const vec3d& centA, const vec3d& centB, ematd& quaternions, evecd& rms);
+  /* finds "best" allignment matrix for given coordinates */
+  static double FindAlignmentMatrix(const TTypeList< AnAssociation2<vec3d,vec3d> >& crds, 
+    const vec3d& centA, const vec3d& centB, smatdd& res);
   /* this fuction is used alonside the above one to allign the atoms using provided
    matrix. Also the Inverted has to be specified if the matric was calculated using
    the function above with the inverted flag on. The atomsToTransform are the atoms

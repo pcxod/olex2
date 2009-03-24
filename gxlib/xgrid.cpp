@@ -473,7 +473,7 @@ bool TXGrid::LoadFromFile(const olxstr& GridFile)  {
   for( int i=0; i < MaxX; i++ )  {
     for( int j=0; j < MaxY; j++ )  {
       for( int k=0; k < MaxZ; k++ )  {
-        float val = (float)toks.String(vc).ToDouble();
+        float val = (float)toks[vc].ToDouble();
         if( val > MaxVal ) MaxVal = val;
         if( val < MinVal ) MinVal = val;
         ED->Data[i][j][k] = val;
