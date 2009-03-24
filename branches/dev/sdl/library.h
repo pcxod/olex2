@@ -48,29 +48,39 @@ public:
   inline TLibrary* GetLibraryByIndex( int index )           const  {  return Libraries.GetObject( index );  }
 
   template <class BaseClass>
-    void RegisterFunction( TFunction<BaseClass>* func )  {
+    void RegisterFunction( TFunction<BaseClass>* func, bool replace = false )  {
       TIntList list;
       Functions.GetIndexes( func->GetName(), list );
       for(int i=0; i < list.Count(); i++ )  {
         unsigned int argc = Functions.GetObject(list[i])->GetArgStateMask();
-        if( func->GetArgStateMask() & argc )
+        if( func->GetArgStateMask() & argc )  {
+          if( replace )  {
+            Functions.Delete(list[i]);
+            break;
+          }
           throw TDuplicateEntry(__OlxSourceInfo, olxstr("function (same number of args)") << func->GetName(), "function");
+        }
       }
       func->SetParentLibrary( *this );
       Functions.Add(func->GetName(), func);
     }
 
-  void RegisterStaticFunction( TStaticFunction* func );
-  void RegisterStaticMacro( TStaticMacro* func );
+  void RegisterStaticFunction( TStaticFunction* func, bool replace = false );
+  void RegisterStaticMacro( TStaticMacro* func, bool replace = false );
 
   template <class BaseClass>
-    void RegisterMacro( TMacro<BaseClass>* macro )  {
+    void RegisterMacro( TMacro<BaseClass>* macro, bool replace = false )  {
       TIntList list;
       Macros.GetIndexes( macro->GetName(), list );
       for(int i=0; i < list.Count(); i++ )  {
         unsigned int argc = Macros.GetObject(list[i])->GetArgStateMask();
-        if( macro->GetArgStateMask() & argc )
+        if( macro->GetArgStateMask() & argc )  {
+          if( replace )  {
+            Macros.Delete(list[i]);
+            break;
+          }
           throw TDuplicateEntry(__OlxSourceInfo, olxstr("macro (same number of args)") << macro->GetName(), "macro");
+        }
       }
       macro->SetParentLibrary( *this );
       Macros.Add(macro->GetName(), macro);
