@@ -17,10 +17,16 @@ public:
     if( !mode )  mode = gmCovalent;
 
     TGlXApp::GetMainForm()->executeMacro("cursor(hand)");
-    if( !AtomsToGrow.IsEmpty() )
-      TGlXApp::GetGXApp()->SetGrowMode( gmSameAtoms, AtomsToGrow );
-    else
-      TGlXApp::GetGXApp()->SetGrowMode( mode, EmptyString );
+    if( Options.Contains('v') )  {
+      TGlXApp::GetGXApp()->SetDeltaV( Options.FindValue('v', '3').ToDouble() );
+      TGlXApp::GetGXApp()->SetGrowMode( gmVanDerWaals, AtomsToGrow );
+    }
+    else  {
+      if( !AtomsToGrow.IsEmpty() )
+        TGlXApp::GetGXApp()->SetGrowMode( gmSameAtoms, AtomsToGrow );
+      else
+        TGlXApp::GetGXApp()->SetGrowMode( mode, EmptyString );
+    }
     TGlXApp::GetGXApp()->SetXGrowLinesVisible(true);
     return true;
   }

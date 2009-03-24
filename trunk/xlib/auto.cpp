@@ -538,7 +538,7 @@ TAutoDB::~TAutoDB()  {
     for( int j=0; j < Nodes[i].Count(); j++ )
       delete Nodes[i][j];
   for( int i=0; i < Folders.Count(); i++ )
-    delete Folders.Object(i);
+    delete Folders.GetObject(i);
   Instance = NULL;
   delete &XFile;
 }
@@ -559,7 +559,7 @@ void TAutoDB::ProcessFolder(const olxstr& folder)  {
 
   TAutoDBFolder* dbfolder = NULL;
   int folderIndex = Folders.IndexOfComparable(uf);
-  if( folderIndex != -1 ) dbfolder = Folders.Object(folderIndex);
+  if( folderIndex != -1 ) dbfolder = Folders.GetObject(folderIndex);
   if( dbfolder == NULL )  {
     dbfolder = new TAutoDBFolder;
     Folders.Add( uf, dbfolder );
@@ -574,9 +574,8 @@ void TAutoDB::ProcessFolder(const olxstr& folder)  {
     if( (files[i].GetAttributes() & sefFile) != 0 )  {
       progress.SetPos(i);
       if( dbfolder->Contains( files[i].GetName() ) )  continue;
-      TAutoDBIdObject& adf = dbfolder->Add( files[i].GetName() );
       try  {
-      TBasicApp::GetLog().Info( olxstr("Processing ") << files[i].GetName() << "..." );
+        TBasicApp::GetLog().Info( olxstr("Processing ") << files[i].GetName() << "..." );
         XFile.LoadFromFile( files[i].GetName() );
         TCif& cif = XFile.GetLastLoader<TCif>();
         olxstr r1 = cif.GetSParam("_refine_ls_R_factor_gt");
@@ -603,6 +602,7 @@ void TAutoDB::ProcessFolder(const olxstr& folder)  {
           XFile.LoadFromFile( files[i].GetName() );
         }
         XFile.GetLattice().Compaq();
+        TAutoDBIdObject& adf = dbfolder->Add( files[i].GetName() );
         for( int j=0; j < XFile.GetLattice().FragmentCount(); j++ )
           ProcessNodes( &adf, XFile.GetLattice().GetFragment(j) );
       }

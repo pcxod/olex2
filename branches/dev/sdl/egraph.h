@@ -14,6 +14,7 @@ template <class IC, class AssociatedOC> class TEGraphNode : ACollectionItem  {
   bool RingNode, Root;
   mutable bool Passed, Mutable;
   mutable TEGraphNode* PassedFor;
+  mutable TPtrList<TEGraphNode> PassedForNodes;
   AssociatedOC Object;
   mutable olxdict<NodeType*, TTypeList<ConnInfo>, TPointerComparator> Connectivity;
 protected:
@@ -193,7 +194,14 @@ public:
     if( node.GetData() != GetData() )  return false;
     if( node.Count() != node_cnt )  return false;
     if( node_cnt == 0  )  return true;
-    if( (!analyse && !IsRoot()) || !Mutable )  {
+    if( (!analyse || !Mutable) && !IsRoot() )  {
+      if( PassedFor == &node )  {
+        node.Nodes = PassedForNodes;
+        for( int i=0; i < node_cnt; i++ )
+          if( !Nodes[i]->FullMatchEx(node[i], analyser, analyse) )  // this should never happen...
+            throw TFunctionFailedException(__OlxSourceInfo, "the matching has failed");
+        return true;
+      }
       for( int i=0; i < node_cnt; i++ )
         node[i].SetPassed( false );
       TIntList matches(node_cnt);
@@ -203,7 +211,7 @@ public:
           if( node[j].IsPassed() )  continue;
           if( Nodes[i]->DoMatch(node[j]) )  {
             node[j].SetPassed( true );
-            matches[j] = i;
+            matches[i] = j;
             Matched = true;
             break;
           }
@@ -212,8 +220,10 @@ public:
       }
       node.Nodes.Rearrange(matches);
       for( int i=0; i < node_cnt; i++ )
-        if( !Nodes[i]->FullMatchEx(node[i], analyser, analyse) )
-          return false;
+        if( !Nodes[i]->FullMatchEx(node[i], analyser, analyse) )   // this should never happen...
+          throw TFunctionFailedException(__OlxSourceInfo, "the matching has failed");
+      PassedFor = &node;
+      PassedForNodes = node.Nodes;
       return true;
     }
     TTypeList<ConnInfo>& conn = GetConnInfo(node, analyser);
@@ -243,12 +253,16 @@ public:
       const double rms = analyser.CalcRMS(*this, node);
       if( rms < 0 )
         continue;
+      else if( rms < 1e-5 )  {// must be there
+        best_perm = -1; // specify that we stopped at the best one
+        break;
+      }
       if( minRms < 0 || rms < minRms )  {
         minRms = rms;
         best_perm = i;
       }
     }
-    if( best_perm != perm_cnt-1 )  {
+    if( best_perm >= 0 && best_perm != perm_cnt-1 )  {
       const TIntList& permutation = permutations[best_perm];
       for( int j=0; j < node_cnt; j++ )
         node.Nodes[dest[j]] = ond[permutation[j]];

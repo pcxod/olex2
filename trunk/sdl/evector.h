@@ -55,53 +55,52 @@ public:
       delete [] FData;
   }
 
-  inline int Count()  const  {  return Fn;  }
+  inline int Count() const {  return Fn;  }
+  inline int Size()  const {  return Fn;  }
 
-  template <class VC> void Assign(const VC& v, int size)  {
-    Resize(size);
-    for( int i=0; i < size; i++ )
-      FData[i] = v[i];
-  }
-
-  void Null()  {  // setmem would be an alternative ...
-    for( int i=0; i < Fn; i++)
+  TVector& Null()  {  
+    for( int i=0; i < Fn; i++ )
       FData[i] = 0;
+    return *this;
   }
 
-  VecType Length()  const  {
-    if( Fn == 0 )  throw TFunctionFailedException(__OlxSourceInfo, "empty vector");
-    VecType l=0;
+  VecType Length() const {
+    if( Fn == 0 )  
+      throw TFunctionFailedException(__OlxSourceInfo, "empty vector");
+    VecType l = 0;
     for( int i=0; i < Fn; i++ )
       l += FData[i]*FData[i];
     return (VecType)sqrt(l);
   }
 
-  VecType QLength()  const  {
+  VecType QLength() const {
     if( Fn == 0 )  throw TFunctionFailedException(__OlxSourceInfo, "empty vector");
-    VecType l=0;
+    VecType l = 0;
     for( int i=0; i < Fn; i++ )
       l += FData[i]*FData[i];
     return l;
   }
 
-  int Compare(const TVector& v )  {
-    int l = min(this->Count(), v.Count() );
+  int Compare(const TVector& v) const {
+    const int l = olx_min(this->Count(), v.Count() );
     for( int i=0; i < l; i++ )  {
       if( FData[i] < v[i] )  return -1;
       if( FData[i] > v[i] )  return 1;
     }
-    return 0;
+    return this->Count() - v.Count();
   }
 
-  void Normalise()  {
+  TVector& Normalise() {
     VecType l = Length();
     if( l == 0 )  throw TDivException(__OlxSourceInfo);
     for( int i=0; i < Fn; i++ )
       FData[i] /= l;
+    return *this;
   }
 
-  VecType CAngle(const TVector &V)  const  {
-    if( Fn != V.Fn )  throw TFunctionFailedException(__OlxSourceInfo, "vectors of different size");
+  template <typename AT> VecType CAngle(const TVector<AT>& V) const {
+    if( Fn != V.Fn )  
+      throw TFunctionFailedException(__OlxSourceInfo, "vectors of different size");
     double l = Length(), v=0;
     l *= V.Length();
     if( l == 0 )  throw TDivException(__OlxSourceInfo);
@@ -110,28 +109,34 @@ public:
     return (VecType)(v/l);
   }
 
-  VecType DistanceTo(const TVector &V)  const  {
-    if( Fn != V.Fn )  throw TFunctionFailedException(__OlxSourceInfo, "vectors of different size");
+  template <typename AT> VecType DistanceTo(const TVector<AT>& V)  const  {
+    if( Fn != V.Fn )  
+      throw TFunctionFailedException(__OlxSourceInfo, "vectors of different size");
     double v = 0;
     for( int i=0; i < Fn; i++ )
       v += sqr(FData[i]-V.FData[i]);
     return (VecType)sqrt(v);
   }
 
-  template <class AType> const TVector& operator  = (const TVector<AType>& a)  {
+  template <class AType> TVector& operator = (const TVector<AType>& a)  {
     Resize( a.Count() );
     for( int i=0; i < Fn; i++ )
       FData[i] = a[i];
-    return a;
+    return *this;
   }
 
-  /* we NEED this operator - if it does not exist the = is never called for objects
-   of the same type (at least in borland  */
-  const TVector& operator = (const TVector& a)  {
+  TVector& operator = (const TVector& a)  {
     Resize( a.Count() );
     for( int i=0; i < Fn; i++ )
       FData[i] = a[i];
-    return a;
+    return *this;
+  }
+
+  template <class VC> TVector& Assign(const VC& v, int size)  {
+    Resize(size);
+    for( int i=0; i < size; i++ )
+      FData[i] = v[i];
+    return *this;
   }
 
   inline VecType& operator  [](int offset) const  {
@@ -155,30 +160,21 @@ public:
     return FData[Fn-1];
   }
 
-  TVector operator  + (VecType a ) const  {
-    TVector R(*this);
-    R += a;
-    return R;
+  TVector operator  + (VecType a ) const {
+    return TVector(*this) += a;
   }
 
-  TVector operator  - (VecType a ) const  {
-    TVector R(*this);
-    R -= a;
-    return R;
+  TVector operator  - (VecType a ) const {
+    return TVector(*this) -= a;
   }
 
-  TVector operator  * (VecType a ) const  {
-    TVector R(*this);
-    R *= a;
-    return R;
+  TVector operator  * (VecType a ) const {
+    return TVector(*this) *= a;
   }
 
-  TVector operator  / (VecType a ) const  {
-    TVector R(*this);
-    R /= a;
-    return R;
+  TVector operator  / (VecType a ) const {
+    return TVector(*this) /= a;
   }
-
 
   TVector& operator  += (VecType v)  {
     for( int i=0; i < Fn; i++ )
@@ -199,54 +195,47 @@ public:
   }
 
   TVector& operator  /= (VecType v )  {
-    if( !v )  throw TDivException(__OlxSourceInfo);
-    for( int i=0; i < Fn; i++ )    FData[i] /= v;
+    if( v == 0 )  throw TDivException(__OlxSourceInfo);
+    for( int i=0; i < Fn; i++ )    
+      FData[i] /= v;
     return *this;
   }
 
-  template <class AType> TVector operator  + (const TVector<AType> &a ) const  {
-    TVector R(*this);
-    R += a;
-    return R;
+  template <class AType> TVector operator  + (const TVector<AType>& a ) const {
+    return TVector(*this) += a;
   }
 
-  template <class AType> TVector operator  - (const TVector<AType> &a ) const  {
-    TVector R(*this);
-    R -= a;
-    return R;
+  template <class AType> TVector operator  - (const TVector<AType>& a ) const {
+    return TVector(*this) -= a;
   }
 
-  template <class AType> TVector operator  * (const TVector<AType> &a ) const  {
-    TVector R(*this);
-    R *= a;
-    return R;
+  template <class AType> TVector operator  * (const TVector<AType>& a ) const {
+    return TVector(*this) *= a;
   }
 
-  template <class AType> TVector operator  / (const TVector<AType> &a ) const  {
-    TVector R(*this);
-    R /= a;
-    return R;
+  template <class AType> TVector operator  / (const TVector<AType>& a ) const {
+    return TVector(*this) /= a;
   }
 
-  template <class AType> TVector& operator  += (const TVector<AType> &a )  {
+  template <class AType> TVector& operator  += (const TVector<AType>& a )  {
     for( int i=0; i < Fn; i++ )
       FData[i] += a[i];
     return *this;
   }
 
-  template <class AType> TVector& operator  -= (const TVector<AType> &a )  {
+  template <class AType> TVector& operator  -= (const TVector<AType>& a )  {
     for( int i=0; i < Fn; i++ )
       FData[i] -= a[i];
     return *this;
   }
 
-  template <class AType> TVector& operator  *= (const TVector<AType> &a )  {
+  template <class AType> TVector& operator  *= (const TVector<AType>& a )  {
     for( int i=0; i < Fn; i++ )
       FData[i] *=a[i];
     return *this;
   }
 
-  template <class AType> TVector& operator  /= (const TVector<AType> &a )  {
+  template <class AType> TVector& operator  /= (const TVector<AType>& a )  {
     for( int i=0; i < Fn; i++ )
       FData[i] /= a[i];
     return *this;
@@ -256,9 +245,9 @@ public:
     if matrix has more elements (in vectors) than given vector - only
     number of vector elements is used
   */
-  template <class AType> TVector  operator * (const TMatrix<AType>  &a ) const  {
+  template <class AType> TVector  operator * (const TMatrix<AType>& a ) const  {
     if( a.Elements() < Fn || a.Vectors() == 0 )
-      throw TInvalidArgumentException(__OlxSourceInfo, "dimention");
+      throw TInvalidArgumentException(__OlxSourceInfo, "dimension");
     TVector V( a.Vectors() );
     for( int i=0; i < a.Vectors(); i++ )
       for( int j=0; j < Fn; j++ )
@@ -270,21 +259,15 @@ public:
     if matrix has more elements (in vectors) than given vector - only
     number of vector elements is used
   */
-  template <class AType> TVector& operator *=(const TMatrix<AType>  &a )  {
-    if( a.Elements() < Fn || a.Vectors() == 0 )
-      throw TInvalidArgumentException(__OlxSourceInfo, "dimention");
-    TVector V( a.Vectors() );
-    for( int i=0; i < a.Vectors(); i++ )
-      for( int j=0; j < Fn; j++ )
-        V[i] += (VecType)(FData[j]*a[j][i]);
-    *this = V;
-    return *this;
+  template <class AType> TVector& operator *= (const TMatrix<AType>& a )  {
+    return (*this = (*this*a));
   }
 
-  template <class AType> bool operator == (const TVector<AType> &a ) const {
+  template <class AType> bool operator == (const TVector<AType>& a ) const {
     if( Fn != a.Count() )  return false;
     for( int i=0; i < Fn; i++ )
-      if( FData[i] != a[i] )  return false;
+      if( FData[i] != a[i] )  
+        return false;
     return true;
   }
 
@@ -304,30 +287,33 @@ public:
   inline CString  ToCStr()   const {  return StrRepr<CString>();  }
   inline WString  ToWStr()   const {  return StrRepr<WString>();  }
 
-  void Resize(int newsize)  {
-    if( Fn == newsize )    return;
-    if( newsize == 0 )  {  Fn = 0;  return;  }
-    if( FData != NULL )  {
-      int uc = (newsize < Fn) ? newsize : Fn;
-      VecType *ND = new VecType[newsize];
-      for( int i=0; i < uc; i++ )
+  TVector& Resize(int newsize)  {
+    if( newsize <= Fn )
+      Fn = newsize;
+    else if( newsize == 0 )
+      Fn = 0;  
+    else if( FData != NULL )  {
+      VecType* ND = new VecType[newsize];
+      for( int i=0; i < Fn; i++ )
         ND[i] = FData[i];
-      for( int i=uc; i < newsize; i++ )
+      for( int i=Fn; i < newsize; i++ )
         ND[i] = 0;
       Fn = newsize;
       delete [] FData;
       FData = ND;
-      return;
     }
-    Fn = newsize;
-    FData = new VecType[Fn];
-    Null();
+    else  {
+      Fn = newsize;
+      FData = new VecType[Fn];
+      Null();
+    }
+    return *this;
   }
 
 //------------------------------------------------------------------------------
 //static members
     // searches maximum of an array
-  static VecType  ArrayMax( VecType* a, int &n, int sz )  {
+  static VecType  ArrayMax( VecType* a, int& n, int sz )  {
     VecType b;
     b = a[0];
     n = 0;
@@ -337,7 +323,7 @@ public:
     return b;
   }
     // searches maximum of an array
-  static VecType  ArrayMin( VecType* a, int &n, int sz )  {
+  static VecType  ArrayMin( VecType* a, int& n, int sz )  {
     VecType b;
     b = a[0];
     n = 0;

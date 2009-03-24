@@ -125,7 +125,7 @@ void XLibMacros::macTestSymm(TStrObjList &Cmds, const TParamList &Options, TMacr
   for( int i=0; i < toTest.Count(); i++ )  {
     XApp.GetLog() << ( olxstr("Testing ") << toTest[i] << "...\n");
     XApp.Update();
-    try  {  st.TestMatrix( toTest.Object(i), tol );  }
+    try  {  st.TestMatrix( toTest.GetObject(i), tol );  }
     catch( const TExceptionBase& exc )  {
       XApp.GetLog() << ( olxstr("Test failed because of ") << exc.GetException()->GetError()  << '\n');
       continue;
@@ -143,7 +143,7 @@ void XLibMacros::macTestSymm(TStrObjList &Cmds, const TParamList &Options, TMacr
         }
         st.Push( itrans);
       }
-      res = toTest.Object(i);
+      res = toTest.GetObject(i);
       res *= -1;  // special treatment of inversion
       translations.Clear();
       if( match >= confth )  {
@@ -164,7 +164,7 @@ void XLibMacros::macTestSymm(TStrObjList &Cmds, const TParamList &Options, TMacr
         continue;
       }
 
-      presentSymm.AddACopy( toTest.Object(i) );
+      presentSymm.AddACopy( toTest.GetObject(i) );
       ElimateSGFromList( sglist, res, translations, true);
 
       if( match >= confth )  {

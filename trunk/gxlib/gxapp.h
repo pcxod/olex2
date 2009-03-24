@@ -62,7 +62,8 @@ const short oglAtoms  = 0,
 // grow mode
 const short gmCovalent      = 0x0001,
             gmSInteractions = 0x0002,
-            gmSameAtoms     = 0x0004;
+            gmSameAtoms     = 0x0004,
+            gmVanDerWaals   = 0x0008;
 //---------------------------------------------------------------------------
 class TDUnitCell;
 class TDBasis;
@@ -109,8 +110,9 @@ class TGXApp : public TXApp, AEventsDispatcher, public ASelectionOwner  {
 
   void CreateXRefs();
   void CreateXGrowLines();
+  void _CreateXGrowVLines();
   void CreateXGrowPoints();
-
+  double DeltaV;
 protected:
   TGlRenderer *FGlRender;
   TXFader *Fader;
@@ -258,6 +260,7 @@ public:
 
   void Link(TXAtom *A, TXAtom *B);
   void Free(TXAtom *A, TXAtom *B);
+  DefPropP(double, DeltaV)
   //
 //..............................................................................
 // XFile interface

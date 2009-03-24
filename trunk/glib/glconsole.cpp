@@ -158,7 +158,7 @@ bool TGlConsole::Orient(TGlPrimitive *P)  {
       line = line.SubStringTo(stlen);
 
       glRasterPos3d(T[0], T[1], MaxZ);
-      TGlMaterial* GlMP = FBuffer.Object(i);
+      TGlMaterial* GlMP = FBuffer.GetObject(i);
       if( GlMP != NULL ) 
         GlMP->Init();
       else if( IsBlend() )  {
@@ -218,7 +218,7 @@ bool TGlConsole::ProcessKey( int Key , short ShiftState)  {
     if( FCmdPos >= 0 && FCmdPos < FCommands.Count() )  {
       olex::IOlexProcessor::GetInstance()->executeFunction(InviteStr, PromptStr);
       FCommand = PromptStr;
-      FCommand << FCommands.String(FCmdPos);
+      FCommand << FCommands[FCmdPos];
       StringPosition(  FCommand.Length() );
     }
     return true;
@@ -229,7 +229,7 @@ bool TGlConsole::ProcessKey( int Key , short ShiftState)  {
     if( FCmdPos >= 0 && FCmdPos < FCommands.Count() )  {
       olex::IOlexProcessor::GetInstance()->executeFunction(InviteStr, PromptStr);
       FCommand = PromptStr;
-      FCommand << FCommands.String(FCmdPos);
+      FCommand << FCommands[FCmdPos];
       StringPosition(  FCommand.Length() );
     }
     return true;
@@ -377,11 +377,11 @@ void TGlConsole::PrintText(const olxstr &S, TGlMaterial *M, bool Hypernate)  {
     TGlMaterial *GlM = NULL;
     if( M != NULL )  {  GlM = new TGlMaterial;  *GlM = *M;  }
     if( !FBuffer.IsEmpty() && FBuffer.LastStr().IsEmpty() )  {
-      FBuffer.Last().String() = Tmp;
+      FBuffer.Last().String = Tmp;
       /* this line is added after memory leak analysis by Compuware DevPartner 8.2 trial */
-      if( FBuffer.Last().Object() != NULL )
-        delete FBuffer.Last().Object();
-      FBuffer.Last().Object() = GlM;
+      if( FBuffer.Last().Object != NULL )
+        delete FBuffer.Last().Object;
+      FBuffer.Last().Object = GlM;
     }
     else
       FBuffer.Add(Tmp, GlM);
@@ -416,8 +416,8 @@ void TGlConsole::PrintText(const TStrList &SL, TGlMaterial *M, bool Hypernate)  
         TGlMaterial *GlM = NULL;
         if( M != NULL )  {  GlM = new TGlMaterial;  *GlM = *M;  }
         if( j == 0 && !FBuffer.IsEmpty() && FBuffer.LastStr().IsEmpty() )  {
-          FBuffer.Last().String() = Txt[j];
-          FBuffer.Last().Object() = GlM;
+          FBuffer.Last().String = Txt[j];
+          FBuffer.Last().Object = GlM;
         }
         else
           FBuffer.Add(Txt[j], GlM);
@@ -428,8 +428,8 @@ void TGlConsole::PrintText(const TStrList &SL, TGlMaterial *M, bool Hypernate)  
       TGlMaterial *GlM = NULL;
       if( M != NULL )  {  GlM = new TGlMaterial;  *GlM = *M;  }
       if( !FBuffer.IsEmpty() && FBuffer.LastStr().IsEmpty() )  {
-        FBuffer.Last().String() = Tmp;
-        FBuffer.Last().Object() = GlM;
+        FBuffer.Last().String = Tmp;
+        FBuffer.Last().Object = GlM;
       }
       else
         FBuffer.Add(Tmp, GlM);
@@ -457,8 +457,8 @@ void TGlConsole::SetCommand(const olxstr &NewCmd)  {
 void TGlConsole::ClearBuffer()  {
   int lc = FBuffer.Count();
   for(int i=0; i < lc; i++ )
-    if( FBuffer.Object(i) != NULL )
-      delete (TGlMaterial*)FBuffer.Object(i);
+    if( FBuffer.GetObject(i) != NULL )
+      delete (TGlMaterial*)FBuffer.GetObject(i);
   FBuffer.Clear();
   //FCommand = FInviteString;
   FTxtPos = -1;
@@ -468,8 +468,8 @@ void TGlConsole::KeepSize()  {
   int lc = FBuffer.Count();
   if( lc > FMaxLines )  {
     for( int i = 0; i < lc-FMaxLines; i++ )
-      if( FBuffer.Object(i) )
-        delete (TGlMaterial*)FBuffer.Object(i);
+      if( FBuffer.GetObject(i) )
+        delete FBuffer.GetObject(i);
     FBuffer.DeleteRange(0, lc-FMaxLines);
   }
 }
@@ -577,22 +577,22 @@ size_t TGlConsole::Write(const olxstr& str)  {
     return 1;
   }
   if( FBuffer.IsEmpty() )  FBuffer.Add(EmptyString);
-  FBuffer.Last().String().SetCapacity( FBuffer.Last().String().Length() + str.Length());
+  FBuffer.Last().String.SetCapacity( FBuffer.Last().String.Length() + str.Length());
   for( int i=0; i < str.Length(); i++ )  {
     if( str[i] == '\n' )  {
       FBuffer.Add(EmptyString);
     }
     else if( str[i] == '\r' )  {
       if( !FBuffer.IsEmpty() )
-      FBuffer.Last().String() = EmptyString;
+      FBuffer.Last().String = EmptyString;
     }
     else if( str[i] == '\t') {
-      int count = 8-FBuffer.Last().String().Length()%8;
+      int count = 8-FBuffer.Last().String.Length()%8;
       if( count > 0 )
-        FBuffer.Last().String().Insert(' ', FBuffer.Last().String().Length(), count);
+        FBuffer.Last().String.Insert(' ', FBuffer.Last().String.Length(), count);
     }
     else
-      FBuffer.Last().String() << str[i];
+      FBuffer.Last().String << str[i];
   }
   KeepSize();
   FTxtPos = FBuffer.Count()-1;

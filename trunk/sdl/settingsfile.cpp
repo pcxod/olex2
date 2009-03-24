@@ -22,7 +22,7 @@ void TSettingsFile::LoadSettings(const olxstr& fileName)  {
   strs.LoadFromFile(fileName);
 
   for( int i=0; i < strs.Count(); i++ )  {
-    if( strs.String(i).IsEmpty() )  continue;
+    if( strs[i].IsEmpty() )  continue;
     
     int ind = strs[i].FirstIndexOf('=');
     if( ind < 0 )
@@ -48,7 +48,7 @@ void TSettingsFile::Clear()  {
 void TSettingsFile::UpdateParam(const olxstr& paramName, const olxstr& val)  {
   int index = Params.IndexOfComparable( paramName );
   if( index != -1 )
-    Params.Object(index) = val;
+    Params.GetObject(index) = val;
   else
     Params.Add(paramName, val);
 }

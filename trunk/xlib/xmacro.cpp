@@ -421,10 +421,10 @@ void XLibMacros::macSGInfo(TStrObjList &Cmds, const TParamList &Options, TMacroE
     ref.Add( & TSymmLib::GetInstance()->GetSymmElement(i) );
   sg->SplitIntoElements(ref, sg_elm);
   if( sg_elm.IsEmpty() )
-    Output.Last().String() << "none";
+    Output.Last().String << "none";
   else  {
     for( int i=0; i < sg_elm.Count(); i++ )
-      Output.Last().String() << sg_elm[i]->GetName() << ' ';
+      Output.Last().String << sg_elm[i]->GetName() << ' ';
   }
   Output.Add(EmptyString);
   TBasicApp::GetLog() << ( Output );
@@ -668,12 +668,11 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       const TCAtom& ca = *all[j].GetA();
       const TBasicAtomInfo& bai1 = ca.GetAtomInfo();
       if(  bais.IndexOf(bai1.GetIndex()) == -1 )  continue;
-      vec3d cvec( all[j].GetB()*ca.ccrd() ); 
-      vec3d bond( cvec );
-      bond -= sa.ccrd();
-      au.CellToCartesian(bond);
-      const double d = bond.Length();
-      if( (bai.GetRad1() + bai1.GetRad1() + 0.45) > d )  continue;  // coval bond
+      vec3d cvec( all[j].GetB()*ca.ccrd() ),
+            bond( cvec - sa.ccrd() );
+      const double d = au.CellToCartesian(bond).Length();
+      if( d < (bai.GetRad1() + bai1.GetRad1() + 0.4) ) // coval bond
+        continue;  
       // analyse angles
       for( int k=0; k < hc; k++ )  {
         vec3d base = sa.Node(h_indexes[k]).ccrd();
@@ -1715,7 +1714,7 @@ void XLibMacros::macEnvi(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     if( rd.GetC().r.IsI() && rd.GetC().t.IsNull() )
      table[i][1] = 'I';  // identity
     else
-      table[i][1] = TSymmParser::MatrixToSymm( rd.GetC() );
+      table[i][1] = TSymmParser::MatrixToSymmCode(xapp.XFile().GetUnitCell(), rd.GetC() );
     table[i][0] = olxstr::FormatFloat(2, rd.GetB().Length());
     for( int j=0; j < rowData.Count(); j++ )  {
       if( i == j )  { table[i][j+2] = '-'; continue; }
@@ -1760,7 +1759,7 @@ void XLibMacros::funRemoveSE(const TStrObjList &Params, TMacroError &E)  {
       if( TSymmLib::GetInstance()->GetGroup(i).Compare(ml, st) )
         sglist.Add(st, &TSymmLib::GetInstance()->GetGroup(i) );
     }
-    E.SetRetVal( sglist.IsEmpty() ? sg->GetName() : sglist.Object(0)->GetName() );
+    E.SetRetVal( sglist.IsEmpty() ? sg->GetName() : sglist.GetObject(0)->GetName() );
   }
 }
 //..............................................................................
@@ -2097,7 +2096,7 @@ void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options, TMacro
     olxstr Tmp;
     DF.LoadFromXLFile(CifTablesFile, &SL);
 
-    Root = DF.Root().FindItemCI("Cif_Tables");
+    Root = DF.Root().FindItemi("Cif_Tables");
     if( Root != NULL )  {
       xapp.GetLog().Info("Found table definitions:");
       for( int i=0; i < Root->ItemCount(); i++ )  {
@@ -2145,7 +2144,7 @@ void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options, TMacro
   }
   RF = TEFile::ChangeFileExt(RF, "html");
 
-  Root = DF.Root().FindItemCI("Cif_Tables");
+  Root = DF.Root().FindItemi("Cif_Tables");
   smatd_list SymmList;
   int tab_count = 1;
   for( int i=0; i < Cmds.Count(); i++ )  {
@@ -2253,13 +2252,13 @@ void XLibMacros::MergePublTableData(TCifLoopTable& to, TCifLoopTable& from)  {
     if( ind == -1 )
       uniqCols.Add( to.ColName(i), AnAssociation2<int,int>(-1, i) );
     else
-      uniqCols.Object(ind).B() = i;
+      uniqCols.GetObject(ind).B() = i;
   }
   // add new columns, if any
   for( int i=0; i < uniqCols.Count(); i++ ) {
-    if( uniqCols.Object(i).GetB() == -1 )  {
+    if( uniqCols.GetObject(i).GetB() == -1 )  {
       to.AddCol( uniqCols.GetComparable(i) );
-      uniqCols.Object(i).B() = to.ColCount() - 1;
+      uniqCols.GetObject(i).B() = to.ColCount() - 1;
     }
   }
   /* by this point the uniqCols contains all the column names and the association
@@ -2267,7 +2266,7 @@ void XLibMacros::MergePublTableData(TCifLoopTable& to, TCifLoopTable& from)  {
   // the actual merge, by author name
   int authNCI = uniqCols.IndexOfComparable( authorNameCN );
   if( authNCI == -1 )  return;  // cannot do much, can we?
-  AnAssociation2<int,int> authCA( uniqCols.Object(authNCI) );
+  AnAssociation2<int,int> authCA( uniqCols.GetObject(authNCI) );
   if( authCA.GetA() == -1 )  return;  // no author?, bad ...
   for( int i=0; i < from.RowCount(); i++ )  {
     int ri = -1;
@@ -2282,7 +2281,7 @@ void XLibMacros::MergePublTableData(TCifLoopTable& to, TCifLoopTable& from)  {
       ri = to.RowCount()-1;
     }
     for( int j=0; j < uniqCols.Count(); j++ )  {
-      AnAssociation2<int,int>& as = uniqCols.Object(j);
+      AnAssociation2<int,int>& as = uniqCols.GetObject(j);
       if( as.GetA() == -1 )  continue;
       to[ ri ][as.GetB()] = from[i][ as.GetA() ];
     }
@@ -2290,9 +2289,9 @@ void XLibMacros::MergePublTableData(TCifLoopTable& to, TCifLoopTable& from)  {
   // null the objects - they must not be here anyway ..
   for( int i=0; i < to.RowCount(); i++ )  {
     for( int j=0; j < to.ColCount(); j++ )  {
-      if( to[i].Object(j) == NULL )
-        to[i].Object(j) = new TCifLoopData(true);
-      to[i].Object(j)->String = true;
+      if( to[i].GetObject(j) == NULL )
+        to[i].GetObject(j) = new TCifLoopData(true);
+      to[i].GetObject(j)->String = true;
     }
   }
 }
@@ -2347,7 +2346,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
       if( cd->Data->IsEmpty() )
         cd->Data->Add( sg->GetBravaisLattice().GetName() );
       else
-        cd->Data->String(0) = sg->GetBravaisLattice().GetName();
+        cd->Data->GetString(0) = sg->GetBravaisLattice().GetName();
       cd->String = true;
     }
     if( !Cif->ParamExists("_symmetry_space_group_name_H-M") )
@@ -2357,7 +2356,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
       if( cd->Data->IsEmpty() )
         cd->Data->Add( sg->GetFullName() );
       else
-        cd->Data->String(0) = sg->GetFullName();
+        cd->Data->GetString(0) = sg->GetFullName();
       cd->String = true;
     }
     if( !Cif->ParamExists("_symmetry_space_group_name_Hall") )
@@ -2367,7 +2366,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
       if( cd->Data->IsEmpty() )
         cd->Data->Add( sg->GetHallSymbol() );
       else
-        cd->Data->String(0) = sg->GetHallSymbol();
+        cd->Data->GetString(0) = sg->GetHallSymbol();
       cd->String = true;
     }
   }
@@ -2718,7 +2717,7 @@ void XLibMacros::macChangeSG(TStrObjList &Cmds, const TParamList &Options, TMacr
     return;
   }
   TSpaceGroup& from_sg = xapp.XFile().GetLastLoaderSG();
-  TSpaceGroup* sg = TSymmLib::GetInstance()->FindGroup(Cmds.Last().String());
+  TSpaceGroup* sg = TSymmLib::GetInstance()->FindGroup(Cmds.Last().String);
   if( sg == NULL )  {
     E.ProcessingError(__OlxSrcInfo, "Could not identify given space group");
     return;
@@ -2765,7 +2764,7 @@ void XLibMacros::macChangeSG(TStrObjList &Cmds, const TParamList &Options, TMacr
   smatd_list ml;
   sg->GetMatrices(ml, mattAll );
   TTypeList< AnAssociation3<vec3d,TCAtom*, int> > list;
-  uc.GenereteAtomCoordinates(list, true);
+  uc.GenereteAtomCoordinates(list, false);
   if( Cmds.Count() == 4 )  {
     vec3d trans( Cmds[0].ToDouble(), Cmds[1].ToDouble(), Cmds[2].ToDouble());
     for( int i=0; i < list.Count(); i++ )  {

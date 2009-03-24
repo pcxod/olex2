@@ -97,8 +97,8 @@ void TXBond::Create(const olxstr& cName, const ACreationParams* cpar)  {
     int off = 1;
     off = off << i;
     if( PrimitiveMask & off )    {
-      TGlPrimitive* SGlP = FStaticObjects.Object(i);
-      TGlPrimitive* GlP = GPC->NewPrimitive(FStaticObjects.String(i), sgloCommandList);
+      TGlPrimitive* SGlP = FStaticObjects.GetObject(i);
+      TGlPrimitive* GlP = GPC->NewPrimitive(FStaticObjects[i], sgloCommandList);
       /* copy the default drawing style tag*/
       GlP->Params.Resize(GlP->Params.Count()+1);
       GlP->Params.Last() = SGlP->Params.Last();
@@ -106,16 +106,16 @@ void TXBond::Create(const olxstr& cName, const ACreationParams* cpar)  {
       GlP->StartList();
       GlP->CallList(SGlP);
       GlP->EndList();
-      TGlMaterial* GlM = const_cast<TGlMaterial*>(GS->Material(FStaticObjects.String(i)));
+      TGlMaterial* GlM = const_cast<TGlMaterial*>(GS->Material(FStaticObjects[i]));
       if( GlM->Mark() && FBond )  {
         if( SGlP->Params.Last() == ddsDefAtomA )  {
           TXAtom::GetDefSphereMaterial(FBond->A(), RGlM);
-          GS->PrimitiveMaterial(FStaticObjects.String(i), RGlM);
+          GS->PrimitiveMaterial(FStaticObjects[i], RGlM);
           GlM = &RGlM;
         }
         if( SGlP->Params.Last() == ddsDefAtomB )  {
           TXAtom::GetDefSphereMaterial(FBond->B(), RGlM);
-          GS->PrimitiveMaterial(FStaticObjects.String(i), RGlM);
+          GS->PrimitiveMaterial(FStaticObjects[i], RGlM);
           GlM = &RGlM;
         }
       }
@@ -474,8 +474,8 @@ olxstr TXBond::GetLegend(const TSBond& Bnd, const short AtomALevel, const short 
            T1(TXAtom::GetLegend(*B, BLevel), '.');
   int maxI = olx_max(T.Count(), T1.Count());
   for( int i=0; i < maxI; i++ )  {
-    LA = (i >= T.Count()) ? T.Last().String() : T[i];
-    LB = (i >= T1.Count()) ? T1.Last().String() : T1[i];
+    LA = (i >= T.Count()) ? T.Last().String : T[i];
+    LB = (i >= T1.Count()) ? T1.Last().String : T1[i];
     if( LA.Compare(LB) < 0 )
       L << LA << '-' << LB;
     else

@@ -18,7 +18,8 @@ public:
 
     TGlXApp::GetMainForm()->executeMacro("cursor(hand)");
     if( Options.Contains('v') )  {
-      TGlXApp::GetGXApp()->SetDeltaV( Options.FindValue('v', '3').ToDouble() );
+      olxstr vr = Options.FindValue('v');
+      TGlXApp::GetGXApp()->SetDeltaV( vr.IsEmpty() ? 3.0 : vr.ToDouble() );
       TGlXApp::GetGXApp()->SetGrowMode( gmVanDerWaals, AtomsToGrow );
     }
     else  {

@@ -13,24 +13,17 @@
 
 #include "emath.h"
 //---------------------------------------------------------------------------
-// compares p with values in array SO and LO. Used in SymmToMatrix function
-short TSymmParser::IsAxis(const char* axes, const olxstr& p){
-  if( p.IsEmpty() )  return -1;
-  for( int i=0; i < 3; i++ )
-    if( axes[i] == p[0] )  return i;
-  return -1;
-}
+const char TSymmParser::Axis[] = {'X','Y','Z'};
 //..............................................................................
 // Transforms standard SYMM operation (INS, CIF files) to matrix
-bool  TSymmParser::SymmToMatrix(const olxstr& S, smatd& M)  {
+bool TSymmParser::SymmToMatrix(const olxstr& S, smatd& M)  {
   olxstr p, p1, opr;
-  static const char Axes[3] = {'x','y','z'};
   double ratio;
   int op, index;
   bool res = true;
   str_stack stack;
   M.Null();
-  TStrList toks(olxstr::LowerCase(S), ',');
+  TStrList toks(olxstr::UpperCase(S), ',');
   if( toks.Count() != 3 )
     throw TFunctionFailedException(__OlxSourceInfo,
          olxstr("Operation sign is missing or operation is incomplete while parsing \"") << S << '\"');
@@ -38,7 +31,7 @@ bool  TSymmParser::SymmToMatrix(const olxstr& S, smatd& M)  {
   for( int i=0; i < 3; i++ )  {
     stack.LoadFromExpression(toks[i]);
     p = stack.Pop();
-    op = IsAxis(Axes, p);
+    op = IsAxis(p);
     if( op < 0 )  {
       p1 = stack.Pop();
       if( stack.IsEmpty() )  {
@@ -57,18 +50,18 @@ bool  TSymmParser::SymmToMatrix(const olxstr& S, smatd& M)  {
       p = stack.Pop();
     }
 next_oper:
-    if( abs(p.CharAt(0)-'z') > 2 )  {
+    if( abs(p.CharAt(0)-'Z') > 2 )  {
       res = false;
       break;
     }
-    index = 2 - 'z' + p.CharAt(0);
+    index = 2 - 'Z' + p.CharAt(0);
     M.r[i][index] = 1;
     if( stack.IsEmpty() )  continue;
     p = stack.Pop();
     if( p.CharAt(0) == '-' )     M.r[i][index] = -1;  // inversion
     if( stack.IsEmpty() )  continue;
     p = stack.Pop();
-    op = IsAxis(Axes, p);
+    op = IsAxis(p);
     if( op < 0 )  {
       if( stack.IsEmpty() )  {
         M.t[i] = p.ToDouble();  // translation
@@ -106,105 +99,27 @@ next_oper:
   return true;
 }
 //..............................................................................
-// Transforms matrix to standard SYMM operation (INS, CIF files)
-
-olxstr FormatFloatEx(double f)  {
-  olxstr rv;
-  if( f < 0 )
-    rv << '-';
-  int v = abs(Round(f*12)), base = 12;
-  int denom = esdl::gcd(v, base);
-  if( denom != 1 )  {
-    v /= denom;
-    base /= denom;
-  }
-  if( base == 1 )
-    return rv << v;
-  else
-    return rv << v << '/' << base;
-}
-olxstr TSymmParser::MatrixToSymm(const smatd& M)  {
-  olxstr T, T1, T2;
-  char Axis[] = {'X','Y','Z'};
-  for( int j=0; j < 3; j ++ )  {
-    if( j != 0 )
-      T << ',';
-    for( int i=0; i < 3; i ++ )  {
-      if( i == j )  {
-        if( M.r[j][i] != 0 )  {
-          //if( M[j][3] != 0 )
-          T1 << CharSign(M.r[j][i]);
-          //if( olx_abs(olx_abs(M.r[j][i])-1) > 1e-5 )
-          //  T1 << (double)M.r[j][i];
-          T1 << Axis[j];
-        }
-        continue;
-      }
-      if( M.r[j][i] != 0 )  {
-        T1.Insert(Axis[i], 0);
-        T1.Insert(CharSign(M.r[j][i]), 0);
-      }
-    }
-    if( M.t[j] != 0 )  {
-      //T2 = FormatFloatX(M[j][3]);
-      T2 = olxstr::FormatFloat(3, M.t[j], false);
-      T2.TrimFloat();
-      T1.Insert(T2, 0);
-    }
-    T << T1;
-    T1 = EmptyString;
-  }
-  return T;
+smatd TSymmParser::SymmCodeToMatrixU(const class TUnitCell& UC, const olxstr& Code)  {
+  return _SymmCodeToMatrix(UC, Code);
 }
 //..............................................................................
-olxstr TSymmParser::MatrixToSymmEx(const smatd& M)  {
-  olxstr T, T1, T2;
-  char Axis[] = {'X','Y','Z'};
-  for( int j=0; j < 3; j ++ )  {
-    if( j != 0 )
-      T << ',';
-    for( int i=0; i < 3; i ++ )  {
-      if( i == j )  {
-        if( M.r[j][i] != 0 )  {
-          //if( M[j][3] != 0 )
-          T1 << CharSign(M.r[j][i]);
-          //if( olx_abs(olx_abs(M.r[j][i])-1) > 1e-5 )
-          //  T1 << (double)M.r[j][i];
-          T1 << Axis[j];
-        }
-        continue;
-      }
-      if( M.r[j][i] != 0 )  {
-        T1.Insert(Axis[i], 0);
-        T1.Insert(CharSign(M.r[j][i]), 0);
-      }
-    }
-    if( M.t[j] != 0 )
-      T1.Insert(FormatFloatEx(M.t[j]), 0);
-    T << T1;
-    T1 = EmptyString;
-  }
-  return T;
+smatd TSymmParser::SymmCodeToMatrixA(const class TAsymmUnit& AU, const olxstr& Code)  {
+  return _SymmCodeToMatrix(AU, Code);
 }
 //..............................................................................
 olxstr TSymmParser::MatrixToSymmEx(const mat3i& M)  {
-  olxstr T, T1, T2;
-  char Axis[] = {'X','Y','Z'};
+  olxstr T, T1;
   for( int j=0; j < 3; j ++ )  {
     if( j != 0 )
       T << ',';
     for( int i=0; i < 3; i ++ )  {
       if( i == j )  {
         if( M[j][i] != 0 )  {
-          //if( M[j][3] != 0 )
           T1 << CharSign(M[j][i]);
-          //if( olx_abs(olx_abs(M[j][i])-1) > 1e-5 )
-          //  T1 << (double)M[j][i];
           T1 << Axis[j];
         }
-        continue;
       }
-      if( M[j][i] != 0 )  {
+      else if( M[j][i] != 0 )  {
         T1.Insert(Axis[i], 0);
         T1.Insert(CharSign(M[j][i]), 0);
       }
@@ -213,116 +128,6 @@ olxstr TSymmParser::MatrixToSymmEx(const mat3i& M)  {
     T1 = EmptyString;
   }
   return T;
-}
-//..............................................................................
-smatd TSymmParser::SymmCodeToMatrixU(const TUnitCell& UC, const olxstr &Code)  {
-  olxstr Tmp;
-  TStrList Toks(Code, '_');
-  int isymm;
-  smatd mSymm;
-  if( Toks.Count() == 1 )  {
-    isymm = Toks[0].ToInt()-1;
-    if( isymm < 0 || isymm >= UC.MatrixCount() )
-      throw TFunctionFailedException(__OlxSourceInfo, olxstr("wrong matrix index: ") << isymm);
-    return UC.GetMatrix(isymm);
-  }
-  if( Toks.Count() != 2 )
-    throw TFunctionFailedException(__OlxSourceInfo, olxstr("wrong Code: ") << Code);
-  isymm = Toks.String(0).ToInt()-1;
-  if( isymm < 0 || isymm >= UC.MatrixCount() )
-    throw TFunctionFailedException(__OlxSourceInfo, olxstr("wrong matrix index: ") << isymm);
-  mSymm = UC.GetMatrix(isymm);
-
-  if( (Toks.String(1).Length() != 3) && (Toks.String(1).Length() != 6))
-    throw TFunctionFailedException(__OlxSourceInfo, olxstr("wrong matrix code: ") << Toks.String(1));
-  if( Toks.String(1).Length() == 3 )  {
-    mSymm.t[0] += (int)(Toks.String(1)[0]-'5');
-    mSymm.t[1] += (int)(Toks.String(1)[1]-'5');
-    mSymm.t[2] += (int)(Toks.String(1)[2]-'5');
-  }
-  else  {
-    Tmp = Toks.String(1).SubString(0, 2);
-    mSymm.t[0] += (Tmp.ToInt()-55);
-    Tmp = Toks.String(1).SubString(2, 2);
-    mSymm.t[1] += (Tmp.ToInt()-55);
-    Tmp = Toks.String(1).SubString(4, 2);
-    mSymm.t[2] += (Tmp.ToInt()-55);
-  }
-  return mSymm;
-}
-//..............................................................................
-smatd TSymmParser::SymmCodeToMatrixA(const TAsymmUnit& AU, const olxstr &Code)  {
-  olxstr Tmp;
-  TStrList Toks(Code, '_');
-  int isymm;
-  smatd mSymm;
-  if( Toks.Count() == 1 )  {
-    isymm = Toks.String(0).ToInt()-1;
-    if( isymm < 0 || isymm >= AU.MatrixCount() )
-      throw TFunctionFailedException(__OlxSourceInfo, olxstr("wrong matrix index: ") << isymm);
-    return AU.GetMatrix(isymm);
-  }
-  if( Toks.Count() != 2 )
-    throw TFunctionFailedException(__OlxSourceInfo, olxstr("wrong Code: ") << Code);
-  isymm = Toks.String(0).ToInt()-1;
-  if( isymm < 0 || isymm >= AU.MatrixCount() )
-    throw TFunctionFailedException(__OlxSourceInfo, olxstr("wrong matrix index: ") << isymm);
-  mSymm = AU.GetMatrix(isymm);
-
-  if( (Toks.String(1).Length() != 3) && (Toks.String(1).Length() != 6))
-    throw TFunctionFailedException(__OlxSourceInfo, olxstr("wrong matrix code: ") << Toks.String(1));
-  if( Toks.String(1).Length() == 3 )  {
-    mSymm.t[0] += (int)(Toks.String(1)[0]-'5');
-    mSymm.t[1] += (int)(Toks.String(1)[1]-'5');
-    mSymm.t[2] += (int)(Toks.String(1)[2]-'5');
-  }
-  else  {
-    Tmp = Toks.String(1).SubString(0, 2);
-    mSymm.t[0] += (Tmp.ToInt()-55);
-    Tmp = Toks.String(1).SubString(2, 2);
-    mSymm.t[1] += (Tmp.ToInt()-55);
-    Tmp = Toks.String(1).SubString(4, 2);
-    mSymm.t[2] += (Tmp.ToInt()-55);
-  }
-  return mSymm;
-}
-//..............................................................................
-smatd TSymmParser::SymmCodeToMatrix(const smatd_list& ml, const olxstr &Code)  {
-  olxstr Tmp;
-  TStrList Toks(Code, '_');
-  int isymm;
-  smatd mSymm;
-  if( Toks.Count() == 1 )  {
-    isymm = Toks[0].ToInt()-1;
-    if( isymm < 0 || isymm >= ml.Count() )
-      throw TFunctionFailedException(__OlxSourceInfo, olxstr("wrong matrix index: ") << isymm);
-    mSymm = ml[isymm];
-    return mSymm;
-  }
-  if( Toks.Count() != 2 )
-    throw TFunctionFailedException(__OlxSourceInfo, olxstr("wrong Code: ") << Code);
-  isymm = Toks[0].ToInt()-1;
-  if( isymm < 0 || isymm >= ml.Count() )
-    throw TFunctionFailedException(__OlxSourceInfo, olxstr("wrong matrix index: ") << isymm);
-  mSymm = ml[isymm];
-
-  if( (Toks.String(1).Length() != 3) && (Toks.String(1).Length() != 6))
-    throw TFunctionFailedException(__OlxSourceInfo, olxstr("wrong matrix code: ") << Toks.String(1));
-  if( Toks.String(1).Length() == 3 )  {
-    mSymm.t[0] += (int)(Toks.String(1)[0]-'5');
-    mSymm.t[1] += (int)(Toks.String(1)[1]-'5');
-    mSymm.t[2] += (int)(Toks.String(1)[2]-'5');
-  }
-  else  {
-    Tmp = Toks.String(1).SubString(0, 2);
-    mSymm.t[0] += (Tmp.ToInt()-55);
-    Tmp = Toks.String(1).SubString(2, 2);
-    mSymm.t[1] += (Tmp.ToInt()-55);
-    Tmp = Toks.String(1).SubString(4, 2);
-    mSymm.t[2] += (Tmp.ToInt()-55);
-  }
-  mSymm.SetTag( isymm );
-  return mSymm;
 }
 //..............................................................................
 // this needs to be of very high performance

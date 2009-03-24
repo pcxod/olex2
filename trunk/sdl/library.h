@@ -68,7 +68,7 @@ public:
       TIntList list;
       Macros.GetIndexes( macro->GetName(), list );
       for(int i=0; i < list.Count(); i++ )  {
-        unsigned int argc = Macros.Object(list[i])->GetArgStateMask();
+        unsigned int argc = Macros.GetObject(list[i])->GetArgStateMask();
         if( macro->GetArgStateMask() & argc )
           throw TDuplicateEntry(__OlxSourceInfo, olxstr("macro (same number of args)") << macro->GetName(), "macro");
       }

@@ -44,7 +44,7 @@ protected:
 #ifdef __WXWIDGETS__
   wxFSFile *_GetFSFileHandler( const olxstr &FN );
 #endif
-  void _AddMemoryBlock(const olxstr& name, char *bf, int length, short persistenceId);
+  void _AddMemoryBlock(const olxstr& name, const char *bf, int length, short persistenceId);
   static olxstr LocateFile( const olxstr& fn );
   void _SaveToStream(IDataOutputStream& os, short persistenceMask);
   void _LoadFromStream(IDataInputStream& is, short persistenceId);
@@ -58,7 +58,7 @@ public:
 #endif
   static void Clear(short persistenceMask = ~0);
   static void AddBaseDir(const olxstr& bd);
-  static void AddMemoryBlock(const olxstr& name, char *bf, int length, short persistenceId);
+  static void AddMemoryBlock(const olxstr& name, const char *bf, int length, short persistenceId);
 
   static void SaveToStream(IDataOutputStream& os, short persistenceMask);
   static void LoadFromStream(IDataInputStream& is, short persistenceId);

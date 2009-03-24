@@ -3607,11 +3607,11 @@ void TMainForm::macMode(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   static bool ChangingMode = false;
   if( ChangingMode )  return;
   AMode *md = Modes->SetMode( Cmds[0] );
-  olxstr cmds = Cmds.Text(' ');
-  for( int i=0; i < Options.Count(); i++ )
-    cmds << " -" << Options.GetName(i) << '=' << Options.GetValue(i);
-  CallbackFunc(OnModeChangeCBName, cmds);
   if( md != NULL )  {
+    olxstr cmds = Cmds.Text(' ');
+    for( int i=0; i < Options.Count(); i++ )
+      cmds << " -" << Options.GetName(i) << '=' << Options.GetValue(i);
+    CallbackFunc(OnModeChangeCBName, cmds);
     Cmds.Delete(0);
     md->Init(Cmds, Options);
   }
@@ -6240,7 +6240,6 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options, TMacroErr
         }
         smatdd S;
         double rms = MatchAtomPairsQT( satomp, S, TryInvert);
-        S.r.Transpose();
         TBasicApp::GetLog() << ("Transformation matrix B to A):\n");
         for( int i=0; i < 3; i++ )
           TBasicApp::GetLog() << S.r[i].ToString() << ' ' << S.t[i] << '\n' ;
@@ -6302,7 +6301,6 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       }
       smatdd S;
       double rms = MatchAtomPairsQT( satomp, S, TryInvert);
-      S.r.Transpose();
       TNetwork::DoAlignAtoms(satomp, atomsToTransform, S, TryInvert);
       FXApp->UpdateBonds();
       FXApp->CenterView();
@@ -6335,7 +6333,6 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options, TMacroErr
           double rms = MatchAtomPairsQT( satomp, S, TryInvert);
           CallMatchCallbacks(*nets[i], *nets[j], rms);
           if( rms >= 0 )  {
-            S.r.Transpose();
             TNetwork::DoAlignAtoms(satomp, atomsToTransform, S, TryInvert);
           }
 

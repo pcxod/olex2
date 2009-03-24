@@ -19,7 +19,7 @@ template <class T>
     T& GetValue( int32_t key )  {
       int ind = Entries.IndexOfComparable( key );
       if( ind == -1 )  throw TInvalidArgumentException(__OlxSourceInfo, "id");
-      return Entries.Object(ind);
+      return Entries.GetObject(ind);
     }
 
     bool ValueExists( int32_t key )  {

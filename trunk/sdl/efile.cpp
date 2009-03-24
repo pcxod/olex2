@@ -131,7 +131,7 @@ bool TEFile::TFileNameMask::DoesMatch(const olxstr& str)  const {
     if( toks.Count() == 1 && mask[ mask.Length()-1] != '*' )  return true;
   }
   if( mask[ mask.Length()-1] != '*' && toks.Count() > (mask[0]!='*' ? 1 : 0) )  {
-    olxstr& tmp = toks.String( toks.Count()-1 );
+    olxstr& tmp = toks[toks.Count()-1];
     if( tmp.Length() > (str.Length()-start) )  return false;
     for( int i=0; i < tmp.Length(); i++ )
      if( !(tmp[i] == '?' || tmp[i] == str[str.Length()-tmp.Length() + i]) )  return false;
@@ -141,7 +141,7 @@ bool TEFile::TFileNameMask::DoesMatch(const olxstr& str)  const {
   }
 
   for( int i=toksStart; i < toksEnd; i++ )  {
-    olxstr& tmp = toks.String(i);
+    olxstr& tmp = toks[i];
     bool found = false;
     for( int j=start; j < end; j++ )  {
       if( (str.Length() - j) < tmp.Length() )  return false;
@@ -449,7 +449,7 @@ bool TEFile::ListCurrentDirEx(TFileList &Out, const olxstr &Mask, const unsigned
   TTypeList<AnAssociation2<TEFile::TFileNameMask*, TEFile::TFileNameMask*> > masks;
   olxstr tmp, fn;
   for(int i=0; i < ml.Count(); i++ )  {
-    olxstr& t = ml.String(i);
+    olxstr& t = ml[i];
     tmp = TEFile::ExtractFileExt( t );
     masks.AddNew( new TEFile::TFileNameMask(t.SubStringTo(t.Length() - tmp.Length() - (tmp.Length()!=0 ? 1 : 0))),
                   new TEFile::TFileNameMask(tmp) );
@@ -518,7 +518,7 @@ bool TEFile::ListCurrentDir(TStrList &Out, const olxstr &Mask, const unsigned sh
   TTypeList<AnAssociation2<TEFile::TFileNameMask*, TEFile::TFileNameMask*> > masks;
   olxstr tmp, fn;
   for(int i=0; i < ml.Count(); i++ )  {
-    olxstr& t = ml.String(i);
+    olxstr& t = ml[i];
     tmp = TEFile::ExtractFileExt( t );
     masks.AddNew( new TEFile::TFileNameMask(t.SubStringTo(t.Length() - tmp.Length() - (tmp.Length()!=0 ? 1 : 0))),
                   new TEFile::TFileNameMask(tmp) );
@@ -780,12 +780,12 @@ olxstr TEFile::AbsolutePathTo(const olxstr &Path, const olxstr &relPath ) {
   TStrList dirToks(OLX_OS_PATH( Path ), OLX_PATH_DEL),
               relPathToks(OLX_OS_PATH( relPath ), OLX_PATH_DEL);
   for( int i=0; i < relPathToks.Count(); i++ )  {
-    if( relPathToks.String(i) == ".." )
+    if( relPathToks[i] == ".." )
       dirToks.Delete( dirToks.Count()-1 );
-    else if( relPathToks.String(i) == "." )
+    else if( relPathToks[i] == "." )
       ;
     else
-      dirToks.Add( relPathToks.String(i) );
+      dirToks.Add( relPathToks[i] );
   }
   olxstr res = dirToks.Text(OLX_PATH_DEL);
 //  if( !TEFile::FileExists( res ) )
@@ -895,9 +895,9 @@ void ListDirForGUI(const TStrObjList& Params, TMacroError& E)  {
   TEFile::ChangeDir( Params[0] );
   short attrib = sefFile;
   if( Params.Count() == 3 )  {
-    if( Params.String(2).Comparei("fd") == 0 )
+    if( Params[2].Comparei("fd") == 0 )
       attrib |= sefDir;
-    else if( Params.String(2)[0] == 'd' )
+    else if( Params[2].CharAt(0) == 'd' )
       attrib = sefDir;
   }
   TStrList output;
@@ -907,8 +907,8 @@ void ListDirForGUI(const TStrObjList& Params, TMacroError& E)  {
   output.QSort(false);
   for(int i=0; i < output.Count(); i++ )  {
    tmp = EmptyString;
-    tmp <<  "<-" << dn << output.String(i);
-    output.String(i) << tmp;
+    tmp <<  "<-" << dn << output[i];
+    output[i] << tmp;
   }
   E.SetRetVal( output.Text(';') );
 }

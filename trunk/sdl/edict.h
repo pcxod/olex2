@@ -42,6 +42,7 @@ public:
   }
   inline void Clear()                         {  SortedL::Clear();  }
   inline int Count()                    const {  return SortedL::Count();  }
+  inline bool IsEmpty()                 const {  return SortedL::IsEmpty();  }
   inline VType& GetValue(int ind)             {  return SortedL::operator[] (ind).val;  }
   inline const VType& GetValue(int ind) const {  return SortedL::operator[] (ind).val;  }
   inline const KType& GetKey(int ind)   const {  return SortedL::operator[] (ind).key;  }

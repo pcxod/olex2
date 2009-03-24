@@ -34,11 +34,12 @@ TDataItem::~TDataItem()  {
 void TDataItem::Clear()  {
   Fields.Clear();
   for( int i=0; i < Items.Count(); i++ )  {
-    if( Items.Object(i)->GetRefCount() < 1 ) delete Items.Object(i);
+    if( Items.GetObject(i)->GetRefCount() < 1 ) 
+      delete Items.GetObject(i);
     else  {
-      if( Items.Object(i)->GetParent() == this )
-        Items.Object(i)->SetParent(NULL);
-      Items.Object(i)->DecRef();
+      if( Items.GetObject(i)->GetParent() == this )
+        Items.GetObject(i)->SetParent(NULL);
+      Items.GetObject(i)->DecRef();
     }
   }
   Items.Clear();
@@ -128,7 +129,7 @@ TDataItem *TDataItem::GetAnyItem(const olxstr& Name) const {
 }
 //..............................................................................
 TDataItem *TDataItem::GetAnyItemCI(const olxstr &Name) const {
-  TDataItem *DI = Items.FindObjectCI(Name);
+  TDataItem *DI = Items.FindObjecti(Name);
   if( DI == NULL )  {
     for( int i=0; i < ItemCount(); i++ )  {
       DI = GetItem(i).GetAnyItemCI(Name);
@@ -288,10 +289,10 @@ int TDataItem::LoadFromString( int start, olxstr &Data, TStrList* Log)  {
 }
 //..............................................................................
 void TDataItem::ResolveFields(TStrList* Log)  {  // resolves referenced fields
-  olxstr Tmp, *RefFieldValue, RefFieldName;
+  olxstr *RefFieldValue, RefFieldName;
   TDataItem *DI;
   for( int i=0; i < FieldCount(); i++ )  {
-    Tmp = Fields.String(i);
+    const olxstr& Tmp = Fields[i];
     if( Tmp.IndexOf('.') >= 0 )  {  // a reference to an item
       DI = DotItem(Tmp, Log);
       if( DI != NULL )  {
@@ -308,8 +309,8 @@ void TDataItem::ResolveFields(TStrList* Log)  {  // resolves referenced fields
         else
         {
           if( Log)  Log->Add(olxstr("Resolved field: ") << Tmp);
-          Fields.String(i) = RefFieldName;
-          Fields.Object(i) = *RefFieldValue;
+          Fields[i] = RefFieldName;
+          Fields.GetObject(i) = *RefFieldValue;
         }
       }
     }
@@ -335,8 +336,8 @@ void TDataItem::SaveToStrBuffer(TEStrBuffer &Data) const {
   fc = FieldCount();
   ic = ItemCount();
   for( int i=0; i < fc; i++ )  {
-    Data << Fields.String(i) << '=';
-    Data << '\"' << CodeString(Fields.Object(i)) << '\"' << ' ';
+    Data << Fields.GetString(i) << '=';
+    Data << '\"' << CodeString(Fields.GetObject(i)) << '\"' << ' ';
   }
   for( int i=0; i < ic; i++ )  {
     if( GetItem(i).GetParent() != this )  {  // dot operator
@@ -364,7 +365,7 @@ void TDataItem::SaveToStrBuffer(TEStrBuffer &Data) const {
 void TDataItem::FindSimilarItems(const olxstr &StartsFrom, TPtrList<TDataItem>& List)  {
   for(int i=0; i < ItemCount(); i++ )  {
     if( Items[i].StartsFrom(StartsFrom) )
-      List.Add((TDataItem*)Items.Object(i));
+      List.Add(Items.GetObject(i));
   }
 }
 //..............................................................................

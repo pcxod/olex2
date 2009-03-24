@@ -27,7 +27,7 @@ class TAU_SfacSorter  {
 public:
   static int Compare(const TPrimitiveStrListData<olxstr,TBasicAtomInfo*>* s1, 
                     const TPrimitiveStrListData<olxstr,TBasicAtomInfo*>* s2)  {
-    double diff = s1->GetObject()->GetMr() - s1->GetObject()->GetMr();
+    double diff = s1->Object->GetMr() - s1->Object->GetMr();
     if( diff < 0 )  return -1;
     if( diff > 0 )  return 1;
     return 0;
@@ -386,7 +386,7 @@ void TAsymmUnit::SummFormula(TStrPObjList<olxstr,TBasicAtomInfo*>& BasicAtoms, o
     TCAtom& A = *CAtoms[i];
     bool Uniq = true;
     for( int j=0; j < BasicAtoms.Count(); j++)  {
-      if( BasicAtoms.Object(j)->GetIndex() == A.GetAtomInfo().GetIndex() ) {  // already in the list ?
+      if( BasicAtoms.GetObject(j)->GetIndex() == A.GetAtomInfo().GetIndex() ) {  // already in the list ?
         A.GetAtomInfo().SetSumm( A.GetAtomInfo().GetSumm() + A.GetOccu() );       // update the quantity
         Uniq = false;
         break;
@@ -405,7 +405,7 @@ void TAsymmUnit::SummFormula(TStrPObjList<olxstr,TBasicAtomInfo*>& BasicAtoms, o
   if( Hydrogen != NULL && BasicAtoms.Count() > 1 )
     BasicAtoms.Swap(1, BasicAtoms.IndexOfObject(Hydrogen));
   for( int i=0; i < BasicAtoms.Count(); i++)  {
-    AI = BasicAtoms.Object(i);
+    AI = BasicAtoms.GetObject(i);
     Elements << AI->GetSymbol();
     if( MultiplyZ )
       Numbers << olxstr::FormatFloat(3, AI->GetSumm()*GetZ());
@@ -810,7 +810,7 @@ void TAsymmUnit::LibSetAtomLabel(const TStrObjList& Params, TMacroError& E)  {
   int index = Params[0].ToInt();
   if( index < 0 || index >= AtomCount() )  throw TIndexOutOfRangeException(__OlxSourceInfo, index, 0, AtomCount());
   olxstr newLabel;
-  if( Params.String(1).IsNumber() )  {
+  if( Params[1].IsNumber() )  {
     int inc = Params[1].ToInt();
     int v = GetAtom(index).GetAtomInfo().GetIndex() + inc;
     if( v >= 0 && v <= iQPeakIndex )  {
@@ -824,7 +824,7 @@ void TAsymmUnit::LibSetAtomLabel(const TStrObjList& Params, TMacroError& E)  {
   }
   newLabel = CheckLabel(&GetAtom(index), newLabel );
   if( !newLabel.Length() || !GetAtom(index).SetLabel(newLabel) )  {
-    E.ProcessingError(__OlxSrcInfo, "incorrect label ") << Params.String(1);
+    E.ProcessingError(__OlxSrcInfo, "incorrect label ") << Params[1];
     return;
   }
 }
@@ -833,7 +833,7 @@ void TAsymmUnit::LibGetAtomLabel(const TStrObjList& Params, TMacroError& E)  {
   int index = Params[0].ToInt();
   if( index < 0 || index >= AtomCount() )  throw TIndexOutOfRangeException(__OlxSourceInfo, index, 0, AtomCount());
   olxstr newLabel;
-  if( Params.String(1).IsNumber() )  {
+  if( Params[1].IsNumber() )  {
     int inc = Params[1].ToInt();
     int v = GetAtom(index).GetAtomInfo().GetIndex() + inc;
     if( v >= 0 && v <= iQPeakIndex )  {
@@ -935,7 +935,7 @@ void TAsymmUnit::LibNewAtom(const TStrObjList& Params, TMacroError& E)  {
     }
     QPeakIndex = ac - sortedPeaks.IndexOfComparable( qPeak );
     MinQPeak = sortedPeaks.GetComparable(0);
-    MaxQPeak = sortedPeaks.Last().Comparable();
+    MaxQPeak = sortedPeaks.Last().Comparable;
   }
 
   TCAtom& ca = this->NewAtom();

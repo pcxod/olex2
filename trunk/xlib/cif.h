@@ -148,9 +148,9 @@ public:
   // returns the number of parameters
   inline int ParamCount() const {  return Parameters.Count(); };
   // returns the name of a specified parameter
-  const olxstr& Param(int index) const {  return Parameters.String(index); };
+  const olxstr& Param(int index) const {  return Parameters[index]; };
   // returns the name of a specified parameter
-  TCifData* ParamValue(int index)        {  return Parameters.Object(index); };
+  TCifData* ParamValue(int index)        {  return Parameters.GetObject(index); };
   //............................................................................
   //Returns the data name of the file (data_XXX, returns XXX in this case)
   inline const olxstr& GetDataName() const {  return FDataName; }
@@ -173,7 +173,7 @@ public:
   //Returns a loop specified by name
   TCifLoop* FindLoop(const olxstr &L);
   //Returns the name of a loop specified by the index
-  inline const olxstr& GetLoopName(int i)  const {  return Loops.String(i);  }
+  inline const olxstr& GetLoopName(int i)  const {  return Loops[i];  }
   // Returns the number of loops
   inline int LoopCount()                     const { return Loops.Count(); }
   // Adds a loop to current  file
