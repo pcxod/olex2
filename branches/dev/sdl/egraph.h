@@ -109,6 +109,7 @@ public:
   void SortNodesByTag() {
     Nodes.BubleSorter.SortSF(Nodes, &TEGraphNode::_SortNodesByTag);
   }
+  TPtrList<NodeType>& GetNodes() {  return Nodes;  }
   inline const IC& GetData()  const {  return Data;  }
   inline const AssociatedOC& GetObject()  const {  return Object;  }
 
@@ -129,6 +130,7 @@ public:
     if( node.GetData() != GetData() )  return false;
     //if( IsRingNode() )  return true;
     if( node.Count() != Count() )  return false;
+    if( Count() == 0 )  return true;
     for( int i=0; i < node.Count(); i++ )
       node[i].SetPassed( false );
     TIntList indeces(Count());
@@ -138,7 +140,7 @@ public:
         if( node[j].IsPassed() )  continue;
         if( Nodes[i]->DoMatch(node[j]) )  {
           node[j].SetPassed( true );
-          indeces[j] = i;  // sorting the nodes to match
+          indeces[i] = j;  // sorting the nodes to match
           Matched = true;
           break;
         }
@@ -192,11 +194,6 @@ public:
     if( node.Count() != node_cnt )  return false;
     if( node_cnt == 0  )  return true;
     if( (!analyse && !IsRoot()) || !Mutable )  {
-      if( PassedFor == &node )  {
-        for( int i=0; i < node_cnt; i++ )
-          Nodes[i]->FullMatchEx(node[i], analyser, analyse);
-        return true;
-      }
       for( int i=0; i < node_cnt; i++ )
         node[i].SetPassed( false );
       TIntList matches(node_cnt);
@@ -204,7 +201,7 @@ public:
         bool Matched = false;
         for( int j=0; j < node_cnt; j++ )  {  // Count equals for both nodes
           if( node[j].IsPassed() )  continue;
-          if( Nodes[i]->FullMatchEx(node[j], analyser, analyse) )  {
+          if( Nodes[i]->DoMatch(node[j]) )  {
             node[j].SetPassed( true );
             matches[j] = i;
             Matched = true;
@@ -214,25 +211,28 @@ public:
         if( !Matched )  return false;
       }
       node.Nodes.Rearrange(matches);
-      PassedFor = &node;
+      for( int i=0; i < node_cnt; i++ )
+        if( !Nodes[i]->FullMatchEx(node[i], analyser, analyse) )
+          return false;
       return true;
     }
     TTypeList<ConnInfo>& conn = GetConnInfo(node, analyser);
-    if( conn.IsEmpty() )
-      return false;
+    int dest_ind = 0;
     TIntList dest(node_cnt);
-    TPtrList<TEGraphNode> ond(node.Nodes);
-    TTypeList<TIntList> permutations;
-    GeneratePermutations(conn, permutations);
-    const int perm_cnt = permutations.Count();
-    int best_perm = 0, dest_ind = 0;
-    double minRms = -1;
-
     for( int i=0; i < conn.Count(); i++ )  {
       const ConnInfo& ci = conn[i];
       for( int j=0; j < ci.GetB().Count(); j++ )
         dest[dest_ind++] = ci.GetB()[j];
     }
+    if( dest_ind != node_cnt )
+      return false;
+    TPtrList<TEGraphNode> ond(node.Nodes);
+    TTypeList<TIntList> permutations;
+    GeneratePermutations(conn, permutations);
+    const int perm_cnt = permutations.Count();
+    int best_perm = 0;
+    double minRms = -1;
+
 
     for( int i=0; i < permutations.Count(); i++ )  {
       const TIntList& permutation = permutations[i];
