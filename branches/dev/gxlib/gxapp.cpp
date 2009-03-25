@@ -3061,7 +3061,7 @@ void TGXApp::CreateXGrowPoints()  {
 }
 //..............................................................................
 void TGXApp::SetXGrowLinesVisible(bool v)  {
-  if( !XGrowLines.Count() && v )  {
+  if( v )  {
     CreateXGrowLines();
     FXGrowLinesVisible = v;
     return;
@@ -3096,7 +3096,20 @@ struct TGXApp_Transform {
   TGXApp_Transform() : to(NULL), from(NULL), dist(0) { }
 };
 void TGXApp::CreateXGrowLines()  {
-  if( !XGrowLines.IsEmpty() )  return;
+  if( !XGrowLines.IsEmpty() )  {  // clear the existing ones...
+    TPtrList<TGPCollection> colls; // list of unique collections
+    TPtrList<AGDrawObject> lines;  // list of the AGDrawObject pointers to lines...
+    for( int i=0; i < XGrowLines.Count(); i++ )  {
+      XGrowLines[i].Primitives()->SetTag(i);
+      lines.Add(&XGrowLines[i]);
+    }
+    for( int i=0; i < XGrowLines.Count(); i++ )
+      if( XGrowLines[i].Primitives()->GetTag() == i )
+        colls.Add( XGrowLines[i].Primitives() );
+    FGlRender->RemoveCollections( colls );  // remove collections with their primitives
+    FGlRender->RemoveObjects( lines );  // remove the object references
+    XGrowLines.Clear(); // and delete the objects
+  }
   if( FGrowMode & gmVanDerWaals )  {
     _CreateXGrowVLines();
     return;
@@ -3236,7 +3249,7 @@ void TGXApp::_CreateXGrowVLines()  {
     TSAtom* A = AtomsToProcess[i];
     if( A->IsDeleted() )  continue;
     TArrayList< AnAssociation2<TCAtom const*,smatd> > envi;
-    uc.FindInRangeAM(A->ccrd(), 5, envi);
+    uc.FindInRangeAM(A->ccrd(), DeltaV+ A->GetAtomInfo().GetRad1(), envi);
     for( int j=0; j < envi.Count(); j++ )  {
       TCAtom *aa = const_cast<TCAtom*>(envi[j].GetA());
       const vec3d& cc = aa->ccrd();

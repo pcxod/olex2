@@ -1459,7 +1459,7 @@ void TMainForm::OnDrawQChange(wxCommandEvent& event)  {
 //..............................................................................
 void TMainForm::CellVChange()  {
   TStateChange sc(prsCellVis, FXApp->IsCellVisible() );
-  pmModel->SetLabel(ID_CellVisible, (FXApp->IsCellVisible() ? wxT("Show cell") : wxT("Hide cell")) );
+  pmModel->SetLabel(ID_CellVisible, (!FXApp->IsCellVisible() ? wxT("Show cell") : wxT("Hide cell")) );
   OnStateChange->Execute((AEventsDispatcher*)this, &sc);
 }
 //..............................................................................
@@ -1470,7 +1470,7 @@ void TMainForm::BasisVChange()  {
 }
 //..............................................................................
 void TMainForm::OnCellVisible(wxCommandEvent& event)  {
-  FXApp->SetCellVisible( FXApp->IsCellVisible() );
+  FXApp->SetCellVisible( !FXApp->IsCellVisible() );
 }
 //..............................................................................
 void TMainForm::OnBasisVisible(wxCommandEvent& event)  {
