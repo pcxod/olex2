@@ -1895,7 +1895,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
             TSymmParser::MatrixToSymmEx(((TXGrowLine*)G)->GetTransform()) << ')';
         }
         else if( EsdlInstanceOf( *G, TXGrowPoint) )  {
-          Tip = TSymmParser::MatrixToSymm( ((TXGrowPoint*)G)->GetTransform() );
+          Tip = TSymmParser::MatrixToSymmEx( ((TXGrowPoint*)G)->GetTransform() );
         }
 #if defined (__WIN32__)
         FGlCanvas->SetToolTip( Tip.u_str());
@@ -2963,7 +2963,7 @@ void TMainForm::BadReflectionsTable(bool TableDef)  {
   Table.ColName(0) = "H";
   Table.ColName(1) = "K";
   Table.ColName(2) = "L";
-  Table.ColName(3) = "&Delta;(F<sup>2</sup>)/esd";
+  Table.ColName(3) = "(Fc<sup>2</sup>-Fo<sup>2</sup>)/esd";
   for( int i=0; i < Lst.DRefCount(); i++ )  {
     TLstRef& Ref = Lst.DRef(i);
     Table[i][0] = Ref.H;
@@ -2971,9 +2971,9 @@ void TMainForm::BadReflectionsTable(bool TableDef)  {
     Table[i][2] = Ref.L;
     Table[i][3] << ((Ref.Fc > Ref.Fo) ? '+' : '-');
     if( Ref.DF >= 10 ) 
-      Table[i][3] << "<font color=\'red\'>" << Ref.DF << "</font>";
+      Table[i][3] << "<font color=\'red\'>" << olxstr::FormatFloat(2, Ref.DF) << "</font>";
     else  
-      Table[i][3] << Ref.DF;
+      Table[i][3] << olxstr::FormatFloat(2, Ref.DF);
     if( Ref.Deleted )
       Table[i][4] << "Omitted";
     else
