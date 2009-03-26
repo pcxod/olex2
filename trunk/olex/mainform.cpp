@@ -2939,9 +2939,9 @@ bool TMainForm::QPeaksTable(const olxstr &FN, bool TableDef)  {
       Tmp << Atoms[rowIndex]->Atom().GetLabel() << " to ";
     Tmp << Atoms[i]->Atom().GetLabel();
     if( Atoms[i]->Atom().CAtom().GetQPeak() < 2 )
-      Tmp << "\"><img border=\"0\" src=\"gui/images/bar_small.gif\" height=\"10\" width=\"";
+      Tmp << "\"><zimg border=\"0\" src=\"gui/images/bar_small.gif\" height=\"10\" width=\"";
     else
-      Tmp << "\"><img border=\"0\" src=\"gui/images/bar_large.gif\" height=\"10\" width=\"";
+      Tmp << "\"><zimg border=\"0\" src=\"gui/images/bar_large.gif\" height=\"10\" width=\"";
     Tmp << olxstr::FormatFloat(1, Atoms[i]->Atom().CAtom().GetQPeak()*100/LQP);
     Tmp << "%\"></a>";
     Table[rowIndex][2] = Tmp;
