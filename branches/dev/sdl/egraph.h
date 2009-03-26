@@ -14,7 +14,7 @@ template <class IC, class AssociatedOC> class TEGraphNode : ACollectionItem  {
   bool RingNode, Root;
   mutable bool Passed, Mutable;
   mutable TEGraphNode* PassedFor;
-  mutable TPtrList<TEGraphNode> PassedForNodes;
+  mutable TPtrList<NodeType> PassedForNodes;
   AssociatedOC Object;
   mutable olxdict<NodeType*, TTypeList<ConnInfo>, TPointerComparator> Connectivity;
 protected:

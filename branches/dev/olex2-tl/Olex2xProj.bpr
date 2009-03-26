@@ -4,11 +4,12 @@
   <MACROS>
     <VERSION value="BCB.06.00"/>
     <PROJECT value="Olex2xProj.ocx"/>
-    <OBJFILES value="Olex2xProj.obj Olex2xProj_TLB.obj Olex2xProj_ATL.obj Olex2xImpl.obj 
-      implementation.obj ..\repository\olxvar.obj ..\repository\pyext.obj 
+    <OBJFILES value="Olex2xProj.obj ..\build\Borland\Olex2\Olex2xProj_TLB.obj 
+      Olex2xProj_ATL.obj Olex2xImpl.obj implementation.obj 
+      ..\repository\olxvar.obj ..\repository\pyext.obj 
       ..\repository\integration.obj ..\repository\IsoSurface.obj 
       ..\repository\fsext.obj ..\repository\wxzipfs.obj"/>
-    <RESFILES value="Olex2xProj.res Olex2xProj.tlb"/>
+    <RESFILES value="Olex2xProj.res ..\build\Borland\Olex2\Olex2xProj.tlb"/>
     <DEFFILE value=""/>
     <RESDEPEN value="$(RESFILES) Olex2xImpl.dfm"/>
     <LIBFILES value="..\build\Borland\Olex2\lib\alglib.lib ..\build\Borland\Olex2\lib\gllib.lib 
@@ -31,7 +32,7 @@
       vclie.bpi xmlrtl.bpi inet.bpi inetdbbde.bpi inetdbxpress.bpi inetdb.bpi 
       nmfast.bpi bcbie.bpi soaprtl.bpi dclocx.bpi dbexpress.bpi dbxcds.bpi 
       indy.bpi bcb2kaxserver.bpi"/>
-    <PATHCPP value=".;..\repository"/>
+    <PATHCPP value=".;..\build\Borland\Olex2;..\repository"/>
     <PATHPAS value=".;"/>
     <PATHRC value=".;"/>
     <PATHASM value=".;"/>
@@ -41,8 +42,8 @@
     <USERDEFINES value="__WXWIDGETS__;DEBUG;"/>
     <SYSDEFINES value="NO_STRICT;_ATL_APARTMENT_THREADED;USING_ATLVCL;_ATL_NO_SECURITY;INC_ATL_HEADERS"/>
     <MAINSOURCE value="Olex2xProj.cpp"/>
-    <INCLUDEPATH value="..;olex2-tl;$(BCB)\include;$(BCB)\include\vcl;$(BCB)\include\atl;..\sdl;..\repository;..\glib;..\xlib;..\gxlib;..\..;E:\wxWidgets-2.8.7\include;E:\wxWidgets-2.8.7\lib\bcc_lib\mswd;C:\Python25\include"/>
-    <LIBPATH value="..\repository;..;&quot;olex2-tl&quot;;$(BCB)\lib\obj;$(BCB)\lib"/>
+    <INCLUDEPATH value="..\build\Borland\Olex2;..;olex2-tl;$(BCB)\include;$(BCB)\include\vcl;$(BCB)\include\atl;..\sdl;..\repository;..\glib;..\xlib;..\gxlib;..\..;E:\wxWidgets-2.8.7\include;E:\wxWidgets-2.8.7\lib\bcc_lib\mswd;C:\Python25\include"/>
+    <LIBPATH value="..\build\Borland\Olex2;..\repository;..;&quot;olex2-tl&quot;;$(BCB)\lib\obj;$(BCB)\lib"/>
     <WARNINGS value="-w-par"/>
     <OTHERFILES value=""/>
   </MACROS>
@@ -64,8 +65,8 @@
   <FILELIST>
       <FILE FILENAME="Olex2xProj.res" FORMNAME="" UNITNAME="Olex2xProj.res" CONTAINERID="ResTool" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="Olex2xProj.cpp" FORMNAME="" UNITNAME="Olex2xProj" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
-      <FILE FILENAME="Olex2xProj.tlb" FORMNAME="" UNITNAME="Olex2xProj.tlb" CONTAINERID="TypeLibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
-      <FILE FILENAME="Olex2xProj_TLB.cpp" FORMNAME="" UNITNAME="Olex2xProj_TLB" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\build\Borland\Olex2\Olex2xProj.tlb" FORMNAME="" UNITNAME="Olex2xProj.tlb" CONTAINERID="TypeLibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\build\Borland\Olex2\Olex2xProj_TLB.cpp" FORMNAME="" UNITNAME="Olex2xProj_TLB" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="Olex2xProj_ATL.cpp" FORMNAME="" UNITNAME="Olex2xProj_ATL" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="Olex2xImpl.cpp" FORMNAME="Olex2x" UNITNAME="Olex2xImpl" COCLASSES="Olex2x" CONTAINERID="CCompiler" DESIGNCLASS="TActiveForm" LOCALCOMMAND=""/>
       <FILE FILENAME="implementation.cpp" FORMNAME="" UNITNAME="implementation" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
