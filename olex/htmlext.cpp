@@ -609,6 +609,9 @@ TAG_HANDLER_PROC(tag)  {
     if( !TGlXApp::GetMainForm()->GetHtml()->AddObject(ObjectName, CreatedObject, CreatedWindow, tag.HasParam(wxT("MANAGE")) ) )
       TBasicApp::GetLog().Error(olxstr("HTML: duplicated object \'") << ObjectName << '\'');
     if( CreatedWindow != NULL )  {
+#ifndef __WIN32__
+      CreatedWindow->Hide();
+#endif
       olxstr bgc, fgc;
       if( tag.HasParam(wxT("BGCOLOR")) )  {
         bgc = tag.GetParam( wxT("BGCOLOR") ).c_str();
@@ -1295,27 +1298,28 @@ bool THtml::UpdatePage()  {
   ObjectsState.SaveState();
   FObjects.Clear();
 //  TEFile::ChangeDir(FWebFolder);
-  int xPos = -1, yPos = -1;
+  int xPos = -1, yPos = -1, xWnd=-1, yWnd = -1;
   wxHtmlWindow::GetViewStart(&xPos, &yPos);
-  wxHtmlWindow::Freeze();
-//  GetParser()->SetInputEncoding( wxFONTENCODING_UTF8 );
+  //wxHtmlWindow::Freeze();
+  Hide();
   SetPage( Res.Text(' ').u_str() );
-  wxHtmlWindow::Scroll(xPos, yPos);
-  wxHtmlWindow::Thaw();
   // looks like it is "fixed" in 2.8.9... It is but only for WIN!
+  ObjectsState.RestoreState();
+  wxHtmlWindow::Scroll(xPos, yPos);
+  //wxHtmlWindow::Thaw();
+  Show();
 #ifndef __WIN32__
+  Refresh();
+  Update();
   for( int i=0; i < FObjects.Count(); i++ )  {
-    if( FObjects.GetObject(i).GetB() != NULL )  {
-    // this i the only way to not show the bloody control at (0,0) on windows!
+    if( FObjects.GetObject(i).B() != NULL )  {
 #ifndef __MAC__
-      FObjects.GetObject(i).B()->Move(2000, 2000);
-#endif      
-      FObjects.GetObject(i).B()->Show(true);
+      FObjects.GetObject(i).B()->Move(16000, 0);
+#endif
+      FObjects.GetObject(i).B()->Show();
     }
   }
 #endif
-  ObjectsState.RestoreState();
-
   SwitchSources.Clear();
   SwitchSource  = EmptyString;
   TEFile::ChangeDir(oldPath);
@@ -1341,8 +1345,8 @@ bool THtml::UpdatePage()  {
         if( cb->GetTextCtrl() != NULL )  {
           cb->GetTextCtrl()->SetInsertionPoint(0);
         }
-#endif				
-			  wnd = cb;
+#endif
+        wnd = cb;
       }
       else if( EsdlInstanceOf(*wnd, TSpinCtrl) )  {
         TSpinCtrl* sc = (TSpinCtrl*)wnd;
