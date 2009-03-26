@@ -3231,15 +3231,44 @@ void TGXApp::CreateXGrowLines()  {
   }
 }
 //..............................................................................
+struct TGXApp_CrdMap  {
+  typedef SortedObjectList<int, TPrimitiveComparator> ZDict;
+  typedef olxdict<int, ZDict, TPrimitiveComparator> YDict;
+  olxdict<int, YDict, TPrimitiveComparator> data;
+  const int resolution;
+  TGXApp_CrdMap() : resolution(5) {}
+  void Add(const vec3d& pt)  {
+    YDict& yd = data.Add( Round(pt[0]*resolution) );
+    ZDict& zd = yd.Add( Round(pt[1]*resolution) );
+    int pos = -1;
+    zd.AddUnique( Round(pt[2]*resolution), pos );
+  }
+  bool Exists(const vec3d& pt) const  {
+    const int y_ind = data.IndexOf( Round(pt[0]*resolution) );
+    if( y_ind == -1 )  return false;
+    const YDict& yd = data.GetValue(y_ind);
+    const int z_ind = yd.IndexOf( Round(pt[1]*resolution) );
+    if( z_ind == -1 )  return false;
+    const ZDict& zd = yd.GetValue( z_ind );
+    return zd.IndexOf( Round(pt[2]*resolution) ) == -1 ? false : true;
+  }
+};
 void TGXApp::_CreateXGrowVLines()  {
   if( !XGrowLines.IsEmpty() )  return;
   const TAsymmUnit& au = FXFile->GetAsymmUnit();
   const TUnitCell& uc = FXFile->GetUnitCell();
+  TGXApp_CrdMap CrdMap;
   TSAtomPList AtomsToProcess;
   if( !AtomsToGrow.IsEmpty() )  {
     TXAtomPList xatoms;
     FindXAtoms(AtomsToGrow, xatoms);
     TListCaster::POP( xatoms, AtomsToProcess );
+    const int ac = FXFile->GetLattice().AtomCount();
+    for( int i=0; i < ac; i++ )  {
+      TSAtom& A = FXFile->GetLattice().GetAtom(i);
+      if( A.IsDeleted() )  continue;
+      CrdMap.Add( A.crd() );
+    }
   }
   else  {
     const int ac = FXFile->GetLattice().AtomCount();
@@ -3247,6 +3276,7 @@ void TGXApp::_CreateXGrowVLines()  {
       TSAtom& A = FXFile->GetLattice().GetAtom(i);
       if( A.IsDeleted() )  continue;
       AtomsToProcess.Add( &A );
+      CrdMap.Add( A.crd() );
     }
   }
   typedef TTypeList<TGXApp_Transform> tr_list;
@@ -3266,13 +3296,8 @@ void TGXApp::_CreateXGrowVLines()  {
       if( qdist < 0.001 )  // skip atoms on special postions
         continue;
       bool uniq = true;
-      for( int l=0; l < XAtoms.Count(); l++ )  {  // check if point to one of already connected
-        if( XAtoms[l].Atom().crd().QDistanceTo(tc) < 0.001 )  {
-          uniq = false;
-          break;
-        }
-      }
-      if( !uniq )  continue;
+      if( CrdMap.Exists(tc) )  // check if point to one of already connected
+        continue;
       tr_list& ntl = net_tr.Add(aa->GetFragmentId());
       for( int l=0; l < ntl.Count(); l++ )  {
         if( ntl[l].transform == transform )  {
@@ -3292,6 +3317,7 @@ void TGXApp::_CreateXGrowVLines()  {
         nt.dist = qdist;
         nt.to = aa;
         nt.from = A;
+        CrdMap.Add(tc);
       }
     }
   }

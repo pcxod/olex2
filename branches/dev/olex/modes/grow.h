@@ -7,27 +7,27 @@ public:
   TGrowMode(int id) : AMode(id)  {  }
   bool Init(TStrObjList &Cmds, const TParamList &Options) {
     bool SI = Options.Contains('s'),
-         Cov = Options.Contains('c');
+         Cov = Options.Contains('c'),
+         VdW = Options.Contains('v'),
+         Rad = Options.Contains('r');
 
     olxstr AtomsToGrow( Cmds.Text(' ') );
 
     short mode = 0;
     if( SI )   mode |= gmSInteractions;
     if( Cov )  mode |= gmCovalent;
-    if( !mode )  mode = gmCovalent;
-
-    TGlXApp::GetMainForm()->executeMacro("cursor(hand)");
-    if( Options.Contains('v') )  {
+    else if( VdW )  {
+      mode = gmVanDerWaals;
       olxstr vr = Options.FindValue('v');
       TGlXApp::GetGXApp()->SetDeltaV( vr.IsEmpty() ? 3.0 : vr.ToDouble() );
-      TGlXApp::GetGXApp()->SetGrowMode( gmVanDerWaals, AtomsToGrow );
     }
-    else  {
-      if( !AtomsToGrow.IsEmpty() )
-        TGlXApp::GetGXApp()->SetGrowMode( gmSameAtoms, AtomsToGrow );
-      else
-        TGlXApp::GetGXApp()->SetGrowMode( mode, EmptyString );
-    }
+    else if( Rad )
+      mode = gmSameAtoms;
+    if( mode == 0 )  
+      mode = gmCovalent;
+
+    TGlXApp::GetMainForm()->executeMacro("cursor(hand)");
+    TGlXApp::GetGXApp()->SetGrowMode( mode, AtomsToGrow );
     TGlXApp::GetGXApp()->SetXGrowLinesVisible(true);
     return true;
   }

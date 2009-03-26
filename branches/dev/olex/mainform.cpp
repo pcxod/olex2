@@ -630,9 +630,10 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual occupancy\
 
   this_InitMacroD(Mode, 
     "p-[name] prefix&;\
-s-[grow] short interactions; [name] suffix&;t-[name] type&;\
+s-[grow] short interactions; [name] suffix&;\
+t-[name] type&;\
 c-[grow] covalent bonds; [move] copy fragments instead of moving&;\
-r-[split] a restraint/constraint for split atoms&;\
+r-[split] a restraint/constraint for split atoms; [grow] show radial bonds between the same atoms&;\
 v-[grow] use user provided delta for connctivity analysis", 
 (fpAny^fpNone)|psFileLoaded, 
     "Turns specified mode on. Valid mode: fixu, fixc, grow, himp, match, move, name, occu, pack, part, split");
