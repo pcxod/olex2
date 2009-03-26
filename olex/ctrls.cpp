@@ -37,7 +37,7 @@
   TGlXApp::GetMainForm()->UnlockWindowDestruction( GetParent() );
 
 
-#ifdef __MAC__
+#ifndef __WIN32__
 IMPLEMENT_CLASS(TComboBox, wxComboBox)
 #else
 IMPLEMENT_CLASS(TComboBox, wxOwnerDrawnComboBox)
@@ -60,7 +60,7 @@ IMPLEMENT_CLASS(TTimer, wxTimer)
 //----------------------------------------------------------------------------//
 // TdlgComboBox function bodies
 //----------------------------------------------------------------------------//
-#ifdef __MAC__
+#ifndef __WIN32__
 BEGIN_EVENT_TABLE(TComboBox, wxComboBox)
 #else
 BEGIN_EVENT_TABLE(TComboBox, wxOwnerDrawnComboBox)
@@ -73,7 +73,7 @@ BEGIN_EVENT_TABLE(TComboBox, wxOwnerDrawnComboBox)
 END_EVENT_TABLE()
 //..............................................................................
 TComboBox::TComboBox(wxWindow *Parent, bool ReadOnly, const wxSize& sz) :
-#ifdef __MAC__
+#ifndef __WIN32__
   wxComboBox(Parent, -1, wxString(), wxDefaultPosition, sz, 0, NULL,
     wxCB_DROPDOWN|(ReadOnly?wxCB_READONLY:0)|wxTE_PROCESS_ENTER), WI(this)
 #else
@@ -81,8 +81,10 @@ TComboBox::TComboBox(wxWindow *Parent, bool ReadOnly, const wxSize& sz) :
     wxCB_DROPDOWN|(ReadOnly?wxCB_READONLY:0)|wxTE_PROCESS_ENTER), WI(this)
 #endif
 {
-  //if( Parent->IsFrozen() )  Hide();
-
+#ifndef __WIN32__
+  if( Parent == TGlXApp::GetMainForm()->GetHtml() )  
+    Hide();
+#endif
   FActions = new TActionQList;
   OnChange = &FActions->NewQueue("ONCHANGE");
   OnLeave = &FActions->NewQueue("ONLEAVE");
@@ -102,7 +104,7 @@ TComboBox::~TComboBox()  {
 //..............................................................................
 void TComboBox::SetText(const olxstr& T)  {  
   SetValue( T.u_str() );  
-#ifndef __MAC__
+#ifdef __WIN32__
   if( GetTextCtrl() != NULL )
     GetTextCtrl()->SetInsertionPoint(0);
 #endif		
@@ -117,7 +119,7 @@ void TComboBox::Clear() {
       delete d_o;
     }
   }
-#ifdef __MAC__
+#ifndef __WIN32__
   wxComboBox::Clear();
 #else	
   wxOwnerDrawnComboBox::Clear();
@@ -208,7 +210,7 @@ void TComboBox::AddItems(const TStrList& EL) {
   }
 }
 //..............................................................................
-#ifndef __MAC__
+#ifdef __WIN32__
 void TComboBox::OnDrawItem( wxDC& dc, const wxRect& rect, int item, int flags ) const {
   wxOwnerDrawnComboBox::OnDrawItem(dc, rect, item, flags);
   return;
@@ -465,7 +467,10 @@ END_EVENT_TABLE()
 TButton::TButton(wxWindow* P, wxWindowID id, const wxString& label, const wxPoint& pos, 
     const wxSize& size, long style) : 
     wxButton(P, id, label, pos, size, style), WI(this)  {
-  //if( P->IsFrozen() )  Hide();
+#ifndef __WIN32__
+  if( P == TGlXApp::GetMainForm()->GetHtml() )  
+    Hide();
+#endif
 }
 //..............................................................................
 TButton::~TButton()  {  ;  }
@@ -491,7 +496,10 @@ END_EVENT_TABLE()
 TBmpButton::TBmpButton(wxWindow* P, wxWindowID id, const wxBitmap& bitmap, const wxPoint& pos, 
     const wxSize& size, long style) : 
     wxBitmapButton(P, -1, bitmap, pos, size, style), WI(this)  {
-  //if( P->IsFrozen() )  Hide();
+#ifndef __WIN32__
+  if( P == TGlXApp::GetMainForm()->GetHtml() )  
+    Hide();
+#endif
 }
 //..............................................................................
 TBmpButton::~TBmpButton()  {  ;  }
@@ -514,7 +522,10 @@ BEGIN_EVENT_TABLE(TCheckBox, wxCheckBox)
 END_EVENT_TABLE()
 
 TCheckBox::TCheckBox(wxWindow *P):wxCheckBox(P, -1, wxString()), WI(this)  {
-  //if( P->IsFrozen() )  Hide();
+#ifndef __WIN32__
+  if( P == TGlXApp::GetMainForm()->GetHtml() )  
+    Hide();
+#endif
   FActions = new TActionQList;
   OnClick = &FActions->NewQueue("ONCLICK");
   OnCheck = &FActions->NewQueue("ONCHECK");
@@ -574,7 +585,10 @@ BEGIN_EVENT_TABLE(TLabel, wxStaticText)
 END_EVENT_TABLE()
 
 TLabel::TLabel(wxWindow *P):wxStaticText(P, -1, wxString()), WI(this)  {
-  //if( P->IsFrozen() )  Hide();
+#ifndef __WIN32__
+  if( P == TGlXApp::GetMainForm()->GetHtml() )  
+    Hide();
+#endif
   FActions = new TActionQList;
   OnClick = &FActions->NewQueue("ONCLICK");
 }
@@ -606,7 +620,10 @@ END_EVENT_TABLE()
 //..............................................................................
 TTextEdit::TTextEdit(wxWindow *Parent, int style):
     wxTextCtrl(Parent, -1, wxString(), wxDefaultPosition, wxDefaultSize, style), WI(this)  {
-  //if( Parent->IsFrozen() )  Hide();
+#ifndef __WIN32__
+  if( Parent == TGlXApp::GetMainForm()->GetHtml() )  
+    Hide();
+#endif
   FActions = new TActionQList;
   OnChange = &FActions->NewQueue("ONCHANGE");
   OnClick = &FActions->NewQueue("ONCLICK");
@@ -689,7 +706,10 @@ BEGIN_EVENT_TABLE(TListBox, wxListBox)
 END_EVENT_TABLE()
 //..............................................................................
 TListBox::TListBox(wxWindow *Parent): wxListBox(Parent, -1), WI(this)  {
-  //if( Parent->IsFrozen() )  Hide();
+#ifndef __WIN32__
+  if( Parent == TGlXApp::GetMainForm()->GetHtml() )  
+    Hide();
+#endif
   FActions = new TActionQList;
   OnSelect = &FActions->NewQueue("ONSELECT");
   OnDblClick = &FActions->NewQueue("ONCLICK");
@@ -740,7 +760,10 @@ BEGIN_EVENT_TABLE(TSpinCtrl, wxSpinCtrl)
 END_EVENT_TABLE()
 //..............................................................................
 TSpinCtrl::TSpinCtrl(wxWindow *Parent): wxSpinCtrl(Parent), WI(this)  {
-  //if( Parent->IsFrozen() )  Hide();
+#ifndef __WIN32__
+  if( Parent == TGlXApp::GetMainForm()->GetHtml() )  
+    Hide();
+#endif
   FActions = new TActionQList;
   OnChange = &FActions->NewQueue("ONCHANGE");
 }
@@ -795,7 +818,10 @@ BEGIN_EVENT_TABLE(TTreeView, wxGenericTreeCtrl)
 END_EVENT_TABLE()
 
 TTreeView::TTreeView(wxWindow* Parent): wxGenericTreeCtrl(Parent), WI(this)  {
-  //if( Parent->IsFrozen() )  Hide();
+#ifndef __WIN32__
+  if( Parent == TGlXApp::GetMainForm()->GetHtml() )  
+    Hide();
+#endif
   FActions = new TActionQList;
   OnSelect = &FActions->NewQueue("ONSELECT");
   OnDblClick = &FActions->NewQueue("ONCLICK");
@@ -863,9 +889,13 @@ BEGIN_EVENT_TABLE(TTrackBar, wxSlider)
   EVT_LEFT_UP(TTrackBar::MouseUpEvent)
 END_EVENT_TABLE()
 //..............................................................................
-TTrackBar::TTrackBar(wxWindow *Parent):wxSlider(Parent, -1, 0, 0, 100, wxDefaultPosition, wxDefaultSize, wxSL_HORIZONTAL|wxSL_AUTOTICKS),
-                                       WI(this)  {
-  //if( Parent->IsFrozen() )  Hide();
+TTrackBar::TTrackBar(wxWindow *Parent) : 
+  wxSlider(Parent, -1, 0, 0, 100, wxDefaultPosition, wxDefaultSize, wxSL_HORIZONTAL|wxSL_AUTOTICKS),
+  WI(this)  {
+#ifndef __WIN32__
+  if( Parent == TGlXApp::GetMainForm()->GetHtml() )  
+    Hide();
+#endif
   FActions = new TActionQList;
   OnChange = &FActions->NewQueue("ONCHANGE");
   OnMouseUp = &FActions->NewQueue("ONMOUSEUP");

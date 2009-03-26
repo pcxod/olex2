@@ -624,7 +624,7 @@ TAG_HANDLER_PROC(tag)  {
         if( !bgc.IsEmpty() )  {
           wxColor bgCl = wxColor( uiStr(bgc) );
           Box->SetBackgroundColour( bgCl );
-#ifndef __MAC__          
+#ifdef __WIN32__          
           if( Box->GetTextCtrl() != NULL )
             Box->GetTextCtrl()->SetBackgroundColour( bgCl );
           if( Box->GetPopupControl() != NULL && Box->GetPopupControl()->GetControl() != NULL )
@@ -634,7 +634,7 @@ TAG_HANDLER_PROC(tag)  {
         if( !fgc.IsEmpty() )  {
           wxColor fgCl = wxColor( uiStr(bgc) );
           Box->SetForegroundColour( fgCl );
-#ifndef __MAC__          
+#ifdef __WIN32__          
           if( Box->GetTextCtrl() != NULL )
             Box->GetTextCtrl()->SetForegroundColour( fgCl );
           if( Box->GetPopupControl() != NULL && Box->GetPopupControl()->GetControl() != NULL)
@@ -1300,21 +1300,21 @@ bool THtml::UpdatePage()  {
   wxHtmlWindow::Freeze();
 //  GetParser()->SetInputEncoding( wxFONTENCODING_UTF8 );
   SetPage( Res.Text(' ').u_str() );
-  // looks like it is "fixed" in 2.8.9...
-//  for( int i=0; i < FObjects.Count(); i++ )  {
-//    if( FObjects.GetObject(i).GetB() != NULL )  {
-//      // this i the only way to not show the bloody control at (0,0) on windows!
-//#ifndef __MAC__
-//      FObjects.GetObject(i).B()->Move(2000, 2000);
-//#endif      
-//      FObjects.GetObject(i).B()->Show(true);
-//    }
-//  }
-  ObjectsState.RestoreState();
-
   wxHtmlWindow::Scroll(xPos, yPos);
   wxHtmlWindow::Thaw();
-  wxHtmlWindow::GetViewStart(&xPos, &yPos);
+  // looks like it is "fixed" in 2.8.9... It is but only for WIN!
+#ifndef __WIN32__
+  for( int i=0; i < FObjects.Count(); i++ )  {
+    if( FObjects.GetObject(i).GetB() != NULL )  {
+    // this i the only way to not show the bloody control at (0,0) on windows!
+#ifndef __MAC__
+      FObjects.GetObject(i).B()->Move(2000, 2000);
+#endif      
+      FObjects.GetObject(i).B()->Show(true);
+    }
+  }
+#endif
+  ObjectsState.RestoreState();
 
   SwitchSources.Clear();
   SwitchSource  = EmptyString;
@@ -1337,7 +1337,7 @@ bool THtml::UpdatePage()  {
         ((TTextEdit*)wnd)->SetSelection(-1,-1);
       else if( EsdlInstanceOf(*wnd, TComboBox) )  {
         TComboBox* cb = (TComboBox*)wnd;
-#ifndef __MAC__
+#ifdef __WIN32__
         if( cb->GetTextCtrl() != NULL )  {
           cb->GetTextCtrl()->SetInsertionPoint(0);
         }
@@ -2212,7 +2212,7 @@ void THtml::funSetFocus(const TStrObjList &Params, TMacroError &E)  {
   else if( EsdlInstanceOf(*wnd, TComboBox) )  {
     TComboBox* cb = (TComboBox*)wnd;
     //cb->GetTextCtrl()->SetSelection(-1, -1);
-#ifndef __MAC__
+#ifdef __WIN32__
     cb->GetTextCtrl()->SetInsertionPoint(0);
     wnd = cb->GetTextCtrl();
 #endif		
@@ -2274,7 +2274,7 @@ void THtml::funSetFG(const TStrObjList &Params, TMacroError &E)  {
       TComboBox* Box = (TComboBox*)wxw;
       wxColor fgCl = wxColor( uiStr(Params[1]) );
       Box->SetForegroundColour( fgCl );
-#ifndef __MAC__
+#ifdef __WIN32__
       if( Box->GetPopupControl() != NULL )
         Box->GetPopupControl()->GetControl()->SetForegroundColour( fgCl );
       if( Box->GetTextCtrl() != NULL )
@@ -2299,7 +2299,7 @@ void THtml::funSetBG(const TStrObjList &Params, TMacroError &E)  {
       TComboBox* Box = (TComboBox*)wxw;
       wxColor fgCl = wxColor( uiStr(Params[1]) );
       Box->SetBackgroundColour( fgCl );
-#ifndef __MAC__
+#ifdef __WIN32__
       if( Box->GetPopupControl() != NULL )
         Box->GetPopupControl()->GetControl()->SetBackgroundColour( fgCl );
       if( Box->GetTextCtrl() != NULL )
@@ -2488,7 +2488,7 @@ void THtml::TObjectsState::RestoreState()  {
         if( !fg.IsEmpty() )  {
           wxColor fgCl = wxColor( fg.u_str() );
           Box->SetForegroundColour( fgCl );
-#ifndef __MAC__
+#ifdef __WIN32__
           if( Box->GetPopupControl() != NULL )
             Box->GetPopupControl()->GetControl()->SetForegroundColour( fgCl );
           if( Box->GetTextCtrl() != NULL )
@@ -2498,7 +2498,7 @@ void THtml::TObjectsState::RestoreState()  {
         if( !bg.IsEmpty() )  {
           wxColor bgCl = wxColor( bg.u_str() );
           Box->SetBackgroundColour( bgCl );
-#ifndef __MAC__					
+#ifdef __WIN32__					
           if( Box->GetPopupControl() != NULL )
             Box->GetPopupControl()->GetControl()->SetBackgroundColour( bgCl );
           if( Box->GetTextCtrl() != NULL )
