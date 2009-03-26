@@ -186,7 +186,7 @@ public:
     list.Insert(pos, entry);
     return true;
   }
-  int AddUnique(const TypeClass& entry, int& pos)  {
+  bool AddUnique(const TypeClass& entry, int& pos)  {
     if( list.IsEmpty() )  {  
       list.Add(entry);  
       pos = 0;

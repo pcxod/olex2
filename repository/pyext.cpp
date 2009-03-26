@@ -171,7 +171,7 @@ PyObject* runRegisterFunction(PyObject* self, PyObject* args)  {
   TFuncWrapper* fw = PythonExt::GetInstance()->AddToDelete( new TFuncWrapper(fun, true, profile) );
   try  {
     PythonExt::GetInstance()->GetBindLibrary()->RegisterFunction(
-      new TFunction<TFuncWrapper>(fw, &TFuncWrapper::Call, PyEval_GetFuncName(fun), fpAny) );
+      new TFunction<TFuncWrapper>(fw, &TFuncWrapper::Call, PyEval_GetFuncName(fun), fpAny), true );
     return Py_BuildValue("b", true);
   }
   catch( const TExceptionBase& exc )  {
@@ -248,7 +248,7 @@ PyObject* runRegisterMacro(PyObject* self, PyObject* args)  {
   TMacroWrapper* mw = PythonExt::GetInstance()->AddToDelete( new TMacroWrapper(fun, profile) );
   try  {
     PythonExt::GetInstance()->GetBindLibrary()->RegisterMacro(
-      new TMacro<TMacroWrapper>(mw, &TMacroWrapper::Call, PyEval_GetFuncName(fun), validOptions, fpAny) );
+      new TMacro<TMacroWrapper>(mw, &TMacroWrapper::Call, PyEval_GetFuncName(fun), validOptions, fpAny), true );
     return Py_BuildValue("b", true);
   }
   catch( const TExceptionBase& exc )  {

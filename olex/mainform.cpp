@@ -630,9 +630,10 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual occupancy\
 
   this_InitMacroD(Mode, 
     "p-[name] prefix&;\
-s-[grow] short interactions; [name] suffix&;t-[name] type&;\
+s-[grow] short interactions; [name] suffix&;\
+t-[name] type&;\
 c-[grow] covalent bonds; [move] copy fragments instead of moving&;\
-r-[split] a restraint/constraint for split atoms&;\
+r-[split] a restraint/constraint for split atoms; [grow] show radial bonds between the same atoms&;\
 v-[grow] use user provided delta for connctivity analysis", 
 (fpAny^fpNone)|psFileLoaded, 
     "Turns specified mode on. Valid mode: fixu, fixc, grow, himp, match, move, name, occu, pack, part, split");
@@ -1459,7 +1460,7 @@ void TMainForm::OnDrawQChange(wxCommandEvent& event)  {
 //..............................................................................
 void TMainForm::CellVChange()  {
   TStateChange sc(prsCellVis, FXApp->IsCellVisible() );
-  pmModel->SetLabel(ID_CellVisible, (FXApp->IsCellVisible() ? wxT("Show cell") : wxT("Hide cell")) );
+  pmModel->SetLabel(ID_CellVisible, (!FXApp->IsCellVisible() ? wxT("Show cell") : wxT("Hide cell")) );
   OnStateChange->Execute((AEventsDispatcher*)this, &sc);
 }
 //..............................................................................
@@ -1470,7 +1471,7 @@ void TMainForm::BasisVChange()  {
 }
 //..............................................................................
 void TMainForm::OnCellVisible(wxCommandEvent& event)  {
-  FXApp->SetCellVisible( FXApp->IsCellVisible() );
+  FXApp->SetCellVisible( !FXApp->IsCellVisible() );
 }
 //..............................................................................
 void TMainForm::OnBasisVisible(wxCommandEvent& event)  {
@@ -1895,7 +1896,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
             TSymmParser::MatrixToSymmEx(((TXGrowLine*)G)->GetTransform()) << ')';
         }
         else if( EsdlInstanceOf( *G, TXGrowPoint) )  {
-          Tip = TSymmParser::MatrixToSymm( ((TXGrowPoint*)G)->GetTransform() );
+          Tip = TSymmParser::MatrixToSymmEx( ((TXGrowPoint*)G)->GetTransform() );
         }
 #if defined (__WIN32__)
         FGlCanvas->SetToolTip( Tip.u_str());
@@ -2963,7 +2964,7 @@ void TMainForm::BadReflectionsTable(bool TableDef)  {
   Table.ColName(0) = "H";
   Table.ColName(1) = "K";
   Table.ColName(2) = "L";
-  Table.ColName(3) = "&Delta;(F<sup>2</sup>)/esd";
+  Table.ColName(3) = "(Fc<sup>2</sup>-Fo<sup>2</sup>)/esd";
   for( int i=0; i < Lst.DRefCount(); i++ )  {
     TLstRef& Ref = Lst.DRef(i);
     Table[i][0] = Ref.H;
@@ -2971,9 +2972,9 @@ void TMainForm::BadReflectionsTable(bool TableDef)  {
     Table[i][2] = Ref.L;
     Table[i][3] << ((Ref.Fc > Ref.Fo) ? '+' : '-');
     if( Ref.DF >= 10 ) 
-      Table[i][3] << "<font color=\'red\'>" << Ref.DF << "</font>";
+      Table[i][3] << "<font color=\'red\'>" << olxstr::FormatFloat(2, Ref.DF) << "</font>";
     else  
-      Table[i][3] << Ref.DF;
+      Table[i][3] << olxstr::FormatFloat(2, Ref.DF);
     if( Ref.Deleted )
       Table[i][4] << "Omitted";
     else

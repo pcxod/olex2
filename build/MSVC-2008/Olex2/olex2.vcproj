@@ -230,7 +230,7 @@
 				UsePrecompiledHeader="0"
 				BrowseInformation="1"
 				WarningLevel="2"
-				DebugInformationFormat="3"
+				DebugInformationFormat="4"
 				UndefinePreprocessorDefinitions="_DEBUG"
 			/>
 			<Tool

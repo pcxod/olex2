@@ -3061,7 +3061,7 @@ void TGXApp::CreateXGrowPoints()  {
 }
 //..............................................................................
 void TGXApp::SetXGrowLinesVisible(bool v)  {
-  if( !XGrowLines.Count() && v )  {
+  if( v )  {
     CreateXGrowLines();
     FXGrowLinesVisible = v;
     return;
@@ -3095,8 +3095,24 @@ struct TGXApp_Transform {
   smatd transform;
   TGXApp_Transform() : to(NULL), from(NULL), dist(0) { }
 };
+struct TGXApp_Transform1 : public TGXApp_Transform {
+  vec3d dest;
+};
 void TGXApp::CreateXGrowLines()  {
-  if( !XGrowLines.IsEmpty() )  return;
+  if( !XGrowLines.IsEmpty() )  {  // clear the existing ones...
+    TPtrList<TGPCollection> colls; // list of unique collections
+    TPtrList<AGDrawObject> lines;  // list of the AGDrawObject pointers to lines...
+    for( int i=0; i < XGrowLines.Count(); i++ )  {
+      XGrowLines[i].Primitives()->SetTag(i);
+      lines.Add(&XGrowLines[i]);
+    }
+    for( int i=0; i < XGrowLines.Count(); i++ )
+      if( XGrowLines[i].Primitives()->GetTag() == i )
+        colls.Add( XGrowLines[i].Primitives() );
+    FGlRender->RemoveCollections( colls );  // remove collections with their primitives
+    FGlRender->RemoveObjects( lines );  // remove the object references
+    XGrowLines.Clear(); // and delete the objects
+  }
   if( FGrowMode & gmVanDerWaals )  {
     _CreateXGrowVLines();
     return;
@@ -3118,8 +3134,7 @@ void TGXApp::CreateXGrowLines()  {
     }
   }
   TPtrList<TCAtom> AttachedAtoms;
-  typedef TTypeList<TGXApp_Transform> tr_list;
-  olxdict<int, tr_list, TPrimitiveComparator> net_tr;
+  TTypeList<TGXApp_Transform1> tr_list;
   for( int i=0; i < AtomsToProcess.Count(); i++ )  {
     TSAtom* A = AtomsToProcess[i];
     if( A->IsDeleted() )  continue;
@@ -3164,25 +3179,32 @@ void TGXApp::CreateXGrowLines()  {
         smatd& transform = transforms->Item(k);
         vec3d tc = transform*cc;
         au.CellToCartesian(tc);
-        const double dist = tc.DistanceTo( A->crd() );
-        tr_list& ntl = net_tr.Add(aa->GetFragmentId());
+        const double qdist = tc.QDistanceTo( A->crd() );
         bool uniq = true;
-        for( int l=0; l < ntl.Count(); l++ )  {
-          if( ntl[l].transform == transform )  {
-            if( ntl[l].dist > dist )  {
-              ntl[l].transform = transform;
-              ntl[l].dist = dist;
-              ntl[l].to = aa;
-              ntl[l].from = A;
+        for( int l=0; l < A->NodeCount(); l++ )  {  // check if point to one of already connected
+          if( A->Node(l).crd().QDistanceTo(tc) < 0.001 )  {
+            uniq = false;
+            break;
+          }
+        }
+        if( !uniq )  
+          continue;
+        for( int l=0; l < tr_list.Count(); l++ )  {
+          if( tr_list[l].dest.QDistanceTo(tc) < 0.001 )  {
+            if( tr_list[l].dist > qdist )  {
+              tr_list[l].transform = transform;
+              tr_list[l].dist = qdist;
+              tr_list[l].to = aa;
+              tr_list[l].from = A;
             }
             uniq = false;
             break;
           }
         }
         if( uniq )  {
-          TGXApp_Transform& nt = ntl.AddNew();
+          TGXApp_Transform1& nt = tr_list.AddNew();
           nt.transform = transform;
-          nt.dist = dist;
+          nt.dist = qdist;
           nt.to = aa;
           nt.from = A;
         }
@@ -3190,37 +3212,63 @@ void TGXApp::CreateXGrowLines()  {
       delete transforms;
     }
   }
-  for( int i=0; i < net_tr.Count(); i++ )  {
-    const tr_list& ntl = net_tr.GetValue(i);
-    for( int j=0; j < ntl.Count(); j++ )  {
-      TGXApp_Transform& nt = ntl[j];
-      TXGrowLine& gl = XGrowLines.AddNew(EmptyString, nt.from, nt.to, nt.transform, FGlRender );
+  for( int i=0; i < tr_list.Count(); i++ )  {
+    TGXApp_Transform1& nt = tr_list[i];
+    TXGrowLine& gl = XGrowLines.AddNew(EmptyString, nt.from, nt.to, nt.transform, FGlRender );
 
-      if( !QPeakBondsVisible() &&
-        (nt.from->GetAtomInfo() == iQPeakIndex || nt.to->GetAtomInfo() == iQPeakIndex ) )
-        gl.Visible(false);
-      if( !HBondsVisible() && 
-        (nt.from->GetAtomInfo() == iHydrogenIndex || nt.to->GetAtomInfo() == iHydrogenIndex) )
-        gl.Visible(false);
+    if( !QPeakBondsVisible() &&
+      (nt.from->GetAtomInfo() == iQPeakIndex || nt.to->GetAtomInfo() == iQPeakIndex ) )
+      gl.Visible(false);
+    if( !HBondsVisible() && 
+      (nt.from->GetAtomInfo() == iHydrogenIndex || nt.to->GetAtomInfo() == iHydrogenIndex) )
+      gl.Visible(false);
 
-      if( nt.dist < (nt.from->GetAtomInfo().GetRad1() + nt.to->GetAtomInfo().GetRad1() + 
-        FXFile->GetLattice().GetDelta()) )
-        gl.Create("COV");
-      else
-        gl.Create("SI");
-    }
+    if( nt.dist < (nt.from->GetAtomInfo().GetRad1() + nt.to->GetAtomInfo().GetRad1() + 
+      FXFile->GetLattice().GetDelta()) )
+      gl.Create("COV");
+    else
+      gl.Create("SI");
   }
 }
 //..............................................................................
+struct TGXApp_CrdMap  {
+  typedef SortedObjectList<int, TPrimitiveComparator> ZDict;
+  typedef olxdict<int, ZDict, TPrimitiveComparator> YDict;
+  olxdict<int, YDict, TPrimitiveComparator> data;
+  const int resolution;
+  TGXApp_CrdMap() : resolution(5) {}
+  void Add(const vec3d& pt)  {
+    YDict& yd = data.Add( Round(pt[0]*resolution) );
+    ZDict& zd = yd.Add( Round(pt[1]*resolution) );
+    int pos = -1;
+    zd.AddUnique( Round(pt[2]*resolution), pos );
+  }
+  bool Exists(const vec3d& pt) const  {
+    const int y_ind = data.IndexOf( Round(pt[0]*resolution) );
+    if( y_ind == -1 )  return false;
+    const YDict& yd = data.GetValue(y_ind);
+    const int z_ind = yd.IndexOf( Round(pt[1]*resolution) );
+    if( z_ind == -1 )  return false;
+    const ZDict& zd = yd.GetValue( z_ind );
+    return zd.IndexOf( Round(pt[2]*resolution) ) == -1 ? false : true;
+  }
+};
 void TGXApp::_CreateXGrowVLines()  {
   if( !XGrowLines.IsEmpty() )  return;
   const TAsymmUnit& au = FXFile->GetAsymmUnit();
   const TUnitCell& uc = FXFile->GetUnitCell();
+  TGXApp_CrdMap CrdMap;
   TSAtomPList AtomsToProcess;
   if( !AtomsToGrow.IsEmpty() )  {
     TXAtomPList xatoms;
     FindXAtoms(AtomsToGrow, xatoms);
     TListCaster::POP( xatoms, AtomsToProcess );
+    const int ac = FXFile->GetLattice().AtomCount();
+    for( int i=0; i < ac; i++ )  {
+      TSAtom& A = FXFile->GetLattice().GetAtom(i);
+      if( A.IsDeleted() )  continue;
+      CrdMap.Add( A.crd() );
+    }
   }
   else  {
     const int ac = FXFile->GetLattice().AtomCount();
@@ -3228,6 +3276,7 @@ void TGXApp::_CreateXGrowVLines()  {
       TSAtom& A = FXFile->GetLattice().GetAtom(i);
       if( A.IsDeleted() )  continue;
       AtomsToProcess.Add( &A );
+      CrdMap.Add( A.crd() );
     }
   }
   typedef TTypeList<TGXApp_Transform> tr_list;
@@ -3236,21 +3285,25 @@ void TGXApp::_CreateXGrowVLines()  {
     TSAtom* A = AtomsToProcess[i];
     if( A->IsDeleted() )  continue;
     TArrayList< AnAssociation2<TCAtom const*,smatd> > envi;
-    uc.FindInRangeAM(A->ccrd(), 5, envi);
+    uc.FindInRangeAM(A->ccrd(), DeltaV+ A->GetAtomInfo().GetRad1(), envi);
     for( int j=0; j < envi.Count(); j++ )  {
       TCAtom *aa = const_cast<TCAtom*>(envi[j].GetA());
       const vec3d& cc = aa->ccrd();
       const smatd& transform = envi[j].GetB();
       vec3d tc = transform*cc;
       au.CellToCartesian(tc);
-      const double dist = tc.DistanceTo( A->crd() );
-      tr_list& ntl = net_tr.Add(aa->GetFragmentId());
+      const double qdist = tc.QDistanceTo( A->crd() );
+      if( qdist < 0.001 )  // skip atoms on special postions
+        continue;
       bool uniq = true;
+      if( CrdMap.Exists(tc) )  // check if point to one of already connected
+        continue;
+      tr_list& ntl = net_tr.Add(aa->GetFragmentId());
       for( int l=0; l < ntl.Count(); l++ )  {
         if( ntl[l].transform == transform )  {
-          if( ntl[l].dist > dist )  {
+          if( ntl[l].dist > qdist )  {
             ntl[l].transform = transform;
-            ntl[l].dist = dist;
+            ntl[l].dist = qdist;
             ntl[l].to = aa;
             ntl[l].from = A;
           }
@@ -3261,9 +3314,10 @@ void TGXApp::_CreateXGrowVLines()  {
       if( uniq )  {
         TGXApp_Transform& nt = ntl.AddNew();
         nt.transform = transform;
-        nt.dist = dist;
+        nt.dist = qdist;
         nt.to = aa;
         nt.from = A;
+        CrdMap.Add(tc);
       }
     }
   }

@@ -113,7 +113,7 @@ __fastcall TdlgMain::TdlgMain(TComponent* Owner)
             sl.LoadFromTextStream( vf );
             if( sl.Count() >= 1 )
               Tmp += '-';
-              Tmp += sl.String(0).c_str();
+              Tmp += sl[0].c_str();
           }
           catch( const TIOExceptionBase& exc )  {
             ;

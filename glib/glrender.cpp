@@ -877,6 +877,17 @@ void TGlRenderer::OnSetProperties(const TGlMaterial *P)  {  // tracks transluent
   }
 }
 //..............................................................................
+void TGlRenderer::RemoveObjects(const TPtrList<AGDrawObject>& objects)  {
+  for( int i=0; i < FGObjects.Count(); i++ )
+    FGObjects[i]->SetTag(-1);
+  for( int i=0; i < objects.Count(); i++ )
+    objects[i]->SetTag(0);
+  for( int i=0; i < FGObjects.Count(); i++ )
+    if( FGObjects[i]->GetTag() == 0 )
+      FGObjects[i] = NULL;
+  FGObjects.Pack();
+}
+//..............................................................................
 void TGlRenderer::AddGObject(AGDrawObject *G)  {
   FGObjects.Add(G);
   if( FSceneComplete || !G->Visible() )  return;
@@ -932,7 +943,8 @@ void TGlRenderer::RemoveCollections(const TPtrList<TGPCollection>& Colls)  {
     for( int j=0; j < Colls[i]->PrimitiveCount(); j++ )
       Colls[i]->Primitive(j)->SetTag(0);
     FPrimitives->RemoveObjectsByTag(0);
-    FCollections.Remove( FCollections.IndexOfObject(Colls[i]) );
+    int col_ind = FCollections.IndexOfObject(Colls[i]);
+    FCollections.Remove( col_ind );
     delete Colls[i];
   }
   for( int i=0; i < FPrimitives->PropCount(); i++ )  {

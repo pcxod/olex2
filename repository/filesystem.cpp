@@ -135,8 +135,10 @@ void TFSItem::operator >> (TStrList& S) const  {
     if( (i+1) < Properties.Count() )  
       str << ';';
   }
+  if( !Properties.IsEmpty() && !Actions.IsEmpty() )
+    str << ';';
   for( int i=0; i < Actions.Count(); i++ )  {
-    str << Actions[i];
+    str << "action:" << Actions[i];
     if( (i+1) < Actions.Count() )  
       str << ';';
   }

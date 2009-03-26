@@ -20,7 +20,7 @@
 //----------------------------------------------------------------------------//
 TXGrowLine::TXGrowLine(const olxstr& collectionName, TSAtom *A, TCAtom* CA,
                          const smatd& transform, TGlRenderer *Render) :
-  TXBond(collectionName, *(TSBond*)NULL, Render)
+  TXBond(collectionName, *(TSBond*)NULL, Render), Transform(transform)
 {
   AGDrawObject::Groupable(false);
   vec3d C = transform * CA->ccrd();
@@ -39,15 +39,10 @@ TXGrowLine::TXGrowLine(const olxstr& collectionName, TSAtom *A, TCAtom* CA,
   }
   FSAtom = A;
   FCAtom = CA;
-  Transform = transform;
 }
 //..............................................................................
 void TXGrowLine::Create(const olxstr& cName, const ACreationParams* cpar)  {
-  if( !cName.IsEmpty() )  
-    SetCollectionName(cName);
-  TXBond::Create( GetCollectionName() );
-  TGPCollection* GPC = FParent->FindCollection( GetCollectionName() );
-  GPC->AddObject(this);
+  TXBond::Create( cName );
 }
 //..............................................................................
 TXGrowLine::~TXGrowLine()  {
