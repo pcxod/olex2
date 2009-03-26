@@ -16,7 +16,6 @@ bool TXlConGen::FixAtom(TAtomEnvi& envi, const short Group, const TBasicAtomInfo
     TCAtomPList CreatedAtoms;
     TAtomEnvi NEnvi;
     GenerateAtom( CreatedAtoms, envi, Group, atomType, pivoting);
-
     short afix = 0;
     switch( Group )  {
       case fgNH3:
