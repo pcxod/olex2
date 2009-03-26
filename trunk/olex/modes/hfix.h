@@ -44,7 +44,7 @@ public:
         TIntList parts;
         TDoubleList occu;
         RefinementModel& rm = TGlXApp::GetGXApp()->XFile().GetRM();
-
+        
         for( int i=0; i < AE.Count(); i++ )  {
           if( AE.GetCAtom(i).GetPart() != 0 && AE.GetCAtom(i).GetPart() != AE.GetBase().CAtom().GetPart() ) 
             if( parts.IndexOf(AE.GetCAtom(i).GetPart()) == -1 )  {
