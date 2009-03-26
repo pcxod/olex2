@@ -72,7 +72,7 @@ class TSymmParser  {
         }
       }
       if( M.t[j] != 0 )  {
-        if( fraction )
+        if( !fraction )
           T1.Insert(olxstr::FormatFloat(3, M.t[j], false).TrimFloat(), 0);
         else
           T1.Insert(FormatFloatEx(M.t[j]), 0);

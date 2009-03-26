@@ -245,6 +245,7 @@ public:
   inline void SetObjectsCapacity(int v)     { FGObjects.SetCapacity(v);  } 
   inline AGDrawObject* GObject( int i)      {  return FGObjects[i]; }
   inline void RemoveObject(AGDrawObject* D) {  FGObjects.Remove(D);  }
+  void RemoveObjects(const TPtrList<AGDrawObject>& objects);
   void AddGObject(AGDrawObject *G);
   inline int GObjectCount() const           {  return FGObjects.Count(); }
 

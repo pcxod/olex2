@@ -37,25 +37,35 @@ void TLibrary::AttachLibrary( TLibrary* lib )  {
   lib->SetParentLibrary( this );
 }
 //..............................................................................
-void TLibrary::RegisterStaticMacro( TStaticMacro* func )  {
+void TLibrary::RegisterStaticMacro( TStaticMacro* func, bool replace )  {
   TIntList list;
   Macros.GetIndexes( func->GetName(), list );
   for(int i=0; i < list.Count(); i++ )  {
     unsigned int argc = Macros.GetObject(list[i])->GetArgStateMask();
-    if( func->GetArgStateMask() & argc )
+    if( func->GetArgStateMask() & argc )  {
+      if( replace )  {
+        Macros.Delete(list[i]);
+        break;
+      }
       throw TDuplicateEntry(__OlxSourceInfo, olxstr("macro (same number of args)") << func->GetName(), "static macro");
+    }
   }
   func->SetParentLibrary( *this );
   Macros.Add(func->GetName(), func);
 }
 //..............................................................................
-void TLibrary::RegisterStaticFunction( TStaticFunction* func )  {
+void TLibrary::RegisterStaticFunction( TStaticFunction* func, bool replace )  {
   TIntList list;
   Functions.GetIndexes( func->GetName(), list );
   for(int i=0; i < list.Count(); i++ )  {
     unsigned int argc = Functions.GetObject(list[i])->GetArgStateMask();
-    if( func->GetArgStateMask() & argc )
+    if( func->GetArgStateMask() & argc )  {
+      if( replace )  {
+        Functions.Delete(list[i]);
+        break;
+      }
       throw TDuplicateEntry(__OlxSourceInfo, olxstr("function (same number of args)") << func->GetName(), "static function");
+    }
   }
   func->SetParentLibrary( *this );
   Functions.Add(func->GetName(), func);

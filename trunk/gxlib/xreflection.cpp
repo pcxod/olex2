@@ -36,7 +36,7 @@ TXReflection::TXReflection(const olxstr& collectionName, double minI, double max
   v *= (2.0/scale);                    // extra scaling
   FCenter = v;
   Params().Resize(1);
-  Params()[0] = (R.GetI() - maxI) / (maxI + olx_abs(minI));
+  Params()[0] = (I - minI) / (maxI + olx_abs(minI));
   if( Params()[0] > 0 )  
     Params()[0] = sqrt( Params()[0] ); 
 }
@@ -62,72 +62,59 @@ void TXReflection::Create(const olxstr& cName, const ACreationParams* cpar) {
   TGlMaterial* GlM = const_cast<TGlMaterial*>(GS->Material("Reflection"));
 
   if( GlM->Mark() )  {
-    GlM->SetFlags( sglmAmbientF|sglmAmbientB);
-    GlM->AmbientF = 0x000f00ff;
-    GlM->DiffuseF = 0x000f00FF;
-    GlM->AmbientB = 0x000f00FF;
-    GlM->DiffuseB = 0x000f00FF;
+    GlM->FromString("85;1.000,0.000,0.059,0.000;2138535799;1.000,1.000,1.000,0.500;36");
     GlM->Mark(false);
   }
   GlP->SetProperties(GlM);
   double sz = 0.5;
-/*
-  GlP->Type(sgloQuads);
-  GlP->Data.Resize(3, 12);  // three rectangles
-  // xy
-  GlP->Data[0][0] = -sz;  GlP->Data[1][0] = sz;
-  GlP->Data[0][1] = sz;  GlP->Data[1][1] = sz;
-  GlP->Data[0][2] = sz;  GlP->Data[1][2] = -sz;
-  GlP->Data[0][3] = -sz;  GlP->Data[1][3] = -sz;
-  // xz plane
-  GlP->Data[0][4] = -sz;  GlP->Data[2][4] = sz;
-  GlP->Data[0][5] = sz;  GlP->Data[2][5] = sz;
-  GlP->Data[0][6] = sz;  GlP->Data[2][6] = -sz;
-  GlP->Data[0][7] = -sz;  GlP->Data[2][7] = -sz;
-  // zy plane x
-  GlP->Data[2][8] = -sz;  GlP->Data[1][8] = sz;
-  GlP->Data[2][9] = sz;  GlP->Data[1][9] = sz;
-  GlP->Data[2][10] = sz;  GlP->Data[1][10] = -sz;
-  GlP->Data[2][11] = -sz;  GlP->Data[1][11] = -sz;
-  */
-  GlP->Data.Resize(3, 12);  // four rectangles
-  double v = sqrt(3.0)/2;
-  // bottom
-  GlP->Data[0][0] = 0;      GlP->Data[1][0] = sz;
-  GlP->Data[0][1] = sz*v;   GlP->Data[1][1] = -sz*v;
-  GlP->Data[0][2] = -sz*v;  GlP->Data[1][2] = -sz*v;
+  GlP->Data.Resize(4, 12);  // four triangles + normals
+  static const double c_30 = sqrt(3.0)/2, s_30 = 0.5;
+  TArrayList<vec3d> vecs;
+  vecs.Add( vec3d(0, 0, sz) );
+  vecs.Add( vec3d(0, sz, 0) );
+  vecs.Add( vec3d(sz*c_30, -sz*s_30, 0) );
+  vecs.Add( vec3d(-sz*c_30, -sz*s_30, 0) );
+  GlP->Data[0][0] = vecs[0][0];  GlP->Data[0][1] = vecs[2][0];  GlP->Data[0][2] = vecs[1][0];
+  GlP->Data[1][0] = vecs[0][1];  GlP->Data[1][1] = vecs[2][1];  GlP->Data[1][2] = vecs[1][1];
+  GlP->Data[2][0] = vecs[0][2];  GlP->Data[2][1] = vecs[2][2];  GlP->Data[2][2] = vecs[1][2];
+  vec3d n = vec3d(vecs[2]-vecs[0]).XProdVec(vecs[1]-vecs[0]).Normalise();
+  GlP->Data[3][0] = n[0];  GlP->Data[3][1] = n[1];  GlP->Data[3][2] = n[2];  
 
-  GlP->Data[0][3] = 0;      GlP->Data[1][3] = sz;
-  GlP->Data[0][4] = sz*v;   GlP->Data[1][4] = -sz*v;
-  GlP->Data[0][5] = 0;      GlP->Data[1][5] = 0;         GlP->Data[2][5] = sz;
+  GlP->Data[0][3] = vecs[0][0];  GlP->Data[0][4] = vecs[3][0];  GlP->Data[0][5] = vecs[2][0];
+  GlP->Data[1][3] = vecs[0][1];  GlP->Data[1][4] = vecs[3][1];  GlP->Data[1][5] = vecs[2][1];
+  GlP->Data[2][3] = vecs[0][2];  GlP->Data[2][4] = vecs[3][2];  GlP->Data[2][5] = vecs[2][2];
+  n = vec3d(vecs[3]-vecs[0]).XProdVec(vecs[2]-vecs[0]).Normalise();
+  GlP->Data[3][0] = n[0];  GlP->Data[3][1] = n[1];  GlP->Data[3][2] = n[2];  
 
-  GlP->Data[0][6] = 0;      GlP->Data[1][6] = sz;
-  GlP->Data[0][7] = -sz*v;  GlP->Data[1][7] = -sz*v;
-  GlP->Data[0][8] = 0;      GlP->Data[1][8] = 0;         GlP->Data[2][8] = sz;
+  GlP->Data[0][6] = vecs[0][0];  GlP->Data[0][7] = vecs[1][0];  GlP->Data[0][8] = vecs[3][0];
+  GlP->Data[1][6] = vecs[0][1];  GlP->Data[1][7] = vecs[1][1];  GlP->Data[1][8] = vecs[3][1];
+  GlP->Data[2][6] = vecs[0][2];  GlP->Data[2][7] = vecs[1][2];  GlP->Data[2][8] = vecs[3][2];
+  n = vec3d(vecs[1]-vecs[0]).XProdVec(vecs[3]-vecs[0]).Normalise();
+  GlP->Data[3][0] = n[0];  GlP->Data[3][1] = n[1];  GlP->Data[3][2] = n[2];  
 
-  GlP->Data[0][9] = sz*v;   GlP->Data[1][9] = -sz*v;
-  GlP->Data[0][10] = -sz*v; GlP->Data[1][10] = -sz*v;
-  GlP->Data[0][11] = 0;     GlP->Data[1][11] = 0;        GlP->Data[2][11] = sz;
-
+  GlP->Data[0][9] = vecs[1][0];  GlP->Data[0][10] = vecs[2][0];  GlP->Data[0][11] = vecs[3][0];
+  GlP->Data[1][9] = vecs[1][1];  GlP->Data[1][10] = vecs[2][1];  GlP->Data[1][11] = vecs[3][1];
+  GlP->Data[2][9] = vecs[1][2];  GlP->Data[2][10] = vecs[2][2];  GlP->Data[2][11] = vecs[3][2];
+  n = vec3d(vecs[2]-vecs[1]).XProdVec(vecs[3]-vecs[1]).Normalise();
+  GlP->Data[3][0] = n[0];  GlP->Data[3][1] = n[1];  GlP->Data[3][2] = n[2];  
 }
 //..............................................................................
 TXReflection::~TXReflection()  {  }
 //..............................................................................
-bool TXReflection::Orient(TGlPrimitive *GlP)
-{
+bool TXReflection::Orient(TGlPrimitive *GlP)  {
   Parent()->GlTranslate(FCenter);
-
-  double scale1 = sqrt(atan(Params()[0])*2/M_PI);
+  // scale the larger reflections up
+  double scale1 = sqrt(atan(FParams[0])*2/M_PI);
   FParent->GlScale( (float)(1+scale1*6) );
 
-  if( Selected() )  return false;
-  TGlMaterial GlM;
-  GlM = *(TGlMaterial*)GlP->GetProperties();
+  if( Selected() || !((TGlMaterial*)GlP->GetProperties())->GetTransparent() )  
+    return false;
 
-  double scale = 0.25 + Params()[0]*0.75;
-  GlM.AmbientF *= scale;
-  GlM.AmbientB *= scale;
-  //GlM.Init();
+  TGlMaterial GlM = *(TGlMaterial*)GlP->GetProperties();
+
+  double scale = (1.0-FParams[0]);
+  GlM.AmbientF[3] = scale;
+  GlM.Init();
   return false;
 }
 //..............................................................................
