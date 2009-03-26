@@ -1620,7 +1620,8 @@ void TLattice::AnalyseHAdd(AConstraintGenerator& cg, const TSAtomPList& atoms)  
       }
     }
     for(int j=0; j < atoms[i]->CAtom().AttachedAtomCount(); j++ )  {
-      if( atoms[i]->CAtom().GetAttachedAtom(j).GetAtomInfo() == iHydrogenIndex )  {
+      if( atoms[i]->CAtom().GetAttachedAtom(j).GetAtomInfo() == iHydrogenIndex &&
+        !atoms[i]->CAtom().GetAttachedAtom(j).IsDeleted() )  {
         consider = false;
         break;
       }

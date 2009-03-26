@@ -606,7 +606,7 @@ void TUnitCell::GetAtomEnviList(TSAtom& atom, TAtomEnvi& envi, bool IncludeQ, in
     // make sure that atoms on center of symmetry are not counted twice
     bool Add = true;
     for( int j=0; j < envi.Count(); j++ )  {
-      if( envi.GetCAtom(j) == A && envi.GetCrd(j) == v )  {
+      if( envi.GetCAtom(j) == A && envi.GetCrd(j).QDistanceTo(v) < 0.001 )  {
         Add = false;
         break;
       }
