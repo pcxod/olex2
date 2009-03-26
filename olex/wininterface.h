@@ -30,14 +30,18 @@ public:
   }
   inline void SetColor(wxColor c)  {  FWindow->SetBackgroundColour(c);  FWindow->Refresh();  }
   inline bool IsVisible()    const {  return FWindow->IsShown();  }
-  inline void SetVisible(bool v)   {  if( v )  FWindow->Show();  else  FWindow->Hide();  }
+  inline void SetVisible(bool v)   {  
+    if( v )  
+      FWindow->Show();  
+    else  
+      FWindow->Hide();  
+  }
 
   inline long GetWindowStyle()  const {   return FWindow->GetWindowStyleFlag();  }
   inline void SetWindowStyle(long v)  { FWindow->SetWindowStyleFlag(v);  }
   inline void AddWindowStyle(long v)  { FWindow->SetWindowStyleFlag(GetWindowStyle() | v);  }
   void DelWindowStyle(long v)  {
-    if( (GetWindowStyle() & v) != 0 )
-      FWindow->SetWindowStyleFlag(GetWindowStyle() ^ v);
+    FWindow->SetWindowStyleFlag(GetWindowStyle() & ~v);
   }
   inline bool HasWindowStyle(long v) const {  return (GetWindowStyle() & v) != 0;  }
 
@@ -45,8 +49,7 @@ public:
   inline void SetExtraStyle(long v)   { FWindow->SetExtraStyle(v);  }
   inline void AddExtraStyle(long v)   { FWindow->SetExtraStyle(GetWindowStyle() | v);  }
   void DelExtraStyle(long v)   {
-    if( (GetExtraStyle() & v) != 0 )
-      SetExtraStyle(GetExtraStyle() ^ v);
+    SetExtraStyle(GetExtraStyle() & ~v);
   }
   inline bool HasExtraStyle(long v) const {  return (GetExtraStyle() & v) != 0;  }
 };

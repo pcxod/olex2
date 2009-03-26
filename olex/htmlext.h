@@ -22,7 +22,9 @@ public:
   THtmlImageCell(wxWindow *window,
                   wxFSFile *input, int w = wxDefaultCoord, int h = wxDefaultCoord,
                   double scale = 1.0, int align = wxHTML_ALIGN_BOTTOM,
-                  const wxString& mapname = wxEmptyString);
+                  const wxString& mapname = wxEmptyString, 
+                  bool WidthInPercent = false, 
+                  bool HeightInPercent = false);
   ~THtmlImageCell();
   void Draw(wxDC& dc, int x, int y, int view_y1, int view_y2,
             wxHtmlRenderingInfo& info);
@@ -46,6 +48,7 @@ private:
   olxstr           FSource;
   int                 m_bmpW, m_bmpH;
   bool                m_showFrame:1;
+  bool WidthInPercent, HeightInPercent;
   wxScrolledWindow   *m_window;
 #if wxUSE_GIF && wxUSE_TIMER
   wxGIFDecoder       *m_gifDecoder;

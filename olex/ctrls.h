@@ -91,7 +91,12 @@ public:
   DefPropC(olxstr, OnEnterStr) // this is passed when the control becomes focuesd
 
   inline bool IsReadOnly()  {   return WI.HasWindowStyle(wxCB_READONLY);  }
-  void ReadOnly( bool v)    {  WI.AddWindowStyle(wxCB_READONLY);  }
+  void ReadOnly(bool v)   {  
+    if( v ) 
+      WI.AddWindowStyle(wxCB_READONLY);  
+    else
+      WI.DelWindowStyle(wxCB_READONLY);  
+  }
 
   TActionQueue *OnChange, *OnLeave, *OnEnter;
   TWindowInterface WI;
