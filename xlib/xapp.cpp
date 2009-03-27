@@ -213,7 +213,10 @@ void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F)  {
 void TXApp::NameHydrogens(TSAtom& SA, TUndoData* ud, bool CheckLabel)  {
   TNameUndo* nu = static_cast<TNameUndo*>(ud);
   olxstr Labl;
-  int hcount=0, allH = 0, processedH = 0;
+  int hcount=0, 
+      allH = 0, 
+      processedH = 0;
+  olxdict<int,int,TPrimitiveComparator> parts;
   olxstr Name( SA.GetLabel().StartsFromi(SA.GetAtomInfo().GetSymbol()) ? 
     SA.GetLabel().SubStringFrom( SA.GetAtomInfo().GetSymbol().Length() )
     :
@@ -222,10 +225,11 @@ void TXApp::NameHydrogens(TSAtom& SA, TUndoData* ud, bool CheckLabel)  {
   TCAtom* CA;
   for( int i=0; i < SA.NodeCount(); i++ )  {
     const TSAtom& sa = SA.Node(i);
-    if( !sa.IsDeleted() && sa.GetAtomInfo() == iHydrogenIndex )
+    if( !sa.IsDeleted() && sa.GetAtomInfo() == iHydrogenIndex )  {
       allH ++;
+      parts(sa.CAtom().GetPart(), 0);
+    }
   }
-  olxdict<int,int,TPrimitiveComparator> parts;
   for( int i=0; i < SA.NodeCount(); i++ )  {
     TSAtom& SA1 = SA.Node(i);
     if( SA1.IsDeleted() )  continue;
@@ -237,16 +241,19 @@ void TXApp::NameHydrogens(TSAtom& SA, TUndoData* ud, bool CheckLabel)  {
         Labl << (char)('a' + parts(SA1.CAtom().GetPart(), 0)++);
       }
       if(  CheckLabel )  {
-        while( (CA = XFile().GetAsymmUnit().FindCAtom(Labl)) != NULL && CA->GetPart() ==SA1.CAtom().GetPart() )  {
+        while( (CA = XFile().GetAsymmUnit().FindCAtom(Labl)) != NULL && 
+                CA->GetPart() ==SA1.CAtom().GetPart() )  
+        {
           if( CA == &SA1.CAtom() || CA->IsDeleted() )  break;
           hcount++;
           Labl = SA1.GetAtomInfo().GetSymbol()+Name;
           if( Labl.Length() >= 4 )  Labl.SetLength(3);
-          Labl << (char)('a' +  + parts(SA1.CAtom().GetPart(), 0)++);
+          Labl << (char)('a' + parts(SA1.CAtom().GetPart(), 0)++);
         }
       }
       if( SA1.GetLabel() != Labl )  {
-        if( nu != NULL )  nu->AddAtom(SA1, SA1.GetLabel() );
+        if( nu != NULL )  
+          nu->AddAtom(SA1, SA1.GetLabel() );
         SA1.CAtom().Label() = Labl;
       }
       hcount++;
