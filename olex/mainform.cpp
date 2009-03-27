@@ -784,6 +784,7 @@ separated values of Atom Type and radius, an entry a line" );
     "Creates a projection of the fragment of the provided atom onto a spehere" );
   this_InitMacroD(PictPS, "color_line-lines&;color_fill-ellipses are filled", fpOne|psFileLoaded, 
     "Experimental postscript rendering" );
+  this_InitMacroD(UpdateQPeakTable, EmptyString, fpNone, "Internal routine for synchronisation" );
   // FUNCTIONS _________________________________________________________________
 
   this_InitFunc(FileLast, fpNone|fpOne);
@@ -1089,8 +1090,6 @@ separated values of Atom Type and radius, an entry a line" );
   #endif
 #endif
 
-  BadRefsFile = "badrefs.htm";
-  RefineDataFile = "refinedata.htm";
   DictionaryFile = XA->BaseDir() + "dictionary.txt";
   PluginFile =  XA->BaseDir() + "plugins.xld";
   FHtmlIndexFile = TutorialDir+"index.htm";
@@ -2884,7 +2883,8 @@ void TMainForm::UpdateRecentFile(const olxstr& fn)  {
     FRecentFiles.SetCount(FRecentFilesToShow);
 }
 //..............................................................................
-bool TMainForm::RecentFilesTable(const olxstr &FN, bool TableDef)  {
+bool TMainForm::UpdateRecentFilesTable(bool TableDef)  {
+  const olxstr RecentFilesFile("recent_files.htm");
   TTTable<TStrList> Table;
   TStrList Output;
   int tc=0;
@@ -2898,7 +2898,11 @@ bool TMainForm::RecentFilesTable(const olxstr &FN, bool TableDef)  {
     Table[i/3][i%3] = Tmp;
   }
   Table.CreateHTMLList(Output, EmptyString, false, false, false);
-  TUtf8File::WriteLines( FN, Output, false );
+  CString cst = TUtf8::Encode(Output.Text('\n'));
+  TFileHandlerManager::AddMemoryBlock(RecentFilesFile, cst.c_str(), cst.Length(), plStructure);
+  if( TEFile::FileExists(DataDir+RecentFilesFile) )
+    TEFile::DelFile(DataDir+RecentFilesFile);
+  //TUtf8File::WriteLines( RecentFilesFile, Output, false );
   return true;
 }
 //..............................................................................
@@ -2908,7 +2912,12 @@ int SortQPeak( const TXAtom* a1, const TXAtom* a2)  {
   if( v > 0 )  return 1;
   return 0;
 }
-bool TMainForm::QPeaksTable(const olxstr &FN, bool TableDef)  {
+void TMainForm::QPeakTable(bool TableDef, bool Create)  {
+  static const olxstr QPeakTableFile("qpeaks.htm");
+  if( !Create )  {
+    TFileHandlerManager::AddMemoryBlock(QPeakTableFile, NULL, 0, plStructure);
+    return;
+  }
   TTTable<TStrList> Table;
   TXAtomPList Atoms;
   olxstr Tmp;
@@ -2923,8 +2932,8 @@ bool TMainForm::QPeaksTable(const olxstr &FN, bool TableDef)  {
     else
       Table[0][1] = "N/A in this file format";
     Table.CreateHTMLList(Output, EmptyString, false, false, TableDef);
-    TUtf8File::WriteLines( FN, Output, false );
-    return false;
+    TUtf8File::WriteLines( QPeakTableFile, Output, false );
+    return;
   }
   Atoms.QuickSorter.SortSF(Atoms, SortQPeak);
   Table.Resize( olx_min(10, Atoms.Count()), 3);
@@ -2949,15 +2958,20 @@ bool TMainForm::QPeaksTable(const olxstr &FN, bool TableDef)  {
 
   Table.CreateHTMLList(Output, EmptyString, false, false, TableDef);
   CString cst = TUtf8::Encode(Output.Text('\n'));
-  TFileHandlerManager::AddMemoryBlock(FN, cst.c_str(), cst.Length(), plStructure);
+  TFileHandlerManager::AddMemoryBlock(QPeakTableFile, cst.c_str(), cst.Length(), plStructure);
+  if( TEFile::FileExists(QPeakTableFile) )
+    TEFile::DelFile(QPeakTableFile);
   //TUtf8File::WriteLines( FN, Output, false );
-  return true;
 }
 //..............................................................................
-void TMainForm::BadReflectionsTable(bool TableDef)  {
+void TMainForm::BadReflectionsTable(bool TableDef, bool Create)  {
+  static const olxstr BadRefsFile("badrefs.htm");
+  if( !Create )  {
+    TFileHandlerManager::AddMemoryBlock(BadRefsFile, NULL, 0, plStructure);
+    return;
+  }
   if( FXApp->CheckFileType<TIns>() )
     Lst.SynchroniseOmits( FXApp->XFile().GetRM() );
-
   TTTable<TStrList> Table;
   TStrList Output;
   Table.Resize(Lst.DRefCount(), 5);
@@ -2983,10 +2997,17 @@ void TMainForm::BadReflectionsTable(bool TableDef)  {
   Table.CreateHTMLList(Output, EmptyString, true, false, TableDef);
   CString cst = TUtf8::Encode(Output.Text('\n'));
   TFileHandlerManager::AddMemoryBlock(BadRefsFile, cst.c_str(), cst.Length(), plStructure);
+  if( TEFile::FileExists(BadRefsFile) )
+    TEFile::DelFile(BadRefsFile);
   //TUtf8File::WriteLines( BadRefsFile, Output, false );
 }
 //..............................................................................
-void TMainForm::RefineDataTable(bool TableDef)  {
+void TMainForm::RefineDataTable(bool TableDef, bool Create)  {
+  static const olxstr RefineDataFile("refinedata.htm");
+  if( !Create )  {
+    TFileHandlerManager::AddMemoryBlock(RefineDataFile, NULL, 0, plStructure);
+    return;
+  }
   TTTable<TStrList> Table;
   TStrList Output;
 
@@ -2994,57 +3015,59 @@ void TMainForm::RefineDataTable(bool TableDef)  {
 
   Table[0][0] = "R1(Fo > 4sig(Fo))";
   if( Lst.R1() > 0.1 )
-    Table[0][1] << "<font color=\'red\'>" << Lst.R1() << "</font>";
+    Table[0][1] << "<font color=\'red\'>" << olxstr::FormatFloat(4,Lst.R1()) << "</font>";
   else
-    Table[0][1] = Lst.R1();
+    Table[0][1] = olxstr::FormatFloat(4,Lst.R1());
 
   Table[0][2] = "R1(all data)";
   if( Lst.R1a() > 0.1 )
-    Table[0][3] << "<font color=\'red\'>" << Lst.R1a() << "</font>";
+    Table[0][3] << "<font color=\'red\'>" << olxstr::FormatFloat(4,Lst.R1a()) << "</font>";
   else
-   Table[0][3] = Lst.R1a();
+   Table[0][3] = olxstr::FormatFloat(4,Lst.R1a());
 
   Table[1][0] = "wR2";
   if( Lst.wR2() > 0.2 )
-     Table[1][1] << "<font color=\'red\'>" << Lst.wR2() << "</font>"; 
+     Table[1][1] << "<font color=\'red\'>" << olxstr::FormatFloat(4,Lst.wR2()) << "</font>"; 
   else
-    Table[1][1] = Lst.wR2();
+    Table[1][1] = olxstr::FormatFloat(4,Lst.wR2());
 
   Table[1][2] = "GooF";
   if( olx_abs(Lst.S()-1) > 0.5 )
-    Table[1][3] << "<font color=\'red\'>" << Lst.S() << "</font>";
+    Table[1][3] << "<font color=\'red\'>" << olxstr::FormatFloat(2,Lst.S()) << "</font>";
   else
-    Table[1][3] = Lst.S();  
+    Table[1][3] = olxstr::FormatFloat(2,Lst.S());  
 
   Table[2][0] = "GooF(Restr)";
   if( olx_abs(Lst.RS()-1) > 0.5 )
-    Table[2][1] << "<font color=\'red\'>" << Lst.RS() << "</font>";
+    Table[2][1] << "<font color=\'red\'>" << olxstr::FormatFloat(2,Lst.RS()) << "</font>";
   else
-    Table[2][1] = Lst.RS();
+    Table[2][1] = olxstr::FormatFloat(2,Lst.RS());
 
   Table[2][2] = "Highest peak";
   if( Lst.Peak() > 1.5 )
-    Table[2][3] << "<font color=\'red\'>" << Lst.Peak() << "</font>";
+    Table[2][3] << "<font color=\'red\'>" << olxstr::FormatFloat(2,Lst.Peak()) << "</font>";
   else
-    Table[2][3] = Lst.Peak(); 
+    Table[2][3] = olxstr::FormatFloat(2,Lst.Peak()); 
 
   Table[3][0] = "Deepest hole";
   if( olx_abs(Lst.Hole()) > 1.5 )
-    Table[3][1] << "<font color=\'red\'>" << Lst.Hole() << "</font>";
+    Table[3][1] << "<font color=\'red\'>" << olxstr::FormatFloat(2,Lst.Hole()) << "</font>";
   else
-    Table[3][1] = Lst.Hole();
+    Table[3][1] = olxstr::FormatFloat(2,Lst.Hole());
 
   Table[3][2] = "Params";             Table[3][3] = Lst.Params();
   Table[4][0] = "Refs(total)";        Table[4][1] = Lst.TotalRefs();
   Table[4][2] = "Refs(uni)";          Table[4][3] = Lst.UniqRefs();
   Table[5][0] = "Refs(Fo > 4sig(Fo))";Table[5][1] = Lst.Refs4sig();
-  Table[5][2] = "R(int)";             Table[5][3] = Lst.Rint();
-  Table[6][0] = "R(sigma)";           Table[6][1] = Lst.Rsigma();
+  Table[5][2] = "R(int)";             Table[5][3] = olxstr::FormatFloat(3,Lst.Rint());
+  Table[6][0] = "R(sigma)";           Table[6][1] = olxstr::FormatFloat(3,Lst.Rsigma());
 
   Table.CreateHTMLList(Output, EmptyString, false, false, TableDef);
   CString cst = TUtf8::Encode(Output.Text('\n'));
   TFileHandlerManager::AddMemoryBlock(RefineDataFile, cst.c_str(), cst.Length(), plStructure);
-  //TUtf8File::WriteLines( RefineDataFile, Output, false );
+  if( TEFile::FileExists(RefineDataFile) )
+    TEFile::DelFile(RefineDataFile);
+//TUtf8File::WriteLines( RefineDataFile, Output, false );
 }
 //..............................................................................
 void TMainForm::OnMouseWheel(int x, int y, double delta)  {

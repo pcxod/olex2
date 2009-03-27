@@ -1107,7 +1107,7 @@ void THtml::CheckForSwitches(THtmlSwitch &Sender, bool izZip)  {
       Toks.Clear();
       TParamList::StrtokParams(Tmp, ';', Toks); // extract arguments
       if( Toks.Count() < 2 )  { // must be at least 2 for filename and status
-        TBasicApp::GetLog().Error( olxstr("Wrong defined field (not enough data)") << Sw->Name());
+        TBasicApp::GetLog().Error( olxstr("Wrong defined switch (not enough data)") << Sw->Name());
         continue;
       }
 
@@ -1151,7 +1151,7 @@ void THtml::CheckForSwitches(THtmlSwitch &Sender, bool izZip)  {
       }
       Sw->FileIndex(ind);
     }
-    if( Lst[i].StartsFrom(Tag1) )  {
+    else if( Lst[i].StartsFrom(Tag1) )  {
       Toks.Clear();  
       Tmp = Lst[i].SubStringFrom(Tag1.Length());
       Toks.Strtok(Tmp, ' '); // extract item name
@@ -1174,7 +1174,7 @@ void THtml::CheckForSwitches(THtmlSwitch &Sender, bool izZip)  {
 //      if( OnCmd->Execute(this, &(Toks.String(0))) )
 //      { Lst[i] = Toks.String(0); }
     }
-    if( Lst[i].StartsFrom(Tag3) )   { // html link
+    else if( Lst[i].StartsFrom(Tag3) )   { // html link
       Toks.Clear();  
       Tmp = Lst[i].SubStringFrom(Tag3.Length());
       Toks.Strtok(Tmp, ' '); // extract file name
