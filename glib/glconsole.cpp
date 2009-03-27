@@ -480,7 +480,8 @@ void TGlConsole::Visible(bool On)  {
 }
 //..............................................................................
 void TGlConsole::UpdateCursorPosition(bool InitCmds)  {
-  if( !IsPromptVisible() || FontIndex == -1 )  return;
+  if( !IsPromptVisible() || FontIndex == -1 || 
+    FParent->GetWidth()*FParent->GetHeight() == 0 )  return;
   TGlFont* Fnt = Font();
   if( InitCmds )  {
     Cmds.Clear();
