@@ -2453,6 +2453,8 @@ void TMainForm::OnResize()  {
     FCmdLine->WI.SetLeft( l );
     FCmdLine->WI.SetTop( h - FCmdLine->WI.GetHeight() );
   }
+  if( w <= 0 )  w = 5;
+  if( h <= 0 )  h = 5;
   FGlConsole->SetTop(dheight);
   FGlCanvas->SetSize(l, 0, w, h - (CmdLineVisible ? FCmdLine->WI.GetHeight() : 0) );
   FGlCanvas->GetClientSize(&w, &h);
@@ -2899,7 +2901,7 @@ bool TMainForm::UpdateRecentFilesTable(bool TableDef)  {
   }
   Table.CreateHTMLList(Output, EmptyString, false, false, false);
   CString cst = TUtf8::Encode(Output.Text('\n'));
-  TFileHandlerManager::AddMemoryBlock(RecentFilesFile, cst.c_str(), cst.Length(), plStructure);
+  TFileHandlerManager::AddMemoryBlock(RecentFilesFile, cst.c_str(), cst.Length(), plGlobal);
   if( TEFile::FileExists(DataDir+RecentFilesFile) )
     TEFile::DelFile(DataDir+RecentFilesFile);
   //TUtf8File::WriteLines( RecentFilesFile, Output, false );
@@ -3495,10 +3497,8 @@ bool TMainForm::Show( bool v )  {
 #else
   bool res = wxFrame::Show(v);
 #endif
-  if( res )  {
-    FXApp->SetMainFormVisible( v );
-    FGlCanvas->SetFocus();
-  }
+  FXApp->SetMainFormVisible( v );
+  FGlCanvas->SetFocus();
   return res;
 }
 //..............................................................................
