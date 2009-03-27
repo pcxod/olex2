@@ -198,6 +198,8 @@ xlib_InitMacro(File, "s-sort the main residue of the asymmetric unit", fpNone|fp
 //_________________________________________________________________________________________________________________________
   xlib_InitFunc(RemoveSE, fpOne|psFileLoaded, "Returns a new space group name without provided element");
 //_________________________________________________________________________________________________________________________
+  xlib_InitFunc(Run, fpOne, "Same as the macro, executes provided commands (sperated by >>) returns true if succeded");
+//_________________________________________________________________________________________________________________________
 }
 //..............................................................................
 void XLibMacros::macSAInfo(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
@@ -1879,6 +1881,24 @@ void XLibMacros::funBaseDir(const TStrObjList& Params, TMacroError &E)  {
 //..............................................................................
 void XLibMacros::funLSM(const TStrObjList& Params, TMacroError &E) {
   E.SetRetVal( TXApp::GetInstance().XFile().GetRM().GetRefinementMethod() );
+}
+//..............................................................................
+void XLibMacros::funRun(const TStrObjList& Params, TMacroError &E) {
+  using namespace olex;
+  IOlexProcessor* op = IOlexProcessor::GetInstance();
+  if( op == NULL )
+    throw TFunctionFailedException(__OlxSourceInfo, "this function requires Olex2 processor implementation");
+  TStrList allCmds(Params.Text(' '), ">>");
+  for( int i=0; i < allCmds.Count(); i++ )  {
+    op->executeMacroEx(allCmds[i], E);
+    if( !E.IsSuccessful() )  {
+      if( (i+1) < allCmds.Count() )
+        op->print("Not all macros in the provided list were executed", olex::mtError);
+      break;
+    }
+  }
+  E.Reset(); // to avoide duplicate messages
+  E.SetRetVal(E.IsSuccessful());
 }
 //..............................................................................
 void XLibMacros::funIns(const TStrObjList& Params, TMacroError &E)  {
