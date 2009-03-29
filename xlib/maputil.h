@@ -293,7 +293,7 @@ public:
       }
       center /= toMerge.Count();
       center *= cart2cell;
-      center /= norm;
+      center[0] /= norm[0];  center[1] /= norm[1];  center[2] /= norm[2];
       p.x = Round(center[0]);
       p.y = Round(center[1]);
       p.z = Round(center[2]);

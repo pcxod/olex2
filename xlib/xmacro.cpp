@@ -614,7 +614,7 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     return;
   }
   double max_d = 2.9, min_ang = 150.0;
-  int cnt = XLibMacros::ParseNumbers<double>(Cmds, 2, &max_d, &min_ang);
+  int cnt = XLibMacros::ParseNumbers<double,TStrObjList>(Cmds, 2, &max_d, &min_ang);
   if( cnt == 1 )  {
     if( max_d > 100 )  {
       min_ang = max_d;
@@ -902,7 +902,6 @@ void XLibMacros::macGraphPD(TStrObjList &Cmds, const TParamList &Options, TMacro
   double max_2t = 0, min_2t=180;
   for( int i=0; i < refs.Count(); i++ )  {
     const TReflection& ref = refs[i];
-    const vec3d& d_hkl = ref.GetHkl();
     vec3d hkl = ref.ToCart(hkl2c);
     const double theta_2 = 360*asin(d_2_sin*hkl.Length())/M_PI;
     gd.AddNew( theta_2, ref.GetI()*ref.GetMultiplicity());
@@ -1038,7 +1037,7 @@ void XLibMacros::macDelIns(TStrObjList &Cmds, const TParamList &Options, TMacroE
 //..............................................................................
 void XLibMacros::macLS(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   int ls = -1;
-  XLibMacros::ParseNumbers<int>(Cmds, 1, &ls);
+  XLibMacros::ParseNumbers<int,TStrObjList>(Cmds, 1, &ls);
   if( ls != -1 )  
     TXApp::GetInstance().XFile().GetRM().SetIterations( (int)ls);
   if( !Cmds.IsEmpty() )
@@ -1650,7 +1649,7 @@ void XLibMacros::macCompaq(TStrObjList &Cmds, const TParamList &Options, TMacroE
 //..............................................................................
 void XLibMacros::macEnvi(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
   double r = 2.7;
-  ParseNumbers<double>(Cmds, 1, &r);
+  ParseNumbers<double,TStrObjList>(Cmds, 1, &r);
   if( r < 1 || r > 10 )  {
     E.ProcessingError(__OlxSrcInfo, "radius must be within [1;10] range" );
     return;

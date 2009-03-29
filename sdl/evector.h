@@ -188,7 +188,7 @@ public:
     return *this;
   }
 
-  TVector& operator  *= (VecType v )  {
+  TVector& operator  *= (VecType v)  {
     for( int i=0; i < Fn; i++ )
       FData[i] *= v;
     return *this;
@@ -202,19 +202,19 @@ public:
   }
 
   template <class AType> TVector operator  + (const TVector<AType>& a ) const {
-    return TVector(*this) += a;
+    return TVector<VecType>(*this) += a;
   }
 
   template <class AType> TVector operator  - (const TVector<AType>& a ) const {
-    return TVector(*this) -= a;
+    return TVector<VecType>(*this) -= a;
   }
 
   template <class AType> TVector operator  * (const TVector<AType>& a ) const {
-    return TVector(*this) *= a;
+    return TVector<VecType>(*this) *= a;
   }
 
   template <class AType> TVector operator  / (const TVector<AType>& a ) const {
-    return TVector(*this) /= a;
+    return TVector<VecType>(*this) /= a;
   }
 
   template <class AType> TVector& operator  += (const TVector<AType>& a )  {

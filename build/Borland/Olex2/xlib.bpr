@@ -31,8 +31,8 @@
     <USERDEFINES value="_DEBUG;_NO_PYTHON"/>
     <SYSDEFINES value="NO_STRICT"/>
     <MAINSOURCE value="xlib.bpf"/>
-    <INCLUDEPATH value="..\;..;..\..\..\xlib\macro;&quot;C:\Program Files\Borland\CBuilder6\Projects&quot;;..\..\..\sdl;..\..\..\xlib;$(BCB)\include;$(BCB)\include\vcl;..\..\..\alglib;..\..\..\repository"/>
-    <LIBPATH value="..\;..;..\..\..\xlib\macro;&quot;C:\Program Files\Borland\CBuilder6\Projects&quot;;..\..\..\xlib;$(BCB)\lib\obj;$(BCB)\lib"/>
+    <INCLUDEPATH value="..;..\..\..\xlib\macro;&quot;C:\Program Files\Borland\CBuilder6\Projects&quot;;..\..\..\sdl;..\..\..\xlib;$(BCB)\include;$(BCB)\include\vcl;..\..\..\alglib;..\..\..\repository"/>
+    <LIBPATH value="..;..\..\..\xlib\macro;&quot;C:\Program Files\Borland\CBuilder6\Projects&quot;;..\..\..\xlib;$(BCB)\lib\obj;$(BCB)\lib"/>
     <WARNINGS value="-w-par"/>
     <LISTFILE value=""/>
     <OTHERFILES value=""/>
@@ -136,22 +136,26 @@ ProductVersion=1.0.0.0
 Comments=
 
 [HistoryLists\hlIncludePath]
-Count=8
-Item0=..\;..\..\..\xlib\macro;C:\Program Files\Borland\CBuilder6\Projects;..\..\..\sdl;..\..\..\xlib;$(BCB)\include;$(BCB)\include\vcl;..\..\..\alglib;..\..\..\repository
-Item1=..\..\..\xlib\macro;C:\Program Files\Borland\CBuilder6\Projects;..\..\..\sdl;..\..\..\xlib;$(BCB)\include;$(BCB)\include\vcl;..\..\..\alglib;..\..\..\repository
-Item2=..\..\..\xlib\macro;C:\Program Files\Borland\CBuilder6\Projects;..\..\..\sdl;..\..\..\xlib;$(BCB)\include;$(BCB)\include\vcl;..\..\..\alglib
-Item3=C:\Program Files\Borland\CBuilder6\Projects;..\..\..\sdl;..\..\..\xlib;$(BCB)\include;$(BCB)\include\vcl;..\..\..\alglib
-Item4=..\..\..\sdl;..\..\..\xlib;$(BCB)\include;$(BCB)\include\vcl;..\..\..\alglib
-Item5=C:\Program Files\Borland\CBuilder6\Projects;..\..\..\xlib;$(BCB)\include;$(BCB)\include\vcl;..\..\..\sdl
-Item6=..\..\..\xlib;$(BCB)\include;$(BCB)\include\vcl;..\..\..\sdl
-Item7=..\..\..\xlib;$(BCB)\include;$(BCB)\include\vcl
+Count=10
+Item0=..;..\..\..\xlib\macro;C:\Program Files\Borland\CBuilder6\Projects;..\..\..\sdl;..\..\..\xlib;$(BCB)\include;$(BCB)\include\vcl;..\..\..\alglib;..\..\..\repository
+Item1=..\;..;..\..\..\xlib\macro;C:\Program Files\Borland\CBuilder6\Projects;..\..\..\sdl;..\..\..\xlib;$(BCB)\include;$(BCB)\include\vcl;..\..\..\alglib;..\..\..\repository
+Item2=..\;..\..\..\xlib\macro;C:\Program Files\Borland\CBuilder6\Projects;..\..\..\sdl;..\..\..\xlib;$(BCB)\include;$(BCB)\include\vcl;..\..\..\alglib;..\..\..\repository
+Item3=..\..\..\xlib\macro;C:\Program Files\Borland\CBuilder6\Projects;..\..\..\sdl;..\..\..\xlib;$(BCB)\include;$(BCB)\include\vcl;..\..\..\alglib;..\..\..\repository
+Item4=..\..\..\xlib\macro;C:\Program Files\Borland\CBuilder6\Projects;..\..\..\sdl;..\..\..\xlib;$(BCB)\include;$(BCB)\include\vcl;..\..\..\alglib
+Item5=C:\Program Files\Borland\CBuilder6\Projects;..\..\..\sdl;..\..\..\xlib;$(BCB)\include;$(BCB)\include\vcl;..\..\..\alglib
+Item6=..\..\..\sdl;..\..\..\xlib;$(BCB)\include;$(BCB)\include\vcl;..\..\..\alglib
+Item7=C:\Program Files\Borland\CBuilder6\Projects;..\..\..\xlib;$(BCB)\include;$(BCB)\include\vcl;..\..\..\sdl
+Item8=..\..\..\xlib;$(BCB)\include;$(BCB)\include\vcl;..\..\..\sdl
+Item9=..\..\..\xlib;$(BCB)\include;$(BCB)\include\vcl
 
 [HistoryLists\hlLibraryPath]
-Count=4
-Item0=..\;..\..\..\xlib\macro;C:\Program Files\Borland\CBuilder6\Projects;..\..\..\xlib;$(BCB)\lib\obj;$(BCB)\lib
-Item1=..\..\..\xlib\macro;C:\Program Files\Borland\CBuilder6\Projects;..\..\..\xlib;$(BCB)\lib\obj;$(BCB)\lib
-Item2=C:\Program Files\Borland\CBuilder6\Projects;..\..\..\xlib;$(BCB)\lib\obj;$(BCB)\lib
-Item3=..\..\..\xlib;$(BCB)\lib\obj;$(BCB)\lib
+Count=6
+Item0=..;..\..\..\xlib\macro;C:\Program Files\Borland\CBuilder6\Projects;..\..\..\xlib;$(BCB)\lib\obj;$(BCB)\lib
+Item1=..\;..;..\..\..\xlib\macro;C:\Program Files\Borland\CBuilder6\Projects;..\..\..\xlib;$(BCB)\lib\obj;$(BCB)\lib
+Item2=..\;..\..\..\xlib\macro;C:\Program Files\Borland\CBuilder6\Projects;..\..\..\xlib;$(BCB)\lib\obj;$(BCB)\lib
+Item3=..\..\..\xlib\macro;C:\Program Files\Borland\CBuilder6\Projects;..\..\..\xlib;$(BCB)\lib\obj;$(BCB)\lib
+Item4=C:\Program Files\Borland\CBuilder6\Projects;..\..\..\xlib;$(BCB)\lib\obj;$(BCB)\lib
+Item5=..\..\..\xlib;$(BCB)\lib\obj;$(BCB)\lib
 
 [HistoryLists\hlDebugSourcePath]
 Count=1
@@ -203,5 +207,10 @@ RemoteDebug=0
 ShowInfoMsgs=0
 LinkDebugVcl=0
 LinkCGLIB=0
+
+[Language]
+ActiveLang=
+ProjectLang=
+RootDir=
   </IDEOPTIONS>
 </PROJECT>
