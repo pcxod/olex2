@@ -12,7 +12,20 @@
 #include "maputil.h"
 #include "estopwatch.h"
 
-typedef SortedPtrList<TBasicAtomInfo, TPointerComparator> SortedBAIList;
+#ifdef __BORLANDC__
+class XLibMacros_PtrComparator  {
+public:
+  template <class ComparableA, class ComparableB>
+  static inline int Compare(const ComparableA* A, const ComparableB* B )  {
+    if( A < B )  return -1;
+    if( A > B )  return 1;
+    return 0;
+  }
+};
+  typedef SortedPtrList<TBasicAtomInfo, XLibMacros_PtrComparator> SortedBAIList;
+#else
+  typedef SortedPtrList<TBasicAtomInfo, TPointerComparator> SortedBAIList;
+#endif
 // helper function
 int imp_auto_AtomCount(const TAsymmUnit& au)  {
   int ac = 0;
@@ -151,8 +164,8 @@ void helper_CleanBaiList(TStrPObjList<olxstr,TBasicAtomInfo*>& list, SortedBAILi
     list.Clear();   
     list.Strtok(ins.GetSfac(), ' ');
     TAtomsInfo& bai = TAtomsInfo::GetInstance();
-    for( int i=0; i < list.Count(); i++ ) 
-      au_bais.Add( list.GetObject(i) = bai.FindAtomInfoBySymbol(list[i]) );
+    for( int i=0; i < list.Count(); i++ )
+      au_bais.Add( (list.GetObject(i) = bai.FindAtomInfoBySymbol(list[i])) );
     list.QuickSort<Main_BaiComparator>();
   }
 }

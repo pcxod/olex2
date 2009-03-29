@@ -288,7 +288,7 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx,
     if( code < 17 )
       throw TInvalidArgumentException(__OlxSourceInfo, "FRAG code must be more than 16");
     double a=1, b=1, c=1, al=90, be=90, ga=90;
-    XLibMacros::ParseOnlyNumbers<double>(Toks, 6, 2, &a, &b, &c, &al, &be, &ga);
+    XLibMacros::ParseOnlyNumbers<double, TStrList>(Toks, 6, 2, &a, &b, &c, &al, &be, &ga);
     Fragment* frag = cx.rm.FindFragByCode(code);
     if( frag == NULL )
       frag = &cx.rm.AddFrag(Toks[1].ToInt(), a, b, c, al, be, ga);
@@ -1192,7 +1192,8 @@ TCAtom* TIns::_ParseAtom(TStrList& Toks, ParseContext& cx, TCAtom* atom)  {
   if( Toks.Count() == 12 )  {  // full ellipsoid
     for( int j=0; j < 6; j ++ )
       QE[j] = cx.rm.Vars.SetParam(*atom, catom_var_name_U11+j, Toks[j+6].ToDouble() );
-    TEllipsoid& elp = cx.au.NewEllp().Initialise(cx.au.UcifToUcart(QE));
+    cx.au.UcifToUcart(QE);
+    TEllipsoid& elp = cx.au.NewEllp().Initialise(QE);
     atom->AssignEllp( &elp );
     if( atom->GetEllipsoid()->IsNPD() )  {
       TBasicApp::GetLog().Info(olxstr("Not positevely defined: ") << Toks[0]);
@@ -1528,11 +1529,11 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
       rm.GetFrag(i).ToStrings(SL);
   }
   else  {
-    SortedPtrList<Fragment, TPointerComparator> saved; 
+    SortedPtrList<const Fragment, TPointerComparator> saved; 
     for( int i=0; i < atoms->Count(); i++ )  {
       const int m = TAfixGroup::GetM( (*atoms)[i]->GetAfix() );
       if( m < 17 )  continue;
-      Fragment* frag = rm.FindFragByCode(m);
+      const Fragment* frag = rm.FindFragByCode(m);
       if( frag == NULL )
         throw TFunctionFailedException(__OlxSourceInfo, "could not locate the FRAG for fitted group");
       if( saved.IndexOf(frag) != -1 )  continue;

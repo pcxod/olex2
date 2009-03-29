@@ -2,7 +2,8 @@
 #define __olx_3x3
 
 #include "exception.h"
-#include "evpoint.h"
+#include "typelist.h"
+#include "talist.h"
 
 BeginEsdlNamespace()
 
