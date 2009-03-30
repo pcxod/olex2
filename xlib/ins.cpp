@@ -174,7 +174,7 @@ void TIns::_ProcessSame(ParseContext& cx)  {
        int resi_ind = toks[0].IndexOf('_');
        olxstr resi( (resi_ind != -1) ? toks[0].SubStringFrom(resi_ind+1) : EmptyString );
        double esd1=0.02, esd2=0.04;
-       int from_ind = 1;
+       int from_ind = toks[0].Comparei("SAME") == 0 ? 1 : 0;
        if( toks.Count() > 1 && toks[1].IsNumber() )  {
          esd1 = toks[1].ToDouble(); 
          from_ind++;
