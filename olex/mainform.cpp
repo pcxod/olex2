@@ -2933,31 +2933,29 @@ void TMainForm::QPeakTable(bool TableDef, bool Create)  {
       Table[0][2] = "No Q-Peaks";
     else
       Table[0][1] = "N/A in this file format";
-    Table.CreateHTMLList(Output, EmptyString, false, false, TableDef);
-    TUtf8File::WriteLines( QPeakTableFile, Output, false );
-    return;
   }
-  Atoms.QuickSorter.SortSF(Atoms, SortQPeak);
-  Table.Resize( olx_min(10, Atoms.Count()), 3);
-  double LQP = olx_max(0.01, Atoms[0]->Atom().CAtom().GetQPeak() );
-  int rowIndex = 0;
-  for( int i=0; i < Atoms.Count(); i++, rowIndex++ )  {
-    if( i > 8 )  i = Atoms.Count() -1;
-    Table[rowIndex][0] = Atoms[i]->Atom().GetLabel();
-    Table[rowIndex][1] = olxstr::FormatFloat(3, Atoms[i]->Atom().CAtom().GetQPeak());
-    Tmp = "<a href=\"sel -i ";
-    if( i > rowIndex )
-      Tmp << Atoms[rowIndex]->Atom().GetLabel() << " to ";
-    Tmp << Atoms[i]->Atom().GetLabel();
-    if( Atoms[i]->Atom().CAtom().GetQPeak() < 2 )
-      Tmp << "\"><zimg border=\"0\" src=\"gui/images/bar_small.gif\" height=\"10\" width=\"";
-    else
-      Tmp << "\"><zimg border=\"0\" src=\"gui/images/bar_large.gif\" height=\"10\" width=\"";
-    Tmp << olxstr::FormatFloat(1, Atoms[i]->Atom().CAtom().GetQPeak()*100/LQP);
-    Tmp << "%\"></a>";
-    Table[rowIndex][2] = Tmp;
+  else  {
+    Atoms.QuickSorter.SortSF(Atoms, SortQPeak);
+    Table.Resize( olx_min(10, Atoms.Count()), 3);
+    double LQP = olx_max(0.01, Atoms[0]->Atom().CAtom().GetQPeak() );
+    int rowIndex = 0;
+    for( int i=0; i < Atoms.Count(); i++, rowIndex++ )  {
+      if( i > 8 )  i = Atoms.Count() -1;
+      Table[rowIndex][0] = Atoms[i]->Atom().GetLabel();
+      Table[rowIndex][1] = olxstr::FormatFloat(3, Atoms[i]->Atom().CAtom().GetQPeak());
+      Tmp = "<a href=\"sel -i ";
+      if( i > rowIndex )
+        Tmp << Atoms[rowIndex]->Atom().GetLabel() << " to ";
+      Tmp << Atoms[i]->Atom().GetLabel();
+      if( Atoms[i]->Atom().CAtom().GetQPeak() < 2 )
+        Tmp << "\"><zimg border=\"0\" src=\"gui/images/bar_small.gif\" height=\"10\" width=\"";
+      else
+        Tmp << "\"><zimg border=\"0\" src=\"gui/images/bar_large.gif\" height=\"10\" width=\"";
+      Tmp << olxstr::FormatFloat(1, Atoms[i]->Atom().CAtom().GetQPeak()*100/LQP);
+      Tmp << "%\"></a>";
+      Table[rowIndex][2] = Tmp;
+    }
   }
-
   Table.CreateHTMLList(Output, EmptyString, false, false, TableDef);
   CString cst = TUtf8::Encode(Output.Text('\n'));
   TFileHandlerManager::AddMemoryBlock(QPeakTableFile, cst.c_str(), cst.Length(), plStructure);

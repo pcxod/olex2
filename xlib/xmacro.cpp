@@ -1974,7 +1974,7 @@ olxstr XLibMacros_funSGNameToHtml(const olxstr& name)  {
   for( int i=0; i < name.Length(); i++ )  {
     if( (i+1) < name.Length() )  {
       if( (name[i] >= '0' && name[i] <= '9')  &&  (name[i+1] >= '0' && name[i+1] <= '9') )  {
-        if( name[i] != '1' )  {
+        if( name[i] != '1' && name[i] > name[i+1] )  {
           res << name[i] << "<sub>" << name[i+1] << "</sub>";
           i++;
           continue;
