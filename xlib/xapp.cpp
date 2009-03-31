@@ -210,19 +210,21 @@ void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F)  {
   delete [] Ucifs;
 }
 //..............................................................................
+/* Creates a label, if number of parts attached to the atoms is more than one
+  and the atom label is shorter than 3, the two chars are added - the first is the part
+  and the secind is the atom suffix... if number of parts is one or the label is longer
+  or equal to 3, the continious charachters are added
+*/
 void TXApp::NameHydrogens(TSAtom& SA, TUndoData* ud, bool CheckLabel)  {
   TNameUndo* nu = static_cast<TNameUndo*>(ud);
-  olxstr Labl;
-  int hcount=0, 
-      allH = 0, 
-      processedH = 0;
+  int allH = 0, 
+      processedH = 0; // just a termination counter
   olxdict<int,int,TPrimitiveComparator> parts;
   olxstr Name( SA.GetLabel().StartsFromi(SA.GetAtomInfo().GetSymbol()) ? 
     SA.GetLabel().SubStringFrom( SA.GetAtomInfo().GetSymbol().Length() )
     :
     EmptyString
   );
-  TCAtom* CA;
   for( int i=0; i < SA.NodeCount(); i++ )  {
     const TSAtom& sa = SA.Node(i);
     if( !sa.IsDeleted() && sa.GetAtomInfo() == iHydrogenIndex )  {
@@ -230,36 +232,43 @@ void TXApp::NameHydrogens(TSAtom& SA, TUndoData* ud, bool CheckLabel)  {
       parts(sa.CAtom().GetPart(), 0);
     }
   }
+  bool usePart0 = Name.Length() > 2;
+  if( usePart0 )
+    parts(0,0);  // init part 0 counter
+
   for( int i=0; i < SA.NodeCount(); i++ )  {
     TSAtom& SA1 = SA.Node(i);
     if( SA1.IsDeleted() )  continue;
-    if( SA1.GetAtomInfo().GetIndex() == iHydrogenIndex )  {
-      Labl = SA1.GetAtomInfo().GetSymbol() + Name;
-      // the suffix matters only for multiple hydrogen atoms attached
-      if( allH > 1 )  {
-        if( Labl.Length() >= 4 )  Labl.SetLength(3);
-        Labl << (char)('a' + parts(SA1.CAtom().GetPart(), 0)++);
-      }
-      if(  CheckLabel )  {
-        while( (CA = XFile().GetAsymmUnit().FindCAtom(Labl)) != NULL && 
-                CA->GetPart() ==SA1.CAtom().GetPart() )  
-        {
-          if( CA == &SA1.CAtom() || CA->IsDeleted() )  break;
-          hcount++;
-          Labl = SA1.GetAtomInfo().GetSymbol()+Name;
-          if( Labl.Length() >= 4 )  Labl.SetLength(3);
-          Labl << (char)('a' + parts(SA1.CAtom().GetPart(), 0)++);
-        }
-      }
-      if( SA1.GetLabel() != Labl )  {
-        if( nu != NULL )  
-          nu->AddAtom(SA1, SA1.GetLabel() );
-        SA1.CAtom().Label() = Labl;
-      }
-      hcount++;
-      processedH++;
-      if( processedH >= allH )  break;
+    if( SA1.GetAtomInfo().GetIndex() != iHydrogenIndex )  
+      continue;
+    const int part = usePart0 ? 0 : SA.CAtom().GetPart();
+    olxstr Labl = SA1.GetAtomInfo().GetSymbol() + Name;
+    // the suffix matters only for multiple hydrogen atoms attached
+    if( allH > 1 )  {
+      if( Labl.Length() >= 4 )  
+        Labl.SetLength(3);
+      else if( Labl.Length() < 3 && parts.Count() > 1 )
+        Labl << (char)('a' + parts.IndexOf(part));
+      Labl << (char)('a' + parts(part, 0)++);
     }
+    if( CheckLabel )  {
+      TCAtom* CA;
+      while( (CA = XFile().GetAsymmUnit().FindCAtom(Labl)) != NULL && 
+        CA->GetPart() == SA1.CAtom().GetPart() )  
+      {
+        if( CA == &SA1.CAtom() || CA->IsDeleted() )  break;
+        Labl = SA1.GetAtomInfo().GetSymbol()+Name;
+        if( Labl.Length() >= 4 )  Labl.SetLength(3);
+        Labl << (char)('a' + parts(part, 0)++);
+      }
+    }
+    if( SA1.GetLabel() != Labl )  {
+      if( nu != NULL )  
+        nu->AddAtom(SA1, SA1.GetLabel() );
+      SA1.CAtom().Label() = Labl;
+    }
+    processedH++;
+    if( processedH >= allH )  break;
   }
 }
 //..............................................................................
