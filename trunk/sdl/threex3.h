@@ -1,7 +1,7 @@
 #ifndef __olx_3x3
 #define __olx_3x3
 
-#include "exception.h"
+#include "emath.h"
 #include "typelist.h"
 #include "talist.h"
 

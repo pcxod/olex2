@@ -4,7 +4,6 @@
 #define emathH
 
 #include <math.h>
-#include "ebase.h"
 #include "exception.h"
 
 BeginEsdlNamespace()
