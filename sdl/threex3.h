@@ -4,7 +4,7 @@
 #include "emath.h"
 #include "typelist.h"
 #include "talist.h"
-
+#undef QLength
 BeginEsdlNamespace()
 
 template <typename> class TVector33;
