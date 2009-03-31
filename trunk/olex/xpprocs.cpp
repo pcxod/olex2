@@ -5042,6 +5042,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
               if( !TEFile::FileExists(insFileName) )  {
                 TIns ins;
                 ins.Adopt( &FXApp->XFile() );
+                ins.GetRM().SetHKLSource(hklFileName);
                 ins.SaveToFile( insFileName );
                 ProcessXPMacro( olxstr("@reap \'") << insFileName << '\'', er);
                 if( !er.IsProcessingError() )  {
