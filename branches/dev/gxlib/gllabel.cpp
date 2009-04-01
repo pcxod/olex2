@@ -17,7 +17,7 @@
 
 TXGlLabel::TXGlLabel(const olxstr& collectionName, TGlRenderer *Render) :
     TGlMouseListener(collectionName, Render)  {
-  Move2D(false);
+  Move2D(true);
   Moveable(true);
   Zoomable(false);
   Groupable(false);
@@ -72,35 +72,43 @@ void TXGlLabel::SetLabel(const olxstr& L)   {
 }
 //..............................................................................
 vec3d TXGlLabel::GetRasterPosition() const {
-  vec3d T( Basis.GetCenter() );
-  T += FParent->GetBasis().GetCenter();
+  vec3d T( FParent->GetBasis().GetCenter() );
+  const double Scale = FParent->GetScale();
+  const double ScaleR = FParent->GetExtraZoom()*FParent->GetViewZoom();
+  T += Center;
   T *= FParent->GetBasis().GetMatrix();
   T[2] += 5;
-  T /= FParent->GetScale();
-  T[0] -= OffsetX;
-  T[1] -= OffsetY;
+  T /= Scale;
+  vec3d off(Basis.GetCenter()[0]-OffsetX, Basis.GetCenter()[1]-OffsetY, Basis.GetCenter()[2]);
+  off *= ScaleR;
+  T += off;
   return T;
 }
 //..............................................................................
 bool TXGlLabel::Orient(TGlPrimitive *P)  {
-  vec3d T( Basis.GetCenter() );
+  vec3d T( FParent->GetBasis().GetCenter() );
   const double Scale = FParent->GetScale();
+  const double ScaleR = FParent->GetExtraZoom()*FParent->GetViewZoom();
+  const double ScaleVR = Scale*ScaleR;
   if( P->GetType() == sgloText )  {
-    T += FParent->GetBasis().GetCenter();
+    T += Center;
     T *= FParent->GetBasis().GetMatrix();
     T[2] += 5;
     T /= Scale;
-    T[0] -= OffsetX;
-    T[1] -= OffsetY;
+    vec3d off(Basis.GetCenter()[0]-OffsetX, Basis.GetCenter()[1]-OffsetY, Basis.GetCenter()[2]);
+    off *= ScaleR;
+    T += off;
     FParent->DrawTextSafe(T, FLabel, *Font());
     return true;
   }
   else  {
-    double xinc = OffsetX*Scale;
-    double yinc = OffsetY*Scale;
-    T += FParent->GetBasis().GetCenter();
+    double xinc = OffsetX*ScaleVR;
+    double yinc = OffsetY*ScaleVR;
+    vec3d off(Basis.GetCenter()[0], Basis.GetCenter()[1], Basis.GetCenter()[2]);
+    off = FParent->GetBasis().GetMatrix()*off;  // unproject
+    T += Center;
+    T += off*ScaleVR;
     T *= FParent->GetBasis().GetMatrix();
-    //T[0] += 0.15;  T[1] += 0.15;
     T[2] += 4.8;
     Parent()->GlTranslate(T);
     P->Data[0][0] = -xinc;  P->Data[1][0] = yinc;

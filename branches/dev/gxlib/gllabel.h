@@ -12,6 +12,7 @@ class TXGlLabel: public TGlMouseListener  {
   olxstr FLabel;
   short FFontIndex;
   double OffsetX, OffsetY;
+  vec3d Center;
 public:
   TXGlLabel(const olxstr& collectionName, TGlRenderer *Render);
   void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
@@ -22,6 +23,7 @@ public:
   inline const olxstr& GetLabel() const   {  return FLabel;  }
   void SetLabel(const olxstr& L);
   vec3d GetRasterPosition() const;
+  DefPropC(vec3d, Center)
 
   TGlFont *Font() const;
   inline void FontIndex(short FntIndex)  {  FFontIndex = FntIndex; }

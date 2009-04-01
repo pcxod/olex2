@@ -232,7 +232,10 @@ void TXApp::NameHydrogens(TSAtom& SA, TUndoData* ud, bool CheckLabel)  {
       parts(sa.CAtom().GetPart(), 0);
     }
   }
-  bool usePart0 = Name.Length() > 2;  if( usePart0 )    parts(0,0);  // init part 0 counter  for( int i=0; i < SA.NodeCount(); i++ )  {
+  bool usePart0 = Name.Length() > 2;  
+  if( usePart0 )    
+    parts(0,0);  // init part 0 counter
+  for( int i=0; i < SA.NodeCount(); i++ )  {
     TSAtom& SA1 = SA.Node(i);
     if( SA1.IsDeleted() )  continue;
     if( SA1.GetAtomInfo().GetIndex() != iHydrogenIndex )  

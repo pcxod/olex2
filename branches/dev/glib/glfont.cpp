@@ -30,6 +30,9 @@ TGlFont::TGlFont(const olxstr& name) {
   ClearData();
   Name = name;
   PointSize = 0;
+  FMaxWidth = FMaxHeight = 0;
+  FLeftmost = 1000; 
+  FTopmost  = 1000;
 }
 //..............................................................................
 TGlFont::~TGlFont()  {

@@ -410,8 +410,6 @@ void TGXApp::CreateObjects(bool SyncBonds, bool centerModel)  {
     }
   }
   sw.start("Other objects creation");
-  for( int i=0; i < XLabels.Count(); i++ )
-    XLabels[i].Create();
 
   for( int i=0; i < FXFile->GetLattice().PlaneCount(); i++ )  {
     TSPlane& P = FXFile->GetLattice().GetPlane(i);
@@ -440,6 +438,9 @@ void TGXApp::CreateObjects(bool SyncBonds, bool centerModel)  {
     }
     LooseObjects[i]->Create();
   }
+
+  for( int i=0; i < XLabels.Count(); i++ )
+    XLabels[i].Create();
 
   FLabels->Init();
   FLabels->Create();
@@ -1583,7 +1584,7 @@ TXGlLabel *TGXApp::AddLabel(const olxstr& Name, const vec3d& center, const olxst
   TXGlLabel* gl = new TXGlLabel(Name, FGlRender);
   gl->FontIndex( FLabels->GetFontIndex() );
   gl->SetLabel( T );
-  gl->Basis.SetCenter( center );
+  gl->SetCenter( center );
   gl->Create();
   LooseObjects.Add(gl);
   return gl;
@@ -2551,7 +2552,6 @@ void TGXApp::RestoreVisibility()  {
 void TGXApp::BeginDrawBitmap(double resolution)  {
   FPictureResolution = resolution;
   FLabels->Clear();
-
   GetRender().Scene()->ScaleFonts(resolution);
   // store groups && visibility
   StoreGroups();
@@ -2559,8 +2559,6 @@ void TGXApp::BeginDrawBitmap(double resolution)  {
   /* end */
 
   CreateObjects( false, false );
-  //CenterView();
-  for( int i=0; i < XLabels.Count(); i++ )  XLabels[i].Create();
   // restore the visiblity && groups
   RestoreGroups();
   RestoreVisibility();
@@ -2570,7 +2568,6 @@ void TGXApp::FinishDrawBitmap()  {
   FLabels->Clear();
   GetRender().Scene()->RestoreFontScale();
   CreateObjects( false, false );
-  for( int i=0; i < XLabels.Count(); i++ )  XLabels[i].Create();
   // recreate groups && clean up the memory
   RestoreGroups();
   ClearGroups();
@@ -2589,10 +2586,8 @@ TXGlLabel* TGXApp::CreateLabel(TXAtom *A, int FontIndex)  {
   TXGlLabel& L = XLabels.AddNew( "PLabels", FGlRender );
   L.FontIndex( FontIndex );
   L.SetLabel(A->Atom().GetLabel());
-  L.Basis.SetCenter( A->Atom().crd() );
-  L.Basis.TranslateX(0.15);
-  L.Basis.TranslateY(0.15);
-  L.Basis.TranslateZ(0.15);
+  L.SetCenter( A->Atom().crd() );
+  L.Basis.Translate( vec3d(20, -20, 0) );  // in pixels
   L.Create();
   return &L;
 }

@@ -213,7 +213,7 @@ public:
   }
   void Render(const olxstr& fileName)  {
     PSWriter pw(fileName);
-    pw.custom("/Helvetica findfont 12 scalefont setfont");
+    pw.custom("/Verdana findfont 14 scalefont setfont");
     Init(pw);
     const TEBasis& basis = app.GetRender().GetBasis();
     TTypeList<OrtDraw::OrtAtom> atoms;
@@ -294,11 +294,14 @@ public:
       DrawBonds(pw, atoms[i]);
       pw.translate(-p);
     }
-    for( int i=0; i < app.LabelCount(); i++ )  {
-      const TXGlLabel& glxl = app.GetLabel(i);
-      vec3d rp = glxl.GetRasterPosition();
-      rp *= (DrawScale*app.GetRender().GetScale());
-      pw.drawText(glxl.GetLabel(), rp+DrawOrigin);
+    if( app.LabelCount() != 0 )  {
+      //TGlFont* glf = app.GetLabel(0).Font(); 
+      for( int i=0; i < app.LabelCount(); i++ )  {
+        const TXGlLabel& glxl = app.GetLabel(i);
+        vec3d rp = glxl.GetRasterPosition();
+        rp *= (DrawScale*app.GetRender().GetScale());
+        pw.drawText(glxl.GetLabel(), rp+DrawOrigin);
+      }
     }
   }
 
