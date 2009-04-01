@@ -346,7 +346,6 @@ double TCAtom::GetValue(short var_index) const {
 }
 //..............................................................................
 void TCAtom::SetValue(short var_index, const double& val) {
-  static double q[6];
   switch( var_index)  {
     case catom_var_name_X:     Center[0] = val;  break;
     case catom_var_name_Y:     Center[1] = val;  break;

@@ -198,6 +198,8 @@ xlib_InitMacro(File, "s-sort the main residue of the asymmetric unit", fpNone|fp
 //_________________________________________________________________________________________________________________________
   xlib_InitFunc(RemoveSE, fpOne|psFileLoaded, "Returns a new space group name without provided element");
 //_________________________________________________________________________________________________________________________
+  xlib_InitFunc(Run, fpOne, "Same as the macro, executes provided commands (sperated by >>) returns true if succeded");
+//_________________________________________________________________________________________________________________________
 }
 //..............................................................................
 void XLibMacros::macSAInfo(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
@@ -612,7 +614,7 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     return;
   }
   double max_d = 2.9, min_ang = 150.0;
-  int cnt = XLibMacros::ParseNumbers<double>(Cmds, 2, &max_d, &min_ang);
+  int cnt = XLibMacros::ParseNumbers<double,TStrObjList>(Cmds, 2, &max_d, &min_ang);
   if( cnt == 1 )  {
     if( max_d > 100 )  {
       min_ang = max_d;
@@ -900,7 +902,6 @@ void XLibMacros::macGraphPD(TStrObjList &Cmds, const TParamList &Options, TMacro
   double max_2t = 0, min_2t=180;
   for( int i=0; i < refs.Count(); i++ )  {
     const TReflection& ref = refs[i];
-    const vec3d& d_hkl = ref.GetHkl();
     vec3d hkl = ref.ToCart(hkl2c);
     const double theta_2 = 360*asin(d_2_sin*hkl.Length())/M_PI;
     gd.AddNew( theta_2, ref.GetI()*ref.GetMultiplicity());
@@ -1036,7 +1037,7 @@ void XLibMacros::macDelIns(TStrObjList &Cmds, const TParamList &Options, TMacroE
 //..............................................................................
 void XLibMacros::macLS(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   int ls = -1;
-  XLibMacros::ParseNumbers<int>(Cmds, 1, &ls);
+  XLibMacros::ParseNumbers<int,TStrObjList>(Cmds, 1, &ls);
   if( ls != -1 )  
     TXApp::GetInstance().XFile().GetRM().SetIterations( (int)ls);
   if( !Cmds.IsEmpty() )
@@ -1648,7 +1649,7 @@ void XLibMacros::macCompaq(TStrObjList &Cmds, const TParamList &Options, TMacroE
 //..............................................................................
 void XLibMacros::macEnvi(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
   double r = 2.7;
-  ParseNumbers<double>(Cmds, 1, &r);
+  ParseNumbers<double,TStrObjList>(Cmds, 1, &r);
   if( r < 1 || r > 10 )  {
     E.ProcessingError(__OlxSrcInfo, "radius must be within [1;10] range" );
     return;
@@ -1881,6 +1882,24 @@ void XLibMacros::funLSM(const TStrObjList& Params, TMacroError &E) {
   E.SetRetVal( TXApp::GetInstance().XFile().GetRM().GetRefinementMethod() );
 }
 //..............................................................................
+void XLibMacros::funRun(const TStrObjList& Params, TMacroError &E) {
+  using namespace olex;
+  IOlexProcessor* op = IOlexProcessor::GetInstance();
+  if( op == NULL )
+    throw TFunctionFailedException(__OlxSourceInfo, "this function requires Olex2 processor implementation");
+  TStrList allCmds(Params.Text(' '), ">>");
+  for( int i=0; i < allCmds.Count(); i++ )  {
+    op->executeMacroEx(allCmds[i], E);
+    if( !E.IsSuccessful() )  {
+      if( (i+1) < allCmds.Count() )
+        op->print("Not all macros in the provided list were executed", olex::mtError);
+      break;
+    }
+  }
+  E.Reset(); // to avoide duplicate messages
+  E.SetRetVal(E.IsSuccessful());
+}
+//..............................................................................
 void XLibMacros::funIns(const TStrObjList& Params, TMacroError &E)  {
   RefinementModel& rm = TXApp::GetInstance().XFile().GetRM();
   olxstr tmp;
@@ -1955,7 +1974,7 @@ olxstr XLibMacros_funSGNameToHtml(const olxstr& name)  {
   for( int i=0; i < name.Length(); i++ )  {
     if( (i+1) < name.Length() )  {
       if( (name[i] >= '0' && name[i] <= '9')  &&  (name[i+1] >= '0' && name[i+1] <= '9') )  {
-        if( name[i] != '1' )  {
+        if( name[i] != '1' && name[i] > name[i+1] )  {
           res << name[i] << "<sub>" << name[i+1] << "</sub>";
           i++;
           continue;

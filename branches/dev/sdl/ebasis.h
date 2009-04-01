@@ -7,6 +7,7 @@
 
 #include "ebase.h"
 #include "threex3.h"
+#include "dataitem.h"
 
 BeginEsdlNamespace()
 

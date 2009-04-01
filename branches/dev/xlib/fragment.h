@@ -15,6 +15,7 @@ struct FragAtom {
   FragAtom& operator = (const FragAtom& a)  {
     label = a.label;
     crd = a.crd;
+    return *this;
   }
   olxstr ToString() const {
     return (olxstr(label).Format(5, true, ' ') << "-1  "

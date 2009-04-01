@@ -49,7 +49,7 @@ struct MergeStats  {
 //..............................................................................
 class RefMerger {
   template <class RefListMerger> 
-  static MergeStats DoMerge(smatd_list& ml, TRefPList& refs, const vec3i_list& omits, TRefList& output)  {
+  static MergeStats _DoMerge(smatd_list& ml, TRefPList& refs, const vec3i_list& omits, TRefList& output)  {
     MergeStats stats;
     // search for the inversion matrix
     int inverseMatIndex = -1;
@@ -125,7 +125,7 @@ class RefMerger {
     return stats;
   }
   template <class RefListMerger> 
-  static MergeStats DryMerge(smatd_list& ml, TRefPList& refs, const vec3i_list& omits)  {
+  static MergeStats _DryMerge(smatd_list& ml, TRefPList& refs, const vec3i_list& omits)  {
     MergeStats stats;
     // search for the inversion matrix
     int inverseMatIndex = -1;
@@ -198,7 +198,7 @@ class RefMerger {
   }
 
   template <class RefListMerger>
-  static MergeStats DoMergeInP1(TPtrList<const TReflection>& refs, const vec3i_list& omits, TRefList& output)  {
+  static MergeStats _DoMergeInP1(TPtrList<const TReflection>& refs, const vec3i_list& omits, TRefList& output)  {
     MergeStats stats;
     // sort the list
     TReflection::SortPList(refs);
@@ -253,7 +253,7 @@ class RefMerger {
     return stats;
   }
   template <class RefListMerger>
-  static MergeStats DryMergeInP1(TPtrList<const TReflection>& refs, const vec3i_list& omits)  {
+  static MergeStats _DryMergeInP1(TPtrList<const TReflection>& refs, const vec3i_list& omits)  {
     MergeStats stats;
     // sort the list
     TReflection::SortPList(refs);
@@ -309,27 +309,27 @@ public:
     TRefPList refs( Refs.Count() );  // list of replicated reflections
     for( int i=0; i < Refs.Count(); i++ )
       refs[i] = TReflection::RefP(Refs[i]);
-    return DoMerge<RefListMerger>(ml, refs, omits, output);
+    return _DoMerge<RefListMerger>(ml, refs, omits, output);
   }
   /* Functions gets the statistic on the list of provided reflections (which get stantardised) */
   template <class RefListMerger, class RefList> static MergeStats DryMerge(smatd_list& ml, RefList& Refs, const vec3i_list& omits)  {
     TRefPList refs( Refs.Count() );  // list of replicated reflections
-    for( int i=0; i < Refs.Count(); i++ ) 
+    for( int i=0; i < Refs.Count(); i++ )
       refs[i] = TReflection::RefP(Refs[i]);
-    return DryMerge<RefListMerger>(ml, refs, omits);
+    return _DryMerge<RefListMerger>(ml, refs, omits);
   }
   /* The function merges provided reflections in P1 and strores the result in the output */
   template <class RefListMerger, class RefList> static MergeStats MergeInP1(const RefList& Refs, TRefList& output, const vec3i_list& omits)  {
     TPtrList<const TReflection> refs( Refs.Count() );
     for( int i=0; i < Refs.Count(); i++ )
       refs[i] = TReflection::GetRefP(Refs[i]);
-    return DoMergeInP1<RefListMerger>(refs, omits, output);
+    return _DoMergeInP1<RefListMerger>(refs, omits, output);
   }
   template <class RefListMerger, class RefList> static MergeStats DryMergeInP1(const RefList& Refs, const vec3i_list& omits)  {
     TPtrList<const TReflection> refs( Refs.Count() );
     for( int i=0; i < Refs.Count(); i++ )
       refs[i] = TReflection::GetRefP(Refs[i]);
-    return DryMergeInP1<RefListMerger>(refs, omits);
+    return _DryMergeInP1<RefListMerger>(refs, omits);
   }
 
   struct MergerOut  {

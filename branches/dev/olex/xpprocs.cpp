@@ -4988,8 +4988,8 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       FXApp->LoadXFile(FN);
       st = TETime::msNow() - st;
       TBasicApp::GetLog().Info( olxstr("Structure loaded in ") << st << " ms\n");
-      TFileHandlerManager::AddMemoryBlock(RefineDataFile, NULL, 0, plStructure);
-      TFileHandlerManager::AddMemoryBlock(BadRefsFile, NULL, 0, plStructure);
+      BadReflectionsTable(false, false);
+      RefineDataTable(false, false);
       LoadVFS(plStructure);  // load virtual fs file
     }
     catch(TEmptyFileException)  {
@@ -5019,8 +5019,6 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     }
     if( FXApp->XFile().HasLastLoader() )  {
       FInfoBox->Clear();
-      TEFile::DelFile(BadRefsFile);
-      TEFile::DelFile(RefineDataFile);
       if( FXApp->CheckFileType<TP4PFile>() || FXApp->CheckFileType<TCRSFile>() )  {
         TMacroError er;
         if( TEFile::FileExists( TEFile::ChangeFileExt(FN, "ins") ) )
@@ -5044,6 +5042,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
               if( !TEFile::FileExists(insFileName) )  {
                 TIns ins;
                 ins.Adopt( &FXApp->XFile() );
+                ins.GetRM().SetHKLSource(hklFileName);
                 ins.SaveToFile( insFileName );
                 ProcessXPMacro( olxstr("@reap \'") << insFileName << '\'', er);
                 if( !er.IsProcessingError() )  {
@@ -5075,13 +5074,13 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       }
       if( !Blind )  UpdateRecentFile(FN);
       //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-      QPeaksTable("qpeaks.htm", false);
-      RecentFilesTable(DataDir+"recent_files.htm", false);
+      QPeakTable(false, true);
+      UpdateRecentFilesTable(false);
       olxstr lstFileName = TEFile::ChangeFileExt(FN, "lst");
       if( TEFile::FileExists(lstFileName)  )  {
         Lst.LoadFromFile(lstFileName);
-        BadReflectionsTable(false);
-        RefineDataTable(false);
+        BadReflectionsTable(false, true);
+        RefineDataTable(false, true);
         if( Lst.SplitAtomCount() )  {
           TBasicApp::GetLog() << ("The following atom(s) may be split: \n");
           for( int i=0; i < Lst.SplitAtomCount(); i++ )  {
@@ -8841,6 +8840,10 @@ void TMainForm::macConn(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   }
   latt.UpdateConnectivity();
   FXApp->CreateObjects(false, false);
+}
+//..............................................................................
+void TMainForm::macUpdateQPeakTable(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  QPeakTable(false);
 }
 //..............................................................................
 

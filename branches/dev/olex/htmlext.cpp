@@ -73,6 +73,7 @@ TAG_HANDLER_END(SWITCHINFOE)
 TAG_HANDLER_BEGIN(IMAGE, "ZIMG")
 TAG_HANDLER_PROC(tag)  {
   int ax=-1, ay=-1;
+  bool WidthInPercent = false, HeightInPercent = false;
   olxch cBf[40];
   olxstr Tmp;
   int fl = 0;
@@ -85,24 +86,25 @@ TAG_HANDLER_PROC(tag)  {
   tag.ScanParam(wxT("WIDTH"), _StrFormat_, cBf);
   Tmp = cBf;
   if( !Tmp.IsEmpty() )  {
-    ax = Tmp.ToInt();
     if( Tmp.EndsWith('%') )  {
-      float w = (float)ax/100;
-      w *= m_WParser->GetWindowInterface()->GetHTMLWindow()->GetSize().GetWidth();
-      ax = (int)w;
+      ax = Tmp.SubStringTo(Tmp.Length()-1).ToInt();
+      WidthInPercent = true;
     }
+    else
+      ax = Tmp.ToInt();
   }
   cBf[0] = '\0';
   tag.ScanParam(wxT("HEIGHT"), _StrFormat_, cBf);
   Tmp = cBf;
   if( !Tmp.IsEmpty() )  {
-    ay = Tmp.ToInt();
     if( Tmp.EndsWith('%') )  {
-      float h = (float)ay/100;
-      h *= m_WParser->GetWindowInterface()->GetHTMLWindow()->GetSize().GetHeight();
-      ay = (int)h;
+      ay = Tmp.SubStringTo(Tmp.Length()-1).ToInt();
+      HeightInPercent = true;
     }
+    else
+      ay = Tmp.ToInt();
   }
+
   if (tag.HasParam(wxT("FLOAT"))) fl = ax;
 
   if( text.Len() != 0 )  {
@@ -130,7 +132,9 @@ TAG_HANDLER_PROC(tag)  {
                                            ax, ay,
                                            m_WParser->GetPixelScale(),
                                            wxHTML_ALIGN_BOTTOM,
-                                           mapName
+                                           mapName,
+                                           WidthInPercent,
+                                           HeightInPercent
                                            );
 
   cell->SetText( text );
@@ -163,8 +167,7 @@ TAG_HANDLER_PROC(tag)  {
   Tmp = Bf;
   if( !Tmp.IsEmpty() )  {
     if( Tmp.EndsWith('%') )  {
-      Tmp.SetLength(Tmp.Length()-1);
-      ax = Tmp.ToInt();
+      ax = Tmp.SubStringTo(Tmp.Length()-1).ToInt();
       float w = (float)ax/100;
       w *= m_WParser->GetWindowInterface()->GetHTMLWindow()->GetSize().GetWidth();
       ax = (int)w;
@@ -177,8 +180,7 @@ TAG_HANDLER_PROC(tag)  {
   Tmp = Bf;
   if( !Tmp.IsEmpty() )  {
     if( Tmp.EndsWith('%') )  {
-      Tmp.SetLength(Tmp.Length()-1);
-      ay = Tmp.ToInt();
+      ay = Tmp.SubStringTo(Tmp.Length()-1).ToInt();
       float h = (float)ay/100;
       h *= m_WParser->GetWindowInterface()->GetHTMLWindow()->GetSize().GetHeight();
       ay = (int)h;
@@ -609,6 +611,7 @@ TAG_HANDLER_PROC(tag)  {
     if( !TGlXApp::GetMainForm()->GetHtml()->AddObject(ObjectName, CreatedObject, CreatedWindow, tag.HasParam(wxT("MANAGE")) ) )
       TBasicApp::GetLog().Error(olxstr("HTML: duplicated object \'") << ObjectName << '\'');
     if( CreatedWindow != NULL )  {
+      CreatedWindow->Hide();
       olxstr bgc, fgc;
       if( tag.HasParam(wxT("BGCOLOR")) )  {
         bgc = tag.GetParam( wxT("BGCOLOR") ).c_str();
@@ -624,7 +627,7 @@ TAG_HANDLER_PROC(tag)  {
         if( !bgc.IsEmpty() )  {
           wxColor bgCl = wxColor( uiStr(bgc) );
           Box->SetBackgroundColour( bgCl );
-#ifndef __MAC__          
+#ifdef __WIN32__          
           if( Box->GetTextCtrl() != NULL )
             Box->GetTextCtrl()->SetBackgroundColour( bgCl );
           if( Box->GetPopupControl() != NULL && Box->GetPopupControl()->GetControl() != NULL )
@@ -634,7 +637,7 @@ TAG_HANDLER_PROC(tag)  {
         if( !fgc.IsEmpty() )  {
           wxColor fgCl = wxColor( uiStr(bgc) );
           Box->SetForegroundColour( fgCl );
-#ifndef __MAC__          
+#ifdef __WIN32__          
           if( Box->GetTextCtrl() != NULL )
             Box->GetTextCtrl()->SetForegroundColour( fgCl );
           if( Box->GetPopupControl() != NULL && Box->GetPopupControl()->GetControl() != NULL)
@@ -1104,7 +1107,7 @@ void THtml::CheckForSwitches(THtmlSwitch &Sender, bool izZip)  {
       Toks.Clear();
       TParamList::StrtokParams(Tmp, ';', Toks); // extract arguments
       if( Toks.Count() < 2 )  { // must be at least 2 for filename and status
-        TBasicApp::GetLog().Error( olxstr("Wrong defined field (not enough data)") << Sw->Name());
+        TBasicApp::GetLog().Error( olxstr("Wrong defined switch (not enough data)") << Sw->Name());
         continue;
       }
 
@@ -1148,7 +1151,7 @@ void THtml::CheckForSwitches(THtmlSwitch &Sender, bool izZip)  {
       }
       Sw->FileIndex(ind);
     }
-    if( Lst[i].StartsFrom(Tag1) )  {
+    else if( Lst[i].StartsFrom(Tag1) )  {
       Toks.Clear();  
       Tmp = Lst[i].SubStringFrom(Tag1.Length());
       Toks.Strtok(Tmp, ' '); // extract item name
@@ -1171,7 +1174,7 @@ void THtml::CheckForSwitches(THtmlSwitch &Sender, bool izZip)  {
 //      if( OnCmd->Execute(this, &(Toks.String(0))) )
 //      { Lst[i] = Toks.String(0); }
     }
-    if( Lst[i].StartsFrom(Tag3) )   { // html link
+    else if( Lst[i].StartsFrom(Tag3) )   { // html link
       Toks.Clear();  
       Tmp = Lst[i].SubStringFrom(Tag3.Length());
       Toks.Strtok(Tmp, ' '); // extract file name
@@ -1288,34 +1291,36 @@ bool THtml::UpdatePage()  {
     FRoot->Switch(i).UpdateFileIndex();
 
   TStrList Res;
-//  Res.Add( "<meta http-equiv='Content-Type' content='text/html; charset=") <<
-//    TGlXApp::GetMainForm()->GetCurrentLanguageEncodingStr() << "'>";
-//  Res.Add( "<meta http-equiv='Content-Type' content='text/html; charset=UNICODE'>");
   FRoot->ToStrings(Res);
   ObjectsState.SaveState();
   FObjects.Clear();
-//  TEFile::ChangeDir(FWebFolder);
-  int xPos = -1, yPos = -1;
+  int xPos = -1, yPos = -1, xWnd=-1, yWnd = -1;
   wxHtmlWindow::GetViewStart(&xPos, &yPos);
+#ifdef __WIN32__
   wxHtmlWindow::Freeze();
-//  GetParser()->SetInputEncoding( wxFONTENCODING_UTF8 );
+#else
+  Hide();
+#endif
   SetPage( Res.Text(' ').u_str() );
-  // looks like it is "fixed" in 2.8.9...
-//  for( int i=0; i < FObjects.Count(); i++ )  {
-//    if( FObjects.GetObject(i).GetB() != NULL )  {
-//      // this i the only way to not show the bloody control at (0,0) on windows!
-//#ifndef __MAC__
-//      FObjects.GetObject(i).B()->Move(2000, 2000);
-//#endif      
-//      FObjects.GetObject(i).B()->Show(true);
-//    }
-//  }
   ObjectsState.RestoreState();
-
   wxHtmlWindow::Scroll(xPos, yPos);
-  wxHtmlWindow::Thaw();
-  wxHtmlWindow::GetViewStart(&xPos, &yPos);
-
+  //wxHtmlWindow::Thaw();
+#ifdef __WIN32__
+  Thaw();
+#else
+  Show();
+  Refresh();
+  Update();
+#endif
+  for( int i=0; i < FObjects.Count(); i++ )  {
+    if( FObjects.GetObject(i).B() != NULL )  {
+#ifndef __MAC__
+      FObjects.GetObject(i).B()->Move(16000, 0);
+#endif
+      FObjects.GetObject(i).B()->Show();
+    }
+  }
+//#endif
   SwitchSources.Clear();
   SwitchSource  = EmptyString;
   TEFile::ChangeDir(oldPath);
@@ -1337,12 +1342,12 @@ bool THtml::UpdatePage()  {
         ((TTextEdit*)wnd)->SetSelection(-1,-1);
       else if( EsdlInstanceOf(*wnd, TComboBox) )  {
         TComboBox* cb = (TComboBox*)wnd;
-#ifndef __MAC__
+#ifdef __WIN32__
         if( cb->GetTextCtrl() != NULL )  {
           cb->GetTextCtrl()->SetInsertionPoint(0);
         }
-#endif				
-			  wnd = cb;
+#endif
+        wnd = cb;
       }
       else if( EsdlInstanceOf(*wnd, TSpinCtrl) )  {
         TSpinCtrl* sc = (TSpinCtrl*)wnd;
@@ -1421,7 +1426,8 @@ void THtml::OnCellMouseHover(wxHtmlCell *Cell, wxCoord x, wxCoord y)  {
 //..............................................................................
 THtmlImageCell::THtmlImageCell(wxWindow *window, wxFSFile *input,
                                  int w, int h, double scale, int align,
-                                 const wxString& mapname) : wxHtmlCell()
+                                 const wxString& mapname, 
+                                 bool width_per, bool height_per) : wxHtmlCell()
 {
   m_window = window ? wxStaticCast(window, wxScrolledWindow) : NULL;
   m_scale = scale;
@@ -1497,7 +1503,8 @@ THtmlImageCell::THtmlImageCell(wxWindow *window, wxFSFile *input,
 
   m_Width = (int)(scale * (double)m_bmpW);
   m_Height = (int)(scale * (double)m_bmpH);
-
+  WidthInPercent = width_per;
+  HeightInPercent = height_per;
   switch( align )  {
     case wxHTML_ALIGN_TOP :
       m_Descent = m_Height;
@@ -1590,41 +1597,47 @@ void THtmlImageCell::Draw(wxDC& dc, int x, int y,
                            int WXUNUSED(view_y1), int WXUNUSED(view_y2),
                            wxHtmlRenderingInfo& WXUNUSED(info))
 {
-    if ( m_showFrame )
-    {
-        dc.SetBrush(*wxTRANSPARENT_BRUSH);
-        dc.SetPen(*wxBLACK_PEN);
-        dc.DrawRectangle(x + m_PosX, y + m_PosY, m_Width, m_Height);
-        x++, y++;
-    }
-    if ( m_bitmap )
-    {
-        // We add in the scaling from the desired bitmap width
-        // and height, so we only do the scaling once.
-        double imageScaleX = 1.0;
-        double imageScaleY = 1.0;
-        if (m_bmpW != m_bitmap->GetWidth())
-            imageScaleX = (double) m_bmpW / (double) m_bitmap->GetWidth();
-        if (m_bmpH != m_bitmap->GetHeight())
-            imageScaleY = (double) m_bmpH / (double) m_bitmap->GetHeight();
+  int width = m_bmpW, height = m_bmpH;
+  if( WidthInPercent || HeightInPercent )  {
+    if( WidthInPercent )
+      width = GetParent()->GetWidth() * m_Width / 100;
+    if( HeightInPercent )
+      height = GetParent()->GetHeight() * m_Height / 100;
+  }
+  if ( m_showFrame )  {
+    dc.SetBrush(*wxTRANSPARENT_BRUSH);
+    dc.SetPen(*wxBLACK_PEN);
+    dc.DrawRectangle(x + m_PosX, y + m_PosY, width*m_scale, height*m_scale);
+    x++, y++;
+  }
+  if ( m_bitmap )
+  {
+    // We add in the scaling from the desired bitmap width
+    // and height, so we only do the scaling once.
+    double imageScaleX = 1.0;
+    double imageScaleY = 1.0;
+    if (width != m_bitmap->GetWidth())
+      imageScaleX = (double) width / (double) m_bitmap->GetWidth();
+    if (height != m_bitmap->GetHeight())
+      imageScaleY = (double) height / (double) m_bitmap->GetHeight();
 
-        double us_x, us_y;
-        dc.GetUserScale(&us_x, &us_y);
-        dc.SetUserScale(us_x * m_scale * imageScaleX, us_y * m_scale * imageScaleY);
-        int cx = (int) ((double)(x + m_PosX) / (m_scale*imageScaleX)),
-            cy = (int) ((double)(y + m_PosY) / (m_scale*imageScaleY));
-//        dc.DrawBitmap(*m_bitmap, cx+1, cy, true);
-        dc.DrawBitmap(*m_bitmap, cx, cy, true);
-        dc.SetUserScale(us_x, us_y);
-        if( Text.Len() )
-        {
-          dc.SetTextForeground( *wxBLACK );
-//          wxFont fnt = dc.GetFont();
-//          fnt.SetPointSize(25);
-//          dc.SetFont( fnt );
-          dc.DrawText(Text, x + m_PosX, y + m_PosY);
-        }
+    double us_x, us_y;
+    dc.GetUserScale(&us_x, &us_y);
+    dc.SetUserScale(us_x * m_scale * imageScaleX, us_y * m_scale * imageScaleY);
+    int cx = (int) ((double)(x + m_PosX) / (m_scale*imageScaleX)),
+      cy = (int) ((double)(y + m_PosY) / (m_scale*imageScaleY));
+    //        dc.DrawBitmap(*m_bitmap, cx+1, cy, true);
+    dc.DrawBitmap(*m_bitmap, cx, cy, true);
+    dc.SetUserScale(us_x, us_y);
+    if( Text.Len() )
+    {
+      dc.SetTextForeground( *wxBLACK );
+      //          wxFont fnt = dc.GetFont();
+      //          fnt.SetPointSize(25);
+      //          dc.SetFont( fnt );
+      dc.DrawText(Text, x + m_PosX, y + m_PosY);
     }
+  }
 }
 
 wxHtmlLinkInfo *THtmlImageCell::GetLink( int x, int y ) const {
@@ -2212,7 +2225,7 @@ void THtml::funSetFocus(const TStrObjList &Params, TMacroError &E)  {
   else if( EsdlInstanceOf(*wnd, TComboBox) )  {
     TComboBox* cb = (TComboBox*)wnd;
     //cb->GetTextCtrl()->SetSelection(-1, -1);
-#ifndef __MAC__
+#ifdef __WIN32__
     cb->GetTextCtrl()->SetInsertionPoint(0);
     wnd = cb->GetTextCtrl();
 #endif		
@@ -2274,7 +2287,7 @@ void THtml::funSetFG(const TStrObjList &Params, TMacroError &E)  {
       TComboBox* Box = (TComboBox*)wxw;
       wxColor fgCl = wxColor( uiStr(Params[1]) );
       Box->SetForegroundColour( fgCl );
-#ifndef __MAC__
+#ifdef __WIN32__
       if( Box->GetPopupControl() != NULL )
         Box->GetPopupControl()->GetControl()->SetForegroundColour( fgCl );
       if( Box->GetTextCtrl() != NULL )
@@ -2299,7 +2312,7 @@ void THtml::funSetBG(const TStrObjList &Params, TMacroError &E)  {
       TComboBox* Box = (TComboBox*)wxw;
       wxColor fgCl = wxColor( uiStr(Params[1]) );
       Box->SetBackgroundColour( fgCl );
-#ifndef __MAC__
+#ifdef __WIN32__
       if( Box->GetPopupControl() != NULL )
         Box->GetPopupControl()->GetControl()->SetBackgroundColour( fgCl );
       if( Box->GetTextCtrl() != NULL )
@@ -2488,7 +2501,7 @@ void THtml::TObjectsState::RestoreState()  {
         if( !fg.IsEmpty() )  {
           wxColor fgCl = wxColor( fg.u_str() );
           Box->SetForegroundColour( fgCl );
-#ifndef __MAC__
+#ifdef __WIN32__
           if( Box->GetPopupControl() != NULL )
             Box->GetPopupControl()->GetControl()->SetForegroundColour( fgCl );
           if( Box->GetTextCtrl() != NULL )
@@ -2498,7 +2511,7 @@ void THtml::TObjectsState::RestoreState()  {
         if( !bg.IsEmpty() )  {
           wxColor bgCl = wxColor( bg.u_str() );
           Box->SetBackgroundColour( bgCl );
-#ifndef __MAC__					
+#ifdef __WIN32__					
           if( Box->GetPopupControl() != NULL )
             Box->GetPopupControl()->GetControl()->SetBackgroundColour( bgCl );
           if( Box->GetTextCtrl() != NULL )

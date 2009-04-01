@@ -440,6 +440,7 @@ private:
   DefMacro(ProjSph)
   DefMacro(PictPS)
   DefMacro(Conn)
+  DefMacro(UpdateQPeakTable)
 ////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////FUNCTIONS/////////////////////////////////////////
   DefFunc(FileLast)
@@ -535,9 +536,7 @@ public:
     DefSceneP,        // default scene parameters file
     DataDir,
     TutorialDir,
-    PluginFile,
-    BadRefsFile,
-    RefineDataFile;
+    PluginFile;
   TGlMaterial HelpFontColorCmd, HelpFontColorTxt,
               ExecFontColor, InfoFontColor,
               WarningFontColor, ErrorFontColor, ExceptionFontColor;
@@ -579,10 +578,10 @@ private:
   bool InfoWindowVisible, HelpWindowVisible, CmdLineVisible;
   float FHtmlPanelWidth;
 
-  bool RecentFilesTable(const olxstr &FN, bool TableDef=true);
-  bool QPeaksTable(const olxstr &FN, bool TableDef=true);
-  void BadReflectionsTable(bool TableDef=true);
-  void RefineDataTable(bool TableDef=true);
+  bool UpdateRecentFilesTable(bool TableDef=true);
+  void QPeakTable(bool TableDef=true, bool Create=true);
+  void BadReflectionsTable(bool TableDef=true, bool Create=true);
+  void RefineDataTable(bool TableDef=true, bool Create=true);
 
   TAccellList<olxstr> AccShortcuts;
   TAccellList<TMenuItem*> AccMenus;
