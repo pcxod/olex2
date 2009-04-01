@@ -77,12 +77,10 @@ vec3d TXGlLabel::GetRasterPosition() const {
   const double ScaleR = FParent->GetExtraZoom()*FParent->GetViewZoom();
   T += Center;
   T *= FParent->GetBasis().GetMatrix();
-  T[2] += 5;
   T /= Scale;
   vec3d off(Basis.GetCenter()[0]-OffsetX, Basis.GetCenter()[1]-OffsetY, Basis.GetCenter()[2]);
   off *= ScaleR;
-  T += off;
-  return T;
+  return T += off;
 }
 //..............................................................................
 bool TXGlLabel::Orient(TGlPrimitive *P)  {

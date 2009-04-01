@@ -213,7 +213,11 @@ public:
   }
   void Render(const olxstr& fileName)  {
     PSWriter pw(fileName);
-    pw.custom("/Verdana findfont 14 scalefont setfont");
+    if( app.LabelCount() != 0 )  {
+      CString fnt("/Verdana findfont ");
+      fnt << app.GetLabel(0).Font()->GetPointSize() << " scalefont setfont";
+      pw.custom(fnt.c_str());
+    }
     Init(pw);
     const TEBasis& basis = app.GetRender().GetBasis();
     TTypeList<OrtDraw::OrtAtom> atoms;
@@ -295,10 +299,11 @@ public:
       pw.translate(-p);
     }
     if( app.LabelCount() != 0 )  {
-      //TGlFont* glf = app.GetLabel(0).Font(); 
       for( int i=0; i < app.LabelCount(); i++ )  {
+        const double fsz = app.GetLabel(0).Font()->GetPointSize();
         const TXGlLabel& glxl = app.GetLabel(i);
         vec3d rp = glxl.GetRasterPosition();
+        rp[1] += (3*fsz/12.0);
         rp *= (DrawScale*app.GetRender().GetScale());
         pw.drawText(glxl.GetLabel(), rp+DrawOrigin);
       }
