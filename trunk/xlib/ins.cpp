@@ -175,12 +175,12 @@ void TIns::_ProcessSame(ParseContext& cx)  {
        olxstr resi( (resi_ind != -1) ? toks[0].SubStringFrom(resi_ind+1) : EmptyString );
        double esd1=0.02, esd2=0.04;
        int from_ind = 0;
-       if( toks.Count() > 1 && toks[1].IsNumber() )  {
-         esd1 = toks[1].ToDouble(); 
+       if( toks.Count() > 0 && toks[0].IsNumber() )  {
+         esd1 = toks[0].ToDouble(); 
          from_ind++;
        }
-       if( toks.Count() > 2 && toks[2].IsNumber() )  {
-         esd2 = toks[2].ToDouble(); 
+       if( toks.Count() > 1 && toks[1].IsNumber() )  {
+         esd2 = toks[1].ToDouble(); 
          from_ind++;
        }
        TAtomReference ar( toks.Text(' ', from_ind) );
