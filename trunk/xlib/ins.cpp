@@ -743,7 +743,6 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
   if( atom_afix != afix || afix == 1 || afix == 2 )  { 
     if( !TAfixGroup::HasExcplicitPivot(afix) || !TAfixGroup::IsDependent(atom_afix) )  {
       if( ag != NULL )  {
-        sl.Add("AFIX ") << atom_afix;
         olxstr& str = sl.Add("AFIX ") << atom_afix;
         if( ag->GetD() != 0 )  {
           str << ' ' << ag->GetD();
