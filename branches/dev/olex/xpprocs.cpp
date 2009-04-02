@@ -1684,6 +1684,8 @@ void TMainForm::macLabels(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     FXApp->LabelsMode(lmode |= lmQPeak );
     FXApp->LabelsVisible(true);
   }
+  TStateChange sc(prsLabels, FXApp->LabelsVisible());
+  OnStateChange->Execute(this, &sc);
 }
 //..............................................................................
 void TMainForm::macSetEnv(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
@@ -5840,7 +5842,7 @@ public:
 //
 void TMainForm::macInstallPlugin(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   if( !FPluginItem->ItemExists(Cmds[0]) )  {
-    TStateChange sc(prsPluginInstalled, true);
+    TStateChange sc(prsPluginInstalled, true, Cmds[0]);
     olxstr local_file( Options.FindValue("l", EmptyString) );
     if( !local_file.IsEmpty() )  {
       if( !TEFile::FileExists(local_file) )  {
@@ -5935,7 +5937,7 @@ void TMainForm::macInstallPlugin(TStrObjList &Cmds, const TParamList &Options, T
   else  {
     TDataItem* di = FPluginItem->FindItem( Cmds[0] );
     if( di != NULL )  {
-      TStateChange sc(prsPluginInstalled, false);
+      TStateChange sc(prsPluginInstalled, false, Cmds[0]);
       OnStateChange->Execute((AEventsDispatcher*)this, &sc);
       ProcessXPMacro( olxstr("uninstallplugin ") << Cmds[0], E );
     }
@@ -8848,6 +8850,10 @@ void TMainForm::macConn(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 //..............................................................................
 void TMainForm::macUpdateQPeakTable(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   QPeakTable(false);
+}
+//..............................................................................
+void TMainForm::funCheckState(const TStrObjList& Params, TMacroError &E)  {
+  E.SetRetVal( CheckState(TStateChange::DecodeState(Params[0]), Params.Count() == 2 ? Params[1] : EmptyString) );
 }
 //..............................................................................
 

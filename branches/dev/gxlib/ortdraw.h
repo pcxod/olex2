@@ -28,7 +28,7 @@ private:
     const float diff = a1.crd[2] - a2.crd[2];
     return diff < 0 ? -1 : (diff > 0 ? 1 : 0);
   }
-  float AradScale, DrawScale, BondRad;
+  float AradScale, DrawScale, BondRad, LinearScale;
   mat3f ProjMatr, UnProjMatr;
   vec3f DrawOrigin, SceneOrigin;
   TGXApp& app;
@@ -40,7 +40,8 @@ protected:
   TPtrList<const vec3f> FilteredArc;
   float PieLineWidth, 
     ElpLineWidth, 
-    QuadLineWidth;
+    QuadLineWidth,
+    HBondScale;
 
   int PrepareArc(const TArrayList<vec3f>& in, TPtrList<const vec3f>& out, const vec3f& normal)  {
     int start=-1, cnt=0;
@@ -78,9 +79,9 @@ protected:
       dir_vec = (p1-oa.crd).Normalise();
       const float pers_scale = 1.0-sqr(dir_vec[2]);
       float brad = (bn.A().GetAtomInfo() < 4 || bn.B().GetAtomInfo() < 4) ? 
-        BondRad/2 : BondRad;
+        BondRad*HBondScale : BondRad;
       if( bn.GetType() == sotHBond )  //even thiner H-bonds
-        brad /= 2;
+        brad *= HBondScale;
       touch_point = (bn.Another(sa).crd()-oa.atom->crd()).Normalise();
       vec3f rot_vec(-touch_point[1], touch_point[0], 0);
       CreateRotationMatrix(rot_mat, rot_vec.Normalise(), touch_point[2]);
@@ -166,6 +167,7 @@ public:
     QuadLineWidth = PieLineWidth = 0.5;
     BondRad = 1;
     ColorMode = ortep_color_None;
+    HBondScale = 0.5;
   }
   // create ellipse and pie coordinates
   void Init(const PSWriter& pw)  {
@@ -203,9 +205,10 @@ public:
     glGetFloatv(GL_VIEWPORT, vp);
     TGXApp& app = TGXApp::GetInstance();
     const TEBasis& basis = app.GetRender().GetBasis();
-    DrawScale = olx_min((float)pw.GetWidth()/vp[2], (double)pw.GetHeight()/vp[3]) /app.GetRender().GetScale();
-    AradScale = 0.25/app.GetRender().GetScale(),
-    BondRad = 0.025/app.GetRender().GetScale();
+    LinearScale = olx_min((float)pw.GetWidth()/vp[2], (double)pw.GetHeight()/vp[3]);
+    DrawScale = LinearScale/app.GetRender().GetScale();
+    AradScale = 0.5*DrawScale;///app.GetRender().GetScale(),
+    BondRad = 0.05*DrawScale;///app.GetRender().GetScale();
     SceneOrigin = basis.GetCenter();
     DrawOrigin = vec3f(pw.GetWidth()/2, pw.GetHeight()/2, 0);
     ProjMatr = basis.GetMatrix()*DrawScale;  
@@ -213,12 +216,12 @@ public:
   }
   void Render(const olxstr& fileName)  {
     PSWriter pw(fileName);
+    Init(pw);
     if( app.LabelCount() != 0 )  {
       CString fnt("/Verdana findfont ");
-      fnt << app.GetLabel(0).Font()->GetPointSize() << " scalefont setfont";
+      fnt << Round(app.GetLabel(0).Font()->GetPointSize()*sqrt(LinearScale)) << " scalefont setfont";
       pw.custom(fnt.c_str());
     }
-    Init(pw);
     const TEBasis& basis = app.GetRender().GetBasis();
     TTypeList<OrtDraw::OrtAtom> atoms;
     atoms.SetCapacity(app.AtomCount());
@@ -312,7 +315,10 @@ public:
 
   DefPropP(short, ElpDiv)
   DefPropP(short, PieDiv) 
+  DefPropP(short, BondDiv) 
   DefPropP(short, ColorMode)
+  DefPropP(float, HBondScale)
+  DefPropP(float, BondRad)
 };
 
 

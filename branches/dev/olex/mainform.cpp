@@ -93,7 +93,8 @@
 
   IMPLEMENT_CLASS(TMainForm, TMainFrame)
 
-  const olxstr ProcessOutputCBName("procout");
+static const olxstr ProcessOutputCBName("procout");
+static const olxstr OnStateChangeCBName("statechange");
 
 enum
 {
@@ -329,11 +330,10 @@ TMainForm::TMainForm(TGlXApp *Parent, int Width, int Height):
 
   FLastSettingsFile = "last.osp";
 
-  ProgramState = 0;
+  ProgramState = prsQVis|prsHVis|prsHBVis;
 
   OnModeChange = &FActionList.NewQueue("ONMODECHANGE");
   OnStateChange = &FActionList.NewQueue("ONSTATECHANGE");
-
   Modes = new TModes();
 
   FUndoStack = new TUndoStack();
@@ -888,6 +888,7 @@ separated values of Atom Type and radius, an entry a line" );
   this_InitFuncD(IsOS, fpOne, "Returns true if current system Windows [win], Linux/GTK [linux], Mac [mac]" );
   this_InitFuncD(ExtraZoom, fpNone|fpOne, "Sets/reads current extra zoom (default zoom correction)" );
   this_InitFuncD(HasGUI, fpNone, "Returns if true if Olex2 is built with GUI" );
+  this_InitFuncD(CheckState, fpOne|fpTwo, "Returns if true if given program state is active" );
 
   Library.AttachLibrary( TEFile::ExportLibrary() );
   //Library.AttachLibrary( olxstr::ExportLibrary("str") );
@@ -1306,9 +1307,11 @@ void TMainForm::StartupInit()  {
   if( TEFile::FileExists( PluginFile ) )  {
     FPluginFile.LoadFromXLFile( PluginFile, NULL );
     FPluginItem = FPluginFile.Root().FindItem("Plugin");
-    TStateChange sc(prsPluginInstalled, true);
-    // manually activate the event
-    OnStateChange->Execute((AEventsDispatcher*)this, &sc);
+    // manually activate the events
+    for( int i=0; i < FPluginItem->ItemCount(); i++ )  {
+      TStateChange sc(prsPluginInstalled, true, FPluginItem->GetItem(i).GetName());
+      OnStateChange->Execute((AEventsDispatcher*)this, &sc);
+    }
   }
   else  {
     FPluginItem = &FPluginFile.Root().AddItem("Plugin");
@@ -2059,7 +2062,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
     }
   }
   else if( MsgId == ID_DELINS )  {
-    if( Data != 0 && EsdlInstanceOf(*Data, olxstr) )  {
+    if( Data != NULL && EsdlInstanceOf(*Data, olxstr) )  {
       if( ((olxstr*)Data)->Comparei("OMIT") == 0 )  {
         BadReflectionsTable(false);
         executeMacro("html.updatehtml");
@@ -3186,8 +3189,7 @@ bool TMainForm::CheckMode(const unsigned short mode, const olxstr& modeData)  {
   return mode == Modes->GetCurrent()->GetId();
 }
 //..............................................................................
-bool TMainForm::CheckState(const unsigned short state, const olxstr& stateData)
-{
+bool TMainForm::CheckState(uint32_t state, const olxstr& stateData)  {
   if( stateData.IsEmpty() )  return (ProgramState & state) != 0;
 
   if( state == prsHtmlVis )  {
@@ -3448,8 +3450,31 @@ int TMainForm::TranslateShortcut(const olxstr& sk)  {
   return Char!=0 ? ((Shift << 16)|Char) : -1;
 }
 //..............................................................................
-void TMainForm::SetProgramState( bool val, unsigned short state )  {
+void TMainForm::SetProgramState(bool val, uint32_t state, const olxstr& data )  {
   SetBit(val, ProgramState, state);
+  uint32_t st = state;
+  while( (st%2) == 0 && st > 0 )
+    st /= 2;
+  if( st > 1 )  {  // multiple values
+    for( int i=0; i < 32; i++ )  {
+      st = 1 << i;
+      if( (state & st) == 0 )  continue;
+      TStrObjList args;
+      args.Add( TStateChange::StrRepr(st) );
+      args.Add( val );
+      if( !data.IsEmpty() )
+        args.Add(data);
+      CallbackFunc(OnStateChangeCBName, args);
+    }
+  }
+  else  {
+    TStrObjList args;
+    args.Add( TStateChange::StrRepr(state) );
+    args.Add( val );
+    if( !data.IsEmpty() )
+      args.Add(data);
+    CallbackFunc(OnStateChangeCBName, args);
+  }
 }
 //..............................................................................
 bool TMainForm::OnMouseDblClick(int x, int y, short Flags, short Buttons)  {

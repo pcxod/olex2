@@ -107,13 +107,35 @@ bool TModeChange::CheckStatus( unsigned short mode, const olxstr& modeData ) {
 //..............................................................................
 //..............................................................................
 //..............................................................................
-TStateChange::TStateChange(unsigned short state, bool status) {
+TStateChange::TStateChange(uint32_t state, bool status, const olxstr& data) {
   FStatus = status;
   State = state;
-  TGlXApp::GetMainForm()->SetProgramState(status,  state );
+  TGlXApp::GetMainForm()->SetProgramState(status,  state, data);
 }
 //..............................................................................
-unsigned short TStateChange::DecodeState( const olxstr& mode )  {
+olxstr TStateChange::StrRepr(uint32_t State) {
+  switch( State )  {
+    case prsStrVis:     return "strvis";
+    case prsHVis:       return "hvis";
+    case prsHBVis:      return "hbvis";
+    case prsQVis:       return "qvis";
+    case prsQBVis:      return "qbvis";
+    case prsCellVis:    return "cellvis";
+    case prsBasisVis:   return "basisvis";
+    case prsHtmlVis:    return "htmlvis";
+    case prsHtmlTTVis:  return "htmlttvis";
+    case prsBmpVis:     return "bmpvis";
+    case prsInfoVis:    return "infovis";
+    case prsHelpVis:    return "helpvis";
+    case prsCmdlVis:    return "cmdlinevis";
+    case prsGradBG:     return "gradBG";
+    case prsLabels:     return "labelsvis";
+    case prsPluginInstalled:  return "pluginInstalled";
+  }
+  return "none";
+}
+//..............................................................................
+uint32_t TStateChange::DecodeState( const olxstr& mode )  {
  if( !mode.Comparei("strvis") )
    return prsStrVis;
   else if( !mode.Comparei("hvis") )
@@ -136,14 +158,16 @@ unsigned short TStateChange::DecodeState( const olxstr& mode )  {
     return prsBmpVis;
   else if( !mode.Comparei("pluginInstalled") )
     return prsPluginInstalled;
-  else if( !mode.Comparei("infoVis") )
+  else if( !mode.Comparei("infovis") )
     return prsInfoVis;
-  else if( !mode.Comparei("helpVis") )
+  else if( !mode.Comparei("helpvis") )
     return prsHelpVis;
-  else if( !mode.Comparei("cmdlineVis") )
+  else if( !mode.Comparei("cmdlinevis") )
     return prsCmdlVis;
   else if( !mode.Comparei("gradBG") )
     return prsGradBG;
+  else if( !mode.Comparei("labelsvis") )
+    return prsLabels;
   return prsNone;
 }
 //..............................................................................
@@ -151,7 +175,7 @@ bool TStateChange::CheckStatus(const olxstr& stateName, const olxstr& stateData)
   return CheckStatus(TStateChange::DecodeState(stateName), stateData);
 }
 //..............................................................................
-bool TStateChange::CheckStatus(unsigned short state, const olxstr& stateData) {
+bool TStateChange::CheckStatus(uint32_t state, const olxstr& stateData) {
   return TGlXApp::GetMainForm()->CheckState( state, stateData );
 }
 
