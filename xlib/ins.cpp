@@ -1528,8 +1528,7 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
       rm.GetFrag(i).ToStrings(SL);
   }
   else  {
-    SortedPtrList<const Fragment, TPointerComparator> saved; 
-    for( int i=0; i < atoms->Count(); i++ )  {
+    SortedPtrList<const Fragment, TPointerPtrComparator> saved;     for( int i=0; i < atoms->Count(); i++ )  {
       const int m = TAfixGroup::GetM( (*atoms)[i]->GetAfix() );
       if( m < 17 )  continue;
       const Fragment* frag = rm.FindFragByCode(m);

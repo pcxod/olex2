@@ -410,8 +410,6 @@ void TGXApp::CreateObjects(bool SyncBonds, bool centerModel)  {
     }
   }
   sw.start("Other objects creation");
-  for( int i=0; i < XLabels.Count(); i++ )
-    XLabels[i].Create();
 
   for( int i=0; i < FXFile->GetLattice().PlaneCount(); i++ )  {
     TSPlane& P = FXFile->GetLattice().GetPlane(i);
@@ -419,17 +417,27 @@ void TGXApp::CreateObjects(bool SyncBonds, bool centerModel)  {
     if( P.IsDeleted() )  XP.Deleted(true);
     XP.Create();
   }
-  double cell[6];
-  cell[0] = XFile().GetAsymmUnit().Axes()[0].GetV();
-  cell[1] = XFile().GetAsymmUnit().Axes()[1].GetV();
-  cell[2] = XFile().GetAsymmUnit().Axes()[2].GetV();
-  cell[3] = XFile().GetAsymmUnit().Angles()[0].GetV();
-  cell[4] = XFile().GetAsymmUnit().Angles()[1].GetV();
-  cell[5] = XFile().GetAsymmUnit().Angles()[2].GetV();
+  double cell[] = {  
+    XFile().GetAsymmUnit().Axes()[0].GetV(),
+    XFile().GetAsymmUnit().Axes()[1].GetV(),
+    XFile().GetAsymmUnit().Axes()[2].GetV(),
+    XFile().GetAsymmUnit().Angles()[0].GetV(),
+    XFile().GetAsymmUnit().Angles()[1].GetV(),
+    XFile().GetAsymmUnit().Angles()[2].GetV()
+  };
   DUnitCell().Init( cell );
   DBasis().AsymmUnit( &XFile().GetAsymmUnit() );
+
   for( int i=0; i < ObjectsToCreate.Count(); i++ )
     ObjectsToCreate[i]->Create();
+
+  /*somehow if the XLAbels are created before the DBasis (like after picture drawing),
+  the 'disappear' from opengl selection... - the plane is drawn in different color and
+  selection is inpossible, unless properties are changed, odd... could not figure out
+  what is going wrong... */
+
+  for( int i=0; i < XLabels.Count(); i++ )
+    XLabels[i].Create();
 
   for( int i=0; i < LooseObjects.Count(); i++ )  {
     if( LooseObjects[i]->Deleted() )  {
@@ -922,6 +930,51 @@ void TGXApp::TransformFragments(const TXAtomPList& NetworkAtoms, const smatd& m)
   TSAtomPList SAtoms;
   TListCaster::POP(NetworkAtoms, SAtoms);
   XFile().GetLattice().TransformFragments(SAtoms, m);
+}
+//..............................................................................
+void TGXApp::SelectFragmentsAtoms(const TNetPList& frags, bool v)  {
+  TSAtomPList SA;
+  TXAtomPList XA;
+  for( int i=0; i < frags.Count(); i++ )  {
+    for( int j=0; j < frags[i]->NodeCount(); j++ )
+      SA.Add( &frags[i]->Node(j) );
+  }
+  SAtoms2XAtoms(SA, XA);
+  for( int i=0; i < XA.Count(); i++ )  {
+    if( v )  {
+      if( !XA[i]->Selected() )
+        GetRender().Select(XA[i]);
+    }
+    else  {
+      if( XA[i]->Selected() )
+        GetRender().DeSelect(XA[i]);
+    }
+  }
+}
+//..............................................................................
+void TGXApp::SelectFragmentsBonds(const TNetPList& frags, bool v)  {
+  TSBondPList SB;
+  TXBondPList XB;
+  for( int i=0; i < frags.Count(); i++ )  {
+    for( int j=0; j < frags[i]->BondCount(); j++ )
+      SB.Add( &frags[i]->Bond(j) );
+  }
+  SBonds2XBonds(SB, XB);
+  for( int i=0; i < XB.Count(); i++ )  {
+    if( v )  {
+      if( !XB[i]->Selected() )
+        GetRender().Select(XB[i]);
+    }
+    else  {
+      if( XB[i]->Selected() )
+        GetRender().DeSelect(XB[i]);
+    }
+  }
+}
+//..............................................................................
+void TGXApp::SelectFragments(const TNetPList& frags, bool v)  {
+  SelectFragmentsAtoms(frags, v);
+  SelectFragmentsBonds(frags, v);
 }
 //..............................................................................
 void TGXApp::FragmentVisible(TNetwork *N, bool V)  {
@@ -1583,7 +1636,7 @@ TXGlLabel *TGXApp::AddLabel(const olxstr& Name, const vec3d& center, const olxst
   TXGlLabel* gl = new TXGlLabel(Name, FGlRender);
   gl->FontIndex( FLabels->GetFontIndex() );
   gl->SetLabel( T );
-  gl->Basis.SetCenter( center );
+  gl->SetCenter( center );
   gl->Create();
   LooseObjects.Add(gl);
   return gl;
@@ -2551,7 +2604,6 @@ void TGXApp::RestoreVisibility()  {
 void TGXApp::BeginDrawBitmap(double resolution)  {
   FPictureResolution = resolution;
   FLabels->Clear();
-
   GetRender().Scene()->ScaleFonts(resolution);
   // store groups && visibility
   StoreGroups();
@@ -2559,8 +2611,6 @@ void TGXApp::BeginDrawBitmap(double resolution)  {
   /* end */
 
   CreateObjects( false, false );
-  //CenterView();
-  for( int i=0; i < XLabels.Count(); i++ )  XLabels[i].Create();
   // restore the visiblity && groups
   RestoreGroups();
   RestoreVisibility();
@@ -2570,7 +2620,6 @@ void TGXApp::FinishDrawBitmap()  {
   FLabels->Clear();
   GetRender().Scene()->RestoreFontScale();
   CreateObjects( false, false );
-  for( int i=0; i < XLabels.Count(); i++ )  XLabels[i].Create();
   // recreate groups && clean up the memory
   RestoreGroups();
   ClearGroups();
@@ -2589,10 +2638,8 @@ TXGlLabel* TGXApp::CreateLabel(TXAtom *A, int FontIndex)  {
   TXGlLabel& L = XLabels.AddNew( "PLabels", FGlRender );
   L.FontIndex( FontIndex );
   L.SetLabel(A->Atom().GetLabel());
-  L.Basis.SetCenter( A->Atom().crd() );
-  L.Basis.TranslateX(0.15);
-  L.Basis.TranslateY(0.15);
-  L.Basis.TranslateZ(0.15);
+  L.SetCenter( A->Atom().crd() );
+  L.Basis.Translate( vec3d(20, -20, 0) );  // in pixels
   L.Create();
   return &L;
 }
@@ -2808,7 +2855,7 @@ void TGXApp::ShowPart(const TIntList& parts, bool show)  {
 void TGXApp::HklVisible(bool v)  {
   if( v )  {
     // default if could not load the hkl ...
-    FDUnitCell->Reciprical(false);
+    FDUnitCell->SetReciprocal(false);
     FHklVisible = false;
     if( !FHklFile->RefCount() )  {
       if( !FXFile->HasLastLoader() )
@@ -2822,7 +2869,7 @@ void TGXApp::HklVisible(bool v)  {
   }
   for( int i=0; i < XReflections.Count(); i++ )  XReflections[i].Visible(v);
   FHklVisible = v;
-  FDUnitCell->Reciprical(v);
+  FDUnitCell->SetReciprocal(v);
 }
 //..............................................................................
 void TGXApp::SetGridDepth(const vec3d& crd)  {

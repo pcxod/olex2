@@ -201,21 +201,13 @@ public:
     return *this;
   }
 
-  template <class AType> TVector operator  + (const TVector<AType>& a ) const {
-    return TVector<VecType>(*this) += a;
-  }
+  template <class AType> TVector operator  + (const TVector<AType>& a ) const {    return TVector<VecType>(*this) += a;  }
 
-  template <class AType> TVector operator  - (const TVector<AType>& a ) const {
-    return TVector<VecType>(*this) -= a;
-  }
+  template <class AType> TVector operator  - (const TVector<AType>& a ) const {    return TVector<VecType>(*this) -= a;  }
 
-  template <class AType> TVector operator  * (const TVector<AType>& a ) const {
-    return TVector<VecType>(*this) *= a;
-  }
+  template <class AType> TVector operator  * (const TVector<AType>& a ) const {    return TVector<VecType>(*this) *= a;  }
 
-  template <class AType> TVector operator  / (const TVector<AType>& a ) const {
-    return TVector<VecType>(*this) /= a;
-  }
+  template <class AType> TVector operator  / (const TVector<AType>& a ) const {    return TVector<VecType>(*this) /= a;  }
 
   template <class AType> TVector& operator  += (const TVector<AType>& a )  {
     for( int i=0; i < Fn; i++ )

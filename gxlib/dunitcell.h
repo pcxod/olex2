@@ -7,8 +7,8 @@
 BeginGxlNamespace()
 
 class TDUnitCell: public AGDrawObject  {
-  bool FReciprical;
-  vec3d FCenter, FOldCenter;
+  bool Reciprocal;
+  vec3d Center, OldCenter;
   TGlPrimitive *FGlP;
   mat3d CellToCartesian, HklToCartesian;
 public:
@@ -19,9 +19,9 @@ public:
   bool Orient(TGlPrimitive *P);
   bool GetDimensions(vec3d &Max, vec3d &Min);
 
-  inline bool IsReciprical()  const {  return FReciprical;  }
-  void Reciprical(bool v );
-  inline vec3d& Center()         {  return FCenter;  }
+  inline bool IsReciprocal()  const {  return Reciprocal;  }
+  void SetReciprocal(bool v);
+  DefPropC(vec3d, Center)
   inline const mat3d& GetCellToCartesian() const {  return CellToCartesian;  }
   inline const mat3d& GetHklToCartesian()  const {  return HklToCartesian;  }
   void ResetCentres();

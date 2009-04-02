@@ -30,6 +30,12 @@ TGlBackground::TGlBackground(const olxstr& collectionName, TGlRenderer *Render, 
 void TGlBackground::Create(const olxstr& cName, const ACreationParams* cpar) {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
+  TGPCollection* GPC = FParent->FindCollection( GetCollectionName() );
+  if( GPC == NULL )    
+    GPC = FParent->NewCollection( GetCollectionName() );
+  GPC->AddObject(this);
+  if( GPC->PrimitiveCount() != 0 )  return;
+
   TGlMaterial GlM;
   if( FCeiling )
     GlM.SetFlags(sglmAmbientF|sglmDiffuseF|sglmTransparent|sglmIdentityDraw);
@@ -39,11 +45,6 @@ void TGlBackground::Create(const olxstr& cName, const ACreationParams* cpar) {
   GlM.DiffuseF = 0x7f4f4f4f;
   GlM.AmbientB = 0x7f4f4f4f;
   GlM.DiffuseB = 0x7f4f4f4f;
-
-  TGPCollection* GPC = FParent->FindCollection( GetCollectionName() );
-  if( GPC == NULL )    
-    GPC = FParent->NewCollection( GetCollectionName() );
-  GPC->AddObject(this);
 
   TGraphicsStyle *GS = GPC->Style();
   FColors[0] = GS->GetParam("A", 0xffffffff, true).ToInt();

@@ -45,9 +45,9 @@ TdlgMatProp::TdlgMatProp(TMainFrame *ParentFrame, TGPCollection *GPC, TGXApp *XA
   FXApp = XApp;
   wxSize DefS(100, 21);
   if( GPC != NULL )  {
-    if( EsdlInstanceOf( *GPC->Object(0), TXAtom) && false )  {
-      FAtom = (TSAtom*)GPC->Object(0);
-      cbApplyToGroup = new wxCheckBox(this, -1, wxT("Apply to Group"), wxDefaultPosition, DefS);
+    if( EsdlInstanceOf( *GPC->Object(0), TXAtom) && FXApp->GetRender().Selection()->Count() > 1 )  {
+      FAtom = (TXAtom*)GPC->Object(0);
+      cbApplyToGroup = new wxCheckBox(this, -1, wxT("Apply to All"), wxDefaultPosition, DefS);
       cbApplyToGroup->SetValue(true);
     }
     else  {
@@ -336,38 +336,35 @@ void TdlgMatProp::Update(TGlMaterial &Glm)  {
   Glm.ShininessB = olxstr(tcShnB->GetValue().c_str()).ToInt();
 }
 //..............................................................................
-void TdlgMatProp::OnOK(wxCommandEvent& event)
-{
+void TdlgMatProp::OnOK(wxCommandEvent& event)  {
   Update(FMaterials[FCurrentMaterial]);
-  TGraphicsStyle *GS;
-  if( FAtom )
-  {
-/*    if( cbApplyToGroup->GetValue() )
-    {
-      AS = FXApp->GetStyle(FAtom, false);
-      int i;
-      TGlMaterial *GlM;
-      for( i=0; i < FAtom->PrimitiveCount(); i++ )
-      {
-        AS->PrimitiveMaterial(FAtom->PrimitiveName(i), &FMaterials[i] );
-        FAtom->Primitive(i)->SetProperties(&FMaterials[i]);
-//        *((TGlMaterial*)FAtom->Primitive(i)->GetProperties()) = FMaterials[i];
+  if( FAtom != NULL && cbApplyToGroup->GetValue() )  {
+    TGlGroup* gl = FXApp->GetRender().Selection();
+    TGPCollection* ogpc = FAtom->Primitives();
+    SortedPtrList<TGPCollection, TPointerPtrComparator> uniqCol;
+    for( int i=0; i < gl->Count(); i++ )  {
+      if( EsdlInstanceOf(*gl->Object(i), TXAtom) )  {
+        int pos; // ah...
+        uniqCol.AddUnique(gl->Object(i)->Primitives(), pos);
       }
-      FXApp->UpdateAtomStyle(FAtom, AS);
     }
-    else
-    {
-      int i;
-      FXApp->CreateAtom(FAtom); // will create an atom if necessary
-      olxstr Tmp = FXApp->Render()->NameOfCollection(FAtom->Primitives());
-      AS = FXApp->Render()->Styles()->Style(Tmp, true);
-      for( i=0; i < FAtom->PrimitiveCount(); i++ )
-      {
-        AS->PrimitiveMaterial(FAtom->PrimitiveName(i), &FMaterials[i] );
-        FAtom->Primitive(i)->SetProperties(&FMaterials[i]);
+    for( int i=0; i < uniqCol.Count(); i++ )  {
+      if( uniqCol[i] != ogpc )  {
+        for( int j=0; j < ogpc->PrimitiveCount(); j++ )  {
+          TGlPrimitive* glp = uniqCol[i]->FindPrimitiveByName(ogpc->PrimitiveName(j));
+          if( glp != NULL )  {
+            glp->SetProperties(&FMaterials[j]);
+            uniqCol[i]->Style()->PrimitiveMaterial(glp->GetName(), FMaterials[j]);
+          }
+        }
       }
-      FXApp->UpdateAtomStyle(FAtom, AS);
-    }  */
+      else  {
+        for( int j=0; j < ogpc->PrimitiveCount(); j++ )  {
+          ogpc->Primitive(j)->SetProperties(&FMaterials[j]);
+          ogpc->Style()->PrimitiveMaterial(ogpc->PrimitiveName(j), FMaterials[j]);
+        }
+      }
+    }
   }
   else  {
     if( GPCollection != NULL && EsdlInstanceOf(*GPCollection->Object(0), TGlGroup) )  {
@@ -375,10 +372,10 @@ void TdlgMatProp::OnOK(wxCommandEvent& event)
     }
     else  {
       if( GPCollection != NULL )  {
-        GS = FXApp->GetRender().Styles()->NewStyle( GPCollection->Name(), true);
+        //TGraphicsStyle* GS = FXApp->GetRender().Styles()->NewStyle( GPCollection->Name(), true);
         for( int i=0; i < GPCollection->PrimitiveCount(); i++ )  {
           GPCollection->Primitive(i)->SetProperties(&FMaterials[i]);
-          GS->PrimitiveMaterial( GPCollection->Primitive(i)->GetName(), FMaterials[i]);
+          GPCollection->Style()->PrimitiveMaterial( GPCollection->Primitive(i)->GetName(), FMaterials[i]);
         }
       }
     }

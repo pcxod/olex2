@@ -29,25 +29,21 @@ void TDUserObj::Create(const olxstr& cName, const ACreationParams* cpar)  {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
   olxstr NewL;
-  TGlMaterial GlM;
-  GlM.SetFlags(sglmAmbientF);
-  GlM.AmbientF = 0;
   TGPCollection* GPC = FParent->CollectionX( GetCollectionName(), NewL);
   if( GPC == NULL )
     GPC = FParent->NewCollection(NewL);
-  else  {
-    if( GPC->PrimitiveCount() != 0 )  {
-      GPC->AddObject(this);
-      return;
-    }
-  }
-  TGraphicsStyle* GS = GPC->Style();
   GPC->AddObject(this);
+  if( GPC->PrimitiveCount() != 0 )  return;
 
+  TGraphicsStyle* GS = GPC->Style();
   TGlPrimitive* FGlP = GPC->NewPrimitive("Object", Type);
   const TGlMaterial* SGlM = GS->Material("Object");
-  if( !SGlM->Mark() )  FGlP->SetProperties(SGlM);
+  if( !SGlM->Mark() )  
+    FGlP->SetProperties(SGlM);
   else  {
+    TGlMaterial GlM;
+    GlM.SetFlags(sglmAmbientF);
+    GlM.AmbientF = 0;
     GlM.SetIdentityDraw(false);
     GlM.SetTransparent(false);
     FGlP->SetProperties(&GlM);

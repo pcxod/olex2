@@ -38,20 +38,18 @@ TGlTextBox::TGlTextBox(const olxstr& collectionName, TGlRenderer *Render):
   Z = 0;
 }
 //..............................................................................
-TGlTextBox::~TGlTextBox()
-{ Clear(); }
+TGlTextBox::~TGlTextBox()  { Clear();  }
 //..............................................................................
 void TGlTextBox::Create(const olxstr& cName, const ACreationParams* cpar)  {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
   TGPCollection* GPC = FParent->FindCollection( GetCollectionName() );
-  if( GPC == NULL )    GPC = FParent->NewCollection( GetCollectionName() );
-  else  {
-    GPC->AddObject(this);
-    return;
-  }
-  TGraphicsStyle* GS = GPC->Style();
+  if( GPC == NULL )    
+    GPC = FParent->NewCollection( GetCollectionName() );
   GPC->AddObject(this);
+  if( GPC->PrimitiveCount() != 0 )  return;
+
+  TGraphicsStyle* GS = GPC->Style();
   Left = GS->GetParam("Left", Left, true).ToInt();
   Top = GS->GetParam("Top", Top, true).ToInt();
 

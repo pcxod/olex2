@@ -93,7 +93,8 @@
 
   IMPLEMENT_CLASS(TMainForm, TMainFrame)
 
-  const olxstr ProcessOutputCBName("procout");
+static const olxstr ProcessOutputCBName("procout");
+static const olxstr OnStateChangeCBName("statechange");
 
 enum
 {
@@ -146,6 +147,9 @@ enum
 
   ID_FragmentHide,  // fragment menu
   ID_FragmentShowOnly,
+  ID_FragmentSelectAtoms,
+  ID_FragmentSelectBonds,
+  ID_FragmentSelectAll,
   ID_Disassemble,
 
   ID_View100,   // vew menu
@@ -246,6 +250,9 @@ BEGIN_EVENT_TABLE(TMainForm, wxFrame)  // basic interface
 
   EVT_MENU(ID_FragmentHide, TMainForm::OnFragmentHide)
   EVT_MENU(ID_FragmentShowOnly, TMainForm::OnFragmentShowOnly)
+  EVT_MENU(ID_FragmentSelectAtoms, TMainForm::OnFragmentSelectAtoms)
+  EVT_MENU(ID_FragmentSelectBonds, TMainForm::OnFragmentSelectBonds)
+  EVT_MENU(ID_FragmentSelectAll, TMainForm::OnFragmentSelectAll)
 
   EVT_MENU(ID_AtomTypeChangeC, TMainForm::OnAtomTypeChange)
   EVT_MENU(ID_AtomTypeChangeN, TMainForm::OnAtomTypeChange)
@@ -323,11 +330,10 @@ TMainForm::TMainForm(TGlXApp *Parent, int Width, int Height):
 
   FLastSettingsFile = "last.osp";
 
-  ProgramState = 0;
+  ProgramState = prsQVis|prsHVis|prsHBVis;
 
   OnModeChange = &FActionList.NewQueue("ONMODECHANGE");
   OnStateChange = &FActionList.NewQueue("ONSTATECHANGE");
-
   Modes = new TModes();
 
   FUndoStack = new TUndoStack();
@@ -882,6 +888,7 @@ separated values of Atom Type and radius, an entry a line" );
   this_InitFuncD(IsOS, fpOne, "Returns true if current system Windows [win], Linux/GTK [linux], Mac [mac]" );
   this_InitFuncD(ExtraZoom, fpNone|fpOne, "Sets/reads current extra zoom (default zoom correction)" );
   this_InitFuncD(HasGUI, fpNone, "Returns if true if Olex2 is built with GUI" );
+  this_InitFuncD(CheckState, fpOne|fpTwo, "Returns if true if given program state is active" );
 
   Library.AttachLibrary( TEFile::ExportLibrary() );
   //Library.AttachLibrary( olxstr::ExportLibrary("str") );
@@ -978,6 +985,9 @@ separated values of Atom Type and radius, an entry a line" );
   pmFragment->Append(ID_FragmentHide, wxT("Hide"));
   pmFragment->Append(ID_FragmentShowOnly, wxT("Show this only"));
   pmFragment->Append(ID_ShowAll, wxT("Show all"));
+  pmFragment->Append(ID_FragmentSelectAtoms, wxT("Select atoms"));
+  pmFragment->Append(ID_FragmentSelectBonds, wxT("Select bonds"));
+  pmFragment->Append(ID_FragmentSelectAll, wxT("Select"));
 // setting selection menu
   pmSelection->Append(ID_SelGroup, wxT("Group"));
   pmSelection->Append(ID_SelUnGroup, wxT("Ungroup"));
@@ -1297,9 +1307,11 @@ void TMainForm::StartupInit()  {
   if( TEFile::FileExists( PluginFile ) )  {
     FPluginFile.LoadFromXLFile( PluginFile, NULL );
     FPluginItem = FPluginFile.Root().FindItem("Plugin");
-    TStateChange sc(prsPluginInstalled, true);
-    // manually activate the event
-    OnStateChange->Execute((AEventsDispatcher*)this, &sc);
+    // manually activate the events
+    for( int i=0; i < FPluginItem->ItemCount(); i++ )  {
+      TStateChange sc(prsPluginInstalled, true, FPluginItem->GetItem(i).GetName());
+      OnStateChange->Execute((AEventsDispatcher*)this, &sc);
+    }
   }
   else  {
     FPluginItem = &FPluginFile.Root().AddItem("Plugin");
@@ -1480,120 +1492,71 @@ void TMainForm::OnBasisVisible(wxCommandEvent& event)  {
 void TMainForm::OnGraphics(wxCommandEvent& event)  {
   if( FObjectUnderMouse == NULL )  return;
 
-  int i;
-  olxstr PName, Tmp;
-  TGlGroup *Sel;
-  TdlgMatProp *MatProp;
-  TdlgPrimitive *Primitives;
-  TStrList Ps;
-  olxstr TmpStr;
-
-  switch( event.GetId() )  {
-    case ID_GraphicsHide:
-      if( FObjectUnderMouse->Selected() )
-        ProcessXPMacro("hide sel", MacroError);
-      else
-        FUndoStack->Push( FXApp->SetGraphicsVisible(FObjectUnderMouse, false) );
-      TimePerFrame = FXApp->Draw();
-      break;
-    case ID_GraphicsKill:
-      if( FObjectUnderMouse->Selected() )
-        ProcessXPMacro("kill sel", MacroError);
-      else  {
-        TPtrList<AGDrawObject> l;
-        l.Add(FObjectUnderMouse);
-        FUndoStack->Push( FXApp->DeleteXObjects(l) );
+  if( event.GetId() == ID_GraphicsHide )  {
+    if( FObjectUnderMouse->Selected() )
+      ProcessXPMacro("hide sel", MacroError);
+    else
+      FUndoStack->Push( FXApp->SetGraphicsVisible(FObjectUnderMouse, false) );
+    TimePerFrame = FXApp->Draw();
+  }
+  else if( event.GetId() == ID_GraphicsKill )  {
+    if( FObjectUnderMouse->Selected() )
+      ProcessXPMacro("kill sel", MacroError);
+    else  {
+      TPtrList<AGDrawObject> l;
+      l.Add(FObjectUnderMouse);
+      FUndoStack->Push( FXApp->DeleteXObjects(l) );
+    }
+    TimePerFrame = FXApp->Draw();
+  }
+  else if( event.GetId() == ID_GraphicsEdit )  {
+    if( LabelToEdit != NULL )  {
+      olxstr Tmp = "getuserinput(1, \'Please, enter new label\', \'";
+      Tmp << LabelToEdit->GetLabel() << "\')";
+      ProcessMacroFunc(Tmp);
+      if( !Tmp.IsEmpty() ) {
+        LabelToEdit->SetLabel(Tmp);
+        FXApp->Draw();
       }
-      TimePerFrame = FXApp->Draw();
-      break;
-    case ID_GraphicsEdit:
-      if( LabelToEdit != NULL )  {
-        Tmp = "getuserinput(1, \'Please, enter new label\', \'";
-        Tmp << LabelToEdit->GetLabel() << "\')";
-        ProcessMacroFunc(Tmp);
-        if( !Tmp.IsEmpty() ) {
-          LabelToEdit->SetLabel(Tmp);
-          FXApp->Draw();
-        }
-        LabelToEdit = NULL;
-      }
-      break;
-    case ID_GraphicsDS:
-      Sel = FXApp->Selection();
-      MatProp = new TdlgMatProp(this, FObjectUnderMouse->Primitives(), FXApp);
-      if( EsdlInstanceOf(*FObjectUnderMouse, TGlGroup) )
-        MatProp->SetCurrent( *((TGlGroup*)FObjectUnderMouse)->GlM() );
-      if( FObjectUnderMouse->Selected() )  {
-        MatProp->ApplyToGroupEnabled(false);
-        MatProp->ApplyToGroupChecked(false);
-      }
-      else  {
-        MatProp->ApplyToGroupEnabled(true);
-        MatProp->ApplyToGroupChecked(true);
-      }
-      if( MatProp->ShowModal() == wxID_OK )  {
-        if( EsdlInstanceOf(*FObjectUnderMouse, TGlGroup) )
-          ((TGlGroup*)FObjectUnderMouse)->GlM( MatProp->GetCurrent() );
-        else if( EsdlInstanceOf( *FObjectUnderMouse, TXAtom) )  {
-          FXApp->XAtomDS2XBondDS("Sphere");  
-/*          OAtom = (TSAtom*)FObjectUnderMouse;
-          if( FObjectUnderMouse->Selected() )
-          {
-            OAS =  OAtom->Style();
-            for( i=0; i < Sel->Count(); i++ )
-            {
-              GO = Sel->Object(i);
-              if( GO == FObjectUnderMouse )  continue;
-              if( GO->ClassName() == "TSATOM" )
-              {
-                SA = (TSAtom*)GO;
-
-                FXApp->CreateAtom(SA); // will create an atom if necessary
-                Tmp = FXApp->GetRender().NameOfCollection(SA->Primitives());
-                AS = FXApp->GetRender().Styles()->Style(Tmp, true);
-                for( j=0; j < OAtom->PrimitiveCount(); j++ )
-                {
-                  PName = OAtom->PrimitiveName(j);
-                  GlM = const_cast<TGlMaterial*>(OAS->Material(PName));
-                  AS->PrimitiveMaterial(PName, GlM );
-                  SA->Primitive(PName)->SetProperties(GlM);
-                }
-//                FXApp->UpdateAtomStyle(SA, AS);
-              }
-            }
-          }*/
-        }
-      }
-      MatProp->Destroy();
-      TimePerFrame = FXApp->Draw();
-      break;
-    case ID_GraphicsP:
-      FObjectUnderMouse->ListPrimitives(Ps);
-      if( Ps.Count() < 2 )  {
-        TBasicApp::GetLog().Info("The object does not support requested function...");
-        return;
-      }
-      i = FObjectUnderMouse->Primitives()->Style()->GetParam("PMask", "0").ToInt();
-      Primitives = new TdlgPrimitive(&Ps, i, this);
-      if( Primitives->ShowModal() == wxID_OK )  {
-        TmpStr = "mask ";
-        TmpStr << FObjectUnderMouse->Primitives()->Name() << ' ' << Primitives->Mask;
-        ProcessXPMacro(TmpStr, MacroError);
-//        FObjectUnderMouse->UpdatePrimitives(Primitives->Mask);
-      }
-      Primitives->Destroy();
-      TimePerFrame = FXApp->Draw();
-      break;
-    case ID_FixLattice:
-      if( EsdlInstanceOf(*FObjectUnderMouse, TXLattice) )  {
-        ((TXLattice*)FObjectUnderMouse)->SetFixed(true);
-      }
-      break;
-    case ID_FreeLattice:
-      if( EsdlInstanceOf(*FObjectUnderMouse, TXLattice) )  {
-        ((TXLattice*)FObjectUnderMouse)->SetFixed(false);
-      }
-      break;
+      LabelToEdit = NULL;
+    }
+  }
+  else if( event.GetId() == ID_GraphicsDS )  {
+    TGlGroup* Sel = FXApp->Selection();
+    TdlgMatProp* MatProp = new TdlgMatProp(this, FObjectUnderMouse->Primitives(), FXApp);
+    if( EsdlInstanceOf(*FObjectUnderMouse, TGlGroup) )
+      MatProp->SetCurrent( *((TGlGroup*)FObjectUnderMouse)->GlM() );
+    if( MatProp->ShowModal() == wxID_OK )  {
+      if( EsdlInstanceOf( *FObjectUnderMouse, TXAtom) )
+        FXApp->XAtomDS2XBondDS("Sphere");  
+    }
+    MatProp->Destroy();
+    TimePerFrame = FXApp->Draw();
+  }
+  else if( event.GetId() == ID_GraphicsP )  {
+    TStrList Ps;
+    FObjectUnderMouse->ListPrimitives(Ps);
+    if( Ps.Count() < 2 )  {
+      TBasicApp::GetLog().Info("The object does not support requested function...");
+      return;
+    }
+    int i = FObjectUnderMouse->Primitives()->Style()->GetParam("PMask", "0").ToInt();
+    TdlgPrimitive* Primitives = new TdlgPrimitive(&Ps, i, this);
+    if( Primitives->ShowModal() == wxID_OK )  {
+      olxstr TmpStr = "mask ";
+      TmpStr << FObjectUnderMouse->Primitives()->Name() << ' ' << Primitives->Mask;
+      ProcessXPMacro(TmpStr, MacroError);
+    }
+    Primitives->Destroy();
+    TimePerFrame = FXApp->Draw();
+  }
+  else if( event.GetId() == ID_FixLattice )  {
+    if( EsdlInstanceOf(*FObjectUnderMouse, TXLattice) )
+      ((TXLattice*)FObjectUnderMouse)->SetFixed(true);
+  }
+  else if( event.GetId() == ID_FreeLattice )  {
+    if( EsdlInstanceOf(*FObjectUnderMouse, TXLattice) )
+      ((TXLattice*)FObjectUnderMouse)->SetFixed(false);
   }
 }
 //..............................................................................
@@ -1724,17 +1687,70 @@ void TMainForm::OnAtomTypePTable(wxCommandEvent& event)  {
   TimePerFrame = FXApp->Draw();
 }
 //..............................................................................
+int TMainForm::GetFragmentList(TNetPList& res)  {
+  if( FObjectUnderMouse == NULL )  return 0;
+  if( FObjectUnderMouse->Selected() )  {
+    TGlGroup* glg = FXApp->GetRender().Selection();
+    for( int i=0; i < glg->Count(); i++ )  {
+      if( EsdlInstanceOf(*glg->Object(i), TXAtom) )
+        res.Add( &((TXAtom*)glg->Object(i))->Atom().GetNetwork() );
+      else if( EsdlInstanceOf(*glg->Object(i), TXBond) )
+        res.Add( &((TXBond*)glg->Object(i))->Bond().GetNetwork() );
+    }
+    for( int i=0; i < res.Count(); i++ )
+      res[i]->SetTag(i);
+    for( int i=0; i < res.Count(); i++ )
+      if( res[i]->GetTag() != i )
+        res[i] = NULL;
+    res.Pack();
+  }
+  else  {
+    if( EsdlInstanceOf(*FObjectUnderMouse, TXAtom) )
+      res.Add( &((TXAtom*)FObjectUnderMouse)->Atom().GetNetwork() );
+    else if( EsdlInstanceOf(*FObjectUnderMouse, TXBond) )
+      res.Add( &((TXBond*)FObjectUnderMouse)->Bond().GetNetwork() );
+  }
+  return res.Count();
+}
+//..............................................................................
 void TMainForm::OnFragmentHide(wxCommandEvent& event)  {
   if( FObjectUnderMouse == NULL )  return;
   TNetPList L;
-  if( EsdlInstanceOf(*FObjectUnderMouse, TXAtom) )
-    L.Add( &((TXAtom*)FObjectUnderMouse)->Atom().GetNetwork() );
-  else if( EsdlInstanceOf(*FObjectUnderMouse, TXBond) )
-    L.Add( &((TXBond*)FObjectUnderMouse)->Bond().GetNetwork() );
-  else
+  if( GetFragmentList(L) == 0 )
     return;
   FXApp->FragmentsVisible(L, false);
   FXApp->CenterView();
+}
+//..............................................................................
+void TMainForm::OnFragmentShowOnly(wxCommandEvent& event)  {
+  if( FObjectUnderMouse == NULL )  return;
+  TNetPList L, L1;
+  if( GetFragmentList(L) == 0 )
+    return;
+  FXApp->InvertFragmentsList(L, L1);
+  FXApp->FragmentsVisible(L1, false);
+  FXApp->CenterView();
+}
+//..............................................................................
+void TMainForm::OnFragmentSelectAtoms(wxCommandEvent& event)  {
+  TNetPList L;
+  if( GetFragmentList(L) == 0 )  return;
+  FXApp->SelectFragmentsAtoms(L, true);
+  TimePerFrame = FXApp->Draw();
+}
+//..............................................................................
+void TMainForm::OnFragmentSelectBonds(wxCommandEvent& event)  {
+  TNetPList L;
+  if( GetFragmentList(L) == 0 )  return;
+  FXApp->SelectFragmentsBonds(L, true);
+  TimePerFrame = FXApp->Draw();
+}
+//..............................................................................
+void TMainForm::OnFragmentSelectAll(wxCommandEvent& event)  {
+  TNetPList L;
+  if( GetFragmentList(L) == 0 )  return;
+  FXApp->SelectFragments(L, true);
+  TimePerFrame = FXApp->Draw();
 }
 //..............................................................................
 void TMainForm::OnShowAll(wxCommandEvent& event)  {
@@ -1744,18 +1760,6 @@ void TMainForm::OnShowAll(wxCommandEvent& event)  {
 void TMainForm::OnModelCenter(wxCommandEvent& event)  {
   FXApp->CenterModel();
   TimePerFrame = FXApp->Draw();
-}
-//..............................................................................
-void TMainForm::OnFragmentShowOnly(wxCommandEvent& event)  {
-  if( ! FObjectUnderMouse )  return;
-  TSAtom *A;
-  if( EsdlInstanceOf( *FObjectUnderMouse, TXAtom) )
-    A = &((TXAtom*)FObjectUnderMouse)->Atom();
-  else if( EsdlInstanceOf( *FObjectUnderMouse, TXBond) )
-    A = &((TXBond*)FObjectUnderMouse)->Bond().A();
-  else
-    return;
-  ProcessXPMacro(olxstr("uniq #s") << A->GetLattId(), MacroError);
 }
 //..............................................................................
 bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, const IEObject *Data)  {
@@ -2058,7 +2062,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
     }
   }
   else if( MsgId == ID_DELINS )  {
-    if( Data != 0 && EsdlInstanceOf(*Data, olxstr) )  {
+    if( Data != NULL && EsdlInstanceOf(*Data, olxstr) )  {
       if( ((olxstr*)Data)->Comparei("OMIT") == 0 )  {
         BadReflectionsTable(false);
         executeMacro("html.updatehtml");
@@ -3185,8 +3189,7 @@ bool TMainForm::CheckMode(const unsigned short mode, const olxstr& modeData)  {
   return mode == Modes->GetCurrent()->GetId();
 }
 //..............................................................................
-bool TMainForm::CheckState(const unsigned short state, const olxstr& stateData)
-{
+bool TMainForm::CheckState(uint32_t state, const olxstr& stateData)  {
   if( stateData.IsEmpty() )  return (ProgramState & state) != 0;
 
   if( state == prsHtmlVis )  {
@@ -3447,8 +3450,31 @@ int TMainForm::TranslateShortcut(const olxstr& sk)  {
   return Char!=0 ? ((Shift << 16)|Char) : -1;
 }
 //..............................................................................
-void TMainForm::SetProgramState( bool val, unsigned short state )  {
+void TMainForm::SetProgramState(bool val, uint32_t state, const olxstr& data )  {
   SetBit(val, ProgramState, state);
+  uint32_t st = state;
+  while( (st%2) == 0 && st > 0 )
+    st /= 2;
+  if( st > 1 )  {  // multiple values
+    for( int i=0; i < 32; i++ )  {
+      st = 1 << i;
+      if( (state & st) == 0 )  continue;
+      TStrObjList args;
+      args.Add( TStateChange::StrRepr(st) );
+      args.Add( val );
+      if( !data.IsEmpty() )
+        args.Add(data);
+      CallbackFunc(OnStateChangeCBName, args);
+    }
+  }
+  else  {
+    TStrObjList args;
+    args.Add( TStateChange::StrRepr(state) );
+    args.Add( val );
+    if( !data.IsEmpty() )
+      args.Add(data);
+    CallbackFunc(OnStateChangeCBName, args);
+  }
 }
 //..............................................................................
 bool TMainForm::OnMouseDblClick(int x, int y, short Flags, short Buttons)  {

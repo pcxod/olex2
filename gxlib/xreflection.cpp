@@ -48,15 +48,10 @@ void TXReflection::Create(const olxstr& cName, const ACreationParams* cpar) {
   TGPCollection* GPC = FParent->FindCollection( GetCollectionName() );
   if( GPC == NULL )
     GPC = FParent->NewCollection( GetCollectionName() );
-  else  {
-    if( GPC->PrimitiveCount() != 0 )  {
-      GPC->AddObject(this);
-      return;
-    }
-  }
-  TGraphicsStyle* GS = GPC->Style();
   GPC->AddObject(this);
+  if( GPC->PrimitiveCount() != 0 )  return;
 
+  TGraphicsStyle* GS = GPC->Style();
   TGlPrimitive* GlP = GPC->NewPrimitive("Reflection", sgloTriangles);
 
   TGlMaterial* GlM = const_cast<TGlMaterial*>(GS->Material("Reflection"));

@@ -12,20 +12,7 @@
 #include "maputil.h"
 #include "estopwatch.h"
 
-#ifdef __BORLANDC__
-class XLibMacros_PtrComparator  {
-public:
-  template <class ComparableA, class ComparableB>
-  static inline int Compare(const ComparableA* A, const ComparableB* B )  {
-    if( A < B )  return -1;
-    if( A > B )  return 1;
-    return 0;
-  }
-};
-  typedef SortedPtrList<TBasicAtomInfo, XLibMacros_PtrComparator> SortedBAIList;
-#else
-  typedef SortedPtrList<TBasicAtomInfo, TPointerComparator> SortedBAIList;
-#endif
+typedef SortedPtrList<TBasicAtomInfo, TPointerPtrComparator> SortedBAIList;
 // helper function
 int imp_auto_AtomCount(const TAsymmUnit& au)  {
   int ac = 0;

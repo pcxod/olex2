@@ -331,8 +331,10 @@ void TwxGlScene::ExportFont(const olxstr& name, const olxstr& fileName)  {
 }
 //..............................................................................
 TGlFont* TwxGlScene::ImportFont(const olxstr& Name, const olxstr& fntDesc, short Flags)  {
-  TGlFont* Fnt = FindFont(Name);
   MetaFont mf(fntDesc);
+  if( mf.GetSize() <= 1 )
+    throw TInvalidArgumentException(__OlxSourceInfo, "invalid font size");
+  TGlFont* Fnt = FindFont(Name);
   olxstr fileName( FontsFolder + mf.GetFileName() );
   if( !TEFile::FileExists(fileName) )
     return NULL;
@@ -340,8 +342,6 @@ TGlFont* TwxGlScene::ImportFont(const olxstr& Name, const olxstr& fntDesc, short
   char sig[4];
   int originalFntSize = -1;
   olxstr fntPrefix( mf.GetFileIdString().SubStringTo(4) );
-  if( mf.GetSize() < 0 )
-    throw TInvalidArgumentException(__OlxSourceInfo, "invalid font size");
   fis.Read(sig, 4);
   if( olxstr::o_memcmp(sig, "ofnt", 4) != 0 )
     throw TFunctionFailedException(__OlxSourceInfo, "invalid file signature");
@@ -425,18 +425,21 @@ void TwxGlScene::ScaleFonts(double scale)  {
   if( !FontSizes.IsEmpty() )
     throw TFunctionFailedException(__OlxSourceInfo, "call RestoreFontScale");
   FontSizes.SetCount( Fonts.Count() );
-  for( int i=0; i < Fonts.Count(); i++ )  {
+  for( int i=0; i < Fonts.Count(); i++ )  // kepp the sizes if scaling fails
     FontSizes[i] = Fonts[i]->GetPointSize();
+  for( int i=0; i < Fonts.Count(); i++ )  {
     olxstr fontId;
     if( MetaFont::IsOlexFont(Fonts[i]->IdString()) )  {
       MetaFont mf(Fonts[i]->IdString());
-      mf.SetSize( (short)(Fonts[i]->GetPointSize()*scale) );
+      int sz = (int)(Fonts[i]->GetPointSize()*scale);
+      mf.SetSize( sz < 2 ? 2 : sz );
       fontId << mf.GetIdString();
     }
     else  {
       wxFont font;
       ((wxFontBase&)font).SetNativeFontInfo( Fonts[i]->IdString().u_str() );
-      font.SetPointSize((int)(font.GetPointSize()*scale));
+      int sz = (int)(font.GetPointSize()*scale);
+      font.SetPointSize( sz < 2 ? 2 : sz );
       fontId = font.GetNativeFontInfoDesc().c_str();
     }
     CreateFont(Fonts[i]->GetName(), fontId);
@@ -483,7 +486,7 @@ olxstr TwxGlScene::ShowFontDialog(TGlFont* glf, const olxstr& fntDesc)  {
   else  {
     wxFontData fnt_data;
     wxFont Fnt(12, wxMODERN, wxNORMAL, wxNORMAL);
-    if( !fntDesc.IsEmpty() )  // is not default?
+    if( !fntId.IsEmpty() )  // is not default?
       Fnt.SetNativeFontInfo( fntId.u_str() );
     fnt_data.SetInitialFont(Fnt);
     wxFontDialog fD(NULL, fnt_data);

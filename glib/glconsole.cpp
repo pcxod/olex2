@@ -81,6 +81,7 @@ void TGlConsole::Create(const olxstr& cName, const ACreationParams* cpar)  {
   if( GPC == NULL )    
     GPC = FParent->NewCollection( GetCollectionName() );
   GPC->AddObject(this);
+  if( GPC->PrimitiveCount() != 0 )  return;
 
   TGraphicsStyle *GS = GPC->Style();
 

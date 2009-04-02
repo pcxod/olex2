@@ -27,26 +27,29 @@ TDBasis::TDBasis(const olxstr& collectionName, TGlRenderer *Render) : TGlMouseLi
 void TDBasis::Create(const olxstr& cName, const ACreationParams* cpar)  {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
-  ematd M, M1, M2;
+  olxstr NewL;
+  TGPCollection* GPC = FParent->CollectionX( GetCollectionName(), NewL);
+  if( GPC == NULL )
+    GPC = FParent->NewCollection(NewL);
+  GPC->AddObject(this);
+  if( GPC->PrimitiveCount() != 0 )  return;
+
+  ematd M, M2;
   M.Assign(FAU->GetCellToCartesian(), 3, 3);
-  evecd V, V1;
-  TEBasis* EB;
-  M1 = M;
-  if( !M1[0].Length() )  M1[0][0] = 1;
-    M1[0].Normalise();
-  if( !M1[1].Length() )  M1[1][1] = 1;
-    M1[1].Normalise();
-  if( !M1[2].Length() )  M1[2][2] = 1;
-    M1[2].Normalise();
+  const ematd M1(M);
+  for( int i=0; i < 3; i++ )  {
+    if( M1[i].Length() == 0 )  
+      M1[i][i] = 1;
+    else
+      M1[i].Normalise();
+  }
   TGlMaterial GlM, GlM1;
-  const TGlMaterial *SGlM;
+  const TGlMaterial* SGlM;
   GlM.SetFlags(0);   GlM.ShininessF = 128;      GlM.SpecularF = 0x03030303;  GlM.SpecularF = 0x03030303;
   GlM1.SetFlags(0);  GlM1.ShininessF = 128;     GlM1.SpecularF = 0x03030303;  GlM1.SpecularB = 0x03030303;
 
-  double ConeH = 0.8, ConeW = 0.2; // cylinder dimensions
-  int CQ = 5; // cylinde quality
-  TGPCollection* GPC = FParent->NewCollection( GetCollectionName() );
-  GPC->AddObject(this);
+  const double ConeH = 0.8, ConeW = 0.2; // cylinder dimensions
+  const int CQ = 5; // cylinder quality
   TGraphicsStyle* GS = GPC->Style();
 
   GlM.SetFlags( sglmAmbientF|sglmDiffuseF|sglmSpecularF|
@@ -60,29 +63,25 @@ void TDBasis::Create(const olxstr& cName, const ACreationParams* cpar)  {
   GlP->Params[0] = ConeW/1.5;  GlP->Params[1] = 6;  GlP->Params[2] = 6;
 
   GlM.AmbientF = 0x800000ff;
-  M2 = M1;  M2.SwapRows(0, 1);  M2.SwapRows(1,2);
+  M2 = M1;  M2.SwapRows(0, 1);  M2.SwapRows(1, 2);
   GlP = GPC->NewPrimitive("ConeX", sgloCylinder);  // X cone
   SGlM = GS->Material("ConeX");
-  if( !SGlM->Mark() )  GlP->SetProperties(SGlM);
-  else                 GlP->SetProperties(&GlM);
-  EB = new TEBasis;  GlP->SetBasis(EB);  EB->SetMatrix(M2);  EB->SetCenter( M[0]/5 );
+  GlP->SetProperties(SGlM->Mark() ? &GlM : SGlM);
+  TEBasis* EB = new TEBasis;  GlP->SetBasis(EB);  EB->SetMatrix(M2);  EB->SetCenter( M[0]/5 );
   GlP->Params[0] = ConeW;  GlP->Params[1] = 0;
   GlP->Params[2] = ConeH; GlP->Params[3] = CQ; GlP->Params[4] = CQ;
 
   GlP = GPC->NewPrimitive("DiskX", sgloDisk);  // X cone bottom
   SGlM = GS->Material("DiskX");
-  if( !SGlM->Mark() )  GlP->SetProperties(SGlM);
-  else                 GlP->SetProperties(&GlM);
+  GlP->SetProperties(SGlM->Mark() ? &GlM : SGlM);
   EB = new TEBasis;  GlP->SetBasis(EB);  EB->SetMatrix(M2);  EB->SetCenter( M[0]/5 );
   GlP->Params[0] = 0;  GlP->Params[1] = ConeW;
   GlP->Params[2] = CQ; GlP->Params[3] = CQ;
   GlP->SetQuadricOrientation(GLU_INSIDE);
 
-
   GlP = GPC->NewPrimitive("CylinderX",sgloCylinder);  // X axis
   SGlM = GS->Material("CylinderX");
-  if( !SGlM->Mark() )  GlP->SetProperties(SGlM);
-  else                 GlP->SetProperties(&GlM);
+  GlP->SetProperties(SGlM->Mark() ? &GlM : SGlM);
   GlP->SetProperties(&GlM);
   EB = new TEBasis;  GlP->SetBasis(EB);  EB->SetMatrix(M2);
   GlP->Params[0] = ConeW/2;  GlP->Params[1] = ConeW/2;
@@ -93,8 +92,7 @@ void TDBasis::Create(const olxstr& cName, const ACreationParams* cpar)  {
   M2 = M1;  M2.SwapRows(0, 1);  M2.SwapRows(0, 2);
   GlP = GPC->NewPrimitive("ConeY", sgloCylinder);  // Y
   SGlM = GS->Material("ConeY");
-  if( !SGlM->Mark() )  GlP->SetProperties(SGlM);
-  else                 GlP->SetProperties(&GlM);
+  GlP->SetProperties(SGlM->Mark() ? &GlM : SGlM);
   GlP->SetProperties(&GlM);
   EB = new TEBasis;  GlP->SetBasis(EB);  EB->SetMatrix(M2);  EB->SetCenter( M[1]/5 );
   GlP->Params[0] = ConeW;  GlP->Params[1] = 0;
@@ -102,8 +100,7 @@ void TDBasis::Create(const olxstr& cName, const ACreationParams* cpar)  {
 
   GlP = GPC->NewPrimitive("DiskY", sgloDisk);  // Y cone bottom
   SGlM = GS->Material("DiskY");
-  if( !SGlM->Mark() )  GlP->SetProperties(SGlM);
-  else                 GlP->SetProperties(&GlM);
+  GlP->SetProperties(SGlM->Mark() ? &GlM : SGlM);
   EB = new TEBasis;  GlP->SetBasis(EB);  EB->SetMatrix(M2);  EB->SetCenter( M[1]/5 );
   GlP->Params[0] = 0;  GlP->Params[1] = ConeW;
   GlP->Params[2] = CQ; GlP->Params[3] = CQ;
@@ -111,8 +108,7 @@ void TDBasis::Create(const olxstr& cName, const ACreationParams* cpar)  {
 
   GlP = GPC->NewPrimitive("CylinderY", sgloCylinder);  // y axis
   SGlM = GS->Material("CylinderY");
-  if( !SGlM->Mark() )  GlP->SetProperties(SGlM);
-  else                 GlP->SetProperties(&GlM);
+  GlP->SetProperties(SGlM->Mark() ? &GlM : SGlM);
   EB = new TEBasis;  GlP->SetBasis(EB);  EB->SetMatrix(M2);
   GlP->Params[0] = ConeW/2;  GlP->Params[1] = ConeW/2;
   GlP->Params[2] = M[1].Length()/5; GlP->Params[3] = CQ; GlP->Params[4] = CQ;
@@ -120,16 +116,14 @@ void TDBasis::Create(const olxstr& cName, const ACreationParams* cpar)  {
   GlM.AmbientF  = 0x80ff0000;
   GlP = GPC->NewPrimitive("ConeZ", sgloCylinder);  //Z cone
   SGlM = GS->Material("ConeZ");
-  if( !SGlM->Mark() )  GlP->SetProperties(SGlM);
-  else                 GlP->SetProperties(&GlM);
+  GlP->SetProperties(SGlM->Mark() ? &GlM : SGlM);
   EB = new TEBasis;  GlP->SetBasis(EB);  EB->SetMatrix(M1);  EB->SetCenter( M[2]/5 );
   GlP->Params[0] = ConeW;  GlP->Params[1] = 0;
   GlP->Params[2] = ConeH; GlP->Params[3] = CQ; GlP->Params[4] = CQ;
 
   GlP = GPC->NewPrimitive("DiskZ", sgloDisk);  // Z cone bottom
   SGlM = GS->Material("DiskZ");
-  if( !SGlM->Mark() )  GlP->SetProperties(SGlM);
-  else                 GlP->SetProperties(&GlM);
+  GlP->SetProperties(SGlM->Mark() ? &GlM : SGlM);
   EB = new TEBasis;  GlP->SetBasis(EB);  EB->SetMatrix(M1);  EB->SetCenter( M[2]/5 );
   GlP->Params[0] = 0;  GlP->Params[1] = ConeW;
   GlP->Params[2] = CQ; GlP->Params[3] = CQ;
@@ -137,8 +131,7 @@ void TDBasis::Create(const olxstr& cName, const ACreationParams* cpar)  {
 
   GlP = GPC->NewPrimitive("CylinderZ", sgloCylinder);  // Z axis
   SGlM = GS->Material("CylinderZ");
-  if( !SGlM->Mark() )  GlP->SetProperties(SGlM);
-  else                 GlP->SetProperties(&GlM);
+  GlP->SetProperties(SGlM->Mark() ? &GlM : SGlM);
   EB = new TEBasis;  GlP->SetBasis(EB);  EB->SetMatrix(M1);
   GlP->Params[0] = ConeW/2;  GlP->Params[1] = ConeW/2;
   GlP->Params[2] = M[2].Length()/5; GlP->Params[3] = CQ; GlP->Params[4] = CQ;
@@ -155,55 +148,33 @@ void TDBasis::Create(const olxstr& cName, const ACreationParams* cpar)  {
 }
 //..............................................................................
 bool TDBasis::Orient(TGlPrimitive *P) {
-  vec3d T;
   // extra zoom is very important for making pictures - it makes sure that the
   // object is translated to the right place!
-  double EZoom = Parent()->GetExtraZoom();
+  const double EZoom = FParent->GetExtraZoom()*FParent->GetViewZoom();
   if( P->GetType() == sgloText )  {
-    olxstr Str;
+    olxstr Str('a');
+    const double scale = 1./FParent->GetScale();
     vec3d Center( Basis.GetCenter() );
     Center[0] = Center[0]*EZoom;
     Center[1] = Center[1]*EZoom;
     Center *= FParent->GetScale();
     Center = FParent->GetBasis().GetMatrix() * Center;
-    //A
-    T = FAU->GetCellToCartesian()[0];
-    T /= 5;
-    T[0] += 0.8;
-    T *= Basis.GetZoom();
-    T += Center;
-    T *= FParent->GetBasis().GetMatrix();
-    glRasterPos3d(T[0], T[1], T[2]+5);
-    Str = "a";
-    P->SetString(&Str);
-    P->Draw();
-    //B
-    T = FAU->GetCellToCartesian()[1];
-    T /= 5;
-    T[1] += 0.8;
-    T *= Basis.GetZoom();
-    T += Center;
-    T *= FParent->GetBasis().GetMatrix();
-    glRasterPos3d(T[0], T[1], T[2]+5);
-    Str = "b";
-    P->SetString(&Str);
-    P->Draw();
-    //C
-    T = FAU->GetCellToCartesian()[2];
-    T /= 5;
-    T[2] += 0.8;
-    T *= Basis.GetZoom();
-    T += Center;
-    T *= FParent->GetBasis().GetMatrix();
-    glRasterPos3d(T[0], T[1], T[2]+5);
-    Str = "c";
-    P->SetString(&Str);
-    P->Draw();
-
+    const TGlFont& fnt = *Parent()->Scene()->DefFont();
+    for( int i=0; i < 3; i++ )  {
+      vec3d T = FAU->GetCellToCartesian()[i];
+      T /= 5;
+      T[i] += 0.8;
+      T *= Basis.GetZoom();
+      T += Center;
+      T *= FParent->GetBasis().GetMatrix();
+      T[2] += 5;
+      T *= scale;
+      Str[0] = (char)('a'+i);
+      FParent->DrawTextSafe(T, Str, fnt);
+    }
     return true;
   }
-
-  T = Basis.GetCenter();
+  vec3d T = Basis.GetCenter();
   T[0] = T[0]*EZoom;
   T[1] = T[1]*EZoom;
   T *= Parent()->GetScale();

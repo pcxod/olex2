@@ -444,7 +444,9 @@ public:     void CalcProbFactor(float Prob);
 
   void FragmentsVisible(const TNetPList& Networks, bool V);
   int InvertFragmentsList(const TNetPList& SelectedFragments, TNetPList& Result);
-
+  void SelectFragmentsAtoms(const TNetPList& frags, bool v);
+  void SelectFragmentsBonds(const TNetPList& frags, bool v);
+  void SelectFragments(const TNetPList& frags, bool v);
   TGlGroup& GroupFragments(const TNetPList& Fragments, const olxstr groupName);
 
   // inverts current list of TLattice using Selected Fragments, returns

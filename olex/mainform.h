@@ -144,7 +144,7 @@ protected:
   olxstr ExpandCommand(const olxstr &Cmd);
   int MouseMoveTimeElapsed, MousePositionX, MousePositionY;
   // click-name states
-  unsigned short ProgramState;
+  uint32_t ProgramState;
 
   class TModes *Modes;
 
@@ -172,9 +172,9 @@ public:
 
   inline TUndoStack* GetUndoStack()  {  return FUndoStack;  }
 
-  void SetProgramState( bool val, unsigned short state );
-  bool CheckMode(const unsigned short mode, const olxstr& modeData);
-  bool CheckState(const unsigned short mode, const olxstr& statusData);
+  void SetProgramState(bool val, uint32_t state, const olxstr& data );
+  bool CheckMode(unsigned short mode, const olxstr& modeData);
+  bool CheckState(uint32_t state, const olxstr& stateData);
 
 protected:
   void PostCmdHelp(const olxstr &Cmd, bool Full=false);
@@ -209,6 +209,11 @@ protected:
   void OnShowAll(wxCommandEvent& event);
   void OnModelCenter(wxCommandEvent& event);
   void OnFragmentShowOnly(wxCommandEvent& event);
+  void OnFragmentSelectAtoms(wxCommandEvent& event);
+  void OnFragmentSelectBonds(wxCommandEvent& event);
+  void OnFragmentSelectAll(wxCommandEvent& event);
+  // helper function to get the list of fragments (if several selected)
+  int GetFragmentList(TNetPList& res);
 
   void OnAtomTypeChange(wxCommandEvent& event);
   void OnAtomOccuChange(wxCommandEvent& event);
@@ -512,6 +517,7 @@ private:
   DefFunc(IsOS)
   DefFunc(ExtraZoom)
   DefFunc(HasGUI)
+  DefFunc(CheckState)
 
   TUndoStack *FUndoStack;
 //..............................................................................
