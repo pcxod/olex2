@@ -23,7 +23,7 @@ protected:
   bool Execute(const IEObject *Sender, const IEObject *Data=NULL);
   void OnRemove()  {  ;  }
   TGlMaterial *FMaterials;
-  TSAtom *FAtom;
+  TXAtom *FAtom;
   int FCurrentMaterial;
   TGXApp *FXApp;
   void Init( const TGlMaterial &GlM );

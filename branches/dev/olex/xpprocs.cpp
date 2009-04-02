@@ -1982,6 +1982,7 @@ void TMainForm::macMask(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     }
     if( ADS != 0 && Atoms.IsEmpty() )  return;
     FXApp->UpdateAtomPrimitives(Mask, Atoms.IsEmpty() ? NULL : &Atoms);
+    TimePerFrame = FXApp->Draw();
     return;
   }
   if( Cmds[0] == "bonds" )  {
@@ -1999,6 +2000,7 @@ void TMainForm::macMask(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   if( GPC != NULL )  {
     if( GPC->ObjectCount() != 0 )
       GPC->Object(0)->UpdatePrimitives( Mask );
+    TimePerFrame = FXApp->Draw();
   }
   else  {
     Error.ProcessingError(__OlxSrcInfo, "undefined graphics" );

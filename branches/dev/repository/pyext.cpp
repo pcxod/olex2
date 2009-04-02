@@ -319,7 +319,8 @@ PyObject* runPrintText(PyObject* self, PyObject* args)  {
 PyMethodDef Methods[] = {
   {"m", runOlexMacro, METH_VARARGS, "executes olex macro"},
   {"f", runOlexFunction, METH_VARARGS, "executes olex function"},
-  {"writeImage", runWriteImage, METH_VARARGS, "adds new image/object to olex2 memory"},
+  {"writeImage", runWriteImage, METH_VARARGS, "adds new image/object to olex2 memory; (name, date, persistence=0).\
+ Persistence: 0 - none, 1 - for current structure, 2 - global"},
   {"readImage", runReadImage, METH_VARARGS, "reads an image/object from olex memory"},
   {"registerFunction", runRegisterFunction, METH_VARARGS, "registers python function in olex domain"},
   {"registerMacro", runRegisterMacro, METH_VARARGS, "registers python macro in olex domain"},

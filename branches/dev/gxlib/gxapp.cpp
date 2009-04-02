@@ -417,21 +417,27 @@ void TGXApp::CreateObjects(bool SyncBonds, bool centerModel)  {
     if( P.IsDeleted() )  XP.Deleted(true);
     XP.Create();
   }
-  double cell[6];
-  cell[0] = XFile().GetAsymmUnit().Axes()[0].GetV();
-  cell[1] = XFile().GetAsymmUnit().Axes()[1].GetV();
-  cell[2] = XFile().GetAsymmUnit().Axes()[2].GetV();
-  cell[3] = XFile().GetAsymmUnit().Angles()[0].GetV();
-  cell[4] = XFile().GetAsymmUnit().Angles()[1].GetV();
-  cell[5] = XFile().GetAsymmUnit().Angles()[2].GetV();
+  double cell[] = {  
+    XFile().GetAsymmUnit().Axes()[0].GetV(),
+    XFile().GetAsymmUnit().Axes()[1].GetV(),
+    XFile().GetAsymmUnit().Axes()[2].GetV(),
+    XFile().GetAsymmUnit().Angles()[0].GetV(),
+    XFile().GetAsymmUnit().Angles()[1].GetV(),
+    XFile().GetAsymmUnit().Angles()[2].GetV()
+  };
   DUnitCell().Init( cell );
   DBasis().AsymmUnit( &XFile().GetAsymmUnit() );
 
-  for( int i=0; i < XLabels.Count(); i++ )
-    XLabels[i].Create();
-
   for( int i=0; i < ObjectsToCreate.Count(); i++ )
     ObjectsToCreate[i]->Create();
+
+  /*somehow if the XLAbels are created before the DBasis (like after picture drawing),
+  the 'disappear' from opengl selection... - the plane is drawn in different color and
+  selection is inpossible, unless properties are changed, odd... could not figure out
+  what is going wrong... */
+
+  for( int i=0; i < XLabels.Count(); i++ )
+    XLabels[i].Create();
 
   for( int i=0; i < LooseObjects.Count(); i++ )  {
     if( LooseObjects[i]->Deleted() )  {
@@ -924,6 +930,51 @@ void TGXApp::TransformFragments(const TXAtomPList& NetworkAtoms, const smatd& m)
   TSAtomPList SAtoms;
   TListCaster::POP(NetworkAtoms, SAtoms);
   XFile().GetLattice().TransformFragments(SAtoms, m);
+}
+//..............................................................................
+void TGXApp::SelectFragmentsAtoms(const TNetPList& frags, bool v)  {
+  TSAtomPList SA;
+  TXAtomPList XA;
+  for( int i=0; i < frags.Count(); i++ )  {
+    for( int j=0; j < frags[i]->NodeCount(); j++ )
+      SA.Add( &frags[i]->Node(j) );
+  }
+  SAtoms2XAtoms(SA, XA);
+  for( int i=0; i < XA.Count(); i++ )  {
+    if( v )  {
+      if( !XA[i]->Selected() )
+        GetRender().Select(XA[i]);
+    }
+    else  {
+      if( XA[i]->Selected() )
+        GetRender().DeSelect(XA[i]);
+    }
+  }
+}
+//..............................................................................
+void TGXApp::SelectFragmentsBonds(const TNetPList& frags, bool v)  {
+  TSBondPList SB;
+  TXBondPList XB;
+  for( int i=0; i < frags.Count(); i++ )  {
+    for( int j=0; j < frags[i]->BondCount(); j++ )
+      SB.Add( &frags[i]->Bond(j) );
+  }
+  SBonds2XBonds(SB, XB);
+  for( int i=0; i < XB.Count(); i++ )  {
+    if( v )  {
+      if( !XB[i]->Selected() )
+        GetRender().Select(XB[i]);
+    }
+    else  {
+      if( XB[i]->Selected() )
+        GetRender().DeSelect(XB[i]);
+    }
+  }
+}
+//..............................................................................
+void TGXApp::SelectFragments(const TNetPList& frags, bool v)  {
+  SelectFragmentsAtoms(frags, v);
+  SelectFragmentsBonds(frags, v);
 }
 //..............................................................................
 void TGXApp::FragmentVisible(TNetwork *N, bool V)  {

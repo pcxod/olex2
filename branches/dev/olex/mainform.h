@@ -209,6 +209,11 @@ protected:
   void OnShowAll(wxCommandEvent& event);
   void OnModelCenter(wxCommandEvent& event);
   void OnFragmentShowOnly(wxCommandEvent& event);
+  void OnFragmentSelectAtoms(wxCommandEvent& event);
+  void OnFragmentSelectBonds(wxCommandEvent& event);
+  void OnFragmentSelectAll(wxCommandEvent& event);
+  // helper function to get the list of fragments (if several selected)
+  int GetFragmentList(TNetPList& res);
 
   void OnAtomTypeChange(wxCommandEvent& event);
   void OnAtomOccuChange(wxCommandEvent& event);
