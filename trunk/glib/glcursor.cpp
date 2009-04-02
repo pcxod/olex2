@@ -39,8 +39,11 @@ void TGlCursor::Create(const olxstr& cName, const ACreationParams* cpar)  {
     SetCollectionName(cName);
 
   TGPCollection* GPC = FParent->FindCollection( GetCollectionName() );
-  if( !GPC )    GPC = FParent->NewCollection( GetCollectionName() );
+  if( GPC == NULL )    
+    GPC = FParent->NewCollection( GetCollectionName() );
   GPC->AddObject(this);
+  if( GPC->PrimitiveCount() != 0 )  return;
+
   TGraphicsStyle *GS = GPC->Style();
   Symbol = GS->GetParam("Char", '|', true)[0];
   TGlMaterial* FGlM = const_cast<TGlMaterial*>(GS->Material("On"));

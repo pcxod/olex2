@@ -38,25 +38,25 @@ public:
 
 class AGroupObject: public ACollectionItem  {
 protected:
-  TObjectGroup *FParent;
-  AGOProperties *FProperties;
+  TObjectGroup* FParent;
+  AGOProperties* FProperties;
 
   friend class TObjectGroup;
-  virtual AGOProperties * NewProperties() = 0;
   // the function is used to create a new instance of the properties
+  virtual AGOProperties * NewProperties() = 0;
 public:
   AGroupObject(TObjectGroup *Group);
-  virtual ~AGroupObject(){  return;};
-  virtual const AGOProperties * GetProperties() const;
+  virtual ~AGroupObject()  {  }
+  inline const AGOProperties * GetProperties() const {  return FProperties;  }
   /* a copy of C is created and returned if the property does not exists
    therwise a pointer to existing proprty is returned
   */
-  virtual AGOProperties * SetProperties( const AGOProperties *C );
+  virtual AGOProperties * SetProperties(const AGOProperties* C);
 };
 
 class TObjectGroup: public IEObject  {
 protected:
-  AGOProperties *GetProps( const AGOProperties &C);
+  AGOProperties *GetProps(const AGOProperties& C);
 protected:
   TPtrList<AGroupObject> Objects;
   TPtrList<AGOProperties> Props;
@@ -65,18 +65,18 @@ public:
   virtual ~TObjectGroup();
   void Clear();
 
-  void AddObject(AGroupObject *O)               {  Objects.Add(O);  }
-  inline AGroupObject* Object(size_t index) const  {  return Objects[index]; }
-  inline int ObjectCount() const                {  return Objects.Count(); }
-  int IndexOf(AGroupObject *G)                  {  return Objects.IndexOf(G); }
+  void AddObject(AGroupObject* O)                 {  Objects.Add(O);  }
+  inline AGroupObject* Object(size_t index) const {  return Objects[index]; }
+  inline int ObjectCount() const                  {  return Objects.Count(); }
+  int IndexOf(AGroupObject* G)                    {  return Objects.IndexOf(G); }
+  // used to remove objects form the collection; if an object->Tag ==Tag, it is removed
   void RemoveObjectsByTag(int Tag);
   //void ReplaceObjects(TEList *CurObj, TEList *NewObj );
-  // used to remove objects form the collection; if an object->Tag ==Tag, it is removed
 
-  AGOProperties * Properties(int index)   const {  return Props[index]; }
+  AGOProperties * Properties(int index) const {  return Props[index]; }
 
-  inline int PropCount()                  const {  return Props.Count(); }
-  int IndexOf(const AGOProperties *P) const     {  return Props.IndexOf(P); }
+  inline int PropCount()              const {  return Props.Count(); }
+  int IndexOf(const AGOProperties *P) const {  return Props.IndexOf(P); }
   AGOProperties * NewProps(AGroupObject *Sender, AGOProperties *OldProps, const AGOProperties *NewProps);
 };
 

@@ -12,6 +12,16 @@ BeginEsdlNamespace()
    of QS that location will get changed as Swap operations used!
 */
 
+class TPrimitivePtrComparator  {
+public:
+  template <class ComparableA, class ComparableB>
+  static inline int Compare(const ComparableA* A, const ComparableB* B )  {
+    if( *A < *B )  return -1;
+    if( *A > *B )  return 1;
+    return 0;
+  }
+};
+
 class TPrimitiveComparator  {
 public:
   template <class ComparableA, class ComparableB>
@@ -20,10 +30,14 @@ public:
     if( A > B )  return 1;
     return 0;
   }
+};
+
+class TPointerPtrComparator  {
+public:
   template <class ComparableA, class ComparableB>
   static inline int Compare(const ComparableA* A, const ComparableB* B )  {
-    if( *A < *B )  return -1;
-    if( *A > *B )  return 1;
+    if( A < B )  return -1;
+    if( A > B )  return 1;
     return 0;
   }
 };
@@ -36,11 +50,13 @@ public:
     if( &A > &B )  return 1;
     return 0;
   }
+};
+
+class TComparablePtrComparator  {
+public:
   template <class ComparableA, class ComparableB>
   static inline int Compare(const ComparableA* A, const ComparableB* B )  {
-    if( A < B )  return -1;
-    if( A > B )  return 1;
-    return 0;
+    return A->Compare(*B);
   }
 };
 
@@ -49,10 +65,6 @@ public:
   template <class ComparableA, class ComparableB>
   static inline int Compare(const ComparableA& A, const ComparableB& B )  {
     return A.Compare(B);
-  }
-  template <class ComparableA, class ComparableB>
-  static inline int Compare(const ComparableA* A, const ComparableB* B )  {
-    return A->Compare(*B);
   }
 };
 

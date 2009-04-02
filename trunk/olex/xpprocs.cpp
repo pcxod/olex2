@@ -1252,6 +1252,8 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     res = 10;
   if( res <= 0 )  
     res = 1;
+  if( res > 1 && res < 100 )
+    res = Round(res);
 
   int ScrHeight = (int)(((double)orgHeight/(res*2)-1.0)*res*2),
       ScrWidth  = (int)(((double)orgWidth/(res*2)-1.0)*res*2);
@@ -1682,6 +1684,8 @@ void TMainForm::macLabels(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     FXApp->LabelsMode(lmode |= lmQPeak );
     FXApp->LabelsVisible(true);
   }
+  TStateChange sc(prsLabels, FXApp->LabelsVisible());
+  OnStateChange->Execute(this, &sc);
 }
 //..............................................................................
 void TMainForm::macSetEnv(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
@@ -1980,6 +1984,7 @@ void TMainForm::macMask(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     }
     if( ADS != 0 && Atoms.IsEmpty() )  return;
     FXApp->UpdateAtomPrimitives(Mask, Atoms.IsEmpty() ? NULL : &Atoms);
+    TimePerFrame = FXApp->Draw();
     return;
   }
   if( Cmds[0] == "bonds" )  {
@@ -1997,6 +2002,7 @@ void TMainForm::macMask(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   if( GPC != NULL )  {
     if( GPC->ObjectCount() != 0 )
       GPC->Object(0)->UpdatePrimitives( Mask );
+    TimePerFrame = FXApp->Draw();
   }
   else  {
     Error.ProcessingError(__OlxSrcInfo, "undefined graphics" );
@@ -5836,7 +5842,7 @@ public:
 //
 void TMainForm::macInstallPlugin(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   if( !FPluginItem->ItemExists(Cmds[0]) )  {
-    TStateChange sc(prsPluginInstalled, true);
+    TStateChange sc(prsPluginInstalled, true, Cmds[0]);
     olxstr local_file( Options.FindValue("l", EmptyString) );
     if( !local_file.IsEmpty() )  {
       if( !TEFile::FileExists(local_file) )  {
@@ -5931,7 +5937,7 @@ void TMainForm::macInstallPlugin(TStrObjList &Cmds, const TParamList &Options, T
   else  {
     TDataItem* di = FPluginItem->FindItem( Cmds[0] );
     if( di != NULL )  {
-      TStateChange sc(prsPluginInstalled, false);
+      TStateChange sc(prsPluginInstalled, false, Cmds[0]);
       OnStateChange->Execute((AEventsDispatcher*)this, &sc);
       ProcessXPMacro( olxstr("uninstallplugin ") << Cmds[0], E );
     }
@@ -8844,6 +8850,10 @@ void TMainForm::macConn(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 //..............................................................................
 void TMainForm::macUpdateQPeakTable(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   QPeakTable(false);
+}
+//..............................................................................
+void TMainForm::funCheckState(const TStrObjList& Params, TMacroError &E)  {
+  E.SetRetVal( CheckState(TStateChange::DecodeState(Params[0]), Params.Count() == 2 ? Params[1] : EmptyString) );
 }
 //..............................................................................
 

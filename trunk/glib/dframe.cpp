@@ -28,22 +28,21 @@ TDFrame::TDFrame(const olxstr& collectionName, TGlRenderer *Render) :
   OnSelect = &FActions->NewQueue("ONSELECT");
 };
 //..............................................................................
-TDFrame::~TDFrame()
-{
+TDFrame::~TDFrame()  {
   delete FActions;
 }
 //..............................................................................
 void TDFrame::Create(const olxstr& cName, const ACreationParams* cpar) {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
-  TGlMaterial GlM;
-//  GlM.SetFlags( sglmAmbientF|sglmDiffuseF|sglmSpecularF|sglmShininessF|
-//                sglmAmbientB|sglmDiffuseB|sglmSpecularB|sglmShininessB);
-  GlM.SetFlags(sglmIdentityDraw);
-
-  TGPCollection* GPC = FRender->NewCollection( GetCollectionName() );
+  TGPCollection* GPC = FRender->FindCollection( GetCollectionName() );
+  if( GPC == NULL )
+    GPC = FRender->NewCollection( GetCollectionName() );
   GPC->AddObject(this);
+  if( GPC->PrimitiveCount() != 0 )  return;
 
+  TGlMaterial GlM;
+  GlM.SetFlags(sglmIdentityDraw);
   FPrimitive = GPC->NewPrimitive("Lines", sgloLineLoop);
   FPrimitive->SetProperties(&GlM);
   FPrimitive->Data.Resize(4, 4);

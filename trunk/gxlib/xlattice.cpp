@@ -26,17 +26,20 @@ TXLattice::~TXLattice()  {
 void TXLattice::Create(const olxstr& cName, const ACreationParams* cpar)  {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
-  TGlMaterial GlM;
-  GlM.SetFlags(sglmAmbientF);
-  GlM.AmbientF = 0;
-  TGPCollection* GPC = Parent()->NewCollection( GetCollectionName() );
-  TGraphicsStyle* GS = GPC->Style();
+  TGPCollection* GPC = FParent->FindCollection( GetCollectionName() );
+  if( GPC == NULL )
+    GPC = FParent->NewCollection( GetCollectionName() );
   GPC->AddObject(this);
+  if( GPC->PrimitiveCount() != 0 )  return;
 
+  TGraphicsStyle* GS = GPC->Style();
   Lines = GPC->NewPrimitive("Lines", sgloLines);
   const TGlMaterial* SGlM = GS->Material("Lines");
   if( !SGlM->Mark() )  Lines->SetProperties(SGlM);
   else  {
+    TGlMaterial GlM;
+    GlM.SetFlags(sglmAmbientF);
+    GlM.AmbientF = 0;
     GlM.SetIdentityDraw(false);
     GlM.SetTransparent(false);
     Lines->SetProperties(&GlM);
@@ -49,6 +52,7 @@ void TXLattice::Create(const olxstr& cName, const ACreationParams* cpar)  {
   SGlM = GS->Material("Label");
   if( !SGlM->Mark() )  GlP->SetProperties(SGlM);
   else  {
+    TGlMaterial GlM;
     GlM.SetIdentityDraw(true);
     GlM.SetTransparent(false);
     GlP->SetProperties(&GlM);

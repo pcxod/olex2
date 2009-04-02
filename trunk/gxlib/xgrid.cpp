@@ -186,16 +186,12 @@ void TXGrid::Create(const olxstr& cName, const ACreationParams* cpar)  {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
   TGPCollection* GPC = FParent->FindCollection( GetCollectionName() );
-  if( !GPC )
+  if( GPC == NULL )
     GPC = FParent->NewCollection( GetCollectionName() );
-  else  {
-    if( GPC->PrimitiveCount() )  {
-      GPC->AddObject(this);
-      return;
-    }
-  }
-  TGraphicsStyle* GS = GPC->Style();
   GPC->AddObject(this);
+  if( GPC->PrimitiveCount() != 0 )  return;
+
+  TGraphicsStyle* GS = GPC->Style();
   TGlPrimitive* GlP = GPC->NewPrimitive("eMap", sgloQuads);
   TGlMaterial* GlM = const_cast<TGlMaterial*>( GS->Material("eMap") );
   if( GlM->Mark() )  {

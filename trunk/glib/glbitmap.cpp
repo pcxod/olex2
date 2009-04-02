@@ -40,28 +40,21 @@ TGlBitmap::TGlBitmap(const olxstr& collectionName, TGlRenderer *Render,
 void TGlBitmap::Create(const olxstr& cName, const ACreationParams* cpar)  {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
-  TGlPrimitive *GlP;
-  TGPCollection *GPC;
-  TGraphicsStyle *GS;
 
-  TGlTexture* tex = FParent->GetTextureManager().FindTexture(TextureId);
-
-  TGlMaterial *GlM;
-  olxstr Name = EsdlObjectName(*this) + tex->GetName();
-  GPC = FParent->FindCollection( GetCollectionName() );
-  if( !GPC )    GPC = FParent->NewCollection( GetCollectionName() );
-  else  {
-    GPC->AddObject(this);
-    return;
-  }
-
-  GS = GPC->Style();
+  //TGlTexture* tex = FParent->GetTextureManager().FindTexture(TextureId);
+  //olxstr Name = EsdlObjectName(*this) + tex->GetName();
+  TGPCollection* GPC = FParent->FindCollection( GetCollectionName() );
+  if( GPC == NULL )    
+    GPC = FParent->NewCollection( GetCollectionName() );
   GPC->AddObject(this);
+  if( GPC->PrimitiveCount() != 0 )  return;
+
+  TGraphicsStyle* GS = GPC->Style();
   Left = GS->GetParam("Left", Left).ToInt();
   Top = GS->GetParam("Top", Top).ToInt();
   Z = GS->GetParam("Z", Z).ToDouble();
 
-  GlM = const_cast<TGlMaterial*>( GS->Material("Plane") );
+  TGlMaterial* GlM = const_cast<TGlMaterial*>( GS->Material("Plane") );
   if( GlM->Mark() )  {
     GlM->SetFlags(0);   GlM->ShininessF = 128;
     GlM->SetFlags(sglmAmbientF|sglmDiffuseF|sglmIdentityDraw|sglmTransparent);
@@ -69,7 +62,7 @@ void TGlBitmap::Create(const olxstr& cName, const ACreationParams* cpar)  {
     GlM->DiffuseF = 0x800f0f0f;
   }
 
-  GlP = GPC->NewPrimitive("Plane", sgloQuads);  //
+  TGlPrimitive* GlP = GPC->NewPrimitive("Plane", sgloQuads);  //
   GlP->SetTextureId( TextureId );
   GlP->SetProperties(GlM);
   GlP->Data.Resize(5, 4);

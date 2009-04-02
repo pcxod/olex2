@@ -6,22 +6,24 @@
 // mouse modes
 const unsigned short mmNone   = 0;
 // program states
-const unsigned short prsNone      = 0, // modes
-                     prsStrVis    = 0x0001, // Structure visible/invisible
-                     prsHVis      = 0x0002,        // hydroges visible invisible
-                     prsHBVis     = 0x0004,      // hydrogen bonds visible/invisible
-                     prsQVis      = 0x0008,        // qpeaks visible/invisible
-                     prsQBVis     = 0x0010,       // qpeak bonds visible/invisible
-                     prsCellVis   = 0x0020,     // cell visible/invisible
-                     prsBasisVis  = 0x0040,    // basis visible/invisible
-                     prsHtmlVis     = 0x0080,       // popup window visible/invisible
-                     prsHtmlTTVis   = 0x0100,       // popup window tooltips visible/invisible
-                     prsBmpVis    = 0x0200,       // glBitmap visible/invisible
-                     prsPluginInstalled = 0x0400,       // plugin installed
-                     prsHelpVis = 0x0800,       // help window visible
-                     prsInfoVis = 0x1000,       // info window visible
-                     prsCmdlVis = 0x2000,       // command line visible
-                     prsGradBG  = 0x4000;       // gradient bg view
+const uint32_t 
+  prsNone            = 0x00000000, // modes
+  prsStrVis          = 0x00000001, // Structure visible/invisible
+  prsHVis            = 0x00000002,        // hydroges visible invisible
+  prsHBVis           = 0x00000004,      // hydrogen bonds visible/invisible
+  prsQVis            = 0x00000008,        // qpeaks visible/invisible
+  prsQBVis           = 0x00000010,       // qpeak bonds visible/invisible
+  prsCellVis         = 0x00000020,     // cell visible/invisible
+  prsBasisVis        = 0x00000040,    // basis visible/invisible
+  prsHtmlVis         = 0x00000080,       // popup window visible/invisible
+  prsHtmlTTVis       = 0x00000100,       // popup window tooltips visible/invisible
+  prsBmpVis          = 0x00000200,       // glBitmap visible/invisible
+  prsPluginInstalled = 0x00000400,       // plugin installed
+  prsHelpVis         = 0x00000800,       // help window visible
+  prsInfoVis         = 0x00001000,       // info window visible
+  prsCmdlVis         = 0x00002000,       // command line visible
+  prsGradBG          = 0x00004000,       // gradient bg view
+  prsLabels          = 0x00008000;       // labels vusible/hidden
 
 //---------------------------------------------------------------------------
 class AMode : public IEObject  {
@@ -94,13 +96,19 @@ public:
 //..............................................................................
 class TStateChange: public IEObject  {
   bool FStatus;
-  unsigned short State;
+  uint32_t State;
+  olxstr Data;
 public:
-  TStateChange(unsigned short state, bool status);
+  TStateChange(uint32_t state, bool status, const olxstr& data=EmptyString);
+  // string representation of the state
+  inline bool GetStatus() const {  return FStatus;  }
+  inline uint32_t GetState() const {  return State;  }
+  inline const olxstr& GetData() const {  return Data;  }
   static bool CheckStatus(const olxstr& stateName, const olxstr& stateData=EmptyString);
-  static bool CheckStatus(unsigned short state, const olxstr& stateData=EmptyString);
+  static bool CheckStatus(uint32_t state, const olxstr& stateData=EmptyString);
 
-  static unsigned short DecodeState( const olxstr& mode );
+  static uint32_t DecodeState( const olxstr& mode );
+  static olxstr StrRepr(uint32_t state);
 };
 
 #endif

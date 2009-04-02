@@ -22,37 +22,36 @@
 TDUnitCell::TDUnitCell(const olxstr& collectionName, TGlRenderer *Render) : AGDrawObject(collectionName) {
   FParent = Render;
   Groupable(false);
-  FReciprical = false;
+  Reciprocal = false;
   FGlP = NULL;
   // FCenter[0] == M_PI - the object is not initialised
-  FOldCenter[0] = FOldCenter[1] = FOldCenter[2] = 100;
+  OldCenter[0] = OldCenter[1] = OldCenter[2] = 100;
   CellToCartesian.I();
   HklToCartesian.I();
 }
 //...........................................................................
 void TDUnitCell::ResetCentres()  {
-  FCenter.Null();
-  FOldCenter[0] = FOldCenter[1] = FOldCenter[2] = 100;
+  Center.Null();
+  OldCenter[0] = OldCenter[1] = OldCenter[2] = 100;
 }
 //...........................................................................
 void TDUnitCell::Init(const double cell[6])  {
   if( cell[0] == 0 )  return;
-  double cG = cos(cell[5]/180*M_PI),
+  const double cG = cos(cell[5]/180*M_PI),
          cB = cos(cell[4]/180*M_PI),
          cA = cos(cell[3]/180*M_PI),
          sG = sin(cell[5]/180*M_PI),
          sB = sin(cell[4]/180*M_PI),
          sA = sin(cell[3]/180*M_PI);
 
-  double V = cell[0]*cell[1]*cell[2]*sqrt( (1-cA*cA-cB*cB-cG*cG) + 2*(cA*cB*cG));
+  const double V = cell[0]*cell[1]*cell[2]*sqrt( (1-cA*cA-cB*cB-cG*cG) + 2*(cA*cB*cG));
 
-  double cGs = (cA*cB-cG)/(sA*sB),
+  const double cGs = (cA*cB-cG)/(sA*sB),
          cBs = (cA*cG-cB)/(sA*sG),
          cAs = (cB*cG-cA)/(sB*sG),
          as = cell[1]*cell[2]*sA/V,
          bs = cell[0]*cell[2]*sB/V,
-         cs = cell[0]*cell[1]*sG/V
-         ;
+         cs = cell[0]*cell[1]*sG/V;
   // cell to cartesian transformation matrix
   CellToCartesian.I();
   CellToCartesian[0][0] = cell[0];
@@ -74,11 +73,11 @@ void TDUnitCell::Init(const double cell[6])  {
   HklToCartesian[2] /= V;
 }
 //...........................................................................
-void TDUnitCell::Reciprical(bool v )  {
-  if( !FGlP )  return;
+void TDUnitCell::SetReciprocal(bool v)  {
+  if( FGlP == NULL )  return;
   mat3d M;
   if( v )  {
-    FOldCenter = FCenter;
+    OldCenter = Center;
     M = HklToCartesian;
     //M.Transpose();
     vec3d scaleV(1, 1, 1);
@@ -86,13 +85,12 @@ void TDUnitCell::Reciprical(bool v )  {
     double scale = olx_max(scaleV[2],  olx_max(scaleV[0], scaleV[1]) );
     // with this scale it will cover 10 reflections
     M *= (10.0/scale);                    // extra scaling;
-    FCenter = M[0] + M[1] + M[2];
-    FCenter /= -2;
+    Center = (M[0] + M[1] + M[2])*(-0.5);
   }
   else  {
     M = CellToCartesian;
-    if( FOldCenter.Length() == 1000000 )
-      FCenter = FOldCenter;
+    if( OldCenter.Length() == 1000000 )
+      Center = OldCenter;
   }
 
   FGlP->Data[0][1] = M[0][0];  //000-A
@@ -168,28 +166,22 @@ void TDUnitCell::Reciprical(bool v )  {
   FGlP->Data[1][23] = M[2][1]+M[1][1]+M[0][1];
   FGlP->Data[2][23] = M[2][2]+M[1][2]+M[0][2];
 
-  FReciprical = v;
+  Reciprocal = v;
 }
 
 void TDUnitCell::Create(const olxstr& cName, const ACreationParams* cpar)  {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
   olxstr NewL;
-  TGlMaterial *SGlM;
   TGPCollection* GPC = FParent->CollectionX( GetCollectionName(), NewL);
   if( GPC == NULL )
     GPC = FParent->NewCollection(NewL);
-  else  {
-    if( GPC->PrimitiveCount() )  {
-      GPC->AddObject(this);
-      return;
-    }
-  }
-  TGraphicsStyle* GS = GPC->Style();
   GPC->AddObject(this);
+  if( GPC->PrimitiveCount() != 0 )  return;
 
+  TGraphicsStyle* GS = GPC->Style();
   FGlP = GPC->NewPrimitive("Lines", sgloLines);
-  SGlM = const_cast<TGlMaterial*>(GS->Material("Lines"));
+  TGlMaterial* SGlM = const_cast<TGlMaterial*>(GS->Material("Lines"));
   if( SGlM->Mark() )  {
     SGlM->SetFlags(sglmAmbientF);
     SGlM->AmbientF = 0;
@@ -197,7 +189,7 @@ void TDUnitCell::Create(const olxstr& cName, const ACreationParams* cpar)  {
   FGlP->SetProperties(SGlM);
 
   FGlP->Data.Resize(3, 24);
-  Reciprical(FReciprical);
+  SetReciprocal(Reciprocal);
 
   TGlPrimitive* GlP = GPC->NewPrimitive("Label", sgloText);  // labels
   SGlM = const_cast<TGlMaterial*>(GS->Material("Label"));
@@ -223,48 +215,35 @@ bool TDUnitCell::GetDimensions(vec3d &Max, vec3d &Min)  {
 //..............................................................................
 bool TDUnitCell::Orient(TGlPrimitive *P)  {
   if( P->GetType() == sgloText )  {
-    olxstr Str;
+    olxstr Str('O');
+    const TGlFont& fnt = *Parent()->Scene()->DefFont();
     vec3d T;
-    double tr = 0.3;
-    vec3d Center( FParent->GetBasis().GetCenter() );
-    Center += FCenter;
+    const double tr = 0.3, 
+      scale = 1./FParent->GetScale();;
+
+    vec3d cnt( FParent->GetBasis().GetCenter() );
+    cnt += Center;
     T += tr;
-    T += Center;
+    T += cnt;
     T *= FParent->GetBasis().GetMatrix();
-    glRasterPos3d(T[0], T[1], T[2]);
-    Str = "O";
-    P->SetString(&Str);
-    P->Draw();
-    //A
-    T[0] = FGlP->Data[0][1];  T[1] = FGlP->Data[1][1];  T[2] = FGlP->Data[2][1];
-    T[0] += tr;  T[1] -= tr;  T[2] -=tr;
-    T += Center;
-    T *= FParent->GetBasis().GetMatrix();
-    glRasterPos3d(T[0], T[1], T[2]);
-    Str = "a";
-    P->SetString(&Str);
-    P->Draw();
-    //B
-    T[0] = FGlP->Data[0][3];  T[1] = FGlP->Data[1][3];  T[2] = FGlP->Data[2][3];
-    T[0] -= tr;  T[1] += tr;  T[2] -=tr;
-    T += Center;
-    T *= FParent->GetBasis().GetMatrix();
-    glRasterPos3d(T[0], T[1], T[2]);
-    Str = "b";
-    P->SetString(&Str);
-    P->Draw();
-    //C
-    T[0] = FGlP->Data[0][5];  T[1] = FGlP->Data[1][5];  T[2] = FGlP->Data[2][5];
-    T[0] -= tr;  T[1] -= tr;  T[2] +=tr;
-    T += Center;
-    T *= FParent->GetBasis().GetMatrix();
-    glRasterPos3d(T[0], T[1], T[2]);
-    Str = "c";
-    P->SetString(&Str);
-    P->Draw();
+    T *= scale;
+    FParent->DrawTextSafe(T, Str, fnt);
+    for( int i=0; i < 3; i++ )  {
+      const int ind = i*2+1;
+      T[0] = FGlP->Data[0][ind];  
+      T[1] = FGlP->Data[1][ind];  
+      T[2] = FGlP->Data[2][ind];
+      for( int j=0; j < 3; j++ )
+        T[j] -= (j==i ? -tr : tr);
+      T += cnt;
+      T *= FParent->GetBasis().GetMatrix();
+      T *= scale;
+      Str[0] = (char)('a'+i);
+      FParent->DrawTextSafe(T, Str, fnt);
+    }
     return true;
   }
-  Parent()->GlTranslate(FCenter);
+  Parent()->GlTranslate(Center);
 /*
   const TMatrixD& m = FAU->GetCellToCartesian();
   const TMatrixD& n = FAU->GetCartesianToCell();

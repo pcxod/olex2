@@ -74,12 +74,10 @@ void TXBond::Create(const olxstr& cName, const ACreationParams* cpar)  {
   TGPCollection* GPC = FParent->CollectionX( GetCollectionName(), NewL);
   if( GPC == NULL )
     GPC = FParent->NewCollection(NewL);
-  else  {
-    if( GPC->PrimitiveCount() )  {
-      GPC->AddObject(this);
-      Params()[4] = GPC->Style()->GetParam("R", "1").ToDouble();
-      return;
-    }
+  else if( GPC->PrimitiveCount() != 0 )  {
+    GPC->AddObject(this);
+    Params()[4] = GPC->Style()->GetParam("R", "1").ToDouble();
+    return;
   }
   TGraphicsStyle* GS = GPC->Style();
   GS->SetSaveable( GPC->Name().CharCount('.') == 0 );

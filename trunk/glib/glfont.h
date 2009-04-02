@@ -53,6 +53,8 @@ public:
   int TextWidth(const olxstr &Text, int cnt=-1);
   int MaxTextLength(int width);
   int TextHeight(const olxstr &Text=EmptyString);
+  inline uint16_t GetLeftmost() const {  return FLeftmost;  }
+  inline uint16_t GetTopmost() const {  return FTopmost;  }
   bool CharFromRGBArray(size_t Char, unsigned char *RGBData, int width, int height);
 
   void CreateGlyphsFromRGBArray(bool FixedWidth, short Width, short Height);

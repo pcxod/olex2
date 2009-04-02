@@ -45,6 +45,7 @@ void TXGlLabels::Create(const olxstr& cName, const ACreationParams* cpar)  {
   if( GPC == NULL )    
     GPC = FParent->NewCollection( GetCollectionName() );
   GPC->AddObject(this);
+  if( GPC->PrimitiveCount() != 0 )  return;
 
   TGlMaterial* GlM = const_cast<TGlMaterial*>(GPC->Style()->Material("Text"));
   if( GlM->Mark() )

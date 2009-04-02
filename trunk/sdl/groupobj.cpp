@@ -42,10 +42,6 @@ AGroupObject::AGroupObject(TObjectGroup *Group)  {
   FProperties = NULL;
 }
 //..............................................................................
-const AGOProperties * AGroupObject::GetProperties() const  {
-  return FProperties;
-}
-//..............................................................................
 AGOProperties * AGroupObject::SetProperties( const AGOProperties *C)  {
   FProperties = FParent->NewProps(this, FProperties, C);
   return FProperties;

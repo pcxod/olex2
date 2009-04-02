@@ -24,10 +24,13 @@ TXPlane::TXPlane(const olxstr& collectionName, TSPlane *Plane, TGlRenderer *Rend
 void TXPlane::Create(const olxstr& cName, const ACreationParams* cpar)  {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
-  TGlMaterial GlM, GlM1;
-  TGPCollection* GPC = FParent->NewCollection( GetCollectionName() );
+  TGPCollection* GPC = FParent->FindCollection( GetCollectionName() );
+  if( GPC == NULL )
+    GPC = FParent->NewCollection( GetCollectionName() );
   GPC->AddObject(this);
+  if( GPC->PrimitiveCount() != 0 )  return;
 
+  TGlMaterial GlM, GlM1;
   GlM.SetFlags( sglmAmbientF|sglmDiffuseF|sglmAmbientB|sglmDiffuseB|sglmTransparent);
   GlM1.SetFlags( sglmAmbientF );
   GlM1.AmbientF = 0;
