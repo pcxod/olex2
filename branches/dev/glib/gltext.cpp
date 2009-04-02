@@ -34,10 +34,8 @@ TGlText::TGlText(const olxstr& collectionName, TGlRenderer *Render, const olxstr
 //..............................................................................
 void TGlText::SetStaticPos(bool On)  {
   SetBit(On, TextFlags, gltStaticPos);
-  if( On )
-  {  Move2D(true);  Roteable(true); }
-  else
-  {  Move2D(false);  Roteable(false); }
+  Move2D(On);  
+  Roteable(On); 
 }
 //..............................................................................
 void TGlText::SetStaticWidth(bool On)  {
@@ -76,17 +74,16 @@ void TGlText::SetText(const olxstr &T)  {
 void TGlText::Create(const olxstr& cName, const ACreationParams* cpar)  {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
-  TGlMaterial GlM;
-//  GlM.SetFlags( sglmAmbientF|sglmDiffuseF|sglmSpecularF|sglmShininessF|
-//                sglmAmbientB|sglmDiffuseB|sglmSpecularB|sglmShininessB);
-  GlM.SetFlags(sglmAmbientF|sglmIdentityDraw);
-
   TGPCollection* GPC = FParent->FindCollection( GetCollectionName() );
   if( GPC == NULL )    
     GPC = FParent->NewCollection( GetCollectionName() );
   GPC->AddObject(this);
+  if( GPC->PrimitiveCount() != 0 )  return;
 
   TGlPrimitive* GlP = GPC->NewPrimitive("Text", sgloText);
+  TGlMaterial GlM;
+  GlM.SetFlags(sglmAmbientF|sglmIdentityDraw);
+
   GlM.AmbientF = 0x7fff7f;
   GlP->SetProperties(&GlM);
   GlP->Params[0] = -1;  //bitmap; TTF by default

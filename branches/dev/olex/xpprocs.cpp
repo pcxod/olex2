@@ -1252,6 +1252,8 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     res = 10;
   if( res <= 0 )  
     res = 1;
+  if( res > 1 && res < 100 )
+    res = Round(res);
 
   int ScrHeight = (int)(((double)orgHeight/(res*2)-1.0)*res*2),
       ScrWidth  = (int)(((double)orgWidth/(res*2)-1.0)*res*2);

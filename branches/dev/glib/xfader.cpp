@@ -30,19 +30,20 @@ TXFader::~TXFader()  {
 }
 //..............................................................................
 void TXFader::Create(const olxstr& cName, const ACreationParams* cpar)  {
-  if( cName.Length() )  SetCollectionName(cName);
-  TGlPrimitive *GlP;
-  TGPCollection *GPC;
+  if( !cName.IsEmpty() )  
+    SetCollectionName(cName);
   GlM.SetFlags(sglmAmbientF|sglmTransparent|sglmIdentityDraw);
   GlM.AmbientF = 0xffffffff;
   GlM.DiffuseF = 0xffffffff;
 
-  GPC = FParent->FindCollection( GetCollectionName() );
-  if( !GPC )    GPC = FParent->NewCollection( GetCollectionName() );
+  TGPCollection* GPC = FParent->FindCollection( GetCollectionName() );
+  if( GPC == NULL )    
+    GPC = FParent->NewCollection( GetCollectionName() );
   GPC->AddObject(this);
+  if( GPC->PrimitiveCount() != 0 )  return;
 
   //glBitmap
-  GlP = GPC->NewPrimitive("Quad", sgloQuads);
+  TGlPrimitive* GlP = GPC->NewPrimitive("Quad", sgloQuads);
   GlP->SetProperties( &GlM );
   GlP->Data.Resize(4, 4);
 }

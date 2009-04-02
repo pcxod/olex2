@@ -426,6 +426,10 @@ void TGXApp::CreateObjects(bool SyncBonds, bool centerModel)  {
   cell[5] = XFile().GetAsymmUnit().Angles()[2].GetV();
   DUnitCell().Init( cell );
   DBasis().AsymmUnit( &XFile().GetAsymmUnit() );
+
+  for( int i=0; i < XLabels.Count(); i++ )
+    XLabels[i].Create();
+
   for( int i=0; i < ObjectsToCreate.Count(); i++ )
     ObjectsToCreate[i]->Create();
 
@@ -438,9 +442,6 @@ void TGXApp::CreateObjects(bool SyncBonds, bool centerModel)  {
     }
     LooseObjects[i]->Create();
   }
-
-  for( int i=0; i < XLabels.Count(); i++ )
-    XLabels[i].Create();
 
   FLabels->Init();
   FLabels->Create();
@@ -2803,7 +2804,7 @@ void TGXApp::ShowPart(const TIntList& parts, bool show)  {
 void TGXApp::HklVisible(bool v)  {
   if( v )  {
     // default if could not load the hkl ...
-    FDUnitCell->Reciprical(false);
+    FDUnitCell->SetReciprocal(false);
     FHklVisible = false;
     if( !FHklFile->RefCount() )  {
       if( !FXFile->HasLastLoader() )
@@ -2817,7 +2818,7 @@ void TGXApp::HklVisible(bool v)  {
   }
   for( int i=0; i < XReflections.Count(); i++ )  XReflections[i].Visible(v);
   FHklVisible = v;
-  FDUnitCell->Reciprical(v);
+  FDUnitCell->SetReciprocal(v);
 }
 //..............................................................................
 void TGXApp::SetGridDepth(const vec3d& crd)  {

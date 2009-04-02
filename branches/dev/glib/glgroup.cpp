@@ -32,15 +32,11 @@ void TGlGroup::Create(const olxstr& cName, const ACreationParams* cpar)  {
   TGPCollection *GPC = FParent->FindCollection( GetCollectionName() );
   if( GPC == NULL )  
     GPC = FParent->NewCollection( GetCollectionName() );
-  else  {
-    TGraphicsStyle *GS = GPC->Style();
-    FGlM = const_cast<TGlMaterial*>(GS->Material("mat"));
-    GPC->AddObject(this);
-    return;
-  }
   GPC->AddObject(this);
   TGraphicsStyle *GS = GPC->Style();
   FGlM = const_cast<TGlMaterial*>(GS->Material("mat"));
+  if( GPC->PrimitiveCount() != 0 )  return;
+
   DefaultColor = FGlM->Mark();
   if( FGlM->Mark() )  {
     if( ParentGroup() != NULL )  {

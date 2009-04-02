@@ -33,14 +33,11 @@ void TXGlLabel::Create(const olxstr& cName, const ACreationParams* cpar)  {
   TGPCollection* GPC = FParent->FindCollection( GetCollectionName() );
   if( GPC == NULL )   
     GPC = FParent->NewCollection( GetCollectionName() );
-  else  {
-    GPC->AddObject(this);
-    return;
-  }
+  GPC->AddObject(this);
+  if( GPC->PrimitiveCount() != 0 )  return;
+
   TGraphicsStyle* GS = GPC->Style();
   GS->SetPersistent(true);
-  GPC->AddObject(this);
-
   TGlMaterial* GlM = const_cast<TGlMaterial*>(GS->Material("Plane"));
   if( GlM->Mark() )  {
     GlM->SetFlags( sglmAmbientF|sglmIdentityDraw|sglmTransparent  );
