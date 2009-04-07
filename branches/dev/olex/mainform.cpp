@@ -1484,8 +1484,6 @@ void TMainForm::OnAtomConnChange(wxCommandEvent& event)  {
   TXAtom *XA = (TXAtom*)FObjectUnderMouse;
   if( XA == NULL )  return;
   olxstr Tmp("conn ");
-  if( XA->Selected() )  Tmp << "sel";
-  else                  Tmp << "#x" << XA->GetXAppId();
   Tmp << ' ';
   switch( event.GetId() )  {
     case ID_AtomConn0:   Tmp << '0';  break;
@@ -1494,6 +1492,8 @@ void TMainForm::OnAtomConnChange(wxCommandEvent& event)  {
     case ID_AtomConn3:   Tmp << '3';  break;
     case ID_AtomConn4:   Tmp << '4';  break;
   }
+  if( XA->Selected() )  Tmp << " sel";
+  else                  Tmp << " #x" << XA->GetXAppId();
   ProcessXPMacro(Tmp, MacroError);
 }
 //..............................................................................
