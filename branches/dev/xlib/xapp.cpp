@@ -210,63 +210,59 @@ void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F)  {
   delete [] Ucifs;
 }
 //..............................................................................
-/* Creates a label, if number of parts attached to the atoms is more than one
-  and the atom label is shorter than 3, the two chars are added - the first is the part
-  and the secind is the atom suffix... if number of parts is one or the label is longer
-  or equal to 3, the continious charachters are added
-*/
 void TXApp::NameHydrogens(TSAtom& SA, TUndoData* ud, bool CheckLabel)  {
   TNameUndo* nu = static_cast<TNameUndo*>(ud);
   int allH = 0, 
-      processedH = 0; // just a termination counter
-  olxdict<int,int,TPrimitiveComparator> parts;
+      processedH = 0, // just a termination counter
+      lablInc = 0; 
+  olxdict<int,TSAtomPList,TPrimitiveComparator> parts;
   olxstr Name( SA.GetLabel().StartsFromi(SA.GetAtomInfo().GetSymbol()) ? 
     SA.GetLabel().SubStringFrom( SA.GetAtomInfo().GetSymbol().Length() )
     :
     EmptyString
   );
   for( int i=0; i < SA.NodeCount(); i++ )  {
-    const TSAtom& sa = SA.Node(i);
+    TSAtom& sa = SA.Node(i);
     if( !sa.IsDeleted() && sa.GetAtomInfo() == iHydrogenIndex )  {
       allH ++;
-      parts(sa.CAtom().GetPart(), 0);
+      TSAtomPList& al = parts.Add(sa.CAtom().GetPart());
+      al.Add(&sa);
     }
   }
-  bool usePart0 = Name.Length() > 2;  
-  if( usePart0 )    
-    parts(0,0);  // init part 0 counter
-  for( int i=0; i < SA.NodeCount(); i++ )  {
-    TSAtom& SA1 = SA.Node(i);
-    if( SA1.IsDeleted() )  continue;
-    if( SA1.GetAtomInfo().GetIndex() != iHydrogenIndex )  
-      continue;
-    const int part = usePart0 ? 0 : SA.CAtom().GetPart();
-    olxstr Labl = SA1.GetAtomInfo().GetSymbol() + Name;
-    // the suffix matters only for multiple hydrogen atoms attached
-    if( allH > 1 )  {
+  for( int i=0; i < parts.Count(); i++ )  {
+    const TSAtomPList& al = parts.GetValue(i);
+    for( int j=0; j < al.Count(); j++ )  {
+      olxstr Labl = al[j]->GetAtomInfo().GetSymbol() + Name;
       if( Labl.Length() >= 4 )  
         Labl.SetLength(3);
-      else if( Labl.Length() < 3 && parts.Count() > 1 )
-        Labl << (char)('a' + parts.IndexOf(part));
-      Labl << (char)('a' + parts(part, 0)++);
+      else if( Labl.Length() < 3 )
+        Labl << (char)('a'+i);  // part ID
+      Labl << (char)('a' + lablInc++);      
+      if( CheckLabel )  {
+        TCAtom* CA;
+        while( (CA = XFile().GetAsymmUnit().FindCAtom(Labl)) != NULL )  {
+          if( CA == &al[j]->CAtom() || CA->IsDeleted() )  break;
+          Labl = al[j]->GetAtomInfo().GetSymbol()+Name;
+          if( Labl.Length() >= 4 )  
+            Labl.SetLength(3);
+          else if( Labl.Length() < 3 )
+            Labl << (char)('a'+i);
+          const char next_ch = 'a' + lablInc++;
+          if( next_ch > 'z' )
+            Labl = CA->GetParent()->CheckLabel(NULL, Labl);
+          else
+            Labl << next_ch;      
+        }
+      }
+      if( al[j]->GetLabel() != Labl )  {
+        if( nu != NULL )  
+          nu->AddAtom(*al[j], al[j]->GetLabel() );
+        al[j]->CAtom().Label() = Labl;
+      }
+      processedH++;
+      if( processedH >= allH )  
+        break;
     }
-    if( CheckLabel )  {
-      TCAtom* CA;
-      while( (CA = XFile().GetAsymmUnit().FindCAtom(Labl)) != NULL && 
-        CA->GetPart() == SA1.CAtom().GetPart() )  
-      {
-        if( CA == &SA1.CAtom() || CA->IsDeleted() )  break;
-        Labl = SA1.GetAtomInfo().GetSymbol()+Name;
-        if( Labl.Length() >= 4 )  Labl.SetLength(3);
-        Labl << (char)('a' + parts(part, 0)++);      }
-    }
-    if( SA1.GetLabel() != Labl )  {
-      if( nu != NULL )  
-        nu->AddAtom(SA1, SA1.GetLabel() );
-      SA1.CAtom().Label() = Labl;
-    }
-    processedH++;
-    if( processedH >= allH )  break;
   }
 }
 //..............................................................................

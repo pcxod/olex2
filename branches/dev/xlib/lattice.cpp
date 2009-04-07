@@ -1212,7 +1212,7 @@ void TLattice::RestoreCoordinates()  {
 //..............................................................................
 bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPList& ProcessingAtoms, int part, TCAtomPList* generated)  {
 
-  if( ProcessingAtoms.IndexOf(&atom) != -1 || (atom.CAtom().IsHAttached() && part == -1) )
+  if( ProcessingAtoms.IndexOf(&atom) != -1 || (atom.CAtom().IsHAttached() && part == DefNoPart) )
     return false;
   ProcessingAtoms.Add( &atom );
 
@@ -1228,7 +1228,7 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPL
   //    }
   //  }
   //}
-  if( part == -1 )  {  // check for disorder
+  if( part == DefNoPart )  {  // check for disorder
     TIntList parts;
     TDoubleList occu;
     RefinementModel* rm = GetAsymmUnit().GetRefMod();

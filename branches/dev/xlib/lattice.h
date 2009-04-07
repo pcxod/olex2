@@ -155,7 +155,7 @@ protected:
   void RemoveNonHBonding(class TAtomEnvi& envi);
 //  void AnalyseHBonding(class TAtomEnvi& Envi);
   bool _AnalyseAtomHAdd(class AConstraintGenerator& cg, TSAtom& atom, TSAtomPList& ProcessingAtoms, 
-    int part = -1, TCAtomPList* generated = NULL);
+    int part = DefNoPart, TCAtomPList* generated = NULL);
   void _ProcessRingHAdd(AConstraintGenerator& cg, const TPtrList<TBasicAtomInfo>& rcont);
 public:
   void AnalyseHAdd(class AConstraintGenerator& cg, const TSAtomPList& atoms);

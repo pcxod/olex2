@@ -2957,9 +2957,8 @@ void TMainForm::macSump(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 }
 //..............................................................................
 void TMainForm::macPart(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  const static int NoPart = -10345;
   RefinementModel& rm = FXApp->XFile().GetRM();
-  int part = NoPart, partCount = Options.FindValue("p", "1").ToInt();
+  int part = DefNoPart, partCount = Options.FindValue("p", "1").ToInt();
   XLibMacros::ParseNumbers<int>(Cmds, 1, &part);
   bool linkOccu = Options.Contains("lo");
 
@@ -2980,7 +2979,7 @@ void TMainForm::macPart(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       leq = &rm.Vars.NewEquation(1.0, 0.01);
   }
 
-  if( part == NoPart ) 
+  if( part == DefNoPart ) 
     part = FXApp->XFile().GetLattice().GetAsymmUnit().GetNextPart();
 
   for( int i=0; i < partCount; i++ )  {
@@ -5493,18 +5492,26 @@ void TMainForm::macUpdateOptions(TStrObjList &Cmds, const TParamList &Options, T
 }
 //..............................................................................
 void TMainForm::macReload(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  if( !Cmds[0].Comparei("macro") && TEFile::FileExists(FXApp->BaseDir() + "macro.xld") )  {
-    TStrList SL;
-    FMacroFile.LoadFromXLFile(FXApp->BaseDir() + "macro.xld", &SL);
-    FMacroItem = FMacroFile.Root().FindItem("xl_macro");
-    FMacroFile.Include(&SL);
-    TBasicApp::GetLog() << (SL);
+  if( Cmds[0].Comparei("macro") == 0 )  {
+    if( TEFile::FileExists(FXApp->BaseDir() + "macro.xld") )  {
+      TStrList SL;
+      FMacroFile.LoadFromXLFile(FXApp->BaseDir() + "macro.xld", &SL);
+      FMacroItem = FMacroFile.Root().FindItem("xl_macro");
+      FMacroFile.Include(&SL);
+      TBasicApp::GetLog() << (SL);
+    }
   }
-  if( !Cmds[0].Comparei("macro") && TEFile::FileExists(FXApp->BaseDir() + "help.xld") )  {
-    TStrList SL;
-    FHelpFile.LoadFromXLFile(FXApp->BaseDir() + "help.xld", &SL);
-    FHelpItem = FHelpFile.Root().FindItem("xl_help");
-    TBasicApp::GetLog() << (SL);
+  else if( Cmds[0].Comparei("help") == 0 )  {
+    if( TEFile::FileExists(FXApp->BaseDir() + "help.xld") )  {
+      TStrList SL;
+      FHelpFile.LoadFromXLFile(FXApp->BaseDir() + "help.xld", &SL);
+      FHelpItem = FHelpFile.Root().FindItem("xl_help");
+      TBasicApp::GetLog() << (SL);
+    }
+  }
+  else if( Cmds[0].Comparei("dictionary") == 0 )  {
+    if( TEFile::FileExists( DictionaryFile ) )
+      Dictionary.SetCurrentLanguage(DictionaryFile, Dictionary.GetCurrentLanguage() );
   }
 }
 //..............................................................................
@@ -5897,7 +5904,9 @@ void TMainForm::macInstallPlugin(TStrObjList &Cmds, const TParamList &Options, T
         TDownloadProgress* dp = new TDownloadProgress(*FXApp);
         TBasicApp::GetInstance()->OnProgress->Add( dp );
         try  { local_f = httpFS.SaveFile( zip_fn );  }
-        catch( ... )  {  }
+        catch( ... )  {  
+          TBasicApp::GetLog().Error("Could not locate the plugin zip file - trying direct download...");
+        }
         TBasicApp::GetInstance()->OnProgress->Remove(dp);
         delete dp;
         if( local_f != NULL )  {

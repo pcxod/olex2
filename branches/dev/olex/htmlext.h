@@ -293,7 +293,7 @@ public:
   }
 
   inline bool GetShowTooltips()  const {  return ShowTooltips;  }
-  void SetShowTooltips(bool v);
+  void SetShowTooltips(bool v, const olxstr& html_name=EmptyString);
 
   bool PageLoadRequested()  const  {  return FPageLoadRequested;  }
   inline void IncLockPageLoad()    {  FLockPageLoad++;  }

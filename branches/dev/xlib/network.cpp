@@ -97,14 +97,24 @@ void TNetwork::TDisassembleTaskCheckConnectivity::Run(long index)  {
     const double D1 = sqr(Atoms[index]->GetAtomInfo().GetRad1() + Atoms[i]->GetAtomInfo().GetRad1() + Delta);
     if(  D < D1 )  {
       const int that_p = Atoms[i]->CAtom().GetPart();
-      if( this_p == 0 || that_p == 0 )  {
-        Atoms[index]->AddNode(*Atoms[i]);
-        Atoms[i]->AddNode(*Atoms[index]);  // crosslinking
+      if( this_p < 0 || that_p < 0 ) {
+        const smatd& sm = Atoms[i]->GetMatrix(0);
+        bool found = false;
+        for( int j=0; j < Atoms[index]->MatrixCount(); j++ )  {
+          if( Atoms[index]->GetMatrix(j).GetTag() == sm.GetTag() && 
+              Atoms[index]->GetMatrix(j) == sm )  
+          {
+            found = true;
+            continue;
+          }
+        }
+        if( !found ) 
+          continue;
       }
-      else if( (this_p == that_p) && (this_p > 0)  )  {
-        Atoms[index]->AddNode(*Atoms[i]);
-        Atoms[i]->AddNode(*Atoms[index]);  // crosslinking
-      }
+      else if( !(this_p == that_p || this_p == 0 && that_p == 0) )
+        continue;
+      Atoms[index]->AddNode(*Atoms[i]);
+      Atoms[i]->AddNode(*Atoms[index]);  // crosslinking
     }
   }
 }
@@ -113,14 +123,12 @@ void TNetwork::Disassemble(TSAtomPList& Atoms, TNetPList& Frags, TSBondPList* In
   if( Atoms.Count() < 2 )  return;
   TStopWatch sw(__FUNC__);
   sw.start("Initialising");
-  TNetwork *Net;
   //TSAtom *A;
-  int ac;
   double** Distances = new double* [4];
   double  Delta = GetLattice().GetDelta();
   Atoms.QuickSorter.SortSF(Atoms, AtomsSortByDistance);
   Distances[0] = new double[ Atoms.Count() ];  // distsnaces from {0,0,0} to an atom
-  ac = Atoms.Count();
+  int ac = Atoms.Count();
   for( int i = 0; i < ac; i++ )  {
     Distances[0][i] = Atoms[i]->crd().Length();
     Atoms[i]->SetTag(1);
@@ -272,30 +280,53 @@ void TNetwork::THBondSearchTask::Run(long ind)  {
       const double D = A1->crd().QDistanceTo( Atoms[i]->crd() );
       const double D1 = sqr(A1->GetAtomInfo().GetRad1() + Atoms[i]->GetAtomInfo().GetRad1() + Delta);
       if(  D < D1 )  {
-         if( (this_p == that_p && this_p >= 0) || this_p == 0 || that_p == 0 )  {
-          TSBond* B = new TSBond(&A1->GetNetwork());
-          B->SetType(sotHBond);
-          B->SetA(*A1);
-          B->SetB(*Atoms[i]);
-          A1->AddBond(*B);
-          Atoms[i]->AddBond(*B);
-          A1->GetNetwork().AddBond(*B);
+        if( this_p < 0 || that_p < 0 ) {
+          const smatd& sm = Atoms[i]->GetMatrix(0);
+          bool found = false;
+          for( int j=0; j < A1->MatrixCount(); j++ )  {
+            if( A1->GetMatrix(j).GetTag() == sm.GetTag() && A1->GetMatrix(j) == sm )  {
+              found = true;
+              continue;
+            }
+          }
+          if( !found ) 
+            continue;
         }
+        else if( !(this_p == that_p || this_p == 0 && that_p == 0) )
+          continue;
+        TSBond* B = new TSBond(&A1->GetNetwork());
+        B->SetType(sotHBond);
+        B->SetA(*A1);
+        B->SetB(*Atoms[i]);
+        A1->AddBond(*B);
+        Atoms[i]->AddBond(*B);
+        A1->GetNetwork().AddBond(*B);
       }
     }
-    else  {
+    else if( Bonds != NULL )  {
       const int that_p = Atoms[i]->CAtom().GetPart();
       const double D = A1->crd().QDistanceTo( Atoms[i]->crd() );
       const double D1 = sqr(A1->GetAtomInfo().GetRad1() + Atoms[i]->GetAtomInfo().GetRad1() + Delta);
       if(  D < D1 )  {
-        if( (this_p == that_p && this_p >= 0) || this_p == 0 || that_p == 0 )  {
-          TSBond* B = new TSBond( &A1->GetNetwork() );
-          B->SetType(sotHBond);
-          B->SetA(*A1);
-          B->SetB(*Atoms[i]);
-          if( Bonds != NULL )
-            Bonds->Add( B );
+        if( this_p < 0 || that_p < 0 ) {
+          const smatd& sm = Atoms[i]->GetMatrix(0);
+          bool found = false;
+          for( int j=0; j < A1->MatrixCount(); j++ )  {
+            if( A1->GetMatrix(j).GetTag() == sm.GetTag() && A1->GetMatrix(j) == sm )  {
+              found = true;
+              continue;
+            }
+          }
+          if( !found ) 
+            continue;
         }
+        else if( !(this_p == that_p || this_p == 0 && that_p == 0) )
+          continue;
+        TSBond* B = new TSBond( &A1->GetNetwork() );
+        B->SetType(sotHBond);
+        B->SetA(*A1);
+        B->SetB(*Atoms[i]);
+        Bonds->Add( B );
       }
     }
   }

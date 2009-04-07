@@ -114,6 +114,7 @@ enum
   ID_MenuItemBondInfo,
   ID_MenuAtomType,
   ID_MenuAtomOccu,
+  ID_MenuAtomConn,
 
   ID_About, // help menu
 
@@ -165,6 +166,12 @@ enum
   ID_AtomOccu12,
   ID_AtomOccu13,
   ID_AtomOccu14,
+
+  ID_AtomConn0,
+  ID_AtomConn1,
+  ID_AtomConn2,
+  ID_AtomConn3,
+  ID_AtomConn4,
 
   ID_Selection,
   ID_SelGroup,
@@ -280,6 +287,11 @@ BEGIN_EVENT_TABLE(TMainForm, wxFrame)  // basic interface
   EVT_MENU(ID_AtomOccu13, TMainForm::OnAtomOccuChange)
   EVT_MENU(ID_AtomOccu14, TMainForm::OnAtomOccuChange)
 
+  EVT_MENU(ID_AtomConn0, TMainForm::OnAtomConnChange)
+  EVT_MENU(ID_AtomConn1, TMainForm::OnAtomConnChange)
+  EVT_MENU(ID_AtomConn2, TMainForm::OnAtomConnChange)
+  EVT_MENU(ID_AtomConn3, TMainForm::OnAtomConnChange)
+  EVT_MENU(ID_AtomConn4, TMainForm::OnAtomConnChange)
 
   EVT_MENU(ID_SelGroup, TMainForm::OnSelection)
   EVT_MENU(ID_SelUnGroup, TMainForm::OnSelection)
@@ -918,6 +930,7 @@ separated values of Atom Type and radius, an entry a line" );
     pmBang = new TMenu();
     pmAtomType = new TMenu();
     pmAtomOccu = new TMenu();
+    pmAtomConn = new TMenu();
   pmFragment = new TMenu();
   pmSelection = new TMenu();
   pmGraphics = new TMenu();
@@ -1023,8 +1036,14 @@ separated values of Atom Type and radius, an entry a line" );
     pmAtomOccu->Append(ID_AtomOccu12, wxT("1/2"));
     pmAtomOccu->Append(ID_AtomOccu13, wxT("1/3"));
     pmAtomOccu->Append(ID_AtomOccu14, wxT("1/4"));
+    pmAtomConn->Append(ID_AtomConn0, wxT("0"));
+    pmAtomConn->Append(ID_AtomConn1, wxT("1"));
+    pmAtomConn->Append(ID_AtomConn2, wxT("2"));
+    pmAtomConn->Append(ID_AtomConn3, wxT("3"));
+    pmAtomConn->Append(ID_AtomConn4, wxT("4"));
 
   pmAtom->Append(ID_MenuAtomType, wxT("Type"), pmAtomType);
+  pmAtom->Append(ID_MenuAtomConn, wxT("Bonds"), pmAtomConn);
   pmAtom->Append(ID_MenuAtomOccu, wxT("Occupancy"), pmAtomOccu);
   pmAtom->AppendSeparator();
   pmAtom->Append(ID_AtomGrowShells, wxT("Grow Shell"));
@@ -1457,6 +1476,23 @@ void TMainForm::OnAtomOccuChange(wxCommandEvent& event)  {
     case ID_AtomOccu12:  Tmp << "10.5";  break;
     case ID_AtomOccu13:  Tmp << "10.33333";  break;
     case ID_AtomOccu14:  Tmp << "10.25";  break;
+  }
+  ProcessXPMacro(Tmp, MacroError);
+}
+//..............................................................................
+void TMainForm::OnAtomConnChange(wxCommandEvent& event)  {
+  TXAtom *XA = (TXAtom*)FObjectUnderMouse;
+  if( XA == NULL )  return;
+  olxstr Tmp("conn ");
+  if( XA->Selected() )  Tmp << "sel";
+  else                  Tmp << "#x" << XA->GetXAppId();
+  Tmp << ' ';
+  switch( event.GetId() )  {
+    case ID_AtomConn0:   Tmp << '0';  break;
+    case ID_AtomConn1:   Tmp << '1';  break;
+    case ID_AtomConn2:   Tmp << '2';  break;
+    case ID_AtomConn3:   Tmp << '3';  break;
+    case ID_AtomConn4:   Tmp << '4';  break;
   }
   ProcessXPMacro(Tmp, MacroError);
 }
@@ -2749,7 +2785,7 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
   DefSceneP = I->GetFieldValue("SceneP");
   // restroring language
   if( TEFile::FileExists( DictionaryFile ) )  {
-      Dictionary.SetCurrentLanguage(DictionaryFile, I->GetFieldValue("language", EmptyString) );
+    Dictionary.SetCurrentLanguage(DictionaryFile, I->GetFieldValue("language", EmptyString) );
   }
   FXApp->SetExtraZoom( I->GetFieldValue("ExtraZoom", "1.25").ToDouble() );
 

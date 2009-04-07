@@ -217,6 +217,7 @@ protected:
 
   void OnAtomTypeChange(wxCommandEvent& event);
   void OnAtomOccuChange(wxCommandEvent& event);
+  void OnAtomConnChange(wxCommandEvent& event);
   void OnAtomTypePTable(wxCommandEvent& event);
   void OnAtom(wxCommandEvent& event); // general handler
 
@@ -636,7 +637,7 @@ protected:
     wxMenuItem *miAtomGrowFrag;
     TMenu    *pmBang;  // bonds angles
     TMenu    *pmAtomType;
-    TMenu    *pmAtomOccu;
+    TMenu    *pmAtomOccu, *pmAtomConn;
   TMenu    *pmBond;
     wxMenuItem *miBondInfo;
     TMenu    *pmTang;  // torsion angles

@@ -812,7 +812,7 @@ void THtmlSwitch::ToStrings(TStrList &List)  {
           Tmp1 = '#';  Tmp1 << FParams.GetName(j);
           Tmp.Replace( Tmp1, FParams.GetValue(j) );
         }
-        List.Add( Tmp );
+        List.Add( TGlXApp::GetMainForm()->TranslateString(Tmp) );
 
       } // end of parameter replcaement
       else
@@ -1130,7 +1130,8 @@ void THtml::CheckForSwitches(THtmlSwitch &Sender, bool izZip)  {
           if( Toks[j].IndexOf('#') != -1 )  {
             olxstr Tmp = Toks[j], Tmp1;
             for( int k=0; k < Sender.Params().Count(); k++ )  {
-              Tmp1 = '#';  Tmp1 << Sender.Params().GetName(k);
+              Tmp1 = '#';  
+              Tmp1 << Sender.Params().GetName(k);
               Tmp.Replace( Tmp1, Sender.Params().GetValue(k) );
             }
             Sw->AddParam(Tmp);
@@ -1774,33 +1775,29 @@ void THtml::funIsItem(const TStrObjList &Params, TMacroError &E)  {
   E.SetRetVal( sw == NULL ? false : true );
 }
 //..............................................................................
-void THtml::SetShowTooltips(bool v)  {
+void THtml::SetShowTooltips(bool v, const olxstr& html_name)  {
   ShowTooltips = v;
-  TStateChange sc(prsHtmlTTVis, v);
+  TStateChange sc(prsHtmlTTVis, v, html_name);
   TGlXApp::GetMainForm()->OnStateChange->Execute((AEventsDispatcher*)this, &sc);
 }
 //..............................................................................
 void THtml::macTooltips(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   if( Cmds.IsEmpty() )  {
     SetShowTooltips( !GetShowTooltips() );
-    return;
   }
-  if( Cmds.Count() == 1 )  {
-    if( !Cmds[0].Comparei("true") || ! Cmds[0].Comparei("false") )  {
+  else if( Cmds.Count() == 1 )  {
+    if( Cmds[0].Comparei("true") == 0 || Cmds[0].Comparei("false") == 0 )
       this->SetShowTooltips( Cmds[0].ToBool() );
-      return;
-    }
     else  {
       THtml* html = TGlXApp::GetMainForm()->GetHtml( Cmds[0] );
       if( html == NULL )  return;
       html->SetShowTooltips( !html->GetShowTooltips() );
-      return;
     }
   }
-
-  THtml* html = TGlXApp::GetMainForm()->GetHtml( Cmds[0] );
-  if( html != NULL )  {
-    html->SetShowTooltips( Cmds[1].ToBool() );
+  else  {
+    THtml* html = TGlXApp::GetMainForm()->GetHtml( Cmds[0] );
+    if( html != NULL )
+      html->SetShowTooltips( Cmds[1].ToBool(), Cmds[0] );
   }
 }
 //..............................................................................

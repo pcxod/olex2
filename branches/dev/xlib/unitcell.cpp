@@ -591,7 +591,7 @@ void TUnitCell::GetAtomEnviList(TSAtom& atom, TAtomEnvi& envi, bool IncludeQ, in
     TSAtom& A = atom.Node(i);
     if( A.IsDeleted() ) continue;
     if( !IncludeQ && A.GetAtomInfo() == iQPeakIndex )  continue;
-    if( part == -1 || (A.CAtom().GetPart() == 0 || A.CAtom().GetPart() == part) )
+    if( part == DefNoPart || (A.CAtom().GetPart() == 0 || A.CAtom().GetPart() == part) )
       envi.Add( A.CAtom(), I, A.crd() );
   }
   for( int i=0; i < atom.CAtom().AttachedAtomCount(); i++ )  {
@@ -612,7 +612,7 @@ void TUnitCell::GetAtomEnviList(TSAtom& atom, TAtomEnvi& envi, bool IncludeQ, in
       }
     }
     if( Add )  {
-      if( part == -1 || (A.GetPart() == 0 || A.GetPart() == part) )
+      if( part == DefNoPart || (A.GetPart() == 0 || A.GetPart() == part) )
         envi.Add( A, *m, v );
     }
     delete m;

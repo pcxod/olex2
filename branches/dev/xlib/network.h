@@ -8,8 +8,10 @@
 
 BeginXlibNamespace()
 
-  typedef TTypeListExt<class TNetwork, IEObject> TNetList;
-  typedef TPtrList<class TNetwork> TNetPList;
+const int DefNoPart = -100;
+
+typedef TTypeListExt<class TNetwork, IEObject> TNetList;
+typedef TPtrList<class TNetwork> TNetPList;
 
 class TNetwork: public TBasicNode<TNetwork, TSAtom, TSBond>  {
 protected:
