@@ -111,7 +111,7 @@ void TNetwork::TDisassembleTaskCheckConnectivity::Run(long index)  {
         if( !found ) 
           continue;
       }
-      else if( !(this_p == that_p || this_p == 0 && that_p == 0) )
+      else if( !(this_p == that_p || this_p == 0 || that_p == 0) )
         continue;
       Atoms[index]->AddNode(*Atoms[i]);
       Atoms[i]->AddNode(*Atoms[index]);  // crosslinking
@@ -211,8 +211,10 @@ void TNetwork::CreateBondsAndFragments(TSAtomPList& Atoms, TNetPList& Frags)  {
             A3.SetNetwork(*Net);
             TSBond* B = new TSBond(Net);
             B->SetType(sotBond);
-            B->SetA(A2); B->SetB(A3);
-            A2.AddBond(*B);  A3.AddBond(*B);
+            B->SetA(A2); 
+            B->SetB(A3);
+            A2.AddBond(*B);  
+            A3.AddBond(*B);
             Net->AddBond(*B);
             A3.SetTag(0);
           }
@@ -320,7 +322,7 @@ void TNetwork::THBondSearchTask::Run(long ind)  {
           if( !found ) 
             continue;
         }
-        else if( !(this_p == that_p || this_p == 0 && that_p == 0) )
+        else if( !(this_p == that_p || this_p == 0 || that_p == 0) )
           continue;
         TSBond* B = new TSBond( &A1->GetNetwork() );
         B->SetType(sotHBond);
@@ -741,7 +743,10 @@ void TNetwork_UnifyRings(TTypeList<TSAtomPList>& rings)  {
 
 
 void TNetwork::FindRings( const TPtrList<TBasicAtomInfo>& ringContent,
-                          TTypeList<TSAtomPList>& res)  {
+                          TTypeList<TSAtomPList>& res)  
+{
+  if( ringContent.IsEmpty() )  
+    return;
   TSAtomPList all;
   all.SetCapacity( NodeCount() );
   for( int i=0; i < NodeCount(); i++ )  {

@@ -709,6 +709,18 @@ void THtmlSwitch::UpdateFileIndex()  {
   }
   FStrings.LoadFromTextStream(*is);
   delete is;
+  for( int i=0; i < FStrings.Count(); i++ )  {
+    // replace the parameters with their values
+    if( FStrings[i].IndexOf('#') != -1 )  {
+      // "key word parameter"
+      FStrings[i].Replace( "#switch_name", FName );
+      if( FParent != NULL )
+        FStrings[i].Replace( "#parent_name", FParent->Name() );
+
+      for( int j=0; j < FParams.Count(); j++ )
+        FStrings[i].Replace( olxstr('#') << FParams.GetName(j), FParams.GetValue(j) );
+    } // end of parameter replacement
+  }
   FParentHtml->CheckForSwitches(*this, TZipWrapper::IsZipFile(FN) );
   for( int i=0; i < SwitchCount(); i++ )
     FSwitches[i].UpdateFileIndex();
@@ -789,36 +801,15 @@ THtmlSwitch*  THtmlSwitch::FindSwitch(const olxstr &IName)  {
 }
 //..............................................................................
 void THtmlSwitch::ToStrings(TStrList &List)  {
-  olxstr Tmp, Tmp1;
-  AHtmlObject *HO;
-  if( FFileIndex >= 0 && FFileIndex < FFiles.Count() )  {
-    Tmp = "<SWITCHINFOS SRC=\"";
-    Tmp << FFiles[FFileIndex] << "\">";
-    List.Add(Tmp);
-  }
+  if( FFileIndex >= 0 && FFileIndex < FFiles.Count() )
+    List.Add("<SWITCHINFOS SRC=\"")<< FFiles[FFileIndex] << "\">";
+
   for( int i=0; i < FStrings.Count(); i++ )  {
     if( FStrings.GetObject(i) != NULL )
       FStrings.GetObject(i)->ToStrings(List);
-    else  {
-      // replace the parameters with their values
-      if( FStrings[i].IndexOf('#') != -1 )  {
-        Tmp = FStrings[i];
-        // "key word parameter"
-        Tmp.Replace( "#switch_name", FName );
-        if( FParent != NULL )
-          Tmp.Replace( "#parent_name", FParent->Name() );
-
-        for( int j=0; j < FParams.Count(); j++ )  {
-          Tmp1 = '#';  Tmp1 << FParams.GetName(j);
-          Tmp.Replace( Tmp1, FParams.GetValue(j) );
-        }
-        List.Add( TGlXApp::GetMainForm()->TranslateString(Tmp) );
-
-      } // end of parameter replcaement
-      else
-        List.Add( FStrings[i] );
-    }
+    List.Add( FStrings[i] );
   }
+
   if( FFileIndex >= 0 && FFileIndex < FFiles.Count() )
     List.Add("<SWITCHINFOE>");
 }

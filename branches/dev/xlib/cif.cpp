@@ -780,15 +780,18 @@ void TCif::Initialize()  {
   this->Title << " OLEX: imported from CIF";
 
   ALoop = FindLoop("_atom_site");
-  if( !ALoop )  return;
+  if( ALoop == NULL )  return;
 
-  int ALabel =  ALoop->Table().ColIndex("_atom_site_label"), ALabel1, ALabel2;
+  int ALabel =  ALoop->Table().ColIndex("_atom_site_label");
   int ACx =     ALoop->Table().ColIndex("_atom_site_fract_x");
   int ACy =     ALoop->Table().ColIndex("_atom_site_fract_y");
   int ACz =     ALoop->Table().ColIndex("_atom_site_fract_z");
   int ACUiso =  ALoop->Table().ColIndex("_atom_site_U_iso_or_equiv");
   int ASymbol = ALoop->Table().ColIndex("_atom_site_type_symbol");
-  if( ALabel < 0 || ACx < 0 || ACy < 0 || ACz < 0 || ASymbol < 0)  return;
+  if( ALabel < 0 || ACx < 0 || ACy < 0 || ACz < 0 || ASymbol < 0)  {
+    TBasicApp::GetLog().Error("Failed to locate required fields in atoms loop");
+    return;
+  }
   TAtomsInfo& atoms_info = TAtomsInfo::GetInstance();
   for( int i=0; i < ALoop->Table().RowCount(); i++ )  {
     A = &GetAsymmUnit().NewAtom();
@@ -812,8 +815,8 @@ void TCif::Initialize()  {
   for( int i=0; i < Loops.Count(); i++ )  {
     if( Loops.GetObject(i) == ALoop )  continue;
     for( int j=0; j < Loops.GetObject(i)->Table().ColCount(); j++ )  {
-      ALabel1 = Loops.GetObject(i)->Table().ColName(j).IndexOf("atom_site" );
-      ALabel2 = Loops.GetObject(i)->Table().ColName(j).IndexOf("label" );
+      int ALabel1 = Loops.GetObject(i)->Table().ColName(j).IndexOf("atom_site" );
+      int ALabel2 = Loops.GetObject(i)->Table().ColName(j).IndexOf("label" );
       if(  ALabel1 >= 0 && ALabel2 >= 0 )  {
         for( int k=0; k < Loops.GetObject(i)->Table().RowCount(); k++ )  {
           ALabel1 = ALabel;
@@ -825,15 +828,14 @@ void TCif::Initialize()  {
   }
 
   ALoop = FindLoop("_atom_site_aniso");
-  if( !ALoop )  return;
-  int U11, U22, U33, U12, U13, U23;
+  if( ALoop == NULL )  return;
   ALabel =  ALoop->Table().ColIndex("_atom_site_aniso_label");
-  U11 =     ALoop->Table().ColIndex("_atom_site_aniso_U_11");
-  U22 =     ALoop->Table().ColIndex("_atom_site_aniso_U_22");
-  U33 =     ALoop->Table().ColIndex("_atom_site_aniso_U_33");
-  U23 =     ALoop->Table().ColIndex("_atom_site_aniso_U_23");
-  U13 =     ALoop->Table().ColIndex("_atom_site_aniso_U_13");
-  U12 =     ALoop->Table().ColIndex("_atom_site_aniso_U_12");
+  int U11 =     ALoop->Table().ColIndex("_atom_site_aniso_U_11");
+  int U22 =     ALoop->Table().ColIndex("_atom_site_aniso_U_22");
+  int U33 =     ALoop->Table().ColIndex("_atom_site_aniso_U_33");
+  int U23 =     ALoop->Table().ColIndex("_atom_site_aniso_U_23");
+  int U13 =     ALoop->Table().ColIndex("_atom_site_aniso_U_13");
+  int U12 =     ALoop->Table().ColIndex("_atom_site_aniso_U_12");
   if( ALabel < 0 || U11 < 0 || U22 < 0 || U33 < 0 || U23 < 0 || U13 < 0 || U12 < 0 )  return;
   for( int i=0; i < ALoop->Table().RowCount(); i++ )  {
     A = GetAsymmUnit().FindCAtom( ALoop->Table()[i][ALabel] );

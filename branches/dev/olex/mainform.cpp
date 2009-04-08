@@ -1196,6 +1196,8 @@ separated values of Atom Type and radius, an entry a line" );
 #if defined(__WIN32__) || defined(__MAC__)
   StartupInit();
 #endif
+  //wxStaticText* wxst = new wxStaticText(FGlCanvas, -1, wxT("Static text"), 
+  //  wxPoint(100,100));
 }
 //..............................................................................
 void TMainForm::StartupInit()  {
@@ -1408,8 +1410,7 @@ void TMainForm::OnHtmlPanel(wxCommandEvent& event)  {
   ProcessXPMacro("html.updatehtml", MacroError);
 }
 //..............................................................................
-void TMainForm::OnGenerate(wxCommandEvent& WXUNUSED(event))
-{
+void TMainForm::OnGenerate(wxCommandEvent& WXUNUSED(event))  {
 //  TBasicApp::GetLog()->Info("generate!");;
   TdlgGenerate *G = new TdlgGenerate(this);
   if( G->ShowModal() == wxID_OK )  {
@@ -1495,6 +1496,7 @@ void TMainForm::OnAtomConnChange(wxCommandEvent& event)  {
   if( XA->Selected() )  Tmp << " sel";
   else                  Tmp << " #x" << XA->GetXAppId();
   ProcessXPMacro(Tmp, MacroError);
+  TimePerFrame = FXApp->Draw();
 }
 //..............................................................................
 void TMainForm::OnDrawQChange(wxCommandEvent& event)  {
@@ -1755,7 +1757,8 @@ void TMainForm::OnFragmentHide(wxCommandEvent& event)  {
   if( GetFragmentList(L) == 0 )
     return;
   FXApp->FragmentsVisible(L, false);
-  FXApp->CenterView();
+  //FXApp->CenterView();
+  TimePerFrame = FXApp->Draw();
 }
 //..............................................................................
 void TMainForm::OnFragmentShowOnly(wxCommandEvent& event)  {
@@ -1765,7 +1768,8 @@ void TMainForm::OnFragmentShowOnly(wxCommandEvent& event)  {
     return;
   FXApp->InvertFragmentsList(L, L1);
   FXApp->FragmentsVisible(L1, false);
-  FXApp->CenterView();
+  //FXApp->CenterView();
+  TimePerFrame = FXApp->Draw();
 }
 //..............................................................................
 void TMainForm::OnFragmentSelectAtoms(wxCommandEvent& event)  {
@@ -1807,6 +1811,8 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
   if( MsgId == ID_GLDRAW && !IsIconized() )  {
     if( !FBitmapDraw )  
       FGlCanvas->SwapBuffers();
+    //wxClientDC dc(FGlCanvas);
+    //dc.DrawText(wxT("RRRRRRRRRRRR"), 0, 0);
   }
   else if( MsgId == ID_TIMER )  {
     FTimer->OnTimer()->SetEnabled( false );

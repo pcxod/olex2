@@ -597,6 +597,8 @@ void TUnitCell::GetAtomEnviList(TSAtom& atom, TAtomEnvi& envi, bool IncludeQ, in
   for( int i=0; i < atom.CAtom().AttachedAtomCount(); i++ )  {
     TCAtom& A = atom.CAtom().GetAttachedAtom(i);
     if( A.IsDeleted() || (!IncludeQ && A.GetAtomInfo() == iQPeakIndex) )  continue;
+    if( A.GetPart() < 0 || atom.CAtom().GetPart() < 0 )
+      continue;
 
     smatd* m = GetClosest( atom.ccrd(), A.ccrd(), false );
     if( m == NULL )
