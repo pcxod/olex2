@@ -36,6 +36,10 @@ int TLattice_SortFragments(const TNetwork* n1, const TNetwork* n2)  {
 int TLattice_SortAtomsById(const TSAtom* a1, const TSAtom* a2)  {
   return a1->CAtom().GetId() - a2->CAtom().GetId();
 }
+int TLattice_AtomsSortByDistance(const TSAtom* A1, const TSAtom* A2)  {
+  const double d = A1->crd().QLength() - A2->crd().QLength();
+  return (d < 0 ? -1 : ((d > 0 ) ? 1 : 0));
+}
 //---------------------------------------------------------------------------
 // TLattice function bodies
 //---------------------------------------------------------------------------
@@ -338,6 +342,59 @@ void  TLattice::Generate(TCAtomPList* Template, bool ClearCont, bool IncludeQ)  
 
   Disassemble();
   Generated = true;
+}
+//..............................................................................
+void TLattice::GenerateCell(bool includeQ)  {
+  ClearAtoms();
+  ClearMatrices();
+  OnStructureGrow->Enter(this);
+  const TUnitCell& uc = GetUnitCell();
+  TAsymmUnit& au = GetAsymmUnit();
+  for( int i=0; i < uc.MatrixCount(); i++ )  {
+    const smatd& m = uc.GetMatrix(i);
+    for( int j=0; j < au.AtomCount(); j++ )  {
+      TCAtom& ca = au.GetAtom(j);
+      if( ca.IsDeleted() )  continue;
+      TSAtom* sa = new TSAtom(Network);
+      sa->CAtom( ca );
+      sa->ccrd() = m * ca.ccrd();
+      for( int k=0; k < 3; k++ )  {
+        while( sa->ccrd()[k] < 0 )  
+          sa->ccrd()[k] += 1;
+        while( sa->ccrd()[k] >= 1 )  
+          sa->ccrd()[k] -= 1;
+      }
+      au.CellToCartesian( sa->ccrd(), sa->crd() );
+      sa->SetEllipsoid( &GetUnitCell().GetEllipsoid(m.GetTag(), ca.GetId()) );
+      sa->AddMatrix( Matrices.Add(new smatd(m)) );
+      AddSAtom(sa);
+    }
+  }
+  Atoms.QuickSorter.SortSF(Atoms, TLattice_AtomsSortByDistance );
+  const int lc = Atoms.Count();
+  float* distances = new float[ lc+1 ];
+  for( int i=0; i < lc; i++ )
+    distances[i] = Atoms[i]->crd().QLength();    
+  for( int i=0; i < lc; i++ )  {
+    if( Atoms[i] == NULL )  continue;
+    for( int j=i+1; j < lc; j++ )  {
+      if( Atoms[j] == NULL )  continue;
+      if( (distances[j] - distances[i]) > 0.1 )  break;
+      const double qd = Atoms[i]->crd().QDistanceTo( Atoms[j]->crd() );
+      if( qd < 0.00001 )  {
+        Atoms[i]->AddMatrices(Atoms[j]);
+        delete Atoms[j];
+        Atoms[j] = NULL;
+        continue;
+      }
+    }
+  }
+  delete [] distances;
+  Atoms.Pack();
+
+  Disassemble();
+  Generated = true;
+  OnStructureGrow->Exit(this);
 }
 //..............................................................................
 void TLattice::Generate(const vec3d& MFrom, const vec3d& MTo, TCAtomPList* Template,

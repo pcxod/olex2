@@ -1573,50 +1573,53 @@ void TMainForm::macExit(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 }
 //..............................................................................
 void TMainForm::macPack(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  vec3d From( -1.0, -1.0, -1.0);
-  vec3d To( 1.5, 1.5, 1.5);
-
-  int number_count = 0;
-  for( int i=0; i < Cmds.Count(); i++ )  {
-    if( Cmds[i].IsNumber() )  {
-      if( !(number_count%2) )
-        From[number_count/2] = Cmds[i].ToDouble();
-      else
-        To[number_count/2]= Cmds[i].ToDouble();
-      number_count++;
-      Cmds.Delete(i);
-      i--;
-    }
-  }
-
-  if( number_count != 0 && !(number_count == 6 || number_count == 1) )  {
-    Error.ProcessingError(__OlxSrcInfo, "please provide 6 numbers" );
-    return;
-  }
-
   bool ClearCont = !Options.Contains("c");
   bool IncludeQ = Options.Contains("q");
-  TCAtomPList TemplAtoms;
-  if( !Cmds.IsEmpty() )
-    FXApp->FindCAtoms(Cmds.Text(' '), TemplAtoms);
-
   int64_t st = TETime::msNow();
-  if( number_count == 6 || number_count == 0 )
-    FXApp->Generate(From, To, TemplAtoms.IsEmpty() ? NULL : &TemplAtoms, ClearCont, IncludeQ);
+  if( Cmds.Count() == 1 && Cmds[0].Comparei("cell") == 0 )
+    FXApp->XFile().GetLattice().GenerateCell(IncludeQ);
   else  {
-    TXAtomPList xatoms;
-    FindXAtoms(Cmds, xatoms, true, true);
-    vec3d cent;
-    double wght = 0;
-    for( int i=0; i < xatoms.Count(); i++ )  {
-      cent += xatoms[i]->Atom().crd()*xatoms[i]->Atom().CAtom().GetOccu();
-      wght += xatoms[i]->Atom().CAtom().GetOccu();
-    }
-    if( wght != 0 )
-      cent /= wght;
-    FXApp->Generate(cent, From[0], TemplAtoms.IsEmpty() ? NULL : &TemplAtoms, ClearCont, IncludeQ);
-  }
+    vec3d From( -1.0, -1.0, -1.0);
+    vec3d To( 1.5, 1.5, 1.5);
 
+    int number_count = 0;
+    for( int i=0; i < Cmds.Count(); i++ )  {
+      if( Cmds[i].IsNumber() )  {
+        if( !(number_count%2) )
+          From[number_count/2] = Cmds[i].ToDouble();
+        else
+          To[number_count/2]= Cmds[i].ToDouble();
+        number_count++;
+        Cmds.Delete(i);
+        i--;
+      }
+    }
+
+    if( number_count != 0 && !(number_count == 6 || number_count == 1) )  {
+      Error.ProcessingError(__OlxSrcInfo, "please provide 6 numbers" );
+      return;
+    }
+
+    TCAtomPList TemplAtoms;
+    if( !Cmds.IsEmpty() )
+      FXApp->FindCAtoms(Cmds.Text(' '), TemplAtoms);
+
+    if( number_count == 6 || number_count == 0 )
+      FXApp->Generate(From, To, TemplAtoms.IsEmpty() ? NULL : &TemplAtoms, ClearCont, IncludeQ);
+    else  {
+      TXAtomPList xatoms;
+      FindXAtoms(Cmds, xatoms, true, true);
+      vec3d cent;
+      double wght = 0;
+      for( int i=0; i < xatoms.Count(); i++ )  {
+        cent += xatoms[i]->Atom().crd()*xatoms[i]->Atom().CAtom().GetOccu();
+        wght += xatoms[i]->Atom().CAtom().GetOccu();
+      }
+      if( wght != 0 )
+        cent /= wght;
+      FXApp->Generate(cent, From[0], TemplAtoms.IsEmpty() ? NULL : &TemplAtoms, ClearCont, IncludeQ);
+    }
+  }
   TBasicApp::GetLog().Info( olxstr(FXApp->XFile().GetLattice().AtomCount()) << " atoms and " <<
      FXApp->XFile().GetLattice().BondCount() << " bonds generated in " <<
      FXApp->XFile().GetLattice().FragmentCount() << " fragments (" << (TETime::msNow()-st) << "ms)");
@@ -4602,25 +4605,6 @@ void TMainForm::macCollectivise(TStrObjList &Cmds, const TParamList &Options, TM
     FXApp->Collectivise( Atoms[i] );
 }
 //..............................................................................
-olxstr macSel_GetName2(const TSAtom& a1, const TSAtom& a2)  {
-  return olxstr(a1.GetGuiLabel()) << '-' << a2.GetGuiLabel();
-}
-olxstr macSel_GetName3(const TSAtom& a1, const TSAtom& a2, const TSAtom& a3)  {
-  return olxstr(a1.GetGuiLabel()) << '-' << a2.GetGuiLabel() << '-' << a3.GetGuiLabel();
-}
-olxstr macSel_GetName4(const TSAtom& a1, const TSAtom& a2, const TSAtom& a3, const TSAtom& a4)  {
-  return olxstr(a1.GetGuiLabel()) << '-' << a2.GetGuiLabel() << '-' << a3.GetGuiLabel() << '-' << a4.GetGuiLabel();
-}
-olxstr macSel_GetName4a(const TSAtom& a1, const TSAtom& a2, const TSAtom& a3, const TSAtom& a4)  {
-  return olxstr(a1.GetGuiLabel()) << '-' << a2.GetGuiLabel() << ' ' << a3.GetGuiLabel() << '-' << a4.GetGuiLabel();
-}
-olxstr macSel_GetPlaneName(const TSPlane& p)  {
-  if( p.Count() == 0 )  return EmptyString;
-  olxstr rv(p.GetAtom(0).GetGuiLabel());
-  for( int i=1; i < p.Count(); i++ )
-    rv << ' ' << p.GetAtom(i).GetGuiLabel();
-  return rv;
-}
 void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   if( Cmds.Count() == 1 && Cmds[0].Comparei("res") == 0 )  {
     FXApp->GetRender().ClearSelection();
@@ -4706,145 +4690,9 @@ void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError
         return;
       }
     }
-    if( Sel->Count() == 2 )  {
-      if( EsdlInstanceOf(*Sel->Object(0), TXAtom) &&
-          EsdlInstanceOf(*Sel->Object(1), TXAtom) )  {
-        Tmp = "Distance (";
-        Tmp << macSel_GetName2(((TXAtom*)Sel->Object(0))->Atom(), ((TXAtom*)Sel->Object(1))->Atom());
-        v = ((TXAtom*)Sel->Object(0))->Atom().crd().DistanceTo( ((TXAtom*)Sel->Object(1))->Atom().crd() );
-        TBasicApp::GetLog() << (Tmp << "): " << olxstr::FormatFloat(3, v) << '\n');
-        return;
-      }
-      if( EsdlInstanceOf(*Sel->Object(0), TXBond) &&
-          EsdlInstanceOf(*Sel->Object(1), TXBond) )  {
-        TXBond* A = (TXBond*)Sel->Object(0), *B =(TXBond*)Sel->Object(1);
-        Tmp = "Angle (";
-        Tmp << macSel_GetName4a(A->Bond().A(), A->Bond().B(), B->Bond().A(), B->Bond().B());
-        v = Angle(A->Bond().A().crd(), A->Bond().B().crd(), B->Bond().A().crd(), B->Bond().B().crd());
-        Tmp << "): " << olxstr::FormatFloat(3, v) << " (" << olxstr::FormatFloat(3, 180-v) << ')';
-        TBasicApp::GetLog() << (Tmp << '\n');
-        Tmp = "Angle (";
-        Tmp << macSel_GetName4a(A->Bond().A(), A->Bond().B(), B->Bond().B(), B->Bond().A());
-        v = Angle(A->Bond().A().crd(), A->Bond().B().crd(), B->Bond().A().crd(), B->Bond().B().crd());
-        Tmp << "): " << olxstr::FormatFloat(3, v) << " (" << olxstr::FormatFloat(3, 180-v) << ')';
-        TBasicApp::GetLog() << (Tmp << '\n');
-        // check for ajusten bonds
-        if( &A->Bond().A() == &B->Bond().A() || &A->Bond().A() == &B->Bond().B() ||
-            &A->Bond().B() == &B->Bond().A() || &A->Bond().B() == &B->Bond().B() )
-          return;
-        Tmp = "Torsion angle (";
-        v = TorsionAngle(A->Bond().A().crd(), A->Bond().B().crd(), B->Bond().B().crd(), B->Bond().A().crd());
-        Tmp << macSel_GetName4(A->Bond().A(), A->Bond().B(), B->Bond().B(), B->Bond().A());
-        Tmp << "): " << olxstr::FormatFloat(3, v) << " (" << olxstr::FormatFloat(3, 180-v) << ')';
-        TBasicApp::GetLog() << (Tmp << '\n');
-        Tmp = "Torsion angle (";
-        v = TorsionAngle(A->Bond().A().crd(), A->Bond().B().crd(), B->Bond().A().crd(), B->Bond().B().crd());
-        Tmp << macSel_GetName4(A->Bond().A(), A->Bond().B(), B->Bond().B(), B->Bond().A());
-        Tmp << "): " << olxstr::FormatFloat(3, v) << " (" << olxstr::FormatFloat(3, 180-v) << ')';
-        TBasicApp::GetLog() << (Tmp << '\n');
-        return;
-      }
-      if( EsdlInstanceOf(*Sel->Object(0), TXPlane) &&
-          EsdlInstanceOf(*Sel->Object(1), TXAtom) )  {
-        Tmp = "Distance (plane-atom): ";
-        v = ((TXPlane*)Sel->Object(0))->Plane().DistanceTo(((TXAtom*)Sel->Object(1))->Atom());
-        TBasicApp::GetLog() << ( Tmp << olxstr::FormatFloat(3, v) << '\n');
-        Tmp = "Distance (plane centroid-atom): ";
-        v = ((TXPlane*)Sel->Object(0))->Plane().GetCenter().DistanceTo(((TXAtom*)Sel->Object(1))->Atom().crd());
-        TBasicApp::GetLog() << ( Tmp << olxstr::FormatFloat(3, v) << '\n');
-        return;
-      }
-      if( EsdlInstanceOf(*Sel->Object(0), TXAtom) &&
-          EsdlInstanceOf(*Sel->Object(1), TXPlane) )  {
-        Tmp = "Distance (plane-atom): ";
-        v = ((TXPlane*)Sel->Object(1))->Plane().DistanceTo(((TXAtom*)Sel->Object(0))->Atom());
-        TBasicApp::GetLog() << ( Tmp << olxstr::FormatFloat(3, v) << '\n');
-        Tmp = "Distance (plane centroid-atom): ";
-        v = ((TXPlane*)Sel->Object(1))->Plane().GetCenter().DistanceTo(((TXAtom*)Sel->Object(0))->Atom().crd());
-        TBasicApp::GetLog() << ( Tmp << olxstr::FormatFloat(3, v) << '\n');
-        return;
-      }
-      if( EsdlInstanceOf(*Sel->Object(0), TXBond) &&
-          EsdlInstanceOf(*Sel->Object(1), TXPlane) )  {
-        Tmp = "Angle (plane-bond): ";
-        v = ((TXPlane*)Sel->Object(1))->Plane().Angle(((TXBond*)Sel->Object(0))->Bond());
-        TBasicApp::GetLog() << ( Tmp << olxstr::FormatFloat(3, v) << '\n');
-        return;
-      }
-      if( EsdlInstanceOf(*Sel->Object(1), TXBond) &&
-          EsdlInstanceOf(*Sel->Object(0), TXPlane) )  {
-        Tmp = "Angle (plane-bond): ";
-        v = ((TXPlane*)Sel->Object(0))->Plane().Angle(((TXBond*)Sel->Object(1))->Bond());
-        TBasicApp::GetLog() << ( Tmp << olxstr::FormatFloat(3, v) << '\n');
-        return;
-      }
-      if( EsdlInstanceOf(*Sel->Object(1), TXPlane) &&
-          EsdlInstanceOf(*Sel->Object(0), TXPlane) )  {
-        TSPlane &a = ((TXPlane*)Sel->Object(0))->Plane(),
-                &b = ((TXPlane*)Sel->Object(1))->Plane();
-        Tmp = "Angle (plane-plane): ";
-        v = a.Angle(b);
-        TBasicApp::GetLog() << ( Tmp << olxstr::FormatFloat(3, v) << '\n');
-        Tmp = "Distance (plane centroid-plane centroid): ";
-        v = a.GetCenter().DistanceTo(b.GetCenter());
-        TBasicApp::GetLog() << ( Tmp << olxstr::FormatFloat(3, v) << '\n');
-        (Tmp = "Distance (plane[") << macSel_GetPlaneName(a) << "]-centroid): ";
-        v = a.DistanceTo(b.GetCenter());
-        TBasicApp::GetLog() << ( Tmp << olxstr::FormatFloat(3, v) << '\n');
-        (Tmp = "Distance (plane[") << macSel_GetPlaneName(b) << "]-centroid): ";
-        v = b.DistanceTo(a.GetCenter());
-        TBasicApp::GetLog() << ( Tmp << olxstr::FormatFloat(3, v) << '\n');
-        return;
-      }
-    }
-    if( Sel->Count() == 3 )  {
-      if( EsdlInstanceOf(*Sel->Object(0), TXAtom) &&
-          EsdlInstanceOf(*Sel->Object(1), TXAtom) &&
-          EsdlInstanceOf(*Sel->Object(2), TXAtom) )  {
-        TSAtom &a1 = ((TXAtom*)Sel->Object(0))->Atom(),
-               &a2 = ((TXAtom*)Sel->Object(1))->Atom(),
-               &a3 = ((TXAtom*)Sel->Object(2))->Atom();
-        Tmp = "Angle (";
-        macSel_GetName3(a1, a2, a3);
-        v = Angle(a1.crd(), a2.crd(), a3.crd());
-        TBasicApp::GetLog() << ( Tmp << "): " << olxstr::FormatFloat(3, v) << '\n');
-        return;
-      }
-    }
-    if( Sel->Count() == 4 )  {
-      if( EsdlInstanceOf(*Sel->Object(0), TXAtom) &&
-          EsdlInstanceOf(*Sel->Object(1), TXAtom) &&
-          EsdlInstanceOf(*Sel->Object(2), TXAtom) &&
-          EsdlInstanceOf(*Sel->Object(3), TXAtom) )  {
-        TSAtom &a1 = ((TXAtom*)Sel->Object(0))->Atom(),
-               &a2 = ((TXAtom*)Sel->Object(1))->Atom(),
-               &a3 = ((TXAtom*)Sel->Object(2))->Atom(),
-               &a4 = ((TXAtom*)Sel->Object(3))->Atom();
-        Tmp = "Torsion angle (";
-        Tmp << macSel_GetName4(a1, a2, a3, a4);
-        v = TorsionAngle(a1.crd(), a2.crd(), a3.crd(), a4.crd());
-        Tmp << "): " << olxstr::FormatFloat(3, v) << " (" << olxstr::FormatFloat(3, 180-v) << ')';
-        TBasicApp::GetLog() << (Tmp << '\n');
-        Tmp = "Angle (";
-        Tmp << macSel_GetName3(a1, a2, a3);
-        v = Angle(a1.crd(), a2.crd(), a3.crd());
-        TBasicApp::GetLog() << (Tmp << "): " << olxstr::FormatFloat(3, v) << '\n');
-        Tmp = "Angle (";
-        Tmp << macSel_GetName3(a2, a3, a4);
-        v = Angle(a2.crd(), a3.crd(), a4.crd());
-        TBasicApp::GetLog() << (Tmp << "): " << olxstr::FormatFloat(3, v) << '\n');
-        Tmp = "Distance (";
-        Tmp << macSel_GetName2(a1, a2);
-        TBasicApp::GetLog() << (Tmp << "): " << olxstr::FormatFloat(3, a1.crd().DistanceTo(a2.crd())) << '\n');
-        Tmp = "Distance (";
-        Tmp << macSel_GetName2(a2, a3);
-        TBasicApp::GetLog() << (Tmp << "): " << olxstr::FormatFloat(3, a2.crd().DistanceTo(a3.crd())) << '\n');
-        Tmp = "Distance (";
-        Tmp << macSel_GetName2(a3, a4);
-        TBasicApp::GetLog() << (Tmp << "): " << olxstr::FormatFloat(3, a3.crd().DistanceTo(a4.crd())) << '\n');
-        return;
-      }
-    }
+    olxstr seli = FXApp->GetSelectionInfo();
+    if( !seli.IsEmpty() )
+      FXApp->GetLog() << seli;
   }
   else  {
     for( int i=0; i < Options.Count(); i++ )  {
@@ -8189,35 +8037,9 @@ void TMainForm::macProjSph(TStrObjList &Cmds, const TParamList &Options, TMacroE
 }
 //..............................................................................
 void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  typedef AnAssociation2<TIntList,TIntList> con_info;
-  TTypeList< AnAssociation2<TIntList,TIntList> > conn_l;
-  con_info& conn1 = conn_l.AddNew();
-  conn1.A().SetCount(2);
-  conn1.A()[0] = 1;
-  conn1.A()[1] = 2;
-  con_info& conn2 = conn_l.AddNew();
-  conn2.A().SetCount(3);
-  conn2.A()[0] = 3;
-  conn2.A()[1] = 4;
-  conn2.A()[2] = 5;
-
-  con_info& conn3 = conn_l.AddNew();
-  conn3.A().SetCount(2);
-  conn3.A()[0] = 6;
-  conn3.A()[1] = 7;
-
-  con_info& conn4 = conn_l.AddNew();
-  conn4.A().SetCount(1);
-  conn4.A()[0] = 8;
-
-  TTypeList<TIntList> out;
-  TEGraphNode<int,int>::GeneratePermutations(conn_l, out);
-  for( int i=0; i < out.Count(); i++ )  {
-    const TIntList& pm = out[i];
-    olxstr str = pm[0];
-    for( int j=1; j < pm.Count(); j++ )
-      str << ' ' << pm[j];
-    TBasicApp::GetLog() << (str << '\n');
+  TLattice& latt = FXApp->XFile().GetLattice();
+  for( int i=0; i < latt.AtomCount(); i++ )  {
+    Labels.NewLabel(FGlCanvas, latt.GetAtom(i).GetLabel(), 100, 100);
   }
 }
 //..............................................................................

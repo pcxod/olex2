@@ -755,6 +755,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\olex\guilabels.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\olex\htmlext.cpp"
 				>
 			</File>
@@ -914,6 +918,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\repository\fftn.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\olex\guilabels.h"
 				>
 			</File>
 			<File

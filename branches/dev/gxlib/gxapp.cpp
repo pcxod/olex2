@@ -746,122 +746,120 @@ void TGXApp::TangList(TXBond *XMiddle, TStrList &L)  {
   }
 }
 //..............................................................................
+olxstr macSel_GetName2(const TSAtom& a1, const TSAtom& a2)  {
+  return olxstr(a1.GetGuiLabel()) << '-' << a2.GetGuiLabel();
+}
+olxstr macSel_GetName3(const TSAtom& a1, const TSAtom& a2, const TSAtom& a3)  {
+  return olxstr(a1.GetGuiLabel()) << '-' << a2.GetGuiLabel() << '-' << a3.GetGuiLabel();
+}
+olxstr macSel_GetName4(const TSAtom& a1, const TSAtom& a2, const TSAtom& a3, const TSAtom& a4)  {
+  return olxstr(a1.GetGuiLabel()) << '-' << a2.GetGuiLabel() << '-' << a3.GetGuiLabel() << '-' << a4.GetGuiLabel();
+}
+olxstr macSel_GetName4a(const TSAtom& a1, const TSAtom& a2, const TSAtom& a3, const TSAtom& a4)  {
+  return olxstr(a1.GetGuiLabel()) << '-' << a2.GetGuiLabel() << ' ' << a3.GetGuiLabel() << '-' << a4.GetGuiLabel();
+}
+olxstr macSel_GetPlaneName(const TSPlane& p)  {
+  if( p.Count() == 0 )  return EmptyString;
+  olxstr rv(p.GetAtom(0).GetGuiLabel());
+  for( int i=1; i < p.Count(); i++ )
+    rv << ' ' << p.GetAtom(i).GetGuiLabel();
+  return rv;
+}
 olxstr TGXApp::GetSelectionInfo()  {
-  olxstr rv;
+  olxstr Tmp;
   double v;
   TGlGroup* Sel = FGlRender->Selection();
   if( Sel->Count() == 2 )  {
     if( EsdlInstanceOf(*Sel->Object(0), TXAtom) &&
       EsdlInstanceOf(*Sel->Object(1), TXAtom) )  {
-        rv = "Distance: ";
-        v = ((TXAtom*)Sel->Object(0))->Atom().crd().DistanceTo(
-          ((TXAtom*)Sel->Object(1))->Atom().crd());
-        rv << olxstr::FormatFloat(3, v);
+        Tmp = "Distance (";
+        Tmp << macSel_GetName2(((TXAtom*)Sel->Object(0))->Atom(), ((TXAtom*)Sel->Object(1))->Atom());
+        v = ((TXAtom*)Sel->Object(0))->Atom().crd().DistanceTo( ((TXAtom*)Sel->Object(1))->Atom().crd() );
+        Tmp << "): " << olxstr::FormatFloat(3, v);
     }
     else if( EsdlInstanceOf(*Sel->Object(0), TXBond) &&
       EsdlInstanceOf(*Sel->Object(1), TXBond) )  {
-        rv = "Angle (bond-bond): ";
-        vec3d V, V1;
         TXBond* A = (TXBond*)Sel->Object(0), *B =(TXBond*)Sel->Object(1);
-        V = A->Bond().A().crd() - A->Bond().B().crd();
-        V1 = B->Bond().A().crd() - B->Bond().B().crd();
-        v = V.CAngle(V1);  v = acos(v)*180/M_PI;
-        rv << olxstr::FormatFloat(3, v) << " (" << olxstr::FormatFloat(3, 180-v) << ')';
-        double distances[4];
-        int minInd;
-        distances[0] = A->Bond().A().crd().DistanceTo( B->Bond().A().crd() );
-        distances[1] = A->Bond().A().crd().DistanceTo( B->Bond().B().crd() );
-        distances[2] = A->Bond().B().crd().DistanceTo( B->Bond().A().crd() );
-        distances[3] = A->Bond().B().crd().DistanceTo( B->Bond().B().crd() );
-
-        evecd::ArrayMin(&distances[0], minInd, 4);
-        // check if the adjastent bonds
-        if( olx_abs(distances[minInd]) < 0.01 )  return rv;
-        vec3d V2, V3, V4, V5;
-        switch( minInd )  {
-          case 0:
-            V = A->Bond().B().crd() - A->Bond().A().crd();
-            V1 = B->Bond().A().crd() - A->Bond().A().crd();
-            V2 = B->Bond().B().crd() - B->Bond().A().crd();
-            V3 = A->Bond().A().crd() - B->Bond().A().crd();
-            break;
-          case 1:
-            V = A->Bond().B().crd() - A->Bond().A().crd();
-            V1 = B->Bond().B().crd() - A->Bond().A().crd();
-            V2 = B->Bond().A().crd() - B->Bond().B().crd();
-            V3 = A->Bond().A().crd() - B->Bond().B().crd();
-            break;
-          case 2:
-            V = A->Bond().A().crd() - A->Bond().B().crd();
-            V1 = B->Bond().A().crd() - A->Bond().B().crd();
-            V2 = B->Bond().B().crd() - B->Bond().A().crd();
-            V3 = A->Bond().B().crd() - B->Bond().A().crd();
-            break;
-          case 3:
-            V = A->Bond().A().crd() - A->Bond().B().crd();
-            V1 = B->Bond().B().crd() - A->Bond().B().crd();
-            V2 = B->Bond().A().crd() - B->Bond().B().crd();
-            V3 = A->Bond().B().crd() - B->Bond().B().crd();
-            break;
-        }
-        V4 = V.XProdVec(V1);
-        V5 = V2.XProdVec(V3);
-        if( V4.Length() != 0 && V5.Length() != 0 )  {
-          rv << "\nTorsion angle (bond-bond, away from closest atoms): ";
-          v = V4.CAngle(V5);  v = acos(v)*180/M_PI;
-          rv << olxstr::FormatFloat(3, v) << " (" << olxstr::FormatFloat(3, 180-v) << ')';
+        Tmp = "Angle (";
+          Tmp << macSel_GetName4a(A->Bond().A(), A->Bond().B(), B->Bond().A(), B->Bond().B()) <<
+            "): ";
+          v = Angle(A->Bond().A().crd(), A->Bond().B().crd(), B->Bond().A().crd(), B->Bond().B().crd());
+          Tmp << olxstr::FormatFloat(3, v) << " (" << olxstr::FormatFloat(3, 180-v) << ')' <<
+        "\nAngle (" <<
+          macSel_GetName4a(A->Bond().A(), A->Bond().B(), B->Bond().B(), B->Bond().A()) <<
+          "): ";
+          v = Angle(A->Bond().A().crd(), A->Bond().B().crd(), B->Bond().A().crd(), B->Bond().B().crd());
+          Tmp << olxstr::FormatFloat(3, v) << " (" << olxstr::FormatFloat(3, 180-v) << ')';
+        // check for ajusten bonds
+        if( !(&A->Bond().A() == &B->Bond().A() || &A->Bond().A() == &B->Bond().B() ||
+          &A->Bond().B() == &B->Bond().A() || &A->Bond().B() == &B->Bond().B()) )
+        {
+          Tmp << "\nTorsion angle (" <<
+            macSel_GetName4(A->Bond().A(), A->Bond().B(), B->Bond().B(), B->Bond().A()) <<
+            "): ";
+            v = TorsionAngle(A->Bond().A().crd(), A->Bond().B().crd(), B->Bond().B().crd(), B->Bond().A().crd());
+          Tmp << olxstr::FormatFloat(3, v) << " (" << olxstr::FormatFloat(3, 180-v) << ')' <<
+          "\nTorsion angle (" <<
+            macSel_GetName4(A->Bond().A(), A->Bond().B(), B->Bond().B(), B->Bond().A()) << 
+            "): ";
+            v = TorsionAngle(A->Bond().A().crd(), A->Bond().B().crd(), B->Bond().A().crd(), B->Bond().B().crd());
+          Tmp << olxstr::FormatFloat(3, v) << " (" << olxstr::FormatFloat(3, 180-v) << ')';
         }
     }
     else if( EsdlInstanceOf(*Sel->Object(0), TXPlane) &&
       EsdlInstanceOf(*Sel->Object(1), TXAtom) )  {
-        rv = "Distance (plane-atom): ";
-        v = ((TXPlane*)Sel->Object(0))->Plane().DistanceTo(((TXAtom*)Sel->Object(1))->Atom());
-        rv << olxstr::FormatFloat(3, v);
-        rv << "\nDistance (plane centroid-atom): ";
-        v = ((TXPlane*)Sel->Object(0))->Plane().GetCenter().DistanceTo(((TXAtom*)Sel->Object(1))->Atom().crd());
-        rv << olxstr::FormatFloat(3, v);
+        Tmp = "Distance (plane-atom): ";
+          v = ((TXPlane*)Sel->Object(0))->Plane().DistanceTo(((TXAtom*)Sel->Object(1))->Atom());
+        Tmp << olxstr::FormatFloat(3, v) << 
+        "\nDistance (plane centroid-atom): ";
+          v = ((TXPlane*)Sel->Object(0))->Plane().GetCenter().DistanceTo(((TXAtom*)Sel->Object(1))->Atom().crd());
+          Tmp << olxstr::FormatFloat(3, v);
     }
     else if( EsdlInstanceOf(*Sel->Object(0), TXAtom) &&
       EsdlInstanceOf(*Sel->Object(1), TXPlane) )  {
-        rv = "Distance (plane-atom): ";
-        v = ((TXPlane*)Sel->Object(1))->Plane().DistanceTo(((TXAtom*)Sel->Object(0))->Atom());
-        rv << olxstr::FormatFloat(3, v);
-        rv << "\nDistance (plane centroid-atom): ";
-        v = ((TXPlane*)Sel->Object(1))->Plane().GetCenter().DistanceTo(((TXAtom*)Sel->Object(0))->Atom().crd());
-        rv << olxstr::FormatFloat(3, v);
+        Tmp = "Distance (plane-atom): ";
+          v = ((TXPlane*)Sel->Object(1))->Plane().DistanceTo(((TXAtom*)Sel->Object(0))->Atom());
+          Tmp << olxstr::FormatFloat(3, v) <<
+        "\nDistance (plane centroid-atom): ";
+          v = ((TXPlane*)Sel->Object(1))->Plane().GetCenter().DistanceTo(((TXAtom*)Sel->Object(0))->Atom().crd());
+          Tmp << olxstr::FormatFloat(3, v);
     }
     else if( EsdlInstanceOf(*Sel->Object(0), TXBond) &&
       EsdlInstanceOf(*Sel->Object(1), TXPlane) )  {
-        rv = "Angle (plane-bond): ";
+        Tmp = "Angle (plane-bond): ";
         v = ((TXPlane*)Sel->Object(1))->Plane().Angle(((TXBond*)Sel->Object(0))->Bond());
-        rv << olxstr::FormatFloat(3, v);
+        Tmp << olxstr::FormatFloat(3, v);
     }
     else if( EsdlInstanceOf(*Sel->Object(1), TXBond) &&
       EsdlInstanceOf(*Sel->Object(0), TXPlane) )  {
-        rv = "Angle (plane-bond): ";
+        Tmp = "Angle (plane-bond): ";
         v = ((TXPlane*)Sel->Object(0))->Plane().Angle(((TXBond*)Sel->Object(1))->Bond());
-        rv << olxstr::FormatFloat(3, v);
+        Tmp << olxstr::FormatFloat(3, v);
     }
-    else if( EsdlInstanceOf(*Sel->Object(1), TXPlane) &&
+    if( EsdlInstanceOf(*Sel->Object(1), TXPlane) &&
       EsdlInstanceOf(*Sel->Object(0), TXPlane) )  {
-        rv = "Angle (plane-plane): ";
-        v = ((TXPlane*)Sel->Object(0))->Plane().Angle(((TXPlane*)Sel->Object(1))->Plane());
-        rv << olxstr::FormatFloat(3, v);
-        rv << "\nDistance (plane centroid-plane centroid): ";
-        v = ((TXPlane*)Sel->Object(0))->Plane().GetCenter().DistanceTo(((TXPlane*)Sel->Object(1))->Plane().GetCenter());
-        rv << olxstr::FormatFloat(3, v);
+        TSPlane &a = ((TXPlane*)Sel->Object(0))->Plane(),
+          &b = ((TXPlane*)Sel->Object(1))->Plane();
+        Tmp = "Angle (plane-plane): ";
+          Tmp << olxstr::FormatFloat(3, a.Angle(b)) <<
+        "\nDistance (plane centroid-plane centroid): " <<
+          olxstr::FormatFloat(3, a.GetCenter().DistanceTo(b.GetCenter())) <<
+        "\nDistance (plane[" << macSel_GetPlaneName(a) << "]-centroid): " <<
+          olxstr::FormatFloat(3, a.DistanceTo(b.GetCenter())) <<
+        "\nDistance (plane[" << macSel_GetPlaneName(b) << "]-centroid): " <<
+          olxstr::FormatFloat(3, b.DistanceTo(a.GetCenter()));
     }
   }
   else if( Sel->Count() == 3 )  {
     if( EsdlInstanceOf(*Sel->Object(0), TXAtom) &&
       EsdlInstanceOf(*Sel->Object(1), TXAtom) &&
       EsdlInstanceOf(*Sel->Object(2), TXAtom) )  {
-        rv = "Angle: ";
-        vec3d V, V1;
-        V = ((TXAtom*)Sel->Object(0))->Atom().crd() - ((TXAtom*)Sel->Object(1))->Atom().crd();
-        V1 = ((TXAtom*)Sel->Object(2))->Atom().crd() - ((TXAtom*)Sel->Object(1))->Atom().crd();
-        v = V.CAngle(V1);  v = acos(v)*180/M_PI;
-        rv << olxstr::FormatFloat(3, v);
+        TSAtom &a1 = ((TXAtom*)Sel->Object(0))->Atom(),
+          &a2 = ((TXAtom*)Sel->Object(1))->Atom(),
+          &a3 = ((TXAtom*)Sel->Object(2))->Atom();
+        Tmp = "Angle (";
+        Tmp << macSel_GetName3(a1, a2, a3)<< "): " << 
+          olxstr::FormatFloat(3, Angle(a1.crd(), a2.crd(), a3.crd()));
     }
   }
   else if( Sel->Count() == 4 )  {
@@ -869,22 +867,27 @@ olxstr TGXApp::GetSelectionInfo()  {
       EsdlInstanceOf(*Sel->Object(1), TXAtom) &&
       EsdlInstanceOf(*Sel->Object(2), TXAtom) &&
       EsdlInstanceOf(*Sel->Object(3), TXAtom) )  {
-        vec3d V1, V2, V3, V4;
-        V1 = ((TXAtom*)Sel->Object(0))->Atom().crd() - ((TXAtom*)Sel->Object(1))->Atom().crd();
-        V2 = ((TXAtom*)Sel->Object(2))->Atom().crd() - ((TXAtom*)Sel->Object(1))->Atom().crd();
-        V3 = ((TXAtom*)Sel->Object(3))->Atom().crd() - ((TXAtom*)Sel->Object(2))->Atom().crd();
-        V4 = ((TXAtom*)Sel->Object(1))->Atom().crd() - ((TXAtom*)Sel->Object(2))->Atom().crd();
-
-        V1 = V1.XProdVec(V2);
-        V3 = V3.XProdVec(V4);
-        if( V1.Length() != 0  && V3.Length() != 0 )  {
-          rv = "Torsion angle: ";
-          v = V1.CAngle(V3);  v = acos(v)*180/M_PI;
-          rv << olxstr::FormatFloat(3, v) << " (" << olxstr::FormatFloat(3, 180-v) << ')';
-        }
+        TSAtom &a1 = ((TXAtom*)Sel->Object(0))->Atom(),
+          &a2 = ((TXAtom*)Sel->Object(1))->Atom(),
+          &a3 = ((TXAtom*)Sel->Object(2))->Atom(),
+          &a4 = ((TXAtom*)Sel->Object(3))->Atom();
+        Tmp = "Torsion angle (";
+        Tmp << macSel_GetName4(a1, a2, a3, a4) << "): ";
+        v = TorsionAngle(a1.crd(), a2.crd(), a3.crd(), a4.crd());
+        Tmp << olxstr::FormatFloat(3, v) << " (" << olxstr::FormatFloat(3, 180-v) << ')' <<
+        "\nAngle (" << macSel_GetName3(a1, a2, a3) << "): " <<
+          olxstr::FormatFloat(3, Angle(a1.crd(), a2.crd(), a3.crd())) <<
+        "\nAngle (" << macSel_GetName3(a2, a3, a4) << "): " << 
+          olxstr::FormatFloat(3, Angle(a2.crd(), a3.crd(), a4.crd())) <<
+        "\nDistance (" << macSel_GetName2(a1, a2) << "): " << 
+          olxstr::FormatFloat(3, a1.crd().DistanceTo(a2.crd())) <<
+        "\nDistance (" << macSel_GetName2(a2, a3) << "): " << 
+          olxstr::FormatFloat(3, a2.crd().DistanceTo(a3.crd())) <<
+        "\nDistance (" << macSel_GetName2(a3, a4) << "): " << 
+          olxstr::FormatFloat(3, a3.crd().DistanceTo(a4.crd()));
     }
   }
-  return rv;
+  return Tmp;
 }
 //..............................................................................
 void TGXApp::ChangeAtomType( TXAtom *A, const olxstr &Element)  {

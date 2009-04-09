@@ -75,6 +75,8 @@ public:
   // used if the connectivity ifosrmation was altered externally
   void UpdateConnectivity();
   void Init();
+  // generates atoms inside the unit cell only
+  void GenerateCell(bool IncludeQ);
   // generates atoms within specified volume
   void Generate(const vec3d& MFrom, const vec3d& MTo, TCAtomPList* Template,
     bool ClearCont, bool IncludeQ);

@@ -1196,8 +1196,9 @@ separated values of Atom Type and radius, an entry a line" );
 #if defined(__WIN32__) || defined(__MAC__)
   StartupInit();
 #endif
-  //wxStaticText* wxst = new wxStaticText(FGlCanvas, -1, wxT("Static text"), 
-  //  wxPoint(100,100));
+  customTooltip = new wxStaticText(FGlCanvas, -1, wxT("tooltip"), 
+    wxPoint(100,100));
+  customTooltip->Hide();
 }
 //..............................................................................
 void TMainForm::StartupInit()  {
@@ -1913,7 +1914,10 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
       AGDrawObject *G = FXApp->SelectObject(MousePositionX, MousePositionY, 0);
       olxstr Tip;
       if( G != NULL )  {
-        if( EsdlInstanceOf( *G, TXAtom) )  {
+        if( G->Selected() )  {
+          Tip = FXApp->GetSelectionInfo();
+        }
+        else if( EsdlInstanceOf( *G, TXAtom) )  {
           TXAtom &xa = *(TXAtom*)G;
           Tip = xa.Atom().GetGuiLabelEx();
           if( xa.Atom().GetAtomInfo() == iQPeakIndex )  {
@@ -1944,8 +1948,13 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
           Tip = TSymmParser::MatrixToSymmEx( ((TXGrowPoint*)G)->GetTransform() );
         }
 #if defined (__WIN32__)
-        FGlCanvas->SetToolTip( Tip.u_str());
-        SetToolTip( Tip.u_str());
+        //FGlCanvas->SetToolTip( Tip.u_str());
+        //SetToolTip( Tip.u_str());
+        if( customTooltip != NULL )  {
+          customTooltip->SetLabel(Tip.u_str());
+          customTooltip->Move(MousePositionX, MousePositionY-customTooltip->GetSize().GetY());
+          customTooltip->Show();
+        }
 #else
         if( GlTooltip != NULL && !Tip.IsEmpty() )  {
           GlTooltip->Clear();
@@ -3136,7 +3145,9 @@ void TMainForm::OnMouseMove(int x, int y)  {
     MousePositionX = x;
     MousePositionY = y;
 #if defined (__WIN32__)
-    FGlCanvas->SetToolTip(wxT(""));
+    //FGlCanvas->SetToolTip(wxT(""));
+    if( customTooltip != NULL )
+      customTooltip->Hide();
 #else
     if( GlTooltip != NULL )  GlTooltip->Visible(false);
 #endif

@@ -8,7 +8,7 @@
 
 #include "globj.h"
 #include "gxapp.h"
-#include "ctrls.h"
+#include "guilabels.h"
 #include "eprocess.h"
 #include "undo.h"
 //#include "framemaker.h"
@@ -126,6 +126,8 @@ protected:
 
   TGlConsole *FGlConsole;
   TGlTextBox *FHelpWindow, *FInfoBox, *GlTooltip;
+  wxStaticText* customTooltip;
+  GuiLabels Labels;
   TStrList FOnTerminateMacroCmds; // a list of commands called when a process is terminated
   TStrList FOnAbortCmds;           // a "stack" of macroses, called when macro terminated
   TStrList FOnListenCmds;  // a list of commands called when a file is changed by another process
