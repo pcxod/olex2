@@ -1399,7 +1399,6 @@ void THtml::OnCellMouseHover(wxHtmlCell *Cell, wxCoord x, wxCoord y)  {
       Href.Insert((char)val, ind);
       ind = Href.FirstIndexOf('%', ind+1);
     }
-#if defined(__WIN32__) || defined(__WXGTK__)
     if( ShowTooltips )  {
       wxToolTip *tt = GetToolTip();
       Href.Replace("#href", Link->GetHref().c_str() );
@@ -1408,7 +1407,6 @@ void THtml::OnCellMouseHover(wxHtmlCell *Cell, wxCoord x, wxCoord y)  {
         SetToolTip( wxs );
       }
     }
-#endif
   }
   else
     SetToolTip(NULL);

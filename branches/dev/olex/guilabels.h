@@ -9,8 +9,6 @@ class GuiLabel : public wxStaticText  {
   void OnMouseDown(wxMouseEvent& event);
   void OnMouseUp(wxMouseEvent& event);
   void OnMouseMotion(wxMouseEvent& event);
-  int FMouseX, FMouseY;
-  bool FMouseDown;
   GuiLabels& Parent;
 public:
   GuiLabel(GuiLabels& Parent, wxWindow* wnd, int x, int y);
@@ -19,10 +17,18 @@ public:
 };
 class GuiLabels  {
   TPtrList<GuiLabel> Labels;
+  GuiLabel* active;
+  int FMouseX, FMouseY;
 public:
+  GuiLabels();
   GuiLabel& NewLabel(wxWindow* parent, const olxstr& text, int x, int y);
   inline int Count() const {  return Labels.Count();  }
   GuiLabel& operator [] (int i) const {  return *Labels[i];  }
+
+  bool OnMouseDblClick(wxMouseEvent& event, GuiLabel* sender=NULL);
+  bool OnMouseDown(wxMouseEvent& event, GuiLabel* sender=NULL);
+  bool OnMouseUp(wxMouseEvent& event, GuiLabel* sender=NULL);
+  bool OnMouseMotion(wxMouseEvent& event, GuiLabel* sender=NULL);
 };
 
 #endif
