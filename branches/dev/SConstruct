@@ -91,9 +91,7 @@ if sys.platform[:3] == 'win':
                              wxzlib mapi32 glu32 user32 opengl32 gdi32 ole32 
                              advapi32 comdlg32 comctl32 shell32 rpcrt4 oleaut32
                              kernel32 wsock32"""))
-  env.Append(LINKFLAGS=['/MANIFEST', out_dir + 'olex/app.res'])
-  env.Append(RCFLAGS=['/l0x809'])
-  env.RES(out_dir + 'olex/app.res', 'olex/app.rc')
+  env.Append(LINKFLAGS=['/MANIFEST'])
 else:
   try: 
     if sys.platform[:6] == 'darwin':
@@ -118,6 +116,7 @@ env.StaticLibrary(out_dir + 'lib/sdl', sdl_files)
 
 env.Append(LIBPATH=[out_dir+'lib'])
 env.Append(LIBS = ['sdl'])
+np_env = env.Clone()
 olex2_files = fileListToStringList('alglib', alglib) + \
               fileListToStringList('xlib', xlib) + \
               fileListToStringList('xlib/macro', xlib_macro) + \
@@ -126,9 +125,14 @@ olex2_files = fileListToStringList('alglib', alglib) + \
               repository + \
               fileListToStringList('olex', olex2)
 olex2_files = processFileNameList(olex2_files, env, out_dir+'olex')  
+#link in the res file...
+if sys.platform[:3] == 'win':
+  res_file = out_dir + 'olex/app.res'
+  env.Append(LINKFLAGS=['/MANIFEST', res_file])
+  env.Append(RCFLAGS=['/l0x809'])
+  env.RES(res_file, 'olex/app.rc')
 env.Program(out_dir+'exe/olex2', olex2_files)
 
-np_env = env.Clone()
 unirun_files = np_repository + fileListToStringList('unirun', unirun)
 unirun_files = processFileNameList(unirun_files, np_env, out_dir+'unirun')
 
