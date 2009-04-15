@@ -3499,6 +3499,7 @@ int TMainForm::TranslateShortcut(const olxstr& sk)  {
   else if( charStr == "DEL" )  Char = WXK_DELETE;
   else if( charStr == "INS" )  Char = WXK_INSERT;  
   else if( charStr == "BREAK" ) Char = WXK_PAUSE;
+  else if( charStr == "BACK" ) Char = WXK_BACK;
 
   return Char!=0 ? ((Shift << 16)|Char) : -1;
 }

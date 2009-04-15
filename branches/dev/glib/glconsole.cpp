@@ -209,6 +209,8 @@ bool TGlConsole::WillProcessKey( int Key, short ShiftState )  {
       return true;
     }
   }
+  else if( Key == WXK_BACK && StringPosition() != PromptStr.Length() )
+    return true;
   return false;
 }
 //..............................................................................
