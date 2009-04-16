@@ -2018,8 +2018,15 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
           else if( GlTooltip != NULL )  {
             GlTooltip->Clear();
             GlTooltip->PostText( Tip );
-            GlTooltip->SetLeft(MousePositionX-GlTooltip->GetWidth()/2); // put it off the mouse
-            GlTooltip->SetTop(MousePositionY-GlTooltip->GetHeight()-4);
+            int x = MousePositionX-GlTooltip->GetWidth()/2,
+                y = MousePositionY-GlTooltip->GetHeight()-4;
+            if( x < 0 )  x = 0;
+            if( (x + GlTooltip->GetWidth()) > FXApp->GetRender().GetWidth() )
+              x = FXApp->GetRender().GetWidth() - GlTooltip->GetWidth();
+            if( y < 0 )
+               y  = 0;
+            GlTooltip->SetLeft(x); // put it off the mouse
+            GlTooltip->SetTop(y);
             GlTooltip->SetZ( FXApp->GetRender().GetMaxRasterZ() -0.1 );
             GlTooltip->Visible(true);
             Draw = true;
