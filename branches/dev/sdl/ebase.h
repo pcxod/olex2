@@ -77,6 +77,7 @@ protected:
   mutable Buffer *SData;  // do not have much choice with c_str ...
   inline void IncLength(size_t len)  {  _Length += len;  }
   inline void DecLength(size_t len)  {  _Length -= len;  }
+  inline size_t GetCapacity()  const {  return SData->Length;  }
   size_t _Increment, _Length;
   mutable size_t _Start;
   TTIString() {}

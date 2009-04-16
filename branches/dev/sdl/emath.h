@@ -11,7 +11,7 @@ BeginEsdlNamespace()
 // returns corresponding character for sign
 inline char CharSign(double p )  {  return (p<0) ? '-' : '+';  }
 // determines the sign of a number
-inline int  Sign(double a)  {  return (a<0)? -1 : 1;  }
+inline int Sign(double a)  {  return (a<0) ? -1 : 1;  }
 
 // solves an equation by the Newton method
 // f - function, df - first derivative, point - starting point
@@ -27,7 +27,8 @@ template <typename float_t> inline long Round(const float_t a)  {
 template <typename num> inline num olx_abs(num n)  {
   return n < 0 ? -n : n;
 }
-// returns absolute value of a number
+/* swaps two objects using a temporary variable (copy constructor must be 
+ available for complex types) */
 template <typename obj> inline void olx_swap(obj& o1, obj& o2)  {
   obj tmp = o1;
   o1 = o2;

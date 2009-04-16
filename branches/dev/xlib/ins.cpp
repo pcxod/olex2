@@ -190,8 +190,10 @@ void TIns::_ProcessSame(ParseContext& cx)  {
        catch( const TExceptionBase& ex )  {
          throw TFunctionFailedException(__OlxSourceInfo, olxstr("invalid SAME instruction :") << ex.GetException()->GetError());
        }
-       if( ag.IsEmpty() )
-         throw TFunctionFailedException(__OlxSourceInfo, "empty SAME atoms list");
+       if( ag.IsEmpty() )  {
+         TBasicApp::GetLog().Error(olxstr("Invalid SAME atom list, removed: ") << toks.Text(' '));
+         //throw TFunctionFailedException(__OlxSourceInfo, "empty SAME atoms list");
+       }
        TSameGroup& sg1 = sgl.NewDependent(sg);
        for( int k=0; k < ag.Count(); k++ )
          sg1.Add( *ag[k].GetAtom() );

@@ -3,10 +3,6 @@
 #include "splane.h"
 
 namespace PlaneSort {
-  struct _PlaneSort  {  // used in sort of plane points
-    vec3d* crd;
-    TSPlane * plane;
-  };
   struct Sorter {
     TPSTypeList<double, const vec3d*> sortedPlane;
     Sorter(const TSPlane& sp)  {

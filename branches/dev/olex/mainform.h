@@ -8,7 +8,7 @@
 
 #include "globj.h"
 #include "gxapp.h"
-#include "guilabels.h"
+#include "ctrls.h"
 #include "eprocess.h"
 #include "undo.h"
 //#include "framemaker.h"
@@ -126,8 +126,6 @@ protected:
 
   TGlConsole *FGlConsole;
   TGlTextBox *FHelpWindow, *FInfoBox, *GlTooltip;
-  wxStaticText* customTooltip;
-  GuiLabels Labels;
   TStrList FOnTerminateMacroCmds; // a list of commands called when a process is terminated
   TStrList FOnAbortCmds;           // a "stack" of macroses, called when macro terminated
   TStrList FOnListenCmds;  // a list of commands called when a file is changed by another process
@@ -220,6 +218,7 @@ protected:
   void OnAtomTypeChange(wxCommandEvent& event);
   void OnAtomOccuChange(wxCommandEvent& event);
   void OnAtomConnChange(wxCommandEvent& event);
+  void OnAtomPolyChange(wxCommandEvent& event);
   void OnAtomTypePTable(wxCommandEvent& event);
   void OnAtom(wxCommandEvent& event); // general handler
 
@@ -297,8 +296,6 @@ private:
   DefMacro(Ceiling)
   DefMacro(Fade)
   DefMacro(WaitFor)
-
-  DefMacro(Occu)
 
   DefMacro(HtmlPanelSwap)
   DefMacro(HtmlPanelWidth)
@@ -521,6 +518,7 @@ private:
   DefFunc(ExtraZoom)
   DefFunc(HasGUI)
   DefFunc(CheckState)
+  DefFunc(GlTooltip)
 
   TUndoStack *FUndoStack;
 //..............................................................................
@@ -584,7 +582,7 @@ private:
   bool FHtmlMinimized, FHtmlOnLeft, FBitmapDraw, FHtmlWidthFixed, 
        RunOnceProcessed,
        StartupInitialised;
-  bool InfoWindowVisible, HelpWindowVisible, CmdLineVisible;
+  bool InfoWindowVisible, HelpWindowVisible, CmdLineVisible, UseGlTooltip;
   float FHtmlPanelWidth;
 
   bool UpdateRecentFilesTable(bool TableDef=true);
@@ -639,7 +637,9 @@ protected:
     wxMenuItem *miAtomGrowFrag;
     TMenu    *pmBang;  // bonds angles
     TMenu    *pmAtomType;
-    TMenu    *pmAtomOccu, *pmAtomConn;
+    TMenu    *pmAtomOccu, 
+             *pmAtomConn,
+             *pmAtomPoly;
   TMenu    *pmBond;
     wxMenuItem *miBondInfo;
     TMenu    *pmTang;  // torsion angles

@@ -2608,19 +2608,6 @@ void TMainForm::macWaitFor(TStrObjList &Cmds, const TParamList &Options, TMacroE
   }
 }
 //..............................................................................
-void TMainForm::macOccu(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  double occu = 0;
-  if( XLibMacros::ParseNumbers<double>(Cmds, 1, &occu) == 0 )  {
-    Error.ProcessingError(__OlxSrcInfo, "please provide occupancy" );
-    return;
-  }
-  TXAtomPList xatoms;
-  FindXAtoms(Cmds, xatoms, true, !Options.Contains("cs"));
-  RefinementModel& rm = FXApp->XFile().GetRM();
-  for( int i=0; i < xatoms.Count(); i++ )
-    rm.Vars.SetParam(xatoms[i]->Atom().CAtom(), catom_var_name_Sof, occu);
-}
-//..............................................................................
 void TMainForm::macHtmlPanelSwap(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   if( Cmds.IsEmpty() )  {
     FHtmlOnLeft = !FHtmlOnLeft;
@@ -5298,8 +5285,7 @@ void TMainForm::macCheckMenu(TStrObjList &Cmds, const TParamList &Options, TMacr
   menu->Check( ind, true );
 }
 //..............................................................................
-void TMainForm::macUncheckMenu(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)
-{
+void TMainForm::macUncheckMenu(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
   int ind = Cmds[0].LastIndexOf(';');
   if( ind == -1 )  return;
   olxstr menuName = Cmds[0].SubStringTo( ind );
@@ -5311,18 +5297,15 @@ void TMainForm::macUncheckMenu(TStrObjList &Cmds, const TParamList &Options, TMa
   menu->Check( ind, false );
 }
 //..............................................................................
-void TMainForm::macCreateShortcut(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)
-{
+void TMainForm::macCreateShortcut(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
   AccShortcuts.AddAccell( TranslateShortcut( Cmds[0]), Cmds[1] );
 }
 //..............................................................................
-void TMainForm::macSetCmd(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)
-{
+void TMainForm::macSetCmd(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
   FGlConsole->SetCommand( Cmds.Text(' ') );
 }
 //..............................................................................
-void TMainForm::funCmdList(const TStrObjList &Cmds, TMacroError &E)
-{
+void TMainForm::funCmdList(const TStrObjList &Cmds, TMacroError &E) {
   if( !FGlConsole->GetCommandCount() ) return;
 
   int cc = FGlConsole->GetCommandIndex() + Cmds[0].ToInt();
@@ -5332,8 +5315,7 @@ void TMainForm::funCmdList(const TStrObjList &Cmds, TMacroError &E)
   E.SetRetVal( FGlConsole->GetCommandByIndex(cc) );
 }
 //..............................................................................
-void TMainForm::macUpdateOptions(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)
-{
+void TMainForm::macUpdateOptions(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
   TdlgUpdateOptions* dlg = new TdlgUpdateOptions(this);
   dlg->ShowModal();
   dlg->Destroy();
@@ -8037,10 +8019,7 @@ void TMainForm::macProjSph(TStrObjList &Cmds, const TParamList &Options, TMacroE
 }
 //..............................................................................
 void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  TLattice& latt = FXApp->XFile().GetLattice();
-  for( int i=0; i < latt.AtomCount(); i++ )  {
-    Labels.NewLabel(FGlCanvas, latt.GetAtom(i).GetLabel(), 100, 100);
-  }
+
 }
 //..............................................................................
 double Main_FindClosestDistance(const smatd_list& ml, vec3d& o_from, const TCAtom& a_to) {
@@ -8685,6 +8664,13 @@ void TMainForm::macUpdateQPeakTable(TStrObjList &Cmds, const TParamList &Options
 //..............................................................................
 void TMainForm::funCheckState(const TStrObjList& Params, TMacroError &E)  {
   E.SetRetVal( CheckState(TStateChange::DecodeState(Params[0]), Params.Count() == 2 ? Params[1] : EmptyString) );
+}
+//..............................................................................
+void TMainForm::funGlTooltip(const TStrObjList& Params, TMacroError &E)  {
+  if( Params.IsEmpty() )
+    E.SetRetVal( UseGlTooltip );
+  else
+    UseGlTooltip = Params[0].ToBool();
 }
 //..............................................................................
 

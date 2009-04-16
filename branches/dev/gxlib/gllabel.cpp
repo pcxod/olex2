@@ -93,6 +93,7 @@ bool TXGlLabel::Orient(TGlPrimitive *P)  {
     vec3d off(Basis.GetCenter()[0]-OffsetX, Basis.GetCenter()[1]-OffsetY, Basis.GetCenter()[2]);
     off *= ScaleR;
     T += off;
+    T[2] = FParent->GetMaxRasterZ();
     FParent->DrawTextSafe(T, FLabel, *Font());
     return true;
   }
