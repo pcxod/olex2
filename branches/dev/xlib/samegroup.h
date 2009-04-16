@@ -10,10 +10,12 @@ class TSameGroup : public ACollectionItem {
   TCAtomPList Atoms;
   int Id;
   class TSameGroupList& Parent;
+  bool Deleted;
 public:
   TSameGroup(int id, TSameGroupList& parent) : Id(id), Parent(parent)  { 
     Esd12 = 0.02;
     Esd13 = 0.04;
+    Deleted = false;
   }
   ~TSameGroup()  {  Clear();  }
 
@@ -30,11 +32,8 @@ public:
   
   bool IsReference() const {  return !Dependent.IsEmpty();  }
   
-  TCAtom& Add(TCAtom& ca)  {  
-    ca.SetSameId(Id);
-    Atoms.Add(&ca);
-    return ca;
-  }
+  // will invalidate previously assigned group
+  TCAtom& Add(TCAtom& ca); 
   
   void AddDependent(TSameGroup& sg)  {
     Dependent.Add( &sg );
@@ -77,7 +76,7 @@ public:
   void Assign(TAsymmUnit& tau, const TSameGroupList& sl)  {
     Clear();
     for( int i=0; i < sl.Groups.Count(); i++ )
-      New().SetTag(0);
+        New().SetTag(0);
     for( int i=0; i < sl.Groups.Count(); i++ )  {
       // dependent first, to override shared atoms SameId
       for( int j=0; j < sl.Groups[i].DependentCount(); j++ )  {

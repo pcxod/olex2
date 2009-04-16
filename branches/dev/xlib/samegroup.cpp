@@ -26,6 +26,12 @@ void TSameGroup::Assign(TAsymmUnit& tau, const TSameGroup& sg)  {
     Dependent.Add( &Parent[ sg.Dependent[i]->Id ] );
 }
 //..........................................................................................
+TCAtom& TSameGroup::Add(TCAtom& ca)  {  
+  ca.SetSameId(Id);
+  Atoms.Add(&ca);
+  return ca;
+}
+//..........................................................................................
 void TSameGroup::ToDataItem(TDataItem& item) const {
   item.AddField("esd12", Esd12);
   item.AddField("esd13", Esd13);
