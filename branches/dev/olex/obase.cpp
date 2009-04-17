@@ -130,6 +130,7 @@ olxstr TStateChange::StrRepr(uint32_t State) {
     case prsCmdlVis:    return "cmdlinevis";
     case prsGradBG:     return "gradBG";
     case prsLabels:     return "labelsvis";
+    case prsGLTT:       return "gltt";
     case prsPluginInstalled:  return "pluginInstalled";
   }
   return "none";
@@ -168,6 +169,8 @@ uint32_t TStateChange::DecodeState( const olxstr& mode )  {
     return prsGradBG;
   else if( !mode.Comparei("labelsvis") )
     return prsLabels;
+  else if( !mode.Comparei("GLTT") )
+    return prsGLTT;
   return prsNone;
 }
 //..............................................................................

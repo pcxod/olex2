@@ -10,15 +10,35 @@ class TSameGroup : public ACollectionItem {
   TCAtomPList Atoms;
   int Id;
   class TSameGroupList& Parent;
-  bool Deleted;
+  TSameGroup* ParentGroup;
+protected:
+  void SetId(int id)  {
+    for( int i=0; i < Atoms.Count(); i++ )
+      Atoms[i]->SetSameId(id);
+    Id = id;
+  }
+  // it does not clear the ParentGroup, to make Restore work...
+  void RemoveDependent(TSameGroup& sg)  {
+    int ind = Dependent.IndexOf(&sg);
+    if( ind != -1 )
+      Dependent.Delete(ind);
+  }
+  // on release
+  void ClearAtomIds()  {
+    for( int i=0; i < Atoms.Count(); i++ )
+      Atoms[i]->SetSameId(-1);
+  }
 public:
   TSameGroup(int id, TSameGroupList& parent) : Id(id), Parent(parent)  { 
     Esd12 = 0.02;
     Esd13 = 0.04;
-    Deleted = false;
+    ParentGroup = NULL;
   }
   ~TSameGroup()  {  Clear();  }
 
+  inline const TSameGroupList& GetParent() const {  return Parent;  }
+  inline TSameGroupList& GetParent()             {  return Parent;  }
+  inline TSameGroup* GetParentGroup()      const {  return ParentGroup;  }
   int GetId() const {  return Id;  }
 
   void Assign(class TAsymmUnit& tau, const TSameGroup& sg);
@@ -26,6 +46,11 @@ public:
   void Clear()  {
     for( int i=0; i < Atoms.Count(); i++ )
       Atoms[i]->SetSameId(-1);
+    Atoms.Clear();
+    Dependent.Clear();
+  }
+  // does not reset the Atom's SameId
+  void ReleasedClear()  {
     Atoms.Clear();
     Dependent.Clear();
   }
@@ -37,8 +62,12 @@ public:
   
   void AddDependent(TSameGroup& sg)  {
     Dependent.Add( &sg );
+    sg.ParentGroup = this;
   }
   
+  // compares pointer addresses only!
+  bool operator == (const TSameGroup& sr) const {  return this == &sr;  }
+
   int Count() const {  return Atoms.Count();  }
   TCAtom& operator [] (int i) {  return *Atoms[i];  }
   const TCAtom& operator [] (int i) const {  return *Atoms[i];  }
@@ -46,6 +75,15 @@ public:
   int DependentCount() const {  return Dependent.Count();  }
   TSameGroup& GetDependent(int i) {  return *Dependent[i];  }
   const TSameGroup& GetDependent(int i) const {  return *Dependent[i];  }
+  
+  bool IsValidForSave() const {
+    if( Atoms.IsEmpty() )  
+      return false;
+    for( int i=0; i < Atoms.Count(); i++ )
+      if( Atoms[i]->IsDeleted() )
+        return false;
+    return true;
+  }
 
   double Esd12, Esd13;
 
@@ -54,6 +92,8 @@ public:
   PyObject* PyExport(PyObject* main, TPtrList<PyObject>& allGroups, TPtrList<PyObject>& atoms);
 #endif
   void FromDataItem(TDataItem& item);
+  // for releasing/restoring items SetId must be called
+  friend class TSameGroupList;
 };
 
 class TSameGroupList  {
@@ -90,6 +130,8 @@ public:
       Groups[i].SetTag(1);
     }
   }
+  void Release(TSameGroup& sg);
+  void Restore(TSameGroup& sg);
 
   void ToDataItem(TDataItem& item) const;
 #ifndef _NO_PYTHON

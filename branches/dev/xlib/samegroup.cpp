@@ -24,6 +24,8 @@ void TSameGroup::Assign(TAsymmUnit& tau, const TSameGroup& sg)  {
   Esd13 = sg.Esd13;  
   for( int i=0; i < sg.Dependent.Count(); i++ )
     Dependent.Add( &Parent[ sg.Dependent[i]->Id ] );
+  if( sg.GetParentGroup() != NULL )
+    ParentGroup = &Parent[ sg.GetParentGroup()->Id ];
 }
 //..........................................................................................
 TCAtom& TSameGroup::Add(TCAtom& ca)  {  
@@ -84,6 +86,26 @@ void TSameGroup::FromDataItem(TDataItem& item) {
 }
 //..........................................................................................
 //..........................................................................................
+//..........................................................................................
+void TSameGroupList::Release(TSameGroup& sg)  {
+  if( &sg.GetParent() != this )
+    throw TInvalidArgumentException(__OlxSourceInfo, "SAME group parent differs");
+  Groups.Release(sg.GetId());
+  if( sg.GetParentGroup() != NULL )
+    sg.GetParentGroup()->RemoveDependent(sg);
+  sg.ClearAtomIds();
+  for( int i=0; i < Groups.Count(); i++ )
+    Groups[i].SetId(i);
+}
+//..........................................................................................
+void TSameGroupList::Restore(TSameGroup& sg)  {
+  if( &sg.GetParent() != this )
+    throw TInvalidArgumentException(__OlxSourceInfo, "SAME group parent differs");
+  Groups.Add(sg);
+  if( sg.GetParentGroup() != NULL )
+    sg.GetParentGroup()->AddDependent(sg);
+  sg.SetId( Groups.Count() - 1 );
+}
 //..........................................................................................
 void TSameGroupList::ToDataItem(TDataItem& item) const {
   item.AddField("n", Groups.Count());

@@ -2614,6 +2614,7 @@ void TGXApp::BeginDrawBitmap(double resolution)  {
   /* end */
 
   CreateObjects( false, false );
+  FXGrid->GlContextChange();
   // restore the visiblity && groups
   RestoreGroups();
   RestoreVisibility();
@@ -2623,6 +2624,7 @@ void TGXApp::FinishDrawBitmap()  {
   FLabels->Clear();
   GetRender().Scene()->RestoreFontScale();
   CreateObjects( false, false );
+  FXGrid->GlContextChange();
   // recreate groups && clean up the memory
   RestoreGroups();
   ClearGroups();

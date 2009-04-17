@@ -582,7 +582,8 @@ private:
   bool FHtmlMinimized, FHtmlOnLeft, FBitmapDraw, FHtmlWidthFixed, 
        RunOnceProcessed,
        StartupInitialised;
-  bool InfoWindowVisible, HelpWindowVisible, CmdLineVisible, UseGlTooltip;
+  bool InfoWindowVisible, HelpWindowVisible, CmdLineVisible, _UseGlTooltip;
+
   float FHtmlPanelWidth;
 
   bool UpdateRecentFilesTable(bool TableDef=true);
@@ -609,6 +610,10 @@ public:
   void SaveSettings(const olxstr &FN);
   void LoadScene(TDataItem *Root, TGlLightModel *FLM=NULL);
   void SaveScene(TDataItem *Root, TGlLightModel *FLM=NULL);
+
+  // fires the state change as well
+  void UseGlTooltip(bool v);
+
   const olxstr& GetStructureOlexFolder();
   float GetHtmlPanelWidth() const  {  return FHtmlPanelWidth;  }
   inline THtml* GetHtml()  const {  return FHtml; }

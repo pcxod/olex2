@@ -175,8 +175,6 @@ TXGrid::TXGrid(const olxstr& collectionName, TGXApp* xapp) :
 TXGrid::~TXGrid()  {
   Clear();
   DeleteObjects();
-  if( PListId != -1 )
-    glDeleteLists(PListId, 2);
   delete Info;
 }
 //..............................................................................
@@ -573,7 +571,16 @@ bool TXGrid::OnMouseMove(const IEObject *Sender, const TMouseData *Data)  {
   return true;
 }
 //..............................................................................
-
+void TXGrid::GlContextChange()  {
+  if( ED == NULL )
+    return;
+  if( PListId != -1 )  {
+    glDeleteLists(PListId, 2);
+    PListId = NListId = -1;
+  }
+  SetScale(Scale);
+}
+//..............................................................................
 void TXGrid::RescaleSurface()  {
   const TAsymmUnit& au =  XApp->XFile().GetAsymmUnit();
   if( PListId == -1 )  {

@@ -3925,17 +3925,28 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options, TMacro
     }
   }
   TXApp::UnifyPAtomList(CAtoms);
-  TPtrList<TSameGroup> processed;
+  RefinementModel::ReleasedItems released;
   int ac = CAtoms.Count();  // to avoid recursion
   for( int i=0; i < ac; i++ )  {
     if( CAtoms[i]->GetSameId() != -1 )  {
       TSameGroup& sg = FXApp->XFile().GetRM().rSAME[CAtoms[i]->GetSameId()];
-      if( processed.IndexOf( &sg ) != -1 )  continue;
-      processed.Add( &sg );
+      if( released.sameList.IndexOf( &sg ) != -1 )  continue;
+      released.sameList.Add( &sg );
       for( int j=0; j < sg.Count(); j++ )
         CAtoms.Add( &sg[j] );
     }
   }
+  // proces dependent SAME's
+  for( int i=0; i < released.sameList.Count(); i++ )  {
+    for( int j=0; j < released.sameList[i]->DependentCount(); j++ )  {
+      TSameGroup& sg = released.sameList[i]->GetDependent(j);
+      if( released.sameList.IndexOf( &sg ) != -1 )  continue;
+      released.sameList.Add( &sg );
+      for( int k=0; k < sg.Count(); k++ )
+        CAtoms.Add( &sg[k] );
+    }
+  }
+
   for( int i=0; i < rm.AfixGroups.Count(); i++ )
     rm.AfixGroups[i].SetTag(0);
   for(int i=0; i < CAtoms.Count(); i++ )  {  // add afixed mates and afix parents
@@ -3997,11 +4008,11 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options, TMacro
   }
   SL.Add(EmptyString);
   TIntList atomIndex;
-  RefinementModel::ReleasedItems released;
   Ins.SaveAtomsToStrings(FXApp->XFile().GetRM(), CAtoms, atomIndex, SL, &released);
   for( int i=0; i < released.restraints.Count(); i++ )
     released.restraints[i]->GetParent().Release(*released.restraints[i]);
-
+  for( int i=0; i < released.sameList.Count(); i++ )
+    released.sameList[i]->GetParent().Release(*released.sameList[i]);
   TdlgEdit *dlg = new TdlgEdit(this, true);
   dlg->SetText( SL.Text('\n') );
   try  {
@@ -4024,7 +4035,10 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options, TMacro
         Ins.AddIns(RemovedIns[i], *RemovedIns.GetObject(i), FXApp->XFile().GetRM());
       for( int i=0; i < released.restraints.Count(); i++ )
         released.restraints[i]->GetParent().Restore(*released.restraints[i]);
+      for( int i=0; i < released.sameList.Count(); i++ )
+        released.sameList[i]->GetParent().Restore(*released.sameList[i]);
       released.restraints.Clear();
+      released.sameList.Clear();
     }
   }
   catch(const TExceptionBase& exc )  {
@@ -4033,7 +4047,10 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options, TMacro
       Ins.AddIns(RemovedIns[i], *RemovedIns.GetObject(i), FXApp->XFile().GetRM());
     for( int i=0; i < released.restraints.Count(); i++ )
       released.restraints[i]->GetParent().Restore(*released.restraints[i]);
+    for( int i=0; i < released.sameList.Count(); i++ )
+      released.sameList[i]->GetParent().Restore(*released.sameList[i]);
     released.restraints.Clear();
+    released.sameList.Clear();
   }
   for( int i=0; i < RemovedIns.Count(); i++ )
     delete (TStrList*)RemovedIns.GetObject(i);
@@ -4041,6 +4058,10 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options, TMacro
     if( released.restraints[i]->GetVarRef(0) != NULL )
       delete released.restraints[i]->GetVarRef(0);
     delete released.restraints[i];
+  }
+  for( int i=0; i < released.sameList.Count(); i++ )  {
+    released.sameList[i]->ReleasedClear();
+    delete released.sameList[i];
   }
   dlg->Destroy();
 }
@@ -6117,7 +6138,7 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       return;
     }
 
-    if( atoms.Count() >= 8 )  {  // a full basis provided
+    if( atoms.Count() >= 6 )  {  // a full basis provided
       if( (atoms.Count()%2) != 0 )  {
         E.ProcessingError(__OlxSrcInfo, "even number of atoms is expected");
         return;
@@ -6139,10 +6160,10 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       }
       if( netA != netB )  {  // collect all atoms
         for( int i=0; i < netA.NodeCount(); i++ )
-          atomsToTransform.Add( &netA.Node(i) );
+          atomsToTransform.Add( &netB.Node(i) );
       }
       else  {
-        for(int i=0; i < atoms.Count()/2; i++ )
+        for(int i=atoms.Count()/2; i < atoms.Count(); i++ )
           atomsToTransform.Add( &atoms[i]->Atom() );
       }
       smatdd S;
@@ -6178,10 +6199,8 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options, TMacroErr
           }
           double rms = MatchAtomPairsQT( satomp, S, TryInvert);
           CallMatchCallbacks(*nets[i], *nets[j], rms);
-          if( rms >= 0 )  {
+          if( rms >= 0 ) 
             TNetwork::DoAlignAtoms(satomp, atomsToTransform, S, TryInvert);
-          }
-
         }
       }
     }
@@ -8668,9 +8687,9 @@ void TMainForm::funCheckState(const TStrObjList& Params, TMacroError &E)  {
 //..............................................................................
 void TMainForm::funGlTooltip(const TStrObjList& Params, TMacroError &E)  {
   if( Params.IsEmpty() )
-    E.SetRetVal( UseGlTooltip );
+    E.SetRetVal( _UseGlTooltip );
   else
-    UseGlTooltip = Params[0].ToBool();
+    UseGlTooltip( Params[0].ToBool() );
 }
 //..............................................................................
 

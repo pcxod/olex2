@@ -324,7 +324,7 @@ TMainForm::TMainForm(TGlXApp *Parent, int Width, int Height):
 //  _crtBreakAlloc = 5892;
   SkipSizing = false;
   Destroying = false;
-  UseGlTooltip = false;  // most platforms support it, besides some very old ones...
+  _UseGlTooltip = false;  // most platforms support it, besides some very old ones...
 
   StartupInitialised = RunOnceProcessed = false;
   wxInitAllImageHandlers();
@@ -2013,7 +2013,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
           Tip = TSymmParser::MatrixToSymmEx( ((TXGrowPoint*)G)->GetTransform() );
         }
         if( !Tip.IsEmpty() )  {
-          if( !UseGlTooltip )
+          if( !_UseGlTooltip )
             FGlCanvas->SetToolTip( Tip.u_str());
           else if( GlTooltip != NULL )  {
             GlTooltip->Clear();
@@ -2717,7 +2717,7 @@ void TMainForm::SaveSettings(const olxstr &FN)  {
   I->AddField("GradientPicture", GradientPicture );
   I->AddField("language", Dictionary.GetCurrentLanguage() );
   I->AddField("ExtraZoom", FXApp->GetExtraZoom() );
-  I->AddField("GlTooltip", UseGlTooltip);
+  I->AddField("GlTooltip", _UseGlTooltip);
 
   I = &DF.Root().AddItem("Recent_files");
   for( int i=0; i < olx_min(FRecentFilesToShow, FRecentFiles.Count()); i++ )
@@ -2870,7 +2870,7 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
     Dictionary.SetCurrentLanguage(DictionaryFile, I->GetFieldValue("language", EmptyString) );
   }
   FXApp->SetExtraZoom( I->GetFieldValue("ExtraZoom", "1.25").ToDouble() );
-  UseGlTooltip = I->GetFieldValue("GlTooltip", FalseString).ToBool();
+  UseGlTooltip( I->GetFieldValue("GlTooltip", FalseString).ToBool() );
 
   olxstr T( I->GetFieldValue("BgColor") );
   if( !T.IsEmpty() )  FBgColor.FromString(T);
@@ -3213,7 +3213,7 @@ void TMainForm::OnMouseMove(int x, int y)  {
     MouseMoveTimeElapsed = 0;
     MousePositionX = x;
     MousePositionY = y;
-    if( !UseGlTooltip )
+    if( !_UseGlTooltip )
       FGlCanvas->SetToolTip(wxT(""));
     else if( GlTooltip != NULL && GlTooltip->Visible() )  {
       GlTooltip->Visible(false);
@@ -3673,6 +3673,13 @@ olxstr TMainForm::TranslateString(const olxstr& str) const {
     ind = phrase.FirstIndexOf('%', ind1+1);
   }
   return phrase;
+}
+void TMainForm::UseGlTooltip(bool v)  {
+  if( v == _UseGlTooltip )
+    return;
+  TStateChange sc(prsGLTT, v);
+  _UseGlTooltip = v;
+  OnStateChange->Execute(this, &sc);
 }
 //..............................................................................
 //..............................................................................
