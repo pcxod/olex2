@@ -44,9 +44,10 @@ void TSameGroup::ToDataItem(TDataItem& item) const {
     atoms.AddItem(atom_id++, Atoms[i]->GetTag() );
   }
   TDataItem& dep = item.AddItem("dependent");
-  for( int i=0; i < Dependent.Count(); i++ )  {
+  for( int i=0; i < Dependent.Count(); i++ )
     item.AddItem(atom_id++, Dependent[i]->GetId() );
-  }
+  if( ParentGroup != NULL )
+    item.AddField("parent", ParentGroup->GetId() );
 }
 //..............................................................................
 #ifndef _NO_PYTHON
@@ -69,6 +70,8 @@ PyObject* TSameGroup::PyExport(PyObject* main, TPtrList<PyObject>& allGroups, TP
   for( int i=0; i < Dependent.Count(); i++ )
     PyTuple_SetItem(dependent, i, allGroups[Dependent[i]->GetTag()] );
   PyDict_SetItemString(main, "dependent", dependent);
+  if( ParentGroup != NULL )
+    PyDict_SetItemString(main, "parent", allGroups[ParentGroup->GetTag()]);
   return main;
 }
 #endif
@@ -79,10 +82,13 @@ void TSameGroup::FromDataItem(TDataItem& item) {
   Esd13 = item.GetRequiredField("esd13").ToDouble();
   TDataItem& atoms = item.FindRequiredItem("atoms");
   for( int i=0; i < atoms.ItemCount(); i++ )
-    Atoms.Add( &Parent.RM.aunit.GetAtom(atoms.GetItem(i).GetValue().ToInt()) );
+    Add( Parent.RM.aunit.GetAtom(atoms.GetItem(i).GetValue().ToInt()) );
   TDataItem& dep = item.FindRequiredItem("dependent");
   for( int i=0; i < dep.ItemCount(); i++ )
-    Dependent.Add( &Parent[dep.GetItem(i).GetValue().ToInt()] );
+    AddDependent( Parent[dep.GetItem(i).GetValue().ToInt()] );
+  const olxstr p_id = item.GetFieldValue("parent");
+  if( !p_id.IsEmpty() )
+    ParentGroup = &Parent[p_id.ToInt()];
 }
 //..........................................................................................
 //..........................................................................................
@@ -109,9 +115,9 @@ void TSameGroupList::Restore(TSameGroup& sg)  {
 //..........................................................................................
 void TSameGroupList::ToDataItem(TDataItem& item) const {
   item.AddField("n", Groups.Count());
-  for( int i=0; i < Groups.Count(); i++ )  {
-    Groups[i].ToDataItem( item.AddItem(i) );
-  }
+  for( int i=0; i < Groups.Count(); i++ ) 
+    if( Groups[i].IsValidForSave() )
+      Groups[i].ToDataItem( item.AddItem(i) );
 }
 //..............................................................................
 #ifndef _NO_PYTHON
@@ -120,8 +126,9 @@ PyObject* TSameGroupList::PyExport(TPtrList<PyObject>& _atoms)  {
   TPtrList<PyObject> allGroups(Groups.Count());
   for( int i=0; i < Groups.Count(); i++ )
     PyTuple_SetItem(main, i, allGroups.Add( PyDict_New() ) );
-  for( int i=0; i < Groups.Count(); i++ )
-    Groups[i].PyExport(allGroups[i], allGroups, _atoms);
+  for( int i=0; i < Groups.Count(); i++ ) 
+    if( Groups[i].IsValidForSave() )
+      Groups[i].PyExport(allGroups[i], allGroups, _atoms);
   return main;
 }
 #endif

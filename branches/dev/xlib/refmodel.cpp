@@ -678,6 +678,29 @@ void RefinementModel::Describe(TStrList& lst, TPtrList<TCAtom>* a_res, TPtrList<
       str << '}';
     }
   }
+  if( rSAME.Count() != 0 )  {
+    lst.Add(olxstr(++sec_num)) << ". Same fragments";
+    for( int i=0; i < rSAME.Count(); i++ )  {
+      TSameGroup& sg = rSAME[i];
+      if( sg.DependentCount() == 0 || !sg.IsValidForSave() )
+        continue;
+      for( int j=0; j < sg.DependentCount(); j++ )  {
+        if( !sg.GetDependent(j).IsValidForSave() )
+          continue;
+        olxstr& str = lst.Add('{');
+        str << sg.GetDependent(j)[0].GetLabel();
+        for( int k=1; k < sg.GetDependent(j).Count(); k++ )
+          str << ", " << sg.GetDependent(j)[k].GetLabel();
+        str << '}';
+      }
+      lst.Add("as");
+      olxstr& str = lst.Add('{');
+      str << sg[0].GetLabel();
+      for( int j=1; j < sg.Count(); j++ )
+        str << ", " << sg[j].GetLabel();
+      str << '}';
+    }
+  }
   TStrList vars;
   Vars.Describe(vars);
   if( !vars.IsEmpty() )  {

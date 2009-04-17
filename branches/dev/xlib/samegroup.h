@@ -82,7 +82,13 @@ public:
     for( int i=0; i < Atoms.Count(); i++ )
       if( Atoms[i]->IsDeleted() )
         return false;
-    return true;
+    if( Dependent.IsEmpty() )
+      return true;
+    int dep_cnt = 0;
+    for( int i=0; i < Dependent.Count(); i++ )
+      if( Dependent[i]->IsValidForSave() )
+        dep_cnt++;
+    return dep_cnt != 0;
   }
 
   double Esd12, Esd13;
