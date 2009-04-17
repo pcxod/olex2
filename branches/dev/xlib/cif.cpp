@@ -969,6 +969,7 @@ bool TCif::Adopt(TXFile *XF)  {
   AddParam("_cell_formula_units_Z", XF->GetAsymmUnit().GetZ(), true);
   AddParam("_symmetry_cell_setting", sg->GetBravaisLattice().GetName(), true);
   AddParam("_symmetry_space_group_name_H-M", sg->GetName(), true);
+  AddParam("_symmetry_space_group_name_Hall", sg->GetHallSymbol(), true);
 
   Loop = &AddLoop("_symmetry_equiv_pos_as_xyz");
   Table = &Loop->Table();
@@ -1025,7 +1026,7 @@ bool TCif::Adopt(TXFile *XF)  {
 
       TStrPObjList<olxstr,TCifLoopData*>& Row1 = ATable->AddRow(EmptyString);
       Row1[0] = A->Label();  Row1.GetObject(0) = new TCifLoopData(A);
-      for( int j=0; j < 3; j++ )  {
+      for( int j=0; j < 6; j++ )  {
         EValue.V() = Q[j];  EValue.E() = E[j];
         Row1[j+1] = EValue.ToCStr();
         Row1.GetObject(j+1) = new TCifLoopData;

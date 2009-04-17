@@ -452,7 +452,7 @@ olxstr TAsymmUnit::SummFormula(const olxstr &Sep, bool MultiplyZ) const  {
     if( A.GetAtomInfo().GetIndex() == iQPeakIndex )  continue;
     T << A.GetAtomInfo().GetSymbol();
     if( MultiplyZ )
-      T << olxstr::FormatFloat(3, A.GetAtomInfo().GetSumm()*(MatrixCount()+matrixInc) );
+      T << olxstr::FormatFloat(3, A.GetAtomInfo().GetSumm()*(MatrixCount()+matrixInc) ).TrimFloat();
     else
       T << olxstr::FormatFloat(3, A.GetAtomInfo().GetSumm());
     if( i < (UniqAtoms.Count()-1) )
