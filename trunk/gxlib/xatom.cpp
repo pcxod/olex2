@@ -49,6 +49,7 @@ TGraphicsStyle* TXAtom::FAtomParams=NULL;
 TXAtomStylesClear *TXAtom::FXAtomStylesClear=NULL;
 short TXAtom::PolyhedronIndex = -1;
 short TXAtom::SphereIndex = -1;
+olxstr TXAtom::PolyTypeName("PolyType");
 //..............................................................................
 
 TXAtom::TXAtom(const olxstr& collectionName, TSAtom& A, TGlRenderer *Render) :
@@ -923,11 +924,36 @@ bool TXAtom::OnMouseMove(const IEObject *Sender, const TMouseData *Data)  {
   return true;
 }
 //..............................................................................
-void TXAtom::TriangulateType2(Poly& pl, TSAtomPList& atoms)  {
+void TXAtom::CreateNormals(TXAtom::Poly& pl, const vec3f& cnt)  {
+  int off = pl.norms.Count();
+  pl.norms.SetCapacity( pl.faces.Count() );
+  for( int i=off; i < pl.faces.Count(); i++ )  {
+    const vec3f& v1 = pl.vecs[pl.faces[i][0]];
+    const vec3f& v2 = pl.vecs[pl.faces[i][1]];
+    const vec3f& v3 = pl.vecs[pl.faces[i][2]];
+    vec3f n = (v2-v1).XProdVec(v3-v1);
+    const float d = n.DotProd((v1+v2+v3)/3)/n.Length();
+    n.Normalise();
+    if( (n.DotProd(cnt) - d) > 0 )  { // normal looks inside?
+      olx_swap(pl.faces[i][0], pl.faces[i][1]);
+      n *= -1;
+    }
+    pl.norms.AddCCopy(n);
+  }
+}
+vec3f TXAtom::TriangulateType2(Poly& pl, const TSAtomPList& atoms)  {
   TSPlane plane(NULL);
   TTypeList< AnAssociation2<TSAtom*, double> > pa;
-  for( int i=0; i < atoms.Count(); i++ )
+  vec3f cnt;
+  double wght = 0;
+  for( int i=0; i < atoms.Count(); i++ )  {
     pa.AddNew( atoms[i], 1 );
+    cnt += atoms[i]->crd()*atoms[i]->CAtom().GetOccu();
+    wght += atoms[i]->CAtom().GetOccu();
+  }
+  cnt += FAtom->crd();
+  wght += FAtom->CAtom().GetOccu();
+  cnt /= (float)wght;
   plane.Init(pa);
   PlaneSort::Sorter sp(plane);
   const int start = pl.vecs.Count();
@@ -944,10 +970,66 @@ void TXAtom::TriangulateType2(Poly& pl, TSAtomPList& atoms)  {
   for( int i=0; i < sp.sortedPlane.Count()-1; i++ )
     pl.faces.AddNew(start, start+i+2, start+i+3);
   pl.faces.AddNew(start, start+2, start+sp.sortedPlane.Count()+1);
+  return cnt;
+}
+//..............................................................................
+void TXAtom::CreatePoly(const TSAtomPList& bound, short type, const vec3d* _normal, const vec3d* _pc)  {
+  static const vec3d NullVec;
+  TXAtom::Poly& pl = *((Polyhedron == NULL) ? (Polyhedron=new TXAtom::Poly) : Polyhedron);
+  if( type == polyRegular )  {
+    pl.vecs.SetCount( bound.Count() );
+    for( int i=0; i < bound.Count(); i++ )  {
+      pl.vecs[i] = bound[i]->crd();
+      for( int j=i+1; j < bound.Count(); j++ )  {
+        for( int k=j+1; k < bound.Count(); k++ )  {
+          if( TetrahedronVolume(
+            NullVec, 
+            (bound[i]->crd()-FAtom->crd()).Normalise(), 
+            (bound[j]->crd()-FAtom->crd()).Normalise(), 
+            (bound[k]->crd()-FAtom->crd()).Normalise() ) > 0.03 )  // reagular octahedron vol would be ~0.47A^3
+            pl.faces.AddNew(i, j, k);
+        }
+      }
+    }
+    CreateNormals(pl, FAtom->crd());
+  }
+  else if( type == polyPyramid )  {
+    vec3f cnt = TriangulateType2(pl, bound);
+    CreateNormals(pl, cnt);
+  }
+  else if( type == polyBipyramid )  {
+    vec3d normal, pc;
+    if( _normal == NULL || _pc == NULL )  {
+      vec3d rms;
+      mat3d normals;
+      TSPlane::CalcPlanes(bound, normals, rms, pc);
+      normal = normals[2];
+    }
+    else  {
+      normal = *_normal;
+      pc = *_pc;
+    }
+    TSAtomPList sidea, sideb;
+    pl.vecs.Clear();
+    for( int i=0; i < bound.Count(); i++ )  {
+      const double ca = normal.CAngle(bound[i]->crd() - pc);
+      if( ca >= 0 )
+        sidea.Add(bound[i]);
+      else
+        sideb.Add(bound[i]);
+    }
+    if( sidea.Count() > 2 )  {
+      vec3f cnt = TriangulateType2(pl, sidea);
+      CreateNormals(pl, cnt);
+    }
+    if( sideb.Count() > 2 )  {
+      vec3f cnt = TriangulateType2(pl, sideb);
+      CreateNormals(pl, cnt);
+    }
+  }
 }
 //..............................................................................
 void TXAtom::CreatePolyhedron(bool v)  {
-  const vec3d NullVec;
   if( Polyhedron != NULL )  {
     delete Polyhedron;
     Polyhedron = NULL;
@@ -970,12 +1052,16 @@ void TXAtom::CreatePolyhedron(bool v)  {
     bound.Add( &FAtom->Node(i) );
   }
   if( bound.Count() < 4 )  return;
+  int type = Primitives()->Style()->GetParam(PolyTypeName, "0", true).ToInt();
+  if( type != polyAuto && type != polyNone )  {
+    CreatePoly(bound, type);
+    return;
+  }
+
   TXAtom::Poly& pl = *(Polyhedron = new TXAtom::Poly);
-  pl.vecs.SetCount( bound.Count() );
   vec3f sv;
   double sd = 0;
   for( int i=0; i < bound.Count(); i++ )  {
-    pl.vecs[i] = bound[i]->crd();
     vec3d nd = bound[i]->crd() - FAtom->crd();
     sd += nd.Length();
     sv += nd.Normalise();
@@ -984,75 +1070,58 @@ void TXAtom::CreatePolyhedron(bool v)  {
   sd /= bound.Count();
   double ratio = sv.Length()/sd;
   if( ratio < 0.2 )  {  // atom is inside
-    if( bound.Count() == 4 )  {  // easy case
-      pl.faces.AddNew( 0, 1, 2 );
-      pl.faces.AddNew( 0, 2, 3 );
-      pl.faces.AddNew( 0, 3, 1 );
-      pl.faces.AddNew( 1, 2, 3 );
+    // test for Cp-kind polyhedron, should be drawn as two of the other kind (atom outside)
+    vec3d pc, rms;
+    mat3d normals;
+    TSPlane::CalcPlanes(bound, normals, rms, pc);
+    const double pd = normals[0].DotProd(pc)/normals[0].Length();
+    const double pd_x = normals[2].DotProd(pc)/normals[2].Length();
+    normals.Normalise();
+    int deviating = 0, deviating_x = 0;
+    for( int i=0; i < bound.Count(); i++ )  {
+      if( olx_abs(bound[i]->crd().DotProd(normals[0]) - pd) > rms[0] )
+        deviating++;
+      if( olx_abs(bound[i]->crd().DotProd(normals[2]) - pd_x) > rms[2] )
+        deviating_x++;
     }
-    else  {
-      // test for Cp-kind polyhedron, should be drawn as two of the other kind (atom outside)
-      vec3d pc, rms;
-      mat3d normals;
-      TSPlane::CalcPlanes(bound, normals, rms, pc);
-      const double pd = normals[0].DotProd(pc)/normals[0].Length();
-      const double pd_x = normals[2].DotProd(pc)/normals[2].Length();
-      normals.Normalise();
-      int deviating = 0, deviating_x = 0;
-      for( int i=0; i < bound.Count(); i++ )  {
-        if( olx_abs(bound[i]->crd().DotProd(normals[0]) - pd) > rms[0] )
-          deviating++;
-        if( olx_abs(bound[i]->crd().DotProd(normals[2]) - pd_x) > rms[2] )
-          deviating_x++;
-      }
-      if( deviating < 3 || deviating_x < 3 )  {  // a proepr polyhedra
-        for( int i=0; i < bound.Count(); i++ )  {
-          for( int j=i+1; j < bound.Count(); j++ )  {
-            for( int k=j+1; k < bound.Count(); k++ )  {
-              if( TetrahedronVolume(
-                NullVec, 
-                (bound[i]->crd()-FAtom->crd()).Normalise(), 
-                (bound[j]->crd()-FAtom->crd()).Normalise(), 
-                (bound[k]->crd()-FAtom->crd()).Normalise() ) > 0.03 )  // reagualr octahedron vol would be ~0.47A^3
-                pl.faces.AddNew(i, j, k);
-            }
-          }
+    if( deviating < 3 || deviating_x < 3 )  // a proper polyhedra
+      CreatePoly(bound, polyRegular);
+    else  // two polyhedra of atom outside..
+      CreatePoly(bound, polyBipyramid, &normals[2], &pc);
+  }
+  else  // atom outside
+    CreatePoly(bound, polyPyramid);
+}
+//..............................................................................
+void TXAtom::SetPolyhedronType(short type)  {
+  olxstr& str_type = Primitives()->Style()->GetParam(PolyTypeName, "0", true);
+  int int_type = str_type.ToInt();
+  int int_mask = Primitives()->Style()->GetParam("PMask", "0").ToInt();
+  if( type == polyNone )  {
+    if( (int_mask & (1 << PolyhedronIndex)) != 0 )
+      UpdatePrimitives(int_mask & ~(1 << PolyhedronIndex) );
+  }
+  else  {
+    if( int_type != type || (int_mask & (1 << PolyhedronIndex)) == 0 )  {
+      str_type = type;
+      if( (int_mask & (1 << PolyhedronIndex)) == 0 )
+        UpdatePrimitives(int_mask | (1 << PolyhedronIndex) );
+      else  {
+        Primitives()->ClearPrimitives();
+        Primitives()->RemoveObject(this);
+        Create();
+        for( int i=0; i < Primitives()->ObjectCount(); i++ ) {
+          if( EsdlInstanceOf(*Primitives()->Object(i), TXAtom) )
+            ((TXAtom*)Primitives()->Object(i))->CreatePolyhedron(true);
         }
       }
-      else  {  // two polyhedra of atom outside..
-        TSAtomPList sidea, sideb;
-        pl.vecs.Clear();
-        for( int i=0; i < bound.Count(); i++ )  {
-          const double ca = normals[2].CAngle(bound[i]->crd() - pc);
-          if( ca >= 0 )
-            sidea.Add(bound[i]);
-          else
-            sideb.Add(bound[i]);
-        }
-        if( sidea.Count() > 2 )
-          TriangulateType2(pl, sidea);
-        if( sideb.Count() > 2 )
-          TriangulateType2(pl, sideb);
-      }
     }
   }
-  else  {  // atom outside
-    pl.vecs.Clear();
-    TriangulateType2(pl, bound);
-  }
-  pl.norms.SetCount( pl.faces.Count() );
-  for( int i=0; i < pl.faces.Count(); i++ )  {
-    const vec3f& v1 = pl.vecs[pl.faces[i][0]];
-    const vec3f& v2 = pl.vecs[pl.faces[i][1]];
-    const vec3f& v3 = pl.vecs[pl.faces[i][2]];
-    vec3f n = (v2-v1).XProdVec(v3-v1).Normalise();
-    if( n.DotProd(v1) < 0 )  {
-      int vi = pl.faces[i][0];
-      pl.faces[i][0] = pl.faces[i][1];
-      pl.faces[i][1] = vi;
-      n *= -1;
-    }
-    pl.norms[i] = n;
-  }
+}
+//..............................................................................
+int TXAtom::GetPolyhedronType()  {
+  int int_mask = Primitives()->Style()->GetParam("PMask", "0").ToInt();
+  return (int_mask & (1 << PolyhedronIndex)) == 0 ? polyNone :
+    Primitives()->Style()->GetParam(PolyTypeName, "0", true).ToInt();
 }
 //..............................................................................

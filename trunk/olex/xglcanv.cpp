@@ -92,7 +92,8 @@ void TGlCanvas::OnEraseBackground(wxEraseEvent& event)
 {   } // Do nothing, to avoid flashing.
 //..............................................................................
 void TGlCanvas::InitGL()  {
-  if( FXApp != NULL )  FXApp->Init();
+  if( FXApp != NULL )  
+    FXApp->Init();
 }
  //..............................................................................
 void TGlCanvas::OnMouseDown(wxMouseEvent& me)  {
@@ -132,42 +133,38 @@ void TGlCanvas::OnMouseUp(wxMouseEvent& me)
   {
 //    FMY += (wxSystemSettings::GetMetric(wxSYS_MENU_Y)*FParent->pmMenu->GetMenuItemCount());
     FXApp->ResetMouseState();  // reset mouse state
-    if( FRightMouseDown )
-    {
+    if( FRightMouseDown )  {
       FXApp->MouseUp(me.m_x, me.m_y, Fl, Btn);
       AGDrawObject *G = FXApp->SelectObject(me.m_x, me.m_y);
       TGlGroup *GlG = FXApp->FindObjectGroup(G);
       bool Handled = false;
-      if( G )
-      {
-        if( !GlG )  FParent->ObjectUnderMouse(G);
-        else        FParent->ObjectUnderMouse(GlG);
-        if( FParent->CurrentPopupMenu() )
-        {
+      if( G != NULL )  {
+        if( GlG == NULL )  
+          FParent->ObjectUnderMouse(G);
+        else        
+          FParent->ObjectUnderMouse(GlG);
+        if( FParent->CurrentPopupMenu() )  {
           FParent->PopupMenu(FParent->CurrentPopupMenu(), FMX+left, FMY+top);
           Handled = true;
         }
         if( !Handled )
-        { FParent->PopupMenu(FParent->DefaultPopup(), FMX+left, FMY+top); };
+          FParent->PopupMenu(FParent->DefaultPopup(), FMX+left, FMY+top);
       }
       else
-      {
         FParent->PopupMenu(FParent->GeneralPopup(), FMX+left, FMY+top);
-      }
     }
     SetFocus();
     FRightMouseDown = false;
     FLeftMouseDown = false;
     return;
   }
-  if( FParent->OnMouseUp(me.m_x, me.m_y, Fl, Btn) )
-  {
+  if( FParent->OnMouseUp(me.m_x, me.m_y, Fl, Btn) )  {
     FXApp->ResetMouseState();
     FXApp->Draw();
   }
-  else
-  {
-    if( FXApp->MouseUp(me.m_x, me.m_y, Fl, Btn) )  FXApp->Draw();
+  else  {
+    if( FXApp->MouseUp(me.m_x, me.m_y, Fl, Btn) )  
+      FXApp->Draw();
   }
   FRightMouseDown = false;
   FLeftMouseDown = false;

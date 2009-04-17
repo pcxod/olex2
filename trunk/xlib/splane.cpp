@@ -75,8 +75,12 @@ bool TSPlane::CalcPlanes(const TTypeList< AnAssociation2<vec3d, double> >& Point
   m[2][0] = m[0][2];
   m[2][1] = m[1][2];
   mat3d::EigenValues(m, Params.I());
-  for( int i=0; i < 3; i++ )
-    rms[i] = sqrt(m[i][i]/Points.Count());
+  for( int i=0; i < 3; i++ )  {
+    if( m[i][i] < 0 ) // optimised version will create slightly negative values!
+      rms[i] = 0;
+    else
+      rms[i] = sqrt(m[i][i]/Points.Count());
+  }
   bool swaps = true;
   while( swaps )  {
     swaps = false;

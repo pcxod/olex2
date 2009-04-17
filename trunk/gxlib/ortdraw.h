@@ -170,7 +170,7 @@ public:
     HBondScale = 0.5;
   }
   // create ellipse and pie coordinates
-  void Init(const PSWriter& pw)  {
+  void Init(PSWriter& pw)  {
     ElpCrd.SetCount(ElpDiv);
     Arc.SetCount(ElpDiv);
     PieCrd.SetCount(PieDiv);
@@ -206,22 +206,27 @@ public:
     TGXApp& app = TGXApp::GetInstance();
     const TEBasis& basis = app.GetRender().GetBasis();
     LinearScale = olx_min((float)pw.GetWidth()/vp[2], (double)pw.GetHeight()/vp[3]);
+
+    if( app.LabelCount() != 0 )  {
+      CString fnt("/Verdana findfont ");
+      fnt << Round(app.GetLabel(0).Font()->GetPointSize()/LinearScale) << " scalefont setfont";
+      pw.custom(fnt.c_str());
+    }
+
+    pw.scale(LinearScale, LinearScale);
+    LinearScale = 1; // reset now
     DrawScale = LinearScale/app.GetRender().GetScale();
     AradScale = 0.5*DrawScale;///app.GetRender().GetScale(),
     BondRad = 0.05*DrawScale;///app.GetRender().GetScale();
     SceneOrigin = basis.GetCenter();
-    DrawOrigin = vec3f(pw.GetWidth()/2, pw.GetHeight()/2, 0);
+    //DrawOrigin = vec3f(pw.GetWidth()/2, pw.GetHeight()/2, 0);
+    DrawOrigin = vec3f(vp[2]/2, vp[3]/2, 0);
     ProjMatr = basis.GetMatrix()*DrawScale;  
     UnProjMatr = ProjMatr.Inverse();
   }
   void Render(const olxstr& fileName)  {
     PSWriter pw(fileName);
     Init(pw);
-    if( app.LabelCount() != 0 )  {
-      CString fnt("/Verdana findfont ");
-      fnt << Round(app.GetLabel(0).Font()->GetPointSize()*sqrt(LinearScale)) << " scalefont setfont";
-      pw.custom(fnt.c_str());
-    }
     const TEBasis& basis = app.GetRender().GetBasis();
     TTypeList<OrtDraw::OrtAtom> atoms;
     atoms.SetCapacity(app.AtomCount());
@@ -303,10 +308,9 @@ public:
     }
     if( app.LabelCount() != 0 )  {
       for( int i=0; i < app.LabelCount(); i++ )  {
-        const double fsz = app.GetLabel(0).Font()->GetPointSize();
         const TXGlLabel& glxl = app.GetLabel(i);
         vec3d rp = glxl.GetRasterPosition();
-        rp[1] += (3*fsz/12.0);
+        rp[1] += 4;
         rp *= (DrawScale*app.GetRender().GetScale());
         pw.drawText(glxl.GetLabel(), rp+DrawOrigin);
       }

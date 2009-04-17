@@ -75,6 +75,8 @@ public:
   // used if the connectivity ifosrmation was altered externally
   void UpdateConnectivity();
   void Init();
+  // generates atoms inside the unit cell only
+  void GenerateCell(bool IncludeQ);
   // generates atoms within specified volume
   void Generate(const vec3d& MFrom, const vec3d& MTo, TCAtomPList* Template,
     bool ClearCont, bool IncludeQ);
@@ -155,7 +157,7 @@ protected:
   void RemoveNonHBonding(class TAtomEnvi& envi);
 //  void AnalyseHBonding(class TAtomEnvi& Envi);
   bool _AnalyseAtomHAdd(class AConstraintGenerator& cg, TSAtom& atom, TSAtomPList& ProcessingAtoms, 
-    int part = -1, TCAtomPList* generated = NULL);
+    int part = DefNoPart, TCAtomPList* generated = NULL);
   void _ProcessRingHAdd(AConstraintGenerator& cg, const TPtrList<TBasicAtomInfo>& rcont);
 public:
   void AnalyseHAdd(class AConstraintGenerator& cg, const TSAtomPList& atoms);

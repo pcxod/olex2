@@ -14,13 +14,13 @@ namespace PersUtil {
     TStrList toks(v, ',');
     if( toks.Count() != 3 )
       throw TInvalidArgumentException(__OlxSourceInfo, "invalid vector size");
-    return vec3d(toks[0].ToDouble(), toks[2].ToDouble(), toks[2].ToDouble());
+    return vec3d(toks[0].ToDouble(), toks[1].ToDouble(), toks[2].ToDouble());
   }
   static vec3i IntVecFromStr(const olxstr& v)  {
     TStrList toks(v, ',');
     if( toks.Count() != 3 )
       throw TInvalidArgumentException(__OlxSourceInfo, "invalid vector size");
-    return vec3i(toks[0].ToInt(), toks[2].ToInt(), toks[2].ToInt());
+    return vec3i(toks[0].ToInt(), toks[1].ToInt(), toks[2].ToInt());
   }
   template <class lc> static olxstr NumberListToStr(const lc& v)  {
     olxstr rv = v.IsEmpty() ? EmptyString : olxstr(v[0]);

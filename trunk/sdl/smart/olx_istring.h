@@ -1171,7 +1171,7 @@ public:
   inline void SetIncrement(size_t ni)  {  T::_Increment = ni;  }
   void SetCapacity(size_t newc)  {
     if( T::SData == NULL )  T::SData = new struct T::Buffer(newc+T::_Increment);
-    else                 
+    else if( newc > T::GetCapacity() )                
       T::checkBufferForModification(newc);
   }
   //............................................................................

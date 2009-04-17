@@ -2921,9 +2921,11 @@ void XLibMacros::macASR(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 //..............................................................................
 void XLibMacros::macDescribe(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   TXApp& xapp = TXApp::GetInstance();
-  TStrList lst;
+  TStrList lst, out;
   xapp.XFile().GetRM().Describe(lst);
-  xapp.GetLog() << lst << '\n'; 
+  for( int i=0; i < lst.Count(); i++ )
+    out.Hypernate(lst[i], 80, true);
+  xapp.GetLog() << out << '\n'; 
 }
 //..............................................................................
 

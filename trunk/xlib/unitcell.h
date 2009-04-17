@@ -114,7 +114,7 @@ public:
   /* finds all atoms (+symm attached) and Q-peaks, if specfied; if part is not -1, part 0 and 
   the specified part are only placed
   */
-  void GetAtomEnviList(TSAtom& atom, TAtomEnvi& envi, bool IncludeQ = false, int part=-1) const;
+  void GetAtomEnviList(TSAtom& atom, TAtomEnvi& envi, bool IncludeQ = false, int part=DefNoPart) const;
   
   // finds only q-peaks in the environment of specified atom
   void GetAtomQEnviList(TSAtom& atom, TAtomEnvi& envi);
