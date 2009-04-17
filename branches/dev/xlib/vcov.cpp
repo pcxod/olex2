@@ -23,8 +23,11 @@ void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au)  {
   for( int i=1; i < cnt; i++ )  { // skipp OSF
     toks.Clear();
     toks.Strtok(sl[i+7], ' ');
-    if( toks[0].ToInt() != i+1 || toks.Count() != 6 )
+    if( toks[0].ToInt() != i+1 || toks.Count() != 6 )  {
+      if( toks.Count() == 5 )
+        continue;
       throw TFunctionFailedException(__OlxSourceInfo, "invalid matrix file");
+    }
     if( toks[4].CharAt(0) == 'x' )  {
       diag.Add(toks[2].ToDouble());
       Index.AddNew( toks[5], vcoviX, -1 );
