@@ -9,21 +9,22 @@ const unsigned short mmNone   = 0;
 const uint32_t 
   prsNone            = 0x00000000, // modes
   prsStrVis          = 0x00000001, // Structure visible/invisible
-  prsHVis            = 0x00000002,        // hydroges visible invisible
-  prsHBVis           = 0x00000004,      // hydrogen bonds visible/invisible
-  prsQVis            = 0x00000008,        // qpeaks visible/invisible
-  prsQBVis           = 0x00000010,       // qpeak bonds visible/invisible
-  prsCellVis         = 0x00000020,     // cell visible/invisible
-  prsBasisVis        = 0x00000040,    // basis visible/invisible
-  prsHtmlVis         = 0x00000080,       // popup window visible/invisible
-  prsHtmlTTVis       = 0x00000100,       // popup window tooltips visible/invisible
-  prsBmpVis          = 0x00000200,       // glBitmap visible/invisible
-  prsPluginInstalled = 0x00000400,       // plugin installed
-  prsHelpVis         = 0x00000800,       // help window visible
-  prsInfoVis         = 0x00001000,       // info window visible
-  prsCmdlVis         = 0x00002000,       // command line visible
-  prsGradBG          = 0x00004000,       // gradient bg view
-  prsLabels          = 0x00008000;       // labels vusible/hidden
+  prsHVis            = 0x00000002, // hydroges visible invisible
+  prsHBVis           = 0x00000004, // hydrogen bonds visible/invisible
+  prsQVis            = 0x00000008, // qpeaks visible/invisible
+  prsQBVis           = 0x00000010, // qpeak bonds visible/invisible
+  prsCellVis         = 0x00000020, // cell visible/invisible
+  prsBasisVis        = 0x00000040, // basis visible/invisible
+  prsHtmlVis         = 0x00000080, // popup window visible/invisible
+  prsHtmlTTVis       = 0x00000100, // popup window tooltips visible/invisible
+  prsBmpVis          = 0x00000200, // glBitmap visible/invisible
+  prsPluginInstalled = 0x00000400, // plugin installed
+  prsHelpVis         = 0x00000800, // help window visible
+  prsInfoVis         = 0x00001000, // info window visible
+  prsCmdlVis         = 0x00002000, // command line visible
+  prsGradBG          = 0x00004000, // gradient bg view
+  prsLabels          = 0x00008000, // labels vusible/hidden
+  prsGLTT            = 0x00010000; // GLTooltip 
 
 //---------------------------------------------------------------------------
 class AMode : public IEObject  {

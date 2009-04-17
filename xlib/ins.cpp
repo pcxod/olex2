@@ -190,26 +190,36 @@ void TIns::_ProcessSame(ParseContext& cx)  {
        catch( const TExceptionBase& ex )  {
          throw TFunctionFailedException(__OlxSourceInfo, olxstr("invalid SAME instruction :") << ex.GetException()->GetError());
        }
-       if( ag.IsEmpty() )
-         throw TFunctionFailedException(__OlxSourceInfo, "empty SAME atoms list");
-       TSameGroup& sg1 = sgl.NewDependent(sg);
-       for( int k=0; k < ag.Count(); k++ )
-         sg1.Add( *ag[k].GetAtom() );
-       sg1.Esd12 = esd1;
-       sg1.Esd13 = esd2;
-       if( ag.Count() > max_atoms )
-         max_atoms = ag.Count();
+       if( ag.IsEmpty() )  {
+         TBasicApp::GetLog().Error(olxstr("Invalid SAME atom list, removed: ") << toks.Text(' '));
+         //throw TFunctionFailedException(__OlxSourceInfo, "empty SAME atoms list");
+       }
+       else  {
+         TSameGroup& sg1 = sgl.NewDependent(sg);
+         for( int k=0; k < ag.Count(); k++ )
+           sg1.Add( *ag[k].GetAtom() );
+         sg1.Esd12 = esd1;
+         sg1.Esd13 = esd2;
+         if( ag.Count() > max_atoms )
+           max_atoms = ag.Count();
+       }
     }
-    // now process the reference group
-    for( int j=0; j < max_atoms; j++ )  {
-      if( ca->GetId() + j >= cx.au.AtomCount() )
-        throw TFunctionFailedException(__OlxSourceInfo, "not enough atoms to create the reference group for SAME");
-      TCAtom& a = cx.au.GetAtom(ca->GetId() + j);
-      if( a.GetAtomInfo() == iHydrogenIndex || a.GetAtomInfo() == iDeuteriumIndex )  {
-        max_atoms++;
-        continue;
+    if( sg.DependentCount() == 0 )  {
+      sgl.Release(sg);
+      delete &sg;
+    }
+    else  {
+      // now process the reference group
+      for( int j=0; j < max_atoms; j++ )  {
+        if( ca->GetId() + j >= cx.au.AtomCount() )
+          throw TFunctionFailedException(__OlxSourceInfo, "not enough atoms to create the reference group for SAME");
+        TCAtom& a = cx.au.GetAtom(ca->GetId() + j);
+        if( a.GetAtomInfo() == iHydrogenIndex || a.GetAtomInfo() == iDeuteriumIndex )  {
+          max_atoms++;
+          continue;
+        }
+        sg.Add( a );
       }
-      sg.Add( a );
     }
 #ifdef _DEBUG
     for( int j=0; j < sg.Count(); j++ )  {
@@ -722,16 +732,21 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
   if( a.IsDeleted() || a.IsSaved() )  return;
   if( checkSame && a.GetSameId() != -1 )  {  // "
     TSameGroup& sg = rm.rSAME[a.GetSameId()];
-    for( int i=0; i < sg.DependentCount(); i++ )  {
-      olxstr tmp( "SAME ");
-      tmp << olxstr(sg.Esd12).TrimFloat() << ' ' << olxstr(sg.Esd13).TrimFloat();
-      for( int j=0; j < sg.GetDependent(i).Count(); j++ )
-        tmp << ' ' << sg.GetDependent(i)[j].GetLabel();
-      HypernateIns( tmp, sl );
+    if( sg.IsValidForSave() )  {
+      for( int i=0; i < sg.DependentCount(); i++ )  {
+        if( !sg.GetDependent(i).IsValidForSave() )
+          continue;
+        olxstr tmp( "SAME ");
+        tmp << olxstr(sg.GetDependent(i).Esd12).TrimFloat() << ' ' 
+            << olxstr(sg.GetDependent(i).Esd13).TrimFloat();
+        for( int j=0; j < sg.GetDependent(i).Count(); j++ )
+          tmp << ' ' << sg.GetDependent(i)[j].GetLabel();
+        HypernateIns( tmp, sl );
+      }
+      for( int i=0; i < sg.Count(); i++ )
+        _SaveAtom(rm, sg[i], part, afix, sfac, sl, index, false);
+      return;
     }
-    for( int i=0; i < sg.Count(); i++ )
-      _SaveAtom(rm, sg[i], part, afix, sfac, sl, index, false);
-    return;
   }
   if( a.GetPart() != part )  {
     if( part != 0 && a.GetPart() != 0 )

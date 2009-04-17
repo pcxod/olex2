@@ -709,6 +709,18 @@ void THtmlSwitch::UpdateFileIndex()  {
   }
   FStrings.LoadFromTextStream(*is);
   delete is;
+  for( int i=0; i < FStrings.Count(); i++ )  {
+    // replace the parameters with their values
+    if( FStrings[i].IndexOf('#') != -1 )  {
+      // "key word parameter"
+      FStrings[i].Replace( "#switch_name", FName );
+      if( FParent != NULL )
+        FStrings[i].Replace( "#parent_name", FParent->Name() );
+
+      for( int j=0; j < FParams.Count(); j++ )
+        FStrings[i].Replace( olxstr('#') << FParams.GetName(j), FParams.GetValue(j) );
+    } // end of parameter replacement
+  }
   FParentHtml->CheckForSwitches(*this, TZipWrapper::IsZipFile(FN) );
   for( int i=0; i < SwitchCount(); i++ )
     FSwitches[i].UpdateFileIndex();
@@ -789,36 +801,15 @@ THtmlSwitch*  THtmlSwitch::FindSwitch(const olxstr &IName)  {
 }
 //..............................................................................
 void THtmlSwitch::ToStrings(TStrList &List)  {
-  olxstr Tmp, Tmp1;
-  AHtmlObject *HO;
-  if( FFileIndex >= 0 && FFileIndex < FFiles.Count() )  {
-    Tmp = "<SWITCHINFOS SRC=\"";
-    Tmp << FFiles[FFileIndex] << "\">";
-    List.Add(Tmp);
-  }
+  if( FFileIndex >= 0 && FFileIndex < FFiles.Count() )
+    List.Add("<SWITCHINFOS SRC=\"")<< FFiles[FFileIndex] << "\">";
+
   for( int i=0; i < FStrings.Count(); i++ )  {
     if( FStrings.GetObject(i) != NULL )
       FStrings.GetObject(i)->ToStrings(List);
-    else  {
-      // replace the parameters with their values
-      if( FStrings[i].IndexOf('#') != -1 )  {
-        Tmp = FStrings[i];
-        // "key word parameter"
-        Tmp.Replace( "#switch_name", FName );
-        if( FParent != NULL )
-          Tmp.Replace( "#parent_name", FParent->Name() );
-
-        for( int j=0; j < FParams.Count(); j++ )  {
-          Tmp1 = '#';  Tmp1 << FParams.GetName(j);
-          Tmp.Replace( Tmp1, FParams.GetValue(j) );
-        }
-        List.Add( Tmp );
-
-      } // end of parameter replcaement
-      else
-        List.Add( FStrings[i] );
-    }
+    List.Add( FStrings[i] );
   }
+
   if( FFileIndex >= 0 && FFileIndex < FFiles.Count() )
     List.Add("<SWITCHINFOE>");
 }
@@ -1130,7 +1121,8 @@ void THtml::CheckForSwitches(THtmlSwitch &Sender, bool izZip)  {
           if( Toks[j].IndexOf('#') != -1 )  {
             olxstr Tmp = Toks[j], Tmp1;
             for( int k=0; k < Sender.Params().Count(); k++ )  {
-              Tmp1 = '#';  Tmp1 << Sender.Params().GetName(k);
+              Tmp1 = '#';  
+              Tmp1 << Sender.Params().GetName(k);
               Tmp.Replace( Tmp1, Sender.Params().GetValue(k) );
             }
             Sw->AddParam(Tmp);
@@ -1407,7 +1399,6 @@ void THtml::OnCellMouseHover(wxHtmlCell *Cell, wxCoord x, wxCoord y)  {
       Href.Insert((char)val, ind);
       ind = Href.FirstIndexOf('%', ind+1);
     }
-#if defined(__WIN32__) || defined(__WXGTK__)
     if( ShowTooltips )  {
       wxToolTip *tt = GetToolTip();
       Href.Replace("#href", Link->GetHref().c_str() );
@@ -1416,7 +1407,6 @@ void THtml::OnCellMouseHover(wxHtmlCell *Cell, wxCoord x, wxCoord y)  {
         SetToolTip( wxs );
       }
     }
-#endif
   }
   else
     SetToolTip(NULL);
@@ -1774,33 +1764,29 @@ void THtml::funIsItem(const TStrObjList &Params, TMacroError &E)  {
   E.SetRetVal( sw == NULL ? false : true );
 }
 //..............................................................................
-void THtml::SetShowTooltips(bool v)  {
+void THtml::SetShowTooltips(bool v, const olxstr& html_name)  {
   ShowTooltips = v;
-  TStateChange sc(prsHtmlTTVis, v);
+  TStateChange sc(prsHtmlTTVis, v, html_name);
   TGlXApp::GetMainForm()->OnStateChange->Execute((AEventsDispatcher*)this, &sc);
 }
 //..............................................................................
 void THtml::macTooltips(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   if( Cmds.IsEmpty() )  {
     SetShowTooltips( !GetShowTooltips() );
-    return;
   }
-  if( Cmds.Count() == 1 )  {
-    if( !Cmds[0].Comparei("true") || ! Cmds[0].Comparei("false") )  {
+  else if( Cmds.Count() == 1 )  {
+    if( Cmds[0].Comparei("true") == 0 || Cmds[0].Comparei("false") == 0 )
       this->SetShowTooltips( Cmds[0].ToBool() );
-      return;
-    }
     else  {
       THtml* html = TGlXApp::GetMainForm()->GetHtml( Cmds[0] );
       if( html == NULL )  return;
       html->SetShowTooltips( !html->GetShowTooltips() );
-      return;
     }
   }
-
-  THtml* html = TGlXApp::GetMainForm()->GetHtml( Cmds[0] );
-  if( html != NULL )  {
-    html->SetShowTooltips( Cmds[1].ToBool() );
+  else  {
+    THtml* html = TGlXApp::GetMainForm()->GetHtml( Cmds[0] );
+    if( html != NULL )
+      html->SetShowTooltips( Cmds[1].ToBool(), Cmds[0] );
   }
 }
 //..............................................................................

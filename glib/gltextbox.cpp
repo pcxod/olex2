@@ -132,12 +132,17 @@ void TGlTextBox::Clear()  {
 }
 //..............................................................................
 void TGlTextBox::PostText(const olxstr& S, TGlMaterial* M)  {
+  if( S.IndexOf('\n') != -1 )  {
+    TStrList toks(S, '\n');
+    PostText(toks, M);
+    return;
+  }
   olxstr Tmp = S;
-  int count;
+  Tmp.SetCapacity( S.CharCount('\t')*8 );
   for(int i=0; i < Tmp.Length(); i++ )  {
     if( Tmp[i] == '\t' )  {
       Tmp[i] = ' ';
-      count = 4-i%4-1;
+      int count = 4-i%4-1;
       if( count > 0 ) Tmp.Insert(' ', i, count);
     }
   }
@@ -158,9 +163,9 @@ void TGlTextBox::PostText(const olxstr& S, TGlMaterial* M)  {
   int width = Font()->TextWidth(Tmp);
   if( width > Width )  Width = width + 3;
   if( FBuffer.Count() > 1 )
-    Height = (int)(Font()->TextHeight()*(LineSpacing)*FBuffer.Count())+2;
+    Height = (int)(Font()->TextHeight()*(LineSpacing)*FBuffer.Count());
   else
-    Height = Font()->TextHeight(FBuffer[0])+2;
+    Height = Font()->TextHeight(FBuffer[0]);
 }
 //..............................................................................
 void TGlTextBox::PostText(const TStrList &SL, TGlMaterial *M)  {

@@ -5,11 +5,36 @@
 BeginXlibNamespace()
 /* scatterer wrapping to allow user defined values */
 class XScatterer {
+public:
+  struct ConnInfo  {
+    int maxBonds;
+    double r;
+    bool builtIn;
+    ConnInfo(): maxBonds(12), r(0), builtIn(false) {}
+    ConnInfo(const ConnInfo& ci): 
+      maxBonds(ci.maxBonds),
+      r(ci.r),
+      builtIn(ci.builtIn)  {  }
+    ConnInfo(const cm_Element& elm) : maxBonds(12), r(elm.r_bonding), builtIn(true)  {}
+    void SetR(const double& r)  {
+      if( r != this->r )
+        builtIn = false;
+      this->r = r;
+    }
+    ConnInfo& operator = (const cm_Element& elm)  {
+      maxBonds = 12;
+      r = elm.r_bonding;
+      builtIn = true;
+      return *this;
+    }
+  };
+private:
   cm_Gaussians gaussians;
-  double mu, r, wt;
+  double mu, wt;
   compd fpfdp;
   cm_Element* source;
   olxstr Label;
+  ConnInfo connInfo;
   bool builtIn;
 public:
   // creates a dummy scatterer
@@ -30,18 +55,18 @@ public:
   XScatterer(const XScatterer& sc) : 
     gaussians(sc.gaussians), 
     mu(sc.mu),
-    r(sc.r),
     wt(sc.wt),
     Label(sc.Label),
     source(sc.source),
-    builtIn(sc.builtIn) {  }
+    builtIn(sc.builtIn),
+    connInfo(sc.connInfo)  {  }
   // initialises data from the provided library element
   void SetSource(cm_Element& src, double energy)  {
     if( src.gaussians == NULL )
       throw TInvalidArgumentException(__OlxSourceInfo, "given scatterer is only partially initialised");
     gaussians = *src.gaussians;
     Label = src.symbol;
-    r = src.r_bonding;
+    connInfo = src;
     wt = src.CalcMr();
     fpfdp = src.CalcFpFdp(energy);
     source = &src;
@@ -57,12 +82,10 @@ public:
   compd GetFpFdp() const {  return fpfdp;  }
   // sets custom bonding radius
   void SetBondingR(double v)  {
-    if( v != r )  {
-      r = v;
-      builtIn = false;
-    }
+    connInfo.SetR(v);
   }
-  double GetBondingR() const {  return r;  }
+  double GetBondingR() const {  connInfo.r;  }
+  const ConnInfo& GetConnInfo() const {  return connInfo;  }
   // sets custom molecular weight
   void SetWeight(double v)  {
     if( v != wt )  {
@@ -99,7 +122,7 @@ public:
     rv << ' ' << gaussians.a1 << ' ' << gaussians.a2 << ' ' << gaussians.a3 << ' ' << gaussians.a4 <<
           ' ' << -gaussians.b1 << ' ' << -gaussians.b2 << ' ' << -gaussians.b3 << ' ' << -gaussians.b4 <<
           ' ' << gaussians.c << 
-          ' ' << fpfdp.GetRe() << ' ' << fpfdp.GetIm() << ' ' << mu << ' ' << r << ' ' << wt;
+          ' ' << fpfdp.GetRe() << ' ' << fpfdp.GetIm() << ' ' << mu << ' ' << connInfo.r << ' ' << wt;
     return rv;
   }
   inline double calc_sq(double sqv) const {

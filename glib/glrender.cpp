@@ -1108,7 +1108,7 @@ void TGlRenderer::DrawTextSafe(const vec3d& pos, const olxstr& text, const TGlFo
     glCallList(fnt.FontBase() + ' ');
   }
   // set a valid raster position
-  glRasterPos3d(0, 0, pos[2]*GetScale());
+  glRasterPos3d(0, 0, pos[2]);
   glBitmap(0, 0, 0, 0, (float)(pos[0]/FViewZoom), (float)(pos[1]/FViewZoom), NULL);
   for( int i=0; i < text.Length(); i++ ) 
     glCallList( fnt.FontBase() + text.CharAt(i) );

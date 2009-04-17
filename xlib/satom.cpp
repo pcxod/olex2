@@ -7,6 +7,7 @@
 #include "lattice.h"
 #include "asymmunit.h"
 #include "symmparser.h"
+#include "pers_util.h"
 
           
 //----------------------------------------------------------------------------//
@@ -79,6 +80,8 @@ olxstr TSAtom::GetGuiLabelEx() const  {
 //..............................................................................
 void TSAtom::ToDataItem(TDataItem& item) const {
   item.AddField("net_id", Network->GetTag());
+  // need to save it for overlayed images etc
+  item.AddField("crd", PersUtil::VecToStr(FCenter) );
   TDataItem& nodes = item.AddItem("Nodes");
   for( int i=0; i < Nodes.Count(); i++ )  {
     if( Nodes[i]->IsDeleted() )  continue;
@@ -117,6 +120,7 @@ void TSAtom::FromDataItem(const TDataItem& item, TLattice& parent) {
     Matrices.Add( &latt.GetMatrix(mi) );
   }
   FCCenter = *Matrices[0] * FCCenter;
-  latt.GetAsymmUnit().CellToCartesian(FCCenter, FCenter);
+  FCenter = PersUtil::FloatVecFromStr(item.GetRequiredField("crd"));
+  //latt.GetAsymmUnit().CellToCartesian(FCCenter, FCenter);
 }
 //..............................................................................

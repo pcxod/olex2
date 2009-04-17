@@ -209,6 +209,8 @@ bool TGlConsole::WillProcessKey( int Key, short ShiftState )  {
       return true;
     }
   }
+  else if( Key == WXK_BACK && StringPosition() != PromptStr.Length() )
+    return true;
   return false;
 }
 //..............................................................................
@@ -579,7 +581,8 @@ size_t TGlConsole::Write(const olxstr& str)  {
     SetSkipPosting(false);
     return 1;
   }
-  if( FBuffer.IsEmpty() )  FBuffer.Add(EmptyString);
+  if( FBuffer.IsEmpty() )  
+    FBuffer.Add(EmptyString);
   FBuffer.Last().String.SetCapacity( FBuffer.Last().String.Length() + str.Length());
   for( int i=0; i < str.Length(); i++ )  {
     if( str[i] == '\n' )  {

@@ -24,6 +24,11 @@ const short darPers     = 0x0001, // default atom radii
             darPack     = 0x0004,
             darBond     = 0x0008,
             darIsotH    = 0x0010;  // only affects H, others as darIsot
+const short polyNone      = 0,
+            polyAuto      = 1,  // polyhedron type
+            polyRegular   = 2,
+            polyPyramid   = 3,
+            polyBipyramid = 4;
 
 const int xatom_PolyId   = 1,
           xatom_SphereId = 2;
@@ -45,12 +50,16 @@ private:
   friend class TXAtomStylesClear;
   struct Poly {
     TArrayList<vec3f> vecs;
-    TArrayList<vec3f> norms;
+    TTypeList<vec3f> norms;
     TTypeList<vec3i> faces;
   };
   Poly* Polyhedron;
   void CreatePolyhedron(bool v);
-  void TriangulateType2(Poly& p, TSAtomPList& atoms);
+  // returns the center of the created polyhedron
+  vec3f TriangulateType2(Poly& p, const TSAtomPList& atoms);
+  void CreateNormals(TXAtom::Poly& pl, const vec3f& cnt);
+  void CreatePoly(const TSAtomPList& atoms, short type, 
+    const vec3d* normal=NULL, const vec3d* center=NULL);
 protected:
   TStrList* FindPrimitiveParams(TGlPrimitive *P);
   static TTypeList<TGlPrimitiveParams> FPrimitiveParams;
@@ -63,6 +72,7 @@ protected:
   static float FTelpProb, FQPeakScale;
   static short FDefRad, FDefDS;
   static TGraphicsStyle *FAtomParams;
+  static olxstr PolyTypeName;
 public:
   TXAtom(const olxstr& collectionName, TSAtom& A, TGlRenderer *Render);
   virtual ~TXAtom();
@@ -120,8 +130,8 @@ public:
   void ListParams(TStrList &List, TGlPrimitive *Primitive);
   // for parameters of a specific primitive
   void ListParams(TStrList &List);
-  void ListPrimitives(TStrList &List) const;
   // fills the list with proposal primitives to construct object
+  void ListPrimitives(TStrList &List) const;
   TGraphicsStyle* Style();
   void UpdatePrimitives(int32_t Mask, const ACreationParams* cpar=NULL);
 
@@ -143,6 +153,10 @@ public:
     if( FXAtomStylesClear == NULL ) 
       FXAtomStylesClear = new TXAtomStylesClear(glr);
   }
+  
+  void SetPolyhedronType(short type);
+  int GetPolyhedronType();
+
   static TGraphicsStyle* GetParamStyle() {  return FAtomParams;  }
 };
 

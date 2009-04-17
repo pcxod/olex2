@@ -310,6 +310,8 @@ TSimpleRestraint& TSRestraintList::Release(int i)    {
 }
 //..............................................................................
 void TSRestraintList::Restore(TSimpleRestraint& sr)  {  
+  if( &sr.GetParent() != this )
+    throw TInvalidArgumentException(__OlxSourceInfo, "restraint parent differs");
   Restraints.Add(sr);  
   if( sr.GetVarRef(0) != NULL )
     RefMod.Vars.RestoreRef(sr, 0, sr.GetVarRef(0));

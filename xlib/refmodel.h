@@ -581,6 +581,7 @@ of components 1 ... m
   
   struct ReleasedItems {
     TSimpleRestraintPList restraints;
+    TPtrList<TSameGroup> sameList;
     //TPtrList<XLEQ> equations;
   };
 };

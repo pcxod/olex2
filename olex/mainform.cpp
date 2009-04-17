@@ -114,6 +114,8 @@ enum
   ID_MenuItemBondInfo,
   ID_MenuAtomType,
   ID_MenuAtomOccu,
+  ID_MenuAtomConn,
+  ID_MenuAtomPoly,
 
   ID_About, // help menu
 
@@ -165,6 +167,20 @@ enum
   ID_AtomOccu12,
   ID_AtomOccu13,
   ID_AtomOccu14,
+  ID_AtomOccuFix,
+  ID_AtomOccuFree,
+
+  ID_AtomConn0,
+  ID_AtomConn1,
+  ID_AtomConn2,
+  ID_AtomConn3,
+  ID_AtomConn4,
+
+  ID_AtomPolyNone,
+  ID_AtomPolyAuto,
+  ID_AtomPolyRegular,
+  ID_AtomPolyPyramid,
+  ID_AtomPolyBipyramid,
 
   ID_Selection,
   ID_SelGroup,
@@ -279,7 +295,20 @@ BEGIN_EVENT_TABLE(TMainForm, wxFrame)  // basic interface
   EVT_MENU(ID_AtomOccu12, TMainForm::OnAtomOccuChange)
   EVT_MENU(ID_AtomOccu13, TMainForm::OnAtomOccuChange)
   EVT_MENU(ID_AtomOccu14, TMainForm::OnAtomOccuChange)
+  EVT_MENU(ID_AtomOccuFree, TMainForm::OnAtomOccuChange)
+  EVT_MENU(ID_AtomOccuFix, TMainForm::OnAtomOccuChange)
 
+  EVT_MENU(ID_AtomConn0, TMainForm::OnAtomConnChange)
+  EVT_MENU(ID_AtomConn1, TMainForm::OnAtomConnChange)
+  EVT_MENU(ID_AtomConn2, TMainForm::OnAtomConnChange)
+  EVT_MENU(ID_AtomConn3, TMainForm::OnAtomConnChange)
+  EVT_MENU(ID_AtomConn4, TMainForm::OnAtomConnChange)
+
+  EVT_MENU(ID_AtomPolyNone, TMainForm::OnAtomPolyChange)
+  EVT_MENU(ID_AtomPolyAuto, TMainForm::OnAtomPolyChange)
+  EVT_MENU(ID_AtomPolyRegular, TMainForm::OnAtomPolyChange)
+  EVT_MENU(ID_AtomPolyPyramid, TMainForm::OnAtomPolyChange)
+  EVT_MENU(ID_AtomPolyBipyramid, TMainForm::OnAtomPolyChange)
 
   EVT_MENU(ID_SelGroup, TMainForm::OnSelection)
   EVT_MENU(ID_SelUnGroup, TMainForm::OnSelection)
@@ -295,6 +324,8 @@ TMainForm::TMainForm(TGlXApp *Parent, int Width, int Height):
 //  _crtBreakAlloc = 5892;
   SkipSizing = false;
   Destroying = false;
+  _UseGlTooltip = false;  // most platforms support it, besides some very old ones...
+
   StartupInitialised = RunOnceProcessed = false;
   wxInitAllImageHandlers();
 
@@ -581,7 +612,6 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual occupancy\
   this_InitMacro(Fade, , fpThree );
 
   this_InitMacro(WaitFor, , fpOne );
-  this_InitMacro(Occu, , (fpAny^fpNone)^fpOne );
 
   this_InitMacro(HtmlPanelSwap, , fpNone|fpOne );
   this_InitMacro(HtmlPanelWidth, , fpNone|fpOne );
@@ -889,6 +919,8 @@ separated values of Atom Type and radius, an entry a line" );
   this_InitFuncD(ExtraZoom, fpNone|fpOne, "Sets/reads current extra zoom (default zoom correction)" );
   this_InitFuncD(HasGUI, fpNone, "Returns if true if Olex2 is built with GUI" );
   this_InitFuncD(CheckState, fpOne|fpTwo, "Returns if true if given program state is active" );
+  this_InitFuncD(GlTooltip, fpNone|fpOne, "Returns state of/sets OpenGL tooltip implementation for the main window\
+                                          (some old platforms do not have proper implementation of tooltips)" );
 
   Library.AttachLibrary( TEFile::ExportLibrary() );
   //Library.AttachLibrary( olxstr::ExportLibrary("str") );
@@ -918,6 +950,8 @@ separated values of Atom Type and radius, an entry a line" );
     pmBang = new TMenu();
     pmAtomType = new TMenu();
     pmAtomOccu = new TMenu();
+    pmAtomConn = new TMenu();
+    pmAtomPoly = new TMenu();
   pmFragment = new TMenu();
   pmSelection = new TMenu();
   pmGraphics = new TMenu();
@@ -1023,9 +1057,23 @@ separated values of Atom Type and radius, an entry a line" );
     pmAtomOccu->Append(ID_AtomOccu12, wxT("1/2"));
     pmAtomOccu->Append(ID_AtomOccu13, wxT("1/3"));
     pmAtomOccu->Append(ID_AtomOccu14, wxT("1/4"));
+    pmAtomOccu->Append(ID_AtomOccuFix, wxT("Fix"));
+    pmAtomOccu->Append(ID_AtomOccuFree, wxT("Free"));
+    pmAtomConn->Append(ID_AtomConn0, wxT("0"));
+    pmAtomConn->Append(ID_AtomConn1, wxT("1"));
+    pmAtomConn->Append(ID_AtomConn2, wxT("2"));
+    pmAtomConn->Append(ID_AtomConn3, wxT("3"));
+    pmAtomConn->Append(ID_AtomConn4, wxT("4"));
+    pmAtomPoly->AppendRadioItem(ID_AtomPolyNone, wxT("None"));
+    pmAtomPoly->AppendRadioItem(ID_AtomPolyAuto, wxT("Auto"));
+    pmAtomPoly->AppendRadioItem(ID_AtomPolyRegular, wxT("Regular"));
+    pmAtomPoly->AppendRadioItem(ID_AtomPolyPyramid, wxT("Pyramid"));
+    pmAtomPoly->AppendRadioItem(ID_AtomPolyBipyramid, wxT("Bipyramid"));
 
   pmAtom->Append(ID_MenuAtomType, wxT("Type"), pmAtomType);
+  pmAtom->Append(ID_MenuAtomConn, wxT("Bonds"), pmAtomConn);
   pmAtom->Append(ID_MenuAtomOccu, wxT("Occupancy"), pmAtomOccu);
+  pmAtom->Append(ID_MenuAtomPoly, wxT("Polyhedron"), pmAtomPoly);
   pmAtom->AppendSeparator();
   pmAtom->Append(ID_AtomGrowShells, wxT("Grow Shell"));
     miAtomGrowShell = pmAtom->FindItemByPosition(pmAtom->GetMenuItemCount()-1);
@@ -1389,8 +1437,7 @@ void TMainForm::OnHtmlPanel(wxCommandEvent& event)  {
   ProcessXPMacro("html.updatehtml", MacroError);
 }
 //..............................................................................
-void TMainForm::OnGenerate(wxCommandEvent& WXUNUSED(event))
-{
+void TMainForm::OnGenerate(wxCommandEvent& WXUNUSED(event))  {
 //  TBasicApp::GetLog()->Info("generate!");;
   TdlgGenerate *G = new TdlgGenerate(this);
   if( G->ShowModal() == wxID_OK )  {
@@ -1447,9 +1494,13 @@ void TMainForm::OnViewAlong(wxCommandEvent& event) {
 void TMainForm::OnAtomOccuChange(wxCommandEvent& event)  {
   TXAtom *XA = (TXAtom*)FObjectUnderMouse;
   if( XA == NULL )  return;
-  olxstr Tmp("occu ");
-  if( XA->Selected() )  Tmp << "sel";
-  else                  Tmp << "#x" << XA->GetXAppId();
+  olxstr Tmp = ((event.GetId() == ID_AtomOccuFix) ? "fix " : 
+                (event.GetId() == ID_AtomOccuFree) ? "free " : "");
+  Tmp << "occu ";
+  if( XA->Selected() )  
+    Tmp << "sel";
+  else                  
+    Tmp << "#c" << XA->Atom().CAtom().GetId();
   Tmp << ' ';
   switch( event.GetId() )  {
     case ID_AtomOccu1:   Tmp << "11";  break;
@@ -1457,8 +1508,41 @@ void TMainForm::OnAtomOccuChange(wxCommandEvent& event)  {
     case ID_AtomOccu12:  Tmp << "10.5";  break;
     case ID_AtomOccu13:  Tmp << "10.33333";  break;
     case ID_AtomOccu14:  Tmp << "10.25";  break;
+    case ID_AtomOccuFix:   break;
+    case ID_AtomOccuFree:  break;
   }
   ProcessXPMacro(Tmp, MacroError);
+}
+//..............................................................................
+void TMainForm::OnAtomConnChange(wxCommandEvent& event)  {
+  TXAtom *XA = (TXAtom*)FObjectUnderMouse;
+  if( XA == NULL )  return;
+  olxstr Tmp("conn ");
+  Tmp << ' ';
+  switch( event.GetId() )  {
+    case ID_AtomConn0:   Tmp << '0';  break;
+    case ID_AtomConn1:   Tmp << '1';  break;
+    case ID_AtomConn2:   Tmp << '2';  break;
+    case ID_AtomConn3:   Tmp << '3';  break;
+    case ID_AtomConn4:   Tmp << '4';  break;
+  }
+  if( XA->Selected() )  Tmp << " sel";
+  else                  Tmp << " #x" << XA->GetXAppId();
+  ProcessXPMacro(Tmp, MacroError);
+  TimePerFrame = FXApp->Draw();
+}
+//..............................................................................
+void TMainForm::OnAtomPolyChange(wxCommandEvent& event)  {
+  TXAtom *XA = (TXAtom*)FObjectUnderMouse;
+  if( XA == NULL )  return;
+  switch( event.GetId() )  {
+    case ID_AtomPolyNone:       XA->SetPolyhedronType(polyNone);  break;
+    case ID_AtomPolyAuto:       XA->SetPolyhedronType(polyAuto);  break;
+    case ID_AtomPolyRegular:    XA->SetPolyhedronType(polyRegular);  break;
+    case ID_AtomPolyPyramid:    XA->SetPolyhedronType(polyPyramid);  break;
+    case ID_AtomPolyBipyramid:  XA->SetPolyhedronType(polyBipyramid);  break;
+  }
+  TimePerFrame = FXApp->Draw();
 }
 //..............................................................................
 void TMainForm::OnDrawQChange(wxCommandEvent& event)  {
@@ -1579,15 +1663,27 @@ void TMainForm::ObjectUnderMouse( AGDrawObject *G)  {
     if( XA->Atom().GetAtomInfo().GetIndex() == iQPeakIndex )  {
       T << ": " << olxstr::FormatFloat(3, XA->Atom().CAtom().GetQPeak());
     }
-    else  {
+    else 
       T << " Occu: " << olxstr::FormatFloat(3, XA->Atom().CAtom().GetOccu());
-    }
     miAtomInfo->SetText( uiStr(T) );
     pmAtom->Enable(ID_AtomGrowShells, FXApp->AtomExpandable(XA));
     pmAtom->Enable(ID_AtomGrowFrags, FXApp->AtomExpandable(XA));
     pmAtom->Enable(ID_Selection, G->Selected());
     pmAtom->Enable(ID_SelGroup, false);
+    int bound_cnt = 0;
+    for( int i=0; i < XA->Atom().NodeCount(); i++ )  {
+      if( XA->Atom().Node(i).IsDeleted() || 
+        XA->Atom().Node(i).GetAtomInfo() == iHydrogenIndex ||
+        XA->Atom().Node(i).GetAtomInfo() == iDeuteriumIndex || 
+        XA->Atom().Node(i).GetAtomInfo() == iQPeakIndex )
+        continue;
+      bound_cnt++;
+    }
+    pmAtom->Enable(ID_MenuAtomPoly, bound_cnt > 3);
+    if( bound_cnt > 3 )
+      pmAtom->Check(ID_AtomPolyNone + XA->GetPolyhedronType(), true);
     FCurrentPopup = pmAtom;
+    
   }
   else if( EsdlInstanceOf( *G, TXBond) )  {
     TStrList SL;
@@ -1719,7 +1815,8 @@ void TMainForm::OnFragmentHide(wxCommandEvent& event)  {
   if( GetFragmentList(L) == 0 )
     return;
   FXApp->FragmentsVisible(L, false);
-  FXApp->CenterView();
+  //FXApp->CenterView();
+  TimePerFrame = FXApp->Draw();
 }
 //..............................................................................
 void TMainForm::OnFragmentShowOnly(wxCommandEvent& event)  {
@@ -1729,7 +1826,8 @@ void TMainForm::OnFragmentShowOnly(wxCommandEvent& event)  {
     return;
   FXApp->InvertFragmentsList(L, L1);
   FXApp->FragmentsVisible(L1, false);
-  FXApp->CenterView();
+  //FXApp->CenterView();
+  TimePerFrame = FXApp->Draw();
 }
 //..............................................................................
 void TMainForm::OnFragmentSelectAtoms(wxCommandEvent& event)  {
@@ -1771,6 +1869,8 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
   if( MsgId == ID_GLDRAW && !IsIconized() )  {
     if( !FBitmapDraw )  
       FGlCanvas->SwapBuffers();
+    //wxClientDC dc(FGlCanvas);
+    //dc.DrawText(wxT("RRRRRRRRRRRR"), 0, 0);
   }
   else if( MsgId == ID_TIMER )  {
     FTimer->OnTimer()->SetEnabled( false );
@@ -1871,12 +1971,23 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
       AGDrawObject *G = FXApp->SelectObject(MousePositionX, MousePositionY, 0);
       olxstr Tip;
       if( G != NULL )  {
-        if( EsdlInstanceOf( *G, TXAtom) )  {
-          TXAtom &xa = *(TXAtom*)G;
+        if( G->Selected() )  {
+          Tip = FXApp->GetSelectionInfo();
+        }
+        else if( EsdlInstanceOf( *G, TXAtom) )  {
+          const TXAtom &xa = *(TXAtom*)G;
+          const TCAtom& ca = xa.Atom().CAtom();
           Tip = xa.Atom().GetGuiLabelEx();
           if( xa.Atom().GetAtomInfo() == iQPeakIndex )  {
             Tip << ':' << xa.Atom().CAtom().GetQPeak();
           }
+          Tip << "\nOccu (";
+          if( ca.GetVarRef(catom_var_name_Sof) != NULL && 
+            ca.GetVarRef(catom_var_name_Sof)->relation_type == relation_None )
+            Tip << "fixed): ";
+          else
+            Tip << "free): ";
+          Tip << olxstr::FormatFloat(3, xa.Atom().CAtom().GetOccu());
         }
         else  if( EsdlInstanceOf( *G, TXBond) )  {
           Tip = ((TXBond*)G)->Bond().A().GetLabel();
@@ -1901,24 +2012,30 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
         else if( EsdlInstanceOf( *G, TXGrowPoint) )  {
           Tip = TSymmParser::MatrixToSymmEx( ((TXGrowPoint*)G)->GetTransform() );
         }
-#if defined (__WIN32__)
-        FGlCanvas->SetToolTip( Tip.u_str());
-        SetToolTip( Tip.u_str());
-#else
-        if( GlTooltip != NULL && !Tip.IsEmpty() )  {
-          GlTooltip->Clear();
-          GlTooltip->PostText( Tip );
-          GlTooltip->SetLeft(MousePositionX+4); // put it off the mouse
-          GlTooltip->SetTop(MousePositionY-GlTooltip->GetHeight()-4);
-          GlTooltip->SetZ( FXApp->GetRender().GetMaxRasterZ() -0.1 );
-          GlTooltip->Visible(true);
-          Draw = true;
+        if( !Tip.IsEmpty() )  {
+          if( !_UseGlTooltip )
+            FGlCanvas->SetToolTip( Tip.u_str());
+          else if( GlTooltip != NULL )  {
+            GlTooltip->Clear();
+            GlTooltip->PostText( Tip );
+            int x = MousePositionX-GlTooltip->GetWidth()/2,
+                y = MousePositionY-GlTooltip->GetHeight()-4;
+            if( x < 0 )  x = 0;
+            if( (x + GlTooltip->GetWidth()) > FXApp->GetRender().GetWidth() )
+              x = FXApp->GetRender().GetWidth() - GlTooltip->GetWidth();
+            if( y < 0 )
+               y  = 0;
+            GlTooltip->SetLeft(x); // put it off the mouse
+            GlTooltip->SetTop(y);
+            GlTooltip->SetZ( FXApp->GetRender().GetMaxRasterZ() -0.1 );
+            GlTooltip->Visible(true);
+            Draw = true;
+          }
         }
-        else if( GlTooltip != NULL )  {
+        else if( GlTooltip != NULL && GlTooltip->Visible() )  {
           GlTooltip->Visible(false);
           Draw = true;
         }
-#endif
       }
       if( DrawSceneTimer >= 0 && !Draw )  {
         DrawSceneTimer -= FTimer->GetInterval();
@@ -2600,6 +2717,7 @@ void TMainForm::SaveSettings(const olxstr &FN)  {
   I->AddField("GradientPicture", GradientPicture );
   I->AddField("language", Dictionary.GetCurrentLanguage() );
   I->AddField("ExtraZoom", FXApp->GetExtraZoom() );
+  I->AddField("GlTooltip", _UseGlTooltip);
 
   I = &DF.Root().AddItem("Recent_files");
   for( int i=0; i < olx_min(FRecentFilesToShow, FRecentFiles.Count()); i++ )
@@ -2749,9 +2867,10 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
   DefSceneP = I->GetFieldValue("SceneP");
   // restroring language
   if( TEFile::FileExists( DictionaryFile ) )  {
-      Dictionary.SetCurrentLanguage(DictionaryFile, I->GetFieldValue("language", EmptyString) );
+    Dictionary.SetCurrentLanguage(DictionaryFile, I->GetFieldValue("language", EmptyString) );
   }
   FXApp->SetExtraZoom( I->GetFieldValue("ExtraZoom", "1.25").ToDouble() );
+  UseGlTooltip( I->GetFieldValue("GlTooltip", FalseString).ToBool() );
 
   olxstr T( I->GetFieldValue("BgColor") );
   if( !T.IsEmpty() )  FBgColor.FromString(T);
@@ -2780,7 +2899,8 @@ void TMainForm::LoadScene(TDataItem *Root, TGlLightModel *FLM)  {
   TDataFile F;
   TDataItem *I;
   olxstr FntData;
-  if( !FLM )  FLM = &(FXApp->GetRender().LightModel);
+  if( FLM == NULL )  
+    FLM = &(FXApp->GetRender().LightModel);
   I = Root->FindItem("Scene_Properties");
   if( I == NULL )  {
     TBasicApp::GetLog().Error("Wrong scene parameters file!");
@@ -3093,11 +3213,12 @@ void TMainForm::OnMouseMove(int x, int y)  {
     MouseMoveTimeElapsed = 0;
     MousePositionX = x;
     MousePositionY = y;
-#if defined (__WIN32__)
-    FGlCanvas->SetToolTip(wxT(""));
-#else
-    if( GlTooltip != NULL )  GlTooltip->Visible(false);
-#endif
+    if( !_UseGlTooltip )
+      FGlCanvas->SetToolTip(wxT(""));
+    else if( GlTooltip != NULL && GlTooltip->Visible() )  {
+      GlTooltip->Visible(false);
+      TimePerFrame = FXApp->Draw();
+    }
   }
 }
 //..............................................................................
@@ -3446,6 +3567,7 @@ int TMainForm::TranslateShortcut(const olxstr& sk)  {
   else if( charStr == "DEL" )  Char = WXK_DELETE;
   else if( charStr == "INS" )  Char = WXK_INSERT;  
   else if( charStr == "BREAK" ) Char = WXK_PAUSE;
+  else if( charStr == "BACK" ) Char = WXK_BACK;
 
   return Char!=0 ? ((Shift << 16)|Char) : -1;
 }
@@ -3551,6 +3673,13 @@ olxstr TMainForm::TranslateString(const olxstr& str) const {
     ind = phrase.FirstIndexOf('%', ind1+1);
   }
   return phrase;
+}
+void TMainForm::UseGlTooltip(bool v)  {
+  if( v == _UseGlTooltip )
+    return;
+  TStateChange sc(prsGLTT, v);
+  _UseGlTooltip = v;
+  OnStateChange->Execute(this, &sc);
 }
 //..............................................................................
 //..............................................................................

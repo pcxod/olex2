@@ -98,6 +98,9 @@ public:
   DefPropP(float, MinVal)
   DefPropP(float, MaxVal)
 
+  // recreates the lists, for draing on a different context
+  void GlContextChange();
+
   inline bool IsEmpty()  const  {  return ED == NULL;  }
 
   inline bool Visible()   const {  return (Flags & sgdoVisible) == sgdoVisible; }
