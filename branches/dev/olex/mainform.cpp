@@ -3227,9 +3227,11 @@ void TMainForm::OnMouseMove(int x, int y)  {
     MousePositionX = x;
     MousePositionY = y;
     if( !_UseGlTooltip )  {
-      FGlCanvas->SetToolTip(wxT(""));
 #if !defined(__WIN32__)
       AquireTooltipValue();
+      FGlCanvas->SetToolTip(Tooltip.u_str());
+#else
+      FGlCanvas->SetToolTip(wxT(""));
 #endif
     }
     else if( GlTooltip != NULL && GlTooltip->Visible() )  {
