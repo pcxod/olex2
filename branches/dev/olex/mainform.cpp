@@ -3701,7 +3701,7 @@ void TMainForm::UseGlTooltip(bool v)  {
     return;
   TStateChange sc(prsGLTT, v);
   _UseGlTooltip = v;
-  if( !v )
+  if( v )
     FGlCanvas->SetToolTip(wxT(""));
   OnStateChange->Execute(this, &sc);
 }
