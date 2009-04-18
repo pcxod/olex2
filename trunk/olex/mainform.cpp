@@ -324,8 +324,11 @@ TMainForm::TMainForm(TGlXApp *Parent, int Width, int Height):
 //  _crtBreakAlloc = 5892;
   SkipSizing = false;
   Destroying = false;
-  _UseGlTooltip = false;  // most platforms support it, besides some very old ones...
-
+#ifdef __WIN32__
+  _UseGlTooltip = false;  // most platforms support it, besides some very old or stupid ones...
+#else
+  _UseGlTooltip = true;
+#endif
   StartupInitialised = RunOnceProcessed = false;
   wxInitAllImageHandlers();
 
@@ -1860,6 +1863,57 @@ void TMainForm::OnModelCenter(wxCommandEvent& event)  {
   TimePerFrame = FXApp->Draw();
 }
 //..............................................................................
+void TMainForm::AquireTooltipValue()  {
+  AGDrawObject *G = FXApp->SelectObject(MousePositionX, MousePositionY, 0);
+  if( G != NULL )  {
+    if( G->Selected() )  {
+      Tooltip = FXApp->GetSelectionInfo();
+    }
+    else if( EsdlInstanceOf( *G, TXAtom) )  {
+      const TXAtom &xa = *(TXAtom*)G;
+      const TCAtom& ca = xa.Atom().CAtom();
+      Tooltip = xa.Atom().GetGuiLabelEx();
+      if( xa.Atom().GetAtomInfo() == iQPeakIndex )
+        Tooltip << ':' << xa.Atom().CAtom().GetQPeak();
+      Tooltip << "\nOccu (";
+      if( ca.GetVarRef(catom_var_name_Sof) != NULL && 
+        ca.GetVarRef(catom_var_name_Sof)->relation_type == relation_None )
+        Tooltip << "fixed): ";
+      else
+        Tooltip << "free): ";
+      Tooltip << olxstr::FormatFloat(3, xa.Atom().CAtom().GetOccu());
+    }
+    else  if( EsdlInstanceOf( *G, TXBond) )  {
+      Tooltip = ((TXBond*)G)->Bond().A().GetLabel();
+      Tooltip << '-' << ((TXBond*)G)->Bond().B().GetLabel() << ": ";
+      Tooltip << olxstr::FormatFloat(3, ((TXBond*)G)->Bond().Length());
+    } 
+    else if( EsdlInstanceOf( *G, TXReflection) )  {
+      Tooltip = ((TXReflection*)G)->GetHKL()[0];
+      Tooltip << ' '
+              << ((TXReflection*)G)->GetHKL()[1] << ' '
+              << ((TXReflection*)G)->GetHKL()[2] << ": "
+              << ((TXReflection*)G)->GetI();
+    }
+    else if( EsdlInstanceOf( *G, TXLine) )  {
+      Tooltip = olxstr::FormatFloat(3, ((TXLine*)G)->Length());
+    }
+    else if( EsdlInstanceOf( *G, TXGrowLine) )  {
+      Tooltip = ((TXGrowLine*)G)->SAtom()->GetLabel();
+      Tooltip << '-' << ((TXGrowLine*)G)->CAtom()->GetLabel() << ": "
+          << olxstr::FormatFloat(3, ((TXGrowLine*)G)->Length()) << '('
+          << TSymmParser::MatrixToSymmEx(((TXGrowLine*)G)->GetTransform()) << ')';
+    }
+    else if( EsdlInstanceOf( *G, TXGrowPoint) )  {
+      Tooltip = TSymmParser::MatrixToSymmEx( ((TXGrowPoint*)G)->GetTransform() );
+    }
+    else
+      Tooltip = EmptyString;
+  }
+  else
+    Tooltip = EmptyString;
+}
+//..............................................................................
 bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, const IEObject *Data)  {
   bool res = true, Silent = (FMode & mSilent) != 0, Draw=false;
   if( Destroying )  {
@@ -1968,72 +2022,34 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
     if( MouseMoveTimeElapsed < 2500 )
       MouseMoveTimeElapsed += FTimer->GetInterval();
     if( MouseMoveTimeElapsed > 500 && MouseMoveTimeElapsed < 5000 )  {
-      AGDrawObject *G = FXApp->SelectObject(MousePositionX, MousePositionY, 0);
-      olxstr Tip;
-      if( G != NULL )  {
-        if( G->Selected() )  {
-          Tip = FXApp->GetSelectionInfo();
-        }
-        else if( EsdlInstanceOf( *G, TXAtom) )  {
-          const TXAtom &xa = *(TXAtom*)G;
-          const TCAtom& ca = xa.Atom().CAtom();
-          Tip = xa.Atom().GetGuiLabelEx();
-          if( xa.Atom().GetAtomInfo() == iQPeakIndex )  {
-            Tip << ':' << xa.Atom().CAtom().GetQPeak();
-          }
-          Tip << "\nOccu (";
-          if( ca.GetVarRef(catom_var_name_Sof) != NULL && 
-            ca.GetVarRef(catom_var_name_Sof)->relation_type == relation_None )
-            Tip << "fixed): ";
-          else
-            Tip << "free): ";
-          Tip << olxstr::FormatFloat(3, xa.Atom().CAtom().GetOccu());
-        }
-        else  if( EsdlInstanceOf( *G, TXBond) )  {
-          Tip = ((TXBond*)G)->Bond().A().GetLabel();
-          Tip << '-' << ((TXBond*)G)->Bond().B().GetLabel() << ": ";
-          Tip << olxstr::FormatFloat(3, ((TXBond*)G)->Bond().Length());
-        } else if( EsdlInstanceOf( *G, TXReflection) )  {
-          Tip = ((TXReflection*)G)->GetHKL()[0];
-          Tip << ' ';
-          Tip << ((TXReflection*)G)->GetHKL()[1] << ' ';
-          Tip << ((TXReflection*)G)->GetHKL()[2] << ": ";
-          Tip << ((TXReflection*)G)->GetI();
-        }
-        else if( EsdlInstanceOf( *G, TXLine) )  {
-          Tip = olxstr::FormatFloat(3, ((TXLine*)G)->Length());
-        }
-        else if( EsdlInstanceOf( *G, TXGrowLine) )  {
-          Tip = ((TXGrowLine*)G)->SAtom()->GetLabel();
-          Tip << '-' << ((TXGrowLine*)G)->CAtom()->GetLabel() << ": " <<
-            olxstr::FormatFloat(3, ((TXGrowLine*)G)->Length()) << '(' <<
-            TSymmParser::MatrixToSymmEx(((TXGrowLine*)G)->GetTransform()) << ')';
-        }
-        else if( EsdlInstanceOf( *G, TXGrowPoint) )  {
-          Tip = TSymmParser::MatrixToSymmEx( ((TXGrowPoint*)G)->GetTransform() );
-        }
-        if( !Tip.IsEmpty() )  {
-          if( !_UseGlTooltip )
-            FGlCanvas->SetToolTip( Tip.u_str());
-          else if( GlTooltip != NULL )  {
-            GlTooltip->Clear();
-            GlTooltip->PostText( Tip );
-            int x = MousePositionX-GlTooltip->GetWidth()/2,
-                y = MousePositionY-GlTooltip->GetHeight()-4;
-            if( x < 0 )  x = 0;
-            if( (x + GlTooltip->GetWidth()) > FXApp->GetRender().GetWidth() )
-              x = FXApp->GetRender().GetWidth() - GlTooltip->GetWidth();
-            if( y < 0 )
-               y  = 0;
-            GlTooltip->SetLeft(x); // put it off the mouse
-            GlTooltip->SetTop(y);
-            GlTooltip->SetZ( FXApp->GetRender().GetMaxRasterZ() -0.1 );
-            GlTooltip->Visible(true);
+      if( !_UseGlTooltip )  {
+#ifdef __WIN32__
+        AquireTooltipValue();
+#endif
+        FGlCanvas->SetToolTip( Tooltip.u_str());
+      }
+      else if( GlTooltip != NULL )  {
+        AquireTooltipValue();
+        if( Tooltip.IsEmpty() )  {
+          if( GlTooltip->Visible() )  {
+            GlTooltip->Visible(false);
             Draw = true;
           }
         }
-        else if( GlTooltip != NULL && GlTooltip->Visible() )  {
-          GlTooltip->Visible(false);
+        else  {
+          GlTooltip->Clear();
+          GlTooltip->PostText( Tooltip );
+          int x = MousePositionX-GlTooltip->GetWidth()/2,
+            y = MousePositionY-GlTooltip->GetHeight()-4;
+          if( x < 0 )  x = 0;
+          if( (x + GlTooltip->GetWidth()) > FXApp->GetRender().GetWidth() )
+            x = FXApp->GetRender().GetWidth() - GlTooltip->GetWidth();
+          if( y < 0 )
+            y  = 0;
+          GlTooltip->SetLeft(x); // put it off the mouse
+          GlTooltip->SetTop(y);
+          GlTooltip->SetZ( FXApp->GetRender().GetMaxRasterZ() -0.1 );
+          GlTooltip->Visible(true);
           Draw = true;
         }
       }
@@ -3213,8 +3229,14 @@ void TMainForm::OnMouseMove(int x, int y)  {
     MouseMoveTimeElapsed = 0;
     MousePositionX = x;
     MousePositionY = y;
-    if( !_UseGlTooltip )
+    if( !_UseGlTooltip )  {
+#if !defined(__WIN32__)
+      AquireTooltipValue();
+      FGlCanvas->SetToolTip(Tooltip.u_str());
+#else
       FGlCanvas->SetToolTip(wxT(""));
+#endif
+    }
     else if( GlTooltip != NULL && GlTooltip->Visible() )  {
       GlTooltip->Visible(false);
       TimePerFrame = FXApp->Draw();
@@ -3679,6 +3701,8 @@ void TMainForm::UseGlTooltip(bool v)  {
     return;
   TStateChange sc(prsGLTT, v);
   _UseGlTooltip = v;
+  if( !v )
+    FGlCanvas->SetToolTip(wxT(""));
   OnStateChange->Execute(this, &sc);
 }
 //..............................................................................

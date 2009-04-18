@@ -130,6 +130,9 @@ protected:
   TStrList FOnAbortCmds;           // a "stack" of macroses, called when macro terminated
   TStrList FOnListenCmds;  // a list of commands called when a file is changed by another process
   TMacroError MacroError;
+  
+  olxstr Tooltip;
+  void AquireTooltipValue();
 
   void ClearPopups();
   TPopupData* GetPopup(const olxstr& name);
