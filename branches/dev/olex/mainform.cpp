@@ -324,8 +324,11 @@ TMainForm::TMainForm(TGlXApp *Parent, int Width, int Height):
 //  _crtBreakAlloc = 5892;
   SkipSizing = false;
   Destroying = false;
-  _UseGlTooltip = false;  // most platforms support it, besides some very old ones...
-
+#ifdef __WIN32__
+  _UseGlTooltip = false;  // most platforms support it, besides some very old or stupid ones...
+#else
+  _UseGlTooltip = true;
+#endif
   StartupInitialised = RunOnceProcessed = false;
   wxInitAllImageHandlers();
 
@@ -3698,6 +3701,8 @@ void TMainForm::UseGlTooltip(bool v)  {
     return;
   TStateChange sc(prsGLTT, v);
   _UseGlTooltip = v;
+  if( !v )
+    FGlCanvas->SetToolTip(wxT(""));
   OnStateChange->Execute(this, &sc);
 }
 //..............................................................................
