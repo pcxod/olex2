@@ -114,8 +114,7 @@ void TGlCanvas::OnMouseDown(wxMouseEvent& me)  {
   me.Skip();
 }
 //..............................................................................
-void TGlCanvas::OnMouseUp(wxMouseEvent& me)
-{
+void TGlCanvas::OnMouseUp(wxMouseEvent& me)  {
   me.Skip();
   short Fl = 0, Btn = 0;
   if( me.m_altDown )      Fl |= sssAlt;
@@ -171,13 +170,13 @@ void TGlCanvas::OnMouseUp(wxMouseEvent& me)
 }
 //..............................................................................
 void TGlCanvas::OnMouseMove(wxMouseEvent& me)  {
-  me.Skip();
   short Fl = 0;
   if( me.m_altDown )      Fl |= sssAlt;
   if( me.m_shiftDown )    Fl |= sssShift;
   if( me.m_controlDown )  Fl |= sssCtrl;
 
-  if( !FLeftMouseDown && !FRightMouseDown )  FParent->OnMouseMove(me.m_x, me.m_y);
+  if( !FLeftMouseDown && !FRightMouseDown )  
+    FParent->OnMouseMove(me.m_x, me.m_y);
   if( FXApp != NULL && FXApp->MouseMove(me.m_x, me.m_y, Fl) )  // check if a handler for the event is found
     FXApp->Draw();
 }
