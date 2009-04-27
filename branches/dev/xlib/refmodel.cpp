@@ -748,6 +748,7 @@ void RefinementModel::ProcessFrags()  {
           tr = tri;
           invert = true;
         }
+        tm.r.Transpose();
         for( int k=0; k < atoms.Count(); k++ )  {
           vec3d v = (*frag)[k].crd;
           if( invert )  {
