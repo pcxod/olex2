@@ -145,7 +145,7 @@ TXGrid::TXGrid(const olxstr& collectionName, TGXApp* xapp) :
     throw TFunctionFailedException(__OlxSourceInfo, "singleton");
   Mask = NULL;
   Instance = this;
-  Mode3D = false;
+  Extended = Mode3D = false;
   PolygonMode = GL_FILL;
 #ifndef _NO_PYTHON
   PythonExt::GetInstance()->Register( &TXGrid::PyInit );
@@ -511,6 +511,13 @@ void TXGrid::SetScale(float v)  {
   }
 }
 //..............................................................................
+void TXGrid::SetExtended(bool v)  {
+  if( Extended == v )
+    return;
+  Extended = v;
+  SetScale(Scale);
+}
+//..............................................................................
 void TXGrid::SetDepth(float v)  {  Depth = v;  }
 //..............................................................................
 void TXGrid::SetDepth(const vec3d& v)  {
@@ -633,28 +640,67 @@ void TXGrid::RescaleSurface()  {
     n_normals.Clear();
   }
   else  {
-    for( int li = 0; li <= 1; li++ )  {
-      TTypeList<vec3f>& verts = (li == 0 ? p_vertices : n_vertices);
-      const TTypeList<vec3f>& norms = (li == 0 ? p_normals : n_normals);
-      const TTypeList<IsoTriangle>& trians = (li == 0 ? p_triangles : n_triangles);
-      for( int i=0; i < verts.Count(); i++ )  {
-        verts[i][0] /= MaxX;  verts[i][1] /= MaxY;  verts[i][2] /= MaxZ;
-        au.CellToCartesian(verts[i]);
-      }
-      glNewList(li == 0 ? PListId : NListId, GL_COMPILE_AND_EXECUTE);
-      glPolygonMode(GL_FRONT_AND_BACK, PolygonMode);
-      glBegin(GL_TRIANGLES);
-      for( int i=0; i < trians.Count(); i++ )  {
-        for( int j=0; j < 3; j++ )  {
-          const vec3f& nr = norms[trians[i].pointID[j]];
-          glNormal3f( nr[0], nr[1], nr[2] );
-          const vec3f& p = verts[trians[i].pointID[j]];
-          glVertex3f(p[0], p[1], p[2]);
+    if( Extended )  {
+      vec3d pts[3]; // ext drawing
+      for( int li = 0; li <= 1; li++ )  {
+        TTypeList<vec3f>& verts = (li == 0 ? p_vertices : n_vertices);
+        const TTypeList<vec3f>& norms = (li == 0 ? p_normals : n_normals);
+        const TTypeList<IsoTriangle>& trians = (li == 0 ? p_triangles : n_triangles);
+        glNewList(li == 0 ? PListId : NListId, GL_COMPILE_AND_EXECUTE);
+        glPolygonMode(GL_FRONT_AND_BACK, PolygonMode);
+        glBegin(GL_TRIANGLES);
+        for( int x=-1; x <= 1; x++ )  {
+          for( int y=-1; y <= 1; y++ )  {
+            for( int z=-1; z <= 1; z++ )  {
+              for( int i=0; i < trians.Count(); i++ )  {
+                for( int j=0; j < 3; j++ )  {
+                  pts[j] = verts[trians[i].pointID[j]];                      // ext drawing
+                  pts[j][0] /= MaxX;  pts[j][1] /= MaxY;  pts[j][2] /= MaxZ; // ext drawing
+                  pts[j][0] += x;     pts[j][1] += y;     pts[j][2] += z;    // ext drawing
+                  const vec3f& nr = norms[trians[i].pointID[j]];
+                  glNormal3f( nr[0], nr[1], nr[2] );
+                  au.CellToCartesian(pts[j]);                                // ext drawing
+                  glVertex3f(pts[j][0], pts[j][1], pts[j][2]);               // ext drawing
+                }
+              }
+            }
+          }
         }
+        glEnd();
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        glEndList();
       }
-      glEnd();
-      glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-      glEndList();
+    }
+    else  {
+      for( int li = 0; li <= 1; li++ )  {
+        TTypeList<vec3f>& verts = (li == 0 ? p_vertices : n_vertices);
+        const TTypeList<vec3f>& norms = (li == 0 ? p_normals : n_normals);
+        const TTypeList<IsoTriangle>& trians = (li == 0 ? p_triangles : n_triangles);
+        for( int i=0; i < verts.Count(); i++ )  {                           // cell drawing
+          verts[i][0] /= MaxX;  verts[i][1] /= MaxY;  verts[i][2] /= MaxZ;  // cell drawing
+          au.CellToCartesian(verts[i]);                                     // cell drawing
+        }
+        glNewList(li == 0 ? PListId : NListId, GL_COMPILE_AND_EXECUTE);
+        glPolygonMode(GL_FRONT_AND_BACK, PolygonMode);
+        glBegin(GL_TRIANGLES);
+        for( int x=-1; x <= 1; x++ )  {
+          for( int y=-1; y <= 1; y++ )  {
+            for( int z=-1; z <= 1; z++ )  {
+              for( int i=0; i < trians.Count(); i++ )  {
+                for( int j=0; j < 3; j++ )  {
+                  const vec3f& nr = norms[trians[i].pointID[j]];
+                  glNormal3f( nr[0], nr[1], nr[2] );
+                  const vec3f& p = verts[trians[i].pointID[j]];  // cell drawing
+                  glVertex3f(p[0], p[1], p[2]);                  // cell drawing
+                }
+              }
+            }
+          }
+        }
+        glEnd();
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        glEndList();
+      }
     }
     p_vertices.Clear();
     p_triangles.Clear();
@@ -703,6 +749,13 @@ void TXGrid::LibDrawStyle3D(const TStrObjList& Params, TMacroError& E)  {
   else  {
     Mode3D = Params[0].ToBool();
     InitIso(Mode3D);
+  }
+}
+//..............................................................................
+void TXGrid::LibExtended(const TStrObjList& Params, TMacroError& E)  {
+  if( Params.IsEmpty() )  E.SetRetVal( Extended );
+  else  {
+    SetExtended( Params[0].ToBool() );
   }
 }
 //..............................................................................
@@ -759,6 +812,7 @@ void TXGrid::ToDataItem(TDataItem& item, wxOutputStream& zos) const {
     item.AddField("min_val", MinVal);
     item.AddField("depth", Depth);
     item.AddField("size", Size);
+    item.AddField("extended", Extended);
     item.AddField("scale", Scale);
     item.AddField("max_x", MaxX);
     item.AddField("max_y", MaxY);
@@ -783,6 +837,7 @@ void TXGrid::FromDataItem(const TDataItem& item, wxInputStream& zis) {
   MinVal = item.GetRequiredField("min_val").ToDouble();
   Depth = item.GetRequiredField("depth").ToDouble();
   Size = item.GetRequiredField("size").ToDouble();
+  Extended = item.GetFieldValue("Extended", FalseString).ToBool();
   Scale = item.GetRequiredField("scale").ToDouble();
   InitGrid( item.GetRequiredField("max_x").ToInt(), 
             item.GetRequiredField("max_y").ToInt(),
@@ -801,6 +856,8 @@ TLibrary*  TXGrid::ExportLibrary(const olxstr& name)  {
     fpNone, "Returns maximum value of the map") );
   lib->RegisterFunction<TXGrid>( new TFunction<TXGrid>(this,  &TXGrid::LibDrawStyle3D, "3D",
     fpNone|fpOne, "Returns/sets 3D drawing style") );
+  lib->RegisterFunction<TXGrid>( new TFunction<TXGrid>(this,  &TXGrid::LibExtended, "Extended",
+    fpNone|fpOne, "Returns/sets extended size of the grid") );
   lib->RegisterFunction<TXGrid>( new TFunction<TXGrid>(this,  &TXGrid::LibScale, "Scale",
     fpNone|fpOne, "Returns/sets current scale") );
   lib->RegisterFunction<TXGrid>( new TFunction<TXGrid>(this,  &TXGrid::LibSize, "Size",

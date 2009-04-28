@@ -167,8 +167,8 @@ bool TDBasis::Orient(TGlPrimitive *P) {
       T *= Basis.GetZoom();
       T += Center;
       T *= FParent->GetBasis().GetMatrix();
-      T[2] += 5;
       T *= scale;
+      T[2] = FParent->GetMaxRasterZ();
       Str[0] = (char)('a'+i);
       FParent->DrawTextSafe(T, Str, fnt);
     }

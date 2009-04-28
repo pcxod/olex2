@@ -1575,8 +1575,14 @@ void TMainForm::macExit(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 void TMainForm::macPack(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   bool ClearCont = !Options.Contains("c");
   bool IncludeQ = Options.Contains("q");
+  bool cell = false;
+  if( Cmds.Count() > 1 && Cmds[0].Comparei("cell") == 0 )  {  // for the future packing cells...
+    cell = true;
+    Cmds.Delete(0);
+  }
+
   int64_t st = TETime::msNow();
-  if( Cmds.Count() == 1 && Cmds[0].Comparei("cell") == 0 )
+  if( Cmds.IsEmpty() && cell )
     FXApp->XFile().GetLattice().GenerateCell(IncludeQ);
   else  {
     vec3d From( -1.0, -1.0, -1.0);
@@ -1595,8 +1601,8 @@ void TMainForm::macPack(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       }
     }
 
-    if( number_count != 0 && !(number_count == 6 || number_count == 1) )  {
-      Error.ProcessingError(__OlxSrcInfo, "please provide 6 numbers" );
+    if( number_count != 0 && !(number_count == 6 || number_count == 1 || number_count == 2) )  {
+      Error.ProcessingError(__OlxSrcInfo, "please provide 6, 2 or 1 number" );
       return;
     }
 
@@ -1604,8 +1610,13 @@ void TMainForm::macPack(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     if( !Cmds.IsEmpty() )
       FXApp->FindCAtoms(Cmds.Text(' '), TemplAtoms);
 
-    if( number_count == 6 || number_count == 0 )
+    if( number_count == 6 || number_count == 0 || number_count == 2 )  {
+      if( number_count == 2 )  {
+        From[1] = From[2] = From[0];
+        To[1] = To[2] = To[0];
+      }
       FXApp->Generate(From, To, TemplAtoms.IsEmpty() ? NULL : &TemplAtoms, ClearCont, IncludeQ);
+    }
     else  {
       TXAtomPList xatoms;
       FindXAtoms(Cmds, xatoms, true, true);
@@ -4340,7 +4351,8 @@ void TMainForm::macCalcVoid(TStrObjList &Cmds, const TParamList &Options, TMacro
     double totalVol = 0;
     for( int i=MaxLevel; i >= 0; i-- )  {
       totalVol += levels[i];
-      TBasicApp::GetLog() << ( olxstr("Level ") << i << " corresponds to " <<
+      TBasicApp::GetLog() << ( olxstr("Level ") << i << " corresponds to sphere r/A " <<
+        olxstr::FormatFloat(3, pow(i*i*i*vol/mapVol, 1./3)) << " and total volume " <<
         olxstr::FormatFloat(3, totalVol*vol/mapVol) << "(A^3)\n" );
     }
   }

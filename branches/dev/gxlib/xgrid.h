@@ -39,7 +39,7 @@ class TXGrid: public TGlMouseListener  {
   void RescaleSurface();
   TGlTextBox* Info;
   int PolygonMode;
-  bool Mode3D;
+  bool Mode3D, Extended;
   TGlPrimitive* glpP, *glpN;
   // these will keep the masked objects
   TTypeList<vec3f> p_vertices, n_vertices;
@@ -90,6 +90,10 @@ public:
   // this object will be deleted
   void SetMask(FractMask& fm) {  Mask = &fm;  }
 
+  // extends the grid by +-1
+  bool IsExtended() const {  return Extended;  }
+  void SetExtended(bool v);
+
   void SetDepth(float v);
   void SetDepth(const vec3d& v);
 
@@ -119,6 +123,7 @@ public:
 
   void LibDrawStyle3D(const TStrObjList& Params, TMacroError& E);
   void LibScale(const TStrObjList& Params, TMacroError& E);
+  void LibExtended(const TStrObjList& Params, TMacroError& E);
   void LibSize(const TStrObjList& Params, TMacroError& E);
   void LibGetMin(const TStrObjList& Params, TMacroError& E);
   void LibGetMax(const TStrObjList& Params, TMacroError& E);
