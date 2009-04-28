@@ -25,6 +25,7 @@ TGlBackground::TGlBackground(const olxstr& collectionName, TGlRenderer *Render, 
   FCeiling = ceiling;
   Groupable(false);
   Texture = NULL;
+  FPrimitive = NULL;
 }
 //..............................................................................
 void TGlBackground::Create(const olxstr& cName, const ACreationParams* cpar) {
@@ -67,6 +68,8 @@ void TGlBackground::Create(const olxstr& cName, const ACreationParams* cpar) {
 //..............................................................................
 void TGlBackground::SetTexture(TGlTexture* tx)  {  
   Texture = tx;
+  if( FPrimitive == NULL )
+    return;
   FPrimitive->SetTextureId( (tx != NULL) ? tx->GetId() : -1 );  
 }
 //..............................................................................

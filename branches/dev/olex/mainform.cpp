@@ -1284,6 +1284,9 @@ void TMainForm::StartupInit()  {
 
   FXApp->Init(); // initialise the gl after styles reloaded
 
+  if( !GradientPicture.IsEmpty() )  // need to call it after all objects are created
+    ProcessXPMacro(olxstr("grad ") << " -p=\'" << GradientPicture << '\'', MacroError);
+
   FInfoBox->SetHeight(FXApp->GetRender().Scene()->Font(2)->TextHeight(EmptyString));
   
   ProcessXPMacro(olxstr("showwindow help ") << HelpWindowVisible, MacroError);
@@ -2896,7 +2899,7 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
   T = I->GetFieldValue("Gradient", EmptyString);
   GradientPicture = I->GetFieldValue("GradientPicture", EmptyString);
   if( !T.IsEmpty() ) 
-    ProcessXPMacro(olxstr("grad ") << T << " -p=\'" << GradientPicture << '\'', MacroError);
+    ProcessXPMacro(olxstr("grad ") << T, MacroError);
 
   I = DF.Root().FindItem("Stored_params");
   if( I )  {
