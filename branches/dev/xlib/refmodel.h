@@ -11,6 +11,7 @@
 #include "fragment.h"
 #include "symmlib.h"
 #include "edict.h"
+#include "conninfo.h"
 
 BeginXlibNamespace()
 
@@ -126,6 +127,7 @@ public:
   TSameGroupList  rSAME;
   TAfixGroups AfixGroups;
   TExyzGroups ExyzGroups;
+  ConnInfo Conn;          // extra connectivity information
 
   // removes references to all deleted atoms
   void Validate();

@@ -593,6 +593,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\xlib\conninfo.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\xlib\crs.cpp"
 				>
 			</File>

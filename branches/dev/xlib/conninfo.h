@@ -7,6 +7,9 @@
 
 BeginXlibNamespace()
 
+class RefinementModel;
+
+
 class ConnInfo  {
 public:
   struct bondInfo  {
@@ -22,17 +25,36 @@ protected:
     double r;
     _connInfo() : maxBonds(12), r(-1) {}
     _connInfo(const _connInfo& ci) : maxBonds(ci.maxBonds), r(ci.r) {}
-  }
+    _connInfo& operator = (const _connInfo& ci)  {
+      maxBonds = ci.maxBonds;
+      r = ci.r;
+      return *this;
+    }
+  };
   struct AtomConnInfo : public _connInfo  {
-    TCAtom& atom;
+    TCAtom* atom;
     BondInfoList BondsToCreate, BondsToRemove;
-    AtomConnInfo(TCAtom& ca) : atom(ca) {}
+    AtomConnInfo() : atom(NULL) {}
+    AtomConnInfo(TCAtom& ca) : atom(&ca) {}
     AtomConnInfo(const AtomConnInfo& ci) : _connInfo(*this), atom(ci.atom) {}
+    AtomConnInfo& operator = (const AtomConnInfo& ci)  {
+      _connInfo::operator = (ci);
+      atom = ci.atom;
+      BondsToCreate = ci.BondsToCreate;
+      BondsToRemove = ci.BondsToRemove;
+      return *this;
+    }
   };
   struct TypeConnInfo : public _connInfo  {
-    TBasicAtomInfo& atomInfo;
-    TypeConnInfo(TBasicAtomInfo& bai) : atomInfo(bai) {}
+    TBasicAtomInfo* atomInfo;
+    TypeConnInfo() : atomInfo(NULL) {}
+    TypeConnInfo(TBasicAtomInfo& bai) : atomInfo(&bai) {}
     TypeConnInfo(const TypeConnInfo& ci) : _connInfo(*this), atomInfo(ci.atomInfo) {}
+    TypeConnInfo& operator = (const TypeConnInfo& ti)  {
+      _connInfo::operator = (ti);
+      atomInfo = ti.atomInfo;
+      return *this;
+    }
   };
   olxdict<TCAtom*, AtomConnInfo, TPointerPtrComparator> AtomInfo;
   olxdict<TBasicAtomInfo*, TypeConnInfo, TPointerPtrComparator> TypeInfo;
@@ -40,7 +62,6 @@ public:
   struct connInfo : public _connInfo{
     BondInfoList BondsToCreate, 
                  BondsToRemove;
-    connInfo() : maxBonds(12), r(-1) {}
   };
   void Compile(const TAsymmUnit& au, TTypeList<ConnInfo::connInfo>& res)  {
     for( int i=0; i < au.AtomCount(); i++ )  {
@@ -50,7 +71,7 @@ public:
       if( ai_ind != -1 )  {
         AtomConnInfo& aci = AtomInfo.GetValue(ai_ind);
         connInfo& ci = res.AddNew();  
-        ci.r = aci.r < 0 ? ca.GetAtomInfo().GetR1() : aci.r;
+        ci.r = aci.r < 0 ? ca.GetAtomInfo().GetRad1() : aci.r;
         ci.maxBonds = aci.maxBonds;
         ci.BondsToCreate.AddListC(aci.BondsToCreate);
         ci.BondsToRemove.AddListC(aci.BondsToRemove);
@@ -58,7 +79,7 @@ public:
       else if( (ti_ind = TypeInfo.IndexOf(&ca.GetAtomInfo())) != -1 )  {
         TypeConnInfo& aci = TypeInfo.GetValue(ti_ind);
         connInfo& ci = res.AddNew();  
-        ci.r = (aci.r < 0 ? ca.GetAtomInfo().GetR1() : aci.r);
+        ci.r = (aci.r < 0 ? ca.GetAtomInfo().GetRad1() : aci.r);
         ci.maxBonds = aci.maxBonds;
       }
       else
@@ -114,9 +135,54 @@ public:
       ai.r = r;
     }
   }
-  template <class list> void ProcessFree(TAsymmUnit& au, list& ins)  {
-    
+  void AddBond(TCAtom& a1, TCAtom& a2, const smatd* eqiv)  {
+    AtomConnInfo& ai = AtomInfo.Add(&a1, AtomConnInfo(a1));
+    bool found = false;
+    for( int i=0; i < ai.BondsToCreate.Count(); i++ )  {
+      if( ai.BondsToCreate[i].to == a2 )  {
+        if( ai.BondsToCreate[i].matr && eqiv == NULL )  {
+          found = true;
+          break;
+        }
+        if( ai.BondsToCreate[i].matr != NULL && eqiv != NULL &&
+            *ai.BondsToCreate[i].matr == *eqiv )  
+        {
+          found = true;
+          break;
+        }
+      }
+    }
+    if( found )
+      return;
+    // need to check if the same bond is not in the BondsToRemove List
+    ai.BondsToCreate.Add( new bondInfo(a2, eqiv) );
   }
+  void RemBond(TCAtom& a1, TCAtom& a2, const smatd* eqiv)  {
+    AtomConnInfo& ai = AtomInfo.Add(&a1, AtomConnInfo(a1));
+    bool found = false;
+    for( int i=0; i < ai.BondsToRemove.Count(); i++ )  {
+      if( ai.BondsToCreate[i].to == a2 )  {
+        if( ai.BondsToRemove[i].matr && eqiv == NULL )  {
+          found = true;
+          break;
+        }
+        if( ai.BondsToRemove[i].matr != NULL && eqiv != NULL &&
+            *ai.BondsToRemove[i].matr == *eqiv )  
+        {
+          found = true;
+          break;
+        }
+      }
+    }
+    if( found )
+      return;
+    // need to check if the same bond is not in the BondsToCreate List
+    ai.BondsToRemove.Add( new bondInfo(a2, eqiv) );
+  }
+  //.................................................................
+  void ProcessFree(RefinementModel& rm, const TStrList& ins);
+  void ProcessBind(RefinementModel& rm, const TStrList& ins);
+
 };
 
 EndXlibNamespace()
