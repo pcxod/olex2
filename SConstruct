@@ -100,7 +100,7 @@ else:
       env.Append(FRAMEWORKS=['OpenGL', 'AGL'])
     else:
       env.ParseConfig("wx-config --cxxflags --unicode --toolkit=gtk2 --libs gl,core,html,net,aui")
-    env.ParseConfig("python-config --includes")
+      env.ParseConfig("python-config --includes")
     env.ParseConfig("python-config --libs --ldflags")
   except:
     print 'Please make sure that wxWidgets and Python config scripts are available'
