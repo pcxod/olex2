@@ -206,7 +206,6 @@ void TNetwork::CreateBondsAndFragments(TSAtomPList& Atoms, TNetPList& Frags)  {
     const ConnInfo::connInfo& ci = conn[sa->CAtom().GetId()];
     if( &ci == NULL )
       continue;
-    // cannot create bonds here, nor in the the main loop due to the optimisation...
     for( int j=0; j < ci.BondsToRemove.Count(); j++ )  {
       if( ci.BondsToRemove[j].matr == NULL )  {
         for( int k=0; k < sa->NodeCount(); k++ )  {
@@ -232,6 +231,39 @@ void TNetwork::CreateBondsAndFragments(TSAtomPList& Atoms, TNetPList& Frags)  {
             }
             if( remove )
               sa->RemoveNode(sa->Node(k));
+          }
+        }
+      }
+    }
+    for( int j=0; j < ci.BondsToCreate.Count(); j++ )  {
+      if( ci.BondsToCreate[j].matr == NULL )  {
+        for( int k=0; k < ac; k++ )  {
+          if( Atoms[k]->CAtom() == ci.BondsToCreate[j].to )  {
+            sa->AddNode(*Atoms[k]);
+            Atoms[k]->AddNode(*sa);
+          }
+        }
+      }
+      else {
+        const mat3i tr = sa->GetMatrix(0).r*ci.BondsToCreate[j].matr->r;
+        const vec3d tnt = sa->GetMatrix(0).t - ci.BondsToCreate[j].matr->t;
+        const vec3d tpt = sa->GetMatrix(0).t + ci.BondsToCreate[j].matr->t;
+        for( int k=0; k < ac; k++ )  {
+          if( Atoms[k]->CAtom() == ci.BondsToCreate[j].to )  {
+            bool add = false;
+            for( int l=0; l < Atoms[k]->MatrixCount(); l++ )  {
+              if( Atoms[k]->GetMatrix(l).r == tr && 
+                  (Atoms[k]->GetMatrix(l).t.QDistanceTo(tnt) < 0.001 ||
+                   Atoms[k]->GetMatrix(l).t.QDistanceTo(tpt) < 0.001) )  
+              {
+                add = true;
+                break;
+              }
+            }
+            if( add )  {
+              sa->AddNode(*Atoms[k]);
+              Atoms[k]->AddNode(*sa);
+            }
           }
         }
       }

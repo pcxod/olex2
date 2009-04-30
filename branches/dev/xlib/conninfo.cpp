@@ -13,6 +13,16 @@ void ConnInfo::ProcessFree(const TStrList& ins)  {
     throw TFunctionFailedException(__OlxSourceInfo, "Two atoms are expected for FREE");
   if( ag[0].GetMatrix() != NULL && ag[1].GetMatrix() != NULL )
     throw TFunctionFailedException(__OlxSourceInfo, "At maximum one equivalent position is expectd for FREE");
+  // validate
+  if( ag[0].GetAtom()->GetId() == ag[1].GetAtom()->GetId() )  {
+    if( (ag[0].GetMatrix() != NULL && ag[0].GetMatrix()->r.IsI() && ag[0].GetMatrix()->t.IsNull()) || 
+        (ag[1].GetMatrix() != NULL && ag[1].GetMatrix()->r.IsI() && ag[1].GetMatrix()->t.IsNull()) || 
+        ag[0].GetMatrix() == NULL && ag[1].GetMatrix() == NULL )  
+    {
+      TBasicApp::GetLog().Error(  olxstr("Skipping: FREE ") << ar.GetExpression() );
+      return;
+    }
+  }
   if( ag[0].GetMatrix() == NULL )
     RemBond( *ag[0].GetAtom(), *ag[1].GetAtom(), ag[1].GetMatrix() );
   else
@@ -31,6 +41,16 @@ void ConnInfo::ProcessBind(const TStrList& ins)  {
     throw TFunctionFailedException(__OlxSourceInfo, "Two atoms are expected for BIND");
   if( ag[0].GetMatrix() != NULL && ag[1].GetMatrix() != NULL )
     throw TFunctionFailedException(__OlxSourceInfo, "At maximum one equivalent position is expectd for BIND");
+  // validate
+  if( ag[0].GetAtom()->GetId() == ag[1].GetAtom()->GetId() )  {
+    if( (ag[0].GetMatrix() != NULL && ag[0].GetMatrix()->r.IsI() && ag[0].GetMatrix()->t.IsNull()) || 
+        (ag[1].GetMatrix() != NULL && ag[1].GetMatrix()->r.IsI() && ag[1].GetMatrix()->t.IsNull()) || 
+        ag[0].GetMatrix() == NULL && ag[1].GetMatrix() == NULL )  
+    {
+      TBasicApp::GetLog().Error(  olxstr("Skipping: BIND ") << ar.GetExpression() );
+      return;
+    }
+  }
   if( ag[0].GetMatrix() == NULL )
     AddBond( *ag[0].GetAtom(), *ag[1].GetAtom(), ag[1].GetMatrix() );
   else
@@ -123,7 +143,7 @@ void ConnInfo::ToInsList(TStrList& ins) const {
         int si = RM.UsedSymmIndex(*bi.matr);
         if( si == -1 )
           throw TFunctionFailedException(__OlxSourceInfo, "Undefined EQIV in BIND");
-        str << '_' << (si+1);
+        str << "_$" << (si+1);
       }
     }
     for( int j=0; j < aci.BondsToRemove.Count(); j++ )  {
