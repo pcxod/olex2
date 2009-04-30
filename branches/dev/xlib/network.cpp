@@ -98,21 +98,24 @@ void TNetwork::TDisassembleTaskCheckConnectivity::Run(long index)  {
     const double D1 = sqr(Atoms[index]->GetAtomInfo().GetRad1() + Atoms[i]->GetAtomInfo().GetRad1() + Delta);
     if(  D < D1 )  {
       const int that_p = Atoms[i]->CAtom().GetPart();
-      if( this_p < 0 || that_p < 0 ) {
-        const smatd& sm = Atoms[i]->GetMatrix(0);
+      if( (this_p | that_p) < 0 ) {
         bool found = false;
         for( int j=0; j < Atoms[index]->MatrixCount(); j++ )  {
-          if( Atoms[index]->GetMatrix(j).GetTag() == sm.GetTag() && 
-              Atoms[index]->GetMatrix(j) == sm )  
-          {
-            found = true;
-            continue;
+          for( int k=0; k < Atoms[i]->MatrixCount(); k++ )  {
+            if( Atoms[index]->GetMatrix(j).GetTag() == Atoms[i]->GetMatrix(k).GetTag() && 
+                Atoms[index]->GetMatrix(j).t == Atoms[i]->GetMatrix(k).t )  
+            {
+              found = true;
+              break;
+            }
           }
+          if( found )  break;
         }
-        if( !found ) 
-          continue;
+        if( !found )  continue;
       }
-      else if( !(this_p == that_p || this_p == 0 || that_p == 0) )
+      else if( (this_p & that_p) == 0 )
+        ;
+      else if( this_p != that_p )
         continue;
       Atoms[index]->AddNode(*Atoms[i]);
       Atoms[i]->AddNode(*Atoms[index]);  // crosslinking
@@ -203,24 +206,36 @@ void TNetwork::CreateBondsAndFragments(TSAtomPList& Atoms, TNetPList& Frags)  {
     const ConnInfo::connInfo& ci = conn[sa->CAtom().GetId()];
     if( &ci == NULL )
       continue;
-    // cannot create bonds here - treated in the main loop
-    //for( int j=0; j < ci.BondsToRemove.Count(); j++ )  {
-    //  if( ci.BondsToRemove[j].matr == NULL )  {
-    //    for( int k=0; k < sa->NodeCount(); k++ )  {
-    //      if( sa->Node(k).CAtom() == ci.BondsToRemove[j].to )
-    //        sa->RemoveNode(sa->Node(k));
-    //    }
-    //  }
-    //  else  {
-    //    for( int k=0; k < sa->NodeCount(); k++ )  {
-    //      if( sa->Node(k).CAtom() == ci.BondsToRemove[j].to )  {
-    //        for( int l=0; l < sa->Node(k).MatrixCount(); l++ )  {
-    //          if( sa->Node(k).GetMatrix(l)
-    //        }
-    //        sa->RemoveNode(sa->Node(k));
-    //      }
-    //  }
-    //}
+    // cannot create bonds here, nor in the the main loop due to the optimisation...
+    for( int j=0; j < ci.BondsToRemove.Count(); j++ )  {
+      if( ci.BondsToRemove[j].matr == NULL )  {
+        for( int k=0; k < sa->NodeCount(); k++ )  {
+          if( sa->Node(k).CAtom() == ci.BondsToRemove[j].to )
+            sa->RemoveNode(sa->Node(k--));
+        }
+      }
+      else {
+        const mat3i tr = sa->GetMatrix(0).r*ci.BondsToRemove[j].matr->r;
+        const vec3d tnt = sa->GetMatrix(0).t - ci.BondsToRemove[j].matr->t;
+        const vec3d tpt = sa->GetMatrix(0).t + ci.BondsToRemove[j].matr->t;
+        for( int k=0; k < sa->NodeCount(); k++ )  {
+          if( sa->Node(k).CAtom() == ci.BondsToRemove[j].to )  {
+            bool remove = false;
+            for( int l=0; l < sa->Node(k).MatrixCount(); l++ )  {
+              if( sa->Node(k).GetMatrix(l).r == tr && 
+                  (sa->Node(k).GetMatrix(l).t.QDistanceTo(tnt) < 0.001 ||
+                   sa->Node(k).GetMatrix(l).t.QDistanceTo(tpt) < 0.001) )  
+              {
+                remove = true;
+                break;
+              }
+            }
+            if( remove )
+              sa->RemoveNode(sa->Node(k));
+          }
+        }
+      }
+    }
     if( sa->NodeCount() > ci.maxBonds )  {
       sa->SortNodesByDistance();
       sa->SetNodeCount(ci.maxBonds);
@@ -316,19 +331,24 @@ void TNetwork::THBondSearchTask::Run(long ind)  {
       const double D = A1->crd().QDistanceTo( Atoms[i]->crd() );
       const double D1 = sqr(A1->GetAtomInfo().GetRad1() + Atoms[i]->GetAtomInfo().GetRad1() + Delta);
       if(  D < D1 )  {
-        if( this_p < 0 || that_p < 0 ) {
-          const smatd& sm = Atoms[i]->GetMatrix(0);
+        if( (this_p | that_p) < 0 ) {
           bool found = false;
           for( int j=0; j < A1->MatrixCount(); j++ )  {
-            if( A1->GetMatrix(j).GetTag() == sm.GetTag() && A1->GetMatrix(j) == sm )  {
-              found = true;
-              continue;
+            for( int k=0; k < Atoms[i]->MatrixCount(); k++ )  {
+              if( A1->GetMatrix(j).GetTag() == Atoms[i]->GetMatrix(k).GetTag() && 
+                  A1->GetMatrix(j).t == Atoms[i]->GetMatrix(k).t )  
+              {
+                found = true;
+                break;
+              }
             }
+            if( found )  break;
           }
-          if( !found ) 
-            continue;
+          if( !found )  continue;
         }
-        else if( !(this_p == that_p || this_p == 0 && that_p == 0) )
+        else if( (this_p & that_p) == 0 )
+          ;
+        else if( this_p != that_p )
           continue;
         TSBond* B = new TSBond(&A1->GetNetwork());
         B->SetType(sotHBond);
@@ -344,7 +364,7 @@ void TNetwork::THBondSearchTask::Run(long ind)  {
       const double D = A1->crd().QDistanceTo( Atoms[i]->crd() );
       const double D1 = sqr(A1->GetAtomInfo().GetRad1() + Atoms[i]->GetAtomInfo().GetRad1() + Delta);
       if(  D < D1 )  {
-        if( this_p < 0 || that_p < 0 ) {
+        if( (this_p | that_p) < 0 ) {
           const smatd& sm = Atoms[i]->GetMatrix(0);
           bool found = false;
           for( int j=0; j < A1->MatrixCount(); j++ )  {
@@ -356,7 +376,9 @@ void TNetwork::THBondSearchTask::Run(long ind)  {
           if( !found ) 
             continue;
         }
-        else if( !(this_p == that_p || this_p == 0 || that_p == 0) )
+        else if( (this_p & that_p) == 0 )
+          ;
+        else if( this_p != that_p )
           continue;
         TSBond* B = new TSBond( &A1->GetNetwork() );
         B->SetType(sotHBond);

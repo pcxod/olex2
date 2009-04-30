@@ -59,7 +59,13 @@ public:
 
   inline int MatrixCount()             const {  return Matrices.Count();  }
   inline const smatd& GetMatrix(int i) const {  return *Matrices[i];  }
-  inline void AddMatrix(smatd* M)            {  Matrices.Add(M);  }
+  // this also makes sure that the identity releated matrix is coming first in the list
+  inline void AddMatrix(smatd* M)            {  
+    if( !Matrices.IsEmpty() && M->GetTag() == 0 )
+      Matrices.Insert(0, M);
+    else
+      Matrices.Add(M);  
+  }
   inline void AddMatrices(TSAtom *A)         {  Matrices.AddList(A->Matrices); }
   inline void ClearMatrices()                {  Matrices.Clear();  }
   void ChangeType(const olxstr& Type);

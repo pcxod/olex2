@@ -1576,7 +1576,7 @@ void TMainForm::macPack(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   bool ClearCont = !Options.Contains("c");
   bool IncludeQ = Options.Contains("q");
   bool cell = false;
-  if( Cmds.Count() > 1 && Cmds[0].Comparei("cell") == 0 )  {  // for the future packing cells...
+  if( Cmds.Count() > 0 && Cmds[0].Comparei("cell") == 0 )  {  // for the future packing cells...
     cell = true;
     Cmds.Delete(0);
   }

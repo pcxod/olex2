@@ -14,9 +14,9 @@ void ConnInfo::ProcessFree(const TStrList& ins)  {
   if( ag[0].GetMatrix() != NULL && ag[1].GetMatrix() != NULL )
     throw TFunctionFailedException(__OlxSourceInfo, "At maximum one equivalent position is expectd for FREE");
   if( ag[0].GetMatrix() == NULL )
-    AddBond( *ag[0].GetAtom(), *ag[1].GetAtom(), ag[1].GetMatrix() );
+    RemBond( *ag[0].GetAtom(), *ag[1].GetAtom(), ag[1].GetMatrix() );
   else
-    AddBond( *ag[1].GetAtom(), *ag[0].GetAtom(), ag[0].GetMatrix() );
+    RemBond( *ag[1].GetAtom(), *ag[0].GetAtom(), ag[0].GetMatrix() );
 }
 //........................................................................
 void ConnInfo::ProcessBind(const TStrList& ins)  {
@@ -32,9 +32,9 @@ void ConnInfo::ProcessBind(const TStrList& ins)  {
   if( ag[0].GetMatrix() != NULL && ag[1].GetMatrix() != NULL )
     throw TFunctionFailedException(__OlxSourceInfo, "At maximum one equivalent position is expectd for BIND");
   if( ag[0].GetMatrix() == NULL )
-    RemBond( *ag[0].GetAtom(), *ag[1].GetAtom(), ag[1].GetMatrix() );
+    AddBond( *ag[0].GetAtom(), *ag[1].GetAtom(), ag[1].GetMatrix() );
   else
-    RemBond( *ag[1].GetAtom(), *ag[0].GetAtom(), ag[0].GetMatrix() );
+    AddBond( *ag[1].GetAtom(), *ag[0].GetAtom(), ag[0].GetMatrix() );
 }
 //........................................................................
 void ConnInfo::ProcessConn(TStrList& ins)  {
