@@ -27,6 +27,10 @@ private:
   vec3d  FCenter;          // atom center in cartesian coordinates
 protected:
   mutable short Flags;
+  int _SortNodesByDistance(const TSAtom* a1, const TSAtom* a2)  {
+    const double diff = FCenter.DistanceTo(a1->FCenter) - FCenter.DistanceTo(a2->FCenter);
+    return diff < 0 ? -1 : (diff > 0 ? 1 : 0);
+  }
 public:
   TSAtom(TNetwork *N);
   virtual ~TSAtom();
@@ -66,6 +70,12 @@ public:
   inline vec3d&  crd()              {  return FCenter;  }
   inline vec3d const&  ccrd() const {  return FCCenter;  }
   inline vec3d const&  crd()  const {  return FCenter;  }
+
+  void SortNodesByDistance();
+  // allows to trim the number of nodes
+  void SetNodeCount(int cnt);
+  // removes specified node from the list of nodes
+  void RemoveNode(TSAtom& node);
 
   virtual void ToDataItem(TDataItem& item) const;
   virtual void FromDataItem(const TDataItem& item, class TLattice& parent);

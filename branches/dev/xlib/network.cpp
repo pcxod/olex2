@@ -23,6 +23,7 @@
 #include "estopwatch.h"
 #include "edict.h"
 #include "emath.h"
+#include "refmodel.h"
 
 #undef GetObject
 
@@ -193,6 +194,39 @@ void TNetwork::Disassemble(TSAtomPList& Atoms, TNetPList& Frags, TSBondPList* In
 void TNetwork::CreateBondsAndFragments(TSAtomPList& Atoms, TNetPList& Frags)  {
   // creating bonds
   const int ac = Atoms.Count();
+  // analyse extra connectivity information
+  RefinementModel* rm = Lattice->GetAsymmUnit().GetRefMod();
+  TTypeList<ConnInfo::connInfo> conn;
+  rm->Conn.Compile(conn);
+  for( int i=0; i < ac; i++ )  {
+    TSAtom* sa = Atoms[i];
+    const ConnInfo::connInfo& ci = conn[sa->CAtom().GetId()];
+    if( &ci == NULL )
+      continue;
+    // cannot create bonds here - treated in the main loop
+    //for( int j=0; j < ci.BondsToRemove.Count(); j++ )  {
+    //  if( ci.BondsToRemove[j].matr == NULL )  {
+    //    for( int k=0; k < sa->NodeCount(); k++ )  {
+    //      if( sa->Node(k).CAtom() == ci.BondsToRemove[j].to )
+    //        sa->RemoveNode(sa->Node(k));
+    //    }
+    //  }
+    //  else  {
+    //    for( int k=0; k < sa->NodeCount(); k++ )  {
+    //      if( sa->Node(k).CAtom() == ci.BondsToRemove[j].to )  {
+    //        for( int l=0; l < sa->Node(k).MatrixCount(); l++ )  {
+    //          if( sa->Node(k).GetMatrix(l)
+    //        }
+    //        sa->RemoveNode(sa->Node(k));
+    //      }
+    //  }
+    //}
+    if( sa->NodeCount() > ci.maxBonds )  {
+      sa->SortNodesByDistance();
+      sa->SetNodeCount(ci.maxBonds);
+    }
+  }
+  // end analysis the extra con info
   for( int i=0; i < ac; i++ )  {
     TSAtom* A1 = Atoms[i];
     if( A1->GetTag() != 0 )  {

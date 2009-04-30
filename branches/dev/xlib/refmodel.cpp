@@ -26,7 +26,8 @@ RefinementModel::RefinementModel(TAsymmUnit& au) :
   HklStatFileID(EmptyString, 0, 0), 
   HklFileID(EmptyString, 0, 0), 
   Vars(*this),
-  VarRefrencerId("basf")
+  VarRefrencerId("basf"),
+  Conn(*this)
 {
   SetDefaults();
   RefContainers(rDFIX.GetIdName(), &rDFIX);
@@ -73,6 +74,7 @@ void RefinementModel::Clear() {
   rEADP.Clear();
   rSAME.Clear();
   ExyzGroups.Clear();
+  Conn.Clear();
   //AfixGroups.Clear();
   InfoTables.Clear();
   UsedSymm.Clear();
@@ -176,6 +178,7 @@ RefinementModel& RefinementModel::Assign(const RefinementModel& rm, bool AssignA
   rSAME.Assign(aunit, rm.rSAME);
   ExyzGroups.Assign(rm.ExyzGroups);
   AfixGroups.Assign(rm.AfixGroups);
+  Conn.Assign(rm.Conn);
   // restraunts have to be copied first, as some may refer to vars
   Vars.Assign( rm.Vars );
 

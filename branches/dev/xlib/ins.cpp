@@ -235,8 +235,32 @@ void TIns::_ProcessSame(ParseContext& cx)  {
   }
 }
 //..............................................................................
+void TIns::__ProcessConn(ParseContext& cx)  {
+  TStrList toks;
+  for( int i=0; i < Ins.Count(); i++ )  {
+    if( Ins[i].IsEmpty() )  // should not happen, but
+      continue;
+    toks.Clear();
+    toks.Strtok(Ins[i], ' ');
+    if( toks[0].Comparei("CONN") == 0 )  {
+      cx.rm.Conn.ProcessConn(toks.SubListFrom(1));
+      Ins[i] = EmptyString;
+    }
+    else if( toks[0].Comparei("FREE") == 0 )  {
+      cx.rm.Conn.ProcessFree(toks.SubListFrom(1));
+      Ins[i] = EmptyString;
+    }
+    else if( toks[0].Comparei("BIND") == 0 )  {
+      cx.rm.Conn.ProcessBind(toks.SubListFrom(1));
+      Ins[i] = EmptyString;
+    }
+  }
+  Ins.Pack();
+}
+//..............................................................................
 void TIns::_FinishParsing(ParseContext& cx)  {
-  for( int i =0; i < Ins.Count(); i++ )  {
+  __ProcessConn(cx);
+  for( int i=0; i < Ins.Count(); i++ )  {
     TInsList* Param = new TInsList(Ins[i], ' ');
     Ins.GetObject(i) = Param;
     Ins[i] = Param->GetString(0);
@@ -1622,6 +1646,7 @@ void TIns::SaveHeader(TStrList& SL, bool ValidateRestraintNames)  {
     if( GetRM().GetInfoTab(i).IsValid() )
       SL.Add( GetRM().GetInfoTab(i).InsStr() );
   }
+  GetRM().Conn.ToInsList(SL);
   // copy "unknown" instructions except rems
   for( int i=0; i < Ins.Count(); i++ )  {
     TInsList* L = Ins.GetObject(i);

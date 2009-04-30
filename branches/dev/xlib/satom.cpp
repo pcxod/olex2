@@ -66,6 +66,28 @@ olxstr TSAtom::GetGuiLabel() const  {
     return rv << '.' << TSymmParser::MatrixToSymmCode(Network->GetLattice().GetUnitCell(), *Matrices[0]);
 }
 //..............................................................................
+void TSAtom::SortNodesByDistance()  {
+  Nodes.QuickSorter.SortMF(Nodes, *this, &TSAtom::_SortNodesByDistance);
+}
+//..............................................................................
+void TSAtom::SetNodeCount(int cnt)  {
+  if( cnt >= Nodes.Count() )
+    return;
+  for( int i=cnt; i < Nodes.Count(); i++ )  {
+    Nodes[i]->Nodes.Remove(this);
+    Nodes[i] = NULL;
+  }
+  Nodes.Pack();
+}
+//..............................................................................
+void TSAtom::RemoveNode(TSAtom& node)  {
+  int ind = Nodes.IndexOf(&node);
+  if( ind == -1 )
+    return;
+  node.Nodes.Remove(this);
+  Nodes.Delete(ind);
+}
+//..............................................................................
 olxstr TSAtom::GetGuiLabelEx() const  {  
   olxstr rv(FCAtom->GetLabel());
   if( FCAtom->GetResiId() != -1 )  {

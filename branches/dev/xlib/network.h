@@ -1,10 +1,10 @@
 #ifndef networkH
 #define networkH
 
-#include "xbase.h"
 #include "satom.h"
 #include "sbond.h"
 #include "tptrlist.h"
+#include "conninfo.h"
 
 BeginXlibNamespace()
 
