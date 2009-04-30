@@ -235,9 +235,10 @@ void TXApp::NameHydrogens(TSAtom& SA, TUndoData* ud, bool CheckLabel)  {
       olxstr Labl = al[j]->GetAtomInfo().GetSymbol() + Name;
       if( Labl.Length() >= 4 )  
         Labl.SetLength(3);
-      else if( Labl.Length() < 3 )
+      else if( Labl.Length() < 3 && parts.Count() > 1 )
         Labl << (char)('a'+i);  // part ID
-      Labl << (char)('a' + lablInc++);      
+      if( al.Count() > 1 )
+        Labl << (char)('a' + lablInc++);      
       if( CheckLabel )  {
         TCAtom* CA;
         while( (CA = XFile().GetAsymmUnit().FindCAtom(Labl)) != NULL )  {
@@ -245,7 +246,7 @@ void TXApp::NameHydrogens(TSAtom& SA, TUndoData* ud, bool CheckLabel)  {
           Labl = al[j]->GetAtomInfo().GetSymbol()+Name;
           if( Labl.Length() >= 4 )  
             Labl.SetLength(3);
-          else if( Labl.Length() < 3 )
+          else if( Labl.Length() < 3 && parts.Count() > 1 )
             Labl << (char)('a'+i);
           const char next_ch = 'a' + lablInc++;
           if( next_ch > 'z' )

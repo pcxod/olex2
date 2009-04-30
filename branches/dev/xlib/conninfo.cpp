@@ -136,7 +136,7 @@ void ConnInfo::ToInsList(TStrList& ins) const {
         int si = RM.UsedSymmIndex(*bi.matr);
         if( si == -1 )
           throw TFunctionFailedException(__OlxSourceInfo, "Undefined EQIV in BIND");
-        str << '_' << (si+1);
+        str << "_$" << (si+1);
       }
     }
   }

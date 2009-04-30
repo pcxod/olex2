@@ -167,7 +167,7 @@ public:
 
   inline double GetMaxRasterZ() const {  // to be used to calculate raster positions (z)
     double df = CalcZoom();
-    return (df*df)/FBasis->GetZoom();
+    return (df*df)/FBasis->GetZoom()-1;
   }
   /* this function provides extra value for use with rasters, when the scene is zoomed
   using LookAt function

@@ -223,7 +223,7 @@ bool TXGlLabels::Orient(TGlPrimitive *P)  {
     V = XA.Atom().crd();
     V += FParent->GetBasis().GetCenter();
     V *= FParent->GetBasis().GetMatrix();
-    glRasterPos3d(V[0]+0.15, V[1]+0.15, V[2]+5);
+    glRasterPos3d(V[0]+0.15, V[1]+0.15, FParent->GetMaxRasterZ());
     P->Draw();
   }
   OGlM->Init();
