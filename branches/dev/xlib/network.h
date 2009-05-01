@@ -39,8 +39,29 @@ public:
   void Disassemble(TSAtomPList& Atoms, TNetPList& Frags, TSBondPList* InterBonds);
   /* creates bonds and fragments for atoms initialised by Disassemble */
   void CreateBondsAndFragments(TSAtomPList& Atoms, TNetPList& Frags);
+  // returns true if the two atoms share a matrix
+  static bool HaveSharedMatrix(const TSAtom& sa, const TSAtom& sb)  {
+    for( int i=0; i < sa.MatrixCount(); i++ )  {
+      for( int j=0; j < sb.MatrixCount(); j++ )  {
+        if( sa.GetMatrix(i).GetTag() == sb.GetMatrix(j).GetTag() && 
+            sa.GetMatrix(i).t == sb.GetMatrix(j).t )  
+        {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+  static inline bool IsBondAllowed(const TSAtom& sa, const TSAtom& sb)  {
+    if( (sa.CAtom().GetPart() | sb.CAtom().GetPart()) < 0 )
+      return HaveSharedMatrix(sa, sb);
+    else if( sa.CAtom().GetPart() == 0 || sb.CAtom().GetPart() == 0 || 
+             (sa.CAtom().GetPart() == sb.CAtom().GetPart()) )
+      return true;
+    return false;
+  }
 
-  bool CBondExists(const class TCAtom& CA1, const TCAtom& CA2, const double& D) const;
+  bool CBondExists(const TCAtom& CA1, const TCAtom& CA2, const double& D) const;
   bool HBondExists(const TCAtom& CA1, const TCAtom& CA2, const double& D) const;
 
   // only pointers are compared!!

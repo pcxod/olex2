@@ -242,11 +242,11 @@ void TUnitCell::TSearchSymmEqTask::Run(long ind)  {
       int iLy = Round(Vec[1]);  Vec[1] -= iLy;
       int iLz = Round(Vec[2]);  Vec[2] -= iLz;
       // skip I
-      if( (j|iLx|iLy|iLz) == 0 )  {
+      if( j == 0 && (iLx|iLy|iLz) == 0 )  {
         if( !Initialise || ind == i )  continue;
         if( Atoms[i]->GetFragmentId() == Atoms[ind]->GetFragmentId() )  continue;
         AU->CellToCartesian(Vec);
-        double Dis = Vec.Length();
+        const double Dis = Vec.Length();
         if( Latt->GetNetwork().HBondExists(*Atoms[ind], *Atoms[i], Dis) )  {
           Atoms[ind]->AttachAtomI( Atoms[i] );
           Atoms[i]->AttachAtomI( Atoms[ind] );
@@ -258,10 +258,13 @@ void TUnitCell::TSearchSymmEqTask::Run(long ind)  {
       double Dis = Vec.Length();
       if( (j != 0) && (Dis < tolerance) )  {
         if( i == ind )  {
-          if( Initialise )  Atoms[ind]->SetDegeneracy( Atoms[ind]->GetDegeneracy() + 1 );
+          if( Initialise )  
+            Atoms[ind]->SetDegeneracy( Atoms[ind]->GetDegeneracy() + 1 );
           continue;
         }
-        if( Atoms[i]->GetAtomInfo() != Atoms[ind]->GetAtomInfo() ) continue;  //keep atoms of different type (EXYZ)
+        //keep atoms of different type (EXYZ)
+        if( Atoms[i]->GetAtomInfo() != Atoms[ind]->GetAtomInfo() ) 
+          continue;  
         Report.Add( olxstr(Atoms[ind]->Label(), 10) << '-' << Atoms[i]->GetLabel() );
         Atoms[i]->SetTag(-1);
         break;
@@ -270,7 +273,8 @@ void TUnitCell::TSearchSymmEqTask::Run(long ind)  {
         if( !Initialise )  continue;
         if( Latt->GetNetwork().CBondExists(*Atoms[ind], *Atoms[i], Dis) )  {
           Atoms[ind]->SetGrowable(true);
-          if( Atoms[ind]->IsAttachedTo( *Atoms[i] ) )  continue;
+          if( Atoms[ind]->IsAttachedTo( *Atoms[i] ) )  
+            continue;
           Atoms[ind]->AttachAtom( Atoms[i] );
           if( i != ind )  {
             Atoms[i]->SetGrowable(true);
@@ -278,6 +282,8 @@ void TUnitCell::TSearchSymmEqTask::Run(long ind)  {
           }
         }
         else if( Latt->GetNetwork().HBondExists(*Atoms[ind], *Atoms[i], Dis) )  {
+          if( Atoms[ind]->IsAttachedToI( *Atoms[i] ) )
+            continue;
           Atoms[ind]->AttachAtomI( Atoms[i] );
           if( i != ind )
             Atoms[i]->AttachAtomI( Atoms[ind] );
