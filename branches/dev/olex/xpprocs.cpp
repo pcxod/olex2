@@ -8628,69 +8628,22 @@ void TMainForm::macExportFrag(TStrObjList &Cmds, const TParamList &Options, TMac
       continue;
     TCAtom& ca = xyz.GetAsymmUnit().NewAtom();
     ca.ccrd() = nets[0]->Node(i).crd();
-    ca.SetAtomInfo( &nets[0]->Node(i).GetAtomInfo() );
+    ca.SetAtomInfo( nets[0]->Node(i).GetAtomInfo() );
   }
   xyz.SaveToFile(FN);
 }
 //..............................................................................
 void TMainForm::macConn(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  int con = Cmds[0].ToInt();
-  TXAtomPList xatoms;
-  FindXAtoms(Cmds.SubListFrom(1), xatoms, false, true);
-  if( xatoms.IsEmpty() )  {
-    E.ProcessingError(__OlxSrcInfo, "no atoms provided");
-    return;
+  try  {  
+    TStrList lst(Cmds);
+    FXApp->XFile().GetRM().Conn.ProcessConn(lst);
+    FXApp->XFile().GetAsymmUnit()._UpdateConnInfo();
+    FXApp->XFile().GetLattice().UpdateConnectivity();
+    FXApp->CreateObjects(false, false);
   }
-  TLattice& latt = FXApp->XFile().GetLattice();
-  if( con == 0 )  {
-    for( int i=0; i < latt.AtomCount(); i++ )  {
-      TSAtom& sa = latt.GetAtom(i);
-      for( int j=0; j < xatoms.Count(); j++ )  {
-        if( &sa == &xatoms[j]->Atom() ) {
-          for( int k=0; k < sa.NodeCount(); k++ )  {
-            if( sa.Node(k).NullNode(xatoms[j]->Atom()) )
-              sa.Node(k).PackNodes();
-          }
-          sa.ClearNodes();
-        }
-      }
-    }
+  catch( const TExceptionBase& exc )  {
+    E.ProcessingError(__OlxSrcInfo, exc.GetException()->GetError());
   }
-  else  {
-    TPSTypeList<double, TSBond*> bonds;
-    for( int i=0; i < latt.AtomCount(); i++ )  {
-      TSAtom& sa = latt.GetAtom(i);
-      for( int j=0; j < xatoms.Count(); j++ )  {
-        if( &sa == &xatoms[j]->Atom() ) {
-          if( sa.BondCount() > olx_abs(con) )  {
-            for( int k=0; k < sa.BondCount(); k++ )
-              bonds.Add( sa.Bond(k).Length(), &sa.Bond(k));
-            if( con < 0 )  {
-              con = olx_abs(con);
-              for( int k=bonds.Count()-con-1; k >=0 ; k-- )  {
-                TSAtom& aa = bonds.GetObject(k)->Another(sa); 
-                aa.NullNode(sa);
-                aa.PackNodes();
-                sa.NullNode( aa );
-              }
-              sa.PackNodes();
-            }
-            else  {
-              for( int k=con; k < bonds.Count(); k++ )  {
-                TSAtom& aa = bonds.GetObject(k)->Another(sa); 
-                aa.NullNode(sa);
-                aa.PackNodes();
-                sa.NullNode( aa );
-              }
-              sa.PackNodes();
-            }
-          }
-        }
-      }
-    }
-  }
-  latt.UpdateConnectivity();
-  FXApp->CreateObjects(false, false);
 }
 //..............................................................................
 void TMainForm::macUpdateQPeakTable(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {

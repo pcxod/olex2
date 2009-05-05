@@ -21,6 +21,7 @@ public:
   DefPropB(Deleted)
 
   double Length() const;
+  double QLength() const;
 
   void ToDataItem(TDataItem& item) const;
   void FromDataItem(const TDataItem& item, TPtrList<TNetwork>& net_pool);

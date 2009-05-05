@@ -119,9 +119,9 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
       TCAtom* atom = _ParseAtom(Toks, cx);
       atom->Label() = Toks[0];
       if( qpeak ) 
-        atom->SetAtomInfo(&baiQPeak);
+        atom->SetAtomInfo(baiQPeak);
       else
-        atom->SetAtomInfo( cx.BasicAtoms.GetObject(Toks[1].ToInt()-1) );
+        atom->SetAtomInfo( *cx.BasicAtoms.GetObject(Toks[1].ToInt()-1) );
       if( atom->GetAtomInfo().GetMr() > 3.5 )
         cx.LastNonH = atom;
       _ProcessAfix(*atom, cx);
@@ -1056,7 +1056,7 @@ void TIns::UpdateAtomsFromStrings(RefinementModel& rm, TCAtomPList& CAtoms, cons
       _ParseAtom( Toks, cx, atom );
       atomCount++;
       atom->Label() = Tmp1;
-      atom->SetAtomInfo(bai);
+      atom->SetAtomInfo(*bai);
       if( atom->GetAtomInfo().GetMr() > 3.5 )
         cx.LastNonH = atom;
       _ProcessAfix(*atom, cx);

@@ -1059,21 +1059,21 @@ void TAutoDB::A2Pemutate(TCAtom& a1, TCAtom& a2, TBasicAtomInfo& ai1, TBasicAtom
   if( ratio > (1.0 + threshold) )  {
     if( a1.GetAtomInfo() != ai1 )  {
       TBasicApp::GetLog().Info( olxstr("A2 assignment: ") << a1.GetLabel() << " -> " << ai1.GetSymbol() );
-      a1.SetAtomInfo( &ai1 );
+      a1.SetAtomInfo( ai1 );
     }
     if( a2.GetAtomInfo() != ai2 )  {
       TBasicApp::GetLog().Info( olxstr("A2 assignment: ") << a2.GetLabel() << " -> " << ai2.GetSymbol() );
-      a2.SetAtomInfo( &ai2 );
+      a2.SetAtomInfo( ai2 );
     }
   }
   else if( ratio < (1.0-threshold) )  {
     if( a2.GetAtomInfo() != ai1 )  {
       TBasicApp::GetLog().Info( olxstr("A2 assignment: ") << a2.GetLabel() << " -> " << ai1.GetSymbol() );
-      a2.SetAtomInfo( &ai1 );
+      a2.SetAtomInfo( ai1 );
     }
     if( a1.GetAtomInfo() != ai2 )  {
       TBasicApp::GetLog().Info( olxstr("A2 assignment: ") << a1.GetLabel() << " -> " << ai2.GetSymbol() );
-      a1.SetAtomInfo( &ai2 );
+      a1.SetAtomInfo( ai2 );
     }
   }
 }
@@ -1201,20 +1201,20 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
             if( proposed_atoms->IndexOf( type ) != -1 )  {
               stat.AtomTypeChanges++;
               guesses[i].atom->Label() =  (olxstr( type->GetSymbol() ) << (i+1));
-              guesses[i].atom->SetAtomInfo( type );
+              guesses[i].atom->SetAtomInfo( *type );
             }
           }
           else if( BAIDelta != -1 )  {
             if( abs(type->GetIndex() - guesses[i].atom->GetAtomInfo().GetIndex()) < BAIDelta )  {
               stat.AtomTypeChanges++;
               guesses[i].atom->Label() =  (olxstr( type->GetSymbol() ) << (i+1));
-              guesses[i].atom->SetAtomInfo( type );
+              guesses[i].atom->SetAtomInfo( *type );
             }
           }
           else  {
             stat.AtomTypeChanges++;
             guesses[i].atom->Label() =  (olxstr( type->GetSymbol() ) << (i+1));
-            guesses[i].atom->SetAtomInfo( type );
+            guesses[i].atom->SetAtomInfo( *type );
           }
         }
       }
@@ -1232,7 +1232,7 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
           if(  ref_val > 0.01 && ref_val < 0.075)  {
             change_evt = 0;
             guesses[i].atom->Label() = (olxstr( l_bai->GetSymbol() ) << (i+1));
-            guesses[i].atom->SetAtomInfo(l_bai);
+            guesses[i].atom->SetAtomInfo(*l_bai);
           }
         }
       }
@@ -1240,13 +1240,13 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
         if( olx_abs(guesses[i].atom->GetAtomInfo().GetIndex() - sn->Node(i).GetTag()) < BAIDelta )  {
           change_evt = 1;
           guesses[i].atom->Label() = (olxstr( l_bai->GetSymbol() ) << (i+1));
-          guesses[i].atom->SetAtomInfo(l_bai);
+          guesses[i].atom->SetAtomInfo(*l_bai);
         }
       }
       else  {  // unrestrained assignment
         change_evt = 2;
         guesses[i].atom->Label() = (olxstr( l_bai->GetSymbol() ) << (i+1));
-        guesses[i].atom->SetAtomInfo(l_bai);
+        guesses[i].atom->SetAtomInfo(*l_bai);
       }
       if( change_evt != -1 )  {
         TBasicApp::GetLog().Info( olxstr("SN[") << change_evt << "] assignment " << guesses[i].atom->GetLabel() <<
@@ -1331,20 +1331,20 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
             if( proposed_atoms->IndexOf( type ) != -1 )  {
               stat.AtomTypeChanges++;
               guesses[i].atom->Label() =  (olxstr( type->GetSymbol() ) << (i+1));
-              guesses[i].atom->SetAtomInfo( type );
+              guesses[i].atom->SetAtomInfo( *type );
             }
           }
           else if( BAIDelta != -1 )  {
             if( abs(type->GetIndex() - guesses[i].atom->GetAtomInfo().GetIndex()) < BAIDelta )  {
               stat.AtomTypeChanges++;
               guesses[i].atom->Label() =  (olxstr( type->GetSymbol() ) << (i+1));
-              guesses[i].atom->SetAtomInfo( type );
+              guesses[i].atom->SetAtomInfo( *type );
             }
           }
           else  {
             stat.AtomTypeChanges++;
             guesses[i].atom->Label() =  (olxstr( type->GetSymbol() ) << (i+1));
-            guesses[i].atom->SetAtomInfo( type );
+            guesses[i].atom->SetAtomInfo( *type );
           }
         }
         TBasicApp::GetLog().Info( tmp );

@@ -5,7 +5,7 @@ void ConnInfo::ProcessFree(const TStrList& ins)  {
   TAtomReference ar(ins.Text(' '));
   TCAtomGroup ag;
   int aag;
-  try  {  ar.Expand(RM, ag, EmptyString, aag);  }
+  try  {  ar.Expand(rm, ag, EmptyString, aag);  }
   catch(TExceptionBase& ex)  {
     throw TFunctionFailedException(__OlxSourceInfo, ex, "Failed to locate atoms");
   }
@@ -33,7 +33,7 @@ void ConnInfo::ProcessBind(const TStrList& ins)  {
   TAtomReference ar(ins.Text(' '));
   TCAtomGroup ag;
   int aag;
-  try  {  ar.Expand(RM, ag, EmptyString, aag);  }
+  try  {  ar.Expand(rm, ag, EmptyString, aag);  }
   catch(TExceptionBase& ex)  {
     throw TFunctionFailedException(__OlxSourceInfo, ex, "Failed to locate atoms");
   }
@@ -58,7 +58,7 @@ void ConnInfo::ProcessBind(const TStrList& ins)  {
 }
 //........................................................................
 void ConnInfo::ProcessConn(TStrList& ins)  {
-  short maxB = 12;
+  short maxB = def_max_bonds;
   double r = -1;
   TIntList num_indexes;
   for( int i=0; i < ins.Count(); i++ )  {
@@ -75,8 +75,8 @@ void ConnInfo::ProcessConn(TStrList& ins)  {
     else
       maxB = ins[num_indexes[0]].ToInt();
   }
-  else  // invalid argument set, skipping
-    return;
+  else  // invalid argument set - reset any existing conn info
+    ;
   // remove numbers to leave atom names/types only
   for( int i=num_indexes.Count()-1; i >=0; i-- )
     ins.Delete(num_indexes[i]);
@@ -96,7 +96,7 @@ void ConnInfo::ProcessConn(TStrList& ins)  {
     }
   }
   for( int i=0; i < ins.Count(); i++ )  {
-    TCAtom* ca = RM.aunit.FindCAtom(ins[i]);
+    TCAtom* ca = rm.aunit.FindCAtom(ins[i]);
     if( ca == NULL )  {
       TBasicApp::GetLog().Error(olxstr("Undefined atom name in CONN: ") << ins[i]);
       continue;
@@ -111,10 +111,10 @@ void ConnInfo::ToInsList(TStrList& ins) const {
   // put the type specific info first
   for( int i=0; i < TypeInfo.Count(); i++ )  {
     const TypeConnInfo& tci = TypeInfo.GetValue(i);
-    if( tci.maxBonds == 12 && tci.r == -1 )
+    if( tci.maxBonds == def_max_bonds && tci.r == -1 )
       continue;
     olxstr& str = ins.Add("CONN ");
-    if( tci.maxBonds != 12 )
+    if( tci.maxBonds != def_max_bonds )
       str << tci.maxBonds << ' ';
     if( tci.r != -1 )
       str << tci.r << ' ';
@@ -125,35 +125,35 @@ void ConnInfo::ToInsList(TStrList& ins) const {
     const AtomConnInfo& aci = AtomInfo.GetValue(i);
     if( aci.atom->IsDeleted() )
       continue;
-    if( aci.r != -1 || aci.maxBonds != 12 )  {
+    if( aci.r != -1 || aci.maxBonds != def_max_bonds )  {
       olxstr& str = ins.Add("CONN ");
-      if( aci.maxBonds != 12 )
+      if( aci.maxBonds != def_max_bonds )
         str << aci.maxBonds << ' ';
       if( aci.r != -1 )
         str << aci.r << ' ';
       str << aci.atom->GetLabel();
     }
     for( int j=0; j < aci.BondsToCreate.Count(); j++ )  {
-      const bondInfo& bi = aci.BondsToCreate[j];
+      const CXBondInfo& bi = aci.BondsToCreate[j];
       if( bi.to.IsDeleted() )
         continue;
       olxstr& str = ins.Add("BIND ");
       str << aci.atom->GetLabel() << ' ' << bi.to.GetLabel();
       if( bi.matr != NULL )  {
-        int si = RM.UsedSymmIndex(*bi.matr);
+        int si = rm.UsedSymmIndex(*bi.matr);
         if( si == -1 )
           throw TFunctionFailedException(__OlxSourceInfo, "Undefined EQIV in BIND");
         str << "_$" << (si+1);
       }
     }
     for( int j=0; j < aci.BondsToRemove.Count(); j++ )  {
-      const bondInfo& bi = aci.BondsToRemove[j];
+      const CXBondInfo& bi = aci.BondsToRemove[j];
       if( bi.to.IsDeleted() )
         continue;
       olxstr& str = ins.Add("FREE ");
       str << aci.atom->GetLabel() << ' ' << bi.to.GetLabel();
       if( bi.matr != NULL )  {
-        int si = RM.UsedSymmIndex(*bi.matr);
+        int si = rm.UsedSymmIndex(*bi.matr);
         if( si == -1 )
           throw TFunctionFailedException(__OlxSourceInfo, "Undefined EQIV in BIND");
         str << "_$" << (si+1);
@@ -162,28 +162,41 @@ void ConnInfo::ToInsList(TStrList& ins) const {
   }
 }
 //........................................................................
-void ConnInfo::Compile(TTypeList<ConnInfo::connInfo>& res) const {
-  for( int i=0; i < RM.aunit.AtomCount(); i++ )  {
-    TCAtom& ca = RM.aunit.GetAtom(i);
-    int ai_ind = AtomInfo.IndexOf(&ca), 
-      ti_ind;
-    if( ai_ind != -1 )  {
-      const AtomConnInfo& aci = AtomInfo.GetValue(ai_ind);
-      connInfo& ci = res.AddNew();  
-      ci.r = aci.r < 0 ? ca.GetAtomInfo().GetRad1() : aci.r;
-      ci.maxBonds = aci.maxBonds;
-      ci.BondsToCreate.AddListC(aci.BondsToCreate);
-      ci.BondsToRemove.AddListC(aci.BondsToRemove);
-    } 
-    else if( (ti_ind = TypeInfo.IndexOf(&ca.GetAtomInfo())) != -1 )  {
-      const TypeConnInfo& aci = TypeInfo.GetValue(ti_ind);
-      connInfo& ci = res.AddNew();  
-      ci.r = (aci.r < 0 ? ca.GetAtomInfo().GetRad1() : aci.r);
-      ci.maxBonds = aci.maxBonds;
-    }
-    else
-      res.Add(NULL);
+CXConnInfo& ConnInfo::GetConnInfo(const TCAtom& ca) const {
+  CXConnInfo& ci = *(new CXConnInfo);  
+  int ai_ind = AtomInfo.IndexOf(&ca), ti_ind;
+  if( ai_ind != -1 )  {
+    const AtomConnInfo& aci = AtomInfo.GetValue(ai_ind);
+    ci.r = aci.r < 0 ? ca.GetAtomInfo().GetRad1() : aci.r;
+    ci.maxBonds = aci.maxBonds;
+    ci.BondsToCreate.AddListC(aci.BondsToCreate);
+    ci.BondsToRemove.AddListC(aci.BondsToRemove);
   } 
+  else if( (ti_ind = TypeInfo.IndexOf(&ca.GetAtomInfo())) != -1 )  {
+    const TypeConnInfo& aci = TypeInfo.GetValue(ti_ind);
+    ci.r = (aci.r < 0 ? ca.GetAtomInfo().GetRad1() : aci.r);
+    ci.maxBonds = aci.maxBonds;
+  }
+  else  {
+    ci.r = ca.GetAtomInfo().GetRad1();
+    ci.maxBonds = def_max_bonds;
+  }
+  return ci;
+}
+//........................................................................
+CXConnInfo& ConnInfo::GetConnInfo(TBasicAtomInfo& bai) const {
+  CXConnInfo& ci = *(new CXConnInfo);
+  int ti_ind = TypeInfo.IndexOf(&bai);
+  if( ti_ind != -1 )  {
+    const TypeConnInfo& aci = TypeInfo.GetValue(ti_ind);
+    ci.r = (aci.r < 0 ? bai.GetRad1() : aci.r);
+    ci.maxBonds = aci.maxBonds;
+  }
+  else  {
+    ci.r = bai.GetRad1();
+    ci.maxBonds = def_max_bonds;
+  }
+  return ci;
 }
 //........................................................................
 void ConnInfo::Assign(const ConnInfo& ci)  {
@@ -192,31 +205,31 @@ void ConnInfo::Assign(const ConnInfo& ci)  {
     const AtomConnInfo& _aci = ci.AtomInfo.GetValue(i);
     if( _aci.atom->IsDeleted() )
       continue;
-    TCAtom* ca = RM.aunit.FindCAtomById(_aci.atom->GetId());
+    TCAtom* ca = rm.aunit.FindCAtomById(_aci.atom->GetId());
     if( ca == NULL )
       throw TFunctionFailedException(__OlxSourceInfo, "Asymmetric units mismatch");
     AtomConnInfo& aci = AtomInfo.Add(ca);
     aci.atom = ca;
-    (_connInfo&)aci = _aci;
+    (CXConnInfoBase&)aci = _aci;
     for( int j=0; j < _aci.BondsToCreate.Count(); j++ )  {
-      ca = RM.aunit.FindCAtomById(_aci.BondsToCreate[j].to.GetId());
+      ca = rm.aunit.FindCAtomById(_aci.BondsToCreate[j].to.GetId());
       if( ca == NULL )
         throw TFunctionFailedException(__OlxSourceInfo, "Asymmetric units mismatch");
       if( ca->IsDeleted() )
         continue;
       const smatd* sm = _aci.BondsToCreate[j].matr == NULL ? NULL :
-                        &RM.AddUsedSymm(*_aci.BondsToCreate[j].matr);
-      aci.BondsToCreate.Add( new bondInfo(*ca, sm) );
+                        &rm.AddUsedSymm(*_aci.BondsToCreate[j].matr);
+      aci.BondsToCreate.Add( new CXBondInfo(*ca, sm) );
     }
     for( int j=0; j < _aci.BondsToRemove.Count(); j++ )  {
-      ca = RM.aunit.FindCAtomById(_aci.BondsToRemove[j].to.GetId());
+      ca = rm.aunit.FindCAtomById(_aci.BondsToRemove[j].to.GetId());
       if( ca == NULL )
         throw TFunctionFailedException(__OlxSourceInfo, "Asymmetric units mismatch");
       if( ca->IsDeleted() )
         continue;
       const smatd* sm = _aci.BondsToRemove[j].matr == NULL ? NULL :
-                        &RM.AddUsedSymm(*_aci.BondsToRemove[j].matr);
-      aci.BondsToRemove.Add( new bondInfo(*ca, sm) );
+                        &rm.AddUsedSymm(*_aci.BondsToRemove[j].matr);
+      aci.BondsToRemove.Add( new CXBondInfo(*ca, sm) );
     }
   }
   for( int i=0; i < ci.TypeInfo.Count(); i++ ) 

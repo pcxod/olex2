@@ -1196,38 +1196,7 @@ void TLattice::TransformFragments(const TSAtomPList& fragAtoms, const smatd& tra
 }
 //..............................................................................
 void TLattice::UpdateConnectivity()  {
-  OnDisassemble->Enter(this);
-  // clear all covalent bonds
-  for( int i=0; i < Bonds.Count(); i++ )  {
-    if( Bonds[i]->GetType() == sotBond )  {
-      delete Bonds[i];
-      Bonds[i] = NULL;
-    }
-  }
-  Bonds.Pack();
-  ClearFragments();
-  const int ac = Atoms.Count();
-  for( int i = 0; i < ac; i++ )  {
-    Atoms[i]->SetTag(1);
-    Atoms[i]->SetNetId(-1);
-    Atoms[i]->ClearBonds();
-  }
-  Network->CreateBondsAndFragments(Atoms, Fragments);
-  // precalculate memory usage
-  int bondCnt = Bonds.Count();
-  for(int i=0; i < Fragments.Count(); i++ )
-    bondCnt += Fragments[i]->BondCount();
-  Bonds.SetCapacity( bondCnt );
-  // end
-
-  for( int i=0; i < Fragments.Count(); i++ )  {
-    TNetwork* Frag = Fragments[i];
-    for( int j=0; j < Frag->BondCount(); j++ )
-      AddSBond( &Frag->Bond(j) );
-    for( int j=0; j < Frag->NodeCount(); j++ )
-      Frag->Node(j).CAtom().SetFragmentId(i);
-  }
-  OnDisassemble->Exit(this);
+  Disassemble();
 }
 //..............................................................................
 void TLattice::Disassemble()  {

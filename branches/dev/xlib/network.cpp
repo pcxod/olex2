@@ -94,7 +94,7 @@ void TNetwork::TDisassembleTaskCheckConnectivity::Run(long index)  {
     if( olx_abs(Distances[3][i] - Distances[3][index]) > dcMaxCBLength  )  continue;
 
     const double D = Atoms[index]->crd().QDistanceTo( Atoms[i]->crd());
-    const double D1 = sqr(Atoms[index]->GetAtomInfo().GetRad1() + Atoms[i]->GetAtomInfo().GetRad1() + Delta);
+    const double D1 = sqr(Atoms[index]->CAtom().GetConnInfo().r + Atoms[i]->CAtom().GetConnInfo().r + Delta);
     if(  D < D1 && IsBondAllowed(*Atoms[index], *Atoms[i]) )  {
       Atoms[index]->AddNode(*Atoms[i]);
       Atoms[i]->AddNode(*Atoms[index]);  // crosslinking
@@ -151,6 +151,7 @@ void TNetwork::Disassemble(TSAtomPList& Atoms, TNetPList& Frags, TSBondPList* In
     Distances[2][i] = A->crd()[1];
     Distances[3][i] = A->crd()[2];
   }
+  // get extrac connectivity information
   sw.start("Connectivity analysis");
   TDisassembleTaskCheckConnectivity searchConTask( Atoms, Distances, Delta);
   TListIteratorManager<TDisassembleTaskCheckConnectivity> searchCon(searchConTask, Atoms.Count(), tQuadraticTask, 100);
@@ -177,14 +178,9 @@ void TNetwork::CreateBondsAndFragments(TSAtomPList& Atoms, TNetPList& Frags)  {
   // creating bonds
   const int ac = Atoms.Count();
   // analyse extra connectivity information
-  RefinementModel* rm = Lattice->GetAsymmUnit().GetRefMod();
-  TTypeList<ConnInfo::connInfo> conn;
-  rm->Conn.Compile(conn);
   for( int i=0; i < ac; i++ )  {
     TSAtom* sa = Atoms[i];
-    const ConnInfo::connInfo& ci = conn[sa->CAtom().GetId()];
-    if( &ci == NULL )
-      continue;
+    const CXConnInfo& ci = sa->CAtom().GetConnInfo();
     for( int j=0; j < ci.BondsToRemove.Count(); j++ )  {
       if( ci.BondsToRemove[j].matr == NULL )  {
         for( int k=0; k < sa->NodeCount(); k++ )  {
@@ -249,7 +245,17 @@ void TNetwork::CreateBondsAndFragments(TSAtomPList& Atoms, TNetPList& Frags)  {
     }
     if( sa->NodeCount() > ci.maxBonds )  {
       sa->SortNodesByDistance();
-      sa->SetNodeCount(ci.maxBonds);
+      // prevent q-peaks affecting the max number of bonds...
+      int bc2set = ci.maxBonds;
+      for( int j=0;  j < bc2set; j++ )  {
+        if( sa->Node(j).GetAtomInfo() == iQPeakIndex )  {
+          if( ++bc2set >= sa->NodeCount() )  {
+            break;
+          }
+        }
+      }
+      if( bc2set < sa->NodeCount() )
+        sa->SetNodeCount(bc2set);
     }
   }
   // end analysis the extra con info
@@ -339,7 +345,7 @@ void TNetwork::THBondSearchTask::Run(long ind)  {
       if( connected )  continue;
 
       const double D = A1->crd().QDistanceTo( Atoms[i]->crd() );
-      const double D1 = sqr(A1->GetAtomInfo().GetRad1() + Atoms[i]->GetAtomInfo().GetRad1() + Delta);
+      const double D1 = sqr(A1->CAtom().GetConnInfo().r + Atoms[i]->CAtom().GetConnInfo().r + Delta);
       if(  D < D1 && IsBondAllowed(*A1, *Atoms[i]) )  {
         TSBond* B = new TSBond(&A1->GetNetwork());
         B->SetType(sotHBond);
@@ -352,7 +358,7 @@ void TNetwork::THBondSearchTask::Run(long ind)  {
     }
     else if( Bonds != NULL )  {
       const double D = A1->crd().QDistanceTo( Atoms[i]->crd() );
-      const double D1 = sqr(A1->GetAtomInfo().GetRad1() + Atoms[i]->GetAtomInfo().GetRad1() + Delta);
+      const double D1 = sqr(A1->CAtom().GetConnInfo().r + Atoms[i]->CAtom().GetConnInfo().r + Delta);
       if(  D < D1 && IsBondAllowed(*A1, *Atoms[i]) )  {
         TSBond* B = new TSBond( &A1->GetNetwork() );
         B->SetType(sotHBond);
@@ -364,21 +370,48 @@ void TNetwork::THBondSearchTask::Run(long ind)  {
   }
 }
 //..............................................................................
-bool TNetwork::CBondExists(const TCAtom& CA1, const TCAtom& CA2, const double& D) const  {
-  if(  D < (CA1.GetAtomInfo().GetRad1() + CA2.GetAtomInfo().GetRad1() + GetLattice().GetDelta() ) )  {
-    if( (CA1.GetPart() & CA2.GetPart()) == 0 || CA1.GetPart() == CA2.GetPart() )
-      return true;
+bool TNetwork::CBondExists(const TCAtom& CA1, const TCAtom& CA2, const smatd& sm, const double& D) const  {
+  if(  D < (CA1.GetConnInfo().r + CA2.GetConnInfo().r + GetLattice().GetDelta() ) )  {
+    return IsBondAllowed(CA1, CA2, sm);
   }
   return false;
 }
 //..............................................................................
-bool TNetwork::HBondExists(const TCAtom& CA1, const TCAtom& CA2, const double& D) const  {
-  if(  D < (CA1.GetAtomInfo().GetRad1() + CA2.GetAtomInfo().GetRad1() + GetLattice().GetDeltaI() ) )  {
-    if( (CA1.GetPart() & CA2.GetPart()) == 0 || CA1.GetPart() == CA2.GetPart() )
-      return true;
+bool TNetwork::CBondExistsQ(const TCAtom& CA1, const TCAtom& CA2, const smatd& sm, const double& qD) const  {
+  if(  qD < sqr(CA1.GetConnInfo().r + CA2.GetConnInfo().r + GetLattice().GetDelta() ) )  {
+    return IsBondAllowed(CA1, CA2, sm);
   }
   return false;
 }
+//..............................................................................
+bool TNetwork::HBondExists(const TCAtom& CA1, const TCAtom& CA2, const smatd& sm, const double& D) const  {
+  if(  D < (CA1.GetConnInfo().r + CA2.GetConnInfo().r + GetLattice().GetDeltaI() ) )  {
+    return IsBondAllowed(CA1, CA2, sm);
+  }
+  return false;
+}
+//..............................................................................
+bool TNetwork::HBondExistsQ(const TCAtom& CA1, const TCAtom& CA2, const smatd& sm, const double& qD) const  {
+  if(  qD < sqr(CA1.GetConnInfo().r + CA2.GetConnInfo().r + GetLattice().GetDeltaI() ) )  {
+    return IsBondAllowed(CA1, CA2, sm);
+  }
+  return false;
+}
+//..............................................................................
+bool TNetwork::CBondExists(const TSAtom& A1, const TSAtom& A2, const double& D) const  {
+  if(  D < (A1.CAtom().GetConnInfo().r + A2.CAtom().GetConnInfo().r + GetLattice().GetDelta() ) )  {
+    return IsBondAllowed(A1, A2);
+  }
+  return false;
+}
+//..............................................................................
+bool TNetwork::CBondExistsQ(const TSAtom& A1, const TSAtom& A2, const double& qD) const  {
+  if(  qD < sqr(A1.CAtom().GetConnInfo().r + A2.CAtom().GetConnInfo().r + GetLattice().GetDelta() ) )  {
+    return IsBondAllowed(A1, A2);
+  }
+  return false;
+}
+//..............................................................................
 //..............................................................................
 // HELPER function
 class TNetTraverser  {

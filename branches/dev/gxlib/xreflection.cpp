@@ -108,7 +108,7 @@ bool TXReflection::Orient(TGlPrimitive *GlP)  {
   TGlMaterial GlM = *(TGlMaterial*)GlP->GetProperties();
 
   double scale = (1.0-FParams[0]);
-  GlM.AmbientF[3] = scale;
+  GlM.AmbientF[3] = (float)scale;
   GlM.Init();
   return false;
 }

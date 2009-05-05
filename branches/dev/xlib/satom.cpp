@@ -29,7 +29,7 @@ void  TSAtom::CAtom(TCAtom& S)  {
   FEllipsoid = S.GetEllipsoid();
 }
 //..............................................................................
-void TSAtom::AtomInfo(TBasicAtomInfo* AI)  {
+void TSAtom::AtomInfo(TBasicAtomInfo& AI)  {
   FCAtom->SetAtomInfo(AI);
 }
 //..............................................................................

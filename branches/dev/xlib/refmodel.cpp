@@ -74,7 +74,6 @@ void RefinementModel::Clear() {
   rEADP.Clear();
   rSAME.Clear();
   ExyzGroups.Clear();
-  Conn.Clear();
   //AfixGroups.Clear();
   InfoTables.Clear();
   UsedSymm.Clear();
@@ -89,6 +88,7 @@ void RefinementModel::Clear() {
   SetDefaults();
   expl.Clear();
   Vars.Clear();
+  Conn.Clear();
 }
 //....................................................................................................
 void RefinementModel::ClearVarRefs() {
@@ -179,6 +179,7 @@ RefinementModel& RefinementModel::Assign(const RefinementModel& rm, bool AssignA
   ExyzGroups.Assign(rm.ExyzGroups);
   AfixGroups.Assign(rm.AfixGroups);
   Conn.Assign(rm.Conn);
+  aunit._UpdateConnInfo();
   // restraunts have to be copied first, as some may refer to vars
   Vars.Assign( rm.Vars );
 

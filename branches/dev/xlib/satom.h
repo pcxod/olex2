@@ -47,8 +47,8 @@ public:
   inline TCAtom& CAtom()     const {  return *FCAtom; }
   void CAtom(TCAtom& CA);
 
-  void AtomInfo(TBasicAtomInfo *AI);
-  inline TBasicAtomInfo& GetAtomInfo()    const {  return FCAtom->GetAtomInfo(); }
+  void AtomInfo(TBasicAtomInfo& AI);
+  inline TBasicAtomInfo& GetAtomInfo()  const {  return FCAtom->GetAtomInfo(); }
 
   inline void SetLabel(const olxstr &L)       { FCAtom->SetLabel(L); }
   inline const olxstr& GetLabel() const       {  return FCAtom->GetLabel(); }

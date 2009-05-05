@@ -839,6 +839,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\xlib\connext.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\xlib\conninfo.h"
 				>
 			</File>

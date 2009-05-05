@@ -61,8 +61,27 @@ public:
     return false;
   }
 
-  bool CBondExists(const TCAtom& CA1, const TCAtom& CA2, const double& D) const;
-  bool HBondExists(const TCAtom& CA1, const TCAtom& CA2, const double& D) const;
+  static inline bool IsBondAllowed(const TCAtom& ca, const TCAtom& cb, const smatd& sm)  {
+    if( (ca.GetPart() | cb.GetPart()) < 0 )
+      return sm.GetTag() == 0 && sm.t.IsNull();  // is identity and no translation
+    else if( ca.GetPart() == 0 || cb.GetPart() == 0 || 
+             (ca.GetPart() == cb.GetPart()) )
+      return true;
+    return false;
+  }
+
+  bool CBondExists(const TSAtom& A1, const TSAtom& CA2, const double& D) const;
+  // considers quadratic distance
+  bool CBondExistsQ(const TSAtom& A1, const TSAtom& CA2, const double& qD) const;
+
+  bool CBondExists(const TCAtom& CA1, const TCAtom& CA2, const smatd& sm, const double& D) const;
+  // compares the quadratic distances
+  bool CBondExistsQ(const TCAtom& CA1, const TCAtom& CA2, const smatd& sm, const double& qD) const;
+  
+  bool HBondExists(const TCAtom& CA1, const TCAtom& CA2, const smatd& sm, const double& D) const;
+  // compares the quadratic distances
+  bool HBondExistsQ(const TCAtom& CA1, const TCAtom& CA2, const smatd& sm, const double& qD) const;
+
 
   // only pointers are compared!!
   inline bool operator == (const TNetwork& n) const  {  return this == &n;  }
@@ -149,8 +168,9 @@ protected:
     double** Distances;
     double Delta;
   public:
-    TDisassembleTaskCheckConnectivity(TSAtomPList& atoms, double** distances,
-        double delta) :  Atoms(atoms)  {
+    TDisassembleTaskCheckConnectivity(TSAtomPList& atoms, 
+      double** distances, double delta) :  Atoms(atoms) 
+    {
       Distances = distances;
       Delta = delta;
     }
@@ -165,8 +185,10 @@ protected:
     double** Distances;
     double Delta;
   public:
-    THBondSearchTask(TSAtomPList& atoms, TSBondPList* bonds, double** distances,
-        double delta) :  Atoms(atoms)  {
+    THBondSearchTask(TSAtomPList& atoms, 
+      TSBondPList* bonds, 
+      double** distances, double delta) :  Atoms(atoms)  
+    {
       Distances = distances;
       Delta = delta;
       Bonds = bonds;

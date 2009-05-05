@@ -11,7 +11,6 @@
 #include "fragment.h"
 #include "symmlib.h"
 #include "edict.h"
-#include "conninfo.h"
 
 BeginXlibNamespace()
 
@@ -127,7 +126,6 @@ public:
   TSameGroupList  rSAME;
   TAfixGroups AfixGroups;
   TExyzGroups ExyzGroups;
-  ConnInfo Conn;          // extra connectivity information
 
   // removes references to all deleted atoms
   void Validate();
@@ -140,6 +138,8 @@ public:
   TDoubleList used_weight, proposed_weight;
   TIntList LS;      // up to four params
   TDoubleList PLAN;  // up to three params
+
+  ConnInfo Conn;          // extra connectivity information
   
   const olxstr& GetHKLSource() const {  return HKLSource;  }
   //TODO: handle the change

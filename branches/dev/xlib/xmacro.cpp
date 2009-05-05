@@ -1472,7 +1472,7 @@ void XLibMacros::macEXYZ(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       ca.ccrd() = atoms[0]->CAtom().ccrd();
       ca.Label() = bai->GetSymbol() + atoms[0]->GetLabel().SubStringFrom( 
         atoms[0]->GetAtomInfo().GetSymbol().Length());
-      ca.SetAtomInfo( bai );
+      ca.SetAtomInfo( *bai );
       ca.SetDegeneracy( atoms[0]->CAtom().GetDegeneracy() );
       rm.Vars.FixParam(ca, catom_var_name_Sof);
       eg->Add(ca);

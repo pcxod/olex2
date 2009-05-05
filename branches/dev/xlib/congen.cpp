@@ -27,7 +27,7 @@ void AConstraintGenerator::DoGenerateAtom( TCAtomPList& created, TAsymmUnit& au,
     }
     else
       CA->Label() = au.CheckLabel(CA, StartingName);
-    CA->SetAtomInfo( &au.GetAtomsInfo()->GetAtomInfo(iHydrogenIndex) );
+    CA->SetAtomInfo( au.GetAtomsInfo()->GetAtomInfo(iHydrogenIndex) );
     CA->ccrd() = v;
     created.Add( CA );
   }
@@ -60,7 +60,7 @@ void AConstraintGenerator::GenerateAtom( TCAtomPList& created, TAtomEnvi& envi,
         NA = envi.GetBase().GetNetwork().GetLattice().FindSAtom( envi.GetCAtom(0) );
         envi.GetBase().GetNetwork().GetLattice().GetUnitCell().GetAtomEnviList(*NA, NEnvi);
         NEnvi.Exclude( envi.GetBase().CAtom() );
-        // best approximation, though not really required ...
+        // best approximation, though not really required (one atom in plane of the subs and two - out)...
         if( NEnvi.Count() >= 2 )  {
           RotVec = (NEnvi.GetBase().crd() - envi.GetBase().crd()).Normalise();
           CreateRotationMatrix(M, RotVec, -0.5 );

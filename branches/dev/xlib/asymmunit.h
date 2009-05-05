@@ -16,6 +16,7 @@
 #include "samegroup.h"
 
 #include "dataitem.h"
+#include "conninfo.h"
 
 #undef GetObject
 
@@ -191,6 +192,10 @@ public:
   void AssignResidues(const TAsymmUnit& au);
   // if a number is provided, seraches by Number otherwise - by ClassName
   void FindResidues(const olxstr& resi, TPtrList<TResidue>& list);
+  // this is called internally by the TCAtom, to sync connectivity info
+  void _OnAtomTypeChanged(TCAtom& caller);
+  // called by the ref model
+  void _UpdateConnInfo();
   //creates a new atom and puts it into the list
   TCAtom& NewAtom(TResidue* resi = NULL);
   //creates a new atom and puts it into the list

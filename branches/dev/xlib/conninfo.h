@@ -3,7 +3,7 @@
 
 #include "edict.h"
 #include "bapp.h"
-#include "catom.h"
+#include "connext.h"
 
 BeginXlibNamespace()
 
@@ -11,46 +11,28 @@ class RefinementModel;
 
 class ConnInfo  {
 public:
-  struct bondInfo  {
-    TCAtom& to;
-    const smatd* matr;
-    bondInfo(const bondInfo& bi) : to(bi.to), matr(bi.matr) {}
-    bondInfo(TCAtom& ca, const smatd* m=NULL) : to(ca), matr(m) {}
-  };
-  typedef TTypeList<bondInfo> BondInfoList;
 protected:
-  struct _connInfo  {
-    short maxBonds;
-    double r;
-    _connInfo() : maxBonds(12), r(-1) {}
-    _connInfo(const _connInfo& ci) : maxBonds(ci.maxBonds), r(ci.r) {}
-    _connInfo& operator = (const _connInfo& ci)  {
-      maxBonds = ci.maxBonds;
-      r = ci.r;
-      return *this;
-    }
-  };
-  struct AtomConnInfo : public _connInfo  {
+  struct AtomConnInfo : public CXConnInfoBase  {
     TCAtom* atom;
     BondInfoList BondsToCreate, BondsToRemove;
     AtomConnInfo() : atom(NULL) {}
     AtomConnInfo(TCAtom& ca) : atom(&ca) {}
-    AtomConnInfo(const AtomConnInfo& ci) : _connInfo(ci), atom(ci.atom) {}
+    AtomConnInfo(const AtomConnInfo& ci) : CXConnInfoBase(ci), atom(ci.atom) {}
     AtomConnInfo& operator = (const AtomConnInfo& ci)  {
-      _connInfo::operator = (ci);
+      CXConnInfoBase::operator = (ci);
       atom = ci.atom;
       BondsToCreate = ci.BondsToCreate;
       BondsToRemove = ci.BondsToRemove;
       return *this;
     }
   };
-  struct TypeConnInfo : public _connInfo  {
+  struct TypeConnInfo : public CXConnInfoBase  {
     TBasicAtomInfo* atomInfo;
     TypeConnInfo() : atomInfo(NULL) {}
     TypeConnInfo(TBasicAtomInfo& bai) : atomInfo(&bai) {}
-    TypeConnInfo(const TypeConnInfo& ci) : _connInfo(ci), atomInfo(ci.atomInfo) {}
+    TypeConnInfo(const TypeConnInfo& ci) : CXConnInfoBase(ci), atomInfo(ci.atomInfo) {}
     TypeConnInfo& operator = (const TypeConnInfo& ti)  {
-      _connInfo::operator = (ti);
+      CXConnInfoBase::operator = (ti);
       atomInfo = ti.atomInfo;
       return *this;
     }
@@ -58,18 +40,15 @@ protected:
   olxdict<TCAtom*, AtomConnInfo, TPointerPtrComparator> AtomInfo;
   olxdict<TBasicAtomInfo*, TypeConnInfo, TPointerPtrComparator> TypeInfo;
 public:
-  RefinementModel& RM;
-  
-  ConnInfo(RefinementModel& rm) : RM(rm) {}
+  ConnInfo(RefinementModel& _rm) : rm(_rm) {}
 
-  struct connInfo : public _connInfo{
-    BondInfoList BondsToCreate, 
-                 BondsToRemove;
-  };
+  RefinementModel& rm;
 
   // prepares a list of extra connectivity info for each atom of the AUnit
-  void Compile(TTypeList<ConnInfo::connInfo>& res) const;
-  
+  CXConnInfo& GetConnInfo(const TCAtom& ca) const;
+  // an object created with new is returned always
+  CXConnInfo& GetConnInfo(TBasicAtomInfo& bai) const;
+
   void ProcessConn(TStrList& ins);
 
   void AddBond(TCAtom& a1, TCAtom& a2, const smatd* eqiv)  {
@@ -92,7 +71,7 @@ public:
     if( found )
       return;
     // need to check if the same bond is not in the BondsToRemove List
-    ai.BondsToCreate.Add( new bondInfo(a2, eqiv) );
+    ai.BondsToCreate.Add( new CXBondInfo(a2, eqiv) );
   }
   void RemBond(TCAtom& a1, TCAtom& a2, const smatd* eqiv)  {
     AtomConnInfo& ai = AtomInfo.Add(&a1, AtomConnInfo(a1));
@@ -114,7 +93,7 @@ public:
     if( found )
       return;
     // need to check if the same bond is not in the BondsToCreate List
-    ai.BondsToRemove.Add( new bondInfo(a2, eqiv) );
+    ai.BondsToRemove.Add( new CXBondInfo(a2, eqiv) );
   }
   //.................................................................
   void ProcessFree(const TStrList& ins);

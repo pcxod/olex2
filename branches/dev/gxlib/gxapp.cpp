@@ -1405,8 +1405,8 @@ void TGXApp::CheckQBonds(TXAtom& XA)  {
     if( xb->Bond().A().GetAtomInfo() == iQPeakIndex ||
         xb->Bond().B().GetAtomInfo() == iQPeakIndex )  continue;
     /* check that the covalent bond really exists before showing it */
-    xb->Visible( FXFile->GetLattice().GetNetwork().CBondExists(xb->Bond().A().CAtom(),
-                    xb->Bond().B().CAtom(), xb->Bond().Length()) );
+    xb->Visible( FXFile->GetLattice().GetNetwork().CBondExistsQ(xb->Bond().A(),
+                    xb->Bond().B(), xb->Bond().QLength()) );
   }
 }
 //..............................................................................
@@ -1725,7 +1725,7 @@ void TGXApp::AdoptAtoms(const TAsymmUnit& au, TXAtomPList& xatoms) {
     XFile().GetAsymmUnit().CartesianToCell(center);
     TSAtom *A = XFile().GetLattice().NewAtom( center );
     if( A != NULL )  {
-      A->CAtom().SetAtomInfo( &ca.GetAtomInfo() );
+      A->CAtom().SetAtomInfo( ca.GetAtomInfo() );
       A->CAtom().Label() = ca.GetLabel();
       TXAtom& XA = XAtoms.Add( new TXAtom(EmptyString, *A, FGlRender) );
       XA.Create();
@@ -1746,12 +1746,12 @@ TXAtom* TGXApp::AddAtom(TXAtom* templ)  {
     olxstr colName;
     if( templ != NULL )  {
       colName = templ->GetCollectionName();
-      A->CAtom().SetAtomInfo( &templ->Atom().GetAtomInfo() );
+      A->CAtom().SetAtomInfo( templ->Atom().GetAtomInfo() );
       if( templ->Atom().GetAtomInfo() == iQPeakIndex )
         A->CAtom().SetQPeak(1.0);
     }
     else  {
-      A->CAtom().SetAtomInfo( &AtomsInfo.GetAtomInfo(6) );
+      A->CAtom().SetAtomInfo( AtomsInfo.GetAtomInfo(6) );
     }
     TXAtom& XA = XAtoms.Add( new TXAtom(colName, *A, FGlRender) );
     XA.Create();

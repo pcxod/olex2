@@ -91,14 +91,16 @@ void TAsymmUnit::Assign(const TAsymmUnit& C)  {
     NewResidue( resi->GetClassName(), resi->GetNumber(), resi->GetAlias() ); 
   }
   for( int i = 0; i < C.AtomCount(); i++ )  {
-    TCAtom& CA = this->NewAtom();
+    TCAtom& CA = NewAtom();
     CA.SetId(i);
     if( C.GetAtom(i).GetResiId() != -1 )  // main residue
       GetResidue(C.GetAtom(i).GetResiId()).AddAtom(&CA);
   }
   for( int i = 0; i < C.AtomCount(); i++ )  {
-    GetAtom(i).Assign( C.GetAtom(i) );
-    GetAtom(i).SetId(i);
+    TCAtom& ca = GetAtom(i);
+    ca.Assign( C.GetAtom(i) );
+    ca.SetId(i);
+    //ca.SetConnInfo( RefMod->Conn.GetConnInfo(ca) );
   }
   // copy matrices
   Cartesian2Cell = C.GetCartesianToCell();
@@ -112,6 +114,13 @@ void TAsymmUnit::Assign(const TAsymmUnit& C)  {
   SetContainsEquivalents( C.DoesContainEquivalents() );
   MaxQPeak = C.GetMaxQPeak();
   MinQPeak = C.GetMinQPeak();
+}
+//..............................................................................
+void TAsymmUnit::_UpdateConnInfo()  {
+  for( int i = 0; i < AtomCount(); i++ )  {
+    TCAtom& ca = GetAtom(i);
+    ca.SetConnInfo( RefMod->Conn.GetConnInfo(ca) );
+  }
 }
 //..............................................................................
 void  TAsymmUnit::InitMatrices()  {
@@ -256,6 +265,10 @@ void TAsymmUnit::AssignResidues(const TAsymmUnit& au)  {
   }
 }
 //..............................................................................
+void TAsymmUnit::_OnAtomTypeChanged(TCAtom& caller)  {
+  caller.SetConnInfo( RefMod->Conn.GetConnInfo(caller) );
+}
+//..............................................................................
 TCAtom& TAsymmUnit::NewAtom(TResidue* resi)  {
   TCAtom *A = new TCAtom(this);
   A->SetId( CAtoms.Count() );
@@ -267,8 +280,9 @@ TCAtom& TAsymmUnit::NewAtom(TResidue* resi)  {
 //..............................................................................
 TCAtom& TAsymmUnit::NewCentroid(const vec3d& CCenter)  {
   TCAtom& A = NewAtom();
+  A.SetAtomInfo( TAtomsInfo::GetInstance().GetAtomInfo(iCarbonIndex) );
   A.ccrd() = CCenter;
-  A.SetLabel( olxstr("Cnt") << CAtoms.Count() );
+  A.Label() = (olxstr("Cnt") << CAtoms.Count());
   return A;
 }
 //..............................................................................
@@ -941,7 +955,7 @@ void TAsymmUnit::LibNewAtom(const TStrObjList& Params, TMacroError& E)  {
   TCAtom& ca = this->NewAtom();
   if( QPeakIndex >= 0 )  {
     ca.Label() = qLabel << olxstr(QPeakIndex);
-    ca.SetAtomInfo( &AtomsInfo->GetAtomInfo(iQPeakIndex) );
+    ca.SetAtomInfo( AtomsInfo->GetAtomInfo(iQPeakIndex) );
     ca.SetQPeak( qPeak );
     GetRefMod()->Vars.SetParam(ca, catom_var_name_Sof, 11.0);
     GetRefMod()->Vars.SetParam(ca, catom_var_name_Uiso, 0.5);

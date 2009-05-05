@@ -40,13 +40,21 @@ TCAtom::TCAtom(TAsymmUnit *Parent)  {
   DependentHfixGroups = NULL;
   ExyzGroup = NULL;
   Flags = 0;
+  ConnInfo = NULL;
   memset(Vars, 0, sizeof(Vars));
 }
 //..............................................................................
 TCAtom::~TCAtom()  {
-  if( FAttachedAtoms != NULL )   delete FAttachedAtoms;
-  if( FAttachedAtomsI != NULL )  delete FAttachedAtomsI;
-  if( DependentHfixGroups != NULL )  delete DependentHfixGroups; 
+  if( FAttachedAtoms != NULL )        delete FAttachedAtoms;
+  if( FAttachedAtomsI != NULL )       delete FAttachedAtomsI;
+  if( DependentHfixGroups != NULL )   delete DependentHfixGroups; 
+  if( ConnInfo != NULL )              delete ConnInfo;
+}
+//..............................................................................
+void TCAtom::SetConnInfo(CXConnInfo& ci) {
+  if( ConnInfo != NULL )
+    delete ConnInfo;
+  ConnInfo = &ci;
 }
 //..............................................................................
 bool TCAtom::SetLabel(const olxstr &L)  {
@@ -74,7 +82,10 @@ bool TCAtom::SetLabel(const olxstr &L)  {
   if( BAI == NULL )
     throw TInvalidArgumentException(__OlxSourceInfo, olxstr("Unknown element: '") << L << '\'' );
   else  {
-    FAtomInfo = BAI;
+    if( FAtomInfo != BAI )  {
+      FAtomInfo = BAI;
+      FParent->_OnAtomTypeChanged(*this);
+    }
     FLabel = L;
     if( *BAI != iQPeakIndex )
       SetQPeak(0);
@@ -85,15 +96,11 @@ bool TCAtom::SetLabel(const olxstr &L)  {
   return true;
 }
 //..............................................................................
-void TCAtom::SetAtomInfo(TBasicAtomInfo* A)  {
-  FAtomInfo = A;
-  return;
-  olxstr Tmp(A->GetSymbol());
-  if( FLabel.Length() > Tmp.Length() )
-    Tmp << FLabel.SubStringFrom(FAtomInfo->GetSymbol().Length());
-
-  FLabel = FParent->CheckLabel(this, Tmp);
-//  FLabel = Tmp;
+void TCAtom::SetAtomInfo(TBasicAtomInfo& A)  {
+  if( FAtomInfo == &A )
+    return;
+  FAtomInfo = &A;
+  FParent->_OnAtomTypeChanged(*this);
 }
 //..............................................................................
 void TCAtom::Assign(const TCAtom& S)  {

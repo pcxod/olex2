@@ -230,32 +230,28 @@ TUnitCell::TSearchSymmEqTask::TSearchSymmEqTask(TPtrList<TCAtom>& atoms,
 }
 //..............................................................................
 void TUnitCell::TSearchSymmEqTask::Run(long ind)  {
-  vec3d Vec, Vec1;
   const int ac = Atoms.Count();
   for( int i=ind; i < ac; i++ )  {
     if( Atoms[i]->GetTag() == -1 )  continue;
     for( int j=0; j < Matrices.Count(); j++ )  {
-      Vec1 = Matrices[j] * Atoms[i]->ccrd();
-      Vec = Atoms[ind]->ccrd();
-      Vec -= Vec1;
-      int iLx = Round(Vec[0]);  Vec[0] -= iLx;
-      int iLy = Round(Vec[1]);  Vec[1] -= iLy;
-      int iLz = Round(Vec[2]);  Vec[2] -= iLz;
+      vec3d v = Atoms[ind]->ccrd() - Matrices[j] * Atoms[i]->ccrd();
+      int iLx = Round(v[0]);  v[0] -= iLx;
+      int iLy = Round(v[1]);  v[1] -= iLy;
+      int iLz = Round(v[2]);  v[2] -= iLz;
       // skip I
       if( j == 0 && (iLx|iLy|iLz) == 0 )  {
         if( !Initialise || ind == i )  continue;
         if( Atoms[i]->GetFragmentId() == Atoms[ind]->GetFragmentId() )  continue;
-        AU->CellToCartesian(Vec);
-        const double Dis = Vec.Length();
-        if( Latt->GetNetwork().HBondExists(*Atoms[ind], *Atoms[i], Dis) )  {
+        AU->CellToCartesian(v);
+        if( Latt->GetNetwork().HBondExists(*Atoms[ind], *Atoms[i], Matrices[j], v.Length()) )  {
           Atoms[ind]->AttachAtomI( Atoms[i] );
           Atoms[i]->AttachAtomI( Atoms[ind] );
         }
         continue;
       }
 
-      AU->CellToCartesian(Vec);
-      double Dis = Vec.Length();
+      AU->CellToCartesian(v);
+      double Dis = v.Length();
       if( (j != 0) && (Dis < tolerance) )  {
         if( i == ind )  {
           if( Initialise )  
@@ -271,7 +267,7 @@ void TUnitCell::TSearchSymmEqTask::Run(long ind)  {
       }
       else  {
         if( !Initialise )  continue;
-        if( Latt->GetNetwork().CBondExists(*Atoms[ind], *Atoms[i], Dis) )  {
+        if( Latt->GetNetwork().CBondExists(*Atoms[ind], *Atoms[i], Matrices[j], Dis) )  {
           Atoms[ind]->SetGrowable(true);
           if( Atoms[ind]->IsAttachedTo( *Atoms[i] ) )  
             continue;
@@ -281,7 +277,7 @@ void TUnitCell::TSearchSymmEqTask::Run(long ind)  {
             Atoms[i]->AttachAtom(Atoms[ind]);
           }
         }
-        else if( Latt->GetNetwork().HBondExists(*Atoms[ind], *Atoms[i], Dis) )  {
+        else if( Latt->GetNetwork().HBondExists(*Atoms[ind], *Atoms[i], Matrices[j], Dis) )  {
           if( Atoms[ind]->IsAttachedToI( *Atoms[i] ) )
             continue;
           Atoms[ind]->AttachAtomI( Atoms[i] );
@@ -405,6 +401,8 @@ double TUnitCell::FindClosestDistance(const class TCAtom& a_from, const TCAtom& 
 smatd_list* TUnitCell::GetBinding(const TCAtom& toA, const TCAtom& fromA,
     const vec3d& to, const vec3d& from, bool IncludeI, bool IncludeHBonds) const  {
   smatd_list* retVal = new smatd_list;
+  smatd Im;
+  Im.I().SetTag(0);
 
   for( int i=0; i < MatrixCount(); i++ )  {
     const smatd& matr = GetMatrix(i);
@@ -415,15 +413,15 @@ smatd_list* TUnitCell::GetBinding(const TCAtom& toA, const TCAtom& fromA,
     // check for identity matrix
     if( !IncludeI && i == 0 &&  (ix|iy|iz) == 0 )  continue;
     GetLattice().GetAsymmUnit().CellToCartesian(V1);
-    const double D = V1.Length();
-    if( GetLattice().GetNetwork().CBondExists(toA, fromA, D) )  {
+    const double qD = V1.QLength();
+    if( GetLattice().GetNetwork().CBondExistsQ(toA, fromA, matr, qD) )  {
       smatd& newMatr = retVal->AddNew(matr);
       newMatr.t[0] -= ix;
       newMatr.t[1] -= iy;
       newMatr.t[2] -= iz;
     }
     else if( IncludeHBonds )  {
-      if( GetLattice().GetNetwork().HBondExists(toA, fromA, D) )  {
+      if( GetLattice().GetNetwork().HBondExistsQ(toA, fromA, matr, qD) )  {
         smatd& newMatr = retVal->AddNew(matr);
         newMatr.t[0] -= ix;
         newMatr.t[1] -= iy;
@@ -436,9 +434,10 @@ smatd_list* TUnitCell::GetBinding(const TCAtom& toA, const TCAtom& fromA,
       for( int k=-1; k <= 1; k++ )  {
         if( (i|j|k) == 0 )  continue;
         vec3d V1(from[0] + i - to[0], from[1] + j - to[1], from[2] + k - to[2]);
+        Im.t = V1;
         GetLattice().GetAsymmUnit().CellToCartesian(V1);
-        const double D = V1.Length();
-        if( GetLattice().GetNetwork().CBondExists(toA, fromA, D) )  {
+        const double qD = V1.QLength();
+        if( GetLattice().GetNetwork().CBondExistsQ(toA, fromA, Im, qD) )  {
           smatd& retMatr = retVal->AddNew().I();
           retMatr.t[0] += i;
           retMatr.t[1] += j;
@@ -446,7 +445,7 @@ smatd_list* TUnitCell::GetBinding(const TCAtom& toA, const TCAtom& fromA,
           retMatr.SetTag(0);
         }
         else if( IncludeHBonds )  {
-          if( GetLattice().GetNetwork().HBondExists(toA, fromA, D) )  {
+          if( GetLattice().GetNetwork().HBondExistsQ(toA, fromA, Im, qD) )  {
             smatd& retMatr = retVal->AddNew().I();
             retMatr.t[0] += i;
             retMatr.t[1] += j;
