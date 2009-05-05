@@ -1,5 +1,6 @@
 #include "conninfo.h"
 #include "atomref.h"
+#include "xapp.h"
 
 void ConnInfo::ProcessFree(const TStrList& ins)  {
   TAtomReference ar(ins.Text(' '));
@@ -95,13 +96,10 @@ void ConnInfo::ProcessConn(TStrList& ins)  {
       ins.Delete(i--);
     }
   }
-  for( int i=0; i < ins.Count(); i++ )  {
-    TCAtom* ca = rm.aunit.FindCAtom(ins[i]);
-    if( ca == NULL )  {
-      TBasicApp::GetLog().Error(olxstr("Undefined atom name in CONN: ") << ins[i]);
-      continue;
-    }
-    AtomConnInfo& ai = AtomInfo.Add(ca, AtomConnInfo(*ca));
+  TSAtomPList atoms;
+  TXApp::GetInstance().FindSAtoms(ins.Text(' '), atoms);
+  for( int i=0; i < atoms.Count(); i++ )  {
+    AtomConnInfo& ai = AtomInfo.Add(&atoms[i]->CAtom(), AtomConnInfo(atoms[i]->CAtom()));
     ai.maxBonds = maxB;
     ai.r = r;
   }
