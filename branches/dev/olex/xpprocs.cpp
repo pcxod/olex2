@@ -4787,7 +4787,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   }
   else  {
     FN = PickFile("Open File",
-        olxstr("All supported files|*.ins;*.cif;*res;*.mol;*.xyz;*.p4p;*.mas;*.crs;*pdb;*.fco;*.fcf;*.hkl;*.oxm")  <<
+        olxstr("All supported files|*.ins;*.cif;*.res;*.mol;*.xyz;*.p4p;*.mas;*.crs;*pdb;*.fco;*.fcf;*.hkl;*.oxm")  <<
           "|INS files (*.ins)|*.ins"  <<
           "|Olex2 model files (*.oxm)|*.oxm"  <<
           "|CIF files (*.cif)|*.cif" <<

@@ -362,6 +362,8 @@ struct TWindowInfo  {
 class TMainFrame: public wxFrame  {
 protected:
   TSStrPObjList<olxstr,TWindowInfo*, false> FWindowPos;
+  // extends filter for case sensitive OS
+  olxstr PortableFilter(const olxstr& filter);
 public:
   TMainFrame(const wxString& title, const wxPoint& pos, const wxSize& size, const wxString &ClassName);
   virtual ~TMainFrame();

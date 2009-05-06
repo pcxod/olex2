@@ -99,11 +99,12 @@
 
 UseEsdlNamespace()
 
+const olxstr TEFile::AllFilesMask("*.*");
 //----------------------------------------------------------------------------//
 // TFileNameMask function bodies
 //----------------------------------------------------------------------------//
-TEFile::TFileNameMask::TFileNameMask(const olxstr& msk )  {
-  mask = msk;
+void TEFile::TFileNameMask::Build(const olxstr& msk )  {
+  mask = olxstr::LowerCase(msk);
   toks.Strtok( mask, '*');
   if( !mask.IsEmpty() )  {
     toksStart = (mask[0] != '*') ? 1 : 0;
@@ -115,12 +116,12 @@ TEFile::TFileNameMask::TFileNameMask(const olxstr& msk )  {
   }
 }
 //..............................................................................
-bool TEFile::TFileNameMask::DoesMatch(const olxstr& str)  const {
-  if( mask.IsEmpty() && !str.IsEmpty() )  return false;
+bool TEFile::TFileNameMask::DoesMatch(const olxstr& _str)  const {
+  if( mask.IsEmpty() && !_str.IsEmpty() )  return false;
   // this will work for '*' mask
   if( toks.Count() == 0 )  return true;
   // need to check if the mask starts from a '*' or ends with it
-
+  olxstr str = olxstr::LowerCase(_str);
   int off = 0, start = 0, end = str.Length();
   if( mask[0] != '*' )  {
     olxstr& tmp = toks[0];
@@ -365,33 +366,49 @@ bool TEFile::DelDir(const olxstr& F)  {
   return (rmdir(OLXSTR(OLX_OS_PATH(F))) == -1) ?  false : true;
 }
 //..............................................................................
+bool TEFile::DoesMatchMasks(const olxstr& _fn, const MaskList& masks)  {
+  olxstr ext = TEFile::ExtractFileExt( _fn );
+  olxstr fn = _fn.SubStringTo(_fn.Length() - ext.Length() - (ext.IsEmpty() ? 0 : 1));
+  for( int i=0; i < masks.Count(); i++ )
+    if( masks[i].ExtMask.DoesMatch(ext) && masks[i].NameMask.DoesMatch(fn) )
+      return true;
+  return false;
+}
+//..............................................................................
+void TEFile::BuildMaskList(const olxstr& mask, MaskList& masks)  {
+  TStrList ml(mask, ';');
+  for( int i=0; i < ml.Count(); i++ )
+    masks.AddNew(ml[i]);
+}
+//..............................................................................
 #ifdef __WIN32__
 bool TEFile::ListCurrentDirEx(TFileList &Out, const olxstr &Mask, const unsigned short sF)  {
-  olxstr Tmp;
+  MaskList masks;
+  BuildMaskList(Mask, masks);
+
   WIN32_FIND_DATA sd;
   struct STAT_STR the_stat;
   memset(&sd, 0, sizeof(sd));
 
   int flags = 0;
   unsigned short attrib;
-  TStrList L;
   if( (sF & sefDir) != 0 )       flags |= FILE_ATTRIBUTE_DIRECTORY;
   if( (sF & sefReadOnly) != 0 )  flags |= FILE_ATTRIBUTE_READONLY;
   if( (sF & sefSystem) != 0 )    flags |= FILE_ATTRIBUTE_SYSTEM;
   if( (sF & sefHidden) != 0 )    flags |= FILE_ATTRIBUTE_HIDDEN;
   sd.dwFileAttributes = flags; 
-  L.Strtok(Mask, ';');
-  for( int i=0; i < L.Count(); i++ )  {
-    HANDLE hn = FindFirstFile(L[i].u_str(), &sd);
-    if( hn == INVALID_HANDLE_VALUE )  continue;
-    bool done = true;
-    while( done )  {
-      if( (sF & sefDir) != 0 && (sF & sefRelDir) == 0 && (sd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0)  {
-        if( sd.cFileName[0] == '.' || (sd.cFileName[0] == '.' && sd.cFileName[1] == '.') )  {
-          done = (FindNextFile(hn, &sd) != 0);
-          continue;
-        }
+  HANDLE hn = FindFirstFile(AllFilesMask.u_str(), &sd);
+  if( hn == INVALID_HANDLE_VALUE )  
+    return false;
+  bool done = true;
+  while( done )  {
+    if( (sF & sefDir) != 0 && (sF & sefRelDir) == 0 && (sd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0)  {
+      if( sd.cFileName[0] == '.' || (sd.cFileName[0] == '.' && sd.cFileName[1] == '.') )  {
+        done = (FindNextFile(hn, &sd) != 0);
+        continue;
       }
+    }
+    if( DoesMatchMasks(sd.cFileName, masks) )  {
       TFileListItem& li = Out.AddNew();
       li.SetName( sd.cFileName );
       uint64_t lv = sd.nFileSizeLow;
@@ -405,39 +422,44 @@ bool TEFile::ListCurrentDirEx(TFileList &Out, const olxstr &Mask, const unsigned
       else
         throw TFunctionFailedException(__OlxSourceInfo, "stat failed");
       attrib = 0;
-      if( (sd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0 )  attrib |= sefDir;
+      if( (sd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0 )  
+        attrib |= sefDir;
       else                                      attrib |= sefFile;
-      if( (sd.dwFileAttributes & FILE_ATTRIBUTE_READONLY) != 0 ) attrib |= sefReadOnly;
-      if( (sd.dwFileAttributes & FILE_ATTRIBUTE_SYSTEM) != 0 ) attrib |= sefSystem;
-      if( (sd.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN) != 0 ) attrib |= sefHidden;
+      if( (sd.dwFileAttributes & FILE_ATTRIBUTE_READONLY) != 0 ) 
+        attrib |= sefReadOnly;
+      if( (sd.dwFileAttributes & FILE_ATTRIBUTE_SYSTEM) != 0 ) 
+        attrib |= sefSystem;
+      if( (sd.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN) != 0 ) 
+        attrib |= sefHidden;
       li.SetAttributes( attrib );
-      done = (FindNextFile(hn, &sd) != 0);
     }
-    FindClose( hn );
+    done = (FindNextFile(hn, &sd) != 0);
   }
+  FindClose( hn );
   return true;
 }
 bool TEFile::ListCurrentDir(TStrList& Out, const olxstr &Mask, const unsigned short sF)  {
-  olxstr Tmp;
+  MaskList masks;
+  BuildMaskList(Mask, masks);
   WIN32_FIND_DATA sd;
   memset(&sd, 0, sizeof(sd));
 
   int flags = 0;
-  TStrList L;
   if( (sF & sefDir) != 0 )       flags |= FILE_ATTRIBUTE_DIRECTORY;
   if( (sF & sefReadOnly) != 0 )  flags |= FILE_ATTRIBUTE_READONLY;
   if( (sF & sefSystem) != 0 )    flags |= FILE_ATTRIBUTE_SYSTEM;
   if( (sF & sefHidden) != 0 )    flags |= FILE_ATTRIBUTE_HIDDEN;
   sd.dwFileAttributes = flags; 
-  L.Strtok(Mask, ';');
-  for( int i=0; i < L.Count(); i++ )  {
-    HANDLE hn = FindFirstFile(L[i].u_str(), &sd);
-    if( hn == INVALID_HANDLE_VALUE )  continue;
-    Out.Add( sd.cFileName );
-    while( FindNextFile(hn, &sd) )
+  HANDLE hn = FindFirstFile(AllFilesMask.u_str(), &sd);
+  if( hn == INVALID_HANDLE_VALUE )  
+    return false;
+  bool done = true;
+  while( done )  {
+    if( DoesMatchMasks(sd.cFileName, masks) )
       Out.Add( sd.cFileName );
-    FindClose(hn);
+    done = FindNextFile(hn, &sd);
   }
+  FindClose(hn);
   return true;
 }
 #else
@@ -445,15 +467,8 @@ bool TEFile::ListCurrentDir(TStrList& Out, const olxstr &Mask, const unsigned sh
 bool TEFile::ListCurrentDirEx(TFileList &Out, const olxstr &Mask, const unsigned short sF)  {
   DIR *d = opendir( TEFile::CurrentDir().c_str() );
   if( d == NULL ) return false;
-  TStrList ml(Mask, ';');
-  TTypeList<AnAssociation2<TEFile::TFileNameMask*, TEFile::TFileNameMask*> > masks;
-  olxstr tmp, fn;
-  for(int i=0; i < ml.Count(); i++ )  {
-    olxstr& t = ml[i];
-    tmp = TEFile::ExtractFileExt( t );
-    masks.AddNew( new TEFile::TFileNameMask(t.SubStringTo(t.Length() - tmp.Length() - (tmp.Length()!=0 ? 1 : 0))),
-                  new TEFile::TFileNameMask(tmp) );
-  }
+  MaskList masks;
+  BuildMaskList(Mask, masks);
   int access = 0, faccess;
   unsigned short attrib;
   if( (sF & sefReadOnly) != 0 )  access |= S_IRUSR;
@@ -481,27 +496,20 @@ bool TEFile::ListCurrentDirEx(TFileList &Out, const olxstr &Mask, const unsigned
       }
       else if( (sF & sefFile) == 0 || S_ISDIR(the_stat.st_mode) )  continue;
     }
-    fn = de->d_name;
-    for( int i=0; i < masks.Count(); i++ )  {
-      tmp = TEFile::ExtractFileExt( fn );
-      if( masks[i].GetB()->DoesMatch( tmp ) &&
-          masks[i].GetA()->DoesMatch( fn.SubStringTo(fn.Length() - tmp.Length() - (tmp.Length()!=0 ? 1 : 0)) ) )
-      {
-        TFileListItem& li = Out.AddNew();
-        li.SetName( de->d_name );
-        li.SetSize( the_stat.st_size );
-        li.SetCreationTime( the_stat.st_ctime );
-        li.SetModificationTime( the_stat.st_mtime );
-        li.SetLastAccessTime( the_stat.st_atime );
-        attrib = 0;
-        if( S_ISDIR(the_stat.st_mode) )           attrib |= sefDir;
-        else                                      attrib |= sefFile;
-        if( (the_stat.st_mode & S_IRUSR) != 0 )  attrib |= sefReadOnly;
-        if( (the_stat.st_mode & S_IWUSR) != 0 )  attrib |= sefWriteOnly;
-        if( (the_stat.st_mode & S_IXUSR) != 0 )  attrib |= sefExecute;
-        li.SetAttributes( attrib );
-        break;
-      }
+    if( DoesMatchMasks(de->d_name, masks) )  {
+      TFileListItem& li = Out.AddNew();
+      li.SetName( de->d_name );
+      li.SetSize( the_stat.st_size );
+      li.SetCreationTime( the_stat.st_ctime );
+      li.SetModificationTime( the_stat.st_mtime );
+      li.SetLastAccessTime( the_stat.st_atime );
+      attrib = 0;
+      if( S_ISDIR(the_stat.st_mode) )           attrib |= sefDir;
+      else                                      attrib |= sefFile;
+      if( (the_stat.st_mode & S_IRUSR) != 0 )  attrib |= sefReadOnly;
+      if( (the_stat.st_mode & S_IWUSR) != 0 )  attrib |= sefWriteOnly;
+      if( (the_stat.st_mode & S_IXUSR) != 0 )  attrib |= sefExecute;
+      li.SetAttributes( attrib );
     }
   }
   for( int i=0; i < masks.Count(); i++ )  {
@@ -609,7 +617,7 @@ time_t TEFile::FileAge(const olxstr& fileName)  {
 #endif
 }
 //..............................................................................
-long TEFile::FileLength(const olxstr& fileName)  {
+uint64_t TEFile::FileLength(const olxstr& fileName)  {
   struct STAT_STR the_stat;
   if( STAT(OLXSTR(OLX_OS_PATH(fileName)), &the_stat) != 0 )
     throw TFunctionFailedException(__OlxSourceInfo, "stat failed");
@@ -816,6 +824,11 @@ olxstr TEFile::Which(const olxstr& filename)  {
   }
   return EmptyString;
 }
+//..............................................................................
+olxstr TEFile::BuildOSMask(const olxstr& mask_s)  {
+  return mask_s;
+}
+//..............................................................................
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////EXTERNAL LIBRRAY FUNCTIONS//////////////////////////////////

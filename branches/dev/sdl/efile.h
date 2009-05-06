@@ -63,7 +63,9 @@ public:
     olxstr mask;
     int toksEnd, toksStart;
   public:
-    TFileNameMask(const olxstr& msk );
+    TFileNameMask(const olxstr& msk)  { Build(mask);  }
+    TFileNameMask() : toksEnd(-1), toksStart(-1)  {  }
+    void Build(const olxstr& mask);
     bool DoesMatch(const olxstr& str)  const;
   };
   // a simple file ID, validates file by modification time, name and the size...
@@ -91,6 +93,20 @@ public:
       return *this;
     }
   };
+protected:
+  struct MaskAssociation  {
+    TEFile::TFileNameMask ExtMask, NameMask;
+    MaskAssociation(const olxstr& fn)  {
+      olxstr ext = TEFile::ExtractFileExt( fn );
+      ExtMask.Build(ext);
+      NameMask.Build(fn.SubStringTo(fn.Length() - ext.Length() - (ext.IsEmpty() ? 0 : 1)));
+    }
+  };
+  typedef TTypeList<MaskAssociation> MaskList;
+  // validates if given file name matches any of the provided masks buidl by BuildMaskList
+  static bool DoesMatchMasks(const olxstr& fn, const MaskList& masks);
+  // used to build masks ( ans association of mask by name and extension) from a semicolon separated string of masks
+  static void BuildMaskList(const olxstr& mask, MaskList& out);
 public:
   TEFile();
   TEFile(const olxstr &F, const olxstr &Attribs);
@@ -195,10 +211,15 @@ public:
   // function is based on stat;
   static time_t FileAge(const olxstr& fileName);
   // function is based on stat;
-  static long FileLength(const olxstr& fileName);
+  static uint64_t FileLength(const olxstr& fileName);
   static FileID GetFileID(const olxstr& name);
 
   static void CheckFileExists(const olxstr& location, const olxstr& fileName);
+  
+  static const olxstr AllFilesMask;
+  /* builds OS specific mask(s): for windows - returns the same string, for others - extends 
+  given mask(s) with letter case permutated */
+  static olxstr BuildOSMask(const olxstr& mask_s);
 
   static class TLibrary*  ExportLibrary(const olxstr& name=EmptyString);
 };
