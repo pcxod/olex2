@@ -1501,22 +1501,21 @@ void TMainForm::OnAtomOccuChange(wxCommandEvent& event)  {
   TXAtom *XA = (TXAtom*)FObjectUnderMouse;
   if( XA == NULL )  return;
   olxstr Tmp = ((event.GetId() == ID_AtomOccuFix) ? "fix " : 
-                (event.GetId() == ID_AtomOccuFree) ? "free " : "");
+                (event.GetId() == ID_AtomOccuFree) ? "free " : "fix ");
   Tmp << "occu ";
-  if( XA->Selected() )  
-    Tmp << "sel";
-  else                  
-    Tmp << "#c" << XA->Atom().CAtom().GetId();
-  Tmp << ' ';
   switch( event.GetId() )  {
-    case ID_AtomOccu1:   Tmp << "11";  break;
-    case ID_AtomOccu34:  Tmp << "10.75";  break;
-    case ID_AtomOccu12:  Tmp << "10.5";  break;
-    case ID_AtomOccu13:  Tmp << "10.33333";  break;
-    case ID_AtomOccu14:  Tmp << "10.25";  break;
+    case ID_AtomOccu1:   Tmp << "1";  break;
+    case ID_AtomOccu34:  Tmp << "0.75";  break;
+    case ID_AtomOccu12:  Tmp << "0.5";  break;
+    case ID_AtomOccu13:  Tmp << "0.33333";  break;
+    case ID_AtomOccu14:  Tmp << "0.25";  break;
     case ID_AtomOccuFix:   break;
     case ID_AtomOccuFree:  break;
   }
+  if( XA->Selected() )  
+    Tmp << " sel";
+  else                  
+    Tmp << " #c" << XA->Atom().CAtom().GetId();
   ProcessXPMacro(Tmp, MacroError);
 }
 //..............................................................................

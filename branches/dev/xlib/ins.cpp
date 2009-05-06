@@ -728,7 +728,7 @@ void TIns::_SaveSfac(TStrList& list, int pos)  {
     list[pos] = olxstr("SFAC ") << Sfac;
   else  {
     TStrList toks(Sfac, ' '), lines;
-    olxstr tmp, LeftOut;
+    olxstr tmp;
     for( int i=0; i < toks.Count(); i++ )  {
       XScatterer* sd = GetRM().FindSfacData( toks[i] );
       if( sd != NULL )  {
@@ -740,11 +740,8 @@ void TIns::_SaveSfac(TStrList& list, int pos)  {
           list.Insert(pos++, lines[j] );
       }
       else  {
-        LeftOut << ' ' << toks[i];
+        list.Insert(pos++, "SFAC ") << ' ' << toks[i];
       }
-    }
-    if( !LeftOut.IsEmpty() != 0 )  {
-      list.Insert(pos, olxstr("SFAC") << LeftOut );
     }
   }
   for( int i=0; i < Disp.Count(); i++ )

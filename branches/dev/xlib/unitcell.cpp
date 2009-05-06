@@ -585,8 +585,9 @@ void TUnitCell::_FindInRange(const vec3d& to, double R,
 //..............................................................................
 void TUnitCell::GetAtomEnviList(TSAtom& atom, TAtomEnvi& envi, bool IncludeQ, int part )  const {
   if( atom.IsGrown() )
-    throw TFunctionFailedException(__OlxSourceInfo, "not implementd for grown atoms");
+    throw TFunctionFailedException(__OlxSourceInfo, "not implemented for grown atoms");
 
+  const TAsymmUnit& au = GetLattice().GetAsymmUnit();
   envi.SetBase( atom );
 
   smatd I;
@@ -609,7 +610,7 @@ void TUnitCell::GetAtomEnviList(TSAtom& atom, TAtomEnvi& envi, bool IncludeQ, in
     if( m == NULL )
       throw TFunctionFailedException(__OlxSourceInfo, "Could not find symmetry generated atom");
     vec3d v = *m * A.ccrd();
-    this->GetLattice().GetAsymmUnit().CellToCartesian(v);
+    au.CellToCartesian(v);
     // make sure that atoms on center of symmetry are not counted twice
     bool Add = true;
     for( int j=0; j < envi.Count(); j++ )  {
@@ -623,6 +624,124 @@ void TUnitCell::GetAtomEnviList(TSAtom& atom, TAtomEnvi& envi, bool IncludeQ, in
         envi.Add( A, *m, v );
     }
     delete m;
+  }
+  /* process extra conn info imposed by other atoms */
+  for( int i=0; i < au.AtomCount(); i++ )  {
+    if( au.GetAtom(i) == atom.CAtom() || au.GetAtom(i).IsDeleted() )
+      continue;
+    const CXConnInfo& ci = au.GetAtom(i).GetConnInfo();
+    for( int j=0; j < ci.BondsToRemove.Count(); j++ )  {
+      if( ci.BondsToRemove[j].to != atom.CAtom() )
+        continue;
+      for( int k=0; k < envi.Count(); k++ )  {
+        if( envi.GetCAtom(k) == au.GetAtom(i) )  {
+          if( ci.BondsToRemove[j].matr == NULL )  {
+            envi.Delete(k);
+            break;
+          }
+          else if( envi.GetMatrix(k).r == ci.BondsToRemove[j].matr->r && 
+              envi.GetMatrix(k).t.QDistanceTo(ci.BondsToRemove[j].matr->t) < 0.001 )  
+          {
+            envi.Delete(k);
+            break;
+          }
+        }
+      }
+    }
+    for( int j=0; j < ci.BondsToCreate.Count(); j++ )  {
+      if( ci.BondsToCreate[j].to != atom.CAtom() )
+        continue;
+      bool found = false;
+      for( int k=0; k < envi.Count(); k++ )  {
+        if( envi.GetCAtom(k) == au.GetAtom(i) )  {
+          if( ci.BondsToCreate[j].matr == NULL &&
+            envi.GetMatrix(k).r.IsI() && envi.GetMatrix(k).t.IsNull() )  
+          {
+            found = true;
+            break;
+          }
+          if( envi.GetMatrix(k).r == ci.BondsToCreate[j].matr->r &&
+            envi.GetMatrix(k).t.QDistanceTo( ci.BondsToCreate[j].matr->t ) < 0.001 )  
+          {
+            found = true;
+            break;
+          }
+        }
+      }
+      if( !found )  {
+        if( ci.BondsToCreate[j].matr == NULL )  {
+          vec3d crd = au.GetAtom(i).ccrd();
+          au.CellToCartesian(crd);
+          if( crd.QDistanceTo(atom.crd()) > 0.001 )
+            envi.Add(au.GetAtom(i), I, crd);
+        }
+        else  {
+          vec3d crd = (*ci.BondsToCreate[j].matr)*au.GetAtom(i).ccrd();
+          au.CellToCartesian(crd);
+          if( crd.QDistanceTo(atom.crd()) > 0.001 )
+            envi.Add(au.GetAtom(i), *ci.BondsToCreate[j].matr, crd);
+        }
+      }
+    }
+  }
+  // process own connectivity info
+  const CXConnInfo& ci = atom.CAtom().GetConnInfo();
+  for( int i=0; i < ci.BondsToRemove.Count(); i++ )  {
+    if( ci.BondsToRemove[i].matr == NULL )  {
+      for( int j=0; j < envi.Count(); j++ )  {
+        if( envi.GetCAtom(j) == ci.BondsToRemove[i].to )
+          envi.Delete(j--);
+      }
+    }
+    else {
+      const mat3i tr = atom.GetMatrix(0).r*ci.BondsToRemove[i].matr->r;
+      const vec3d tnt = atom.GetMatrix(0).t - ci.BondsToRemove[i].matr->t;
+      const vec3d tpt = atom.GetMatrix(0).t + ci.BondsToRemove[i].matr->t;
+      for( int j=0; j < envi.Count(); j++ )  {
+        if( envi.GetCAtom(j) == ci.BondsToRemove[i].to )  {
+          if( envi.GetMatrix(j).r == tr && 
+            (envi.GetMatrix(j).t.QDistanceTo(tnt) < 0.001 ||
+             envi.GetMatrix(j).t.QDistanceTo(tpt) < 0.001) )  
+          {
+            envi.Delete(j);
+            break;
+          }
+        }
+      }
+    }
+  }
+  for( int i=0; i < ci.BondsToCreate.Count(); i++ )  {
+    bool found = false;
+    for( int j=0; j < envi.Count(); j++ )  {
+      if( envi.GetCAtom(j) == ci.BondsToCreate[i].to )  {
+        if( ci.BondsToCreate[i].matr == NULL )  {
+          if( envi.GetMatrix(j).r.IsI() && envi.GetMatrix(j).t.IsNull() )  {
+            found = true;
+            break;
+          }
+        }
+        else if( envi.GetMatrix(j).r == ci.BondsToCreate[i].matr->r &&
+          envi.GetMatrix(j).t.QDistanceTo( ci.BondsToCreate[i].matr->t ) < 0.001 )  
+        {
+          found = true;
+          break;
+        }
+      }
+    }
+    if( !found )  {
+      if( ci.BondsToCreate[i].matr == NULL )  {
+        vec3d crd = ci.BondsToCreate[i].to.ccrd();
+        au.CellToCartesian(crd);
+        if( crd.QDistanceTo(atom.crd()) > 0.001 )
+          envi.Add(ci.BondsToCreate[i].to, I, crd);
+      }
+      else  {
+        vec3d crd = (*ci.BondsToCreate[i].matr)*ci.BondsToCreate[i].to.ccrd();
+        au.CellToCartesian(crd);
+        if( crd.QDistanceTo(atom.crd()) > 0.001 )
+          envi.Add(ci.BondsToCreate[i].to, *ci.BondsToCreate[i].matr, crd);
+      }
+    }
   }
 }
 //..............................................................................

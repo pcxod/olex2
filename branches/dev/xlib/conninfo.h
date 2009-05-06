@@ -56,7 +56,7 @@ public:
     bool found = false;
     for( int i=0; i < ai.BondsToCreate.Count(); i++ )  {
       if( ai.BondsToCreate[i].to == a2 )  {
-        if( ai.BondsToCreate[i].matr && eqiv == NULL )  {
+        if( ai.BondsToCreate[i].matr == NULL && eqiv == NULL )  {
           found = true;
           break;
         }
@@ -77,8 +77,8 @@ public:
     AtomConnInfo& ai = AtomInfo.Add(&a1, AtomConnInfo(a1));
     bool found = false;
     for( int i=0; i < ai.BondsToRemove.Count(); i++ )  {
-      if( ai.BondsToCreate[i].to == a2 )  {
-        if( ai.BondsToRemove[i].matr && eqiv == NULL )  {
+      if( ai.BondsToRemove[i].to == a2 )  {
+        if( ai.BondsToRemove[i].matr == NULL && eqiv == NULL )  {
           found = true;
           break;
         }

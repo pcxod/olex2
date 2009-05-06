@@ -811,7 +811,9 @@ void XLibMacros::macFix(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   }
   TXApp& xapp = TXApp::GetInstance();
   TSAtomPList atoms;
-  if( !xapp.FindSAtoms(Cmds.Text(' '), atoms, true, true) )  return;
+  if( !xapp.FindSAtoms(Cmds.Text(' '), atoms, true, true) )  
+    return;
+
   if( vars.Comparei( "XYZ" ) == 0 )  {
     for(int i=0; i < atoms.Count(); i++ )  {
       for( int j=0; j < 3; j++ )
@@ -830,13 +832,13 @@ void XLibMacros::macFix(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   }
   else if( vars.Comparei( "OCCU" ) == 0 )  {
     for(int i=0; i < atoms.Count(); i++ )  {
-      if( atoms[i]->CAtom().GetPart() == 0 )  {  // it would be invalid for split atoms
-        xapp.XFile().GetRM().Vars.FixParam(atoms[i]->CAtom(), catom_var_name_Sof);
-        if( var_val == 0 )  
+      xapp.XFile().GetRM().Vars.FixParam(atoms[i]->CAtom(), catom_var_name_Sof);
+      if( var_val == 0 )  {
+        if( atoms[i]->CAtom().GetPart() == 0 )  // else leave as it is
           atoms[i]->CAtom().SetOccu( 1./atoms[i]->CAtom().GetDegeneracy() );
-        else
-          atoms[i]->CAtom().SetOccu( var_val );
       }
+      else
+        atoms[i]->CAtom().SetOccu( var_val );
     }
   }
 }

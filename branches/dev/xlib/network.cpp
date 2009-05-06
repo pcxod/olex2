@@ -214,8 +214,10 @@ void TNetwork::CreateBondsAndFragments(TSAtomPList& Atoms, TNetPList& Frags)  {
       if( ci.BondsToCreate[j].matr == NULL )  {
         for( int k=0; k < ac; k++ )  {
           if( Atoms[k]->CAtom() == ci.BondsToCreate[j].to )  {
-            sa->AddNode(*Atoms[k]);
-            Atoms[k]->AddNode(*sa);
+            if( !sa->IsConnectedTo(*Atoms[k]) )  {
+              sa->AddNode(*Atoms[k]);
+              Atoms[k]->AddNode(*sa);
+            }
           }
         }
       }
@@ -235,7 +237,7 @@ void TNetwork::CreateBondsAndFragments(TSAtomPList& Atoms, TNetPList& Frags)  {
                 break;
               }
             }
-            if( add )  {
+            if( add && !sa->IsConnectedTo(*Atoms[k]) )  {
               sa->AddNode(*Atoms[k]);
               Atoms[k]->AddNode(*sa);
             }

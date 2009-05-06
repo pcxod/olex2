@@ -4669,6 +4669,25 @@ void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError
     FXApp->GetLog() << '\n';
     return;
   }
+  if( Cmds.Count() > 1 && Cmds[0].Comparei("part") == 0 )  {
+    Cmds.Delete(0);
+    TIntList parts;
+    for( int i=0; Cmds.Count(); i++ )  {
+      if( Cmds[i].IsNumber() )  {
+        parts.Add( Cmds[i].ToInt() );
+        Cmds.Delete(i--);
+      }
+      else
+        break;
+    }
+    if( !parts.IsEmpty() )  {
+      olxstr cond = "xatom.part==";
+      cond << parts[0];
+      for( int i=1; i < parts.Count(); i++ )
+        cond << "||xatom.part==" << parts[i];
+      FXApp->SelectAtomsWhere(cond);
+    }
+  }
   if( Options.Count() == 0 )  {  // print labels of selected atoms
     olxstr Tmp("sel");
     int period=5;
@@ -4714,7 +4733,7 @@ void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError
     }
     olxstr seli = FXApp->GetSelectionInfo();
     if( !seli.IsEmpty() )
-      FXApp->GetLog() << seli;
+      FXApp->GetLog() << seli << '\n';
   }
   else  {
     for( int i=0; i < Options.Count(); i++ )  {
