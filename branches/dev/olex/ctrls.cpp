@@ -268,7 +268,7 @@ void TMainFrame::SavePosition(wxWindow *Window)  {  //saves current position of 
 }
 //..............................................................................
 olxstr TMainFrame::PortableFilter(const olxstr& filter)  {
-#ifdef __WIN32__
+#if defined(__WIN32__) || defined(__MAC__)
   return filter;
 #else
   olxstr rv;
