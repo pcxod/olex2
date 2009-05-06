@@ -512,25 +512,15 @@ bool TEFile::ListCurrentDirEx(TFileList &Out, const olxstr &Mask, const unsigned
       li.SetAttributes( attrib );
     }
   }
-  for( int i=0; i < masks.Count(); i++ )  {
-    delete masks[i].GetA();
-    delete masks[i].GetB();
-  }
   return closedir(d) == 0;
 }
 //..............................................................................
 bool TEFile::ListCurrentDir(TStrList &Out, const olxstr &Mask, const unsigned short sF)  {
   DIR *d = opendir( TEFile::CurrentDir().c_str() );
   if( d == NULL ) return false;
-  TStrList ml(Mask, ';');
-  TTypeList<AnAssociation2<TEFile::TFileNameMask*, TEFile::TFileNameMask*> > masks;
+  MaskList masks;
+  BuildMaskList(Mask, masks);
   olxstr tmp, fn;
-  for(int i=0; i < ml.Count(); i++ )  {
-    olxstr& t = ml[i];
-    tmp = TEFile::ExtractFileExt( t );
-    masks.AddNew( new TEFile::TFileNameMask(t.SubStringTo(t.Length() - tmp.Length() - (tmp.Length()!=0 ? 1 : 0))),
-                  new TEFile::TFileNameMask(tmp) );
-  }
   int access = 0, faccess;
 
   if( (sF & sefReadOnly) != 0 )  access |= S_IRUSR;
@@ -558,20 +548,8 @@ bool TEFile::ListCurrentDir(TStrList &Out, const olxstr &Mask, const unsigned sh
       }
       else if( (sF & sefFile) == 0 || S_ISDIR(the_stat.st_mode) )  continue;
     }
-    fn = de->d_name;
-    for( int i=0; i < masks.Count(); i++ )  {
-      tmp = TEFile::ExtractFileExt( fn );
-      if( masks[i].GetB()->DoesMatch( tmp ) &&
-          masks[i].GetA()->DoesMatch( fn.SubStringTo(fn.Length() - tmp.Length() - (tmp.Length()!=0 ? 1 : 0)) ) )
-      {
-        Out.Add(de->d_name);
-        break;
-      }
-    }
-  }
-  for( int i=0; i < masks.Count(); i++ )  {
-    delete masks[i].GetA();
-    delete masks[i].GetB();
+    if( DoesMatchMasks(de->d_name, masks) )
+      Out.Add(de->d_name);
   }
   return closedir(d) == 0;
 }

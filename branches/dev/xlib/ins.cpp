@@ -243,7 +243,8 @@ void TIns::__ProcessConn(ParseContext& cx)  {
     toks.Clear();
     toks.Strtok(Ins[i], ' ');
     if( toks[0].Comparei("CONN") == 0 )  {
-      cx.rm.Conn.ProcessConn(toks.SubListFrom(1));
+      TStrList sl(toks.SubListFrom(1));
+      cx.rm.Conn.ProcessConn(sl);
       Ins[i] = EmptyString;
     }
     else if( toks[0].Comparei("FREE") == 0 )  {

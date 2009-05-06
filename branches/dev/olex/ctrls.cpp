@@ -276,17 +276,23 @@ olxstr TMainFrame::PortableFilter(const olxstr& filter)  {
   for( int i=0; i < fitems.Count(); i+=2 )  {
     if( i+1 >= fitems.Count() )
       break;
+    if( i != 0 )
+      rv << '|';
     rv << fitems[i] << '|';
     TStrList masks(fitems[i+1], ';');
     for( int j=0; j < masks.Count(); j++ )  {
       int di = masks[j].LastIndexOf('.');
       if( di == -1 )  {
-        rv << masks[j] << ';';
+        rv << masks[j];
+        if( j+1 < masks.Count() )
+          rv << ';';
         continue;
       }
       rv << masks[j].SubStringTo(di+1);
       for( int k=di+1; k < masks[j].Length(); k++ )
-        rv << '[' << olxstr::o_tolower(masks[j].CharAt(k)) << olxstr::o_toupper(masks[j].CharAt(k)) << ']' << ';';
+        rv << '[' << olxstr::o_tolower(masks[j].CharAt(k)) << olxstr::o_toupper(masks[j].CharAt(k)) << ']';
+      if( j+1 < masks.Count() )
+        rv << ';';
     }
   }
   return rv;
