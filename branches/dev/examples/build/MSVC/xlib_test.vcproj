@@ -66,7 +66,7 @@
 				UseUnicodeResponseFiles="false"
 				AdditionalDependencies="sdl.lib xlib-np.lib mapi32.lib user32.lib"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="$(SolutionDir)$(ConfigurationName)"
+				AdditionalLibraryDirectories="$(SolutionDir)\lib_d"
 				GenerateDebugInformation="true"
 				SubSystem="1"
 				TargetMachine="1"

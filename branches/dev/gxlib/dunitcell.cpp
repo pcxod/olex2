@@ -238,6 +238,7 @@ bool TDUnitCell::Orient(TGlPrimitive *P)  {
       T += cnt;
       T *= FParent->GetBasis().GetMatrix();
       T *= scale;
+      T[2] = FParent->GetMaxRasterZ();
       Str[0] = (char)('a'+i);
       FParent->DrawTextSafe(T, Str, fnt);
     }

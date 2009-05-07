@@ -164,17 +164,17 @@ void copymatr(smatd& dest, const smatd& src, bool transpose)  {
 void CodeGen(smatd& m, const olxstr& d_type, const olxstr&var_type, const olxstr& Suffix, TStrList& out)  {
   out.Add("  static inline void Mult") << Suffix << '(' << d_type << " v)  {";
   if( m.r.IsI() )  {
-    out.Last().String() << "  }";
+    out.Last().String << "  }";
     return;
   }
   if( IsDiagonale(m) )  {
     out.Add( EmptyString );
     if( m.r[0][0] == -1 )
-      out.Last().String() << "    v[0] = -v[0];";
+      out.Last().String << "    v[0] = -v[0];";
     if( m.r[1][1] == -1 )
-      out.Last().String() << "    v[1] = -v[1];";
+      out.Last().String << "    v[1] = -v[1];";
     if( m.r[2][2] == -1 )
-      out.Last().String() << "    v[2] = -v[2];";
+      out.Last().String << "    v[2] = -v[2];";
     out.Add("  }");
     return;
   }
@@ -478,8 +478,8 @@ int CodeGen(TSpaceGroup& sg, TStrList& out, olxstr& hs)  {
       olxstr& str = out.Add("    res[") << i << "][" << j << "] = ";
       bool added = false;
       for( int k=0; k < 3; k++ )  {
-        if( m.r[j][k] != 0 )  {  // normal form here for hkl
-          str << ((m.r[j][k] > 0) ? (added ? (olxstr("+v[") << k << ']') : (olxstr("v[") << k << ']')) : (olxstr("-v[") << k << ']'));
+        if( m.r[k][j] != 0 )  {  // normal form here for hkl
+          str << ((m.r[k][j] > 0) ? (added ? (olxstr("+v[") << k << ']') : (olxstr("v[") << k << ']')) : (olxstr("-v[") << k << ']'));
           added = true;
         }
       }
@@ -551,7 +551,7 @@ int CodeGen(TSpaceGroup& sg, TStrList& out, olxstr& hs)  {
     }
     if( !added && (m.t[0] != 0 || m.t[1] != 0 || m.t[2] != 0) )  {  // generic case
       for( int j=0; j < 3; j++ )  {
-        if( m.t[j] != 0 )  {  // transposed form for hkl
+        if( m.t[j] != 0 )  {  
           int v = Round(m.t[j]*12), base = 12;
           int denom = esdl::gcd(v, base);
           if( denom != 1 )  {

@@ -683,18 +683,12 @@ void TXGrid::RescaleSurface()  {
         glNewList(li == 0 ? PListId : NListId, GL_COMPILE_AND_EXECUTE);
         glPolygonMode(GL_FRONT_AND_BACK, PolygonMode);
         glBegin(GL_TRIANGLES);
-        for( int x=-1; x <= 1; x++ )  {
-          for( int y=-1; y <= 1; y++ )  {
-            for( int z=-1; z <= 1; z++ )  {
-              for( int i=0; i < trians.Count(); i++ )  {
-                for( int j=0; j < 3; j++ )  {
-                  const vec3f& nr = norms[trians[i].pointID[j]];
-                  glNormal3f( nr[0], nr[1], nr[2] );
-                  const vec3f& p = verts[trians[i].pointID[j]];  // cell drawing
-                  glVertex3f(p[0], p[1], p[2]);                  // cell drawing
-                }
-              }
-            }
+        for( int i=0; i < trians.Count(); i++ )  {
+          for( int j=0; j < 3; j++ )  {
+            const vec3f& nr = norms[trians[i].pointID[j]];
+            glNormal3f( nr[0], nr[1], nr[2] );
+            const vec3f& p = verts[trians[i].pointID[j]];  // cell drawing
+            glVertex3f(p[0], p[1], p[2]);                  // cell drawing
           }
         }
         glEnd();
