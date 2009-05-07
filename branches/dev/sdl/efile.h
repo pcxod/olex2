@@ -152,7 +152,13 @@ public:
   bool Delete();
 
   static bool Access(const olxstr& F, const short Flags);
+  // uses access, so is case sensitive
   static bool FileExists(const olxstr &F);
+  /* a case insensitive alternative (for windows - same as above) 
+    the case sensitive name is stored in res (the first on if there
+    are several file names matching
+  */
+  static bool FileExistsi(const olxstr &F, olxstr& res);
   static bool DelFile(const olxstr &F);
   static bool DelDir(const olxstr &F);
   static olxstr ExtractFileDrive(const olxstr &F);
@@ -217,9 +223,6 @@ public:
   static void CheckFileExists(const olxstr& location, const olxstr& fileName);
   
   static const olxstr AllFilesMask;
-  /* builds OS specific mask(s): for windows - returns the same string, for others - extends 
-  given mask(s) with letter case permutated */
-  static olxstr BuildOSMask(const olxstr& mask_s);
 
   static class TLibrary*  ExportLibrary(const olxstr& name=EmptyString);
 };

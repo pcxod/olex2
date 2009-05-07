@@ -290,6 +290,26 @@ bool TEFile::FileExists(const olxstr& F)  {
   return (access( OLXSTR(OLX_OS_PATH(F)), 0) != -1);
 }
 //..............................................................................
+bool TEFile::FileExistsi(const olxstr& F, olxstr& res)  {
+  if( F.IsEmpty() )
+    return false;
+#ifdef __WIN32__
+  return FileExiste(F);
+#else
+  olxstr path = ExtractFilePath(F);
+  olxstr name = ExtractFileName(F);
+  TStrList files;
+  if( path.IsEmpty() )  
+    TEFile::ListCurrentDir(files, name, sefAll);
+  else
+    TEFile::ListDir(path, files, name, sefAll);
+  if( files.IsEmpty() )
+    return false;
+  res = TEFile::AddTrailingBackslashI(path) << files[0];
+  return true;
+#endif
+}
+//..............................................................................
 bool TEFile::Access(const olxstr& F, const short Flags)  {
   return (access(OLXSTR(OLX_OS_PATH(F)), Flags) != -1);
 }
@@ -801,10 +821,6 @@ olxstr TEFile::Which(const olxstr& filename)  {
 //    TBasicApp::GetLog() << toks[i] << '\n';
   }
   return EmptyString;
-}
-//..............................................................................
-olxstr TEFile::BuildOSMask(const olxstr& mask_s)  {
-  return mask_s;
 }
 //..............................................................................
 

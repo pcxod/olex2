@@ -56,7 +56,7 @@ void TBasicCFile::LoadFromFile(const olxstr& fn)  {
   FileName = fn;
   if( GetRM().GetHKLSource().IsEmpty() )  {
     olxstr src = TEFile::ChangeFileExt(fn, "hkl");
-    if( !TEFile::FileExists(src) )
+    if( !TEFile::FileExistsi(olxstr(src), src) )
       src = EmptyString;
     GetRM().SetHKLSource(src);
   }
