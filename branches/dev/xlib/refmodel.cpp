@@ -780,15 +780,15 @@ void RefinementModel::ToDataItem(TDataItem& item) {
 
   // save used equivalent positions
   TIntList mat_tags(UsedSymm.Count());
-  TDataItem& eqiv = item.AddItem("eqiv");
+  TDataItem& eqiv = item.AddItem("EQIV");
   for( int i=0; i < UsedSymm.Count(); i++ )  {
     eqiv.AddItem(UsedSymm.GetKey(i), TSymmParser::MatrixToSymmEx(UsedSymm.GetValue(i)));
     mat_tags[i] = UsedSymm.GetValue(i).GetTag();
     UsedSymm.GetValue(i).SetTag(i);
   }
   
-  Vars.ToDataItem(item.AddItem("leqs"));
-  expl.ToDataItem(item.AddItem("expl"));  
+  Vars.ToDataItem(item.AddItem("LEQS"));
+  expl.ToDataItem(item.AddItem("EXPL"));  
 
   AfixGroups.ToDataItem(item.AddItem("afix"));
   ExyzGroups.ToDataItem(item.AddItem("exyz"));
@@ -816,6 +816,7 @@ void RefinementModel::ToDataItem(TDataItem& item) {
   item.AddItem("TWIN", TWIN_set).AddField("mat", TSymmParser::MatrixToSymmEx(TWIN_mat)).AddField("n", TWIN_n);
   item.AddItem("MERG", MERG_set).AddField("val", MERG);
   item.AddItem("SHEL", SHEL_set).AddField("high", SHEL_hr).AddField("low", SHEL_lr);
+  Conn.ToDataItem( item.AddItem("CONN") );
   // restore matrix tags
   for( int i=0; i < UsedSymm.Count(); i++ )
     UsedSymm.GetValue(i).SetTag( mat_tags[i] );
@@ -831,12 +832,12 @@ void RefinementModel::FromDataItem(TDataItem& item) {
   PersUtil::FloatNumberListFromStr(item.GetRequiredField("BatchScales"), BASF);
   PersUtil::IntNumberListFromStr(item.GetRequiredField("RefInArg"), LS);
 
-  TDataItem& eqiv = item.FindRequiredItem("eqiv");
+  TDataItem& eqiv = item.FindRequiredItem("EQIV");
   for( int i=0; i < eqiv.ItemCount(); i++ )
     TSymmParser::SymmToMatrix( eqiv.GetItem(i).GetValue(), UsedSymm.Add(eqiv.GetName()));
   
 
-  expl.FromDataItem(item.FindRequiredItem("expl"));  
+  expl.FromDataItem(item.FindRequiredItem("EXPL"));  
 
   AfixGroups.FromDataItem(item.FindRequiredItem("afix"));
   ExyzGroups.FromDataItem(item.FindRequiredItem("exyz"));
@@ -851,7 +852,7 @@ void RefinementModel::FromDataItem(TDataItem& item) {
   rISOR.FromDataItem(item.FindRequiredItem("isor"));
   rEADP.FromDataItem(item.FindRequiredItem("eadp"));
   // restraints may use some of the vars...  
-  Vars.FromDataItem( item.FindRequiredItem("leqs") );
+  Vars.FromDataItem( item.FindRequiredItem("LEQS") );
 
   TDataItem& hklf = item.FindRequiredItem("HKLF");
   HKLF = hklf.GetValue().ToInt();
@@ -884,6 +885,9 @@ void RefinementModel::FromDataItem(TDataItem& item) {
     SHEL_lr = shel.GetRequiredField("low").ToDouble();
     SHEL_hr = shel.GetRequiredField("high").ToDouble();
   }
+
+  Conn.FromDataItem( item.FindRequiredItem("CONN") );
+  aunit._UpdateConnInfo();
 }
 //....................................................................................................
 #ifndef _NO_PYTHON

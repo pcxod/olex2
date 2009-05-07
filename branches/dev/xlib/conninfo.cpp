@@ -236,3 +236,91 @@ void ConnInfo::Assign(const ConnInfo& ci)  {
     TypeInfo.Add( ci.TypeInfo.GetKey(i), ci.TypeInfo.GetValue(i) );
 }
 //........................................................................
+void ConnInfo::ToDataItem(TDataItem& item)  {
+  TDataItem& ti_item = item.AddItem("TYPE");
+  for( int i=0; i < TypeInfo.Count(); i++ )
+    TypeInfo.GetValue(i).ToDataItem(ti_item.AddItem(TypeInfo.GetValue(i).atomInfo->GetSymbol()));
+  TDataItem& ai_item = item.AddItem("ATOM");
+  for( int i=0; i < AtomInfo.Count(); i++ ) 
+    AtomInfo.GetValue(i).ToDataItem(ai_item.AddItem(AtomInfo.GetValue(i).atom->GetTag()));
+}
+//........................................................................
+void ConnInfo::FromDataItem(TDataItem& item)  {
+  TAtomsInfo& ai = TAtomsInfo::GetInstance();
+  TDataItem& ti_item = item.FindRequiredItem("TYPE");
+  for( int i=0; i < ti_item.ItemCount(); i++ )  {
+    TBasicAtomInfo* bai = ai.FindAtomInfoBySymbol(ti_item.GetItem(i).GetName());
+    if( bai == NULL )
+      throw TInvalidArgumentException(__OlxSourceInfo, olxstr("Unknown symbol: ") << ti_item.GetItem(i).GetName());
+    TypeInfo.Add(bai).FromDataItem(ti_item.GetItem(i), bai);
+
+  }
+  TDataItem& ai_item = item.FindRequiredItem("ATOM");
+  for( int i=0; i < ai_item.ItemCount(); i++ )  {
+    TCAtom& ca = rm.aunit.GetAtom(ai_item.GetItem(i).GetName().ToInt());
+    AtomInfo.Add(&ca).FromDataItem(ai_item.GetItem(i), rm, ca);
+  }
+}
+//........................................................................
+//........................................................................
+//........................................................................
+void ConnInfo::TypeConnInfo::ToDataItem(TDataItem& item)  {
+  item.AddField("r", r);
+  item.AddField("b", maxBonds);
+}
+void ConnInfo::TypeConnInfo::FromDataItem(TDataItem& item, TBasicAtomInfo* bai)  {
+  atomInfo = bai;
+  r = item.GetRequiredField("r").ToDouble();
+  maxBonds = item.GetRequiredField("b").ToInt();
+}
+//........................................................................
+void ConnInfo::AtomConnInfo::ToDataItem(TDataItem& item)  {
+  item.AddField("r", r);
+  item.AddField("b", maxBonds);
+  TDataItem& ab = item.AddItem("ADDBOND");
+  for( int i=0; i < BondsToCreate.Count(); i++ )  {
+    if( BondsToCreate[i].to.IsDeleted() )
+      continue;
+    TDataItem& bi = ab.AddItem("bi");
+    bi.AddField("to", BondsToCreate[i].to.GetTag());
+    if( BondsToCreate[i].matr != NULL )
+      bi.AddField("eqiv", BondsToCreate[i].matr->GetTag());
+  }
+  TDataItem& db = item.AddItem("DELBOND");
+  for( int i=0; i < BondsToRemove.Count(); i++ )  {
+    if( BondsToRemove[i].to.IsDeleted() )
+      continue;
+    TDataItem& bi = ab.AddItem("bi");
+    bi.AddField("to", BondsToRemove[i].to.GetTag());
+    if( BondsToCreate[i].matr != NULL )
+      bi.AddField("eqiv", BondsToRemove[i].matr->GetTag());
+  }
+}
+void ConnInfo::AtomConnInfo::FromDataItem(TDataItem& item, RefinementModel& rm, TCAtom& a)  {
+  atom = &a;
+  r = item.GetRequiredField("r").ToDouble();
+  maxBonds = item.GetRequiredField("b").ToInt();
+  TDataItem& ab = item.FindRequiredItem("ADDBOND");
+  for( int i=0; i < ab.ItemCount(); i++ )  {
+    TCAtom& ca = rm.aunit.GetAtom( ab.GetItem(i).GetRequiredField("to").ToInt() );
+    const olxstr& eq = ab.GetItem(i).GetFieldValue("eqiv");
+    smatd const* eqiv = NULL;
+    if( !eq.IsEmpty() )  { 
+      eqiv = &rm.GetUsedSymm( eq.ToInt() );
+      rm.AddUsedSymm(*eqiv);  // persist
+    }
+    BondsToCreate.Add( new CXBondInfo(ca, eqiv) );
+  }
+  TDataItem& db = item.FindRequiredItem("DELBOND");
+  for( int i=0; i < db.ItemCount(); i++ )  {
+    TCAtom& ca = rm.aunit.GetAtom( db.GetItem(i).GetRequiredField("to").ToInt() );
+    const olxstr& eq = db.GetItem(i).GetFieldValue("eqiv");
+    smatd const* eqiv = NULL;
+    if( !eq.IsEmpty() )  { 
+      eqiv = &rm.GetUsedSymm( eq.ToInt() );
+      rm.AddUsedSymm(*eqiv);  // persist
+    }
+    BondsToRemove.Add( new CXBondInfo(ca, eqiv) );
+  }
+}
+//........................................................................

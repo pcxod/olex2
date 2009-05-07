@@ -4,6 +4,7 @@
 #include "edict.h"
 #include "bapp.h"
 #include "connext.h"
+#include "dataitem.h"
 
 BeginXlibNamespace()
 
@@ -25,6 +26,8 @@ protected:
       BondsToRemove = ci.BondsToRemove;
       return *this;
     }
+    void ToDataItem(TDataItem& item);
+    void FromDataItem(TDataItem& item, RefinementModel& rm, TCAtom& atom);
   };
   struct TypeConnInfo : public CXConnInfoBase  {
     TBasicAtomInfo* atomInfo;
@@ -36,6 +39,8 @@ protected:
       atomInfo = ti.atomInfo;
       return *this;
     }
+    void ToDataItem(TDataItem& item);
+    void FromDataItem(TDataItem& item, TBasicAtomInfo* bai);
   };
   olxdict<TCAtom*, AtomConnInfo, TPointerPtrComparator> AtomInfo;
   olxdict<TBasicAtomInfo*, TypeConnInfo, TPointerPtrComparator> TypeInfo;
@@ -107,6 +112,9 @@ public:
   void ToInsList(TStrList& ins) const;
 
   void Assign(const ConnInfo& ci);
+
+  void ToDataItem(TDataItem& item);
+  void FromDataItem(TDataItem& item);
 
 };
 

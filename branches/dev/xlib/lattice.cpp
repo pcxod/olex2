@@ -1869,8 +1869,8 @@ void TLattice::FromDataItem(TDataItem& item)  {
   for( int i=0; i < frags.ItemCount(); i++ )
     Fragments[i]->FromDataItem( frags.GetItem(i) );
   GetUnitCell().InitMatrices();
-  int eqc = GetUnitCell().FindSymmEq(0.1, true, false, false); // find and not remove
-  GetAsymmUnit().SetContainsEquivalents( eqc != 0 );
+  //int eqc = GetUnitCell().FindSymmEq(0.1, true, false, false); // find and not remove
+  //GetAsymmUnit().SetContainsEquivalents( eqc != 0 );
   //Disassemble();
   TDataItem& planes = item.FindRequiredItem("Planes");
   for( int i=0; i < planes.ItemCount(); i++ )
