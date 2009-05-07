@@ -37,7 +37,7 @@ void TXLine::Create(const olxstr& cName, const ACreationParams* cpar)  {
     SetCollectionName(cName);
 
   TGPCollection* GPC = FParent->FindCollection( GetCollectionName() );
-  if( GPC == NULL )  {
+  if( GPC == NULL || GPC->PrimitiveCount() == 0 )  {
     TXBond::Create();
     TGraphicsStyle *GS = Primitives()->Style();
 

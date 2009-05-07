@@ -1866,19 +1866,40 @@ void TMainForm::macQual(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 //..............................................................................
 void TMainForm::macLine(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   TXAtomPList Atoms;
+  FindXAtoms(Cmds, Atoms, true, true);
   olxstr name;
-  if( Cmds.Count() == 3 )  {
-   name = Cmds[0];
-    Cmds.Delete(0);
+  vec3d from, to;
+  if( Atoms.Count() > 2 )  {
+    TSAtomPList satoms;
+    TListCaster::POP(Atoms, satoms);
+    mat3d params;
+    vec3d rms, center;
+    TSPlane::CalcPlanes(satoms, params, rms, center);
+    double maxl = -1000, minl = 1000;
+    for( int i=0; i < satoms.Count(); i++ )  {
+      vec3d v = satoms[i]->crd() - center;
+      if( v.QLength() < 0.0001 )
+        continue;
+      const double ca = params[2].CAngle(v);
+      const double l = v.Length()*ca;
+      if( l > maxl )
+        maxl = l;
+      if( l < minl )
+        minl = l;
+    }
+    from = center+params[2]*minl;
+    to = center+params[2]*maxl;
   }
-  FXApp->FindXAtoms(Cmds.Text(' '), Atoms);
-  if( Atoms.Count() != 2 )  {
-    Error.ProcessingError(__OlxSrcInfo, "a [name] and two atoms are expected" );
+  else if( Atoms.Count() == 2 )  {
+    from = Atoms[0]->Atom().crd();
+    to = Atoms[1]->Atom().crd();
+  }
+  else  {
+    Error.ProcessingError(__OlxSrcInfo, "at least two atoms are expected");
     return;
   }
-  vec3d V( Atoms[0]->Atom().crd() - Atoms[1]->Atom().crd() );
-  FXApp->GetRender().Basis()->OrientNormal(V);
-  FXApp->AddLine(name, Atoms[0]->Atom().crd(), Atoms[1]->Atom().crd());
+  FXApp->GetRender().Basis()->OrientNormal(to-from);
+  FXApp->AddLine(name, from, to);
   FXApp->Draw();
 }
 //..............................................................................

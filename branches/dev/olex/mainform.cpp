@@ -576,7 +576,7 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual occupancy\
  values are acceptable, nine values provide a full matrix ");
   this_InitMacroD(Qual, "h-High&;m-Medium&;l-Low", fpNone, "Sets drawings quality");
 
-  this_InitMacro(Line, , fpOne|fpTwo|fpThree);
+  this_InitMacroD(Line, EmptyString, fpAny, "Creates a line or best line for provided atoms");
   this_InitMacro(AddLabel, , fpThree|fpFive);
   this_InitMacroD(Mpln, "n-just orient, do not create plane&;r-create regular plane;we-use weights proportional to the (atomic weight)^we", 
     fpAny, "sets current view along the normal of the best plane");
