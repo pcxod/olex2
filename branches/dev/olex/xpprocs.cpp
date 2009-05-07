@@ -8665,6 +8665,71 @@ void TMainForm::macConn(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   }
 }
 //..............................................................................
+void TMainForm::macAddBond(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  TXAtomPList atoms;
+  if( !FindXAtoms(Cmds, atoms, false, true) )  {
+    E.ProcessingError(__OlxSrcInfo, "no atoms provided");
+    return;
+  }
+  if( (atoms.Count() % 2) != 0 )  {
+    E.ProcessingError(__OlxSrcInfo, "even number if atoms is expected");
+    return;
+  }
+  for( int i=0; i < atoms.Count(); i += 2 )  {
+    TSAtom* a1 = NULL, *a2 = NULL;
+    if( atoms[i]->Atom().GetMatrix(0).GetTag() == 0 && atoms[i]->Atom().GetMatrix(0).t.IsNull() )
+      a1 = &atoms[i]->Atom();
+    else if( atoms[i+1]->Atom().GetMatrix(0).GetTag() == 0 && atoms[i+1]->Atom().GetMatrix(0).t.IsNull() )
+      a1 = &atoms[i+1]->Atom();
+    else  {
+      FXApp->GetLog() << (olxstr("At maximum one symmetry equivalent atom is allowed, skipping: ") <<
+        atoms[i]->Atom().GetGuiLabel() << '-' << atoms[i+1]->Atom().GetGuiLabel() << '\n');
+      continue;
+    }
+    a2 = (a1 == &atoms[i]->Atom()) ? &atoms[i+1]->Atom() : &atoms[i]->Atom();
+    const smatd& eqiv = FXApp->XFile().GetRM().AddUsedSymm(a2->GetMatrix(0));
+    FXApp->XFile().GetRM().Conn.AddBond(a1->CAtom(), a2->CAtom(), &eqiv);
+  }
+  FXApp->XFile().GetAsymmUnit()._UpdateConnInfo();
+  FXApp->XFile().GetLattice().UpdateConnectivity();
+  FXApp->CreateObjects(false, false);
+}
+//..............................................................................
+void TMainForm::macDelBond(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  if( Cmds.IsEmpty() )  {
+    TGlGroup* glg = FXApp->GetRender().Selection();
+    TXBondPList bonds;
+    for( int i=0; i < glg->Count(); i++ )  {
+      if( EsdlInstanceOf(*glg->Object(i), TXBond) )
+        bonds.Add( (TXBond*)glg->Object(i) );
+    }
+    if( bonds.IsEmpty() )  {
+      E.ProcessingError(__OlxSrcInfo, "please select bonds to remove");
+      return;
+    }
+    for( int i=0; i < bonds.Count(); i++ )  {
+      TSBond& sb = bonds[i]->Bond();  
+      TSAtom* a1 = NULL, *a2 = NULL;
+      if( sb.A().GetMatrix(0).GetTag() == 0 && sb.A().GetMatrix(0).t.IsNull() )
+        a1 = &sb.A();
+      else if( sb.B().GetMatrix(0).GetTag() == 0 && sb.B().GetMatrix(0).t.IsNull() )
+        a1 = &sb.B();
+      else  {
+        FXApp->GetLog() << (olxstr("At maximum one symmetry equivalent atom is allowed, skipping: ") <<
+          sb.A().GetGuiLabel() << '-' << sb.B().GetGuiLabel() << '\n');
+        continue;
+      }
+      a2 = (a1 == &sb.A()) ? &sb.B() : &sb.A();
+      const smatd& eqiv = FXApp->XFile().GetRM().AddUsedSymm(a2->GetMatrix(0));
+      FXApp->XFile().GetRM().Conn.RemBond(a1->CAtom(), a2->CAtom(), &eqiv);
+    }
+  }
+  FXApp->GetRender().SelectAll(false);
+  FXApp->XFile().GetAsymmUnit()._UpdateConnInfo();
+  FXApp->XFile().GetLattice().UpdateConnectivity();
+  FXApp->CreateObjects(false, false);
+}
+//..............................................................................
 void TMainForm::macUpdateQPeakTable(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   QPeakTable(false);
 }

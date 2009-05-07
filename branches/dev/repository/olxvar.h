@@ -2,6 +2,7 @@
 #define olxvarH
 
 #include "estlist.h"
+#include "actions.h"
 
 #ifndef _NO_PYTHON
   #include "pyext.h"
@@ -60,7 +61,13 @@ public:
   inline olxstr* GetStr()  {  return Str;  }
   void Set(PyObject* obj);
   void Set(const olxstr& str);
-  
+};
+
+struct TOlxVarChangeData : public IEObject  {
+  const olxstr& str_val, var_name;
+  PyObject* py_val;
+  TOlxVarChangeData(const olxstr& v_name, const olxstr& v_val, PyObject* p_val) :
+    var_name(v_name), str_val(v_val), py_val(p_val) {}
 };
    
 class TOlxVars : public IEObject  {
@@ -77,6 +84,8 @@ class TOlxVars : public IEObject  {
       throw TFunctionFailedException(__OlxSourceInfo, exc,
         olxstr("Exception occured while setting variable '") << name <<'\'');
     }
+    TOlxVarChangeData vcd(name, value, NULL);
+    OnVarChange->Execute(NULL, &vcd);
   }
   inline void _SetVar(const olxstr& name, PyObject* value)  {
     int ind = Vars.IndexOfComparable(name);
@@ -90,6 +99,8 @@ class TOlxVars : public IEObject  {
       throw TFunctionFailedException(__OlxSourceInfo, exc,
         olxstr("Exception occured while setting variable '") << name <<'\'');
     }
+    TOlxVarChangeData vcd(name, EmptyString, value);
+    OnVarChange->Execute(NULL, &vcd);
   }
 
   inline const olxstr& _FindName(PyObject* value)  {
@@ -105,10 +116,14 @@ class TOlxVars : public IEObject  {
   }
   TOlxVars();
   ~TOlxVars()  {  Instance = NULL;  }
+  TActionQList Actions;
 public:
+
+  TActionQueue *OnVarChange;
+
   static inline TOlxVars* GetInstance()  {  return Instance;  }
   static inline TOlxVars& Init()  {  return *(new TOlxVars());  }
-  static inline void Finalise()  {  if( Instance != NULL )  delete Instance;  }
+  static inline void Finalise()   {  if( Instance != NULL )  delete Instance;  }
 
   static inline int VarCount()  {  return Instance != NULL ? Instance->Vars.Count() : 0;  }
 

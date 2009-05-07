@@ -84,8 +84,6 @@
 #include "utf8file.h"
 #include "py_core.h"
 
-//#include <crtdbg.h>
-
 
 #ifdef __GNUC__
   #undef Bool
@@ -95,6 +93,7 @@
 
 static const olxstr ProcessOutputCBName("procout");
 static const olxstr OnStateChangeCBName("statechange");
+static const olxstr GlConsoleBlendVarName("core_console_blend");
 
 enum
 {
@@ -196,7 +195,8 @@ enum
   ID_GStyleOpen,
   ID_FixLattice,
   ID_FreeLattice,
-  ID_DELINS
+  ID_DELINS,
+  ID_VarChange
 };
 
 class TObjectVisibilityChange: public AActionHandler
@@ -324,7 +324,7 @@ TMainForm::TMainForm(TGlXApp *Parent, int Width, int Height):
 //  _crtBreakAlloc = 5892;
   SkipSizing = false;
   Destroying = false;
-#ifdef __WIN32__
+#ifndef __WIN32__
   _UseGlTooltip = false;  // most platforms support it, besides some very old or stupid ones...
 #else
   _UseGlTooltip = true;
@@ -337,7 +337,7 @@ TMainForm::TMainForm(TGlXApp *Parent, int Width, int Height):
   */
   PythonExt::Init(this).Register( &TMainForm::PyInit );
   PythonExt::GetInstance()->Register( &OlexPyCore::PyInit );
-  TOlxVars::Init();
+  TOlxVars::Init().OnVarChange->Add(this, ID_VarChange);
   FGlCanvas = NULL;
   FXApp = NULL;
   FGlConsole = NULL;
@@ -751,6 +751,8 @@ v-[grow] use user provided delta for connctivity analysis",
  this is appended to the label, '$xx' replaces the symbols after the atom type symbol with xx, leving the ending,\
  '-xx' - changes the ending of the label with xx&;a-align&;i-try inversion&;u-unmatch", fpNone|fpOne|fpTwo, "Fragment matching, alignment and label transfer routine" );
   this_InitMacroD(Conn, EmptyString, fpAny^fpNone, "Changes provided atom(s) connectivity (only until next connectivity modifying operation for now). First parameter is the new connectivity" );
+  this_InitMacroD(AddBond, EmptyString, fpAny, "Adds specified bond to the connectivity table" );
+  this_InitMacroD(DelBond, EmptyString, fpAny, "Removes specified bond from the connectivity table" );
   this_InitMacro(ShowWindow, ,fpOne|fpTwo );
   
   this_InitMacro(DelOFile, ,fpOne );
@@ -1927,6 +1929,15 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
       FGlCanvas->SwapBuffers();
     //wxClientDC dc(FGlCanvas);
     //dc.DrawText(wxT("RRRRRRRRRRRR"), 0, 0);
+  }
+  else if( MsgId == ID_VarChange )  {
+    if( Data != NULL && EsdlInstanceOf(*Data, TOlxVarChangeData) && FGlConsole != NULL )  {
+      TOlxVarChangeData& vcd = *(TOlxVarChangeData*)Data;
+      if( GlConsoleBlendVarName.Comparei(vcd.var_name) == 0 )  {
+        if( !vcd.str_val.IsEmpty() )
+          FGlConsole->SetBlend( vcd.str_val.ToBool() );
+      }
+    }
   }
   else if( MsgId == ID_TIMER )  {
     FTimer->OnTimer()->SetEnabled( false );
@@ -3216,7 +3227,7 @@ void TMainForm::OnMouseWheel(int x, int y, double delta)  {
   int ind = Bindings.IndexOf("wheel");
   if( ind == -1 )  return;
   olxstr cmd( Bindings.GetObject(ind) );
-  ind = TOlxVars::VarIndex("wheel_step");
+  ind = TOlxVars::VarIndex("core_wheel_step");
   const olxstr& step( ind == -1 ? EmptyString : TOlxVars::GetVarStr(ind));
   if( step.IsNumber() )
     delta *= step.ToDouble();

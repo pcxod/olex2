@@ -447,8 +447,10 @@ private:
   DefMacro(ImportFont)
   DefMacro(ProjSph)
   DefMacro(PictPS)
-  DefMacro(Conn)
   DefMacro(UpdateQPeakTable)
+  DefMacro(Conn)
+  DefMacro(AddBond)
+  DefMacro(DelBond)
 ////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////FUNCTIONS/////////////////////////////////////////
   DefFunc(FileLast)

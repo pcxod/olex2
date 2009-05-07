@@ -110,7 +110,6 @@ bool TGlConsole::Orient(TGlPrimitive *P)  {
   if( Fnt == NULL )  return true;
 //  Fnt->DrawGlText( vec3d(0,0,0), "HELLW_O", true);
   P->SetFont(Fnt);
-
   if( FParent->GetWidth() < 100 )  return true;
   int th = Fnt->TextHeight(EmptyString), lc, ii;
   double Scale = FParent->GetScale(),

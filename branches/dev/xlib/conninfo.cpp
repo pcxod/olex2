@@ -96,12 +96,14 @@ void ConnInfo::ProcessConn(TStrList& ins)  {
       ins.Delete(i--);
     }
   }
-  TSAtomPList atoms;
-  TXApp::GetInstance().FindSAtoms(ins.Text(' '), atoms);
-  for( int i=0; i < atoms.Count(); i++ )  {
-    AtomConnInfo& ai = AtomInfo.Add(&atoms[i]->CAtom(), AtomConnInfo(atoms[i]->CAtom()));
-    ai.maxBonds = maxB;
-    ai.r = r;
+  if( !ins.IsEmpty() )  {
+    TSAtomPList atoms;
+    TXApp::GetInstance().FindSAtoms(ins.Text(' '), atoms);
+    for( int i=0; i < atoms.Count(); i++ )  {
+      AtomConnInfo& ai = AtomInfo.Add(&atoms[i]->CAtom(), AtomConnInfo(atoms[i]->CAtom()));
+      ai.maxBonds = maxB;
+      ai.r = r;
+    }
   }
 }
 //........................................................................

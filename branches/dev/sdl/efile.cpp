@@ -294,7 +294,7 @@ bool TEFile::FileExistsi(const olxstr& F, olxstr& res)  {
   if( F.IsEmpty() )
     return false;
 #ifdef __WIN32__
-  return FileExiste(F);
+  return FileExists(F);
 #else
   olxstr path = ExtractFilePath(F);
   olxstr name = ExtractFileName(F);
