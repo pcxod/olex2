@@ -238,7 +238,7 @@ void TCAtom::FromDataItem(TDataItem& item)  {
   if( adp != NULL )  {
     double Q[6], E[6];
     if( adp->FieldCount() != 6 )
-      throw TInvalidArgumentException(__OlxSourceInfo, "6 parameters expecetd for the ADP");
+      throw TInvalidArgumentException(__OlxSourceInfo, "6 parameters expected for the ADP");
     for( int i=0; i < 6; i++ )  {
       ev = adp->GetField(i);
       E[i] = ev.GetE();

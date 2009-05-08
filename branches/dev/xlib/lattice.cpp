@@ -1319,7 +1319,7 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPL
       v = acos(v)*180/M_PI;
       double d1 = AE.GetCrd(0).DistanceTo( atom.crd() );
       double d2 = AE.GetCrd(1).DistanceTo( atom.crd() );
-      if(  d1 > 1.4 && d2 > 1.4 && v < 120 )  {
+      if(  d1 > 1.4 && d2 > 1.4 && v < 125 )  {
         TBasicApp::GetLog().Info( olxstr(atom.GetLabel()) << ": XYCH2" );
         cg.FixAtom( AE, fgCH2, HAI, NULL, generated);
       }

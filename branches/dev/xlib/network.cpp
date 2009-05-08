@@ -96,6 +96,8 @@ void TNetwork::TDisassembleTaskCheckConnectivity::Run(long index)  {
     const double D = Atoms[index]->crd().QDistanceTo( Atoms[i]->crd());
     const double D1 = sqr(Atoms[index]->CAtom().GetConnInfo().r + Atoms[i]->CAtom().GetConnInfo().r + Delta);
     if(  D < D1 && IsBondAllowed(*Atoms[index], *Atoms[i]) )  {
+      if( D < 1e-5 )  // EXYZ?
+        continue;
       Atoms[index]->AddNode(*Atoms[i]);
       Atoms[i]->AddNode(*Atoms[index]);  // crosslinking
     }

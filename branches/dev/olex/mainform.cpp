@@ -621,12 +621,12 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual occupancy\
   this_InitMacro(HtmlPanelVisible, , fpNone|fpOne|fpTwo );
 
   this_InitMacro(QPeakScale, , fpNone|fpOne );
-  this_InitMacro(Label, , fpAny^fpNone );
-  this_InitMacro(CalcChn, , fpNone|fpOne );
-  this_InitMacro(CalcMass, , fpNone|fpOne );
+  this_InitMacroD(Label, EmptyString, fpAny, "Creates moveable labels for provided atoms (selection)");
+  this_InitMacroD(CalcChn, EmptyString, fpNone|fpOne, "Calculates CHN composition of curent structure or for provided formula" );
+  this_InitMacroD(CalcMass, EmptyString, fpNone|fpOne, "Calculates Mass spectrum of curent structure or for provided formula" );
 
-  this_InitMacro(Focus, , fpNone );
-  this_InitMacro(Refresh, , fpNone );
+  this_InitMacroD(Focus, EmptyString, fpNone, "Sets input focus to the console" );
+  this_InitMacroD(Refresh, EmptyString, fpNone, "Refreshes the GUI" );
   this_InitMacroD(Move,"cs-leaves selection unchanged&;c-copy moved atom", fpNone|fpTwo,
   "moves two atoms as close to each other as possible; if no atoms given, moves all fragments\
   as close to the cell center as possible" );
@@ -635,7 +635,7 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual occupancy\
   this_InitMacro(Fvar, , (fpAny^fpNone)|psCheckFileTypeIns );
   this_InitMacro(Sump, , (fpAny^fpNone)|psCheckFileTypeIns );
   this_InitMacro(Part, p&;lo, (fpAny^fpNone)|psCheckFileTypeIns );
-  this_InitMacroD(Afix,"n-for afix 66 restraints the pyridine rings as well as phenol rings" , 
+  this_InitMacroD(Afix,"n-to accept N atoms in the rings for afix 66" , 
     (fpAny^fpNone)|psCheckFileTypeIns,
     "sets atoms afix, special cases are 56,69,66,69,76,79,106,109,116 and 119");
   this_InitMacro(Dfix, cs-do not clear selection&;e, fpAny|psCheckFileTypeIns );
@@ -658,7 +658,7 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual occupancy\
   this_InitMacroD(ISOR, "cs-do not clear selection", fpAny|psCheckFileTypeIns,
 "Forses Uij of provided atoms to behave in isotropic manner. If no atoms provided, all non-H atoms considered" );
 
-  this_InitMacro(Degen, cs, fpOne|psFileLoaded );
+  this_InitMacroD(Degen, "cs-clear selection", fpAny|psFileLoaded, "Prints how many symmetry operators put given atom to the same site" );
   // not implemented
   this_InitMacro(SwapExyz, , fpAny );
   // not implemented

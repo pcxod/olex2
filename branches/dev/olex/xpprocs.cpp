@@ -2745,16 +2745,10 @@ void TMainForm::macQPeakScale(TStrObjList &Cmds, const TParamList &Options, TMac
 }
 //..............................................................................
 void TMainForm::macLabel(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  if( Cmds.Count() )  {
-    TXAtomPList Atoms;
-    FXApp->FindXAtoms(Cmds.Text(" "), Atoms);
-    for( int i=0; i < Atoms.Count(); i++ )  {
-      FXApp->CreateLabel( Atoms[i], fntPLabels )->Visible(true);
-    }
-    return;
-  }
-  E.ProcessingError(__OlxSrcInfo, "wrong number of arguments" );
-  return;
+  TXAtomPList atoms;
+  FindXAtoms(Cmds, atoms, true, true);
+  for( int i=0; i < atoms.Count(); i++ )
+    FXApp->CreateLabel( atoms[i], fntPLabels )->Visible(true);
 }
 //..............................................................................
 void TMainForm::macCalcChn(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
@@ -3108,13 +3102,17 @@ void TMainForm::macAfix(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 }
 //..............................................................................
 void TMainForm::macDegen(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  TXAtom* XA = FXApp->GetXAtom(Cmds[0], !Options.Contains("cs"));
-  if( XA == NULL )  {
-    E.ProcessingError(__OlxSrcInfo, "wrong atom: " ) << Cmds[0];
-    return;
+  TXAtomPList atoms;
+  FindXAtoms(Cmds, atoms, true, !Options.Contains("cs"));
+  for( int i=0; i < atoms.Count(); i++ ) 
+    atoms[i]->Atom().CAtom().SetTag(i);
+  
+  for( int i=0; i < atoms.Count(); i++ )  {
+    if( atoms[i]->Atom().CAtom().GetTag() != i )
+      continue;
+    olxstr str(atoms[i]->Atom().CAtom().GetLabel());
+    TBasicApp::GetLog() << (str.Format(6, true, ' ') <<  atoms[i]->Atom().CAtom().GetDegeneracy() << '\n');
   }
-  olxstr deg( XA->Atom().CAtom().GetDegeneracy() );
-  TBasicApp::GetLog() << (deg << '\n');
 }
 //..............................................................................
 void TMainForm::macSwapExyz(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
@@ -8717,38 +8715,48 @@ void TMainForm::macAddBond(TStrObjList &Cmds, const TParamList &Options, TMacroE
 }
 //..............................................................................
 void TMainForm::macDelBond(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  TSAtomPList pairs;
   if( Cmds.IsEmpty() )  {
     TGlGroup* glg = FXApp->GetRender().Selection();
-    TXBondPList bonds;
     for( int i=0; i < glg->Count(); i++ )  {
-      if( EsdlInstanceOf(*glg->Object(i), TXBond) )
-        bonds.Add( (TXBond*)glg->Object(i) );
+      if( EsdlInstanceOf(*glg->Object(i), TXBond) )  {
+        TSBond& sb = ((TXBond*)glg->Object(i))->Bond();
+        pairs.Add(&sb.A());
+        pairs.Add(&sb.B());
+      }
     }
-    if( bonds.IsEmpty() )  {
-      E.ProcessingError(__OlxSrcInfo, "please select bonds to remove");
-      return;
-    }
-    for( int i=0; i < bonds.Count(); i++ )  {
-      TSBond& sb = bonds[i]->Bond();  
+  }
+  else  {
+    TXAtomPList atoms;
+    FindXAtoms(Cmds, atoms, false, false);
+    if( (atoms.Count()%2) == 0 )
+      TListCaster::POP(atoms, pairs);
+  }
+  if( !pairs.IsEmpty()  )  {
+    for( int i=0; i < pairs.Count(); i+=2 )  {
       TSAtom* a1 = NULL, *a2 = NULL;
-      if( sb.A().GetMatrix(0).GetTag() == 0 && sb.A().GetMatrix(0).t.IsNull() )
-        a1 = &sb.A();
-      else if( sb.B().GetMatrix(0).GetTag() == 0 && sb.B().GetMatrix(0).t.IsNull() )
-        a1 = &sb.B();
+      if( pairs[i]->GetMatrix(0).GetTag() == 0 && pairs[i]->GetMatrix(0).t.IsNull() )
+        a1 = pairs[i];
+      else if( pairs[i+1]->GetMatrix(0).GetTag() == 0 && pairs[i+1]->GetMatrix(0).t.IsNull() )
+        a1 = pairs[i+1];
       else  {
         FXApp->GetLog() << (olxstr("At maximum one symmetry equivalent atom is allowed, skipping: ") <<
-          sb.A().GetGuiLabel() << '-' << sb.B().GetGuiLabel() << '\n');
+          pairs[i]->GetGuiLabel() << '-' << pairs[i+1]->GetGuiLabel() << '\n');
         continue;
       }
-      a2 = (a1 == &sb.A()) ? &sb.B() : &sb.A();
+      a2 = (a1 == pairs[i]) ? pairs[i+1] : pairs[i];
       const smatd& eqiv = FXApp->XFile().GetRM().AddUsedSymm(a2->GetMatrix(0));
       FXApp->XFile().GetRM().Conn.RemBond(a1->CAtom(), a2->CAtom(), &eqiv);
     }
+    FXApp->GetRender().SelectAll(false);
+    FXApp->XFile().GetAsymmUnit()._UpdateConnInfo();
+    FXApp->XFile().GetLattice().UpdateConnectivity();
+    FXApp->CreateObjects(false, false);
   }
-  FXApp->GetRender().SelectAll(false);
-  FXApp->XFile().GetAsymmUnit()._UpdateConnInfo();
-  FXApp->XFile().GetLattice().UpdateConnectivity();
-  FXApp->CreateObjects(false, false);
+  else  {
+    E.ProcessingError(__OlxSrcInfo, "please select soe bonds or provide atom pairs");
+    return;
+  }
 }
 //..............................................................................
 void TMainForm::macUpdateQPeakTable(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
