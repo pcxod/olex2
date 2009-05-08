@@ -4636,14 +4636,14 @@ void TMainForm::macIndividualise(TStrObjList &Cmds, const TParamList &Options, T
   TXAtomPList Atoms;
   FindXAtoms(Cmds, Atoms, false, false);
   for( int i=0; i < Atoms.Count(); i++ )
-    FXApp->Individualise( Atoms[i] );
+    FXApp->Individualise( *Atoms[i] );
 }
 //..............................................................................
 void TMainForm::macCollectivise(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   TXAtomPList Atoms;
   FindXAtoms(Cmds, Atoms, false, false);
   for( int i=0; i < Atoms.Count(); i++ )
-    FXApp->Collectivise( Atoms[i] );
+    FXApp->Collectivise( *Atoms[i] );
 }
 //..............................................................................
 void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
@@ -8708,6 +8708,12 @@ void TMainForm::macAddBond(TStrObjList &Cmds, const TParamList &Options, TMacroE
     a2 = (a1 == &atoms[i]->Atom()) ? &atoms[i+1]->Atom() : &atoms[i]->Atom();
     const smatd& eqiv = FXApp->XFile().GetRM().AddUsedSymm(a2->GetMatrix(0));
     FXApp->XFile().GetRM().Conn.AddBond(a1->CAtom(), a2->CAtom(), NULL, &eqiv, true);
+    if( FXApp->XFile().GetAsymmUnit().GetLatt() > 0 && !eqiv.r.IsI() )  {  // for centrosymm sg
+      smatd imat( a2->GetMatrix(0).r.Inverse(), a2->GetMatrix(0).t * -1 );
+      const smatd& eqiv1 = FXApp->XFile().GetRM().AddUsedSymm(imat);
+      FXApp->XFile().GetRM().Conn.AddBond(a1->CAtom(), a2->CAtom(), NULL, &eqiv, true);
+      FXApp->XFile().GetRM().Conn.AddBond(a1->CAtom(), a2->CAtom(), NULL, &eqiv1, true);
+    }
   }
   FXApp->XFile().GetAsymmUnit()._UpdateConnInfo();
   FXApp->XFile().GetLattice().UpdateConnectivity();
@@ -8746,7 +8752,12 @@ void TMainForm::macDelBond(TStrObjList &Cmds, const TParamList &Options, TMacroE
       }
       a2 = (a1 == pairs[i]) ? pairs[i+1] : pairs[i];
       const smatd& eqiv = FXApp->XFile().GetRM().AddUsedSymm(a2->GetMatrix(0));
-      FXApp->XFile().GetRM().Conn.RemBond(a1->CAtom(), a2->CAtom(), NULL, &eqiv, true);
+      if( FXApp->XFile().GetAsymmUnit().GetLatt() > 0  && !eqiv.r.IsI() )  {  // for centrosymm sg
+        smatd imat( a2->GetMatrix(0).r.Inverse(), a2->GetMatrix(0).t * -1 );
+        const smatd& eqiv1 = FXApp->XFile().GetRM().AddUsedSymm(imat);
+        FXApp->XFile().GetRM().Conn.RemBond(a1->CAtom(), a2->CAtom(), NULL, &eqiv, true);
+        FXApp->XFile().GetRM().Conn.RemBond(a1->CAtom(), a2->CAtom(), NULL, &eqiv1, true);
+      }
     }
     FXApp->GetRender().SelectAll(false);
     FXApp->XFile().GetAsymmUnit()._UpdateConnInfo();

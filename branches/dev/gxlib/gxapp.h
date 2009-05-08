@@ -253,8 +253,9 @@ public:
   int GetNextAvailableLabel(const olxstr& AtomType);
 
   // moving atom from/to collection
-  void Individualise(TXAtom* XA);
-  void Collectivise(TXAtom* XA);
+  void Individualise(TXAtom& XA);
+  void Collectivise(TXAtom& XA);
+  void Individualise(TXBond& XB);
   // should not be used externaly
   void ClearLabels();
 

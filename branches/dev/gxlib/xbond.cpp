@@ -444,6 +444,7 @@ void TXBond::CreateStaticPrimitives()  {
 void TXBond::UpdatePrimitives(int32_t Mask, const ACreationParams* cpar)  {
   olxstr& pm = Primitives()->Style()->GetParam("PMask", "0"); 
   if( pm.ToInt() == Mask )  return;
+  pm = Mask;
   Primitives()->Style()->SetParam("PMask", Mask);
   Primitives()->ClearPrimitives();
   Primitives()->RemoveObject(this);

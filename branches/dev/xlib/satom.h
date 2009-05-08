@@ -61,12 +61,22 @@ public:
   inline const smatd& GetMatrix(int i) const {  return *Matrices[i];  }
   // this also makes sure that the identity releated matrix is coming first in the list
   inline void AddMatrix(smatd* M)            {  
-    if( !Matrices.IsEmpty() && M->GetTag() == 0 )
-      Matrices.Insert(0, M);
-    else
-      Matrices.Add(M);  
+    Matrices.Add(M);  
+    if( M->GetTag() == 0 && Matrices.Count() > 1 )
+      Matrices.Swap(0, Matrices.Count()-1);
   }
-  inline void AddMatrices(TSAtom *A)         {  Matrices.AddList(A->Matrices); }
+  inline void AddMatrices(TSAtom *A)         {  
+    const int cnt = Matrices.Count();
+    Matrices.AddList(A->Matrices); 
+    if( cnt != 0 && Matrices.Count() > 1 )  {
+      for( int i=0; i < A->Matrices.Count(); i++ )  {
+        if( A->Matrices[i]->GetTag() == 0 )  {
+          Matrices.Swap(0, cnt+i);
+          break;
+        }
+      }
+    }
+  }
   inline void ClearMatrices()                {  Matrices.Clear();  }
   void ChangeType(const olxstr& Type);
 

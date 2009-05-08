@@ -1634,9 +1634,16 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
     int i = FObjectUnderMouse->Primitives()->Style()->GetParam("PMask", "0").ToInt();
     TdlgPrimitive* Primitives = new TdlgPrimitive(&Ps, i, this);
     if( Primitives->ShowModal() == wxID_OK )  {
-      olxstr TmpStr = "mask ";
-      TmpStr << FObjectUnderMouse->Primitives()->Name() << ' ' << Primitives->Mask;
-      ProcessXPMacro(TmpStr, MacroError);
+      if( FObjectUnderMouse->Selected() && EsdlInstanceOf(*FObjectUnderMouse, TXBond) )  {
+        TXBond& xb = *(TXBond*)FObjectUnderMouse;
+        FXApp->Individualise(xb);
+        xb.UpdatePrimitives( Primitives->Mask );
+      }
+      else  {
+        olxstr TmpStr = "mask ";
+        TmpStr << FObjectUnderMouse->Primitives()->Name() << ' ' << Primitives->Mask;
+        ProcessXPMacro(TmpStr, MacroError);
+      }
     }
     Primitives->Destroy();
     TimePerFrame = FXApp->Draw();

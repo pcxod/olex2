@@ -394,8 +394,9 @@ void TGXApp::CreateObjects(bool SyncBonds, bool centerModel)  {
     TSBond* B = allBonds[i];
     TXAtom& XA = XAtoms[ B->A().GetTag() ];
     TXAtom& XA1 = XAtoms[ B->B().GetTag() ];
-    TXBond& XB = XBonds.Add( *(new TXBond(TXBond::GetLegend( *B, TXAtom::LegendLevel(XA.Primitives()->Name()),
-                TXAtom::LegendLevel(XA1.Primitives()->Name())), *allBonds[i], FGlRender)) );
+    //TXBond& XB = XBonds.Add( *(new TXBond(TXBond::GetLegend( *B, TXAtom::LegendLevel(XA.Primitives()->Name()),
+    //            TXAtom::LegendLevel(XA1.Primitives()->Name())), *allBonds[i], FGlRender)) );
+    TXBond& XB = XBonds.Add( *(new TXBond(TXBond::GetLegend( *B, 2, 2), *allBonds[i], FGlRender)) );
     if( B->IsDeleted() || (B->A().IsDeleted() || allBonds[i]->B().IsDeleted()) )
       XB.Deleted(true);
     XB.Create();
@@ -2898,35 +2899,35 @@ bool TGXApp::ShowGrid(bool v, const olxstr& FN)  {
   return v;
 }
 //..............................................................................
-void TGXApp::Individualise(TXAtom* XA)  {
-  if( XA->Primitives()->ObjectCount() == 1 )  return;
-  short level = XA->LegendLevel( XA->Primitives()->Name() ), 
+void TGXApp::Individualise(TXAtom& XA)  {
+  if( XA.Primitives()->ObjectCount() == 1 )  return;
+  short level = XA.LegendLevel( XA.Primitives()->Name() ), 
     required_level = FXFile->GetLattice().IsGenerated() ? 2 : 1;
   
   if( level >= required_level )  return;
   else  
     level = required_level;
 
-  olxstr leg = XA->GetLegend( XA->Atom(), level );
+  olxstr leg = XA.GetLegend( XA.Atom(), level );
   TGPCollection* indCol = FGlRender->FindCollection( leg );
-  if( indCol != NULL && XA->Primitives() == indCol )  
+  if( indCol != NULL && XA.Primitives() == indCol )  
     return;
   else  {
     if( indCol == NULL )  {
       indCol = FGlRender->NewCollection( leg );
       IndividualCollections.Add(leg);
     }
-    XA->Primitives()->RemoveObject(XA);
-    XA->Create( leg );
+    XA.Primitives()->RemoveObject(&XA);
+    XA.Create( leg );
     TSAtomPList satoms;
     TSBondPList sbonds;
     TXAtomPList xatoms;
     TXBondPList xbonds;
     short level1;
-    for( int i=0; i < XA->Atom().BondCount(); i++ )  {
-      TSBond* SB = &XA->Atom().Bond(i);
-      sbonds.Add( SB );
-      satoms.Add( &SB->Another(XA->Atom()) );
+    for( int i=0; i < XA.Atom().BondCount(); i++ )  {
+      TSBond& SB = XA.Atom().Bond(i);
+      sbonds.Add( &SB );
+      satoms.Add( &SB.Another(XA.Atom()) );
     }
     SAtoms2XAtoms(satoms, xatoms);
     SBonds2XBonds(sbonds, xbonds);
@@ -2951,34 +2952,50 @@ void TGXApp::Individualise(TXAtom* XA)  {
   }
 }
 //..............................................................................
-void TGXApp::Collectivise(TXAtom* XA)  {
-  short level = XA->LegendLevel( XA->Primitives()->Name() );
+void TGXApp::Individualise(TXBond& XB)  {
+  if( XB.Primitives()->ObjectCount() == 1 )  return;
+  short required_level = FXFile->GetLattice().IsGenerated() ? 2 : 1;
+  olxstr leg = XB.GetLegend(XB.Bond(), required_level, required_level);
+  TGPCollection* indCol = FGlRender->FindCollection( leg );
+  if( indCol != NULL && XB.Primitives() == indCol )  
+    return;
+  if( indCol == NULL )  {
+    indCol = FGlRender->NewCollection( leg );
+    IndividualCollections.Add(leg);
+  }
+  XB.Primitives()->RemoveObject(&XB);
+  XB.Create( leg );
+}
+//..............................................................................
+void TGXApp::Collectivise(TXAtom& XA)  {
+  short level = XA.LegendLevel( XA.Primitives()->Name() );
   if( !level )  return;
   else  level--;
 
-  olxstr leg = XA->GetLegend( XA->Atom(), level );
+  olxstr leg = XA.GetLegend( XA.Atom(), level );
   TGPCollection* indCol = FGlRender->FindCollection( leg );
-  if( indCol != NULL && XA->Primitives() == indCol )  
+  if( indCol != NULL && XA.Primitives() == indCol )  
     return;
   else  {
-    if( indCol == NULL )  indCol = FGlRender->NewCollection( leg );
+    if( indCol == NULL )  
+      indCol = FGlRender->NewCollection( leg );
 
-    XA->Primitives()->RemoveObject(XA);
-    if( XA->Primitives()->ObjectCount() == 0 )  {
-      int index = IndividualCollections.IndexOf( XA->Primitives()->Name() );
+    XA.Primitives()->RemoveObject(&XA);
+    if( XA.Primitives()->ObjectCount() == 0 )  {
+      int index = IndividualCollections.IndexOf( XA.Primitives()->Name() );
       if( index >= 0 )  
         IndividualCollections.Delete(index);
     }
-    XA->Create(leg);
+    XA.Create(leg);
     TSAtomPList satoms;
     TSBondPList sbonds;
     TXAtomPList xatoms;
     TXBondPList xbonds;
     short level1;
-    for( int i=0; i < XA->Atom().BondCount(); i++ )  {
-      TSBond* SB = &XA->Atom().Bond(i);
-      sbonds.Add( SB );
-      satoms.Add( &SB->Another(XA->Atom()) );
+    for( int i=0; i < XA.Atom().BondCount(); i++ )  {
+      TSBond& SB = XA.Atom().Bond(i);
+      sbonds.Add( &SB );
+      satoms.Add( &SB.Another(XA.Atom()) );
     }
     SAtoms2XAtoms(satoms, xatoms);
     SBonds2XBonds(sbonds, xbonds);
@@ -3770,7 +3787,13 @@ void TGXApp::LoadModel(const olxstr& fileName) {
   df.LoadFromTextStream(ms);
   delete [] bf;
   zin->OpenEntry(*grid);
-  FromDataItem( df.Root().FindRequiredItem("olex_model"), *zin );
+  try  {  FromDataItem( df.Root().FindRequiredItem("olex_model"), *zin );  }
+  catch( const TExceptionBase& exc )  {
+    GetLog().Exception( olxstr("Failed to load model: ") << exc.GetException()->GetError() );
+    FXFile->SetLastLoader(NULL);
+    FXFile->LastLoaderChanged();
+    CreateObjects(false, false);
+  }
   delete model;
   delete grid;
   delete zin;

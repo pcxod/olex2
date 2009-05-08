@@ -290,9 +290,7 @@ int ConnInfo::FindBondIndex(const BondInfoList& list, TCAtom* key, TCAtom& a1, T
     return -1;
   }
   else  {
-    smatd mat(*eqiv);
-    mat.r = eqiv->r.Inverse();
-    mat.t *= -1;
+    smatd mat(eqiv->r.Inverse(), eqiv->t * -1);
     for( int i=0; i < list.Count(); i++ )  {
       if( list[i].to == a1 && list[i].matr != NULL && *list[i].matr == mat )  
         return i;
@@ -308,9 +306,7 @@ const smatd* ConnInfo::GetCorrectMatrix(const smatd* eqiv1, const smatd* eqiv2, 
     return eqiv2;
   }
   if( eqiv2 == NULL || (eqiv2->r.IsI() && eqiv2->t.IsNull()) )  {
-    smatd mat(*eqiv1);
-    mat.r = eqiv1->r.Inverse();
-    mat.t *= -1;
+    smatd mat(eqiv1->r.Inverse(), eqiv1->t * -1);
     if( release )  {
       rm.RemUsedSymm(*eqiv1);
       if( eqiv2 != NULL )

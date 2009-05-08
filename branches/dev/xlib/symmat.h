@@ -6,12 +6,16 @@ template <class MC, class VC> class TSymmMat {
   int Tag;
 public:
   TSymmMat() : Tag(-1) {  }
-  
-  template <class AMC, class AVC> 
+  // copy constructor
+  template <typename AMC, typename AVC> 
   TSymmMat(const TSymmMat<AMC,AVC>& v) : 
     r(v.r), 
     t(v.t),
     Tag(-1) {  }
+  // composing constructor
+  template <typename AMC, typename AVC> 
+  TSymmMat(const TMatrix33<AMC>& m, const TVector3<AVC>& v) :
+    r(m), t(v), Tag(-1) {  }
 
   template <class AT> 
   TVector3<AT> operator * (const TVector3<AT>& a) const {
@@ -47,6 +51,9 @@ public:
     r.I();
     t.Null();
     return *this;
+  }
+  inline bool IsI() const  {
+    return (r.IsI() && t.QLength() < 1e-6);
   }
   
   inline TSymmMat<MC,VC>& Null()  {
