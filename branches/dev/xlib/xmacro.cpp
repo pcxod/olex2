@@ -771,10 +771,7 @@ void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options, TMacroErr
           if( eqiv != NULL )  {
             TIns& ins = XApp.XFile().GetLastLoader<TIns>();
             const smatd& e = rm.AddUsedSymm(*eqiv);
-            int ei = rm.UsedSymmIndex(e)+1;
-            ins.AddIns(olxstr("FREE ") << satoms[aitr]->GetLabel() << ' ' << 
-              satoms[aitr]->GetLabel() << "_$" << ei, 
-              rm );
+            rm.Conn.RemBond(satoms[aitr]->CAtom(), satoms[aitr]->CAtom(), NULL, &e, true);
             XApp.GetLog() << (olxstr("The atom" ) << satoms[aitr]->GetLabel() << 
               " is connected to itself through symmetry, removing the symmetry generated bond\n");
             delete eqiv;

@@ -8707,7 +8707,7 @@ void TMainForm::macAddBond(TStrObjList &Cmds, const TParamList &Options, TMacroE
     }
     a2 = (a1 == &atoms[i]->Atom()) ? &atoms[i+1]->Atom() : &atoms[i]->Atom();
     const smatd& eqiv = FXApp->XFile().GetRM().AddUsedSymm(a2->GetMatrix(0));
-    FXApp->XFile().GetRM().Conn.AddBond(a1->CAtom(), a2->CAtom(), &eqiv);
+    FXApp->XFile().GetRM().Conn.AddBond(a1->CAtom(), a2->CAtom(), NULL, &eqiv, true);
   }
   FXApp->XFile().GetAsymmUnit()._UpdateConnInfo();
   FXApp->XFile().GetLattice().UpdateConnectivity();
@@ -8746,7 +8746,7 @@ void TMainForm::macDelBond(TStrObjList &Cmds, const TParamList &Options, TMacroE
       }
       a2 = (a1 == pairs[i]) ? pairs[i+1] : pairs[i];
       const smatd& eqiv = FXApp->XFile().GetRM().AddUsedSymm(a2->GetMatrix(0));
-      FXApp->XFile().GetRM().Conn.RemBond(a1->CAtom(), a2->CAtom(), &eqiv);
+      FXApp->XFile().GetRM().Conn.RemBond(a1->CAtom(), a2->CAtom(), NULL, &eqiv, true);
     }
     FXApp->GetRender().SelectAll(false);
     FXApp->XFile().GetAsymmUnit()._UpdateConnInfo();

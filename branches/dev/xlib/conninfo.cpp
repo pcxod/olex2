@@ -24,10 +24,7 @@ void ConnInfo::ProcessFree(const TStrList& ins)  {
       return;
     }
   }
-  if( ag[0].GetMatrix() == NULL )
-    RemBond( *ag[0].GetAtom(), *ag[1].GetAtom(), ag[1].GetMatrix() );
-  else
-    RemBond( *ag[1].GetAtom(), *ag[0].GetAtom(), ag[0].GetMatrix() );
+  RemBond( *ag[0].GetAtom(), *ag[1].GetAtom(), ag[0].GetMatrix(), ag[1].GetMatrix(), true );
 }
 //........................................................................
 void ConnInfo::ProcessBind(const TStrList& ins)  {
@@ -52,10 +49,7 @@ void ConnInfo::ProcessBind(const TStrList& ins)  {
       return;
     }
   }
-  if( ag[0].GetMatrix() == NULL )
-    AddBond( *ag[0].GetAtom(), *ag[1].GetAtom(), ag[1].GetMatrix() );
-  else
-    AddBond( *ag[1].GetAtom(), *ag[0].GetAtom(), ag[0].GetMatrix() );
+  AddBond( *ag[0].GetAtom(), *ag[1].GetAtom(), ag[0].GetMatrix(), ag[1].GetMatrix(), true );
 }
 //........................................................................
 void ConnInfo::ProcessConn(TStrList& ins)  {
@@ -272,6 +266,121 @@ void ConnInfo::TypeConnInfo::FromDataItem(TDataItem& item, TBasicAtomInfo* bai) 
   atomInfo = bai;
   r = item.GetRequiredField("r").ToDouble();
   maxBonds = item.GetRequiredField("b").ToInt();
+}
+//........................................................................
+int ConnInfo::FindBondIndex(const BondInfoList& list, TCAtom* key, TCAtom& a1, TCAtom& a2, const smatd* eqiv) const {
+  if( key != &a1 && key != &a2 )
+    return -1;
+  if( key == &a1 )  {
+    for( int i=0; i < list.Count(); i++ )  {
+      if( list[i].to == a2 )  {
+        if( list[i].matr == NULL && eqiv == NULL )
+          return i;
+        if( list[i].matr != NULL && eqiv != NULL && *list[i].matr == *eqiv )  
+          return i;
+      }
+    }
+    return -1;
+  }
+  else if( eqiv == NULL )  {
+    for( int i=0; i < list.Count(); i++ )  {
+      if( list[i].to == a1 )
+        return i;
+    }
+    return -1;
+  }
+  else  {
+    smatd mat(*eqiv);
+    mat.r = eqiv->r.Inverse();
+    mat.t *= -1;
+    for( int i=0; i < list.Count(); i++ )  {
+      if( list[i].to == a1 && list[i].matr != NULL && *list[i].matr == mat )  
+        return i;
+    }
+    return -1;
+  }
+}
+//........................................................................
+const smatd* ConnInfo::GetCorrectMatrix(const smatd* eqiv1, const smatd* eqiv2, bool release) const {
+  if( eqiv1 == NULL || (eqiv1->r.IsI() && eqiv1->t.IsNull()) )  {
+    if( release && eqiv1 != NULL )
+      rm.RemUsedSymm(*eqiv1);
+    return eqiv2;
+  }
+  if( eqiv2 == NULL || (eqiv2->r.IsI() && eqiv2->t.IsNull()) )  {
+    smatd mat(*eqiv1);
+    mat.r = eqiv1->r.Inverse();
+    mat.t *= -1;
+    if( release )  {
+      rm.RemUsedSymm(*eqiv1);
+      if( eqiv2 != NULL )
+        rm.RemUsedSymm(*eqiv2);
+    }
+    return &rm.AddUsedSymm(mat);
+  }
+  throw TFunctionFailedException(__OlxSourceInfo, "both symops are not identity");
+}
+//........................................................................
+void ConnInfo::AddBond(TCAtom& a1, TCAtom& a2, const smatd* eqiv1, const smatd* eqiv2, bool release_eqiv)  {
+  const smatd* eqiv = NULL;
+  try {  eqiv = GetCorrectMatrix(eqiv1, eqiv2, release_eqiv);  }
+  catch( ... )  {
+    TBasicApp::GetLog().Error( olxstr("Failed to add bond: only one EQIV is expected"));
+    return;
+  }
+  int ind = -1;
+  for( int i=0; i < AtomInfo.Count(); i++ )  {
+    ind = FindBondIndex(AtomInfo.GetValue(i).BondsToCreate, AtomInfo.GetKey(i), a1, a2, eqiv); 
+    if( ind != -1 )
+      break;
+  }
+  if( ind == -1 )  {
+    // validate the bonds to delete
+    bool exists = false;
+    for( int i=0; i < AtomInfo.Count(); i++ )  {
+      ind = FindBondIndex(AtomInfo.GetValue(i).BondsToRemove, AtomInfo.GetKey(i), a1, a2, eqiv);
+      if( ind != -1 )  {
+        AtomInfo.GetValue(i).BondsToRemove.Delete(ind);
+        exists = true;
+        break;
+      }
+    }
+    if( ! exists )  {  // if was deleted - may be already exists?
+      AtomConnInfo& ai = AtomInfo.Add(&a1, AtomConnInfo(a1));
+      ai.BondsToCreate.Add( new CXBondInfo(a2, eqiv) );
+    }
+  }
+}
+//........................................................................
+void ConnInfo::RemBond(TCAtom& a1, TCAtom& a2, const smatd* eqiv1, const smatd* eqiv2, bool release_eqiv)  {
+  const smatd* eqiv = NULL;
+  try {  eqiv = GetCorrectMatrix(eqiv1, eqiv2, release_eqiv);  }
+  catch( ... )  {
+    TBasicApp::GetLog().Error( olxstr("Failed to delete bond: only one EQIV is expected"));
+    return;
+  }
+  int ind = -1;
+  for( int i=0; i < AtomInfo.Count(); i++ )  {
+    ind = FindBondIndex(AtomInfo.GetValue(i).BondsToRemove, AtomInfo.GetKey(i), a1, a2, eqiv);
+    if( ind != -1 )
+      break;
+  }
+  if( ind == -1 )  {
+    // validate the bonds to create
+    bool exists = false;
+    for( int i=0; i < AtomInfo.Count(); i++ )  {
+      ind = FindBondIndex(AtomInfo.GetValue(i).BondsToCreate, AtomInfo.GetKey(i), a1, a2, eqiv);
+      if( ind != -1 )  {
+        AtomInfo.GetValue(i).BondsToCreate.Delete(ind);
+        exists = true;
+        break;
+      }
+    }
+    if( !exists )  {  // if was added - then it might not exist?
+      AtomConnInfo& ai = AtomInfo.Add(&a1, AtomConnInfo(a1));
+      ai.BondsToRemove.Add( new CXBondInfo(a2, eqiv) );
+    }
+  }
 }
 //........................................................................
 void ConnInfo::AtomConnInfo::ToDataItem(TDataItem& item)  {

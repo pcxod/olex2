@@ -44,6 +44,9 @@ protected:
   };
   olxdict<TCAtom*, AtomConnInfo, TPointerPtrComparator> AtomInfo;
   olxdict<TBasicAtomInfo*, TypeConnInfo, TPointerPtrComparator> TypeInfo;
+  int FindBondIndex(const BondInfoList& list, TCAtom* key, TCAtom& a1, TCAtom& a2, const smatd* eqiv) const;
+  // 
+  const smatd* GetCorrectMatrix(const smatd* eqiv1, const smatd* eqiv2, bool release) const;
 public:
   ConnInfo(RefinementModel& _rm) : rm(_rm) {}
 
@@ -56,50 +59,8 @@ public:
 
   void ProcessConn(TStrList& ins);
 
-  void AddBond(TCAtom& a1, TCAtom& a2, const smatd* eqiv)  {
-    AtomConnInfo& ai = AtomInfo.Add(&a1, AtomConnInfo(a1));
-    bool found = false;
-    for( int i=0; i < ai.BondsToCreate.Count(); i++ )  {
-      if( ai.BondsToCreate[i].to == a2 )  {
-        if( ai.BondsToCreate[i].matr == NULL && eqiv == NULL )  {
-          found = true;
-          break;
-        }
-        if( ai.BondsToCreate[i].matr != NULL && eqiv != NULL &&
-            *ai.BondsToCreate[i].matr == *eqiv )  
-        {
-          found = true;
-          break;
-        }
-      }
-    }
-    if( found )
-      return;
-    // need to check if the same bond is not in the BondsToRemove List
-    ai.BondsToCreate.Add( new CXBondInfo(a2, eqiv) );
-  }
-  void RemBond(TCAtom& a1, TCAtom& a2, const smatd* eqiv)  {
-    AtomConnInfo& ai = AtomInfo.Add(&a1, AtomConnInfo(a1));
-    bool found = false;
-    for( int i=0; i < ai.BondsToRemove.Count(); i++ )  {
-      if( ai.BondsToRemove[i].to == a2 )  {
-        if( ai.BondsToRemove[i].matr == NULL && eqiv == NULL )  {
-          found = true;
-          break;
-        }
-        if( ai.BondsToRemove[i].matr != NULL && eqiv != NULL &&
-            *ai.BondsToRemove[i].matr == *eqiv )  
-        {
-          found = true;
-          break;
-        }
-      }
-    }
-    if( found )
-      return;
-    // need to check if the same bond is not in the BondsToCreate List
-    ai.BondsToRemove.Add( new CXBondInfo(a2, eqiv) );
-  }
+  void AddBond(TCAtom& a1, TCAtom& a2, const smatd* eqiv1, const smatd* eqiv2, bool release_eqiv);
+  void RemBond(TCAtom& a1, TCAtom& a2, const smatd* eqiv1, const smatd* eqiv2, bool release_eqiv);
   //.................................................................
   void ProcessFree(const TStrList& ins);
   void ProcessBind(const TStrList& ins);

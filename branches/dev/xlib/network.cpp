@@ -192,15 +192,15 @@ void TNetwork::CreateBondsAndFragments(TSAtomPList& Atoms, TNetPList& Frags)  {
       }
       else {
         const mat3i tr = sa->GetMatrix(0).r*ci.BondsToRemove[j].matr->r;
-        const vec3d tnt = sa->GetMatrix(0).t - ci.BondsToRemove[j].matr->t;
+        //const vec3d tnt = sa->GetMatrix(0).t - ci.BondsToCreate[j].matr->t;
         const vec3d tpt = sa->GetMatrix(0).t + ci.BondsToRemove[j].matr->t;
         for( int k=0; k < sa->NodeCount(); k++ )  {
           if( sa->Node(k).CAtom() == ci.BondsToRemove[j].to )  {
             bool remove = false;
             for( int l=0; l < sa->Node(k).MatrixCount(); l++ )  {
-              if( sa->Node(k).GetMatrix(l).r == tr && 
-                  (sa->Node(k).GetMatrix(l).t.QDistanceTo(tnt) < 0.001 ||
-                   sa->Node(k).GetMatrix(l).t.QDistanceTo(tpt) < 0.001) )  
+              if( sa->Node(k).GetMatrix(l).r == tr &&                
+                  //(sa->Node(k).GetMatrix(l).t.QDistanceTo(tnt) < 0.001 ||
+                   sa->Node(k).GetMatrix(l).t.QDistanceTo(tpt) < 0.001) //)  
               {
                 remove = true;
                 break;
@@ -225,15 +225,15 @@ void TNetwork::CreateBondsAndFragments(TSAtomPList& Atoms, TNetPList& Frags)  {
       }
       else {
         const mat3i tr = sa->GetMatrix(0).r*ci.BondsToCreate[j].matr->r;
-        const vec3d tnt = sa->GetMatrix(0).t - ci.BondsToCreate[j].matr->t;
+        //const vec3d tnt = sa->GetMatrix(0).t - ci.BondsToCreate[j].matr->t;
         const vec3d tpt = sa->GetMatrix(0).t + ci.BondsToCreate[j].matr->t;
         for( int k=0; k < ac; k++ )  {
           if( Atoms[k]->CAtom() == ci.BondsToCreate[j].to )  {
             bool add = false;
             for( int l=0; l < Atoms[k]->MatrixCount(); l++ )  {
               if( Atoms[k]->GetMatrix(l).r == tr && 
-                  (Atoms[k]->GetMatrix(l).t.QDistanceTo(tnt) < 0.001 ||
-                   Atoms[k]->GetMatrix(l).t.QDistanceTo(tpt) < 0.001) )  
+                  //(Atoms[k]->GetMatrix(l).t.QDistanceTo(tnt) < 0.001 ||
+                   Atoms[k]->GetMatrix(l).t.QDistanceTo(tpt) < 0.001) //)  
               {
                 add = true;
                 break;
