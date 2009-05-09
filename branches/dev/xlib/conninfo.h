@@ -44,7 +44,6 @@ protected:
   };
   olxdict<TCAtom*, AtomConnInfo, TPointerPtrComparator> AtomInfo;
   olxdict<TBasicAtomInfo*, TypeConnInfo, TPointerPtrComparator> TypeInfo;
-  int FindBondIndex(const BondInfoList& list, TCAtom* key, TCAtom& a1, TCAtom& a2, const smatd* eqiv) const;
   // 
   const smatd* GetCorrectMatrix(const smatd* eqiv1, const smatd* eqiv2, bool release) const;
 public:
@@ -58,9 +57,16 @@ public:
   CXConnInfo& GetConnInfo(TBasicAtomInfo& bai) const;
 
   void ProcessConn(TStrList& ins);
-
+  // eqiv corresponds to a2
+  static int FindBondIndex(const BondInfoList& list, TCAtom* key, TCAtom& a1, TCAtom& a2, const smatd* eqiv);
   void AddBond(TCAtom& a1, TCAtom& a2, const smatd* eqiv1, const smatd* eqiv2, bool release_eqiv);
   void RemBond(TCAtom& a1, TCAtom& a2, const smatd* eqiv1, const smatd* eqiv2, bool release_eqiv);
+  /* combines all bonds to create and delete for this atom and imposed by others 
+  assumes that all atoms already have connectivity information attached. 
+  The newly created matrices are stored in the ml - note then the list is deleted
+  the compiled information might become invalid (as some bonds will refer to matrices 
+  in the list) */
+  static void Compile(const TCAtom& a, BondInfoList& toCreate, BondInfoList& toDelete, smatd_list& ml);
   //.................................................................
   void ProcessFree(const TStrList& ins);
   void ProcessBind(const TStrList& ins);

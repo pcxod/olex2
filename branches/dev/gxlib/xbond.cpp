@@ -483,12 +483,8 @@ olxstr TXBond::GetLegend(const TSBond& Bnd, const short AtomALevel, const short 
     if( (i+1) < maxI ) 
       L << '.';
   }
-  /*
-  L = A->GetAtomInfo()->Symbol;
-  L += '-';
-  L += B->GetAtomInfo()->Symbol;*/
-
-  if( Bnd.GetType() == sotHBond )  L << "@H";
+  if( Bnd.GetType() == sotHBond )  
+    L << ".HB";
   return L;
 }
 //..............................................................................

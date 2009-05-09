@@ -268,13 +268,13 @@ void ConnInfo::TypeConnInfo::FromDataItem(TDataItem& item, TBasicAtomInfo* bai) 
   maxBonds = item.GetRequiredField("b").ToInt();
 }
 //........................................................................
-int ConnInfo::FindBondIndex(const BondInfoList& list, TCAtom* key, TCAtom& a1, TCAtom& a2, const smatd* eqiv) const {
-  if( key != &a1 && key != &a2 )
+int ConnInfo::FindBondIndex(const BondInfoList& list, TCAtom* key, TCAtom& a1, TCAtom& a2, const smatd* eqiv) {
+  if( key != &a1 && key != &a2 || list.IsEmpty() )
     return -1;
   if( key == &a1 )  {
     for( int i=0; i < list.Count(); i++ )  {
       if( list[i].to == a2 )  {
-        if( list[i].matr == NULL && eqiv == NULL )
+        if( list[i].matr == NULL ) // this is special case - generic bond suppression... && eqiv == NULL )
           return i;
         if( list[i].matr != NULL && eqiv != NULL && *list[i].matr == *eqiv )  
           return i;
@@ -290,7 +290,7 @@ int ConnInfo::FindBondIndex(const BondInfoList& list, TCAtom* key, TCAtom& a1, T
     return -1;
   }
   else  {
-    smatd mat(eqiv->r.Inverse(), eqiv->t * -1);
+    smatd mat( eqiv->Inverse() );
     for( int i=0; i < list.Count(); i++ )  {
       if( list[i].to == a1 && list[i].matr != NULL && *list[i].matr == mat )  
         return i;
@@ -306,7 +306,7 @@ const smatd* ConnInfo::GetCorrectMatrix(const smatd* eqiv1, const smatd* eqiv2, 
     return eqiv2;
   }
   if( eqiv2 == NULL || (eqiv2->r.IsI() && eqiv2->t.IsNull()) )  {
-    smatd mat(eqiv1->r.Inverse(), eqiv1->t * -1);
+    smatd mat(eqiv1->Inverse());
     if( release )  {
       rm.RemUsedSymm(*eqiv1);
       if( eqiv2 != NULL )
@@ -343,7 +343,10 @@ void ConnInfo::AddBond(TCAtom& a1, TCAtom& a2, const smatd* eqiv1, const smatd* 
     }
     if( ! exists )  {  // if was deleted - may be already exists?
       AtomConnInfo& ai = AtomInfo.Add(&a1, AtomConnInfo(a1));
-      ai.BondsToCreate.Add( new CXBondInfo(a2, eqiv) );
+      if( eqiv == NULL )  // these to be processed first
+        ai.BondsToCreate.Insert(0, new CXBondInfo(a2, eqiv) );
+      else
+        ai.BondsToCreate.Add( new CXBondInfo(a2, eqiv) );
     }
   }
 }
@@ -374,7 +377,47 @@ void ConnInfo::RemBond(TCAtom& a1, TCAtom& a2, const smatd* eqiv1, const smatd* 
     }
     if( !exists )  {  // if was added - then it might not exist?
       AtomConnInfo& ai = AtomInfo.Add(&a1, AtomConnInfo(a1));
-      ai.BondsToRemove.Add( new CXBondInfo(a2, eqiv) );
+      if( eqiv == NULL )  // these to be processed first
+        ai.BondsToRemove.Insert(0, new CXBondInfo(a2, eqiv) );
+      else
+        ai.BondsToRemove.Add( new CXBondInfo(a2, eqiv) );
+    }
+  }
+}
+//........................................................................
+void ConnInfo::Compile(const TCAtom& a, BondInfoList& toCreate, BondInfoList& toDelete, 
+                       smatd_list& ml )  
+{
+  TAsymmUnit& au = *a.GetParent();
+  for( int i=0; i < au.AtomCount(); i++ )  {
+    TCAtom& ca = au.GetAtom(i);
+    if( ca.IsDeleted() )  continue;
+    CXConnInfo& ci = ca.GetConnInfo();
+    if( ca != a )  {
+      for( int j=0; j < ci.BondsToRemove.Count(); j++ )  {
+        if( ci.BondsToRemove[j].to == a )  {
+          if( ci.BondsToRemove[j].matr == NULL )
+            toDelete.AddCCopy(ci.BondsToRemove[j]);
+          else  {
+            const smatd& matr = ml.AddNew(ci.BondsToRemove[j].matr->Inverse());
+            toDelete.Add( new CXBondInfo(ca, &matr) );
+          }
+        }
+      }
+      for( int j=0; j < ci.BondsToCreate.Count(); j++ )  {
+        if( ci.BondsToCreate[j].to == a )  {
+          if( ci.BondsToCreate[j].matr == NULL )
+            toCreate.AddCCopy(ci.BondsToRemove[j]);
+          else  {
+            const smatd& matr = ml.AddNew(ci.BondsToCreate[j].matr->Inverse());
+            toCreate.Add( new CXBondInfo(ca, &matr) );
+          }
+        }
+      }
+    }
+    else  {  // own connectivity
+      toCreate.AddListC(ci.BondsToCreate);
+      toDelete.AddListC(ci.BondsToRemove);
     }
   }
 }

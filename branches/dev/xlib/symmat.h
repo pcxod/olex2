@@ -18,12 +18,27 @@ public:
     r(m), t(v), Tag(-1) {  }
 
   template <class AT> 
-  TVector3<AT> operator * (const TVector3<AT>& a) const {
-    return TVector3<AT>( r*a ).operator +=(t);
+  inline TVector3<VC> operator * (const TVector3<AT>& a) const {
+    return TVector3<VC>( r*a ).operator +=(t);
   }
   
+  inline TSymmMat<MC,VC> operator * (const TSymmMat<MC,VC>& v) const {
+    return TSymmMat<MC,VC>(r*v.r, v*t);
+  }
+
+  inline TSymmMat<MC,VC>& operator *= (const TSymmMat<MC,VC>& v)  {
+    r *= v.r;
+    t = v * t;
+    return *this;
+  }
+
   inline bool operator == (const TSymmMat<MC,VC>& v) const {
-    return r == v.r ? (t == v.t) : false;
+    return (r == v.r && t == v.t);
+  }
+  /* compares rotational part directly, but does distance comparison for translation 
+  to prevent rounding errors influence*/
+  bool EqualExt(const TSymmMat<MC,VC>& v) const {
+    return (r == v.r && t.QDistanceTo(v.t) < 1e-6);
   }
   
   inline TSymmMat& operator = (const TSymmMat& sm)  {
@@ -62,6 +77,18 @@ public:
     return *this;
   }
   
+  inline TSymmMat<MC,VC> Inverse() const  {
+    TSymmMat<MC,VC> rv(r.Inverse(), t*-1);
+    rv.t = rv.r * rv.t;
+    return rv;
+  }
+  
+  static inline TSymmMat<MC,VC>& Inverse(TSymmMat<MC,VC>& m)  {
+    m.r = m.r.Inverse();
+    m.t = ((m.r*m.t) *= -1);
+    return m;
+  }
+
   TVector3<VC> t;
   TMatrix33<MC> r;
 

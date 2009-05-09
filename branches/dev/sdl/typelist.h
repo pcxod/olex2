@@ -102,7 +102,7 @@ public:
 //..............................................................................
   // adds a copy of the object with default constructor and assign operator "assigned copy"
   inline T& AddACopy(const T& Obj)  {  
-    T& rv =AddNew();
+    T& rv = AddNew();
     rv = Obj;
     return rv;
   }
@@ -138,7 +138,7 @@ public:
   inline T& Insert(size_t index, T* Obj)  {  return *List.Insert(index, Obj);  }
 //..............................................................................
   // copy constructor created copy is inserted
-  inline const T& InsertCCopy(size_t index, const T& Obj)  {  return InsertNew<T>(index, Obj);  }
+  inline T& InsertCCopy(size_t index, const T& Obj)  {  return InsertNew<T>(index, Obj);  }
 //..............................................................................
   //inerts a new object at specified position
   inline T& InsertNew(size_t index)  {  return *List.Insert(index, new T());  }

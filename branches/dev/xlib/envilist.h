@@ -51,6 +51,8 @@ public:
         break;
       }
   }
+  // applies a symmetry operation to all matrices and recalculates the coordinates
+  void ApplySymm(const smatd& sym);
 #ifndef _NO_PYTHON
   PyObject* PyExport(TPtrList<PyObject>& atoms);
 #endif

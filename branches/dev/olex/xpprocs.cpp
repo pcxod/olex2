@@ -8092,6 +8092,12 @@ void TMainForm::macProjSph(TStrObjList &Cmds, const TParamList &Options, TMacroE
 }
 //..............................................................................
 void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  vec3d p(1./3, 2./3, 1./6);
+  smatd sm;
+  sm.r = mat3d(1,-1,0, 1, 0, 0, -1, 0, 1);
+  sm.t = vec3d(1./2, 1./3, 1./4);
+  p = sm* p;
+  p = smatd::Inverse(sm) * p;
 
 }
 //..............................................................................
@@ -8708,12 +8714,6 @@ void TMainForm::macAddBond(TStrObjList &Cmds, const TParamList &Options, TMacroE
     a2 = (a1 == &atoms[i]->Atom()) ? &atoms[i+1]->Atom() : &atoms[i]->Atom();
     const smatd& eqiv = FXApp->XFile().GetRM().AddUsedSymm(a2->GetMatrix(0));
     FXApp->XFile().GetRM().Conn.AddBond(a1->CAtom(), a2->CAtom(), NULL, &eqiv, true);
-    if( FXApp->XFile().GetAsymmUnit().GetLatt() > 0 && !eqiv.r.IsI() )  {  // for centrosymm sg
-      smatd imat( a2->GetMatrix(0).r.Inverse(), a2->GetMatrix(0).t * -1 );
-      const smatd& eqiv1 = FXApp->XFile().GetRM().AddUsedSymm(imat);
-      FXApp->XFile().GetRM().Conn.AddBond(a1->CAtom(), a2->CAtom(), NULL, &eqiv, true);
-      FXApp->XFile().GetRM().Conn.AddBond(a1->CAtom(), a2->CAtom(), NULL, &eqiv1, true);
-    }
   }
   FXApp->XFile().GetAsymmUnit()._UpdateConnInfo();
   FXApp->XFile().GetLattice().UpdateConnectivity();
@@ -8752,12 +8752,7 @@ void TMainForm::macDelBond(TStrObjList &Cmds, const TParamList &Options, TMacroE
       }
       a2 = (a1 == pairs[i]) ? pairs[i+1] : pairs[i];
       const smatd& eqiv = FXApp->XFile().GetRM().AddUsedSymm(a2->GetMatrix(0));
-      if( FXApp->XFile().GetAsymmUnit().GetLatt() > 0  && !eqiv.r.IsI() )  {  // for centrosymm sg
-        smatd imat( a2->GetMatrix(0).r.Inverse(), a2->GetMatrix(0).t * -1 );
-        const smatd& eqiv1 = FXApp->XFile().GetRM().AddUsedSymm(imat);
-        FXApp->XFile().GetRM().Conn.RemBond(a1->CAtom(), a2->CAtom(), NULL, &eqiv, true);
-        FXApp->XFile().GetRM().Conn.RemBond(a1->CAtom(), a2->CAtom(), NULL, &eqiv1, true);
-      }
+      FXApp->XFile().GetRM().Conn.RemBond(a1->CAtom(), a2->CAtom(), NULL, &eqiv, true);
     }
     FXApp->GetRender().SelectAll(false);
     FXApp->XFile().GetAsymmUnit()._UpdateConnInfo();

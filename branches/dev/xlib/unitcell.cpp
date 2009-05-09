@@ -125,56 +125,29 @@ void TUnitCell::GenerateMatrices(smatd_list& out, const TAsymmUnit& au, short la
 
   smatd* M;
   for( int i=0; i < out.Count(); i++ )  {
-    smatd& m = out[i];
+    const smatd& m = out[i];
     switch( abs(lat) )  {
       case 1: break;
       case 2:      // Body Centered (I)
-        M = new smatd(m);
-        M->t[0] += 0.5f;     M->t[1] += 0.5f;     M->t[2] += 0.5f;
-        out.Insert(i+1, *M);
-        i++;
+        out.InsertCCopy(++i, m).t += vec3d(0.5, 0.5, 0.5);
         break;
       case 3:      // R Centered
-        M = new smatd(m);
-        M->t[0] += (2./3.);  M->t[1] += (1./3.);  M->t[2] += (1./3.);
-        out.Insert(i+1, *M);
-        i++;
-        M = new smatd(m);
-        M->t[0] += (1./3.);  M->t[1] += (2./3.);  M->t[2] += (2./3.);
-        out.Insert(i+1, *M);
-        i++;
+        out.InsertCCopy(++i, m).t += vec3d(2./3, 1./3, 1./3);
+        out.InsertCCopy(++i, m).t += vec3d(1./3, 2./3, 2./3);
         break;
       case 4:      // Face Centered (F)
-        M = new smatd(m);
-        M->t[0] += 0.0;    M->t[1] += 0.5;  M->t[2] += 0.5;
-        out.Insert(i+1, *M);
-        i++;
-        M = new smatd(m);
-        M->t[0] += 0.5;  M->t[1] += 0;    M->t[2] += 0.5;
-        out.Insert(i+1, *M);
-        i++;
-        M = new smatd(m);
-        M->t[0] += 0.5;  M->t[1] += 0.5;  M->t[2] += 0;
-        out.Insert(i+1, *M);
-        i++;
+        out.InsertCCopy(++i, m).t += vec3d(0, 0.5, 0.5);
+        out.InsertCCopy(++i, m).t += vec3d(0.5, 0, 0.5);
+        out.InsertCCopy(++i, m).t += vec3d(0.5, 0.5, 0);
         break;
       case 5:      // A Centered (A)
-        M = new smatd(m);
-        M->t[0] += 0;    M->t[1] += 0.5;  M->t[2] += 0.5;
-        out.Insert(i+1, *M);
-        i++;
+        out.InsertCCopy(++i, m).t += vec3d(0, 0.5, 0.5);
         break;
       case 6:      // B Centered (B)
-        M = new smatd(m);
-        M->t[0] += 0.5;  M->t[1] += 0;    M->t[2] += 0.5;
-        out.Insert(i+1, *M);
-        i++;
+        out.InsertCCopy(++i, m).t += vec3d(0.5, 0, 0.5);
         break;
       case 7:      // C Centered (C);
-        M = new smatd(m);
-        M->t[0] += 0.5;  M->t[1] += 0.5;  M->t[2] += 0;
-        out.Insert(i+1, *M);
-        i++;
+        out.InsertCCopy(++i, m).t += vec3d(0.5, 0.5, 0);
         break;
       default:
         throw TInvalidArgumentException(__OlxSourceInfo, "LATT");
@@ -182,10 +155,8 @@ void TUnitCell::GenerateMatrices(smatd_list& out, const TAsymmUnit& au, short la
   }
   if( au.GetLatt() > 0 )  {
     for( int i=0; i < out.Count(); i++ )  {
-      M = new smatd(out[i]);
-      *M *= -1;
-      out.Insert(i+1, *M);
-      i++;
+      const smatd& m = out[i];
+      out.InsertCCopy(++i, m) *= -1;
     }
   }
 }
@@ -195,8 +166,8 @@ void TUnitCell::UpdateEllipsoids()  {
   const int ac = au.AtomCount();
   const int mc = Matrices.Count();
 
-  mat3d abc2xyz( mat3d::Transpose(au.GetCellToCartesian()) ),
-        xyz2abc( mat3d::Transpose(au.GetCartesianToCell()) );
+  const mat3d abc2xyz( mat3d::Transpose(au.GetCellToCartesian()) ),
+              xyz2abc( mat3d::Transpose(au.GetCartesianToCell()) );
 
   ClearEllipsoids();
   Ellipsoids.SetCount(ac);
@@ -625,84 +596,21 @@ void TUnitCell::GetAtomEnviList(TSAtom& atom, TAtomEnvi& envi, bool IncludeQ, in
     }
     delete m;
   }
-  /* process extra conn info imposed by other atoms */
-  for( int i=0; i < au.AtomCount(); i++ )  {
-    if( au.GetAtom(i) == atom.CAtom() || au.GetAtom(i).IsDeleted() )
-      continue;
-    const CXConnInfo& ci = au.GetAtom(i).GetConnInfo();
-    for( int j=0; j < ci.BondsToRemove.Count(); j++ )  {
-      if( ci.BondsToRemove[j].to != atom.CAtom() )
-        continue;
-      for( int k=0; k < envi.Count(); k++ )  {
-        if( envi.GetCAtom(k) == au.GetAtom(i) )  {
-          if( ci.BondsToRemove[j].matr == NULL )  {
-            envi.Delete(k);
-            break;
-          }
-          else if( envi.GetMatrix(k).r == ci.BondsToRemove[j].matr->r && 
-              envi.GetMatrix(k).t.QDistanceTo(ci.BondsToRemove[j].matr->t) < 0.001 )  
-          {
-            envi.Delete(k);
-            break;
-          }
-        }
-      }
-    }
-    for( int j=0; j < ci.BondsToCreate.Count(); j++ )  {
-      if( ci.BondsToCreate[j].to != atom.CAtom() )
-        continue;
-      bool found = false;
-      for( int k=0; k < envi.Count(); k++ )  {
-        if( envi.GetCAtom(k) == au.GetAtom(i) )  {
-          if( ci.BondsToCreate[j].matr == NULL &&
-            envi.GetMatrix(k).r.IsI() && envi.GetMatrix(k).t.IsNull() )  
-          {
-            found = true;
-            break;
-          }
-          if( envi.GetMatrix(k).r == ci.BondsToCreate[j].matr->r &&
-            envi.GetMatrix(k).t.QDistanceTo( ci.BondsToCreate[j].matr->t ) < 0.001 )  
-          {
-            found = true;
-            break;
-          }
-        }
-      }
-      if( !found )  {
-        if( ci.BondsToCreate[j].matr == NULL )  {
-          vec3d crd = au.GetAtom(i).ccrd();
-          au.CellToCartesian(crd);
-          if( crd.QDistanceTo(atom.crd()) > 0.001 )
-            envi.Add(au.GetAtom(i), I, crd);
-        }
-        else  {
-          vec3d crd = (*ci.BondsToCreate[j].matr)*au.GetAtom(i).ccrd();
-          au.CellToCartesian(crd);
-          if( crd.QDistanceTo(atom.crd()) > 0.001 )
-            envi.Add(au.GetAtom(i), *ci.BondsToCreate[j].matr, crd);
-        }
-      }
-    }
-  }
-  // process own connectivity info
-  const CXConnInfo& ci = atom.CAtom().GetConnInfo();
-  for( int i=0; i < ci.BondsToRemove.Count(); i++ )  {
-    if( ci.BondsToRemove[i].matr == NULL )  {
+  smatd_list ml;
+  BondInfoList toCreate, toDelete;
+  ConnInfo::Compile(atom.CAtom(), toCreate, toDelete, ml);
+  /* process own connectivity info. according to latest changes, olex2 sort */
+  for( int i=0; i < toDelete.Count(); i++ )  {
+    if( toDelete[i].matr == NULL )  {
       for( int j=0; j < envi.Count(); j++ )  {
-        if( envi.GetCAtom(j) == ci.BondsToRemove[i].to )
+        if( envi.GetCAtom(j) == toDelete[i].to )
           envi.Delete(j--);
       }
     }
     else {
-      const mat3i tr = atom.GetMatrix(0).r*ci.BondsToRemove[i].matr->r;
-      const vec3d tnt = atom.GetMatrix(0).t - ci.BondsToRemove[i].matr->t;
-      const vec3d tpt = atom.GetMatrix(0).t + ci.BondsToRemove[i].matr->t;
       for( int j=0; j < envi.Count(); j++ )  {
-        if( envi.GetCAtom(j) == ci.BondsToRemove[i].to )  {
-          if( envi.GetMatrix(j).r == tr && 
-            (envi.GetMatrix(j).t.QDistanceTo(tnt) < 0.001 ||
-             envi.GetMatrix(j).t.QDistanceTo(tpt) < 0.001) )  
-          {
+        if( envi.GetCAtom(j) == toDelete[i].to )  {
+          if( envi.GetMatrix(j).EqualExt(*toDelete[i].matr) )  {
             envi.Delete(j);
             break;
           }
@@ -710,38 +618,43 @@ void TUnitCell::GetAtomEnviList(TSAtom& atom, TAtomEnvi& envi, bool IncludeQ, in
       }
     }
   }
-  for( int i=0; i < ci.BondsToCreate.Count(); i++ )  {
+  for( int i=0; i < toCreate.Count(); i++ )  {
     bool found = false;
     for( int j=0; j < envi.Count(); j++ )  {
-      if( envi.GetCAtom(j) == ci.BondsToCreate[i].to )  {
-        if( ci.BondsToCreate[i].matr == NULL )  {
-          if( envi.GetMatrix(j).r.IsI() && envi.GetMatrix(j).t.IsNull() )  {
+      if( envi.GetCAtom(j) == toCreate[i].to )  {
+        if( toCreate[i].matr == NULL )  {
+          if( envi.GetMatrix(j).IsI() )  {
             found = true;
             break;
           }
         }
-        else if( envi.GetMatrix(j).r == ci.BondsToCreate[i].matr->r &&
-          envi.GetMatrix(j).t.QDistanceTo( ci.BondsToCreate[i].matr->t ) < 0.001 )  
-        {
+        else if( envi.GetMatrix(j).EqualExt(*toCreate[i].matr) )  {
           found = true;
           break;
         }
       }
     }
     if( !found )  {
-      if( ci.BondsToCreate[i].matr == NULL )  {
-        vec3d crd = ci.BondsToCreate[i].to.ccrd();
+      if( toCreate[i].matr == NULL )  {
+        vec3d crd = toCreate[i].to.ccrd();
         au.CellToCartesian(crd);
         if( crd.QDistanceTo(atom.crd()) > 0.001 )
-          envi.Add(ci.BondsToCreate[i].to, I, crd);
+          envi.Add(toCreate[i].to, I, crd);
       }
       else  {
-        vec3d crd = (*ci.BondsToCreate[i].matr)*ci.BondsToCreate[i].to.ccrd();
+        vec3d crd = (*toCreate[i].matr)*toCreate[i].to.ccrd();
         au.CellToCartesian(crd);
         if( crd.QDistanceTo(atom.crd()) > 0.001 )
-          envi.Add(ci.BondsToCreate[i].to, *ci.BondsToCreate[i].matr, crd);
+          envi.Add(toCreate[i].to, *toCreate[i].matr, crd);
       }
     }
+  }
+  // finally, CONN
+  int maxb = atom.CAtom().GetConnInfo().maxBonds;
+  if( envi.Count() > maxb )  {
+    envi.SortByDistance();
+    while( envi.Count() > maxb )
+      envi.Delete( envi.Count()-1 );
   }
 }
 //..............................................................................
