@@ -9,7 +9,7 @@
 
   static bool DoCheckPosition = false;
 
-TCmdLine::TCmdLine( wxWindow* parent, int flags )  : TTextEdit( parent, flags )  {
+TCmdLine::TCmdLine( wxWindow* parent, int flags )  : TTextEdit( parent, wxDefaultSize, flags )  {
   Actions = new TActionQList();
   OnCommand = &Actions->NewQueue("ONCOMMAND");
   PromptStr = ">>";

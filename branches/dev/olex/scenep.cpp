@@ -25,7 +25,6 @@ BEGIN_EVENT_TABLE(TdlgSceneProps, TDialog)
   EVT_BUTTON(wxID_APPLY, TdlgSceneProps::OnApply)
 END_EVENT_TABLE()
 //..............................................................................
-
 TdlgSceneProps::TdlgSceneProps(TMainForm *ParentFrame, TGXApp *XApp)
 :TDialog(ParentFrame, wxT("Scene Parameters"), uiStrT(EsdlClassNameT(TdlgSceneProps)) )
 {
@@ -35,17 +34,17 @@ TdlgSceneProps::TdlgSceneProps(TMainForm *ParentFrame, TGXApp *XApp)
   wxSize DefS(100, 21);
   short Border = 1, TbW=100, SpW = 40;
   wxStaticText *stX = new wxStaticText(this, -1, wxT("X"), wxDefaultPosition, wxSize(21, 21));
-  tbX = new TTrackBar(this);  tbX->WI.SetWidth(TbW);  tbX->OnChange->Add(this);  tbX->SetRange(-100,100);
-  teX = new TTextEdit(this);  teX->WI.SetWidth(25);   teX->SetReadOnly(true);
+  tbX = new TTrackBar(this, wxSize(TbW, 21));  tbX->OnChange->Add(this);  tbX->SetRange(-100,100);
+  teX = new TTextEdit(this, wxSize(25, 21));  teX->SetReadOnly(true);
   wxStaticText *stY = new wxStaticText(this, -1, wxT("Y"), wxDefaultPosition, wxSize(21, 21));
-  tbY = new TTrackBar(this);  tbY->WI.SetWidth(TbW);  tbY->OnChange->Add(this);  tbY->SetRange(-100,100);
-  teY = new TTextEdit(this);  teY->WI.SetWidth(25);   teY->SetReadOnly(true);
+  tbY = new TTrackBar(this, wxSize(TbW, 21));  tbY->OnChange->Add(this);  tbY->SetRange(-100,100);
+  teY = new TTextEdit(this, wxSize(25, 21));  teY->SetReadOnly(true);
   wxStaticText *stZ = new wxStaticText(this, -1, wxT("Z"), wxDefaultPosition, wxSize(21, 21));
-  tbZ = new TTrackBar(this);  tbZ->WI.SetWidth(TbW);  tbZ->OnChange->Add(this);  tbZ->SetRange(-100,100);
-  teZ = new TTextEdit(this);  teZ->WI.SetWidth(25);   teZ->SetReadOnly(true);
+  tbZ = new TTrackBar(this, wxSize(TbW, 21));  tbZ->OnChange->Add(this);  tbZ->SetRange(-100,100);
+  teZ = new TTextEdit(this, wxSize(25, 21));  teZ->SetReadOnly(true);
   wxStaticText *stR = new wxStaticText(this, -1, wxT("R"), wxDefaultPosition, wxSize(21, 21));
-  tbR  = new TTrackBar(this); tbR->WI.SetWidth(TbW);  tbR->OnChange->Add(this);  tbR->SetRange(-3,3);
-  teR = new TTextEdit(this);  teR->WI.SetWidth(25);   teR->SetReadOnly(true);
+  tbR  = new TTrackBar(this, wxSize(TbW, 21)); tbR->OnChange->Add(this);  tbR->SetRange(-3,3);
+  teR = new TTextEdit(this, wxSize(25, 21));  teR->SetReadOnly(true);
 
   wxBoxSizer *PSizerX = new wxBoxSizer( wxHORIZONTAL );
   PSizerX->Add( stX, 0, wxALL, Border );
@@ -75,19 +74,18 @@ TdlgSceneProps::TdlgSceneProps(TMainForm *ParentFrame, TGXApp *XApp)
   PSizer->Add( PSizerR, 0, wxALL, 1 );
 
   wxStaticText *stAmb = new wxStaticText(this, -1, wxT("Ambient"), wxDefaultPosition, wxSize(45, 21));
-  teAmb = new TTextEdit(this); teAmb->SetReadOnly(true);  teAmb->WI.SetWidth(34);  teAmb->WI.SetHeight(21);  teAmb->OnClick->Add(this);
-  scAmbA = new TSpinCtrl(this);  scAmbA->WI.SetWidth(SpW);
+  teAmb = new TTextEdit(this, wxSize(34, 21));  teAmb->SetReadOnly(true);  teAmb->OnClick->Add(this);
+  scAmbA = new TSpinCtrl(this, wxSize(SpW, 21));
 
   wxStaticText *stDiff = new wxStaticText(this, -1, wxT("Diffuse"), wxDefaultPosition, wxSize(45, 21));
-  teDiff = new TTextEdit(this); teDiff->SetReadOnly(true);  teDiff->WI.SetWidth(34);  teDiff->WI.SetHeight(21);  teDiff->OnClick->Add(this);
-  scDiffA = new TSpinCtrl(this); scDiffA->WI.SetWidth(SpW);
+  teDiff = new TTextEdit(this, wxSize(34, 21)); teDiff->SetReadOnly(true);  teDiff->OnClick->Add(this);
+  scDiffA = new TSpinCtrl(this, wxSize(SpW, 21)); scDiffA->WI.SetWidth(SpW);
 
   wxStaticText *stSpec = new wxStaticText(this, -1, wxT("Specular"), wxDefaultPosition, wxSize(45, 21));
-  teSpec  = new TTextEdit(this); teSpec->SetReadOnly(true);  teSpec->WI.SetWidth(34);  teSpec->WI.SetHeight(21);  teSpec->OnClick->Add(this);
-  scSpecA = new TSpinCtrl(this); scSpecA->WI.SetWidth(SpW);
-
+  teSpec  = new TTextEdit(this, wxSize(34, 21)); teSpec->SetReadOnly(true);  teSpec->OnClick->Add(this);
+  scSpecA = new TSpinCtrl(this, wxSize(SpW, 21)); 
   wxStaticText *stSExp = new wxStaticText(this, -1, wxT("Spot exponent"), wxDefaultPosition, wxSize(80, 21));
-  scSExp = new TSpinCtrl(this); scSExp->WI.SetWidth(SpW+5);  scSExp->SetRange(0, 128);
+  scSExp = new TSpinCtrl(this, wxSize(SpW+5, 21)); scSExp->SetRange(0, 128);
 
   wxBoxSizer *LSizerA = new wxBoxSizer( wxHORIZONTAL );
   LSizerA->Add( stAmb, 0, wxALL, Border );
@@ -130,7 +128,7 @@ TdlgSceneProps::TdlgSceneProps(TMainForm *ParentFrame, TGXApp *XApp)
   ButtonsSizer->Add( new wxButton( this, wxID_SAVE, wxT("Save") ),     0, wxALL, Border );
   ButtonsSizer->Add( new wxButton( this, wxID_APPLY, wxT("Apply") ),     0, wxALL, Border );
 
-  cbLights = new TComboBox(this); 
+  cbLights = new TComboBox(this, true, wxSize(80,21)); 
   for( int i=0; i < 8; i++ )
     cbLights->AddObject(olxstr("Light ") << (i + 1));
   cbLights->SetValue( uiStr(cbLights->GetItem(0)) );
@@ -147,12 +145,12 @@ TdlgSceneProps::TdlgSceneProps(TMainForm *ParentFrame, TGXApp *XApp)
   SizerSC->Add( scSCO, 0, wxALL, 1 );
   SizerSC->Add( cbUniform, 0, wxALL, 1 );
 
-  wxStaticText *stSCX = new wxStaticText(this, -1, wxT("X"), wxDefaultPosition, wxSize(10, 21));
-  teSCX = new TTextEdit(this);  teSCX->WI.SetWidth(45);
-  wxStaticText *stSCY = new wxStaticText(this, -1, wxT("Y"), wxDefaultPosition, wxSize(10, 21));
-  teSCY = new TTextEdit(this);  teSCY->WI.SetWidth(45);
-  wxStaticText *stSCZ = new wxStaticText(this, -1, wxT("Z"), wxDefaultPosition, wxSize(10, 21));
-  teSCZ = new TTextEdit(this);  teSCZ->WI.SetWidth(45);
+  wxStaticText *stSCX = new wxStaticText(this, -1, wxT("X"), wxDefaultPosition, wxSize(15, 21));
+  teSCX = new TTextEdit(this, wxSize(45, 21));
+  wxStaticText *stSCY = new wxStaticText(this, -1, wxT("Y"), wxDefaultPosition, wxSize(15, 21));
+  teSCY = new TTextEdit(this, wxSize(45, 21));
+  wxStaticText *stSCZ = new wxStaticText(this, -1, wxT("Z"), wxDefaultPosition, wxSize(15, 21));
+  teSCZ = new TTextEdit(this, wxSize(45, 21));
 
   wxStaticBox *BoxSD = new wxStaticBox(this, -1, wxT("Spot direction"));
   wxStaticBoxSizer *SizerSD = new wxStaticBoxSizer(BoxSD, wxHORIZONTAL );
@@ -168,11 +166,11 @@ TdlgSceneProps::TdlgSceneProps(TMainForm *ParentFrame, TGXApp *XApp)
   SizerS->Add( SizerSD, 0, wxALL, 1 );
 
 
-  teAA = new TTextEdit(this);  teAA->WI.SetWidth(45);
+  teAA = new TTextEdit(this, wxSize(45, 21));
   wxStaticText *stAA = new wxStaticText(this, -1, wxT("x^2+"), wxDefaultPosition, wxSize(25, 21));
-  teAB = new TTextEdit(this);  teAB->WI.SetWidth(45);
+  teAB = new TTextEdit(this, wxSize(45, 21));
   wxStaticText *stAB = new wxStaticText(this, -1, wxT("x+"), wxDefaultPosition, wxSize(15, 21));
-  teAC = new TTextEdit(this);  teAC->WI.SetWidth(45);
+  teAC = new TTextEdit(this, wxSize(45, 21));
 
   wxStaticBox *BoxA = new wxStaticBox(this, -1, wxT("Attenuation"));
   wxStaticBoxSizer *SizerA = new wxStaticBoxSizer(BoxA, wxHORIZONTAL );
@@ -194,7 +192,7 @@ TdlgSceneProps::TdlgSceneProps(TMainForm *ParentFrame, TGXApp *XApp)
   TSizer1->Add( SizerA, 0, wxALL, 1 );
   TSizer1->Add( SizerE, 0, wxALL, 1 );
 
-  cbFonts = new TComboBox(this);
+  cbFonts = new TComboBox(this, true, wxSize(80,21));
   AGlScene* ascene = FXApp->GetRender().Scene();
   for( int i=0; i < ascene->FontCount(); i++ )
     cbFonts->AddObject( ascene->Font(i)->GetName(), ascene->Font(i) );
@@ -205,11 +203,9 @@ TdlgSceneProps::TdlgSceneProps(TMainForm *ParentFrame, TGXApp *XApp)
   cbLocalV = new wxCheckBox(this, -1, wxT("Local viewer"), wxDefaultPosition, DefS);
   cbTwoSide = new wxCheckBox(this, -1, wxT("Two side"), wxDefaultPosition, DefS);
   cbSmooth = new wxCheckBox(this, -1, wxT("Smooth shade"), wxDefaultPosition, DefS);
-  tcAmbLM = new TTextEdit(this); tcAmbLM->SetReadOnly(true);  tcAmbLM->WI.SetWidth(34);
-    tcAmbLM->WI.SetHeight(21);  tcAmbLM->OnClick->Add(this);
+  tcAmbLM = new TTextEdit(this, wxSize(34, 21)); tcAmbLM->SetReadOnly(true);  tcAmbLM->OnClick->Add(this);
   wxStaticText *stAmbLM = new wxStaticText(this, -1, wxT("Ambient color"), wxDefaultPosition, wxSize(75, 21));
-  tcBgClr = new TTextEdit(this); tcBgClr->SetReadOnly(true);  tcBgClr->WI.SetWidth(34);
-    tcBgClr->WI.SetHeight(21);  tcBgClr->OnClick->Add(this);
+  tcBgClr = new TTextEdit(this, wxSize(34, 21)); tcBgClr->SetReadOnly(true);  tcBgClr->OnClick->Add(this);
   wxStaticText *stBgClr = new wxStaticText(this, -1, wxT("Background color"), wxDefaultPosition, wxSize(100, 21));
 
   wxStaticBox *Box2 = new wxStaticBox(this, -1, wxT("Light model"));

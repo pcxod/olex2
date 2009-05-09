@@ -408,7 +408,7 @@ protected:
   void EnterEvent(wxFocusEvent& event);
   olxstr OnChangeStr, Data, OnLeaveStr, OnEnterStr;
 public:
-  TTextEdit(wxWindow *Parent, int style=0);
+  TTextEdit(wxWindow *Parent, const wxSize& sz=wxDefaultSize, int style=0);
   virtual ~TTextEdit();
 
   olxstr GetText()          const {  return wxTextCtrl::GetValue().c_str(); }
@@ -444,7 +444,7 @@ protected:
   void EnterPressedEvent(wxCommandEvent& event);
   olxstr OnChangeStr, Data;
 public:
-  TSpinCtrl(wxWindow *Parent);
+  TSpinCtrl(wxWindow *Parent, const wxSize& sz=wxDefaultSize);
   virtual ~TSpinCtrl();
 
   DefPropC(olxstr, OnChangeStr) // this is passed to the OnChange event
@@ -475,7 +475,8 @@ protected:
   olxstr OnChangeStr, OnMouseUpStr, Data;
   int this_Val;  // needed to call events only if value has changed
 public:
-  TTrackBar(wxWindow *Parent);
+  // on gtk, the size cannot be changed after the creation!
+  TTrackBar(wxWindow *Parent, const wxSize& sz=wxDefaultSize);
   virtual ~TTrackBar();
 
   DefPropC(olxstr, OnChangeStr) // this is passed to the OnChange event

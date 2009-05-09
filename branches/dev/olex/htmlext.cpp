@@ -223,12 +223,10 @@ TAG_HANDLER_PROC(tag)  {
 /******************* TEXT CONTROL *********************************************/
   if( !TagName.Comparei("text") )  {
     TTextEdit *Text = new TTextEdit(m_WParser->GetWindowInterface()->GetHTMLWindow(),
-      (tag.HasParam(wxT("MULTILINE")) ? wxTE_MULTILINE : 0));
+      wxSize(ax, ay), (tag.HasParam(wxT("MULTILINE")) ? wxTE_MULTILINE : 0));
     Text->SetFont( m_WParser->GetDC()->GetFont() );
     CreatedObject = Text;
     CreatedWindow = Text;
-    Text->WI.SetWidth( ax );
-    Text->WI.SetHeight( ay );
     Text->SetData( Data );
 
     Text->SetText(Value);

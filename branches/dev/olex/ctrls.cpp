@@ -631,8 +631,8 @@ BEGIN_EVENT_TABLE(TTextEdit, wxTextCtrl)
   EVT_SET_FOCUS(TTextEdit::EnterEvent)
 END_EVENT_TABLE()
 //..............................................................................
-TTextEdit::TTextEdit(wxWindow *Parent, int style):
-    wxTextCtrl(Parent, -1, wxString(), wxDefaultPosition, wxDefaultSize, style), WI(this)  {
+TTextEdit::TTextEdit(wxWindow *Parent, const wxSize& sz, int style):
+    wxTextCtrl(Parent, -1, wxString(), wxDefaultPosition, sz, style), WI(this)  {
   FActions = new TActionQList;
   OnChange = &FActions->NewQueue("ONCHANGE");
   OnClick = &FActions->NewQueue("ONCLICK");
@@ -764,7 +764,9 @@ BEGIN_EVENT_TABLE(TSpinCtrl, wxSpinCtrl)
   EVT_SET_FOCUS(TSpinCtrl::EnterEvent)
 END_EVENT_TABLE()
 //..............................................................................
-TSpinCtrl::TSpinCtrl(wxWindow *Parent): wxSpinCtrl(Parent), WI(this)  {
+TSpinCtrl::TSpinCtrl(wxWindow *Parent, const wxSize& sz): 
+  wxSpinCtrl(Parent, -1, wxEmptyString, wxDefaultPosition, sz), WI(this)  
+{
   FActions = new TActionQList;
   OnChange = &FActions->NewQueue("ONCHANGE");
 }
@@ -886,8 +888,8 @@ BEGIN_EVENT_TABLE(TTrackBar, wxSlider)
   EVT_LEFT_UP(TTrackBar::MouseUpEvent)
 END_EVENT_TABLE()
 //..............................................................................
-TTrackBar::TTrackBar(wxWindow *Parent) : 
-  wxSlider(Parent, -1, 0, 0, 100, wxDefaultPosition, wxDefaultSize, wxSL_HORIZONTAL|wxSL_AUTOTICKS),
+TTrackBar::TTrackBar(wxWindow *Parent, const wxSize& sz) : 
+  wxSlider(Parent, -1, 0, 0, 100, wxDefaultPosition, sz, wxSL_HORIZONTAL|wxSL_AUTOTICKS),
   WI(this)  {
   FActions = new TActionQList;
   OnChange = &FActions->NewQueue("ONCHANGE");
