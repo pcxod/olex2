@@ -162,10 +162,7 @@ void TXBond::ListPrimitives(TStrList &List) const {
 }
 //..............................................................................
 void TXBond::Quality(const short Val)  {
-  olxstr Legend("Bonds");
-  TGraphicsStyle *GS;
-  GS = FParent->Styles()->NewStyle(Legend, true);
-
+  TGraphicsStyle *GS = FParent->Styles()->NewStyle("Bonds", true);
   olxstr& ConeQ = GS->GetParam("ConeQ", "0", true);
 //  double &ConeStipples = GS->ParameterValue("ConeStipples");
 
@@ -482,7 +479,8 @@ olxstr TXBond::GetLegend(const TSBond& Bnd, const short level)  {
 }
 //..............................................................................
 void TXBond::Radius(float V)  {
-  Params()[4] = Primitives()->Style()->GetParam("R", V).ToDouble();
+  Params()[4] = V;
+  Primitives()->Style()->SetParam("R", V);
   // update radius for all members of the collection
   for( int i=0; i < Primitives()->ObjectCount(); i++ )
     Primitives()->Object(i)->Params()[4] = V;

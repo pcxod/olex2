@@ -399,8 +399,16 @@ void ConnInfo::Compile(const TCAtom& a, BondInfoList& toCreate, BondInfoList& to
           if( ci.BondsToRemove[j].matr == NULL )
             toDelete.AddCCopy(ci.BondsToRemove[j]);
           else  {
-            const smatd& matr = ml.AddNew(ci.BondsToRemove[j].matr->Inverse());
-            toDelete.Add( new CXBondInfo(ca, &matr) );
+            const smatd matr = ci.BondsToRemove[j].matr->Inverse();
+            bool uniq = true;
+            for( int k=0; k < toDelete.Count(); k++ )  {
+              if( toDelete[k].matr != NULL && toDelete[k].to == a && toDelete[k].matr->EqualExt(matr) )  {
+                uniq = false;
+                break;
+              }
+            }
+            if( uniq )
+              toDelete.Add( new CXBondInfo(ca, &ml.AddCCopy(matr)) );
           }
         }
       }
@@ -409,8 +417,16 @@ void ConnInfo::Compile(const TCAtom& a, BondInfoList& toCreate, BondInfoList& to
           if( ci.BondsToCreate[j].matr == NULL )
             toCreate.AddCCopy(ci.BondsToRemove[j]);
           else  {
-            const smatd& matr = ml.AddNew(ci.BondsToCreate[j].matr->Inverse());
-            toCreate.Add( new CXBondInfo(ca, &matr) );
+            const smatd matr = ci.BondsToCreate[j].matr->Inverse();
+            bool uniq = true;
+            for( int k=0; k < toCreate.Count(); k++ )  {
+              if( toCreate[k].matr != NULL && toCreate[k].to == a && toCreate[k].matr->EqualExt(matr) )  {
+                uniq = false;
+                break;
+              }
+            }
+            if( uniq )
+              toCreate.Add( new CXBondInfo(ca, &ml.AddCCopy(matr)) );
           }
         }
       }

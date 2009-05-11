@@ -585,10 +585,12 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual occupancy\
 "Sets primitives for atoms or bonds according to provided mask.\
 Accepts atoms, bonds, hbonds or a name (like from LstGO). Example: 'mask hbonds 2048' - this resets hydrogen bond style to default" );
 
-  this_InitMacroD(ARad, EmptyString, fpAny^fpNone, "Changes how the atoms are drawn [sfil,pers,isot,isoth]" );
-  this_InitMacroD(ADS, EmptyString, fpAny^(fpNone), "Changes atom draw style [sph,elp]" );
-  this_InitMacroD(AZoom, EmptyString, fpAny^fpNone, "modifies given atoms [all] radius. The first argument is the new radius in %");
-  this_InitMacroD(BRad, EmptyString, fpOne, "sets bond radius to given number" );
+  this_InitMacroD(ARad, EmptyString, fpAny^fpNone, 
+"Changes how the atoms are drawn [sfil - sphere packing, pers - static radii, isot - radii proportional to Ueq,\
+ isoth - as isot, but applied to H atoms as well]" );
+  this_InitMacroD(ADS, EmptyString, fpAny^(fpNone), "Changes atom draw style [sph,elp,std]" );
+  this_InitMacroD(AZoom, EmptyString, fpAny^fpNone, "Modifies given atoms [all] radius. The first argument is the new radius in %");
+  this_InitMacroD(BRad, EmptyString, fpAny^fpNone, "Sets provided [all] bonds radius to given number (first argument)" );
 
   this_InitMacro(Hide, , fpAny^fpNone );
   this_InitMacroD(Kill, "h-kill hidden atoms", fpAny^fpNone, "deletes provided [selected] atoms" );

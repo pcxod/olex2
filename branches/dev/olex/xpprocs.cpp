@@ -1979,8 +1979,6 @@ void TMainForm::macMask(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     int Mask = Cmds[1].ToInt();
     TXBondPList Bonds;
     FXApp->GetBonds(Cmds.Text(' ', 2), Bonds);
-    if( Bonds.IsEmpty() && FXApp->Selection()->Count() == 0 )
-      TXBond::DefMask(Mask);
     FXApp->UpdateBondPrimitives(Mask, 
       (Bonds.IsEmpty() && FXApp->Selection()->Count() == 0) ? NULL : &Bonds, 
       Cmds[0].Comparei("hbonds") == 0);
@@ -2042,7 +2040,9 @@ void TMainForm::macAZoom(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 }
 //..............................................................................
 void TMainForm::macBRad(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  FXApp->BondRad(Cmds[0].ToDouble());
+  TXBondPList bonds;
+  FXApp->GetBonds(Cmds.Text(' ', 1), bonds);
+  FXApp->BondRad(Cmds[0].ToDouble(), bonds.IsEmpty() ? NULL : &bonds);
 }
 //..............................................................................
 void TMainForm::macKill(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {

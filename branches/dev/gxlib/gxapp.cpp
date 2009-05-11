@@ -2396,12 +2396,14 @@ void TGXApp::UpdateBondPrimitives(int Mask, TXBondPList* Bonds, bool HBondsOnly)
       if( bonds[i]->Primitives()->GetTag() == i )
         bonds[i]->UpdatePrimitives(Mask);
     }
-    if( Bonds == NULL )  {
-      for( int i=0; i < IndividualCollections.Count(); i++ )
-        if( IndividualCollections[i].IndexOf('-') != -1 )
-          IndividualCollections[i] = EmptyString;
-      IndividualCollections.Pack();
-    }
+  }
+  if( Bonds == NULL )  {
+    for( int i=0; i < IndividualCollections.Count(); i++ )
+      if( IndividualCollections[i].IndexOf('-') != -1 )
+        IndividualCollections[i] = EmptyString;
+    IndividualCollections.Pack();
+    if( !HBondsOnly )
+      TXBond::DefMask(Mask);
   }
 }
 //..............................................................................
