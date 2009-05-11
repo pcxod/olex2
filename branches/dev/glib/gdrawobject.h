@@ -46,6 +46,11 @@ public:
   virtual ACreationParams* GetCreationParams() const {  return NULL;  }
   virtual ~AGDrawObject();
 
+  virtual const olxstr& GetPrimitiveMaskName() const {
+    static const olxstr mn("PMask");
+    return mn;
+  }
+
   void  Primitives( TGPCollection *GPC);
   inline TGPCollection* Primitives()  const {  return FPrimitives;  }
 

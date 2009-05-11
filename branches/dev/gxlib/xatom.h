@@ -10,14 +10,13 @@
 #include "styles.h"
 
 #include "satom.h"
-
+#include "ellipsoid.h"
 BeginGxlNamespace()
 
 const short adsSphere       = 1,  // atom draw styles
             adsEllipsoid    = 2,
-            adsEllipsoidNPD = 3,
-            adsStandalone   = 4,
-            adsOrtep        = 5;
+            adsStandalone   = 3,
+            adsOrtep        = 4;
 
 const short darPers     = 0x0001, // default atom radii
             darIsot     = 0x0002,
@@ -30,8 +29,13 @@ const short polyNone      = 0,
             polyPyramid   = 3,
             polyBipyramid = 4;
 
-const int xatom_PolyId   = 1,
-          xatom_SphereId = 2;
+const int 
+  xatom_PolyId        = 1,
+  xatom_SphereId      = 2,
+  xatom_SmallSphereId = 3,
+  xatom_RimsId        = 4,
+  xatom_DisksId       = 5,
+  xatom_CrossId       = 6;
 
 class TXAtomStylesClear: public AActionHandler  {
 public:
@@ -46,7 +50,12 @@ private:
   TSAtom *FAtom;
   short FDrawStyle, FRadius;
   int XAppId;
-  static short PolyhedronIndex, SphereIndex;
+  static short PolyhedronIndex, 
+    SphereIndex, 
+    SmallSphereIndex, 
+    RimsIndex, 
+    DisksIndex,
+    CrossIndex;
   friend class TXAtomStylesClear;
   struct Poly {
     TArrayList<vec3f> vecs;
@@ -60,6 +69,7 @@ private:
   void CreateNormals(TXAtom::Poly& pl, const vec3f& cnt);
   void CreatePoly(const TSAtomPList& atoms, short type, 
     const vec3d* normal=NULL, const vec3d* center=NULL);
+  // returns different names for isotropic and anisotropic atoms
 protected:
   TStrList* FindPrimitiveParams(TGlPrimitive *P);
   static TTypeList<TGlPrimitiveParams> FPrimitiveParams;
@@ -95,17 +105,13 @@ public:
 
   static void DefRad(short V);
   static void DefDS(short V);
-  static void DefSphMask(int V);
-  static void DefElpMask(int V);
-  static void DefNpdMask(int V);
+  static void DefMask(int V);
   static void TelpProb(float V);
   static void DefZoom(float V);
 
   static short DefRad(); // default radius
   static short DefDS();     // default drawing style
-  static int   DefSphMask();  // default mask for spherical atoms
-  static int   DefElpMask();  // default mask for elliptical atoms
-  static int   DefNpdMask();  // default mas for elliptical atoms eith NPD ellipsoid
+  static int   DefMask();  // default mas for elliptical atoms eith NPD ellipsoid
   static float TelpProb();    // to use with ellipsoids
   static float DefZoom();    // to use with ellipsoids
 

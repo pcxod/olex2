@@ -924,8 +924,7 @@ void TIns::SetSfacUnit(const olxstr& su) {
 //..............................................................................
 bool TIns::Adopt(TXFile *XF)  {
   Clear();
-  GetAsymmUnit().Assign( XF->GetAsymmUnit() );
-  GetAsymmUnit().SetZ( (short)XF->GetLattice().GetUnitCell().MatrixCount() );
+  GetRM().Assign(XF->GetRM(), true);
   try  {
     TSpaceGroup& sg = XF->GetLastLoaderSG();
     Title << "in" << sg.GetFullName();
@@ -933,28 +932,9 @@ bool TIns::Adopt(TXFile *XF)  {
   catch( ... )  {}
   if( XF->HasLastLoader() )  {
     Title = XF->LastLoader()->GetTitle();
-    GetRM().SetHKLSource( XF->LastLoader()->GetRM().GetHKLSource() );
-    
     if( EsdlInstanceOf(*XF->LastLoader(), TP4PFile) )  {
       TP4PFile& p4p = XF->GetLastLoader<TP4PFile>();
-      RefMod.expl.SetRadiation( p4p.GetRadiation() );
       TStrList lst;
-      olxstr tmp = p4p.GetSize();  
-      if( tmp.IsEmpty() )  {
-        tmp.Replace('?', '0');
-        lst.Add("SIZE");
-        lst.Add( tmp );  
-        AddIns(lst, GetRM()); 
-        lst.Clear();
-      }
-      tmp = p4p.GetTemp();
-      if( !tmp.IsEmpty() )  {
-        tmp.Replace('?', '0');
-        lst.Add("TEMP");
-        lst.Add( tmp );  
-        AddIns(lst, GetRM()); 
-        lst.Clear();
-      }
       if( p4p.GetChem() != "?" )  {
         try  {  SetSfacUnit( p4p.GetChem() );  }
         catch( TExceptionBase& )  {  }

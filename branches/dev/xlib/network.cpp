@@ -251,6 +251,7 @@ void TNetwork::CreateBondsAndFragments(TSAtomPList& Atoms, TNetPList& Frags)  {
       if( bc2set < sa->NodeCount() )
         sa->SetNodeCount(bc2set);
     }
+    sa->SetStandalone( sa->NodeCount() == 0 );
   }
   // end analysis the extra con info
   for( int i=0; i < ac; i++ )  {

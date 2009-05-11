@@ -43,12 +43,13 @@ public:
   static TStrPObjList<olxstr,TGlPrimitive*> FStaticObjects;
   void CreateStaticPrimitives();
 
-  // this function shoul dbe with AtomALevel for B->A() and same for B()
-  static olxstr GetLegend(const TSBond& B, const short AtomALevel, const short AtomBLevel);
+  // creates legend up three levels (0 to 2)
+  static olxstr GetLegend(const TSBond& B, const short level);
 
   inline operator TSBond* () const {  return FBond;  }
   // beware - for objects, having not tdbond underneath this might fail
   inline TSBond& Bond()      const {  return *FBond; }
+  
   void Radius(float V);
   inline double Radius()        {  return Params()[4]; }
 

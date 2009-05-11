@@ -13,8 +13,9 @@
 BeginXlibNamespace()
 
 const short 
-  satomDeleted    = 0x0001,
-  satomGrown      = 0x0002;
+  satom_Deleted    = 0x0001,
+  satom_Grown      = 0x0002,
+  satom_Standalone = 0x0004;
 
 class TSAtom : public TBasicNode<TNetwork, TSAtom, TSBond>  {
 private:
@@ -36,11 +37,14 @@ public:
   virtual ~TSAtom();
   void Assign(const TSAtom& S);
 
-  bool IsDeleted()     const {  return (Flags & satomDeleted) != 0;  }
-  void SetDeleted(bool v)    {  SetBit(v, Flags, satomDeleted);  }
+  bool IsDeleted()     const {  return (Flags & satom_Deleted) != 0;  }
+  void SetDeleted(bool v)    {  SetBit(v, Flags, satom_Deleted);  }
+
+  bool IsStandalone()     const {  return (Flags & satom_Standalone) != 0;  }
+  void SetStandalone(bool v)    {  SetBit(v, Flags, satom_Standalone);  }
 
   bool IsGrown() const;
-  inline void SetGrown(bool v)  {  SetBit(v, Flags, satomGrown);  }
+  inline void SetGrown(bool v)  {  SetBit(v, Flags, satom_Grown);  }
 
   inline operator TCAtom* () const {  return FCAtom;  }
 

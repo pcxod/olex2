@@ -7,7 +7,6 @@
 #include "symmlib.h"
 
 TP4PFile::TP4PFile() {
-  Radiation = 0.71;
 }
 
 TP4PFile::~TP4PFile()  {  }
@@ -39,15 +38,19 @@ void TP4PFile::SaveToStrings(TStrList& SL)  {
 
   SL.Add(olxstr("MORPH   ") << GetMorph() );
   SL.Add(olxstr("CCOLOR  ") << GetColor() );
-  SL.Add(olxstr("CSIZE  ") << GetSize() << ' '  << GetTemp() );
-  SL.Add(olxstr("SOURCE  ") << GetSource() );
+  SL.Add(olxstr("CSIZE  ") << GetRM().expl.GetCrystalSize()[0] 
+    << ' ' << GetRM().expl.GetCrystalSize()[0]
+    << ' ' << GetRM().expl.GetCrystalSize()[1]
+    << ' ' << GetRM().expl.GetCrystalSize()[2]
+    << ' '  << GetRM().expl.GetTemperature() );
+    SL.Add(olxstr("SOURCE  ") << GetRM().expl.GetRadiation() );
   // save only if preset
   if( !SG.IsEmpty() )
     SL.Add(olxstr("SG  ") << GetSG() );
 }
 
 void TP4PFile::LoadFromStrings(const TStrList& Strings)  {
-  olxstr Tmp, TmpUC, Cell, CellSd;
+  olxstr Tmp, TmpUC, Cell, CellSd, Size, Source;
   TStrPObjList<olxstr,olxstr*> params;
   params.Add("SITEID",  &SiteId);
   params.Add("MORPH",   &Morph);
@@ -102,33 +105,39 @@ void TP4PFile::LoadFromStrings(const TStrList& Strings)  {
   params.Clear();
   params.Strtok( Size, ' ');
   if( params.Count() == 5 )  {
-    Temp = params[4];
+    if( !params[4].IsNumber() )  {
+      int bi = params[4].IndexOf('(');
+      if( bi > 0 )
+        params[4] = params[4].SubStringTo(bi);
+    }
+    if( params[4].IsNumber() )
+      GetRM().expl.SetTemperature( params[4].ToDouble() );
     params.Delete(4);
   }
   while( params.Count() > 3 )
     params.Delete( params.Count()-1 );
 
-  if( params.Count() == 3 )
-    Size = params.Text(' ');
+  if( params.Count() == 3 )  {
+    if( !params[0].IsNumber() )  params[0] = '0';
+    if( !params[1].IsNumber() )  params[1] = '0';
+    if( !params[2].IsNumber() )  params[2] = '0';
+    GetRM().expl.SetCrystalSize( params[0].ToDouble(), params[1].ToDouble(), params[2].ToDouble());
+  }
 
   params.Clear();
   params.Strtok( Source, ' ');
-  if( params.Count() > 2 )  {
-    Radiation = params[1].ToDouble();
-  }
-
+  if( params.Count() > 2 )
+    GetRM().expl.SetRadiation( params[1].ToDouble() );
   Chem.DeleteChars('_');
 }
 
 bool TP4PFile::Adopt(TXFile* f)  {
-
   Chem = f->GetAsymmUnit().SummFormula(' ');
+  GetRM().Assign( f->GetRM(), false );
   GetAsymmUnit().Angles() = f->GetAsymmUnit().Angles();
   GetAsymmUnit().Axes()   = f->GetAsymmUnit().Axes();
-  if( f->HasLastLoader() )  {
+  if( f->HasLastLoader() )
     Title = f->LastLoader()->GetTitle();
-    GetRM().SetHKLSource( f->LastLoader()->GetRM().GetHKLSource() );
-  }
   else  {
     Title = "?";
     GetRM().SetHKLSource( EmptyString );
@@ -137,15 +146,14 @@ bool TP4PFile::Adopt(TXFile* f)  {
   SiteId  = "?";
   Morph   = "?";
   Color   = "?";
-  Size    = "? ? ?";
   Mosaic  = "?";
-
-  TSpaceGroup* sg = TSymmLib::GetInstance()->FindSG(f->GetAsymmUnit());
-  if( sg != NULL )  {
-    Symm = sg->GetName();
-    Bravais = sg->GetBravaisLattice().GetName();
+  
+  try  {
+    TSpaceGroup& sg = f->GetLastLoaderSG();
+    Symm = sg.GetName();
+    Bravais = sg.GetBravaisLattice().GetName();
   }
-  else  {
+  catch( ... )  {
     Symm    = "?";
     Bravais = "?";
   }

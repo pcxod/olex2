@@ -76,13 +76,21 @@ public:
   const class TGlMaterial* Material(const olxstr& PName);
   TGlMaterial* PrimitiveMaterial(const olxstr& PName, const TGlMaterial& GlM);
 
+  template <class T> int FindMaterialIndex(const T& PName) const {
+    for( int i=0; i < FPStyles.Count(); i++ ) 
+      if( FPStyles[i]->PrimitiveName() == PName )
+        return i;
+    return -1;
+  }
+
   inline int PrimitiveStyleCount()              const {  return FPStyles.Count(); }
   inline TPrimitiveStyle* PrimitiveStyle(int i) const {  return FPStyles[i];  }
   
   inline int StyleCount() const {  return FStyles.Count();  }
   inline TGraphicsStyle* GetStyle(int i) const {  return FStyles.GetObject(i);  }
 
-  void SetParam(const olxstr& name, const olxstr& val, bool saveable=false) {
+  template <class T>
+  void SetParam(const T& name, const olxstr& val, bool saveable=false) {
     int ind = FParams.IndexOf(name);
     if( ind >= 0 )  
       FParams.GetObject(ind).val = val;
@@ -91,7 +99,8 @@ public:
   }  /* returns value of specified parameter, if the parameter does not exist, a new one is created
   using the default value and the saveable flag.
   */
-  olxstr& GetParam(const olxstr& name, const olxstr& defval, bool saveable=false) {
+  template <class T, class T1>
+  olxstr& GetParam(const T& name, const T1& defval, bool saveable=false) {
     int index = FParams.IndexOf(name);
     if( index == -1 )  {
       olxstr dv(defval);

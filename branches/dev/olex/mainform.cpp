@@ -1631,7 +1631,7 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
       TBasicApp::GetLog().Info("The object does not support requested function...");
       return;
     }
-    int i = FObjectUnderMouse->Primitives()->Style()->GetParam("PMask", "0").ToInt();
+    int i = FObjectUnderMouse->Primitives()->Style()->GetParam(FObjectUnderMouse->GetPrimitiveMaskName(), "0").ToInt();
     TdlgPrimitive* Primitives = new TdlgPrimitive(&Ps, i, this);
     if( Primitives->ShowModal() == wxID_OK )  {
       if( FObjectUnderMouse->Selected() && EsdlInstanceOf(*FObjectUnderMouse, TXBond) )  {

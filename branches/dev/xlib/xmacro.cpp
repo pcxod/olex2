@@ -129,9 +129,9 @@ void XLibMacros::Export(TLibrary& lib)  {
   xlib_InitMacro(FixHL, "", fpNone|psFileLoaded, "Fixes hydrogen atom labels" );
   xlib_InitMacro(Fix, "", (fpAny^fpNone)|psCheckFileTypeIns, "Fixes specified parameters of atoms: XYZ, Uiso, Occu" );
   xlib_InitMacro(Free, "", (fpAny^fpNone)|psCheckFileTypeIns, "Frees specified parameters of atoms: XYZ, Uiso, Occu" );
-  xlib_InitMacro(Isot,"" , fpAny|psCheckFileTypeIns,
+  xlib_InitMacro(Isot,"" , fpAny|psFileLoaded,
 "makes provided atoms isotropic, if no arguments provided, current selection or all atoms become isotropic");
-  xlib_InitMacro(Anis,"h-adds hydrogen atoms" , (fpAny) | psCheckFileTypeIns, 
+  xlib_InitMacro(Anis,"h-adds hydrogen atoms" , (fpAny) | psFileLoaded, 
 "makes provided atoms anisotropic if no arguments provided current selection or all atoms are considered" );
 xlib_InitMacro(File, "s-sort the main residue of the asymmetric unit", fpNone|fpOne|psFileLoaded, 
     "Saves current model to a file. By default an ins file is saved and loaded" );

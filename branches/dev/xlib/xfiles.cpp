@@ -32,7 +32,9 @@ TBasicCFile::TBasicCFile() : RefMod(AsymmUnit), AsymmUnit(NULL)  {
   AsymmUnit.SetRefMod(&RefMod);
 }
 //..............................................................................
-TBasicCFile::~TBasicCFile()  {  }
+TBasicCFile::~TBasicCFile()  {  
+  RefMod.ClearAll();  // this must be called, as the AU might get destroyed beforehand and then AfixGroups cause crash
+}
 //..............................................................................
 void TBasicCFile::SaveToFile(const olxstr& fn)  {
   TStrList L;
@@ -116,12 +118,12 @@ void TXFile::LastLoaderChanged() {
     return;
   }
   FSG = TSymmLib::GetInstance()->FindSG(FLastLoader->GetAsymmUnit());
-  OnFileLoad->Enter(this);
+  OnFileLoad->Enter(this, &FLastLoader->GetFileName());
   GetRM().ClearAll();
   GetLattice().Clear(true);
   GetRM().Assign(FLastLoader->GetRM(), true);
   GetLattice().Init();
-  OnFileLoad->Exit(this);
+  OnFileLoad->Exit(this, &FLastLoader->GetFileName());
 }
 //..............................................................................
 bool TXFile::Dispatch(int MsgId, short MsgSubId, const IEObject* Sender, const IEObject* Data) {

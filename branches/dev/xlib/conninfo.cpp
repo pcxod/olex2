@@ -90,9 +90,9 @@ void ConnInfo::ProcessConn(TStrList& ins)  {
       ins.Delete(i--);
     }
   }
-  if( !ins.IsEmpty() )  {
+  if( ins.IsEmpty() )  {
     TSAtomPList atoms;
-    TXApp::GetInstance().FindSAtoms(ins.Text(' '), atoms);
+    TXApp::GetInstance().FindSAtoms(ins.Text(' '), atoms, false);
     for( int i=0; i < atoms.Count(); i++ )  {
       AtomConnInfo& ai = AtomInfo.Add(&atoms[i]->CAtom(), AtomConnInfo(atoms[i]->CAtom()));
       ai.maxBonds = maxB;

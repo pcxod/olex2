@@ -44,14 +44,14 @@ void  TSAtom::Assign(const TSAtom& S)  {
 }
 //..............................................................................
 bool TSAtom::IsGrown() const {
-  if( (Flags & satomGrown) == 0 )  return false;
+  if( (Flags & satom_Grown) == 0 )  return false;
   int subs = 0;
   for( int i=0; i < Nodes.Count(); i++ )
     if( Nodes[i]->IsDeleted() )
       subs--;
   if( subs < 0 )
-    SetBit(false, Flags, satomGrown);
-  return (Flags & satomGrown) != 0;
+    SetBit(false, Flags, satom_Grown);
+  return (Flags & satom_Grown) != 0;
 }
 //..............................................................................
 olxstr TSAtom::GetGuiLabel() const  {  

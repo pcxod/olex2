@@ -271,10 +271,10 @@ TGPCollection *TGlRenderer::CollectionX(const olxstr& Name, olxstr& CollName)  {
       if( Name.StartsFrom( BestMatch->Name() ) )  
         return BestMatch;
       CollName = Name.SubStringTo(di);
-      return NULL;
+      return FindCollection(CollName);
     }
     CollName = Name.SubStringTo(di);
-    return NULL;
+    return FindCollection(CollName);
   }
   else  {
     CollName = Name;

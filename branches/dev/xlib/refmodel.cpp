@@ -89,6 +89,8 @@ void RefinementModel::Clear() {
   expl.Clear();
   Vars.Clear();
   Conn.Clear();
+  PLAN.Clear();
+  LS.Clear();
 }
 //....................................................................................................
 void RefinementModel::ClearVarRefs() {
@@ -790,18 +792,18 @@ void RefinementModel::ToDataItem(TDataItem& item) {
   Vars.ToDataItem(item.AddItem("LEQS"));
   expl.ToDataItem(item.AddItem("EXPL"));  
 
-  AfixGroups.ToDataItem(item.AddItem("afix"));
-  ExyzGroups.ToDataItem(item.AddItem("exyz"));
-  rSAME.ToDataItem(item.AddItem("same"));
-  rDFIX.ToDataItem(item.AddItem("dfix"));
-  rDANG.ToDataItem(item.AddItem("dang"));
-  rSADI.ToDataItem(item.AddItem("sadi"));
-  rCHIV.ToDataItem(item.AddItem("chiv"));
-  rFLAT.ToDataItem(item.AddItem("flat"));
-  rDELU.ToDataItem(item.AddItem("delu"));
-  rSIMU.ToDataItem(item.AddItem("simu"));
-  rISOR.ToDataItem(item.AddItem("isor"));
-  rEADP.ToDataItem(item.AddItem("eadp"));
+  AfixGroups.ToDataItem(item.AddItem("AFIX"));
+  ExyzGroups.ToDataItem(item.AddItem("EXYZ"));
+  rSAME.ToDataItem(item.AddItem("SAME"));
+  rDFIX.ToDataItem(item.AddItem("DFIX"));
+  rDANG.ToDataItem(item.AddItem("DANG"));
+  rSADI.ToDataItem(item.AddItem("SADI"));
+  rCHIV.ToDataItem(item.AddItem("CHIV"));
+  rFLAT.ToDataItem(item.AddItem("FLAT"));
+  rDELU.ToDataItem(item.AddItem("DELU"));
+  rSIMU.ToDataItem(item.AddItem("SIMU"));
+  rISOR.ToDataItem(item.AddItem("ISOR"));
+  rEADP.ToDataItem(item.AddItem("EADP"));
   
   TDataItem& hklf = item.AddItem("HKLF", HKLF);
   hklf.AddField("s", HKLF_s);
@@ -830,6 +832,8 @@ void RefinementModel::FromDataItem(TDataItem& item) {
   RefinementMethod = item.GetRequiredField("RefMeth");
   SolutionMethod = item.GetRequiredField("SolMeth");
   PersUtil::FloatNumberListFromStr(item.GetRequiredField("BatchScales"), BASF);
+  for( int i=0; i < BASF.Count(); i++ )
+    BASF_Vars.Add(NULL);
   PersUtil::IntNumberListFromStr(item.GetRequiredField("RefInArg"), LS);
 
   TDataItem& eqiv = item.FindRequiredItem("EQIV");
@@ -839,20 +843,18 @@ void RefinementModel::FromDataItem(TDataItem& item) {
 
   expl.FromDataItem(item.FindRequiredItem("EXPL"));  
 
-  AfixGroups.FromDataItem(item.FindRequiredItem("afix"));
-  ExyzGroups.FromDataItem(item.FindRequiredItem("exyz"));
-  rSAME.FromDataItem(item.FindRequiredItem("same"));
-  rDFIX.FromDataItem(item.FindRequiredItem("dfix"));
-  rDANG.FromDataItem(item.FindRequiredItem("dang"));
-  rSADI.FromDataItem(item.FindRequiredItem("sadi"));
-  rCHIV.FromDataItem(item.FindRequiredItem("chiv"));
-  rFLAT.FromDataItem(item.FindRequiredItem("flat"));
-  rDELU.FromDataItem(item.FindRequiredItem("delu"));
-  rSIMU.FromDataItem(item.FindRequiredItem("simu"));
-  rISOR.FromDataItem(item.FindRequiredItem("isor"));
-  rEADP.FromDataItem(item.FindRequiredItem("eadp"));
-  // restraints may use some of the vars...  
-  Vars.FromDataItem( item.FindRequiredItem("LEQS") );
+  AfixGroups.FromDataItem(item.FindRequiredItem("AFIX"));
+  ExyzGroups.FromDataItem(item.FindRequiredItem("EXYZ"));
+  rSAME.FromDataItem(item.FindRequiredItem("SAME"));
+  rDFIX.FromDataItem(item.FindRequiredItem("DFIX"));
+  rDANG.FromDataItem(item.FindRequiredItem("DANG"));
+  rSADI.FromDataItem(item.FindRequiredItem("SADI"));
+  rCHIV.FromDataItem(item.FindRequiredItem("CHIV"));
+  rFLAT.FromDataItem(item.FindRequiredItem("FLAT"));
+  rDELU.FromDataItem(item.FindRequiredItem("DELU"));
+  rSIMU.FromDataItem(item.FindRequiredItem("SIMU"));
+  rISOR.FromDataItem(item.FindRequiredItem("ISOR"));
+  rEADP.FromDataItem(item.FindRequiredItem("EADP"));
 
   TDataItem& hklf = item.FindRequiredItem("HKLF");
   HKLF = hklf.GetValue().ToInt();
@@ -885,6 +887,9 @@ void RefinementModel::FromDataItem(TDataItem& item) {
     SHEL_lr = shel.GetRequiredField("low").ToDouble();
     SHEL_hr = shel.GetRequiredField("high").ToDouble();
   }
+
+  // restraints and BASF may use some of the vars...  
+  Vars.FromDataItem( item.FindRequiredItem("LEQS") );
 
   Conn.FromDataItem( item.FindRequiredItem("CONN") );
   aunit._UpdateConnInfo();

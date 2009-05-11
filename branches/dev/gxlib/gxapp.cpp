@@ -392,11 +392,11 @@ void TGXApp::CreateObjects(bool SyncBonds, bool centerModel)  {
   XBonds.SetCapacity( allBonds.Count() );
   for( int i=0; i < allBonds.Count(); i++ )  {
     TSBond* B = allBonds[i];
-    TXAtom& XA = XAtoms[ B->A().GetTag() ];
-    TXAtom& XA1 = XAtoms[ B->B().GetTag() ];
+    //TXAtom& XA = XAtoms[ B->A().GetTag() ];
+    //TXAtom& XA1 = XAtoms[ B->B().GetTag() ];
     //TXBond& XB = XBonds.Add( *(new TXBond(TXBond::GetLegend( *B, TXAtom::LegendLevel(XA.Primitives()->Name()),
     //            TXAtom::LegendLevel(XA1.Primitives()->Name())), *allBonds[i], FGlRender)) );
-    TXBond& XB = XBonds.Add( *(new TXBond(TXBond::GetLegend( *B, 2, 2), *allBonds[i], FGlRender)) );
+    TXBond& XB = XBonds.Add( *(new TXBond(TXBond::GetLegend( *B, 2), *allBonds[i], FGlRender)) );
     if( B->IsDeleted() || (B->A().IsDeleted() || allBonds[i]->B().IsDeleted()) )
       XB.Deleted(true);
     XB.Create();
@@ -2366,6 +2366,8 @@ void TGXApp::UpdateAtomPrimitives(int Mask, TXAtomPList* Atoms) {
   for( int i=0; i < atoms.Count(); i++ )
     if( atoms[i]->Primitives()->GetTag() == i )
       atoms[i]->UpdatePrimitives(Mask);
+  if( Atoms == NULL )
+    TXAtom::DefMask(Mask);
 }
 //..............................................................................
 void TGXApp::UpdateBondPrimitives(int Mask, TXBondPList* Bonds)  {
@@ -2394,39 +2396,42 @@ void TGXApp::SetAtomDrawingStyle(short ADS, TXAtomPList* Atoms)  {
 //..............................................................................
 void TGXApp::XAtomDS2XBondDS(const olxstr &Source)  {
   int dds;
-  TGlPrimitive *AGlP, *BGlP;
   for( int i=0; i < XAtoms.Count(); i++ )  XAtoms[i].Atom().SetTag(i);
   for( int i=0; i < XBonds.Count(); i++ )  XBonds[i].Primitives()->SetTag(i);
 
   for( int i=0; i < XBonds.Count(); i++ )  {
     if( XBonds[i].Primitives()->GetTag() != i )  continue;
     TXBond* XB = &XBonds[i];
+    const short bll = TXAtom::LegendLevel(XB->Primitives()->Name());
+    TGlMaterial *GlMA = NULL, *GlMB = NULL;
     TXAtom* XA = &XAtoms[ XB->Bond().A().GetTag() ];
-
-    AGlP = XA->Primitives()->FindPrimitiveByName(Source);
-    if( !AGlP )  continue;
-    TGlMaterial* GlMA = (TGlMaterial*)AGlP->GetProperties();
-
+    if( TXAtom::LegendLevel(XA->Primitives()->Name()) >= bll )  {
+      TGlPrimitive *AGlP = XA->Primitives()->FindPrimitiveByName(Source);
+      if( AGlP == NULL )  continue;
+      GlMA = (TGlMaterial*)AGlP->GetProperties();
+    }
     XA = &XAtoms[ XB->Bond().B().GetTag() ];
-    BGlP = XA->Primitives()->FindPrimitiveByName(Source);
-    if( !BGlP )  continue;
-    TGlMaterial* GlMB = (TGlMaterial*)BGlP->GetProperties();
-
+    if( TXAtom::LegendLevel(XA->Primitives()->Name()) >= bll )  {
+      TGlPrimitive *BGlP = XA->Primitives()->FindPrimitiveByName(Source);
+      if( BGlP == NULL )  continue;
+      GlMB = (TGlMaterial*)BGlP->GetProperties();
+    }
+    if( GlMA == NULL && GlMB == NULL )  continue;
     for( int j=0; j < XB->Primitives()->PrimitiveCount(); j++ )  {
       TGlPrimitive* GlP = XBonds[i].Primitives()->Primitive(j);
       if( GlP->Params.Count() >= 1 )  {
         dds = (int)GlP->Params.Last();
-        if( dds == ddsDefAtomA )  {  // from atom A
+        if( dds == ddsDefAtomA && GlMA != NULL )  {  // from atom A
           GlP->SetProperties(GlMA);
           XB->Primitives()->Style()->PrimitiveMaterial(GlP->GetName(), *GlMA);
           continue;
         }
-        if( dds == ddsDef )  {  // from haviest atom
+        if( dds == ddsDef  && GlMA != NULL )  {  // from haviest atom
           GlP->SetProperties(GlMA);
           XB->Primitives()->Style()->PrimitiveMaterial(GlP->GetName(), *GlMA);
           continue;
         }
-        if( dds == ddsDefAtomB )  {
+        if( dds == ddsDefAtomB  && GlMB != NULL )  {
           GlP->SetProperties(GlMB);
           XB->Primitives()->Style()->PrimitiveMaterial(GlP->GetName(), *GlMB);
           continue;
@@ -2682,9 +2687,24 @@ void TGXApp::Compaq(bool All)  {
 //..............................................................................
 void TGXApp::HBondsVisible(bool v)  {
   FHBondsVisible = v;
-  for( int i=0; i < XBonds.Count(); i++ )  {
-    if( XBonds[i].Bond().GetType() == sotHBond )
-      XBonds[i].Visible(FHBondsVisible);
+  if( !v )  {
+    for( int i=0; i < XBonds.Count(); i++ )  {
+      if( XBonds[i].Bond().GetType() == sotHBond )
+        XBonds[i].Visible(false);
+    }
+  }
+  else  {
+    const int ac = XAtoms.Count();
+    for( int i=0; i < ac; i++ )  
+      XAtoms[i].Atom().SetTag(i);
+    for( int i=0; i < XBonds.Count(); i++ )  {
+      const TSBond& b = XBonds[i].Bond(); 
+      if( b.GetType() == sotHBond && 
+        XAtoms[b.A().GetTag()].Visible() && XAtoms[b.B().GetTag()].Visible() )
+      {
+        XBonds[i].Visible(FHBondsVisible);
+      }
+    }
   }
 }
 //..............................................................................
@@ -2933,10 +2953,7 @@ void TGXApp::Individualise(TXAtom& XA)  {
     SBonds2XBonds(sbonds, xbonds);
     for( int i=0; i < xbonds.Count(); i++ )  {
       level1 = TXAtom::LegendLevel( xatoms[i]->Primitives()->Name() );
-      if( xatoms[i]->Atom() == xbonds[i]->Bond().A() )
-        leg = xbonds[i]->GetLegend( xbonds[i]->Bond(), level1, level);
-      else
-        leg = xbonds[i]->GetLegend( xbonds[i]->Bond(), level, level1);
+      leg = xbonds[i]->GetLegend( xbonds[i]->Bond(), level);
       indCol = FGlRender->FindCollection( leg );
       if( indCol != NULL && xbonds[i]->Primitives() == indCol )  
         continue;
@@ -2955,7 +2972,7 @@ void TGXApp::Individualise(TXAtom& XA)  {
 void TGXApp::Individualise(TXBond& XB)  {
   if( XB.Primitives()->ObjectCount() == 1 )  return;
   short required_level = FXFile->GetLattice().IsGenerated() ? 2 : 1;
-  olxstr leg = XB.GetLegend(XB.Bond(), required_level, required_level);
+  olxstr leg = XB.GetLegend(XB.Bond(), required_level);
   TGPCollection* indCol = FGlRender->FindCollection( leg );
   if( indCol != NULL && XB.Primitives() == indCol )  
     return;
@@ -2991,7 +3008,6 @@ void TGXApp::Collectivise(TXAtom& XA)  {
     TSBondPList sbonds;
     TXAtomPList xatoms;
     TXBondPList xbonds;
-    short level1;
     for( int i=0; i < XA.Atom().BondCount(); i++ )  {
       TSBond& SB = XA.Atom().Bond(i);
       sbonds.Add( &SB );
@@ -3000,11 +3016,7 @@ void TGXApp::Collectivise(TXAtom& XA)  {
     SAtoms2XAtoms(satoms, xatoms);
     SBonds2XBonds(sbonds, xbonds);
     for( int i=0; i < xbonds.Count(); i++ )  {
-      level1 = TXAtom::LegendLevel( xatoms[i]->Primitives()->Name() );
-      if( xatoms[i]->Atom() == xbonds[i]->Bond().A() )
-        leg = xbonds[i]->GetLegend( xbonds[i]->Bond(), level1, level);
-      else
-        leg = xbonds[i]->GetLegend( xbonds[i]->Bond(), level, level1);
+      leg = xbonds[i]->GetLegend( xbonds[i]->Bond(), level);
       indCol = FGlRender->FindCollection( leg );
       if( indCol != NULL && xbonds[i]->Primitives() == indCol )  
         continue;
@@ -3076,8 +3088,8 @@ void TGXApp::SynchroniseBonds( TXAtomPList& xatoms )  {
     xbonds[i]->Primitives()->RemoveObject( xbonds[i] );
     TXAtom& XA  = XAtoms[ xbonds[i]->Bond().A().GetTag() ];
     TXAtom& XA1 = XAtoms[ xbonds[i]->Bond().B().GetTag() ];
-    xbonds[i]->Create( TXBond::GetLegend( xbonds[i]->Bond(), TXAtom::LegendLevel(XA.Primitives()->Name()),
-                TXAtom::LegendLevel(XA1.Primitives()->Name())) );
+    xbonds[i]->Create( TXBond::GetLegend( xbonds[i]->Bond(), olx_max(TXAtom::LegendLevel(XA.Primitives()->Name()),
+                TXAtom::LegendLevel(XA1.Primitives()->Name()))) );
   }
   XAtomDS2XBondDS("Sphere");
 }
@@ -3294,9 +3306,9 @@ void TGXApp::CreateXGrowLines()  {
 
     if( nt.dist < (nt.from->GetAtomInfo().GetRad1() + nt.to->GetAtomInfo().GetRad1() + 
       FXFile->GetLattice().GetDelta()) )
-      gl.Create("COV");
+      gl.Create("GrowBond_COV");
     else
-      gl.Create("SI");
+      gl.Create("GrowBond_SI");
   }
 }
 //..............................................................................

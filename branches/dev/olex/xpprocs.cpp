@@ -1972,52 +1972,7 @@ void TMainForm::macMask(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     short ADS=0, AtomsStart=2;
     olxstr Tmp;
     TXAtomPList Atoms;
-    if( Cmds.Count() >= 3 )  {  // a atom drawing style is specified
-      if( Cmds[2] == "elp" )  {
-        ADS = adsEllipsoid;
-        AtomsStart = 3;
-        TXAtom::DefElpMask(Mask);
-      }
-      else if( Cmds[2] == "sph" )  {
-        ADS = adsSphere;
-        AtomsStart = 3;
-        TXAtom::DefSphMask(Mask);
-      }
-      else if( Cmds[2] == "npd" )  {
-        ADS = adsEllipsoidNPD;
-        AtomsStart = 3;
-        TXAtom::DefNpdMask(Mask);
-      }
-      else if( Cmds[2] == "std" )  {
-        ADS = adsStandalone;
-        AtomsStart = 3;
-        TXAtom::DefNpdMask(Mask);
-      }
-    }
-    FindXAtoms(Cmds.SubListFrom(AtomsStart), Atoms, true, false);
-    if( ADS != 0 )  {
-      if( ADS == adsStandalone )  {
-        for( int i=0; i < Atoms.Count(); i++ )  {
-          bool process = true;
-          for( int j=0; j < Atoms[i]->Atom().NodeCount(); j++ )  {
-            if( !Atoms[i]->Atom().Node(j).IsDeleted() )  {
-              process = false;
-              break;
-            }
-          }
-          if( !process )  
-            Atoms[i] = NULL;
-        }
-      }
-      else  {
-        for( int i=0; i < Atoms.Count(); i++ )  {
-          if( Atoms[i]->DrawStyle() != ADS )  
-            Atoms[i] = NULL;
-        }
-      }
-      Atoms.Pack();
-    }
-    if( ADS != 0 && Atoms.IsEmpty() )  return;
+    FindXAtoms(Cmds.SubListFrom(AtomsStart), Atoms, false, false);
     FXApp->UpdateAtomPrimitives(Mask, Atoms.IsEmpty() ? NULL : &Atoms);
     TimePerFrame = FXApp->Draw();
     return;
@@ -2062,8 +2017,10 @@ void TMainForm::macADS(TStrObjList &Cmds, const TParamList &Options, TMacroError
     ads = adsSphere;
   else if( Cmds[0].Comparei("ort") == 0 )
     ads = adsOrtep;
+  else if( Cmds[0].Comparei("std") == 0 )
+    ads = adsStandalone;
   if( ads == -1 )  {
-    Error.ProcessingError(__OlxSrcInfo, "unknown atom type (elp/sph) supported only" );
+    Error.ProcessingError(__OlxSrcInfo, "unknown atom type (elp/sph/ort/std) supported only" );
     return;
   }
   Cmds.Delete(0);
@@ -4806,11 +4763,12 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   }
   else  {
     FN = PickFile("Open File",
-        olxstr("All supported files|*.ins;*.cif;*.res;*.mol;*.xyz;*.p4p;*.mas;*.crs;*pdb;*.fco;*.fcf;*.hkl;*.oxm")  <<
+        olxstr("All supported files|*.ins;*.cif;*.res;*.mol;*.xyz;*.p4p;*.mas;*.crs;*pdb;*.fco;*.fcf;*.hkl;*.oxm;*.mol2")  <<
           "|INS files (*.ins)|*.ins"  <<
           "|Olex2 model files (*.oxm)|*.oxm"  <<
           "|CIF files (*.cif)|*.cif" <<
           "|MDL MOL files (*.mol)|*.mol" <<
+          "|Tripos MOL2 files (*.mol2)|*.mol2" <<
           "|XYZ files (*.xyz)|*.xyz" <<
           "|P4P files (*.p4p)|*.p4p" <<
           "|PDB files (*.pdb)|*.pdb" <<
@@ -8682,6 +8640,7 @@ void TMainForm::macConn(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     TStrList lst(Cmds);
     FXApp->XFile().GetRM().Conn.ProcessConn(lst);
     FXApp->XFile().GetAsymmUnit()._UpdateConnInfo();
+    FXApp->GetRender().SelectAll(false);
     FXApp->XFile().GetLattice().UpdateConnectivity();
     FXApp->CreateObjects(false, false);
   }

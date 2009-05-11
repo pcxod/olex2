@@ -11,6 +11,8 @@
 #include "xbond.h"
 #include "gpcollection.h"
 #include "xatom.h"
+#include "lattice.h"
+#include "symmparser.h"
 
 //..............................................................................
 bool TXBondStylesClear::Enter(const IEObject *Sender, const IEObject *Data)
@@ -82,7 +84,7 @@ void TXBond::Create(const olxstr& cName, const ACreationParams* cpar)  {
   TGraphicsStyle* GS = GPC->Style();
   GS->SetSaveable( GPC->Name().CharCount('.') == 0 );
 
-  int PrimitiveMask = GS->GetParam("PMask",
+  int PrimitiveMask = GS->GetParam(GetPrimitiveMaskName(),
     (FBond && (FBond->GetType() == sotHBond)) ? 2048 : DefMask() ).ToInt();
 
   GPC->AddObject(this);
@@ -442,49 +444,40 @@ void TXBond::CreateStaticPrimitives()  {
 }
 //..............................................................................
 void TXBond::UpdatePrimitives(int32_t Mask, const ACreationParams* cpar)  {
-  olxstr& pm = Primitives()->Style()->GetParam("PMask", "0"); 
+  olxstr& pm = Primitives()->Style()->GetParam(GetPrimitiveMaskName(), "0"); 
   if( pm.ToInt() == Mask )  return;
   pm = Mask;
-  Primitives()->Style()->SetParam("PMask", Mask);
+  Primitives()->Style()->SetParam(GetPrimitiveMaskName(), Mask);
   Primitives()->ClearPrimitives();
   Primitives()->RemoveObject(this);
   Create(EmptyString, cpar);
 }
 //..............................................................................
-olxstr TXBond::GetLegend(const TSBond& Bnd, const short AtomALevel, const short AtomBLevel)  {
-  olxstr L;
+olxstr TXBond::GetLegend(const TSBond& Bnd, const short level)  {
+  olxstr L(EmptyString, 32);
   const TSAtom *A = &Bnd.A(),
                *B = &Bnd.B();
-  short ALevel = AtomALevel, BLevel = AtomBLevel;
   if( A->GetAtomInfo().GetMr() != B->GetAtomInfo().GetMr() )  {
     if( A->GetAtomInfo().GetMr() < B->GetAtomInfo().GetMr() )  {
-      A = &Bnd.B();      B = &Bnd.A();
-      ALevel = AtomBLevel;  BLevel = AtomALevel;
+      A = &Bnd.B();  
+      B = &Bnd.A();
     }
   }
   else  {
     if( A->GetLabel().Compare( B->GetLabel() ) < 0 )  {
-      A = &Bnd.B();      B = &Bnd.A();
-      ALevel = AtomBLevel;  BLevel = AtomALevel;
+      A = &Bnd.B();
+      B = &Bnd.A();
     }
   }
-  olxstr LA, LB;
-  TStrList T(TXAtom::GetLegend(*A, ALevel), '.'), 
-           T1(TXAtom::GetLegend(*B, BLevel), '.');
-  int maxI = olx_max(T.Count(), T1.Count());
-  for( int i=0; i < maxI; i++ )  {
-    LA = (i >= T.Count()) ? T.Last().String : T[i];
-    LB = (i >= T1.Count()) ? T1.Last().String : T1[i];
-    if( LA.Compare(LB) < 0 )
-      L << LA << '-' << LB;
-    else
-      L << LB << '-' << LA;
-
-    if( (i+1) < maxI ) 
-      L << '.';
-  }
+  L << A->GetAtomInfo().GetSymbol() << '-' << B->GetAtomInfo().GetSymbol();
   if( Bnd.GetType() == sotHBond )  
-    L << ".HB";
+    L << "@H";
+  if( level == 0 )  return L;
+  L << '.' << A->GetLabel() << '-' << B->GetLabel();
+  if( level == 1 )  return L;
+  L << '.' << TSymmParser::MatrixToSymmCode(A->GetNetwork().GetLattice().GetUnitCell(), A->GetMatrix(0)) <<
+    '-' <<
+    TSymmParser::MatrixToSymmCode(B->GetNetwork().GetLattice().GetUnitCell(), B->GetMatrix(0));
   return L;
 }
 //..............................................................................
