@@ -74,6 +74,8 @@ template <class VC>
       V4(v2 - v3);
     V1 = V1.XProdVec(V2);
     V3 = V3.XProdVec(V4);
+    if( olx_abs(V1.QLength()*V3.QLength()) < 1e-5 )
+      return -1;
     return acos(V1.CAngle(V3))*180/M_PI;
   }
   //angle in degrees for three coordinates A-B C-B angle

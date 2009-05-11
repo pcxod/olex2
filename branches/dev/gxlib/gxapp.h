@@ -364,7 +364,7 @@ public:
   void InfoList(const olxstr &Atoms, TStrList &Info, bool Sort);
 
   void UpdateAtomPrimitives(int Mask, TXAtomPList* Atoms=NULL);
-  void UpdateBondPrimitives(int Mask, TXBondPList* Bonds=NULL);
+  void UpdateBondPrimitives(int Mask, TXBondPList* Bonds=NULL, bool HBondsOnly=false);
 
   void SetAtomDrawingStyle(short ADS, TXAtomPList* Atoms=NULL);
 

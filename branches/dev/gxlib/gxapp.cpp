@@ -875,7 +875,9 @@ olxstr TGXApp::GetSelectionInfo()  {
         Tmp = "Torsion angle (";
         Tmp << macSel_GetName4(a1, a2, a3, a4) << "): ";
         v = TorsionAngle(a1.crd(), a2.crd(), a3.crd(), a4.crd());
-        Tmp << olxstr::FormatFloat(3, v) << " (" << olxstr::FormatFloat(3, 180-v) << ')' <<
+        
+        Tmp << olxstr::FormatFloat(3, v) << " (" << 
+          (v < 0 ? EmptyString : olxstr::FormatFloat(3, 180-v)) << ')' <<
         "\nAngle (" << macSel_GetName3(a1, a2, a3) << "): " <<
           olxstr::FormatFloat(3, Angle(a1.crd(), a2.crd(), a3.crd())) <<
         "\nAngle (" << macSel_GetName3(a2, a3, a4) << "): " << 
@@ -2366,20 +2368,40 @@ void TGXApp::UpdateAtomPrimitives(int Mask, TXAtomPList* Atoms) {
   for( int i=0; i < atoms.Count(); i++ )
     if( atoms[i]->Primitives()->GetTag() == i )
       atoms[i]->UpdatePrimitives(Mask);
-  if( Atoms == NULL )
+  if( Atoms == NULL )  {
     TXAtom::DefMask(Mask);
+    for( int i=0; i < IndividualCollections.Count(); i++ )
+      if( IndividualCollections[i].IndexOf('-') == -1 )
+        IndividualCollections[i] = EmptyString;
+    IndividualCollections.Pack();
+  }
 }
 //..............................................................................
-void TGXApp::UpdateBondPrimitives(int Mask, TXBondPList* Bonds)  {
+void TGXApp::UpdateBondPrimitives(int Mask, TXBondPList* Bonds, bool HBondsOnly)  {
   TXBondPList bonds;
   FillXBondList(bonds, Bonds);
   for( int i=0; i < bonds.Count(); i++ )
     bonds[i]->Primitives()->SetTag(i);
 
-  for( int i=0; i < bonds.Count(); i++ )  {
-    if( (Bonds == NULL) && (bonds[i]->Bond().GetType() == sotHBond) )  continue;
-    if( bonds[i]->Primitives()->GetTag() == i )
-      bonds[i]->UpdatePrimitives(Mask);
+  if( HBondsOnly )  {
+    for( int i=0; i < bonds.Count(); i++ )  {
+      if( bonds[i]->Bond().GetType() != sotHBond )  continue;
+      if( bonds[i]->Primitives()->GetTag() == i )
+        bonds[i]->UpdatePrimitives(Mask);
+    }
+  }
+  else  {
+    for( int i=0; i < bonds.Count(); i++ )  {
+      if( bonds[i]->Bond().GetType() == sotHBond )  continue;
+      if( bonds[i]->Primitives()->GetTag() == i )
+        bonds[i]->UpdatePrimitives(Mask);
+    }
+    if( Bonds == NULL )  {
+      for( int i=0; i < IndividualCollections.Count(); i++ )
+        if( IndividualCollections[i].IndexOf('-') != -1 )
+          IndividualCollections[i] = EmptyString;
+      IndividualCollections.Pack();
+    }
   }
 }
 //..............................................................................
@@ -2717,9 +2739,7 @@ void TGXApp::HydrogensVisible(bool v)  {
   for( int i=0; i < XBonds.Count(); i++ )  {
     if( XBonds[i].Bond().GetType() == sotHBond )  continue;
     if( ((XBonds[i].Bond().A().GetAtomInfo() == iHydrogenIndex) ||
-      (XBonds[i].Bond().B().GetAtomInfo() == iHydrogenIndex)) &&
-      ((XBonds[i].Bond().A().GetAtomInfo() != iQPeakIndex) &&
-      (XBonds[i].Bond().B().GetAtomInfo() != iQPeakIndex)) )
+      (XBonds[i].Bond().B().GetAtomInfo() == iHydrogenIndex)) )
     {
       XBonds[i].Visible(FHydrogensVisible);
     }
@@ -2755,7 +2775,7 @@ void TGXApp::SyncQVisibility()  {
 
   const int bc = XBonds.Count();
   for( int i=0; i < bc; i++ )  {
-    TSBond& b = XBonds[i].Bond();
+    const TSBond& b = XBonds[i].Bond();
     if( b.A().GetAtomInfo().GetIndex() == iQPeakIndex || b.B().GetAtomInfo().GetIndex() == iQPeakIndex )
       XBonds[i].Visible(XAtoms[b.A().GetTag()].Visible() && XAtoms[b.B().GetTag()].Visible());
   }
@@ -2769,16 +2789,29 @@ void TGXApp::SyncQVisibility()  {
 //..............................................................................
 void TGXApp::QPeakBondsVisible(bool v)  {
   FQPeakBondsVisible = v;
-  for( int i=0; i < XBonds.Count(); i++ )  {
-    if( (XBonds[i].Bond().A().GetAtomInfo() == iQPeakIndex) ||
+  if( !v )  {
+    for( int i=0; i < XBonds.Count(); i++ )  {
+      if( (XBonds[i].Bond().A().GetAtomInfo() == iQPeakIndex) ||
         (XBonds[i].Bond().B().GetAtomInfo() == iQPeakIndex)  )
-      XBonds[i].Visible(v);
+        XBonds[i].Visible(v);
+    }
+    if( FXGrowLinesVisible )  {
+      for( int i=0; i < XGrowLines.Count(); i++ )  {
+        if( XGrowLines[i].SAtom()->GetAtomInfo() == iQPeakIndex ||
+          XGrowLines[i].CAtom()->GetAtomInfo() == iQPeakIndex )
+          XGrowLines[i].Visible(v);
+      }
+    }
   }
-  if( FXGrowLinesVisible )  {
-    for( int i=0; i < XGrowLines.Count(); i++ )  {
-      if( XGrowLines[i].SAtom()->GetAtomInfo() == iQPeakIndex ||
-            XGrowLines[i].CAtom()->GetAtomInfo() == iQPeakIndex )
-        XGrowLines[i].Visible(v);
+  else  {
+    const int ac = XAtoms.Count();
+    for( int i=0; i < ac; i++ )  
+      XAtoms[i].Atom().SetTag(i);
+
+    for( int i=0; i < XBonds.Count(); i++ )  {
+      const TSBond& b = XBonds[i].Bond();
+      if( b.A().GetAtomInfo() == iQPeakIndex || b.B().GetAtomInfo() == iQPeakIndex )
+        XBonds[i].Visible(XAtoms[b.A().GetTag()].Visible() && XAtoms[b.B().GetTag()].Visible());
     }
   }
 }

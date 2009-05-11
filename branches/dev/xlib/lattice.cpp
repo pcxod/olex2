@@ -176,6 +176,8 @@ int TLattice::GenerateMatrices(smatd_plist& Result,
     }
   }
   Result.Pack();
+  if( Result.IsEmpty() )
+    Result.Add( new smatd )->I().SetTag(0);
   return Result.Count();
 }
 //..............................................................................
@@ -212,6 +214,8 @@ int TLattice::GenerateMatrices(smatd_plist& Result, const vec3d& center, double 
     }
   }
   Result.Pack();
+  if( Result.IsEmpty() )
+    Result.Add( new smatd )->I().SetTag(0);
   return Result.Count();
 }
 //..............................................................................

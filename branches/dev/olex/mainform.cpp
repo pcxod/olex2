@@ -579,9 +579,11 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual occupancy\
   this_InitMacroD(Line, EmptyString, fpAny, "Creates a line or best line for provided atoms");
   this_InitMacro(AddLabel, , fpThree|fpFive);
   this_InitMacroD(Mpln, "n-just orient, do not create plane&;r-create regular plane;we-use weights proportional to the (atomic weight)^we", 
-    fpAny, "sets current view along the normal of the best plane");
+    fpAny, "Sets current view along the normal of the best plane");
   this_InitMacroD(Cent, EmptyString, fpAny^fpNone, "creates a centroid for given atoms");
-  this_InitMacroD(Mask, EmptyString, fpAny, "sets primitives for atoms or bonds according to provided mask" );
+  this_InitMacroD(Mask, EmptyString, fpAny^fpNone, 
+"Sets primitives for atoms or bonds according to provided mask.\
+Accepts atoms, bonds, hbonds or a name (like from LstGO). Example: 'mask hbonds 2048' - this resets hydrogen bond style to default" );
 
   this_InitMacroD(ARad, EmptyString, fpAny^fpNone, "Changes how the atoms are drawn [sfil,pers,isot,isoth]" );
   this_InitMacroD(ADS, EmptyString, fpAny^(fpNone), "Changes atom draw style [sph,elp]" );

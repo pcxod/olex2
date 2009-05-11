@@ -1967,36 +1967,37 @@ void TMainForm::macCent(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 }
 //..............................................................................
 void TMainForm::macMask(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error){
-  if( Cmds[0] == "atoms" )  {
+  if( Cmds[0].Comparei("atoms") == 0 && Cmds.Count() > 1 )  {
     int Mask = Cmds[1].ToInt();
     short ADS=0, AtomsStart=2;
     olxstr Tmp;
     TXAtomPList Atoms;
     FindXAtoms(Cmds.SubListFrom(AtomsStart), Atoms, false, false);
     FXApp->UpdateAtomPrimitives(Mask, Atoms.IsEmpty() ? NULL : &Atoms);
-    TimePerFrame = FXApp->Draw();
-    return;
   }
-  if( Cmds[0] == "bonds" )  {
+  else if( (Cmds[0].Comparei("bonds") == 0 || Cmds[0].Comparei("hbonds") == 0) && Cmds.Count() > 1 )  {
     int Mask = Cmds[1].ToInt();
     TXBondPList Bonds;
     FXApp->GetBonds(Cmds.Text(' ', 2), Bonds);
     if( Bonds.IsEmpty() && FXApp->Selection()->Count() == 0 )
       TXBond::DefMask(Mask);
-    FXApp->UpdateBondPrimitives(Mask, (Bonds.IsEmpty() && FXApp->Selection()->Count() == 0) ? NULL : &Bonds);
-    return;
-  }
-  int Mask = Cmds.Last().String.ToInt();
-  Cmds.Delete( Cmds.Count() - 1 );
-  TGPCollection *GPC = FXApp->GetRender().FindCollection( Cmds.Text(' ') );
-  if( GPC != NULL )  {
-    if( GPC->ObjectCount() != 0 )
-      GPC->Object(0)->UpdatePrimitives( Mask );
-    TimePerFrame = FXApp->Draw();
+    FXApp->UpdateBondPrimitives(Mask, 
+      (Bonds.IsEmpty() && FXApp->Selection()->Count() == 0) ? NULL : &Bonds, 
+      Cmds[0].Comparei("hbonds") == 0);
   }
   else  {
-    Error.ProcessingError(__OlxSrcInfo, "undefined graphics" );
-    return;
+    int Mask = Cmds.Last().String.ToInt();
+    Cmds.Delete( Cmds.Count() - 1 );
+    TGPCollection *GPC = FXApp->GetRender().FindCollection( Cmds.Text(' ') );
+    if( GPC != NULL )  {
+      if( GPC->ObjectCount() != 0 )
+        GPC->Object(0)->UpdatePrimitives( Mask );
+      //TimePerFrame = FXApp->Draw();
+    }
+    else  {
+      Error.ProcessingError(__OlxSrcInfo, olxstr("Indefined graphics :") << Cmds.Text(' ') );
+      return;
+    }
   }
 }
 //..............................................................................

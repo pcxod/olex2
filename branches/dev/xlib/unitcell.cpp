@@ -123,7 +123,6 @@ void TUnitCell::GenerateMatrices(smatd_list& out, const TAsymmUnit& au, short la
     out.AddNew( m );
   }
 
-  smatd* M;
   for( int i=0; i < out.Count(); i++ )  {
     const smatd& m = out[i];
     switch( abs(lat) )  {
