@@ -31,7 +31,7 @@ OLEX_BIN := $(HOME)/bin
 # Compiling
 CC := gcc
 CFLAGS := -fexceptions -O3 -combine
-OPTS = `wx-config --cxxflags --unicode --toolkit=gtk2` `python-config --includes` -I$(SRC_DIR)sdl -I$(SRC_DIR)xlib -I$(SRC_DIR)glib -I$(SRC_DIR)gxlib -I$(SRC_DIR)repository -I$(SRC_DIR)olex -I$(SRC_DIR)alglib -S -D__WXWIDGETS__ -D_UNICODE
+OPTS = `wx-config --cxxflags --unicode --toolkit=gtk2 --libs gl,core,html,net,aui` `python-config --includes` -I$(SRC_DIR)sdl -I$(SRC_DIR)xlib -I$(SRC_DIR)glib -I$(SRC_DIR)gxlib -I$(SRC_DIR)repository -I$(SRC_DIR)olex -I$(SRC_DIR)alglib -S -D__WXWIDGETS__ -D_UNICODE
 LDFLAGS += `wx-config --libs gl,core,html,net,aui --unicode --toolkit=gtk2` `python-config --libs --ldflags` -L. -fexceptions -g -rdynamic -O3
 CCFLAGS += $(CFLAGS)
 ###############################################################################
