@@ -93,7 +93,6 @@
 
 static const olxstr ProcessOutputCBName("procout");
 static const olxstr OnStateChangeCBName("statechange");
-static const olxstr GlConsoleBlendVarName("core_console_blend");
 
 enum
 {
@@ -337,7 +336,7 @@ TMainForm::TMainForm(TGlXApp *Parent, int Width, int Height):
   */
   PythonExt::Init(this).Register( &TMainForm::PyInit );
   PythonExt::GetInstance()->Register( &OlexPyCore::PyInit );
-  TOlxVars::Init().OnVarChange->Add(this, ID_VarChange);
+  //TOlxVars::Init().OnVarChange->Add(this, ID_VarChange);
   FGlCanvas = NULL;
   FXApp = NULL;
   FGlConsole = NULL;
@@ -605,8 +604,8 @@ Accepts atoms, bonds, hbonds or a name (like from LstGO). Example: 'mask hbonds 
   this_InitMacro(Save, , fpAny^fpNone );
   this_InitMacro(Load, , fpAny^fpNone );
   this_InitMacro(Link, , fpNone|fpOne );
-  this_InitMacro(Style, s, fpNone|fpOne );
-  this_InitMacro(Scene, s, fpNone|fpOne );
+  this_InitMacroD(Style, "s-shows a file open dialog", fpNone|fpOne, "Prints default style or sets it (none resets)" );
+  this_InitMacroD(Scene, "s-shows a file open dialog", fpNone|fpOne, "Prints default scene parameters or sets it (none resets)" );
 
   this_InitMacro(SyncBC, , fpNone );
 
@@ -1940,15 +1939,15 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
     //wxClientDC dc(FGlCanvas);
     //dc.DrawText(wxT("RRRRRRRRRRRR"), 0, 0);
   }
-  else if( MsgId == ID_VarChange )  {
-    if( Data != NULL && EsdlInstanceOf(*Data, TOlxVarChangeData) && FGlConsole != NULL )  {
-      TOlxVarChangeData& vcd = *(TOlxVarChangeData*)Data;
-      if( GlConsoleBlendVarName.Comparei(vcd.var_name) == 0 )  {
-        if( !vcd.str_val.IsEmpty() )
-          FGlConsole->SetBlend( vcd.str_val.ToBool() );
-      }
-    }
-  }
+  //else if( MsgId == ID_VarChange )  {
+  //  if( Data != NULL && EsdlInstanceOf(*Data, TOlxVarChangeData) && FGlConsole != NULL )  {
+  //    TOlxVarChangeData& vcd = *(TOlxVarChangeData*)Data;
+  //    if( GlConsoleBlendVarName.Comparei(vcd.var_name) == 0 )  {
+  //      if( !vcd.str_val.IsEmpty() )
+  //        FGlConsole->SetBlend( vcd.str_val.ToBool() );
+  //    }
+  //  }
+  //}
   else if( MsgId == ID_TIMER )  {
     FTimer->OnTimer()->SetEnabled( false );
     // execute tasks ...
@@ -1986,7 +1985,8 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
         FObjectUnderMouse = NULL;
         ProcessXPMacro((olxstr("@reap -b -r \'") << FListenFile)+'\'', MacroError);
         // for debug purposes
-        if( TEFile::FileExists(DefStyle) )  FXApp->GetRender().Styles()->LoadFromFile(DefStyle);
+        if( TEFile::FileExists(DefStyle) )  
+          FXApp->GetRender().Styles()->LoadFromFile(DefStyle);
         for( int i=0; i < FOnListenCmds.Count(); i++ )  {
           ProcessXPMacro(FOnListenCmds[i], MacroError);
           if( !MacroError.IsSuccessful() )  break;
@@ -2627,26 +2627,44 @@ void TMainForm::OnResize()  {
 }
 //..............................................................................
 olxstr TMainForm::ExpandCommand(const olxstr &Cmd)  {
-  olxstr FullCmd(Cmd);
+  if( Cmd.IsEmpty() )
+    return Cmd;
+  olxstr FullCmd(Cmd.ToLowerCase());
+  TStrList all_cmds;
   if( !Cmd.IsEmpty() && FMacroItem != NULL )  {
     TPtrList<TDataItem> SL;
     FMacroItem->FindSimilarItems(Cmd, SL);
-    if( SL.Count() == 1 )
-      FullCmd = SL[0]->GetName();
-    else if( SL.IsEmpty() && FHelpItem != NULL )  {
-      FHelpItem->FindSimilarItems(Cmd, SL);
-      if( SL.Count() == 1 )
-        FullCmd = SL[0]->GetName();
-    }
+    for( int i=0; i < SL.Count(); i++ )
+      all_cmds.Add(SL[i]->GetName().ToLowerCase());
   }
-  if( FullCmd == Cmd )  {  // try buil-ins
-    TBasicFunctionPList bins;  // builins
-    GetLibrary().FindSimilarMacros(Cmd, bins);
-    GetLibrary().FindSimilarFunctions(Cmd, bins);
-    if( bins.Count() == 1 )  {
-      FullCmd = bins[0]->GetQualifiedName();
-    }
+  TBasicFunctionPList bins;  // builins
+  GetLibrary().FindSimilarMacros(Cmd, bins);
+  GetLibrary().FindSimilarFunctions(Cmd, bins);
+  if( bins.Count() == 1 )
+    FullCmd = bins[0]->GetQualifiedName();
+  else  {
+    for( int i=0; i < bins.Count(); i++ )
+      all_cmds.Add( bins[i]->GetName().ToLowerCase() );
   }
+  if( all_cmds.Count() > 1 )  {
+    olxstr cmn_str = all_cmds[0];
+    olxstr line(all_cmds[0], 80);
+    for( int i=1; i < all_cmds.Count(); i++ )  {
+      cmn_str = all_cmds[i].CommonString(cmn_str);
+      if( line.Length() + all_cmds[i].Length() > 79 )  {  // expects no names longer that 79!
+        FXApp->GetLog() << (line << '\n');
+        line.SetLength(0);
+      }
+      else
+        line << ' ' << all_cmds[i];
+    }
+    FullCmd = cmn_str;
+    if( !line.IsEmpty() )
+      FXApp->GetLog() << (line << '\n');
+    FXApp->GetLog() << '\n';
+  }
+  else if( all_cmds.Count() == 1 )
+    return all_cmds[0];
   return FullCmd;
 }
 //..............................................................................
@@ -2747,8 +2765,8 @@ void TMainForm::SaveSettings(const olxstr &FN)  {
   I->AddField("CmdLine", CmdLineVisible);
 
   I = &DF.Root().AddItem("Defaults");
-  I->AddField("Style", DefStyle);
-  I->AddField("SceneP", DefSceneP);
+  I->AddField("Style", TEFile::ExtractFileName(DefStyle));
+  I->AddField("SceneP", TEFile::ExtractFileName(DefSceneP));
 
   I->AddField("BgColor", FBgColor.ToString());
   I->AddField("WhiteOn", (FXApp->GetRender().LightModel.ClearColor().GetRGB() == 0xffffffff) );
@@ -2757,6 +2775,7 @@ void TMainForm::SaveSettings(const olxstr &FN)  {
   I->AddField("language", Dictionary.GetCurrentLanguage() );
   I->AddField("ExtraZoom", FXApp->GetExtraZoom() );
   I->AddField("GlTooltip", _UseGlTooltip);
+  I->AddField("console.blend", FGlConsole->IsBlend());
 
   I = &DF.Root().AddItem("Recent_files");
   for( int i=0; i < olx_min(FRecentFilesToShow, FRecentFiles.Count()); i++ )
@@ -2885,6 +2904,26 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
       FRecentFiles.Add(uniqNames[j], mi);
     }
   }
+
+  I = DF.Root().FindItem("Defaults");
+  DefStyle = I->GetFieldValue("Style");
+    executeFunction(DefStyle, DefStyle);
+  DefSceneP = I->GetFieldValue("SceneP");
+    executeFunction(DefSceneP, DefSceneP);
+  // loading default style if provided ?
+  if( TEFile::FileExists(DefStyle) )  {
+    TDataFile SDF;
+    SDF.LoadFromXLFile(DefStyle, &Log);
+    FXApp->GetRender().Styles()->FromDataItem(*SDF.Root().FindItem("style"));
+  }
+  else  {
+    FXApp->GetRender().Styles()->FromDataItem(*DF.Root().FindItem("Styles"));
+    // old style override
+    if( FXApp->GetRender().Styles()->GetVersion() < 2 )  {
+      ;//if( TEFile::Exists(FXApp->BaseDir() + "default.gldp")...
+    }
+  }
+  // default scene properties provided?
   if( TEFile::FileExists(DefSceneP) )  {
     TDataFile SDF;
     SDF.LoadFromXLFile(DefSceneP, &Log);
@@ -2892,24 +2931,13 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
   }
   else
     LoadScene(DF.Root().FindItem("Scene"));
-
-  if( TEFile::FileExists(DefStyle) )  {
-    TDataFile SDF;
-    SDF.LoadFromXLFile(DefStyle, &Log);
-    FXApp->GetRender().Styles()->FromDataItem(*SDF.Root().FindItem("style"));
-  }
-  else
-    FXApp->GetRender().Styles()->FromDataItem(*DF.Root().FindItem("Styles"));
-
-  I = DF.Root().FindItem("Defaults");
-  DefStyle = I->GetFieldValue("Style");
-  DefSceneP = I->GetFieldValue("SceneP");
-  // restroring language
+  // restroring language or setting default
   if( TEFile::FileExists( DictionaryFile ) )  {
     Dictionary.SetCurrentLanguage(DictionaryFile, I->GetFieldValue("language", EmptyString) );
   }
   FXApp->SetExtraZoom( I->GetFieldValue("ExtraZoom", "1.25").ToDouble() );
   UseGlTooltip( I->GetFieldValue("GlTooltip", FalseString).ToBool() );
+  FGlConsole->SetBlend(I->GetFieldValue("console.blend", TrueString).ToBool());
 
   olxstr T( I->GetFieldValue("BgColor") );
   if( !T.IsEmpty() )  FBgColor.FromString(T);

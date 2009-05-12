@@ -24,8 +24,10 @@ public:
   inline const olxstr& GetName(int index)  const {  return GetString(index);  }
   void FromString(const olxstr& S, char Sep); // -t=op
   void AddParam(const olxstr& Name, const olxstr& Param, bool Check = true);
-  inline bool Contains(const olxstr& Name)  const {  return IndexOf(Name) != -1;  }
-  const olxstr& FindValue(const olxstr& Name, const olxstr& defval=EmptyString) const  {
+  template <class T>
+  inline bool Contains(const T& Name)  const {  return IndexOf(Name) != -1;  }
+  template <class T>
+  const olxstr& FindValue(const T& Name, const olxstr& defval=EmptyString) const  {
     int i = IndexOf(Name);
     return (i >= 0) ? GetObject(i) : defval;
    }

@@ -10,7 +10,7 @@
 #include "glmaterial.h"
 #include "glrender.h"
 
-const short GraphicsStyleVersion = 1;
+const short GraphicsStyleVersion = 2;
 //------------------------------------------------------------------------------
 //TPrimitiveStyle implementation
 //------------------------------------------------------------------------------

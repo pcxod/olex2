@@ -2297,13 +2297,11 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   olxstr Tmp = Cmds[0];
   Cmds.Delete(0);
   olxstr FN = Cmds.Text(' ');
-  if( Tmp == "style" )  {
+  if( Tmp.Comparei("style") == 0 )  {
     if( FN.IsEmpty() )
       FN = PickFile("Load drawing style", "Drawing styles|*.glds", StylesDir, true);
-    if( FN.IsEmpty() )  {
-      Error.ProcessingError(__OlxSrcInfo, "no file name is given" );
+    if( FN.IsEmpty() )
       return;
-    }
     Tmp = TEFile::ExtractFilePath(FN);
     if( !Tmp.IsEmpty() )  {
       if( StylesDir.Comparei(Tmp) )  {
@@ -2339,10 +2337,8 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   else if( Tmp == "scene" )  {
     if( FN.IsEmpty() )
       FN = PickFile("Load scene parameters", "Scene parameters|*.glsp", SParamDir, true);
-    if( FN.IsEmpty() )  {
-      Error.ProcessingError(__OlxSrcInfo, "no file name is given" );
+    if( FN.IsEmpty() )
       return;
-    }
     Tmp = TEFile::ExtractFilePath(FN);
     if( !Tmp.IsEmpty() )  {
       if( SParamDir.Comparei(Tmp) != 0 )  {
@@ -2428,7 +2424,8 @@ void TMainForm::macLink(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     FN = (Tmp << FN );
   }
   FN = TEFile::ChangeFileExt(FN, "glsp");
-  if( TEFile::FileExists(FN) )  { FXApp->GetRender().Styles()->LinkFile(FN); }
+  if( TEFile::FileExists(FN) )  
+    FXApp->GetRender().Styles()->LinkFile(FN);
   else  {
     Error.ProcessingError(__OlxSrcInfo, "file does not exists : ") << FN;
     return;
@@ -2436,27 +2433,26 @@ void TMainForm::macLink(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 }
 //..............................................................................
 void TMainForm::macStyle(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  olxstr FN, Tmp;
-  if( !Cmds.Count() && !Options.Count() )  {
-    FN = "Default style: ";
+  if( Cmds.IsEmpty() && Options.IsEmpty() )  {
+    olxstr tmp = "Default style: ";
     if( !DefStyle.IsEmpty() )
-      FN << DefStyle;
+      tmp << DefStyle;
     else
-      FN << "none";
-    TBasicApp::GetLog().Info(FN);
+      tmp << "none";
+    TBasicApp::GetLog() << (tmp << '\n');
     return;
   }
   else  {
-    if( Cmds.Count() != 0 )  {
+    if( !Cmds.IsEmpty() )  {
       if( Cmds[0] == "none" )  {
         DefStyle = EmptyString;
-        Error.ProcessingError(__OlxSrcInfo, "default style is cleared" );
+        TBasicApp::GetLog() << "Default style is reset to none\n";
         return;
       }
-      FN = Cmds.Text(' ');
-      Tmp = TEFile::ExtractFilePath(FN);
+      olxstr FN = Cmds.Text(' ');
+      olxstr Tmp = TEFile::ExtractFilePath(FN);
       if( Tmp.IsEmpty() )  {
-        if( StylesDir.Length() )
+        if( !StylesDir.IsEmpty() )
           Tmp = StylesDir;
         else
           Tmp = FXApp->BaseDir();
@@ -2471,37 +2467,31 @@ void TMainForm::macStyle(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       return;
     }
     else  {
-      if( Options.Count() != 0 )  {
-        if( Options.GetName(0) == "s" )  {
-          FN = PickFile("Load drawing style", "Drawing styles|*.glds", StylesDir, false);
-          if( FN.Length() )
-            DefStyle = FN;
-          else  {
-            Error.ProcessingError(__OlxSrcInfo, "no file name is given" );
-            return;
-          }
-        }
-        Error.ProcessingError(__OlxSrcInfo, "wrong option: ") << Options.GetName(0);
-        return;
-      }
+      olxstr FN = PickFile("Load drawing style", "Drawing styles|*.glds", StylesDir, false);
+      if( TEFile::FileExists(FN) )
+        DefStyle = FN;
     }
   }
 }
 //..............................................................................
 void TMainForm::macScene(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  olxstr FN, Tmp;
   if( Cmds.IsEmpty()  && Options.IsEmpty() )  {
-    TBasicApp::GetLog() << DefSceneP << '\n';
+    olxstr tmp = "Default scene: ";
+    if( DefSceneP.IsEmpty() )
+      tmp << "none";
+    else
+      tmp << DefSceneP;
+    TBasicApp::GetLog() << (tmp << '\n');
     return;
   }
-  if( Cmds.Count() != 0 )  {
+  if( !Cmds.IsEmpty() )  {
     if( Cmds[0] == "none" )  {
-      Error.ProcessingError(__OlxSrcInfo, "default scene is cleared" );
+      TBasicApp::GetLog() << "Default scene is reset to none\n";
       DefSceneP = EmptyString;
       return;
     }
-    FN = Cmds.Text(' ');
-    Tmp = TEFile::ExtractFilePath(FN);
+    olxstr FN = Cmds.Text(' ');
+    olxstr Tmp = TEFile::ExtractFilePath(FN);
     if( Tmp.IsEmpty() )  {
       if( !SParamDir.IsEmpty() )
         Tmp = SParamDir;
@@ -2515,20 +2505,11 @@ void TMainForm::macScene(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       Error.ProcessingError(__OlxSrcInfo, "specified file does not exists" );
       return;
     }
-    return;
   }
   else  {
-    if( Options.Count() != 0 )  {
-      if( Options.GetName(0) == "s" )  {
-        FN = PickFile("Load scene parameters", "Scene parameters|*.glsp", SParamDir, false);
-        if( FN.Length() )
-          DefSceneP = FN;
-        else  {
-          Error.ProcessingError(__OlxSrcInfo, "no file name is given" );
-          return;
-        }
-      }
-    }
+    olxstr FN = PickFile("Load scene parameters", "Scene parameters|*.glsp", SParamDir, false);
+    if( TEFile::FileExists(FN) )
+      DefSceneP = FN;
   }
 }
 //..............................................................................

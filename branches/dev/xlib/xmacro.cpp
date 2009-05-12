@@ -87,7 +87,7 @@ void XLibMacros::Export(TLibrary& lib)  {
   xlib_InitMacro(AddSE, "", (fpAny^fpNone)|psFileLoaded,
 "Tries to add a new symmetry element to current space group to form a new one. [-1] is for center of symmetry" );
 //_________________________________________________________________________________________________________________________
-  xlib_InitMacro(Fuse, "f-removes symmetrical equivalents", fpNone|psFileLoaded,
+  xlib_InitMacro(Fuse, "f-removes symmetrical equivalents", fpNone|fpOne|psFileLoaded,
 "Re-initialises the connectivity list" );
   xlib_InitMacro(Flush, EmptyString, fpNone|fpOne, "Flushes log streams" );
 //_________________________________________________________________________________________________________________________
@@ -1066,6 +1066,8 @@ void XLibMacros::macFile(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 }
 //..............................................................................
 void XLibMacros::macFuse(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
+  if( Cmds.Count() == 1 && Cmds[0].IsNumber() )
+    throw TNotImplementedException(__OlxSrcInfo);
   TXApp::GetInstance().XFile().GetLattice().Uniq( Options.Contains("f") );
 }
 //..............................................................................

@@ -74,7 +74,8 @@ class TOlxVars : public IEObject  {
   static TOlxVars* Instance;
   TSStrObjList<olxstr,TOlxPyVar, true> Vars;
 
-  inline void _SetVar(const olxstr& name, const olxstr& value)  {
+  template <class T>
+  inline void _SetVar(const T& name, const olxstr& value)  {
     int ind = Vars.IndexOfComparable(name);
     try  {
       if( ind >= 0 )  Vars.GetObject(ind).Set(value);
@@ -87,7 +88,8 @@ class TOlxVars : public IEObject  {
     TOlxVarChangeData vcd(name, value, NULL);
     OnVarChange->Execute(NULL, &vcd);
   }
-  inline void _SetVar(const olxstr& name, PyObject* value)  {
+  template <class T>
+  inline void _SetVar(const T& name, PyObject* value)  {
     int ind = Vars.IndexOfComparable(name);
     try  {
       if( ind >= 0 )
@@ -110,7 +112,8 @@ class TOlxVars : public IEObject  {
     return EmptyString;
   }
 
-  inline void _UnsetVar(const olxstr& name)  {
+  template <class T>
+  inline void _UnsetVar(const T& name)  {
     int ind = Vars.IndexOfComparable(name);
     if( ind >= 0 )  Vars.Delete(ind);
   }
@@ -139,25 +142,30 @@ public:
     return Instance->Vars.GetComparable(index);
   }
 
-  static inline void SetVar(const olxstr& name, const olxstr& value)  {
+  template <class T>
+  static inline void SetVar(const T& name, const olxstr& value)  {
     if( Instance == NULL )  new TOlxVars();
     Instance->_SetVar(name, value);
   }
 
-  static inline void UnsetVar(const olxstr& name)  {
+  template <class T>
+  static inline void UnsetVar(const T& name)  {
     if( Instance == NULL )  return;
     Instance->_UnsetVar(name);
   }
 
-  static inline void SetVar(const olxstr& name, PyObject *value)  {
+  template <class T>
+  static inline void SetVar(const T& name, PyObject *value)  {
     if( Instance == NULL )  new TOlxVars();
     Instance->_SetVar(name, value);
   }
 
-  static inline bool IsVar(const olxstr& name) {
+  template <class T>
+  static inline bool IsVar(const T& name) {
     return (Instance == NULL) ? false : Instance->Vars.IndexOfComparable(name) != -1;
   }
-  static inline int VarIndex(const olxstr& name) {
+  template <class T>
+  static inline int VarIndex(const T& name) {
     return (Instance == NULL) ? -1 : Instance->Vars.IndexOfComparable(name);
   }
   static inline const olxstr& FindVarName(PyObject *pyObj) {
@@ -169,12 +177,15 @@ public:
 class TOlxVars : public IEObject  {
   static TOlxVars* Instance;
   TSStrObjList<olxstr,olxstr, true> Vars;
-  inline void _SetVar(const olxstr& name, const olxstr& value)  {
+
+  template <class T>
+  inline void _SetVar(const T& name, const olxstr& value)  {
     int ind = Vars.IndexOfComparable(name);
     if( ind >= 0 )  Vars.GetObject(ind) = value;
     else            Vars.Add(name, value);
   }
-  inline void _UnsetVar(const olxstr& name)  {
+  template <class T>
+  inline void _UnsetVar(const T& name)  {
     int ind = Vars.IndexOfComparable(name);
     if( ind >= 0 )  Vars.Delete(ind);
   }
@@ -192,21 +203,22 @@ public:
     return Instance->Vars.GetObject(index);
   }
 
-
-  static inline void SetVar(const olxstr& name, const olxstr& value)  {
+  template <class T>
+  static inline void SetVar(const T& name, const olxstr& value)  {
     if( Instance == NULL )  new TOlxVars();
     Instance->_SetVar(name, value);
   }
-
-  static inline void UnsetVar(const olxstr& name)  {
+  template <class T>
+  static inline void UnsetVar(const T& name)  {
     if( Instance == NULL )  return;
     Instance->_UnsetVar(name);
   }
-
-  static inline bool IsVar(const olxstr& name) {
+  template <class T>
+  static inline bool IsVar(const T& name) {
     return (Instance == NULL) ? false : Instance->Vars.IndexOfComparable(name) != -1;
   }
-  static inline int VarIndex(const olxstr& name) {
+  template <class T>
+  static inline int VarIndex(const T& name) {
     return (Instance == NULL) ? -1 : Instance->Vars.IndexOfComparable(name);
   }
 };
