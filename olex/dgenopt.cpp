@@ -29,19 +29,19 @@ TdlgGenerate::TdlgGenerate(TMainFrame *ParentFrame)
   TStrList EL;
   for( i=1; i < 9; i++ )    EL.Add(i);
 
-  stAFrom = new wxStaticText(this, -1, wxT("A from"), wxDefaultPosition, wxSize(34, 21));
-  stBFrom = new wxStaticText(this, -1, wxT("B from"), wxDefaultPosition, wxSize(34, 21));
-  stCFrom = new wxStaticText(this, -1, wxT("C from"), wxDefaultPosition, wxSize(34, 21));
-  stATo   = new wxStaticText(this, -1, wxT("to"), wxDefaultPosition, wxSize(34, 21) );
-  stBTo   = new wxStaticText(this, -1, wxT("to"), wxDefaultPosition, wxSize(34, 21) );
-  stCTo   = new wxStaticText(this, -1, wxT("to"), wxDefaultPosition, wxSize(34, 21) );
+  stAFrom = new wxStaticText(this, -1, wxT("A from"), wxDefaultPosition);
+  stBFrom = new wxStaticText(this, -1, wxT("B from"), wxDefaultPosition);
+  stCFrom = new wxStaticText(this, -1, wxT("C from"), wxDefaultPosition);
+  stATo   = new wxStaticText(this, -1, wxT("to"), wxDefaultPosition);
+  stBTo   = new wxStaticText(this, -1, wxT("to"), wxDefaultPosition);
+  stCTo   = new wxStaticText(this, -1, wxT("to"), wxDefaultPosition);
 
-  tcAFrom = new wxTextCtrl(this, -1, wxT("-1"), wxDefaultPosition, wxSize(34, 21), 0);
-  tcBFrom = new wxTextCtrl(this, -1, wxT("-1"), wxDefaultPosition, wxSize(34, 21), 0);
-  tcCFrom = new wxTextCtrl(this, -1, wxT("-1"), wxDefaultPosition, wxSize(34, 21), 0);
-  tcATo   = new wxTextCtrl(this, -1, wxT("1"), wxDefaultPosition, wxSize(34, 21), 0);
-  tcBTo   = new wxTextCtrl(this, -1, wxT("1"), wxDefaultPosition, wxSize(34, 21), 0);
-  tcCTo   = new wxTextCtrl(this, -1, wxT("1"), wxDefaultPosition, wxSize(34, 21), 0);
+  tcAFrom = new wxTextCtrl(this, -1, wxT("-1"), wxDefaultPosition);
+  tcBFrom = new wxTextCtrl(this, -1, wxT("-1"), wxDefaultPosition);
+  tcCFrom = new wxTextCtrl(this, -1, wxT("-1"), wxDefaultPosition);
+  tcATo   = new wxTextCtrl(this, -1, wxT("1"), wxDefaultPosition);
+  tcBTo   = new wxTextCtrl(this, -1, wxT("1"), wxDefaultPosition);
+  tcCTo   = new wxTextCtrl(this, -1, wxT("1"), wxDefaultPosition);
 
   cbA = new TComboBox(this);  cbA->SetText("2"); cbA->WI.SetWidth(46); cbA->WI.SetHeight(21);  cbA->AddItems(EL);
   cbB = new TComboBox(this);  cbB->SetText("2"); cbB->WI.SetWidth(46); cbB->WI.SetHeight(21);  cbB->AddItems(EL);
@@ -50,42 +50,42 @@ TdlgGenerate::TdlgGenerate(TMainFrame *ParentFrame)
   cbB->OnChange->Add(this);
   cbC->OnChange->Add(this);
 
-  wxBoxSizer *TopSiser = new wxBoxSizer( wxVERTICAL );
+  wxBoxSizer *TopSizer = new wxBoxSizer(wxVERTICAL );
 
-  wxBoxSizer *ASizer = new wxBoxSizer( wxHORIZONTAL );
-  ASizer->Add( stAFrom, 0, wxALL, Border );
-  ASizer->Add( tcAFrom, 0, wxALL, Border );
-  ASizer->Add( stATo,   0, wxALL, Border );
-  ASizer->Add( tcATo, 0, wxALL, Border );
-  ASizer->Add( cbA, 0, wxALL, Border );
+  wxFlexGridSizer *GridSizer = new wxFlexGridSizer(3, 5, 0, 0);
+  GridSizer->Add( stAFrom, 0, wxALL, Border );
+  GridSizer->Add( tcAFrom, 0, wxALL, Border );
+  GridSizer->Add( stATo,   0, wxALL, Border );
+  GridSizer->Add( tcATo, 0, wxALL, Border );
+  GridSizer->Add( cbA, 0, wxALL, Border );
 
-  wxBoxSizer *BSizer = new wxBoxSizer( wxHORIZONTAL );
-  BSizer->Add( stBFrom, 0, wxALL, Border );
-  BSizer->Add( tcBFrom, 0, wxALL, Border );
-  BSizer->Add( stBTo,   0, wxALL, Border );
-  BSizer->Add( tcBTo, 0, wxALL, Border );
-  BSizer->Add( cbB, 0, wxALL, Border );
+  GridSizer->Add( stBFrom, 0, wxALL, Border );
+  GridSizer->Add( tcBFrom, 0, wxALL, Border );
+  GridSizer->Add( stBTo,   0, wxALL, Border );
+  GridSizer->Add( tcBTo, 0, wxALL, Border );
+  GridSizer->Add( cbB, 0, wxALL, Border );
 
-  wxBoxSizer *CSizer = new wxBoxSizer( wxHORIZONTAL );
-  CSizer->Add( stCFrom, 0, wxALL, Border );
-  CSizer->Add( tcCFrom, 0, wxALL, Border );
-  CSizer->Add( stCTo,   0, wxALL, Border );
-  CSizer->Add( tcCTo, 0, wxALL, Border );
-  CSizer->Add( cbC, 0, wxALL, Border );
-
+  GridSizer->Add( stCFrom, 0, wxALL, Border );
+  GridSizer->Add( tcCFrom, 0, wxALL, Border );
+  GridSizer->Add( stCTo,   0, wxALL, Border );
+  GridSizer->Add( tcCTo, 0, wxALL, Border );
+  GridSizer->Add( cbC, 0, wxALL, Border );
+  GridSizer->SetSizeHints(this);
+  
   wxBoxSizer *ButtonsSizer = new wxBoxSizer( wxHORIZONTAL );
 
   ButtonsSizer->Add( new wxButton( this, wxID_OK, wxT("OK") ), 0, wxALL, Border);
   ButtonsSizer->Add( new wxButton( this, wxID_CANCEL, wxT("Cancel") ), 0, wxALL, Border);
   ButtonsSizer->Add( new wxButton( this, wxID_HELP, wxT("Help") ),     0, wxALL, Border );
+  ButtonsSizer->SetSizeHints(this);
+  
+  TopSizer->Add(GridSizer, 0, wxALL, 5);
+  TopSizer->Add(ButtonsSizer, 0, wxALL, 5);
+  //TopSiser->Add(CSizer, 0, wxALL, 5);
+  //TopSiser->Add(ButtonsSizer, 0, wxALL, 10);
+  SetSizer( TopSizer );      // use the sizer for layout
 
-  TopSiser->Add(ASizer, 0, wxALL, 5);
-  TopSiser->Add(BSizer, 0, wxALL, 5);
-  TopSiser->Add(CSizer, 0, wxALL, 5);
-  TopSiser->Add(ButtonsSizer, 0, wxALL, 10);
-  SetSizer( TopSiser );      // use the sizer for layout
-
-  TopSiser->SetSizeHints( this );   // set size hints to honour minimum size
+  TopSizer->SetSizeHints( this );   // set size hints to honour minimum size
 
   Center();
   FParent->RestorePosition(this);
