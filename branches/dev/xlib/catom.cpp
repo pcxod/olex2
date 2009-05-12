@@ -34,6 +34,7 @@ TCAtom::TCAtom(TAsymmUnit *Parent)  {
   FragmentId = -1;
   FAttachedAtoms = NULL;
   FAttachedAtomsI = NULL;
+  FAtomInfo = NULL;
   Degeneracy = 1;
   Tag = -1;
   DependentAfixGroup = ParentAfixGroup = NULL;

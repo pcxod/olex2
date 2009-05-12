@@ -572,6 +572,78 @@
 				Name="VCPostBuildEventTool"
 			/>
 		</Configuration>
+		<Configuration
+			Name="unicode-release-di|Win32"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)\lib"
+			IntermediateDirectory="$(ConfigurationName)"
+			ConfigurationType="4"
+			CharacterSet="1"
+			ManagedExtensions="0"
+			WholeProgramOptimization="1"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="2"
+				InlineFunctionExpansion="2"
+				EnableIntrinsicFunctions="true"
+				FavorSizeOrSpeed="1"
+				AdditionalIncludeDirectories="&quot;E:\wxWidgets-2.8.9\lib\vc_lib\mswud&quot;;&quot;E:\wxWidgets-2.8.9\include&quot;;..\..\..\glib;..\..\..\xlib;..\..\..\repository;C:\Python25\include;..\..\..\sdl"
+				PreprocessorDefinitions="__WXWIDGETS__;_UNICODE"
+				StringPooling="true"
+				MinimalRebuild="false"
+				BasicRuntimeChecks="0"
+				RuntimeLibrary="2"
+				EnableEnhancedInstructionSet="2"
+				FloatingPointModel="2"
+				UsePrecompiledHeader="0"
+				BrowseInformation="0"
+				WarningLevel="3"
+				DebugInformationFormat="3"
+				CallingConvention="0"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLibrarianTool"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+			/>
+		</Configuration>
 	</Configurations>
 	<References>
 		<AssemblyReference
@@ -689,6 +761,15 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Unicode-release-py26|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="3"
+						BasicRuntimeChecks="0"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="unicode-release-di|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"

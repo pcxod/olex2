@@ -90,7 +90,7 @@ void TLangDict::SetCurrentLanguage(const olxstr& fileName, const olxstr& lang)  
       continue;
     }
 #ifdef _UNICODE
-    if( toks[CurrentLanguageIndex].IsEmpty() )  {  // take language 1
+    if( toks[CurrentLanguageIndex].Length() < 2 )  {  // take language 1
       wc_bf.SetCapacity(toks[1].Length());
       int c = utf8.MB2WC( wc_bf.Data(), toks[1].c_str(), wc_bf.GetCapacity());
       Records.Add( toks[0], new olxstr((const olxch *)wc_bf.Data(), c) );
@@ -101,7 +101,7 @@ void TLangDict::SetCurrentLanguage(const olxstr& fileName, const olxstr& lang)  
       Records.Add( toks[0], new olxstr((const olxch *)wc_bf.Data(), c) );
     }
 #else
-    if( toks[CurrentLanguageIndex].IsEmpty() )  {
+    if( toks[CurrentLanguageIndex].Length() < 2 )  {
       wc_bf.SetCapacity(toks[1].Length());
       c_bf.SetCapacity(toks[1].Length());
       int c = utf8.MB2WC( wc_bf.Data(), toks[1].c_str(), wc_bf.GetCapacity());
