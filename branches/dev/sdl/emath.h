@@ -53,14 +53,16 @@ template <typename A, typename B>
 
 template <class VC>
   double TetrahedronVolume(const VC& A, const VC& B, const VC& C,const VC& D )  {
-    VC a(A-B),b(C-B),n;
-    double d, caS, sa;
-    caS = a.CAngle(b);
-    if( olx_abs(caS) > 0.9999 )  return 0;
-    sa = sqrt( 1- caS*caS);
+    VC a(A-B),b(C-B);
+    if( a.QLength()*b.QLength() < 1e-5 )
+      return 0;
+    double caS = a.CAngle(b);
+    if( olx_abs(caS) > 0.9999 )  
+      return 0;
+    double sa = sqrt( 1- caS*caS);
     caS = a.Length() * b.Length() * sa / 2;
-    n = a.XProdVec(b);
-    d = n[2]*A[2] + n[1]*A[1] + n[0]*A[0];
+    VC n = a.XProdVec(b);
+    double d = n[2]*A[2] + n[1]*A[1] + n[0]*A[0];
     d = n[2]*D[2] + n[1]*D[1] + n[0]*D[0] - d;
     d /= n.Length();
     return olx_abs( caS*d/3 );

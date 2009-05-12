@@ -2041,8 +2041,18 @@ void TMainForm::macAZoom(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 //..............................................................................
 void TMainForm::macBRad(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   TXBondPList bonds;
-  FXApp->GetBonds(Cmds.Text(' ', 1), bonds);
-  FXApp->BondRad(Cmds[0].ToDouble(), bonds.IsEmpty() ? NULL : &bonds);
+  if( Cmds.Count() == 2 && Cmds[1].Comparei("hbonds") == 0 )  {
+    for( int i=0; i < FXApp->BondCount(); i++ )  {
+      if( FXApp->GetBond(i).Bond().GetType() == sotHBond )
+        bonds.Add( &FXApp->GetBond(i) );
+    }
+    if( !bonds.IsEmpty() )
+      FXApp->BondRad(Cmds[0].ToDouble(), &bonds);
+  }
+  else  {
+    FXApp->GetBonds(Cmds.Text(' ', 1), bonds);
+    FXApp->BondRad(Cmds[0].ToDouble(), bonds.IsEmpty() ? NULL : &bonds);
+  }
 }
 //..............................................................................
 void TMainForm::macKill(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
@@ -6414,10 +6424,6 @@ void TMainForm::macCalcVol(TStrObjList &Cmds, const TParamList &Options, TMacroE
     TBasicApp::GetLog() << ( olxstr("The tetrahedra volume is ") << olxstr::FormatFloat(3,v) << '\n' );
 }
 //..............................................................................
-void TMainForm::macChangeLanguage(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  Dictionary.SetCurrentLanguage(DictionaryFile, Cmds[0] );
-}
-//..............................................................................
 void TMainForm::funTranslatePhrase(const TStrObjList& Params, TMacroError &E) {
   E.SetRetVal( TranslatePhrase(Params[0]) );
 }
@@ -8740,4 +8746,10 @@ void TMainForm::funGlTooltip(const TStrObjList& Params, TMacroError &E)  {
     UseGlTooltip( Params[0].ToBool() );
 }
 //..............................................................................
-
+void TMainForm::funCurrentLanguage(const TStrObjList& Params, TMacroError &E)  {
+  if( Params.IsEmpty() )
+    E.SetRetVal(Dictionary.GetCurrentLanguage());
+  else
+    Dictionary.SetCurrentLanguage(DictionaryFile, Params[0] );
+}
+//..............................................................................

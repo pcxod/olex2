@@ -166,8 +166,11 @@ RefinementModel& RefinementModel::Assign(const RefinementModel& rm, bool AssignA
   for( int i=0; i < rm.Frags.Count(); i++ )
     Frags(rm.Frags.GetKey(i), new Fragment( *rm.Frags.GetValue(i) ) );
 
+  Conn.Assign(rm.Conn);
   if( AssignAUnit )
     aunit.Assign(rm.aunit);
+  else
+    aunit._UpdateConnInfo();
   rDFIX.Assign(rm.rDFIX);
   rDANG.Assign(rm.rDANG);
   rSADI.Assign(rm.rSADI);
@@ -180,8 +183,6 @@ RefinementModel& RefinementModel::Assign(const RefinementModel& rm, bool AssignA
   rSAME.Assign(aunit, rm.rSAME);
   ExyzGroups.Assign(rm.ExyzGroups);
   AfixGroups.Assign(rm.AfixGroups);
-  Conn.Assign(rm.Conn);
-  aunit._UpdateConnInfo();
   // restraunts have to be copied first, as some may refer to vars
   Vars.Assign( rm.Vars );
 

@@ -661,6 +661,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\xlib\mol2.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\xlib\network.cpp"
 				>
 			</File>
@@ -904,6 +908,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\xlib\mol.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\xlib\mol2.h"
 				>
 			</File>
 			<File

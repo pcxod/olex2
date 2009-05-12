@@ -126,7 +126,10 @@ void TCAtom::Assign(const TCAtom& S)  {
   else
     UisoOwner = NULL;
   FLabel   = S.FLabel;
-  FAtomInfo = &S.GetAtomInfo();
+  if( FAtomInfo != &S.GetAtomInfo() )  {
+    FAtomInfo = &S.GetAtomInfo();
+    FParent->_OnAtomTypeChanged(*this);
+  }
 //  Frag    = S.Frag;
   //Id = S.GetId();
   FragmentId = S.GetFragmentId();

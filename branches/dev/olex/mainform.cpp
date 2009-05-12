@@ -324,8 +324,8 @@ TMainForm::TMainForm(TGlXApp *Parent, int Width, int Height):
 //  _crtBreakAlloc = 5892;
   SkipSizing = false;
   Destroying = false;
-#ifndef __WIN32__
-  _UseGlTooltip = false;  // most platforms support it, besides some very old or stupid ones...
+#ifdef __WIN32__
+  _UseGlTooltip = false;  // Linux and Mac set tooltips after have been told to do so...
 #else
   _UseGlTooltip = true;
 #endif
@@ -762,8 +762,6 @@ v-[grow] use user provided delta for connctivity analysis",
   this_InitMacro(DelOFile, ,fpOne );
   this_InitMacro(CalcVol, cs, fpOne );
 
-  this_InitMacro(ChangeLanguage, ,fpOne );
-
   this_InitMacroD(Schedule, "r-repeatable", fpAny^(fpNone|fpOne),
 "Schedules a particular macro (second argument) to be executed within provided\
  interval (first argument)" );
@@ -930,6 +928,7 @@ separated values of Atom Type and radius, an entry a line" );
   this_InitFuncD(CheckState, fpOne|fpTwo, "Returns if true if given program state is active" );
   this_InitFuncD(GlTooltip, fpNone|fpOne, "Returns state of/sets OpenGL tooltip implementation for the main window\
                                           (some old platforms do not have proper implementation of tooltips)" );
+  this_InitFuncD(CurrentLanguage, fpNone|fpOne, "Returns/sets current language" );
 
   Library.AttachLibrary( TEFile::ExportLibrary() );
   //Library.AttachLibrary( olxstr::ExportLibrary("str") );

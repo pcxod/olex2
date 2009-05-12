@@ -875,9 +875,13 @@ olxstr TGXApp::GetSelectionInfo()  {
         Tmp = "Torsion angle (";
         Tmp << macSel_GetName4(a1, a2, a3, a4) << "): ";
         v = TorsionAngle(a1.crd(), a2.crd(), a3.crd(), a4.crd());
-        
-        Tmp << olxstr::FormatFloat(3, v) << " (" << 
-          (v < 0 ? EmptyString : olxstr::FormatFloat(3, 180-v)) << ')' <<
+        if( v >= 0 )
+          Tmp << olxstr::FormatFloat(3, v) << " (" 
+              << olxstr::FormatFloat(3, 180-v) << ')';
+        else 
+          Tmp << "n/a (n/a)";
+
+        Tmp << 
         "\nAngle (" << macSel_GetName3(a1, a2, a3) << "): " <<
           olxstr::FormatFloat(3, Angle(a1.crd(), a2.crd(), a3.crd())) <<
         "\nAngle (" << macSel_GetName3(a2, a3, a4) << "): " << 

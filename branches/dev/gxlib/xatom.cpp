@@ -965,7 +965,7 @@ vec3f TXAtom::TriangulateType2(Poly& pl, const TSAtomPList& atoms)  {
   vec3f cnt;
   double wght = 0;
   for( int i=0; i < atoms.Count(); i++ )  {
-    pa.AddNew( atoms[i], 1 );
+    pa.AddNew( atoms[i], atoms[i]->CAtom().GetOccu());
     cnt += atoms[i]->crd()*atoms[i]->CAtom().GetOccu();
     wght += atoms[i]->CAtom().GetOccu();
   }
@@ -973,7 +973,13 @@ vec3f TXAtom::TriangulateType2(Poly& pl, const TSAtomPList& atoms)  {
   wght += FAtom->CAtom().GetOccu();
   cnt /= (float)wght;
   plane.Init(pa);
-  PlaneSort::Sorter sp(plane);
+  plane.GetCenter();
+  // this might fail if one of the atoms is on at the palce center 
+  PlaneSort::Sorter sp;
+  try  {  sp.DoSort(plane);  }
+  catch( ... )  {
+    return cnt;
+  }
   const int start = pl.vecs.Count();
   pl.vecs.SetCount(pl.vecs.Count()+atoms.Count()+2);
   pl.vecs[start] = FAtom->crd();

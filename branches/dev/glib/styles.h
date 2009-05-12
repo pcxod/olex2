@@ -18,7 +18,7 @@ class TPrimitiveStyle: public AGroupObject  {
 protected:
   AGOProperties *NewProperties();
 public:
-  TPrimitiveStyle(const olxstr &PrimitName, TObjectGroup *GropParent, TGraphicsStyles *Parent);
+  TPrimitiveStyle(const olxstr &PrimitName, TObjectGroup *GroupParent, TGraphicsStyles *Parent);
   ~TPrimitiveStyle();
   const olxstr& PrimitiveName() const {  return FPrimitiveName; }
 
@@ -50,7 +50,6 @@ struct TGSParam {
 class TGraphicsStyle: public ACollectionItem  {
   olxstr FLabel;
   TPtrList<TPrimitiveStyle> FPStyles;
-  //TPtrList<TGraphicsStyle> FStyles;  // a sublist of the tree
   TSStrObjList<olxstr, TGraphicsStyle*, true> FStyles;  // a sublist of the tree
   TGraphicsStyle *FParentStyle;
   TGraphicsStyles *FParent;
