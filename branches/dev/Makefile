@@ -92,14 +92,17 @@ obj_repository : $(OBJ_DIR) $@
 obj : $(OBJ_DIR) obj_alglib obj_sdl obj_sdl_smart obj_xlib obj_xlib_macro obj_glib obj_gxlib obj_repository
 
 # unirun will create the obj/unirun directory and compile the source
-unirun : obj
+
+unirun : $(OBJ_DIR)/$@
+	+make clean_unirun
 	@echo "[A] Making unirun this is relatively quick"
 	@mkdir $(OBJ_DIR)unirun;
 	@cd $(OBJ_DIR)unirun/;	$(CC) $(SRC_DIR)unirun/*.cpp  $(OPTS) $(CFLAGS)
 	@echo "[A] Done! Making unirun I told you this was relatively quick"
 
 # olex will create the obj/olex directory and compile the source
-olex : obj
+olex : $(OBJ_DIR)/$@
+	+make clean_olex
 	@echo "[B] Making olex this can take a while"
 	@mkdir $(OBJ_DIR)olex;
 	@cd $(OBJ_DIR)olex/; $(CC) $(SRC_DIR)olex/*.cpp $(OPTS) $(CFLAGS)
@@ -110,7 +113,8 @@ olex : obj
 bins : unirun olex
 
 # link will link the *.s objects created and build the binaries in the bin directory
-link : unirun olex
+link : $(OBJ_DIR)/unirun/$@ $(OBJ_DIR)/olex/$@
+	+make clean_bin
 	@echo "Linking unirun and olex"
 	@mkdir $(EXE_DIR); $(CC) $(OBJ_DIR)unirun/*.s $(OBJ_DIR)*.s -o $(EXE_DIR)unirun $(LDFLAGS)
 	@$(CC) $(OBJ_DIR)*.s $(OBJ_DIR)olex/*.s -o $(EXE_DIR)olex2 $(LDFLAGS)
