@@ -32,167 +32,162 @@ TdlgSceneProps::TdlgSceneProps(TMainForm *ParentFrame, TGXApp *XApp)
   AActionHandler::SetToDelete(false);
   FXApp = XApp;
 
-  wxSize DefS(100, 21);
-  short Border = 1, TbW=100, SpW = 40;
-  wxStaticText *stX = new wxStaticText(this, -1, wxT("X"), wxDefaultPosition, wxSize(21, 21));
-  tbX = new TTrackBar(this);  tbX->WI.SetWidth(TbW);  tbX->OnChange->Add(this);  tbX->SetRange(-100,100);
-  teX = new TTextEdit(this);  teX->WI.SetWidth(25);   teX->SetReadOnly(true);
-  wxStaticText *stY = new wxStaticText(this, -1, wxT("Y"), wxDefaultPosition, wxSize(21, 21));
-  tbY = new TTrackBar(this);  tbY->WI.SetWidth(TbW);  tbY->OnChange->Add(this);  tbY->SetRange(-100,100);
-  teY = new TTextEdit(this);  teY->WI.SetWidth(25);   teY->SetReadOnly(true);
-  wxStaticText *stZ = new wxStaticText(this, -1, wxT("Z"), wxDefaultPosition, wxSize(21, 21));
-  tbZ = new TTrackBar(this);  tbZ->WI.SetWidth(TbW);  tbZ->OnChange->Add(this);  tbZ->SetRange(-100,100);
-  teZ = new TTextEdit(this);  teZ->WI.SetWidth(25);   teZ->SetReadOnly(true);
-  wxStaticText *stR = new wxStaticText(this, -1, wxT("R"), wxDefaultPosition, wxSize(21, 21));
-  tbR  = new TTrackBar(this); tbR->WI.SetWidth(TbW);  tbR->OnChange->Add(this);  tbR->SetRange(-3,3);
-  teR = new TTextEdit(this);  teR->WI.SetWidth(25);   teR->SetReadOnly(true);
-
-  wxBoxSizer *PSizerX = new wxBoxSizer( wxHORIZONTAL );
-  PSizerX->Add( stX, 0, wxALL, Border );
-  PSizerX->Add( tbX, 0, wxALL, Border );
-  PSizerX->Add( teX, 0, wxALL, Border );
-
-  wxBoxSizer *PSizerY = new wxBoxSizer( wxHORIZONTAL );
-  PSizerY->Add( stY, 0, wxALL, Border );
-  PSizerY->Add( tbY, 0, wxALL, Border );
-  PSizerY->Add( teY, 0, wxALL, Border );
-
-  wxBoxSizer *PSizerZ = new wxBoxSizer( wxHORIZONTAL );
-  PSizerZ->Add( stZ, 0, wxALL, Border );
-  PSizerZ->Add( tbZ, 0, wxALL, Border );
-  PSizerZ->Add( teZ, 0, wxALL, Border );
-
-  wxBoxSizer *PSizerR = new wxBoxSizer( wxHORIZONTAL );
-  PSizerR->Add( stR, 0, wxALL, Border );
-  PSizerR->Add( tbR, 0, wxALL, Border );
-  PSizerR->Add( teR, 0, wxALL, Border );
-
+  short Border = 1;
+  wxStaticText *stX = new wxStaticText(this, -1, wxT("X"), wxDefaultPosition);
+  tbX = new TTrackBar(this, wxSize(80,30));  tbX->OnChange->Add(this);  tbX->SetRange(-100,100);
+  teX = new TTextEdit(this);  teX->SetReadOnly(true);
+  wxStaticText *stY = new wxStaticText(this, -1, wxT("Y"), wxDefaultPosition);
+  tbY = new TTrackBar(this, wxSize(80,30));  tbY->OnChange->Add(this);  tbY->SetRange(-100,100);
+  teY = new TTextEdit(this);  teY->SetReadOnly(true);
+  wxStaticText *stZ = new wxStaticText(this, -1, wxT("Z"), wxDefaultPosition);
+  tbZ = new TTrackBar(this, wxSize(80,30));  tbZ->OnChange->Add(this);  tbZ->SetRange(-100,100);
+  teZ = new TTextEdit(this);  teZ->SetReadOnly(true);
+  wxStaticText *stR = new wxStaticText(this, -1, wxT("R"), wxDefaultPosition);
+  tbR  = new TTrackBar(this, wxSize(80,30)); tbR->OnChange->Add(this);  tbR->SetRange(-3,3);
+  teR = new TTextEdit(this);  teR->SetReadOnly(true);
+    
+  //Light Position frame
   wxStaticBox *PBox = new wxStaticBox(this, -1, wxT("Light position"));
   wxStaticBoxSizer *PSizer = new wxStaticBoxSizer(PBox, wxVERTICAL );
-  PSizer->Add( PSizerX, 0, wxALL, 1 );
-  PSizer->Add( PSizerY, 0, wxALL, 1 );
-  PSizer->Add( PSizerZ, 0, wxALL, 1 );
-  PSizer->Add( PSizerR, 0, wxALL, 1 );
+  wxFlexGridSizer *LightPosGridSizer = new wxFlexGridSizer(4, 3, Border, Border);
+    
+  LightPosGridSizer->Add( stX, 0, wxALL, Border );
+  LightPosGridSizer->Add( tbX, 1, wxEXPAND | wxALL, Border );
+  LightPosGridSizer->Add( teX, 0, wxALL, Border );
 
-  wxStaticText *stAmb = new wxStaticText(this, -1, wxT("Ambient"), wxDefaultPosition, wxSize(45, 21));
-  teAmb = new TTextEdit(this); teAmb->SetReadOnly(true);  teAmb->WI.SetWidth(34);  teAmb->WI.SetHeight(21);  teAmb->OnClick->Add(this);
-  scAmbA = new TSpinCtrl(this);  scAmbA->WI.SetWidth(SpW);
+  LightPosGridSizer->Add( stY, 0, wxALL, Border );
+  LightPosGridSizer->Add( tbY, 1, wxEXPAND | wxALL, Border );
+  LightPosGridSizer->Add( teY, 0, wxALL, Border );
 
-  wxStaticText *stDiff = new wxStaticText(this, -1, wxT("Diffuse"), wxDefaultPosition, wxSize(45, 21));
-  teDiff = new TTextEdit(this); teDiff->SetReadOnly(true);  teDiff->WI.SetWidth(34);  teDiff->WI.SetHeight(21);  teDiff->OnClick->Add(this);
-  scDiffA = new TSpinCtrl(this); scDiffA->WI.SetWidth(SpW);
+  LightPosGridSizer->Add( stZ, 0, wxALL, Border );
+  LightPosGridSizer->Add( tbZ, 1, wxEXPAND | wxALL, Border );
+  LightPosGridSizer->Add( teZ, 0, wxALL, Border );
 
-  wxStaticText *stSpec = new wxStaticText(this, -1, wxT("Specular"), wxDefaultPosition, wxSize(45, 21));
-  teSpec  = new TTextEdit(this); teSpec->SetReadOnly(true);  teSpec->WI.SetWidth(34);  teSpec->WI.SetHeight(21);  teSpec->OnClick->Add(this);
-  scSpecA = new TSpinCtrl(this); scSpecA->WI.SetWidth(SpW);
+  LightPosGridSizer->Add( stR, 0, wxALL, Border );
+  LightPosGridSizer->Add( tbR, 1, wxEXPAND | wxALL, Border );
+  LightPosGridSizer->Add( teR, 0, wxALL, Border );
+  LightPosGridSizer->AddGrowableCol(1);
+  PSizer->Add( LightPosGridSizer, 1, wxEXPAND | wxALL, 1 );
+  //End Light Position frame
 
-  wxStaticText *stSExp = new wxStaticText(this, -1, wxT("Spot exponent"), wxDefaultPosition, wxSize(80, 21));
-  scSExp = new TSpinCtrl(this); scSExp->WI.SetWidth(SpW+5);  scSExp->SetRange(0, 128);
+  wxStaticText *stAmb = new wxStaticText(this, -1, wxT("Ambient"), wxDefaultPosition);
+  teAmb = new TTextEdit(this); teAmb->SetReadOnly(true);  teAmb->OnClick->Add(this);
+  scAmbA = new TSpinCtrl(this); 
 
-  wxBoxSizer *LSizerA = new wxBoxSizer( wxHORIZONTAL );
-  LSizerA->Add( stAmb, 0, wxALL, Border );
-  LSizerA->Add( teAmb, 0, wxALL, Border );
-  LSizerA->Add( scAmbA, 0, wxALL, Border );
+  wxStaticText *stDiff = new wxStaticText(this, -1, wxT("Diffuse"), wxDefaultPosition);
+  teDiff = new TTextEdit(this); teDiff->SetReadOnly(true);  teDiff->OnClick->Add(this);
+  scDiffA = new TSpinCtrl(this);
 
-  wxBoxSizer *LSizerB = new wxBoxSizer( wxHORIZONTAL );
-  LSizerB->Add( stDiff, 0, wxALL, Border );
-  LSizerB->Add( teDiff, 0, wxALL, Border );
-  LSizerB->Add( scDiffA, 0, wxALL, Border );
+  wxStaticText *stSpec = new wxStaticText(this, -1, wxT("Specular"), wxDefaultPosition);
+  teSpec  = new TTextEdit(this); teSpec->SetReadOnly(true); teSpec->OnClick->Add(this);
+  scSpecA = new TSpinCtrl(this);
 
-  wxBoxSizer *LSizerC = new wxBoxSizer( wxHORIZONTAL );
-  LSizerC->Add( stSpec, 0, wxALL, Border );
-  LSizerC->Add( teSpec, 0, wxALL, Border );
-  LSizerC->Add( scSpecA, 0, wxALL, Border );
+  wxStaticText *stSExp = new wxStaticText(this, -1, wxT("Spot exponent"), wxDefaultPosition);
+  scSExp = new TSpinCtrl(this); scSExp->SetRange(0, 128);
 
-  wxBoxSizer *LSizerD = new wxBoxSizer( wxHORIZONTAL );
-  LSizerD->Add( stSExp, 0, wxALL, Border );
-  LSizerD->Add( scSExp, 0, wxALL, Border );
+  //Light frame
+  wxFlexGridSizer *GridSizer = new wxFlexGridSizer(4, 3, Border, Border);
+  GridSizer->Add( stAmb, 1, wxEXPAND | wxALL, Border );
+  GridSizer->Add( teAmb, 1, wxEXPAND | wxALL, Border );
+  GridSizer->Add( scAmbA, 1, wxEXPAND | wxALL, Border );
 
+  GridSizer->Add( stDiff, 1, wxEXPAND | wxALL, Border );
+  GridSizer->Add( teDiff, 1, wxEXPAND | wxALL, Border );
+  GridSizer->Add( scDiffA, 1, wxEXPAND | wxALL, Border );
+
+  GridSizer->Add( stSpec, 1, wxEXPAND | wxALL, Border );
+  GridSizer->Add( teSpec, 1, wxEXPAND | wxALL, Border );
+  GridSizer->Add( scSpecA, 1, wxEXPAND | wxALL, Border );
+
+  GridSizer->Add( stSExp, 1, wxEXPAND | wxALL, Border );  
+  GridSizer->Add( scSExp, 1, wxEXPAND | wxALL, Border );
+  GridSizer->AddGrowableCol(1);
+  GridSizer->AddGrowableCol(2);
+  GridSizer->SetSizeHints(this);
+  
   wxStaticBox *LBox = new wxStaticBox(this, -1, wxT("Light"));
-  wxStaticBoxSizer *LSizer = new wxStaticBoxSizer(LBox, wxVERTICAL );
-  LSizer->Add( LSizerA, 0, wxALL, 1 );
-  LSizer->Add( LSizerB, 0, wxALL, 1 );
-  LSizer->Add( LSizerC, 0, wxALL, 1 );
-  LSizer->Add( LSizerD, 0, wxALL, 1 );
-
+  wxStaticBoxSizer *LSizer = new wxStaticBoxSizer(LBox, wxHORIZONTAL );
+  LSizer->Add( GridSizer, 1, wxEXPAND | wxALL, 1 );
+  //End Light frame
+  
   wxBoxSizer *TSizer0 = new wxBoxSizer( wxHORIZONTAL );
-  TSizer0->Add( LSizer, 0, wxALL, 1 );
-  TSizer0->Add( PSizer, 0, wxALL, 1 );
+  TSizer0->Add( LSizer, 1, wxEXPAND | wxALL, 1 );//Light frame
+  TSizer0->Add( PSizer, 1, wxEXPAND | wxALL, 1 );//Light position frame
 
-
-  wxBoxSizer *ButtonsSizer = new wxBoxSizer( wxVERTICAL );
-
-  ButtonsSizer->Add( new wxButton( this, wxID_OK, wxT("OK") ), 0, wxALL, Border);
-  ButtonsSizer->Add( new wxButton( this, wxID_CANCEL, wxT("Cancel") ), 0, wxALL, Border);
-  ButtonsSizer->Add( new wxButton( this, wxID_HELP, wxT("Help") ),     0, wxALL, Border );
-
-  ButtonsSizer->Add( new wxButton( this, wxID_OPEN, wxT("Open") ), 0, wxALL, Border);
-  ButtonsSizer->Add( new wxButton( this, wxID_SAVE, wxT("Save") ),     0, wxALL, Border );
-  ButtonsSizer->Add( new wxButton( this, wxID_APPLY, wxT("Apply") ),     0, wxALL, Border );
-
+  //Light dropdown menu
   cbLights = new TComboBox(this); 
   for( int i=0; i < 8; i++ )
     cbLights->AddObject(olxstr("Light ") << (i + 1));
   cbLights->SetValue( uiStr(cbLights->GetItem(0)) );
   cbLights->OnChange->Add(this);
-  wxBoxSizer *SizerLt = new wxBoxSizer( wxVERTICAL );
-  SizerLt->Add( cbLights, 0, wxALL, 1 );
+  //end Light dropdown menu
 
+  // checkbox enabled
+  cbEnabled = new wxCheckBox(this, -1, wxT("Enabled"), wxDefaultPosition);
+  wxBoxSizer *SizerE = new wxBoxSizer( wxHORIZONTAL );
+  SizerE->Add( cbEnabled, 1, wxEXPAND | wxALL, 1 );
+  //end checkbox enabled
+  
+  wxBoxSizer *SizerLt = new wxBoxSizer( wxHORIZONTAL );
+  SizerLt->Add( cbLights, 1, wxEXPAND | wxALL, 1 );//dropdown light menu
+  SizerLt->Add( SizerE, 1, wxEXPAND | wxALL, 1 );//checkbox enbaled
 
-  cbUniform = new wxCheckBox(this, -1, wxT("Uniform"), wxDefaultPosition, wxSize(80, 21));
-  scSCO = new TSpinCtrl(this); scSCO->WI.SetWidth(SpW);  scSCO->SetRange(1, 180);  scSCO->OnChange->Add(this);
+  //spot cut off frame
+  cbUniform = new wxCheckBox(this, -1, wxT("Uniform"), wxDefaultPosition);
+  scSCO = new TSpinCtrl(this); scSCO->SetRange(1, 180);  scSCO->OnChange->Add(this);
 
   wxStaticBox *BoxSC = new wxStaticBox(this, -1, wxT("Spot cutoff"));
   wxStaticBoxSizer *SizerSC = new wxStaticBoxSizer(BoxSC, wxHORIZONTAL );
-  SizerSC->Add( scSCO, 0, wxALL, 1 );
-  SizerSC->Add( cbUniform, 0, wxALL, 1 );
+  SizerSC->Add( scSCO, 1, wxEXPAND | wxALL, 1 );
+  SizerSC->Add( cbUniform, 1, wxEXPAND | wxALL, 1 );
+  //end spot cut off frame
 
-  wxStaticText *stSCX = new wxStaticText(this, -1, wxT("X"), wxDefaultPosition, wxSize(10, 21));
-  teSCX = new TTextEdit(this);  teSCX->WI.SetWidth(45);
-  wxStaticText *stSCY = new wxStaticText(this, -1, wxT("Y"), wxDefaultPosition, wxSize(10, 21));
-  teSCY = new TTextEdit(this);  teSCY->WI.SetWidth(45);
-  wxStaticText *stSCZ = new wxStaticText(this, -1, wxT("Z"), wxDefaultPosition, wxSize(10, 21));
-  teSCZ = new TTextEdit(this);  teSCZ->WI.SetWidth(45);
+  //spot direction frame
+  wxStaticText *stSCX = new wxStaticText(this, -1, wxT("X"), wxDefaultPosition);
+  teSCX = new TTextEdit(this);  
+  wxStaticText *stSCY = new wxStaticText(this, -1, wxT("Y"), wxDefaultPosition);
+  teSCY = new TTextEdit(this);  
+  wxStaticText *stSCZ = new wxStaticText(this, -1, wxT("Z"), wxDefaultPosition);
+  teSCZ = new TTextEdit(this);  
 
   wxStaticBox *BoxSD = new wxStaticBox(this, -1, wxT("Spot direction"));
   wxStaticBoxSizer *SizerSD = new wxStaticBoxSizer(BoxSD, wxHORIZONTAL );
-  SizerSD->Add( stSCX, 0, wxALL, 1 );
-  SizerSD->Add( teSCX, 0, wxALL, 1 );
-  SizerSD->Add( stSCY, 0, wxALL, 1 );
-  SizerSD->Add( teSCY, 0, wxALL, 1 );
-  SizerSD->Add( stSCZ, 0, wxALL, 1 );
-  SizerSD->Add( teSCZ, 0, wxALL, 1 );
+  SizerSD->Add( stSCX, 0, wxEXPAND | wxALL, 1 );
+  SizerSD->Add( teSCX, 0, wxEXPAND | wxALL, 1 );
+  SizerSD->Add( stSCY, 0, wxEXPAND | wxALL, 1 );
+  SizerSD->Add( teSCY, 0, wxEXPAND | wxALL, 1 );
+  SizerSD->Add( stSCZ, 0, wxEXPAND | wxALL, 1 );
+  SizerSD->Add( teSCZ, 0, wxEXPAND | wxALL, 1 );
+  //end spot direction frame
 
+  //spot direction frame + spot cut off frame
   wxBoxSizer *SizerS = new wxBoxSizer(wxHORIZONTAL );
-  SizerS->Add( SizerSC, 0, wxALL, 1 );
-  SizerS->Add( SizerSD, 0, wxALL, 1 );
+  SizerS->Add( SizerSC, 0, wxEXPAND | wxALL, 1 );
+  SizerS->Add( SizerSD, 0, wxEXPAND | wxALL, 1 );
+  //end spot direction frame + spot cut off frame
 
+  teAA = new TTextEdit(this);  
+  wxStaticText *stAA = new wxStaticText(this, -1, wxT("x^2+"), wxDefaultPosition);
+  teAB = new TTextEdit(this);  
+  wxStaticText *stAB = new wxStaticText(this, -1, wxT("x+"), wxDefaultPosition);
+  teAC = new TTextEdit(this);  
 
-  teAA = new TTextEdit(this);  teAA->WI.SetWidth(45);
-  wxStaticText *stAA = new wxStaticText(this, -1, wxT("x^2+"), wxDefaultPosition, wxSize(25, 21));
-  teAB = new TTextEdit(this);  teAB->WI.SetWidth(45);
-  wxStaticText *stAB = new wxStaticText(this, -1, wxT("x+"), wxDefaultPosition, wxSize(15, 21));
-  teAC = new TTextEdit(this);  teAC->WI.SetWidth(45);
-
+  //frame attenuation
   wxStaticBox *BoxA = new wxStaticBox(this, -1, wxT("Attenuation"));
   wxStaticBoxSizer *SizerA = new wxStaticBoxSizer(BoxA, wxHORIZONTAL );
-  SizerA->Add( teAA, 0, wxALL, 1 );
-  SizerA->Add( stAA, 0, wxALL, 1 );
-  SizerA->Add( teAB, 0, wxALL, 1 );
-  SizerA->Add( stAB, 0, wxALL, 1 );
-  SizerA->Add( teAC, 0, wxALL, 1 );
-
-  cbEnabled = new wxCheckBox(this, -1, wxT("Enabled"), wxDefaultPosition, DefS);
-  wxBoxSizer *SizerE = new wxBoxSizer( wxHORIZONTAL );
-  SizerE->Add( cbEnabled, 0, wxALL, 1 );
-
+  SizerA->Add( teAA, 0, wxEXPAND | wxALL, 1 );
+  SizerA->Add( stAA, 0, wxEXPAND | wxALL, 1 );
+  SizerA->Add( teAB, 0, wxEXPAND | wxALL, 1 );
+  SizerA->Add( stAB, 0, wxEXPAND | wxALL, 1 );
+  SizerA->Add( teAC, 0, wxEXPAND | wxALL, 1 );
+  //end frame attenuation
+  
   wxStaticBox *Box1 = new wxStaticBox(this, -1, wxT(""));
   wxStaticBoxSizer *TSizer1 = new wxStaticBoxSizer(Box1, wxVERTICAL );
-  TSizer1->Add( SizerLt, 0, wxALL, 1 );
-  TSizer1->Add( TSizer0, 0, wxALL, 1 );
-  TSizer1->Add( SizerS, 0, wxALL, 1 );
-  TSizer1->Add( SizerA, 0, wxALL, 1 );
-  TSizer1->Add( SizerE, 0, wxALL, 1 );
+  TSizer1->Add( SizerLt, 0, wxEXPAND | wxALL, 1 );//Light dropdown menu
+  TSizer1->Add( TSizer0, 0, wxEXPAND | wxALL, 1 );//Light frame + Light position frame
+  TSizer1->Add( SizerS, 0, wxEXPAND | wxALL, 1 );//spot cut off frame
+  TSizer1->Add( SizerA, 0, wxEXPAND | wxALL, 1 );//frame attenuation
 
   cbFonts = new TComboBox(this);
   AGlScene* ascene = FXApp->GetRender().Scene();
@@ -202,55 +197,62 @@ TdlgSceneProps::TdlgSceneProps(TMainForm *ParentFrame, TGXApp *XApp)
   cbFonts->OnChange->Add(this);
   tbEditFont = new TButton(this);  tbEditFont->SetCaption("Edit Font");  tbEditFont->OnClick->Add(this);
 
-  cbLocalV = new wxCheckBox(this, -1, wxT("Local viewer"), wxDefaultPosition, DefS);
-  cbTwoSide = new wxCheckBox(this, -1, wxT("Two side"), wxDefaultPosition, DefS);
-  cbSmooth = new wxCheckBox(this, -1, wxT("Smooth shade"), wxDefaultPosition, DefS);
-  tcAmbLM = new TTextEdit(this); tcAmbLM->SetReadOnly(true);  tcAmbLM->WI.SetWidth(34);
-    tcAmbLM->WI.SetHeight(21);  tcAmbLM->OnClick->Add(this);
-  wxStaticText *stAmbLM = new wxStaticText(this, -1, wxT("Ambient color"), wxDefaultPosition, wxSize(75, 21));
-  tcBgClr = new TTextEdit(this); tcBgClr->SetReadOnly(true);  tcBgClr->WI.SetWidth(34);
-    tcBgClr->WI.SetHeight(21);  tcBgClr->OnClick->Add(this);
-  wxStaticText *stBgClr = new wxStaticText(this, -1, wxT("Background color"), wxDefaultPosition, wxSize(100, 21));
+  cbLocalV = new wxCheckBox(this, -1, wxT("Local viewer"), wxDefaultPosition);
+  cbTwoSide = new wxCheckBox(this, -1, wxT("Two side"), wxDefaultPosition);
+  cbSmooth = new wxCheckBox(this, -1, wxT("Smooth shade"), wxDefaultPosition);
+  tcAmbLM = new TTextEdit(this); tcAmbLM->SetReadOnly(true);  
+    tcAmbLM->OnClick->Add(this);
+  wxStaticText *stAmbLM = new wxStaticText(this, -1, wxT("Ambient color"), wxDefaultPosition);
+  tcBgClr = new TTextEdit(this); tcBgClr->SetReadOnly(true);  
+    tcBgClr->OnClick->Add(this);
+  wxStaticText *stBgClr = new wxStaticText(this, -1, wxT("Background color"), wxDefaultPosition);
 
   wxStaticBox *Box2 = new wxStaticBox(this, -1, wxT("Light model"));
   wxStaticBox *Box2a = new wxStaticBox(this, -1, wxT("Fonts"));
-  wxStaticBoxSizer *SizerLM = new wxStaticBoxSizer(Box2, wxVERTICAL );
-  wxStaticBoxSizer *SizerFonts = new wxStaticBoxSizer(Box2a, wxVERTICAL );
+  wxStaticBoxSizer *SizerLM = new wxStaticBoxSizer(Box2, wxHORIZONTAL );
+  wxStaticBoxSizer *SizerFonts = new wxStaticBoxSizer(Box2a, wxHORIZONTAL );
 
-  wxBoxSizer *SizerLM0 = new wxBoxSizer(wxHORIZONTAL );
-  wxBoxSizer *SizerLM1 = new wxBoxSizer(wxHORIZONTAL );
-  wxBoxSizer *SizerLM2 = new wxBoxSizer(wxHORIZONTAL );
+  wxFlexGridSizer *SizerLM1 = new wxFlexGridSizer(1, 3 );
+  wxFlexGridSizer *SizerLM2 = new wxFlexGridSizer(2, 2 );
 
-  SizerLM1->Add( cbLocalV, 0, wxALL, Border );
-  SizerLM1->Add( cbTwoSide, 0, wxALL, Border );
-  SizerLM1->Add( cbSmooth, 0, wxALL, Border );
+  SizerLM1->Add( cbLocalV, 1, wxEXPAND | wxALL, Border ); //light model first line
+  SizerLM1->Add( cbTwoSide, 1, wxEXPAND | wxALL, Border );
+  SizerLM1->Add( cbSmooth, 1, wxEXPAND | wxALL, Border );
 
-  SizerLM2->Add( stAmbLM, 0, wxALL, Border );
-  SizerLM2->Add( tcAmbLM, 0, wxALL, Border );
-  SizerLM2->Add( stBgClr, 0, wxALL, Border );
-  SizerLM2->Add( tcBgClr, 0, wxALL, Border );
+  SizerLM2->Add( stAmbLM, 1, wxEXPAND | wxALL, Border );//light model second line
+  SizerLM2->Add( tcAmbLM, 1, wxEXPAND | wxALL, Border );
+  SizerLM2->Add( stBgClr, 1, wxEXPAND | wxALL, Border );
+  SizerLM2->Add( tcBgClr, 1, wxEXPAND | wxALL, Border );
+  
+  SizerLM->Add( SizerLM2, 1, wxEXPAND | wxALL, Border );//light model frame
+  SizerLM->Add( SizerLM1, 1, wxEXPAND | wxALL, Border );
 
-  SizerLM->Add( SizerLM2, 0, wxALL, Border );
-  SizerLM->Add( SizerLM1, 0, wxALL, Border );
+  SizerFonts->Add( cbFonts, 1, wxEXPAND | wxALL, Border ); //fonts frame
+  SizerFonts->Add( tbEditFont, 1, wxEXPAND | wxALL, Border );
 
-  SizerFonts->Add( cbFonts, 0, wxALL, Border );
-  SizerFonts->Add( tbEditFont, 0, wxALL, Border );
+  wxBoxSizer *TSizer2 = new wxBoxSizer(wxVERTICAL );
+  TSizer2->Add( SizerLM, 0, wxEXPAND | wxALL, 1 );//light model frame
+  TSizer2->Add( SizerFonts, 0, wxEXPAND | wxALL, Border );//fonts frame
+  TSizer2->Add( TSizer1, 1, wxEXPAND | wxALL, 1 );//big light frame
 
-  SizerLM0->Add( SizerLM, 0, wxALL, Border );
-  SizerLM0->Add( SizerFonts, 0, wxALL, Border );
+  //right buttons list
+  wxBoxSizer *ButtonsSizer = new wxBoxSizer( wxVERTICAL );
 
+  ButtonsSizer->Add( new wxButton( this, wxID_OK, wxT("OK") ), 0, wxEXPAND | wxALL, Border);
+  ButtonsSizer->Add( new wxButton( this, wxID_CANCEL, wxT("Cancel") ), 0, wxEXPAND | wxALL, Border);
+  ButtonsSizer->Add( new wxButton( this, wxID_HELP, wxT("Help") ),     0, wxEXPAND | wxALL, Border );
 
-  wxStaticBox *Box3 = new wxStaticBox(this, -1, wxT(""));
-  wxStaticBoxSizer *TSizer2 = new wxStaticBoxSizer(Box3, wxVERTICAL );
-  TSizer2->Add( SizerLM0, 0, wxALL, 1 );
-  TSizer2->Add( TSizer1, 0, wxALL, 1 );
+  ButtonsSizer->Add( new wxButton( this, wxID_OPEN, wxT("Open") ), 0, wxEXPAND | wxALL, Border);
+  ButtonsSizer->Add( new wxButton( this, wxID_SAVE, wxT("Save") ),     0, wxEXPAND | wxALL, Border );
+  ButtonsSizer->Add( new wxButton( this, wxID_APPLY, wxT("Apply") ),     0, wxEXPAND | wxALL, Border );
+  ButtonsSizer->SetSizeHints(this);
+  //end right buttons list
 
-//  wxStaticBox *Box4 = new wxStaticBox(this, -1, "");
   wxBoxSizer *TSizer3 = new wxBoxSizer(wxHORIZONTAL );
-  TSizer3->Add( TSizer2, 0, wxALL, 1 );
+  TSizer3->Add( TSizer2, 1, wxALL, 1 );
   TSizer3->Add( ButtonsSizer, 0, wxALL, 1 );
   SetSizer(TSizer3);
-  TSizer3->SetSizeHints(this);
+  TSizer3->SetSizeHints(this);  
 
   Center();
 
