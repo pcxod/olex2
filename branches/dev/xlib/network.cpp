@@ -238,9 +238,12 @@ void TNetwork::CreateBondsAndFragments(TSAtomPList& Atoms, TNetPList& Frags)  {
       }
     }
     if( sa->NodeCount() > ci.maxBonds )  {
-      sa->SortNodesByDistance();
+      if( ci.maxBonds < 0 )
+        sa->SortNodesByDistanceDsc();
+      else
+        sa->SortNodesByDistanceAsc();
       // prevent q-peaks affecting the max number of bonds...
-      int bc2set = ci.maxBonds;
+      int bc2set = olx_abs(ci.maxBonds);
       for( int j=0;  j < bc2set; j++ )  {
         if( sa->Node(j).GetAtomInfo() == iQPeakIndex )  {
           if( ++bc2set >= sa->NodeCount() )  {

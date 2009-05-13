@@ -1535,8 +1535,8 @@ void TMainForm::OnAtomConnChange(wxCommandEvent& event)  {
     case ID_AtomConn3:   Tmp << '3';  break;
     case ID_AtomConn4:   Tmp << '4';  break;
   }
-  if( XA->Selected() )  Tmp << " sel";
-  else                  Tmp << " #x" << XA->GetXAppId();
+  if( !XA->Selected() )
+    Tmp << " #c" << XA->Atom().CAtom().GetId();
   ProcessXPMacro(Tmp, MacroError);
   TimePerFrame = FXApp->Draw();
 }

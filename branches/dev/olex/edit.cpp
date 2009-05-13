@@ -22,8 +22,8 @@ TdlgEdit::TdlgEdit(TMainForm *ParentFrame, bool MultiLine):
     flags = wxTE_MULTILINE|wxTE_DONTWRAP;
     height = 350;
   }
-  Text = new TTextEdit(this, wxSize(width, height), flags);
-
+  Text = new TTextEdit(this, flags);
+  Text->SetSize(width, height);
   wxFont fnt(fontSize, wxMODERN, wxNORMAL, wxNORMAL);
   Text->SetFont(fnt);
 

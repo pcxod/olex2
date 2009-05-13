@@ -66,7 +66,7 @@ olxstr TSAtom::GetGuiLabel() const  {
     return rv << '.' << TSymmParser::MatrixToSymmCode(Network->GetLattice().GetUnitCell(), *Matrices[0]);
 }
 //..............................................................................
-void TSAtom::SetNodeCount(int cnt)  {
+void TSAtom::SetNodeCount(size_t cnt)  {
   if( cnt >= Nodes.Count() )
     return;
   for( int i=cnt; i < Nodes.Count(); i++ )  {

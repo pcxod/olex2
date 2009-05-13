@@ -1074,7 +1074,7 @@ void XLibMacros::macFuse(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       TSAtom& sa = latt.GetAtom(i);
       if( sa.IsDeleted() )  continue;
       if( sa.BondCount() == 0 )  continue;
-      sa.SortBondsByLength();
+      sa.SortBondsByLengthAsc();
       vec3d cnt(sa.crd());
       int ac = 1;
       for( int j=0; j < sa.BondCount(); j++ )  {

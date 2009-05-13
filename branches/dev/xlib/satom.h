@@ -28,12 +28,20 @@ private:
   vec3d  FCenter;          // atom center in cartesian coordinates
 protected:
   mutable short Flags;
-  int _SortNodesByDistance(const TSAtom* a1, const TSAtom* a2)  {
+  int _SortNodesByDistanceAsc(const TSAtom* a1, const TSAtom* a2)  {
     const double diff = FCenter.DistanceTo(a1->FCenter) - FCenter.DistanceTo(a2->FCenter);
     return diff < 0 ? -1 : (diff > 0 ? 1 : 0);
   }
-  int _SortBondsByLength(const TSBond* b1, const TSBond* b2)  {
+  int _SortNodesByDistanceDsc(const TSAtom* a1, const TSAtom* a2)  {
+    const double diff = FCenter.DistanceTo(a2->FCenter) - FCenter.DistanceTo(a1->FCenter);
+    return diff < 0 ? -1 : (diff > 0 ? 1 : 0);
+  }
+  int _SortBondsByLengthAsc(const TSBond* b1, const TSBond* b2)  {
     const double diff = b1->QLength() - b2->QLength();
+    return diff < 0 ? -1 : (diff > 0 ? 1 : 0);
+  }
+  int _SortBondsByLengthDsc(const TSBond* b1, const TSBond* b2)  {
+    const double diff = b2->QLength() - b1->QLength();
     return diff < 0 ? -1 : (diff > 0 ? 1 : 0);
   }
 public:
@@ -95,14 +103,20 @@ public:
   inline vec3d const&  ccrd() const {  return FCCenter;  }
   inline vec3d const&  crd()  const {  return FCenter;  }
 
-  void SortNodesByDistance()  {
-    Nodes.QuickSorter.SortMF(Nodes, *this, &TSAtom::_SortNodesByDistance);
+  void SortNodesByDistanceAsc()  {
+    Nodes.QuickSorter.SortMF(Nodes, *this, &TSAtom::_SortNodesByDistanceAsc);
   }
-  void SortBondsByLength()  {
-    Bonds.QuickSorter.SortMF(Bonds, *this, &TSAtom::_SortBondsByLength);
+  void SortNodesByDistanceDsc()  {
+    Nodes.QuickSorter.SortMF(Nodes, *this, &TSAtom::_SortNodesByDistanceDsc);
+  }
+  void SortBondsByLengthAsc()  {
+    Bonds.QuickSorter.SortMF(Bonds, *this, &TSAtom::_SortBondsByLengthAsc);
+  }
+  void SortBondsByLengthDsc()  {
+    Bonds.QuickSorter.SortMF(Bonds, *this, &TSAtom::_SortBondsByLengthDsc);
   }
   // allows to trim the number of nodes
-  void SetNodeCount(int cnt);
+  void SetNodeCount(size_t cnt);
   // removes specified node from the list of nodes
   void RemoveNode(TSAtom& node);
 
