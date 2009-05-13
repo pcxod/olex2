@@ -43,6 +43,7 @@ TAsymmUnit::TAsymmUnit(TLattice *L) : MainResidue(*this, -1)  {
   AtomsInfo = &TAtomsInfo::GetInstance();
   Lattice   = L;
   Latt = -1;
+  Assigning = false;
   Z = 1;
   ContainsEquivalents = false;
   OnSGChange = &Actions.NewQueue("AU_SG_CHANGE");
@@ -73,6 +74,7 @@ void  TAsymmUnit::Clear()  {
 //..............................................................................
 void TAsymmUnit::Assign(const TAsymmUnit& C)  {
   Clear();
+  Assigning = true;
   FAxes   = C.FAxes;
   FAngles = C.FAngles;
   RAxes   = C.GetRAxes();
@@ -114,6 +116,7 @@ void TAsymmUnit::Assign(const TAsymmUnit& C)  {
   SetContainsEquivalents( C.DoesContainEquivalents() );
   MaxQPeak = C.GetMaxQPeak();
   MinQPeak = C.GetMinQPeak();
+  Assigning = false;
 }
 //..............................................................................
 void TAsymmUnit::_UpdateConnInfo()  {
@@ -266,7 +269,8 @@ void TAsymmUnit::AssignResidues(const TAsymmUnit& au)  {
 }
 //..............................................................................
 void TAsymmUnit::_OnAtomTypeChanged(TCAtom& caller)  {
-  caller.SetConnInfo( RefMod->Conn.GetConnInfo(caller) );
+  if( !Assigning )  
+    caller.SetConnInfo( RefMod->Conn.GetConnInfo(caller) );
 }
 //..............................................................................
 TCAtom& TAsymmUnit::NewAtom(TResidue* resi)  {

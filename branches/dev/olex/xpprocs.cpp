@@ -8626,6 +8626,13 @@ void TMainForm::macExportFrag(TStrObjList &Cmds, const TParamList &Options, TMac
 void TMainForm::macConn(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   try  {  
     TStrList lst(Cmds);
+    if( Cmds.Count() == 1 && Cmds[0].IsNumber() )  {
+      TCAtomPList atoms;
+      FXApp->FindCAtoms("sel", atoms, false);
+      if( atoms.IsEmpty() )  return;
+      for( int i=0; i < atoms.Count(); i++ )
+        lst.Add("#c") << atoms[i]->GetId();
+    }
     FXApp->XFile().GetRM().Conn.ProcessConn(lst);
     FXApp->XFile().GetAsymmUnit()._UpdateConnInfo();
     FXApp->GetRender().SelectAll(false);

@@ -90,11 +90,18 @@ void ConnInfo::ProcessConn(TStrList& ins)  {
       ins.Delete(i--);
     }
   }
-  if( ins.IsEmpty() )  {
-    TSAtomPList atoms;
-    TXApp::GetInstance().FindSAtoms(ins.Text(' '), atoms, false);
-    for( int i=0; i < atoms.Count(); i++ )  {
-      AtomConnInfo& ai = AtomInfo.Add(&atoms[i]->CAtom(), AtomConnInfo(atoms[i]->CAtom()));
+  if( !ins.IsEmpty() )  {
+    TAtomReference ar(ins.Text(' '));
+    TCAtomGroup ag;
+    int aag;
+    try  {  ar.Expand(rm, ag, EmptyString, aag);  }
+    catch(TExceptionBase& ex)  {  }
+    if( ag.IsEmpty() )  {
+      TBasicApp::GetLog().Error( olxstr("Undefined atom in CONN: ") << ins.Text(' ') );
+      return;
+    }
+    for( int i=0; i < ag.Count(); i++ )  {
+      AtomConnInfo& ai = AtomInfo.Add(ag[i].GetAtom(), AtomConnInfo(*ag[i].GetAtom()));
       ai.maxBonds = maxB;
       ai.r = r;
     }

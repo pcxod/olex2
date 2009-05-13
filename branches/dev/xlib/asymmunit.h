@@ -33,11 +33,14 @@ class TAsymmUnit: public IXVarReferencerContainer, public IEObject  {
            UcifToUxyzT, UxyzToUcifT;
   mat3d Hkl2Cartesian;  // transformation from HKL crd to cartesian
   TCAtomPList Centroids;
-  double            MaxQPeak,
-                    MinQPeak;
-  short             Z,
-                    Latt;
-  bool              ContainsEquivalents;
+  double MaxQPeak,
+         MinQPeak;
+  short  Z,
+         Latt;
+  bool   ContainsEquivalents, 
+    /* this flag specifies that _OnAtomTypeChange will do nothing, however whatever called Assign
+    must call _UpdateConnInfo */
+         Assigning;
   class TLattice*   Lattice;    // parent lattice
   TEVPointD  FAxes;    // axes with errors
   TEVPointD  FAngles;    // angles + errors
@@ -169,7 +172,7 @@ public:
     v = UxyzToUcif*v*UxyzToUcifT;
     return v;
   }
-
+  // copies the atoms from another AU, _UpdateConnInfo must be called after this
   void Assign( const TAsymmUnit& C);
   void ChangeSpaceGroup(const class TSpaceGroup& sg);
   // executed from the above function, Data is the new space group
