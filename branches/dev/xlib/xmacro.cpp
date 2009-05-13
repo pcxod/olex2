@@ -40,7 +40,7 @@ TActionQList XLibMacros::Actions;
 TActionQueue* XLibMacros::OnDelIns = &XLibMacros::Actions.NewQueue("OnDelIns");
 
 void XLibMacros::Export(TLibrary& lib)  {
-  xlib_InitMacro(Run, "", fpAny^fpNone, "Runs provided macros (combined by '>>')");
+  xlib_InitMacro(Run, EmptyString, fpAny^fpNone, "Runs provided macros (combined by '>>')");
   xlib_InitMacro(HklStat, "l-list the reflections&;m-merge reflection in current space group", fpAny|psFileLoaded, 
     "If no arguments provided, prints the statistics on the reflections as well as the ones used in the refinement.\
  If an expressions (condition) is given in the following form: x[ahbkcl], meaning that x=ah+bk+cl;\
@@ -88,7 +88,8 @@ void XLibMacros::Export(TLibrary& lib)  {
 "Tries to add a new symmetry element to current space group to form a new one. [-1] is for center of symmetry" );
 //_________________________________________________________________________________________________________________________
   xlib_InitMacro(Fuse, "f-removes symmetrical equivalents", fpNone|fpOne|psFileLoaded,
-"Re-initialises the connectivity list" );
+"Re-initialises the connectivity list. If a number is provided, atoms of the same type connected by bonds shorter\
+ than the provided number are merged into one atom with center at the centroid formed by all removed atoms" );
   xlib_InitMacro(Flush, EmptyString, fpNone|fpOne, "Flushes log streams" );
 //_________________________________________________________________________________________________________________________
   xlib_InitMacro(EXYZ, "eadp-sets the equivalent anisotropic parameter constraints for the shared sites\
@@ -198,7 +199,7 @@ xlib_InitMacro(File, "s-sort the main residue of the asymmetric unit", fpNone|fp
 //_________________________________________________________________________________________________________________________
   xlib_InitFunc(RemoveSE, fpOne|psFileLoaded, "Returns a new space group name without provided element");
 //_________________________________________________________________________________________________________________________
-  xlib_InitFunc(Run, fpOne, "Same as the macro, executes provided commands (sperated by >>) returns true if succeded");
+  xlib_InitFunc(Run, fpOne, "Same as the macro, executes provided commands (separated by >>) returns true if succeded");
 //_________________________________________________________________________________________________________________________
 }
 //..............................................................................
@@ -1066,9 +1067,38 @@ void XLibMacros::macFile(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 }
 //..............................................................................
 void XLibMacros::macFuse(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
-  if( Cmds.Count() == 1 && Cmds[0].IsNumber() )
-    throw TNotImplementedException(__OlxSrcInfo);
-  TXApp::GetInstance().XFile().GetLattice().Uniq( Options.Contains("f") );
+  if( Cmds.Count() == 1 && Cmds[0].IsNumber() )  {
+    const double th = Cmds[0].ToDouble();
+    TLattice& latt = TXApp::GetInstance().XFile().GetLattice();
+    for( int i=0; i < latt.AtomCount(); i++ )  {
+      TSAtom& sa = latt.GetAtom(i);
+      if( sa.IsDeleted() )  continue;
+      if( sa.BondCount() == 0 )  continue;
+      sa.SortBondsByLength();
+      vec3d cnt(sa.crd());
+      int ac = 1;
+      for( int j=0; j < sa.BondCount(); j++ )  {
+        if( sa.Bond(j).Length() < th )  {
+          TSAtom& asa = sa.Bond(j).Another(sa);
+          if( asa.GetAtomInfo() != sa.GetAtomInfo() )
+            continue;
+          ac++;
+          cnt += asa.crd();
+          asa.CAtom().SetDeleted(true);
+          asa.SetDeleted(true);
+        }    
+        else
+          break;
+      }
+      if( ac > 1 )  {
+        cnt /= ac;
+        sa.CAtom().ccrd() = latt.GetAsymmUnit().CartesianToCell(cnt);
+      }
+    }
+    TXApp::GetInstance().XFile().GetLattice().Uniq(true);
+  }
+  else
+    TXApp::GetInstance().XFile().GetLattice().Uniq( Options.Contains("f") );
 }
 //..............................................................................
 void XLibMacros::macLstIns(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
@@ -2064,6 +2094,17 @@ olxstr XLibMacros_funSGNameToHtml(const olxstr& name)  {
   }
   return res;
 }
+olxstr XLibMacros_funSGNameToHtmlX(const olxstr& name)  {
+  TStrList toks(name, ' ');
+  olxstr res;
+  for( int i=0; i < toks.Count(); i++ )  {
+    if( toks[i].Length() == 2 )
+      res << toks[i].CharAt(0) << "<sub>" << toks[i].CharAt(1) << "</sub>";
+    else
+      res << toks[i];
+  }
+  return res;
+}
 void XLibMacros::funSG(const TStrObjList &Cmds, TMacroError &E)  {
   TSpaceGroup* sg = NULL;
   try  { sg = &TXApp::GetInstance().XFile().GetLastLoaderSG();  }
@@ -2085,7 +2126,7 @@ void XLibMacros::funSG(const TStrObjList &Cmds, TMacroError &E)  {
       Tmp.Replace("%HS", sg->GetHallSymbol());
       Tmp.Replace("%s", sg->GetBravaisLattice().GetName());
       if( Tmp.IndexOf("%H") != -1 )
-        Tmp.Replace("%H", XLibMacros_funSGNameToHtml(sg->GetFullName()));
+        Tmp.Replace("%H", XLibMacros_funSGNameToHtmlX(sg->GetFullName()));
       if( Tmp.IndexOf("%h") != -1 )
         Tmp.Replace("%h", XLibMacros_funSGNameToHtml(sg->GetName()));
     }

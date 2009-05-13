@@ -5,6 +5,8 @@
 
 #include <math.h>
 #include "exception.h"
+// Linux stuff....
+#undef QLength
 
 BeginEsdlNamespace()
 //---------------------------------------------------------------------------

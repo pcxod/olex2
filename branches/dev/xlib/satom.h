@@ -32,6 +32,10 @@ protected:
     const double diff = FCenter.DistanceTo(a1->FCenter) - FCenter.DistanceTo(a2->FCenter);
     return diff < 0 ? -1 : (diff > 0 ? 1 : 0);
   }
+  int _SortBondsByLength(const TSBond* b1, const TSBond* b2)  {
+    const double diff = b1->QLength() - b2->QLength();
+    return diff < 0 ? -1 : (diff > 0 ? 1 : 0);
+  }
 public:
   TSAtom(TNetwork *N);
   virtual ~TSAtom();
@@ -91,7 +95,12 @@ public:
   inline vec3d const&  ccrd() const {  return FCCenter;  }
   inline vec3d const&  crd()  const {  return FCenter;  }
 
-  void SortNodesByDistance();
+  void SortNodesByDistance()  {
+    Nodes.QuickSorter.SortMF(Nodes, *this, &TSAtom::_SortNodesByDistance);
+  }
+  void SortBondsByLength()  {
+    Bonds.QuickSorter.SortMF(Bonds, *this, &TSAtom::_SortBondsByLength);
+  }
   // allows to trim the number of nodes
   void SetNodeCount(int cnt);
   // removes specified node from the list of nodes
