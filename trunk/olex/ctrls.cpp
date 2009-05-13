@@ -283,7 +283,7 @@ olxstr TMainFrame::PickFile(const olxstr &Caption, const olxstr &Filter,
 // TDialog implementation
 //----------------------------------------------------------------------------//
 TDialog::TDialog(TMainFrame *Parent, const wxString &Title, const wxString &ClassName)
-:wxDialog(Parent, -1,  Title, wxPoint(0, 0), wxSize(425, 274), wxDEFAULT_DIALOG_STYLE, ClassName), WI(this)
+:wxDialog(Parent, -1,  Title, wxPoint(0, 0), wxSize(425, 274), wxRESIZE_BORDER | wxDEFAULT_DIALOG_STYLE, ClassName), WI(this)
 {
   FParent = Parent;
   FParent->RestorePosition(this);
@@ -853,8 +853,8 @@ BEGIN_EVENT_TABLE(TTrackBar, wxSlider)
   EVT_LEFT_UP(TTrackBar::MouseUpEvent)
 END_EVENT_TABLE()
 //..............................................................................
-TTrackBar::TTrackBar(wxWindow *Parent) : 
-  wxSlider(Parent, -1, 0, 0, 100, wxDefaultPosition, wxDefaultSize, wxSL_HORIZONTAL|wxSL_AUTOTICKS),
+TTrackBar::TTrackBar(wxWindow *Parent, const wxSize TTrackSize ) : 
+  wxSlider(Parent, -1, 0, 0, 100, wxDefaultPosition, TTrackSize, wxSL_HORIZONTAL|wxSL_AUTOTICKS),
   WI(this)  {
   FActions = new TActionQList;
   OnChange = &FActions->NewQueue("ONCHANGE");

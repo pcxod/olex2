@@ -473,7 +473,7 @@ protected:
   olxstr OnChangeStr, OnMouseUpStr, Data;
   int this_Val;  // needed to call events only if value has changed
 public:
-  TTrackBar(wxWindow *Parent);
+  TTrackBar(wxWindow *Parent, const wxSize TTrackSize=wxDefaultSize);
   virtual ~TTrackBar();
 
   DefPropC(olxstr, OnChangeStr) // this is passed to the OnChange event
