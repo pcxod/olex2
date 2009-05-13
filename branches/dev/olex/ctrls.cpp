@@ -266,39 +266,6 @@ void TMainFrame::SavePosition(wxWindow *Window)  {  //saves current position of 
   }
   Window->GetPosition(&(wi->x), &(wi->y));
 }
-//..............................................................................
-olxstr TMainFrame::PortableFilter(const olxstr& filter)  {
-#if defined(__WIN32__) || defined(__MAC__)
-  return filter;
-#else
-  olxstr rv;
-  TStrList fitems(filter, '|');
-  for( int i=0; i < fitems.Count(); i+=2 )  {
-    if( i+1 >= fitems.Count() )
-      break;
-    if( i != 0 )
-      rv << '|';
-    rv << fitems[i] << '|';
-    TStrList masks(fitems[i+1], ';');
-    for( int j=0; j < masks.Count(); j++ )  {
-      int di = masks[j].LastIndexOf('.');
-      if( di == -1 )  {
-        rv << masks[j];
-        if( j+1 < masks.Count() )
-          rv << ';';
-        continue;
-      }
-      rv << masks[j].SubStringTo(di+1);
-      for( int k=di+1; k < masks[j].Length(); k++ )
-        rv << '[' << olxstr::o_tolower(masks[j].CharAt(k)) << olxstr::o_toupper(masks[j].CharAt(k)) << ']';
-      if( j+1 < masks.Count() )
-        rv << ';';
-    }
-  }
-  return rv;
-#endif
-}
-//..............................................................................
 olxstr TMainFrame::PickFile(const olxstr &Caption, const olxstr &Filter,
                               const olxstr &DefFolder, bool Open)  {
   olxstr FN;
@@ -306,7 +273,7 @@ olxstr TMainFrame::PickFile(const olxstr &Caption, const olxstr &Filter,
   if( Open )  Style = wxFD_OPEN;
   else        Style = wxFD_SAVE;
   wxFileDialog *dlgFile = new wxFileDialog( this, uiStr(Caption), uiStr(DefFolder), wxString(),
-    PortableFilter(Filter).u_str(), Style);
+    uiStr(Filter), Style);
   if( dlgFile->ShowModal() ==  wxID_OK )
     FN = dlgFile->GetPath().c_str();
   delete dlgFile;
@@ -316,7 +283,7 @@ olxstr TMainFrame::PickFile(const olxstr &Caption, const olxstr &Filter,
 // TDialog implementation
 //----------------------------------------------------------------------------//
 TDialog::TDialog(TMainFrame *Parent, const wxString &Title, const wxString &ClassName)
-:wxDialog(Parent, -1,  Title, wxPoint(0, 0), wxSize(425, 274), wxDEFAULT_DIALOG_STYLE, ClassName), WI(this)
+:wxDialog(Parent, -1,  Title, wxPoint(0, 0), wxSize(425, 274), wxRESIZE_BORDER | wxDEFAULT_DIALOG_STYLE, ClassName), WI(this)
 {
   FParent = Parent;
   FParent->RestorePosition(this);
@@ -631,8 +598,8 @@ BEGIN_EVENT_TABLE(TTextEdit, wxTextCtrl)
   EVT_SET_FOCUS(TTextEdit::EnterEvent)
 END_EVENT_TABLE()
 //..............................................................................
-TTextEdit::TTextEdit(wxWindow *Parent, const wxSize& sz, int style):
-    wxTextCtrl(Parent, -1, wxString(), wxDefaultPosition, sz, style), WI(this)  {
+TTextEdit::TTextEdit(wxWindow *Parent, int style):
+    wxTextCtrl(Parent, -1, wxString(), wxDefaultPosition, wxDefaultSize, style), WI(this)  {
   FActions = new TActionQList;
   OnChange = &FActions->NewQueue("ONCHANGE");
   OnClick = &FActions->NewQueue("ONCLICK");
@@ -764,9 +731,7 @@ BEGIN_EVENT_TABLE(TSpinCtrl, wxSpinCtrl)
   EVT_SET_FOCUS(TSpinCtrl::EnterEvent)
 END_EVENT_TABLE()
 //..............................................................................
-TSpinCtrl::TSpinCtrl(wxWindow *Parent, const wxSize& sz): 
-  wxSpinCtrl(Parent, -1, wxEmptyString, wxDefaultPosition, sz), WI(this)  
-{
+TSpinCtrl::TSpinCtrl(wxWindow *Parent): wxSpinCtrl(Parent), WI(this)  {
   FActions = new TActionQList;
   OnChange = &FActions->NewQueue("ONCHANGE");
 }
@@ -888,8 +853,8 @@ BEGIN_EVENT_TABLE(TTrackBar, wxSlider)
   EVT_LEFT_UP(TTrackBar::MouseUpEvent)
 END_EVENT_TABLE()
 //..............................................................................
-TTrackBar::TTrackBar(wxWindow *Parent, const wxSize& sz) : 
-  wxSlider(Parent, -1, 0, 0, 100, wxDefaultPosition, sz, wxSL_HORIZONTAL|wxSL_AUTOTICKS),
+TTrackBar::TTrackBar(wxWindow *Parent, const wxSize TTrackSize ) : 
+  wxSlider(Parent, -1, 0, 0, 100, wxDefaultPosition, TTrackSize, wxSL_HORIZONTAL|wxSL_AUTOTICKS),
   WI(this)  {
   FActions = new TActionQList;
   OnChange = &FActions->NewQueue("ONCHANGE");

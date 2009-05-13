@@ -32,19 +32,18 @@ TdlgSceneProps::TdlgSceneProps(TMainForm *ParentFrame, TGXApp *XApp)
   AActionHandler::SetToDelete(false);
   FXApp = XApp;
 
-  wxSize DefS(140, 21);
-  short Border = 1, TbW=100, SpW = 40;
+  short Border = 1;
   wxStaticText *stX = new wxStaticText(this, -1, wxT("X"), wxDefaultPosition);
-  tbX = new TTrackBar(this);  tbX->OnChange->Add(this);  tbX->SetRange(-100,100);
+  tbX = new TTrackBar(this, wxSize(80,30));  tbX->OnChange->Add(this);  tbX->SetRange(-100,100);
   teX = new TTextEdit(this);  teX->SetReadOnly(true);
   wxStaticText *stY = new wxStaticText(this, -1, wxT("Y"), wxDefaultPosition);
-  tbY = new TTrackBar(this);  tbY->OnChange->Add(this);  tbY->SetRange(-100,100);
+  tbY = new TTrackBar(this, wxSize(80,30));  tbY->OnChange->Add(this);  tbY->SetRange(-100,100);
   teY = new TTextEdit(this);  teY->SetReadOnly(true);
   wxStaticText *stZ = new wxStaticText(this, -1, wxT("Z"), wxDefaultPosition);
-  tbZ = new TTrackBar(this);  tbZ->OnChange->Add(this);  tbZ->SetRange(-100,100);
+  tbZ = new TTrackBar(this, wxSize(80,30));  tbZ->OnChange->Add(this);  tbZ->SetRange(-100,100);
   teZ = new TTextEdit(this);  teZ->SetReadOnly(true);
   wxStaticText *stR = new wxStaticText(this, -1, wxT("R"), wxDefaultPosition);
-  tbR  = new TTrackBar(this); tbR->OnChange->Add(this);  tbR->SetRange(-3,3);
+  tbR  = new TTrackBar(this, wxSize(80,30)); tbR->OnChange->Add(this);  tbR->SetRange(-3,3);
   teR = new TTextEdit(this);  teR->SetReadOnly(true);
     
   //Light Position frame
@@ -53,22 +52,22 @@ TdlgSceneProps::TdlgSceneProps(TMainForm *ParentFrame, TGXApp *XApp)
   wxFlexGridSizer *LightPosGridSizer = new wxFlexGridSizer(4, 3, Border, Border);
     
   LightPosGridSizer->Add( stX, 0, wxALL, Border );
-  LightPosGridSizer->Add( tbX, 0, wxALL, Border );
+  LightPosGridSizer->Add( tbX, 1, wxEXPAND | wxALL, Border );
   LightPosGridSizer->Add( teX, 0, wxALL, Border );
 
   LightPosGridSizer->Add( stY, 0, wxALL, Border );
-  LightPosGridSizer->Add( tbY, 0, wxALL, Border );
+  LightPosGridSizer->Add( tbY, 1, wxEXPAND | wxALL, Border );
   LightPosGridSizer->Add( teY, 0, wxALL, Border );
 
   LightPosGridSizer->Add( stZ, 0, wxALL, Border );
-  LightPosGridSizer->Add( tbZ, 0, wxALL, Border );
+  LightPosGridSizer->Add( tbZ, 1, wxEXPAND | wxALL, Border );
   LightPosGridSizer->Add( teZ, 0, wxALL, Border );
 
   LightPosGridSizer->Add( stR, 0, wxALL, Border );
-  LightPosGridSizer->Add( tbR, 0, wxALL, Border );
+  LightPosGridSizer->Add( tbR, 1, wxEXPAND | wxALL, Border );
   LightPosGridSizer->Add( teR, 0, wxALL, Border );
-
-  PSizer->Add( LightPosGridSizer, 0, wxALL, 1 );
+  LightPosGridSizer->AddGrowableCol(1);
+  PSizer->Add( LightPosGridSizer, 1, wxEXPAND | wxALL, 1 );
   //End Light Position frame
 
   wxStaticText *stAmb = new wxStaticText(this, -1, wxT("Ambient"), wxDefaultPosition);
@@ -102,17 +101,18 @@ TdlgSceneProps::TdlgSceneProps(TMainForm *ParentFrame, TGXApp *XApp)
 
   GridSizer->Add( stSExp, 1, wxEXPAND | wxALL, Border );  
   GridSizer->Add( scSExp, 1, wxEXPAND | wxALL, Border );
-  
+  GridSizer->AddGrowableCol(1);
+  GridSizer->AddGrowableCol(2);
   GridSizer->SetSizeHints(this);
   
   wxStaticBox *LBox = new wxStaticBox(this, -1, wxT("Light"));
   wxStaticBoxSizer *LSizer = new wxStaticBoxSizer(LBox, wxHORIZONTAL );
-  LSizer->Add( GridSizer, 0, wxALL, 1 );
+  LSizer->Add( GridSizer, 1, wxEXPAND | wxALL, 1 );
   //End Light frame
   
   wxBoxSizer *TSizer0 = new wxBoxSizer( wxHORIZONTAL );
-  TSizer0->Add( LSizer, 0, wxALL, 1 );//Light frame
-  TSizer0->Add( PSizer, 0, wxALL, 1 );//Light position frame
+  TSizer0->Add( LSizer, 1, wxEXPAND | wxALL, 1 );//Light frame
+  TSizer0->Add( PSizer, 1, wxEXPAND | wxALL, 1 );//Light position frame
 
   //Light dropdown menu
   cbLights = new TComboBox(this); 
@@ -123,14 +123,14 @@ TdlgSceneProps::TdlgSceneProps(TMainForm *ParentFrame, TGXApp *XApp)
   //end Light dropdown menu
 
   // checkbox enabled
-  cbEnabled = new wxCheckBox(this, -1, wxT("Enabled"), wxDefaultPosition, DefS);
+  cbEnabled = new wxCheckBox(this, -1, wxT("Enabled"), wxDefaultPosition);
   wxBoxSizer *SizerE = new wxBoxSizer( wxHORIZONTAL );
-  SizerE->Add( cbEnabled, 0, wxALL, 1 );
+  SizerE->Add( cbEnabled, 1, wxEXPAND | wxALL, 1 );
   //end checkbox enabled
   
   wxBoxSizer *SizerLt = new wxBoxSizer( wxHORIZONTAL );
-  SizerLt->Add( cbLights, 0, wxALL, 1 );//dropdown light menu
-  SizerLt->Add( SizerE, 0, wxALL, 1 );//checkbox enbaled
+  SizerLt->Add( cbLights, 1, wxEXPAND | wxALL, 1 );//dropdown light menu
+  SizerLt->Add( SizerE, 1, wxEXPAND | wxALL, 1 );//checkbox enbaled
 
   //spot cut off frame
   cbUniform = new wxCheckBox(this, -1, wxT("Uniform"), wxDefaultPosition);
@@ -138,8 +138,8 @@ TdlgSceneProps::TdlgSceneProps(TMainForm *ParentFrame, TGXApp *XApp)
 
   wxStaticBox *BoxSC = new wxStaticBox(this, -1, wxT("Spot cutoff"));
   wxStaticBoxSizer *SizerSC = new wxStaticBoxSizer(BoxSC, wxHORIZONTAL );
-  SizerSC->Add( scSCO, 0, wxALL, 1 );
-  SizerSC->Add( cbUniform, 0, wxALL, 1 );
+  SizerSC->Add( scSCO, 1, wxEXPAND | wxALL, 1 );
+  SizerSC->Add( cbUniform, 1, wxEXPAND | wxALL, 1 );
   //end spot cut off frame
 
   //spot direction frame
@@ -152,18 +152,18 @@ TdlgSceneProps::TdlgSceneProps(TMainForm *ParentFrame, TGXApp *XApp)
 
   wxStaticBox *BoxSD = new wxStaticBox(this, -1, wxT("Spot direction"));
   wxStaticBoxSizer *SizerSD = new wxStaticBoxSizer(BoxSD, wxHORIZONTAL );
-  SizerSD->Add( stSCX, 0, wxALL, 1 );
-  SizerSD->Add( teSCX, 0, wxALL, 1 );
-  SizerSD->Add( stSCY, 0, wxALL, 1 );
-  SizerSD->Add( teSCY, 0, wxALL, 1 );
-  SizerSD->Add( stSCZ, 0, wxALL, 1 );
-  SizerSD->Add( teSCZ, 0, wxALL, 1 );
+  SizerSD->Add( stSCX, 0, wxEXPAND | wxALL, 1 );
+  SizerSD->Add( teSCX, 0, wxEXPAND | wxALL, 1 );
+  SizerSD->Add( stSCY, 0, wxEXPAND | wxALL, 1 );
+  SizerSD->Add( teSCY, 0, wxEXPAND | wxALL, 1 );
+  SizerSD->Add( stSCZ, 0, wxEXPAND | wxALL, 1 );
+  SizerSD->Add( teSCZ, 0, wxEXPAND | wxALL, 1 );
   //end spot direction frame
 
   //spot direction frame + spot cut off frame
   wxBoxSizer *SizerS = new wxBoxSizer(wxHORIZONTAL );
-  SizerS->Add( SizerSC, 0, wxALL, 1 );
-  SizerS->Add( SizerSD, 0, wxALL, 1 );
+  SizerS->Add( SizerSC, 0, wxEXPAND | wxALL, 1 );
+  SizerS->Add( SizerSD, 0, wxEXPAND | wxALL, 1 );
   //end spot direction frame + spot cut off frame
 
   teAA = new TTextEdit(this);  
@@ -175,19 +175,19 @@ TdlgSceneProps::TdlgSceneProps(TMainForm *ParentFrame, TGXApp *XApp)
   //frame attenuation
   wxStaticBox *BoxA = new wxStaticBox(this, -1, wxT("Attenuation"));
   wxStaticBoxSizer *SizerA = new wxStaticBoxSizer(BoxA, wxHORIZONTAL );
-  SizerA->Add( teAA, 0, wxALL, 1 );
-  SizerA->Add( stAA, 0, wxALL, 1 );
-  SizerA->Add( teAB, 0, wxALL, 1 );
-  SizerA->Add( stAB, 0, wxALL, 1 );
-  SizerA->Add( teAC, 0, wxALL, 1 );
+  SizerA->Add( teAA, 0, wxEXPAND | wxALL, 1 );
+  SizerA->Add( stAA, 0, wxEXPAND | wxALL, 1 );
+  SizerA->Add( teAB, 0, wxEXPAND | wxALL, 1 );
+  SizerA->Add( stAB, 0, wxEXPAND | wxALL, 1 );
+  SizerA->Add( teAC, 0, wxEXPAND | wxALL, 1 );
   //end frame attenuation
   
   wxStaticBox *Box1 = new wxStaticBox(this, -1, wxT(""));
   wxStaticBoxSizer *TSizer1 = new wxStaticBoxSizer(Box1, wxVERTICAL );
-  TSizer1->Add( SizerLt, 0, wxALL, 1 );//Light dropdown menu
-  TSizer1->Add( TSizer0, 0, wxALL, 1 );//Light frame + Light position frame
-  TSizer1->Add( SizerS, 0, wxALL, 1 );//spot cut off frame
-  TSizer1->Add( SizerA, 0, wxALL, 1 );//frame attenuation
+  TSizer1->Add( SizerLt, 0, wxEXPAND | wxALL, 1 );//Light dropdown menu
+  TSizer1->Add( TSizer0, 0, wxEXPAND | wxALL, 1 );//Light frame + Light position frame
+  TSizer1->Add( SizerS, 0, wxEXPAND | wxALL, 1 );//spot cut off frame
+  TSizer1->Add( SizerA, 0, wxEXPAND | wxALL, 1 );//frame attenuation
 
   cbFonts = new TComboBox(this);
   AGlScene* ascene = FXApp->GetRender().Scene();
@@ -215,25 +215,25 @@ TdlgSceneProps::TdlgSceneProps(TMainForm *ParentFrame, TGXApp *XApp)
   wxFlexGridSizer *SizerLM1 = new wxFlexGridSizer(1, 3 );
   wxFlexGridSizer *SizerLM2 = new wxFlexGridSizer(2, 2 );
 
-  SizerLM1->Add( cbLocalV, 0, wxEXPAND | wxALL, Border ); //light model first line
-  SizerLM1->Add( cbTwoSide, 0, wxEXPAND | wxALL, Border );
-  SizerLM1->Add( cbSmooth, 0, wxEXPAND | wxALL, Border );
+  SizerLM1->Add( cbLocalV, 1, wxEXPAND | wxALL, Border ); //light model first line
+  SizerLM1->Add( cbTwoSide, 1, wxEXPAND | wxALL, Border );
+  SizerLM1->Add( cbSmooth, 1, wxEXPAND | wxALL, Border );
 
-  SizerLM2->Add( stAmbLM, 0, wxEXPAND | wxALL, Border );//light model second line
-  SizerLM2->Add( tcAmbLM, 0, wxEXPAND | wxALL, Border );
-  SizerLM2->Add( stBgClr, 0, wxEXPAND | wxALL, Border );
-  SizerLM2->Add( tcBgClr, 0, wxEXPAND | wxALL, Border );
+  SizerLM2->Add( stAmbLM, 1, wxEXPAND | wxALL, Border );//light model second line
+  SizerLM2->Add( tcAmbLM, 1, wxEXPAND | wxALL, Border );
+  SizerLM2->Add( stBgClr, 1, wxEXPAND | wxALL, Border );
+  SizerLM2->Add( tcBgClr, 1, wxEXPAND | wxALL, Border );
+  
+  SizerLM->Add( SizerLM2, 1, wxEXPAND | wxALL, Border );//light model frame
+  SizerLM->Add( SizerLM1, 1, wxEXPAND | wxALL, Border );
 
-  SizerLM->Add( SizerLM2, 0, wxEXPAND | wxALL, Border );//light model frame
-  SizerLM->Add( SizerLM1, 0, wxEXPAND | wxALL, Border );
-
-  SizerFonts->Add( cbFonts, 0, wxALL, Border ); //fonts frame
-  SizerFonts->Add( tbEditFont, 0, wxALL, Border );
+  SizerFonts->Add( cbFonts, 1, wxEXPAND | wxALL, Border ); //fonts frame
+  SizerFonts->Add( tbEditFont, 1, wxEXPAND | wxALL, Border );
 
   wxBoxSizer *TSizer2 = new wxBoxSizer(wxVERTICAL );
   TSizer2->Add( SizerLM, 0, wxEXPAND | wxALL, 1 );//light model frame
   TSizer2->Add( SizerFonts, 0, wxEXPAND | wxALL, Border );//fonts frame
-  TSizer2->Add( TSizer1, 0, wxEXPAND | wxALL, 1 );//big light frame
+  TSizer2->Add( TSizer1, 1, wxEXPAND | wxALL, 1 );//big light frame
 
   //right buttons list
   wxBoxSizer *ButtonsSizer = new wxBoxSizer( wxVERTICAL );
@@ -249,7 +249,7 @@ TdlgSceneProps::TdlgSceneProps(TMainForm *ParentFrame, TGXApp *XApp)
   //end right buttons list
 
   wxBoxSizer *TSizer3 = new wxBoxSizer(wxHORIZONTAL );
-  TSizer3->Add( TSizer2, 0, wxALL, 1 );
+  TSizer3->Add( TSizer2, 1, wxALL, 1 );
   TSizer3->Add( ButtonsSizer, 0, wxALL, 1 );
   SetSizer(TSizer3);
   TSizer3->SetSizeHints(this);  
