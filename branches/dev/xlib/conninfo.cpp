@@ -173,12 +173,14 @@ CXConnInfo& ConnInfo::GetConnInfo(const TCAtom& ca) const {
     ci.BondsToCreate.AddListC(aci.BondsToCreate);
     ci.BondsToRemove.AddListC(aci.BondsToRemove);
   } 
-  else if( (ti_ind = TypeInfo.IndexOf(&ca.GetAtomInfo())) != -1 )  {
+  // extend the connectivity info...
+  if( (ti_ind = TypeInfo.IndexOf(&ca.GetAtomInfo())) != -1 )  {
     const TypeConnInfo& aci = TypeInfo.GetValue(ti_ind);
     ci.r = (aci.r < 0 ? ca.GetAtomInfo().GetRad1() : aci.r);
     ci.maxBonds = aci.maxBonds;
   }
-  else  {
+  // use defaults then
+  if( ai_ind == -1 && ti_ind == -1 )  {
     ci.r = ca.GetAtomInfo().GetRad1();
     ci.maxBonds = def_max_bonds;
   }

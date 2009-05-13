@@ -237,24 +237,30 @@ void TNetwork::CreateBondsAndFragments(TSAtomPList& Atoms, TNetPList& Frags)  {
         }
       }
     }
-    if( sa->NodeCount() > ci.maxBonds )  {
+  }
+  /* final conn processing, in case some extra bonds were created considering
+     bond duality ... This cannot be done in th eloop above */
+  for( int i=0; i < ac; i++ )  {
+    TSAtom* A1 = Atoms[i];
+    const CXConnInfo& ci = A1->CAtom().GetConnInfo();
+    if( A1->NodeCount() > ci.maxBonds )  {
       if( ci.maxBonds < 0 )
-        sa->SortNodesByDistanceDsc();
+        A1->SortNodesByDistanceDsc();
       else
-        sa->SortNodesByDistanceAsc();
+        A1->SortNodesByDistanceAsc();
       // prevent q-peaks affecting the max number of bonds...
       int bc2set = olx_abs(ci.maxBonds);
       for( int j=0;  j < bc2set; j++ )  {
-        if( sa->Node(j).GetAtomInfo() == iQPeakIndex )  {
-          if( ++bc2set >= sa->NodeCount() )  {
+        if( A1->Node(j).GetAtomInfo() == iQPeakIndex )  {
+          if( ++bc2set >= A1->NodeCount() )  {
             break;
           }
         }
       }
-      if( bc2set < sa->NodeCount() )
-        sa->SetNodeCount(bc2set);
+      if( bc2set < A1->NodeCount() )
+        A1->SetNodeCount(bc2set);
     }
-    sa->SetStandalone( sa->NodeCount() == 0 );
+    A1->SetStandalone( A1->NodeCount() == 0 );
   }
   // end analysis the extra con info
   for( int i=0; i < ac; i++ )  {
