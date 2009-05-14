@@ -44,34 +44,64 @@ all: obj bins link
 $(OBJ_DIR): 
 	@echo "Building object libraries, this can take a while"
 	@if test ! -d $(OBJ_DIR); then mkdir $(OBJ_DIR); else touch $(OBJ_DIR); fi;
-obj_xlib : $(OBJ_DIR) $@
-	@echo "[1] Building xlib object libraries"
-	@cd $(OBJ_DIR); $(CC) $(SRC_DIR)xlib/*.cpp $(OPTS) $(CFLAGS)
-	@echo "[1] Done! Building xlib object libraries" #This takes a while perhaps split?
+.phony obj_xlib : $(OBJ_DIR) obj_xlib1 obj_xlib2 obj_xlib3
+
+obj_xlib1 : $(OBJ_DIR) $@
+	@cd $(OBJ_DIR); \
+	for i in {a..m} {A..M}; do\
+		num=`find  $(SRC_DIR)xlib -maxdepth 1 -type f -name "$$i*.cpp" | wc -l`; \
+		if [ "$$num" -gt "0" ]; then \
+                        echo "[1]$$i Building xlib object libraries"; \
+			$(CC) $(SRC_DIR)xlib/$$i*.cpp $(OPTS) $(CFLAGS); \
+		fi; \
+	done; 
+	@echo "[1]A-M* Done! Building xlib object libraries"
+
+obj_xlib2 : $(OBJ_DIR) $@
+	@cd $(OBJ_DIR); \
+        for i in {n..r} {N..r}; do\
+                num=`find  $(SRC_DIR)xlib -maxdepth 1 -type f -name "$$i*.cpp" | wc -l`; \
+                if [ "$$num" -gt "0" ]; then \
+                        echo "[1]$$i Building xlib object libraries"; \
+                        $(CC) $(SRC_DIR)xlib/$$i*.cpp $(OPTS) $(CFLAGS); \
+                fi; \
+        done; 
+	@echo "[1]N-R* Done! Building xlib object libraries"
+obj_xlib3 : $(OBJ_DIR) $@
+	@cd $(OBJ_DIR); \
+        for i in {r..z} {R..Z}; do\
+                num=`find  $(SRC_DIR)xlib -maxdepth 1 -type f -name "$$i*.cpp" | wc -l`; \
+                if [ "$$num" -gt "0" ]; then \
+                        echo "[1]$$i Building xlib object libraries"; \
+                        $(CC) $(SRC_DIR)xlib/$$i*.cpp $(OPTS) $(CFLAGS); \
+                fi; \
+        done; 
+	@echo "[1]R-Z* Done! Building xlib object libraries"
+
 obj_alglib : $(OBJ_DIR) $@
 	@echo "[2] Building alglib object libraries"
 	@cd $(OBJ_DIR); $(CC) $(SRC_DIR)alglib/*.cpp $(OPTS) $(CFLAGS)
-	@echo "[2] Done! Building alglib object libraries"
+	@echo "[2]* Done! Building alglib object libraries"
 obj_sdl : $(OBJ_DIR)  $@
 	@echo "[3] Building sdl object libraries"
 	@cd $(OBJ_DIR);	$(CC) $(SRC_DIR)sdl/*.cpp $(OPTS) $(CFLAGS)
-	@echo "[3] Done! Building sdl object libraries"
+	@echo "[3]* Done! Building sdl object libraries"
 obj_sdl_smart : $(OBJ_DIR)  $@
 	@echo "[4] Building sdl smart object libraries"
 	@cd $(OBJ_DIR);	$(CC) $(SRC_DIR)sdl/smart/*.cpp $(OPTS) $(CFLAGS)
-	@echo "[4] Done! Building sdl smart object libraries"
+	@echo "[4]* Done! Building sdl smart object libraries"
 obj_xlib_macro : $(OBJ_DIR) $@
 	@echo "[5] Building xlib macro object libraries"
 	@cd $(OBJ_DIR);	$(CC) $(SRC_DIR)xlib/macro/*.cpp $(OPTS) $(CFLAGS)
-	@echo "[5] Done! Building xlib macro object libraries"
+	@echo "[5]* Done! Building xlib macro object libraries"
 obj_glib : $(OBJ_DIR) $@
 	@echo "[6] Building glib object libraries"
 	@cd $(OBJ_DIR);	$(CC) $(SRC_DIR)glib/*.cpp $(OPTS) $(CFLAGS)
-	@echo "[6] Done! Building glib object libraries"
+	@echo "[6]* Done! Building glib object libraries"
 obj_gxlib : $(OBJ_DIR) $@
 	@echo "[7] Building gxlib object libraries"
 	@cd $(OBJ_DIR);	$(CC) $(SRC_DIR)gxlib/*.cpp $(OPTS) $(CFLAGS)
-	@echo "[7] Done! Building gxlib object libraries"
+	@echo "[7]* Done! Building gxlib object libraries"
 obj_repository : $(OBJ_DIR) $@
 	@echo "[8] Building repository object libraries"
 	@cd $(OBJ_DIR); $(CC) $(SRC_DIR)repository/filesystem.cpp $(OPTS) $(CFLAGS)
@@ -87,33 +117,36 @@ obj_repository : $(OBJ_DIR) $@
 	@cd $(OBJ_DIR); $(CC) $(SRC_DIR)repository/eprocess.cpp $(OPTS) $(CFLAGS)
 	@cd $(OBJ_DIR); $(CC) $(SRC_DIR)repository/olxvar.cpp $(OPTS) $(CFLAGS)
 	@cd $(OBJ_DIR); $(CC) $(SRC_DIR)repository/py_core.cpp $(OPTS) $(CFLAGS)
-	@echo "[8] Done! Building repository object libraries"
+	@echo "[8]* Done! Building repository object libraries"
 
 obj : $(OBJ_DIR) obj_alglib obj_sdl obj_sdl_smart obj_xlib obj_xlib_macro obj_glib obj_gxlib obj_repository
 
 # unirun will create the obj/unirun directory and compile the source
 
-unirun : $(OBJ_DIR)/$@
-	+make clean_unirun
+unirun : $(OBJ_DIR)$@
+	@if test -d $(OBJ_DIR)unirun; then +make clean_unirun;
 	@echo "[A] Making unirun this is relatively quick"
 	@mkdir $(OBJ_DIR)unirun;
 	@cd $(OBJ_DIR)unirun/;	$(CC) $(SRC_DIR)unirun/*.cpp  $(OPTS) $(CFLAGS)
-	@echo "[A] Done! Making unirun I told you this was relatively quick"
+	@echo "[A]* Done! Making unirun I told you this was relatively quick"
 
 # olex will create the obj/olex directory and compile the source
-olex : $(OBJ_DIR)/$@
-	+make clean_olex
+olex : $(OBJ_DIR)$@
+	@if test -d $(OBJ_DIR)olex; then +make clean_olex;
 	@echo "[B] Making olex this can take a while"
 	@mkdir $(OBJ_DIR)olex;
 	@cd $(OBJ_DIR)olex/; $(CC) $(SRC_DIR)olex/*.cpp $(OPTS) $(CFLAGS)
-	@echo "[B] Done! Making olex I told you that this can take a while"
+	@echo "[B]* Done! Making olex I told you that this can take a while"
 # There now appears to be no files in the olex/macro directory?
 #	@cd $(OBJ_DIR)olex/; $(CC) $(SRC_DIR)olex/*.cpp $(SRC_DIR)olex/macro/*.cpp $(CFLAGS)
+
+.phony $(OBJ_DIR)unirun : unirun
+.phony $(OBJ_DIR)olex : olex
 
 bins : unirun olex
 
 # link will link the *.s objects created and build the binaries in the bin directory
-link : $(OBJ_DIR)/unirun/$@ $(OBJ_DIR)/olex/$@
+link : $(OBJ_DIR)unirun/$@ $(OBJ_DIR)olex/$@
 	+make clean_bin
 	@echo "Linking unirun and olex"
 	@mkdir $(EXE_DIR); $(CC) $(OBJ_DIR)unirun/*.s $(OBJ_DIR)*.s -o $(EXE_DIR)unirun $(LDFLAGS)
