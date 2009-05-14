@@ -316,7 +316,7 @@ olxstr TMainFrame::PickFile(const olxstr &Caption, const olxstr &Filter,
 // TDialog implementation
 //----------------------------------------------------------------------------//
 TDialog::TDialog(TMainFrame *Parent, const wxString &Title, const wxString &ClassName)
-:wxDialog(Parent, -1,  Title, wxPoint(0, 0), wxSize(425, 274), wxDEFAULT_DIALOG_STYLE, ClassName), WI(this)
+:wxDialog(Parent, -1,  Title, wxPoint(0, 0), wxSize(425, 274), wxRESIZE_BORDER | wxDEFAULT_DIALOG_STYLE, ClassName), WI(this)
 {
   FParent = Parent;
   FParent->RestorePosition(this);
@@ -631,8 +631,8 @@ BEGIN_EVENT_TABLE(TTextEdit, wxTextCtrl)
   EVT_SET_FOCUS(TTextEdit::EnterEvent)
 END_EVENT_TABLE()
 //..............................................................................
-TTextEdit::TTextEdit(wxWindow *Parent, const wxSize& sz, int style):
-    wxTextCtrl(Parent, -1, wxString(), wxDefaultPosition, sz, style), WI(this)  {
+TTextEdit::TTextEdit(wxWindow *Parent, int style):
+    wxTextCtrl(Parent, -1, wxString(), wxDefaultPosition, wxDefaultSize, style), WI(this)  {
   FActions = new TActionQList;
   OnChange = &FActions->NewQueue("ONCHANGE");
   OnClick = &FActions->NewQueue("ONCLICK");

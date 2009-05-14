@@ -408,7 +408,7 @@ protected:
   void EnterEvent(wxFocusEvent& event);
   olxstr OnChangeStr, Data, OnLeaveStr, OnEnterStr;
 public:
-  TTextEdit(wxWindow *Parent, const wxSize& sz=wxDefaultSize, int style=0);
+  TTextEdit(wxWindow *Parent, int style=0);
   virtual ~TTextEdit();
 
   olxstr GetText()          const {  return wxTextCtrl::GetValue().c_str(); }
