@@ -123,7 +123,7 @@ obj : $(OBJ_DIR) obj_alglib obj_sdl obj_sdl_smart obj_xlib obj_xlib_macro obj_gl
 
 # unirun will create the obj/unirun directory and compile the source
 
-unirun : $(OBJ_DIR)$@
+unirun : obj
 	@if test -d $(OBJ_DIR)unirun; then +make clean_unirun;
 	@echo "[A] Making unirun this is relatively quick"
 	@mkdir $(OBJ_DIR)unirun;
@@ -131,7 +131,7 @@ unirun : $(OBJ_DIR)$@
 	@echo "[A]* Done! Making unirun I told you this was relatively quick"
 
 # olex will create the obj/olex directory and compile the source
-olex : $(OBJ_DIR)$@
+olex : obj
 	@if test -d $(OBJ_DIR)olex; then +make clean_olex;
 	@echo "[B] Making olex this can take a while"
 	@mkdir $(OBJ_DIR)olex;
