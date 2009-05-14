@@ -81,7 +81,7 @@ obj_xlib3 : $(OBJ_DIR) $@
 	@echo "[1]O-T* Done! Building xlib object libraries"
 obj_xlib4 : $(OBJ_DIR) $@
 	@cd $(OBJ_DIR); \
-        for i in {t..z} {t..Z}; do\
+        for i in {t..z} {T..Z}; do\
                 num=`find  $(SRC_DIR)xlib -maxdepth 1 -type f -name "$$i*.cpp" | wc -l`; \
                 if [ "$$num" -gt "0" ]; then \
                         echo "[1]$$i Building xlib object libraries"; \
