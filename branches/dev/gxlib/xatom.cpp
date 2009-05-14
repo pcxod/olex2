@@ -250,8 +250,8 @@ void TXAtom::Create(const olxstr& cName, const ACreationParams* cpar)  {
           ValidateRadius( GPC->Style() );
           ValidateDS(GPC->Style());
         }
-        else
-          Params() = cpar->params;
+        else if( cpar->params != 0 )
+          Params() = *cpar->params;
         return;
       }
     }
@@ -273,8 +273,8 @@ void TXAtom::Create(const olxstr& cName, const ACreationParams* cpar)  {
     ValidateDS(GS);
     ValidateRadius(GS);
   }
-  else {
-    Params() = cpar->params;
+  else if( cpar->params != NULL )  {
+    Params() = *cpar->params;
   }
 
   for( int i=0; i < FStaticObjects.Count(); i++ )  {
@@ -312,7 +312,7 @@ void TXAtom::Create(const olxstr& cName, const ACreationParams* cpar)  {
       }
       else  {
         const TGlMaterial* GlM = GS->Material(FStaticObjects.GetString(i));
-        if( GlM->Mark() )  {
+        if( GlM->HasMark() )  {
           if( SGlP->Params.Last() == ddsDefSphere )   {
             if( i != SphereIndex )  {
               int mi = GS->FindMaterialIndex("Sphere");
@@ -348,7 +348,7 @@ void TXAtom::Create(const olxstr& cName, const ACreationParams* cpar)  {
 //..............................................................................
 ACreationParams* TXAtom::GetCreationParams() const {
   AtomCreationParams& ap = *(new AtomCreationParams);
-  ap.params = FParams;
+  //ap.params = FParams;
   return &ap;
 }
 //..............................................................................
@@ -556,7 +556,7 @@ void TXAtom::GetDefSphereMaterial(const TSAtom& Atom, TGlMaterial& M)  {
   M.AmbientB = M.AmbientF;
   M.DiffuseB = M.DiffuseF;
   M.SpecularB = M.SpecularF;
-  M.Mark(false);
+  M.SetMark(false);
 }
 //..............................................................................
 void TXAtom::GetDefRimMaterial(const TSAtom& Atom, TGlMaterial &M)  {
@@ -572,11 +572,11 @@ void TXAtom::GetDefRimMaterial(const TSAtom& Atom, TGlMaterial &M)  {
   M.SpecularF = 0xffffffff;
   M.EmissionF =  0x14141414;
   M.ShininessF = 12;
-  M.Mark(false);
+  M.SetMark(false);
 }
 //..............................................................................
 TGraphicsStyle* TXAtom::Style()  {
-  return NULL;
+  return Primitives()->Style();
 }
 //..............................................................................
 void TXAtom::ApplyStyle(TGraphicsStyle *Style)  {

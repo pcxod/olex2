@@ -13,6 +13,10 @@ class TXGrowLine : public TXBond  {
   TCAtom *FCAtom;
   smatd Transform;
   vec3d  FEdge, FBase;
+protected:
+  virtual bool IsMaskSaveable() const {  return true;  }
+  virtual bool IsStyleSaveable() const {  return true; }
+  virtual bool IsRadiusSaveable() const {  return true; }
 public:
   TXGrowLine(const olxstr& collectionName, TSAtom *A,
                TCAtom* CA, const smatd& transform, TGlRenderer *Render);

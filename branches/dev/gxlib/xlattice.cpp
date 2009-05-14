@@ -35,7 +35,7 @@ void TXLattice::Create(const olxstr& cName, const ACreationParams* cpar)  {
   TGraphicsStyle* GS = GPC->Style();
   Lines = GPC->NewPrimitive("Lines", sgloLines);
   const TGlMaterial* SGlM = GS->Material("Lines");
-  if( !SGlM->Mark() )  Lines->SetProperties(SGlM);
+  if( !SGlM->HasMark() )  Lines->SetProperties(SGlM);
   else  {
     TGlMaterial GlM;
     GlM.SetFlags(sglmAmbientF);
@@ -50,7 +50,7 @@ void TXLattice::Create(const olxstr& cName, const ACreationParams* cpar)  {
 
   TGlPrimitive* GlP = GPC->NewPrimitive("Label", sgloText);  // labels
   SGlM = GS->Material("Label");
-  if( !SGlM->Mark() )  GlP->SetProperties(SGlM);
+  if( !SGlM->HasMark() )  GlP->SetProperties(SGlM);
   else  {
     TGlMaterial GlM;
     GlM.SetIdentityDraw(true);

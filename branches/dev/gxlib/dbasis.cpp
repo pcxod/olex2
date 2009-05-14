@@ -66,14 +66,14 @@ void TDBasis::Create(const olxstr& cName, const ACreationParams* cpar)  {
   M2 = M1;  M2.SwapRows(0, 1);  M2.SwapRows(1, 2);
   GlP = GPC->NewPrimitive("ConeX", sgloCylinder);  // X cone
   SGlM = GS->Material("ConeX");
-  GlP->SetProperties(SGlM->Mark() ? &GlM : SGlM);
+  GlP->SetProperties(SGlM->HasMark() ? &GlM : SGlM);
   TEBasis* EB = new TEBasis;  GlP->SetBasis(EB);  EB->SetMatrix(M2);  EB->SetCenter( M[0]/5 );
   GlP->Params[0] = ConeW;  GlP->Params[1] = 0;
   GlP->Params[2] = ConeH; GlP->Params[3] = CQ; GlP->Params[4] = CQ;
 
   GlP = GPC->NewPrimitive("DiskX", sgloDisk);  // X cone bottom
   SGlM = GS->Material("DiskX");
-  GlP->SetProperties(SGlM->Mark() ? &GlM : SGlM);
+  GlP->SetProperties(SGlM->HasMark() ? &GlM : SGlM);
   EB = new TEBasis;  GlP->SetBasis(EB);  EB->SetMatrix(M2);  EB->SetCenter( M[0]/5 );
   GlP->Params[0] = 0;  GlP->Params[1] = ConeW;
   GlP->Params[2] = CQ; GlP->Params[3] = CQ;
@@ -81,7 +81,7 @@ void TDBasis::Create(const olxstr& cName, const ACreationParams* cpar)  {
 
   GlP = GPC->NewPrimitive("CylinderX",sgloCylinder);  // X axis
   SGlM = GS->Material("CylinderX");
-  GlP->SetProperties(SGlM->Mark() ? &GlM : SGlM);
+  GlP->SetProperties(SGlM->HasMark() ? &GlM : SGlM);
   GlP->SetProperties(&GlM);
   EB = new TEBasis;  GlP->SetBasis(EB);  EB->SetMatrix(M2);
   GlP->Params[0] = ConeW/2;  GlP->Params[1] = ConeW/2;
@@ -92,7 +92,7 @@ void TDBasis::Create(const olxstr& cName, const ACreationParams* cpar)  {
   M2 = M1;  M2.SwapRows(0, 1);  M2.SwapRows(0, 2);
   GlP = GPC->NewPrimitive("ConeY", sgloCylinder);  // Y
   SGlM = GS->Material("ConeY");
-  GlP->SetProperties(SGlM->Mark() ? &GlM : SGlM);
+  GlP->SetProperties(SGlM->HasMark() ? &GlM : SGlM);
   GlP->SetProperties(&GlM);
   EB = new TEBasis;  GlP->SetBasis(EB);  EB->SetMatrix(M2);  EB->SetCenter( M[1]/5 );
   GlP->Params[0] = ConeW;  GlP->Params[1] = 0;
@@ -100,7 +100,7 @@ void TDBasis::Create(const olxstr& cName, const ACreationParams* cpar)  {
 
   GlP = GPC->NewPrimitive("DiskY", sgloDisk);  // Y cone bottom
   SGlM = GS->Material("DiskY");
-  GlP->SetProperties(SGlM->Mark() ? &GlM : SGlM);
+  GlP->SetProperties(SGlM->HasMark() ? &GlM : SGlM);
   EB = new TEBasis;  GlP->SetBasis(EB);  EB->SetMatrix(M2);  EB->SetCenter( M[1]/5 );
   GlP->Params[0] = 0;  GlP->Params[1] = ConeW;
   GlP->Params[2] = CQ; GlP->Params[3] = CQ;
@@ -108,7 +108,7 @@ void TDBasis::Create(const olxstr& cName, const ACreationParams* cpar)  {
 
   GlP = GPC->NewPrimitive("CylinderY", sgloCylinder);  // y axis
   SGlM = GS->Material("CylinderY");
-  GlP->SetProperties(SGlM->Mark() ? &GlM : SGlM);
+  GlP->SetProperties(SGlM->HasMark() ? &GlM : SGlM);
   EB = new TEBasis;  GlP->SetBasis(EB);  EB->SetMatrix(M2);
   GlP->Params[0] = ConeW/2;  GlP->Params[1] = ConeW/2;
   GlP->Params[2] = M[1].Length()/5; GlP->Params[3] = CQ; GlP->Params[4] = CQ;
@@ -116,14 +116,14 @@ void TDBasis::Create(const olxstr& cName, const ACreationParams* cpar)  {
   GlM.AmbientF  = 0x80ff0000;
   GlP = GPC->NewPrimitive("ConeZ", sgloCylinder);  //Z cone
   SGlM = GS->Material("ConeZ");
-  GlP->SetProperties(SGlM->Mark() ? &GlM : SGlM);
+  GlP->SetProperties(SGlM->HasMark() ? &GlM : SGlM);
   EB = new TEBasis;  GlP->SetBasis(EB);  EB->SetMatrix(M1);  EB->SetCenter( M[2]/5 );
   GlP->Params[0] = ConeW;  GlP->Params[1] = 0;
   GlP->Params[2] = ConeH; GlP->Params[3] = CQ; GlP->Params[4] = CQ;
 
   GlP = GPC->NewPrimitive("DiskZ", sgloDisk);  // Z cone bottom
   SGlM = GS->Material("DiskZ");
-  GlP->SetProperties(SGlM->Mark() ? &GlM : SGlM);
+  GlP->SetProperties(SGlM->HasMark() ? &GlM : SGlM);
   EB = new TEBasis;  GlP->SetBasis(EB);  EB->SetMatrix(M1);  EB->SetCenter( M[2]/5 );
   GlP->Params[0] = 0;  GlP->Params[1] = ConeW;
   GlP->Params[2] = CQ; GlP->Params[3] = CQ;
@@ -131,14 +131,14 @@ void TDBasis::Create(const olxstr& cName, const ACreationParams* cpar)  {
 
   GlP = GPC->NewPrimitive("CylinderZ", sgloCylinder);  // Z axis
   SGlM = GS->Material("CylinderZ");
-  GlP->SetProperties(SGlM->Mark() ? &GlM : SGlM);
+  GlP->SetProperties(SGlM->HasMark() ? &GlM : SGlM);
   EB = new TEBasis;  GlP->SetBasis(EB);  EB->SetMatrix(M1);
   GlP->Params[0] = ConeW/2;  GlP->Params[1] = ConeW/2;
   GlP->Params[2] = M[2].Length()/5; GlP->Params[3] = CQ; GlP->Params[4] = CQ;
 
   GlP = GPC->NewPrimitive("Label", sgloText);  // labels
   SGlM = GS->Material("Label");
-  if( !SGlM->Mark() )  GlP->SetProperties(SGlM);
+  if( !SGlM->HasMark() )  GlP->SetProperties(SGlM);
   else  {
     GlM.SetIdentityDraw(true);
     GlM.SetTransparent(false);

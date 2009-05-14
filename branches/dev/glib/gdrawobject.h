@@ -22,9 +22,9 @@ const short  sgdoVisible   = 0x0001, // TGDrawObject flags
 */
 //---------------------------------------------------------------------------
 struct ACreationParams {
-  evecd params;
+  evecd* params;
   int tag;
-  ACreationParams() : tag(-1) {}
+  ACreationParams() : tag(-1), params(NULL) {}
   virtual ~ACreationParams() {}
 };
 class AGDrawObject: public ACollectionItem  {

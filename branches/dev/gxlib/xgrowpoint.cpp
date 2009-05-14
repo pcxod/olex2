@@ -39,11 +39,11 @@ void TXGrowPoint::Create(const olxstr& cName, const ACreationParams* cpar) {
   TGlPrimitive* GlP = GPC->NewPrimitive( GetCollectionName(), sgloTriangles );
   TGlMaterial* GlM = const_cast<TGlMaterial*>(GS->Material(GetCollectionName()));
 
-  if( GlM->Mark() )  {
+  if( GlM->HasMark() )  {
     GlM->SetFlags( sglmAmbientF|sglmDiffuseF);
     GlM->AmbientF = 0x000000ff;
     GlM->DiffuseF = 0xf0f0f0;
-    GlM->Mark(false);
+    GlM->SetMark(false);
   }
   GlP->SetProperties(GlM);
   double sz = 1;

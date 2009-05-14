@@ -751,8 +751,9 @@ v-[grow] use user provided delta for connctivity analysis",
   this_InitMacro(NextSolution, ,fpNone );
 
   this_InitMacroD(Match, "s-subgraph match&;n-naming. If the value a symbol [or set of]\
- this is appended to the label, '$xx' replaces the symbols after the atom type symbol with xx, leving the ending,\
- '-xx' - changes the ending of the label with xx&;a-align&;i-try inversion&;u-unmatch", fpNone|fpOne|fpTwo, "Fragment matching, alignment and label transfer routine" );
+ this is appended to the label, '$xx' replaces the symbols after the atom type symbol with xx,\
+ leving the ending, '-xx' - changes the ending of the label with xx&;a-align&;\
+i-try inversion&;u-unmatch&;esd-calculate esd (works for pairs only)", fpNone|fpOne|fpTwo, "Fragment matching, alignment and label transfer routine" );
   this_InitMacroD(Conn, EmptyString, fpAny^fpNone, "Changes provided atom(s) connectivity (only until next connectivity modifying operation for now). First parameter is the new connectivity" );
   this_InitMacroD(AddBond, EmptyString, fpAny, "Adds specified bond to the connectivity table" );
   this_InitMacroD(DelBond, EmptyString, fpAny, "Removes specified bond from the connectivity table" );
@@ -1381,6 +1382,11 @@ void TMainForm::StartupInit()  {
                     << ",\'" << StoredParams.GetObject(i)
                     << "\')", MacroError);
 
+  }
+
+  if( Dictionary.GetCurrentLanguage().IsEmpty() )  {
+    try  { Dictionary.SetCurrentLanguage(DictionaryFile, "English");  }
+    catch(...) {}
   }
 
   ProcessXPMacro("onstartup", MacroError);

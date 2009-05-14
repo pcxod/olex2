@@ -56,9 +56,9 @@ void TXReflection::Create(const olxstr& cName, const ACreationParams* cpar) {
 
   TGlMaterial* GlM = const_cast<TGlMaterial*>(GS->Material("Reflection"));
 
-  if( GlM->Mark() )  {
+  if( GlM->HasMark() )  {
     GlM->FromString("85;1.000,0.000,0.059,0.000;2138535799;1.000,1.000,1.000,0.500;36");
-    GlM->Mark(false);
+    GlM->SetMark(false);
   }
   GlP->SetProperties(GlM);
   double sz = 0.5;

@@ -30,12 +30,13 @@
 double TNetwork_FindAlignmentMatrix(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atoms, smatdd& res, vec3d& _centB, bool TryInversion)  {
   TTypeList< AnAssociation2<vec3d,vec3d> > crds;
   crds.SetCapacity( atoms.Count() );
-  const TAsymmUnit& au = atoms[0].GetA()->GetNetwork().GetLattice().GetAsymmUnit();
+  const TAsymmUnit& au1 = atoms[0].GetA()->GetNetwork().GetLattice().GetAsymmUnit();
+  const TAsymmUnit& au2 = atoms[0].GetB()->GetNetwork().GetLattice().GetAsymmUnit();
   for( int i=0; i < atoms.Count(); i++ )  {
     vec3d v = atoms[i].GetB()->ccrd();
     if( TryInversion )
       v *= -1;
-    crds.AddNew(atoms[i].GetA()->crd(), au.CellToCartesian(v) );
+    crds.AddNew(atoms[i].GetA()->crd(), au2.CellToCartesian(v) );
   }
   double sumA = 0, sumB = 0;
   vec3d centA, centB;
@@ -1036,24 +1037,62 @@ double TNetwork::FindAlignmentMatrix(const TTypeList< AnAssociation2<TSAtom*,TSA
   return TNetwork_FindAlignmentMatrix(atoms, res, centB, TryInversion);
 }
 //..............................................................................
+void TNetwork::PrepearesESDCalc(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atoms, 
+    bool Inverted,
+    TSAtomPList& atoms_out,
+    vec3d_alist& crd_out, 
+    TDoubleList& wght_out)
+{
+  atoms_out.SetCount(atoms.Count()*2);
+  crd_out.SetCount(atoms.Count()*2);
+  wght_out.SetCount(atoms.Count()*2);
+  if( Inverted )  {
+    const TAsymmUnit& au2 = atoms[0].GetB()->GetNetwork().GetLattice().GetAsymmUnit();
+    for(int i=0; i < atoms.Count(); i++ )  {
+      atoms_out[i] = atoms[i].A();
+      atoms_out[atoms.Count()+i] = atoms[i].B();
+      wght_out[i] = atoms[i].GetA()->CAtom().GetOccu()*atoms[i].GetA()->GetAtomInfo().GetMr();
+      wght_out[atoms.Count()+i] = atoms[i].GetB()->CAtom().GetOccu()*atoms[i].GetB()->GetAtomInfo().GetMr();
+      vec3d v = atoms[i].GetB()->ccrd() * -1;
+      au2.CellToCartesian(v);
+      crd_out[i] = atoms[i].GetA()->crd(); 
+      crd_out[atoms.Count()+i] = v;
+    }
+  }
+  else  {
+    for(int i=0; i < atoms.Count(); i++ )  {
+      atoms_out[i] = atoms[i].A();
+      atoms_out[atoms.Count()+i] = atoms[i].B();
+      wght_out[i] = atoms[i].GetA()->CAtom().GetOccu()*atoms[i].GetA()->GetAtomInfo().GetMr();
+      wght_out[atoms.Count()+i] = atoms[i].GetB()->CAtom().GetOccu()*atoms[i].GetB()->GetAtomInfo().GetMr();
+      crd_out[i] = atoms[i].GetA()->crd(); 
+      crd_out[atoms.Count()+i] = atoms[i].GetB()->crd();
+    }
+  }
+}
+//..............................................................................
 void TNetwork::DoAlignAtoms(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& satomp,
-                            const TSAtomPList& atomsToTransform, const smatdd& S, bool Inverted)  {
+                            const TSAtomPList& atomsToTransform, const smatdd& S, bool Inverted)  
+{
+  if( atomsToTransform.IsEmpty() )
+    return;
   vec3d mcent;
-  const TAsymmUnit& au = satomp[0].GetA()->GetNetwork().GetLattice().GetAsymmUnit();
+  const TAsymmUnit& au1 = atomsToTransform[0]->GetNetwork().GetLattice().GetAsymmUnit();
+  const TAsymmUnit& au2 = satomp[0].GetB()->GetNetwork().GetLattice().GetAsymmUnit();
   double sum  = 0;
   if( Inverted )  {
     for( int i=0; i < atomsToTransform.Count(); i++ )
-      au.CellToCartesian(atomsToTransform[i]->ccrd() * -1, atomsToTransform[i]->crd());
+      au1.CellToCartesian(atomsToTransform[i]->ccrd() * -1, atomsToTransform[i]->crd());
     for(int i=0; i < satomp.Count(); i++ )  {
       vec3d v = satomp[i].GetB()->ccrd() * -1;
-      au.CellToCartesian(v);
+      au2.CellToCartesian(v);
       mcent += v*satomp[i].GetB()->CAtom().GetOccu()*satomp[i].GetB()->GetAtomInfo().GetMr();
       sum += satomp[i].GetB()->CAtom().GetOccu()*satomp[i].GetB()->GetAtomInfo().GetMr();
     }
   }
   else  {
     for( int i=0; i < atomsToTransform.Count(); i++ )
-      au.CellToCartesian(atomsToTransform[i]->ccrd(), atomsToTransform[i]->crd());
+      au2.CellToCartesian(atomsToTransform[i]->ccrd(), atomsToTransform[i]->crd());
     for(int i=0; i < satomp.Count(); i++ )  {
       mcent += satomp[i].GetB()->crd()*satomp[i].GetB()->CAtom().GetOccu()*satomp[i].GetB()->GetAtomInfo().GetMr();
       sum += satomp[i].GetB()->CAtom().GetOccu()*satomp[i].GetB()->GetAtomInfo().GetMr();

@@ -399,7 +399,8 @@ void TGXApp::CreateObjects(bool SyncBonds, bool centerModel)  {
     TXBond& XB = XBonds.Add( *(new TXBond(TXBond::GetLegend( *B, 2), *allBonds[i], FGlRender)) );
     if( B->IsDeleted() || (B->A().IsDeleted() || allBonds[i]->B().IsDeleted()) )
       XB.Deleted(true);
-    XB.Create();
+    BondCreationParams bcpar(XAtoms[B->A().GetTag()], XAtoms[B->B().GetTag()]);
+    XB.Create(EmptyString, &bcpar);
     if( (B->A().GetAtomInfo() == iQPeakIndex) ||
         (B->B().GetAtomInfo() == iQPeakIndex)  ) {  XB.Visible(FQPeakBondsVisible);  continue;  }
     if( !FStructureVisible )  {  XB.Visible(FStructureVisible);  continue;  }
@@ -2384,21 +2385,27 @@ void TGXApp::UpdateAtomPrimitives(int Mask, TXAtomPList* Atoms) {
 void TGXApp::UpdateBondPrimitives(int Mask, TXBondPList* Bonds, bool HBondsOnly)  {
   TXBondPList bonds;
   FillXBondList(bonds, Bonds);
-  for( int i=0; i < bonds.Count(); i++ )
-    bonds[i]->Primitives()->SetTag(i);
+  for( int i=0; i < XAtoms.Count(); i++ )  XAtoms[i].Atom().SetTag(i);
+  for( int i=0; i < bonds.Count(); i++ )  bonds[i]->Primitives()->SetTag(i);
 
   if( HBondsOnly )  {
     for( int i=0; i < bonds.Count(); i++ )  {
       if( bonds[i]->Bond().GetType() != sotHBond )  continue;
-      if( bonds[i]->Primitives()->GetTag() == i )
-        bonds[i]->UpdatePrimitives(Mask);
+      if( bonds[i]->Primitives()->GetTag() == i )  {
+        BondCreationParams bcpar(XAtoms[bonds[i]->Bond().A().GetTag()], 
+          XAtoms[bonds[i]->Bond().B().GetTag()]);
+        bonds[i]->UpdatePrimitives(Mask, &bcpar);
+      }
     }
   }
   else  {
     for( int i=0; i < bonds.Count(); i++ )  {
       if( bonds[i]->Bond().GetType() == sotHBond )  continue;
-      if( bonds[i]->Primitives()->GetTag() == i )
-        bonds[i]->UpdatePrimitives(Mask);
+      if( bonds[i]->Primitives()->GetTag() == i )  {
+        BondCreationParams bcpar(XAtoms[bonds[i]->Bond().A().GetTag()], 
+          XAtoms[bonds[i]->Bond().B().GetTag()]);
+        bonds[i]->UpdatePrimitives(Mask, &bcpar);
+      }
     }
   }
   if( Bonds == NULL )  {
@@ -3456,9 +3463,9 @@ void TGXApp::_CreateXGrowVLines()  {
 
       if( nt.dist < (nt.from->GetAtomInfo().GetRad1() + nt.to->GetAtomInfo().GetRad1() + 
         FXFile->GetLattice().GetDelta()) )
-        gl.Create("COV");
+        gl.Create("GrowBond_COV");
       else
-        gl.Create("SI");
+        gl.Create("GrowBond_SI");
     }
   }
 }

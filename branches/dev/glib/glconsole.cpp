@@ -91,7 +91,7 @@ void TGlConsole::Create(const olxstr& cName, const ACreationParams* cpar)  {
   InviteStr = GS->GetParam("Prompt", ">>", true);
 
   TGlMaterial* GlM = const_cast<TGlMaterial*>(GS->Material("Text"));
-  if( GlM->Mark() )
+  if( GlM->HasMark() )
     *GlM = Font()->GetMaterial();
 
   TGlPrimitive* GlP = GPC->NewPrimitive("Text", sgloText);

@@ -38,7 +38,7 @@ void TDUserObj::Create(const olxstr& cName, const ACreationParams* cpar)  {
   TGraphicsStyle* GS = GPC->Style();
   TGlPrimitive* FGlP = GPC->NewPrimitive("Object", Type);
   const TGlMaterial* SGlM = GS->Material("Object");
-  if( !SGlM->Mark() )  
+  if( !SGlM->HasMark() )  
     FGlP->SetProperties(SGlM);
   else  {
     TGlMaterial GlM;

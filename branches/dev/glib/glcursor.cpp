@@ -47,7 +47,7 @@ void TGlCursor::Create(const olxstr& cName, const ACreationParams* cpar)  {
   TGraphicsStyle *GS = GPC->Style();
   Symbol = GS->GetParam("Char", '|', true)[0];
   TGlMaterial* FGlM = const_cast<TGlMaterial*>(GS->Material("On"));
-  if( FGlM->Mark() )  {
+  if( FGlM->HasMark() )  {
     FGlM->SetFlags(sglmAmbientF|sglmIdentityDraw);
     FGlM->AmbientF  = 0x00ffff;
   }

@@ -37,8 +37,8 @@ void TGlGroup::Create(const olxstr& cName, const ACreationParams* cpar)  {
   FGlM = const_cast<TGlMaterial*>(GS->Material("mat"));
   if( GPC->PrimitiveCount() != 0 )  return;
 
-  DefaultColor = FGlM->Mark();
-  if( FGlM->Mark() )  {
+  DefaultColor = FGlM->HasMark();
+  if( FGlM->HasMark() )  {
     if( ParentGroup() != NULL )  {
       FGlM->SetFlags( sglmAmbientF|sglmDiffuseF|sglmSpecularF|sglmShininessF );
       FGlM->ShininessF = 128;

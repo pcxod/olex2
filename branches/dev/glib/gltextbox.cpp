@@ -54,7 +54,7 @@ void TGlTextBox::Create(const olxstr& cName, const ACreationParams* cpar)  {
   Top = GS->GetParam("Top", Top, true).ToInt();
 
   TGlMaterial* GlM = const_cast<TGlMaterial*>(GS->Material("Plane"));
-  if( GlM->Mark() )  {
+  if( GlM->HasMark() )  {
     GlM->SetFlags(0);   GlM->ShininessF = 128;
     GlM->SetFlags(sglmAmbientF|sglmDiffuseF|sglmIdentityDraw|sglmTransparent);
     GlM->AmbientF = 0x800f0f0f;
@@ -66,7 +66,7 @@ void TGlTextBox::Create(const olxstr& cName, const ACreationParams* cpar)  {
   GlP->Data.Resize(3, 4);
 
   GlM = const_cast<TGlMaterial*>(GS->Material("Text"));
-  if( GlM->Mark() )
+  if( GlM->HasMark() )
     *GlM = Font()->GetMaterial();
 
   GlP = GPC->NewPrimitive("Text", sgloText);

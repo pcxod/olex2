@@ -5970,6 +5970,24 @@ double MatchAtomPairsQT(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atom
   return rms;
 }
 //..............................................................................
+double MatchAtomPairsQTEsd(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atoms,
+                        smatdd& res, bool TryInversion)  {
+  if( atoms.Count() < 3 )  return -1;
+  VcoVContainer vcovc;
+  TXApp& xapp = TXApp::GetInstance();
+  vcovc.ReadShelxMat( TEFile::ChangeFileExt(xapp.XFile().GetFileName(), "mat"), 
+    xapp.XFile().GetAsymmUnit() );
+
+  TSAtomPList atoms_out;
+  vec3d_alist crds_out;
+  TDoubleList wghts_out;
+  TNetwork::PrepearesESDCalc(atoms, TryInversion, atoms_out, crds_out ,wghts_out);
+  TEValue<double> rv = vcovc.CalcAlignmentRMSD(atoms_out, crds_out, wghts_out);
+  TBasicApp::GetLog() << ( olxstr("RMS is ") << rv.ToString() << " A\n");
+  double rms = TNetwork::FindAlignmentMatrix(atoms, res, TryInversion);
+  return rms;
+}
+//..............................................................................
 //void MatchAtomPairsULS(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atoms, smatd& res)  {
 //  TMatrixD gs(4,4), lm(atoms.Count(), 4), lmt(4, atoms.Count());
 //  TVectorD gr(4), sol(4), b( atoms.Count() );
@@ -6110,7 +6128,11 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options, TMacroErr
           }
         }
         smatdd S;
-        double rms = MatchAtomPairsQT( satomp, S, TryInvert);
+        double rms = -1;
+        if( Options.Contains("esd") )
+          rms = MatchAtomPairsQTEsd(satomp, S, TryInvert);
+        else
+          MatchAtomPairsQT( satomp, S, TryInvert);
         TBasicApp::GetLog() << ("Transformation matrix B to A):\n");
         for( int i=0; i < 3; i++ )
           TBasicApp::GetLog() << S.r[i].ToString() << ' ' << S.t[i] << '\n' ;

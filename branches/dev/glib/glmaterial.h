@@ -42,7 +42,7 @@ const short    sglmAmbientF   = 0x0001,    // material properties
 
 class TGlMaterial: public AGOProperties, public IEObject  {
   short Flags;
-  bool FMark;
+  bool Mark;
 public:
   TGlOption EmissionF;
   TGlOption SpecularF;
@@ -62,10 +62,10 @@ public:
   void Init() const;
   const TGlMaterial& Intensity(TGlOption& ClearColor, double intensity) const;
   
-  inline void  SetFlags(short v){  Flags = v; };
-  inline short GetFlags() const {  return Flags; };
-  inline bool Mark() const      {  return FMark; }
-  inline void Mark(bool v)      {  FMark = v; }
+  DefPropP(short, Flags)
+
+  inline bool HasMark() const {  return Mark;  }
+  inline void SetMark(bool v) {  Mark = v;  }
 
   inline void SetAmbientF(bool On) {  SetBit(On, Flags, sglmAmbientF); }
   inline void SetDiffuseF(bool On) {  SetBit(On, Flags, sglmDiffuseF); }

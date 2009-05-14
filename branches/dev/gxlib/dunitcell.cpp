@@ -182,7 +182,7 @@ void TDUnitCell::Create(const olxstr& cName, const ACreationParams* cpar)  {
   TGraphicsStyle* GS = GPC->Style();
   FGlP = GPC->NewPrimitive("Lines", sgloLines);
   TGlMaterial* SGlM = const_cast<TGlMaterial*>(GS->Material("Lines"));
-  if( SGlM->Mark() )  {
+  if( SGlM->HasMark() )  {
     SGlM->SetFlags(sglmAmbientF);
     SGlM->AmbientF = 0;
   }
@@ -193,7 +193,7 @@ void TDUnitCell::Create(const olxstr& cName, const ACreationParams* cpar)  {
 
   TGlPrimitive* GlP = GPC->NewPrimitive("Label", sgloText);  // labels
   SGlM = const_cast<TGlMaterial*>(GS->Material("Label"));
-  if( SGlM->Mark() )  {
+  if( SGlM->HasMark() )  {
     SGlM->SetFlags(sglmAmbientF);
     SGlM->AmbientF = 0xff00ff;
     SGlM->SetIdentityDraw(true);

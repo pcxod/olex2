@@ -34,6 +34,9 @@ protected:
   static void ValidateBondParams();
   static TGraphicsStyle *FBondParams;
   static TXBondStylesClear *FXBondStylesClear;
+  virtual bool IsMaskSaveable() const {  return false;  }
+  virtual bool IsStyleSaveable() const {  return false; }
+  virtual bool IsRadiusSaveable() const {  return false; }
 public:
   TXBond(const olxstr& collectionName, TSBond& B, TGlRenderer *Render);
   void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
@@ -91,7 +94,8 @@ public:
 };
 
 struct BondCreationParams : public ACreationParams {
-  int mask;
+  class TXAtom &a1, &a2;
+  BondCreationParams(TXAtom& xa1, TXAtom& xa2) : a1(xa1), a2(xa2) { }
 };
 
 EndGxlNamespace()

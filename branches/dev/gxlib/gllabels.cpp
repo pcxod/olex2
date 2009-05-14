@@ -48,7 +48,7 @@ void TXGlLabels::Create(const olxstr& cName, const ACreationParams* cpar)  {
   if( GPC->PrimitiveCount() != 0 )  return;
 
   TGlMaterial* GlM = const_cast<TGlMaterial*>(GPC->Style()->Material("Text"));
-  if( GlM->Mark() )
+  if( GlM->HasMark() )
     *GlM = Font()->GetMaterial();
   TGlPrimitive* GlP = GPC->NewPrimitive("Text", sgloText);
   GlP->SetProperties(GlM);

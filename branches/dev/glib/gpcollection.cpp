@@ -75,7 +75,7 @@ void TGPCollection::Style(TGraphicsStyle *S)  {
   for( int i=0; i < PrimitiveCount(); i++ )  {
     GlP = Primitive(i);
     GlM = (TGlMaterial*)GlP->GetProperties();
-    if( S->Material(GlP->GetName())->Mark() )
+    if( S->Material(GlP->GetName())->HasMark() )
       S->PrimitiveMaterial(GlP->GetName(), *GlM);
   }
 }

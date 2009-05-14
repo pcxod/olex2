@@ -192,7 +192,7 @@ void TXGrid::Create(const olxstr& cName, const ACreationParams* cpar)  {
   TGraphicsStyle* GS = GPC->Style();
   TGlPrimitive* GlP = GPC->NewPrimitive("eMap", sgloQuads);
   TGlMaterial* GlM = const_cast<TGlMaterial*>( GS->Material("eMap") );
-  if( GlM->Mark() )  {
+  if( GlM->HasMark() )  {
     GlM->SetFlags(0);
     GlM->ShininessF = 128;
     GlM->SetFlags(sglmAmbientF|sglmDiffuseF|sglmTransparent);
@@ -213,12 +213,12 @@ void TXGrid::Create(const olxstr& cName, const ACreationParams* cpar)  {
   // create dummy primitives
   glpP = GPC->NewPrimitive("+Surface", sgloQuads);
   GlM = const_cast<TGlMaterial*>( GS->Material("+Surface") );
-  if( GlM->Mark() )
+  if( GlM->HasMark() )
     GlM->FromString("85;0.000,1.000,0.000,0.850;3632300160;1.000,1.000,1.000,0.500;36");
   glpP->SetProperties(GlM);
   glpN = GPC->NewPrimitive("-Surface", sgloQuads);
   GlM = const_cast<TGlMaterial*>( GS->Material("-Surface") );
-  if( GlM->Mark() ) 
+  if( GlM->HasMark() ) 
     GlM->FromString("85;1.000,0.000,0.000,0.850;3632300160;1.000,1.000,1.000,0.500;36");
   glpN->SetProperties(GlM);
 }

@@ -41,19 +41,19 @@ void TXGlLabel::Create(const olxstr& cName, const ACreationParams* cpar)  {
   TGraphicsStyle* GS = GPC->Style();
   GS->SetPersistent(true);
   TGlMaterial* GlM = const_cast<TGlMaterial*>(GS->Material("Plane"));
-  if( GlM->Mark() )  {
+  if( GlM->HasMark() )  {
     GlM->SetFlags( sglmAmbientF|sglmIdentityDraw|sglmTransparent  );
     GlM->AmbientF = 0x800f0f0f;
     GlM->DiffuseF = 0x800f0f0f;
     GlM->ShininessF = 128;
-    GlM->Mark(false);
+    GlM->SetMark(false);
   }
   TGlPrimitive* GlP = GPC->NewPrimitive("Plane", sgloQuads);  // a sphere at the basis of the object {0,0,0}
   GlP->SetProperties(GlM);
   GlP->Data.Resize(3, 4);
 
   GlM = const_cast<TGlMaterial*>(GS->Material("Text"));
-  if( GlM->Mark() )
+  if( GlM->HasMark() )
     *GlM = Font()->GetMaterial();
 
   GlP = GPC->NewPrimitive("Text", sgloText);

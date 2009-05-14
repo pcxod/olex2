@@ -98,10 +98,10 @@ const TGlMaterial* TGraphicsStyle::Material(const olxstr& PName) {
   if( pm != NULL )
     GlM = *pm;
   else
-    GlM.Mark(true); // specify that the parameter is empty
+    GlM.SetMark(true); // specify that the parameter is empty
   PS->SetProperties(&GlM);
   FPStyles.Add(PS);
-  ((TGlMaterial*)PS->GetProperties())->Mark(GlM.Mark());
+  ((TGlMaterial*)PS->GetProperties())->SetMark(GlM.HasMark());
   return (TGlMaterial*)PS->GetProperties();
 }
 //..............................................................................

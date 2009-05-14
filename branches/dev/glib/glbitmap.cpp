@@ -55,7 +55,7 @@ void TGlBitmap::Create(const olxstr& cName, const ACreationParams* cpar)  {
   Z = GS->GetParam("Z", Z).ToDouble();
 
   TGlMaterial* GlM = const_cast<TGlMaterial*>( GS->Material("Plane") );
-  if( GlM->Mark() )  {
+  if( GlM->HasMark() )  {
     GlM->SetFlags(0);   GlM->ShininessF = 128;
     GlM->SetFlags(sglmAmbientF|sglmDiffuseF|sglmIdentityDraw|sglmTransparent);
     GlM->AmbientF = 0x800f0f0f;
