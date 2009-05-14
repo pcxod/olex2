@@ -39,11 +39,11 @@ CCFLAGS += $(CFLAGS)
 # All will compile and link all of olex takes about 10 minutes
 all: 
 	+make obj
-	+make bins
 	+make link
 	@echo "Type make install to install"
 
 # obj will create the obj directory and compile the objects
+.PHONY : obj
 $(OBJ_DIR): 
 	@echo "Building object libraries, this can take a while"
 	@if test ! -d $(OBJ_DIR); then mkdir $(OBJ_DIR); else touch $(OBJ_DIR); fi;
@@ -137,14 +137,15 @@ obj : $(OBJ_DIR) obj_alglib obj_sdl obj_sdl_smart obj_xlib1 obj_xlib2 obj_xlib3 
 
 # unirun will create the obj/unirun directory and compile the source
 
-unirun : obj
+.PHONY : bins
+unirun : $(OBJ_DIR) $@
 	@echo "[A] Making unirun this is relatively quick"
 	@mkdir $(OBJ_DIR)unirun;
 	@cd $(OBJ_DIR)unirun/;	$(CC) $(SRC_DIR)unirun/*.cpp  $(OPTS) $(CFLAGS)
 	@echo "[A]* Done! Making unirun I told you this was relatively quick"
 
 # olex will create the obj/olex directory and compile the source
-olex : obj
+olex : $(OBJ_DIR) $@
 	@echo "[B] Making olex this can take a while"
 	@mkdir $(OBJ_DIR)olex;
 	@cd $(OBJ_DIR)olex/; $(CC) $(SRC_DIR)olex/*.cpp $(OPTS) $(CFLAGS)
@@ -152,13 +153,13 @@ olex : obj
 # There now appears to be no files in the olex/macro directory?
 #	@cd $(OBJ_DIR)olex/; $(CC) $(SRC_DIR)olex/*.cpp $(SRC_DIR)olex/macro/*.cpp $(CFLAGS)
 
-.phony $(OBJ_DIR)unirun : unirun
-.phony $(OBJ_DIR)olex : olex
-
 bins : unirun olex
 
+.PHONY : $(OBJ_DIR)unirun 
+.PHONY : $(OBJ_DIR)olex
+
 # link will link the *.s objects created and build the binaries in the bin directory
-link : $(OBJ_DIR)unirun/$@ $(OBJ_DIR)olex/$@
+link : $(OBJ_DIR)unirun $(OBJ_DIR)olex
 	+make clean_bin
 	@echo "Linking unirun and olex"
 	@mkdir $(EXE_DIR); $(CC) $(OBJ_DIR)unirun/*.s $(OBJ_DIR)*.s -o $(EXE_DIR)unirun $(LDFLAGS)
