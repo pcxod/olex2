@@ -1645,7 +1645,10 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
       if( FObjectUnderMouse->Selected() && EsdlInstanceOf(*FObjectUnderMouse, TXBond) )  {
         TXBond& xb = *(TXBond*)FObjectUnderMouse;
         FXApp->Individualise(xb);
-        xb.UpdatePrimitives( Primitives->Mask );
+        for( int i=0; i < FXApp->AtomCount(); i++ )
+          FXApp->GetAtom(i).Atom().SetTag(i);
+        BondCreationParams bpar(FXApp->GetAtom(xb.Bond().A().GetTag()), FXApp->GetAtom(xb.Bond().B().GetTag()));
+        xb.UpdatePrimitives( Primitives->Mask, &bpar);
       }
       else  {
         olxstr TmpStr = "mask ";

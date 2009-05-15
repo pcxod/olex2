@@ -3018,6 +3018,8 @@ void TGXApp::Individualise(TXAtom& XA)  {
 void TGXApp::Individualise(TXBond& XB)  {
   if( XB.Primitives()->ObjectCount() == 1 )  return;
   short required_level = FXFile->GetLattice().IsGenerated() ? 2 : 1;
+  for( int i=0; i < XAtoms.Count(); i++)
+    XAtoms[i].Atom().SetTag(i);
   olxstr leg = XB.GetLegend(XB.Bond(), required_level);
   TGPCollection* indCol = FGlRender->FindCollection( leg );
   if( indCol != NULL && XB.Primitives() == indCol )  
@@ -3027,7 +3029,8 @@ void TGXApp::Individualise(TXBond& XB)  {
     IndividualCollections.Add(leg);
   }
   XB.Primitives()->RemoveObject(&XB);
-  XB.Create( leg );
+  BondCreationParams bcpar(XAtoms[XB.Bond().A().GetTag()], XAtoms[XB.Bond().B().GetTag()]); 
+  XB.Create( leg, &bcpar );
 }
 //..............................................................................
 void TGXApp::Collectivise(TXAtom& XA)  {
