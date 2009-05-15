@@ -21,7 +21,7 @@
 
 TDUnitCell::TDUnitCell(const olxstr& collectionName, TGlRenderer *Render) : AGDrawObject(collectionName) {
   FParent = Render;
-  Groupable(false);
+  SetGroupable(false);
   Reciprocal = false;
   FGlP = NULL;
   // FCenter[0] == M_PI - the object is not initialised

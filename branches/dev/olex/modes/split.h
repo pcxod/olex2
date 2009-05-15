@@ -40,7 +40,7 @@ public:
     TGlXApp::GetMainForm()->executeMacro("cursor(hand)");
     for( int i=0; i < app.AtomCount(); i++ )  {
       //if( Atoms[i]->Atom().GetAtomInfo() != iQPeakIndex )
-      app.GetAtom(i).Moveable(true);
+      app.GetAtom(i).SetMoveable(true);
     }
     return true;
   }
@@ -53,8 +53,8 @@ public:
     UpdateSelectionCrds();
     for( int i=0; i < app.AtomCount(); i++ )  {
       TXAtom& xa = app.GetAtom(i);
-      xa.Moveable(false);
-      xa.Roteable(false);
+      xa.SetMoveable(false);
+      xa.SetRoteable(false);
       // summ the translations
       xa.Atom().crd() += xa.Basis.GetCenter();
       xa.Basis.NullCenter();
@@ -105,8 +105,8 @@ public:
         TXAtom* xa = TGlXApp::GetGXApp()->AddAtom( XA );
         if( xa != NULL )  {
           vec3d c;
-          xa->Moveable(true);
-          xa->Roteable(true);
+          xa->SetMoveable(true);
+          xa->SetRoteable(true);
           SplitAtoms.AddNew(XA, xa);
           xa->Atom().crd() += 0.5;
           c = xa->Atom().crd();

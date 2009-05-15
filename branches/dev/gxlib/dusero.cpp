@@ -22,7 +22,7 @@
 TDUserObj::TDUserObj(short type, ematd* data, const olxstr& collectionName, TGlRenderer *Render) :
   TGlMouseListener(collectionName, Render), Type(type), Data(data)
 {
-  Groupable(false);
+  SetGroupable(false);
 }
 //...........................................................................
 void TDUserObj::Create(const olxstr& cName, const ACreationParams* cpar)  {

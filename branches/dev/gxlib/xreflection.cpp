@@ -102,7 +102,7 @@ bool TXReflection::Orient(TGlPrimitive *GlP)  {
   double scale1 = sqrt(atan(FParams[0])*2/M_PI);
   FParent->GlScale( (float)(1+scale1*6) );
 
-  if( Selected() || !((TGlMaterial*)GlP->GetProperties())->GetTransparent() )  
+  if( IsSelected() || !((TGlMaterial*)GlP->GetProperties())->GetTransparent() )  
     return false;
 
   TGlMaterial GlM = *(TGlMaterial*)GlP->GetProperties();

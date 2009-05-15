@@ -129,7 +129,7 @@ public:
   // destructor
   TXAtom_SelectedEvaluator()  {  ;  }
   // evaluator function
-  bool EvaluateBool() const {  return Parent->GetTXAtom()->Selected();  }
+  bool EvaluateBool() const {  return Parent->GetTXAtom()->IsSelected();  }
 };
 // evaluator implementation for scalar length
 class TXBond_LengthEvaluator: public IDoubleEvaluator
@@ -355,7 +355,7 @@ public:
   // destructor
   TXBond_DeletedEvaluator()  {  ;  }
   // evaluator function
-  bool EvaluateBool() const {  return Parent->GetTXBond()->Deleted();  }
+  bool EvaluateBool() const {  return Parent->GetTXBond()->IsDeleted();  }
 };
 
 class TXFactoryRegister : public TSFactoryRegister {

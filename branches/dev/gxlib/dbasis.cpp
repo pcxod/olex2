@@ -19,10 +19,10 @@
 #include "glmaterial.h"
 
 TDBasis::TDBasis(const olxstr& collectionName, TGlRenderer *Render) : TGlMouseListener(collectionName, Render)  {
-  Move2D(true);
-  Moveable(true);
-  Zoomable(true);
-  Groupable(false);
+  SetMove2D(true);
+  SetMoveable(true);
+  SetZoomable(true);
+  SetGroupable(false);
 }
 void TDBasis::Create(const olxstr& cName, const ACreationParams* cpar)  {
   if( !cName.IsEmpty() )  
@@ -138,7 +138,8 @@ void TDBasis::Create(const olxstr& cName, const ACreationParams* cpar)  {
 
   GlP = GPC->NewPrimitive("Label", sgloText);  // labels
   SGlM = GS->Material("Label");
-  if( !SGlM->HasMark() )  GlP->SetProperties(SGlM);
+  if( !SGlM->HasMark() )  
+    GlP->SetProperties(SGlM);
   else  {
     GlM.SetIdentityDraw(true);
     GlM.SetTransparent(false);

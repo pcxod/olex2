@@ -20,8 +20,8 @@ AGDrawObject::AGDrawObject(const olxstr& collectionName)  {
   FParentGroup = NULL;
   Flags = 0;
   FParent = NULL;
-  Visible(true);
-  Groupable(true);
+  SetVisible(true);
+  SetGroupable(true);
   if( collectionName.Length() )
     CollectionName = collectionName;
   else
@@ -42,8 +42,7 @@ void  AGDrawObject::Primitives( TGPCollection *GPC)  {
 //..............................................................................
 void AGDrawObject::ParentGroup(TGlGroup *P)  {
   FParentGroup = P;
-  if( P ) {    Grouped(true);  }
-  else    {    Grouped(false); }
+  SetGrouped(P != NULL);
 }
 //..............................................................................
 void AGDrawObject::UpdatePrimitives(int32_t Mask, const ACreationParams* cpar) {  }
@@ -54,17 +53,18 @@ void AGDrawObject::OnPrimitivesCleared(){  return; }
 //..............................................................................
 
 void AGDrawObject::LibVisible(const TStrObjList& Params, TMacroError& E)  {
-  if( Params.Count() ) Visible( Params[0].ToBool() );
+  if( !Params.IsEmpty() ) 
+    SetVisible( Params[0].ToBool() );
   else
-    E.SetRetVal<olxstr>( Visible() );
+    E.SetRetVal<olxstr>( IsVisible() );
 }
 //..............................................................................
 void AGDrawObject::LibIsGrouped(const TStrObjList& Params, TMacroError& E)  {
-  E.SetRetVal<olxstr>( Grouped() );
+  E.SetRetVal<olxstr>( IsGrouped() );
 }
 //..............................................................................
 void AGDrawObject::LibIsSelected(const TStrObjList& Params, TMacroError& E)  {
-  E.SetRetVal<olxstr>( Selected() );
+  E.SetRetVal<olxstr>( IsSelected() );
 }
 //..............................................................................
 void AGDrawObject::LibGetName(const TStrObjList& Params, TMacroError& E)  {

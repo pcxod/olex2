@@ -71,7 +71,7 @@ protected:
     mat3f proj_mat, rot_mat;
     for( int j=0; j < sa.BondCount(); j++ )  {
       const TSBond& bn = sa.Bond(j);
-      if( app.GetBond( bn.GetTag() ).Deleted() || !app.GetBond( bn.GetTag() ).Visible() )
+      if( app.GetBond( bn.GetTag() ).IsDeleted() || !app.GetBond( bn.GetTag() ).IsVisible() )
         continue;
       vec3f p1 = (bn.Another(sa).crd() + SceneOrigin)*ProjMatr+DrawOrigin;
       if( p1[2] <= oa.crd[2] )  // goes into the plane - drawn
@@ -231,7 +231,7 @@ public:
     TTypeList<OrtDraw::OrtAtom> atoms;
     atoms.SetCapacity(app.AtomCount());
     for( int i=0; i < app.AtomCount(); i++ )  {
-      if( app.GetAtom(i).Deleted() || !app.GetAtom(i).Visible() )
+      if( app.GetAtom(i).IsDeleted() || !app.GetAtom(i).IsVisible() )
         continue;
       const TSAtom& sa = app.GetAtom(i).Atom();
       if( sa.GetEllipsoid() != NULL )  {

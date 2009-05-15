@@ -242,11 +242,11 @@ protected:
        FXPolyVisible;
   short FGrowMode, PackMode;
 public:
-  bool LabelsVisible() const;
-  void LabelsVisible(bool v);
-  void LabelsMode(short lmode);
-  short LabelsMode() const;
-  void LabelsFont(short FontIndex);
+  bool AreLabelsVisible() const;
+  void SetLabelsVisible(bool v);
+  void SetLabelsMode(short lmode);
+  short GetLabelsMode() const;
+  void SetLabelsFont(short FontIndex);
   TGlMaterial & LabelsMarkMaterial();
   void MarkLabel(const TXAtom& A, bool mark);
   void ClearLabelMarks();
@@ -436,7 +436,7 @@ public:     void CalcProbFactor(float Prob);
   void SetCellVisible( bool v);
   bool IsBasisVisible() const;
   void SetBasisVisible( bool v);
-  inline bool IsGraphicsVisible( AGDrawObject *G ) const {  return G->Visible(); }
+  inline bool IsGraphicsVisible( AGDrawObject *G ) const {  return G->IsVisible(); }
   TUndoData* SetGraphicsVisible( AGDrawObject *G, bool v );
   TUndoData* SetGraphicsVisible( TPtrList<AGDrawObject>& G, bool v );
   void InvertFragments(const TXAtomPList& NetworkAtoms);

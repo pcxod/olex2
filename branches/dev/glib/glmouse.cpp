@@ -106,7 +106,7 @@ bool TGlMouse::MouseDown(int x, int y, short Shift, short button)  {
   if( SelectionEnabled )  {
     Handler = FParent->SelectObject(x, y);
     if( Handler )  {
-      if( Handler->Selected() )
+      if( Handler->IsSelected() )
         PColl = FParent->Selection();
       else  {
         PColl = FParent->FindObjectGroup(Handler);
@@ -151,7 +151,7 @@ bool TGlMouse::MouseMove(int x, int y, short Shift)  {
       return true;
     }
     else  {
-      if( Handler->Selected() )
+      if( Handler->IsSelected() )
         PColl = FParent->Selection();
       else  {
         PColl = FParent->FindObjectGroup(Handler);

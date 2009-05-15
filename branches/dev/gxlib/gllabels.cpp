@@ -29,7 +29,7 @@ TXGlLabels::TXGlLabels(const olxstr& collectionName, TGlRenderer *Render) :
 {
   AGDrawObject::Parent(Render);
   FontIndex = -1;
-  AGDrawObject::Groupable(false);
+  AGDrawObject::SetGroupable(false);
 
   FMarkMaterial = *Render->Selection()->GlM();
   FMarkMaterial.SetFlags(sglmAmbientF|sglmIdentityDraw);
@@ -74,7 +74,7 @@ bool TXGlLabels::Orient(TGlPrimitive *P)  {
   const RefinementModel& rm = app.XFile().GetRM();
   for( int i=0; i < ac; i++ )  {
     const TXAtom& XA = app.GetAtom(i);
-    if( XA.Deleted() || (!XA.Visible()))  continue;
+    if( XA.IsDeleted() || (!XA.IsVisible()))  continue;
     if( !(Mode & lmHydr) && (XA.Atom().GetAtomInfo() == iHydrogenIndex ) )  continue;
     if( !(Mode & lmQPeak) && (XA.Atom().GetAtomInfo() == iQPeakIndex ) )  continue;
     const TCAtom& ca = XA.Atom().CAtom();
@@ -236,7 +236,7 @@ void TXGlLabels::Init()  {
 }
 //..............................................................................
 void TXGlLabels::Selected(bool On) {  
-  AGDrawObject::Selected(false);  
+  AGDrawObject::SetSelected(false);  
 }
 //..............................................................................
 void TXGlLabels::ClearLabelMarks()  {

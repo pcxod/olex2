@@ -15,7 +15,7 @@ UseGlNamespace()
 TXFader::TXFader(const olxstr& collectionName, TGlRenderer *Render):
     AGDrawObject(collectionName)  {
   AGDrawObject::Parent(Render);
-  Groupable(false);
+  SetGroupable(false);
   Foreground = Background = NULL;
   Step = 1./5;
   Position = 0;
@@ -121,10 +121,10 @@ void TXFader::InitBG(bool v)  {
 //    glReadBuffer(GL_FRONT);
     glReadBuffer(GL_BACK);
     FParent->OnDraw->SetEnabled(false);
-    bool vis = Visible();
-    Visible(false);
+    bool vis = IsVisible();
+    SetVisible(false);
     FParent->Draw();
-    Visible(vis);
+    SetVisible(vis);
     FParent->OnDraw->SetEnabled(true);
     glPixelStorei(GL_PACK_ALIGNMENT, 4);
     glReadPixels(0, 0, BGWidth, BGHeight, GL_RGBA, GL_UNSIGNED_BYTE, Background);
@@ -155,10 +155,10 @@ void TXFader::InitFG(bool v)  {
     glGetIntegerv(GL_DRAW_BUFFER, &oldmode);
     glReadBuffer(GL_BACK);
     FParent->OnDraw->SetEnabled(false);
-    bool vis = Visible();
-    Visible(false);
+    bool vis = IsVisible();
+    SetVisible(false);
     FParent->Draw();
-    Visible(vis);
+    SetVisible(vis);
     FParent->OnDraw->SetEnabled(true);
     glPixelStorei(GL_PACK_ALIGNMENT, 4);
     glReadPixels(0, 0, FGWidth, FGHeight, GL_RGBA, GL_UNSIGNED_BYTE, Foreground);

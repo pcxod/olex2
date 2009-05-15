@@ -17,7 +17,7 @@
 TXGrowPoint::TXGrowPoint(const olxstr& collectionName, const vec3d& center,
                          const smatd& transform, TGlRenderer *Render) :
   AGDrawObject(collectionName)  {
-  AGDrawObject::Groupable(false);
+  AGDrawObject::SetGroupable(false);
   FParent = Render;
   Params().Resize(1);
   Params()[0] = 1;

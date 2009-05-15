@@ -38,10 +38,8 @@ public:
   inline bool Orient(TGlPrimitive *P){  return false; };
   inline bool GetDimensions(vec3d &Max, vec3d &Min){  return false;  }
 
-  inline bool Visible()  const {  return AGDrawObject::Visible();  }
-  inline bool Selected() const {  return AGDrawObject::Selected();  }
-  void Visible(bool On);
-  void Selected(bool On);
+  void SetVisible(bool On);
+  void SetSelected(bool On);
 
   inline bool IsDefaultColor() const {  return DefaultColor;  }
   inline const TGlMaterial* GlM()    const {  return FGlM; }

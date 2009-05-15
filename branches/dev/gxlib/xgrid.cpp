@@ -151,9 +151,9 @@ TXGrid::TXGrid(const olxstr& collectionName, TGXApp* xapp) :
   PythonExt::GetInstance()->Register( &TXGrid::PyInit );
 #endif
   XApp = xapp;
-  Move2D(false);
-  Moveable(false);
-  Zoomable(false);
+  SetMove2D(false);
+  SetMoveable(false);
+  SetZoomable(false);
   Depth = 0;
   ED = NULL;
   IS = NULL;

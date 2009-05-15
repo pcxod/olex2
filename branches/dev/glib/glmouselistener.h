@@ -24,17 +24,17 @@ public:
   virtual ~TGlMouseListener();
   TEBasis Basis;
 
-  inline bool Move2D() const {  return (Flags & glmlMove2d) ==  glmlMove2d; }
-  virtual void Move2D(bool On){  SetBit(On, Flags, glmlMove2d); }
+  inline bool IsMove2D() const {  return (Flags & glmlMove2d) ==  glmlMove2d; }
+  virtual void SetMove2D(bool On){  SetBit(On, Flags, glmlMove2d); }
 
-  inline bool Moveable() const {  return (Flags & glmlMoveable) == glmlMoveable; }
-  virtual void Moveable(bool On){  SetBit(On, Flags, glmlMoveable); }
+  inline bool IsMoveable() const {  return (Flags & glmlMoveable) == glmlMoveable; }
+  virtual void SetMoveable(bool On){  SetBit(On, Flags, glmlMoveable); }
 
-  inline bool Roteable() const {  return (Flags & glmlRoteable) == glmlRoteable; }
-  virtual void Roteable(bool On){  SetBit(On, Flags, glmlRoteable); }
+  inline bool IsRoteable() const {  return (Flags & glmlRoteable) == glmlRoteable; }
+  virtual void SetRoteable(bool On){  SetBit(On, Flags, glmlRoteable); }
 
-  inline bool Zoomable() const {  return (Flags & glmlZoomable) == glmlZoomable; }
-  virtual void Zoomable(bool On){  SetBit(On, Flags, glmlZoomable); }
+  inline bool IsZoomable() const {  return (Flags & glmlZoomable) == glmlZoomable; }
+  virtual void SetZoomable(bool On){  SetBit(On, Flags, glmlZoomable); }
 
   bool OnMouseDown(const IEObject *Sender, const TMouseData *Data);
   bool OnMouseUp(const IEObject *Sender, const TMouseData *Data);

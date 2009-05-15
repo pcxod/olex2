@@ -22,7 +22,7 @@ TXGrowLine::TXGrowLine(const olxstr& collectionName, TSAtom *A, TCAtom* CA,
                          const smatd& transform, TGlRenderer *Render) :
   TXBond(collectionName, *(TSBond*)NULL, Render), Transform(transform)
 {
-  AGDrawObject::Groupable(false);
+  AGDrawObject::SetGroupable(false);
   vec3d C = transform * CA->ccrd();
   A->CAtom().GetParent()->CellToCartesian(C);
 

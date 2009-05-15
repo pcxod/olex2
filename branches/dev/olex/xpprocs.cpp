@@ -1517,7 +1517,7 @@ void TMainForm::macWait(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 void TMainForm::macSwapBg(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)
 {
   // hide the gradient background
-  FXApp->GetRender().Background()->Visible(false);
+  FXApp->GetRender().Background()->SetVisible(false);
   if( FXApp->GetRender().LightModel.ClearColor().GetRGB() == 0xffffffff )
     FXApp->GetRender().LightModel.ClearColor() = FBgColor;
   else
@@ -1691,14 +1691,14 @@ void TMainForm::macLabels(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   if( lmode == 0 )  {
     lmode |= lmLabels;
     lmode |= lmQPeak;
-    FXApp->LabelsMode(lmode);
-    FXApp->LabelsVisible( !FXApp->LabelsVisible() );
+    FXApp->SetLabelsMode(lmode);
+    FXApp->SetLabelsVisible( !FXApp->AreLabelsVisible() );
   }
   else  {
-    FXApp->LabelsMode(lmode |= lmQPeak );
-    FXApp->LabelsVisible(true);
+    FXApp->SetLabelsMode(lmode |= lmQPeak );
+    FXApp->SetLabelsVisible(true);
   }
-  TStateChange sc(prsLabels, FXApp->LabelsVisible());
+  TStateChange sc(prsLabels, FXApp->AreLabelsVisible());
   OnStateChange->Execute(this, &sc);
 }
 //..............................................................................
@@ -2089,7 +2089,7 @@ void TMainForm::macKill(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   FXApp->FindXAtoms(Cmds.Text(' '), Atoms, true, Options.Contains('h'));
   if( Atoms.IsEmpty() )  return;
   for( int i=0; i < Atoms.Count(); i++ )
-    if( Atoms[i]->Selected() )
+    if( Atoms[i]->IsSelected() )
       Selected.Add(Atoms[i]);
   TXAtomPList& todel = Selected.IsEmpty() ? Atoms : Selected;
   FXApp->GetLog() << "Deleting ";
@@ -2520,9 +2520,9 @@ void TMainForm::macSyncBC(TStrObjList &Cmds, const TParamList &Options, TMacroEr
 void TMainForm::macCeiling(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   if( Cmds.Count() == 1 )  {
     if( !Cmds[0].Comparei("on") )
-      FXApp->GetRender().Ceiling()->Visible(true);
+      FXApp->GetRender().Ceiling()->SetVisible(true);
     else if( !Cmds[0].Comparei("off") )
-      FXApp->GetRender().Ceiling()->Visible(false);
+      FXApp->GetRender().Ceiling()->SetVisible(false);
     else
       Error.ProcessingError(__OlxSrcInfo, "wrong arguments" );
     FXApp->Draw();
@@ -2539,8 +2539,8 @@ void TMainForm::macFade(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   }
   TGlBackground *C = FXApp->GetRender().Ceiling();
   TGlBackground *G = FXApp->GetRender().Background();
-  if( !C->Visible() )  {
-    if( !G->Visible() )  {
+  if( !C->IsVisible() )  {
+    if( !G->IsVisible() )  {
       C->LT( FXApp->GetRender().LightModel.ClearColor() );
       C->RT( FXApp->GetRender().LightModel.ClearColor() );
       C->LB( FXApp->GetRender().LightModel.ClearColor() );
@@ -2553,7 +2553,7 @@ void TMainForm::macFade(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       C->RB( G->RB() );
     }
 
-    C->Visible(true);
+    C->SetVisible(true);
   }
   FMode = FMode | mFade;
   return;
@@ -2570,7 +2570,7 @@ void TMainForm::macWaitFor(TStrObjList &Cmds, const TParamList &Options, TMacroE
   }
   if( !Cmds[0].Comparei("xfader") )  {
     if( !IsVisible() )  return;
-    while( FXApp->GetFader().GetPosition() < 1 && FXApp->GetFader().Visible() )  {
+    while( FXApp->GetFader().GetPosition() < 1 && FXApp->GetFader().IsVisible() )  {
       FParent->Dispatch();
       Dispatch(ID_TIMER, -1, (AActionHandler*)this, NULL);
     }
@@ -2697,7 +2697,7 @@ void TMainForm::macLabel(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   TXAtomPList atoms;
   FindXAtoms(Cmds, atoms, true, true);
   for( int i=0; i < atoms.Count(); i++ )
-    FXApp->CreateLabel( atoms[i], fntPLabels )->Visible(true);
+    FXApp->CreateLabel( atoms[i], fntPLabels )->SetVisible(true);
 }
 //..............................................................................
 void TMainForm::macCalcChn(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
@@ -3498,7 +3498,7 @@ void TMainForm::macShowQ(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     xatoms.QuickSorter.SortSF(xatoms, TMainForm_macShowQ_QPeakSortA);
     int v_cnt = 0;
     for( int i=0; i < xatoms.Count(); i++ )
-      if( xatoms[i]->Visible() )
+      if( xatoms[i]->IsVisible() )
         v_cnt++;
     if( v_cnt == 0 && wheel < 0 )  return;
     if( v_cnt == xatoms.Count() && wheel > 0 )  return;
@@ -3506,9 +3506,9 @@ void TMainForm::macShowQ(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     if( v_cnt < 0 )  v_cnt = 0;
     if( v_cnt > xatoms.Count() )  v_cnt = xatoms.Count();
     for( int i=v_cnt; i < xatoms.Count(); i++ )  
-      xatoms[i]->Visible(false);
+      xatoms[i]->SetVisible(false);
     for( int i=0; i < v_cnt; i++ )  
-      xatoms[i]->Visible(true);
+      xatoms[i]->SetVisible(true);
     FXApp->SyncQVisibility();
     TimePerFrame = FXApp->Draw();
   }
@@ -3548,9 +3548,9 @@ void TMainForm::macShowQ(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     xatoms.QuickSorter.SortSF(xatoms, negative ? TMainForm_macShowQ_QPeakSortD : TMainForm_macShowQ_QPeakSortA);
     num = olx_min(xatoms.Count()*num/100, xatoms.Count());
     for( int i=num; i < xatoms.Count(); i++ )  
-      xatoms[i]->Visible(false);
+      xatoms[i]->SetVisible(false);
     for( int i=0; i < num; i++ )               
-      xatoms[i]->Visible(true);
+      xatoms[i]->SetVisible(true);
     FXApp->SyncQVisibility();
   }
   else  {
@@ -3707,14 +3707,14 @@ void TMainForm::macBind(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 void TMainForm::macGrad(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   bool invert = Options.Contains('i');
   if( invert )  {
-    TStateChange sc(prsGradBG, !FXApp->GetRender().Background()->Visible() );
+    TStateChange sc(prsGradBG, !FXApp->GetRender().Background()->IsVisible() );
     OnStateChange->Execute( (AEventsDispatcher*)this, &sc );
-    FXApp->GetRender().Background()->Visible( !FXApp->GetRender().Background()->Visible() );
+    FXApp->GetRender().Background()->SetVisible( !FXApp->GetRender().Background()->IsVisible() );
   }
   else if( Cmds.Count() == 1 )  {
     TStateChange sc(prsGradBG, Cmds[0].ToBool() );
     OnStateChange->Execute( (AEventsDispatcher*)this, &sc );
-    FXApp->GetRender().Background()->Visible( Cmds[0].ToBool() );
+    FXApp->GetRender().Background()->SetVisible( Cmds[0].ToBool() );
   }
   else if( Cmds.IsEmpty() && !Options.Contains('p'))  {
     TdlgGradient *G = new TdlgGradient(this);
@@ -4610,7 +4610,7 @@ void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError
     for( int i=0; i < FXApp->AtomCount(); i++ )  {
       TXAtom& xa = FXApp->GetAtom(i);
       if( xa.Atom().CAtom().GetTag() != 1 )  continue;
-      if( xa.Selected() )  continue;
+      if( xa.IsSelected() )  continue;
       FXApp->GetRender().Select( &xa );
     }
     for( int i=0; i < b_res.Count(); i++ )  {
@@ -4621,7 +4621,7 @@ void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError
         const int id2 = res.GetAtom(j+1).GetAtom()->GetId();
         for( int k=0; k < FXApp->BondCount(); k++ )  {
           TXBond& xb = FXApp->GetBond(k);
-          if( xb.Selected() )  continue;
+          if( xb.IsSelected() )  continue;
           const TCAtom& ca1 = xb.Bond().A().CAtom();
           const TCAtom& ca2 = xb.Bond().B().CAtom();
           if( (ca1.GetId() == id1 && ca2.GetId() == id2) ||
@@ -6241,12 +6241,12 @@ void TMainForm::macShowWindow(TStrObjList &Cmds, const TParamList &Options, TMac
   if( Cmds.Count() == 2 )  {
     if( Cmds[0].Comparei("help") == 0 )  {
       HelpWindowVisible = Cmds[1].ToBool();
-      FHelpWindow->Visible( HelpWindowVisible );
+      FHelpWindow->SetVisible( HelpWindowVisible );
       TStateChange sc(prsHelpVis, HelpWindowVisible);
       OnStateChange->Execute((AEventsDispatcher*)this, &sc);
     } else  if( Cmds[0].Comparei("info") == 0 )  {
       InfoWindowVisible = Cmds[1].ToBool();
-      FInfoBox->Visible( InfoWindowVisible );
+      FInfoBox->SetVisible( InfoWindowVisible );
       TStateChange sc(prsInfoVis, InfoWindowVisible);
       OnStateChange->Execute((AEventsDispatcher*)this, &sc);
       OnResize();
@@ -6265,12 +6265,12 @@ void TMainForm::macShowWindow(TStrObjList &Cmds, const TParamList &Options, TMac
   else  {
     if( Cmds[0].Comparei("help") == 0 )  {
       HelpWindowVisible = !HelpWindowVisible;
-      FHelpWindow->Visible( HelpWindowVisible );
+      FHelpWindow->SetVisible( HelpWindowVisible );
       TStateChange sc(prsHelpVis, HelpWindowVisible);
       OnStateChange->Execute((AEventsDispatcher*)this, &sc);
     } else if( Cmds[0].Comparei("info") == 0 )  {
       InfoWindowVisible = !InfoWindowVisible;
-      FInfoBox->Visible( InfoWindowVisible );
+      FInfoBox->SetVisible( InfoWindowVisible );
       TStateChange sc(prsInfoVis, InfoWindowVisible);
       OnStateChange->Execute((AEventsDispatcher*)this, &sc);
       OnResize();

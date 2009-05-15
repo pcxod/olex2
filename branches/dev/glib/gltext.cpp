@@ -20,10 +20,10 @@ UseGlNamespace()
 TGlText::TGlText(const olxstr& collectionName, TGlRenderer *Render, const olxstr& Text):
     TGlMouseListener(collectionName, Render)  {
   this->Text = Text;
-  Move2D(false);
-  Moveable(true);
-  Roteable(true);
-  Zoomable(false);
+  SetMove2D(false);
+  SetMoveable(true);
+  SetRoteable(true);
+  SetZoomable(false);
   TextFlags = 0;
   SetStaticPos(false);
   SetStaticWidth(false);
@@ -34,8 +34,8 @@ TGlText::TGlText(const olxstr& collectionName, TGlRenderer *Render, const olxstr
 //..............................................................................
 void TGlText::SetStaticPos(bool On)  {
   SetBit(On, TextFlags, gltStaticPos);
-  Move2D(On);  
-  Roteable(On); 
+  SetMove2D(On);  
+  SetRoteable(On); 
 }
 //..............................................................................
 void TGlText::SetStaticWidth(bool On)  {

@@ -29,7 +29,7 @@ TGlCursor::TGlCursor(const olxstr& collectionName, TGlRenderer *Render, bool Tex
   AGDrawObject::Parent(Render);
   FPrimitive = NULL;
   FX = FY = 0;
-  Groupable(false);
+  SetGroupable(false);
 }
 //..............................................................................
 TGlCursor::~TGlCursor() {  }

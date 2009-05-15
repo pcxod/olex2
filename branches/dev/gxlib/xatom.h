@@ -145,8 +145,8 @@ public:
   bool OnMouseUp(const IEObject *Sender, const TMouseData *Data);
   bool OnMouseMove(const IEObject *Sender, const TMouseData *Data);
 
-  inline bool Deleted()  const {  return AGDrawObject::Deleted(); }
-  void Deleted(bool v)         {  AGDrawObject::Deleted(v);  FAtom->SetDeleted(v); }
+  inline bool IsDeleted()  const {  return AGDrawObject::IsDeleted(); }
+  void SetDeleted(bool v)         {  AGDrawObject::SetDeleted(v);  FAtom->SetDeleted(v); }
   void ListDrawingStyles(TStrList &List);
   inline short DrawStyle() const {  return FDrawStyle; }
   void DrawStyle(short V);

@@ -40,8 +40,8 @@ bool TGlMouseListener::OnMouseMove(const IEObject *Sender, const TMouseData *Dat
   int dx = Data->X - SX, dy = SY - Data->Y;
   bool res = false;
   if( (Data->Button == smbLeft) && (Data->Shift == sssShift) )  {  // move
-    if( !Moveable() )  {  SX = Data->X;  SY = Data->Y;  return res;}
-    if( !Move2D() ) {  // move in 3D
+    if( !IsMoveable() )  {  SX = Data->X;  SY = Data->Y;  return res;}
+    if( !IsMove2D() ) {  // move in 3D
       vec3d T;
       double v = FParent->GetScale();
       if( Data->Shift & sssCtrl )
@@ -60,7 +60,7 @@ bool TGlMouseListener::OnMouseMove(const IEObject *Sender, const TMouseData *Dat
     }
   }
   if( (Data->Button == smbLeft) && (!Data->Shift || (Data->Shift & sssCtrl)))  { // rotate
-    if( !Roteable() )  {  
+    if( !IsRoteable() )  {  
       SX = Data->X;  
       SY = Data->Y;  
       return res;
@@ -94,7 +94,7 @@ bool TGlMouseListener::OnMouseMove(const IEObject *Sender, const TMouseData *Dat
     }
   }
   if( (Data->Button & smbRight) && (!Data->Shift) )  {  // zoom
-    if( !Zoomable() )  {
+    if( !IsZoomable() )  {
       SX = Data->X;
       SY = Data->Y;
       return res;

@@ -1193,7 +1193,7 @@ separated values of Atom Type and radius, an entry a line" );
 //  FHtml->OnDblClick->Add(this, ID_HTMLDBLCLICK);
   FHtml->OnCmd->Add(this, ID_HTMLCMD);
 
-  FXApp->LabelsVisible(false);
+  FXApp->SetLabelsVisible(false);
   FXApp->GetRender().LightModel.ClearColor() = 0x0f0f0f0f;
 
   FGlConsole = new TGlConsole("Console", &FXApp->GetRender() );
@@ -1215,14 +1215,14 @@ separated values of Atom Type and radius, an entry a line" );
 
   FHelpWindow = new TGlTextBox("HelpWindow", &FXApp->GetRender());
   FXApp->AddObjectToCreate(FHelpWindow);
-  FHelpWindow->Visible(false);
+  FHelpWindow->SetVisible(false);
 
   FInfoBox = new TGlTextBox("InfoBox", &FXApp->GetRender());
   FXApp->AddObjectToCreate( FInfoBox );
 
   GlTooltip = new TGlTextBox("Tooltip", &FXApp->GetRender());
   FXApp->AddObjectToCreate( GlTooltip );
-  GlTooltip->Visible(false);
+  GlTooltip->SetVisible(false);
   GlTooltip->SetZ(4.9);
 
   FTimer->OnTimer()->Add( TBasicApp::GetInstance()->OnTimer );
@@ -1266,7 +1266,7 @@ void TMainForm::StartupInit()  {
   fnt->Material().SetFlags(sglmAmbientF|sglmIdentityDraw);
   fnt->Material().AmbientF = 0x7fff7f;
 
-  FXApp->LabelsFont( 3 );
+  FXApp->SetLabelsFont( 3 );
 
   FGlConsole->SetFontIndex(0);
   FHelpWindow->SetFontIndex(1);
@@ -1522,7 +1522,7 @@ void TMainForm::OnAtomOccuChange(wxCommandEvent& event)  {
     case ID_AtomOccuFix:   break;
     case ID_AtomOccuFree:  break;
   }
-  if( XA->Selected() )  
+  if( XA->IsSelected() )  
     Tmp << " sel";
   else                  
     Tmp << " #c" << XA->Atom().CAtom().GetId();
@@ -1541,7 +1541,7 @@ void TMainForm::OnAtomConnChange(wxCommandEvent& event)  {
     case ID_AtomConn3:   Tmp << '3';  break;
     case ID_AtomConn4:   Tmp << '4';  break;
   }
-  if( !XA->Selected() )
+  if( !XA->IsSelected() )
     Tmp << " #c" << XA->Atom().CAtom().GetId();
   ProcessXPMacro(Tmp, MacroError);
   TimePerFrame = FXApp->Draw();
@@ -1592,14 +1592,14 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
   if( FObjectUnderMouse == NULL )  return;
 
   if( event.GetId() == ID_GraphicsHide )  {
-    if( FObjectUnderMouse->Selected() )
+    if( FObjectUnderMouse->IsSelected() )
       ProcessXPMacro("hide sel", MacroError);
     else
       FUndoStack->Push( FXApp->SetGraphicsVisible(FObjectUnderMouse, false) );
     TimePerFrame = FXApp->Draw();
   }
   else if( event.GetId() == ID_GraphicsKill )  {
-    if( FObjectUnderMouse->Selected() )
+    if( FObjectUnderMouse->IsSelected() )
       ProcessXPMacro("kill sel", MacroError);
     else  {
       TPtrList<AGDrawObject> l;
@@ -1642,7 +1642,7 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
     int i = FObjectUnderMouse->Primitives()->Style()->GetParam(FObjectUnderMouse->GetPrimitiveMaskName(), "0").ToInt();
     TdlgPrimitive* Primitives = new TdlgPrimitive(&Ps, i, this);
     if( Primitives->ShowModal() == wxID_OK )  {
-      if( FObjectUnderMouse->Selected() && EsdlInstanceOf(*FObjectUnderMouse, TXBond) )  {
+      if( FObjectUnderMouse->IsSelected() && EsdlInstanceOf(*FObjectUnderMouse, TXBond) )  {
         TXBond& xb = *(TXBond*)FObjectUnderMouse;
         FXApp->Individualise(xb);
         for( int i=0; i < FXApp->AtomCount(); i++ )
@@ -1693,7 +1693,7 @@ void TMainForm::ObjectUnderMouse( AGDrawObject *G)  {
     miAtomInfo->SetText( uiStr(T) );
     pmAtom->Enable(ID_AtomGrowShells, FXApp->AtomExpandable(XA));
     pmAtom->Enable(ID_AtomGrowFrags, FXApp->AtomExpandable(XA));
-    pmAtom->Enable(ID_Selection, G->Selected());
+    pmAtom->Enable(ID_Selection, G->IsSelected());
     pmAtom->Enable(ID_SelGroup, false);
     int bound_cnt = 0;
     for( int i=0; i < XA->Atom().NodeCount(); i++ )  {
@@ -1724,7 +1724,7 @@ void TMainForm::ObjectUnderMouse( AGDrawObject *G)  {
     T << '-' << XB->Bond().B().GetLabel() << ':' << ' '
       << olxstr::FormatFloat(3, XB->Bond().Length());
     miBondInfo->SetText( uiStr(T) );
-    pmBond->Enable(ID_Selection, G->Selected());
+    pmBond->Enable(ID_Selection, G->IsSelected());
     FCurrentPopup = pmBond;
   }
   else if( EsdlInstanceOf( *G, TXPlane) )  {
@@ -1763,8 +1763,10 @@ void TMainForm::OnAtomTypeChange(wxCommandEvent& event)  {
   TXAtom *XA = (TXAtom*)FObjectUnderMouse;
   if( XA == NULL )  return;
   olxstr Tmp("name -c ");
-  if( XA->Selected() )  Tmp << "sel";
-  else                  Tmp << "#x" << XA->GetXAppId();
+  if( XA->IsSelected() )  
+    Tmp << "sel";
+  else                  
+    Tmp << "#x" << XA->GetXAppId();
   Tmp << ' ';
   switch( event.GetId() )  {
     case ID_AtomTypeChangeC:
@@ -1795,8 +1797,10 @@ void TMainForm::OnAtomTypePTable(wxCommandEvent& event)  {
   TXAtom *XA = (TXAtom*)FObjectUnderMouse;
   if( !XA )  return;
   olxstr Tmp = "name ";
-  if( XA->Selected() )  Tmp << "sel";
-  else                  Tmp << "#x" << XA->GetXAppId();
+  if( XA->IsSelected() )  
+    Tmp << "sel";
+  else                  
+    Tmp << "#x" << XA->GetXAppId();
   Tmp << ' ';
   TPTableDlg *Dlg = new TPTableDlg(this, &TAtomsInfo::GetInstance());
   if( Dlg->ShowModal() == wxID_OK )  {
@@ -1810,7 +1814,7 @@ void TMainForm::OnAtomTypePTable(wxCommandEvent& event)  {
 //..............................................................................
 int TMainForm::GetFragmentList(TNetPList& res)  {
   if( FObjectUnderMouse == NULL )  return 0;
-  if( FObjectUnderMouse->Selected() )  {
+  if( FObjectUnderMouse->IsSelected() )  {
     TGlGroup* glg = FXApp->GetRender().Selection();
     for( int i=0; i < glg->Count(); i++ )  {
       if( EsdlInstanceOf(*glg->Object(i), TXAtom) )
@@ -1888,9 +1892,8 @@ void TMainForm::OnModelCenter(wxCommandEvent& event)  {
 void TMainForm::AquireTooltipValue()  {
   AGDrawObject *G = FXApp->SelectObject(MousePositionX, MousePositionY, 0);
   if( G != NULL )  {
-    if( G->Selected() )  {
+    if( G->IsSelected() )
       Tooltip = FXApp->GetSelectionInfo();
-    }
     else if( EsdlInstanceOf( *G, TXAtom) )  {
       const TXAtom &xa = *(TXAtom*)G;
       const TCAtom& ca = xa.Atom().CAtom();
@@ -2046,9 +2049,9 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
         Draw = true;
       }
     }
-    if( FXApp->GetFader().Visible() )  {
+    if( FXApp->GetFader().IsVisible() )  {
       if( !FXApp->GetFader().Increment() )
-         FXApp->GetFader().Visible(false);
+         FXApp->GetFader().SetVisible(false);
       Draw = true;
     }
     if( MouseMoveTimeElapsed < 2500 )
@@ -2063,8 +2066,8 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
       else if( GlTooltip != NULL )  {
         AquireTooltipValue();
         if( Tooltip.IsEmpty() )  {
-          if( GlTooltip->Visible() )  {
-            GlTooltip->Visible(false);
+          if( GlTooltip->IsVisible() )  {
+            GlTooltip->SetVisible(false);
             Draw = true;
           }
         }
@@ -2081,7 +2084,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
           GlTooltip->SetLeft(x); // put it off the mouse
           GlTooltip->SetTop(y);
           GlTooltip->SetZ( FXApp->GetRender().GetMaxRasterZ() -0.1 );
-          GlTooltip->Visible(true);
+          GlTooltip->SetVisible(true);
           Draw = true;
         }
       }
@@ -2214,7 +2217,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
         FGlConsole->SetCommand(EmptyString);
       }
       else  {
-        FHelpWindow->Visible(false);
+        FHelpWindow->SetVisible(false);
         olxstr FullCmd(tmp);
         ProcessXPMacro(FullCmd, MacroError);
         // this is done in faivor of SetCmd macro, which supposed to modify the command ...
@@ -2273,7 +2276,7 @@ void TMainForm::PreviewHelp(const olxstr& Cmd)  {
     if( FMacroItem != NULL )
       FMacroItem->FindSimilarItems(Cmd, SL);
     if( SL.Count() != 0 )  {
-      FHelpWindow->Visible( HelpWindowVisible );
+      FHelpWindow->SetVisible( HelpWindowVisible );
       FHelpWindow->Clear();
       FGlConsole->ShowBuffer( !HelpWindowVisible );
       FHelpWindow->SetTop( InfoWindowVisible ? FInfoBox->GetTop() + FInfoBox->GetHeight() + 5 : 1 );
@@ -2303,12 +2306,12 @@ void TMainForm::PreviewHelp(const olxstr& Cmd)  {
       }
     }
     else  {
-      FHelpWindow->Visible(false);
+      FHelpWindow->SetVisible(false);
       FGlConsole->ShowBuffer(true);
     }
   }
   else  {
-    FHelpWindow->Visible(false);
+    FHelpWindow->SetVisible(false);
     FGlConsole->ShowBuffer(true);
   }
 }
@@ -2444,7 +2447,7 @@ void TMainForm::OnChar( wxKeyEvent& m )  {
   }
 
   if( FProcess != NULL && FProcess->IsRedirected() )  {
-    FHelpWindow->Visible(false);
+    FHelpWindow->SetVisible(false);
     FGlConsole->ShowBuffer(true);
     TimePerFrame = FXApp->Draw();
     return;
@@ -2779,7 +2782,7 @@ void TMainForm::SaveSettings(const olxstr &FN)  {
 
   I->AddField("BgColor", FBgColor.ToString());
   I->AddField("WhiteOn", (FXApp->GetRender().LightModel.ClearColor().GetRGB() == 0xffffffff) );
-  I->AddField("Gradient", FXApp->GetRender().Background()->Visible() );
+  I->AddField("Gradient", FXApp->GetRender().Background()->IsVisible() );
   I->AddField("GradientPicture", GradientPicture );
   I->AddField("language", Dictionary.GetCurrentLanguage() );
   I->AddField("ExtraZoom", FXApp->GetExtraZoom() );
@@ -3297,8 +3300,8 @@ void TMainForm::OnMouseMove(int x, int y)  {
       FGlCanvas->SetToolTip(wxT(""));
 #endif
     }
-    else if( GlTooltip != NULL && GlTooltip->Visible() )  {
-      GlTooltip->Visible(false);
+    else if( GlTooltip != NULL && GlTooltip->IsVisible() )  {
+      GlTooltip->SetVisible(false);
       TimePerFrame = FXApp->Draw();
     }
   }
@@ -3420,7 +3423,7 @@ bool TMainForm::CheckState(uint32_t state, const olxstr& stateData)  {
     return CmdLineVisible;
   }
   if( state == prsGradBG )  {
-    return FXApp->GetRender().Background()->Visible();
+    return FXApp->GetRender().Background()->IsVisible();
   }
 
   return false;
@@ -3941,7 +3944,7 @@ bool TMainForm::FindXAtoms(const TStrObjList &Cmds, TXAtomPList& xatoms, bool Ge
     FXApp->FindXAtoms(Cmds.Text(' '), xatoms, unselect);
   }
   for( int i=0; i < xatoms.Count(); i++ )
-    if( !xatoms[i]->Visible() )
+    if( !xatoms[i]->IsVisible() )
       xatoms[i] = NULL;
   xatoms.Pack();
   return (xatoms.Count() != cnt);

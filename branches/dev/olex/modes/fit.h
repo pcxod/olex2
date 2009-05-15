@@ -45,8 +45,8 @@ public:
     UpdateSelectionCrds();
     for( int i=0; i < Atoms.Count(); i++ )  {
       TXAtom& xa = *Atoms[i];
-      xa.Moveable(false);
-      xa.Roteable(false);
+      xa.SetMoveable(false);
+      xa.SetRoteable(false);
       // summ the translations
       xa.Atom().crd() += xa.Basis.GetCenter();
       xa.Basis.NullCenter();
@@ -69,8 +69,8 @@ public:
   virtual bool AddAtoms(const TXAtomPList& atoms)  {
     Atoms.AddList(atoms);
     for( int i=0; i < Atoms.Count(); i++ )  {
-      Atoms[i]->Roteable(true);
-      Atoms[i]->Moveable(true);
+      Atoms[i]->SetRoteable(true);
+      Atoms[i]->SetMoveable(true);
       TGlXApp::GetGXApp()->GetRender().Select(Atoms[i]);
     }
     return true;

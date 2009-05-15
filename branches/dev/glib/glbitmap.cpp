@@ -19,11 +19,11 @@ TGlBitmap::TGlBitmap(const olxstr& collectionName, TGlRenderer *Render,
   Width = width;
   Height = height;
 
-  Move2D(true);
-  Moveable(true);
-  Groupable(false);
-  Roteable(false);
-  Zoomable(false);
+  SetMove2D(true);
+  SetMoveable(true);
+  SetGroupable(false);
+  SetRoteable(false);
+  SetZoomable(false);
 
   TextureId = Render->GetTextureManager().Add2DTexture(GetCollectionName(), 0, width, height, 0,
                          format, RGB);

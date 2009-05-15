@@ -51,7 +51,7 @@ TGlRenderer::TGlRenderer(AGlScene *S, int width, int height)  {
   FStyles = new TGraphicsStyles(this);
 
   FSelection = new TGlGroup("Selection", this);
-  FSelection->Selected(true);
+  FSelection->SetSelected(true);
   FSelection->Create();
 
   OnDraw = &FActions->NewQueue("GLDRAW");
@@ -59,9 +59,9 @@ TGlRenderer::TGlRenderer(AGlScene *S, int width, int height)  {
   OnStylesClear  = &FActions->NewQueue("DSCLEAR");
   //GraphicsStyles = FStyles;
   FBackground = new TGlBackground("Background", this, false);
-  FBackground->Visible(false);
+  FBackground->SetVisible(false);
   FCeiling = new TGlBackground("Ceiling", this, true);
-  FCeiling->Visible(false);
+  FCeiling->SetVisible(false);
   FGlImageChanged = true; // will cause its update
   FGlImage = NULL;
   TextureManager = new TTextureManager();
@@ -130,7 +130,7 @@ void TGlRenderer::ClearPrimitives()  {
 }
 //..............................................................................
 void TGlRenderer::Clear()  {
-  FSelection->Selected(false);
+  FSelection->SetSelected(false);
   FSelection->Clear();
   for( int i=0; i < FGroups.Count(); i++ )
     delete FGroups[i];
@@ -417,7 +417,7 @@ void TGlRenderer::DrawObject(AGDrawObject *Object, bool DrawImage)  {
   }
   if( Object != NULL )  {
 //    if( !Object->Visible() )  return;
-    if( Object->Deleted() )  return;
+    if( Object->IsDeleted() )  return;
 
     TGPCollection *GPC = Object->Primitives();
     TGlPrimitive *GlP;
@@ -703,8 +703,9 @@ TGlGroup *TGlRenderer::FindObjectGroup(AGDrawObject *G)  {
 }
 //..............................................................................
 void TGlRenderer::Select(AGDrawObject *G)  {
-  if( !G->Groupable() )  return;
-  G->Selected( FSelection->Add(G));
+  if( !G->IsGroupable() )  
+    return;
+  G->SetSelected( FSelection->Add(G) );
 }
 //..............................................................................
 void TGlRenderer::DeSelect(AGDrawObject *G)  {
@@ -716,12 +717,12 @@ void TGlRenderer::InvertSelection()  {
   const int oc = FGObjects.Count();
   for( int i=0; i < oc; i++ )  {
     AGDrawObject* GDO = FGObjects[i];
-    if( !GDO->Grouped() && GDO->Visible() )  {
-      if( !GDO->Selected() && GDO->Groupable() && GDO != FSelection )
+    if( !GDO->IsGrouped() && GDO->IsVisible() )  {
+      if( !GDO->IsSelected() && GDO->IsGroupable() && GDO != FSelection )
         Selected.Add(GDO);
     }
   }
-  FSelection->Selected(false);
+  FSelection->SetSelected(false);
   FSelection->Clear();
   for( int i=0; i < Selected.Count(); i++ )  {
     FSelection->Add( Selected[i] );
@@ -729,18 +730,18 @@ void TGlRenderer::InvertSelection()  {
 }
 //..............................................................................
 void TGlRenderer::SelectAll(bool Select)  {
-  FSelection->Selected(false);
+  FSelection->SetSelected(false);
   FSelection->Clear();
   if( Select )  {
     AGDrawObject *GDO;
     for( int i=0; i < GObjectCount(); i++ )  {
       GDO = GObject(i);
-      if( !GDO->Grouped() && GDO->Visible() && GDO->Groupable() && !GDO->Deleted() )  {
+      if( !GDO->IsGrouped() && GDO->IsVisible() && GDO->IsGroupable() && !GDO->IsDeleted() )  {
         if( EsdlInstanceOf(*GDO, TGlGroup) )  {
           if( GDO == FSelection )  continue;
           bool Add = false;
           for( int j=0; j < ((TGlGroup*)GDO)->Count(); j++ )  {
-            if( ((TGlGroup*)GDO)->Object(j)->Visible() )  {
+            if( ((TGlGroup*)GDO)->Object(j)->IsVisible() )  {
               Add = true;
               break;
             }
@@ -752,12 +753,13 @@ void TGlRenderer::SelectAll(bool Select)  {
       }
     }
   }
-  FSelection->Selected(true);
+  FSelection->SetSelected(true);
 }
 //..............................................................................
 void TGlRenderer::ClearGroups()  {
   for( int i=0; i < FGroups.Count(); i++ )  {
-    if( FGroups[i]->Selected() )  DeSelect(FGroups[i]);
+    if( FGroups[i]->IsSelected() )  
+      DeSelect(FGroups[i]);
     FGroups[i]->Clear();
   }
   // just in case of groups in groups
@@ -798,7 +800,7 @@ TGlGroup& TGlRenderer::NewGroup(const olxstr& collection_name) {
 }
 //..............................................................................
 void TGlRenderer::UnGroup(TGlGroup *OS)  {
-  if( !OS->Group() )  return;
+  if( !OS->IsGroup() )  return;
   FGroups.Remove(OS);
   if( FSelection->Contains(OS) )
     FSelection->Remove(OS);
@@ -811,7 +813,7 @@ void TGlRenderer::UnGroup(TGlGroup *OS)  {
   delete OS;  // it will reset Parent group to NULL in the objects
   for( int i=0; i < Objects.Count(); i++ )
     FSelection->Add( Objects[i] );
-  FSelection->Selected(true);
+  FSelection->SetSelected(true);
 }
 //..............................................................................
 void TGlRenderer::UnGroupSelection()  {
@@ -820,7 +822,7 @@ void TGlRenderer::UnGroupSelection()  {
     AGDrawObject *GDO;
     for( int i=0; i < FSelection->Count(); i++ )  {
       GDO = FSelection->Object(i);
-      if( GDO->Group() )  {
+      if( GDO->IsGroup() )  {
         OS = (TGlGroup*)GDO;
         UnGroup(OS);
       }
@@ -890,7 +892,7 @@ void TGlRenderer::RemoveObjects(const TPtrList<AGDrawObject>& objects)  {
 //..............................................................................
 void TGlRenderer::AddGObject(AGDrawObject *G)  {
   FGObjects.Add(G);
-  if( FSceneComplete || !G->Visible() )  return;
+  if( FSceneComplete || !G->IsVisible() )  return;
   vec3d MaxV, MinV;
   if( G->GetDimensions(MaxV, MinV) )  {
     UpdateMaxMin(MaxV, MinV);
@@ -1071,10 +1073,10 @@ void TGlRenderer::Compile(bool v)  {
         if( GPC == NULL )  continue;
         for( int k=0; k < GPC->ObjectCount(); k++ )  {
           AGDrawObject* GDO = GPC->Object(k);
-          if( !GDO->Visible() )  continue;
-          if( GDO->Deleted() )  continue;
-          if( GDO->Selected() ) continue;
-          if( GDO->Grouped() ) continue;
+          if( !GDO->IsVisible() )  continue;
+          if( GDO->IsDeleted() )  continue;
+          if( GDO->IsSelected() ) continue;
+          if( GDO->IsGrouped() ) continue;
           glPushMatrix();
           if( GDO->Orient(GlP) )  // the object has drawn itself
           {  glPopMatrix(); continue; }

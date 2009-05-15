@@ -71,8 +71,8 @@ public:
   bool OnMouseUp(const IEObject *Sender, const TMouseData *Data);
   bool OnMouseMove(const IEObject *Sender, const TMouseData *Data);
 
-  inline bool Deleted()  {  return AGDrawObject::Deleted(); }
-  void Deleted(bool v)   {  AGDrawObject::Deleted(v);  FBond->SetDeleted(v); }
+  inline bool IsDeleted()  {  return AGDrawObject::IsDeleted(); }
+  void SetDeleted(bool v)   {  AGDrawObject::SetDeleted(v);  FBond->SetDeleted(v); }
   void ListDrawingStyles(TStrList &List);
 
   void UpdatePrimitives(int32_t Mask, const ACreationParams* cpar=NULL);

@@ -14,9 +14,9 @@ TXLattice::TXLattice(const olxstr& collectionName, TGlRenderer *Render) :
   Fixed = false;
   Size = 4;
 
-  Move2D(false);
-  Moveable(true);
-  Zoomable(false);
+  SetMove2D(false);
+  SetMoveable(true);
+  SetZoomable(false);
 
 }
 //..............................................................................
@@ -100,12 +100,12 @@ bool TXLattice::GetDimensions(vec3d &Max, vec3d &Min)  {
 }
 //..............................................................................
 bool TXLattice::OnMouseDown(const IEObject *Sender, const TMouseData *Data)  {
-  if( !Moveable() )  return true;
+  if( !IsMoveable() )  return true;
   return TGlMouseListener::OnMouseDown(Sender, Data);
 }
 //..............................................................................
 bool TXLattice::OnMouseUp(const IEObject *Sender, const TMouseData *Data)  {
-  if( !Moveable() )  return true;
+  if( !IsMoveable() )  return true;
   return TGlMouseListener::OnMouseUp(Sender, Data);
 }
 //..............................................................................
@@ -132,7 +132,7 @@ void TXLattice::SetFixed(bool v )  {
     Basis.Reset();
     Basis.SetCenter(c);
   }
-  Move2D(v);
+  SetMove2D(v);
   Fixed = v;
 }
 

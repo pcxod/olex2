@@ -23,7 +23,7 @@ TDFrame::TDFrame(const olxstr& collectionName, TGlRenderer *Render) :
 {
   FPrimitive = NULL;
   FRender = Render;
-  Groupable(false);
+  SetGroupable(false);
   FActions = new TActionQList;
   OnSelect = &FActions->NewQueue("ONSELECT");
 };
@@ -75,14 +75,14 @@ bool TDFrame::OnMouseDown(const IEObject *Sender, const TMouseData *Data)  {
   FPrimitive->Data[3][2] = 0x00000000;
   FPrimitive->Data[3][3] = 0x0000ff00;
 
-  Visible( true );
+  SetVisible( true );
   return true;
 }
 //..............................................................................
 bool TDFrame::OnMouseUp(const IEObject *Sender, const TMouseData *Data)
 {
   if( !FPrimitive ) return false;
-  Visible( false );
+  SetVisible( false );
   FRender->Draw();
   TSelectionInfo SI;
   SI.From[0] = olx_min(FPrimitive->Data[0][0], FPrimitive->Data[0][2]);

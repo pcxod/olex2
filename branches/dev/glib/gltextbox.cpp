@@ -22,17 +22,17 @@ UseGlNamespace()
 TGlTextBox::TGlTextBox(const olxstr& collectionName, TGlRenderer *Render):
   TGlMouseListener(collectionName, Render)
 {
-  Move2D(true);
-  Moveable(true);
-  Groupable(true);
-  Roteable(false);
-  Zoomable(false);
+  SetMove2D(true);
+  SetMoveable(true);
+  SetGroupable(true);
+  SetRoteable(false);
+  SetZoomable(false);
 
   LineSpacing = 1;
   Left = Top = 0;
   Width = Height = 0;
   MaxStringLength = 0;
-  Groupable(false);
+  SetGroupable(false);
   FontIndex = 0;  // previous -1 was very dangerous...
   FScrollDirectionUp = true;
   Z = 0;

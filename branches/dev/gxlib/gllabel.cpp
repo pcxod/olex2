@@ -19,10 +19,10 @@
 
 TXGlLabel::TXGlLabel(const olxstr& collectionName, TGlRenderer *Render) :
     TGlMouseListener(collectionName, Render)  {
-  Move2D(true);
-  Moveable(true);
-  Zoomable(false);
-  Groupable(false);
+  SetMove2D(true);
+  SetMoveable(true);
+  SetZoomable(false);
+  SetGroupable(false);
   OffsetX = OffsetY = 0;
   FFontIndex = -1;
 };
@@ -125,14 +125,14 @@ TGlFont* TXGlLabel::Font() const {  return FParent->Scene()->Font(FFontIndex); }
 //..............................................................................
 void TXGlLabel::ToDataItem(TDataItem& item) const {
   item.AddField("text", FLabel);
-  item.AddField("visible", Visible());
+  item.AddField("visible", IsVisible());
   item.AddField("font_id", FFontIndex);
   item.AddField("center", PersUtil::VecToStr(Center));
   Basis.ToDataItem(item.AddItem("Basis"));
 }
 //..............................................................................
 void TXGlLabel::FromDataItem(const TDataItem& item) {
-  Visible( item.GetRequiredField("visible").ToBool() );
+  SetVisible( item.GetRequiredField("visible").ToBool() );
   FFontIndex = item.GetRequiredField("font_id").ToInt();
   SetLabel( item.GetRequiredField("text") );
   Center = PersUtil::FloatVecFromStr( item.GetRequiredField("center") );

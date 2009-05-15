@@ -32,7 +32,7 @@ TXBondStylesClear *TXBond::FXBondStylesClear=NULL;
 TXBond::TXBond(const olxstr& collectionName, TSBond& B, TGlRenderer *R) :
   AGDrawObject(collectionName)
 {
-  Groupable(true);
+  SetGroupable(true);
   FParent = R;
   FDrawStyle = 0x0001;
   Params().Resize(5);

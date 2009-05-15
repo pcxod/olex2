@@ -157,7 +157,7 @@ public:
 class TXAtomSelectedEvaluator: public TXAtomPropertyEvaluator<IBoolEvaluator>
 {
 public:
-  virtual bool EvaluateBool()  const         {  return  FData->Selected();  }
+  virtual bool EvaluateBool()  const         {  return  FData->IsSelected();  }
 };
 /******************************************************************************/
 // TSAtom property evaluators
@@ -209,7 +209,7 @@ public:
 class TXBondSelectedEvaluator: public TXBondPropertyEvaluator<IBoolEvaluator>
 {
 public:
-  virtual bool EvaluateBool()  const         {  return  FData->Selected();  }
+  virtual bool EvaluateBool()  const         {  return  FData->IsSelected();  }
 };
 // length
 class TXBondLengthEvaluator: public TXBondPropertyEvaluator<IDoubleEvaluator>

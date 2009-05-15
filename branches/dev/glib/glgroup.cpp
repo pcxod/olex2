@@ -67,7 +67,7 @@ TGlGroup::~TGlGroup()  {
 void TGlGroup::Clear()  {
   for( int i=0; i < FObjects.Count(); i++ )  {
     FObjects[i]->ParentGroup(NULL);
-    FObjects[i]->Selected(false);
+    FObjects[i]->SetSelected(false);
   }
   FObjects.Clear();
 }
@@ -75,14 +75,14 @@ void TGlGroup::Clear()  {
 void TGlGroup::Remove(AGDrawObject *G)  {
   FObjects.Remove(G);
   G->ParentGroup(NULL);
-  G->Selected(false);
+  G->SetSelected(false);
 }
 //..............................................................................
 void TGlGroup::RemoveDeleted()  {
   for( int i=0; i < FObjects.Count(); i++ )  {
-    if( FObjects[i]->Deleted() )  {
+    if( FObjects[i]->IsDeleted() )  {
       FObjects[i]->ParentGroup(NULL);
-      FObjects[i]->Selected(false);
+      FObjects[i]->SetSelected(false);
       FObjects[i] = NULL;
     }
   }
@@ -107,15 +107,15 @@ bool TGlGroup::Add(AGDrawObject *G)  {
   }
 }
 //..............................................................................
-void TGlGroup::Visible(bool On)  {
+void TGlGroup::SetVisible(bool On)  {
   for( int i=0; i < FObjects.Count(); i++ )
-    FObjects[i]->Visible(On); 
+    FObjects[i]->SetVisible(On); 
 }
 //..............................................................................
-void TGlGroup::Selected(bool On)  {
+void TGlGroup::SetSelected(bool On)  {
   for( int i=0; i < FObjects.Count(); i++ )
-    FObjects[i]->Selected(On);
-  AGDrawObject::Selected(On);
+    FObjects[i]->SetSelected(On);
+  AGDrawObject::SetSelected(On);
 }
 //..............................................................................
 void TGlGroup::InitMaterial() const {
@@ -132,9 +132,9 @@ void TGlGroup::Draw(bool SelectPrimitives, bool SelectObjects) const  {
 
   for( int i=0; i < FObjects.Count(); i++ )  {
     AGDrawObject* G = FObjects[i];
-    if( !G->Visible() )  continue;
-    if( G->Deleted() )  continue;
-    if( G->Group() )    { G->Draw();  continue; }
+    if( !G->IsVisible() )  continue;
+    if( G->IsDeleted() )  continue;
+    if( G->IsGroup() )    { G->Draw();  continue; }
     int pc = G->Primitives()->PrimitiveCount();
     for( int j=0; j < pc; j++ )  {
       TGlPrimitive* GlP = G->Primitives()->Primitive(j);

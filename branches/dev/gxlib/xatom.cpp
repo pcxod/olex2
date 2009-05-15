@@ -64,9 +64,9 @@ TXAtom::TXAtom(const olxstr& collectionName, TSAtom& A, TGlRenderer *Render) :
   XAppId = -1;
   FAtom = &A;
   Polyhedron = NULL;
-  Move2D(false);
-  Moveable(false);
-  Zoomable(false);
+  SetMove2D(false);
+  SetMoveable(false);
+  SetZoomable(false);
 
   if( A.GetEllipsoid() != NULL )
     FDrawStyle = adsEllipsoid;
@@ -400,7 +400,7 @@ bool TXAtom::Orient(TGlPrimitive *GlP) {
 
   vec3d c( Basis.GetCenter() );
   c += FAtom->crd();
-  if( Roteable() )  {
+  if( IsRoteable() )  {
     vec3d cr;
     int ac = 0;
     TGlGroup* gr = FParent->Selection();
@@ -928,12 +928,12 @@ void TXAtom::QPeakScale(float V)  {
 }
 //..............................................................................
 bool TXAtom::OnMouseDown(const IEObject *Sender, const TMouseData *Data)  {
-  if( !Moveable() )  return true;
+  if( !IsMoveable() )  return true;
   return TGlMouseListener::OnMouseDown(Sender, Data);
 }
 //..............................................................................
 bool TXAtom::OnMouseUp(const IEObject *Sender, const TMouseData *Data)  {
-  if( !Moveable() )  return true;
+  if( !IsMoveable() )  return true;
   return TGlMouseListener::OnMouseUp(Sender, Data);
 }
 //..............................................................................

@@ -51,7 +51,7 @@ TGlConsole::TGlConsole(const olxstr& collectionName, TGlRenderer *Render) :
   olex::IOlexProcessor::GetInstance()->executeFunction(InviteStr, PromptStr);
   FCommand = PromptStr;
   FShowBuffer = true;
-  Groupable(false);
+  SetGroupable(false);
   FontIndex = -1;
   FTxtPos = -1;
   FMaxLines = 1000;
@@ -477,8 +477,8 @@ void TGlConsole::KeepSize()  {
 }
 //..............................................................................
 void TGlConsole::Visible(bool On)  {
-  AGDrawObject::Visible(On);
-  FCursor->Visible(On);
+  AGDrawObject::SetVisible(On);
+  FCursor->SetVisible(On);
 }
 //..............................................................................
 void TGlConsole::UpdateCursorPosition(bool InitCmds)  {
@@ -541,7 +541,7 @@ bool TGlConsole::Execute(const IEObject *Sender, const IEObject *Data)  {
 //..............................................................................
 void TGlConsole::SetPromptVisible(bool v)  {
   PromptVisible = v;
-  FCursor->Visible( v );
+  FCursor->SetVisible( v );
 }
 //..............................................................................
 void TGlConsole::SetInviteString(const olxstr &S)  {

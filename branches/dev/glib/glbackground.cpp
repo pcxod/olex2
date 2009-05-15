@@ -23,7 +23,7 @@ TGlBackground::TGlBackground(const olxstr& collectionName, TGlRenderer *Render, 
 {
   AGDrawObject::Parent(Render);
   FCeiling = ceiling;
-  Groupable(false);
+  SetGroupable(false);
   Texture = NULL;
   FPrimitive = NULL;
 }

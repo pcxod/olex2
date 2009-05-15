@@ -75,22 +75,22 @@ public:
   // to be used in groups only
   virtual void Draw() const {  return;  }
 
-  inline bool Visible()   const {  return (Flags & sgdoVisible) == sgdoVisible; }
-  inline virtual void Visible(bool On) {  SetBit(On, Flags, sgdoVisible); }
+  inline bool IsVisible()   const {  return (Flags & sgdoVisible) == sgdoVisible; }
+  inline virtual void SetVisible(bool On) {  SetBit(On, Flags, sgdoVisible); }
 
-  inline bool Selected()  const {  return (Flags & sgdoSelected) == sgdoSelected;  }
-  inline virtual void Selected(bool On){  SetBit(On, Flags, sgdoSelected); }
+  inline bool IsSelected()  const {  return (Flags & sgdoSelected) == sgdoSelected;  }
+  inline virtual void SetSelected(bool On){  SetBit(On, Flags, sgdoSelected); }
 
-  inline bool Groupable() const {  return (Flags & sgdoGroupable) == sgdoGroupable; }
-  void Groupable(bool On){  SetBit(On, Flags, sgdoGroupable); }
+  inline bool IsGroupable() const {  return (Flags & sgdoGroupable) == sgdoGroupable; }
+  void SetGroupable(bool On){  SetBit(On, Flags, sgdoGroupable); }
 
-  inline bool Group() const     {  return (Flags & sgdoGroup) == sgdoGroup; }
+  inline bool IsGroup() const     {  return (Flags & sgdoGroup) == sgdoGroup; }
 
-  inline bool Grouped() const   {  return (Flags & sgdoGrouped) == sgdoGrouped; }
-  virtual void Grouped(bool On){ SetBit(On, Flags, sgdoGrouped); }
+  inline bool IsGrouped() const   {  return (Flags & sgdoGrouped) == sgdoGrouped; }
+  virtual void SetGrouped(bool On){ SetBit(On, Flags, sgdoGrouped); }
 
-  inline bool Deleted()  const  {return (Flags & sgdoDeleted) == sgdoDeleted; }
-  virtual void Deleted(bool On){ SetBit(On, Flags, sgdoDeleted); }
+  inline bool IsDeleted()  const  {return (Flags & sgdoDeleted) == sgdoDeleted; }
+  virtual void SetDeleted(bool On){ SetBit(On, Flags, sgdoDeleted); }
 
   short MaskFlags(short mask) const {  return (Flags&mask);  }
 

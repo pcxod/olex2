@@ -109,8 +109,8 @@ public:
 
   inline bool Visible()   const {  return (Flags & sgdoVisible) == sgdoVisible; }
   inline virtual void Visible(bool On) {  
-    AGDrawObject::Visible(On);  
-    Info->Visible(On);
+    AGDrawObject::SetVisible(On);  
+    Info->SetVisible(On);
     if( !On )
       Clear();
   }
