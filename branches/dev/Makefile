@@ -25,146 +25,145 @@ OBJ_DIR = $(CWD)/obj/
 EXE_DIR = $(CWD)/bin/
 OLEX_INS := $(HOME)/olex
 OLEX_BIN := $(HOME)/bin
+find_files = $(wildcard *.cpp)
+VPATH = xlib:alglib:sdl:sdl/smart:xlib/macro:glib:gxlib
+OBJ := xlib alglib sdl sdl/smart xlib/macro glib gxlib
+NPY_CPP_REPO = filesystem.cpp shellutil.cpp httpex.cpp url.cpp wxhttpfs.cpp wxzipfs.cpp fsext.cpp pyext.cpp integration.cpp IsoSurface.cpp eprocess.cpp
+OBJ_CPP_REPO := olxvar.cpp py_core.cpp $(NPY_CPP_REPO)
+NPY_OBJ_REPO := $(addprefix $(OBJ_DIR), $(NPY_CPP_REPO))
+OBJ_REPO := $(addprefix $(OBJ_DIR),$(OBJ_CPP_REPO))
+
+obj_src_files := $(foreach dir,$(OBJ),$(wildcard $(dir)/*.cpp))
+
+obj_xlib_files := $(addprefix $(OBJ_DIR),$(notdir $(wildcard xlib/*.cpp)))
+obj_alglib_files := $(addprefix $(OBJ_DIR),$(notdir $(wildcard alglib/*.cpp)))
+obj_sdl_files := $(addprefix $(OBJ_DIR),$(notdir $(wildcard sdl/*.cpp)))
+obj_sdl_smart_files := $(addprefix $(OBJ_DIR),$(notdir $(wildcard sdl/smart/*.cpp)))
+obj_xlib_macro_files := $(addprefix $(OBJ_DIR),$(notdir $(wildcard xlib/macro/*.cpp)))
+obj_glib_files := $(addprefix $(OBJ_DIR),$(notdir $(wildcard glib/*.cpp)))
+obj_gxlib_files := $(addprefix $(OBJ_DIR),$(notdir $(wildcard gxlib/*.cpp)))
+OBJ_UNIRUN := $(addprefix $(OBJ_DIR)unirun/,$(notdir $(wildcard unirun/*.cpp)))
+OBJ_OLEX := $(addprefix $(OBJ_DIR)olex/,$(notdir $(wildcard olex/*.cpp)))
 #######################################
 .DEFAULT_GOAL := all
 #######################################
 # Compiling
 CC := gcc
-CFLAGS := -fexceptions -O3 -combine
-OPTS = `wx-config --cxxflags --unicode --toolkit=gtk2` `python-config --includes` -I$(SRC_DIR)sdl -I$(SRC_DIR)xlib -I$(SRC_DIR)glib -I$(SRC_DIR)gxlib -I$(SRC_DIR)repository -I$(SRC_DIR)olex -I$(SRC_DIR)alglib -S -D__WXWIDGETS__ -D_UNICODE
-LDFLAGS += `wx-config --libs gl,core,html,net,aui --unicode --toolkit=gtk2` `python-config --libs --ldflags` -L. -fexceptions -g -rdynamic -O3
+CFLAGS := -O3 
+#-combine
+OPTS = `wx-config --cxxflags --unicode --toolkit=gtk2` `python-config --includes` -I$(SRC_DIR)sdl -I$(SRC_DIR)xlib -I$(SRC_DIR)glib -I$(SRC_DIR)gxlib -I$(SRC_DIR)repository -I$(SRC_DIR)olex -I$(SRC_DIR)alglib -S -D__WXWIDGETS__ -D_UNICODE -DUNICODE
+LDFLAGS += `wx-config --libs gl,core,html,net,aui --unicode --toolkit=gtk2` `python-config --libs --ldflags` -L. -rdynamic -O3
 CCFLAGS += $(CFLAGS)
 ###############################################################################
 
 # All will compile and link all of olex takes about 10 minutes
-all: 
-	+make obj
+# Old way to create objs
+#.PHONY : obj
+#obj: $(obj_src_files:.cpp=.s)#$(obj_src_files:.cpp=.s): $(OBJ_DIR)
+#	cd $(OBJ_DIR); $(CC) $(SRC_DIR)$(@:.s=.cpp) $(OPTS) $(CFLAGS)
+	
+# obj will create the obj directory and compile the objects
+.PHONY : all
+all :
+	+make objs
 	+make bins
-	+make link
 	@echo "Type make install to install"
 
-# obj will create the obj directory and compile the objects
-$(OBJ_DIR): 
-	@echo "Building object libraries, this can take a while"
-	@if test ! -d $(OBJ_DIR); then mkdir $(OBJ_DIR); else touch $(OBJ_DIR); fi;
+.PHONY : objs
+objs: obj obj_xlib obj_alglib obj_sdl obj_sdl_smart obj_xlib_macro obj_glib obj_gxlib obj_repository
 
-obj_xlib1 : $(OBJ_DIR) $@
-	@cd $(OBJ_DIR); \
-	for i in {a..g} {A..G}; do\
-		num=`find  $(SRC_DIR)xlib -maxdepth 1 -type f -name "$$i*.cpp" | wc -l`; \
-		if [ "$$num" -gt "0" ]; then \
-                        echo "[1]$$i Building xlib object libraries"; \
-			$(CC) $(SRC_DIR)xlib/$$i*.cpp $(OPTS) $(CFLAGS); \
-		fi; \
-	done; 
-	@echo "[1]A-G* Done! Building xlib object libraries"
+obj:
+	@if test ! -d $(OBJ_DIR); then mkdir $(OBJ_DIR); else echo "obj directory already present"; fi;
 
-obj_xlib2 : $(OBJ_DIR) $@
-	@cd $(OBJ_DIR); \
-        for i in {h..n} {H..N}; do\
-                num=`find  $(SRC_DIR)xlib -maxdepth 1 -type f -name "$$i*.cpp" | wc -l`; \
-                if [ "$$num" -gt "0" ]; then \
-                        echo "[1]$$i Building xlib object libraries"; \
-                        $(CC) $(SRC_DIR)xlib/$$i*.cpp $(OPTS) $(CFLAGS); \
-                fi; \
-        done; 
-	@echo "[1]H-N* Done! Building xlib object libraries"
-obj_xlib3 : $(OBJ_DIR) $@
-	@cd $(OBJ_DIR); \
-        for i in {o..s} {O..S}; do\
-                num=`find  $(SRC_DIR)xlib -maxdepth 1 -type f -name "$$i*.cpp" | wc -l`; \
-                if [ "$$num" -gt "0" ]; then \
-                        echo "[1]$$i Building xlib object libraries"; \
-                        $(CC) $(SRC_DIR)xlib/$$i*.cpp $(OPTS) $(CFLAGS); \
-                fi; \
-        done; 
-	@echo "[1]O-T* Done! Building xlib object libraries"
-obj_xlib4 : $(OBJ_DIR) $@
-	@cd $(OBJ_DIR); \
-        for i in {t..z} {t..Z}; do\
-                num=`find  $(SRC_DIR)xlib -maxdepth 1 -type f -name "$$i*.cpp" | wc -l`; \
-                if [ "$$num" -gt "0" ]; then \
-                        echo "[1]$$i Building xlib object libraries"; \
-                        $(CC) $(SRC_DIR)xlib/$$i*.cpp $(OPTS) $(CFLAGS); \
-                fi; \
-        done; 
-	@echo "[1]T-Z* Done! Building xlib object libraries"
+.PHONY : obj_xlib
+obj_xlib: obj $(obj_xlib_files:.cpp=.s)
 
-obj_alglib : $(OBJ_DIR) $@
-	@echo "[2] Building alglib object libraries"
-	@cd $(OBJ_DIR); $(CC) $(SRC_DIR)alglib/*.cpp $(OPTS) $(CFLAGS)
-	@echo "[2]* Done! Building alglib object libraries"
-obj_sdl : $(OBJ_DIR)  $@
-	@echo "[3] Building sdl object libraries"
-	@cd $(OBJ_DIR);	$(CC) $(SRC_DIR)sdl/*.cpp $(OPTS) $(CFLAGS)
-	@echo "[3]* Done! Building sdl object libraries"
-obj_sdl_smart : $(OBJ_DIR)  $@
-	@echo "[4] Building sdl smart object libraries"
-	@cd $(OBJ_DIR);	$(CC) $(SRC_DIR)sdl/smart/*.cpp $(OPTS) $(CFLAGS)
-	@echo "[4]* Done! Building sdl smart object libraries"
-obj_xlib_macro : $(OBJ_DIR) $@
-	@echo "[5] Building xlib macro object libraries"
-	@cd $(OBJ_DIR);	$(CC) $(SRC_DIR)xlib/macro/*.cpp $(OPTS) $(CFLAGS)
-	@echo "[5]* Done! Building xlib macro object libraries"
-obj_glib : $(OBJ_DIR) $@
-	@echo "[6] Building glib object libraries"
-	@cd $(OBJ_DIR);	$(CC) $(SRC_DIR)glib/*.cpp $(OPTS) $(CFLAGS)
-	@echo "[6]* Done! Building glib object libraries"
-obj_gxlib : $(OBJ_DIR) $@
-	@echo "[7] Building gxlib object libraries"
-	@cd $(OBJ_DIR);	$(CC) $(SRC_DIR)gxlib/*.cpp $(OPTS) $(CFLAGS)
-	@echo "[7]* Done! Building gxlib object libraries"
-obj_repository : $(OBJ_DIR) $@
-	@echo "[8] Building repository object libraries"
-	@cd $(OBJ_DIR); $(CC) $(SRC_DIR)repository/filesystem.cpp $(OPTS) $(CFLAGS)
-	@cd $(OBJ_DIR); $(CC) $(SRC_DIR)repository/shellutil.cpp $(OPTS) $(CFLAGS)
-	@cd $(OBJ_DIR); $(CC) $(SRC_DIR)repository/httpex.cpp $(OPTS) $(CFLAGS)
-	@cd $(OBJ_DIR); $(CC) $(SRC_DIR)repository/url.cpp $(OPTS) $(CFLAGS)
-	@cd $(OBJ_DIR); $(CC) $(SRC_DIR)repository/wxhttpfs.cpp $(OPTS) $(CFLAGS)
-	@cd $(OBJ_DIR); $(CC) $(SRC_DIR)repository/wxzipfs.cpp $(OPTS) $(CFLAGS)
-	@cd $(OBJ_DIR); $(CC) $(SRC_DIR)repository/fsext.cpp $(OPTS) $(CFLAGS)
-	@cd $(OBJ_DIR); $(CC) $(SRC_DIR)repository/pyext.cpp $(OPTS) $(CFLAGS)
-	@cd $(OBJ_DIR); $(CC) $(SRC_DIR)repository/integration.cpp $(OPTS) $(CFLAGS)
-	@cd $(OBJ_DIR); $(CC) $(SRC_DIR)repository/IsoSurface.cpp $(OPTS) $(CFLAGS)
-	@cd $(OBJ_DIR); $(CC) $(SRC_DIR)repository/eprocess.cpp $(OPTS) $(CFLAGS)
-	@cd $(OBJ_DIR); $(CC) $(SRC_DIR)repository/olxvar.cpp $(OPTS) $(CFLAGS)
-	@cd $(OBJ_DIR); $(CC) $(SRC_DIR)repository/py_core.cpp $(OPTS) $(CFLAGS)
-	@echo "[8]* Done! Building repository object libraries"
+$(obj_xlib_files:.cpp=.s):
+	$(CC) $(SRC_DIR)xlib/$(@F:.s=.cpp) -o $(OBJ_DIR)$(@F) $(OPTS) $(CFLAGS)
 
-.phony obj_xlib : obj_xlib1 obj_xlib2 obj_xlib3 obj_xlib4
+.PHONY : obj_alglib
+obj_alglib: obj $(obj_alglib_files:.cpp=.s)
 
-obj : $(OBJ_DIR) obj_alglib obj_sdl obj_sdl_smart obj_xlib1 obj_xlib2 obj_xlib3 obj_xlib4 obj_xlib_macro obj_glib obj_gxlib obj_repository
+$(obj_alglib_files:.cpp=.s):
+	$(CC) $(SRC_DIR)alglib/$(@F:.s=.cpp) -o $(OBJ_DIR)$(@F) $(OPTS) $(CFLAGS)
+	
+.PHONY : obj_sdl
+obj_sdl: obj $(obj_sdl_files:.cpp=.s)
 
-# unirun will create the obj/unirun directory and compile the source
+$(obj_sdl_files:.cpp=.s):
+	$(CC) $(SRC_DIR)sdl/$(@F:.s=.cpp) -o $(OBJ_DIR)$(@F) $(OPTS) $(CFLAGS)
+	 
+.PHONY : obj_sdl_smart
+obj_sdl_smart: obj $(obj_sdl_smart_files:.cpp=.s)
 
-unirun : obj
-	@echo "[A] Making unirun this is relatively quick"
-	@mkdir $(OBJ_DIR)unirun;
-	@cd $(OBJ_DIR)unirun/;	$(CC) $(SRC_DIR)unirun/*.cpp  $(OPTS) $(CFLAGS)
-	@echo "[A]* Done! Making unirun I told you this was relatively quick"
+$(obj_sdl_smart_files:.cpp=.s):
+	$(CC) $(SRC_DIR)sdl/smart/$(@F:.s=.cpp) -o $(OBJ_DIR)$(@F) $(OPTS) $(CFLAGS)
+		 
+.PHONY : obj_xlib_macro
+obj_xlib_macro: obj $(obj_xlib_macro_files:.cpp=.s)
 
-# olex will create the obj/olex directory and compile the source
-olex : obj
-	@echo "[B] Making olex this can take a while"
-	@mkdir $(OBJ_DIR)olex;
-	@cd $(OBJ_DIR)olex/; $(CC) $(SRC_DIR)olex/*.cpp $(OPTS) $(CFLAGS)
-	@echo "[B]* Done! Making olex I told you that this can take a while"
-# There now appears to be no files in the olex/macro directory?
-#	@cd $(OBJ_DIR)olex/; $(CC) $(SRC_DIR)olex/*.cpp $(SRC_DIR)olex/macro/*.cpp $(CFLAGS)
+$(obj_xlib_macro_files:.cpp=.s):
+	$(CC) $(SRC_DIR)xlib/macro/$(@F:.s=.cpp) -o $(OBJ_DIR)$(@F) $(OPTS) $(CFLAGS)
 
-.phony $(OBJ_DIR)unirun : unirun
-.phony $(OBJ_DIR)olex : olex
+.PHONY : obj_glib
+obj_glib: obj $(obj_glib_files:.cpp=.s)
 
-bins : unirun olex
+$(obj_glib_files:.cpp=.s):
+	$(CC) $(SRC_DIR)glib/$(@F:.s=.cpp) -o $(OBJ_DIR)$(@F) $(OPTS) $(CFLAGS)
+	
+.PHONY : obj_gxlib
+obj_gxlib: obj $(obj_gxlib_files:.cpp=.s)
+$(obj_gxlib_files:.cpp=.s):
+	$(CC) $(SRC_DIR)gxlib/$(@F:.s=.cpp) -o $(OBJ_DIR)$(@F) $(OPTS) $(CFLAGS)
+	
+.PHONY : obj_repository
+obj_repository: obj $(OBJ_REPO:.cpp=.s)
 
-# link will link the *.s objects created and build the binaries in the bin directory
-link : $(OBJ_DIR)unirun/$@ $(OBJ_DIR)olex/$@
-	+make clean_bin
-	@echo "Linking unirun and olex"
-	@mkdir $(EXE_DIR); $(CC) $(OBJ_DIR)unirun/*.s $(OBJ_DIR)*.s -o $(EXE_DIR)unirun $(LDFLAGS)
-	@$(CC) $(OBJ_DIR)*.s $(OBJ_DIR)olex/*.s -o $(EXE_DIR)olex2 $(LDFLAGS)
+$(OBJ_REPO:.cpp=.s):
+	$(CC) $(SRC_DIR)repository/$(@F:.s=.cpp) -o $(OBJ_DIR)$(@F) $(OPTS) $(CFLAGS)
 
-# install will allow a user with root/sudo permission to install a central copy of olex2
+.PHONY : bins 
+bins : objs olex unirun
+
+unirun_obj_dir: obj
+	@if test ! -d $(OBJ_DIR)unirun; then mkdir $(OBJ_DIR)unirun; else echo "obj/unirun already present"; fi;
+olex_obj_dir: obj
+	@if test ! -d $(OBJ_DIR)olex; then mkdir $(OBJ_DIR)olex; else echo "obj/olex already present"; fi;
+bin:	
+	@if test ! -d $(EXE_DIR); then mkdir $(EXE_DIR); else "unirun binary already present"; fi;
+
+.PHONY : unirun
+unirun: objs
+	+make obj_unirun
+	+make $(EXE_DIR)unirun
+
+.PHONY : obj_unirun
+obj_unirun: unirun_obj_dir $(OBJ_UNIRUN:.cpp=.s)
+
+$(OBJ_UNIRUN:.cpp=.s):
+	$(CC) $(SRC_DIR)unirun/$(@F:.s=.cpp) -o $(OBJ_DIR)unirun/$(@F) $(OPTS) $(CFLAGS) -D_NO_PYTHON
+#$(addprefix $(SRC_DIR)repository/,$(NPY_CPP_REPO)) 
+
+$(EXE_DIR)unirun : bin $(OBJ_UNIRUN:.cpp=.s)
+	$(CC) $(OBJ_DIR)*.s $(OBJ_UNIRUN:.cpp=.s) -o $(EXE_DIR)unirun $(LDFLAGS)
+
+.PHONY : olex
+olex : objs
+	+make obj_olex
+	+make $(EXE_DIR)olex
+
+.PHONY : obj_olex
+obj_olex: olex_obj_dir $(OBJ_OLEX:.cpp=.s)
+
+$(OBJ_OLEX:.cpp=.s):
+	$(CC) $(SRC_DIR)olex/$(@F:.s=.cpp) -o $(OBJ_DIR)olex/$(@F) $(OPTS) $(CFLAGS)
+
+$(EXE_DIR)olex: bin $(OBJ_OLEX:.cpp=.s)
+	$(CC) $(OBJ_DIR)*.s $(OBJ_OLEX:.cpp=.s) -o $(EXE_DIR)olex2 $(LDFLAGS)
+
+############################################################################################
+# From here down is to do with installation and cleanup only
+#install will allow a user with root/sudo permission to install a central copy of olex2
 install-root:
 	@echo "You must be root to install"
 	install -m 755 -d /usr/share/olex2
@@ -281,11 +280,9 @@ help:
 	@echo	' '
 	@echo	'Other generic targets:'
 	@echo	'R  all             - Build all targets marked with [*]'
-	@echo	'*  obj             - Build obj files'
+	@echo	'*  objs            - Build obj files'
 	@echo	'*  olex            - Build olex specific files'
-	@echo	'*  unirun          - Build unirun specific files'
-	@echo	'*  link            - Links unirun and olex2 creating binaries'
-	@echo	'   install-root    - Install to /usr/local/ **REQUIRES ROOT**'
+	@echo	'*  unirun          - Build unirun specific files'	@echo	'   install-root    - Install to /usr/local/ **REQUIRES ROOT**'
 #	@echo	'   cctbx-local     - Will download, build and install cctbx to olex defaults'
 #	@echo	'   cctbx-root      - Will download, build and install central cctbx'
 	@echo	'   update          - Update the binaries of an existing install only'
@@ -299,3 +296,4 @@ help:
 
 # DONE!
 # DO NOT DELETE
+
