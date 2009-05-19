@@ -92,12 +92,9 @@ void TAsymmUnit::Assign(const TAsymmUnit& C)  {
     TResidue* resi = C.Residues[i];
     NewResidue( resi->GetClassName(), resi->GetNumber(), resi->GetAlias() ); 
   }
-  for( int i = 0; i < C.AtomCount(); i++ )  {
-    TCAtom& CA = NewAtom();
-    CA.SetId(i);
-    if( C.GetAtom(i).GetResiId() != -1 )  // main residue
-      GetResidue(C.GetAtom(i).GetResiId()).AddAtom(&CA);
-  }
+  for( int i = 0; i < C.AtomCount(); i++ )
+    NewAtom( &GetResidue(C.GetAtom(i).GetResiId()) ).SetId(i);
+  
   for( int i = 0; i < C.AtomCount(); i++ )  {
     TCAtom& ca = GetAtom(i);
     ca.Assign( C.GetAtom(i) );

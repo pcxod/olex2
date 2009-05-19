@@ -884,15 +884,20 @@ void TIns::SaveToStrings(TStrList& SL)  {
   UpdateParams();
   SaveHeader(SL, false);
   SL.Add(EmptyString);
-  int afix = 0, part = 0, fragmentId = 0;
+  int afix = 0, part = 0, fragmentId = -1;
   for( int i=-1; i < GetAsymmUnit().ResidueCount(); i++ )  {
     TAsymmUnit::TResidue& residue = GetAsymmUnit().GetResidue(i);
-    if( i != -1 && !residue.IsEmpty() ) SL.Add( residue.ToString() );
+    if( i != -1 && !residue.IsEmpty() )  { 
+      SL.Add(EmptyString);
+      SL.Add( residue.ToString() );
+      fragmentId = -1;
+    }
     for( int j=0; j < residue.Count(); j++ )  {
       TCAtom& ac = residue[j];
       if( ac.IsDeleted() || ac.IsSaved() )  continue;
-      if( ac.GetFragmentId() != fragmentId )  {
-        SL.Add(EmptyString);
+      if( ac.GetFragmentId() != fragmentId || fragmentId == -1 )  {
+        if( fragmentId != -1 )
+          SL.Add(EmptyString);
         fragmentId = ac.GetFragmentId();
       }
       if( ac.GetParentAfixGroup() != NULL && 

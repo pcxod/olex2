@@ -307,17 +307,22 @@ void TXAtom::Create(const olxstr& cName, const ACreationParams* cpar)  {
         GlP.SetProperties(RGlM);
       }
       else  {
+        int mi = GS.IndexOfMaterial(FStaticObjects.GetString(i));
+        if( mi != -1 )  {
+          GlP.SetProperties( GS.GetPrimitiveStyle(mi).GetProperties() );
+          continue;
+        }
         if( SGlP->Params.Last() == ddsDefSphere )   {
-          int mi = GS.IndexOfMaterial("Sphere");
-          if( mi != -1 )
-            RGlM = GS.GetPrimitiveStyle(mi).GetProperties();
+          int lmi = GS.IndexOfMaterial("Sphere");
+          if( lmi != -1 )
+            RGlM = GS.GetPrimitiveStyle(lmi).GetProperties();
           else
             GetDefSphereMaterial(*FAtom, RGlM);
         }
-        if( SGlP->Params.Last() == ddsDefRim )  {
-          int mi = GS.IndexOfMaterial("Rims");
-          if( mi != -1 )
-            RGlM = GS.GetPrimitiveStyle(mi).GetProperties();
+        else if( SGlP->Params.Last() == ddsDefRim )  {
+          int lmi = GS.IndexOfMaterial("Rims");
+          if( lmi != -1 )
+            RGlM = GS.GetPrimitiveStyle(lmi).GetProperties();
           else
             GetDefRimMaterial(*FAtom, RGlM);
         }
