@@ -284,7 +284,7 @@ TdlgSceneProps::~TdlgSceneProps()  {
   tbZ->OnChange->Clear();
   tbR->OnChange->Clear();
   teAmb->OnClick->Clear();
-  //teDiff->OnClick->Clear();
+  teDiff->OnClick->Clear();
   teSpec->OnClick->Clear();
   scSCO->OnChange->Clear();
   cbLights->OnChange->Clear();
