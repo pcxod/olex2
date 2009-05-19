@@ -784,126 +784,131 @@ olxstr macSel_GetPlaneName(const TSPlane& p)  {
 }
 olxstr TGXApp::GetSelectionInfo()  {
   olxstr Tmp;
-  double v;
-  TGlGroup& Sel = FGlRender->GetSelection();
-  if( Sel.Count() == 2 )  {
-    if( EsdlInstanceOf(Sel[0], TXAtom) &&
-      EsdlInstanceOf(Sel[1], TXAtom) )  {
-        Tmp = "Distance (";
-        Tmp << macSel_GetName2(((TXAtom&)Sel[0]).Atom(), ((TXAtom&)Sel[1]).Atom());
-        v = ((TXAtom&)Sel[0]).Atom().crd().DistanceTo( ((TXAtom&)Sel[1]).Atom().crd() );
-        Tmp << "): " << olxstr::FormatFloat(3, v);
-    }
-    else if( EsdlInstanceOf(Sel[0], TXBond) &&
-      EsdlInstanceOf(Sel[1], TXBond) )  {
-        TXBond& A = (TXBond&)Sel[0], &B =(TXBond&)Sel[1];
-        Tmp = "Angle (";
+  try {
+    double v;
+    TGlGroup& Sel = FGlRender->GetSelection();
+    if( Sel.Count() == 2 )  {
+      if( EsdlInstanceOf(Sel[0], TXAtom) &&
+        EsdlInstanceOf(Sel[1], TXAtom) )  {
+          Tmp = "Distance (";
+          Tmp << macSel_GetName2(((TXAtom&)Sel[0]).Atom(), ((TXAtom&)Sel[1]).Atom());
+          v = ((TXAtom&)Sel[0]).Atom().crd().DistanceTo( ((TXAtom&)Sel[1]).Atom().crd() );
+          Tmp << "): " << olxstr::FormatFloat(3, v);
+      }
+      else if( EsdlInstanceOf(Sel[0], TXBond) &&
+        EsdlInstanceOf(Sel[1], TXBond) )  {
+          TXBond& A = (TXBond&)Sel[0], &B =(TXBond&)Sel[1];
+          Tmp = "Angle (";
           Tmp << macSel_GetName4a(A.Bond().A(), A.Bond().B(), B.Bond().A(), B.Bond().B()) <<
             "): ";
           v = Angle(A.Bond().A().crd(), A.Bond().B().crd(), B.Bond().A().crd(), B.Bond().B().crd());
           Tmp << olxstr::FormatFloat(3, v) << " (" << olxstr::FormatFloat(3, 180-v) << ')' <<
-        "\nAngle (" <<
-          macSel_GetName4a(A.Bond().A(), A.Bond().B(), B.Bond().B(), B.Bond().A()) <<
-          "): ";
+            "\nAngle (" <<
+            macSel_GetName4a(A.Bond().A(), A.Bond().B(), B.Bond().B(), B.Bond().A()) <<
+            "): ";
           v = Angle(A.Bond().A().crd(), A.Bond().B().crd(), B.Bond().A().crd(), B.Bond().B().crd());
           Tmp << olxstr::FormatFloat(3, v) << " (" << olxstr::FormatFloat(3, 180-v) << ')';
-        // check for ajusten bonds
-        if( !(&A.Bond().A() == &B.Bond().A() || &A.Bond().A() == &B.Bond().B() ||
-              &A.Bond().B() == &B.Bond().A() || &A.Bond().B() == &B.Bond().B()) )
-        {
-          Tmp << "\nTorsion angle (" <<
-            macSel_GetName4(A.Bond().A(), A.Bond().B(), B.Bond().B(), B.Bond().A()) <<
-            "): ";
+          // check for ajusten bonds
+          if( !(&A.Bond().A() == &B.Bond().A() || &A.Bond().A() == &B.Bond().B() ||
+            &A.Bond().B() == &B.Bond().A() || &A.Bond().B() == &B.Bond().B()) )
+          {
+            Tmp << "\nTorsion angle (" <<
+              macSel_GetName4(A.Bond().A(), A.Bond().B(), B.Bond().B(), B.Bond().A()) <<
+              "): ";
             v = TorsionAngle(A.Bond().A().crd(), A.Bond().B().crd(), B.Bond().B().crd(), B.Bond().A().crd());
-          Tmp << olxstr::FormatFloat(3, v) << " (" << olxstr::FormatFloat(3, 180-v) << ')' <<
-          "\nTorsion angle (" <<
-            macSel_GetName4(A.Bond().A(), A.Bond().B(), B.Bond().B(), B.Bond().A()) << 
-            "): ";
+            Tmp << olxstr::FormatFloat(3, v) << " (" << olxstr::FormatFloat(3, 180-v) << ')' <<
+              "\nTorsion angle (" <<
+              macSel_GetName4(A.Bond().A(), A.Bond().B(), B.Bond().B(), B.Bond().A()) << 
+              "): ";
             v = TorsionAngle(A.Bond().A().crd(), A.Bond().B().crd(), B.Bond().A().crd(), B.Bond().B().crd());
-          Tmp << olxstr::FormatFloat(3, v) << " (" << olxstr::FormatFloat(3, 180-v) << ')';
-        }
-    }
-    else if( EsdlInstanceOf(Sel[0], TXPlane) && EsdlInstanceOf(Sel[1], TXAtom) )  {
+            Tmp << olxstr::FormatFloat(3, v) << " (" << olxstr::FormatFloat(3, 180-v) << ')';
+          }
+      }
+      else if( EsdlInstanceOf(Sel[0], TXPlane) && EsdlInstanceOf(Sel[1], TXAtom) )  {
         Tmp = "Distance (plane-atom): ";
-          v = ((TXPlane&)Sel[0]).Plane().DistanceTo(((TXAtom&)Sel[1]).Atom());
+        v = ((TXPlane&)Sel[0]).Plane().DistanceTo(((TXAtom&)Sel[1]).Atom());
         Tmp << olxstr::FormatFloat(3, v) << 
-        "\nDistance (plane centroid-atom): ";
-          v = ((TXPlane&)Sel[0]).Plane().GetCenter().DistanceTo(((TXAtom&)Sel[1]).Atom().crd());
-          Tmp << olxstr::FormatFloat(3, v);
-    }
-    else if( EsdlInstanceOf(Sel[0], TXAtom) && EsdlInstanceOf(Sel[1], TXPlane) )  {
+          "\nDistance (plane centroid-atom): ";
+        v = ((TXPlane&)Sel[0]).Plane().GetCenter().DistanceTo(((TXAtom&)Sel[1]).Atom().crd());
+        Tmp << olxstr::FormatFloat(3, v);
+      }
+      else if( EsdlInstanceOf(Sel[0], TXAtom) && EsdlInstanceOf(Sel[1], TXPlane) )  {
         Tmp = "Distance (plane-atom): ";
-          v = ((TXPlane&)Sel[1]).Plane().DistanceTo(((TXAtom&)Sel[0]).Atom());
-          Tmp << olxstr::FormatFloat(3, v) <<
-        "\nDistance (plane centroid-atom): ";
-          v = ((TXPlane&)Sel[1]).Plane().GetCenter().DistanceTo(((TXAtom&)Sel[0]).Atom().crd());
-          Tmp << olxstr::FormatFloat(3, v);
-    }
-    else if( EsdlInstanceOf(Sel[0], TXBond) && EsdlInstanceOf(Sel[1], TXPlane) )  {
+        v = ((TXPlane&)Sel[1]).Plane().DistanceTo(((TXAtom&)Sel[0]).Atom());
+        Tmp << olxstr::FormatFloat(3, v) <<
+          "\nDistance (plane centroid-atom): ";
+        v = ((TXPlane&)Sel[1]).Plane().GetCenter().DistanceTo(((TXAtom&)Sel[0]).Atom().crd());
+        Tmp << olxstr::FormatFloat(3, v);
+      }
+      else if( EsdlInstanceOf(Sel[0], TXBond) && EsdlInstanceOf(Sel[1], TXPlane) )  {
         Tmp = "Angle (plane-bond): ";
         v = ((TXPlane&)Sel[1]).Plane().Angle(((TXBond&)Sel[0]).Bond());
         Tmp << olxstr::FormatFloat(3, v);
-    }
-    else if( EsdlInstanceOf(Sel[1], TXBond) && EsdlInstanceOf(Sel[0], TXPlane) )  {
+      }
+      else if( EsdlInstanceOf(Sel[1], TXBond) && EsdlInstanceOf(Sel[0], TXPlane) )  {
         Tmp = "Angle (plane-bond): ";
         v = ((TXPlane&)Sel[0]).Plane().Angle(((TXBond&)Sel[1]).Bond());
         Tmp << olxstr::FormatFloat(3, v);
-    }
-    if( EsdlInstanceOf(Sel[1], TXPlane) && EsdlInstanceOf(Sel[0], TXPlane) )  {
+      }
+      if( EsdlInstanceOf(Sel[1], TXPlane) && EsdlInstanceOf(Sel[0], TXPlane) )  {
         TSPlane &a = ((TXPlane&)Sel[0]).Plane(),
           &b = ((TXPlane&)Sel[1]).Plane();
         Tmp = "Angle (plane-plane): ";
-          Tmp << olxstr::FormatFloat(3, a.Angle(b)) <<
-        "\nDistance (plane centroid-plane centroid): " <<
+        Tmp << olxstr::FormatFloat(3, a.Angle(b)) <<
+          "\nDistance (plane centroid-plane centroid): " <<
           olxstr::FormatFloat(3, a.GetCenter().DistanceTo(b.GetCenter())) <<
-        "\nDistance (plane[" << macSel_GetPlaneName(a) << "]-centroid): " <<
+          "\nDistance (plane[" << macSel_GetPlaneName(a) << "]-centroid): " <<
           olxstr::FormatFloat(3, a.DistanceTo(b.GetCenter())) <<
-        "\nDistance (plane[" << macSel_GetPlaneName(b) << "]-centroid): " <<
+          "\nDistance (plane[" << macSel_GetPlaneName(b) << "]-centroid): " <<
           olxstr::FormatFloat(3, b.DistanceTo(a.GetCenter()));
+      }
     }
-  }
-  else if( Sel.Count() == 3 )  {
-    if( EsdlInstanceOf(Sel[0], TXAtom) &&
-      EsdlInstanceOf(Sel[1], TXAtom) &&
-      EsdlInstanceOf(Sel[2], TXAtom) )  {
-        TSAtom &a1 = ((TXAtom&)Sel[0]).Atom(),
-          &a2 = ((TXAtom&)Sel[1]).Atom(),
-          &a3 = ((TXAtom&)Sel[2]).Atom();
-        Tmp = "Angle (";
-        Tmp << macSel_GetName3(a1, a2, a3)<< "): " << 
-          olxstr::FormatFloat(3, Angle(a1.crd(), a2.crd(), a3.crd()));
+    else if( Sel.Count() == 3 )  {
+      if( EsdlInstanceOf(Sel[0], TXAtom) &&
+        EsdlInstanceOf(Sel[1], TXAtom) &&
+        EsdlInstanceOf(Sel[2], TXAtom) )  {
+          TSAtom &a1 = ((TXAtom&)Sel[0]).Atom(),
+            &a2 = ((TXAtom&)Sel[1]).Atom(),
+            &a3 = ((TXAtom&)Sel[2]).Atom();
+          Tmp = "Angle (";
+          Tmp << macSel_GetName3(a1, a2, a3)<< "): " << 
+            olxstr::FormatFloat(3, Angle(a1.crd(), a2.crd(), a3.crd()));
+      }
     }
-  }
-  else if( Sel.Count() == 4 )  {
-    if( EsdlInstanceOf(Sel[0], TXAtom) &&
-      EsdlInstanceOf(Sel[1], TXAtom) &&
-      EsdlInstanceOf(Sel[2], TXAtom) &&
-      EsdlInstanceOf(Sel[3], TXAtom) )  {
-        TSAtom &a1 = ((TXAtom&)Sel[0]).Atom(),
-          &a2 = ((TXAtom&)Sel[1]).Atom(),
-          &a3 = ((TXAtom&)Sel[2]).Atom(),
-          &a4 = ((TXAtom&)Sel[3]).Atom();
-        Tmp = "Torsion angle (";
-        Tmp << macSel_GetName4(a1, a2, a3, a4) << "): ";
-        v = TorsionAngle(a1.crd(), a2.crd(), a3.crd(), a4.crd());
-        if( v >= 0 )
-          Tmp << olxstr::FormatFloat(3, v) << " (" 
-              << olxstr::FormatFloat(3, 180-v) << ')';
-        else 
-          Tmp << "n/a (n/a)";
+    else if( Sel.Count() == 4 )  {
+      if( EsdlInstanceOf(Sel[0], TXAtom) &&
+        EsdlInstanceOf(Sel[1], TXAtom) &&
+        EsdlInstanceOf(Sel[2], TXAtom) &&
+        EsdlInstanceOf(Sel[3], TXAtom) )  {
+          TSAtom &a1 = ((TXAtom&)Sel[0]).Atom(),
+            &a2 = ((TXAtom&)Sel[1]).Atom(),
+            &a3 = ((TXAtom&)Sel[2]).Atom(),
+            &a4 = ((TXAtom&)Sel[3]).Atom();
+          Tmp = "Torsion angle (";
+          Tmp << macSel_GetName4(a1, a2, a3, a4) << "): ";
+          v = TorsionAngle(a1.crd(), a2.crd(), a3.crd(), a4.crd());
+          if( v >= 0 )
+            Tmp << olxstr::FormatFloat(3, v) << " (" 
+            << olxstr::FormatFloat(3, 180-v) << ')';
+          else 
+            Tmp << "n/a (n/a)";
 
-        Tmp << 
-        "\nAngle (" << macSel_GetName3(a1, a2, a3) << "): " <<
-          olxstr::FormatFloat(3, Angle(a1.crd(), a2.crd(), a3.crd())) <<
-        "\nAngle (" << macSel_GetName3(a2, a3, a4) << "): " << 
-          olxstr::FormatFloat(3, Angle(a2.crd(), a3.crd(), a4.crd())) <<
-        "\nDistance (" << macSel_GetName2(a1, a2) << "): " << 
-          olxstr::FormatFloat(3, a1.crd().DistanceTo(a2.crd())) <<
-        "\nDistance (" << macSel_GetName2(a2, a3) << "): " << 
-          olxstr::FormatFloat(3, a2.crd().DistanceTo(a3.crd())) <<
-        "\nDistance (" << macSel_GetName2(a3, a4) << "): " << 
-          olxstr::FormatFloat(3, a3.crd().DistanceTo(a4.crd()));
+          Tmp << 
+            "\nAngle (" << macSel_GetName3(a1, a2, a3) << "): " <<
+            olxstr::FormatFloat(3, Angle(a1.crd(), a2.crd(), a3.crd())) <<
+            "\nAngle (" << macSel_GetName3(a2, a3, a4) << "): " << 
+            olxstr::FormatFloat(3, Angle(a2.crd(), a3.crd(), a4.crd())) <<
+            "\nDistance (" << macSel_GetName2(a1, a2) << "): " << 
+            olxstr::FormatFloat(3, a1.crd().DistanceTo(a2.crd())) <<
+            "\nDistance (" << macSel_GetName2(a2, a3) << "): " << 
+            olxstr::FormatFloat(3, a2.crd().DistanceTo(a3.crd())) <<
+            "\nDistance (" << macSel_GetName2(a3, a4) << "): " << 
+            olxstr::FormatFloat(3, a3.crd().DistanceTo(a4.crd()));
+      }
     }
+  }
+  catch(const TExceptionBase& exc)  {
+    Tmp = "n/a";
   }
   return Tmp;
 }
