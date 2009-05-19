@@ -6061,7 +6061,7 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   TXAtomPList atoms;
   bool subgraph = Options.Contains("s");
   olxstr suffix = Options.FindValue("n");
-  bool name = !suffix.IsEmpty();
+  bool name = Options.Contains("n");
   bool align = Options.Contains("a");
   FindXAtoms(Cmds, atoms, false, true);
   if( !atoms.IsEmpty() )  {

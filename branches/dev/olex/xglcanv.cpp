@@ -11,7 +11,13 @@
 #include "mainform.h"
 #include "glgroup.h"
 
-//----------------------------------------------------------------------------//
+int TGlCanvas::glAttrib[] = {
+  WX_GL_RGBA, 1, 
+  WX_GL_DOUBLEBUFFER, 1, 
+//  WX_GL_SAMPLE_BUFFERS, 1,  // these are not defined though documented...
+//  WX_GL_SAMPLES, 4,
+  0};
+ //----------------------------------------------------------------------------//
 // TGlCanvas function bodies
 //----------------------------------------------------------------------------//
 
@@ -42,7 +48,7 @@ TGlCanvas::TGlCanvas(TMainForm *parent, wxWindowID id,
   wxGLCanvas(parent, (wxGLCanvas*)NULL, id, pos, size, style|wxFULL_REPAINT_ON_RESIZE, name )  {
   Context = NULL;
 #else
-  wxGLCanvas(parent, id, (int*) NULL, pos, size, style|wxFULL_REPAINT_ON_RESIZE, name )  {
+  wxGLCanvas(parent, id, &glAttrib[0], pos, size, style|wxFULL_REPAINT_ON_RESIZE, name )  {
   Context = new wxGLContext( this, NULL);
 #ifdef __WIN32__ // on GTK the context initialisation is delayed
   Context->SetCurrent(*this);

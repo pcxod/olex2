@@ -20,6 +20,7 @@ private:
   bool FRightMouseDown, FLeftMouseDown;
   class TMainForm *FParent;
   wxGLContext* Context;
+  static int glAttrib[];
 public:
   TGlCanvas(TMainForm *parent, const wxWindowID id = -1, const wxPoint& pos = wxDefaultPosition,
     const wxSize& size = wxDefaultSize, long style = 0, const wxString& name = wxT("TGlCanvas"));
