@@ -18,8 +18,8 @@ protected:
   virtual bool IsStyleSaveable() const {  return true; }
   virtual bool IsRadiusSaveable() const {  return true; }
 public:
-  TXGrowLine(const olxstr& collectionName, TSAtom *A,
-               TCAtom* CA, const smatd& transform, TGlRenderer *Render);
+  TXGrowLine(TGlRenderer& Render, const olxstr& collectionName, TSAtom *A,
+               TCAtom* CA, const smatd& transform);
   void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
   virtual ~TXGrowLine();
 
@@ -29,7 +29,7 @@ public:
   bool OnMouseUp(const IEObject *Sender, const TMouseData *Data){  return false; }
   bool OnMouseMove(const IEObject *Sender, const TMouseData *Data){  return false; }
 
-  bool Orient(TGlPrimitive *P);
+  bool Orient(TGlPrimitive& P);
   void Radius(float V);
   inline double Radius()     {  return Params()[4]; }
   void Length(float V);

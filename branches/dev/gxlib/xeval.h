@@ -167,7 +167,7 @@ public:
   // destructor
   TSelBEvaluator()  {  ;  }
   // evaluator function
-  TXBond *GetTXBond()  {return (TXBond*)Parent->GetTGlGroup()->Object(0);  }
+  TXBond *GetTXBond()  {return &(TXBond&)Parent->GetTGlGroup()->GetObject(0);  }
 };
 // evaluator implementation for scalar bc
 class TXAtom_BcEvaluator: public IDoubleEvaluator
@@ -219,7 +219,7 @@ public:
   // destructor
   TSelAEvaluator()  {  ;  }
   // evaluator function
-  TXAtom *GetTXAtom()  {return (TXAtom*)Parent->GetTGlGroup()->Object(0);  }
+  TXAtom *GetTXAtom()  {return &(TXAtom&)Parent->GetTGlGroup()->GetObject(0);  }
 };
 // evaluator implementation for scalar afix
 class TXAtom_AfixEvaluator: public IDoubleEvaluator

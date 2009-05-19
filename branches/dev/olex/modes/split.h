@@ -5,15 +5,15 @@ class TSplitMode : public AMode  {
   TTypeList< AnAssociation2<TXAtom*, TXAtom*> > SplitAtoms;
 protected:
   void UpdateSelectionCrds() {
-    TGlGroup* sel = TGlXApp::GetGXApp()->GetRender().Selection();
-    if( sel->Count() > 1 )  {
+    TGlGroup& sel = TGlXApp::GetGXApp()->GetSelection();
+    if( sel.Count() > 1 )  {
       vec3d c, cr;
       TXAtomPList atoms;
-      for( int i=0; i < sel->Count(); i++ )  {
-        if( EsdlInstanceOf(*sel->Object(i), TXAtom) )  {
-          cr += ((TXAtom*)sel->Object(i))->Basis.GetCenter();
-          cr += ((TXAtom*)sel->Object(i))->Atom().crd();
-          atoms.Add( (TXAtom*)sel->Object(i) );
+      for( int i=0; i < sel.Count(); i++ )  {
+        if( EsdlInstanceOf(sel[i], TXAtom) )  {
+          cr += ((TXAtom&)sel[i]).Basis.GetCenter();
+          cr += ((TXAtom&)sel[i]).Atom().crd();
+          atoms.Add( (TXAtom&)sel[i] );
         }
       }
       if( atoms.Count() > 1 )  {
@@ -125,7 +125,7 @@ public:
       }
       else  {  // do selection then
         UpdateSelectionCrds();
-        TGlXApp::GetGXApp()->GetRender().Select(XA);
+        TGlXApp::GetGXApp()->GetRender().Select(*XA);
       }
       return true;
     }

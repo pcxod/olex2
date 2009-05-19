@@ -1037,7 +1037,7 @@ double TNetwork::FindAlignmentMatrix(const TTypeList< AnAssociation2<TSAtom*,TSA
   return TNetwork_FindAlignmentMatrix(atoms, res, centB, TryInversion);
 }
 //..............................................................................
-void TNetwork::PrepearesESDCalc(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atoms, 
+void TNetwork::PrepareESDCalc(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atoms, 
     bool Inverted,
     TSAtomPList& atoms_out,
     vec3d_alist& crd_out, 

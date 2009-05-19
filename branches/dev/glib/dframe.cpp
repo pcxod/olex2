@@ -13,16 +13,16 @@
 #include "glrender.h"
 #include "gpcollection.h"
 #include "glmouse.h"
+#include "glprimitive.h"
 
 UseGlNamespace()
 //..............................................................................
 //..............................................................................
 
-TDFrame::TDFrame(const olxstr& collectionName, TGlRenderer *Render) :
-  AGDrawObject(collectionName)
+TDFrame::TDFrame(TGlRenderer& Render, const olxstr& collectionName) :
+  AGDrawObject(Render, collectionName)
 {
   FPrimitive = NULL;
-  FRender = Render;
   SetGroupable(false);
   FActions = new TActionQList;
   OnSelect = &FActions->NewQueue("ONSELECT");
@@ -35,22 +35,21 @@ TDFrame::~TDFrame()  {
 void TDFrame::Create(const olxstr& cName, const ACreationParams* cpar) {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
-  TGPCollection* GPC = FRender->FindCollection( GetCollectionName() );
-  if( GPC == NULL )
-    GPC = FRender->NewCollection( GetCollectionName() );
-  GPC->AddObject(this);
-  if( GPC->PrimitiveCount() != 0 )  return;
+  TGPCollection& GPC = Parent.FindOrCreateCollection( GetCollectionName() );
+  GPC.AddObject(*this);
+  if( GPC.PrimitiveCount() != 0 )  return;
 
   TGlMaterial GlM;
   GlM.SetFlags(sglmIdentityDraw);
-  FPrimitive = GPC->NewPrimitive("Lines", sgloLineLoop);
-  FPrimitive->SetProperties(&GlM);
+  FPrimitive = &GPC.NewPrimitive("Lines", sgloLineLoop);
+  FPrimitive->SetProperties(GlM);
   FPrimitive->Data.Resize(4, 4);
   FPrimitive->Params[0] = 1;              // line width
 }
 //..............................................................................
 bool TDFrame::OnMouseDown(const IEObject *Sender, const TMouseData *Data)  {
-  if( !FPrimitive ) return false;
+  if( FPrimitive == NULL ) 
+    return false;
   double Scale = FRender->GetScale();
   int hW = FRender->GetWidth()/2 + FRender->GetLeft(),
       hH = FRender->GetHeight()/2 - FRender->GetTop();
@@ -79,9 +78,9 @@ bool TDFrame::OnMouseDown(const IEObject *Sender, const TMouseData *Data)  {
   return true;
 }
 //..............................................................................
-bool TDFrame::OnMouseUp(const IEObject *Sender, const TMouseData *Data)
-{
-  if( !FPrimitive ) return false;
+bool TDFrame::OnMouseUp(const IEObject *Sender, const TMouseData *Data)  {
+  if( FPrimitive == NULL ) 
+    return false;
   SetVisible( false );
   FRender->Draw();
   TSelectionInfo SI;
@@ -95,9 +94,9 @@ bool TDFrame::OnMouseUp(const IEObject *Sender, const TMouseData *Data)
   return true;
 }
 //..............................................................................
-bool TDFrame::OnMouseMove(const IEObject *Sender, const TMouseData *Data)
-{
-  if( !FPrimitive ) return false;
+bool TDFrame::OnMouseMove(const IEObject *Sender, const TMouseData *Data)  {
+  if( FPrimitive == NULL ) 
+    return false;
   double Scale = FRender->GetScale();
   int hW = FRender->GetWidth()/2 + FRender->GetLeft(),
       hH = FRender->GetHeight()/2 - FRender->GetTop();
@@ -110,8 +109,7 @@ bool TDFrame::OnMouseMove(const IEObject *Sender, const TMouseData *Data)
   return true;
 }
 //..............................................................................
-bool TDFrame::Orient(TGlPrimitive *P)
-{
+bool TDFrame::Orient(TGlPrimitive& P)  {
   return false;
 }
 //..............................................................................

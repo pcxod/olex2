@@ -11,17 +11,17 @@
 #include "glrender.h"
 #include "gpcollection.h"
 #include "styles.h"
+#include "glprimitive.h"
 
 UseGlNamespace()
 //..............................................................................
 //..............................................................................
 
-TGlGroup::TGlGroup(const olxstr& collectionName, TGlRenderer *P) :
-  AGDrawObject(collectionName)  {
-
+TGlGroup::TGlGroup(TGlRenderer& R, const olxstr& collectionName) :
+  AGDrawObject(R, collectionName)  
+{
   FGlM = NULL;
   Flags |= sgdoGroup;
-  AGDrawObject::FParent = P;
   DefaultColor = true;
 }
 //..............................................................................
@@ -29,59 +29,55 @@ void TGlGroup::Create(const olxstr& cName, const ACreationParams* cpar)  {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
 
-  TGPCollection *GPC = FParent->FindCollection( GetCollectionName() );
-  if( GPC == NULL )  
-    GPC = FParent->NewCollection( GetCollectionName() );
-  GPC->AddObject(this);
-  TGraphicsStyle *GS = GPC->Style();
-  FGlM = const_cast<TGlMaterial*>(GS->Material("mat"));
-  if( GPC->PrimitiveCount() != 0 )  return;
-
-  DefaultColor = FGlM->HasMark();
-  if( FGlM->HasMark() )  {
-    if( ParentGroup() != NULL )  {
-      FGlM->SetFlags( sglmAmbientF|sglmDiffuseF|sglmSpecularF|sglmShininessF );
-      FGlM->ShininessF = 128;
-      FGlM->AmbientF = 0xff0fff0f;
-      FGlM->DiffuseF = 0xff00f0ff;
-    }
-    else  {
-      FGlM->SetFlags( sglmAmbientF|sglmDiffuseF|sglmSpecularF|sglmShininessF|
-                      sglmAmbientB|sglmDiffuseB|sglmSpecularB|sglmShininessB|sglmTransparent );
-      FGlM->ShininessF = 128;
-      FGlM->AmbientF = 0x7f00ff00;
-      FGlM->DiffuseF = 0x7f0000ff;
-      FGlM->ShininessB = 128;
-      FGlM->AmbientB = 0x7f00ff00;
-      FGlM->DiffuseB = 0x7f0000ff;
-    }
+  TGPCollection& GPC = Parent.FindOrCreateCollection( GetCollectionName() );
+  GPC.AddObject(*this);
+  if( GPC.PrimitiveCount() != 0 )  return;
+  TGraphicsStyle& GS = GPC.GetStyle();
+  TGlMaterial GlM;
+  if( GetParentGroup() != NULL )  {
+    GlM.SetFlags( sglmAmbientF|sglmDiffuseF|sglmSpecularF|sglmShininessF );
+    GlM.ShininessF = 128;
+    GlM.AmbientF = 0xff0fff0f;
+    GlM.DiffuseF = 0xff00f0ff;
   }
+  else  {
+    GlM.SetFlags( sglmAmbientF|sglmDiffuseF|sglmSpecularF|sglmShininessF|
+      sglmAmbientB|sglmDiffuseB|sglmSpecularB|sglmShininessB|sglmTransparent );
+    GlM.ShininessF = 128;
+    GlM.AmbientF = 0x7f00ff00;
+    GlM.DiffuseF = 0x7f0000ff;
+    GlM.ShininessB = 128;
+    GlM.AmbientB = 0x7f00ff00;
+    GlM.DiffuseB = 0x7f0000ff;
+  }
+  DefaultColor = (GS.IndexOfMaterial("mat") != -1);
+  FGlM = &GS.GetMaterial("mat", GlM);
 }
 //..............................................................................
 TGlGroup::~TGlGroup()  {
-  if( ParentGroup() != NULL )
-    ParentGroup()->Remove( (AGDrawObject*)this);
+  if( GetParentGroup() != NULL )
+    GetParentGroup()->Remove(*this);
   Clear();
 } 
 //..............................................................................
 void TGlGroup::Clear()  {
   for( int i=0; i < FObjects.Count(); i++ )  {
-    FObjects[i]->ParentGroup(NULL);
+    FObjects[i]->SetParentGroup(NULL);
     FObjects[i]->SetSelected(false);
   }
   FObjects.Clear();
 }
 //..............................................................................
-void TGlGroup::Remove(AGDrawObject *G)  {
+void TGlGroup::Remove(AGDrawObject& G)  {
   FObjects.Remove(G);
-  G->ParentGroup(NULL);
-  G->SetSelected(false);
+  G.SetParentGroup(NULL);
+  G.SetSelected(false);
 }
 //..............................................................................
 void TGlGroup::RemoveDeleted()  {
   for( int i=0; i < FObjects.Count(); i++ )  {
     if( FObjects[i]->IsDeleted() )  {
-      FObjects[i]->ParentGroup(NULL);
+      FObjects[i]->SetParentGroup(NULL);
       FObjects[i]->SetSelected(false);
       FObjects[i] = NULL;
     }
@@ -89,20 +85,22 @@ void TGlGroup::RemoveDeleted()  {
   FObjects.Pack();
 }
 //..............................................................................
-bool TGlGroup::Add(AGDrawObject *G)  {
-  if( G == this )
+bool TGlGroup::Add(AGDrawObject& GO)  {
+  AGDrawObject* go = &GO;
+  if( go == this )
     throw TInvalidArgumentException(__OlxSourceInfo, "cannot add itself");
-  TGlGroup *GlG = Parent()->FindObjectGroup(G);
-  if( GlG != NULL )  G = GlG;
-  int i = FObjects.IndexOf(G);
+  TGlGroup *GlG = Parent.FindObjectGroup(GO);
+  if( GlG != NULL )  
+    go = GlG;
+  int i = FObjects.IndexOf(go);
   if( i == -1 )  {
-    FObjects.Add(G);
-    G->ParentGroup(this);
+    FObjects.Add(go);
+    go->SetParentGroup(this);
     return true;
   }
   else  {
     FObjects.Delete(i);
-    G->ParentGroup(NULL);
+    go->SetParentGroup(NULL);
     return false;
   }
 }
@@ -119,8 +117,8 @@ void TGlGroup::SetSelected(bool On)  {
 }
 //..............................................................................
 void TGlGroup::InitMaterial() const {
-  if( ParentGroup() != NULL )
-    ParentGroup()->InitMaterial();
+  if( GetParentGroup() != NULL )
+    GetParentGroup()->InitMaterial();
   else
     FGlM->Init();
 }
@@ -135,14 +133,14 @@ void TGlGroup::Draw(bool SelectPrimitives, bool SelectObjects) const  {
     if( !G->IsVisible() )  continue;
     if( G->IsDeleted() )  continue;
     if( G->IsGroup() )    { G->Draw();  continue; }
-    int pc = G->Primitives()->PrimitiveCount();
+    const int pc = G->GetPrimitives().PrimitiveCount();
     for( int j=0; j < pc; j++ )  {
-      TGlPrimitive* GlP = G->Primitives()->Primitive(j);
+      TGlPrimitive& GlP = G->GetPrimitives().GetPrimitive(j);
       if( SelectObjects )     glLoadName(G->GetTag());
-      if( SelectPrimitives )  glLoadName(GlP->GetTag());
+      if( SelectPrimitives )  glLoadName(GlP.GetTag());
       glPushMatrix();
       if( G->Orient(GlP) )  {  glPopMatrix();  continue;  }
-      GlP->Draw();
+      GlP.Draw();
       glPopMatrix();
     }
   }
@@ -167,7 +165,7 @@ bool TGlGroup::OnMouseMove(const IEObject *Sender, const TMouseData *Data)  {
 }
 //..............................................................................
 void TGlGroup::GlM(const TGlMaterial& G)  {
-  FGlM = Primitives()->Style()->PrimitiveMaterial("mat", G);
+  FGlM = &GetPrimitives().GetStyle().SetMaterial("mat", G);
 }
 //..............................................................................
 

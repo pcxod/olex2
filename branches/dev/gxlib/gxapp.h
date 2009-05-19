@@ -167,8 +167,8 @@ public:
 // GlRender interface
   void ClearColor(int Color) {  FGlRender->LightModel.ClearColor() = Color; }
   inline int ClearColor()           {  return FGlRender->LightModel.ClearColor().GetRGB(); }
-  inline TGlRenderer& GetRender()     {  return *FGlRender; }
-  inline TXFader& GetFader()      {  return *Fader; }
+  inline TGlRenderer& GetRender() const {  return *FGlRender; }
+  inline TXFader& GetFader()        {  return *Fader; }
   void InitFadeMode();
 
   // implementation of BasicApp function - renders the scene
@@ -206,12 +206,12 @@ public:
     Draw();
   }
   void InvertSelection()                    {  GetRender().InvertSelection(); Draw(); }
-  inline TGlGroup* FindObjectGroup(AGDrawObject *G)   {  return GetRender().FindObjectGroup(G); }
+  inline TGlGroup* FindObjectGroup(AGDrawObject& G)   {  return GetRender().FindObjectGroup(G); }
   inline TGlGroup* FindGroup(const olxstr& colName) {  return GetRender().FindGroupByName(colName); }
-  inline TGlGroup *Selection()              {  return GetRender().Selection(); }
+  inline TGlGroup& GetSelection() const  {  return GetRender().GetSelection(); }
   void GroupSelection(const olxstr& name) {  GetRender().GroupSelection(name);  Draw(); }
   void UnGroupSelection()                   {  GetRender().UnGroupSelection(); Draw(); }
-  void UnGroup(TGlGroup *G)                 {  GetRender().UnGroup(G); Draw(); }
+  void UnGroup(TGlGroup& G)                 {  GetRender().UnGroup(G); Draw(); }
   olxstr GetSelectionInfo();
   // ASelection Owner interface
   virtual void ExpandSelection(TCAtomGroup& atoms);

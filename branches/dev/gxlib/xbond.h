@@ -38,7 +38,7 @@ protected:
   virtual bool IsStyleSaveable() const {  return false; }
   virtual bool IsRadiusSaveable() const {  return false; }
 public:
-  TXBond(const olxstr& collectionName, TSBond& B, TGlRenderer *Render);
+  TXBond(TGlRenderer& Render, const olxstr& collectionName, TSBond& B);
   void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
   virtual ACreationParams* GetACreationParams() const;
   virtual ~TXBond();
@@ -56,7 +56,7 @@ public:
   void Radius(float V);
   inline double Radius()        {  return Params()[4]; }
 
-  bool Orient(TGlPrimitive *P);
+  bool Orient(TGlPrimitive& P);
   bool GetDimensions(vec3d &Max, vec3d &Min){  return false; };
 
   void ListParams(TStrList &List, TGlPrimitive *Primitive);

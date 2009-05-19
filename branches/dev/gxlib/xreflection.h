@@ -14,8 +14,8 @@ private:
   vec3i hkl;
   double I;
 public:
-  TXReflection(const olxstr& collectionName, double minI, double maxI,
-                 const TReflection& R, TAsymmUnit* au, TGlRenderer *Render);
+  TXReflection(TGlRenderer& Render, const olxstr& collectionName, double minI, double maxI,
+                 const TReflection& R, TAsymmUnit* au);
   virtual ~TXReflection();
   void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
 
@@ -23,8 +23,8 @@ public:
   double GetI() const {  return I;  }
   vec3d& Center()    {  return FCenter;  }
 
-  bool Orient(TGlPrimitive *P);
-  bool GetDimensions(vec3d &Max, vec3d& Min);
+  bool Orient(TGlPrimitive& P);
+  bool GetDimensions(vec3d& Max, vec3d& Min);
 
   bool OnMouseDown(const IEObject *Sender, const TMouseData *Data){  return true; }
   bool OnMouseUp(const IEObject *Sender, const TMouseData *Data){  return false; }

@@ -140,7 +140,7 @@
 // TXReflection function bodies
 //----------------------------------------------------------------------------//
 TXGrid::TXGrid(const olxstr& collectionName, TGXApp* xapp) :
-                     TGlMouseListener(collectionName, &xapp->GetRender())  {
+                     TGlMouseListener(xapp->GetRender(), collectionName)  {
   if( Instance != NULL )
     throw TFunctionFailedException(__OlxSourceInfo, "singleton");
   Mask = NULL;
@@ -165,7 +165,7 @@ TXGrid::TXGrid(const olxstr& collectionName, TGXApp* xapp) :
   //for textures, 2^n+2 (for border)...
   //MaxDim = 128;//olx_max( olx_max(MaxX,MaxY), MaxZ);
   MaxDim = 128;
-  Info = new TGlTextBox("XGrid_Legend", FParent);
+  Info = new TGlTextBox(Parent, "XGrid_Legend");
   MaxX = MaxY = MaxZ = 0;
   MaxVal = MinVal = 0;
   MinHole = MaxHole = 0;
@@ -183,44 +183,37 @@ void TXGrid::Clear()  {  DeleteObjects();  }
 void TXGrid::Create(const olxstr& cName, const ACreationParams* cpar)  {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
-  TGPCollection* GPC = FParent->FindCollection( GetCollectionName() );
-  if( GPC == NULL )
-    GPC = FParent->NewCollection( GetCollectionName() );
-  GPC->AddObject(this);
-  if( GPC->PrimitiveCount() != 0 )  return;
+  TGPCollection& GPC = Parent.FindOrCreateCollection( GetCollectionName() );
+  GPC.AddObject(*this);
+  if( GPC.PrimitiveCount() != 0 )  return;
 
-  TGraphicsStyle* GS = GPC->Style();
-  TGlPrimitive* GlP = GPC->NewPrimitive("eMap", sgloQuads);
-  TGlMaterial* GlM = const_cast<TGlMaterial*>( GS->Material("eMap") );
-  if( GlM->HasMark() )  {
-    GlM->SetFlags(0);
-    GlM->ShininessF = 128;
-    GlM->SetFlags(sglmAmbientF|sglmDiffuseF|sglmTransparent);
-    GlM->AmbientF = 0xD80f0f0f;
-    GlM->DiffuseF = 0xD80f0f0f;
-  }
+  TGraphicsStyle& GS = GPC.GetStyle();
+  TGlPrimitive& GlP = GPC.NewPrimitive("eMap", sgloQuads);
+  TGlMaterial GlM;
+  GlM.SetFlags(0);
+  GlM.ShininessF = 128;
+  GlM.SetFlags(sglmAmbientF|sglmDiffuseF|sglmTransparent);
+  GlM.AmbientF = 0xD80f0f0f;
+  GlM.DiffuseF = 0xD80f0f0f;
+  GlP.SetProperties( GS.GetMaterial(GlP.GetName(), GlM));
+
   TextIndex = -1;
-  GlP->SetTextureId( -1 );
+  GlP.SetTextureId( -1 );
 
-  GlP->SetProperties(GlM);
-  GlP->Data.Resize(5, 4);
+  GlP.Data.Resize(5, 4);
   // texture coordinates
-  GlP->Data[3][0] = 0;  GlP->Data[4][0] = 0;
-  GlP->Data[3][1] = 1;  GlP->Data[4][1] = 0;
-  GlP->Data[3][2] = 1;  GlP->Data[4][2] = 1;
-  GlP->Data[3][3] = 0;  GlP->Data[4][3] = 1;
+  GlP.Data[3][0] = 0;  GlP.Data[4][0] = 0;
+  GlP.Data[3][1] = 1;  GlP.Data[4][1] = 0;
+  GlP.Data[3][2] = 1;  GlP.Data[4][2] = 1;
+  GlP.Data[3][3] = 0;  GlP.Data[4][3] = 1;
   Info->Create();
   // create dummy primitives
-  glpP = GPC->NewPrimitive("+Surface", sgloQuads);
-  GlM = const_cast<TGlMaterial*>( GS->Material("+Surface") );
-  if( GlM->HasMark() )
-    GlM->FromString("85;0.000,1.000,0.000,0.850;3632300160;1.000,1.000,1.000,0.500;36");
-  glpP->SetProperties(GlM);
-  glpN = GPC->NewPrimitive("-Surface", sgloQuads);
-  GlM = const_cast<TGlMaterial*>( GS->Material("-Surface") );
-  if( GlM->HasMark() ) 
-    GlM->FromString("85;1.000,0.000,0.000,0.850;3632300160;1.000,1.000,1.000,0.500;36");
-  glpN->SetProperties(GlM);
+  glpP = &GPC.NewPrimitive("+Surface", sgloQuads);
+  glpP->SetProperties(GS.GetMaterial("+Surface", 
+    TGlMaterial("85;0.000,1.000,0.000,0.850;3632300160;1.000,1.000,1.000,0.500;36")));
+  glpN = &GPC.NewPrimitive("-Surface", sgloQuads);
+  glpN->SetProperties(GS.GetMaterial("+Surface", 
+    TGlMaterial("85;1.000,0.000,0.000,0.850;3632300160;1.000,1.000,1.000,0.500;36")));
 }
 //..............................................................................
 void TXGrid::CalcColorRGB(double v, double& R, double& G, double& B) {
@@ -307,20 +300,20 @@ void TXGrid::CalcColor(double v) {
   glColor3d(R,G,B);
 }
 //..............................................................................
-bool TXGrid::Orient(TGlPrimitive *GlP)  {
+bool TXGrid::Orient(TGlPrimitive& GlP)  {
   if( ED == NULL )  return true;
 
   if( IS != NULL && Mode3D )  {
-    if( GlP == glpN )  // draw once only
+    if( &GlP == glpN )  // draw once only
       glCallList(PListId);
-    else if( GlP == glpP )  // draw once only
+    else if( &GlP == glpP )  // draw once only
       glCallList(NListId);
     return true;
   }
-  if( GlP == glpP || GlP == glpN )  return true;
+  if( &GlP == glpP || &GlP == glpN )  return true;
 
-//  mat3d bm ( mat3d::Transpose(Parent()->GetBasis().GetMatrix()) );
-  mat3d bm( Parent()->GetBasis().GetMatrix() );
+//  mat3d bm ( mat3d::Transpose(Parent.GetBasis().GetMatrix()) );
+  mat3d bm( Parent.GetBasis().GetMatrix() );
   mat3d c2c(  XApp->XFile().GetAsymmUnit().GetCartesianToCell() );
 
   double R, G, B;
@@ -332,10 +325,10 @@ bool TXGrid::Orient(TGlPrimitive *GlP)  {
   p3[0] = hh/Size;   p3[1] = hh/Size;
   p4[0] = -hh/Size;  p4[1] = hh/Size;
   p1[2] = p2[2] = p3[2] = p4[2] = Depth;
-  p1 = bm * p1;  p1 -= Parent()->GetBasis().GetCenter();
-  p2 = bm * p2;  p2 -= Parent()->GetBasis().GetCenter();
-  p3 = bm * p3;  p3 -= Parent()->GetBasis().GetCenter();
-  p4 = bm * p4;  p4 -= Parent()->GetBasis().GetCenter();
+  p1 = bm * p1;  p1 -= Parent.GetBasis().GetCenter();
+  p2 = bm * p2;  p2 -= Parent.GetBasis().GetCenter();
+  p3 = bm * p3;  p3 -= Parent.GetBasis().GetCenter();
+  p4 = bm * p4;  p4 -= Parent.GetBasis().GetCenter();
 
   for( int i=0; i < MaxDim; i++ )  {
     for( int j=0; j < MaxDim; j++ )  {  // (i,j,Depth)        
@@ -344,7 +337,7 @@ bool TXGrid::Orient(TGlPrimitive *GlP)  {
       p[2] = Depth;
 
       p = bm * p;
-      p -= Parent()->GetBasis().GetCenter();
+      p -= Parent.GetBasis().GetCenter();
       p *= c2c;
       p[0] *= MaxX;  p[0] = Round(p[0]);
       p[1] *= MaxY;  p[1] = Round(p[1]);
@@ -366,8 +359,8 @@ bool TXGrid::Orient(TGlPrimitive *GlP)  {
   }
 
   if( TextIndex == -1 )  {
-    TextIndex = FParent->GetTextureManager().Add2DTexture("Plane", 0, MaxDim, MaxDim, 0, GL_RGB, TextData);
-    TGlTexture* tex = FParent->GetTextureManager().FindTexture(TextIndex);
+    TextIndex = Parent.GetTextureManager().Add2DTexture("Plane", 0, MaxDim, MaxDim, 0, GL_RGB, TextData);
+    TGlTexture* tex = Parent.GetTextureManager().FindTexture(TextIndex);
     tex->SetEnvMode( tpeDecal );
     tex->SetSCrdWrapping( tpCrdClamp );
     tex->SetTCrdWrapping( tpCrdClamp );
@@ -377,27 +370,27 @@ bool TXGrid::Orient(TGlPrimitive *GlP)  {
     tex->SetEnabled(true);
   }
   else
-    FParent->GetTextureManager().
-      Replace2DTexture(*FParent->GetTextureManager().
+    Parent.GetTextureManager().
+      Replace2DTexture(*Parent.GetTextureManager().
       FindTexture(TextIndex), 0, MaxDim, MaxDim, 0, GL_RGB, TextData);
 
-  GlP->Data[0][0] = p1[0];
-  GlP->Data[1][0] = p1[1];
-  GlP->Data[2][0] = p1[2];
+  GlP.Data[0][0] = p1[0];
+  GlP.Data[1][0] = p1[1];
+  GlP.Data[2][0] = p1[2];
 
-  GlP->Data[0][1] = p2[0];
-  GlP->Data[1][1] = p2[1];
-  GlP->Data[2][1] = p2[2];
+  GlP.Data[0][1] = p2[0];
+  GlP.Data[1][1] = p2[1];
+  GlP.Data[2][1] = p2[2];
 
-  GlP->Data[0][2] = p3[0];
-  GlP->Data[1][2] = p3[1];
-  GlP->Data[2][2] = p3[2];
+  GlP.Data[0][2] = p3[0];
+  GlP.Data[1][2] = p3[1];
+  GlP.Data[2][2] = p3[2];
 
-  GlP->Data[0][3] = p4[0];
-  GlP->Data[1][3] = p4[1];
-  GlP->Data[2][3] = p4[2];
+  GlP.Data[0][3] = p4[0];
+  GlP.Data[1][3] = p4[1];
+  GlP.Data[2][3] = p4[2];
 
-  GlP->SetTextureId( TextIndex );
+  GlP.SetTextureId( TextIndex );
 //  glNormal3d(bm[0][2], bm[1][2], bm[2][2]);
   glNormal3d(0, 0, 1);
 
@@ -522,8 +515,8 @@ void TXGrid::SetDepth(float v)  {  Depth = v;  }
 //..............................................................................
 void TXGrid::SetDepth(const vec3d& v)  {
   vec3d p(v);
-  p += Parent()->GetBasis().GetCenter();
-  p = Parent()->GetBasis().GetMatrix()*p;
+  p += Parent.GetBasis().GetCenter();
+  p = Parent.GetBasis().GetMatrix()*p;
   SetDepth( (float)p[2] );
 }
 //..............................................................................
@@ -547,7 +540,7 @@ bool TXGrid::OnMouseMove(const IEObject *Sender, const TMouseData *Data)  {
   if( (Data->Button & smbLeft) != 0 ) {
     Depth += (float)(LastMouseX - Data->X)/15;
     Depth += (float)(LastMouseY - Data->Y)/15;
-    float z = (float)FParent->CalcZoom();
+    float z = (float)Parent.CalcZoom();
     if( Depth < -z/2 )
       Depth = -z/2;
     if( Depth > z/2 )

@@ -191,9 +191,9 @@ TdlgSceneProps::TdlgSceneProps(TMainForm *ParentFrame, TGXApp *XApp)
 
   //light model frame
   cbFonts = new TComboBox(this);
-  AGlScene* ascene = FXApp->GetRender().Scene();
-  for( int i=0; i < ascene->FontCount(); i++ )
-    cbFonts->AddObject( ascene->Font(i)->GetName(), ascene->Font(i) );
+  AGlScene& ascene = FXApp->GetRender().GetScene();
+  for( int i=0; i < ascene.FontCount(); i++ )
+    cbFonts->AddObject( ascene.GetFont(i)->GetName(), ascene.GetFont(i) );
   cbFonts->SetSelection(0);
   cbFonts->OnChange->Add(this);
   tbEditFont = new TButton(this);  tbEditFont->SetCaption("Edit Font");  tbEditFont->OnClick->Add(this);
@@ -315,7 +315,7 @@ bool TdlgSceneProps::Execute(const IEObject *Sender, const IEObject *Data)  {
   if( (TButton*)Sender == tbEditFont )  {
     int sel = cbFonts->GetSelection();
     if( sel == -1 )  return false;
-    FXApp->GetRender().Scene()->ShowFontDialog( (TGlFont*)cbFonts->GetObject(sel) );
+    FXApp->GetRender().GetScene().ShowFontDialog( (TGlFont*)cbFonts->GetObject(sel) );
   }
 
   return true;

@@ -73,8 +73,8 @@ private:
 protected:
   TStrList* FindPrimitiveParams(TGlPrimitive *P);
   static TTypeList<TGlPrimitiveParams> FPrimitiveParams;
-  void ValidateRadius(TGraphicsStyle *GS);
-  void ValidateDS(TGraphicsStyle *GS);
+  void ValidateRadius(TGraphicsStyle& GS);
+  void ValidateDS(TGraphicsStyle& GS);
   static void ValidateAtomParams();
   static TXAtomStylesClear *FXAtomStylesClear;
   static int OrtepSpheres;  // 8 glLists
@@ -84,7 +84,7 @@ protected:
   static TGraphicsStyle *FAtomParams;
   static olxstr PolyTypeName;
 public:
-  TXAtom(const olxstr& collectionName, TSAtom& A, TGlRenderer *Render);
+  TXAtom(TGlRenderer& Render, const olxstr& collectionName, TSAtom& A);
   virtual ~TXAtom();
   void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
   virtual ACreationParams* GetCreationParams() const;
@@ -123,13 +123,13 @@ public:
   inline operator TSAtom* () const {  return FAtom;  }
   
   inline TSAtom& Atom() const  {  return *FAtom;  }
-  void ApplyStyle(TGraphicsStyle *S);
-  void UpdateStyle(TGraphicsStyle *S);
+  void ApplyStyle(TGraphicsStyle& S);
+  void UpdateStyle(TGraphicsStyle& S);
 
   void Zoom(float Z);
   inline double Zoom()  {  return Params()[1]; }
 
-  bool Orient(TGlPrimitive *P);
+  bool Orient(TGlPrimitive& P);
   bool DrawStencil();
   bool GetDimensions(vec3d &Max, vec3d &Min);
 
@@ -138,7 +138,7 @@ public:
   void ListParams(TStrList &List);
   // fills the list with proposal primitives to construct object
   void ListPrimitives(TStrList &List) const;
-  TGraphicsStyle* Style();
+  TGraphicsStyle& Style();
   void UpdatePrimitives(int32_t Mask, const ACreationParams* cpar=NULL);
 
   bool OnMouseDown(const IEObject *Sender, const TMouseData *Data);

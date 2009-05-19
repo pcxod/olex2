@@ -9,7 +9,7 @@ BeginGxlNamespace()
 class TXLine: public TXBond  {
   vec3d FBase, FEdge;
 public:
-  TXLine(const olxstr& collectionName, const vec3d& base, const vec3d& edge, TGlRenderer *Render);
+  TXLine(TGlRenderer& Render, const olxstr& collectionName, const vec3d& base, const vec3d& edge);
   void Create(const olxstr& cName=EmptyString, const ACreationParams* cpar = NULL);
   virtual ~TXLine();
 
@@ -22,7 +22,7 @@ public:
   bool OnMouseUp(const IEObject *Sender, const TMouseData *Data){  return false; };
   bool OnMouseMove(const IEObject *Sender, const TMouseData *Data){  return false; };
 
-  bool Orient(TGlPrimitive *P);
+  bool Orient(TGlPrimitive& P);
   void Radius(float V);
   inline double Radius()  {  return Params()[4]; }
   void Length(float V);

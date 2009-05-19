@@ -20,7 +20,7 @@ protected:
   int SX, SY;
   short Flags;
 public:
-  TGlMouseListener(const olxstr& collectionName, TGlRenderer *R);
+  TGlMouseListener(TGlRenderer& R, const olxstr& collectionName);
   virtual ~TGlMouseListener();
   TEBasis Basis;
 

@@ -12,13 +12,12 @@ class TXFader: public AGDrawObject  {
   char *Background, *Foreground;
   int BGWidth, BGHeight;
   int FGWidth, FGHeight;
-  TGlMaterial GlM;
   double Step, Position;
 public:
-  TXFader(const olxstr& collectionName, TGlRenderer *Render);
+  TXFader(TGlRenderer& Render, const olxstr& collectionName);
   virtual ~TXFader();
   void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
-  bool Orient(TGlPrimitive *P);
+  bool Orient(TGlPrimitive& P);
   bool GetDimensions(vec3d& Max, vec3d& Min)  {  return false;  }
 
   void InitBG(bool init=true);

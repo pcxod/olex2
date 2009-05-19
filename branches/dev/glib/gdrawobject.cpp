@@ -15,11 +15,12 @@
 UseGlNamespace();
 //..............................................................................
 //..............................................................................
-AGDrawObject::AGDrawObject(const olxstr& collectionName)  {
-  FPrimitives = NULL;
-  FParentGroup = NULL;
+AGDrawObject::AGDrawObject(TGlRenderer& parent, const olxstr& collectionName) :
+  Parent(parent)
+{
+  Primitives = NULL;
+  ParentGroup = NULL;
   Flags = 0;
-  FParent = NULL;
   SetVisible(true);
   SetGroupable(true);
   if( collectionName.Length() )
@@ -31,18 +32,8 @@ AGDrawObject::AGDrawObject(const olxstr& collectionName)  {
 AGDrawObject::~AGDrawObject()  {  ;  }
 //..............................................................................
 void AGDrawObject::Compile()  {
-  for( int i=0; i < FPrimitives->PrimitiveCount(); i++ )
-    FPrimitives->Primitive(i)->Compile();
-}
-//..............................................................................
-void  AGDrawObject::Primitives( TGPCollection *GPC)  {
-  FPrimitives = GPC;
-  FParent = GPC->Parent();
-}
-//..............................................................................
-void AGDrawObject::ParentGroup(TGlGroup *P)  {
-  FParentGroup = P;
-  SetGrouped(P != NULL);
+  for( int i=0; i < Primitives->PrimitiveCount(); i++ )
+    Primitives->GetPrimitive(i).Compile();
 }
 //..............................................................................
 void AGDrawObject::UpdatePrimitives(int32_t Mask, const ACreationParams* cpar) {  }

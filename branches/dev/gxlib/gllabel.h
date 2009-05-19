@@ -14,11 +14,11 @@ class TXGlLabel: public TGlMouseListener  {
   double OffsetX, OffsetY;
   vec3d Center;
 public:
-  TXGlLabel(const olxstr& collectionName, TGlRenderer *Render);
+  TXGlLabel(TGlRenderer& Render, const olxstr& collectionName);
   void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
   virtual ~TXGlLabel();
 
-  bool Orient(TGlPrimitive *P);
+  bool Orient(TGlPrimitive& P);
   bool GetDimensions(vec3d &Max, vec3d &Min){  return false;  }
   inline const olxstr& GetLabel() const   {  return FLabel;  }
   void SetLabel(const olxstr& L);

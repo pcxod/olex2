@@ -1196,7 +1196,7 @@ separated values of Atom Type and radius, an entry a line" );
   FXApp->SetLabelsVisible(false);
   FXApp->GetRender().LightModel.ClearColor() = 0x0f0f0f0f;
 
-  FGlConsole = new TGlConsole("Console", &FXApp->GetRender() );
+  FGlConsole = new TGlConsole(FXApp->GetRender(), "Console");
   // the commands are posted from in Dispatch, SkipPosting is controlling the output
   FXApp->GetLog().AddStream( FGlConsole, false );
   FGlConsole->OnCommand->Add( this, ID_COMMAND);
@@ -1213,14 +1213,14 @@ separated values of Atom Type and radius, an entry a line" );
   FCmdLine->OnKeyDown->Add(this, ID_CMDLINEKEYDOWN);
   FCmdLine->OnCommand->Add( this, ID_COMMAND);
 
-  FHelpWindow = new TGlTextBox("HelpWindow", &FXApp->GetRender());
+  FHelpWindow = new TGlTextBox(FXApp->GetRender(), "HelpWindow");
   FXApp->AddObjectToCreate(FHelpWindow);
   FHelpWindow->SetVisible(false);
 
-  FInfoBox = new TGlTextBox("InfoBox", &FXApp->GetRender());
+  FInfoBox = new TGlTextBox(FXApp->GetRender(), "InfoBox");
   FXApp->AddObjectToCreate( FInfoBox );
 
-  GlTooltip = new TGlTextBox("Tooltip", &FXApp->GetRender());
+  GlTooltip = new TGlTextBox(FXApp->GetRender(), "Tooltip");
   FXApp->AddObjectToCreate( GlTooltip );
   GlTooltip->SetVisible(false);
   GlTooltip->SetZ(4.9);
@@ -1241,28 +1241,28 @@ void TMainForm::StartupInit()  {
   wxFont Font(10, wxMODERN, wxNORMAL, wxNORMAL);//|wxFONTFLAG_ANTIALIASED);
   // create 4 fonts
   
-  TGlFont *fnt = FXApp->GetRender().Scene()->CreateFont("Console", Font.GetNativeFontInfoDesc().c_str());
+  TGlFont *fnt = FXApp->GetRender().GetScene().CreateFont("Console", Font.GetNativeFontInfoDesc().c_str());
   fnt->Material().SetFlags(sglmAmbientF|sglmEmissionF|sglmIdentityDraw);
   fnt->Material().AmbientF = 0x7fff7f;
   fnt->Material().EmissionF = 0x1f2f1f;
 
-  fnt = FXApp->GetRender().Scene()->CreateFont("Help", Font.GetNativeFontInfoDesc().c_str());
+  fnt = FXApp->GetRender().GetScene().CreateFont("Help", Font.GetNativeFontInfoDesc().c_str());
   fnt->Material().SetFlags(sglmAmbientF|sglmIdentityDraw);
   fnt->Material().AmbientF = 0x7fff7f;
 
-  fnt = FXApp->GetRender().Scene()->CreateFont("Notes", Font.GetNativeFontInfoDesc().c_str());
+  fnt = FXApp->GetRender().GetScene().CreateFont("Notes", Font.GetNativeFontInfoDesc().c_str());
   fnt->Material().SetFlags(sglmAmbientF|sglmIdentityDraw);
   fnt->Material().AmbientF = 0x7fff7f;
 
-  fnt = FXApp->GetRender().Scene()->CreateFont("Labels", Font.GetNativeFontInfoDesc().c_str());
+  fnt = FXApp->GetRender().GetScene().CreateFont("Labels", Font.GetNativeFontInfoDesc().c_str());
   fnt->Material().SetFlags(sglmAmbientF|sglmIdentityDraw);
   fnt->Material().AmbientF = 0x7fff7f;
 
-  fnt = FXApp->GetRender().Scene()->CreateFont("Picture_labels", Font.GetNativeFontInfoDesc().c_str());
+  fnt = FXApp->GetRender().GetScene().CreateFont("Picture_labels", Font.GetNativeFontInfoDesc().c_str());
   fnt->Material().SetFlags(sglmAmbientF|sglmIdentityDraw);
   fnt->Material().AmbientF = 0x7fff7f;
 
-  fnt = FXApp->GetRender().Scene()->CreateFont("Tooltip", Font.GetNativeFontInfoDesc().c_str());
+  fnt = FXApp->GetRender().GetScene().CreateFont("Tooltip", Font.GetNativeFontInfoDesc().c_str());
   fnt->Material().SetFlags(sglmAmbientF|sglmIdentityDraw);
   fnt->Material().AmbientF = 0x7fff7f;
 
@@ -1292,7 +1292,7 @@ void TMainForm::StartupInit()  {
   if( !GradientPicture.IsEmpty() )  // need to call it after all objects are created
     ProcessXPMacro(olxstr("grad ") << " -p=\'" << GradientPicture << '\'', MacroError);
 
-  FInfoBox->SetHeight(FXApp->GetRender().Scene()->Font(2)->TextHeight(EmptyString));
+  FInfoBox->SetHeight(FXApp->GetRender().GetScene().GetFont(2)->TextHeight(EmptyString));
   
   ProcessXPMacro(olxstr("showwindow help ") << HelpWindowVisible, MacroError);
   ProcessXPMacro(olxstr("showwindow info ") << InfoWindowVisible, MacroError);
@@ -1621,8 +1621,8 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
     }
   }
   else if( event.GetId() == ID_GraphicsDS )  {
-    TGlGroup* Sel = FXApp->Selection();
-    TdlgMatProp* MatProp = new TdlgMatProp(this, FObjectUnderMouse->Primitives(), FXApp);
+    TGlGroup& Sel = FXApp->GetSelection();
+    TdlgMatProp* MatProp = new TdlgMatProp(this, &FObjectUnderMouse->GetPrimitives(), FXApp);
     if( EsdlInstanceOf(*FObjectUnderMouse, TGlGroup) )
       MatProp->SetCurrent( *((TGlGroup*)FObjectUnderMouse)->GlM() );
     if( MatProp->ShowModal() == wxID_OK )  {
@@ -1639,7 +1639,7 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
       TBasicApp::GetLog().Info("The object does not support requested function...");
       return;
     }
-    int i = FObjectUnderMouse->Primitives()->Style()->GetParam(FObjectUnderMouse->GetPrimitiveMaskName(), "0").ToInt();
+    int i = FObjectUnderMouse->GetPrimitives().GetStyle().GetParam(FObjectUnderMouse->GetPrimitiveMaskName(), "0").ToInt();
     TdlgPrimitive* Primitives = new TdlgPrimitive(&Ps, i, this);
     if( Primitives->ShowModal() == wxID_OK )  {
       if( FObjectUnderMouse->IsSelected() && EsdlInstanceOf(*FObjectUnderMouse, TXBond) )  {
@@ -1652,7 +1652,7 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
       }
       else  {
         olxstr TmpStr = "mask ";
-        TmpStr << FObjectUnderMouse->Primitives()->Name() << ' ' << Primitives->Mask;
+        TmpStr << FObjectUnderMouse->GetPrimitives().GetName() << ' ' << Primitives->Mask;
         ProcessXPMacro(TmpStr, MacroError);
       }
     }
@@ -1733,11 +1733,11 @@ void TMainForm::ObjectUnderMouse( AGDrawObject *G)  {
   if( FCurrentPopup != NULL )  {
     FCurrentPopup->Enable(ID_SelGroup, false);
     FCurrentPopup->Enable(ID_SelUnGroup, false);
-    if( FXApp->Selection()->Count() > 1 )  {
+    if( FXApp->GetSelection().Count() > 1 )  {
       FCurrentPopup->Enable(ID_SelGroup, true);
     }
-    if( FXApp->Selection()->Count() == 1 )  {
-      if( EsdlInstanceOf( *FXApp->Selection()->Object(0), TGlGroup) )  {
+    if( FXApp->GetSelection().Count() == 1 )  {
+      if( EsdlInstanceOf( FXApp->GetSelection().GetObject(0), TGlGroup) )  {
         FCurrentPopup->Enable(ID_SelUnGroup, true);
       }
     }
@@ -1815,12 +1815,12 @@ void TMainForm::OnAtomTypePTable(wxCommandEvent& event)  {
 int TMainForm::GetFragmentList(TNetPList& res)  {
   if( FObjectUnderMouse == NULL )  return 0;
   if( FObjectUnderMouse->IsSelected() )  {
-    TGlGroup* glg = FXApp->GetRender().Selection();
-    for( int i=0; i < glg->Count(); i++ )  {
-      if( EsdlInstanceOf(*glg->Object(i), TXAtom) )
-        res.Add( &((TXAtom*)glg->Object(i))->Atom().GetNetwork() );
-      else if( EsdlInstanceOf(*glg->Object(i), TXBond) )
-        res.Add( &((TXBond*)glg->Object(i))->Bond().GetNetwork() );
+    TGlGroup& glg = FXApp->GetSelection();
+    for( int i=0; i < glg.Count(); i++ )  {
+      if( EsdlInstanceOf(glg[i], TXAtom) )
+        res.Add( &((TXAtom&)glg[i]).Atom().GetNetwork() );
+      else if( EsdlInstanceOf(glg[i], TXBond) )
+        res.Add( &((TXBond&)glg[i]).Bond().GetNetwork() );
     }
     for( int i=0; i < res.Count(); i++ )
       res[i]->SetTag(i);
@@ -1998,7 +1998,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
         ProcessXPMacro((olxstr("@reap -b -r \'") << FListenFile)+'\'', MacroError);
         // for debug purposes
         if( TEFile::FileExists(DefStyle) )  
-          FXApp->GetRender().Styles()->LoadFromFile(DefStyle);
+          FXApp->GetRender().GetStyles().LoadFromFile(DefStyle);
         for( int i=0; i < FOnListenCmds.Count(); i++ )  {
           ProcessXPMacro(FOnListenCmds[i], MacroError);
           if( !MacroError.IsSuccessful() )  break;
@@ -2008,9 +2008,9 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
       }
     }
     if( (FMode & mRota) != 0  )  {
-      FXApp->GetRender().Basis()->RotateX(FXApp->GetRender().GetBasis().GetRX()+FRotationIncrement*FRotationVector[0]);
-      FXApp->GetRender().Basis()->RotateY(FXApp->GetRender().GetBasis().GetRY()+FRotationIncrement*FRotationVector[1]);
-      FXApp->GetRender().Basis()->RotateZ(FXApp->GetRender().GetBasis().GetRZ()+FRotationIncrement*FRotationVector[2]);
+      FXApp->GetRender().GetBasis().RotateX(FXApp->GetRender().GetBasis().GetRX()+FRotationIncrement*FRotationVector[0]);
+      FXApp->GetRender().GetBasis().RotateY(FXApp->GetRender().GetBasis().GetRY()+FRotationIncrement*FRotationVector[1]);
+      FXApp->GetRender().GetBasis().RotateZ(FXApp->GetRender().GetBasis().GetRZ()+FRotationIncrement*FRotationVector[2]);
       FRotationAngle -= olx_abs(FRotationVector.Length()*FRotationIncrement);
       if( FRotationAngle < 0 )  FMode ^= mRota;
       Draw = true;
@@ -2261,7 +2261,7 @@ void TMainForm::OnPlane(wxCommandEvent& event)  {
   if( !XP )  return;
   switch( event.GetId() )  {
     case ID_PlaneActivate:
-    ProcessXPMacro(olxstr("activate ") << XP->Primitives()->Name(), MacroError);
+    ProcessXPMacro(olxstr("activate ") << XP->GetPrimitives().GetName(), MacroError);
     break;
   }
 }
@@ -2536,20 +2536,20 @@ void TMainForm::OnKeyDown(wxKeyEvent& m)  {
   m.Skip();
 }
 //..............................................................................
-void TMainForm::OnSelection(wxCommandEvent& m)
-{
+void TMainForm::OnSelection(wxCommandEvent& m)  {
   TGlGroup *GlR = NULL;
   if( EsdlInstanceOf( *FObjectUnderMouse, TGlGroup) )
     GlR = (TGlGroup*)FObjectUnderMouse;
-  switch( m.GetId() )
-  {
+  switch( m.GetId() )  {
     case ID_SelGroup:
       ProcessXPMacro("group sel", MacroError);
 //      FXApp->GroupSelection();
       break;
     case ID_SelUnGroup:
-      if( GlR ) FXApp->UnGroup(GlR);
-      else      FXApp->UnGroupSelection();
+      if( GlR != NULL ) 
+        FXApp->UnGroup(*GlR);
+      else      
+        FXApp->UnGroupSelection();
       break;
   }
 }
@@ -2800,7 +2800,7 @@ void TMainForm::SaveSettings(const olxstr &FN)  {
   }
 
   SaveScene(&DF.Root().AddItem("Scene"));
-  FXApp->GetRender().Styles()->ToDataItem(DF.Root().AddItem("Styles"));
+  FXApp->GetRender().GetStyles().ToDataItem(DF.Root().AddItem("Styles"));
   DF.SaveToXLFile(FN);
 }
 //..............................................................................
@@ -2926,12 +2926,12 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
   if( TEFile::FileExists(DefStyle) )  {
     TDataFile SDF;
     SDF.LoadFromXLFile(DefStyle, &Log);
-    FXApp->GetRender().Styles()->FromDataItem(*SDF.Root().FindItem("style"));
+    FXApp->GetRender().GetStyles().FromDataItem(*SDF.Root().FindItem("style"));
   }
   else  {
-    FXApp->GetRender().Styles()->FromDataItem(*DF.Root().FindItem("Styles"));
+    FXApp->GetRender().GetStyles().FromDataItem(*DF.Root().FindItem("Styles"));
     // old style override
-    if( FXApp->GetRender().Styles()->GetVersion() < 2 )  {
+    if( FXApp->GetRender().GetStyles().GetVersion() < 2 )  {
       ;//if( TEFile::Exists(FXApp->BaseDir() + "default.gldp")...
     }
   }
@@ -2992,7 +2992,7 @@ void TMainForm::LoadScene(TDataItem *Root, TGlLightModel *FLM)  {
   if( I == NULL )  return;
   for( int i=0; i < I->ItemCount(); i++ )  {
     TDataItem& fi = I->GetItem(i);
-    FXApp->GetRender().Scene()->CreateFont(fi.GetName(), fi.GetFieldValue("id") );
+    FXApp->GetRender().GetScene().CreateFont(fi.GetName(), fi.GetFieldValue("id") );
   }
   I = Root->FindItem("Materials");
   if( I != NULL )  {
@@ -3026,9 +3026,9 @@ void TMainForm::SaveScene(TDataItem *Root, TGlLightModel *FLM)  {
   else
     FXApp->GetRender().LightModel.ToDataItem(Root->AddItem("Scene_Properties"));
   I = &Root->AddItem("Fonts");
-  for( int i=0; i < FXApp->GetRender().Scene()->FontCount(); i++ )  {
-    TDataItem& fi = I->AddItem( FXApp->GetRender().Scene()->Font(i)->GetName());
-    fi.AddField("id", FXApp->GetRender().Scene()->Font(i)->IdString() );
+  for( int i=0; i < FXApp->GetRender().GetScene().FontCount(); i++ )  {
+    TDataItem& fi = I->AddItem( FXApp->GetRender().GetScene().GetFont(i)->GetName());
+    fi.AddField("id", FXApp->GetRender().GetScene().GetFont(i)->IdString() );
   }
 
   I = &Root->AddItem("Materials");
@@ -3364,7 +3364,7 @@ bool TMainForm::OnMouseUp(int x, int y, short Flags, short Buttons)  {
         if( ca < -1 )  ca = -1;
         if( ca > 1 )   ca = 1;
         vec3d V = Z.XProdVec(N);
-        FXApp->GetRender().Basis()->Rotate(V, acos(ca));
+        FXApp->GetRender().GetBasis().Rotate(V, acos(ca));
       N = FXApp->GetRender().GetBasis().GetMatrix()[2];
       Tmp="got: ";
       Tmp << N.ToString(); 

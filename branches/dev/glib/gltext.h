@@ -21,7 +21,7 @@ class TGlText: public TGlMouseListener  {
 protected:
   void CalcWH();  // calculates width of the text
 public:
-  TGlText(const olxstr& collectionName, TGlRenderer *Render, const olxstr &Text);
+  TGlText(TGlRenderer& Render, const olxstr& collectionName, const olxstr &Text);
   void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
   virtual ~TGlText()  {  ;  }
 
@@ -30,7 +30,7 @@ public:
   inline float GetHeight(){  return CalcHeight; }
   inline float GetWidth(){  return Width; }
   void SetWidth(float W);  // sets width of the text
-  bool Orient(TGlPrimitive *P);
+  bool Orient(TGlPrimitive& P);
   bool GetDimensions(vec3d &Max, vec3d &Min){  return false;};
 
   inline bool IsStaticPos() const {  return (TextFlags & gltStaticPos) == gltStaticPos; };

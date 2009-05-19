@@ -6,6 +6,7 @@
 #include "emath.h"
 
 #include "macroerror.h"
+#include "gpcollection.h"
 
 BeginGlNamespace()
 
@@ -16,6 +17,7 @@ const short  sgdoVisible   = 0x0001, // TGDrawObject flags
              sgdoGrouped   = 0x0010,
              sgdoDeleted   = 0x0020;
 
+class TlGroup;
 /*
   defines basic functionality of a graphic object, accessible outside of
  the graphic core
@@ -31,15 +33,14 @@ class AGDrawObject: public ACollectionItem  {
 protected:
   short FDrawStyle;
   short Flags;
-  class TGlGroup *FParentGroup;  // parent collection
-//  friend class TGlRenderer;
-  class TGPCollection *FPrimitives;
-  class TGlRenderer *FParent;   // initialised owhen the collection is assigned
+  TGlGroup *ParentGroup;  // parent collection
+  TGlRenderer& Parent;
+  TGPCollection *Primitives;
   evecd FParams;
   olxstr CollectionName;
   inline void SetCollectionName(const olxstr& nn)  {  CollectionName = nn;  }
 public:
-  AGDrawObject(const olxstr& collectionName);
+  AGDrawObject(TGlRenderer& parent, const olxstr& collectionName);
   // create object within the specified collection, using provided parameters
   virtual void Create(const olxstr& newCollectionName=EmptyString, const ACreationParams* cpar = NULL)  {  }
   // this should return object created with new in order to recreate the objecs as it was
@@ -51,18 +52,17 @@ public:
     return mn;
   }
 
-  void  Primitives( TGPCollection *GPC);
-  inline TGPCollection* Primitives()  const {  return FPrimitives;  }
+  void  SetPrimitives(TGPCollection& GPC)  {  Primitives = &GPC;  }
+  inline TGPCollection& GetPrimitives()  const {  return *Primitives;  }
 
   inline const olxstr& GetCollectionName()  const  {  return CollectionName;  }
 
   inline evecd& Params()           {  return FParams;  }
 
-  inline TGlRenderer *Parent()  const  {  return FParent;}
-  inline void Parent(TGlRenderer *P)   {  FParent = P;}
-  virtual bool Orient(class TGlPrimitive *P) = 0;
+  inline TGlRenderer& GetParent()  const {  return Parent;  }
+  virtual bool Orient(class TGlPrimitive& P) = 0;
 //  inline virtual void OrientAfterDraw(TGlPrimitive *P){  return; };
-  virtual bool GetDimensions(vec3d &Max, vec3d &Min)=0;
+  virtual bool GetDimensions(vec3d& Max, vec3d& Min)=0;
   // mouse handlers, any object receives mouse down/up events; write appropriate
   //handlers to handle mouse; if the object returns true OnMouseDown, it receives
   //OnMouseMove as well; Objects must not change values of the Data!
@@ -94,23 +94,23 @@ public:
 
   short MaskFlags(short mask) const {  return (Flags&mask);  }
 
-  virtual inline TGlGroup *ParentGroup() const {  return FParentGroup; }
-  virtual void ParentGroup(TGlGroup *P);
+  virtual inline TGlGroup* GetParentGroup() const {  return ParentGroup;  }
+  virtual void SetParentGroup(TGlGroup* P)  {  SetGrouped((ParentGroup = P) != NULL);  }
   
-  virtual void ListDrawingStyles(TStrList &List){  return; }
+  virtual void ListDrawingStyles(TStrList& List){  return; }
 
-  virtual void UpdaterimitiveParams(TGlPrimitive *GlP){  return; }
+  virtual void UpdaterimitiveParams(TGlPrimitive* GlP){  return; }
   // the object should update its parameters from GlP
 
   virtual short DrawStyle() const {  return 0; }
   virtual void Compile(); // is used to compile new created primitives without rebuilding
   // entire model; use it when some object is added to existing scene
 
-  virtual void ListParams(TStrList& List, TGlPrimitive *Primitive){  return; }
+  virtual void ListParams(TStrList& List, TGlPrimitive* Primitive){  return; }
   // for parameters of a specific primitive
-  virtual void ListParams(TStrList &List){  return; }
+  virtual void ListParams(TStrList& List){  return; }
   // for internal object parameters
-  virtual void ListPrimitives(TStrList &List) const {  return; }
+  virtual void ListPrimitives(TStrList& List) const {  return; }
   // fills the list with proposal primitives to construct object
   virtual void UpdatePrimitives(int32_t Mask, const ACreationParams* cpar=NULL);
   virtual void OnPrimitivesCleared();

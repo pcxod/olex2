@@ -59,6 +59,8 @@ public:
   TGlOption DiffuseB;
   
   TGlMaterial();
+  TGlMaterial(const olxstr& str)  {  FromString(str);  }
+
   void Init() const;
   const TGlMaterial& Intensity(TGlOption& ClearColor, double intensity) const;
   

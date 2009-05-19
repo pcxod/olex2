@@ -65,28 +65,55 @@ public:
     FCount += list.Count();
   }
 //..............................................................................
-  inline T* Add(T* pObj)  {
-    if( FCapacity == FCount )  SetCapacity((long)(1.5*FCount + FIncrement));
+  inline T*& Add(T* pObj)  {
+    if( FCapacity == FCount )  
+      SetCapacity((long)(1.5*FCount + FIncrement));
     Items[FCount] = pObj;
-    FCount ++;
-    return pObj;
+    return Items[FCount++];
   }
 //..............................................................................
-  inline T* AddUnique(T* pObj)  {
+  inline T*& Add(T& Obj)  {
+    if( FCapacity == FCount )  
+      SetCapacity((long)(1.5*FCount + FIncrement));
+    Items[FCount] = &Obj;
+    return Items[FCount++];
+  }
+//..............................................................................
+  inline T*& AddUnique(T* pObj)  {
     int ind = IndexOf(pObj);
-    if( ind >=0 )  return Items[ind];
+    if( ind >= 0 )  
+      return Items[ind];
     if( FCapacity == FCount )  SetCapacity((long)(1.5*FCount + FIncrement));
     Items[FCount] = pObj;
-    FCount ++;
-    return pObj;
+    return Items[FCount++];
   }
 //..............................................................................
-  inline T* Insert(size_t index, T* pObj)  {
-    if( FCapacity == FCount )  SetCapacity((long)(1.5*FCount + FIncrement));
+  inline T*& AddUnique(T& Obj)  {
+    int ind = IndexOf(Obj);
+    if( ind >=0 )  
+      return *Items[ind];
+    if( FCapacity == FCount )  
+      SetCapacity((long)(1.5*FCount + FIncrement));
+    Items[FCount] = &Obj;
+    return Items[FCount++];
+  }
+//..............................................................................
+  inline T*& Insert(size_t index, T* pObj)  {
+    if( FCapacity == FCount )  
+      SetCapacity((long)(1.5*FCount + FIncrement));
     memmove(&Items[index+1], &Items[index], (FCount-index)*sizeof(T*));
     Items[index] = pObj;
     FCount++;
-    return pObj;
+    return Items[index];
+  }
+//..............................................................................
+  inline T*& Insert(size_t index, T& Obj)  {
+    if( FCapacity == FCount )  
+      SetCapacity((long)(1.5*FCount + FIncrement));
+    memmove(&Items[index+1], &Items[index], (FCount-index)*sizeof(T*));
+    Items[index] = &Obj;
+    FCount++;
+    return Items[index];
   }
 //..............................................................................
   TPtrList<T>& Insert(size_t index, const TPtrList<T>& list)  {
@@ -132,7 +159,7 @@ public:
     return Items[index];
   }
 //..............................................................................
-  inline TPtrList& operator = ( const TPtrList& list )  {
+  inline TPtrList& operator = (const TPtrList& list)  {
     return Assign(list);
   }
 //..............................................................................
@@ -166,9 +193,16 @@ public:
 //..............................................................................
   inline void Remove(T* pObj)  {
     int i = IndexOf(pObj);
-    if( i != -1 )  Delete(i);
-    else
+    if( i == -1 )  
       throw TFunctionFailedException(__OlxSourceInfo, "could not locate specified object");
+    Delete(i);
+  }
+//..............................................................................
+  inline void Remove(const T& Obj)  {
+    int i = IndexOf(Obj);
+    if( i == -1 )  
+      throw TFunctionFailedException(__OlxSourceInfo, "could not locate specified object");
+    Delete(i);
   }
 //..............................................................................
   // cyclic shift to the left
@@ -282,7 +316,16 @@ public:
 //..............................................................................
   int IndexOf(const T* val) const  {
     for( size_t i=0; i < FCount; i++ )
-      if( (T*)Items[i] == val )  return i;
+      if( Items[i] == val )  
+        return i;
+    return -1;
+  }
+//..............................................................................
+  int IndexOf(const T& val) const  {
+    const T* pv = &val;
+    for( size_t i=0; i < FCount; i++ )
+      if( Items[i] == pv )  
+        return i;
     return -1;
   }
 

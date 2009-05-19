@@ -18,13 +18,13 @@ class TGlTextBox: public TGlMouseListener  {
   int MaxStringLength;
 protected:
 public:
-  TGlTextBox(const olxstr& collectionName, TGlRenderer *Render);
+  TGlTextBox(TGlRenderer& Render, const olxstr& collectionName);
   void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
   virtual ~TGlTextBox();
 
   void Clear();
 
-  bool Orient(TGlPrimitive *P);
+  bool Orient(TGlPrimitive& P);
   bool GetDimensions(vec3d &Max, vec3d &Min) {  return false;  }
 
   DefPropP(double, Z)

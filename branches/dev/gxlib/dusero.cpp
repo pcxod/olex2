@@ -19,8 +19,8 @@
 #include "styles.h"
 
 
-TDUserObj::TDUserObj(short type, ematd* data, const olxstr& collectionName, TGlRenderer *Render) :
-  TGlMouseListener(collectionName, Render), Type(type), Data(data)
+TDUserObj::TDUserObj(TGlRenderer& R, short type, ematd* data, const olxstr& collectionName) :
+  TGlMouseListener(R, collectionName), Type(type), Data(data)
 {
   SetGroupable(false);
 }
@@ -29,41 +29,38 @@ void TDUserObj::Create(const olxstr& cName, const ACreationParams* cpar)  {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
   olxstr NewL;
-  TGPCollection* GPC = FParent->CollectionX( GetCollectionName(), NewL);
+  TGPCollection* GPC = Parent.FindCollectionX( GetCollectionName(), NewL);
   if( GPC == NULL )
-    GPC = FParent->NewCollection(NewL);
-  GPC->AddObject(this);
+    GPC = &Parent.NewCollection(NewL);
+  GPC->AddObject(*this);
   if( GPC->PrimitiveCount() != 0 )  return;
 
-  TGraphicsStyle* GS = GPC->Style();
-  TGlPrimitive* FGlP = GPC->NewPrimitive("Object", Type);
-  const TGlMaterial* SGlM = GS->Material("Object");
-  if( !SGlM->HasMark() )  
-    FGlP->SetProperties(SGlM);
-  else  {
-    TGlMaterial GlM;
-    GlM.SetFlags(sglmAmbientF);
-    GlM.AmbientF = 0;
-    GlM.SetIdentityDraw(false);
-    GlM.SetTransparent(false);
-    FGlP->SetProperties(&GlM);
-  }
+  TGraphicsStyle& GS = GPC->GetStyle();
+  TGlPrimitive& GlP = GPC->NewPrimitive("Object", Type);
+  TGlMaterial GlM;
+  GlM.SetFlags(sglmAmbientF);
+  GlM.AmbientF = 0;
+  GlM.SetIdentityDraw(false);
+  GlM.SetTransparent(false);
+  GlP.SetProperties( GS.GetMaterial("Object", GlM) );
+
+
   if( Type == sgloSphere )  {
-    FGlP->Params[0] = 0.2/1.5;  
-    FGlP->Params[1] = 6;  
-    FGlP->Params[2] = 6;
+    GlP.Params[0] = 0.2/1.5;  
+    GlP.Params[1] = 6;  
+    GlP.Params[2] = 6;
   }
   else if( Data )
-    FGlP->Data = *Data;
+    GlP.Data = *Data;
   else
     ; // throw an exception
 }
-bool TDUserObj::Orient(TGlPrimitive *P)  {
-  Parent()->GlTranslate( Basis.GetCenter() );
+bool TDUserObj::Orient(TGlPrimitive& P)  {
+  Parent.GlTranslate( Basis.GetCenter() );
   if( Type == sgloSphere && Data )  {
     for( int i=0; i < Data->Elements(); i++ )  {
       glTranslated( Data->Data(0)[i], Data->Data(1)[i], Data->Data(2)[i] );
-      P->Draw();
+      P.Draw();
     }
     return true;
   }    

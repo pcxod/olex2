@@ -29,11 +29,10 @@ TArrayList<TGlPrimitiveParams>  TXBond::FPrimitiveParams;
 TGraphicsStyle* TXBond::FBondParams=NULL;
 TXBondStylesClear *TXBond::FXBondStylesClear=NULL;
 //..............................................................................
-TXBond::TXBond(const olxstr& collectionName, TSBond& B, TGlRenderer *R) :
-  AGDrawObject(collectionName)
+TXBond::TXBond(TGlRenderer& R, const olxstr& collectionName, TSBond& B) :
+  AGDrawObject(R, collectionName)
 {
   SetGroupable(true);
-  FParent = R;
   FDrawStyle = 0x0001;
   Params().Resize(5);
   FBond = &B;
@@ -73,55 +72,51 @@ void TXBond::Create(const olxstr& cName, const ACreationParams* cpar)  {
   if( FStaticObjects.IsEmpty() )  
     CreateStaticPrimitives();
   // find collection
-  TGPCollection* GPC = FParent->CollectionX( GetCollectionName(), NewL);
+  TGPCollection* GPC = Parent.FindCollectionX( GetCollectionName(), NewL);
   if( GPC == NULL )
-    GPC = FParent->NewCollection(NewL);
+    GPC = &Parent.NewCollection(NewL);
   else if( GPC->PrimitiveCount() != 0 )  {
-    GPC->AddObject(this);
-    Params()[4] = GPC->Style()->GetParam("R", "1").ToDouble();
+    GPC->AddObject(*this);
+    Params()[4] = GPC->GetStyle().GetParam("R", "1").ToDouble();
     return;
   }
-  TGraphicsStyle* GS = GPC->Style();
-//  GS->SetSaveable( GPC->Name().CharCount('.') == 0 );
-  GS->SetSaveable( IsStyleSaveable() );
+  TGraphicsStyle& GS = GPC->GetStyle();
+//  GS.SetSaveable( GPC->Name().CharCount('.') == 0 );
+  GS.SetSaveable( IsStyleSaveable() );
 
-  int PrimitiveMask = GS->GetParam(GetPrimitiveMaskName(),
+  int PrimitiveMask = GS.GetParam(GetPrimitiveMaskName(),
     (FBond && (FBond->GetType() == sotHBond)) ? 2048 : DefMask(), IsMaskSaveable()).ToInt();
 
-  GPC->AddObject(this);
+  GPC->AddObject(*this);
   if( PrimitiveMask == 0 )  
     return;  // nothing to create then...
 
-  Params()[4]= GS->GetParam("R", Params()[4]).ToDouble();
+  Params()[4]= GS.GetParam("R", Params()[4]).ToDouble();
 
   for( int i=0; i < FStaticObjects.Count(); i++ )  {
     const int off = (1 << i);
     if( PrimitiveMask & off )    {
       TGlPrimitive* SGlP = FStaticObjects.GetObject(i);
-      TGlPrimitive* GlP = GPC->NewPrimitive(FStaticObjects[i], sgloCommandList);
+      TGlPrimitive& GlP = GPC->NewPrimitive(FStaticObjects[i], sgloCommandList);
       /* copy the default drawing style tag*/
-      GlP->Params.Resize(GlP->Params.Count()+1);
-      GlP->Params.Last() = SGlP->Params.Last();
+      GlP.Params.Resize(GlP.Params.Count()+1);
+      GlP.Params.Last() = SGlP->Params.Last();
 
-      GlP->StartList();
-      GlP->CallList(SGlP);
-      GlP->EndList();
-      if( FBond == NULL )  {  // create new style then
-        const TGlMaterial* GlM = GS->Material(FStaticObjects[i]);
-        if( GlM->HasMark() )  {
-          RGlM.FromString("85;2155839359;2155313015;1.000,1.000,1.000,0.502;36");
-          GlM = GS->PrimitiveMaterial(FStaticObjects[i], RGlM);
-        }
-        GlP->SetProperties(GlM);
+      GlP.StartList();
+      GlP.CallList(SGlP);
+      GlP.EndList();
+      if( FBond == NULL )  { // no bond?
+        RGlM.FromString("85;2155839359;2155313015;1.000,1.000,1.000,0.502;36");
+        GlP.SetProperties( GS.GetMaterial(FStaticObjects[i], RGlM) );
       }
       else  {
         if( SGlP->Params.Last() == ddsDefAtomA || SGlP->Params.Last() == ddsDef )  {
           if( cpar == NULL )
             TXAtom::GetDefSphereMaterial(FBond->A(), RGlM);
           else  {
-            int mi = ((BondCreationParams*)cpar)->a1.Style()->FindMaterialIndex("Sphere");
+            int mi = ((BondCreationParams*)cpar)->a1.Style().IndexOfMaterial("Sphere");
             if( mi != -1 )
-              RGlM = *(TGlMaterial*)((BondCreationParams*)cpar)->a1.Style()->PrimitiveStyle(mi)->GetProperties();
+              RGlM = ((BondCreationParams*)cpar)->a1.Style().GetPrimitiveStyle(mi).GetProperties();
             else
               TXAtom::GetDefSphereMaterial(FBond->A(), RGlM);
           }
@@ -130,14 +125,14 @@ void TXBond::Create(const olxstr& cName, const ACreationParams* cpar)  {
           if( cpar == NULL )
             TXAtom::GetDefSphereMaterial(FBond->B(), RGlM);
           else  {
-            int mi = ((BondCreationParams*)cpar)->a2.Style()->FindMaterialIndex("Sphere");
+            int mi = ((BondCreationParams*)cpar)->a2.Style().IndexOfMaterial("Sphere");
             if( mi != -1 )
-              RGlM = *(TGlMaterial*)((BondCreationParams*)cpar)->a2.Style()->PrimitiveStyle(mi)->GetProperties();
+              RGlM = ((BondCreationParams*)cpar)->a2.Style().GetPrimitiveStyle(mi).GetProperties();
             else
               TXAtom::GetDefSphereMaterial(FBond->B(), RGlM);
           }
         }
-        GlP->SetProperties(&RGlM);
+        GlP.SetProperties(RGlM);
       }
     }
   }
@@ -149,10 +144,10 @@ ACreationParams* TXBond::GetACreationParams() const {
 //..............................................................................
 TXBond::~TXBond()  {  }
 //..............................................................................
-bool TXBond::Orient(TGlPrimitive *GlP)  {
-  FParent->GlTranslate( FBond->A().crd() );
-  FParent->GlRotate((float)Params()[0], (float)Params()[1], (float)Params()[2], 0.0);
-  FParent->GlScale((float)Params()[4], (float)Params()[4], (float)Params()[3]);
+bool TXBond::Orient(TGlPrimitive& GlP)  {
+  Parent.GlTranslate( FBond->A().crd() );
+  Parent.GlRotate((float)Params()[0], (float)Params()[1], (float)Params()[2], 0.0);
+  Parent.GlScale((float)Params()[4], (float)Params()[4], (float)Params()[3]);
   return false;
 }
 //..............................................................................
@@ -177,9 +172,9 @@ void TXBond::ListPrimitives(TStrList &List) const {
 }
 //..............................................................................
 void TXBond::Quality(const short Val)  {
-  TGraphicsStyle *GS = FParent->Styles()->NewStyle("Bonds", true);
-  olxstr& ConeQ = GS->GetParam("ConeQ", "0", true);
-//  double &ConeStipples = GS->ParameterValue("ConeStipples");
+  TGraphicsStyle& GS = Parent.GetStyles().NewStyle("Bonds", true);
+  olxstr& ConeQ = GS.GetParam("ConeQ", "0", true);
+//  double &ConeStipples = GS.ParameterValue("ConeStipples");
 
   switch( Val )  {
     case qaPict:
@@ -197,13 +192,13 @@ void TXBond::CreateStaticPrimitives()  {
   TGlMaterial GlM;
   TGlPrimitive *GlP, *GlPRC1, *GlPRD1, *GlPRD2;
   olxstr Legend("Bonds");
-  TGraphicsStyle* GS = FParent->Styles()->NewStyle(Legend, true);
-  double ConeQ = GS->GetParam("ConeQ", "5", true).ToDouble();
-  double ConeStipples = GS->GetParam("ConeStipples", "6", true).ToDouble();
+  TGraphicsStyle& GS = Parent.GetStyles().NewStyle(Legend, true);
+  double ConeQ = GS.GetParam("ConeQ", "5", true).ToDouble();
+  double ConeStipples = GS.GetParam("ConeStipples", "6", true).ToDouble();
 //..............................
   // create single color cylinder
   if( (GlP = FStaticObjects.FindObject("Single cone")) == NULL )  {
-    GlP = FParent->NewPrimitive(sgloCylinder);
+    GlP = &Parent.NewPrimitive(sgloCylinder);
     FStaticObjects.Add("Single cone", GlP);
   }
   GlP->Params[0] = 0.1;  GlP->Params[1] = 0.1;  GlP->Params[2] = 1;
@@ -215,16 +210,16 @@ void TXBond::CreateStaticPrimitives()  {
 //..............................
   // create top disk
   if( (GlP = FStaticObjects.FindObject("Top disk")) == NULL )  {
-    GlP = FParent->NewPrimitive(sgloCommandList);
+    GlP = &Parent.NewPrimitive(sgloCommandList);
     FStaticObjects.Add("Top disk", GlP);
   }
-  GlPRC1 = FParent->NewPrimitive(sgloDisk); 
+  GlPRC1 = &Parent.NewPrimitive(sgloDisk); 
   GlPRC1->Params[0] = 0;  GlPRC1->Params[1] = 0.1;  GlPRC1->Params[2] = ConeQ;
   GlPRC1->Params[3] = 1;
   GlPRC1->Compile();
 
   GlP->StartList();
-  FParent->GlTranslate(0, 0, 1);
+  Parent.GlTranslate(0, 0, 1);
   GlP->CallList(GlPRC1);
   GlP->EndList();
 
@@ -233,7 +228,7 @@ void TXBond::CreateStaticPrimitives()  {
 //..............................
   // create bottom disk
   if( (GlP = FStaticObjects.FindObject("Bottom disk")) == NULL )  {
-    GlP = FParent->NewPrimitive(sgloDisk);
+    GlP = &Parent.NewPrimitive(sgloDisk);
     FStaticObjects.Add("Bottom disk", GlP);
   }
   GlP->SetQuadricOrientation(GLU_INSIDE);
@@ -246,16 +241,16 @@ void TXBond::CreateStaticPrimitives()  {
 //..............................
   // create middle disk
   if( (GlP = FStaticObjects.FindObject("Middle disk")) == NULL )  {
-    GlP = FParent->NewPrimitive(sgloCommandList);
+    GlP = &Parent.NewPrimitive(sgloCommandList);
     FStaticObjects.Add("Middle disk", GlP);
   }
-  GlPRC1 = FParent->NewPrimitive(sgloDisk);
+  GlPRC1 = &Parent.NewPrimitive(sgloDisk);
   GlPRC1->Params[0] = 0;  GlPRC1->Params[1] = 0.1;  GlPRC1->Params[2] = ConeQ;
   GlPRC1->Params[3] = 1;
   GlPRC1->Compile();
 
   GlP->StartList();
-  FParent->GlTranslate(0, 0, 0.5);
+  Parent.GlTranslate(0, 0, 0.5);
   GlP->CallList(GlPRC1);
   GlP->EndList();
 
@@ -264,7 +259,7 @@ void TXBond::CreateStaticPrimitives()  {
 //..............................
   // create bottom cylinder
   if( (GlP = FStaticObjects.FindObject("Bottom cone")) == NULL )  {
-    GlP = FParent->NewPrimitive(sgloCylinder);
+    GlP = &Parent.NewPrimitive(sgloCylinder);
     FStaticObjects.Add("Bottom cone", GlP);
   }
   GlP->Params[0] = 0.1;  GlP->Params[1] = 0.1;  GlP->Params[2] = 0.5;
@@ -276,16 +271,16 @@ void TXBond::CreateStaticPrimitives()  {
 //..............................
   // create top cylinder
   if( (GlP = FStaticObjects.FindObject("Top cone")) == NULL )  {
-    GlP = FParent->NewPrimitive(sgloCommandList);
+    GlP = &Parent.NewPrimitive(sgloCommandList);
     FStaticObjects.Add("Top cone", GlP);
   }
-  GlPRC1 = FParent->NewPrimitive(sgloCylinder);
+  GlPRC1 = &Parent.NewPrimitive(sgloCylinder);
   GlPRC1->Params[0] = 0.1;    GlPRC1->Params[1] = 0.1;  GlPRC1->Params[2] = 0.5;
   GlPRC1->Params[3] = ConeQ;  GlPRC1->Params[4] = 1;
   GlPRC1->Compile();
 
   GlP->StartList();
-  FParent->GlTranslate(0, 0, 0.5);
+  Parent.GlTranslate(0, 0, 0.5);
   GlP->CallList(GlPRC1);
   GlP->EndList();
   GlP->Params.Resize(GlP->Params.Count()+1);  //
@@ -293,7 +288,7 @@ void TXBond::CreateStaticPrimitives()  {
 //..............................
   // create bottom line
   if( (GlP = FStaticObjects.FindObject("Bottom line")) == NULL )  {
-    GlP = FParent->NewPrimitive(sgloCommandList);
+    GlP = &Parent.NewPrimitive(sgloCommandList);
     FStaticObjects.Add("Bottom line", GlP);
   }
   GlP->StartList();
@@ -307,7 +302,7 @@ void TXBond::CreateStaticPrimitives()  {
 //..............................
   // create top line
   if( (GlP = FStaticObjects.FindObject("Top line")) == NULL )  {
-    GlP = FParent->NewPrimitive(sgloCommandList);
+    GlP = &Parent.NewPrimitive(sgloCommandList);
     FStaticObjects.Add("Top line", GlP);
   }
   GlP->StartList();
@@ -322,20 +317,20 @@ void TXBond::CreateStaticPrimitives()  {
   // create stipple cone
   float CL = (float)(1.0/(2*ConeStipples));
   if( (GlP = FStaticObjects.FindObject("Stipple cone")) == NULL )  {
-    GlP = FParent->NewPrimitive(sgloCommandList);
+    GlP = &Parent.NewPrimitive(sgloCommandList);
     FStaticObjects.Add("Stipple cone", GlP);
   }
-  GlPRC1 = FParent->NewPrimitive(sgloCylinder);
+  GlPRC1 = &Parent.NewPrimitive(sgloCylinder);
   GlPRC1->Params[0] = 0.1;    GlPRC1->Params[1] = 0.1;  GlPRC1->Params[2] = CL;
   GlPRC1->Params[3] = ConeQ;  GlPRC1->Params[4] = 1;
   GlPRC1->Compile();
 
-  GlPRD1 = FParent->NewPrimitive(sgloDisk);
+  GlPRD1 = &Parent.NewPrimitive(sgloDisk);
   GlPRD1->Params[0] = 0;  GlPRD1->Params[1] = 0.1;  GlPRD1->Params[2] = ConeQ;
   GlPRD1->Params[3] = 1;
   GlPRD1->Compile();
 
-  GlPRD2 = FParent->NewPrimitive(sgloDisk);
+  GlPRD2 = &Parent.NewPrimitive(sgloDisk);
   GlPRD2->SetQuadricOrientation(GLU_INSIDE);
   GlPRD2->Params[0] = 0;  GlPRD2->Params[1] = 0.1;  GlPRD2->Params[2] = ConeQ;
   GlPRD2->Params[3] = 1;
@@ -346,44 +341,44 @@ void TXBond::CreateStaticPrimitives()  {
     if( i != 0 )
       GlP->CallList(GlPRD2);
     GlP->CallList(GlPRC1);
-    FParent->GlTranslate(0, 0, CL);
+    Parent.GlTranslate(0, 0, CL);
     GlP->CallList(GlPRD1);
-    FParent->GlTranslate(0, 0, CL);
+    Parent.GlTranslate(0, 0, CL);
   }
   GlP->EndList();
   GlP->Params.Resize(GlP->Params.Count()+1);  //
   GlP->Params.Last() = ddsDef;
   //..............................
   if( (GlP = FStaticObjects.FindObject("Bottom stipple cone")) == NULL )  {
-    GlP = FParent->NewPrimitive(sgloCommandList);
+    GlP = &Parent.NewPrimitive(sgloCommandList);
     FStaticObjects.Add("Bottom stipple cone", GlP);
   }
   GlP->StartList();
-  FParent->GlTranslate(0, 0, CL/2);
+  Parent.GlTranslate(0, 0, CL/2);
   for( int i=0; i < ConeStipples/2; i++ )  {
     if( i != 0 )
       GlP->CallList(GlPRD2);
     GlP->CallList(GlPRC1);
-    FParent->GlTranslate(0, 0, CL);
+    Parent.GlTranslate(0, 0, CL);
     GlP->CallList(GlPRD1);
-    FParent->GlTranslate(0, 0, CL);
+    Parent.GlTranslate(0, 0, CL);
   }
   GlP->EndList();
   GlP->Params.Resize(GlP->Params.Count()+1);  //
   GlP->Params.Last() = ddsDefAtomA;
   //..............................
   if( (GlP = FStaticObjects.FindObject("Top stipple cone")) == NULL )  {
-    GlP = FParent->NewPrimitive(sgloCommandList);
+    GlP = &Parent.NewPrimitive(sgloCommandList);
     FStaticObjects.Add("Top stipple cone", GlP);
   }
   GlP->StartList();
-  FParent->GlTranslate(0, 0, (float)(0.5 + CL/2));
+  Parent.GlTranslate(0, 0, (float)(0.5 + CL/2));
   for( int i=0; i < ConeStipples/2; i++ )  {
     GlP->CallList(GlPRD2);
     GlP->CallList(GlPRC1);
-    FParent->GlTranslate(0, 0, CL);
+    Parent.GlTranslate(0, 0, CL);
     GlP->CallList(GlPRD1);
-    FParent->GlTranslate(0, 0, CL);
+    Parent.GlTranslate(0, 0, CL);
   }
   GlP->EndList();
   GlP->Params.Resize(GlP->Params.Count()+1);  //
@@ -393,16 +388,16 @@ void TXBond::CreateStaticPrimitives()  {
   // create stipped ball bond
   CL = (float)(1.0/(12.0));
   if( (GlP = FStaticObjects.FindObject("Sphere")) == NULL )  {
-    GlP = FParent->NewPrimitive(sgloCommandList);
+    GlP = &Parent.NewPrimitive(sgloCommandList);
     FStaticObjects.Add("Balls bond", GlP);
   }
-  GlPRC1 = FParent->NewPrimitive(sgloSphere);
+  GlPRC1 = &Parent.NewPrimitive(sgloSphere);
   GlPRC1->Params[0] = 0.02;    GlPRC1->Params[1] = 5;  GlPRC1->Params[2] = 5;
   GlPRC1->Compile();
 
   GlP->StartList();
   for( int i=0; i < 12; i++ )  {
-    FParent->GlTranslate(0, 0, CL);
+    Parent.GlTranslate(0, 0, CL);
     GlP->CallList(GlPRC1);
   }
   GlP->EndList();
@@ -411,7 +406,7 @@ void TXBond::CreateStaticPrimitives()  {
 //..............................
   // create line
   if( (GlP = FStaticObjects.FindObject("Line")) == NULL )  {
-    GlP = FParent->NewPrimitive(sgloCommandList);
+    GlP = &Parent.NewPrimitive(sgloCommandList);
     FStaticObjects.Add("Line", GlP);
   }
   GlP->StartList();
@@ -425,7 +420,7 @@ void TXBond::CreateStaticPrimitives()  {
 //..............................
   // create stippled line
   if( (GlP = FStaticObjects.FindObject("Stippled line")) == NULL )  {
-    GlP = FParent->NewPrimitive(sgloCommandList);
+    GlP = &Parent.NewPrimitive(sgloCommandList);
     FStaticObjects.Add("Stippled line", GlP);
   }
   GlP->StartList();
@@ -442,12 +437,12 @@ void TXBond::CreateStaticPrimitives()  {
 }
 //..............................................................................
 void TXBond::UpdatePrimitives(int32_t Mask, const ACreationParams* cpar)  {
-  olxstr& pm = Primitives()->Style()->GetParam(GetPrimitiveMaskName(), "0", IsMaskSaveable()); 
+  olxstr& pm = GetPrimitives().GetStyle().GetParam(GetPrimitiveMaskName(), "0", IsMaskSaveable()); 
   if( pm.ToInt() == Mask )  return;
   pm = Mask;
-  Primitives()->Style()->SetParam(GetPrimitiveMaskName(), Mask, IsMaskSaveable());
-  Primitives()->ClearPrimitives();
-  Primitives()->RemoveObject(this);
+  GetPrimitives().GetStyle().SetParam(GetPrimitiveMaskName(), Mask, IsMaskSaveable());
+  GetPrimitives().ClearPrimitives();
+  GetPrimitives().RemoveObject(*this);
   Create(EmptyString, cpar);
 }
 //..............................................................................
@@ -481,20 +476,20 @@ olxstr TXBond::GetLegend(const TSBond& Bnd, const short level)  {
 //..............................................................................
 void TXBond::Radius(float V)  {
   Params()[4] = V;
-  Primitives()->Style()->SetParam("R", V, IsRadiusSaveable());
+  GetPrimitives().GetStyle().SetParam("R", V, IsRadiusSaveable());
   // update radius for all members of the collection
-  for( int i=0; i < Primitives()->ObjectCount(); i++ )
-    Primitives()->Object(i)->Params()[4] = V;
+  for( int i=0; i < GetPrimitives().ObjectCount(); i++ )
+    GetPrimitives().GetObject(i).Params()[4] = V;
 }
 //..............................................................................
 void TXBond::OnPrimitivesCleared()  {
-  if( FStaticObjects.Count() )
+  if( !FStaticObjects.IsEmpty() )
     FStaticObjects.Clear();
 }
 //..............................................................................
 void TXBond::ValidateBondParams()  {
   if( !FBondParams )  {
-    FBondParams = TGlRenderer::GetStyles()->NewStyle("BondParams", true);
+    FBondParams = &TGlRenderer::_GetStyles().NewStyle("BondParams", true);
     FBondParams->SetPersistent(true);
   }
 }

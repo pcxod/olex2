@@ -11,7 +11,7 @@ class TGlBitmap : public TGlMouseListener  {
   double Z;
 public:
 
-  TGlBitmap(const olxstr& collectionName, TGlRenderer *Render,
+  TGlBitmap(TGlRenderer& Render, const olxstr& collectionName,
     int left, int top, int width, int height,
       unsigned char* RGB, GLenum format);
 
@@ -32,7 +32,7 @@ public:
   void SetTop(int w);
   int GetTop()  const;
 
-  virtual bool Orient(TGlPrimitive *P);
+  virtual bool Orient(TGlPrimitive& P);
   virtual bool GetDimensions(vec3d &Max, vec3d &Min);
 };
 

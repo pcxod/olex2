@@ -13,14 +13,15 @@
 #include "glrender.h"
 #include "glscene.h"
 #include "gpcollection.h"
+#include "glprimitive.h"
 #include "glfont.h"
 
 UseGlNamespace()
 //..............................................................................
 //..............................................................................
 
-TGlTextBox::TGlTextBox(const olxstr& collectionName, TGlRenderer *Render):
-  TGlMouseListener(collectionName, Render)
+TGlTextBox::TGlTextBox(TGlRenderer& Render, const olxstr& collectionName):
+  TGlMouseListener(Render, collectionName)
 {
   SetMove2D(true);
   SetMoveable(true);
@@ -43,55 +44,47 @@ TGlTextBox::~TGlTextBox()  { Clear();  }
 void TGlTextBox::Create(const olxstr& cName, const ACreationParams* cpar)  {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
-  TGPCollection* GPC = FParent->FindCollection( GetCollectionName() );
-  if( GPC == NULL )    
-    GPC = FParent->NewCollection( GetCollectionName() );
-  GPC->AddObject(this);
-  if( GPC->PrimitiveCount() != 0 )  return;
+  TGPCollection& GPC = Parent.FindOrCreateCollection( GetCollectionName() );
+  GPC.AddObject(*this);
+  if( GPC.PrimitiveCount() != 0 )  return;
 
-  TGraphicsStyle* GS = GPC->Style();
-  Left = GS->GetParam("Left", Left, true).ToInt();
-  Top = GS->GetParam("Top", Top, true).ToInt();
+  TGraphicsStyle& GS = GPC.GetStyle();
+  Left = GS.GetParam("Left", Left, true).ToInt();
+  Top = GS.GetParam("Top", Top, true).ToInt();
+  TGlMaterial GlM;
+  GlM.SetFlags(0);   
+  GlM.ShininessF = 128;
+  GlM.SetFlags(sglmAmbientF|sglmDiffuseF|sglmIdentityDraw|sglmTransparent);
+  GlM.AmbientF = 0x800f0f0f;
+  GlM.DiffuseF = 0x800f0f0f;
 
-  TGlMaterial* GlM = const_cast<TGlMaterial*>(GS->Material("Plane"));
-  if( GlM->HasMark() )  {
-    GlM->SetFlags(0);   GlM->ShininessF = 128;
-    GlM->SetFlags(sglmAmbientF|sglmDiffuseF|sglmIdentityDraw|sglmTransparent);
-    GlM->AmbientF = 0x800f0f0f;
-    GlM->DiffuseF = 0x800f0f0f;
-  }
+  TGlPrimitive& glpPlane = GPC.NewPrimitive("Plane", sgloQuads);  // a sphere at the basis of the object {0,0,0}
+  glpPlane.SetProperties(GS.GetMaterial("Plane", GlM) );
+  glpPlane.Data.Resize(3, 4);
 
-  TGlPrimitive* GlP = GPC->NewPrimitive("Plane", sgloQuads);  // a sphere at the basis of the object {0,0,0}
-  GlP->SetProperties(GlM);
-  GlP->Data.Resize(3, 4);
-
-  GlM = const_cast<TGlMaterial*>(GS->Material("Text"));
-  if( GlM->HasMark() )
-    *GlM = Font()->GetMaterial();
-
-  GlP = GPC->NewPrimitive("Text", sgloText);
-  GlP->SetProperties(GlM);
-  GlP->Params[0] = -1;  //bitmap; TTF by default
+  TGlPrimitive& glpText = GPC.NewPrimitive("Text", sgloText);
+  glpText.SetProperties( GS.GetMaterial("Text", Font()->GetMaterial()) );
+  glpText.Params[0] = -1;  //bitmap; TTF by default
 }
 //..............................................................................
-bool TGlTextBox::Orient(TGlPrimitive *P)  {
+bool TGlTextBox::Orient(TGlPrimitive& P)  {
 /*  vec3d Trans;
-  Trans = FParent->Basis().Center();
-  Trans *= FParent->Basis().Matrix();
-  FParent->GlTranslate(-Trans[0], -Trans[1], -Trans[2] );*/
+  Trans = Parent.Basis().Center();
+  Trans *= Parent.Basis().Matrix();
+  Parent.GlTranslate(-Trans[0], -Trans[1], -Trans[2] );*/
 
   glNormal3d(0, 0, 1);
 
   TGlFont *Fnt = Font();
   if( Fnt == NULL )  return true;
 
-  if( P->GetType() == sgloText )  {
-    P->SetFont(Fnt);
+  if( P.GetType() == sgloText )  {
+    P.SetFont(Fnt);
     int th = Fnt->TextHeight(EmptyString);
-    double Scale = FParent->GetScale();
-    double GlLeft = ((double)Left - (double)FParent->GetWidth()/2 + Basis.GetCenter()[0]) + 0.1;
-    double GlTop = ((double)FParent->GetHeight()/2 - (Top-Basis.GetCenter()[1])) + 0.1;
-    double LineInc = (th*LineSpacing)*FParent->GetViewZoom();
+    double Scale = Parent.GetScale();
+    double GlLeft = ((double)Left - (double)Parent.GetWidth()/2 + Basis.GetCenter()[0]) + 0.1;
+    double GlTop = ((double)Parent.GetHeight()/2 - (Top-Basis.GetCenter()[1])) + 0.1;
+    double LineInc = (th*LineSpacing)*Parent.GetViewZoom();
     vec3d T;
     for(int i=0; i < FBuffer.Count() ; i++ )  {
       T[0] = GlLeft;
@@ -100,24 +93,24 @@ bool TGlTextBox::Orient(TGlPrimitive *P)  {
       TGlMaterial* GlM = FBuffer.GetObject(i);
       if( GlM != NULL ) 
         GlM->Init();
-      FParent->DrawTextSafe(T, FBuffer[i], *Fnt ); 
+      Parent.DrawTextSafe(T, FBuffer[i], *Fnt ); 
     }
     return true;
   }
   else  {
-    double Scale = Parent()->GetScale();
-    double hw = Parent()->GetWidth()*Scale/2;
-    double hh = Parent()->GetHeight()*Scale/2;
-    Scale = Scale*FParent->GetExtraZoom()*FParent->GetViewZoom();
+    double Scale = Parent.GetScale();
+    double hw = Parent.GetWidth()*Scale/2;
+    double hh = Parent.GetHeight()*Scale/2;
+    Scale = Scale*Parent.GetExtraZoom()*Parent.GetViewZoom();
     double xx = Basis.GetCenter()[0], xy = -Basis.GetCenter()[1];
-    P->Data[0][0] = (Left+Width+xx)*Scale-hw;  P->Data[1][0] = hh-(Top+Height+xy)*Scale;
-    P->Data[0][1] = (Left+Width+xx)*Scale-hw;  P->Data[1][1] = hh-(Top+xy)*Scale;
-    P->Data[0][2] = (Left+xx)*Scale-hw;        P->Data[1][2] = hh-(Top+xy)*Scale;
-    P->Data[0][3] = (Left+xx)*Scale-hw;        P->Data[1][3] = hh-(Top+Height+xy)*Scale;
-    P->Data[2][0] = Z-1;
-    P->Data[2][1] = Z-1;
-    P->Data[2][2] = Z-1;
-    P->Data[2][3] = Z-1;
+    P.Data[0][0] = (Left+Width+xx)*Scale-hw;  P.Data[1][0] = hh-(Top+Height+xy)*Scale;
+    P.Data[0][1] = (Left+Width+xx)*Scale-hw;  P.Data[1][1] = hh-(Top+xy)*Scale;
+    P.Data[0][2] = (Left+xx)*Scale-hw;        P.Data[1][2] = hh-(Top+xy)*Scale;
+    P.Data[0][3] = (Left+xx)*Scale-hw;        P.Data[1][3] = hh-(Top+Height+xy)*Scale;
+    P.Data[2][0] = Z-1;
+    P.Data[2][1] = Z-1;
+    P.Data[2][2] = Z-1;
+    P.Data[2][3] = Z-1;
     return false;
   }
 }
@@ -182,12 +175,12 @@ void TGlTextBox::PostText(const TStrList &SL, TGlMaterial *M)  {
 //..............................................................................
 void TGlTextBox::SetLeft(int l)  {
   Left = l;
-  Primitives()->Style()->SetParam("Left", Left, true);
+  GetPrimitives().GetStyle().SetParam("Left", Left, true);
 }
 //..............................................................................
 void TGlTextBox::SetTop(int t)  {
   Top = t;
-  Primitives()->Style()->SetParam("Top", Top, true);
+  GetPrimitives().GetStyle().SetParam("Top", Top, true);
 }
 //..............................................................................
 bool TGlTextBox::OnMouseUp(const IEObject *Sender, const TMouseData *Data)  {
@@ -200,7 +193,7 @@ bool TGlTextBox::OnMouseUp(const IEObject *Sender, const TMouseData *Data)  {
 }
 //..............................................................................
 TGlFont *TGlTextBox::Font()  const   {
-  TGlFont* fnt = FParent->Scene()->Font(FontIndex);
+  TGlFont* fnt = Parent.GetScene().GetFont(FontIndex);
   if( fnt == NULL )
     throw TFunctionFailedException(__OlxSourceInfo, "invalid font");
   return fnt;

@@ -24,14 +24,13 @@
 //----------------------------------------------------------------------------//
 // TXGlLabels function bodies
 //----------------------------------------------------------------------------//
-TXGlLabels::TXGlLabels(const olxstr& collectionName, TGlRenderer *Render) :
-  AGDrawObject(collectionName)
+TXGlLabels::TXGlLabels(TGlRenderer& Render, const olxstr& collectionName) :
+  AGDrawObject(Render, collectionName)
 {
-  AGDrawObject::Parent(Render);
   FontIndex = -1;
   AGDrawObject::SetGroupable(false);
 
-  FMarkMaterial = *Render->Selection()->GlM();
+  FMarkMaterial = *Render.GetSelection().GlM();
   FMarkMaterial.SetFlags(sglmAmbientF|sglmIdentityDraw);
 }
 //..............................................................................
@@ -41,23 +40,18 @@ void TXGlLabels::Create(const olxstr& cName, const ACreationParams* cpar)  {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
   
-  TGPCollection* GPC = FParent->FindCollection( GetCollectionName() );
-  if( GPC == NULL )    
-    GPC = FParent->NewCollection( GetCollectionName() );
-  GPC->AddObject(this);
-  if( GPC->PrimitiveCount() != 0 )  return;
+  TGPCollection& GPC = Parent.FindOrCreateCollection( GetCollectionName() );
+  GPC.AddObject(*this);
+  if( GPC.PrimitiveCount() != 0 )  return;
 
-  TGlMaterial* GlM = const_cast<TGlMaterial*>(GPC->Style()->Material("Text"));
-  if( GlM->HasMark() )
-    *GlM = Font()->GetMaterial();
-  TGlPrimitive* GlP = GPC->NewPrimitive("Text", sgloText);
-  GlP->SetProperties(GlM);
-  GlP->Params[0] = -1;  //bitmap; TTF by default
+  TGlPrimitive& GlP = GPC.NewPrimitive("Text", sgloText);
+  GlP.SetProperties( GPC.GetStyle().GetMaterial("Text", Font()->GetMaterial()) );
+  GlP.Params[0] = -1;  //bitmap; TTF by default
 }
 //..............................................................................
 void TXGlLabels::Clear()  {  Marks.Clear();  }
 //..............................................................................
-bool TXGlLabels::Orient(TGlPrimitive *P)  {
+bool TXGlLabels::Orient(TGlPrimitive& P)  {
   TGlFont *Fnt = Font();
   TGXApp& app = TGXApp::GetInstance();
   const int ac = app.AtomCount();
@@ -65,9 +59,9 @@ bool TXGlLabels::Orient(TGlPrimitive *P)  {
 
   vec3d V;
   bool currentGlM, matInited = false;
-  P->SetFont(Fnt);
-  TGlMaterial *OGlM = (TGlMaterial*)P->GetProperties();
-  if( FParent->IsATI() )  {
+  P.SetFont(Fnt);
+  TGlMaterial& OGlM = P.GetProperties();
+  if( Parent.IsATI() )  {
     glRasterPos3d(0, 0, 0);
     glCallList(Fnt->FontBase() + ' ');
   }
@@ -178,20 +172,20 @@ bool TXGlLabels::Orient(TGlPrimitive *P)  {
       Tmp << ':' << ca.GetSameId();
 #endif
     if( Tmp.IsEmpty() )  continue;
-    P->SetString(&Tmp);
+    P.SetString(&Tmp);
     if( !matInited )  {
       if( Marks[i] ) {
         FMarkMaterial.Init();
         currentGlM = false;
-        if( FParent->IsATI() )  {
+        if( Parent.IsATI() )  {
           glRasterPos3d(0, 0, 0);
           glCallList(Fnt->FontBase() + ' ');
         } 
       }
       else  {
-      ((TGlMaterial*)P->GetProperties())->Init();
+      P.GetProperties().Init();
         currentGlM = true;
-        if( FParent->IsATI() )  {
+        if( Parent.IsATI() )  {
           glRasterPos3d(0, 0, 0);
           glCallList(Fnt->FontBase() + ' ');
         } 
@@ -203,7 +197,7 @@ bool TXGlLabels::Orient(TGlPrimitive *P)  {
         if( currentGlM )  {
           FMarkMaterial.Init();
           currentGlM = false;
-          if( FParent->IsATI() )  {
+          if( Parent.IsATI() )  {
             glRasterPos3d(0, 0, 0);
             glCallList(Fnt->FontBase() + ' ');
           } 
@@ -211,9 +205,9 @@ bool TXGlLabels::Orient(TGlPrimitive *P)  {
       }
       else  {
         if( !currentGlM )  {
-          ((TGlMaterial*)P->GetProperties())->Init();
+          P.GetProperties().Init();
           currentGlM = true;
-          if( FParent->IsATI() )  {
+          if( Parent.IsATI() )  {
             glRasterPos3d(0, 0, 0);
             glCallList(Fnt->FontBase() + ' ');
           } 
@@ -221,12 +215,12 @@ bool TXGlLabels::Orient(TGlPrimitive *P)  {
       }
     }
     V = XA.Atom().crd();
-    V += FParent->GetBasis().GetCenter();
-    V *= FParent->GetBasis().GetMatrix();
-    glRasterPos3d(V[0]+0.15, V[1]+0.15, FParent->GetMaxRasterZ());
-    P->Draw();
+    V += Parent.GetBasis().GetCenter();
+    V *= Parent.GetBasis().GetMatrix();
+    glRasterPos3d(V[0]+0.15, V[1]+0.15, Parent.GetMaxRasterZ());
+    P.Draw();
   }
-  OGlM->Init();
+  OGlM.Init();
   return true;
 }
 //..............................................................................
@@ -249,7 +243,7 @@ void TXGlLabels::MarkLabel(const TXAtom& A, bool v)  {
 }
 //..............................................................................
 TGlFont* TXGlLabels::Font() const {  
-  return FParent->Scene()->Font(FontIndex); 
+  return Parent.GetScene().GetFont(FontIndex); 
 }
 //..............................................................................
 

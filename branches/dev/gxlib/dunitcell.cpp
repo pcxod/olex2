@@ -19,8 +19,9 @@
 #include "styles.h"
 
 
-TDUnitCell::TDUnitCell(const olxstr& collectionName, TGlRenderer *Render) : AGDrawObject(collectionName) {
-  FParent = Render;
+TDUnitCell::TDUnitCell(TGlRenderer& R, const olxstr& collectionName) : 
+AGDrawObject(R, collectionName) 
+{
   SetGroupable(false);
   Reciprocal = false;
   FGlP = NULL;
@@ -173,34 +174,31 @@ void TDUnitCell::Create(const olxstr& cName, const ACreationParams* cpar)  {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
   olxstr NewL;
-  TGPCollection* GPC = FParent->CollectionX( GetCollectionName(), NewL);
+  TGPCollection* GPC = Parent.FindCollectionX( GetCollectionName(), NewL);
   if( GPC == NULL )
-    GPC = FParent->NewCollection(NewL);
-  GPC->AddObject(this);
+    GPC = &Parent.NewCollection(NewL);
+  GPC->AddObject(*this);
   if( GPC->PrimitiveCount() != 0 )  return;
 
-  TGraphicsStyle* GS = GPC->Style();
-  FGlP = GPC->NewPrimitive("Lines", sgloLines);
-  TGlMaterial* SGlM = const_cast<TGlMaterial*>(GS->Material("Lines"));
-  if( SGlM->HasMark() )  {
-    SGlM->SetFlags(sglmAmbientF);
-    SGlM->AmbientF = 0;
-  }
-  FGlP->SetProperties(SGlM);
-
+  TGraphicsStyle& GS = GPC->GetStyle();
+  FGlP = &GPC->NewPrimitive("Lines", sgloLines);
+  TGlMaterial GlM;
+  GlM.SetFlags(sglmAmbientF);
+  GlM.AmbientF = 0;
+  
+  FGlP->SetProperties( GS.GetMaterial("Lines", GlM));
   FGlP->Data.Resize(3, 24);
   SetReciprocal(Reciprocal);
 
-  TGlPrimitive* GlP = GPC->NewPrimitive("Label", sgloText);  // labels
-  SGlM = const_cast<TGlMaterial*>(GS->Material("Label"));
-  if( SGlM->HasMark() )  {
-    SGlM->SetFlags(sglmAmbientF);
-    SGlM->AmbientF = 0xff00ff;
-    SGlM->SetIdentityDraw(true);
-  }
-  GlP->SetProperties(SGlM);
+  TGlPrimitive& glpLabel = GPC->NewPrimitive("Label", sgloText);  // labels
 
-  GlP->SetFont( Parent()->Scene()->DefFont() );
+  TGlMaterial lMat;
+  lMat.SetFlags(sglmAmbientF);
+  lMat.AmbientF = 0xff00ff;
+  lMat.SetIdentityDraw(true);
+  glpLabel.SetProperties( GS.GetMaterial("Label", lMat) );
+
+  glpLabel.SetFont( Parent.GetScene().DefFont() );
 }
 //..............................................................................
 bool TDUnitCell::GetDimensions(vec3d &Max, vec3d &Min)  {
@@ -213,21 +211,21 @@ bool TDUnitCell::GetDimensions(vec3d &Max, vec3d &Min)  {
   return false;
 }
 //..............................................................................
-bool TDUnitCell::Orient(TGlPrimitive *P)  {
-  if( P->GetType() == sgloText )  {
+bool TDUnitCell::Orient(TGlPrimitive& P)  {
+  if( P.GetType() == sgloText )  {
     olxstr Str('O');
-    const TGlFont& fnt = *Parent()->Scene()->DefFont();
+    const TGlFont& fnt = *Parent.GetScene().DefFont();
     vec3d T;
     const double tr = 0.3, 
-      scale = 1./FParent->GetScale();;
+      scale = 1./Parent.GetScale();;
 
-    vec3d cnt( FParent->GetBasis().GetCenter() );
+    vec3d cnt( Parent.GetBasis().GetCenter() );
     cnt += Center;
     T += tr;
     T += cnt;
-    T *= FParent->GetBasis().GetMatrix();
+    T *= Parent.GetBasis().GetMatrix();
     T *= scale;
-    FParent->DrawTextSafe(T, Str, fnt);
+    Parent.DrawTextSafe(T, Str, fnt);
     for( int i=0; i < 3; i++ )  {
       const int ind = i*2+1;
       T[0] = FGlP->Data[0][ind];  
@@ -236,15 +234,15 @@ bool TDUnitCell::Orient(TGlPrimitive *P)  {
       for( int j=0; j < 3; j++ )
         T[j] -= (j==i ? -tr : tr);
       T += cnt;
-      T *= FParent->GetBasis().GetMatrix();
+      T *= Parent.GetBasis().GetMatrix();
       T *= scale;
-      T[2] = FParent->GetMaxRasterZ();
+      T[2] = Parent.GetMaxRasterZ();
       Str[0] = (char)('a'+i);
-      FParent->DrawTextSafe(T, Str, fnt);
+      Parent.DrawTextSafe(T, Str, fnt);
     }
     return true;
   }
-  Parent()->GlTranslate(Center);
+  Parent.GlTranslate(Center);
 /*
   const TMatrixD& m = FAU->GetCellToCartesian();
   const TMatrixD& n = FAU->GetCartesianToCell();

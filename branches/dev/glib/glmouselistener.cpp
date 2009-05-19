@@ -16,10 +16,9 @@ UseGlNamespace();
 //..............................................................................
 //..............................................................................
 
-TGlMouseListener::TGlMouseListener(const olxstr& collectionName, TGlRenderer *R) :
-  AGDrawObject(collectionName)
+TGlMouseListener::TGlMouseListener(TGlRenderer& R, const olxstr& collectionName) :
+  AGDrawObject(R, collectionName)
 {
-  FParent = R;
   Flags = 0;
 }
 //..............................................................................
@@ -43,13 +42,13 @@ bool TGlMouseListener::OnMouseMove(const IEObject *Sender, const TMouseData *Dat
     if( !IsMoveable() )  {  SX = Data->X;  SY = Data->Y;  return res;}
     if( !IsMove2D() ) {  // move in 3D
       vec3d T;
-      double v = FParent->GetScale();
+      double v = Parent.GetScale();
       if( Data->Shift & sssCtrl )
       { T[2] = (float)(dx+dy)*v;  }
       else
       { T[0] = (float)(dx)*v;      T[1] = (float)(dy)*v;    }
       // use V*M not M*V, as the basis is transposed (See TEBasis::Orient for details)
-      T = FParent->GetBasis().GetMatrix() * T;
+      T = Parent.GetBasis().GetMatrix() * T;
       Basis.Translate(T);
       res = true;
     }
@@ -71,12 +70,12 @@ bool TGlMouseListener::OnMouseMove(const IEObject *Sender, const TMouseData *Dat
     defined by {0,0,1} = ra*Current_Basis and so on, this leasd to three linear equations for 
     three values of the rotation vector...
     */
-    mat3d basis( mat3d::Transpose(FParent->GetBasis().GetMatrix()) );
+    mat3d basis( mat3d::Transpose(Parent.GetBasis().GetMatrix()) );
     if( Data->Shift == sssCtrl )  {
       double RZ = 0;
-      if( SX > FParent->GetWidth()/2 ) RZ -= (double)dy/FRotationDiv;
+      if( SX > Parent.GetWidth()/2 ) RZ -= (double)dy/FRotationDiv;
       else                             RZ += (double)dy/FRotationDiv;
-      if( SY > FParent->GetHeight()/2 )  RZ -= (double)dx/FRotationDiv;
+      if( SY > Parent.GetHeight()/2 )  RZ -= (double)dx/FRotationDiv;
       else                               RZ += (double)dx/FRotationDiv;
       if( RZ != 0 )  {
         Basis.Rotate(mat3d::CramerSolve(basis, vec3d(0,0,1)).Normalise(), RZ*M_PI/180);

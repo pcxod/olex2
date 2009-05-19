@@ -12,13 +12,15 @@
 #include "gpcollection.h"
 #include "glrender.h"
 #include "glscene.h"
+#include "glprimitive.h"
 
 UseGlNamespace()
 //..............................................................................
 //..............................................................................
 
-TGlText::TGlText(const olxstr& collectionName, TGlRenderer *Render, const olxstr& Text):
-    TGlMouseListener(collectionName, Render)  {
+TGlText::TGlText(TGlRenderer& R, const olxstr& collectionName, const olxstr& Text):
+    TGlMouseListener(R, collectionName)  
+{
   this->Text = Text;
   SetMove2D(false);
   SetMoveable(true);
@@ -50,11 +52,11 @@ void TGlText::CalcWH()  {
   CalcWidth = 0;
   CalcHeight = 0;
 /*  int i, tl = FText.Length();
-  if( !FParent->Scene.GlyphMetrics )  return;
+  if( !Parent.Scene.GlyphMetrics )  return;
   GLYPHMETRICSFLOAT *GM;
   for( i=0; i < tl; i++ )
   {
-    GM = &FParent->Scene.GlyphMetrics[FText[i]];
+    GM = &Parent.Scene.GlyphMetrics[FText[i]];
     if( i < (tl - 1) )
     {   FCalcWidth += GM->gmfCellIncX;  FCalcHeight += GM->gmfCellIncY; }
     else
@@ -74,38 +76,36 @@ void TGlText::SetText(const olxstr &T)  {
 void TGlText::Create(const olxstr& cName, const ACreationParams* cpar)  {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
-  TGPCollection* GPC = FParent->FindCollection( GetCollectionName() );
-  if( GPC == NULL )    
-    GPC = FParent->NewCollection( GetCollectionName() );
-  GPC->AddObject(this);
-  if( GPC->PrimitiveCount() != 0 )  return;
+  TGPCollection& GPC = Parent.FindOrCreateCollection( GetCollectionName() );
+  GPC.AddObject(*this);
+  if( GPC.PrimitiveCount() != 0 )  return;
 
-  TGlPrimitive* GlP = GPC->NewPrimitive("Text", sgloText);
+  TGlPrimitive& GlP = GPC.NewPrimitive("Text", sgloText);
   TGlMaterial GlM;
   GlM.SetFlags(sglmAmbientF|sglmIdentityDraw);
 
   GlM.AmbientF = 0x7fff7f;
-  GlP->SetProperties(&GlM);
-  GlP->Params[0] = -1;  //bitmap; TTF by default
+  GlP.SetProperties(GlM);
+  GlP.Params[0] = -1;  //bitmap; TTF by default
   CalcWH();
 }
 //..............................................................................
-bool TGlText::Orient(TGlPrimitive *P)  {
+bool TGlText::Orient(TGlPrimitive& P)  {
   TGlFont *Fnt = Font();
   if( Fnt == NULL )  return false;
-  P->SetFont(Fnt);
+  P.SetFont(Fnt);
   vec3d T( Basis.GetCenter() );
 //  if( StaticPos() )
 //  {
 //    T *= Scale;
-//    T *= FParent->Basis().Matrix();
+//    T *= Parent.Basis().Matrix();
 //  }
-  if( P->Params[0] < 0 )  {  // bitmap
-    FParent->DrawTextSafe(T, Text, *Fnt ); 
+  if( P.Params[0] < 0 )  {  // bitmap
+    Parent.DrawTextSafe(T, Text, *Fnt ); 
     return true;
   }
   else  // ttf
-    Parent()->GlTranslate(T);
+    Parent.GlTranslate(T);
 
 /*  if( StaticWidth() )
   {
@@ -122,14 +122,14 @@ bool TGlText::Orient(TGlPrimitive *P)  {
   if( StaticFace() )
   {
     TMatrixD M(4,4);
-    M = FParent->Basis().Matrix();
+    M = Parent.Basis().Matrix();
     M.Transpose();
     M = Basis.Matrix()*M;
     Parent()->GlOrient(M);
   }            */
-  P->SetString(&Text);
+  P.SetString(&Text);
   return false;
 }
 //..............................................................................
-TGlFont *TGlText::Font()  const   {  return FParent->Scene()->Font(FontIndex); }
+TGlFont *TGlText::Font()  const   {  return Parent.GetScene().GetFont(FontIndex); }
 //..............................................................................
