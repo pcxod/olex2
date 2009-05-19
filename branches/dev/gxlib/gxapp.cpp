@@ -430,7 +430,7 @@ void TGXApp::CreateObjects(bool SyncBonds, bool centerModel)  {
 
   for( int i=0; i < FXFile->GetLattice().PlaneCount(); i++ )  {
     TSPlane& P = FXFile->GetLattice().GetPlane(i);
-    TXPlane& XP = XPlanes.Add( TXPlane(*FGlRender, olxstr("TXPlane") << i, &P) );
+    TXPlane& XP = XPlanes.Add( new TXPlane(*FGlRender, olxstr("TXPlane") << i, &P) );
     XP.SetDeleted(P.IsDeleted());
     XP.Create();
   }
@@ -3210,7 +3210,7 @@ void TGXApp::CreateXGrowPoints()  {
     VTo = VFrom * matrices[i]->r;
     VTo += matrices[i]->t;
     XFile().GetAsymmUnit().CellToCartesian( VTo );
-    TXGrowPoint& gp = XGrowPoints.Add( TXGrowPoint(*FGlRender, EmptyString, VTo, *matrices[i]) );
+    TXGrowPoint& gp = XGrowPoints.Add( new TXGrowPoint(*FGlRender, EmptyString, VTo, *matrices[i]) );
     gp.Create("GrowPoint");
     delete matrices[i];
   }
@@ -3370,7 +3370,7 @@ void TGXApp::CreateXGrowLines()  {
   }
   for( int i=0; i < tr_list.Count(); i++ )  {
     TGXApp_Transform1& nt = tr_list[i];
-    TXGrowLine& gl = XGrowLines.Add( TXGrowLine(*FGlRender, EmptyString, nt.from, nt.to, nt.transform) );
+    TXGrowLine& gl = XGrowLines.Add( new TXGrowLine(*FGlRender, EmptyString, nt.from, nt.to, nt.transform) );
 
     if( !QPeakBondsVisible() &&
       (nt.from->GetAtomInfo() == iQPeakIndex || nt.to->GetAtomInfo() == iQPeakIndex ) )

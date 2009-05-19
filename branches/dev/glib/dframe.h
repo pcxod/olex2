@@ -16,7 +16,6 @@ public:
 
 class TDFrame: public AGDrawObject  {
 protected:
-  class TGlRenderer *FRender;
   class TGlPrimitive *FPrimitive;
   vec3d Translation;
   TActionQList *FActions;

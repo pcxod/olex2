@@ -50,9 +50,9 @@ void TDFrame::Create(const olxstr& cName, const ACreationParams* cpar) {
 bool TDFrame::OnMouseDown(const IEObject *Sender, const TMouseData *Data)  {
   if( FPrimitive == NULL ) 
     return false;
-  double Scale = FRender->GetScale();
-  int hW = FRender->GetWidth()/2 + FRender->GetLeft(),
-      hH = FRender->GetHeight()/2 - FRender->GetTop();
+  double Scale = Parent.GetScale();
+  int hW = Parent.GetWidth()/2 + Parent.GetLeft(),
+      hH = Parent.GetHeight()/2 - Parent.GetTop();
   // the translation is currently disabled, so, just null it
 //  Translation.Null(); // = FRender->Basis().Center();
 //  Translation *= FRender->GetBasis().GetMatrix();
@@ -82,7 +82,7 @@ bool TDFrame::OnMouseUp(const IEObject *Sender, const TMouseData *Data)  {
   if( FPrimitive == NULL ) 
     return false;
   SetVisible( false );
-  FRender->Draw();
+  Parent.Draw();
   TSelectionInfo SI;
   SI.From[0] = olx_min(FPrimitive->Data[0][0], FPrimitive->Data[0][2]);
   SI.From[1] = olx_min(FPrimitive->Data[1][0], FPrimitive->Data[1][2]);
@@ -97,9 +97,9 @@ bool TDFrame::OnMouseUp(const IEObject *Sender, const TMouseData *Data)  {
 bool TDFrame::OnMouseMove(const IEObject *Sender, const TMouseData *Data)  {
   if( FPrimitive == NULL ) 
     return false;
-  double Scale = FRender->GetScale();
-  int hW = FRender->GetWidth()/2 + FRender->GetLeft(),
-      hH = FRender->GetHeight()/2 - FRender->GetTop();
+  double Scale = Parent.GetScale();
+  int hW = Parent.GetWidth()/2 + Parent.GetLeft(),
+      hH = Parent.GetHeight()/2 - Parent.GetTop();
   FPrimitive->Data[0][2] = (-hW + Data->X)*Scale - Translation[0];
   FPrimitive->Data[1][2] = (hH - Data->Y )*Scale - Translation[1];
 
