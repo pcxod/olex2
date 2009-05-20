@@ -3,6 +3,9 @@
 
 #include <iostream>
 
+#ifndef __WIN32__
+  #include "wx/app.h"
+#endif
 using namespace std;
 
 #include "con_in.h"
@@ -120,7 +123,11 @@ class TOlex: public AEventsDispatcher, public olex::IOlexProcessor, public ASele
     while( true )  {
       if( TBasicApp::GetInstance()  == NULL )  return 0;
       TBasicApp::GetInstance()->OnTimer->Execute(NULL);
-      Sleep(50);
+#ifdef __WIN32__
+			Sleep(50);
+#else
+      sleep(50);
+#endif
     }
     return 0;
   }
@@ -160,12 +167,16 @@ public:
     TLibrary &Library = XApp.GetLibrary();
     PythonExt::Init(this).Register(&OlexPyCore::PyInit);
     Library.AttachLibrary( TEFile::ExportLibrary() );
-    Library.AttachLibrary( PythonExt::GetInstance()->ExportLibrary() );
+    //Library.AttachLibrary( PythonExt::GetInstance()->ExportLibrary() );
     Library.AttachLibrary( TETime::ExportLibrary() );
+		cout << "1\n";
     Library.AttachLibrary( XApp.XFile().ExportLibrary() );
+		cout << "2\n";
     Library.AttachLibrary( TFileHandlerManager::ExportLibrary() );
+		cout << "3\n";
 
     DataDir = TShellUtil::GetSpecialFolderLocation(fiAppData);
+		cout << DataDir.c_str() << '\n';
 #ifdef __WIN32__
   unsigned long thread_id;
   TimerThreadHandle = CreateThread(NULL, 0, TimerThreadRun, this, 0, &thread_id);
@@ -175,7 +186,7 @@ public:
     DataDir << "Olex2/";
   #endif
 #else  // need to check the Error
-  pthread_create(&thread_id, NULL, TimerThreadRun,NULL)
+  pthread_create(&thread_id, NULL, TimerThreadRun,NULL);
 #endif
     XApp.GetLog().AddStream( TUtf8File::Create(DataDir + "olex2c.log"), true );
     FMacroItem = NULL;
@@ -748,7 +759,11 @@ public:
       Tmp << ' ';
     }
     TBasicApp::GetLog() << (olxstr("EXEC: ") << Tmp << '\n');
+#ifdef __WIN32__
     TWinProcess* Process  = new TWinProcess;
+#else
+    TWxProcess* Process = new TWxProcess;
+#endif		
     Process->OnTerminateCmds().Assign( FOnTerminateMacroCmds );
     FOnTerminateMacroCmds.Clear();
     if( (Cout && Asyn) || Asyn )  {  // the only combination
@@ -1049,8 +1064,18 @@ public:
     return false; 
   }
 };
-
+#ifndef __WIN32__  // dummy stuff for wxWidgets...
+class MyApp: public wxAppConsole {
+  virtual bool OnInit() {  return true;  }
+	virtual int OnRun() {  return 0;  }
+};
+IMPLEMENT_APP_NO_MAIN(MyApp)
+#endif
 int main(int argc, char* argv[])  {
+#ifndef __WIN32__  // dummy stuff for wxWidgets...
+  MyApp wx_app;
+	wxAppConsole::SetInstance(&wx_app);
+#endif
   olxstr bd(argv[0]);
   char* cbd = getenv("OLEX2_DIR");
   if( cbd != NULL )  {
@@ -1060,7 +1085,9 @@ int main(int argc, char* argv[])  {
     bd << "dummy.txt";
   }
   TOlex olex(bd);
+#ifdef __WIN32__
   SetConsoleTitle(olx_T("Olex2 Console"));
+#endif	
   TLibrary &Library = olex.GetLibrary();
   cout << "Welcome to Olex2 console\n";
   cout << "GUI basedir is: " << TBasicApp::GetInstance()->BaseDir().c_str() << '\n';

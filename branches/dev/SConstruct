@@ -21,6 +21,8 @@ glib = Glob('./glib/*.cpp')
 gxlib = Glob('./gxlib/*.cpp')
 olex2 = Glob('./olex/*.cpp')
 unirun = Glob('./unirun/*.cpp')
+olex2c = Split("""./olex2c/olex2c.cpp""")
+
 np_repository = Split("""./repository/filesystem.cpp   ./repository/shellutil.cpp 
                          ./repository/httpex.cpp       ./repository/url.cpp 
                          ./repository/wxhttpfs.cpp     ./repository/wxzipfs.cpp 
@@ -113,13 +115,17 @@ else:
 sdl_files = fileListToStringList('sdl', sdl) + fileListToStringList('sdl/smart', sdl_smart)
 sdl_files = processFileNameList(sdl_files, env, out_dir + 'sdl')
 env.StaticLibrary(out_dir + 'lib/sdl', sdl_files)
+xlib_files = fileListToStringList('xlib', xlib) + fileListToStringList('xlib/macro', xlib_macro)
+xib_files = processFileNameList(xlib_files, env, out_dir + 'xlib')
+env.StaticLibrary(out_dir + 'lib/xlib', xlib_files)
 
 env.Append(LIBPATH=[out_dir+'lib'])
 env.Append(LIBS = ['sdl'])
 np_env = env.Clone()
+env.Append(LIBS = ['xlib'])
+olex2c_env = env.Clone()
+
 olex2_files = fileListToStringList('alglib', alglib) + \
-              fileListToStringList('xlib', xlib) + \
-              fileListToStringList('xlib/macro', xlib_macro) + \
               fileListToStringList('glib', glib) + \
               fileListToStringList('gxlib', gxlib) + \
               repository + \
@@ -138,6 +144,13 @@ unirun_files = processFileNameList(unirun_files, np_env, out_dir+'unirun')
 
 np_env.Append(CCFLAGS = ['-D_NO_PYTHON'])
 np_env.Program(out_dir+'exe/unirun', unirun_files)
+
+# make olex2c?
+olex2c_files = fileListToStringList('alglib', alglib) + \
+              repository
+olex2c_files = processFileNameList(olex2c_files, olex2c_env, out_dir+'olex2') + \
+                processFileNameList(olex2c, olex2c_env, out_dir+'olex2c')
+olex2c_env.Program(out_dir+'exe/olex2c', olex2c_files)
 
 try:
   import _imaging
