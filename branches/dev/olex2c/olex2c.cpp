@@ -41,6 +41,10 @@ using namespace std;
 #include "settingsfile.h"
 #include "py_core.h"
 
+#ifndef __WIN32__
+  #include <termio.h>
+#endif
+
 //
 
 #define olx_Shift 25
@@ -1074,7 +1078,15 @@ IMPLEMENT_APP_NO_MAIN(MyApp)
 int main(int argc, char* argv[])  {
 #ifndef __WIN32__  // dummy stuff for wxWidgets...
   MyApp wx_app;
-	wxAppConsole::SetInstance(&wx_app);
+  wxAppConsole::SetInstance(&wx_app);
+//  struct termios new_settings, stored_settings;
+//  tcgetattr(0,&stored_settings);
+//  new_settings = stored_settings;
+//  new_settings.c_lflag &= (~(ICANON|ECHO));
+//  new_settings.c_cc[VTIME] = 0;
+//  tcgetattr(0,&stored_settings);
+//  new_settings.c_cc[VMIN] = 1;
+//  tcsetattr(0,TCSANOW,&new_settings);
 #endif
   olxstr bd(argv[0]);
   char* cbd = getenv("OLEX2_DIR");
@@ -1102,11 +1114,33 @@ int main(int argc, char* argv[])  {
   }
   else  {
     char _cmd[512];
+    _cmd[0] = '\0';
     olxstr cmd;
     //TBasicApp::GetInstance()->OnTimer->Add( new TTerminationListener );
     while( true )  {
       TBasicApp::GetInstance()->OnIdle->Execute(NULL);
       cin.getline(_cmd, 512);
+//      int ch = getchar();
+//      if( ch >= 'a' && ch <= 'z' )
+//        cout << (char)ch;
+//      else if( ch == 27 )  {
+//        ch = getchar();
+//        if( ch == '[' )  {
+//          ch = getchar();  
+//          if( ch == 'A' )
+//            TBasicApp::GetLog() << "up\n";
+//          if( ch == 'B' )
+//            TBasicApp::GetLog() << "down\n";
+//          if( ch == 'C' )  {
+//            TBasicApp::GetLog() << "right\n";
+//          }
+//          if( ch == 'D' )  {
+//            TBasicApp::GetLog() << "left\n";
+//            cout << "\r";
+//            continue;
+//          }
+//        }
+//      }
       cmd = _cmd;
       if( cmd.Comparei("quit") == 0 )  break;
       else  {
