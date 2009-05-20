@@ -499,7 +499,7 @@ void TMainForm::XApp( TGXApp *XA)  {
   this_InitMacroD(Clear, EmptyString, fpNone,
 "Clears console buffer (text)");
 
-  this_InitMacroD(Cell, EmptyString, fpNone|fpOne|psFileLoaded,
+  this_InitMacroD(Cell, EmptyString, fpOne|psFileLoaded,
 "If no arguments provided inverts visibility of unit cell, otherwise sets it to\
  the boolean value of the parameter");
   this_InitMacroD(Rota, EmptyString, fpTwo|fpFive,

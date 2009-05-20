@@ -824,7 +824,7 @@ void TXGrid::FromDataItem(const TDataItem& item, wxInputStream& zis) {
   MinVal = item.GetRequiredField("min_val").ToDouble();
   Depth = item.GetRequiredField("depth").ToDouble();
   Size = item.GetRequiredField("size").ToDouble();
-  Extended = item.GetFieldValue("Extended", FalseString).ToBool();
+  Extended = item.GetFieldValue("extended", FalseString).ToBool();
   Scale = item.GetRequiredField("scale").ToDouble();
   InitGrid( item.GetRequiredField("max_x").ToInt(), 
             item.GetRequiredField("max_y").ToInt(),

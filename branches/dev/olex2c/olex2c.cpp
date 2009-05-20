@@ -2,12 +2,10 @@
 //
 
 #include <iostream>
-#include <windows.h>
-#include <conio.h>
-#include <process.h>
-#include <io.h>
 
 using namespace std;
+
+#include "con_in.h"
 
 #include "xapp.h"
 #include "log.h"
@@ -105,12 +103,11 @@ class TOlex: public AEventsDispatcher, public olex::IOlexProcessor, public ASele
   AProcess* FProcess;
   TEMacroLib Macros;
   TSAtomPList Selection;
-  HANDLE conin, conout;
   TDataFile PluginFile;
   TDataItem* Plugins;
+  ConcoleInterface conint;
   bool Silent;
   TOutStream* OutStream;
-  CONSOLE_SCREEN_BUFFER_INFO TextAttrib;
   static unsigned long _stdcall TimerThreadRun(void* _instance) {
     while( true )  {
       if( TBasicApp::GetInstance()  == NULL )  return 0;
@@ -162,9 +159,6 @@ public:
 
     unsigned long thread_id;
     TimerThreadHandle = CreateThread(NULL, 0, TimerThreadRun, this, 0, &thread_id);
-    conin = CreateFile(olx_T("CONIN$"), GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL); 
-    conout  = CreateFile(olx_T("CONOUT$"), GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-    GetConsoleScreenBufferInfo(conout, &TextAttrib); 
     DataDir = TShellUtil::GetSpecialFolderLocation(fiAppData);
 #ifdef __WIN32__
   #ifdef _UNICODE
@@ -266,13 +260,9 @@ public:
     CloseHandle(TimerThreadHandle);
     TOlxVars::Finalise();
     PythonExt::Finilise();
-    CloseHandle(conin);
-    CloseHandle(conout);
     delete OutStream;
     OlexInstance = NULL;
   }
-  HANDLE GetConin()  {  return conin;  }
-  HANDLE GetConout() {  return conout;  }
   virtual bool executeMacroEx(const olxstr& cmdLine, TMacroError& er)  {
     str_stack stack;
     er.SetStack( stack );
@@ -283,25 +273,24 @@ public:
   //..........................................................................................
   virtual void print(const olxstr& msg, const short MessageType = olex::mtNone)  {
     if( Silent && MessageType == olex::mtInfo ) return;
-    CONSOLE_SCREEN_BUFFER_INFO pi;
-    GetConsoleScreenBufferInfo(conout, &pi); 
+    conint.Push();
     switch( MessageType )  {
       case olex::mtError:
       case olex::mtException:
-        SetConsoleTextAttribute(conout, FOREGROUND_RED|FOREGROUND_INTENSITY);
+        conint.SetTextForeground( fgcRed, true);
         break;
       case olex::mtWarning:
-        SetConsoleTextAttribute(conout, FOREGROUND_RED);
+        conint.SetTextForeground( fgcRed, false);
         break;
       case olex::mtInfo:
-        SetConsoleTextAttribute(conout, FOREGROUND_BLUE|FOREGROUND_INTENSITY);
+        conint.SetTextForeground( fgcBlue, true);
         break;
       default:
-        SetConsoleTextAttribute(conout, 0);
+        conint.SetTextForeground( fgcReset, false);
     }
     TBasicApp::GetLog() << msg << '\n';
     //SetConsoleTextAttribute(conout, FOREGROUND_RED|FOREGROUND_GREEN|FOREGROUND_BLUE);
-    SetConsoleTextAttribute(conout, pi.wAttributes);
+    conint.Pop();
   }
   virtual bool executeFunction(const olxstr& function, olxstr& retVal)  {
     retVal = function;
@@ -414,9 +403,9 @@ public:
       // end tasks ...
       if( FProcess != NULL )  {
         while( FProcess->StrCount() != 0 )  {
-          SetConsoleTextAttribute(conout, FOREGROUND_GREEN);
+          conint.SetTextForeground(fgcGreen, false);
           TBasicApp::GetLog() << FProcess->GetString(0) << '\n';
-          SetConsoleTextAttribute(conout, TextAttrib.wAttributes);
+          conint.SetTextForeground(fgcReset, false);  // was setting the first read value!
           CallbackFunc(ProcessOutputCBName, FProcess->GetString(0));
           FProcess->DeleteStr(0);
         }
@@ -428,18 +417,18 @@ public:
     else if( MsgId == ID_INFO || MsgId == ID_WARNING || MsgId == ID_ERROR || MsgId == ID_EXCEPTION )  {
       if( MsgSubId == msiEnter )  {
         if( Data != NULL )  {
-          int mat = 0;
-          if( MsgId == ID_INFO )           mat = FOREGROUND_BLUE|FOREGROUND_INTENSITY;
-          else if( MsgId == ID_WARNING )   mat = FOREGROUND_RED;
-          else if( MsgId == ID_ERROR )     mat = FOREGROUND_RED|FOREGROUND_INTENSITY;
-          else if( MsgId == ID_EXCEPTION ) mat = FOREGROUND_RED|FOREGROUND_INTENSITY;
-          SetConsoleTextAttribute(conout, mat);
+          if( MsgId == ID_INFO )           
+            conint.SetTextForeground(fgcBlue, true);
+          else if( MsgId == ID_WARNING )   
+            conint.SetTextForeground(fgcRed, false);
+          else if( MsgId == ID_ERROR || MsgId == ID_EXCEPTION )     
+            conint.SetTextForeground(fgcRed, true);
           OutStream->SetSkipPost(Silent && MsgId == ID_INFO);
           res = false;  // propargate to other streams, logs in particular if not Silent
         }
       }
       else  if( MsgSubId == msiExit )  {
-        SetConsoleTextAttribute(conout, TextAttrib.wAttributes);
+        conint.SetTextForeground(fgcReset);
       }
     }
     else if( MsgId == ID_STRUCTURECHANGED )
@@ -1041,9 +1030,9 @@ public:
     if( TOlex::TerminateSignal )  {
       TBasicApp::GetLog() << "terminate\n";
       exit(0);
-      DWORD w=0;
-      WriteConsole(TOlex::OlexInstance->GetConin(),
-        olx_T("\n"), 1, &w, NULL); 
+      //DWORD w=0;
+      //WriteConsole(TOlex::OlexInstance->GetConin(),
+      //  olx_T("\n"), 1, &w, NULL); 
     }
     return false; 
   }

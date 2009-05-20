@@ -930,6 +930,12 @@ void TXAtom::CreateNormals(TXAtom::Poly& pl, const vec3f& cnt)  {
     const vec3f& v2 = pl.vecs[pl.faces[i][1]];
     const vec3f& v3 = pl.vecs[pl.faces[i][2]];
     vec3f n = (v2-v1).XProdVec(v3-v1);
+    if( n.QLength() < 1e-15 )  {  // oups...
+      pl.faces.Clear();
+      pl.vecs.Clear();
+      pl.norms.Clear();
+      return;
+    }
     const float d = n.DotProd((v1+v2+v3)/3)/n.Length();
     n.Normalise();
     if( (n.DotProd(cnt) - d) > 0 )  { // normal looks inside?
@@ -978,58 +984,65 @@ vec3f TXAtom::TriangulateType2(Poly& pl, const TSAtomPList& atoms)  {
 }
 //..............................................................................
 void TXAtom::CreatePoly(const TSAtomPList& bound, short type, const vec3d* _normal, const vec3d* _pc)  {
-  static const vec3d NullVec;
-  TXAtom::Poly& pl = *((Polyhedron == NULL) ? (Polyhedron=new TXAtom::Poly) : Polyhedron);
-  if( type == polyRegular )  {
-    pl.vecs.SetCount( bound.Count() );
-    for( int i=0; i < bound.Count(); i++ )  {
-      pl.vecs[i] = bound[i]->crd();
-      for( int j=i+1; j < bound.Count(); j++ )  {
-        for( int k=j+1; k < bound.Count(); k++ )  {
-          if( TetrahedronVolume(
-            NullVec, 
-            (bound[i]->crd()-FAtom->crd()).Normalise(), 
-            (bound[j]->crd()-FAtom->crd()).Normalise(), 
-            (bound[k]->crd()-FAtom->crd()).Normalise() ) > 0.03 )  // reagular octahedron vol would be ~0.47A^3
-            pl.faces.AddNew(i, j, k);
+  try  {
+    static const vec3d NullVec;
+    TXAtom::Poly& pl = *((Polyhedron == NULL) ? (Polyhedron=new TXAtom::Poly) : Polyhedron);
+    if( type == polyRegular )  {
+      pl.vecs.SetCount( bound.Count() );
+      for( int i=0; i < bound.Count(); i++ )  {
+        pl.vecs[i] = bound[i]->crd();
+        for( int j=i+1; j < bound.Count(); j++ )  {
+          for( int k=j+1; k < bound.Count(); k++ )  {
+            if( TetrahedronVolume(
+              NullVec, 
+              (bound[i]->crd()-FAtom->crd()).Normalise(), 
+              (bound[j]->crd()-FAtom->crd()).Normalise(), 
+              (bound[k]->crd()-FAtom->crd()).Normalise() ) > 0.03 )  // reagular octahedron vol would be ~0.47A^3
+              pl.faces.AddNew(i, j, k);
+          }
         }
       }
+      CreateNormals(pl, FAtom->crd());
     }
-    CreateNormals(pl, FAtom->crd());
-  }
-  else if( type == polyPyramid )  {
-    vec3f cnt = TriangulateType2(pl, bound);
-    CreateNormals(pl, cnt);
-  }
-  else if( type == polyBipyramid )  {
-    vec3d normal, pc;
-    if( _normal == NULL || _pc == NULL )  {
-      vec3d rms;
-      mat3d normals;
-      TSPlane::CalcPlanes(bound, normals, rms, pc);
-      normal = normals[2];
-    }
-    else  {
-      normal = *_normal;
-      pc = *_pc;
-    }
-    TSAtomPList sidea, sideb;
-    pl.vecs.Clear();
-    for( int i=0; i < bound.Count(); i++ )  {
-      const double ca = normal.CAngle(bound[i]->crd() - pc);
-      if( ca >= 0 )
-        sidea.Add(bound[i]);
-      else
-        sideb.Add(bound[i]);
-    }
-    if( sidea.Count() > 2 )  {
-      vec3f cnt = TriangulateType2(pl, sidea);
+    else if( type == polyPyramid )  {
+      vec3f cnt = TriangulateType2(pl, bound);
       CreateNormals(pl, cnt);
     }
-    if( sideb.Count() > 2 )  {
-      vec3f cnt = TriangulateType2(pl, sideb);
-      CreateNormals(pl, cnt);
+    else if( type == polyBipyramid )  {
+      vec3d normal, pc;
+      if( _normal == NULL || _pc == NULL )  {
+        vec3d rms;
+        mat3d normals;
+        TSPlane::CalcPlanes(bound, normals, rms, pc);
+        normal = normals[2];
+      }
+      else  {
+        normal = *_normal;
+        pc = *_pc;
+      }
+      TSAtomPList sidea, sideb;
+      pl.vecs.Clear();
+      for( int i=0; i < bound.Count(); i++ )  {
+        const double ca = normal.CAngle(bound[i]->crd() - pc);
+        if( ca >= 0 )
+          sidea.Add(bound[i]);
+        else
+          sideb.Add(bound[i]);
+      }
+      if( sidea.Count() > 2 )  {
+        vec3f cnt = TriangulateType2(pl, sidea);
+        CreateNormals(pl, cnt);
+      }
+      if( sideb.Count() > 2 )  {
+        vec3f cnt = TriangulateType2(pl, sideb);
+        CreateNormals(pl, cnt);
+      }
     }
+  }
+  catch(...)  {
+    if( Polyhedron != NULL )
+      delete Polyhedron;
+    Polyhedron = NULL;
   }
 }
 //..............................................................................

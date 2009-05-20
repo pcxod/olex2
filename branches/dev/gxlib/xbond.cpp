@@ -39,7 +39,8 @@ TXBond::TXBond(TGlRenderer& R, const olxstr& collectionName, TSBond& B) :
   if( FBond != NULL )
     BondUpdated();
   Params()[4] = 0.8;
-  if( !FStaticObjects.Count() )  CreateStaticPrimitives();
+  if( FStaticObjects.IsEmpty() )  
+    CreateStaticPrimitives();
   // the objects will be automatically deleted by the corresponding action collections
 }
 //..............................................................................
@@ -172,17 +173,14 @@ void TXBond::ListPrimitives(TStrList &List) const {
 }
 //..............................................................................
 void TXBond::Quality(const short Val)  {
-  TGraphicsStyle& GS = Parent.GetStyles().NewStyle("Bonds", true);
-  olxstr& ConeQ = GS.GetParam("ConeQ", "0", true);
-//  double &ConeStipples = GS.ParameterValue("ConeStipples");
-
+  ValidateBondParams();
+  olxstr& ConeQ = FBondParams->GetParam("ConeQ", "15", true);
   switch( Val )  {
     case qaPict:
     case qaHigh:   ConeQ = 30;  break;
     case qaMedium: ConeQ = 15;  break;
     case qaLow:    ConeQ = 5;  break;
   }
-//  CreateStaticPrimitives(false);
   return;
 }
 //..............................................................................
@@ -191,10 +189,9 @@ void TXBond::ListDrawingStyles(TStrList &L){  return; }
 void TXBond::CreateStaticPrimitives()  {
   TGlMaterial GlM;
   TGlPrimitive *GlP, *GlPRC1, *GlPRD1, *GlPRD2;
-  olxstr Legend("Bonds");
-  TGraphicsStyle& GS = Parent.GetStyles().NewStyle(Legend, true);
-  double ConeQ = GS.GetParam("ConeQ", "5", true).ToDouble();
-  double ConeStipples = GS.GetParam("ConeStipples", "6", true).ToDouble();
+  ValidateBondParams();
+  double ConeQ = FBondParams->GetParam("ConeQ", "15", true).ToDouble();
+  double ConeStipples = FBondParams->GetParam("ConeStipples", "6", true).ToDouble();
 //..............................
   // create single color cylinder
   if( (GlP = FStaticObjects.FindObject("Single cone")) == NULL )  {

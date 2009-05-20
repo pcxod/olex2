@@ -63,7 +63,8 @@ void TGPCollection::SetStyle(TGraphicsStyle *S)  {
   // update materials of primitives & filling the style
   for( int i=0; i < PrimitiveCount(); i++ )  {
     TGlPrimitive& GlP = GetPrimitive(i);
-    S->SetMaterial(GlP.GetName(), GlP.GetProperties());
+    if( S->IndexOfMaterial(GlP.GetName()) == -1 )
+      S->SetMaterial(GlP.GetName(), GlP.GetProperties());
   }
 }
 

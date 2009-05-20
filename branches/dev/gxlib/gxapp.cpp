@@ -2873,9 +2873,13 @@ void TGXApp::StructureVisible(bool v)  {
 //..............................................................................
 void TGXApp::LoadXFile(const olxstr &fn)  {
   FXFile->LoadFromFile(fn);
-  if( !FHydrogensVisible )  {  Log->Warning("Note: hydrogens are invisible");  }
-  if( !FQPeaksVisible )     {  Log->Warning("Note: Q-peaks are invisible");  }
-  if( !FStructureVisible )  {  Log->Warning("Note: structure is invisible");  }
+  if( !FHydrogensVisible )  
+    (*Log) << "Note: hydrogens are invisible";
+  if( !FQPeaksVisible )     
+    (*Log) << "Note: Q-peaks are invisible";
+  if( !FStructureVisible )  
+    (*Log) << "Note: structure is invisible";
+  Draw();
 }
 //..............................................................................
 void TGXApp::SwapExyz(TXAtom *XA, const olxstr& Elm)

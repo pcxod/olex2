@@ -170,22 +170,33 @@ void TMainForm::funFileLast(const TStrObjList& Params, TMacroError &E)  {
 }
 //..............................................................................
 void TMainForm::funCell(const TStrObjList& Params, TMacroError &E)  {
-  if( !Params[0].Comparei("a") )
-    E.SetRetVal( FXApp->XFile().GetAsymmUnit().Axes()[0].GetV() );
-  else if( !Params[0].Comparei("b") )
-    E.SetRetVal( FXApp->XFile().GetAsymmUnit().Axes()[1].GetV() );
-  else if( !Params[0].Comparei("c") )
-    E.SetRetVal( FXApp->XFile().GetAsymmUnit().Axes()[2].GetV() );
-  else if( !Params[0].Comparei("alpha") )
-    E.SetRetVal( FXApp->XFile().GetAsymmUnit().Angles()[0].GetV() );
-  else if( !Params[0].Comparei("beta") )
-    E.SetRetVal( FXApp->XFile().GetAsymmUnit().Angles()[1].GetV() );
-  else if( !Params[0].Comparei("gamma") )
-    E.SetRetVal( FXApp->XFile().GetAsymmUnit().Angles()[2].GetV() );
-  else if( !Params[0].Comparei("volume") )
-    E.SetRetVal( olxstr::FormatFloat(2, FXApp->XFile().GetUnitCell().CalcVolume()) );
-  else
-    E.ProcessingError(__OlxSrcInfo, "invalid argument: ") << Params[0];
+  if( Params[0].IsNumber() && false )  {  // mutliplies cartesian cell... tests...
+    const double k = Params[0].ToDouble();
+    TAsymmUnit& au = FXApp->XFile().GetAsymmUnit();
+    au.Axes()[0] *= k;  au.Axes()[1] *= k;  au.Axes()[2] *= k;
+    au.InitMatrices();
+    for( int i=0; i < au.AtomCount(); i++ )
+      au.CartesianToCell(au.GetAtom(i).ccrd());
+    ProcessXPMacro("fuse", E);
+  }
+  else  {
+    if( !Params[0].Comparei("a") )
+      E.SetRetVal( FXApp->XFile().GetAsymmUnit().Axes()[0].GetV() );
+    else if( !Params[0].Comparei("b") )
+      E.SetRetVal( FXApp->XFile().GetAsymmUnit().Axes()[1].GetV() );
+    else if( !Params[0].Comparei("c") )
+      E.SetRetVal( FXApp->XFile().GetAsymmUnit().Axes()[2].GetV() );
+    else if( !Params[0].Comparei("alpha") )
+      E.SetRetVal( FXApp->XFile().GetAsymmUnit().Angles()[0].GetV() );
+    else if( !Params[0].Comparei("beta") )
+      E.SetRetVal( FXApp->XFile().GetAsymmUnit().Angles()[1].GetV() );
+    else if( !Params[0].Comparei("gamma") )
+      E.SetRetVal( FXApp->XFile().GetAsymmUnit().Angles()[2].GetV() );
+    else if( !Params[0].Comparei("volume") )
+      E.SetRetVal( olxstr::FormatFloat(2, FXApp->XFile().GetUnitCell().CalcVolume()) );
+    else
+      E.ProcessingError(__OlxSrcInfo, "invalid argument: ") << Params[0];
+  }
 }
 //..............................................................................
 void TMainForm::funCif(const TStrObjList& Params, TMacroError &E)  {
