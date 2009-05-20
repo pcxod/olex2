@@ -93,7 +93,11 @@ enum  {
 class TOlex: public AEventsDispatcher, public olex::IOlexProcessor, public ASelectionOwner  {
   TXApp XApp;
   TLst Lst;
+#ifdef __WIN32__
   HANDLE TimerThreadHandle;
+#else
+  pthread_t thread_id;
+#endif
   olxstr DataDir;
   TCSTypeList<olxstr, ABasicFunction*> CallbackFuncs;
   TStrList FOnTerminateMacroCmds; // a list of commands called when a process is terminated
@@ -108,7 +112,11 @@ class TOlex: public AEventsDispatcher, public olex::IOlexProcessor, public ASele
   ConcoleInterface conint;
   bool Silent;
   TOutStream* OutStream;
+#ifdef __WIN32__
   static unsigned long _stdcall TimerThreadRun(void* _instance) {
+#else
+  static void* TimerThreadRun(void* _instance) {
+#endif
     while( true )  {
       if( TBasicApp::GetInstance()  == NULL )  return 0;
       TBasicApp::GetInstance()->OnTimer->Execute(NULL);
@@ -157,15 +165,17 @@ public:
     Library.AttachLibrary( XApp.XFile().ExportLibrary() );
     Library.AttachLibrary( TFileHandlerManager::ExportLibrary() );
 
-    unsigned long thread_id;
-    TimerThreadHandle = CreateThread(NULL, 0, TimerThreadRun, this, 0, &thread_id);
     DataDir = TShellUtil::GetSpecialFolderLocation(fiAppData);
 #ifdef __WIN32__
+  unsigned long thread_id;
+  TimerThreadHandle = CreateThread(NULL, 0, TimerThreadRun, this, 0, &thread_id);
   #ifdef _UNICODE
     DataDir << "Olex2u/";
   #else
     DataDir << "Olex2/";
   #endif
+#else  // need to check the Error
+  pthread_create(&thread_id, NULL, TimerThreadRun,NULL)
 #endif
     XApp.GetLog().AddStream( TUtf8File::Create(DataDir + "olex2c.log"), true );
     FMacroItem = NULL;
@@ -257,7 +267,9 @@ public:
       FProcess->Terminate();
       delete FProcess;
     }
+#ifdef __WIN32__
     CloseHandle(TimerThreadHandle);
+#endif
     TOlxVars::Finalise();
     PythonExt::Finilise();
     delete OutStream;
