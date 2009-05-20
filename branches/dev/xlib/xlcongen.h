@@ -58,24 +58,35 @@ public:
     return -1;
   }
   static short ShelxToOlex(int shelx_code, TAtomEnvi& envi, TAtomEnvi* pivot = NULL)  {
-    switch( shelx_code ) {
-      case 13:
+    const int m = TAfixGroup::GetM(shelx_code);
+    switch( m ) {
+      case 1:
         if( envi.Count() == 3 )  {
           if( envi.GetBase().GetAtomInfo() == iCarbonIndex )
             return fgCH1;
           else if( envi.GetBase().GetAtomInfo() == iNitrogenIndex )
             return fgNH1;
+          else if( envi.GetBase().GetAtomInfo() == iSiliconIndex )
+            return fgSiH1;
         }
         break;
-      case 23:
-        if( envi.Count() == 2 )  {
+      case 2:
+      case 9:
+        if( envi.Count() == 2 || envi.Count() == 1 )  {
           if( envi.GetBase().GetAtomInfo() == iCarbonIndex )
             return fgCH2;
           else if( envi.GetBase().GetAtomInfo() == iNitrogenIndex )
             return fgNH2;
         }
         break;
-      case 43:
+      case 3:
+      case 13:
+        if( envi.Count() == 1 && envi.GetBase().GetAtomInfo() == iCarbonIndex )
+          return fgCH3;
+        else if( envi.Count() == 1 && envi.GetBase().GetAtomInfo() == iNitrogenIndex )
+          return fgNH3;
+        break;
+      case 4:
         if( envi.Count() == 2 )  {
           if( envi.GetBase().GetAtomInfo() == iCarbonIndex )
             return fgCH1;
@@ -83,11 +94,25 @@ public:
             return fgNH1;
         }
         break;
-      case 137:
+      case 8:
+      case 14:
+        if( envi.Count() != 1 )
+          break;
+        if( envi.GetBase().GetAtomInfo() == iOxygenIndex )
+          return fgOH1;
+        else if( envi.GetBase().GetAtomInfo() == iSulphurIndex )
+          return fgOH1;
+        break;
+      case 15:
+        if( envi.GetBase().GetAtomInfo() == iBoronIndex && 
+          (envi.Count() == 4 || envi.Count() == 5) )
+        {
+          return fgBH1;
+        }
+        break;
+      case 16:
         if( envi.Count() == 1 && envi.GetBase().GetAtomInfo() == iCarbonIndex )
-          return fgCH3;
-        else if( envi.Count() == 1 && envi.GetBase().GetAtomInfo() == iNitrogenIndex )
-          return fgNH3;
+          return fgCH1;
         break;
     }
     return -1;

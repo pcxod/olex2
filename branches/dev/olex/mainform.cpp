@@ -173,6 +173,7 @@ enum
   ID_AtomConn2,
   ID_AtomConn3,
   ID_AtomConn4,
+  ID_AtomConn12,
 
   ID_AtomPolyNone,
   ID_AtomPolyAuto,
@@ -302,6 +303,7 @@ BEGIN_EVENT_TABLE(TMainForm, wxFrame)  // basic interface
   EVT_MENU(ID_AtomConn2, TMainForm::OnAtomConnChange)
   EVT_MENU(ID_AtomConn3, TMainForm::OnAtomConnChange)
   EVT_MENU(ID_AtomConn4, TMainForm::OnAtomConnChange)
+  EVT_MENU(ID_AtomConn12, TMainForm::OnAtomConnChange)
 
   EVT_MENU(ID_AtomPolyNone, TMainForm::OnAtomPolyChange)
   EVT_MENU(ID_AtomPolyAuto, TMainForm::OnAtomPolyChange)
@@ -1072,6 +1074,7 @@ separated values of Atom Type and radius, an entry a line" );
     pmAtomConn->Append(ID_AtomConn2, wxT("2"));
     pmAtomConn->Append(ID_AtomConn3, wxT("3"));
     pmAtomConn->Append(ID_AtomConn4, wxT("4"));
+    pmAtomConn->Append(ID_AtomConn12, wxT("Default"));
     pmAtomPoly->AppendRadioItem(ID_AtomPolyNone, wxT("None"));
     pmAtomPoly->AppendRadioItem(ID_AtomPolyAuto, wxT("Auto"));
     pmAtomPoly->AppendRadioItem(ID_AtomPolyRegular, wxT("Regular"));
@@ -1540,6 +1543,7 @@ void TMainForm::OnAtomConnChange(wxCommandEvent& event)  {
     case ID_AtomConn2:   Tmp << '2';  break;
     case ID_AtomConn3:   Tmp << '3';  break;
     case ID_AtomConn4:   Tmp << '4';  break;
+    case ID_AtomConn12:  Tmp << def_max_bonds;  break;
   }
   if( !XA->IsSelected() )
     Tmp << " #c" << XA->Atom().CAtom().GetId();
@@ -2267,7 +2271,8 @@ void TMainForm::OnPlane(wxCommandEvent& event)  {
 }
 //..............................................................................
 void TMainForm::PreviewHelp(const olxstr& Cmd)  {
-  if( !HelpWindowVisible )  return;
+  if( !HelpWindowVisible )
+    return;
   olxstr Tmp;
   if( !Cmd.IsEmpty() && (FHelpItem != NULL))  {
     TPtrList<TDataItem> SL;
@@ -2275,7 +2280,7 @@ void TMainForm::PreviewHelp(const olxstr& Cmd)  {
     FHelpItem->FindSimilarItems(Cmd, SL);
     if( FMacroItem != NULL )
       FMacroItem->FindSimilarItems(Cmd, SL);
-    if( SL.Count() != 0 )  {
+    if( !SL.IsEmpty() )  {
       FHelpWindow->SetVisible( HelpWindowVisible );
       FHelpWindow->Clear();
       FGlConsole->ShowBuffer( !HelpWindowVisible );
@@ -2317,7 +2322,6 @@ void TMainForm::PreviewHelp(const olxstr& Cmd)  {
 }
 //..............................................................................
 void TMainForm::OnChar( wxKeyEvent& m )  {
-
   short Fl=0, inc=3;
   olxstr Cmd, FullCmd;
   if( m.m_altDown )      Fl |= sssAlt;
@@ -2647,7 +2651,7 @@ olxstr TMainForm::ExpandCommand(const olxstr &Cmd)  {
     TPtrList<TDataItem> SL;
     FMacroItem->FindSimilarItems(Cmd, SL);
     for( int i=0; i < SL.Count(); i++ )
-      all_cmds.Add(SL[i]->GetName().ToLowerCase());
+      all_cmds.Add(SL[i]->GetName());
   }
   TBasicFunctionPList bins;  // builins
   GetLibrary().FindSimilarMacros(Cmd, bins);
@@ -2656,23 +2660,34 @@ olxstr TMainForm::ExpandCommand(const olxstr &Cmd)  {
     FullCmd = bins[0]->GetQualifiedName();
   else  {
     for( int i=0; i < bins.Count(); i++ )
-      all_cmds.Add( bins[i]->GetName().ToLowerCase() );
+      all_cmds.Add( bins[i]->GetName() );
   }
   if( all_cmds.Count() > 1 )  {
-    olxstr cmn_str = all_cmds[0];
+    if( FHelpWindow->IsVisible() )  // console buffer is hidden then...
+      FHelpWindow->Clear();
+    olxstr cmn_str = all_cmds[0].ToLowerCase();
     olxstr line(all_cmds[0], 80);
     for( int i=1; i < all_cmds.Count(); i++ )  {
-      cmn_str = all_cmds[i].CommonString(cmn_str);
+      cmn_str = all_cmds[i].ToLowerCase().CommonString(cmn_str);
       if( line.Length() + all_cmds[i].Length() > 79 )  {  // expects no names longer that 79!
-        FXApp->GetLog() << (line << '\n');
+        line << '\n';
+        if( FHelpWindow->IsVisible() )
+          FHelpWindow->PostText(line);
+        else
+          FXApp->GetLog() << line;
         line.SetLength(0);
       }
       else
         line << ' ' << all_cmds[i];
     }
     FullCmd = cmn_str;
-    if( !line.IsEmpty() )
-      FXApp->GetLog() << (line << '\n');
+    if( !line.IsEmpty() )  {
+      line << '\n';
+      if( FHelpWindow->IsVisible() )
+        FHelpWindow->PostText(line);
+      else
+        FXApp->GetLog() << line;
+    }
     FXApp->GetLog() << '\n';
   }
   else if( all_cmds.Count() == 1 )

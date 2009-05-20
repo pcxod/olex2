@@ -4699,7 +4699,7 @@ void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError
     }
     olxstr seli = FXApp->GetSelectionInfo();
     if( !seli.IsEmpty() )
-      FXApp->GetLog() << seli << '\n';
+      FXApp->GetLog() << (seli << '\n');
   }
   else  {
     for( int i=0; i < Options.Count(); i++ )  {
@@ -6240,16 +6240,19 @@ void TMainForm::macShowWindow(TStrObjList &Cmds, const TParamList &Options, TMac
     if( Cmds[0].Comparei("help") == 0 )  {
       HelpWindowVisible = Cmds[1].ToBool();
       FHelpWindow->SetVisible( HelpWindowVisible );
+      FGlConsole->ShowBuffer( !HelpWindowVisible );  // sync states
       TStateChange sc(prsHelpVis, HelpWindowVisible);
       OnStateChange->Execute((AEventsDispatcher*)this, &sc);
-    } else  if( Cmds[0].Comparei("info") == 0 )  {
+    } 
+    else  if( Cmds[0].Comparei("info") == 0 )  {
       InfoWindowVisible = Cmds[1].ToBool();
       FInfoBox->SetVisible( InfoWindowVisible );
       TStateChange sc(prsInfoVis, InfoWindowVisible);
       OnStateChange->Execute((AEventsDispatcher*)this, &sc);
       OnResize();
       FXApp->Draw();
-    } else if( Cmds[0].Comparei("cmdline") == 0 )  {
+    } 
+    else if( Cmds[0].Comparei("cmdline") == 0 )  {
       CmdLineVisible = Cmds[1].ToBool();
       FCmdLine->Show( CmdLineVisible );
       if( CmdLineVisible )  FCmdLine->SetFocus();
@@ -6264,16 +6267,19 @@ void TMainForm::macShowWindow(TStrObjList &Cmds, const TParamList &Options, TMac
     if( Cmds[0].Comparei("help") == 0 )  {
       HelpWindowVisible = !HelpWindowVisible;
       FHelpWindow->SetVisible( HelpWindowVisible );
+      FGlConsole->ShowBuffer( !HelpWindowVisible );  // sync states
       TStateChange sc(prsHelpVis, HelpWindowVisible);
       OnStateChange->Execute((AEventsDispatcher*)this, &sc);
-    } else if( Cmds[0].Comparei("info") == 0 )  {
+    } 
+    else if( Cmds[0].Comparei("info") == 0 )  {
       InfoWindowVisible = !InfoWindowVisible;
       FInfoBox->SetVisible( InfoWindowVisible );
       TStateChange sc(prsInfoVis, InfoWindowVisible);
       OnStateChange->Execute((AEventsDispatcher*)this, &sc);
       OnResize();
       FXApp->Draw();
-    } else if( Cmds[0].Comparei("cmdline") == 0 )  {
+    } 
+    else if( Cmds[0].Comparei("cmdline") == 0 )  {
       CmdLineVisible = !CmdLineVisible;
       FCmdLine->Show( CmdLineVisible );
       if( CmdLineVisible )  FCmdLine->SetFocus();

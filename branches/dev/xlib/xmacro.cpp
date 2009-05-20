@@ -744,7 +744,10 @@ void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       if( parts.Count() < 2 )  {
         int afix = TXlConGen::ShelxToOlex(Hfix, AE);
         if( afix != -1 )  {
-          xlConGen.FixAtom(AE, afix, TAtomsInfo::GetInstance().GetAtomInfo(iHydrogenIndex));
+          TCAtomPList generated;
+          xlConGen.FixAtom(AE, afix, TAtomsInfo::GetInstance().GetAtomInfo(iHydrogenIndex), NULL, &generated);
+          if( !generated.IsEmpty() && generated[0]->GetParentAfixGroup() != NULL ) // hack to get desired Hfix...
+            generated[0]->GetParentAfixGroup()->SetAfix(Hfix);
         }
         else  {
           XApp.GetLog() << (olxstr("Failed to translate HFIX code for ") << satoms[aitr]->GetLabel() << 
@@ -785,6 +788,8 @@ void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options, TMacroErr
               generated[j]->SetPart( parts[i] );
               rm.Vars.SetParam(*generated[j], catom_var_name_Sof, occu[i]);
             }
+            if( !generated.IsEmpty() && generated[0]->GetParentAfixGroup() != NULL )
+              generated[0]->GetParentAfixGroup()->SetAfix(Hfix); // a hack again
             generated.Clear();
           }
           else  {

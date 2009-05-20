@@ -60,7 +60,7 @@ public:
     }
     if( !tmp.IsEmpty() )
       for( int i=0; i < Streams.Count(); i++ )
-        Streams[i].A()->Write(str);
+        Streams[i].A()->Write(tmp);
     return *this;
   }
   template <class SC, class T>
