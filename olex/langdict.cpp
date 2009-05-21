@@ -90,15 +90,31 @@ void TLangDict::SetCurrentLanguage(const olxstr& fileName, const olxstr& lang)  
       continue;
     }
 #ifdef _UNICODE
-    wc_bf.SetCapacity(toks[CurrentLanguageIndex].Length());
-    int c = utf8.MB2WC( wc_bf.Data(), toks[CurrentLanguageIndex].c_str(), wc_bf.GetCapacity());
-     Records.Add( toks[0], new olxstr((const olxch *)wc_bf.Data(), c) );
+    if( toks[CurrentLanguageIndex].Length() < 2 )  {  // take language 1
+      wc_bf.SetCapacity(toks[1].Length());
+      int c = utf8.MB2WC( wc_bf.Data(), toks[1].c_str(), wc_bf.GetCapacity());
+      Records.Add( toks[0], new olxstr((const olxch *)wc_bf.Data(), c) );
+    }
+    else  {
+      wc_bf.SetCapacity(toks[CurrentLanguageIndex].Length());
+      int c = utf8.MB2WC( wc_bf.Data(), toks[CurrentLanguageIndex].c_str(), wc_bf.GetCapacity());
+      Records.Add( toks[0], new olxstr((const olxch *)wc_bf.Data(), c) );
+    }
 #else
-    wc_bf.SetCapacity(toks[CurrentLanguageIndex].Length());
-    c_bf.SetCapacity(toks[CurrentLanguageIndex].Length());
-    int c = utf8.MB2WC( wc_bf.Data(), toks[CurrentLanguageIndex].c_str(), wc_bf.GetCapacity());
-    csc.FromWChar(c_bf.Data(), c_bf.GetCapacity(), wc_bf.Data(), c);
-    Records.Add( toks[0], new olxstr(c_bf.Data()) );
+    if( toks[CurrentLanguageIndex].Length() < 2 )  {
+      wc_bf.SetCapacity(toks[1].Length());
+      c_bf.SetCapacity(toks[1].Length());
+      int c = utf8.MB2WC( wc_bf.Data(), toks[1].c_str(), wc_bf.GetCapacity());
+      csc.FromWChar(c_bf.Data(), c_bf.GetCapacity(), wc_bf.Data(), c);
+      Records.Add( toks[0], new olxstr(c_bf.Data()) );
+    }
+    else  {
+      wc_bf.SetCapacity(toks[CurrentLanguageIndex].Length());
+      c_bf.SetCapacity(toks[CurrentLanguageIndex].Length());
+      int c = utf8.MB2WC( wc_bf.Data(), toks[CurrentLanguageIndex].c_str(), wc_bf.GetCapacity());
+      csc.FromWChar(c_bf.Data(), c_bf.GetCapacity(), wc_bf.Data(), c);
+      Records.Add( toks[0], new olxstr(c_bf.Data()) );
+    }
 #endif
   }
 }

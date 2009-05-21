@@ -5,15 +5,15 @@ class TFitMode : public AMode  {
   TXAtomPList Atoms;
 protected:
   void UpdateSelectionCrds() {
-    TGlGroup* sel = TGlXApp::GetGXApp()->GetRender().Selection();
-    if( sel->Count() > 1 )  {
+    TGlGroup& sel = TGlXApp::GetGXApp()->GetSelection();
+    if( sel.Count() > 1 )  {
       vec3d c, cr;
       TXAtomPList atoms;
-      for( int i=0; i < sel->Count(); i++ )  {
-        if( EsdlInstanceOf(*sel->Object(i), TXAtom) )  {
-          cr += ((TXAtom*)sel->Object(i))->Basis.GetCenter();
-          cr += ((TXAtom*)sel->Object(i))->Atom().crd();
-          atoms.Add( (TXAtom*)sel->Object(i) );
+      for( int i=0; i < sel.Count(); i++ )  {
+        if( EsdlInstanceOf(sel[i], TXAtom) )  {
+          cr += ((TXAtom&)sel[i]).Basis.GetCenter();
+          cr += ((TXAtom&)sel[i]).Atom().crd();
+          atoms.Add( (TXAtom&)sel[i]);
         }
       }
       if( atoms.Count() > 1 )  {
@@ -45,8 +45,8 @@ public:
     UpdateSelectionCrds();
     for( int i=0; i < Atoms.Count(); i++ )  {
       TXAtom& xa = *Atoms[i];
-      xa.Moveable(false);
-      xa.Roteable(false);
+      xa.SetMoveable(false);
+      xa.SetRoteable(false);
       // summ the translations
       xa.Atom().crd() += xa.Basis.GetCenter();
       xa.Basis.NullCenter();
@@ -59,7 +59,7 @@ public:
   }
   virtual bool OnObject(AGDrawObject &obj)  {
     if( EsdlInstanceOf( obj, TXAtom) )  {
-      TXAtom *XA = &(TXAtom&)obj;
+      //TXAtom *XA = &(TXAtom&)obj;
       UpdateSelectionCrds();
       //TGlXApp::GetGXApp()->GetRender().Select(XA);
       return true;
@@ -69,9 +69,9 @@ public:
   virtual bool AddAtoms(const TXAtomPList& atoms)  {
     Atoms.AddList(atoms);
     for( int i=0; i < Atoms.Count(); i++ )  {
-      Atoms[i]->Roteable(true);
-      Atoms[i]->Moveable(true);
-      TGlXApp::GetGXApp()->GetRender().Select(Atoms[i]);
+      Atoms[i]->SetRoteable(true);
+      Atoms[i]->SetMoveable(true);
+      TGlXApp::GetGXApp()->GetRender().Select(*Atoms[i]);
     }
     return true;
   }

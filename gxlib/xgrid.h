@@ -39,7 +39,7 @@ class TXGrid: public TGlMouseListener  {
   void RescaleSurface();
   TGlTextBox* Info;
   int PolygonMode;
-  bool Mode3D;
+  bool Mode3D, Extended;
   TGlPrimitive* glpP, *glpN;
   // these will keep the masked objects
   TTypeList<vec3f> p_vertices, n_vertices;
@@ -82,13 +82,17 @@ public:
   void AdjustMap();
   void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
 
-  bool Orient(TGlPrimitive *P);
-  bool GetDimensions(vec3d &Max, vec3d &Min);
+  bool Orient(TGlPrimitive& P);
+  bool GetDimensions(vec3d& Max, vec3d& Min);
 
   void SetScale(float v);
   inline double GetScale()  const {  return Scale;  }
   // this object will be deleted
   void SetMask(FractMask& fm) {  Mask = &fm;  }
+
+  // extends the grid by +-1
+  bool IsExtended() const {  return Extended;  }
+  void SetExtended(bool v);
 
   void SetDepth(float v);
   void SetDepth(const vec3d& v);
@@ -105,8 +109,8 @@ public:
 
   inline bool Visible()   const {  return (Flags & sgdoVisible) == sgdoVisible; }
   inline virtual void Visible(bool On) {  
-    AGDrawObject::Visible(On);  
-    Info->Visible(On);
+    AGDrawObject::SetVisible(On);  
+    Info->SetVisible(On);
     if( !On )
       Clear();
   }
@@ -119,6 +123,7 @@ public:
 
   void LibDrawStyle3D(const TStrObjList& Params, TMacroError& E);
   void LibScale(const TStrObjList& Params, TMacroError& E);
+  void LibExtended(const TStrObjList& Params, TMacroError& E);
   void LibSize(const TStrObjList& Params, TMacroError& E);
   void LibGetMin(const TStrObjList& Params, TMacroError& E);
   void LibGetMax(const TStrObjList& Params, TMacroError& E);

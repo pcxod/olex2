@@ -18,11 +18,11 @@
 //----------------------------------------------------------------------------//
 // TXGrowLine function bodies
 //----------------------------------------------------------------------------//
-TXGrowLine::TXGrowLine(const olxstr& collectionName, TSAtom *A, TCAtom* CA,
-                         const smatd& transform, TGlRenderer *Render) :
-  TXBond(collectionName, *(TSBond*)NULL, Render), Transform(transform)
+TXGrowLine::TXGrowLine(TGlRenderer& r, const olxstr& collectionName, TSAtom *A, TCAtom* CA,
+                         const smatd& transform) :
+  TXBond(r, collectionName, *(TSBond*)NULL), Transform(transform)
 {
-  AGDrawObject::Groupable(false);
+  AGDrawObject::SetGroupable(false);
   vec3d C = transform * CA->ccrd();
   A->CAtom().GetParent()->CellToCartesian(C);
 
@@ -49,23 +49,22 @@ TXGrowLine::~TXGrowLine()  {
   ;
 }
 //..............................................................................
-bool TXGrowLine::Orient(TGlPrimitive *GlP)  {
+bool TXGrowLine::Orient(TGlPrimitive& GlP)  {
   static olxstr Length;
-  if( GlP->GetType() == sgloText )  {
+  if( GlP.GetType() == sgloText )  {
     Length = olxstr::FormatFloat(3, Params()[3]);
-    vec3d V;
-    V = (FEdge+FBase)/2;
-    V += FParent->GetBasis().GetCenter();
-    V = FParent->GetBasis().GetMatrix()*V;
+    vec3d V = (FEdge+FBase)/2;
+    V += Parent.GetBasis().GetCenter();
+    V = Parent.GetBasis().GetMatrix()*V;
     glRasterPos3d(V[0]+0.15, V[1]+0.15, V[2]+5);
-    GlP->SetString(&Length);
-    GlP->Draw();
+    GlP.SetString(&Length);
+    GlP.Draw();
     return true;
   }
   else  {
-    Parent()->GlTranslate(FBase);
-    Parent()->GlRotate((float)Params()[0], (float)Params()[1], (float)Params()[2], 0.0);
-    Parent()->GlScale((float)Params()[4], (float)Params()[4], (float)Params()[3]);
+    Parent.GlTranslate(FBase);
+    Parent.GlRotate((float)Params()[0], (float)Params()[1], (float)Params()[2], 0.0);
+    Parent.GlScale((float)Params()[4], (float)Params()[4], (float)Params()[3]);
   }
   return false;
 } 

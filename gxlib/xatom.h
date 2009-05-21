@@ -10,14 +10,13 @@
 #include "styles.h"
 
 #include "satom.h"
-
+#include "ellipsoid.h"
 BeginGxlNamespace()
 
 const short adsSphere       = 1,  // atom draw styles
             adsEllipsoid    = 2,
-            adsEllipsoidNPD = 3,
-            adsStandalone   = 4,
-            adsOrtep        = 5;
+            adsStandalone   = 3,
+            adsOrtep        = 4;
 
 const short darPers     = 0x0001, // default atom radii
             darIsot     = 0x0002,
@@ -30,8 +29,13 @@ const short polyNone      = 0,
             polyPyramid   = 3,
             polyBipyramid = 4;
 
-const int xatom_PolyId   = 1,
-          xatom_SphereId = 2;
+const int 
+  xatom_PolyId        = 1,
+  xatom_SphereId      = 2,
+  xatom_SmallSphereId = 3,
+  xatom_RimsId        = 4,
+  xatom_DisksId       = 5,
+  xatom_CrossId       = 6;
 
 class TXAtomStylesClear: public AActionHandler  {
 public:
@@ -46,7 +50,12 @@ private:
   TSAtom *FAtom;
   short FDrawStyle, FRadius;
   int XAppId;
-  static short PolyhedronIndex, SphereIndex;
+  static short PolyhedronIndex, 
+    SphereIndex, 
+    SmallSphereIndex, 
+    RimsIndex, 
+    DisksIndex,
+    CrossIndex;
   friend class TXAtomStylesClear;
   struct Poly {
     TArrayList<vec3f> vecs;
@@ -60,11 +69,12 @@ private:
   void CreateNormals(TXAtom::Poly& pl, const vec3f& cnt);
   void CreatePoly(const TSAtomPList& atoms, short type, 
     const vec3d* normal=NULL, const vec3d* center=NULL);
+  // returns different names for isotropic and anisotropic atoms
 protected:
   TStrList* FindPrimitiveParams(TGlPrimitive *P);
   static TTypeList<TGlPrimitiveParams> FPrimitiveParams;
-  void ValidateRadius(TGraphicsStyle *GS);
-  void ValidateDS(TGraphicsStyle *GS);
+  void ValidateRadius(TGraphicsStyle& GS);
+  void ValidateDS(TGraphicsStyle& GS);
   static void ValidateAtomParams();
   static TXAtomStylesClear *FXAtomStylesClear;
   static int OrtepSpheres;  // 8 glLists
@@ -74,7 +84,7 @@ protected:
   static TGraphicsStyle *FAtomParams;
   static olxstr PolyTypeName;
 public:
-  TXAtom(const olxstr& collectionName, TSAtom& A, TGlRenderer *Render);
+  TXAtom(TGlRenderer& Render, const olxstr& collectionName, TSAtom& A);
   virtual ~TXAtom();
   void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
   virtual ACreationParams* GetCreationParams() const;
@@ -95,17 +105,13 @@ public:
 
   static void DefRad(short V);
   static void DefDS(short V);
-  static void DefSphMask(int V);
-  static void DefElpMask(int V);
-  static void DefNpdMask(int V);
+  static void DefMask(int V);
   static void TelpProb(float V);
   static void DefZoom(float V);
 
   static short DefRad(); // default radius
   static short DefDS();     // default drawing style
-  static int   DefSphMask();  // default mask for spherical atoms
-  static int   DefElpMask();  // default mask for elliptical atoms
-  static int   DefNpdMask();  // default mas for elliptical atoms eith NPD ellipsoid
+  static int   DefMask();  // default mas for elliptical atoms eith NPD ellipsoid
   static float TelpProb();    // to use with ellipsoids
   static float DefZoom();    // to use with ellipsoids
 
@@ -117,13 +123,13 @@ public:
   inline operator TSAtom* () const {  return FAtom;  }
   
   inline TSAtom& Atom() const  {  return *FAtom;  }
-  void ApplyStyle(TGraphicsStyle *S);
-  void UpdateStyle(TGraphicsStyle *S);
+  void ApplyStyle(TGraphicsStyle& S);
+  void UpdateStyle(TGraphicsStyle& S);
 
   void Zoom(float Z);
   inline double Zoom()  {  return Params()[1]; }
 
-  bool Orient(TGlPrimitive *P);
+  bool Orient(TGlPrimitive& P);
   bool DrawStencil();
   bool GetDimensions(vec3d &Max, vec3d &Min);
 
@@ -132,15 +138,15 @@ public:
   void ListParams(TStrList &List);
   // fills the list with proposal primitives to construct object
   void ListPrimitives(TStrList &List) const;
-  TGraphicsStyle* Style();
+  TGraphicsStyle& Style();
   void UpdatePrimitives(int32_t Mask, const ACreationParams* cpar=NULL);
 
   bool OnMouseDown(const IEObject *Sender, const TMouseData *Data);
   bool OnMouseUp(const IEObject *Sender, const TMouseData *Data);
   bool OnMouseMove(const IEObject *Sender, const TMouseData *Data);
 
-  inline bool Deleted()  const {  return AGDrawObject::Deleted(); }
-  void Deleted(bool v)         {  AGDrawObject::Deleted(v);  FAtom->SetDeleted(v); }
+  inline bool IsDeleted()  const {  return AGDrawObject::IsDeleted(); }
+  void SetDeleted(bool v)         {  AGDrawObject::SetDeleted(v);  FAtom->SetDeleted(v); }
   void ListDrawingStyles(TStrList &List);
   inline short DrawStyle() const {  return FDrawStyle; }
   void DrawStyle(short V);

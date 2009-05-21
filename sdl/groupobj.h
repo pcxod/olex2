@@ -1,12 +1,12 @@
 //---------------------------------------------------------------------------//
 // (c) Oleg V. Dolomanov, 2004
 //---------------------------------------------------------------------------//
-
 #ifndef groupobjH
 #define groupobjH
 #include "ebase.h"
 #include "tptrlist.h"
-//---------------------------------------------------------------------------
+#undef GetObject
+#undef AddObject
 
 BeginEsdlNamespace()
 
@@ -15,70 +15,94 @@ class TObjectGroup;
 class AGOProperties;
 
 class AGOProperties  {
-  int Id;
+  int ObjectGroupId;
+  void SetObjectGroupId(int val) {  ObjectGroupId = val;  }
 protected:
   TPtrList<AGroupObject> Objects;
+  int GetObjectGroupId() const {  return ObjectGroupId;  }
 public:
-  AGOProperties();
-  virtual ~AGOProperties();
-
-  DefPropP(int, Id)
-  // do not change the value of Id from the outside !!!
-
-  inline void AddObject(AGroupObject *O)  {  Objects.Add(O); }
-  inline AGroupObject* Object(size_t index) const {  return Objects[index]; }
+  AGOProperties() : ObjectGroupId(-1) {  }// Objects.SetIncrement(512);  }
+  virtual ~AGOProperties() {}
+  // adds an object (reference or a pointer) to the group and returns it
+  template <class AGO> 
+  inline AGroupObject& AddObject(AGO& O)  {  return *Objects.Add(O); }
+  inline AGroupObject& GetObject(size_t index) const {  return *Objects[index]; }
   inline int ObjectCount() const { return Objects.Count(); }
-  void RemoveObject(const AGroupObject *GO)  {
+  // removes an object reference or a pointer
+  template <class AGO> void RemoveObject(const AGO& GO)  {
     int index = Objects.IndexOf(GO);
-    if( index != -1 )  Objects.Delete(index);
-  };
-  virtual bool operator == (const AGOProperties &C) const = 0;
+    if( index != -1 )  
+      Objects.Delete(index);
+  }
+  
+  void SetObjectCapacity(size_t cap)  {  Objects.SetCapacity(cap);  }
+  void SetObjectIncrement(size_t inc) {  Objects.SetIncrement(inc);  }
+
+  virtual bool operator == (const AGOProperties& C) const = 0;
   virtual AGOProperties& operator = (const AGOProperties& C) = 0;
+
+  friend class TObjectGroup; // to modify the ObjectGroupId
 };
 
 class AGroupObject: public ACollectionItem  {
 protected:
-  TObjectGroup* FParent;
-  AGOProperties* FProperties;
-
+  TObjectGroup& Parent;
+  AGOProperties* Properties;
   friend class TObjectGroup;
   // the function is used to create a new instance of the properties
-  virtual AGOProperties * NewProperties() = 0;
+  virtual AGOProperties* NewProperties() const = 0;
 public:
-  AGroupObject(TObjectGroup *Group);
-  virtual ~AGroupObject()  {  }
-  inline const AGOProperties * GetProperties() const {  return FProperties;  }
+  AGroupObject(TObjectGroup& parent) : Parent(parent), Properties(NULL) { }
+  virtual ~AGroupObject()  { }
+  // this should be used carefull - any change will affect all objects of the group!
+  inline AGOProperties& GetProperties()   {  return *Properties;  }
+  inline const AGOProperties& GetProperties() const {  return *Properties;  }
   /* a copy of C is created and returned if the property does not exists
-   therwise a pointer to existing proprty is returned
+   otherwise a pointer to existing property is returned
   */
-  virtual AGOProperties * SetProperties(const AGOProperties* C);
+  virtual AGOProperties& SetProperties(const AGOProperties& C);
 };
 
 class TObjectGroup: public IEObject  {
 protected:
-  AGOProperties *GetProps(const AGOProperties& C);
+  AGOProperties* FindProps(const AGOProperties& C);
 protected:
   TPtrList<AGroupObject> Objects;
   TPtrList<AGOProperties> Props;
 public:
   TObjectGroup();
-  virtual ~TObjectGroup();
+  virtual ~TObjectGroup() { }
   void Clear();
-
-  void AddObject(AGroupObject* O)                 {  Objects.Add(O);  }
-  inline AGroupObject* Object(size_t index) const {  return Objects[index]; }
-  inline int ObjectCount() const                  {  return Objects.Count(); }
-  int IndexOf(AGroupObject* G)                    {  return Objects.IndexOf(G); }
+  template <class AGO>
+  AGroupObject& AddObject(AGO const& O)           {  return *Objects.Add(O);  }
+  inline AGroupObject& GetObject(size_t index) const {  return *Objects[index]; }
+  inline int ObjectCount() const            {  return Objects.Count(); }
+  template <class AGO> 
+  int IndexOfObject(const AGO& G)           {  return Objects.IndexOf(G); }
   // used to remove objects form the collection; if an object->Tag ==Tag, it is removed
   void RemoveObjectsByTag(int Tag);
   //void ReplaceObjects(TEList *CurObj, TEList *NewObj );
 
-  AGOProperties * Properties(int index) const {  return Props[index]; }
+  AGOProperties& GetProperties(int index) const {  return *Props[index]; }
 
-  inline int PropCount()              const {  return Props.Count(); }
-  int IndexOf(const AGOProperties *P) const {  return Props.IndexOf(P); }
-  AGOProperties * NewProps(AGroupObject *Sender, AGOProperties *OldProps, const AGOProperties *NewProps);
+  inline int PropertiesCount()              const {  return Props.Count(); }
+  template <class AGP>
+  int IndexOfProperties(const AGP& P)     const {  return Props.IndexOf(P); }
+  // creates new properties if required, alwasy returns a valid pointer
+  AGOProperties* NewProps(AGroupObject& Sender, // the sender
+    AGOProperties *OldProps, // senders old properties
+    const AGOProperties& NewProps);  //th eproperties to set
 };
 
+// helper class to avoid casts (well, too many of them)
+template <class PC, class OC>  // property class, object class
+class ObjectGroup : public TObjectGroup {
+public:
+  ObjectGroup() { }
+  virtual ~ObjectGroup() { }
+  template <class AGO> OC& AddObject(AGO const& O)  {  return *(OC*)Objects.Add(O);  }
+  inline OC& GetObject(size_t index) const {  return *(OC*)Objects[index]; }
+  inline PC& GetProperties(int index) const {  return *(PC*)Props[index]; }
+};
 EndEsdlNamespace()
 #endif

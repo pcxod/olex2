@@ -31,7 +31,7 @@ class TXGlLabels: public AGDrawObject  {
   TEBitArray Marks;
   short Mode;
 public:
-  TXGlLabels(const olxstr& collectionName, TGlRenderer *Render);
+  TXGlLabels(TGlRenderer& Render, const olxstr& collectionName);
   void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
   virtual ~TXGlLabels();
 
@@ -42,7 +42,7 @@ public:
 
   void Selected(bool On);
 
-  bool Orient(TGlPrimitive *P);
+  bool Orient(TGlPrimitive& P);
   bool GetDimensions(vec3d &Max, vec3d &Min) {  return false;  }
   
   void Init();

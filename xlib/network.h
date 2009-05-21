@@ -1,10 +1,10 @@
 #ifndef networkH
 #define networkH
 
-#include "xbase.h"
 #include "satom.h"
 #include "sbond.h"
 #include "tptrlist.h"
+#include "conninfo.h"
 
 BeginXlibNamespace()
 
@@ -39,9 +39,49 @@ public:
   void Disassemble(TSAtomPList& Atoms, TNetPList& Frags, TSBondPList* InterBonds);
   /* creates bonds and fragments for atoms initialised by Disassemble */
   void CreateBondsAndFragments(TSAtomPList& Atoms, TNetPList& Frags);
+  // returns true if the two atoms share a matrix
+  static bool HaveSharedMatrix(const TSAtom& sa, const TSAtom& sb)  {
+    for( int i=0; i < sa.MatrixCount(); i++ )  {
+      for( int j=0; j < sb.MatrixCount(); j++ )  {
+        if( sa.GetMatrix(i).GetTag() == sb.GetMatrix(j).GetTag() && 
+            sa.GetMatrix(i).t == sb.GetMatrix(j).t )  
+        {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+  static inline bool IsBondAllowed(const TSAtom& sa, const TSAtom& sb)  {
+    if( (sa.CAtom().GetPart() | sb.CAtom().GetPart()) < 0 )
+      return HaveSharedMatrix(sa, sb);
+    else if( sa.CAtom().GetPart() == 0 || sb.CAtom().GetPart() == 0 || 
+             (sa.CAtom().GetPart() == sb.CAtom().GetPart()) )
+      return true;
+    return false;
+  }
 
-  bool CBondExists(const class TCAtom& CA1, const TCAtom& CA2, const double& D) const;
-  bool HBondExists(const TCAtom& CA1, const TCAtom& CA2, const double& D) const;
+  static inline bool IsBondAllowed(const TCAtom& ca, const TCAtom& cb, const smatd& sm)  {
+    if( (ca.GetPart() | cb.GetPart()) < 0 )
+      return sm.GetTag() == 0 && sm.t.IsNull();  // is identity and no translation
+    else if( ca.GetPart() == 0 || cb.GetPart() == 0 || 
+             (ca.GetPart() == cb.GetPart()) )
+      return true;
+    return false;
+  }
+
+  bool CBondExists(const TSAtom& A1, const TSAtom& CA2, const double& D) const;
+  // considers quadratic distance
+  bool CBondExistsQ(const TSAtom& A1, const TSAtom& CA2, const double& qD) const;
+
+  bool CBondExists(const TCAtom& CA1, const TCAtom& CA2, const smatd& sm, const double& D) const;
+  // compares the quadratic distances
+  bool CBondExistsQ(const TCAtom& CA1, const TCAtom& CA2, const smatd& sm, const double& qD) const;
+  
+  bool HBondExists(const TCAtom& CA1, const TCAtom& CA2, const smatd& sm, const double& D) const;
+  // compares the quadratic distances
+  bool HBondExistsQ(const TCAtom& CA1, const TCAtom& CA2, const smatd& sm, const double& qD) const;
+
 
   // only pointers are compared!!
   inline bool operator == (const TNetwork& n) const  {  return this == &n;  }
@@ -99,6 +139,12 @@ public:
   /* finds "best" allignment matrix for given coordinates */
   static double FindAlignmentMatrix(const TTypeList< AnAssociation2<vec3d,vec3d> >& crds, 
     const vec3d& centA, const vec3d& centB, smatdd& res);
+  // prepares a list of atoms, coordinates and weights for VcoV calculations
+  static void PrepareESDCalc(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atoms, 
+    bool TryInversion,
+    TSAtomPList& atoms_out,
+    vec3d_alist& crd_out, 
+    TDoubleList& wght_out);
   /* this fuction is used alonside the above one to allign the atoms using provided
    matrix. Also the Inverted has to be specified if the matric was calculated using
    the function above with the inverted flag on. The atomsToTransform are the atoms
@@ -128,8 +174,9 @@ protected:
     double** Distances;
     double Delta;
   public:
-    TDisassembleTaskCheckConnectivity(TSAtomPList& atoms, double** distances,
-        double delta) :  Atoms(atoms)  {
+    TDisassembleTaskCheckConnectivity(TSAtomPList& atoms, 
+      double** distances, double delta) :  Atoms(atoms) 
+    {
       Distances = distances;
       Delta = delta;
     }
@@ -144,8 +191,10 @@ protected:
     double** Distances;
     double Delta;
   public:
-    THBondSearchTask(TSAtomPList& atoms, TSBondPList* bonds, double** distances,
-        double delta) :  Atoms(atoms)  {
+    THBondSearchTask(TSAtomPList& atoms, 
+      TSBondPList* bonds, 
+      double** distances, double delta) :  Atoms(atoms)  
+    {
       Distances = distances;
       Delta = delta;
       Bonds = bonds;

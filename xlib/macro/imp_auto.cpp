@@ -314,7 +314,7 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options, TMacroEr
       if( QPeaks[i]->IsDeleted() || QPeaks[i]->CAtom().IsDeleted() )  continue;
       TBasicApp::GetLog().Info( olxstr(QPeaks[i]->CAtom().GetLabel()) << " -> C" );
       QPeaks[i]->CAtom().Label() = "C";
-      QPeaks[i]->CAtom().SetAtomInfo( &AtomsInfo.GetAtomInfo(iCarbonIndex));
+      QPeaks[i]->CAtom().SetAtomInfo( AtomsInfo.GetAtomInfo(iCarbonIndex));
     }
   }
 
@@ -373,7 +373,7 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options, TMacroEr
                   for( int k=j+1; k < StandAlone.Count(); k++ )  {
                     if( AvailableTypes.IndexOf(StandAlone[k]) != -1 )  {
                       sa.CAtom().Label() = StandAlone[k]->GetSymbol();
-                      sa.CAtom().SetAtomInfo(StandAlone[k]);
+                      sa.CAtom().SetAtomInfo(*StandAlone[k]);
                       assigned = true;
                       break;
                     }
@@ -385,7 +385,7 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options, TMacroEr
                   for( int k=j-1; k >= 0; k-- )  {
                     if( AvailableTypes.IndexOf(StandAlone[k]) != -1 )  {
                       sa.CAtom().Label() = StandAlone[k]->GetSymbol();
-                      sa.CAtom().SetAtomInfo(StandAlone[k]);
+                      sa.CAtom().SetAtomInfo(*StandAlone[k]);
                       assigned = true;
                       break;
                     }
@@ -396,11 +396,11 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options, TMacroEr
             }
             if( !found || assignLightest )  {  // make lightest then
               sa.CAtom().Label() = StandAlone[0]->GetSymbol();
-              sa.CAtom().SetAtomInfo(StandAlone[0]);
+              sa.CAtom().SetAtomInfo(*StandAlone[0]);
             }
             else if( assignHeaviest )  {
               sa.CAtom().Label() = StandAlone.Last()->GetSymbol();
-              sa.CAtom().SetAtomInfo(StandAlone.Last());
+              sa.CAtom().SetAtomInfo(*StandAlone.Last());
             }
           }
         }
@@ -451,7 +451,7 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options, TMacroEr
         (sa.CAtom().GetUiso() <= 0.005) )  {
           int ind = sfac.IndexOfObject( &sa.GetAtomInfo() );
           if( ind >= 0 && ((ind+1) < sfac.Count()) )  {
-            sa.CAtom().SetAtomInfo( sfac.GetObject(ind+1) );
+            sa.CAtom().SetAtomInfo( *sfac.GetObject(ind+1) );
           }
       }
     }
@@ -522,7 +522,7 @@ void XLibMacros::funVSS(const TStrObjList &Cmds, TMacroError &Error)  {
           if( SortedQPeaks.IsEmpty() )  break;
           sl[i].A() --;
           SortedQPeaks.Last().Object->Label() = (olxstr(sl[i].GetB()->GetSymbol()) << i);
-          SortedQPeaks.Last().Object->SetAtomInfo( sl[i].B() );
+          SortedQPeaks.Last().Object->SetAtomInfo( *sl[i].B() );
           SortedQPeaks.Last().Object->SetQPeak(0);
           SortedQPeaks.Remove( SortedQPeaks.Count()-1);
         }

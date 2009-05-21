@@ -4,6 +4,13 @@
 
 #include "envilist.h"
 
+void TAtomEnvi::ApplySymm(const smatd& sym)  {
+  for( int i=0; i < Envi.Count(); i++ )  {
+    Envi[i].B() *= sym;
+    Envi[i].C() = Envi[i].GetB() * Envi[i].GetA()->ccrd();
+  }
+}
+
 #ifndef _NO_PYTHON
 PyObject* TAtomEnvi::PyExport(TPtrList<PyObject>& atoms)  {
   PyObject* neighbours = PyTuple_New( Envi.Count() );

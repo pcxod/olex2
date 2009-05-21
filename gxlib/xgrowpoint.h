@@ -12,8 +12,8 @@ class TXGrowPoint : public AGDrawObject  {
   smatd Transform;
   vec3d Center;
 public:
-  TXGrowPoint(const olxstr& collectionName,
-               const vec3d& center, const smatd& transform, TGlRenderer *Render);
+  TXGrowPoint(TGlRenderer& Render, const olxstr& collectionName,
+               const vec3d& center, const smatd& transform);
   void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
   virtual ~TXGrowPoint();
 
@@ -23,7 +23,7 @@ public:
   bool OnMouseUp(const IEObject *Sender, const TMouseData *Data){  return false; }
   bool OnMouseMove(const IEObject *Sender, const TMouseData *Data){  return false; }
 
-  bool Orient(TGlPrimitive *P);
+  bool Orient(TGlPrimitive& P);
   void SetRadius(float V);
   inline double Radius() {  return Params()[0]; }
 

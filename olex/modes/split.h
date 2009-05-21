@@ -5,15 +5,15 @@ class TSplitMode : public AMode  {
   TTypeList< AnAssociation2<TXAtom*, TXAtom*> > SplitAtoms;
 protected:
   void UpdateSelectionCrds() {
-    TGlGroup* sel = TGlXApp::GetGXApp()->GetRender().Selection();
-    if( sel->Count() > 1 )  {
+    TGlGroup& sel = TGlXApp::GetGXApp()->GetSelection();
+    if( sel.Count() > 1 )  {
       vec3d c, cr;
       TXAtomPList atoms;
-      for( int i=0; i < sel->Count(); i++ )  {
-        if( EsdlInstanceOf(*sel->Object(i), TXAtom) )  {
-          cr += ((TXAtom*)sel->Object(i))->Basis.GetCenter();
-          cr += ((TXAtom*)sel->Object(i))->Atom().crd();
-          atoms.Add( (TXAtom*)sel->Object(i) );
+      for( int i=0; i < sel.Count(); i++ )  {
+        if( EsdlInstanceOf(sel[i], TXAtom) )  {
+          cr += ((TXAtom&)sel[i]).Basis.GetCenter();
+          cr += ((TXAtom&)sel[i]).Atom().crd();
+          atoms.Add( (TXAtom&)sel[i] );
         }
       }
       if( atoms.Count() > 1 )  {
@@ -40,7 +40,7 @@ public:
     TGlXApp::GetMainForm()->executeMacro("cursor(hand)");
     for( int i=0; i < app.AtomCount(); i++ )  {
       //if( Atoms[i]->Atom().GetAtomInfo() != iQPeakIndex )
-      app.GetAtom(i).Moveable(true);
+      app.GetAtom(i).SetMoveable(true);
     }
     return true;
   }
@@ -53,8 +53,8 @@ public:
     UpdateSelectionCrds();
     for( int i=0; i < app.AtomCount(); i++ )  {
       TXAtom& xa = app.GetAtom(i);
-      xa.Moveable(false);
-      xa.Roteable(false);
+      xa.SetMoveable(false);
+      xa.SetRoteable(false);
       // summ the translations
       xa.Atom().crd() += xa.Basis.GetCenter();
       xa.Basis.NullCenter();
@@ -105,8 +105,8 @@ public:
         TXAtom* xa = TGlXApp::GetGXApp()->AddAtom( XA );
         if( xa != NULL )  {
           vec3d c;
-          xa->Moveable(true);
-          xa->Roteable(true);
+          xa->SetMoveable(true);
+          xa->SetRoteable(true);
           SplitAtoms.AddNew(XA, xa);
           xa->Atom().crd() += 0.5;
           c = xa->Atom().crd();
@@ -125,7 +125,7 @@ public:
       }
       else  {  // do selection then
         UpdateSelectionCrds();
-        TGlXApp::GetGXApp()->GetRender().Select(XA);
+        TGlXApp::GetGXApp()->GetRender().Select(*XA);
       }
       return true;
     }

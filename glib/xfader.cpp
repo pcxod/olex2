@@ -6,16 +6,16 @@
 #include "glmaterial.h"
 #include "glrender.h"
 #include "gpcollection.h"
-
+#include "glprimitive.h"
 
 UseGlNamespace()
 //..............................................................................
 //..............................................................................
 
-TXFader::TXFader(const olxstr& collectionName, TGlRenderer *Render):
-    AGDrawObject(collectionName)  {
-  AGDrawObject::Parent(Render);
-  Groupable(false);
+TXFader::TXFader(TGlRenderer& R, const olxstr& collectionName):
+  AGDrawObject(R, collectionName)  
+{
+  SetGroupable(false);
   Foreground = Background = NULL;
   Step = 1./5;
   Position = 0;
@@ -32,27 +32,26 @@ TXFader::~TXFader()  {
 void TXFader::Create(const olxstr& cName, const ACreationParams* cpar)  {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
+
+  TGPCollection& GPC = Parent.FindOrCreateCollection( GetCollectionName() );
+  GPC.AddObject(*this);
+  if( GPC.PrimitiveCount() != 0 )  return;
+
+  TGlMaterial GlM;
   GlM.SetFlags(sglmAmbientF|sglmTransparent|sglmIdentityDraw);
   GlM.AmbientF = 0xffffffff;
   GlM.DiffuseF = 0xffffffff;
-
-  TGPCollection* GPC = FParent->FindCollection( GetCollectionName() );
-  if( GPC == NULL )    
-    GPC = FParent->NewCollection( GetCollectionName() );
-  GPC->AddObject(this);
-  if( GPC->PrimitiveCount() != 0 )  return;
-
   //glBitmap
-  TGlPrimitive* GlP = GPC->NewPrimitive("Quad", sgloQuads);
-  GlP->SetProperties( &GlM );
-  GlP->Data.Resize(4, 4);
+  TGlPrimitive& GlP = GPC.NewPrimitive("Quad", sgloQuads);
+  GlP.SetProperties(GlM);
+  GlP.Data.Resize(4, 4);
 }
 //..............................................................................
-bool TXFader::Orient(TGlPrimitive *P)  {
+bool TXFader::Orient(TGlPrimitive& P)  {
   if( Background == NULL && Foreground == NULL )  return true;
-  double MaxZ = FParent->GetMaxRasterZ();
+  double MaxZ = Parent.GetMaxRasterZ();
   //MaxZ = 0;
-  double Scale = FParent->GetScale();
+  double Scale = Parent.GetScale();
   glPixelStorei(GL_PACK_ALIGNMENT, 4);
   //glDrawBuffer(GL_BACK);
   if( Foreground != NULL )  {
@@ -106,26 +105,26 @@ void TXFader::BG2FG(bool zeropos)  {
 void TXFader::InitBG(bool v)  {
   if( v )  {
     if( Background != NULL )  {
-      if( BGHeight != FParent->GetHeight() || BGWidth != FParent->GetWidth() )  {
+      if( BGHeight != Parent.GetHeight() || BGWidth != Parent.GetWidth() )  {
         delete [] Foreground;
-        Background = new char [FParent->GetHeight()*FParent->GetWidth()*4];
+        Background = new char [Parent.GetHeight()*Parent.GetWidth()*4];
       }
     }
     else
-      Background = new char [FParent->GetHeight()*FParent->GetWidth()*4];
+      Background = new char [Parent.GetHeight()*Parent.GetWidth()*4];
 
-    BGHeight = FParent->GetHeight();
-    BGWidth = FParent->GetWidth();
+    BGHeight = Parent.GetHeight();
+    BGWidth = Parent.GetWidth();
     GLint oldmode;
     glGetIntegerv(GL_DRAW_BUFFER, &oldmode);
 //    glReadBuffer(GL_FRONT);
     glReadBuffer(GL_BACK);
-    FParent->OnDraw->SetEnabled(false);
-    bool vis = Visible();
-    Visible(false);
-    FParent->Draw();
-    Visible(vis);
-    FParent->OnDraw->SetEnabled(true);
+    Parent.OnDraw->SetEnabled(false);
+    bool vis = IsVisible();
+    SetVisible(false);
+    Parent.Draw();
+    SetVisible(vis);
+    Parent.OnDraw->SetEnabled(true);
     glPixelStorei(GL_PACK_ALIGNMENT, 4);
     glReadPixels(0, 0, BGWidth, BGHeight, GL_RGBA, GL_UNSIGNED_BYTE, Background);
     glReadBuffer(oldmode);
@@ -141,25 +140,25 @@ void TXFader::InitBG(bool v)  {
 void TXFader::InitFG(bool v)  {
   if( v )  {
     if( Foreground != NULL )  {
-      if( FGHeight != FParent->GetHeight() || FGWidth != FParent->GetWidth() )  {
+      if( FGHeight != Parent.GetHeight() || FGWidth != Parent.GetWidth() )  {
         delete [] Foreground;
-        Foreground = new char [FParent->GetHeight()*FParent->GetWidth()*4];
+        Foreground = new char [Parent.GetHeight()*Parent.GetWidth()*4];
       }
     }
     else
-      Foreground = new char [FParent->GetHeight()*FParent->GetWidth()*4];
+      Foreground = new char [Parent.GetHeight()*Parent.GetWidth()*4];
 
-    FGHeight = FParent->GetHeight();
-    FGWidth = FParent->GetWidth();
+    FGHeight = Parent.GetHeight();
+    FGWidth = Parent.GetWidth();
     GLint oldmode;
     glGetIntegerv(GL_DRAW_BUFFER, &oldmode);
     glReadBuffer(GL_BACK);
-    FParent->OnDraw->SetEnabled(false);
-    bool vis = Visible();
-    Visible(false);
-    FParent->Draw();
-    Visible(vis);
-    FParent->OnDraw->SetEnabled(true);
+    Parent.OnDraw->SetEnabled(false);
+    bool vis = IsVisible();
+    SetVisible(false);
+    Parent.Draw();
+    SetVisible(vis);
+    Parent.OnDraw->SetEnabled(true);
     glPixelStorei(GL_PACK_ALIGNMENT, 4);
     glReadPixels(0, 0, FGWidth, FGHeight, GL_RGBA, GL_UNSIGNED_BYTE, Foreground);
     glReadBuffer(oldmode);

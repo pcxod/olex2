@@ -152,6 +152,8 @@ void XVarManager::Assign(const XVarManager& vm) {
   }
   for( int i=0; i < vm.Equations.Count(); i++ )
     NewEquation()._Assign(vm.Equations[i]);
+  if( Vars.IsEmpty() )  // odd eh?
+    NewVar(1.0).SetId(0);
 }
 //.................................................................................................
 XVarReference& XVarManager::AddVarRef(XVar& var, IXVarReferencer& a, short var_name, short relation, double coeff)  {

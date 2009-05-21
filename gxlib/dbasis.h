@@ -10,11 +10,11 @@ class TDBasis: public TGlMouseListener  {
   TAsymmUnit *FAU;
 protected:
 public:
-  TDBasis(const olxstr& collectionName, TGlRenderer *Render);
+  TDBasis(TGlRenderer& Render, const olxstr& collectionName);
   virtual ~TDBasis() {  }
   void AsymmUnit(TAsymmUnit *AU){  FAU = AU; }
   void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
-  bool Orient(TGlPrimitive *P);
+  bool Orient(TGlPrimitive& P);
   bool GetDimensions(vec3d &Max, vec3d &Min)  {  return false;  }
 };
 

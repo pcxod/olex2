@@ -186,6 +186,7 @@ TOlxVars::TOlxVars()  {
   if( Instance != NULL )
     throw TFunctionFailedException(__OlxSourceInfo, "singleton");
   Instance = this;
+  OnVarChange = &Actions.NewQueue("OnVarChange");
 //  TEGC::AddP(this);  // we cannot do this, as Pyhon might be Finalised boforehad!!!
 }
 #endif // _NO_PYTHON

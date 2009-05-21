@@ -12,11 +12,11 @@ class TDUnitCell: public AGDrawObject  {
   TGlPrimitive *FGlP;
   mat3d CellToCartesian, HklToCartesian;
 public:
-  TDUnitCell(const olxstr& collectionName, TGlRenderer *Render);
+  TDUnitCell(TGlRenderer& Render, const olxstr& collectionName);
   virtual ~TDUnitCell() {  }
   void Init(const double cell_params[6]);
   void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
-  bool Orient(TGlPrimitive *P);
+  bool Orient(TGlPrimitive& P);
   bool GetDimensions(vec3d &Max, vec3d &Min);
 
   inline bool IsReciprocal()  const {  return Reciprocal;  }

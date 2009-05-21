@@ -53,7 +53,7 @@ TPTableDlg::~TPTableDlg()  {
 //..............................................................................
 void TPTableDlg::CreateButton(int i, int j, int offset )  {
   TButton *B = new TButton(this); // q peak
-#ifdef __MAC__
+#ifndef __WIN32__
   short bd = 36;
 #else
   short bd = 22;

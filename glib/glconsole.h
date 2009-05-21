@@ -53,7 +53,7 @@ protected:
 
   virtual bool Execute(const IEObject *Sender, const IEObject *Data=NULL);
 public:
-  TGlConsole(const olxstr& collectionName, TGlRenderer *Render);
+  TGlConsole(TGlRenderer& Render, const olxstr& collectionName);
   void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
   virtual ~TGlConsole();
 
@@ -71,7 +71,7 @@ public:
   inline int GetCommandIndex() const  {  return FCmdPos;  }
   inline void SetCommandIndex( int i) {  FCmdPos = i;  }
 
-  bool Orient(TGlPrimitive *P);
+  bool Orient(TGlPrimitive& P);
   bool GetDimensions(vec3d &Max, vec3d &Min);
   bool ProcessKey( int Key, short ShiftState );
   bool WillProcessKey( int Key, short ShiftState );

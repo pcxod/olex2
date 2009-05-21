@@ -29,7 +29,7 @@ void  TSAtom::CAtom(TCAtom& S)  {
   FEllipsoid = S.GetEllipsoid();
 }
 //..............................................................................
-void TSAtom::AtomInfo(TBasicAtomInfo* AI)  {
+void TSAtom::AtomInfo(TBasicAtomInfo& AI)  {
   FCAtom->SetAtomInfo(AI);
 }
 //..............................................................................
@@ -44,14 +44,14 @@ void  TSAtom::Assign(const TSAtom& S)  {
 }
 //..............................................................................
 bool TSAtom::IsGrown() const {
-  if( (Flags & satomGrown) == 0 )  return false;
+  if( (Flags & satom_Grown) == 0 )  return false;
   int subs = 0;
   for( int i=0; i < Nodes.Count(); i++ )
     if( Nodes[i]->IsDeleted() )
       subs--;
   if( subs < 0 )
-    SetBit(false, Flags, satomGrown);
-  return (Flags & satomGrown) != 0;
+    SetBit(false, Flags, satom_Grown);
+  return (Flags & satom_Grown) != 0;
 }
 //..............................................................................
 olxstr TSAtom::GetGuiLabel() const  {  
@@ -64,6 +64,24 @@ olxstr TSAtom::GetGuiLabel() const  {
     return rv;
   else
     return rv << '.' << TSymmParser::MatrixToSymmCode(Network->GetLattice().GetUnitCell(), *Matrices[0]);
+}
+//..............................................................................
+void TSAtom::SetNodeCount(size_t cnt)  {
+  if( cnt >= Nodes.Count() )
+    return;
+  for( int i=cnt; i < Nodes.Count(); i++ )  {
+    Nodes[i]->Nodes.Remove(this);
+    Nodes[i] = NULL;
+  }
+  Nodes.Pack();
+}
+//..............................................................................
+void TSAtom::RemoveNode(TSAtom& node)  {
+  int ind = Nodes.IndexOf(&node);
+  if( ind == -1 )
+    return;
+  node.Nodes.Remove(this);
+  Nodes.Delete(ind);
 }
 //..............................................................................
 olxstr TSAtom::GetGuiLabelEx() const  {  

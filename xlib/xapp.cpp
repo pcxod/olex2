@@ -46,15 +46,17 @@ TXApp::~TXApp()  {
   delete FAtomsInfo;
 }
 //..............................................................................
-const olxstr& TXApp::LocateHklFile()  {
+olxstr TXApp::LocateHklFile()  {
   if( !XFile().HasLastLoader() )  return EmptyString;
 
-  olxstr &HklFN = TEGC::New<olxstr>( XFile().GetRM().GetHKLSource() );
-  if( TEFile::FileExists( HklFN ) )  return HklFN;
+  olxstr HklFN = XFile().GetRM().GetHKLSource();
+  if( TEFile::FileExistsi( olxstr(HklFN), HklFN) )  
+    return HklFN;
   HklFN = TEFile::ChangeFileExt(XFile().GetFileName(), "hkl");
-  if( TEFile::FileExists( HklFN ) )  return HklFN;
+  if( TEFile::FileExistsi( olxstr(HklFN), HklFN ) )  
+    return HklFN;
   HklFN = TEFile::ChangeFileExt(XFile().GetFileName(), "raw");
-  if( TEFile::FileExists(HklFN) )  {
+  if( TEFile::FileExistsi(olxstr(HklFN), HklFN) )  {
     THklFile Hkl;
     Hkl.LoadFromFile(HklFN);
     HklFN = TEFile::ChangeFileExt(XFile().GetFileName(), "hkl");
@@ -69,7 +71,7 @@ const olxstr& TXApp::LocateHklFile()  {
   else  {  // check for stoe format
     HklFN = TEFile::ChangeFileExt(XFile().GetFileName(), "hkl");
     olxstr HkcFN = TEFile::ChangeFileExt(XFile().GetFileName(), "hkc");
-    if( TEFile::FileExists( HkcFN ) )  {
+    if( TEFile::FileExistsi(olxstr(HkcFN), HkcFN) )  {
       TEFile::Copy( HkcFN, HklFN );
       return HklFN;
     }
@@ -235,9 +237,10 @@ void TXApp::NameHydrogens(TSAtom& SA, TUndoData* ud, bool CheckLabel)  {
       olxstr Labl = al[j]->GetAtomInfo().GetSymbol() + Name;
       if( Labl.Length() >= 4 )  
         Labl.SetLength(3);
-      else if( Labl.Length() < 3 )
+      else if( Labl.Length() < 3 && parts.Count() > 1 )
         Labl << (char)('a'+i);  // part ID
-      Labl << (char)('a' + lablInc++);      
+      if( al.Count() > 1 )
+        Labl << (char)('a' + lablInc++);      
       if( CheckLabel )  {
         TCAtom* CA;
         while( (CA = XFile().GetAsymmUnit().FindCAtom(Labl)) != NULL )  {
@@ -245,7 +248,7 @@ void TXApp::NameHydrogens(TSAtom& SA, TUndoData* ud, bool CheckLabel)  {
           Labl = al[j]->GetAtomInfo().GetSymbol()+Name;
           if( Labl.Length() >= 4 )  
             Labl.SetLength(3);
-          else if( Labl.Length() < 3 )
+          else if( Labl.Length() < 3 && parts.Count() > 1 )
             Labl << (char)('a'+i);
           const char next_ch = 'a' + lablInc++;
           if( next_ch > 'z' )

@@ -362,6 +362,8 @@ struct TWindowInfo  {
 class TMainFrame: public wxFrame  {
 protected:
   TSStrPObjList<olxstr,TWindowInfo*, false> FWindowPos;
+  // extends filter for case sensitive OS
+  olxstr PortableFilter(const olxstr& filter);
 public:
   TMainFrame(const wxString& title, const wxPoint& pos, const wxSize& size, const wxString &ClassName);
   virtual ~TMainFrame();
@@ -442,7 +444,7 @@ protected:
   void EnterPressedEvent(wxCommandEvent& event);
   olxstr OnChangeStr, Data;
 public:
-  TSpinCtrl(wxWindow *Parent);
+  TSpinCtrl(wxWindow *Parent, const wxSize& sz=wxDefaultSize);
   virtual ~TSpinCtrl();
 
   DefPropC(olxstr, OnChangeStr) // this is passed to the OnChange event
@@ -473,7 +475,8 @@ protected:
   olxstr OnChangeStr, OnMouseUpStr, Data;
   int this_Val;  // needed to call events only if value has changed
 public:
-  TTrackBar(wxWindow *Parent, const wxSize TTrackSize=wxDefaultSize);
+  // on gtk, the size cannot be changed after the creation!
+  TTrackBar(wxWindow *Parent, const wxSize& sz=wxDefaultSize);
   virtual ~TTrackBar();
 
   DefPropC(olxstr, OnChangeStr) // this is passed to the OnChange event

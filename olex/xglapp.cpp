@@ -23,6 +23,7 @@
 #include "pdb.h"
 #include "xdmas.h"
 #include "oxmfile.h"
+#include "mol2.h"
 #include "datafile.h"
 #include "wxzipfs.h"
 
@@ -189,18 +190,17 @@ bool TGlXApp::OnInit()  {
   XApp->RegisterXFileFormat(Cif, "cif");
   XApp->RegisterXFileFormat(Cif, "fcf");
   XApp->RegisterXFileFormat(Cif, "fco");
-  TMol *Mol = new TMol;  // the objects will be automatically removed by the XApp
-  XApp->RegisterXFileFormat(Mol, "mol");
+  XApp->RegisterXFileFormat(new TMol, "mol");
   TIns *Ins = new TIns;
   XApp->RegisterXFileFormat(Ins, "ins");
   XApp->RegisterXFileFormat(Ins, "res");
-  TXyz *Xyz = new TXyz;
-  XApp->RegisterXFileFormat(Xyz, "xyz");
+  XApp->RegisterXFileFormat(new TXyz, "xyz");
   XApp->RegisterXFileFormat(new TP4PFile, "p4p");
   XApp->RegisterXFileFormat(new TCRSFile, "crs");
   XApp->RegisterXFileFormat(new TPdb, "pdb");
   XApp->RegisterXFileFormat(new TXDMas, "mas");
   XApp->RegisterXFileFormat(new TOXMFile(*XApp), "oxm");
+  XApp->RegisterXFileFormat(new TMol2, "mol2");
 
   // set backgrownd color of the GlRender
   XApp->ClearColor(0x3f3f3f);

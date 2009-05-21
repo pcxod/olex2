@@ -474,20 +474,20 @@ template <class NodeType>  bool AnalyseUiso(TCAtom& ca, const TTypeList< THitLis
     if( proposed_atoms->IndexOf( type ) != -1 )  {
       stat.AtomTypeChanges++;
       ca.Label() =  type->GetSymbol();
-      ca.SetAtomInfo( type );
+      ca.SetAtomInfo( *type );
     }
   }
   else if( BAIDelta != -1 )  {
     if( abs(type->GetIndex() - ca.GetAtomInfo().GetIndex()) < BAIDelta )  {
       stat.AtomTypeChanges++;
       ca.Label() =  type->GetSymbol();
-      ca.SetAtomInfo( type );
+      ca.SetAtomInfo( *type );
     }
   }
   else  {
     stat.AtomTypeChanges++;
     ca.Label() =  type->GetSymbol();
-    ca.SetAtomInfo( type );
+    ca.SetAtomInfo( *type );
   }
   TBasicApp::GetLog().Info( tmp );
   return atc != stat.AtomTypeChanges;

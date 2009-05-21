@@ -15,8 +15,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "xlib-np", "xlib-np.vcproj",
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gxlib", "gxlib.vcproj", "{DE8F09F2-84B2-4114-AA86-950FCC923CD9}"
 	ProjectSection(ProjectDependencies) = postProject
-		{F91183CE-E72E-4B45-A7E3-EE23C4B62338} = {F91183CE-E72E-4B45-A7E3-EE23C4B62338}
 		{01EB4F8B-6F6E-4FD4-908E-37E02AA6EA63} = {01EB4F8B-6F6E-4FD4-908E-37E02AA6EA63}
+		{F91183CE-E72E-4B45-A7E3-EE23C4B62338} = {F91183CE-E72E-4B45-A7E3-EE23C4B62338}
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "olex2c", "olex2c.vcproj", "{539C2C73-609E-4E80-8598-DED2341FCD93}"
@@ -36,11 +36,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "olex2v", "olex2v.vcproj", "
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "olex2vj", "olex2vj.vcproj", "{F5753617-F037-429C-931A-877699690923}"
 	ProjectSection(ProjectDependencies) = postProject
-		{DE855453-1F3B-4821-ABEB-A3922144B040} = {DE855453-1F3B-4821-ABEB-A3922144B040}
 		{32A77026-E533-47FD-8967-D6CBADA7C0C5} = {32A77026-E533-47FD-8967-D6CBADA7C0C5}
+		{DE855453-1F3B-4821-ABEB-A3922144B040} = {DE855453-1F3B-4821-ABEB-A3922144B040}
 		{C664746C-BA54-47ED-8CEC-58C2C9D859FD} = {C664746C-BA54-47ED-8CEC-58C2C9D859FD}
-		{F91183CE-E72E-4B45-A7E3-EE23C4B62338} = {F91183CE-E72E-4B45-A7E3-EE23C4B62338}
 		{01EB4F8B-6F6E-4FD4-908E-37E02AA6EA63} = {01EB4F8B-6F6E-4FD4-908E-37E02AA6EA63}
+		{F91183CE-E72E-4B45-A7E3-EE23C4B62338} = {F91183CE-E72E-4B45-A7E3-EE23C4B62338}
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gxlib-np", "gxlib-np.vcproj", "{32A77026-E533-47FD-8967-D6CBADA7C0C5}"
@@ -50,10 +50,10 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "olex2", "olex2.vcproj", "{E77DD146-78F9-4A48-8BC6-8792226C1670}"
 	ProjectSection(ProjectDependencies) = postProject
 		{DE855453-1F3B-4821-ABEB-A3922144B040} = {DE855453-1F3B-4821-ABEB-A3922144B040}
+		{61C58785-8535-4CD3-B84A-F324CFA4E27F} = {61C58785-8535-4CD3-B84A-F324CFA4E27F}
 		{01EB4F8B-6F6E-4FD4-908E-37E02AA6EA63} = {01EB4F8B-6F6E-4FD4-908E-37E02AA6EA63}
 		{F91183CE-E72E-4B45-A7E3-EE23C4B62338} = {F91183CE-E72E-4B45-A7E3-EE23C4B62338}
 		{DE8F09F2-84B2-4114-AA86-950FCC923CD9} = {DE8F09F2-84B2-4114-AA86-950FCC923CD9}
-		{61C58785-8535-4CD3-B84A-F324CFA4E27F} = {61C58785-8535-4CD3-B84A-F324CFA4E27F}
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ulaunch", "ulaunch.vcproj", "{FB67F543-EB17-4693-8A9A-4AA27F184129}"
@@ -70,6 +70,7 @@ Global
 		Unicode-debug|Win32 = Unicode-debug|Win32
 		Unicode-debug-py26|Win32 = Unicode-debug-py26|Win32
 		Unicode-release|Win32 = Unicode-release|Win32
+		unicode-release-di|Win32 = unicode-release-di|Win32
 		Unicode-release-py26|Win32 = Unicode-release-py26|Win32
 		Unicode-release-static|Win32 = Unicode-release-static|Win32
 	EndGlobalSection
@@ -84,6 +85,8 @@ Global
 		{01EB4F8B-6F6E-4FD4-908E-37E02AA6EA63}.Unicode-debug-py26|Win32.Build.0 = Unicode-debug|Win32
 		{01EB4F8B-6F6E-4FD4-908E-37E02AA6EA63}.Unicode-release|Win32.ActiveCfg = Unicode-release|Win32
 		{01EB4F8B-6F6E-4FD4-908E-37E02AA6EA63}.Unicode-release|Win32.Build.0 = Unicode-release|Win32
+		{01EB4F8B-6F6E-4FD4-908E-37E02AA6EA63}.unicode-release-di|Win32.ActiveCfg = unicode-release-di|Win32
+		{01EB4F8B-6F6E-4FD4-908E-37E02AA6EA63}.unicode-release-di|Win32.Build.0 = unicode-release-di|Win32
 		{01EB4F8B-6F6E-4FD4-908E-37E02AA6EA63}.Unicode-release-py26|Win32.ActiveCfg = Unicode-release|Win32
 		{01EB4F8B-6F6E-4FD4-908E-37E02AA6EA63}.Unicode-release-py26|Win32.Build.0 = Unicode-release|Win32
 		{01EB4F8B-6F6E-4FD4-908E-37E02AA6EA63}.Unicode-release-static|Win32.ActiveCfg = Unicode-release-static|Win32
@@ -98,6 +101,8 @@ Global
 		{F91183CE-E72E-4B45-A7E3-EE23C4B62338}.Unicode-debug-py26|Win32.Build.0 = Unicode-debug|Win32
 		{F91183CE-E72E-4B45-A7E3-EE23C4B62338}.Unicode-release|Win32.ActiveCfg = Unicode-release|Win32
 		{F91183CE-E72E-4B45-A7E3-EE23C4B62338}.Unicode-release|Win32.Build.0 = Unicode-release|Win32
+		{F91183CE-E72E-4B45-A7E3-EE23C4B62338}.unicode-release-di|Win32.ActiveCfg = unicode-release-di|Win32
+		{F91183CE-E72E-4B45-A7E3-EE23C4B62338}.unicode-release-di|Win32.Build.0 = unicode-release-di|Win32
 		{F91183CE-E72E-4B45-A7E3-EE23C4B62338}.Unicode-release-py26|Win32.ActiveCfg = Unicode-release|Win32
 		{F91183CE-E72E-4B45-A7E3-EE23C4B62338}.Unicode-release-py26|Win32.Build.0 = Unicode-release|Win32
 		{F91183CE-E72E-4B45-A7E3-EE23C4B62338}.Unicode-release-static|Win32.ActiveCfg = Unicode-release-static|Win32
@@ -112,6 +117,8 @@ Global
 		{C664746C-BA54-47ED-8CEC-58C2C9D859FD}.Unicode-debug-py26|Win32.Build.0 = Unicode-debug|Win32
 		{C664746C-BA54-47ED-8CEC-58C2C9D859FD}.Unicode-release|Win32.ActiveCfg = Unicode-release|Win32
 		{C664746C-BA54-47ED-8CEC-58C2C9D859FD}.Unicode-release|Win32.Build.0 = Unicode-release|Win32
+		{C664746C-BA54-47ED-8CEC-58C2C9D859FD}.unicode-release-di|Win32.ActiveCfg = unicode-release-di|Win32
+		{C664746C-BA54-47ED-8CEC-58C2C9D859FD}.unicode-release-di|Win32.Build.0 = unicode-release-di|Win32
 		{C664746C-BA54-47ED-8CEC-58C2C9D859FD}.Unicode-release-py26|Win32.ActiveCfg = Unicode-release|Win32
 		{C664746C-BA54-47ED-8CEC-58C2C9D859FD}.Unicode-release-py26|Win32.Build.0 = Unicode-release|Win32
 		{C664746C-BA54-47ED-8CEC-58C2C9D859FD}.Unicode-release-static|Win32.ActiveCfg = Unicode-release-static|Win32
@@ -126,6 +133,8 @@ Global
 		{DE8F09F2-84B2-4114-AA86-950FCC923CD9}.Unicode-debug-py26|Win32.Build.0 = Unicode-debug-py26|Win32
 		{DE8F09F2-84B2-4114-AA86-950FCC923CD9}.Unicode-release|Win32.ActiveCfg = Unicode-release|Win32
 		{DE8F09F2-84B2-4114-AA86-950FCC923CD9}.Unicode-release|Win32.Build.0 = Unicode-release|Win32
+		{DE8F09F2-84B2-4114-AA86-950FCC923CD9}.unicode-release-di|Win32.ActiveCfg = unicode-release-di|Win32
+		{DE8F09F2-84B2-4114-AA86-950FCC923CD9}.unicode-release-di|Win32.Build.0 = unicode-release-di|Win32
 		{DE8F09F2-84B2-4114-AA86-950FCC923CD9}.Unicode-release-py26|Win32.ActiveCfg = Unicode-release-py26|Win32
 		{DE8F09F2-84B2-4114-AA86-950FCC923CD9}.Unicode-release-py26|Win32.Build.0 = Unicode-release-py26|Win32
 		{DE8F09F2-84B2-4114-AA86-950FCC923CD9}.Unicode-release-static|Win32.ActiveCfg = Unicode-release-static|Win32
@@ -140,6 +149,8 @@ Global
 		{539C2C73-609E-4E80-8598-DED2341FCD93}.Unicode-debug-py26|Win32.Build.0 = Unicode-debug-py26|Win32
 		{539C2C73-609E-4E80-8598-DED2341FCD93}.Unicode-release|Win32.ActiveCfg = Unicode-release|Win32
 		{539C2C73-609E-4E80-8598-DED2341FCD93}.Unicode-release|Win32.Build.0 = Unicode-release|Win32
+		{539C2C73-609E-4E80-8598-DED2341FCD93}.unicode-release-di|Win32.ActiveCfg = unicode-release-di|Win32
+		{539C2C73-609E-4E80-8598-DED2341FCD93}.unicode-release-di|Win32.Build.0 = unicode-release-di|Win32
 		{539C2C73-609E-4E80-8598-DED2341FCD93}.Unicode-release-py26|Win32.ActiveCfg = Unicode-release-py26|Win32
 		{539C2C73-609E-4E80-8598-DED2341FCD93}.Unicode-release-py26|Win32.Build.0 = Unicode-release-py26|Win32
 		{539C2C73-609E-4E80-8598-DED2341FCD93}.Unicode-release-static|Win32.ActiveCfg = Unicode-release-static|Win32
@@ -152,6 +163,7 @@ Global
 		{2A840EC5-E964-4DB5-B419-1222C3B92DA8}.Unicode-debug-py26|Win32.ActiveCfg = Unicode-debug|Win32
 		{2A840EC5-E964-4DB5-B419-1222C3B92DA8}.Unicode-debug-py26|Win32.Build.0 = Unicode-debug|Win32
 		{2A840EC5-E964-4DB5-B419-1222C3B92DA8}.Unicode-release|Win32.ActiveCfg = Unicode-release|Win32
+		{2A840EC5-E964-4DB5-B419-1222C3B92DA8}.unicode-release-di|Win32.ActiveCfg = unicode-release-di|Win32
 		{2A840EC5-E964-4DB5-B419-1222C3B92DA8}.Unicode-release-py26|Win32.ActiveCfg = Unicode-release|Win32
 		{2A840EC5-E964-4DB5-B419-1222C3B92DA8}.Unicode-release-static|Win32.ActiveCfg = Unicode-release-static|Win32
 		{2A840EC5-E964-4DB5-B419-1222C3B92DA8}.Unicode-release-static|Win32.Build.0 = Unicode-release-static|Win32
@@ -163,6 +175,7 @@ Global
 		{F5753617-F037-429C-931A-877699690923}.Unicode-debug-py26|Win32.ActiveCfg = Unicode-debug|Win32
 		{F5753617-F037-429C-931A-877699690923}.Unicode-debug-py26|Win32.Build.0 = Unicode-debug|Win32
 		{F5753617-F037-429C-931A-877699690923}.Unicode-release|Win32.ActiveCfg = Unicode-release|Win32
+		{F5753617-F037-429C-931A-877699690923}.unicode-release-di|Win32.ActiveCfg = unicode-release-di|Win32
 		{F5753617-F037-429C-931A-877699690923}.Unicode-release-py26|Win32.ActiveCfg = Unicode-release|Win32
 		{F5753617-F037-429C-931A-877699690923}.Unicode-release-static|Win32.ActiveCfg = Unicode-release-static|Win32
 		{F5753617-F037-429C-931A-877699690923}.Unicode-release-static|Win32.Build.0 = Unicode-release-static|Win32
@@ -174,6 +187,7 @@ Global
 		{32A77026-E533-47FD-8967-D6CBADA7C0C5}.Unicode-debug-py26|Win32.ActiveCfg = Unicode-debug|Win32
 		{32A77026-E533-47FD-8967-D6CBADA7C0C5}.Unicode-debug-py26|Win32.Build.0 = Unicode-debug|Win32
 		{32A77026-E533-47FD-8967-D6CBADA7C0C5}.Unicode-release|Win32.ActiveCfg = Unicode-release|Win32
+		{32A77026-E533-47FD-8967-D6CBADA7C0C5}.unicode-release-di|Win32.ActiveCfg = unicode-release-di|Win32
 		{32A77026-E533-47FD-8967-D6CBADA7C0C5}.Unicode-release-py26|Win32.ActiveCfg = Unicode-release|Win32
 		{32A77026-E533-47FD-8967-D6CBADA7C0C5}.Unicode-release-static|Win32.ActiveCfg = Unicode-release-static|Win32
 		{32A77026-E533-47FD-8967-D6CBADA7C0C5}.Unicode-release-static|Win32.Build.0 = Unicode-release-static|Win32
@@ -187,6 +201,8 @@ Global
 		{DE855453-1F3B-4821-ABEB-A3922144B040}.Unicode-debug-py26|Win32.Build.0 = Unicode-debug|Win32
 		{DE855453-1F3B-4821-ABEB-A3922144B040}.Unicode-release|Win32.ActiveCfg = Unicode-release|Win32
 		{DE855453-1F3B-4821-ABEB-A3922144B040}.Unicode-release|Win32.Build.0 = Unicode-release|Win32
+		{DE855453-1F3B-4821-ABEB-A3922144B040}.unicode-release-di|Win32.ActiveCfg = unicode-release-di|Win32
+		{DE855453-1F3B-4821-ABEB-A3922144B040}.unicode-release-di|Win32.Build.0 = unicode-release-di|Win32
 		{DE855453-1F3B-4821-ABEB-A3922144B040}.Unicode-release-py26|Win32.ActiveCfg = Unicode-release|Win32
 		{DE855453-1F3B-4821-ABEB-A3922144B040}.Unicode-release-py26|Win32.Build.0 = Unicode-release|Win32
 		{DE855453-1F3B-4821-ABEB-A3922144B040}.Unicode-release-static|Win32.ActiveCfg = Unicode-release-static|Win32
@@ -201,6 +217,8 @@ Global
 		{E77DD146-78F9-4A48-8BC6-8792226C1670}.Unicode-debug-py26|Win32.Build.0 = Unicode-debug-py26|Win32
 		{E77DD146-78F9-4A48-8BC6-8792226C1670}.Unicode-release|Win32.ActiveCfg = Unicode-release|Win32
 		{E77DD146-78F9-4A48-8BC6-8792226C1670}.Unicode-release|Win32.Build.0 = Unicode-release|Win32
+		{E77DD146-78F9-4A48-8BC6-8792226C1670}.unicode-release-di|Win32.ActiveCfg = unicode-release-di|Win32
+		{E77DD146-78F9-4A48-8BC6-8792226C1670}.unicode-release-di|Win32.Build.0 = unicode-release-di|Win32
 		{E77DD146-78F9-4A48-8BC6-8792226C1670}.Unicode-release-py26|Win32.ActiveCfg = Unicode-release-py26|Win32
 		{E77DD146-78F9-4A48-8BC6-8792226C1670}.Unicode-release-py26|Win32.Build.0 = Unicode-release-py26|Win32
 		{E77DD146-78F9-4A48-8BC6-8792226C1670}.Unicode-release-static|Win32.ActiveCfg = Unicode-release-static|Win32
@@ -215,6 +233,8 @@ Global
 		{FB67F543-EB17-4693-8A9A-4AA27F184129}.Unicode-debug-py26|Win32.Build.0 = Unicode-debug|Win32
 		{FB67F543-EB17-4693-8A9A-4AA27F184129}.Unicode-release|Win32.ActiveCfg = Unicode-release|Win32
 		{FB67F543-EB17-4693-8A9A-4AA27F184129}.Unicode-release|Win32.Build.0 = Unicode-release|Win32
+		{FB67F543-EB17-4693-8A9A-4AA27F184129}.unicode-release-di|Win32.ActiveCfg = unicode-release-di|Win32
+		{FB67F543-EB17-4693-8A9A-4AA27F184129}.unicode-release-di|Win32.Build.0 = unicode-release-di|Win32
 		{FB67F543-EB17-4693-8A9A-4AA27F184129}.Unicode-release-py26|Win32.ActiveCfg = Unicode-release|Win32
 		{FB67F543-EB17-4693-8A9A-4AA27F184129}.Unicode-release-py26|Win32.Build.0 = Unicode-release|Win32
 		{FB67F543-EB17-4693-8A9A-4AA27F184129}.Unicode-release-static|Win32.ActiveCfg = Unicode-release-static|Win32
@@ -229,6 +249,8 @@ Global
 		{61C58785-8535-4CD3-B84A-F324CFA4E27F}.Unicode-debug-py26|Win32.Build.0 = Unicode-debug-py26|Win32
 		{61C58785-8535-4CD3-B84A-F324CFA4E27F}.Unicode-release|Win32.ActiveCfg = Unicode-release|Win32
 		{61C58785-8535-4CD3-B84A-F324CFA4E27F}.Unicode-release|Win32.Build.0 = Unicode-release|Win32
+		{61C58785-8535-4CD3-B84A-F324CFA4E27F}.unicode-release-di|Win32.ActiveCfg = unicode-release-di|Win32
+		{61C58785-8535-4CD3-B84A-F324CFA4E27F}.unicode-release-di|Win32.Build.0 = unicode-release-di|Win32
 		{61C58785-8535-4CD3-B84A-F324CFA4E27F}.Unicode-release-py26|Win32.ActiveCfg = Unicode-release-py26|Win32
 		{61C58785-8535-4CD3-B84A-F324CFA4E27F}.Unicode-release-py26|Win32.Build.0 = Unicode-release-py26|Win32
 		{61C58785-8535-4CD3-B84A-F324CFA4E27F}.Unicode-release-static|Win32.ActiveCfg = Unicode-release-static|Win32

@@ -34,8 +34,11 @@ protected:
   static void ValidateBondParams();
   static TGraphicsStyle *FBondParams;
   static TXBondStylesClear *FXBondStylesClear;
+  virtual bool IsMaskSaveable() const {  return false;  }
+  virtual bool IsStyleSaveable() const {  return false; }
+  virtual bool IsRadiusSaveable() const {  return false; }
 public:
-  TXBond(const olxstr& collectionName, TSBond& B, TGlRenderer *Render);
+  TXBond(TGlRenderer& Render, const olxstr& collectionName, TSBond& B);
   void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
   virtual ACreationParams* GetACreationParams() const;
   virtual ~TXBond();
@@ -43,16 +46,17 @@ public:
   static TStrPObjList<olxstr,TGlPrimitive*> FStaticObjects;
   void CreateStaticPrimitives();
 
-  // this function shoul dbe with AtomALevel for B->A() and same for B()
-  static olxstr GetLegend(const TSBond& B, const short AtomALevel, const short AtomBLevel);
+  // creates legend up three levels (0 to 2)
+  static olxstr GetLegend(const TSBond& B, const short level);
 
   inline operator TSBond* () const {  return FBond;  }
   // beware - for objects, having not tdbond underneath this might fail
   inline TSBond& Bond()      const {  return *FBond; }
+  
   void Radius(float V);
   inline double Radius()        {  return Params()[4]; }
 
-  bool Orient(TGlPrimitive *P);
+  bool Orient(TGlPrimitive& P);
   bool GetDimensions(vec3d &Max, vec3d &Min){  return false; };
 
   void ListParams(TStrList &List, TGlPrimitive *Primitive);
@@ -67,8 +71,8 @@ public:
   bool OnMouseUp(const IEObject *Sender, const TMouseData *Data);
   bool OnMouseMove(const IEObject *Sender, const TMouseData *Data);
 
-  inline bool Deleted()  {  return AGDrawObject::Deleted(); }
-  void Deleted(bool v)   {  AGDrawObject::Deleted(v);  FBond->SetDeleted(v); }
+  inline bool IsDeleted()  {  return AGDrawObject::IsDeleted(); }
+  void SetDeleted(bool v)   {  AGDrawObject::SetDeleted(v);  FBond->SetDeleted(v); }
   void ListDrawingStyles(TStrList &List);
 
   void UpdatePrimitives(int32_t Mask, const ACreationParams* cpar=NULL);
@@ -90,7 +94,8 @@ public:
 };
 
 struct BondCreationParams : public ACreationParams {
-  int mask;
+  class TXAtom &a1, &a2;
+  BondCreationParams(TXAtom& xa1, TXAtom& xa2) : a1(xa1), a2(xa2) { }
 };
 
 EndGxlNamespace()

@@ -45,13 +45,13 @@ AMode::~AMode() {
 //..............................................................................
 //..............................................................................
 AModeWithLabels::AModeWithLabels(int id) : AMode(id)  {
-  LabelsVisible = TGlXApp::GetGXApp()->LabelsVisible();
-  LabelsMode = TGlXApp::GetGXApp()->LabelsMode();
+  LabelsVisible = TGlXApp::GetGXApp()->AreLabelsVisible();
+  LabelsMode = TGlXApp::GetGXApp()->GetLabelsMode();
 }
 //..............................................................................
 AModeWithLabels::~AModeWithLabels()  {
-  TGlXApp::GetGXApp()->LabelsVisible(LabelsVisible);
-  TGlXApp::GetGXApp()->LabelsMode(LabelsMode);
+  TGlXApp::GetGXApp()->SetLabelsVisible(LabelsVisible);
+  TGlXApp::GetGXApp()->SetLabelsMode(LabelsMode);
 }
 //..............................................................................
 //..............................................................................

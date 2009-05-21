@@ -23,18 +23,20 @@
 #include "estopwatch.h"
 #include "edict.h"
 #include "emath.h"
+#include "refmodel.h"
 
 #undef GetObject
 
 double TNetwork_FindAlignmentMatrix(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atoms, smatdd& res, vec3d& _centB, bool TryInversion)  {
   TTypeList< AnAssociation2<vec3d,vec3d> > crds;
   crds.SetCapacity( atoms.Count() );
-  const TAsymmUnit& au = atoms[0].GetA()->GetNetwork().GetLattice().GetAsymmUnit();
+  const TAsymmUnit& au1 = atoms[0].GetA()->GetNetwork().GetLattice().GetAsymmUnit();
+  const TAsymmUnit& au2 = atoms[0].GetB()->GetNetwork().GetLattice().GetAsymmUnit();
   for( int i=0; i < atoms.Count(); i++ )  {
     vec3d v = atoms[i].GetB()->ccrd();
     if( TryInversion )
       v *= -1;
-    crds.AddNew(atoms[i].GetA()->crd(), au.CellToCartesian(v) );
+    crds.AddNew(atoms[i].GetA()->crd(), au2.CellToCartesian(v) );
   }
   double sumA = 0, sumB = 0;
   vec3d centA, centB;
@@ -85,7 +87,6 @@ void TNetwork::TDisassembleTaskRemoveSymmEq::Run(long index)  {
   }
 }
 void TNetwork::TDisassembleTaskCheckConnectivity::Run(long index)  {
-  const int this_p = Atoms[index]->CAtom().GetPart();
   const int ac = Atoms.Count();
   for( int i=index+1; i < ac; i++ )  {
     if( olx_abs(Distances[0][i] - Distances[0][index]) > dcMaxCBLength )  return;
@@ -94,24 +95,9 @@ void TNetwork::TDisassembleTaskCheckConnectivity::Run(long index)  {
     if( olx_abs(Distances[3][i] - Distances[3][index]) > dcMaxCBLength  )  continue;
 
     const double D = Atoms[index]->crd().QDistanceTo( Atoms[i]->crd());
-    const double D1 = sqr(Atoms[index]->GetAtomInfo().GetRad1() + Atoms[i]->GetAtomInfo().GetRad1() + Delta);
-    if(  D < D1 )  {
-      const int that_p = Atoms[i]->CAtom().GetPart();
-      if( this_p < 0 || that_p < 0 ) {
-        const smatd& sm = Atoms[i]->GetMatrix(0);
-        bool found = false;
-        for( int j=0; j < Atoms[index]->MatrixCount(); j++ )  {
-          if( Atoms[index]->GetMatrix(j).GetTag() == sm.GetTag() && 
-              Atoms[index]->GetMatrix(j) == sm )  
-          {
-            found = true;
-            continue;
-          }
-        }
-        if( !found ) 
-          continue;
-      }
-      else if( !(this_p == that_p || this_p == 0 || that_p == 0) )
+    const double D1 = sqr(Atoms[index]->CAtom().GetConnInfo().r + Atoms[i]->CAtom().GetConnInfo().r + Delta);
+    if(  D < D1 && IsBondAllowed(*Atoms[index], *Atoms[i]) )  {
+      if( D < 1e-5 )  // EXYZ?
         continue;
       Atoms[index]->AddNode(*Atoms[i]);
       Atoms[i]->AddNode(*Atoms[index]);  // crosslinking
@@ -168,6 +154,7 @@ void TNetwork::Disassemble(TSAtomPList& Atoms, TNetPList& Frags, TSBondPList* In
     Distances[2][i] = A->crd()[1];
     Distances[3][i] = A->crd()[2];
   }
+  // get extrac connectivity information
   sw.start("Connectivity analysis");
   TDisassembleTaskCheckConnectivity searchConTask( Atoms, Distances, Delta);
   TListIteratorManager<TDisassembleTaskCheckConnectivity> searchCon(searchConTask, Atoms.Count(), tQuadraticTask, 100);
@@ -193,6 +180,90 @@ void TNetwork::Disassemble(TSAtomPList& Atoms, TNetPList& Frags, TSBondPList* In
 void TNetwork::CreateBondsAndFragments(TSAtomPList& Atoms, TNetPList& Frags)  {
   // creating bonds
   const int ac = Atoms.Count();
+  // analyse extra connectivity information
+  for( int i=0; i < ac; i++ )  {
+    TSAtom* sa = Atoms[i];
+    const CXConnInfo& ci = sa->CAtom().GetConnInfo();
+    for( int j=0; j < ci.BondsToRemove.Count(); j++ )  {
+      if( ci.BondsToRemove[j].matr == NULL )  {
+        for( int k=0; k < sa->NodeCount(); k++ )  {
+          if( sa->Node(k).CAtom() == ci.BondsToRemove[j].to )
+            sa->RemoveNode(sa->Node(k--));
+        }
+      }
+      else {
+        const smatd ts = (*ci.BondsToRemove[j].matr)*sa->GetMatrix(0);
+        for( int k=0; k < sa->NodeCount(); k++ )  {
+          if( sa->Node(k).CAtom() == ci.BondsToRemove[j].to )  {
+            bool remove = false;
+            for( int l=0; l < sa->Node(k).MatrixCount(); l++ )  {
+              if( sa->Node(k).GetMatrix(l).EqualExt(ts) )  {
+                remove = true;
+                break;
+              }
+            }
+            if( remove )
+              sa->RemoveNode(sa->Node(k));
+          }
+        }
+      }
+    }
+    for( int j=0; j < ci.BondsToCreate.Count(); j++ )  {
+      if( ci.BondsToCreate[j].matr == NULL )  {
+        for( int k=0; k < ac; k++ )  {
+          if( Atoms[k]->CAtom() == ci.BondsToCreate[j].to )  {
+            if( !sa->IsConnectedTo(*Atoms[k]) )  {
+              sa->AddNode(*Atoms[k]);
+              Atoms[k]->AddNode(*sa);
+            }
+          }
+        }
+      }
+      else {
+        const smatd ts = (*ci.BondsToCreate[j].matr)*sa->GetMatrix(0);
+        for( int k=0; k < ac; k++ )  {
+          if( Atoms[k]->CAtom() == ci.BondsToCreate[j].to )  {
+            bool add = false;
+            for( int l=0; l < Atoms[k]->MatrixCount(); l++ )  {
+              if( Atoms[k]->GetMatrix(l).EqualExt(ts) )  {
+                add = true;
+                break;
+              }
+            }
+            if( add && !sa->IsConnectedTo(*Atoms[k]) )  {
+              sa->AddNode(*Atoms[k]);
+              Atoms[k]->AddNode(*sa);
+            }
+          }
+        }
+      }
+    }
+  }
+  /* final conn processing, in case some extra bonds were created considering
+     bond duality ... This cannot be done in th eloop above */
+  for( int i=0; i < ac; i++ )  {
+    TSAtom* A1 = Atoms[i];
+    const CXConnInfo& ci = A1->CAtom().GetConnInfo();
+    if( A1->NodeCount() > ci.maxBonds )  {
+      if( ci.maxBonds < 0 )
+        A1->SortNodesByDistanceDsc();
+      else
+        A1->SortNodesByDistanceAsc();
+      // prevent q-peaks affecting the max number of bonds...
+      int bc2set = olx_abs(ci.maxBonds);
+      for( int j=0;  j < bc2set; j++ )  {
+        if( A1->Node(j).GetAtomInfo() == iQPeakIndex )  {
+          if( ++bc2set >= A1->NodeCount() )  {
+            break;
+          }
+        }
+      }
+      if( bc2set < A1->NodeCount() )
+        A1->SetNodeCount(bc2set);
+    }
+    A1->SetStandalone( A1->NodeCount() == 0 );
+  }
+  // end analysis the extra con info
   for( int i=0; i < ac; i++ )  {
     TSAtom* A1 = Atoms[i];
     if( A1->GetTag() != 0 )  {
@@ -278,24 +349,9 @@ void TNetwork::THBondSearchTask::Run(long ind)  {
       }
       if( connected )  continue;
 
-      const int that_p = Atoms[i]->CAtom().GetPart();
       const double D = A1->crd().QDistanceTo( Atoms[i]->crd() );
-      const double D1 = sqr(A1->GetAtomInfo().GetRad1() + Atoms[i]->GetAtomInfo().GetRad1() + Delta);
-      if(  D < D1 )  {
-        if( this_p < 0 || that_p < 0 ) {
-          const smatd& sm = Atoms[i]->GetMatrix(0);
-          bool found = false;
-          for( int j=0; j < A1->MatrixCount(); j++ )  {
-            if( A1->GetMatrix(j).GetTag() == sm.GetTag() && A1->GetMatrix(j) == sm )  {
-              found = true;
-              continue;
-            }
-          }
-          if( !found ) 
-            continue;
-        }
-        else if( !(this_p == that_p || this_p == 0 && that_p == 0) )
-          continue;
+      const double D1 = sqr(A1->CAtom().GetConnInfo().r + Atoms[i]->CAtom().GetConnInfo().r + Delta);
+      if(  D < D1 && IsBondAllowed(*A1, *Atoms[i]) )  {
         TSBond* B = new TSBond(&A1->GetNetwork());
         B->SetType(sotHBond);
         B->SetA(*A1);
@@ -306,24 +362,9 @@ void TNetwork::THBondSearchTask::Run(long ind)  {
       }
     }
     else if( Bonds != NULL )  {
-      const int that_p = Atoms[i]->CAtom().GetPart();
       const double D = A1->crd().QDistanceTo( Atoms[i]->crd() );
-      const double D1 = sqr(A1->GetAtomInfo().GetRad1() + Atoms[i]->GetAtomInfo().GetRad1() + Delta);
-      if(  D < D1 )  {
-        if( this_p < 0 || that_p < 0 ) {
-          const smatd& sm = Atoms[i]->GetMatrix(0);
-          bool found = false;
-          for( int j=0; j < A1->MatrixCount(); j++ )  {
-            if( A1->GetMatrix(j).GetTag() == sm.GetTag() && A1->GetMatrix(j) == sm )  {
-              found = true;
-              continue;
-            }
-          }
-          if( !found ) 
-            continue;
-        }
-        else if( !(this_p == that_p || this_p == 0 || that_p == 0) )
-          continue;
+      const double D1 = sqr(A1->CAtom().GetConnInfo().r + Atoms[i]->CAtom().GetConnInfo().r + Delta);
+      if(  D < D1 && IsBondAllowed(*A1, *Atoms[i]) )  {
         TSBond* B = new TSBond( &A1->GetNetwork() );
         B->SetType(sotHBond);
         B->SetA(*A1);
@@ -334,23 +375,48 @@ void TNetwork::THBondSearchTask::Run(long ind)  {
   }
 }
 //..............................................................................
-bool TNetwork::CBondExists(const TCAtom& CA1, const TCAtom& CA2, const double& D) const  {
-  if(  D < (CA1.GetAtomInfo().GetRad1() + CA2.GetAtomInfo().GetRad1() + GetLattice().GetDelta() ) )  {
-    if( (CA1.GetPart() == CA2.GetPart() && CA2.GetPart() >= 0 ) || 
-         CA1.GetPart() == 0 ||CA2.GetPart() == 0 )
-      return true;
+bool TNetwork::CBondExists(const TCAtom& CA1, const TCAtom& CA2, const smatd& sm, const double& D) const  {
+  if(  D < (CA1.GetConnInfo().r + CA2.GetConnInfo().r + GetLattice().GetDelta() ) )  {
+    return IsBondAllowed(CA1, CA2, sm);
   }
   return false;
 }
 //..............................................................................
-bool TNetwork::HBondExists(const TCAtom& CA1, const TCAtom& CA2, const double& D) const  {
-  if(  D < (CA1.GetAtomInfo().GetRad1() + CA2.GetAtomInfo().GetRad1() + GetLattice().GetDeltaI() ) )  {
-    if( (CA1.GetPart() == CA2.GetPart() && CA2.GetPart() >=0 ) || 
-      CA1.GetPart() == 0 || CA2.GetPart() == 0 )
-      return true;
+bool TNetwork::CBondExistsQ(const TCAtom& CA1, const TCAtom& CA2, const smatd& sm, const double& qD) const  {
+  if(  qD < sqr(CA1.GetConnInfo().r + CA2.GetConnInfo().r + GetLattice().GetDelta() ) )  {
+    return IsBondAllowed(CA1, CA2, sm);
   }
   return false;
 }
+//..............................................................................
+bool TNetwork::HBondExists(const TCAtom& CA1, const TCAtom& CA2, const smatd& sm, const double& D) const  {
+  if(  D < (CA1.GetConnInfo().r + CA2.GetConnInfo().r + GetLattice().GetDeltaI() ) )  {
+    return IsBondAllowed(CA1, CA2, sm);
+  }
+  return false;
+}
+//..............................................................................
+bool TNetwork::HBondExistsQ(const TCAtom& CA1, const TCAtom& CA2, const smatd& sm, const double& qD) const  {
+  if(  qD < sqr(CA1.GetConnInfo().r + CA2.GetConnInfo().r + GetLattice().GetDeltaI() ) )  {
+    return IsBondAllowed(CA1, CA2, sm);
+  }
+  return false;
+}
+//..............................................................................
+bool TNetwork::CBondExists(const TSAtom& A1, const TSAtom& A2, const double& D) const  {
+  if(  D < (A1.CAtom().GetConnInfo().r + A2.CAtom().GetConnInfo().r + GetLattice().GetDelta() ) )  {
+    return IsBondAllowed(A1, A2);
+  }
+  return false;
+}
+//..............................................................................
+bool TNetwork::CBondExistsQ(const TSAtom& A1, const TSAtom& A2, const double& qD) const  {
+  if(  qD < sqr(A1.CAtom().GetConnInfo().r + A2.CAtom().GetConnInfo().r + GetLattice().GetDelta() ) )  {
+    return IsBondAllowed(A1, A2);
+  }
+  return false;
+}
+//..............................................................................
 //..............................................................................
 // HELPER function
 class TNetTraverser  {
@@ -971,24 +1037,62 @@ double TNetwork::FindAlignmentMatrix(const TTypeList< AnAssociation2<TSAtom*,TSA
   return TNetwork_FindAlignmentMatrix(atoms, res, centB, TryInversion);
 }
 //..............................................................................
+void TNetwork::PrepareESDCalc(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& atoms, 
+    bool Inverted,
+    TSAtomPList& atoms_out,
+    vec3d_alist& crd_out, 
+    TDoubleList& wght_out)
+{
+  atoms_out.SetCount(atoms.Count()*2);
+  crd_out.SetCount(atoms.Count()*2);
+  wght_out.SetCount(atoms.Count()*2);
+  if( Inverted )  {
+    const TAsymmUnit& au2 = atoms[0].GetB()->GetNetwork().GetLattice().GetAsymmUnit();
+    for(int i=0; i < atoms.Count(); i++ )  {
+      atoms_out[i] = atoms[i].A();
+      atoms_out[atoms.Count()+i] = atoms[i].B();
+      wght_out[i] = atoms[i].GetA()->CAtom().GetOccu()*atoms[i].GetA()->GetAtomInfo().GetMr();
+      wght_out[atoms.Count()+i] = atoms[i].GetB()->CAtom().GetOccu()*atoms[i].GetB()->GetAtomInfo().GetMr();
+      vec3d v = atoms[i].GetB()->ccrd() * -1;
+      au2.CellToCartesian(v);
+      crd_out[i] = atoms[i].GetA()->crd(); 
+      crd_out[atoms.Count()+i] = v;
+    }
+  }
+  else  {
+    for(int i=0; i < atoms.Count(); i++ )  {
+      atoms_out[i] = atoms[i].A();
+      atoms_out[atoms.Count()+i] = atoms[i].B();
+      wght_out[i] = atoms[i].GetA()->CAtom().GetOccu()*atoms[i].GetA()->GetAtomInfo().GetMr();
+      wght_out[atoms.Count()+i] = atoms[i].GetB()->CAtom().GetOccu()*atoms[i].GetB()->GetAtomInfo().GetMr();
+      crd_out[i] = atoms[i].GetA()->crd(); 
+      crd_out[atoms.Count()+i] = atoms[i].GetB()->crd();
+    }
+  }
+}
+//..............................................................................
 void TNetwork::DoAlignAtoms(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& satomp,
-                            const TSAtomPList& atomsToTransform, const smatdd& S, bool Inverted)  {
+                            const TSAtomPList& atomsToTransform, const smatdd& S, bool Inverted)  
+{
+  if( atomsToTransform.IsEmpty() )
+    return;
   vec3d mcent;
-  const TAsymmUnit& au = satomp[0].GetA()->GetNetwork().GetLattice().GetAsymmUnit();
+  const TAsymmUnit& au1 = atomsToTransform[0]->GetNetwork().GetLattice().GetAsymmUnit();
+  const TAsymmUnit& au2 = satomp[0].GetB()->GetNetwork().GetLattice().GetAsymmUnit();
   double sum  = 0;
   if( Inverted )  {
     for( int i=0; i < atomsToTransform.Count(); i++ )
-      au.CellToCartesian(atomsToTransform[i]->ccrd() * -1, atomsToTransform[i]->crd());
+      au1.CellToCartesian(atomsToTransform[i]->ccrd() * -1, atomsToTransform[i]->crd());
     for(int i=0; i < satomp.Count(); i++ )  {
       vec3d v = satomp[i].GetB()->ccrd() * -1;
-      au.CellToCartesian(v);
+      au2.CellToCartesian(v);
       mcent += v*satomp[i].GetB()->CAtom().GetOccu()*satomp[i].GetB()->GetAtomInfo().GetMr();
       sum += satomp[i].GetB()->CAtom().GetOccu()*satomp[i].GetB()->GetAtomInfo().GetMr();
     }
   }
   else  {
     for( int i=0; i < atomsToTransform.Count(); i++ )
-      au.CellToCartesian(atomsToTransform[i]->ccrd(), atomsToTransform[i]->crd());
+      au2.CellToCartesian(atomsToTransform[i]->ccrd(), atomsToTransform[i]->crd());
     for(int i=0; i < satomp.Count(); i++ )  {
       mcent += satomp[i].GetB()->crd()*satomp[i].GetB()->CAtom().GetOccu()*satomp[i].GetB()->GetAtomInfo().GetMr();
       sum += satomp[i].GetB()->CAtom().GetOccu()*satomp[i].GetB()->GetAtomInfo().GetMr();

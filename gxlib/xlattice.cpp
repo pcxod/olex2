@@ -7,17 +7,17 @@
 #include "styles.h"
 #include "gpcollection.h"
 #include "glscene.h"
+#include "glprimitive.h"
 
-TXLattice::TXLattice(const olxstr& collectionName, TGlRenderer *Render) :
-  TGlMouseListener(collectionName, Render) {
+TXLattice::TXLattice(TGlRenderer& Render, const olxstr& collectionName) :
+  TGlMouseListener(Render, collectionName) {
 
   Fixed = false;
   Size = 4;
 
-  Move2D(false);
-  Moveable(true);
-  Zoomable(false);
-
+  SetMove2D(false);
+  SetMoveable(true);
+  SetZoomable(false);
 }
 //..............................................................................
 TXLattice::~TXLattice()  {
@@ -26,59 +26,51 @@ TXLattice::~TXLattice()  {
 void TXLattice::Create(const olxstr& cName, const ACreationParams* cpar)  {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
-  TGPCollection* GPC = FParent->FindCollection( GetCollectionName() );
-  if( GPC == NULL )
-    GPC = FParent->NewCollection( GetCollectionName() );
-  GPC->AddObject(this);
-  if( GPC->PrimitiveCount() != 0 )  return;
+  TGPCollection& GPC = Parent.FindOrCreateCollection( GetCollectionName() );
+  GPC.AddObject(*this);
+  if( GPC.PrimitiveCount() != 0 )  return;
 
-  TGraphicsStyle* GS = GPC->Style();
-  Lines = GPC->NewPrimitive("Lines", sgloLines);
-  const TGlMaterial* SGlM = GS->Material("Lines");
-  if( !SGlM->Mark() )  Lines->SetProperties(SGlM);
-  else  {
-    TGlMaterial GlM;
-    GlM.SetFlags(sglmAmbientF);
-    GlM.AmbientF = 0;
-    GlM.SetIdentityDraw(false);
-    GlM.SetTransparent(false);
-    Lines->SetProperties(&GlM);
-  }
+  TGraphicsStyle& GS = GPC.GetStyle();
+  Lines = &GPC.NewPrimitive("Lines", sgloLines);
+  TGlMaterial GlM;
+  GlM.SetFlags(sglmAmbientF);
+  GlM.AmbientF = 0;
+  GlM.SetIdentityDraw(false);
+  GlM.SetTransparent(false);
+
+  Lines->SetProperties( GS.GetMaterial("Lines", GlM) );
 
   // initialise data
   SetSize( GetSize() );
 
-  TGlPrimitive* GlP = GPC->NewPrimitive("Label", sgloText);  // labels
-  SGlM = GS->Material("Label");
-  if( !SGlM->Mark() )  GlP->SetProperties(SGlM);
-  else  {
-    TGlMaterial GlM;
-    GlM.SetIdentityDraw(true);
-    GlM.SetTransparent(false);
-    GlP->SetProperties(&GlM);
-  }
-  GlP->SetFont( Parent()->Scene()->DefFont() );
+  TGlPrimitive& glpLabel = GPC.NewPrimitive("Label", sgloText);  // labels
+  TGlMaterial GlM1;
+  GlM1.SetIdentityDraw(true);
+  GlM1.SetTransparent(false);
+  
+  glpLabel.SetProperties( GS.GetMaterial("Label", GlM1) );
+
+  glpLabel.SetFont( Parent.GetScene().DefFont() );
 }
 //..............................................................................
-bool TXLattice::Orient(TGlPrimitive *P)  {
+bool TXLattice::Orient(TGlPrimitive& P)  {
   if( Fixed )  {
-
-    vec3d c = Parent()->GetBasis().GetCenter();
+    vec3d c = Parent.GetBasis().GetCenter();
     c *= -1;
-    Parent()->GlTranslate( c );
+    Parent.GlTranslate( c );
 
-    mat3d m (Parent()->GetBasis().GetMatrix());
+    mat3d m (Parent.GetBasis().GetMatrix());
     m.Transpose();
     m = Basis.GetMatrix() * m;
-    Parent()->GlOrient(  m );
+    Parent.GlOrient(  m );
 
-    Parent()->GlTranslate( Basis.GetCenter() );
+    Parent.GlTranslate( Basis.GetCenter() );
   }
   else  {
-    Parent()->GlTranslate( Basis.GetCenter() );
+    Parent.GlTranslate( Basis.GetCenter() );
   }
   vec3d vec;
-  if( P->GetType() == sgloLines )  {
+  if( P.GetType() == sgloLines )  {
     glPointSize(5);
     glBegin(GL_POINTS);
     for( int i=-Size; i  < Size; i++ )  {
@@ -100,12 +92,12 @@ bool TXLattice::GetDimensions(vec3d &Max, vec3d &Min)  {
 }
 //..............................................................................
 bool TXLattice::OnMouseDown(const IEObject *Sender, const TMouseData *Data)  {
-  if( !Moveable() )  return true;
+  if( !IsMoveable() )  return true;
   return TGlMouseListener::OnMouseDown(Sender, Data);
 }
 //..............................................................................
 bool TXLattice::OnMouseUp(const IEObject *Sender, const TMouseData *Data)  {
-  if( !Moveable() )  return true;
+  if( !IsMoveable() )  return true;
   return TGlMouseListener::OnMouseUp(Sender, Data);
 }
 //..............................................................................
@@ -124,7 +116,7 @@ void TXLattice::SetSize(short v)  {
 void TXLattice::SetFixed(bool v )  {
   if( v )  {
     vec3d c = Basis.GetCenter();
-    Basis.Orient( Parent()->GetBasis().GetMatrix() );
+    Basis.Orient( Parent.GetBasis().GetMatrix() );
     Basis.SetCenter(c);
   }
   else  {
@@ -132,7 +124,7 @@ void TXLattice::SetFixed(bool v )  {
     Basis.Reset();
     Basis.SetCenter(c);
   }
-  Move2D(v);
+  SetMove2D(v);
   Fixed = v;
 }
 

@@ -10,39 +10,31 @@
 #include "glrender.h"
 #include "gdrawobject.h"
 #include "styles.h"
+#include "glprimitive.h"
 
 UseGlNamespace();
 //..............................................................................
-//..............................................................................
-TGPCollection::TGPCollection( TGlRenderer *P)  {
-  FParent = P;
-}
-//..............................................................................
-TGPCollection::~TGPCollection()  {  }
-//..............................................................................
 void TGPCollection::ClearPrimitives()  {
-  TGlPrimitive *GlP;
-  for( int i=0; i < FParent->PrimitiveCount(); i++ )
-    FParent->Primitive(i)->SetTag(-1);
-  for( int i=0; i < PrimitiveCount(); i++ )  {
-    GlP = Primitive(i);
-    GlP->SetTag(0);
-  }
-  FParent->RemovePrimitive(0);
+  for( int i=0; i < Parent.PrimitiveCount(); i++ )
+    Parent.GetPrimitive(i).SetTag(-1);
+  for( int i=0; i < PrimitiveCount(); i++ )
+    GetPrimitive(i).SetTag(0);
+  Parent.RemovePrimitive(0);
   Primitives.Clear();
 }
 //..............................................................................
-TGlPrimitive* TGPCollection::NewPrimitive(const olxstr& Name, short type)  {
-  TGlPrimitive *GlP = FParent->NewPrimitive(type);
-  GlP->SetName(Name);
+TGlPrimitive& TGPCollection::NewPrimitive(const olxstr& Name, short type)  {
+  TGlPrimitive& GlP = Parent.NewPrimitive(type);
+  GlP.SetName(Name);
   AddPrimitive(GlP);
-  GlP->SetParentCollection(this);
+  GlP.SetParentCollection(this);
   return GlP;
 };
 //..............................................................................
 TGlPrimitive* TGPCollection::FindPrimitiveByName(const olxstr &Name) const {
   for( int i = 0; i < Primitives.Count(); i++ )
-    if( Primitives[i]->GetName() == Name )  return Primitives[i];
+    if( Primitives[i]->GetName() == Name )  
+      return Primitives[i];
   return NULL;
 }
 //..............................................................................
@@ -51,32 +43,28 @@ void TGPCollection::Draw()  {
     Primitives[i]->Draw();
 }
 //..............................................................................
-void TGPCollection::AddObject(AGDrawObject *Obj)  {
-  GObjects.Add(Obj);
-  Obj->Primitives( this );
-  FParent->AddGObject( Obj );
+void TGPCollection::AddObject(AGDrawObject& Obj)  {
+  GObjects.Add(&Obj);
+  Obj.SetPrimitives( *this );
+  Parent.AddObject( Obj );
 };
 //..............................................................................
 void TGPCollection::ListParams(TStrList &List, TGlPrimitive *Primitive)  {
-  if( GObjects.Count() != 0 )
-    Object(0)->ListParams(List, Primitive);
+  if( !GObjects.IsEmpty() )
+    GetObject(0).ListParams(List, Primitive);
 }
-bool TGPCollection::ContainsPrimitive(TGlPrimitive *GlP)  {
-  if( Primitives.IndexOf(GlP) >= 0 )  return true;
-  return false;
+bool TGPCollection::ContainsPrimitive(TGlPrimitive& GlP)  {
+  return Primitives.IndexOf(&GlP) != -1;
 }
 //..............................................................................
-void TGPCollection::Style(TGraphicsStyle *S)  {
-  FStyle = S;
-  if( !S )  return;
-  TGlMaterial *GlM;
-  TGlPrimitive *GlP;
+void TGPCollection::SetStyle(TGraphicsStyle *S)  {
+  Style = S;
+  if( S == NULL )  return;
   // update materials of primitives & filling the style
   for( int i=0; i < PrimitiveCount(); i++ )  {
-    GlP = Primitive(i);
-    GlM = (TGlMaterial*)GlP->GetProperties();
-    if( S->Material(GlP->GetName())->Mark() )
-      S->PrimitiveMaterial(GlP->GetName(), *GlM);
+    TGlPrimitive& GlP = GetPrimitive(i);
+    if( S->IndexOfMaterial(GlP.GetName()) == -1 )
+      S->SetMaterial(GlP.GetName(), GlP.GetProperties());
   }
 }
 

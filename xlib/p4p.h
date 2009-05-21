@@ -6,29 +6,21 @@
 BeginXlibNamespace()
 
 class TP4PFile : public TBasicCFile  {
-  olxstr Size,
-           Color,
+  olxstr   Color,
            SiteId,
            Morph,
            Chem,
            Mosaic,
-           Source,
            Symm,
-           Temp,
            Bravais,
            SG;
-  double Radiation;
 public:
   TP4PFile();
   virtual ~TP4PFile();
 
-  const olxstr& GetSize()    const {  return Size;  }
   const olxstr& GetColor()   const {  return Color;  }
   const olxstr& GetSiteId()  const {  return SiteId;  }
   const olxstr& GetMorph()   const {  return Morph;  }
-  const olxstr& GetTemp()    const {  return Temp;  }
-  const olxstr& GetSource()  const {  return Source;  }
-  const double GetRadiation()  const {  return Radiation;  }
   const olxstr& GetChem()    const {  return Chem;  }
   void SetChem(const olxstr& c)    {  Chem = c;  }
   // this is set when the file is manually exported ...

@@ -25,8 +25,6 @@ public:
   virtual bool OnObject(AGDrawObject &obj)  {
     if( EsdlInstanceOf( obj, TXAtom) )  {
       TXAtom *XA = &(TXAtom&)obj;
-      TAtomEnvi AE;
-      TGlXApp::GetGXApp()->XFile().GetUnitCell().GetAtomEnviList(XA->Atom(), AE);
       int n = TAfixGroup::GetN(Hfix);
       if( TAfixGroup::IsFitted(Hfix) && (n == 6 || n == 9) )  {
         TGlXApp::GetGXApp()->AutoAfixRings(Hfix, &XA->Atom(), true);
@@ -41,67 +39,7 @@ public:
         else if( ca.GetParentAfixGroup() != NULL )     ca.GetParentAfixGroup()->Clear();
       }
       else  {
-        TIntList parts;
-        TDoubleList occu;
-        RefinementModel& rm = TGlXApp::GetGXApp()->XFile().GetRM();
-        
-        for( int i=0; i < AE.Count(); i++ )  {
-          if( AE.GetCAtom(i).GetPart() != 0 && AE.GetCAtom(i).GetPart() != AE.GetBase().CAtom().GetPart() ) 
-            if( parts.IndexOf(AE.GetCAtom(i).GetPart()) == -1 )  {
-              parts.Add( AE.GetCAtom(i).GetPart() );
-              occu.Add( rm.Vars.GetParam(AE.GetCAtom(i), catom_var_name_Sof) );
-            }
-        }
-        if( parts.IsEmpty() )  {
-          int afix = TXlConGen::ShelxToOlex(Hfix, AE);
-          if( afix != -1 )  {
-            xlConGen->FixAtom(AE, afix, TAtomsInfo::GetInstance().GetAtomInfo(iHydrogenIndex));
-            TGlXApp::GetMainForm()->executeMacro("fuse");
-          }
-        }
-        else  {
-          bool processed = false;
-          TCAtomPList generated;
-          for( int i=0; i < parts.Count(); i++ )  {
-            AE.Clear();
-            TGlXApp::GetGXApp()->XFile().GetUnitCell().GetAtomEnviList(XA->Atom(), AE, false, parts[i]);
-            //consider special case where the atom is bound to itself but very long bond > 1.6 A
-            smatd* eqiv = NULL;
-            for( int j=0; j < AE.Count(); j++ )  {
-              if( &AE.GetCAtom(j) == &AE.GetBase().CAtom() )  {
-                double d = AE.GetCrd(j).DistanceTo(AE.GetBase().crd() );
-                if( d > 1.6 )  {
-                  eqiv = new smatd(AE.GetMatrix(j));
-                  AE.Delete(j);
-                  break;
-                }
-              }
-            }
-            if( eqiv != NULL )  {
-              TIns& ins = TGlXApp::GetGXApp()->XFile().GetLastLoader<TIns>();
-              const smatd& e = TGlXApp::GetGXApp()->XFile().GetRM().AddUsedSymm(*eqiv);
-              int ei = TGlXApp::GetGXApp()->XFile().GetRM().UsedSymmIndex(e)+1;
-              ins.AddIns(olxstr("FREE ") << XA->Atom().GetLabel() << ' ' << XA->Atom().GetLabel() << "_$" << ei, 
-                TGlXApp::GetGXApp()->XFile().GetRM() );
-              delete eqiv;
-            }
-            //
-            int afix = TXlConGen::ShelxToOlex(Hfix, AE);
-            if( afix != -1 )  {
-              xlConGen->FixAtom(AE, afix, TAtomsInfo::GetInstance().GetAtomInfo(iHydrogenIndex), NULL, &generated);
-              if( !generated.IsEmpty() )  {
-                for( int j=0; j < generated.Count(); j++ )  {
-                  generated[j]->SetPart( parts[i] );
-                  rm.Vars.SetParam(*generated[j], catom_var_name_Sof, occu[i]);
-                }
-                generated.Clear();
-              }
-              processed = true;
-            }
-          }
-          if( processed )
-            TGlXApp::GetMainForm()->executeMacro("fuse");
-        }
+        TGlXApp::GetMainForm()->executeMacro( olxstr("hadd ") << Hfix << " #c" << XA->Atom().CAtom().GetId() );
       }
       //if( TGlXApp::GetMainForm()->executeMacro(
       //      olxstr("addins HFIX ") << Hfix << ' ' << XA->Atom().GetLabel()) )

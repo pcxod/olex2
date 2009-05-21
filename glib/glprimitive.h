@@ -2,8 +2,7 @@
 
 #ifndef glprimitiveH
 #define glprimitiveH
-#include "glbase.h"
-#include "groupobj.h"
+#include "glmaterial.h"
 #include "glclipplane.h"
 #include "ematrix.h"
 #include "ebasis.h"
@@ -49,13 +48,13 @@ public:
 };
 
 class TGlPrimitive: public AGroupObject  {
-  TGlRenderer* Renderer;
+  TGlRenderer& Renderer;
   olxstr  Name;
 protected:
   GLUquadricObj* Quadric;
   bool Compiled;
   short Type;
-  AGOProperties *NewProperties();
+  virtual AGOProperties* NewProperties() const {  return new TGlMaterial;  }
   TGlClipPlanes* ClipPlanes;
   AEvaluator* Evaluator;
   TGPCollection* ParentCollection;
@@ -75,10 +74,10 @@ protected:
       QuadricOrientation;
   void SetType(short T);
 public:
-  TGlPrimitive(TObjectGroup *ParentG, TGlRenderer *ParentR, short type);
+  TGlPrimitive(TObjectGroup& ParentG, TGlRenderer& ParentR, short type);
   ~TGlPrimitive();
 
-  TGlRenderer* GetRenderer()  const {  return Renderer;  }
+  TGlRenderer& GetRenderer()  const {  return Renderer;  }
   void Compile();
   void Draw();
 
@@ -106,7 +105,8 @@ public:
 
   DefPropC(olxstr, Name)
 
-  AGOProperties* SetProperties(const AGOProperties* C);
+  TGlMaterial& GetProperties() const {  return (TGlMaterial&)AGroupObject::GetProperties();  }
+  AGOProperties& SetProperties(const AGOProperties& C);
   
   inline void CallList(TGlPrimitive* GlP)  {
     if( GlP->IsList() )
