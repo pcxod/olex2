@@ -45,11 +45,11 @@ public:
   virtual void EndDraw();
 
   inline int FontCount() const {  return Fonts.Count(); }
-  inline TGlFont* Font(int i)  {
+  inline TGlFont* GetFont(int i)  {
     return (i < 0 || i >= FontCount())  ? NULL : Fonts[i];
   }
   /* be sure it exists */
-  inline TGlFont* DefFont() const  {  return Fonts[0]; }
+  inline TGlFont* DefFont() const  {  return Fonts.IsEmpty() ? NULL : Fonts[0]; }
   TGlFont* FindFont(const olxstr& name);
 };
 

@@ -41,6 +41,7 @@ class TAfixGroup;
 class TAfixGroups;
 class TExyzGroup;
 class TExyzGroups;
+struct CXConnInfo;
 
 class TCAtom: public ACollectionItem, public IXVarReferencer  {
 private:
@@ -65,13 +66,14 @@ private:
   TExyzGroup* ExyzGroup;
   XVarReference* Vars[12]; //x,y,z,occu,uiso,U
   static olxstr VarNames[];
+  CXConnInfo* ConnInfo;
   inline void SetId(int id) {  Id = id;  }
 public:
   TCAtom(TAsymmUnit *Parent);
   virtual ~TCAtom();
   inline TAsymmUnit* GetParent()       const {  return FParent; }
   inline TBasicAtomInfo& GetAtomInfo() const {  return *FAtomInfo; }
-  void SetAtomInfo(TBasicAtomInfo* A);
+  void SetAtomInfo(TBasicAtomInfo& A);
 
   inline olxstr& Label()                   {  return FLabel; }
   // function validates and changes the atom type, use the syntax above just to set the label
@@ -122,6 +124,10 @@ public:
   DefPropP(int, EllpId)
   DefPropP(int, FragmentId)
   DefPropP(TExyzGroup*, ExyzGroup)
+  
+  CXConnInfo& GetConnInfo() const {  return *ConnInfo;  }
+  void SetConnInfo(CXConnInfo& ci);
+
 //  short   Frag;    // fragment index
   DefPropP(short, Degeneracy)
   DefPropP(short, Part)

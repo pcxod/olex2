@@ -124,7 +124,7 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
     sw.start("Calculation structure factors");
     //xapp.CalcSF(refs, F);
     //sw.start("Calculation structure factors A");
-    // fastsymm version is just about 10% faster...
+    //fastsymm version is just about 10% faster...
     CalcSF(xapp.XFile(), refs, F, !sg.IsCentrosymmetric() );
     sw.start("Scaling structure factors");
     if( mapType != mapTypeCalc )  {

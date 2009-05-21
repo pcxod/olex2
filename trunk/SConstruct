@@ -21,6 +21,8 @@ glib = Glob('./glib/*.cpp')
 gxlib = Glob('./gxlib/*.cpp')
 olex2 = Glob('./olex/*.cpp')
 unirun = Glob('./unirun/*.cpp')
+olex2c = Split("""./olex2c/olex2c.cpp""")
+
 np_repository = Split("""./repository/filesystem.cpp   ./repository/shellutil.cpp 
                          ./repository/httpex.cpp       ./repository/url.cpp 
                          ./repository/wxhttpfs.cpp     ./repository/wxzipfs.cpp 
@@ -100,7 +102,7 @@ else:
       env.Append(FRAMEWORKS=['OpenGL', 'AGL'])
     else:
       env.ParseConfig("wx-config --cxxflags --unicode --toolkit=gtk2 --libs gl,core,html,net,aui")
-      env.ParseConfig("python-config --includes")
+    env.ParseConfig("python-config --includes")
     env.ParseConfig("python-config --libs --ldflags")
   except:
     print 'Please make sure that wxWidgets and Python config scripts are available'
@@ -109,20 +111,25 @@ else:
     env.Append(CCFLAGS = ['-O3', '-exceptions']) 
   else:
     env.Append(CCFLAGS = ['-g', '-exceptions']) 
-  
+#sdl
 sdl_files = fileListToStringList('sdl', sdl) + fileListToStringList('sdl/smart', sdl_smart)
 sdl_files = processFileNameList(sdl_files, env, out_dir + 'sdl')
 env.StaticLibrary(out_dir + 'lib/sdl', sdl_files)
 
 env.Append(LIBPATH=[out_dir+'lib'])
 env.Append(LIBS = ['sdl'])
-np_env = env.Clone()
-olex2_files = fileListToStringList('alglib', alglib) + \
-              fileListToStringList('xlib', xlib) + \
-              fileListToStringList('xlib/macro', xlib_macro) + \
-              fileListToStringList('glib', glib) + \
+unirun_env = env.Clone()
+
+generic_files = fileListToStringList('alglib', alglib) + \
+                fileListToStringList('xlib', xlib) + \
+                fileListToStringList('xlib/macro', xlib_macro) + \
+                repository
+generic_files = processFileNameList(generic_files, env, out_dir+'generic')
+
+olex2c_env = env.Clone()
+
+olex2_files = fileListToStringList('glib', glib) + \
               fileListToStringList('gxlib', gxlib) + \
-              repository + \
               fileListToStringList('olex', olex2)
 olex2_files = processFileNameList(olex2_files, env, out_dir+'olex')  
 #link in the res file...
@@ -131,13 +138,21 @@ if sys.platform[:3] == 'win':
   env.Append(LINKFLAGS=['/MANIFEST', res_file])
   env.Append(RCFLAGS=['/l0x809'])
   env.RES(res_file, 'olex/app.rc')
-env.Program(out_dir+'exe/olex2', olex2_files)
+env.Program(out_dir+'exe/olex2', generic_files + olex2_files)
 
 unirun_files = np_repository + fileListToStringList('unirun', unirun)
-unirun_files = processFileNameList(unirun_files, np_env, out_dir+'unirun')
+unirun_files = processFileNameList(unirun_files, unirun_env, out_dir+'unirun')
 
-np_env.Append(CCFLAGS = ['-D_NO_PYTHON'])
-np_env.Program(out_dir+'exe/unirun', unirun_files)
+unirun_env.Append(CCFLAGS = ['-D_NO_PYTHON'])
+unirun_env.Program(out_dir+'exe/unirun', unirun_files)
+
+# make olex2c?
+
+if sys.platform[:3] != 'win':
+  olex2c_env.Append(LIBS=['readline'])
+
+olex2c_files = processFileNameList(olex2c, olex2c_env, out_dir+'olex2c')
+olex2c_env.Program(out_dir+'exe/olex2c', generic_files + olex2c_files)
 
 try:
   import _imaging

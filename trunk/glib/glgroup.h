@@ -15,7 +15,7 @@ class TGlGroup: public AGDrawObject {
 protected:
   void InitMaterial() const;
 public:
-  TGlGroup(const olxstr& collectionName, TGlRenderer *Parent);
+  TGlGroup(TGlRenderer& R, const olxstr& collectionName);
   virtual void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
   virtual ~TGlGroup();
   void Clear();
@@ -23,27 +23,27 @@ public:
   void Draw() const {  Draw(false, false); }
   // Adds an object to the list if it is not there and removes it otherwise
   // returns true if the object is added and false if it is removed
-  bool Add(AGDrawObject *G);
-  void Remove(AGDrawObject *G);
+  bool Add(AGDrawObject& G);
+  void Remove(AGDrawObject& G);
   void RemoveDeleted();
 
-  inline bool Contains(AGDrawObject *G) const {  return  (FObjects.IndexOf(G) == -1) ? false : true;  }
-  inline int Count()                 const {  return FObjects.Count(); }
-  inline AGDrawObject *Object(int i) const {  return FObjects[i]; }
+  inline bool Contains(AGDrawObject& G) const {  return  (FObjects.IndexOf(G) == -1) ? false : true;  }
+  inline int Count()                    const {  return FObjects.Count(); }
+  inline AGDrawObject& GetObject(int i) const {  return *FObjects[i]; }
+  inline AGDrawObject& operator [] (int i) const {  return *FObjects[i]; }
 
   bool OnMouseDown(const IEObject *Sender, const class TMouseData *Data);
   bool OnMouseUp(const IEObject *Sender, const TMouseData *Data);
   bool OnMouseMove(const IEObject *Sender, const TMouseData *Data);
 
-  inline bool Orient(TGlPrimitive *P){  return false; };
-  inline bool GetDimensions(vec3d &Max, vec3d &Min){  return false;  }
+  inline bool Orient(TGlPrimitive& P){  return false; };
+  inline bool GetDimensions(vec3d& Max, vec3d& Min){  return false;  }
 
-  inline bool Visible()  const {  return AGDrawObject::Visible();  }
-  inline bool Selected() const {  return AGDrawObject::Selected();  }
-  void Visible(bool On);
-  void Selected(bool On);
+  void SetVisible(bool On);
+  void SetSelected(bool On);
 
-  inline bool IsDefaultColor() const {  return DefaultColor;  }
+  bool IsDefaultColor() const {  return DefaultColor;  }
+
   inline const TGlMaterial* GlM()    const {  return FGlM; }
   void GlM(const TGlMaterial &G);
 };

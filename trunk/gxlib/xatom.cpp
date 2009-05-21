@@ -49,23 +49,26 @@ TGraphicsStyle* TXAtom::FAtomParams=NULL;
 TXAtomStylesClear *TXAtom::FXAtomStylesClear=NULL;
 short TXAtom::PolyhedronIndex = -1;
 short TXAtom::SphereIndex = -1;
+short TXAtom::SmallSphereIndex = -1;
+short TXAtom::RimsIndex = -1;
+short TXAtom::DisksIndex = -1;
+short TXAtom::CrossIndex = -1;
 olxstr TXAtom::PolyTypeName("PolyType");
 //..............................................................................
 
-TXAtom::TXAtom(const olxstr& collectionName, TSAtom& A, TGlRenderer *Render) :
+TXAtom::TXAtom(TGlRenderer& Render, const olxstr& collectionName, TSAtom& A) :
   //AGDrawObject(collectionName)
-  TGlMouseListener(collectionName, Render)
+  TGlMouseListener(Render, collectionName)
 {
-  FParent = Render;
   XAppId = -1;
   FAtom = &A;
   Polyhedron = NULL;
-  Move2D(false);
-  Moveable(false);
-  Zoomable(false);
+  SetMove2D(false);
+  SetMoveable(false);
+  SetZoomable(false);
 
   if( A.GetEllipsoid() != NULL )
-    FDrawStyle = A.GetEllipsoid()->IsNPD() ? adsEllipsoidNPD : adsEllipsoid;
+    FDrawStyle = adsEllipsoid;
   else
     FDrawStyle = adsSphere;
   FRadius = darIsot;
@@ -92,19 +95,18 @@ TXAtom::~TXAtom()  {
 //..............................................................................
 void TXAtom::Quality(const short V)  {
   olxstr Legend("Atoms");
-  TGraphicsStyle *GS;
-  GS = FParent->Styles()->NewStyle(Legend, true);
+  TGraphicsStyle& GS = Parent.GetStyles().NewStyle(Legend, true);
 
-  olxstr &SphereQ   = GS->GetParam("SphereQ", EmptyString, true);
-  olxstr &RimQ = GS->GetParam("RimQ", EmptyString, true);  // quality
-  olxstr &DiskQ = GS->GetParam("DiskQ", EmptyString, true);  // quality
+  olxstr &SphereQ   = GS.GetParam("SphereQ", EmptyString, true);
+  olxstr &RimQ = GS.GetParam("RimQ", EmptyString, true);  // quality
+  olxstr &DiskQ = GS.GetParam("DiskQ", EmptyString, true);  // quality
 
-  olxstr &RimR = GS->GetParam("RimR", EmptyString, true);  // radius
-  olxstr &RimW = GS->GetParam("RimW", EmptyString, true);  // width
+  olxstr &RimR = GS.GetParam("RimR", EmptyString, true);  // radius
+  olxstr &RimW = GS.GetParam("RimW", EmptyString, true);  // width
 
-  //olxstr &DiskIR = GS->ParameterValue("DiskIR", EmptyString);  // inner radius for disks
-  olxstr &DiskOR = GS->GetParam("DiskOR", EmptyString, true);  // outer radius
-  olxstr &DiskS = GS->GetParam("DiskS", EmptyString, true);  // separation
+  //olxstr &DiskIR = GS.ParameterValue("DiskIR", EmptyString);  // inner radius for disks
+  olxstr &DiskOR = GS.GetParam("DiskOR", EmptyString, true);  // outer radius
+  olxstr &DiskS = GS.GetParam("DiskS", EmptyString, true);  // separation
 
   RimR = 1.02;
   DiskQ  = RimQ;
@@ -166,7 +168,7 @@ void TXAtom::CalcRad(short DefRadius)  {
   /*  remember the value in the style */
   //DefRad(DefRadius);
   FRadius = DefRadius;
-  Primitives()->Style()->SetParam("DR", DefRadius);
+  GetPrimitives().GetStyle().SetParam("DR", DefRadius);
 
   if( DefRadius == darPers )  
     FParams[0] = FAtom->GetAtomInfo().GetRad();   
@@ -192,13 +194,13 @@ void TXAtom::CalcRad(short DefRadius)  {
   }
 }
 //..............................................................................
-void TXAtom::ValidateRadius(TGraphicsStyle *GS)  {
-  Params()[1] = GS->GetParam("Z", DefZoom()).ToDouble();
-  short dr = GS->GetParam("DR", DefRad()).ToInt();
+void TXAtom::ValidateRadius(TGraphicsStyle& GS)  {
+  Params()[1] = GS.GetParam("Z", DefZoom()).ToDouble();
+  short dr = GS.GetParam("DR", DefRad()).ToInt();
   CalcRad(dr);
 }
-void TXAtom::ValidateDS(TGraphicsStyle *GS)  {
-  DrawStyle( GS->GetParam("DS", DefDS()).ToInt() );
+void TXAtom::ValidateDS(TGraphicsStyle& GS)  {
+  DrawStyle( GS.GetParam("DS", DefDS()).ToInt() );
 }
 //..............................................................................
 void TXAtom::Create(const olxstr& cName, const ACreationParams* cpar)  {
@@ -212,7 +214,6 @@ void TXAtom::Create(const olxstr& cName, const ACreationParams* cpar)  {
     Legend = GetLegend( *FAtom );
 
   TGlMaterial RGlM;
-  TGraphicsStyle *GS = NULL;
   TGPCollection *GPC = NULL;
   if( FStaticObjects.IsEmpty() )  
     CreateStaticPrimitives();
@@ -220,54 +221,47 @@ void TXAtom::Create(const olxstr& cName, const ACreationParams* cpar)  {
   // find collection
   if( FAtom->GetAtomInfo() == iQPeakIndex )  {
     Legend = GetLabelLegend(FAtom);
-    GPC = FParent->FindCollection(Legend);
+    GPC = Parent.FindCollection(Legend);
     if( GPC == NULL || GPC->ObjectCount() == 0 )  {  // if the collection is empty, need to fill it...
       if( GPC == NULL )
-        GPC = FParent->NewCollection(Legend);
-      GS = GPC->Style();
-      GS->SetSaveable(false);
+        GPC = &Parent.NewCollection(Legend);
+      GPC->GetStyle().SetSaveable(false);
     }
     else  {
-      GPC->AddObject(this);
-      ValidateRadius(GPC->Style());
+      GPC->AddObject(*this);
+      ValidateRadius(GPC->GetStyle());
       return;
     }
   }
   else  {
-    GPC = FParent->CollectionX(Legend, NewL);
+    GPC = Parent.FindCollectionX(Legend, NewL);
     if( GPC == NULL )
-      GPC = FParent->NewCollection(NewL);
+      GPC = &Parent.NewCollection(NewL);
     else  {
       if( GPC->PrimitiveCount() != 0 )  {
-        GPC->AddObject(this);
-        if( (GPC->Style()->GetParam("PMask", "0").ToInt() & (1 << PolyhedronIndex)) != 0 )
+        GPC->AddObject(*this);
+        if( (GPC->GetStyle().GetParam(GetPrimitiveMaskName(), "0").ToInt() & (1 << PolyhedronIndex)) != 0 )
           CreatePolyhedron(true);
         if( cpar == NULL )  {
-          ValidateRadius( GPC->Style() );
-          ValidateDS(GPC->Style());
+          ValidateRadius( GPC->GetStyle() );
+          ValidateDS(GPC->GetStyle());
         }
-        else
-          Params() = cpar->params;
+        else if( cpar->params != 0 )
+          Params() = *cpar->params;
         return;
       }
     }
-    GS = GPC->Style();
   }
 
-  GS->SetSaveable( GPC->Name().CharCount('.') == 0 );
+  TGraphicsStyle& GS = GPC->GetStyle();
+  GS.SetSaveable( GPC->GetName().CharCount('.') == 0 );
 
-  olxstr& SMask = GS->GetParam("PMask", EmptyString);
-  if( SMask.IsEmpty() )  {
-    if( FAtom->GetEllipsoid() != NULL && DefRad() == darIsot )  {
-      if( FAtom->GetEllipsoid()->IsNPD() )  {  SMask = DefNpdMask();  }
-      else                                  {  SMask = DefElpMask();  }
-    }
-    else
-      SMask = DefSphMask();
-  }
+  olxstr& SMask = GS.GetParam(GetPrimitiveMaskName(), EmptyString);
+  if( SMask.IsEmpty() )
+    SMask = DefMask();
   int PMask = SMask.ToInt();
 
-  GPC->AddObject(this);
+  GPC->AddObject(*this);
   if( PMask == 0 )  
     return; // nothing to create then...
   // update primitives list
@@ -275,45 +269,64 @@ void TXAtom::Create(const olxstr& cName, const ACreationParams* cpar)  {
     ValidateDS(GS);
     ValidateRadius(GS);
   }
-  else {
-    Params() = cpar->params;
+  else if( cpar->params != NULL )  {
+    Params() = *cpar->params;
   }
 
   for( int i=0; i < FStaticObjects.Count(); i++ )  {
     const int off = 1 << i;
     if( PMask & off )  {
       TGlPrimitive* SGlP = FStaticObjects.GetObject(i);
-      TGlPrimitive* GlP = GPC->NewPrimitive(FStaticObjects.GetString(i), sgloCommandList);
+      TGlPrimitive& GlP = GPC->NewPrimitive(FStaticObjects.GetString(i), sgloCommandList);
       if( i == SphereIndex )
-        GlP->SetOwnerId( xatom_SphereId );
+        GlP.SetOwnerId( xatom_SphereId );
+      else if( i == SmallSphereIndex )
+        GlP.SetOwnerId( xatom_SmallSphereId );
+      else if( i == RimsIndex )
+        GlP.SetOwnerId( xatom_RimsId );
+      else if( i == DisksIndex )
+        GlP.SetOwnerId( xatom_DisksId );
+      else if( i == CrossIndex )
+        GlP.SetOwnerId( xatom_CrossId );
       else if( i == PolyhedronIndex )  {
-        GlP->SetOwnerId( xatom_PolyId );
+        GlP.SetOwnerId( xatom_PolyId );
         CreatePolyhedron(true);
       }
       else
-        GlP->SetOwnerId( 0 );
+        GlP.SetOwnerId( 0 );
       /* copy the default drawing style tag*/
-      GlP->Params.Resize(GlP->Params.Count()+1);
-      GlP->Params.Last() = SGlP->Params.Last();
+      GlP.Params.Resize(GlP.Params.Count()+1);
+      GlP.Params.Last() = SGlP->Params.Last();
 
-      GlP->StartList();
-      GlP->CallList(SGlP);
-      GlP->EndList();
+      GlP.StartList();
+      GlP.CallList(SGlP);
+      GlP.EndList();
 
       if( FAtom->GetAtomInfo() == iQPeakIndex )  {
         GetDefSphereMaterial(*FAtom, RGlM);
-        GlP->SetProperties(&RGlM);
+        GlP.SetProperties(RGlM);
       }
       else  {
-        const TGlMaterial* GlM = GS->Material(FStaticObjects.GetString(i));
-        if( GlM->Mark() )  {
-          if( SGlP->Params.Last() == ddsDefSphere ) GetDefSphereMaterial(*FAtom, RGlM);
-          if( SGlP->Params.Last() == ddsDefRim )    GetDefRimMaterial(*FAtom, RGlM);
-          GS->PrimitiveMaterial(FStaticObjects.GetString(i), RGlM);
-          GlP->SetProperties(&RGlM);
+        int mi = GS.IndexOfMaterial(FStaticObjects.GetString(i));
+        if( mi != -1 )  {
+          GlP.SetProperties( GS.GetPrimitiveStyle(mi).GetProperties() );
+          continue;
         }
-        else
-          GlP->SetProperties(GlM);
+        if( SGlP->Params.Last() == ddsDefSphere )   {
+          int lmi = GS.IndexOfMaterial("Sphere");
+          if( lmi != -1 )
+            RGlM = GS.GetPrimitiveStyle(lmi).GetProperties();
+          else
+            GetDefSphereMaterial(*FAtom, RGlM);
+        }
+        else if( SGlP->Params.Last() == ddsDefRim )  {
+          int lmi = GS.IndexOfMaterial("Rims");
+          if( lmi != -1 )
+            RGlM = GS.GetPrimitiveStyle(lmi).GetProperties();
+          else
+            GetDefRimMaterial(*FAtom, RGlM);
+        }
+        GlP.SetProperties( GS.GetMaterial(FStaticObjects.GetString(i), RGlM) );
       }
     }
   }
@@ -322,7 +335,7 @@ void TXAtom::Create(const olxstr& cName, const ACreationParams* cpar)  {
 //..............................................................................
 ACreationParams* TXAtom::GetCreationParams() const {
   AtomCreationParams& ap = *(new AtomCreationParams);
-  ap.params = FParams;
+  //ap.params = FParams;
   return &ap;
 }
 //..............................................................................
@@ -333,12 +346,7 @@ olxstr TXAtom::GetLabelLegend(TSAtom *A)  {
 }
 //..............................................................................
 olxstr TXAtom::GetLegend(const TSAtom& A, const short Level)  {
-  olxstr L;
-  L = A.GetAtomInfo().GetSymbol();  L << '_';
-  if( A.GetEllipsoid() != NULL )
-    L << (A.GetEllipsoid()->IsNPD() ? 'N' : 'E'); // not positevely defined
-  else
-    L << 'S';
+  olxstr L = A.GetAtomInfo().GetSymbol();  
   if( Level == 0 )  return L;
   L << '.' << A.CAtom().GetLabel();
   if( Level == 1 )  return L;
@@ -351,8 +359,12 @@ short TXAtom::LegendLevel(const olxstr& legend)  {
   return legend.CharCount('.');
 }
 //..............................................................................
-bool TXAtom::Orient(TGlPrimitive *GlP) {
-  if( GlP->GetOwnerId() == xatom_PolyId )  {
+bool TXAtom::Orient(TGlPrimitive& GlP) {
+  // override for standalone atoms
+  if( FDrawStyle == adsStandalone && !FAtom->IsStandalone() )
+    return true;
+ 
+  if( GlP.GetOwnerId() == xatom_PolyId )  {
     if( Polyhedron == NULL )  return true;
     glBegin(GL_TRIANGLES);
     const TXAtom::Poly& pl = *Polyhedron;
@@ -366,16 +378,23 @@ bool TXAtom::Orient(TGlPrimitive *GlP) {
     glEnd();
     return true;
   }
+  // override for iso atoms
+  if( FAtom->GetEllipsoid() == NULL && 
+    (GlP.GetOwnerId() == xatom_DisksId || GlP.GetOwnerId() == xatom_RimsId) )  
+  {
+    return true;
+  }
+
   vec3d c( Basis.GetCenter() );
   c += FAtom->crd();
-  if( Roteable() )  {
+  if( IsRoteable() )  {
     vec3d cr;
     int ac = 0;
-    TGlGroup* gr = FParent->Selection();
-    for( int i=0; i < gr->Count(); i++ )  {
-      if( EsdlInstanceOf(*gr->Object(i), TXAtom) )  {
-        cr += ((TXAtom*)gr->Object(i))->FAtom->crd();
-        cr += ((TXAtom*)gr->Object(i))->Basis.GetCenter();
+    TGlGroup& gr = Parent.GetSelection();
+    for( int i=0; i < gr.Count(); i++ )  {
+      if( EsdlInstanceOf(gr[i], TXAtom) )  {
+        cr += ((TXAtom&)gr[i]).FAtom->crd();
+        cr += ((TXAtom&)gr[i]).Basis.GetCenter();
         ac ++;
       }
     }
@@ -390,7 +409,7 @@ bool TXAtom::Orient(TGlPrimitive *GlP) {
   //if( eg != NULL )  {
   //  //if( &(*eg)[0] != &FAtom->CAtom() )  return true;
   //  if( eg->Count() == 2 )  {
-  //    const mat3d& m = FParent->GetBasis().GetMatrix();
+  //    const mat3d& m = Parent.GetBasis().GetMatrix();
   //    vec3d v(m[0][0], m[1][0], m[2][0]);
   //    if( &(*eg)[0] == &FAtom->CAtom() )  
   //      c -= v*0.25;
@@ -399,27 +418,34 @@ bool TXAtom::Orient(TGlPrimitive *GlP) {
   //  }
   //}
   
-  FParent->GlTranslate(c);
+  Parent.GlTranslate(c);
 
   double scale = FParams[1];
   if( (FRadius & (darIsot|darIsotH)) != 0 )
     scale *= TelpProb();
-
+  
   if( FDrawStyle == adsEllipsoid || FDrawStyle == adsOrtep )  {
     if( FAtom->GetEllipsoid() != NULL )  {
+      // override for NPD atoms
       if( FAtom->GetEllipsoid()->IsNPD() )  {
-        FParent->GlScale((float)(caDefIso*2*scale));
+        Parent.GlScale((float)(caDefIso*2*scale));
+        if( GlP.GetOwnerId() == xatom_SphereId )  {
+          FStaticObjects.GetObject(SmallSphereIndex)->Draw();
+          return true;
+        }
+        if( GlP.GetOwnerId() == xatom_SmallSphereId )
+          return true;
       }
       else  {
-        FParent->GlOrient( FAtom->GetEllipsoid()->GetMatrix() );
-        FParent->GlScale(
+        Parent.GlOrient( FAtom->GetEllipsoid()->GetMatrix() );
+        Parent.GlScale(
           (float)(FAtom->GetEllipsoid()->GetSX()*scale),
           (float)(FAtom->GetEllipsoid()->GetSY()*scale),
           (float)(FAtom->GetEllipsoid()->GetSZ()*scale)
           );
-        if( FDrawStyle == adsOrtep && GlP->GetOwnerId() == xatom_SphereId )  {
+        if( FDrawStyle == adsOrtep && GlP.GetOwnerId() == xatom_SphereId )  {
           short mask = 0;
-          const mat3d mat = FAtom->GetEllipsoid()->GetMatrix()*FParent->GetBasis().GetMatrix();
+          const mat3d mat = FAtom->GetEllipsoid()->GetMatrix()*Parent.GetBasis().GetMatrix();
           for( int i=0; i < 3; i++ )  {
             if( mat[i][2] < 0 )
               mask |= (1<<i);
@@ -429,10 +455,18 @@ bool TXAtom::Orient(TGlPrimitive *GlP) {
         }
       }
     }
+    else 
+      Parent.GlScale( (float)(FParams[0]*scale) );
     return false;
   }
+  // override for standalone atoms
+  if( FDrawStyle == adsStandalone )  {
+    Parent.GlScale( (float)(FParams[0]*scale) );
+    return false;
+  }
+  
   if( FDrawStyle == adsSphere )
-    FParent->GlScale( (float)(FParams[0]*scale) );
+    Parent.GlScale( (float)(FParams[0]*scale) );
   return false;
 }
 //..............................................................................
@@ -444,9 +478,9 @@ bool TXAtom::DrawStencil()  {
   if( FDrawStyle == adsEllipsoid || FDrawStyle == adsOrtep )  {
     if( FAtom->GetEllipsoid() != NULL )  {
       glPushMatrix();  
-      FParent->GlTranslate(Basis.GetCenter()+ FAtom->crd());
-      FParent->GlOrient( FAtom->GetEllipsoid()->GetMatrix() );
-      FParent->GlScale(
+      Parent.GlTranslate(Basis.GetCenter()+ FAtom->crd());
+      Parent.GlOrient( FAtom->GetEllipsoid()->GetMatrix() );
+      Parent.GlScale(
         (float)(FAtom->GetEllipsoid()->GetSX()*scale),
         (float)(FAtom->GetEllipsoid()->GetSY()*scale),
         (float)(FAtom->GetEllipsoid()->GetSZ()*scale)
@@ -509,7 +543,7 @@ void TXAtom::GetDefSphereMaterial(const TSAtom& Atom, TGlMaterial& M)  {
   M.AmbientB = M.AmbientF;
   M.DiffuseB = M.DiffuseF;
   M.SpecularB = M.SpecularF;
-  M.Mark(false);
+  M.SetMark(false);
 }
 //..............................................................................
 void TXAtom::GetDefRimMaterial(const TSAtom& Atom, TGlMaterial &M)  {
@@ -525,41 +559,29 @@ void TXAtom::GetDefRimMaterial(const TSAtom& Atom, TGlMaterial &M)  {
   M.SpecularF = 0xffffffff;
   M.EmissionF =  0x14141414;
   M.ShininessF = 12;
-  M.Mark(false);
+  M.SetMark(false);
 }
 //..............................................................................
-TGraphicsStyle* TXAtom::Style()  {
-  return NULL;
+TGraphicsStyle& TXAtom::Style()  {
+  return GetPrimitives().GetStyle();
 }
 //..............................................................................
-void TXAtom::ApplyStyle(TGraphicsStyle *Style)  {
-  for( int i=0; i < Style->PrimitiveStyleCount(); i++ )  {
-    TGlPrimitive* GP = Primitives()->FindPrimitiveByName( Style->PrimitiveStyle(i)->PrimitiveName() );
+void TXAtom::ApplyStyle(TGraphicsStyle& Style)  {
+  for( int i=0; i < Style.PrimitiveStyleCount(); i++ )  {
+    TGlPrimitive* GP = GetPrimitives().FindPrimitiveByName( 
+      Style.GetPrimitiveStyle(i).GetName() );
     if( GP != NULL )
-      GP->SetProperties(Style->PrimitiveStyle(i)->GetProperties());
+      GP->SetProperties(Style.GetPrimitiveStyle(i).GetProperties());
   } 
 }
 //..............................................................................
 void TXAtom::DrawStyle(short V)  {
-  olxstr &DS = Primitives()->Style()->GetParam("DS", EmptyString);
-  if( V == adsEllipsoid || V == adsOrtep )  {
-    if( FAtom->GetEllipsoid() != NULL )  {
-      if( FAtom->GetEllipsoid()->IsNPD() )  {
-        FDrawStyle = adsEllipsoidNPD;
-        DS = adsEllipsoid;
-      }
-      else  {
-        FDrawStyle = V;
-        DS = V;
-      }
-    }
-    return;
-  }
+  olxstr &DS = GetPrimitives().GetStyle().GetParam("DS", EmptyString);
   DS = V;
   FDrawStyle = V;
 }
 //..............................................................................
-void TXAtom::UpdateStyle(TGraphicsStyle *Style) {
+void TXAtom::UpdateStyle(TGraphicsStyle& Style) {
 /*  TGraphicsStyle *GS=NULL;
   TGPCollection *GPC=NULL, *OGPC;
   TGDrawObject *GDO;
@@ -567,7 +589,7 @@ void TXAtom::UpdateStyle(TGraphicsStyle *Style) {
   int i;
   GS = Render()->Styles()->FindStyle(Style);
   if( !GS )  return;  // uniq then
-  GPC = Render()->Collection(GS->Label());
+  GPC = Render()->Collection(GS.Label());
 
   OGPC = Atom->Primitives();
   for( i=0; i < GPC->ObjectCount(); i++ ) // copy the group
@@ -593,22 +615,21 @@ void TXAtom::UpdatePrimitiveParams(TGlPrimitive* GlP)  {
     throw TInvalidArgumentException(__OlxSourceInfo, "undefined primitive");
 
   olxstr Legend("Atoms");
-  TGraphicsStyle *GS;
-  GS = FParent->Styles()->NewStyle(Legend, true);
+  TGraphicsStyle& GS= Parent.GetStyles().NewStyle(Legend, true);
   if( FStaticObjects[ind] == "Sphere" )
-    GS->SetParam("SphereQ", GlP->Params[1], true);
+    GS.SetParam("SphereQ", GlP->Params[1], true);
   else if( FStaticObjects[ind] == "Small sphere" )
-    GS->SetParam("SphereQ", GlP->Params[1], true);
+    GS.SetParam("SphereQ", GlP->Params[1], true);
   else if( FStaticObjects.GetString(ind) == "Rims" )  {
-    GS->SetParam("RimR", GlP->Params[0], true);
-    GS->SetParam("RimW", GlP->Params[1], true);
-    GS->SetParam("RimQ", GlP->Params[2], true);
+    GS.SetParam("RimR", GlP->Params[0], true);
+    GS.SetParam("RimW", GlP->Params[1], true);
+    GS.SetParam("RimQ", GlP->Params[2], true);
   }
   else if( FStaticObjects[ind] == "Disks" )  {
-    GS->SetParam("DiskIR", GlP->Params[0], true);
-    GS->SetParam("DiskOR", GlP->Params[1], true);
-    GS->SetParam("DiskQ", GlP->Params[2], true);
-    GS->SetParam("DiskS", GlP->Params[3], true);
+    GS.SetParam("DiskIR", GlP->Params[0], true);
+    GS.SetParam("DiskOR", GlP->Params[1], true);
+    GS.SetParam("DiskQ", GlP->Params[2], true);
+    GS.SetParam("DiskS", GlP->Params[3], true);
   }
 }
 //..............................................................................
@@ -617,51 +638,47 @@ void TXAtom::CreateStaticPrimitives()  {
   TGlPrimitiveParams *PParams;
   TGlPrimitive *GlP, *GlPRC1, *GlPRD1, *GlPRD2;
   olxstr Legend("Atoms");
-  TGraphicsStyle *GS;
-  GS = FParent->Styles()->NewStyle(Legend, true);
-  double SphereQ   = GS->GetParam("SphereQ", "15", true).ToDouble();
-  double RimR = GS->GetParam("RimR", "1.02", true).ToDouble();  // radius
-  double RimW = GS->GetParam("RimW", "0.05", true).ToDouble();  // width
-  double RimQ = GS->GetParam("RimQ", SphereQ, true).ToDouble();  // quality
+  TGraphicsStyle& GS= Parent.GetStyles().NewStyle(Legend, true);
+  double SphereQ   = GS.GetParam("SphereQ", "15", true).ToDouble();
+  double RimR = GS.GetParam("RimR", "1.02", true).ToDouble();  // radius
+  double RimW = GS.GetParam("RimW", "0.05", true).ToDouble();  // width
+  double RimQ = GS.GetParam("RimQ", SphereQ, true).ToDouble();  // quality
 
-  double DiskIR = GS->GetParam("DiskIR", "0", true).ToDouble();  // inner radius for disks
-  double DiskOR = GS->GetParam("DiskOR", RimR, true).ToDouble();  // outer radius
-  double DiskQ = GS->GetParam("DiskQ", RimQ, true).ToDouble();  // quality
-  double DiskS = GS->GetParam("DiskS", RimW, true).ToDouble();  // separation
+  double DiskIR = GS.GetParam("DiskIR", "0", true).ToDouble();  // inner radius for disks
+  double DiskOR = GS.GetParam("DiskOR", RimR, true).ToDouble();  // outer radius
+  double DiskQ = GS.GetParam("DiskQ", RimQ, true).ToDouble();  // quality
+  double DiskS = GS.GetParam("DiskS", RimW, true).ToDouble();  // separation
 
 //..............................
   // create sphere
-  GlP = FStaticObjects.FindObject("Sphere");
-  if( GlP == NULL )
-    FStaticObjects.Add("Sphere", GlP = FParent->NewPrimitive(sgloSphere));
+  if( (GlP = FStaticObjects.FindObject("Sphere")) == NULL )
+    FStaticObjects.Add("Sphere", GlP = &Parent.NewPrimitive(sgloSphere));
   GlP->Params[0] = 1;  GlP->Params[1] = SphereQ; GlP->Params[2] = SphereQ;
   GlP->Compile();
   GlP->Params.Resize(GlP->Params.Count()+1);
   GlP->Params.Last() = ddsDefSphere;
 //..............................
   // create a small sphere
-  GlP = FStaticObjects.FindObject("Small sphere");
-  if( GlP == NULL )
-    FStaticObjects.Add("Small sphere", GlP = FParent->NewPrimitive(sgloSphere));
+  if( (GlP = FStaticObjects.FindObject("Small sphere")) == NULL )
+    FStaticObjects.Add("Small sphere", GlP = &Parent.NewPrimitive(sgloSphere));
   GlP->Params[0] = 0.5;  GlP->Params[1] = SphereQ; GlP->Params[2] = SphereQ;
   GlP->Compile();
   GlP->Params.Resize(GlP->Params.Count()+1);
   GlP->Params.Last() = ddsDefSphere;
 //..............................
   // create simple rims
-  GlPRC1 = FParent->NewPrimitive(sgloCylinder);
+  GlPRC1 = &Parent.NewPrimitive(sgloCylinder);
   GlPRC1->Params[0] = RimR;  GlPRC1->Params[1] = RimR;  GlPRC1->Params[2] = RimW;
     GlPRC1->Params[3] = RimQ; GlPRC1->Params[4] = 1;
   GlPRC1->Compile();
 
-  GlP = FStaticObjects.FindObject("Rims");
-  if( GlP == NULL )
-    FStaticObjects.Add("Rims", GlP = FParent->NewPrimitive(sgloCommandList));
+  if( (GlP = FStaticObjects.FindObject("Rims")) == NULL )
+    FStaticObjects.Add("Rims", GlP = &Parent.NewPrimitive(sgloCommandList));
   GlP->StartList();
   GlP->CallList(GlPRC1);
-  FParent->GlRotate(90, 1, 0, 0);
+  Parent.GlRotate(90, 1, 0, 0);
   GlP->CallList(GlPRC1);
-  FParent->GlRotate(90, 0, 1, 0);
+  Parent.GlRotate(90, 0, 1, 0);
   GlP->CallList(GlPRC1);
   GlP->EndList();
   GlP->Params.Resize(3+1);  // radius, height, quality
@@ -676,31 +693,30 @@ void TXAtom::CreateStaticPrimitives()  {
   FPrimitiveParams.Add(PParams);
 //..............................
   // create disks
-  GlPRD1 = FParent->NewPrimitive(sgloDisk);
+  GlPRD1 = &Parent.NewPrimitive(sgloDisk);
   GlPRD1->Params[0] = DiskIR;  GlPRD1->Params[1] = DiskOR;
   GlPRD1->Params[2] = DiskQ;   GlPRD1->Params[3] = 1;
   GlPRD1->Compile();
 
-  GlPRD2 = FParent->NewPrimitive(sgloDisk);
+  GlPRD2 = &Parent.NewPrimitive(sgloDisk);
   GlPRD2->SetQuadricOrientation(GLU_INSIDE);
   GlPRD2->Params[0] = DiskIR;  GlPRD1->Params[1] = DiskOR;
   GlPRD2->Params[2] = DiskQ;   GlPRD1->Params[3] = 1;
   GlPRD2->Compile();
 
-  GlP = FStaticObjects.FindObject("Disks");
-  if( GlP == NULL )
-    FStaticObjects.Add("Disks", GlP = FParent->NewPrimitive(sgloCommandList));
+  if( (GlP = FStaticObjects.FindObject("Disks")) == NULL )
+    FStaticObjects.Add("Disks", GlP = &Parent.NewPrimitive(sgloCommandList));
   GlP->StartList();
   GlP->CallList(GlPRD2);
-  FParent->GlTranslate(0, 0, (float)DiskS);    GlP->CallList(GlPRD1);
-  FParent->GlTranslate(0, 0, (float)(-DiskS) );    
-  FParent->GlRotate(90, 1, 0, 0);
+  Parent.GlTranslate(0, 0, (float)DiskS);    GlP->CallList(GlPRD1);
+  Parent.GlTranslate(0, 0, (float)(-DiskS) );    
+  Parent.GlRotate(90, 1, 0, 0);
   GlP->CallList(GlPRD2);
-  FParent->GlTranslate(0, 0, (float)DiskS);    GlP->CallList(GlPRD1);
-  FParent->GlTranslate(0, 0, (float)(-DiskS) );    
-  FParent->GlRotate(90, 0, 1, 0);
+  Parent.GlTranslate(0, 0, (float)DiskS);    GlP->CallList(GlPRD1);
+  Parent.GlTranslate(0, 0, (float)(-DiskS) );    
+  Parent.GlRotate(90, 0, 1, 0);
   GlP->CallList(GlPRD2);
-  FParent->GlTranslate(0, 0, (float)DiskS);    GlP->CallList(GlPRD1);
+  Parent.GlTranslate(0, 0, (float)DiskS);    GlP->CallList(GlPRD1);
   GlP->EndList();
   GlP->Params.Resize(4+1);  // inner radius, outer radius, Quality, offset
   GlP->Params[0] = DiskIR;
@@ -716,9 +732,8 @@ void TXAtom::CreateStaticPrimitives()  {
   FPrimitiveParams.Add(PParams);
 //..............................
   // create cross
-  GlP = FStaticObjects.FindObject("Cross");
-  if( GlP == NULL )
-    FStaticObjects.Add("Cross", GlP = FParent->NewPrimitive(sgloLines));
+  if( (GlP = FStaticObjects.FindObject("Cross")) == NULL )
+    FStaticObjects.Add("Cross", GlP = &Parent.NewPrimitive(sgloLines));
   GlP->Data.Resize(3, 6);
   GlP->Data[0][0] = -1; 
   GlP->Data[0][1] =  1; 
@@ -731,14 +746,17 @@ void TXAtom::CreateStaticPrimitives()  {
   GlP->Params.Last() = ddsDefSphere;
 //..............................
   // polyhedron - dummy
-  GlP = FStaticObjects.FindObject("Polyhedron");
-  if( GlP == NULL )
-    FStaticObjects.Add("Polyhedron", GlP = FParent->NewPrimitive(sgloMacro));
+  if( (FStaticObjects.FindObject("Polyhedron")) == NULL )
+    FStaticObjects.Add("Polyhedron", GlP = &Parent.NewPrimitive(sgloMacro));
   GlP->Params.Resize(GlP->Params.Count()+1);
   GlP->Params.Last() = ddsDefSphere;
 // init indexes after all are added
   PolyhedronIndex = FStaticObjects.IndexOf("Polyhedron");
   SphereIndex = FStaticObjects.IndexOf("Sphere");
+  SmallSphereIndex = FStaticObjects.IndexOf("Small sphere");
+  RimsIndex = FStaticObjects.IndexOf("Rims");
+  DisksIndex = FStaticObjects.IndexOf("Disks");
+  CrossIndex = FStaticObjects.IndexOf("Cross");
 //..............................
   GlSphereEx gls;
   TTypeList<vec3f> vecs;
@@ -778,16 +796,16 @@ void TXAtom::CreateStaticPrimitives()  {
 }
 //..............................................................................
 void TXAtom::UpdatePrimitives(int32_t Mask, const ACreationParams* cpar)  {
-  olxstr& mstr = Primitives()->Style()->GetParam("PMask", "0");
+  olxstr& mstr = GetPrimitives().GetStyle().GetParam(GetPrimitiveMaskName(), "0");
   if( mstr.ToInt() == Mask )  return;
   mstr = Mask;
-  Primitives()->ClearPrimitives();
-  Primitives()->RemoveObject(this);
+  GetPrimitives().ClearPrimitives();
+  GetPrimitives().RemoveObject(*this);
   Create(EmptyString, cpar);
   bool create_polyhedron = (Mask & (1 << PolyhedronIndex)) != 0;
-  for( int i=0; i < Primitives()->ObjectCount(); i++ ) {
-    if( EsdlInstanceOf(*Primitives()->Object(i), TXAtom) )
-      ((TXAtom*)Primitives()->Object(i))->CreatePolyhedron(create_polyhedron);
+  for( int i=0; i < GetPrimitives().ObjectCount(); i++ ) {
+    if( EsdlInstanceOf(GetPrimitives().GetObject(i), TXAtom) )
+      ((TXAtom&)GetPrimitives().GetObject(i)).CreatePolyhedron(create_polyhedron);
   }
 }
 //..............................................................................
@@ -795,17 +813,17 @@ void TXAtom::UpdatePrimitives(int32_t Mask, const ACreationParams* cpar)  {
 //..............................................................................
 void TXAtom::ValidateAtomParams() {
   if( FAtomParams == NULL )  {
-    FAtomParams = TGlRenderer::GetStyles()->NewStyle("AtomParams", true);
+    FAtomParams = &TGlRenderer::_GetStyles().NewStyle("AtomParams", true);
     FAtomParams->SetPersistent(true);
   }
 }
 //..............................................................................
 void TXAtom::Zoom(float V)  {
-  Primitives()->Style()->SetParam("Z", V);
+  GetPrimitives().GetStyle().SetParam("Z", V);
   Params()[1] = V;
   // update radius for all members of the collection
-  for( int i=0; i < Primitives()->ObjectCount(); i++ )
-    Primitives()->Object(i)->Params()[1] = V;
+  for( int i=0; i < GetPrimitives().ObjectCount(); i++ )
+    GetPrimitives().GetObject(i).Params()[1] = V;
 }
 //..............................................................................
 void TXAtom::OnPrimitivesCleared()  {
@@ -825,19 +843,9 @@ void TXAtom::DefDS(short V)  {
   FDefDS = V;
 }
 //..............................................................................
-void TXAtom::DefSphMask(int V)  {
+void TXAtom::DefMask(int V)  {
   ValidateAtomParams();
-  FAtomParams->SetParam("DefSphM", V, true);
-}
-//..............................................................................
-void TXAtom::DefElpMask(int V)  {
-  ValidateAtomParams();
-  FAtomParams->SetParam("DefElpM", V, true);
-}
-//..............................................................................
-void TXAtom::DefNpdMask(int V)  {
-  ValidateAtomParams();
-  FAtomParams->SetParam("DefNpdM", V, true);
+  FAtomParams->SetParam("DefMask", V, true);
 }
 //..............................................................................
 void TXAtom::DefZoom(float V)  {
@@ -867,19 +875,9 @@ short TXAtom::DefDS()  {
   return FDefDS;
 }
 //..............................................................................
-int TXAtom::DefSphMask()  {
+int TXAtom::DefMask()  {
   ValidateAtomParams();
-  return FAtomParams->GetParam("DefSphM", "1", true).ToInt();
-}
-//..............................................................................
-int TXAtom::DefElpMask()  {
-  ValidateAtomParams();
-  return FAtomParams->GetParam("DefElpM", "5", true).ToInt();
-}
-//..............................................................................
-int TXAtom::DefNpdMask()  {
-  ValidateAtomParams();
-  return FAtomParams->GetParam("DefNpdM", "6", true).ToInt();
+  return FAtomParams->GetParam("DefMask", "5", true).ToInt();
 }
 //..............................................................................
 float TXAtom::TelpProb()  {
@@ -910,12 +908,12 @@ void TXAtom::QPeakScale(float V)  {
 }
 //..............................................................................
 bool TXAtom::OnMouseDown(const IEObject *Sender, const TMouseData *Data)  {
-  if( !Moveable() )  return true;
+  if( !IsMoveable() )  return true;
   return TGlMouseListener::OnMouseDown(Sender, Data);
 }
 //..............................................................................
 bool TXAtom::OnMouseUp(const IEObject *Sender, const TMouseData *Data)  {
-  if( !Moveable() )  return true;
+  if( !IsMoveable() )  return true;
   return TGlMouseListener::OnMouseUp(Sender, Data);
 }
 //..............................................................................
@@ -932,6 +930,12 @@ void TXAtom::CreateNormals(TXAtom::Poly& pl, const vec3f& cnt)  {
     const vec3f& v2 = pl.vecs[pl.faces[i][1]];
     const vec3f& v3 = pl.vecs[pl.faces[i][2]];
     vec3f n = (v2-v1).XProdVec(v3-v1);
+    if( n.QLength() < 1e-15 )  {  // oups...
+      pl.faces.Clear();
+      pl.vecs.Clear();
+      pl.norms.Clear();
+      return;
+    }
     const float d = n.DotProd((v1+v2+v3)/3)/n.Length();
     n.Normalise();
     if( (n.DotProd(cnt) - d) > 0 )  { // normal looks inside?
@@ -947,7 +951,7 @@ vec3f TXAtom::TriangulateType2(Poly& pl, const TSAtomPList& atoms)  {
   vec3f cnt;
   double wght = 0;
   for( int i=0; i < atoms.Count(); i++ )  {
-    pa.AddNew( atoms[i], 1 );
+    pa.AddNew( atoms[i], atoms[i]->CAtom().GetOccu());
     cnt += atoms[i]->crd()*atoms[i]->CAtom().GetOccu();
     wght += atoms[i]->CAtom().GetOccu();
   }
@@ -955,7 +959,13 @@ vec3f TXAtom::TriangulateType2(Poly& pl, const TSAtomPList& atoms)  {
   wght += FAtom->CAtom().GetOccu();
   cnt /= (float)wght;
   plane.Init(pa);
-  PlaneSort::Sorter sp(plane);
+  plane.GetCenter();
+  // this might fail if one of the atoms is on at the palce center 
+  PlaneSort::Sorter sp;
+  try  {  sp.DoSort(plane);  }
+  catch( ... )  {
+    return cnt;
+  }
   const int start = pl.vecs.Count();
   pl.vecs.SetCount(pl.vecs.Count()+atoms.Count()+2);
   pl.vecs[start] = FAtom->crd();
@@ -974,58 +984,65 @@ vec3f TXAtom::TriangulateType2(Poly& pl, const TSAtomPList& atoms)  {
 }
 //..............................................................................
 void TXAtom::CreatePoly(const TSAtomPList& bound, short type, const vec3d* _normal, const vec3d* _pc)  {
-  static const vec3d NullVec;
-  TXAtom::Poly& pl = *((Polyhedron == NULL) ? (Polyhedron=new TXAtom::Poly) : Polyhedron);
-  if( type == polyRegular )  {
-    pl.vecs.SetCount( bound.Count() );
-    for( int i=0; i < bound.Count(); i++ )  {
-      pl.vecs[i] = bound[i]->crd();
-      for( int j=i+1; j < bound.Count(); j++ )  {
-        for( int k=j+1; k < bound.Count(); k++ )  {
-          if( TetrahedronVolume(
-            NullVec, 
-            (bound[i]->crd()-FAtom->crd()).Normalise(), 
-            (bound[j]->crd()-FAtom->crd()).Normalise(), 
-            (bound[k]->crd()-FAtom->crd()).Normalise() ) > 0.03 )  // reagular octahedron vol would be ~0.47A^3
-            pl.faces.AddNew(i, j, k);
+  try  {
+    static const vec3d NullVec;
+    TXAtom::Poly& pl = *((Polyhedron == NULL) ? (Polyhedron=new TXAtom::Poly) : Polyhedron);
+    if( type == polyRegular )  {
+      pl.vecs.SetCount( bound.Count() );
+      for( int i=0; i < bound.Count(); i++ )  {
+        pl.vecs[i] = bound[i]->crd();
+        for( int j=i+1; j < bound.Count(); j++ )  {
+          for( int k=j+1; k < bound.Count(); k++ )  {
+            if( TetrahedronVolume(
+              NullVec, 
+              (bound[i]->crd()-FAtom->crd()).Normalise(), 
+              (bound[j]->crd()-FAtom->crd()).Normalise(), 
+              (bound[k]->crd()-FAtom->crd()).Normalise() ) > 0.03 )  // reagular octahedron vol would be ~0.47A^3
+              pl.faces.AddNew(i, j, k);
+          }
         }
       }
+      CreateNormals(pl, FAtom->crd());
     }
-    CreateNormals(pl, FAtom->crd());
-  }
-  else if( type == polyPyramid )  {
-    vec3f cnt = TriangulateType2(pl, bound);
-    CreateNormals(pl, cnt);
-  }
-  else if( type == polyBipyramid )  {
-    vec3d normal, pc;
-    if( _normal == NULL || _pc == NULL )  {
-      vec3d rms;
-      mat3d normals;
-      TSPlane::CalcPlanes(bound, normals, rms, pc);
-      normal = normals[2];
-    }
-    else  {
-      normal = *_normal;
-      pc = *_pc;
-    }
-    TSAtomPList sidea, sideb;
-    pl.vecs.Clear();
-    for( int i=0; i < bound.Count(); i++ )  {
-      const double ca = normal.CAngle(bound[i]->crd() - pc);
-      if( ca >= 0 )
-        sidea.Add(bound[i]);
-      else
-        sideb.Add(bound[i]);
-    }
-    if( sidea.Count() > 2 )  {
-      vec3f cnt = TriangulateType2(pl, sidea);
+    else if( type == polyPyramid )  {
+      vec3f cnt = TriangulateType2(pl, bound);
       CreateNormals(pl, cnt);
     }
-    if( sideb.Count() > 2 )  {
-      vec3f cnt = TriangulateType2(pl, sideb);
-      CreateNormals(pl, cnt);
+    else if( type == polyBipyramid )  {
+      vec3d normal, pc;
+      if( _normal == NULL || _pc == NULL )  {
+        vec3d rms;
+        mat3d normals;
+        TSPlane::CalcPlanes(bound, normals, rms, pc);
+        normal = normals[2];
+      }
+      else  {
+        normal = *_normal;
+        pc = *_pc;
+      }
+      TSAtomPList sidea, sideb;
+      pl.vecs.Clear();
+      for( int i=0; i < bound.Count(); i++ )  {
+        const double ca = normal.CAngle(bound[i]->crd() - pc);
+        if( ca >= 0 )
+          sidea.Add(bound[i]);
+        else
+          sideb.Add(bound[i]);
+      }
+      if( sidea.Count() > 2 )  {
+        vec3f cnt = TriangulateType2(pl, sidea);
+        CreateNormals(pl, cnt);
+      }
+      if( sideb.Count() > 2 )  {
+        vec3f cnt = TriangulateType2(pl, sideb);
+        CreateNormals(pl, cnt);
+      }
     }
+  }
+  catch(...)  {
+    if( Polyhedron != NULL )
+      delete Polyhedron;
+    Polyhedron = NULL;
   }
 }
 //..............................................................................
@@ -1033,10 +1050,8 @@ void TXAtom::CreatePolyhedron(bool v)  {
   if( Polyhedron != NULL )  {
     delete Polyhedron;
     Polyhedron = NULL;
-    if( !v )
-      return;
   }
-
+  if( !v )  return;
   if( FAtom->NodeCount() < 4 )  return;
   if( FAtom->IsDeleted() || FAtom->GetAtomInfo() == iQPeakIndex )
     return;
@@ -1052,7 +1067,7 @@ void TXAtom::CreatePolyhedron(bool v)  {
     bound.Add( &FAtom->Node(i) );
   }
   if( bound.Count() < 4 )  return;
-  int type = Primitives()->Style()->GetParam(PolyTypeName, "0", true).ToInt();
+  int type = GetPrimitives().GetStyle().GetParam(PolyTypeName, "0", true).ToInt();
   if( type != polyAuto && type != polyNone )  {
     CreatePoly(bound, type);
     return;
@@ -1094,9 +1109,9 @@ void TXAtom::CreatePolyhedron(bool v)  {
 }
 //..............................................................................
 void TXAtom::SetPolyhedronType(short type)  {
-  olxstr& str_type = Primitives()->Style()->GetParam(PolyTypeName, "0", true);
+  olxstr& str_type = GetPrimitives().GetStyle().GetParam(PolyTypeName, "0", true);
   int int_type = str_type.ToInt();
-  int int_mask = Primitives()->Style()->GetParam("PMask", "0").ToInt();
+  int int_mask = GetPrimitives().GetStyle().GetParam(GetPrimitiveMaskName(), "0").ToInt();
   if( type == polyNone )  {
     if( (int_mask & (1 << PolyhedronIndex)) != 0 )
       UpdatePrimitives(int_mask & ~(1 << PolyhedronIndex) );
@@ -1107,12 +1122,12 @@ void TXAtom::SetPolyhedronType(short type)  {
       if( (int_mask & (1 << PolyhedronIndex)) == 0 )
         UpdatePrimitives(int_mask | (1 << PolyhedronIndex) );
       else  {
-        Primitives()->ClearPrimitives();
-        Primitives()->RemoveObject(this);
+        GetPrimitives().ClearPrimitives();
+        GetPrimitives().RemoveObject(*this);
         Create();
-        for( int i=0; i < Primitives()->ObjectCount(); i++ ) {
-          if( EsdlInstanceOf(*Primitives()->Object(i), TXAtom) )
-            ((TXAtom*)Primitives()->Object(i))->CreatePolyhedron(true);
+        for( int i=0; i < GetPrimitives().ObjectCount(); i++ ) {
+          if( EsdlInstanceOf(GetPrimitives().GetObject(i), TXAtom) )
+            ((TXAtom&)GetPrimitives().GetObject(i)).CreatePolyhedron(true);
         }
       }
     }
@@ -1120,8 +1135,8 @@ void TXAtom::SetPolyhedronType(short type)  {
 }
 //..............................................................................
 int TXAtom::GetPolyhedronType()  {
-  int int_mask = Primitives()->Style()->GetParam("PMask", "0").ToInt();
+  int int_mask = GetPrimitives().GetStyle().GetParam(GetPrimitiveMaskName(), "0").ToInt();
   return (int_mask & (1 << PolyhedronIndex)) == 0 ? polyNone :
-    Primitives()->Style()->GetParam(PolyTypeName, "0", true).ToInt();
+    GetPrimitives().GetStyle().GetParam(PolyTypeName, "0", true).ToInt();
 }
 //..............................................................................

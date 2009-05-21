@@ -40,7 +40,7 @@ TActionQList XLibMacros::Actions;
 TActionQueue* XLibMacros::OnDelIns = &XLibMacros::Actions.NewQueue("OnDelIns");
 
 void XLibMacros::Export(TLibrary& lib)  {
-  xlib_InitMacro(Run, "", fpAny^fpNone, "Runs provided macros (combined by '>>')");
+  xlib_InitMacro(Run, EmptyString, fpAny^fpNone, "Runs provided macros (combined by '>>')");
   xlib_InitMacro(HklStat, "l-list the reflections&;m-merge reflection in current space group", fpAny|psFileLoaded, 
     "If no arguments provided, prints the statistics on the reflections as well as the ones used in the refinement.\
  If an expressions (condition) is given in the following form: x[ahbkcl], meaning that x=ah+bk+cl;\
@@ -87,8 +87,9 @@ void XLibMacros::Export(TLibrary& lib)  {
   xlib_InitMacro(AddSE, "", (fpAny^fpNone)|psFileLoaded,
 "Tries to add a new symmetry element to current space group to form a new one. [-1] is for center of symmetry" );
 //_________________________________________________________________________________________________________________________
-  xlib_InitMacro(Fuse, "f-removes symmetrical equivalents", fpNone|psFileLoaded,
-"Re-initialises the connectivity list" );
+  xlib_InitMacro(Fuse, "f-removes symmetrical equivalents", fpNone|fpOne|psFileLoaded,
+"Re-initialises the connectivity list. If a number is provided, atoms of the same type connected by bonds shorter\
+ than the provided number are merged into one atom with center at the centroid formed by all removed atoms" );
   xlib_InitMacro(Flush, EmptyString, fpNone|fpOne, "Flushes log streams" );
 //_________________________________________________________________________________________________________________________
   xlib_InitMacro(EXYZ, "eadp-sets the equivalent anisotropic parameter constraints for the shared sites\
@@ -129,9 +130,9 @@ void XLibMacros::Export(TLibrary& lib)  {
   xlib_InitMacro(FixHL, "", fpNone|psFileLoaded, "Fixes hydrogen atom labels" );
   xlib_InitMacro(Fix, "", (fpAny^fpNone)|psCheckFileTypeIns, "Fixes specified parameters of atoms: XYZ, Uiso, Occu" );
   xlib_InitMacro(Free, "", (fpAny^fpNone)|psCheckFileTypeIns, "Frees specified parameters of atoms: XYZ, Uiso, Occu" );
-  xlib_InitMacro(Isot,"" , fpAny|psCheckFileTypeIns,
+  xlib_InitMacro(Isot,"" , fpAny|psFileLoaded,
 "makes provided atoms isotropic, if no arguments provided, current selection or all atoms become isotropic");
-  xlib_InitMacro(Anis,"h-adds hydrogen atoms" , (fpAny) | psCheckFileTypeIns, 
+  xlib_InitMacro(Anis,"h-adds hydrogen atoms" , (fpAny) | psFileLoaded, 
 "makes provided atoms anisotropic if no arguments provided current selection or all atoms are considered" );
 xlib_InitMacro(File, "s-sort the main residue of the asymmetric unit", fpNone|fpOne|psFileLoaded, 
     "Saves current model to a file. By default an ins file is saved and loaded" );
@@ -198,7 +199,7 @@ xlib_InitMacro(File, "s-sort the main residue of the asymmetric unit", fpNone|fp
 //_________________________________________________________________________________________________________________________
   xlib_InitFunc(RemoveSE, fpOne|psFileLoaded, "Returns a new space group name without provided element");
 //_________________________________________________________________________________________________________________________
-  xlib_InitFunc(Run, fpOne, "Same as the macro, executes provided commands (sperated by >>) returns true if succeded");
+  xlib_InitFunc(Run, fpOne, "Same as the macro, executes provided commands (separated by >>) returns true if succeded");
 //_________________________________________________________________________________________________________________________
 }
 //..............................................................................
@@ -715,10 +716,90 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 //..............................................................................
 void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   TXApp& XApp = TXApp::GetInstance();
+  int Hfix = 0;
+  if( !Cmds.IsEmpty() && Cmds[0].IsNumber() )  {
+    Hfix = Cmds[0].ToInt();
+    Cmds.Delete(0);
+  }
   TSAtomPList satoms;
   XApp.FindSAtoms( Cmds.Text(' '), satoms, true );
-  TXlConGen xlcg( XApp.XFile().GetRM() );
-  XApp.XFile().GetLattice().AnalyseHAdd( xlcg, satoms );
+  TXlConGen xlConGen( XApp.XFile().GetRM() );
+  if( Hfix == 0 ) 
+    XApp.XFile().GetLattice().AnalyseHAdd( xlConGen, satoms );
+  else  {
+    RefinementModel& rm = XApp.XFile().GetRM();
+    for( int aitr=0; aitr < satoms.Count(); aitr++ )  {
+      TIntList parts;
+      TDoubleList occu;
+      TAtomEnvi AE;
+      XApp.XFile().GetUnitCell().GetAtomEnviList(*satoms[aitr], AE);
+
+      for( int i=0; i < AE.Count(); i++ )  {
+        if( AE.GetCAtom(i).GetPart() != 0 && AE.GetCAtom(i).GetPart() != AE.GetBase().CAtom().GetPart() ) 
+          if( parts.IndexOf(AE.GetCAtom(i).GetPart()) == -1 )  {
+            parts.Add( AE.GetCAtom(i).GetPart() );
+            occu.Add( rm.Vars.GetParam(AE.GetCAtom(i), catom_var_name_Sof) );
+          }
+      }
+      if( parts.Count() < 2 )  {
+        int afix = TXlConGen::ShelxToOlex(Hfix, AE);
+        if( afix != -1 )  {
+          TCAtomPList generated;
+          xlConGen.FixAtom(AE, afix, TAtomsInfo::GetInstance().GetAtomInfo(iHydrogenIndex), NULL, &generated);
+          if( !generated.IsEmpty() && generated[0]->GetParentAfixGroup() != NULL ) // hack to get desired Hfix...
+            generated[0]->GetParentAfixGroup()->SetAfix(Hfix);
+        }
+        else  {
+          XApp.GetLog() << (olxstr("Failed to translate HFIX code for ") << satoms[aitr]->GetLabel() << 
+            " with " << AE.Count() << " bonds\n");
+        }
+      }
+      else  {
+        TCAtomPList generated;
+        XApp.GetLog() << (olxstr("Processing ") << parts.Count() << " parts\n");
+        for( int i=0; i < parts.Count(); i++ )  {
+          AE.Clear();
+          XApp.XFile().GetUnitCell().GetAtomEnviList(*satoms[aitr], AE, false, parts[i]);
+          //consider special case where the atom is bound to itself but very long bond > 1.6 A
+          smatd* eqiv = NULL;
+          for( int j=0; j < AE.Count(); j++ )  {
+            if( &AE.GetCAtom(j) == &AE.GetBase().CAtom() )  {
+              const double d = AE.GetCrd(j).DistanceTo(AE.GetBase().crd() );
+              if( d > 1.6 )  {
+                eqiv = new smatd(AE.GetMatrix(j));
+                AE.Delete(j);
+                break;
+              }
+            }
+          }
+          if( eqiv != NULL )  {
+            TIns& ins = XApp.XFile().GetLastLoader<TIns>();
+            const smatd& e = rm.AddUsedSymm(*eqiv);
+            rm.Conn.RemBond(satoms[aitr]->CAtom(), satoms[aitr]->CAtom(), NULL, &e, true);
+            XApp.GetLog() << (olxstr("The atom" ) << satoms[aitr]->GetLabel() << 
+              " is connected to itself through symmetry, removing the symmetry generated bond\n");
+            delete eqiv;
+          }
+          //
+          int afix = TXlConGen::ShelxToOlex(Hfix, AE);
+          if( afix != -1 )  {
+            xlConGen.FixAtom(AE, afix, TAtomsInfo::GetInstance().GetAtomInfo(iHydrogenIndex), NULL, &generated);
+            for( int j=0; j < generated.Count(); j++ )  {
+              generated[j]->SetPart( parts[i] );
+              rm.Vars.SetParam(*generated[j], catom_var_name_Sof, occu[i]);
+            }
+            if( !generated.IsEmpty() && generated[0]->GetParentAfixGroup() != NULL )
+              generated[0]->GetParentAfixGroup()->SetAfix(Hfix); // a hack again
+            generated.Clear();
+          }
+          else  {
+            XApp.GetLog() << (olxstr("Failed to translate HFIX code for ") << satoms[aitr]->GetLabel() << 
+              " with " << AE.Count() << " bonds\n");
+          }
+        }
+      }
+    }
+  }
   XApp.XFile().EndUpdate();
   delete XApp.FixHL();
 }
@@ -811,7 +892,9 @@ void XLibMacros::macFix(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   }
   TXApp& xapp = TXApp::GetInstance();
   TSAtomPList atoms;
-  if( !xapp.FindSAtoms(Cmds.Text(' '), atoms, true, true) )  return;
+  if( !xapp.FindSAtoms(Cmds.Text(' '), atoms, true, true) )  
+    return;
+
   if( vars.Comparei( "XYZ" ) == 0 )  {
     for(int i=0; i < atoms.Count(); i++ )  {
       for( int j=0; j < 3; j++ )
@@ -830,13 +913,13 @@ void XLibMacros::macFix(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   }
   else if( vars.Comparei( "OCCU" ) == 0 )  {
     for(int i=0; i < atoms.Count(); i++ )  {
-      if( atoms[i]->CAtom().GetPart() == 0 )  {  // it would be invalid for split atoms
-        xapp.XFile().GetRM().Vars.FixParam(atoms[i]->CAtom(), catom_var_name_Sof);
-        if( var_val == 0 )  
+      xapp.XFile().GetRM().Vars.FixParam(atoms[i]->CAtom(), catom_var_name_Sof);
+      if( var_val == 0 )  {
+        if( atoms[i]->CAtom().GetPart() == 0 )  // else leave as it is
           atoms[i]->CAtom().SetOccu( 1./atoms[i]->CAtom().GetDegeneracy() );
-        else
-          atoms[i]->CAtom().SetOccu( var_val );
       }
+      else
+        atoms[i]->CAtom().SetOccu( var_val );
     }
   }
 }
@@ -989,7 +1072,38 @@ void XLibMacros::macFile(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 }
 //..............................................................................
 void XLibMacros::macFuse(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
-  TXApp::GetInstance().XFile().GetLattice().Uniq( Options.Contains("f") );
+  if( Cmds.Count() == 1 && Cmds[0].IsNumber() )  {
+    const double th = Cmds[0].ToDouble();
+    TLattice& latt = TXApp::GetInstance().XFile().GetLattice();
+    for( int i=0; i < latt.AtomCount(); i++ )  {
+      TSAtom& sa = latt.GetAtom(i);
+      if( sa.IsDeleted() )  continue;
+      if( sa.BondCount() == 0 )  continue;
+      sa.SortBondsByLengthAsc();
+      vec3d cnt(sa.crd());
+      int ac = 1;
+      for( int j=0; j < sa.BondCount(); j++ )  {
+        if( sa.Bond(j).Length() < th )  {
+          TSAtom& asa = sa.Bond(j).Another(sa);
+          if( asa.GetAtomInfo() != sa.GetAtomInfo() )
+            continue;
+          ac++;
+          cnt += asa.crd();
+          asa.CAtom().SetDeleted(true);
+          asa.SetDeleted(true);
+        }    
+        else
+          break;
+      }
+      if( ac > 1 )  {
+        cnt /= ac;
+        sa.CAtom().ccrd() = latt.GetAsymmUnit().CartesianToCell(cnt);
+      }
+    }
+    TXApp::GetInstance().XFile().GetLattice().Uniq(true);
+  }
+  else
+    TXApp::GetInstance().XFile().GetLattice().Uniq( Options.Contains("f") );
 }
 //..............................................................................
 void XLibMacros::macLstIns(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
@@ -1472,7 +1586,7 @@ void XLibMacros::macEXYZ(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       ca.ccrd() = atoms[0]->CAtom().ccrd();
       ca.Label() = bai->GetSymbol() + atoms[0]->GetLabel().SubStringFrom( 
         atoms[0]->GetAtomInfo().GetSymbol().Length());
-      ca.SetAtomInfo( bai );
+      ca.SetAtomInfo( *bai );
       ca.SetDegeneracy( atoms[0]->CAtom().GetDegeneracy() );
       rm.Vars.FixParam(ca, catom_var_name_Sof);
       eg->Add(ca);
@@ -1985,6 +2099,17 @@ olxstr XLibMacros_funSGNameToHtml(const olxstr& name)  {
   }
   return res;
 }
+olxstr XLibMacros_funSGNameToHtmlX(const olxstr& name)  {
+  TStrList toks(name, ' ');
+  olxstr res;
+  for( int i=0; i < toks.Count(); i++ )  {
+    if( toks[i].Length() == 2 )
+      res << toks[i].CharAt(0) << "<sub>" << toks[i].CharAt(1) << "</sub>";
+    else
+      res << toks[i];
+  }
+  return res;
+}
 void XLibMacros::funSG(const TStrObjList &Cmds, TMacroError &E)  {
   TSpaceGroup* sg = NULL;
   try  { sg = &TXApp::GetInstance().XFile().GetLastLoaderSG();  }
@@ -2006,7 +2131,7 @@ void XLibMacros::funSG(const TStrObjList &Cmds, TMacroError &E)  {
       Tmp.Replace("%HS", sg->GetHallSymbol());
       Tmp.Replace("%s", sg->GetBravaisLattice().GetName());
       if( Tmp.IndexOf("%H") != -1 )
-        Tmp.Replace("%H", XLibMacros_funSGNameToHtml(sg->GetFullName()));
+        Tmp.Replace("%H", XLibMacros_funSGNameToHtmlX(sg->GetFullName()));
       if( Tmp.IndexOf("%h") != -1 )
         Tmp.Replace("%h", XLibMacros_funSGNameToHtml(sg->GetName()));
     }

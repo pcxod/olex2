@@ -23,7 +23,7 @@ TGlMaterial::TGlMaterial()  {
   SpecularB  = 0x80ffffff;
   DiffuseB   = 0x80777777;
   AmbientB   = 0x807f7f7f;
-  FMark = false;
+  Mark = false;
 }
 //..............................................................................
 bool TGlMaterial::operator == (const AGOProperties &G) const  {
@@ -67,7 +67,7 @@ TGlMaterial& TGlMaterial::operator = (const TGlMaterial& G)  {
   DiffuseF     = G.DiffuseF;
   DiffuseB     = G.DiffuseB;
   Flags = G.Flags;
-  FMark = G.FMark;
+  Mark = G.Mark;
   return *this;
 }
 //..............................................................................

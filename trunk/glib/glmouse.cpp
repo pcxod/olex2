@@ -6,12 +6,6 @@
 #pragma hdrstop
 #endif
 
-#ifdef _MSC_VER
-  #define MSVCC(a) ((double)(a))
-#else
-  #define MSVCC(a) (a)
-#endif
-
 #include "glmouse.h"
 #include "elist.h"
 #include "glrender.h"
@@ -48,20 +42,24 @@ bool TGlMouse::MouseUp(int x, int y, short Shift, short button)  {
   bool res = false;
   TGlGroup *PColl;
   MData->UpX = x; MData->UpY = y;
-  MData->Shift = Shift; MData->Button = button;
+  MData->Shift = Shift; 
+  MData->Button = button;
   if( Handler != NULL )  {
-    if( Handler == FDFrame )  {
+    if( Handler == FDFrame ) 
       FDFrame->OnMouseUp(this, MData);
-    }
     else  {
-      PColl = FParent->FindObjectGroup(Handler);
-      if( PColl ) { PColl->OnMouseUp(this, MData);    }
-      else        { Handler->OnMouseUp(this, MData);  }
-      if( (olx_abs(MSVCC(MData->DownX-MData->UpX))<=2) &&
-          (olx_abs(MSVCC(MData->DownY-MData->UpY))<=2) && (Shift==0) )  // click
+      PColl = FParent->FindObjectGroup(*Handler);
+      if( PColl != NULL ) 
+        PColl->OnMouseUp(this, MData);
+      else
+        Handler->OnMouseUp(this, MData);
+      if( (olx_abs(MData->DownX-MData->UpX)<=2) &&
+          (olx_abs(MData->DownY-MData->UpY)<=2) && (Shift==0) )  // click
       {
-        if( PColl ) { FParent->Select(PColl);      }
-        else {  FParent->Select(Handler); }
+        if( PColl != NULL ) 
+          FParent->Select(*PColl); 
+        else 
+          FParent->Select(*Handler);
         FParent->Draw();
         res = true;
       }
@@ -105,22 +103,20 @@ bool TGlMouse::MouseDown(int x, int y, short Shift, short button)  {
   MData->DownX = x;       MData->DownY = y;
   if( SelectionEnabled )  {
     Handler = FParent->SelectObject(x, y);
-    if( Handler )  {
-      if( Handler->Selected() )
-        PColl = FParent->Selection();
+    if( Handler != NULL )  {
+      if( Handler->IsSelected() )
+        PColl = &FParent->GetSelection();
       else  {
-        PColl = FParent->FindObjectGroup(Handler);
-        if( FParent->Selection()->Contains(PColl) ) PColl = FParent->Selection();
+        PColl = FParent->FindObjectGroup(*Handler);
+        if( FParent->GetSelection().Contains(*PColl) ) 
+          PColl = &FParent->GetSelection();
       }
-      if( PColl )  {
+      if( PColl != NULL )
         PColl->OnMouseDown(this, MData);
-      }
-      else  {
-        if( !Handler->OnMouseDown(this, MData) )
-          Handler = NULL;
-      }
+      else if( !Handler->OnMouseDown(this, MData) )
+        Handler = NULL;
     }
-    if( !Handler && Shift == sssShift )  {
+    if( Handler == NULL && Shift == sssShift )  {
       Handler = FDFrame;
       //    FParent->UpdateGlImage();
       Handler->OnMouseDown(this, MData);
@@ -151,19 +147,19 @@ bool TGlMouse::MouseMove(int x, int y, short Shift)  {
       return true;
     }
     else  {
-      if( Handler->Selected() )
-        PColl = FParent->Selection();
+      if( Handler->IsSelected() )
+        PColl = &FParent->GetSelection();
       else  {
-        PColl = FParent->FindObjectGroup(Handler);
-        if( FParent->Selection()->Contains(PColl) ) PColl = FParent->Selection();
+        PColl = FParent->FindObjectGroup(*Handler);
+        if( FParent->GetSelection().Contains(*PColl) ) 
+          PColl = &FParent->GetSelection();
       }
-      if( PColl )  {
+      if( PColl != NULL )  {
         PColl->OnMouseMove(this, MData);
         return true;
       }
-      else  {
-        if( Handler->OnMouseMove(this, MData) )      return true;
-      }
+      else if( Handler->OnMouseMove(this, MData) )      
+        return true;
     }
   }
   // default handlers...

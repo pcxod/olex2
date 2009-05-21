@@ -78,6 +78,8 @@ protected:
   void _ProcessSame(ParseContext& cx);
   // initialises the unparsed instruction list
   void _FinishParsing(ParseContext& cx);
+  // processes CONN, FREE and BIND, called from _FinishParsing
+  void __ProcessConn(ParseContext& cx);
 public:
   TIns();
   virtual ~TIns();

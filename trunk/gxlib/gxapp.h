@@ -144,6 +144,10 @@ protected:
 
   float FProbFactor;
   double ExtraZoom;  // the default is 1, Calculated Zoom is multiplid by this number
+  /* intialises SAtom::Tag to XAtom::Id and checks if any atom with AtomInfo == atom_type
+  has visible neighbours, if not - it will be hidden, otherwise its visibility will become 'show';
+  for bonds makes them visible only if both atoms are visible */
+  void SyncAtomAndBondVisiblity(int atom_type, bool show_a, bool show_b);
 public:
   TGXApp(const olxstr & FileName);
   // FileNAme - argv[0]
@@ -167,8 +171,8 @@ public:
 // GlRender interface
   void ClearColor(int Color) {  FGlRender->LightModel.ClearColor() = Color; }
   inline int ClearColor()           {  return FGlRender->LightModel.ClearColor().GetRGB(); }
-  inline TGlRenderer& GetRender()     {  return *FGlRender; }
-  inline TXFader& GetFader()      {  return *Fader; }
+  inline TGlRenderer& GetRender() const {  return *FGlRender; }
+  inline TXFader& GetFader()        {  return *Fader; }
   void InitFadeMode();
 
   // implementation of BasicApp function - renders the scene
@@ -206,12 +210,12 @@ public:
     Draw();
   }
   void InvertSelection()                    {  GetRender().InvertSelection(); Draw(); }
-  inline TGlGroup* FindObjectGroup(AGDrawObject *G)   {  return GetRender().FindObjectGroup(G); }
+  inline TGlGroup* FindObjectGroup(AGDrawObject& G)   {  return GetRender().FindObjectGroup(G); }
   inline TGlGroup* FindGroup(const olxstr& colName) {  return GetRender().FindGroupByName(colName); }
-  inline TGlGroup *Selection()              {  return GetRender().Selection(); }
+  inline TGlGroup& GetSelection() const  {  return GetRender().GetSelection(); }
   void GroupSelection(const olxstr& name) {  GetRender().GroupSelection(name);  Draw(); }
   void UnGroupSelection()                   {  GetRender().UnGroupSelection(); Draw(); }
-  void UnGroup(TGlGroup *G)                 {  GetRender().UnGroup(G); Draw(); }
+  void UnGroup(TGlGroup& G)                 {  GetRender().UnGroup(G); Draw(); }
   olxstr GetSelectionInfo();
   // ASelection Owner interface
   virtual void ExpandSelection(TCAtomGroup& atoms);
@@ -242,19 +246,20 @@ protected:
        FXPolyVisible;
   short FGrowMode, PackMode;
 public:
-  bool LabelsVisible() const;
-  void LabelsVisible(bool v);
-  void LabelsMode(short lmode);
-  short LabelsMode() const;
-  void LabelsFont(short FontIndex);
+  bool AreLabelsVisible() const;
+  void SetLabelsVisible(bool v);
+  void SetLabelsMode(short lmode);
+  short GetLabelsMode() const;
+  void SetLabelsFont(short FontIndex);
   TGlMaterial & LabelsMarkMaterial();
   void MarkLabel(const TXAtom& A, bool mark);
   void ClearLabelMarks();
   int GetNextAvailableLabel(const olxstr& AtomType);
 
   // moving atom from/to collection
-  void Individualise(TXAtom* XA);
-  void Collectivise(TXAtom* XA);
+  void Individualise(TXAtom& XA);
+  void Collectivise(TXAtom& XA);
+  void Individualise(TXBond& XB);
   // should not be used externaly
   void ClearLabels();
 
@@ -363,7 +368,7 @@ public:
   void InfoList(const olxstr &Atoms, TStrList &Info, bool Sort);
 
   void UpdateAtomPrimitives(int Mask, TXAtomPList* Atoms=NULL);
-  void UpdateBondPrimitives(int Mask, TXBondPList* Bonds=NULL);
+  void UpdateBondPrimitives(int Mask, TXBondPList* Bonds=NULL, bool HBondsOnly=false);
 
   void SetAtomDrawingStyle(short ADS, TXAtomPList* Atoms=NULL);
 
@@ -435,7 +440,7 @@ public:     void CalcProbFactor(float Prob);
   void SetCellVisible( bool v);
   bool IsBasisVisible() const;
   void SetBasisVisible( bool v);
-  inline bool IsGraphicsVisible( AGDrawObject *G ) const {  return G->Visible(); }
+  inline bool IsGraphicsVisible( AGDrawObject *G ) const {  return G->IsVisible(); }
   TUndoData* SetGraphicsVisible( AGDrawObject *G, bool v );
   TUndoData* SetGraphicsVisible( TPtrList<AGDrawObject>& G, bool v );
   void InvertFragments(const TXAtomPList& NetworkAtoms);

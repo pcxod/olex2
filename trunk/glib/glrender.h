@@ -19,12 +19,17 @@
 #include "macroerror.h"
 
 #include "paramlist.h"
+#include "gpcollection.h"
 // sorted pointer list should not give any performace boost...
 //#include "sptrlist.h"
-#ifdef DrawText
-  #undef DrawText
-#endif
+
+#undef DrawText
+#undef GetObject
+
 BeginGlNamespace()
+
+class AGDrawObject;
+class TGlGroup;
 
 class TGlListManager  {
   int FInc, FPos;
@@ -40,14 +45,14 @@ public:
 };
 
 class TGlRenderer : public IEObject  {
-  TObjectGroup *FPrimitives;  // a list of all groups of primitives
-  TSStrPObjList<CString,class TGPCollection*, false> FCollections;
+  ObjectGroup<TGlMaterial, TGlPrimitive>  Primitives;  // a list of all groups of primitives
+  TSStrPObjList<CString,TGPCollection*, false> FCollections;
 //  TPtrList<class TGPCollection> FCollections; // a named list of collections (TGPCollection)
 //  TSPtrList<TGlMaterial> FTransluentObjects, FIdentityObjects, FTransluentIdentityObjects;
   TPtrList<TGlMaterial> FTransluentObjects, FIdentityObjects, FTransluentIdentityObjects;
-  TPtrList<class AGDrawObject> FGObjects;
-  TPtrList<class TGlGroup> FGroups;   // list of groups
-  TGlGroup *FSelection;  // list of selected objects
+  TPtrList<AGDrawObject> FGObjects;
+  TPtrList<TGlGroup> FGroups;   // list of groups
+  TGlGroup* FSelection;  // list of selected objects
   class TTextureManager* TextureManager;
   bool FSceneComplete;
   void SetBasis(bool Identity = false);
@@ -92,12 +97,12 @@ public:
   virtual ~TGlRenderer();
   void Clear();
   void ClearPrimitives();
-  inline AGlScene* Scene()            const {  return FScene; }
+  inline AGlScene& GetScene()  const {  return *FScene; }
   void SetView(int x, int y, bool Select = false, short Res = 1);   // the functions set current matrix
   void SetView(short Res=1); // is used to set current view (when initialisation is done by an external librray
   // such as wxWidgets
 
-  inline TGraphicsStyles *Styles()    const {  return FStyles; }
+  inline TGraphicsStyles& GetStyles()    const {  return *FStyles; }
   void CleanUpStyles(); // removes styles, which are not used by any collection
   void _OnStylesClear(); // is called by the FStyles only!
   void _OnStylesLoaded(); // is called by the FStyles only!
@@ -111,7 +116,7 @@ public:
   inline bool IsSceneComplete()        const {  return FSceneComplete;  }
   inline void SetSceneComplete(bool v)       {  FSceneComplete = v;  }
   // basis manipulation
-  inline TEBasis* Basis()              const {  return FBasis; }
+  inline TEBasis& GetBasis()                 {  return *FBasis; }
   inline const TEBasis& GetBasis()     const {  return *FBasis; }
   inline void SetBasis( const TEBasis &B)    {  *FBasis = B; }
   template <class VC>
@@ -119,9 +124,9 @@ public:
   inline void TranslateX(double V)           {  FBasis->TranslateX(V);  }
   inline void TranslateY(double V)           {  FBasis->TranslateY(V);  }
   inline void TranslateZ(double V)           {  FBasis->TranslateZ(V);  }
-  inline void RotateX( double V)             {  FBasis->RotateX(V); }
-  inline void RotateY( double V)             {  FBasis->RotateY(V); }
-  inline void RotateZ( double V)             {  FBasis->RotateZ(V); }
+  inline void RotateX(double V)              {  FBasis->RotateX(V); }
+  inline void RotateY(double V)              {  FBasis->RotateY(V); }
+  inline void RotateZ(double V)              {  FBasis->RotateZ(V); }
   inline double GetZoom()              const {  return FBasis->GetZoom(); }
   void  SetZoom(double V);
   inline void ResetBasis()                   {  FBasis->Reset(); }
@@ -167,7 +172,7 @@ public:
 
   inline double GetMaxRasterZ() const {  // to be used to calculate raster positions (z)
     double df = CalcZoom();
-    return (df*df)/FBasis->GetZoom();
+    return (df*df)/FBasis->GetZoom()-1;
   }
   /* this function provides extra value for use with rasters, when the scene is zoomed
   using LookAt function
@@ -177,7 +182,7 @@ public:
   //dinates to internal coordinates of OpenGl Scene like follow: if an object has to
   //follow mouse pointer, then the change in coordinates should be x = x0+MouseX*GetScale()
   //y = y0+MouseY*GetScale()
-  void UpdateMaxMin( const vec3d &Max, const vec3d &Min);
+  void UpdateMaxMin( const vec3d& Max, const vec3d& Min);
   void ClearMinMax();
   const vec3d& MaxDim() const { return FMaxV; }
   const vec3d& MinDim() const { return FMinV; }
@@ -202,52 +207,62 @@ public:
   class TGlPrimitive* SelectPrimitive(int x, int y);
 
   inline int GroupCount() const {  return FGroups.Count(); }
-  inline TGlGroup* Group(int i) {  return FGroups[i]; }
+  inline TGlGroup& GetGroup(int i) const {  return *FGroups[i]; }
   TGlGroup& NewGroup(const olxstr& collection_name);
   TGlGroup* FindGroupByName(const olxstr& colName);
-  TGlGroup* FindObjectGroup(AGDrawObject *G);
-  // groups current selection and returns the created group object
-  TGlGroup * GroupSelection(const olxstr& groupName);
+  TGlGroup* FindObjectGroup(AGDrawObject& G);
+  /* groups current selection and returns the created group object, or NULL
+  if current selection had less than 2 elements */
+  TGlGroup* GroupSelection(const olxstr& groupName);
   void ClearGroups();
   void UnGroupSelection();
-  void UnGroup(TGlGroup *GlG);
-  inline TGlGroup* Selection()  {  return FSelection; }
-  void Select(AGDrawObject *G);
-  void DeSelect(AGDrawObject *G);
+  void UnGroup(TGlGroup& GlG);
+  inline TGlGroup& GetSelection()  const {  return *FSelection; }
+  void Select(AGDrawObject& G);
+  void DeSelect(AGDrawObject& G);
   void ClearSelection();
   void SelectAll(bool Select);
   void InvertSelection();
   inline int NewListId()  {  return FListManager.NewList(); }
 
   void operator = (const TGlRenderer &G);
-  class TGPCollection *NewCollection(const olxstr &Name);
-  TGPCollection* Collection(int index);
-  TGPCollection* FindCollection(const olxstr &Name);
+  TGPCollection& NewCollection(const olxstr &Name);
+  TGPCollection& GetCollection(int ind) const {  return *FCollections.GetObject(ind);  }
+  template <class T>
+  TGPCollection* FindCollection(const T& Name)  {
+    int ind = FCollections.IndexOfComparable(Name);
+    return (ind != -1) ? FCollections.GetObject(ind) : NULL;
+  }
+  template <class T>
+  TGPCollection& FindOrCreateCollection(const T& Name)  {
+    int ind = FCollections.IndexOfComparable(Name);
+    return (ind != -1) ? *FCollections.GetObject(ind) : NewCollection(Name);
+  }
 
-  TGPCollection* CollectionX(const olxstr &Name, olxstr &CollName);
+  TGPCollection* FindCollectionX(const olxstr &Name, olxstr& CollName);
   // in comparison with previos function returns first
   // suitable colelction for example will return "C" for "C.C1.1_555"
   // if nor "C.C1" nether "C.C1.1_555" exists
   // if no collection if found, then CollName = "C", otherwise a name
   // of the returned collection
   inline int CollectionCount() const {  return FCollections.Count(); }
-  void RemoveCollection(TGPCollection *GP);
+  void RemoveCollection(TGPCollection& GP);
   void RemoveCollections(const TPtrList<TGPCollection>& Collections);
 
-  inline int PrimitiveCount() const {  return FPrimitives->ObjectCount(); }
-  TGlPrimitive* Primitive(int i)    {  return (TGlPrimitive*)FPrimitives->Object(i); }
-  TGlPrimitive* NewPrimitive(short type); // do not call directly, use GPCollection's method instead
+  inline int PrimitiveCount() const {  return Primitives.ObjectCount(); }
+  TGlPrimitive& GetPrimitive(int i) const {  return Primitives.GetObject(i); }
+  TGlPrimitive& NewPrimitive(short type); // do not call directly, use GPCollection's method instead
   void RemovePrimitive(int in);
-  void OnSetProperties( const TGlMaterial *P);
-  void SetProperties( TGlMaterial *P);  // tracks transluent and identity objects
+  void OnSetProperties(const TGlMaterial& P);
+  void SetProperties(TGlMaterial& P);  // tracks transluent and identity objects
 //  void ReplacePrimitives(TEList *CurObj, TEList *NewObj);
 
-  inline void SetObjectsCapacity(int v)     { FGObjects.SetCapacity(v);  } 
-  inline AGDrawObject* GObject( int i)      {  return FGObjects[i]; }
-  inline void RemoveObject(AGDrawObject* D) {  FGObjects.Remove(D);  }
+  inline void SetObjectsCapacity(int v)        { FGObjects.SetCapacity(v);  } 
+  inline AGDrawObject& GetObject( int i) const {  return *FGObjects[i]; }
+  inline void RemoveObject(AGDrawObject& D)    {  FGObjects.Remove(&D);  }
   void RemoveObjects(const TPtrList<AGDrawObject>& objects);
-  void AddGObject(AGDrawObject *G);
-  inline int GObjectCount() const           {  return FGObjects.Count(); }
+  void AddObject(AGDrawObject& G);
+  inline int ObjectCount() const {  return FGObjects.Count(); }
 
   inline TTextureManager& GetTextureManager() const {  return *TextureManager;  }
 
@@ -300,7 +315,7 @@ public:
   */
   void LookAt(double x, double y, short res);
 
-  static TGraphicsStyles* GetStyles();
+  static TGraphicsStyles& _GetStyles();
 
   void LibCompile(const TStrObjList& Params, TMacroError& E);
   void LibFog(TStrObjList &Cmds, const TParamList &Options, TMacroError &E);

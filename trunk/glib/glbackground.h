@@ -12,16 +12,14 @@ BeginGlNamespace()
 class TGlBackground: public AGDrawObject  {
   TGlOption  FColors[4];
   bool FCeiling;
-  TGlPrimitive *FPrimitive;
   TGlTexture* Texture;
 public:
-  TGlBackground(const olxstr& collectionName, TGlRenderer *Render, bool Ceiling);
+  TGlBackground(TGlRenderer& Render, const olxstr& collectionName, bool Ceiling);
   virtual ~TGlBackground(){  return; };
   void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
-  bool Orient(TGlPrimitive *P);
+  bool Orient(TGlPrimitive& P);
   bool GetDimensions(vec3d &Max, vec3d &Min){  return false;};
   bool Ceiling(){  return FCeiling;  }
-  TGlPrimitive *Primitive(){  return FPrimitive;  }
   void SetTexture(TGlTexture* glt);
   TGlTexture* GetTexture() const {  return Texture;  }
 

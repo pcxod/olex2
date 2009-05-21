@@ -5,6 +5,8 @@
 
 #include <math.h>
 #include "exception.h"
+// Linux stuff....
+#undef QLength
 
 BeginEsdlNamespace()
 //---------------------------------------------------------------------------
@@ -51,40 +53,49 @@ template <typename A, typename B>
     V &= ~Bit;
   }
 
+// throws an exception
 template <class VC>
   double TetrahedronVolume(const VC& A, const VC& B, const VC& C,const VC& D )  {
-    VC a(A-B),b(C-B),n;
-    double d, caS, sa;
-    caS = a.CAngle(b);
-    if( olx_abs(caS) > 0.9999 )  return 0;
-    sa = sqrt( 1- caS*caS);
+    const VC a(A-B), b(C-B);
+    if( a.QLength()*b.QLength() < 1e-15 )
+      throw TDivException(__OlxSourceInfo);
+    double caS = a.CAngle(b);
+    if( olx_abs(caS) > (1.0-1e-15) )  
+      return 0;
+    const double sa = sqrt(1 - caS*caS);
     caS = a.Length() * b.Length() * sa / 2;
-    n = a.XProdVec(b);
-    d = n[2]*A[2] + n[1]*A[1] + n[0]*A[0];
+    VC n = a.XProdVec(b);
+    double d = n[2]*A[2] + n[1]*A[1] + n[0]*A[0];
     d = n[2]*D[2] + n[1]*D[1] + n[0]*D[0] - d;
     d /= n.Length();
     return olx_abs( caS*d/3 );
   }
-  // torsion angle in degrees
+  // torsion angle in degrees [0..180], throws an exception
 template <class VC>
   double TorsionAngle(const VC& v1, const VC& v2, const VC& v3, const VC& v4)  {
-    VC V1(v1 - v2), 
-      V2(v3 - v2), 
-      V3(v4 - v3), 
-      V4(v2 - v3);
-    V1 = V1.XProdVec(V2);
-    V3 = V3.XProdVec(V4);
-    return acos(V1.CAngle(V3))*180/M_PI;
+    const VC a( (v1-v2).XProdVec(v3-v2) ), 
+             b( (v4-v3).XProdVec(v2-v3) ); 
+    if( a.QLength()*b.QLength() < 1e-15 )
+      throw TDivException(__OlxSourceInfo);
+    return acos(a.CAngle(b))*180/M_PI;
   }
-  //angle in degrees for three coordinates A-B C-B angle
+  //angle in degrees for three coordinates A-B B-C angle
 template <class VC>
   double Angle(const VC& v1, const VC& v2, const VC& v3)  {
-    return acos( (v1-v2).CAngle(v3-v2) )*180.0/M_PI;
+    const VC a(v1-v2),
+             b(v3-v2);
+    if( a.QLength()*b.QLength() < 1e-15 )
+      throw TDivException(__OlxSourceInfo);
+    return acos(a.CAngle(b))*180.0/M_PI;
   }
   //angle in degrees for four coordinates A-B D-C angle
 template <class VC>
   double Angle(const VC& v1, const VC& v2, const VC& v3, const VC& v4)  {
-    return acos( (v1-v2).CAngle(v4-v3) )*180.0/M_PI;
+    const VC a(v1-v2),
+             b(v4-v3);
+    if( a.QLength()*b.QLength() < 1e-15 )
+      throw TDivException(__OlxSourceInfo);
+    return acos( a.CAngle(b) )*180.0/M_PI;
   }
 
 // greatest common denominator
@@ -98,10 +109,8 @@ inline double SphereRad(double v)   {  return pow(v*3.0/(4.0*M_PI), 1./3.);  }
 // creates a 3D rotation matrix aroung rv vector, providin cosine of the rotation angle
 template <typename MC, typename VC>
 void CreateRotationMatrix(MC& rm, const VC& rv, double ca)  {
-  double sa;
-  if( olx_abs(ca) > 0.001 )  sa = sqrt(1-ca*ca);
-  else                    sa = 0;
-  double t = 1-ca;
+  const double sa = (olx_abs(ca) > 1e-15) ? sqrt(1-ca*ca) : 0;
+  const double t = 1-ca;
   rm[0][0] = t*rv[0]*rv[0] + ca;
   rm[0][1] = t*rv[0]*rv[1] + sa*rv[2];
   rm[0][2] = t*rv[0]*rv[2] - sa*rv[1];
@@ -116,7 +125,7 @@ void CreateRotationMatrix(MC& rm, const VC& rv, double ca)  {
 }
 template <typename MC, typename VC>
 void CreateRotationMatrix(MC& rm, const VC& rv, double ca, double sa)  {
-  double t = 1-ca;
+  const double t = 1-ca;
   rm[0][0] = t*rv[0]*rv[0] + ca;
   rm[0][1] = t*rv[0]*rv[1] + sa*rv[2];
   rm[0][2] = t*rv[0]*rv[2] - sa*rv[1];

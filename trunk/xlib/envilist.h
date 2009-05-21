@@ -14,6 +14,12 @@ BeginXlibNamespace()
 class TAtomEnvi  {
   TTypeList< AnAssociation3<TCAtom*, smatd, vec3d> >  Envi;
   TSAtom* Base;
+  int _SortByDistance( const AnAssociation3<TCAtom*, smatd, vec3d>& i1, const 
+    AnAssociation3<TCAtom*, smatd, vec3d>& i2) const 
+  {
+    const double diff = i1.GetC().QDistanceTo(Base->crd()) - i2.GetC().QDistanceTo(Base->crd());
+    return diff < 0 ? -1 : (diff > 0 ? 1 : 0);
+  }
 public:
   TAtomEnvi()  {  Base = NULL;  }
   virtual ~TAtomEnvi()  {  }
@@ -35,6 +41,9 @@ public:
   inline const vec3d& GetCrd(int ind)    const {  return Envi[ind].GetC();  }
   inline const smatd& GetMatrix(int ind) const {  return Envi[ind].GetB();  }
   void Delete(int i)                           {  Envi.Delete(i);  }
+  void SortByDistance()  {
+    Envi.QuickSorter.SortMF(Envi, *this, &TAtomEnvi::_SortByDistance);
+  }
   void Exclude(TCAtom& ca )                    {
     for( int i=0; i < Envi.Count(); i++ )
       if( Envi[i].GetA() == &ca )  {
@@ -42,6 +51,8 @@ public:
         break;
       }
   }
+  // applies a symmetry operation to all matrices and recalculates the coordinates
+  void ApplySymm(const smatd& sym);
 #ifndef _NO_PYTHON
   PyObject* PyExport(TPtrList<PyObject>& atoms);
 #endif

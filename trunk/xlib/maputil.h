@@ -211,10 +211,10 @@ public:
               if( inside )  {
                 map[i][j][k] = level + 1;
                 levelUsed = true;
-                MaxLevel = level;
-                void_center[0] = (double)i/mapX;
-                void_center[1] = (double)j/mapY;
-                void_center[2] = (double)k/mapZ;
+                MaxLevel = level+1;
+                void_center[0] = i;  
+                void_center[1] = j;  
+                void_center[2] = k;
               }
             }
           }
@@ -223,6 +223,9 @@ public:
           break;
         level ++;
       }
+      void_center[0] /= mapX;
+      void_center[1] /= mapY;
+      void_center[2] /= mapZ;
       return MaxLevel;
   }
   static int PeakSortByCount(const MapUtil::peak& a, const MapUtil::peak& b)  {

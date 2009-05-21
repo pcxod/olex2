@@ -18,9 +18,9 @@ class TGlCursor: public AGDrawObject, AEventsDispatcher  {
 protected:
   bool Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, const IEObject *Data=NULL);
 public:
-  TGlCursor(const olxstr& collectionName, TGlRenderer *Render, bool TextStyle = true);
+  TGlCursor(TGlRenderer& Render, const olxstr& collectionName, bool TextStyle = true);
   void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
-  virtual ~TGlCursor();
+  virtual ~TGlCursor() {}
 
   void SetPosition(float x, float y)  {  FX=x;  FY=y;  }
   float X() const {  return FX;  }
@@ -35,7 +35,7 @@ public:
   inline olxch GetSymbol() const {  return Symbol;  }
   void SetSymbol(olxch v);
 
-  virtual bool Orient(TGlPrimitive *P);
+  virtual bool Orient(TGlPrimitive& P);
   bool GetDimensions(vec3d &Max, vec3d &Min){  return false;};
 
   void LibSymbol(const TStrObjList& Params, TMacroError& E);

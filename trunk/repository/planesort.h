@@ -5,7 +5,9 @@
 namespace PlaneSort {
   struct Sorter {
     TPSTypeList<double, const vec3d*> sortedPlane;
-    Sorter(const TSPlane& sp)  {
+    Sorter(const TSPlane& sp)  {  DoSort(sp);  }
+    Sorter() { }
+    void DoSort(const TSPlane& sp)  {
       sortedPlane.Add( 0, &sp.GetAtom(0).crd() );
       vec3d org(sp.GetAtom(0).crd()-sp.GetCenter());
       for( int i=1; i < sp.CrdCount(); i++ )  {
@@ -32,6 +34,5 @@ namespace PlaneSort {
       }
     }
   };
-
 };
 #endif

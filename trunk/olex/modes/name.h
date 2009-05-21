@@ -41,13 +41,13 @@ public:
     TGlXApp::GetMainForm()->executeMacro("labels -l");
     TGXApp& app = *TGlXApp::GetGXApp();
     for( int i=0; i < app.BondCount(); i++ )
-      app.GetBond(i).Groupable(false);
+      app.GetBond(i).SetGroupable(false);
     return true;
   }
   ~TNameMode() {
     TGXApp& app = *TGlXApp::GetGXApp();
     for( int i=0; i < app.BondCount(); i++ )
-      app.GetBond(i).Groupable(true);
+      app.GetBond(i).SetGroupable(true);
     if( !Symbol.IsEmpty() )  // reconnect the structure according to the new atom types
       TGlXApp::GetMainForm()->executeMacro("fuse");
   }

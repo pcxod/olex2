@@ -84,8 +84,6 @@
 #include "utf8file.h"
 #include "py_core.h"
 
-//#include <crtdbg.h>
-
 
 #ifdef __GNUC__
   #undef Bool
@@ -175,6 +173,7 @@ enum
   ID_AtomConn2,
   ID_AtomConn3,
   ID_AtomConn4,
+  ID_AtomConn12,
 
   ID_AtomPolyNone,
   ID_AtomPolyAuto,
@@ -196,7 +195,8 @@ enum
   ID_GStyleOpen,
   ID_FixLattice,
   ID_FreeLattice,
-  ID_DELINS
+  ID_DELINS,
+  ID_VarChange
 };
 
 class TObjectVisibilityChange: public AActionHandler
@@ -303,6 +303,7 @@ BEGIN_EVENT_TABLE(TMainForm, wxFrame)  // basic interface
   EVT_MENU(ID_AtomConn2, TMainForm::OnAtomConnChange)
   EVT_MENU(ID_AtomConn3, TMainForm::OnAtomConnChange)
   EVT_MENU(ID_AtomConn4, TMainForm::OnAtomConnChange)
+  EVT_MENU(ID_AtomConn12, TMainForm::OnAtomConnChange)
 
   EVT_MENU(ID_AtomPolyNone, TMainForm::OnAtomPolyChange)
   EVT_MENU(ID_AtomPolyAuto, TMainForm::OnAtomPolyChange)
@@ -325,7 +326,7 @@ TMainForm::TMainForm(TGlXApp *Parent, int Width, int Height):
   SkipSizing = false;
   Destroying = false;
 #ifdef __WIN32__
-  _UseGlTooltip = false;  // most platforms support it, besides some very old or stupid ones...
+  _UseGlTooltip = false;  // Linux and Mac set tooltips after have been told to do so...
 #else
   _UseGlTooltip = true;
 #endif
@@ -337,7 +338,7 @@ TMainForm::TMainForm(TGlXApp *Parent, int Width, int Height):
   */
   PythonExt::Init(this).Register( &TMainForm::PyInit );
   PythonExt::GetInstance()->Register( &OlexPyCore::PyInit );
-  TOlxVars::Init();
+  //TOlxVars::Init().OnVarChange->Add(this, ID_VarChange);
   FGlCanvas = NULL;
   FXApp = NULL;
   FGlConsole = NULL;
@@ -487,7 +488,7 @@ void TMainForm::XApp( TGXApp *XA)  {
 "s&;w-grows the rest of the structure, using already applied generators&;t-grows\
  only provided atoms/atom types", fpAny | psFileLoaded,
 "Grows whole structure or provided atoms only");
-  this_InitMacroD(Uniq, EmptyString, (fpAny ^ fpNone) | psFileLoaded,
+  this_InitMacroD(Uniq, EmptyString, fpAny | psFileLoaded,
 "Shows only fragments specified by atom name(s) or selection");
 
   this_InitMacroD(Group, "n-a custom name can be provided", (fpAny ^ fpNone) | psFileLoaded,
@@ -576,17 +577,21 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual occupancy\
  values are acceptable, nine values provide a full matrix ");
   this_InitMacroD(Qual, "h-High&;m-Medium&;l-Low", fpNone, "Sets drawings quality");
 
-  this_InitMacro(Line, , fpOne|fpTwo|fpThree);
+  this_InitMacroD(Line, EmptyString, fpAny, "Creates a line or best line for provided atoms");
   this_InitMacro(AddLabel, , fpThree|fpFive);
   this_InitMacroD(Mpln, "n-just orient, do not create plane&;r-create regular plane;we-use weights proportional to the (atomic weight)^we", 
-    fpAny, "sets current view along the normal of the best plane");
+    fpAny, "Sets current view along the normal of the best plane");
   this_InitMacroD(Cent, EmptyString, fpAny^fpNone, "creates a centroid for given atoms");
-  this_InitMacroD(Mask, EmptyString, fpAny, "sets primitives for atoms or bonds according to provided mask" );
+  this_InitMacroD(Mask, EmptyString, fpAny^fpNone, 
+"Sets primitives for atoms or bonds according to provided mask.\
+Accepts atoms, bonds, hbonds or a name (like from LstGO). Example: 'mask hbonds 2048' - this resets hydrogen bond style to default" );
 
-  this_InitMacroD(ARad, EmptyString, fpAny^fpNone, "Changes how the atoms are drawn [sfil,pers,isot,isoth]" );
-  this_InitMacroD(ADS, EmptyString, fpAny^(fpNone), "Changes atom draw style [sph,elp]" );
-  this_InitMacroD(AZoom, EmptyString, fpAny^fpNone, "modifies given atoms [all] radius. The first argument is the new radius in %");
-  this_InitMacroD(BRad, EmptyString, fpOne, "sets bond radius to given number" );
+  this_InitMacroD(ARad, EmptyString, fpAny^fpNone, 
+"Changes how the atoms are drawn [sfil - sphere packing, pers - static radii, isot - radii proportional to Ueq,\
+ isoth - as isot, but applied to H atoms as well]" );
+  this_InitMacroD(ADS, EmptyString, fpAny^(fpNone), "Changes atom draw style [sph,elp,std]" );
+  this_InitMacroD(AZoom, EmptyString, fpAny^fpNone, "Modifies given atoms [all] radius. The first argument is the new radius in %");
+  this_InitMacroD(BRad, EmptyString, fpAny^fpNone, "Sets provided [all] bonds radius to given number (first argument)" );
 
   this_InitMacro(Hide, , fpAny^fpNone );
   this_InitMacroD(Kill, "h-kill hidden atoms", fpAny^fpNone, "deletes provided [selected] atoms" );
@@ -601,8 +606,8 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual occupancy\
   this_InitMacro(Save, , fpAny^fpNone );
   this_InitMacro(Load, , fpAny^fpNone );
   this_InitMacro(Link, , fpNone|fpOne );
-  this_InitMacro(Style, s, fpNone|fpOne );
-  this_InitMacro(Scene, s, fpNone|fpOne );
+  this_InitMacroD(Style, "s-shows a file open dialog", fpNone|fpOne, "Prints default style or sets it (none resets)" );
+  this_InitMacroD(Scene, "s-shows a file open dialog", fpNone|fpOne, "Prints default scene parameters or sets it (none resets)" );
 
   this_InitMacro(SyncBC, , fpNone );
 
@@ -621,12 +626,12 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual occupancy\
   this_InitMacro(HtmlPanelVisible, , fpNone|fpOne|fpTwo );
 
   this_InitMacro(QPeakScale, , fpNone|fpOne );
-  this_InitMacro(Label, , fpAny^fpNone );
-  this_InitMacro(CalcChn, , fpNone|fpOne );
-  this_InitMacro(CalcMass, , fpNone|fpOne );
+  this_InitMacroD(Label, EmptyString, fpAny, "Creates moveable labels for provided atoms (selection)");
+  this_InitMacroD(CalcChn, EmptyString, fpNone|fpOne, "Calculates CHN composition of curent structure or for provided formula" );
+  this_InitMacroD(CalcMass, EmptyString, fpNone|fpOne, "Calculates Mass spectrum of curent structure or for provided formula" );
 
-  this_InitMacro(Focus, , fpNone );
-  this_InitMacro(Refresh, , fpNone );
+  this_InitMacroD(Focus, EmptyString, fpNone, "Sets input focus to the console" );
+  this_InitMacroD(Refresh, EmptyString, fpNone, "Refreshes the GUI" );
   this_InitMacroD(Move,"cs-leaves selection unchanged&;c-copy moved atom", fpNone|fpTwo,
   "moves two atoms as close to each other as possible; if no atoms given, moves all fragments\
   as close to the cell center as possible" );
@@ -635,7 +640,7 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual occupancy\
   this_InitMacro(Fvar, , (fpAny^fpNone)|psCheckFileTypeIns );
   this_InitMacro(Sump, , (fpAny^fpNone)|psCheckFileTypeIns );
   this_InitMacro(Part, p&;lo, (fpAny^fpNone)|psCheckFileTypeIns );
-  this_InitMacroD(Afix,"n-for afix 66 restraints the pyridine rings as well as phenol rings" , 
+  this_InitMacroD(Afix,"n-to accept N atoms in the rings for afix 66" , 
     (fpAny^fpNone)|psCheckFileTypeIns,
     "sets atoms afix, special cases are 56,69,66,69,76,79,106,109,116 and 119");
   this_InitMacro(Dfix, cs-do not clear selection&;e, fpAny|psCheckFileTypeIns );
@@ -658,7 +663,7 @@ f-fixed parameters&;u-Uiso&;r-occupancy for riding atoms&;ao-actual occupancy\
   this_InitMacroD(ISOR, "cs-do not clear selection", fpAny|psCheckFileTypeIns,
 "Forses Uij of provided atoms to behave in isotropic manner. If no atoms provided, all non-H atoms considered" );
 
-  this_InitMacro(Degen, cs, fpOne|psFileLoaded );
+  this_InitMacroD(Degen, "cs-clear selection", fpAny|psFileLoaded, "Prints how many symmetry operators put given atom to the same site" );
   // not implemented
   this_InitMacro(SwapExyz, , fpAny );
   // not implemented
@@ -748,15 +753,16 @@ v-[grow] use user provided delta for connctivity analysis",
   this_InitMacro(NextSolution, ,fpNone );
 
   this_InitMacroD(Match, "s-subgraph match&;n-naming. If the value a symbol [or set of]\
- this is appended to the label, '$xx' replaces the symbols after the atom type symbol with xx, leving the ending,\
- '-xx' - changes the ending of the label with xx&;a-align&;i-try inversion&;u-unmatch", fpNone|fpOne|fpTwo, "Fragment matching, alignment and label transfer routine" );
+ this is appended to the label, '$xx' replaces the symbols after the atom type symbol with xx,\
+ leving the ending, '-xx' - changes the ending of the label with xx&;a-align&;\
+i-try inversion&;u-unmatch&;esd-calculate esd (works for pairs only)", fpNone|fpOne|fpTwo, "Fragment matching, alignment and label transfer routine" );
   this_InitMacroD(Conn, EmptyString, fpAny^fpNone, "Changes provided atom(s) connectivity (only until next connectivity modifying operation for now). First parameter is the new connectivity" );
+  this_InitMacroD(AddBond, EmptyString, fpAny, "Adds specified bond to the connectivity table" );
+  this_InitMacroD(DelBond, EmptyString, fpAny, "Removes specified bond from the connectivity table" );
   this_InitMacro(ShowWindow, ,fpOne|fpTwo );
   
   this_InitMacro(DelOFile, ,fpOne );
   this_InitMacro(CalcVol, cs, fpOne );
-
-  this_InitMacro(ChangeLanguage, ,fpOne );
 
   this_InitMacroD(Schedule, "r-repeatable", fpAny^(fpNone|fpOne),
 "Schedules a particular macro (second argument) to be executed within provided\
@@ -924,6 +930,7 @@ separated values of Atom Type and radius, an entry a line" );
   this_InitFuncD(CheckState, fpOne|fpTwo, "Returns if true if given program state is active" );
   this_InitFuncD(GlTooltip, fpNone|fpOne, "Returns state of/sets OpenGL tooltip implementation for the main window\
                                           (some old platforms do not have proper implementation of tooltips)" );
+  this_InitFuncD(CurrentLanguage, fpNone|fpOne, "Returns/sets current language" );
 
   Library.AttachLibrary( TEFile::ExportLibrary() );
   //Library.AttachLibrary( olxstr::ExportLibrary("str") );
@@ -1067,6 +1074,7 @@ separated values of Atom Type and radius, an entry a line" );
     pmAtomConn->Append(ID_AtomConn2, wxT("2"));
     pmAtomConn->Append(ID_AtomConn3, wxT("3"));
     pmAtomConn->Append(ID_AtomConn4, wxT("4"));
+    pmAtomConn->Append(ID_AtomConn12, wxT("Default"));
     pmAtomPoly->AppendRadioItem(ID_AtomPolyNone, wxT("None"));
     pmAtomPoly->AppendRadioItem(ID_AtomPolyAuto, wxT("Auto"));
     pmAtomPoly->AppendRadioItem(ID_AtomPolyRegular, wxT("Regular"));
@@ -1188,10 +1196,10 @@ separated values of Atom Type and radius, an entry a line" );
 //  FHtml->OnDblClick->Add(this, ID_HTMLDBLCLICK);
   FHtml->OnCmd->Add(this, ID_HTMLCMD);
 
-  FXApp->LabelsVisible(false);
+  FXApp->SetLabelsVisible(false);
   FXApp->GetRender().LightModel.ClearColor() = 0x0f0f0f0f;
 
-  FGlConsole = new TGlConsole("Console", &FXApp->GetRender() );
+  FGlConsole = new TGlConsole(FXApp->GetRender(), "Console");
   // the commands are posted from in Dispatch, SkipPosting is controlling the output
   FXApp->GetLog().AddStream( FGlConsole, false );
   FGlConsole->OnCommand->Add( this, ID_COMMAND);
@@ -1208,16 +1216,16 @@ separated values of Atom Type and radius, an entry a line" );
   FCmdLine->OnKeyDown->Add(this, ID_CMDLINEKEYDOWN);
   FCmdLine->OnCommand->Add( this, ID_COMMAND);
 
-  FHelpWindow = new TGlTextBox("HelpWindow", &FXApp->GetRender());
+  FHelpWindow = new TGlTextBox(FXApp->GetRender(), "HelpWindow");
   FXApp->AddObjectToCreate(FHelpWindow);
-  FHelpWindow->Visible(false);
+  FHelpWindow->SetVisible(false);
 
-  FInfoBox = new TGlTextBox("InfoBox", &FXApp->GetRender());
+  FInfoBox = new TGlTextBox(FXApp->GetRender(), "InfoBox");
   FXApp->AddObjectToCreate( FInfoBox );
 
-  GlTooltip = new TGlTextBox("Tooltip", &FXApp->GetRender());
+  GlTooltip = new TGlTextBox(FXApp->GetRender(), "Tooltip");
   FXApp->AddObjectToCreate( GlTooltip );
-  GlTooltip->Visible(false);
+  GlTooltip->SetVisible(false);
   GlTooltip->SetZ(4.9);
 
   FTimer->OnTimer()->Add( TBasicApp::GetInstance()->OnTimer );
@@ -1236,32 +1244,32 @@ void TMainForm::StartupInit()  {
   wxFont Font(10, wxMODERN, wxNORMAL, wxNORMAL);//|wxFONTFLAG_ANTIALIASED);
   // create 4 fonts
   
-  TGlFont *fnt = FXApp->GetRender().Scene()->CreateFont("Console", Font.GetNativeFontInfoDesc().c_str());
+  TGlFont *fnt = FXApp->GetRender().GetScene().CreateFont("Console", Font.GetNativeFontInfoDesc().c_str());
   fnt->Material().SetFlags(sglmAmbientF|sglmEmissionF|sglmIdentityDraw);
   fnt->Material().AmbientF = 0x7fff7f;
   fnt->Material().EmissionF = 0x1f2f1f;
 
-  fnt = FXApp->GetRender().Scene()->CreateFont("Help", Font.GetNativeFontInfoDesc().c_str());
+  fnt = FXApp->GetRender().GetScene().CreateFont("Help", Font.GetNativeFontInfoDesc().c_str());
   fnt->Material().SetFlags(sglmAmbientF|sglmIdentityDraw);
   fnt->Material().AmbientF = 0x7fff7f;
 
-  fnt = FXApp->GetRender().Scene()->CreateFont("Notes", Font.GetNativeFontInfoDesc().c_str());
+  fnt = FXApp->GetRender().GetScene().CreateFont("Notes", Font.GetNativeFontInfoDesc().c_str());
   fnt->Material().SetFlags(sglmAmbientF|sglmIdentityDraw);
   fnt->Material().AmbientF = 0x7fff7f;
 
-  fnt = FXApp->GetRender().Scene()->CreateFont("Labels", Font.GetNativeFontInfoDesc().c_str());
+  fnt = FXApp->GetRender().GetScene().CreateFont("Labels", Font.GetNativeFontInfoDesc().c_str());
   fnt->Material().SetFlags(sglmAmbientF|sglmIdentityDraw);
   fnt->Material().AmbientF = 0x7fff7f;
 
-  fnt = FXApp->GetRender().Scene()->CreateFont("Picture_labels", Font.GetNativeFontInfoDesc().c_str());
+  fnt = FXApp->GetRender().GetScene().CreateFont("Picture_labels", Font.GetNativeFontInfoDesc().c_str());
   fnt->Material().SetFlags(sglmAmbientF|sglmIdentityDraw);
   fnt->Material().AmbientF = 0x7fff7f;
 
-  fnt = FXApp->GetRender().Scene()->CreateFont("Tooltip", Font.GetNativeFontInfoDesc().c_str());
+  fnt = FXApp->GetRender().GetScene().CreateFont("Tooltip", Font.GetNativeFontInfoDesc().c_str());
   fnt->Material().SetFlags(sglmAmbientF|sglmIdentityDraw);
   fnt->Material().AmbientF = 0x7fff7f;
 
-  FXApp->LabelsFont( 3 );
+  FXApp->SetLabelsFont( 3 );
 
   FGlConsole->SetFontIndex(0);
   FHelpWindow->SetFontIndex(1);
@@ -1284,7 +1292,10 @@ void TMainForm::StartupInit()  {
 
   FXApp->Init(); // initialise the gl after styles reloaded
 
-  FInfoBox->SetHeight(FXApp->GetRender().Scene()->Font(2)->TextHeight(EmptyString));
+  if( !GradientPicture.IsEmpty() )  // need to call it after all objects are created
+    ProcessXPMacro(olxstr("grad ") << " -p=\'" << GradientPicture << '\'', MacroError);
+
+  FInfoBox->SetHeight(FXApp->GetRender().GetScene().GetFont(2)->TextHeight(EmptyString));
   
   ProcessXPMacro(olxstr("showwindow help ") << HelpWindowVisible, MacroError);
   ProcessXPMacro(olxstr("showwindow info ") << InfoWindowVisible, MacroError);
@@ -1374,6 +1385,11 @@ void TMainForm::StartupInit()  {
                     << ",\'" << StoredParams.GetObject(i)
                     << "\')", MacroError);
 
+  }
+
+  if( Dictionary.GetCurrentLanguage().IsEmpty() )  {
+    try  { Dictionary.SetCurrentLanguage(DictionaryFile, "English");  }
+    catch(...) {}
   }
 
   ProcessXPMacro("onstartup", MacroError);
@@ -1498,22 +1514,21 @@ void TMainForm::OnAtomOccuChange(wxCommandEvent& event)  {
   TXAtom *XA = (TXAtom*)FObjectUnderMouse;
   if( XA == NULL )  return;
   olxstr Tmp = ((event.GetId() == ID_AtomOccuFix) ? "fix " : 
-                (event.GetId() == ID_AtomOccuFree) ? "free " : "");
+                (event.GetId() == ID_AtomOccuFree) ? "free " : "fix ");
   Tmp << "occu ";
-  if( XA->Selected() )  
-    Tmp << "sel";
-  else                  
-    Tmp << "#c" << XA->Atom().CAtom().GetId();
-  Tmp << ' ';
   switch( event.GetId() )  {
-    case ID_AtomOccu1:   Tmp << "11";  break;
-    case ID_AtomOccu34:  Tmp << "10.75";  break;
-    case ID_AtomOccu12:  Tmp << "10.5";  break;
-    case ID_AtomOccu13:  Tmp << "10.33333";  break;
-    case ID_AtomOccu14:  Tmp << "10.25";  break;
+    case ID_AtomOccu1:   Tmp << "1";  break;
+    case ID_AtomOccu34:  Tmp << "0.75";  break;
+    case ID_AtomOccu12:  Tmp << "0.5";  break;
+    case ID_AtomOccu13:  Tmp << "0.33333";  break;
+    case ID_AtomOccu14:  Tmp << "0.25";  break;
     case ID_AtomOccuFix:   break;
     case ID_AtomOccuFree:  break;
   }
+  if( XA->IsSelected() )  
+    Tmp << " sel";
+  else                  
+    Tmp << " #c" << XA->Atom().CAtom().GetId();
   ProcessXPMacro(Tmp, MacroError);
 }
 //..............................................................................
@@ -1528,9 +1543,10 @@ void TMainForm::OnAtomConnChange(wxCommandEvent& event)  {
     case ID_AtomConn2:   Tmp << '2';  break;
     case ID_AtomConn3:   Tmp << '3';  break;
     case ID_AtomConn4:   Tmp << '4';  break;
+    case ID_AtomConn12:  Tmp << def_max_bonds;  break;
   }
-  if( XA->Selected() )  Tmp << " sel";
-  else                  Tmp << " #x" << XA->GetXAppId();
+  if( !XA->IsSelected() )
+    Tmp << " #c" << XA->Atom().CAtom().GetId();
   ProcessXPMacro(Tmp, MacroError);
   TimePerFrame = FXApp->Draw();
 }
@@ -1580,14 +1596,14 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
   if( FObjectUnderMouse == NULL )  return;
 
   if( event.GetId() == ID_GraphicsHide )  {
-    if( FObjectUnderMouse->Selected() )
+    if( FObjectUnderMouse->IsSelected() )
       ProcessXPMacro("hide sel", MacroError);
     else
       FUndoStack->Push( FXApp->SetGraphicsVisible(FObjectUnderMouse, false) );
     TimePerFrame = FXApp->Draw();
   }
   else if( event.GetId() == ID_GraphicsKill )  {
-    if( FObjectUnderMouse->Selected() )
+    if( FObjectUnderMouse->IsSelected() )
       ProcessXPMacro("kill sel", MacroError);
     else  {
       TPtrList<AGDrawObject> l;
@@ -1609,8 +1625,8 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
     }
   }
   else if( event.GetId() == ID_GraphicsDS )  {
-    TGlGroup* Sel = FXApp->Selection();
-    TdlgMatProp* MatProp = new TdlgMatProp(this, FObjectUnderMouse->Primitives(), FXApp);
+    TGlGroup& Sel = FXApp->GetSelection();
+    TdlgMatProp* MatProp = new TdlgMatProp(this, &FObjectUnderMouse->GetPrimitives(), FXApp);
     if( EsdlInstanceOf(*FObjectUnderMouse, TGlGroup) )
       MatProp->SetCurrent( *((TGlGroup*)FObjectUnderMouse)->GlM() );
     if( MatProp->ShowModal() == wxID_OK )  {
@@ -1627,12 +1643,22 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
       TBasicApp::GetLog().Info("The object does not support requested function...");
       return;
     }
-    int i = FObjectUnderMouse->Primitives()->Style()->GetParam("PMask", "0").ToInt();
+    int i = FObjectUnderMouse->GetPrimitives().GetStyle().GetParam(FObjectUnderMouse->GetPrimitiveMaskName(), "0").ToInt();
     TdlgPrimitive* Primitives = new TdlgPrimitive(&Ps, i, this);
     if( Primitives->ShowModal() == wxID_OK )  {
-      olxstr TmpStr = "mask ";
-      TmpStr << FObjectUnderMouse->Primitives()->Name() << ' ' << Primitives->Mask;
-      ProcessXPMacro(TmpStr, MacroError);
+      if( FObjectUnderMouse->IsSelected() && EsdlInstanceOf(*FObjectUnderMouse, TXBond) )  {
+        TXBond& xb = *(TXBond*)FObjectUnderMouse;
+        FXApp->Individualise(xb);
+        for( int i=0; i < FXApp->AtomCount(); i++ )
+          FXApp->GetAtom(i).Atom().SetTag(i);
+        BondCreationParams bpar(FXApp->GetAtom(xb.Bond().A().GetTag()), FXApp->GetAtom(xb.Bond().B().GetTag()));
+        xb.UpdatePrimitives( Primitives->Mask, &bpar);
+      }
+      else  {
+        olxstr TmpStr = "mask ";
+        TmpStr << FObjectUnderMouse->GetPrimitives().GetName() << ' ' << Primitives->Mask;
+        ProcessXPMacro(TmpStr, MacroError);
+      }
     }
     Primitives->Destroy();
     TimePerFrame = FXApp->Draw();
@@ -1671,7 +1697,7 @@ void TMainForm::ObjectUnderMouse( AGDrawObject *G)  {
     miAtomInfo->SetText( uiStr(T) );
     pmAtom->Enable(ID_AtomGrowShells, FXApp->AtomExpandable(XA));
     pmAtom->Enable(ID_AtomGrowFrags, FXApp->AtomExpandable(XA));
-    pmAtom->Enable(ID_Selection, G->Selected());
+    pmAtom->Enable(ID_Selection, G->IsSelected());
     pmAtom->Enable(ID_SelGroup, false);
     int bound_cnt = 0;
     for( int i=0; i < XA->Atom().NodeCount(); i++ )  {
@@ -1702,7 +1728,7 @@ void TMainForm::ObjectUnderMouse( AGDrawObject *G)  {
     T << '-' << XB->Bond().B().GetLabel() << ':' << ' '
       << olxstr::FormatFloat(3, XB->Bond().Length());
     miBondInfo->SetText( uiStr(T) );
-    pmBond->Enable(ID_Selection, G->Selected());
+    pmBond->Enable(ID_Selection, G->IsSelected());
     FCurrentPopup = pmBond;
   }
   else if( EsdlInstanceOf( *G, TXPlane) )  {
@@ -1711,11 +1737,11 @@ void TMainForm::ObjectUnderMouse( AGDrawObject *G)  {
   if( FCurrentPopup != NULL )  {
     FCurrentPopup->Enable(ID_SelGroup, false);
     FCurrentPopup->Enable(ID_SelUnGroup, false);
-    if( FXApp->Selection()->Count() > 1 )  {
+    if( FXApp->GetSelection().Count() > 1 )  {
       FCurrentPopup->Enable(ID_SelGroup, true);
     }
-    if( FXApp->Selection()->Count() == 1 )  {
-      if( EsdlInstanceOf( *FXApp->Selection()->Object(0), TGlGroup) )  {
+    if( FXApp->GetSelection().Count() == 1 )  {
+      if( EsdlInstanceOf( FXApp->GetSelection().GetObject(0), TGlGroup) )  {
         FCurrentPopup->Enable(ID_SelUnGroup, true);
       }
     }
@@ -1741,8 +1767,10 @@ void TMainForm::OnAtomTypeChange(wxCommandEvent& event)  {
   TXAtom *XA = (TXAtom*)FObjectUnderMouse;
   if( XA == NULL )  return;
   olxstr Tmp("name -c ");
-  if( XA->Selected() )  Tmp << "sel";
-  else                  Tmp << "#x" << XA->GetXAppId();
+  if( XA->IsSelected() )  
+    Tmp << "sel";
+  else                  
+    Tmp << "#x" << XA->GetXAppId();
   Tmp << ' ';
   switch( event.GetId() )  {
     case ID_AtomTypeChangeC:
@@ -1773,8 +1801,10 @@ void TMainForm::OnAtomTypePTable(wxCommandEvent& event)  {
   TXAtom *XA = (TXAtom*)FObjectUnderMouse;
   if( !XA )  return;
   olxstr Tmp = "name ";
-  if( XA->Selected() )  Tmp << "sel";
-  else                  Tmp << "#x" << XA->GetXAppId();
+  if( XA->IsSelected() )  
+    Tmp << "sel";
+  else                  
+    Tmp << "#x" << XA->GetXAppId();
   Tmp << ' ';
   TPTableDlg *Dlg = new TPTableDlg(this, &TAtomsInfo::GetInstance());
   if( Dlg->ShowModal() == wxID_OK )  {
@@ -1788,13 +1818,13 @@ void TMainForm::OnAtomTypePTable(wxCommandEvent& event)  {
 //..............................................................................
 int TMainForm::GetFragmentList(TNetPList& res)  {
   if( FObjectUnderMouse == NULL )  return 0;
-  if( FObjectUnderMouse->Selected() )  {
-    TGlGroup* glg = FXApp->GetRender().Selection();
-    for( int i=0; i < glg->Count(); i++ )  {
-      if( EsdlInstanceOf(*glg->Object(i), TXAtom) )
-        res.Add( &((TXAtom*)glg->Object(i))->Atom().GetNetwork() );
-      else if( EsdlInstanceOf(*glg->Object(i), TXBond) )
-        res.Add( &((TXBond*)glg->Object(i))->Bond().GetNetwork() );
+  if( FObjectUnderMouse->IsSelected() )  {
+    TGlGroup& glg = FXApp->GetSelection();
+    for( int i=0; i < glg.Count(); i++ )  {
+      if( EsdlInstanceOf(glg[i], TXAtom) )
+        res.Add( &((TXAtom&)glg[i]).Atom().GetNetwork() );
+      else if( EsdlInstanceOf(glg[i], TXBond) )
+        res.Add( &((TXBond&)glg[i]).Bond().GetNetwork() );
     }
     for( int i=0; i < res.Count(); i++ )
       res[i]->SetTag(i);
@@ -1866,9 +1896,8 @@ void TMainForm::OnModelCenter(wxCommandEvent& event)  {
 void TMainForm::AquireTooltipValue()  {
   AGDrawObject *G = FXApp->SelectObject(MousePositionX, MousePositionY, 0);
   if( G != NULL )  {
-    if( G->Selected() )  {
+    if( G->IsSelected() )
       Tooltip = FXApp->GetSelectionInfo();
-    }
     else if( EsdlInstanceOf( *G, TXAtom) )  {
       const TXAtom &xa = *(TXAtom*)G;
       const TCAtom& ca = xa.Atom().CAtom();
@@ -1926,6 +1955,15 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
     //wxClientDC dc(FGlCanvas);
     //dc.DrawText(wxT("RRRRRRRRRRRR"), 0, 0);
   }
+  //else if( MsgId == ID_VarChange )  {
+  //  if( Data != NULL && EsdlInstanceOf(*Data, TOlxVarChangeData) && FGlConsole != NULL )  {
+  //    TOlxVarChangeData& vcd = *(TOlxVarChangeData*)Data;
+  //    if( GlConsoleBlendVarName.Comparei(vcd.var_name) == 0 )  {
+  //      if( !vcd.str_val.IsEmpty() )
+  //        FGlConsole->SetBlend( vcd.str_val.ToBool() );
+  //    }
+  //  }
+  //}
   else if( MsgId == ID_TIMER )  {
     FTimer->OnTimer()->SetEnabled( false );
     // execute tasks ...
@@ -1963,7 +2001,8 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
         FObjectUnderMouse = NULL;
         ProcessXPMacro((olxstr("@reap -b -r \'") << FListenFile)+'\'', MacroError);
         // for debug purposes
-        if( TEFile::FileExists(DefStyle) )  FXApp->GetRender().Styles()->LoadFromFile(DefStyle);
+        if( TEFile::FileExists(DefStyle) )  
+          FXApp->GetRender().GetStyles().LoadFromFile(DefStyle);
         for( int i=0; i < FOnListenCmds.Count(); i++ )  {
           ProcessXPMacro(FOnListenCmds[i], MacroError);
           if( !MacroError.IsSuccessful() )  break;
@@ -1973,9 +2012,9 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
       }
     }
     if( (FMode & mRota) != 0  )  {
-      FXApp->GetRender().Basis()->RotateX(FXApp->GetRender().GetBasis().GetRX()+FRotationIncrement*FRotationVector[0]);
-      FXApp->GetRender().Basis()->RotateY(FXApp->GetRender().GetBasis().GetRY()+FRotationIncrement*FRotationVector[1]);
-      FXApp->GetRender().Basis()->RotateZ(FXApp->GetRender().GetBasis().GetRZ()+FRotationIncrement*FRotationVector[2]);
+      FXApp->GetRender().GetBasis().RotateX(FXApp->GetRender().GetBasis().GetRX()+FRotationIncrement*FRotationVector[0]);
+      FXApp->GetRender().GetBasis().RotateY(FXApp->GetRender().GetBasis().GetRY()+FRotationIncrement*FRotationVector[1]);
+      FXApp->GetRender().GetBasis().RotateZ(FXApp->GetRender().GetBasis().GetRZ()+FRotationIncrement*FRotationVector[2]);
       FRotationAngle -= olx_abs(FRotationVector.Length()*FRotationIncrement);
       if( FRotationAngle < 0 )  FMode ^= mRota;
       Draw = true;
@@ -2014,9 +2053,9 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
         Draw = true;
       }
     }
-    if( FXApp->GetFader().Visible() )  {
+    if( FXApp->GetFader().IsVisible() )  {
       if( !FXApp->GetFader().Increment() )
-         FXApp->GetFader().Visible(false);
+         FXApp->GetFader().SetVisible(false);
       Draw = true;
     }
     if( MouseMoveTimeElapsed < 2500 )
@@ -2031,8 +2070,8 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
       else if( GlTooltip != NULL )  {
         AquireTooltipValue();
         if( Tooltip.IsEmpty() )  {
-          if( GlTooltip->Visible() )  {
-            GlTooltip->Visible(false);
+          if( GlTooltip->IsVisible() )  {
+            GlTooltip->SetVisible(false);
             Draw = true;
           }
         }
@@ -2049,7 +2088,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
           GlTooltip->SetLeft(x); // put it off the mouse
           GlTooltip->SetTop(y);
           GlTooltip->SetZ( FXApp->GetRender().GetMaxRasterZ() -0.1 );
-          GlTooltip->Visible(true);
+          GlTooltip->SetVisible(true);
           Draw = true;
         }
       }
@@ -2182,7 +2221,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
         FGlConsole->SetCommand(EmptyString);
       }
       else  {
-        FHelpWindow->Visible(false);
+        FHelpWindow->SetVisible(false);
         olxstr FullCmd(tmp);
         ProcessXPMacro(FullCmd, MacroError);
         // this is done in faivor of SetCmd macro, which supposed to modify the command ...
@@ -2226,13 +2265,14 @@ void TMainForm::OnPlane(wxCommandEvent& event)  {
   if( !XP )  return;
   switch( event.GetId() )  {
     case ID_PlaneActivate:
-    ProcessXPMacro(olxstr("activate ") << XP->Primitives()->Name(), MacroError);
+    ProcessXPMacro(olxstr("activate ") << XP->GetPrimitives().GetName(), MacroError);
     break;
   }
 }
 //..............................................................................
 void TMainForm::PreviewHelp(const olxstr& Cmd)  {
-  if( !HelpWindowVisible )  return;
+  if( !HelpWindowVisible )
+    return;
   olxstr Tmp;
   if( !Cmd.IsEmpty() && (FHelpItem != NULL))  {
     TPtrList<TDataItem> SL;
@@ -2240,8 +2280,8 @@ void TMainForm::PreviewHelp(const olxstr& Cmd)  {
     FHelpItem->FindSimilarItems(Cmd, SL);
     if( FMacroItem != NULL )
       FMacroItem->FindSimilarItems(Cmd, SL);
-    if( SL.Count() != 0 )  {
-      FHelpWindow->Visible( HelpWindowVisible );
+    if( !SL.IsEmpty() )  {
+      FHelpWindow->SetVisible( HelpWindowVisible );
       FHelpWindow->Clear();
       FGlConsole->ShowBuffer( !HelpWindowVisible );
       FHelpWindow->SetTop( InfoWindowVisible ? FInfoBox->GetTop() + FInfoBox->GetHeight() + 5 : 1 );
@@ -2271,18 +2311,17 @@ void TMainForm::PreviewHelp(const olxstr& Cmd)  {
       }
     }
     else  {
-      FHelpWindow->Visible(false);
+      FHelpWindow->SetVisible(false);
       FGlConsole->ShowBuffer(true);
     }
   }
   else  {
-    FHelpWindow->Visible(false);
+    FHelpWindow->SetVisible(false);
     FGlConsole->ShowBuffer(true);
   }
 }
 //..............................................................................
 void TMainForm::OnChar( wxKeyEvent& m )  {
-
   short Fl=0, inc=3;
   olxstr Cmd, FullCmd;
   if( m.m_altDown )      Fl |= sssAlt;
@@ -2412,7 +2451,7 @@ void TMainForm::OnChar( wxKeyEvent& m )  {
   }
 
   if( FProcess != NULL && FProcess->IsRedirected() )  {
-    FHelpWindow->Visible(false);
+    FHelpWindow->SetVisible(false);
     FGlConsole->ShowBuffer(true);
     TimePerFrame = FXApp->Draw();
     return;
@@ -2501,20 +2540,20 @@ void TMainForm::OnKeyDown(wxKeyEvent& m)  {
   m.Skip();
 }
 //..............................................................................
-void TMainForm::OnSelection(wxCommandEvent& m)
-{
+void TMainForm::OnSelection(wxCommandEvent& m)  {
   TGlGroup *GlR = NULL;
   if( EsdlInstanceOf( *FObjectUnderMouse, TGlGroup) )
     GlR = (TGlGroup*)FObjectUnderMouse;
-  switch( m.GetId() )
-  {
+  switch( m.GetId() )  {
     case ID_SelGroup:
       ProcessXPMacro("group sel", MacroError);
 //      FXApp->GroupSelection();
       break;
     case ID_SelUnGroup:
-      if( GlR ) FXApp->UnGroup(GlR);
-      else      FXApp->UnGroupSelection();
+      if( GlR != NULL ) 
+        FXApp->UnGroup(*GlR);
+      else      
+        FXApp->UnGroupSelection();
       break;
   }
 }
@@ -2604,26 +2643,55 @@ void TMainForm::OnResize()  {
 }
 //..............................................................................
 olxstr TMainForm::ExpandCommand(const olxstr &Cmd)  {
-  olxstr FullCmd(Cmd);
+  if( Cmd.IsEmpty() )
+    return Cmd;
+  olxstr FullCmd(Cmd.ToLowerCase());
+  TStrList all_cmds;
   if( !Cmd.IsEmpty() && FMacroItem != NULL )  {
     TPtrList<TDataItem> SL;
     FMacroItem->FindSimilarItems(Cmd, SL);
-    if( SL.Count() == 1 )
-      FullCmd = SL[0]->GetName();
-    else if( SL.IsEmpty() && FHelpItem != NULL )  {
-      FHelpItem->FindSimilarItems(Cmd, SL);
-      if( SL.Count() == 1 )
-        FullCmd = SL[0]->GetName();
-    }
+    for( int i=0; i < SL.Count(); i++ )
+      all_cmds.Add(SL[i]->GetName());
   }
-  if( FullCmd == Cmd )  {  // try buil-ins
-    TBasicFunctionPList bins;  // builins
-    GetLibrary().FindSimilarMacros(Cmd, bins);
-    GetLibrary().FindSimilarFunctions(Cmd, bins);
-    if( bins.Count() == 1 )  {
-      FullCmd = bins[0]->GetQualifiedName();
-    }
+  TBasicFunctionPList bins;  // builins
+  GetLibrary().FindSimilarMacros(Cmd, bins);
+  GetLibrary().FindSimilarFunctions(Cmd, bins);
+  if( bins.Count() == 1 )
+    FullCmd = bins[0]->GetQualifiedName();
+  else  {
+    for( int i=0; i < bins.Count(); i++ )
+      all_cmds.Add( bins[i]->GetName() );
   }
+  if( all_cmds.Count() > 1 )  {
+    if( FHelpWindow->IsVisible() )  // console buffer is hidden then...
+      FHelpWindow->Clear();
+    olxstr cmn_str = all_cmds[0].ToLowerCase();
+    olxstr line(all_cmds[0], 80);
+    for( int i=1; i < all_cmds.Count(); i++ )  {
+      cmn_str = all_cmds[i].ToLowerCase().CommonString(cmn_str);
+      if( line.Length() + all_cmds[i].Length() > 79 )  {  // expects no names longer that 79!
+        line << '\n';
+        if( FHelpWindow->IsVisible() )
+          FHelpWindow->PostText(line);
+        else
+          FXApp->GetLog() << line;
+        line.SetLength(0);
+      }
+      else
+        line << ' ' << all_cmds[i];
+    }
+    FullCmd = cmn_str;
+    if( !line.IsEmpty() )  {
+      line << '\n';
+      if( FHelpWindow->IsVisible() )
+        FHelpWindow->PostText(line);
+      else
+        FXApp->GetLog() << line;
+    }
+    FXApp->GetLog() << '\n';
+  }
+  else if( all_cmds.Count() == 1 )
+    return all_cmds[0];
   return FullCmd;
 }
 //..............................................................................
@@ -2724,16 +2792,17 @@ void TMainForm::SaveSettings(const olxstr &FN)  {
   I->AddField("CmdLine", CmdLineVisible);
 
   I = &DF.Root().AddItem("Defaults");
-  I->AddField("Style", DefStyle);
-  I->AddField("SceneP", DefSceneP);
+  I->AddField("Style", TEFile::ExtractFileName(DefStyle));
+  I->AddField("SceneP", TEFile::ExtractFileName(DefSceneP));
 
   I->AddField("BgColor", FBgColor.ToString());
   I->AddField("WhiteOn", (FXApp->GetRender().LightModel.ClearColor().GetRGB() == 0xffffffff) );
-  I->AddField("Gradient", FXApp->GetRender().Background()->Visible() );
+  I->AddField("Gradient", FXApp->GetRender().Background()->IsVisible() );
   I->AddField("GradientPicture", GradientPicture );
   I->AddField("language", Dictionary.GetCurrentLanguage() );
   I->AddField("ExtraZoom", FXApp->GetExtraZoom() );
   I->AddField("GlTooltip", _UseGlTooltip);
+  I->AddField("console.blend", FGlConsole->IsBlend());
 
   I = &DF.Root().AddItem("Recent_files");
   for( int i=0; i < olx_min(FRecentFilesToShow, FRecentFiles.Count()); i++ )
@@ -2746,7 +2815,7 @@ void TMainForm::SaveSettings(const olxstr &FN)  {
   }
 
   SaveScene(&DF.Root().AddItem("Scene"));
-  FXApp->GetRender().Styles()->ToDataItem(DF.Root().AddItem("Styles"));
+  FXApp->GetRender().GetStyles().ToDataItem(DF.Root().AddItem("Styles"));
   DF.SaveToXLFile(FN);
 }
 //..............................................................................
@@ -2862,6 +2931,26 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
       FRecentFiles.Add(uniqNames[j], mi);
     }
   }
+
+  I = DF.Root().FindItem("Defaults");
+  DefStyle = I->GetFieldValue("Style");
+    executeFunction(DefStyle, DefStyle);
+  DefSceneP = I->GetFieldValue("SceneP");
+    executeFunction(DefSceneP, DefSceneP);
+  // loading default style if provided ?
+  if( TEFile::FileExists(DefStyle) )  {
+    TDataFile SDF;
+    SDF.LoadFromXLFile(DefStyle, &Log);
+    FXApp->GetRender().GetStyles().FromDataItem(*SDF.Root().FindItem("style"));
+  }
+  else  {
+    FXApp->GetRender().GetStyles().FromDataItem(*DF.Root().FindItem("Styles"));
+    // old style override
+    if( FXApp->GetRender().GetStyles().GetVersion() < 2 )  {
+      ;//if( TEFile::Exists(FXApp->BaseDir() + "default.gldp")...
+    }
+  }
+  // default scene properties provided?
   if( TEFile::FileExists(DefSceneP) )  {
     TDataFile SDF;
     SDF.LoadFromXLFile(DefSceneP, &Log);
@@ -2869,24 +2958,13 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
   }
   else
     LoadScene(DF.Root().FindItem("Scene"));
-
-  if( TEFile::FileExists(DefStyle) )  {
-    TDataFile SDF;
-    SDF.LoadFromXLFile(DefStyle, &Log);
-    FXApp->GetRender().Styles()->FromDataItem(*SDF.Root().FindItem("style"));
-  }
-  else
-    FXApp->GetRender().Styles()->FromDataItem(*DF.Root().FindItem("Styles"));
-
-  I = DF.Root().FindItem("Defaults");
-  DefStyle = I->GetFieldValue("Style");
-  DefSceneP = I->GetFieldValue("SceneP");
-  // restroring language
+  // restroring language or setting default
   if( TEFile::FileExists( DictionaryFile ) )  {
     Dictionary.SetCurrentLanguage(DictionaryFile, I->GetFieldValue("language", EmptyString) );
   }
   FXApp->SetExtraZoom( I->GetFieldValue("ExtraZoom", "1.25").ToDouble() );
   UseGlTooltip( I->GetFieldValue("GlTooltip", FalseString).ToBool() );
+  FGlConsole->SetBlend(I->GetFieldValue("console.blend", TrueString).ToBool());
 
   olxstr T( I->GetFieldValue("BgColor") );
   if( !T.IsEmpty() )  FBgColor.FromString(T);
@@ -2896,7 +2974,7 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
   T = I->GetFieldValue("Gradient", EmptyString);
   GradientPicture = I->GetFieldValue("GradientPicture", EmptyString);
   if( !T.IsEmpty() ) 
-    ProcessXPMacro(olxstr("grad ") << T << " -p=\'" << GradientPicture << '\'', MacroError);
+    ProcessXPMacro(olxstr("grad ") << T, MacroError);
 
   I = DF.Root().FindItem("Stored_params");
   if( I )  {
@@ -2929,7 +3007,7 @@ void TMainForm::LoadScene(TDataItem *Root, TGlLightModel *FLM)  {
   if( I == NULL )  return;
   for( int i=0; i < I->ItemCount(); i++ )  {
     TDataItem& fi = I->GetItem(i);
-    FXApp->GetRender().Scene()->CreateFont(fi.GetName(), fi.GetFieldValue("id") );
+    FXApp->GetRender().GetScene().CreateFont(fi.GetName(), fi.GetFieldValue("id") );
   }
   I = Root->FindItem("Materials");
   if( I != NULL )  {
@@ -2963,17 +3041,17 @@ void TMainForm::SaveScene(TDataItem *Root, TGlLightModel *FLM)  {
   else
     FXApp->GetRender().LightModel.ToDataItem(Root->AddItem("Scene_Properties"));
   I = &Root->AddItem("Fonts");
-  for( int i=0; i < FXApp->GetRender().Scene()->FontCount(); i++ )  {
-    TDataItem& fi = I->AddItem( FXApp->GetRender().Scene()->Font(i)->GetName());
-    fi.AddField("id", FXApp->GetRender().Scene()->Font(i)->IdString() );
+  for( int i=0; i < FXApp->GetRender().GetScene().FontCount(); i++ )  {
+    TDataItem& fi = I->AddItem( FXApp->GetRender().GetScene().GetFont(i)->GetName());
+    fi.AddField("id", FXApp->GetRender().GetScene().GetFont(i)->IdString() );
   }
 
   I = &Root->AddItem("Materials");
   HelpFontColorTxt.ToDataItem(I->AddItem("Help_txt"));
   HelpFontColorCmd.ToDataItem(I->AddItem("Help_cmd"));
   ExecFontColor.ToDataItem(I->AddItem("Exec"));
-  InfoFontColor.ToDataItem(I->AddItem("Exception"));
-  WarningFontColor.ToDataItem(I->AddItem("Exception"));
+  InfoFontColor.ToDataItem(I->AddItem("Info"));
+  WarningFontColor.ToDataItem(I->AddItem("Warning"));
   ErrorFontColor.ToDataItem(I->AddItem("Error"));
   ExceptionFontColor.ToDataItem(I->AddItem("Exception"));
 }
@@ -3214,7 +3292,7 @@ void TMainForm::OnMouseWheel(int x, int y, double delta)  {
   int ind = Bindings.IndexOf("wheel");
   if( ind == -1 )  return;
   olxstr cmd( Bindings.GetObject(ind) );
-  ind = TOlxVars::VarIndex("wheel_step");
+  ind = TOlxVars::VarIndex("core_wheel_step");
   const olxstr& step( ind == -1 ? EmptyString : TOlxVars::GetVarStr(ind));
   if( step.IsNumber() )
     delta *= step.ToDouble();
@@ -3237,8 +3315,8 @@ void TMainForm::OnMouseMove(int x, int y)  {
       FGlCanvas->SetToolTip(wxT(""));
 #endif
     }
-    else if( GlTooltip != NULL && GlTooltip->Visible() )  {
-      GlTooltip->Visible(false);
+    else if( GlTooltip != NULL && GlTooltip->IsVisible() )  {
+      GlTooltip->SetVisible(false);
       TimePerFrame = FXApp->Draw();
     }
   }
@@ -3301,7 +3379,7 @@ bool TMainForm::OnMouseUp(int x, int y, short Flags, short Buttons)  {
         if( ca < -1 )  ca = -1;
         if( ca > 1 )   ca = 1;
         vec3d V = Z.XProdVec(N);
-        FXApp->GetRender().Basis()->Rotate(V, acos(ca));
+        FXApp->GetRender().GetBasis().Rotate(V, acos(ca));
       N = FXApp->GetRender().GetBasis().GetMatrix()[2];
       Tmp="got: ";
       Tmp << N.ToString(); 
@@ -3360,7 +3438,7 @@ bool TMainForm::CheckState(uint32_t state, const olxstr& stateData)  {
     return CmdLineVisible;
   }
   if( state == prsGradBG )  {
-    return FXApp->GetRender().Background()->Visible();
+    return FXApp->GetRender().Background()->IsVisible();
   }
 
   return false;
@@ -3881,7 +3959,7 @@ bool TMainForm::FindXAtoms(const TStrObjList &Cmds, TXAtomPList& xatoms, bool Ge
     FXApp->FindXAtoms(Cmds.Text(' '), xatoms, unselect);
   }
   for( int i=0; i < xatoms.Count(); i++ )
-    if( !xatoms[i]->Visible() )
+    if( !xatoms[i]->IsVisible() )
       xatoms[i] = NULL;
   xatoms.Pack();
   return (xatoms.Count() != cnt);

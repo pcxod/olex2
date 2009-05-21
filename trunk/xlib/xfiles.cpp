@@ -32,7 +32,9 @@ TBasicCFile::TBasicCFile() : RefMod(AsymmUnit), AsymmUnit(NULL)  {
   AsymmUnit.SetRefMod(&RefMod);
 }
 //..............................................................................
-TBasicCFile::~TBasicCFile()  {  }
+TBasicCFile::~TBasicCFile()  {  
+  RefMod.ClearAll();  // this must be called, as the AU might get destroyed beforehand and then AfixGroups cause crash
+}
 //..............................................................................
 void TBasicCFile::SaveToFile(const olxstr& fn)  {
   TStrList L;
@@ -56,7 +58,7 @@ void TBasicCFile::LoadFromFile(const olxstr& fn)  {
   FileName = fn;
   if( GetRM().GetHKLSource().IsEmpty() )  {
     olxstr src = TEFile::ChangeFileExt(fn, "hkl");
-    if( !TEFile::FileExists(src) )
+    if( !TEFile::FileExistsi(olxstr(src), src) )
       src = EmptyString;
     GetRM().SetHKLSource(src);
   }
@@ -110,14 +112,18 @@ TBasicCFile *TXFile::FindFormat(const olxstr &Ext)  {
 }
 //..............................................................................
 void TXFile::LastLoaderChanged() {
-  if( FLastLoader == NULL )  return;
+  if( FLastLoader == NULL )  {
+    GetRM().ClearAll();
+    GetLattice().Clear(true);
+    return;
+  }
   FSG = TSymmLib::GetInstance()->FindSG(FLastLoader->GetAsymmUnit());
-  OnFileLoad->Enter(this);
+  OnFileLoad->Enter(this, &FLastLoader->GetFileName());
   GetRM().ClearAll();
   GetLattice().Clear(true);
   GetRM().Assign(FLastLoader->GetRM(), true);
   GetLattice().Init();
-  OnFileLoad->Exit(this);
+  OnFileLoad->Exit(this, &FLastLoader->GetFileName());
 }
 //..............................................................................
 bool TXFile::Dispatch(int MsgId, short MsgSubId, const IEObject* Sender, const IEObject* Data) {

@@ -60,9 +60,9 @@ public:
   TDataItem* GetAnyItemCI(const olxstr& Name) const;
   // returns an item by name using recursive search within subitems as well
   // as in the current item
-  TDataItem* FindItemi(const olxstr& Name) const {  return Items.FindObjecti(Name);  }
-  TDataItem* FindItem(const olxstr& Name)  const {  return Items.FindObject(Name);  }
-  TDataItem& FindRequiredItem(const olxstr& Name)   const {  
+  template <class T> TDataItem* FindItemi(const T& Name) const {  return Items.FindObjecti(Name);  }
+  template <class T> TDataItem* FindItem(const T& Name)  const {  return Items.FindObject(Name);  }
+  template <class T> TDataItem& FindRequiredItem(const T& Name)   const {  
     int i = Items.IndexOf(Name);
     if( i == -1 )
       throw TFunctionFailedException(__OlxSourceInfo, olxstr("Required item does not exist: ") << Name);
@@ -82,8 +82,8 @@ public:
   }
   inline int FieldCount() const                 {  return Fields.Count(); }
 
-  int FieldIndex(const olxstr& Name)   const {  return Fields.IndexOf(Name);  }
-  int FieldIndexi(const olxstr& Name)  const {  return Fields.IndexOfi(Name);  }
+  template <class T> int FieldIndex(const T& Name)   const {  return Fields.IndexOf(Name);  }
+  template <class T> int FieldIndexi(const T& Name)  const {  return Fields.IndexOfi(Name);  }
 
   const olxstr& GetField(int i)         const {  return Fields.GetObject(i); }
   // the filed will not be decoded
@@ -99,28 +99,29 @@ public:
   // deletes field by index
   void DeleteField(int index)  {  Fields.Delete(index);  }
   // deletes field by name, only deletes the first one if there are several with the same name
-  void DeleteField(const olxstr& Name) {
+  template <class T> void DeleteField(const T& Name) {
     int fieldIndex = FieldIndex(Name);
     if( fieldIndex != -1 )  
       DeleteField(fieldIndex);
   }
-
-  const olxstr& GetFieldValue( const olxstr& Name, const olxstr& Default=EmptyString ) const {
+  template <class T>
+  const olxstr& GetFieldValue( const T& Name, const olxstr& Default=EmptyString ) const {
     int i = Fields.IndexOf(Name);
     return (i==-1) ? Default : Fields.GetObject(i);
   }
-  const olxstr& GetFieldValueCI( const olxstr& Name, const olxstr& Default=EmptyString ) const {
+  template <class T>
+  const olxstr& GetFieldValueCI( const T& Name, const olxstr& Default=EmptyString ) const {
     int i = Fields.IndexOfi(Name);
     return (i==-1) ? Default : Fields.GetObject(i);
   }
-  const olxstr& GetRequiredField( const olxstr& Name) const  {
+  template <class T> const olxstr& GetRequiredField(const T& Name) const  {
     int i = Fields.IndexOf(Name);
     if( i == -1 )
       throw TFunctionFailedException(__OlxSourceInfo, olxstr("Required attribute is missing: ") << Name);
     return Fields.GetObject(i);
   }
 
-  bool FieldExists(const olxstr& Name)   {  return Fields.IndexOf(Name) != -1;  }
+  template <class T> bool FieldExists(const T& Name)   {  return Fields.IndexOf(Name) != -1;  }
 
   TDataItem* GetParent() const           {  return Parent; }
   inline int GetLevel() const            {  return Level; }

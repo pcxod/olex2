@@ -23,11 +23,9 @@ TdlgEdit::TdlgEdit(TMainForm *ParentFrame, bool MultiLine):
     height = 350;
   }
   Text = new TTextEdit(this, flags);
-
+  Text->SetSize(width, height);
   wxFont fnt(fontSize, wxMODERN, wxNORMAL, wxNORMAL);
   Text->SetFont(fnt);
-  Text->WI.SetWidth(width);
-  Text->WI.SetHeight(height);
 
   wxBoxSizer *ButtonsSizer = new wxBoxSizer( wxHORIZONTAL );
   ButtonsSizer->Add( new wxButton( this, wxID_OK, wxT("OK") ), 0, wxALL, 3);

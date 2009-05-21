@@ -33,7 +33,7 @@ public:
 template <class SC, class T> class TTStrList : public IEObject {
 protected:
   TPtrList<T> Strings;
-  int FindIndexOf(const SC &Str, bool CI) const  {
+  template <class StrClass> int FindIndexOf(const StrClass& Str, bool CI) const  {
     if( CI )  {
       for( int i=0; i < Count(); i++ )
         if( Strings[i]->String.Comparei(Str) == 0 )
@@ -188,18 +188,19 @@ public:
     }
     Strings.Pack();
   }
-
-  inline int IndexOf(const SC& C)  const {  return FindIndexOf(C, false);  }
-  inline int IndexOfi(const SC& C) const {  return FindIndexOf(C, true);  }
-
-  int FindIndexes(const SC& C, TIntList& rv, bool CI) const  {
+  template <class StrClass>
+  inline int IndexOf(const StrClass& C)  const {  return FindIndexOf(C, false);  }
+  template <class StrClass>
+  inline int IndexOfi(const StrClass& C) const {  return FindIndexOf(C, true);  }
+  
+  template <class StrClass>
+  int FindIndexes(const StrClass& C, TIntList& rv, bool CI) const  {
     int cc = rv.Count();
     for( int i=0; i < Count(); i++ )
       if( Strings[i]->String.Compare(C, CI) == 0 )
           rv.Add(i);
     return rv.Count() - cc;
   }
-
   SC Text(const SC& Sep, int start=-1, int end = -1) const  {
     if( start == -1 )  start = 0;
     if( end == -1 )    end = Strings.Count();
@@ -296,7 +297,7 @@ public:
     else      TPtrList<T>::QuickSorter.template Sort< TStringWrapperComparator<T,false> >(Strings);
   }
 
-  void StrtokF( const SC &Str, const TIntList& indexes )  {
+  void StrtokF( const SC& Str, const TIntList& indexes )  {
     if( indexes.Count() < 2 )
       throw TInvalidArgumentException(__OlxSourceInfo, "at least two numbers are required");
     int fLength = 0;
@@ -312,8 +313,8 @@ public:
     }
     if( fLength < Str.Length() )  Add( Str.SubStringFrom(fLength) );
   }
-  void Strtok( const SC &Str, char Sep, bool SkipSequences = true )  {
-    olxstr Tmp(Str);
+  void Strtok( const SC& Str, char Sep, bool SkipSequences = true )  {
+    SC Tmp(Str);
     int ind = Tmp.IndexOf(Sep);
     while( ind != -1 )  {
       if( ind != 0 )  // skip sequences of separators
@@ -337,7 +338,7 @@ public:
   }
   // similar to previous implementation, the list is passed as one of the parameters
   // takes a string as a separator
-  void Strtok( const SC &Str, const SC &Sep )  {
+  void Strtok( const SC& Str, const SC &Sep )  {
     SC Tmp(Str);
     int ind = Tmp.IndexOf(Sep);
     while( ind != -1 )  {
@@ -491,13 +492,13 @@ public:
   }
   // the find function with this signature work only for objects; for pointers it
   // causes a lot of trouble
-  const OC & FindObject(const SC& Name) const  {
+  template <class StrClass> const OC & FindObject(const StrClass& Name) const  {
     int in = PList::IndexOf(Name);
     return (in != -1) ? PList::Strings[in]->Object : *(OC*)NULL;
   }
 
-  OC* FindObjecti(const SC& Name) const  {
-    int in = PList::CIIndexOf(Name);
+  template <class StrClass> OC* FindObjecti(const StrClass& Name) const  {
+    int in = PList::IndexOfi(Name);
     return (in != -1) ? &PList::Strings[in]->Object : *(OC*)NULL;
   }
 };
@@ -518,18 +519,18 @@ public:
   TStrPObjList(const TTOStringList<SC,OC,TPrimitiveStrListData<SC,OC> >& list) :
     PList(list)  {  }
 
-  TStrPObjList(const SC& string, const olxstr& sep, TTypeList<OC>* objects = NULL) :
+  TStrPObjList(const SC& string, const SC& sep, TTypeList<OC>* objects = NULL) :
     PList(string, sep, objects)  {  }
 
   TStrPObjList(const SC& string, char sep, TTypeList<OC>* objects = NULL) :
     PList(string, sep, objects)  {  }
 
-  inline OC FindObject(const SC &Name) const  {
+  template <class StrClass> inline OC FindObject(const StrClass& Name) const  {
     int in = PList::IndexOf(Name);
     return (in != -1) ? PList::Strings[in]->Object : NULL;
   }
 
-  OC FindObjecti(const SC& Name) const  {
+  template <class StrClass> OC FindObjecti(const StrClass& Name) const  {
     int in = PList::IndexOfi(Name);
     return (in != -1) ? PList::Strings[in]->Object : NULL;
   }

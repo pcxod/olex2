@@ -14,11 +14,11 @@ class TXLattice: public TGlMouseListener  {
   class TGlPrimitive* Lines;
   mat3d LatticeBasis;
 public:
-  TXLattice(const olxstr& collectionName, TGlRenderer *Render);
+  TXLattice(TGlRenderer& Render, const olxstr& collectionName);
   virtual ~TXLattice();
   void Create(const olxstr& cName = EmptyString, const ACreationParams* cpar = NULL);
 
-  bool Orient(TGlPrimitive *P);
+  bool Orient(TGlPrimitive& P);
   bool GetDimensions(vec3d& Max, vec3d& Min);
 
   DefPropC(mat3d, LatticeBasis)

@@ -48,7 +48,7 @@ public:
     }
     else if( Expression.Comparei("sel") == 0 )  { 
       if( SelectionOwner == NULL )
-        throw TInvalidArgumentException(__OlxSourceInfo, "invalid slection owner");
+        throw TInvalidArgumentException(__OlxSourceInfo, "invalid selection owner");
       int ac = atoms.Count();
       SelectionOwner->ExpandSelection(atoms);
       return atoms.Count()-ac;
@@ -71,7 +71,8 @@ public:
       if( i < 0 || i >= rm.aunit.AtomCount() )
         throw TInvalidArgumentException(__OlxSourceInfo, "catom id");
       TCAtom* ca = &rm.aunit.GetAtom(i);
-      if( !IsValidAtom(ca) )  return 0;
+      //skip validation here...
+      //if( !IsValidAtom(ca) )  return 0;
       atoms.AddNew( ca );
       return 1;
     }

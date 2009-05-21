@@ -13,17 +13,17 @@
 #include "glrender.h"
 #include "gpcollection.h"
 #include "glmouse.h"
+#include "glprimitive.h"
 
 UseGlNamespace()
 //..............................................................................
 //..............................................................................
 
-TDFrame::TDFrame(const olxstr& collectionName, TGlRenderer *Render) :
-  AGDrawObject(collectionName)
+TDFrame::TDFrame(TGlRenderer& Render, const olxstr& collectionName) :
+  AGDrawObject(Render, collectionName)
 {
   FPrimitive = NULL;
-  FRender = Render;
-  Groupable(false);
+  SetGroupable(false);
   FActions = new TActionQList;
   OnSelect = &FActions->NewQueue("ONSELECT");
 };
@@ -35,25 +35,24 @@ TDFrame::~TDFrame()  {
 void TDFrame::Create(const olxstr& cName, const ACreationParams* cpar) {
   if( !cName.IsEmpty() )  
     SetCollectionName(cName);
-  TGPCollection* GPC = FRender->FindCollection( GetCollectionName() );
-  if( GPC == NULL )
-    GPC = FRender->NewCollection( GetCollectionName() );
-  GPC->AddObject(this);
-  if( GPC->PrimitiveCount() != 0 )  return;
+  TGPCollection& GPC = Parent.FindOrCreateCollection( GetCollectionName() );
+  GPC.AddObject(*this);
+  if( GPC.PrimitiveCount() != 0 )  return;
 
   TGlMaterial GlM;
   GlM.SetFlags(sglmIdentityDraw);
-  FPrimitive = GPC->NewPrimitive("Lines", sgloLineLoop);
-  FPrimitive->SetProperties(&GlM);
+  FPrimitive = &GPC.NewPrimitive("Lines", sgloLineLoop);
+  FPrimitive->SetProperties(GlM);
   FPrimitive->Data.Resize(4, 4);
   FPrimitive->Params[0] = 1;              // line width
 }
 //..............................................................................
 bool TDFrame::OnMouseDown(const IEObject *Sender, const TMouseData *Data)  {
-  if( !FPrimitive ) return false;
-  double Scale = FRender->GetScale();
-  int hW = FRender->GetWidth()/2 + FRender->GetLeft(),
-      hH = FRender->GetHeight()/2 - FRender->GetTop();
+  if( FPrimitive == NULL ) 
+    return false;
+  double Scale = Parent.GetScale();
+  int hW = Parent.GetWidth()/2 + Parent.GetLeft(),
+      hH = Parent.GetHeight()/2 - Parent.GetTop();
   // the translation is currently disabled, so, just null it
 //  Translation.Null(); // = FRender->Basis().Center();
 //  Translation *= FRender->GetBasis().GetMatrix();
@@ -75,15 +74,15 @@ bool TDFrame::OnMouseDown(const IEObject *Sender, const TMouseData *Data)  {
   FPrimitive->Data[3][2] = 0x00000000;
   FPrimitive->Data[3][3] = 0x0000ff00;
 
-  Visible( true );
+  SetVisible( true );
   return true;
 }
 //..............................................................................
-bool TDFrame::OnMouseUp(const IEObject *Sender, const TMouseData *Data)
-{
-  if( !FPrimitive ) return false;
-  Visible( false );
-  FRender->Draw();
+bool TDFrame::OnMouseUp(const IEObject *Sender, const TMouseData *Data)  {
+  if( FPrimitive == NULL ) 
+    return false;
+  SetVisible( false );
+  Parent.Draw();
   TSelectionInfo SI;
   SI.From[0] = olx_min(FPrimitive->Data[0][0], FPrimitive->Data[0][2]);
   SI.From[1] = olx_min(FPrimitive->Data[1][0], FPrimitive->Data[1][2]);
@@ -95,12 +94,12 @@ bool TDFrame::OnMouseUp(const IEObject *Sender, const TMouseData *Data)
   return true;
 }
 //..............................................................................
-bool TDFrame::OnMouseMove(const IEObject *Sender, const TMouseData *Data)
-{
-  if( !FPrimitive ) return false;
-  double Scale = FRender->GetScale();
-  int hW = FRender->GetWidth()/2 + FRender->GetLeft(),
-      hH = FRender->GetHeight()/2 - FRender->GetTop();
+bool TDFrame::OnMouseMove(const IEObject *Sender, const TMouseData *Data)  {
+  if( FPrimitive == NULL ) 
+    return false;
+  double Scale = Parent.GetScale();
+  int hW = Parent.GetWidth()/2 + Parent.GetLeft(),
+      hH = Parent.GetHeight()/2 - Parent.GetTop();
   FPrimitive->Data[0][2] = (-hW + Data->X)*Scale - Translation[0];
   FPrimitive->Data[1][2] = (hH - Data->Y )*Scale - Translation[1];
 
@@ -110,8 +109,7 @@ bool TDFrame::OnMouseMove(const IEObject *Sender, const TMouseData *Data)
   return true;
 }
 //..............................................................................
-bool TDFrame::Orient(TGlPrimitive *P)
-{
+bool TDFrame::Orient(TGlPrimitive& P)  {
   return false;
 }
 //..............................................................................

@@ -227,8 +227,7 @@ TAG_HANDLER_PROC(tag)  {
     Text->SetFont( m_WParser->GetDC()->GetFont() );
     CreatedObject = Text;
     CreatedWindow = Text;
-    Text->WI.SetWidth( ax );
-    Text->WI.SetHeight( ay );
+    Text->SetSize(ax, ay);
     Text->SetData( Data );
 
     Text->SetText(Value);

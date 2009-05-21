@@ -2,12 +2,13 @@
 //
 
 #include <iostream>
-#include <windows.h>
-#include <conio.h>
-#include <process.h>
-#include <io.h>
 
+#ifndef __WIN32__
+  #include "wx/app.h"
+#endif
 using namespace std;
+
+#include "con_in.h"
 
 #include "xapp.h"
 #include "log.h"
@@ -39,6 +40,10 @@ using namespace std;
 #include "winhttpfs.h"
 #include "settingsfile.h"
 #include "py_core.h"
+
+#ifndef __WIN32__
+  #include <readline/readline.h>
+#endif
 
 //
 
@@ -95,7 +100,11 @@ enum  {
 class TOlex: public AEventsDispatcher, public olex::IOlexProcessor, public ASelectionOwner  {
   TXApp XApp;
   TLst Lst;
+#ifdef __WIN32__
   HANDLE TimerThreadHandle;
+#else
+  pthread_t thread_id;
+#endif
   olxstr DataDir;
   TCSTypeList<olxstr, ABasicFunction*> CallbackFuncs;
   TStrList FOnTerminateMacroCmds; // a list of commands called when a process is terminated
@@ -105,17 +114,24 @@ class TOlex: public AEventsDispatcher, public olex::IOlexProcessor, public ASele
   AProcess* FProcess;
   TEMacroLib Macros;
   TSAtomPList Selection;
-  HANDLE conin, conout;
   TDataFile PluginFile;
   TDataItem* Plugins;
+  ConcoleInterface conint;
   bool Silent;
   TOutStream* OutStream;
-  CONSOLE_SCREEN_BUFFER_INFO TextAttrib;
+#ifdef __WIN32__
   static unsigned long _stdcall TimerThreadRun(void* _instance) {
+#else
+  static void* TimerThreadRun(void* _instance) {
+#endif
     while( true )  {
       if( TBasicApp::GetInstance()  == NULL )  return 0;
       TBasicApp::GetInstance()->OnTimer->Execute(NULL);
-      Sleep(50);
+#ifdef __WIN32__
+			Sleep(50);
+#else
+      sleep(50);
+#endif
     }
     return 0;
   }
@@ -155,23 +171,26 @@ public:
     TLibrary &Library = XApp.GetLibrary();
     PythonExt::Init(this).Register(&OlexPyCore::PyInit);
     Library.AttachLibrary( TEFile::ExportLibrary() );
-    Library.AttachLibrary( PythonExt::GetInstance()->ExportLibrary() );
+    //Library.AttachLibrary( PythonExt::GetInstance()->ExportLibrary() );
     Library.AttachLibrary( TETime::ExportLibrary() );
+		cout << "1\n";
     Library.AttachLibrary( XApp.XFile().ExportLibrary() );
+		cout << "2\n";
     Library.AttachLibrary( TFileHandlerManager::ExportLibrary() );
+		cout << "3\n";
 
-    unsigned long thread_id;
-    TimerThreadHandle = CreateThread(NULL, 0, TimerThreadRun, this, 0, &thread_id);
-    conin = CreateFile(olx_T("CONIN$"), GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL); 
-    conout  = CreateFile(olx_T("CONOUT$"), GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-    GetConsoleScreenBufferInfo(conout, &TextAttrib); 
     DataDir = TShellUtil::GetSpecialFolderLocation(fiAppData);
+		cout << DataDir.c_str() << '\n';
 #ifdef __WIN32__
+  unsigned long thread_id;
+  TimerThreadHandle = CreateThread(NULL, 0, TimerThreadRun, this, 0, &thread_id);
   #ifdef _UNICODE
     DataDir << "Olex2u/";
   #else
     DataDir << "Olex2/";
   #endif
+#else  // need to check the Error
+  pthread_create(&thread_id, NULL, TimerThreadRun,NULL);
 #endif
     XApp.GetLog().AddStream( TUtf8File::Create(DataDir + "olex2c.log"), true );
     FMacroItem = NULL;
@@ -263,16 +282,14 @@ public:
       FProcess->Terminate();
       delete FProcess;
     }
+#ifdef __WIN32__
     CloseHandle(TimerThreadHandle);
+#endif
     TOlxVars::Finalise();
     PythonExt::Finilise();
-    CloseHandle(conin);
-    CloseHandle(conout);
     delete OutStream;
     OlexInstance = NULL;
   }
-  HANDLE GetConin()  {  return conin;  }
-  HANDLE GetConout() {  return conout;  }
   virtual bool executeMacroEx(const olxstr& cmdLine, TMacroError& er)  {
     str_stack stack;
     er.SetStack( stack );
@@ -283,25 +300,24 @@ public:
   //..........................................................................................
   virtual void print(const olxstr& msg, const short MessageType = olex::mtNone)  {
     if( Silent && MessageType == olex::mtInfo ) return;
-    CONSOLE_SCREEN_BUFFER_INFO pi;
-    GetConsoleScreenBufferInfo(conout, &pi); 
+    conint.Push();
     switch( MessageType )  {
       case olex::mtError:
       case olex::mtException:
-        SetConsoleTextAttribute(conout, FOREGROUND_RED|FOREGROUND_INTENSITY);
+        conint.SetTextForeground( fgcRed, true);
         break;
       case olex::mtWarning:
-        SetConsoleTextAttribute(conout, FOREGROUND_RED);
+        conint.SetTextForeground( fgcRed, false);
         break;
       case olex::mtInfo:
-        SetConsoleTextAttribute(conout, FOREGROUND_BLUE|FOREGROUND_INTENSITY);
+        conint.SetTextForeground( fgcBlue, true);
         break;
       default:
-        SetConsoleTextAttribute(conout, 0);
+        conint.SetTextForeground( fgcReset, false);
     }
     TBasicApp::GetLog() << msg << '\n';
     //SetConsoleTextAttribute(conout, FOREGROUND_RED|FOREGROUND_GREEN|FOREGROUND_BLUE);
-    SetConsoleTextAttribute(conout, pi.wAttributes);
+    conint.Pop();
   }
   virtual bool executeFunction(const olxstr& function, olxstr& retVal)  {
     retVal = function;
@@ -414,9 +430,9 @@ public:
       // end tasks ...
       if( FProcess != NULL )  {
         while( FProcess->StrCount() != 0 )  {
-          SetConsoleTextAttribute(conout, FOREGROUND_GREEN);
+          conint.SetTextForeground(fgcGreen, false);
           TBasicApp::GetLog() << FProcess->GetString(0) << '\n';
-          SetConsoleTextAttribute(conout, TextAttrib.wAttributes);
+          conint.SetTextForeground(fgcReset, false);  // was setting the first read value!
           CallbackFunc(ProcessOutputCBName, FProcess->GetString(0));
           FProcess->DeleteStr(0);
         }
@@ -428,18 +444,18 @@ public:
     else if( MsgId == ID_INFO || MsgId == ID_WARNING || MsgId == ID_ERROR || MsgId == ID_EXCEPTION )  {
       if( MsgSubId == msiEnter )  {
         if( Data != NULL )  {
-          int mat = 0;
-          if( MsgId == ID_INFO )           mat = FOREGROUND_BLUE|FOREGROUND_INTENSITY;
-          else if( MsgId == ID_WARNING )   mat = FOREGROUND_RED;
-          else if( MsgId == ID_ERROR )     mat = FOREGROUND_RED|FOREGROUND_INTENSITY;
-          else if( MsgId == ID_EXCEPTION ) mat = FOREGROUND_RED|FOREGROUND_INTENSITY;
-          SetConsoleTextAttribute(conout, mat);
+          if( MsgId == ID_INFO )           
+            conint.SetTextForeground(fgcBlue, true);
+          else if( MsgId == ID_WARNING )   
+            conint.SetTextForeground(fgcRed, false);
+          else if( MsgId == ID_ERROR || MsgId == ID_EXCEPTION )     
+            conint.SetTextForeground(fgcRed, true);
           OutStream->SetSkipPost(Silent && MsgId == ID_INFO);
           res = false;  // propargate to other streams, logs in particular if not Silent
         }
       }
       else  if( MsgSubId == msiExit )  {
-        SetConsoleTextAttribute(conout, TextAttrib.wAttributes);
+        conint.SetTextForeground(fgcReset);
       }
     }
     else if( MsgId == ID_STRUCTURECHANGED )
@@ -747,7 +763,11 @@ public:
       Tmp << ' ';
     }
     TBasicApp::GetLog() << (olxstr("EXEC: ") << Tmp << '\n');
+#ifdef __WIN32__
     TWinProcess* Process  = new TWinProcess;
+#else
+    TWxProcess* Process = new TWxProcess;
+#endif		
     Process->OnTerminateCmds().Assign( FOnTerminateMacroCmds );
     FOnTerminateMacroCmds.Clear();
     if( (Cout && Asyn) || Asyn )  {  // the only combination
@@ -1041,15 +1061,34 @@ public:
     if( TOlex::TerminateSignal )  {
       TBasicApp::GetLog() << "terminate\n";
       exit(0);
-      DWORD w=0;
-      WriteConsole(TOlex::OlexInstance->GetConin(),
-        olx_T("\n"), 1, &w, NULL); 
+      //DWORD w=0;
+      //WriteConsole(TOlex::OlexInstance->GetConin(),
+      //  olx_T("\n"), 1, &w, NULL); 
     }
     return false; 
   }
 };
-
+#ifndef __WIN32__  // dummy stuff for wxWidgets...
+class MyApp: public wxAppConsole {
+  virtual bool OnInit() {  return true;  }
+	virtual int OnRun() {  return 0;  }
+};
+IMPLEMENT_APP_NO_MAIN(MyApp)
+#endif
 int main(int argc, char* argv[])  {
+#ifndef __WIN32__  // dummy stuff for wxWidgets...
+  MyApp wx_app;
+  wxAppConsole::SetInstance(&wx_app);
+	rl_readline_name = "olex2c";
+//  struct termios new_settings, stored_settings;
+//  tcgetattr(0,&stored_settings);
+//  new_settings = stored_settings;
+//  new_settings.c_lflag &= (~(ICANON|ECHO));
+//  new_settings.c_cc[VTIME] = 0;
+//  tcgetattr(0,&stored_settings);
+//  new_settings.c_cc[VMIN] = 1;
+//  tcsetattr(0,TCSANOW,&new_settings);
+#endif
   olxstr bd(argv[0]);
   char* cbd = getenv("OLEX2_DIR");
   if( cbd != NULL )  {
@@ -1059,7 +1098,9 @@ int main(int argc, char* argv[])  {
     bd << "dummy.txt";
   }
   TOlex olex(bd);
+#ifdef __WIN32__
   SetConsoleTitle(olx_T("Olex2 Console"));
+#endif	
   TLibrary &Library = olex.GetLibrary();
   cout << "Welcome to Olex2 console\n";
   cout << "GUI basedir is: " << TBasicApp::GetInstance()->BaseDir().c_str() << '\n';
@@ -1073,13 +1114,46 @@ int main(int argc, char* argv[])  {
     }
   }
   else  {
+#ifdef __WIN32__
     char _cmd[512];
+    _cmd[0] = '\0';
+#endif		
     olxstr cmd;
     //TBasicApp::GetInstance()->OnTimer->Add( new TTerminationListener );
     while( true )  {
       TBasicApp::GetInstance()->OnIdle->Execute(NULL);
+#ifdef __WIN32__
       cin.getline(_cmd, 512);
       cmd = _cmd;
+#else
+  char* _cmd = readline(">>");
+	if( _cmd == NULL )
+	  continue;
+	add_history(_cmd);
+	cmd = _cmd;
+	delete _cmd;
+#endif
+//      int ch = getchar();
+//      if( ch >= 'a' && ch <= 'z' )
+//        cout << (char)ch;
+//      else if( ch == 27 )  {
+//        ch = getchar();
+//        if( ch == '[' )  {
+//          ch = getchar();  
+//          if( ch == 'A' )
+//            TBasicApp::GetLog() << "up\n";
+//          if( ch == 'B' )
+//            TBasicApp::GetLog() << "down\n";
+//          if( ch == 'C' )  {
+//            TBasicApp::GetLog() << "right\n";
+//          }
+//          if( ch == 'D' )  {
+//            TBasicApp::GetLog() << "left\n";
+//            cout << "\r";
+//            continue;
+//          }
+//        }
+//      }
       if( cmd.Comparei("quit") == 0 )  break;
       else  {
         try { olex.executeMacro(cmd);  }
@@ -1088,7 +1162,9 @@ int main(int argc, char* argv[])  {
         }
       }
       if( olex.TerminateSignal )  break;
+#ifdef __WIN32__			
       cout << ">>";
+#endif			
     }
   }
   TBasicApp::GetInstance()->OnIdle->Execute(NULL);

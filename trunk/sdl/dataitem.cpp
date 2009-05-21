@@ -364,7 +364,7 @@ void TDataItem::SaveToStrBuffer(TEStrBuffer &Data) const {
 //..............................................................................
 void TDataItem::FindSimilarItems(const olxstr &StartsFrom, TPtrList<TDataItem>& List)  {
   for(int i=0; i < ItemCount(); i++ )  {
-    if( Items[i].StartsFrom(StartsFrom) )
+    if( Items[i].StartsFromi(StartsFrom) )
       List.Add(Items.GetObject(i));
   }
 }

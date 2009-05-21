@@ -34,19 +34,28 @@ TCAtom::TCAtom(TAsymmUnit *Parent)  {
   FragmentId = -1;
   FAttachedAtoms = NULL;
   FAttachedAtomsI = NULL;
+  FAtomInfo = NULL;
   Degeneracy = 1;
   Tag = -1;
   DependentAfixGroup = ParentAfixGroup = NULL;
   DependentHfixGroups = NULL;
   ExyzGroup = NULL;
   Flags = 0;
+  ConnInfo = NULL;
   memset(Vars, 0, sizeof(Vars));
 }
 //..............................................................................
 TCAtom::~TCAtom()  {
-  if( FAttachedAtoms != NULL )   delete FAttachedAtoms;
-  if( FAttachedAtomsI != NULL )  delete FAttachedAtomsI;
-  if( DependentHfixGroups != NULL )  delete DependentHfixGroups; 
+  if( FAttachedAtoms != NULL )        delete FAttachedAtoms;
+  if( FAttachedAtomsI != NULL )       delete FAttachedAtomsI;
+  if( DependentHfixGroups != NULL )   delete DependentHfixGroups; 
+  if( ConnInfo != NULL )              delete ConnInfo;
+}
+//..............................................................................
+void TCAtom::SetConnInfo(CXConnInfo& ci) {
+  if( ConnInfo != NULL )
+    delete ConnInfo;
+  ConnInfo = &ci;
 }
 //..............................................................................
 bool TCAtom::SetLabel(const olxstr &L)  {
@@ -74,7 +83,10 @@ bool TCAtom::SetLabel(const olxstr &L)  {
   if( BAI == NULL )
     throw TInvalidArgumentException(__OlxSourceInfo, olxstr("Unknown element: '") << L << '\'' );
   else  {
-    FAtomInfo = BAI;
+    if( FAtomInfo != BAI )  {
+      FAtomInfo = BAI;
+      FParent->_OnAtomTypeChanged(*this);
+    }
     FLabel = L;
     if( *BAI != iQPeakIndex )
       SetQPeak(0);
@@ -85,15 +97,11 @@ bool TCAtom::SetLabel(const olxstr &L)  {
   return true;
 }
 //..............................................................................
-void TCAtom::SetAtomInfo(TBasicAtomInfo* A)  {
-  FAtomInfo = A;
-  return;
-  olxstr Tmp(A->GetSymbol());
-  if( FLabel.Length() > Tmp.Length() )
-    Tmp << FLabel.SubStringFrom(FAtomInfo->GetSymbol().Length());
-
-  FLabel = FParent->CheckLabel(this, Tmp);
-//  FLabel = Tmp;
+void TCAtom::SetAtomInfo(TBasicAtomInfo& A)  {
+  if( FAtomInfo == &A )
+    return;
+  FAtomInfo = &A;
+  FParent->_OnAtomTypeChanged(*this);
 }
 //..............................................................................
 void TCAtom::Assign(const TCAtom& S)  {
@@ -119,7 +127,10 @@ void TCAtom::Assign(const TCAtom& S)  {
   else
     UisoOwner = NULL;
   FLabel   = S.FLabel;
-  FAtomInfo = &S.GetAtomInfo();
+  if( FAtomInfo != &S.GetAtomInfo() )  {
+    FAtomInfo = &S.GetAtomInfo();
+    FParent->_OnAtomTypeChanged(*this);
+  }
 //  Frag    = S.Frag;
   //Id = S.GetId();
   FragmentId = S.GetFragmentId();
@@ -231,7 +242,7 @@ void TCAtom::FromDataItem(TDataItem& item)  {
   if( adp != NULL )  {
     double Q[6], E[6];
     if( adp->FieldCount() != 6 )
-      throw TInvalidArgumentException(__OlxSourceInfo, "6 parameters expecetd for the ADP");
+      throw TInvalidArgumentException(__OlxSourceInfo, "6 parameters expected for the ADP");
     for( int i=0; i < 6; i++ )  {
       ev = adp->GetField(i);
       E[i] = ev.GetE();

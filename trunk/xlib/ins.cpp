@@ -119,9 +119,9 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
       TCAtom* atom = _ParseAtom(Toks, cx);
       atom->Label() = Toks[0];
       if( qpeak ) 
-        atom->SetAtomInfo(&baiQPeak);
+        atom->SetAtomInfo(baiQPeak);
       else
-        atom->SetAtomInfo( cx.BasicAtoms.GetObject(Toks[1].ToInt()-1) );
+        atom->SetAtomInfo( *cx.BasicAtoms.GetObject(Toks[1].ToInt()-1) );
       if( atom->GetAtomInfo().GetMr() > 3.5 )
         cx.LastNonH = atom;
       _ProcessAfix(*atom, cx);
@@ -235,8 +235,33 @@ void TIns::_ProcessSame(ParseContext& cx)  {
   }
 }
 //..............................................................................
+void TIns::__ProcessConn(ParseContext& cx)  {
+  TStrList toks;
+  for( int i=0; i < Ins.Count(); i++ )  {
+    if( Ins[i].IsEmpty() )  // should not happen, but
+      continue;
+    toks.Clear();
+    toks.Strtok(Ins[i], ' ');
+    if( toks[0].Comparei("CONN") == 0 )  {
+      TStrList sl(toks.SubListFrom(1));
+      cx.rm.Conn.ProcessConn(sl);
+      Ins[i] = EmptyString;
+    }
+    else if( toks[0].Comparei("FREE") == 0 )  {
+      cx.rm.Conn.ProcessFree(toks.SubListFrom(1));
+      Ins[i] = EmptyString;
+    }
+    else if( toks[0].Comparei("BIND") == 0 )  {
+      cx.rm.Conn.ProcessBind(toks.SubListFrom(1));
+      Ins[i] = EmptyString;
+    }
+  }
+  Ins.Pack();
+}
+//..............................................................................
 void TIns::_FinishParsing(ParseContext& cx)  {
-  for( int i =0; i < Ins.Count(); i++ )  {
+  __ProcessConn(cx);
+  for( int i=0; i < Ins.Count(); i++ )  {
     TInsList* Param = new TInsList(Ins[i], ' ');
     Ins.GetObject(i) = Param;
     Ins[i] = Param->GetString(0);
@@ -704,7 +729,7 @@ void TIns::_SaveSfac(TStrList& list, int pos)  {
     list[pos] = olxstr("SFAC ") << Sfac;
   else  {
     TStrList toks(Sfac, ' '), lines;
-    olxstr tmp, LeftOut;
+    olxstr tmp;
     for( int i=0; i < toks.Count(); i++ )  {
       XScatterer* sd = GetRM().FindSfacData( toks[i] );
       if( sd != NULL )  {
@@ -716,11 +741,8 @@ void TIns::_SaveSfac(TStrList& list, int pos)  {
           list.Insert(pos++, lines[j] );
       }
       else  {
-        LeftOut << ' ' << toks[i];
+        list.Insert(pos++, "SFAC ") << ' ' << toks[i];
       }
-    }
-    if( !LeftOut.IsEmpty() != 0 )  {
-      list.Insert(pos, olxstr("SFAC") << LeftOut );
     }
   }
   for( int i=0; i < Disp.Count(); i++ )
@@ -862,15 +884,20 @@ void TIns::SaveToStrings(TStrList& SL)  {
   UpdateParams();
   SaveHeader(SL, false);
   SL.Add(EmptyString);
-  int afix = 0, part = 0, fragmentId = 0;
+  int afix = 0, part = 0, fragmentId = -1;
   for( int i=-1; i < GetAsymmUnit().ResidueCount(); i++ )  {
     TAsymmUnit::TResidue& residue = GetAsymmUnit().GetResidue(i);
-    if( i != -1 && !residue.IsEmpty() ) SL.Add( residue.ToString() );
+    if( i != -1 && !residue.IsEmpty() )  { 
+      SL.Add(EmptyString);
+      SL.Add( residue.ToString() );
+      fragmentId = -1;
+    }
     for( int j=0; j < residue.Count(); j++ )  {
       TCAtom& ac = residue[j];
       if( ac.IsDeleted() || ac.IsSaved() )  continue;
-      if( ac.GetFragmentId() != fragmentId )  {
-        SL.Add(EmptyString);
+      if( ac.GetFragmentId() != fragmentId || fragmentId == -1 )  {
+        if( fragmentId != -1 )
+          SL.Add(EmptyString);
         fragmentId = ac.GetFragmentId();
       }
       if( ac.GetParentAfixGroup() != NULL && 
@@ -902,8 +929,7 @@ void TIns::SetSfacUnit(const olxstr& su) {
 //..............................................................................
 bool TIns::Adopt(TXFile *XF)  {
   Clear();
-  GetAsymmUnit().Assign( XF->GetAsymmUnit() );
-  GetAsymmUnit().SetZ( (short)XF->GetLattice().GetUnitCell().MatrixCount() );
+  GetRM().Assign(XF->GetRM(), true);
   try  {
     TSpaceGroup& sg = XF->GetLastLoaderSG();
     Title << "in" << sg.GetFullName();
@@ -911,28 +937,9 @@ bool TIns::Adopt(TXFile *XF)  {
   catch( ... )  {}
   if( XF->HasLastLoader() )  {
     Title = XF->LastLoader()->GetTitle();
-    GetRM().SetHKLSource( XF->LastLoader()->GetRM().GetHKLSource() );
-    
     if( EsdlInstanceOf(*XF->LastLoader(), TP4PFile) )  {
       TP4PFile& p4p = XF->GetLastLoader<TP4PFile>();
-      RefMod.expl.SetRadiation( p4p.GetRadiation() );
       TStrList lst;
-      olxstr tmp = p4p.GetSize();  
-      if( tmp.IsEmpty() )  {
-        tmp.Replace('?', '0');
-        lst.Add("SIZE");
-        lst.Add( tmp );  
-        AddIns(lst, GetRM()); 
-        lst.Clear();
-      }
-      tmp = p4p.GetTemp();
-      if( !tmp.IsEmpty() )  {
-        tmp.Replace('?', '0');
-        lst.Add("TEMP");
-        lst.Add( tmp );  
-        AddIns(lst, GetRM()); 
-        lst.Clear();
-      }
       if( p4p.GetChem() != "?" )  {
         try  {  SetSfacUnit( p4p.GetChem() );  }
         catch( TExceptionBase& )  {  }
@@ -1032,7 +1039,7 @@ void TIns::UpdateAtomsFromStrings(RefinementModel& rm, TCAtomPList& CAtoms, cons
       _ParseAtom( Toks, cx, atom );
       atomCount++;
       atom->Label() = Tmp1;
-      atom->SetAtomInfo(bai);
+      atom->SetAtomInfo(*bai);
       if( atom->GetAtomInfo().GetMr() > 3.5 )
         cx.LastNonH = atom;
       _ProcessAfix(*atom, cx);
@@ -1621,6 +1628,7 @@ void TIns::SaveHeader(TStrList& SL, bool ValidateRestraintNames)  {
     if( GetRM().GetInfoTab(i).IsValid() )
       SL.Add( GetRM().GetInfoTab(i).InsStr() );
   }
+  GetRM().Conn.ToInsList(SL);
   // copy "unknown" instructions except rems
   for( int i=0; i < Ins.Count(); i++ )  {
     TInsList* L = Ins.GetObject(i);

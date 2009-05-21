@@ -3,56 +3,58 @@
 #define gpcollectionH
 #include "glbase.h"
 #include "elist.h"
-#include "glprimitive.h"
 #include "tptrlist.h"
+#include "estrlist.h"
 
 BeginGlNamespace()
 
+class TGlPrimitive;
+class AGDrawObject;
+
 class TGPCollection: public ACollectionItem  {
-  class TGlRenderer *FParent;
-  TPtrList<class TGlPrimitive> Primitives; // a list of primitives in the collection
+  class TGlRenderer& Parent;
+  TPtrList<TGlPrimitive> Primitives; // a list of primitives in the collection
   TPtrList<AGDrawObject> GObjects;   // a list of all objects using this collection
-  olxstr FName;
-  class TGraphicsStyle *FStyle;
+  olxstr Name;
+  class TGraphicsStyle* Style;
 public:
-  TGPCollection(TGlRenderer *Parent);
-  virtual ~TGPCollection();
+  TGPCollection(TGlRenderer& parent, const olxstr& name=EmptyString) : 
+      Parent(parent), Name(name), Style(NULL) {}
+  virtual ~TGPCollection() {}
   // clears the content of the colelction and removes primitives
   // use it to change the content of the collection
   void ClearPrimitives();
 
   inline int PrimitiveCount() const {  return Primitives.Count();  }
-  inline TGlPrimitive* Primitive(int index) const {  return Primitives[index];  }
+  inline TGlPrimitive& GetPrimitive(int index) const {  return *Primitives[index];  }
   TGlPrimitive* FindPrimitiveByName(const olxstr& Name) const;
 
-  TGlPrimitive* NewPrimitive(const olxstr& Name, short type);
-
-  inline const olxstr& PrimitiveName(int index) const {  return Primitives[index]->GetName();  }
-  void AddPrimitive(TGlPrimitive* P)                  {  Primitives.Add(P);  }
+  TGlPrimitive& NewPrimitive(const olxstr& Name, short type);
+  void AddPrimitive(TGlPrimitive& P)  {  Primitives.Add(P);  }
 
   void RemovePrimitive(int index) {  Primitives.Delete(index); }
-  void RemovePrimitive(TGlPrimitive *GlP)  {  Primitives.Remove(GlP);  }
+  void RemovePrimitive(TGlPrimitive& GlP)  {  Primitives.Remove(GlP);  }
 
-  bool ContainsPrimitive(TGlPrimitive *GlP);
+  bool ContainsPrimitive(TGlPrimitive& GlP);
 
-  inline int ObjectCount() const       {  return GObjects.Count();  }
-  class AGDrawObject *Object(int index){  return GObjects[index];  }
-  void AddObject(AGDrawObject *Obj);
+  inline int ObjectCount() const          {  return GObjects.Count();  }
+  class AGDrawObject& GetObject(int index) const {  return *GObjects[index];  }
+  void AddObject(AGDrawObject& Obj);
 
   void ClearObjects()                  {  GObjects.Clear();  }
-  void RemoveObject(AGDrawObject *G)   {  GObjects.Remove(G); }
+  void RemoveObject(AGDrawObject& G)   {  GObjects.Remove(G); }
   void DeleteObject(int i)             {  GObjects.Delete(i); }
 
   void Draw();
 
-  void ListParams(TStrList &List, TGlPrimitive *Primitive);
+  void ListParams(TStrList& List, TGlPrimitive* Primitive);
 
-  inline TGlRenderer *Parent()              {  return FParent; }
-  inline const olxstr& Name() const     {  return FName; }
-  inline void Name(const olxstr &name)  {  FName = name;}
+  inline TGlRenderer& GetParent()  const {  return Parent; }
+  DefPropC(olxstr, Name)
 
-  virtual void Style(TGraphicsStyle *S);
-  inline TGraphicsStyle* Style() const {  return FStyle; }
+  virtual void SetStyle(TGraphicsStyle* S);
+  // it might be NULL
+  inline TGraphicsStyle& GetStyle() const {  return *Style; }
 };
 
 

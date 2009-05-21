@@ -25,25 +25,25 @@ BEGIN_EVENT_TABLE(TdlgSceneProps, TDialog)
   EVT_BUTTON(wxID_APPLY, TdlgSceneProps::OnApply)
 END_EVENT_TABLE()
 //..............................................................................
-
 TdlgSceneProps::TdlgSceneProps(TMainForm *ParentFrame, TGXApp *XApp)
 :TDialog(ParentFrame, wxT("Scene Parameters"), uiStrT(EsdlClassNameT(TdlgSceneProps)) )
 {
   AActionHandler::SetToDelete(false);
   FXApp = XApp;
-
-  short Border = 1;
+    
+  short Border = 2;
+    
   wxStaticText *stX = new wxStaticText(this, -1, wxT("X"), wxDefaultPosition);
-  tbX = new TTrackBar(this, wxSize(80,30));  tbX->OnChange->Add(this);  tbX->SetRange(-100,100);
+  tbX = new TTrackBar(this, wxDefaultSize);  tbX->OnChange->Add(this);  tbX->SetRange(-100,100);
   teX = new TTextEdit(this);  teX->SetReadOnly(true);
   wxStaticText *stY = new wxStaticText(this, -1, wxT("Y"), wxDefaultPosition);
-  tbY = new TTrackBar(this, wxSize(80,30));  tbY->OnChange->Add(this);  tbY->SetRange(-100,100);
+  tbY = new TTrackBar(this, wxDefaultSize);  tbY->OnChange->Add(this);  tbY->SetRange(-100,100);
   teY = new TTextEdit(this);  teY->SetReadOnly(true);
   wxStaticText *stZ = new wxStaticText(this, -1, wxT("Z"), wxDefaultPosition);
-  tbZ = new TTrackBar(this, wxSize(80,30));  tbZ->OnChange->Add(this);  tbZ->SetRange(-100,100);
+  tbZ = new TTrackBar(this, wxDefaultSize);  tbZ->OnChange->Add(this);  tbZ->SetRange(-100,100);
   teZ = new TTextEdit(this);  teZ->SetReadOnly(true);
   wxStaticText *stR = new wxStaticText(this, -1, wxT("R"), wxDefaultPosition);
-  tbR  = new TTrackBar(this, wxSize(80,30)); tbR->OnChange->Add(this);  tbR->SetRange(-3,3);
+  tbR  = new TTrackBar(this, wxDefaultSize); tbR->OnChange->Add(this);  tbR->SetRange(-3,3);
   teR = new TTextEdit(this);  teR->SetReadOnly(true);
     
   //Light Position frame
@@ -51,24 +51,27 @@ TdlgSceneProps::TdlgSceneProps(TMainForm *ParentFrame, TGXApp *XApp)
   wxStaticBoxSizer *PSizer = new wxStaticBoxSizer(PBox, wxVERTICAL );
   wxFlexGridSizer *LightPosGridSizer = new wxFlexGridSizer(4, 3, Border, Border);
     
-  LightPosGridSizer->Add( stX, 0, wxALL, Border );
-  LightPosGridSizer->Add( tbX, 1, wxEXPAND | wxALL, Border );
-  LightPosGridSizer->Add( teX, 0, wxALL, Border );
+  LightPosGridSizer->Add( stX, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 2 );
+  LightPosGridSizer->Add( tbX, 1, wxEXPAND | wxALL, 1 );
+  LightPosGridSizer->Add( teX, 0, wxALIGN_CENTER_VERTICAL | wxALL, 1 );
 
-  LightPosGridSizer->Add( stY, 0, wxALL, Border );
-  LightPosGridSizer->Add( tbY, 1, wxEXPAND | wxALL, Border );
-  LightPosGridSizer->Add( teY, 0, wxALL, Border );
+  LightPosGridSizer->Add( stY, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 2 );
+  LightPosGridSizer->Add( tbY, 1, wxEXPAND | wxALL, 1 );
+  LightPosGridSizer->Add( teY, 0, wxALIGN_CENTER_VERTICAL | wxALL, 1 );
 
-  LightPosGridSizer->Add( stZ, 0, wxALL, Border );
-  LightPosGridSizer->Add( tbZ, 1, wxEXPAND | wxALL, Border );
-  LightPosGridSizer->Add( teZ, 0, wxALL, Border );
+  LightPosGridSizer->Add( stZ, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 2 );
+  LightPosGridSizer->Add( tbZ, 1, wxEXPAND | wxALL, 1 );
+  LightPosGridSizer->Add( teZ, 0, wxALIGN_CENTER_VERTICAL | wxALL, 1 );
 
-  LightPosGridSizer->Add( stR, 0, wxALL, Border );
-  LightPosGridSizer->Add( tbR, 1, wxEXPAND | wxALL, Border );
-  LightPosGridSizer->Add( teR, 0, wxALL, Border );
+  LightPosGridSizer->Add( stR, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 2 );
+  LightPosGridSizer->Add( tbR, 1, wxEXPAND | wxALL, 1 );
+  LightPosGridSizer->Add( teR, 0, wxALIGN_CENTER_VERTICAL | wxALL, 1 );
   LightPosGridSizer->AddGrowableCol(1);
   PSizer->Add( LightPosGridSizer, 1, wxEXPAND | wxALL, 1 );
   //End Light Position frame
+
+  wxStaticText *stcolour = new wxStaticText(this, -1, wxT("Colour"), wxDefaultPosition);
+  wxStaticText *sttransparency = new wxStaticText(this, -1, wxT("Transparency"), wxDefaultPosition);
 
   wxStaticText *stAmb = new wxStaticText(this, -1, wxT("Ambient"), wxDefaultPosition);
   teAmb = new TTextEdit(this); teAmb->SetReadOnly(true);  teAmb->OnClick->Add(this);
@@ -76,6 +79,7 @@ TdlgSceneProps::TdlgSceneProps(TMainForm *ParentFrame, TGXApp *XApp)
 
   wxStaticText *stDiff = new wxStaticText(this, -1, wxT("Diffuse"), wxDefaultPosition);
   teDiff = new TTextEdit(this); teDiff->SetReadOnly(true);  teDiff->OnClick->Add(this);
+  //teDiff = new wxColourPickerCtrl(this, -1); //teDiff->OnClick->Add(this);
   scDiffA = new TSpinCtrl(this);
 
   wxStaticText *stSpec = new wxStaticText(this, -1, wxT("Specular"), wxDefaultPosition);
@@ -87,32 +91,36 @@ TdlgSceneProps::TdlgSceneProps(TMainForm *ParentFrame, TGXApp *XApp)
 
   //Light frame
   wxFlexGridSizer *GridSizer = new wxFlexGridSizer(4, 3, Border, Border);
-  GridSizer->Add( stAmb, 1, wxEXPAND | wxALL, Border );
-  GridSizer->Add( teAmb, 1, wxEXPAND | wxALL, Border );
-  GridSizer->Add( scAmbA, 1, wxEXPAND | wxALL, Border );
+  GridSizer->Add( -1,10, 0, wxALIGN_CENTER | wxRIGHT, 2 );
+  GridSizer->Add( stcolour, 0, wxALIGN_CENTER | wxALL, 1 );
+  GridSizer->Add( sttransparency, 0, wxALIGN_CENTER | wxALL, 1 );
 
-  GridSizer->Add( stDiff, 1, wxEXPAND | wxALL, Border );
-  GridSizer->Add( teDiff, 1, wxEXPAND | wxALL, Border );
-  GridSizer->Add( scDiffA, 1, wxEXPAND | wxALL, Border );
+  GridSizer->Add( stAmb, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 2 );
+  GridSizer->Add( teAmb, 0, wxALIGN_CENTER_VERTICAL | wxEXPAND | wxALL, 1 );
+  GridSizer->Add( scAmbA, 0, wxALIGN_CENTER_VERTICAL | wxEXPAND | wxALL, 1 );
 
-  GridSizer->Add( stSpec, 1, wxEXPAND | wxALL, Border );
-  GridSizer->Add( teSpec, 1, wxEXPAND | wxALL, Border );
-  GridSizer->Add( scSpecA, 1, wxEXPAND | wxALL, Border );
+  GridSizer->Add( stDiff, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 2 );
+  GridSizer->Add( teDiff, 0, wxALIGN_CENTER_VERTICAL | wxEXPAND | wxALL, 1 );
+  GridSizer->Add( scDiffA, 0, wxALIGN_CENTER_VERTICAL | wxEXPAND | wxALL, 1 );
 
-  GridSizer->Add( stSExp, 1, wxEXPAND | wxALL, Border );  
-  GridSizer->Add( scSExp, 1, wxEXPAND | wxALL, Border );
+  GridSizer->Add( stSpec, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 2 );
+  GridSizer->Add( teSpec, 0, wxALIGN_CENTER_VERTICAL | wxEXPAND | wxALL, 1 );
+  GridSizer->Add( scSpecA, 0, wxALIGN_CENTER_VERTICAL | wxEXPAND | wxALL, 1 );
+
+  GridSizer->Add( stSExp, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 2 );  
+  GridSizer->Add( scSExp, 0, wxALIGN_CENTER_VERTICAL | wxEXPAND | wxALL, 1 );
   GridSizer->AddGrowableCol(1);
   GridSizer->AddGrowableCol(2);
   GridSizer->SetSizeHints(this);
   
-  wxStaticBox *LBox = new wxStaticBox(this, -1, wxT("Light"));
+  wxStaticBox *LBox = new wxStaticBox(this, -1, wxT("Light colours"));
   wxStaticBoxSizer *LSizer = new wxStaticBoxSizer(LBox, wxHORIZONTAL );
   LSizer->Add( GridSizer, 1, wxEXPAND | wxALL, 1 );
   //End Light frame
   
   wxBoxSizer *TSizer0 = new wxBoxSizer( wxHORIZONTAL );
-  TSizer0->Add( LSizer, 1, wxEXPAND | wxALL, 1 );//Light frame
-  TSizer0->Add( PSizer, 1, wxEXPAND | wxALL, 1 );//Light position frame
+  TSizer0->Add( LSizer, 1, wxEXPAND | wxALL, Border );//Light frame
+  TSizer0->Add( PSizer, 1, wxEXPAND | wxALL, Border );//Light position frame
 
   //Light dropdown menu
   cbLights = new TComboBox(this); 
@@ -125,12 +133,12 @@ TdlgSceneProps::TdlgSceneProps(TMainForm *ParentFrame, TGXApp *XApp)
   // checkbox enabled
   cbEnabled = new wxCheckBox(this, -1, wxT("Enabled"), wxDefaultPosition);
   wxBoxSizer *SizerE = new wxBoxSizer( wxHORIZONTAL );
-  SizerE->Add( cbEnabled, 1, wxEXPAND | wxALL, 1 );
+  SizerE->Add( cbEnabled, 1, wxEXPAND | wxALL, Border );
   //end checkbox enabled
   
   wxBoxSizer *SizerLt = new wxBoxSizer( wxHORIZONTAL );
-  SizerLt->Add( cbLights, 1, wxEXPAND | wxALL, 1 );//dropdown light menu
-  SizerLt->Add( SizerE, 1, wxEXPAND | wxALL, 1 );//checkbox enbaled
+  SizerLt->Add( cbLights, 1, wxEXPAND | wxALL, Border );//dropdown light menu
+  SizerLt->Add( SizerE, 1, wxEXPAND | wxALL, Border );//checkbox enbaled
 
   //spot cut off frame
   cbUniform = new wxCheckBox(this, -1, wxT("Uniform"), wxDefaultPosition);
@@ -138,8 +146,8 @@ TdlgSceneProps::TdlgSceneProps(TMainForm *ParentFrame, TGXApp *XApp)
 
   wxStaticBox *BoxSC = new wxStaticBox(this, -1, wxT("Spot cutoff"));
   wxStaticBoxSizer *SizerSC = new wxStaticBoxSizer(BoxSC, wxHORIZONTAL );
-  SizerSC->Add( scSCO, 1, wxEXPAND | wxALL, 1 );
-  SizerSC->Add( cbUniform, 1, wxEXPAND | wxALL, 1 );
+  SizerSC->Add( scSCO, 0, wxEXPAND | wxALL, Border );
+  SizerSC->Add( cbUniform, 0, wxEXPAND | wxALL, Border );
   //end spot cut off frame
 
   //spot direction frame
@@ -152,47 +160,50 @@ TdlgSceneProps::TdlgSceneProps(TMainForm *ParentFrame, TGXApp *XApp)
 
   wxStaticBox *BoxSD = new wxStaticBox(this, -1, wxT("Spot direction"));
   wxStaticBoxSizer *SizerSD = new wxStaticBoxSizer(BoxSD, wxHORIZONTAL );
-  SizerSD->Add( stSCX, 0, wxEXPAND | wxALL, 1 );
-  SizerSD->Add( teSCX, 0, wxEXPAND | wxALL, 1 );
-  SizerSD->Add( stSCY, 0, wxEXPAND | wxALL, 1 );
-  SizerSD->Add( teSCY, 0, wxEXPAND | wxALL, 1 );
-  SizerSD->Add( stSCZ, 0, wxEXPAND | wxALL, 1 );
-  SizerSD->Add( teSCZ, 0, wxEXPAND | wxALL, 1 );
+  SizerSD->Add( stSCX, 0, wxALIGN_CENTER_VERTICAL | wxLEFT | wxRIGHT, 2  );
+  SizerSD->Add( teSCX, 1, wxRIGHT, 15 );
+  SizerSD->Add( stSCY, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 2 );
+  SizerSD->Add( teSCY, 1, wxRIGHT, 15 );
+  SizerSD->Add( stSCZ, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 2 );
+  SizerSD->Add( teSCZ, 1, wxRIGHT, 2 );
   //end spot direction frame
 
   //spot direction frame + spot cut off frame
   wxBoxSizer *SizerS = new wxBoxSizer(wxHORIZONTAL );
-  SizerS->Add( SizerSC, 0, wxEXPAND | wxALL, 1 );
-  SizerS->Add( SizerSD, 0, wxEXPAND | wxALL, 1 );
+  SizerS->Add( SizerSC, 1, wxEXPAND | wxALL, Border );
+  SizerS->Add( SizerSD, 1, wxEXPAND | wxALL, Border );
   //end spot direction frame + spot cut off frame
 
-  teAA = new TTextEdit(this);  
-  wxStaticText *stAA = new wxStaticText(this, -1, wxT("x^2+"), wxDefaultPosition);
-  teAB = new TTextEdit(this);  
-  wxStaticText *stAB = new wxStaticText(this, -1, wxT("x+"), wxDefaultPosition);
-  teAC = new TTextEdit(this);  
+  teAA = new TTextEdit(this);  //GL_QUADRATIC_ATTENUATION
+  wxStaticText *stAA = new wxStaticText(this, -1, wxT("Quadratic"), wxDefaultPosition);
+  teAB = new TTextEdit(this);  //GL_LINEAR_ATTENUATION
+  wxStaticText *stAB = new wxStaticText(this, -1, wxT("Linear"), wxDefaultPosition);
+  teAC = new TTextEdit(this);  //GL_CONSTANT_ATTENUATION
+  wxStaticText *stAC = new wxStaticText(this, -1, wxT("Constant"), wxDefaultPosition);
 
   //frame attenuation
   wxStaticBox *BoxA = new wxStaticBox(this, -1, wxT("Attenuation"));
   wxStaticBoxSizer *SizerA = new wxStaticBoxSizer(BoxA, wxHORIZONTAL );
-  SizerA->Add( teAA, 0, wxEXPAND | wxALL, 1 );
-  SizerA->Add( stAA, 0, wxEXPAND | wxALL, 1 );
-  SizerA->Add( teAB, 0, wxEXPAND | wxALL, 1 );
-  SizerA->Add( stAB, 0, wxEXPAND | wxALL, 1 );
-  SizerA->Add( teAC, 0, wxEXPAND | wxALL, 1 );
+  SizerA->Add( stAA, 0, wxALIGN_CENTER_VERTICAL | wxLEFT | wxRIGHT, 2 );
+  SizerA->Add( teAA, 1, wxRIGHT, 15 );
+  SizerA->Add( stAB, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 2 );
+  SizerA->Add( teAB, 1, wxRIGHT, 15 );
+  SizerA->Add( stAC, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 2 );
+  SizerA->Add( teAC, 1, wxRIGHT, 2 );
   //end frame attenuation
   
-  wxStaticBox *Box1 = new wxStaticBox(this, -1, wxT(""));
+  wxStaticBox *Box1 = new wxStaticBox(this, -1, wxT("Light sources"));
   wxStaticBoxSizer *TSizer1 = new wxStaticBoxSizer(Box1, wxVERTICAL );
-  TSizer1->Add( SizerLt, 0, wxEXPAND | wxALL, 1 );//Light dropdown menu
-  TSizer1->Add( TSizer0, 0, wxEXPAND | wxALL, 1 );//Light frame + Light position frame
-  TSizer1->Add( SizerS, 0, wxEXPAND | wxALL, 1 );//spot cut off frame
-  TSizer1->Add( SizerA, 0, wxEXPAND | wxALL, 1 );//frame attenuation
+  TSizer1->Add( SizerLt, 0, wxEXPAND | wxALL, Border );//Light dropdown menu
+  TSizer1->Add( TSizer0, 0, wxEXPAND | wxALL, Border );//Light frame + Light position frame
+  TSizer1->Add( SizerS, 0, wxEXPAND | wxALL, Border );//spot cut off frame
+  TSizer1->Add( SizerA, 0, wxEXPAND | wxALL, Border );//frame attenuation
 
+  //light model frame
   cbFonts = new TComboBox(this);
-  AGlScene* ascene = FXApp->GetRender().Scene();
-  for( int i=0; i < ascene->FontCount(); i++ )
-    cbFonts->AddObject( ascene->Font(i)->GetName(), ascene->Font(i) );
+  AGlScene& ascene = FXApp->GetRender().GetScene();
+  for( int i=0; i < ascene.FontCount(); i++ )
+    cbFonts->AddObject( ascene.GetFont(i)->GetName(), ascene.GetFont(i) );
   cbFonts->SetSelection(0);
   cbFonts->OnChange->Add(this);
   tbEditFont = new TButton(this);  tbEditFont->SetCaption("Edit Font");  tbEditFont->OnClick->Add(this);
@@ -208,49 +219,51 @@ TdlgSceneProps::TdlgSceneProps(TMainForm *ParentFrame, TGXApp *XApp)
   wxStaticText *stBgClr = new wxStaticText(this, -1, wxT("Background color"), wxDefaultPosition);
 
   wxStaticBox *Box2 = new wxStaticBox(this, -1, wxT("Light model"));
-  wxStaticBox *Box2a = new wxStaticBox(this, -1, wxT("Fonts"));
   wxStaticBoxSizer *SizerLM = new wxStaticBoxSizer(Box2, wxHORIZONTAL );
-  wxStaticBoxSizer *SizerFonts = new wxStaticBoxSizer(Box2a, wxHORIZONTAL );
 
-  wxFlexGridSizer *SizerLM1 = new wxFlexGridSizer(1, 3 );
+  wxGridSizer *SizerLM1 = new wxGridSizer(2, 2 );
   wxFlexGridSizer *SizerLM2 = new wxFlexGridSizer(2, 2 );
 
-  SizerLM1->Add( cbLocalV, 1, wxEXPAND | wxALL, Border ); //light model first line
-  SizerLM1->Add( cbTwoSide, 1, wxEXPAND | wxALL, Border );
-  SizerLM1->Add( cbSmooth, 1, wxEXPAND | wxALL, Border );
+  SizerLM1->Add( cbLocalV, 0, wxALIGN_CENTER_VERTICAL | wxALL, 0 ); //light model second column
+  SizerLM1->Add( cbTwoSide, 0, wxALIGN_CENTER_VERTICAL | wxALL, 0 );
+  SizerLM1->Add( cbSmooth, 0, wxALIGN_CENTER_VERTICAL | wxALL, 0 );
 
-  SizerLM2->Add( stAmbLM, 1, wxEXPAND | wxALL, Border );//light model second line
-  SizerLM2->Add( tcAmbLM, 1, wxEXPAND | wxALL, Border );
-  SizerLM2->Add( stBgClr, 1, wxEXPAND | wxALL, Border );
-  SizerLM2->Add( tcBgClr, 1, wxEXPAND | wxALL, Border );
+  SizerLM2->Add( stAmbLM, 0, wxALL, 2 );//light model first column
+  SizerLM2->Add( tcAmbLM, 0, wxEXPAND | wxALL, 1 );
+  SizerLM2->Add( stBgClr, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 2 );
+  SizerLM2->Add( tcBgClr, 0, wxEXPAND | wxALL, 1 );
   
   SizerLM->Add( SizerLM2, 1, wxEXPAND | wxALL, Border );//light model frame
   SizerLM->Add( SizerLM1, 1, wxEXPAND | wxALL, Border );
-
+  //light model frame
+  
+  wxStaticBox *Box2a = new wxStaticBox(this, -1, wxT("Fonts"));
+  wxStaticBoxSizer *SizerFonts = new wxStaticBoxSizer(Box2a, wxHORIZONTAL );
   SizerFonts->Add( cbFonts, 1, wxEXPAND | wxALL, Border ); //fonts frame
   SizerFonts->Add( tbEditFont, 1, wxEXPAND | wxALL, Border );
 
   wxBoxSizer *TSizer2 = new wxBoxSizer(wxVERTICAL );
-  TSizer2->Add( SizerLM, 0, wxEXPAND | wxALL, 1 );//light model frame
   TSizer2->Add( SizerFonts, 0, wxEXPAND | wxALL, Border );//fonts frame
-  TSizer2->Add( TSizer1, 1, wxEXPAND | wxALL, 1 );//big light frame
+  TSizer2->Add(-1,10);//spacer
+  TSizer2->Add( SizerLM, 0, wxEXPAND | wxALL, Border );//light model frame
+  TSizer2->Add(-1,10);
+  TSizer2->Add( TSizer1, 1, wxEXPAND | wxALL, Border );//big light frame
 
   //right buttons list
   wxBoxSizer *ButtonsSizer = new wxBoxSizer( wxVERTICAL );
 
   ButtonsSizer->Add( new wxButton( this, wxID_OK, wxT("OK") ), 0, wxEXPAND | wxALL, Border);
   ButtonsSizer->Add( new wxButton( this, wxID_CANCEL, wxT("Cancel") ), 0, wxEXPAND | wxALL, Border);
-  ButtonsSizer->Add( new wxButton( this, wxID_HELP, wxT("Help") ),     0, wxEXPAND | wxALL, Border );
-
   ButtonsSizer->Add( new wxButton( this, wxID_OPEN, wxT("Open") ), 0, wxEXPAND | wxALL, Border);
   ButtonsSizer->Add( new wxButton( this, wxID_SAVE, wxT("Save") ),     0, wxEXPAND | wxALL, Border );
   ButtonsSizer->Add( new wxButton( this, wxID_APPLY, wxT("Apply") ),     0, wxEXPAND | wxALL, Border );
+  ButtonsSizer->Add( new wxButton( this, wxID_HELP, wxT("Help") ),     0, wxEXPAND | wxALL, Border );
   ButtonsSizer->SetSizeHints(this);
   //end right buttons list
 
   wxBoxSizer *TSizer3 = new wxBoxSizer(wxHORIZONTAL );
-  TSizer3->Add( TSizer2, 1, wxALL, 1 );
-  TSizer3->Add( ButtonsSizer, 0, wxALL, 1 );
+  TSizer3->Add( TSizer2, 1, wxALL, 5 );
+  TSizer3->Add( ButtonsSizer, 0, wxALL, 5 );
   SetSizer(TSizer3);
   TSizer3->SetSizeHints(this);  
 
@@ -311,7 +324,7 @@ bool TdlgSceneProps::Execute(const IEObject *Sender, const IEObject *Data)  {
   if( (TButton*)Sender == tbEditFont )  {
     int sel = cbFonts->GetSelection();
     if( sel == -1 )  return false;
-    FXApp->GetRender().Scene()->ShowFontDialog( (TGlFont*)cbFonts->GetObject(sel) );
+    FXApp->GetRender().GetScene().ShowFontDialog( (TGlFont*)cbFonts->GetObject(sel) );
   }
 
   return true;
@@ -342,6 +355,9 @@ void TdlgSceneProps::InitLight( TGlLight &L )  {
   teAmb->WI.SetColor(L.Ambient().GetRGB());
   scAmbA->SetValue( (int)L.Ambient()[3]*100);
   teDiff->WI.SetColor(L.Diffuse().GetRGB());
+  /*teDiff->SetColour(wxColour(GetRValue(L.Diffuse().GetRGB()), 
+    GetGValue(L.Diffuse().GetRGB()), 
+    GetBValue(L.Diffuse().GetRGB())));*/
   scDiffA->SetValue((int)L.Diffuse()[3]*100);
   teSpec->WI.SetColor(L.Specular().GetRGB());
   scSpecA->SetValue((int)L.Specular()[3]*100);
@@ -367,6 +383,8 @@ void TdlgSceneProps::UpdateLight( TGlLight &L )  {
   L.Ambient()[3] = (float)scAmbA->GetValue()/100;
 
   L.Diffuse() = teDiff->WI.GetColor();
+  //L.Diffuse() = RGB(teDiff->GetColour().Red(), teDiff->GetColour().Green(), teDiff->GetColour().Blue());
+    
   L.Diffuse()[3] = (float)scDiffA->GetValue()/100;
 
   L.Specular() = teSpec->WI.GetColor();

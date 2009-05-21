@@ -15,8 +15,8 @@
 
 UseGlNamespace();
 //..............................................................................
-TGlPrimitive::TGlPrimitive(TObjectGroup *ParentG, TGlRenderer *ParentR, short type):
-  AGroupObject(ParentG)
+TGlPrimitive::TGlPrimitive(TObjectGroup& ParentG, TGlRenderer& ParentR, short type):
+  AGroupObject(ParentG), Renderer(ParentR)
 {
   Quadric = NULL;
   Evaluator = NULL;
@@ -42,8 +42,6 @@ TGlPrimitive::~TGlPrimitive()  {
   if( ClipPlanes != NULL )  
     delete ClipPlanes;
 }
-//..............................................................................
-AGOProperties *TGlPrimitive::NewProperties()  {  return new TGlMaterial;  }
 //..............................................................................
 void TGlPrimitive::CreateQuadric()  {
   if( Quadric != NULL )  return;
@@ -98,7 +96,7 @@ void TGlPrimitive::SetType(short T)  {
   if( Type == sgloDisk || Type == sgloDiskSlice ||
       Type == sgloCylinder || Type == sgloSphere ||
       Type == sgloCommandList )  
-    ListId = Renderer->NewListId();
+    ListId = Renderer.NewListId();
 
 }
 //..............................................................................
@@ -203,7 +201,7 @@ void TGlPrimitive::Draw()  {
   if( ClipPlanes != NULL )  ClipPlanes->Enable(true);
   TGlTexture* currentTexture = NULL;
   if( TextureId != -1 )  {
-    TGlTexture* tex = Renderer->GetTextureManager().FindTexture( TextureId );
+    TGlTexture* tex = Renderer.GetTextureManager().FindTexture( TextureId );
     currentTexture = new TGlTexture();
     tex->ReadCurrent( *currentTexture );
     tex->SetCurrent();
@@ -433,13 +431,13 @@ void TGlPrimitive::Draw()  {
 //  glEnable(GL_LIGHTING);
 }
 //..............................................................................
-AGOProperties * TGlPrimitive::SetProperties(const AGOProperties *C)  {
-  if( GetProperties() != NULL )  {
-    if( !(*C == *GetProperties()) )  // properties will be removed if ObjectCount == 1
-      Renderer->OnSetProperties((TGlMaterial*)GetProperties());
+AGOProperties& TGlPrimitive::SetProperties(const AGOProperties& C)  {
+  if( Properties != NULL )  {
+    if( !(C == GetProperties()) )  // properties will be removed if ObjectCount == 1
+      Renderer.OnSetProperties(GetProperties());
   }
-  TGlMaterial* Props = (TGlMaterial*)AGroupObject::SetProperties(C);
-  Renderer->SetProperties(Props);
+  TGlMaterial& Props = (TGlMaterial&)AGroupObject::SetProperties(C);
+  Renderer.SetProperties(Props);
   return Props;
 }
 //..............................................................................

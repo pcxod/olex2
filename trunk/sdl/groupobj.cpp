@@ -10,41 +10,10 @@
 
 UseEsdlNamespace()
 //----------------------------------------------------------------------------//
-// TGOproperties
-//----------------------------------------------------------------------------//
-AGOProperties::AGOProperties()  {
-  Id = -1;
-  Objects.SetIncrement( 512 );
-}
-//..............................................................................
-AGOProperties::~AGOProperties()  {  }
-//..............................................................................
-/*
-void TGOProperties::ReplaceObjects(TEList *CurObj, TEList *NewObj)
-{
-  int i;
-  TGroupObject *GO;
-  for( i=0; i < ObjectCount(); i++ )
-  {
-    GO = Object(i);
-    if( GO->Tag() >=0 ) // replace objects
-    {
-      FObjects->Item(GO->Tag()) = NewObj->Item(GO->Tag());
-    }
-  }
-}
-*/
-//----------------------------------------------------------------------------//
 // TGroupObject
 //----------------------------------------------------------------------------//
-AGroupObject::AGroupObject(TObjectGroup *Group)  {
-  FParent = Group;
-  FProperties = NULL;
-}
-//..............................................................................
-AGOProperties * AGroupObject::SetProperties( const AGOProperties *C)  {
-  FProperties = FParent->NewProps(this, FProperties, C);
-  return FProperties;
+AGOProperties& AGroupObject::SetProperties( const AGOProperties& C)  {
+  return *(Properties = Parent.NewProps(*this, Properties, C));
 }
 //----------------------------------------------------------------------------//
 // TGObjectGroup
@@ -54,60 +23,25 @@ TObjectGroup::TObjectGroup()  {
   Props.SetIncrement( 512 );
 }
 //..............................................................................
-TObjectGroup::~TObjectGroup() {   }
-//..............................................................................
 void TObjectGroup::Clear()  {
   Objects.Clear();
   Props.Clear();
 }
 //..............................................................................
-/*
-void TObjectGroup::ReplaceObjects(TEList *CurObj, TEList *NewObj )
-{
-  if( CurObj->Count() != NewObj->Count() )
-    BasicApp->Log->Exception("TObjectGroup:: lists count does not much!", true);
-  AGroupObject *GO;
-  AGOProperties *P;
-  int i;
-  for( i=0; i < ObjectCount(); i++ )  Object(i)->Tag(-1);
-  
-  for( i=0; i < CurObj->Count(); i++ )
-  {
-    GO = (AGroupObject*)CurObj->Item(i);
-    GO->Tag(i);
-//    GO = (AGroupObject*)NewObj->Item(i);
-//    GO->Tag(i);
-  }
-  for( i=0; i < ObjectCount(); i++ )
-  {
-    GO = Object(i);
-    if( GO->Tag() >=0 ) // replace objects
-    {
-      FObjects->Item(GO->Tag()) = NewObj->Item(GO->Tag());
-    }
-  }
-  for( i=0; i < PropCount(); i++ )
-  {
-    P = Properties(i);
-    P->ReplaceObjects(CurObj, NewObj);
-  }
-  FProps->Pack();
-}
-*/
-//..............................................................................
 void TObjectGroup::RemoveObjectsByTag(int Tag)  {
   for( int i=0; i < ObjectCount(); i++ )  {
     if( Objects[i]->GetTag() == Tag )  {
-      AGOProperties* P = const_cast<AGOProperties*>(Objects[i]->GetProperties());
-      if( P->ObjectCount() == 1 )   P->SetId(-1); // mark to remove
-      P->RemoveObject( Objects[i] );
+      AGOProperties& P = Objects[i]->GetProperties();
+      if( P.ObjectCount() == 1 )   
+        P.SetObjectGroupId(-1); // mark to remove
+      P.RemoveObject( Objects[i] );
       delete Objects[i];
       Objects[i] = NULL;
     }
   }
   Objects.Pack();
   for( int i=0; i < Props.Count(); i++ )  {
-    if( Props[i]->GetId() == -1 )  {
+    if( Props[i]->GetObjectGroupId() == -1 )  {
       delete Props[i];
       Props[i] = NULL;
     }
@@ -115,39 +49,41 @@ void TObjectGroup::RemoveObjectsByTag(int Tag)  {
   Props.Pack();
 }
 //..............................................................................
-AGOProperties *TObjectGroup::GetProps( const AGOProperties &C)  {
+AGOProperties* TObjectGroup::FindProps(const AGOProperties &C)  {
   for( int i = 0; i < Props.Count(); i++ )
     if( C == *Props[i] )
       return Props[i];
   return NULL;
 }
 //..............................................................................
-AGOProperties * TObjectGroup::NewProps(AGroupObject *Sender, AGOProperties *OldProps, const AGOProperties *P)  {
+AGOProperties* TObjectGroup::NewProps(AGroupObject& Sender, AGOProperties* OldProps, 
+                                      const AGOProperties& P)  
+{
   if( OldProps != NULL )
-    if( *OldProps == *P )
+    if( *OldProps == P )
       return OldProps;
 
-  AGOProperties *Prop = GetProps(*P);
+  AGOProperties *Prop = FindProps(P);
   if( Prop == NULL )  {
-    Prop = Sender->NewProperties();
-    *Prop = *P;
+    Prop = Sender.NewProperties();
+    *Prop = P;
     Prop->AddObject(Sender);
     Props.Add(Prop);
     if( OldProps != NULL )  {
       OldProps->RemoveObject(Sender);
-      if( !OldProps->ObjectCount() && OldProps->GetId() )  {  // Id = 0 for default properties
+      if( OldProps->ObjectCount() == 0 && OldProps->GetObjectGroupId() != 0 )  {  // Id = 0 for default properties
         Props.Remove(OldProps);
         delete OldProps;
       }
     }
-    Prop->SetId( Props.Count()-1 );
+    Prop->SetObjectGroupId( Props.Count()-1 );
     return Prop;
   }
   else  {
     Prop->AddObject(Sender);
     if( OldProps )  {
       OldProps->RemoveObject(Sender);
-      if( !OldProps->ObjectCount() && OldProps->GetId() )  {  // Id = 0 for default properties
+      if( OldProps->ObjectCount() == 0  && OldProps->GetObjectGroupId() != 0 )  {  // Id = 0 for default properties
         Props.Remove(OldProps);
         delete OldProps;
       }
