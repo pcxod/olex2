@@ -217,7 +217,9 @@ bool TDUnitCell::Orient(TGlPrimitive& P)  {
     const TGlFont& fnt = *Parent.GetScene().DefFont();
     vec3d T;
     const double tr = 0.3, 
-      scale = 1./Parent.GetScale();;
+      scale = 1./Parent.GetScale(),
+      maxZ = Parent.GetMaxRasterZ();
+
 
     vec3d cnt( Parent.GetBasis().GetCenter() );
     cnt += Center;
@@ -225,6 +227,7 @@ bool TDUnitCell::Orient(TGlPrimitive& P)  {
     T += cnt;
     T *= Parent.GetBasis().GetMatrix();
     T *= scale;
+    T[2] = maxZ;
     Parent.DrawTextSafe(T, Str, fnt);
     for( int i=0; i < 3; i++ )  {
       const int ind = i*2+1;
@@ -236,7 +239,7 @@ bool TDUnitCell::Orient(TGlPrimitive& P)  {
       T += cnt;
       T *= Parent.GetBasis().GetMatrix();
       T *= scale;
-      T[2] = Parent.GetMaxRasterZ();
+      T[2] = maxZ;
       Str[0] = (char)('a'+i);
       Parent.DrawTextSafe(T, Str, fnt);
     }

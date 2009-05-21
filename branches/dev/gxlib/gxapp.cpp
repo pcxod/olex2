@@ -3431,12 +3431,7 @@ void TGXApp::CreateXGrowLines()  {
     if( !HBondsVisible() && 
       (nt.from->GetAtomInfo() == iHydrogenIndex || nt.to->GetAtomInfo() == iHydrogenIndex) )
       gl.SetVisible(false);
-
-    if( nt.dist < (nt.from->GetAtomInfo().GetRad1() + nt.to->GetAtomInfo().GetRad1() + 
-      FXFile->GetLattice().GetDelta()) )
-      gl.Create("GrowBond_COV");
-    else
-      gl.Create("GrowBond_SI");
+      gl.Create("GrowBonds");
   }
 }
 //..............................................................................
@@ -3542,12 +3537,7 @@ void TGXApp::_CreateXGrowVLines()  {
       if( !HBondsVisible() && 
         (nt.from->GetAtomInfo() == iHydrogenIndex || nt.to->GetAtomInfo() == iHydrogenIndex) )
         gl.SetVisible(false);
-
-      if( nt.dist < (nt.from->GetAtomInfo().GetRad1() + nt.to->GetAtomInfo().GetRad1() + 
-        FXFile->GetLattice().GetDelta()) )
-        gl.Create("GrowBond_COV");
-      else
-        gl.Create("GrowBond_SI");
+        gl.Create("GrowBonds");
     }
   }
 }

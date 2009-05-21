@@ -499,7 +499,7 @@ void TMainForm::XApp( TGXApp *XA)  {
   this_InitMacroD(Clear, EmptyString, fpNone,
 "Clears console buffer (text)");
 
-  this_InitMacroD(Cell, EmptyString, fpOne|psFileLoaded,
+  this_InitMacroD(Cell, EmptyString, fpNone|fpOne|psFileLoaded,
 "If no arguments provided inverts visibility of unit cell, otherwise sets it to\
  the boolean value of the parameter");
   this_InitMacroD(Rota, EmptyString, fpTwo|fpFive,
@@ -3050,8 +3050,8 @@ void TMainForm::SaveScene(TDataItem *Root, TGlLightModel *FLM)  {
   HelpFontColorTxt.ToDataItem(I->AddItem("Help_txt"));
   HelpFontColorCmd.ToDataItem(I->AddItem("Help_cmd"));
   ExecFontColor.ToDataItem(I->AddItem("Exec"));
-  InfoFontColor.ToDataItem(I->AddItem("Exception"));
-  WarningFontColor.ToDataItem(I->AddItem("Exception"));
+  InfoFontColor.ToDataItem(I->AddItem("Info"));
+  WarningFontColor.ToDataItem(I->AddItem("Warning"));
   ErrorFontColor.ToDataItem(I->AddItem("Error"));
   ExceptionFontColor.ToDataItem(I->AddItem("Exception"));
 }
