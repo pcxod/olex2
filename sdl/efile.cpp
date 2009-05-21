@@ -911,7 +911,11 @@ void ListDirForGUI(const TStrObjList& Params, TMacroError& E)  {
   olxstr tmp;
   TEFile::ListCurrentDir( output, Params[1], attrib );
   TEFile::ChangeDir( cd );
+#ifdef __BORLANDC__
+  output.QuickSort< TStringWrapperComparator<TSingleStringWrapper<olxstr>,true> >();
+#else  // borland dies here...
   output.QSort(false);
+#endif
   for(int i=0; i < output.Count(); i++ )  {
    tmp = EmptyString;
     tmp <<  "<-" << dn << output[i];
