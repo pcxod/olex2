@@ -52,7 +52,7 @@ CC := gcc
 CFLAGS := -O3 
 #-combine
 OPTS = `wx-config --cxxflags --unicode --toolkit=gtk2` `python-config --includes` -I$(SRC_DIR)sdl -I$(SRC_DIR)xlib -I$(SRC_DIR)glib -I$(SRC_DIR)gxlib -I$(SRC_DIR)repository -I$(SRC_DIR)olex -I$(SRC_DIR)alglib -S -D__WXWIDGETS__ -D_UNICODE -DUNICODE
-LDFLAGS += `wx-config --libs gl,core,html,net,aui --unicode --toolkit=gtk2` `python-config --libs --ldflags` -L. -rdynamic -O3
+LDFLAGS += `wx-config --libs gl,core,html,net,aui --unicode --toolkit=gtk2` `python-config --libs --ldflags` -L$(OBJ_DIR) -rdynamic -O3
 CCFLAGS += $(CFLAGS)
 ###############################################################################
 
@@ -141,11 +141,11 @@ unirun: objs
 obj_unirun: unirun_obj_dir $(OBJ_UNIRUN:.cpp=.s)
 
 $(OBJ_UNIRUN:.cpp=.s):
-	$(CC) $(SRC_DIR)unirun/$(@F:.s=.cpp) -o $(OBJ_DIR)unirun/$(@F) $(OPTS) $(CFLAGS) -D_NO_PYTHON
+	$(CC) $(SRC_DIR)unirun/$(@F:.s=.cpp) -o $(OBJ_DIR)unirun/$(@F) -O3 `wx-config --cxxflags --unicode --toolkit=gtk2` -I$(SRC_DIR)sdl -I$(SRC_DIR)xlib -I$(SRC_DIR)glib -I$(SRC_DIR)gxlib -I$(SRC_DIR)repository -I$(SRC_DIR)alglib -S -D__WXWIDGETS__ -D_UNICODE -DUNICODE -D_NO_PYTHON
 #$(addprefix $(SRC_DIR)repository/,$(NPY_CPP_REPO)) 
 
-$(EXE_DIR)unirun : bin $(OBJ_UNIRUN:.cpp=.s)
-	$(CC) $(OBJ_DIR)*.s $(OBJ_UNIRUN:.cpp=.s) -o $(EXE_DIR)unirun $(LDFLAGS)
+$(EXE_DIR)unirun : bin $(OBJ_UNIRUN:.cpp=.s) $(obj_sdl_files:.cpp=.s) $(obj_sdl_smart_files:.cpp=.s) $(OBJ_REPO:.cpp=.s)
+	$(CC) $(obj_sdl_files:.cpp=.s) $(obj_sdl_smart_files:.cpp=.s) $(addprefix $(OBJ_DIR),$(NPY_CPP_REPO:.cpp=.s)) $(OBJ_UNIRUN:.cpp=.s) -o $(EXE_DIR)unirun $(LDFLAGS) -D_NO_PYTHON
 
 .PHONY : olex
 olex : objs
