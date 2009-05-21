@@ -10,7 +10,7 @@
 #include "glmaterial.h"
 #include "glrender.h"
 
-const short GraphicsStyleVersion = 2;
+const int TGraphicsStyles::CurrentVersion = 2;
 //------------------------------------------------------------------------------
 //TPrimitiveStyle implementation
 //------------------------------------------------------------------------------
@@ -248,7 +248,7 @@ void TGraphicsStyle::RemoveNamedStyles(const TStrList& toks)  {
 //..............................................................................
 TGraphicsStyles::TGraphicsStyles(TGlRenderer& R) : Renderer(R)  {
   Root = new TGraphicsStyle(*this, NULL, "Root");
-  Version = GraphicsStyleVersion;
+  Version = CurrentVersion;
 }
 //..............................................................................
 TGraphicsStyles::~TGraphicsStyles()  {
@@ -277,7 +277,7 @@ void TGraphicsStyles::ToDataItem(TDataItem& Item) const {
   }
   Item.AddField("Name", Name);
   Item.AddField("LinkFile", LinkFile);
-  Item.AddField("Version", GraphicsStyleVersion);
+  Item.AddField("Version", CurrentVersion);
   Root->ToDataItem(Item.AddItem("Root"));
   DataItems.Clear();
 }
@@ -312,7 +312,7 @@ void TGraphicsStyles::ToDataItem(TDataItem& item, const TPtrList<TGraphicsStyle>
   }
   item.AddField("Name", Name);
   item.AddField("LinkFile", LinkFile);
-  item.AddField("Version", GraphicsStyleVersion);
+  item.AddField("Version", CurrentVersion);
   root.ToDataItem(item.AddItem("Root"), true);
   DataItems.Clear();
   root.ReleaseStyles();

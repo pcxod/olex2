@@ -3,7 +3,7 @@
 #ifndef stylesH
 #define stylesH
 #include "glmaterial.h"
-#include "estlist.h"
+#include "dataitem.h"
 
 BeginGlNamespace()
 
@@ -269,6 +269,12 @@ public:
   void RemoveNamedStyles(const olxstr& name)  {  Root->RemoveNamedStyles(TStrList(name, '.'));  }
 
   inline short GetVersion() const {  return Version;  }
+  // reads the style version (0 - no version) from a dataitem 
+  static int ReadStyleVersion(const TDataItem& Item) {
+    return Item.GetFieldValue("Version", "0").ToInt();
+  }
+  // this is the current version of the styles
+  static const int CurrentVersion;
 };
 
 EndGlNamespace()
