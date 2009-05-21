@@ -2944,10 +2944,25 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
     FXApp->GetRender().GetStyles().FromDataItem(*SDF.Root().FindItem("style"));
   }
   else  {
-    FXApp->GetRender().GetStyles().FromDataItem(*DF.Root().FindItem("Styles"));
-    // old style override
-    if( FXApp->GetRender().GetStyles().GetVersion() < 2 )  {
-      ;//if( TEFile::Exists(FXApp->BaseDir() + "default.gldp")...
+    TDataItem& last_saved_style = DF.Root().FindRequiredItem("Styles");
+    int l_version = TGraphicsStyles::ReadStyleVersion(last_saved_style);
+    // old style override, let's hope it is newer!
+    if( l_version < TGraphicsStyles::CurrentVersion )  {
+      olxstr new_set = FXApp->BaseDir() + "last.osp";
+      if( TEFile::FileExists(new_set) )  {
+        TDataFile LF;
+        try  {  
+          LF.LoadFromXLFile(new_set);
+          TDataItem& distributed_style = LF.Root().FindRequiredItem("Styles");
+          int d_version = TGraphicsStyles::ReadStyleVersion(distributed_style);
+          // it would be weird if distributed version is not current... but might happen
+          FXApp->GetRender().GetStyles().FromDataItem(
+            (d_version <= l_version) ? last_saved_style : distributed_style );
+        }
+        catch(...)  {  // recover...
+          FXApp->GetRender().GetStyles().FromDataItem(last_saved_style);
+        }
+      }
     }
   }
   // default scene properties provided?
