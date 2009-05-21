@@ -727,36 +727,39 @@ void RefinementModel::ProcessFrags()  {
         TCAtomPList atoms;
         atoms.Add( &ag.GetPivot() );
         for( int k=0; k < ag.Count(); k++ )
-          atoms.Add( &ag[k] );
+          atoms.Add( ag[k] );
         for( int k=0; k < atoms.Count(); k++ )  {
           if( atoms[k]->ccrd().QLength() > 0.00001 )  {
-            crds.AddNew( (*frag)[k].crd, atoms[k]->ccrd() );
-            icrds.AddNew((*frag)[k].crd );
+            crds.AddNew( atoms[k]->ccrd(), (*frag)[k].crd );
+            icrds.AddNew(atoms[k]->ccrd(), (*frag)[k].crd );
           }
         }
         if( crds.Count() < 3 )
           throw TFunctionFailedException(__OlxSourceInfo, "Not enough atoms in fitted group");
-        smatdd tm;
+        smatdd tm, tmi;
         vec3d tr, tri, t;
         for( int k=0; k < crds.Count(); k++ )  {
-          icrds[k].B() = aunit.CellToCartesian( crds[k].B() );
-          aunit.CartesianToCell( icrds[k].A() ) *= -1;
-          aunit.CellToCartesian( icrds[k].A() );
-          t += crds[k].B();
-          tr += crds[k].GetA();
-          tri += icrds[k].GetA();
+          icrds[k].A() = aunit.CellToCartesian( crds[k].A() );
+          aunit.CartesianToCell( icrds[k].B() ) *= -1;
+          aunit.CellToCartesian( icrds[k].B() );
+          t += crds[k].GetA();
+          tr += crds[k].GetB();
+          tri += icrds[k].GetB();
         }
         t /= crds.Count();
         tr /= crds.Count();
         tri /= crds.Count();
+        tm.t = t;
+        tmi.t = t;
         bool invert = false;
-        double rms = TNetwork::FindAlignmentMatrix(crds, tr, t, tm);
-        double irms = TNetwork::FindAlignmentMatrix(icrds, tri, t, tm);
+        double rms = TNetwork::FindAlignmentMatrix(crds, t, tr, tm);
+        double irms = TNetwork::FindAlignmentMatrix(icrds, t, tri, tmi);
         if( irms < rms && irms >= 0 )  {
           tr = tri;
+          tm = tmi;
           invert = true;
         }
-        tm.r.Transpose();
+        //tm.r.Transpose();
         for( int k=0; k < atoms.Count(); k++ )  {
           vec3d v = (*frag)[k].crd;
           if( invert )  {
@@ -764,7 +767,7 @@ void RefinementModel::ProcessFrags()  {
             v *= -1;
             aunit.CellToCartesian(v);
           }
-          v = tm*(tr-v);
+          v = tm*(v-tr);
           atoms[k]->ccrd() = aunit.CartesianToCell(v);
         }
         ag.SetAfix( ag.GetN() );
