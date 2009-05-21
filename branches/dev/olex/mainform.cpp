@@ -488,7 +488,7 @@ void TMainForm::XApp( TGXApp *XA)  {
 "s&;w-grows the rest of the structure, using already applied generators&;t-grows\
  only provided atoms/atom types", fpAny | psFileLoaded,
 "Grows whole structure or provided atoms only");
-  this_InitMacroD(Uniq, EmptyString, (fpAny ^ fpNone) | psFileLoaded,
+  this_InitMacroD(Uniq, EmptyString, fpAny | psFileLoaded,
 "Shows only fragments specified by atom name(s) or selection");
 
   this_InitMacroD(Group, "n-a custom name can be provided", (fpAny ^ fpNone) | psFileLoaded,

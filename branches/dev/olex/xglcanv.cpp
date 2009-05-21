@@ -141,9 +141,9 @@ void TGlCanvas::OnMouseUp(wxMouseEvent& me)  {
     if( FRightMouseDown )  {
       FXApp->MouseUp(me.m_x, me.m_y, Fl, Btn);
       AGDrawObject *G = FXApp->SelectObject(me.m_x, me.m_y);
-      TGlGroup *GlG = FXApp->FindObjectGroup(*G);
       bool Handled = false;
       if( G != NULL )  {
+        TGlGroup *GlG = FXApp->FindObjectGroup(*G);
         if( GlG == NULL )  
           FParent->ObjectUnderMouse(G);
         else        

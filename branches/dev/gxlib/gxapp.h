@@ -144,6 +144,10 @@ protected:
 
   float FProbFactor;
   double ExtraZoom;  // the default is 1, Calculated Zoom is multiplid by this number
+  /* intialises SAtom::Tag to XAtom::Id and checks if any atom with AtomInfo == atom_type
+  has visible neighbours, if not - it will be hidden, otherwise its visibility will become 'show';
+  for bonds makes them visible only if both atoms are visible */
+  void SyncAtomAndBondVisiblity(int atom_type, bool show_a, bool show_b);
 public:
   TGXApp(const olxstr & FileName);
   // FileNAme - argv[0]

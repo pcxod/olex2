@@ -1405,19 +1405,20 @@ void TMainForm::macGrow(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 }
 //..............................................................................
 void TMainForm::macUniq(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  if( Cmds.IsEmpty() ) {  ;  }
-  else  {
-    TNetPList L, L1;
-    TXAtomPList Atoms;
-    FXApp->FindXAtoms(Cmds.Text(' '), Atoms);
-    for( int i=0; i < Atoms.Count(); i++ )
-      L.Add( &Atoms[i]->Atom().GetNetwork());
-
-    FXApp->InvertFragmentsList(L, L1);
-    FXApp->FragmentsVisible(L1, false);
-    FXApp->CenterView(true);
-    TimePerFrame = FXApp->Draw();
+  TXAtomPList Atoms;
+  FindXAtoms(Cmds, Atoms, false, true);
+  if( Atoms.IsEmpty() )  {
+    Error.ProcessingError(__OlxSrcInfo, "no atoms provided");
+    return;
   }
+
+  TNetPList L, L1;
+  for( int i=0; i < Atoms.Count(); i++ )
+    L.Add( &Atoms[i]->Atom().GetNetwork());
+  FXApp->InvertFragmentsList(L, L1);
+  FXApp->FragmentsVisible(L1, false);
+  FXApp->CenterView(true);
+  TimePerFrame = FXApp->Draw();
 }
 //..............................................................................
 void TMainForm::macGroup(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
