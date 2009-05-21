@@ -1,0 +1,216 @@
+<?xml version='1.0' encoding='utf-8' ?>
+<!-- C++Builder XML Project -->
+<PROJECT>
+  <MACROS>
+    <VERSION value="BCB.06.00"/>
+    <PROJECT value="lib\xlib.lib"/>
+    <OBJFILES value="build\asymmunit.obj build\atominfo.obj build\catom.obj build\chnexp.obj 
+      build\cif.obj build\congen.obj build\crs.obj build\ellipsoid.obj 
+      build\envilist.obj build\evaln.obj build\hkl.obj build\idistribution.obj 
+      build\ins.obj build\ipattern.obj build\lattice.obj build\lst.obj 
+      build\mol.obj build\network.obj build\p4p.obj build\satom.obj 
+      build\sbond.obj build\sgtest.obj build\splane.obj build\symmlib.obj 
+      build\symmparser.obj build\sysabs.obj build\unitcell.obj build\xbase.obj 
+      build\xfiles.obj build\xlcongen.obj build\xyz.obj build\tls.obj 
+      build\scat_it.obj build\srestraint.obj build\auto.obj build\pdb.obj 
+      build\symmtest.obj build\xapp.obj build\graphsr.obj build\brushhkl.obj 
+      build\sg.obj build\xmacro.obj build\wilson.obj build\imp_auto.obj 
+      build\seval.obj build\samegroup.obj build\afixgroup.obj 
+      build\exyzgroup.obj build\leq.obj build\refmodel.obj build\chemdata.obj"/>
+    <RESFILES value=""/>
+    <DEFFILE value=""/>
+    <RESDEPEN value="$(RESFILES)"/>
+    <LIBFILES value=""/>
+    <LIBRARIES value=""/>
+    <PACKAGES value=""/>
+    <PATHCPP value=".;..\..\..\xlib;..\..\..\xlib\macro"/>
+    <PATHPAS value=".;"/>
+    <PATHRC value=".;"/>
+    <PATHASM value=".;"/>
+    <LINKER value="TLib"/>
+    <USERDEFINES value="_DEBUG;_NO_PYTHON"/>
+    <SYSDEFINES value="NO_STRICT"/>
+    <MAINSOURCE value="xlib.bpf"/>
+    <INCLUDEPATH value="..;..\..\..\xlib\macro;&quot;C:\Program Files\Borland\CBuilder6\Projects&quot;;..\..\..\sdl;..\..\..\xlib;$(BCB)\include;$(BCB)\include\vcl;..\..\..\alglib;..\..\..\repository"/>
+    <LIBPATH value="..;..\..\..\xlib\macro;&quot;C:\Program Files\Borland\CBuilder6\Projects&quot;;..\..\..\xlib;$(BCB)\lib\obj;$(BCB)\lib"/>
+    <WARNINGS value="-w-par"/>
+    <LISTFILE value=""/>
+    <OTHERFILES value=""/>
+  </MACROS>
+  <OPTIONS>
+    <CFLAG1 value="-Od -H=$(BCB)\lib\vcl60.csm -Hc -Vx -Ve -ff -X- -r- -a8 -6 -b -d -k -y -v 
+      -vi- -c -tW -tWM"/>
+    <PFLAGS value="-N2build -N0build -$YD -$W -$O- -$A8 -v -JPHNE -M"/>
+    <AFLAGS value="/mx /w2 /zi"/>
+    <LFLAGS value="/P1024 /C"/>
+    <OTHERFILES value=""/>
+  </OPTIONS>
+  <LINKER>
+    <ALLOBJ value="$(OBJFILES)"/>
+    <ALLLIB value=""/>
+    <OTHERFILES value=""/>
+  </LINKER>
+  <FILELIST>
+      <FILE FILENAME="xlib.bpf" FORMNAME="" UNITNAME="xlib" CONTAINERID="BPF" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\asymmunit.cpp" FORMNAME="" UNITNAME="asymmunit.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\atominfo.cpp" FORMNAME="" UNITNAME="atominfo.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\catom.cpp" FORMNAME="" UNITNAME="catom.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\chnexp.cpp" FORMNAME="" UNITNAME="chnexp.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\cif.cpp" FORMNAME="" UNITNAME="cif.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\congen.cpp" FORMNAME="" UNITNAME="congen.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\crs.cpp" FORMNAME="" UNITNAME="crs.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\ellipsoid.cpp" FORMNAME="" UNITNAME="ellipsoid.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\envilist.cpp" FORMNAME="" UNITNAME="envilist.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\evaln.cpp" FORMNAME="" UNITNAME="evaln.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\hkl.cpp" FORMNAME="" UNITNAME="hkl.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\idistribution.cpp" FORMNAME="" UNITNAME="idistribution.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\ins.cpp" FORMNAME="" UNITNAME="ins.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\ipattern.cpp" FORMNAME="" UNITNAME="ipattern.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\lattice.cpp" FORMNAME="" UNITNAME="lattice.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\lst.cpp" FORMNAME="" UNITNAME="lst.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\mol.cpp" FORMNAME="" UNITNAME="mol.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\network.cpp" FORMNAME="" UNITNAME="network.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\p4p.cpp" FORMNAME="" UNITNAME="p4p.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\satom.cpp" FORMNAME="" UNITNAME="satom.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\sbond.cpp" FORMNAME="" UNITNAME="sbond.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\sgtest.cpp" FORMNAME="" UNITNAME="sgtest.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\splane.cpp" FORMNAME="" UNITNAME="splane.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\symmlib.cpp" FORMNAME="" UNITNAME="symmlib.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\symmparser.cpp" FORMNAME="" UNITNAME="symmparser.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\sysabs.cpp" FORMNAME="" UNITNAME="sysabs.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\unitcell.cpp" FORMNAME="" UNITNAME="unitcell.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\xbase.cpp" FORMNAME="" UNITNAME="xbase.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\xfiles.cpp" FORMNAME="" UNITNAME="xfiles.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\xlcongen.cpp" FORMNAME="" UNITNAME="xlcongen.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\xyz.cpp" FORMNAME="" UNITNAME="xyz.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\tls.cpp" FORMNAME="" UNITNAME="tls" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\scat_it.cpp" FORMNAME="" UNITNAME="scat_it" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\srestraint.cpp" FORMNAME="" UNITNAME="srestraint" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\auto.cpp" FORMNAME="" UNITNAME="auto" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\pdb.cpp" FORMNAME="" UNITNAME="pdb" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\symmtest.cpp" FORMNAME="" UNITNAME="symmtest" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\xapp.cpp" FORMNAME="" UNITNAME="xapp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\macro\graphsr.cpp" FORMNAME="" UNITNAME="graphsr" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\macro\brushhkl.cpp" FORMNAME="" UNITNAME="brushhkl" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\macro\sg.cpp" FORMNAME="" UNITNAME="sg" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\xmacro.cpp" FORMNAME="" UNITNAME="xmacro" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\macro\wilson.cpp" FORMNAME="" UNITNAME="wilson" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\macro\imp_auto.cpp" FORMNAME="" UNITNAME="imp_auto" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\seval.cpp" FORMNAME="" UNITNAME="seval" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\samegroup.cpp" FORMNAME="" UNITNAME="samegroup" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\afixgroup.cpp" FORMNAME="" UNITNAME="afixgroup.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\exyzgroup.cpp" FORMNAME="" UNITNAME="exyzgroup.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\leq.cpp" FORMNAME="" UNITNAME="leq.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\refmodel.cpp" FORMNAME="" UNITNAME="refmodel.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\chemdata.cpp" FORMNAME="" UNITNAME="chemdata" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+  </FILELIST>
+  <BUILDTOOLS>
+  </BUILDTOOLS>
+
+  <IDEOPTIONS>
+[Version Info]
+IncludeVerInfo=0
+AutoIncBuild=0
+MajorVer=1
+MinorVer=0
+Release=0
+Build=0
+Debug=0
+PreRelease=0
+Special=0
+Private=0
+DLL=0
+Locale=2057
+CodePage=1252
+
+[Version Info Keys]
+CompanyName=
+FileDescription=
+FileVersion=1.0.0.0
+InternalName=
+LegalCopyright=
+LegalTrademarks=
+OriginalFilename=
+ProductName=
+ProductVersion=1.0.0.0
+Comments=
+
+[HistoryLists\hlIncludePath]
+Count=10
+Item0=..;..\..\..\xlib\macro;C:\Program Files\Borland\CBuilder6\Projects;..\..\..\sdl;..\..\..\xlib;$(BCB)\include;$(BCB)\include\vcl;..\..\..\alglib;..\..\..\repository
+Item1=..\;..;..\..\..\xlib\macro;C:\Program Files\Borland\CBuilder6\Projects;..\..\..\sdl;..\..\..\xlib;$(BCB)\include;$(BCB)\include\vcl;..\..\..\alglib;..\..\..\repository
+Item2=..\;..\..\..\xlib\macro;C:\Program Files\Borland\CBuilder6\Projects;..\..\..\sdl;..\..\..\xlib;$(BCB)\include;$(BCB)\include\vcl;..\..\..\alglib;..\..\..\repository
+Item3=..\..\..\xlib\macro;C:\Program Files\Borland\CBuilder6\Projects;..\..\..\sdl;..\..\..\xlib;$(BCB)\include;$(BCB)\include\vcl;..\..\..\alglib;..\..\..\repository
+Item4=..\..\..\xlib\macro;C:\Program Files\Borland\CBuilder6\Projects;..\..\..\sdl;..\..\..\xlib;$(BCB)\include;$(BCB)\include\vcl;..\..\..\alglib
+Item5=C:\Program Files\Borland\CBuilder6\Projects;..\..\..\sdl;..\..\..\xlib;$(BCB)\include;$(BCB)\include\vcl;..\..\..\alglib
+Item6=..\..\..\sdl;..\..\..\xlib;$(BCB)\include;$(BCB)\include\vcl;..\..\..\alglib
+Item7=C:\Program Files\Borland\CBuilder6\Projects;..\..\..\xlib;$(BCB)\include;$(BCB)\include\vcl;..\..\..\sdl
+Item8=..\..\..\xlib;$(BCB)\include;$(BCB)\include\vcl;..\..\..\sdl
+Item9=..\..\..\xlib;$(BCB)\include;$(BCB)\include\vcl
+
+[HistoryLists\hlLibraryPath]
+Count=6
+Item0=..;..\..\..\xlib\macro;C:\Program Files\Borland\CBuilder6\Projects;..\..\..\xlib;$(BCB)\lib\obj;$(BCB)\lib
+Item1=..\;..;..\..\..\xlib\macro;C:\Program Files\Borland\CBuilder6\Projects;..\..\..\xlib;$(BCB)\lib\obj;$(BCB)\lib
+Item2=..\;..\..\..\xlib\macro;C:\Program Files\Borland\CBuilder6\Projects;..\..\..\xlib;$(BCB)\lib\obj;$(BCB)\lib
+Item3=..\..\..\xlib\macro;C:\Program Files\Borland\CBuilder6\Projects;..\..\..\xlib;$(BCB)\lib\obj;$(BCB)\lib
+Item4=C:\Program Files\Borland\CBuilder6\Projects;..\..\..\xlib;$(BCB)\lib\obj;$(BCB)\lib
+Item5=..\..\..\xlib;$(BCB)\lib\obj;$(BCB)\lib
+
+[HistoryLists\hlDebugSourcePath]
+Count=1
+Item0=$(BCB)\source\vcl
+
+[HistoryLists\hlConditionals]
+Count=5
+Item0=_DEBUG;_NO_PYTHON
+Item1=_DEBUG;
+Item2=_DEBUG;_UNICODE;
+Item3=_DEBUG;_UNICODE
+Item4=_DEBUG
+
+[HistoryLists\hlIntOutputDir]
+Count=1
+Item0=build
+
+[HistoryLists\hlFinalOutputDir]
+Count=2
+Item0=lib\
+Item1=lib
+
+[HistoryLists\hlTlibPageSize]
+Count=7
+Item0=0x0400
+Item1=0x0200
+Item2=0x0100
+Item3=0x0080
+Item4=0x0040
+Item5=0x0020
+Item6=0x0010
+
+[Debugging]
+DebugSourceDirs=$(BCB)\source\vcl
+
+[Parameters]
+RunParams=
+Launcher=
+UseLauncher=0
+DebugCWD=
+HostApplication=
+RemoteHost=
+RemotePath=
+RemoteLauncher=
+RemoteCWD=
+RemoteDebug=0
+
+[Compiler]
+ShowInfoMsgs=0
+LinkDebugVcl=0
+LinkCGLIB=0
+
+[Language]
+ActiveLang=
+ProjectLang=
+RootDir=
+  </IDEOPTIONS>
+</PROJECT>
