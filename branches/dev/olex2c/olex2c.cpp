@@ -42,7 +42,7 @@ using namespace std;
 #include "py_core.h"
 
 #ifndef __WIN32__
-  #include <termio.h>
+  #include <readline/readline.h>
 #endif
 
 //
@@ -1079,6 +1079,7 @@ int main(int argc, char* argv[])  {
 #ifndef __WIN32__  // dummy stuff for wxWidgets...
   MyApp wx_app;
   wxAppConsole::SetInstance(&wx_app);
+	rl_readline_name = "olex2c";
 //  struct termios new_settings, stored_settings;
 //  tcgetattr(0,&stored_settings);
 //  new_settings = stored_settings;
@@ -1113,13 +1114,25 @@ int main(int argc, char* argv[])  {
     }
   }
   else  {
+#ifdef __WIN32__
     char _cmd[512];
     _cmd[0] = '\0';
+#endif		
     olxstr cmd;
     //TBasicApp::GetInstance()->OnTimer->Add( new TTerminationListener );
     while( true )  {
       TBasicApp::GetInstance()->OnIdle->Execute(NULL);
+#ifdef __WIN32__
       cin.getline(_cmd, 512);
+      cmd = _cmd;
+#else
+  char* _cmd = readline(">>");
+	if( _cmd == NULL )
+	  continue;
+	add_history(_cmd);
+	cmd = _cmd;
+	delete _cmd;
+#endif
 //      int ch = getchar();
 //      if( ch >= 'a' && ch <= 'z' )
 //        cout << (char)ch;
@@ -1141,7 +1154,6 @@ int main(int argc, char* argv[])  {
 //          }
 //        }
 //      }
-      cmd = _cmd;
       if( cmd.Comparei("quit") == 0 )  break;
       else  {
         try { olex.executeMacro(cmd);  }
@@ -1150,7 +1162,9 @@ int main(int argc, char* argv[])  {
         }
       }
       if( olex.TerminateSignal )  break;
+#ifdef __WIN32__			
       cout << ">>";
+#endif			
     }
   }
   TBasicApp::GetInstance()->OnIdle->Execute(NULL);

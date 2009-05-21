@@ -147,6 +147,10 @@ unirun_env.Append(CCFLAGS = ['-D_NO_PYTHON'])
 unirun_env.Program(out_dir+'exe/unirun', unirun_files)
 
 # make olex2c?
+
+if sys.platform[:3] != 'win':
+  olex2c_env.Append(LIBS=['readline'])
+
 olex2c_files = processFileNameList(olex2c, olex2c_env, out_dir+'olex2c')
 olex2c_env.Program(out_dir+'exe/olex2c', generic_files + olex2c_files)
 

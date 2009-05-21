@@ -80,7 +80,8 @@ public:
   }
   void Push()  {
   }
-  void Pop()  {
+  void Pop()  {  // just reset the values to default
+    cout << "\033[0";
   }
   void SetTextBackground(const int cl, bool intensity=false)  {
     cout << "\033[" << cl;
