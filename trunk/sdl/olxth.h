@@ -107,7 +107,8 @@ public:
     if( h == NULL )  
       return false;
 #else  
-    return (pthread_create(&Handle, NULL, f, NULL) == 0);
+    pthread_t thread_id;
+    return (pthread_create(&thread_id, NULL, &ThreadFunctionConverter<T>::Func, (void*)(f)) == 0);
 #endif
     return true;
   }
