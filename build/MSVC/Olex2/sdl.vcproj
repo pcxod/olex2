@@ -837,6 +837,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\sdl\olxmps.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\sdl\olxth.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\sdl\smart\ostring.h"
 				>
 			</File>

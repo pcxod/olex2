@@ -2000,9 +2000,6 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
       if( FileMT != FileT )  {
         FObjectUnderMouse = NULL;
         ProcessXPMacro((olxstr("@reap -b -r \'") << FListenFile)+'\'', MacroError);
-        // for debug purposes
-        if( TEFile::FileExists(DefStyle) )  
-          FXApp->GetRender().GetStyles().LoadFromFile(DefStyle);
         for( int i=0; i < FOnListenCmds.Count(); i++ )  {
           ProcessXPMacro(FOnListenCmds[i], MacroError);
           if( !MacroError.IsSuccessful() )  break;
@@ -2792,8 +2789,8 @@ void TMainForm::SaveSettings(const olxstr &FN)  {
   I->AddField("CmdLine", CmdLineVisible);
 
   I = &DF.Root().AddItem("Defaults");
-  I->AddField("Style", TEFile::ExtractFileName(DefStyle));
-  I->AddField("SceneP", TEFile::ExtractFileName(DefSceneP));
+  I->AddField("Style", DefStyle);  // these file names are stored as absolute values!
+  I->AddField("SceneP", DefSceneP);
 
   I->AddField("BgColor", FBgColor.ToString());
   I->AddField("WhiteOn", (FXApp->GetRender().LightModel.ClearColor().GetRGB() == 0xffffffff) );

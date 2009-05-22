@@ -27,7 +27,11 @@ public:
 
   static inline TLog& GetLog()  {  return *GetInstance()->Log;  }
 
-  static inline TBasicApp*  GetInstance() {  return Instance;  }
+  static inline TBasicApp*  GetInstance() {  
+    if( Instance == NULL )
+      throw TFunctionFailedException(__OlxSourceInfo, "Uninitialised application layer...");
+    return Instance;  
+  }
 
   //static printf(const char* format, ...);
 
@@ -40,7 +44,7 @@ public:
   DefPropB(Profiling)
 
   // default implementtaion is POSIX and windows
-  void Sleep(long msec);
+  static void Sleep(long msec);
   // implementation might consider drawing scene, update GUI etc..
   virtual void Update()  {  return;  }
   DefPropP(short, MaxThreadCount)

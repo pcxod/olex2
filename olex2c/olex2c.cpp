@@ -127,11 +127,7 @@ class TOlex: public AEventsDispatcher, public olex::IOlexProcessor, public ASele
     while( true )  {
       if( TBasicApp::GetInstance()  == NULL )  return 0;
       TBasicApp::GetInstance()->OnTimer->Execute(NULL);
-#ifdef __WIN32__
-			Sleep(50);
-#else
-      sleep(50);
-#endif
+      TBasicApp::Sleep(50);
     }
     return 0;
   }
@@ -173,11 +169,8 @@ public:
     Library.AttachLibrary( TEFile::ExportLibrary() );
     //Library.AttachLibrary( PythonExt::GetInstance()->ExportLibrary() );
     Library.AttachLibrary( TETime::ExportLibrary() );
-		cout << "1\n";
     Library.AttachLibrary( XApp.XFile().ExportLibrary() );
-		cout << "2\n";
     Library.AttachLibrary( TFileHandlerManager::ExportLibrary() );
-		cout << "3\n";
 
     DataDir = TShellUtil::GetSpecialFolderLocation(fiAppData);
 		cout << DataDir.c_str() << '\n';

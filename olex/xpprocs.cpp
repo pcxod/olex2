@@ -135,6 +135,7 @@
 #include "ortdraw.h"
 // FOR DEBUG only
 #include "egraph.h"
+#include "olxth.h"
 //#include "base_2d.h"
 //#include "gl2ps/gl2ps.c"
 
@@ -4671,7 +4672,6 @@ void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError
   if( Options.Count() == 0 )  {  // print labels of selected atoms
     olxstr Tmp("sel");
     int period=5;
-    double v;
     TGlGroup& Sel = FXApp->GetSelection();
     TXAtomPList Atoms;
     FXApp->FindXAtoms(Tmp, Atoms, false);
@@ -8075,14 +8075,32 @@ void TMainForm::macProjSph(TStrObjList &Cmds, const TParamList &Options, TMacroE
     FXApp->GetBond(i).BondUpdated();
 }
 //..............................................................................
+class Th1 : public AOlxThread  {
+  Th1* toKill;
+public:
+  Th1(Th1* to_kill=NULL) : toKill(to_kill)  {  }
+  virtual int Run()  {
+    if( toKill != 0 )  {
+      TBasicApp::Sleep(5000);
+      toKill->SendTerminate();
+      return 1;
+    }
+    while( true )  {
+      TBasicApp::Sleep(50);
+      if( Terminate )
+        return 0;
+    }
+  }
+};
 void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  vec3d p(1./3, 2./3, 1./6);
-  smatd sm;
-  sm.r = mat3d(1,-1,0, 1, 0, 0, -1, 0, 1);
-  sm.t = vec3d(1./2, 1./3, 1./4);
-  p = sm* p;
-  p = smatd::Inverse(sm) * p;
-
+  Th1* th1 = new Th1;
+  Th1* th2 = new Th1(th1);
+  th1->Start();
+  th2->Start();
+  TBasicApp::Sleep(1000);
+  th1->Join();
+  delete th1;
+  //delete th1;
 }
 //..............................................................................
 double Main_FindClosestDistance(const smatd_list& ml, vec3d& o_from, const TCAtom& a_to) {
