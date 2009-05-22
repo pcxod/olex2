@@ -10,8 +10,8 @@
 #include <wx/font.h>
 
 TdlgEdit::TdlgEdit(TMainForm *ParentFrame, bool MultiLine):
-  TDialog(ParentFrame, wxT("Edit"), wxT("dlgEdit"))
-
+  //TDialog(ParentFrame, -1, wxT("Edit"), wxT("dlgEdit"))
+  wxDialog(ParentFrame, -1,  wxT("Edit"), wxPoint(0, 0), wxDefaultSize, wxMAXIMIZE_BOX | wxRESIZE_BORDER | wxDEFAULT_DIALOG_STYLE, wxT("dlgEdit")), WI(this)
 {
   int fontSize = 12, charNumber = 75;
   FParent = ParentFrame;
@@ -22,23 +22,34 @@ TdlgEdit::TdlgEdit(TMainForm *ParentFrame, bool MultiLine):
     flags = wxTE_MULTILINE|wxTE_DONTWRAP;
     height = 350;
   }
-  Text = new TTextEdit(this, flags);
-  Text->SetSize(width, height);
+  Text = new wxTextCtrl(this, -1, wxT(""), wxDefaultPosition, wxSize(width, height), flags);
+  //Text->SetSize(width, height);
   wxFont fnt(fontSize, wxMODERN, wxNORMAL, wxNORMAL);
   Text->SetFont(fnt);
+
+  wxBoxSizer *GlobalSizer = new wxBoxSizer(wxVERTICAL );
+  GlobalSizer->Add(Text, 1, wxEXPAND | wxALL, 3);
 
   wxBoxSizer *ButtonsSizer = new wxBoxSizer( wxHORIZONTAL );
   ButtonsSizer->Add( new wxButton( this, wxID_OK, wxT("OK") ), 0, wxALL, 3);
   ButtonsSizer->Add( new wxButton( this, wxID_CANCEL, wxT("Cancel") ), 0, wxALL, 3);
-  ButtonsSizer->SetDimension(0, height+1, width, 30);
-  this->WI.SetWidth(width+5);
-  this->WI.SetHeight(height+70);
-  delete ButtonsSizer;
+  //ButtonsSizer->SetDimension(0, height+1, width, 30);
+  //this->WI.SetWidth(width+5);
+  //this->WI.SetHeight(height+70);
+  GlobalSizer->Add(ButtonsSizer,0, wxALL, 3);
+    
+  
+  SetSizer(GlobalSizer);
+  GlobalSizer->SetSizeHints(this);  
+  
+  //delete ButtonsSizer;
   Center();
   FParent->RestorePosition(this);
 }
 //..............................................................................
-TdlgEdit::~TdlgEdit()  { }
+TdlgEdit::~TdlgEdit()  { 
+  FParent->SavePosition(this);
+}
 //..............................................................................
 void TdlgEdit::SetText(const olxstr& text)  {
   Text->SetValue( uiStr(text) );
