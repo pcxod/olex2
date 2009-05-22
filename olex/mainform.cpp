@@ -2964,6 +2964,8 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
         }
       }
     }
+    else  // up-to-date then...
+      FXApp->GetRender().GetStyles().FromDataItem(last_saved_style);
   }
   // default scene properties provided?
   if( TEFile::FileExists(DefSceneP) )  {

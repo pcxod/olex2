@@ -98,7 +98,11 @@ protected:
     TEFile::TFileNameMask ExtMask, NameMask;
     MaskAssociation(const olxstr& fn)  {
       olxstr ext = TEFile::ExtractFileExt( fn );
-      ExtMask.Build(ext);
+      // special case when "name*" is specified - the extension can be any...
+      if( ext.IsEmpty() && !fn.EndsWith('.') && fn.EndsWith('*') )
+        ExtMask.Build('*');
+      else
+        ExtMask.Build(ext);
       NameMask.Build(fn.SubStringTo(fn.Length() - ext.Length() - (ext.IsEmpty() ? 0 : 1)));
     }
   };
