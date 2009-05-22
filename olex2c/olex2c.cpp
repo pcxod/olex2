@@ -44,6 +44,7 @@ using namespace std;
 
 #ifndef __WIN32__
   #include <readline/readline.h>
+  #include <readline/history.h>
 #endif
 
 //
@@ -1058,7 +1059,7 @@ int main(int argc, char* argv[])  {
 #ifndef __WIN32__  // dummy stuff for wxWidgets...
   MyApp wx_app;
   wxAppConsole::SetInstance(&wx_app);
-	rl_readline_name = "olex2c";
+	rl_readline_name = argv[0];
 //  struct termios new_settings, stored_settings;
 //  tcgetattr(0,&stored_settings);
 //  new_settings = stored_settings;
@@ -1084,7 +1085,9 @@ int main(int argc, char* argv[])  {
   cout << "Welcome to Olex2 console\n";
   cout << "GUI basedir is: " << TBasicApp::GetInstance()->BaseDir().c_str() << '\n';
   cout << "Compilation information: " << __DATE__ << ' ' << __TIME__ << '\n';
+#ifdef __WIN32__  // readline prints one itself...
   cout << ">>";
+#endif
   if( argc > 1 )  {
     olxstr arg_ext( TEFile::ExtractFileExt(argv[1]) );
     if( arg_ext.Comparei("autochem") == 0 )  {
