@@ -1,0 +1,210 @@
+//---------------------------------------------------------------------------
+#ifndef wxFtpFSH
+#define wxFtpFSH
+#include "filesystem.h"
+#include "url.h"
+#include "wxzipfs.h"
+#include "wx/protocol/ftp.h"
+#include "ememstream.h"
+//---------------------------------------------------------------------------
+class TwxFtpFileSystem: public AFileSystem, public IEObject  {
+  TUrl Url;
+  wxFTP Ftp;
+  TwxZipFileSystem* ZipFS;
+  olxstr pwd;
+  olxstr NormaliseName(const olxstr& name) const {
+    olxstr fn( TEFile::UnixPath(name) );
+    fn = fn.StartsFrom(pwd) ? fn.SubStringFrom(pwd.Length()) : fn;
+    return fn.Trim('/');
+  }
+public:
+  TwxFtpFileSystem(const TUrl& url, const olxstr& userName, const olxstr& pswd, TwxZipFileSystem* zipFS=NULL) : Url(url) {
+    Ftp.SetUser( userName.u_str() );
+    Ftp.SetPassword( pswd.u_str() );
+    Ftp.SetBinary();
+    ZipFS = zipFS;
+    if( !Ftp.Connect( (url.HasProxy() ? url.GetProxy().GetFullHost() : url.GetHost()).u_str() ) )  {
+      throw TFunctionFailedException(__OlxSourceInfo, "connection failed");
+    }
+    SetBase( url.GetPath() );
+    if( !url.GetPath().IsEmpty() )  {
+      if( !FileExists(url.GetPath()) )
+        NewDir(url.GetPath());
+      ChangeDir(url.GetPath());
+      pwd = url.GetPath();
+    }
+  }
+  virtual ~TwxFtpFileSystem() {}
+  // saves stream to a temprray file and returs the object which must be deleted manually
+  TEFile* SaveFile(const olxstr& fn);
+  // zip is as primary source of the files, if a file is not in the zip - Url is used
+  void SetZipFS( TwxZipFileSystem* zipFS )  {
+    if( ZipFS != NULL )  delete ZipFS;
+      ZipFS = zipFS;
+  }
+  virtual IInputStream* OpenFile(const olxstr& Source)  {
+    olxstr o_src(NormaliseName(Source));
+    olxstr zip_name = Source.SubStringFrom( Url.GetPath().Length()+1 );
+    if( ZipFS != NULL && ZipFS->FileExists(zip_name) != 0 )  {
+      return ZipFS->OpenFile(zip_name);
+    }
+    TOnProgress Progress;
+    Progress.SetMax(1);
+    Progress.SetPos(0);
+    Progress.SetAction(olxstr("Downloading ") << o_src );
+    TBasicApp::GetInstance()->OnProgress->Enter(this, &Progress);
+    wxInputStream* is = NULL;
+    try  {
+      olxstr src( o_src );
+      src.Replace(' ', "%20");
+      is = wxOpenFile( src );
+      if( is != NULL )  {
+        Progress.SetMax( is->GetLength() );
+        TBasicApp::GetInstance()->OnProgress->Execute(this, &Progress);
+      }
+    }
+    catch( ... )  {   return NULL;  }
+
+    if( is == NULL )  {
+      throw TFunctionFailedException(__OlxSourceInfo, olxstr("NULL handle for '") << o_src << '\'');
+      return NULL;
+    }
+    TEMemoryStream* ms = new TEMemoryStream();
+    char* bf = new char[1024*64];
+    try {
+      is->Read(bf, 1024*64);
+      while( is->LastRead() != 0 )  {
+        ms->Write( bf, is->LastRead() );
+        if( Progress.GetMax() > 0 )  {
+          Progress.SetPos( ms->GetPosition() );
+          TBasicApp::GetInstance()->OnProgress->Execute(this, &Progress);
+        }
+        is->Read(bf, 1024*64);
+      }
+      ms->SetPosition(0);
+      Progress.SetAction("Download complete");
+      Progress.SetPos( 0 );
+      TBasicApp::GetInstance()->OnProgress->Exit(this, &Progress);
+    }
+    catch(...)  {
+      Progress.SetAction("Download failed");
+      Progress.SetPos( 0 );
+      TBasicApp::GetInstance()->OnProgress->Execute(this, &Progress);
+      TBasicApp::GetInstance()->OnProgress->Exit(this, &Progress);
+    }
+    delete is;
+    delete [] bf;
+    return ms;  
+    
+  }
+  virtual wxInputStream* wxOpenFile(const olxstr& Source) {  return Ftp.GetInputStream(Source.u_str());  }
+  virtual bool FileExists(const olxstr& DN)  {  
+    // hack here... too slow otherwise, assume that index IS up-to-date
+    olxstr fn( NormaliseName(DN).u_str() );
+    if( fn == "index.ind" )
+      return Ftp.FileExists( wxT("index.ind") );  
+    return true;
+  }
+
+  virtual bool DelFile(const olxstr& FN)     {  // to dangerous
+    return true;
+    return Ftp.RmFile(NormaliseName(FN).u_str());    
+  }
+  virtual bool DelDir(const olxstr& DN)      {  // too dangerous
+    return true; 
+    //return Ftp.RmDir(NormaliseName(DN).u_str());     
+  }
+  virtual bool AdoptFile(const TFSItem& src){  
+    IInputStream* is = NULL;
+    try  {  
+      is = src.GetFileSystem().OpenFile(src.GetFileSystem().GetBase() + src.GetFullName() );  
+      if( is != NULL )  
+        return AdoptStream(*is, TEFile::UnixPath(src.GetFullName()));
+    }
+    catch(const TExceptionBase& exc)  {
+      throw TFunctionFailedException(__OlxSourceInfo, exc);
+    }
+    if( is == NULL )  return false;
+    else
+      delete is;
+    return true;
+  }
+  virtual bool AdoptStream(IInputStream& in, const olxstr& as) {  
+    olxstr rel_path( NormaliseName(as) );
+//    OnAdoptFile->Execute( this, &F__N);
+    TOnProgress Progress;
+    Progress.SetMax(1);
+    Progress.SetPos(0);
+    Progress.SetAction(olxstr("Uploading ") << rel_path );
+    TBasicApp::GetInstance()->OnProgress->Enter(this, &Progress);
+
+    Progress.SetMax( in.GetSize() );
+    try {
+      //TStrList path_toks;
+      int ind = rel_path.LastIndexOf('/');
+      olxstr path = (ind != -1) ? rel_path.SubStringTo(ind) : EmptyString;
+      olxstr fn( ind == 0-1 ? rel_path : rel_path.SubStringFrom(ind+1) );
+      int depth = 0;
+      if( !path.IsEmpty() && !Ftp.FileExists(path.u_str()) )  {
+        if( !NewDir(path) )  
+          throw TFunctionFailedException(__OlxSourceInfo, olxstr("Mkdir \'") << path << '\'');
+      }
+
+      wxOutputStream* out = Ftp.GetOutputStream( rel_path.u_str() );
+      if( out == NULL )
+        throw TFunctionFailedException(__OlxSourceInfo, "could not open output stream");
+      const int bf_sz = 64*1024;
+      char* bf = new char [bf_sz];
+      size_t read = 0;
+      try {
+        while( (read = in.SafeRead(bf, bf_sz)) > 0 )  {
+          out->Write(bf, read);
+          Progress.SetPos( in.GetPosition() );
+          TBasicApp::GetInstance()->OnProgress->Execute(this, &Progress);
+        }
+        Progress.SetAction("Upload complete");
+        Progress.SetPos( 0 );
+        TBasicApp::GetInstance()->OnProgress->Exit(this, &Progress);
+      }
+      catch(...)  {
+        Progress.SetAction("Upload failed");
+        Progress.SetPos( 0 );
+        TBasicApp::GetInstance()->OnProgress->Execute(this, &Progress);
+        TBasicApp::GetInstance()->OnProgress->Exit(this, &Progress);
+      }
+      delete out;
+      delete [] bf;
+    }
+    catch( const TExceptionBase& exc )  {
+      throw TFunctionFailedException(__OlxSourceInfo, exc);
+    }
+    return true;
+  }
+  virtual bool NewDir(const olxstr& DN)      {  
+    olxstr norm_path( NormaliseName(DN) );
+    if( norm_path.FirstIndexOf('/') != -1 )  {
+      TStrList toks(norm_path, '/');
+      for( int i=0; i < toks.Count(); i++ )  {
+        if( !Ftp.FileExists( toks[i].u_str() ) )
+          if( !Ftp.MkDir(toks[i].u_str()) )
+            return false;
+        if( !Ftp.ChDir(toks[i].u_str()) )
+          return false;
+      }
+      for( int i=0; i < toks.Count(); i++ )  // restore the level
+        if( !Ftp.ChDir(wxT("..")) )
+          return false;
+      return true;
+    }
+    return Ftp.MkDir(norm_path.u_str());     
+  }
+  virtual bool ChangeDir(const olxstr& DN)   {  
+    if( Ftp.ChDir( DN.u_str() ) )  {
+      pwd = TEFile::UnixPath(Ftp.Pwd().wx_str());
+      return true;
+    }
+    return false;
+  }
+};
+
+#endif
