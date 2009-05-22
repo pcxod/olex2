@@ -8075,32 +8075,7 @@ void TMainForm::macProjSph(TStrObjList &Cmds, const TParamList &Options, TMacroE
     FXApp->GetBond(i).BondUpdated();
 }
 //..............................................................................
-class Th1 : public AOlxThread  {
-  Th1* toKill;
-public:
-  Th1(Th1* to_kill=NULL) : toKill(to_kill)  {  }
-  virtual int Run()  {
-    if( toKill != 0 )  {
-      TBasicApp::Sleep(5000);
-      toKill->SendTerminate();
-      return 1;
-    }
-    while( true )  {
-      TBasicApp::Sleep(50);
-      if( Terminate )
-        return 0;
-    }
-  }
-};
 void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  Th1* th1 = new Th1;
-  Th1* th2 = new Th1(th1);
-  th1->Start();
-  th2->Start();
-  TBasicApp::Sleep(1000);
-  th1->Join();
-  delete th1;
-  //delete th1;
 }
 //..............................................................................
 double Main_FindClosestDistance(const smatd_list& ml, vec3d& o_from, const TCAtom& a_to) {
