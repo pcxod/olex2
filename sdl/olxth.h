@@ -11,6 +11,17 @@
 #include "bapp.h"
 
 BeginEsdlNamespace()
+// converts function (taking no arguents) to a thread - ready function
+template <class T> struct ThreadFunctionConverter  {
+#ifdef __WIN32__
+  static unsigned long _stdcall Func(void* data) {
+#else
+  static void* Func(void* data) {
+#endif
+    ((T)(data))();
+    return 0;
+  }
+};
 
 class AOlxThread  {
 protected:
@@ -82,13 +93,27 @@ public:
   }
   // this only has effect if the main procedure of the thread checks for this flag...
   void SendTerminate()  {  Terminate = true;  }
-  // just to validate that the type is correct
-  template <class T> static T* NewThread()  {
-    AOlxThread* th = new T;
-    return (T*)th;
+
+  /* executes a simplest function thread, the function should not take any arguments
+  the return value will be ignored. To be used for global detached threads such timers etc.
+  Simplest example:
+    void TestTh()  {  your code here...  }
+    AOlxThread::RunThread(&TestTh);
+  */
+  template <class T> static bool RunThread(T f)  {
+#ifdef __WIN32__
+    unsigned long thread_id;
+    HANDLE h = CreateThread(NULL, 0, &ThreadFunctionConverter<T>::Func, f, 0, &thread_id);
+    if( h == NULL )  
+      return false;
+#else  
+    return (pthread_create(&Handle, NULL, f, NULL) == 0);
+#endif
+    return true;
   }
 
 };
+
 
 EndEsdlNamespace()
 #endif
