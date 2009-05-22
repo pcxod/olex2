@@ -101,9 +101,16 @@ void ConnInfo::ProcessConn(TStrList& ins)  {
       return;
     }
     for( int i=0; i < ag.Count(); i++ )  {
-      AtomConnInfo& ai = AtomInfo.Add(ag[i].GetAtom(), AtomConnInfo(*ag[i].GetAtom()));
-      ai.maxBonds = maxB;
-      ai.r = r;
+      if( maxB == 12 && r == -1 )  {  // reset to default?
+        int ai = AtomInfo.IndexOf(ag[i].GetAtom());
+        if( ai != -1 )
+          AtomInfo.Delete(ai);
+      }
+      else  {
+        AtomConnInfo& ai = AtomInfo.Add(ag[i].GetAtom(), AtomConnInfo(*ag[i].GetAtom()));
+        ai.maxBonds = maxB;
+        ai.r = r;
+      }
     }
   }
 }
@@ -165,20 +172,20 @@ void ConnInfo::ToInsList(TStrList& ins) const {
 //........................................................................
 CXConnInfo& ConnInfo::GetConnInfo(const TCAtom& ca) const {
   CXConnInfo& ci = *(new CXConnInfo);  
-  int ai_ind = AtomInfo.IndexOf(&ca), ti_ind;
-  if( ai_ind != -1 )  {
+  int ai_ind, ti_ind;
+  if( (ti_ind = TypeInfo.IndexOf(&ca.GetAtomInfo())) != -1 )  {
+    const TypeConnInfo& aci = TypeInfo.GetValue(ti_ind);
+    ci.r = (aci.r < 0 ? ca.GetAtomInfo().GetRad1() : aci.r);
+    ci.maxBonds = aci.maxBonds;
+  }
+  // specialise the connectivity info...
+  if( (ai_ind = AtomInfo.IndexOf(&ca)) != -1 )  {
     const AtomConnInfo& aci = AtomInfo.GetValue(ai_ind);
     ci.r = aci.r < 0 ? ca.GetAtomInfo().GetRad1() : aci.r;
     ci.maxBonds = aci.maxBonds;
     ci.BondsToCreate.AddListC(aci.BondsToCreate);
     ci.BondsToRemove.AddListC(aci.BondsToRemove);
   } 
-  // extend the connectivity info...
-  if( (ti_ind = TypeInfo.IndexOf(&ca.GetAtomInfo())) != -1 )  {
-    const TypeConnInfo& aci = TypeInfo.GetValue(ti_ind);
-    ci.r = (aci.r < 0 ? ca.GetAtomInfo().GetRad1() : aci.r);
-    ci.maxBonds = aci.maxBonds;
-  }
   // use defaults then
   if( ai_ind == -1 && ti_ind == -1 )  {
     ci.r = ca.GetAtomInfo().GetRad1();

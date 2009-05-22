@@ -83,7 +83,7 @@ public:
 #ifdef __WIN32__
     unsigned long ec = STILL_ACTIVE, rv;
     while( ec == STILL_ACTIVE && (rv=GetExitCodeThread(Handle, &ec)) != 0 )
-      ;
+      TBasicApp::Sleep(50);
     return rv != 0;
 #else  
     if( pthread_join(Handle, NULL) != 0 )
