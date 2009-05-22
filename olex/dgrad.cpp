@@ -22,20 +22,28 @@ TdlgGradient::TdlgGradient(TMainForm *ParentFrame):
   short Border = 3;
   FParent = ParentFrame;
 
-  wxSize DefS(100, 21);
+  wxStaticText *stcA = new wxStaticText(this, -1, wxT("Bottom left"), wxDefaultPosition);
+  tcA = new TTextEdit(this);  tcA->SetReadOnly(true);  tcA->OnClick->Add(this);
+  wxStaticText *stcB = new wxStaticText(this, -1, wxT("Bottom right"), wxDefaultPosition);
+  tcB = new TTextEdit(this);  tcB->SetReadOnly(true);  tcB->OnClick->Add(this);
+  wxStaticText *stcC = new wxStaticText(this, -1, wxT("Top right"), wxDefaultPosition);
+  tcC = new TTextEdit(this);  tcC->SetReadOnly(true);  tcC->OnClick->Add(this);
+  wxStaticText *stcD = new wxStaticText(this, -1, wxT("Top Left"), wxDefaultPosition);
+  tcD = new TTextEdit(this);  tcD->SetReadOnly(true);  tcD->OnClick->Add(this);
 
-  tcA = new TTextEdit(this);  tcA->SetReadOnly(true);  tcA->WI.SetWidth(34);  tcA->WI.SetHeight(21);  tcA->OnClick->Add(this);
-  tcB = new TTextEdit(this);  tcB->SetReadOnly(true);  tcB->WI.SetWidth(34);  tcB->WI.SetHeight(21);  tcB->OnClick->Add(this);
-  tcC = new TTextEdit(this);  tcC->SetReadOnly(true);  tcC->WI.SetWidth(34);  tcC->WI.SetHeight(21);  tcC->OnClick->Add(this);
-  tcD = new TTextEdit(this);  tcD->SetReadOnly(true);  tcD->WI.SetWidth(34);  tcD->WI.SetHeight(21);  tcD->OnClick->Add(this);
+  wxFlexGridSizer *GridSizer = new wxFlexGridSizer(2, 4, Border, Border);
+  GridSizer->Add( stcD, 0, wxALIGN_CENTER_VERTICAL | wxRight, 2 );
+  GridSizer->Add( tcD, 1, wxEXPAND | wxALL, 0 );
+  GridSizer->Add( stcC, 0, wxALIGN_CENTER_VERTICAL | wxRight, 2 );
+  GridSizer->Add( tcC, 1, wxEXPAND | wxALL, 0 );
 
-  wxBoxSizer *ASizer = new wxBoxSizer( wxHORIZONTAL );
-  ASizer->Add( tcD, 0, wxALL, Border );
-  ASizer->Add( tcC, 0, wxALL, Border );
-
-  wxBoxSizer *BSizer = new wxBoxSizer( wxHORIZONTAL );
-  BSizer->Add( tcA, 0, wxALL, Border );
-  BSizer->Add( tcB, 0, wxALL, Border );
+  GridSizer->Add( stcA, 0, wxALIGN_CENTER_VERTICAL | wxRight, 2 );
+  GridSizer->Add( tcA, 1, wxEXPAND | wxALL, 0 );
+  GridSizer->Add( stcB, 0, wxALIGN_CENTER_VERTICAL | wxRight, 2 );  
+  GridSizer->Add( tcB, 1, wxEXPAND | wxALL, 0 );
+  
+  GridSizer->AddGrowableCol(1);
+  GridSizer->AddGrowableCol(3);
 
   wxBoxSizer *ButtonsSizer = new wxBoxSizer( wxHORIZONTAL );
   ButtonsSizer->Add( new wxButton( this, wxID_OK, wxT("OK") ), 0, wxALL, Border);
@@ -43,12 +51,11 @@ TdlgGradient::TdlgGradient(TMainForm *ParentFrame):
 //  ButtonsSizer->Add( new wxButton( this, wxID_HELP, wxT("Help") ),     0, wxALL, Border );
 
   wxBoxSizer *TopSiser = new wxBoxSizer( wxVERTICAL );
-  TopSiser->Add(ASizer, 0, wxALL, 5);
-  TopSiser->Add(BSizer, 0, wxALL, 5);
+  TopSiser->Add(new wxStaticText(this, -1, wxT("Gradient colour of the background of the structure window"), wxDefaultPosition), 0, wxEXPAND | wxALL, 10);
+  TopSiser->Add(GridSizer, 0, wxEXPAND | wxALL, 5);
   TopSiser->Add(ButtonsSizer, 0, wxALL, 10);
 
   SetSizer( TopSiser );      // use the sizer for layout
-
   TopSiser->SetSizeHints( this );   // set size hints to honour minimum size
 
   Center();
