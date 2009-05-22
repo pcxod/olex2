@@ -9,14 +9,16 @@
 #include "mainform.h"
 //---------------------------------------------------------------------------
 
-class TdlgEdit: public TDialog  {
+class TdlgEdit: public wxDialog  {
 private:
-  TTextEdit *Text;
+  wxTextCtrl *Text;
+  TMainFrame *FParent;
 public:
   TdlgEdit(TMainForm *ParentFrame, bool MultiLine);
   ~TdlgEdit();
   void SetText(const olxstr& Text);
   olxstr GetText();
+  TWindowInterface WI;
 };
 #endif
  
