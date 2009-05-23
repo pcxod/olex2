@@ -84,7 +84,7 @@ public:
   void SetBondingR(double v)  {
     connInfo.SetR(v);
   }
-  double GetBondingR() const {  connInfo.r;  }
+  double GetBondingR() const {  return connInfo.r;  }
   const ConnInfo& GetConnInfo() const {  return connInfo;  }
   // sets custom molecular weight
   void SetWeight(double v)  {

@@ -48,8 +48,8 @@ void __fastcall TdlgIndexInfo::bbUpdateClick(TObject *Sender)  {
   }
   if( rbList->Checked )  {
     for( int i=0; i < dlgMain->Paths.Count(); i++ )  {
-      if( TEFile::FileExists(dlgMain->Paths.String(i)) )
-        dlgMain->Index->Update(false, dlgMain->Paths.String(i), atoi(eLimit->Text.c_str())*1024*1024, this);
+      if( TEFile::FileExists(dlgMain->Paths[i]) )
+        dlgMain->Index->Update(false, dlgMain->Paths[i], atoi(eLimit->Text.c_str())*1024*1024, this);
     }
   }
   eCount->Text = dlgMain->Index->GetCount();

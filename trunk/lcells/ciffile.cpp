@@ -226,7 +226,7 @@ bool _fastcall TZipFile::LoadFromZip(const olxstr& FN)  {
   Files.Assign(FZip->Files);
   FZip->MaskFiles("ins");
   for( int i=0; i < FZip->Files.Count(); i++ )  {
-    Tmp = FZip->Files.String(i);
+    Tmp = FZip->Files[i];
     Tmp1 = dlgMain->TmpDir;
     Tmp1 << Tmp;
     C = new TCifFile(this);
@@ -243,7 +243,7 @@ bool _fastcall TZipFile::LoadFromZip(const olxstr& FN)  {
   FZip->Files.Assign(Files);
   FZip->MaskFiles("cif");
   for( int i=0; i < FZip->Files.Count(); i++ )  {
-    Tmp = FZip->Files.String(i);
+    Tmp = FZip->Files[i];
     Tmp1 = dlgMain->TmpDir;
     Tmp1 << Tmp;
     C = new TCifFile(this);
@@ -378,7 +378,7 @@ bool _fastcall TCifIndex::Update(bool Total, const olxstr& Dir, int MaxSize, TFo
   dlgProgress->pbBar->Position = 0;
   dlgProgress->pbBar->Max = InsFiles.Count();
   for( int i=0; i < CifFiles.Count(); i++ )  {
-    FFN = CifFiles.String(i);
+    FFN = CifFiles[i];
     FN = TEFile::UNCFileName(FFN);
     dlgProgress->SetAction(FFN);
     if( !(i%10) )  {
@@ -430,7 +430,7 @@ bool _fastcall TCifIndex::Update(bool Total, const olxstr& Dir, int MaxSize, TFo
   dlgProgress->pbBar->Position = 0;
   dlgProgress->pbBar->Max = ZipFiles.Count();
   for( int i=0; i < ZipFiles.Count(); i++ )  {
-    FFN = ZipFiles.String(i);
+    FFN = ZipFiles[i];
     FN = TEFile::UNCFileName(FFN);
     dlgProgress->SetAction(FFN);
     dlgProgress->pbBar->Position = i;
