@@ -43,11 +43,10 @@ TdlgMatProp::TdlgMatProp(TMainFrame *ParentFrame, TGPCollection *GPC, TGXApp *XA
   FParent = ParentFrame;
   GPCollection = GPC;
   FXApp = XApp;
-  wxSize DefS(100, 21);
   if( GPC != NULL )  {
     if( EsdlInstanceOf( GPC->GetObject(0), TXAtom) && FXApp->GetSelection().Count() > 1 )  {
       FAtom = &(TXAtom&)GPC->GetObject(0);
-      cbApplyToGroup = new wxCheckBox(this, -1, wxT("Apply to All"), wxDefaultPosition, DefS);
+      cbApplyToGroup = new wxCheckBox(this, -1, wxT("Apply to All"), wxDefaultPosition, wxDefaultSize);
       cbApplyToGroup->SetValue(true);
     }
     else  {
@@ -81,114 +80,125 @@ TdlgMatProp::TdlgMatProp(TMainFrame *ParentFrame, TGPCollection *GPC, TGXApp *XA
     FCurrentMaterial = 0;
   }
   long flags = 0;wxCHK_3STATE|wxCHK_ALLOW_3RD_STATE_FOR_USER;
-  cbAmbF = new wxCheckBox(this, -1, wxT("Ambient Front"), wxDefaultPosition, DefS, flags);
+  cbAmbF = new wxCheckBox(this, -1, wxT("Ambient Front"), wxDefaultPosition, wxDefaultSize, flags);
   scAmbF = new TSpinCtrl(this);  scAmbF->WI.SetWidth(SpW);  scAmbF->SetRange(0, 100);
-  cbAmbB = new wxCheckBox(this, -1, wxT("Ambient Back"), wxDefaultPosition, DefS, flags);
+  cbAmbB = new wxCheckBox(this, -1, wxT("Ambient Back"), wxDefaultPosition, wxDefaultSize, flags);
   scAmbB = new TSpinCtrl(this);  scAmbB->WI.SetWidth(SpW);  scAmbB->SetRange(0, 100);
-  cbDiffF = new wxCheckBox(this, -1, wxT("Diffuse Front"), wxDefaultPosition, DefS, flags);
+  cbDiffF = new wxCheckBox(this, -1, wxT("Diffuse Front"), wxDefaultPosition, wxDefaultSize, flags);
   scDiffF = new TSpinCtrl(this);  scDiffF->WI.SetWidth(SpW);  scDiffF->SetRange(0, 100);
-  cbDiffB = new wxCheckBox(this, -1, wxT("Diffuse Back"), wxDefaultPosition, DefS, flags);
+  cbDiffB = new wxCheckBox(this, -1, wxT("Diffuse Back"), wxDefaultPosition, wxDefaultSize, flags);
   scDiffB = new TSpinCtrl(this);  scDiffB->WI.SetWidth(SpW);  scDiffB->SetRange(0, 100);
-  cbEmmF = new wxCheckBox(this, -1, wxT("Emission Front"), wxDefaultPosition, DefS, flags);
+  cbEmmF = new wxCheckBox(this, -1, wxT("Emission Front"), wxDefaultPosition, wxDefaultSize, flags);
   scEmmF = new TSpinCtrl(this);  scEmmF->WI.SetWidth(SpW);  scEmmF->SetRange(0, 100);
-  cbEmmB = new wxCheckBox(this, -1, wxT("Emission Back"), wxDefaultPosition, DefS, flags);
+  cbEmmB = new wxCheckBox(this, -1, wxT("Emission Back"), wxDefaultPosition, wxDefaultSize, flags);
   scEmmB = new TSpinCtrl(this);  scEmmB->WI.SetWidth(SpW);  scEmmB->SetRange(0, 100);
-  cbSpecF = new wxCheckBox(this, -1, wxT("Specular Front"), wxDefaultPosition, DefS, flags);
+  cbSpecF = new wxCheckBox(this, -1, wxT("Specular Front"), wxDefaultPosition, wxDefaultSize, flags);
   scSpecF = new TSpinCtrl(this);  scSpecF->WI.SetWidth(SpW);  scSpecF->SetRange(0, 100);
-  cbSpecB = new wxCheckBox(this, -1, wxT("Specular Back"), wxDefaultPosition, DefS, flags);
+  cbSpecB = new wxCheckBox(this, -1, wxT("Specular Back"), wxDefaultPosition, wxDefaultSize, flags);
   scSpecB = new TSpinCtrl(this);  scSpecB->WI.SetWidth(SpW);  scSpecB->SetRange(0, 100);
-  cbShnF = new wxCheckBox(this, -1, wxT("Shininess Front"), wxDefaultPosition, DefS, flags);
-  cbShnB = new wxCheckBox(this, -1, wxT("Shininess Back"), wxDefaultPosition, DefS, flags);
+  cbShnF = new wxCheckBox(this, -1, wxT("Shininess Front"), wxDefaultPosition, wxDefaultSize, flags);
+  cbShnB = new wxCheckBox(this, -1, wxT("Shininess Back"), wxDefaultPosition, wxDefaultSize, flags);
 
   FSpinCtrls->Add(scAmbF);  FSpinCtrls->Add(scAmbB);
   FSpinCtrls->Add(scDiffF);  FSpinCtrls->Add(scDiffB);
   FSpinCtrls->Add(scEmmF);  FSpinCtrls->Add(scEmmB);
   FSpinCtrls->Add(scSpecF);  FSpinCtrls->Add(scSpecB);
 
-  cbTrans = new wxCheckBox(this, -1, wxT("Transluent"), wxDefaultPosition, DefS);
+  cbTrans = new wxCheckBox(this, -1, wxT("Transluent"), wxDefaultPosition, wxDefaultSize);
   scTrans = new TSpinCtrl(this);  scTrans->SetRange(5, 95);  scTrans->OnChange->Add(this);
-  cbIDraw = new wxCheckBox(this, -1, wxT("Identity Draw"), wxDefaultPosition, DefS);
+  cbIDraw = new wxCheckBox(this, -1, wxT("Identity Draw"), wxDefaultPosition, wxDefaultSize);
 
-  tcAmbF = new TTextEdit(this);  tcAmbF->SetReadOnly(true);  tcAmbF->WI.SetWidth(34);  tcAmbF->WI.SetHeight(21);  tcAmbF->OnClick->Add(this);
-  tcAmbB = new TTextEdit(this);  tcAmbB->SetReadOnly(true);  tcAmbB->WI.SetWidth(34);  tcAmbB->WI.SetHeight(21);  tcAmbB->OnClick->Add(this);
-  tcDiffF = new TTextEdit(this); tcDiffF->SetReadOnly(true);  tcDiffF->WI.SetWidth(34);  tcDiffF->WI.SetHeight(21);  tcDiffF->OnClick->Add(this);
-  tcDiffB = new TTextEdit(this); tcDiffB->SetReadOnly(true);  tcDiffB->WI.SetWidth(34);  tcDiffB->WI.SetHeight(21);  tcDiffB->OnClick->Add(this);
-  tcEmmF = new TTextEdit(this);  tcEmmF->SetReadOnly(true);  tcEmmF->WI.SetWidth(34);  tcEmmF->WI.SetHeight(21);  tcEmmF->OnClick->Add(this);
-  tcEmmB = new TTextEdit(this);  tcEmmB->SetReadOnly(true);  tcEmmB->WI.SetWidth(34);  tcEmmB->WI.SetHeight(21);  tcEmmB->OnClick->Add(this);
-  tcSpecF = new TTextEdit(this); tcSpecF->SetReadOnly(true);  tcSpecF->WI.SetWidth(34);  tcSpecF->WI.SetHeight(21);  tcSpecF->OnClick->Add(this);
-  tcSpecB = new TTextEdit(this); tcSpecB->SetReadOnly(true);  tcSpecB->WI.SetWidth(34);  tcSpecB->WI.SetHeight(21);  tcSpecB->OnClick->Add(this);
-  tcShnF = new TTextEdit(this);  tcShnF->SetReadOnly(false);  tcShnF->WI.SetWidth(34);  tcShnF->WI.SetHeight(21);
-  tcShnB = new TTextEdit(this);  tcShnB->SetReadOnly(false);  tcShnB->WI.SetWidth(34);  tcShnB->WI.SetHeight(21);
+  tcAmbF = new TTextEdit(this);  tcAmbF->SetReadOnly(true);  tcAmbF->OnClick->Add(this);
+  tcAmbB = new TTextEdit(this);  tcAmbB->SetReadOnly(true);  tcAmbB->OnClick->Add(this);
+  tcDiffF = new TTextEdit(this); tcDiffF->SetReadOnly(true); tcDiffF->OnClick->Add(this);
+  tcDiffB = new TTextEdit(this); tcDiffB->SetReadOnly(true); tcDiffB->OnClick->Add(this);
+  tcEmmF = new TTextEdit(this);  tcEmmF->SetReadOnly(true);  tcEmmF->OnClick->Add(this);
+  tcEmmB = new TTextEdit(this);  tcEmmB->SetReadOnly(true);  tcEmmB->OnClick->Add(this);
+  tcSpecF = new TTextEdit(this); tcSpecF->SetReadOnly(true); tcSpecF->OnClick->Add(this);
+  tcSpecB = new TTextEdit(this); tcSpecB->SetReadOnly(true); tcSpecB->OnClick->Add(this);
+  tcShnF = new TTextEdit(this);  tcShnF->SetReadOnly(false); 
+  tcShnB = new TTextEdit(this);  tcShnB->SetReadOnly(false); 
 
   wxBoxSizer *Sizer0 = NULL;
   if( cbPrimitives )  {
     Sizer0 = new wxBoxSizer( wxHORIZONTAL );
-    Sizer0->Add( cbPrimitives, 0, wxALL, Border );
+    Sizer0->Add( cbPrimitives, 0, wxEXPAND | wxALL, Border );
     if( cbApplyToGroup )
-      Sizer0->Add( cbApplyToGroup, 0, wxALL, Border );
-    Sizer0->Add( new wxButton( this, ID_COPY, wxT("Copy  Mat.") ), 0, wxALL, Border );
-    Sizer0->Add( new wxButton( this, ID_PASTE, wxT("Paste Mat.") ), 0, wxALL, Border );
+      Sizer0->Add( cbApplyToGroup, 0, wxEXPAND | wxALL, Border );
+    Sizer0->Add( new wxButton( this, ID_COPY, wxT("Copy  Mat.") ), 1, wxEXPAND | wxALL, Border );
+    Sizer0->Add( new wxButton( this, ID_PASTE, wxT("Paste Mat.") ), 1, wxEXPAND | wxALL, Border );
     bEditFont = new wxButton( this, ID_EDITFONT, wxT("Edit Font") );
     bEditFont->Enable( GPC->GetPrimitive(0).GetFont() != NULL );
-    Sizer0->Add( bEditFont, 0, wxALL, Border );
+    Sizer0->Add( bEditFont, 1, wxEXPAND | wxALL, Border );
   }
 
-  wxBoxSizer *ASizer = new wxBoxSizer( wxHORIZONTAL );
-  ASizer->Add( cbAmbF, 0, wxALL, Border );
-  ASizer->Add( tcAmbF, 0, wxALL, Border );
-  ASizer->Add( scAmbF, 0, wxALL, Border );
-  ASizer->Add( cbAmbB, 0, wxALL, Border );
-  ASizer->Add( tcAmbB, 0, wxALL, Border );
-  ASizer->Add( scAmbB, 0, wxALL, Border );
+  wxFlexGridSizer *grid = new wxFlexGridSizer( 6, 8 );
+  grid->Add(-1,10);
+  grid->Add( new wxStaticText(this, -1, wxT("Colour"), wxDefaultPosition), 0, wxALIGN_CENTRE | wxEXPAND | wxALL, Border );
+  grid->Add( new wxStaticText(this, -1, wxT("Transparency"), wxDefaultPosition), 0, wxALIGN_CENTRE | wxEXPAND | wxALL, Border );
+  grid->Add(-1,10);
+  grid->Add( new wxStaticText(this, -1, wxT("Colour"), wxDefaultPosition), 0, wxALIGN_CENTRE | wxEXPAND | wxALL, Border );
+  grid->Add( new wxStaticText(this, -1, wxT("Transparency"), wxDefaultPosition), 0, wxALIGN_CENTRE | wxEXPAND | wxALL, Border );
 
-  wxBoxSizer *BSizer = new wxBoxSizer( wxHORIZONTAL );
-  BSizer->Add( cbDiffF, 0, wxALL, Border );
-  BSizer->Add( tcDiffF, 0, wxALL, Border );
-  BSizer->Add( scDiffF, 0, wxALL, Border );
-  BSizer->Add( cbDiffB, 0, wxALL, Border );
-  BSizer->Add( tcDiffB, 0, wxALL, Border );
-  BSizer->Add( scDiffB, 0, wxALL, Border );
+  grid->Add( cbAmbF, 0, wxALL, Border );
+  grid->Add( tcAmbF, 0, wxEXPAND | wxALL, Border );
+  grid->Add( scAmbF, 0, wxEXPAND | wxALL, Border );
+  grid->Add( cbAmbB, 0, wxALL, Border );
+  grid->Add( tcAmbB, 0, wxEXPAND | wxALL, Border );
+  grid->Add( scAmbB, 0, wxEXPAND | wxALL, Border );
 
-  wxBoxSizer *CSizer = new wxBoxSizer( wxHORIZONTAL );
-  CSizer->Add( cbEmmF, 0, wxALL, Border );
-  CSizer->Add( tcEmmF, 0, wxALL, Border );
-  CSizer->Add( scEmmF, 0, wxALL, Border );
-  CSizer->Add( cbEmmB, 0, wxALL, Border );
-  CSizer->Add( tcEmmB, 0, wxALL, Border );
-  CSizer->Add( scEmmB, 0, wxALL, Border );
+  grid->Add( cbDiffF, 0, wxALL, Border );
+  grid->Add( tcDiffF, 0, wxEXPAND | wxALL, Border );
+  grid->Add( scDiffF, 0, wxEXPAND | wxALL, Border );
+  grid->Add( cbDiffB, 0, wxALL, Border );
+  grid->Add( tcDiffB, 0, wxEXPAND | wxALL, Border );
+  grid->Add( scDiffB, 0, wxEXPAND | wxALL, Border );
 
-  wxBoxSizer *DSizer = new wxBoxSizer( wxHORIZONTAL );
-  DSizer->Add( cbSpecF, 0, wxALL, Border );
-  DSizer->Add( tcSpecF, 0, wxALL, Border );
-  DSizer->Add( scSpecF, 0, wxALL, Border );
-  DSizer->Add( cbSpecB, 0, wxALL, Border );
-  DSizer->Add( tcSpecB, 0, wxALL, Border );
-  DSizer->Add( scSpecB, 0, wxALL, Border );
+  grid->Add( cbEmmF, 0, wxALL, Border );
+  grid->Add( tcEmmF, 0, wxEXPAND | wxALL, Border );
+  grid->Add( scEmmF, 0, wxEXPAND | wxALL, Border );
+  grid->Add( cbEmmB, 0, wxALL, Border );
+  grid->Add( tcEmmB, 0, wxEXPAND | wxALL, Border );
+  grid->Add( scEmmB, 0, wxEXPAND | wxALL, Border );
 
-  wxBoxSizer *ESizer = new wxBoxSizer( wxHORIZONTAL );
-  ESizer->Add( cbShnF, 0, wxALL, Border );
-  ESizer->Add( tcShnF, 0, wxALL, Border );
-  ESizer->Add( cbShnB, 0, wxALL, Border );
-  ESizer->Add( tcShnB, 0, wxALL, Border );
+  grid->Add( cbSpecF, 0, wxALL, Border );
+  grid->Add( tcSpecF, 0, wxEXPAND | wxALL, Border );
+  grid->Add( scSpecF, 0, wxEXPAND | wxALL, Border );
+  grid->Add( cbSpecB, 0, wxALL, Border );
+  grid->Add( tcSpecB, 0, wxEXPAND | wxALL, Border );
+  grid->Add( scSpecB, 0, wxEXPAND | wxALL, Border );
 
-  wxBoxSizer *FSizer = new wxBoxSizer( wxHORIZONTAL );
-  FSizer->Add( cbTrans, 0, wxALL, Border );
-  FSizer->Add( scTrans, 0, wxALL, Border );
-  FSizer->Add( cbIDraw, 0, wxALL, Border );
+  grid->Add(-1,10);
+  grid->Add(-1,10);
+  grid->Add(-1,10);
+  grid->Add(-1,10);
+  grid->Add(-1,10);
+  grid->Add(-1,10);
+
+  grid->Add( cbShnF, 0, wxALL, Border );
+  grid->Add( tcShnF, 0, wxEXPAND | wxALL, Border );
+  grid->Add(-1,10);
+  grid->Add( cbShnB, 0, wxALL, Border );
+  grid->Add( tcShnB, 0, wxEXPAND | wxALL, Border );
+  grid->Add(-1,10);
+  
+  grid->Add( cbTrans, 0, wxALL, Border );
+  grid->Add( scTrans, 0, wxEXPAND | wxALL, Border );
+  grid->Add(-1,10);
+  grid->Add( cbIDraw, 0, wxALL, Border );
+  grid->AddGrowableCol(1);
+  grid->AddGrowableCol(2);
+  grid->AddGrowableCol(4);
+  grid->AddGrowableCol(5);
+  
   wxBoxSizer *ButtonsSizer = new wxBoxSizer( wxHORIZONTAL );
-
-  ButtonsSizer->Add( new wxButton( this, wxID_OK, wxT("OK") ), 0, wxALL, Border);
-  ButtonsSizer->Add( new wxButton( this, wxID_CANCEL, wxT("Cancel") ), 0, wxALL, Border);
-  ButtonsSizer->Add( new wxButton( this, wxID_HELP, wxT("Help") ),     0, wxALL, Border );
+  ButtonsSizer->Add( new wxButton( this, wxID_OK, wxT("OK") ), 0, wxEXPAND | wxALL, Border);
+  ButtonsSizer->Add( new wxButton( this, wxID_CANCEL, wxT("Cancel") ), 0, wxEXPAND | wxALL, Border);
+  ButtonsSizer->Add( new wxButton( this, wxID_HELP, wxT("Help") ),     0, wxEXPAND | wxALL, Border );
 
   wxBoxSizer *TopSiser = new wxBoxSizer( wxVERTICAL );
-  if( Sizer0 )  TopSiser->Add(Sizer0, 0, wxALL, 5);
-  TopSiser->Add(ASizer, 0, wxALL, 5);
-  TopSiser->Add(BSizer, 0, wxALL, 5);
-  TopSiser->Add(CSizer, 0, wxALL, 5);
-  TopSiser->Add(DSizer, 0, wxALL, 5);
-  TopSiser->Add(ESizer, 0, wxALL, 5);
-  TopSiser->Add(FSizer, 0, wxALL, 5);
+  if( Sizer0 )  TopSiser->Add(Sizer0, 0, wxEXPAND | wxALL, 5);
+  TopSiser->Add(grid, 0, wxEXPAND | wxALL, 5);
   TopSiser->Add(ButtonsSizer, 0, wxALL, 10);
 
   SetSizer( TopSiser );      // use the sizer for layout
