@@ -124,7 +124,7 @@ bool TGlXApp::OnInit()  {
   wxPoint wTop(0, 0);
   wxSize wSize(ScreenW, ScreenH);
 
-  MainForm = new TMainForm(this, ScreenW, ScreenH);
+  MainForm = new TMainForm(this);
 #ifdef __WIN32__
   MainForm->SetIcon(wxIcon(wxT("MAINICON")));
 #else
@@ -140,7 +140,7 @@ bool TGlXApp::OnInit()  {
   glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);
   */
 
-  MainForm->GlCanvas(new TGlCanvas(MainForm, wxID_ANY, wTop, wxDefaultSize, 0, wxT("GL_CANVAS") ) );
+  MainForm->GlCanvas(new TGlCanvas(MainForm, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0, wxT("GL_CANVAS") ) );
   // cratea an instance of the XApplication
   olxstr BaseDir(argv[0]), Tmp;
   // 2008.09.29
