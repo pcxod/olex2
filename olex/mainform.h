@@ -230,8 +230,6 @@ protected:
   void OnSelection(wxCommandEvent& event);
 
   void OnGraphicsStyle(wxCommandEvent& event);
-  
-  void OnPictureExport(wxCommandEvent& event);
 
   // view menu
   void OnHtmlPanel(wxCommandEvent& event);
