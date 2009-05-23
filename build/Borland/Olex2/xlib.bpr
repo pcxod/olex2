@@ -16,7 +16,8 @@
       build\symmtest.obj build\xapp.obj build\graphsr.obj build\brushhkl.obj 
       build\sg.obj build\xmacro.obj build\wilson.obj build\imp_auto.obj 
       build\seval.obj build\samegroup.obj build\afixgroup.obj 
-      build\exyzgroup.obj build\leq.obj build\refmodel.obj build\chemdata.obj"/>
+      build\exyzgroup.obj build\leq.obj build\refmodel.obj build\chemdata.obj 
+      build\conninfo.obj"/>
     <RESFILES value=""/>
     <DEFFILE value=""/>
     <RESDEPEN value="$(RESFILES)"/>
@@ -103,6 +104,7 @@
       <FILE FILENAME="..\..\..\xlib\leq.cpp" FORMNAME="" UNITNAME="leq.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\xlib\refmodel.cpp" FORMNAME="" UNITNAME="refmodel.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\xlib\chemdata.cpp" FORMNAME="" UNITNAME="chemdata" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\xlib\conninfo.cpp" FORMNAME="" UNITNAME="conninfo" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
   </FILELIST>
   <BUILDTOOLS>
   </BUILDTOOLS>
