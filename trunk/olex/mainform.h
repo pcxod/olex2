@@ -230,6 +230,8 @@ protected:
   void OnSelection(wxCommandEvent& event);
 
   void OnGraphicsStyle(wxCommandEvent& event);
+  
+  void OnPictureExport(wxCommandEvent& event);
 
   // view menu
   void OnHtmlPanel(wxCommandEvent& event);
@@ -607,7 +609,7 @@ private:
   void StartupInit();
   bool SkipSizing; // when size changed from the LoadSettings
 public:
-  TMainForm(TGlXApp *Parent, int Height, int Width);
+  TMainForm(TGlXApp *Parent);
   virtual ~TMainForm();
   virtual bool Destroy();
   void SetProcess( AProcess *Process );

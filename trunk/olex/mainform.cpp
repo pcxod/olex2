@@ -84,6 +84,10 @@
 #include "utf8file.h"
 #include "py_core.h"
 
+#include "gxapp.h"
+#include "savevecdialog.h"
+#include "gl2ps.h"
+
 
 #ifdef __GNUC__
   #undef Bool
@@ -196,7 +200,9 @@ enum
   ID_FixLattice,
   ID_FreeLattice,
   ID_DELINS,
-  ID_VarChange
+  ID_VarChange,
+  
+  ID_gl2ps
 };
 
 class TObjectVisibilityChange: public AActionHandler
@@ -317,10 +323,11 @@ BEGIN_EVENT_TABLE(TMainForm, wxFrame)  // basic interface
   EVT_MENU(ID_GStyleSave, TMainForm::OnGraphicsStyle)
   EVT_MENU(ID_GStyleOpen, TMainForm::OnGraphicsStyle)
 
+  EVT_MENU(ID_gl2ps, TMainForm::OnPictureExport)
 END_EVENT_TABLE()
 //..............................................................................
-TMainForm::TMainForm(TGlXApp *Parent, int Width, int Height):
-  TMainFrame(wxT("Olex2"), wxPoint(0,0), wxSize(Width, Height), wxT("MainForm"))
+TMainForm::TMainForm(TGlXApp *Parent):
+  TMainFrame(wxT("Olex2"), wxPoint(0,0), wxDefaultSize, wxT("MainForm"))
 {
 //  _crtBreakAlloc = 5892;
   SkipSizing = false;
@@ -488,7 +495,7 @@ void TMainForm::XApp( TGXApp *XA)  {
 "s&;w-grows the rest of the structure, using already applied generators&;t-grows\
  only provided atoms/atom types", fpAny | psFileLoaded,
 "Grows whole structure or provided atoms only");
-  this_InitMacroD(Uniq, EmptyString, fpAny | psFileLoaded,
+  this_InitMacroD(Uniq, EmptyString, (fpAny ^ fpNone) | psFileLoaded,
 "Shows only fragments specified by atom name(s) or selection");
 
   this_InitMacroD(Group, "n-a custom name can be provided", (fpAny ^ fpNone) | psFileLoaded,
@@ -499,7 +506,7 @@ void TMainForm::XApp( TGXApp *XA)  {
   this_InitMacroD(Clear, EmptyString, fpNone,
 "Clears console buffer (text)");
 
-  this_InitMacroD(Cell, EmptyString, fpNone|fpOne|psFileLoaded,
+  this_InitMacroD(Cell, EmptyString, fpOne|psFileLoaded,
 "If no arguments provided inverts visibility of unit cell, otherwise sets it to\
  the boolean value of the parameter");
   this_InitMacroD(Rota, EmptyString, fpTwo|fpFive,
@@ -979,6 +986,7 @@ separated values of Atom Type and radius, an entry a line" );
   MenuView->Append(miHtmlPanel);
 
   MenuStructure->Append(ID_StrGenerate, wxT("&Generate..."));
+  MenuStructure->Append(ID_gl2ps, wxT("&Export picture (experimental)") );
 
   MenuHelp->Append(ID_About, wxT("&About...") );
 
@@ -3064,8 +3072,8 @@ void TMainForm::SaveScene(TDataItem *Root, TGlLightModel *FLM)  {
   HelpFontColorTxt.ToDataItem(I->AddItem("Help_txt"));
   HelpFontColorCmd.ToDataItem(I->AddItem("Help_cmd"));
   ExecFontColor.ToDataItem(I->AddItem("Exec"));
-  InfoFontColor.ToDataItem(I->AddItem("Info"));
-  WarningFontColor.ToDataItem(I->AddItem("Warning"));
+  InfoFontColor.ToDataItem(I->AddItem("Exception"));
+  WarningFontColor.ToDataItem(I->AddItem("Exception"));
   ErrorFontColor.ToDataItem(I->AddItem("Error"));
   ExceptionFontColor.ToDataItem(I->AddItem("Exception"));
 }
@@ -4053,9 +4061,24 @@ static PyMethodDef CORE_Methods[] = {
   {"IsControl", pyIsControl, METH_VARARGS, "Takes HTML element name and optionaly popup name. Returns true/false if given control exists"},
   {NULL, NULL, 0, NULL}
    };
-
+//..............................................................................
 void TMainForm::PyInit()  {
   Py_InitModule( "olex_gui", CORE_Methods );
 }
+//..............................................................................
+void TMainForm::OnPictureExport(wxCommandEvent& WXUNUSED(event))  {
+//  TBasicApp::GetLog()->Info("generate!");;
+  //const wxFileName filename = new wxFileName( wxT("mydir"), wxT("test") );
+  SaveVecDialog *G = new SaveVecDialog(this, FXApp);
+  if( G->ShowModal() == wxID_OK )  {
+    olxstr T("pack ");
+    //T << olxstr::FormatFloat(1, G->AFrom()) << ' ' << olxstr::FormatFloat(1, G->ATo()) << ' ';
+    //T << olxstr::FormatFloat(1, G->BFrom()) << ' ' << olxstr::FormatFloat(1, G->BTo()) << ' ';
+    //T << olxstr::FormatFloat(1, G->CFrom()) << ' ' << olxstr::FormatFloat(1, G->CTo()) << ' ';
+    //ProcessXPMacro(T, MacroError);
+  }
+  G->Destroy();
+}
+//..............................................................................
 
 
