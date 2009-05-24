@@ -347,6 +347,8 @@ TMainForm::TMainForm(TGlXApp *Parent):
   FHtml = NULL;
   ActiveLogFile = NULL;
 
+  MousePositionX = MousePositionY = -1;
+
   LabelToEdit = NULL;
   
   TimePerFrame = 50;

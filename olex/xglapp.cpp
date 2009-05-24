@@ -139,8 +139,13 @@ bool TGlXApp::OnInit()  {
   glHint(GL_LINE_SMOOTH_HINT,GL_NICEST);
   glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);
   */
-
-  MainForm->GlCanvas(new TGlCanvas(MainForm, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0, wxT("GL_CANVAS") ) );
+  // KUBUNTU opengl does not want any parameters :)
+  wxString glAttr;
+  int *gl_attr = NULL;
+  wxGetEnv(wxT("OLEX2_GL_DEFAULT"), &glAttr);
+  if( glAttr.IsEmpty() || glAttr.CmpNoCase(wxT("FALSE")) )
+    gl_attr = TGlCanvas::GetGlAttributes();
+  MainForm->GlCanvas(new TGlCanvas(MainForm, gl_attr, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0, wxT("GL_CANVAS") ) );
   // cratea an instance of the XApplication
   olxstr BaseDir(argv[0]), Tmp;
   // 2008.09.29

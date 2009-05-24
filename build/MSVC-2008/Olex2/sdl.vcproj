@@ -193,7 +193,7 @@
 				FloatingPointExceptions="false"
 				UsePrecompiledHeader="0"
 				BrowseInformation="1"
-				WarningLevel="2"
+				WarningLevel="3"
 				DebugInformationFormat="3"
 			/>
 			<Tool
@@ -768,6 +768,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\sdl\olxmps.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\sdl\olxth.h"
 				>
 			</File>
 			<File
