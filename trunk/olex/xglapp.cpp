@@ -143,7 +143,7 @@ bool TGlXApp::OnInit()  {
   wxString glAttr;
   int *gl_attr = NULL;
   wxGetEnv(wxT("OLEX2_GL_DEFAULT"), &glAttr);
-  if( glAttr.IsEmpty() || glAttr.CmpNoCase(wxT("FALSE")) )
+  if( glAttr.IsEmpty() || glAttr.CmpNoCase(wxT("FALSE")) == 0 )
     gl_attr = TGlCanvas::GetGlAttributes();
   MainForm->GlCanvas(new TGlCanvas(MainForm, gl_attr, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0, wxT("GL_CANVAS") ) );
   // cratea an instance of the XApplication
