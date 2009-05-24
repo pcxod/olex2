@@ -2979,7 +2979,12 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
     Dictionary.SetCurrentLanguage(DictionaryFile, I->GetFieldValue("language", EmptyString) );
   }
   FXApp->SetExtraZoom( I->GetFieldValue("ExtraZoom", "1.25").ToDouble() );
-  UseGlTooltip( I->GetFieldValue("GlTooltip", FalseString).ToBool() );
+#ifdef __WIN32__
+  const olxstr& defGlTVal = FalseString;
+#else
+  const olxstr& defGlTVal = TrueString;
+#endif
+  UseGlTooltip( I->GetFieldValue("GlTooltip", defGlTVal).ToBool() );
   FGlConsole->SetBlend(I->GetFieldValue("console.blend", TrueString).ToBool());
 
   olxstr T( I->GetFieldValue("BgColor") );
