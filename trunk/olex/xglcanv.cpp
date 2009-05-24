@@ -42,13 +42,13 @@ BEGIN_EVENT_TABLE(TGlCanvas, wxGLCanvas)
 
 END_EVENT_TABLE()
 //..............................................................................
-TGlCanvas::TGlCanvas(TMainForm *parent, wxWindowID id,
+TGlCanvas::TGlCanvas(TMainForm *parent, int* gl_attr, wxWindowID id,
     const wxPoint& pos, const wxSize& size, long style, const wxString& name):
 #if defined(__WXX11__) || defined(__MAC__)
   wxGLCanvas(parent, (wxGLCanvas*)NULL, id, pos, size, style|wxFULL_REPAINT_ON_RESIZE, name )  {
   Context = NULL;
 #else
-  wxGLCanvas(parent, id, &glAttrib[0], pos, size, style|wxFULL_REPAINT_ON_RESIZE, name )  {
+  wxGLCanvas(parent, id, gl_attr, pos, size, style|wxFULL_REPAINT_ON_RESIZE, name )  {
   Context = new wxGLContext( this, NULL);
 #ifdef __WIN32__ // on GTK the context initialisation is delayed
   Context->SetCurrent(*this);

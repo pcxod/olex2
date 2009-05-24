@@ -22,7 +22,7 @@ private:
   wxGLContext* Context;
   static int glAttrib[];
 public:
-  TGlCanvas(TMainForm *parent, const wxWindowID id = -1, const wxPoint& pos = wxDefaultPosition,
+  TGlCanvas(TMainForm *parent, int* gl_attr, const wxWindowID id = -1, const wxPoint& pos = wxDefaultPosition,
     const wxSize& size = wxDefaultSize, long style = 0, const wxString& name = wxT("TGlCanvas"));
   ~TGlCanvas(void);
 
@@ -35,6 +35,9 @@ public:
   TGXApp *GetXApp()    {  return FXApp;};
 
   void Render();
+  /* the arrays is staically allocated and should not be modified!!! 
+  wxWidgets needs not a const pointer... */
+  static int* GetGlAttributes()  {  return &glAttrib[0];  }
   DECLARE_CLASS(wxGLCanvas)
   DECLARE_EVENT_TABLE()
 
