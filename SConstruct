@@ -10,9 +10,9 @@ AddOption('--dbg',
           metavar='DBG',
           default='false',
           help='Builds debug version')
-debug = GetOption('dbg')
+debug = (GetOption('dbg').lower() == 'true')
 out_dir = 'build/scons/' 
-if debug.lower() == 'true':
+if debug:
   out_dir += 'debug/'
 else:
   out_dir += 'release/'
@@ -114,10 +114,13 @@ else:
   except:
     print 'Please make sure that wxWidgets and Python config scripts are available'
     Exit(1)
-  if not debug:
-    env.Append(CCFLAGS = ['-O3', '-exceptions']) 
+  env.Append(CCFLAGS = ['-exceptions']) 
+  if debug:
+    env.Append(CCFLAGS = ['-g']) 
+#    env.Append(CCFLAGS = ['-pg']) 
+#    env.Append(LINKFLAGS=['-pg'])
   else:
-    env.Append(CCFLAGS = ['-g', '-exceptions']) 
+    env.Append(CCFLAGS = ['-O3']) 
 #sdl
 sdl_files = fileListToStringList('sdl', sdl) + fileListToStringList('sdl/smart', sdl_smart)
 sdl_files = processFileNameList(sdl_files, env, out_dir + 'sdl')
