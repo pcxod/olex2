@@ -90,7 +90,7 @@ olxstr TShellUtil::GetSpecialFolderLocation( short folderId )  {
     case fiStartup:       FID = CSIDL_STARTUP;  break;
     case fiControls:      FID = CSIDL_CONTROLS;  break;
     case fiProgramFiles:  FID = CSIDL_PROGRAM_FILES;  break;
-    case fiMyDocuments:   FID = CSIDL_MYDOCUMENTS;  break;
+    case fiMyDocuments:   FID = CSIDL_PERSONAL;  break;
     case fiAppData:       FID = CSIDL_APPDATA;  break;
     default:
       throw TInvalidArgumentException(__OlxSourceInfo, "unknown identifier");

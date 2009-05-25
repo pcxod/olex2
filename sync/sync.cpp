@@ -4,6 +4,7 @@
 #pragma hdrstop
 //---------------------------------------------------------------------------
 USEFORM("main.cpp", fMain);
+USEFORM("sync_dlg.cpp", dlgSync);
 //---------------------------------------------------------------------------
 WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 {
@@ -11,6 +12,7 @@ WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
   {
      Application->Initialize();
      Application->CreateForm(__classid(TfMain), &fMain);
+     Application->CreateForm(__classid(TdlgSync), &dlgSync);
      Application->Run();
   }
   catch (Exception &exception)

@@ -8,12 +8,23 @@
 BeginEsdlNamespace()
 class TFileTree  {
 public:
+  typedef TPtrList<const TFileListItem> TFilePtrList;
+
+  template <class FT> struct TDiffFolder  {
+    FT *Src, *Dest;
+    // the size is the same but some items might be missing
+    TFilePtrList SrcFiles, DestFiles;
+    TTypeList< TDiffFolder<FT> > Folders;
+    TDiffFolder(FT* src, FT* dest) : Src(src), Dest(dest)  {  }
+  };
+///////////////////////////////////////////////////////////////////////////////////////
   struct Folder  {
     TFileList Files;
     TFileTree& FileTree;
     TTypeList<Folder> Folders;
     Folder* Parent;
     olxstr FullPath, Name;
+    typedef TDiffFolder<Folder> DiffFolder;
     Folder(TFileTree& fileTree, const olxstr& fullPath, Folder* parent = NULL) :
     Parent(parent), FileTree(fileTree)  {
       FullPath = TEFile::OSPath(fullPath);
@@ -78,8 +89,8 @@ public:
       return -1;
     }
 #endif
-    size_t CalcSize()  {
-      size_t res = 0;
+    uint64_t CalcSize()  {
+      uint64_t res = 0;
       for( int i=0; i < Files.Count(); i++ )
         res += Files[i].GetSize();
       for( int i=0; i < Folders.Count(); i++ )
@@ -127,6 +138,57 @@ public:
           total_size += Folders[i].Compare( f.Folders[ind], pg );
       }
       return total_size;
+    }
+    void _ExpandNewFolder(DiffFolder& df, bool is_src) const {
+      TFilePtrList& dst = (is_src ? df.DestFiles : df.SrcFiles);
+      TFilePtrList& src = (is_src ? df.SrcFiles : df.DestFiles);
+      dst.SetCapacity( dst.Count() + Files.Count() );
+      src.SetCapacity( src.Count() + Files.Count() );
+      for( int i=0; i < Files.Count(); i++ )  {
+        src.Add( &Files[i] );
+        dst.Add( NULL );
+      }
+      for( int i=0; i < Folders.Count(); i++ )
+        Folders[i]._ExpandNewFolder(
+          df.Folders.Add(
+            new DiffFolder(is_src ? &Folders[i] : NULL, is_src ? NULL : &Folders[i])),
+          is_src
+        );
+    }
+    void CalcMergedTree(const Folder& f, DiffFolder& df) const {
+      for( int i=0; i < Files.Count(); i++ )  {
+        int ind = FindSortedIndexOf( f.Files, Files[i].GetName() );
+        df.SrcFiles.Add(&Files[i]);
+        if( ind == -1 )
+          df.DestFiles.Add(NULL);
+        else
+          df.DestFiles.Add(&f.Files[ind]);
+      }
+      // complete the tree
+      for( int i=0; i < f.Files.Count(); i++ )  {
+        int ind = FindSortedIndexOf( Files, f.Files[i].GetName() );
+        if( ind == -1 )
+          df.DestFiles.Add(&f.Files[ind]);
+      }
+      for( int i=0; i < Folders.Count(); i++ )  {
+        int ind = FindSortedIndexOf( f.Folders, Folders[i].Name );
+        if( ind == -1 )
+          Folders[i]._ExpandNewFolder(
+            df.Folders.Add( new DiffFolder(&Folders[i], NULL) ),
+            true
+          );
+        else
+          Folders[i].CalcMergedTree( f.Folders[ind], df.Folders.AddNew(&Folders[i], &f.Folders[ind]));
+      }
+      // complete the tree
+      for( int i=0; i < f.Folders.Count(); i++ )  {
+        int ind = FindSortedIndexOf( Folders, f.Folders[i].Name );
+        if( ind == -1 )
+          f.Folders[i]._ExpandNewFolder(
+            df.Folders.Add( new DiffFolder(NULL, &f.Folders[i]) ),
+            false
+          );
+      }
     }
     void Synchronise(Folder& f, TOnProgress& onSync, TOnProgress& onFileCopy) {
       if( FileTree.Stop )
@@ -220,6 +282,9 @@ public:
 ///////////////////////////////////////////////////////////////////////////////////////
   TActionQList Actions;
 public:
+
+  typedef TFileTree::TDiffFolder<TFileTree::Folder> DiffFolder;
+
   Folder Root;
   bool Stop;
   TActionQueue* OnExpand, *OnSynchronise, *OnFileCopy, *OnFileCompare, *OnCompare;
@@ -232,7 +297,7 @@ public:
     Stop = false;
   }
 #ifdef __WIN32__
-  bool CopyFileX(const olxstr& from, const olxstr& to, TOnProgress& pg)  {
+  bool CopyFileX(const olxstr& from, const olxstr& to, TOnProgress& pg) const {
     HANDLE in = CreateFile(from.u_str(),
       GENERIC_READ, 0, NULL,
       OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, NULL);
@@ -241,7 +306,7 @@ public:
 
     HANDLE out = CreateFile(to.u_str(),
       GENERIC_WRITE, 0, NULL,
-      CREATE_NEW, FILE_FLAG_BACKUP_SEMANTICS, NULL);
+      OPEN_ALWAYS, FILE_FLAG_BACKUP_SEMANTICS, NULL);
     if( out == INVALID_HANDLE_VALUE )  {
       CloseHandle(in);
       throw TFunctionFailedException(__OlxSourceInfo, olxstr("Failed to create: ") << to );
@@ -283,6 +348,7 @@ public:
     }
     pg.SetPos( (double)fl );
     OnFileCopy->Execute(NULL, &pg);
+    pg.SetPos(0);
     delete [] bf;
     CloseHandle(in);
     CloseHandle(out);
@@ -348,6 +414,56 @@ public:
     delete [] bf1;
     delete [] bf2;
     return res;
+  }
+  //............................................................................
+  static uint64_t CalcMergeSize(const DiffFolder& df)  {
+    if( df.Src == NULL )
+      return 0;
+    if( df.Dest == NULL )
+      return df.Src->CalcSize();
+    uint64_t sz = 0;
+    for( int i=0; i < df.SrcFiles.Count(); i++ )  {
+      if( df.SrcFiles[i] != NULL )
+        sz += df.SrcFiles[i]->GetSize();
+    }
+    for( int i=0; i < df.Folders.Count(); i++ )
+      sz += CalcMergeSize(df.Folders[i]);
+    return sz;
+  }
+  //............................................................................
+  void DoMerge(const DiffFolder& df, TOnProgress& onSync,
+    TOnProgress& onFileCopy, const olxstr& _dest_n = EmptyString) const
+  {
+    if( df.Src == NULL )
+      return;
+    olxstr dest_n( df.Dest == NULL ? _dest_n : df.Dest->FullPath);
+    if( df.Dest == NULL )
+      TEFile::MakeDir(dest_n);
+
+    for( int i=0; i < df.Src->Files.Count(); i++ )  {
+      if( df.Src->Files.IsNull(i) )
+        continue;
+      olxstr nf(olxstr(dest_n) << df.Src->Files[i].GetName());
+#ifdef __WIN32__
+      if( CopyFileX( olxstr(df.Src->FullPath) << df.Src->Files[i].GetName(), nf, onFileCopy) )  {
+#else
+      if( CopyFile( olxstr(FullPath) << df.Src->Files[i].GetName(), nf, onFileCopy) )  {
+#endif
+        bool res = TEFile::SetFileTimes(nf, df.Src->Files[i].GetLastAccessTime(), df.Src->Files[i].GetModificationTime());
+        if( !res )
+          throw TFunctionFailedException(__OlxSourceInfo, "settime");
+        onSync.SetPos( onSync.GetPos() + df.Src->Files[i].GetSize() );
+        onSync.SetAction( df.Src->Files[i].GetName() );
+        OnSynchronise->Execute(NULL, &onSync);
+      }
+      if( Stop )
+        return;
+    }
+    for( int i=0; i < df.Folders.Count(); i++ )  {
+      DiffFolder& f = df.Folders[i];
+      if( f.Src == NULL )  continue;
+      DoMerge(f, onSync, onFileCopy, (dest_n + f.Src->Name) << '/');
+    }
   }
 };
 
