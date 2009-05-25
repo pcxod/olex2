@@ -4,10 +4,10 @@
   <MACROS>
     <VERSION value="BCB.06.00"/>
     <PROJECT value="sync.exe"/>
-    <OBJFILES value="sync.obj main.obj"/>
+    <OBJFILES value="sync.obj main.obj sync_dlg.obj ..\repository\shellutil.obj"/>
     <RESFILES value="sync.res"/>
     <DEFFILE value=""/>
-    <RESDEPEN value="$(RESFILES) main.dfm"/>
+    <RESDEPEN value="$(RESFILES) main.dfm sync_dlg.dfm"/>
     <LIBFILES value="..\build\Borland\Olex2\lib\sdl_unicode.lib"/>
     <LIBRARIES value=""/>
     <SPARELIBS value="vcl.lib rtl.lib"/>
@@ -17,7 +17,7 @@
       vclie.bpi xmlrtl.bpi inet.bpi inetdbbde.bpi inetdbxpress.bpi inetdb.bpi 
       nmfast.bpi bcbie.bpi soaprtl.bpi dclocx.bpi dbexpress.bpi dbxcds.bpi 
       indy.bpi bcb2kaxserver.bpi"/>
-    <PATHCPP value=".;"/>
+    <PATHCPP value=".;..\repository"/>
     <PATHPAS value=".;"/>
     <PATHRC value=".;"/>
     <PATHASM value=".;"/>
@@ -27,8 +27,8 @@
     <USERDEFINES value="_DEBUG;_UNICODE"/>
     <SYSDEFINES value="_RTLDLL;NO_STRICT;USEPACKAGES"/>
     <MAINSOURCE value="sync.cpp"/>
-    <INCLUDEPATH value="..;sync;$(BCB)\include;$(BCB)\include\vcl;..\sdl"/>
-    <LIBPATH value="..;sync;$(BCB)\lib\obj;$(BCB)\lib"/>
+    <INCLUDEPATH value="..\repository;&quot;C:\Program Files\Borland\CBuilder6\Projects&quot;;..;sync;$(BCB)\include;$(BCB)\include\vcl;..\sdl"/>
+    <LIBPATH value="..\repository;&quot;C:\Program Files\Borland\CBuilder6\Projects&quot;;..;sync;$(BCB)\lib\obj;$(BCB)\lib"/>
     <WARNINGS value="-w-par"/>
     <OTHERFILES value=""/>
   </MACROS>
@@ -52,6 +52,8 @@
       <FILE FILENAME="sync.cpp" FORMNAME="" UNITNAME="sync" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="main.cpp" FORMNAME="fMain" UNITNAME="main" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\build\Borland\Olex2\lib\sdl_unicode.lib" FORMNAME="" UNITNAME="sdl_unicode.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="sync_dlg.cpp" FORMNAME="dlgSync" UNITNAME="sync_dlg" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\repository\shellutil.cpp" FORMNAME="" UNITNAME="shellutil" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
   </FILELIST>
   <BUILDTOOLS>
   </BUILDTOOLS>

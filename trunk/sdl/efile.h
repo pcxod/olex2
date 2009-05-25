@@ -97,6 +97,12 @@ protected:
   struct MaskAssociation  {
     TEFile::TFileNameMask ExtMask, NameMask;
     MaskAssociation(const olxstr& fn)  {
+      // yet another special case...
+      if( fn.Length() == 1 && fn.CharAt(0) == '*' )  {
+        ExtMask.Build('*');
+        NameMask.Build('*');
+        return;
+      }
       olxstr ext = TEFile::ExtractFileExt( fn );
       // special case when "name*" is specified - the extension can be any...
       if( ext.IsEmpty() && !fn.EndsWith('.') && fn.EndsWith('*') )
