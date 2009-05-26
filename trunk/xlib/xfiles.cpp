@@ -164,7 +164,10 @@ void TXFile::LoadFromFile(const olxstr & FN) {
 
   if( !Loader->IsNative() )  {
     OnFileLoad->Enter(this, &FN);
-    GetRM().ClearAll();
+    try  {  GetRM().ClearAll();  }
+    catch( const TExceptionBase& exc )  {
+      TBasicApp::GetLog() << (olxstr("An error occured: ") << exc.GetException()->GetError());
+    }
     GetLattice().Clear(true);
     GetRM().Assign(Loader->GetRM(), true);
     GetLattice().Init();

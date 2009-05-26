@@ -64,7 +64,7 @@ public:
   void AssignAtoms( const TCAtomGroup& ag )  {
     atoms.Clear();
     for( int i=0; i < ag.Count(); i++ )
-      atoms.AddNew( ag[i] );
+      AddAtom(ag[i].GetAtom(), ag[i].GetMatrix() );
   }
   void AddAtom(TCAtom* ca, const smatd* sm)  {
     atoms.Add( new TGroupCAtom(ca, (sm == NULL ? NULL : &RM.AddUsedSymm(*sm))) );
