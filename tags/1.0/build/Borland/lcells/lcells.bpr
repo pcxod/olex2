@@ -31,7 +31,7 @@
     <DEBUGLIBPATH value="$(BCB)\lib\debug"/>
     <RELEASELIBPATH value="$(BCB)\lib\release"/>
     <LINKER value="ilink32"/>
-    <USERDEFINES value="_DEBUG;"/>
+    <USERDEFINES value="_DEBUG;_NO_PYTHON"/>
     <SYSDEFINES value="NO_STRICT"/>
     <MAINSOURCE value="lcells.cpp"/>
     <INCLUDEPATH value="..\..\..\sdl;$(BCB)\include;..\..\..\repository;..\..\..\lcells;..\..\..\..;$(BCB)\include\vcl;..\..\..\xlib"/>
@@ -40,8 +40,8 @@
     <OTHERFILES value=""/>
   </MACROS>
   <OPTIONS>
-    <CFLAG1 value="-Od -H=$(BCB)\lib\vcl60.csm -Hc -Q -Vx -Ve -ff -X- -r- -a8 -6 -b -d -k -y 
-      -v -vi- -c -tW -tWM"/>
+    <CFLAG1 value="-Od -H=$(BCB)\lib\vcl60.csm -Hc -Vx -Ve -ff -X- -r- -a8 -6 -b -d -k -y -v 
+      -vi- -c -tW -tWM"/>
     <PFLAGS value="-N2build -N0build -$YD -$W -$O- -$A8 -v -JPHNE -M"/>
     <RFLAGS value=""/>
     <AFLAGS value="/mx /w2 /zi"/>
@@ -122,10 +122,12 @@ Count=1
 Item0=$(BCB)\source\vcl
 
 [HistoryLists\hlConditionals]
-Count=3
-Item0=_DEBUG;
-Item1=_DEBUG;_OLX_DEBUG
-Item2=_DEBUG
+Count=5
+Item0=_DEBUG;_NO_PYTHON
+Item1=_DEBUG;NO_PYTHON
+Item2=_DEBUG;
+Item3=_DEBUG;_OLX_DEBUG
+Item4=_DEBUG
 
 [HistoryLists\hlIntOutputDir]
 Count=1

@@ -2,15 +2,22 @@ import sys
 import os
 import string
 
-debug = ARGUMENTS.get('debug', 0)
-debug = int(debug)
-
+AddOption('--dbg',
+          dest='dbg',
+          type='string',
+          nargs=1,
+          action='store',
+          metavar='DBG',
+          default='false',
+          help='Builds debug version')
+debug = (GetOption('dbg').lower() == 'true')
 out_dir = 'build/scons/' 
 if debug:
   out_dir += 'debug/'
 else:
   out_dir += 'release/'
 
+print 'Building location: ' + out_dir
 #get file lists
 alglib = Glob('./alglib/*.cpp')
 sdl = Glob('./sdl/*.cpp')
@@ -78,13 +85,13 @@ if sys.platform[:3] == 'win':
                                wxmsw28u_richtext wxmsw28u_html wxmsw28u_core 
                                wxmsw28u_adv wxregexu"""))
     env.Append(LINKFLAGS=['/LTCG'])
-    env.Append(ARFFLAGS=['/LTCG'])
   else:
     env.Append(CCFLAGS = ['/EHsc', '/RTC1', '/ZI', '-D_DUBUG', '/Od', '/MDd', 
                           '/bigobj', '/fp:fast']) 
     env.Append(LIBS = Split("""wxbase28ud         wxbase28ud_net  wxmsw28ud_gl   
                                wxmsw28ud_richtext wxmsw28ud_html wxmsw28ud_core 
                                wxmsw28ud_adv wxregexud"""))
+    #env.Append(LINKFLAGS=['NODEFAULTLIB:'])
   env.Append(CPPPATH=[wxFolder+'include', 
                       wxFolder+'lib/vc_lib/mswud',
                       pyFolder+'include'])
@@ -93,7 +100,7 @@ if sys.platform[:3] == 'win':
                              wxzlib mapi32 glu32 user32 opengl32 gdi32 ole32 
                              advapi32 comdlg32 comctl32 shell32 rpcrt4 oleaut32
                              kernel32 wsock32"""))
-  env.Append(LINKFLAGS=['/MANIFEST'])
+  env.Append(LINKFLAGS=['/MANIFEST', '/MACHINE:X86'])
 else:
   try: 
     if sys.platform[:6] == 'darwin':
@@ -107,10 +114,13 @@ else:
   except:
     print 'Please make sure that wxWidgets and Python config scripts are available'
     Exit(1)
-  if not debug:
-    env.Append(CCFLAGS = ['-O3', '-exceptions']) 
+  env.Append(CCFLAGS = ['-exceptions']) 
+  if debug:
+    env.Append(CCFLAGS = ['-g']) 
+#    env.Append(CCFLAGS = ['-pg']) 
+#    env.Append(LINKFLAGS=['-pg'])
   else:
-    env.Append(CCFLAGS = ['-g', '-exceptions']) 
+    env.Append(CCFLAGS = ['-O3']) 
 #sdl
 sdl_files = fileListToStringList('sdl', sdl) + fileListToStringList('sdl/smart', sdl_smart)
 sdl_files = processFileNameList(sdl_files, env, out_dir + 'sdl')
@@ -135,9 +145,8 @@ olex2_files = processFileNameList(olex2_files, env, out_dir+'olex')
 #link in the res file...
 if sys.platform[:3] == 'win':
   res_file = out_dir + 'olex/app.res'
-  env.Append(LINKFLAGS=['/MANIFEST', res_file])
-  env.Append(RCFLAGS=['/l0x809'])
-  env.RES(res_file, 'olex/app.rc')
+  olex2_files = olex2_files + env.RES(res_file, 'olex/app.rc')
+  env.Append(RCFLAGS=['/l 0x809'])
 env.Program(out_dir+'exe/olex2', generic_files + olex2_files)
 
 unirun_files = np_repository + fileListToStringList('unirun', unirun)
@@ -152,6 +161,10 @@ if sys.platform[:3] != 'win':
   olex2c_env.Append(LIBS=['readline'])
 
 olex2c_files = processFileNameList(olex2c, olex2c_env, out_dir+'olex2c')
+if sys.platform[:3] == 'win':
+  res_file = out_dir + 'olex2c/app.res'
+  olex2c_files = olex2c_files + olex2c_env.RES(res_file, 'olex2c/app.rc')
+  olex2c_env.Append(RCFLAGS=['/l 0x809'])
 olex2c_env.Program(out_dir+'exe/olex2c', generic_files + olex2c_files)
 
 try:

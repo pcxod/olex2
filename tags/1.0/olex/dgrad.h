@@ -12,6 +12,7 @@
 class TdlgGradient: public TDialog, AActionHandler  {
 private:
   TTextEdit *tcA, *tcB, *tcC, *tcD;
+  wxStaticText *stcA, *stcB, *stcC, *stcD;
 protected:
   void OnOK(wxCommandEvent& event);
   bool Execute(const IEObject *Sender, const IEObject *Data=NULL);

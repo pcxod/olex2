@@ -449,7 +449,7 @@ void TConZip::Assign(TZipFile *ZF, TXFile& xf)  {
   FileAge = ZF->FileAge;
   FileName = ZF->FileName;
   for( int i=0; i < ZF->Zip->Files.Count(); i++ )  {
-    FN = ZF->Zip->Files.String(i);
+    FN = ZF->Zip->Files[i];
     if( !TEFile::FileExists(FN) )
       continue;
     try  {  xf.LoadFromFile(FN);  }
@@ -516,7 +516,7 @@ void TConIndex::Update(const TStrList& IndexFiles, TXFile& xf)  {
   dlgProg->Show();
   dlgProg->Caption = "Updating information CIF/INS Files...";
   for( int i=0; i < IndexFiles.Count(); i++ )  {
-    Index->LoadFromFile(IndexFiles.String(i), true);
+    Index->LoadFromFile(IndexFiles[i], true);
   }
   Index->Exclusive();  // removing files with the same name - avoid problems with update
   dlgProg->pbBar->Max = Index->IFiles.Count() + Index->ZFiles.Count();

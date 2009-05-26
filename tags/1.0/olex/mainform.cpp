@@ -319,8 +319,8 @@ BEGIN_EVENT_TABLE(TMainForm, wxFrame)  // basic interface
 
 END_EVENT_TABLE()
 //..............................................................................
-TMainForm::TMainForm(TGlXApp *Parent, int Width, int Height):
-  TMainFrame(wxT("Olex2"), wxPoint(0,0), wxSize(Width, Height), wxT("MainForm"))
+TMainForm::TMainForm(TGlXApp *Parent):
+  TMainFrame(wxT("Olex2"), wxPoint(0,0), wxDefaultSize, wxT("MainForm"))
 {
 //  _crtBreakAlloc = 5892;
   SkipSizing = false;
@@ -346,6 +346,8 @@ TMainForm::TMainForm(TGlXApp *Parent, int Width, int Height):
   GlTooltip = NULL;
   FHtml = NULL;
   ActiveLogFile = NULL;
+
+  MousePositionX = MousePositionY = -1;
 
   LabelToEdit = NULL;
   
@@ -2977,7 +2979,12 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
     Dictionary.SetCurrentLanguage(DictionaryFile, I->GetFieldValue("language", EmptyString) );
   }
   FXApp->SetExtraZoom( I->GetFieldValue("ExtraZoom", "1.25").ToDouble() );
-  UseGlTooltip( I->GetFieldValue("GlTooltip", FalseString).ToBool() );
+#ifdef __WIN32__
+  const olxstr& defGlTVal = FalseString;
+#else
+  const olxstr& defGlTVal = TrueString;
+#endif
+  UseGlTooltip( I->GetFieldValue("GlTooltip", defGlTVal).ToBool() );
   FGlConsole->SetBlend(I->GetFieldValue("console.blend", TrueString).ToBool());
 
   olxstr T( I->GetFieldValue("BgColor") );

@@ -24,7 +24,7 @@ class TActionQList;
 
 struct TDispatchInfo  {
   int MsgId;
-  short MsgSubId;
+  int MsgSubId;
   AEventsDispatcher *Dispatcher;
   TDispatchInfo(int msgid, int subid, AEventsDispatcher *dispatcher)  {
     MsgId = msgid;

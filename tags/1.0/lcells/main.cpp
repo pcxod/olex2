@@ -44,7 +44,7 @@ void AddNode( TTreeNodes* tree, const olxstr& path )  {
   TreeNode* theNode = &TheTreeRoot;
   while( i < toks.Count() && (ind = theNode->IndexOf(toks[i])) >= 0 )  {
     i++;
-    nd = theNode->Object(ind);
+    nd = theNode->GetObject(ind);
     theNode = ((TreeNode*)nd->Data);
   }
   for(int j=i; j < toks.Count(); j++ )  {
@@ -180,8 +180,8 @@ exit:
       if( TEFile::FileExists(IndexFile) )
         Index->LoadFromFile(IndexFile, false);
       for( int i=0; i < UpdatePaths.Count(); i++ )  {
-        if( TEFile::FileExists(UpdatePaths.String(i)) )
-          res = Index->Update(false, UpdatePaths.String(i), 50*1024*1024, this);
+        if( TEFile::FileExists(UpdatePaths[i]) )
+          res = Index->Update(false, UpdatePaths[i], 50*1024*1024, this);
       }
       Index->SaveToFile(dlgMain->IndexFile);
       if( res )
@@ -320,13 +320,13 @@ void __fastcall TdlgMain::bbSearchClick(TObject *Sender)  {
   ReduceCell(C);
   Index->Clear();
   for( int i=0; i < IndexFiles.Count(); i++ )  {
-    if( TEFile::FileExists(IndexFiles.String(i)) )  {
-      Index->LoadFromFile(IndexFiles.String(i), true);
+    if( TEFile::FileExists(IndexFiles[i]) )  {
+      Index->LoadFromFile(IndexFiles[i], true);
       Index->Search(C, Dev, Cifs, false);
     }
     else  {
       Tmp = "Cannot find the index file: ";
-      Tmp << IndexFiles.String(i);
+      Tmp << IndexFiles[i];
       Application->MessageBox(Tmp.c_str(), "Error", MB_OK|MB_ICONERROR);
     }
   }
@@ -427,7 +427,7 @@ void _fastcall TdlgMain::AddMessage(const olxstr& A)  {
 //---------------------------------------------------------------------------
 void _fastcall TdlgMain::AddMessage(const TStrList& sl)  {
   for( int i=0; i < sl.Count(); i++ )
-    mMemo->Lines->Add( sl.String(i).c_str() );
+    mMemo->Lines->Add( sl[i].c_str() );
 }
 //---------------------------------------------------------------------------
 
@@ -770,11 +770,11 @@ void __fastcall TdlgMain::miPreferencesClick(TObject *Sender)
 
   for(int i=0; i < UpdatePaths.Count(); i++ )  {
      I = dlgPref->lvPaths->Items->Add();
-     I->Caption = UpdatePaths.String(i).c_str();
+     I->Caption = UpdatePaths[i].c_str();
   }
   for(int i=0; i < IndexFiles.Count(); i++ )  {
      I = dlgPref->lvFiles->Items->Add();
-     I->Caption = IndexFiles.String(i).c_str();
+     I->Caption = IndexFiles[i].c_str();
   }
   if( dlgPref->ShowModal() == mrOk )  {
     IndexFiles.Clear();

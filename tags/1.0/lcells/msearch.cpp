@@ -152,9 +152,9 @@ void _fastcall TdlgSearch::AddResults(const TPtrList<TConFile>& Res)  {
   dlgProg->Caption = "Loading Index File...";
 
   for( int i=0; i < dlgMain->Indexes.Count(); i++ )  {
-    if( TEFile::FileExists(dlgMain->Indexes.String(i)) )  {
-      dlgProg->SetAction(dlgMain->Indexes.String(i));
-      dlgMain->Index->LoadFromFile(dlgMain->Indexes.String(i), true);
+    if( TEFile::FileExists(dlgMain->Indexes[i]) )  {
+      dlgProg->SetAction(dlgMain->Indexes[i]);
+      dlgMain->Index->LoadFromFile(dlgMain->Indexes[i], true);
     }
   }
 

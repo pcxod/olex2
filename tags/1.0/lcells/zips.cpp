@@ -33,7 +33,7 @@ bool _fastcall TZipShell::Initialize(const olxstr& Arch)  {
 void _fastcall TZipShell::MaskFiles(const olxstr& Mask, const olxstr& Mask1)  {
   olxstr Tmp;
   for( int i=0; i < FFiles.Count(); i++ )  {
-    Tmp = TEFile::ExtractFileExt(FFiles.String(i));
+    Tmp = TEFile::ExtractFileExt(FFiles[i]);
     if( (Tmp != Mask)  && (Tmp != Mask1) )  {
       FFiles.Delete(i);
       i--;
@@ -43,7 +43,7 @@ void _fastcall TZipShell::MaskFiles(const olxstr& Mask, const olxstr& Mask1)  {
 void _fastcall TZipShell::MaskFiles(const olxstr& Mask)  {
   olxstr Tmp;
   for( int i=0; i < FFiles.Count(); i++ )  {
-    Tmp = TEFile::ExtractFileExt(FFiles.String(i));
+    Tmp = TEFile::ExtractFileExt(FFiles[i]);
     if( Tmp != Mask )  {
       FFiles.Delete(i);
       i--;

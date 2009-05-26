@@ -25,7 +25,7 @@ TdlgGenerate::TdlgGenerate(TMainFrame *ParentFrame)
   AActionHandler::SetToDelete(false);
   FAFrom = FBFrom = FCFrom = -1;
   FATo = FBTo = FCTo = 1;
-  short Border = 3, i;
+  short Border = 2, i;
   TStrList EL;
   for( i=1; i < 9; i++ )    EL.Add(i);
 
@@ -43,46 +43,45 @@ TdlgGenerate::TdlgGenerate(TMainFrame *ParentFrame)
   tcBTo   = new wxTextCtrl(this, -1, wxT("1"), wxDefaultPosition);
   tcCTo   = new wxTextCtrl(this, -1, wxT("1"), wxDefaultPosition);
 
-  cbA = new TComboBox(this);  cbA->SetText("2"); cbA->WI.SetWidth(46); cbA->WI.SetHeight(21);  cbA->AddItems(EL);
-  cbB = new TComboBox(this);  cbB->SetText("2"); cbB->WI.SetWidth(46); cbB->WI.SetHeight(21);  cbB->AddItems(EL);
-  cbC = new TComboBox(this);  cbC->SetText("2"); cbC->WI.SetWidth(46); cbC->WI.SetHeight(21);  cbC->AddItems(EL);
+  cbA = new TComboBox(this);  cbA->SetText("2"); cbA->AddItems(EL);
+  cbB = new TComboBox(this);  cbB->SetText("2"); cbB->AddItems(EL);
+  cbC = new TComboBox(this);  cbC->SetText("2"); cbC->AddItems(EL);
   cbA->OnChange->Add(this);
   cbB->OnChange->Add(this);
   cbC->OnChange->Add(this);
 
   wxBoxSizer *TopSizer = new wxBoxSizer(wxVERTICAL );
 
-  wxFlexGridSizer *GridSizer = new wxFlexGridSizer(3, 5, 0, 0);
-  GridSizer->Add( stAFrom, 0, wxALL, Border );
-  GridSizer->Add( tcAFrom, 0, wxALL, Border );
-  GridSizer->Add( stATo,   0, wxALL, Border );
-  GridSizer->Add( tcATo, 0, wxALL, Border );
-  GridSizer->Add( cbA, 0, wxALL, Border );
+  wxFlexGridSizer *GridSizer = new wxFlexGridSizer(3, 5, Border, Border);
+  GridSizer->Add( stAFrom, 0, wxALIGN_CENTER_VERTICAL | wxALL, Border );
+  GridSizer->Add( tcAFrom, 0, wxEXPAND | wxALL, Border );
+  GridSizer->Add( stATo,   0, wxALIGN_CENTER_VERTICAL | wxALL, Border );
+  GridSizer->Add( tcATo, 0, wxEXPAND | wxALL, Border );
+  GridSizer->Add( cbA, 0, wxEXPAND | wxALL, Border );
 
-  GridSizer->Add( stBFrom, 0, wxALL, Border );
-  GridSizer->Add( tcBFrom, 0, wxALL, Border );
-  GridSizer->Add( stBTo,   0, wxALL, Border );
-  GridSizer->Add( tcBTo, 0, wxALL, Border );
-  GridSizer->Add( cbB, 0, wxALL, Border );
+  GridSizer->Add( stBFrom, 0, wxALIGN_CENTER_VERTICAL | wxALL, Border );
+  GridSizer->Add( tcBFrom, 0, wxEXPAND | wxALL, Border );
+  GridSizer->Add( stBTo,   0, wxALIGN_CENTER_VERTICAL | wxALL, Border );
+  GridSizer->Add( tcBTo, 0, wxEXPAND | wxALL, Border );
+  GridSizer->Add( cbB, 0, wxEXPAND | wxALL, Border );
 
-  GridSizer->Add( stCFrom, 0, wxALL, Border );
-  GridSizer->Add( tcCFrom, 0, wxALL, Border );
-  GridSizer->Add( stCTo,   0, wxALL, Border );
-  GridSizer->Add( tcCTo, 0, wxALL, Border );
-  GridSizer->Add( cbC, 0, wxALL, Border );
-  GridSizer->SetSizeHints(this);
+  GridSizer->Add( stCFrom, 0, wxALIGN_CENTER_VERTICAL | wxALL, Border );
+  GridSizer->Add( tcCFrom, 0, wxEXPAND | wxALL, Border );
+  GridSizer->Add( stCTo,   0, wxALIGN_CENTER_VERTICAL | wxALL, Border );
+  GridSizer->Add( tcCTo, 0, wxEXPAND | wxALL, Border );
+  GridSizer->Add( cbC, 0, wxEXPAND | wxALL, Border );
+  GridSizer->AddGrowableCol(1);
+  GridSizer->AddGrowableCol(3);
+  GridSizer->AddGrowableCol(4);
   
   wxBoxSizer *ButtonsSizer = new wxBoxSizer( wxHORIZONTAL );
 
   ButtonsSizer->Add( new wxButton( this, wxID_OK, wxT("OK") ), 0, wxALL, Border);
   ButtonsSizer->Add( new wxButton( this, wxID_CANCEL, wxT("Cancel") ), 0, wxALL, Border);
   ButtonsSizer->Add( new wxButton( this, wxID_HELP, wxT("Help") ),     0, wxALL, Border );
-  ButtonsSizer->SetSizeHints(this);
   
-  TopSizer->Add(GridSizer, 0, wxALL, 5);
+  TopSizer->Add(GridSizer, 1, wxEXPAND | wxALL, 5);
   TopSizer->Add(ButtonsSizer, 0, wxALL, 5);
-  //TopSiser->Add(CSizer, 0, wxALL, 5);
-  //TopSiser->Add(ButtonsSizer, 0, wxALL, 10);
   SetSizer( TopSizer );      // use the sizer for layout
 
   TopSizer->SetSizeHints( this );   // set size hints to honour minimum size

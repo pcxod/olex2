@@ -3,6 +3,8 @@
 #define __olxs_sptr_list_H
 #include "tptrlist.h"
 
+BeginEsdlNamespace()
+
 template <class ListClass, class Comparator, typename TypeClass> class TTSortedList {
   ListClass list;
 protected:
@@ -322,5 +324,6 @@ public:
   }
 };
 
+EndEsdlNamespace()
 #endif
 
