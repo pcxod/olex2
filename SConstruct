@@ -86,9 +86,14 @@ if sys.platform[:3] == 'win':
             nargs=1,
             action='store',
             metavar='WXDIR',
-            default='e:/wxWidgets-2.8.9/',
+            default='',
             help='Locaton of the wxWidgets library')
   wxFolder = GetOption('wxFolder')
+  if not wxFolder:
+    wxFolder = os.environ.get('WX_DIR')
+  if not wxFolder:
+    print 'Please provide --wxdir=wxWidgets_root_folder or set WX_DIR system variable to point to wxWidgets root folder'
+    Exit(0)
   if wxFolder[-1] != '/' or wxFolder[-1] != '\\':
     wxFolder += '/'
   pyFolder = os.path.split(sys.executable)[0] + '\\'
