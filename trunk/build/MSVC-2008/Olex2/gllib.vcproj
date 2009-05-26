@@ -160,6 +160,7 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
+				CommandLine="set WX_DIR=c:"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
