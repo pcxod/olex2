@@ -109,7 +109,7 @@ const smatd& RefinementModel::AddUsedSymm(const smatd& matr, const olxstr& id) {
   smatd* rv = NULL;
   if( ind == -1 )  {
     if( id.IsEmpty() ) 
-      rv = &UsedSymm.Add( olxstr("$") << UsedSymm.Count(), matr );
+      rv = &UsedSymm.Add( olxstr("$") << (UsedSymm.Count()+1), matr );
     else
       rv = &UsedSymm.Add( id, matr );
     rv->SetTag(0); // do not lock it
@@ -168,7 +168,10 @@ RefinementModel& RefinementModel::Assign(const RefinementModel& rm, bool AssignA
 
   if( AssignAUnit )
     aunit.Assign(rm.aunit);
-  
+  // need to copy the ID's before any restraints or info tabs use them or all gets broken... !!! 
+  for( int i=0; i < rm.UsedSymm.Count(); i++ )
+    AddUsedSymm( rm.UsedSymm.GetValue(i), rm.UsedSymm.GetKey(i) );
+
   rDFIX.Assign(rm.rDFIX);
   rDANG.Assign(rm.rDANG);
   rSADI.Assign(rm.rSADI);
@@ -186,9 +189,6 @@ RefinementModel& RefinementModel::Assign(const RefinementModel& rm, bool AssignA
 
   Conn.Assign(rm.Conn);
   aunit._UpdateConnInfo();
-
-  for( int i=0; i < rm.UsedSymm.Count(); i++ )
-    AddUsedSymm( rm.UsedSymm.GetValue(i), rm.UsedSymm.GetKey(i) );
 
   for( int i=0; i < rm.InfoTables.Count(); i++ )  {
     if( rm.InfoTables[i].IsValid() )
