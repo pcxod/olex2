@@ -2,16 +2,30 @@ import sys
 import os
 import string
 
-AddOption('--dbg',
-          dest='dbg',
+AddOption('--olx_debug',
+          dest='olx_debug',
           type='string',
           nargs=1,
           action='store',
-          metavar='DBG',
+          metavar='OLX_DEBUG',
           default='false',
           help='Builds debug version')
-debug = (GetOption('dbg').lower() == 'true')
+debug = (GetOption('olx_debug').lower() == 'true')
+
+AddOption('--olx_profile',
+          dest='olx_profile',
+          type='string',
+          nargs=1,
+          action='store',
+          metavar='OLX_PROFILE',
+          default='false',
+          help='Build for profiling')
+profiling = (GetOption('olx_profile').lower() == 'true')
+
 out_dir = 'build/scons/' 
+if profiling:
+  out_dir += 'profiling/'
+  
 if debug:
   out_dir += 'debug/'
 else:
@@ -117,10 +131,11 @@ else:
   env.Append(CCFLAGS = ['-exceptions']) 
   if debug:
     env.Append(CCFLAGS = ['-g']) 
-#    env.Append(CCFLAGS = ['-pg']) 
-#    env.Append(LINKFLAGS=['-pg'])
   else:
     env.Append(CCFLAGS = ['-O3']) 
+  if profiling:
+    env.Append(CCFLAGS = ['-pg']) 
+    env.Append(LINKFLAGS=['-pg'])
 #sdl
 sdl_files = fileListToStringList('sdl', sdl) + fileListToStringList('sdl/smart', sdl_smart)
 sdl_files = processFileNameList(sdl_files, env, out_dir + 'sdl')
