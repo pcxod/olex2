@@ -288,17 +288,9 @@ void TGlRenderer::EnablePerspective(bool Set)  {
 }
 //..............................................................................
 void TGlRenderer::SetPerspectiveAngle(double angle)  {
-  if( FPerspective )  SetChanged(true);
-  int ang = (int)angle;
-  if( !(angle - ang) )  {
-    if( !(ang%90) )  {
-      if( !((ang%90)%2) )  //0, 180, ...
-        ang = 1;
-      else
-        ang = 89; // 90, 270, ..
-    }
-  }
-  FPAngle = (float)tan(ang*M_PI/180);
+  if( FPerspective )  
+    SetChanged(true);
+  FPAngle = (float)tan(angle*M_PI/360);
 }
 //..............................................................................
 void TGlRenderer::Resize(int w, int h)  {
@@ -335,17 +327,15 @@ void TGlRenderer::SetView(int x, int y, bool Select, short Res)  {
     glGetIntegerv(GL_VIEWPORT, vp);
     gluPickMatrix(x, FHeight-y, 2, 2, vp);
   }
-  double top, right;
   if( FPerspective )  {
-    top = FPAngle;
-    right = top*(double)FWidth/(double)FHeight;
-
+    double top = FPAngle;
+    double right = top*(double)FWidth/(double)FHeight;
     glFrustum(right*FProjectionLeft, right*FProjectionRight,
-              top*FProjectionTop, top*FProjectionBottom, 0.1, 10.0);//MaxZ+0.1);
+              top*FProjectionTop, top*FProjectionBottom, 1, 10.0);//MaxZ+0.1);
   }
   else  {
-    top = 1;
-    right = top*(double)FWidth/(double)FHeight;
+    double top = 1;
+    double right = top*(double)FWidth/(double)FHeight;
     glOrtho(right*FProjectionLeft, right*FProjectionRight,
               top*FProjectionTop, top*FProjectionBottom, 0, 10.0);
   }
@@ -365,15 +355,17 @@ void TGlRenderer::SetBasis(bool Identity)  {
   }
   // move the scene to 0
   Bf[3][2] = -MaxZ;
-
-  Bf[3][3] = MaxZ;
-  float dv = (float)(GetBasis().GetZoom()/MaxZ);
-  //glMatrixMode(GL_MODELVIEW);
-  glLoadMatrixf(&Bf[0][0]);
-  glScalef(dv, dv, dv);
-  if( !Identity )  {
-    glTranslated(GetBasis().GetCenter()[0], GetBasis().GetCenter()[1], GetBasis().GetCenter()[2] );
+  if( FPerspective )  {
+    if( Identity ) // heh? any better?
+      Bf[3][2] *= 5;
+    Bf[3][2] -= MaxZ;
   }
+  Bf[3][3] = MaxZ;
+  glLoadMatrixf(&Bf[0][0]);
+  float dv = (float)(GetBasis().GetZoom()/MaxZ);
+  glScalef(dv, dv, dv);
+  if( !Identity )
+    glTranslated(GetBasis().GetCenter()[0], GetBasis().GetCenter()[1], GetBasis().GetCenter()[2] );
 }
 //..............................................................................
 void TGlRenderer::DrawObject(AGDrawObject *Object, bool DrawImage)  {
@@ -450,20 +442,20 @@ void TGlRenderer::Draw()  {
   GetScene().StartDraw();
   //glLineWidth( (float)(0.07/GetScale()) );
   //glPointSize( (float)(0.07/GetScale()) );  
-  DrawObjects(false, false);
+  DrawObjects(0, 0, false, false);
   GetScene().EndDraw();
   FGlImageChanged = true;
   OnDraw->Execute(this);
 }
 //..............................................................................
-void TGlRenderer::DrawObjects( bool SelectPrimitives, bool SelectObjects)  {
-  bool Select = SelectPrimitives || SelectObjects, Pers=false;
+void TGlRenderer::DrawObjects(int x, int y, bool SelectPrimitives, bool SelectObjects)  {
+  const bool Select = SelectPrimitives || SelectObjects;
   const int DrawMask = sgdoVisible|sgdoSelected|sgdoDeleted|sgdoGrouped;
   if( !FIdentityObjects.IsEmpty() )  {
     if( FPerspective )  {
       FPerspective = false;
-      SetView();
-      Pers = true;
+      SetView(x, y, Select);
+      FPerspective = true;
     }
     SetBasis(true);
     const int id_obj_count = FIdentityObjects.Count();
@@ -488,10 +480,8 @@ void TGlRenderer::DrawObjects( bool SelectPrimitives, bool SelectObjects)  {
         }
       }
     }
-    if( Pers )  {
-      FPerspective = true;
-      SetView();
-    }
+    if( FPerspective )
+      SetView(x, y, Select);
     SetBasis();
   }
 
@@ -504,7 +494,8 @@ void TGlRenderer::DrawObjects( bool SelectPrimitives, bool SelectObjects)  {
       TGlMaterial& GlM = Primitives.GetProperties(i);
       if( GlM.GetIdentityDraw() ) continue;  // already drawn
       if( GlM.GetTransparent() ) continue;  // will be drawn
-      if( !Select )    GlM.Init();
+      if( !Select )    
+        GlM.Init();
       const int obj_count = GlM.ObjectCount();
       for( int j=0; j < obj_count; j++ )  {
         TGlPrimitive& GlP = (TGlPrimitive&)GlM.GetObject(j);
@@ -528,7 +519,8 @@ void TGlRenderer::DrawObjects( bool SelectPrimitives, bool SelectObjects)  {
   const int trans_obj_count = FTransluentObjects.Count();
   for( int i=0; i < trans_obj_count; i++ )  {
     TGlMaterial* GlM = FTransluentObjects[i];
-    if( !Select )    GlM->Init();
+    if( !Select )    
+      GlM->Init();
     const int obj_count = GlM->ObjectCount();
     for( int j=0; j < obj_count; j++ )  {
       TGlPrimitive& GlP = (TGlPrimitive&)GlM->GetObject(j);
@@ -557,8 +549,8 @@ void TGlRenderer::DrawObjects( bool SelectPrimitives, bool SelectObjects)  {
   if( !FTransluentIdentityObjects.IsEmpty() )  {
     if( FPerspective )  {
       FPerspective = false;
-      SetView();
-      Pers = true;
+      SetView(x, y, Select);
+      FPerspective = true;
     }
     SetBasis(true);
     const int trans_id_obj_count = FTransluentIdentityObjects.Count();
@@ -583,12 +575,14 @@ void TGlRenderer::DrawObjects( bool SelectPrimitives, bool SelectObjects)  {
         }
       }
     }
-    FPerspective = Pers;
+    if( FPerspective )
+      SetView(x, y, Select);
   }
 }
 //..............................................................................
 AGDrawObject* TGlRenderer::SelectObject(int x, int y, int depth)  {
-  if( !FWidth || !FHeight )  return NULL;
+  if( FWidth*FHeight == 0 )  
+    return NULL;
 
   AGDrawObject *Result = NULL;
   GLuint *selectBuf = new GLuint [MAXSELECT];
@@ -600,10 +594,8 @@ AGDrawObject* TGlRenderer::SelectObject(int x, int y, int depth)  {
 //  for( i=0; i < GroupCount(); i++ )
 //  {    Group(i)->Tag(hits + i + 2 );  }
   GetScene().StartSelect(x, y, selectBuf);
-  DrawObjects(false, true);
-  GetScene().EndSelect();
-
-  int hits = glRenderMode(GL_RENDER);
+  DrawObjects(x, y, false, true);
+  int hits = GetScene().EndSelect();
   if (hits >= 1)  {
     if( hits == 1 )  {
       int in = selectBuf[(hits-1)*4+3];
@@ -640,7 +632,7 @@ TGlPrimitive* TGlRenderer::SelectPrimitive(int x, int y)  {
     Primitives.GetObject(i).SetTag( i+1 );
 
   GetScene().StartSelect(x, y, selectBuf);
-  DrawObjects(true, false);
+  DrawObjects(x, y, true, false);
   GetScene().EndSelect();
 
   int hits = glRenderMode(GL_RENDER);

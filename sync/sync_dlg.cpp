@@ -163,7 +163,8 @@ void TdlgSync::SetAction(TTreeNode& node, int action, bool int_call)  {
   NodeData* nd = (NodeData*)node.Data;
   if( node.ImageIndex == iiUptoDate )
     return;
-  tvFrom->Items->BeginUpdate();
+  if( !int_call )
+    tvFrom->Items->BeginUpdate();
   nd->action = action;
   node.ImageIndex = action;
   node.SelectedIndex = action;
@@ -180,24 +181,26 @@ void TdlgSync::SetAction(TTreeNode& node, int action, bool int_call)  {
       p->SelectedIndex = action;
     }
   }
-  if( !int_call )
+  if( !int_call )  {
     CalcSize();
-  tvFrom->Items->EndUpdate();
+    tvFrom->Items->EndUpdate();
+  }
 }
 //---------------------------------------------------------------------------
 void __fastcall TdlgSync::miSkipClick(TObject *Sender)  {
-  TTreeNode* node = tvFrom->Selected;
-  if( node == NULL )
-    return;
-  SetAction(*node, iiSkip);
+  tvFrom->Items->BeginUpdate();
+  for( int i=0; i < tvFrom->SelectionCount; i++ )
+    SetAction(*tvFrom->Selections[i], iiSkip, true);
+  CalcSize();
+  tvFrom->Items->EndUpdate();
 }
 //---------------------------------------------------------------------------
-void __fastcall TdlgSync::miUpdateClick(TObject *Sender)
-{
-  TTreeNode* node = tvFrom->Selected;
-  if( node == NULL )
-    return;
-  SetAction(*node, iiUpdate);
+void __fastcall TdlgSync::miUpdateClick(TObject *Sender)  {
+  tvFrom->Items->BeginUpdate();
+  for( int i=0; i < tvFrom->SelectionCount; i++ )
+    SetAction(*tvFrom->Selections[i], iiUpdate, true);
+  CalcSize();
+  tvFrom->Items->EndUpdate();
 }
 //---------------------------------------------------------------------------
 void __fastcall TdlgSync::tvFromMouseDown(TObject *Sender,

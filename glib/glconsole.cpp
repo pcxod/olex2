@@ -102,7 +102,7 @@ void TGlConsole::Create(const olxstr& cName, const ACreationParams* cpar)  {
 bool TGlConsole::Orient(TGlPrimitive& P)  {
   TGlFont *Fnt = Font();
   if( Fnt == NULL )  return true;
-//  Fnt->DrawGlText( vec3d(0,0,0), "HELLW_O", true);
+  //Fnt->DrawGlText( vec3d(0,0,0), "HELLW_O", true);
   P.SetFont(Fnt);
   if( Parent.GetWidth() < 100 )  return true;
   int th = Fnt->TextHeight(EmptyString), lc, ii;

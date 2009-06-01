@@ -25,7 +25,7 @@ AGlScene::~AGlScene()  {
 //..............................................................................
 void AGlScene::StartDraw()  {  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); }
 //..............................................................................
-void AGlScene::EndDraw()    {  glFlush();}
+void AGlScene::EndDraw()    {  glFlush();  }
 //..............................................................................
 void AGlScene::StartSelect(int x, int y, GLuint *Bf)  {
   glSelectBuffer(MAXSELECT, Bf);
@@ -35,9 +35,11 @@ void AGlScene::StartSelect(int x, int y, GLuint *Bf)  {
   FParent->SetView(x, y, true);
 }
 //..............................................................................
-void AGlScene::EndSelect()  {
+int AGlScene::EndSelect()  {
+  int hits = glRenderMode(GL_RENDER);
   glFlush();
   FParent->SetView();
+  return hits;
 }
 //..............................................................................
 void AGlScene::Destroy()    {  return; }
