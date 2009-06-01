@@ -350,6 +350,10 @@ void TMainForm::funSel(const TStrObjList& Params, TMacroError &E)  {
   olxstr tmp;
   for( int i=0; i < atoms.Count(); i++ )  {
     tmp << atoms[i]->GetLabel();
+    if( atoms[i]->CAtom().GetResiId() != -1 )  {
+      tmp << '_' << 
+        atoms[i]->CAtom().GetParent()->GetResidue(atoms[i]->CAtom().GetResiId()).GetNumber();
+    }
     if( (i+1) < atoms.Count() )  
       tmp << ' ';
   }
