@@ -369,7 +369,6 @@ void TGlFont::CreateGlyphs(const TEBitArray& ba, bool fixedWidth, short w, short
 //}
 //..............................................................................
 void TGlFont::CreateTextures(short Width, short Height)  {
-  return;
   if( Width < FMaxWidth || Width < 0 ||
       Height < FMaxHeight || Height < 0 ||
       FMaxWidth <=0 || FMaxHeight <=0 )

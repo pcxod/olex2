@@ -39,7 +39,8 @@ public:
   virtual olxstr ShowFontDialog(TGlFont* glf = NULL, 
     const olxstr& fontDescription = EmptyString) = 0;
   virtual void StartSelect(int x, int y, GLuint *Bf);
-  virtual void EndSelect();
+  // returns number of selection hits
+  virtual int EndSelect();
 
   virtual void StartDraw();
   virtual void EndDraw();

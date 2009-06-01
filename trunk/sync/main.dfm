@@ -77,7 +77,7 @@ object fMain: TfMain
     Top = 152
     Width = 72
     Height = 13
-    Caption = 'Average spped'
+    Caption = 'Average speed'
   end
   object sbSyncStatus: TStatusBar
     Left = 0

@@ -77,7 +77,7 @@ class TGlRenderer : public IEObject  {
   TGlListManager FListManager;
   int CompiledListId;
 protected:
-  void DrawObjects( bool SelectPrimitives, bool SelectObjects);
+  void DrawObjects(int x, int y, bool SelectPrimitives, bool SelectObjects);
 
   vec3d FMaxV, FMinV;
   bool Changed;

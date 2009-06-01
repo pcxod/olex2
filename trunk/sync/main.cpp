@@ -52,7 +52,7 @@ public:
         fMain->pbOverall->Position = Round(pos*dv);
         if( Data == &OnSync )
           fMain->reEdit->Lines->Add(OnFileCopy.GetAction().u_str());
-        if( pos < 1024*1024*1024 )
+        if( pos < 1024 )
           fMain->stTotal->Caption = AnsiString::FormatFloat("0.00", pos) + " MByte";
         else
           fMain->stTotal->Caption = AnsiString::FormatFloat("0.00", pos/1024) + " GByte";

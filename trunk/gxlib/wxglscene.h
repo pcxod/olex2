@@ -42,13 +42,12 @@ public:
   
   virtual olxstr ShowFontDialog(TGlFont* glf=NULL, const olxstr& fontDesc=EmptyString);
 
-  void Destroy();
+  virtual void Destroy()  { AGlScene::Destroy();  }
+  virtual void StartSelect(int x, int y, GLuint *Bf) {  AGlScene::StartSelect(x, y, Bf);  }
+  virtual int EndSelect()  {  return AGlScene::EndSelect();  }
 
-  void StartSelect(int x, int y, GLuint *Bf);
-  void EndSelect();
-
-  void StartDraw();
-  void EndDraw();
+  virtual void StartDraw() {  AGlScene::StartDraw();  }
+  virtual void EndDraw()  {  AGlScene::EndDraw();  }
 
   class MetaFont {
     bool Bold, Italic, Fixed, Underlined;
