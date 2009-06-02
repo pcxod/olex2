@@ -230,6 +230,8 @@ protected:
   void OnSelection(wxCommandEvent& event);
 
   void OnGraphicsStyle(wxCommandEvent& event);
+  
+  void OnPictureExport(wxCommandEvent& event);
 
   // view menu
   void OnHtmlPanel(wxCommandEvent& event);
@@ -446,6 +448,7 @@ private:
   DefMacro(ImportFont)
   DefMacro(ProjSph)
   DefMacro(PictPS)
+  DefMacro(PictTEX)
   DefMacro(UpdateQPeakTable)
   DefMacro(Conn)
   DefMacro(AddBond)
