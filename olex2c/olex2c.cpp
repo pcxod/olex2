@@ -160,7 +160,7 @@ public:
     TLibrary &Library = XApp.GetLibrary();
     PythonExt::Init(this).Register(&OlexPyCore::PyInit);
     Library.AttachLibrary( TEFile::ExportLibrary() );
-    //Library.AttachLibrary( PythonExt::GetInstance()->ExportLibrary() );
+    Library.AttachLibrary( PythonExt::GetInstance()->ExportLibrary() );
     Library.AttachLibrary( TETime::ExportLibrary() );
     Library.AttachLibrary( XApp.XFile().ExportLibrary() );
     Library.AttachLibrary( TFileHandlerManager::ExportLibrary() );

@@ -8761,7 +8761,7 @@ void TMainForm::macDelBond(TStrObjList &Cmds, const TParamList &Options, TMacroE
     FXApp->CreateObjects(false, false);
   }
   else  {
-    E.ProcessingError(__OlxSrcInfo, "please select soe bonds or provide atom pairs");
+    E.ProcessingError(__OlxSrcInfo, "please select some bonds or provide atom pairs");
     return;
   }
 }
@@ -8786,5 +8786,47 @@ void TMainForm::funCurrentLanguage(const TStrObjList& Params, TMacroError &E)  {
     E.SetRetVal(Dictionary.GetCurrentLanguage());
   else
     Dictionary.SetCurrentLanguage(DictionaryFile, Params[0] );
+}
+//..............................................................................
+void TMainForm::macSAME(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  TXAtomPList atoms;
+  bool invert = Options.Contains("i");
+  FindXAtoms(Cmds, atoms, false, true);
+  if( atoms.Count() == 2 )  {
+    TTypeList< AnAssociation2<int, int> > res;
+    TIntList sk;
+    TNetwork &netA = atoms[0]->Atom().GetNetwork(),
+      &netB = atoms[1]->Atom().GetNetwork();
+    if( &netA == &netB )  {
+      E.ProcessingError(__OlxSrcInfo, "Please select different fragments");
+      return;
+    }
+    if( !netA.DoMatch( netB, res, invert ) )  {
+      E.ProcessingError(__OlxSrcInfo, "Graphs do not match");
+      return;
+    }
+    //got the pairs now...
+    TSameGroup& sg = FXApp->XFile().GetRM().rSAME.New();
+    for( int i=0; i < netA.NodeCount(); i++ )  {
+      netA.Node(i).SetTag(-1);
+      netB.Node(i).SetTag(-1);
+    }
+    for( int i=0; i < res.Count(); i++ )  {
+      if( netA.Node(res[i].GetA()).GetAtomInfo().GetMr() < 3.5 || netA.Node(res[i].GetA()).GetTag() == 0 )
+        continue;
+      sg.Add( netA.Node(res[i].GetA()).CAtom() );
+      netA.Node(res[i].GetA()).SetTag(0);
+      TBasicApp::GetLog() << netA.Node(res[i].GetA()).GetLabel() << ' ';
+    }
+    TBasicApp::GetLog() << '\n';
+    TSameGroup& d_sg = FXApp->XFile().GetRM().rSAME.NewDependent(sg);
+    for( int i=0; i < res.Count(); i++ )  {
+      if( netB.Node(res[i].GetB()).GetAtomInfo().GetMr() < 3.5 || netB.Node(res[i].GetB()).GetTag() == 0 )
+        continue;
+      d_sg.Add( netB.Node(res[i].GetB()).CAtom() );
+      netB.Node(res[i].GetB()).SetTag(0);
+      TBasicApp::GetLog() << netB.Node(res[i].GetB()).GetLabel() << ' ';
+    }
+  }
 }
 //..............................................................................
