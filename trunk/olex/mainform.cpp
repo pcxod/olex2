@@ -197,6 +197,8 @@ enum
   ID_FreeLattice,
   ID_DELINS,
   ID_VarChange,
+
+  ID_gl2ps,
   
   ID_PictureExport
 };
@@ -4076,7 +4078,8 @@ void TMainForm::OnPictureExport(wxCommandEvent& WXUNUSED(event))  {
   //if ( dlg->Show() == wxID_OK ) {
   //} 
   //#include "savevecdialog.h"
-  wxMessage(wxT("Under construction"));    
+  
+  wxMessageBox(wxT("Under construction"));    
 }
 //..............................................................................
 
