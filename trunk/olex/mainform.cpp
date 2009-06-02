@@ -646,7 +646,7 @@ Accepts atoms, bonds, hbonds or a name (like from LstGO). Example: 'mask hbonds 
   this_InitMacro(ShowH, , fpNone|fpTwo|psFileLoaded );
   this_InitMacro(Fvar, , (fpAny^fpNone)|psCheckFileTypeIns );
   this_InitMacro(Sump, , (fpAny^fpNone)|psCheckFileTypeIns );
-  this_InitMacro(Part, p&;lo, (fpAny^fpNone)|psCheckFileTypeIns );
+  this_InitMacro(Part, p&;lo, (fpAny^fpNone)|psFileLoaded );
   this_InitMacroD(Afix,"n-to accept N atoms in the rings for afix 66" , 
     (fpAny^fpNone)|psCheckFileTypeIns,
     "sets atoms afix, special cases are 56,69,66,69,76,79,106,109,116 and 119");
@@ -1657,12 +1657,16 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
     TdlgPrimitive* Primitives = new TdlgPrimitive(&Ps, i, this);
     if( Primitives->ShowModal() == wxID_OK )  {
       if( FObjectUnderMouse->IsSelected() && EsdlInstanceOf(*FObjectUnderMouse, TXBond) )  {
-        TXBond& xb = *(TXBond*)FObjectUnderMouse;
-        FXApp->Individualise(xb);
         for( int i=0; i < FXApp->AtomCount(); i++ )
           FXApp->GetAtom(i).Atom().SetTag(i);
-        BondCreationParams bpar(FXApp->GetAtom(xb.Bond().A().GetTag()), FXApp->GetAtom(xb.Bond().B().GetTag()));
-        xb.UpdatePrimitives( Primitives->Mask, &bpar);
+        for( int i=0; i < FXApp->GetSelection().Count(); i++ )  {
+          if( !EsdlInstanceOf(FXApp->GetSelection()[i], TXBond) )
+            continue;
+          TXBond& xb = (TXBond&)FXApp->GetSelection()[i];
+          FXApp->Individualise(xb);
+          BondCreationParams bpar(FXApp->GetAtom(xb.Bond().A().GetTag()), FXApp->GetAtom(xb.Bond().B().GetTag()));
+          xb.UpdatePrimitives( Primitives->Mask, &bpar);
+        }
       }
       else  {
         olxstr TmpStr = "mask ";
