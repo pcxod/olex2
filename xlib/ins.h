@@ -138,7 +138,7 @@ public:
           SL[i] = EmptyString;
           continue;
         }
-        if( (Toks[0].Comparei("HTAB") == 0 || Toks[0].Comparei("RTAB") == 0) && Toks.Count() > 2 )  {
+        if( (Toks[0].StartsFromi("HTAB") || Toks[0].StartsFromi("RTAB")) && Toks.Count() > 2 )  {
           cx.rm.AddInfoTab( Toks );
           SL[i] = EmptyString;
           continue;

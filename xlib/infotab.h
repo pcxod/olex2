@@ -94,12 +94,29 @@ public:
 
   olxstr InsStr() const {
     olxstr rv = (Type == infotab_htab ? "HTAB" : "RTAB");
-    if( !ResiName.IsEmpty() )
+    if( !ResiName.IsEmpty() )  {
       rv << '_' << ResiName;
-    rv << ' ' << ParamName;
-    for( int i=0; i < atoms.Count(); i++ )  {
-      if( !atoms[i].GetAtom()->IsDeleted() )
-        rv << ' ' << atoms[i].GetFullLabel(RM);
+      rv << ' ' << ParamName;
+      if( ResiName.IsNumber() )  {
+        int resi = ResiName.ToInt();
+        for( int i=0; i < atoms.Count(); i++ )  {
+          if( !atoms[i].GetAtom()->IsDeleted() )
+            rv << ' ' << atoms[i].GetFullLabel(RM, resi);
+        }
+      }
+      else  {
+        for( int i=0; i < atoms.Count(); i++ )  {
+          if( !atoms[i].GetAtom()->IsDeleted() )
+            rv << ' ' << atoms[i].GetFullLabel(RM, ResiName);
+        }
+      }
+    }
+    else  {
+      rv << ' ' << ParamName;
+      for( int i=0; i < atoms.Count(); i++ )  {
+        if( !atoms[i].GetAtom()->IsDeleted() )
+          rv << ' ' << atoms[i].GetFullLabel(RM);
+      }
     }
     return rv;
   }

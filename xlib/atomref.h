@@ -144,9 +144,10 @@ public:
       else                              residues.Add(rm.aunit.PrevResidue(*CurrResi));
     }
     else  {
-      if( CurrResi != NULL )  residues.Add(CurrResi);
       if( !resi_name.IsEmpty() )  // empty resi name refers to all atom outside RESI
         rm.aunit.FindResidues(resi_name, residues);  
+      else if( CurrResi != NULL )  
+        residues.Add(CurrResi);
       if( residues.IsEmpty() )  throw TInvalidArgumentException(__OlxSourceInfo, olxstr("invalid residue class/number: ") << resi_name);
     }
     if( Expression.CharAt(0) == '$' )  {  // sfac type
