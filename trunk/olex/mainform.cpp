@@ -839,6 +839,8 @@ separated values of Atom Type and radius, an entry a line" );
   this_InitMacroD(PictTEX, "color_line-lines&;color_fill-ellipses are filled", fpOne|psFileLoaded, 
     "Experimental tex/pgf rendering" );
   this_InitMacroD(UpdateQPeakTable, EmptyString, fpNone, "Internal routine for synchronisation" );
+  this_InitMacroD(SAME, "i-invert the graphs", fpAny, "Creates SAME for two fragments (two selected atoms or two\
+ atoms provided) or two groups following one another" );
   // FUNCTIONS _________________________________________________________________
 
   this_InitFunc(FileLast, fpNone|fpOne);
