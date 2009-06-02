@@ -480,6 +480,7 @@ olxstr TwxGlScene::ShowFontDialog(TGlFont* glf, const olxstr& fntDesc)  {
     if( !fntId.IsEmpty() )  // is not default?
       Fnt.SetNativeFontInfo( fntId.u_str() );
     fnt_data.SetInitialFont(Fnt);
+    fnt_data.EnableEffects(false);
     wxFontDialog fD(NULL, fnt_data);
     if( fD.ShowModal() == wxID_OK )  {
       Fnt = fD.GetFontData().GetChosenFont();

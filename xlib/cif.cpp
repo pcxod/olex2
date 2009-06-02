@@ -788,6 +788,7 @@ void TCif::Initialize()  {
   int ACz =     ALoop->Table().ColIndex("_atom_site_fract_z");
   int ACUiso =  ALoop->Table().ColIndex("_atom_site_U_iso_or_equiv");
   int ASymbol = ALoop->Table().ColIndex("_atom_site_type_symbol");
+  int APart   = ALoop->Table().ColIndex("_atom_site_disorder_group");
   if( ALabel < 0 || ACx < 0 || ACy < 0 || ACz < 0 || ASymbol < 0)  {
     TBasicApp::GetLog().Error("Failed to locate required fields in atoms loop");
     return;
@@ -808,6 +809,8 @@ void TCif::Initialize()  {
       A->SetUisoEsd( EValue.GetE() );
       A->SetUiso( EValue.GetV() );
     }
+    if( APart != -1 && ALoop->Table()[i][APart].IsNumber() )
+      A->SetPart(ALoop->Table()[i][APart].ToInt() );
 
 //    if( !A->Info ) ;
     ALoop->Table()[i].GetObject(ALabel)->CA = A;
@@ -947,7 +950,7 @@ bool TCif::Adopt(TXFile *XF)  {
 
   GetAsymmUnit().Assign( XF->GetAsymmUnit() );
   GetAsymmUnit().SetZ( (short)XF->GetLattice().GetUnitCell().MatrixCount());
-  Title = "CIFEXP";
+  Title = "OLEX2_EXP";
 
   SetDataName(Title);
   AddParam("_cell_length_a", GetAsymmUnit().Axes()[0].ToString(), false);
@@ -991,11 +994,13 @@ bool TCif::Adopt(TXFile *XF)  {
   Table->AddCol("_atom_site_fract_x");
   Table->AddCol("_atom_site_fract_y");
   Table->AddCol("_atom_site_fract_z");
+  Table->AddCol("_atom_site_disorder_group");
 
   for( int i = 0; i < GetAsymmUnit().AtomCount(); i++ )  {
     A = &GetAsymmUnit().GetAtom(i);
     if( A->GetEllipsoid() != NULL )  {
-      AddUTable = true;  break;
+      AddUTable = true;  
+      break;
     }
   }
   if( AddUTable )  {
@@ -1019,7 +1024,14 @@ bool TCif::Adopt(TXFile *XF)  {
       EValue.V() = A->ccrd()[j];  EValue.E() = A->ccrdEsd()[j];
       Row[j+2] = EValue.ToCStr();
       Row.GetObject(j+2) = new TCifLoopData;
-    }      
+    }
+    // process part as well
+    if( A->GetPart() != -1 )
+      Row[5] = A->GetPart();
+    else
+      Row[5] = '.';
+    Row.GetObject(5) = new TCifLoopData;
+
     if( A->GetEllipsoid() != NULL )  {
       A->GetEllipsoid()->GetQuad(Q, E);
       GetAsymmUnit().UcartToUcif(Q);
@@ -1035,7 +1047,8 @@ bool TCif::Adopt(TXFile *XF)  {
   }
   if( XF->HasLastLoader() )
     GetRM().SetHKLSource( XF->LastLoader()->GetRM().GetHKLSource() );
-
+  
+  AddParam("_refine_diff_density_max", XF->GetAsymmUnit().GetMaxQPeak(), false);
   return true;
 }
 //----------------------------------------------------------------------------//
