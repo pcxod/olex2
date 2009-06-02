@@ -762,7 +762,7 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
         tmp << olxstr(sg.GetDependent(i).Esd12).TrimFloat() << ' ' 
             << olxstr(sg.GetDependent(i).Esd13).TrimFloat();
         for( int j=0; j < sg.GetDependent(i).Count(); j++ )
-          tmp << ' ' << sg.GetDependent(i)[j].GetLabel();
+          tmp << ' ' << sg.GetDependent(i)[j].GetResiLabel();
         HypernateIns( tmp, sl );
       }
       for( int i=0; i < sg.Count(); i++ )
