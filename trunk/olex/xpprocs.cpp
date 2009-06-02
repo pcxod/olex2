@@ -133,6 +133,7 @@
 
 #include "sfutil.h"
 #include "ortdraw.h"
+#include "ortdrawtex.h"
 // FOR DEBUG only
 #include "egraph.h"
 #include "olxth.h"
@@ -351,10 +352,10 @@ void TMainForm::funSel(const TStrObjList& Params, TMacroError &E)  {
   for( int i=0; i < atoms.Count(); i++ )  {
     tmp << atoms[i]->GetLabel();
     if( atoms[i]->CAtom().GetResiId() != -1 )  {
-      tmp << '_' << 
+      tmp << '_' <<
         atoms[i]->CAtom().GetParent()->GetResidue(atoms[i]->CAtom().GetResiId()).GetNumber();
     }
-    if( (i+1) < atoms.Count() )  
+    if( (i+1) < atoms.Count() )
       tmp << ' ';
   }
   E.SetRetVal( tmp );
@@ -1337,6 +1338,17 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 //..............................................................................
 void TMainForm::macPictPS(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   OrtDraw od;
+  short color_mode = ortep_color_None;
+  if( Options.Contains("color_fill") )
+    color_mode = ortep_color_Fill;
+  else if( Options.Contains("color_line") )
+    color_mode = ortep_color_Lines;
+  od.SetColorMode(color_mode);
+  od.Render(Cmds[0]);
+}
+//..............................................................................
+void TMainForm::macPictTEX(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+  OrtDrawTex od;
   short color_mode = ortep_color_None;
   if( Options.Contains("color_fill") )
     color_mode = ortep_color_Fill;

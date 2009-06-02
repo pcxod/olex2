@@ -196,7 +196,9 @@ enum
   ID_FixLattice,
   ID_FreeLattice,
   ID_DELINS,
-  ID_VarChange
+  ID_VarChange,
+  
+  ID_PictureExport
 };
 
 class TObjectVisibilityChange: public AActionHandler
@@ -317,6 +319,7 @@ BEGIN_EVENT_TABLE(TMainForm, wxFrame)  // basic interface
   EVT_MENU(ID_GStyleSave, TMainForm::OnGraphicsStyle)
   EVT_MENU(ID_GStyleOpen, TMainForm::OnGraphicsStyle)
 
+  EVT_MENU(ID_gl2ps, TMainForm::OnPictureExport)
 END_EVENT_TABLE()
 //..............................................................................
 TMainForm::TMainForm(TGlXApp *Parent):
@@ -831,6 +834,8 @@ separated values of Atom Type and radius, an entry a line" );
     "Creates a projection of the fragment of the provided atom onto a spehere" );
   this_InitMacroD(PictPS, "color_line-lines&;color_fill-ellipses are filled", fpOne|psFileLoaded, 
     "Experimental postscript rendering" );
+  this_InitMacroD(PictTEX, "color_line-lines&;color_fill-ellipses are filled", fpOne|psFileLoaded, 
+    "Experimental tex/pgf rendering" );
   this_InitMacroD(UpdateQPeakTable, EmptyString, fpNone, "Internal routine for synchronisation" );
   // FUNCTIONS _________________________________________________________________
 
@@ -981,6 +986,7 @@ separated values of Atom Type and radius, an entry a line" );
   MenuView->Append(miHtmlPanel);
 
   MenuStructure->Append(ID_StrGenerate, wxT("&Generate..."));
+  MenuStructure->Append(ID_PictureExport, wxT("&Export picture (experimental)") );
 
   MenuHelp->Append(ID_About, wxT("&About...") );
 
@@ -4060,9 +4066,18 @@ static PyMethodDef CORE_Methods[] = {
   {"IsControl", pyIsControl, METH_VARARGS, "Takes HTML element name and optionaly popup name. Returns true/false if given control exists"},
   {NULL, NULL, 0, NULL}
    };
-
+//..............................................................................
 void TMainForm::PyInit()  {
   Py_InitModule( "olex_gui", CORE_Methods );
 }
+//..............................................................................
+void TMainForm::OnPictureExport(wxCommandEvent& WXUNUSED(event))  {
+  //SaveVecDialog *dlg = new SaveVecDialog(this, FXApp);
+  //if ( dlg->Show() == wxID_OK ) {
+  //} 
+  //#include "savevecdialog.h"
+  wxMessage(wxT("Under construction"));    
+}
+//..............................................................................
 
 

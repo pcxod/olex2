@@ -164,6 +164,10 @@ public:
   template <typename vec_t, typename mat_t> 
   void ellipse(const vec_t& center, const mat_t& basis)  {
     out.Writenl("matrix currentmatrix");
+    //a b 0
+    //c d 0
+    //tx ty 1
+    //[a b c d tx ty]
     sprintf(bf, "[%f %f %f %f %f %f] concat", (float)basis[0][0], 
       (float)basis[0][1], 
       (float)basis[1][0],
