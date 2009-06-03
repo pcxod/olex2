@@ -1,12 +1,11 @@
 #ifndef __olx_ort_Draw_Tex_H
 #define __olx_ort_Draw_Tex_H
 #include "gxapp.h"
-#include "ps_writer.h"
+#include "tex_writer.h"
 #include <math.h>
 
   
 class OrtDrawTex  {
-      TEFile test;
 private:
   struct OrtAtom {
     const TSAtom* atom;
@@ -63,10 +62,10 @@ protected:
     }
     return cnt;
   }
-  void DoDrawBonds(PSWriter& pw, const OrtAtom& oa, uint32_t color, float scalex, const vec3d& p)  {
-    pw.color(color);
+  void DoDrawBonds(TEXWriter& pw, const OrtAtom& oa, uint32_t color, float scalex, const vec3d& p)  {
                               char bf[250]; //pascal
       float xa, xb, ya, yb, angle, xc, yc, xd, yd, xe, ye, xf, yf;
+      static int AtomCount;
     const TSAtom& sa = *oa.atom;
     vec3f dir_vec, touch_point, touch_point_proj, off_vec, bproj_cnt;
     mat3f proj_mat, rot_mat;
@@ -113,11 +112,11 @@ protected:
           BondProjF[j] += dir_vec*off_len;
         }
       }
-      if( bn.GetType() == sotHBond )
-        pw.drawQuads(BondProjF, BondProjT, 16, &PSWriter::fill);
-      else
+      if( bn.GetType() != sotHBond )
+        //pw.drawQuads(BondProjF, BondProjT, 16, &TEXWriter::fill);
+      //else
       {
-        pw.drawQuads(BondProjF, BondProjT, &PSWriter::fill);
+        //pw.drawQuads(BondProjF, BondProjT, &TEXWriter::fill);
         if( BondProjF.Count() != BondProjT.Count() )
           throw TFunctionFailedException(__OlxSourceInfo, "lists mismatch");
         if( BondProjF.Count() > 2 )
@@ -129,13 +128,13 @@ protected:
             yb = p[1]+(BondProjF[1][1]+BondProjF[2][1]+BondProjF[3][1]+BondProjF[4][1]+BondProjF[5][1]+BondProjF[6][1]+BondProjF[7][1]+BondProjF[8][1]+BondProjF[9][1]+BondProjF[10][1]+BondProjF[11][1]+BondProjF[12][1])/12;
             
             //calculation of the angle between the bond and the vertical. Needed to applys a shading on the bond
-            if(xb>xa && (xb-xa)/sqrt((xb-xa)*(xb-xa)+(yb-ya)*(yb-ya))<1 && (xb-xa)/sqrt((xb-xa)*(xb-xa)+(yb-ya)*(yb-ya))>-1) 
+            if(xb>xa and (xb-xa)/sqrt((xb-xa)*(xb-xa)+(yb-ya)*(yb-ya))<1 and (xb-xa)/sqrt((xb-xa)*(xb-xa)+(yb-ya)*(yb-ya))>-1) 
             {
                 angle = asin((xb-xa)/sqrt((xb-xa)*(xb-xa)+(yb-ya)*(yb-ya)))*180/M_PI;
                 if(ya<yb)
                     angle = 180 - asin((xb-xa)/sqrt((xb-xa)*(xb-xa)+(yb-ya)*(yb-ya)))*180/M_PI;
             }
-            else if(xa>xb && (xa-xb)/sqrt((xb-xa)*(xb-xa)+(yb-ya)*(yb-ya))<1 && (xa-xb)/sqrt((xb-xa)*(xb-xa)+(yb-ya)*(yb-ya))>-1) 
+            else if(xa>xb and (xa-xb)/sqrt((xb-xa)*(xb-xa)+(yb-ya)*(yb-ya))<1 and (xa-xb)/sqrt((xb-xa)*(xb-xa)+(yb-ya)*(yb-ya))>-1) 
             {
                 angle = - asin((xa-xb)/sqrt((xb-xa)*(xb-xa)+(yb-ya)*(yb-ya)))*180/M_PI;
                 if(ya<yb)
@@ -147,13 +146,13 @@ protected:
             }
                     
             //Front coordinate of the rectangle for the bond
-            yc = 0.08*DrawScale*(xa-xb)/sqrt(xa*xa-2*xa*xb+xb*xb+(ya-yb)*(ya-yb))+ya;
+            yc = 0.09*DrawScale*(xa-xb)/sqrt(xa*xa-2*xa*xb+xb*xb+(ya-yb)*(ya-yb))+ya;
             xc = -(yb-ya)*(yc-ya)/(xb-xa)+xa;
             ye = ya-(yc-ya);
             xe = xa-(xc-xa);
 
             //Back coordinate of the recangle for the bond
-            yd = 0.055*DrawScale*(xa-xb)/sqrt(xa*xa-2*xa*xb+xb*xb+(ya-yb)*(ya-yb))+yb;
+            yd = 0.06*DrawScale*(xa-xb)/sqrt(xa*xa-2*xa*xb+xb*xb+(ya-yb)*(ya-yb))+yb;
             xd = -(ya-yb)*(yd-yb)/(xa-xb)+xb;
             yf = yb-(yd-yb);
             xf = xb-(xd-xb);
@@ -164,7 +163,7 @@ protected:
                 xe/5, ye/5,
                 xf/5, yf/5, 
                 xd/5, yd/5);
-            test.Writenl(bf);
+            pw.Writenl(bf);
             
             //Fix me!!! Assign the right color to each end of the bond
             //A is the heaviest atom
@@ -187,7 +186,7 @@ protected:
                     xf/5, yf/5, 
                     xd/5, yd/5);
             }                                    
-            test.Writenl(bf);
+            pw.Writenl(bf);
             
             //Draw the black stroke around the bond
             sprintf(bf, "\\draw[rounded corners=\\cornerradius] (%fmm,%fmm) --  (%fmm,%fmm) -- (%fmm,%fmm) -- (%fmm,%fmm) -- cycle;",
@@ -195,18 +194,51 @@ protected:
                 xe/5, ye/5,
                 xf/5, yf/5, 
                 xd/5, yd/5);
-            test.Writenl(bf);
-                    
+            pw.Writenl(bf);
+            
+            //put some nodes at the end of the bonds
+            /*sprintf(bf, "\\node (%s%i) at (%fmm,%fmm) {};",
+                bn.A().GetAtomInfo().GetSymbol().c_str(), AtomCount++,
+                xb/5, yb/5);
+            out.Writenl(bf);
+            sprintf(bf, "\\node (%s%i) at (%fmm,%fmm) {};",
+                bn.B().GetAtomInfo().GetSymbol().c_str(), AtomCount++,
+                xa/5, ya/5);
+            out.Writenl(bf);
+            sprintf(bf, "\\node[dot] (bca%i) at (%fmm,%fmm) {};",
+                AtomCount,
+                xc/5,yc/5);
+            out.Writenl(bf);
+            sprintf(bf, "\\node[dot] (bcb%i) at (%fmm,%fmm) {};",
+                AtomCount,
+                xe/5,ye/5);
+            out.Writenl(bf);
+            sprintf(bf, "\\node[dot] (bcc%i) at (%fmm,%fmm) {};",
+                AtomCount,
+                xf/5,yf/5);
+            out.Writenl(bf);
+            sprintf(bf, "\\node[dot] (bcd%i) at (%fmm,%fmm) {};",
+                AtomCount,
+                xd/5,yd/5);
+            out.Writenl(bf);
+            sprintf(bf, "\\node[draw=red, fit=(bca%i) (bcb%i) (bcc%i) (bcd%i)] (%s%i) {};",
+                AtomCount,
+                AtomCount,
+                AtomCount, 
+                AtomCount,
+                bn.B().GetAtomInfo().GetSymbol().c_str(), AtomCount);
+            out.Writenl(bf);
+            AtomCount++;*/
+                  
         }
       }
     }
   }
-  void DrawBonds(PSWriter& pw, const OrtAtom& oa, const vec3d& p) {
+  void DrawBonds(TEXWriter& pw, const OrtAtom& oa, const vec3d& p) {
     //DoDrawBonds(pw, oa, ~0, 1.2, p);
     DoDrawBonds(pw, oa, 0, 1, p);
   }
-  void DrawRimsAndQuad(PSWriter& pw, const OrtAtom& oa, bool drawQuad)  {
-    pw.lineWidth(QuadLineWidth);
+  void DrawRimsAndQuad(TEXWriter& pw, const OrtAtom& oa, bool drawQuad)  {
     const mat3f& elpm = *oa.elpm;
     const mat3f& ielpm = *oa.ielpm;
     char bf[200];
@@ -222,32 +254,33 @@ protected:
       Arc[j] = ElpCrd[j]*pelpm;
     int pts_cnt = PrepareArc(Arc, FilteredArc, norm_vec);
     //pw.color(0x0000ff);
-    pw.drawLines_vp(FilteredArc, pts_cnt, false);
+    //pw.drawLines_vp(FilteredArc, pts_cnt, false);
     
     for( int j=0; j < ElpDiv; j++ )
       Arc[j] = vec3f(ElpCrd[j][1], 0, ElpCrd[j][0])*pelpm;
     pts_cnt = PrepareArc(Arc, FilteredArc, norm_vec);
     //pw.color(0x00ff00);
-    pw.drawLines_vp(FilteredArc, pts_cnt, false);
+    //pw.drawLines_vp(FilteredArc, pts_cnt, false);
 
     for( int j=0; j < ElpDiv; j++ )
       Arc[j] = vec3f(0, ElpCrd[j][0], ElpCrd[j][1])*pelpm;
     pts_cnt = PrepareArc(Arc, FilteredArc, norm_vec);
     //pw.color(0xff0000);
-    pw.drawLines_vp(FilteredArc, pts_cnt, false);
+    //pw.drawLines_vp(FilteredArc, pts_cnt, false);
 
     //pw.color(0);
+    /*
     if( drawQuad )  {
-      pw.drawLine(NullVec, pelpm[0]);
-      pw.drawLine(NullVec, pelpm[1]);
-      pw.drawLine(NullVec, pelpm[2]);
+      //pw.drawLine(NullVec, pelpm[0]);
+      //pw.drawLine(NullVec, pelpm[1]);
+      //pw.drawLine(NullVec, pelpm[2]);
       for( int j=0; j < PieDiv; j++ )
-        pw.drawLine( PieCrd[j]*pelpm, pelpm[0]*((float)(PieDiv-j)/PieDiv));
+        //pw.drawLine( PieCrd[j]*pelpm, pelpm[0]*((float)(PieDiv-j)/PieDiv));
       for( int j=0; j < PieDiv; j++ )
-        pw.drawLine( vec3f(0, PieCrd[j][0], PieCrd[j][1])*pelpm, pelpm[1]*((float)(PieDiv-j)/PieDiv));
+        //pw.drawLine( vec3f(0, PieCrd[j][0], PieCrd[j][1])*pelpm, pelpm[1]*((float)(PieDiv-j)/PieDiv));
       for( int j=0; j < PieDiv; j++ )
-        pw.drawLine( vec3f(PieCrd[j][1], 0, PieCrd[j][0])*pelpm, pelpm[2]*((float)(PieDiv-j)/PieDiv));
-    }
+        //pw.drawLine( vec3f(PieCrd[j][1], 0, PieCrd[j][0])*pelpm, pelpm[2]*((float)(PieDiv-j)/PieDiv));
+    }*/
   }
 public:
   OrtDrawTex() : app(TGXApp::GetInstance()) {  
@@ -260,8 +293,7 @@ public:
     HBondScale = 0.5;
   }
   // create ellipse and pie coordinates
-  void Init(PSWriter& pw)  {
-        test.Open("/home/pascal/test.tex", "w");
+  void Init(TEXWriter& pw)  {
     ElpCrd.SetCount(ElpDiv);
     Arc.SetCount(ElpDiv);
     PieCrd.SetCount(PieDiv);
@@ -296,15 +328,6 @@ public:
     glGetFloatv(GL_VIEWPORT, vp);
     TGXApp& app = TGXApp::GetInstance();
     const TEBasis& basis = app.GetRender().GetBasis();
-    LinearScale = olx_min((float)pw.GetWidth()/vp[2], (double)pw.GetHeight()/vp[3]);
-
-    if( app.LabelCount() != 0 )  {
-      CString fnt("/Verdana findfont ");
-      fnt << Round(app.GetLabel(0).Font()->GetPointSize()/LinearScale) << " scalefont setfont";
-      pw.custom(fnt.c_str());
-    }
-
-    pw.scale(LinearScale, LinearScale);
     LinearScale = 1; // reset now
     DrawScale = LinearScale/app.GetRender().GetScale();
     AradScale = 0.5*DrawScale;///app.GetRender().GetScale(),
@@ -316,17 +339,47 @@ public:
     UnProjMatr = ProjMatr.Inverse();
   }
   void Render(const olxstr& fileName)  {
-    PSWriter pw(fileName);
+    TEXWriter pw(fileName);
     Init(pw);
-              char bf[200];
-
+    char bf[200];
+    bool CurrentAtom;
+      
     const TEBasis& basis = app.GetRender().GetBasis();
     TTypeList<OrtDrawTex::OrtAtom> atoms;
     atoms.SetCapacity(app.AtomCount());
+      
+      
     for( int i=0; i < app.AtomCount(); i++ )  {
       if( app.GetAtom(i).IsDeleted() || !app.GetAtom(i).IsVisible() )
         continue;
       const TSAtom& sa = app.GetAtom(i).Atom();
+      
+      //write latex colors atoms commands and shading
+      CurrentAtom=false;
+      //We check first if a similar atom already get processed.
+      for( int j=0; j < atoms.Count(); j++ )  {
+        const TSAtom& sa2 = *atoms[j].atom;
+        if(sa.GetAtomInfo().GetSymbol() == sa2.GetAtomInfo().GetSymbol())
+            CurrentAtom=true;
+      }
+      //writing of the color definition of the atom
+      if(CurrentAtom == false)
+      {
+        sprintf(bf, "\\newcommand{\\color%s}{%s!90!black}",         
+            sa.GetAtomInfo().GetSymbol().c_str(),
+            "white"//fixme! get the colour of the atom
+        );        
+        pw.Writenl(bf);
+          
+        sprintf(bf, "\\pgfdeclareradialshading{ballshading%s}{\\pgfpoint{-10bp}{10bp}}",
+            sa.GetAtomInfo().GetSymbol().c_str());
+        pw.Writenl(bf);
+        sprintf(bf, "{color(0bp)=(red!15!white); color(9bp)=(red!75!white);");
+        pw.Writenl(bf);//fixme! get the colour of the atom
+        sprintf(bf, "color(18bp)=(red!70!black); color(25bp)=(red!50!black); color(50bp)=(black)} ");
+        pw.Writenl(bf);//fixme! get the colour of the atom
+      }
+      
       if( sa.GetEllipsoid() != NULL )  {
         mat3f& elpm = *(new mat3f(sa.GetEllipsoid()->GetMatrix()) );
         elpm[0] *= sa.GetEllipsoid()->GetSX();
@@ -340,6 +393,11 @@ public:
       else
         atoms.AddNew(&sa, (sa.crd() + SceneOrigin)*ProjMatr+DrawOrigin);
     }
+    
+    //tex header is finished, start the body
+    pw.Writenl("\\begin{document}");
+    pw.Writenl("\\begin{tikzpicture}");
+    
     for( int i=0; i < app.BondCount(); i++ )  {
       app.GetBond(i).SetTag(i);
       app.GetBond(i).Bond().SetTag(i);
@@ -349,83 +407,74 @@ public:
     for( int i=0; i < atoms.Count(); i++ )  {
       const TSAtom& sa = *atoms[i].atom;
       const vec3d& p = atoms[i].crd;
-      pw.translate(p);
-      pw.lineWidth(0.5);
-      pw.color(~0);
       if( sa.GetEllipsoid() == NULL )  {
-        pw.drawCircle(NullVec, AradScale*sa.GetAtomInfo().GetRad1()*1.05, &PSWriter::fill);
-        if( ColorMode == ortep_color_None )  {
-          pw.color(0);
-          pw.drawCircle(NullVec, AradScale*sa.GetAtomInfo().GetRad1());
-        }
-        else if( ColorMode == ortep_color_Fill )  {
-          pw.newPath();
-          pw.circle(NullVec, AradScale*sa.GetAtomInfo().GetRad1());
-          pw.gsave();
-          pw.color(sa.GetAtomInfo().GetDefColor());
-          pw.fill();
-          pw.grestore();
-          pw.color(0);
-          pw.stroke();
-        }
-        else if( ColorMode == ortep_color_Lines )  {
-          pw.color(  sa.GetAtomInfo().GetDefColor() == 0xffffff ? 0 : sa.GetAtomInfo().GetDefColor() );
-          pw.drawCircle(NullVec, AradScale*sa.GetAtomInfo().GetRad1());
-        }
-        //draw the atom
+        //draw the atom, done twice, to make a white border arounf it
         //draw circle, centre, radius
+        sprintf(bf, "\\begin{pgfscope}\\pgfsetstrokecolor{white}\\pgfsetlinewidth{\\whitespace}\\pgfpathcircle{\\pgfpoint{%fmm}{%fmm}}{%fmm}\n\\pgfshadepath{ballshading%s}{0}\n\\pgfusepath{draw}\\end{pgfscope}",         
+            p[0]/5, p[1]/5,
+            AradScale*sqrt(sa.GetAtomInfo().GetRad1())/5,
+            sa.GetAtomInfo().GetSymbol().c_str()
+        );        
+        pw.Writenl(bf);
         sprintf(bf, "\\pgfpathcircle{\\pgfpoint{%fmm}{%fmm}}{%fmm}\n\\pgfshadepath{ballshading%s}{0}\n\\pgfusepath{draw}",         
             p[0]/5, p[1]/5,
             AradScale*sqrt(sa.GetAtomInfo().GetRad1())/5,
             sa.GetAtomInfo().GetSymbol().c_str()
         );        
-        test.Writenl(bf);
+        pw.Writenl(bf);
+        //write a node to make life easier later
+        sprintf(bf, "\\node (atom%i) at (%fmm,%fmm) {};",
+            i,
+            p[0]/5, p[1]/5);
+        pw.Writenl(bf);
       }
       else  {
         const mat3f& ielpm = *atoms[i].ielpm;
         //Draw the atom
         //centre, basis
-        //drawing centered on the origin, then the ellipse is translated.
-        pw.drawEllipse(NullVec, ielpm*1.05, &PSWriter::fill);
+        //draw a white border around the ellipse
+        pw.Writenl("\\begin{pgfscope}\n\\pgfsetstrokecolor{white}\\pgfsetlinewidth{\\whitespace}");
+        sprintf(bf, "\\pgfpathellipse{\\pgfpoint{%fmm}{%fmm}}\n{\\pgfpoint{%fmm}{%fmm}}\n{\\pgfpoint{%fmm}{%fmm}}\n\\pgfusepath{draw}", 
+            p[0]/5, p[1]/5,
+            ielpm[0][0]/5, ielpm[0][1]/5, 
+            ielpm[1][0]/5, ielpm[1][1]/5,
+            sa.GetAtomInfo().GetSymbol().c_str()
+            );
+        pw.Writenl(bf);
+        pw.Writenl("\\end{pgfscope}");
+        //the ellipse
         sprintf(bf, "\\pgfpathellipse{\\pgfpoint{%fmm}{%fmm}}\n{\\pgfpoint{%fmm}{%fmm}}\n{\\pgfpoint{%fmm}{%fmm}}\n\\pgfshadepath{ballshading%s}{0}\n\\pgfusepath{draw}", 
             p[0]/5, p[1]/5,
             ielpm[0][0]/5, ielpm[0][1]/5, 
             ielpm[1][0]/5, ielpm[1][1]/5,
             sa.GetAtomInfo().GetSymbol().c_str()
             );
-        test.Writenl(bf);
-        if( ColorMode == ortep_color_None )  {
-          pw.color(0);
-          pw.drawEllipse(NullVec, ielpm);
-        }
-        else if( ColorMode == ortep_color_Fill )  {
-          pw.newPath();
-          pw.ellipse(NullVec, ielpm);
-          pw.gsave();
-          pw.color(sa.GetAtomInfo().GetDefColor());
-          pw.fill();
-          pw.grestore();
-          pw.color(0);
-          pw.stroke();
-        }
-        else if( ColorMode == ortep_color_Lines )  {
-          pw.color(  sa.GetAtomInfo().GetDefColor() == 0xffffff ? 0 : sa.GetAtomInfo().GetDefColor() );
-          pw.drawEllipse(NullVec, ielpm);
-        }
-        DrawRimsAndQuad(pw, atoms[i], sa.GetAtomInfo() != iCarbonIndex);
+        pw.Writenl(bf);
+        //write a node to make life easier later
+        sprintf(bf, "\\node (atom%i) at (%fmm,%fmm) {};",
+            i,
+            p[0]/5, p[1]/5);
+        pw.Writenl(bf);
+        
+        //DrawRimsAndQuad(pw, atoms[i], sa.GetAtomInfo() != iCarbonIndex);
       }
       DrawBonds(pw, atoms[i], p);
-      pw.translate(-p);
     }
+    //write labels
     if( app.LabelCount() != 0 )  {
       for( int i=0; i < app.LabelCount(); i++ )  {
         const TXGlLabel& glxl = app.GetLabel(i);
         vec3d rp = glxl.GetRasterPosition();
         rp[1] += 4;
         rp *= (DrawScale*app.GetRender().GetScale());
-        pw.drawText(glxl.GetLabel(), rp+DrawOrigin);
+        //pw.drawText(glxl.GetLabel(), rp+DrawOrigin);
       }
     }
+    
+    //document close
+    pw.Writenl("\\end{tikzpicture}");
+    pw.Writenl("\\end{document}");
+    
   }
 
   DefPropP(short, ElpDiv)
@@ -436,5 +485,7 @@ public:
   DefPropP(float, BondRad)
 };
 
+//to be done: labels
+//\node [circle,draw,label=60:$60^\circ$,label=below:$-90^\circ$] {my circle};
 
 #endif
