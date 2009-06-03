@@ -561,6 +561,8 @@ void TGlConsole::SetLineSpacing(float v)  {
 void TGlConsole::SetLineWidth(int V)  {
   if( V < 0 )
     V = Font()->MaxTextLength(Parent.GetWidth() - 5);
+  if( V < 5 )
+    V = 80;
   FLineWidth = V;
   GetPrimitives().GetStyle().SetParam("LineWidth", FLineWidth, true);
 }
