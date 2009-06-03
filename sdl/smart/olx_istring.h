@@ -259,6 +259,18 @@ public:
   static inline wchar_t o_tolower(wchar_t ch)  {  return towlower(ch);  }
   static inline bool o_isdigit(char ch)     {  return (ch >= '0' && ch <= '9');  }
   static inline bool o_isdigit(wchar_t ch)  {  return (ch >= L'0' && ch <= L'9');  }
+  static inline bool o_ishexdigit(char ch)  {  
+    return (ch >= '0' && ch <= '9') || 
+           (ch >= 'A' && ch <= 'Z') ||
+           (ch >= 'a' && ch <= 'z');  
+  }
+  static inline bool o_ishexdigit(wchar_t ch)  {  
+    return (ch >= L'0' && ch <= L'9') || 
+           (ch >= L'A' && ch <= L'Z') ||
+           (ch >= L'a' && ch <= L'z');  
+  }
+  static inline bool o_iswhitechar(char ch)     {  return (ch == ' ' || ch == '\t');  }
+  static inline bool o_iswhitechar(wchar_t ch)  {  return (ch == L' ' && ch == L'\t');  }
   static inline size_t o_strlen(const char *cstr)    {  return (cstr==NULL) ? 0 : strlen(cstr);  }
   static inline size_t o_strlen(const wchar_t *wstr) {  return (wstr==NULL) ? 0 : wcslen(wstr);  }
   static void o_strtup(TC *wht, size_t wht_len)  {
@@ -587,7 +599,7 @@ public:
     if( len == 0 )    
       TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "invalid integer format");
     size_t sts = 0; // string start, end
-    while( data[sts] == ' ' && ++sts < len )
+    while( o_iswhitechar(data[sts]) && ++sts < len )
     if( sts >= len )  
       TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "invalid integer format");
     // test for any particluar format specifier, here just '0x', for hexadecimal
@@ -607,9 +619,9 @@ public:
     if( len == 0 )    
       TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "invalid integer format");
     size_t sts = 0; // string start, end
-    while( data[sts] == ' ' && ++sts < len )
-    if( sts >= len )  
-      TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "invalid integer format");
+    while( o_iswhitechar(data[sts]) && ++sts < len )
+      if( sts >= len )  
+        TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "invalid integer format");
     IT val=0;
     bool Negative = false;
     if( data[sts] == '-' )  {  Negative = true;  sts++;  }
@@ -663,7 +675,7 @@ public:
     if( len == 0 )  
       TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "invalid integer format");
     size_t sts = 0; // string start
-    while( data[sts] == ' ' && ++sts < len )
+    while( o_iswhitechar(data[sts]) && ++sts < len )
     if( sts >= len )
       TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "invalid integer format");
     bool negative = false;
@@ -1122,40 +1134,47 @@ public:
     return rv;
   }
   //............................................................................
-  bool IsNumber() const  {
-    if( T::_Length == 0 )  return false;
+  // checks if provided string represent an integer or float point number (inc exponental form)
+  static bool o_isnumber(const TC *data, size_t len) {
+    if( len == 0 )
+      return false;
+    size_t sts = 0, ste = len; // string start
+    while( o_iswhitechar(data[sts]) && ++sts < len ) ;
+    while( --ste > sts && o_iswhitechar(data[ste]) ) ;
+    if( ++ste <= sts )
+      return false;
     // hex notation
-    if( T::_Length >= 3 && TTIString<TC>::Data(0) == '0' && TTIString<TC>::Data(1) == 'x' )  {
-      for( size_t i=2; i < T::_Length; i++ )  {
-        TC ch = o_toupper(TTIString<TC>::Data(i));
-        if( !( (ch >= '0' && ch <= '9') ||
-               (ch >= 'A' && ch <= 'F')
-             )  )  return false;
+    if( (ste-sts) >= 3 && data[sts] == '0' && data[sts+1] == 'x' )  {
+      for( size_t i=sts+2; i < ste; i++ )  {
+        if( !o_ishexdigit(data[i]) )
+          return false;
       }
       return true;
     }
-    size_t st = 0;
     bool expfound = false, fpfound = false;
-    if( TTIString<TC>::Data(0) == '+' || TTIString<TC>::Data(0) == '-' )
-      st++;
-    for( size_t i = st; i < T::_Length; i++ )  {
-      TC ch = TTIString<TC>::Data(i);
-      if( ch <= '9' && ch >= '0' )
+    if( data[sts] == '+' || data[sts] == '-' )
+      sts++;
+    for( size_t i = sts; i < ste; i++ )  {
+      TC ch = data[i];
+      if( o_isdigit(ch) )
         continue;
       else if( ch == '.' )  {
-        if( fpfound )  return false;
+        if( fpfound )  
+          return false;
         fpfound = true;
       }
       else if( ch == 'e' || ch == 'E' )  {
-        if( expfound )  return false;
+        if( expfound )  
+          return false;
         expfound = true;
-        if( ++i == T::_Length )  return false;
-        ch = TTIString<TC>::Data(i);
+        if( ++i == ste )  // exponent cannot be the last char
+          return false;
+        ch = data[i];
         if( ch == '-' )
           ;
         else if( ch == '+' )
           ;
-        else if( ch >= '0' && ch <= '9' )  // anonymous positiv exp
+        else if( o_isdigit(ch) )  // anonymously positive exp
          i--;
         else  // invalid dddd.ddddE-/+/ddd format
           return false;
@@ -1165,6 +1184,8 @@ public:
     }
     return true;
   }
+  // checks if the string represent and integer or float point number (inc exponental form)
+  bool IsNumber() const  {  return o_isnumber(T::Data(), T::_Length);  }
   //............................................................................
   //TTIString<TC> toIstr() const {  return TTIString<TC>(Data());  }
   //............................................................................

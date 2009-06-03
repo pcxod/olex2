@@ -1303,7 +1303,6 @@ void TMainForm::StartupInit()  {
   }
 
   FXApp->Init(); // initialise the gl after styles reloaded
-
   if( !GradientPicture.IsEmpty() )  // need to call it after all objects are created
     ProcessXPMacro(olxstr("grad ") << " -p=\'" << GradientPicture << '\'', MacroError);
 
@@ -2651,6 +2650,7 @@ void TMainForm::OnResize()  {
   FGlConsole->SetLeft(0);
   FGlConsole->SetWidth(w);
   FGlConsole->SetHeight(h - dheight );
+  FGlConsole->SetLineWidth(-1);
   FInfoBox->SetWidth(w);
   FInfoBox->SetLeft(0);
 }

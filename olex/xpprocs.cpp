@@ -8092,6 +8092,27 @@ void TMainForm::macProjSph(TStrObjList &Cmds, const TParamList &Options, TMacroE
 }
 //..............................................................................
 void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  olxstr ns[] = {
+    EmptyString, 
+    "0", 
+    " 0 ",
+    " 0",
+    "0 ",
+    " 0",
+    " 0",
+    " .0 ",
+    " 0.0 ",
+    " 0.e0 ",
+    "  0.e-1  ",
+    "  0xffa  ",
+    "  0xffa",
+    "  0xffx",
+    " 0" 
+  };
+  for( int i=0; i < sizeof(ns)/sizeof(ns[0]); i++ )  {
+    bool val = ns[i].IsNumber();
+    TBasicApp::GetLog() << val;
+  }
 }
 //..............................................................................
 double Main_FindClosestDistance(const smatd_list& ml, vec3d& o_from, const TCAtom& a_to) {
