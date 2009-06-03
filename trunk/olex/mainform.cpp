@@ -1311,6 +1311,7 @@ void TMainForm::StartupInit()  {
   ProcessXPMacro(olxstr("showwindow help ") << HelpWindowVisible, MacroError);
   ProcessXPMacro(olxstr("showwindow info ") << InfoWindowVisible, MacroError);
   ProcessXPMacro(olxstr("showwindow cmdline ") << CmdLineVisible, MacroError);
+  FGlConsole->ShowBuffer( true );  // this should be on :)
   ProcessXPMacro("reload macro", MacroError);
   ProcessXPMacro("reload help", MacroError);
 
