@@ -63,15 +63,15 @@ PyObject* TSameGroup::PyExport(PyObject* main, TPtrList<PyObject>& allGroups, TP
   atom_cnt = 0;
   for( int i=0; i < Atoms.Count(); i++ )  {
     if( Atoms[i]->IsDeleted() )  continue;
-    PyTuple_SetItem(atoms, atom_cnt++, _atoms[Atoms[i]->GetTag()] );
+    PyTuple_SetItem(atoms, atom_cnt++, Py_BuildValue("i", Atoms[i]->GetTag()) );
   }
   PyDict_SetItemString(main, "atoms", atoms);
   PyObject* dependent = PyTuple_New(Dependent.Count());
   for( int i=0; i < Dependent.Count(); i++ )
-    PyTuple_SetItem(dependent, i, allGroups[Dependent[i]->GetTag()] );
+    PyTuple_SetItem(dependent, i, Py_BuildValue("i", Dependent[i]->GetTag()) );
   PyDict_SetItemString(main, "dependent", dependent);
   if( ParentGroup != NULL )
-    PyDict_SetItemString(main, "parent", allGroups[ParentGroup->GetTag()]);
+    PyDict_SetItemString(main, "parent", Py_BuildValue("i", ParentGroup->GetTag()));
   return main;
 }
 #endif
@@ -122,9 +122,16 @@ void TSameGroupList::ToDataItem(TDataItem& item) const {
 //..............................................................................
 #ifndef _NO_PYTHON
 PyObject* TSameGroupList::PyExport(TPtrList<PyObject>& _atoms)  {
-  PyObject* main = PyTuple_New( Groups.Count() );
-  TPtrList<PyObject> allGroups(Groups.Count());
-  for( int i=0; i < Groups.Count(); i++ )
+  int id = 0;
+  for( int i=0; i < Groups.Count(); i++ )  {
+    if( Groups[i].IsValidForSave() )
+      Groups[i].SetTag(id++);
+  }
+  if( id == 0 )
+    return Py_None;
+  PyObject* main = PyTuple_New( id );
+  TPtrList<PyObject> allGroups;
+  for( int i=0; i < id; i++ )
     PyTuple_SetItem(main, i, allGroups.Add( PyDict_New() ) );
   for( int i=0; i < Groups.Count(); i++ ) 
     if( Groups[i].IsValidForSave() )
