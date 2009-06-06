@@ -48006,7 +48006,7 @@ cm_Element cm_Elements[cm_Element_Count] = {
 
 cm_Element* XElementLib::FindBySymbol(const olxstr& symbol) {
   for( int i=0; i < cm_Element_Count; i++ )
-    if( cm_Elements[i].symbol.Comparei(symbol) == 0 )
+    if( cm_Elements[i].symbol.Equalsi(symbol) )
       return &cm_Elements[i];
   return NULL;
 }
@@ -48022,7 +48022,7 @@ cm_Element* XElementLib::FindBySymbolEx(const olxstr& label)  {
   // check for 2 char label
   if( lbl.Length() == 2 && (lbl.CharAt(1) >= 'A' && lbl.CharAt(1) <= 'Z') )  {
     for( short i=0; i < cm_Element_Count; i++ )
-      if( cm_Elements[i].symbol.Length() == 2 && cm_Elements[i].symbol.Comparei(lbl) == 0 )
+      if( cm_Elements[i].symbol.Length() == 2 && cm_Elements[i].symbol.Equalsi(lbl) )
         return &cm_Elements[i];
   }
   //check for single char label

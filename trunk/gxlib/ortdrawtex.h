@@ -124,13 +124,13 @@ protected:
             yb = p[1]+(BondProjF[1][1]+BondProjF[2][1]+BondProjF[3][1]+BondProjF[4][1]+BondProjF[5][1]+BondProjF[6][1]+BondProjF[7][1]+BondProjF[8][1]+BondProjF[9][1]+BondProjF[10][1]+BondProjF[11][1]+BondProjF[12][1])/12;
             
             //calculation of the angle between the bond and the vertical. Needed to apply a shading on the bond
-            if(xb>xa and (xb-xa)/sqrt((xb-xa)*(xb-xa)+(yb-ya)*(yb-ya))<1 and (xb-xa)/sqrt((xb-xa)*(xb-xa)+(yb-ya)*(yb-ya))>-1) 
+            if(xb>xa && (xb-xa)/sqrt((xb-xa)*(xb-xa)+(yb-ya)*(yb-ya))<1 && (xb-xa)/sqrt((xb-xa)*(xb-xa)+(yb-ya)*(yb-ya))>-1) 
             {
                 angle = asin((xb-xa)/sqrt((xb-xa)*(xb-xa)+(yb-ya)*(yb-ya)))*180/M_PI;
                 if(ya<yb)
                     angle = 180 - asin((xb-xa)/sqrt((xb-xa)*(xb-xa)+(yb-ya)*(yb-ya)))*180/M_PI;
             }
-            else if(xa>xb and (xa-xb)/sqrt((xb-xa)*(xb-xa)+(yb-ya)*(yb-ya))<1 and (xa-xb)/sqrt((xb-xa)*(xb-xa)+(yb-ya)*(yb-ya))>-1) 
+            else if(xa>xb && (xa-xb)/sqrt((xb-xa)*(xb-xa)+(yb-ya)*(yb-ya))<1 && (xa-xb)/sqrt((xb-xa)*(xb-xa)+(yb-ya)*(yb-ya))>-1) 
             {
                 angle = - asin((xa-xb)/sqrt((xb-xa)*(xb-xa)+(yb-ya)*(yb-ya)))*180/M_PI;
                 if(ya<yb)

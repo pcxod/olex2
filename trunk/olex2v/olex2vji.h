@@ -70,7 +70,7 @@ public:
   static TPSTypeList<int, TOlexViewer*> Instances;
   static TOlexViewer* Locate(int object)  {
     int i = Instances.IndexOfComparable(object);
-    return (i==-1) ? NULL : Instances.Object(i);
+    return (i==-1) ? NULL : Instances.GetObject(i);
   }
   const olxstr GetFileName() const {  return FileName;  }
   void SaveState();

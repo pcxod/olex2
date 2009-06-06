@@ -113,12 +113,12 @@ class TOlex: public AEventsDispatcher, public olex::IOlexProcessor, public ASele
   TSAtomPList Selection;
   TDataFile PluginFile;
   TDataItem* Plugins;
-  ConcoleInterface conint;
+  ConsoleInterface conint;
   bool Silent;
   TOutStream* OutStream;
   static void* TimerThreadFunction() {
     while( true )  {
-      if( TBasicApp::GetInstance()  == NULL )  return 0;
+      if( !TBasicApp::HasInstance() )  return 0;
       TBasicApp::GetInstance()->OnTimer->Execute(NULL);
       TBasicApp::Sleep(50);
     }
@@ -472,9 +472,9 @@ public:
   }
   //..............................................................................
   void macSilent(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-    if( Cmds[0].Comparei("on") == 0 )
+    if( Cmds[0].Equalsi("on") )
       Silent = true;
-    else if( Cmds[0].Comparei("off") == 0 )
+    else if( Cmds[0].Equalsi("off") )
       Silent = false;
     else
       Silent = Cmds[0].ToBool();
@@ -510,7 +510,7 @@ public:
           Selection.Add(&latt.GetAtom(i));
     }
     else {
-      if( Cmds.Count() > 1 && Cmds[0].Comparei("satoms") == 0 )  {
+      if( Cmds.Count() > 1 && Cmds[0].Equalsi("satoms") )  {
         int wi = Cmds.IndexOf("where");
         olxstr Where( Cmds.Text(' ', wi+1).LowerCase() );
         TSFactoryRegister rf;
@@ -538,7 +538,7 @@ public:
   }
   //..............................................................................
   void macWaitFor(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-    if( Cmds[0].Comparei("process") == 0 )  {
+    if( Cmds[0].Equalsi("process") )  {
       while( FProcess != NULL )  {
         XApp.Sleep(50);
       }
@@ -553,8 +553,9 @@ public:
       return;
     }
     for( int i=0; i < Ins.InsCount(); i++ )  {
-      if(  !Ins.InsName(i).Comparei(Cmds[0]) )  {
-        Ins.DelIns(i);  i--;  continue;
+      if(  Ins.InsName(i).Equalsi(Cmds[0]) )  {
+        Ins.DelIns(i--);  
+        continue;
       }
     }
   }
@@ -623,33 +624,33 @@ public:
     if( !Lst.IsLoaded() )  {
       E.SetRetVal<olxstr>( NAString );
     }
-    else if( !Cmds[0].Comparei("rint") )
+    else if( Cmds[0].Equalsi("rint") )
       E.SetRetVal( Lst.Rint() );
-    else if( !Cmds[0].Comparei("rsig") )
+    else if( Cmds[0].Equalsi("rsig") )
       E.SetRetVal( Lst.Rsigma() );
-    else if( !Cmds[0].Comparei("r1") )
+    else if( Cmds[0].Equalsi("r1") )
       E.SetRetVal( Lst.R1() );
-    else if( !Cmds[0].Comparei("r1a") )
+    else if( Cmds[0].Equalsi("r1a") )
       E.SetRetVal( Lst.R1a() );
-    else if( !Cmds[0].Comparei("wr2") )
+    else if( Cmds[0].Equalsi("wr2") )
       E.SetRetVal( Lst.wR2() );
-    else if( !Cmds[0].Comparei("s") )
+    else if( Cmds[0].Equalsi("s") )
       E.SetRetVal( Lst.S() );
-    else if( !Cmds[0].Comparei("rs") )
+    else if( Cmds[0].Equalsi("rs") )
       E.SetRetVal( Lst.RS() );
-    else if( !Cmds[0].Comparei("params") )
+    else if( Cmds[0].Equalsi("params") )
       E.SetRetVal( Lst.Params() );
-    else if( !Cmds[0].Comparei("rtotal") )
+    else if( Cmds[0].Equalsi("rtotal") )
       E.SetRetVal( Lst.TotalRefs() );
-    else if( !Cmds[0].Comparei("runiq") )
+    else if( Cmds[0].Equalsi("runiq") )
       E.SetRetVal( Lst.UniqRefs() );
-    else if( !Cmds[0].Comparei("r4sig") )
+    else if( Cmds[0].Equalsi("r4sig") )
       E.SetRetVal( Lst.Refs4sig() );
-    else if( !Cmds[0].Comparei("peak") )
+    else if( Cmds[0].Equalsi("peak") )
       E.SetRetVal( Lst.Peak() );
-    else if( !Cmds[0].Comparei("hole") )
+    else if( Cmds[0].Equalsi("hole") )
       E.SetRetVal( Lst.Hole() );
-    else if( !Cmds[0].Comparei("flack") )  {
+    else if( Cmds[0].Equalsi("flack") )  {
       if( Lst.HasFlack() )
         E.SetRetVal( Lst.Flack().ToString() );
       else
@@ -660,7 +661,7 @@ public:
   }
   //..............................................................................
   void macIF(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-    if( Cmds.Count() < 2 || Cmds[1].Comparei("then"))  {
+    if( Cmds.Count() < 2 || !Cmds[1].Equalsi("then"))  {
       E.ProcessingError(__OlxSrcInfo, "incorrect syntax - two commands or a command and \'then\' are expected" );
       return;
     }
@@ -669,14 +670,14 @@ public:
       return;
     }
     if( Condition.ToBool() )  {
-      if( Cmds[2].Comparei("none") )
+      if( !Cmds[2].Equalsi("none") )
         Macros.ProcessMacro(Cmds[2], E);
       return;
     }
     else  {
       if( Cmds.Count() == 5 )  {
-        if( !Cmds[3].Comparei("else") )  {
-          if( Cmds[4].Comparei("none") )
+        if( Cmds[3].Equalsi("else") )  {
+          if( !Cmds[4].Equalsi("none") )
             Macros.ProcessMacro(Cmds[4], E);
           return;
         }
@@ -788,7 +789,7 @@ public:
   }
   //..............................................................................
   void macReload(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-    if( Cmds[0].Comparei("macro") == 0 )  {
+    if( Cmds[0].Equalsi("macro") )  {
       olxstr macroFile( XApp.BaseDir() + "macrox.xld" );
       if( TEFile::FileExists(macroFile) )  {
         TDataFile df;
@@ -1090,7 +1091,7 @@ int main(int argc, char* argv[])  {
 #endif
   if( argc > 1 )  {
     olxstr arg_ext( TEFile::ExtractFileExt(argv[1]) );
-    if( arg_ext.Comparei("autochem") == 0 )  {
+    if( arg_ext.Equalsi("autochem") )  {
       olxstr sf ( TEFile::ChangeFileExt(argv[1], EmptyString) );
       olex.executeMacro( olxstr("start_autochem '") << sf << '\'' );
     }
@@ -1136,7 +1137,7 @@ int main(int argc, char* argv[])  {
 //          }
 //        }
 //      }
-      if( cmd.Comparei("quit") == 0 )  break;
+      if( cmd.Equalsi("quit") )  break;
       else  {
         try { olex.executeMacro(cmd);  }
         catch( TExceptionBase& exc )  {

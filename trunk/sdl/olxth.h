@@ -60,7 +60,7 @@ public:
   }
 
   /* It is crutial to check if the terminate flag is set. In that case the function should
-  return a value, or a deadlock situation may arrise. */
+  return a value, or a deadlock situation may arise. */
   virtual int Run() = 0;
 
   bool Start() {

@@ -174,8 +174,8 @@ public:
   }
 //..............................................................................
   // these values are intialised by Analyse
-  DefPropB(Centric)
-  DefPropB(Absent)
+  DefPropBIsSet(Centric)
+  DefPropBIsSet(Absent)
   DefPropP(short, Multiplicity)
   inline void IncMultiplicity()  {  Multiplicity++;  }
 //..............................................................................

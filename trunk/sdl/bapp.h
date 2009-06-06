@@ -33,6 +33,7 @@ public:
     return Instance;  
   }
 
+  static bool HasInstance()  {  return Instance != NULL;  }
   //static printf(const char* format, ...);
 
   TActionQueue& NewActionQueue(const olxstr &Name);
@@ -40,8 +41,8 @@ public:
 
   inline TActionQList& Actions() const {  return *FActions; }
 
-  DefPropB(MainFormVisible)
-  DefPropB(Profiling)
+  DefPropBIsSet(MainFormVisible)
+  DefPropBIsSet(Profiling)
 
   // default implementtaion is POSIX and windows
   static void Sleep(long msec);

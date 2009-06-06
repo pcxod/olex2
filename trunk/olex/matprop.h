@@ -17,7 +17,7 @@ private:
   wxButton* bEditFont;
   TComboBox *cbPrimitives;
   TGPCollection *GPCollection;
-  TEList *FSpinCtrls;
+  TPtrList<TSpinCtrl> SpinCtrls;
 protected:
   void OnOK(wxCommandEvent& event);
   bool Execute(const IEObject *Sender, const IEObject *Data=NULL);

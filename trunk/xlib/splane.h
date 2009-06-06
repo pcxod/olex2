@@ -22,7 +22,7 @@ public:
   TSPlane(TNetwork* Parent);
   virtual ~TSPlane();
 
-  DefPropB(Deleted)
+  DefPropBIsSet(Deleted)
 
   inline int CrdCount()              const {  return Crds.Count(); }
   // an association point, weight is provided
@@ -45,7 +45,7 @@ public:
   double Weight(int i) const {  return Crds[i].GetB();  }
 
   // this is justa flag for the owner - is not used by the object itself
-  DefPropB(Regular)
+  DefPropBIsSet(Regular)
 
 // static members
   /* calculates all three planes - best, worst and the complimentary, 

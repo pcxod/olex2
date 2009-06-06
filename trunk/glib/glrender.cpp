@@ -398,7 +398,7 @@ void TGlRenderer::DrawObject(AGDrawObject *Object, bool DrawImage)  {
     for( int i=0; i < GPC.ObjectCount(); i++ )  {
       TGlPrimitive& GlP = GPC.GetPrimitive(i);
       const TGlMaterial& GlM = GlP.GetProperties();
-      if( !GlM.GetIdentityDraw() ) continue;
+      if( !GlM.IsIdentityDraw() ) continue;
       GlM.Init();
       glPushMatrix();
       if( Object->Orient(GlP) )  // the object has drawn itself
@@ -410,7 +410,7 @@ void TGlRenderer::DrawObject(AGDrawObject *Object, bool DrawImage)  {
     for( int i=0; i < GPC.ObjectCount(); i++ )  {
       TGlPrimitive& GlP = GPC.GetPrimitive(i);
       const TGlMaterial& GlM = GlP.GetProperties();
-      if( GlM.GetIdentityDraw() ) continue;
+      if( GlM.IsIdentityDraw() ) continue;
       GlM.Init();
       glPushMatrix();
       if( Object->Orient(GlP) )  // the object has drawn itself
@@ -492,8 +492,8 @@ void TGlRenderer::DrawObjects(int x, int y, bool SelectPrimitives, bool SelectOb
     const int prim_count = Primitives.PropertiesCount();
     for( int i=0; i < prim_count; i++ )  {
       TGlMaterial& GlM = Primitives.GetProperties(i);
-      if( GlM.GetIdentityDraw() ) continue;  // already drawn
-      if( GlM.GetTransparent() ) continue;  // will be drawn
+      if( GlM.IsIdentityDraw() ) continue;  // already drawn
+      if( GlM.IsTransparent() ) continue;  // will be drawn
       if( !Select )    
         GlM.Init();
       const int obj_count = GlM.ObjectCount();
@@ -810,15 +810,15 @@ void TGlRenderer::EnableClipPlane(TGlClipPlane *P, bool v)  {
 }
 //..............................................................................
 void TGlRenderer::SetProperties(TGlMaterial& P)  {  // tracks transluent and identity objects
-  if( P.GetTransparent() && P.GetIdentityDraw() )  {
+  if( P.IsTransparent() && P.IsIdentityDraw() )  {
     FTransluentIdentityObjects.AddUnique(&P);
     return;
   }
-  if( P.GetTransparent() )  {
+  if( P.IsTransparent() )  {
     FTransluentObjects.AddUnique(&P);
     return;
   }
-  if( P.GetIdentityDraw() )  {
+  if( P.IsIdentityDraw() )  {
     FIdentityObjects.AddUnique(&P);
     return;
   }
@@ -827,19 +827,19 @@ void TGlRenderer::SetProperties(TGlMaterial& P)  {  // tracks transluent and ide
 void TGlRenderer::OnSetProperties(const TGlMaterial& P)  {  // tracks transluent and identity objects
   //if( P == NULL )  return;
   if( P.ObjectCount() > 1 )  return; // the properties will not be removde
-  if( P.GetTransparent() && P.GetIdentityDraw() )  {
+  if( P.IsTransparent() && P.IsIdentityDraw() )  {
     int index = FTransluentIdentityObjects.IndexOf(&P);
     if( index != -1 )  
       FTransluentIdentityObjects.Delete(index);
     return;
   }
-  if( P.GetTransparent() )  {
+  if( P.IsTransparent() )  {
     int index = FTransluentObjects.IndexOf(&P);
     if( index != -1 )  
       FTransluentObjects.Delete(index);
     return;
   }
-  if( P.GetIdentityDraw() )  {
+  if( P.IsIdentityDraw() )  {
     int index = FIdentityObjects.IndexOf(&P);
     if( index != -1 ) 
       FIdentityObjects.Delete(index);
@@ -890,11 +890,11 @@ void TGlRenderer::RemoveCollection(TGPCollection& GP)  {
 
   for( int i=0; i < Primitives.PropertiesCount(); i++ )  {
     TGlMaterial& GlM = Primitives.GetProperties(i);
-    if( GlM.GetTransparent() && GlM.GetIdentityDraw()  )
+    if( GlM.IsTransparent() && GlM.IsIdentityDraw()  )
       FTransluentIdentityObjects.Add(GlM);
-    else if( GlM.GetTransparent() )
+    else if( GlM.IsTransparent() )
       FTransluentObjects.Add(GlM);
-    else if( GlM.GetIdentityDraw() )
+    else if( GlM.IsIdentityDraw() )
       FIdentityObjects.Add(GlM);
   }
   delete &GP;
@@ -919,11 +919,11 @@ void TGlRenderer::RemoveCollections(const TPtrList<TGPCollection>& Colls)  {
   }
   for( int i=0; i < Primitives.PropertiesCount(); i++ )  {
     TGlMaterial& GlM = Primitives.GetProperties(i);
-    if( GlM.GetTransparent() && GlM.GetIdentityDraw() )
+    if( GlM.IsTransparent() && GlM.IsIdentityDraw() )
       FTransluentIdentityObjects.Add(&GlM);
-    else if( GlM.GetTransparent() )   
+    else if( GlM.IsTransparent() )   
       FTransluentObjects.Add(GlM);
-    else if( GlM.GetIdentityDraw() )  
+    else if( GlM.IsIdentityDraw() )  
       FIdentityObjects.Add(GlM);
   }
 }
@@ -961,21 +961,20 @@ void TGlRenderer::RemovePrimitive(int in)  {
   FIdentityObjects.Clear();
   for( int i=0; i < Primitives.PropertiesCount(); i++ )  {
     TGlMaterial& GlM = Primitives.GetProperties(i);
-    if( GlM.GetTransparent() && GlM.GetIdentityDraw() )
+    if( GlM.IsTransparent() && GlM.IsIdentityDraw() )
       FTransluentIdentityObjects.Add(GlM);
-    else if( GlM.GetTransparent() )    
+    else if( GlM.IsTransparent() )    
       FTransluentObjects.Add(GlM);
-    else if( GlM.GetIdentityDraw() )   
+    else if( GlM.IsIdentityDraw() )   
       FIdentityObjects.Add(GlM);
   }
 }
 //..............................................................................
-void TGlRenderer::CleanUpStyles() // removes styles, which are not used by any collection
-{
+void TGlRenderer::CleanUpStyles()  {// removes styles, which are not used by any collection
   OnStylesClear->Enter(this);
   GetStyles().SetStylesTag(0);
   for( int i=0; i < FCollections.Count(); i++ )
-    FCollections[i]->GetStyle().SetTag(1);
+    FCollections.GetObject(i)->GetStyle().SetTag(1);
   GetStyles().RemoveStylesByTag(0);
   OnStylesClear->Exit(this);
 }
@@ -1034,8 +1033,8 @@ void TGlRenderer::Compile(bool v)  {
     glNewList(CompiledListId, GL_COMPILE);
     for( int i=0; i < Primitives.PropertiesCount(); i++ )  {
       TGlMaterial& GlM = Primitives.GetProperties(i);
-      if( GlM.GetIdentityDraw() ) continue;  // already drawn
-      if( GlM.GetTransparent() ) continue;  // will be drawn
+      if( GlM.IsIdentityDraw() ) continue;  // already drawn
+      if( GlM.IsTransparent() ) continue;  // will be drawn
       GlM.Init();
       for( int j=0; j < GlM.ObjectCount(); j++ )  {
         TGlPrimitive& GlP = (TGlPrimitive&)GlM.GetObject(j);

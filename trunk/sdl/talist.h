@@ -82,8 +82,11 @@ public:
 //..............................................................................
   const T& Insert(size_t index, const T& Obj)  {
     if( FCapacity == FCount )  SetCapacity((long)(1.5*FCount + FIncrement));
-    for( int i=FCount-1; i >= index; i-- )
-      Items[i+1] = Items[i];
+    const size_t diff = FCount - index;
+    for( size_t i=0; i < diff; i++ )  {
+      const size_t ind = FCount -i;
+      Items[ind] = Items[ind-1];
+    }
     Items[index] = Obj;
     FCount++;
     return Obj;
@@ -191,16 +194,17 @@ public:
 
     if( sv == 1 )  {  // special case
       T D = Items[FCount-1];
-      for( int i=FCount-2; i >= 0; i-- )
-        Items[i+1] = Items[i];
+      for( size_t i=1; i < FCount; i++ )
+        Items[FCount-i] = Items[FCount-i-1];
       Items[0] = D;
     }
     else  {
       T* D = new T[sv];
       for( size_t i=0; i < sv; i++ )
         D[i] = Items[FCount-sv+i];
-      for( int i=FCount-sv-1; i >= 0; i-- )
-        Items[i+sv] = Items[i];
+      const size_t diff = FCount-sv;
+      for( size_t i=1; i <= diff; i++ )
+        Items[FCount-i] = Items[diff-i];
       for( size_t i=0; i < sv; i++ )
         Items[i] = D[i];
       delete [] D;
@@ -224,8 +228,9 @@ public:
 #endif
     T D = Items[from];
     if( from > to )  {
-      for( int i=from-1; i >= to; i-- )
-      Items[i+1] = Items[i];
+      const size_t diff = from-to;
+      for( size_t i=0; i < diff; i++ )
+        Items[from-i] = Items[from-i-1];
     }
     else  {
       for( size_t i=from+1; i <= to; i++ )

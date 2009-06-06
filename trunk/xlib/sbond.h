@@ -18,7 +18,7 @@ public:
   TSBond(TNetwork* Parent);
   virtual ~TSBond() { }
 
-  DefPropB(Deleted)
+  DefPropBIsSet(Deleted)
 
   double Length() const;
   double QLength() const;

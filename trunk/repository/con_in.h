@@ -37,18 +37,18 @@ public:
 };
 */
 #ifdef __WIN32__
-class ConcoleInterface  { // : public IConsoleInterface {
+class ConsoleInterface  { // : public IConsoleInterface {
   HANDLE conin, conout;
   TStack<CONSOLE_SCREEN_BUFFER_INFO> TextAttrib;
 public:
-  ConcoleInterface()  {
+  ConsoleInterface()  {
     conin = CreateFile(olx_T("CONIN$"), GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL); 
     conout  = CreateFile(olx_T("CONOUT$"), GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
     CONSOLE_SCREEN_BUFFER_INFO pi;
     GetConsoleScreenBufferInfo(conout, &pi); 
     TextAttrib.Push(pi);
   }
-  ~ConcoleInterface()  {
+  ~ConsoleInterface()  {
     CloseHandle(conin);
     CloseHandle(conout);
   }
@@ -71,12 +71,12 @@ public:
   }
 };
 #else
-class ConcoleInterface  { // : public IConsoleInterface {
+class ConsoleInterface  { // : public IConsoleInterface {
 public:
-  ConcoleInterface()  {
+  ConsoleInterface()  {
   
   }
-  ~ConcoleInterface()  {
+  ~ConsoleInterface()  {
   }
   void Push()  {
   }

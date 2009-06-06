@@ -75,12 +75,17 @@ void TNetwork::SortNodes()  {
 }
 //..............................................................................
 void TNetwork::TDisassembleTaskRemoveSymmEq::Run(long index)  {
-  if( Atoms[index]->CAtom().GetExyzGroup() != NULL )  return;
   if( (Atoms[index]->GetTag() & 0x0002) != 0 )  return;
   const int ac = Atoms.Count();
   for( int i=index+1; i < ac; i++ )  {
     if( olx_abs(Distances[0][index] - Distances[0][i]) > 0.01 )  return;
     if( Atoms[index]->crd().QDistanceTo( Atoms[i]->crd() ) < 0.0001 )  {
+     // treat EXYZ atoms - only combine if both atoms refer to the same one in the AU
+      if( Atoms[index]->CAtom().GetExyzGroup() != NULL && 
+        Atoms[index]->CAtom().GetId() != Atoms[i]->CAtom().GetId() )  
+      {
+        continue;
+      }
       Atoms[index]->AddMatrices(Atoms[i]);
       Atoms[i]->SetTag(2);            // specify that the node has to be deleted
     }

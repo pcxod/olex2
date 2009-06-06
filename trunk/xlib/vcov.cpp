@@ -85,7 +85,7 @@ void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au)  {
       throw TFunctionFailedException(__OlxSourceInfo, "matrix is not upto date");
     Index[i].C() = ca->GetId();
     int j = i;
-    while( ++j < Index.Count() && Index[i].GetA().Comparei(Index[j].GetA()) == 0 )
+    while( ++j < Index.Count() && Index[i].GetA().Equalsi(Index[j].GetA()) )
       Index[j].C() = ca->GetId();
     i = j-1;
   }

@@ -1942,7 +1942,7 @@ TBasicAtomInfo* TAtomsInfo::FindAtomInfoBySymbol(const olxstr &Symbol) const  {
 //  while ( running )  TBasicApp::GetInstance()->Sleep(1);
 //  running = true;
   for( int i=0; i < Data.Count(); i++ )
-    if( Data[i].GetSymbol().Comparei(Symbol) == 0 )  {
+    if( Data[i].GetSymbol().Equalsi(Symbol) )  {
 //      running = false;
       return &Data[i];
     }

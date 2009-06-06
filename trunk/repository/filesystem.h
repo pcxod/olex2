@@ -135,7 +135,7 @@ public:
 
   const TStrList& GetActions() const {  return Actions;  }
 
-  DefPropB(Folder)
+  DefPropBIsSet(Folder)
 
   inline const olxstr& GetName()  const      {  return Name;  }
 

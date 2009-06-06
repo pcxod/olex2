@@ -61,9 +61,9 @@ public:
     static bool IsOlexFont(const olxstr& fntId) {  return fntId.IsEmpty()? false : fntId.CharAt(0) == '#';  }
     static olxstr BuildOlexFontId(const olxstr& fileName, short size, bool fixed, bool bold, bool italic);
     DefPropC(olxstr, FileName)
-    DefPropB(Bold)
-    DefPropB(Fixed)
-    DefPropB(Italic)
+    DefPropBIsSet(Bold)
+    DefPropBIsSet(Fixed)
+    DefPropBIsSet(Italic)
     inline bool IsUnderlined() const {  return Underlined; }
     DefPropP(short, Size)
   };

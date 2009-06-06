@@ -390,7 +390,7 @@ void TCif::LoadFromStrings(const TStrList& Strings)  {
     }
     if( Tmp.CharAt(0) == '#')  continue;
 next_loop:
-    if( Tmp.Comparei("loop_") == 0  )  {  // parse a loop
+    if( Tmp.Equalsi("loop_") )  {  // parse a loop
       Loop = new TCifLoop();
       LoopData.Clear();
       Loops.Add(EmptyString, Loop);
@@ -471,7 +471,7 @@ finalize_loop:
           if( Char == '#' )  {  j++;  continue;  }
           if( Tmp1.Length() > 4 )  {  // check for special data items
             Tmp2 = Tmp1.SubString(0,4);
-            if( (Tmp2.Comparei("data") == 0)  || (Tmp2.Comparei("loop") == 0)  )  break;
+            if( Tmp2.Equalsi("data") || Tmp2.Equalsi("loop") )  break;
           }
           if( Char != '_' )  {
             D->Data->Add(Tmp1);
@@ -1485,22 +1485,22 @@ bool TCif::ResolveParamsFromDictionary(TStrList &Dic, olxstr &String,
           SVal = Dic[index-1];
           Tmp = EmptyString;
           if( SVal.Length() != 0 )  {
-            if( SVal.Comparei("date") == 0 )  {
+            if( SVal.Equalsi("date") )  {
               Tmp = TETime::FormatDateTime( TETime::Now() );
               String.Insert(Tmp, start);
             }
-            else if( !SVal.Comparei("sg_number") )  {
+            else if( SVal.Equalsi("sg_number") )  {
               TSpaceGroup* sg = TSymmLib::GetInstance()->FindSG( GetAsymmUnit() );
               if( sg != NULL )
                 Tmp = sg->GetNumber();
               else
                 Tmp = "unknown";
             }
-            else if( !SVal.Comparei("data_name") )
+            else if( SVal.Equalsi("data_name") )
               Tmp = GetDataName();
-            else if( !SVal.Comparei("weighta") )
+            else if( SVal.Equalsi("weighta") )
               Tmp = GetWeightA();
-            else if( !SVal.Comparei("weightb") )
+            else if( SVal.Equalsi("weightb") )
               Tmp = GetWeightB();
             else {
               Params = FindParam(SVal);
@@ -1654,7 +1654,7 @@ bool TCif::CreateTable(TDataItem *TD, TTTable<TStrList> &Table, smatd_list& Symm
       if( !Tmp.IsEmpty() )  {  // check for atom type equals to
         TCifLoopData* CD = (*LT)[i].GetObject(j);
         if( CD != NULL && CD->CA != NULL )
-          if( CD->CA->GetAtomInfo().GetSymbol().Comparei( Tmp ) )  {
+          if( !CD->CA->GetAtomInfo().GetSymbol().Equalsi(Tmp) )  {
             AddRow = false;
             break;
           }
@@ -1663,7 +1663,7 @@ bool TCif::CreateTable(TDataItem *TD, TTTable<TStrList> &Table, smatd_list& Symm
       if( !Tmp.IsEmpty() )  {  // check for atom type equals to
         TCifLoopData* CD = (*LT)[i].GetObject(j);
         if( CD != NULL && CD->CA != NULL )
-          if( !CD->CA->GetAtomInfo().GetSymbol().Comparei( Tmp ) )  {
+          if( CD->CA->GetAtomInfo().GetSymbol().Equalsi(Tmp) )  {
             AddRow = false;
             break;
           }

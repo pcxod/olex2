@@ -55,7 +55,10 @@ TEBitArray& TEBitArray::operator = (const TEBitArray& arr )  {
 }
 //..............................................................................
 void TEBitArray::SetSize(int newSize)  {
-  if( FData )  delete [] FData;
+  if( FCount == newSize )
+    return;
+  if( FData != NULL )  
+    delete [] FData;
   FCount = newSize;
   FCharCount = newSize/8 + 1;
   FData = new unsigned char [FCharCount];
@@ -151,10 +154,8 @@ void TEBitArray::FromHexString(const olxstr& str) {
 TIString TEBitArray::ToString() const  {
   olxstr StrRepr(EmptyString, FCount+1);
   StrRepr.SetCapacity( Count() );
-  for( uint32_t i=0; i < Count(); i++ )  {
-    if( Get(i) )  StrRepr <<  '1';
-    else          StrRepr <<  '0';
-  }        
+  for( uint32_t i=0; i < Count(); i++ )
+    StrRepr <<  (Get(i) ? '1': '0');
   return StrRepr;
 }
 //..............................................................................

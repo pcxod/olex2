@@ -1364,9 +1364,9 @@ void TMainForm::StartupInit()  {
       }
       cmd << ' ';
 
-      if( !item.GetName().Comparei("radio") )  cmd << "-r ";
-      if( !item.GetName().Comparei("sep") )    cmd << "-# ";
-      if( !item.GetName().Comparei("check") )  cmd << "-c ";
+      if( item.GetName().Equalsi("radio") )  cmd << "-r ";
+      if( item.GetName().Equalsi("sep") )    cmd << "-# ";
+      if( item.GetName().Equalsi("check") )  cmd << "-c ";
 
       ProcessXPMacro(cmd, MacroError);
       }
@@ -1656,7 +1656,7 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
       return;
     }
     int i = FObjectUnderMouse->GetPrimitives().GetStyle().GetParam(FObjectUnderMouse->GetPrimitiveMaskName(), "0").ToInt();
-    TdlgPrimitive* Primitives = new TdlgPrimitive(&Ps, i, this);
+    TdlgPrimitive* Primitives = new TdlgPrimitive(Ps, i, this);
     if( Primitives->ShowModal() == wxID_OK )  {
       if( FObjectUnderMouse->IsSelected() && EsdlInstanceOf(*FObjectUnderMouse, TXBond) )  {
         for( int i=0; i < FXApp->AtomCount(); i++ )
@@ -2248,7 +2248,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
   }
   else if( MsgId == ID_DELINS )  {
     if( Data != NULL && EsdlInstanceOf(*Data, olxstr) )  {
-      if( ((olxstr*)Data)->Comparei("OMIT") == 0 )  {
+      if( ((olxstr*)Data)->Equalsi("OMIT") )  {
         BadReflectionsTable(false);
         executeMacro("html.updatehtml");
       }
@@ -3679,9 +3679,9 @@ int TMainForm::TranslateShortcut(const olxstr& sk)  {
   if( !toks.Count() )  return -1;
   short Shift=0, Char = 0;
   for( int i=0; i < toks.Count() - 1; i++ )  {
-    if( ((Shift&sssCtrl)==0) && toks[i].Comparei("Ctrl")==0 )   {  Shift |= sssCtrl;  continue;  }
-    if( ((Shift&sssShift)==0) && toks[i].Comparei("Shift")==0 )  {  Shift |= sssShift;  continue;  }
-    if( ((Shift&sssAlt)==0) && toks[i].Comparei("Alt") )    {  Shift |= sssAlt;  continue;  }
+    if( ((Shift&sssCtrl)==0) && toks[i].Equalsi("Ctrl") )   {  Shift |= sssCtrl;  continue;  }
+    if( ((Shift&sssShift)==0) && toks[i].Equalsi("Shift") )  {  Shift |= sssShift;  continue;  }
+    if( ((Shift&sssAlt)==0) && toks[i].Equalsi("Alt") )    {  Shift |= sssAlt;  continue;  }
   }
   olxstr charStr = toks.LastStr();
   // a char

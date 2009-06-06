@@ -938,17 +938,17 @@ void TUnitCell::LibVolumeEx(const TStrObjList& Params, TMacroError& E)  {
 }
 //..............................................................................
 void TUnitCell::LibCellEx(const TStrObjList& Params, TMacroError& E)  {
-  if( Params[0].Comparei('a') == 0 )
+  if( Params[0].Equalsi('a') )
     E.SetRetVal( Lattice->GetAsymmUnit().Axes()[0].ToString() );
-  else if( Params[0].Comparei('b') == 0 )
+  else if( Params[0].Equalsi('b') )
     E.SetRetVal( Lattice->GetAsymmUnit().Axes()[1].ToString() );
-  else if( Params[0].Comparei('c') == 0 )
+  else if( Params[0].Equalsi('c') )
     E.SetRetVal( Lattice->GetAsymmUnit().Axes()[2].ToString() );
-  else if( Params[0].Comparei("alpha") == 0 )
+  else if( Params[0].Equalsi("alpha") )
     E.SetRetVal( Lattice->GetAsymmUnit().Angles()[0].ToString() );
-  else if( Params[0].Comparei("beta") == 0 )
+  else if( Params[0].Equalsi("beta") )
     E.SetRetVal( Lattice->GetAsymmUnit().Angles()[1].ToString() );
-  else if( Params[0].Comparei("gamma") == 0 )
+  else if( Params[0].Equalsi("gamma") )
     E.SetRetVal( Lattice->GetAsymmUnit().Angles()[2].ToString() );
   else
     E.ProcessingError(__OlxSrcInfo, "invalid argument");

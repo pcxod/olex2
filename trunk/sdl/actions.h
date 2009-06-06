@@ -50,11 +50,11 @@ public:
   virtual bool Execute(const IEObject *Sender, const IEObject *Data=NULL) {  return false; }
   // the function is called the object is removed from the queue
   virtual void OnRemove()  { ;  }
-  DefPropB(Enabled)
+  DefPropBIsSet(Enabled)
   /* beware that it is set to true by default, which means that the object will
     be automatically deleted by the parent queue
   */
-  DefPropB(ToDelete)
+  DefPropBIsSet(ToDelete)
 };
 /*
  AEventsDispatcher allows to do events/actions hanling within one loop
@@ -73,7 +73,7 @@ public:
      Data -  is the object being changed or some data object
   */
   virtual bool Dispatch(int MsgId, short MsgSubId, const IEObject *Sender, const IEObject *Data=NULL)=0;
-  DefPropB(Enabled)
+  DefPropBIsSet(Enabled)
 };
 class TActionQueue: public AActionHandler  {
   TPtrList<AActionHandler> Handlers;

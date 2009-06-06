@@ -95,7 +95,7 @@ void ConnInfo::ProcessConn(TStrList& ins)  {
     TCAtomGroup ag;
     int aag;
     try  {  ar.Expand(rm, ag, EmptyString, aag);  }
-    catch(TExceptionBase& ex)  {  }
+    catch(const TExceptionBase& )  {  }
     if( ag.IsEmpty() )  {
       TBasicApp::GetLog().Error( olxstr("Undefined atom in CONN: ") << ins.Text(' ') );
       return;

@@ -149,82 +149,84 @@ public:
   }
   /* adds an item only if not already in the list, returns true if the item is added, pos is is 
   initialised with the item index */
-  bool AddUnique(TypeClass& entry, int& pos)  {
+  bool AddUnique(TypeClass& entry, int* pos=NULL)  {
     if( list.IsEmpty() )  {  
       list.Add(entry);  
-      pos = 0;
+      if( pos != NULL )  *pos = 0;
       return true;  
     }
     if( list.Count() == 1 )  {
       const int cmp_val = Comparator::Compare(list[0], entry);
       if(  cmp_val < 0 )  {  
         list.Add(entry);  
-        pos = 1;
+        if( pos != NULL )  *pos = 1;
         return true;  
       }
       else if( cmp_val > 0 )  {  
         list.Insert(0, entry);  
-        pos = 0;      
+        if( pos != NULL )  *pos = 0;      
         return true;  
       }
       else  {  
-        pos = 0;
+        if( pos != NULL )  *pos = 0;
         return false;  
       }
     }
     if( Comparator::Compare(list[0],entry) > 0 )  {  // smaller than the first
       list.Insert(0, entry);  
-      pos = 0;
+      if( pos != NULL )  *pos = 0;
       return true; 
     }
     if( Comparator::Compare(list.Last(), entry) < 0 )  {  // larger than the last
       list.Add(entry);  
-      pos = list.Count()-1;
+      if( pos != NULL ) *pos = list.Count()-1;
       return true; 
     }
     bool exists = false;
-    pos = FindInsertIndexEx( entry, exists );
+    int ps = FindInsertIndexEx( entry, exists );
+    if( pos != NULL )  *pos = ps;
     if( exists )  return false;
-    list.Insert(pos, entry);
+    list.Insert(ps, entry);
     return true;
   }
-  bool AddUnique(const TypeClass& entry, int& pos)  {
+  bool AddUnique(const TypeClass& entry, int* pos = NULL)  {
     if( list.IsEmpty() )  {  
       list.Add(entry);  
-      pos = 0;
+      if( pos != NULL )  *pos = 0;
       return true;  
     }
     if( list.Count() == 1 )  {
       const int cmp_val = Comparator::Compare(list[0], entry);
       if(  cmp_val < 0 )  {  
         list.Add(entry);  
-        pos = 1;
+        if( pos != NULL )  *pos = 1;
         return true;  
       }
       else if( cmp_val > 0 )  {  
         list.Insert(0, entry);  
-        pos = 0;      
+        if( pos != NULL )  *pos = 0;      
         return true;  
       }
       else  {  
-        pos = 0;
+        if( pos != NULL )  *pos = 0;
         return false;  
       }
     }
     if( Comparator::Compare(list[0],entry) > 0 )  {  // smaller than the first
       list.Insert(0, entry);  
-      pos = 0;
+      if( pos != NULL )  *pos = 0;
       return true; 
     }
     if( Comparator::Compare(list.Last(), entry) < 0 )  {  // larger than the last
       list.Add(entry);  
-      pos = list.Count()-1;
+      if( pos != NULL ) *pos = list.Count()-1;
       return true; 
     }
     bool exists = false;
-    pos = FindInsertIndexEx( entry, exists );
+    int ps = FindInsertIndexEx( entry, exists );
+    if( pos != NULL )  *pos = ps;
     if( exists )  return false;
-    list.Insert(pos, entry);
+    list.Insert(ps, entry);
     return true;
   }
   template <class KeyC>

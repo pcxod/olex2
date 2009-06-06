@@ -22,11 +22,30 @@
 public:\
   inline Type Get##Name() const {  return Name;  }\
   inline void Set##Name(Type MaCV) {  Name = MaCV;  }
-// defines a boolean type property
-#define DefPropB(Name) \
+// defines a boolean type property as Is/Set
+#define DefPropBIsSet(Name) \
 public:\
   inline bool Is##Name() const {  return Name;  }\
   inline void Set##Name(bool MaCV) {  Name = MaCV;  }
+// defines a boolean type property as Is/Set
+#define DefPropBHasSet(Name) \
+public:\
+  inline bool Has##Name() const {  return Name;  }\
+  inline void Set##Name(bool MaCV) {  Name = MaCV;  }
+// defines a boolean type property as a bit mask as Is/Set
+#define DefPropBFIsSet(Name, VarName, BitMask) \
+public:\
+  inline bool Is##Name() const {  return (VarName & BitMask) != 0;  }\
+  inline void Set##Name(bool v)   { \
+      if( v )  VarName |= BitMask; \
+      else     VarName &= ~BitMask;  }
+// defines a boolean type property as a bit mask as Has/Set
+#define DefPropBFHasSet(Name, VarName, BitMask) \
+public:\
+  inline bool Has##Name() const {  return (VarName & BitMask) != 0;  }\
+  inline void Set##Name(bool v)   { \
+      if( v )  VarName |= BitMask; \
+      else     VarName &= ~BitMask;  }
 // defines a complex (class) type property
 #define DefPropC(Type, Name) \
 public:\

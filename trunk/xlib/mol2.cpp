@@ -40,7 +40,7 @@ const olxstr& TMol2::EncodeBondType(short type) const  {
 //..............................................................................
 short TMol2::DecodeBondType(const olxstr& name) const  {
   for( int i=0; i < 8; i++ )
-    if( BondNames[i].Comparei(name) == 0 )
+    if( BondNames[i].Equalsi(name) )
       return i+1;
   return mol2btUnknown;
 }

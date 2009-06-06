@@ -36,12 +36,12 @@ protected:
   template <class StrClass> int FindIndexOf(const StrClass& Str, bool CI) const  {
     if( CI )  {
       for( int i=0; i < Count(); i++ )
-        if( Strings[i]->String.Comparei(Str) == 0 )
+        if( Strings[i]->String.Equalsi(Str) )
           return i;
     }
     else  {
       for( int i=0; i < Count(); i++ )
-        if( Strings[i]->String.Compare(Str) == 0 )
+        if( Strings[i]->String.Equals(Str) )
           return i;
     }
     return -1;
@@ -355,7 +355,9 @@ public:
   }
 
   void Hypernate(const SC& String, int Width, bool Force=true)  {
-   SC Str(String);
+    if( Width <= 0 )
+      throw TInvalidArgumentException(__OlxSourceInfo, "width");
+    SC Str(String);
     while( Str.Length() > Width )  {
       int spi = Str.LastIndexOf(' ', Width);
       if( spi > 0 )  {
@@ -369,7 +371,8 @@ public:
         }
       }
     }
-    if( !Str.IsEmpty() )  Add(Str);
+    if( !Str.IsEmpty() )  
+      Add(Str);
   }
 };
 

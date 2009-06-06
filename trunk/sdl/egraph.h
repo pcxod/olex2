@@ -330,7 +330,7 @@ public:
     }
     return true;
   }
-  DefPropB(Root)
+  DefPropBIsSet(Root)
   static TGraphTraverser< TEGraphNode<IC, AssociatedOC> > Traverser;
 };
 

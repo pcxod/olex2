@@ -235,15 +235,16 @@ public:
 
     if( sv == 1 )  {  // special case
       T* D = Items[FCount-1];
-      for( int i=FCount-2; i >= 0; i-- )
-        Items[i+1] = Items[i];
+      for( size_t i=1; i < FCount; i++ )
+        Items[FCount-i] = Items[FCount-i-1];
       Items[0] = D;
     }
     else  {
       T** D = new T*[sv];
       memcpy( &D[0], &Items[FCount-sv], sv*sizeof(T*) );
-      for( int i=FCount-sv-1; i >= 0; i-- )
-        Items[i+sv] = Items[i];
+      const size_t diff = FCount-sv;
+      for( size_t i=1; i <= diff; i++ )
+        Items[FCount-i] = Items[diff-i];
       memcpy( &Items[0], &D[0], sv*sizeof(T*) );
       delete [] D;
     }
@@ -266,8 +267,9 @@ public:
 #endif
     T *D = Items[from];
     if( from > to )  {
-      for( int i = from; i > to; i-- )
-        Items[i] = Items[i-1];
+      const size_t diff = from-to;
+      for( size_t i=0; i < diff; i++ )
+        Items[from-i] = Items[from-i-1];
     }
     else  {
       for( size_t i=from; i < to; i++ )

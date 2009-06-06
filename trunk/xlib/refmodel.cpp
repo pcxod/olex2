@@ -277,9 +277,9 @@ void RefinementModel::AddInfoTab(const TStrList& l)  {
   int resi_ind = l[0].IndexOf('_');
   olxstr tab_name = (resi_ind == -1 ? l[0] : l[0].SubStringTo(resi_ind));
   olxstr resi_name = (resi_ind == -1 ? EmptyString : l[0].SubStringFrom(resi_ind+1));
-  if( tab_name.Comparei("HTAB") == 0 )
+  if( tab_name.Equalsi("HTAB") )
     InfoTables.Add( new InfoTab(*this, infotab_htab, EmptyString, resi_name) );
-  else if( tab_name.Comparei("RTAB") == 0 )
+  else if( tab_name.Equalsi("RTAB") )
     InfoTables.Add( new InfoTab(*this, infotab_rtab, l[atom_start++], resi_name) );
   else
     throw TInvalidArgumentException(__OlxSourceInfo, "unknown information table name");

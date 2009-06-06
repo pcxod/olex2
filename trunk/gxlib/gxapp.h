@@ -55,10 +55,6 @@ const short sdsNone   = 0, // drawing style
             sdsSS     = 6,  // stippled cones + spheres
             sdsST     = 7;  // sticks
 
-// constatns, identifying lists in saved groups
-const short oglAtoms  = 0,
-            oglBonds  = 1,
-            oglPlanes = 2;
 // grow mode
 const short gmCovalent      = 0x0001,
             gmSInteractions = 0x0002,
@@ -137,10 +133,19 @@ protected:
   void RestoreVisibility();
   void StoreVisibility();
 
-  TEList FOldGroups;
+  struct GroupData  {
+    TSAtomPList atoms;
+    TSBondPList bonds;
+    TSPlanePList planes;
+    olxstr collectionName;
+    bool visible;
+    TGlMaterial material;
+  };
+
+  TTypeList<GroupData> FOldGroups;
   void RestoreGroups();
   void StoreGroups();
-  void ClearGroups();
+  void ClearGroups()  {  FOldGroups.Clear();  }
 
   float FProbFactor;
   double ExtraZoom;  // the default is 1, Calculated Zoom is multiplid by this number
@@ -245,6 +250,7 @@ protected:
        XGrowPointsVisible,
        FXPolyVisible;
   short FGrowMode, PackMode;
+  TEBitArray& GetVisibilityMask(TEBitArray& ba) const;
 public:
   bool AreLabelsVisible() const;
   void SetLabelsVisible(bool v);
@@ -280,8 +286,9 @@ public:
     TCAtomPList* Template, bool ClearPrevCont, bool IncludeQ)
   {    FXFile->GetLattice().Generate(center, rad, Template, ClearPrevCont, IncludeQ);  }
   void Uniq(bool remEqs=false)  {    FXFile->GetLattice().Uniq(remEqs);  }
-  void GrowFragments(bool Shell, TCAtomPList* Template=NULL)
-  {    FXFile->GetLattice().GrowFragments(Shell, Template);  }
+  void GrowFragments(bool Shell, TCAtomPList* Template=NULL)  {
+    FXFile->GetLattice().GrowFragments(Shell, Template);  
+  }
   void GrowAtoms(const olxstr &Atoms, bool Shell, TCAtomPList* Template=NULL);
   void GrowAtom(TXAtom *XA, bool Shell, TCAtomPList* Template=NULL);
   void Grow(const TXGrowLine& growLine);
@@ -322,8 +329,6 @@ public:
   inline short GetPackMode()  const {  return PackMode;  }
   void SetPackMode(short v, const olxstr& atoms);
   //
-  void SwapExyz(TXAtom *XA, const olxstr& Elm);
-  void AddExyz(TXAtom *XA, const olxstr& Elm);
 protected:
   void XAtomsByMask(const olxstr& Name, int Mask, TXAtomPList& List);
   void CAtomsByMask(const olxstr& Name, int Mask, TCAtomPList& List);
