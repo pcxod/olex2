@@ -46,14 +46,14 @@ public:
       }
       return atoms.Count() - ac;
     }
-    else if( Expression.Comparei("sel") == 0 )  { 
+    else if( Expression.Equalsi("sel") )  { 
       if( SelectionOwner == NULL )
         throw TInvalidArgumentException(__OlxSourceInfo, "invalid selection owner");
       int ac = atoms.Count();
       SelectionOwner->ExpandSelection(atoms);
       return atoms.Count()-ac;
     }
-    else if( Expression.Comparei("first") == 0 )  { 
+    else if( Expression.Equalsi("first") )  { 
       if( rm.aunit.AtomCount() == 0 )  return 0;
       int i=0;
       TCAtom* ca = &rm.aunit.GetAtom(i);
@@ -76,7 +76,7 @@ public:
       atoms.AddNew( ca );
       return 1;
     }
-    else if( Expression.Comparei("last") == 0 )  { 
+    else if( Expression.Equalsi("last") )  { 
       if( rm.aunit.AtomCount() == 0 )  return 0;
       int i=rm.aunit.AtomCount()-1;
       TCAtom* ca = &rm.aunit.GetAtom(i);
@@ -168,7 +168,7 @@ public:
         if( residues[i] == NULL )  continue;
         for( int j=0; j < residues[i]->Count(); j++ )  {
           TCAtom* ca = &residues[i]->GetAtom(j);
-          if( !ca->IsDeleted() && ca->GetLabel().Comparei(aname) == 0 )  {  // must be unique!
+          if( !ca->IsDeleted() && ca->GetLabel().Equalsi(aname) )  {  // must be unique!
             atoms.AddNew( ca, eqiv );
             break;
           }

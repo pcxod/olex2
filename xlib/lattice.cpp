@@ -328,13 +328,12 @@ void  TLattice::Generate(TCAtomPList* Template, bool ClearCont, bool IncludeQ)  
   else  {
     for(int i=0; i < Atoms.Count(); i++ )  {  // restore atom coordinates
       TSAtom* A = Atoms[i];
-      if( A->IsDeleted() )  {
+      if( A->IsDeleted() || A->CAtom().IsMasked() )  {
         delete A;
         Atoms[i] = NULL;
         continue;
       }
-      A->crd() = A->ccrd();
-      GetAsymmUnit().CellToCartesian(A->crd());
+      GetAsymmUnit().CellToCartesian(A->ccrd(), A->crd());
     }
   }
   Atoms.Pack();
@@ -358,7 +357,7 @@ void TLattice::GenerateCell(bool includeQ)  {
     const smatd& m = uc.GetMatrix(i);
     for( int j=0; j < au.AtomCount(); j++ )  {
       TCAtom& ca = au.GetAtom(j);
-      if( ca.IsDeleted() )  continue;
+      if( ca.IsDeleted() || ca.IsMasked() )  continue;
       TSAtom* sa = new TSAtom(Network);
       sa->CAtom( ca );
       sa->ccrd() = m * ca.ccrd();
@@ -454,13 +453,14 @@ void TLattice::DoGrow(const TSAtomPList& atoms, bool GrowShell, TCAtomPList* Tem
   // the fragmens to grow by a particular matrix
   TTypeList<TIntList> Fragments2Grow;
   OnStructureGrow->Enter(this);
+  ApplyMasks();
   for(int i=0; i < atoms.Count(); i++ )  {
     TSAtom* SA = atoms[i];
     SA->SetGrown(true);
     const TCAtom& CA = SA->CAtom();
     for(int j=0; j < CA.AttachedAtomCount(); j++ )  {
       const TCAtom& CA1 = CA.GetAttachedAtom(j);
-      if( CA1.IsDeleted() )  
+      if( CA1.IsDeleted() || CA1.IsMasked() )  
         continue;
       smatd_list* BindingMatrices = GetUnitCell().GetBinding(CA, CA1, SA->ccrd(), CA1.ccrd(), false, false);
       for( int k=0; k < BindingMatrices->Count(); k++ )  {
@@ -499,11 +499,12 @@ void TLattice::DoGrow(const TSAtomPList& atoms, bool GrowShell, TCAtomPList* Tem
     smatd* M = Matrices[i];
     TIntList& ToGrow = Fragments2Grow[i-currentCount];
     for(int j=0; j < GetAsymmUnit().AtomCount(); j++ )  {
+      TCAtom& ca = GetAsymmUnit().GetAtom(j);
       for(int k=0; k < ToGrow.Count(); k++ )  {
-        if( GetAsymmUnit().GetAtom(j).IsDeleted() )  continue;
-        if( GetAsymmUnit().GetAtom(j).GetFragmentId() == ToGrow[k] )  {
+        if( ca.IsDeleted() || ca.IsMasked() )  continue;
+        if( ca.GetFragmentId() == ToGrow[k] )  {
           TSAtom* SA = new TSAtom( Network );
-          SA->CAtom( GetAsymmUnit().GetAtom(j) );
+          SA->CAtom( ca );
           SA->AddMatrix(M);
           SA->ccrd() = *M * SA->ccrd();
           SA->SetEllipsoid( &GetUnitCell().GetEllipsoid(M->GetTag(), SA->CAtom().GetId()) );
@@ -524,7 +525,8 @@ void TLattice::GrowFragments(bool GrowShells, TCAtomPList* Template)  {
   TSAtomPList TmpAtoms;
   for( int i=0; i < Atoms.Count(); i++ )  {
     TSAtom* A = Atoms[i];
-    if( A->IsDeleted() )  continue;
+    if( A->IsDeleted() || A->CAtom().IsMasked() )  
+      continue;
     for( int j=0; j < A->NodeCount(); j++ )  {
       if( A->Node(j).IsDeleted() )
         A->NullNode(j);
@@ -554,7 +556,7 @@ void TLattice::GrowAtom(TSAtom& Atom, bool GrowShells, TCAtomPList* Template)  {
 }
 //..............................................................................
 void TLattice::GrowAtom(int FragId, const smatd& transform)  {
-  smatd *M;
+  smatd *M = NULL;
   // check if the matix is unique
   bool found = false;
   for( int i=0; i < Matrices.Count(); i++ )  {
@@ -571,12 +573,14 @@ void TLattice::GrowAtom(int FragId, const smatd& transform)  {
   }
 
   OnStructureGrow->Enter(this);
+  ApplyMasks();
 
   for( int i=0; i < GetAsymmUnit().AtomCount(); i++ )  {
-    if( GetAsymmUnit().GetAtom(i).IsDeleted() )  continue;
-    if( GetAsymmUnit().GetAtom(i).GetFragmentId() == FragId )  {
+    TCAtom& ca = GetAsymmUnit().GetAtom(i);
+    if( ca.IsDeleted() || ca.IsMasked() )  continue;
+    if( ca.GetFragmentId() == FragId )  {
       TSAtom* SA = new TSAtom( Network );
-      SA->CAtom( GetAsymmUnit().GetAtom(i) );
+      SA->CAtom( ca );
       SA->AddMatrix( M );
       SA->ccrd() = *M * SA->ccrd();
       SA->SetEllipsoid( &GetUnitCell().GetEllipsoid(M->GetTag(), SA->CAtom().GetId()) );
@@ -591,7 +595,7 @@ void TLattice::GrowAtom(int FragId, const smatd& transform)  {
 }
 //..............................................................................
 void TLattice::GrowAtoms(const TSAtomPList& atoms, const smatd_list& matrices)  {
-  smatd *M;
+  smatd *M = NULL;
   smatd_plist addedMatrices;
   // check if the matices is unique
   for( int i=0; i < matrices.Count(); i++ )  {
@@ -612,6 +616,7 @@ void TLattice::GrowAtoms(const TSAtomPList& atoms, const smatd_list& matrices)  
   }
 
   OnStructureGrow->Enter(this);
+  ApplyMasks();
   Atoms.SetCapacity( Atoms.Count() + atoms.Count()*addedMatrices.Count() );
   for( int i=0; i < addedMatrices.Count(); i++ )  {
     for( int j=0; j < atoms.Count(); j++ )  {
@@ -632,7 +637,7 @@ void TLattice::GrowAtoms(const TSAtomPList& atoms, const smatd_list& matrices)  
 }
 //..............................................................................
 void TLattice::Grow(const smatd& transform)  {
-  smatd *M;
+  smatd *M = NULL;
   // check if the matix is unique
   bool found = false;
   for( int i=0; i < Matrices.Count(); i++ )  {
@@ -649,6 +654,7 @@ void TLattice::Grow(const smatd& transform)  {
   }
 
   OnStructureGrow->Enter(this);
+  ApplyMasks();
   Atoms.SetCapacity( Atoms.Count() + GetAsymmUnit().AtomCount() );
   for( int i=0; i < GetAsymmUnit().AtomCount(); i++ )  {
     if( GetAsymmUnit().GetAtom(i).IsDeleted() )  continue;
@@ -668,7 +674,7 @@ void TLattice::Grow(const smatd& transform)  {
 //..............................................................................
 TSAtom* TLattice::FindSAtom(const olxstr& Label) const {
   for( int i =0; i < Atoms.Count(); i++ )
-    if( !Label.Comparei( Atoms[i]->GetLabel()) )  
+    if( Label.Equalsi( Atoms[i]->GetLabel()) )  
       return Atoms[i];
   return NULL;
 }
@@ -802,12 +808,22 @@ void TLattice::UpdateAsymmUnit()  {
     AsymmUnit->SetContainsEquivalents( UnitCell->FindSymmEq(0.1, false, false, false) != 0 );
 }
 //..............................................................................
+void TLattice::ApplyMasks()  {
+  for( int i=0; i < Atoms.Count(); i++ )  {
+    if( Atoms[i]->IsDeleted() || Atoms[i]->CAtom().IsMasked() )  {
+      delete Atoms[i];
+      Atoms[i] = NULL;
+    }
+  }
+  Atoms.Pack();
+}
+//..............................................................................
 void TLattice::ListAsymmUnit(TSAtomPList& L, TCAtomPList* Template, bool IncludeQ)  {
   ClearPlanes();
   if( Template != NULL )  {
     L.SetCapacity( L.Count() + Template->Count() );
     for( int i=0; i < Template->Count(); i++ )  {
-      if( Template->Item(i)->IsDeleted() )  continue;
+      if( (*Template)[i]->IsDeleted() || (*Template)[i]->IsMasked() )  continue;
       TSAtom* A = new TSAtom( Network );
       A->CAtom( *Template->Item(i) );
       A->SetEllipsoid( &GetUnitCell().GetEllipsoid(0, Template->Item(i)->GetId()) ); // ellipsoid for the identity matrix
@@ -820,7 +836,7 @@ void TLattice::ListAsymmUnit(TSAtomPList& L, TCAtomPList* Template, bool Include
     L.SetCapacity( L.Count() + GetAsymmUnit().AtomCount() );
     for( int i=0; i < GetAsymmUnit().AtomCount(); i++ )    {
       TCAtom& CA = GetAsymmUnit().GetAtom(i);
-      if( CA.IsDeleted() )  continue;
+      if( CA.IsDeleted() || CA.IsMasked() )  continue;
       if( !IncludeQ && CA.GetAtomInfo() == iQPeakIndex )  continue;
       TSAtom* A = new TSAtom( Network );
       A->CAtom(CA);

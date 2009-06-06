@@ -48,12 +48,10 @@ public:
   TSAtom(TNetwork *N);
   virtual ~TSAtom();
   void Assign(const TSAtom& S);
-
-  bool IsDeleted()     const {  return (Flags & satom_Deleted) != 0;  }
-  void SetDeleted(bool v)    {  SetBit(v, Flags, satom_Deleted);  }
-
-  bool IsStandalone()     const {  return (Flags & satom_Standalone) != 0;  }
-  void SetStandalone(bool v)    {  SetBit(v, Flags, satom_Standalone);  }
+  
+  // Is/Set
+  DefPropBFIsSet(Deleted, Flags, satom_Deleted)
+  DefPropBFIsSet(Standalone, Flags, satom_Standalone)
 
   bool IsGrown() const;
   inline void SetGrown(bool v)  {  SetBit(v, Flags, satom_Grown);  }

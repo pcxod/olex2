@@ -237,7 +237,7 @@ void TAsymmUnit::FindResidues(const olxstr& resi, TPtrList<TAsymmUnit::TResidue>
       list.Add( &MainResidue );
     }
     for( int i=0; i < Residues.Count(); i++ )
-      if( Residues[i]->GetClassName().Comparei(resi) == 0 || Residues[i]->GetAlias().Comparei(resi) == 0 ) 
+      if( Residues[i]->GetClassName().Equalsi(resi) || Residues[i]->GetAlias().Equalsi(resi) ) 
         list.Add(Residues[i]);
   }
 }
@@ -309,13 +309,13 @@ TCAtom * TAsymmUnit::FindCAtom(const olxstr &Label, TResidue* resi)  const {
   }
   if( resi != NULL )  {
     for( int i=0; i < resi->Count(); i++ )
-      if( !resi->GetAtom(i).IsDeleted() && resi->GetAtom(i).GetLabel().Comparei(lb) == 0 )
+      if( !resi->GetAtom(i).IsDeleted() && resi->GetAtom(i).GetLabel().Equalsi(lb) )
         if( part == DefNoPart || resi->GetAtom(i).GetPart() == part )
         return &resi->GetAtom(i);
   }
   else  {  // global search
     for( int i=0; i < CAtoms.Count(); i++ )
-      if( !CAtoms[i]->IsDeleted() && CAtoms[i]->GetLabel().Comparei(lb) == 0  )
+      if( !CAtoms[i]->IsDeleted() && CAtoms[i]->GetLabel().Equalsi(lb) )
         if( part == DefNoPart || CAtoms[i]->GetPart() == part )
           return CAtoms[i];
   }
@@ -506,7 +506,7 @@ olxstr TAsymmUnit::CheckLabel(const TCAtom* ca, const olxstr &Label, char a, cha
     for( int i=0; i < resi.Count(); i++ )  {
       const TCAtom& atom = resi[i];
       if( atom.GetPart() != ca->GetPart() && (atom.GetPart()|ca->GetPart()) != 0 )  continue;
-      if( !atom.IsDeleted() && (atom.GetLabel().Comparei(Label) == 0) && 
+      if( !atom.IsDeleted() && (atom.GetLabel().Equalsi(Label) ) && 
         (atom.GetId() != ca->GetId()) )  {
         LB = atom.GetAtomInfo().GetSymbol();
         if( LB.Length() == 2 )  LB[0] = LB.o_toupper(LB[0]);
@@ -522,7 +522,7 @@ olxstr TAsymmUnit::CheckLabel(const TCAtom* ca, const olxstr &Label, char a, cha
   }
   for( int i=0; i < AtomCount(); i++ )  {
     const TCAtom& CA = GetAtom(i);
-    if( !CA.IsDeleted() && (CA.GetLabel().Comparei(Label) == 0) )  {
+    if( !CA.IsDeleted() && CA.GetLabel().Equalsi(Label) )  {
       LB = CA.GetAtomInfo().GetSymbol();
       if( LB.Length() == 2 )  LB[0] = LB.o_toupper(LB[0]);
       LB << a << b;
@@ -541,7 +541,7 @@ olxstr TAsymmUnit::ValidateLabel(const olxstr &Label) const  {
   int cnt=0;
   for( int i=0; i < AtomCount(); i++ )  {
     const TCAtom& CA = GetAtom(i);
-    if( !CA.IsDeleted() && (CA.GetLabel().Comparei(Label) == 0) )
+    if( !CA.IsDeleted() && CA.GetLabel().Equalsi(Label) )
        cnt++;
     if( cnt > 1 )
       return CheckLabel(NULL, LB);

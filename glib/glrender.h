@@ -107,7 +107,7 @@ public:
   void _OnStylesClear(); // is called by the FStyles only!
   void _OnStylesLoaded(); // is called by the FStyles only!
 
-  DefPropB(Changed)
+  DefPropBIsSet(Changed)
 
   inline bool IsCompiled()            const {  return CompiledListId != -1; }
   void Compile(bool v);

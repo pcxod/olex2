@@ -84,9 +84,9 @@ public:
     SetParams = 0;
     Name = name;
     if( dimension == tpt1D )
-      SetBit(true, SetParams, tp1D);
+      SetBitTrue(SetParams, tp1D);
     else if( dimension == tpt2D )
-      SetBit(true, SetParams, tp2D);
+      SetBitTrue(SetParams, tp2D);
     else
       throw TInvalidArgumentException(__OlxSourceInfo, "dimention");
   }
@@ -100,11 +100,11 @@ public:
   inline void Clear()  {
     if( (SetParams & tp1D) != 0 )  {
       SetParams = 0;
-      SetBit(true, SetParams, tp1D);
+      SetBitTrue(SetParams, tp1D);
     }
     else if( (SetParams & tp2D) != 0 )  {
       SetParams = 0;
-      SetBit(true, SetParams, tp2D);
+      SetBitTrue(SetParams, tp2D);
     }
 
   }
@@ -114,57 +114,57 @@ public:
   }
 //..............................................................................
   void SetMinFilter(GLint val)  {
-    SetBit(true, SetParams, tpminSet);
+    SetBitTrue(SetParams, tpminSet);
     MinFilter = val;
   }
 //..............................................................................
   void SetMagFilter(GLint val)  {
-    SetBit(true, SetParams, tpmagSet);
+    SetBitTrue(SetParams, tpmagSet);
     MagFilter = val;
   }
 //..............................................................................
   void SetSCrdWrapping(GLint val)  {
-    SetBit(true, SetParams, tpscrdSet);
+    SetBitTrue(SetParams, tpscrdSet);
     SCrd = val;
   }
 //..............................................................................
   void SetTCrdWrapping(GLint val)  {
-    SetBit(true, SetParams, tptcrdSet);
+    SetBitTrue(SetParams, tptcrdSet);
     TCrd = val;
   }
 //..............................................................................
   void SetBorderColor(const TGlOption& cl)  {
-    SetBit(true, SetParams, tpbrdSet);
+    SetBitTrue(SetParams, tpbrdSet);
     BorderColor = cl;
   }
 //..............................................................................
   inline void SetSCrdGen(GLenum modeName, const TGlOption& values)  {
-    SetBit(true, SetParams, tpSGen);
+    SetBitTrue(SetParams, tpSGen);
     SGenParams = values;
   }
 //..............................................................................
   inline void SetTCrdGen(GLenum modeName, const TGlOption& values)  {
-    SetBit(true, SetParams, tpTGen);
+    SetBitTrue(SetParams, tpTGen);
     TGenParams = values;
   }
 //..............................................................................
   inline void SetRCrdGen(GLenum modeName, const TGlOption& values)  {
-    SetBit(true, SetParams, tpRGen);
+    SetBitTrue(SetParams, tpRGen);
     RGenParams = values;
   }
 //..............................................................................
   inline void SetQCrdGen(GLenum modeName, const TGlOption& values)  {
-    SetBit(true, SetParams, tpQGen);
+    SetBitTrue(SetParams, tpQGen);
     QGenParams = values;
   }
 //..............................................................................
   inline void SetEnvMode(GLenum modeName)  {
-    SetBit(true, SetParams, tpEnvMode);
+    SetBitTrue(SetParams, tpEnvMode);
     EnvMode = modeName;
   }
 //..............................................................................
   inline void SetEnvColor(const TGlOption& clr)  {
-    SetBit(true, SetParams, tpEnvColor);
+    SetBitTrue(SetParams, tpEnvColor);
     EnvColor = clr;
   }
 //..............................................................................
@@ -197,22 +197,22 @@ public:
     status = 0;
 
     if( glIsEnabled(GL_TEXTURE_1D) )  {
-      SetBit( true, status, tp1D );
-      SetBit( true, status, tpEnabled );
+      SetBitTrue( status, tp1D );
+      SetBitTrue( status, tpEnabled );
     }
     else if( glIsEnabled(GL_TEXTURE_2D) )  {
-      SetBit( true, status, tp2D );
-      SetBit( true, status, tpEnabled );
+      SetBitTrue( status, tp2D );
+      SetBitTrue( status, tpEnabled );
     }
 
     if( glIsEnabled(GL_TEXTURE_GEN_S) )
-      SetBit(true, status, tpSGen);
+      SetBitTrue( status, tpSGen );
     if( glIsEnabled(GL_TEXTURE_GEN_T) )
-      SetBit(true, status, tpTGen);
+      SetBitTrue( status, tpTGen );
     if( glIsEnabled(GL_TEXTURE_GEN_Q) )
-      SetBit(true, status, tpQGen);
+      SetBitTrue( status, tpQGen );
     if( glIsEnabled(GL_TEXTURE_GEN_R) )
-      SetBit(true, status, tpRGen);
+      SetBitTrue( status, tpRGen );
   }
 //..............................................................................
   static void RestoreStatus( const unsigned short status)  {

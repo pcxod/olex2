@@ -75,22 +75,13 @@ public:
   // to be used in groups only
   virtual void Draw() const {  return;  }
 
-  inline bool IsVisible()   const {  return (Flags & sgdoVisible) == sgdoVisible; }
-  inline virtual void SetVisible(bool On) {  SetBit(On, Flags, sgdoVisible); }
-
-  inline bool IsSelected()  const {  return (Flags & sgdoSelected) == sgdoSelected;  }
-  inline virtual void SetSelected(bool On){  SetBit(On, Flags, sgdoSelected); }
-
-  inline bool IsGroupable() const {  return (Flags & sgdoGroupable) == sgdoGroupable; }
-  void SetGroupable(bool On){  SetBit(On, Flags, sgdoGroupable); }
+  DefPropBFIsSet(Visible, Flags, sgdoVisible)
+  DefPropBFIsSet(Selected, Flags, sgdoSelected)
+  DefPropBFIsSet(Groupable, Flags, sgdoGroupable)
+  DefPropBFIsSet(Grouped, Flags, sgdoGrouped)
+  DefPropBFIsSet(Deleted, Flags, sgdoDeleted)
 
   inline bool IsGroup() const     {  return (Flags & sgdoGroup) == sgdoGroup; }
-
-  inline bool IsGrouped() const   {  return (Flags & sgdoGrouped) == sgdoGrouped; }
-  virtual void SetGrouped(bool On){ SetBit(On, Flags, sgdoGrouped); }
-
-  inline bool IsDeleted()  const  {return (Flags & sgdoDeleted) == sgdoDeleted; }
-  virtual void SetDeleted(bool On){ SetBit(On, Flags, sgdoDeleted); }
 
   short MaskFlags(short mask) const {  return (Flags&mask);  }
 

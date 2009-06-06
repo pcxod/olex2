@@ -213,15 +213,15 @@ TAG_HANDLER_PROC(tag)  {
   }
 
   strValign = tag.GetParam(wxT("VALIGN")).c_str();
-  if( strValign.Comparei("top") == 0 )
+  if( strValign.Equalsi("top") )
     valign = wxHTML_ALIGN_TOP;
-  else if( strValign.Comparei("center") == 0 )
+  else if( strValign.Equalsi("center") )
     valign = wxHTML_ALIGN_CENTER;
-  else if( strValign.Comparei("bottom") == 0 )
+  else if( strValign.Equalsi("bottom") )
     valign = wxHTML_ALIGN_BOTTOM;
 
 /******************* TEXT CONTROL *********************************************/
-  if( !TagName.Comparei("text") )  {
+  if( TagName.Equalsi("text") )  {
     TTextEdit *Text = new TTextEdit(m_WParser->GetWindowInterface()->GetHTMLWindow(),
       (tag.HasParam(wxT("MULTILINE")) ? wxTE_MULTILINE : 0));
     Text->SetFont( m_WParser->GetDC()->GetFont() );
@@ -257,7 +257,7 @@ TAG_HANDLER_PROC(tag)  {
     }
   }
 /******************* LABEL ***************************************************/
-  else if( !TagName.Comparei("label") )  {
+  else if( TagName.Equalsi("label") )  {
     TLabel *Text = new TLabel(m_WParser->GetWindowInterface()->GetHTMLWindow());
     Text->SetFont( m_WParser->GetDC()->GetFont() );
     CreatedObject = Text;
@@ -270,7 +270,7 @@ TAG_HANDLER_PROC(tag)  {
     m_WParser->GetContainer()->InsertCell(new wxHtmlWidgetCell(Text, fl));
   }
 /******************* BUTTON ***************************************************/
-  else if( !TagName.Comparei("button") )  {
+  else if( TagName.Equalsi("button") )  {
     AButtonBase *Btn;
     long flags = 0;
     if( tag.HasParam(wxT("FIT")) )  flags |= wxBU_EXACTFIT;
@@ -356,7 +356,7 @@ TAG_HANDLER_PROC(tag)  {
       m_WParser->GetContainer()->InsertCell(new wxHtmlWidgetCell((TBmpButton*)Btn, fl));
   }
 /******************* COMBOBOX *************************************************/
-  else if( !TagName.Comparei("combo") )  {
+  else if( TagName.Equalsi("combo") )  {
     TComboBox *Box = new TComboBox( m_WParser->GetWindowInterface()->GetHTMLWindow(),
                                     tag.HasParam(wxT("READONLY")),
                                     wxSize(ax, ay) );
@@ -410,7 +410,7 @@ TAG_HANDLER_PROC(tag)  {
       m_WParser->GetContainer()->InsertCell(new wxHtmlWidgetCell(Box, fl));
   }
 /******************* SPIN CONTROL *********************************************/
-  else if( !TagName.Comparei("spin") )  {
+  else if( TagName.Equalsi("spin") )  {
     TSpinCtrl *Spin = new TSpinCtrl( m_WParser->GetWindowInterface()->GetHTMLWindow() );
     Spin->SetFont( m_WParser->GetDC()->GetFont() );
     Spin->SetForegroundColour( m_WParser->GetDC()->GetTextForeground() );
@@ -445,7 +445,7 @@ TAG_HANDLER_PROC(tag)  {
       m_WParser->GetContainer()->InsertCell(new wxHtmlWidgetCell(Spin, fl));
   }
 /******************* SLIDER ***************************************************/
-  else  if( !TagName.Comparei("slider") )  {
+  else  if( TagName.Equalsi("slider") )  {
     TTrackBar *Track = new TTrackBar( m_WParser->GetWindowInterface()->GetHTMLWindow() );
     Track->SetFont( m_WParser->GetDC()->GetFont() );
 
@@ -484,7 +484,7 @@ TAG_HANDLER_PROC(tag)  {
       m_WParser->GetContainer()->InsertCell(new wxHtmlWidgetCell(Track, fl));
   }
 /******************* CHECKBOX *************************************************/
-  else if( !TagName.Comparei("checkbox") )  {
+  else if( TagName.Equalsi("checkbox") )  {
     TCheckBox *Box = new TCheckBox( m_WParser->GetWindowInterface()->GetHTMLWindow() );
     Box->SetFont( m_WParser->GetDC()->GetFont() );
 
@@ -522,7 +522,7 @@ TAG_HANDLER_PROC(tag)  {
     m_WParser->GetContainer()->InsertCell(new wxHtmlWidgetCell(Box, fl));
   }
 /******************* TREE CONTROL *********************************************/
-  else if( !TagName.Comparei("tree") )  {
+  else if( TagName.Equalsi("tree") )  {
     olxstr src = tag.GetParam(wxT("SRC")).c_str();
     TGlXApp::GetMainForm()->ProcessMacroFunc( src );
     IInputStream* ios = TFileHandlerManager::GetInputStream( src );
@@ -560,7 +560,7 @@ TAG_HANDLER_PROC(tag)  {
     }
   }
 /******************* LIST CONTROL *********************************************/
-  else if( !TagName.Comparei("list") )  {
+  else if( TagName.Equalsi("list") )  {
     bool srcTag   = tag.HasParam(wxT("SRC")),
          itemsTag = tag.HasParam(wxT("ITEMS"));
     TStrList itemsList;
@@ -789,7 +789,7 @@ void THtmlSwitch::Expand(TPtrList<THtmlSwitch>& ret)  {
 //..............................................................................
 THtmlSwitch*  THtmlSwitch::FindSwitch(const olxstr &IName)  {
   for( int i=0; i < FSwitches.Count(); i++ )  {
-    if( FSwitches[i].Name().Comparei(IName) == 0 )
+    if( FSwitches[i].Name().Equalsi(IName) )
       return &FSwitches[i];
     else  {
       THtmlSwitch* Res = FSwitches[i].FindSwitch(IName);
@@ -1774,7 +1774,7 @@ void THtml::macTooltips(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     SetShowTooltips( !GetShowTooltips() );
   }
   else if( Cmds.Count() == 1 )  {
-    if( Cmds[0].Comparei("true") == 0 || Cmds[0].Comparei("false") == 0 )
+    if( Cmds[0].Equalsi("true") || Cmds[0].Equalsi("false") )
       this->SetShowTooltips( Cmds[0].ToBool() );
     else  {
       THtml* html = TGlXApp::GetMainForm()->GetHtml( Cmds[0] );
@@ -1864,38 +1864,38 @@ void THtml::macDefineControl(TStrObjList &Cmds, const TParamList &Options, TMacr
     return;
   }
   TSStrStrList<olxstr,false>* props = NULL;
-  if( Cmds[1].Comparei("text") == 0 )  {
+  if( Cmds[1].Equalsi("text") )  {
     props = ObjectsState.DefineControl(Cmds[0], typeid(TTextEdit) );
   }
-  else if( Cmds[1].Comparei("label") == 0 )  {
+  else if( Cmds[1].Equalsi("label") )  {
     props = ObjectsState.DefineControl(Cmds[0], typeid(TLabel) );
   }
-  else if( Cmds[1].Comparei("button") == 0 )  {
+  else if( Cmds[1].Equalsi("button") )  {
     props = ObjectsState.DefineControl(Cmds[0], typeid(TButton) );
     (*props)["checked"] = Options.FindValue("c", "false");
   }
-  else if( Cmds[1].Comparei("combo") == 0 )  {
+  else if( Cmds[1].Equalsi("combo") )  {
     props = ObjectsState.DefineControl(Cmds[0], typeid(TComboBox) );
     (*props)["items"] = Options.FindValue("i");
   }
-  else if( Cmds[1].Comparei("spin") == 0 )  {
+  else if( Cmds[1].Equalsi("spin") )  {
     props = ObjectsState.DefineControl(Cmds[0], typeid(TSpinCtrl) );
     (*props)["min"] = Options.FindValue("min", "0");
     (*props)["max"] = Options.FindValue("max", "100");
   }
-  else if( Cmds[1].Comparei("slider") == 0 )  {
+  else if( Cmds[1].Equalsi("slider") )  {
     props = ObjectsState.DefineControl(Cmds[0], typeid(TTrackBar) );
     (*props)["min"] = Options.FindValue("min", "0");
     (*props)["max"] = Options.FindValue("max", "100");
   }
-  else if( Cmds[1].Comparei("checkbox") == 0 )  {
+  else if( Cmds[1].Equalsi("checkbox") )  {
     props = ObjectsState.DefineControl(Cmds[0], typeid(TCheckBox) );
     (*props)["checked"] = Options.FindValue("c", "false");
   }
-  else if( Cmds[1].Comparei("tree") == 0 )  {
+  else if( Cmds[1].Equalsi("tree") )  {
     props = ObjectsState.DefineControl(Cmds[0], typeid(TTreeView) );
   }
-  else if( Cmds[1].Comparei("list") == 0 )  {
+  else if( Cmds[1].Equalsi("list") )  {
     props = ObjectsState.DefineControl(Cmds[0], typeid(TListBox) );
     (*props)["items"] = Options.FindValue("i");
   }

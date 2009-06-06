@@ -115,40 +115,40 @@ public:
   inline bool IsAtom(const olxstr &C)     const {  return (FindAtomInfoEx(C) != NULL);  }
   // checks if p is an element symbol, will correctly distinguis "C " and "Cd"
   static bool IsShortcut(const olxstr &c) {  
-    return c.Comparei("Ph") == 0 || c.Comparei("Cp") == 0 || c.Comparei("Me") == 0 ||
-      c.Comparei("Et") == 0 || c.Comparei("Bu") == 0 || 
-      c.Comparei("Py") == 0 || c.Comparei("Tf") == 0;  
+    return c.Equalsi("Ph") || c.Equalsi("Cp") || c.Equalsi("Me") ||
+      c.Equalsi("Et") || c.Equalsi("Bu") || 
+      c.Equalsi("Py") || c.Equalsi("Tf");  
   }
   static void ExpandShortcut(const olxstr& sh, TTypeList<AnAssociation2<olxstr, int> >& res, int cnt=1)  {
     TTypeList<AnAssociation2<olxstr, int> > shc;
-    if( sh.Comparei("Ph") == 0 )  {
+    if( sh.Equalsi("Ph") )  {
       shc.AddNew("C", 6);
       shc.AddNew("H", 5);
     }
-    else if( sh.Comparei("Py") == 0 )  {
+    else if( sh.Equalsi("Py") )  {
       shc.AddNew("C", 5);
       shc.AddNew("N", 1);
       shc.AddNew("H", 4);
     }
-    else if( sh.Comparei("Tf") == 0 )  {
+    else if( sh.Equalsi("Tf") )  {
       shc.AddNew("C", 1);
       shc.AddNew("S", 1);
       shc.AddNew("O", 2);
       shc.AddNew("F", 3);
     }
-    else if( sh.Comparei("Cp") == 0 )  {
+    else if( sh.Equalsi("Cp") )  {
       shc.AddNew("C", 5);
       shc.AddNew("H", 5);
     }
-    else if( sh.Comparei("Me") == 0 )  {
+    else if( sh.Equalsi("Me") )  {
       shc.AddNew("C", 1);
       shc.AddNew("H", 3);
     }
-    else if( sh.Comparei("Et") == 0 )  {
+    else if( sh.Equalsi("Et") )  {
       shc.AddNew("C", 2);
       shc.AddNew("H", 5);
     }
-    else if( sh.Comparei("Bu") == 0 )  {
+    else if( sh.Equalsi("Bu") )  {
       shc.AddNew("C", 4);
       shc.AddNew("H", 9);
     }
@@ -159,7 +159,7 @@ public:
       shc[i].B() *= cnt;
       bool found = false;
       for( int j=0; j < res.Count(); j++ )  {
-        if( res[j].GetA().Comparei(shc[i].GetA()) == 0 )  {
+        if( res[j].GetA().Equalsi(shc[i].GetA()) )  {
           res[j].B() += shc[i].GetB();
           found = true;
           break;

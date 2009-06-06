@@ -375,7 +375,7 @@ olxstr TGroupCAtom::GetFullLabel(RefinementModel& rm, const olxstr& resiName) co
   }
   else  {
     if( Atom->GetResiId() == -1 || 
-      (!resiName.IsEmpty() && Atom->GetParent()->GetResidue(Atom->GetResiId()).GetClassName().Comparei(resiName) == 0) )  
+      (!resiName.IsEmpty() && Atom->GetParent()->GetResidue(Atom->GetResiId()).GetClassName().Equalsi(resiName)) )  
     {
       if( Matrix != NULL )
         name << "_$" << (rm.UsedSymmIndex(*Matrix) + 1);

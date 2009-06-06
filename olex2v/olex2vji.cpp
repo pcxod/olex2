@@ -37,7 +37,7 @@ TOlexViewer::TOlexViewer(int w, int h) {
   }
   if( inited )  {
     if( !Instances.IsEmpty() )
-      Initialised = Instances.Object(0)->Initialised;
+      Initialised = Instances.GetObject(0)->Initialised;
     return;
   }
   glClearColor(0.5, 0.5, 0, 0);
@@ -45,12 +45,12 @@ TOlexViewer::TOlexViewer(int w, int h) {
   wxFont Font(*wxNORMAL_FONT);//|wxFONTFLAG_ANTIALIASED);
 //  wxFont Font(10, wxMODERN, wxNORMAL, wxNORMAL);//|wxFONTFLAG_ANTIALIASED);
   // create 4 fonts
-  TGlFont *fnt = GXApp->GetRender().Scene()->CreateFont("Labels", Font.GetNativeFontInfoDesc().c_str());
+  TGlFont *fnt = GXApp->GetRender().GetScene().CreateFont("Labels", Font.GetNativeFontInfoDesc().c_str());
   fnt->Material().SetFlags(sglmAmbientF|sglmEmissionF|sglmIdentityDraw);
   fnt->Material().AmbientF = 0x7fff7f;
   fnt->Material().EmissionF = 0x1f2f1f;
   
-  GXApp->LabelsFont(0);
+  GXApp->SetLabelsFont(0);
   
   TIns *Ins = new TIns;
   GXApp->RegisterXFileFormat(Ins, "ins");
@@ -59,12 +59,12 @@ TOlexViewer::TOlexViewer(int w, int h) {
   GXApp->SetMainFormVisible(true);
   GXApp->AtomRad("isot");
   //GXApp->SetAtomDrawingStyle(adsEllipsoid);
-  TXAtom::DefElpMask(5);
+  TXAtom::DefMask(5);
   TXAtom::DefDS(adsEllipsoid);
   TXBond::DefMask(48);
-  GXApp->LabelsVisible(false);
+  GXApp->SetLabelsVisible(false);
   GXApp->CalcProbFactor(50);
-  GXApp->LabelsMode(lmLabels);
+  GXApp->SetLabelsMode(lmLabels);
   Initialised = Status.IsEmpty();
 }
 TOlexViewer::~TOlexViewer()  {
@@ -127,8 +127,8 @@ olxstr TOlexViewer::GetObjectLabelAt(int x, int y)  {
       }
     }
     else  if( EsdlInstanceOf( *G, TXBond) )  {
-      Tip = ((TXBond*)G)->Bond().GetA().GetLabel();
-      Tip << '-' << ((TXBond*)G)->Bond().GetB().GetLabel() << ": ";
+      Tip = ((TXBond*)G)->Bond().A().GetLabel();
+      Tip << '-' << ((TXBond*)G)->Bond().B().GetLabel() << ": ";
       Tip << olxstr::FormatFloat(3, ((TXBond*)G)->Bond().Length());
     } 
   }
@@ -136,15 +136,15 @@ olxstr TOlexViewer::GetObjectLabelAt(int x, int y)  {
 }
 
 void TOlexViewer::ShowLabels(bool v)  {
-  GXApp->LabelsVisible(v);
+  GXApp->SetLabelsVisible(v);
 }
 void TOlexViewer::SaveState()  {
   Basis = GXApp->GetRender().GetBasis();
-  LabelsVisible = GXApp->LabelsVisible();
+  LabelsVisible = GXApp->AreLabelsVisible();
 }
 void TOlexViewer::RestoreState()  {
   GXApp->GetRender().SetBasis(Basis);
-  GXApp->LabelsVisible( LabelsVisible );
+  GXApp->SetLabelsVisible( LabelsVisible );
 }
 
 
@@ -317,7 +317,7 @@ JNIEXPORT jbyteArray JNICALL Java_olex2j_GlWindow_getStatus(JNIEnv* env, jobject
 JNIEXPORT void JNICALL Java_olex2j_GlWindow_finalise(JNIEnv *, jobject this_object, jint o_id)  {
   int i = TOlexViewer::Instances.IndexOfComparable(o_id);
   if( i == -1 )  return;
-  delete TOlexViewer::Instances.Object(i);
+  delete TOlexViewer::Instances.GetObject(i);
   TOlexViewer::Instances.Remove(i);
   if( TOlexViewer::Instances.IsEmpty() )
     delete DrawContext::Instance;

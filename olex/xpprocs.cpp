@@ -182,19 +182,19 @@ void TMainForm::funCell(const TStrObjList& Params, TMacroError &E)  {
     ProcessXPMacro("fuse", E);
   }
   else  {
-    if( !Params[0].Comparei("a") )
+    if( Params[0].Equalsi('a') )
       E.SetRetVal( FXApp->XFile().GetAsymmUnit().Axes()[0].GetV() );
-    else if( !Params[0].Comparei("b") )
+    else if( Params[0].Equalsi('b') )
       E.SetRetVal( FXApp->XFile().GetAsymmUnit().Axes()[1].GetV() );
-    else if( !Params[0].Comparei("c") )
+    else if( Params[0].Equalsi('c') )
       E.SetRetVal( FXApp->XFile().GetAsymmUnit().Axes()[2].GetV() );
-    else if( !Params[0].Comparei("alpha") )
+    else if( Params[0].Equalsi("alpha") )
       E.SetRetVal( FXApp->XFile().GetAsymmUnit().Angles()[0].GetV() );
-    else if( !Params[0].Comparei("beta") )
+    else if( Params[0].Equalsi("beta") )
       E.SetRetVal( FXApp->XFile().GetAsymmUnit().Angles()[1].GetV() );
-    else if( !Params[0].Comparei("gamma") )
+    else if( Params[0].Equalsi("gamma") )
       E.SetRetVal( FXApp->XFile().GetAsymmUnit().Angles()[2].GetV() );
-    else if( !Params[0].Comparei("volume") )
+    else if( Params[0].Equalsi("volume") )
       E.SetRetVal( olxstr::FormatFloat(2, FXApp->XFile().GetUnitCell().CalcVolume()) );
     else
       E.ProcessingError(__OlxSrcInfo, "invalid argument: ") << Params[0];
@@ -225,11 +225,11 @@ void TMainForm::funExtraZoom(const TStrObjList& Params, TMacroError &E)  {
 //..............................................................................
 void TMainForm::funIsOS(const TStrObjList& Params, TMacroError &E)  {
 #if defined(__WXMSW__)
-  E.SetRetVal( Params[0].Comparei("win") == 0 );
+  E.SetRetVal( Params[0].Equalsi("win") );
 #elif defined(__WXMAC__) || defined(__MAC__)
-  E.SetRetVal( Params[0].Comparei("mac") == 0 );
+  E.SetRetVal( Params[0].Equalsi("mac") );
 #elif defined(__WXGTK__)
-  E.SetRetVal(Params[0].Comparei("linux") == 0);
+  E.SetRetVal(Params[0].Equalsi("linux") 0);
 #else
   E.SetRetVal(false);
 #endif
@@ -237,7 +237,7 @@ void TMainForm::funIsOS(const TStrObjList& Params, TMacroError &E)  {
 //..............................................................................
 void TMainForm::funCrs(const TStrObjList& Params, TMacroError &E)  {
   TCRSFile& cf = FXApp->XFile().GetLastLoader<TCRSFile>();
-  if( Params[0].Comparei("sg") == 0 )  {
+  if( Params[0].Equalsi("sg") )  {
     TSpaceGroup* sg = cf.GetSG();
     if( sg != NULL )
       E.SetRetVal( sg->GetName() );
@@ -430,19 +430,19 @@ void TMainForm::funCursor(const TStrObjList& Params, TMacroError &E)  {
     SetStatusText(wxT(""));
   }
   else  {
-    if( !Params[0].Comparei("busy") )  {
+    if( Params[0].Equalsi("busy") )  {
       wxCursor cr(wxCURSOR_WAIT);
       SetCursor( cr );
       FGlCanvas->SetCursor( cr );
       if( Params.Count() == 2 )
         SetStatusText( uiStr(Params[1]) );
     }
-    else if( !Params[0].Comparei("brush") )  {
+    else if( Params[0].Equalsi("brush") )  {
       wxCursor cr(wxCURSOR_PAINT_BRUSH);
       SetCursor( cr );
       FGlCanvas->SetCursor( cr );
     }
-    else if( !Params[0].Comparei("hand") )  {
+    else if( Params[0].Equalsi("hand") )  {
       wxCursor cr(wxCURSOR_HAND);
       SetCursor( cr );
       FGlCanvas->SetCursor( cr );
@@ -491,7 +491,7 @@ void TMainForm::funColor(const TStrObjList& Params, TMacroError &E)  {
     if( Params.IsEmpty() )  {
       E.SetRetVal( (int)RGB(wc.Red(), wc.Green(), wc.Blue()) );
     }
-    else if( Params[0].Comparei("hex") == 0 )  {
+    else if( Params[0].Equalsi("hex") )  {
       char* bf = new char [35];
       sprintf( bf, "#%.2x%.2x%.2x", wc.Red(), wc.Green(), wc.Blue() );
       E.SetRetVal( olxstr(bf) );
@@ -506,33 +506,33 @@ void TMainForm::funLst(const TStrObjList &Cmds, TMacroError &E)  {
   if( !Lst.IsLoaded() )  {
     E.SetRetVal( NAString );
   }
-  else if( !Cmds[0].Comparei("rint") )
+  else if( Cmds[0].Equalsi("rint") )
     E.SetRetVal( Lst.Rint() );
-  else if( !Cmds[0].Comparei("rsig") )
+  else if( Cmds[0].Equalsi("rsig") )
     E.SetRetVal( Lst.Rsigma() );
-  else if( !Cmds[0].Comparei("r1") )
+  else if( Cmds[0].Equalsi("r1") )
     E.SetRetVal( Lst.R1() );
-  else if( !Cmds[0].Comparei("r1a") )
+  else if( Cmds[0].Equalsi("r1a") )
     E.SetRetVal( Lst.R1a() );
-  else if( !Cmds[0].Comparei("wr2") )
+  else if( Cmds[0].Equalsi("wr2") )
     E.SetRetVal( Lst.wR2() );
-  else if( !Cmds[0].Comparei("s") )
+  else if( Cmds[0].Equalsi("s") )
     E.SetRetVal( Lst.S() );
-  else if( !Cmds[0].Comparei("rs") )
+  else if( Cmds[0].Equalsi("rs") )
     E.SetRetVal( Lst.RS() );
-  else if( !Cmds[0].Comparei("params") )
+  else if( Cmds[0].Equalsi("params") )
     E.SetRetVal( Lst.Params() );
-  else if( !Cmds[0].Comparei("rtotal") )
+  else if( Cmds[0].Equalsi("rtotal") )
     E.SetRetVal( Lst.TotalRefs() );
-  else if( !Cmds[0].Comparei("runiq") )
+  else if( Cmds[0].Equalsi("runiq") )
     E.SetRetVal( Lst.UniqRefs() );
-  else if( !Cmds[0].Comparei("r4sig") )
+  else if( Cmds[0].Equalsi("r4sig") )
     E.SetRetVal( Lst.Refs4sig() );
-  else if( !Cmds[0].Comparei("peak") )
+  else if( Cmds[0].Equalsi("peak") )
     E.SetRetVal( Lst.Peak() );
-  else if( !Cmds[0].Comparei("hole") )
+  else if( Cmds[0].Equalsi("hole") )
     E.SetRetVal( Lst.Hole() );
-  else if( !Cmds[0].Comparei("flack") )  {
+  else if( Cmds[0].Equalsi("flack") )  {
     if( Lst.HasFlack() )
       E.SetRetVal( Lst.Flack().ToString() );
     else
@@ -642,11 +642,11 @@ bool TMainForm::ProcessMacroFunc(olxstr& Cmd)  {
         Params.Clear();
         TParamList::StrtokParams(ArgV, ',', Params);
         // evaluation will be called from within the functions
-        if( Func.Comparei("or") != 0 && Func.Comparei("and") != 0 )  {
+        if( !Func.Equalsi("or") && !Func.Equalsi("and") )  {
           olxstr localArg;
           for( int j=0; j < Params.Count(); j++ )  {
             if( !ProcessMacroFunc(Params[j]) )  {
-              if( !Func.Comparei("eval") ) // put the function back
+              if( Func.Equalsi("eval") ) // put the function back
                 Params[j] = ArgV;
               else  return false;
             }
@@ -951,7 +951,7 @@ void TMainForm::ProcessXPMacro(const olxstr &Cmd, TMacroError &Error, bool Proce
   }
   ABasicFunction *MF = GetLibrary().FindMacro(Command);//, Cmds.Count());
   if( MF != NULL )  {
-    if( !Command.Comparei("if") )  {
+    if( Command.Equalsi("if") )  {
       MF->Run(Cmds, Options, Error);
       if( ProcessFunctions )  
         AnalyseError( Error );
@@ -1010,7 +1010,7 @@ void TMainForm::ProcessXPMacro(const olxstr &Cmd, TMacroError &Error, bool Proce
 }
 //..............................................................................
 void TMainForm::macIF(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  if( Cmds.Count() < 2 || Cmds[1].Comparei("then"))  {
+  if( Cmds.Count() < 2 || !Cmds[1].Equalsi("then"))  {
     E.ProcessingError(__OlxSrcInfo, "incorrect syntax - two commands or a command and \'then\' are expected" );
     return;
   }
@@ -1020,7 +1020,7 @@ void TMainForm::macIF(TStrObjList &Cmds, const TParamList &Options, TMacroError 
     return;
   }
   if( Condition.ToBool() )  {
-    if( Cmds[2].Comparei(NoneString) )  {
+    if( !Cmds[2].Equalsi(NoneString) )  {
       if( Cmds[2].IndexOf(">>") != -1 )  {
         TStrList toks(Cmds[2], ">>");
         for( int i=0; i < toks.Count(); i++ )  {
@@ -1039,8 +1039,8 @@ void TMainForm::macIF(TStrObjList &Cmds, const TParamList &Options, TMacroError 
   }
   else  {
     if( Cmds.Count() == 5 )  {
-      if( !Cmds[3].Comparei("else") )  {
-        if( Cmds[4].Comparei(NoneString) )  {
+      if( Cmds[3].Equalsi("else") )  {
+        if( !Cmds[4].Equalsi(NoneString) )  {
           if( Cmds[4].IndexOf(">>") != -1 )  {
             TStrList toks(Cmds[4], ">>");
             for( int i=0; i < toks.Count(); i++ )  {
@@ -1225,10 +1225,10 @@ void TMainForm::macPict(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   else
     outFN = Cmds[0];
   // correct a common typo
-  if( !TEFile::ExtractFileExt(outFN).Comparei("jpeg") )
+  if( TEFile::ExtractFileExt(outFN).Equalsi("jpeg") )
     outFN = TEFile::ChangeFileExt(outFN, "jpg");
 
-  if( TEFile::ExtractFileExt(outFN).Comparei("bmp") == 0 )
+  if( TEFile::ExtractFileExt(outFN).Equalsi("bmp") )
     bmpFN = TEFile::ChangeFileExt(outFN, "bmp");
   else
     bmpFN = TEFile::ChangeFileExt(outFN, "bmp.tmp");
@@ -1240,7 +1240,7 @@ void TMainForm::macPict(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   DeleteObject(DIBmp);
   delete BmpFile;
   //check if the image is bmp
-  if( TEFile::ExtractFileExt(outFN).Comparei("bmp") == 0 )
+  if( TEFile::ExtractFileExt(outFN).Equalsi("bmp") )
     return;
   wxImage image;
   image.LoadFile( bmpFN.u_str(), wxBITMAP_TYPE_BMP);
@@ -1331,7 +1331,7 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   wxImage image;
   image.SetData((unsigned char*)bmpData, BmpWidth, BmpHeight ); 
   // correct a common typo
-  if( !TEFile::ExtractFileExt(bmpFN).Comparei("jpeg") )
+  if( TEFile::ExtractFileExt(bmpFN).Equalsi("jpeg") )
     bmpFN = TEFile::ChangeFileExt(bmpFN, "jpg");
   image.SaveFile( bmpFN.u_str() );
 }
@@ -1383,41 +1383,22 @@ void TMainForm::macBang(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 }
 //..............................................................................
 void TMainForm::macGrow(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error) {
-  bool GrowShells = false,
-      GrowContent = false,
-      Template=false;
-  TStrList TemplList;
+  bool GrowShells = Options.Contains('s'),
+       GrowContent = Options.Contains('w');
   TCAtomPList TemplAtoms;
-  for( int i=0; i < Options.Count(); i++ )  {
-    if( Options.GetName(i) == "s" )  GrowShells  = true;
-    else if( Options.GetName(i) == "w" )  GrowContent = true;
-    else if( Options.GetName(i) == "t" )  {
-      Template = true;
-      TemplList.Strtok(Options.GetValue(i), ',');
-      FXApp->FindCAtoms(TemplList.Text(' '), TemplAtoms);
-    }
-  }
-  if( TemplList.Count() != 0 )  Template = true;
-  else                     Template = false;
+  if( Options.Contains('t') )
+    FXApp->FindCAtoms(olxstr(Options.GetValue('t')).Replace(',', ' '), TemplAtoms);
   if( Cmds.IsEmpty() )  {  // grow fragments
-    if( Template )  {
-      if( GrowContent ) FXApp->GrowWhole(&TemplAtoms);
-      else              FXApp->GrowFragments(GrowShells, &TemplAtoms);
-    }
-    else  {
-      if( GrowContent ) FXApp->GrowWhole(NULL);
-      else              FXApp->GrowFragments(GrowShells);
-    }
+    if( GrowContent ) 
+      FXApp->GrowWhole(TemplAtoms.IsEmpty() ? NULL : &TemplAtoms);
+    else
+      FXApp->GrowFragments(GrowShells, TemplAtoms.IsEmpty() ? NULL : &TemplAtoms);
   }
   else  {  // grow atoms
-    if( Template )  {
-      if( GrowContent ) FXApp->GrowWhole(&TemplAtoms);
-      else              FXApp->GrowAtoms(Cmds.Text(' '), GrowShells, &TemplAtoms);
-    }
-    else  {
-      if( GrowContent ) FXApp->GrowWhole(NULL);
-      else              FXApp->GrowAtoms(Cmds.Text(' '), GrowShells);
-    }
+    if( GrowContent )
+      FXApp->GrowWhole(TemplAtoms.IsEmpty() ? NULL : &TemplAtoms);
+    else
+      FXApp->GrowAtoms(Cmds.Text(' '), GrowShells, TemplAtoms.IsEmpty() ? NULL : &TemplAtoms);
   }
 }
 //..............................................................................
@@ -1518,9 +1499,12 @@ void TMainForm::macListen(TStrObjList &Cmds, const TParamList &Options, TMacroEr
 #ifdef __WIN32__
 void TMainForm::macWindowCmd(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   for( int i=1; i < Cmds.Count(); i++ )  {
-    if( !Cmds[i].Comparei("nl") )    {  TWinWinCmd::SendWindowCmd(Cmds[0], '\r'); continue; }
-    if( !Cmds[i].Comparei("sp") )    {  TWinWinCmd::SendWindowCmd(Cmds[0], ' ');  continue;}
-    TWinWinCmd::SendWindowCmd(Cmds[0], Cmds[i]+' ');
+    if( Cmds[i].Equalsi("nl") )    
+      TWinWinCmd::SendWindowCmd(Cmds[0], '\r');
+    else if( Cmds[i].Equalsi("sp") )
+      TWinWinCmd::SendWindowCmd(Cmds[0], ' ');
+    else
+      TWinWinCmd::SendWindowCmd(Cmds[0], Cmds[i]+' ');
   }
 }
 #endif
@@ -1531,9 +1515,9 @@ void TMainForm::macProcessCmd(TStrObjList &Cmds, const TParamList &Options, TMac
     return;
   }
   for( int i=0; i < Cmds.Count(); i++ )  {
-    if( !Cmds[i].Comparei("nl") )
+    if( Cmds[i].Equalsi("nl") )
       FProcess->Writenl();
-    else if( !Cmds[i].Comparei("sp") )
+    else if( Cmds[i].Equalsi("sp") )
       FProcess->Write(' ');
     else
       FProcess->Write(Cmds[i]+' ');
@@ -1606,7 +1590,7 @@ void TMainForm::macPack(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   bool ClearCont = !Options.Contains("c");
   bool IncludeQ = Options.Contains("q");
   bool cell = false;
-  if( Cmds.Count() > 0 && Cmds[0].Comparei("cell") == 0 )  {  // for the future packing cells...
+  if( Cmds.Count() > 0 && Cmds[0].Equalsi("cell") )  {  // for the future packing cells...
     cell = true;
     Cmds.Delete(0);
   }
@@ -1702,22 +1686,16 @@ void TMainForm::macTelpV(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 //..............................................................................
 void TMainForm::macLabels(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   short lmode = 0;
-  for( int i=0; i < Options.Count(); i++ )  {
-    if( !Options.GetName(i).Comparei("p") )       lmode |= lmPart;
-    else if( !Options.GetName(i).Comparei("l") )  lmode |= lmLabels;
-    else if( !Options.GetName(i).Comparei("v") )  lmode |= lmOVar;
-    else if( !Options.GetName(i).Comparei("o") )  lmode |= lmOccp;
-    else if( !Options.GetName(i).Comparei("ao") ) lmode |= lmAOcc;
-    else if( !Options.GetName(i).Comparei("u") )  lmode |= lmUiso;
-    else if( !Options.GetName(i).Comparei("r") )  lmode |= lmUisR;
-    else if( !Options.GetName(i).Comparei("a") )  lmode |= lmAfix;
-    else if( !Options.GetName(i).Comparei("h") )  lmode |= lmHydr;
-    else if( !Options.GetName(i).Comparei("f") )  lmode |= lmFixed;
-    else if( !Options.GetName(i).Comparei("qi") ) {
-      lmode |= lmQPeakI;
-      lmode |= lmQPeak;
-    }
-  }
+  if( Options.Contains("p") )   lmode |= lmPart;
+  if( Options.Contains("l") )   lmode |= lmLabels;
+  if( Options.Contains("v") )   lmode |= lmOVar;
+  if( Options.Contains("o") )   lmode |= lmOccp;
+  if( Options.Contains("ao") )  lmode |= lmAOcc;
+  if( Options.Contains("u") )   lmode |= lmUiso;
+  if( Options.Contains("r") )   lmode |= lmUisR;
+  if( Options.Contains("a") )   lmode |= lmAfix;
+  if( Options.Contains("h") )   lmode |= lmHydr;
+  if( Options.Contains("f") )   lmode |= lmFixed;
   if( lmode == 0 )  {
     lmode |= lmLabels;
     lmode |= lmQPeak;
@@ -1813,7 +1791,7 @@ void TMainForm::macHelp(TStrObjList &Cmds, const TParamList &Options, TMacroErro
           Cat = FHelpItem->GetItem(i).FindItemi("category");
           if( Cat == NULL )  continue;
           for( int j=0; j < Cat->ItemCount(); j++ )  {
-            if( Cat->GetItem(j).GetName().Comparei(Cmds[0]) == 0 )  {
+            if( Cat->GetItem(j).GetName().Equalsi(Cmds[0]) )  {
               FGlConsole->PrintText(FHelpItem->GetItem(i).GetName());
               break;
             }
@@ -1997,7 +1975,7 @@ void TMainForm::macCent(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 }
 //..............................................................................
 void TMainForm::macMask(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error){
-  if( Cmds[0].Comparei("atoms") == 0 && Cmds.Count() > 1 )  {
+  if( Cmds[0].Equalsi("atoms") && Cmds.Count() > 1 )  {
     int Mask = Cmds[1].ToInt();
     short ADS=0, AtomsStart=2;
     olxstr Tmp;
@@ -2005,13 +1983,13 @@ void TMainForm::macMask(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     FindXAtoms(Cmds.SubListFrom(AtomsStart), Atoms, false, false);
     FXApp->UpdateAtomPrimitives(Mask, Atoms.IsEmpty() ? NULL : &Atoms);
   }
-  else if( (Cmds[0].Comparei("bonds") == 0 || Cmds[0].Comparei("hbonds") == 0) && Cmds.Count() > 1 )  {
+  else if( (Cmds[0].Equalsi("bonds") || Cmds[0].Equalsi("hbonds") ) && Cmds.Count() > 1 )  {
     int Mask = Cmds[1].ToInt();
     TXBondPList Bonds;
     FXApp->GetBonds(Cmds.Text(' ', 2), Bonds);
     FXApp->UpdateBondPrimitives(Mask, 
       (Bonds.IsEmpty() && FXApp->GetSelection().Count() == 0) ? NULL : &Bonds, 
-      Cmds[0].Comparei("hbonds") == 0);
+      Cmds[0].Equalsi("hbonds"));
   }
   else  {
     int Mask = Cmds.Last().String.ToInt();
@@ -2040,13 +2018,13 @@ void TMainForm::macARad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 void TMainForm::macADS(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   TXAtomPList Atoms;
   short ads = -1;
-  if( Cmds[0].Comparei("elp") == 0 )
+  if( Cmds[0].Equalsi("elp") )
     ads = adsEllipsoid;
-  else if( Cmds[0].Comparei("sph") == 0 )
+  else if( Cmds[0].Equalsi("sph") )
     ads = adsSphere;
-  else if( Cmds[0].Comparei("ort") == 0 )
+  else if( Cmds[0].Equalsi("ort") )
     ads = adsOrtep;
-  else if( Cmds[0].Comparei("std") == 0 )
+  else if( Cmds[0].Equalsi("std") )
     ads = adsStandalone;
   if( ads == -1 )  {
     Error.ProcessingError(__OlxSrcInfo, "unknown atom type (elp/sph/ort/std) supported only" );
@@ -2071,7 +2049,7 @@ void TMainForm::macAZoom(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 //..............................................................................
 void TMainForm::macBRad(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   TXBondPList bonds;
-  if( Cmds.Count() == 2 && Cmds[1].Comparei("hbonds") == 0 )  {
+  if( Cmds.Count() == 2 && Cmds[1].Equalsi("hbonds") )  {
     for( int i=0; i < FXApp->BondCount(); i++ )  {
       if( FXApp->GetBond(i).Bond().GetType() == sotHBond )
         bonds.Add( &FXApp->GetBond(i) );
@@ -2087,7 +2065,7 @@ void TMainForm::macBRad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 //..............................................................................
 void TMainForm::macKill(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   if( Cmds.Count() == 1 )  {
-    if( Cmds[0].Comparei("sel") == 0 )  {
+    if( Cmds[0].Equalsi("sel") )  {
       TPtrList<AGDrawObject> Objects;
       TGlGroup& sel = FXApp->GetSelection();
       olxstr out;
@@ -2105,7 +2083,7 @@ void TMainForm::macKill(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         sel.RemoveDeleted();
       }
     }
-    else if( Cmds[0].Comparei("$Q") == 0 )  {
+    else if( Cmds[0].Equalsi("$Q") )  {
       TXAtomPList Atoms;
       FXApp->FindXAtoms("$Q", Atoms, true, true);
       if( Atoms.IsEmpty() )  return;
@@ -2131,7 +2109,7 @@ void TMainForm::macKill(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 }
 //..............................................................................
 void TMainForm::macHide(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  if( Cmds.Count() == 1 && Cmds[0].Comparei("sel") == 0 )  {
+  if( Cmds.Count() == 1 && Cmds[0].Equalsi("sel") )  {
     TPtrList<AGDrawObject> Objects;
     TGlGroup& sel = FXApp->GetSelection();
     for( int i=0; i < sel.Count(); i++ )  
@@ -2327,14 +2305,14 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   olxstr Tmp = Cmds[0];
   Cmds.Delete(0);
   olxstr FN = Cmds.Text(' ');
-  if( Tmp.Comparei("style") == 0 )  {
+  if( Tmp.Equalsi("style") )  {
     if( FN.IsEmpty() )
       FN = PickFile("Load drawing style", "Drawing styles|*.glds", StylesDir, true);
     if( FN.IsEmpty() )
       return;
     Tmp = TEFile::ExtractFilePath(FN);
     if( !Tmp.IsEmpty() )  {
-      if( StylesDir.Comparei(Tmp) )  {
+      if( !StylesDir.Equalsi(Tmp) )  {
         TBasicApp::GetLog().Info(olxstr("Styles folder is changed to: ") + Tmp);
         StylesDir = Tmp;
       }
@@ -2371,7 +2349,7 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       return;
     Tmp = TEFile::ExtractFilePath(FN);
     if( !Tmp.IsEmpty() )  {
-      if( SParamDir.Comparei(Tmp) != 0 )  {
+      if( !SParamDir.Equalsi(Tmp) )  {
         TBasicApp::GetLog().Info(olxstr("Scene parameters folder is changed to: ") << Tmp);
         SParamDir = Tmp;
       }
@@ -2549,9 +2527,9 @@ void TMainForm::macSyncBC(TStrObjList &Cmds, const TParamList &Options, TMacroEr
 //..............................................................................
 void TMainForm::macCeiling(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   if( Cmds.Count() == 1 )  {
-    if( !Cmds[0].Comparei("on") )
+    if( Cmds[0].Equalsi("on") )
       FXApp->GetRender().Ceiling()->SetVisible(true);
-    else if( !Cmds[0].Comparei("off") )
+    else if( Cmds[0].Equalsi("off") )
       FXApp->GetRender().Ceiling()->SetVisible(false);
     else
       Error.ProcessingError(__OlxSrcInfo, "wrong arguments" );
@@ -2591,27 +2569,27 @@ void TMainForm::macFade(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 //..............................................................................
 void TMainForm::macWaitFor(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   // we need to call the timer in case it is disabled ...
-  if( !Cmds[0].Comparei("fade") )  {
+  if( Cmds[0].Equalsi("fade") )  {
     if( !IsVisible() )  return;
     while( FMode & mFade )  {
       FParent->Dispatch();
       Dispatch(ID_TIMER, -1, (AActionHandler*)this, NULL);
     }
   }
-  if( !Cmds[0].Comparei("xfader") )  {
+  if( Cmds[0].Equalsi("xfader") )  {
     if( !IsVisible() )  return;
     while( FXApp->GetFader().GetPosition() < 1 && FXApp->GetFader().IsVisible() )  {
       FParent->Dispatch();
       Dispatch(ID_TIMER, -1, (AActionHandler*)this, NULL);
     }
   }
-  else if( !Cmds[0].Comparei("rota") )  {
+  else if( Cmds[0].Equalsi("rota") )  {
     while( FMode & mRota )  {
       FParent->Dispatch();
       Dispatch(ID_TIMER, -1, (AActionHandler*)this, NULL);
     }
   }
-  else if( !Cmds[0].Comparei("process") )  {
+  else if( Cmds[0].Equalsi("process") )  {
     while( FProcess != NULL )  {
       FParent->Dispatch();
       Dispatch(ID_TIMER, -1, (AActionHandler*)this, NULL);
@@ -2626,12 +2604,12 @@ void TMainForm::macHtmlPanelSwap(TStrObjList &Cmds, const TParamList &Options, T
   }
   else  {
     bool changed = false;
-    if( Cmds[0].Comparei("left") == 0 )  {
+    if( Cmds[0].Equalsi("left") )  {
       if( !FHtmlOnLeft )  {
         changed = FHtmlOnLeft = true;
       }
     }
-    else if( Cmds[0].Comparei("right") == 0 )  {
+    else if( Cmds[0].Equalsi("right") )  {
       if( FHtmlOnLeft )  {
         changed = true;
         FHtmlOnLeft = false;
@@ -3609,7 +3587,7 @@ void TMainForm::macMode(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   static bool ChangingMode = false;
   if( ChangingMode )  return;
   AMode *md = Modes->SetMode( Cmds[0] );
-  if( md != NULL || Cmds[0].Comparei("off") == 0 )  {
+  if( md != NULL || Cmds[0].Equalsi("off") )  {
     olxstr cmds = Cmds.Text(' ');
     for( int i=0; i < Options.Count(); i++ )
       cmds << " -" << Options.GetName(i) << '=' << Options.GetValue(i);
@@ -3721,7 +3699,7 @@ void TMainForm::macShowStr(TStrObjList &Cmds, const TParamList &Options, TMacroE
 }
 //..............................................................................
 void TMainForm::macBind(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
-  if( Cmds[0].Comparei("wheel") == 0 )  {
+  if( Cmds[0].Equalsi("wheel") )  {
     int ind = Bindings.IndexOf("wheel");
     if( ind == -1 )
       Bindings.Add("wheel", Cmds[1]);
@@ -3989,7 +3967,7 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options, TMacro
   // go through instructions
   for(int i=0; i < Ins.InsCount(); i++ )  {
     // do not process remarks
-    if( Ins.InsName(i).Comparei("rem") != 0 )  {
+    if( !Ins.InsName(i).Equalsi("rem") )  {
       InsParams = &Ins.InsParams(i);
       bool found = false;
       for( int j=0; j < InsParams->Count(); j++ )  {
@@ -3997,7 +3975,7 @@ void TMainForm::macEditAtom(TStrObjList &Cmds, const TParamList &Options, TMacro
         if( CA1 == NULL )  continue;
         for( int k=0; k < CAtoms.Count(); k++ )  {
           TCAtom* CA = CAtoms[k];
-          if( CA->Label().Comparei(CA1->Label()) == 0 )  {
+          if( CA->Label().Equalsi(CA1->Label()) )  {
             found = true;  break;
           }
         }
@@ -4086,8 +4064,8 @@ void TMainForm::macEditIns(TStrObjList &Cmds, const TParamList &Options, TMacroE
     if( dlg->ShowModal() == wxID_OK )  {
       // clear rems, as they are recreated
       for( int i=0; i < Ins.InsCount(); i++ )  {
-        if( Ins.InsName(i).Comparei("REM") == 0 )  {
-          Ins.DelIns(i);  i--;  continue;
+        if( Ins.InsName(i).Equalsi("REM") )  {
+          Ins.DelIns(i--);  continue;
         }
       }
       SL.Clear();
@@ -4625,7 +4603,7 @@ void TMainForm::macCollectivise(TStrObjList &Cmds, const TParamList &Options, TM
 }
 //..............................................................................
 void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  if( Cmds.Count() == 1 && Cmds[0].Comparei("res") == 0 )  {
+  if( Cmds.Count() == 1 && Cmds[0].Equalsi("res") )  {
     FXApp->GetRender().ClearSelection();
     TStrList out;
     TCAtomPList a_res;
@@ -4666,7 +4644,7 @@ void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError
     FXApp->GetLog() << '\n';
     return;
   }
-  if( Cmds.Count() > 1 && Cmds[0].Comparei("part") == 0 )  {
+  if( Cmds.Count() > 1 && Cmds[0].Equalsi("part") )  {
     Cmds.Delete(0);
     TIntList parts;
     for( int i=0; Cmds.Count(); i++ )  {
@@ -4706,9 +4684,9 @@ void TMainForm::macSel(TStrObjList &Cmds, const TParamList &Options, TMacroError
       if( whereIndex >= 1 )  {
         Tmp = Cmds[whereIndex-1];
         while( whereIndex >= 0  )  {  Cmds.Delete(whereIndex);  whereIndex --;  }
-        if( !Tmp.Comparei("atoms") )
+        if( Tmp.Equalsi("atoms") )
           FXApp->SelectAtomsWhere(Cmds.Text(' '));
-        else if( !Tmp.Comparei("bonds") )
+        else if( Tmp.Equalsi("bonds") )
           FXApp->SelectBondsWhere(Cmds.Text(' '));
         else
           Error.ProcessingError(__OlxSrcInfo, "undefined keyword: " ) << Tmp;
@@ -4823,7 +4801,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     if( !(TEFile::ChangeFileExt(FN, EmptyString) == TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), EmptyString)) )
       TEFile::DelFile(DataDir+"spacegroups.htm");
     // special treatment of the kl files
-    if( TEFile::ExtractFileExt(FN).Comparei("hkl") == 0 )  {
+    if( TEFile::ExtractFileExt(FN).Equalsi("hkl") )  {
       if( !TEFile::FileExists( TEFile::ChangeFileExt(FN, "ins") ) )  {
         THklFile hkl;
         bool ins_initialised = false;
@@ -5150,14 +5128,11 @@ void TMainForm::macCreateMenu(TStrObjList &Cmds, const TParamList &Options, TMac
   olxstr menuName = Cmds[0].SubStringTo(ind);
 
   short itemType = mtNormalItem;
-  olxstr modeDependent, stateDependent;
-  for( int i=0; i < Options.Count(); i++ )  {
-    if( Options.GetName(i)[0] == 'r' )  {  itemType = mtRadioItem;  continue;  }
-    if( Options.GetName(i)[0] == 'c' )  {  itemType = mtCheckItem;  continue;  }
-    if( Options.GetName(i)[0] == '#' )  {  itemType = mtSeparator;  continue;  }
-    if( Options.GetName(i)[0] == 's' )  {  stateDependent = Options.GetValue(i);  continue;  }
-    if( Options.GetName(i)[0] == 'm' )  {  modeDependent = Options.GetValue(i);  continue;  }
-  }
+  if( Options.Contains("r") )  itemType = mtRadioItem;
+  if( Options.Contains("c") )  itemType = mtCheckItem;
+  if( Options.Contains("#") )  itemType = mtSeparator;
+  olxstr stateDependent = Options.FindValue("s");
+  olxstr modeDependent = Options.FindValue("m");
   TMenu* menu = Menus[menuName];
   if( menu == NULL )  {
     TStrList toks;
@@ -5371,7 +5346,7 @@ void TMainForm::macUpdateOptions(TStrObjList &Cmds, const TParamList &Options, T
 }
 //..............................................................................
 void TMainForm::macReload(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  if( Cmds[0].Comparei("macro") == 0 )  {
+  if( Cmds[0].Equalsi("macro") )  {
     if( TEFile::FileExists(FXApp->BaseDir() + "macro.xld") )  {
       TStrList SL;
       FMacroFile.LoadFromXLFile(FXApp->BaseDir() + "macro.xld", &SL);
@@ -5380,7 +5355,7 @@ void TMainForm::macReload(TStrObjList &Cmds, const TParamList &Options, TMacroEr
       TBasicApp::GetLog() << (SL);
     }
   }
-  else if( Cmds[0].Comparei("help") == 0 )  {
+  else if( Cmds[0].Equalsi("help") )  {
     if( TEFile::FileExists(FXApp->BaseDir() + "help.xld") )  {
       TStrList SL;
       FHelpFile.LoadFromXLFile(FXApp->BaseDir() + "help.xld", &SL);
@@ -5388,7 +5363,7 @@ void TMainForm::macReload(TStrObjList &Cmds, const TParamList &Options, TMacroEr
       TBasicApp::GetLog() << (SL);
     }
   }
-  else if( Cmds[0].Comparei("dictionary") == 0 )  {
+  else if( Cmds[0].Equalsi("dictionary") )  {
     if( TEFile::FileExists( DictionaryFile ) )
       Dictionary.SetCurrentLanguage(DictionaryFile, Dictionary.GetCurrentLanguage() );
   }
@@ -5933,7 +5908,7 @@ void TMainForm::funValidatePlugin(const TStrObjList& Params, TMacroError &E) {
 void TMainForm::macUpdateFile(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
 #ifndef __WIN32__  // skip updating launch or other win files not on win
   olxstr ext(TEFile::ExtractFileExt(Cmds[0]));
-  if( ext.Comparei("exe") == 0 || ext.Comparei("dll") == 0 || ext.Comparei("pyd") )  {
+  if( ext.Equalsi("exe") || ext.Equalsi("dll") || ext.Equalsi("pyd") )  {
     TBasicApp::GetLog() << "Skipping windows files update...\n";
     return;
   }
@@ -5942,18 +5917,12 @@ void TMainForm::macUpdateFile(TStrObjList &Cmds, const TParamList &Options, TMac
   TEFile::CheckFileExists( __OlxSourceInfo, SettingsFile );
   TSettingsFile settings;
   olxstr Proxy, Repository;
-  bool Force = false;
-  for( int i=0; i < Options.Count(); i++ )  {
-    if( Options.GetName(i)[0] == 'f' )  {
-      Force = true;
-      break;
-    }
-  }
+  bool Force = Options.Contains('f');
 
   settings.LoadSettings( SettingsFile );
   if( settings.ParamExists("proxy") )        Proxy = settings.ParamValue("proxy");
   if( settings.ParamExists("repository") )   Repository = settings.ParamValue("repository");
-  if( settings.ParamValue("update").Comparei("never") == 0 )  {
+  if( settings.ParamValue("update").Equalsi("never") )  {
     TBasicApp::GetLog() << (olxstr("User settings prevented updating file: ") << Cmds[0]);
     return;
   }
@@ -6265,14 +6234,14 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 //..............................................................................
 void TMainForm::macShowWindow(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   if( Cmds.Count() == 2 )  {
-    if( Cmds[0].Comparei("help") == 0 )  {
+    if( Cmds[0].Equalsi("help") )  {
       HelpWindowVisible = Cmds[1].ToBool();
       FHelpWindow->SetVisible( HelpWindowVisible );
       FGlConsole->ShowBuffer( !HelpWindowVisible );  // sync states
       TStateChange sc(prsHelpVis, HelpWindowVisible);
       OnStateChange->Execute((AEventsDispatcher*)this, &sc);
     } 
-    else  if( Cmds[0].Comparei("info") == 0 )  {
+    else  if( Cmds[0].Equalsi("info") )  {
       InfoWindowVisible = Cmds[1].ToBool();
       FInfoBox->SetVisible( InfoWindowVisible );
       TStateChange sc(prsInfoVis, InfoWindowVisible);
@@ -6280,7 +6249,7 @@ void TMainForm::macShowWindow(TStrObjList &Cmds, const TParamList &Options, TMac
       OnResize();
       FXApp->Draw();
     } 
-    else if( Cmds[0].Comparei("cmdline") == 0 )  {
+    else if( Cmds[0].Equalsi("cmdline") )  {
       CmdLineVisible = Cmds[1].ToBool();
       FCmdLine->Show( CmdLineVisible );
       if( CmdLineVisible )  FCmdLine->SetFocus();
@@ -6292,14 +6261,14 @@ void TMainForm::macShowWindow(TStrObjList &Cmds, const TParamList &Options, TMac
     }
   }
   else  {
-    if( Cmds[0].Comparei("help") == 0 )  {
+    if( Cmds[0].Equalsi("help") )  {
       HelpWindowVisible = !HelpWindowVisible;
       FHelpWindow->SetVisible( HelpWindowVisible );
       FGlConsole->ShowBuffer( !HelpWindowVisible );  // sync states
       TStateChange sc(prsHelpVis, HelpWindowVisible);
       OnStateChange->Execute((AEventsDispatcher*)this, &sc);
     } 
-    else if( Cmds[0].Comparei("info") == 0 )  {
+    else if( Cmds[0].Equalsi("info") )  {
       InfoWindowVisible = !InfoWindowVisible;
       FInfoBox->SetVisible( InfoWindowVisible );
       TStateChange sc(prsInfoVis, InfoWindowVisible);
@@ -6307,7 +6276,7 @@ void TMainForm::macShowWindow(TStrObjList &Cmds, const TParamList &Options, TMac
       OnResize();
       FXApp->Draw();
     } 
-    else if( Cmds[0].Comparei("cmdline") == 0 )  {
+    else if( Cmds[0].Equalsi("cmdline") )  {
       CmdLineVisible = !CmdLineVisible;
       FCmdLine->Show( CmdLineVisible );
       if( CmdLineVisible )  FCmdLine->SetFocus();
@@ -7434,7 +7403,7 @@ void main_GenerateCrd(const vec3d_list& p, const smatd_list& sm, vec3d_list& res
 }
 
 void TMainForm::macAddObject(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  if( Cmds[0].Comparei("cell") == 0 && Cmds.Count() == 2 )  {
+  if( Cmds[0].Equalsi("cell") && Cmds.Count() == 2 )  {
     if( !TEFile::FileExists( Cmds[1] )  )  {
       Error.ProcessingError(__OlxSrcInfo, "file does not exist" );
       return;
@@ -7490,7 +7459,7 @@ void TMainForm::macAddObject(TStrObjList &Cmds, const TParamList &Options, TMacr
     vec3d_list p, allPoints;
     vec3d v;
 
-    if( Cmds[0].Comparei("sphere") == 0 )  {
+    if( Cmds[0].Equalsi("sphere") )  {
       if( (Cmds.Count()-3)%3 != 0 )  {
         Error.ProcessingError(__OlxSrcInfo, "invalid number of arguments" );
         return;
@@ -7507,7 +7476,7 @@ void TMainForm::macAddObject(TStrObjList &Cmds, const TParamList &Options, TMacr
       FXApp->AddObjectToCreate( uo );
       uo->Create();
     }
-    else if( Cmds[0].Comparei("line") == 0 )  {
+    else if( Cmds[0].Equalsi("line") )  {
       if( (Cmds.Count()-3)%6 != 0 )  {
         Error.ProcessingError(__OlxSrcInfo, "invalid number of arguments" );
         return;
@@ -7526,7 +7495,7 @@ void TMainForm::macAddObject(TStrObjList &Cmds, const TParamList &Options, TMacr
       FXApp->AddObjectToCreate( uo );
       uo->Create();
     }
-    else if( Cmds[0].Comparei("plane") == 0 )  {
+    else if( Cmds[0].Equalsi("plane") )  {
       if( (Cmds.Count()-3)%12 != 0 )  {
         Error.ProcessingError(__OlxSrcInfo, "invalid number of arguments" );
         return;
@@ -7547,7 +7516,8 @@ void TMainForm::macAddObject(TStrObjList &Cmds, const TParamList &Options, TMacr
       FXApp->AddObjectToCreate( uo );
       uo->Create();
     }
-    else if( Cmds[0].Comparei("poly") == 0 )  {
+    else if( Cmds[0].Equalsi("poly") )  {
+      ;
     }
     else
       Error.ProcessingError(__OlxSrcInfo, "unknown object type");
@@ -7920,19 +7890,19 @@ void TMainForm::funGetMouseY(const TStrObjList &Params, TMacroError &E)  {
 }
 //..............................................................................
 void TMainForm::funGetWindowSize(const TStrObjList &Params, TMacroError &E)  {
-  if( Params.IsEmpty() || Params[0].Comparei("main") == 0 )  {
+  if( Params.IsEmpty() || Params[0].Equalsi("main") )  {
     wxRect sz = GetRect();
     E.SetRetVal( olxstr(sz.x) << ',' << sz.y << ',' << sz.width << ',' << sz.height);
   }
-  else if( Params[0].Comparei("gl") == 0 ) {
+  else if( Params[0].Equalsi("gl") ) {
     wxRect sz = FGlCanvas->GetRect();
     E.SetRetVal( olxstr(sz.x) << ',' << sz.y << ',' << sz.width << ',' << sz.height);
   }
-  else if( Params[0].Comparei("html") == 0 ) {
+  else if( Params[0].Equalsi("html") ) {
     wxRect sz = FHtml->GetRect();
     E.SetRetVal( olxstr(sz.x) << ',' << sz.y << ',' << sz.width << ',' << sz.height);
   }
-  else if( Params[0].Comparei("main-cs") == 0 ) {
+  else if( Params[0].Equalsi("main-cs") ) {
     if( Params.Count() == 1 )  {
       int w=0, h=0;
       GetClientSize(&w, &h);
@@ -8113,6 +8083,37 @@ void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options, TMa
     bool val = ns[i].IsNumber();
     TBasicApp::GetLog() << val;
   }
+  TArrayList<int> il(10);
+  for( int i=0; i < il.Count(); i++ )
+    il[i] = i;
+  TBasicApp::GetLog() << '\n';
+  for( int i=0; i < il.Count(); i++ )
+    TBasicApp::GetLog() << il[i];
+  il.Move(0,9);
+  TBasicApp::GetLog() << '\n';
+  for( int i=0; i < il.Count(); i++ )
+    TBasicApp::GetLog() << il[i];
+  il.ShiftR(3);
+  TBasicApp::GetLog() << '\n';
+  for( int i=0; i < il.Count(); i++ )
+    TBasicApp::GetLog() << il[i];
+  il.ShiftR(1);
+  TBasicApp::GetLog() << '\n';
+  for( int i=0; i < il.Count(); i++ )
+    TBasicApp::GetLog() << il[i];
+  il.ShiftL(4);
+  TBasicApp::GetLog() << '\n';
+  for( int i=0; i < il.Count(); i++ )
+    TBasicApp::GetLog() << il[i];
+  il.Move(9,0);
+  TBasicApp::GetLog() << '\n';
+  for( int i=0; i < il.Count(); i++ )
+    TBasicApp::GetLog() << il[i];
+
+  TParamList opt;
+  opt.FromString("t=false", '=');
+  bool hast = opt.Contains('t');
+  hast = ns[1] > ns[2];
 }
 //..............................................................................
 double Main_FindClosestDistance(const smatd_list& ml, vec3d& o_from, const TCAtom& a_to) {

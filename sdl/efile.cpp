@@ -902,7 +902,7 @@ void ListDirForGUI(const TStrObjList& Params, TMacroError& E)  {
   TEFile::ChangeDir( Params[0] );
   short attrib = sefFile;
   if( Params.Count() == 3 )  {
-    if( Params[2].Comparei("fd") == 0 )
+    if( Params[2].Equalsi("fd") )
       attrib |= sefDir;
     else if( Params[2].CharAt(0) == 'd' )
       attrib = sefDir;

@@ -56,13 +56,13 @@ public:
   }
   template <typename T> VType& Add(const T& key, const VType& def) {
     int ind = -1;
-    if( SortedL::AddUnique(key, ind) ) // new entry?
+    if( SortedL::AddUnique(key, &ind) ) // new entry?
       SortedL::operator[] (ind).val = def;
     return SortedL::operator[] (ind).val;
   }
   template <typename T> VType& Add(const T& key) {
     int ind = -1;
-    SortedL::AddUnique(key, ind);
+    SortedL::AddUnique(key, &ind);
     return SortedL::operator[] (ind).val;
   }
   template <class T> int IndexOf(const T& key) const {  return SortedL::IndexOf(key);  }

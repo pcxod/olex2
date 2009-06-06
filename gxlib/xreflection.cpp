@@ -96,7 +96,7 @@ bool TXReflection::Orient(TGlPrimitive& GlP)  {
   double scale1 = sqrt(atan(FParams[0])*2/M_PI);
   Parent.GlScale( (float)(1+scale1*6) );
 
-  if( IsSelected() || !GlP.GetProperties().GetTransparent() )  
+  if( IsSelected() || !GlP.GetProperties().IsTransparent() )  
     return false;
 
   TGlMaterial GlM = GlP.GetProperties();

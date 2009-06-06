@@ -39,7 +39,6 @@ TdlgMatProp::TdlgMatProp(TMainFrame *ParentFrame, TGPCollection *GPC, TGXApp *XA
   if( GPC != NULL && GPC->ObjectCount() == 0 )
     throw TFunctionFailedException(__OlxSourceInfo, "empty collection");
   short Border = 3, SpW = 40;
-  FSpinCtrls = new TEList;
   FParent = ParentFrame;
   GPCollection = GPC;
   FXApp = XApp;
@@ -99,10 +98,10 @@ TdlgMatProp::TdlgMatProp(TMainFrame *ParentFrame, TGPCollection *GPC, TGXApp *XA
   cbShnF = new wxCheckBox(this, -1, wxT("Shininess Front"), wxDefaultPosition, wxDefaultSize, flags);
   cbShnB = new wxCheckBox(this, -1, wxT("Shininess Back"), wxDefaultPosition, wxDefaultSize, flags);
 
-  FSpinCtrls->Add(scAmbF);  FSpinCtrls->Add(scAmbB);
-  FSpinCtrls->Add(scDiffF);  FSpinCtrls->Add(scDiffB);
-  FSpinCtrls->Add(scEmmF);  FSpinCtrls->Add(scEmmB);
-  FSpinCtrls->Add(scSpecF);  FSpinCtrls->Add(scSpecB);
+  SpinCtrls.Add(scAmbF);   SpinCtrls.Add(scAmbB);
+  SpinCtrls.Add(scDiffF);  SpinCtrls.Add(scDiffB);
+  SpinCtrls.Add(scEmmF);   SpinCtrls.Add(scEmmB);
+  SpinCtrls.Add(scSpecF);  SpinCtrls.Add(scSpecB);
 
   cbTrans = new wxCheckBox(this, -1, wxT("Transluent"), wxDefaultPosition, wxDefaultSize);
   scTrans = new TSpinCtrl(this);  scTrans->SetRange(5, 95);  scTrans->OnChange->Add(this);
@@ -212,10 +211,8 @@ TdlgMatProp::TdlgMatProp(TMainFrame *ParentFrame, TGPCollection *GPC, TGXApp *XA
   FParent->RestorePosition(this);
 }
 //..............................................................................
-TdlgMatProp::~TdlgMatProp()
-{
+TdlgMatProp::~TdlgMatProp()  {
   delete [] FMaterials;
-  delete FSpinCtrls;
   if( cbPrimitives )  cbPrimitives->OnChange->Clear();
   scTrans->OnChange->Clear();
   tcAmbF->OnClick->Clear();
@@ -250,41 +247,38 @@ bool TdlgMatProp::Execute(const IEObject *Sender, const IEObject *Data)  {
     }
   }
   if( (TSpinCtrl*)Sender == scTrans )  {
-    TSpinCtrl *SC;
-    for( int i=0; i < FSpinCtrls->Count(); i++ )  {
-      SC = (TSpinCtrl*)FSpinCtrls->Item(i);
-      SC->SetValue(scTrans->GetValue());
-    }
+    for( int i=0; i < SpinCtrls.Count(); i++ ) 
+      SpinCtrls[i]->SetValue(scTrans->GetValue());
   }
   return true;
 }
 //..............................................................................
 void TdlgMatProp::Init( const TGlMaterial &Glm )  {
-  cbAmbF->SetValue(Glm.GetAmbientF());
-  cbAmbB->SetValue(Glm.GetAmbientB());
+  cbAmbF->SetValue(Glm.HasAmbientF());
+  cbAmbB->SetValue(Glm.HasAmbientB());
   scAmbF->SetValue(Round(Glm.AmbientF.Data()[3]*100));
   scAmbB->SetValue( (int)Glm.AmbientB.Data()[3]*100);
 
-  cbDiffF->SetValue(Glm.GetDiffuseF());
-  cbDiffB->SetValue(Glm.GetDiffuseB());
+  cbDiffF->SetValue(Glm.HasDiffuseF());
+  cbDiffB->SetValue(Glm.HasDiffuseB());
   scDiffF->SetValue(Round(Glm.DiffuseF.Data()[3]*100));
   scDiffB->SetValue(Round(Glm.DiffuseB.Data()[3]*100));
 
-  cbEmmF->SetValue(Glm.GetEmissionF());
-  cbEmmB->SetValue(Glm.GetEmissionB());
+  cbEmmF->SetValue(Glm.HasEmissionF());
+  cbEmmB->SetValue(Glm.HasEmissionB());
   scEmmF->SetValue(Round(Glm.EmissionF.Data()[3]*100));
   scEmmB->SetValue(Round(Glm.EmissionB.Data()[3]*100));
 
-  cbSpecF->SetValue(Glm.GetSpecularF());
-  cbSpecB->SetValue(Glm.GetSpecularB());
+  cbSpecF->SetValue(Glm.HasSpecularF());
+  cbSpecB->SetValue(Glm.HasSpecularB());
   scSpecF->SetValue(Round(Glm.SpecularF.Data()[3]*100));
   scSpecB->SetValue(Round(Glm.SpecularB.Data()[3]*100));
 
-  cbShnF->SetValue(Glm.GetShininessF());
-  cbShnB->SetValue(Glm.GetShininessB());
+  cbShnF->SetValue(Glm.HasShininessF());
+  cbShnB->SetValue(Glm.HasShininessB());
 
-  cbTrans->SetValue(Glm.GetTransparent());
-  cbIDraw->SetValue(Glm.GetIdentityDraw());
+  cbTrans->SetValue(Glm.IsTransparent());
+  cbIDraw->SetValue(Glm.IsIdentityDraw());
 
   tcAmbF->WI.SetColor(Glm.AmbientF.GetRGB());
   tcAmbB->WI.SetColor(Glm.AmbientB.GetRGB());
@@ -351,11 +345,9 @@ void TdlgMatProp::OnOK(wxCommandEvent& event)  {
     TGlGroup& gl = FXApp->GetSelection();
     TGPCollection* ogpc = &FAtom->GetPrimitives();
     SortedPtrList<TGPCollection, TPointerPtrComparator> uniqCol;
-    for( int i=0; i < gl.Count(); i++ )  {
+    for( int i=0; i < gl.Count(); i++ )
       if( EsdlInstanceOf(gl.GetObject(i), TXAtom) )  {
-        int pos; // ah...
-        uniqCol.AddUnique(&gl.GetObject(i).GetPrimitives(), pos);
-      }
+        uniqCol.AddUnique(&gl.GetObject(i).GetPrimitives());
     }
     for( int i=0; i < uniqCol.Count(); i++ )  {
       if( uniqCol[i] != ogpc )  {

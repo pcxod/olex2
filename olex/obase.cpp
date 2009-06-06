@@ -137,39 +137,39 @@ olxstr TStateChange::StrRepr(uint32_t State) {
 }
 //..............................................................................
 uint32_t TStateChange::DecodeState( const olxstr& mode )  {
- if( !mode.Comparei("strvis") )
+ if( mode.Equalsi("strvis") )
    return prsStrVis;
-  else if( !mode.Comparei("hvis") )
+  else if( mode.Equalsi("hvis") )
     return prsHVis;
-  else if( !mode.Comparei("hbvis") )
+  else if( mode.Equalsi("hbvis") )
     return prsHBVis;
-  else if( !mode.Comparei("qvis") )
+  else if( mode.Equalsi("qvis") )
     return prsQVis;
-  else if( !mode.Comparei("qbvis") )
+  else if( mode.Equalsi("qbvis") )
     return prsQBVis;
-  else if( !mode.Comparei("cellvis") )
+  else if( mode.Equalsi("cellvis") )
     return prsCellVis;
-  else if( !mode.Comparei("basisvis") )
+  else if( mode.Equalsi("basisvis") )
     return prsBasisVis;
-  else if( !mode.Comparei("htmlvis") )
+  else if( mode.Equalsi("htmlvis") )
     return prsHtmlVis;
-  else if( !mode.Comparei("htmlttvis") )
+  else if( mode.Equalsi("htmlttvis") )
     return prsHtmlTTVis;
-  else if( !mode.Comparei("bmpvis") )
+  else if( mode.Equalsi("bmpvis") )
     return prsBmpVis;
-  else if( !mode.Comparei("pluginInstalled") )
+  else if( mode.Equalsi("pluginInstalled") )
     return prsPluginInstalled;
-  else if( !mode.Comparei("infovis") )
+  else if( mode.Equalsi("infovis") )
     return prsInfoVis;
-  else if( !mode.Comparei("helpvis") )
+  else if( mode.Equalsi("helpvis") )
     return prsHelpVis;
-  else if( !mode.Comparei("cmdlinevis") )
+  else if( mode.Equalsi("cmdlinevis") )
     return prsCmdlVis;
-  else if( !mode.Comparei("gradBG") )
+  else if( mode.Equalsi("gradBG") )
     return prsGradBG;
-  else if( !mode.Comparei("labelsvis") )
+  else if( mode.Equalsi("labelsvis") )
     return prsLabels;
-  else if( !mode.Comparei("GLTT") )
+  else if( mode.Equalsi("GLTT") )
     return prsGLTT;
   return prsNone;
 }

@@ -153,8 +153,7 @@ void TGlMaterial::Init() const  {
   }
 }
 //..............................................................................
-const TGlMaterial& TGlMaterial::Intensity(TGlOption& ClearColor, double intensity) const
-{
+const TGlMaterial& TGlMaterial::Intensity(TGlOption& ClearColor, double intensity) const  {
   static TGlMaterial GlM;
   GlM.AmbientF = (AmbientF.operator*(intensity));
   GlM.AmbientB = (AmbientB.operator*(intensity));

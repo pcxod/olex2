@@ -121,7 +121,7 @@ public:
     int fi = -1;
     TCAtomPList sorted;
     for( int i=0; i < list.Count(); i++ )  {
-      if( list[i]->GetLabel().Comparei(atom_names[0]) == 0 )  {
+      if( list[i]->GetLabel().Equalsi(atom_names[0]) )  {
         fi = i;
         sorted.Add(list[i]);
         list[i] = NULL;
@@ -133,7 +133,7 @@ public:
     for( int i=1; i < atom_names.Count(); i++ )  {
       for( int j=0; j < list.Count(); j++ )  {
         if( list[j] == NULL )  continue;
-        if( list[j]->GetLabel().Comparei(atom_names[i]) == 0 )  {
+        if( list[j]->GetLabel().Equalsi(atom_names[i]) )  {
           sorted.Add(list[j]);
           list[j] = NULL;
           break;
@@ -178,7 +178,7 @@ public:
       list[i]->SetTag(-1);
     for( int i=0; i < atom_names.Count(); i++ )  {
       for( int j=0; j < list.Count(); j++ )  {
-        if( list[j]->GetLabel().Comparei(atom_names[i]) == 0 )  {
+        if( list[j]->GetLabel().Equalsi(atom_names[i]) )  {
           if( list[j]->GetTag() == -1 )  {  // avoid duplicated moieties
             list[j]->SetTag(moieties.Count());
             moieties.Add( new moiety(list[j]) );

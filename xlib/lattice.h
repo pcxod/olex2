@@ -58,6 +58,8 @@ protected:
   // fills the list with atoms of asymmertic unit
   // the atoms have to be deleted with a call to delete
   void ListAsymmUnit(TSAtomPList& res, TCAtomPList* Template, bool IncludeQ);
+  // removes existing TSAtoms with TCAtom's masked
+  void ApplyMasks();
   void InitBody();
   void Disassemble();
   void RestoreCoordinates();

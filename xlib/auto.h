@@ -512,7 +512,7 @@ public:
   void ReInit(const TAsymmUnit& au);
   void InitAtom(TAutoDB::TGuessCount& guess);
   void Permutate();
-  DefPropB(Active)
+  DefPropBIsSet(Active)
 };
 
 EndXlibNamespace()

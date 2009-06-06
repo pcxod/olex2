@@ -86,7 +86,7 @@ public:
 
   void Clear();
 
-  DefPropB(LoadQPeaks)
+  DefPropBIsSet(LoadQPeaks)
   
   // this is -1 if not in the file like REM R1 = ...
   inline double GetR1() const {  return R1;  }
@@ -131,7 +131,7 @@ public:
       for( int i =0; i < SL.Count(); i++ )  {
         Toks.Clear();
         Toks.Strtok( SL[i], ' ');
-        if( Toks[0].Comparei("EQIV") == 0 && Toks.Count() >= 3 )  {
+        if( Toks[0].Equalsi("EQIV") && Toks.Count() >= 3 )  {
           smatd SymM;
           TSymmParser::SymmToMatrix(Toks.Text(EmptyString, 2), SymM);
           cx.rm.AddUsedSymm(SymM, Toks[1]);
@@ -156,42 +156,42 @@ public:
         else
           resi = EmptyString;
 
-        if( Toks[0].Comparei("EXYZ") == 0 )  {
+        if( Toks[0].Equalsi("EXYZ") )  {
           cx.rm.AddEXYZ( Toks.SubListFrom(1) );
           SL[i] = EmptyString;
           continue;
         }
-        else if( Toks[0].Comparei("DFIX") == 0 )  {
+        else if( Toks[0].Equalsi("DFIX") )  {
           srl = &cx.rm.rDFIX;
           RequiredParams = 1;  AcceptsParams = 2;
           DefEsd = 0.02;
           Vals[0] = &DefVal;  Vals[1] = &DefEsd;
         }
-        else if( Toks[0].Comparei("DANG") == 0 )  {
+        else if( Toks[0].Equalsi("DANG") )  {
           srl = &cx.rm.rDANG;
           RequiredParams = 1;  AcceptsParams = 2;
           DefEsd = 0.04;
           Vals[0] = &DefVal;  Vals[1] = &DefEsd;
         }
-        else if( Toks[0].Comparei("SADI") == 0 )  {
+        else if( Toks[0].Equalsi("SADI") )  {
           srl = &cx.rm.rSADI;
           RequiredParams = 0;  AcceptsParams = 1;
           DefEsd = 0.02;
           Vals[0] = &DefEsd;
         }
-        else if( Toks[0].Comparei("CHIV") == 0 )  {
+        else if( Toks[0].Equalsi("CHIV") )  {
           srl = &cx.rm.rCHIV;
           RequiredParams = 1;  AcceptsParams = 2;
           DefEsd = 0.1;
           Vals[0] = &DefEsd;  Vals[1] = &DefVal;
         }
-        else if( Toks[0].Comparei("FLAT") == 0 )  {
+        else if( Toks[0].Equalsi("FLAT") )  {
           srl = &cx.rm.rFLAT;
           DefEsd = 0.1;
           RequiredParams = 0;  AcceptsParams = 1;
           Vals[0] = &DefEsd; ;
         }
-        else if( Toks[0].Comparei("DELU") == 0 )  {
+        else if( Toks[0].Equalsi("DELU") )  {
           srl = &cx.rm.rDELU;
           DefEsd = 0.01;  DefEsd1 = 0.01;
           Esd1Mult = 1;
@@ -199,7 +199,7 @@ public:
           Vals[0] = &DefEsd;  Vals[1] = &DefEsd1;
           AcceptsAll = true;
         }
-        else if( Toks[0].Comparei("SIMU") == 0 )  {
+        else if( Toks[0].Equalsi("SIMU") )  {
           srl = &cx.rm.rSIMU;
           DefEsd = 0.04;  DefEsd1 = 0.08;
           Esd1Mult = 2;
@@ -208,7 +208,7 @@ public:
           Vals[0] = &DefEsd;  Vals[1] = &DefEsd1;  Vals[2] = &DefVal;
           AcceptsAll = true;
         }
-        else if( Toks[0].Comparei("ISOR") == 0 )  {
+        else if( Toks[0].Equalsi("ISOR") )  {
           srl = &cx.rm.rISOR;
           DefEsd = 0.1;  DefEsd1 = 0.2;
           Esd1Mult = 2;
@@ -216,7 +216,7 @@ public:
           Vals[0] = &DefEsd;  Vals[1] = &DefEsd1;
           AcceptsAll = true;
         }
-        else if( Toks[0].Comparei("EADP") == 0 )  {
+        else if( Toks[0].Equalsi("EADP") )  {
           srl = &cx.rm.rEADP;
           RequiredParams = 0;  AcceptsParams = 0;
         }
@@ -272,7 +272,7 @@ public:
               TBasicApp::GetLog().Error( olxstr("Wrong restraint parameters list: ") << SL[i] );
               continue;
             }
-            if( Toks[0].Comparei("FLAT") == 0 )  {  // a special case again...
+            if( Toks[0].Equalsi("FLAT") )  {  // a special case again...
               TSimpleRestraint* sr1 = &sr;
               for( int j=0; j < agroup.Count(); j += atomAGroup )  {
                 for( int k=0; k < atomAGroup; k++ )
@@ -297,11 +297,11 @@ public:
   /* parses a single line instruction, which does not depend on context (as SYMM) 
     this is used internally by ParseIns and AddIns    */
     template <class StrLst> bool _ParseIns(RefinementModel& rm, const StrLst& Toks)  {
-      if( Toks[0].Comparei("FVAR") == 0 )
+      if( Toks[0].Equalsi("FVAR") )
         rm.Vars.AddFVAR( Toks.SubListFrom(1) );
-      else if( Toks[0].Comparei("SUMP") == 0 )
+      else if( Toks[0].Equalsi("SUMP") )
         rm.Vars.AddSUMP( Toks.SubListFrom(1) );
-      else if( Toks[0].Comparei("WGHT") == 0 )  {
+      else if( Toks[0].Equalsi("WGHT") )  {
         if( rm.used_weight.Count() != 0 )  {
           rm.proposed_weight.SetCount(Toks.Count()-1);
           for( int j=1; j < Toks.Count(); j++ )
@@ -314,40 +314,40 @@ public:
           rm.proposed_weight = rm.used_weight;
         }
       }
-      else if( Toks[0].Comparei("TITL") == 0 )
+      else if( Toks[0].Equalsi("TITL") )
         Title = Toks.Text(' ', 1);
-      else if( Toks[0].Comparei("MERG") == 0 && Toks.Count() == 2 )
+      else if( Toks[0].Equalsi("MERG") && Toks.Count() == 2 )
         rm.SetMERG( Toks[1].ToInt() );
-      else if( Toks[0].Comparei("SIZE") == 0 && (Toks.Count() == 4) )
+      else if( Toks[0].Equalsi("SIZE") && (Toks.Count() == 4) )
         rm.expl.SetCrystalSize(Toks[1].ToDouble(), Toks[2].ToDouble(), Toks[3].ToDouble() );
-      else if( Toks[0].Comparei("BASF") == 0 && (Toks.Count() > 1) )
+      else if( Toks[0].Equalsi("BASF") && (Toks.Count() > 1) )
         rm.SetBASF( Toks.SubListFrom(1) );
-      else if( Toks[0].Comparei("OMIT") == 0 )
+      else if( Toks[0].Equalsi("OMIT") )
         rm.AddOMIT( Toks.SubListFrom(1) );
-      else if( Toks[0].Comparei("SHEL") == 0 )
+      else if( Toks[0].Equalsi("SHEL") )
         rm.SetSHEL( Toks.SubListFrom(1) );
-      else if( Toks[0].Comparei("TWIN") == 0 )
+      else if( Toks[0].Equalsi("TWIN") )
         rm.SetTWIN( Toks.SubListFrom(1) );
-      else if( Toks[0].Comparei("TEMP") == 0 && Toks.Count() == 2 )
+      else if( Toks[0].Equalsi("TEMP") && Toks.Count() == 2 )
         rm.expl.SetTemperature( Toks[1].ToDouble() );
-      else if( Toks[0].Comparei("HKLF") == 0 && (Toks.Count() > 1) )
+      else if( Toks[0].Equalsi("HKLF") && (Toks.Count() > 1) )
         rm.SetHKLF( Toks.SubListFrom(1) );
-      else if( Toks[0].Comparei("L.S.") == 0  || Toks[0].Comparei("CGLS") == 0 )  {
+      else if( Toks[0].Equalsi("L.S.") || Toks[0].Equalsi("CGLS") )  {
         rm.SetRefinementMethod(Toks[0]);
         rm.LS.SetCount( Toks.Count() - 1 );
         for( int i=1; i < Toks.Count(); i++ )
           rm.LS[i-1] = Toks[i].ToInt();
       }
-      else if( Toks[0].Comparei("PLAN") == 0  )  {
+      else if( Toks[0].Equalsi("PLAN") )  {
         rm.PLAN.SetCount( Toks.Count() - 1 );
         for( int i=1; i < Toks.Count(); i++ )
           rm.PLAN[i-1] = Toks[i].ToDouble();
       }
-      else if( Toks[0].Comparei("LATT") == 0 && (Toks.Count() > 1))
+      else if( Toks[0].Equalsi("LATT") && (Toks.Count() > 1))
         rm.aunit.SetLatt( (short)Toks[1].ToInt() );
-      else if( Toks[0].Comparei("UNIT") == 0 )
+      else if( Toks[0].Equalsi("UNIT") )
         Unit = Toks.Text(' ', 1);
-      else if( Toks[0].Comparei("ZERR") == 0 )  {
+      else if( Toks[0].Equalsi("ZERR") )  {
         if( Toks.Count() == 8 )  {
           rm.aunit.SetZ( (short)Toks[1].ToInt() );
           rm.aunit.Axes()[0].E() = Toks[2].ToDouble();

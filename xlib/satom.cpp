@@ -67,7 +67,7 @@ olxstr TSAtom::GetGuiLabel() const  {
 }
 //..............................................................................
 void TSAtom::SetNodeCount(size_t cnt)  {
-  if( cnt >= Nodes.Count() )
+  if( cnt >= (size_t)Nodes.Count() )
     return;
   for( int i=cnt; i < Nodes.Count(); i++ )  {
     Nodes[i]->Nodes.Remove(this);

@@ -55,9 +55,9 @@ IOutputStream& TEMemoryStream::operator << (IInputStream &is)  {
   }
   else  {
     TDirectionalListEntry<char>* en = GetTail();
-    long size = is.GetSize();
+    size_t size = is.GetSize();
     if( en->GetCapacity() - en->GetSize() )  {
-      int towrite = olx_min(en->GetCapacity() - en->GetSize(), size);
+      size_t towrite = olx_min(en->GetCapacity() - en->GetSize(), size);
       char* bf = new char[towrite];
       is.Read(bf, towrite);
       en->Write(bf, towrite);
@@ -65,7 +65,7 @@ IOutputStream& TEMemoryStream::operator << (IInputStream &is)  {
       size -= towrite;
       Position = towrite;
     }
-    if( size )  {
+    if( size != 0 )  {
       char* mem = TTBuffer<char>::Alloc(size);
       is.Read( mem, size );
       en->AddEntry( mem, size );

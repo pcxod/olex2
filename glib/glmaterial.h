@@ -68,43 +68,23 @@ public:
 
   inline bool HasMark() const {  return Mark;  }
   inline void SetMark(bool v) {  Mark = v;  }
+  // Has/Set 
+  DefPropBFHasSet(AmbientF,   Flags, sglmAmbientF)
+  DefPropBFHasSet(DiffuseF,   Flags, sglmDiffuseF)
+  DefPropBFHasSet(EmissionF,  Flags, sglmEmissionF)
+  DefPropBFHasSet(SpecularF,  Flags, sglmSpecularF)
+  DefPropBFHasSet(ShininessF, Flags, sglmShininessF)
 
-  inline void SetAmbientF(bool On) {  SetBit(On, Flags, sglmAmbientF); }
-  inline void SetDiffuseF(bool On) {  SetBit(On, Flags, sglmDiffuseF); }
-  inline void SetAmbientB(bool On) {  SetBit(On, Flags, sglmAmbientB); }
-  inline void SetDiffuseB(bool On) {  SetBit(On, Flags, sglmDiffuseB); }
+  DefPropBFHasSet(AmbientB,   Flags, sglmAmbientB)
+  DefPropBFHasSet(DiffuseB,   Flags, sglmDiffuseB)
+  DefPropBFHasSet(EmissionB,  Flags, sglmEmissionB)
+  DefPropBFHasSet(SpecularB,  Flags, sglmSpecularB)
+  DefPropBFHasSet(ShininessB, Flags, sglmShininessB)
 
-  inline void SetEmissionF(bool On) {  SetBit(On, Flags, sglmEmissionF); }
-  inline void SetSpecularF(bool On) {  SetBit(On, Flags, sglmSpecularF); }
-  inline void SetShininessF(bool On){  SetBit(On, Flags, sglmShininessF); }
-  inline void SetEmissionB(bool On) {  SetBit(On, Flags, sglmEmissionB); }
-  inline void SetSpecularB(bool On) {  SetBit(On, Flags, sglmSpecularB); }
-  inline void SetShininessB(bool On){  SetBit(On, Flags, sglmShininessB); }
-
-  inline void SetLighting(bool On){  SetBit(On, Flags, sglmLighting); }
-  inline void SetColorMaterial(bool On){  SetBit(On, Flags, sglmColorMat); }
-
-
-  inline bool GetAmbientF() const {  return (Flags & sglmAmbientF) == sglmAmbientF; }
-  inline bool GetDiffuseF() const {  return (Flags & sglmDiffuseF) == sglmDiffuseF;  }
-  inline bool GetAmbientB() const {  return (Flags & sglmAmbientB) == sglmAmbientB;  }
-  inline bool GetDiffuseB() const {  return (Flags & sglmDiffuseB) == sglmDiffuseB;  }
-
-  inline bool GetEmissionF() const {  return (Flags & sglmEmissionF) == sglmEmissionF;  }
-  inline bool GetSpecularF() const {  return (Flags & sglmSpecularF) ==  sglmSpecularF;  }
-  inline bool GetShininessF()const {  return (Flags & sglmShininessF) ==  sglmShininessF;  }
-  inline bool GetEmissionB() const {  return (Flags & sglmEmissionB) == sglmEmissionB;  }
-  inline bool GetSpecularB() const {  return (Flags & sglmSpecularB) == sglmSpecularB;  }
-  inline bool GetShininessB()const {  return (Flags & sglmShininessB) == sglmShininessB;  }
-
-  inline bool GetLighting() const {  return (Flags & sglmLighting)  == sglmLighting;  }
-  inline bool GetColorMaterial() const {  return (Flags & sglmColorMat) == sglmColorMat;  }
-
-  inline void SetTransparent(bool On) {  SetBit(On, Flags, sglmTransparent);  }
-  inline bool GetTransparent() const  {  return (Flags & sglmTransparent) == sglmTransparent;  }
-
-  inline void SetIdentityDraw(bool On) {  SetBit(On, Flags, sglmIdentityDraw);  }
-  inline bool GetIdentityDraw() const  {  return (Flags & sglmIdentityDraw) == sglmIdentityDraw;  }
+  DefPropBFHasSet(Lighting,  Flags, sglmLighting)
+  DefPropBFHasSet(ColorMaterial,  Flags, sglmColorMat)
+  DefPropBFIsSet(Transparent,  Flags, sglmTransparent)
+  DefPropBFIsSet(IdentityDraw,  Flags, sglmIdentityDraw)
 
   TGlMaterial& operator = (const TGlMaterial &G);
   AGOProperties& operator = (const AGOProperties &G);

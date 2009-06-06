@@ -249,7 +249,7 @@ void TXFile::Sort(const TStrList& ins)  {
     for( int i=0; i < ins.Count(); i++ )  {
       if( ins[i].CharAt(0) == '+' )
         sort << ins[i].SubStringFrom(i);
-      else if( ins[i].Comparei("moiety") == 0 )  {
+      else if( ins[i].Equalsi("moiety") )  {
         moiety_index = i;
         break;
       }
@@ -421,9 +421,9 @@ void TXFile::LibGetFormula(const TStrObjList& Params, TMacroError& E)  {
   bool list = false, html = false;
   int digits = -1;
   if( Params.Count() > 0 )  {
-    if( Params[0].Comparei("list") == 0 )
+    if( Params[0].Equalsi("list") )
       list = true;
-    else if( Params[0].Comparei("html") == 0 )
+    else if( Params[0].Equalsi("html") )
       html = true;
   }
   if( Params.Count() == 2 )

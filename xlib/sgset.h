@@ -7,7 +7,7 @@ class AxisInfo  {
   olxstr axis;
 public:
   AxisInfo(const TSpaceGroup& sg, const olxstr _axis=EmptyString) : axis(_axis.IsEmpty() ? sg.GetAxis() : _axis)  {
-    if( axis.IsEmpty() && sg.GetBravaisLattice().GetName().Comparei("Orthorhombic") == 0 )
+    if( axis.IsEmpty() && sg.GetBravaisLattice().GetName().Equalsi("Orthorhombic") )
       axis = "abc";
   }
   bool HasCellChoice() const {
@@ -99,7 +99,7 @@ public:
       m = rv;
       return !rv.IsI();
     }
-    if( ai.GetAxis().Comparei("abc") == 0 )  {
+    if( ai.GetAxis().Equalsi("abc") )  {
       if( sg.GetAxis() == "ba-c" ) 
         rv = mat3d(0, 1, 0, 1, 0, 0, 0, 0, -1);
       else if( sg.GetAxis() == "cab" )

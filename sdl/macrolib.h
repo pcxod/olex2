@@ -234,7 +234,7 @@ public:
             olxstr localArg;
             for( int j=0; j < Params.Count(); j++ )  {
               if( !ProcessMacroFunc(Params[j], E) )  {
-                if( !Func.Comparei("eval") ) // put the function back
+                if( Func.Equalsi("eval") ) // put the function back
                   Params[j] = ArgV;
                 else  return false;
               }
@@ -357,7 +357,7 @@ public:
     }
     ABasicFunction *MF = OlexProcessor.GetLibrary().FindMacro(Command);//, Cmds.Count());
     if( MF != NULL )  {
-      if( Command.Comparei("if") == 0 )  {
+      if( Command.Equalsi("if") )  {
         MF->Run(Cmds, Options, Error);
         if( Error.IsSuccessful() && Error.GetStack() != NULL )  
           Error.GetStack()->Pop();

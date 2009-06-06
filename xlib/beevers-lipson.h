@@ -113,7 +113,7 @@ public:
           //if( abs_map && val < 0 )  val = -val;
           if( val > mi.maxVal )  mi.maxVal = val;
           if( val < mi.minVal )  mi.minVal = val;
-          map[ix][iy][iz] = val;
+          map[ix][iy][iz] = (FloatT)val;
         }
         for( int i=0; i < lLen; i++ )  
           T[i].Null();

@@ -34,7 +34,8 @@ const short
   catom_flag_Deleted    = 0x0001,
   catom_flag_Growable   = 0x0002,
   catom_flag_HAttached  = 0x0004,
-  catom_flag_Saved      = 0x0008;
+  catom_flag_Saved      = 0x0008,
+  catom_flag_Masked     = 0x0010;
 
 class TEllipsoid;
 class TAfixGroup;
@@ -154,14 +155,11 @@ public:
   DefPropP(double, UisoScale)
   DefPropP(TCAtom*, UisoOwner)
   DefPropP(double, QPeak)
-  inline bool IsDeleted()     const {  return (Flags & catom_flag_Deleted) != 0;  }
-  inline bool IsSaved()       const {  return (Flags & catom_flag_Saved) != 0;  }
-  inline bool IsHAttached()   const {  return (Flags & catom_flag_HAttached) != 0;  }
-  inline bool IsGrowable()    const {  return (Flags & catom_flag_Growable) != 0;  }
-  inline void SetDeleted(bool v)    {  SetBit(v, Flags, catom_flag_Deleted);  }
-  inline void SetSaved(bool v)      {  SetBit(v, Flags, catom_flag_Saved);  }
-  inline void SetHAttached(bool v)  {  SetBit(v, Flags, catom_flag_HAttached);  }
-  inline void SetGrowable(bool v)   {  SetBit(v, Flags, catom_flag_Growable);  }
+  DefPropBFIsSet(Deleted,   Flags, catom_flag_Deleted)
+  DefPropBFIsSet(Saved,     Flags, catom_flag_Saved)
+  DefPropBFIsSet(HAttached, Flags, catom_flag_HAttached)
+  DefPropBFIsSet(Growable,  Flags, catom_flag_Growable)
+  DefPropBFIsSet(Masked,    Flags, catom_flag_Masked)
 
   TEllipsoid* GetEllipsoid() const;
   void UpdateEllp( const TEllipsoid& NV);

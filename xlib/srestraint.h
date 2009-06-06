@@ -68,7 +68,7 @@ public:
   DefPropP(double, Value)
   DefPropP(double, Esd)
   DefPropP(double, Esd1)
-  DefPropB(AllNonHAtoms)
+  DefPropBIsSet(AllNonHAtoms)
 
   // compares pointer addresses only!
   bool operator == (const TSimpleRestraint& sr) const {  return this == &sr;  }

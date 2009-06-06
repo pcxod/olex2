@@ -222,7 +222,7 @@ void DoRun()  {
     filesToSkip.Strtok(settings.ParamValue("skip", EmptyString), ';');
     TBasicApp::GetLog() << "Skipping the following files: " << filesToSkip.Text(' ') << '\n';
   }
-  if( TEFile::ExtractFileExt(Repository).Comparei("zip") != 0 )
+  if( !TEFile::ExtractFileExt(Repository).Equalsi("zip") )
     if( Repository.Length() && !Repository.EndsWith('/') )
       Repository << '/';
 
@@ -258,7 +258,7 @@ void DoRun()  {
     catch( TExceptionBase &e )  {  ;  }
   }
   // end properties evaluation
-  if( TEFile::ExtractFileExt(Repository).Comparei("zip") == 0 )  {
+  if( TEFile::ExtractFileExt(Repository).Equalsi("zip") )  {
     if( !TEFile::IsAbsolutePath(Repository) )
       Repository = TBasicApp::GetInstance()->BaseDir() + Repository;
     if( TEFile::FileAge(Repository) > LastUpdate )  {
@@ -293,12 +293,12 @@ void DoRun()  {
   if( !ftpToSync.IsEmpty() )  {
     AFileSystem* FS = NULL;
     try  {
-      if( syncSrc.Comparei("fs2Ftp") == 0 )  {
+      if( syncSrc.Equalsi("fs2Ftp") )  {
         FS = new TOSFileSystem; // local file system
         FS->SetBase( TBasicApp::GetInstance()->BaseDir() );
         FS->SetBase( TEFile::AddTrailingBackslash( FS->GetBase() ) );
       }
-      else if( syncSrc.Comparei("http2Ftp") == 0 )  {
+      else if( syncSrc.Equalsi("http2Ftp") )  {
         TUrl url(Repository);
         if( !Proxy.IsEmpty() )  url.SetProxy( Proxy );
         FS = new TwxHttpFileSystem(url);    

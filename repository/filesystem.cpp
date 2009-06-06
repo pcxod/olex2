@@ -167,7 +167,7 @@ int TFSItem::ReadStrings(int& index, TFSItem* caller, TStrList& strings, const T
       if( folder )  {
         if( toSkip->filesToSkip != NULL )  {
           for( int i=0; i < toSkip->filesToSkip->Count(); i++ )  {
-            if( (*toSkip->filesToSkip)[i].Comparei(name) == 0 )  {
+            if( (*toSkip->filesToSkip)[i].Equalsi(name) )  {
               skip = true;
               break;
             }
@@ -192,7 +192,7 @@ int TFSItem::ReadStrings(int& index, TFSItem* caller, TStrList& strings, const T
       else  {
         if( toSkip->extsToSkip != NULL && !ext.IsEmpty() )  {  
           for( int i=0; i < toSkip->extsToSkip->Count(); i++ )  {
-            if( (*toSkip->extsToSkip)[i].Comparei(ext) == 0 )  {
+            if( (*toSkip->extsToSkip)[i].Equalsi(ext) )  {
               skip = true;
               break;
             }
@@ -200,7 +200,7 @@ int TFSItem::ReadStrings(int& index, TFSItem* caller, TStrList& strings, const T
         }
         if( !skip && toSkip->filesToSkip != NULL )  {
           for( int i=0; i < toSkip->filesToSkip->Count(); i++ )  {
-            if( (*toSkip->filesToSkip)[i].Comparei(name) == 0 )  {
+            if( (*toSkip->filesToSkip)[i].Equalsi(name) )  {
               skip = true;
               break;
             }

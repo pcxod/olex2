@@ -196,8 +196,8 @@ public:
 
   inline TGraphicsStyle* GetParentStyle() const {  return ParentStyle; }
 
-  DefPropB(Saveable)
-  DefPropB(Persistent)
+  DefPropBIsSet(Saveable)
+  DefPropBIsSet(Persistent)
 
   void ToDataItem(TDataItem& Item, bool saveAll=false) const;
   bool FromDataItem(const TDataItem& Item);

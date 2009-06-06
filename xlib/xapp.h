@@ -44,7 +44,7 @@ protected:
 public:
   TXApp(const olxstr &basedir, ASelectionOwner* selOwner=NULL);
   virtual ~TXApp();
-  inline TXFile& XFile()         {  return *FXFile; }
+  inline TXFile& XFile() const {  return *FXFile; }
   
   DefPropC(olxstr, CifTemplatesDir)
 

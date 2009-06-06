@@ -82,11 +82,11 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
     Toks.Strtok(InsFile[i], ' ');
     if( Toks.IsEmpty() )  continue;
 
-    if( Toks[0].Comparei("MOLE") == 0 )  // these are dodgy
+    if( Toks[0].Equalsi("MOLE") )  // these are dodgy
       continue;
     else if( ParseIns(InsFile, Toks, cx, i) )
       continue;
-    else if( Toks[0].Comparei("END") == 0 )  {   //reset RESI to default
+    else if( Toks[0].Equalsi("END") )  {   //reset RESI to default
       cx.End = true;  
       cx.Resi = &GetAsymmUnit().GetResidue(-1);
       cx.AfixGroups.Clear();
@@ -242,16 +242,16 @@ void TIns::__ProcessConn(ParseContext& cx)  {
       continue;
     toks.Clear();
     toks.Strtok(Ins[i], ' ');
-    if( toks[0].Comparei("CONN") == 0 )  {
+    if( toks[0].Equalsi("CONN") )  {
       TStrList sl(toks.SubListFrom(1));
       cx.rm.Conn.ProcessConn(sl);
       Ins[i] = EmptyString;
     }
-    else if( toks[0].Comparei("FREE") == 0 )  {
+    else if( toks[0].Equalsi("FREE") )  {
       cx.rm.Conn.ProcessFree(toks.SubListFrom(1));
       Ins[i] = EmptyString;
     }
-    else if( toks[0].Comparei("BIND") == 0 )  {
+    else if( toks[0].Equalsi("BIND") )  {
       cx.rm.Conn.ProcessBind(toks.SubListFrom(1));
       Ins[i] = EmptyString;
     }
@@ -301,7 +301,7 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx,
   TAtomsInfo& atomsInfo = TAtomsInfo::GetInstance();
   if( _ParseIns(cx.rm, Toks) )
     return true;
-  else if( !cx.CellFound && Toks[0].Comparei("CELL") == 0 )  {
+  else if( !cx.CellFound && Toks[0].Equalsi("CELL") )  {
     if( Toks.Count() == 8 )  {
       cx.rm.expl.SetRadiation( Toks[1].ToDouble() );
       cx.au.Axes()[0] = Toks[2];
@@ -316,9 +316,9 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx,
     else  
       throw TFunctionFailedException(__OlxSourceInfo, "invalid Cell instruction");
   }
-  else if( Toks[0].Comparei("SYMM") == 0 && (Toks.Count() > 1))
+  else if( Toks[0].Equalsi("SYMM") && (Toks.Count() > 1))
     cx.Symm.Add( Toks.Text(EmptyString, 1) );
-  else if( Toks[0].Comparei("FRAG") == 0 && (Toks.Count() > 1))  {
+  else if( Toks[0].Equalsi("FRAG") && (Toks.Count() > 1))  {
    int code = Toks[1].ToInt();
     if( code < 17 )
       throw TInvalidArgumentException(__OlxSourceInfo, "FRAG code must be more than 16");
@@ -340,7 +340,7 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx,
       f_toks.Clear();
     }
   }
-  else if( Toks[0].Comparei("PART") == 0 && (Toks.Count() > 1) )  {
+  else if( Toks[0].Equalsi("PART") && (Toks.Count() > 1) )  {
     cx.Part = (short)Toks[1].ToInt();
     if( cx.Part == 0 )  cx.PartOccu = 0;
     if( Toks.Count() == 3 )
@@ -348,7 +348,7 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx,
     // TODO: validate if appropriate here...
     //_ProcessAfix0(cx);
   }
-  else if( Toks[0].Comparei("AFIX") == 0 && (Toks.Count() > 1) )  {
+  else if( Toks[0].Equalsi("AFIX") && (Toks.Count() > 1) )  {
     int afix = Toks[1].ToInt();
     TAfixGroup* afixg = NULL;
     int n = 0, m = 0;
@@ -432,7 +432,7 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx,
       }
     }
   }
-  else if( Toks[0].Comparei("RESI") == 0 )  {
+  else if( Toks[0].Equalsi("RESI") )  {
     if( Toks.Count() < 3 )
       throw TInvalidArgumentException(__OlxSourceInfo, "wrong number of arguments for a residue");
     if( Toks[1].IsNumber() )
@@ -440,7 +440,7 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx,
     else
       cx.Resi = &cx.au.NewResidue(Toks[1], Toks[2].ToInt(), (Toks.Count() > 3) ? Toks[3] : EmptyString);
   }
-  else if( Toks[0].Comparei("SFAC") == 0 )  {
+  else if( Toks[0].Equalsi("SFAC") )  {
     bool expandedSfacProcessed = false;
     if( Toks.Count() == 16 )  {  // a special case for expanded sfac
       int NumberCount = 0;
@@ -483,15 +483,15 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx,
       }
     }
   }
-  else if( Toks[0].Comparei("DISP") == 0 )     {  
+  else if( Toks[0].Equalsi("DISP") )     {  
     Disp.Add( Toks.Text(' ', 1) );
   }
-  else if( Toks[0].Comparei("REM") == 0 )     {  
+  else if( Toks[0].Equalsi("REM") )     {  
     if( Toks.Count() > 1 )  {
-      if( Toks[1].Comparei("R1") == 0 && Toks.Count() > 4 && Toks[3].IsNumber() )  {
+      if( Toks[1].Equalsi("R1") && Toks.Count() > 4 && Toks[3].IsNumber() )  {
         R1 = Toks[3].ToDouble();
       }
-      else if( Toks[1].Comparei("olex2.stop_parsing") == 0 )  {
+      else if( Toks[1].Equalsi("olex2.stop_parsing") )  {
         while( i < ins.Count() )  {
           Skipped.Add( ins[i] );
           if( ins[i].StartsFromi("REM") && ins[i].IndexOf("olex2.resume_parsing") != -1 ) 
@@ -524,7 +524,7 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx,
         Ins.Add( Toks.Text(' ') ); 
     }
   }
-  else if( Toks[0].Comparei("SAME") == 0 )  {
+  else if( Toks[0].Equalsi("SAME") )  {
     if( !cx.Same.IsEmpty() && cx.Same.Last().GetB() == NULL )  // no atom so far, add to the list of Same
       cx.Same.Last().A().Add( Toks.Text(' ', 1) );
     else  {
@@ -568,12 +568,12 @@ bool TIns::AddIns(const TStrList& toks, RefinementModel& rm, bool CheckUniq)  {
   // check for uniqueness
   if( CheckUniq )  {
     for( int i=0; i < Ins.Count(); i++ )  {
-      if( !Ins[i].Comparei(toks[0]) )  {
+      if( Ins[i].Equalsi(toks[0]) )  {
         TInsList *ps = Ins.GetObject(i);
         if( ps->Count() == (toks.Count()-1) )  {
           bool unique = false;
           for( int j=0; j < ps->Count(); j++ )  {
-            if( ps->GetString(j).Comparei(toks[j+1]) != 0 )  {
+            if( !ps->GetString(j).Equalsi(toks[j+1]) )  {
               unique = true;
               break;
             }
@@ -874,7 +874,7 @@ void TIns::SaveToStrings(TStrList& SL)  {
         if( residue[k].IsDeleted() )  continue;
         if( residue[j].GetPart() != residue[k].GetPart() && 
             residue[j].GetPart() != 0 && residue[k].GetPart() != 0 )  continue;
-        if( residue[j].GetLabel().Comparei(residue[k].GetLabel()) == 0 ) 
+        if( residue[j].GetLabel().Equalsi(residue[k].GetLabel()) ) 
           residue[k].Label() = GetAsymmUnit().CheckLabel(&residue[k], residue[k].GetLabel() );
       }
     }

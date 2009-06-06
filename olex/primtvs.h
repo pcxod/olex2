@@ -7,10 +7,9 @@ class TdlgPrimitive: public TDialog
 {
 protected:
   void OnOK(wxCommandEvent& event);
-  TStrList* FPList;
-  TEList FBoxes;
+  TPtrList<wxCheckBox> Boxes;
 public:
-  TdlgPrimitive(TStrList *L, int mask, class TMainForm *P);
+  TdlgPrimitive(const TStrList& L, int mask, class TMainForm *P);
   virtual ~TdlgPrimitive();
   int Mask;
   DECLARE_EVENT_TABLE()

@@ -80,8 +80,8 @@ public:
   DefPropP(int, Height)
   DefPropP(int, Top)
   DefPropP(int, Left)
-  DefPropB(Blend)
-  DefPropB(SkipPosting)
+  DefPropBIsSet(Blend)
+  DefPropBIsSet(SkipPosting)
   inline bool ShowBuffer() const                  {  return FShowBuffer; }
   inline void ShowBuffer(bool v)                  {  FShowBuffer = v; }
   inline float GetLineSpacing()  const            {  return FLineSpacing; }

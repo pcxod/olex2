@@ -51,12 +51,12 @@ TOlexViewer::TOlexViewer(HDC windowDC, int w, int h) : WindowDC(windowDC) {
   glClearColor(0.5, 0.5, 0, 0);
   OnSize(w, h);
   wxFont Font(*wxNORMAL_FONT);//|wxFONTFLAG_ANTIALIASED);
-  TGlFont *fnt = GXApp->GetRender().Scene()->CreateFont("Labels", Font.GetNativeFontInfoDesc().c_str());
+  TGlFont *fnt = GXApp->GetRender().GetScene().CreateFont("Labels", Font.GetNativeFontInfoDesc().c_str());
   fnt->Material().SetFlags(sglmAmbientF|sglmEmissionF|sglmIdentityDraw);
   fnt->Material().AmbientF = 0x7fff7f;
   fnt->Material().EmissionF = 0x1f2f1f;
   
-  GXApp->LabelsFont(0);
+  GXApp->SetLabelsFont(0);
 
   TIns *Ins = new TIns;
   GXApp->RegisterXFileFormat(Ins, "ins");
@@ -64,11 +64,11 @@ TOlexViewer::TOlexViewer(HDC windowDC, int w, int h) : WindowDC(windowDC) {
   GXApp->SetMainFormVisible(true);
   GXApp->AtomRad("isot");
   //GXApp->SetAtomDrawingStyle(adsEllipsoid);
-  TXAtom::DefElpMask(5);
+  TXAtom::DefMask(5);
   TXAtom::DefDS(adsEllipsoid);
   TXBond::DefMask(48);
-  GXApp->LabelsVisible(false);
-  GXApp->LabelsMode(lmLabels);
+  GXApp->SetLabelsVisible(false);
+  GXApp->SetLabelsMode(lmLabels);
   GXApp->CalcProbFactor(50);
   GXApp->EnableSelection(false);
   DefDS = olxv_DrawStyleTelp;
@@ -170,8 +170,8 @@ olxstr TOlexViewer::GetObjectLabelAt(int x, int y)  {
       }
     }
     else  if( EsdlInstanceOf( *G, TXBond) )  {
-      Tip = ((TXBond*)G)->Bond().GetA().GetLabel();
-      Tip << '-' << ((TXBond*)G)->Bond().GetB().GetLabel() << ": ";
+      Tip = ((TXBond*)G)->Bond().A().GetLabel();
+      Tip << '-' << ((TXBond*)G)->Bond().B().GetLabel() << ": ";
       Tip << olxstr::FormatFloat(3, ((TXBond*)G)->Bond().Length());
     } 
   }
@@ -187,10 +187,10 @@ void TOlexViewer::ShowLabels(unsigned short type)  {
   if( (type & olxv_LabelsH) != 0 )  t |= lmHydr;
   if( (type & olxv_LabelsQ) != 0 )  t |= lmQPeak;
   if( t == 0 )
-    GXApp->LabelsVisible(false);
+    GXApp->SetLabelsVisible(false);
   else  {
-    GXApp->LabelsMode(t);
-    GXApp->LabelsVisible(true);
+    GXApp->SetLabelsMode(t);
+    GXApp->SetLabelsVisible(true);
   }
 }
 //.......................................................................................
@@ -206,7 +206,6 @@ void TOlexViewer::ShowCell(bool v)  {
 void TOlexViewer::DrawStyle(short style)  {
   if( style == olxv_DrawStylePers )  {
     GXApp->AtomRad("pers");
-    TXAtom::DefSphMask(1);
     TXAtom::DefDS(adsSphere);
     TXBond::DefMask(48);
     GXApp->UpdateAtomPrimitives(1);
@@ -215,7 +214,6 @@ void TOlexViewer::DrawStyle(short style)  {
   }
   else if( style == olxv_DrawStyleTelp )  {
     GXApp->AtomRad("isot");
-    TXAtom::DefElpMask(5);
     TXAtom::DefDS(adsEllipsoid);
     TXBond::DefMask(48);
     GXApp->CalcProbFactor(50);
@@ -225,7 +223,6 @@ void TOlexViewer::DrawStyle(short style)  {
   }
   else if( style == olxv_DrawStyleSfil )  {
     GXApp->AtomRad("sfil");
-    TXAtom::DefSphMask(1);
     TXAtom::DefDS(adsSphere);
     TXBond::DefMask(48);
     GXApp->UpdateAtomPrimitives(1);
@@ -240,7 +237,7 @@ void TOlexViewer::LoadStyle(const olxstr& _styleFile)  {
     if( TEFile::FileExists(styleFile) )  {
       TDataFile df;
       df.LoadFromXLFile(styleFile);
-      GXApp->GetRender().Styles()->FromDataItem(*df.Root().FindItem("style"));
+      GXApp->GetRender().GetStyles().FromDataItem(*df.Root().FindItem("style"));
       GXApp->CreateObjects( true );
     }
   }

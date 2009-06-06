@@ -175,7 +175,7 @@ IEvaluable* TSyntaxParser::SimpleParse(const olxstr& Exp)  {
           LeftEvaluator = new TScalarEvaluator( LeftExp.ToDouble() );
           Evaluators.Add( LeftEvaluator );
         }
-        else  if( !LeftExp.Comparei("true") || !LeftExp.Comparei("false") )  {
+        else  if( LeftExp.Equalsi("true") || LeftExp.Equalsi("false") )  {
           LeftEvaluator = new TBoolEvaluator( LeftExp.ToBool() );
           Evaluators.Add( LeftEvaluator );
         }
@@ -193,7 +193,7 @@ IEvaluable* TSyntaxParser::SimpleParse(const olxstr& Exp)  {
           RightEvaluator = new TScalarEvaluator( RightExp.ToDouble() );
           Evaluators.Add( RightEvaluator );
         }
-        else  if( !RightExp.Comparei("true") || !RightExp.Comparei("false") )  {
+        else  if( RightExp.Equalsi("true") || !RightExp.Equalsi("false") )  {
           RightEvaluator = new TBoolEvaluator( RightExp.ToBool() );
           Evaluators.Add( RightEvaluator );
         }
