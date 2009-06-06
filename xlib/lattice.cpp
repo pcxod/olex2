@@ -763,29 +763,28 @@ TSPlane* TLattice::TmpPlane(const TSAtomPList& atoms, int weightExtent)  {
 //..............................................................................
 void TLattice::UpdateAsymmUnit()  {
   if( Atoms.IsEmpty() )  return;
-  TTypeList<TSAtomPList> AUAtoms;
-  TSAtom* OA;
   const int ac = GetAsymmUnit().AtomCount();
+  TTypeList<TSAtomPList> AUAtoms(ac);
   for( int i=0; i < ac; i++ )  // create lists to store atom groups
-    AUAtoms.AddNew();
+    AUAtoms.Set(i, new TSAtomPList);
   const int lat_ac = Atoms.Count();
   for( int i=0; i < lat_ac; i++ )  {
-    TSAtom* A = Atoms[i];
-    if( A->IsDeleted() )  continue;
-    AUAtoms[A->CAtom().GetId()].Add(A);
+    if( Atoms[i]->IsDeleted() )  continue;
+    AUAtoms[Atoms[i]->CAtom().GetId()].Add(Atoms[i]);
   }
   for( int i=0; i < ac; i++ )  {  // create lists to store atom groups
     TSAtomPList& l = AUAtoms[i];
+    TCAtom& ca = AsymmUnit->GetAtom(i);
     if( l.IsEmpty() )  {  // all atoms are deleted
-      AsymmUnit->GetAtom(i).SetDeleted(true);
+      ca.SetDeleted( !ca.IsMasked() || ca.GetAtomInfo() == iQPeakIndex);
       continue;
     }
     // find the original atom, or symmetry equivalent if removed
-    OA = NULL;
+    TSAtom* OA = NULL;
     const int lst_c = l.Count();
     for( int j=0; j < lst_c; j++ )  {
       TSAtom* A = l[j];
-      int am_c = A->MatrixCount();
+      const int am_c = A->MatrixCount();
       for( int k=0; k < am_c; k++ )  {
         const smatd& m = A->GetMatrix(k);
         if( m.GetTag() == 0 && m.t.IsNull() )  {  // the original atom
@@ -797,12 +796,10 @@ void TLattice::UpdateAsymmUnit()  {
     }
     if( OA == NULL )
       OA = l[0];
-    TCAtom& CA = GetAsymmUnit().GetAtom(i);
-    CA.SetDeleted(false);
-    if( OA->GetEllipsoid() )  {
-      CA.UpdateEllp(*OA->GetEllipsoid());
-    }
-    CA.ccrd() = OA->ccrd();
+    ca.SetDeleted(false);
+    if( OA->GetEllipsoid() )
+      ca.UpdateEllp(*OA->GetEllipsoid());
+    ca.ccrd() = OA->ccrd();
   }
   if( GetAsymmUnit().DoesContainEquivalents() )
     AsymmUnit->SetContainsEquivalents( UnitCell->FindSymmEq(0.1, false, false, false) != 0 );

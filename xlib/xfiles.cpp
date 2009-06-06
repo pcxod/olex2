@@ -170,6 +170,7 @@ void TXFile::LoadFromFile(const olxstr & FN) {
     }
     GetLattice().Clear(true);
     GetRM().Assign(Loader->GetRM(), true);
+    OnFileLoad->Execute(this);
     GetLattice().Init();
     OnFileLoad->Exit(this);
   }
@@ -180,7 +181,6 @@ void TXFile::LoadFromFile(const olxstr & FN) {
         FileFormats.GetObject(i) = Loader;
     delete FLastLoader;
   }
-
   FLastLoader = Loader;
 }
 //..............................................................................
