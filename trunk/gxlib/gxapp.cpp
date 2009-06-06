@@ -153,13 +153,14 @@ TXBondStylesClear::~TXBondStylesClear()  {  ;  }
 class xappXFileLoad: public AActionHandler  {
   TGXApp *FParent;
   TEBasis B;
+  TStrList AtomNames;
+  TEBitArray CAtomMasks;
 public:
   xappXFileLoad(TGXApp *Parent) {  
     FParent = Parent;  
     AActionHandler::SetToDelete(false);
   }
   ~xappXFileLoad()  {  return;  }
-  bool Execute(const IEObject *Sender, const IEObject *Data)  {  return false;  }
   bool Enter(const IEObject *Sender, const IEObject *Data)  {
     FParent->ClearLabels();
     // make sure that these are only cleared when file is loaded
@@ -170,6 +171,24 @@ public:
         if( s1 != s2 )  {
           FParent->ClearIndividualCollections();
           FParent->GetRender().GetStyles().RemoveNamedStyles("Q");
+        }
+        else  {
+          const TAsymmUnit& au = FParent->XFile().GetAsymmUnit();
+          int ac = 0;
+          for( int i=0; i < au.AtomCount(); i++ )  {
+            const TCAtom& ca = au.GetAtom(i);           
+            if( ca.IsDeleted() || ca.GetAtomInfo() == iQPeakIndex )  continue;
+            ac++;
+          }
+          AtomNames.SetCapacity(ac);
+          CAtomMasks.SetSize(ac);
+          ac = 0;
+          for( int i=0; i < au.AtomCount(); i++ )  {
+            const TCAtom& ca = au.GetAtom(i);
+            if( ca.IsDeleted() || ca.GetAtomInfo() == iQPeakIndex )  continue;
+            AtomNames.Add(ca.GetLabel());
+            CAtomMasks.Set(ac++, ca.IsMasked());
+          }
         }
       }
       else  {
@@ -185,8 +204,37 @@ public:
     FParent->ClearSelectionCopy();
     return true;
   }
+  bool Execute(const IEObject *Sender, const IEObject *Data)  {
+    const TAsymmUnit& au = FParent->XFile().GetAsymmUnit();
+    bool sameAU = true;
+    int ac = 0;
+    for( int i=0; i < au.AtomCount(); i++ )  {
+      const TCAtom& ca = au.GetAtom(i);
+      if( ca.IsDeleted() || ca.GetAtomInfo() == iQPeakIndex )  continue;
+      if( ac >= AtomNames.Count() )  {
+        sameAU = false;
+        break;
+      }
+      if( !AtomNames[ac++].Equalsi(ca.GetLabel()) )  {
+        sameAU = false;
+        break;
+      }
+    }
+    if( sameAU )  {  // apply masks
+      ac = 0;
+      TIntList maskedQ;
+      for( int i=0; i < au.AtomCount(); i++ )  {
+        TCAtom& ca = au.GetAtom(i);
+        if( ca.IsDeleted() || ca.GetAtomInfo() == iQPeakIndex )  continue;
+        ca.SetMasked( CAtomMasks[ac++] );
+      }
+    }
+    CAtomMasks.Clear();
+    AtomNames.Clear();
+    return false;
+  }
   bool Exit(const IEObject *Sender, const IEObject *Data)  {
-    // lets make Horst HAPPY!
+    // let's make Horst HAPPY!
     //FParent->GetRender().CleanUpStyles();
     //  FParent->CenterModel();
     FParent->GetRender().SetBasis(B);
