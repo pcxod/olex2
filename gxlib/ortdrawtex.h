@@ -2,9 +2,12 @@
 #define __olx_ort_Draw_Tex_H
 #include "gxapp.h"
 #include "tex_writer.h"
+#include <string.h>
 #include <math.h>
+#include <map>
 
-  
+using namespace std;
+
 class OrtDrawTex  {
 private:
   struct OrtAtom {
@@ -71,10 +74,6 @@ protected:
     mat3f proj_mat, rot_mat;
     for( int j=0; j < sa.BondCount(); j++ )  {
       const TSBond& bn = sa.Bond(j);
-      //const TSBond atom1 = app.GetBond( bn.GetTag() );
-      //char Atom1Symbol = bn.A().GetAtomInfo().GetSymbol().c_str();
-      //char Atom2Symbol = bn.B().GetAtomInfo().GetSymbol().c_str();
-      //const char atom2 = bn.FB.GetAtomInfo().GetSymbol().c_str();
       if( app.GetBond( bn.GetTag() ).IsDeleted() || !app.GetBond( bn.GetTag() ).IsVisible() )
         continue;
       vec3f p1 = (bn.Another(sa).crd() + SceneOrigin)*ProjMatr+DrawOrigin;
@@ -85,7 +84,7 @@ protected:
       float brad = (bn.A().GetAtomInfo() < 4 || bn.B().GetAtomInfo() < 4) ? 
         BondRad*HBondScale : BondRad;
       if( bn.GetType() == sotHBond )  //even thiner H-bonds
-        brad *= HBondScale;
+        brad *= HBondScale;      
       touch_point = (bn.Another(sa).crd()-oa.atom->crd()).Normalise();
       vec3f rot_vec(-touch_point[1], touch_point[0], 0);
       CreateRotationMatrix(rot_mat, rot_vec.Normalise(), touch_point[2]);
@@ -112,10 +111,7 @@ protected:
           BondProjF[j] += dir_vec*off_len;
         }
       }
-      if( bn.GetType() != sotHBond )
-        //pw.drawQuads(BondProjF, BondProjT, 16, &TEXWriter::fill);
-      //else
-      {
+
         //pw.drawQuads(BondProjF, BondProjT, &TEXWriter::fill);
         if( BondProjF.Count() != BondProjT.Count() )
           throw TFunctionFailedException(__OlxSourceInfo, "lists mismatch");
@@ -127,7 +123,7 @@ protected:
             xb = p[0]+(BondProjF[1][0]+BondProjF[2][0]+BondProjF[3][0]+BondProjF[4][0]+BondProjF[5][0]+BondProjF[6][0]+BondProjF[7][0]+BondProjF[8][0]+BondProjF[9][0]+BondProjF[10][0]+BondProjF[11][0]+BondProjF[12][0])/12;
             yb = p[1]+(BondProjF[1][1]+BondProjF[2][1]+BondProjF[3][1]+BondProjF[4][1]+BondProjF[5][1]+BondProjF[6][1]+BondProjF[7][1]+BondProjF[8][1]+BondProjF[9][1]+BondProjF[10][1]+BondProjF[11][1]+BondProjF[12][1])/12;
             
-            //calculation of the angle between the bond and the vertical. Needed to applys a shading on the bond
+            //calculation of the angle between the bond and the vertical. Needed to apply a shading on the bond
             if(xb>xa and (xb-xa)/sqrt((xb-xa)*(xb-xa)+(yb-ya)*(yb-ya))<1 and (xb-xa)/sqrt((xb-xa)*(xb-xa)+(yb-ya)*(yb-ya))>-1) 
             {
                 angle = asin((xb-xa)/sqrt((xb-xa)*(xb-xa)+(yb-ya)*(yb-ya)))*180/M_PI;
@@ -142,7 +138,7 @@ protected:
             }
             else
             {
-                angle = 360;
+                angle = 0;
             }
                     
             //Front coordinate of the rectangle for the bond
@@ -231,7 +227,7 @@ protected:
             AtomCount++;*/
                   
         }
-      }
+      
     }
   }
   void DrawBonds(TEXWriter& pw, const OrtAtom& oa, const vec3d& p) {
@@ -344,6 +340,115 @@ public:
     char bf[200];
     bool CurrentAtom;
       
+    //temporary colour dictionary
+    //map<olxstr,string> ColourDic;
+    olxdict <olxstr,olxstr,olxstrComparator<false> > ColourDic;
+        ColourDic("H","white");
+        ColourDic("D","white");
+        ColourDic("He","white");
+        ColourDic("Li","white");
+        ColourDic("Be","white");
+        ColourDic("B","white");
+        ColourDic("C","gray");
+        ColourDic("N","blue");
+        ColourDic("O","red");
+        ColourDic("F","darkgreen");
+        ColourDic("Na","white");
+        ColourDic("Mg","white");
+        ColourDic("Al","white");
+        ColourDic("Si","orange");
+        ColourDic("P","purple");
+        ColourDic("S","yellow");
+        ColourDic("Cl","white");
+        ColourDic("K","white");
+        ColourDic("Ca","white");
+        ColourDic("Sc","white");
+        ColourDic("Ti","white");
+        ColourDic("V","white");
+        ColourDic("Cr","white");
+        ColourDic("Mn","white");
+        ColourDic("Fe","white");
+        ColourDic("Co","white");
+        ColourDic("Ni","white");
+        ColourDic("Cu","white");
+        ColourDic("Zn","white");
+        ColourDic("Ga","white");
+        ColourDic("Ge","white");
+        ColourDic("As","white");
+        ColourDic("Se","white");
+        ColourDic("Br","white");
+        ColourDic("Kr","white");
+        ColourDic("Rb","white");
+        ColourDic("Sr","white");
+        ColourDic("Y","white");
+        ColourDic("Zr","white");
+        ColourDic("Nb","white");
+        ColourDic("Mo","white");
+        ColourDic("Tc","white");
+        ColourDic("Ru","white");
+        ColourDic("Rh","white");
+        ColourDic("Pd","white");
+        ColourDic("Ag","white");
+        ColourDic("Cd","white");
+        ColourDic("In","white");
+        ColourDic("Sn","white");
+        ColourDic("Sb","white");
+        ColourDic("Te","white");
+        ColourDic("I","white");
+        ColourDic("Xe","white");
+        ColourDic("Cs","white");
+        ColourDic("Ba","white");
+        ColourDic("La","white");
+        ColourDic("Hf","white");
+        ColourDic("Ta","white");
+        ColourDic("W","white");
+        ColourDic("Re","white");
+        ColourDic("Os","white");
+        ColourDic("Ir","white");
+        ColourDic("Pt","white");
+        ColourDic("Au","white");
+        ColourDic("Hg","white");
+        ColourDic("Tl","white");
+        ColourDic("Pb","white");
+        ColourDic("Bi","white");
+        ColourDic("Po","white");
+        ColourDic("At","white");
+        ColourDic("Rn","white");
+        ColourDic("Fr","white");
+        ColourDic("Ra","white");
+        ColourDic("Ac","white");
+        ColourDic("Ce","white");
+        ColourDic("Pr","white");
+        ColourDic("Nd","white");
+        ColourDic("Pm","white");
+        ColourDic("Sm","white");
+        ColourDic("Eu","white");
+        ColourDic("Gd","white");
+        ColourDic("Tb","white");
+        ColourDic("Dy","white");
+        ColourDic("Ho","white");
+        ColourDic("Er","white");
+        ColourDic("Tm","white");
+        ColourDic("Yb","white");
+        ColourDic("Lu","white");
+        ColourDic("Th","white");
+        ColourDic("Pa","white");
+        ColourDic("U","white");
+        ColourDic("Np","white");
+        ColourDic("Pu","white");
+        ColourDic("Am","white");
+        ColourDic("Cm","white");
+        ColourDic("Bk","white");
+        ColourDic("Cf","white");
+        ColourDic("Es","white");
+        ColourDic("Fm","white");
+        ColourDic("Md","white");
+        ColourDic("No","white");
+        ColourDic("Lr","white");
+        ColourDic("Ne","white");
+        ColourDic("Ar","white");
+
+      
     const TEBasis& basis = app.GetRender().GetBasis();
     TTypeList<OrtDrawTex::OrtAtom> atoms;
     atoms.SetCapacity(app.AtomCount());
@@ -362,22 +467,27 @@ public:
         if(sa.GetAtomInfo().GetSymbol() == sa2.GetAtomInfo().GetSymbol())
             CurrentAtom=true;
       }
+      
+      ColourDic[sa.GetAtomInfo().GetSymbol()];
+      
       //writing of the color definition of the atom
       if(CurrentAtom == false)
       {
         sprintf(bf, "\\newcommand{\\color%s}{%s!90!black}",         
             sa.GetAtomInfo().GetSymbol().c_str(),
-            "white"//fixme! get the colour of the atom
+            ColourDic[sa.GetAtomInfo().GetSymbol()].c_str()
         );        
         pw.Writenl(bf);
-          
+                    
         sprintf(bf, "\\pgfdeclareradialshading{ballshading%s}{\\pgfpoint{-10bp}{10bp}}",
             sa.GetAtomInfo().GetSymbol().c_str());
         pw.Writenl(bf);
-        sprintf(bf, "{color(0bp)=(red!15!white); color(9bp)=(red!75!white);");
-        pw.Writenl(bf);//fixme! get the colour of the atom
-        sprintf(bf, "color(18bp)=(red!70!black); color(25bp)=(red!50!black); color(50bp)=(black)} ");
-        pw.Writenl(bf);//fixme! get the colour of the atom
+        sprintf(bf, "{color(0bp)=(\\color%s!15!white); color(9bp)=(\\color%s!75!white);",
+            sa.GetAtomInfo().GetSymbol().c_str(), sa.GetAtomInfo().GetSymbol().c_str());
+        pw.Writenl(bf);
+        sprintf(bf, "color(18bp)=(\\color%s!70!black); color(25bp)=(\\color%s!50!black); color(50bp)=(black)} ",
+            sa.GetAtomInfo().GetSymbol().c_str(), sa.GetAtomInfo().GetSymbol().c_str());          
+        pw.Writenl(bf);
       }
       
       if( sa.GetEllipsoid() != NULL )  {
