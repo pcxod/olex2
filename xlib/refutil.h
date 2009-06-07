@@ -131,7 +131,7 @@ public:
       delete analyser;
   }
 
-  DefPropBFIsSet(Centrosymmetric)
+  DefPropBIsSet(Centrosymmetric)
 
   void Standardize(TRefPList& refs) const {
     if( analyser != NULL )  analyser->Standardize(refs);
