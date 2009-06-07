@@ -229,7 +229,7 @@ void TMainForm::funIsOS(const TStrObjList& Params, TMacroError &E)  {
 #elif defined(__WXMAC__) || defined(__MAC__)
   E.SetRetVal( Params[0].Equalsi("mac") );
 #elif defined(__WXGTK__)
-  E.SetRetVal(Params[0].Equalsi("linux") 0);
+  E.SetRetVal(Params[0].Equalsi("linux") );
 #else
   E.SetRetVal(false);
 #endif
