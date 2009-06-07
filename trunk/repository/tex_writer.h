@@ -33,8 +33,6 @@ public:
     out.Writenl("");
     //white border width around elements
     out.Writenl("\\newcommand{\\whitespace}{1pt}");
-    //radius for the end of the bond
-    out.Writenl("\\newcommand{\\cornerradius}{0.6mm}");
     out.Writenl("");   
   }
   //..........................................................................

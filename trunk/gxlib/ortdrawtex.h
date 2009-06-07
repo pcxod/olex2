@@ -67,11 +67,12 @@ protected:
   }
   void DoDrawBonds(TEXWriter& pw, const OrtAtom& oa, uint32_t color, float scalex, const vec3d& p)  {
                               char bf[250]; //pascal
-      float xa, xb, ya, yb, angle, xc, yc, xd, yd, xe, ye, xf, yf;
+      float xa, xb, ya, yb, za, zb, angle, xc, yc, xd, yd, xe, ye, xf, yf;
       static int AtomCount;
     const TSAtom& sa = *oa.atom;
     vec3f dir_vec, touch_point, touch_point_proj, off_vec, bproj_cnt;
     mat3f proj_mat, rot_mat;
+      
     for( int j=0; j < sa.BondCount(); j++ )  {
       const TSBond& bn = sa.Bond(j);
       if( app.GetBond( bn.GetTag() ).IsDeleted() || !app.GetBond( bn.GetTag() ).IsVisible() )
@@ -120,15 +121,17 @@ protected:
             //Calculation of the centre of the intersection ellipsis    
             xa = p[0]+(BondProjT[1][0]+BondProjT[2][0]+BondProjT[3][0]+BondProjT[4][0]+BondProjT[5][0]+BondProjT[6][0]+BondProjT[7][0]+BondProjT[8][0]+BondProjT[9][0]+BondProjT[10][0]+BondProjT[11][0]+BondProjT[12][0])/12;
             ya = p[1]+(BondProjT[1][1]+BondProjT[2][1]+BondProjT[3][1]+BondProjT[4][1]+BondProjT[5][1]+BondProjT[6][1]+BondProjT[7][1]+BondProjT[8][1]+BondProjT[9][1]+BondProjT[10][1]+BondProjT[11][1]+BondProjT[12][1])/12;
+            za = p[2]+(BondProjT[1][2]+BondProjT[2][2]+BondProjT[3][2]+BondProjT[4][2]+BondProjT[5][2]+BondProjT[6][2]+BondProjT[7][2]+BondProjT[8][2]+BondProjT[9][2]+BondProjT[10][2]+BondProjT[11][2]+BondProjT[12][2])/12;
             xb = p[0]+(BondProjF[1][0]+BondProjF[2][0]+BondProjF[3][0]+BondProjF[4][0]+BondProjF[5][0]+BondProjF[6][0]+BondProjF[7][0]+BondProjF[8][0]+BondProjF[9][0]+BondProjF[10][0]+BondProjF[11][0]+BondProjF[12][0])/12;
             yb = p[1]+(BondProjF[1][1]+BondProjF[2][1]+BondProjF[3][1]+BondProjF[4][1]+BondProjF[5][1]+BondProjF[6][1]+BondProjF[7][1]+BondProjF[8][1]+BondProjF[9][1]+BondProjF[10][1]+BondProjF[11][1]+BondProjF[12][1])/12;
+            zb = p[2]+(BondProjF[1][2]+BondProjF[2][2]+BondProjF[3][2]+BondProjF[4][2]+BondProjF[5][2]+BondProjF[6][2]+BondProjF[7][2]+BondProjF[8][2]+BondProjF[9][2]+BondProjF[10][2]+BondProjF[11][2]+BondProjF[12][2])/12;
             
             //calculation of the angle between the bond and the vertical. Needed to apply a shading on the bond
             if(xb>xa && (xb-xa)/sqrt((xb-xa)*(xb-xa)+(yb-ya)*(yb-ya))<1 && (xb-xa)/sqrt((xb-xa)*(xb-xa)+(yb-ya)*(yb-ya))>-1) 
             {
                 angle = asin((xb-xa)/sqrt((xb-xa)*(xb-xa)+(yb-ya)*(yb-ya)))*180/M_PI;
                 if(ya<yb)
-                    angle = 180 - asin((xb-xa)/sqrt((xb-xa)*(xb-xa)+(yb-ya)*(yb-ya)))*180/M_PI;
+                    angle = - asin((xb-xa)/sqrt((xb-xa)*(xb-xa)+(yb-ya)*(yb-ya)))*180/M_PI;
             }
             else if(xa>xb && (xa-xb)/sqrt((xb-xa)*(xb-xa)+(yb-ya)*(yb-ya))<1 && (xa-xb)/sqrt((xb-xa)*(xb-xa)+(yb-ya)*(yb-ya))>-1) 
             {
@@ -141,14 +144,15 @@ protected:
                 angle = 0;
             }
                     
-            //Front coordinate of the rectangle for the bond
-            yc = 0.09*DrawScale*(xa-xb)/sqrt(xa*xa-2*xa*xb+xb*xb+(ya-yb)*(ya-yb))+ya;
+            //To coordinate of the rectangle for the bond
+            yc = brad*(xa-xb)/sqrt(xa*xa-2*xa*xb+xb*xb+(ya-yb)*(ya-yb))+ya;
             xc = -(yb-ya)*(yc-ya)/(xb-xa)+xa;
             ye = ya-(yc-ya);
             xe = xa-(xc-xa);
 
-            //Back coordinate of the recangle for the bond
-            yd = 0.06*DrawScale*(xa-xb)/sqrt(xa*xa-2*xa*xb+xb*xb+(ya-yb)*(ya-yb))+yb;
+            //From coordinate of the recangle for the bond
+            //0.7, this end is a bit smaller
+            yd = 0.7*brad*(xa-xb)/sqrt(xa*xa-2*xa*xb+xb*xb+(ya-yb)*(ya-yb))+yb;
             xd = -(ya-yb)*(yd-yb)/(xa-xb)+xb;
             yf = yb-(yd-yb);
             xf = xb-(xd-xb);
@@ -161,27 +165,81 @@ protected:
                 xd/5, yd/5);
             pw.Writenl(bf);
             
-            //Fix me!!! Assign the right color to each end of the bond
-            //A is the heaviest atom
-            //draw the shading
-            if(((bn.A().crd() + SceneOrigin)*ProjMatr+DrawOrigin)[2]-((bn.B().crd() + SceneOrigin)*ProjMatr+DrawOrigin)[2] >0)
+            //draw the shading on the bond
+            //I need the projection coordinate of the atom
+            vec3f p2 = (bn.A().crd() + SceneOrigin)*ProjMatr+DrawOrigin;
+            vec3f p3 = (bn.B().crd() + SceneOrigin)*ProjMatr+DrawOrigin;
+            
+            //All this, just to have a correct shading...
+            if(ya > yb && xa < xb) 
             {
-                sprintf(bf, "\\shade[top color=\\color%s, bottom color=\\color%s, shading angle=%f, rounded corners=\\cornerradius] (%fmm,%fmm) --  (%fmm,%fmm) -- (%fmm,%fmm) -- (%fmm,%fmm) -- cycle;",
-                    bn.B().GetAtomInfo().GetSymbol().c_str(), bn.A().GetAtomInfo().GetSymbol().c_str(), angle,
-                    xc/5,yc/5,
-                    xe/5, ye/5,
-                    xf/5, yf/5, 
-                    xd/5, yd/5);
+                if(p2[2] < p3[2])
+                    sprintf(bf, "\\shade[top color=\\color%s, bottom color=\\color%s, shading angle=%f, rounded corners=\\cornerradius] (%fmm,%fmm) --  (%fmm,%fmm) -- (%fmm,%fmm) -- (%fmm,%fmm) -- cycle;",
+                        bn.B().GetAtomInfo().GetSymbol().c_str(), bn.A().GetAtomInfo().GetSymbol().c_str(), angle,
+                        xc/5,yc/5,
+                        xe/5, ye/5,
+                        xf/5, yf/5, 
+                        xd/5, yd/5);
+                else
+                    sprintf(bf, "\\shade[top color=\\color%s, bottom color=\\color%s, shading angle=%f, rounded corners=\\cornerradius] (%fmm,%fmm) --  (%fmm,%fmm) -- (%fmm,%fmm) -- (%fmm,%fmm) -- cycle;",
+                        bn.A().GetAtomInfo().GetSymbol().c_str(), bn.B().GetAtomInfo().GetSymbol().c_str(), angle,
+                        xc/5,yc/5,
+                        xe/5, ye/5,
+                        xf/5, yf/5, 
+                        xd/5, yd/5);
             }
-            else
+            else if(ya > yb && xa > xb) 
             {
-                sprintf(bf, "\\shade[top color=\\color%s, bottom color=\\color%s, shading angle=%f, rounded corners=\\cornerradius] (%fmm,%fmm) --  (%fmm,%fmm) -- (%fmm,%fmm) -- (%fmm,%fmm) -- cycle;",
-                    bn.A().GetAtomInfo().GetSymbol().c_str(), bn.B().GetAtomInfo().GetSymbol().c_str(), angle,
-                    xc/5,yc/5,
-                    xe/5, ye/5,
-                    xf/5, yf/5, 
-                    xd/5, yd/5);
-            }                                    
+                if(p2[2] < p3[2])
+                    sprintf(bf, "\\shade[top color=\\color%s, bottom color=\\color%s, shading angle=%f, rounded corners=\\cornerradius] (%fmm,%fmm) --  (%fmm,%fmm) -- (%fmm,%fmm) -- (%fmm,%fmm) -- cycle;",
+                        bn.B().GetAtomInfo().GetSymbol().c_str(), bn.A().GetAtomInfo().GetSymbol().c_str(), angle,
+                        xc/5,yc/5,
+                        xe/5, ye/5,
+                        xf/5, yf/5, 
+                        xd/5, yd/5);
+                else
+                    sprintf(bf, "\\shade[top color=\\color%s, bottom color=\\color%s, shading angle=%f, rounded corners=\\cornerradius] (%fmm,%fmm) --  (%fmm,%fmm) -- (%fmm,%fmm) -- (%fmm,%fmm) -- cycle;",
+                        bn.A().GetAtomInfo().GetSymbol().c_str(), bn.B().GetAtomInfo().GetSymbol().c_str(), angle,
+                        xc/5,yc/5,
+                        xe/5, ye/5,
+                        xf/5, yf/5, 
+                        xd/5, yd/5);                    
+            }
+            else if(ya <= yb && xa <= xb) 
+            {
+                if(p2[2] < p3[2])
+                    sprintf(bf, "\\shade[top color=\\color%s, bottom color=\\color%s, shading angle=%f, rounded corners=\\cornerradius] (%fmm,%fmm) --  (%fmm,%fmm) -- (%fmm,%fmm) -- (%fmm,%fmm) -- cycle;",
+                        bn.A().GetAtomInfo().GetSymbol().c_str(), bn.B().GetAtomInfo().GetSymbol().c_str(), angle,
+                        xc/5,yc/5,
+                        xe/5, ye/5,
+                        xf/5, yf/5, 
+                        xd/5, yd/5);
+                else
+                    sprintf(bf, "\\shade[top color=\\color%s, bottom color=\\color%s, shading angle=%f, rounded corners=\\cornerradius] (%fmm,%fmm) --  (%fmm,%fmm) -- (%fmm,%fmm) -- (%fmm,%fmm) -- cycle;",
+                        bn.B().GetAtomInfo().GetSymbol().c_str(), bn.A().GetAtomInfo().GetSymbol().c_str(), angle,
+                        xc/5,yc/5,
+                        xe/5, ye/5,
+                        xf/5, yf/5, 
+                        xd/5, yd/5);                    
+            }
+            else //if(ya <= yb && xa >= xb)
+            {
+                if(p2[2] < p3[2])
+                    sprintf(bf, "\\shade[top color=\\color%s, bottom color=\\color%s, shading angle=%f, rounded corners=\\cornerradius] (%fmm,%fmm) --  (%fmm,%fmm) -- (%fmm,%fmm) -- (%fmm,%fmm) -- cycle;",
+                        bn.A().GetAtomInfo().GetSymbol().c_str(), bn.B().GetAtomInfo().GetSymbol().c_str(), angle,
+                        xc/5,yc/5,
+                        xe/5, ye/5,
+                        xf/5, yf/5, 
+                        xd/5, yd/5);
+                else
+                    sprintf(bf, "\\shade[top color=\\color%s, bottom color=\\color%s, shading angle=%f, rounded corners=\\cornerradius] (%fmm,%fmm) --  (%fmm,%fmm) -- (%fmm,%fmm) -- (%fmm,%fmm) -- cycle;",
+                        bn.B().GetAtomInfo().GetSymbol().c_str(), bn.A().GetAtomInfo().GetSymbol().c_str(), angle,
+                        xc/5,yc/5,
+                        xe/5, ye/5,
+                        xf/5, yf/5, 
+                        xd/5, yd/5);                    
+            }
+                
             pw.Writenl(bf);
             
             //Draw the black stroke around the bond
@@ -191,41 +249,7 @@ protected:
                 xf/5, yf/5, 
                 xd/5, yd/5);
             pw.Writenl(bf);
-            
-            //put some nodes at the end of the bonds
-            /*sprintf(bf, "\\node (%s%i) at (%fmm,%fmm) {};",
-                bn.A().GetAtomInfo().GetSymbol().c_str(), AtomCount++,
-                xb/5, yb/5);
-            out.Writenl(bf);
-            sprintf(bf, "\\node (%s%i) at (%fmm,%fmm) {};",
-                bn.B().GetAtomInfo().GetSymbol().c_str(), AtomCount++,
-                xa/5, ya/5);
-            out.Writenl(bf);
-            sprintf(bf, "\\node[dot] (bca%i) at (%fmm,%fmm) {};",
-                AtomCount,
-                xc/5,yc/5);
-            out.Writenl(bf);
-            sprintf(bf, "\\node[dot] (bcb%i) at (%fmm,%fmm) {};",
-                AtomCount,
-                xe/5,ye/5);
-            out.Writenl(bf);
-            sprintf(bf, "\\node[dot] (bcc%i) at (%fmm,%fmm) {};",
-                AtomCount,
-                xf/5,yf/5);
-            out.Writenl(bf);
-            sprintf(bf, "\\node[dot] (bcd%i) at (%fmm,%fmm) {};",
-                AtomCount,
-                xd/5,yd/5);
-            out.Writenl(bf);
-            sprintf(bf, "\\node[draw=red, fit=(bca%i) (bcb%i) (bcc%i) (bcd%i)] (%s%i) {};",
-                AtomCount,
-                AtomCount,
-                AtomCount, 
-                AtomCount,
-                bn.B().GetAtomInfo().GetSymbol().c_str(), AtomCount);
-            out.Writenl(bf);
-            AtomCount++;*/
-                  
+                              
         }
       
     }
@@ -284,9 +308,9 @@ public:
     BondDiv = 12;
     PieDiv = 4;
     QuadLineWidth = PieLineWidth = 0.5;
-    BondRad = 1;
+    BondRad = 4;
     ColorMode = ortep_color_None;
-    HBondScale = 0.5;
+    HBondScale = 0.8;
   }
   // create ellipse and pie coordinates
   void Init(TEXWriter& pw)  {
@@ -327,7 +351,7 @@ public:
     LinearScale = 1; // reset now
     DrawScale = LinearScale/app.GetRender().GetScale();
     AradScale = 0.5*DrawScale;///app.GetRender().GetScale(),
-    BondRad = 0.05*DrawScale;///app.GetRender().GetScale();
+    BondRad = 0.1*DrawScale;///app.GetRender().GetScale();
     SceneOrigin = basis.GetCenter();
     //DrawOrigin = vec3f(pw.GetWidth()/2, pw.GetHeight()/2, 0);
     DrawOrigin = vec3f(vp[2]/2, vp[3]/2, 0);
@@ -453,12 +477,16 @@ public:
     TTypeList<OrtDrawTex::OrtAtom> atoms;
     atoms.SetCapacity(app.AtomCount());
       
+    //radius for the end of the bond
+    sprintf(bf, "\\newcommand{\\cornerradius}{%fmm}", 
+    0.12*0.1*DrawScale);
+    pw.Writenl(bf);
       
     for( int i=0; i < app.AtomCount(); i++ )  {
       if( app.GetAtom(i).IsDeleted() || !app.GetAtom(i).IsVisible() )
         continue;
       const TSAtom& sa = app.GetAtom(i).Atom();
-      
+           
       //write latex colors atoms commands and shading
       CurrentAtom=false;
       //We check first if a similar atom already get processed.
@@ -467,9 +495,6 @@ public:
         if(sa.GetAtomInfo().GetSymbol() == sa2.GetAtomInfo().GetSymbol())
             CurrentAtom=true;
       }
-      
-      ColourDic[sa.GetAtomInfo().GetSymbol()];
-      
       //writing of the color definition of the atom
       if(CurrentAtom == false)
       {
@@ -518,11 +543,11 @@ public:
       const TSAtom& sa = *atoms[i].atom;
       const vec3d& p = atoms[i].crd;
       if( sa.GetEllipsoid() == NULL )  {
-        //draw the atom, done twice, to make a white border arounf it
+        //draw the atom as a circle, done twice, to make a white border arounf it
         //draw circle, centre, radius
         sprintf(bf, "\\begin{pgfscope}\\pgfsetstrokecolor{white}\\pgfsetlinewidth{\\whitespace}\\pgfpathcircle{\\pgfpoint{%fmm}{%fmm}}{%fmm}\n\\pgfshadepath{ballshading%s}{0}\n\\pgfusepath{draw}\\end{pgfscope}",         
             p[0]/5, p[1]/5,
-            AradScale*sqrt(sa.GetAtomInfo().GetRad1())/5,
+            AradScale*sqrt(sa.GetAtomInfo().GetRad())/5,
             sa.GetAtomInfo().GetSymbol().c_str()
         );        
         pw.Writenl(bf);
@@ -540,7 +565,7 @@ public:
       }
       else  {
         const mat3f& ielpm = *atoms[i].ielpm;
-        //Draw the atom
+        //Draw the atom as an ellipse
         //centre, basis
         //draw a white border around the ellipse
         pw.Writenl("\\begin{pgfscope}\n\\pgfsetstrokecolor{white}\\pgfsetlinewidth{\\whitespace}");
