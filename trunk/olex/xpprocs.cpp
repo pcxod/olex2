@@ -8849,6 +8849,42 @@ void TMainForm::macSAME(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       netB.Node(res[i].GetB()).SetTag(0);
       TBasicApp::GetLog() << netB.Node(res[i].GetB()).GetLabel() << ' ';
     }
+    TBasicApp::GetLog() << '\n';
+  }
+}
+//..............................................................................
+void TMainForm::macRESI(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  TXAtomPList atoms;
+  olxstr resi_class = Cmds[0];
+  Cmds.Delete(0);
+  int resi_number = 0;
+  if( Cmds.Count() > 0  && Cmds[0].IsNumber() )  {
+    resi_number = olx_abs(Cmds[0].ToInt());
+    Cmds.Delete(0);
+  }
+  FindXAtoms(Cmds, atoms, false, true);
+  if( atoms.IsEmpty() )  {
+    E.ProcessingError(__OlxSrcInfo, "no atoms provided");
+    return;
+  }
+  TAsymmUnit& au = FXApp->XFile().GetAsymmUnit();
+  for( int i=0; i < atoms.Count(); i++ )
+    atoms[i]->Atom().CAtom().SetTag(i);
+  if( resi_class.Equalsi("none") )  {
+    TAsymmUnit::TResidue& main_resi = au.GetResidue(-1);
+    for( int i=0; i < atoms.Count(); i++ )  {
+      TCAtom& ca = atoms[i]->Atom().CAtom();
+      if( ca.GetTag() == i && ca.GetResiId() != -1 )  {
+        au.GetResidue( ca.GetResiId()).Remove( &ca );
+        main_resi.AddAtom( &ca );
+      }
+    }
+  }
+  else  {
+    TAsymmUnit::TResidue& resi = au.NewResidue(resi_class, resi_number, Options.FindValue('a'));
+    for( int i=0; i < atoms.Count(); i++ )
+      if( atoms[i]->Atom().CAtom().GetTag() == i )
+        resi.AddAtom( &atoms[i]->Atom().CAtom() );
   }
 }
 //..............................................................................

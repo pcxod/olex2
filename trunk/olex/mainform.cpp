@@ -838,9 +838,11 @@ separated values of Atom Type and radius, an entry a line" );
     "Experimental postscript rendering" );
   this_InitMacroD(PictTEX, "color_line-lines&;color_fill-ellipses are filled", fpOne|psFileLoaded, 
     "Experimental tex/pgf rendering" );
-  this_InitMacroD(UpdateQPeakTable, EmptyString, fpNone, "Internal routine for synchronisation" );
-  this_InitMacroD(SAME, "i-invert the graphs", fpAny, "Creates SAME for two fragments (two selected atoms or two\
+  this_InitMacroD(UpdateQPeakTable, EmptyString, fpNone|psFileLoaded, "Internal routine for synchronisation" );
+  this_InitMacroD(SAME, "i-invert the graphs", fpAny|psFileLoaded, "Creates SAME for two fragments (two selected atoms or two\
  atoms provided) or two groups following one another" );
+  this_InitMacroD(RESI, "a-alias", (fpAny^fpNone)|psFileLoaded, "Creates residue with given class name and optionally number and adds selected\
+ or provided atoms into the residue. If provided residue class name is 'none', provided atoms are removed from their residues" );
   // FUNCTIONS _________________________________________________________________
 
   this_InitFunc(FileLast, fpNone|fpOne);
@@ -4069,10 +4071,17 @@ PyObject* pyGetUserInput(PyObject* self, PyObject* args)  {
   return rv;
 }
 //..............................................................................
+PyObject* pyPPI(PyObject* self, PyObject* args)  {
+  wxWindowDC wx_dc( TGlXApp::GetMainForm() );
+  wxSize ppi = wx_dc.GetPPI();
+  return Py_BuildValue("(ii)", ppi.GetX(), ppi.GetY());
+}
+//..............................................................................
 static PyMethodDef CORE_Methods[] = {
   {"GetUserInput", pyGetUserInput, METH_VARARGS, "shows a dialog, where user can type some text.\
    Takes three agruments: flags, title and content. If flags not equal to 1, a muliline dialog sis created"},
   {"IsControl", pyIsControl, METH_VARARGS, "Takes HTML element name and optionaly popup name. Returns true/false if given control exists"},
+  {"GetPPI", pyPPI, METH_VARARGS, "Returns screen PPI"},
   {NULL, NULL, 0, NULL}
    };
 //..............................................................................
