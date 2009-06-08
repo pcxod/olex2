@@ -155,13 +155,21 @@ class xappXFileLoad: public AActionHandler  {
   TEBasis B;
   TStrList AtomNames;
   TEBitArray CAtomMasks;
+  TLattice::GrowInfo* GrowInfo;
 public:
   xappXFileLoad(TGXApp *Parent) {  
     FParent = Parent;  
     AActionHandler::SetToDelete(false);
+    GrowInfo = NULL;
   }
-  ~xappXFileLoad()  {  return;  }
+  ~xappXFileLoad()  {  
+    if( GrowInfo != NULL )
+      delete GrowInfo;
+    return;  
+  }
   bool Enter(const IEObject *Sender, const IEObject *Data)  {
+    if( GrowInfo != NULL )
+      delete GrowInfo;
     FParent->ClearLabels();
     // make sure that these are only cleared when file is loaded
     if( Sender && EsdlInstanceOf(*Sender, TXFile) )  {
@@ -189,6 +197,7 @@ public:
             AtomNames.Add(ca.GetLabel());
             CAtomMasks.Set(ac++, ca.IsMasked());
           }
+          GrowInfo = FParent->XFile().GetLattice().GetGrowInfo();
         }
       }
       else  {
@@ -228,7 +237,11 @@ public:
         if( ca.IsDeleted() || ca.GetAtomInfo() == iQPeakIndex )  continue;
         ca.SetMasked( CAtomMasks[ac++] );
       }
+      FParent->XFile().GetLattice().SetGrowInfo( GrowInfo );
+      GrowInfo = NULL;
     }
+    if( GrowInfo != NULL )
+      delete GrowInfo;
     CAtomMasks.Clear();
     AtomNames.Clear();
     return false;
@@ -1055,10 +1068,8 @@ void TGXApp::FragmentVisible(TNetwork *N, bool V)  {
   for( int i=0; i < N->NodeCount(); i++ )
     SA.Add( N->Node(i) );
   SAtoms2XAtoms(SA, XA);
-  for( int i=0; i < XA.Count(); i++ )  {
+  for( int i=0; i < XA.Count(); i++ )
     XA[i]->SetVisible(V);
-    XA[i]->Atom().CAtom().SetMasked(!V);
-  }
 
   TSBondPList SB;
   TXBondPList XB;
@@ -1077,6 +1088,15 @@ void TGXApp::FragmentsVisible(const TNetPList& Frags, bool V)  {
     FragmentVisible(Frags[i], V);
   // synchronise the intermolecular bonds
   HBondsVisible( FHBondsVisible );
+  TAsymmUnit& au = XFile().GetAsymmUnit();
+  TEBitArray vis( au.AtomCount() );
+  for( int i=0; i < XAtoms.Count(); i++ )  {
+    const TXAtom& xa = XAtoms[i];
+    if( !XAtoms[i].IsVisible() )  continue;
+    vis.SetTrue( xa.Atom().CAtom().GetId() );
+  }
+  for( int i=0; i < vis.Count(); i++ )
+    au.GetAtom(i).SetMasked( !vis[i] );
 //  OnFragmentsVisible->Exit(this, dynamic_cast<IEObject*>(Frags));
   Draw();
 }

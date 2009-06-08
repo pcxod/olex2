@@ -150,11 +150,23 @@ public:
   inline bool operator == (const TLattice* l)  const  {  return this == l;  }
   inline bool operator != (const TLattice& l)  const  {  return this != &l;  }
   inline bool operator != (const TLattice* l)  const  {  return this != l;  }
-
-  void ToDataItem(TDataItem& item) const;
-  void FromDataItem(TDataItem& item);
-
+  struct GrowInfo  {
+    smatd_plist matrices;  // the list of all matrices
+    TArrayList<TIntList> info;  // TCAtomId -> list of used matrices;
+    int unc_matrix_count;
+    ~GrowInfo() {
+      for( int i=0; i < matrices.Count(); i++ )
+        delete matrices[i];
+    }
+  };
+  // takes the oenwership of the provided object
+  void SetGrowInfo(GrowInfo* grow_info);
+  // returns an object created with new
+  GrowInfo* GetGrowInfo() const;
 protected:
+  GrowInfo* _GrowInfo;
+  // returns true if the info is valid and applied
+  bool ApplyGrowInfo();
   // removes H2O and R3N from the list of potential hydrogen bond forming atoms
   void RemoveNonHBonding(class TAtomEnvi& envi);
 //  void AnalyseHBonding(class TAtomEnvi& Envi);
@@ -166,6 +178,9 @@ public:
 
   DefPropP(double, Delta)
   DefPropP(double, DeltaI)
+
+  void ToDataItem(TDataItem& item) const;
+  void FromDataItem(TDataItem& item);
 
   void LibGetFragmentCount(const TStrObjList& Params, TMacroError& E);
   void LibGetFragmentAtoms(const TStrObjList& Params, TMacroError& E);

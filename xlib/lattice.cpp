@@ -51,6 +51,7 @@ TLattice::TLattice() : AtomsInfo(TAtomsInfo::GetInstance()) {
   Network     = new TNetwork(this, NULL);
   Delta    = 0.5f;
   DeltaI    = 1.2f;
+  _GrowInfo = NULL;
   OnStructureGrow = &Actions.NewQueue("STRGEN");
   OnStructureUniq = &Actions.NewQueue("STRUNIQ");
   OnDisassemble= &Actions.NewQueue("DISASSEBLE");
@@ -61,6 +62,8 @@ TLattice::~TLattice()  {
   delete UnitCell;
   delete AsymmUnit;
   delete Network;
+  if( _GrowInfo != NULL )
+    delete _GrowInfo;
 }
 //..............................................................................
 void  TLattice::ClearAtoms()  {
@@ -224,13 +227,11 @@ int CompareNets(const TNetwork* N, const TNetwork* N1)  {
 }
 //..............................................................................
 void TLattice::InitBody()  {
-  TNetwork *Frag;
-  smatd *M = new smatd; // create identity matrix
-  *M = GetUnitCell().GetMatrix(0);
-  M->SetTag(0);
-  Matrices.Add( M );
-  ListAsymmUnit(Atoms, NULL, true);
-
+  if( !ApplyGrowInfo() )  {
+    // create identity matrix
+    Matrices.Add( new smatd(GetUnitCell().GetMatrix(0)) )->SetTag(0);
+    ListAsymmUnit(Atoms, NULL, true);
+  }
   OnDisassemble->Enter(this);
 
   Network->Disassemble(Atoms, Fragments, &Bonds);
@@ -244,8 +245,8 @@ void TLattice::InitBody()  {
     bondCnt += Fragments[i]->BondCount();
   Bonds.SetCapacity( bondCnt + 1);
   // end
-  for(int i=0; i < Fragments.Count(); i++ )  {
-    Frag = Fragments[i];
+  for( int i=0; i < Fragments.Count(); i++ )  {
+    TNetwork* Frag = Fragments[i];
     for( int j=0; j < Frag->BondCount(); j++ )
       AddSBond(&Frag->Bond(j));
     for( int j=0; j < Frag->NodeCount(); j++ )  {
@@ -261,10 +262,10 @@ void TLattice::Init()  {
   Clear(false);
   GetUnitCell().ClearEllipsoids();
   GetUnitCell().InitMatrices();
+  Generated = false;
   InitBody();
   int eqc = GetUnitCell().FindSymmEq(0.1, true, false, false); // find and not remove
   GetAsymmUnit().SetContainsEquivalents( eqc != 0 );
-  Generated = false;
 }
 //..............................................................................
 void  TLattice::Uniq(bool remEqv)  {
@@ -1861,6 +1862,91 @@ void TLattice::FromDataItem(TDataItem& item)  {
   TDataItem& planes = item.FindRequiredItem("Planes");
   for( int i=0; i < planes.ItemCount(); i++ )
     Planes.Add( new TSPlane(Network) )->FromDataItem(planes.GetItem(i));
+}
+//..............................................................................
+void TLattice::SetGrowInfo(GrowInfo* grow_info)  {
+  if( _GrowInfo != NULL )
+    delete _GrowInfo;
+  _GrowInfo = grow_info;
+}
+//..............................................................................
+TLattice::GrowInfo* TLattice::GetGrowInfo() const  {
+  if( !Generated )
+    return NULL;
+  const TAsymmUnit& au = GetAsymmUnit();
+  GrowInfo& gi = *(new GrowInfo);
+  gi.matrices.SetCount( Matrices.Count() );
+  gi.unc_matrix_count = GetUnitCell().MatrixCount();
+  // save matrix tags and init gi.matrices
+  TIntList mtags( Matrices.Count() );
+  for( int i=0; i < Matrices.Count(); i++ )  {
+    mtags[i] = Matrices[i]->GetTag();
+    (gi.matrices[i] = new smatd( *Matrices[i] ))->SetTag(mtags[i]);
+    Matrices[i]->SetTag(i);
+  }
+
+  gi.info.SetCount( au.AtomCount() );
+  for( int i=0; i < Atoms.Count(); i++ )  {
+    TIntList& mi = gi.info[ Atoms[i]->CAtom().GetId() ];
+    const int mi_cnt = mi.Count();
+    mi.SetCount(mi_cnt + Atoms[i]->MatrixCount()+1);
+    mi[mi_cnt] = -Atoms[i]->MatrixCount(); // separator field
+    for( int j=1; j <= Atoms[i]->MatrixCount(); j++ )
+      mi[mi_cnt+j] = Atoms[i]->GetMatrix(j-1).GetTag();
+  }
+  // restore matrix tags
+  for( int i=0; i < mtags.Count(); i++ )
+    Matrices[i]->SetTag( mtags[i] );
+  return &gi;
+}
+//..............................................................................
+bool TLattice::ApplyGrowInfo()  {
+  TAsymmUnit& au = GetAsymmUnit();
+  if( _GrowInfo == NULL || !Atoms.IsEmpty() || !Matrices.IsEmpty() || 
+    GetUnitCell().MatrixCount() != _GrowInfo->unc_matrix_count ||
+    au.AtomCount() < _GrowInfo->info.Count() )  // let's be picky
+  {
+    if( _GrowInfo != NULL )  {
+      delete _GrowInfo;
+      _GrowInfo = NULL;
+    }
+    return false;
+  }
+  Matrices.Assign( _GrowInfo->matrices );
+  _GrowInfo->matrices.Clear();
+  Atoms.SetCapacity( au.AtomCount() );
+  for( int i=0; i < au.AtomCount(); i++ )    {
+    TCAtom& ca = GetAsymmUnit().GetAtom(i);
+    if( ca.IsDeleted() ||ca.IsMasked() )  continue;
+    if( i >= _GrowInfo->info.Count() )  {  // create just with I matrix
+      TSAtom* a = Atoms.Add( new TSAtom(Network) );
+      a->CAtom(ca);
+      a->SetEllipsoid( &GetUnitCell().GetEllipsoid(0, ca.GetId()) ); // ellipsoid for the identity matrix
+      a->SetLattId( Atoms.Count() - 1 );
+      au.CellToCartesian(a->ccrd(), a->crd());
+      a->AddMatrix( Matrices[0] );
+      continue;
+    }
+    const TIntList& mi = _GrowInfo->info[i];
+    for( int j=0; j < mi.Count(); j++ )  {
+      if( mi[j] < 0 )  {
+        const int matr_cnt = olx_abs(mi[j]),
+          matr_start = j+1;       
+        TSAtom* a = Atoms.Add( new TSAtom(Network) );
+        a->CAtom(ca);
+        a->SetEllipsoid( &GetUnitCell().GetEllipsoid(mi[matr_start], ca.GetId()) ); // ellipsoid for the identity matrix
+        a->SetLattId( Atoms.Count() - 1 );
+        a->ccrd() = (*Matrices[mi[matr_start]]) * ca.ccrd();
+        au.CellToCartesian(a->ccrd(), a->crd());
+        for( int k=matr_start; k < matr_start+matr_cnt; k++, j++ )
+          a->AddMatrix( Matrices[mi[k]] );
+      }
+    }
+  }
+  Generated = true;
+  delete _GrowInfo;
+  _GrowInfo = NULL;
+  return true;
 }
 //..............................................................................
 //..............................................................................
