@@ -9,6 +9,7 @@
 #include "wxzipfs.h"
 #include "efile.h"
 #include "bapp.h"
+#include "log.h"
 #include "ememstream.h"
 
 olxstr TZipWrapper::ZipUrlSignature = "@zip:";
@@ -113,9 +114,16 @@ void TZipWrapper::ExtractAll(const olxstr& dest)  {
   for( int i=0; i < FEntries.Count(); i++ )  {
     if( !FInputStream->OpenEntry( *FEntries.GetObject(i) ) )
       continue;
-    wxString fn(dest.u_str());
-    fn << FEntries.GetObject(i)->GetName();
-    wxFileOutputStream fos( fn );
+    if( FEntries.GetString(i).EndsWith('/') )  continue;
+    olxstr dest_file = extractPath + FEntries.GetString(i);
+    olxstr dst_dir = TEFile::ExtractFilePath(dest_file);
+    if( !TEFile::FileExists(dst_dir) )
+      TEFile::MakeDirs(dst_dir);
+    if( TEFile::FileExists(dest_file) )  {
+      if( !TEFile::DelFile(dest_file) )
+        TBasicApp::GetLog().Error( olxstr("Failed to remove/update file: ") << dest_file);
+    }
+    wxFileOutputStream fos( dest_file.u_str() );
     while( FInputStream->Read(bf, bf_sz).LastRead() != 0 )
       fos.Write(bf, FInputStream->LastRead());
   }
