@@ -31,6 +31,7 @@ TOSFileSystem::TOSFileSystem()  {
 bool TOSFileSystem::DelFile(const olxstr& FN)  {
   F__N = FN;
   OnRmFile->Execute( this, &F__N);
+  TEFile::DelFile(FN);
   return true;
 }
 //..............................................................................
@@ -398,15 +399,20 @@ TFSItem* TFSItem::UpdateFile(TFSItem& item)  {
   else  {
     // an error can be only caused by impossibility to open the file
     try  {
-      GetFileSystem().AdoptFile(item);
       TFSItem* FI = const_cast<TFSItem*>(this);
       // if names are different - we are looking at the content of this
+      bool is_new = false;
       if( this->GetName() != item.GetName() )  {
         FI = FindByName( item.GetName() );
-        if( FI == NULL )
+        if( FI == NULL )  {
           FI = &NewItem( item.GetName() );
+          is_new = true;
+        }
       }
+      if( !is_new && !Index.ShallAdopt(item, *FI) )
+        return FI;
       *FI = item;
+      GetFileSystem().AdoptFile(item);
       Index.ProcessActions(*FI);
       return FI;
     }
@@ -432,7 +438,7 @@ void TFSItem::Remove(TFSItem& item)  {
   item.GetParent()->DeleteItem( &item );
 }
 //..............................................................................
-void TFSItem::DelFile()  {
+void TFSItem::DelFile() const {
   if( IsFolder() )  {
     for( int i=0; i < Count(); i++ )
       Item(i).DelFile();
@@ -494,7 +500,9 @@ void TFSItem::ClearNonexisting()  {
     return;
   for( int i=0; i < Count(); i++ )  {
     if( !Item(i).IsFolder() )  {
-      if( !GetFileSystem().FileExists( GetFileSystem().GetBase() + Item(i).GetFullName()) )  {
+      if( !GetFileSystem().FileExists( GetFileSystem().GetBase() + Item(i).GetFullName()) && 
+        Index.ShouldExist(Item(i)) )  
+      {
         delete Items.GetObject(i);
         Items.Remove(i);
         i--;
@@ -635,6 +643,12 @@ bool TFSIndex::UpdateFile(AFileSystem& To, const olxstr& fileName, bool Force, c
   return res;
 }
 //..............................................................................
+bool TFSIndex::ShallAdopt(const TFSItem& src, const TFSItem& dest) const  {
+  if( src.GetActions().IndexOfi("delete") != -1 )
+    return !(dest.GetDateTime() == src.GetDateTime() && dest.GetSize() == src.GetSize());
+  return true;
+}
+//..............................................................................
 void TFSIndex::ProcessActions(const TFSItem& item)  {
   const TStrList& actions = item.GetActions();
 #ifdef __WXWIDGETS__
@@ -642,13 +656,12 @@ void TFSIndex::ProcessActions(const TFSItem& item)  {
 #elif __WIN32__
   typedef TWinZipFileSystem ZipFS;
 #endif
-
-  for( int i=0; i < actions.Count(); i++ )  {
-    if( actions[i].StartsFrom("extract") )  {
-      ZipFS zp( item.GetFileSystem().GetBase() + item.GetFullName() );
-      zp.ExtractAll( item.GetFileSystem().GetBase() );
-    }
+  if( actions.IndexOfi("extract") != -1 )  {
+    ZipFS zp( item.GetFileSystem().GetBase() + item.GetFullName() );
+    zp.ExtractAll( item.GetFileSystem().GetBase() );
   }
+  if( actions.IndexOfi("delete") )
+      item.DelFile();
 }
 //..............................................................................
 

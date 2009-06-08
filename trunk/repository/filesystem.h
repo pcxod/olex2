@@ -145,7 +145,8 @@ public:
   DefPropP(uint64_t, DateTime)
   DefPropP(uint64_t, Size)
 
-  TFSItem* FindByName(const olxstr& Name)  const {
+  template <class SC> 
+  TFSItem* FindByName(const SC& Name) const {
     int ind = Items.IndexOfComparable(Name);
     return (ind == -1) ? NULL : Items.GetObject(ind);
   }
@@ -157,7 +158,8 @@ public:
   // caller must be NULL, when invoked externally
   double Synchronize(TFSItem* Caller, TFSItem& Dest, const TStrList& properties, bool Count=false);
   TFSItem* UpdateFile(TFSItem& FN);
-  void DelFile();
+  // deletes underlying physical object
+  void DelFile() const;
 
   inline bool IsProcessed()  const {  return Processed; }
   inline void SetProcessed(bool v) {  Processed = v; }
@@ -186,6 +188,10 @@ public:
   // returns true if the file is updated (added) and false otherwise
   bool UpdateFile(AFileSystem& To, const olxstr& fileName, bool Force, const olxstr& indexName="index.ind");
   inline TFSItem& GetRoot()  const {  return *Root; }
+  /* checks if the file actions specify to delete it, if a delete action is found return false
+  if the timestamps of the items and size match and false in other cases */
+  bool ShallAdopt(const TFSItem& src, const TFSItem& dest) const;
+  bool ShouldExist(const TFSItem& src)  const {  return src.GetActions().IndexOfi("delete") == -1;  }
   void ProcessActions(const TFSItem& item); 
 };
 #endif

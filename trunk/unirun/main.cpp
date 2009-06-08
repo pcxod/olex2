@@ -94,6 +94,26 @@ bool UpdateInstallationH( const TUrl& url, const TStrList& properties, const TFS
   }
 }
 //---------------------------------------------------------------------------
+bool UpdateInstallationL( const olxstr& local_repos, const TStrList& properties, const TFSItem::SkipOptions* toSkip )  {
+  try  {
+    TOSFileSystem DestFS; // local file system
+    TOSFileSystem SrcFS; // "remote" FS
+    SrcFS.SetBase( local_repos );
+    DestFS.SetBase( TBasicApp::GetInstance()->BaseDir() );
+    olxstr tmp = DestFS.GetBase();
+    TEFile::AddTrailingBackslash( tmp );
+    DestFS.SetBase( tmp );
+    TFSIndex FI( SrcFS );
+    return FI.Synchronise(DestFS, properties, toSkip);
+  }
+  catch( TExceptionBase& exc )  {
+    TStrList out;
+    exc.GetException()->GetStackTrace(out);
+    TBasicApp::GetLog() << "Update failed due to :\n" << out.Text('\n');
+    return false;
+  }
+}
+//---------------------------------------------------------------------------
 bool UpdateInstallationZ( const olxstr& zip_name, const TStrList& properties, const TFSItem::SkipOptions* toSkip )  {
   try  {
     TOSFileSystem DestFS; // local file system
@@ -276,14 +296,19 @@ void DoRun()  {
     else if( UpdateInterval == "Monthly" )
       Update = ((TETime::EpochTime() - LastUpdate ) > SecsADay*30 );
      
-    TUrl url(Repository);
-    url.SetUser(ProxyUser);
-    url.SetPassword(ProxyPasswd);
-    if( !Proxy.IsEmpty() )  url.SetProxy( Proxy );
-      
     if( Update )  {
       bool skip = (extensionsToSkip.IsEmpty() && filesToSkip.IsEmpty());
-      UpdateInstallationH( url, props, skip ? NULL : &toSkip );
+      if( Repository.StartFromi("local://") )  {
+        UpdateInstallationL( Repository.SubStringFrom(8), props, skip ? NULL : &toSkip );
+      }
+      else  {
+        TUrl url(Repository);
+        url.SetUser(ProxyUser);
+        url.SetPassword(ProxyPasswd);
+        if( !Proxy.IsEmpty() )  
+          url.SetProxy( Proxy );
+        UpdateInstallationH( url, props, skip ? NULL : &toSkip );
+      }
     }
   }
   if( Update )  { // have to save lastupdate in anyway
