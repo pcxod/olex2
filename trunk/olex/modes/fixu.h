@@ -10,7 +10,7 @@ protected:
 
   public:
     TFixUModeUndo(TXAtom* XA) :
-        TUndoData(new TUndoActionImpl<TFixUModeUndo>(this, &TFixUModeUndo::undo))  {
+        TUndoData(new TUndoActionImplMF<TFixUModeUndo>(this, &TFixUModeUndo::undo))  {
       Atom = XA;
       RefinementModel& rm = *XA->Atom().CAtom().GetParent()->GetRefMod();
       Uiso = rm.Vars.ReleaseRef(XA->Atom().CAtom(), catom_var_name_Uiso);

@@ -252,6 +252,7 @@ protected:
   short FGrowMode, PackMode;
   TEBitArray& GetVisibilityMask(TEBitArray& ba) const;
 public:
+  TXGlLabels& GetLabels() const {  return *FLabels; }
   bool AreLabelsVisible() const;
   void SetLabelsVisible(bool v);
   void SetLabelsMode(short lmode);
@@ -259,7 +260,9 @@ public:
   void SetLabelsFont(short FontIndex);
   TGlMaterial & LabelsMarkMaterial();
   void MarkLabel(const TXAtom& A, bool mark);
+  bool IsLabelMarked(const TXAtom& A) const;
   void ClearLabelMarks();
+
   int GetNextAvailableLabel(const olxstr& AtomType);
 
   // moving atom from/to collection

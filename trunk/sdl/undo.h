@@ -59,20 +59,26 @@ public:
 };
 
 
-template <class BaseClass>
-  class TUndoActionImpl: public IUndoAction  {
-    BaseClass *BC;
-    void (BaseClass::*Func)(TUndoData* d);
-  public:
-    TUndoActionImpl(BaseClass* app, void (BaseClass::*f)(TUndoData* d))  {
-      BC = app;
-      Func = f;
-    }
-    virtual void Execute(TUndoData *Data)  {
-      (BC->*Func)(Data);
-    }
-  };
+template <class BaseClass> class TUndoActionImplMF: public IUndoAction  {
+  BaseClass *BC;
+  void (BaseClass::*MFunc)(TUndoData*);
+public:
+  TUndoActionImplMF( BaseClass* base, void (BaseClass::*f)(TUndoData*) ) :
+      BC(base), MFunc(f) {  }
+  virtual void Execute(TUndoData *Data)  {
+    (BC->*MFunc)(Data);
+  }
+};
 
+class TUndoActionImplSF: public IUndoAction  {
+  void (*SFunc)(TUndoData*);
+public:
+  TUndoActionImplSF(void (*f)(TUndoData*) ) :
+      SFunc(f){  }
+  virtual void Execute(TUndoData *Data)  {
+    (*SFunc)(Data);
+  }
+};
 EndEsdlNamespace()
 
 #endif

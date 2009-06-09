@@ -242,6 +242,12 @@ void TXGlLabels::MarkLabel(const TXAtom& A, bool v)  {
     Marks.Set(A.GetXAppId(), v);
 }
 //..............................................................................
+bool TXGlLabels::IsLabelMarked(const TXAtom& atom) const {
+  if( atom.GetXAppId() < Marks.Count() )
+    return Marks[atom.GetXAppId()];
+  return false;  // should not happen...
+}
+//..............................................................................
 TGlFont* TXGlLabels::Font() const {  
   return Parent.GetScene().GetFont(FontIndex); 
 }

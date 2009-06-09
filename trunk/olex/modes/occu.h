@@ -9,7 +9,7 @@ protected:
     double Occu;
   public:
     TOccuModeUndo(TXAtom* XA) :
-        TUndoData(new TUndoActionImpl<TOccuModeUndo>(this, &TOccuModeUndo::undo))  {
+        TUndoData(new TUndoActionImplMF<TOccuModeUndo>(this, &TOccuModeUndo::undo))  {
       Atom = XA;
       Occu = XA->Atom().CAtom().GetParent()->GetRefMod()->Vars.GetParam(XA->Atom().CAtom(), catom_var_name_Sof);
     }
