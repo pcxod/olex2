@@ -168,8 +168,10 @@ public:
     return;  
   }
   bool Enter(const IEObject *Sender, const IEObject *Data)  {
-    if( GrowInfo != NULL )
+    if( GrowInfo != NULL )  {
       delete GrowInfo;
+      GrowInfo = NULL;
+    }
     FParent->ClearLabels();
     // make sure that these are only cleared when file is loaded
     if( Sender && EsdlInstanceOf(*Sender, TXFile) )  {
@@ -240,8 +242,10 @@ public:
       FParent->XFile().GetLattice().SetGrowInfo( GrowInfo );
       GrowInfo = NULL;
     }
-    if( GrowInfo != NULL )
+    if( GrowInfo != NULL )  {
       delete GrowInfo;
+      GrowInfo = NULL;
+    }
     CAtomMasks.Clear();
     AtomNames.Clear();
     return false;

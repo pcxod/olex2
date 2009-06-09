@@ -281,7 +281,7 @@ void TXApp::undoName(TUndoData *data)  {
 }
 //..............................................................................
 TUndoData* TXApp::FixHL()  {
-  TNameUndo *undo = new TNameUndo( new TUndoActionImpl<TXApp>(this, &TXApp::undoName));
+  TNameUndo *undo = new TNameUndo( new TUndoActionImplMF<TXApp>(this, &TXApp::undoName));
   for( int i=0; i < XFile().GetLattice().AtomCount(); i++ )  {
     TSAtom& sa = XFile().GetLattice().GetAtom(i);
     if( sa.IsDeleted() || (sa.GetAtomInfo() == iQPeakIndex) || (sa.GetAtomInfo() == iHydrogenIndex)  )
