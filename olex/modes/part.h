@@ -9,7 +9,7 @@ protected:
     int Part;
   public:
     TPartModeUndo(TXAtom* XA) :
-        TUndoData( new TUndoActionImpl<TPartModeUndo>(this, &TPartModeUndo::undo))  {
+        TUndoData( new TUndoActionImplMF<TPartModeUndo>(this, &TPartModeUndo::undo))  {
       Atom = XA;
       Part = XA->Atom().CAtom().GetPart();
     }

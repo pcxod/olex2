@@ -11,6 +11,7 @@
 
 BeginGxlNamespace()
 
+class TXAtom;
 // label modes
 const short lmLabels   = 0x0001,  // atom label
             lmPart     = 0x0002,  // part
@@ -46,8 +47,10 @@ public:
   bool GetDimensions(vec3d &Max, vec3d &Min) {  return false;  }
   
   void Init();
-  void MarkLabel(const class TXAtom& A, bool v);
-  
+
+  void MarkLabel(const TXAtom& atom, bool v);
+  bool IsLabelMarked(const TXAtom& atom) const;
+
   TGlFont *Font() const;
   DefPropP(short, FontIndex)
 

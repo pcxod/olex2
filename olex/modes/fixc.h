@@ -8,7 +8,7 @@ protected:
     XVarReference* Vars[3];
   public:
     TFixCModeUndo(TXAtom* XA) :
-        TUndoData(new TUndoActionImpl<TFixCModeUndo>(this, &TFixCModeUndo::undo))  {
+        TUndoData(new TUndoActionImplMF<TFixCModeUndo>(this, &TFixCModeUndo::undo))  {
       Atom = XA;
       RefinementModel& rm = *XA->Atom().CAtom().GetParent()->GetRefMod();
       for( int i=0; i < 3; i++ )

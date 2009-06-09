@@ -1597,7 +1597,7 @@ void TGXApp::CheckQBonds(TXAtom& XA)  {
 }
 //..............................................................................
 TUndoData* TGXApp::ChangeSuffix(const TXAtomPList& xatoms, const olxstr &To, bool CheckLabels)  {
-  TNameUndo *undo = new TNameUndo( new TUndoActionImpl<TGXApp>(this, &GxlObject(TGXApp::undoName)));
+  TNameUndo *undo = new TNameUndo( new TUndoActionImplMF<TGXApp>(this, &GxlObject(TGXApp::undoName)));
   olxstr oldL, newL;
   for( int i=0; i < xatoms.Count(); i++ )  {
     oldL = xatoms[i]->Atom().GetLabel();
@@ -1622,7 +1622,7 @@ TUndoData* TGXApp::Name(TXAtom& XA, const olxstr &Name, bool CheckLabel)  {
   bool checkBonds = (XA.Atom().GetAtomInfo() == iQPeakIndex);
   TBasicAtomInfo *bai = FAtomsInfo->FindAtomInfoEx(Name);
 
-  TNameUndo *undo = new TNameUndo( new TUndoActionImpl<TGXApp>(this, &GxlObject(TGXApp::undoName)));
+  TNameUndo *undo = new TNameUndo( new TUndoActionImplMF<TGXApp>(this, &GxlObject(TGXApp::undoName)));
   olxstr oldL = XA.Atom().GetLabel();
 
   bool recreate = ((bai == NULL) ? true : XA.Atom().GetAtomInfo() != *bai);
@@ -1651,7 +1651,7 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To, bool CheckLabel, b
     return Name( *XA, To, CheckLabel);
   }
   else  {
-    TNameUndo *undo = new TNameUndo( new TUndoActionImpl<TGXApp>(this, &GxlObject(TGXApp::undoName)));
+    TNameUndo *undo = new TNameUndo( new TUndoActionImplMF<TGXApp>(this, &GxlObject(TGXApp::undoName)));
     olxstr oldL;
 
     TXAtomPList Atoms, ChangedAtoms;
@@ -2000,7 +2000,7 @@ TUndoData* TGXApp::DeleteXObjects(TPtrList<AGDrawObject>& L)  {
 }
 //..............................................................................
 TUndoData* TGXApp::DeleteXAtoms(TXAtomPList& L)  {
-  TKillUndo *undo = new TKillUndo( new TUndoActionImpl<TGXApp>(this, &GxlObject(TGXApp::undoDelete)));
+  TKillUndo *undo = new TKillUndo( new TUndoActionImplMF<TGXApp>(this, &GxlObject(TGXApp::undoDelete)));
   TSBondPList SBL;
   TSAtomPList SAL;
   for( int i=0; i < L.Count(); i++ )  {
@@ -2287,6 +2287,8 @@ void TGXApp::SetLabelsFont(short Findex){  FLabels->SetFontIndex(Findex);  }
 TGlMaterial& TGXApp::LabelsMarkMaterial()  {  return FLabels->MarkMaterial();  }
 //..............................................................................
 void TGXApp::MarkLabel(const TXAtom& A, bool v)  {  FLabels->MarkLabel(A, v);  }
+//..............................................................................
+bool TGXApp::IsLabelMarked(const TXAtom& A) const {  return FLabels->IsLabelMarked(A);  }
 //..............................................................................
 void TGXApp::ClearLabelMarks()  {  FLabels->ClearLabelMarks();  }
 //..............................................................................
