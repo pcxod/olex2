@@ -122,6 +122,7 @@ void TXFile::LastLoaderChanged() {
   GetRM().ClearAll();
   GetLattice().Clear(true);
   GetRM().Assign(FLastLoader->GetRM(), true);
+  OnFileLoad->Execute(this);
   GetLattice().Init();
   OnFileLoad->Exit(this, &FLastLoader->GetFileName());
 }
@@ -373,7 +374,8 @@ IEObject* TXFile::Replicate() const  {
 }
 //..............................................................................
 void TXFile::EndUpdate()  {
-  OnFileLoad->Enter(this);
+  OnFileLoad->Enter(this, &GetFileName());
+  OnFileLoad->Execute(this);
   // we keep the asymmunit but clear the unitcell
   GetLattice().Clear(false);
   GetLattice().GetUnitCell().Clear();

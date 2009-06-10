@@ -4,23 +4,25 @@
 class TPartMode : public AModeWithLabels  {
   int Part;
 protected:
+  static bool HasInstance;
   class TPartModeUndo : public TUndoData {
-    TXAtom* Atom;
-    int Part;
+    TCAtom& Atom;
+    int Part, LabelIndex;
   public:
-    TPartModeUndo(TXAtom* XA) :
-        TUndoData( new TUndoActionImplMF<TPartModeUndo>(this, &TPartModeUndo::undo))  {
-      Atom = XA;
-      Part = XA->Atom().CAtom().GetPart();
+    TPartModeUndo(TXAtom* XA) : TUndoData( new TUndoActionImplMF<TPartModeUndo>(this, &TPartModeUndo::undo)),
+      Atom(XA->Atom().CAtom()), LabelIndex(XA->GetXAppId())
+    {
+      Part = Atom.GetPart();
     }
     void undo(TUndoData* data)  {
-      TGlXApp::GetGXApp()->MarkLabel(*Atom, false);
-      Atom->Atom().CAtom().SetPart( Part );
+      if( TPartMode::HasInstance )
+        TGlXApp::GetGXApp()->MarkLabel(LabelIndex, false);
+      Atom.SetPart( Part );
     }
   };
 
 public:
-  TPartMode(int id) : AModeWithLabels(id)  {}
+  TPartMode(int id) : AModeWithLabels(id)  {  HasInstance = true;  }
   bool Init(TStrObjList &Cmds, const TParamList &Options) {
     Part = Cmds.IsEmpty() ? 0 : Cmds[0].ToInt();
     TGlXApp::GetMainForm()->SetUserCursor( Part, "part");
@@ -28,7 +30,9 @@ public:
     return true;
   }
   ~TPartMode() {
-    TGlXApp::GetMainForm()->executeMacro("fuse");
+    HasInstance = false;
+    TXApp::GetInstance().XFile().GetLattice().UpdateConnectivity();
+    //TGlXApp::GetMainForm()->executeMacro("fuse");
   }
   virtual bool OnObject(AGDrawObject &obj)  {
     if( EsdlInstanceOf( obj, TXAtom) )  {

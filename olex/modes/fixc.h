@@ -3,16 +3,18 @@
 
 class TFixCMode : public AModeWithLabels  {
 protected:
+  static bool HasInstance;
   class TFixCModeUndo : public TUndoData {
-    TXAtom* Atom;
+    TCAtom& Atom;
     XVarReference* Vars[3];
+    int LabelIndex;
   public:
-    TFixCModeUndo(TXAtom* XA) :
-        TUndoData(new TUndoActionImplMF<TFixCModeUndo>(this, &TFixCModeUndo::undo))  {
-      Atom = XA;
-      RefinementModel& rm = *XA->Atom().CAtom().GetParent()->GetRefMod();
+    TFixCModeUndo(TXAtom* XA) : TUndoData(new TUndoActionImplMF<TFixCModeUndo>(this, &TFixCModeUndo::undo)),
+      Atom(XA->Atom().CAtom()), LabelIndex(XA->GetXAppId())
+    {
+      RefinementModel& rm = *Atom.GetParent()->GetRefMod();
       for( int i=0; i < 3; i++ )
-        Vars[i] = rm.Vars.ReleaseRef(XA->Atom().CAtom(), catom_var_name_X+i);
+        Vars[i] = rm.Vars.ReleaseRef(Atom, catom_var_name_X+i);
     }
     ~TFixCModeUndo() {
       for( int i=0; i < 3; i++ )
@@ -20,23 +22,24 @@ protected:
           delete Vars[i];
     }
     void undo(TUndoData* data)  {
-      TGlXApp::GetGXApp()->MarkLabel(*Atom, false);
-      RefinementModel& rm = *Atom->Atom().CAtom().GetParent()->GetRefMod();
+      if( TFixCMode::HasInstance )
+        TGlXApp::GetGXApp()->MarkLabel(LabelIndex, false);
+      RefinementModel& rm = *Atom.GetParent()->GetRefMod();
       for( int i=0; i < 3; i++ )  {
-        rm.Vars.RestoreRef(Atom->Atom().CAtom(), catom_var_name_X+i, Vars[i]);
+        rm.Vars.RestoreRef(Atom, catom_var_name_X+i, Vars[i]);
         Vars[i] = NULL;
       }
     }
   };
 
 public:
-  TFixCMode(int id) : AModeWithLabels(id)  {}
+  TFixCMode(int id) : AModeWithLabels(id)  { HasInstance = true;  }
   bool Init(TStrObjList &Cmds, const TParamList &Options) {
     TGlXApp::GetMainForm()->executeMacro("labels -f");
     TGlXApp::GetMainForm()->SetUserCursor( "XYZ", "fix" );
     return true;
   }
-  ~TFixCMode() {  }
+  ~TFixCMode() {  HasInstance = false;  }
   virtual bool OnObject(AGDrawObject &obj)  {
     if( EsdlInstanceOf( obj, TXAtom) )  {
       TXAtom& XA = (TXAtom&)obj;

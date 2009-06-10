@@ -1,14 +1,14 @@
 #ifndef sbondH
 #define sbondH
 
-#include "xbase.h"
+#include "satom.h"
 #include "typelist.h"
 #include "tptrlist.h"
 #include "dataitem.h"
 
 BeginXlibNamespace()
 
-class TSBond: public TBasicBond<class TNetwork, class TSAtom>  {
+class TSBond: public TBasicBond<class TNetwork, TSAtom>  {
 private:
 //  int FTag;
   virtual void OnAtomSet();
@@ -20,8 +20,8 @@ public:
 
   DefPropBIsSet(Deleted)
 
-  double Length() const;
-  double QLength() const;
+  double Length()  const {  return FA->crd().DistanceTo(FB->crd()); }
+  double QLength() const {  return FA->crd().QDistanceTo(FB->crd()); }
 
   void ToDataItem(TDataItem& item) const;
   void FromDataItem(const TDataItem& item, TPtrList<TNetwork>& net_pool);

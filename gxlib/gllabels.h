@@ -49,7 +49,9 @@ public:
   void Init();
 
   void MarkLabel(const TXAtom& atom, bool v);
+  void MarkLabel(int index, bool v);
   bool IsLabelMarked(const TXAtom& atom) const;
+  bool IsLabelMarked(int index) const;
 
   TGlFont *Font() const;
   DefPropP(short, FontIndex)

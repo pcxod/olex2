@@ -554,9 +554,6 @@ void TUnitCell::_FindInRange(const vec3d& to, double R,
 }
 //..............................................................................
 void TUnitCell::GetAtomEnviList(TSAtom& atom, TAtomEnvi& envi, bool IncludeQ, int part )  const {
-  if( atom.IsGrown() )
-    throw TFunctionFailedException(__OlxSourceInfo, "not implemented for grown atoms");
-
   const TAsymmUnit& au = GetLattice().GetAsymmUnit();
   envi.SetBase( atom );
 
@@ -564,11 +561,13 @@ void TUnitCell::GetAtomEnviList(TSAtom& atom, TAtomEnvi& envi, bool IncludeQ, in
   I.I().SetTag(0);
 
   for( int i=0; i < atom.NodeCount(); i++ )  {
-    TSAtom& A = atom.Node(i);
-    if( A.IsDeleted() ) continue;
-    if( !IncludeQ && A.GetAtomInfo() == iQPeakIndex )  continue;
-    if( part == DefNoPart || (A.CAtom().GetPart() == 0 || A.CAtom().GetPart() == part) )
-      envi.Add( A.CAtom(), I, A.crd() );
+    TSAtom& a = atom.Node(i);
+    if( a.IsDeleted() ) continue;
+    if( !IncludeQ && a.GetAtomInfo() == iQPeakIndex )  continue;
+    if( part == DefNoPart || (a.CAtom().GetPart() == 0 || a.CAtom().GetPart() == part) )  {
+      if( TNetwork::HaveSharedMatrix(atom, a) )  // put only the 'uniq' entries
+        envi.Add( a.CAtom(), I, a.crd() );
+    }
   }
   for( int i=0; i < atom.CAtom().AttachedAtomCount(); i++ )  {
     TCAtom& A = atom.CAtom().GetAttachedAtom(i);

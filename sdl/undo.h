@@ -19,6 +19,8 @@ class TUndoStack  {
 public:
   TUndoStack()                {  ;  }
   virtual ~TUndoStack()       {  Clear();  }
+  // for convinience
+  const TPtrList<TUndoData>& GetList() const {  return UndoList;  }
   void Clear();
   inline bool isEmpty() const {  return UndoList.Count() == 0;  }
   /* the function will not do anything for a NULL UndoObject, which might appear

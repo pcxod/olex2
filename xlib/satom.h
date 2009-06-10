@@ -8,7 +8,6 @@
 #include "symmat.h"
 #include "typelist.h"
 #include "tptrlist.h"
-#include "sbond.h"
 
 BeginXlibNamespace()
 
@@ -17,7 +16,7 @@ const short
   satom_Grown      = 0x0002,
   satom_Standalone = 0x0004;
 
-class TSAtom : public TBasicNode<TNetwork, TSAtom, TSBond>  {
+class TSAtom : public TBasicNode<class TNetwork, TSAtom, class TSBond>  {
 private:
   smatd_plist Matrices;
   // a list of pointers to matrices used for generation of atom
@@ -36,14 +35,8 @@ protected:
     const double diff = FCenter.DistanceTo(a2->FCenter) - FCenter.DistanceTo(a1->FCenter);
     return diff < 0 ? -1 : (diff > 0 ? 1 : 0);
   }
-  int _SortBondsByLengthAsc(const TSBond* b1, const TSBond* b2)  {
-    const double diff = b1->QLength() - b2->QLength();
-    return diff < 0 ? -1 : (diff > 0 ? 1 : 0);
-  }
-  int _SortBondsByLengthDsc(const TSBond* b1, const TSBond* b2)  {
-    const double diff = b2->QLength() - b1->QLength();
-    return diff < 0 ? -1 : (diff > 0 ? 1 : 0);
-  }
+  static int _SortBondsByLengthAsc(const TSBond* b1, const TSBond* b2);
+  static int _SortBondsByLengthDsc(const TSBond* b1, const TSBond* b2);
 public:
   TSAtom(TNetwork *N);
   virtual ~TSAtom();
@@ -108,15 +101,56 @@ public:
     Nodes.QuickSorter.SortMF(Nodes, *this, &TSAtom::_SortNodesByDistanceDsc);
   }
   void SortBondsByLengthAsc()  {
-    Bonds.QuickSorter.SortMF(Bonds, *this, &TSAtom::_SortBondsByLengthAsc);
+    Bonds.QuickSorter.SortSF(Bonds, &TSAtom::_SortBondsByLengthAsc);
   }
   void SortBondsByLengthDsc()  {
-    Bonds.QuickSorter.SortMF(Bonds, *this, &TSAtom::_SortBondsByLengthDsc);
+    Bonds.QuickSorter.SortSF(Bonds, &TSAtom::_SortBondsByLengthDsc);
   }
   // allows to trim the number of nodes
   void SetNodeCount(size_t cnt);
   // removes specified node from the list of nodes
   void RemoveNode(TSAtom& node);
+
+  struct Ref  {
+    int catom_id;
+    smatd::Ref matrix_ref;
+    TTypeList<smatd::Ref>* matrices; 
+    Ref(int a_id, const smatd_plist& symm) : catom_id(a_id), 
+      matrix_ref(symm[0]->GetRef()), matrices(NULL) 
+    {
+      if( symm.Count() > 1 )  {
+        matrices = new TTypeList<smatd::Ref>(symm.Count()-1);
+        for( int i=1; i < symm.Count(); i++ )
+          matrices->Set(i, new smatd::Ref(symm[i]->GetRef()) );
+      }
+    } 
+    Ref(const Ref& r) : catom_id(r.catom_id), 
+      matrix_ref(r.matrix_ref), 
+      matrices( r.matrices == NULL ? NULL : new TTypeList<smatd::Ref>(*r.matrices) )  
+    {}
+    Ref& operator = (const Ref& r)  {
+      catom_id = r.catom_id;
+      matrix_ref = r.matrix_ref;
+      matrices = ( r.matrices == NULL ? NULL : new TTypeList<smatd::Ref>(*r.matrices));
+      return *this;
+    }
+    ~Ref()  {
+      if( matrices != NULL )
+        delete matrices;
+    }
+  };
+
+  bool operator == (const Ref& id) const {
+    if( FCAtom->GetId() == id.catom_id )  {
+      for( int i=0; i < Matrices.Count(); i++ )
+        if( (*Matrices[i]) == id.matrix_ref )
+          return true;
+    }
+    return false;
+  }
+  Ref GetRef() const  {
+    return Ref(FCAtom->GetId(), Matrices);
+  }
 
   virtual void ToDataItem(TDataItem& item) const;
   virtual void FromDataItem(const TDataItem& item, class TLattice& parent);

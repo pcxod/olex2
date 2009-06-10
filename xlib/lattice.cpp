@@ -673,6 +673,49 @@ void TLattice::Grow(const smatd& transform)  {
   OnStructureGrow->Exit(this);
 }
 //..............................................................................
+void TLattice::RestoreAtom(const TSAtom::Ref& id)  {
+  if( id.matrix_ref.tag >= GetUnitCell().MatrixCount() )
+    throw TInvalidArgumentException(__OlxSourceInfo, "matrix ID");
+  if( id.catom_id >= GetAsymmUnit().AtomCount() )
+    throw TInvalidArgumentException(__OlxSourceInfo, "catom ID");
+  smatd* matr = NULL;
+  for( int i=0; i < Matrices.Count(); i++ )  {
+    if( (*Matrices[i]) == id.matrix_ref )  {
+      matr = Matrices[i];
+      break;
+    }
+  }
+  if( matr == NULL )  {
+    matr = Matrices.Add( new smatd(GetUnitCell().GetMatrix(id.matrix_ref.tag)) );
+    matr->t = id.matrix_ref.t;
+  }
+  TSAtom* sa = new TSAtom(Network);
+  sa->CAtom( GetAsymmUnit().GetAtom(id.catom_id) );
+  sa->ccrd() = (*matr) * sa->ccrd();
+  sa->AddMatrix(matr);
+  GetAsymmUnit().CellToCartesian(sa->ccrd(), sa->crd() );
+  sa->SetEllipsoid( &GetUnitCell().GetEllipsoid(matr->GetTag(), id.catom_id) );
+  AddSAtom(sa);
+  if( id.matrices != NULL )  {
+    for( int i=0; i < id.matrices->Count(); i++ )  {
+      if( (*id.matrices)[i].tag >= GetUnitCell().MatrixCount() )
+        throw TInvalidArgumentException(__OlxSourceInfo, "matrix ID");
+      matr = NULL;
+      for( int j=0; j < Matrices.Count(); j++ )  {
+        if( (*Matrices[j]) == (*id.matrices)[i] )  {
+          matr = Matrices[j];
+          break;
+        }
+      }
+      if( matr == NULL )  {
+        matr = Matrices.Add( new smatd(GetUnitCell().GetMatrix( (*id.matrices)[i].tag)) );
+        matr->t = (*id.matrices)[i].t;
+      }
+      sa->AddMatrix(matr);
+    }
+  }
+}
+//..............................................................................
 TSAtom* TLattice::FindSAtom(const olxstr& Label) const {
   for( int i =0; i < Atoms.Count(); i++ )
     if( Label.Equalsi( Atoms[i]->GetLabel()) )  
@@ -1184,6 +1227,7 @@ void TLattice::TransformFragments(const TSAtomPList& fragAtoms, const smatd& tra
 //..............................................................................
 void TLattice::UpdateConnectivity()  {
   Disassemble();
+  UpdateAsymmUnit();
 }
 //..............................................................................
 void TLattice::Disassemble()  {

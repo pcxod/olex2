@@ -4,39 +4,42 @@
 class TFixUMode : public AModeWithLabels  {
   double Val;
 protected:
+  static bool HasInstance;
   class TFixUModeUndo : public TUndoData {
-    TXAtom* Atom;
+    TCAtom& Atom;
     XVarReference* Uiso, *Vars[6];
-
+    int LabelIndex;
   public:
-    TFixUModeUndo(TXAtom* XA) :
-        TUndoData(new TUndoActionImplMF<TFixUModeUndo>(this, &TFixUModeUndo::undo))  {
-      Atom = XA;
-      RefinementModel& rm = *XA->Atom().CAtom().GetParent()->GetRefMod();
-      Uiso = rm.Vars.ReleaseRef(XA->Atom().CAtom(), catom_var_name_Uiso);
+    TFixUModeUndo(TXAtom* XA) : TUndoData(new TUndoActionImplMF<TFixUModeUndo>(this, &TFixUModeUndo::undo)),
+      Atom(XA->Atom().CAtom()), LabelIndex(XA->GetXAppId())
+    {
+      RefinementModel& rm = *Atom.GetParent()->GetRefMod();
+      Uiso = rm.Vars.ReleaseRef(Atom, catom_var_name_Uiso);
       for( int i=0; i < 6; i++ )
-        Vars[i] = rm.Vars.ReleaseRef(XA->Atom().CAtom(), catom_var_name_U11+i);
+        Vars[i] = rm.Vars.ReleaseRef(Atom, catom_var_name_U11+i);
     }
     ~TFixUModeUndo()  {
-      if( Uiso != NULL )  delete Uiso;
+      if( Uiso != NULL )  
+        delete Uiso;
       for( int i=0; i < 6; i++ )
         if( Vars[i] != NULL )
           delete Vars[i];
     }
     void undo(TUndoData* data)  {
-      TGlXApp::GetGXApp()->MarkLabel(*Atom, false);
-      RefinementModel& rm = *Atom->Atom().CAtom().GetParent()->GetRefMod();
-      rm.Vars.RestoreRef(Atom->Atom().CAtom(), catom_var_name_Uiso, Uiso);
+      if( TFixUMode::HasInstance )
+        TGlXApp::GetGXApp()->MarkLabel(LabelIndex, false);
+      RefinementModel& rm = *Atom.GetParent()->GetRefMod();
+      rm.Vars.RestoreRef(Atom, catom_var_name_Uiso, Uiso);
       Uiso = NULL;
       for( int i=0; i < 6; i++ )  {
-        rm.Vars.RestoreRef(Atom->Atom().CAtom(), catom_var_name_U11+i, Vars[i]);
+        rm.Vars.RestoreRef(Atom, catom_var_name_U11+i, Vars[i]);
         Vars[i] = NULL;
       }
     }
   };
 
 public:
-  TFixUMode(int id) : AModeWithLabels(id)  {}
+  TFixUMode(int id) : AModeWithLabels(id)  {  HasInstance = true;  }
   bool Init(TStrObjList &Cmds, const TParamList &Options) {
     Val = Cmds.IsEmpty() ? 1 : Cmds[0].ToDouble();
     TGlXApp::GetMainForm()->executeMacro("labels -f -r -h");
@@ -46,7 +49,7 @@ public:
       TGlXApp::GetMainForm()->SetUserCursor( Val, "fixU" );
     return true;
   }
-  ~TFixUMode() {  }
+  ~TFixUMode() {  HasInstance = false;  }
   virtual bool OnObject(AGDrawObject &obj)  {
     if( EsdlInstanceOf( obj, TXAtom) )  {
       TXAtom& XA = (TXAtom&)obj;

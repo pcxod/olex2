@@ -150,7 +150,7 @@ enum
   ID_FragmentSelectAtoms,
   ID_FragmentSelectBonds,
   ID_FragmentSelectAll,
-  ID_Disassemble,
+  ID_FileLoad,
 
   ID_View100,   // vew menu
   ID_View010,
@@ -1244,7 +1244,7 @@ separated values of Atom Type and radius, an entry a line" );
 
   FTimer->OnTimer()->Add( TBasicApp::GetInstance()->OnTimer );
   TBasicApp::GetInstance()->OnTimer->Add(this, ID_TIMER);
-  FXApp->XFile().GetLattice().OnDisassemble->Add(this, ID_Disassemble);
+  FXApp->XFile().OnFileLoad->Add(this, ID_FileLoad);
   // synchronise if value is different in settings file...
   miHtmlPanel->Check( !FHtmlMinimized );
 #if defined(__WIN32__) || defined(__MAC__)
@@ -2120,7 +2120,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
   else if( MsgId == ID_XOBJECTSDESTROY )  {
     if( Modes->GetCurrent() != NULL ) Modes->GetCurrent()->OnGraphicsDestroy();
   }
-  else if( MsgId == ID_Disassemble )  {
+  else if( MsgId == ID_FileLoad )  {
     if( MsgSubId == msiEnter )
       FUndoStack->Clear();
   }

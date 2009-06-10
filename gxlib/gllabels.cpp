@@ -242,9 +242,20 @@ void TXGlLabels::MarkLabel(const TXAtom& A, bool v)  {
     Marks.Set(A.GetXAppId(), v);
 }
 //..............................................................................
+void TXGlLabels::MarkLabel(int i, bool v)  {
+  if( i < Marks.Count() )
+    Marks.Set(i, v);
+}
+//..............................................................................
 bool TXGlLabels::IsLabelMarked(const TXAtom& atom) const {
   if( atom.GetXAppId() < Marks.Count() )
     return Marks[atom.GetXAppId()];
+  return false;  // should not happen...
+}
+//..............................................................................
+bool TXGlLabels::IsLabelMarked(int i) const {
+  if( i < Marks.Count() )
+    return Marks[i];
   return false;  // should not happen...
 }
 //..............................................................................

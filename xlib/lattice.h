@@ -113,6 +113,13 @@ public:
   inline TSAtom& GetAtom(int i)             const {  return *Atoms[i];  }
   TSAtom* FindSAtom(const olxstr &Label) const;
   TSAtom* FindSAtom(const TCAtom& ca) const;
+  TSAtom* FindSAtom(const TSAtom::Ref& id) const  {
+    for( int i=0; i < Atoms.Count(); i++ )
+      if( (*Atoms[i]) == id )
+        return Atoms[i];
+    return NULL;
+  }
+  void RestoreAtom(const TSAtom::Ref& id);
 
   inline int BondCount()                    const {  return Bonds.Count();  }
   inline TSBond& GetBond(int i)             const {  return *Bonds[i]; }
