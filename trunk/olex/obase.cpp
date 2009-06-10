@@ -29,6 +29,11 @@
 #include "modes/move.h"
 #include "modes/fit.h"
 
+ bool TPartMode::HasInstance = false;
+ bool TOccuMode::HasInstance = false;
+ bool TFixUMode::HasInstance = false;
+ bool TFixCMode::HasInstance = false;
+ TNameMode* TNameMode::Instance = NULL;
 
 AMode::AMode(int id) : Id(id)  {
   TModeChange mc(Id, true);

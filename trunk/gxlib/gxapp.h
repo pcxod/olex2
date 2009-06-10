@@ -260,7 +260,9 @@ public:
   void SetLabelsFont(short FontIndex);
   TGlMaterial & LabelsMarkMaterial();
   void MarkLabel(const TXAtom& A, bool mark);
+  void MarkLabel(int index, bool mark);
   bool IsLabelMarked(const TXAtom& A) const;
+  bool IsLabelMarked(int index) const;
   void ClearLabelMarks();
 
   int GetNextAvailableLabel(const olxstr& AtomType);

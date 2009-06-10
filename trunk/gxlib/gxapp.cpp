@@ -85,64 +85,13 @@ int CompareStr(const olxstr &Str, const olxstr &Str1, bool IC) {
 ////////////////////////////////////////////////////////////////////////////////
 // UNDO DATA CLASSES
 class TKillUndo: public TUndoData  {
-  TSBondPList* SBonds;
-  TSAtomPList* SAtoms;
-  TSPlanePList* SPlanes;
 public:
-  TKillUndo(IUndoAction *action):TUndoData(action)  {
-    SBonds = NULL;
-    SAtoms = NULL;
-    SPlanes = NULL;
-  }
+  TTypeList<TSAtom::Ref> SAtomIds;
+  TKillUndo(IUndoAction *action):TUndoData(action)  {  }
 
-  virtual ~TKillUndo()  {
-    if( SBonds != NULL )   delete SBonds;
-    if( SAtoms != NULL )   delete SAtoms;
-    if( SPlanes != NULL )  delete SPlanes;
-  }
+  virtual ~TKillUndo()  {  }
 
-  int SBondCount()  {  return SBonds == NULL ? 0 : SBonds->Count();  }
-  int SAtomCount()  {  return SAtoms == NULL ? 0 : SAtoms->Count();  }
-  int SPlaneCount()  {  return SPlanes == NULL ? 0 : SPlanes->Count();  }
-  TSBond& SBond(int i)    {  return *SBonds->Item(i);    }
-  TSAtom& SAtom(int i)    {  return *SAtoms->Item(i);    }
-  TSPlane& SPlane(int i)  {  return *SPlanes->Item(i);  }
-
-  TSAtomPList& GetSAtoms()  {  return *SAtoms;  }
-  TSBondPList& GetSBonds()  {  return *SBonds;  }
-  TSPlanePList& GetSPlanes() {  return *SPlanes;  }
-
-  void AddSAtom(TSAtom& SA)  {
-    if( SAtoms == NULL )  
-      SAtoms = new TSAtomPList();
-    SAtoms->Add(&SA);
-  }
-  void AddSBond(TSBond& SB)  {
-    if( SBonds == NULL )  
-      SBonds = new TSBondPList();
-    SBonds->Add(&SB);
-  }
-  void AddSPlane(TSPlane& SP)  {
-    if( SPlanes == NULL )  
-      SPlanes = new TSPlanePList();
-    SPlanes->Add(&SP);
-  }
-
-  void AddSAtoms(const TSAtomPList& atoms)  {
-    if( SAtoms == NULL )  
-      SAtoms = new TSAtomPList();
-    SAtoms->AddList(atoms);
-  }
-  void AddSBonds(const TSBondPList& bonds)  {
-    if( SBonds == NULL )  
-      SBonds = new TSBondPList();
-    SBonds->AddList(bonds);
-  }
-  void AddSPlanes(const TSPlanePList& planes)  {
-    if( SPlanes == NULL )  
-      SPlanes = new TSPlanePList();
-    SPlanes->AddList(planes);
-  }
+  void AddSAtom(const TSAtom& SA)  {  SAtomIds.AddCCopy( SA.GetRef() );  }
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -255,7 +204,7 @@ public:
     //FParent->GetRender().CleanUpStyles();
     //  FParent->CenterModel();
     FParent->GetRender().SetBasis(B);
-    FParent->CreateObjects(true);
+    //FParent->CreateObjects(true);
     FParent->CenterView();
     FParent->GetRender().SetZoom( FParent->GetRender().CalcZoom()*FParent->GetExtraZoom() );
     //FParent->CenterModel();
@@ -1313,7 +1262,8 @@ bool TGXApp::Dispatch(int MsgId, short MsgSubId, const IEObject *Sender, const I
     if(  !(SData->From == SData->To) )
       Select(SData->From, SData->To);
   }
-  else if( MsgId == ID_OnDisassemble ) {
+  else if( MsgId == ID_OnDisassemble && MsgSubId == msiExit ) {
+    CreateObjects(false, false);
   }
   return false;
 }
@@ -1617,7 +1567,7 @@ TUndoData* TGXApp::ChangeSuffix(const TXAtomPList& xatoms, const olxstr &To, boo
     if( CheckLabels )
       newL = XFile().GetAsymmUnit().CheckLabel(&xatoms[i]->Atom().CAtom(), newL);
     xatoms[i]->Atom().CAtom().Label() = newL;
-    undo->AddAtom( xatoms[i]->Atom(), oldL );
+    undo->AddAtom( xatoms[i]->Atom().CAtom(), oldL );
   }
   return undo;
 }
@@ -1634,7 +1584,7 @@ TUndoData* TGXApp::Name(TXAtom& XA, const olxstr &Name, bool CheckLabel)  {
   XA.Atom().SetLabel( CheckLabel ? XFile().GetAsymmUnit().CheckLabel(&XA.Atom().CAtom(), Name) : Name);
 
   if( oldL != XA.Atom().GetLabel() )
-    undo->AddAtom( XA.Atom(), oldL );
+    undo->AddAtom( XA.Atom().CAtom(), oldL );
   // Dima's complaint - leave all in for manual naming
   //NameHydrogens(XA.Atom(), undo, CheckLabel);
   if( checkBonds )  CheckQBonds(XA);
@@ -1673,7 +1623,7 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To, bool CheckLabel, b
         bool recreate = XA->Atom().GetAtomInfo() != *bai;
         oldL = XA->Atom().GetLabel();
         XA->Atom().SetLabel( CheckLabel ? XFile().GetAsymmUnit().CheckLabel(&XA->Atom().CAtom(), NL) : NL );
-        undo->AddAtom(XA->Atom(), oldL);
+        undo->AddAtom(XA->Atom().CAtom(), oldL);
         NameHydrogens(XA->Atom(), undo, CheckLabel);
         if( recreate )  {
           ChangedAtoms.Add( XA );
@@ -1693,7 +1643,7 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To, bool CheckLabel, b
         bool recreate = XA->Atom().GetAtomInfo() != *bai;
         oldL = XA->Atom().GetLabel();
         XA->Atom().SetLabel( CheckLabel ? XFile().GetAsymmUnit().CheckLabel(&XA->Atom().CAtom(), NL) : NL );
-        undo->AddAtom( XA->Atom(), oldL);
+        undo->AddAtom( XA->Atom().CAtom(), oldL);
         NameHydrogens(XA->Atom(), undo, CheckLabel);
         if( recreate )  {
           ChangedAtoms.Add( XA );
@@ -1725,7 +1675,7 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To, bool CheckLabel, b
         bool recreate = XA->Atom().GetAtomInfo() != *bai;
         oldL = XA->Atom().GetLabel();
         XA->Atom().SetLabel( CheckLabel ? XFile().GetAsymmUnit().CheckLabel(&XA->Atom().CAtom(), NL) : NL );
-        undo->AddAtom(XA->Atom(), oldL);
+        undo->AddAtom(XA->Atom().CAtom(), oldL);
         NameHydrogens(XA->Atom(), undo, CheckLabel);
         if( recreate )  {
           ChangedAtoms.Add( XA );
@@ -1932,112 +1882,73 @@ TXAtom* TGXApp::AddAtom(TXAtom* templ)  {
 //..............................................................................
 void TGXApp::undoDelete(TUndoData *data)  {
   TKillUndo *undo = static_cast<TKillUndo*>(data);
-  for( int i=0; i < undo->SAtomCount(); i++ )  undo->SAtom(i).SetDeleted(false);
-  for( int i=0; i < undo->SBondCount(); i++ )  undo->SBond(i).SetDeleted(false);
-  for( int i=0; i < undo->SPlaneCount(); i++ )  undo->SPlane(i).SetDeleted(false);
-  if( undo->SBondCount() )  {
-    TXBondPList res;
-    SBonds2XBonds(undo->GetSBonds(), res);
-    for( int i=0; i < res.Count(); i++ )  
-      res[i]->SetDeleted(false);
+  TLattice& latt = XFile().GetLattice();
+  for( int i=0; i < undo->SAtomIds.Count(); i++ )  {  
+    TSAtom* sa = latt.FindSAtom( undo->SAtomIds[i] );
+    if( sa != NULL )
+      sa->SetDeleted(false);
+    else
+      latt.RestoreAtom( undo->SAtomIds[i] );
   }
-  if( undo->SPlaneCount() )  {
-    TXPlanePList res;
-    SPlanes2XPlanes(undo->GetSPlanes(), res);
-    for( int i=0; i < res.Count(); i++ )  
-      res[i]->SetDeleted(false);
-  }
-  if( undo->SAtomCount() )  {
-    TXAtomPList res;
-    SAtoms2XAtoms(undo->GetSAtoms(), res);
-    for( int i=0; i < res.Count(); i++ )  
-      res[i]->SetDeleted(false);
-    XFile().GetLattice().UpdateAsymmUnit();
-    CenterView();
-  }
+  XFile().GetLattice().UpdateConnectivity();
 }
 //..............................................................................
 void TGXApp::undoName(TUndoData *data)  {
   TNameUndo *undo = static_cast<TNameUndo*>(data);
-  TSAtomPList sal;
+  TCAtomPList cal;
+  TAsymmUnit& au = XFile().GetAsymmUnit();
   for( int i=0; i < undo->AtomCount(); i++ )  {
+    if( undo->GetCAtomId(i) >= au.AtomCount() )  //could happen?
+      continue;
+    TCAtom& ca = au.GetAtom( undo->GetCAtomId(i));
     TBasicAtomInfo* bai = FAtomsInfo->FindAtomInfoEx( undo->GetLabel(i) );
-    if( undo->GetAtom(i).GetAtomInfo() != *bai )
-      sal.Add( &undo->GetAtom(i) );
-    undo->GetAtom(i).SetLabel( undo->GetLabel(i) );
+    ca.Label() = undo->GetLabel(i);
+    if( ca.GetAtomInfo() != *bai )
+      cal.Add(ca)->SetAtomInfo(*bai);
   }
-  if( sal.Count() != 0 )  {
-    TXAtomPList xal;
-    SAtoms2XAtoms( sal, xal );
-    for( int i=0; i < xal.Count(); i ++ )  {
-      xal[i]->GetPrimitives().RemoveObject( *xal[i] );
-      xal[i]->Create();
-    }
-    SynchroniseBonds( xal );
-  }
+  // could be optimised...
+  if( !cal.IsEmpty() )
+    CreateObjects(false, false);
 }
 //..............................................................................
 TUndoData* TGXApp::DeleteXObjects(TPtrList<AGDrawObject>& L)  {
   TXAtomPList atoms;
-  TXBondPList bonds;
-  TXPlanePList planes;
   for( int i=0; i < L.Count(); i++ )  {
-    AGDrawObject* GO = (AGDrawObject*)L[i];
-    if( EsdlInstanceOf(*GO, TXAtom) )  {  atoms.Add( (TXAtom*)GO );  continue;  }
-    if( EsdlInstanceOf(*GO, TXBond) )  {  bonds.Add( (TXBond*)GO );  continue;  }
-    if( EsdlInstanceOf(*GO, TXPlane) ) {  planes.Add( (TXPlane*)GO); continue;  }
+    AGDrawObject* GO = L[i];
+    if( EsdlInstanceOf(*GO, TXAtom) )  
+      atoms.Add( (TXAtom*)GO );
   }
-  TKillUndo *undo = (TKillUndo*)DeleteXAtoms(atoms);
-  for( int i=0; i < bonds.Count(); i++ )  {
-    if( !bonds[i]->IsDeleted() )  {
-      bonds[i]->SetDeleted(true);
-      undo->AddSBond( bonds[i]->Bond() );
-    }
-  }
-  for( int i=0; i < planes.Count(); i++ )  {
-    if( !planes[i]->IsDeleted() )  {
-      planes[i]->SetDeleted(true);
-      undo->AddSPlane( planes[i]->Plane() );
-    }
-  }
-  return undo;
+  return DeleteXAtoms(atoms);
 }
 //..............................................................................
 TUndoData* TGXApp::DeleteXAtoms(TXAtomPList& L)  {
   TKillUndo *undo = new TKillUndo( new TUndoActionImplMF<TGXApp>(this, &GxlObject(TGXApp::undoDelete)));
-  TSBondPList SBL;
   TSAtomPList SAL;
   for( int i=0; i < L.Count(); i++ )  {
-    TXAtom* XA = (TXAtom*)L[i];
-    TSAtom* SA = &XA->Atom();
+    TXAtom* XA = L[i];
+    TSAtom& SA = XA->Atom();
+    if( SA.IsDeleted() )  continue;
     undo->AddSAtom( XA->Atom() );
-    for( int j=0; j < SA->BondCount(); j++ )
-      SBL.Add(SA->Bond(j))->SetDeleted(true);
-    for( int j=0; j < SA->NodeCount();j++ ) {
-      TSAtom* SH = &SA->Node(j);
-      if( (SA->GetAtomInfo() != iQPeakIndex ) &&  (SH->GetAtomInfo() == iHydrogenIndex) )  {
-        SH->SetDeleted(true);
-        SAL.Add( SH );
-      }
+    for( int j=0; j < SA.NodeCount();j++ ) {
+      TSAtom& SH = SA.Node(j);
+      if( SH.IsDeleted() )  continue;
+      if( SA.GetAtomInfo() != iQPeakIndex && SH.GetAtomInfo() == iHydrogenIndex )  
+        SAL.Add(SH)->SetDeleted(true);
     }
     XA->SetDeleted(true);
   }
-  undo->AddSAtoms(SAL);
-  undo->AddSBonds(SBL);
-
-  TXBondPList XBL;
-  SBonds2XBonds(SBL, XBL);
-  for( int i=0; i < XBL.Count(); i++ )  
-    XBL[i]->SetDeleted(true);
 
   TXAtomPList XAL;
   SAtoms2XAtoms(SAL, XAL);
-  for( int i=0; i < XAL.Count(); i++ )  
+  for( int i=0; i < XAL.Count(); i++ )  {  
     XAL[i]->SetDeleted(true);
+    undo->AddSAtom( XAL[i]->Atom() );
+  }
 
   GetSelection().RemoveDeleted();
-  XFile().GetLattice().UpdateAsymmUnit();
-  CenterView();
+  XFile().GetLattice().UpdateConnectivity();
+  //CreateObjects(false, false);
+  //CenterView();
   return undo;
 }
 //..............................................................................
@@ -2292,7 +2203,11 @@ TGlMaterial& TGXApp::LabelsMarkMaterial()  {  return FLabels->MarkMaterial();  }
 //..............................................................................
 void TGXApp::MarkLabel(const TXAtom& A, bool v)  {  FLabels->MarkLabel(A, v);  }
 //..............................................................................
+void TGXApp::MarkLabel(int i, bool v)  {  FLabels->MarkLabel(i, v);  }
+//..............................................................................
 bool TGXApp::IsLabelMarked(const TXAtom& A) const {  return FLabels->IsLabelMarked(A);  }
+//..............................................................................
+bool TGXApp::IsLabelMarked(int i) const {  return FLabels->IsLabelMarked(i);  }
 //..............................................................................
 void TGXApp::ClearLabelMarks()  {  FLabels->ClearLabelMarks();  }
 //..............................................................................

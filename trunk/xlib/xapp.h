@@ -18,16 +18,23 @@ const unsigned int   psFileLoaded        = 0x00010000,
                      psCheckFileTypeCRS  = 0x00100000;
 
 class TNameUndo : public TUndoData  {
-  TTypeList< AnAssociation2<TSAtom*, olxstr> >  Data;
 public:
-  TNameUndo(IUndoAction* action) : TUndoData(action)  {  }
+  struct NameRef {
+    int catom_id;
+    olxstr name;
+    NameRef(int id, const olxstr& n) : catom_id(id), name(n)  {  }
+  };
 
-  void AddAtom( TSAtom& A, const olxstr& newName )  {
-    Data.AddNew( &A, newName );
+  TNameUndo(IUndoAction* action) : TUndoData(action)  {  }
+  
+  TTypeList<NameRef> Data;
+  
+  void AddAtom(TCAtom& A, const olxstr& newName)  {
+    Data.Add( new NameRef(A.GetId(), newName) );
   }
-  inline int AtomCount()                   const {  return Data.Count();  }
-  inline TSAtom& GetAtom(int i)            const {  return  *Data[i].GetA();  }
-  inline const olxstr& GetLabel(int i)   const {  return  Data[i].GetB();  }
+  inline int AtomCount() const {  return Data.Count();  }
+  inline const int& GetCAtomId(int i) const {  return  Data[i].catom_id;  }
+  inline const olxstr& GetLabel(int i) const {  return  Data[i].name;  }
 };
 
                      

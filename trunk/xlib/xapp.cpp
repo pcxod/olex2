@@ -225,7 +225,7 @@ void TXApp::NameHydrogens(TSAtom& SA, TUndoData* ud, bool CheckLabel)  {
   );
   for( int i=0; i < SA.NodeCount(); i++ )  {
     TSAtom& sa = SA.Node(i);
-    if( !sa.IsDeleted() && sa.GetAtomInfo() == iHydrogenIndex )  {
+    if( sa.GetAtomInfo() == iHydrogenIndex && sa.GetTag() == 1 )  {
       allH ++;
       TSAtomPList& al = parts.Add(sa.CAtom().GetPart());
       al.Add(&sa);
@@ -259,7 +259,7 @@ void TXApp::NameHydrogens(TSAtom& SA, TUndoData* ud, bool CheckLabel)  {
       }
       if( al[j]->GetLabel() != Labl )  {
         if( nu != NULL )  
-          nu->AddAtom(*al[j], al[j]->GetLabel() );
+          nu->AddAtom(al[j]->CAtom(), al[j]->GetLabel() );
         al[j]->CAtom().Label() = Labl;
       }
       processedH++;
@@ -271,12 +271,15 @@ void TXApp::NameHydrogens(TSAtom& SA, TUndoData* ud, bool CheckLabel)  {
 //..............................................................................
 void TXApp::undoName(TUndoData *data)  {
   TNameUndo *undo = static_cast<TNameUndo*>(data);
-  TSAtomPList sal;
+  TAsymmUnit& au = XFile().GetAsymmUnit();
   for( int i=0; i < undo->AtomCount(); i++ )  {
+    if( undo->GetCAtomId(i) >= au.AtomCount() )  // would definetely be an error
+      continue;
+    TCAtom& ca = au.GetAtom(undo->GetCAtomId(i));
     TBasicAtomInfo* bai = FAtomsInfo->FindAtomInfoEx( undo->GetLabel(i) );
-    if( undo->GetAtom(i).GetAtomInfo() != *bai )
-      sal.Add( &undo->GetAtom(i) );
-    undo->GetAtom(i).SetLabel( undo->GetLabel(i) );
+    ca.Label() = undo->GetLabel(i);
+    if( ca.GetAtomInfo() != *bai )
+      ca.SetAtomInfo(*bai);
   }
 }
 //..............................................................................
@@ -284,13 +287,19 @@ TUndoData* TXApp::FixHL()  {
   TNameUndo *undo = new TNameUndo( new TUndoActionImplMF<TXApp>(this, &TXApp::undoName));
   for( int i=0; i < XFile().GetLattice().AtomCount(); i++ )  {
     TSAtom& sa = XFile().GetLattice().GetAtom(i);
-    if( sa.IsDeleted() || (sa.GetAtomInfo() == iQPeakIndex) || (sa.GetAtomInfo() == iHydrogenIndex)  )
+    if( sa.IsDeleted() || (sa.GetAtomInfo() == iQPeakIndex) )  {
+      sa.SetTag(-1);
+      continue;
+    }
+    bool au_atom = (sa.GetMatrix(0).GetTag() == 0 && sa.GetMatrix(0).t.QLength() < 1e-6);
+    sa.SetTag( au_atom ? 1 : -1 );
+    if( sa.GetAtomInfo() == iHydrogenIndex )
       continue;
     NameHydrogens(sa, undo, false);
   }
   for( int i=0; i < XFile().GetLattice().AtomCount(); i++ )  {
     TSAtom& sa = XFile().GetLattice().GetAtom(i);
-    if( sa.IsDeleted() || (sa.GetAtomInfo() == iQPeakIndex) || (sa.GetAtomInfo() == iHydrogenIndex)  )
+    if( sa.GetAtomInfo() == iHydrogenIndex || sa.GetTag() < 0 )  
       continue;
     NameHydrogens(sa, undo, true);
   }

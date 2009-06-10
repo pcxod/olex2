@@ -33,7 +33,17 @@ void TSAtom::AtomInfo(TBasicAtomInfo& AI)  {
   FCAtom->SetAtomInfo(AI);
 }
 //..............................................................................
-void  TSAtom::Assign(const TSAtom& S)  {
+int TSAtom::_SortBondsByLengthAsc(const TSBond* b1, const TSBond* b2)  {
+  const double diff = b1->QLength() - b2->QLength();
+  return diff < 0 ? -1 : (diff > 0 ? 1 : 0);
+}
+//..............................................................................
+int TSAtom::_SortBondsByLengthDsc(const TSBond* b1, const TSBond* b2)  {
+  const double diff = b2->QLength() - b1->QLength();
+  return diff < 0 ? -1 : (diff > 0 ? 1 : 0);
+}
+//..............................................................................
+void TSAtom::Assign(const TSAtom& S)  {
   TSObject<TNetwork>::Assign(S);
   FEllipsoid = S.GetEllipsoid();
   FCenter    = S.crd();

@@ -2064,48 +2064,44 @@ void TMainForm::macBRad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 }
 //..............................................................................
 void TMainForm::macKill(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  if( Cmds.Count() == 1 )  {
-    if( Cmds[0].Equalsi("sel") )  {
-      TPtrList<AGDrawObject> Objects;
-      TGlGroup& sel = FXApp->GetSelection();
-      olxstr out;
-      for( int i=0; i < sel.Count(); i++ )  {
-        Objects.Add( sel[i] );
-        if( EsdlInstanceOf(sel[i], TXAtom) )
-          out << ((TXAtom&)sel[i]).Atom().GetLabel();
-        else
-          out << sel[i].GetCollectionName();
-        out << ' ';
-      }
-      if( !out.IsEmpty()  )  {
-        FXApp->GetLog() << "Deleting " << out << '\n';
-        FUndoStack->Push( FXApp->DeleteXObjects( Objects ) );
-        sel.RemoveDeleted();
-      }
+  if( Modes->GetCurrent() != NULL )  {
+    Error.ProcessingError(__OlxSrcInfo, "Kill inaccessible from within a mode");
+    return;
+  }
+  if( Cmds.Count() == 1 && Cmds[0].Equalsi("sel") )  {
+    TPtrList<AGDrawObject> Objects;
+    TGlGroup& sel = FXApp->GetSelection();
+    olxstr out;
+    for( int i=0; i < sel.Count(); i++ )  {
+      Objects.Add( sel[i] );
+      if( EsdlInstanceOf(sel[i], TXAtom) )
+        out << ((TXAtom&)sel[i]).Atom().GetLabel();
+      else
+        out << sel[i].GetCollectionName();
+      out << ' ';
     }
-    else if( Cmds[0].Equalsi("$Q") )  {
-      TXAtomPList Atoms;
-      FXApp->FindXAtoms("$Q", Atoms, true, true);
-      if( Atoms.IsEmpty() )  return;
-      delete FXApp->DeleteXAtoms(Atoms);
-      ProcessXPMacro("fuse", Error);
-      FXApp->GetLog() << "All Q-peaks are deleted and the connectivity is recalculated\n";
-      return;
+    if( !out.IsEmpty()  )  {
+      FXApp->GetLog() << "Deleting " << out << '\n';
+      FUndoStack->Push( FXApp->DeleteXObjects( Objects ) );
+      sel.RemoveDeleted();
     }
   }
-  TXAtomPList Atoms, Selected;
-  FXApp->FindXAtoms(Cmds.Text(' '), Atoms, true, Options.Contains('h'));
-  if( Atoms.IsEmpty() )  return;
-  for( int i=0; i < Atoms.Count(); i++ )
-    if( Atoms[i]->IsSelected() )
-      Selected.Add(Atoms[i]);
-  TXAtomPList& todel = Selected.IsEmpty() ? Atoms : Selected;
-  FXApp->GetLog() << "Deleting ";
-  for( int i=0; i < todel.Count(); i++ )
-    FXApp->GetLog() << todel[i]->Atom().GetLabel() << ' ';
-  FXApp->GetLog() << '\n';
-  FXApp->GetLog() << "Please execute 'fuse' to recalculate the connectivity if using any functions using it\n";
-  FUndoStack->Push( FXApp->DeleteXAtoms(todel) );
+  else  {
+    TXAtomPList Atoms, Selected;
+    FXApp->FindXAtoms(Cmds.Text(' '), Atoms, true, Options.Contains('h'));
+    if( Atoms.IsEmpty() )  return;
+    for( int i=0; i < Atoms.Count(); i++ )
+      if( Atoms[i]->IsSelected() )
+        Selected.Add(Atoms[i]);
+    TXAtomPList& todel = Selected.IsEmpty() ? Atoms : Selected;
+    if( todel.IsEmpty() )
+      return;
+    FXApp->GetLog() << "Deleting ";
+    for( int i=0; i < todel.Count(); i++ )
+      FXApp->GetLog() << todel[i]->Atom().GetLabel() << ' ';
+    FXApp->GetLog() << '\n';
+    FUndoStack->Push( FXApp->DeleteXAtoms(todel) );
+  }
 }
 //..............................................................................
 void TMainForm::macHide(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {

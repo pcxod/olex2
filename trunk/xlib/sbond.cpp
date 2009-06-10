@@ -38,10 +38,6 @@ void TSBond::OnAtomSet()  {
   }
 }
 //..............................................................................
-double TSBond::Length() const {  return FA->crd().DistanceTo(FB->crd()); }
-//..............................................................................
-double TSBond::QLength() const {  return FA->crd().QDistanceTo(FB->crd()); }
-//..............................................................................
 void TSBond::ToDataItem(TDataItem& item) const {
   item.AddField("net_id", Network->GetTag());
   item.AddField("a_id", FA->GetTag());

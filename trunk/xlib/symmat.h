@@ -96,6 +96,23 @@ public:
 
   inline int IncTag() {  return ++Tag;  }
   inline int DecTag() {  return --Tag;  }
+
+  // Tag dependent reference operations
+  struct Ref  {
+    int tag;
+    TVector3<VC> t;
+    Ref(int _tag, const TVector3<VC>& _t) : tag(_tag), t(_t) {}
+    Ref(const Ref& r) : tag(r.tag), t(r.t) {}
+    Ref& operator = (const Ref& r)  {
+      tag = r.tag;
+      t = r.t;
+      return *this;
+    }
+  };
+  Ref GetRef() const {  return Ref(Tag, t);  }
+  bool operator == (const Ref& ref) const  {
+    return (Tag == ref.tag && t.QDistanceTo(ref.t) < 1e-6);
+  }
 };
 
 typedef TSymmMat<int,double>   smatd;
