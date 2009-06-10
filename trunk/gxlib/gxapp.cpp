@@ -105,11 +105,13 @@ class xappXFileLoad: public AActionHandler  {
   TStrList AtomNames;
   TEBitArray CAtomMasks;
   TLattice::GrowInfo* GrowInfo;
+  bool SameFile;
 public:
   xappXFileLoad(TGXApp *Parent) {  
     FParent = Parent;  
     AActionHandler::SetToDelete(false);
     GrowInfo = NULL;
+    SameFile = false;
   }
   ~xappXFileLoad()  {  
     if( GrowInfo != NULL )
@@ -121,6 +123,7 @@ public:
       delete GrowInfo;
       GrowInfo = NULL;
     }
+    SameFile = false;
     FParent->ClearLabels();
     // make sure that these are only cleared when file is loaded
     if( Sender && EsdlInstanceOf(*Sender, TXFile) )  {
@@ -149,6 +152,7 @@ public:
             CAtomMasks.Set(ac++, ca.IsMasked());
           }
           GrowInfo = FParent->XFile().GetLattice().GetGrowInfo();
+          SameFile = true;
         }
       }
       else  {
@@ -206,7 +210,8 @@ public:
     FParent->GetRender().SetBasis(B);
     //FParent->CreateObjects(true);
     FParent->CenterView();
-    FParent->GetRender().SetZoom( FParent->GetRender().CalcZoom()*FParent->GetExtraZoom() );
+    if( !SameFile )
+      FParent->GetRender().SetZoom( FParent->GetRender().CalcZoom()*FParent->GetExtraZoom() );
     //FParent->CenterModel();
     //FParent->GetRender().Compile();
     FParent->Draw();

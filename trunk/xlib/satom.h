@@ -121,7 +121,7 @@ public:
       if( symm.Count() > 1 )  {
         matrices = new TTypeList<smatd::Ref>(symm.Count()-1);
         for( int i=1; i < symm.Count(); i++ )
-          matrices->Set(i, new smatd::Ref(symm[i]->GetRef()) );
+          matrices->Set(i-1, new smatd::Ref(symm[i]->GetRef()) );
       }
     } 
     Ref(const Ref& r) : catom_id(r.catom_id), 

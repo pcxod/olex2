@@ -668,7 +668,7 @@ void TUnitCell::GetAtomQEnviList(TSAtom& atom, TAtomEnvi& envi)  {
   for( int i=0; i < atom.NodeCount(); i++ )  {
     TSAtom& A = atom.Node(i);
     if( A.IsDeleted() ) continue;
-    if( A.GetAtomInfo() == iQPeakIndex )
+    if( A.GetAtomInfo() == iQPeakIndex && TNetwork::HaveSharedMatrix(A, atom) )
       envi.Add( A.CAtom(), I, A.crd() );
   }
   for( int i=0; i < atom.CAtom().AttachedAtomCount(); i++ )  {
@@ -695,9 +695,6 @@ void TUnitCell::GetAtomQEnviList(TSAtom& atom, TAtomEnvi& envi)  {
 }
 //..............................................................................
 void TUnitCell::GetAtomPossibleHBonds(const TAtomEnvi& ae, TAtomEnvi& envi)  {
-  if( ae.GetBase().IsGrown() )
-    throw TFunctionFailedException(__OlxSourceInfo, "Not implementd for grown structre");
-
   envi.SetBase( ae.GetBase() );
 
   TAsymmUnit& au = GetLattice().GetAsymmUnit();
