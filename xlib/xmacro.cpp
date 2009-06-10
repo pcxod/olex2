@@ -800,7 +800,8 @@ void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       }
     }
   }
-  XApp.XFile().EndUpdate();
+  XApp.XFile().GetLattice().Init();
+  //XApp.XFile().EndUpdate();
   delete XApp.FixHL();
 }
 //..............................................................................
@@ -855,10 +856,13 @@ void XLibMacros::macHImp(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       XApp.GetLog() << "Skipping " << h.GetLabel() << '\n';
       continue;
     }
+    h.crd() = v;
     XApp.XFile().GetAsymmUnit().CartesianToCell(v);
     h.CAtom().ccrd() = v;
+    h.ccrd() = v;
   }
-  XApp.XFile().EndUpdate();
+  XApp.XFile().GetLattice().UpdateConnectivity();
+  //XApp.XFile().EndUpdate();
 }
 //..............................................................................
 void XLibMacros::macAnis(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {

@@ -377,8 +377,6 @@ void TXFile::EndUpdate()  {
   OnFileLoad->Enter(this, &GetFileName());
   OnFileLoad->Execute(this);
   // we keep the asymmunit but clear the unitcell
-  GetLattice().Clear(false);
-  GetLattice().GetUnitCell().Clear();
   GetLattice().Init();
   OnFileLoad->Exit(this);
 }

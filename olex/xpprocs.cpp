@@ -2977,6 +2977,7 @@ void TMainForm::macPart(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     }
     part++;
   }
+  FXApp->XFile().GetLattice().UpdateConnectivity();
 }
 void TMainForm::macAfix(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   int afix = -1;
@@ -3106,8 +3107,8 @@ void ParseResParam(TStrObjList &Cmds, double& esd, double* len = NULL, double* l
   for( int i=0; i < Cmds.Count(); i++ )  {
     if( Cmds[i].IsNumber() )  {
       double v = Cmds[i].ToDouble();
-      if( v > 0.25 )  {
-        if( v < 5 )  {
+      if( olx_abs(v) > 0.25 )  {
+        if( olx_abs(v) < 5 )  {
           if( len == NULL )
             throw TInvalidArgumentException(__OlxSourceInfo, "too many numerical arguments, length");
           else  {
@@ -3121,7 +3122,7 @@ void ParseResParam(TStrObjList &Cmds, double& esd, double* len = NULL, double* l
               throw TInvalidArgumentException(__OlxSourceInfo, "too many numerical arguments, length");
           }
         }
-        else if( v >= 15 && v <= 180 )  {  // looks line an angle?
+        else if( olx_abs(v) >= 15 && olx_abs(v) <= 180 )  {  // looks line an angle?
           if( ang != NULL )  *ang = v;
           else
             throw TInvalidArgumentException(__OlxSourceInfo, "too many numerical arguments, angle");
@@ -8702,7 +8703,6 @@ void TMainForm::macConn(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     FXApp->XFile().GetAsymmUnit()._UpdateConnInfo();
     FXApp->GetRender().SelectAll(false);
     FXApp->XFile().GetLattice().UpdateConnectivity();
-    FXApp->CreateObjects(false, false);
   }
   catch( const TExceptionBase& exc )  {
     E.ProcessingError(__OlxSrcInfo, exc.GetException()->GetError());
@@ -8736,7 +8736,6 @@ void TMainForm::macAddBond(TStrObjList &Cmds, const TParamList &Options, TMacroE
   }
   FXApp->XFile().GetAsymmUnit()._UpdateConnInfo();
   FXApp->XFile().GetLattice().UpdateConnectivity();
-  FXApp->CreateObjects(false, false);
 }
 //..............................................................................
 void TMainForm::macDelBond(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
@@ -8776,7 +8775,6 @@ void TMainForm::macDelBond(TStrObjList &Cmds, const TParamList &Options, TMacroE
     FXApp->GetRender().SelectAll(false);
     FXApp->XFile().GetAsymmUnit()._UpdateConnInfo();
     FXApp->XFile().GetLattice().UpdateConnectivity();
-    FXApp->CreateObjects(false, false);
   }
   else  {
     E.ProcessingError(__OlxSrcInfo, "please select some bonds or provide atom pairs");

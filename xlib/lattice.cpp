@@ -688,6 +688,7 @@ void TLattice::RestoreAtom(const TSAtom::Ref& id)  {
   if( matr == NULL )  {
     matr = Matrices.Add( new smatd(GetUnitCell().GetMatrix(id.matrix_ref.tag)) );
     matr->t = id.matrix_ref.t;
+    Generated = true;
   }
   TSAtom* sa = new TSAtom(Network);
   sa->CAtom( GetAsymmUnit().GetAtom(id.catom_id) );
@@ -710,6 +711,7 @@ void TLattice::RestoreAtom(const TSAtom::Ref& id)  {
       if( matr == NULL )  {
         matr = Matrices.Add( new smatd(GetUnitCell().GetMatrix( (*id.matrices)[i].tag)) );
         matr->t = (*id.matrices)[i].t;
+        Generated = true;
       }
       sa->AddMatrix(matr);
     }
@@ -1350,12 +1352,12 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPL
       v = acos(v)*180/M_PI;
       double d1 = AE.GetCrd(0).DistanceTo( atom.crd() );
       double d2 = AE.GetCrd(1).DistanceTo( atom.crd() );
-      if(  d1 > 1.4 && d2 > 1.4 && v < 125 )  {
+      if(  d1 > 1.43 && d2 > 1.43 && v < 125 )  {
         TBasicApp::GetLog().Info( olxstr(atom.GetLabel()) << ": XYCH2" );
         cg.FixAtom( AE, fgCH2, HAI, NULL, generated);
       }
       else  {
-        if( (d1 < 1.4 || d2 < 1.4) && v < 160 )  {
+        if( (d1 < 1.43 || d2 < 1.43) && v < 160 )  {
           TBasicApp::GetLog().Info( olxstr(atom.GetLabel()) << ": X(Y=C)H" );
           cg.FixAtom( AE, fgCH1, HAI, NULL, generated);
         }
@@ -1634,6 +1636,10 @@ void TLattice::_ProcessRingHAdd(AConstraintGenerator& cg, const TPtrList<TBasicA
 }
 //..............................................................................
 void TLattice::AnalyseHAdd(AConstraintGenerator& cg, const TSAtomPList& atoms)  {
+  if( Generated )  {
+    TBasicApp::GetLog().Error("Hadd is not applicable to grown structure");
+    return;
+  }
   TPtrList<TBasicAtomInfo> CTypes;
   CTypes.Add( &AtomsInfo.GetAtomInfo(iCarbonIndex) );
   CTypes.Add( &AtomsInfo.GetAtomInfo(iNitrogenIndex) );
@@ -1978,7 +1984,7 @@ bool TLattice::ApplyGrowInfo()  {
           matr_start = j+1;       
         TSAtom* a = Atoms.Add( new TSAtom(Network) );
         a->CAtom(ca);
-        a->SetEllipsoid( &GetUnitCell().GetEllipsoid(mi[matr_start], ca.GetId()) ); // ellipsoid for the identity matrix
+        a->SetEllipsoid( &GetUnitCell().GetEllipsoid(Matrices[mi[matr_start]]->GetTag(), ca.GetId()) ); // ellipsoid for the matrix
         a->SetLattId( Atoms.Count() - 1 );
         a->ccrd() = (*Matrices[mi[matr_start]]) * ca.ccrd();
         au.CellToCartesian(a->ccrd(), a->crd());
