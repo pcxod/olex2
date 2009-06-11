@@ -30,6 +30,7 @@ if debug:
   out_dir += 'debug/'
 else:
   out_dir += 'release/'
+full_out_dir = os.getcwd() + '/' + out_dir
 
 print 'Building location: ' + out_dir
 #get file lists
@@ -119,7 +120,7 @@ if sys.platform[:3] == 'win':
                              wxzlib mapi32 glu32 user32 opengl32 gdi32 ole32 
                              advapi32 comdlg32 comctl32 shell32 rpcrt4 oleaut32
                              kernel32 wsock32"""))
-  env.Append(LINKFLAGS=['/MANIFEST', '/MACHINE:X86'])
+  env.Append(LINKFLAGS=['/MANIFEST', '/MACHINE:X86', '/DEBUG', '/ASSEMBLYDEBUG'])
 else:
   try: 
     if sys.platform[:6] == 'darwin':
@@ -167,12 +168,15 @@ if sys.platform[:3] == 'win':
   res_file = out_dir + 'olex/app.res'
   olex2_files = olex2_files + env.RES(res_file, 'olex/app.rc')
   env.Append(RCFLAGS=['/l 0x809'])
+  env.Append(LINKFLAGS=['/PDB:' + out_dir + 'exe/olex2.pdb'])
 env.Program(out_dir+'exe/olex2', generic_files + olex2_files)
 
 unirun_files = np_repository + fileListToStringList('unirun', unirun)
 unirun_files = processFileNameList(unirun_files, unirun_env, out_dir+'unirun')
 
 unirun_env.Append(CCFLAGS = ['-D_NO_PYTHON'])
+if sys.platform[:3] == 'win':
+  unirun_env.Append(LINKFLAGS=['/PDB:' + out_dir + 'exe/unirun.pdb'])
 unirun_env.Program(out_dir+'exe/unirun', unirun_files)
 
 # make olex2c?
@@ -185,6 +189,7 @@ if sys.platform[:3] == 'win':
   res_file = out_dir + 'olex2c/app.res'
   olex2c_files = olex2c_files + olex2c_env.RES(res_file, 'olex2c/app.rc')
   olex2c_env.Append(RCFLAGS=['/l 0x809'])
+  olex2c_env.Append(LINKFLAGS=['/PDB:' + out_dir + 'exe/olex2c.pdb'])
 olex2c_env.Program(out_dir+'exe/olex2c', generic_files + olex2c_files)
 
 try:
