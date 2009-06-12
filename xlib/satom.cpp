@@ -5,7 +5,7 @@
 #include "satom.h"
 #include "network.h"
 #include "lattice.h"
-#include "asymmunit.h"
+#include "residue.h"
 #include "symmparser.h"
 #include "pers_util.h"
 

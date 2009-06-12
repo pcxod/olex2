@@ -533,6 +533,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\sdl\testsuit.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\sdl\undo.cpp"
 				>
 			</File>
@@ -824,6 +828,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\sdl\talist.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\sdl\testsuit.h"
 				>
 			</File>
 			<File

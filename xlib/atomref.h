@@ -1,6 +1,7 @@
 #ifndef __OLX__ATOM_GROUP
 #define __OLX__ATOM_GROUP
 #include "refmodel.h"
+#include "residue.h"
 
 BeginXlibNamespace()
 /* Possible Shelx syntax
@@ -35,7 +36,7 @@ public:
   TAtomReference(const olxstr& expression, ASelectionOwner* selectionOwner = NULL) : 
       Expression(expression), SelectionOwner(selectionOwner)  {  }
   const olxstr& GetExpression() const {  return Expression;  }
-  int _Expand(RefinementModel& rm, TCAtomGroup& atoms, TAsymmUnit::TResidue* CurrResi)  {
+  int _Expand(RefinementModel& rm, TCAtomGroup& atoms, TResidue* CurrResi)  {
     int ac = atoms.Count();
     if( Expression.IsEmpty() )  {  // all atoms of au
       atoms.SetCapacity( atoms.Count() + rm.aunit.AtomCount() );
@@ -137,7 +138,7 @@ public:
       resi_name = resi_name.SubStringTo(eqiv_ind);
     }
     // validate syntax
-    TPtrList<TAsymmUnit::TResidue> residues;
+    TPtrList<TResidue> residues;
     if( !resi_name.IsEmpty() && (resi_name.CharAt(0) == '+' || resi_name.CharAt(0) == '-') )  {
       if( CurrResi == NULL )  throw TInvalidArgumentException(__OlxSourceInfo, "current residue");
       if( resi_name.CharAt(0) == '+' )  residues.Add(rm.aunit.NextResidue(*CurrResi));
@@ -191,7 +192,7 @@ public:
     }
     atomAGroup = 0;
     TCAtomGroup tmp_atoms;
-    TPtrList<TAsymmUnit::TResidue> residues;
+    TPtrList<TResidue> residues;
     rm.aunit.FindResidues(DefResi, residues);  // empty resi name refers to all atom outside RESI
     TStrList toks(nexp, ' '), unprocessed;
     for( int i=0; i < residues.Count(); i++ )  {

@@ -14,7 +14,7 @@
 #include "log.h"
 #include "symmparser.h"
 #include "atomref.h"
-#include "asymmunit.h"
+#include "residue.h"
 #include "estack.h"
 
 #ifdef AdAtom
@@ -36,7 +36,7 @@ class TIns: public TBasicCFile  {
     double PartOccu;
     TCAtom* Last, 
       *LastWithU, *LastNonH;  // thi sis used to evaluate riding H Uiso coded like -1.5
-    TAsymmUnit::TResidue* Resi;
+    TResidue* Resi;
     TAsymmUnit& au;
     RefinementModel& rm;
     // SAME instructions and the first atom after it/them

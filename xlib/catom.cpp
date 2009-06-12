@@ -8,11 +8,11 @@
 
 #include "catom.h"
 #include "ellipsoid.h"
-#include "asymmunit.h"
 #include "exception.h"
 #include "estrlist.h"
 #include "refmodel.h"
 #include "pers_util.h"
+#include "residue.h"
 
 olxstr TCAtom::VarNames[] = {"Scale", "X", "Y", "Z", "Sof", "Uiso", "U11", "U22", "U33", "U23", "U13", "U12"};
 //----------------------------------------------------------------------------//

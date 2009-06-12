@@ -561,6 +561,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\xlib\catomlist.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\xlib\chemdata.cpp"
 				>
 				<FileConfiguration
@@ -823,6 +827,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\xlib\catomlist.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\xlib\chembase.h"
 				>
 			</File>
@@ -960,6 +968,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\xlib\refutil.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\xlib\residue.h"
 				>
 			</File>
 			<File

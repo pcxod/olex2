@@ -22,6 +22,8 @@
 
 BeginXlibNamespace()
 
+class TResidue;
+
 class TAsymmUnit: public IXVarReferencerContainer, public IEObject  {
   TCAtomPList CAtoms;      // list of TCAtoms
   smatd_list  Matrices;  // list of matrices (excluding ones after centering)
@@ -47,64 +49,10 @@ class TAsymmUnit: public IXVarReferencerContainer, public IEObject  {
   vec3d   RAxes;     // reciprical axes
   vec3d   RAngles;    // reciprical angles
   // this list holds the list of all atoms which are not deleted
-public:  // residue class implementation
-  class TResidue : public IEObject  {
-    olxstr ClassName, Alias;
-    int Number, Id;
-    TCAtomPList Atoms;
-    TAsymmUnit& Parent;
-  public:
-    TResidue(TAsymmUnit& parent, int id, const olxstr& cl=EmptyString, int number = 0, const olxstr& alias=EmptyString) : 
-        Parent(parent), Id(id), ClassName(cl), Number(number), Alias(alias) {  }
-    DefPropC(olxstr, ClassName)
-    DefPropC(olxstr, Alias)
-    DefPropP(int, Number)
-    inline int GetId()          const {  return Id;  }
-    inline TAsymmUnit& GetParent()    {  return Parent;  }
-    TCAtomPList& AtomList()           {  return Atoms;  }
-    virtual TIString ToString() const {
-      if( Id == -1 )  return EmptyString;
-      olxstr rv("RESI ");
-      rv << ClassName;
-      if( Number != 0 )  rv << ' ' << Number;
-      return (rv << (Alias.IsEmpty() ? EmptyString : (olxstr(' ') << Alias)));
-    }
-    inline int Count()                 const {  return Atoms.Count();  }  
-    inline TCAtom& GetAtom(int i)      const {  return *Atoms[i];  }
-    inline TCAtom& operator [] (int i) const {  return *Atoms[i]; }
-    inline void Clear()                      {  Atoms.Clear();  } 
-    inline void Remove(TCAtom* ca)           {
-      int i = Atoms.IndexOf(ca);
-      if( i != -1 )  Atoms.Delete(i);
-    }
-    inline void AddAtom( TCAtom* ca )        {
-      Atoms.Add( ca );
-      ca->SetResiId( Id );
-    }
-    inline void SetCapacity(int c)  {  Atoms.SetCapacity(c);  }
-    bool IsEmpty() const {
-      for( int i=0; i < Atoms.Count(); i++ )
-        if( !Atoms[i]->IsDeleted() )  return false;
-      return true;
-    }
-    // this assumes that atoms and their Ids of the Parent already assigned 
-    const TResidue& operator = (const TResidue& res)  {
-      Atoms.Clear();
-      Atoms.SetCapacity(res.Count() );
-      for( int i=0; i < res.Count(); i++ )  {
-        if( res[i].GetId() >= 0 && res[i].GetId() < Parent.AtomCount() )
-          AddAtom( &Parent.GetAtom( res[i].GetId() ) );
-      }
-      this->ClassName = res.ClassName;
-      this->Number = res.Number;
-      this->Alias = res.Alias;
-      return *this;
-    }
-  };
 protected:
   TActionQList Actions;
-  TPtrList<TResidue> Residues;
-  TResidue MainResidue;
+  TTypeListExt<TResidue, IEObject> Residues;
+  TResidue& MainResidue;
   class RefinementModel* RefMod;
   void InitAtomIds(); // initialises atom ids if any were added or removed
   static const olxstr IdName;
@@ -186,12 +134,9 @@ public:
   //creates a new residue
   TResidue& NewResidue(const olxstr& RClass, int number, const olxstr& alias = EmptyString);
   inline int ResidueCount()                 const {  return Residues.Count();  }
-  inline TResidue& GetResidue(int i)        const { return (i==-1) ? const_cast<TAsymmUnit*>(this)->MainResidue : *Residues[i];  }
-  inline TResidue* NextResidue(const TResidue& r) const {  return ((r.GetId()-1) == Residues.Count()) ? NULL : Residues[r.GetId()+1];  }
-  inline TResidue* PrevResidue(const TResidue& r) const {  
-    return (r.GetId() == -1) ? NULL : ((r.GetId() == 0) ? &const_cast<TAsymmUnit*>(this)->MainResidue : Residues[r.GetId()-1]);  
-  }
-  void ClearResidues(bool moveToMain);
+  inline TResidue& GetResidue(int i)        const { return (i==-1) ? const_cast<TAsymmUnit*>(this)->MainResidue : Residues[i];  }
+  TResidue* NextResidue(const TResidue& r) const;
+  TResidue* PrevResidue(const TResidue& r) const;
   void AssignResidues(const TAsymmUnit& au);
   // if a number is provided, seraches by Number otherwise - by ClassName
   void FindResidues(const olxstr& resi, TPtrList<TResidue>& list);

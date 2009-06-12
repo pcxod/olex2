@@ -261,16 +261,16 @@ public:
   static inline bool o_isdigit(wchar_t ch)  {  return (ch >= L'0' && ch <= L'9');  }
   static inline bool o_ishexdigit(char ch)  {  
     return (ch >= '0' && ch <= '9') || 
-           (ch >= 'A' && ch <= 'Z') ||
-           (ch >= 'a' && ch <= 'z');  
+           (ch >= 'A' && ch <= 'F') ||
+           (ch >= 'a' && ch <= 'f');  
   }
   static inline bool o_ishexdigit(wchar_t ch)  {  
     return (ch >= L'0' && ch <= L'9') || 
-           (ch >= L'A' && ch <= L'Z') ||
-           (ch >= L'a' && ch <= L'z');  
+           (ch >= L'A' && ch <= L'F') ||
+           (ch >= L'a' && ch <= L'f');  
   }
   static inline bool o_iswhitechar(char ch)     {  return (ch == ' ' || ch == '\t');  }
-  static inline bool o_iswhitechar(wchar_t ch)  {  return (ch == L' ' && ch == L'\t');  }
+  static inline bool o_iswhitechar(wchar_t ch)  {  return (ch == L' ' || ch == L'\t');  }
   static inline size_t o_strlen(const char *cstr)    {  return (cstr==NULL) ? 0 : strlen(cstr);  }
   static inline size_t o_strlen(const wchar_t *wstr) {  return (wstr==NULL) ? 0 : wcslen(wstr);  }
   static void o_strtup(TC *wht, size_t wht_len)  {

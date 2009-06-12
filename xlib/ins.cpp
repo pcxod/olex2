@@ -846,7 +846,7 @@ void TIns::SaveToStrings(TStrList& SL)  {
   }
   int carbonBAIIndex = BasicAtoms.IndexOfi('c');  // for Q-peaks
   for( int i=-1; i < GetAsymmUnit().ResidueCount(); i++ )  {
-    TAsymmUnit::TResidue& residue = GetAsymmUnit().GetResidue(i);
+    TResidue& residue = GetAsymmUnit().GetResidue(i);
     for( int j=0; j < residue.Count(); j++ )  {
       if( residue[j].IsDeleted() )  continue;
       residue[j].SetSaved(false);
@@ -886,7 +886,7 @@ void TIns::SaveToStrings(TStrList& SL)  {
   SL.Add(EmptyString);
   int afix = 0, part = 0, fragmentId = -1;
   for( int i=-1; i < GetAsymmUnit().ResidueCount(); i++ )  {
-    TAsymmUnit::TResidue& residue = GetAsymmUnit().GetResidue(i);
+    TResidue& residue = GetAsymmUnit().GetResidue(i);
     if( i != -1 && !residue.IsEmpty() )  { 
       SL.Add(EmptyString);
       SL.Add( residue.ToString() );
@@ -1031,7 +1031,8 @@ void TIns::UpdateAtomsFromStrings(RefinementModel& rm, TCAtomPList& CAtoms, cons
       }
       else  {
         atom = CAtoms[index[atomCount]];
-        if( cx.Resi != NULL )  cx.Resi->AddAtom(atom);
+        if( cx.Resi != NULL )  
+          cx.Resi->Add(*atom);
       }
       // clear fixed fixed values as they reread
       //atom->FixedValues().Null();
