@@ -163,9 +163,9 @@ public:
   }
 //..............................................................................
   // cyclic shift to the left
-  void ShiftL(int cnt)  {
+  void ShiftL(size_t cnt)  {
     if( FCount == 0 )  return;
-    int sv = cnt%FCount;
+    size_t sv = cnt%FCount;
     if( sv <= 0 )  return;
 
     if( sv == 1 )  {  // special case
@@ -187,9 +187,9 @@ public:
   }
 //..............................................................................
   // cyclic shift to the right
-  void ShiftR(int cnt)  {
+  void ShiftR(size_t cnt)  {
     if( FCount == 0 )  return;
-    int sv = cnt%FCount;
+    size_t sv = cnt%FCount;
     if( sv <= 0 )  return;
 
     if( sv == 1 )  {  // special case

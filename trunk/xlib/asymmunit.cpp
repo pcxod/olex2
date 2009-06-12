@@ -20,6 +20,7 @@
 #include "lattice.h"
 #include "symmparser.h"
 #include "refmodel.h"
+#include "residue.h"
 
 #undef GetObject
 
@@ -39,7 +40,7 @@ const olxstr TAsymmUnit::IdName("catom");
 //----------------------------------------------------------------------------//
 // TAsymmetricUnit function bodies
 //----------------------------------------------------------------------------//
-TAsymmUnit::TAsymmUnit(TLattice *L) : MainResidue(*this, -1)  {
+TAsymmUnit::TAsymmUnit(TLattice *L) : MainResidue(*(new TResidue(*this, -1)))  {
   AtomsInfo = &TAtomsInfo::GetInstance();
   Lattice   = L;
   Latt = -1;
@@ -50,9 +51,15 @@ TAsymmUnit::TAsymmUnit(TLattice *L) : MainResidue(*this, -1)  {
   RefMod = NULL;
 }
 //..............................................................................
-TAsymmUnit::~TAsymmUnit() {  Clear();  }
+TAsymmUnit::~TAsymmUnit()  {  
+  Clear();  
+  delete &MainResidue;
+}
 //..............................................................................
 void  TAsymmUnit::Clear()  {
+  Residues.Clear();
+  MainResidue.Clear();
+
   Matrices.Clear();
   for( int i=0; i < CAtoms.Count(); i++ )
     delete CAtoms[i];
@@ -63,10 +70,6 @@ void  TAsymmUnit::Clear()  {
   for( int i=0; i < Ellipsoids.Count(); i++ )
     delete Ellipsoids[i];
   Ellipsoids.Clear();
-  for( int i=0; i < Residues.Count(); i++ )
-    delete Residues[i];
-  Residues.Clear();
-  MainResidue.Clear();
   Latt = -1;
   Z = 1;
   ContainsEquivalents = false;
@@ -89,8 +92,8 @@ void TAsymmUnit::Assign(const TAsymmUnit& C)  {
     this->NewEllp() = C.GetEllp(i);
 
   for( int i=0; i < C.Residues.Count(); i++ )  {
-    TResidue* resi = C.Residues[i];
-    NewResidue( resi->GetClassName(), resi->GetNumber(), resi->GetAlias() ); 
+    TResidue& resi = C.Residues[i];
+    NewResidue( resi.GetClassName(), resi.GetNumber(), resi.GetAlias() ); 
   }
   for( int i = 0; i < C.AtomCount(); i++ )
     NewAtom( &GetResidue(C.GetAtom(i).GetResiId()) ).SetId(i);
@@ -206,18 +209,16 @@ void TAsymmUnit::InitData()  {
   }
 }
 //..............................................................................
-TAsymmUnit::TResidue& TAsymmUnit::NewResidue(const olxstr& RClass, int number, const olxstr& alias)  {
+TResidue& TAsymmUnit::NewResidue(const olxstr& RClass, int number, const olxstr& alias)  {
   for( int i=0; i < Residues.Count(); i++ )
-    if( Residues[i]->GetNumber() == number )  {
-      return *Residues[i];
+    if( Residues[i].GetNumber() == number )  {
+      return Residues[i];
       //throw TInvalidArgumentException(__OlxSourceInfo, "dublicated residue number");
     }
-  TResidue* resi = new TResidue(*this, Residues.Count(), RClass, number, alias);
-  Residues.Add( resi );
-  return *resi;
+  return Residues.Add( new TResidue(*this, Residues.Count(), RClass, number, alias) );
 }
 //..............................................................................
-void TAsymmUnit::FindResidues(const olxstr& resi, TPtrList<TAsymmUnit::TResidue>& list) {
+void TAsymmUnit::FindResidues(const olxstr& resi, TPtrList<TResidue>& list) {
   if( resi.IsEmpty() )  {
     list.Add(&MainResidue);
     return;
@@ -225,7 +226,7 @@ void TAsymmUnit::FindResidues(const olxstr& resi, TPtrList<TAsymmUnit::TResidue>
   if( resi.IsNumber() )  {
     int number = resi.ToInt();
     for( int i=0; i < Residues.Count(); i++ )  {
-      if( Residues[i]->GetNumber() == number )  {
+      if( Residues[i].GetNumber() == number )  {
         list.Add(Residues[i]);
         break;  // number must be unique
       }
@@ -233,35 +234,35 @@ void TAsymmUnit::FindResidues(const olxstr& resi, TPtrList<TAsymmUnit::TResidue>
   }
   else  {
     if( resi.Length() == 1 && resi.CharAt(0) == '*' )  {  //special case
-      list.Assign(Residues);
+      for( int i=0; i < Residues.Count(); i++ )
+        list.Add( Residues[i] );
       list.Add( &MainResidue );
     }
     for( int i=0; i < Residues.Count(); i++ )
-      if( Residues[i]->GetClassName().Equalsi(resi) || Residues[i]->GetAlias().Equalsi(resi) ) 
+      if( Residues[i].GetClassName().Equalsi(resi) || Residues[i].GetAlias().Equalsi(resi) ) 
         list.Add(Residues[i]);
   }
 }
 //..............................................................................
-void TAsymmUnit::ClearResidues(bool moveToMain)  {
-  for( int i=0;  i < Residues.Count(); i++ )
-    delete Residues[i];
-  Residues.Clear();
-  MainResidue.Clear();
-  if( moveToMain)  {
-    MainResidue.SetCapacity(CAtoms.Count());
-    for( int i=0; i < CAtoms.Count(); i++ )  {
-      CAtoms[i]->SetResiId(-1);
-      MainResidue.AddAtom(CAtoms[i]);
-    }
-  }
+TResidue* TAsymmUnit::NextResidue(const TResidue& r) const {  return ((r.GetId()-1) == Residues.Count()) ? NULL : &Residues[r.GetId()+1];  }
+//..............................................................................
+TResidue* TAsymmUnit::PrevResidue(const TResidue& r) const {  
+  return (r.GetId() == -1) ? NULL : ((r.GetId() == 0) ? &const_cast<TAsymmUnit*>(this)->MainResidue : &Residues[r.GetId()-1]);  
 }
 //..............................................................................
 void TAsymmUnit::AssignResidues(const TAsymmUnit& au)  {
-  ClearResidues(false);
-  MainResidue = au.MainResidue;
+  if( CAtoms.Count() != au.CAtoms.Count() )
+    throw TFunctionFailedException(__OlxSourceInfo, "asymmetric units mismatch");
+  Residues.Clear();
+  MainResidue.Clear();
+  for( int i=0; i < au.MainResidue.Count(); i++ )
+    MainResidue._Add( *CAtoms[au.MainResidue[i].GetId()] );
   for( int i=0; i < au.Residues.Count(); i++ )  {
-    TResidue* resi = au.Residues[i];
-    NewResidue( resi->GetClassName(), resi->GetNumber() ) = *resi; 
+    TResidue& that_resi = au.Residues[i];
+    TResidue& this_resi = NewResidue( that_resi.GetClassName(), that_resi.GetNumber(), that_resi.GetAlias() );
+    for( int j=0; j < that_resi.Count(); j++ )  {
+      this_resi._Add( *CAtoms[that_resi[j].GetId()] );
+    }
   }
 }
 //..............................................................................
@@ -274,8 +275,9 @@ TCAtom& TAsymmUnit::NewAtom(TResidue* resi)  {
   TCAtom *A = new TCAtom(this);
   A->SetId( CAtoms.Count() );
   CAtoms.Add(A);
-  if( resi == NULL )  resi = &MainResidue;
-  resi->AddAtom(A);
+  if( resi == NULL )  
+    resi = &MainResidue;
+  resi->_Add(*A);
   return *A;
 }
 //..............................................................................
@@ -295,8 +297,8 @@ TCAtom * TAsymmUnit::FindCAtom(const olxstr &Label, TResidue* resi)  const {
     if( Label.SubStringFrom(us_ind).IsNumber() )  {  // residue number?
       int resi_num = Label.SubStringFrom(us_ind).ToInt();
       for( int i=0; i < Residues.Count(); i++ )  {
-        if( Residues[i]->GetNumber() == resi_num )  {
-          resi = Residues[i];
+        if( Residues[i].GetNumber() == resi_num )  {
+          resi = &Residues[i];
           break;  // number must be unique
         }
       }
@@ -308,16 +310,40 @@ TCAtom * TAsymmUnit::FindCAtom(const olxstr &Label, TResidue* resi)  const {
     lb = lb.SubStringTo(us_ind-1);
   }
   if( resi != NULL )  {
-    for( int i=0; i < resi->Count(); i++ )
-      if( !resi->GetAtom(i).IsDeleted() && resi->GetAtom(i).GetLabel().Equalsi(lb) )
-        if( part == DefNoPart || resi->GetAtom(i).GetPart() == part )
-        return &resi->GetAtom(i);
+    if( Label.Equalsi("first") )  {
+      for( int i=0; i < resi->Count(); i++ )
+        if( !resi->GetAtom(i).IsDeleted() )
+          return &resi->GetAtom(i);
+    }
+    else if( Label.Equalsi("last") )  {
+      for( int i=resi->Count()-1; i >= 0; i-- )
+        if( !resi->GetAtom(i).IsDeleted() )
+          return &resi->GetAtom(i);
+    }
+    else  {
+      for( int i=0; i < resi->Count(); i++ )
+        if( !resi->GetAtom(i).IsDeleted() && resi->GetAtom(i).GetLabel().Equalsi(lb) )
+          if( part == DefNoPart || resi->GetAtom(i).GetPart() == part )
+            return &resi->GetAtom(i);
+    }
   }
   else  {  // global search
-    for( int i=0; i < CAtoms.Count(); i++ )
-      if( !CAtoms[i]->IsDeleted() && CAtoms[i]->GetLabel().Equalsi(lb) )
-        if( part == DefNoPart || CAtoms[i]->GetPart() == part )
+    if( Label.Equalsi("first") )  {
+      for( int i=0; i < CAtoms.Count(); i++ )
+        if( !CAtoms[i]->IsDeleted() )
           return CAtoms[i];
+    }
+    else if( Label.Equalsi("last") )  {
+      for( int i = CAtoms.Count()-1; i >= 0; i-- )
+        if( !CAtoms[i]->IsDeleted() )
+          return CAtoms[i];
+    }
+    else  {
+      for( int i=0; i < CAtoms.Count(); i++ )
+        if( !CAtoms[i]->IsDeleted() && CAtoms[i]->GetLabel().Equalsi(lb) )
+          if( part == DefNoPart || CAtoms[i]->GetPart() == part )
+            return CAtoms[i];
+    }
   }
   return NULL;
 }
@@ -331,11 +357,11 @@ void TAsymmUnit::InitAtomIds()  {  // initialises atom ids if any were added or 
 //..............................................................................
 void TAsymmUnit::PackAtoms()  {
   for( int i=-1; i < Residues.Count(); i++ )  {
-    TAsymmUnit::TResidue& resi = GetResidue(i);
+    TResidue& resi = GetResidue(i);
     for( int j=0; j < resi.Count(); j++ )
       if( resi[j].IsDeleted() )
-        resi.AtomList()[j] = NULL;
-    resi.AtomList().Pack();
+        resi.Atoms[j] = NULL;
+    resi.Atoms.Pack();
   }
   for( int i=0; i < CAtoms.Count(); i++ )  {
     if( CAtoms[i]->IsDeleted() )  {
@@ -562,7 +588,7 @@ size_t TAsymmUnit::CountElements(const olxstr &Symbol) const  {
 //..............................................................................
 void TAsymmUnit::Sort(TCAtomPList* list) {
  // sorting by four params
-  if( list == NULL )  list = &MainResidue.AtomList();
+  if( list == NULL )  list = &MainResidue.Atoms;
  TCAtomPList::QuickSorter.Sort<TCAtomPComparator>(*list);
  TCAtomPList::QuickSorter.Sort<TCAtomPComparator>(*list);
  TCAtomPList::QuickSorter.Sort<TCAtomPComparator>(*list);

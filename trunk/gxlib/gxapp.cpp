@@ -2147,7 +2147,7 @@ void TGXApp::FindCAtoms(const olxstr &Atoms, TCAtomPList& List, bool ClearSelect
     TAsymmUnit& AU = XFile().GetLattice().GetAsymmUnit();
     List.SetCapacity( List.Count() + AU.AtomCount() );
     for(int i=-1; i < AU.ResidueCount(); i++ )  {
-      TAsymmUnit::TResidue& resi = AU.GetResidue(i);
+      TResidue& resi = AU.GetResidue(i);
       for( int j=0; j < resi.Count(); j++ )  {
         if( !resi[j].IsDeleted() )
           List.Add( &resi[j] );

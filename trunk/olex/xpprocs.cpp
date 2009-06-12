@@ -134,6 +134,8 @@
 #include "sfutil.h"
 #include "ortdraw.h"
 #include "ortdrawtex.h"
+#include "testsuit.h"
+#include "catomlist.h"
 // FOR DEBUG only
 #include "egraph.h"
 #include "olxth.h"
@@ -8059,58 +8061,14 @@ void TMainForm::macProjSph(TStrObjList &Cmds, const TParamList &Options, TMacroE
 }
 //..............................................................................
 void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  olxstr ns[] = {
-    EmptyString, 
-    "0", 
-    " 0 ",
-    " 0",
-    "0 ",
-    " 0",
-    " 0",
-    " .0 ",
-    " 0.0 ",
-    " 0.e0 ",
-    "  0.e-1  ",
-    "  0xffa  ",
-    "  0xffa",
-    "  0xffx",
-    " 0" 
-  };
-  for( int i=0; i < sizeof(ns)/sizeof(ns[0]); i++ )  {
-    bool val = ns[i].IsNumber();
-    TBasicApp::GetLog() << val;
-  }
-  TArrayList<int> il(10);
-  for( int i=0; i < il.Count(); i++ )
-    il[i] = i;
-  TBasicApp::GetLog() << '\n';
-  for( int i=0; i < il.Count(); i++ )
-    TBasicApp::GetLog() << il[i];
-  il.Move(0,9);
-  TBasicApp::GetLog() << '\n';
-  for( int i=0; i < il.Count(); i++ )
-    TBasicApp::GetLog() << il[i];
-  il.ShiftR(3);
-  TBasicApp::GetLog() << '\n';
-  for( int i=0; i < il.Count(); i++ )
-    TBasicApp::GetLog() << il[i];
-  il.ShiftR(1);
-  TBasicApp::GetLog() << '\n';
-  for( int i=0; i < il.Count(); i++ )
-    TBasicApp::GetLog() << il[i];
-  il.ShiftL(4);
-  TBasicApp::GetLog() << '\n';
-  for( int i=0; i < il.Count(); i++ )
-    TBasicApp::GetLog() << il[i];
-  il.Move(9,0);
-  TBasicApp::GetLog() << '\n';
-  for( int i=0; i < il.Count(); i++ )
-    TBasicApp::GetLog() << il[i];
-
-  TParamList opt;
-  opt.FromString("t=false", '=');
-  bool hast = opt.Contains('t');
-  hast = ns[1] > ns[2];
+  OlxTests tests;
+  tests.run();
+  AtomRefList arl(FXApp->XFile().GetRM(), Cmds.Text(' '), "suc");
+  TAtomRefList res;
+  TResidue& main_resi = FXApp->XFile().GetAsymmUnit().GetResidue(-1);
+  arl.Expand(FXApp->XFile().GetRM(), res);
+  for( int i=0; i < res.Count(); i++ )
+    TBasicApp::GetLog() << res[i].GetFullLabel(FXApp->XFile().GetRM(), main_resi);
 }
 //..............................................................................
 double Main_FindClosestDistance(const smatd_list& ml, vec3d& o_from, const TCAtom& a_to) {
@@ -8865,20 +8823,19 @@ void TMainForm::macRESI(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   for( int i=0; i < atoms.Count(); i++ )
     atoms[i]->Atom().CAtom().SetTag(i);
   if( resi_class.Equalsi("none") )  {
-    TAsymmUnit::TResidue& main_resi = au.GetResidue(-1);
+    TResidue& main_resi = au.GetResidue(-1);
     for( int i=0; i < atoms.Count(); i++ )  {
       TCAtom& ca = atoms[i]->Atom().CAtom();
       if( ca.GetTag() == i && ca.GetResiId() != -1 )  {
-        au.GetResidue( ca.GetResiId()).Remove( &ca );
-        main_resi.AddAtom( &ca );
+        main_resi.Add( ca );
       }
     }
   }
   else  {
-    TAsymmUnit::TResidue& resi = au.NewResidue(resi_class, resi_number, Options.FindValue('a'));
+    TResidue& resi = au.NewResidue(resi_class, resi_number, Options.FindValue('a'));
     for( int i=0; i < atoms.Count(); i++ )
       if( atoms[i]->Atom().CAtom().GetTag() == i )
-        resi.AddAtom( &atoms[i]->Atom().CAtom() );
+        resi.Add( atoms[i]->Atom().CAtom() );
   }
 }
 //..............................................................................
