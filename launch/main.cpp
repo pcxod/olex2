@@ -94,7 +94,7 @@ __fastcall TdlgMain::TdlgMain(TComponent* Owner)
   //asm {  int 3  }
   // reading version info
   olxstr OlexFN( (TBasicApp::GetInstance()->BaseDir()+ "olex2.dll") );
-  if( TEFile::FileExists(OlexFN) )  {
+  if( TEFile::Exists(OlexFN) )  {
     DWORD len = GetFileVersionInfoSize( const_cast<char*>(OlexFN.c_str()), &len);
     if( len > 0 )  {
       AnsiString Tmp;
@@ -106,7 +106,7 @@ __fastcall TdlgMain::TdlgMain(TComponent* Owner)
       if( VerQueryValue(pBuf, Tmp.c_str(), (void**)&pValue[0], &pLen) )  {
         Tmp = "Version: ";
         Tmp += pValue[0];
-        if( TEFile::FileExists(vfn) )  {
+        if( TEFile::Exists(vfn) )  {
           try  {
             TEFile vf(vfn, "rb");
             TStrList sl;
@@ -137,7 +137,7 @@ __fastcall TdlgMain::TdlgMain(TComponent* Owner)
     SetFileAttributes(checkFN.c_str(), FILE_ATTRIBUTE_NORMAL);
   olxstr SettingsFile( TBasicApp::GetInstance()->BaseDir() + "usettings.dat" );
   TSettingsFile settings;
-  if( TEFile::FileExists(SettingsFile) )  {
+  if( TEFile::Exists(SettingsFile) )  {
     olxstr Proxy, Repository = "http://dimas.dur.ac.uk/olex-distro/update",
              UpdateInterval = "Always";
     int LastUpdate = 0;
@@ -159,7 +159,7 @@ __fastcall TdlgMain::TdlgMain(TComponent* Owner)
     TStrList props;
     props.Add("olex-update");
     olxstr pluginFile = TBasicApp::GetInstance()->BaseDir() + "plugins.xld";
-    if( TEFile::FileExists( pluginFile ) )  {
+    if( TEFile::Exists( pluginFile ) )  {
       try  {
         TDataFile df;
         df.LoadFromXLFile( pluginFile, NULL );

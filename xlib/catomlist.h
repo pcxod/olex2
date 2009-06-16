@@ -107,6 +107,7 @@ public:
     delete &end;
   }
   virtual bool IsExpandable() const {  return true;  }
+  virtual bool IsExplicit() const {  return false;  }
   // * is special char
   virtual olxstr GetExpression() const {  return olxstr(start.GetExpression() << ' ' << op << ' ' << end.GetExpression());  }
   virtual int Expand(RefinementModel& rm, TAtomRefList& res, TResidue& resi) const;

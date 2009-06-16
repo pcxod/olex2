@@ -343,7 +343,7 @@ void CPP::Process(TStrList& lines, TStrList& output)  {
       }
       line = line.SubString(1, line.Length()-2);
       fn = CP->LocateFile(line);
-      if( !TEFile::FileExists(fn) )  {
+      if( !TEFile::Exists(fn) )  {
         output.Add("// FAILED ON Include ") << line;
         output.Add("// >> ") << lines[i];
         continue;
@@ -484,14 +484,14 @@ olxstr CParser::LocateFile(const olxstr& fn) const {
   if( fn.IndexOf("..") != -1 )  {
     for( int i=0; i < Paths.Count(); i++ )  {
       olxstr f( TEFile::AbsolutePathTo(Paths[i], fn) );
-      if( TEFile::FileExists(f) )  return f;
+      if( TEFile::Exists(f) )  return f;
     }
   }
   else  {
     for( int i=0; i < Paths.Count(); i++ )  {
       olxstr f( Paths[i]);
       f << fn;
-      if( TEFile::FileExists(f) )  return f;
+      if( TEFile::Exists(f) )  return f;
     }
   }
   return EmptyString;

@@ -50,13 +50,13 @@ olxstr TXApp::LocateHklFile()  {
   if( !XFile().HasLastLoader() )  return EmptyString;
 
   olxstr HklFN = XFile().GetRM().GetHKLSource();
-  if( TEFile::FileExistsi( olxstr(HklFN), HklFN) )  
+  if( TEFile::Existsi( olxstr(HklFN), HklFN) )  
     return HklFN;
   HklFN = TEFile::ChangeFileExt(XFile().GetFileName(), "hkl");
-  if( TEFile::FileExistsi( olxstr(HklFN), HklFN ) )  
+  if( TEFile::Existsi( olxstr(HklFN), HklFN ) )  
     return HklFN;
   HklFN = TEFile::ChangeFileExt(XFile().GetFileName(), "raw");
-  if( TEFile::FileExistsi(olxstr(HklFN), HklFN) )  {
+  if( TEFile::Existsi(olxstr(HklFN), HklFN) )  {
     THklFile Hkl;
     Hkl.LoadFromFile(HklFN);
     HklFN = TEFile::ChangeFileExt(XFile().GetFileName(), "hkl");
@@ -71,7 +71,7 @@ olxstr TXApp::LocateHklFile()  {
   else  {  // check for stoe format
     HklFN = TEFile::ChangeFileExt(XFile().GetFileName(), "hkl");
     olxstr HkcFN = TEFile::ChangeFileExt(XFile().GetFileName(), "hkc");
-    if( TEFile::FileExistsi(olxstr(HkcFN), HkcFN) )  {
+    if( TEFile::Existsi(olxstr(HkcFN), HkcFN) )  {
       TEFile::Copy( HkcFN, HklFN );
       return HklFN;
     }

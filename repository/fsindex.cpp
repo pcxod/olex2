@@ -84,7 +84,7 @@ bool TOSFS::NewDir(const TEString& DN)
 {  return TEFile::MakeDir(DN);  }
 //..............................................................................
 bool TOSFS::FileExists(const TEString& FN)
-{  return TEFile::FileExists(FN); }
+{  return TEFile::Exists(FN); }
 //..............................................................................
 TEString TOSFS::File(TFSItem *Src, const TEString &Name)
 {  
@@ -812,7 +812,7 @@ TFSItem* TFSItem::UpdateFile(TFSItem *FN)
 {
   if( FN->IsFolder() )
   {
-    if( TEFile::FileExists(FN->GetFullName().Data()) || GetFS()->NewDir(FN->GetFullName()) )
+    if( TEFile::Exists(FN->GetFullName().Data()) || GetFS()->NewDir(FN->GetFullName()) )
     {
       TFSItem *FI = NewItem();
       *FI = *FN;

@@ -11,6 +11,10 @@
 #include <string.h>
 #include <sys/stat.h>
 #include "efile.h"
+#ifdef __WIN32__
+#include <windows.h>
+#endif
+#include "filetree.h"
 
 #ifdef __WIN32__
 
@@ -286,15 +290,15 @@ void TEFile::Seek( long Position, const int From)  {
     throw TFileExceptionBase(__OlxSourceInfo, FName, "fseek failed");
 }
 //..............................................................................
-bool TEFile::FileExists(const olxstr& F)  {
+bool TEFile::Exists(const olxstr& F)  {
   return (access( OLXSTR(OLX_OS_PATH(F)), 0) != -1);
 }
 //..............................................................................
-bool TEFile::FileExistsi(const olxstr& F, olxstr& res)  {
+bool TEFile::Existsi(const olxstr& F, olxstr& res)  {
   if( F.IsEmpty() )
     return false;
 #ifdef __WIN32__
-  return FileExists(F);
+  return Exists(F);
 #else
   olxstr path = ExtractFilePath(F);
   olxstr name = ExtractFileName(F);
@@ -352,7 +356,7 @@ olxstr TEFile::ExtractFileDrive(const olxstr& F)  {
   if( F[1] != ':' )  return EmptyString;
   return F.SubString(0, 2);
 #else
-  return F;
+  return EmptyString;
 #endif
 }
 //..............................................................................
@@ -374,16 +378,38 @@ olxstr TEFile::ChangeFileExt(const olxstr &F, const olxstr &Ext)  {
 }
 //..............................................................................
 bool TEFile::DelFile(const olxstr& F)  {
-  if( !TEFile::FileExists(F) )  return true;
+  if( !Exists(F) )  return true;
   olxstr fn = OLX_OS_PATH(F);
   if( !chmod(OLXSTR(fn), S_IWRITE) )
     return (unlink(OLXSTR(fn)) == -1) ? false: true;
   return false;
 }
 //..............................................................................
-bool TEFile::DelDir(const olxstr& F)  {
-  if( !TEFile::FileExists(F) )  return true;
+bool TEFile::RmDir(const olxstr& F)  {
+  if( !Exists(F) )  return true;
   return (rmdir(OLXSTR(OLX_OS_PATH(F))) == -1) ?  false : true;
+}
+//..............................................................................
+bool TEFile::IsDir(const olxstr& F)  {
+  struct STAT_STR the_stat;
+  if( STAT(OLXSTR(OLX_OS_PATH(F)), &the_stat) != 0 )
+    return false;
+  return (the_stat.st_mode & S_IFDIR) != 0;
+}
+//..............................................................................
+bool TEFile::DeleteDir(const olxstr& F)  {
+  olxstr fn = OLX_OS_PATH(F);
+  if( !Exists(fn) )  
+    return false;
+  if( !TEFile::IsDir(fn) )  
+    return false;
+  TFileTree ft(F);
+  try  {
+    ft.Root.Expand();
+    ft.Root.Delete();
+    return true;
+  }
+  catch( TExceptionBase& )  {    return false;  }
 }
 //..............................................................................
 bool TEFile::DoesMatchMasks(const olxstr& _fn, const MaskList& masks)  {
@@ -477,7 +503,7 @@ bool TEFile::ListCurrentDir(TStrList& Out, const olxstr &Mask, const unsigned sh
   while( done )  {
     if( DoesMatchMasks(sd.cFileName, masks) )
       Out.Add( sd.cFileName );
-    done = FindNextFile(hn, &sd);
+    done = (FindNextFile(hn, &sd) != 0);
   }
   FindClose(hn);
   return true;
@@ -667,7 +693,7 @@ bool TEFile::MakeDirs(const olxstr& Name)  {
   toCreate.SetCapacity( Name.Length() + 5 );
   for( int i=0; i < toks.Count(); i++ )  {
     toCreate << toks[i] << OLX_PATH_DEL;
-    if( !FileExists( toCreate ) )
+    if( !Exists( toCreate ) )
       if( !MakeDir( toCreate ) )
         return false;
   }
@@ -757,7 +783,7 @@ olxstr TEFile::UNCFileName(const olxstr &LocalFN)  {
 }
 //..............................................................................
 void TEFile::CheckFileExists(const olxstr& location, const olxstr& fileName)  {
-  if( !TEFile::FileExists(fileName) )
+  if( !Exists(fileName) )
     throw TFileDoesNotExistException(location, fileName);
 }
 //..............................................................................
@@ -770,12 +796,12 @@ TEFile* TEFile::TmpFile(const olxstr& templ)  {
 }
 //..............................................................................
 bool TEFile::Rename(const olxstr& from, const olxstr& to, bool overwrite)  {
-  if( FileExists(to) && ! overwrite )  return false;
+  if( Exists(to) && ! overwrite )  return false;
   return rename( OLXSTR(from), OLXSTR(to) ) != -1;
 }
 //..............................................................................
 void TEFile::Copy(const olxstr& From, const olxstr& To, bool overwrite )  {
-  if( TEFile::FileExists(To) && !overwrite )  return;
+  if( Exists(To) && !overwrite )  return;
   // need to check that the files are not the same though...
   TEFile in( From, "rb" );
   TEFile out( To, "w+b" );
@@ -805,18 +831,18 @@ olxstr TEFile::Which(const olxstr& filename)  {
   olxstr fn = TEFile::CurrentDir();
   TEFile::AddTrailingBackslashI(fn) << filename;
   // check current folder
-  if( TEFile::FileExists(fn) )  return fn;
+  if( Exists(fn) )  return fn;
   // check program folder
   fn = TBasicApp::GetInstance()->BaseDir();
   fn << filename;
-  if( TEFile::FileExists(fn) )  return fn;
+  if( Exists(fn) )  return fn;
   // check path then ...
   char* path = getenv("PATH");
   if( path == NULL )  return EmptyString;
   TStrList toks(path, OLX_ENVI_PATH_DEL);
   for( int i=0; i < toks.Count(); i++ )  {
     TEFile::AddTrailingBackslashI(toks[i]) << filename;
-    if( TEFile::FileExists(toks[i]) )
+    if( Exists(toks[i]) )
       return toks[i];
 //    TBasicApp::GetLog() << toks[i] << '\n';
   }
@@ -829,7 +855,7 @@ olxstr TEFile::Which(const olxstr& filename)  {
 ////////////////////////////////////////////////////////////////////////////////
 
 void FileExists(const TStrObjList& Params, TMacroError& E)  {
-  E.SetRetVal( TEFile::FileExists( Params[0] ) );
+  E.SetRetVal( TEFile::Exists( Params[0] ) );
 }
 
 void FileName(const TStrObjList& Params, TMacroError& E)  {

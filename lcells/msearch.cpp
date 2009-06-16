@@ -24,7 +24,7 @@ __fastcall TdlgSearch::TdlgSearch(TComponent* Owner)
   CIndex = new TConIndex;
   iQuery->Picture->Bitmap->Height = iQuery->Height;
   iQuery->Picture->Bitmap->Width  = iQuery->Width;
-  if( TEFile::FileExists(dlgMain->CIndexFile) )
+  if( TEFile::Exists(dlgMain->CIndexFile) )
     CIndex->LoadFromFile(dlgMain->CIndexFile);
   else  {
     CIndex->Update(dlgMain->Indexes, *Organiser->XFile);
@@ -96,7 +96,7 @@ void __fastcall TdlgSearch::bbLoadClick(TObject *Sender)  {
 
 void __fastcall TdlgSearch::bbUpdateClick(TObject *Sender)  {
   CIndex->Clear();
-  if( TEFile::FileExists(dlgMain->CIndexFile) )
+  if( TEFile::Exists(dlgMain->CIndexFile) )
     CIndex->LoadFromFile(dlgMain->CIndexFile);
 
   CIndex->Update(dlgMain->Indexes, *Organiser->XFile);
@@ -152,7 +152,7 @@ void _fastcall TdlgSearch::AddResults(const TPtrList<TConFile>& Res)  {
   dlgProg->Caption = "Loading Index File...";
 
   for( int i=0; i < dlgMain->Indexes.Count(); i++ )  {
-    if( TEFile::FileExists(dlgMain->Indexes[i]) )  {
+    if( TEFile::Exists(dlgMain->Indexes[i]) )  {
       dlgProg->SetAction(dlgMain->Indexes[i]);
       dlgMain->Index->LoadFromFile(dlgMain->Indexes[i], true);
     }

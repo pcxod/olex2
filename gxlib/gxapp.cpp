@@ -2963,7 +2963,7 @@ void TGXApp::HklVisible(bool v)  {
     if( !FHklFile->RefCount() )  {
       if( !FXFile->HasLastLoader() )
       {  Log->Error("Cannot display HKL - file is not loaded");  return;  }
-      if( !TEFile::FileExists(FXFile->LastLoader()->GetRM().GetHKLSource()) )
+      if( !TEFile::Exists(FXFile->LastLoader()->GetRM().GetHKLSource()) )
       {  Log->Error("Cannot display HKL - could locate HKL file");  return;  }
       if( !FHklFile->LoadFromFile(FXFile->LastLoader()->GetRM().GetHKLSource()) )
       {  Log->Error("Cannot display HKL - could load HKL file");  return;  }

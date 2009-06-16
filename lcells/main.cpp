@@ -111,7 +111,7 @@ __fastcall TdlgMain::TdlgMain(TComponent* Owner)
           TEFile::AddTrailingBackslashI(Olex2Path);
         }
       }
-      sbOlex2->Visible = TEFile::FileExists(Olex2Path+"olex2.dll");
+      sbOlex2->Visible = TEFile::Exists(Olex2Path+"olex2.dll");
       Reg->CloseKey();
     }
     Reg->RootKey = HKEY_CURRENT_USER;
@@ -146,7 +146,7 @@ exit:
 
   TmpDir = TShellUtil::GetSpecialFolderLocation(fiAppData);
   TmpDir << "lcells/";
-  if( !TEFile::FileExists( TmpDir) && !TEFile::MakeDir(TmpDir) )
+  if( !TEFile::Exists( TmpDir) && !TEFile::MakeDir(TmpDir) )
       Application->MessageBox("Cannot create the tmp folder!", "Error", MB_OK);
 
   Zip = new TZipShell;
@@ -155,7 +155,7 @@ exit:
   CIndexFile = CurrentDir + "cindex.dat";
   IniFile = CurrentDir + "cifs.ini";
   Index = new TCifIndex();
-  if( TEFile::FileExists(IniFile) )  {
+  if( TEFile::Exists(IniFile) )  {
     TEFile inf( IniFile, "rb");
     TEMemoryStream S(inf);
     if( S.GetSize() != 0 )  {
@@ -177,10 +177,10 @@ exit:
     olxstr Tmp = ParamStr(1).LowerCase().c_str();
     bool res;
     if( Tmp == "/update" )  {
-      if( TEFile::FileExists(IndexFile) )
+      if( TEFile::Exists(IndexFile) )
         Index->LoadFromFile(IndexFile, false);
       for( int i=0; i < UpdatePaths.Count(); i++ )  {
-        if( TEFile::FileExists(UpdatePaths[i]) )
+        if( TEFile::Exists(UpdatePaths[i]) )
           res = Index->Update(false, UpdatePaths[i], 50*1024*1024, this);
       }
       Index->SaveToFile(dlgMain->IndexFile);
@@ -195,9 +195,9 @@ exit:
     olxstr Tmp = ParamStr(1).LowerCase().c_str();
     olxstr FN = ParamStr(2).c_str();
     if( Tmp == "/searchfile" )  {
-      if( !TEFile::FileExists(FN) )  {
+      if( !TEFile::Exists(FN) )  {
         FN = CurrentDir + FN;
-        if( !TEFile::FileExists(FN) )  {
+        if( !TEFile::Exists(FN) )  {
           Application->MessageBox("Search file does not exist...","LCELLS", MB_OK|MB_ICONERROR);
           Application->Terminate();
           return;
@@ -320,7 +320,7 @@ void __fastcall TdlgMain::bbSearchClick(TObject *Sender)  {
   ReduceCell(C);
   Index->Clear();
   for( int i=0; i < IndexFiles.Count(); i++ )  {
-    if( TEFile::FileExists(IndexFiles[i]) )  {
+    if( TEFile::Exists(IndexFiles[i]) )  {
       Index->LoadFromFile(IndexFiles[i], true);
       Index->Search(C, Dev, Cifs, false);
     }
@@ -931,7 +931,7 @@ void TdlgMain::ClearTree()  {
 void TdlgMain::InitTree()  {
   ClearTree();
   olxstr tmp;
-  if( TEFile::FileExists(IndexFile) )  {
+  if( TEFile::Exists(IndexFile) )  {
     Index->LoadFromFile(IndexFile, false);
     for( int i=0; i < Index->IFiles.Count(); i++)  {
       //tvTree->Items->Add( NULL, Index->IFiles[i]->Name.c_str());
@@ -948,7 +948,7 @@ void TdlgMain::InitTree()  {
 }
 //---------------------------------------------------------------------------
 void TdlgMain::LoadCurrentFile()  {
-  if( TEFile::FileExists(CurrentFile) )  {
+  if( TEFile::Exists(CurrentFile) )  {
     try   {
       //TSAtomPList toGrow;
       olxstr FExt = TEFile::ExtractFileExt(CurrentFile);

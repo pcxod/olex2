@@ -58,9 +58,9 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
   TStopWatch sw(__FUNC__);
   if( sfOrigin == sfOriginFcf )  {
     olxstr fcffn( TEFile::ChangeFileExt(xapp.XFile().GetFileName(), "fcf") );
-    if( !TEFile::FileExists(fcffn) )  {
+    if( !TEFile::Exists(fcffn) )  {
       fcffn = TEFile::ChangeFileExt(xapp.XFile().GetFileName(), "fco");
-      if( !TEFile::FileExists(fcffn) )
+      if( !TEFile::Exists(fcffn) )
         return "please load fcf file or make sure the one exists in current folder";
     }
     sw.start("Loading CIF");
@@ -114,7 +114,7 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
   }
   else  {  // olex2 calculated SF
     olxstr hklFileName( xapp.LocateHklFile() );
-    if( !TEFile::FileExists(hklFileName) )
+    if( !TEFile::Exists(hklFileName) )
       return "could not locate hkl file";
     double av = 0;
     sw.start("Loading/Filtering/Merging HKL");

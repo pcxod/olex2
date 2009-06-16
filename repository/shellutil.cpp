@@ -145,7 +145,7 @@ olxstr TShellUtil::PickFolder( const olxstr& Title,
   if( SHGetDesktopFolder(&desktopFolder) != NOERROR )  return EmptyString;
 
   LPITEMIDLIST rootFolder= NULL;
-  if( TEFile::FileExists( RootFolder ) )  {
+  if( TEFile::Exists( RootFolder ) )  {
     WCHAR wsz[MAX_PATH];
     unsigned long eaten = 0;
     MultiByteToWideChar(CP_ACP, 0, RootFolder.c_str(), -1, wsz, MAX_PATH);
@@ -158,7 +158,7 @@ olxstr TShellUtil::PickFolder( const olxstr& Title,
   bi.pszDisplayName = path;
   bi.pidlRoot = rootFolder;
   bi.ulFlags = BIF_RETURNONLYFSDIRS|BIF_NEWDIALOGSTYLE;
-  if( !SelectedFolder.IsEmpty() && TEFile::FileExists(SelectedFolder) )  {
+  if( !SelectedFolder.IsEmpty() && TEFile::Exists(SelectedFolder) )  {
     bi.lpfn = BrowseCallbackProc;
     bi.lParam = (LPARAM)SelectedFolder.u_str();
   }

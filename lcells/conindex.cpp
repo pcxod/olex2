@@ -450,7 +450,7 @@ void TConZip::Assign(TZipFile *ZF, TXFile& xf)  {
   FileName = ZF->FileName;
   for( int i=0; i < ZF->Zip->Files.Count(); i++ )  {
     FN = ZF->Zip->Files[i];
-    if( !TEFile::FileExists(FN) )
+    if( !TEFile::Exists(FN) )
       continue;
     try  {  xf.LoadFromFile(FN);  }
     catch(const TExceptionBase& exc)  {
@@ -538,7 +538,7 @@ void TConIndex::Update(const TStrList& IndexFiles, TXFile& xf)  {
       }
     }
     if( Uniq )  {  // crete a new record
-      if( !TEFile::FileExists(CifF->Name) )
+      if( !TEFile::Exists(CifF->Name) )
         continue;
       dlgMain->AddMessage(olxstr("Processing '") << CifF->Name << '\'' );
       if( TEFile::ExtractFileExt(CifF->Name).IndexOf(';') != -1 )  continue;

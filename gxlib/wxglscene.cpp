@@ -327,7 +327,7 @@ TGlFont* TwxGlScene::ImportFont(const olxstr& Name, const olxstr& fntDesc, short
     throw TInvalidArgumentException(__OlxSourceInfo, "invalid font size");
   TGlFont* Fnt = FindFont(Name);
   olxstr fileName( FontsFolder + mf.GetFileName() );
-  if( !TEFile::FileExists(fileName) )
+  if( !TEFile::Exists(fileName) )
     return NULL;
   wxFileInputStream fis( fileName.u_str() );
   char sig[4];

@@ -159,18 +159,27 @@ public:
   virtual size_t GetPosition() const;
 
   inline const olxstr& GetName()  const  {  return FName; }
+  // closes the file handle and deletes the file
   bool Delete();
-
+  // tests one or several of the accessXXXX flags
   static bool Access(const olxstr& F, const short Flags);
-  // uses access, so is case sensitive
-  static bool FileExists(const olxstr &F);
+  // uses access, so is case sensitive, works for both dirs and files
+  static bool Exists(const olxstr &F);
   /* a case insensitive alternative (for windows - same as above) 
-    the case sensitive name is stored in res (the first on if there
+    the case sensitive name is stored in res (the first one if there
     are several file names matching
   */
-  static bool FileExistsi(const olxstr &F, olxstr& res);
+  static bool Existsi(const olxstr &F, olxstr& res);
+  // deletes the file and returns true on success
   static bool DelFile(const olxstr &F);
-  static bool DelDir(const olxstr &F);
+  // returns true if the name refers to a folder
+  static bool IsDir(const olxstr& F);
+  // deletes the folder if empty and returns true on succsess
+  static bool RmDir(const olxstr &F);
+  /* deletes the folder recursively, returns true on success, false if the name is a file or
+  the deletion was not successful */
+  static bool DeleteDir(const olxstr &F);
+  // returns file drive on windows ans empty string for other platforms
   static olxstr ExtractFileDrive(const olxstr &F);
   static olxstr ExtractFilePath(const olxstr &F);
   static olxstr ParentDir(const olxstr& F);

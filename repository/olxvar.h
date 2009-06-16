@@ -113,9 +113,13 @@ class TOlxVars : public IEObject  {
   }
 
   template <class T>
-  inline void _UnsetVar(const T& name)  {
-    int ind = Vars.IndexOfComparable(name);
-    if( ind >= 0 )  Vars.Delete(ind);
+  inline bool _UnsetVar(const T& name)  {
+    const int ind = Vars.IndexOfComparable(name);
+    if( ind >= 0 )  {
+      Vars.Delete(ind);
+      return true;
+    }
+    return false;
   }
   TOlxVars();
   ~TOlxVars()  {  Instance = NULL;  }
@@ -149,9 +153,9 @@ public:
   }
 
   template <class T>
-  static inline void UnsetVar(const T& name)  {
-    if( Instance == NULL )  return;
-    Instance->_UnsetVar(name);
+  static inline bool UnsetVar(const T& name)  {
+    if( Instance == NULL )  return false;
+    return Instance->_UnsetVar(name);
   }
 
   template <class T>

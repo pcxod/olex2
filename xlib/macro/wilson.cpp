@@ -51,7 +51,7 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroE
   TXApp &XApp = TXApp::GetInstance();
 
   olxstr HklFN( XApp.LocateHklFile() );
-  if( !TEFile::FileExists(HklFN) )  {
+  if( !TEFile::Exists(HklFN) )  {
     E.ProcessingError(__OlxSrcInfo, "could not locate the HKL file" );
     return;
   }

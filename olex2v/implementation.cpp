@@ -82,9 +82,9 @@ TOlexViewer::TOlexViewer(HDC windowDC, int w, int h) : WindowDC(windowDC) {
   #endif
 #endif
 
-  if( TEFile::FileExists(DataDir + "default.glsp") )
+  if( TEFile::Exists(DataDir + "default.glsp") )
     LoadScene(DataDir + "default.glsp");
-  if( TEFile::FileExists(DataDir + "default.glds") )
+  if( TEFile::Exists(DataDir + "default.glds") )
     LoadStyle(DataDir + "default.glds");
   
 }
@@ -234,7 +234,7 @@ void TOlexViewer::DrawStyle(short style)  {
 void TOlexViewer::LoadStyle(const olxstr& _styleFile)  {
   olxstr styleFile( TEFile::ChangeFileExt(_styleFile, "glds"));
   try  {
-    if( TEFile::FileExists(styleFile) )  {
+    if( TEFile::eExists(styleFile) )  {
       TDataFile df;
       df.LoadFromXLFile(styleFile);
       GXApp->GetRender().GetStyles().FromDataItem(*df.Root().FindItem("style"));
@@ -247,7 +247,7 @@ void TOlexViewer::LoadStyle(const olxstr& _styleFile)  {
 void TOlexViewer::LoadScene(const olxstr& _sceneFile)  {
   olxstr sceneFile( TEFile::ChangeFileExt(_sceneFile, "glsp"));
   try  {
-    if( TEFile::FileExists(sceneFile) )  {
+    if( TEFile::Exists(sceneFile) )  {
       TDataFile df;
       df.LoadFromXLFile(sceneFile);
       GXApp->GetRender().LightModel.FromDataItem(*df.Root().FindItem("Scene_Properties"));

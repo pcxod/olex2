@@ -60,7 +60,7 @@ int main(int argc, char* argv[])  {
     uint64_t time_start = TETime::msNow();
     for( int i=0; i < files.Count(); i++ )  {
       olxstr hkl( TEFile::ChangeFileExt(files[i], "hkl") );
-      if( TEFile::FileExists(hkl) )  {
+      if( TEFile::Exists(hkl) )  {
         XApp.GetLog() << files[i] << '\n';
         logf.Writenl( files[i] );
         try { 

@@ -29,7 +29,7 @@ TMemoryBlock *TFileHandlerManager::GetMemoryBlock( const olxstr &FN )  {
   olxstr fileName = TEFile::UnixPath(FN);
   TMemoryBlock *mb = FMemoryBlocks[fileName];
   if( mb == NULL )  {
-    if( !TEFile::FileExists(fileName) )  return NULL;
+    if( !TEFile::Exists(fileName) )  return NULL;
     TEFile file(fileName, "rb");
     long fl = file.Length();
     if( fl <= 0 ) return NULL;
@@ -41,7 +41,7 @@ TMemoryBlock *TFileHandlerManager::GetMemoryBlock( const olxstr &FN )  {
     FMemoryBlocks.Add( fileName, mb );
   }
   else  {
-    if( mb->DateTime != 0 && TEFile::FileExists(fileName) )  {
+    if( mb->DateTime != 0 && TEFile::Exists(fileName) )  {
       if( TEFile::FileAge( fileName ) != mb->DateTime )  {
         int ind = FMemoryBlocks.IndexOf( fileName );
         FMemoryBlocks.Delete( ind );
@@ -241,9 +241,9 @@ olxstr TFileHandlerManager::LocateFile( const olxstr& fn )  {
   if( FHandler->IsMemoryBlock(fn) )  return fn;
   if( !TEFile::IsAbsolutePath(fn) )  {
     olxstr f = TEFile::AddTrailingBackslash( TEFile::CurrentDir() );
-    if( TEFile::FileExists( f + fn ) )  return f + fn;
+    if( TEFile::Exists( f + fn ) )  return f + fn;
     for( int i=0; i < BaseDirs.Count(); i++ )  {
-      if( TEFile::FileExists( BaseDirs[i] + fn ) )
+      if( TEFile::Exists( BaseDirs[i] + fn ) )
         return BaseDirs[i] + fn;
     }
   }

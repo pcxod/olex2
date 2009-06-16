@@ -47,7 +47,7 @@ bool TOSFileSystem::AdoptStream(IInputStream& f, const olxstr& name)  {
 
   try {
     olxstr path = TEFile::ExtractFilePath( name );
-    if( !TEFile::FileExists(path) )
+    if( !TEFile::Exists(path) )
       if( !TEFile::MakeDir(path) )
         if( !TEFile::MakeDirs(path) )
           throw TFunctionFailedException(__OlxSourceInfo, olxstr("Mkdir \'") << path << '\'');
@@ -74,7 +74,7 @@ bool TOSFileSystem::AdoptFile(const TFSItem& Src)  {
 
   try {
     olxstr path = TEFile::ExtractFilePath( DFN );
-    if( !TEFile::FileExists(path) )
+    if( !TEFile::Exists(path) )
       if( !TEFile::MakeDir(path) )
         if( !TEFile::MakeDirs(path) )
           throw TFunctionFailedException(__OlxSourceInfo, olxstr("Mkdir \'") << path << '\'');
@@ -97,7 +97,7 @@ bool TOSFileSystem::NewDir(const olxstr& DN)  {
 }
 //..............................................................................
 bool TOSFileSystem::FileExists(const olxstr& FN)  {
-  return TEFile::FileExists(FN);
+  return TEFile::Exists(FN);
 }
 //..............................................................................
 IInputStream* TOSFileSystem::OpenFile(const olxstr& fileName)  {
@@ -387,7 +387,7 @@ double TFSItem::Synchronize(TFSItem* Caller, TFSItem& Dest, const TStrList& prop
 TFSItem* TFSItem::UpdateFile(TFSItem& item)  {
   if( item.IsFolder() )  {
     olxstr FN = GetFileSystem().GetBase() + item.GetFullName();
-    if( TEFile::FileExists(FN) || GetFileSystem().NewDir(FN) )    {
+    if( TEFile::Exists(FN) || GetFileSystem().NewDir(FN) )    {
       TFSItem* FI = FindByName(item.GetName());
       if( FI == NULL )
         FI = &NewItem(item.GetName());

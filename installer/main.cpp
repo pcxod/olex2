@@ -75,7 +75,7 @@ __fastcall TfMain::TfMain(TComponent* Owner)
     frMain->eInstallationPath->Text = OlexInstalledPath.c_str();
     olxstr sfile = OlexInstalledPath;
            sfile << TfMain::SettingsFile;
-    if( TEFile::FileExists( sfile ) )  {
+    if( TEFile::Exists( sfile ) )  {
       TSettingsFile Settings( sfile );
       frMain->cbRepository->Text = Settings.ParamValue("repository").c_str();
       frMain->eProxy->Text = Settings.ParamValue("proxy").c_str();
@@ -94,7 +94,7 @@ __fastcall TfMain::TfMain(TComponent* Owner)
   }
   else  {
     olxstr zipfn( Bapp->BaseDir() + "olex2.zip" );
-    if( TEFile::FileExists(zipfn) )  {
+    if( TEFile::Exists(zipfn) )  {
       if( !TEFile::IsAbsolutePath(zipfn) )  {
         zipfn = TEFile::CurrentDir();
         zipfn << "\\olex2.zip";
@@ -245,7 +245,7 @@ void __fastcall TfMain::bbInstallClick(TObject *Sender)  {
   installPath = TEFile::WinPath( installPath );
   if( !installPath.IsEmpty() && !installPath.EndsWith('\\') )  installPath << '\\';
 
-  if( !OlexInstalled && !TEFile::FileExists( installPath ) )  {
+  if( !OlexInstalled && !TEFile::Exists( installPath ) )  {
     if( !ForceDirectories( installPath.c_str() ) )  {
       Application->MessageBoxA("Could not create installation directory", "Installation failed", MB_OK|MB_ICONERROR);
       return;
@@ -296,10 +296,10 @@ void __fastcall TfMain::bbInstallClick(TObject *Sender)  {
 //    frMain->pbProgress->Position = 0;
     // install MSVC redistributables
     olxstr redist_path( TBasicApp::GetInstance()->BaseDir() + "redist/vcredist_x86.exe");
-    if( TEFile::FileExists(redist_path) && !TEFile::IsAbsolutePath(redist_path) )  {
+    if( TEFile::Exists(redist_path) && !TEFile::IsAbsolutePath(redist_path) )  {
       redist_path = TEFile::CurrentDir() + "/redist/vcredist_x86.exe";
     }
-    if( TEFile::FileExists(redist_path) )
+    if( TEFile::Exists(redist_path) )
       LaunchFile( redist_path, false );
     frMain->stAction->Caption = "Done";
     InitRegistry( installPath.c_str() );
@@ -321,7 +321,7 @@ void __fastcall TfMain::bbInstallClick(TObject *Sender)  {
       frMain->cbRepository->Text = AnsiString(reposPath.c_str()) + "update/";
     }
     olxstr set_fn( installPath + TfMain::SettingsFile );
-    if( !TEFile::FileExists(set_fn) )  // keep settings if provided from the zip
+    if( !TEFile::Exists(set_fn) )  // keep settings if provided from the zip
       Settings.SaveSettings( set_fn );
   }
   catch( const TExceptionBase& exc )  {
@@ -428,7 +428,7 @@ void __fastcall TfMain::bbUninstallClick(TObject *Sender)  {
   frMain->bbUninstall->Enabled = false;
   frMain->bbInstall->Enabled = false;
 
-  if( !TEFile::FileExists(indexFileName) )  {
+  if( !TEFile::Exists(indexFileName) )  {
     Application->MessageBoxA("Could not locate installation database\nProcessing registry and shortcuts...", "Error", MB_OK|MB_ICONINFORMATION);
 
     frMain->bbInstall->Enabled = true;
@@ -443,7 +443,7 @@ void __fastcall TfMain::bbUninstallClick(TObject *Sender)  {
     Application->MessageBoxA("Could not remove registry entries", "Error", MB_OK|MB_ICONERROR);
     return;
   }
-  if( TEFile::FileExists(indexFileName) )  {
+  if( TEFile::Exists(indexFileName) )  {
     TOSFileSystem osFS;
     osFS.SetBase(OlexInstalledPath);
     TFSIndex FSIndex(osFS);
@@ -454,9 +454,9 @@ void __fastcall TfMain::bbUninstallClick(TObject *Sender)  {
   // find and delete shortcuts
   try  {
     olxstr sf = TShellUtil::GetSpecialFolderLocation(fiStartMenu) + "Olex2.lnk";
-    if( TEFile::FileExists( sf ) )  TEFile::DelFile( sf );
+    if( TEFile::Exists( sf ) )  TEFile::DelFile( sf );
     sf = TShellUtil::GetSpecialFolderLocation(fiDesktop) + "Olex2.lnk";
-    if( TEFile::FileExists( sf ) )  TEFile::DelFile( sf );
+    if( TEFile::Exists( sf ) )  TEFile::DelFile( sf );
   }
   catch( const TExceptionBase& exc )  {
     Application->MessageBoxA("Could not remove shortcuts", "Error", MB_OK|MB_ICONERROR);
@@ -477,7 +477,7 @@ bool TfMain::CleanInstallationFolder(TFSItem& item)  {
     TEFile::ListCurrentDir(leftItems, "*.*", sefAll);
     if( !leftItems.Count() )  {
       TEFile::ChangeDir( OlexInstalledPath );
-      TEFile::DelDir( item.GetFullName() );
+      TEFile::RmDir( item.GetFullName() );
     }
   }
   return true;

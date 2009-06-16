@@ -549,7 +549,7 @@ void TAutoDB::PrepareForSearch()  {
 }
 //..............................................................................
 void TAutoDB::ProcessFolder(const olxstr& folder)  {
-  if( !TEFile::FileExists(folder) )  return;
+  if( !TEFile::Exists(folder) )  return;
   olxstr currentDir = TEFile::CurrentDir();
   olxstr uf = TEFile::RemoveTrailingBackslash(folder);
   TEFile::ChangeDir( uf );
@@ -1363,7 +1363,7 @@ void TAutoDB::AnalyseNet(TNetwork& net, TAtomTypePermutator* permutator,
 void TAutoDB::ValidateResult(const olxstr& fileName, const TLattice& latt, TStrList& report)  {
   olxstr cifFN = TEFile::ChangeFileExt(fileName, "cif");
   report.Add( olxstr("Starting analysis of '") << cifFN << "' on " << TETime::FormatDateTime( TETime::Now() ) );
-  if( !TEFile::FileExists(cifFN) )  {
+  if( !TEFile::Exists(cifFN) )  {
     report.Add( olxstr("The cif file does not exist") );
     return;
   }
