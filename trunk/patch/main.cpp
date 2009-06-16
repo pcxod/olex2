@@ -50,7 +50,7 @@ int main(int argc, char* argv[])  {
     return 0;
   }
   TEFile::AddTrailingBackslashI(upSet) << "usettings.dat";
-  if( !TEFile::FileExists(upSet) )  {
+  if( !TEFile::Exists(upSet) )  {
     printf("Could not locate Olex2 update settings file. Please reinstall Olexpress Enter to exit...");
     printf("\nPlease reinstall Olex2 in a normal way.\nPress Enter to exit...");
     getchar();

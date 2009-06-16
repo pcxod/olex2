@@ -63,7 +63,7 @@ void XLibMacros::funATA(const TStrObjList &Cmds, TMacroError &Error)  {
   olxstr autodbf( xapp.BaseDir() + "acidb.db");
   if( TAutoDB::GetInstance() == NULL )  {
     TEGC::AddP( new TAutoDB(*((TXFile*)xapp.XFile().Replicate()), xapp ) );
-    if( TEFile::FileExists( autodbf ) )  {
+    if( TEFile::Exists( autodbf ) )  {
       TEFile dbf(autodbf, "rb");
       TAutoDB::GetInstance()->LoadFromStream( dbf );
     }
@@ -110,7 +110,7 @@ void XLibMacros::macAtomInfo(TStrObjList &Cmds, const TParamList &Options, TMacr
   if( TAutoDB::GetInstance() == NULL )  {
     TEGC::AddP( new TAutoDB(*((TXFile*)xapp.XFile().Replicate()), xapp ) );
     olxstr autodbf( xapp.BaseDir() + "acidb.db");
-    if( TEFile::FileExists( autodbf ) )  {
+    if( TEFile::Exists( autodbf ) )  {
       TEFile dbf(autodbf, "rb");
       TAutoDB::GetInstance()->LoadFromStream( dbf );
     }
@@ -127,7 +127,7 @@ void XLibMacros::macVATA(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   if( TAutoDB::GetInstance() == NULL )  {
     TEGC::AddP( new TAutoDB(*((TXFile*)xapp.XFile().Replicate()), xapp ) );
     olxstr autodbf( xapp.BaseDir() + "acidb.db");
-    if( TEFile::FileExists( autodbf ) )  {
+    if( TEFile::Exists( autodbf ) )  {
       TEFile dbf(autodbf, "rb");
       TAutoDB::GetInstance()->LoadFromStream( dbf );
     }
@@ -175,7 +175,7 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   if( TAutoDB::GetInstance() == NULL )  {
     olxstr autodbf( xapp.BaseDir() + "acidb.db");
     TEGC::AddP( new TAutoDB(*((TXFile*)xapp.XFile().Replicate()), xapp ) );
-    if( TEFile::FileExists( autodbf ) )  {
+    if( TEFile::Exists( autodbf ) )  {
       TEFile dbf(autodbf, "rb");
       TAutoDB::GetInstance()->LoadFromStream( dbf );
     }
@@ -471,7 +471,7 @@ void XLibMacros::funVSS(const TStrObjList &Cmds, TMacroError &Error)  {
   //olxstr autodbf( xapp.BaseDir() + "acidb.db");
   //if( TAutoDB::GetInstance() == NULL )  {
   //  TEGC::AddP( new TAutoDB(*((TXFile*)xapp.XFile().Replicate()), *FXApp ) );
-  //  if( TEFile::FileExists( autodbf ) )  {
+  //  if( TEFile::Exists( autodbf ) )  {
   //    TEFile dbf(autodbf, "rb");
   //    TAutoDB::GetInstance()->LoadFromStream( dbf );
   //  }

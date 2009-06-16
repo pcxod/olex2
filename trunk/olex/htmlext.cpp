@@ -2250,7 +2250,7 @@ void THtml::funSaveData(const TStrObjList &Params, TMacroError &E)  {
 }
 //..............................................................................
 void THtml::funLoadData(const TStrObjList &Params, TMacroError &E)  {
-  if( !TEFile::FileExists(Params[0]) )  {
+  if( !TEFile::Exists(Params[0]) )  {
     E.ProcessingError(__OlxSrcInfo, "file does not exist: ") << Params[0];
     return;
   }

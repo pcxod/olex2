@@ -71,7 +71,7 @@ bool ExtractZip(const olxstr& zipfn, const olxstr& extractPath)  {
     GetZipItem(hz, zi, &ze); // fetch individual details
     outFN = extractPath;
     outFN << ze.name;
-    if( !TEFile::FileExists(outFN) )  {
+    if( !TEFile::Exists(outFN) )  {
       UnzipItem(hz, zi, outFN.c_str() );         // e.g. the item's name.
       chmod( outFN.c_str(), S_IREAD|S_IWRITE);
     }
@@ -92,13 +92,13 @@ void __fastcall TfMain::ContinueClick(TObject *Sender)
   }
   else if( rbRunFromCD->Checked )  {
     olxstr mdf = TShellUtil::GetSpecialFolderLocation(fiAppData);
-    if( !TEFile::FileExists(mdf) )  {
+    if( !TEFile::Exists(mdf) )  {
       Application->MessageBox("Could not locate the Application data folder...", "Error", MB_OK|MB_ICONERROR);
       return;
     }
     TEFile::AddTrailingBackslashI(mdf);
     mdf << "Olex2u\\";
-    if( !TEFile::FileExists( mdf ) )
+    if( !TEFile::Exists( mdf ) )
       TEFile::MakeDir(mdf);
     if( !ExtractZip( TBasicApp::GetInstance()->BaseDir() + "samples.zip", mdf) )  {
       Application->MessageBox("Could not extract sample data...", "Error", MB_OK|MB_ICONERROR);
@@ -106,7 +106,7 @@ void __fastcall TfMain::ContinueClick(TObject *Sender)
     }
     olxstr lastosp( TBasicApp::GetInstance()->BaseDir() + "last.osp" );
     bool provide_arg = true;
-    if( TEFile::FileExists(lastosp) )  {
+    if( TEFile::Exists(lastosp) )  {
       TEFile::Copy(lastosp, mdf + "last.osp");
       chmod( (olxstr(mdf) << mdf + "last.osp").c_str(), S_IREAD|S_IWRITE);
       provide_arg = false;

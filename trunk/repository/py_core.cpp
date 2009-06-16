@@ -117,6 +117,22 @@ PyObject* pySetVar(PyObject* self, PyObject* args)  {
   return Py_None;
 }
 //..............................................................................
+PyObject* pyUnsetVar(PyObject* self, PyObject* args)  {
+  olxstr varName;
+  if( !PythonExt::ParseTuple(args, "w", &varName) )  {
+    Py_INCREF(Py_None);
+    return Py_None;
+  }
+  if( TOlxVars::UnsetVar(varName) )  {
+    Py_INCREF(Py_True);
+    return Py_True;
+  }
+  else  {
+    Py_INCREF(Py_False);
+    return Py_False;
+  }
+}
+//..............................................................................
 PyObject* pyGetPlugins(PyObject* self, PyObject* args)  {
   TStrList rv(IOlexProcessor::GetInstance()->GetPluginList());
   PyObject* af = PyTuple_New( rv.Count() );
@@ -230,7 +246,7 @@ PyObject* pyUpdateRepository(PyObject* self, PyObject* args)  {
   }
   olxstr SettingsFile( TBasicApp::GetInstance()->BaseDir() + "usettings.dat" );
   TSettingsFile settings;
-  if( TEFile::FileExists(SettingsFile) )  {
+  if( TEFile::Exists(SettingsFile) )  {
     if( settings.ParamExists("proxy") )        
       proxy = settings.ParamValue("proxy");
   }
@@ -276,6 +292,8 @@ the index file name, destination folder (relative to the basedir)"},
   {"VarCount", pyVarCount, METH_VARARGS, "returns the number of variables"},
   {"VarValue", pyGetVar, METH_VARARGS, "returns specified variable value"},
   {"SetVar", pySetVar, METH_VARARGS, "sets value of specified variable"},
+  {"UnsetVar", pyUnsetVar, METH_VARARGS, "unsets specified variable. Returns True if the variable existed,\
+ False if it did not xust and None if an error occured"},
   {"FindValue", pyVarValue, METH_VARARGS, "returns value of specified variable or empty string"},
   {"FindObject", pyVarObject, METH_VARARGS, "returns value of specified variable as an object"},
   {"VarName", pyGetVarName, METH_VARARGS, "returns name of specified variable"},

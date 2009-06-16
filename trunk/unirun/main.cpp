@@ -207,7 +207,7 @@ void DoRun()  {
 
   olxstr SettingsFile( TBasicApp::GetInstance()->BaseDir() + "usettings.dat" );
   TSettingsFile settings;
-  if( !TEFile::FileExists(SettingsFile) )  {
+  if( !TEFile::Exists(SettingsFile) )  {
     TBasicApp::GetLog() << "Could not locate settings file: " << SettingsFile << '\n';
     return;
   }
@@ -265,7 +265,7 @@ void DoRun()  {
   props.Add("port-mac");
 #endif
   olxstr pluginFile = TBasicApp::GetInstance()->BaseDir() + "plugins.xld";
-  if( TEFile::FileExists( pluginFile ) )  {
+  if( TEFile::Exists( pluginFile ) )  {
     try  {
       TDataFile df;
       df.LoadFromXLFile( pluginFile, NULL );

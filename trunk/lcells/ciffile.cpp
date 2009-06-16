@@ -565,7 +565,7 @@ void _fastcall TCifIndex::SaveToFile(const olxstr& FN)  {
   *this >> f;
 }
 void _fastcall TCifIndex::LoadFromFile(const olxstr& FN, bool App)  {
-  if( !TEFile::FileExists( FN ) )
+  if( !TEFile::Exists( FN ) )
     return;
   FAppend = App;
   try  {
@@ -712,7 +712,7 @@ void _fastcall TCifIndex::CleanDead(TForm *Parent)  {
       if( Cancel )
         goto exit;
     }
-    if( !TEFile::FileExists(C->Name) )  {
+    if( !TEFile::Exists(C->Name) )  {
       delete C;
       FInsFiles.NullItem(i);
       continue;
@@ -730,7 +730,7 @@ void _fastcall TCifIndex::CleanDead(TForm *Parent)  {
       if( Cancel )
         goto exit;
     }
-    if( !TEFile::FileExists(Z->FileName) )  {
+    if( !TEFile::Exists(Z->FileName) )  {
       delete Z;
       FZipFiles.NullItem(i);
       continue;

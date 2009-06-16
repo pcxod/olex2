@@ -35,9 +35,9 @@ void XLibMacros::macGraphSR(TStrObjList &Cmds, const TParamList &Options, TMacro
   if( XApp.CheckFileType<TCif>() )  C = &XApp.XFile().GetLastLoader<TCif>();
   else  {
     olxstr fcffn = TEFile::ChangeFileExt(XApp.XFile().GetFileName(), "fcf");
-    if( !TEFile::FileExists(fcffn) )  {
+    if( !TEFile::Exists(fcffn) )  {
       fcffn = TEFile::ChangeFileExt(XApp.XFile().GetFileName(), "fco");
-      if( !TEFile::FileExists(fcffn) )  {
+      if( !TEFile::Exists(fcffn) )  {
         E.ProcessingError(__OlxSrcInfo, "please load fcf file or make sure the one exists in current folder");
         return;
       }

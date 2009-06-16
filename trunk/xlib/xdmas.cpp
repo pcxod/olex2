@@ -4,7 +4,7 @@
 
 void TXDMas::LoadFromStrings(const TStrList& Strings)  {
   olxstr crdfn( TEFile::ChangeFileExt(GetFileName(), "inp") );
-  if( !TEFile::FileExists(crdfn) )
+  if( !TEFile::Exists(crdfn) )
     throw TFunctionFailedException(__OlxSourceInfo, "could not locate coordinates file");
 
   GetAsymmUnit().Clear();

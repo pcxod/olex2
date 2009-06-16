@@ -166,7 +166,7 @@ void TMainForm::funFileLast(const TStrObjList& Params, TMacroError &E)  {
     E.ProcessingError(__OlxSrcInfo, "no last file");
     return;
   }
-  if( !TEFile::FileExists(FRecentFiles[index]) )  {
+  if( !TEFile::Exists(FRecentFiles[index]) )  {
     E.ProcessingError(__OlxSrcInfo, "file does not exists anymore");
     return;
   }
@@ -311,7 +311,7 @@ void TMainForm::funIsVar(const TStrObjList& Params, TMacroError &E)  {
 void TMainForm::funVVol(const TStrObjList& Params, TMacroError &E)  {
   TSStrPObjList<olxstr,double, true> *Volumes = NULL;
   if( Params.Count() == 1 )  {
-    if( !TEFile::FileExists(Params[0]) )  {
+    if( !TEFile::Exists(Params[0]) )  {
       E.ProcessingError(__OlxSrcInfo, "the volumes file does not exist: ") << Params[0];
       return;
     }
@@ -450,7 +450,7 @@ void TMainForm::funCursor(const TStrObjList& Params, TMacroError &E)  {
       FGlCanvas->SetCursor( cr );
     }
     else  {
-      if( TEFile::FileExists(Params[0]) )  {
+      if( TEFile::Exists(Params[0]) )  {
         wxImage img;
         img.LoadFile( uiStr(Params[0]) );
         img.SetMaskColour(254, 254, 254);
@@ -556,7 +556,7 @@ void TMainForm::funZoom(const TStrObjList &Cmds, TMacroError &E)  {
 #ifdef __WIN32__
 //..............................................................................
 void TMainForm::funLoadDll(const TStrObjList &Cmds, TMacroError &E)  {
-  if( !TEFile::FileExists( Cmds[0] ) )  {
+  if( !TEFile::Exists( Cmds[0] ) )  {
     E.ProcessingError(__OlxSrcInfo, "could not locate specified file" );
     return;
   }
@@ -2332,7 +2332,7 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     FXApp->CreateObjects( true );
     FN = FXApp->GetRender().GetStyles().GetLinkFile();
     if( !FN.IsEmpty() )  {
-      if( TEFile::FileExists(FN) )  {
+      if( TEFile::Exists(FN) )  {
         F.LoadFromXLFile(FN, NULL);
         LoadScene(&F.Root());
       }
@@ -2373,7 +2373,7 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       else
         Tmp = TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), "xlds");
     }
-    if( TEFile::FileExists(Tmp) )  {
+    if( TEFile::Exists(Tmp) )  {
       TDataFile DF;
       TStrList log;
       DF.LoadFromXLFile(Tmp, &log);
@@ -2393,7 +2393,7 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     if( FXApp->XFile().HasLastLoader() )  {
       Tmp = (Cmds.Count() == 1) ? TEFile::ChangeFileExt(Cmds[0], "oxm") :
                                   TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), "oxm");
-      if( TEFile::FileExists(Tmp) )  {  
+      if( TEFile::Exists(Tmp) )  {  
         FXApp->LoadModel(Tmp);
         //TDataFile DF;
         //DF.LoadFromXLFile(Tmp);
@@ -2430,7 +2430,7 @@ void TMainForm::macLink(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     FN = (Tmp << FN );
   }
   FN = TEFile::ChangeFileExt(FN, "glsp");
-  if( TEFile::FileExists(FN) )  
+  if( TEFile::Exists(FN) )  
     FXApp->GetRender().GetStyles().SetLinkFile(FN);
   else  {
     Error.ProcessingError(__OlxSrcInfo, "file does not exists : ") << FN;
@@ -2464,7 +2464,7 @@ void TMainForm::macStyle(TStrObjList &Cmds, const TParamList &Options, TMacroErr
           Tmp = FXApp->BaseDir();
         FN = (Tmp << FN);
       }
-      if( TEFile::FileExists(FN) )
+      if( TEFile::Exists(FN) )
         DefStyle = FN;
       else  {
         Error.ProcessingError(__OlxSrcInfo, "specified file does not exists" );
@@ -2474,7 +2474,7 @@ void TMainForm::macStyle(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     }
     else  {
       olxstr FN = PickFile("Load drawing style", "Drawing styles|*.glds", StylesDir, false);
-      if( TEFile::FileExists(FN) )
+      if( TEFile::Exists(FN) )
         DefStyle = FN;
     }
   }
@@ -2505,7 +2505,7 @@ void TMainForm::macScene(TStrObjList &Cmds, const TParamList &Options, TMacroErr
         Tmp = FXApp->BaseDir();
       FN = (Tmp << FN);
     }
-    if( TEFile::FileExists(FN) )
+    if( TEFile::Exists(FN) )
       DefSceneP = FN;
     else  {
       Error.ProcessingError(__OlxSrcInfo, "specified file does not exists" );
@@ -2514,7 +2514,7 @@ void TMainForm::macScene(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   }
   else  {
     olxstr FN = PickFile("Load scene parameters", "Scene parameters|*.glsp", SParamDir, false);
-    if( TEFile::FileExists(FN) )
+    if( TEFile::Exists(FN) )
       DefSceneP = FN;
   }
 }
@@ -3658,7 +3658,7 @@ void TMainForm::macReset(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   olxstr lstFN( TEFile::ChangeFileExt(fileName, "lst") );
 
   Ins->SaveToRefine(FN, Cmds.Text(' '), newSg);
-  if( TEFile::FileExists(lstFN) )  {
+  if( TEFile::Exists(lstFN) )  {
     olxstr lstTmpFN( lstFN );
     lstTmpFN << ".tmp";
     wxRenameFile( uiStr(lstFN), uiStr(lstTmpFN) );
@@ -3739,7 +3739,7 @@ void TMainForm::macGrad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     if( glt != NULL  )
       glt->SetEnabled(false);
   }
-  else if( TEFile::FileExists(GradientPicture) )  {
+  else if( TEFile::Exists(GradientPicture) )  {
     wxFSFile* inf = TFileHandlerManager::GetFSFileHandler( GradientPicture );
     if( inf == NULL )  {
       E.ProcessingError(__OlxSrcInfo, "Image file does not exist: ") << GradientPicture;
@@ -4107,7 +4107,7 @@ void TMainForm::macMergeHkl(TStrObjList &Cmds, const TParamList &Options, TMacro
 //..............................................................................
 void TMainForm::macEditHkl(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   olxstr HklFN( FXApp->LocateHklFile() );
-  if( !TEFile::FileExists(HklFN) )  {
+  if( !TEFile::Exists(HklFN) )  {
     E.ProcessingError(__OlxSrcInfo, "could not locate the HKL file" );
     return;
   }
@@ -4216,7 +4216,7 @@ bool InvestigateVoid(short x, short y, short z, TArray3D<short>& map, T3DIndexLi
 //
 void TMainForm::macCalcVoid(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   TPSTypeList<TBasicAtomInfo*, double> radii;
-  if( Cmds.Count() == 1 && TEFile::FileExists(Cmds[0]) )  {
+  if( Cmds.Count() == 1 && TEFile::Exists(Cmds[0]) )  {
     TBasicApp::GetLog() << "Using user defined radii for: \n";
     TStrList sl, toks;
     sl.LoadFromFile(Cmds[0]);
@@ -4411,7 +4411,7 @@ void TMainForm::macAppendHkl(TStrObjList &Cmds, const TParamList &Options, TMacr
     l.Add( toks[i].ToInt() );
 
   olxstr hklSrc( FXApp->LocateHklFile() );
-  if( !TEFile::FileExists( hklSrc ) )  {
+  if( !TEFile::Exists( hklSrc ) )  {
     E.ProcessingError(__OlxSrcInfo, "could not find hkl file: ") << hklSrc;
     return;
   }
@@ -4469,7 +4469,7 @@ void TMainForm::macExcludeHkl(TStrObjList &Cmds, const TParamList &Options, TMac
     l.Add( toks[i].ToInt() );
 
   olxstr hklSrc( FXApp->LocateHklFile() );
-  if( !TEFile::FileExists( hklSrc ) )  {
+  if( !TEFile::Exists( hklSrc ) )  {
     E.ProcessingError(__OlxSrcInfo, "could not find hkl file: ") << hklSrc;
     return;
   }
@@ -4735,8 +4735,8 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     if( TEFile::ExtractFileExt(FN).IsEmpty() )  {
       olxstr res_fn = TEFile::ChangeFileExt(FN, "res"),
              ins_fn = TEFile::ChangeFileExt(FN, "ins");
-      if( TEFile::FileExists(res_fn) )  {
-        if( TEFile::FileExists(ins_fn) )
+      if( TEFile::Exists(res_fn) )  {
+        if( TEFile::Exists(ins_fn) )
           FN = TEFile::FileAge(ins_fn) < TEFile::FileAge(res_fn) ? res_fn : ins_fn;
         else
           FN = res_fn;
@@ -4779,7 +4779,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     /* with some compilations Borland would bring program into an incorrect state
      if the NonExistenFile exception is thrown from XFile ... (MSVC is fine thought)
     */
-    if( !TEFile::FileExists(FN) )  return;
+    if( !TEFile::Exists(FN) )  return;
     if( OverlayXFile )  {
       TXFile& xf = FXApp->NewOverlayedXFile();
       xf.LoadFromFile( FN );
@@ -4789,11 +4789,11 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     if( Modes->GetCurrent() != NULL )
       ProcessXPMacro("mode off", Error);
     Tmp = TEFile::ChangeFileExt(FN, "xlds");
-    if( TEFile::FileExists(Tmp) )  {
+    if( TEFile::Exists(Tmp) )  {
       ProcessXPMacro(olxstr("load view '") << TEFile::ChangeFileExt(FN, EmptyString) << '\'', Error);
     }
     else  {
-      if( TEFile::FileExists(DefStyle) && ReadStyle )
+      if( TEFile::Exists(DefStyle) && ReadStyle )
         FXApp->GetRender().GetStyles().LoadFromFile(DefStyle);
     }
     // delete the Space groups infor mation file
@@ -4801,7 +4801,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       TEFile::DelFile(DataDir+"spacegroups.htm");
     // special treatment of the kl files
     if( TEFile::ExtractFileExt(FN).Equalsi("hkl") )  {
-      if( !TEFile::FileExists( TEFile::ChangeFileExt(FN, "ins") ) )  {
+      if( !TEFile::Exists( TEFile::ChangeFileExt(FN, "ins") ) )  {
         THklFile hkl;
         bool ins_initialised = false;
         TIns* ins = (TIns*)FXApp->XFile().FindFormat("ins");
@@ -4860,7 +4860,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     }
     catch(TEmptyFileException)  {
       olxstr lstFileName = TEFile::ChangeFileExt(FN, "lst");
-      if( TEFile::FileExists(lstFileName)  )  {
+      if( TEFile::Exists(lstFileName)  )  {
         try  {  Lst.LoadFromFile(lstFileName);  }
         catch( ... )  {  throw;  }
 
@@ -4887,7 +4887,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       FInfoBox->Clear();
       if( FXApp->CheckFileType<TP4PFile>() || FXApp->CheckFileType<TCRSFile>() )  {
         TMacroError er;
-        if( TEFile::FileExists( TEFile::ChangeFileExt(FN, "ins") ) )
+        if( TEFile::Exists( TEFile::ChangeFileExt(FN, "ins") ) )
           ProcessXPMacro("SG", er);
         else
           ProcessXPMacro("SGE", er);
@@ -4899,13 +4899,13 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         olxstr hklFileName = TEFile::ChangeFileExt(FN, "hkl");
         olxstr insFileName = TEFile::ChangeFileExt(FN, "ins");
         TMacroError er;
-        if( !TEFile::FileExists(hklFileName)  )  {
+        if( !TEFile::Exists(hklFileName)  )  {
           TCif& C = FXApp->XFile().GetLastLoader<TCif>();
           if( C.FindLoop("_refln") != NULL )  {
             er.SetRetVal(&C);
             ProcessXPMacro( olxstr("export ") << TEFile::ExtractFileName(hklFileName), er, false, false);
             if( !er.IsProcessingError() )  {
-              if( !TEFile::FileExists(insFileName) )  {
+              if( !TEFile::Exists(insFileName) )  {
                 TIns ins;
                 ins.Adopt( &FXApp->XFile() );
                 ins.GetRM().SetHKLSource(hklFileName);
@@ -4943,7 +4943,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       QPeakTable(false, true);
       UpdateRecentFilesTable(false);
       olxstr lstFileName = TEFile::ChangeFileExt(FN, "lst");
-      if( TEFile::FileExists(lstFileName)  )  {
+      if( TEFile::Exists(lstFileName)  )  {
         Lst.LoadFromFile(lstFileName);
         BadReflectionsTable(false, true);
         RefineDataTable(false, true);
@@ -5346,7 +5346,7 @@ void TMainForm::macUpdateOptions(TStrObjList &Cmds, const TParamList &Options, T
 //..............................................................................
 void TMainForm::macReload(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   if( Cmds[0].Equalsi("macro") )  {
-    if( TEFile::FileExists(FXApp->BaseDir() + "macro.xld") )  {
+    if( TEFile::Exists(FXApp->BaseDir() + "macro.xld") )  {
       TStrList SL;
       FMacroFile.LoadFromXLFile(FXApp->BaseDir() + "macro.xld", &SL);
       FMacroItem = FMacroFile.Root().FindItem("xl_macro");
@@ -5355,7 +5355,7 @@ void TMainForm::macReload(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     }
   }
   else if( Cmds[0].Equalsi("help") )  {
-    if( TEFile::FileExists(FXApp->BaseDir() + "help.xld") )  {
+    if( TEFile::Exists(FXApp->BaseDir() + "help.xld") )  {
       TStrList SL;
       FHelpFile.LoadFromXLFile(FXApp->BaseDir() + "help.xld", &SL);
       FHelpItem = FHelpFile.Root().FindItem("xl_help");
@@ -5363,7 +5363,7 @@ void TMainForm::macReload(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     }
   }
   else if( Cmds[0].Equalsi("dictionary") )  {
-    if( TEFile::FileExists( DictionaryFile ) )
+    if( TEFile::Exists( DictionaryFile ) )
       Dictionary.SetCurrentLanguage(DictionaryFile, Dictionary.GetCurrentLanguage() );
   }
 }
@@ -5518,7 +5518,7 @@ void TMainForm::macTref(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   }
   SolutionFolder = TEFile::ExtractFilePath(FXApp->XFile().GetFileName() );
   TEFile::AddTrailingBackslashI( SolutionFolder ) << "olex_sol\\";
-  if( !TEFile::FileExists( SolutionFolder ) )
+  if( !TEFile::Exists( SolutionFolder ) )
     TEFile::MakeDir( SolutionFolder );
   olxstr cinsFN = TEFile::ChangeFileExt( FXApp->XFile().GetFileName(), "ins" );
   olxstr cresFN = TEFile::ChangeFileExt( FXApp->XFile().GetFileName(), "res" );
@@ -5559,7 +5559,7 @@ void TMainForm::macExport(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   else
     exName = TEFile::ChangeFileExt( FXApp->XFile().GetFileName(), "hkl" );
 
-  if( TEFile::FileExists(exName) )  {
+  if( TEFile::Exists(exName) )  {
     E.ProcessingError(__OlxSrcInfo, "the hkl file already exists");
     return;
   }
@@ -5705,7 +5705,7 @@ void TMainForm::macInstallPlugin(TStrObjList &Cmds, const TParamList &Options, T
     TStateChange sc(prsPluginInstalled, true, Cmds[0]);
     olxstr local_file( Options.FindValue("l", EmptyString) );
     if( !local_file.IsEmpty() )  {
-      if( !TEFile::FileExists(local_file) )  {
+      if( !TEFile::Exists(local_file) )  {
         E.ProcessingError(__OlxSrcInfo, "cannot find plugin archive");
         return;
       }
@@ -5738,7 +5738,7 @@ void TMainForm::macInstallPlugin(TStrObjList &Cmds, const TParamList &Options, T
     else  {
       olxstr SettingsFile( TBasicApp::GetInstance()->BaseDir() + "usettings.dat" );
       TSettingsFile settings;
-      if( TEFile::FileExists(SettingsFile) )  {
+      if( TEFile::Exists(SettingsFile) )  {
         olxstr Proxy, Repository;
 
         settings.LoadSettings( SettingsFile );
@@ -5845,7 +5845,7 @@ void TMainForm::macSignPlugin(TStrObjList &Cmds, const TParamList &Options, TMac
               TBasicApp::GetLog() << ( olxstr("\rDeleting folder /~/") << path.SubStringFrom(cpath.Length()) );
               xa->Draw();
               wxTheApp->Dispatch();
-              TEFile::DelDir( path );
+              TEFile::RmDir( path );
               deleted = true;
               FoldersToDelete[i]->GetParent()->Remove( *FoldersToDelete[i] );
               FoldersToDelete.Delete(i);
@@ -5879,7 +5879,7 @@ void TMainForm::macUninstallPlugin(TStrObjList &Cmds, const TParamList &Options,
     FPluginItem->DeleteItem( di );
     OnStateChange->Execute((AEventsDispatcher*)this, &sc);
     olxstr indexFile = TBasicApp::GetInstance()->BaseDir() + "index.ind";
-    if( TEFile::FileExists(indexFile) )  {
+    if( TEFile::Exists(indexFile) )  {
       TOSFileSystem osFS;
       osFS.SetBase( TBasicApp::GetInstance()->BaseDir() );
       TFSIndex fsIndex( osFS );
@@ -6626,7 +6626,7 @@ void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   //}
   //return;
   olxstr hklfn = FXApp->LocateHklFile();
-  if( TEFile::FileExists(hklfn) )  {
+  if( TEFile::Exists(hklfn) )  {
     const TRefPList& fpp = FXApp->XFile().GetRM().GetFriedelPairs();
     if( fpp.IsEmpty() )  return;
 
@@ -6913,7 +6913,7 @@ void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 
   TIns *Ins = (TIns*)FXApp->XFile().GetLastLoader();
   olxstr HklFN = Ins->GetHKLSource();
-  if( !TEFile::FileExists(HklFN) )  {
+  if( !TEFile::Exists(HklFN) )  {
     Error.ProcessingError(__OlxSrcInfo, "could not locate HKL file" );
     return;
   }
@@ -7304,14 +7304,14 @@ void TMainForm::macStartLogging(TStrObjList &Cmds, const TParamList &Options, TM
       ActiveLogFile = NULL;
     }
     else  {
-      if( TEFile::FileExists(Cmds[0]) )  {
+      if( TEFile::Exists(Cmds[0]) )  {
         TEFile::DelFile( Cmds[0] );
       }
     }
   }
   if( ActiveLogFile != NULL )
     return;
-  if( TEFile::FileExists(Cmds[0]) )
+  if( TEFile::Exists(Cmds[0]) )
     ActiveLogFile = new TEFile(Cmds[0], "a+b");
   else
     ActiveLogFile = new TEFile(Cmds[0], "w+b");
@@ -7320,7 +7320,7 @@ void TMainForm::macStartLogging(TStrObjList &Cmds, const TParamList &Options, TM
 }
 //..............................................................................
 void TMainForm::macViewLattice(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  if( !TEFile::FileExists( Cmds[0] )  )  {
+  if( !TEFile::Exists( Cmds[0] )  )  {
     Error.ProcessingError(__OlxSrcInfo, "file does not exist" );
     return;
   }
@@ -7403,7 +7403,7 @@ void main_GenerateCrd(const vec3d_list& p, const smatd_list& sm, vec3d_list& res
 
 void TMainForm::macAddObject(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   if( Cmds[0].Equalsi("cell") && Cmds.Count() == 2 )  {
-    if( !TEFile::FileExists( Cmds[1] )  )  {
+    if( !TEFile::Exists( Cmds[1] )  )  {
       Error.ProcessingError(__OlxSrcInfo, "file does not exist" );
       return;
     }
@@ -7528,7 +7528,7 @@ void TMainForm::macDelObject(TStrObjList &Cmds, const TParamList &Options, TMacr
 }
 //..............................................................................
 void TMainForm::macTextm(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  if( !TEFile::FileExists( Cmds[0] )  )  {
+  if( !TEFile::Exists( Cmds[0] )  )  {
     Error.ProcessingError(__OlxSrcInfo, "file does not exist" );
     return;
   }
@@ -7774,7 +7774,7 @@ void TMainForm::macCalcPatt(TStrObjList &Cmds, const TParamList &Options, TMacro
   smatd_list ml;
   sg->GetMatrices(ml, mattAll);
   olxstr hklFileName = FXApp->LocateHklFile();
-  if( !TEFile::FileExists(hklFileName) )  {
+  if( !TEFile::Exists(hklFileName) )  {
     E.ProcessingError(__OlxSrcInfo, "could not locate hkl file");
     return;
   }
@@ -8290,7 +8290,7 @@ void TMainForm::macTestStat(TStrObjList &Cmds, const TParamList &Options, TMacro
 //  FXApp->SetMaxThreadCount(4);
 //  TListIteratorManager<TestDistanceAnalysisIteration>* Test = new TListIteratorManager<TestDistanceAnalysisIteration>(testdai, files.Count(), tLinearTask, 0);
 //  delete Test;
-  if( files.Count() == 1 && TEFile::FileExists(Cmds[0]) )  {
+  if( files.Count() == 1 && TEFile::Exists(Cmds[0]) )  {
     TStrList sl;
     sl.LoadFromFile( Cmds[0] );
     TPSTypeList<int, int> ref_data, &data = testdai.XYZ;

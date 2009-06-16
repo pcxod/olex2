@@ -44,7 +44,7 @@ TZipWrapper::TZipWrapper(const olxstr &zipName, bool useCache)  {
   wxfile = NULL;
   UseCache = useCache;
   //FFileInputStream = NULL;
-  if( !TEFile::FileExists( zipName )  )  return;
+  if( !TEFile::Exists( zipName )  )  return;
   FInputStream = new wxZipInputStream( new wxFileInputStream( zipName.u_str() ) );
   wxZipEntry *entry;
   while( (entry = FInputStream->GetNextEntry() ) != NULL )
@@ -117,9 +117,9 @@ void TZipWrapper::ExtractAll(const olxstr& dest)  {
     if( FEntries.GetString(i).EndsWith('/') )  continue;
     olxstr dest_file = extractPath + FEntries.GetString(i);
     olxstr dst_dir = TEFile::ExtractFilePath(dest_file);
-    if( !TEFile::FileExists(dst_dir) )
+    if( !TEFile::Exists(dst_dir) )
       TEFile::MakeDirs(dst_dir);
-    if( TEFile::FileExists(dest_file) )  {
+    if( TEFile::Exists(dest_file) )  {
       if( !TEFile::DelFile(dest_file) )
         TBasicApp::GetLog().Error( olxstr("Failed to remove/update file: ") << dest_file);
     }
@@ -133,10 +133,10 @@ void TZipWrapper::ExtractAll(const olxstr& dest)  {
 bool TZipWrapper::IsValidFileName(const olxstr &FN)  {
   int zi = FN.IndexOf(ZipUrlSignature);
   if( zi > 0 )  {
-    if( TEFile::FileExists( ExtractZipName(FN) ) )  return true;
+    if( TEFile::Exists( ExtractZipName(FN) ) )  return true;
     return false;
   }
-  return TEFile::FileExists(FN);
+  return TEFile::Exists(FN);
 }
 //..............................................................................
 bool TZipWrapper::IsZipFile(const olxstr &FN)  {

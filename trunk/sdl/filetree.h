@@ -97,6 +97,7 @@ public:
         res += Folders[i].CalcSize();
       return res;
     }
+    // sends notification events when expanding
     void Expand(TOnProgress& pg)  {
       Files.Clear();
       pg.SetAction(FullPath);
@@ -111,6 +112,46 @@ public:
       Files.Pack();
       Files.QuickSorter.SortSF(Files, &CompareFiles);
       Folders.QuickSorter.SortSF(Folders, &CompareFolders);
+    }
+    // a quiet version of the above
+    void Expand()  {
+      Files.Clear();
+      TEFile::ListDirEx(FullPath, Files, "*", sefAll^sefRelDir);
+      for( int i=0; i < Files.Count(); i++ )  {
+        if( (Files[i].GetAttributes() & sefDir) == sefDir )  {
+          Folders.Add( new Folder(FileTree, FullPath + Files[i].GetName(), this)).Expand();
+          Files.NullItem(i);
+        }
+      }
+      Files.Pack();
+      Files.QuickSorter.SortSF(Files, &CompareFiles);
+      Folders.QuickSorter.SortSF(Folders, &CompareFolders);
+    }
+    // recursive deletion of the folder, must be expanded beforehand!
+    bool Delete()  {
+      try  {
+        for( int i=0; i < Folders.Count(); i++ )  {
+          Folders.NullItem(i);
+          Folders[i].Delete();
+        }
+      }
+      catch( const TExceptionBase& exc )  {
+        Folders.Pack();
+        throw TFunctionFailedException(__OlxSourceInfo, exc);
+      }
+      Folders.Clear();
+      for( int i=0; i < Files.Count(); i++ )  {
+        olxstr fn = FullPath + Files[i].GetName();
+        if( !TEFile::DelFile(fn) )  {
+          Files.Pack();
+          throw TFunctionFailedException(__OlxSourceInfo, olxstr("Could not delete file: ") << fn);
+        }
+        else
+          Files.NullItem(i);
+      }
+      Files.Pack();
+      if( !TEFile::RmDir(FullPath) )
+        throw TFunctionFailedException(__OlxSourceInfo, olxstr("Could not delete folder: ") << FullPath);
     }
     double Compare(const Folder& f, TOnProgress& pg) const {
       double total_size = 0;

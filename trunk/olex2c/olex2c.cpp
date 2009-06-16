@@ -235,7 +235,7 @@ public:
     
     olxstr pluginsFile( XApp.BaseDir() + "plugins.xld" );
     Plugins = NULL;
-    if( TEFile::FileExists( pluginsFile ) )  {
+    if( TEFile::Exists( pluginsFile ) )  {
       PluginFile.LoadFromXLFile( pluginsFile, NULL );
       Plugins = PluginFile.Root().FindItem("Plugin");
     }
@@ -244,7 +244,7 @@ public:
   
     olxstr macroFile( XApp.BaseDir() );
     macroFile << "macrox.xld";
-    if( TEFile::FileExists(macroFile) )  {
+    if( TEFile::Exists(macroFile) )  {
       TDataFile df;
       df.LoadFromXLFile( macroFile );
       df.Include(NULL);
@@ -397,7 +397,7 @@ public:
     if( MsgId == ID_TIMER )  {
       if( XApp.XFile().HasLastLoader() )  {
         olxstr sfn( TEFile::ExtractFilePath(XApp.XFile().GetFileName()) + "autochem.stop");
-        if( TEFile::FileExists(sfn) )  {
+        if( TEFile::Exists(sfn) )  {
           XApp.Sleep(100);
           TEFile::DelFile(sfn);
 //          TOlex::~TOlex();
@@ -612,7 +612,7 @@ public:
     olxstr lstFN( TEFile::ChangeFileExt(fileName, "lst") );
 
     Ins->SaveToRefine(FN, Cmds.Text(' '), newSg);
-    if( TEFile::FileExists(lstFN) )  {
+    if( TEFile::Exists(lstFN) )  {
       olxstr lstTmpFN( lstFN );
       lstTmpFN << ".tmp";
       TEFile::Rename( lstFN, lstTmpFN );
@@ -791,7 +791,7 @@ public:
   void macReload(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
     if( Cmds[0].Equalsi("macro") )  {
       olxstr macroFile( XApp.BaseDir() + "macrox.xld" );
-      if( TEFile::FileExists(macroFile) )  {
+      if( TEFile::Exists(macroFile) )  {
         TDataFile df;
         df.LoadFromXLFile( macroFile );
         df.Include(NULL);
@@ -870,7 +870,7 @@ public:
   void funStrDir(const TStrObjList& Params, TMacroError &E) {
     olxstr ofn( TEFile::ExtractFilePath(XApp.XFile().GetFileName()) );
     TEFile::AddTrailingBackslashI(ofn) << ".olex";
-    if( !TEFile::FileExists(ofn) )  {
+    if( !TEFile::Exists(ofn) )  {
       if( !TEFile::MakeDir(ofn) )  {
         throw TFunctionFailedException(__OlxSourceInfo, "cannot create folder");
       }
@@ -933,7 +933,7 @@ public:
     Lst.Clear();
     XApp.XFile().LoadFromFile( Cmds.Text(' ') );
     olxstr lstfn( TEFile::ChangeFileExt(Cmds[0], "lst") );
-    if( TEFile::FileExists(lstfn) )
+    if( TEFile::Exists(lstfn) )
       Lst.LoadFromFile(lstfn);
   }
   //..............................................................................

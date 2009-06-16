@@ -457,7 +457,7 @@ void XLibMacros::macRun(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 void XLibMacros::macHklStat(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   TXApp& xapp = TXApp::GetInstance();
   olxstr hklSrc = xapp.LocateHklFile();
-  if( !TEFile::FileExists( hklSrc ) )  {
+  if( !TEFile::Exists( hklSrc ) )  {
     Error.ProcessingError(__OlxSrcInfo, "could not find hkl file: ") << hklSrc;
     return;
   }
@@ -716,6 +716,10 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 //..............................................................................
 void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   TXApp& XApp = TXApp::GetInstance();
+  if( XApp.XFile().GetLattice().IsGenerated() )  {
+    Error.ProcessingError(__OlxSrcInfo, "command is not applicable to grown structure");
+    return;
+  }
   int Hfix = 0;
   if( !Cmds.IsEmpty() && Cmds[0].IsNumber() )  {
     Hfix = Cmds[0].ToInt();
@@ -2186,14 +2190,14 @@ void XLibMacros::macCif2Doc(TStrObjList &Cmds, const TParamList &Options, TMacro
   }
 
   olxstr TN = Cmds[0];
-  if( !TEFile::FileExists(TN) )
+  if( !TEFile::Exists(TN) )
     TN = xapp.GetCifTemplatesDir() + TN;
-  if( !TEFile::FileExists(TN) )  {
+  if( !TEFile::Exists(TN) )  {
     Error.ProcessingError(__OlxSrcInfo, "template for CIF does not exist: ") << Cmds[0];
     return;
   }
   // resolvind the index file
-  if( !TEFile::FileExists(CifDictionaryFile) )  {
+  if( !TEFile::Exists(CifDictionaryFile) )  {
     Error.ProcessingError(__OlxSrcInfo, "CIF dictionary does not exist" );
     return;
   }
@@ -2203,7 +2207,7 @@ void XLibMacros::macCif2Doc(TStrObjList &Cmds, const TParamList &Options, TMacro
     Cif = &xapp.XFile().GetLastLoader<TCif>();
   else  {
     olxstr cifFN = TEFile::ChangeFileExt( xapp.XFile().GetFileName(), "cif");
-    if( TEFile::FileExists( cifFN ) ) 
+    if( TEFile::Exists( cifFN ) ) 
       Cif1.LoadFromFile( cifFN );
     else  {
       Error.ProcessingError(__OlxSrcInfo, "existing cif is expected");
@@ -2233,7 +2237,7 @@ void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options, TMacro
   olxstr CifTablesFile( xapp.GetCifTemplatesDir() + "tables.xlt");
   olxstr CifDictionaryFile( xapp.GetCifTemplatesDir() + "cifindex.dat");
   if( Cmds.IsEmpty() )  {
-    if( !TEFile::FileExists(CifTablesFile) )  {
+    if( !TEFile::Exists(CifTablesFile) )  {
       Error.ProcessingError(__OlxSrcInfo, "tables definition file is not found" );
       return;
     }
@@ -2267,7 +2271,7 @@ void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options, TMacro
     Cif = &xapp.XFile().GetLastLoader<TCif>();
   else  {
     olxstr cifFN = TEFile::ChangeFileExt( xapp.XFile().GetFileName(), "cif");
-    if( TEFile::FileExists( cifFN ) )  {
+    if( TEFile::Exists( cifFN ) )  {
       Cif1.LoadFromFile( cifFN );
     }
     else
@@ -2452,7 +2456,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
     Cif = &xapp.XFile().GetLastLoader<TCif>();
   else  {
     olxstr cifFN = TEFile::ChangeFileExt( xapp.XFile().GetFileName(), "cif");
-    if( TEFile::FileExists( cifFN ) )  {
+    if( TEFile::Exists( cifFN ) )  {
       Cif2.LoadFromFile( cifFN );
     }
     else
@@ -2527,9 +2531,9 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options, TMacr
 void XLibMacros::macCifExtract(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   TXApp& xapp = TXApp::GetInstance();
   olxstr Dictionary = Cmds[0];
-  if( !TEFile::FileExists(Dictionary) )  {  // check if the dictionary exists
+  if( !TEFile::Exists(Dictionary) )  {  // check if the dictionary exists
     Dictionary = xapp.GetCifTemplatesDir();  Dictionary << Cmds[0];
-    if( !TEFile::FileExists(Dictionary) )  {
+    if( !TEFile::Exists(Dictionary) )  {
       Error.ProcessingError(__OlxSrcInfo, "dictionary file does not exists" );
       return;
     }
@@ -2541,7 +2545,7 @@ void XLibMacros::macCifExtract(TStrObjList &Cmds, const TParamList &Options, TMa
     Cif = &xapp.XFile().GetLastLoader<TCif>();
   else  {
     olxstr cifFN = TEFile::ChangeFileExt( xapp.XFile().GetFileName(), "cif");
-    if( TEFile::FileExists( cifFN ) )  {
+    if( TEFile::Exists( cifFN ) )  {
       Cif1.LoadFromFile( cifFN );
     }
     else
@@ -2598,9 +2602,9 @@ void XLibMacros::macVoidE(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     F000 += ec*uc.MatrixCount()*ca.GetOccu();
   }
   olxstr fcffn = TEFile::ChangeFileExt(XApp.XFile().GetFileName(), "fcf");
-  if( !TEFile::FileExists(fcffn) )  {
+  if( !TEFile::Exists(fcffn) )  {
     fcffn = TEFile::ChangeFileExt(XApp.XFile().GetFileName(), "fco");
-    if( !TEFile::FileExists(fcffn) )  {
+    if( !TEFile::Exists(fcffn) )  {
       E.ProcessingError(__OlxSrcInfo, "please load fcf file or make sure the one exists in current folder");
       return;
     }
@@ -2644,7 +2648,7 @@ void XLibMacros::macVoidE(TStrObjList &Cmds, const TParamList &Options, TMacroEr
       F[i] = TEComplex<double>::polar(dI, rv.arg());
   }
   olxstr hklFileName = XApp.LocateHklFile();
-  if( !TEFile::FileExists(hklFileName) )  {
+  if( !TEFile::Exists(hklFileName) )  {
     E.ProcessingError(__OlxSrcInfo, "could not locate hkl file");
     return;
   }

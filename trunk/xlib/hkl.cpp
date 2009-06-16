@@ -247,7 +247,7 @@ void THklFile::Append(const THklFile& hkls)  {
 bool THklFile::SaveToFile(const olxstr& FN, const TRefPList& refs, bool Append)  {
   if( refs.IsEmpty() )  return true;
 
-  if( Append && TEFile::FileExists(FN) )  {
+  if( Append && TEFile::Exists(FN) )  {
     THklFile F;
     F.LoadFromFile(FN);
     F.Append(refs);

@@ -1182,7 +1182,7 @@ separated values of Atom Type and radius, an entry a line" );
 
   SetStatusText( uiStr(XA->BaseDir()));
 
-  if( !TEFile::FileExists(DataDir) )  {
+  if( !TEFile::Exists(DataDir) )  {
     if( !TEFile::MakeDir(DataDir) )
       TBasicApp::GetLog().Error("Could not create data folder!");
   }
@@ -1292,7 +1292,7 @@ void TMainForm::StartupInit()  {
 
   olxstr T(DataDir);  
   T << FLastSettingsFile;
-  if( !TEFile::FileExists(T) )  {
+  if( !TEFile::Exists(T) )  {
     T = TBasicApp::GetInstance()->BaseDir();
     TEFile::AddTrailingBackslashI(T);
     T << FLastSettingsFile;
@@ -1320,7 +1320,7 @@ void TMainForm::StartupInit()  {
   FTimer->Start(15);
   if( FGlCanvas != NULL )  FGlCanvas->XApp(FXApp);
 
-  if( TEFile::FileExists(FXApp->BaseDir() + "settings.xld") )  {
+  if( TEFile::Exists(FXApp->BaseDir() + "settings.xld") )  {
     TDataFile settings;
     settings.LoadFromXLFile( FXApp->BaseDir() + "settings.xld", NULL );
     TDataItem* sh = settings.Root().FindItemi("shortcuts");
@@ -1380,7 +1380,7 @@ void TMainForm::StartupInit()  {
   }
 
   FPluginItem = NULL;
-  if( TEFile::FileExists( PluginFile ) )  {
+  if( TEFile::Exists( PluginFile ) )  {
     FPluginFile.LoadFromXLFile( PluginFile, NULL );
     FPluginItem = FPluginFile.Root().FindItem("Plugin");
     // manually activate the events
@@ -2012,7 +2012,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
       }
       //FTimer->OnTimer->Enabled = true;
     }
-    if( (FMode & mListen) != 0 && TEFile::FileExists(FListenFile) )  {
+    if( (FMode & mListen) != 0 && TEFile::Exists(FListenFile) )  {
       static time_t FileMT = wxFileModificationTime( uiStr(FListenFile));
       time_t FileT = wxFileModificationTime( uiStr(FListenFile));
       if( FileMT != FileT )  {
@@ -2836,7 +2836,7 @@ void TMainForm::SaveSettings(const olxstr &FN)  {
 }
 //..............................................................................
 void TMainForm::LoadSettings(const olxstr &FN)  {
-  if( !TEFile::FileExists(FN) ) return;
+  if( !TEFile::Exists(FN) ) return;
 
   TDataFile DF;
   TStrList Log;
@@ -2858,7 +2858,7 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
   else
     executeFunction(CifTemplatesDir, CifTemplatesDir);
   // to fix old folder location at the basedir ... 
-  if( !TEFile::FileExists(CifTemplatesDir) )
+  if( !TEFile::Exists(CifTemplatesDir) )
     CifTemplatesDir = TutorialDir + "CIF/";
   FXApp->SetCifTemplatesDir( CifTemplatesDir );
 
@@ -2954,7 +2954,7 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
   DefSceneP = I->GetFieldValue("SceneP");
     executeFunction(DefSceneP, DefSceneP);
   // loading default style if provided ?
-  if( TEFile::FileExists(DefStyle) )  {
+  if( TEFile::Exists(DefStyle) )  {
     TDataFile SDF;
     SDF.LoadFromXLFile(DefStyle, &Log);
     FXApp->GetRender().GetStyles().FromDataItem(*SDF.Root().FindItem("style"));
@@ -2965,7 +2965,7 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
     // old style override, let's hope it is newer!
     if( l_version < TGraphicsStyles::CurrentVersion )  {
       olxstr new_set = FXApp->BaseDir() + "last.osp";
-      if( TEFile::FileExists(new_set) )  {
+      if( TEFile::Exists(new_set) )  {
         TDataFile LF;
         try  {  
           LF.LoadFromXLFile(new_set);
@@ -2984,7 +2984,7 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
       FXApp->GetRender().GetStyles().FromDataItem(last_saved_style);
   }
   // default scene properties provided?
-  if( TEFile::FileExists(DefSceneP) )  {
+  if( TEFile::Exists(DefSceneP) )  {
     TDataFile SDF;
     SDF.LoadFromXLFile(DefSceneP, &Log);
     LoadScene(&SDF.Root());
@@ -2992,7 +2992,7 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
   else
     LoadScene(DF.Root().FindItem("Scene"));
   // restroring language or setting default
-  if( TEFile::FileExists( DictionaryFile ) )  {
+  if( TEFile::Exists( DictionaryFile ) )  {
     Dictionary.SetCurrentLanguage(DictionaryFile, I->GetFieldValue("language", EmptyString) );
   }
   FXApp->SetExtraZoom( I->GetFieldValue("ExtraZoom", "1.25").ToDouble() );
@@ -3158,7 +3158,7 @@ bool TMainForm::UpdateRecentFilesTable(bool TableDef)  {
   Table.CreateHTMLList(Output, EmptyString, false, false, false);
   CString cst = TUtf8::Encode(Output.Text('\n'));
   TFileHandlerManager::AddMemoryBlock(RecentFilesFile, cst.c_str(), cst.Length(), plGlobal);
-  if( TEFile::FileExists(DataDir+RecentFilesFile) )
+  if( TEFile::Exists(DataDir+RecentFilesFile) )
     TEFile::DelFile(DataDir+RecentFilesFile);
   //TUtf8File::WriteLines( RecentFilesFile, Output, false );
   return true;
@@ -3215,7 +3215,7 @@ void TMainForm::QPeakTable(bool TableDef, bool Create)  {
   Table.CreateHTMLList(Output, EmptyString, false, false, TableDef);
   CString cst = TUtf8::Encode(Output.Text('\n'));
   TFileHandlerManager::AddMemoryBlock(QPeakTableFile, cst.c_str(), cst.Length(), plStructure);
-  if( TEFile::FileExists(QPeakTableFile) )
+  if( TEFile::Exists(QPeakTableFile) )
     TEFile::DelFile(QPeakTableFile);
   //TUtf8File::WriteLines( FN, Output, false );
 }
@@ -3253,7 +3253,7 @@ void TMainForm::BadReflectionsTable(bool TableDef, bool Create)  {
   Table.CreateHTMLList(Output, EmptyString, true, false, TableDef);
   CString cst = TUtf8::Encode(Output.Text('\n'));
   TFileHandlerManager::AddMemoryBlock(BadRefsFile, cst.c_str(), cst.Length(), plStructure);
-  if( TEFile::FileExists(BadRefsFile) )
+  if( TEFile::Exists(BadRefsFile) )
     TEFile::DelFile(BadRefsFile);
   //TUtf8File::WriteLines( BadRefsFile, Output, false );
 }
@@ -3321,7 +3321,7 @@ void TMainForm::RefineDataTable(bool TableDef, bool Create)  {
   Table.CreateHTMLList(Output, EmptyString, false, false, TableDef);
   CString cst = TUtf8::Encode(Output.Text('\n'));
   TFileHandlerManager::AddMemoryBlock(RefineDataFile, cst.c_str(), cst.Length(), plStructure);
-  if( TEFile::FileExists(RefineDataFile) )
+  if( TEFile::Exists(RefineDataFile) )
     TEFile::DelFile(RefineDataFile);
 //TUtf8File::WriteLines( RefineDataFile, Output, false );
 }
@@ -3940,7 +3940,7 @@ void TMainForm::LoadVFS(short persistenceId)  {
     else
       throw TFunctionFailedException(__OlxSourceInfo, "undefined persistence level");
 
-    if( !TEFile::FileExists(dbFN ) )  return;
+    if( !TEFile::Exists(dbFN ) )  return;
 
     try  {
       TEFile dbf(dbFN, "rb");
@@ -3962,7 +3962,7 @@ const olxstr& TMainForm::GetStructureOlexFolder()  {
   if( FXApp->XFile().HasLastLoader() )  {
     olxstr ofn = TEFile::ExtractFilePath(FXApp->XFile().GetFileName());
     TEFile::AddTrailingBackslashI(ofn) << ".olex/";
-    if( !TEFile::FileExists(ofn) )  {
+    if( !TEFile::Exists(ofn) )  {
       if( !TEFile::MakeDir(ofn) )  {
         throw TFunctionFailedException(__OlxSourceInfo, "cannot create folder");
       }

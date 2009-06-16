@@ -64,7 +64,7 @@ olxstr TBasicAtomInfo::StrRepr() const  {
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
 TAtomsInfo::TAtomsInfo(const olxstr &filename)  {
-  if( !filename.IsEmpty() && TEFile::FileExists(filename) )  {
+  if( !filename.IsEmpty() && TEFile::Exists(filename) )  {
     olxstr Tmp;
     TCStrList List, Toks;
     int color;

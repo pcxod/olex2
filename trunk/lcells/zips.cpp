@@ -14,7 +14,7 @@ void _fastcall TZipShell::SetTmpPath(const olxstr& S)  {
   FTmpPath = TEFile::AddTrailingBackslash(S);
 }
 bool _fastcall TZipShell::Initialize(const olxstr& Arch)  {
-  if( !TEFile::FileExists(Arch) )
+  if( !TEFile::Exists(Arch) )
     return false;
   HZIP hz = OpenZip(Arch.c_str(),0);
   ZIPENTRY ze;

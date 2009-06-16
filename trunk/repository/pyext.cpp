@@ -493,7 +493,7 @@ void PythonExt::funReset(TStrObjList& Cmds, const TParamList &Options, TMacroErr
 //..............................................................................
 void PythonExt::funRun(TStrObjList& Cmds, const TParamList &Options, TMacroError& E) {
   olxstr fn = TEFile::OSPath( Cmds.Text(' ') );
-  if( !TEFile::FileExists(fn) )  {
+  if( !TEFile::Exists(fn) )  {
     E.ProcessingError(__OlxSrcInfo, "specified scrip file does not exist: ") << fn;
     return;
   }
@@ -509,7 +509,7 @@ void PythonExt::funRun(TStrObjList& Cmds, const TParamList &Options, TMacroError
 //..............................................................................
 void PythonExt::funRunTh(TStrObjList& Cmds, const TParamList &Options, TMacroError& E)  {
   olxstr fn = Cmds.Text(' ');
-  if( !TEFile::FileExists(fn) )  {
+  if( !TEFile::Exists(fn) )  {
     E.ProcessingError(__OlxSrcInfo, "specified scrip file does not exist: ") << fn;
     return;
   }
