@@ -176,6 +176,8 @@ int main(int argc, char** argv)  {
         log << "(c) Oleg V. Dolomanov 2007-2009\n";
         return 0;
       }
+      if( arg.EndsWith('.') || arg.EndsWith("..") )
+        arg = TEFile::AbsolutePathTo(TEFile::CurrentDir(), arg);
       bapp = new TBasicApp(arg << "/dummy.txt");
     }
     bapp->GetLog().AddStream( new TOutStream, true);
