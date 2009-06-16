@@ -6,8 +6,8 @@
 void IsNumberTest(OlxTests& t)  {
   t.description = __FUNC__;
   olxstr valid_str[] = { "0", " 0 ", " 0", "0 ", " 0", " 0", " .0 ", " 0.0 ", " 0.e0 ", 
-    "  0.e-1  ", "  0xffa  ", "  0xffa", " 0"  };
-  olxstr invalid_str[] = { EmptyString, "  0xffx", " 0a" };
+    "  0.e-1  ", "  0xffa  ", "  0xffa", " 0", " -0. ", " +0. ", "+0e-5", "-.e-5"  };
+  olxstr invalid_str[] = { EmptyString, "  0xffx", " 0a", " -.", "0e-a" };
   for( int i=0; i < sizeof(valid_str)/sizeof(valid_str[0]); i++ )  {
     if( !valid_str[i].IsNumber() )
       throw TFunctionFailedException(__OlxSourceInfo, olxstr("valid number is not recognised: '") << valid_str[i] << '\'');

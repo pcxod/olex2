@@ -81,49 +81,53 @@ int ImplicitCAtomRef::Expand(RefinementModel& rm, TAtomRefList& res, TResidue& r
     }
     return 0;
   }
-  if( Name.StartsFrom('$') )  {
-    TBasicAtomInfo* bai = TAtomsInfo::GetInstance().FindAtomInfoBySymbol( Name.SubStringFrom(1) );
+  ResiPList residues;
+  const smatd* symm = NULL;
+  olxstr aname(Name);
+  int us_ind = Name.IndexOf('_');
+  if( us_ind == -1 )  {  // atom name, type
+    residues.Add(resi);
+  }
+  else  {
+    if( us_ind+1 == Name.Length() )  // invalid residue/symm reference
+      return 0;
+    olxstr resi_ref = Name.SubStringFrom(us_ind+1);
+    // symmetry reference
+    int symm_ind = resi_ref.IndexOf('$');
+    if( symm_ind != -1 )  {  
+      symm = rm.FindUsedSymm( Name.SubStringFrom(symm_ind) );
+      if( symm == NULL )
+        return 0;
+      resi_ref = resi_ref.SubStringTo(symm_ind);
+    }
+    rm.aunit.FindResidues(resi_ref, residues);
+    aname = Name.SubStringTo(us_ind);
+  }
+  int ac = 0;
+  if( aname.StartsFrom('$') )  {
+    TBasicAtomInfo* bai = TAtomsInfo::GetInstance().FindAtomInfoBySymbol( aname.SubStringFrom(1) );
     if( bai == NULL )  return 0;
     int ac = 0;
-    for( int i=0; i < resi.Count(); i++ )  {
-      if( resi[i].IsDeleted() || resi[i].GetAtomInfo() != bai->GetIndex() )  continue;
-      res.Add( new ExplicitCAtomRef(resi[i], NULL) );
-      ac++;
-    }
-    return ac;
-  }
-  int us_ind = Name.IndexOf('_');
-  if( us_ind == -1 )  {  // atom name
-    for( int i=0; i < resi.Count(); i++ )  {
-      if( !resi[i].IsDeleted() && resi[i].GetLabel().Equalsi(Name) )  {
-        res.Add( new ExplicitCAtomRef(resi[i], NULL) );
-        return 1;
-      }
-    }
-    return 0;
-  }
-  if( us_ind+1 == Name.Length() )  // invalid residue/symm reference
-    return 0;
-  olxstr resi_ref = Name.SubStringFrom(us_ind+1);
-  const smatd* symm = NULL;
-  // symmetry reference
-  int symm_ind = resi_ref.IndexOf('$');
-  if( symm_ind != -1 )  {  
-    symm = rm.FindUsedSymm( Name.SubStringFrom(symm_ind) );
-    if( symm == NULL )
-      return 0;
-    resi_ref = resi_ref.SubStringTo(symm_ind);
-  }
-  ResiPList residues;
-  rm.aunit.FindResidues(resi_ref, residues);
-  olxstr aname = Name.SubStringTo(us_ind);
-  int ac = 0;
-  for( int i=0; i < residues.Count(); i++ )  {
-    for( int j=0; j < residues[i]->Count(); j++ )  {
-      if( residues[i]->GetAtom(j).GetLabel().Equalsi(aname) )  {
+    for( int i=0; i < residues.Count(); i++ )  {
+      for( int j=0; j < residues[i]->Count(); j++ )  {
+        if( residues[i]->GetAtom(j).IsDeleted() || 
+          residues[i]->GetAtom(j).GetAtomInfo() != bai->GetIndex() )  
+        {
+          continue;
+        }
         res.Add( new ExplicitCAtomRef(residues[i]->GetAtom(j), symm) );
         ac++;
-        break;  // must be unique to the RESI
+      }
+    }
+  }
+  else  {
+    for( int i=0; i < residues.Count(); i++ )  {
+      for( int j=0; j < residues[i]->Count(); j++ )  {
+        if( !residues[i]->GetAtom(j).IsDeleted() && residues[i]->GetAtom(j).GetLabel().Equalsi(aname) )  {
+          res.Add( new ExplicitCAtomRef(residues[i]->GetAtom(j), symm) );
+          ac++;
+          break;  // must be unique to the RESI
+        }
       }
     }
   }
@@ -149,7 +153,7 @@ int ListIAtomRef::Expand(RefinementModel& rm, TAtomRefList& res, TResidue& _resi
   if( op == '>' && si <= ei )  {
     int ac = 0;
     for( int i=si; i <= ei; i++ )  {
-      if( resi[i].IsDeleted() )  continue;
+      if( resi[i].IsDeleted() || resi[i].GetAtomInfo().GetMr() < 3.5 )  continue;
       res.Add( new ExplicitCAtomRef(resi[i], boundaries[0].GetMatrix()) );
       ac++;
     }
@@ -158,7 +162,7 @@ int ListIAtomRef::Expand(RefinementModel& rm, TAtomRefList& res, TResidue& _resi
   if( op == '<' && si >= ei )  {
     int ac = 0;
     for( int i=si; i >= ei; i-- )  {
-      if( resi[i].IsDeleted() )  continue;
+      if( resi[i].IsDeleted() || resi[i].GetAtomInfo().GetMr() < 3.5 )  continue;
       res.Add( new ExplicitCAtomRef(resi[i], boundaries[0].GetMatrix()) );
       ac++;
     }
@@ -171,6 +175,7 @@ int ListIAtomRef::Expand(RefinementModel& rm, TAtomRefList& res, TResidue& _resi
 //...................................................................................................
 AtomRefList::AtomRefList(RefinementModel& _rm, const olxstr& exp, const olxstr& resi) : rm(_rm), residue(resi)  {
   Valid = true;
+  ContainsImplicitAtoms = false;
   TStrList toks(exp, ' ');
   for( int i=0; i < toks.Count(); i++ )  {
     if( (i+2) < toks.Count() )  {
@@ -200,16 +205,92 @@ AtomRefList::AtomRefList(RefinementModel& _rm, const olxstr& exp, const olxstr& 
   }
   if( !Valid )
     refs.Clear();
+  for( int i=0; i < refs.Count(); i++ )  {
+    if( !refs[i].IsExplicit() )  {
+      ContainsImplicitAtoms = true;
+      break;
+    }
+  }
 }
 //...................................................................................................
-int AtomRefList::Expand(RefinementModel& rm, TAtomRefList& res) const  {
-  if( !Valid )  return 0;
+void AtomRefList::EnsureAtomPairs(RefinementModel& rm, TAtomRefList& al) const {
+  for( int i=0; i < al.Count(); i++ )  {
+    if( !al.IsNull(i) && al[i].GetAtom().IsDeleted() )  {
+      int ei = i + ((i%2)==0 ? 1 : -1);
+      if( al[ei].GetMatrix() != NULL )
+        rm.RemUsedSymm( *al[ei].GetMatrix() );
+      al.NullItem(ei);
+    }
+  }
+}
+//...................................................................................................
+void AtomRefList::EnsureAtomTriplets(RefinementModel& rm, TAtomRefList& al) const {
+  for( int i=0; i < al.Count(); i++ )  {
+    if( !al.IsNull(i) && al[i].GetAtom().IsDeleted() )  {
+      if( (i%3) == 0 )  {
+        if( al[i+1].GetMatrix() != NULL )
+          rm.RemUsedSymm( *al[i+1].GetMatrix() );
+        al.NullItem(i+2);
+        if( al[i+2].GetMatrix() != NULL )
+          rm.RemUsedSymm( *al[i+2].GetMatrix() );
+        al.NullItem(i+2);
+      }
+      else if( (i%3) == 1 )  {
+        if( al[i-1].GetMatrix() != NULL )
+          rm.RemUsedSymm( *al[i-1].GetMatrix() );
+        al.NullItem(i+1);
+        if( al[i+1].GetMatrix() != NULL )
+          rm.RemUsedSymm( *al[i+1].GetMatrix() );
+        al.NullItem(i+1);
+      }
+      else if( (i%3) == 2 )  {
+        if( al[i-1].GetMatrix() != NULL )
+          rm.RemUsedSymm( *al[i-1].GetMatrix() );
+        al.NullItem(i-2);
+        if( al[i-2].GetMatrix() != NULL )
+          rm.RemUsedSymm( *al[i-2].GetMatrix() );
+        al.NullItem(i-2);
+      }
+    }
+  }
+}
+//...................................................................................................
+void AtomRefList::Expand(RefinementModel& rm, TTypeList<TAtomRefList>& c_res, const short list_type) const  {
+  if( !Valid )  
+    return;
   TPtrList<TResidue> residues;
   rm.aunit.FindResidues(residue, residues);
-  int ac = 0;
-  for( int i=0; i < residues.Count(); i++ )
+  for( int i=0; i < residues.Count(); i++ )  {
+    TAtomRefList& res = c_res.AddNew();
     for( int j=0; j < refs.Count(); j++ )
-      ac += refs[j].Expand(rm, res, *residues[i]);
-  return ac;
+      refs[j].Expand(rm, res, *residues[i]);
+    if( list_type == atom_list_type_pairs )
+      EnsureAtomPairs(rm, res);
+    else if( list_type == atom_list_type_triplets )
+      EnsureAtomTriplets(rm, res);
+    if( res.IsEmpty() )
+      c_res.NullItem(i);
+  }
+  c_res.Pack();
+}
+//...................................................................................................
+bool AtomRefList::IsExpandable(RefinementModel& rm, const short list_type) const  {
+  if( !Valid )    
+    return false;
+  TPtrList<TResidue> residues;
+  rm.aunit.FindResidues(residue, residues);
+  TAtomRefList res;
+  int ac = 0;
+  for( int i=0; i < residues.Count(); i++ )  {
+    res.Clear();
+    for( int j=0; j < refs.Count(); j++ )
+      refs[j].Expand(rm, res, *residues[i]);
+    if( list_type == atom_list_type_pairs )
+      EnsureAtomPairs(rm, res);
+    else if( list_type == atom_list_type_triplets )
+      EnsureAtomTriplets(rm, res);
+    ac += res.Count();
+  }
+  return ac != 0;
 }
 

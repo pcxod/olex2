@@ -8064,11 +8064,15 @@ void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options, TMa
   OlxTests tests;
   tests.run();
   AtomRefList arl(FXApp->XFile().GetRM(), Cmds.Text(' '), "suc");
-  TAtomRefList res;
+  TTypeList<TAtomRefList> res;
   TResidue& main_resi = FXApp->XFile().GetAsymmUnit().GetResidue(-1);
   arl.Expand(FXApp->XFile().GetRM(), res);
-  for( int i=0; i < res.Count(); i++ )
-    TBasicApp::GetLog() << res[i].GetFullLabel(FXApp->XFile().GetRM(), main_resi);
+  for( int i=0; i < res.Count(); i++ )  {
+    TBasicApp::GetLog() << '\n';
+    for( int j=0; j < res[i].Count(); j++ )
+      TBasicApp::GetLog() << res[i][j].GetFullLabel(FXApp->XFile().GetRM(), main_resi);
+  }
+  TBasicApp::GetLog() << '\n' << arl.GetExpression() << '\n';
 }
 //..............................................................................
 double Main_FindClosestDistance(const smatd_list& ml, vec3d& o_from, const TCAtom& a_to) {
