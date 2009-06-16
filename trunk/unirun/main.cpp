@@ -253,7 +253,9 @@ void DoRun()  {
   // evaluate properties
   TStrList props;
   props.Add("olex-update");
-#if !defined(__MAC__) && !defined(__WIN32__)
+#ifdef __WIN32__
+  props.Add("port-win32");
+#else
   // updating ported executables
   olxstr olex_port = settings.ParamValue("olex-port");
   if( !olex_port.IsEmpty() )  {
@@ -261,8 +263,6 @@ void DoRun()  {
     TBasicApp::GetLog() << "Portable executable update tag: " << olex_port << '\n'; 
   }
   // end
-#elif __MAC__
-  props.Add("port-mac");
 #endif
   olxstr pluginFile = TBasicApp::GetInstance()->BaseDir() + "plugins.xld";
   if( TEFile::Exists( pluginFile ) )  {

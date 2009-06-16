@@ -154,10 +154,11 @@ __fastcall TdlgMain::TdlgMain(TComponent* Owner)
       if( Repository.Length() && !Repository.EndsWith('/') )
         Repository << '/';
 
-    bool Update = false, succeded = false;
+    bool Update = false, succeeded = false;
     // evaluate properties
     TStrList props;
     props.Add("olex-update");
+    props.Add("port-win32");
     olxstr pluginFile = TBasicApp::GetInstance()->BaseDir() + "plugins.xld";
     if( TEFile::Exists( pluginFile ) )  {
       try  {
@@ -177,7 +178,7 @@ __fastcall TdlgMain::TdlgMain(TComponent* Owner)
         Repository = TBasicApp::GetInstance()->BaseDir() + Repository;
       if( TEFile::FileAge(Repository) > LastUpdate )  {
         Update = true;
-        succeded = UpdateInstallationZ( Repository, props );
+        succeeded = UpdateInstallationZ( Repository, props );
       }
     }
     else  {
@@ -192,9 +193,9 @@ __fastcall TdlgMain::TdlgMain(TComponent* Owner)
       TUrl url(Repository);
       if( !Proxy.IsEmpty() )  url.SetProxy( Proxy );
       if( Update )
-        succeded = UpdateInstallationH( url, props );
+        succeeded = UpdateInstallationH( url, props );
     }
-    if( Update && succeded )  { // have to save lastupdate in anyway
+    if( Update && succeeded )  { // have to save lastupdate in anyway
       settings.UpdateParam("lastupdate", TETime::EpochTime() );
       settings.SaveSettings( SettingsFile );
     }
