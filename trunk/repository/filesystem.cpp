@@ -31,14 +31,13 @@ TOSFileSystem::TOSFileSystem()  {
 bool TOSFileSystem::DelFile(const olxstr& FN)  {
   F__N = FN;
   OnRmFile->Execute( this, &F__N);
-  TEFile::DelFile(FN);
-  return true;
+  return TEFile::DelFile(FN);
 }
 //..............................................................................
 bool TOSFileSystem::DelDir(const olxstr& DN)  {
   F__N = DN;
   OnRmDir->Execute( this, &F__N);
-  return true;
+  return TEFile::DeleteDir(DN);
 }
 //..............................................................................
 bool TOSFileSystem::AdoptStream(IInputStream& f, const olxstr& name)  {
@@ -273,7 +272,10 @@ olxstr TFSItem::GetFullName() const  {
 int TFSItem::GetLevel()  const  {
   int level = 0;
   TFSItem *FI = const_cast<TFSItem*>(this);
-  while( FI && FI->GetParent() )  {  FI = FI->GetParent();  level++;  }
+  while( FI && FI->GetParent() )  {  
+    FI = FI->GetParent();  
+    level++;  
+  }
   return level;
 }
 //..............................................................................
@@ -283,105 +285,106 @@ void TFSItem::DoSetProcessed(bool V)  {
     Item(i).SetProcessed(V);
 }
 //..............................................................................
-int TFSItem::TotalItemsCount(int &cnt)  {
-  cnt += Count();
-  for( int i=0; i < Count(); i++ )  {
-    TFSItem& FS = Item(i);
-    if( FS.IsFolder() )
-      FS.TotalItemsCount(cnt);
-  }
-  return cnt;
+uint64_t TFSItem::CalcTotalItemsSize(const TStrList& props) const {
+  if( !IsFolder() )
+    return ValidateProperties(props) ? GetSize() : 0;
+  uint64_t sz = 0;
+  for( int i=0; i < Count(); i++ )
+    sz += Item(i).CalcTotalItemsSize(props);
+  return sz;
 }
 //..............................................................................
-double TFSItem::TotalItemsSize(double& cnt, const TStrList& props)  {
-  for( int i=0; i < Count(); i++ )  {
-    TFSItem& FS = Item(i);
-    if( FS.IsFolder() )
-      FS.TotalItemsSize(cnt, props);
-    else  {
-      if( FS.ValidateProperties(props) ) 
-        cnt += FS.GetSize();
-    }
-  }
-  return cnt;
-}
-//..............................................................................
-double TFSItem::Synchronize(TFSItem* Caller, TFSItem& Dest, const TStrList& properties, bool Count)  {
+double TFSItem::Synchronize(TFSItem& Dest, const TStrList& properties, TFSItem* Caller)  {
   static TOnProgress Progress;
-  static double fc=0;
   if( Caller == NULL )  {
-    fc = 0;
-    Progress.SetMax( Synchronize(this, Dest, properties, true) );
-    if( fc == 0 )  return 0;  // nothing to do then ...
-    fc = 0;
+    size_t sz = CalcDiffSize(Dest, properties);
+    Progress.SetMax( (double)sz );
+    if( sz == 0 )  return 0;  // nothing to do then ...
     Progress.SetPos( 0.0 );
     TBasicApp::GetInstance()->OnProgress->Enter(this, &Progress);
   }
   SetProcessed(false);
+  Dest.SetProcessed(false);
   /* check the repository files are at the destination - if not delete them
-  (not implemented in TOSFileSystem, as a bit too dangerous)
-  */
+  (now implemented in TOSFileSystem */
   for( int i=0; i < Dest.Count(); i++ )  {
     TFSItem& FI = Dest.Item(i);
-    if( !Count )  {
-      Progress.SetAction( FI.GetFullName() );
-      Progress.IncPos( (double)FI.GetSize() );
-      TBasicApp::GetInstance()->OnProgress->Execute(this, &Progress);
-    } 
+    FI.SetProcessed(true);
+
+    Progress.SetAction( FI.GetFullName() );
+    Progress.IncPos( (double)FI.GetSize() );
+    TBasicApp::GetInstance()->OnProgress->Execute(this, &Progress);
 
     TFSItem* Res = FindByName( FI.GetName() );
-    if( FI.IsFolder() && Res!= NULL )  {
-      Res->Synchronize(this, FI, properties, Count);
-      Res->SetProcessed(true);
-      continue;
-    }
     if( Res == NULL )  {
-      if( !Count )
-        FI.DelFile();
+      FI.DelFile();
+      if( FI.GetParent() != NULL )
+        TFSItem::Remove(FI);
     }
     else  {
       Res->SetProcessed(true);
-      if( !FI.ValidateProperties(properties) )
+      if( !Res->ValidateProperties(properties) )
         continue;
-      if( Res->GetDateTime() > FI.GetDateTime() ||
-          !FI.GetFileSystem().FileExists(FI.GetFileSystem().GetBase() + FI.GetFullName()) )  {
-        if( !Count )
-          FI.UpdateFile(*Res);
-        fc += FI.GetSize();
+      if( FI.IsFolder() )
+        Res->Synchronize(FI, properties, this);
+      else if( Res->GetDateTime() > FI.GetDateTime() ||
+               !FI.GetFileSystem().FileExists(FI.GetFileSystem().GetBase() + FI.GetFullName()) )  
+      {
+        FI.UpdateFile(*Res);
       }
     }
   }
-  /* add new files ans update the changed ones */
+  // add new files
   for( int i=0; i < this->Count(); i++ )  {
     TFSItem& FI = Item(i);
+    if( FI.IsProcessed() )  continue;
     if( !FI.ValidateProperties(properties) ) 
       continue;
-    if( !Count )  {
-      Progress.SetAction( FI.GetFullName() );
-      Progress.IncPos( (double)FI.GetSize() );
-      TBasicApp::GetInstance()->OnProgress->Execute(this, &Progress);
-    }
+    Progress.SetAction( FI.GetFullName() );
+    Progress.IncPos( (double)FI.GetSize() );
+    TBasicApp::GetInstance()->OnProgress->Execute(this, &Progress);
 
-    if( FI.IsProcessed() )  continue;
     if( FI.IsFolder() )  {
-      if( !Count )  {
-        TFSItem* Res = Dest.UpdateFile(FI);
-        if( Res != NULL)
-          FI.Synchronize(this, *Res, properties);
-      }
-      else
-        FI.TotalItemsSize(fc, properties);
+      TFSItem* Res = Dest.UpdateFile(FI);
+      if( Res != NULL)
+        FI.Synchronize(*Res, properties, this);
     }
-    else  {
-      if( !Count )
-        Dest.UpdateFile(FI);
-      fc += FI.GetSize();
-    }
+    else
+      Dest.UpdateFile(FI);
   }
   if( this->GetParent() == NULL )  {
     TBasicApp::GetInstance()->OnProgress->Exit(NULL, &Progress);
   }
-  return fc;
+  return Progress.GetMax();
+}
+//..............................................................................
+uint64_t TFSItem::CalcDiffSize(TFSItem& Dest, const TStrList& properties)  {
+  uint64_t sz = 0;
+  /* check the repository files are at the destination */
+  SetProcessed(false);
+  for( int i=0; i < Dest.Count(); i++ )  {
+    TFSItem& FI = Dest.Item(i);
+    TFSItem* Res = FindByName( FI.GetName() );
+    if( Res != NULL )  {
+      Res->SetProcessed(true);
+      if( !Res->ValidateProperties(properties) )
+        continue;
+      if( FI.IsFolder() ) 
+        sz += Res->CalcDiffSize(FI, properties);
+      if( Res->GetDateTime() > FI.GetDateTime() ||
+          !FI.GetFileSystem().FileExists(FI.GetFileSystem().GetBase() + FI.GetFullName()) )  {
+        sz += FI.GetSize();
+      }
+    }
+    else
+      sz += FI.CalcTotalItemsSize(properties);
+  }
+  for( int i=0; i < this->Count(); i++ )  {
+    TFSItem& res = Item(i);
+    if( res.IsProcessed() )  continue;
+    sz += res.CalcTotalItemsSize(properties);
+  }
+  return sz;
 }
 //..............................................................................
 TFSItem* TFSItem::UpdateFile(TFSItem& item)  {
@@ -424,24 +427,27 @@ TFSItem* TFSItem::UpdateFile(TFSItem& item)  {
 //..............................................................................
 void TFSItem::DeleteItem(TFSItem* item)  {
   int ind = Items.IndexOfComparable( item->GetName() );
-  if( ind != -1 )
+  if( ind != -1 )  {
     Items.Remove( ind );
-  item->DelFile();
-  delete item;
+    item->DelFile();
+    delete item;
+  }
+  else
+    throw TInvalidArgumentException(__OlxSourceInfo, "item");
 }
 //..............................................................................
 void TFSItem::Remove(TFSItem& item)  {
-  if( &item == this )
-    throw TInvalidArgumentException(__OlxSourceInfo, "cannot delete itself");
   if( item.GetParent() == NULL )
     throw TInvalidArgumentException(__OlxSourceInfo, "cannot delete ROOT");
   item.GetParent()->DeleteItem( &item );
 }
 //..............................................................................
-void TFSItem::DelFile() const {
+void TFSItem::DelFile() {
   if( IsFolder() )  {
     for( int i=0; i < Count(); i++ )
-      Item(i).DelFile();
+      delete Items.GetObject(i);
+    Items.Clear();
+    // this will remove ALL files, not only the files in the index
     GetFileSystem().DelDir( GetFileSystem().GetBase() + GetFullName() );
   }
   else
@@ -594,7 +600,7 @@ double TFSIndex::Synchronise(AFileSystem& To, const TStrList& properties, const 
     LoadIndex(SrcInd, toSkip);
     if( To.FileExists(DestInd) )
       DestI.LoadIndex(DestInd);
-    BytesTransfered = GetRoot().Synchronize(NULL, DestI.GetRoot(), properties );
+    BytesTransfered = GetRoot().Synchronize(DestI.GetRoot(), properties );
     if( BytesTransfered != 0 )
       DestI.SaveIndex(DestInd);
   }
@@ -649,7 +655,7 @@ bool TFSIndex::ShallAdopt(const TFSItem& src, const TFSItem& dest) const  {
   return true;
 }
 //..............................................................................
-void TFSIndex::ProcessActions(const TFSItem& item)  {
+void TFSIndex::ProcessActions(TFSItem& item)  {
   const TStrList& actions = item.GetActions();
 #ifdef __WXWIDGETS__
   typedef TwxZipFileSystem ZipFS;
@@ -660,7 +666,7 @@ void TFSIndex::ProcessActions(const TFSItem& item)  {
     ZipFS zp( item.GetFileSystem().GetBase() + item.GetFullName() );
     zp.ExtractAll( item.GetFileSystem().GetBase() );
   }
-  if( actions.IndexOfi("delete") )
+  if( actions.IndexOfi("delete") != -1 )
       item.DelFile();
 }
 //..............................................................................

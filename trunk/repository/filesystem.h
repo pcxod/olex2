@@ -115,8 +115,8 @@ public:
   TFSItem& NewItem(const olxstr& name);
   // recreates specified item in current context
   TFSItem& NewItem(TFSItem* item);
-  // removes the item and deletes the file
-  void Remove(TFSItem& item);
+  // removes the item and deletes the file/folder
+  static void Remove(TFSItem& item);
 
   inline int PropertyCount()  const  {  return Properties.Count();  }
   inline const olxstr& GetProperty(int ind)  const  {  return Properties[ind];  }
@@ -155,17 +155,18 @@ public:
 
   inline AFileSystem& GetFileSystem()  const   {  return *FileSystem; }
   inline void SetFileSystem(AFileSystem& FS)   {  FileSystem = &FS; }
+  // calculates the update size
+  uint64_t CalcDiffSize(TFSItem& Dest, const TStrList& properties);
   // caller must be NULL, when invoked externally
-  double Synchronize(TFSItem* Caller, TFSItem& Dest, const TStrList& properties, bool Count=false);
+  double Synchronize(TFSItem& Dest, const TStrList& properties, TFSItem* Caller=NULL);
   TFSItem* UpdateFile(TFSItem& FN);
-  // deletes underlying physical object
-  void DelFile() const;
+  /* deletes underlying physical object (file or folder). If th eobject is a folder
+  the content of that folder will be removed completely */
+  void DelFile();
 
-  inline bool IsProcessed()  const {  return Processed; }
-  inline void SetProcessed(bool v) {  Processed = v; }
+  DefPropBIsSet(Processed)
 
-  int TotalItemsCount(int &cnt);
-  double TotalItemsSize(double& cnt, const TStrList& props);
+  uint64_t CalcTotalItemsSize(const TStrList& props) const;
 
   static TGraphTraverser<TFSItem> Traverser;
 };
@@ -192,6 +193,6 @@ public:
   if the timestamps of the items and size match and false in other cases */
   bool ShallAdopt(const TFSItem& src, const TFSItem& dest) const;
   bool ShouldExist(const TFSItem& src)  const {  return src.GetActions().IndexOfi("delete") == -1;  }
-  void ProcessActions(const TFSItem& item); 
+  void ProcessActions(TFSItem& item); 
 };
 #endif

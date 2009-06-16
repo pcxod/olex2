@@ -127,17 +127,17 @@ public:
       Files.QuickSorter.SortSF(Files, &CompareFiles);
       Folders.QuickSorter.SortSF(Folders, &CompareFolders);
     }
-    // recursive deletion of the folder, must be expanded beforehand!
-    bool Delete()  {
-      try  {
-        for( int i=0; i < Folders.Count(); i++ )  {
-          Folders.NullItem(i);
+    // recursive deletion of the folder, must be expanded beforehand! throws TFunctionFailedException
+    void Delete()  {
+      for( int i=0; i < Folders.Count(); i++ )  {
+        try  {
           Folders[i].Delete();
+          Folders.NullItem(i);
         }
-      }
-      catch( const TExceptionBase& exc )  {
-        Folders.Pack();
-        throw TFunctionFailedException(__OlxSourceInfo, exc);
+        catch( const TExceptionBase& exc )  {
+          Folders.Pack();
+          throw TFunctionFailedException(__OlxSourceInfo, exc);
+        }
       }
       Folders.Clear();
       for( int i=0; i < Files.Count(); i++ )  {
