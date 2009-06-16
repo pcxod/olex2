@@ -1155,12 +1155,15 @@ public:
       return true;
     }
     bool expfound = false, fpfound = false;
+    short digit_cnt = 0;
     if( data[sts] == '+' || data[sts] == '-' )
       sts++;
     for( size_t i = sts; i < ste; i++ )  {
       TC ch = data[i];
-      if( o_isdigit(ch) )
+      if( o_isdigit(ch) )  {
+        digit_cnt++;
         continue;
+      }
       else if( ch == '.' )  {
         if( fpfound )  
           return false;
@@ -1177,15 +1180,17 @@ public:
           ;
         else if( ch == '+' )
           ;
-        else if( o_isdigit(ch) )  // anonymously positive exp
-         i--;
+        else if( o_isdigit(ch) )  { // anonymously positive exp
+          digit_cnt++;
+          i--;
+        }
         else  // invalid dddd.ddddE-/+/ddd format
           return false;
       }
       else
         return false;
     }
-    return true;
+    return (digit_cnt != 0);
   }
   // checks if the string represent and integer or float point number (inc exponental form)
   bool IsNumber() const  {  return o_isnumber(T::Data(), T::_Length);  }
