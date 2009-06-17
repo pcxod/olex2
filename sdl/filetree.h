@@ -397,7 +397,7 @@ public:
   }
 #endif
   // will fails on huge files
-  bool CopyFile(const olxstr& from, const olxstr& to, TOnProgress& pg)  {
+  bool CopyFile(const olxstr& from, const olxstr& to, TOnProgress& pg) const {
     TEFile in(from, "rb"), out(to, "wb+");
     const int bf_sz = 16*1024*1024;
     char* bf = new char[bf_sz];
@@ -425,7 +425,7 @@ public:
     delete [] bf;
     return true;
   }
-  bool CompareFiles(const olxstr& from, const olxstr& to, TOnProgress& pg)  {
+  bool CompareFiles(const olxstr& from, const olxstr& to, TOnProgress& pg) const {
     TEFile f1(from, "rb"), f2(to, "rb");
     if( f1.Length() != f2.Length() )  return false;
     const int bf_sz = 16*1024*1024;
@@ -488,7 +488,7 @@ public:
 #ifdef __WIN32__
       if( CopyFileX( olxstr(df.Src->FullPath) << df.Src->Files[i].GetName(), nf, onFileCopy) )  {
 #else
-      if( CopyFile( olxstr(FullPath) << df.Src->Files[i].GetName(), nf, onFileCopy) )  {
+      if( CopyFile( olxstr(df.Src->FullPath) << df.Src->Files[i].GetName(), nf, onFileCopy) )  {
 #endif
         bool res = TEFile::SetFileTimes(nf, df.Src->Files[i].GetLastAccessTime(), df.Src->Files[i].GetModificationTime());
         if( !res )
