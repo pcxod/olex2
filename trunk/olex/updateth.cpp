@@ -66,7 +66,7 @@ UpdateThread::UpdateThread(const olxstr& patch_dir) : time_out(0), PatchDir(patc
 #else
     olxstr olex_port = settings.ParamValue("olex-port");
     if( !olex_port.IsEmpty() )
-      props.Add(olex_port);
+      properties.Add(olex_port);
 #endif
   }
   Valid = true;
