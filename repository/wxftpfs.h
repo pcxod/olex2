@@ -35,6 +35,7 @@ public:
     }
   }
   virtual ~TwxFtpFileSystem() {}
+
   // saves stream to a temprray file and returs the object which must be deleted manually
   TEFile* SaveFile(const olxstr& fn);
   // zip is as primary source of the files, if a file is not in the zip - Url is used
@@ -52,7 +53,7 @@ public:
     Progress.SetMax(1);
     Progress.SetPos(0);
     Progress.SetAction(olxstr("Downloading ") << o_src );
-    TBasicApp::GetInstance()->OnProgress->Enter(this, &Progress);
+    OnProgress->Enter(this, &Progress);
     wxInputStream* is = NULL;
     try  {
       olxstr src( o_src );
@@ -60,7 +61,7 @@ public:
       is = wxOpenFile( src );
       if( is != NULL )  {
         Progress.SetMax( is->GetLength() );
-        TBasicApp::GetInstance()->OnProgress->Execute(this, &Progress);
+        OnProgress->Execute(this, &Progress);
       }
     }
     catch( ... )  {   return NULL;  }
@@ -77,20 +78,20 @@ public:
         ms->Write( bf, is->LastRead() );
         if( Progress.GetMax() > 0 )  {
           Progress.SetPos( ms->GetPosition() );
-          TBasicApp::GetInstance()->OnProgress->Execute(this, &Progress);
+          OnProgress->Execute(this, &Progress);
         }
         is->Read(bf, 1024*64);
       }
       ms->SetPosition(0);
       Progress.SetAction("Download complete");
       Progress.SetPos( 0 );
-      TBasicApp::GetInstance()->OnProgress->Exit(this, &Progress);
+      OnProgress->Exit(this, &Progress);
     }
     catch(...)  {
       Progress.SetAction("Download failed");
       Progress.SetPos( 0 );
-      TBasicApp::GetInstance()->OnProgress->Execute(this, &Progress);
-      TBasicApp::GetInstance()->OnProgress->Exit(this, &Progress);
+      OnProgress->Execute(this, &Progress);
+      OnProgress->Exit(this, &Progress);
     }
     delete is;
     delete [] bf;
@@ -117,7 +118,7 @@ public:
   virtual bool AdoptFile(const TFSItem& src){  
     IInputStream* is = NULL;
     try  {  
-      is = src.GetFileSystem().OpenFile(src.GetFileSystem().GetBase() + src.GetFullName() );  
+      is = src.GetIndexFS().OpenFile(src.GetIndexFS().GetBase() + src.GetFullName() );  
       if( is != NULL )  
         return AdoptStream(*is, TEFile::UnixPath(src.GetFullName()));
     }
@@ -136,7 +137,7 @@ public:
     Progress.SetMax(1);
     Progress.SetPos(0);
     Progress.SetAction(olxstr("Uploading ") << rel_path );
-    TBasicApp::GetInstance()->OnProgress->Enter(this, &Progress);
+    OnProgress->Enter(this, &Progress);
 
     Progress.SetMax( in.GetSize() );
     try {
@@ -160,17 +161,17 @@ public:
         while( (read = in.SafeRead(bf, bf_sz)) > 0 )  {
           out->Write(bf, read);
           Progress.SetPos( in.GetPosition() );
-          TBasicApp::GetInstance()->OnProgress->Execute(this, &Progress);
+          OnProgress->Execute(this, &Progress);
         }
         Progress.SetAction("Upload complete");
         Progress.SetPos( 0 );
-        TBasicApp::GetInstance()->OnProgress->Exit(this, &Progress);
+        OnProgress->Exit(this, &Progress);
       }
       catch(...)  {
         Progress.SetAction("Upload failed");
         Progress.SetPos( 0 );
-        TBasicApp::GetInstance()->OnProgress->Execute(this, &Progress);
-        TBasicApp::GetInstance()->OnProgress->Exit(this, &Progress);
+        OnProgress->Execute(this, &Progress);
+        OnProgress->Exit(this, &Progress);
       }
       delete out;
       delete [] bf;

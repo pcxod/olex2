@@ -79,7 +79,7 @@ IDataInputStream* TWinHttpFileSystem::OpenFile(const olxstr& Source)  {
   Progress.SetAction("Connecting to the server...");
   Progress.SetPos(0);
   Progress.SetMax(1);
-  TBasicApp::GetInstance()->OnProgress->Execute(this, &Progress);
+  OnProgress->Execute(this, &Progress);
   if( Connected )  {
     Disconnect();
     Connect();
@@ -118,7 +118,7 @@ IDataInputStream* TWinHttpFileSystem::OpenFile(const olxstr& Source)  {
   Tmp << '/' << FileName;
 
   Progress.SetAction(Source);
-  TBasicApp::GetInstance()->OnProgress->Execute(this, &Progress);
+  OnProgress->Execute(this, &Progress);
 
   Tmp.Replace(" ", "%20");
   sprintf(Request, "GET %s HTTP/1.0\n\n", Tmp.c_str());
@@ -150,7 +150,7 @@ IDataInputStream* TWinHttpFileSystem::OpenFile(const olxstr& Source)  {
             FileLength = Tmp.ToInt();
             Progress.SetPos( 0 );
             Progress.SetMax( FileLength );
-            TBasicApp::GetInstance()->OnProgress->Enter(this, &Progress);
+            OnProgress->Enter(this, &Progress);
           }
         }
       }
@@ -158,7 +158,7 @@ IDataInputStream* TWinHttpFileSystem::OpenFile(const olxstr& Source)  {
     }
     if( FileLength != -1 )  {
       Progress.SetPos(TotalRead);
-      TBasicApp::GetInstance()->OnProgress->Execute(this, &Progress);
+      OnProgress->Execute(this, &Progress);
     }
   }
   if( (FileLength != -1) && (FileLength <= TotalRead) )  {
@@ -181,14 +181,14 @@ IDataInputStream* TWinHttpFileSystem::OpenFile(const olxstr& Source)  {
     File1->Seek(0, SEEK_SET);
     Progress.SetAction("Download complete");
     Progress.SetPos(FileLength);
-    TBasicApp::GetInstance()->OnProgress->Exit(this, &Progress);
+    OnProgress->Exit(this, &Progress);
     delete [] Buffer;
     return File1;
   }
   else  {
     Progress.SetPos(0);
     Progress.SetAction("Download failed");
-    TBasicApp::GetInstance()->OnProgress->Execute(this, &Progress);
+    OnProgress->Execute(this, &Progress);
     File1->Delete();
     File.Delete();
     delete [] Buffer;

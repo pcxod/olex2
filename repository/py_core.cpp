@@ -270,11 +270,10 @@ PyObject* pyUpdateRepository(PyObject* self, PyObject* args)  {
 #else
   TwxHttpFileSystem httpFS( url );
 #endif
-  TOSFileSystem osFS;
-  osFS.SetBase(TEFile::AddTrailingBackslashI(dest));
+  TOSFileSystem osFS(dest);
   TFSIndex fsIndex( httpFS );
   TStrList properties;
-  try  {  fsIndex.Synchronise(osFS, properties, NULL, index_fn);  }
+  try  {  fsIndex.Synchronise(osFS, properties, NULL, NULL, NULL, index_fn);  }
   catch( const TExceptionBase& exc )  {
     PyErr_SetObject(PyExc_TypeError, PythonExt::BuildString(exc.GetException()->GetFullMessage()) );
     return Py_BuildValue("b", false);

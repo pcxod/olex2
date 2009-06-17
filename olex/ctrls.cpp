@@ -319,11 +319,12 @@ TDialog::TDialog(TMainFrame *Parent, const wxString &Title, const wxString &Clas
 :wxDialog(Parent, -1,  Title, wxPoint(0, 0), wxSize(425, 274), wxRESIZE_BORDER | wxDEFAULT_DIALOG_STYLE, ClassName), WI(this)
 {
   FParent = Parent;
-  FParent->RestorePosition(this);
+  if( FParent != NULL )
+    FParent->RestorePosition(this);
 }
-TDialog::~TDialog()
-{
-  FParent->SavePosition(this);
+TDialog::~TDialog()  {
+  if( FParent != NULL )
+    FParent->SavePosition(this);
 }
 //----------------------------------------------------------------------------//
 // TMenu implementation

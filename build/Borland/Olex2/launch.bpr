@@ -36,11 +36,11 @@
   </MACROS>
   <OPTIONS>
     <CFLAG1 value="-Od -H=$(BCB)\lib\vcl60.csm -Hc -Vx -Ve -xf -xp -ff -X- -r- -a8 -6 -b -d 
-      -k- -vi- -c -tW -tWM"/>
+      -k- -v -vi- -c -tW -tWM"/>
     <PFLAGS value="-N2build -N0build -$Y+ -$W -$O- -$A8 -v -JPHNE -M"/>
     <RFLAGS value=""/>
     <AFLAGS value="/mx /w2 /zi"/>
-    <LFLAGS value="-Ibuild -D&quot;&quot; -aa -Tpe -x -Gn"/>
+    <LFLAGS value="-Ibuild -D&quot;&quot; -aa -Tpe -x -Gn -v"/>
     <OTHERFILES value=""/>
   </OPTIONS>
   <LINKER>

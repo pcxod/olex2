@@ -22,7 +22,7 @@ IInputStream* TwxHttpFileSystem::OpenFile(const olxstr& Source)  {
   Progress.SetMax(1);
   Progress.SetPos(0);
   Progress.SetAction(olxstr("Downloading ") << o_src );
-  TBasicApp::GetInstance()->OnProgress->Enter(this, &Progress);
+  OnProgress->Enter(this, &Progress);
   wxInputStream* is = NULL;
   try  {
     olxstr src( Url.GetFullHost() );
@@ -33,7 +33,7 @@ IInputStream* TwxHttpFileSystem::OpenFile(const olxstr& Source)  {
     is = Http.GetInputStream( src.u_str() );
     if( is != NULL )  {
       Progress.SetMax( is->GetLength() );
-      TBasicApp::GetInstance()->OnProgress->Execute(this, &Progress);
+      OnProgress->Execute(this, &Progress);
     }
   }
   catch( ... )  {   return NULL;  }
@@ -50,20 +50,20 @@ IInputStream* TwxHttpFileSystem::OpenFile(const olxstr& Source)  {
       ms->Write( bf, is->LastRead() );
       if( Progress.GetMax() > 0 )  {
         Progress.SetPos( ms->GetPosition() );
-        TBasicApp::GetInstance()->OnProgress->Execute(this, &Progress);
+        OnProgress->Execute(this, &Progress);
       }
       is->Read(bf, 1024*64);
     }
     ms->SetPosition(0);
     Progress.SetAction("Download complete");
     Progress.SetPos( 0 );
-    TBasicApp::GetInstance()->OnProgress->Exit(this, &Progress);
+    OnProgress->Exit(this, &Progress);
   }
   catch(...)  {
     Progress.SetAction("Download failed");
     Progress.SetPos( 0 );
-    TBasicApp::GetInstance()->OnProgress->Execute(this, &Progress);
-    TBasicApp::GetInstance()->OnProgress->Exit(this, &Progress);
+    OnProgress->Execute(this, &Progress);
+    OnProgress->Exit(this, &Progress);
   }
   delete is;
   delete [] bf;
@@ -94,7 +94,7 @@ TEFile* TwxHttpFileSystem::SaveFile(const olxstr& Source)  {
   Progress.SetMax(1);
   Progress.SetPos(0);
   Progress.SetAction(olxstr("Downloading ") << Source );
-  TBasicApp::GetInstance()->OnProgress->Enter(this, &Progress);
+  OnProgress->Enter(this, &Progress);
   olxstr o_src(TEFile::UnixPath(Source));
   wxInputStream* is = NULL;
   try  {
@@ -106,7 +106,7 @@ TEFile* TwxHttpFileSystem::SaveFile(const olxstr& Source)  {
     is = Http.GetInputStream( src.u_str() );
     if( is != NULL )  {
       Progress.SetMax( is->GetLength() );
-      TBasicApp::GetInstance()->OnProgress->Execute(this, &Progress);
+      OnProgress->Execute(this, &Progress);
     }
   }
   catch( ... )  {   return NULL;  }
@@ -119,12 +119,12 @@ TEFile* TwxHttpFileSystem::SaveFile(const olxstr& Source)  {
   while( is->LastRead() != 0 )  {
     tf->Write(bf, is->LastRead());
     Progress.SetPos( tf->GetPosition() );
-    TBasicApp::GetInstance()->OnProgress->Execute(this, &Progress);
+    OnProgress->Execute(this, &Progress);
     is->Read(bf, 1024*64);
   }
   Progress.SetAction("Download complete");
   Progress.SetPos( 0 );
-  TBasicApp::GetInstance()->OnProgress->Exit(this, &Progress);
+  OnProgress->Exit(this, &Progress);
 
   delete [] bf;
   tf->Seek(0, 0);

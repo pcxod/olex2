@@ -5710,8 +5710,7 @@ void TMainForm::macInstallPlugin(TStrObjList &Cmds, const TParamList &Options, T
         return;
       }
       TwxZipFileSystem zipFS( local_file, false );
-      TOSFileSystem osFS;
-      osFS.SetBase( TBasicApp::GetInstance()->BaseDir() );
+      TOSFileSystem osFS( TBasicApp::GetInstance()->BaseDir() );
       TFSIndex fsIndex( zipFS );
       TStrList properties;
       properties.Add(Cmds[0]);
@@ -5754,19 +5753,15 @@ void TMainForm::macInstallPlugin(TStrObjList &Cmds, const TParamList &Options, T
         olxstr zip_fn( olxstr("/") << TEFile::UnixPath(TEFile::ParentDir(url.GetPath())) <<
           Cmds[0].SubStringFrom(7) << ".zip" );
         TEFile* local_f = NULL;
-        TDownloadProgress* dp = new TDownloadProgress(*FXApp);
-        TBasicApp::GetInstance()->OnProgress->Add( dp );
+        httpFS.OnProgress->Add( new TDownloadProgress(*FXApp) );
         try  { local_f = httpFS.SaveFile( zip_fn );  }
         catch( ... )  {  
           TBasicApp::GetLog().Error("Could not locate the plugin zip file - trying direct download...");
         }
-        TBasicApp::GetInstance()->OnProgress->Remove(dp);
-        delete dp;
         if( local_f != NULL )  {
           httpFS.SetZipFS( new TwxZipFileSystem(local_f, false) );
         }
-        TOSFileSystem osFS;
-        osFS.SetBase( TBasicApp::GetInstance()->BaseDir() );
+        TOSFileSystem osFS( TBasicApp::GetInstance()->BaseDir() );
         TFSIndex fsIndex( httpFS );
         TStrList properties;
         properties.Add(Cmds[0]);
@@ -5840,7 +5835,7 @@ void TMainForm::macSignPlugin(TStrObjList &Cmds, const TParamList &Options, TMac
           bool deleted = false;
           for( int i=0; i < FoldersToDelete.Count(); i++ )  {
             if( FoldersToDelete[i]->IsEmpty() )  {
-              olxstr path = FoldersToDelete[i]->GetFileSystem().GetBase() + FoldersToDelete[i]->GetFullName(),
+              olxstr path = FoldersToDelete[i]->GetIndexFS().GetBase() + FoldersToDelete[i]->GetFullName(),
               cpath = path.CommonString(path, BaseDir);
               TBasicApp::GetLog() << ( olxstr("\rDeleting folder /~/") << path.SubStringFrom(cpath.Length()) );
               xa->Draw();
@@ -5857,7 +5852,7 @@ void TMainForm::macSignPlugin(TStrObjList &Cmds, const TParamList &Options, TMac
       }
       bool OnItem(TFSItem& it) {
         if( it.HasProperty(Property) )  {
-          olxstr path = it.GetFileSystem().GetBase() + it.GetFullName(),
+          olxstr path = it.GetIndexFS().GetBase() + it.GetFullName(),
                    cpath = path.CommonString(path, BaseDir);
           TBasicApp::GetLog() << ( olxstr("\rDeleting /~/") << path.SubStringFrom(cpath.Length()) );
           xa->Draw();
@@ -5880,8 +5875,7 @@ void TMainForm::macUninstallPlugin(TStrObjList &Cmds, const TParamList &Options,
     OnStateChange->Execute((AEventsDispatcher*)this, &sc);
     olxstr indexFile = TBasicApp::GetInstance()->BaseDir() + "index.ind";
     if( TEFile::Exists(indexFile) )  {
-      TOSFileSystem osFS;
-      osFS.SetBase( TBasicApp::GetInstance()->BaseDir() );
+      TOSFileSystem osFS( TBasicApp::GetInstance()->BaseDir() );
       TFSIndex fsIndex( osFS );
 
       fsIndex.LoadIndex( indexFile );
@@ -5932,8 +5926,7 @@ void TMainForm::macUpdateFile(TStrObjList &Cmds, const TParamList &Options, TMac
     url.SetProxy( Proxy );
 
   TwxHttpFileSystem httpFS( url );
-  TOSFileSystem osFS;
-  osFS.SetBase( TBasicApp::GetInstance()->BaseDir() );
+  TOSFileSystem osFS( TBasicApp::GetInstance()->BaseDir() );
   TFSIndex fsIndex( httpFS );
 
   IEObject* Cause = NULL;

@@ -25,6 +25,7 @@
 #include "eaccell.h"
 #include "estlist.h"
 #include "langdict.h"
+#include "updateth.h"
 
 #define  ID_FILE0 100
 
@@ -106,6 +107,7 @@ public:
   TCSTypeList<olxstr, ABasicFunction*> CallbackFuncs;
 protected:
   bool Destroying;
+  UpdateThread* _UpdateThread;
   TEFile* ActiveLogFile;
   static void PyInit();
   TActionQList FActionList;
@@ -675,6 +677,9 @@ public:
   wxMenu* CurrentPopupMenu()    {  return FCurrentPopup; }
   wxMenu* DefaultPopup()        {  return pmGraphics; }
   wxMenu* GeneralPopup()        {  return pmMenu; }
+//..............................................................................
+  // for threads...
+  static int ShowMsgBox(const olxstr& msg, const olxstr& title, const olxstr& cb_msg, int flags, bool show_cb);
 //..............................................................................
 // TMainForm interface
   void GlCanvas( TGlCanvas *GC) {  FGlCanvas = GC;  }

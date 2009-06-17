@@ -82,7 +82,6 @@ TdlgMsgBox::TdlgMsgBox(TMainFrame* Parent, const olxstr& msg, const olxstr& titl
 
   Center();
 //  TDialog::Init();
-  FParent->RestorePosition(this);
 }
 //..............................................................................
 TdlgMsgBox::~TdlgMsgBox()  {

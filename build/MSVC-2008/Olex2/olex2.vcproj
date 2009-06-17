@@ -861,6 +861,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\olex\updateth.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\repository\url.cpp"
 				>
 			</File>
@@ -972,6 +976,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\olex\updateoptions.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\olex\updateth.h"
 				>
 			</File>
 			<File

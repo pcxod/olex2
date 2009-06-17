@@ -83,6 +83,8 @@
 #include "xmacro.h"
 #include "utf8file.h"
 #include "py_core.h"
+#include "updateth.h"
+#include "msgbox.h"
 
 
 #ifdef __GNUC__
@@ -200,7 +202,8 @@ enum
 
   ID_gl2ps,
   
-  ID_PictureExport
+  ID_PictureExport,
+  ID_UpdateThreadTerminate
 };
 
 class TObjectVisibilityChange: public AActionHandler
@@ -328,6 +331,7 @@ TMainForm::TMainForm(TGlXApp *Parent):
   TMainFrame(wxT("Olex2"), wxPoint(0,0), wxDefaultSize, wxT("MainForm"))
 {
 //  _crtBreakAlloc = 5892;
+  _UpdateThread = NULL;
   SkipSizing = false;
   Destroying = false;
 #ifdef __WIN32__
@@ -428,6 +432,11 @@ bool TMainForm::Destroy()  {
 }
 //..............................................................................
 TMainForm::~TMainForm()  {
+  if( _UpdateThread != NULL )  {
+    _UpdateThread->OnTerminate->Remove(this);
+    _UpdateThread->Join(true);
+    delete _UpdateThread;
+  }
   delete Modes;
   for( int i=0; i < CallbackFuncs.Count(); i++ )
     delete CallbackFuncs.GetObject(i);
@@ -1250,6 +1259,9 @@ separated values of Atom Type and radius, an entry a line" );
 #if defined(__WIN32__) || defined(__MAC__)
   StartupInit();
 #endif
+  //_UpdateThread = new UpdateThread("e:/tmp/patch");
+  //_UpdateThread->OnTerminate->Add(this, ID_UpdateThreadTerminate);
+  //_UpdateThread->Start();
 }
 //..............................................................................
 void TMainForm::StartupInit()  {
@@ -1982,6 +1994,8 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
   //    }
   //  }
   //}
+  else if( MsgId == ID_UpdateThreadTerminate )
+    _UpdateThread = NULL;
   else if( MsgId == ID_TIMER )  {
     FTimer->OnTimer()->SetEnabled( false );
     // execute tasks ...
@@ -2115,6 +2129,24 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
     }
     if( Draw )  {
       TimePerFrame = FXApp->Draw();
+    }
+    if( _UpdateThread != NULL && _UpdateThread->GetUpdateSize() != 0 )  {
+      FTimer->OnTimer()->SetEnabled( false );
+      int res = TMainForm::ShowMsgBox( 
+        olxstr("Olex2 updates avaialable (") << _UpdateThread->GetUpdateSize()/(1024*1024) << "Mb)",
+        "Automatic Updates",
+        "Never ask again",
+        wxYES|wxNO|wxICON_QUESTION,
+        true);
+      if( res == wxID_YES )  {
+        _UpdateThread->DoUpdate();
+        _UpdateThread = NULL;
+      }
+      else  {
+        _UpdateThread->SendTerminate();
+        _UpdateThread = NULL;
+      }
+      FTimer->OnTimer()->SetEnabled( true );
     }
   }
   else if( MsgId == ID_XOBJECTSDESTROY )  {
@@ -4027,6 +4059,18 @@ bool TMainForm::IsControl(const olxstr& _cname) const {
   olxstr cname = (di == -1 ? _cname : _cname.SubStringFrom(di+2));
   THtml* html = pname.IsEmpty() ? GetHtml() : GetHtml(pname);  
   return html == NULL ? false : (html->FindObject(cname) != NULL);
+}
+//..............................................................................
+int TMainForm::ShowMsgBox(const olxstr& msg, const olxstr& title, const olxstr& cb_msg, int flags, bool show_cb)  {
+  TdlgMsgBox* msg_box = new TdlgMsgBox( TGlXApp::GetMainForm(), 
+    msg, 
+    title,
+    cb_msg,
+    flags,
+    show_cb);
+  int res = msg_box->ShowModal();  
+  msg_box->Destroy();
+  return res;
 }
 //..............................................................................
 //..............................................................................

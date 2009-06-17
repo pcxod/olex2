@@ -392,7 +392,10 @@ bool TEFile::RmDir(const olxstr& F)  {
 //..............................................................................
 bool TEFile::IsDir(const olxstr& F)  {
   struct STAT_STR the_stat;
-  if( STAT(OLXSTR(OLX_OS_PATH(F)), &the_stat) != 0 )
+  olxstr fn = OLX_OS_PATH(F);
+  if( fn.EndsWith(OLX_PATH_DEL) )
+    fn = fn.SubStringFrom(0, 1);
+  if( STAT(OLXSTR(fn), &the_stat) != 0 )
     return false;
   return (the_stat.st_mode & S_IFDIR) != 0;
 }
@@ -735,25 +738,31 @@ olxstr& TEFile::UnixPathI( olxstr& F )  {
 }
 //..............................................................................
 olxstr TEFile::AddTrailingBackslash( const olxstr& Path )  {
-  if( Path.IsEmpty() )  return Path;
-  olxstr T( Path );
-  if( T[T.Length()-1] != OLX_PATH_DEL )  T << OLX_PATH_DEL;
+  if( Path.IsEmpty() )  
+    return olxstr(OLX_PATH_DEL);
+  olxstr T = OLX_OS_PATH(Path);
+  if( T[T.Length()-1] != OLX_PATH_DEL )  
+    T << OLX_PATH_DEL;
   return T;
 }
 //..............................................................................
 olxstr& TEFile::AddTrailingBackslashI(olxstr &Path)  {
   if( Path.IsEmpty() )  return Path;
-  if( Path[Path.Length()-1] != OLX_PATH_DEL )  Path << OLX_PATH_DEL;
+  OLX_OS_PATHI(Path);
+  if( Path[Path.Length()-1] != OLX_PATH_DEL )  
+    Path << OLX_PATH_DEL;
   return Path;
 }
 //..............................................................................
 olxstr TEFile::RemoveTrailingBackslash(const olxstr &Path)  {
-  if( !Path.Length() )  return Path;
-  return (Path[Path.Length()-1] == OLX_PATH_DEL ) ? Path.SubStringTo(Path.Length()-1) : Path;
+  if( Path.IsEmpty() )  return Path;
+  olxstr T = OLX_OS_PATH(Path);
+  return (T[T.Length()-1] == OLX_PATH_DEL ) ? T.SubStringTo(T.Length()-1) : T;
 }
 //..............................................................................
 olxstr& TEFile::RemoveTrailingBackslashI(olxstr &Path)  {
-  if( !Path.Length() )  return Path;
+  if( Path.IsEmpty() )  return Path;
+  OLX_OS_PATHI(Path);
   if( Path[Path.Length()-1] == OLX_PATH_DEL )
     Path.SetLength(Path.Length()-1);
   return Path;

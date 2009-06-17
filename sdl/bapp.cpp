@@ -30,6 +30,7 @@ TBasicApp::TBasicApp(const olxstr & FileName)  {
 
   MaxThreadCount = 1;
   FBaseDir = TEFile::ExtractFilePath(FileName);
+  TEFile::AddTrailingBackslashI(FBaseDir);  // just in case!
   olxstr LogFN;
   Log = new TLog;
 
