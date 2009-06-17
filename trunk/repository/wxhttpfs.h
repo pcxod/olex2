@@ -24,6 +24,7 @@ public:
     SetBase( olxstr('/') << url.GetPath() );
   }
   virtual ~TwxHttpFileSystem();
+
   // saves stream to a temprray file and returs the object which must be deleted manually
   TEFile* SaveFile(const olxstr& fn);
   // zip is as primary source of the files, if a file is not in the zip - Url is used

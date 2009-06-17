@@ -9,6 +9,7 @@
 #endif
 #include "exception.h"
 #include "bapp.h"
+#include "actions.h"
 
 BeginEsdlNamespace()
 // converts function (taking no arguents) to a thread - ready function
@@ -23,7 +24,7 @@ template <class T> struct ThreadFunctionConverter  {
   }
 };
 
-class AOlxThread  {
+class AOlxThread : public IEObject {
 protected:
   int volatile RetVal;
   bool volatile Terminate, Detached, Running;
@@ -43,14 +44,19 @@ protected:
     return 0;
   }
 protected:  // do not allow to create externally
+  TActionQList Actions;
   AOlxThread() : 
     Detached(true), 
     Terminate(false),
     Running(false),
     Handle(0), 
-    RetVal(0) {  }
+    RetVal(0) 
+  {  
+    OnTerminate = &Actions.NewQueue("ON_TERMINATE");  
+  }
 public:
   virtual ~AOlxThread()  {
+    OnTerminate->Execute(this, NULL);
     if( Running )  {  // prevent deleting
       Detached = false;
       Terminate = true;
@@ -58,6 +64,8 @@ public:
     while( Running )
       TBasicApp::Sleep(50);
   }
+
+  TActionQueue* OnTerminate;
 
   /* It is crutial to check if the terminate flag is set. In that case the function should
   return a value, or a deadlock situation may arise. */
@@ -76,10 +84,12 @@ public:
   }
   /* returns true if successful, the process calling Join is responsible for the
   memory deallocation... */
-  bool Join()  {
+  bool Join(bool send_terminate = false)  {
     if( Handle == 0 )
       throw TInvalidArgumentException(__OlxSourceInfo, "the tread must be started at first");
     Detached = false;
+    if( send_terminate )
+      Terminate = true;
 #ifdef __WIN32__
     unsigned long ec = STILL_ACTIVE, rv;
     while( ec == STILL_ACTIVE && (rv=GetExitCodeThread(Handle, &ec)) != 0 )

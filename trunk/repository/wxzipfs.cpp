@@ -192,7 +192,7 @@ IDataInputStream* TwxZipFileSystem::OpenFile(const olxstr& Source)  {
   Progress.SetAction( olxstr("Extracting ") << fn );
   Progress.SetPos(0);
   Progress.SetMax(1);
-  TBasicApp::GetInstance()->OnProgress->Enter(this, &Progress);
+  OnProgress->Enter(this, &Progress);
   
   IDataInputStream* rv = zip.OpenEntry(Source);
   if( rv == NULL )
@@ -200,7 +200,7 @@ IDataInputStream* TwxZipFileSystem::OpenFile(const olxstr& Source)  {
   
   Progress.SetAction("Done");
 //  Progress.SetPos( TEFile::FileLength(TmpFN) );
-  TBasicApp::GetInstance()->OnProgress->Exit(this, &Progress);
+  OnProgress->Exit(this, &Progress);
   return rv;
 }
 //..............................................................................

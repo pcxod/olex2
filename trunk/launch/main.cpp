@@ -86,9 +86,6 @@ __fastcall TdlgMain::TdlgMain(TComponent* Owner)
 
   dlgSplash = new TdlgSplash(this);
 
-  TProgress *P = new TProgress;
-  TBasicApp::GetInstance()->OnProgress->Add(P);
-
   olxstr vfn = (TBasicApp::GetInstance()->BaseDir()+ "version.txt");
   // check updates ...
   //asm {  int 3  }
@@ -127,7 +124,7 @@ __fastcall TdlgMain::TdlgMain(TComponent* Owner)
   dlgSplash->Show();
   dlgSplash->Repaint();
   olxstr checkFN(FBApp->BaseDir()+"index.ind");
-  if( !SetFileAttributes(checkFN.c_str(), FILE_ATTRIBUTE_SYSTEM) )  {
+  if( TEFile::Exists(checkFN) && !SetFileAttributes(checkFN.c_str(), FILE_ATTRIBUTE_SYSTEM) )  {
     Application->MessageBox("Please make sure that you have enough right to modify the installation folder",
       "Scheduled update failed", MB_OK|MB_ICONINFORMATION);
     Application->Terminate();
@@ -154,7 +151,7 @@ __fastcall TdlgMain::TdlgMain(TComponent* Owner)
       if( Repository.Length() && !Repository.EndsWith('/') )
         Repository << '/';
 
-    bool Update = false, succeeded = false;
+    bool Update = false;
     // evaluate properties
     TStrList props;
     props.Add("olex-update");
@@ -173,12 +170,19 @@ __fastcall TdlgMain::TdlgMain(TComponent* Owner)
       catch( TExceptionBase &e )  {  ;  }
     }
     // end properties evaluation
-    if( TEFile::ExtractFileExt(Repository).Comparei("zip") == 0 )  {
-      if( !TEFile::IsAbsolutePath(Repository) )
-        Repository = TBasicApp::GetInstance()->BaseDir() + Repository;
-      if( TEFile::FileAge(Repository) > LastUpdate )  {
+    AFileSystem* srcFS = NULL;
+    if( TEFile::Exists(Repository) )  {
+      if( TEFile::ExtractFileExt(Repository).Comparei("zip") == 0 )  {
+        if( !TEFile::IsAbsolutePath(Repository) )
+          Repository = TBasicApp::GetInstance()->BaseDir() + Repository;
+        if( TEFile::FileAge(Repository) > LastUpdate )  {
+          Update = true;
+          srcFS = new TWinZipFileSystem(Repository);
+        }
+      }
+      else if( TEFile::IsDir(Repository) )  {
         Update = true;
-        succeeded = UpdateInstallationZ( Repository, props );
+        srcFS = new TOSFileSystem(Repository);
       }
     }
     else  {
@@ -193,11 +197,13 @@ __fastcall TdlgMain::TdlgMain(TComponent* Owner)
       TUrl url(Repository);
       if( !Proxy.IsEmpty() )  url.SetProxy( Proxy );
       if( Update )
-        succeeded = UpdateInstallationH( url, props );
+        srcFS = new TWinHttpFileSystem(url);
     }
-    if( Update && succeeded )  { // have to save lastupdate in anyway
-      settings.UpdateParam("lastupdate", TETime::EpochTime() );
-      settings.SaveSettings( SettingsFile );
+    if( Update && srcFS != NULL  )  { // have to save lastupdate in anyway
+      if( UpdateInstallation(*srcFS, props) )  {
+        settings.UpdateParam("lastupdate", TETime::EpochTime() );
+        settings.SaveSettings( SettingsFile );
+      }
     }
   }
   // cheating :D
@@ -261,52 +267,32 @@ void TdlgMain::Launch()
   }
 }
 //---------------------------------------------------------------------------
-bool TdlgMain::UpdateInstallationH( const TUrl& url, const TStrList& properties )  {
+bool TdlgMain::UpdateInstallation( AFileSystem& SrcFS, const TStrList& properties )  {
   try  {
-    TOSFileSystem DestFS; // local file system
-    TWinHttpFileSystem SrcFS( url ); // remote FS
-
-    DestFS.SetBase( TBasicApp::GetInstance()->BaseDir() );
-    olxstr tmp = DestFS.GetBase();
-    TEFile::AddTrailingBackslash( tmp );
-    DestFS.SetBase( tmp );
+    TOSFileSystem DestFS(TBasicApp::GetInstance()->BaseDir()); // local file system
     TFSIndex FI( SrcFS );
     TFSItem::SkipOptions so;
     TStrList filesToSkip;
     filesToSkip.Add("olex2.exe");
     so.filesToSkip = &filesToSkip;
-    return FI.Synchronise(DestFS, properties, &so);
+    SrcFS.OnProgress->Add( new TProgress );
+    FI.OnProgress->Add( new TProgress );
+    return FI.Synchronise(DestFS, properties, &so) != 0;
   }
   catch( TExceptionBase& exc )  {
     TStrList out;
-    Application->MessageBox("Please make sure that your computer is online and/or you have enough right to modify the installation folder\
+    if( EsdlInstanceOf(SrcFS, TWinHttpFileSystem) )  {
+      Application->MessageBox("Please make sure that your computer is online and/or you have enough right to modify the installation folder\
 \nAlso the Olex2 repository might be down - once Olex2 is running you may choose another one from 'Update Options' in the 'Help' menu",
-      "Scheduled update failed", MB_OK|MB_ICONINFORMATION);
+        "Scheduled update failed", MB_OK|MB_ICONINFORMATION);
+    }
+    else  {
+      Application->MessageBox(out.Text('\n').u_str(), "Update failed", MB_OK|MB_ICONERROR);
+    }
     return false;
   }
 }
 //---------------------------------------------------------------------------
-bool TdlgMain::UpdateInstallationZ( const olxstr& zip_name, const TStrList& properties )  {
-  try  {
-    TOSFileSystem DestFS; // local file system
-    TWinZipFileSystem SrcFS(zip_name);
-
-    DestFS.SetBase( TBasicApp::GetInstance()->BaseDir() );
-    olxstr tmp = DestFS.GetBase();
-    TEFile::AddTrailingBackslash( tmp );
-    DestFS.SetBase( tmp );
-    TFSIndex FI( SrcFS );
-
-    return FI.Synchronise(DestFS, properties);
-  }
-  catch( TExceptionBase& exc )  {
-    TStrList out;
-    exc.GetException()->GetStackTrace(out);
-    Application->MessageBox(out.Text('\n').u_str(),
-      "Update failed", MB_OK|MB_ICONERROR);
-    return false;
-  }
-}
 
 void __fastcall TdlgMain::tTimerTimer(TObject *Sender)
 {

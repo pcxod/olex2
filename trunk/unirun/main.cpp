@@ -14,17 +14,11 @@
 #include "dataitem.h"
 #include "wxhttpfs.h"
 #include "wxftpfs.h"
+#include "utf8file.h"
 #include <iostream>
 using namespace std;
 
 class TProgress: public AActionHandler  {
-  inline bool IsFSSender(const IEObject* obj) const {
-    if( obj != NULL && (EsdlInstanceOf(*obj, TwxHttpFileSystem) || 
-                        EsdlInstanceOf(*obj, TwxZipFileSystem)  ||
-                        EsdlInstanceOf(*obj, TwxFtpFileSystem)  )
-                        ) return true;
-    return false;
-  }
 public:
   TProgress(){  return; }
   ~TProgress(){  return; }
@@ -33,30 +27,17 @@ public:
     return true;
   }
   bool Enter(const IEObject *Sender, const IEObject *Data)  {
-    if( Data == NULL || !EsdlInstanceOf(*Data, TOnProgress) )  {
+    if( Data == NULL )  {
       return false;
     }
     IEObject *d_p = const_cast<IEObject*>(Data);
     TOnProgress *A = dynamic_cast<TOnProgress *>(d_p);
-    if( IsFSSender(Sender) ) { // reset particular file preogress  
-      TBasicApp::GetLog().Info( A->GetAction() );
-    }
-    else
-      ;// update global progress
+    TBasicApp::GetLog().Info( A->GetAction() );
     return true;
   }
   bool Execute(const IEObject *Sender, const IEObject *Data)  {
     if( !EsdlInstanceOf( *Data, TOnProgress) )
       throw TInvalidArgumentException(__OlxSourceInfo, "invalid type");
-
-    IEObject *d_p = const_cast<IEObject*>(Data);
-    TOnProgress *A = dynamic_cast<TOnProgress *>(d_p);
-    if( IsFSSender(Sender) )  { // update particular file info
-      //TBasicApp::GetLog() << A->GetPos()*20/A->GetMax();
-      ;
-    }
-    else
-      ;// update global progress
     return true;
   }
 };
@@ -64,6 +45,7 @@ public:
 bool UpdateMirror( AFileSystem& src, TwxFtpFileSystem& dest )  {
   try  {
     TFSIndex FI( src );
+    dest.OnProgress->Add( new TProgress );
     TStrList empty;
     return FI.Synchronise(dest, empty, NULL);
   }
@@ -75,15 +57,11 @@ bool UpdateMirror( AFileSystem& src, TwxFtpFileSystem& dest )  {
   }
 }
 //---------------------------------------------------------------------------
-bool UpdateInstallationH( const TUrl& url, const TStrList& properties, const TFSItem::SkipOptions* toSkip )  {
+bool UpdateInstallation( AFileSystem& SrcFS, const TStrList& properties, const TFSItem::SkipOptions* toSkip )  {
   try  {
-    TOSFileSystem DestFS; // local file system
-    TwxHttpFileSystem SrcFS( url ); // remote FS
-    DestFS.SetBase( TBasicApp::GetInstance()->BaseDir() );
-    olxstr tmp = DestFS.GetBase();
-    TEFile::AddTrailingBackslash( tmp );
-    DestFS.SetBase( tmp );
+    TOSFileSystem DestFS(TBasicApp::GetInstance()->BaseDir()); // local file system
     TFSIndex FI( SrcFS );
+    SrcFS.OnProgress->Add( new TProgress );
     return FI.Synchronise(DestFS, properties, toSkip);
   }
   catch( TExceptionBase& exc )  {
@@ -94,46 +72,6 @@ bool UpdateInstallationH( const TUrl& url, const TStrList& properties, const TFS
   }
 }
 //---------------------------------------------------------------------------
-bool UpdateInstallationL( const olxstr& local_repos, const TStrList& properties, const TFSItem::SkipOptions* toSkip )  {
-  try  {
-    TOSFileSystem DestFS; // local file system
-    TOSFileSystem SrcFS; // "remote" FS
-    SrcFS.SetBase( local_repos );
-    DestFS.SetBase( TBasicApp::GetInstance()->BaseDir() );
-    olxstr tmp = DestFS.GetBase();
-    TEFile::AddTrailingBackslash( tmp );
-    DestFS.SetBase( tmp );
-    TFSIndex FI( SrcFS );
-    return FI.Synchronise(DestFS, properties, toSkip);
-  }
-  catch( TExceptionBase& exc )  {
-    TStrList out;
-    exc.GetException()->GetStackTrace(out);
-    TBasicApp::GetLog() << "Update failed due to :\n" << out.Text('\n');
-    return false;
-  }
-}
-//---------------------------------------------------------------------------
-bool UpdateInstallationZ( const olxstr& zip_name, const TStrList& properties, const TFSItem::SkipOptions* toSkip )  {
-  try  {
-    TOSFileSystem DestFS; // local file system
-    TwxZipFileSystem SrcFS(zip_name, false);
-
-    DestFS.SetBase( TBasicApp::GetInstance()->BaseDir() );
-    olxstr tmp = DestFS.GetBase();
-    TEFile::AddTrailingBackslash( tmp );
-    DestFS.SetBase( tmp );
-    TFSIndex FI( SrcFS );
-
-    return FI.Synchronise(DestFS, properties, toSkip);
-  }
-  catch( TExceptionBase& exc )  {
-    TStrList out;
-    exc.GetException()->GetStackTrace(out);
-    TBasicApp::GetLog() << "Update failed due to :\n" << out.Text('\n');
-    return false;
-  }
-}
 
 void DoRun();
 
@@ -205,7 +143,6 @@ void DoRun()  {
   TBasicApp& bapp = *TBasicApp::GetInstance();
   if( &bapp == NULL )
     return;
-  bapp.OnProgress->Add( new TProgress );
 
   olxstr SettingsFile( TBasicApp::GetInstance()->BaseDir() + "usettings.dat" );
   TSettingsFile settings;
@@ -279,55 +216,56 @@ void DoRun()  {
     }
     catch( TExceptionBase &e )  {  ;  }
   }
+  AFileSystem* srcFS = NULL;
   // end properties evaluation
-  if( TEFile::ExtractFileExt(Repository).Equalsi("zip") )  {
-    if( !TEFile::IsAbsolutePath(Repository) )
-      Repository = TBasicApp::GetInstance()->BaseDir() + Repository;
-    if( TEFile::FileAge(Repository) > LastUpdate )  {
+  if( TEFile::Exists(Repository) )  {
+    if( TEFile::ExtractFileExt(Repository).Equalsi("zip") )  {
+      if( !TEFile::IsAbsolutePath(Repository) )
+        Repository = TBasicApp::GetInstance()->BaseDir() + Repository;
+      if( TEFile::FileAge(Repository) > LastUpdate )  {
+        Update = true;
+        srcFS = new TwxZipFileSystem(Repository, false);
+      }
+    }
+    else if( TEFile::IsDir(Repository) )  {
       Update = true;
-      bool skip = (extensionsToSkip.IsEmpty() && filesToSkip.IsEmpty());
-      UpdateInstallationZ( Repository, props, skip ? NULL : &toSkip );
+      srcFS = new TOSFileSystem(Repository);
     }
   }
   else  {
-    if( UpdateInterval == "Always" )  Update = true;
-    else if( UpdateInterval == "Daily" )
+    if( UpdateInterval.Equalsi("Always") )  Update = true;
+    else if( UpdateInterval.Equalsi("Daily") )
       Update = ((TETime::EpochTime() - LastUpdate ) > SecsADay );
-    else if( UpdateInterval == "Weekly" )
+    else if( UpdateInterval.Equalsi("Weekly") )
       Update = ((TETime::EpochTime() - LastUpdate ) > SecsADay*7 );
-    else if( UpdateInterval == "Monthly" )
+    else if( UpdateInterval.Equalsi("Monthly") )
       Update = ((TETime::EpochTime() - LastUpdate ) > SecsADay*30 );
      
     if( Update )  {
-      bool skip = (extensionsToSkip.IsEmpty() && filesToSkip.IsEmpty());
-      if( Repository.StartFromi("local://") )  {
-        UpdateInstallationL( Repository.SubStringFrom(8), props, skip ? NULL : &toSkip );
-      }
-      else  {
-        TUrl url(Repository);
-        url.SetUser(ProxyUser);
-        url.SetPassword(ProxyPasswd);
-        if( !Proxy.IsEmpty() )  
-          url.SetProxy( Proxy );
-        UpdateInstallationH( url, props, skip ? NULL : &toSkip );
-      }
+      TUrl url(Repository);
+      url.SetUser(ProxyUser);
+      url.SetPassword(ProxyPasswd);
+      if( !Proxy.IsEmpty() )  
+        url.SetProxy( Proxy );
+      srcFS = new TwxHttpFileSystem(url);
     }
   }
-  if( Update )  { // have to save lastupdate in anyway
+  if( Update && srcFS != NULL )  { // have to save lastupdate in anyway
+    bool skip = (extensionsToSkip.IsEmpty() && filesToSkip.IsEmpty());
+    UpdateInstallation(*srcFS, props, skip ? NULL : &toSkip);
+    delete srcFS;
     settings.UpdateParam("lastupdate", TETime::EpochTime() );
     settings.SaveSettings( SettingsFile );
   }
   if( !ftpToSync.IsEmpty() )  {
     AFileSystem* FS = NULL;
     try  {
-      if( syncSrc.Equalsi("fs2Ftp") )  {
-        FS = new TOSFileSystem; // local file system
-        FS->SetBase( TBasicApp::GetInstance()->BaseDir() );
-        FS->SetBase( TEFile::AddTrailingBackslash( FS->GetBase() ) );
-      }
+      if( syncSrc.Equalsi("fs2Ftp") )
+        FS = new TOSFileSystem(TBasicApp::GetInstance()->BaseDir()); // local file system
       else if( syncSrc.Equalsi("http2Ftp") )  {
         TUrl url(Repository);
-        if( !Proxy.IsEmpty() )  url.SetProxy( Proxy );
+        if( !Proxy.IsEmpty() )  
+          url.SetProxy( Proxy );
         FS = new TwxHttpFileSystem(url);    
       }
     }

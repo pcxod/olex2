@@ -8,6 +8,7 @@
 #include "etime.h"
 #include "estlist.h"
 #include "etraverse.h"
+#include "efile.h"
 #undef GetObject
 
 class TFSIndex;
@@ -15,9 +16,16 @@ class TFSItem;
 
 class AFileSystem  {
   olxstr FBase;
+  TActionQList Actions;
 public:
-  AFileSystem()           {  ; }
+  AFileSystem() {  
+    OnProgress = &Actions.NewQueue("ON_PROGRESS");
+  }
   virtual ~AFileSystem()  {  ; }
+
+  // called on progress
+  TActionQueue* OnProgress;
+
   // deletes a file
   virtual bool DelFile(const olxstr& FN)=0;
   // deletes a folder
@@ -34,7 +42,7 @@ public:
   virtual bool ChangeDir(const olxstr& DN)=0;
   // returns a base at which the file system is initalised
   inline const olxstr& GetBase() const  {  return FBase; }
-  inline void SetBase(const olxstr& b)  {  FBase = b; }
+  inline void SetBase(const olxstr& b)  {  FBase = TEFile::AddTrailingBackslash(b); }
 
   virtual bool AdoptStream(IInputStream& file, const olxstr& name) = 0;
 };
@@ -46,7 +54,7 @@ class TOSFileSystem: public AFileSystem, public IEObject {
   // this is used to pass file.dir names to the events ....
   static olxstr F__N;
 public:
-  TOSFileSystem();
+  TOSFileSystem(const olxstr& base);
   virtual ~TOSFileSystem()  {  ; }
   virtual bool DelFile(const olxstr& FN);
   virtual bool DelDir(const olxstr& DN);
@@ -82,16 +90,14 @@ private:
   TFSItem* Parent;
   TCSTypeList<olxstr, TFSItem*> Items;
   TStrList Properties, Actions;
-  AFileSystem *FileSystem;
   TFSIndex& Index;
 protected:
   void DoSetProcessed(bool V);
   void DeleteItem(TFSItem* item);
 public:
-  TFSItem(TFSIndex& index, TFSItem* parent, AFileSystem* FS, const olxstr& name) :
+  TFSItem(TFSIndex& index, TFSItem* parent, const olxstr& name) :
     Index(index), 
     Parent(parent), 
-    FileSystem(FS) , 
     Folder(false), 
     Processed(false) ,
     DateTime(0), 
@@ -153,14 +159,15 @@ public:
 	// does a search of /parent_folder/parent_folder/file_name
   TFSItem* FindByFullName(const olxstr& Name) const;
 
-  inline AFileSystem& GetFileSystem()  const   {  return *FileSystem; }
-  inline void SetFileSystem(AFileSystem& FS)   {  FileSystem = &FS; }
+  AFileSystem& GetIndexFS() const;
+  AFileSystem& GetDestFS() const;
   // calculates the update size
   uint64_t CalcDiffSize(TFSItem& Dest, const TStrList& properties);
   // caller must be NULL, when invoked externally
-  double Synchronize(TFSItem& Dest, const TStrList& properties, TFSItem* Caller=NULL);
+  double Synchronise(TFSItem& Dest, const TStrList& properties, TStrList* cmds=NULL, 
+    TFSItem* Caller=NULL);
   TFSItem* UpdateFile(TFSItem& FN);
-  /* deletes underlying physical object (file or folder). If th eobject is a folder
+  /* deletes underlying physical object (file or folder). If the object is a folder
   the content of that folder will be removed completely */
   void DelFile();
 
@@ -176,16 +183,29 @@ public:
 class TFSIndex: public IEObject  {
 private:
   TFSItem *Root;
+  bool IndexLoaded;
 protected:
   olxstr Source,  Destination;
   TStrList Properties;
+  TActionQList Actions;
+  AFileSystem *DestFS;
+  AFileSystem& IndexFS;
+  TOnProgress Progress;
 public:
   TFSIndex(AFileSystem& fs);
   virtual ~TFSIndex();
+  
+  // this is to be used for the oevral progress monitorring
+  TActionQueue* OnProgress;
+
   void LoadIndex(const olxstr& IndexFile, const TFSItem::SkipOptions* toSkip=NULL);
   void SaveIndex(const olxstr& IndexFile);
-  // returns the number transfered bytes 
-  double Synchronise(AFileSystem& To, const TStrList& properties, const TFSItem::SkipOptions* toSkip=NULL, const olxstr& indexName="index.ind");
+  /* returns the number transfered bytes.  If the dest_fs is not NULL, the difference is adopted by that
+  file syste. If cmds is not NULL, the rm commands are stored in it */
+  double Synchronise(AFileSystem& To, const TStrList& properties, const TFSItem::SkipOptions* toSkip=NULL, 
+    AFileSystem* dest_fs=NULL, TStrList* cmds=NULL, const olxstr& indexName="index.ind");
+  uint64_t CalcDiffSize(AFileSystem& To, const TStrList& properties, const TFSItem::SkipOptions* toSkip=NULL,
+    const olxstr& indexName="index.ind");
   // returns true if the file is updated (added) and false otherwise
   bool UpdateFile(AFileSystem& To, const olxstr& fileName, bool Force, const olxstr& indexName="index.ind");
   inline TFSItem& GetRoot()  const {  return *Root; }
@@ -194,5 +214,6 @@ public:
   bool ShallAdopt(const TFSItem& src, const TFSItem& dest) const;
   bool ShouldExist(const TFSItem& src)  const {  return src.GetActions().IndexOfi("delete") == -1;  }
   void ProcessActions(TFSItem& item); 
+  friend class TFSItem;
 };
 #endif

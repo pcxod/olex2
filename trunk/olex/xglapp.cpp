@@ -29,7 +29,10 @@
 
 #include "efile.h"
 #ifndef __WIN32__
-#include "icons/olex2.xpm"
+  #include "icons/olex2.xpm"
+  #include <unistd.h>
+#else
+  #include <process.h>
 #endif
 
 TGlXApp* TGlXApp::Instance = NULL;
@@ -177,7 +180,11 @@ bool TGlXApp::OnInit()  {
       uiStrT("Exception: ") += uiStrT(EsdlObjectNameT(exc)), wxOK|wxICON_ERROR);
     throw;
   }
-  // asseble whole command line
+  // write PID file
+  int pid = getpid();
+  TEGC::NewG<TEFile>( olxstr(XApp->BaseDir()) << pid << "._pid_", "w+b" );
+
+  // assemble whole command line
   for( int i=1; i < argc; i++ )
     Tmp << argv[i] <<  ' ';
   TParamList::StrtokParams(Tmp, ' ', XApp->Arguments);
@@ -228,7 +235,24 @@ bool TGlXApp::OnInit()  {
 }
 //..............................................................................
 int TGlXApp::OnExit()  {
+  TStrList pid_files;
+  olxstr base_dir = XApp->BaseDir(); 
+  TEFile::ListDir( base_dir, pid_files, "*._pid_", sefAll );
   delete XApp;
+  // garbage collector TEGC is emptied now delete unused pid files
+  for( int i=0; i < pid_files.Count(); i++ )  {
+    if( TEFile::DelFile( base_dir+pid_files[i] ) )
+      pid_files[i].SetLength(0);
+  }
+  pid_files.Pack();
+  if( pid_files.IsEmpty() )  {
+#ifdef __WIN32__
+    olxstr ext(".exe");
+#else
+    olxstr ext;
+#endif
+    //wxExecute( ((base_dir + "olex2_updater") << ext).u_str() );
+  }
   return 0;
 }
 //..............................................................................

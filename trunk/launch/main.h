@@ -12,7 +12,7 @@
 
 #include "actions.h"
 #include "bapp.h"
-#include "url.h"
+#include "filesystem.h"
 #include "estrlist.h"
 //---------------------------------------------------------------------------
 class TdlgMain : public TForm
@@ -23,8 +23,7 @@ __published:  // IDE-managed Components
 private: // User declarations
   TBasicApp *FBApp;
   void Launch();
-  bool UpdateInstallationH( const TUrl& url, const TStrList& properties );
-  bool UpdateInstallationZ( const olxstr& zip_name, const TStrList& properties );
+  bool UpdateInstallation( AFileSystem& srcFS, const TStrList& properties );
 public: // User declarations
   __fastcall TdlgMain(TComponent* Owner);
   virtual __fastcall ~TdlgMain();

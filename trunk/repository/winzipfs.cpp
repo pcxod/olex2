@@ -41,7 +41,7 @@ IDataInputStream* TWinZipFileSystem::OpenFile(const olxstr& Source)  {
   if( zindex == -1 )
     throw TFunctionFailedException(__OlxSourceInfo, olxstr("Could not locate zip entry: ") << Source);
   Progress.SetMax(TEFile::FileLength(TmpFN));
-  TBasicApp::GetInstance()->OnProgress->Enter(this, &Progress);
+  OnProgress->Enter(this, &Progress);
   Progress.SetAction( olxstr("Extracting ") << Source );
   Progress.SetPos(0);
   Progress.SetMax(1);
@@ -50,10 +50,10 @@ IDataInputStream* TWinZipFileSystem::OpenFile(const olxstr& Source)  {
   chmod( tmp_fn.c_str(), S_IREAD|S_IWRITE);
 
   Progress.SetMax(TEFile::FileLength(tmp_fn));
-  TBasicApp::GetInstance()->OnProgress->Enter(this, &Progress);
+  OnProgress->Enter(this, &Progress);
   Progress.SetAction("Done");
   Progress.SetPos( TEFile::FileLength(tmp_fn) );
-  TBasicApp::GetInstance()->OnProgress->Exit(this, &Progress);
+  OnProgress->Exit(this, &Progress);
   return new TEFile( TmpFN, "rb" );
 }
 //..............................................................................
@@ -64,15 +64,17 @@ void TWinZipFileSystem::ExtractAll(const olxstr& dest)  {
   int numitems = ze.index;
   TOnProgress Progress;
   Progress.SetMax( numitems );
-  TBasicApp::GetInstance()->OnProgress->Enter( NULL, &Progress );
+  OnProgress->Enter( NULL, &Progress );
   // -1 gives overall information about the zipfile
   for( int zi=0; zi < numitems; zi++ )  {
     ZIPENTRY ze;
     GetZipItem(zip, zi, &ze); // fetch individual details
     Progress.SetPos( zi );
     Progress.SetAction( ze.name );
-    TBasicApp::GetInstance()->OnProgress->Execute( NULL, &Progress );
+    OnProgress->Execute( NULL, &Progress );
     UnzipItem(zip, zi, (extractPath + ze.name).u_str() );         // e.g. the item's name.
   }
+  Progress.SetPos( numitems );
+  OnProgress->Exit( NULL, &Progress );
 }
 #endif // __WIN32__
