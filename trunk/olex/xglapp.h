@@ -10,8 +10,9 @@ private:
   TGXApp* XApp;
   class TMainForm* MainForm;
   static TGlXApp* Instance;
+  TEFile* pid_file;
 public:
-
+  TGlXApp() : pid_file(NULL)  {}
   bool Dispatch();
 //  int MainLoop();
   void OnIdle(wxIdleEvent& event);

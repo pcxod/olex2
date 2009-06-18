@@ -66,7 +66,7 @@ void TBasicApp::Sleep(long msec)  {
 //  #else  // POSIX, <time.h>
     timespec tm;
     tm.tv_sec = msec/1000;
-    tm.tv_nsec = (msec%1000)*1000;
+    tm.tv_nsec = (msec%1000)*1000*1000;
     nanosleep(&tm, NULL);
 //  #endif
 #endif

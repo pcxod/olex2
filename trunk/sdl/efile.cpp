@@ -380,15 +380,21 @@ olxstr TEFile::ChangeFileExt(const olxstr &F, const olxstr &Ext)  {
 bool TEFile::DelFile(const olxstr& F)  {
   if( !Exists(F) )  return true;
   olxstr fn = OLX_OS_PATH(F);
-  if( chmod(OLXSTR(fn), S_IWRITE) == 0 )
-    return (unlink(OLXSTR(fn)) == -1) ? false: true;
+  int res = chmod(OLXSTR(fn), S_IWRITE);
+#ifdef __WIN32__
+  if( res != 0 )
+    return false;
+#else  // POSIX -1 - no change!
+  if( res != 0 && res != -1 )
+    return false;
+#endif 
+  return (unlink(OLXSTR(fn)) == -1) ? false: true;
   return false;
 }
 //..............................................................................
 bool TEFile::RmDir(const olxstr& F)  {
   if( !Exists(F) )  return true;
-  if( chmod(OLXSTR(F), S_IWRITE) == 0 )
-    return (rmdir(OLXSTR(OLX_OS_PATH(F))) == -1) ?  false : true;
+  return (rmdir(OLXSTR(OLX_OS_PATH(F))) == -1) ?  false : true;
   return false;
 }
 //..............................................................................
