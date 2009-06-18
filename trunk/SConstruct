@@ -174,6 +174,8 @@ if sys.platform[:3] == 'win':
 env.Program(out_dir+'exe/olex2', generic_files + olex2_files)
 
 unirun_files = np_repository + fileListToStringList('unirun', unirun)
+unirun_files.append('./repository/patchapi.cpp')
+unirun_files.append('./repository/updateapi.cpp')
 unirun_files = processFileNameList(unirun_files, unirun_env, out_dir+'unirun')
 
 unirun_env.Append(CCFLAGS = ['-D_NO_PYTHON'])
