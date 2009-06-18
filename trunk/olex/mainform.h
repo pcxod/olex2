@@ -613,6 +613,7 @@ private:
   // this must be called at different times on GTK and windows
   void StartupInit();
   bool SkipSizing; // when size changed from the LoadSettings
+  void DoUpdateFiles();
 public:
   TMainForm(TGlXApp *Parent);
   virtual ~TMainForm();
@@ -677,9 +678,6 @@ public:
   wxMenu* CurrentPopupMenu()    {  return FCurrentPopup; }
   wxMenu* DefaultPopup()        {  return pmGraphics; }
   wxMenu* GeneralPopup()        {  return pmMenu; }
-//..............................................................................
-  // for threads...
-  static int ShowMsgBox(const olxstr& msg, const olxstr& title, const olxstr& cb_msg, int flags, bool show_cb);
 //..............................................................................
 // TMainForm interface
   void GlCanvas( TGlCanvas *GC) {  FGlCanvas = GC;  }

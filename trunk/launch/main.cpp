@@ -4,54 +4,53 @@
 #pragma hdrstop
 
 #include "main.h"
-#include "winhttpfs.h"
-#include "winzipfs.h"
 #include "splash.h"
 #include "actions.h"
 
 #include "log.h"
 #include "exception.h"
 
-#include "settingsfile.h"
-#include "datafile.h"
-#include "dataitem.h"
+#include "filetree.h"
 //---------------------------------------------------------------------------
 #pragma package(smart_init)
 #pragma resource "*.dfm"
 TdlgMain *dlgMain;
 
-class TProgress: public AActionHandler
-{
+class TFileProgress: public AActionHandler {
 public:
-  TProgress(){  return; }
-  ~TProgress(){  return; }
-  bool Exit(const IEObject *Sender, const IEObject *Data)  {
-    return true;
-  }
+  TFileProgress(){}
+  ~TFileProgress(){}
+  bool Exit(const IEObject *Sender, const IEObject *Data)  {  return true;  }
   bool Enter(const IEObject *Sender, const IEObject *Data)  {
     if( !EsdlInstanceOf(*Data, TOnProgress) )  return false;
-    IEObject *d_p = const_cast<IEObject*>(Data);
-    TOnProgress *A = dynamic_cast<TOnProgress *>(d_p);
-    if( Sender!= NULL && (EsdlInstanceOf(*Sender, TWinHttpFileSystem)) || EsdlInstanceOf(*Sender, TWinZipFileSystem) )
-      dlgSplash->pbFProgress->Max = A->GetMax();
-    else
-      dlgSplash->pbOProgress->Max = A->GetMax();
-    //Application->MessageBox(A->GetAction().c_str(), "", MB_OK );
+    const TOnProgress *A = dynamic_cast<const TOnProgress*>(Data);
+    dlgSplash->stFileName->Caption = TEFile::ExtractFileName(A->GetAction()).c_str();
+    dlgSplash->pbFProgress->Max = A->GetMax();
     return true;
   }
   bool Execute(const IEObject *Sender, const IEObject *Data)  {
-    if( !EsdlInstanceOf( *Data, TOnProgress) )
-      throw TInvalidArgumentException(__OlxSourceInfo, "invalid type");
-
-    IEObject *d_p = const_cast<IEObject*>(Data);
-    TOnProgress *A = dynamic_cast<TOnProgress *>(d_p);
-    if( Sender!= NULL && EsdlInstanceOf(*Sender, TWinHttpFileSystem) || EsdlInstanceOf(*Sender, TWinZipFileSystem))  {
-      dlgSplash->pbFProgress->Position = A->GetPos();
-      dlgSplash->stFileName->Caption = TEFile::ExtractFileName(A->GetAction()).c_str();
-    }
-    else
-      dlgSplash->pbOProgress->Position = A->GetPos();
-      
+    if( !EsdlInstanceOf(*Data, TOnProgress) )  return false;
+    const TOnProgress *A = dynamic_cast<const TOnProgress*>(Data);
+    dlgSplash->pbFProgress->Position = A->GetPos();
+    Application->ProcessMessages();
+    return true;
+  }
+};
+class TOverallProgress: public AActionHandler {
+public:
+  TOverallProgress(){}
+  ~TOverallProgress(){}
+  bool Exit(const IEObject *Sender, const IEObject *Data)  {  return true;  }
+  bool Enter(const IEObject *Sender, const IEObject *Data)  {
+    if( !EsdlInstanceOf(*Data, TOnProgress) )  return false;
+    const TOnProgress *A = dynamic_cast<const TOnProgress*>(Data);
+    dlgSplash->pbOProgress->Max = A->GetMax();
+    return true;
+  }
+  bool Execute(const IEObject *Sender, const IEObject *Data)  {
+    if( !EsdlInstanceOf(*Data, TOnProgress) )  return false;
+    const TOnProgress *A = dynamic_cast<const TOnProgress*>(Data);
+    dlgSplash->pbOProgress->Position = A->GetPos();
     Application->ProcessMessages();
     return true;
   }
@@ -132,84 +131,15 @@ __fastcall TdlgMain::TdlgMain(TComponent* Owner)
   }
   else
     SetFileAttributes(checkFN.c_str(), FILE_ATTRIBUTE_NORMAL);
-  olxstr SettingsFile( TBasicApp::GetInstance()->BaseDir() + "usettings.dat" );
-  TSettingsFile settings;
-  if( TEFile::Exists(SettingsFile) )  {
-    olxstr Proxy, Repository = "http://dimas.dur.ac.uk/olex-distro/update",
-             UpdateInterval = "Always";
-    int LastUpdate = 0;
-    settings.LoadSettings( SettingsFile );
-    Proxy = settings.ParamValue("proxy");
-    if( settings.ParamExists("repository") )
-      Repository = settings.ParamValue("repository");
-    if( settings.ParamExists("update") )
-      UpdateInterval = settings.ParamValue("update");
-    if( settings.ParamExists("lastupdate") )  {
-      LastUpdate = settings.ParamValue("lastupdate", '0').RadInt<long>();
-    }
-    if( TEFile::ExtractFileExt(Repository).Comparei("zip") != 0 )
-      if( Repository.Length() && !Repository.EndsWith('/') )
-        Repository << '/';
-
-    bool Update = false;
-    // evaluate properties
-    TStrList props;
-    props.Add("olex-update");
-    props.Add("port-win32");
-    olxstr pluginFile = TBasicApp::GetInstance()->BaseDir() + "plugins.xld";
-    if( TEFile::Exists( pluginFile ) )  {
-      try  {
-        TDataFile df;
-        df.LoadFromXLFile( pluginFile, NULL );
-        TDataItem* PluginItem = df.Root().FindItem("Plugin");
-        if( PluginItem != NULL )  {
-          for( int i=0; i < PluginItem->ItemCount(); i++ )
-            props.Add( PluginItem->GetItem(i).GetName() );
-        }
-      }
-      catch( TExceptionBase &e )  {  ;  }
-    }
-    // end properties evaluation
-    AFileSystem* srcFS = NULL;
-    if( TEFile::Exists(Repository) )  {
-      if( TEFile::ExtractFileExt(Repository).Comparei("zip") == 0 )  {
-        if( !TEFile::IsAbsolutePath(Repository) )
-          Repository = TBasicApp::GetInstance()->BaseDir() + Repository;
-        if( TEFile::FileAge(Repository) > LastUpdate )  {
-          Update = true;
-          srcFS = new TWinZipFileSystem(Repository);
-        }
-      }
-      else if( TEFile::IsDir(Repository) )  {
-        Update = true;
-        srcFS = new TOSFileSystem(Repository);
-      }
-    }
-    else  {
-      if( UpdateInterval == "Always" )  Update = true;
-      else if( UpdateInterval == "Daily" )
-        Update = ((TETime::EpochTime() - LastUpdate ) > SecsADay );
-      else if( UpdateInterval == "Weekly" )
-        Update = ((TETime::EpochTime() - LastUpdate ) > SecsADay*7 );
-      else if( UpdateInterval == "Monthly" )
-        Update = ((TETime::EpochTime() - LastUpdate ) > SecsADay*30 );
-
-      TUrl url(Repository);
-      if( !Proxy.IsEmpty() )  url.SetProxy( Proxy );
-      if( Update )
-        srcFS = new TWinHttpFileSystem(url);
-    }
-    if( Update && srcFS != NULL  )  { // have to save lastupdate in anyway
-      if( UpdateInstallation(*srcFS, props) )  {
-        settings.UpdateParam("lastupdate", TETime::EpochTime() );
-        settings.SaveSettings( SettingsFile );
-      }
-    }
+  if( !UpdateInstallation() )  {
+    Application->MessageBox("Please make sure that no Olex2 instances are running,\n\
+you have enough right to modify the installation folder and\n\
+no oOlex2 folders are opened in browsers",
+      "Update failed", MB_OK|MB_ICONINFORMATION);
   }
   // cheating :D
   dlgSplash->pbOProgress->Position = dlgSplash->pbOProgress->Max;
   dlgSplash->pbFProgress->Position = dlgSplash->pbFProgress->Max;
-
   Launch();
   dlgSplash->stFileName->Caption = "Done. Launching Olex2";
   dlgSplash->Repaint();
@@ -225,8 +155,7 @@ __fastcall TdlgMain::~TdlgMain()
   delete dlgSplash;
 }
 //---------------------------------------------------------------------------
-void TdlgMain::Launch()
-{
+void TdlgMain::Launch()  {
   // modify th epath to set the basedir to the basedir, so that correct python25.dll is loaded
   char* bf = new char [1024];
   bf[0] = '\0';
@@ -240,7 +169,7 @@ void TdlgMain::Launch()
   delete [] bf;
   path.Insert(bd.SubStringTo(bd.Length()-1) + ';', 0);
   SetEnvironmentVariable("PATH", path.c_str());
-  olxstr py_path = TBasicApp::GetInstance()->BaseDir() + "util\\pyUtil\\PythonLib";
+  olxstr py_path = TBasicApp::GetInstance()->BaseDir() + "Python26";
   SetEnvironmentVariable("PYTHONHOME", py_path.c_str());
 
   STARTUPINFO si;
@@ -267,30 +196,92 @@ void TdlgMain::Launch()
   }
 }
 //---------------------------------------------------------------------------
-bool TdlgMain::UpdateInstallation( AFileSystem& SrcFS, const TStrList& properties )  {
+void AfterFileCopy(const olxstr& src, const olxstr& dest)  {
+  if( !TEFile::DelFile(src) )
+    throw TFunctionFailedException(__OlxSourceInfo, olxstr("Failed to delete file: ") << src);
+}
+bool TdlgMain::UpdateInstallation()  {
+  TBasicApp& bapp = *TBasicApp::GetInstance();
+  
+  olxstr patch_dir(bapp.BaseDir() + "patch/");
+  olxstr download_vf(bapp.BaseDir() + "__completed.update");
+  olxstr cmd_file(bapp.BaseDir() + "__cmds.update");
+  // make sure that only one instance is running
+  olxstr pid_file(bapp.BaseDir() + "updater.pid_");
+  if( TEFile::Exists(pid_file) )  {
+    if( !TEFile::DelFile(pid_file) )
+      return false;
+  }
+  if( !TEFile::Exists(patch_dir) || !TEFile::Exists(download_vf) )
+    return true;
+  // create lock if possible or exit
+  TEFile* pid_file_inst = NULL;
   try  {
-    TOSFileSystem DestFS(TBasicApp::GetInstance()->BaseDir()); // local file system
-    TFSIndex FI( SrcFS );
-    TFSItem::SkipOptions so;
-    TStrList filesToSkip;
-    filesToSkip.Add("olex2.exe");
-    so.filesToSkip = &filesToSkip;
-    SrcFS.OnProgress->Add( new TProgress );
-    FI.OnProgress->Add( new TProgress );
-    return FI.Synchronise(DestFS, properties, &so) != 0;
+    pid_file_inst = new TEFile(pid_file, "w+b");
   }
-  catch( TExceptionBase& exc )  {
-    TStrList out;
-    if( EsdlInstanceOf(SrcFS, TWinHttpFileSystem) )  {
-      Application->MessageBox("Please make sure that your computer is online and/or you have enough right to modify the installation folder\
-\nAlso the Olex2 repository might be down - once Olex2 is running you may choose another one from 'Update Options' in the 'Help' menu",
-        "Scheduled update failed", MB_OK|MB_ICONINFORMATION);
-    }
-    else  {
-      Application->MessageBox(out.Text('\n').u_str(), "Update failed", MB_OK|MB_ICONERROR);
-    }
+  catch( TExceptionBase& )  {  return false;  }
+  // check that there are no olex2 instances...
+  TStrList pid_files;
+  TEFile::ListDir(bapp.BaseDir(), pid_files, "*.olex2_pid", sefAll);
+  for( int i=0; i < pid_files.Count(); i++ )  {
+    if( TEFile::DelFile( bapp.BaseDir() + pid_files[i]) )
+      pid_files[i].SetLength(0);
+  }
+  pid_files.Pack();
+  if( !pid_files.IsEmpty() )
     return false;
+  // clean
+  bool res = true;
+  if( TEFile::Exists(cmd_file) )  {
+    TWStrList _cmds;
+    TUtf8File::ReadLines(cmd_file, _cmds);
+    TStrList cmds(_cmds);
+    for( int i=0; i < cmds.Count(); i++ )  {
+      if( cmds[i].StartsFrom("rm ") )  {
+        olxstr fdn = cmds[i].SubStringFrom(3).Trim('\'');
+        if( !TEFile::Exists(fdn) )  {
+          cmds[i].SetLength(0);
+          continue;
+        }
+        if( TEFile::IsDir(fdn) )  {
+          if( !TEFile::DeleteDir(fdn) )  {
+            res = false;
+            break;  // next time then...
+          }
+        }
+        else  {
+          if( !TEFile::DelFile(fdn) )  {
+            res = false;
+            break; // next time then...
+          }
+        }
+        cmds[i].SetLength(0);
+      }
+    }
+    if( res )
+      TEFile::DelFile(cmd_file);
+    else  {
+      cmds.Pack();
+      TUtf8File::WriteLines(cmd_file, cmds, true);
+    }
   }
+  // copy...
+  if( res )  {
+    try  {
+      TFileTree ft(patch_dir);
+      ft.Root.Expand();
+      TOnProgress OnFileCopy, OnSync;
+      ft.OnFileCopy->Add( new TFileProgress );
+      ft.OnSynchronise->Add( new TOverallProgress );
+      ft.CopyTo(bapp.BaseDir(), &AfterFileCopy, &OnFileCopy, &OnSync);
+      TEFile::DeleteDir(patch_dir);
+      TEFile::DelFile(download_vf);
+    }
+    catch(...)  {  res = false;  }
+  }
+  pid_file_inst->Delete();
+  delete pid_file_inst;
+  return res;
 }
 //---------------------------------------------------------------------------
 

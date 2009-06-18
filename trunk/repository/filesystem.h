@@ -17,8 +17,10 @@ class TFSItem;
 class AFileSystem  {
   olxstr FBase;
   TActionQList Actions;
+protected:
+  bool volatile Break;
 public:
-  AFileSystem() {  
+  AFileSystem() : Break(false) {  
     OnProgress = &Actions.NewQueue("ON_PROGRESS");
   }
   virtual ~AFileSystem()  {  ; }
@@ -45,6 +47,8 @@ public:
   inline void SetBase(const olxstr& b)  {  FBase = TEFile::AddTrailingBackslash(b); }
 
   virtual bool AdoptStream(IInputStream& file, const olxstr& name) = 0;
+  // depends on the file system implementation
+  void DoBreak() {  Break = true;  }
 };
 //.............................................................................//
 //.............................................................................//
@@ -92,8 +96,8 @@ private:
   TStrList Properties, Actions;
   TFSIndex& Index;
 protected:
-  void DoSetProcessed(bool V);
   void DeleteItem(TFSItem* item);
+  bool IsProcessed() const {  return Processed;  }
 public:
   TFSItem(TFSIndex& index, TFSItem* parent, const olxstr& name) :
     Index(index), 
@@ -171,7 +175,8 @@ public:
   the content of that folder will be removed completely */
   void DelFile();
 
-  DefPropBIsSet(Processed)
+  // recursive version, must be called with false before Syncronise or CalcDiffSize
+  void SetProcessed(bool v);
 
   uint64_t CalcTotalItemsSize(const TStrList& props) const;
 
@@ -184,6 +189,7 @@ class TFSIndex: public IEObject  {
 private:
   TFSItem *Root;
   bool IndexLoaded;
+  mutable bool Break;
 protected:
   olxstr Source,  Destination;
   TStrList Properties;
@@ -214,6 +220,14 @@ public:
   bool ShallAdopt(const TFSItem& src, const TFSItem& dest) const;
   bool ShouldExist(const TFSItem& src)  const {  return src.GetActions().IndexOfi("delete") == -1;  }
   void ProcessActions(TFSItem& item); 
+  // stops the syncronisation and updates the index
+  void DoBreak() {  
+    Break = true;  
+    IndexFS.DoBreak();  
+  }
+  bool IsInterrupted() const {
+    return Break && Progress.GetPos() != Progress.GetMax();
+  }
   friend class TFSItem;
 };
 #endif

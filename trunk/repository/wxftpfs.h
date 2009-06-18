@@ -80,6 +80,12 @@ public:
           Progress.SetPos( ms->GetPosition() );
           OnProgress->Execute(this, &Progress);
         }
+        if( Break )  {
+          delete is;
+          delete [] bf;
+          delete ms;
+          return NULL;
+        }
         is->Read(bf, 1024*64);
       }
       ms->SetPosition(0);
@@ -159,6 +165,12 @@ public:
       size_t read = 0;
       try {
         while( (read = in.SafeRead(bf, bf_sz)) > 0 )  {
+          if( Break )  {
+            delete [] bf;
+            delete out;
+            Ftp.RmFile( rel_path.u_str() );
+            return false;
+          }
           out->Write(bf, read);
           Progress.SetPos( in.GetPosition() );
           OnProgress->Execute(this, &Progress);

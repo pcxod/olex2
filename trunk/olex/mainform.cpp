@@ -1259,9 +1259,9 @@ separated values of Atom Type and radius, an entry a line" );
 #if defined(__WIN32__) || defined(__MAC__)
   StartupInit();
 #endif
-  //_UpdateThread = new UpdateThread("e:/tmp/patch");
-  //_UpdateThread->OnTerminate->Add(this, ID_UpdateThreadTerminate);
-  //_UpdateThread->Start();
+  _UpdateThread = new UpdateThread(FXApp->BaseDir() + "patch");
+  _UpdateThread->OnTerminate->Add(this, ID_UpdateThreadTerminate);
+  _UpdateThread->Start();
 }
 //..............................................................................
 void TMainForm::StartupInit()  {
@@ -2132,20 +2132,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
     }
     if( _UpdateThread != NULL && _UpdateThread->GetUpdateSize() != 0 )  {
       FTimer->OnTimer()->SetEnabled( false );
-      int res = TMainForm::ShowMsgBox( 
-        olxstr("Olex2 updates avaialable (") << _UpdateThread->GetUpdateSize()/(1024*1024) << "Mb)",
-        "Automatic Updates",
-        "Never ask again",
-        wxYES|wxNO|wxICON_QUESTION,
-        true);
-      if( res == wxID_YES )  {
-        _UpdateThread->DoUpdate();
-        _UpdateThread = NULL;
-      }
-      else  {
-        _UpdateThread->SendTerminate();
-        _UpdateThread = NULL;
-      }
+      DoUpdateFiles();
       FTimer->OnTimer()->SetEnabled( true );
     }
   }
@@ -4061,16 +4048,38 @@ bool TMainForm::IsControl(const olxstr& _cname) const {
   return html == NULL ? false : (html->FindObject(cname) != NULL);
 }
 //..............................................................................
-int TMainForm::ShowMsgBox(const olxstr& msg, const olxstr& title, const olxstr& cb_msg, int flags, bool show_cb)  {
-  TdlgMsgBox* msg_box = new TdlgMsgBox( TGlXApp::GetMainForm(), 
-    msg, 
-    title,
-    cb_msg,
-    flags,
-    show_cb);
-  int res = msg_box->ShowModal();  
-  msg_box->Destroy();
-  return res;
+void TMainForm::DoUpdateFiles()  {
+  if( _UpdateThread == NULL )
+    return;
+  uint64_t sz = _UpdateThread->GetUpdateSize();
+  _UpdateThread->ResetUpdateSize();
+  olxstr sf_name(FXApp->BaseDir() + "usettings.dat");
+  TSettingsFile sf( sf_name );
+  bool ask = sf.ParamValue("ask_update", TrueString).ToBool();
+  TdlgMsgBox* msg_box = NULL;
+  if( ask )  {
+    msg_box = new TdlgMsgBox( this, 
+      olxstr("Olex2 updates avaialable (") << olxstr::FormatFloat(3, (double)sz/(1024*1024)) << "Mb)",
+      "Automatic Updates",
+      "Do updates without asking",
+      wxYES|wxNO|wxICON_QUESTION,
+      true);
+    int res = msg_box->ShowModal();  
+    if( res == wxID_YES )  {
+      _UpdateThread->DoUpdate();
+      if( msg_box->IsChecked() )  {
+        sf.UpdateParam("ask_update", FalseString);
+        sf.SaveSettings(sf_name);
+      }
+    }
+    else  {
+      _UpdateThread->SendTerminate();
+      _UpdateThread = NULL;
+    }
+    msg_box->Destroy();
+  }
+  else
+    _UpdateThread->DoUpdate();
 }
 //..............................................................................
 //..............................................................................

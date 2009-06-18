@@ -380,14 +380,16 @@ olxstr TEFile::ChangeFileExt(const olxstr &F, const olxstr &Ext)  {
 bool TEFile::DelFile(const olxstr& F)  {
   if( !Exists(F) )  return true;
   olxstr fn = OLX_OS_PATH(F);
-  if( !chmod(OLXSTR(fn), S_IWRITE) )
+  if( chmod(OLXSTR(fn), S_IWRITE) == 0 )
     return (unlink(OLXSTR(fn)) == -1) ? false: true;
   return false;
 }
 //..............................................................................
 bool TEFile::RmDir(const olxstr& F)  {
   if( !Exists(F) )  return true;
-  return (rmdir(OLXSTR(OLX_OS_PATH(F))) == -1) ?  false : true;
+  if( chmod(OLXSTR(F), S_IWRITE) == 0 )
+    return (rmdir(OLXSTR(OLX_OS_PATH(F))) == -1) ?  false : true;
+  return false;
 }
 //..............................................................................
 bool TEFile::IsDir(const olxstr& F)  {
@@ -452,7 +454,8 @@ bool TEFile::ListCurrentDirEx(TFileList &Out, const olxstr &Mask, const unsigned
   bool done = true;
   while( done )  {
     if( (sF & sefDir) != 0 && (sF & sefRelDir) == 0 && (sd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0)  {
-      if( sd.cFileName[0] == '.' || (sd.cFileName[0] == '.' && sd.cFileName[1] == '.') )  {
+      size_t len = olxstr::o_strlen(sd.cFileName);
+      if( (len == 1 && sd.cFileName[0] == '.') || (len == 2 && sd.cFileName[0] == '.' && sd.cFileName[1] == '.') )  {
         done = (FindNextFile(hn, &sd) != 0);
         continue;
       }

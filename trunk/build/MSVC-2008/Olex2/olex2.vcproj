@@ -221,7 +221,7 @@
 				InlineFunctionExpansion="0"
 				EnableIntrinsicFunctions="false"
 				AdditionalIncludeDirectories="..\..\..\glib;..\..\..\gxlib;..\..\..\repository;..\..\..\xlib;..\..\..\olex;..\..\..\sdl;&quot;$(WX_DIR)\include&quot;;$(PY_DIR)\include;&quot;$(WX_DIR)\lib\vc_lib\mswud&quot;"
-				PreprocessorDefinitions="__WXWIDGETS__;__WXDEBUG__;_UNICODE;_DEBUG;__OD_BUILD__"
+				PreprocessorDefinitions="__WXWIDGETS__;__WXDEBUG__;_UNICODE;_DEBUG"
 				StringPooling="true"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -232,7 +232,6 @@
 				BrowseInformation="1"
 				WarningLevel="2"
 				DebugInformationFormat="4"
-				UndefinePreprocessorDefinitions="_DEBUG"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
