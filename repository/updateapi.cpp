@@ -22,7 +22,7 @@
   #include "wxhttpfs.h"
   #include "wxzipfs.h"
   typedef TwxHttpFileSystem HttpFS;
-  typedef TwxZipFileSystem HttpFS;
+  typedef TwxZipFileSystem ZipFS;
 #endif
 
 using namespace updater;
