@@ -24,12 +24,14 @@ profiling = (GetOption('olx_profile').lower() == 'true')
 
 out_dir = 'build/scons/' 
 if profiling:
-  out_dir += 'profiling/'
+  out_dir += 'profiling'
   
 if debug:
-  out_dir += 'debug/'
+  out_dir += 'debug'
 else:
-  out_dir += 'release/'
+  out_dir += 'release'
+out_dir += '-py' + sys.version[:3] + '/'
+
 full_out_dir = os.getcwd() + '/' + out_dir
 
 print 'Building location: ' + out_dir
