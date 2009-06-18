@@ -5,8 +5,7 @@
     <VERSION value="BCB.06.00"/>
     <PROJECT value="exe\launch.exe"/>
     <OBJFILES value="build\launch.obj build\main.obj build\splash.obj build\url.obj 
-      build\filesystem.obj build\winhttpfs.obj build\frame1.obj 
-      build\winzipfs.obj build\unzip.obj"/>
+      build\filesystem.obj build\frame1.obj build\patchapi.obj"/>
     <RESFILES value="..\..\..\launch\launch.res"/>
     <DEFFILE value=""/>
     <RESDEPEN value="$(RESFILES) ..\..\..\launch\main.dfm ..\..\..\launch\splash.dfm frame1.dfm"/>
@@ -29,18 +28,18 @@
     <USERDEFINES value="_DEBUG"/>
     <SYSDEFINES value="NO_STRICT"/>
     <MAINSOURCE value="launch.cpp"/>
-    <INCLUDEPATH value="..\..\..\launch;..\..\..\repository;$(BCB)\include;$(BCB)\include\vcl;..\..\..\sdl"/>
-    <LIBPATH value="..\..\..\repository;..\..\..\..\repository;..\..\..\launch;..\..\repository;..\..;Test\olex_l;$(BCB)\Projects\Lib;$(BCB)\lib\obj;$(BCB)\lib"/>
+    <INCLUDEPATH value="&quot;C:\Program Files\Borland\CBuilder6\Projects&quot;;..\..\..\launch;..\..\..\repository;$(BCB)\include;$(BCB)\include\vcl;..\..\..\sdl"/>
+    <LIBPATH value="&quot;C:\Program Files\Borland\CBuilder6\Projects&quot;;..\..\..\repository;..\..\..\..\repository;..\..\..\launch;..\..\repository;..\..;Test\olex_l;$(BCB)\Projects\Lib;$(BCB)\lib\obj;$(BCB)\lib"/>
     <WARNINGS value="-w-par"/>
     <OTHERFILES value=""/>
   </MACROS>
   <OPTIONS>
     <CFLAG1 value="-Od -H=$(BCB)\lib\vcl60.csm -Hc -Vx -Ve -xf -xp -ff -X- -r- -a8 -6 -b -d 
-      -k- -v -vi- -c -tW -tWM"/>
+      -k -v -vi- -c -tW -tWM"/>
     <PFLAGS value="-N2build -N0build -$Y+ -$W -$O- -$A8 -v -JPHNE -M"/>
     <RFLAGS value=""/>
     <AFLAGS value="/mx /w2 /zi"/>
-    <LFLAGS value="-Ibuild -D&quot;&quot; -aa -Tpe -x -Gn -v"/>
+    <LFLAGS value="-Ibuild -D&quot;&quot; -aa -Tpe -x -Gn"/>
     <OTHERFILES value=""/>
   </OPTIONS>
   <LINKER>
@@ -57,10 +56,8 @@
       <FILE FILENAME="lib\sdl.lib" FORMNAME="" UNITNAME="sdl.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\repository\url.cpp" FORMNAME="" UNITNAME="url.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\repository\filesystem.cpp" FORMNAME="" UNITNAME="filesystem.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
-      <FILE FILENAME="..\..\..\repository\winhttpfs.cpp" FORMNAME="" UNITNAME="winhttpfs" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="frame1.cpp" FORMNAME="frMain" UNITNAME="frame1" CONTAINERID="CCompiler" DESIGNCLASS="TFrame" LOCALCOMMAND=""/>
-      <FILE FILENAME="..\..\..\repository\winzipfs.cpp" FORMNAME="" UNITNAME="winzipfs" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
-      <FILE FILENAME="..\..\..\repository\unzip.cpp" FORMNAME="" UNITNAME="unzip" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\repository\patchapi.cpp" FORMNAME="" UNITNAME="patchapi" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
   </FILELIST>
   <BUILDTOOLS>
   </BUILDTOOLS>
@@ -95,23 +92,25 @@ Comments=
 SpecialBuild=
 
 [HistoryLists\hlIncludePath]
-Count=7
-Item0=..\..\..\launch;..\..\..\repository;$(BCB)\include;$(BCB)\include\vcl;..\..\..\sdl
-Item1=C:\Program Files\Borland\CBuilder6\Projects;..\..\..\..\repository;..\..\..\launch;..\..\..\repository;..\..;$(BCB)\include;$(BCB)\include\vcl;..\..\..\sdl
-Item2=..\..\..\launch;..\..\..\repository;..\..;$(BCB)\include;$(BCB)\include\vcl;..\..\..\sdl
-Item3=..\..\..\..\repository;..\..\..\launch;..\..\repository;..\..;Test\olex_l;$(BCB)\include;$(BCB)\include\vcl;C:\Program Files\Borland\CBuilder6\Projects\X-net\sdl
-Item4=..\..\repository;..\..;Test\olex_l;$(BCB)\include;$(BCB)\include\vcl;C:\Program Files\Borland\CBuilder6\Projects\X-net\sdl
-Item5=..\..;Test\olex_l;$(BCB)\include;$(BCB)\include\vcl;C:\Program Files\Borland\CBuilder6\Projects\X-net\sdl
-Item6=..\..;Test\olex_l;$(BCB)\include;$(BCB)\include\vcl
+Count=8
+Item0=C:\Program Files\Borland\CBuilder6\Projects;..\..\..\launch;..\..\..\repository;$(BCB)\include;$(BCB)\include\vcl;..\..\..\sdl
+Item1=..\..\..\launch;..\..\..\repository;$(BCB)\include;$(BCB)\include\vcl;..\..\..\sdl
+Item2=C:\Program Files\Borland\CBuilder6\Projects;..\..\..\..\repository;..\..\..\launch;..\..\..\repository;..\..;$(BCB)\include;$(BCB)\include\vcl;..\..\..\sdl
+Item3=..\..\..\launch;..\..\..\repository;..\..;$(BCB)\include;$(BCB)\include\vcl;..\..\..\sdl
+Item4=..\..\..\..\repository;..\..\..\launch;..\..\repository;..\..;Test\olex_l;$(BCB)\include;$(BCB)\include\vcl;C:\Program Files\Borland\CBuilder6\Projects\X-net\sdl
+Item5=..\..\repository;..\..;Test\olex_l;$(BCB)\include;$(BCB)\include\vcl;C:\Program Files\Borland\CBuilder6\Projects\X-net\sdl
+Item6=..\..;Test\olex_l;$(BCB)\include;$(BCB)\include\vcl;C:\Program Files\Borland\CBuilder6\Projects\X-net\sdl
+Item7=..\..;Test\olex_l;$(BCB)\include;$(BCB)\include\vcl
 
 [HistoryLists\hlLibraryPath]
-Count=6
-Item0=..\..\..\repository;..\..\..\..\repository;..\..\..\launch;..\..\repository;..\..;Test\olex_l;$(BCB)\Projects\Lib;$(BCB)\lib\obj;$(BCB)\lib
-Item1=..\..\..\repository;C:\Program Files\Borland\CBuilder6\Projects;..\..\..\..\repository;..\..\..\launch;..\..\repository;..\..;Test\olex_l;$(BCB)\Projects\Lib;$(BCB)\lib\obj;$(BCB)\lib
-Item2=C:\Program Files\Borland\CBuilder6\Projects;..\..\..\..\repository;..\..\..\launch;..\..\repository;..\..;Test\olex_l;$(BCB)\Projects\Lib;$(BCB)\lib\obj;$(BCB)\lib
-Item3=..\..\..\..\repository;..\..\..\launch;..\..\repository;..\..;Test\olex_l;$(BCB)\Projects\Lib;$(BCB)\lib\obj;$(BCB)\lib
-Item4=..\..\repository;..\..;Test\olex_l;$(BCB)\Projects\Lib;$(BCB)\lib\obj;$(BCB)\lib
-Item5=..\..;Test\olex_l;$(BCB)\Projects\Lib;$(BCB)\lib\obj;$(BCB)\lib
+Count=7
+Item0=C:\Program Files\Borland\CBuilder6\Projects;..\..\..\repository;..\..\..\..\repository;..\..\..\launch;..\..\repository;..\..;Test\olex_l;$(BCB)\Projects\Lib;$(BCB)\lib\obj;$(BCB)\lib
+Item1=..\..\..\repository;..\..\..\..\repository;..\..\..\launch;..\..\repository;..\..;Test\olex_l;$(BCB)\Projects\Lib;$(BCB)\lib\obj;$(BCB)\lib
+Item2=..\..\..\repository;C:\Program Files\Borland\CBuilder6\Projects;..\..\..\..\repository;..\..\..\launch;..\..\repository;..\..;Test\olex_l;$(BCB)\Projects\Lib;$(BCB)\lib\obj;$(BCB)\lib
+Item3=C:\Program Files\Borland\CBuilder6\Projects;..\..\..\..\repository;..\..\..\launch;..\..\repository;..\..;Test\olex_l;$(BCB)\Projects\Lib;$(BCB)\lib\obj;$(BCB)\lib
+Item4=..\..\..\..\repository;..\..\..\launch;..\..\repository;..\..;Test\olex_l;$(BCB)\Projects\Lib;$(BCB)\lib\obj;$(BCB)\lib
+Item5=..\..\repository;..\..;Test\olex_l;$(BCB)\Projects\Lib;$(BCB)\lib\obj;$(BCB)\lib
+Item6=..\..;Test\olex_l;$(BCB)\Projects\Lib;$(BCB)\lib\obj;$(BCB)\lib
 
 [HistoryLists\hlDebugSourcePath]
 Count=1
