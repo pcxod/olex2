@@ -435,6 +435,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\repository\updateapi.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\repository\url.cpp"
 				>
 			</File>

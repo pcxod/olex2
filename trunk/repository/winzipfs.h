@@ -11,7 +11,7 @@ class TWinZipFileSystem: public AFileSystem, public IEObject  {
   HZIP zip;
   TStrList TmpFiles;
 public:
-  TWinZipFileSystem(const olxstr& filename);
+  TWinZipFileSystem(const olxstr& filename, bool unused=false);
   virtual ~TWinZipFileSystem();
 
   virtual IDataInputStream* OpenFile(const olxstr& zip_name);

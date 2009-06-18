@@ -5,10 +5,9 @@
 
 #include "main.h"
 #include "splash.h"
-#include "actions.h"
+#include "patchapi.h"
 
 #include "log.h"
-#include "exception.h"
 
 #include "filetree.h"
 //---------------------------------------------------------------------------
@@ -55,20 +54,6 @@ public:
     return true;
   }
 };
-//---------------------------------------------------------------------------
-enum
-{
-  ID_Progress
-};
-
-const char* Updates[] = {"Always", "Daily", "Weekly", "Monthly", "Never"};
-const short uAlways  = 0,
-            uDaily   = 1,
-            uWeekly  = 2,
-            uMonthly = 3,
-            uNever   = 4,
-            uUnknown = -1;
-
 //---------------------------------------------------------------------------
 __fastcall TdlgMain::TdlgMain(TComponent* Owner)
   : TForm(Owner)
@@ -131,11 +116,17 @@ __fastcall TdlgMain::TdlgMain(TComponent* Owner)
   }
   else
     SetFileAttributes(checkFN.c_str(), FILE_ATTRIBUTE_NORMAL);
-  if( !UpdateInstallation() )  {
-    Application->MessageBox("Please make sure that no Olex2 instances are running,\n\
+  short res = patch::PatchAPI::DoPatch(new TFileProgress, new TOverallProgress);
+  if( res != patch::papi_OK )  {
+    olxstr msg;
+    if( res == patch::papi_Busy )
+      msg = "Another update or Olex2 instance are running at the moment";
+    else if( res == patch::papi_CopyError || res == patch::papi_DeleteError )  {
+      msg = "Please make sure that no Olex2 instances are running,\n\
 you have enough right to modify the installation folder and\n\
-no oOlex2 folders are opened in browsers",
-      "Update failed", MB_OK|MB_ICONINFORMATION);
+no Olex2 folders are opened in browsers";
+   }
+    Application->MessageBox(msg.c_str(), "Update failed", MB_OK|MB_ICONINFORMATION);
   }
   // cheating :D
   dlgSplash->pbOProgress->Position = dlgSplash->pbOProgress->Max;
@@ -196,95 +187,6 @@ void TdlgMain::Launch()  {
   }
 }
 //---------------------------------------------------------------------------
-void AfterFileCopy(const olxstr& src, const olxstr& dest)  {
-  if( !TEFile::DelFile(src) )
-    throw TFunctionFailedException(__OlxSourceInfo, olxstr("Failed to delete file: ") << src);
-}
-bool TdlgMain::UpdateInstallation()  {
-  TBasicApp& bapp = *TBasicApp::GetInstance();
-  
-  olxstr patch_dir(bapp.BaseDir() + "patch/");
-  olxstr download_vf(bapp.BaseDir() + "__completed.update");
-  olxstr cmd_file(bapp.BaseDir() + "__cmds.update");
-  // make sure that only one instance is running
-  olxstr pid_file(bapp.BaseDir() + "updater.pid_");
-  if( TEFile::Exists(pid_file) )  {
-    if( !TEFile::DelFile(pid_file) )
-      return false;
-  }
-  if( !TEFile::Exists(patch_dir) || !TEFile::Exists(download_vf) )
-    return true;
-  // create lock if possible or exit
-  TEFile* pid_file_inst = NULL;
-  try  {
-    pid_file_inst = new TEFile(pid_file, "w+b");
-  }
-  catch( TExceptionBase& )  {  return false;  }
-  // check that there are no olex2 instances...
-  TStrList pid_files;
-  TEFile::ListDir(bapp.BaseDir(), pid_files, "*.olex2_pid", sefAll);
-  for( int i=0; i < pid_files.Count(); i++ )  {
-    if( TEFile::DelFile( bapp.BaseDir() + pid_files[i]) )
-      pid_files[i].SetLength(0);
-  }
-  pid_files.Pack();
-  if( !pid_files.IsEmpty() )
-    return false;
-  // clean
-  bool res = true;
-  if( TEFile::Exists(cmd_file) )  {
-    TWStrList _cmds;
-    TUtf8File::ReadLines(cmd_file, _cmds);
-    TStrList cmds(_cmds);
-    for( int i=0; i < cmds.Count(); i++ )  {
-      if( cmds[i].StartsFrom("rm ") )  {
-        olxstr fdn = cmds[i].SubStringFrom(3).Trim('\'');
-        if( !TEFile::Exists(fdn) )  {
-          cmds[i].SetLength(0);
-          continue;
-        }
-        if( TEFile::IsDir(fdn) )  {
-          if( !TEFile::DeleteDir(fdn) )  {
-            res = false;
-            break;  // next time then...
-          }
-        }
-        else  {
-          if( !TEFile::DelFile(fdn) )  {
-            res = false;
-            break; // next time then...
-          }
-        }
-        cmds[i].SetLength(0);
-      }
-    }
-    if( res )
-      TEFile::DelFile(cmd_file);
-    else  {
-      cmds.Pack();
-      TUtf8File::WriteLines(cmd_file, cmds, true);
-    }
-  }
-  // copy...
-  if( res )  {
-    try  {
-      TFileTree ft(patch_dir);
-      ft.Root.Expand();
-      TOnProgress OnFileCopy, OnSync;
-      ft.OnFileCopy->Add( new TFileProgress );
-      ft.OnSynchronise->Add( new TOverallProgress );
-      ft.CopyTo(bapp.BaseDir(), &AfterFileCopy, &OnFileCopy, &OnSync);
-      TEFile::DeleteDir(patch_dir);
-      TEFile::DelFile(download_vf);
-    }
-    catch(...)  {  res = false;  }
-  }
-  pid_file_inst->Delete();
-  delete pid_file_inst;
-  return res;
-}
-//---------------------------------------------------------------------------
-
 void __fastcall TdlgMain::tTimerTimer(TObject *Sender)
 {
   // force the GC to free temporray obejcts
