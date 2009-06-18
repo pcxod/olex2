@@ -4,7 +4,7 @@
 
 
 UpdateThread::UpdateThread(const olxstr& patch_dir) : time_out(0), PatchDir(patch_dir), 
-    srcFS(NULL), destFS(NULL) 
+    srcFS(NULL), destFS(NULL), Index(NULL) 
 {
   UpdateSize = 0;
   olxstr SettingsFile( TBasicApp::GetInstance()->BaseDir() + "usettings.dat" );
@@ -18,7 +18,7 @@ UpdateThread::UpdateThread(const olxstr& patch_dir) : time_out(0), PatchDir(patc
     settings.LoadSettings( SettingsFile );
     if( settings.ParamExists("proxy") )        Proxy = settings.ParamValue("proxy");
     if( settings.ParamExists("repository") )   Repository = settings.ParamValue("repository");
-    if( settings.ParamExists("lastupdate") )   LastUpdate = settings.ParamValue("lastupdate", '0').RadInt<uint64_t>();
+    if( settings.ParamExists("lastupdate") )   LastUpdate = settings.ParamValue("lastupdate", '0').RadInt<int64_t>();
     if( settings.ParamExists("update") )       UpdateInterval = settings.ParamValue("update");
 
     if( Repository.Length() && !Repository.EndsWith('/') )  Repository << '/';
@@ -53,12 +53,18 @@ UpdateThread::UpdateThread(const olxstr& patch_dir) : time_out(0), PatchDir(patc
       else if( UpdateInterval.Equalsi("Monthly") )
         Update = ((TETime::EpochTime() - LastUpdate ) > SecsADay*30 );
       if( Update )  {
-        TUrl url(Repository);
-        if( !Proxy.IsEmpty() )  
-          url.SetProxy( TUrl(Proxy) );
-        srcFS = new TwxHttpFileSystem(url);
+        try  {
+          TUrl url(Repository);
+          if( !Proxy.IsEmpty() )  
+            url.SetProxy( TUrl(Proxy) );
+          srcFS = new TwxHttpFileSystem(url);
+        }
+        catch(...)  {  return;  }
       }
+      else
+        return;
     }
+    Index = new TFSIndex(*srcFS);
     destFS = new TOSFileSystem( TBasicApp::GetInstance()->BaseDir() );
     properties.Add("olex-update");
 #ifdef __WIN32__
@@ -81,15 +87,18 @@ int UpdateThread::Run()  {
     TBasicApp::Sleep(50);
     time_out += 50;
   }
-  if( !TBasicApp::HasInstance() || Terminate || srcFS == NULL || destFS == NULL )
+  if( !TBasicApp::HasInstance() || Terminate || 
+    srcFS == NULL || destFS == NULL || Index == NULL )  
+  {
+    CleanUp();
     return 0;
+  }
 
-  TFSIndex fsi( *srcFS );
   try  {
     TOSFileSystem dfs(PatchDir);
     TStrList cmds;
     bool skip = (extensionsToSkip.IsEmpty() && filesToSkip.IsEmpty());
-    UpdateSize = fsi.CalcDiffSize(*destFS, properties, skip ? NULL : &toSkip);
+    UpdateSize = Index->CalcDiffSize(*destFS, properties, skip ? NULL : &toSkip);
     if( UpdateSize != 0 )
       Update = false;
     else
@@ -98,18 +107,35 @@ int UpdateThread::Run()  {
       if( Terminate )
         return 0;
       if( !TBasicApp::HasInstance() )  {  // nobody took care ?
-        delete srcFS;
-        srcFS = NULL;
-        delete destFS;
-        destFS = NULL;
+        CleanUp();
         return 0;
       }
       TBasicApp::Sleep(100);
     }
-    fsi.Synchronise(*destFS, properties, skip ? NULL : &toSkip, &dfs, &cmds);
-    TUtf8File::WriteLines(dfs.GetBase() + "__cmds__", cmds);
+    // download completion file
+    olxstr download_vf( TBasicApp::GetInstance()->BaseDir() + "__completed.update");
+    if( TEFile::Exists(download_vf) )
+      TEFile::DelFile(download_vf);
+    Index->Synchronise(*destFS, properties, skip ? NULL : &toSkip, &dfs, &cmds);
+    olxstr cmd_fn(TBasicApp::GetInstance()->BaseDir() + "__cmds.update");
+    if( TEFile::Exists(cmd_fn) )  {
+      TStrList pc;
+      TUtf8File::ReadLines(cmd_fn, pc);
+      cmds.Insert(0, pc);
+    }
+    TUtf8File::WriteLines(cmd_fn, cmds);
+    // mark download as complete
+    if( !Index->IsInterrupted() )
+      TEFile(download_vf, "w+b");
   }
-  catch(...)  { return 0;  }  // oups...
+  catch(...)  { // oups...
+    CleanUp();
+    return 0;  
+  }  
   return 1;
 }
-
+//....................................................................................
+void UpdateThread::OnSendTerminate()  {
+  if( Index != NULL )
+    Index->DoBreak();
+}

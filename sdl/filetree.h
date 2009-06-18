@@ -4,7 +4,7 @@
 #include "efile.h"
 #include "actions.h"
 #include "utf8file.h"
-
+#undef CopyFile
 BeginEsdlNamespace()
 class TFileTree  {
 public:
@@ -97,29 +97,17 @@ public:
         res += Folders[i].CalcSize();
       return res;
     }
-    // sends notification events when expanding
-    void Expand(TOnProgress& pg)  {
+    // reads the folder structure
+    void Expand(TOnProgress* pg=NULL)  {
       Files.Clear();
-      pg.SetAction(FullPath);
-      FileTree.OnExpand->Execute(NULL, &pg);
+      if( pg != NULL )  {
+        pg->SetAction(FullPath);
+        FileTree.OnExpand->Execute(NULL, pg);
+      }
       TEFile::ListDirEx(FullPath, Files, "*", sefAll^sefRelDir);
       for( int i=0; i < Files.Count(); i++ )  {
         if( (Files[i].GetAttributes() & sefDir) == sefDir )  {
           Folders.Add( new Folder(FileTree, FullPath + Files[i].GetName(), this)).Expand(pg);
-          Files.NullItem(i);
-        }
-      }
-      Files.Pack();
-      Files.QuickSorter.SortSF(Files, &CompareFiles);
-      Folders.QuickSorter.SortSF(Folders, &CompareFolders);
-    }
-    // a quiet version of the above
-    void Expand()  {
-      Files.Clear();
-      TEFile::ListDirEx(FullPath, Files, "*", sefAll^sefRelDir);
-      for( int i=0; i < Files.Count(); i++ )  {
-        if( (Files[i].GetAttributes() & sefDir) == sefDir )  {
-          Folders.Add( new Folder(FileTree, FullPath + Files[i].GetName(), this)).Expand();
           Files.NullItem(i);
         }
       }
@@ -231,6 +219,35 @@ public:
           );
       }
     }
+    // copies and overwrites existing files and timestamp
+    void CopyTo(const olxstr& _dest,
+                void (*AfterCopy)(const olxstr& src, const olxstr& dest) = NULL,
+                TOnProgress* OnCopy = NULL,
+                TOnProgress* OnSync = NULL
+                )
+    {
+      olxstr dest = TEFile::AddTrailingBackslash(_dest + (Parent == NULL ? EmptyString : Name));
+      if( !TEFile::Exists(dest) )  {
+        if( !TEFile::MakeDir(dest) || !TEFile::MakeDirs(dest) )
+          throw TFunctionFailedException(__OlxSourceInfo, olxstr("Could not create folder: ") << dest);
+      }
+      for( int i=0; i < Files.Count(); i++ )  {
+        olxstr src_fn(FullPath + Files[i].GetName());
+        olxstr dest_fn(dest + Files[i].GetName());
+        FileTree.CopyFile(src_fn, dest_fn, OnCopy);
+        if( OnSync != NULL )  {
+          OnSync->IncPos( (double)Files[i].GetSize() );
+          FileTree.OnSynchronise->Execute(NULL, OnSync);
+        }
+        bool res = TEFile::SetFileTimes(dest_fn, Files[i].GetLastAccessTime(), Files[i].GetModificationTime());
+        if( !res )
+          throw TFunctionFailedException(__OlxSourceInfo, "settime");
+        if( AfterCopy != NULL )
+          (*AfterCopy)(src_fn, dest_fn);
+      }
+      for( int i=0; i < Folders.Count(); i++ )
+        Folders[i].CopyTo(dest, AfterCopy, OnCopy, OnSync);
+    }
     void Synchronise(Folder& f, TOnProgress& onSync, TOnProgress& onFileCopy) {
       if( FileTree.Stop )
         return;
@@ -239,11 +256,7 @@ public:
         if( ind == -1 )  {
           olxstr nf(f.FullPath + Files[i].GetName());
           onSync.SetAction( olxstr("New file: ") << FullPath << Files[i].GetName() );
-#ifdef __WIN32__
-          if( FileTree.CopyFileX( olxstr(FullPath) << Files[i].GetName(), nf, onFileCopy) )  {
-#else
-          if( FileTree.CopyFile( olxstr(FullPath) << Files[i].GetName(), nf, onFileCopy) )  {
-#endif
+          if( FileTree.CopyFile( olxstr(FullPath) << Files[i].GetName(), nf, &onFileCopy) )  {
             bool res = TEFile::SetFileTimes(nf, Files[i].GetLastAccessTime(), Files[i].GetModificationTime());
             if( !res )
               throw TFunctionFailedException(__OlxSourceInfo, "settime");
@@ -329,6 +342,7 @@ public:
   Folder Root;
   bool Stop;
   TActionQueue* OnExpand, *OnSynchronise, *OnFileCopy, *OnFileCompare, *OnCompare;
+
   TFileTree(const olxstr& root) : Root(*this, root)  {
     OnExpand = &Actions.NewQueue("ON_EXPAND");
     OnSynchronise = &Actions.NewQueue("ON_SYNC");
@@ -338,7 +352,7 @@ public:
     Stop = false;
   }
 #ifdef __WIN32__
-  bool CopyFileX(const olxstr& from, const olxstr& to, TOnProgress& pg) const {
+  bool CopyFile(const olxstr& from, const olxstr& to, TOnProgress* pg = NULL) const {
     HANDLE in = CreateFile(from.u_str(),
       GENERIC_READ, 0, NULL,
       OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, NULL);
@@ -357,9 +371,12 @@ public:
     fl += MAXDWORD*fsHigh;
     const int bf_sz = 16*1024*1024;
     char* bf = new char[bf_sz];
-    pg.SetMax( (double)fl );
-    pg.SetPos(0);
-    pg.SetAction( from );
+    if( pg != NULL )  {
+      pg->SetMax( (double)fl );
+      pg->SetPos(0);
+      pg->SetAction( from );
+      OnFileCopy->Enter(NULL, pg);
+    }
     DWORD read = 1;
     while( true )  {
       if( ReadFile(in, bf, bf_sz, &read, NULL) == 0 )  {
@@ -383,35 +400,44 @@ public:
           throw TFunctionFailedException(__OlxSourceInfo, "write failed" );
         }
         read -= written;
-        pg.SetPos( pg.GetPos() + written);
-        OnFileCopy->Execute(NULL, &pg);
+        if( pg != NULL )  {
+          pg->IncPos( written);
+          OnFileCopy->Execute(NULL, pg);
+        }
       }
     }
-    pg.SetPos( (double)fl );
-    OnFileCopy->Execute(NULL, &pg);
-    pg.SetPos(0);
+    if( pg != NULL )  {
+      pg->SetPos( (double)fl );
+      OnFileCopy->Execute(NULL, pg);
+      pg->SetPos(0);
+    }
     delete [] bf;
     CloseHandle(in);
     CloseHandle(out);
     return true;
   }
-#endif
+#else
   // will fails on huge files
-  bool CopyFile(const olxstr& from, const olxstr& to, TOnProgress& pg) const {
+  bool CopyFile(const olxstr& from, const olxstr& to, TOnProgress* pg) const {
     TEFile in(from, "rb"), out(to, "wb+");
     const int bf_sz = 16*1024*1024;
     char* bf = new char[bf_sz];
     size_t fl = in.Length();
-    pg.SetMax( fl );
-    pg.SetPos(0);
-    pg.SetAction( from );
+    if( pg != NULL )  {
+      pg->SetMax( fl );
+      pg->SetPos(0);
+      pg->SetAction( from );
+      OnFileCopy->Enter(NULL, pg);
+    }
     size_t full = fl/bf_sz,
            part = fl%bf_sz;
     for( size_t i=0; i < full; i++ )  {
       in.Read(bf, bf_sz);
       out.Write(bf, bf_sz);
-      pg.SetPos( (i+1)*bf_sz);
-      OnFileCopy->Execute(NULL, &pg);
+      if( pg != NULL )  {
+        pg->SetPos( (i+1)*bf_sz);
+        OnFileCopy->Execute(NULL, pg);
+      }
       if( Stop )  {
         delete [] bf;
         out.Delete();
@@ -420,11 +446,16 @@ public:
     }
     in.Read(bf, part);
     out.Write(bf, part);
-    pg.SetPos( fl );
-    OnFileCopy->Execute(NULL, &pg);
+    if( pg != NULL )  {
+      pg->SetPos( fl );
+      OnFileCopy->Execute(NULL, pg);
+      pg->SetPos(0);
+    }
     delete [] bf;
     return true;
   }
+#endif
+
   bool CompareFiles(const olxstr& from, const olxstr& to, TOnProgress& pg) const {
     TEFile f1(from, "rb"), f2(to, "rb");
     if( f1.Length() != f2.Length() )  return false;
@@ -485,11 +516,7 @@ public:
       if( df.Src->Files.IsNull(i) )
         continue;
       olxstr nf(olxstr(dest_n) << df.Src->Files[i].GetName());
-#ifdef __WIN32__
-      if( CopyFileX( olxstr(df.Src->FullPath) << df.Src->Files[i].GetName(), nf, onFileCopy) )  {
-#else
-      if( CopyFile( olxstr(df.Src->FullPath) << df.Src->Files[i].GetName(), nf, onFileCopy) )  {
-#endif
+      if( CopyFile( olxstr(df.Src->FullPath) << df.Src->Files[i].GetName(), nf, &onFileCopy) )  {
         bool res = TEFile::SetFileTimes(nf, df.Src->Files[i].GetLastAccessTime(), df.Src->Files[i].GetModificationTime());
         if( !res )
           throw TFunctionFailedException(__OlxSourceInfo, "settime");
@@ -506,6 +533,24 @@ public:
       DoMerge(f, onSync, onFileCopy, (dest_n + f.Src->Name) << '/');
     }
   }
+  void CopyTo(const olxstr& _dest,
+              void (*AfterCopy)(const olxstr& src, const olxstr& dest) = NULL,
+              TOnProgress* OnCopy = NULL,
+              TOnProgress* OnSync = NULL )
+  {
+    if( OnSync != NULL )  {
+      OnSync->SetMax( (double)Root.CalcSize() );
+      OnSync->SetPos(0);
+      OnSynchronise->Enter(NULL, OnSync);
+    }
+    Root.CopyTo(_dest, AfterCopy, OnSync, OnCopy);
+    if( OnSync != NULL )  {
+      OnSync->SetMax( OnSync->GetMax() );
+      OnSynchronise->Execute(NULL, OnSync);
+      OnSync->SetPos(0);
+    }
+  }
+
 };
 
 

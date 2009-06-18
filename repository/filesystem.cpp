@@ -5,6 +5,7 @@
 #include "filesystem.h"
 #include "actions.h"
 #include "bapp.h"
+#include "log.h"
 #include "efile.h"
 #include "tptrlist.h"
 #include "estack.h"
@@ -72,9 +73,7 @@ bool TOSFileSystem::AdoptFile(const TFSItem& Src)  {
   }
   IInputStream* is = NULL;
   try  {  is = Src.GetIndexFS().OpenFile(Src.GetIndexFS().GetBase() + Src.GetFullName() );  }
-  catch(const TExceptionBase& exc)  {
-    throw TFunctionFailedException(__OlxSourceInfo, exc);
-  }
+  catch(const TExceptionBase& exc)  {  return false;  }
   if( is == NULL )  return false;
 
   try {
@@ -289,8 +288,8 @@ int TFSItem::GetLevel()  const  {
   return level;
 }
 //..............................................................................
-void TFSItem::DoSetProcessed(bool V)  {
-  SetProcessed(V);
+void TFSItem::SetProcessed(bool V)  {
+  Processed = V;
   for( int i=0; i < Count(); i++ )
     Item(i).SetProcessed(V);
 }
@@ -314,13 +313,12 @@ double TFSItem::Synchronise(TFSItem& Dest, const TStrList& properties, TStrList*
     Index.Progress.SetPos( 0.0 );
     Index.OnProgress->Enter(this, &Index.Progress);
   }
-  SetProcessed(false);
   /* check the repository files are at the destination - if not delete them
   (now implemented in TOSFileSystem */
   for( int i=0; i < Dest.Count(); i++ )  {
     TFSItem& FI = Dest.Item(i);
-    FI.SetProcessed(true);
-
+    if( Index.Break )  // temination signal
+      return Index.Progress.GetPos();
     Index.Progress.SetAction( FI.GetFullName() );
     Index.OnProgress->Execute(this, &Index.Progress);
 
@@ -340,42 +338,44 @@ double TFSItem::Synchronise(TFSItem& Dest, const TStrList& properties, TStrList*
       if( FI.IsFolder() )
         Res->Synchronise(FI, properties, cmds, this);
       else if( Dest.Index.ShallAdopt(*Res, FI) )  {
-        FI.UpdateFile(*Res);
-        Index.Progress.IncPos( (double)FI.GetSize() );
-        Index.OnProgress->Execute(this, &Index.Progress);
+        if( FI.UpdateFile(*Res) != NULL )  {
+          Index.Progress.IncPos( (double)FI.GetSize() );
+          Index.OnProgress->Execute(this, &Index.Progress);
+        }
       }
     }
   }
   // add new files
   for( int i=0; i < this->Count(); i++ )  {
     TFSItem& FI = Item(i);
-    if( FI.IsProcessed() )  continue;
-    if( !FI.ValidateProperties(properties) ) 
+    if( FI.IsProcessed() || !FI.ValidateProperties(properties) ) 
       continue;
+    if( Index.Break )  // termination signal    
+      return Index.Progress.GetPos();
     Index.Progress.SetAction( FI.GetFullName() );
-    Index.Progress.IncPos( (double)FI.GetSize() );
     Index.OnProgress->Execute(this, &Index.Progress);
-
     if( FI.IsFolder() )  {
       TFSItem* Res = Dest.UpdateFile(FI);
       if( Res != NULL)
         FI.Synchronise(*Res, properties, cmds, this);
     }
     else  {
-      Dest.UpdateFile(FI);
+      if( Dest.UpdateFile(FI) != NULL )  {
+        Index.Progress.IncPos( (double)FI.GetSize() );
+        Index.OnProgress->Execute(this, &Index.Progress);
+      }
+      TBasicApp::GetLog() << FI.GetFullName() << '\n';
     }
   }
   if( this->GetParent() == NULL )  {
     Index.OnProgress->Exit(NULL, &Index.Progress);
   }
-  SetProcessed(false);
   return Index.Progress.GetMax();
 }
 //..............................................................................
 uint64_t TFSItem::CalcDiffSize(TFSItem& Dest, const TStrList& properties)  {
   uint64_t sz = 0;
   /* check the repository files are at the destination */
-  SetProcessed(false);
   for( int i=0; i < Dest.Count(); i++ )  {
     TFSItem& FI = Dest.Item(i);
     TFSItem* Res = FindByName( FI.GetName() );
@@ -395,7 +395,6 @@ uint64_t TFSItem::CalcDiffSize(TFSItem& Dest, const TStrList& properties)  {
       continue;
     sz += res.CalcTotalItemsSize(properties);
   }
-  SetProcessed(true);
   return sz;
 }
 //..............................................................................
@@ -424,12 +423,19 @@ TFSItem* TFSItem::UpdateFile(TFSItem& item)  {
           is_new = true;
         }
       }
-      if( !is_new && !Index.ShallAdopt(item, *FI) )
+      if( !is_new && !Index.ShallAdopt(item, *FI) )  {
+        *FI = item;  // just update so it does not trigger update next time
         return FI;
-      *FI = item;
-      GetDestFS().AdoptFile(item);
-      Index.ProcessActions(*FI);
-      return FI;
+      }
+      if( GetDestFS().AdoptFile(item) )  {
+        *FI = item;
+        Index.ProcessActions(*FI);
+        return FI;
+      }
+      else  {
+        Remove(*FI);
+        return NULL;
+      }
     }
     catch( TExceptionBase& )  {  
       return NULL;
@@ -518,12 +524,16 @@ void TFSItem::ClearNonexisting()  {
     return;
   for( int i=0; i < Count(); i++ )  {
     if( !Item(i).IsFolder() )  {
-      if( !GetIndexFS().FileExists( GetIndexFS().GetBase() + Item(i).GetFullName()) && 
+      if( !GetIndexFS().FileExists(GetIndexFS().GetBase() + Item(i).GetFullName()) && 
         Index.ShouldExist(Item(i)) )  
       {
-        delete Items.GetObject(i);
-        Items.Remove(i);
-        i--;
+        // check if not already downloaded
+        if( Index.DestFS != NULL && !Index.DestFS->FileExists(Index.DestFS->GetBase() + Item(i).GetFullName()) )
+        {
+          delete Items.GetObject(i);
+          Items.Remove(i);
+          i--;
+        }
       }
     }
     else  {
@@ -558,6 +568,7 @@ TFSIndex::TFSIndex(AFileSystem& fs) : IndexFS(fs)  {
   OnProgress = &Actions.NewQueue("ON_PROGRESS");
   DestFS = NULL;
   IndexLoaded = false;
+  Break = false;
 }
 //..............................................................................
 TFSIndex::~TFSIndex()  {
@@ -611,6 +622,7 @@ double TFSIndex::Synchronise(AFileSystem& To, const TStrList& properties, const 
                              AFileSystem* dest_fs, TStrList* cmds, const olxstr& indexName)  
 {
   TFSIndex DestI(To);
+  Break = false;
   DestI.DestFS = (dest_fs == NULL ? &To : dest_fs);
   olxstr SrcInd = IndexFS.GetBase() + indexName;
   olxstr DestInd = To.GetBase() + indexName;
@@ -618,6 +630,7 @@ double TFSIndex::Synchronise(AFileSystem& To, const TStrList& properties, const 
     LoadIndex(SrcInd, toSkip);
     if( To.FileExists(DestInd) )
       DestI.LoadIndex(DestInd);
+    GetRoot().SetProcessed(false);
     double BytesTransfered = GetRoot().Synchronise(DestI.GetRoot(), properties, cmds);
     if( BytesTransfered != 0 )
       DestI.SaveIndex(DestInd);
@@ -638,6 +651,7 @@ uint64_t TFSIndex::CalcDiffSize(AFileSystem& To, const TStrList& properties, con
     LoadIndex(SrcInd, toSkip);
     if( To.FileExists(DestInd) )
       DestI.LoadIndex(DestInd);
+    GetRoot().SetProcessed(false);
     return GetRoot().CalcDiffSize(DestI.GetRoot(), properties);
   }
   catch( const TExceptionBase& exc )  {
@@ -688,8 +702,13 @@ bool TFSIndex::ShallAdopt(const TFSItem& src, const TFSItem& dest) const  {
   if( src.GetActions().IndexOfi("delete") != -1 )
     return !(dest.GetDateTime() == src.GetDateTime() && dest.GetSize() == src.GetSize());
   if( dest.GetDateTime() < src.GetDateTime() || 
-    !dest.GetIndexFS().FileExists(dest.GetIndexFS().GetBase() + dest.GetFullName()) )
+    !dest.GetIndexFS().FileExists(dest.GetIndexFS().GetBase() + dest.GetFullName()) )  
+  {
+    // validate if not already downlaoded
+    if( &dest.GetDestFS() != NULL && 
+      dest.GetDestFS().FileExists(dest.GetDestFS().GetBase() + dest.GetFullName()) )
     return true;
+  }
   return false;
 }
 //..............................................................................

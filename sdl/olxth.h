@@ -54,6 +54,9 @@ protected:  // do not allow to create externally
   {  
     OnTerminate = &Actions.NewQueue("ON_TERMINATE");  
   }
+  /* thread can do some extras here, as it will be called from SendTerminate 
+  before the Terimate flag is set */
+  virtual void OnSendTerminate() {}
 public:
   virtual ~AOlxThread()  {
     OnTerminate->Execute(this, NULL);
@@ -88,8 +91,8 @@ public:
     if( Handle == 0 )
       throw TInvalidArgumentException(__OlxSourceInfo, "the tread must be started at first");
     Detached = false;
-    if( send_terminate )
-      Terminate = true;
+    if( send_terminate && !Terminate )
+      SendTerminate();
 #ifdef __WIN32__
     unsigned long ec = STILL_ACTIVE, rv;
     while( ec == STILL_ACTIVE && (rv=GetExitCodeThread(Handle, &ec)) != 0 )
@@ -102,7 +105,10 @@ public:
     return true;
   }
   // this only has effect if the main procedure of the thread checks for this flag...
-  void SendTerminate()  {  Terminate = true;  }
+  void SendTerminate()  {  
+    OnSendTerminate(); 
+    Terminate = true;  
+  }
 
   /* executes a simplest function thread, the function should not take any arguments
   the return value will be ignored. To be used for global detached threads such timers etc.

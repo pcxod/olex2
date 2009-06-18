@@ -23,7 +23,7 @@ __published:  // IDE-managed Components
 private: // User declarations
   TBasicApp *FBApp;
   void Launch();
-  bool UpdateInstallation( AFileSystem& srcFS, const TStrList& properties );
+  bool UpdateInstallation();
 public: // User declarations
   __fastcall TdlgMain(TComponent* Owner);
   virtual __fastcall ~TdlgMain();

@@ -11,21 +11,32 @@ class UpdateThread : public AOlxThread  {
   bool Valid, Update;
   uint64_t UpdateSize;
   AFileSystem* srcFS, *destFS;
+  TFSIndex* Index;
   TStrList properties, filesToSkip, extensionsToSkip;
   TFSItem::SkipOptions toSkip;
   olxstr PatchDir;
+  void CleanUp()  {
+    if( Index != NULL )  {
+      delete Index;
+      Index = NULL;
+    }
+    if( srcFS != NULL )  {
+      delete srcFS;
+      srcFS = NULL;
+    }
+    if( destFS != NULL )  {
+      delete destFS;
+      destFS = NULL;
+    }
+  }
+  virtual void OnSendTerminate();
 public:
   UpdateThread(const olxstr& patch_dir);
 
-  virtual ~UpdateThread()  {
-    if( srcFS != NULL )
-      delete srcFS;
-    if( destFS != NULL )
-      delete destFS;
-  }
+  virtual ~UpdateThread()  {  CleanUp();  }
   void DoUpdate() {  Update = true;  }  
   uint64_t GetUpdateSize() const {  return UpdateSize;  }
-
+  void ResetUpdateSize() {  UpdateSize = 0;  }
   virtual int Run();
 };
 

@@ -52,6 +52,12 @@ IInputStream* TwxHttpFileSystem::OpenFile(const olxstr& Source)  {
         Progress.SetPos( ms->GetPosition() );
         OnProgress->Execute(this, &Progress);
       }
+      if( Break )  {
+        delete is;
+        delete [] bf;
+        delete ms;
+        return NULL;
+      }
       is->Read(bf, 1024*64);
     }
     ms->SetPosition(0);
@@ -97,6 +103,7 @@ TEFile* TwxHttpFileSystem::SaveFile(const olxstr& Source)  {
   OnProgress->Enter(this, &Progress);
   olxstr o_src(TEFile::UnixPath(Source));
   wxInputStream* is = NULL;
+  Break = false;
   try  {
     olxstr src;
     if( Url.HasProxy() )
@@ -120,6 +127,11 @@ TEFile* TwxHttpFileSystem::SaveFile(const olxstr& Source)  {
     tf->Write(bf, is->LastRead());
     Progress.SetPos( tf->GetPosition() );
     OnProgress->Execute(this, &Progress);
+    if( Break )  {
+      delete [] bf;
+      delete tf;
+      return NULL;
+    }
     is->Read(bf, 1024*64);
   }
   Progress.SetAction("Download complete");

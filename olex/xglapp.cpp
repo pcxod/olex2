@@ -182,7 +182,7 @@ bool TGlXApp::OnInit()  {
   }
   // write PID file
   int pid = getpid();
-  TEGC::NewG<TEFile>( olxstr(XApp->BaseDir()) << pid << "._pid_", "w+b" );
+  TEGC::NewG<TEFile>( olxstr(XApp->BaseDir()) << pid << ".olex2_pid", "w+b" );
 
   // assemble whole command line
   for( int i=1; i < argc; i++ )
@@ -237,22 +237,11 @@ bool TGlXApp::OnInit()  {
 int TGlXApp::OnExit()  {
   TStrList pid_files;
   olxstr base_dir = XApp->BaseDir(); 
-  TEFile::ListDir( base_dir, pid_files, "*._pid_", sefAll );
+  TEFile::ListDir( base_dir, pid_files, "*.olex2_pid", sefAll );
   delete XApp;
   // garbage collector TEGC is emptied now delete unused pid files
-  for( int i=0; i < pid_files.Count(); i++ )  {
-    if( TEFile::DelFile( base_dir+pid_files[i] ) )
-      pid_files[i].SetLength(0);
-  }
-  pid_files.Pack();
-  if( pid_files.IsEmpty() )  {
-#ifdef __WIN32__
-    olxstr ext(".exe");
-#else
-    olxstr ext;
-#endif
-    //wxExecute( ((base_dir + "olex2_updater") << ext).u_str() );
-  }
+  for( int i=0; i < pid_files.Count(); i++ )
+    TEFile::DelFile( base_dir+pid_files[i] );
   return 0;
 }
 //..............................................................................
