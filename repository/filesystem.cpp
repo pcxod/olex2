@@ -364,7 +364,6 @@ double TFSItem::Synchronise(TFSItem& Dest, const TStrList& properties, TStrList*
         Index.Progress.IncPos( (double)FI.GetSize() );
         Index.OnProgress->Execute(this, &Index.Progress);
       }
-      TBasicApp::GetLog() << FI.GetFullName() << '\n';
     }
   }
   if( this->GetParent() == NULL )  {
@@ -705,8 +704,8 @@ bool TFSIndex::ShallAdopt(const TFSItem& src, const TFSItem& dest) const  {
     !dest.GetIndexFS().FileExists(dest.GetIndexFS().GetBase() + dest.GetFullName()) )  
   {
     // validate if not already downlaoded
-    if( &dest.GetDestFS() != NULL && 
-      dest.GetDestFS().FileExists(dest.GetDestFS().GetBase() + dest.GetFullName()) )
+    if( &dest.GetDestFS() != NULL )
+      return !dest.GetDestFS().FileExists(dest.GetDestFS().GetBase() + dest.GetFullName());  
     return true;
   }
   return false;
