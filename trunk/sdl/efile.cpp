@@ -703,6 +703,8 @@ bool TEFile::MakeDirs(const olxstr& Name)  {
   TStrList toks(OLX_OS_PATH(Name), OLX_PATH_DEL);
   olxstr toCreate;
   toCreate.SetCapacity( Name.Length() + 5 );
+  if( Name.StartsFrom('/') ) // !!!!
+    toCreate << '/';
   for( int i=0; i < toks.Count(); i++ )  {
     toCreate << toks[i] << OLX_PATH_DEL;
     if( !Exists( toCreate ) )
@@ -713,7 +715,7 @@ bool TEFile::MakeDirs(const olxstr& Name)  {
 }
 //..............................................................................
 bool TEFile::MakeDir(const olxstr& Name)  {
-  return ( makedir(OLXSTR(OLX_OS_PATH(Name))) == -1 ) ? false : true;
+  return (makedir(OLXSTR(OLX_OS_PATH(Name))) != -1);
 }
 //..............................................................................
 olxstr TEFile::OSPath(const olxstr &F)  {

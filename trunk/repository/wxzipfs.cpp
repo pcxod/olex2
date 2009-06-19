@@ -118,7 +118,8 @@ void TZipWrapper::ExtractAll(const olxstr& dest)  {
     olxstr dest_file = extractPath + FEntries.GetString(i);
     olxstr dst_dir = TEFile::ExtractFilePath(dest_file);
     if( !TEFile::Exists(dst_dir) )
-      TEFile::MakeDirs(dst_dir);
+      if( !TEFile::MakeDirs(dst_dir) )
+        TBasicApp::GetLog().Error( olxstr("Failed to create folder: ") << dst_dir);
     if( TEFile::Exists(dest_file) )  {
       if( !TEFile::DelFile(dest_file) )
         TBasicApp::GetLog().Error( olxstr("Failed to remove/update file: ") << dest_file);

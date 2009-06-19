@@ -162,10 +162,9 @@ void UpdateAPI::EvaluateProperties(TStrList& props) const  {
 #ifdef __WIN32__
   props.Add("port-win32");
 #else
-  olxstr olex_port = settings.ParamValue("olex-port");
-  if( !olex_port.IsEmpty() )  {
-    props.Add(olex_port);
-    log.Add("Portable executable update tag: ") << olex_port;
+  if( !settings.olex2_port.IsEmpty() )  {
+    props.Add(settings.olex2_port);
+    log.Add("Portable executable update tag: ") << settings.olex2_port;
   }
 #endif
   olxstr pluginFile = TBasicApp::GetInstance()->BaseDir() + "plugins.xld";
@@ -348,6 +347,7 @@ SettingsFile::SettingsFile(const olxstr& file_name) : source_file(file_name)  {
   dest_pswd = settings["dest_passwd"];
   src_for_dest = settings["src_for_dest"];
   files_to_skip.Strtok(settings["skip"], ';');
+  olex2_port = settings["olex-port"];
 }
 //.......................................................................
 olxstr SettingsFile::GetRepositoryUrlStr() const  {
@@ -399,6 +399,7 @@ void SettingsFile::Save() const {
   settings["dest_passwd"] = dest_pswd;
   settings["src_for_dest"] = src_for_dest;
   settings["skip"] = files_to_skip.Text(';');
+  settings["olex-port"] = olex2_port;
   settings.SaveSettings(source_file);
 }
 //.......................................................................
