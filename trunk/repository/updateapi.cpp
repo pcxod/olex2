@@ -13,7 +13,7 @@
 
 //#define __WXWIDGETS__
 
-#ifdef __WIN32__
+#if defined(__WIN32__) && !defined(__WXWIDGETS__)
   #include "winhttpfs.h"
   #include "winzipfs.h"
   typedef TWinHttpFileSystem HttpFS;
@@ -24,75 +24,151 @@
   typedef TwxHttpFileSystem HttpFS;
   typedef TwxZipFileSystem ZipFS;
 #endif
+#ifdef __WXWIDGETS__
+  #include "wxftpfs.h"
+#endif
 
 using namespace updater;
 
 //..............................................................................
-short UpdateAPI::DoUpdate(AActionHandler* f_lsnr, AActionHandler* p_lsnr)  {
-  TBasicApp& bapp = *TBasicApp::GetInstance();
-
-  olxstr SettingsFile( bapp.BaseDir() + "usettings.dat" );
-  TSettingsFile settings;
-  if( !TEFile::Exists(SettingsFile) )  {
-    log.Add("Could not locate settings file: ") << SettingsFile;
+short UpdateAPI::DoUpdate(AActionHandler* _f_lsnr, AActionHandler* _p_lsnr)  {
+  CleanUp(_f_lsnr, _p_lsnr); 
+  if( !settings.IsValid() )  {
+    log.Add("Invalid settings file: ") << settings.source_file;
     return uapi_NoSettingsFile;
   }
-  olxstr Proxy, ProxyUser, ProxyPasswd,
-    Repository = "http://dimas.dur.ac.uk/olex-distro/update",
-           UpdateInterval = "Always",
-           ftpToSync, ftpUser, ftpPwd, syncSrc;
-  int LastUpdate = 0;
-  TStrList extensionsToSkip, filesToSkip;
+  SettingsFile& sf = settings;
   TFSItem::SkipOptions toSkip;
-  settings.LoadSettings( SettingsFile );
-  if( settings.ParamExists("proxy") )        Proxy = settings.ParamValue("proxy");
-  if( settings.ParamExists("proxy_user") )   ProxyUser = settings.ParamValue("proxy_user");
-  if( settings.ParamExists("proxy_passwd") ) ProxyPasswd = settings.ParamValue("proxy_passwd");
-  if( settings.ParamExists("repository") )   Repository = settings.ParamValue("repository");
-  if( settings.ParamExists("update") )       UpdateInterval = settings.ParamValue("update");
-  if( settings.ParamExists("lastupdate") )   LastUpdate = settings.ParamValue("lastupdate", '0').RadInt<long>();
-  if( settings.ParamExists("exceptions") )  {
-    extensionsToSkip.Strtok(settings.ParamValue("exceptions", EmptyString), ';');
-    log.Add("Skipping the following extensions: ") << extensionsToSkip.Text(' ');
-  }
-  if( settings.ParamExists("ftpToSync") )  {
-    TStrList toks(settings.ParamValue("ftpToSync", EmptyString), ';');
-    ftpToSync = toks[0];
-    if( toks.Count() > 1 )  ftpUser = toks[1];
-    if( toks.Count() > 2 )  ftpPwd = toks[2];
-  #ifdef __WXWIDGETS__
-    log.Add("Synchronising the following ftp mirror: ") << ftpToSync;
-  #endif
-  }
-  syncSrc = settings.ParamValue("sync", "fs2Ftp");
+  toSkip.extsToSkip = sf.extensions_to_skip.IsEmpty() ? NULL : &sf.extensions_to_skip;
+  toSkip.filesToSkip = sf.files_to_skip.IsEmpty() ? NULL : &sf.files_to_skip;
 
-  if( settings.ParamExists("skip") )  {
-    filesToSkip.Strtok(settings.ParamValue("skip", EmptyString), ';');
-    log.Add("Skipping the following files: ") << filesToSkip.Text(' ');
-  }
-  if( !TEFile::ExtractFileExt(Repository).Equalsi("zip") )
-    if( Repository.Length() && !Repository.EndsWith('/') )
-      Repository << '/';
-
-  toSkip.extsToSkip = extensionsToSkip.IsEmpty() ? NULL : &extensionsToSkip;
-  toSkip.filesToSkip = filesToSkip.IsEmpty() ? NULL : &filesToSkip;
-
-  bool Update = false;
   // evaluate properties
   TStrList props;
+  short res = updater::uapi_NoSource;
+  EvaluateProperties(props);
+  AFileSystem* srcFS = GetRepositoryFS(sf, &res, &log);
+  if( srcFS != NULL )  { // have to save lastupdate in anyway
+    bool skip = (toSkip.extsToSkip == NULL && toSkip.filesToSkip == NULL);
+    short res = _Update(*srcFS, props, skip ? NULL : &toSkip);
+    delete srcFS;
+    if( res == updater::uapi_OK )  {
+      sf.last_updated = TETime::EpochTime();
+      sf.Save();
+    }
+    return res;
+  }
+  else
+    return res;
+}
+//.............................................................................
+short UpdateAPI::DoInstall(AActionHandler* download_lsnr, AActionHandler* extract_lsnr)  {
+  CleanUp(download_lsnr, extract_lsnr);
+  if( !IsInstallRequired() )  return updater::uapi_OK;
+  // check for local installation
+  olxstr src_fn = GetInstallationFileName();
+  if( TEFile::Exists( TBasicApp::GetInstance()->BaseDir() + src_fn) )  {
+    try  {
+      ZipFS zfs(TBasicApp::GetInstance()->BaseDir() + src_fn, false);
+      if( p_lsnr != NULL )  {
+        zfs.OnProgress->Add(p_lsnr);
+        p_lsnr = NULL;
+      }
+      zfs.ExtractAll(TBasicApp::GetInstance()->BaseDir());
+      return updater::uapi_OK;
+    }
+    catch( const TExceptionBase& exc )  {
+      log.Add( exc.GetException()->GetFullMessage() );
+      return updater::uapi_InstallError;
+    }
+  }
+  AFileSystem* fs = GetRepositoryFS(&settings.repository);
+  if( fs == NULL )  return updater::uapi_NoSource;
+  if( f_lsnr != NULL )  {
+    fs->OnProgress->Add(f_lsnr);
+    f_lsnr = NULL;
+  }
+  IInputStream* src_s = NULL;
+  try {  src_s = fs->OpenFile( fs->GetBase() + src_fn ); }
+  catch( const TExceptionBase& exc )  {
+    log.Add( exc.GetException()->GetFullMessage() );
+    delete fs;
+    return updater::uapi_InvaildRepository;
+  }
+  if( src_s == NULL )  {
+    delete fs;
+    return updater::uapi_InvaildRepository;
+  }
+  try  {
+    src_fn = TBasicApp::GetInstance()->BaseDir() + src_fn; 
+    TEFile src_f(src_fn, "w+b");
+    src_f << *src_s;
+    delete src_s;
+    src_s = NULL;
+    src_f.Close();
+    ZipFS zfs(src_fn, false);
+    if( p_lsnr != NULL )  {
+      zfs.OnProgress->Add(p_lsnr);
+      p_lsnr = NULL;
+    }
+    TEFile::DelFile(src_fn);
+    delete fs;
+    fs = NULL;
+    zfs.ExtractAll(TBasicApp::GetInstance()->BaseDir());
+    settings.last_updated = TETime::EpochTime();
+    settings.update_interval = "Always";
+    settings.Save();
+  }
+  catch( const TExceptionBase& exc )  {
+    log.Add( exc.GetException()->GetFullMessage() );
+    if( fs != NULL )     delete fs;
+    if( src_s != NULL )  delete src_s;
+    return updater::uapi_InstallError;
+  }
+  return updater::uapi_OK;
+}
+//.............................................................................
+short UpdateAPI::DoSynch(AActionHandler* _f_lsnr, AActionHandler* _p_lsnr)  {
+  CleanUp(_f_lsnr, _p_lsnr); 
+  if( !settings.IsValid() )  {
+    log.Add("Invalid settings file: ") << settings.source_file;
+    return uapi_NoSettingsFile;
+  }
+  const SettingsFile& sf = settings;
+  if( sf.dest_repository.IsEmpty() || sf.src_for_dest.IsEmpty() )
+    return updater::uapi_NoTask;
+  AFileSystem* srcFS = NULL;
+  if( sf.src_for_dest.Equalsi("local") )
+    srcFS = new TOSFileSystem(TBasicApp::GetInstance()->BaseDir());
+  else if( sf.src_for_dest.Equalsi("remote") )
+    srcFS = FSFromString( sf.GetRepositoryUrlStr(), sf.GetProxyUrlStr() );
+  
+  if( srcFS == NULL )  {
+    log.Add("Could not locate source for syncronisation");
+    return updater::uapi_NoSource;
+  }
+  AFileSystem* destFS = FSFromString( sf.GetDestinationUrlStr(), sf.GetProxyUrlStr() );
+  if( destFS == NULL )  {
+    delete srcFS;
+    return updater::uapi_NoDestination;
+  }
+  short res = _Update(*srcFS, *destFS);
+  delete srcFS;
+  delete destFS;
+  return res;
+}
+//.............................................................................
+void UpdateAPI::EvaluateProperties(TStrList& props) const  {
   props.Add("olex-update");
 #ifdef __WIN32__
   props.Add("port-win32");
 #else
-  // updating ported executables
   olxstr olex_port = settings.ParamValue("olex-port");
   if( !olex_port.IsEmpty() )  {
     props.Add(olex_port);
     log.Add("Portable executable update tag: ") << olex_port;
   }
-  // end
 #endif
-  olxstr pluginFile = bapp.BaseDir() + "plugins.xld";
+  olxstr pluginFile = TBasicApp::GetInstance()->BaseDir() + "plugins.xld";
   if( TEFile::Exists( pluginFile ) )  {
     try  {
       TDataFile df;
@@ -103,86 +179,226 @@ short UpdateAPI::DoUpdate(AActionHandler* f_lsnr, AActionHandler* p_lsnr)  {
           props.Add( PluginItem->GetItem(i).GetName() );
       }
     }
-    catch( TExceptionBase &e )  {  ;  }
+    catch(...)  {}  // unlucky
   }
-  AFileSystem* srcFS = NULL;
-  // end properties evaluation
-  if( TEFile::Exists(Repository) )  {
-    if( TEFile::ExtractFileExt(Repository).Equalsi("zip") )  {
-      if( !TEFile::IsAbsolutePath(Repository) )
-        Repository = bapp.BaseDir() + Repository;
-      if( TEFile::FileAge(Repository) > LastUpdate )  {
-        Update = true;
-        srcFS = new ZipFS(Repository, false);
-      }
+}
+//.............................................................................
+AFileSystem* UpdateAPI::FSFromString(const olxstr& _repo, const olxstr& _proxy)  {
+  if( _repo.IsEmpty() )  return NULL;
+  AFileSystem* FS = NULL;
+  olxstr repo = _repo;
+  if( TEFile::Exists(repo) )  {
+    if( TEFile::ExtractFileExt(repo).Equalsi("zip") )  {
+      if( !TEFile::IsAbsolutePath(repo) )
+        repo = TBasicApp::GetInstance()->BaseDir() + repo;
+      FS = new ZipFS(repo, false);
     }
-    else if( TEFile::IsDir(Repository) )  {
-      Update = true;
-      srcFS = new TOSFileSystem(Repository);
-    }
+    else if( TEFile::IsDir(repo) )
+      FS = new TOSFileSystem(repo);
   }
   else  {
-    if( UpdateInterval.Equalsi("Always") )  Update = true;
-    else if( UpdateInterval.Equalsi("Daily") )
-      Update = ((TETime::EpochTime() - LastUpdate ) > SecsADay );
-    else if( UpdateInterval.Equalsi("Weekly") )
-      Update = ((TETime::EpochTime() - LastUpdate ) > SecsADay*7 );
-    else if( UpdateInterval.Equalsi("Monthly") )
-      Update = ((TETime::EpochTime() - LastUpdate ) > SecsADay*30 );
-
-    if( Update )  {
-      TUrl url(Repository);
-      url.SetUser(ProxyUser);
-      url.SetPassword(ProxyPasswd);
-      if( !Proxy.IsEmpty() )
-        url.SetProxy( Proxy );
-      srcFS = new HttpFS(url);
-    }
-  }
-  if( Update && srcFS != NULL )  { // have to save lastupdate in anyway
-    bool skip = (extensionsToSkip.IsEmpty() && filesToSkip.IsEmpty());
-    UpdateInstallation(*srcFS, props, skip ? NULL : &toSkip, f_lsnr, p_lsnr);
-    delete srcFS;
-    settings.UpdateParam("lastupdate", TETime::EpochTime() );
-    settings.SaveSettings( SettingsFile );
-  }
-  #ifdef __WXWIDGETS__
-  short res = updater::uapi_OK;
-  if( !ftpToSync.IsEmpty() )  {
-    AFileSystem* FS = NULL;
-    try  {
-      if( syncSrc.Equalsi("fs2Ftp") )
-        FS = new TOSFileSystem(bapp.BaseDir()); // local file system
-      else if( syncSrc.Equalsi("http2Ftp") )  {
-        TUrl url(Repository);
-        if( !Proxy.IsEmpty() )
-          url.SetProxy( Proxy );
-        FS = new HttpFS(url);
-      }
-    }
-    catch(const TExceptionBase& exc)  {
-      if( FS != NULL )  {
-        delete FS;
-        FS = NULL;
-      }
-      res = updater::uapi_FTP_Error;
-      log.Add( exc.GetException()->GetFullMessage() );
-    }
-    if( FS != NULL )  {
-      try  {
-        TwxFtpFileSystem ftp(ftpToSync, ftpUser, ftpPwd, NULL);
-        UpdateMirror(*FS, ftp, f_lsnr, p_lsnr);
-      }
-      catch(const TExceptionBase& exc)  {
-        res = updater::uapi_FTP_Error;
-        log.Add( exc.GetException()->GetFullMessage() );
-      }
-      delete FS;
-    }
-  }
+    TUrl url(_repo);
+    if( !_proxy.IsEmpty() )
+      url.SetProxy( _proxy );
+    if( url.GetProtocol() == "http" )
+      FS = new HttpFS(url);
+#ifdef __WXWIDGETS__
+    else if( url.GetProtocol() == "ftp" )
+      FS = new TwxFtpFileSystem(url);
 #endif
-  return res;
+  }
+  return FS;
 }
+//.............................................................................
+AFileSystem* UpdateAPI::GetRepositoryFS(const SettingsFile& sf, short* status, TStrList* log)  {
+  AFileSystem* FS = NULL;
+  olxstr repo = sf.repository;
+  if( TEFile::Exists(repo) )  {
+    if( TEFile::ExtractFileExt(repo).Equalsi("zip") )  {
+      if( !TEFile::IsAbsolutePath(repo) )
+        repo = TBasicApp::GetInstance()->BaseDir() + repo;
+      if( TEFile::FileAge(repo) > sf.last_updated )
+        FS = new ZipFS(repo, false);
+    }
+    else if( TEFile::IsDir(repo) )
+      FS = new TOSFileSystem(repo);
+  }
+  else  {
+    bool update = false;
+    if( sf.update_interval.IsEmpty() || sf.update_interval.Equalsi("Always") )  
+      update = true;
+    else if( sf.update_interval.Equalsi("Daily") )
+      update = ((TETime::EpochTime() - sf.last_updated ) > SecsADay );
+    else if( sf.update_interval.Equalsi("Weekly") )
+      update = ((TETime::EpochTime() - sf.last_updated ) > SecsADay*7 );
+    else if( sf.update_interval.Equalsi("Monthly") )
+      update = ((TETime::EpochTime() - sf.last_updated ) > SecsADay*30 );
 
-
-
+    if( update )  {
+      try  {
+        if( !repo.EndsWith('/') )
+          repo << '/';
+        if( !repo.EndsWith("update/") )
+          repo << "update/";
+        TUrl url(repo);
+        url.SetUser(sf.repository_user);
+        url.SetPassword(sf.repository_pswd);
+        if( !sf.proxy.IsEmpty() )  {
+          TUrl proxy( sf.proxy );
+          proxy.SetUser( sf.proxy_user );
+          proxy.SetPassword( sf.proxy_pswd );
+          url.SetProxy( proxy );
+        }
+        if( url.GetProtocol() == "http" )
+          FS = new HttpFS(url);
+#ifdef __WXWIDGETS__
+        else if( url.GetProtocol() == "ftp" )
+          FS = new TwxFtpFileSystem(url);
+#endif
+      }
+      catch( const TExceptionBase& exc )  {
+        if( log != NULL )
+          log->Add( exc.GetException()->GetFullMessage() );
+        return NULL;
+      }
+    }
+    else if( status != NULL )
+      *status = updater::uapi_UptoDate;
+  }
+  return FS;
+}
+//.............................................................................
+AFileSystem* UpdateAPI::GetRepositoryFS(olxstr* repo_name) const  {
+  olxstr repo, def_repo("http://www.olex2.org/olex2-distro/");
+  //olxstr repo, def_repo("http://www.olex2.org/olex-distro-test/");
+  TStrList repositories;
+  olxstr mirrors_fn = GetMirrorsFileName();
+  if( TEFile::Exists(mirrors_fn) )
+    repositories.LoadFromFile(mirrors_fn);
+  if( repositories.IndexOf(def_repo) == -1 )
+    repositories.Insert(0, def_repo);
+  if( settings.IsValid() && !settings.repository.IsEmpty() )  {
+    int ind = repositories.IndexOf(settings.repository);
+    if( ind != -1 && ind != 0 )
+      repositories.Delete(ind);
+    repositories.Insert(0, settings.repository);
+  }
+  olxstr proxy_url = settings.GetProxyUrlStr();
+  for( int i=0; i < repositories.Count(); i++ )  {
+    AFileSystem* fs = FSFromString(repositories[i], proxy_url);
+    if( fs != NULL )  {
+      if( repo_name != NULL )
+        *repo_name = repositories[i];
+      return fs;
+    }
+  }
+  return NULL;
+}
+//.............................................................................
+void UpdateAPI::GetTags(TStrList& res, olxstr& repo_name) const {
+  AFileSystem* fs = GetRepositoryFS(&repo_name);
+  olxstr tags_fn = TBasicApp::GetInstance()->BaseDir() + GetTagsFileName();
+  if( TEFile::Exists(tags_fn) )
+    res.LoadFromFile(tags_fn);
+  if( fs == NULL )  return;
+  IInputStream* is= NULL;
+  try  { is = fs->OpenFile(fs->GetBase() + GetTagsFileName());  }
+  catch( const TExceptionBase& exc )  {
+    log.Add( exc.GetException()->GetFullMessage() );
+    delete fs;
+    return;
+  }
+  if( is == NULL )  {
+    delete fs;
+    return;
+  }
+  if( res.IsEmpty() )  {
+    res.LoadFromTextStream(*is);
+    delete is;
+    return;
+  }
+  // merge then
+  TStrList tags;
+  tags.LoadFromTextStream(*is);
+  delete is;
+  for( int i=0; i < tags.Count(); i++ )
+    if( res.IndexOf(tags[i]) == -1 )
+      res.Add(res[i]);
+}
+/////////////////////////////////////////////////////////////////////////
+SettingsFile::SettingsFile(const olxstr& file_name) : source_file(file_name)  {
+  if( !TEFile::Exists(file_name) )
+    return;
+  const TSettingsFile settings(file_name);
+  proxy = settings["proxy"];
+  proxy_user = settings["proxy_user"];
+  proxy_pswd = settings["proxy_passwd"];
+  repository = settings["repository"];
+  repository_user = settings["repository_user"];
+  repository_pswd = settings["repository_passwd"];
+  update_interval = settings["update"];
+  const olxstr& last_update_str = settings.GetParam("lastupdate", "0");
+  if( last_update_str.IsEmpty() )
+    last_updated = 0;
+  else
+    last_updated = last_update_str.RadInt<int64_t>();
+  extensions_to_skip.Strtok(settings["exceptions"], ';');
+  dest_repository = settings["dest_repository"];
+  dest_user = settings["dest_user"];
+  dest_pswd = settings["dest_passwd"];
+  src_for_dest = settings["src_for_dest"];
+  files_to_skip.Strtok(settings["skip"], ';');
+}
+//.......................................................................
+olxstr SettingsFile::GetRepositoryUrlStr() const  {
+  if( repository.IsEmpty() )
+    return EmptyString;
+  olxstr rv;
+  if( !repository_user.IsEmpty() )
+    rv << repository_user << '@';
+  if( !repository_pswd.IsEmpty() )
+    rv << ':' << repository_pswd;
+  return rv << repository;
+}
+//.......................................................................
+olxstr SettingsFile::GetDestinationUrlStr() const  {
+  if( dest_repository.IsEmpty() )
+    return EmptyString;
+  olxstr rv;
+  if( !dest_user.IsEmpty() )
+    rv << dest_user << '@';
+  if( !dest_pswd.IsEmpty() )
+    rv << ':' << dest_pswd;
+  return rv << dest_repository;
+}
+//.......................................................................
+olxstr SettingsFile::GetProxyUrlStr() const  {
+  if( proxy.IsEmpty() )
+    return EmptyString;
+  olxstr rv;
+  if( !proxy_user.IsEmpty() )
+    rv << proxy_user << '@';
+  if( !proxy_pswd.IsEmpty() )
+    rv << ':' << proxy_pswd;
+  return rv << proxy;
+}
+//.......................................................................
+void SettingsFile::Save() const {
+  TSettingsFile settings;
+  settings["proxy"] = proxy;
+  settings["proxy_user"] = proxy_user;
+  settings["proxy_passwd"] = proxy_pswd;
+  settings["repository"] = repository;
+  settings["repository_user"] = repository_user;
+  settings["repository_passwd"] = repository_pswd;
+  settings["update"] = update_interval;
+  settings["lastupdate"] = last_updated;
+  settings["exceptions"] = extensions_to_skip.Text(';');
+  settings["dest_repository"] = dest_repository;
+  settings["dest_user"] = dest_user;
+  settings["dest_passwd"] = dest_pswd;
+  settings["src_for_dest"] = src_for_dest;
+  settings["skip"] = files_to_skip.Text(';');
+  settings.SaveSettings(source_file);
+}
+//.......................................................................

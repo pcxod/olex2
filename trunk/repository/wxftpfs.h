@@ -18,9 +18,9 @@ class TwxFtpFileSystem: public AFileSystem, public IEObject  {
     return fn.Trim('/');
   }
 public:
-  TwxFtpFileSystem(const TUrl& url, const olxstr& userName, const olxstr& pswd, TwxZipFileSystem* zipFS=NULL) : Url(url) {
-    Ftp.SetUser( userName.u_str() );
-    Ftp.SetPassword( pswd.u_str() );
+  TwxFtpFileSystem(const TUrl& url, TwxZipFileSystem* zipFS=NULL) : Url(url) {
+    Ftp.SetUser( url.GetUser().u_str() );
+    Ftp.SetPassword( url.GetPassword().u_str() );
     Ftp.SetBinary();
     ZipFS = zipFS;
     if( !Ftp.Connect( (url.HasProxy() ? url.GetProxy().GetFullHost() : url.GetHost()).u_str() ) )  {

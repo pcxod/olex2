@@ -1,11 +1,13 @@
-#ifndef winzipfsH
-#define winzipfsH
+#ifndef __olx_win_zipfs_H
+#define __olx_win_zipfs_H
+/* windows specific ZIP file extracting, creation (not implemented yet) utility,
+(c) O Dolomanov, 2004-2009 */
 
+#include "defs.h"
 #ifdef __WIN32__
   #include <windows.h>
   #include "filesystem.h"
   #include "unzip.h"
-  #include "efile.h"
 
 class TWinZipFileSystem: public AFileSystem, public IEObject  {
   HZIP zip;

@@ -22,6 +22,7 @@ object fMain: TfMain
   OnMouseMove = iSplashMouseMove
   OnMouseUp = iSplashMouseUp
   OnPaint = FormPaint
+  OnShow = FormShow
   PixelsPerInch = 96
   TextHeight = 13
   object Panel2: TPanel

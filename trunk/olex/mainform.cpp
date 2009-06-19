@@ -4055,7 +4055,7 @@ void TMainForm::DoUpdateFiles()  {
   _UpdateThread->ResetUpdateSize();
   olxstr sf_name(FXApp->BaseDir() + "usettings.dat");
   TSettingsFile sf( sf_name );
-  bool ask = sf.ParamValue("ask_update", TrueString).ToBool();
+  bool ask = sf.GetParam("ask_update", TrueString).ToBool();
   TdlgMsgBox* msg_box = NULL;
   if( ask )  {
     msg_box = new TdlgMsgBox( this, 
@@ -4068,7 +4068,7 @@ void TMainForm::DoUpdateFiles()  {
     if( res == wxID_YES )  {
       _UpdateThread->DoUpdate();
       if( msg_box->IsChecked() )  {
-        sf.UpdateParam("ask_update", FalseString);
+        sf["ask_update"] = FalseString;
         sf.SaveSettings(sf_name);
       }
     }

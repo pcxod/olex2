@@ -12,10 +12,11 @@
 
 #include "efile.h"
 #include "winhttpfs.h"
-#include "unzip.h"
+#include "winzipfs.h"
 #include "settingsfile.h"
 #include "shellutil.h"
 #include "estrlist.h"
+#include "updateapi.h"
 //---------------------------------------------------------------------------
 #pragma package(smart_init)
 #pragma link "frame1"
@@ -23,31 +24,23 @@
 
 TfMain *fMain;
 
-class TProgress: public AActionHandler
-{
+class TProgress: public AActionHandler  {
 public:
-  TProgress(){  return; }
-  virtual ~TProgress(){  return; }
-  bool Exit(const IEObject *Sender, const IEObject *Data)  {
-    return true;
-  }
+  TProgress(){}
+  virtual ~TProgress(){}
+  bool Exit(const IEObject *Sender, const IEObject *Data)  {  return true;  }
   bool Enter(const IEObject *Sender, const IEObject *Data)  {
     if( !EsdlInstanceOf( *Data, TOnProgress) )  return false;
-    IEObject *d_p = const_cast<IEObject*>(Data);
-    TOnProgress *A = dynamic_cast<TOnProgress *>(d_p);
+    const TOnProgress *A = dynamic_cast<const TOnProgress*>(Data);
     fMain->pbProgress->Max = A->GetMax();
     return true;
   }
   bool Execute(const IEObject *Sender, const IEObject *Data)  {
-    if( !EsdlInstanceOf( *Data, TOnProgress) )
-      throw TInvalidArgumentException(__OlxSourceInfo, "invalid type");
-
-    IEObject *d_p = const_cast<IEObject*>(Data);
-    TOnProgress *A = dynamic_cast<TOnProgress *>(d_p);
+    if( !EsdlInstanceOf( *Data, TOnProgress) )  return false;
+    const TOnProgress *A = dynamic_cast<const TOnProgress*>(Data);
     fMain->pbProgress->Position = A->GetPos();
-    if( Sender != NULL && EsdlInstanceOf(*Sender, TWinHttpFileSystem) ) {
-      fMain->frMain->stAction->Caption = (olxstr("Downloading: ") << TEFile::ExtractFileName(A->GetAction())).c_str();
-    }
+    if( Sender != NULL && EsdlInstanceOf(*Sender, TWinHttpFileSystem) )
+      fMain->frMain->stAction->Caption = (olxstr("Downloading: ") << TEFile::ExtractFileName(A->GetAction().c_str())).c_str();
     else
       fMain->frMain->stAction->Caption = TEFile::ExtractFileName(A->GetAction()).c_str();
     Application->ProcessMessages();
@@ -58,14 +51,11 @@ public:
 olxstr TfMain::SettingsFile = "usettings.dat";
 
 //---------------------------------------------------------------------------
-__fastcall TfMain::TfMain(TComponent* Owner)
-  : TForm(Owner)
-{
+__fastcall TfMain::TfMain(TComponent* Owner) :TForm(Owner)  {
   MouseDown = Dragging = false;
   Expanded = false;
   Bapp = new TBasicApp( CmdLine[0] );
-  Progress = new TProgress();
-  Bapp->OnProgress->Add( Progress );
+  Bapp->OnProgress->Add( new TProgress );
   olxstr ip( TShellUtil::GetSpecialFolderLocation(fiProgramFiles) );
   TEFile::AddTrailingBackslashI( ip ) << "Olex2";
   frMain->eInstallationPath->Text = ip.c_str();
@@ -76,10 +66,10 @@ __fastcall TfMain::TfMain(TComponent* Owner)
     olxstr sfile = OlexInstalledPath;
            sfile << TfMain::SettingsFile;
     if( TEFile::Exists( sfile ) )  {
-      TSettingsFile Settings( sfile );
-      frMain->cbRepository->Text = Settings.ParamValue("repository").c_str();
-      frMain->eProxy->Text = Settings.ParamValue("proxy").c_str();
-      int updateInd = frMain->rgAutoUpdate->Items->IndexOfName( Settings.ParamValue("update").c_str() );
+      const TSettingsFile Settings( sfile );
+      frMain->cbRepository->Text = Settings["repository"].c_str();
+      frMain->eProxy->Text = Settings["proxy"].c_str();
+      int updateInd = frMain->rgAutoUpdate->Items->IndexOfName( Settings["update"].c_str() );
       if( updateInd != -1 )
         frMain->rgAutoUpdate->ItemIndex = updateInd;
     }
@@ -105,8 +95,7 @@ __fastcall TfMain::TfMain(TComponent* Owner)
   frMain->bbInstall->Default = true;
 }
 //---------------------------------------------------------------------------
-__fastcall TfMain::~TfMain()
-{
+__fastcall TfMain::~TfMain()  {
   Bapp->OnIdle->Execute(NULL, NULL);
   delete Bapp;
 }
@@ -115,16 +104,13 @@ void __fastcall TfMain::iSplashMouseMove(TObject *Sender,
       TShiftState Shift, int X, int Y)
 {
   if( !MouseDown )  return;
-  if( !Dragging )
-  {
+  if( !Dragging )  {
     if( abs(X-MouseDownX) >= 3 || abs(Y-MouseDownY) >= 3 )
       Dragging = true;
   }
   if( !Dragging )  return;
   Left = Left + (X-MouseDownX);
   Top = Top + (Y-MouseDownY);
-  //MouseDownX = X;
-  //MouseDownY = Y;
 }
 //---------------------------------------------------------------------------
 void __fastcall TfMain::iSplashMouseDown(TObject *Sender,
@@ -155,71 +141,24 @@ void __fastcall TfMain::bbBrowseClick(TObject *Sender)
   this->Enabled = true;
 }
 //---------------------------------------------------------------------------
-void __fastcall TfMain::bbDoneClick(TObject *Sender)
-{
-  Application->Terminate();  
-}
-//---------------------------------------------------------------------------
-bool ExtractZip(TWinHttpFileSystem& repos, const olxstr& zipName, const olxstr& extractPath)  {
-  TEFile* zipf = repos.OpenFileAsFile(repos.GetBase() + zipName);
-  if( zipf == NULL )  {
-    //Application->MessageBoxA("Could not locate the olex distribution", "Zip file fetching error", MB_OK|MB_ICONERROR);
-    return false;
-  }
-  olxstr zipfn( zipf->GetName() );
-  delete zipf;
-  HZIP hz = OpenZip(zipfn.c_str(), NULL);
-  ZIPENTRY ze;
-  GetZipItem(hz, -1, &ze);
-  int numitems = ze.index;
-  TOnProgress Progress;
-  Progress.SetMax( numitems );
-  TBasicApp::GetInstance()->OnProgress->Enter( NULL, &Progress );
-  // -1 gives overall information about the zipfile
-  for( int zi=0; zi < numitems; zi++ )  {
-    ZIPENTRY ze;
-    GetZipItem(hz, zi, &ze); // fetch individual details
-    Progress.SetPos( zi );
-    Progress.SetAction( ze.name );
-    TBasicApp::GetInstance()->OnProgress->Execute( NULL, &Progress );
-    UnzipItem(hz, zi, (extractPath + ze.name).c_str() );         // e.g. the item's name.
-  }
-  CloseZip(hz);
-  return true;
+void __fastcall TfMain::bbDoneClick(TObject *Sender)  {
+  Application->Terminate();
 }
 //---------------------------------------------------------------------------
 bool TfMain::DoInstall(const olxstr& zipFile, const olxstr& installPath)  {
-  HZIP hz = OpenZip(zipFile.c_str(), NULL);
-  ZIPENTRY ze;
-  GetZipItem(hz, -1, &ze);
-  int numitems = ze.index;
-  TOnProgress Progress;
-  Progress.SetMax( numitems );
-  TBasicApp::GetInstance()->OnProgress->Enter( NULL, &Progress );
-  olxstr licFile("licence.rtf");
-  bool accepted = false;
-  for( int zi=0; zi < numitems; zi++ )  {
-    GetZipItem(hz, zi, &ze); // fetch individual details
-    if( !licFile.Comparei( ze.name ) )  {
-      UnzipItem(hz, zi, (installPath + ze.name).c_str() );         // e.g. the item's name.
-      dlgLicence->reEdit->Lines->LoadFromFile( (installPath + ze.name).c_str() );
-      accepted = (dlgLicence->ShowModal() == mrOk );
-      break;
-    }
-  }
-  if( !accepted )  {
-    Application->Terminate();
-    return false;  // nobody cares thougth :)
-  }
-
-  for( int zi=0; zi < numitems; zi++ )  {
-    GetZipItem(hz, zi, &ze); // fetch individual details
-    Progress.SetPos( zi );
-    Progress.SetAction( olxstr("Installing: ") << ze.name );
-    TBasicApp::GetInstance()->OnProgress->Execute( NULL, &Progress );
-    UnzipItem(hz, zi, (installPath + ze.name).c_str() );         // e.g. the item's name.
-  }
-  CloseZip(hz);
+  TWinZipFileSystem zfs( zipFile );
+  zfs.OnProgress->Add( new TProgress );
+  TEFile* lic_f = NULL;
+  try  {  lic_f = zfs.OpenFileAsFile("licence.rtf");  }
+  catch(...)  {  return false;  }
+  if( lic_f == NULL )  return false;
+  olxstr lic_fn = lic_f->GetName();
+  delete lic_f;
+  dlgLicence->reEdit->Lines->LoadFromFile( lic_fn.c_str() );
+  bool accepted = (dlgLicence->ShowModal() == mrOk );
+  if( !accepted )  return false;
+  try  {  zfs.ExtractAll(installPath);  }
+  catch(...) {  return false;  }
   return true;
 }
 //---------------------------------------------------------------------------
@@ -252,15 +191,15 @@ void __fastcall TfMain::bbInstallClick(TObject *Sender)  {
     }
   }
   if( !localInstall )
-    Settings.UpdateParam("repository", reposPath);
+    Settings["repository"] = reposPath;
   else  // use default
-    Settings.UpdateParam("repository", "http://dimas.dur.ac.uk/olex-distro/update");
-  Settings.UpdateParam("proxy", proxyPath);
-  Settings.UpdateParam("update", frMain->rgAutoUpdate->Items->Strings[frMain->rgAutoUpdate->ItemIndex].c_str());
+    Settings["repository"] = "http://dimas.dur.ac.uk/olex-distro/";
+  Settings["proxy"] = proxyPath;
+  Settings["update"] = frMain->rgAutoUpdate->Items->Strings[frMain->rgAutoUpdate->ItemIndex].c_str();
 
   if( OlexInstalled )  {
     // forcr launch to update
-    Settings.UpdateParam("lastupdate", EmptyString);
+    Settings["lastupdate"] = EmptyString;
     if( !localInstall )  {
       try  { Settings.SaveSettings( installPath + TfMain::SettingsFile );  }
       catch( TExceptionBase& exc )  {
@@ -278,16 +217,20 @@ void __fastcall TfMain::bbInstallClick(TObject *Sender)  {
       if( !proxyPath.IsEmpty() )
         url.SetProxy(proxyPath);
       TWinHttpFileSystem repos(url);
+      repos.OnProgress->Add( new TProgress );
       TEFile* zipf = repos.OpenFileAsFile( url.GetPath() + "olex2.zip");
       if( zipf == NULL )  {
+        frMain->stAction->Caption = "Failed...";
         Application->MessageBoxA("Could not locate the olex distribution.\nPlease try another repository.", "Zip file fetching error", MB_OK|MB_ICONERROR);
         return;
       }
       olxstr zipName( zipf->GetName() );
       delete zipf;
-      // the file gets deleted with the FS ... have to hurry!
-      if( !DoInstall( zipName, installPath ) )
+      // the file gets deleted with the FS
+      if( !DoInstall( zipName, installPath ) )  {
+        Application->MessageBoxA("Installation has failed.", "Error", MB_OK|MB_ICONERROR);
         return;
+      }
     }
     else  {
       if( !DoInstall( frMain->cbRepository->Text.c_str(), installPath ) )
@@ -317,7 +260,7 @@ void __fastcall TfMain::bbInstallClick(TObject *Sender)  {
       TShellUtil::CreateShortcut(TShellUtil::GetSpecialFolderLocation(fiDesktop) + "Olex2.lnk",
                                  installPath + "olex2.exe", "Olex2 launcher", SetRunAs);
     if( !localInstall )  {
-      Settings.UpdateParam("repository", reposPath + "update/");
+      Settings["repository"] = reposPath + "update/";
       frMain->cbRepository->Text = AnsiString(reposPath.c_str()) + "update/";
     }
     olxstr set_fn( installPath + TfMain::SettingsFile );
@@ -444,8 +387,7 @@ void __fastcall TfMain::bbUninstallClick(TObject *Sender)  {
     return;
   }
   if( TEFile::Exists(indexFileName) )  {
-    TOSFileSystem osFS;
-    osFS.SetBase(OlexInstalledPath);
+    TOSFileSystem osFS(OlexInstalledPath);
     TFSIndex FSIndex(osFS);
     FSIndex.LoadIndex( indexFileName );
     CleanInstallationFolder( FSIndex.GetRoot() );
@@ -533,4 +475,16 @@ void __fastcall TfMain::sbPickZipClick(TObject *Sender)
 }
 //---------------------------------------------------------------------------
 
+
+void __fastcall TfMain::FormShow(TObject *Sender)  {
+  updater::UpdateAPI api;
+  TStrList tags;
+  olxstr repo_name;
+  api.GetTags(tags, repo_name);
+  if( tags.IsEmpty() )  return;
+  //frMain->cbRepository->Items->Clear();
+  for( int i=0; i < tags.Count(); i++ )
+    frMain->cbRepository->Items->Add( (repo_name+tags[i]).c_str());
+}
+//---------------------------------------------------------------------------
 

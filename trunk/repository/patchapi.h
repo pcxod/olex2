@@ -3,7 +3,7 @@
 #include "actions.h"
 #include "efile.h"
 #include "exception.h"
-namespace patch  {
+namespace patcher  {
 const short
   papi_OK = 0,
   papi_Busy = 1,

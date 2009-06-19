@@ -5736,15 +5736,15 @@ void TMainForm::macInstallPlugin(TStrObjList &Cmds, const TParamList &Options, T
     }
     else  {
       olxstr SettingsFile( TBasicApp::GetInstance()->BaseDir() + "usettings.dat" );
-      TSettingsFile settings;
       if( TEFile::Exists(SettingsFile) )  {
+        const TSettingsFile settings(SettingsFile);
         olxstr Proxy, Repository;
 
-        settings.LoadSettings( SettingsFile );
-        if( settings.ParamExists("proxy") )        Proxy = settings.ParamValue("proxy");
-        if( settings.ParamExists("repository") )   Repository = settings.ParamValue("repository");
+        Proxy = settings["proxy"];
+        Repository = settings["repository"];
 
-        if( Repository.Length() && !Repository.EndsWith('/') )  Repository << '/';
+        if( Repository.Length() && !Repository.EndsWith('/') )  
+          Repository << '/';
 
         TUrl url(Repository);
         if( !Proxy.IsEmpty() )  url.SetProxy( TUrl(Proxy) );
@@ -5908,14 +5908,13 @@ void TMainForm::macUpdateFile(TStrObjList &Cmds, const TParamList &Options, TMac
 #endif
   olxstr SettingsFile( TBasicApp::GetInstance()->BaseDir() + "usettings.dat" );
   TEFile::CheckFileExists( __OlxSourceInfo, SettingsFile );
-  TSettingsFile settings;
+  const TSettingsFile settings(SettingsFile);
   olxstr Proxy, Repository;
   bool Force = Options.Contains('f');
 
-  settings.LoadSettings( SettingsFile );
-  if( settings.ParamExists("proxy") )        Proxy = settings.ParamValue("proxy");
-  if( settings.ParamExists("repository") )   Repository = settings.ParamValue("repository");
-  if( settings.ParamValue("update").Equalsi("never") )  {
+  Proxy = settings["proxy"];
+  Repository = settings["repository"];
+  if( settings.GetParam("update").Equalsi("never") )  {
     TBasicApp::GetLog() << (olxstr("User settings prevented updating file: ") << Cmds[0]);
     return;
   }

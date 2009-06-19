@@ -19,10 +19,7 @@ IInputStream* TwxHttpFileSystem::OpenFile(const olxstr& Source)  {
     return ZipFS->OpenFile(zip_name);
   }
   TOnProgress Progress;
-  Progress.SetMax(1);
-  Progress.SetPos(0);
   Progress.SetAction(olxstr("Downloading ") << o_src );
-  OnProgress->Enter(this, &Progress);
   wxInputStream* is = NULL;
   try  {
     olxstr src( Url.GetFullHost() );
@@ -33,7 +30,7 @@ IInputStream* TwxHttpFileSystem::OpenFile(const olxstr& Source)  {
     is = Http.GetInputStream( src.u_str() );
     if( is != NULL )  {
       Progress.SetMax( is->GetLength() );
-      OnProgress->Execute(this, &Progress);
+      OnProgress->Enter(this, &Progress);
     }
   }
   catch( ... )  {   return NULL;  }
@@ -61,12 +58,10 @@ IInputStream* TwxHttpFileSystem::OpenFile(const olxstr& Source)  {
       is->Read(bf, 1024*64);
     }
     ms->SetPosition(0);
-    Progress.SetAction("Download complete");
-    Progress.SetPos( 0 );
+    Progress.SetPos( Progress.GetMax() );
     OnProgress->Exit(this, &Progress);
   }
   catch(...)  {
-    Progress.SetAction("Download failed");
     Progress.SetPos( 0 );
     OnProgress->Execute(this, &Progress);
     OnProgress->Exit(this, &Progress);

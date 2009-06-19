@@ -231,6 +231,7 @@
 				AdditionalDependencies="sdl.lib wxexpatd.lib wxjpegd.lib wxbase28ud.lib wxbase28ud_net.lib wxmsw28ud_gl.lib wxmsw28ud_richtext.lib wxmsw28ud_html.lib wxmsw28ud_core.lib wxmsw28ud_adv.lib wxpngd.lib wxregexud.lib wxtiffd.lib wxzlibd.lib mapi32.lib glu32.lib user32.lib opengl32.lib gdi32.lib ole32.lib advapi32.lib comdlg32.lib comctl32.lib shell32.lib rpcrt4.lib oleaut32.lib kernel32.lib wsock32.lib"
 				AdditionalLibraryDirectories="&quot;$(WX_DIR)\lib\vc_lib&quot;;&quot;$(SolutionDir)$(ConfigurationName)\lib&quot;;&quot;$(SolutionDir)\lib_ud&quot;"
 				GenerateDebugInformation="true"
+				AssemblyDebug="1"
 				SubSystem="1"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
@@ -435,11 +436,27 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\repository\patchapi.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\repository\unzip.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\repository\updateapi.cpp"
 				>
 			</File>
 			<File
 				RelativePath="..\..\..\repository\url.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\repository\winhttpfs.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\repository\winzipfs.cpp"
 				>
 			</File>
 			<File
