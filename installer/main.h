@@ -36,6 +36,7 @@ __published:	// IDE-managed Components
   void __fastcall cbProxyClick(TObject *Sender);
   void __fastcall FormPaint(TObject *Sender);
   void __fastcall sbPickZipClick(TObject *Sender);
+  void __fastcall FormShow(TObject *Sender);
 private:	// User declarations
   bool Dragging, MouseDown;
   int MouseDownX, MouseDownY;

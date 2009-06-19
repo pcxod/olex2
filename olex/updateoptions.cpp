@@ -24,9 +24,8 @@ TdlgUpdateOptions::TdlgUpdateOptions(TMainFrame *ParentFrame) :
   stRepository = new wxStaticText(this, -1, wxT("Repository URL"), wxDefaultPosition, wxDefaultSize);
   stLastUpdated = new wxStaticText(this, -1, wxT("Last updated: unknown"), wxDefaultPosition, wxDefaultSize);
 
-  olxstr lastUpdate = SF.ParamValue("lastupdate");
-  if( lastUpdate.Length() )
-  {
+  olxstr lastUpdate = SF["lastupdate"];
+  if( !lastUpdate.IsEmpty() )  {
   // buggy wxWidgets will fail for timezone <> 0
 //    wxDateTime dt( (time_t)lastUpdate.Long() );
 //    wxString date = "Last updated: ";
@@ -39,13 +38,13 @@ TdlgUpdateOptions::TdlgUpdateOptions(TMainFrame *ParentFrame) :
   wxString choices[] = {wxT("http://dimas.dur.ac.uk/olex-distro/update/"),
   wxT("http://dimas.dur.ac.uk/olex-distro-test/update/"),
   wxT("http://www.x-rayman.co.uk/olex2/olex-distro-test/update/")};
-  tcProxy = new wxTextCtrl(this, -1, uiStr(SF.ParamValue("proxy")) , wxDefaultPosition, wxSize(320, 21), 0);
-  cbRepository = new wxComboBox(this, -1, uiStr(SF.ParamValue("repository")), wxDefaultPosition, wxSize(320, 21), 3, choices);
+  tcProxy = new wxTextCtrl(this, -1, uiStr(SF["proxy"]) , wxDefaultPosition, wxSize(320, 21), 0);
+  cbRepository = new wxComboBox(this, -1, uiStr(SF["repository"]), wxDefaultPosition, wxSize(320, 21), 3, choices);
 
   wxString options[] = {wxT("Always"), wxT("Daily"), wxT("Weekly"), wxT("Monthly"), wxT("Never")};
   rbUpdateInterval = new wxRadioBox(this, -1, wxT("Update Frequency"),
                            wxDefaultPosition, wxDefaultSize, 5, options);
-  int selIndex = rbUpdateInterval->FindString( uiStr(SF.ParamValue("update")) );
+  int selIndex = rbUpdateInterval->FindString( uiStr(SF["update"]) );
   if( selIndex >= 0 )  rbUpdateInterval->SetSelection( selIndex );
 
   wxBoxSizer *TopSiser = new wxBoxSizer( wxVERTICAL );
@@ -93,9 +92,9 @@ TdlgUpdateOptions::~TdlgUpdateOptions() {
 }
 //..............................................................................
 void TdlgUpdateOptions::OnOK(wxCommandEvent& event)  {
-  SF.UpdateParam( "proxy", tcProxy->GetValue().c_str() );
-  SF.UpdateParam( "repository", cbRepository->GetValue().c_str() );
-  SF.UpdateParam( "update", rbUpdateInterval->GetStringSelection().c_str() );
+  SF["proxy"] = tcProxy->GetValue().c_str();
+  SF["repository"] = cbRepository->GetValue().c_str();
+  SF["update"] = rbUpdateInterval->GetStringSelection().c_str();
   SF.SaveSettings( SettingsFile );
   EndModal(wxID_OK);
 }

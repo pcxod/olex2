@@ -1,80 +1,22 @@
 #include "mainform.h"
 
 #include "updateth.h"
+#include "updateapi.h"
 
 
 UpdateThread::UpdateThread(const olxstr& patch_dir) : time_out(0), PatchDir(patch_dir), 
     srcFS(NULL), destFS(NULL), Index(NULL) 
 {
   UpdateSize = 0;
-  olxstr SettingsFile( TBasicApp::GetInstance()->BaseDir() + "usettings.dat" );
-  TSettingsFile settings;
-  uint64_t LastUpdate = 0;
+  updater::UpdateAPI uapi;
   Valid = false;
   Update = false;
-  if( TEFile::Exists(SettingsFile) )  {
-    olxstr Proxy, Repository, UpdateInterval("Always");
-
-    settings.LoadSettings( SettingsFile );
-    if( settings.ParamExists("proxy") )        Proxy = settings.ParamValue("proxy");
-    if( settings.ParamExists("repository") )   Repository = settings.ParamValue("repository");
-    if( settings.ParamExists("lastupdate") )   LastUpdate = settings.ParamValue("lastupdate", '0').RadInt<int64_t>();
-    if( settings.ParamExists("update") )       UpdateInterval = settings.ParamValue("update");
-
-    if( Repository.Length() && !Repository.EndsWith('/') )  Repository << '/';
-
-    if( settings.ParamExists("exceptions") )
-      extensionsToSkip.Strtok(settings.ParamValue("exceptions", EmptyString), ';');
-    if( settings.ParamExists("skip") )
-      filesToSkip.Strtok(settings.ParamValue("skip", EmptyString), ';');
-
-    toSkip.extsToSkip = extensionsToSkip.IsEmpty() ? NULL : &extensionsToSkip;
-    toSkip.filesToSkip = filesToSkip.IsEmpty() ? NULL : &filesToSkip;
-    if( TEFile::ExtractFileExt(Repository).Equalsi("zip") )  {
-      if( !TEFile::IsAbsolutePath(Repository) )
-        Repository = TBasicApp::GetInstance()->BaseDir() + Repository;
-      if( !TEFile::Exists(Repository) ) 
-        return;
-      if( TEFile::FileAge(Repository) > LastUpdate )  {
-        Update = true;
-        srcFS = new TwxZipFileSystem(Repository, false);
-      }
-    }
-    else if( TEFile::Exists(Repository) && TEFile::IsDir(Repository) )  {
-      Update = true;
-      srcFS = new TOSFileSystem(Repository);
-    }
-    else  {
-      if( UpdateInterval.Equalsi("Always") )  Update = true;
-      else if( UpdateInterval.Equalsi("Daily") )
-        Update = ((TETime::EpochTime() - LastUpdate ) > SecsADay );
-      else if( UpdateInterval.Equalsi("Weekly") )
-        Update = ((TETime::EpochTime() - LastUpdate ) > SecsADay*7 );
-      else if( UpdateInterval.Equalsi("Monthly") )
-        Update = ((TETime::EpochTime() - LastUpdate ) > SecsADay*30 );
-      if( Update )  {
-        try  {
-          TUrl url(Repository);
-          if( !Proxy.IsEmpty() )  
-            url.SetProxy( TUrl(Proxy) );
-          srcFS = new TwxHttpFileSystem(url);
-        }
-        catch(...)  {  return;  }
-      }
-      else
-        return;
-    }
-    Index = new TFSIndex(*srcFS);
-    destFS = new TOSFileSystem( TBasicApp::GetInstance()->BaseDir() );
-    properties.Add("olex-update");
-#ifdef __WIN32__
-    properties.Add("port-win32");
-#else
-    olxstr olex_port = settings.ParamValue("olex-port");
-    if( !olex_port.IsEmpty() )
-      properties.Add(olex_port);
-#endif
-  }
+  srcFS = uapi.GetRepositoryFS();
+  if( srcFS == NULL )
+    return;
+  Index = new TFSIndex(*srcFS);
+  destFS = new TOSFileSystem( TBasicApp::GetInstance()->BaseDir() );
+  uapi.EvaluateProperties(properties);
   Valid = true;
 }
 //....................................................................................

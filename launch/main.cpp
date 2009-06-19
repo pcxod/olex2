@@ -116,12 +116,12 @@ __fastcall TdlgMain::TdlgMain(TComponent* Owner)
   }
   else
     SetFileAttributes(checkFN.c_str(), FILE_ATTRIBUTE_NORMAL);
-  short res = patch::PatchAPI::DoPatch(new TFileProgress, new TOverallProgress);
-  if( res != patch::papi_OK )  {
+  short res = patcher::PatchAPI::DoPatch(new TFileProgress, new TOverallProgress);
+  if( res != patcher::papi_OK )  {
     olxstr msg;
-    if( res == patch::papi_Busy )
+    if( res == patcher::papi_Busy )
       msg = "Another update or Olex2 instance are running at the moment";
-    else if( res == patch::papi_CopyError || res == patch::papi_DeleteError )  {
+    else if( res == patcher::papi_CopyError || res == patcher::papi_DeleteError )  {
       msg = "Please make sure that no Olex2 instances are running,\n\
 you have enough right to modify the installation folder and\n\
 no Olex2 folders are opened in browsers";

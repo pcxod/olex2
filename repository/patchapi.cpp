@@ -11,7 +11,7 @@
 #endif
 #include "filetree.h"
 
-using namespace patch;
+using namespace patcher;
 
 short PatchAPI::DoPatch(AActionHandler* OnFileCopy, AActionHandler* OnOverallCopy)  {
   TBasicApp& bapp = *TBasicApp::GetInstance();

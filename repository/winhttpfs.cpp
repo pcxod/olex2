@@ -1,10 +1,11 @@
-#ifdef __WIN32__
-
 #ifdef __BORLANDC__
   #pragma hdrstop
 #endif
 
 #include "winhttpfs.h"
+
+#ifdef __WIN32__ // nonportable code
+
 #include "efile.h"
 #include "bapp.h"
 
@@ -76,10 +77,6 @@ bool TWinHttpFileSystem::Connect()  {
 //..............................................................................
 IDataInputStream* TWinHttpFileSystem::OpenFile(const olxstr& Source)  {
   TOnProgress Progress;
-  Progress.SetAction("Connecting to the server...");
-  Progress.SetPos(0);
-  Progress.SetMax(1);
-  OnProgress->Execute(this, &Progress);
   if( Connected )  {
     Disconnect();
     Connect();
@@ -117,10 +114,7 @@ IDataInputStream* TWinHttpFileSystem::OpenFile(const olxstr& Source)  {
   Tmp = Url.GetFullHost();
   Tmp << '/' << FileName;
 
-  Progress.SetAction(Source);
-  OnProgress->Execute(this, &Progress);
-
-  Tmp.Replace(" ", "%20");
+  Tmp.Replace(' ', "%20");
   sprintf(Request, "GET %s HTTP/1.0\n\n", Tmp.c_str());
   if( Url.HasProxy() && !Url.GetProxy().GetUser().IsEmpty() && !Url.GetProxy().GetPassword().IsEmpty() )
     sprintf(Request, "Authorization: %s\n\n", Url.GenerateHTTPAuthString().c_str());
@@ -128,9 +122,7 @@ IDataInputStream* TWinHttpFileSystem::OpenFile(const olxstr& Source)  {
   send(Socket, Request, strlen(Request), 0);
   while( ThisRead )  {
     ThisRead = recv(Socket, Buffer, BufferSize, 0);
-
-    if( !ThisRead )  break;
-
+    if( ThisRead == 0 )  break;
     if( ThisRead == SOCKET_ERROR )  break;
     else  {
       File.Write(Buffer, ThisRead);
@@ -146,9 +138,10 @@ IDataInputStream* TWinHttpFileSystem::OpenFile(const olxstr& Source)  {
             Tmp << Buffer[off];
             off++;
           }
-          if( !Tmp.IsEmpty() )  {
+          if( !Tmp.IsEmpty() && FileAttached )  {
             FileLength = Tmp.ToInt();
             Progress.SetPos( 0 );
+            Progress.SetAction(Source);
             Progress.SetMax( FileLength );
             OnProgress->Enter(this, &Progress);
           }
@@ -156,30 +149,27 @@ IDataInputStream* TWinHttpFileSystem::OpenFile(const olxstr& Source)  {
       }
       TotalRead += ThisRead;
     }
-    if( FileLength != -1 )  {
-      Progress.SetPos(TotalRead);
+    if( FileLength != -1 && FileAttached )  {
+      Progress.SetPos(TotalRead > Progress.GetMax() ? Progress.GetMax() : TotalRead);
       OnProgress->Execute(this, &Progress);
     }
   }
-  if( (FileLength != -1) && (FileLength <= TotalRead) )  {
-    if( FileAttached )  {
-      File.Flush();
-      File.Seek(TotalRead-FileLength, SEEK_SET);
-      parts = FileLength/BufferSize;
-      for( i=0; i < parts; i++ )  {
-        File.Read(Buffer, BufferSize);
-        File1->Write(Buffer, BufferSize);
-      }
-      parts = FileLength%BufferSize;
-      if( parts )  {
-        File.Read(Buffer, parts);
-        File1->Write(Buffer, parts);
-      }
-      TmpFiles.Add( File1->GetName() );
+  if( (FileLength != -1) && (FileLength <= TotalRead) && FileAttached )  {
+    File.Flush();
+    File.Seek(TotalRead-FileLength, SEEK_SET);
+    parts = FileLength/BufferSize;
+    for( i=0; i < parts; i++ )  {
+      File.Read(Buffer, BufferSize);
+      File1->Write(Buffer, BufferSize);
     }
+    parts = FileLength%BufferSize;
+    if( parts )  {
+      File.Read(Buffer, parts);
+      File1->Write(Buffer, parts);
+    }
+    TmpFiles.Add( File1->GetName() );
     File.Delete();
     File1->Seek(0, SEEK_SET);
-    Progress.SetAction("Download complete");
     Progress.SetPos(FileLength);
     OnProgress->Exit(this, &Progress);
     delete [] Buffer;
@@ -187,7 +177,6 @@ IDataInputStream* TWinHttpFileSystem::OpenFile(const olxstr& Source)  {
   }
   else  {
     Progress.SetPos(0);
-    Progress.SetAction("Download failed");
     OnProgress->Execute(this, &Progress);
     File1->Delete();
     File.Delete();

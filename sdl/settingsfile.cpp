@@ -7,50 +7,48 @@
 #include "exception.h"
 
 //..............................................................................
-TSettingsFile::TSettingsFile( const olxstr& fileName )  {
-  LoadSettings( fileName );
-}
-//..............................................................................
-TSettingsFile::~TSettingsFile()  {
-  Clear();
-}
-//..............................................................................
 void TSettingsFile::LoadSettings(const olxstr& fileName)  {
   Clear();
   TEFile::CheckFileExists(__OlxSourceInfo, fileName);
-  TStrList strs;
-  strs.LoadFromFile(fileName);
+  Lines.LoadFromFile(fileName);
 
-  for( int i=0; i < strs.Count(); i++ )  {
-    if( strs[i].IsEmpty() )  continue;
-    
-    int ind = strs[i].FirstIndexOf('=');
-    if( ind < 0 )
-      throw TInvalidArgumentException(__OlxSourceInfo, olxstr("no assignement char at line ") << (i+1));
-    Params.Add( strs[i].SubStringTo(ind), strs[i].SubStringFrom(ind+1) );
+  for( int i=0; i < Lines.Count(); i++ )  {
+    olxstr ln = Lines[i].Trim(' ');
+    int ind = ln.FirstIndexOf('=');
+    if( ind == -1 || ln.StartsFrom('#') || ln.IsEmpty() )  {
+      Lines.GetObject(i) = false;
+      continue;
+    }
+    else  {
+      olxstr pn = ln.SubStringTo(ind).Trim(' ');
+      olxstr pv = ln.SubStringFrom(ind+1).Trim(' ');
+      ind = Params.IndexOf(pn);
+      // in case of duplicate params - keep the latest value
+      if( ind == -1 )  {
+        Params.Add(pn, pv);
+        Lines.GetObject(i) = true;
+        Lines[i] = pn;
+      }
+      else  {
+        Lines[i] = EmptyString;
+        Lines.GetObject(i) = false;
+        Params.GetValue(ind) = pv;
+      }
+    }
   }
 }
 //..............................................................................
 void TSettingsFile::SaveSettings(const olxstr& fileName)  {
   TEFile f( fileName, "w+b" );
-  olxstr line;
-  for( int i=0; i < Params.Count(); i++ )  {
-    line = Params.GetComparable(i);
-    line << '=' << Params.GetObject(i);
-    f.Writenl( line.c_str(), line.Length() );
+  for( int i=0; i < Lines.Count(); i++ )  {
+    if( !Lines.GetObject(i) ) 
+      f.Writenl( Lines[i].c_str(), Lines[i].Length() );
+    else  {
+      CString ln = Lines[i];
+      ln << '=' << Params[Lines[i]];
+      f.Writenl( ln );
+    }
   }
-}
-//..............................................................................
-void TSettingsFile::Clear()  {
-  Params.Clear();
-}
-//..............................................................................
-void TSettingsFile::UpdateParam(const olxstr& paramName, const olxstr& val)  {
-  int index = Params.IndexOfComparable( paramName );
-  if( index != -1 )
-    Params.GetObject(index) = val;
-  else
-    Params.Add(paramName, val);
 }
 //..............................................................................
 

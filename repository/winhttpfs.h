@@ -1,6 +1,8 @@
-#ifndef winhttpfsH
-#define winhttpfsH
-
+#ifndef __olx_win_httpfs_H
+#define __olx_win_httpfs_H
+/* windows specific HTTP file fetching utility,
+(c) O Dolomanov, 2004-2009 */
+#include "defs.h"
 #ifdef __WIN32__
   #include <winsock.h>
   #include <windows.h>

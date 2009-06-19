@@ -245,10 +245,9 @@ PyObject* pyUpdateRepository(PyObject* self, PyObject* args)  {
     return Py_None;
   }
   olxstr SettingsFile( TBasicApp::GetInstance()->BaseDir() + "usettings.dat" );
-  TSettingsFile settings;
   if( TEFile::Exists(SettingsFile) )  {
-    if( settings.ParamExists("proxy") )        
-      proxy = settings.ParamValue("proxy");
+    const TSettingsFile settings(SettingsFile);
+    proxy = settings["proxy"];
   }
   int lsi = index.LastIndexOf('/');
   if( lsi == -1 )  {

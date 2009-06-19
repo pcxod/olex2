@@ -15,22 +15,17 @@
 #include "wxhttpfs.h"
 #include "wxftpfs.h"
 #include "updateapi.h"
+#include "patchapi.h"
 
 #include <iostream>
 using namespace std;
 
 class TProgress: public AActionHandler  {
 public:
-  TProgress(){  return; }
-  ~TProgress(){  return; }
-  bool Exit(const IEObject *Sender, const IEObject *Data)  {
-    //TBasicApp::GetLog() << '\n';
-    return true;
-  }
+  TProgress(){}
+  bool Exit(const IEObject *Sender, const IEObject *Data)  {  return true;  }
   bool Enter(const IEObject *Sender, const IEObject *Data)  {
-    if( Data == NULL )  {
-      return false;
-    }
+    if( Data == NULL )  {  return false;  }
     const TOnProgress *A = dynamic_cast<const TOnProgress*>(Data);
     TBasicApp::GetLog().Info( A->GetAction() );
     return true;
@@ -39,21 +34,27 @@ public:
     return true;
   }
 };
+class TDProgress: public AActionHandler  {
+public:
+  TDProgress(){}
+  bool Exit(const IEObject *Sender, const IEObject *Data)  {  
+    TBasicApp::GetLog() << "\rDone\n";
+    return true;  
+  }
+  bool Enter(const IEObject *Sender, const IEObject *Data)  {
+    if( Data == NULL )  {  return false;  }
+    const TOnProgress *A = dynamic_cast<const TOnProgress*>(Data);
+    TBasicApp::GetLog() << (olxstr("Downloading ") << A->GetAction() << '\n');
+    return true;
+  }
+  bool Execute(const IEObject *Sender, const IEObject *Data)  {
+    if( Data == NULL )  {  return false;  }
+    const TOnProgress *A = dynamic_cast<const TOnProgress*>(Data);
+    TBasicApp::GetLog() << (olxstr("\r") << (int)(100*A->GetPos()/A->GetMax()) << '%');
+    return true;
+  }
+};
 
-bool UpdateMirror( AFileSystem& src, TwxFtpFileSystem& dest )  {
-  try  {
-    TFSIndex FI( src );
-    dest.OnProgress->Add( new TProgress );
-    TStrList empty;
-    return FI.Synchronise(dest, empty, NULL);
-  }
-  catch( TExceptionBase& exc )  {
-    TStrList out;
-    exc.GetException()->GetStackTrace(out);
-    TBasicApp::GetLog() << "Update failed due to :\n" << out.Text('\n');
-    return false;
-  }
-}
 //---------------------------------------------------------------------------
 
 void DoRun();
@@ -89,7 +90,7 @@ int main(int argc, char** argv)  {
         TBasicApp _bapp(  TEFile::CurrentDir() << "/dummy.txt" );
         TLog& log = _bapp.GetLog();
         log.AddStream( new TOutStream, true);
-        log << "Unirun, Olex2 update program\n";
+        log << "Unirun, Olex2 update/install program\n";
         log << "Compiled on " << __DATE__ << " at " << __TIME__ << '\n';
         log << "Usage: unirun [olex2_gui_dir]\n";
         log << "If no arguments provided, the system variable OLEX2_DIR will be checked first, if the variable is not set,\
@@ -123,7 +124,18 @@ int main(int argc, char** argv)  {
 }
 
 void DoRun()  {
-  updater::UpdateAPI api;
-  api.DoUpdate(new TProgress, NULL);
+  if( updater::UpdateAPI::IsInstallRequired() )  {
+    updater::UpdateAPI api;
+    short res = api.DoInstall(new TDProgress, new TProgress);
+    if( res != updater::uapi_OK && res != updater::uapi_UptoDate )  {
+      TBasicApp::GetLog() << "Installation has failed...\n";
+      TBasicApp::GetLog() << api.GetLog();
+    }
+  }
+  else  {
+    short res = patcher::PatchAPI::DoPatch(NULL, new TProgress);
+    if( res != patcher::papi_OK )
+      TBasicApp::GetLog() << "Update has failed...\n";
+  }
 }
 

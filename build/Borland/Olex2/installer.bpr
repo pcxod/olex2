@@ -6,7 +6,7 @@
     <PROJECT value="exe\installer.exe"/>
     <OBJFILES value="build\installer.obj build\licence.obj build\main.obj build\shellutil.obj 
       build\unzip.obj build\winhttpfs.obj build\filesystem.obj build\url.obj 
-      build\frame1.obj"/>
+      build\frame1.obj build\winzipfs.obj build\updateapi.obj"/>
     <RESFILES value="..\..\..\installer\installer.res"/>
     <DEFFILE value=""/>
     <RESDEPEN value="$(RESFILES) ..\..\..\installer\licence.dfm ..\..\..\installer\main.dfm 
@@ -62,6 +62,8 @@
       <FILE FILENAME="lib\sdl.lib" FORMNAME="" UNITNAME="sdl.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\repository\url.cpp" FORMNAME="" UNITNAME="url" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="frame1.cpp" FORMNAME="frMain" UNITNAME="frame1" CONTAINERID="CCompiler" DESIGNCLASS="TFrame" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\repository\winzipfs.cpp" FORMNAME="" UNITNAME="winzipfs" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\repository\updateapi.cpp" FORMNAME="" UNITNAME="updateapi" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
   </FILELIST>
   <BUILDTOOLS>
   </BUILDTOOLS>
