@@ -55,7 +55,7 @@ np_repository = Split("""./repository/filesystem.cpp   ./repository/shellutil.cp
                          ./repository/eprocess.cpp     ./repository/olxvar.cpp 
                          """)
 repository = np_repository + Split("""./repository/pyext.cpp 
-                                     ./repository/py_core.cpp""")
+                                     ./repository/py_core.cpp ./repository/updateapi.cpp""")
 #function to process file name list
 def processFileNameList(file_list, envi, dest, suffix=''):
   obj_list = []
@@ -81,7 +81,7 @@ env = Environment(CCFLAGS = ['-D__WXWIDGETS__', '-D_UNICODE', '-DUNICODE'],
                   ENV = os.environ )
 env.Append(CPPPATH = ['alglib', 'sdl', 'glib', 'gxlib', 
                       'repository', 'xlib'])
-
+unirun_env = None
 if sys.platform[:3] == 'win':
   AddOption('--wxdir',
             dest='wxFolder',
@@ -124,18 +124,6 @@ if sys.platform[:3] == 'win':
                              kernel32 wsock32"""))
   env.Append(LINKFLAGS=['/MANIFEST', '/MACHINE:X86', '/DEBUG', '/ASSEMBLYDEBUG'])
 else:
-  try: 
-    if sys.platform[:6] == 'darwin':
-      env.Append(CCFLAGS = '-D__MAC__')
-      env.ParseConfig("wx-config --cxxflags --unicode --libs gl,core,html,net,aui")
-      env.Append(FRAMEWORKS=['OpenGL', 'AGL', 'Python'])
-    else:
-      env.ParseConfig("wx-config --cxxflags --unicode --toolkit=gtk2 --libs gl,core,html,net,aui")
-    env.ParseConfig("python-config --includes")
-    env.ParseConfig("python-config --ldflags")
-  except:
-    print 'Please make sure that wxWidgets and Python config scripts are available'
-    Exit(1)
   env.Append(CCFLAGS = ['-exceptions']) 
   if debug:
     env.Append(CCFLAGS = ['-g']) 
@@ -144,6 +132,20 @@ else:
   if profiling:
     env.Append(CCFLAGS = ['-pg']) 
     env.Append(LINKFLAGS=['-pg'])
+  try: 
+    if sys.platform[:6] == 'darwin':
+      env.Append(CCFLAGS = '-D__MAC__')
+      env.ParseConfig("wx-config --cxxflags --unicode --libs gl,core,html,net,aui")
+      env.Append(FRAMEWORKS=['OpenGL', 'AGL', 'Python'])
+    else:
+      env.ParseConfig("wx-config --cxxflags --unicode --toolkit=gtk2 --libs gl,core,html,net,aui")
+#!!!
+    unirun_env = env.Clone()
+    env.ParseConfig("python-config --includes")
+    env.ParseConfig("python-config --ldflags")
+  except:
+    print 'Please make sure that wxWidgets and Python config scripts are available'
+    Exit(1)
 #sdl
 sdl_files = fileListToStringList('sdl', sdl) + fileListToStringList('sdl/smart', sdl_smart)
 sdl_files = processFileNameList(sdl_files, env, out_dir + 'sdl')
@@ -151,7 +153,9 @@ env.StaticLibrary(out_dir + 'lib/sdl', sdl_files)
 
 env.Append(LIBPATH=[out_dir+'lib'])
 env.Append(LIBS = ['sdl'])
-unirun_env = env.Clone()
+
+unirun_env.Append(LIBPATH=[out_dir+'lib'])
+unirun_env.Append(LIBS=['sdl'])
 
 generic_files = fileListToStringList('alglib', alglib) + \
                 fileListToStringList('xlib', xlib) + \

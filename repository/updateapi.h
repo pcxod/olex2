@@ -34,7 +34,8 @@ struct SettingsFile  {
     dest_pswd,        // like ftp pswd
     dest_repository,  // like ftp
     src_for_dest,     // source for dest, local or remote (repository)
-    update_interval;
+    update_interval,
+    olex2_port;
 
   const olxstr source_file;
 

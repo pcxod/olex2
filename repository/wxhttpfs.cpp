@@ -19,7 +19,7 @@ IInputStream* TwxHttpFileSystem::OpenFile(const olxstr& Source)  {
     return ZipFS->OpenFile(zip_name);
   }
   TOnProgress Progress;
-  Progress.SetAction(olxstr("Downloading ") << o_src );
+  Progress.SetAction(o_src );
   wxInputStream* is = NULL;
   try  {
     olxstr src( Url.GetFullHost() );
