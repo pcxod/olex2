@@ -27,6 +27,7 @@
 #include "datafile.h"
 #include "wxzipfs.h"
 #include "shellutil.h"
+#include "patchapi.h"
 
 #include "efile.h"
 #ifndef __WIN32__
@@ -158,7 +159,7 @@ bool TGlXApp::OnInit()  {
   if( wxGetEnv( wxT("OLEX2_DIR"), &OlxPath) )  {
     if( wxDirExists(OlxPath) )  {//&& wxIsAbsolutePath(OlxPath))  {
       olxstr olx_path(OlxPath.c_str() );
-      BaseDir = TEFile::AddTrailingBackslashI(olx_path) << "dummy.txt";
+      BaseDir = TEFile::AddTrailingBackslashI(olx_path) << TEFile::ExtractFileName(GetAppName().c_str());
     }
   }
   // end of the basedir override
@@ -172,7 +173,7 @@ bool TGlXApp::OnInit()  {
 //      BaseDir << "Resources/";
     #endif
     XApp = new TGXApp( BaseDir );
-    XApp->SetConfigDir( TShellUtil::GetSpecialFolderLocation(fiCommonAppData) << "Olex2u");
+    XApp->SetSharedDir( TShellUtil::GetSpecialFolderLocation(fiAppData) << "Olex2u");
     //XApp = new TGXApp( TEFile::UNCFileName(BaseDir) );
   }
   catch( TExceptionBase& exc )  {
@@ -183,9 +184,10 @@ bool TGlXApp::OnInit()  {
     throw;
   }
   // write PID file
-  int pid = getpid();
-  pid_file = new TEFile( olxstr(XApp->GetConfigDir()) << pid << ".olex2_pid", "w+b" );
-
+  if( XApp->IsBaseDirWriteable() )  {
+    int pid = getpid();
+    pid_file = new TEFile( olxstr(XApp->BaseDir()) << pid << '.' << patcher::PatchAPI::GetOlex2PIDFileExt(), "w+b" );
+  }
   // assemble whole command line
   for( int i=1; i < argc; i++ )
     Tmp << argv[i] <<  ' ';
@@ -238,16 +240,18 @@ bool TGlXApp::OnInit()  {
 //..............................................................................
 int TGlXApp::OnExit()  {
   // do all operations before TEGC is deleted
-  if( pid_file != NULL )  {
-    pid_file->Delete();
-    delete pid_file;
-    pid_file = NULL;
+  if( XApp->IsBaseDirWriteable() )  {
+    if( pid_file != NULL )  {
+      pid_file->Delete();
+      delete pid_file;
+      pid_file = NULL;
+    }
+    TStrList pid_files;
+    olxstr conf_dir = XApp->BaseDir(); 
+    TEFile::ListDir( conf_dir, pid_files, olxstr("*.") << patcher::PatchAPI::GetOlex2PIDFileExt(), sefAll );
+    for( int i=0; i < pid_files.Count(); i++ )
+      TEFile::DelFile(conf_dir+pid_files[i]);
   }
-  TStrList pid_files;
-  olxstr conf_dir = XApp->GetConfigDir(); 
-  TEFile::ListDir( conf_dir, pid_files, "*.olex2_pid", sefAll );
-  for( int i=0; i < pid_files.Count(); i++ )
-    TEFile::DelFile(conf_dir+pid_files[i]);
   delete XApp;
   return 0;
 }

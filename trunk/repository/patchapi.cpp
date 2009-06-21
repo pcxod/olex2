@@ -15,36 +15,39 @@ using namespace patcher;
 
 short PatchAPI::DoPatch(AActionHandler* OnFileCopy, AActionHandler* OnOverallCopy)  {
   TBasicApp& bapp = *TBasicApp::GetInstance();
-
-  olxstr patch_dir(bapp.GetConfigDir() + "patch/");
-  olxstr download_vf(bapp.GetConfigDir() + "__completed.update");
-  olxstr cmd_file(bapp.GetConfigDir() + "__cmds.update");
+  if( !bapp.IsBaseDirWriteable() )
+    return papi_AccessDenied;
+  if( !TEFile::Exists( GetUpdateLocationFileName() ) )  {
+    CleanUp(OnFileCopy, OnOverallCopy);
+    return papi_OK;
+  }
+  olxstr patch_dir = GetUpdateLocation();
+  if( patch_dir.IsEmpty() )  {
+    TEFile::DelFile( GetUpdateLocationFileName() );
+    CleanUp(OnFileCopy, OnOverallCopy);
+    return papi_InvalidUpdate;
+  }
+  olxstr cmd_file(TEFile::ParentDir(patch_dir) + GetUpdaterCmdFileName());
   // make sure that only one instance is running
-  olxstr pid_file(bapp.GetConfigDir() + "updater.pid_");
+  olxstr pid_file(GetUpdaterPIDFileName());
   if( TEFile::Exists(pid_file) )  {
     if( !TEFile::DelFile(pid_file) )  {
       CleanUp(OnFileCopy, OnOverallCopy);
       return papi_Busy;
     }
   }
-  if( !TEFile::Exists(patch_dir) || !TEFile::Exists(download_vf) )  {
-    CleanUp(OnFileCopy, OnOverallCopy);
-    return papi_OK;
-  }
   // create lock if possible or exit
   TEFile* pid_file_inst = NULL;
-  try  {
-    pid_file_inst = new TEFile(pid_file, "w+b");
-  }
+  try  {  pid_file_inst = new TEFile(pid_file, "w+b");  }
   catch( TExceptionBase& )  {
     CleanUp(OnFileCopy, OnOverallCopy);
     return papi_Busy;
   }
   // check that there are no olex2 instances...
   TStrList pid_files;
-  TEFile::ListDir(bapp.GetConfigDir(), pid_files, "*.olex2_pid", sefAll);
+  TEFile::ListDir(bapp.BaseDir(), pid_files, olxstr("*.") << GetOlex2PIDFileExt(), sefAll);
   for( int i=0; i < pid_files.Count(); i++ )  {
-    if( TEFile::DelFile( bapp.GetConfigDir() + pid_files[i]) )
+    if( TEFile::DelFile( bapp.BaseDir() + pid_files[i]) )
       pid_files[i].SetLength(0);
   }
   pid_files.Pack();
@@ -105,7 +108,7 @@ short PatchAPI::DoPatch(AActionHandler* OnFileCopy, AActionHandler* OnOverallCop
     if( res == papi_OK )  {
       try  {
         TEFile::DeleteDir(patch_dir);
-        TEFile::DelFile(download_vf);
+        TEFile::DelFile(GetUpdateLocationFileName());
       }
       catch(...)  {  res = papi_DeleteError;  }
     }

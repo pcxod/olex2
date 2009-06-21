@@ -394,11 +394,9 @@ void __fastcall TfMain::bbUninstallClick(TObject *Sender)  {
       if( !TEFile::DeleteDir(OlexInstalledPath) )
           Application->MessageBoxA("Could not remove all Olex2 folders...", "Error", MB_OK|MB_ICONERROR);
       olxstr DataDir = TShellUtil::GetSpecialFolderLocation(fiAppData);
-      olxstr ConfigDir = TShellUtil::GetSpecialFolderLocation(fiCommonAppData);
       TStrList dirs;
       dirs.Add( DataDir + "Olex2u");
       dirs.Add( DataDir + "Olex2");
-      dirs.Add( ConfigDir + "Olex2u");
       for( int i=0; i < dirs.Count(); i++ )  {
         if( TEFile::Exists(dirs[i]) )
           TEFile::DeleteDir(dirs[i]);
