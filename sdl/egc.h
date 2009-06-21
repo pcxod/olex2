@@ -32,24 +32,21 @@ for now we use the latetr one
 BeginEsdlNamespace()
 
 class TEGC : public AActionHandler  {
-
   struct OEntry  {
     OEntry* Next;
     IEObject* Object;
   };
 
   static TEGC* Instance;
-  inline static void Init()  {
-    if( Instance == NULL )
-      Instance = new TEGC();
-  }
+  static volatile bool RemovalManaged;
   // to be deleted as soon as possible
   OEntry  ASAPOHead, *ASAPOTail;
   // to be deleted at the end
   OEntry  ATEOHead, *ATEOTail;
 protected:
   bool RemoveObject( OEntry& head, IEObject* obj );
-  bool Destructing;
+  static void ManageRemoval();
+  volatile bool Destructing;
 protected:
   void ClearASAP();
   void ClearATE();
@@ -70,10 +67,24 @@ public:
   inline static void AddP(IEObject* object)  {
     GetInstance()->_AddATE( object );
   }
-
+  /* call this before any API calls clike olxstr.c_str() and u_cstr(), once an instance of TBasicAPP,
+  or derived class is created the instance gets attached and will be removde automatically */
+  inline static void Initialise() {  
+    if( Instance == NULL )
+      Instance = new TEGC;
+    if( !RemovalManaged )
+      ManageRemoval();
+  }
+  /* call this to manually Finalise (nothing will happen in case if TBasicApp instance is active),
+  should only be called when an instanve of TBasicApp is never created */
+  inline static void Finalise()  {
+    if( !RemovalManaged && Instance != NULL )  {
+      delete Instance;
+      Instance = NULL;
+    }
+  }
   inline static TEGC* GetInstance()  {
-    Init();
-    return Instance;
+    return (Instance!=NULL ? Instance : (Instance = new TEGC));
   }
 
   virtual bool Execute(const IEObject *Sender, const IEObject *Data=NULL) {

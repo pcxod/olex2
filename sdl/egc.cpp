@@ -6,6 +6,7 @@
 #include "bapp.h"
 
   TEGC* TEGC::Instance = NULL;
+  volatile bool TEGC::RemovalManaged = false;
 //..............................................................................
 TEGC::TEGC()  {
   // force TBasicApp::OnIdle to delete this object
@@ -16,9 +17,12 @@ TEGC::TEGC()  {
   ATEOHead.Next = NULL;
   ATEOHead.Object = NULL;
   ATEOTail = NULL;
-  if( TBasicApp::GetInstance() == NULL )
-    throw TFunctionFailedException(__OlxSourceInfo, "Uninitialised application layer");
-  TBasicApp::GetInstance()->OnIdle->Add(this);
+  if( !TBasicApp::HasInstance() )
+    RemovalManaged = false;
+  else  {
+    TBasicApp::GetInstance()->OnIdle->Add(this);
+    RemovalManaged = true;
+  }
   Destructing = false;
 }
 //..............................................................................
@@ -27,6 +31,13 @@ TEGC::~TEGC()  {
   ClearASAP();
   ClearATE();
   Instance = NULL;
+}
+//..............................................................................
+void TEGC::ManageRemoval()  {
+  if( TBasicApp::HasInstance() )  {
+    RemovalManaged = true;
+    TBasicApp::GetInstance()->OnIdle->Add(Instance);
+  }
 }
 //..............................................................................
 void TEGC::ClearASAP()  {
