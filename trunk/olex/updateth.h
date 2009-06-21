@@ -8,13 +8,13 @@
 
 class UpdateThread : public AOlxThread  {
   size_t time_out;
-  bool Valid, Update;
   uint64_t UpdateSize;
   AFileSystem* srcFS, *destFS;
   TFSIndex* Index;
   TStrList properties, filesToSkip, extensionsToSkip;
   TFSItem::SkipOptions toSkip;
   olxstr PatchDir;
+  volatile bool _DoUpdate;
   void CleanUp()  {
     if( Index != NULL )  {
       delete Index;
@@ -34,7 +34,7 @@ public:
   UpdateThread(const olxstr& patch_dir);
 
   virtual ~UpdateThread()  {  CleanUp();  }
-  void DoUpdate() {  Update = true;  }  
+  void DoUpdate() {  _DoUpdate = true;  }  
   uint64_t GetUpdateSize() const {  return UpdateSize;  }
   void ResetUpdateSize() {  UpdateSize = 0;  }
   virtual int Run();

@@ -16,11 +16,11 @@ using namespace patcher;
 short PatchAPI::DoPatch(AActionHandler* OnFileCopy, AActionHandler* OnOverallCopy)  {
   TBasicApp& bapp = *TBasicApp::GetInstance();
 
-  olxstr patch_dir(bapp.BaseDir() + "patch/");
-  olxstr download_vf(bapp.BaseDir() + "__completed.update");
-  olxstr cmd_file(bapp.BaseDir() + "__cmds.update");
+  olxstr patch_dir(bapp.GetConfigDir() + "patch/");
+  olxstr download_vf(bapp.GetConfigDir() + "__completed.update");
+  olxstr cmd_file(bapp.GetConfigDir() + "__cmds.update");
   // make sure that only one instance is running
-  olxstr pid_file(bapp.BaseDir() + "updater.pid_");
+  olxstr pid_file(bapp.GetConfigDir() + "updater.pid_");
   if( TEFile::Exists(pid_file) )  {
     if( !TEFile::DelFile(pid_file) )  {
       CleanUp(OnFileCopy, OnOverallCopy);
@@ -42,9 +42,9 @@ short PatchAPI::DoPatch(AActionHandler* OnFileCopy, AActionHandler* OnOverallCop
   }
   // check that there are no olex2 instances...
   TStrList pid_files;
-  TEFile::ListDir(bapp.BaseDir(), pid_files, "*.olex2_pid", sefAll);
+  TEFile::ListDir(bapp.GetConfigDir(), pid_files, "*.olex2_pid", sefAll);
   for( int i=0; i < pid_files.Count(); i++ )  {
-    if( TEFile::DelFile( bapp.BaseDir() + pid_files[i]) )
+    if( TEFile::DelFile( bapp.GetConfigDir() + pid_files[i]) )
       pid_files[i].SetLength(0);
   }
   pid_files.Pack();
@@ -90,8 +90,7 @@ short PatchAPI::DoPatch(AActionHandler* OnFileCopy, AActionHandler* OnOverallCop
   // copy...
   if( res == papi_OK )  {
     TFileTree ft(patch_dir);
-    ft.Root.Expand();
-    TOnProgress fc_pg, oa_pg;
+    ft.Expand();
     if( OnFileCopy != NULL )
       ft.OnFileCopy->Add( OnFileCopy );
     if( OnOverallCopy != NULL )
@@ -99,12 +98,7 @@ short PatchAPI::DoPatch(AActionHandler* OnFileCopy, AActionHandler* OnOverallCop
     OnFileCopy = NULL;
     OnOverallCopy = NULL;
 
-    try  {
-      ft.CopyTo(bapp.BaseDir(), &AfterFileCopy,
-        OnFileCopy == NULL ? NULL : &fc_pg,
-        OnOverallCopy == NULL ? NULL : &oa_pg
-      );
-    }
+    try  {  ft.CopyTo(bapp.BaseDir(), &AfterFileCopy);  }
     catch(PatchAPI::DeletionExc)  {  res = papi_DeleteError;  }
     catch(...)  {  res = papi_CopyError;  }
     

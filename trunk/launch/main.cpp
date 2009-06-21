@@ -10,6 +10,7 @@
 #include "log.h"
 
 #include "filetree.h"
+#include "shellutil.h"
 //---------------------------------------------------------------------------
 #pragma package(smart_init)
 #pragma resource "*.dfm"
@@ -67,7 +68,7 @@ __fastcall TdlgMain::TdlgMain(TComponent* Owner)
   if( BaseDir.Length() > 0 && BaseDir[1] != ':' )
     BaseDir = TEFile::CurrentDir()+'\\';
   FBApp = new TBasicApp(BaseDir);
-
+  FBApp->SetConfigDir( TShellUtil::GetSpecialFolderLocation(fiCommonAppData) + "Olex2u");
   dlgSplash = new TdlgSplash(this);
 
   olxstr vfn = (TBasicApp::GetInstance()->BaseDir()+ "version.txt");

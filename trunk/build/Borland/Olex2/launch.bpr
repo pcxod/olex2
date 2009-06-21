@@ -5,7 +5,7 @@
     <VERSION value="BCB.06.00"/>
     <PROJECT value="exe\launch.exe"/>
     <OBJFILES value="build\launch.obj build\main.obj build\splash.obj build\url.obj 
-      build\filesystem.obj build\frame1.obj build\patchapi.obj"/>
+      build\filesystem.obj build\frame1.obj build\patchapi.obj build\shellutil.obj"/>
     <RESFILES value="..\..\..\launch\launch.res"/>
     <DEFFILE value=""/>
     <RESDEPEN value="$(RESFILES) ..\..\..\launch\main.dfm ..\..\..\launch\splash.dfm frame1.dfm"/>
@@ -35,7 +35,7 @@
   </MACROS>
   <OPTIONS>
     <CFLAG1 value="-Od -H=$(BCB)\lib\vcl60.csm -Hc -Vx -Ve -xf -xp -ff -X- -r- -a8 -6 -b -d 
-      -k -v -vi- -c -tW -tWM"/>
+      -k- -vi- -c -tW -tWM"/>
     <PFLAGS value="-N2build -N0build -$Y+ -$W -$O- -$A8 -v -JPHNE -M"/>
     <RFLAGS value=""/>
     <AFLAGS value="/mx /w2 /zi"/>
@@ -58,6 +58,7 @@
       <FILE FILENAME="..\..\..\repository\filesystem.cpp" FORMNAME="" UNITNAME="filesystem.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="frame1.cpp" FORMNAME="frMain" UNITNAME="frame1" CONTAINERID="CCompiler" DESIGNCLASS="TFrame" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\repository\patchapi.cpp" FORMNAME="" UNITNAME="patchapi" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\repository\shellutil.cpp" FORMNAME="" UNITNAME="shellutil" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
   </FILELIST>
   <BUILDTOOLS>
   </BUILDTOOLS>

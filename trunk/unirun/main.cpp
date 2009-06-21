@@ -16,6 +16,7 @@
 #include "wxftpfs.h"
 #include "updateapi.h"
 #include "patchapi.h"
+#include "shellutil.h"
 
 #include <iostream>
 using namespace std;
@@ -118,6 +119,7 @@ int main(int argc, char** argv)  {
       bapp = new TBasicApp(arg << "/dummy.txt");
     }
     bapp->GetLog().AddStream( new TOutStream, true);
+    bapp->SetConfigDir( TShellUtil::GetSpecialFolderLocation(fiCommonAppData) << "Olex2u/");
     DoRun();
   }
   catch(const TExceptionBase& exc)  {

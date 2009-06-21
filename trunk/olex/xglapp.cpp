@@ -26,6 +26,7 @@
 #include "mol2.h"
 #include "datafile.h"
 #include "wxzipfs.h"
+#include "shellutil.h"
 
 #include "efile.h"
 #ifndef __WIN32__
@@ -171,6 +172,7 @@ bool TGlXApp::OnInit()  {
 //      BaseDir << "Resources/";
     #endif
     XApp = new TGXApp( BaseDir );
+    XApp->SetConfigDir( TShellUtil::GetSpecialFolderLocation(fiCommonAppData) << "Olex2u");
     //XApp = new TGXApp( TEFile::UNCFileName(BaseDir) );
   }
   catch( TExceptionBase& exc )  {
@@ -182,7 +184,7 @@ bool TGlXApp::OnInit()  {
   }
   // write PID file
   int pid = getpid();
-  pid_file = new TEFile( olxstr(XApp->BaseDir()) << pid << ".olex2_pid", "w+b" );
+  pid_file = new TEFile( olxstr(XApp->GetConfigDir()) << pid << ".olex2_pid", "w+b" );
 
   // assemble whole command line
   for( int i=1; i < argc; i++ )
@@ -242,10 +244,10 @@ int TGlXApp::OnExit()  {
     pid_file = NULL;
   }
   TStrList pid_files;
-  olxstr base_dir = XApp->BaseDir(); 
-  TEFile::ListDir( base_dir, pid_files, "*.olex2_pid", sefAll );
+  olxstr conf_dir = XApp->GetConfigDir(); 
+  TEFile::ListDir( conf_dir, pid_files, "*.olex2_pid", sefAll );
   for( int i=0; i < pid_files.Count(); i++ )
-    TEFile::DelFile(base_dir+pid_files[i]);
+    TEFile::DelFile(conf_dir+pid_files[i]);
   delete XApp;
   return 0;
 }
