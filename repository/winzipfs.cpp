@@ -12,7 +12,7 @@
 #include "io.h"
 #include "sys/stat.h"
 
-TWinZipFileSystem::TWinZipFileSystem(const olxstr& zip_name, bool unused)  {
+TWinZipFileSystem::TWinZipFileSystem(const olxstr& _zip_name, bool unused) : zip_name(_zip_name)  {
   TEFile::CheckFileExists(__OlxSourceInfo, zip_name);
   zip = OpenZip(zip_name.u_str(), NULL);
   if( zip == NULL )
@@ -62,21 +62,23 @@ IDataInputStream* TWinZipFileSystem::OpenFile(const olxstr& Source)  {
 void TWinZipFileSystem::ExtractAll(const olxstr& dest)  {
   ZIPENTRY ze;
   olxstr extractPath( TEFile::AddTrailingBackslash(dest) );
+  // -1 gives overall information about the zipfile
   GetZipItem(zip, -1, &ze);
   int numitems = ze.index;
   TOnProgress Progress;
+  Progress.SetAction( olxstr("Unpacking ") << zip_name << "...");
   Progress.SetMax( numitems );
   OnProgress->Enter( NULL, &Progress );
-  // -1 gives overall information about the zipfile
   for( int zi=0; zi < numitems; zi++ )  {
     ZIPENTRY ze;
     GetZipItem(zip, zi, &ze); // fetch individual details
     Progress.SetPos( zi );
     Progress.SetAction( ze.name );
-    OnProgress->Execute( NULL, &Progress );
+    OnProgress->Execute( this, &Progress );
     UnzipItem(zip, zi, (extractPath + ze.name).u_str() );         // e.g. the item's name.
   }
   Progress.SetPos( numitems );
-  OnProgress->Exit( NULL, &Progress );
+  Progress.SetAction("Done");
+  OnProgress->Exit( this, &Progress );
 }
 #endif // __WIN32__

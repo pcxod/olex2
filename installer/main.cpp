@@ -222,6 +222,7 @@ void __fastcall TfMain::bbInstallClick(TObject *Sender)  {
       if( zipf == NULL )  {
         frMain->stAction->Caption = "Failed...";
         Application->MessageBoxA("Could not locate the olex distribution.\nPlease try another repository.", "Zip file fetching error", MB_OK|MB_ICONERROR);
+        frMain->bbInstall->Enabled = true;
         return;
       }
       olxstr zipName( zipf->GetName() );
@@ -260,8 +261,8 @@ void __fastcall TfMain::bbInstallClick(TObject *Sender)  {
       TShellUtil::CreateShortcut(TShellUtil::GetSpecialFolderLocation(fiDesktop) + "Olex2.lnk",
                                  installPath + "olex2.exe", "Olex2 launcher", SetRunAs);
     if( !localInstall )  {
-      Settings["repository"] = reposPath + "update/";
-      frMain->cbRepository->Text = AnsiString(reposPath.c_str()) + "update/";
+      Settings["repository"] = reposPath;
+      frMain->cbRepository->Text = reposPath.c_str();
     }
     olxstr set_fn( installPath + TfMain::SettingsFile );
     if( !TEFile::Exists(set_fn) )  // keep settings if provided from the zip
@@ -387,11 +388,26 @@ void __fastcall TfMain::bbUninstallClick(TObject *Sender)  {
     return;
   }
   if( TEFile::Exists(indexFileName) )  {
-    TOSFileSystem osFS(OlexInstalledPath);
-    TFSIndex FSIndex(osFS);
-    FSIndex.LoadIndex( indexFileName );
-    CleanInstallationFolder( FSIndex.GetRoot() );
-    TEFile::DelFile( indexFileName );
+    if( Application->MessageBoxA("Do you want to remove ALL Olex2 folders?",
+          "Confirm", MB_YESNO|MB_ICONQUESTION) == IDYES )
+    {
+      if( !TEFile::DeleteDir(OlexInstalledPath) )
+          Application->MessageBoxA("Could not remove all Olex2 folders...", "Error", MB_OK|MB_ICONERROR);
+      olxstr DataDir = TShellUtil::GetSpecialFolderLocation(fiAppData);
+      olxstr unicode_olex2 = DataDir + "Olex2u";
+      olxstr non_unicode_olex2 = DataDir + "Olex2";
+      if( TEFile::Exists(unicode_olex2) )
+        TEFile::DeleteDir(unicode_olex2);
+      if( TEFile::Exists(non_unicode_olex2) )
+        TEFile::DeleteDir(non_unicode_olex2);
+    }
+    else  {
+      TOSFileSystem osFS(OlexInstalledPath);
+      TFSIndex FSIndex(osFS);
+      FSIndex.LoadIndex( indexFileName );
+      CleanInstallationFolder( FSIndex.GetRoot() );
+      TEFile::DelFile( indexFileName );
+    }
   }
   // find and delete shortcuts
   try  {
@@ -478,13 +494,13 @@ void __fastcall TfMain::sbPickZipClick(TObject *Sender)
 
 void __fastcall TfMain::FormShow(TObject *Sender)  {
   updater::UpdateAPI api;
-  TStrList tags;
-  olxstr repo_name;
-  api.GetTags(tags, repo_name);
-  if( tags.IsEmpty() )  return;
-  //frMain->cbRepository->Items->Clear();
-  for( int i=0; i < tags.Count(); i++ )
-    frMain->cbRepository->Items->Add( (repo_name+tags[i]).c_str());
+  TStrList repos;
+  api.GetAvailableRepositories(repos);
+  if( repos.IsEmpty() )  return;
+  frMain->cbRepository->Items->Clear();
+  for( int i=0; i < repos.Count(); i++ )
+    frMain->cbRepository->Items->Add( repos[i].u_str());
+  frMain->cbRepository->Text = repos[0].u_str();
 }
 //---------------------------------------------------------------------------
 

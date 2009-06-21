@@ -177,7 +177,7 @@ IDataInputStream* TWinHttpFileSystem::OpenFile(const olxstr& Source)  {
   }
   else  {
     Progress.SetPos(0);
-    OnProgress->Execute(this, &Progress);
+    OnProgress->Exit(this, &Progress);
     File1->Delete();
     File.Delete();
     delete [] Buffer;

@@ -12,11 +12,13 @@ UpdateThread::UpdateThread(const olxstr& patch_dir) : time_out(0), PatchDir(patc
   Valid = false;
   Update = false;
   srcFS = uapi.GetRepositoryFS();
-  if( srcFS == NULL )
-    return;
+  if( srcFS == NULL )  return;
+  if( !srcFS->GetBase().EndsWith("update/") )
+    srcFS->SetBase(srcFS->GetBase() + "update/");
   Index = new TFSIndex(*srcFS);
   destFS = new TOSFileSystem( TBasicApp::GetInstance()->BaseDir() );
   uapi.EvaluateProperties(properties);
+  Update = true;
   Valid = true;
 }
 //....................................................................................

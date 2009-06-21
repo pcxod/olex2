@@ -8,16 +8,9 @@
 #include "efile.h"
 #include "ememstream.h"
 
-TwxHttpFileSystem::~TwxHttpFileSystem()  {  
-  if( ZipFS != NULL )  delete ZipFS;
-}
 //.........................................................................................
 IInputStream* TwxHttpFileSystem::OpenFile(const olxstr& Source)  {
   olxstr o_src(TEFile::UnixPath(Source));
-  olxstr zip_name = Source.SubStringFrom( Url.GetPath().Length()+1 );
-  if( ZipFS != NULL && ZipFS->FileExists(zip_name) != 0 )  {
-    return ZipFS->OpenFile(zip_name);
-  }
   TOnProgress Progress;
   Progress.SetAction(o_src );
   wxInputStream* is = NULL;
