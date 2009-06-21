@@ -214,8 +214,9 @@
 				StringPooling="true"
 				RuntimeLibrary="3"
 				FloatingPointModel="2"
+				BrowseInformation="1"
 				WarningLevel="2"
-				DebugInformationFormat="4"
+				DebugInformationFormat="3"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -437,6 +438,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\repository\patchapi.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\repository\shellutil.cpp"
 				>
 			</File>
 			<File

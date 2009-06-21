@@ -9,7 +9,7 @@
 BeginEsdlNamespace()
 
 class TBasicApp: public IEObject  {
-  olxstr FBaseDir;
+  olxstr FBaseDir, ConfigDir;
 protected:
   class TActionQList* FActions;
   static TBasicApp* Instance;
@@ -20,10 +20,16 @@ public:
   TParamList ParamList;
   TStrObjList Arguments;
 
-  TBasicApp(const olxstr& AppName); // the file anme of the application with full path
+  TBasicApp(const olxstr& AppName); // the file name of the application with full path
   virtual ~TBasicApp();
 
   const olxstr& BaseDir() const {  return FBaseDir; }
+
+  /* config dir is independent of current user and to be used for global data
+  and locks, mut be initialised by the caller */
+  const olxstr& GetConfigDir() const {  return ConfigDir; }
+  // will create the folder if does not exist
+  const olxstr& SetConfigDir(const olxstr& cd);
 
   static inline TLog& GetLog()  {  return *GetInstance()->Log;  }
 

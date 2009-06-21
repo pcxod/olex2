@@ -389,14 +389,12 @@ bool TEFile::DelFile(const olxstr& F)  {
   if( res != 0 && res != -1 )
     return false;
 #endif 
-  return (unlink(OLXSTR(fn)) == -1) ? false: true;
-  return false;
+  return unlink(OLXSTR(fn)) != -1;
 }
 //..............................................................................
 bool TEFile::RmDir(const olxstr& F)  {
   if( !Exists(F) )  return true;
-  return (rmdir(OLXSTR(OLX_OS_PATH(F))) == -1) ?  false : true;
-  return false;
+  return rmdir(OLXSTR(OLX_OS_PATH(F))) != -1;
 }
 //..............................................................................
 bool TEFile::IsDir(const olxstr& F)  {
@@ -415,10 +413,8 @@ bool TEFile::DeleteDir(const olxstr& F)  {
     return false;
   if( !TEFile::IsDir(fn) )  
     return false;
-  TFileTree ft(F);
   try  {
-    ft.Root.Expand();
-    ft.Root.Delete();
+    TFileTree::Delete(fn);
     return true;
   }
   catch( TExceptionBase& )  {    return false;  }
@@ -819,7 +815,15 @@ TEFile* TEFile::TmpFile(const olxstr& templ)  {
 }
 //..............................................................................
 bool TEFile::Rename(const olxstr& from, const olxstr& to, bool overwrite)  {
-  if( Exists(to) && ! overwrite )  return false;
+  if( !Exists(from) )  return false;
+  if( Exists(to) )  {
+    if( !overwrite )  
+      return false;
+    if( !IsDir(to) )
+      DelFile(to);
+    else
+      return false;
+  }
   return rename( OLXSTR(from), OLXSTR(to) ) != -1;
 }
 //..............................................................................

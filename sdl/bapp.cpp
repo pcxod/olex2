@@ -47,6 +47,17 @@ TBasicApp::~TBasicApp()  {
   delete Log;
 }
 //..............................................................................
+const olxstr& TBasicApp::SetConfigDir(const olxstr& cd) {
+  if( !TEFile::Exists(cd) )  {
+    if( !TEFile::MakeDir(cd) )
+      if( !TEFile::MakeDirs(cd) )
+        throw TFunctionFailedException(__OlxSourceInfo, olxstr("Could not create config dir:") << cd);
+  }
+  else if( !TEFile::IsDir(cd) )  
+    throw TFunctionFailedException(__OlxSourceInfo, olxstr("Invalid config dir:") << cd);
+  return (ConfigDir = TEFile::AddTrailingBackslash(cd));
+}
+//..............................................................................
 TActionQueue& TBasicApp::NewActionQueue(const olxstr &Name) {
   if( FActions->QueueExists(Name) )
     return *FActions->FindQueue(Name);

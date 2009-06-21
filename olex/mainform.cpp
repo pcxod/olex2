@@ -1259,7 +1259,7 @@ separated values of Atom Type and radius, an entry a line" );
 #if defined(__WIN32__) || defined(__MAC__)
   StartupInit();
 #endif
-  _UpdateThread = new UpdateThread(FXApp->BaseDir() + "patch");
+  _UpdateThread = new UpdateThread(FXApp->GetConfigDir() + "patch");
   _UpdateThread->OnTerminate->Add(this, ID_UpdateThreadTerminate);
   _UpdateThread->Start();
 }

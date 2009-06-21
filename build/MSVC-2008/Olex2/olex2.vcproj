@@ -230,7 +230,7 @@
 				FloatingPointModel="2"
 				UsePrecompiledHeader="0"
 				ProgramDataBaseFileName="$(IntDir)\vc90.pdb"
-				BrowseInformation="2"
+				BrowseInformation="1"
 				WarningLevel="2"
 				DebugInformationFormat="3"
 			/>

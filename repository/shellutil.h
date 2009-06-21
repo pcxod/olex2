@@ -11,16 +11,15 @@ const short  fiDesktop       = 1,
              fiControls      = 5,
              fiProgramFiles  = 6,
              fiMyDocuments   = 7,
-             fiAppData       = 8; // retrun API data folder for secific user
+             fiAppData       = 8, // returns application data folder for specific user
+             fiCommonAppData = 9; // returns application data folder for all users
 
-class TShellUtil
-{
+
+class TShellUtil  {
 public:
   static bool CreateShortcut(const olxstr& ShortcutPath,
                      const olxstr& ObjectPath, const olxstr& description, bool AddRunAs);
-
   static olxstr GetSpecialFolderLocation( short folderId );
-
   static olxstr PickFolder( const olxstr& Title, const olxstr& SelectedFolder,
      const olxstr& RootFolder );
 

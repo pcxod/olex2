@@ -92,6 +92,7 @@ olxstr TShellUtil::GetSpecialFolderLocation( short folderId )  {
     case fiProgramFiles:  FID = CSIDL_PROGRAM_FILES;  break;
     case fiMyDocuments:   FID = CSIDL_PERSONAL;  break;
     case fiAppData:       FID = CSIDL_APPDATA;  break;
+    case fiCommonAppData: FID = CSIDL_COMMON_APPDATA;  break;
     default:
       throw TInvalidArgumentException(__OlxSourceInfo, "unknown identifier");
   }
@@ -105,7 +106,7 @@ olxstr TShellUtil::GetSpecialFolderLocation( short folderId )  {
     LPMALLOC shellMalloc;
     if( SHGetMalloc(& shellMalloc ) == NOERROR )
       shellMalloc->Free( items );
-    return TEFile::AddTrailingBackslash( retVal );
+    return TEFile::AddTrailingBackslashI( retVal );
   }
   return EmptyString;
 #else
@@ -118,10 +119,13 @@ olxstr TShellUtil::GetSpecialFolderLocation( short folderId )  {
       case fiMyDocuments:
         retVal = wxStandardPaths().GetDocumentsDir().c_str();
       break;
+      case fiCommonAppData:
+        retVal = wxStandardPaths().GetConfigDir().c_str();
+        break;
       default:
         throw TInvalidArgumentException(__OlxSourceInfo, "unknown identifier");
     }
-    return TEFile::AddTrailingBackslash( retVal );
+    return TEFile::AddTrailingBackslashI( retVal );
   #endif
   throw TNotImplementedException(__OlxSourceInfo);
 #endif

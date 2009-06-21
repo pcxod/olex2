@@ -477,6 +477,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\sdl\filetree.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\sdl\function.cpp"
 				>
 			</File>

@@ -130,9 +130,10 @@ public:
   // updates specified repository (if any provided)
   short DoSynch(AActionHandler* file_slnr, AActionHandler* progress_lsnr);
   const TStrList& GetLog() const {  return log;  }
-  // if the repository is uptodate the status will get changed to uapi_UptoDate
-  static AFileSystem* GetRepositoryFS(const SettingsFile& sf, short* status=NULL, TStrList* log=NULL);
-  // creates an FS from string - ftpfs, httpfs, os-fs or zipff
+  /* if fails or the repository is uptodate return NULL, res can be NULL, if not it will be
+  set to updater::uapi_UptoDate or an error code */
+  AFileSystem* FindActiveUpdateRepositoryFS(short* res) const;
+  // creates an FS from string - ftpfs, httpfs, os-fs or zipfs
   static AFileSystem* FSFromString(const olxstr& repo_str, const olxstr& proxy_str);
   static olxstr GetSettingsFileName()  {  return TBasicApp::GetInstance()->BaseDir() + "usettings.dat";  }
   static olxstr GetIndexFileName()  {  return TBasicApp::GetInstance()->BaseDir() + "index.ind";  }
@@ -141,14 +142,14 @@ public:
   static bool IsInstallRequired() {  return !TEFile::Exists(GetIndexFileName());  }
   /* checks the repository if in the settings, if down - then the default URL (http://www.olex2.org/olex2-distro/, 
   if down - checks the mirrors.txt file, if no valid repositories found, returns empty string */
-  olxstr GetRepositoryUrl() const  {
+  olxstr FindActiveRepositoryUrl() const  {
     olxstr repo_name;
-    AFileSystem* fs = GetRepositoryFS(&repo_name);
+    AFileSystem* fs = FindActiveRepositoryFS(&repo_name);
     if( fs != NULL )  delete fs;
     return repo_name;
   }
   // as above, but returns newly created file system wrapper or NULL if failed
-  AFileSystem* GetRepositoryFS(olxstr* repo_name=NULL) const;
+  AFileSystem* FindActiveRepositoryFS(olxstr* repo_name=NULL) const;
   // fills list with available repositories
   void GetAvailableRepositories(TStrList& res) const;
   // returns platform-dependen instalaltion file name
