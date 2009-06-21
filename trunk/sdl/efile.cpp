@@ -328,12 +328,13 @@ olxstr TEFile::ExtractFilePath(const olxstr &F)  {
   return EmptyString;
 }
 //..............................................................................
-olxstr TEFile::ParentDir(const olxstr& F) {
-  if( F.IsEmpty() )  return F;
-  int start = F[F.Length()-1] == OLX_PATH_DEL ? F.Length()-2 : F.Length()-1;
-  olxstr fn = OLX_OS_PATH(F);
-  int i = fn.LastIndexOf(OLX_PATH_DEL, start);
-  if( i > 0 ) return fn.SubStringTo(i+1);
+olxstr TEFile::ParentDir(const olxstr& name) {
+  if( name.IsEmpty() )  return name;
+  // normalise path
+  olxstr np = OLX_OS_PATH(name);
+  int start = (np.Last() == OLX_PATH_DEL ? np.Length()-2 : np.Length()-1);
+  int i = np.LastIndexOf(OLX_PATH_DEL, start);
+  if( i > 0 ) return np.SubStringTo(i+1);
   return EmptyString;
 }
 //..............................................................................
@@ -703,8 +704,10 @@ bool TEFile::MakeDirs(const olxstr& Name)  {
   TStrList toks(OLX_OS_PATH(Name), OLX_PATH_DEL);
   olxstr toCreate;
   toCreate.SetCapacity( Name.Length() + 5 );
-  if( Name.StartsFrom('/') ) // !!!!
+  if( Name.StartsFrom('/') ) // !!!! linux
     toCreate << '/';
+  else if( Name.StartsFrom("\\\\") ) // server name
+    toCreate << "\\\\";
   for( int i=0; i < toks.Count(); i++ )  {
     toCreate << toks[i] << OLX_PATH_DEL;
     if( !Exists( toCreate ) )

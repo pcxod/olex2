@@ -700,7 +700,7 @@ bool TFSIndex::UpdateFile(AFileSystem& To, const olxstr& fileName, bool Force, c
 bool TFSIndex::ShallAdopt(const TFSItem& src, const TFSItem& dest) const  {
   if( src.GetActions().IndexOfi("delete") != -1 )
     return !(dest.GetDateTime() == src.GetDateTime() && dest.GetSize() == src.GetSize());
-  if( dest.GetDateTime() < src.GetDateTime() || 
+  if( dest.GetDateTime() != src.GetDateTime() || 
     !dest.GetIndexFS().FileExists(dest.GetIndexFS().GetBase() + dest.GetFullName()) )  
   {
     // validate if not already downlaoded

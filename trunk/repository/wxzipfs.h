@@ -1,13 +1,13 @@
-#ifndef wxzipfsH
-#define wxzipfsH
+#ifndef __olx_wxzip_fs_H
+#define __olx_wxzip_fs_H
+
+#include "filesystem.h"
 
 #ifdef __WXWIDGETS__
 
 #include <wx/zipstrm.h>
 #include <wx/mstream.h>
 #include <wx/wfstream.h>
-
-#include "filesystem.h"
 #include "fsext.h"
 
 struct TZipEntry  {
@@ -21,14 +21,18 @@ class TZipWrapper  {
 //  wxFileInputStream *FFileInputStream;
   TSStrPObjList<olxstr,wxZipEntry*, false> FEntries;
   TSStrPObjList<olxstr,TMemoryBlock*, false> FMemoryBlocks;
+  TActionQList Actions;
 protected:
   TMemoryBlock* GetMemoryBlock(const olxstr &EM);
+  olxstr zip_name;
   bool UseCache;
 public:
   static olxstr ZipUrlSignature;
 
   TZipWrapper(const olxstr &zipName, bool useCache);
   TZipWrapper(TEFile* zipName, bool useCache);
+  
+  TActionQueue* OnProgress;
 
   ~TZipWrapper();
   IDataInputStream* OpenEntry(const olxstr& EN);
@@ -47,8 +51,22 @@ public:
   static olxstr ComposeFileName(const olxstr &ZipFileNameA, const olxstr &FNA);
 };
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-class TwxZipFileSystem: public AFileSystem, public IEObject  {
+class TwxZipFileSystem: public AFileSystem, public AActionHandler  {
   TZipWrapper zip;
+protected:
+  // proxying functions
+  virtual bool Enter(const IEObject *Sender, const IEObject *Data) {  
+    OnProgress->Enter(this, Data);
+    return true;
+  }
+  virtual bool Exit(const IEObject *Sender, const IEObject *Data=NULL)  {  
+    OnProgress->Exit(this, Data);
+    return true; 
+  }
+  virtual bool Execute(const IEObject *Sender, const IEObject *Data=NULL) {  
+    OnProgress->Execute(this, Data);
+    return false; 
+  }
 public:
   TwxZipFileSystem(const olxstr& filename, bool UseCache=false);
   TwxZipFileSystem(TEFile* file, bool UseCache);

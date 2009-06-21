@@ -61,14 +61,15 @@ short UpdateAPI::DoUpdate(AActionHandler* _f_lsnr, AActionHandler* _p_lsnr)  {
     return res;
 }
 //.............................................................................
-short UpdateAPI::DoInstall(AActionHandler* download_lsnr, AActionHandler* extract_lsnr)  {
+short UpdateAPI::DoInstall(AActionHandler* download_lsnr, AActionHandler* extract_lsnr, const olxstr& repo)  {
   CleanUp(download_lsnr, extract_lsnr);
   if( !IsInstallRequired() )  return updater::uapi_OK;
   // check for local installation
-  olxstr src_fn = GetInstallationFileName();
-  if( TEFile::Exists( TBasicApp::GetInstance()->BaseDir() + src_fn) )  {
+  olxstr src_fn = GetInstallationFileName(),
+         inst_zip_fn = TBasicApp::GetInstance()->BaseDir() + src_fn;
+  if( (repo.IsEmpty() || repo == inst_zip_fn) && TEFile::Exists(inst_zip_fn) )  {
     try  {
-      ZipFS zfs(TBasicApp::GetInstance()->BaseDir() + src_fn, false);
+      ZipFS zfs(inst_zip_fn, false);
       if( p_lsnr != NULL )  {
         zfs.OnProgress->Add(p_lsnr);
         p_lsnr = NULL;
@@ -81,7 +82,8 @@ short UpdateAPI::DoInstall(AActionHandler* download_lsnr, AActionHandler* extrac
       return updater::uapi_InstallError;
     }
   }
-  AFileSystem* fs = GetRepositoryFS(&settings.repository);
+  AFileSystem* fs = repo.IsEmpty() ? GetRepositoryFS(&settings.repository) 
+    : FSFromString(repo, settings.GetProxyUrlStr());
   if( fs == NULL )  return updater::uapi_NoSource;
   if( f_lsnr != NULL )  {
     fs->OnProgress->Add(f_lsnr);
@@ -105,15 +107,17 @@ short UpdateAPI::DoInstall(AActionHandler* download_lsnr, AActionHandler* extrac
     delete src_s;
     src_s = NULL;
     src_f.Close();
-    ZipFS zfs(src_fn, false);
-    if( p_lsnr != NULL )  {
-      zfs.OnProgress->Add(p_lsnr);
-      p_lsnr = NULL;
+    {  // make sure the zipfs goes before deleting the file
+      ZipFS zfs(src_fn, false);
+      if( p_lsnr != NULL )  {
+        zfs.OnProgress->Add(p_lsnr);
+        p_lsnr = NULL;
+      }
+      zfs.ExtractAll(TBasicApp::GetInstance()->BaseDir());
     }
-    TEFile::DelFile(src_fn);
+    //TEFile::DelFile(src_fn);
     delete fs;
     fs = NULL;
-    zfs.ExtractAll(TBasicApp::GetInstance()->BaseDir());
     settings.last_updated = TETime::EpochTime();
     settings.update_interval = "Always";
     settings.Save();
@@ -122,6 +126,52 @@ short UpdateAPI::DoInstall(AActionHandler* download_lsnr, AActionHandler* extrac
     log.Add( exc.GetException()->GetFullMessage() );
     if( fs != NULL )     delete fs;
     if( src_s != NULL )  delete src_s;
+    return updater::uapi_InstallError;
+  }
+  return updater::uapi_OK;
+}
+//.............................................................................
+short UpdateAPI::InstallPlugin(AActionHandler* d_lsnr, AActionHandler* e_lsnr, const olxstr& name) {
+  CleanUp(d_lsnr, e_lsnr); 
+  AFileSystem* fs = GetRepositoryFS();
+  if( fs == NULL )
+    return updater::uapi_NoSource;
+  if( f_lsnr != NULL )  {
+    fs->OnProgress->Add(f_lsnr);
+    f_lsnr = NULL;
+  }
+  olxstr zip_fn( olxstr("/") << 
+    TEFile::UnixPath(TEFile::ParentDir(fs->GetBase())) << name << ".zip" );
+  IInputStream* is = NULL;
+  try { is = fs->OpenFile(zip_fn);  }
+  catch( const TExceptionBase& exc )  {
+    log.Add( exc.GetException()->GetFullMessage() );
+    delete fs;
+    return updater::uapi_InvaildRepository;
+  }
+  try  {
+    zip_fn = TBasicApp::GetInstance()->BaseDir() + name; 
+    TEFile src_f(zip_fn, "w+b");
+    src_f << *is;
+    delete is;
+    is = NULL;
+    src_f.Close();
+    {  // make sure the zipfs goes before deleting the file
+      ZipFS zfs(zip_fn, false);
+      if( p_lsnr != NULL )  {
+        zfs.OnProgress->Add(p_lsnr);
+        p_lsnr = NULL;
+      }
+      zfs.ExtractAll(TBasicApp::GetInstance()->BaseDir());
+    }
+    //TEFile::DelFile(src_fn);
+    delete fs;
+    fs = NULL;
+  }
+  catch( const TExceptionBase& exc )  {
+    log.Add( exc.GetException()->GetFullMessage() );
+    if( fs != NULL )     delete fs;
+    if( is != NULL )  delete is;
     return updater::uapi_InstallError;
   }
   return updater::uapi_OK;
@@ -294,11 +344,12 @@ AFileSystem* UpdateAPI::GetRepositoryFS(olxstr* repo_name) const  {
   return NULL;
 }
 //.............................................................................
-void UpdateAPI::GetTags(TStrList& res, olxstr& repo_name) const {
+void UpdateAPI::GetAvailableRepositories(TStrList& res) const {
+  olxstr repo_name, 
+         inst_zip_fn = TBasicApp::GetInstance()->BaseDir() + GetInstallationFileName();
+  if( TEFile::Exists(inst_zip_fn) )  
+    res.Add( inst_zip_fn );
   AFileSystem* fs = GetRepositoryFS(&repo_name);
-  olxstr tags_fn = TBasicApp::GetInstance()->BaseDir() + GetTagsFileName();
-  if( TEFile::Exists(tags_fn) )
-    res.LoadFromFile(tags_fn);
   if( fs == NULL )  return;
   IInputStream* is= NULL;
   try  { is = fs->OpenFile(fs->GetBase() + GetTagsFileName());  }
@@ -311,18 +362,14 @@ void UpdateAPI::GetTags(TStrList& res, olxstr& repo_name) const {
     delete fs;
     return;
   }
-  if( res.IsEmpty() )  {
-    res.LoadFromTextStream(*is);
-    delete is;
-    return;
-  }
-  // merge then
-  TStrList tags;
-  tags.LoadFromTextStream(*is);
+  res.LoadFromTextStream(*is);
   delete is;
-  for( int i=0; i < tags.Count(); i++ )
-    if( res.IndexOf(tags[i]) == -1 )
-      res.Add(res[i]);
+  delete fs;
+  for( int i=0; i < res.Count(); i++ )
+    res[i] = repo_name + res[i];
+  // LoadFromTextStream clears the list...
+  if( TEFile::Exists(inst_zip_fn) )  
+    res.Insert( 0, inst_zip_fn );
 }
 /////////////////////////////////////////////////////////////////////////
 SettingsFile::SettingsFile(const olxstr& file_name) : source_file(file_name)  {
@@ -383,11 +430,14 @@ olxstr SettingsFile::GetProxyUrlStr() const  {
   return rv << proxy;
 }
 //.......................................................................
-void SettingsFile::Save() const {
+void SettingsFile::Save() {
   TSettingsFile settings;
   settings["proxy"] = proxy;
   settings["proxy_user"] = proxy_user;
   settings["proxy_passwd"] = proxy_pswd;
+  // a bit of hack here...
+  if( repository.EndsWith("update/") )
+    repository.SetLength(repository.Length()-7);
   settings["repository"] = repository;
   settings["repository_user"] = repository_user;
   settings["repository_passwd"] = repository_pswd;

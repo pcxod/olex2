@@ -47,7 +47,8 @@ struct SettingsFile  {
   olxstr GetDestinationUrlStr() const;
   olxstr GetProxyUrlStr() const;
   bool IsValid() const {  return TEFile::Exists(source_file);  }
-  void Save() const;
+  // save will change repo/update/ to repo...
+  void Save();
 };
 
 // Olex2 updater/installer API
@@ -113,11 +114,12 @@ public:
   UpdateAPI() : f_lsnr(NULL), p_lsnr(NULL), settings(GetSettingsFileName()) {  }
   ~UpdateAPI()  {  CleanUp();  }
   /* calls IsInstallRequired and if required, checks for GetInstallationFileName in the basedir, if
-  the file exists - extracts it otherwise fetches GetInstallationFileName and extracts to basedir 
-  return uapi_OK if install is not required or was successful and uapi_InstallError or uapi_InvalidRepository
-  or uapi_NoSource in case of an error*/
-  short DoInstall(AActionHandler* download_lsnr, AActionHandler* extract_lsnr);
+  the file exists - extracts it otherwise fetches (using default or provided epository) GetInstallationFileName 
+  and extracts to basedir return uapi_OK if install is not required or was successful and uapi_InstallError 
+  or uapi_InvalidRepository or uapi_NoSource in case of an error*/
+  short DoInstall(AActionHandler* download_lsnr, AActionHandler* extract_lsnr, const olxstr& repo=EmptyString);
   // provided handlers must be created with new, and will be deleted
+  short InstallPlugin(AActionHandler* download_lsnr, AActionHandler* extract_lsnr, const olxstr& name);
 
   SettingsFile& GetSettings() {  return settings;  }
 
@@ -147,8 +149,8 @@ public:
   }
   // as above, but returns newly created file system wrapper or NULL if failed
   AFileSystem* GetRepositoryFS(olxstr* repo_name=NULL) const;
-  // fills list with available folders
-  void GetTags(TStrList& res, olxstr& repo_name) const;
+  // fills list with available repositories
+  void GetAvailableRepositories(TStrList& res) const;
   // returns platform-dependen instalaltion file name
   static olxstr GetInstallationFileName()  {
 #ifdef __WIN32__

@@ -34,6 +34,21 @@ public:
     return true;
   }
 };
+class TEProgress: public AActionHandler  {
+public:
+  TEProgress(){}
+  bool Exit(const IEObject *Sender, const IEObject *Data)  {  
+    TBasicApp::GetLog() << "Done\n";
+    return true;  
+  }
+  bool Enter(const IEObject *Sender, const IEObject *Data)  {  return true;  }
+  bool Execute(const IEObject *Sender, const IEObject *Data)  {
+    if( Data == NULL )  {  return false;  }
+    const TOnProgress *A = dynamic_cast<const TOnProgress*>(Data);
+    TBasicApp::GetLog() << (olxstr("Extracting: ") << A->GetAction() << '\n');
+    return true;
+  }
+};
 class TDProgress: public AActionHandler  {
 public:
   TDProgress(){}
@@ -120,13 +135,38 @@ int main(int argc, char** argv)  {
   else  {
     cout << "\nFinished\n";
   }
+#if defined(__WIN32__ ) && defined(_DEBUG)
+  system("PAUSE");
+#endif
   return res;
 }
 
 void DoRun()  {
   if( updater::UpdateAPI::IsInstallRequired() )  {
+    TStrList repos;
     updater::UpdateAPI api;
-    short res = api.DoInstall(new TDProgress, new TProgress);
+    api.GetAvailableRepositories(repos);
+    if( repos.IsEmpty() )
+      TBasicApp::GetLog() << "Could not locate any installation repositories, aborting...\n";
+    olxstr repo = repos[0];
+    if( repos.Count() > 1 )  {
+      cout << "Please choose the installation repository:\n";
+      for( int i=0; i < repos.Count(); i++ )
+        cout << (i+1) << ": " << repos[i].c_str() << '\n';
+      cout << (repos.Count()+1) << ": Cancel\n";
+      int repo_ind = 0;
+      while( true )  {
+        cout << "Your choice: ";
+        cin >> repo_ind;
+        if( cin.fail() )  continue;
+        if( repo_ind == repos.Count()+1 )
+          return;
+        if( repo_ind > 0 && repo_ind <= repos.Count() )
+          break;
+      }
+      repo = repos[repo_ind-1];
+    }
+    short res = api.DoInstall(new TDProgress, new TEProgress, repo);
     if( res != updater::uapi_OK && res != updater::uapi_UptoDate )  {
       TBasicApp::GetLog() << "Installation has failed...\n";
       TBasicApp::GetLog() << api.GetLog();

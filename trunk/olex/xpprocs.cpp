@@ -136,6 +136,7 @@
 #include "ortdrawtex.h"
 #include "testsuit.h"
 #include "catomlist.h"
+#include "updateapi.h"
 // FOR DEBUG only
 #include "egraph.h"
 #include "olxth.h"
@@ -5737,53 +5738,22 @@ void TMainForm::macInstallPlugin(TStrObjList &Cmds, const TParamList &Options, T
     else  {
       olxstr SettingsFile( TBasicApp::GetInstance()->BaseDir() + "usettings.dat" );
       if( TEFile::Exists(SettingsFile) )  {
-        const TSettingsFile settings(SettingsFile);
-        olxstr Proxy, Repository;
+        updater::UpdateAPI api;
+        short res = api.InstallPlugin(new TDownloadProgress(*FXApp), 
+          new TOnSync(*FXApp, TBasicApp::GetInstance()->BaseDir() ),
+          Cmds[0].SubStringFrom(7)
+        );
+        if( res == updater::uapi_OK )  {
+          FPluginItem->AddItem( Cmds[0] );
+          OnStateChange->Execute((AEventsDispatcher*)this, &sc);
 
-        Proxy = settings["proxy"];
-        Repository = settings["repository"];
-
-        if( Repository.Length() && !Repository.EndsWith('/') )  
-          Repository << '/';
-
-        TUrl url(Repository);
-        if( !Proxy.IsEmpty() )  url.SetProxy( TUrl(Proxy) );
-        TwxHttpFileSystem httpFS( url );
-        // plugin- = 7
-        olxstr zip_fn( olxstr("/") << TEFile::UnixPath(TEFile::ParentDir(url.GetPath())) <<
-          Cmds[0].SubStringFrom(7) << ".zip" );
-        TEFile* local_f = NULL;
-        httpFS.OnProgress->Add( new TDownloadProgress(*FXApp) );
-        try  { local_f = httpFS.SaveFile( zip_fn );  }
-        catch( ... )  {  
-          TBasicApp::GetLog().Error("Could not locate the plugin zip file - trying direct download...");
+          FPluginFile.SaveToXLFile( PluginFile );
+          TBasicApp::GetLog() << ("\rInstallation complete\n");
         }
-        if( local_f != NULL )  {
-          httpFS.SetZipFS( new TwxZipFileSystem(local_f, false) );
+        else  {
+          TBasicApp::GetLog() << "Plugin installation failed...\n";
+          TBasicApp::GetLog() << api.GetLog();
         }
-        TOSFileSystem osFS( TBasicApp::GetInstance()->BaseDir() );
-        TFSIndex fsIndex( httpFS );
-        TStrList properties;
-        properties.Add(Cmds[0]);
-        TOnSync* progressListener = new TOnSync(*FXApp, TBasicApp::GetInstance()->BaseDir() );
-        osFS.OnAdoptFile->Add( progressListener );
-
-        IEObject* Cause = NULL;
-        try  {  fsIndex.Synchronise(osFS, properties);  }
-        catch( const TExceptionBase& exc )  {
-          Cause = exc.Replicate();
-        }
-        osFS.OnAdoptFile->Remove( progressListener );
-        delete progressListener;
-        delete local_f;
-        if( Cause )
-          throw TFunctionFailedException(__OlxSourceInfo, Cause);
-
-        FPluginItem->AddItem( Cmds[0] );
-        OnStateChange->Execute((AEventsDispatcher*)this, &sc);
-
-        FPluginFile.SaveToXLFile( PluginFile );
-        TBasicApp::GetLog() << ("\rInstallation complete\n");
         FXApp->Draw();
       }
       else  {

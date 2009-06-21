@@ -39,7 +39,8 @@ TMemoryBlock* TZipWrapper::GetMemoryBlock(const olxstr &EM)  {
   return mb;
 }
 //..............................................................................
-TZipWrapper::TZipWrapper(const olxstr &zipName, bool useCache)  {
+TZipWrapper::TZipWrapper(const olxstr &zipName, bool useCache) : zip_name(zipName)  {
+  OnProgress = &Actions.NewQueue("ON_PROGRESS");
   FInputStream = NULL;
   wxfile = NULL;
   UseCache = useCache;
@@ -109,12 +110,21 @@ wxInputStream* TZipWrapper::OpenWxEntry(const olxstr &EN)  {
 //..............................................................................
 void TZipWrapper::ExtractAll(const olxstr& dest)  {
   olxstr extractPath( TEFile::AddTrailingBackslash(dest) );
+  TOnProgress Progress;
+  Progress.SetMax( FEntries.Count() );
+  Progress.SetAction( olxstr("Unpacking ") << zip_name << "...");
+  OnProgress->Enter( NULL, &Progress );
   const size_t bf_sz = 1024*64;
   char* bf = new char[bf_sz];
   for( int i=0; i < FEntries.Count(); i++ )  {
     if( !FInputStream->OpenEntry( *FEntries.GetObject(i) ) )
       continue;
     if( FEntries.GetString(i).EndsWith('/') )  continue;
+
+    Progress.SetPos( i+1 );
+    Progress.SetAction( FEntries.GetString(i) );
+    OnProgress->Execute( NULL, &Progress );
+
     olxstr dest_file = extractPath + FEntries.GetString(i);
     olxstr dst_dir = TEFile::ExtractFilePath(dest_file);
     if( !TEFile::Exists(dst_dir) )
@@ -129,6 +139,9 @@ void TZipWrapper::ExtractAll(const olxstr& dest)  {
       fos.Write(bf, FInputStream->LastRead());
   }
   delete [] bf;
+  Progress.SetPos( FEntries.Count() );
+  Progress.SetAction("Done");
+  OnProgress->Exit( NULL, &Progress );
 }
 //..............................................................................
 bool TZipWrapper::IsValidFileName(const olxstr &FN)  {
@@ -182,7 +195,11 @@ olxstr TZipWrapper::ComposeFileName(const olxstr &ZipFileNameA, const olxstr &FN
 
 
 TwxZipFileSystem::TwxZipFileSystem(const olxstr& zip_name, bool UseCache) : 
-  zip(zip_name, UseCache) { }
+zip(zip_name, UseCache) 
+{ 
+  AActionHandler::SetToDelete(false);
+  zip.OnProgress->Add(this);
+}
 //..............................................................................
 TwxZipFileSystem::TwxZipFileSystem(TEFile* zip_fh, bool UseCache) : 
   zip(zip_fh, UseCache) { }
