@@ -1,1 +1,0 @@
-gcc *.s -o olex2 `wx-config --libs gl,core,html,net,aui --unicode --toolkit=x11` `python-config --libs --ldflags` -L. -fexceptions -L./libpython2.5.a -g -rdynamic

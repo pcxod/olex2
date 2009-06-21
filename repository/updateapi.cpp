@@ -113,7 +113,7 @@ short UpdateAPI::DoInstall(AActionHandler* download_lsnr, AActionHandler* extrac
       }
       zfs.ExtractAll(TBasicApp::GetInstance()->BaseDir());
     }
-    //TEFile::DelFile(src_fn);
+    TEFile::DelFile(src_fn);
     delete fs;
     fs = NULL;
     settings.last_updated = TETime::EpochTime();

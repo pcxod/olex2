@@ -23,14 +23,26 @@ TBasicApp* TBasicApp::Instance = NULL;
 //----------------------------------------------------------------------------//
 //TBasicApp function bodies
 //----------------------------------------------------------------------------//
-TBasicApp::TBasicApp(const olxstr & FileName)  {
+TBasicApp::TBasicApp(const olxstr& FileName)  {
   if( Instance != NULL )
     throw TFunctionFailedException(__OlxSourceInfo, "an application instance already exists");
   Instance = this;
 
   MaxThreadCount = 1;
   FBaseDir = TEFile::ExtractFilePath(FileName);
+  FExeName = TEFile::ExtractFileName(FileName);
   TEFile::AddTrailingBackslashI(FBaseDir);  // just in case!
+  BaseDirWriteable = false;
+  // and test it now
+  const olxstr tmp_dir = FBaseDir + "_t__m___p____DIR";
+  if( TEFile::Exists(tmp_dir) )  {  // would be odd
+    if( TEFile::RmDir(tmp_dir) )
+      BaseDirWriteable = true;
+  }
+  else if( TEFile::MakeDir(tmp_dir) )  {
+    if( TEFile::RmDir(tmp_dir) )
+      BaseDirWriteable = true;
+  }
   olxstr LogFN;
   Log = new TLog;
 
@@ -47,15 +59,21 @@ TBasicApp::~TBasicApp()  {
   delete Log;
 }
 //..............................................................................
-const olxstr& TBasicApp::SetConfigDir(const olxstr& cd) {
+const olxstr& TBasicApp::SetSharedDir(const olxstr& cd) {
   if( !TEFile::Exists(cd) )  {
     if( !TEFile::MakeDir(cd) )
       if( !TEFile::MakeDirs(cd) )
-        throw TFunctionFailedException(__OlxSourceInfo, olxstr("Could not create config dir:") << cd);
+        throw TFunctionFailedException(__OlxSourceInfo, olxstr("Could not create common dir:") << cd);
   }
   else if( !TEFile::IsDir(cd) )  
     throw TFunctionFailedException(__OlxSourceInfo, olxstr("Invalid config dir:") << cd);
-  return (ConfigDir = TEFile::AddTrailingBackslash(cd));
+  return (SharedDir = TEFile::AddTrailingBackslash(cd));
+}
+//..............................................................................
+const olxstr& TBasicApp::GetSharedDir() const {  
+  if( SharedDir.IsEmpty() )
+    throw TFunctionFailedException(__OlxSourceInfo, "The common directory is undefined");
+  return SharedDir; 
 }
 //..............................................................................
 TActionQueue& TBasicApp::NewActionQueue(const olxstr &Name) {

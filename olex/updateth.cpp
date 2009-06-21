@@ -2,6 +2,7 @@
 
 #include "updateth.h"
 #include "updateapi.h"
+#include "patchapi.h"
 
 
 UpdateThread::UpdateThread(const olxstr& patch_dir) : time_out(0), PatchDir(patch_dir), 
@@ -51,15 +52,15 @@ int UpdateThread::Run()  {
     olxstr updater_file( dfs.GetBase() + "unirun");
 #endif
     // download completion file
-    olxstr download_vf( TBasicApp::GetInstance()->GetConfigDir() + "__completed.update");
-    if( TEFile::Exists(download_vf) )
-      TEFile::DelFile(download_vf);
+    olxstr download_vf(patcher::PatchAPI::GetUpdateLocationFileName());
+    if( TEFile::Exists(download_vf) ) // do not run subsequent temporary updates
+      return 0;
     Index->Synchronise(*destFS, properties, skip ? NULL : &toSkip, &dfs, &cmds);
-    // try to update the updater
-    if( dfs.FileExists(updater_file) )  {
+    // try to update the updater, should check the name of executable though!
+    if( dfs.FileExists(updater_file) )
       TEFile::Rename(updater_file, TBasicApp::GetInstance()->BaseDir() + TEFile::ExtractFileName(updater_file) );
-    }
-    olxstr cmd_fn(TBasicApp::GetInstance()->GetConfigDir() + "__cmds.update");
+    
+    olxstr cmd_fn( TEFile::ParentDir(dfs.GetBase()) + patcher::PatchAPI::GetUpdaterCmdFileName());
     if( TEFile::Exists(cmd_fn) )  {
       TStrList pc;
       TUtf8File::ReadLines(cmd_fn, pc);
@@ -67,8 +68,11 @@ int UpdateThread::Run()  {
     }
     TUtf8File::WriteLines(cmd_fn, cmds);
     // mark download as complete
-    if( !Index->IsInterrupted() )
-      TEFile(download_vf, "w+b");
+    if( !Index->IsInterrupted() )  {
+      TEFile f(download_vf, "w+b");
+      CString location(dfs.GetBase());
+      f.Write(location);
+    }
   }
   catch(...)  { // oups...
     CleanUp();

@@ -1,4 +1,0 @@
-
-gcc ../../$1/$2.cpp `wx-config --cxxflags  --unicode --toolkit=x11` `python-config --includes` -I../../sdl -I../../xlib -I../../glib -I../../gxlib -I../../repository -S -D__WXWIDGETS__ -D_UNICODE -fexceptions -g -v
-
-./link-x11

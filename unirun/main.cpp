@@ -92,9 +92,9 @@ int main(int argc, char** argv)  {
     if( argc == 1 )  { // no folder to update provided
       char* olex_dir = getenv("OLEX2_DIR");
       if( olex_dir != NULL )
-        bapp = new TBasicApp( olxstr(olex_dir) << "/dummy.txt" );
+        bapp = new TBasicApp( TEFile::AddTrailingBackslash(olex_dir) << TEFile::ExtractFileName(argv[0]) );
       else
-        bapp = new TBasicApp(TEFile::CurrentDir() << "/dummy.txt");
+        bapp = new TBasicApp(TEFile::AddTrailingBackslashI(TEFile::CurrentDir()) << TEFile::ExtractFileName(argv[0]));
     }
     else  {
       olxstr arg(argv[1]);
@@ -103,7 +103,7 @@ int main(int argc, char** argv)  {
 #else
       if( arg == "--help" )  {
 #endif     
-        TBasicApp _bapp(  TEFile::CurrentDir() << "/dummy.txt" );
+        TBasicApp _bapp(  TEFile::AddTrailingBackslashI(TEFile::CurrentDir()) << TEFile::ExtractFileName(argv[0]) );
         TLog& log = _bapp.GetLog();
         log.AddStream( new TOutStream, true);
         log << "Unirun, Olex2 update/install program\n";
@@ -116,10 +116,10 @@ int main(int argc, char** argv)  {
       }
       if( arg.EndsWith('.') || arg.EndsWith("..") )
         arg = TEFile::AbsolutePathTo(TEFile::CurrentDir(), arg);
-      bapp = new TBasicApp(arg << "/dummy.txt");
+      bapp = new TBasicApp(TEFile::AddTrailingBackslash(arg) << TEFile::ExtractFileName(argv[0]));
     }
     bapp->GetLog().AddStream( new TOutStream, true);
-    bapp->SetConfigDir( TShellUtil::GetSpecialFolderLocation(fiCommonAppData) << "Olex2u/");
+    bapp->SetSharedDir( TShellUtil::GetSpecialFolderLocation(fiAppData) << "Olex2u/");
     DoRun();
   }
   catch(const TExceptionBase& exc)  {
