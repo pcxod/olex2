@@ -17,6 +17,7 @@
 #include "updateapi.h"
 #include "patchapi.h"
 #include "shellutil.h"
+#include "egc.h"
 
 #include <iostream>
 using namespace std;
@@ -87,7 +88,8 @@ int main(int argc, char** argv)  {
   MyApp app;
   TBasicApp* bapp = NULL;
   int res = 0;
-  wxAppConsole::SetInstance(&app);
+  wxAppConsole::SetInstance(&app); // as soon as we create TBasicApp, this instance gets attached to it
+  TEGC::Initialise();
   try  {
     if( argc == 1 )  { // no folder to update provided
       char* olex_dir = getenv("OLEX2_DIR");

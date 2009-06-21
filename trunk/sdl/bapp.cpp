@@ -11,6 +11,7 @@
 #include "log.h"
 #include "efile.h"
 #include "etime.h"
+#include "egc.h"
 
 #ifdef __WIN32__
   #include <windows.h>
@@ -51,6 +52,8 @@ TBasicApp::TBasicApp(const olxstr& FileName)  {
   OnTimer    = &FActions->NewQueue("TIMER");
   OnIdle     = &FActions->NewQueue("IDLE");
   Profiling = MainFormVisible = false;
+  // attach GC to the instance, if detached...
+  TEGC::Initialise();
 }
 //..............................................................................
 TBasicApp::~TBasicApp()  {
