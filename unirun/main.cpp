@@ -51,6 +51,21 @@ public:
     return true;
   }
 };
+class TUProgress: public AActionHandler  {
+public:
+  TUProgress(){}
+  bool Exit(const IEObject *Sender, const IEObject *Data)  {  
+    TBasicApp::GetLog() << "Done\n";
+    return true;  
+  }
+  bool Enter(const IEObject *Sender, const IEObject *Data)  {  return true;  }
+  bool Execute(const IEObject *Sender, const IEObject *Data)  {
+    if( Data == NULL )  {  return false;  }
+    const TOnProgress *A = dynamic_cast<const TOnProgress*>(Data);
+    TBasicApp::GetLog() << (olxstr("Copying: ") << A->GetAction() << '\n');
+    return true;
+  }
+};
 class TDProgress: public AActionHandler  {
 public:
   TDProgress(){}
@@ -177,7 +192,7 @@ void DoRun()  {
     }
   }
   else  {
-    short res = patcher::PatchAPI::DoPatch(NULL, new TProgress);
+    short res = patcher::PatchAPI::DoPatch(NULL, new TUProgress);
     if( res != patcher::papi_OK )
       TBasicApp::GetLog() << "Update has failed...\n";
   }
