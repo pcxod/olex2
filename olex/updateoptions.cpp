@@ -6,6 +6,7 @@
 #include "bapp.h"
 #include "efile.h"
 #include "etime.h"
+#include "updateapi.h"
 
 BEGIN_EVENT_TABLE(TdlgUpdateOptions, TDialog)
   EVT_BUTTON(wxID_OK, TdlgUpdateOptions::OnOK)
@@ -35,11 +36,14 @@ TdlgUpdateOptions::TdlgUpdateOptions(TMainFrame *ParentFrame) :
 
     stLastUpdated->SetLabel( uiStr(TETime::FormatDateTime(lastUpdate.RadInt<time_t>())) );
   }
-  wxString choices[] = {wxT("http://dimas.dur.ac.uk/olex-distro/update/"),
-  wxT("http://dimas.dur.ac.uk/olex-distro-test/update/"),
-  wxT("http://www.x-rayman.co.uk/olex2/olex-distro-test/update/")};
-  tcProxy = new wxTextCtrl(this, -1, uiStr(SF["proxy"]) , wxDefaultPosition, wxSize(320, 21), 0);
-  cbRepository = new wxComboBox(this, -1, uiStr(SF["repository"]), wxDefaultPosition, wxSize(320, 21), 3, choices);
+  TStrList repos;
+  updater::UpdateAPI uapi;
+  uapi.GetAvailableMirrors(repos);
+  tcProxy = new wxTextCtrl(this, -1, SF["proxy"].u_str() , wxDefaultPosition, wxSize(320, 21), 0);
+  cbRepository = new wxComboBox(this, -1, SF["repository"].u_str(), wxDefaultPosition, wxSize(320, 21), 0, NULL, wxTE_READONLY);
+  for( int i=0; i < repos.Count(); i++ )
+    cbRepository->Append( repos[i].u_str() );
+  cbRepository->SetValue(SF["repository"].u_str());
 
   wxString options[] = {wxT("Always"), wxT("Daily"), wxT("Weekly"), wxT("Monthly"), wxT("Never")};
   rbUpdateInterval = new wxRadioBox(this, -1, wxT("Update Frequency"),

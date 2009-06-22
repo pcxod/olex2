@@ -18,7 +18,11 @@ const short
   uapi_UpdateError    = 5,  // error happend while updating
   uapi_NoTask         = 6,  // nor source or destination exists
   uapi_InstallError   = 7,  // an installation error has occured
-  uapi_InvaildRepository = 8;  // repository does not contain required files
+  uapi_InvaildRepository = 8,  // repository does not contain required files
+  uapi_MissingTag     = 9,  // tag is missing on the repo, new isntall might be required
+  uapi_AccessDenied   = 10, // the destination folder is not writeable
+  uapi_InvalidInstallation = 11,  // required files are missing
+  uapi_Busy           = 12;  // updater API is busy
 
 // Olex2 settings file wrapper
 ////////////////////////////////////////////////////////////////////////////
@@ -110,14 +114,23 @@ class UpdateAPI  {
   }
   //.................................................................................................
   SettingsFile settings;
+  olxstr Tag;
+protected:
+  // transforms /olex2-distro/tag or /olex2-distro/tag/update to /olex2-distro
+  olxstr TrimTagPart(const olxstr& path) const;
+  // transforms /olex2-distro to to /olex2/distro/tag or /olex2/distro/tag/update
+  olxstr AddTagPart(const olxstr& path, bool Update) const;
 public:
-  UpdateAPI() : f_lsnr(NULL), p_lsnr(NULL), settings(GetSettingsFileName()) {  }
+  UpdateAPI() : f_lsnr(NULL), p_lsnr(NULL), 
+    settings(GetSettingsFileName()),
+    Tag( ReadRepositoryTag() )
+  {  }
   ~UpdateAPI()  {  CleanUp();  }
-  /* calls IsInstallRequired and if required, checks for GetInstallationFileName in the basedir, if
-  the file exists - extracts it otherwise fetches (using default or provided epository) GetInstallationFileName 
+  /* calls IsInstallRequired and if required, checks for GetInstallationFileName in the basedir, 
+  fetches (using default or provided repository or zip file) GetInstallationFileName 
   and extracts to basedir return uapi_OK if install is not required or was successful and uapi_InstallError 
   or uapi_InvalidRepository or uapi_NoSource in case of an error*/
-  short DoInstall(AActionHandler* download_lsnr, AActionHandler* extract_lsnr, const olxstr& repo=EmptyString);
+  short DoInstall(AActionHandler* download_lsnr, AActionHandler* extract_lsnr, const olxstr& repo);
   // provided handlers must be created with new, and will be deleted
   short InstallPlugin(AActionHandler* download_lsnr, AActionHandler* extract_lsnr, const olxstr& name);
 
@@ -135,10 +148,12 @@ public:
   AFileSystem* FindActiveUpdateRepositoryFS(short* res) const;
   // creates an FS from string - ftpfs, httpfs, os-fs or zipfs
   static AFileSystem* FSFromString(const olxstr& repo_str, const olxstr& proxy_str);
-  static olxstr GetSettingsFileName()  {  return TBasicApp::GetInstance()->BaseDir() + "usettings.dat";  }
-  static olxstr GetIndexFileName()  {  return TBasicApp::GetInstance()->BaseDir() + "index.ind";  }
-  static olxstr GetMirrorsFileName()  {  return "mirrors.txt";  }
-  static olxstr GetTagsFileName()  {  return "tags.txt";  }
+  static const char* GetDefaultRepository() {  return "http://www.olex2.org/olex2-distro/";  }
+  static olxstr GetSettingsFileName()  {  return TBasicApp::GetBaseDir() + "usettings.dat";  }
+  static olxstr GetIndexFileName()  {  return TBasicApp::GetBaseDir() + "index.ind";  }
+  static olxstr GetMirrorsFileName()  {  return TBasicApp::GetBaseDir() + "mirrors.txt";  }
+  static const char* GetTagsFileName()  {  return "tags.txt";  }
+  static const char* GetTagFileName()  {  return "olex2.tag";  }
   static bool IsInstallRequired() {  return !TEFile::Exists(GetIndexFileName());  }
   /* checks the repository if in the settings, if down - then the default URL (http://www.olex2.org/olex2-distro/, 
   if down - checks the mirrors.txt file, if no valid repositories found, returns empty string */
@@ -152,6 +167,10 @@ public:
   AFileSystem* FindActiveRepositoryFS(olxstr* repo_name=NULL) const;
   // fills list with available repositories
   void GetAvailableRepositories(TStrList& res) const;
+  // fills list with available repositories
+  void GetAvailableMirrors(TStrList& res) const;
+  //reads current repository tag, returns EmptyString in the case of error
+  static olxstr ReadRepositoryTag();
   // returns platform-dependen instalaltion file name
   static olxstr GetInstallationFileName()  {
 #ifdef __WIN32__

@@ -8,6 +8,7 @@
 #include "patchapi.h"
 
 #include "log.h"
+#include "egc.h"
 
 #include "filetree.h"
 #include "shellutil.h"
@@ -60,22 +61,23 @@ __fastcall TdlgMain::TdlgMain(TComponent* Owner)
   : TForm(Owner)
 {
   olxstr BaseDir;
+  TEGC::Initialise();
   char* olex_dir = getenv("OLEX2_DIR");
   if( olex_dir != NULL )
-    BaseDir = olxstr(olex_dir) << "/dummy.txt";
+    BaseDir = TEFile::AddTrailingBackslash(olex_dir) << TEFile::ExtractFileName(CmdLine[0]);
   else
     BaseDir = ParamStr(0).c_str();
-  if( BaseDir.Length() > 0 && BaseDir[1] != ':' )
-    BaseDir = TEFile::CurrentDir()+'\\';
+  if( !BaseDir.IsEmpty() && BaseDir[1] != ':' )
+    BaseDir = TEFile::AddTrailingBackslash(TEFile::CurrentDir()) + TEFile::ExtractFileName(CmdLine[0]);
   FBApp = new TBasicApp(BaseDir);
   FBApp->SetSharedDir( TShellUtil::GetSpecialFolderLocation(fiAppData) + "Olex2u");
   dlgSplash = new TdlgSplash(this);
 
-  olxstr vfn = (TBasicApp::GetInstance()->BaseDir()+ "version.txt");
+  olxstr vfn = (TBasicApp::GetBaseDir()+ "version.txt");
   // check updates ...
   //asm {  int 3  }
   // reading version info
-  olxstr OlexFN( (TBasicApp::GetInstance()->BaseDir()+ "olex2.dll") );
+  olxstr OlexFN( (TBasicApp::GetBaseDir()+ "olex2.dll") );
   if( TEFile::Exists(OlexFN) )  {
     DWORD len = GetFileVersionInfoSize( const_cast<char*>(OlexFN.c_str()), &len);
     if( len > 0 )  {
@@ -108,26 +110,19 @@ __fastcall TdlgMain::TdlgMain(TComponent* Owner)
   }
   dlgSplash->Show();
   dlgSplash->Repaint();
-  olxstr checkFN(FBApp->BaseDir()+"index.ind");
-  if( TEFile::Exists(checkFN) && !SetFileAttributes(checkFN.c_str(), FILE_ATTRIBUTE_SYSTEM) )  {
-    Application->MessageBox("Please make sure that you have enough right to modify the installation folder",
-      "Scheduled update failed", MB_OK|MB_ICONINFORMATION);
-    Application->Terminate();
-    return;
-  }
-  else
-    SetFileAttributes(checkFN.c_str(), FILE_ATTRIBUTE_NORMAL);
-  short res = patcher::PatchAPI::DoPatch(new TFileProgress, new TOverallProgress);
-  if( res != patcher::papi_OK )  {
-    olxstr msg;
-    if( res == patcher::papi_Busy )
-      msg = "Another update or Olex2 instance are running at the moment";
-    else if( res == patcher::papi_CopyError || res == patcher::papi_DeleteError )  {
-      msg = "Please make sure that no Olex2 instances are running,\n\
+  if( TBasicApp::GetInstance()->IsBaseDirWriteable() )  {
+    short res = patcher::PatchAPI::DoPatch(new TFileProgress, new TOverallProgress);
+    if( res != patcher::papi_OK )  {
+      olxstr msg;
+      if( res == patcher::papi_Busy )
+        msg = "Another update or Olex2 instance are running at the moment";
+      else if( res == patcher::papi_CopyError || res == patcher::papi_DeleteError )  {
+        msg = "Please make sure that no Olex2 instances are running,\n\
 you have enough right to modify the installation folder and\n\
 no Olex2 folders are opened in browsers";
-   }
-    Application->MessageBox(msg.c_str(), "Update failed", MB_OK|MB_ICONINFORMATION);
+     }
+      Application->MessageBox(msg.c_str(), "Update failed", MB_OK|MB_ICONINFORMATION);
+    }
   }
   // cheating :D
   dlgSplash->pbOProgress->Position = dlgSplash->pbOProgress->Max;

@@ -5,7 +5,6 @@
 //---------------------------------------------------------------------------
 USEFORM("..\..\..\launch\main.cpp", dlgMain);
 USEFORM("..\..\..\launch\splash.cpp", dlgSplash);
-USEFORM("frame1.cpp", frMain); /* TFrame: File Type */
 //---------------------------------------------------------------------------
 WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 {

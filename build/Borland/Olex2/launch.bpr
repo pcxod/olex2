@@ -4,11 +4,11 @@
   <MACROS>
     <VERSION value="BCB.06.00"/>
     <PROJECT value="exe\launch.exe"/>
-    <OBJFILES value="build\launch.obj build\main.obj build\splash.obj build\url.obj 
-      build\filesystem.obj build\frame1.obj build\patchapi.obj build\shellutil.obj"/>
+    <OBJFILES value="build\launch.obj build\main.obj build\splash.obj build\patchapi.obj 
+      build\shellutil.obj"/>
     <RESFILES value="..\..\..\launch\launch.res"/>
     <DEFFILE value=""/>
-    <RESDEPEN value="$(RESFILES) ..\..\..\launch\main.dfm ..\..\..\launch\splash.dfm frame1.dfm"/>
+    <RESDEPEN value="$(RESFILES) ..\..\..\launch\main.dfm ..\..\..\launch\splash.dfm"/>
     <LIBFILES value="lib\sdl.lib"/>
     <LIBRARIES value="rtl.lib vcl.lib"/>
     <SPARELIBS value="vcl.lib rtl.lib"/>
@@ -54,9 +54,6 @@
       <FILE FILENAME="..\..\..\launch\splash.cpp" FORMNAME="dlgSplash" UNITNAME="splash" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\launch\launch.res" FORMNAME="" UNITNAME="launch.res" CONTAINERID="ResTool" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="lib\sdl.lib" FORMNAME="" UNITNAME="sdl.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
-      <FILE FILENAME="..\..\..\repository\url.cpp" FORMNAME="" UNITNAME="url.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
-      <FILE FILENAME="..\..\..\repository\filesystem.cpp" FORMNAME="" UNITNAME="filesystem.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
-      <FILE FILENAME="frame1.cpp" FORMNAME="frMain" UNITNAME="frame1" CONTAINERID="CCompiler" DESIGNCLASS="TFrame" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\repository\patchapi.cpp" FORMNAME="" UNITNAME="patchapi" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\repository\shellutil.cpp" FORMNAME="" UNITNAME="shellutil" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
   </FILELIST>

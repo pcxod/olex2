@@ -100,7 +100,7 @@ public:
     // reads the folder structure
     void Expand(TOnProgress& pg);
     // recursive deletion of the folder, must be expanded beforehand! throws TFunctionFailedException
-    void Delete(TOnProgress& pg);
+    void Delete(TOnProgress& pg, bool ContentOnly=false);
     // compares folders and returns the difference size
     uint64_t Compare(const Folder& f, TOnProgress& pg) const;
     // calculates the difference tree between the folders
@@ -181,20 +181,21 @@ public:
     OnSynchronise->Exit(NULL, &onExp);
   }
   //............................................................................
-  void Delete()  {
+  // if ContentOnly is true, the top folder is not deleted
+  void Delete(bool ContentOnly=false)  {
     TOnProgress onDel;
     onDel.SetPos(0);
     onDel.SetMax( Root.CalcItemCount() );
     OnDelete->Enter(NULL, &onDel);
-    Root.Delete(onDel);
+    Root.Delete(onDel, ContentOnly);
     onDel.SetPos( onDel.GetMax() );
     OnDelete->Exit(NULL, &onDel);
   }
   //............................................................................
-  static void Delete(const olxstr& fn)  {
+  static void Delete(const olxstr& fn, bool ContentOnly=false)  {
     TFileTree ft(fn);
     ft.Expand();
-    ft.Delete();
+    ft.Delete(ContentOnly);
   }
   //............................................................................
   uint64_t Compare(const TFileTree& ft) const {

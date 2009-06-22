@@ -465,10 +465,10 @@ void TFSItem::DelFile() {
       delete Items.GetObject(i);
     Items.Clear();
     // this will remove ALL files, not only the files in the index
-    GetDestFS().DelDir( GetDestFS().GetBase() + GetFullName() );
+    GetIndexFS().DelDir( GetIndexFS().GetBase() + GetFullName() );
   }
   else
-    GetDestFS().DelFile( GetDestFS().GetBase() + GetFullName());
+    GetIndexFS().DelFile( GetIndexFS().GetBase() + GetFullName());
 }
 //..............................................................................
 TFSItem& TFSItem::operator = (const TFSItem& FI)  {

@@ -40,7 +40,7 @@ void TFileTree::Folder::Expand(TOnProgress& pg)  {
   Folders.QuickSorter.SortSF(Folders, &CompareFolders);
 }
 //......................................................................................
-void TFileTree::Folder::Delete(TOnProgress& pg)  {
+void TFileTree::Folder::Delete(TOnProgress& pg, bool ContentOnly)  {
   for( int i=0; i < Folders.Count(); i++ )  {
     try  {
       pg.IncPos(1);
@@ -68,7 +68,8 @@ void TFileTree::Folder::Delete(TOnProgress& pg)  {
       Files.NullItem(i);
   }
   Files.Pack();
-  if( !TEFile::RmDir(FullPath) )
+  const bool remove = (Parent == NULL ? !ContentOnly : true);
+  if( remove && !TEFile::RmDir(FullPath) )
     throw TFunctionFailedException(__OlxSourceInfo, olxstr("Could not delete folder: ") << FullPath);
 }
 //......................................................................................

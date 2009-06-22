@@ -17,6 +17,8 @@
 #include "shellutil.h"
 #include "estrlist.h"
 #include "updateapi.h"
+#include "patchapi.h"
+#include "egc.h"
 //---------------------------------------------------------------------------
 #pragma package(smart_init)
 #pragma link "frame1"
@@ -54,13 +56,14 @@ olxstr TfMain::SettingsFile = "usettings.dat";
 __fastcall TfMain::TfMain(TComponent* Owner) :TForm(Owner)  {
   MouseDown = Dragging = false;
   Expanded = false;
-  Bapp = new TBasicApp( CmdLine[0] );
-  Bapp->OnProgress->Add( new TProgress );
+  TEGC::Initialise();
   olxstr ip( TShellUtil::GetSpecialFolderLocation(fiProgramFiles) );
   TEFile::AddTrailingBackslashI( ip ) << "Olex2";
   frMain->eInstallationPath->Text = ip.c_str();
   OlexInstalled = CheckOlexInstalled( OlexInstalledPath );
   if( OlexInstalled )  {
+    Bapp = new TBasicApp( TEFile::AddTrailingBackslash(OlexInstalledPath) + "installer.exe" );
+    Bapp->OnProgress->Add( new TProgress );
     TEFile::AddTrailingBackslash( OlexInstalledPath );
     frMain->eInstallationPath->Text = OlexInstalledPath.c_str();
     olxstr sfile = OlexInstalledPath;
@@ -83,6 +86,7 @@ __fastcall TfMain::TfMain(TComponent* Owner) :TForm(Owner)  {
     frMain->cbCreateDesktopShortcut->Visible = false;
   }
   else  {
+    Bapp = new TBasicApp( CmdLine[0] );
     olxstr zipfn( Bapp->BaseDir() + "olex2.zip" );
     if( TEFile::Exists(zipfn) )  {
       if( !TEFile::IsAbsolutePath(zipfn) )  {
@@ -135,7 +139,7 @@ void __fastcall TfMain::bbBrowseClick(TObject *Sender)
       TShellUtil::GetSpecialFolderLocation(fiPrograms), EmptyString) );
     if( dir.Length() != 0 )
       frMain->eInstallationPath->Text = dir.c_str();
-    dir = TShellUtil::GetSpecialFolderLocation(fiDesktop);
+    dir = TShellUtil::GetSpecialFolderLocation(fiProgramFiles);
   }
   catch( ... )  {  ;  }
   this->Enabled = true;
@@ -185,22 +189,23 @@ void __fastcall TfMain::bbInstallClick(TObject *Sender)  {
   if( !installPath.IsEmpty() && !installPath.EndsWith('\\') )  installPath << '\\';
 
   if( !OlexInstalled )  {
-    if( !TEFile::Exists( installPath ) )  {
+    if( !TEFile::Exists(installPath) )  {
       if( !ForceDirectories( installPath.c_str() ) )  {
-        Application->MessageBoxA("Could not create installation directory", "Installation failed", MB_OK|MB_ICONERROR);
+        Application->MessageBoxA("Could not create installation folder.\
+ Please make sure the folder is not opened in any other programs and try again.", "Error", MB_OK|MB_ICONERROR);
+        frMain->bbInstall->Enabled = false;
         return;
       }
     }
-    else  {
-      int res =Application->MessageBoxA("The instalaltion folder already exists.\nThe installer needs to delete it.\nContinue?",
+    else if( !TEFile::IsEmptyDir(installPath) ) {
+      int res =Application->MessageBoxA("The instalaltion folder already exists.\nThe installer needs to empty it.\nContinue?",
             "Confirm", MB_YESNOCANCEL|MB_ICONWARNING);
       if( res == IDYES )  {
-        if( !TEFile::DeleteDir(installPath) )  {
+        if( !TEFile::DeleteDir(installPath, true) )  {
           Application->MessageBoxA("Could not clean up the instalaltion folder. Please try later.", "Error", MB_OK|MB_ICONERROR);
           frMain->bbInstall->Enabled = false;
           return;
         }
-        TEFile::MakeDir(installPath);
       }
       else if( res == IDCANCEL )  {
         frMain->bbInstall->Enabled = false;
@@ -211,7 +216,7 @@ void __fastcall TfMain::bbInstallClick(TObject *Sender)  {
   if( !localInstall )
     Settings["repository"] = reposPath;
   else  // use default
-    Settings["repository"] = "http://dimas.dur.ac.uk/olex-distro/";
+    Settings["repository"] = "http://dimas.dur.ac.uk/olex2-distro/";
   Settings["proxy"] = proxyPath;
   Settings["update"] = frMain->rgAutoUpdate->Items->Strings[frMain->rgAutoUpdate->ItemIndex].c_str();
 
@@ -384,6 +389,11 @@ bool TfMain::CleanRegistry()
 //---------------------------------------------------------------------------
 void __fastcall TfMain::bbUninstallClick(TObject *Sender)  {
   if( !OlexInstalled )  return;
+  if( patcher::PatchAPI::IsOlex2Running() )  {
+    Application->MessageBoxA("There are Olex2 instances are running or you do\
+ not have sufficient rights to access the the instalaltion folder...", "Error", MB_OK|MB_ICONERROR);
+    return;
+  }
   olxstr indexFileName( OlexInstalledPath);
          indexFileName << "index.ind";
 
@@ -391,7 +401,9 @@ void __fastcall TfMain::bbUninstallClick(TObject *Sender)  {
   frMain->bbInstall->Enabled = false;
 
   if( !TEFile::Exists(indexFileName) )  {
-    Application->MessageBoxA("Could not locate installation database\nProcessing registry and shortcuts...", "Error", MB_OK|MB_ICONINFORMATION);
+    Application->MessageBoxA("Could not locate installation database\nProcessing registry and shortcuts...",
+      "Error",
+      MB_OK|MB_ICONERROR);
 
     frMain->bbInstall->Enabled = true;
     frMain->bbInstall->Caption = "Install";
@@ -401,14 +413,12 @@ void __fastcall TfMain::bbUninstallClick(TObject *Sender)  {
     frMain->cbCreateShortcut->Visible = true;
     frMain->cbCreateDesktopShortcut->Visible = true;
   }
-  if( !CleanRegistry() )  {
-    Application->MessageBoxA("Could not remove registry entries", "Error", MB_OK|MB_ICONERROR);
-    return;
-  }
-  if( TEFile::Exists(indexFileName) )  {
-    if( Application->MessageBoxA("Do you want to remove ALL Olex2 folders?",
-          "Confirm", MB_YESNO|MB_ICONQUESTION) == IDYES )
-    {
+  else  {
+    int res = Application->MessageBoxA("Do you want to remove ALL Olex2 folders?",
+          "Confirm", MB_YESNOCANCEL|MB_ICONQUESTION);
+     if( res == IDCANCEL )
+       return;
+     if( res == IDYES )  {
       if( !TEFile::DeleteDir(OlexInstalledPath) )
           Application->MessageBoxA("Could not remove all Olex2 folders...", "Error", MB_OK|MB_ICONERROR);
       olxstr DataDir = TShellUtil::GetSpecialFolderLocation(fiAppData);
@@ -427,6 +437,10 @@ void __fastcall TfMain::bbUninstallClick(TObject *Sender)  {
       CleanInstallationFolder( FSIndex.GetRoot() );
       TEFile::DelFile( indexFileName );
     }
+  }
+  if( !CleanRegistry() )  {
+    Application->MessageBoxA("Could not remove registry entries", "Error", MB_OK|MB_ICONERROR);
+    return;
   }
   // find and delete shortcuts
   try  {

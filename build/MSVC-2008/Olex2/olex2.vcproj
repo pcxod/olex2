@@ -801,6 +801,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\repository\patchapi.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\olex\primtvs.cpp"
 				>
 			</File>

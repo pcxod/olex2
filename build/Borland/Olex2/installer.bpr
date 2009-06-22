@@ -6,7 +6,7 @@
     <PROJECT value="exe\installer.exe"/>
     <OBJFILES value="build\installer.obj build\licence.obj build\main.obj build\shellutil.obj 
       build\unzip.obj build\winhttpfs.obj build\filesystem.obj build\url.obj 
-      build\frame1.obj build\winzipfs.obj build\updateapi.obj"/>
+      build\frame1.obj build\winzipfs.obj build\updateapi.obj build\patchapi.obj"/>
     <RESFILES value="..\..\..\installer\installer.res"/>
     <DEFFILE value=""/>
     <RESDEPEN value="$(RESFILES) ..\..\..\installer\licence.dfm ..\..\..\installer\main.dfm 
@@ -64,6 +64,7 @@
       <FILE FILENAME="frame1.cpp" FORMNAME="frMain" UNITNAME="frame1" CONTAINERID="CCompiler" DESIGNCLASS="TFrame" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\repository\winzipfs.cpp" FORMNAME="" UNITNAME="winzipfs" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\repository\updateapi.cpp" FORMNAME="" UNITNAME="updateapi" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\repository\patchapi.cpp" FORMNAME="" UNITNAME="patchapi" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
   </FILELIST>
   <BUILDTOOLS>
   </BUILDTOOLS>

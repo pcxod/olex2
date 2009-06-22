@@ -10,6 +10,7 @@
 #include "url.h"
 #include "datafile.h"
 #include "dataitem.h"
+#include "patchapi.h"
 
 //#define __WXWIDGETS__
 
@@ -29,6 +30,7 @@
 #endif
 
 using namespace updater;
+using namespace patcher;
 
 //..............................................................................
 short UpdateAPI::DoUpdate(AActionHandler* _f_lsnr, AActionHandler* _p_lsnr)  {
@@ -37,6 +39,10 @@ short UpdateAPI::DoUpdate(AActionHandler* _f_lsnr, AActionHandler* _p_lsnr)  {
     log.Add("Invalid settings file: ") << settings.source_file;
     return uapi_NoSettingsFile;
   }
+  if( Tag.IsEmpty() )
+    return updater::uapi_InvalidInstallation;
+  if( !PatchAPI::LockUpdater() )
+    return updater::uapi_Busy;
   SettingsFile& sf = settings;
   TFSItem::SkipOptions toSkip;
   toSkip.extsToSkip = sf.extensions_to_skip.IsEmpty() ? NULL : &sf.extensions_to_skip;
@@ -44,8 +50,8 @@ short UpdateAPI::DoUpdate(AActionHandler* _f_lsnr, AActionHandler* _p_lsnr)  {
 
   short res = updater::uapi_NoSource;
   AFileSystem* srcFS = FindActiveUpdateRepositoryFS(&res);
-  if( srcFS == NULL )
-    return res;
+  if( srcFS == NULL )  return res;
+  srcFS->SetBase( AddTagPart(srcFS->GetBase(), false) );
   // evaluate properties
   TStrList props;
   EvaluateProperties(props);
@@ -56,47 +62,69 @@ short UpdateAPI::DoUpdate(AActionHandler* _f_lsnr, AActionHandler* _p_lsnr)  {
     sf.last_updated = TETime::EpochTime();
     sf.Save();
   }
+  PatchAPI::UnlockUpdater();
   return res;
 }
 //.............................................................................
 short UpdateAPI::DoInstall(AActionHandler* download_lsnr, AActionHandler* extract_lsnr, const olxstr& repo)  {
   CleanUp(download_lsnr, extract_lsnr);
   if( !IsInstallRequired() )  return updater::uapi_OK;
+  if( repo.IsEmpty() )
+    return updater::uapi_InvaildRepository;
+  if( TBasicApp::GetInstance()->IsBaseDirWriteable() )
+    return updater::uapi_AccessDenied;
   // check for local installation
   olxstr src_fn = GetInstallationFileName(),
          inst_zip_fn = TBasicApp::GetInstance()->BaseDir() + src_fn;
-  if( (repo.IsEmpty() || repo == inst_zip_fn) && TEFile::Exists(inst_zip_fn) )  {
+  if( repo == inst_zip_fn && TEFile::Exists(inst_zip_fn) )  {
     try  {
+      if( !PatchAPI::LockUpdater() )
+        return updater::uapi_Busy;
       ZipFS zfs(inst_zip_fn, false);
       if( p_lsnr != NULL )  {
         zfs.OnProgress->Add(p_lsnr);
         p_lsnr = NULL;
       }
+      if( !zfs.FileExists(GetTagFileName()) )
+        return updater::uapi_InvaildRepository;
       zfs.ExtractAll(TBasicApp::GetInstance()->BaseDir());
+      settings.repository = GetDefaultRepository();
+      settings.last_updated = TETime::EpochTime();
+      settings.Save();
+      PatchAPI::UnlockUpdater();
       return updater::uapi_OK;
     }
     catch( const TExceptionBase& exc )  {
       log.Add( exc.GetException()->GetFullMessage() );
+      PatchAPI::UnlockUpdater();
       return updater::uapi_InstallError;
     }
   }
-  AFileSystem* fs = repo.IsEmpty() ? FindActiveRepositoryFS(&settings.repository) 
-    : FSFromString(repo, settings.GetProxyUrlStr());
-  if( fs == NULL )  return updater::uapi_NoSource;
+  if( !PatchAPI::LockUpdater() )
+    return updater::uapi_Busy;
+  AFileSystem* fs = FSFromString(repo, settings.GetProxyUrlStr());
+  if( fs == NULL )  {
+    PatchAPI::UnlockUpdater();
+    return updater::uapi_NoSource;
+  }
   if( f_lsnr != NULL )  {
     fs->OnProgress->Add(f_lsnr);
     f_lsnr = NULL;
   }
   IInputStream* src_s = NULL;
+  short res = updater::uapi_OK;
   try {  src_s = fs->OpenFile( fs->GetBase() + src_fn ); }
   catch( const TExceptionBase& exc )  {
     log.Add( exc.GetException()->GetFullMessage() );
-    delete fs;
-    return updater::uapi_InvaildRepository;
+    res = updater::uapi_InvaildRepository;
   }
-  if( src_s == NULL )  {
+  if( src_s == NULL )
+    res = updater::uapi_InvaildRepository;
+  
+  if( res != updater::uapi_OK )  {
     delete fs;
-    return updater::uapi_InvaildRepository;
+    PatchAPI::UnlockUpdater();
+    return res;
   }
   try  {
     src_fn = TBasicApp::GetInstance()->BaseDir() + src_fn; 
@@ -113,44 +141,53 @@ short UpdateAPI::DoInstall(AActionHandler* download_lsnr, AActionHandler* extrac
       }
       zfs.ExtractAll(TBasicApp::GetInstance()->BaseDir());
     }
-    TEFile::DelFile(src_fn);
     delete fs;
     fs = NULL;
-    if( !repo.IsEmpty() )
-      settings.repository = repo;
+    TEFile::DelFile(src_fn);
+    settings.repository = TrimTagPart(repo);
     settings.last_updated = TETime::EpochTime();
     settings.update_interval = "Always";
     settings.Save();
   }
   catch( const TExceptionBase& exc )  {
     log.Add( exc.GetException()->GetFullMessage() );
-    if( fs != NULL )     delete fs;
-    if( src_s != NULL )  delete src_s;
-    return updater::uapi_InstallError;
+    res = updater::uapi_InstallError;
   }
-  return updater::uapi_OK;
+  if( fs != NULL )     delete fs;
+  if( src_s != NULL )  delete src_s;
+  PatchAPI::UnlockUpdater();
+  return res;
 }
 //.............................................................................
 short UpdateAPI::InstallPlugin(AActionHandler* d_lsnr, AActionHandler* e_lsnr, const olxstr& name) {
   CleanUp(d_lsnr, e_lsnr); 
+  if( !TBasicApp::GetInstance()->IsBaseDirWriteable() )
+    return updater::uapi_AccessDenied;
+  if( Tag.IsEmpty() )
+    return updater::uapi_InvalidInstallation;
+  if( !PatchAPI::LockUpdater() )
+    return updater::uapi_Busy;
   AFileSystem* fs = FindActiveRepositoryFS();
-  if( fs == NULL )
+  if( fs == NULL )  {
+    PatchAPI::UnlockUpdater();
     return updater::uapi_NoSource;
+  }
   if( f_lsnr != NULL )  {
     fs->OnProgress->Add(f_lsnr);
     f_lsnr = NULL;
   }
-  olxstr zip_fn( olxstr("/") << 
-    TEFile::UnixPath(TEFile::ParentDir(fs->GetBase())) << name << ".zip" );
+  fs->SetBase( AddTagPart(fs->GetBase(), false) );
+  olxstr zip_fn( TEFile::UnixPath(olxstr(fs->GetBase()) << name << ".zip") );
   IInputStream* is = NULL;
   try { is = fs->OpenFile(zip_fn);  }
   catch( const TExceptionBase& exc )  {
     log.Add( exc.GetException()->GetFullMessage() );
     delete fs;
+    PatchAPI::UnlockUpdater();
     return updater::uapi_InvaildRepository;
   }
   try  {
-    zip_fn = TBasicApp::GetInstance()->BaseDir() + name; 
+    zip_fn = (TBasicApp::GetInstance()->BaseDir() + name) << ".zip"; 
     TEFile src_f(zip_fn, "w+b");
     src_f << *is;
     delete is;
@@ -164,16 +201,19 @@ short UpdateAPI::InstallPlugin(AActionHandler* d_lsnr, AActionHandler* e_lsnr, c
       }
       zfs.ExtractAll(TBasicApp::GetInstance()->BaseDir());
     }
-    //TEFile::DelFile(src_fn);
+    TEFile::DelFile(zip_fn);
     delete fs;
     fs = NULL;
+    PatchAPI::UnlockUpdater();
   }
   catch( const TExceptionBase& exc )  {
     log.Add( exc.GetException()->GetFullMessage() );
     if( fs != NULL )     delete fs;
     if( is != NULL )  delete is;
+    PatchAPI::UnlockUpdater();
     return updater::uapi_InstallError;
   }
+  PatchAPI::UnlockUpdater();
   return updater::uapi_OK;
 }
 //.............................................................................
@@ -260,6 +300,10 @@ AFileSystem* UpdateAPI::FSFromString(const olxstr& _repo, const olxstr& _proxy) 
 }
 //.............................................................................
 AFileSystem* UpdateAPI::FindActiveUpdateRepositoryFS(short* res) const {
+  if( Tag.IsEmpty() )  {
+    if( res != NULL )  *res = updater::uapi_InvalidInstallation;
+    return NULL;
+  }
   if( res != NULL )  *res = updater::uapi_UptoDate;
   olxstr repo = settings.repository;
   if( TEFile::Exists(repo) )  {
@@ -288,12 +332,7 @@ AFileSystem* UpdateAPI::FindActiveUpdateRepositoryFS(short* res) const {
         if( res != NULL )  *res = updater::uapi_NoSource;
         return NULL;
       }
-      olxstr base = TEFile::UnixPath(FS->GetBase());
-      if( !base.IsEmpty() && !base.EndsWith('/') )
-        base << '/';
-      if( !base.EndsWith("update/") )
-        base << "update/";
-      FS->SetBase(base);
+      FS->SetBase( AddTagPart(FS->GetBase(), true) );
       return FS;
     }
   }
@@ -302,7 +341,7 @@ AFileSystem* UpdateAPI::FindActiveUpdateRepositoryFS(short* res) const {
 }
 //.............................................................................
 AFileSystem* UpdateAPI::FindActiveRepositoryFS(olxstr* repo_name) const  {
-  olxstr repo, def_repo("http://www.olex2.org/olex2-distro/");
+  olxstr def_repo("http://www.olex2.org/olex2-distro/");
   //olxstr repo, def_repo("http://www.olex2.org/olex-distro-test/");
   TStrList repositories;
   olxstr mirrors_fn = GetMirrorsFileName();
@@ -326,6 +365,22 @@ AFileSystem* UpdateAPI::FindActiveRepositoryFS(olxstr* repo_name) const  {
     }
   }
   return NULL;
+}
+//.............................................................................
+void UpdateAPI::GetAvailableMirrors(TStrList& res) const  {
+  olxstr def_repo("http://www.olex2.org/olex2-distro/");
+  olxstr mirrors_fn = GetMirrorsFileName();
+  if( TEFile::Exists(mirrors_fn) )
+    res.LoadFromFile(mirrors_fn);
+  if( res.IndexOf(def_repo) == -1 )
+    res.Insert(0, def_repo);
+  if( settings.IsValid() && !settings.repository.IsEmpty() )  {
+    int ind = res.IndexOf(settings.repository);
+    if( ind != -1 && ind != 0 )
+      res.Delete(ind);
+    if( ind != 0 )
+      res.Insert(0, settings.repository);
+  }
 }
 //.............................................................................
 void UpdateAPI::GetAvailableRepositories(TStrList& res) const {
@@ -355,6 +410,38 @@ void UpdateAPI::GetAvailableRepositories(TStrList& res) const {
   if( TEFile::Exists(inst_zip_fn) )  
     res.Insert( 0, inst_zip_fn );
 }
+//.............................................................................
+olxstr UpdateAPI::ReadRepositoryTag()  {
+  olxstr tag_fn = TBasicApp::GetBaseDir() + GetTagFileName();
+  if( !TEFile::Exists(tag_fn) )
+    return EmptyString;
+  TStrList sl;
+  sl.LoadFromFile(tag_fn);
+  return sl.Count() == 1 ? sl[0] : EmptyString;
+}
+//.............................................................................
+olxstr UpdateAPI::TrimTagPart(const olxstr& path) const {
+  if( Tag.IsEmpty() )  return path;
+  olxstr rv = TEFile::UnixPath(path);
+  if( !rv.EndsWith('/') )  rv << '/';
+  if( rv.EndsWith("update/") )
+    rv.SetLength( rv.Length() - 7 );
+  if( rv.EndsWith(Tag+'/') )
+    rv.SetLength( rv.Length() - Tag.Length() );
+  return rv;
+}
+//.............................................................................
+olxstr UpdateAPI::AddTagPart(const olxstr& path, bool Update) const {
+  if( Tag.IsEmpty() )  return path;
+  olxstr rv = TrimTagPart(path);
+  rv << Tag << '/';
+  if( Update )
+    rv << "update/";
+  return rv;
+}
+//.............................................................................
+/////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////
 SettingsFile::SettingsFile(const olxstr& file_name) : source_file(file_name)  {
   if( !TEFile::Exists(file_name) )
@@ -364,13 +451,6 @@ SettingsFile::SettingsFile(const olxstr& file_name) : source_file(file_name)  {
   proxy_user = settings["proxy_user"];
   proxy_pswd = settings["proxy_passwd"];
   repository = settings["repository"];
-  // fix if wrong...
-  repository = TEFile::UnixPathI(repository);
-  if( !repository.IsEmpty() )  {
-    if( !repository.EndsWith('/') )  repository << '/';
-    if( repository.EndsWith("update/") )
-      repository.SetLength(repository.Length()-7);
-  }
   repository_user = settings["repository_user"];
   repository_pswd = settings["repository_passwd"];
   update_interval = settings["update"];
@@ -426,13 +506,6 @@ void SettingsFile::Save() {
   settings["proxy"] = proxy;
   settings["proxy_user"] = proxy_user;
   settings["proxy_passwd"] = proxy_pswd;
-  // a bit of hack here...
-  repository = TEFile::UnixPathI(repository);
-  if( !repository.IsEmpty() )  {
-    if( !repository.EndsWith('/') )  repository << '/';
-    if( repository.EndsWith("update/") )
-      repository.SetLength(repository.Length()-7);
-  }
   settings["repository"] = repository;
   settings["repository_user"] = repository_user;
   settings["repository_passwd"] = repository_pswd;
