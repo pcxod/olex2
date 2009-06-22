@@ -29,13 +29,7 @@ const short
 ////////////////////////////////////////////////////////////////////////////
 struct SettingsFile  {
   olxstr repository,  // repository for local update
-    repository_user,  // for ftp/http
-    repository_pswd,  // for ftp/http
     proxy,            // repository proxy
-    proxy_user,       // proxy user name
-    proxy_pswd,       // proxy password
-    dest_user,        // like ftp user name
-    dest_pswd,        // like ftp pswd
     dest_repository,  // like ftp
     src_for_dest,     // source for dest, local or remote (repository)
     update_interval,
@@ -47,12 +41,9 @@ struct SettingsFile  {
   time_t last_updated;
   //...................................................................
   SettingsFile(const olxstr& file_name);
-  olxstr GetRepositoryUrlStr() const;
-  olxstr GetDestinationUrlStr() const;
-  olxstr GetProxyUrlStr() const;
   bool IsValid() const {  return TEFile::Exists(source_file);  }
   // save will change repo/update/ to repo...
-  void Save();
+  bool Save();
 };
 
 // Olex2 updater/installer API
@@ -81,7 +72,7 @@ class UpdateAPI  {
   //.................................................................................................
   short _Update(AFileSystem& SrcFS, const TStrList& properties, const TFSItem::SkipOptions* toSkip)  {
     try  {
-      TOSFileSystem DestFS(TBasicApp::GetInstance()->BaseDir()); // local file system
+      TOSFileSystem DestFS(TBasicApp::GetBaseDir()); // local file system
       TFSIndex FI( SrcFS );
       InitAQueues(SrcFS.OnProgress, FI.OnProgress);
       if( FI.Synchronise(DestFS, properties, toSkip) == 0)
@@ -115,11 +106,6 @@ class UpdateAPI  {
   //.................................................................................................
   SettingsFile settings;
   olxstr Tag;
-protected:
-  // transforms /olex2-distro/tag or /olex2-distro/tag/update to /olex2-distro
-  olxstr TrimTagPart(const olxstr& path) const;
-  // transforms /olex2-distro to to /olex2/distro/tag or /olex2/distro/tag/update
-  olxstr AddTagPart(const olxstr& path, bool Update) const;
 public:
   UpdateAPI() : f_lsnr(NULL), p_lsnr(NULL), 
     settings(GetSettingsFileName()),
@@ -152,8 +138,14 @@ public:
   static olxstr GetSettingsFileName()  {  return TBasicApp::GetBaseDir() + "usettings.dat";  }
   static olxstr GetIndexFileName()  {  return TBasicApp::GetBaseDir() + "index.ind";  }
   static olxstr GetMirrorsFileName()  {  return TBasicApp::GetBaseDir() + "mirrors.txt";  }
+
   static const char* GetTagsFileName()  {  return "tags.txt";  }
   static const char* GetTagFileName()  {  return "olex2.tag";  }
+  // transforms /olex2-distro/tag or /olex2-distro/tag/update to /olex2-distro
+  olxstr TrimTagPart(const olxstr& path) const;
+  // transforms /olex2-distro to to /olex2/distro/tag or /olex2/distro/tag/update
+  olxstr AddTagPart(const olxstr& path, bool Update) const;
+
   static bool IsInstallRequired() {  return !TEFile::Exists(GetIndexFileName());  }
   /* checks the repository if in the settings, if down - then the default URL (http://www.olex2.org/olex2-distro/, 
   if down - checks the mirrors.txt file, if no valid repositories found, returns empty string */

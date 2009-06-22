@@ -9,7 +9,7 @@
 BeginEsdlNamespace()
 
 class TBasicApp: public IEObject  {
-  olxstr FBaseDir, SharedDir, FExeName;
+  olxstr BaseDir, SharedDir, ExeName;
 protected:
   class TActionQList* FActions;
   static TBasicApp* Instance;
@@ -23,25 +23,28 @@ public:
   TBasicApp(const olxstr& AppName); // the file name of the application with full path
   virtual ~TBasicApp();
 
-  const olxstr& BaseDir() const {  return FBaseDir; }
-  bool IsBaseDirWriteable() const {  return BaseDirWriteable;  }
-  // valid only if correct string is passed to the constructor
-  const olxstr& ExeName() const {  return FExeName;  }
   /* shared dir is independent of current user and to be used for global data
   and locks, must be initialised by the caller otherwise (if empty) the function
   will throw TFunctionfailedException  */
-  const olxstr& GetSharedDir() const;
+  static const olxstr& GetSharedDir();
   // will create the folder if does not exist, if fails - throws TFunctionfailedException
-  const olxstr& SetSharedDir(const olxstr& cd);
-  bool HasSharedDir() const {  return !SharedDir.IsEmpty();  }
+  static const olxstr& SetSharedDir(const olxstr& cd);
+  static bool HasSharedDir() {  return !GetInstance().SharedDir.IsEmpty();  }
 
-  static TLog& GetLog()  {  return *GetInstance()->Log;  }
-  static const olxstr& GetBaseDir()  {  return GetInstance()->FBaseDir;  }
-  static const olxstr& GetExeName()  {  return GetInstance()->FExeName;  }
-  static inline TBasicApp*  GetInstance() {  
+  static TLog& GetLog()  {  return *GetInstance().Log;  }
+  /* if var_name is not NULL, tries to get its value and combine with file name of path 
+  if either are empty - the curent folder is used with exename 'unknown.exe' */
+  static olxstr GuessBaseDir(const olxstr& path, const olxstr& var_name=EmptyString);
+  static const olxstr& GetBaseDir()  {  return GetInstance().BaseDir;  }
+  // this resets the ExeName to the file name of the bd
+  static const olxstr& SetBaseDir(const olxstr& bd);
+  static bool IsBaseDirWriteable() {  return GetInstance().BaseDirWriteable;  }
+  // valid only if correct string is passed to the constructor
+  static const olxstr& GetExeName()  {  return GetInstance().ExeName;  }
+  static inline TBasicApp& GetInstance() {  
     if( Instance == NULL )
       throw TFunctionFailedException(__OlxSourceInfo, "Uninitialised application layer...");
-    return Instance;  
+    return *Instance;  
   }
 
   static bool HasInstance()  {  return Instance != NULL;  }

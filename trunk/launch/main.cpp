@@ -62,14 +62,7 @@ __fastcall TdlgMain::TdlgMain(TComponent* Owner)
 {
   olxstr BaseDir;
   TEGC::Initialise();
-  char* olex_dir = getenv("OLEX2_DIR");
-  if( olex_dir != NULL )
-    BaseDir = TEFile::AddTrailingBackslash(olex_dir) << TEFile::ExtractFileName(CmdLine[0]);
-  else
-    BaseDir = ParamStr(0).c_str();
-  if( !BaseDir.IsEmpty() && BaseDir[1] != ':' )
-    BaseDir = TEFile::AddTrailingBackslash(TEFile::CurrentDir()) + TEFile::ExtractFileName(CmdLine[0]);
-  FBApp = new TBasicApp(BaseDir);
+  FBApp = new TBasicApp(TBasicApp::GuessBaseDir(CmdLine, "OLEX2_DIR") );
   FBApp->SetSharedDir( TShellUtil::GetSpecialFolderLocation(fiAppData) + "Olex2u");
   dlgSplash = new TdlgSplash(this);
 
@@ -110,7 +103,7 @@ __fastcall TdlgMain::TdlgMain(TComponent* Owner)
   }
   dlgSplash->Show();
   dlgSplash->Repaint();
-  if( TBasicApp::GetInstance()->IsBaseDirWriteable() )  {
+  if( TBasicApp::GetInstance().IsBaseDirWriteable() )  {
     short res = patcher::PatchAPI::DoPatch(new TFileProgress, new TOverallProgress);
     if( res != patcher::papi_OK )  {
       olxstr msg;
@@ -152,17 +145,17 @@ void TdlgMain::Launch()  {
     bf = new char [rv+1];
     rv = GetEnvironmentVariable("PATH", bf, rv+1);
   }
-  olxstr path(bf), bd = TBasicApp::GetInstance()->BaseDir();
+  olxstr path(bf), bd = TBasicApp::GetBaseDir();
   delete [] bf;
   path.Insert(bd.SubStringTo(bd.Length()-1) + ';', 0);
   SetEnvironmentVariable("PATH", path.c_str());
-  olxstr py_path = TBasicApp::GetInstance()->BaseDir() + "Python26";
+  olxstr py_path = TBasicApp::GetBaseDir() + "Python26";
   SetEnvironmentVariable("PYTHONHOME", py_path.c_str());
 
   STARTUPINFO si;
   PROCESS_INFORMATION ProcessInfo;
   AnsiString Tmp;
-  Tmp += TBasicApp::GetInstance()->BaseDir().u_str();
+  Tmp += TBasicApp::GetBaseDir().u_str();
   Tmp += "olex2.dll";
   ZeroMemory(&si, sizeof(STARTUPINFO));
   si.cb = sizeof(STARTUPINFO);

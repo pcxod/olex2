@@ -17,11 +17,11 @@ TCmdLine::TCmdLine( wxWindow* parent, int flags )  : TTextEdit( parent, flags ) 
   SetInsertionPointEnd();
   CmdIndex = 0;
   SetToDelete(false);
-  TBasicApp::GetInstance()->OnTimer->Add( (AActionHandler*)this );
+  TBasicApp::GetInstance().OnTimer->Add( (AActionHandler*)this );
 }
 //..............................................................................
 TCmdLine::~TCmdLine()  {
-  TBasicApp::GetInstance()->OnTimer->Remove( (AActionHandler*)this );
+  TBasicApp::GetInstance().OnTimer->Remove( (AActionHandler*)this );
   delete Actions;
 }
 //..............................................................................

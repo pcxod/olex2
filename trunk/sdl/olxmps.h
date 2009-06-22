@@ -89,7 +89,7 @@ template <class TaskClass>
     }                                                
   protected:
     void CalculateRatios(eveci& res, long ListSize, const short TaskType)  {
-      const short mt = olx_min(4, TBasicApp::GetInstance()->GetMaxThreadCount());
+      const short mt = olx_min(4, TBasicApp::GetInstance().GetMaxThreadCount());
       res.Resize( mt );  // max 4 threads to support
       if( TaskType == tLinearTask )  {
         res[0] = (int)(ListSize/mt);
@@ -127,7 +127,7 @@ template <class TaskClass>
   public:
     TListIteratorManager( TaskClass& task, long ListSize, const short TaskType, long minSize)  {
       SetToDelete(false);
-      if( ListSize < minSize || TBasicApp::GetInstance()->GetMaxThreadCount() == 1)  {  // should we create parallel tasks then at all?
+      if( ListSize < minSize || TBasicApp::GetInstance().GetMaxThreadCount() == 1)  {  // should we create parallel tasks then at all?
         for( long i=0; i < ListSize; i++ )
           task.Run(i);
         return;
@@ -150,7 +150,7 @@ template <class TaskClass>
         start_thread( item );
       }
       while( !IsCompleted() )
-        TBasicApp::GetInstance()->Sleep(25);
+        TBasicApp::GetInstance().Sleep(25);
     }
     virtual bool Execute(const IEObject *Sender, const IEObject *Data=NULL) {
       ((TArrayIterationItem<TaskClass>*)Sender)->OnCompletion->Remove(this);

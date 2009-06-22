@@ -1939,7 +1939,7 @@ void TAtomsInfo::SaveToFile(const olxstr &filename) const  {
 //..............................................................................
 TBasicAtomInfo* TAtomsInfo::FindAtomInfoBySymbol(const olxstr &Symbol) const  {
 //  static bool running = false;
-//  while ( running )  TBasicApp::GetInstance()->Sleep(1);
+//  while ( running )  TBasicApp::GetInstance().Sleep(1);
 //  running = true;
   for( int i=0; i < Data.Count(); i++ )
     if( Data[i].GetSymbol().Equalsi(Symbol) )  {

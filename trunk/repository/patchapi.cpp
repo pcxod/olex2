@@ -18,7 +18,7 @@ using namespace patcher;
 TEFile* PatchAPI::lock_file = NULL;
 
 short PatchAPI::DoPatch(AActionHandler* OnFileCopy, AActionHandler* OnOverallCopy)  {
-  TBasicApp& bapp = *TBasicApp::GetInstance();
+  TBasicApp& bapp = TBasicApp::GetInstance();
   if( !bapp.IsBaseDirWriteable() )
     return papi_AccessDenied;
   if( !TEFile::Exists( GetUpdateLocationFileName() ) )  {
@@ -83,7 +83,7 @@ short PatchAPI::DoPatch(AActionHandler* OnFileCopy, AActionHandler* OnOverallCop
     OnFileCopy = NULL;
     OnOverallCopy = NULL;
 
-    try  {  ft.CopyTo(bapp.BaseDir(), &AfterFileCopy);  }
+    try  {  ft.CopyTo(bapp.GetBaseDir(), &AfterFileCopy);  }
     catch(PatchAPI::DeletionExc)  {  res = papi_DeleteError;  }
     catch(const TExceptionBase& exc)  {  
       res = papi_CopyError;  

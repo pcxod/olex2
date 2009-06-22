@@ -16,7 +16,7 @@ END_EVENT_TABLE()
 TdlgUpdateOptions::TdlgUpdateOptions(TMainFrame *ParentFrame) :
   TDialog(ParentFrame, wxT("Update options"), wxT("dlgAutoUpdate"))
 {
-  SettingsFile = TBasicApp::GetInstance()->BaseDir() + "usettings.dat";
+  SettingsFile = TBasicApp::GetBaseDir() + "usettings.dat";
   if( TEFile::Exists( SettingsFile ) )
     SF.LoadSettings( SettingsFile );
   short Border = 0;

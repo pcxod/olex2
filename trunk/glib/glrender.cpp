@@ -427,7 +427,7 @@ void TGlRenderer::DrawObject(AGDrawObject *Object, bool DrawImage)  {
 void TGlRenderer::Draw()  {
   static double BZoom = 0;
 
-  if( FWidth < 50 || !TBasicApp::GetInstance()->IsMainFormVisible() )  return;
+  if( FWidth < 50 || !TBasicApp::GetInstance().IsMainFormVisible() )  return;
   
 
 // check if the projection matrices have to be reinitialised..

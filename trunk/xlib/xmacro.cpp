@@ -1992,7 +1992,7 @@ void XLibMacros::funIsFileType(const TStrObjList& Params, TMacroError &E) {
 }
 //..............................................................................
 void XLibMacros::funBaseDir(const TStrObjList& Params, TMacroError &E)  {
-  olxstr tmp( TBasicApp::GetInstance()->BaseDir() );
+  olxstr tmp( TBasicApp::GetBaseDir() );
   // remove the trailing backslash, as it causes a lot of problems with
   // passing parameters to other programs:
   // windows parser assumes that \" is " and does wrong parsing...

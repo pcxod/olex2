@@ -41,7 +41,7 @@ TWinProcess::TWinProcess()  {
 TWinProcess::~TWinProcess()  {
   if( IsTerminateOnDelete() )
     Terminate();
-  TBasicApp::GetInstance()->OnTimer->Remove(this);
+  TBasicApp::GetInstance().OnTimer->Remove(this);
   CloseThreadStreams();
   CloseStreams();
   if( ProcessInfo.hProcess != NULL )
@@ -145,7 +145,7 @@ bool TWinProcess::Execute(const olxstr & Cmd, short Flags)  {
   // close when the child process exits and ReadFile will hang.
   CloseThreadStreams();
   if( !IsSynchronised() && IsRedirected() ) // Launch a thread to receive output from the child process.
-    TBasicApp::GetInstance()->OnTimer->Add(this, ID_Timer);
+    TBasicApp::GetInstance().OnTimer->Add(this, ID_Timer);
 
   if( IsSynchronised() )  {
     DWORD Status;
@@ -159,7 +159,7 @@ bool TWinProcess::Execute(const olxstr & Cmd, short Flags)  {
 }
 //..............................................................................
 bool TWinProcess::Terminate()  {
-  TBasicApp::GetInstance()->OnTimer->Remove(this);
+  TBasicApp::GetInstance().OnTimer->Remove(this);
   CloseStreams();
   OnTerminate->Execute( (AEventsDispatcher*)this, NULL );
   if( ProcessInfo.hProcess )  {

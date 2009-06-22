@@ -2237,7 +2237,7 @@ void TMainForm::macSave(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     }
     else  {
       if( !StylesDir.IsEmpty() )  Tmp = StylesDir;
-      else                        Tmp = FXApp->BaseDir();
+      else                        Tmp = FXApp->GetBaseDir();
       Tmp << FN;  FN = Tmp;
     }
     FN = TEFile::ChangeFileExt(FN, "glds");
@@ -2264,7 +2264,7 @@ void TMainForm::macSave(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       }
     }
     else  {
-      Tmp = (SParamDir.IsEmpty() ? FXApp->BaseDir() : SParamDir);
+      Tmp = (SParamDir.IsEmpty() ? FXApp->GetBaseDir() : SParamDir);
       Tmp << FN;  FN = Tmp;
     }
     FN = TEFile::ChangeFileExt(FN, "glsp");
@@ -2320,7 +2320,7 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       if( !StylesDir.IsEmpty() )
         Tmp = StylesDir;
       else
-        Tmp = FXApp->BaseDir();
+        Tmp = FXApp->GetBaseDir();
       Tmp << FN;
       FN = Tmp;
     }
@@ -2357,7 +2357,7 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       if( SParamDir.Length() )
         Tmp = SParamDir;
       else
-        Tmp = FXApp->BaseDir();
+        Tmp = FXApp->GetBaseDir();
       Tmp << FN;
       FN = Tmp;
     }
@@ -2427,7 +2427,7 @@ void TMainForm::macLink(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     if( !SParamDir.IsEmpty() )
       Tmp = SParamDir;
     else
-      Tmp = FXApp->BaseDir();
+      Tmp = FXApp->GetBaseDir();
     FN = (Tmp << FN );
   }
   FN = TEFile::ChangeFileExt(FN, "glsp");
@@ -2462,7 +2462,7 @@ void TMainForm::macStyle(TStrObjList &Cmds, const TParamList &Options, TMacroErr
         if( !StylesDir.IsEmpty() )
           Tmp = StylesDir;
         else
-          Tmp = FXApp->BaseDir();
+          Tmp = FXApp->GetBaseDir();
         FN = (Tmp << FN);
       }
       if( TEFile::Exists(FN) )
@@ -2503,7 +2503,7 @@ void TMainForm::macScene(TStrObjList &Cmds, const TParamList &Options, TMacroErr
       if( !SParamDir.IsEmpty() )
         Tmp = SParamDir;
       else
-        Tmp = FXApp->BaseDir();
+        Tmp = FXApp->GetBaseDir();
       FN = (Tmp << FN);
     }
     if( TEFile::Exists(FN) )
@@ -5351,18 +5351,18 @@ void TMainForm::macUpdateOptions(TStrObjList &Cmds, const TParamList &Options, T
 //..............................................................................
 void TMainForm::macReload(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   if( Cmds[0].Equalsi("macro") )  {
-    if( TEFile::Exists(FXApp->BaseDir() + "macro.xld") )  {
+    if( TEFile::Exists(FXApp->GetBaseDir() + "macro.xld") )  {
       TStrList SL;
-      FMacroFile.LoadFromXLFile(FXApp->BaseDir() + "macro.xld", &SL);
+      FMacroFile.LoadFromXLFile(FXApp->GetBaseDir() + "macro.xld", &SL);
       FMacroItem = FMacroFile.Root().FindItem("xl_macro");
       FMacroFile.Include(&SL);
       TBasicApp::GetLog() << (SL);
     }
   }
   else if( Cmds[0].Equalsi("help") )  {
-    if( TEFile::Exists(FXApp->BaseDir() + "help.xld") )  {
+    if( TEFile::Exists(FXApp->GetBaseDir() + "help.xld") )  {
       TStrList SL;
-      FHelpFile.LoadFromXLFile(FXApp->BaseDir() + "help.xld", &SL);
+      FHelpFile.LoadFromXLFile(FXApp->GetBaseDir() + "help.xld", &SL);
       FHelpItem = FHelpFile.Root().FindItem("xl_help");
       TBasicApp::GetLog() << (SL);
     }
@@ -5715,11 +5715,11 @@ void TMainForm::macInstallPlugin(TStrObjList &Cmds, const TParamList &Options, T
         return;
       }
       TwxZipFileSystem zipFS( local_file, false );
-      TOSFileSystem osFS( TBasicApp::GetInstance()->BaseDir() );
+      TOSFileSystem osFS( TBasicApp::GetBaseDir() );
       TFSIndex fsIndex( zipFS );
       TStrList properties;
       properties.Add(Cmds[0]);
-      TOnSync* progressListener = new TOnSync(*FXApp, TBasicApp::GetInstance()->BaseDir() );
+      TOnSync* progressListener = new TOnSync(*FXApp, TBasicApp::GetBaseDir() );
       osFS.OnAdoptFile->Add( progressListener );
 
       IEObject* Cause = NULL;
@@ -5740,11 +5740,11 @@ void TMainForm::macInstallPlugin(TStrObjList &Cmds, const TParamList &Options, T
       FXApp->Draw();
     }
     else  {
-      olxstr SettingsFile( TBasicApp::GetInstance()->BaseDir() + "usettings.dat" );
+      olxstr SettingsFile( TBasicApp::GetBaseDir() + "usettings.dat" );
       if( TEFile::Exists(SettingsFile) )  {
         updater::UpdateAPI api;
         short res = api.InstallPlugin(new TDownloadProgress(*FXApp), 
-          new TOnSync(*FXApp, TBasicApp::GetInstance()->BaseDir() ),
+          new TOnSync(*FXApp, TBasicApp::GetBaseDir() ),
           Cmds[0].SubStringFrom(7)
         );
         if( res == updater::uapi_OK )  {
@@ -5847,13 +5847,13 @@ void TMainForm::macUninstallPlugin(TStrObjList &Cmds, const TParamList &Options,
     TStateChange sc(prsPluginInstalled, false);
     FPluginItem->DeleteItem( di );
     OnStateChange->Execute((AEventsDispatcher*)this, &sc);
-    olxstr indexFile = TBasicApp::GetInstance()->BaseDir() + "index.ind";
+    olxstr indexFile = TBasicApp::GetBaseDir() + "index.ind";
     if( TEFile::Exists(indexFile) )  {
-      TOSFileSystem osFS( TBasicApp::GetInstance()->BaseDir() );
+      TOSFileSystem osFS( TBasicApp::GetBaseDir() );
       TFSIndex fsIndex( osFS );
 
       fsIndex.LoadIndex( indexFile );
-      TFSTraverser* trav = new TFSTraverser(*FXApp, TBasicApp::GetInstance()->BaseDir(), Cmds[0]);
+      TFSTraverser* trav = new TFSTraverser(*FXApp, TBasicApp::GetBaseDir(), Cmds[0]);
       TFSItem::Traverser.Traverse<TFSTraverser>(fsIndex.GetRoot(), *trav );
       delete trav;
       fsIndex.SaveIndex( indexFile );
@@ -5880,7 +5880,7 @@ void TMainForm::macUpdateFile(TStrObjList &Cmds, const TParamList &Options, TMac
     return;
   }
 #endif
-  olxstr SettingsFile( TBasicApp::GetInstance()->BaseDir() + "usettings.dat" );
+  olxstr SettingsFile( TBasicApp::GetBaseDir() + "usettings.dat" );
   TEFile::CheckFileExists( __OlxSourceInfo, SettingsFile );
   const TSettingsFile settings(SettingsFile);
   olxstr Proxy, Repository;
@@ -5899,7 +5899,7 @@ void TMainForm::macUpdateFile(TStrObjList &Cmds, const TParamList &Options, TMac
     url.SetProxy( Proxy );
 
   TwxHttpFileSystem httpFS( url );
-  TOSFileSystem osFS( TBasicApp::GetInstance()->BaseDir() );
+  TOSFileSystem osFS( TBasicApp::GetBaseDir() );
   TFSIndex fsIndex( httpFS );
 
   IEObject* Cause = NULL;
@@ -8076,7 +8076,7 @@ public:
   TestDistanceAnalysisIteration( const TStrList& f_list) : 
       files(f_list), au(cif.GetAsymmUnit())  
   {  
-    //TBasicApp::GetInstance()->SetMaxThreadCount(1);  // reset for xfile
+    //TBasicApp::GetInstance().SetMaxThreadCount(1);  // reset for xfile
   }
   ~TestDistanceAnalysisIteration()  {   }
   int Run(long i)  {

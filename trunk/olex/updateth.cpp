@@ -13,7 +13,7 @@ UpdateThread::UpdateThread(const olxstr& patch_dir) : time_out(0), PatchDir(patc
   srcFS = uapi.FindActiveUpdateRepositoryFS(NULL);
   if( srcFS == NULL )  return;
   Index = new TFSIndex(*srcFS);
-  destFS = new TOSFileSystem( TBasicApp::GetInstance()->BaseDir() );
+  destFS = new TOSFileSystem( TBasicApp::GetBaseDir() );
   uapi.EvaluateProperties(properties);
 }
 //....................................................................................
@@ -78,7 +78,7 @@ int UpdateThread::Run()  {
     Index->Synchronise(*destFS, properties, skip ? NULL : &toSkip, &dfs, &cmds);
     // try to update the updater, should check the name of executable though!
     if( dfs.FileExists(updater_file) )
-      TEFile::Rename(updater_file, TBasicApp::GetInstance()->BaseDir() + TEFile::ExtractFileName(updater_file) );
+      TEFile::Rename(updater_file, TBasicApp::GetBaseDir() + TEFile::ExtractFileName(updater_file) );
     
     olxstr cmd_fn( TEFile::ParentDir(dfs.GetBase()) + patcher::PatchAPI::GetUpdaterCmdFileName());
     if( TEFile::Exists(cmd_fn) )  {

@@ -60,7 +60,7 @@ void XLibMacros::funATA(const TStrObjList &Cmds, TMacroError &Error)  {
 //    FileName = xapp.XFile().GetFileName();
 //  }
 //  if( AtomPermutator.IsActive() )  AtomPermutator.ReInit( xapp.XFile().GetAsymmUnit() );
-  olxstr autodbf( xapp.BaseDir() + "acidb.db");
+  olxstr autodbf( xapp.GetBaseDir() + "acidb.db");
   if( TAutoDB::GetInstance() == NULL )  {
     TEGC::AddP( new TAutoDB(*((TXFile*)xapp.XFile().Replicate()), xapp ) );
     if( TEFile::Exists( autodbf ) )  {
@@ -109,7 +109,7 @@ void XLibMacros::macAtomInfo(TStrObjList &Cmds, const TParamList &Options, TMacr
   xapp.FindSAtoms( Cmds.Text(' '), satoms );
   if( TAutoDB::GetInstance() == NULL )  {
     TEGC::AddP( new TAutoDB(*((TXFile*)xapp.XFile().Replicate()), xapp ) );
-    olxstr autodbf( xapp.BaseDir() + "acidb.db");
+    olxstr autodbf( xapp.GetBaseDir() + "acidb.db");
     if( TEFile::Exists( autodbf ) )  {
       TEFile dbf(autodbf, "rb");
       TAutoDB::GetInstance()->LoadFromStream( dbf );
@@ -126,7 +126,7 @@ void XLibMacros::macVATA(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   TEFile log(Cmds.Text(' '), "a+b");
   if( TAutoDB::GetInstance() == NULL )  {
     TEGC::AddP( new TAutoDB(*((TXFile*)xapp.XFile().Replicate()), xapp ) );
-    olxstr autodbf( xapp.BaseDir() + "acidb.db");
+    olxstr autodbf( xapp.GetBaseDir() + "acidb.db");
     if( TEFile::Exists( autodbf ) )  {
       TEFile dbf(autodbf, "rb");
       TAutoDB::GetInstance()->LoadFromStream( dbf );
@@ -173,7 +173,7 @@ void XLibMacros::macClean(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   }
   helper_CleanBaiList(sfac, AvailableTypes);
   if( TAutoDB::GetInstance() == NULL )  {
-    olxstr autodbf( xapp.BaseDir() + "acidb.db");
+    olxstr autodbf( xapp.GetBaseDir() + "acidb.db");
     TEGC::AddP( new TAutoDB(*((TXFile*)xapp.XFile().Replicate()), xapp ) );
     if( TEFile::Exists( autodbf ) )  {
       TEFile dbf(autodbf, "rb");
