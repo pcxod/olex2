@@ -33,7 +33,9 @@ class  PatchAPI  {
     if( !TEFile::DelFile(src) )
       throw DeletionExc(__OlxSourceInfo, olxstr("Failed to delete file: ") << src);
   }
+  static TEFile* lock_file;
 public:
+  ~PatchAPI()  {  UnlockUpdater();  }
   // if action handlers are passed along - they eill be automatically deleted
   static short DoPatch(AActionHandler* OnFileCopy=NULL,
     AActionHandler* OnOverallCopy=NULL);
@@ -51,6 +53,9 @@ public:
   static olxstr GetUpdaterPIDFileName()  {  return TBasicApp::GetBaseDir() + "pid.update";  }
   static const char* GetUpdaterCmdFileName()  {  return "__cmds.update";  }
   static const char* GetOlex2PIDFileExt()  {  return "olex2_pid";  }
+  static bool IsOlex2Running();
+  static bool LockUpdater();
+  static bool UnlockUpdater();
 };
 
 };

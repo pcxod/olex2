@@ -5340,6 +5340,10 @@ void TMainForm::funCmdList(const TStrObjList &Cmds, TMacroError &E) {
 }
 //..............................................................................
 void TMainForm::macUpdateOptions(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
+  if( !FXApp->IsBaseDirWriteable() )  {
+    E.ProcessingError(__OlxSrcInfo, "This feature is not accessible in read-only installation");
+    return;
+  }
   TdlgUpdateOptions* dlg = new TdlgUpdateOptions(this);
   dlg->ShowModal();
   dlg->Destroy();
@@ -5794,7 +5798,7 @@ void TMainForm::macSignPlugin(TStrObjList &Cmds, const TParamList &Options, TMac
       ~TFSTraverser()  {
         TPtrList<TFSItem> FoldersToDelete;
         for( int i=0; i < ToDelete.Count(); i++ )
-          if( !ToDelete[i]->IsFolder() )  {
+          if( !ToDelete[i]->IsFolder() && ToDelete[i]->GetParent() != NULL )  {
             if( FoldersToDelete.IndexOf( ToDelete[i]->GetParent() ) == -1 )
               FoldersToDelete.Add( ToDelete[i]->GetParent() );
             ToDelete[i]->GetParent()->Remove( *ToDelete[i] );

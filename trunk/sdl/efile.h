@@ -177,8 +177,11 @@ public:
   // deletes the folder if empty and returns true on succsess
   static bool RmDir(const olxstr &F);
   /* deletes the folder recursively, returns true on success, false if the name is a file or
-  the deletion was not successful */
-  static bool DeleteDir(const olxstr &F);
+  the deletion was not successful. If ContentOnly is provided - the top dir is not deleted.
+  Returns true on success and false if an error has occured */
+  static bool DeleteDir(const olxstr &F, bool ContentOnly=false);
+  // checks if the folder is empty, in case of error (non existing dir etc) returns false
+  static bool IsEmptyDir(const olxstr &F);
   // returns file drive on windows ans empty string for other platforms
   static olxstr ExtractFileDrive(const olxstr &F);
   static olxstr ExtractFilePath(const olxstr &F);
@@ -186,10 +189,10 @@ public:
   static olxstr ExtractFileExt(const olxstr &F);
   static olxstr ExtractFileName(const olxstr &F);
   static olxstr ChangeFileExt(const olxstr &F, const olxstr &Extension);
-  static bool ListCurrentDirEx(TFileList &Out, const olxstr &Mask, const unsigned short searchFlags);
-  static bool ListDirEx(const olxstr& dir, TFileList &Out, const olxstr &Mask, const unsigned short searchFlags);
-  static bool ListCurrentDir(TStrList& Out, const olxstr &Mask, const unsigned short searchFlags);
-  static bool ListDir(const olxstr& dir, TStrList& Out, const olxstr &Mask, const unsigned short searchFlags);
+  static bool ListCurrentDirEx(TFileList &Out, const olxstr &Mask, const uint16_t searchFlags);
+  static bool ListDirEx(const olxstr& dir, TFileList &Out, const olxstr &Mask, const uint16_t searchFlags);
+  static bool ListCurrentDir(TStrList& Out, const olxstr &Mask, const uint16_t searchFlags);
+  static bool ListDir(const olxstr& dir, TStrList& Out, const olxstr &Mask, const uint16_t searchFlags);
   static bool ChangeDir(const olxstr &To);
   static bool MakeDir(const olxstr &Name);
   // the function forces the creation of all dirs upto the last one

@@ -22,6 +22,10 @@ int UpdateThread::Run()  {
   //while( time_out < 50*20*3*60 )  {
   while( time_out < 50*20*10 )  {
     TBasicApp::Sleep(50);
+    if( Terminate )  {
+      CleanUp();
+      return 0;
+    }
     time_out += 50;
   }
   if( !TBasicApp::HasInstance() || Terminate || 
@@ -30,18 +34,26 @@ int UpdateThread::Run()  {
     CleanUp();
     return 0;
   }
-
+  // try to lock updateAPI
+  while( !patcher::PatchAPI::LockUpdater() )  {
+    TBasicApp::Sleep(100);
+    if( Terminate || !TBasicApp::HasInstance() )  {
+      CleanUp();
+      return 0;
+    }
+  }
   try  {
     TOSFileSystem dfs(PatchDir);
     TStrList cmds;
     bool skip = (extensionsToSkip.IsEmpty() && filesToSkip.IsEmpty());
     UpdateSize = Index->CalcDiffSize(*destFS, properties, skip ? NULL : &toSkip);
+    patcher::PatchAPI::UnlockUpdater();
     if( UpdateSize == 0 )
       return 0;
     while( !_DoUpdate )  {
-      if( Terminate ) return 0;
-      if( !TBasicApp::HasInstance() )  {  // nobody took care ?
+      if( Terminate || !TBasicApp::HasInstance() )  {  // nobody took care ?
         CleanUp();
+        patcher::PatchAPI::UnlockUpdater(); // safe to call without app instance
         return 0;
       }
       TBasicApp::Sleep(100);
@@ -55,6 +67,14 @@ int UpdateThread::Run()  {
     olxstr download_vf(patcher::PatchAPI::GetUpdateLocationFileName());
     if( TEFile::Exists(download_vf) ) // do not run subsequent temporary updates
       return 0;
+  // try to lock updateAPI for update
+    while( !patcher::PatchAPI::LockUpdater() )  {
+      TBasicApp::Sleep(100);
+      if( Terminate || !TBasicApp::HasInstance() )  {
+        CleanUp();
+        return 0;
+      }
+    }
     Index->Synchronise(*destFS, properties, skip ? NULL : &toSkip, &dfs, &cmds);
     // try to update the updater, should check the name of executable though!
     if( dfs.FileExists(updater_file) )
@@ -73,9 +93,11 @@ int UpdateThread::Run()  {
       CString location(dfs.GetBase());
       f.Write(location);
     }
+    patcher::PatchAPI::UnlockUpdater();
   }
   catch(...)  { // oups...
     CleanUp();
+    patcher::PatchAPI::UnlockUpdater();
     return 0;  
   }  
   return 1;

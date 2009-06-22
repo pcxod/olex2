@@ -7,12 +7,15 @@
 #include "efile.h"
 #include "log.h"
 #include "utf8file.h"
+#include "egc.h"
 #ifdef __WIN32__
   #include <windows.h>
 #endif
 #include "filetree.h"
 
 using namespace patcher;
+
+TEFile* PatchAPI::lock_file = NULL;
 
 short PatchAPI::DoPatch(AActionHandler* OnFileCopy, AActionHandler* OnOverallCopy)  {
   TBasicApp& bapp = *TBasicApp::GetInstance();
@@ -30,29 +33,7 @@ short PatchAPI::DoPatch(AActionHandler* OnFileCopy, AActionHandler* OnOverallCop
   }
   olxstr cmd_file(TEFile::ParentDir(patch_dir) + GetUpdaterCmdFileName());
   // make sure that only one instance is running
-  olxstr pid_file(GetUpdaterPIDFileName());
-  if( TEFile::Exists(pid_file) )  {
-    if( !TEFile::DelFile(pid_file) )  {
-      CleanUp(OnFileCopy, OnOverallCopy);
-      return papi_Busy;
-    }
-  }
-  // create lock if possible or exit
-  TEFile* pid_file_inst = NULL;
-  try  {  pid_file_inst = new TEFile(pid_file, "w+b");  }
-  catch( TExceptionBase& )  {
-    CleanUp(OnFileCopy, OnOverallCopy);
-    return papi_Busy;
-  }
-  // check that there are no olex2 instances...
-  TStrList pid_files;
-  TEFile::ListDir(bapp.BaseDir(), pid_files, olxstr("*.") << GetOlex2PIDFileExt(), sefAll);
-  for( int i=0; i < pid_files.Count(); i++ )  {
-    if( TEFile::DelFile( bapp.BaseDir() + pid_files[i]) )
-      pid_files[i].SetLength(0);
-  }
-  pid_files.Pack();
-  if( !pid_files.IsEmpty() )  {
+  if( !LockUpdater() || IsOlex2Running() )  {
     CleanUp(OnFileCopy, OnOverallCopy);
     return papi_Busy;
   }
@@ -94,7 +75,6 @@ short PatchAPI::DoPatch(AActionHandler* OnFileCopy, AActionHandler* OnOverallCop
   // copy...
   if( res == papi_OK )  {
     TFileTree ft(patch_dir);
-    TBasicApp::GetLog() << "Patch dir: "  << patch_dir << '\n';
     ft.Expand();
     if( OnFileCopy != NULL )
       ft.OnFileCopy->Add( OnFileCopy );
@@ -118,10 +98,43 @@ short PatchAPI::DoPatch(AActionHandler* OnFileCopy, AActionHandler* OnOverallCop
       catch(...)  {  res = papi_DeleteError;  }
     }
   }
-  pid_file_inst->Delete();
-  delete pid_file_inst;
   CleanUp(OnFileCopy, OnOverallCopy);
+  UnlockUpdater();
   return res;
 }
-
-
+//.........................................................................
+bool PatchAPI::IsOlex2Running()  {
+  TStrList pid_files;
+  TEFile::ListDir(TBasicApp::GetBaseDir(), pid_files, olxstr("*.") << GetOlex2PIDFileExt(), sefAll);
+  for( int i=0; i < pid_files.Count(); i++ )  {
+    if( TEFile::DelFile( TBasicApp::GetBaseDir() + pid_files[i]) )
+      pid_files[i].SetLength(0);
+  }
+  pid_files.Pack();
+  return !pid_files.IsEmpty();
+}
+//.........................................................................
+bool PatchAPI::LockUpdater() {
+  if( lock_file != NULL )
+    return false;
+  try  {  
+    if( TEFile::Exists(GetUpdaterPIDFileName()) )
+      if( !TEFile::DelFile(GetUpdaterPIDFileName()) )
+        return false;
+    lock_file = new TEFile(GetUpdaterPIDFileName(), "w+");  
+  }
+  catch(...)  {  return false;  }
+  return true;
+}
+//.............................................................................
+bool PatchAPI::UnlockUpdater() {
+  if( lock_file == NULL )  return true;
+  if( !TBasicApp::HasInstance() ) // have to make sure the TEGC exists...
+    TEGC::Initialise();
+  lock_file->Delete();
+  delete lock_file;
+  lock_file = NULL;
+  TEGC::Finalise();
+  return true;
+}
+//.........................................................................

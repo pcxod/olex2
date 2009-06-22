@@ -408,17 +408,25 @@ bool TEFile::IsDir(const olxstr& F)  {
   return (the_stat.st_mode & S_IFDIR) != 0;
 }
 //..............................................................................
-bool TEFile::DeleteDir(const olxstr& F)  {
+bool TEFile::DeleteDir(const olxstr& F, bool ContentOnly)  {
   olxstr fn = OLX_OS_PATH(F);
-  if( !Exists(fn) )  
-    return false;
-  if( !TEFile::IsDir(fn) )  
+  if( !Exists(fn) || !TEFile::IsDir(fn) )  
     return false;
   try  {
-    TFileTree::Delete(fn);
+    TFileTree::Delete(fn, ContentOnly);
     return true;
   }
-  catch( TExceptionBase& )  {    return false;  }
+  catch( TExceptionBase& )  {  return false;  }
+}
+//..............................................................................
+bool TEFile::IsEmptyDir(const olxstr& F)  {
+  olxstr fn = OLX_OS_PATH(F);
+  if( !Exists(fn) || !TEFile::IsDir(fn) )  
+    return false;
+  TStrList out;
+  if( !TEFile::ListDir(fn, out, "*", sefAll^sefRelDir) )
+    return false;
+  return out.IsEmpty();
 }
 //..............................................................................
 bool TEFile::DoesMatchMasks(const olxstr& _fn, const MaskList& masks)  {
@@ -437,7 +445,7 @@ void TEFile::BuildMaskList(const olxstr& mask, MaskList& masks)  {
 }
 //..............................................................................
 #ifdef __WIN32__
-bool TEFile::ListCurrentDirEx(TFileList &Out, const olxstr &Mask, const unsigned short sF)  {
+bool TEFile::ListCurrentDirEx(TFileList &Out, const olxstr &Mask, const uint16_t sF)  {
   MaskList masks;
   BuildMaskList(Mask, masks);
 
@@ -494,7 +502,7 @@ bool TEFile::ListCurrentDirEx(TFileList &Out, const olxstr &Mask, const unsigned
   FindClose( hn );
   return true;
 }
-bool TEFile::ListCurrentDir(TStrList& Out, const olxstr &Mask, const unsigned short sF)  {
+bool TEFile::ListCurrentDir(TStrList& Out, const olxstr &Mask, const uint16_t sF)  {
   MaskList masks;
   BuildMaskList(Mask, masks);
   WIN32_FIND_DATA sd;
@@ -511,6 +519,13 @@ bool TEFile::ListCurrentDir(TStrList& Out, const olxstr &Mask, const unsigned sh
     return false;
   bool done = true;
   while( done )  {
+    if( (sF & sefDir) != 0 && (sF & sefRelDir) == 0 && (sd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0)  {
+      size_t len = olxstr::o_strlen(sd.cFileName);
+      if( (len == 1 && sd.cFileName[0] == '.') || (len == 2 && sd.cFileName[0] == '.' && sd.cFileName[1] == '.') )  {
+        done = (FindNextFile(hn, &sd) != 0);
+        continue;
+      }
+    }
     if( DoesMatchMasks(sd.cFileName, masks) )
       Out.Add( sd.cFileName );
     done = (FindNextFile(hn, &sd) != 0);
@@ -520,7 +535,7 @@ bool TEFile::ListCurrentDir(TStrList& Out, const olxstr &Mask, const unsigned sh
 }
 #else
 //..............................................................................
-bool TEFile::ListCurrentDirEx(TFileList &Out, const olxstr &Mask, const unsigned short sF)  {
+bool TEFile::ListCurrentDirEx(TFileList &Out, const olxstr &Mask, const uint16_t sF)  {
   DIR *d = opendir( TEFile::CurrentDir().c_str() );
   if( d == NULL ) return false;
   MaskList masks;
@@ -571,7 +586,7 @@ bool TEFile::ListCurrentDirEx(TFileList &Out, const olxstr &Mask, const unsigned
   return closedir(d) == 0;
 }
 //..............................................................................
-bool TEFile::ListCurrentDir(TStrList &Out, const olxstr &Mask, const unsigned short sF)  {
+bool TEFile::ListCurrentDir(TStrList &Out, const olxstr &Mask, const uint16_t sF)  {
   DIR *d = opendir( TEFile::CurrentDir().c_str() );
   if( d == NULL ) return false;
   MaskList masks;
@@ -611,7 +626,7 @@ bool TEFile::ListCurrentDir(TStrList &Out, const olxstr &Mask, const unsigned sh
 }
 #endif
 //..............................................................................
-bool TEFile::ListDirEx(const olxstr& dir, TFileList &Out, const olxstr &Mask, const unsigned short sF)  {
+bool TEFile::ListDirEx(const olxstr& dir, TFileList &Out, const olxstr &Mask, const uint16_t sF)  {
   olxstr cd( TEFile::CurrentDir() );
   TEFile::ChangeDir(dir);
   bool res = ListCurrentDirEx(Out, Mask, sF);
@@ -619,7 +634,7 @@ bool TEFile::ListDirEx(const olxstr& dir, TFileList &Out, const olxstr &Mask, co
   return res;
 }
 //..............................................................................
-bool TEFile::ListDir(const olxstr& dir, TStrList &Out, const olxstr &Mask, const unsigned short sF)  {
+bool TEFile::ListDir(const olxstr& dir, TStrList &Out, const olxstr &Mask, const uint16_t sF)  {
   olxstr cd( TEFile::CurrentDir() );
   TEFile::ChangeDir(dir);
   bool res = ListCurrentDir(Out, Mask, sF);
