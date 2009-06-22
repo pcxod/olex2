@@ -96,7 +96,7 @@ int main(int argc, char** argv)  {
       if( olex_dir != NULL )
         bapp = new TBasicApp( TEFile::AddTrailingBackslash(olex_dir) << TEFile::ExtractFileName(argv[0]) );
       else
-        bapp = new TBasicApp(TEFile::AddTrailingBackslashI(TEFile::CurrentDir()) << TEFile::ExtractFileName(argv[0]));
+        bapp = new TBasicApp(TEFile::AddTrailingBackslash(TEFile::CurrentDir()) << TEFile::ExtractFileName(argv[0]));
     }
     else  {
       olxstr arg(argv[1]);
@@ -105,15 +105,15 @@ int main(int argc, char** argv)  {
 #else
       if( arg == "--help" )  {
 #endif     
-        TBasicApp _bapp(  TEFile::AddTrailingBackslashI(TEFile::CurrentDir()) << TEFile::ExtractFileName(argv[0]) );
+        TBasicApp _bapp(  TEFile::AddTrailingBackslash(TEFile::CurrentDir()) << TEFile::ExtractFileName(argv[0]) );
         TLog& log = _bapp.GetLog();
         log.AddStream( new TOutStream, true);
-        log << "Unirun, Olex2 update/install program\n";
+        log << "\nUnirun, Olex2 update/install program\n";
         log << "Compiled on " << __DATE__ << " at " << __TIME__ << '\n';
         log << "Usage: unirun [olex2_gui_dir]\n";
         log << "If no arguments provided, the system variable OLEX2_DIR will be checked first, if the variable is not set,\
-               current folder will be updated\n";
-        log << "(c) Oleg V. Dolomanov 2007-2009\n";
+current folder will be updated\n";
+        log << "(c) Oleg V. Dolomanov 2007-2009\n\n";
         return 0;
       }
       if( arg.EndsWith('.') || arg.EndsWith("..") )

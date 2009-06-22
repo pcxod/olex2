@@ -145,6 +145,7 @@ bool TGlXApp::OnInit()  {
   glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);
   */
   // KUBUNTU opengl does not want any parameters :)
+  TEGC::Initialise();  // prepare Olex2 API...
   wxString glAttr;
   int *gl_attr = NULL;
   wxGetEnv(wxT("OLEX2_GL_DEFAULT"), &glAttr);
@@ -155,7 +156,7 @@ bool TGlXApp::OnInit()  {
   olxstr BaseDir(argv[0]), Tmp;
   // 2008.09.29
   // see if the system variable OLEX2_DIR is define to override the default basedir
-  wxString OlxPath; // we cannot use any TEFile functions, working eith c_str, as the TEGC is not initialised yet...
+  wxString OlxPath;
   if( wxGetEnv( wxT("OLEX2_DIR"), &OlxPath) )  {
     if( wxDirExists(OlxPath) )  {//&& wxIsAbsolutePath(OlxPath))  {
       olxstr olx_path(OlxPath.c_str() );

@@ -116,6 +116,8 @@ short UpdateAPI::DoInstall(AActionHandler* download_lsnr, AActionHandler* extrac
     TEFile::DelFile(src_fn);
     delete fs;
     fs = NULL;
+    if( !repo.IsEmpty() )
+      settings.repository = repo;
     settings.last_updated = TETime::EpochTime();
     settings.update_interval = "Always";
     settings.Save();
