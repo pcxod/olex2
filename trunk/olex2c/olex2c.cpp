@@ -233,7 +233,7 @@ public:
     this_InitFuncD(HasGUI, fpNone, "" );
     this_InitFuncD(Sel, fpNone, "" );
     
-    olxstr pluginsFile( XApp.BaseDir() + "plugins.xld" );
+    olxstr pluginsFile( XApp.GetBaseDir() + "plugins.xld" );
     Plugins = NULL;
     if( TEFile::Exists( pluginsFile ) )  {
       PluginFile.LoadFromXLFile( pluginsFile, NULL );
@@ -242,7 +242,7 @@ public:
     else  
       Plugins = &PluginFile.Root().AddItem("Plugin");
   
-    olxstr macroFile( XApp.BaseDir() );
+    olxstr macroFile( XApp.GetBaseDir() );
     macroFile << "macrox.xld";
     if( TEFile::Exists(macroFile) )  {
       TDataFile df;
@@ -790,7 +790,7 @@ public:
   //..............................................................................
   void macReload(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
     if( Cmds[0].Equalsi("macro") )  {
-      olxstr macroFile( XApp.BaseDir() + "macrox.xld" );
+      olxstr macroFile( XApp.GetBaseDir() + "macrox.xld" );
       if( TEFile::Exists(macroFile) )  {
         TDataFile df;
         df.LoadFromXLFile( macroFile );

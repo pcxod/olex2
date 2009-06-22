@@ -55,7 +55,8 @@ np_repository = Split("""./repository/filesystem.cpp   ./repository/shellutil.cp
                          ./repository/eprocess.cpp     ./repository/olxvar.cpp 
                          """)
 repository = np_repository + Split("""./repository/pyext.cpp 
-                                     ./repository/py_core.cpp ./repository/updateapi.cpp""")
+                                     ./repository/py_core.cpp ./repository/updateapi.cpp 
+                                     ./repository/patchapi.cpp""")
 #function to process file name list
 def processFileNameList(file_list, envi, dest, suffix=''):
   obj_list = []
