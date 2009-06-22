@@ -20,7 +20,7 @@ TEGC::TEGC()  {
   if( !TBasicApp::HasInstance() )
     RemovalManaged = false;
   else  {
-    TBasicApp::GetInstance()->OnIdle->Add(this);
+    TBasicApp::GetInstance().OnIdle->Add(this);
     RemovalManaged = true;
   }
   Destructing = false;
@@ -36,7 +36,7 @@ TEGC::~TEGC()  {
 void TEGC::ManageRemoval()  {
   if( TBasicApp::HasInstance() )  {
     RemovalManaged = true;
-    TBasicApp::GetInstance()->OnIdle->Add(Instance);
+    TBasicApp::GetInstance().OnIdle->Add(Instance);
   }
 }
 //..............................................................................

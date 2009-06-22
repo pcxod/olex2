@@ -497,13 +497,11 @@ public:     void CalcProbFactor(float Prob);
   void LoadModel(const olxstr& file_name);
 //..............................................................................
   static TGXApp& GetInstance()  {
-    TBasicApp *bai = TBasicApp::GetInstance();
-    if( bai == NULL )
-      throw TFunctionFailedException(__OlxSourceInfo, "unitialised application");
-    TGXApp *gxai = dynamic_cast<TGXApp*>(bai);
-    if( gxai == NULL )
+    TBasicApp& bai = TBasicApp::GetInstance();
+    TGXApp& gxai = dynamic_cast<TGXApp&>(bai);
+    if( &gxai == NULL )
       throw TFunctionFailedException(__OlxSourceInfo, "unsuitabe application instance");
-    return *gxai;
+    return gxai;
   }
 };
 ////////////////////////////////////////////////////////////////////////////////

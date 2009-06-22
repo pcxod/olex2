@@ -178,7 +178,7 @@ void TNetwork::Disassemble(TSAtomPList& Atoms, TNetPList& Frags, TSBondPList* In
   delete [] Distances[3];
   delete [] Distances;
   sw.stop();
-  if( TBasicApp::GetInstance()->IsProfiling() )
+  if( TBasicApp::GetInstance().IsProfiling() )
     sw.print( TBasicApp::GetLog(), &TLog::Info );
 }
 //..............................................................................

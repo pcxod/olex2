@@ -232,7 +232,7 @@ TGXApp::TGXApp(const olxstr &FileName) : TXApp(FileName, this)  {
   XGrowPointsVisible = FXGrowLinesVisible = FQPeakBondsVisible = false;
   FXPolyVisible = true;
   DeltaV = 3;
-  TwxGlScene *GlScene = new TwxGlScene( BaseDir() + "etc/Fonts/" );
+  TwxGlScene *GlScene = new TwxGlScene( GetBaseDir() + "etc/Fonts/" );
   FGrowMode = gmCovalent;
 //  TWGlScene *GlScene = new TWGlScene;
 //  TGlScene *GlScene = new TGlScene;

@@ -62,7 +62,7 @@ __fastcall TfMain::TfMain(TComponent* Owner) :TForm(Owner)  {
   frMain->eInstallationPath->Text = ip.c_str();
   OlexInstalled = CheckOlexInstalled( OlexInstalledPath );
   if( OlexInstalled )  {
-    Bapp = new TBasicApp( TEFile::AddTrailingBackslash(OlexInstalledPath) + "installer.exe" );
+    Bapp = new TBasicApp( TEFile::AddTrailingBackslash(OlexInstalledPath) );
     Bapp->OnProgress->Add( new TProgress );
     TEFile::AddTrailingBackslash( OlexInstalledPath );
     frMain->eInstallationPath->Text = OlexInstalledPath.c_str();
@@ -84,10 +84,12 @@ __fastcall TfMain::TfMain(TComponent* Owner) :TForm(Owner)  {
     frMain->eInstallationPath->Enabled = false;
     frMain->cbCreateShortcut->Visible = false;
     frMain->cbCreateDesktopShortcut->Visible = false;
+    frMain->cbRepository->Enabled = false;
+    frMain->rgAutoUpdate->Enabled = false;
   }
   else  {
-    Bapp = new TBasicApp( CmdLine[0] );
-    olxstr zipfn( Bapp->BaseDir() + "olex2.zip" );
+    Bapp = new TBasicApp( TBasicApp::GuessBaseDir(CmdLine) );
+    olxstr zipfn( Bapp->GetBaseDir() + "olex2.zip" );
     if( TEFile::Exists(zipfn) )  {
       if( !TEFile::IsAbsolutePath(zipfn) )  {
         zipfn = TEFile::CurrentDir();
@@ -150,6 +152,7 @@ void __fastcall TfMain::bbDoneClick(TObject *Sender)  {
 }
 //---------------------------------------------------------------------------
 bool TfMain::DoInstall(const olxstr& zipFile, const olxstr& installPath)  {
+  TBasicApp::SetBaseDir(TEFile::AddTrailingBackslash(installPath) << "installer.exe");
   TWinZipFileSystem zfs( zipFile );
   zfs.OnProgress->Add( new TProgress );
   TEFile* lic_f = NULL;
@@ -168,15 +171,13 @@ bool TfMain::DoInstall(const olxstr& zipFile, const olxstr& installPath)  {
 //---------------------------------------------------------------------------
 void __fastcall TfMain::bbInstallClick(TObject *Sender)  {
   olxstr reposPath, proxyPath, installPath;
-  TSettingsFile Settings;
 
   frMain->bbInstall->Enabled = false;
   pbProgress->Visible = true;
-  if( frMain->eProxy->Enabled )  {
+  if( frMain->eProxy->Enabled )
     proxyPath = frMain->eProxy->Text.c_str();
-  }
 
-  reposPath = frMain->cbRepository->Text.c_str();
+  reposPath = TEFile::UnixPath(frMain->cbRepository->Text.c_str());
 
   bool localInstall = TEFile::IsAbsolutePath( reposPath );
 
@@ -213,22 +214,7 @@ void __fastcall TfMain::bbInstallClick(TObject *Sender)  {
       }
     }
   }
-  if( !localInstall )
-    Settings["repository"] = reposPath;
-  else  // use default
-    Settings["repository"] = "http://dimas.dur.ac.uk/olex2-distro/";
-  Settings["proxy"] = proxyPath;
-  Settings["update"] = frMain->rgAutoUpdate->Items->Strings[frMain->rgAutoUpdate->ItemIndex].c_str();
-
   if( OlexInstalled )  {
-    // forcr launch to update
-    Settings["lastupdate"] = EmptyString;
-    if( !localInstall )  {
-      try  { Settings.SaveSettings( installPath + TfMain::SettingsFile );  }
-      catch( TExceptionBase& exc )  {
-        Application->MessageBoxA("Was not able to save settings", "Exception", MB_OK|MB_ICONERROR);
-      }
-    }
     TEFile::ChangeDir( OlexInstalledPath );
     LaunchFile(OlexInstalledPath + "olex2.exe", true);
     return;
@@ -244,7 +230,7 @@ void __fastcall TfMain::bbInstallClick(TObject *Sender)  {
       TEFile* zipf = repos.OpenFileAsFile( url.GetPath() + "olex2.zip");
       if( zipf == NULL )  {
         frMain->stAction->Caption = "Failed...";
-        Application->MessageBoxA("Could not locate the olex distribution.\nPlease try another repository.", "Zip file fetching error", MB_OK|MB_ICONERROR);
+        Application->MessageBoxA("Could not locate the Olex2 archive.\nPlease try another repository.", "Zip file fetching error", MB_OK|MB_ICONERROR);
         frMain->bbInstall->Enabled = true;
         return;
       }
@@ -262,7 +248,7 @@ void __fastcall TfMain::bbInstallClick(TObject *Sender)  {
     }
 //    frMain->pbProgress->Position = 0;
     // install MSVC redistributables
-    olxstr redist_path( TBasicApp::GetInstance()->BaseDir() + "redist/vcredist_x86.exe");
+    olxstr redist_path( TBasicApp::GetBaseDir() + "redist/vcredist_x86.exe");
     if( TEFile::Exists(redist_path) && !TEFile::IsAbsolutePath(redist_path) )  {
       redist_path = TEFile::CurrentDir() + "/redist/vcredist_x86.exe";
     }
@@ -283,13 +269,15 @@ void __fastcall TfMain::bbInstallClick(TObject *Sender)  {
     if( frMain->cbCreateDesktopShortcut->Checked )
       TShellUtil::CreateShortcut(TShellUtil::GetSpecialFolderLocation(fiDesktop) + "Olex2.lnk",
                                  installPath + "olex2.exe", "Olex2 launcher", SetRunAs);
-    if( !localInstall )  {
-      Settings["repository"] = reposPath;
-      frMain->cbRepository->Text = reposPath.c_str();
-    }
-    olxstr set_fn( installPath + TfMain::SettingsFile );
-    if( !TEFile::Exists(set_fn) )  // keep settings if provided from the zip
-      Settings.SaveSettings( set_fn );
+    updater::UpdateAPI api;
+    if( localInstall )
+      api.GetSettings().repository = "http://dimas.dur.ac.uk/olex2-distro/";
+    else
+      api.GetSettings().repository = api.TrimTagPart(reposPath);
+
+    api.GetSettings().proxy = proxyPath;
+    api.GetSettings().update_interval = frMain->rgAutoUpdate->Items->Strings[frMain->rgAutoUpdate->ItemIndex].c_str();
+    api.GetSettings().Save();
   }
   catch( const TExceptionBase& exc )  {
     Application->MessageBox("The installation has failed. If using online installation please check, that\
@@ -504,20 +492,17 @@ bool TfMain::LaunchFile( const olxstr& fileName, bool do_exit )  {
 }
 //---------------------------------------------------------------------------
 
-void __fastcall TfMain::cbProxyClick(TObject *Sender)
-{
+void __fastcall TfMain::cbProxyClick(TObject *Sender)  {
   frMain->eProxy->Enabled = frMain->cbProxy->Checked;
 }
 //---------------------------------------------------------------------------
 
-void __fastcall TfMain::FormPaint(TObject *Sender)
-{
+void __fastcall TfMain::FormPaint(TObject *Sender)  {
   Canvas->Rectangle(0, 0, Width, Height);
 }
 //---------------------------------------------------------------------------
 
-void __fastcall TfMain::sbPickZipClick(TObject *Sender)
-{
+void __fastcall TfMain::sbPickZipClick(TObject *Sender)  {
   if( frMain->dlgOpen->Execute() )  {
     frMain->cbRepository->Text = frMain->dlgOpen->FileName;
   }
@@ -526,11 +511,14 @@ void __fastcall TfMain::sbPickZipClick(TObject *Sender)
 
 
 void __fastcall TfMain::FormShow(TObject *Sender)  {
+  if( OlexInstalled )
+    return;
+  frMain->cbRepository->Items->Clear();
+  frMain->cbRepository->Text = "";
   updater::UpdateAPI api;
   TStrList repos;
   api.GetAvailableRepositories(repos);
   if( repos.IsEmpty() )  return;
-  frMain->cbRepository->Items->Clear();
   for( int i=0; i < repos.Count(); i++ )
     frMain->cbRepository->Items->Add( repos[i].u_str());
   frMain->cbRepository->Text = repos[0].u_str();

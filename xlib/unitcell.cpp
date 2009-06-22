@@ -818,7 +818,7 @@ void TUnitCell::BuildStructureMap( TArray3D<short>& map, double delta, short val
     const double dx = (double)j/da;
     if( (j%5) == 0 )  {
       TBasicApp::GetLog() << '\r' << j*100/da << '%';
-      TBasicApp::GetInstance()->Update();
+      TBasicApp::GetInstance().Update();
     }
     for( int k = 0; k < db; k ++ )  {
       const double dy = (double)k/db;
@@ -845,7 +845,7 @@ void TUnitCell::BuildStructureMap( TArray3D<short>& map, double delta, short val
     *structurePoints = sp;
   }
   TBasicApp::GetLog() << '\r' << "Done\n";
-  TBasicApp::GetInstance()->Update();
+  TBasicApp::GetInstance().Update();
 }
 void TUnitCell::BuildStructureMapEx( TArray3D<short>& map, double resolution, double delta, short val, 
                                   size_t* structurePoints, TPSTypeList<TBasicAtomInfo*, 

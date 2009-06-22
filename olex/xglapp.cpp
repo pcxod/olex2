@@ -156,16 +156,6 @@ bool TGlXApp::OnInit()  {
   olxstr BaseDir(argv[0]), Tmp;
   // 2008.09.29
   // see if the system variable OLEX2_DIR is define to override the default basedir
-  wxString OlxPath;
-  if( wxGetEnv( wxT("OLEX2_DIR"), &OlxPath) )  {
-    if( wxDirExists(OlxPath) )  {//&& wxIsAbsolutePath(OlxPath))  {
-      olxstr olx_path(OlxPath.c_str() );
-      BaseDir = TEFile::AddTrailingBackslashI(olx_path) << TEFile::ExtractFileName(GetAppName().c_str());
-    }
-  }
-  // end of the basedir override
-  if( !TEFile::IsAbsolutePath(BaseDir) )
-    BaseDir = TEFile::AddTrailingBackslash( TEFile::CurrentDir() );
   try  {
    //asm{  int 3 }
     #if defined __APPLE__ && defined __MACH__
@@ -173,7 +163,7 @@ bool TGlXApp::OnInit()  {
 //      BaseDir = TEFile::ParentDir(BaseDir);
 //      BaseDir << "Resources/";
     #endif
-    XApp = new TGXApp( BaseDir );
+    XApp = new TGXApp( TBasicApp::GuessBaseDir(GetAppName().c_str(), "OLEX2_DIR") );
     XApp->SetSharedDir( TShellUtil::GetSpecialFolderLocation(fiAppData) << "Olex2u");
     //XApp = new TGXApp( TEFile::UNCFileName(BaseDir) );
   }
@@ -187,7 +177,7 @@ bool TGlXApp::OnInit()  {
   // write PID file
   if( XApp->IsBaseDirWriteable() )  {
     int pid = getpid();
-    pid_file = new TEFile( olxstr(XApp->BaseDir()) << pid << '.' << patcher::PatchAPI::GetOlex2PIDFileExt(), "w+b" );
+    pid_file = new TEFile( olxstr(XApp->GetBaseDir()) << pid << '.' << patcher::PatchAPI::GetOlex2PIDFileExt(), "w+b" );
   }
   // assemble whole command line
   for( int i=1; i < argc; i++ )
@@ -248,7 +238,7 @@ int TGlXApp::OnExit()  {
       pid_file = NULL;
     }
     TStrList pid_files;
-    olxstr conf_dir = XApp->BaseDir(); 
+    olxstr conf_dir = XApp->GetBaseDir(); 
     TEFile::ListDir( conf_dir, pid_files, olxstr("*.") << patcher::PatchAPI::GetOlex2PIDFileExt(), sefAll );
     for( int i=0; i < pid_files.Count(); i++ )
       TEFile::DelFile(conf_dir+pid_files[i]);
@@ -263,7 +253,7 @@ bool TGlXApp::Dispatch()  {
 //..............................................................................
 //int TGlXApp::MainLoop()  {
 //  while( wxApp::Pending() )  wxApp::Dispatch();
-  //TBasicApp::GetInstance()->OnTimer->Clear();
+  //TBasicApp::GetInstance().OnTimer->Clear();
 //  return wxApp::MainLoop();
 //}
 //..............................................................................

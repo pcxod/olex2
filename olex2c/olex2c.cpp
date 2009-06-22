@@ -119,7 +119,7 @@ class TOlex: public AEventsDispatcher, public olex::IOlexProcessor, public ASele
   static void* TimerThreadFunction() {
     while( true )  {
       if( !TBasicApp::HasInstance() )  return 0;
-      TBasicApp::GetInstance()->OnTimer->Execute(NULL);
+      TBasicApp::GetInstance().OnTimer->Execute(NULL);
       TBasicApp::Sleep(50);
     }
     return 0;
@@ -253,10 +253,10 @@ public:
         Macros.Load( *di );
     }
     executeMacro("onstartup");
-    TBasicApp::GetInstance()->OnTimer->Add(this, ID_TIMER);
+    TBasicApp::GetInstance().OnTimer->Add(this, ID_TIMER);
   }
   ~TOlex()  {
-    TBasicApp::GetInstance()->OnTimer->Clear();
+    TBasicApp::GetInstance().OnTimer->Clear();
     executeMacro("onexit");
     for( int i=0; i < CallbackFuncs.Count(); i++ )
       delete CallbackFuncs.GetObject(i);
@@ -405,7 +405,7 @@ public:
 //          exit(0);
         }
       }
-      TBasicApp::GetInstance()->OnTimer->SetEnabled( false );
+      TBasicApp::GetInstance().OnTimer->SetEnabled( false );
       // execute tasks ...
       // end tasks ...
       if( FProcess != NULL )  {
@@ -418,7 +418,7 @@ public:
         }
       }
       //    if( (FMode & mListen) != 0 )  {
-      TBasicApp::GetInstance()->OnTimer->SetEnabled( true );
+      TBasicApp::GetInstance().OnTimer->SetEnabled( true );
     }
     else if( MsgId == ID_PROCESSTERMINATE )  SetProcess(NULL);
     else if( MsgId == ID_INFO || MsgId == ID_WARNING || MsgId == ID_ERROR || MsgId == ID_EXCEPTION )  {
@@ -1084,7 +1084,7 @@ int main(int argc, char* argv[])  {
 #endif	
   TLibrary &Library = olex.GetLibrary();
   cout << "Welcome to Olex2 console\n";
-  cout << "GUI basedir is: " << TBasicApp::GetInstance()->BaseDir().c_str() << '\n';
+  cout << "GUI basedir is: " << TBasicApp::GetBaseDir().c_str() << '\n';
   cout << "Compilation information: " << __DATE__ << ' ' << __TIME__ << '\n';
 #ifdef __WIN32__  // readline prints one itself...
   cout << ">>";
@@ -1102,9 +1102,9 @@ int main(int argc, char* argv[])  {
     _cmd[0] = '\0';
 #endif		
     olxstr cmd;
-    //TBasicApp::GetInstance()->OnTimer->Add( new TTerminationListener );
+    //TBasicApp::GetInstance().OnTimer->Add( new TTerminationListener );
     while( true )  {
-      TBasicApp::GetInstance()->OnIdle->Execute(NULL);
+      TBasicApp::GetInstance().OnIdle->Execute(NULL);
 #ifdef __WIN32__
       cin.getline(_cmd, 512);
       cmd = _cmd;
@@ -1150,7 +1150,7 @@ int main(int argc, char* argv[])  {
 #endif			
     }
   }
-  TBasicApp::GetInstance()->OnIdle->Execute(NULL);
+  TBasicApp::GetInstance().OnIdle->Execute(NULL);
   return 0;
 }
 

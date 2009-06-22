@@ -13,7 +13,7 @@ TdlgSplash *dlgSplash;
 __fastcall TdlgSplash::TdlgSplash(TComponent* Owner)
   : TForm(Owner)
 {
-  AnsiString spf( TBasicApp::GetInstance()->BaseDir().c_str() );
+  AnsiString spf( TBasicApp::GetBaseDir().c_str() );
   spf += "splash.jpg";
   if( FileExists(spf) )
   {

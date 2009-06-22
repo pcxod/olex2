@@ -244,7 +244,7 @@ PyObject* pyUpdateRepository(PyObject* self, PyObject* args)  {
     Py_INCREF(Py_None);
     return Py_None;
   }
-  olxstr SettingsFile( TBasicApp::GetInstance()->BaseDir() + "usettings.dat" );
+  olxstr SettingsFile( TBasicApp::GetBaseDir() + "usettings.dat" );
   if( TEFile::Exists(SettingsFile) )  {
     const TSettingsFile settings(SettingsFile);
     proxy = settings["proxy"];
@@ -254,7 +254,7 @@ PyObject* pyUpdateRepository(PyObject* self, PyObject* args)  {
     PyErr_SetObject(PyExc_AttributeError, PythonExt::BuildString("Invalid index file") );
     return Py_BuildValue("b", false);
   }
-  dest = TBasicApp::GetInstance()->BaseDir() + dest;
+  dest = TBasicApp::GetBaseDir() + dest;
   if( !TEFile::MakeDirs(dest) )  {
     PyErr_SetObject(PyExc_AttributeError, PythonExt::BuildString("Could not create distination folder") );
     return Py_BuildValue("b", false);

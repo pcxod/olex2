@@ -21,9 +21,9 @@
 TXApp::TXApp(const olxstr &basedir, ASelectionOwner* selOwner) : 
     SelectionOwner(selOwner), TBasicApp(basedir), Library(EmptyString, this)  {
   try  {
-    FAtomsInfo = new TAtomsInfo( BaseDir() + "ptablex.dat" );
+    FAtomsInfo = new TAtomsInfo( GetBaseDir() + "ptablex.dat" );
     if( TSymmLib::GetInstance() == NULL )
-      TEGC::AddP( new TSymmLib(BaseDir() + "symmlib.xld") );
+      TEGC::AddP( new TSymmLib(GetBaseDir() + "symmlib.xld") );
   }
   catch( const TIOExceptionBase &exc )  {
     throw TFunctionFailedException(__OlxSourceInfo, exc);
@@ -36,7 +36,7 @@ TXApp::TXApp(const olxstr &basedir, ASelectionOwner* selOwner) :
   DefineState( psCheckFileTypeP4P, "P4P file is expected");
   DefineState( psCheckFileTypeCRS, "CRS file is expected");
   
-  CifTemplatesDir = BaseDir() + "etc/CIF/";
+  CifTemplatesDir = GetBaseDir() + "etc/CIF/";
 
   XLibMacros::Export(Library);
 }

@@ -876,7 +876,7 @@ olxstr TEFile::Which(const olxstr& filename)  {
   // check current folder
   if( Exists(fn) )  return fn;
   // check program folder
-  fn = TBasicApp::GetInstance()->BaseDir();
+  fn = TBasicApp::GetBaseDir();
   fn << filename;
   if( Exists(fn) )  return fn;
   // check path then ...

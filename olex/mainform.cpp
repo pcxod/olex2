@@ -85,6 +85,7 @@
 #include "py_core.h"
 #include "updateth.h"
 #include "msgbox.h"
+#include "updateapi.h"
 
 
 #ifdef __GNUC__
@@ -1164,7 +1165,7 @@ separated values of Atom Type and radius, an entry a line" );
   if( FXApp->IsBasisVisible() )  pmModel->SetLabel(ID_BasisVisible, wxT("Hide basis"));
   else                           pmModel->SetLabel(ID_BasisVisible, wxT("Show basis"));
 
-  TutorialDir = XA->BaseDir()+"etc/";
+  TutorialDir = XA->GetBaseDir()+"etc/";
 //  DataDir = TutorialDir + "Olex_Data\\";
   wxString data_dir; // we cannot use any TEFile functions, working eith c_str, as the TEGC is not initialised yet...
   if( wxGetEnv( wxT("OLEX2_DATADIR"), &data_dir) )  {
@@ -1182,14 +1183,14 @@ separated values of Atom Type and radius, an entry a line" );
   #endif
 #endif
 
-  DictionaryFile = XA->BaseDir() + "dictionary.txt";
-  PluginFile =  XA->BaseDir() + "plugins.xld";
+  DictionaryFile = XA->GetBaseDir() + "dictionary.txt";
+  PluginFile =  XA->GetBaseDir() + "plugins.xld";
   FHtmlIndexFile = TutorialDir+"index.htm";
 
   TFileHandlerManager::AddBaseDir( TutorialDir );
   TFileHandlerManager::AddBaseDir( DataDir );
 
-  SetStatusText( uiStr(XA->BaseDir()));
+  SetStatusText( XA->GetBaseDir().u_str() );
 
   if( !TEFile::Exists(DataDir) )  {
     if( !TEFile::MakeDir(DataDir) )
@@ -1251,8 +1252,8 @@ separated values of Atom Type and radius, an entry a line" );
   GlTooltip->SetVisible(false);
   GlTooltip->SetZ(4.9);
 
-  FTimer->OnTimer()->Add( TBasicApp::GetInstance()->OnTimer );
-  TBasicApp::GetInstance()->OnTimer->Add(this, ID_TIMER);
+  FTimer->OnTimer()->Add( TBasicApp::GetInstance().OnTimer );
+  TBasicApp::GetInstance().OnTimer->Add(this, ID_TIMER);
   FXApp->XFile().OnFileLoad->Add(this, ID_FileLoad);
   // synchronise if value is different in settings file...
   miHtmlPanel->Check( !FHtmlMinimized );
@@ -1307,7 +1308,7 @@ void TMainForm::StartupInit()  {
   olxstr T(DataDir);  
   T << FLastSettingsFile;
   if( !TEFile::Exists(T) )  {
-    T = TBasicApp::GetInstance()->BaseDir();
+    T = TBasicApp::GetBaseDir();
     TEFile::AddTrailingBackslashI(T);
     T << FLastSettingsFile;
   }
@@ -1334,9 +1335,9 @@ void TMainForm::StartupInit()  {
   FTimer->Start(15);
   if( FGlCanvas != NULL )  FGlCanvas->XApp(FXApp);
 
-  if( TEFile::Exists(FXApp->BaseDir() + "settings.xld") )  {
+  if( TEFile::Exists(FXApp->GetBaseDir() + "settings.xld") )  {
     TDataFile settings;
-    settings.LoadFromXLFile( FXApp->BaseDir() + "settings.xld", NULL );
+    settings.LoadFromXLFile( FXApp->GetBaseDir() + "settings.xld", NULL );
     TDataItem* sh = settings.Root().FindItemi("shortcuts");
     if( sh != NULL )  {
       try  {
@@ -2985,7 +2986,7 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
     int l_version = TGraphicsStyles::ReadStyleVersion(last_saved_style);
     // old style override, let's hope it is newer!
     if( l_version < TGraphicsStyles::CurrentVersion )  {
-      olxstr new_set = FXApp->BaseDir() + "last.osp";
+      olxstr new_set = FXApp->GetBaseDir() + "last.osp";
       if( TEFile::Exists(new_set) )  {
         TDataFile LF;
         try  {  
@@ -3509,14 +3510,12 @@ void TMainForm::OnInternalIdle()  {
 #if !defined(__WIN32__)  
   if( !StartupInitialised )  StartupInit();
 #endif
-  TBasicApp::GetInstance()->OnIdle->Execute((AEventsDispatcher*)this, NULL);
+  TBasicApp::GetInstance().OnIdle->Execute((AEventsDispatcher*)this, NULL);
   // runonce business...
   if( !RunOnceProcessed )  {
     RunOnceProcessed = true;
     TStrList rof;
-    olxstr curd = TEFile::CurrentDir();
-    TEFile::ChangeDir( FXApp->BaseDir() );
-    TEFile::ListCurrentDir( rof, "runonce*.*", sefFile);
+    TEFile::ListDir(FXApp->GetBaseDir(), rof, "runonce*.*", sefFile);
     TStrList macros;
     for( int i=0; i < rof.Count(); i++ )  {
       try  {
@@ -3541,7 +3540,6 @@ void TMainForm::OnInternalIdle()  {
       TEFile::SetFileTimes(rof[i], fa, fa);
       //TEFile::DelFile(rof.String(i));
     }
-    TEFile::ChangeDir( curd );
   }
   wxFrame::OnInternalIdle();
 #ifdef __MAC__  // duno why otherwise it takes 100% of CPU time...
@@ -3967,9 +3965,9 @@ void TMainForm::LoadVFS(short persistenceId)  {
       TEFile dbf(dbFN, "rb");
       TFileHandlerManager::LoadFromStream(dbf, persistenceId);
     }
-    catch( const TExceptionBase& exc )  {
-       try  {  TEFile::DelFile(dbFN);  }
-      catch( ... )  {  throw TFunctionFailedException(__OlxSourceInfo, "faild to read VFS");  }
+    catch( const TExceptionBase& exc)  {
+      TEFile::DelFile(dbFN);
+      throw TFunctionFailedException(__OlxSourceInfo, exc, "failed to read VFS");
     }
   }
   catch( const TExceptionBase& exc )  {
@@ -4055,7 +4053,7 @@ void TMainForm::DoUpdateFiles()  {
     return;
   uint64_t sz = _UpdateThread->GetUpdateSize();
   _UpdateThread->ResetUpdateSize();
-  olxstr sf_name(FXApp->BaseDir() + "usettings.dat");
+  olxstr sf_name(updater::UpdateAPI::GetSettingsFileName());
   TSettingsFile sf( sf_name );
   bool ask = sf.GetParam("ask_update", TrueString).ToBool();
   TdlgMsgBox* msg_box = NULL;
