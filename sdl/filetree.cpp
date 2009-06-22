@@ -4,6 +4,8 @@
 #endif
 #undef CopyFile
 
+#include "bapp.h"
+#include "log.h"
 
 uint64_t TFileTree::Folder::CalcSize() const {
   uint64_t res = 0;
@@ -26,6 +28,7 @@ void TFileTree::Folder::Expand(TOnProgress& pg)  {
   pg.SetAction(FullPath);
   FileTree.OnExpand->Execute(NULL, &pg);
   TEFile::ListDirEx(FullPath, Files, "*", sefAll^sefRelDir);
+//  TBasicApp::GetLog() << "E: "  << FullPath << ". found: "  << Files.Count() << '\n';
   for( int i=0; i < Files.Count(); i++ )  {
     if( (Files[i].GetAttributes() & sefDir) == sefDir )  {
       Folders.Add( new Folder(FileTree, FullPath + Files[i].GetName(), this)).Expand(pg);
@@ -363,6 +366,9 @@ bool TFileTree::CopyFile(const olxstr& from, const olxstr& to) const {
 #else
 // will fails on huge files
 bool TFileTree::CopyFile(const olxstr& from, const olxstr& to) const {
+  if( TEFile::Exists(to) ) // delete the file, as CreateFile fails...
+    if( !TEFile::DelFile(to) )
+      throw TFunctionFailedException(__OlxSourceInfo, olxstr("Failed to delete: ") << to );
   TEFile in(from, "rb"), out(to, "w+b");
   const int bf_sz = 16*1024*1024;
   char* bf = new char[bf_sz];
