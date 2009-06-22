@@ -24,9 +24,9 @@
   #endif
 #else
   #include <time.h>  //POSIX for nanosleep
-  #define OLXSTR(a) (a).c_str()
-  #define olx_getenv getenv
-  #define OLX_CHAR char*
+  #define OLX_STR(a) (a).c_str()
+  #define OLX_GETENV getenv
+  #define OLX_CHAR char
 #endif
 UseEsdlNamespace()
 
