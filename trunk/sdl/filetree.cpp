@@ -193,6 +193,7 @@ void TFileTree::Folder::CopyTo(const olxstr& _dest,
     olxstr src_fn(FullPath + Files[i].GetName());
     olxstr dest_fn(dest + Files[i].GetName());
     FileTree.CopyFile(src_fn, dest_fn);
+    OnSync.SetAction(dest_fn);
     OnSync.IncPos( (double)Files[i].GetSize() );
     FileTree.OnSynchronise->Execute(NULL, &OnSync);
     bool res = TEFile::SetFileTimes(dest_fn, Files[i].GetLastAccessTime(), Files[i].GetModificationTime());

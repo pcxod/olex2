@@ -184,10 +184,28 @@ void __fastcall TfMain::bbInstallClick(TObject *Sender)  {
   installPath = TEFile::WinPath( installPath );
   if( !installPath.IsEmpty() && !installPath.EndsWith('\\') )  installPath << '\\';
 
-  if( !OlexInstalled && !TEFile::Exists( installPath ) )  {
-    if( !ForceDirectories( installPath.c_str() ) )  {
-      Application->MessageBoxA("Could not create installation directory", "Installation failed", MB_OK|MB_ICONERROR);
-      return;
+  if( !OlexInstalled )  {
+    if( !TEFile::Exists( installPath ) )  {
+      if( !ForceDirectories( installPath.c_str() ) )  {
+        Application->MessageBoxA("Could not create installation directory", "Installation failed", MB_OK|MB_ICONERROR);
+        return;
+      }
+    }
+    else  {
+      int res =Application->MessageBoxA("The instalaltion folder already exists.\nThe installer needs to delete it.\nContinue?",
+            "Confirm", MB_YESNOCANCEL|MB_ICONWARNING);
+      if( res == IDYES )  {
+        if( !TEFile::DeleteDir(installPath) )  {
+          Application->MessageBoxA("Could not clean up the instalaltion folder. Please try later.", "Error", MB_OK|MB_ICONERROR);
+          frMain->bbInstall->Enabled = false;
+          return;
+        }
+        TEFile::MakeDir(installPath);
+      }
+      else if( res == IDCANCEL )  {
+        frMain->bbInstall->Enabled = false;
+        return;
+      }
     }
   }
   if( !localInstall )
