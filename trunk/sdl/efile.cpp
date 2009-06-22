@@ -120,7 +120,7 @@ void TEFile::TFileNameMask::Build(const olxstr& msk )  {
   }
 }
 //..............................................................................
-bool TEFile::TFileNameMask::DoesMatch(const olxstr& _str)  const {
+bool TEFile::TFileNameMask::DoesMatch(const olxstr& _str) const {
   if( mask.IsEmpty() && !_str.IsEmpty() )  return false;
   // this will work for '*' mask
   if( toks.Count() == 0 )  return true;
@@ -128,12 +128,13 @@ bool TEFile::TFileNameMask::DoesMatch(const olxstr& _str)  const {
   olxstr str = olxstr::LowerCase(_str);
   int off = 0, start = 0, end = str.Length();
   if( mask[0] != '*' )  {
-    olxstr& tmp = toks[0];
+    const olxstr& tmp = toks[0];
     if( tmp.Length() > str.Length() )  return false;
     for( int i=0; i < tmp.Length(); i++ )
-     if( !(tmp[i] == '?' || tmp[i] == str[i]) )  return false;
+     if( tmp[i] != '?' && tmp[i] != str[i] )  return false;
     start = tmp.Length();
-    if( toks.Count() == 1 && mask[ mask.Length()-1] != '*' )  return true;
+    if( toks.Count() == 1 )  
+      return tmp.Length() == str.Length() ? true : mask[ mask.Length()-1] == '*';
   }
   if( mask[ mask.Length()-1] != '*' && toks.Count() > (mask[0]!='*' ? 1 : 0) )  {
     olxstr& tmp = toks[toks.Count()-1];
@@ -524,8 +525,7 @@ bool TEFile::ListCurrentDirEx(TFileList &Out, const olxstr &Mask, const unsigned
   if( d == NULL ) return false;
   MaskList masks;
   BuildMaskList(Mask, masks);
-  int access = 0, faccess;
-  unsigned short attrib;
+  int access = 0;
   if( (sF & sefReadOnly) != 0 )  access |= S_IRUSR;
   if( (sF & sefWriteOnly) != 0 ) access |= S_IWUSR;
   if( (sF & sefExecute) != 0 )   access |= S_IXUSR;
@@ -535,12 +535,13 @@ bool TEFile::ListCurrentDirEx(TFileList &Out, const olxstr &Mask, const unsigned
   while((de = readdir(d)) != NULL) {
     stat(de->d_name, &the_stat);
     if( sF != sefAll )  {
-      faccess = 0;
-      if( (the_stat.st_mode & S_IRUSR) != 0 )  faccess |= S_IRUSR;
-      if( (the_stat.st_mode & S_IWUSR) != 0 )  faccess |= S_IWUSR;
-      if( (the_stat.st_mode & S_IXUSR) != 0 )  faccess |= S_IXUSR;
-      if( (faccess & access) != access )  continue;
-
+      if( access != 0 )  {
+        int faccess = 0;
+        if( (the_stat.st_mode & S_IRUSR) != 0 )  faccess |= S_IRUSR;
+        if( (the_stat.st_mode & S_IWUSR) != 0 )  faccess |= S_IWUSR;
+        if( (the_stat.st_mode & S_IXUSR) != 0 )  faccess |= S_IXUSR;
+        if( (faccess & access) == 0 )  continue;
+      }
       if( (sF & sefDir) != 0 )  {
         if( S_ISDIR(the_stat.st_mode) )  {
           if( (sF & sefRelDir) == 0 )
@@ -558,7 +559,7 @@ bool TEFile::ListCurrentDirEx(TFileList &Out, const olxstr &Mask, const unsigned
       li.SetCreationTime( the_stat.st_ctime );
       li.SetModificationTime( the_stat.st_mtime );
       li.SetLastAccessTime( the_stat.st_atime );
-      attrib = 0;
+      uint16_t attrib = 0;
       if( S_ISDIR(the_stat.st_mode) )           attrib |= sefDir;
       else                                      attrib |= sefFile;
       if( (the_stat.st_mode & S_IRUSR) != 0 )  attrib |= sefReadOnly;
@@ -576,8 +577,7 @@ bool TEFile::ListCurrentDir(TStrList &Out, const olxstr &Mask, const unsigned sh
   MaskList masks;
   BuildMaskList(Mask, masks);
   olxstr tmp, fn;
-  int access = 0, faccess;
-
+  int access = 0;
   if( (sF & sefReadOnly) != 0 )  access |= S_IRUSR;
   if( (sF & sefWriteOnly) != 0 ) access |= S_IWUSR;
   if( (sF & sefExecute) != 0 )   access |= S_IXUSR;
@@ -587,12 +587,13 @@ bool TEFile::ListCurrentDir(TStrList &Out, const olxstr &Mask, const unsigned sh
   while((de = readdir(d)) != NULL) {
     if( sF != sefAll )  {
       stat(de->d_name, &the_stat);
-      faccess = 0;
-      if( (the_stat.st_mode & S_IRUSR) != 0 )  faccess |= S_IRUSR;
-      if( (the_stat.st_mode & S_IWUSR) != 0 )  faccess |= S_IWUSR;
-      if( (the_stat.st_mode & S_IXUSR) != 0 )  faccess |= S_IXUSR;
-      if( (faccess & access) != access )  continue;
-
+      if( access != 0 )  {
+        int faccess = 0;
+        if( (the_stat.st_mode & S_IRUSR) != 0 )  faccess |= S_IRUSR;
+        if( (the_stat.st_mode & S_IWUSR) != 0 )  faccess |= S_IWUSR;
+        if( (the_stat.st_mode & S_IXUSR) != 0 )  faccess |= S_IXUSR;
+        if( (faccess & access) == 0 )  continue;
+      }
       if( (sF & sefDir) != 0 )  {
         if( S_ISDIR(the_stat.st_mode) )  {
           if( (sF & sefRelDir) == 0 )

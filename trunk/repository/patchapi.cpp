@@ -5,6 +5,7 @@
 #include "patchapi.h"
 #include "bapp.h"
 #include "efile.h"
+#include "log.h"
 #include "utf8file.h"
 #ifdef __WIN32__
   #include <windows.h>
@@ -93,6 +94,7 @@ short PatchAPI::DoPatch(AActionHandler* OnFileCopy, AActionHandler* OnOverallCop
   // copy...
   if( res == papi_OK )  {
     TFileTree ft(patch_dir);
+    TBasicApp::GetLog() << "Patch dir: "  << patch_dir << '\n';
     ft.Expand();
     if( OnFileCopy != NULL )
       ft.OnFileCopy->Add( OnFileCopy );
@@ -103,7 +105,10 @@ short PatchAPI::DoPatch(AActionHandler* OnFileCopy, AActionHandler* OnOverallCop
 
     try  {  ft.CopyTo(bapp.BaseDir(), &AfterFileCopy);  }
     catch(PatchAPI::DeletionExc)  {  res = papi_DeleteError;  }
-    catch(...)  {  res = papi_CopyError;  }
+    catch(const TExceptionBase& exc)  {  
+      res = papi_CopyError;  
+      TBasicApp::GetLog().Error( exc.GetException()->GetFullMessage() );
+    }
     
     if( res == papi_OK )  {
       try  {

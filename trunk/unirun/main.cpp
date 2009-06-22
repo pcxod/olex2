@@ -131,7 +131,10 @@ current folder will be updated\n";
         log << "(c) Oleg V. Dolomanov 2007-2009\n\n";
         return 0;
       }
-      if( arg.EndsWith('.') || arg.EndsWith("..") )
+      arg.Trim(' ');
+      if( arg.IsEmpty() )
+        arg = TEFile::CurrentDir();
+      else if( arg.EndsWith('.') || arg.EndsWith("..") )
         arg = TEFile::AbsolutePathTo(TEFile::CurrentDir(), arg);
       bapp = new TBasicApp(TEFile::AddTrailingBackslash(arg) << TEFile::ExtractFileName(argv[0]));
     }
@@ -194,7 +197,7 @@ void DoRun()  {
   else  {
     short res = patcher::PatchAPI::DoPatch(NULL, new TUProgress);
     if( res != patcher::papi_OK )
-      TBasicApp::GetLog() << "Update has failed...\n";
+      TBasicApp::GetLog() << "Update has failed with error code: " << res << '\n';
   }
 }
 
