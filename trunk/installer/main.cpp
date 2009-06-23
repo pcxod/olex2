@@ -154,19 +154,26 @@ void __fastcall TfMain::bbDoneClick(TObject *Sender)  {
 bool TfMain::DoInstall(const olxstr& zipFile, const olxstr& installPath)  {
   TBasicApp::SetBaseDir(TEFile::AddTrailingBackslash(installPath) << "installer.exe");
   TWinZipFileSystem zfs( zipFile );
-  zfs.OnProgress->Add( new TProgress );
-  TEFile* lic_f = NULL;
-  try  {  lic_f = zfs.OpenFileAsFile("licence.rtf");  }
-  catch(...)  {  return false;  }
-  if( lic_f == NULL )  return false;
-  olxstr lic_fn = lic_f->GetName();
-  delete lic_f;
-  dlgLicence->reEdit->Lines->LoadFromFile( lic_fn.c_str() );
-  bool accepted = (dlgLicence->ShowModal() == mrOk );
-  if( !accepted )  return false;
-  try  {  zfs.ExtractAll(installPath);  }
-  catch(...) {  return false;  }
-  return true;
+  bool res = zfs.Exists("olex2.tag");
+  if( res )  {
+    zfs.OnProgress->Add( new TProgress );
+    TEFile* lic_f = NULL;
+    try  {  lic_f = zfs.OpenFileAsFile("licence.rtf");  }
+    catch(...)  {  res = false;  }
+    if( lic_f == NULL )  res = false;
+    if( res )  {
+      olxstr lic_fn = lic_f->GetName();
+      delete lic_f;
+      dlgLicence->reEdit->Lines->LoadFromFile( lic_fn.c_str() );
+      if( dlgLicence->ShowModal() != mrOk )
+        return false;
+      try  {  zfs.ExtractAll(installPath);  }
+      catch(...) {  res = false;  }
+    }
+  }
+  if( !res )
+    Application->MessageBoxA("Invalid installation archive.", "Installation failed", MB_OK|MB_ICONERROR);
+  return res;
 }
 //---------------------------------------------------------------------------
 void __fastcall TfMain::bbInstallClick(TObject *Sender)  {
@@ -221,6 +228,7 @@ void __fastcall TfMain::bbInstallClick(TObject *Sender)  {
   }
 
   try  {
+    olxstr StartDir = TBasicApp::GetBaseDir();  // it will be changd after install!!
     if( !localInstall )  {
       TUrl url( reposPath );
       if( !proxyPath.IsEmpty() )
@@ -238,7 +246,6 @@ void __fastcall TfMain::bbInstallClick(TObject *Sender)  {
       delete zipf;
       // the file gets deleted with the FS
       if( !DoInstall( zipName, installPath ) )  {
-        Application->MessageBoxA("Installation has failed.", "Error", MB_OK|MB_ICONERROR);
         return;
       }
     }
@@ -248,12 +255,20 @@ void __fastcall TfMain::bbInstallClick(TObject *Sender)  {
     }
 //    frMain->pbProgress->Position = 0;
     // install MSVC redistributables
-    olxstr redist_path( TBasicApp::GetBaseDir() + "redist/vcredist_x86.exe");
-    if( TEFile::Exists(redist_path) && !TEFile::IsAbsolutePath(redist_path) )  {
-      redist_path = TEFile::CurrentDir() + "/redist/vcredist_x86.exe";
-    }
+    olxstr redist_path( StartDir + "redist/vcredist_x86.exe");
     if( TEFile::Exists(redist_path) )
       LaunchFile( redist_path, false );
+
+    updater::UpdateAPI api;
+    if( localInstall )
+      api.GetSettings().repository = "http://dimas.dur.ac.uk/olex2-distro/";
+    else
+      api.GetSettings().repository = api.TrimTagPart(reposPath);
+
+    api.GetSettings().proxy = proxyPath;
+    api.GetSettings().update_interval = frMain->rgAutoUpdate->Items->Strings[frMain->rgAutoUpdate->ItemIndex].c_str();
+    api.GetSettings().Save();
+
     frMain->stAction->Caption = "Done";
     InitRegistry( installPath.c_str() );
     OSVERSIONINFO veri;
@@ -264,20 +279,11 @@ void __fastcall TfMain::bbInstallClick(TObject *Sender)  {
     bool SetRunAs = veri.dwMajorVersion > 5;
     // create shortcuts
     if( frMain->cbCreateShortcut->Checked )
-      TShellUtil::CreateShortcut(TShellUtil::GetSpecialFolderLocation(fiStartMenu) + "Olex2.lnk",
+      TShellUtil::CreateShortcut(TShellUtil::GetSpecialFolderLocation(fiCommonStartMenu) + "Olex2.lnk",
                                  installPath + "olex2.exe", "Olex2 launcher", SetRunAs);
     if( frMain->cbCreateDesktopShortcut->Checked )
-      TShellUtil::CreateShortcut(TShellUtil::GetSpecialFolderLocation(fiDesktop) + "Olex2.lnk",
+      TShellUtil::CreateShortcut(TShellUtil::GetSpecialFolderLocation(fiCommonDesktop) + "Olex2.lnk",
                                  installPath + "olex2.exe", "Olex2 launcher", SetRunAs);
-    updater::UpdateAPI api;
-    if( localInstall )
-      api.GetSettings().repository = "http://dimas.dur.ac.uk/olex2-distro/";
-    else
-      api.GetSettings().repository = api.TrimTagPart(reposPath);
-
-    api.GetSettings().proxy = proxyPath;
-    api.GetSettings().update_interval = frMain->rgAutoUpdate->Items->Strings[frMain->rgAutoUpdate->ItemIndex].c_str();
-    api.GetSettings().Save();
   }
   catch( const TExceptionBase& exc )  {
     Application->MessageBox("The installation has failed. If using online installation please check, that\
@@ -300,11 +306,7 @@ bool TfMain::CheckOlexInstalled(olxstr& installPath)  {
     res = Reg->OpenKey(cmdKey, false);
     if( res )  {
       installPath = Reg->ReadString("").c_str();
-      if( installPath.Length() && installPath[0] == '\"' )  {
-        int lind = installPath.LastIndexOf('"');
-        if( lind > 0 )
-          installPath = TEFile::ExtractFilePath(installPath.SubString(1, lind-1));
-      }
+      installPath = TEFile::ExtractFilePath(installPath.Trim('"'));
       Reg->CloseKey();
     }
   }
@@ -320,8 +322,7 @@ bool TfMain::InitRegistry(const AnsiString& installPath)  {
     Reg->RootKey = HKEY_CLASSES_ROOT;
     AnsiString cmdKey = "Applications\\olex2.dll\\shell\\open\\command";
     res = Reg->OpenKey(cmdKey, true);
-    if( res )
-    {
+    if( res )  {
       AnsiString val = '\"';
       val += installPath;
       val += "olex2.dll";

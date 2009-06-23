@@ -12,14 +12,14 @@
   #include <windows.h>
 #endif
 #include "filetree.h"
+#include "updateapi.h"
 
 using namespace patcher;
 
 TEFile* PatchAPI::lock_file = NULL;
 
 short PatchAPI::DoPatch(AActionHandler* OnFileCopy, AActionHandler* OnOverallCopy)  {
-  TBasicApp& bapp = TBasicApp::GetInstance();
-  if( !bapp.IsBaseDirWriteable() )
+  if( !TBasicApp::IsBaseDirWriteable() )
     return papi_AccessDenied;
   if( !TEFile::Exists( GetUpdateLocationFileName() ) )  {
     CleanUp(OnFileCopy, OnOverallCopy);
@@ -83,7 +83,7 @@ short PatchAPI::DoPatch(AActionHandler* OnFileCopy, AActionHandler* OnOverallCop
     OnFileCopy = NULL;
     OnOverallCopy = NULL;
 
-    try  {  ft.CopyTo(bapp.GetBaseDir(), &AfterFileCopy);  }
+    try  {  ft.CopyTo(TBasicApp::GetBaseDir(), &AfterFileCopy);  }
     catch(PatchAPI::DeletionExc)  {  res = papi_DeleteError;  }
     catch(const TExceptionBase& exc)  {  
       res = papi_CopyError;  
@@ -96,6 +96,11 @@ short PatchAPI::DoPatch(AActionHandler* OnFileCopy, AActionHandler* OnOverallCop
         TEFile::DelFile(GetUpdateLocationFileName());
       }
       catch(...)  {  res = papi_DeleteError;  }
+    }
+    if( res == papi_OK )  {
+      updater::SettingsFile sf( updater::UpdateAPI::GetSettingsFileName() );
+      sf.last_updated = TETime::EpochTime();
+      sf.Save();
     }
   }
   CleanUp(OnFileCopy, OnOverallCopy);

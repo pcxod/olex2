@@ -13,6 +13,7 @@
 #include "sys/stat.h"
 
 TWinZipFileSystem::TWinZipFileSystem(const olxstr& _zip_name, bool unused) : zip_name(_zip_name)  {
+  Access = afs_ReadOnlyAccess;
   TEFile::CheckFileExists(__OlxSourceInfo, zip_name);
   zip = OpenZip(zip_name.u_str(), NULL);
   if( zip == NULL )
@@ -26,7 +27,7 @@ TWinZipFileSystem::~TWinZipFileSystem()  {
     TEFile::DelFile( TmpFiles[i] );
 }
 //..............................................................................
-IDataInputStream* TWinZipFileSystem::OpenFile(const olxstr& Source)  {
+IInputStream* TWinZipFileSystem::_DoOpenFile(const olxstr& Source)  {
   TOnProgress Progress;
   olxstr fn( TEFile::UnixPath(Source) );
 

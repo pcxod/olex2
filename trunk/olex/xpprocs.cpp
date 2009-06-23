@@ -5708,7 +5708,7 @@ public:
 void TMainForm::macInstallPlugin(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   if( !FPluginItem->ItemExists(Cmds[0]) )  {
     TStateChange sc(prsPluginInstalled, true, Cmds[0]);
-    olxstr local_file( Options.FindValue("l", EmptyString) );
+    olxstr local_file = Options['l'];
     if( !local_file.IsEmpty() )  {
       if( !TEFile::Exists(local_file) )  {
         E.ProcessingError(__OlxSrcInfo, "cannot find plugin archive");
@@ -5745,7 +5745,7 @@ void TMainForm::macInstallPlugin(TStrObjList &Cmds, const TParamList &Options, T
         updater::UpdateAPI api;
         short res = api.InstallPlugin(new TDownloadProgress(*FXApp), 
           new TOnSync(*FXApp, TBasicApp::GetBaseDir() ),
-          Cmds[0].SubStringFrom(7)
+          Cmds[0]
         );
         if( res == updater::uapi_OK )  {
           FPluginItem->AddItem( Cmds[0] );
@@ -5853,7 +5853,7 @@ void TMainForm::macUninstallPlugin(TStrObjList &Cmds, const TParamList &Options,
       TFSIndex fsIndex( osFS );
 
       fsIndex.LoadIndex( indexFile );
-      TFSTraverser* trav = new TFSTraverser(*FXApp, TBasicApp::GetBaseDir(), Cmds[0]);
+      TFSTraverser* trav = new TFSTraverser(*FXApp, TBasicApp::GetBaseDir(), olxstr("plugin-") << Cmds[0]);
       TFSItem::Traverser.Traverse<TFSTraverser>(fsIndex.GetRoot(), *trav );
       delete trav;
       fsIndex.SaveIndex( indexFile );

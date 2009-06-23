@@ -10,6 +10,7 @@
 #include "bapp.h"
 
 TWinHttpFileSystem::TWinHttpFileSystem(const TUrl& url): Url(url){
+  Access = afs_ReadOnlyAccess;
   WSADATA  WsaData;
   Successful = (WSAStartup(0x0001, &WsaData) == 0);
   if( !Successful )
@@ -75,7 +76,7 @@ bool TWinHttpFileSystem::Connect()  {
   return Connected;
 }
 //..............................................................................
-IDataInputStream* TWinHttpFileSystem::OpenFile(const olxstr& Source)  {
+IInputStream* TWinHttpFileSystem::_DoOpenFile(const olxstr& Source)  {
   TOnProgress Progress;
   if( Connected )  {
     Disconnect();
@@ -184,6 +185,12 @@ IDataInputStream* TWinHttpFileSystem::OpenFile(const olxstr& Source)  {
     delete File1;
     return NULL;
   }
+}
+//..............................................................................
+bool TWinHttpFileSystem::_DoesExist(const olxstr& f)  {  
+  if( Index != NULL )
+    return Index->GetRoot().FindByFullName(f);
+  return false;  
 }
 //..............................................................................
 #endif  // __WIN32__

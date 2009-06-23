@@ -191,6 +191,9 @@ void TXFile::UpdateAsymmUnit()  {
   if( LL->IsNative() )
     return;
   GetLattice().UpdateAsymmUnit();
+  LL->GetAsymmUnit().ClearEllps();
+  for( int i=0; i < GetAsymmUnit().EllpCount(); i++ )
+    LL->GetAsymmUnit().NewEllp() = GetAsymmUnit().GetEllp(i);
   for( int i=0; i < GetAsymmUnit().AtomCount(); i++ )  {
     TCAtom& CA = GetAsymmUnit().GetAtom(i);
     TCAtom& CA1 = LL->GetAsymmUnit().AtomCount() <= i ? 

@@ -9,7 +9,7 @@
 #include "ememstream.h"
 
 //.........................................................................................
-IInputStream* TwxHttpFileSystem::OpenFile(const olxstr& Source)  {
+bool TwxHttpFileSystem::ReadToStream(IOutputStream& ms, const olxstr& Source)  {
   olxstr o_src(TEFile::UnixPath(Source));
   TOnProgress Progress;
   Progress.SetAction(o_src );
@@ -26,31 +26,29 @@ IInputStream* TwxHttpFileSystem::OpenFile(const olxstr& Source)  {
       OnProgress->Enter(this, &Progress);
     }
   }
-  catch( ... )  {   return NULL;  }
-
-  if( is == NULL )  {
-    throw TFunctionFailedException(__OlxSourceInfo, olxstr("NULL handle for '") << o_src << '\'');
-    return NULL;
+  catch( const TExceptionBase& exc )  {   
+    throw TFunctionFailedException(__OlxSourceInfo, exc);
   }
-  TEMemoryStream* ms = new TEMemoryStream();
+  if( is == NULL )
+    throw TFunctionFailedException(__OlxSourceInfo, olxstr("NULL handle for '") << o_src << '\'');
+
   char* bf = new char[1024*64];
   try {
     is->Read(bf, 1024*64);
     while( is->LastRead() != 0 )  {
-      ms->Write( bf, is->LastRead() );
+      ms.Write( bf, is->LastRead() );
       if( Progress.GetMax() > 0 )  {
-        Progress.SetPos( ms->GetPosition() );
+        Progress.SetPos( ms.GetPosition() );
         OnProgress->Execute(this, &Progress);
       }
       if( Break )  {
         delete is;
         delete [] bf;
-        delete ms;
-        return NULL;
+        return false;
       }
       is->Read(bf, 1024*64);
     }
-    ms->SetPosition(0);
+    ms.SetPosition(0);
     Progress.SetPos( Progress.GetMax() );
     OnProgress->Exit(this, &Progress);
   }
@@ -61,7 +59,21 @@ IInputStream* TwxHttpFileSystem::OpenFile(const olxstr& Source)  {
   }
   delete is;
   delete [] bf;
-  return ms;  
+  return true;  
+}
+//.........................................................................................
+IInputStream* TwxHttpFileSystem::_DoOpenFile(const olxstr& Source)  {
+  TEMemoryStream* ms = new TEMemoryStream();
+  try { 
+    if( ReadToStream(*ms, Source) )
+      return ms;
+    delete ms;
+    return NULL;
+  }  
+  catch( const TExceptionBase& exc)  {
+    delete ms;
+    throw TFunctionFailedException(__OlxSourceInfo, exc);
+  }
 }
 //.........................................................................................
 wxInputStream* TwxHttpFileSystem::wxOpenFile(const olxstr& Source)  {
@@ -84,51 +96,23 @@ wxInputStream* TwxHttpFileSystem::wxOpenFile(const olxstr& Source)  {
 }
 //.........................................................................................
 TEFile* TwxHttpFileSystem::SaveFile(const olxstr& Source)  {
-  TOnProgress Progress;
-  Progress.SetMax(1);
-  Progress.SetPos(0);
-  Progress.SetAction(olxstr("Downloading ") << Source );
-  OnProgress->Enter(this, &Progress);
-  olxstr o_src(TEFile::UnixPath(Source));
-  wxInputStream* is = NULL;
-  Break = false;
-  try  {
-    olxstr src;
-    if( Url.HasProxy() )
-      src << Url.GetFullHost();
-    src << o_src;
-    src.Replace(' ', "%20");
-    is = Http.GetInputStream( src.u_str() );
-    if( is != NULL )  {
-      Progress.SetMax( is->GetLength() );
-      OnProgress->Execute(this, &Progress);
-    }
-  }
-  catch( ... )  {   return NULL;  }
-  if( is == NULL )  {
-    throw TFunctionFailedException(__OlxSourceInfo, olxstr("NULL handle for '") << o_src << '\'');
-  }
   TEFile* tf = TEFile::TmpFile(EmptyString);
-  char* bf = new char [1024*64];
-  is->Read(bf, 1024*64);
-  while( is->LastRead() != 0 )  {
-    tf->Write(bf, is->LastRead());
-    Progress.SetPos( tf->GetPosition() );
-    OnProgress->Execute(this, &Progress);
-    if( Break )  {
-      delete [] bf;
-      delete tf;
-      return NULL;
-    }
-    is->Read(bf, 1024*64);
+  try { 
+    if( ReadToStream(*tf, Source) )
+      return tf;
+    delete tf;
+    return NULL;
+  }  
+  catch( const TExceptionBase& exc)  {
+    delete tf;
+    throw TFunctionFailedException(__OlxSourceInfo, exc);
   }
-  Progress.SetAction("Download complete");
-  Progress.SetPos( 0 );
-  OnProgress->Exit(this, &Progress);
-
-  delete [] bf;
-  tf->Seek(0, 0);
-  return tf;  
+}
+//.........................................................................................
+bool TwxHttpFileSystem::_DoesExist(const olxstr& f)  {  
+  if( Index != NULL )
+    return Index->GetRoot().FindByFullName(f) != NULL;
+  return false;  
 }
 //.........................................................................................
 

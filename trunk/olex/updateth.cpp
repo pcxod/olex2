@@ -34,6 +34,8 @@ int UpdateThread::Run()  {
     CleanUp();
     return 0;
   }
+  if( TEFile::Exists(patcher::PatchAPI::GetUpdateLocationFileName()) )
+    return 0;
   // try to lock updateAPI
   while( !patcher::PatchAPI::LockUpdater() )  {
     TBasicApp::Sleep(100);
@@ -75,9 +77,10 @@ int UpdateThread::Run()  {
         return 0;
       }
     }
+    Index->OnProgress->Add(new DListener);
     Index->Synchronise(*destFS, properties, skip ? NULL : &toSkip, &dfs, &cmds);
     // try to update the updater, should check the name of executable though!
-    if( dfs.FileExists(updater_file) )
+    if( dfs.Exists(updater_file) )
       TEFile::Rename(updater_file, TBasicApp::GetBaseDir() + TEFile::ExtractFileName(updater_file) );
     
     olxstr cmd_fn( TEFile::ParentDir(dfs.GetBase()) + patcher::PatchAPI::GetUpdaterCmdFileName());
@@ -89,15 +92,21 @@ int UpdateThread::Run()  {
     TUtf8File::WriteLines(cmd_fn, cmds);
     // mark download as complete
     if( !Index->IsInterrupted() )  {
+      TBasicApp::GetLog().Info("Done update downloading");
       TEFile f(download_vf, "w+b");
       CString location(dfs.GetBase());
       f.Write(location);
     }
+    else  {
+      TBasicApp::GetLog().Info("Update downloading interupted, will continue in the new session");
+    }
     patcher::PatchAPI::UnlockUpdater();
   }
-  catch(...)  { // oups...
+  catch( const TExceptionBase& exc)  { // oups...
     CleanUp();
     patcher::PatchAPI::UnlockUpdater();
+    TBasicApp::GetLog().Info("Update failed...");
+    TBasicApp::GetLog().Info(exc.GetException()->GetFullMessage());
     return 0;  
   }  
   return 1;

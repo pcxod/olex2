@@ -197,6 +197,7 @@ olxstr TZipWrapper::ComposeFileName(const olxstr &ZipFileNameA, const olxstr &FN
 TwxZipFileSystem::TwxZipFileSystem(const olxstr& zip_name, bool UseCache) : 
 zip(zip_name, UseCache) 
 { 
+  Access = afs_ReadOnlyAccess;
   AActionHandler::SetToDelete(false);
   zip.OnProgress->Add(this);
 }
@@ -204,7 +205,7 @@ zip(zip_name, UseCache)
 TwxZipFileSystem::TwxZipFileSystem(TEFile* zip_fh, bool UseCache) : 
   zip(zip_fh, UseCache) { }
 //..............................................................................
-IDataInputStream* TwxZipFileSystem::OpenFile(const olxstr& Source)  {
+IInputStream* TwxZipFileSystem::_DoOpenFile(const olxstr& Source)  {
   TOnProgress Progress;
   olxstr fn( TEFile::UnixPath(Source) );
   Progress.SetAction( olxstr("Extracting ") << fn );

@@ -41,6 +41,7 @@ public:
   inline int Count()               const {  return FEntries.Count();  }
   inline const olxstr& Name(int i) const {  return FEntries.GetString(i);  }
   inline time_t Timestamp(int i)   const {  return FEntries.GetObject(i)->GetDateTime().GetTicks();  } 
+  inline size_t Size(int i)        const {  return FEntries.GetObject(i)->GetSize();  } 
   inline bool FileExists(const olxstr& fn) const {  return FEntries[TEFile::UnixPath(fn)] != NULL;  }
 
   static bool IsValidFileName(const olxstr &FN);
@@ -67,13 +68,18 @@ protected:
     OnProgress->Execute(this, Data);
     return false; 
   }
+  virtual bool _DoDelFile(const olxstr& f) {  return false;  }
+  virtual bool _DoDelDir(const olxstr& f)  {  return false;  }
+  virtual bool _DoNewDir(const olxstr& f)  {  return false;  }
+  virtual bool _DoAdoptFile(const TFSItem& Source) {  return false;  }
+  virtual bool _DoesExist(const olxstr& df) {  return zip.FileExists(df);  }
+  virtual IInputStream* _DoOpenFile(const olxstr& src);
+  virtual bool _DoAdoptStream(IInputStream& file, const olxstr& name) {  return false;  }
 public:
   TwxZipFileSystem(const olxstr& filename, bool UseCache=false);
   TwxZipFileSystem(TEFile* file, bool UseCache);
   virtual ~TwxZipFileSystem() {}
 
-  virtual IDataInputStream* OpenFile(const olxstr& zip_name);
-  virtual bool FileExists(const olxstr& DN)  {  return zip.FileExists(DN);  }
   void ExtractAll(const olxstr& dest);
 
   virtual bool DelFile(const olxstr& FN)     {  throw TNotImplementedException(__OlxSourceInfo);    }

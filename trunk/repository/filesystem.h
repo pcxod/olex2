@@ -14,13 +14,34 @@
 class TFSIndex;
 class TFSItem;
 
+const uint16_t 
+  afs_ReadAccess  = 0x0001,
+  afs_WriteAccess = 0x0002,
+  afs_DeleteAccess = 0x0004,
+  afs_BrowseAccess = 0x0008,
+  afs_FullAccess  = afs_ReadAccess|afs_BrowseAccess|afs_WriteAccess|afs_DeleteAccess,
+  afs_ReadOnlyAccess = afs_ReadAccess|afs_BrowseAccess;
+
+
 class AFileSystem  {
   olxstr FBase;
   TActionQList Actions;
 protected:
+  TFSIndex* Index;
+  uint16_t Access;
   bool volatile Break;
+  virtual bool _DoDelFile(const olxstr& f) = 0;
+  virtual bool _DoDelDir(const olxstr& f) = 0;
+  virtual bool _DoNewDir(const olxstr& f) = 0;
+  virtual bool _DoAdoptFile(const TFSItem& src)=0;
+  virtual bool _DoesExist(const olxstr& df)=0;
+  virtual IInputStream* _DoOpenFile(const olxstr& src)=0;
+  virtual bool _DoAdoptStream(IInputStream& file, const olxstr& name) = 0;
 public:
-  AFileSystem() : Break(false) {  
+  AFileSystem() : 
+      Break(false),
+      Index(NULL),
+      Access(afs_FullAccess) {  
     OnProgress = &Actions.NewQueue("ON_PROGRESS");
   }
   virtual ~AFileSystem()  {  ; }
@@ -29,24 +50,55 @@ public:
   TActionQueue* OnProgress;
 
   // deletes a file
-  virtual bool DelFile(const olxstr& FN)=0;
+  bool DelFile(const olxstr& f)  {  
+    if( (Access & afs_DeleteAccess) == 0 ) 
+      return false;  
+    return _DoDelFile(f);
+  }
   // deletes a folder
-  virtual bool DelDir(const olxstr& DN)=0;
+  bool DelDir(const olxstr& d)  {
+    if( (Access & afs_DeleteAccess) == 0 ) 
+      return false;  
+    return _DoDelDir(d);
+  }
   // puts a file to the file system
-  virtual bool AdoptFile(const TFSItem& Source)=0;
+  bool AdoptFile(const TFSItem& src)  {
+    if( (Access & afs_WriteAccess) == 0 ) 
+      return false;  
+    return _DoAdoptFile(src);
+  }
   // creates a new folder
-  virtual bool NewDir(const olxstr& DN)=0;
+  bool NewDir(const olxstr& d)  {
+    if( (Access & afs_WriteAccess) == 0 ) 
+      return false;  
+    return _DoNewDir(d);
+  }
   // checks if the file exists
-  virtual bool FileExists(const olxstr& DN)=0;
+  bool Exists(const olxstr& fn)  {
+    if( (Access & afs_BrowseAccess) == 0 ) 
+      return false;  
+    return _DoesExist(fn);
+  }
   // returns a stream for a specified stream, must be deleted
-  virtual IInputStream* OpenFile(const olxstr& Source)=0;
-  // changes a folder 
-  virtual bool ChangeDir(const olxstr& DN)=0;
+  IInputStream* OpenFile(const olxstr& src)  {
+    if( (Access & afs_ReadAccess) == 0 ) 
+      return NULL;  
+    return _DoOpenFile(src);
+  }
+  bool AdoptStream(IInputStream& file, const olxstr& name) {
+    if( (Access & afs_WriteAccess) == 0 ) 
+      return false;  
+    return _DoAdoptStream(file, name);
+  }
+  void RemoveAccessRight(uint16_t access)  {
+    Access &= ~access;
+  }
+  bool HasAccess(uint16_t access)  const {  return (Access & access) != 0;  }
+  DefPropP(TFSIndex*, Index)
   // returns a base at which the file system is initalised
   inline const olxstr& GetBase() const  {  return FBase; }
   inline void SetBase(const olxstr& b)  {  FBase = TEFile::AddTrailingBackslash(b); }
 
-  virtual bool AdoptStream(IInputStream& file, const olxstr& name) = 0;
   // depends on the file system implementation
   void DoBreak() {  Break = true;  }
 };
@@ -55,25 +107,21 @@ public:
 //.............................................................................//
 class TOSFileSystem: public AFileSystem, public IEObject {
   TActionQList Events;
-  // this is used to pass file.dir names to the events ....
-  static olxstr F__N;
+protected:
+  virtual bool _DoDelFile(const olxstr& f);
+  virtual bool _DoDelDir(const olxstr& f);
+  virtual bool _DoNewDir(const olxstr& f);
+  virtual bool _DoAdoptFile(const TFSItem& Source);
+  virtual bool _DoesExist(const olxstr& df);
+  virtual IInputStream* _DoOpenFile(const olxstr& src);
+  virtual bool _DoAdoptStream(IInputStream& file, const olxstr& name);
 public:
   TOSFileSystem(const olxstr& base);
-  virtual ~TOSFileSystem()  {  ; }
-  virtual bool DelFile(const olxstr& FN);
-  virtual bool DelDir(const olxstr& DN);
-  virtual bool AdoptFile(const TFSItem& Source);
-  virtual bool AdoptStream(IInputStream& file, const olxstr& name);
-  virtual bool NewDir(const olxstr& DN);
-  virtual bool FileExists(const olxstr& DN);
-  // not that the stream must be deleted
-  virtual IInputStream* OpenFile(const olxstr& Source);
-  virtual bool ChangeDir(const olxstr& DN);
+  virtual ~TOSFileSystem()  {}
 
   TActionQueue* OnRmFile;
   TActionQueue* OnRmDir;
   TActionQueue* OnMkDir;
-  TActionQueue* OnChDir;
   TActionQueue* OnAdoptFile;
   TActionQueue* OnOpenFile;
 };
@@ -98,6 +146,8 @@ private:
 protected:
   void DeleteItem(TFSItem* item);
   bool IsProcessed() const {  return Processed;  }
+  // recursive version, must be called with false before Syncronise or CalcDiffSize
+  void SetProcessed(bool v);
 public:
   TFSItem(TFSIndex& index, TFSItem* parent, const olxstr& name) :
     Index(index), 
@@ -167,16 +217,12 @@ public:
   AFileSystem& GetDestFS() const;
   // calculates the update size
   uint64_t CalcDiffSize(TFSItem& Dest, const TStrList& properties);
-  // caller must be NULL, when invoked externally
-  double Synchronise(TFSItem& Dest, const TStrList& properties, TStrList* cmds=NULL, 
-    TFSItem* Caller=NULL);
+  // syncronises two items
+  double Synchronise(TFSItem& Dest, const TStrList& properties, TStrList* cmds=NULL);
   TFSItem* UpdateFile(TFSItem& FN);
   /* deletes underlying physical object (file or folder). If the object is a folder
   the content of that folder will be removed completely */
   void DelFile();
-
-  // recursive version, must be called with false before Syncronise or CalcDiffSize
-  void SetProcessed(bool v);
 
   uint64_t CalcTotalItemsSize(const TStrList& props) const;
 
