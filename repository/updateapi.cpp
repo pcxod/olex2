@@ -85,7 +85,7 @@ short UpdateAPI::DoInstall(AActionHandler* download_lsnr, AActionHandler* extrac
         zfs.OnProgress->Add(p_lsnr);
         p_lsnr = NULL;
       }
-      if( !zfs.FileExists(GetTagFileName()) )
+      if( !zfs.Exists(GetTagFileName()) )
         return updater::uapi_InvaildRepository;
       zfs.ExtractAll(TBasicApp::GetBaseDir());
       settings.repository = GetDefaultRepository();
@@ -195,11 +195,17 @@ short UpdateAPI::InstallPlugin(AActionHandler* d_lsnr, AActionHandler* e_lsnr, c
     src_f.Close();
     {  // make sure the zipfs goes before deleting the file
       ZipFS zfs(zip_fn, false);
+      TFSIndex fsi(zfs);
+      TOSFileSystem osf(TBasicApp::GetBaseDir());
+      osf.RemoveAccessRight(afs_DeleteAccess);
+      TStrList props;
+      props.Add(olxstr("plugin-") << name);
       if( p_lsnr != NULL )  {
-        zfs.OnProgress->Add(p_lsnr);
+        fsi.OnProgress->Add(p_lsnr);
         p_lsnr = NULL;
       }
-      zfs.ExtractAll(TBasicApp::GetBaseDir());
+      fsi.Synchronise(osf, props);
+      //zfs.ExtractAll(TBasicApp::GetBaseDir());
     }
     TEFile::DelFile(zip_fn);
     delete fs;

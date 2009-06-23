@@ -21,21 +21,16 @@ protected:
   void GetAddress(struct sockaddr* Result);
   bool Connect();
   void Disconnect();
+  virtual bool _DoDelFile(const olxstr& f) {  return false;  }
+  virtual bool _DoDelDir(const olxstr& f)  {  return false;  }
+  virtual bool _DoNewDir(const olxstr& f)  {  return false;  }
+  virtual bool _DoAdoptFile(const TFSItem& Source) {  return false;  }
+  virtual bool _DoesExist(const olxstr& df);
+  virtual IInputStream* _DoOpenFile(const olxstr& src);
+  virtual bool _DoAdoptStream(IInputStream& file, const olxstr& name) {  return false;  }
 public:
   TWinHttpFileSystem(const TUrl& url);
   virtual ~TWinHttpFileSystem();
-
-  virtual IDataInputStream* OpenFile(const olxstr& Source);
-  virtual bool FileExists(const olxstr& DN)  {  return true;  }
-
-  virtual bool DelFile(const olxstr& FN)     {  throw TNotImplementedException(__OlxSourceInfo);    }
-  virtual bool DelDir(const olxstr& DN)      {  throw TNotImplementedException(__OlxSourceInfo);     }
-  virtual bool AdoptFile(const TFSItem& Source){  throw TNotImplementedException(__OlxSourceInfo);  }
-  virtual bool NewDir(const olxstr& DN)      {  throw TNotImplementedException(__OlxSourceInfo);     }
-  virtual bool ChangeDir(const olxstr& DN)   {  throw TNotImplementedException(__OlxSourceInfo);  }
-  virtual bool AdoptStream(IInputStream& file, const olxstr& name)  {
-    throw TNotImplementedException(__OlxSourceInfo);
-  }
 
   TEFile* OpenFileAsFile(const olxstr& Source)  {
     return (TEFile*)OpenFile(Source);

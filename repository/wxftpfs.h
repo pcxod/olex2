@@ -12,41 +12,16 @@ class TwxFtpFileSystem: public AFileSystem, public IEObject  {
   wxFTP Ftp;
   TwxZipFileSystem* ZipFS;
   olxstr pwd;
+protected:
   olxstr NormaliseName(const olxstr& name) const {
     olxstr fn( TEFile::UnixPath(name) );
     fn = fn.StartsFrom(pwd) ? fn.SubStringFrom(pwd.Length()) : fn;
     return fn.Trim('/');
   }
-public:
-  TwxFtpFileSystem(const TUrl& url, TwxZipFileSystem* zipFS=NULL) : Url(url) {
-    Ftp.SetUser( url.GetUser().u_str() );
-    Ftp.SetPassword( url.GetPassword().u_str() );
-    Ftp.SetBinary();
-    ZipFS = zipFS;
-    if( !Ftp.Connect( (url.HasProxy() ? url.GetProxy().GetFullHost() : url.GetHost()).u_str() ) )  {
-      throw TFunctionFailedException(__OlxSourceInfo, "connection failed");
-    }
-    SetBase( url.GetPath() );
-    if( !url.GetPath().IsEmpty() )  {
-      if( !FileExists(url.GetPath()) )
-        NewDir(url.GetPath());
-      ChangeDir(url.GetPath());
-      pwd = url.GetPath();
-    }
-  }
-  virtual ~TwxFtpFileSystem() {}
-
-  // saves stream to a temprray file and returs the object which must be deleted manually
-  TEFile* SaveFile(const olxstr& fn);
-  // zip is as primary source of the files, if a file is not in the zip - Url is used
-  void SetZipFS( TwxZipFileSystem* zipFS )  {
-    if( ZipFS != NULL )  delete ZipFS;
-      ZipFS = zipFS;
-  }
-  virtual IInputStream* OpenFile(const olxstr& Source)  {
+  virtual IInputStream* _DoOpenFile(const olxstr& Source)  {
     olxstr o_src(NormaliseName(Source));
     olxstr zip_name = Source.SubStringFrom( Url.GetPath().Length()+1 );
-    if( ZipFS != NULL && ZipFS->FileExists(zip_name) != 0 )  {
+    if( ZipFS != NULL && ZipFS->Exists(zip_name) != 0 )  {
       return ZipFS->OpenFile(zip_name);
     }
     TOnProgress Progress;
@@ -104,24 +79,20 @@ public:
     return ms;  
     
   }
-  virtual wxInputStream* wxOpenFile(const olxstr& Source) {  return Ftp.GetInputStream(Source.u_str());  }
-  virtual bool FileExists(const olxstr& DN)  {  
-    // hack here... too slow otherwise, assume that index IS up-to-date
+  virtual bool _DoesExist(const olxstr& DN)  {  
     olxstr fn( NormaliseName(DN).u_str() );
-    if( fn == "index.ind" )
-      return Ftp.FileExists( wxT("index.ind") );  
-    return true;
+    if( Index != NULL )
+      return Index->GetRoot().FindByFullName(fn) != NULL;
+    return Ftp.FileExists( fn.u_str() );  
   }
 
-  virtual bool DelFile(const olxstr& FN)     {  // to dangerous
-    return true;
+  virtual bool _DoDelFile(const olxstr& FN)     {  // to dangerous
     return Ftp.RmFile(NormaliseName(FN).u_str());    
   }
-  virtual bool DelDir(const olxstr& DN)      {  // too dangerous
-    return true; 
-    //return Ftp.RmDir(NormaliseName(DN).u_str());     
+  virtual bool _DoDelDir(const olxstr& DN)      {  // too dangerous
+    return Ftp.RmDir(NormaliseName(DN).u_str());     
   }
-  virtual bool AdoptFile(const TFSItem& src){  
+  virtual bool _DoAdoptFile(const TFSItem& src){  
     IInputStream* is = NULL;
     try  {  
       is = src.GetIndexFS().OpenFile(src.GetIndexFS().GetBase() + src.GetFullName() );  
@@ -136,7 +107,7 @@ public:
       delete is;
     return true;
   }
-  virtual bool AdoptStream(IInputStream& in, const olxstr& as) {  
+  virtual bool _DoAdoptStream(IInputStream& in, const olxstr& as) {  
     olxstr rel_path( NormaliseName(as) );
 //    OnAdoptFile->Execute( this, &F__N);
     TOnProgress Progress;
@@ -193,7 +164,7 @@ public:
     }
     return true;
   }
-  virtual bool NewDir(const olxstr& DN)      {  
+  virtual bool _DoNewDir(const olxstr& DN)      {  
     olxstr norm_path( NormaliseName(DN) );
     if( norm_path.FirstIndexOf('/') != -1 )  {
       TStrList toks(norm_path, '/');
@@ -211,13 +182,42 @@ public:
     }
     return Ftp.MkDir(norm_path.u_str());     
   }
-  virtual bool ChangeDir(const olxstr& DN)   {  
+public:
+  TwxFtpFileSystem(const TUrl& url, TwxZipFileSystem* zipFS=NULL) : Url(url) {
+    Access = afs_FullAccess;
+    Ftp.SetUser( url.GetUser().u_str() );
+    Ftp.SetPassword( url.GetPassword().u_str() );
+    Ftp.SetBinary();
+    ZipFS = zipFS;
+    if( !Ftp.Connect( (url.HasProxy() ? url.GetProxy().GetFullHost() : url.GetHost()).u_str() ) )  {
+      throw TFunctionFailedException(__OlxSourceInfo, "connection failed");
+    }
+    SetBase( url.GetPath() );
+    if( !url.GetPath().IsEmpty() )  {
+      if( !Exists(url.GetPath()) )
+        NewDir(url.GetPath());
+      ChangeDir(url.GetPath());
+      pwd = url.GetPath();
+    }
+  }
+  virtual ~TwxFtpFileSystem() {}
+
+  // saves stream to a temprray file and returs the object which must be deleted manually
+  TEFile* SaveFile(const olxstr& fn);
+  // zip is as primary source of the files, if a file is not in the zip - Url is used
+  void SetZipFS( TwxZipFileSystem* zipFS )  {
+    if( ZipFS != NULL )  delete ZipFS;
+      ZipFS = zipFS;
+  }
+  virtual wxInputStream* wxOpenFile(const olxstr& Source) {  return Ftp.GetInputStream(Source.u_str());  }
+  bool ChangeDir(const olxstr& DN)   {  
     if( Ftp.ChDir( DN.u_str() ) )  {
       pwd = TEFile::UnixPath(Ftp.Pwd().wx_str());
       return true;
     }
     return false;
   }
+
 };
 
 #endif

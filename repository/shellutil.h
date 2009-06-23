@@ -11,7 +11,11 @@ const short  fiDesktop       = 1,
              fiControls      = 5,
              fiProgramFiles  = 6,
              fiMyDocuments   = 7,
-             fiAppData       = 8; // returns application data folder for specific user
+             fiAppData       = 8,    // returns application data folder for specific user
+             fiCommonStartMenu = 9,
+             fiCommonAppData   = 10,
+             fiCommonPrograms  = 11,
+             fiCommonDesktop   = 12; 
 
 
 class TShellUtil  {

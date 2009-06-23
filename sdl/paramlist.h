@@ -27,11 +27,12 @@ public:
   template <class T>
   inline bool Contains(const T& Name)  const {  return IndexOf(Name) != -1;  }
   template <class T>
-  const olxstr& FindValue(const T& Name, const olxstr& defval=EmptyString) const  {
+  const olxstr& FindValue(const T& Name, const olxstr& defval=EmptyString) const {
     int i = IndexOf(Name);
     return (i >= 0) ? GetObject(i) : defval;
    }
-
+  template <class T>
+  const olxstr& operator [] (const T& Name) const {  return FindValue(Name);  }
   // these functions consider the folowing situation '"'
   template <class SC, class T>
     static int StrtokParams(const olxstr& Cmd, char Separator, TTStrList<SC,T>& Params)  {

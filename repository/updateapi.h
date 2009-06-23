@@ -145,6 +145,7 @@ public:
   olxstr TrimTagPart(const olxstr& path) const;
   // transforms /olex2-distro to to /olex2/distro/tag or /olex2/distro/tag/update
   olxstr AddTagPart(const olxstr& path, bool Update) const;
+  const olxstr& GetTag() const {  return Tag;  }
 
   static bool IsInstallRequired() {  return !TEFile::Exists(GetIndexFileName());  }
   /* checks the repository if in the settings, if down - then the default URL (http://www.olex2.org/olex2-distro/, 

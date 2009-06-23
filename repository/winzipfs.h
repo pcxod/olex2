@@ -14,26 +14,22 @@ class TWinZipFileSystem: public AFileSystem, public IEObject  {
   TStrList TmpFiles;
 protected:
   olxstr zip_name;
-public:
-  TWinZipFileSystem(const olxstr& filename, bool unused=false);
-  virtual ~TWinZipFileSystem();
-
-  virtual IDataInputStream* OpenFile(const olxstr& zip_name);
-  virtual bool FileExists(const olxstr& fn)  {
+  virtual bool _DoDelFile(const olxstr& f) {  return false;  }
+  virtual bool _DoDelDir(const olxstr& f)  {  return false;  }
+  virtual bool _DoNewDir(const olxstr& f)  {  return false;  }
+  virtual bool _DoAdoptFile(const TFSItem& Source) {  return false;  }
+  virtual bool _DoesExist(const olxstr& fn)  {
     ZIPENTRY* ze = NULL;
     int zindex = -1;
     return FindZipItem(zip, fn.u_str(), true, &zindex, ze) == ZR_OK;
   }
-  void ExtractAll(const olxstr& dest);
+  virtual IInputStream* _DoOpenFile(const olxstr& src);
+  virtual bool _DoAdoptStream(IInputStream& file, const olxstr& name) {  return false;  }
+public:
+  TWinZipFileSystem(const olxstr& filename, bool unused=false);
+  virtual ~TWinZipFileSystem();
 
-  virtual bool DelFile(const olxstr& FN)     {  throw TNotImplementedException(__OlxSourceInfo);    }
-  virtual bool DelDir(const olxstr& DN)      {  throw TNotImplementedException(__OlxSourceInfo);     }
-  virtual bool AdoptFile(const TFSItem& Source){  throw TNotImplementedException(__OlxSourceInfo);  }
-  virtual bool NewDir(const olxstr& DN)      {  throw TNotImplementedException(__OlxSourceInfo);     }
-  virtual bool ChangeDir(const olxstr& DN)   {  throw TNotImplementedException(__OlxSourceInfo);  }
-  virtual bool AdoptStream(IInputStream& file, const olxstr& name)  {
-    throw TNotImplementedException(__OlxSourceInfo);
-  }
+  void ExtractAll(const olxstr& dest);
 
   TEFile* OpenFileAsFile(const olxstr& Source)  {
     return (TEFile*)OpenFile(Source);

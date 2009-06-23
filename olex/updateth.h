@@ -30,6 +30,20 @@ class UpdateThread : public AOlxThread  {
     }
   }
   virtual void OnSendTerminate();
+  class DListener : public AActionHandler  {
+  public:
+    virtual bool Enter(const IEObject* Sender, const IEObject* data)  {
+      return true;
+    }
+    virtual bool Execute(const IEObject* Sender, const IEObject* data)  {
+      if( data == NULL || !EsdlInstanceOf(*data, TOnProgress) )  return false;
+      TBasicApp::GetLog().Info( olxstr("Downloading: ") << ((TOnProgress*)data)->GetAction() );
+      return true;
+    }
+    virtual bool Exit(const IEObject* Sender, const IEObject* data)  {
+      return true;
+    }
+  };
 public:
   UpdateThread(const olxstr& patch_dir);
 

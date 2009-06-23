@@ -3518,6 +3518,7 @@ void TMainForm::OnInternalIdle()  {
     TEFile::ListDir(FXApp->GetBaseDir(), rof, "runonce*.*", sefFile);
     TStrList macros;
     for( int i=0; i < rof.Count(); i++ )  {
+      rof[i] = FXApp->GetBaseDir()+rof[i];
       try  {
         macros.LoadFromFile( rof[i] );
         macros.CombineLines('\\');
@@ -3533,7 +3534,7 @@ void TMainForm::OnInternalIdle()  {
         ::wxMessageBox( uiStr(exc.GetException()->GetError()) += wxT('\n'),
           uiStrT("Exception: ") += uiStr(EsdlObjectName(exc)), wxOK|wxICON_ERROR);
       }
-      long fa = TEFile::FileAge( rof[i] );
+      time_t fa = TEFile::FileAge( rof[i] );
       // Null the file
       try  {  TEFile ef(rof[i], "wb+");  }
       catch( TIOExceptionBase& )  { ;  }
