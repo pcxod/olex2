@@ -71,7 +71,7 @@ short UpdateAPI::DoInstall(AActionHandler* download_lsnr, AActionHandler* extrac
   if( !IsInstallRequired() )  return updater::uapi_OK;
   if( repo.IsEmpty() )
     return updater::uapi_InvaildRepository;
-  if( TBasicApp::GetInstance().IsBaseDirWriteable() )
+  if( !TBasicApp::GetInstance().IsBaseDirWriteable() )
     return updater::uapi_AccessDenied;
   // check for local installation
   olxstr src_fn = GetInstallationFileName(),

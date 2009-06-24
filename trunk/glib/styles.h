@@ -136,7 +136,7 @@ public:
     TGlMaterial* glm = FindLocalMaterial(PName);
     if( glm != NULL )
       return glm;
-    return FindParentMaterial(PName, def);
+    return FindInheritedMaterial(PName, def);
   }
 
   inline int PrimitiveStyleCount()              const {  return PStyles.Count(); }

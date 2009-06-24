@@ -13,10 +13,13 @@ void SFUtil::ExpandToP1(const TArrayList<vec3i>& hkl, const TArrayList<compd>& F
   if( sf_util == NULL )
     throw TFunctionFailedException(__OlxSourceInfo, "invalid space group");
   out.SetCount( sf_util->GetSGOrder()* hkl.Count() );
+  sf_util->Expand(hkl, F, out);
+  delete sf_util;
   // test
   //smatd_list ml;
   //sg.GetMatrices(ml, mattAll);
   //const int ml_cnt = ml.Count();
+  //out.SetCount( ml_cnt* hkl.Count() );
   //for( int i=0; i < hkl.Count(); i++ )  {
   //  const int off = i*ml_cnt;
   //  for( int j=0; j < ml_cnt; j++ )  {
@@ -33,8 +36,6 @@ void SFUtil::ExpandToP1(const TArrayList<vec3i>& hkl, const TArrayList<compd>& F
   //  }  
   //}
   //end test
-  sf_util->Expand(hkl, F, out);
-  delete sf_util;
 }
 //...........................................................................................
 void SFUtil::FindMinMax(const TArrayList<StructureFactor>& F, vec3i& min, vec3i& max)  {
@@ -121,6 +122,7 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
     const TSpaceGroup& sg = xapp.XFile().GetLastLoaderSG();
     RefinementModel::HklStat ms = xapp.XFile().GetRM().GetFourierRefList<RefMerger::ShelxMerger>(sg, refs);
     F.SetCount(refs.Count());
+    //THklFile::SaveToFile("e:/1.tmp", refs);
     sw.start("Calculation structure factors");
     //xapp.CalcSF(refs, F);
     //sw.start("Calculation structure factors A");

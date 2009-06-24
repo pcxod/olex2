@@ -67,6 +67,7 @@ __fastcall TdlgMain::TdlgMain(TComponent* Owner)
   dlgSplash = new TdlgSplash(this);
 
   olxstr vfn = (TBasicApp::GetBaseDir()+ "version.txt");
+  olxstr tfn = (TBasicApp::GetBaseDir()+ "olex2.tag");
   // check updates ...
   //asm {  int 3  }
   // reading version info
@@ -79,23 +80,28 @@ __fastcall TdlgMain::TdlgMain(TComponent* Owner)
         *pValue[1];
       UINT pLen;
       GetFileVersionInfo(const_cast<char*>(OlexFN.c_str()), 0, len, pBuf);
-      Tmp = "StringFileInfo\\080904E4\\FileVersion";
+      Tmp = "StringFileInfo\\080904E4\\ProductVersion";
       if( VerQueryValue(pBuf, Tmp.c_str(), (void**)&pValue[0], &pLen) )  {
         Tmp = "Version: ";
         Tmp += pValue[0];
-        if( TEFile::Exists(vfn) )  {
-          try  {
-            TEFile vf(vfn, "rb");
-            TStrList sl;
-            sl.LoadFromTextStream( vf );
-            if( sl.Count() >= 1 )
+        try  {
+          TStrList sl;
+          if( TEFile::Exists(tfn) )  {
+            sl.LoadFromFile( tfn );
+            if( sl.Count() > 0 )  {
               Tmp += '-';
               Tmp += sl[0].c_str();
+            }
           }
-          catch( const TIOExceptionBase& exc )  {
-            ;
+          if( TEFile::Exists(vfn) )  {
+            sl.LoadFromFile( vfn );
+            if( sl.Count() > 0 )  {
+              Tmp += '-';
+              Tmp += sl[0].c_str();
+            }
           }
         }
+        catch( const TIOExceptionBase& exc )  {}
         dlgSplash->stVersion->Caption = Tmp;
       }
       free(pBuf);

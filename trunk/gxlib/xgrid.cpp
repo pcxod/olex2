@@ -212,7 +212,7 @@ void TXGrid::Create(const olxstr& cName, const ACreationParams* cpar)  {
   glpP->SetProperties(GS.GetMaterial("+Surface", 
     TGlMaterial("85;0.000,1.000,0.000,0.850;3632300160;1.000,1.000,1.000,0.500;36")));
   glpN = &GPC.NewPrimitive("-Surface", sgloQuads);
-  glpN->SetProperties(GS.GetMaterial("+Surface", 
+  glpN->SetProperties(GS.GetMaterial("-Surface", 
     TGlMaterial("85;1.000,0.000,0.000,0.850;3632300160;1.000,1.000,1.000,0.500;36")));
 }
 //..............................................................................

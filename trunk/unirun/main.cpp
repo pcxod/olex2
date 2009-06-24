@@ -160,15 +160,16 @@ void DoRun()  {
     api.GetAvailableRepositories(repos);
     if( repos.IsEmpty() )
       TBasicApp::GetLog() << "Could not locate any installation repositories, aborting...\n";
+    TBasicApp::GetLog() << "Installation folder: "  << TBasicApp::GetBaseDir() << '\n';
     olxstr repo = repos[0];
-    if( repos.Count() > 1 )  {
-      cout << "Please choose the installation repository:\n";
+    if( repos.Count() >= 1 )  {
+      TBasicApp::GetLog() << "Please choose the installation repository or Cancel:\n";
       for( int i=0; i < repos.Count(); i++ )
-        cout << (i+1) << ": " << repos[i].c_str() << '\n';
-      cout << (repos.Count()+1) << ": Cancel\n";
+        TBasicApp::GetLog() << (i+1) << ": " << repos[i].c_str() << '\n';
+      TBasicApp::GetLog() << (repos.Count()+1) << ": Cancel\n";
       int repo_ind = 0;
       while( true )  {
-        cout << "Your choice: ";
+        TBasicApp::GetLog() << "Your choice: ";
         cin >> repo_ind;
         if( cin.fail() )  continue;
         if( repo_ind == repos.Count()+1 )
@@ -180,7 +181,7 @@ void DoRun()  {
     }
     short res = api.DoInstall(new TDProgress, new TEProgress, repo);
     if( res != updater::uapi_OK && res != updater::uapi_UptoDate )  {
-      TBasicApp::GetLog() << "Installation has failed...\n";
+      TBasicApp::GetLog() << "Installation has failed with error code: " << res << '\n';
       TBasicApp::GetLog() << api.GetLog();
     }
   }
