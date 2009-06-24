@@ -77,7 +77,7 @@ int UpdateThread::Run()  {
         return 0;
       }
     }
-    Index->OnProgress->Add(new DListener);
+    //Index->OnProgress->Add(new DListener);
     Index->Synchronise(*destFS, properties, skip ? NULL : &toSkip, &dfs, &cmds);
     // try to update the updater, should check the name of executable though!
     if( dfs.Exists(updater_file) )
@@ -92,21 +92,21 @@ int UpdateThread::Run()  {
     TUtf8File::WriteLines(cmd_fn, cmds);
     // mark download as complete
     if( !Index->IsInterrupted() )  {
-      TBasicApp::GetLog().Info("Done update downloading");
+      //TBasicApp::GetLog().Info("Done update downloading");
       TEFile f(download_vf, "w+b");
       CString location(dfs.GetBase());
       f.Write(location);
     }
     else  {
-      TBasicApp::GetLog().Info("Update downloading interupted, will continue in the new session");
+      //TBasicApp::GetLog().Info("Update downloading interrupted, will continue in the new session");
     }
     patcher::PatchAPI::UnlockUpdater();
   }
   catch( const TExceptionBase& exc)  { // oups...
     CleanUp();
     patcher::PatchAPI::UnlockUpdater();
-    TBasicApp::GetLog().Info("Update failed...");
-    TBasicApp::GetLog().Info(exc.GetException()->GetFullMessage());
+    //TBasicApp::GetLog().Info("Update failed...");
+    //TBasicApp::GetLog().Info(exc.GetException()->GetFullMessage());
     return 0;  
   }  
   return 1;

@@ -23,6 +23,7 @@ namespace SFUtil {
   static const short sfOriginFcf = 0,  // structure factor origin
     sfOriginOlex2 = 1;
   static const double T_PI = M_PI*2;
+  static const double MT_PI = -M_PI*2;
   const static double EQ_PI = 8*M_PI*M_PI;
   const static double TQ_PI = 2*M_PI*M_PI;
   

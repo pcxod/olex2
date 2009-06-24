@@ -10,6 +10,7 @@
 #include "exception.h"
 #include "bapp.h"
 #include "actions.h"
+#include "egc.h"
 
 BeginEsdlNamespace()
 // converts function (taking no arguents) to a thread - ready function
@@ -29,6 +30,14 @@ protected:
   int volatile RetVal;
   bool volatile Terminate, Detached, Running;
 #ifdef __WIN32__
+  struct HandleRemover  : public IEObject  {
+    HANDLE handle;
+    HandleRemover(HANDLE _handle) : handle(_handle) {}
+    ~HandleRemover()  {
+      if( handle != NULL )
+        CloseHandle(handle);
+    }
+  };
   HANDLE Handle;
   static unsigned long _stdcall _Run(void* _instance) {
 #else
@@ -41,6 +50,9 @@ protected:
     ((AOlxThread*)_instance)->Running = false;
     if( ((AOlxThread*)_instance)->Detached )
       delete (AOlxThread*)_instance;
+#ifndef __WIN32__
+    pthread_exit(NULL);
+#endif
     return 0;
   }
 protected:  // do not allow to create externally
@@ -66,6 +78,11 @@ public:
     }
     while( Running )
       TBasicApp::Sleep(50);
+#ifdef __WIN32__  // costed me may restarts...
+    if( Handle != NULL )
+      CloseHandle(Handle);
+#else
+#endif
   }
 
   TActionQueue* OnTerminate;
@@ -122,6 +139,7 @@ public:
     HANDLE h = CreateThread(NULL, 0, &ThreadFunctionConverter<T>::Func, f, 0, &thread_id);
     if( h == NULL )  
       return false;
+    TEGC::AddP( new HandleRemover(h) );  // make sure it gets deleted at the end!
 #else  
     pthread_t thread_id;
     return (pthread_create(&thread_id, NULL, &ThreadFunctionConverter<T>::Func, (void*)(f)) == 0);

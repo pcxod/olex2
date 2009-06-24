@@ -6420,6 +6420,8 @@ object fMain: TfMain
         B8B7B7B8B7B7B8B7B7B8B7B7B8B7B7B8B7B7B8B7B7B8B6B6B7B6B6B7B6B6B7B5
         B5B7B4B4B6B3B3B5B3B3B5B2B2B3B1B1B2AFAFB1AEAEB0ADADAFABABADB2B2B3
         0000}
+      Proportional = True
+      Stretch = True
       OnMouseDown = iSplashMouseDown
       OnMouseMove = iSplashMouseMove
       OnMouseUp = iSplashMouseUp
