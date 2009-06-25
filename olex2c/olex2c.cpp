@@ -41,6 +41,7 @@ using namespace std;
 #include "settingsfile.h"
 #include "py_core.h"
 #include "olxth.h"
+#include "egc.h"
 
 #ifndef __WIN32__
   #include <readline/readline.h>
@@ -1057,6 +1058,7 @@ class MyApp: public wxAppConsole {
 IMPLEMENT_APP_NO_MAIN(MyApp)
 #endif
 int main(int argc, char* argv[])  {
+  TEGC::Initialise();
 #ifndef __WIN32__  // dummy stuff for wxWidgets...
   MyApp wx_app;
   wxAppConsole::SetInstance(&wx_app);
@@ -1070,14 +1072,8 @@ int main(int argc, char* argv[])  {
 //  new_settings.c_cc[VMIN] = 1;
 //  tcsetattr(0,TCSANOW,&new_settings);
 #endif
-  olxstr bd(argv[0]);
-  char* cbd = getenv("OLEX2_DIR");
-  if( cbd != NULL )  {
-    bd = cbd;
-    if( bd.Last() != '\\' || bd.Last() != '/' )
-      bd << '/';
-    bd << "dummy.txt";
-  }
+  
+  olxstr bd( TBasicApp::GuessBaseDir(argv[0], "OLEX2_DIR"));
   TOlex olex(bd);
 #ifdef __WIN32__
   SetConsoleTitle(olx_T("Olex2 Console"));
