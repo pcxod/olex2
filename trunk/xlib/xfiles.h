@@ -118,7 +118,7 @@ public:
   void LibSetFormula(const TStrObjList& Params, TMacroError& E);
   void LibEndUpdate(const TStrObjList& Params, TMacroError& E);
   void LibSaveSolution(const TStrObjList& Params, TMacroError& E);
-  class TLibrary*  ExportLibrary(const olxstr& name=EmptyString);
+  class TLibrary* ExportLibrary(const olxstr& name=EmptyString);
 };
 //---------------------------------------------------------------------------
 EndXlibNamespace()

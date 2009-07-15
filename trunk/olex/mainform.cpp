@@ -4060,9 +4060,10 @@ void TMainForm::DoUpdateFiles()  {
   TdlgMsgBox* msg_box = NULL;
   if( ask )  {
     msg_box = new TdlgMsgBox( this, 
-      olxstr("Olex2 updates avaialable (") << olxstr::FormatFloat(3, (double)sz/(1024*1024)) << "Mb)",
+      olxstr("There are new updates avaialable (") << olxstr::FormatFloat(3, (double)sz/(1024*1024)) << "Mb)\n" <<
+      "Updates will be downloaded in the background during this session and\nwill take effect with the next restart of Olex2",
       "Automatic Updates",
-      "Do updates without asking",
+      "Do not show this message again",
       wxYES|wxNO|wxICON_QUESTION,
       true);
     int res = msg_box->ShowModal();  
