@@ -1299,13 +1299,12 @@ void TGXApp::RestoreSelection()  {
 }
 //..............................................................................
 void TGXApp::GetSelectedXAtoms(TXAtomPList& List, bool Clear)  {
-  TGlGroup* Sel = &GetSelection();
   TPtrList<TGlGroup> S;
-  S.Add(Sel );
+  S.Add( GetSelection() );
   for( int i=0; i < S.Count(); i++ )  {
-    Sel = S[i];
-    for( int j=0; j < Sel->Count(); j++ )  {
-      AGDrawObject& GO = Sel->GetObject(j);
+    TGlGroup& Sel = *S[i];
+    for( int j=0; j < Sel.Count(); j++ )  {
+      AGDrawObject& GO = Sel[j];
       if( GO.IsDeleted() )  continue;
       if( GO.IsGroup() )  // another group
         S.Add((TGlGroup&)GO);  
@@ -1928,6 +1927,8 @@ TUndoData* TGXApp::DeleteXObjects(TPtrList<AGDrawObject>& L)  {
 //..............................................................................
 TUndoData* TGXApp::DeleteXAtoms(TXAtomPList& L)  {
   TKillUndo *undo = new TKillUndo( new TUndoActionImplMF<TGXApp>(this, &GxlObject(TGXApp::undoDelete)));
+  if( L.IsEmpty() )
+    return undo;
   TSAtomPList SAL;
   for( int i=0; i < L.Count(); i++ )  {
     TXAtom* XA = L[i];
@@ -1950,7 +1951,8 @@ TUndoData* TGXApp::DeleteXAtoms(TXAtomPList& L)  {
     undo->AddSAtom( XAL[i]->Atom() );
   }
 
-  GetSelection().RemoveDeleted();
+  //GetSelection().RemoveDeleted();
+  GetSelection().Clear();
   XFile().GetLattice().UpdateConnectivity();
   //CreateObjects(false, false);
   //CenterView();
