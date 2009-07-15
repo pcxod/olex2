@@ -8568,6 +8568,17 @@ void TMainForm::macEsd(TStrObjList &Cmds, const TParamList &Options, TMacroError
           vcovc.CalcTetrahedronVolume(a1, a2, a3, a4).ToString() << '\n');
       }
     }
+    else if( sel.Count() == 7 )  {
+      TSAtomPList atoms;
+      for( int i=0; i < sel.Count(); i++ )  {
+        if( EsdlInstanceOf(sel[i], TXAtom) )
+          atoms.Add( ((TXAtom&)sel[i]).Atom() );
+      }
+      if( atoms.Count() != 7 )
+        return;
+      TBasicApp::GetLog() << "Octahedral distortion is: " << 
+        vcovc.CalcOHDistortion(atoms).ToString() << '\n';
+    }
   }
 }
 //..............................................................................
