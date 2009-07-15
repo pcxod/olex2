@@ -61,6 +61,7 @@ void TCRSFile::SaveToStrings(TStrList& SL)  {
 }
 //..............................................................................
 void TCRSFile::LoadFromStrings(const TStrList& Strings)  {
+  SGInitialised = false;
   olxstr Tmp, TmpUC, Cell, Zerr, Sg, fcId("FACE");
   TStrList toks;
   TStrPObjList<olxstr, olxstr*> params;

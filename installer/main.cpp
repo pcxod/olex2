@@ -87,17 +87,8 @@ __fastcall TfMain::TfMain(TComponent* Owner) :TForm(Owner)  {
     frMain->cbRepository->Enabled = false;
     frMain->rgAutoUpdate->Enabled = false;
   }
-  else  {
+  else
     Bapp = new TBasicApp( TBasicApp::GuessBaseDir(CmdLine) );
-    olxstr zipfn( Bapp->GetBaseDir() + "olex2.zip" );
-    if( TEFile::Exists(zipfn) )  {
-      if( !TEFile::IsAbsolutePath(zipfn) )  {
-        zipfn = TEFile::CurrentDir();
-        zipfn << "\\olex2.zip";
-      }
-      frMain->cbRepository->Text = zipfn.c_str();
-    }
-  }
   frMain->bbInstall->Default = true;
 }
 //---------------------------------------------------------------------------
@@ -312,6 +303,8 @@ bool TfMain::CheckOlexInstalled(olxstr& installPath)  {
   }
   catch( ... )  {    }
   delete Reg;
+  if( res && !TEFile::Exists(installPath) )
+    return false;
   return res;
 }
 //---------------------------------------------------------------------------
@@ -512,17 +505,31 @@ void __fastcall TfMain::sbPickZipClick(TObject *Sender)  {
 
 
 void __fastcall TfMain::FormShow(TObject *Sender)  {
-  if( OlexInstalled )
-    return;
-  frMain->cbRepository->Items->Clear();
-  frMain->cbRepository->Text = "";
-  updater::UpdateAPI api;
-  TStrList repos;
-  api.GetAvailableRepositories(repos);
-  if( repos.IsEmpty() )  return;
-  for( int i=0; i < repos.Count(); i++ )
-    frMain->cbRepository->Items->Add( repos[i].u_str());
-  frMain->cbRepository->Text = repos[0].u_str();
+  if( OlexInstalled )  return;
+  try  {
+    frMain->cbRepository->Items->Clear();
+    frMain->cbRepository->Text = "";
+    updater::UpdateAPI api;
+    TStrList repos;
+    api.GetAvailableRepositories(repos);
+    if( repos.IsEmpty() )  return;
+    for( int i=0; i < repos.Count(); i++ )
+      frMain->cbRepository->Items->Add( repos[i].u_str());
+    frMain->cbRepository->Text = repos[0].u_str();
+  }
+  catch(...)  {
+    Application->MessageBox( "Could not discover any Olex2 repositories, only offline installation will be available",
+      "Error",
+      MB_OK|MB_ICONERROR);
+  }
+  olxstr zipfn( Bapp->GetBaseDir() + "olex2.zip" );
+  if( TEFile::Exists(zipfn) )  {
+    if( !TEFile::IsAbsolutePath(zipfn) )  {
+      zipfn = TEFile::CurrentDir();
+      zipfn << "\\olex2.zip";
+    }
+    frMain->cbRepository->Text = zipfn.c_str();
+  }
 }
 //---------------------------------------------------------------------------
 

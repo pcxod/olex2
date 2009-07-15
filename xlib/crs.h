@@ -25,6 +25,8 @@ public:
   inline int FacesCount()  const  {  return Faces.Count();  }
   inline const evecd& GetFace(int i)  const  {  return Faces[i];  }
 
+  bool IsSGInitialised() const {  return SGInitialised;  }
+
   virtual void SaveToStrings(TStrList& Strings);
   virtual void LoadFromStrings(const TStrList& Strings);
   virtual bool Adopt(TXFile *);

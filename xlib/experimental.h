@@ -13,9 +13,13 @@ BeginXlibNamespace()
 class ExperimentalDetails {
   double Radiation, RadiationEnergy;
   double Temperature;
+  char TemperatureChar;  // K, C, F
   vec3d CrystalSize;
+  bool SetTemp(const olxstr& t);
+  bool SetSize(const olxstr& t);
+  bool SetWL(const olxstr& t);
 public:
-  ExperimentalDetails() : Temperature(0) {
+  ExperimentalDetails() : Temperature(-1000), TemperatureChar('C') {
     SetRadiation(0.71073);
   }
   ExperimentalDetails(const ExperimentalDetails& ed)  {
@@ -35,6 +39,7 @@ public:
   double GetRadiationEnergy() const {  return RadiationEnergy;  }
 
   DefPropP(double, Temperature)
+  DefPropP(char, TemperatureChar)
   DefPropC(vec3d, CrystalSize)
   void SetCrystalSize(double x, double y, double z)  {
     CrystalSize = vec3d(x,y,z);
@@ -49,6 +54,12 @@ public:
   PyObject* PyExport();
 #endif
   void FromDataItem(const TDataItem& item);
+
+  void LibTemperature(const TStrObjList& Params, TMacroError& E);
+  void LibRadiation(const TStrObjList& Params, TMacroError& E);
+  void LibSize(const TStrObjList& Params, TMacroError& E);
+  
+  class TLibrary* ExportLibrary(const olxstr& name=EmptyString);
 };
 
 EndXlibNamespace()

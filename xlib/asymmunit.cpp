@@ -963,7 +963,7 @@ void TAsymmUnit::LibNewAtom(const TStrObjList& Params, TMacroError& E)  {
   vec3d crd(Params[1].ToDouble(), Params[2].ToDouble(), Params[3].ToDouble());
   if( Lattice != NULL )  {
     vec3d test_pos(crd);
-    if( Lattice->GetUnitCell().FindOverlappingAtom( test_pos, 0.3 ) != NULL)  {
+    if( Lattice->GetUnitCell().FindOverlappingAtom( test_pos, 0.3 ) != NULL )  {
       E.SetRetVal(-1);
       return;
     }

@@ -2979,56 +2979,68 @@ void XLibMacros::macFlush(TStrObjList &Cmds, const TParamList &Options, TMacroEr
 //..............................................................................
 void XLibMacros::macSGE(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   using namespace olex;
+  TXApp& xapp = TXApp::GetInstance();
   IOlexProcessor* op = IOlexProcessor::GetInstance();
   if( op == NULL )
     throw TFunctionFailedException(__OlxSourceInfo, "this function requires Olex2 processor implementation");
-  TPtrList<TSpaceGroup> sgs;
   TSpaceGroup* sg = NULL;
-  bool cntro = false;
-  E.SetRetVal(&sgs);
-  op->executeMacroEx("SG", E);
-  E.SetRetVal<bool>(false);
-  if( sgs.Count() == 0 )  {
-    TBasicApp::GetLog().Error( "Could not find any suitable spacegroup. Terminating ... " );
-    return;
-  }
-  else if( sgs.Count() == 1 )  {
-    sg = sgs[0];
-    TBasicApp::GetLog() << "Univocal spacegroup choice: " << sg->GetName() << '\n';
+  if( EsdlInstanceOf(*xapp.XFile().LastLoader(), TCRSFile) && 
+    ((TCRSFile*)xapp.XFile().LastLoader())->IsSGInitialised() )  
+  {
+    sg = &xapp.XFile().GetLastLoaderSG();
+    TBasicApp::GetLog() << "Choosing CRS file space group: " << sg->GetName() << '\n';
   }
   else  {
-    E.Reset();
-    op->executeMacroEx("Wilson", E);
-    bool centro = E.GetRetVal().ToBool();
-    TBasicApp::GetLog() << "Searching for centrosymmetric group: " << centro << '\n';
-    for( int i=0; i < sgs.Count(); i++ )  {
-      if( centro )  {
-        if( sgs[i]->IsCentrosymmetric() )  {
-          sg = sgs[i];
-          break;
-        }
-      }
-      else  {
-        if( !sgs[i]->IsCentrosymmetric() )  {
-          sg = sgs[i];
-          break;
-        }
-      }
+    TPtrList<TSpaceGroup> sgs;
+    bool cntro = false;
+    E.SetRetVal(&sgs);
+    op->executeMacroEx("SG", E);
+    E.SetRetVal<bool>(false);
+    if( sgs.Count() == 0 )  {
+      TBasicApp::GetLog().Error( "Could not find any suitable space group. Terminating ... " );
+      return;
     }
-    if( sg == NULL )  {  // no match to centre of symmetry found
+    else if( sgs.Count() == 1 )  {
       sg = sgs[0];
-      TBasicApp::GetLog() << "Could not match, choosing: " << sg->GetName() << '\n';
+      TBasicApp::GetLog() << "Univocal space group choice: " << sg->GetName() << '\n';
     }
     else  {
-      TBasicApp::GetLog() << "Chosen: " << sg->GetName() << '\n';
+      E.Reset();
+      op->executeMacroEx("Wilson", E);
+      bool centro = E.GetRetVal().ToBool();
+      TBasicApp::GetLog() << "Searching for centrosymmetric group: " << centro << '\n';
+      for( int i=0; i < sgs.Count(); i++ )  {
+        if( centro )  {
+          if( sgs[i]->IsCentrosymmetric() )  {
+            sg = sgs[i];
+            break;
+          }
+        }
+        else  {
+          if( !sgs[i]->IsCentrosymmetric() )  {
+            sg = sgs[i];
+            break;
+          }
+        }
+      }
+      if( sg == NULL )  {  // no match to centre of symmetry found
+        sg = sgs[0];
+        TBasicApp::GetLog() << "Could not match, choosing: " << sg->GetName() << '\n';
+      }
+      else  {
+        TBasicApp::GetLog() << "Chosen: " << sg->GetName() << '\n';
+      }
     }
   }
   olxstr fn( Cmds.IsEmpty() ? TEFile::ChangeFileExt(TXApp::GetInstance().XFile().GetFileName(), "ins") : Cmds[0] );
   op->executeMacroEx(olxstr("reset -s=") << sg->GetName() << " -f='" << fn << '\'', E);
   if( E.IsSuccessful() )  {
     op->executeMacroEx(olxstr("reap '") << fn << '\'', E);
-    if( E.IsSuccessful() )  
+    if( E.IsSuccessful() )  { 
       op->executeMacroEx(olxstr("solve"), E);
+      // this will reset zoom!
+      op->executeMacroEx(olxstr("fuse"), E);
+    }
     E.SetRetVal<bool>(E.IsSuccessful());
   }
 }

@@ -4809,42 +4809,51 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         //ins->Clear();
         hkl.LoadFromFile(FN, ins, &ins_initialised);
         if( !ins_initialised )  {
-          Error.ProcessingError(__OlxSrcInfo, "could not initialise CELL/SFAC from the hkl file");
+          olxstr src_fn = TEFile::ChangeFileExt(FN, "p4p");
+          if( !TEFile::Exists(src_fn) )
+            src_fn = TEFile::ChangeFileExt(FN, "crs");
+          if( !TEFile::Exists(src_fn) )  {
+            Error.ProcessingError(__OlxSrcInfo, "could not initialise CELL/SFAC from the hkl file");
+            return;
+          }
+          else
+            FN = src_fn;
+        }
+        else  {
+          FXApp->XFile().SetLastLoader(ins);
+          ins->Clear();
+          FXApp->XFile().GetRM().SetHKLSource(FN);  // make sure tha SGE finds the related HKL
+          TMacroError er;
+          ProcessXPMacro(olxstr("SGE '") << TEFile::ChangeFileExt(FN, "ins") << '\'', er);
+          if( !er.HasRetVal() || !er.GetRetObj< TEPType<bool> >()->GetValue()  )  {
+            olxstr s_inp("getuserinput(1, \'Please, enter the spacegroup\', \'')"), s_sg(s_inp);
+            TSpaceGroup* sg = NULL;
+            while( sg == NULL )  {
+              ProcessMacroFunc(s_sg);
+              sg = TSymmLib::GetInstance()->FindGroup(s_sg);
+              if( sg != NULL ) break;
+              s_sg = s_inp;
+            }
+            ins->GetAsymmUnit().ChangeSpaceGroup(*sg);
+            if( ins->GetSfac().IsEmpty() )  {
+              s_inp = "getuserinput(1, \'Please, enter cell content\', \'C1')";
+              ProcessMacroFunc(s_inp);
+              ins->SetSfacUnit(s_inp);
+            }
+            else  {
+              int sfac_count = ins->GetSfac().CharCount(' ');
+              olxstr unit;
+              for( int i=0; i < sfac_count; i++ )  
+                unit << (sg->MatrixCount()+1)*(sg->GetLattice().VectorCount()+1) << ' ';
+              ins->SetUnit(unit);
+              ins->GetAsymmUnit().SetZ( (sg->MatrixCount()+1)*(sg->GetLattice().VectorCount()+1));
+            }
+            ins->SaveToRefine( TEFile::ChangeFileExt(FN, "ins"), EmptyString, EmptyString );
+            ProcessXPMacro( olxstr("reap '") << TEFile::ChangeFileExt(FN, "ins") << '\'', Error);
+            ProcessXPMacro("solve", Error);
+          }  // sge, if succeseded will run reap and solve
           return;
         }
-        FXApp->XFile().SetLastLoader(ins);
-        ins->Clear();
-        FXApp->XFile().GetRM().SetHKLSource(FN);  // make sure tha SGE finds the related HKL
-        TMacroError er;
-        ProcessXPMacro(olxstr("SGE '") << TEFile::ChangeFileExt(FN, "ins") << '\'', er);
-        if( !er.HasRetVal() || !er.GetRetObj< TEPType<bool> >()->GetValue()  )  {
-          olxstr s_inp("getuserinput(1, \'Please, enter the spacegroup\', \'')"), s_sg(s_inp);
-          TSpaceGroup* sg = NULL;
-          while( sg == NULL )  {
-            ProcessMacroFunc(s_sg);
-            sg = TSymmLib::GetInstance()->FindGroup(s_sg);
-            if( sg != NULL ) break;
-            s_sg = s_inp;
-          }
-          ins->GetAsymmUnit().ChangeSpaceGroup(*sg);
-          if( ins->GetSfac().IsEmpty() )  {
-            s_inp = "getuserinput(1, \'Please, enter cell content\', \'C1')";
-            ProcessMacroFunc(s_inp);
-            ins->SetSfacUnit(s_inp);
-          }
-          else  {
-            int sfac_count = ins->GetSfac().CharCount(' ');
-            olxstr unit;
-            for( int i=0; i < sfac_count; i++ )  
-              unit << (sg->MatrixCount()+1)*(sg->GetLattice().VectorCount()+1) << ' ';
-            ins->SetUnit(unit);
-            ins->GetAsymmUnit().SetZ( (sg->MatrixCount()+1)*(sg->GetLattice().VectorCount()+1));
-          }
-          ins->SaveToRefine( TEFile::ChangeFileExt(FN, "ins"), EmptyString, EmptyString );
-          ProcessXPMacro( olxstr("reap '") << TEFile::ChangeFileExt(FN, "ins") << '\'', Error);
-          ProcessXPMacro("solve", Error);
-        }  // sge, if succeseded will run reap and solve
-        return;
       }
       else
         FN = TEFile::ChangeFileExt(FN, "ins");

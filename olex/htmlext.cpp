@@ -863,8 +863,7 @@ BEGIN_EVENT_TABLE(THtml, wxHtmlWindow)
   EVT_CHAR(THtml::OnChar)
 END_EVENT_TABLE()
 //..............................................................................
-void THtml::OnLinkClicked(const wxHtmlLinkInfo& link)
-{
+void THtml::OnLinkClicked(const wxHtmlLinkInfo& link)  {
   olxstr Href = link.GetHref().c_str();
   int val;
   int ind = Href.FirstIndexOf('%');
@@ -989,22 +988,28 @@ void THtml::ClearSwitchStates()  {
 }
 //..............................................................................
 void THtml::OnMouseDown(wxMouseEvent& event)  {
-  event.Skip();
+  if( this->m_tmpLastLink != NULL )  {
+    event.Skip();
+    return;
+  }
   this->SetFocusIgnoringChildren();
-  FMouseX = event.GetX();
-  FMouseY = event.GetY();
   if( FMovable )  {
+    FMouseX = event.GetX();
+    FMouseY = event.GetY();
     SetCursor( wxCursor(wxCURSOR_SIZING) );
     FMouseDown = true;
   }
+  else
+    event.Skip();
 }
 //..............................................................................
 void THtml::OnMouseUp(wxMouseEvent& event)  {
-  event.Skip();
-  if( FMovable )  {
+  if( FMovable && FMouseDown )  {
     FMouseDown = false;
     SetCursor( wxCursor(wxCURSOR_ARROW) );
   }
+  else
+    event.Skip();
 }
 //..............................................................................
 void THtml::OnMouseMotion(wxMouseEvent& event)  {
@@ -1016,7 +1021,7 @@ void THtml::OnMouseMotion(wxMouseEvent& event)  {
   int dy = event.GetY() - FMouseY;
   if( !dx && !dy )  return;
   wxWindow *parent = GetParent();
-  if( !parent || !parent->GetParent() )  return;
+  if( parent == NULL || parent->GetParent() == NULL )  return;
 
   int x=0, y=0;
   parent->GetPosition(&x, &y);
