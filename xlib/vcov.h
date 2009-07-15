@@ -153,7 +153,7 @@ protected:
     double C = h22*h33 - h23*h23;
     return acos(A/sqrt(B*C))*180.0/M_PI;
   }
-  template <int k> double _calcPlane(const vec3d_alist& Points) {
+  template <int k, int type> double _calcPlane(const vec3d_alist& Points) {
     mat3d m, vecs;
     vec3d t;
     double mass = 0;
@@ -183,26 +183,19 @@ protected:
     m[2][0] = m[0][2];
     m[2][1] = m[1][2];
     mat3d::EigenValues(m, vecs.I());
-    if( m[0][0] < m[1][1] )  {
-      if( m[0][0] < m[2][2] )  {  
-        pp = vecs[0];
-        return sqrt(m[0][0]/Points.Count());
-      }
-      else  {
-        pp = vecs[2];
-        return sqrt(m[2][2]/Points.Count());
-      }
-    }
-    else  {
-      if( m[1][1] < m[2][2] )  {
-        pp = vecs[1];
-        return sqrt(m[1][1]/Points.Count());
-      }
-      else  {
-        pp = vecs[2];
-        return sqrt(m[2][2]/Points.Count());
+    bool swaps = true;
+    while( swaps )  {
+      swaps = false;
+      for( int i=0; i < 2; i++ )  {
+        if( m[i][i] > m[i+1][i+1] )  {
+          olx_swap(vecs[i], vecs[i+1]);
+          olx_swap(m[i][i], m[i+1][i+1]);
+          swaps = true;
+        }
       }
     }
+    pp = vecs[type];
+    return m[type][type] < 0 ? 0 : sqrt(m[type][type]/Points.Count());
   }
   // plane to plane angle in degrees
   double _calcP2PAngle(const vec3d_alist& points, int fpc)  {
@@ -213,8 +206,8 @@ protected:
       else
         p2[i-fpc] = points[i];
     }
-    _calcPlane<1>(p1);
-    _calcPlane<2>(p2);
+    _calcPlane<1,0>(p1);
+    _calcPlane<2,0>(p2);
     return acos(plane_param1.CAngle(plane_param2))*180.0/M_PI;
   }
   // plane to plane centroid distance
@@ -228,7 +221,7 @@ protected:
         crd += points[i];
     }
     crd /= (points.Count()-fpc);
-    _calcPlane<1>(p1);
+    _calcPlane<1,0>(p1);
     double d = plane_param1.DotProd(plane_center1)/plane_param1.Length();
     plane_param1.Normalise();
     return crd.DotProd(plane_param1) - d;
@@ -286,7 +279,7 @@ protected:
     vec3d_alist p1(points.Count()-2);
     for( int i=0; i < points.Count()-2; i++ ) 
       p1[i] = points[i];
-    _calcPlane<1>(p1);
+    _calcPlane<1,0>(p1);
     vec3d v(points.Last() - points[points.Count()-2]);
     return acos(plane_param1.CAngle(v))*180.0/M_PI;
   }
@@ -295,7 +288,7 @@ protected:
     vec3d_alist p1(points.Count()-1);
     for( int i=0; i < points.Count()-1; i++ )
       p1[i] = points[i];
-    _calcPlane<1>(p1);
+    _calcPlane<1,0>(p1);
     double d = plane_param1.DotProd(plane_center1)/plane_param1.Length();
     plane_param1.Normalise();
     return points.Last().DotProd(plane_param1) - d;
@@ -320,6 +313,30 @@ protected:
       c1 += points[i];
     c1 /= (points.Count()-1);
     return c1.DistanceTo(points.Last());
+  }
+  // octahedral distortion (in angles)
+  double _calcOHDistortion(const vec3d_alist& points)  {
+    // centroid for first face
+    vec3d c1 = (points[1] + points[3] + points[5])/3;
+    // centroid for second face
+    vec3d c2 = (points[2] + points[4] + points[6])/3;
+    weights1.SetCount(3);
+    for( int i=0; i < weights1.Count(); i++ )
+      weights1[i] = 1.0;
+    vec3d_alist p1(3);
+    p1[0] = c1;  p1[1] = points[0];  p1[2] = c2;
+    const double rms = _calcPlane<1,2>(p1);
+    const double d = plane_param1.DotProd(plane_center1)/plane_param1.Length();
+    plane_param1.Normalise();
+    double sum = 0;
+    for( int i=0; i < 3; i++ )  {
+      vec3d v1 = (points[i+1] - points[0]).Normalise();
+      vec3d v2 = (points[i+2] - points[0]).Normalise();
+      v1 = v1 - plane_param1*v1.DotProd(plane_param1);
+      v2 = v2 - plane_param1*v2.DotProd(plane_param1);
+      sum += acos(v1.CAngle(v2));
+    }
+    return (sum*180/3)/M_PI;
   }
   // helper functions
   double CalcEsd(const int sz, const mat3d_list& m, const TDoubleList& df)  {
@@ -590,7 +607,7 @@ public:
     weights1.SetCount(atoms.Count());
     for( int i=0; i < atoms.Count(); i++ ) 
       weights1[i] = 1.0;
-    return DoCalcForAtoms(atoms, &VcoVContainer::_calcPlane<1>);
+    return DoCalcForAtoms(atoms, &VcoVContainer::_calcPlane<1,0>);
   }
   // plane to atom distance
   TEValue<double> CalcP2ADistance(const TSAtomPList& atoms, const TSAtom& a) {
@@ -664,6 +681,11 @@ public:
     GetVcoV(atoms, m);
     weights1 = weights;
     return DoCalcForPoints(crds, m, &VcoVContainer::_calcAllignmentRMSD);
+  }
+  // octahedral distortion, takes {Central Atom, a1, b1, a2, b2, a3, b3}, returns mean value
+  TEValue<double> CalcOHDistortion(const TSAtomPList& atoms)  {
+    mat3d_list m;
+    return DoCalcForAtoms(atoms, &VcoVContainer::_calcOHDistortion);
   }
   const VcoVMatrix& GetMatrix() const {  return vcov;  }
 };
