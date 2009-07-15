@@ -366,13 +366,29 @@ public:
     return 1;
   }
   inline int Compare(const TTSString& v)       const { return o_strcmp(T::Data(), T::_Length, v.Data(), v._Length, false );  }
-  inline int Compare(const char& v)            const { return T::_Length == 0 ? -1 : (T::_Length-1 + T::Data()[0] - v);  }
-  inline int Compare(const wchar_t& v)         const { return T::_Length == 0 ? -1 : (T::_Length-1 + T::Data()[0] - v);  }
+  inline int Compare(const char& v)            const { 
+    if( T::_Length == 0 )  return -1;
+    const int df = T::Data()[0] - v;
+    return df == 0 ? T::_Length-1 : df;
+  }
+  inline int Compare(const wchar_t& v)         const { 
+    if( T::_Length == 0 )  return -1;
+    const int df = T::Data()[0] - v;
+    return df == 0 ? T::_Length-1 : df;
+  }
   template <typename AC>
     inline int Compare(const AC *v)            const { return o_strcmp(T::Data(), T::_Length, v, o_strlen(v), false );  }
   inline int Comparei(const TTSString& v)      const { return o_strcmp(T::Data(), T::_Length, v.Data(), v._Length, true );  }
-  inline int Comparei(const char& v)           const { return T::_Length == 0 ? -1 : (T::_Length-1 + o_toupper(T::Data()[0]) - o_toupper(v));  }
-  inline int Comparei(const wchar_t& v)        const { return T::_Length == 0 ? -1 : (T::_Length-1 + o_toupper(T::Data()[0]) - o_toupper(v));  }
+  inline int Comparei(const char& v)           const { 
+    if( T::_Length == 0 )  return -1;
+    const int df = o_toupper(T::Data()[0]) - o_toupper(v);
+    return df == 0 ? T::_Length-1 : df;
+  }
+  inline int Comparei(const wchar_t& v)        const { 
+    if( T::_Length == 0 )  return -1;
+    const int df = o_toupper(T::Data()[0]) - o_toupper(v);
+    return df == 0 ? T::_Length-1 : df;
+  }
   template <typename AC>
     inline int Comparei(const AC *v)           const { return o_strcmp(T::Data(), T::_Length, v, o_strlen(v), true );  }
   template <typename AC>
