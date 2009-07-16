@@ -5060,7 +5060,7 @@ void TMainForm::macPopup(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   THtml *html1 = new THtml(dlg, FXApp);
   html1->WebFolder( TutorialDir );
   html1->SetHomePage( TutorialDir + Cmds[1] );
-  html1->Movable(true);
+  html1->Movable(false);
   dlg->GetClientSize(&width, &height);
   html1->SetSize(width, height);
   wxBoxSizer *TopSizer = new wxBoxSizer( wxVERTICAL );
@@ -8552,6 +8552,17 @@ void TMainForm::macEsd(TStrObjList &Cmds, const TParamList &Options, TMacroError
         TBasicApp::GetLog() << (olxstr(a1->GetLabel()) << '-' << a2->GetLabel() << " to plane " << pld << "angle: " <<
           vcovc.CalcP2VAngle(atoms, *a1, *a2).ToString() << '\n' );
       }
+      else if( EsdlInstanceOf(sel[0], TXPlane) && EsdlInstanceOf(sel[1], TXPlane) && EsdlInstanceOf(sel[2], TXPlane) )  {
+        TSPlane& p1 = ((TXPlane&)sel[0]).Plane();
+        TSPlane& p2 = ((TXPlane&)sel[1]).Plane();
+        TSPlane& p3 = ((TXPlane&)sel[2]).Plane();
+        TSAtomPList a1, a2, a3;
+        for( int i=0; i < p1.Count(); i++ )  a1.Add( p1.Atom(i) );
+        for( int i=0; i < p2.Count(); i++ )  a2.Add( p2.Atom(i) );
+        for( int i=0; i < p3.Count(); i++ )  a3.Add( p3.Atom(i) );
+        TBasicApp::GetLog() << "Angle between plane centroids: " <<
+          vcovc.Calc3PCAngle(a1, a2, a3).ToString() << '\n';
+      }
     }
     else if( sel.Count() == 4 )  {
       if( EsdlInstanceOf(sel[0], TXAtom) && EsdlInstanceOf(sel[1], TXAtom) && 
@@ -8576,8 +8587,10 @@ void TMainForm::macEsd(TStrObjList &Cmds, const TParamList &Options, TMacroError
       }
       if( atoms.Count() != 7 )
         return;
-      TBasicApp::GetLog() << "Octahedral distortion is: " << 
-        vcovc.CalcOHDistortion(atoms).ToString() << '\n';
+      TBasicApp::GetLog() << "Octahedral distortion is (BL): " << 
+        vcovc.CalcOHDistortionBL(atoms).ToString() << '\n';
+      TBasicApp::GetLog() << "Octahedral distortion is (BP): " << 
+        vcovc.CalcOHDistortionBP(atoms).ToString() << '\n';
     }
   }
 }
