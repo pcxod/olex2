@@ -889,6 +889,16 @@ olxstr TGXApp::GetSelectionInfo()  {
           Tmp << macSel_GetName3(a1, a2, a3)<< "): " << 
             olxstr::FormatFloat(3, Angle(a1.crd(), a2.crd(), a3.crd()));
       }
+      else if( EsdlInstanceOf(Sel[0], TXPlane) &&
+        EsdlInstanceOf(Sel[1], TXPlane) &&
+        EsdlInstanceOf(Sel[2], TXPlane) )  {
+          TSPlane &p1 = ((TXPlane&)Sel[0]).Plane(),
+            &p2 = ((TXPlane&)Sel[1]).Plane(),
+            &p3 = ((TXPlane&)Sel[2]).Plane();
+          Tmp = "Angle between plane centroids: ";
+          Tmp << olxstr::FormatFloat(3, 
+            Angle(p1.GetCenter(), p2.GetCenter(), p3.GetCenter()));
+      }
     }
     else if( Sel.Count() == 4 )  {
       if( EsdlInstanceOf(Sel[0], TXAtom) &&
@@ -919,6 +929,34 @@ olxstr TGXApp::GetSelectionInfo()  {
             olxstr::FormatFloat(3, a2.crd().DistanceTo(a3.crd())) <<
             "\nDistance (" << macSel_GetName2(a3, a4) << "): " << 
             olxstr::FormatFloat(3, a3.crd().DistanceTo(a4.crd()));
+      }
+    }
+    else if( Sel.Count() == 7 )  {
+      vec3d_list points;
+      for( int i=0; i < Sel.Count(); i++ )  {
+        if( EsdlInstanceOf(Sel[i], TXAtom) )
+          points.AddCCopy( ((TXAtom&)Sel[i]).Atom().crd() );
+      }
+      if( points.Count() == 7 )  {
+        vec3d c1 = (points[1] + points[3] + points[5])/3;
+        // centroid for second face
+        vec3d c2 = (points[2] + points[4] + points[6])/3;
+        vec3d plane_params, plane_center;
+        TTypeList<AnAssociation2<vec3d, double> > p1;
+        p1.AddNew( c1, 1.0 );  
+        p1.AddNew( points[0], 1 );
+        p1.AddNew( c2, 1.0 );
+        TSPlane::CalcPlane(p1, plane_params, plane_center, plane_worst);
+        plane_params.Normalise();
+        double sum = 0;
+        for( int i=0; i < 3; i++ )  {
+          vec3d v1 = (points[i*2+1] - points[0]).Normalise();
+          vec3d v2 = (points[i*2+2] - points[0]).Normalise();
+          v1 = v1 - plane_params*v1.DotProd(plane_params);
+          v2 = v2 - plane_params*v2.DotProd(plane_params);
+          sum += acos(v1.CAngle(v2));
+        }
+        Tmp << "Octahedral distortion is: " << olxstr::FormatFloat(3, (sum*180/3)/M_PI);
       }
     }
   }
