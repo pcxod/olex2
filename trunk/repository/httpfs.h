@@ -1,20 +1,22 @@
 #ifndef __olx_win_httpfs_H
 #define __olx_win_httpfs_H
-/* windows specific HTTP file fetching utility,
+/* POSIX HTTP file fetching utility,
 (c) O Dolomanov, 2004-2009 */
 #include "defs.h"
 #ifdef __WIN32__
   #include <winsock.h>
   #include <windows.h>
-
-  #include "filesystem.h"
-  #include "url.h"
-  #include "efile.h"
+#else
+  #include <sys/socket.h>
+#endif
+#include "filesystem.h"
+#include "url.h"
+#include "efile.h"
 //  #pragma link "../..lib/psdk/mswsock.lib"
 
-class TWinHttpFileSystem: public AFileSystem, public IEObject  {
-  TStrList TmpFiles;
-  SOCKET  Socket;
+class THttpFileSystem: public AFileSystem, public IEObject  {
+  TPtrList<TEFile> TmpFiles;
+  int Socket;
   bool Connected, Successful;
   TUrl Url;
 protected:
@@ -29,15 +31,13 @@ protected:
   virtual IInputStream* _DoOpenFile(const olxstr& src);
   virtual bool _DoAdoptStream(IInputStream& file, const olxstr& name) {  return false;  }
 public:
-  TWinHttpFileSystem(const TUrl& url);
-  virtual ~TWinHttpFileSystem();
+  THttpFileSystem(const TUrl& url);
+  virtual ~THttpFileSystem();
 
   TEFile* OpenFileAsFile(const olxstr& Source)  {
     return (TEFile*)OpenFile(Source);
   }
 };
-
-#endif // __WIN32__
 
 #endif
  

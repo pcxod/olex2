@@ -2,37 +2,38 @@
   #pragma hdrstop
 #endif
 
-#include "winhttpfs.h"
-
-#ifdef __WIN32__ // nonportable code
+#include "httpfs.h"
 
 #include "efile.h"
 #include "bapp.h"
 
-TWinHttpFileSystem::TWinHttpFileSystem(const TUrl& url): Url(url){
+THttpFileSystem::THttpFileSystem(const TUrl& url): Url(url){
   Access = afs_ReadOnlyAccess;
+#ifdef __WIN32__
   WSADATA  WsaData;
   Successful = (WSAStartup(0x0001, &WsaData) == 0);
   if( !Successful )
     throw TFunctionFailedException(__OlxSourceInfo, "could not initialise winsocks");
+#endif
   SetBase( url.GetPath() );
   Connected = false;
   Connect();
 }
 //..............................................................................
-TWinHttpFileSystem::~TWinHttpFileSystem()  {
+THttpFileSystem::~THttpFileSystem()  {
   if( Connected )
     Disconnect();
+#ifdef __WIN32__
   if( Successful )
     WSACleanup();
-
+#endif
   for( int i=0; i < TmpFiles.Count(); i++ )
-    TEFile::DelFile( TmpFiles[i] );
+    delete TmpFiles[i];
 }
 //..............................................................................
-void TWinHttpFileSystem::GetAddress(struct sockaddr* Result)  {
+void THttpFileSystem::GetAddress(struct sockaddr* Result)  {
   struct hostent* Host;
-  SOCKADDR_IN     Address;
+  sockaddr_in Address;
 
   memset(Result, 0, sizeof(*Result));
   memset(&Address, 0, sizeof(Address));
@@ -50,14 +51,14 @@ void TWinHttpFileSystem::GetAddress(struct sockaddr* Result)  {
        olxstr("Can't map hostname: ") << Url.GetHost() );
 }
 //..............................................................................
-void TWinHttpFileSystem::Disconnect()  {
+void THttpFileSystem::Disconnect()  {
   if( Connected )  {
     Connected = false;
     closesocket(Socket);
   }
 }
 //..............................................................................
-bool TWinHttpFileSystem::Connect()  {
+bool THttpFileSystem::Connect()  {
   if( Connected )
     Disconnect();
   struct sockaddr  SockAddr;
@@ -76,7 +77,7 @@ bool TWinHttpFileSystem::Connect()  {
   return Connected;
 }
 //..............................................................................
-IInputStream* TWinHttpFileSystem::_DoOpenFile(const olxstr& Source)  {
+IInputStream* THttpFileSystem::_DoOpenFile(const olxstr& Source)  {
   TOnProgress Progress;
   if( Connected )  {
     Disconnect();
@@ -85,26 +86,15 @@ IInputStream* TWinHttpFileSystem::_DoOpenFile(const olxstr& Source)  {
   if( !Connected )
     throw TFunctionFailedException(__OlxSourceInfo, "could not connect");
 
-  TEFile File;
-  TEFile* File1 = new TEFile();
+  TEFile* File = TEFile::TmpFile();
+  TEFile* File1 = TEFile::TmpFile();
 
   char  Request[512], *Buffer;
-  olxch TmpFN[MAX_PATH];
-  GetTempPath(MAX_PATH, TmpFN);
-  olxstr Tmp,
-         FileName = TEFile::UnixPath( Source ),
-         fn_mask("http");
+  olxstr FileName = TEFile::UnixPath( Source );
 
-  Tmp = TmpFN;
-  GetTempFileName(Tmp.u_str(), fn_mask.u_str(), 0, TmpFN);
-  File.Open(TmpFN, "w+b");
+  const int BufferSize = 1024*64;
 
-  GetTempFileName(Tmp.u_str(), fn_mask.u_str(), 0, TmpFN);
-  File1->Open(TmpFN, "w+b");
-
-  int i, parts,
-    BufferSize = 1024*64,
-    TotalRead = 0,
+  int TotalRead = 0,
     ThisRead = 1,
     FileLength = -1;
   Buffer = new char[BufferSize];
@@ -112,7 +102,7 @@ IInputStream* TWinHttpFileSystem::_DoOpenFile(const olxstr& Source)  {
 
   bool FileAttached = false;
 
-  Tmp = Url.GetFullHost();
+  olxstr Tmp = Url.GetFullHost();
   Tmp << '/' << FileName;
 
   Tmp.Replace(' ', "%20");
@@ -126,7 +116,7 @@ IInputStream* TWinHttpFileSystem::_DoOpenFile(const olxstr& Source)  {
     if( ThisRead == 0 )  break;
     if( ThisRead == SOCKET_ERROR )  break;
     else  {
-      File.Write(Buffer, ThisRead);
+      File->Write(Buffer, ThisRead);
       if( TotalRead == 0 )  {
         Tmp.SetLength(0);
         int off = olxstr::o_strposi(Buffer, ThisRead, EndTagId, olxstr::o_strlen(EndTagId));
@@ -134,7 +124,7 @@ IInputStream* TWinHttpFileSystem::_DoOpenFile(const olxstr& Source)  {
         off = olxstr::o_strposi(Buffer, ThisRead, LengthId, olxstr::o_strlen(LengthId));
         if( off != -1 )  {
           off += strlen(LengthId)+1;
-          while( (off < ThisRead) && Buffer[off] == ' ' ) {  off++; }  // skipp spaces
+          while( (off < ThisRead) && Buffer[off] == ' ' ) {  off++; }  // skip spaces
           while( (off < ThisRead) && Buffer[off] >= '0' && Buffer[off] <= '9')  {
             Tmp << Buffer[off];
             off++;
@@ -156,42 +146,39 @@ IInputStream* TWinHttpFileSystem::_DoOpenFile(const olxstr& Source)  {
     }
   }
   if( (FileLength != -1) && (FileLength <= TotalRead) && FileAttached )  {
-    File.Flush();
-    File.Seek(TotalRead-FileLength, SEEK_SET);
-    parts = FileLength/BufferSize;
-    for( i=0; i < parts; i++ )  {
-      File.Read(Buffer, BufferSize);
+    File->Flush();
+    File->Seek(TotalRead-FileLength, SEEK_SET);
+    int parts = FileLength/BufferSize;
+    for( int i=0; i < parts; i++ )  {
+      File->Read(Buffer, BufferSize);
       File1->Write(Buffer, BufferSize);
     }
     parts = FileLength%BufferSize;
     if( parts )  {
-      File.Read(Buffer, parts);
+      File->Read(Buffer, parts);
       File1->Write(Buffer, parts);
     }
-    TmpFiles.Add( File1->GetName() );
-    File.Delete();
     File1->Seek(0, SEEK_SET);
+    TmpFiles.Add( File1 );
+    delete File;
     Progress.SetPos(FileLength);
     OnProgress->Exit(this, &Progress);
     delete [] Buffer;
-    return File1;
   }
   else  {
     Progress.SetPos(0);
     OnProgress->Exit(this, &Progress);
-    File1->Delete();
-    File.Delete();
     delete [] Buffer;
     delete File1;
+    delete File;
     return NULL;
   }
 }
 //..............................................................................
-bool TWinHttpFileSystem::_DoesExist(const olxstr& f)  {  
+bool THttpFileSystem::_DoesExist(const olxstr& f)  {  
   if( Index != NULL )
     return Index->GetRoot().FindByFullName(f);
   return false;  
 }
 //..............................................................................
-#endif  // __WIN32__
 
