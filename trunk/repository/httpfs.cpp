@@ -54,7 +54,11 @@ void THttpFileSystem::GetAddress(struct sockaddr* Result)  {
 void THttpFileSystem::Disconnect()  {
   if( Connected )  {
     Connected = false;
+#ifdef __WIN32__
     closesocket(Socket);
+#else
+  close(Socket);
+#endif
   }
 }
 //..............................................................................
@@ -70,10 +74,10 @@ bool THttpFileSystem::Connect()  {
   if(Status >= 0)
     Connected = true;
   else
-    throw TFunctionFailedException(__OlxSourceInfo, olxstr("connection failed: ") << WSAGetLastError());
+    throw TFunctionFailedException(__OlxSourceInfo, "connection failed");
   int timeout = 5000; // ms ?
   if( setsockopt(Socket, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeout, sizeof(int)) != 0 )
-    throw TFunctionFailedException(__OlxSourceInfo, olxstr("Failed to setup timeout: ") << WSAGetLastError());
+    throw TFunctionFailedException(__OlxSourceInfo, "Failed to setup timeout");
   return Connected;
 }
 //..............................................................................
@@ -114,7 +118,7 @@ IInputStream* THttpFileSystem::_DoOpenFile(const olxstr& Source)  {
   while( ThisRead )  {
     ThisRead = recv(Socket, Buffer, BufferSize, 0);
     if( ThisRead == 0 )  break;
-    if( ThisRead == SOCKET_ERROR )  break;
+    if( ThisRead == -1 )  break;
     else  {
       File->Write(Buffer, ThisRead);
       if( TotalRead == 0 )  {

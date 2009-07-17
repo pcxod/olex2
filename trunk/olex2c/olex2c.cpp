@@ -37,7 +37,7 @@ using namespace std;
 #include "seval.h"
 #include "ecast.h"
 #include "utf8file.h"
-#include "winhttpfs.h"
+#include "httpfs.h"
 #include "settingsfile.h"
 #include "py_core.h"
 #include "olxth.h"
