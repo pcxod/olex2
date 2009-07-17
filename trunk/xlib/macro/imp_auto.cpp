@@ -12,6 +12,14 @@
 #include "maputil.h"
 #include "estopwatch.h"
 
+struct _auto_BI {  
+  int type, max_bonds;  
+};
+static _auto_BI _autoMaxBond[] = { 
+  {iOxygenIndex, 2},
+  {iFluorineIndex, 1},
+};
+
 typedef SortedPtrList<TBasicAtomInfo, TPointerPtrComparator> SortedBAIList;
 // helper function
 int imp_auto_AtomCount(const TAsymmUnit& au)  {
@@ -483,96 +491,130 @@ void XLibMacros::funVSS(const TStrObjList &Cmds, TMacroError &Error)  {
   int ValidatedAtomCount = 0, AtomCount=0;
   bool trim = Cmds[0].ToBool();
   bool use_formula = Cmds[0].ToBool();
-  if( use_formula )  {
-    if( xapp.CheckFileType<TIns>() )  {
-      TIns& ins = xapp.XFile().GetLastLoader<TIns>();
-      TTypeList< AnAssociation2<int,TBasicAtomInfo*> > sl;
-      TStrList sfac(ins.GetSfac(), ' ');
-      TStrList unit(ins.GetUnit(), ' ');
-      int ac = 0;
-      for( int i=0; i < sfac.Count(); i++ )  {
-        int cnt = unit[i].ToInt();
-        TBasicAtomInfo* bai = au.GetAtomsInfo()->FindAtomInfoBySymbol(sfac[i]);
-        if( *bai == iHydrogenIndex )  continue;
-        sl.AddNew( cnt, bai );
-        ac += cnt;
-      }
-      sl.QuickSorter.Sort<Main_SfacComparator>(sl);  // sorts ascending
-      double auv = latt.GetUnitCell().CalcVolume()/latt.GetUnitCell().MatrixCount();
-      double ratio = auv/(16*ac);
-      for( int i=0; i < sl.Count(); i++ )
-        sl[i].A() = Round(ratio*sl[i].GetA());
+  if( use_formula && xapp.CheckFileType<TIns>() )  {
+    TIns& ins = xapp.XFile().GetLastLoader<TIns>();
+    TTypeList< AnAssociation2<int,TBasicAtomInfo*> > sl;
+    TStrList sfac(ins.GetSfac(), ' ');
+    TStrList unit(ins.GetUnit(), ' ');
+    int ac = 0;
+    for( int i=0; i < sfac.Count(); i++ )  {
+      int cnt = unit[i].ToInt();
+      TBasicAtomInfo* bai = au.GetAtomsInfo()->FindAtomInfoBySymbol(sfac[i]);
+      if( *bai == iHydrogenIndex )  continue;
+      sl.AddNew( cnt, bai );
+      ac += cnt;
+    }
+    sl.QuickSorter.Sort<Main_SfacComparator>(sl);  // sorts ascending
+    double auv = latt.GetUnitCell().CalcVolume()/latt.GetUnitCell().MatrixCount();
+    double ratio = auv/(16*ac);
+    for( int i=0; i < sl.Count(); i++ )
+      sl[i].A() = Round(ratio*sl[i].GetA());
 
-      TPSTypeList<double, TCAtom*> SortedQPeaks;
-      for( int i=0; i < au.AtomCount(); i++ )  {
-        if( au.GetAtom(i).IsDeleted() )  continue;
-        if( au.GetAtom(i).GetAtomInfo() == iQPeakIndex )
-          SortedQPeaks.Add( au.GetAtom(i).GetQPeak(), &au.GetAtom(i));
-        else  {
-          for( int j=0; j < sl.Count(); j++ )  {
-            if( *sl[j].GetB() == au.GetAtom(i).GetAtomInfo() )  {
-              sl[j].A()--;
-              break;
-            }
-          }
-        }
-      }
-      for( int i=0; i < sl.Count(); i++ )  {
-        while( sl[i].GetA() > 0 )  {
-          if( SortedQPeaks.IsEmpty() )  break;
-          sl[i].A() --;
-          SortedQPeaks.Last().Object->Label() = (olxstr(sl[i].GetB()->GetSymbol()) << i);
-          SortedQPeaks.Last().Object->SetAtomInfo( *sl[i].B() );
-          SortedQPeaks.Last().Object->SetQPeak(0);
-          SortedQPeaks.Remove( SortedQPeaks.Count()-1);
-        }
-        if( SortedQPeaks.IsEmpty() ) break;
-      }
-      // get rid of the rest of Q-peaks and "validate" geometry of atoms
-      for( int i=0; i < au.AtomCount(); i++ )  {
-        if( au.GetAtom(i).GetAtomInfo() == iQPeakIndex ) 
-          au.GetAtom(i).SetDeleted(true);
-      }
-      TArrayList< AnAssociation2<TCAtom const*, vec3d> > res;
-      for( int i=0; i < au.AtomCount(); i++ )  {
-        if( au.GetAtom(i).IsDeleted() )  continue;
-        uc.FindInRangeAC( au.GetAtom(i).ccrd(), au.GetAtom(i).GetAtomInfo().GetRad1()+1.3, res);
-        for( int j=0; j < res.Count(); j++ )  {
-          if( res[j].GetA()->GetId() == au.GetAtom(i).GetId() )  {
-            res.Delete(j);
+    TPSTypeList<double, TCAtom*> SortedQPeaks;
+    for( int i=0; i < au.AtomCount(); i++ )  {
+      if( au.GetAtom(i).IsDeleted() )  continue;
+      if( au.GetAtom(i).GetAtomInfo() == iQPeakIndex )
+        SortedQPeaks.Add( au.GetAtom(i).GetQPeak(), &au.GetAtom(i));
+      else  {
+        for( int j=0; j < sl.Count(); j++ )  {
+          if( *sl[j].GetB() == au.GetAtom(i).GetAtomInfo() )  {
+            sl[j].A()--;
             break;
           }
         }
-        AtomCount++;
-        double wght = 1;
-        if( res.Count() > 1 )  {
-          double awght = 1./(res.Count()*(res.Count()-1));
-          for( int j=0; j < res.Count(); j++ )  {
-            if( res[j].GetA()->GetId() == au.GetAtom(i).GetId() )
-              continue;
-            if( res[j].GetB().QLength() < 1 )  
-              wght -= 0.5/res.Count();
-            for( int k=j+1; k < res.Count(); k++ )  {
-              double cang = res[j].GetB().CAngle(res[k].GetB());
-              if( cang > 0.588 )  { // 56 degrees
-                wght -= awght;
-              }
+      }
+    }
+    for( int i=0; i < sl.Count(); i++ )  {
+      while( sl[i].GetA() > 0 )  {
+        if( SortedQPeaks.IsEmpty() )  break;
+        sl[i].A() --;
+        SortedQPeaks.Last().Object->Label() = (olxstr(sl[i].GetB()->GetSymbol()) << i);
+        SortedQPeaks.Last().Object->SetAtomInfo( *sl[i].B() );
+        SortedQPeaks.Last().Object->SetQPeak(0);
+        SortedQPeaks.Remove( SortedQPeaks.Count()-1);
+      }
+      if( SortedQPeaks.IsEmpty() ) break;
+    }
+    // get rid of the rest of Q-peaks and "validate" geometry of atoms
+    for( int i=0; i < au.AtomCount(); i++ )  {
+      if( au.GetAtom(i).GetAtomInfo() == iQPeakIndex ) 
+        au.GetAtom(i).SetDeleted(true);
+    }
+    TArrayList< AnAssociation2<TCAtom const*, vec3d> > res;
+    for( int i=0; i < au.AtomCount(); i++ )  {
+      if( au.GetAtom(i).IsDeleted() )  continue;
+      uc.FindInRangeAC( au.GetAtom(i).ccrd(), au.GetAtom(i).GetAtomInfo().GetRad1()+1.3, res);
+      for( int j=0; j < res.Count(); j++ )  {
+        if( res[j].GetA()->GetId() == au.GetAtom(i).GetId() )  {
+          res.Delete(j);
+          break;
+        }
+      }
+      AtomCount++;
+      double wght = 1;
+      if( res.Count() > 1 )  {
+        double awght = 1./(res.Count()*(res.Count()-1));
+        for( int j=0; j < res.Count(); j++ )  {
+          if( res[j].GetA()->GetId() == au.GetAtom(i).GetId() )
+            continue;
+          if( res[j].GetB().QLength() < 1 )  
+            wght -= 0.5/res.Count();
+          for( int k=j+1; k < res.Count(); k++ )  {
+            double cang = res[j].GetB().CAngle(res[k].GetB());
+            if( cang > 0.588 )  { // 56 degrees
+              wght -= awght;
             }
           }
         }
-        else if( res.Count() == 1 ) {  // just one bond
-          if( res[0].GetB().QLength() < 1 )
-            wght = 0;
-        }
-        else  // no bonds, cannot say anything
-          wght = 0;
-
-        if( wght >= 0.95 )
-          ValidatedAtomCount++;
-        res.Clear();
       }
+      else if( res.Count() == 1 ) {  // just one bond
+        if( res[0].GetB().QLength() < 1 )
+          wght = 0;
+      }
+      else  // no bonds, cannot say anything
+        wght = 0;
+
+      if( wght >= 0.95 )
+        ValidatedAtomCount++;
+      res.Clear();
     }
     xapp.XFile().EndUpdate();
+    // validate max bonds
+    TUnitCell& uc = xapp.XFile().GetUnitCell();
+    TLattice& latt = xapp.XFile().GetLattice();
+    TTypeList<TAtomEnvi> bc_to_check;
+    const int maxb_cnt = sizeof(_autoMaxBond)/sizeof(_autoMaxBond[0]);
+    for( int i=0; i < latt.AtomCount(); i++ )  {
+      TSAtom& sa = latt.GetAtom(i);
+      for( int j=0; j < maxb_cnt; j++ )  {
+        if( sa.GetAtomInfo() == _autoMaxBond[j].type )  {
+          uc.GetAtomEnviList(sa, bc_to_check.AddNew()); 
+          if( bc_to_check.Last().Count() <= _autoMaxBond[j].max_bonds )  {
+            bc_to_check.NullItem(bc_to_check.Count()-1);
+          }
+        }
+      }
+    }
+    bc_to_check.Pack();
+    bool changes = true;
+    while( changes )  {
+      changes = false;
+      for( int i=0; i < bc_to_check.Count(); i++ )  {
+        int sati = -1;
+        for( int j=0; j < sl.Count(); j++ )  {
+          if( bc_to_check[i].GetBase().GetAtomInfo() == sl[j].GetB()->GetIndex() )  {
+            sati = j;
+            break;
+          }
+        }
+        if( sati >= 0 && (sati+1) < sl.Count() )  {
+          bc_to_check[i].GetBase().CAtom().SetAtomInfo(*sl[sati+1].GetB());
+          changes = true;
+        }
+      }
+    }
+    if( !bc_to_check.IsEmpty() )
+      xapp.XFile().EndUpdate();
   }
   else if( trim && false )  {
     double auv = latt.GetUnitCell().CalcVolume()/latt.GetUnitCell().MatrixCount();
