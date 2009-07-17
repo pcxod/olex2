@@ -42,6 +42,9 @@ protected:
         continue;
       if( app.IsLabelMarked(app.GetAtom(nd.GetTag())) )
         continue;
+      // 2009.07.17 --
+      if( xa.Atom().GetAtomInfo() != nd.GetAtomInfo() )
+        continue;
       outgoing.Add( app.GetAtom(nd.GetTag()) );
     }
     if( outgoing.Count() == 1 )  {

@@ -522,7 +522,8 @@ void TUnitCell::_FindInRange(const vec3d& to, double R,
       const int iz = Round(V1[2]);  V1[2] -= iz;
       au.CellToCartesian(V1);
       const double D = V1.QLength();
-      if( D < R && D > 0.0001 )  {
+      //if( D < R && D != 0 )  {
+      if( D < R )  {
         smatd& m = res.AddNew(&a, matr, V1).B();
         m.t[0] -= ix;
         m.t[1] -= iy;
