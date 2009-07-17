@@ -52,9 +52,10 @@ class TEFile: public IEObject, public IDataInputStream,
   bool Temporary; //tmpnam or tmpfile to use
   void CheckHandle() const;
 protected:
-  TEFile(const olxstr& name, FILE* handle)  {  // a temporray file
+  TEFile(const olxstr& name, FILE* handle)  {  // a temporary file
     FName = name;
     FHandle = handle;
+    Temporary = true;
   }
 public:
   // class for filtering files by mask. other platforms then win
@@ -233,7 +234,7 @@ public:
   */
   static olxstr Which(const olxstr& filename);
   // returns a new object created with new using tmpnam
-  static TEFile* TmpFile(const olxstr& templ);
+  static TEFile* TmpFile(const olxstr& templ=EmptyString);
   // function is based on utime
   static bool SetFileTimes(const olxstr& fileName, uint64_t AccTime, uint64_t ModTime);
   // function is based on stat;

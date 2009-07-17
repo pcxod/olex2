@@ -177,14 +177,17 @@ bool TEFile::TFileNameMask::DoesMatch(const olxstr& _str) const {
 //----------------------------------------------------------------------------//
 TEFile::TEFile()  {
   FHandle = NULL;
+  Temporary = false;
 }
 //..............................................................................
 TEFile::TEFile(const olxstr &F, const olxstr &Attribs)  {
+  Temporary = false;
   FHandle = NULL;
   Open(F, Attribs);
 }
 //..............................................................................
 TEFile::TEFile(const olxstr& F, short Attribs)  {
+  Temporary = false;
   throw TNotImplementedException(__OlxSourceInfo);
 /*
   olxstr attr;
@@ -221,6 +224,10 @@ bool TEFile::Close()  {
     if( fclose(FHandle) != 0 )
       throw TFileExceptionBase(__OlxSourceInfo, FName, "fclose failed");
     FHandle = NULL;
+    if( Temporary )  {
+      if( !DelFile(FName) )
+        throw TFileExceptionBase(__OlxSourceInfo, FName, "could not remove temporary file");
+    }
     return true;
   }
   return false;
@@ -824,7 +831,17 @@ void TEFile::CheckFileExists(const olxstr& location, const olxstr& fileName)  {
 //..............................................................................
 TEFile* TEFile::TmpFile(const olxstr& templ)  {
   if( templ.IsEmpty() )  {
+#ifdef __WIN32__
+  olxch TmpFN[MAX_PATH];
+  GetTempPath(MAX_PATH, TmpFN);
+  olxstr Tmp(TmpFN), fn_mask("olex2");
+  GetTempFileName(Tmp.u_str(), fn_mask.u_str(), 0, TmpFN);
+  TEFile* rv = new TEFile(TmpFN, "w+b");
+  rv->Temporary = true;
+  return rv;
+#else
     return new TEFile(EmptyString, tmpfile());
+#endif
   }
   else  
     throw TNotImplementedException(__OlxSourceInfo);

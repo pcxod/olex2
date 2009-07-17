@@ -537,12 +537,21 @@ void XLibMacros::funVSS(const TStrObjList &Cmds, TMacroError &Error)  {
       for( int i=0; i < au.AtomCount(); i++ )  {
         if( au.GetAtom(i).IsDeleted() )  continue;
         uc.FindInRangeAC( au.GetAtom(i).ccrd(), au.GetAtom(i).GetAtomInfo().GetRad1()+1.3, res);
+        for( int j=0; j < res.Count(); j++ )  {
+          if( res[j].GetA()->GetId() == au.GetAtom(i).GetId() )  {
+            res.Delete(j);
+            break;
+          }
+        }
         AtomCount++;
         double wght = 1;
         if( res.Count() > 1 )  {
           double awght = 1./(res.Count()*(res.Count()-1));
           for( int j=0; j < res.Count(); j++ )  {
-            if( res[j].GetB().QLength() < 1 )  wght -= 0.5/res.Count();
+            if( res[j].GetA()->GetId() == au.GetAtom(i).GetId() )
+              continue;
+            if( res[j].GetB().QLength() < 1 )  
+              wght -= 0.5/res.Count();
             for( int k=j+1; k < res.Count(); k++ )  {
               double cang = res[j].GetB().CAngle(res[k].GetB());
               if( cang > 0.588 )  { // 56 degrees
