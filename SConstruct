@@ -50,7 +50,7 @@ olex2c = Split("""./olex2c/olex2c.cpp""")
 np_repository = Split("""./repository/filesystem.cpp   ./repository/shellutil.cpp 
                          ./repository/httpex.cpp       ./repository/url.cpp 
                          ./repository/wxhttpfs.cpp     ./repository/wxzipfs.cpp 
-                         ./repository/fsext.cpp         
+                         ./repository/fsext.cpp        ./repository/httpfs.cpp 
                          ./repository/integration.cpp  ./repository/IsoSurface.cpp 
                          ./repository/eprocess.cpp     ./repository/olxvar.cpp 
                          """)
