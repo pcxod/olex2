@@ -78,7 +78,7 @@
 #include "network.h"
 
 #include "filesystem.h"
-#include "wxhttpfs.h"
+#include "httpfs.h"
 
 #include "ecast.h"
 #include "sls.h"
@@ -5907,7 +5907,7 @@ void TMainForm::macUpdateFile(TStrObjList &Cmds, const TParamList &Options, TMac
   if( !Proxy.IsEmpty() ) 
     url.SetProxy( Proxy );
 
-  TwxHttpFileSystem httpFS( url );
+  THttpFileSystem httpFS( url );
   TOSFileSystem osFS( TBasicApp::GetBaseDir() );
   TFSIndex fsIndex( httpFS );
 

@@ -12,7 +12,6 @@
 #include "settingsfile.h"
 #include "datafile.h"
 #include "dataitem.h"
-#include "wxhttpfs.h"
 #include "wxftpfs.h"
 #include "updateapi.h"
 #include "patchapi.h"
@@ -158,8 +157,10 @@ void DoRun()  {
     TStrList repos;
     updater::UpdateAPI api;
     api.GetAvailableRepositories(repos);
-    if( repos.IsEmpty() )
+    if( repos.IsEmpty() )  {
       TBasicApp::GetLog() << "Could not locate any installation repositories, aborting...\n";
+			return;
+		}
     TBasicApp::GetLog() << "Installation folder: "  << TBasicApp::GetBaseDir() << '\n';
     olxstr repo = repos[0];
     if( repos.Count() >= 1 )  {

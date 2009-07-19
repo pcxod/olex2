@@ -18,7 +18,6 @@
 //  #pragma link "../..lib/psdk/mswsock.lib"
 
 class THttpFileSystem: public AFileSystem, public IEObject  {
-  TPtrList<TEFile> TmpFiles;
   int Socket;
   bool Connected, Successful;
   TUrl Url;
