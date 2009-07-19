@@ -6,11 +6,7 @@
 #include "efile.h"
 #include "settingsfile.h"
 #include "url.h"
-#if defined(__WIN32__) && !defined(__WXWIDGETS__)
-  #include "winhttpfs.h"
-#else
-  #include "wxhttpfs.h"
-#endif
+#include "httpfs.h"
 #include "integration.h"
 #include "olxvar.h"
 
@@ -264,11 +260,7 @@ PyObject* pyUpdateRepository(PyObject* self, PyObject* args)  {
   TUrl url(repos);
   if( !proxy.IsEmpty() )  
     url.SetProxy( TUrl(proxy) );
-#if defined(__WIN32__) && !defined(__WXWIDGETS__)
-  TWinHttpFileSystem httpFS( url );
-#else
-  TwxHttpFileSystem httpFS( url );
-#endif
+  THttpFileSystem httpFS( url );
   TOSFileSystem osFS(dest);
   TFSIndex fsIndex( httpFS );
   TStrList properties;

@@ -13,16 +13,15 @@
 #include "patchapi.h"
 
 //#define __WXWIDGETS__
+#include "httpfs.h"
+typedef THttpFileSystem HttpFS;
 
 #if defined(__WIN32__) && !defined(__WXWIDGETS__)
-  #include "winhttpfs.h"
   #include "winzipfs.h"
-  typedef TWinHttpFileSystem HttpFS;
   typedef TWinZipFileSystem ZipFS;
 #else
   #include "wxhttpfs.h"
   #include "wxzipfs.h"
-  typedef TwxHttpFileSystem HttpFS;
   typedef TwxZipFileSystem ZipFS;
 #endif
 #ifdef __WXWIDGETS__

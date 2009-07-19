@@ -2,10 +2,13 @@
   #pragma hdrstop
 #endif
 
+#include <errno.h>
+
 #include "httpfs.h"
 
 #include "efile.h"
 #include "bapp.h"
+#include "log.h"
 
 THttpFileSystem::THttpFileSystem(const TUrl& url): Url(url){
   Access = afs_ReadOnlyAccess;
@@ -27,8 +30,6 @@ THttpFileSystem::~THttpFileSystem()  {
   if( Successful )
     WSACleanup();
 #endif
-  for( int i=0; i < TmpFiles.Count(); i++ )
-    delete TmpFiles[i];
 }
 //..............................................................................
 void THttpFileSystem::GetAddress(struct sockaddr* Result)  {
@@ -75,9 +76,15 @@ bool THttpFileSystem::Connect()  {
     Connected = true;
   else
     throw TFunctionFailedException(__OlxSourceInfo, "connection failed");
-  int timeout = 5000; // ms ?
-  if( setsockopt(Socket, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeout, sizeof(int)) != 0 )
-    throw TFunctionFailedException(__OlxSourceInfo, "Failed to setup timeout");
+#ifdef __WIN32__
+  int timeout = 10000; // ms ?
+#else
+  struct timeval timeout;
+	memset(&timeout, 0, sizeof(timeout));
+	timeout.tv_sec = 10;
+#endif
+  if( setsockopt(Socket, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeout, sizeof(timeout)) != 0 )
+    throw TFunctionFailedException(__OlxSourceInfo, olxstr("Failed to setup timeout: ") << errno);
   return Connected;
 }
 //..............................................................................
@@ -101,7 +108,7 @@ IInputStream* THttpFileSystem::_DoOpenFile(const olxstr& Source)  {
   int TotalRead = 0,
     ThisRead = 1,
     FileLength = -1;
-  Buffer = new char[BufferSize];
+  Buffer = new char[BufferSize+1];
   static const char LengthId[] = "Content-Length:", EndTagId[]="ETag:";
 
   bool FileAttached = false;
@@ -163,11 +170,11 @@ IInputStream* THttpFileSystem::_DoOpenFile(const olxstr& Source)  {
       File1->Write(Buffer, parts);
     }
     File1->Seek(0, SEEK_SET);
-    TmpFiles.Add( File1 );
     delete File;
     Progress.SetPos(FileLength);
     OnProgress->Exit(this, &Progress);
     delete [] Buffer;
+		return File1;
   }
   else  {
     Progress.SetPos(0);

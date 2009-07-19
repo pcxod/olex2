@@ -67,7 +67,10 @@ olxstr TBasicApp::GuessBaseDir(const olxstr& _path, const olxstr& var_name)  {
       bd = var_val;
   }
   else  {
-    bd = TEFile::ExtractFilePath( path );
+	  if( !TEFile::IsDir(path) )
+      bd = TEFile::ExtractFilePath( path );
+		else
+		  bd = path;
     if( bd.EndsWith('.') || bd.EndsWith("..") )
       bd = TEFile::AbsolutePathTo(TEFile::CurrentDir(), bd);
   }
