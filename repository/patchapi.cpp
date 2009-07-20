@@ -92,8 +92,8 @@ short PatchAPI::DoPatch(AActionHandler* OnFileCopy, AActionHandler* OnOverallCop
     
     if( res == papi_OK )  {
       try  {
-        TEFile::DeleteDir(patch_dir);
         TEFile::DelFile(GetUpdateLocationFileName());
+        TEFile::DeleteDir(patch_dir);
       }
       catch(...)  {  res = papi_DeleteError;  }
     }

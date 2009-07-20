@@ -162,6 +162,8 @@ public:
   inline const olxstr& GetName()  const  {  return FName; }
   // closes the file handle and deletes the file
   bool Delete();
+  // temporary file will be deleted on close, if fails - exception will be thrown
+  DefPropBIsSet(Temporary)
   // tests one or several of the accessXXXX flags
   static bool Access(const olxstr& F, const short Flags);
   // uses access, so is case sensitive, works for both dirs and files
@@ -233,7 +235,8 @@ public:
     if the filename is absolute returns it straight away
   */
   static olxstr Which(const olxstr& filename);
-  // returns a new object created with new using tmpnam
+  /* returns a new object created with new using tmpnam (on non-windows systems), or
+  properly named file object which is deleted upon the object deletion */
   static TEFile* TmpFile(const olxstr& templ=EmptyString);
   // function is based on utime
   static bool SetFileTimes(const olxstr& fileName, uint64_t AccTime, uint64_t ModTime);

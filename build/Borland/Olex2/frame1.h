@@ -30,7 +30,6 @@ __published:	// IDE-managed Components
   TCheckBox *cbProxy;
   TCheckBox *cbCreateDesktopShortcut;
   TCheckBox *cbCreateShortcut;
-  TBitBtn *bbUninstall;
   TOpenDialog *dlgOpen;
   TImage *Image1;
   TComboBox *cbRepository;

@@ -25,7 +25,7 @@
     <PATHRC value=".;"/>
     <PATHASM value=".;"/>
     <LINKER value="TLib"/>
-    <USERDEFINES value="_DEBUG"/>
+    <USERDEFINES value=""/>
     <SYSDEFINES value="NO_STRICT"/>
     <MAINSOURCE value="sdl.bpf"/>
     <INCLUDEPATH value="..\..\..\sdl\smart;&quot;C:\Program Files\Borland\CBuilder6\Projects&quot;;..\..\..\sdl;$(BCB)\include;$(BCB)\include\vcl"/>

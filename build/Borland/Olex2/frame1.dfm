@@ -2899,16 +2899,6 @@ object frMain: TfrMain
     State = cbChecked
     TabOrder = 8
   end
-  object bbUninstall: TBitBtn
-    Left = 215
-    Top = 249
-    Width = 72
-    Height = 22
-    Caption = 'Uninstall'
-    TabOrder = 9
-    Visible = False
-    NumGlyphs = 2
-  end
   object bbInstall: TBitBtn
     Left = 215
     Top = 273
@@ -2925,7 +2915,7 @@ object frMain: TfrMain
     Width = 251
     Height = 21
     ItemHeight = 13
-    TabOrder = 10
+    TabOrder = 9
     Text = 'http://dimas.dur.ac.uk/olex-distro/'
     Items.Strings = (
       'http://dimas.dur.ac.uk/olex-distro/'

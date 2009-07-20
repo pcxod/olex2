@@ -545,10 +545,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\repository\wxhttpfs.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\repository\wxzipfs.cpp"
 				>
 			</File>

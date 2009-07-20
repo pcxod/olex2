@@ -29,15 +29,13 @@
 bool TShellUtil::CreateShortcut(const olxstr& ShortcutPath,
        const olxstr& ObjectPath,const olxstr& description, bool AddRunAs)  {
 #ifdef __WIN32__
-  HRESULT hres;
   IShellLink* psl;
-
+  CoInitialize(NULL);
   // Get a pointer to the IShellLink interface.
-  hres = CoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER,
+  HRESULT hres = CoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER,
                           IID_IShellLink, (LPVOID*)&psl);
   if( SUCCEEDED(hres) )  {
     IPersistFile* ppf;
-
     // Set the path to the shortcut target and add the description.
     psl->SetPath( ObjectPath.u_str() );
     psl->SetDescription( description.u_str() );
@@ -75,6 +73,7 @@ bool TShellUtil::CreateShortcut(const olxstr& ShortcutPath,
     }
     psl->Release();
   }
+  CoUninitialize();
   return (hres != NULL);
 #endif
   throw TNotImplementedException(__OlxSourceInfo);

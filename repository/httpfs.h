@@ -35,7 +35,7 @@ protected:
 public:
   THttpFileSystem(const TUrl& url);
   virtual ~THttpFileSystem();
-
+  // returns temporary file, which gets deleted when object is deleted, use SetTemporary to change it
   TEFile* OpenFileAsFile(const olxstr& Source)  {
     return (TEFile*)OpenFile(Source);
   }
