@@ -418,7 +418,7 @@ bool TEFile::IsDir(const olxstr& F)  {
 bool TEFile::DeleteDir(const olxstr& F, bool ContentOnly)  {
   olxstr fn = OLX_OS_PATH(F);
   if( !Exists(fn) || !TEFile::IsDir(fn) )  
-    return false;
+    throw TFunctionFailedException(__OlxSourceInfo, "The directory does not exist");
   try  {
     TFileTree::Delete(fn, ContentOnly);
     return true;
@@ -429,10 +429,10 @@ bool TEFile::DeleteDir(const olxstr& F, bool ContentOnly)  {
 bool TEFile::IsEmptyDir(const olxstr& F)  {
   olxstr fn = OLX_OS_PATH(F);
   if( !Exists(fn) || !TEFile::IsDir(fn) )  
-    return false;
+    throw TFunctionFailedException(__OlxSourceInfo, "The directory does not exist");
   TStrList out;
   if( !TEFile::ListDir(fn, out, "*", sefAll^sefRelDir) )
-    return false;
+    throw TFunctionFailedException(__OlxSourceInfo, "Failed to list the directory");
   return out.IsEmpty();
 }
 //..............................................................................
@@ -635,7 +635,8 @@ bool TEFile::ListCurrentDir(TStrList &Out, const olxstr &Mask, const uint16_t sF
 //..............................................................................
 bool TEFile::ListDirEx(const olxstr& dir, TFileList &Out, const olxstr &Mask, const uint16_t sF)  {
   olxstr cd( TEFile::CurrentDir() );
-  TEFile::ChangeDir(dir);
+  if( !TEFile::ChangeDir(dir) )
+    return false;
   bool res = ListCurrentDirEx(Out, Mask, sF);
   TEFile::ChangeDir(cd);
   return res;
@@ -643,7 +644,8 @@ bool TEFile::ListDirEx(const olxstr& dir, TFileList &Out, const olxstr &Mask, co
 //..............................................................................
 bool TEFile::ListDir(const olxstr& dir, TStrList &Out, const olxstr &Mask, const uint16_t sF)  {
   olxstr cd( TEFile::CurrentDir() );
-  TEFile::ChangeDir(dir);
+  if( !TEFile::ChangeDir(dir) )
+    return false;
   bool res = ListCurrentDir(Out, Mask, sF);
   TEFile::ChangeDir(cd);
   return res;

@@ -6,6 +6,7 @@
 USEFORM("..\..\..\installer\licence.cpp", dlgLicence);
 USEFORM("..\..\..\installer\main.cpp", fMain);
 USEFORM("frame1.cpp", frMain); /* TFrame: File Type */
+USEFORM("..\..\..\installer\uninstall.cpp", dlgUninstall);
 //---------------------------------------------------------------------------
 WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 {

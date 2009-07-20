@@ -15,6 +15,12 @@
 #include "bapp.h"
 #include <Dialogs.hpp>
 #include "frame1.h"
+
+enum {
+  actionInstall,
+  actionRun,
+  actionReinstall
+};
 //---------------------------------------------------------------------------
 class TfMain : public TForm
 {
@@ -32,7 +38,6 @@ __published:	// IDE-managed Components
   void __fastcall bbBrowseClick(TObject *Sender);
   void __fastcall bbDoneClick(TObject *Sender);
   void __fastcall bbInstallClick(TObject *Sender);
-  void __fastcall bbUninstallClick(TObject *Sender);
   void __fastcall cbProxyClick(TObject *Sender);
   void __fastcall FormPaint(TObject *Sender);
   void __fastcall sbPickZipClick(TObject *Sender);
@@ -43,16 +48,23 @@ private:	// User declarations
   bool Expanded;
   TBasicApp* Bapp;
   class TProgress* Progress;
-  bool OlexInstalled;
+  bool OlexInstalled, SetRunAs, RedistInstalled;
   olxstr OlexInstalledPath;
+  int action;
+  void SetAction(int a);
 protected:
   bool InitRegistry(const AnsiString& installPath);
   bool CleanRegistry();
+  bool CleanRegistryAndShortcuts(bool sc);
+  bool CleanRegistryX();
   bool CleanInstallationFolder(class TFSItem& item);
   bool CheckOlexInstalled(olxstr& installPath);
 
   //the return value is the licence acceptance ...
-  bool DoInstall(const olxstr& zipFile, const olxstr& installPath);
+  bool _DoInstall(const olxstr& zipFile, const olxstr& installPath);
+  bool DoUninstall();
+  bool DoInstall();
+  bool DoRun();
   static olxstr SettingsFile;
 
   bool LaunchFile( const olxstr& fileName, bool do_exit );

@@ -6478,9 +6478,6 @@ object fMain: TfMain
       OnMouseMove = iSplashMouseMove
       OnMouseUp = iSplashMouseUp
     end
-    inherited bbUninstall: TBitBtn
-      OnClick = bbUninstallClick
-    end
     inherited bbInstall: TBitBtn
       OnClick = bbInstallClick
     end

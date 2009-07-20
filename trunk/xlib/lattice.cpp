@@ -1785,10 +1785,11 @@ void TLattice::SetAnis( const TCAtomPList& atoms, bool anis )  {
   }
   else  {
     evecd ee(6);
-    ee[0] = ee[1] = ee[2] = 0.025;
     for( int i=0; i < atoms.Count(); i++ )  {
-      if( atoms[i]->GetEllipsoid() == NULL )
-         atoms[i]->UpdateEllp( ee );
+      if( atoms[i]->GetEllipsoid() == NULL )  {
+        ee[0] = ee[1] = ee[2] = atoms[i]->GetUiso();
+        atoms[i]->UpdateEllp( ee );
+      }
     }
   }
   OnStructureUniq->Enter(this);

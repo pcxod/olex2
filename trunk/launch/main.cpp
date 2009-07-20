@@ -62,7 +62,8 @@ __fastcall TdlgMain::TdlgMain(TComponent* Owner)
 {
   olxstr BaseDir;
   TEGC::Initialise();
-  FBApp = new TBasicApp(TBasicApp::GuessBaseDir(CmdLine, "OLEX2_DIR") );
+  //FBApp = new TBasicApp(TBasicApp::GuessBaseDir(CmdLine, "OLEX2_DIR") );
+  FBApp = new TBasicApp( TBasicApp::GuessBaseDir(CmdLine, NULL) );
   FBApp->SetSharedDir( TShellUtil::GetSpecialFolderLocation(fiAppData) + "Olex2u");
   dlgSplash = new TdlgSplash(this);
 

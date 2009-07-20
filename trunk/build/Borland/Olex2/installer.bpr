@@ -5,12 +5,13 @@
     <VERSION value="BCB.06.00"/>
     <PROJECT value="exe\installer.exe"/>
     <OBJFILES value="build\installer.obj build\licence.obj build\main.obj build\shellutil.obj 
-      build\unzip.obj build\winhttpfs.obj build\filesystem.obj build\url.obj 
-      build\frame1.obj build\winzipfs.obj build\updateapi.obj build\patchapi.obj"/>
+      build\unzip.obj build\filesystem.obj build\url.obj build\frame1.obj 
+      build\winzipfs.obj build\updateapi.obj build\patchapi.obj build\httpfs.obj 
+      build\uninstall.obj"/>
     <RESFILES value="..\..\..\installer\installer.res"/>
     <DEFFILE value=""/>
     <RESDEPEN value="$(RESFILES) ..\..\..\installer\licence.dfm ..\..\..\installer\main.dfm 
-      frame1.dfm"/>
+      frame1.dfm ..\..\..\installer\uninstall.dfm"/>
     <LIBFILES value="lib\sdl.lib"/>
     <LIBRARIES value="rtl.lib vcl.lib"/>
     <SPARELIBS value="vcl.lib rtl.lib"/>
@@ -27,7 +28,7 @@
     <DEBUGLIBPATH value="$(BCB)\lib\debug"/>
     <RELEASELIBPATH value="$(BCB)\lib\release"/>
     <LINKER value="ilink32"/>
-    <USERDEFINES value="_DEBUG"/>
+    <USERDEFINES value=""/>
     <SYSDEFINES value="NO_STRICT"/>
     <MAINSOURCE value="installer.cpp"/>
     <INCLUDEPATH value="&quot;C:\Program Files\Borland\CBuilder6\Projects&quot;;..\..\..\repository;..\..\..\installer;..\..\..\sdl;$(BCB)\include;$(BCB)\include\vcl"/>
@@ -57,7 +58,6 @@
       <FILE FILENAME="..\..\..\installer\installer.res" FORMNAME="" UNITNAME="installer.res" CONTAINERID="ResTool" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\repository\shellutil.cpp" FORMNAME="" UNITNAME="shellutil.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\repository\unzip.cpp" FORMNAME="" UNITNAME="unzip.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
-      <FILE FILENAME="..\..\..\repository\winhttpfs.cpp" FORMNAME="" UNITNAME="winhttpfs.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\repository\filesystem.cpp" FORMNAME="" UNITNAME="filesystem.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="lib\sdl.lib" FORMNAME="" UNITNAME="sdl.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\repository\url.cpp" FORMNAME="" UNITNAME="url" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
@@ -65,6 +65,8 @@
       <FILE FILENAME="..\..\..\repository\winzipfs.cpp" FORMNAME="" UNITNAME="winzipfs" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\repository\updateapi.cpp" FORMNAME="" UNITNAME="updateapi" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\repository\patchapi.cpp" FORMNAME="" UNITNAME="patchapi" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\repository\httpfs.cpp" FORMNAME="" UNITNAME="httpfs" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\installer\uninstall.cpp" FORMNAME="dlgUninstall" UNITNAME="uninstall" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
   </FILELIST>
   <BUILDTOOLS>
   </BUILDTOOLS>

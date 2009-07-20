@@ -136,7 +136,7 @@ Item1=exe
 DebugSourceDirs=$(BCB)\source\vcl
 
 [Parameters]
-RunParams=ggg
+RunParams=
 Launcher=
 UseLauncher=0
 DebugCWD=
