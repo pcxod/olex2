@@ -92,7 +92,6 @@ void DoRun();
 
 class MyApp: public wxAppConsole { 
   virtual bool OnInit() { 
-//    wxSocketBase::Initialize();
     return true; 
   } 
   virtual int OnRun() {  return 0;  } 
@@ -128,11 +127,7 @@ current folder will be updated\n";
       bapp = new TBasicApp(TBasicApp::GuessBaseDir(argv[1]) );
     }
     bapp->GetLog().AddStream( new TOutStream, true);
-#ifdef __WIN32__
-    bapp->SetSharedDir( TShellUtil::GetSpecialFolderLocation(fiAppData) << "Olex2u/");
-#else
-    bapp->SetSharedDir( TShellUtil::GetSpecialFolderLocation(fiAppData));
-#endif
+    //bapp->SetSharedDir( TShellUtil::GetSpecialFolderLocation(fiAppData) << "Olex2u/");
     DoRun();
   }
   catch(const TExceptionBase& exc)  {
