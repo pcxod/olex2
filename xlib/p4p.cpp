@@ -6,10 +6,9 @@
 #include "asymmunit.h"
 #include "symmlib.h"
 
-TP4PFile::TP4PFile() {
-}
+TP4PFile::TP4PFile() {}
 
-TP4PFile::~TP4PFile()  {  }
+TP4PFile::~TP4PFile()  {}
 
 void TP4PFile::SaveToStrings(TStrList& SL)  {
   olxstr Tmp;
@@ -28,22 +27,26 @@ void TP4PFile::SaveToStrings(TStrList& SL)  {
   SL.Add(Tmp);
 
   Tmp = "CELLSD "; Tmp << GetAsymmUnit().GetZ();
-  Tmp << ' '; Tmp << GetAsymmUnit().Axes()[0].GetE();
-  Tmp << ' '; Tmp << GetAsymmUnit().Axes()[1].GetE();
-  Tmp << ' '; Tmp << GetAsymmUnit().Axes()[2].GetE();
-  Tmp << ' '; Tmp << GetAsymmUnit().Angles()[0].GetE();
-  Tmp << ' '; Tmp << GetAsymmUnit().Angles()[1].GetE();
-  Tmp << ' '; Tmp << GetAsymmUnit().Angles()[2].GetE();
+  Tmp << ' ' << GetAsymmUnit().Axes()[0].GetE();
+  Tmp << ' ' << GetAsymmUnit().Axes()[1].GetE();
+  Tmp << ' ' << GetAsymmUnit().Axes()[2].GetE();
+  Tmp << ' ' << GetAsymmUnit().Angles()[0].GetE();
+  Tmp << ' ' << GetAsymmUnit().Angles()[1].GetE();
+  Tmp << ' ' << GetAsymmUnit().Angles()[2].GetE();
   SL.Add(Tmp);
 
-  SL.Add(olxstr("MORPH   ") << GetMorph() );
-  SL.Add(olxstr("CCOLOR  ") << GetColor() );
-  SL.Add(olxstr("CSIZE  ") << GetRM().expl.GetCrystalSize()[0] 
+  SL.Add("MORPH   ") << GetMorph();
+  SL.Add("CCOLOR  ") << GetColor();
+  SL.Add("CSIZE  ") << GetRM().expl.GetCrystalSize()[0] 
     << ' ' << GetRM().expl.GetCrystalSize()[0]
     << ' ' << GetRM().expl.GetCrystalSize()[1]
     << ' ' << GetRM().expl.GetCrystalSize()[2]
-    << ' '  << GetRM().expl.GetTemperature() );
-    SL.Add(olxstr("SOURCE  ") << GetRM().expl.GetRadiation() );
+    << ' ';
+    if( GetRM().expl.IsTemperatureSet() ) 
+      SL.Last().String << GetRM().expl.GetTemperature();
+    else
+      SL.Last().String << '0';
+    SL.Add("SOURCE  ") << GetRM().expl.GetRadiation();
   // save only if preset
   if( !SG.IsEmpty() )
     SL.Add(olxstr("SG  ") << GetSG() );
