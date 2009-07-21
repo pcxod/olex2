@@ -3,24 +3,33 @@
 #include "updateth.h"
 #include "updateapi.h"
 #include "patchapi.h"
+#include "log.h"
 
 
 UpdateThread::UpdateThread(const olxstr& patch_dir) : time_out(0), PatchDir(patch_dir), 
-    srcFS(NULL), destFS(NULL), Index(NULL), _DoUpdate(false) 
-{
-  UpdateSize = 0;
-  updater::UpdateAPI uapi;
-  srcFS = uapi.FindActiveUpdateRepositoryFS(NULL);
-  if( srcFS == NULL )  return;
-  Index = new TFSIndex(*srcFS);
-  destFS = new TOSFileSystem( TBasicApp::GetBaseDir() );
-  uapi.EvaluateProperties(properties);
+    srcFS(NULL), destFS(NULL), Index(NULL), _DoUpdate(false), UpdateSize(0)  { }
+//....................................................................................
+void UpdateThread::DoInit()  {
+  if( !TBasicApp::HasInstance() || Terminate ) 
+    return;
+  try  {
+    updater::UpdateAPI uapi;
+    srcFS = uapi.FindActiveUpdateRepositoryFS(NULL);
+    if( srcFS == NULL )  return;
+    Index = new TFSIndex(*srcFS);
+    destFS = new TOSFileSystem( TBasicApp::GetBaseDir() );
+    uapi.EvaluateProperties(properties);
+  }
+  catch(const TExceptionBase& exc)  {
+    if( TBasicApp::HasInstance() )
+      TBasicApp::GetLog().Info( exc.GetException()->GetFullMessage() );
+  }
 }
 //....................................................................................
 int UpdateThread::Run()  {
   // wait for ~3 minutes
   //while( time_out < 50*20*3*60 )  {
-  while( time_out < 50*20*10 )  {
+  while( time_out < 50*20*1 )  {
     TBasicApp::Sleep(50);
     if( Terminate )  {
       CleanUp();
@@ -28,6 +37,7 @@ int UpdateThread::Run()  {
     }
     time_out += 50;
   }
+  DoInit();
   if( !TBasicApp::HasInstance() || Terminate || 
     srcFS == NULL || destFS == NULL || Index == NULL )  
   {
