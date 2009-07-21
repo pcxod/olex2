@@ -2090,18 +2090,27 @@ void XLibMacros::funSSM(const TStrObjList& Params, TMacroError &E) {
     E.SetRetVal( rm.GetSolutionMethod() );
 }
 //..............................................................................
+bool XLibMacros_funSGNameIsNextSub(const olxstr& name, int i)  {
+  if( (i+1) < name.Length() )  {
+    if( olxstr::o_isdigit(name[i])  &&  olxstr::o_isdigit(name[i+1]) )  {
+      if( name[i] != '1' && name[i] > name[i+1] )
+        return true;
+    }
+  }
+  return false;
+}
 olxstr XLibMacros_funSGNameToHtml(const olxstr& name)  {
   olxstr res;
   res.SetCapacity( name.Length() + 20 );
   for( int i=0; i < name.Length(); i++ )  {
-    if( (i+1) < name.Length() )  {
-      if( (name[i] >= '0' && name[i] <= '9')  &&  (name[i+1] >= '0' && name[i+1] <= '9') )  {
-        if( name[i] != '1' && name[i] > name[i+1] )  {
-          res << name[i] << "<sub>" << name[i+1] << "</sub>";
-          i++;
-          continue;
-        } 
-      }
+    if( XLibMacros_funSGNameIsNextSub(name, i+1) )  {
+      res << name[i];
+      continue;
+    }
+    if( XLibMacros_funSGNameIsNextSub(name, i) )  {
+      res << name[i] << "<sub>" << name[i+1] << "</sub>";
+      i++;
+      continue;
     }
     res << name[i];
   }

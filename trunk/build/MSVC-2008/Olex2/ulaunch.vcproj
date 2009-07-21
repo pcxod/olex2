@@ -559,6 +559,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\repository\patchapi.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\repository\updateapi.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\repository\wxftpfs.h"
 				>
 			</File>
