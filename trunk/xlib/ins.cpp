@@ -1608,7 +1608,7 @@ void TIns::_SaveSizeTemp(TStrList& SL)  {
   vec3d size( RefMod.expl.GetCrystalSize() );
   if( !size.IsNull() )
     SL.Add("SIZE ") << size[0] << ' ' << size[1] << ' ' << size[2];
-  if( RefMod.expl.GetTemperature() != 0 )
+  if( RefMod.expl.IsTemperatureSet() )
     SL.Add("TEMP ") << RefMod.expl.GetTemperature();
 }
 //..............................................................................

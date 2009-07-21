@@ -12,14 +12,13 @@ BeginXlibNamespace()
 
 class ExperimentalDetails {
   double Radiation, RadiationEnergy;
-  double Temperature;
-  char TemperatureChar;  // K, C, F
+  double Temperature;  // always in C
   vec3d CrystalSize;
   bool SetTemp(const olxstr& t);
   bool SetSize(const olxstr& t);
   bool SetWL(const olxstr& t);
 public:
-  ExperimentalDetails() : Temperature(-1000), TemperatureChar('C') {
+  ExperimentalDetails() : Temperature(-1000) {
     SetRadiation(0.71073);
   }
   ExperimentalDetails(const ExperimentalDetails& ed)  {
@@ -37,9 +36,9 @@ public:
     RadiationEnergy = XElementLib::Wavelength2eV(Radiation);
   }
   double GetRadiationEnergy() const {  return RadiationEnergy;  }
+  bool IsTemperatureSet() const {  return Temperature >= -273.15;  }
 
   DefPropP(double, Temperature)
-  DefPropP(char, TemperatureChar)
   DefPropC(vec3d, CrystalSize)
   void SetCrystalSize(double x, double y, double z)  {
     CrystalSize = vec3d(x,y,z);
@@ -47,7 +46,7 @@ public:
   void Clear() {
     SetRadiation(0.71073);
     CrystalSize.Null();
-    Temperature = 0;
+    Temperature = -1000;
   }
   void ToDataItem(class TDataItem& item) const;
 #ifndef _NO_PYTHON

@@ -94,6 +94,7 @@ __fastcall TfMain::TfMain(TComponent* Owner) :TForm(Owner)  {
 }
 //---------------------------------------------------------------------------
 __fastcall TfMain::~TfMain()  {
+  delete dlgUninstall; 
   Bapp->OnIdle->Execute(NULL, NULL);
   delete Bapp;
 }
@@ -169,9 +170,10 @@ bool TfMain::_DoInstall(const olxstr& zipFile, const olxstr& installPath)  {
       if( res )  {
         olxstr redist_fn = TBasicApp::GetBaseDir() + "vcredist_x86.exe";
         if( !RedistInstalled )  {
-          frMain->stAction->Caption = "MSVCRT installation...";
+          frMain->stAction->Caption = "Installing MSVCRT...";
           if( !LaunchFile(redist_fn, false) )  {
             Application->MessageBoxA("Could not install MSVC redistributables.", "Installation failed", MB_OK|MB_ICONERROR);
+            frMain->stAction->Caption = "Failed to install MSVCRT...";
             return false;
           }
         }
@@ -184,16 +186,19 @@ bool TfMain::_DoInstall(const olxstr& zipFile, const olxstr& installPath)  {
   return res;
 }
 //---------------------------------------------------------------------------
+void TfMain::DisableInterface(bool v)  {
+  frMain->sbPickZip->Enabled = !v;
+  frMain->bbBrowse->Enabled = !v;
+  frMain->eInstallationPath->Enabled = !v;
+  frMain->cbCreateShortcut->Enabled = !v;
+  frMain->cbCreateDesktopShortcut->Enabled = !v;
+  frMain->cbRepository->Enabled = !v;
+  frMain->rgAutoUpdate->Enabled = !v;
+  frMain->cbProxy->Enabled = !v;
+}
+//---------------------------------------------------------------------------
 bool TfMain::DoInstall()  {
-
-    frMain->sbPickZip->Enabled = false;
-    frMain->bbBrowse->Enabled = false;
-    frMain->eInstallationPath->Enabled = false;
-    frMain->cbCreateShortcut->Enabled = false;
-    frMain->cbCreateDesktopShortcut->Enabled = false;
-    frMain->cbRepository->Enabled = false;
-    frMain->rgAutoUpdate->Enabled = false;
-
+  DisableInterface(true);
   olxstr reposPath, proxyPath, installPath;
   frMain->bbInstall->Enabled = false;
   pbProgress->Visible = true;
@@ -301,10 +306,14 @@ void __fastcall TfMain::bbInstallClick(TObject *Sender)  {
   }
   else if( action == actionReinstall )  {
     if( DoUninstall() )  {
-      if( DoInstall() )
-        SetAction(actionRun);
-      else
-        SetAction(actionInstall);
+      if( action == actionExit )
+        Application->Terminate();
+      else  {
+        if( DoInstall() )
+          SetAction(actionRun);
+        else
+          SetAction(actionInstall);
+      }
     }
     else
       SetAction(actionReinstall);
@@ -477,7 +486,8 @@ bool TfMain::LaunchFile( const olxstr& fileName, bool do_exit )  {
     DWORD rv;
     bool res = false;
     while( (res = GetExitCodeProcess(ProcessInfo.hProcess, &rv)) && rv == STILL_ACTIVE )  {
-      SleepEx(500, false);
+      Application->ProcessMessages();
+      SleepEx(100, false);
     }
     if( res )
       return rv == 0;
@@ -533,13 +543,8 @@ void __fastcall TfMain::FormShow(TObject *Sender)  {
 void TfMain::SetAction(int a)  {
   action = a;
   if( a == actionInstall || a == actionReinstall )  {
-    frMain->sbPickZip->Enabled = true;
-    frMain->bbBrowse->Enabled = true;
-    frMain->eInstallationPath->Enabled = true;
-    frMain->cbCreateShortcut->Enabled = true;
-    frMain->cbCreateDesktopShortcut->Enabled = true;
-    frMain->cbRepository->Enabled = true;
-    frMain->rgAutoUpdate->Enabled = true;
+    DisableInterface(false);
+    frMain->bbInstall->Enabled = true;
     if( a == actionInstall )
       frMain->bbInstall->Caption = "Install";
     else
@@ -548,13 +553,7 @@ void TfMain::SetAction(int a)  {
     pbProgress->Visible = true;
   }
   else  {
-    frMain->sbPickZip->Enabled = false;
-    frMain->bbBrowse->Enabled = false;
-    frMain->eInstallationPath->Enabled = false;
-    frMain->cbCreateShortcut->Enabled = false;
-    frMain->cbCreateDesktopShortcut->Enabled = false;
-    frMain->cbRepository->Enabled = false;
-    frMain->rgAutoUpdate->Enabled = false;
+    DisableInterface(true);
     pbProgress->Visible = false;
     frMain->bbInstall->Caption = "Run!";
     frMain->bbInstall->Enabled = true;
@@ -597,6 +596,7 @@ bool TfMain::DoUninstall()  {
   dlgUninstall->eAppend->Text = tag.u_str();
 
   if( dlgUninstall->ShowModal() == mrOk )  {
+    action = dlgUninstall->cbInstall->Checked ? actionInstall : actionExit;
     if( dlgUninstall->rgRemove->Checked )  {
       if( !TEFile::DeleteDir(OlexInstalledPath) )  {
         Application->MessageBoxA("Could not remove Olex2 installation folder...", "Error", MB_OK|MB_ICONERROR);
@@ -652,7 +652,9 @@ bool TfMain::DoUninstall()  {
         if( desktop_sc )  TEFile::DelFile( d_sc_fn );
       }
     }
+    return true;
   }
-  return true;
+  else
+    return false;
 }
 

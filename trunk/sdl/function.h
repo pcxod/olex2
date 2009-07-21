@@ -100,18 +100,19 @@ public:
   virtual bool CheckProgramState( unsigned int specialCheck ) = 0;
 };
 
-class IBasicLibrary  {
+class ABasicLibrary  {
 public:
-  virtual ~IBasicLibrary()  {  ;  }
+  virtual ~ABasicLibrary()  {  ;  }
   virtual bool CheckProgramState(unsigned int state) = 0;
   virtual ALibraryContainer* GetOwner() const = 0;
-  virtual IBasicLibrary* GetParentLibrary() const = 0;
+  virtual ABasicLibrary* GetParentLibrary() const = 0;
   virtual const olxstr& GetName() const = 0;
+  olxstr GetQualifiedName() const;
 };
 
 
 class ABasicFunction: public IEObject  {
-  IBasicLibrary* ParentLibrary;
+  ABasicLibrary* ParentLibrary;
   olxstr Name;
   olxstr Description;
 protected:
@@ -127,8 +128,8 @@ public:
   const olxstr& GetDescription() const {  return Description;  }
   void SetDescription(const olxstr& d) {  Description = d;  }
   olxstr GetQualifiedName() const;
-  void SetParentLibrary( IBasicLibrary& parent ) {  ParentLibrary = &parent;  }
-  IBasicLibrary* GetParentLibrary()  const {  return ParentLibrary;  }
+  void SetParentLibrary( ABasicLibrary& parent ) {  ParentLibrary = &parent;  }
+  ABasicLibrary* GetParentLibrary()  const {  return ParentLibrary;  }
   virtual olxstr GetSignature() const;
   virtual const TCSTypeList<olxstr,olxstr>& GetOptions() const = 0;
   virtual const olxstr& GetRuntimeSignature() const = 0;
@@ -417,6 +418,7 @@ template <class Base>
   };
 
   typedef TPtrList<ABasicFunction> TBasicFunctionPList;
+  typedef TPtrList<ABasicLibrary> TBasicLibraryPList;
 EndEsdlNamespace()
 
 #endif

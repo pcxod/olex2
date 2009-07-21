@@ -6,7 +6,7 @@
 BeginEsdlNamespace()
 
 
-class TLibrary: public IEObject, public IBasicLibrary  {
+class TLibrary: public IEObject, public ABasicLibrary  {
   TSStrPObjList<olxstr,ABasicFunction*, true> Functions, Macros;
   olxstr LibraryName;
   TSStrPObjList<olxstr,TLibrary*, true> Libraries;
@@ -27,7 +27,7 @@ public:
   virtual ~TLibrary();
 
   virtual const olxstr& GetName()  const        {  return LibraryName;  }
-  virtual IBasicLibrary* GetParentLibrary() const {  return ParentLibrary;  }
+  virtual ABasicLibrary* GetParentLibrary() const {  return ParentLibrary;  }
   // implementation of the state checker
   virtual bool CheckProgramState(unsigned int state);
   virtual ALibraryContainer* GetOwner() const     {  return LibraryOwner;  }
@@ -85,7 +85,7 @@ public:
       macro->SetParentLibrary( *this );
       Macros.Add(macro->GetName(), macro);
     }
-  /* if function name is no qualified, current lib is serached only, for quailified
+  /* if function name is no qualified, current lib is searched only, for quailified
     function names like, html.home, the library will be located and searched
   */
   ABasicFunction* FindFunction(const olxstr& name, unsigned int argc = 0);
@@ -95,6 +95,8 @@ public:
   size_t FindSimilarMacros(const olxstr& name, TBasicFunctionPList& store);
   // finds similar functions and puts them to the list, returns the number of added entries
   size_t FindSimilarFunctions(const olxstr& name, TBasicFunctionPList& store);
+  // finds similar library names and puts them to the list, returns the number of added entries
+  size_t FindSimilarLibraries(const olxstr& name, TBasicLibraryPList& store);
 
   /* the functions do search sublibrraies too and return the list of available functions
     the return value is the number of found functions
@@ -103,6 +105,7 @@ public:
   size_t LocateMacros(const olxstr& name, TBasicFunctionPList& store);
   size_t LocateSimilarFunctions(const olxstr& name, TBasicFunctionPList& store);
   size_t LocateSimilarMacros(const olxstr& name, TBasicFunctionPList& store);
+  size_t LocateSimilarLibraries(const olxstr& name, TBasicLibraryPList& store);
 
   void ListAllFunctions(TBasicFunctionPList& store);
   void ListAllMacros(TBasicFunctionPList& store);

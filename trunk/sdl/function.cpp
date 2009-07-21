@@ -8,6 +8,16 @@
 UseEsdlNamespace()
 
 //..............................................................................
+olxstr ABasicLibrary::GetQualifiedName() const  {
+  olxstr res = GetName();
+  ABasicLibrary* lib = this->GetParentLibrary();
+  while( lib && lib->GetParentLibrary() )  {
+    res.Insert(lib->GetName() + '.', 0 );
+    lib = lib->GetParentLibrary();
+  }
+  return res;
+}
+//..............................................................................
 olxstr ABasicFunction::GetSignature() const {
   olxstr res(GetName());
   res << " arguments [";
@@ -54,9 +64,8 @@ olxstr ABasicFunction::GetSignature() const {
 //..............................................................................
 olxstr ABasicFunction::GetQualifiedName() const  {
   olxstr res = GetName();
-  IBasicLibrary* lib = this->GetParentLibrary();
-  while( lib && lib->GetParentLibrary() )
-  {
+  ABasicLibrary* lib = this->GetParentLibrary();
+  while( lib && lib->GetParentLibrary() )  {
     res.Insert(lib->GetName() + '.', 0 );
     lib = lib->GetParentLibrary();
   }

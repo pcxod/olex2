@@ -19,7 +19,8 @@
 enum {
   actionInstall,
   actionRun,
-  actionReinstall
+  actionReinstall,
+  actionExit
 };
 //---------------------------------------------------------------------------
 class TfMain : public TForm
@@ -53,6 +54,7 @@ private:	// User declarations
   int action;
   void SetAction(int a);
 protected:
+  void DisableInterface(bool v);
   bool InitRegistry(const AnsiString& installPath);
   bool CleanRegistry();
   bool CleanRegistryAndShortcuts(bool sc);
