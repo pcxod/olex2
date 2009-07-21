@@ -164,7 +164,11 @@ bool TGlXApp::OnInit()  {
 //      BaseDir << "Resources/";
     #endif
     XApp = new TGXApp( TBasicApp::GuessBaseDir(GetAppName().c_str(), "OLEX2_DIR") );
+#ifdef __WIN32__
     XApp->SetSharedDir( TShellUtil::GetSpecialFolderLocation(fiAppData) << "Olex2u");
+#else
+    XApp->SetSharedDir( TShellUtil::GetSpecialFolderLocation(fiAppData));
+#endif
     //XApp = new TGXApp( TEFile::UNCFileName(BaseDir) );
   }
   catch( TExceptionBase& exc )  {
