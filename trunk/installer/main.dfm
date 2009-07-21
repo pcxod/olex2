@@ -1,6 +1,6 @@
 object fMain: TfMain
-  Left = 374
-  Top = 239
+  Left = 623
+  Top = 332
   AlphaBlendValue = 90
   BorderIcons = []
   BorderStyle = bsNone

@@ -29,6 +29,7 @@ class UpdateThread : public AOlxThread  {
       destFS = NULL;
     }
   }
+  void DoInit();
   virtual void OnSendTerminate();
   class DListener : public AActionHandler  {
   public:
