@@ -121,7 +121,7 @@ END_EVENT_TABLE()
 
 //..............................................................................
 bool TGlXApp::OnInit()  {
-
+  wxApp::SetAppName(wxT("olex2"));
   Instance = this;
 //  wxToolTip::Enable(true);
   int ScreenW = wxSystemSettings::GetMetric(wxSYS_SCREEN_X),
