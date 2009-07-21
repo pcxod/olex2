@@ -319,6 +319,8 @@ public:
     while( ind != -1 )  {
       if( ind != 0 )  // skip sequences of separators
         Add(Tmp.SubStringTo(ind));
+      else if( !SkipSequences )
+        Add(EmptyString);
       if( (ind+1) >= Tmp.Length() )  {
         Tmp = EmptyString;
         break;
