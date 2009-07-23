@@ -3,7 +3,7 @@
 
 #include "wx/wx.h"
 #include "ctrls.h"
-#include "settingsfile.h"
+#include "updateapi.h"
 //---------------------------------------------------------------------------
 
 class TdlgUpdateOptions: public TDialog  {
@@ -11,11 +11,11 @@ class TdlgUpdateOptions: public TDialog  {
     *stRepository, *stLastUpdated;
   wxTextCtrl *tcProxy;
   wxComboBox* cbRepository;
+  wxCheckBox* cbQueryUpdate;
   wxRadioBox *rbUpdateInterval;
 protected:
-  TSettingsFile SF;
   void OnOK(wxCommandEvent& event);
-  olxstr SettingsFile;
+  updater::UpdateAPI uapi;
 public:
 
   TdlgUpdateOptions(TMainFrame *ParentFrame);

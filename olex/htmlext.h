@@ -256,6 +256,8 @@ protected:
   DefFunc(GetFontName)
   DefFunc(GetBorders)
   DefFunc(SetFocus)
+  DefFunc(EndModal)
+  DefFunc(ShowModal)
 
   DefFunc(SaveData)
   DefFunc(LoadData)

@@ -464,6 +464,7 @@ SettingsFile::SettingsFile(const olxstr& file_name) : source_file(file_name)  {
   src_for_dest = settings["src_for_dest"];
   files_to_skip.Strtok(settings["skip"], ';');
   olex2_port = settings["olex-port"];
+  ask_for_update = settings.GetParam("ask_update", TrueString).ToBool();
 }
 //.......................................................................
 bool SettingsFile::Save() {
@@ -477,6 +478,7 @@ bool SettingsFile::Save() {
   settings["src_for_dest"] = src_for_dest;
   settings["skip"] = files_to_skip.Text(';');
   settings["olex-port"] = olex2_port;
+  settings["ask_update"] = ask_for_update;
   try  {  settings.SaveSettings(source_file);  }
   catch(...)  {  return false;  }
   return true;

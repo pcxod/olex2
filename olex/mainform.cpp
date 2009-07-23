@@ -735,7 +735,7 @@ v-[grow] use user provided delta for connctivity analysis",
   this_InitMacroD(Collectivise, EmptyString, fpAny, "Does the opposite to the Individialise. If provided atoms are unique to the lattice\
  a call to this function makes them uniq to the asymmetric unit, the following call makes the uniq to the element type");
 
-  this_InitMacro(Popup, w&;h&;t&;b&;x&;y&;d&;t&;r&;s&;c&;a&;i&;p, fpTwo );
+  this_InitMacro(Popup, w&;h&;t&;b&;x&;y&;d&;s, fpTwo );
 
   this_InitMacro(Delta, , fpNone|fpOne );
   this_InitMacro(DeltaI, , fpNone|fpOne );
@@ -3639,9 +3639,13 @@ IEObject* TMainForm::executeFunction(const olxstr& function)  {
   return (me.HasRetVal()) ? me.RetObj()->Replicate() : NULL;
 }
 //..............................................................................
-THtml* TMainForm::GetHtml(const olxstr& popupName) const {
+THtml* TMainForm::FindHtml(const olxstr& popupName) const {
   TPopupData* pd = FPopups[popupName];
   return pd ? pd->Html : NULL;
+}
+//..............................................................................
+TPopupData* TMainForm::FindHtmlEx(const olxstr& popupName) const {
+  return FPopups[popupName];
 }
 //..............................................................................
 void TMainForm::AnalyseError( TMacroError& error )  {
@@ -4039,7 +4043,7 @@ bool TMainForm::IsControl(const olxstr& _cname) const {
   int di = _cname.IndexOf("->");
   olxstr pname = (di == -1 ? EmptyString : _cname.SubStringTo(di));
   olxstr cname = (di == -1 ? _cname : _cname.SubStringFrom(di+2));
-  THtml* html = pname.IsEmpty() ? GetHtml() : GetHtml(pname);  
+  THtml* html = pname.IsEmpty() ? GetHtml() : FindHtml(pname);  
   return html == NULL ? false : (html->FindObject(cname) != NULL);
 }
 //..............................................................................
@@ -4048,11 +4052,9 @@ void TMainForm::DoUpdateFiles()  {
     return;
   uint64_t sz = _UpdateThread->GetUpdateSize();
   _UpdateThread->ResetUpdateSize();
-  olxstr sf_name(updater::UpdateAPI::GetSettingsFileName());
-  TSettingsFile sf( sf_name );
-  bool ask = sf.GetParam("ask_update", TrueString).ToBool();
+  updater::SettingsFile sf(updater::UpdateAPI::GetSettingsFileName());
   TdlgMsgBox* msg_box = NULL;
-  if( ask )  {
+  if( sf.ask_for_update )  {
     msg_box = new TdlgMsgBox( this, 
       olxstr("There are new updates avaialable (") << olxstr::FormatFloat(3, (double)sz/(1024*1024)) << "Mb)\n" <<
       "Updates will be downloaded in the background during this session and\nwill take effect with the next restart of Olex2",
@@ -4064,8 +4066,8 @@ void TMainForm::DoUpdateFiles()  {
     if( res == wxID_YES )  {
       _UpdateThread->DoUpdate();
       if( msg_box->IsChecked() )  {
-        sf["ask_update"] = FalseString;
-        sf.SaveSettings(sf_name);
+        sf.ask_for_update = false;
+        sf.Save();
       }
     }
     else  {
@@ -4090,7 +4092,7 @@ PyObject* pyIsControl(PyObject* self, PyObject* args)  {
     return Py_None;
   }
   THtml* html = pname.IsEmpty() ? TGlXApp::GetMainForm()->GetHtml() :
-                TGlXApp::GetMainForm()->GetHtml(pname);
+                TGlXApp::GetMainForm()->FindHtml(pname);
   return Py_BuildValue("b", html == NULL ? false : (html->FindObject(cname) != NULL) );
 }
 //..............................................................................
