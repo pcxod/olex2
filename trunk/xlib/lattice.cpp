@@ -447,6 +447,31 @@ bool TLattice::IsExpandable(TSAtom& A) const {
   return (A.CAtom().IsGrowable() && !A.IsGrown());
 }
 //..............................................................................
+void TLattice::GetGrowMatrices(smatd_list& res) const {
+  for( int i=0; i < Atoms.Count(); i++ )  {
+    if( Atoms[i]->IsGrown() )  continue;
+    const TCAtom& ca = Atoms[i]->CAtom();
+    for(int j=0; j < ca.AttachedAtomCount(); j++ )  {
+      const TCAtom& ca1 = ca.GetAttachedAtom(j);
+      if( ca1.IsDeleted() || ca1.IsMasked() )  
+        continue;
+      smatd_list* BindingMatrices = GetUnitCell().GetBinding(ca, ca1, Atoms[i]->ccrd(), ca1.ccrd(), false, false);
+      for( int k=0; k < BindingMatrices->Count(); k++ )  {
+        const smatd& M = BindingMatrices->Item(k);
+        bool found = false;
+        for( int l=0; l < MatrixCount(); l++ )  {
+          if( *Matrices[l] == M )  {
+            found = true;  
+            break;
+          }
+        }
+        if( !found && res.IndexOf(M) == -1 )
+          res.AddCCopy( M );
+      }
+      delete BindingMatrices;
+    }
+  }
+}
 //..............................................................................
 void TLattice::DoGrow(const TSAtomPList& atoms, bool GrowShell, TCAtomPList* Template)  {
   // all matrices after MatrixCount are new and has to be used for generation
@@ -455,7 +480,7 @@ void TLattice::DoGrow(const TSAtomPList& atoms, bool GrowShell, TCAtomPList* Tem
   TTypeList<TIntList> Fragments2Grow;
   OnStructureGrow->Enter(this);
   ApplyMasks();
-  for(int i=0; i < atoms.Count(); i++ )  {
+  for( int i=0; i < atoms.Count(); i++ )  {
     TSAtom* SA = atoms[i];
     SA->SetGrown(true);
     const TCAtom& CA = SA->CAtom();
@@ -481,14 +506,7 @@ void TLattice::DoGrow(const TSAtomPList& atoms, bool GrowShell, TCAtomPList* Tem
         else  {
           if( l >= currentCount )  {
             TIntList* ToGrow = &Fragments2Grow[l-currentCount];
-            found = false;
-            for(int m=0; m < ToGrow->Count(); m++ )  {
-              if( ToGrow->Item(m) == CA1.GetFragmentId() )  {
-                found = true;  
-                break;
-              }
-            }
-            if( !found )  
+            if( ToGrow->IndexOf(CA1.GetFragmentId()) == -1 )
               ToGrow->Add( CA1.GetFragmentId() );
           }
         }
@@ -496,7 +514,7 @@ void TLattice::DoGrow(const TSAtomPList& atoms, bool GrowShell, TCAtomPList* Tem
       delete BindingMatrices;
     }
   }
-  for(int i = currentCount; i < MatrixCount(); i++ )  {
+  for( int i = currentCount; i < MatrixCount(); i++ )  {
     smatd* M = Matrices[i];
     TIntList& ToGrow = Fragments2Grow[i-currentCount];
     for(int j=0; j < GetAsymmUnit().AtomCount(); j++ )  {

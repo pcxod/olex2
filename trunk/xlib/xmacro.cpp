@@ -2350,7 +2350,7 @@ void XLibMacros::macCif2Tab(TStrObjList &Cmds, const TParamList &Options, TMacro
       olxstr footer;
       for(int i=0; i < SymmList.Count(); i++ )  {
         footer << "<sup>" << (i+1) << "</sup>" <<
-           TSymmParser::MatrixToSymm(SymmList[i]);
+           TSymmParser::MatrixToSymmEx(SymmList[i]);
         if( (i+1) < SymmList.Count() )
           footer << "; ";
       }

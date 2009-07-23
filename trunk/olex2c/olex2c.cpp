@@ -148,6 +148,7 @@ class TOlex: public AEventsDispatcher, public olex::IOlexProcessor, public ASele
   }
 public:
   TOlex( const olxstr& basedir) : XApp(basedir, this), Macros(*this) {
+    XApp.SetCifTemplatesDir( XApp.GetBaseDir() + "etc/CIF/" );
     OlexInstance = this;
     Silent = true;
     OutStream = new TOutStream();

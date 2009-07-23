@@ -479,6 +479,7 @@ TMainForm::~TMainForm()  {
 //..............................................................................
 void TMainForm::XApp( TGXApp *XA)  {
   FXApp = XA;
+  FXApp->SetCifTemplatesDir( XA->GetBaseDir() + "etc/CIF/" );
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
   TLibrary &Library = XA->GetLibrary();
@@ -2801,7 +2802,6 @@ void TMainForm::SaveSettings(const olxstr &FN)  {
   I->AddField("Styles", StylesDir);
   I->AddField("SceneP", SParamDir);
   I->AddField("Current", XLibMacros::CurrentDir);
-  I->AddField("CifTemplates", FXApp->GetCifTemplatesDir());
 
   I = &DF.Root().AddItem("HTML");
   I->AddField("Minimized", FHtmlMinimized);
@@ -2880,15 +2880,6 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
     executeFunction(SParamDir, SParamDir);
   XLibMacros::CurrentDir = I->GetFieldValue("Current");
     executeFunction(XLibMacros::CurrentDir, XLibMacros::CurrentDir);
-  olxstr CifTemplatesDir( I->GetFieldValue("CifTemplates", EmptyString) );
-  if( CifTemplatesDir.IsEmpty() )
-    CifTemplatesDir = TutorialDir + "CIF/";
-  else
-    executeFunction(CifTemplatesDir, CifTemplatesDir);
-  // to fix old folder location at the basedir ... 
-  if( !TEFile::Exists(CifTemplatesDir) )
-    CifTemplatesDir = TutorialDir + "CIF/";
-  FXApp->SetCifTemplatesDir( CifTemplatesDir );
 
   I = DF.Root().FindItem("HTML");
   if( I != NULL )  {
@@ -2922,7 +2913,7 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
   SkipSizing = true;
   I = DF.Root().FindItem("Window");
   if( I != NULL )  {
-    if( I->GetFieldValue("Maximized", "false").ToBool() )  {
+    if( I->GetFieldValue("Maximized", FalseString).ToBool() )  {
       int l = I->GetFieldValue("X", "0").ToInt(), 
           t = I->GetFieldValue("Y", "0").ToInt();
         Move( l, t );
@@ -2942,12 +2933,9 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
   
   I = DF.Root().FindItem("Windows");
   if( I != NULL )  {
-    Tmp = I->GetFieldValue("Help");
-    HelpWindowVisible = Tmp.IsEmpty() ? true : Tmp.ToBool();
-    Tmp = I->GetFieldValue("Info");
-    InfoWindowVisible = Tmp.IsEmpty() ? true : Tmp.ToBool();
-    Tmp = I->GetFieldValue("CmdLine", EmptyString);
-    CmdLineVisible = Tmp.IsEmpty() ? false : Tmp.ToBool();
+    HelpWindowVisible = I->GetFieldValue("Help", TrueString).ToBool();
+    InfoWindowVisible = I->GetFieldValue("Info", TrueString).ToBool();
+    CmdLineVisible = I->GetFieldValue("CmdLine", FalseString).ToBool();
   }
   TEFile::ChangeDir(XLibMacros::CurrentDir);
 
