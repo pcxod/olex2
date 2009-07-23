@@ -323,6 +323,10 @@ public:
     int ind = FObjects.IndexOf(Name);
     return (ind == -1) ? NULL : FObjects.GetObject(ind).A();
   }
+  wxWindow *FindObjectWindow(const olxstr& Name)  {
+    int ind = FObjects.IndexOf(Name);
+    return (ind == -1) ? NULL : FObjects.GetObject(ind).B();
+  }
   inline int ObjectCount()          const {  return FObjects.Count();  }
   inline IEObject* GetObject(int i)       {  return FObjects.GetObject(i).A();  }
   inline wxWindow* GetWindow(int i)       {  return FObjects.GetObject(i).B();  }
