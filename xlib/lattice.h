@@ -91,7 +91,9 @@ public:
   // generates matrices so that the center of asymmetric unit is inisde the specified volume
   int GenerateMatrices(smatd_plist& Result, const vec3d& VFrom, const vec3d& VTo,
         const vec3d& MFrom, const vec3d& MTo);
-
+  // finds matrices to be used for the next grow operation 
+  void GetGrowMatrices(smatd_list& res) const;
+  
   void GrowFragments(bool GrowShells, TCAtomPList* Template);
   void GrowAtoms(const TSAtomPList& Atoms, bool GrowShells, TCAtomPList* Template);
   void GrowAtoms(const TSAtomPList& Atoms, const smatd_list& matrices);

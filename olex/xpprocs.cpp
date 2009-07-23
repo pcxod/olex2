@@ -1390,12 +1390,38 @@ void TMainForm::macGrow(TStrObjList &Cmds, const TParamList &Options, TMacroErro
        GrowContent = Options.Contains('w');
   TCAtomPList TemplAtoms;
   if( Options.Contains('t') )
-    FXApp->FindCAtoms(olxstr(Options.GetValue('t')).Replace(',', ' '), TemplAtoms);
+    FXApp->FindCAtoms(olxstr(Options['t']).Replace(',', ' '), TemplAtoms);
   if( Cmds.IsEmpty() )  {  // grow fragments
     if( GrowContent ) 
       FXApp->GrowWhole(TemplAtoms.IsEmpty() ? NULL : &TemplAtoms);
-    else
+    else  {
       FXApp->GrowFragments(GrowShells, TemplAtoms.IsEmpty() ? NULL : &TemplAtoms);
+      const TLattice& latt = FXApp->XFile().GetLattice();
+      smatd_list gm;
+      /* check if next grow will not introduce simple translations */
+      bool grow_next = true;
+      while( grow_next )  {
+        gm.Clear();
+        latt.GetGrowMatrices(gm);
+        if( gm.IsEmpty() )  break;
+        for( int i=0; i < latt.MatrixCount(); i++ )  {
+          for( int j=0; j < gm.Count(); j++ )  {
+            if( latt.GetMatrix(i).r == gm[j].r )  {
+              vec3d df = latt.GetMatrix(i).t - gm[j].t;
+              for( int k=0; k < 3; k++ )
+                df[k] -= Round(df[k]);
+              if( df.QLength() < 1e-6 )  {
+                grow_next = false;
+                break;
+              }
+            }
+          }
+          if( !grow_next )  break;
+        }
+        if( grow_next )
+          FXApp->GrowFragments(GrowShells, TemplAtoms.IsEmpty() ? NULL : &TemplAtoms);
+      }
+    }
   }
   else  {  // grow atoms
     if( GrowContent )
@@ -5077,7 +5103,7 @@ void TMainForm::macPopup(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   THtml* ph = FHtml;
   FHtml = html1;
   try  {
-    html1->LoadPage( uiStr(Cmds[1]) );
+    html1->LoadPage( Cmds[1].u_str() );
   }
   catch( ... )  {}
   FHtml = ph;
@@ -5086,6 +5112,9 @@ void TMainForm::macPopup(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   html1->OnKey->Add(this, ID_HTMLKEY);
   html1->OnDblClick->Add(this, ID_HTMLDBLCLICK);
   html1->OnCmd->Add(this, ID_HTMLCMD);
+  //if( Options.Contains('m') )
+  //  dlg->ShowModal();
+  //else 
   dlg->Show();
 }
 //..............................................................................
@@ -8036,6 +8065,8 @@ void TMainForm::macProjSph(TStrObjList &Cmds, const TParamList &Options, TMacroE
 }
 //..............................................................................
 void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  wxPasswordEntryDialog pe(this, wxT("msg") );
+  pe.ShowModal();
   OlxTests tests;
   tests.run();
   AtomRefList arl(FXApp->XFile().GetRM(), Cmds.Text(' '), "suc");

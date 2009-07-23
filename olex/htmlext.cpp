@@ -222,8 +222,10 @@ TAG_HANDLER_PROC(tag)  {
 
 /******************* TEXT CONTROL *********************************************/
   if( TagName.Equalsi("text") )  {
-    TTextEdit *Text = new TTextEdit(m_WParser->GetWindowInterface()->GetHTMLWindow(),
-      (tag.HasParam(wxT("MULTILINE")) ? wxTE_MULTILINE : 0));
+    int flags = 0;
+    if( tag.HasParam( wxT("MULTILINE") ) )  flags |= wxTE_MULTILINE;
+    if( tag.HasParam( wxT("PASSWORD") ) )     flags |= wxTE_PASSWORD;
+    TTextEdit *Text = new TTextEdit(m_WParser->GetWindowInterface()->GetHTMLWindow(), flags);
     Text->SetFont( m_WParser->GetDC()->GetFont() );
     CreatedObject = Text;
     CreatedWindow = Text;

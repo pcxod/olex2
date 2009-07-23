@@ -1618,12 +1618,11 @@ bool TCif::CreateTable(TDataItem *TD, TTTable<TStrList> &Table, smatd_list& Symm
     for( int j=0; j < LT->ColCount(); j++ )  {
       DI = TD->FindItemi( LT->ColName(j) );
 
-      if( sindex >=0 && LT->ColName(j).IndexOf("site_symmetry") != -1 )  {
+      if( sindex >=0 && LT->ColName(j).StartsFrom("_geom_") && LT->ColName(j).IndexOf("site_symmetry") != -1)  {
         // 1_555
         if( (*LT)[i][j] != '.' )  {
           olxstr tmp = LT->ColName(j).SubStringFrom( LT->ColName(j).LastIndexOf('_')+1 );
-          if( !tmp.IsNumber() )
-            continue;
+          //if( !tmp.IsNumber() ) continue;
           Tmp = "label_";
           Tmp << tmp;
           SymmMatr = TSymmParser::SymmCodeToMatrix(AllSymmList, (*LT)[i][j] );
