@@ -157,17 +157,9 @@ TAG_HANDLER_PROC(tag)  {
   tag.ScanParam(wxT("TYPE"), _StrFormat_, Bf);
   olxstr TagName(Bf), ObjectName, Value, Data, strValign, Tmp, Label;
   ObjectName = tag.GetParam(wxT("NAME")).c_str();
-  if( !ObjectName.IsEmpty() )  {
-    IEObject* obj = TGlXApp::GetMainForm()->GetHtml()->FindObject(ObjectName);
-    if( obj != NULL )  {
-      if( !tag.HasParam(wxT("reuse")) )
-        TBasicApp::GetLog().Error(olxstr("HTML: duplicated object \'") << ObjectName << '\'');
-      return false;
-    }
-  }
-  int ax=100, ay=20;
-  int fl = 0,
-      valign = wxHTML_ALIGN_CENTER;
+  int valign = wxHTML_ALIGN_CENTER, 
+    fl=0,
+    ax=100, ay=20;
   IEObject* CreatedObject = NULL;
   wxWindow* CreatedWindow = NULL;
   Bf[0] = '\0';
@@ -199,12 +191,20 @@ TAG_HANDLER_PROC(tag)  {
 
   if( ax == 0 )  ax = 30;
   if( ay == 0 )  ay = 20;
-  if( tag.HasParam(wxT("FLOAT")) ) fl = ax;
-
-  Value = tag.GetParam(wxT("VALUE")).c_str();
-  TGlXApp::GetMainForm()->ProcessMacroFunc( Value );
-  Data = tag.GetParam(wxT("DATA")).c_str();
+ 
+  if( tag.HasParam(wxT("FLOAT")) ) 
+    fl = ax;
+  if( tag.HasParam(wxT("VALIGN")) ){
+    strValign = tag.GetParam(wxT("VALIGN")).c_str();
+    if( strValign.Equalsi("top") )
+      valign = wxHTML_ALIGN_TOP;
+    else if( strValign.Equalsi("center") )
+      valign = wxHTML_ALIGN_CENTER;
+    else if( strValign.Equalsi("bottom") )
+      valign = wxHTML_ALIGN_BOTTOM;
+  }
   Label = tag.GetParam(wxT("LABEL")).c_str();
+
   wxHtmlLinkInfo* LinkInfo = NULL;
   if( !Label.IsEmpty() )  {
     if( Label.StartsFromi("href=") )  {
@@ -218,15 +218,34 @@ TAG_HANDLER_PROC(tag)  {
       LinkInfo = new wxHtmlLinkInfo(Label.u_str(), tag.u_str() );
     }
   }
+  if( !ObjectName.IsEmpty() )  {
+    wxWindow* wnd = TGlXApp::GetMainForm()->GetHtml()->FindObjectWindow(ObjectName);
+    if( wnd != NULL )  {
+      if( !tag.HasParam(wxT("reuse")) )
+        TBasicApp::GetLog().Error(olxstr("HTML: duplicated object \'") << ObjectName << '\'');
+      else  {
+        if( !Label.IsEmpty() )  {
+          wxHtmlContainerCell* contC = new wxHtmlContainerCell(m_WParser->GetContainer());
+          THtmlWordCell* wc = new THtmlWordCell( Label.u_str(), *m_WParser->GetDC());
+          if( LinkInfo != NULL ) {  
+            wc->SetLink(*LinkInfo);
+            delete LinkInfo;
+          }
+          wc->SetDescent(0);
+          contC->InsertCell( wc );
+          contC->InsertCell(new wxHtmlWidgetCell(wnd, fl));
+          contC->SetAlignVer(valign);
+        }
+        else
+          m_WParser->GetContainer()->InsertCell(new wxHtmlWidgetCell(wnd, fl));
+      }
+      return false;
+    }
+  }
 
-  strValign = tag.GetParam(wxT("VALIGN")).c_str();
-  if( strValign.Equalsi("top") )
-    valign = wxHTML_ALIGN_TOP;
-  else if( strValign.Equalsi("center") )
-    valign = wxHTML_ALIGN_CENTER;
-  else if( strValign.Equalsi("bottom") )
-    valign = wxHTML_ALIGN_BOTTOM;
-
+  Value = tag.GetParam(wxT("VALUE")).c_str();
+  TGlXApp::GetMainForm()->ProcessMacroFunc( Value );
+  Data = tag.GetParam(wxT("DATA")).c_str();
 /******************* TEXT CONTROL *********************************************/
   if( TagName.Equalsi("text") )  {
     int flags = 0;
