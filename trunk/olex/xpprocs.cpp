@@ -5077,7 +5077,8 @@ void TMainForm::macPopup(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     //pd->Dialog->SetTitle( title );
     pd->Html->LoadPage( uiStr(Cmds[1]) );
     pd->Html->SetHomePage(TutorialDir + Cmds[1]);
-    if( !pd->Dialog->IsShown() )  pd->Dialog->Show();
+    if( !pd->Dialog->IsShown() && !Options.Contains('s'))  
+      pd->Dialog->Show();
     return;
   }
 
@@ -5112,10 +5113,8 @@ void TMainForm::macPopup(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   html1->OnKey->Add(this, ID_HTMLKEY);
   html1->OnDblClick->Add(this, ID_HTMLDBLCLICK);
   html1->OnCmd->Add(this, ID_HTMLCMD);
-  //if( Options.Contains('m') )
-  //  dlg->ShowModal();
-  //else 
-  dlg->Show();
+  if( !Options.Contains('s') )
+    dlg->Show();
 }
 //..............................................................................
 void TMainForm::macDelta(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {

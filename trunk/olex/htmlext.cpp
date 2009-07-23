@@ -156,7 +156,15 @@ TAG_HANDLER_PROC(tag)  {
   olxch Bf[80];
   tag.ScanParam(wxT("TYPE"), _StrFormat_, Bf);
   olxstr TagName(Bf), ObjectName, Value, Data, strValign, Tmp, Label;
-
+  ObjectName = tag.GetParam(wxT("NAME")).c_str();
+  if( !ObjectName.IsEmpty() )  {
+    IEObject* obj = TGlXApp::GetMainForm()->GetHtml()->FindObject(ObjectName);
+    if( obj != NULL )  {
+      if( !tag.HasParam(wxT("reuse")) )
+        TBasicApp::GetLog().Error(olxstr("HTML: duplicated object \'") << ObjectName << '\'');
+      return false;
+    }
+  }
   int ax=100, ay=20;
   int fl = 0,
       valign = wxHTML_ALIGN_CENTER;
@@ -193,7 +201,6 @@ TAG_HANDLER_PROC(tag)  {
   if( ay == 0 )  ay = 20;
   if( tag.HasParam(wxT("FLOAT")) ) fl = ax;
 
-  ObjectName = tag.GetParam(wxT("NAME")).c_str();
   Value = tag.GetParam(wxT("VALUE")).c_str();
   TGlXApp::GetMainForm()->ProcessMacroFunc( Value );
   Data = tag.GetParam(wxT("DATA")).c_str();
@@ -889,7 +896,7 @@ wxHtmlOpeningStatus THtml::OnOpeningURL(wxHtmlURLType type, const wxString& url,
 }
 //..............................................................................
 THtml::THtml(wxWindow *Parent, ALibraryContainer* LC): 
-     wxHtmlWindow(Parent), WI(this), ObjectsState(*this)  {
+     wxHtmlWindow(Parent, -1, wxDefaultPosition, wxDefaultSize, 4|wxTAB_TRAVERSAL), WI(this), ObjectsState(*this)  {
   FActions = new TActionQList;
   FRoot = new THtmlSwitch(this, NULL);
   OnLink = &FActions->NewQueue("ONLINK");
@@ -962,6 +969,8 @@ THtml::THtml(wxWindow *Parent, ALibraryContainer* LC):
     this_InitFuncD(GetItemState, fpOne|fpTwo, "Returns item state of provided switch");
     this_InitFuncD(IsItem, fpOne, "Returns true if specified switch exists");
     this_InitFuncD(IsPopup, fpOne, "Returns true if specified popup window exists and visible");
+    this_InitFuncD(EndModal, fpTwo, "Ends a modal popup and sets the return code");
+    this_InitFuncD(ShowModal, fpOne, "Shows a previously created popup window as a modal dialog");
   }
 }
 //..............................................................................
@@ -1036,6 +1045,8 @@ void THtml::OnMouseDblClick(wxMouseEvent& event)  {
 }
 //..............................................................................
 void THtml::OnChar(wxKeyEvent& event)  {
+  if( event.GetKeyCode() == WXK_TAB )
+    return;
   TKeyEvent KE(event);
   OnKey->Execute(this, &KE);
 }
@@ -1657,7 +1668,7 @@ one of the states correspond to current - the next one is selected
 void THtml::macItemState(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   THtml *html;
   if( Cmds.Count() > 2 && !Cmds[1].IsNumber() )  {
-    html = TGlXApp::GetMainForm()->GetHtml( Cmds[0] );
+    html = TGlXApp::GetMainForm()->FindHtml( Cmds[0] );
     if( html == NULL )  {
       Error.ProcessingError(__OlxSrcInfo, "could not locate specified popup" );
       return;
@@ -1738,7 +1749,7 @@ void THtml::macItemState(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 }
 //..............................................................................
 void THtml::funGetItemState(const TStrObjList &Params, TMacroError &E)  {
-  THtml *html = (Params.Count() == 2) ? TGlXApp::GetMainForm()->GetHtml(Params[0]) : this;
+  THtml *html = (Params.Count() == 2) ? TGlXApp::GetMainForm()->FindHtml(Params[0]) : this;
   if( html == NULL )  {
     E.ProcessingError(__OlxSrcInfo, "undefined html window");
     return;
@@ -1754,12 +1765,12 @@ void THtml::funGetItemState(const TStrObjList &Params, TMacroError &E)  {
 }
 //..............................................................................
 void THtml::funIsPopup(const TStrObjList& Params, TMacroError &E)  {
-  THtml *html = TGlXApp::GetMainForm()->GetHtml(Params[0]);
+  THtml *html = TGlXApp::GetMainForm()->FindHtml(Params[0]);
   E.SetRetVal( html != NULL && html->GetParent()->IsShown() ); 
 }
 //..............................................................................
 void THtml::funIsItem(const TStrObjList &Params, TMacroError &E)  {
-  THtml *html = (Params.Count() == 2) ? TGlXApp::GetMainForm()->GetHtml(Params[0]) : this;
+  THtml *html = (Params.Count() == 2) ? TGlXApp::GetMainForm()->FindHtml(Params[0]) : this;
   if( html == NULL )  {
     E.ProcessingError(__OlxSrcInfo, "undefined html window");
     return;
@@ -1784,20 +1795,20 @@ void THtml::macTooltips(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     if( Cmds[0].Equalsi("true") || Cmds[0].Equalsi("false") )
       this->SetShowTooltips( Cmds[0].ToBool() );
     else  {
-      THtml* html = TGlXApp::GetMainForm()->GetHtml( Cmds[0] );
+      THtml* html = TGlXApp::GetMainForm()->FindHtml( Cmds[0] );
       if( html == NULL )  return;
       html->SetShowTooltips( !html->GetShowTooltips() );
     }
   }
   else  {
-    THtml* html = TGlXApp::GetMainForm()->GetHtml( Cmds[0] );
+    THtml* html = TGlXApp::GetMainForm()->FindHtml( Cmds[0] );
     if( html != NULL )
       html->SetShowTooltips( Cmds[1].ToBool(), Cmds[0] );
   }
 }
 //..............................................................................
 void THtml::macUpdateHtml(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  THtml *html = (Cmds.Count() == 1) ? TGlXApp::GetMainForm()->GetHtml(Cmds[0]) : this;
+  THtml *html = (Cmds.Count() == 1) ? TGlXApp::GetMainForm()->FindHtml(Cmds[0]) : this;
   if( html == NULL )  {
     E.ProcessingError(__OlxSrcInfo, "undefined html window");
     return;
@@ -1810,7 +1821,7 @@ void THtml::macSetFonts(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 }
 //..............................................................................
 void THtml::macSetBorders(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  THtml *html = (Cmds.Count() == 2) ? TGlXApp::GetMainForm()->GetHtml(Cmds[0]) : this;
+  THtml *html = (Cmds.Count() == 2) ? TGlXApp::GetMainForm()->FindHtml(Cmds[0]) : this;
   if( html == NULL )  {
     E.ProcessingError(__OlxSrcInfo, "undefined html window");
     return;
@@ -1819,7 +1830,7 @@ void THtml::macSetBorders(TStrObjList &Cmds, const TParamList &Options, TMacroEr
 }
 //..............................................................................
 void THtml::macHtmlHome(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  THtml *html = (Cmds.Count() == 1) ? TGlXApp::GetMainForm()->GetHtml(Cmds[0]) : this;
+  THtml *html = (Cmds.Count() == 1) ? TGlXApp::GetMainForm()->FindHtml(Cmds[0]) : this;
   if( html == NULL )  {
     E.ProcessingError(__OlxSrcInfo, "undefined html window");
     return;
@@ -1828,7 +1839,7 @@ void THtml::macHtmlHome(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 }
 //..............................................................................
 void THtml::macHtmlReload(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  THtml *html = (Cmds.Count() == 1) ? TGlXApp::GetMainForm()->GetHtml(Cmds[0]) : this;
+  THtml *html = (Cmds.Count() == 1) ? TGlXApp::GetMainForm()->FindHtml(Cmds[0]) : this;
   if( html == NULL )  {
     E.ProcessingError(__OlxSrcInfo, "undefined html window");
     return;
@@ -1837,7 +1848,7 @@ void THtml::macHtmlReload(TStrObjList &Cmds, const TParamList &Options, TMacroEr
 }
 //..............................................................................
 void THtml::macHtmlLoad(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  THtml *html = (Cmds.Count() == 2) ? TGlXApp::GetMainForm()->GetHtml(Cmds[0]) : this;
+  THtml *html = (Cmds.Count() == 2) ? TGlXApp::GetMainForm()->FindHtml(Cmds[0]) : this;
   if( html == NULL )  {
     E.ProcessingError(__OlxSrcInfo, "undefined html window");
     return;
@@ -1846,7 +1857,7 @@ void THtml::macHtmlLoad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 }
 //..............................................................................
 void THtml::macHide(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  THtml *html = TGlXApp::GetMainForm()->GetHtml(Cmds[0]);
+  THtml *html = TGlXApp::GetMainForm()->FindHtml(Cmds[0]);
   if( html == NULL )  {
     //E.ProcessingError(__OlxSrcInfo, "undefined html window");
     return;
@@ -1855,7 +1866,7 @@ void THtml::macHide(TStrObjList &Cmds, const TParamList &Options, TMacroError &E
 }
 //..............................................................................
 void THtml::macHtmlDump(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  THtml *html = (Cmds.Count() == 2) ? TGlXApp::GetMainForm()->GetHtml(Cmds[0]) : this;
+  THtml *html = (Cmds.Count() == 2) ? TGlXApp::GetMainForm()->FindHtml(Cmds[0]) : this;
   if( html == NULL )  {
     E.ProcessingError(__OlxSrcInfo, "undefined html window");
     return;
@@ -2323,6 +2334,28 @@ void THtml::funGetFontName(const TStrObjList &Params, TMacroError &E)  {
 //..............................................................................
 void THtml::funGetBorders(const TStrObjList &Params, TMacroError &E)  {
   E.SetRetVal( GetBorders() );
+}
+//..............................................................................
+void THtml::funEndModal(const TStrObjList &Params, TMacroError &E)  {
+  TPopupData *pd = TGlXApp::GetMainForm()->FindHtmlEx(Params[0]);
+  if( pd == NULL )  {
+    E.ProcessingError(__OlxSrcInfo, "undefined html window");
+    return;
+  }
+  if( !pd->Dialog->IsModal() )  {
+    E.ProcessingError(__OlxSrcInfo, "non-modal html window");
+    return;
+  }
+  pd->Dialog->EndModal( Params[1].ToInt() );
+}
+//..............................................................................
+void THtml::funShowModal(const TStrObjList &Params, TMacroError &E)  {
+  TPopupData *pd = TGlXApp::GetMainForm()->FindHtmlEx(Params[0]);
+  if( pd == NULL )  {
+    E.ProcessingError(__OlxSrcInfo, "undefined html window");
+    return;
+  }
+  E.SetRetVal( pd->Dialog->ShowModal() );
 }
 //..............................................................................
 //..............................................................................

@@ -34,7 +34,7 @@ struct SettingsFile  {
     src_for_dest,     // source for dest, local or remote (repository)
     update_interval,
     olex2_port;
-
+  bool ask_for_update;
   const olxstr source_file;
 
   TStrList extensions_to_skip, files_to_skip;

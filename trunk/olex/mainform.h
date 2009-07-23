@@ -630,7 +630,8 @@ public:
   const olxstr& GetStructureOlexFolder();
   float GetHtmlPanelWidth() const  {  return FHtmlPanelWidth;  }
   inline THtml* GetHtml()  const {  return FHtml; }
-  THtml* GetHtml(const olxstr& popupName) const;
+  THtml* FindHtml(const olxstr& popupName) const;
+  TPopupData* FindHtmlEx(const olxstr& popupName) const;
   inline const olxstr& GetCurrentLanguageEncodingStr()  const  {
     return Dictionary.GetCurrentLanguageEncodingStr();
   }
