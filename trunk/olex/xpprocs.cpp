@@ -5075,7 +5075,13 @@ void TMainForm::macPopup(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     //pd->Dialog->SetWindowStyle( iBorder );
     //pd->Dialog->SetSize(x, y, width, height, wxSIZE_USE_EXISTING);
     //pd->Dialog->SetTitle( title );
-    pd->Html->LoadPage( uiStr(Cmds[1]) );
+    THtml* ph = FHtml;
+    FHtml = pd->Html;
+    try  {
+      pd->Html->LoadPage( Cmds[1].u_str() );
+    }
+    catch( ... )  {}
+    FHtml = ph;
     pd->Html->SetHomePage(TutorialDir + Cmds[1]);
     if( !pd->Dialog->IsShown() && !Options.Contains('s'))  
       pd->Dialog->Show();
