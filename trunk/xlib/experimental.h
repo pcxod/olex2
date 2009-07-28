@@ -3,6 +3,8 @@
 #include "xbase.h"
 #include "threex3.h"
 #include "chemdata.h"
+#include "library.h"
+#include "macroerror.h"
 
 #ifndef _NO_PYTHON
   #include "pyext.h"
