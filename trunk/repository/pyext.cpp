@@ -19,6 +19,7 @@
 #include "estrlist.h"
 #include "function.h"
 #include "macroerror.h"
+#include "eutf8.h"
 
 #include <stdarg.h>
 

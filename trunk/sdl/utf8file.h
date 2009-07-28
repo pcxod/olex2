@@ -72,7 +72,7 @@ public:
     int fl = io.GetSize() - io.GetPosition();
     char * bf = new char [fl+1];
     io.Read(bf, fl);
-    list.Strtok( TUtf8::Decode(bf, fl), '\n');
+    list.Strtok( TUtf8::Decode(bf, fl), '\n', false);
     delete [] bf;
     for(int i=0; i < list.Count(); i++ )
       if( list[i].EndsWith('\r') )  
@@ -83,7 +83,7 @@ public:
     int fl = file.Length() - file.GetPosition();
     char * bf = new char [fl+1];
     file.Read(bf, fl);
-    list.Strtok( TUtf8::Decode(bf, fl), '\n');
+    list.Strtok( TUtf8::Decode(bf, fl), '\n', false);
     delete [] bf;
     for(int i=0; i < list.Count(); i++ )
       if( list[i].EndsWith('\r') )  
