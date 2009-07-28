@@ -1,8 +1,6 @@
 #include "experimental.h"
 #include "dataitem.h"
 #include "pers_util.h"
-#include "library.h"
-#include "macroerror.h"
 
 //..................................................................................................
 bool ExperimentalDetails::SetTemp(const olxstr& t)  {

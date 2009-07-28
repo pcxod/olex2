@@ -908,6 +908,10 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath="..\..\..\repository\httpfs.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\repository\integration.cpp"
 				>
 			</File>
@@ -1065,10 +1069,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\repository\url.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\repository\winhttpfs.cpp"
 				>
 			</File>
 			<File
