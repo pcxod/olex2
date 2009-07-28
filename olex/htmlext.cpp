@@ -582,7 +582,11 @@ TAG_HANDLER_PROC(tag)  {
     }
     else  {
       TStrList list;
+#ifdef _UNICODE
+      TUtf8File::ReadLines(*ios, list, false);
+#else
       list.LoadFromTextStream(*ios);
+#endif
       Tree->LoadFromStrings(list);
       delete ios;
     }
@@ -601,7 +605,11 @@ TAG_HANDLER_PROC(tag)  {
       if( ios == NULL )
         TBasicApp::GetLog().Error(olxstr("THTML: could not locate list source: \'") << src <<  '\'');
       else  {
+#ifdef _UNICODE
+      TUtf8File::ReadLines(*ios, itemsList, false);
+#else
         itemsList.LoadFromTextStream( *ios );
+#endif
         delete ios;
       }
     }
@@ -734,7 +742,13 @@ void THtmlSwitch::UpdateFileIndex()  {
     TBasicApp::GetLog().Error( olxstr("THtmlSwitch::File does not exist: ") << FN );
     return;
   }
-  FStrings.LoadFromTextStream(*is);
+#ifdef _UNICODE
+  TStrList sl;
+  TUtf8File::ReadLines(*is, sl, false);
+  FStrings.Assign(sl);
+#else
+  FString.LoadFromtextStream(*is);
+#endif
   delete is;
   for( int i=0; i < FStrings.Count(); i++ )  {
     // replace the parameters with their values
@@ -858,7 +872,11 @@ void THtmlLink::ToStrings(TStrList &List) {
     return;
   }
   TStrList SL;
+#ifdef _UNICODE
+  TUtf8File::ReadLines(*is, SL, false);
+#else
   SL.LoadFromTextStream(*is);
+#endif
   delete is;
   List.AddList(SL);
 }

@@ -40,7 +40,8 @@ void THttpFileSystem::GetAddress(struct sockaddr* Result)  {
   memset(&Address, 0, sizeof(Address));
 
   olxstr HostAdd = Url.HasProxy() ? Url.GetProxy().GetHost() : Url.GetHost();
-  Host = gethostbyname( HostAdd.c_str() );
+  CString cstr = HostAdd;
+  Host = gethostbyname( cstr.c_str() );
   if( Host != NULL )  {
     Address.sin_family  = AF_INET;
     Address.sin_port    = htons( (unsigned short)(Url.HasProxy() ? Url.GetProxy().GetPort() : Url.GetPort()) );
