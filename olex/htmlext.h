@@ -123,7 +123,7 @@ public:
 
 class THtmlSwitch: public AHtmlObject {
 protected:
-  olxstr FName, FFileName;
+  olxstr FName;
   short FFileIndex;  // the file index
   TStrList  FFiles;
   TStrPObjList<olxstr,AHtmlObject*> FStrings;  // represents current content of the switch
@@ -148,6 +148,7 @@ public:
   const olxstr &File(int ind) const {  return FFiles[ind]; }
   void ClearFiles()  {  FFiles.Clear(); }
   void AddFile(const olxstr &FN){ FFiles.Add(FN); }
+  const olxstr& CurrentFile() const {  return FFileIndex == -1 ? EmptyString : FFiles[FFileIndex];  }
 
   TStrPObjList<olxstr,AHtmlObject*>& Strings()  {  return FStrings; }
   inline int SwitchCount() const {  return FSwitches.Count(); }

@@ -25,6 +25,7 @@ TLangDict::~TLangDict()  {  Clear();  }
 void TLangDict::Clear()  {
   for( int i=0; i < Records.Count(); i++ )
     delete Records.GetObject(i);
+  Records.Clear();
 }
 //..............................................................................
 const olxstr& TLangDict::Translate(const olxstr& Phrase) const  {
@@ -37,6 +38,7 @@ const olxstr& TLangDict::Translate(const olxstr& Phrase) const  {
 }
 //..............................................................................
 void TLangDict::SetCurrentLanguage(const olxstr& fileName, const olxstr& lang)  {
+  Clear();
   TEFile f( fileName, "rb" );
   int Utf8Encoding = 0;
   f.Read( &Utf8Encoding, 3);

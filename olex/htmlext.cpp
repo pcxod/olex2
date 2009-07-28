@@ -743,11 +743,9 @@ void THtmlSwitch::UpdateFileIndex()  {
     return;
   }
 #ifdef _UNICODE
-  TStrList sl;
-  TUtf8File::ReadLines(*is, sl, false);
-  FStrings.Assign(sl);
+  TUtf8File::ReadLines(*is, FStrings, false);
 #else
-  FString.LoadFromtextStream(*is);
+  FStrings.LoadFromtextStream(*is);
 #endif
   delete is;
   for( int i=0; i < FStrings.Count(); i++ )  {
@@ -755,8 +753,10 @@ void THtmlSwitch::UpdateFileIndex()  {
     if( FStrings[i].IndexOf('#') != -1 )  {
       // "key word parameter"
       FStrings[i].Replace( "#switch_name", FName );
-      if( FParent != NULL )
+      if( FParent != NULL )  {
         FStrings[i].Replace( "#parent_name", FParent->Name() );
+        FStrings[i].Replace( "#parent_file", FParent->CurrentFile() );
+      }
 
       for( int j=0; j < FParams.Count(); j++ )
         FStrings[i].Replace( olxstr('#') << FParams.GetName(j), FParams.GetValue(j) );
@@ -769,7 +769,7 @@ void THtmlSwitch::UpdateFileIndex()  {
 //..............................................................................
 bool THtmlSwitch::ToFile()  {
   if( FSwitches.IsEmpty() )  return true;
-  if( FFileName.IsEmpty() )  return true;
+  if( CurrentFile().IsEmpty() )  return true;
   for( int i=0; i < FStrings.Count(); i++ )  {
     if( FStrings.GetObject(i) )  {
       AHtmlObject* HO = FStrings.GetObject(i);
@@ -779,7 +779,11 @@ bool THtmlSwitch::ToFile()  {
       }
     }
   }
-  FStrings.SaveToFile(FFileName);
+#ifdef _UNICODE
+  TUtf8File::WriteLines(CurrentFile(), FStrings, false);
+#else
+  FStrings.SaveToFile(CurrentFile());
+#endif
   return true;
 }
 //..............................................................................

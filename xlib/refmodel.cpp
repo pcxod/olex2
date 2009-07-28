@@ -468,7 +468,7 @@ RefinementModel::HklStat& RefinementModel::FilterHkl(TRefList& out, RefinementMo
       _HklStat.OmittedReflections++;
       continue;
     }
-    vec3i chkl(r.GetH(), r.GetK(), r.GetL());
+    vec3i chkl = r.GetHkl();
     if( transform_hkl )
       r.MulHklR(chkl, HKLF_mat);
 
