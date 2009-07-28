@@ -185,6 +185,11 @@ short UpdateAPI::InstallPlugin(AActionHandler* d_lsnr, AActionHandler* e_lsnr, c
     PatchAPI::UnlockUpdater();
     return updater::uapi_InvaildRepository;
   }
+  if( is == NULL )  {
+    delete fs;
+    PatchAPI::UnlockUpdater();
+    return updater::uapi_NoSource;
+  }
   try  {
     zip_fn = (TBasicApp::GetBaseDir() + name) << ".zip"; 
     TEFile src_f(zip_fn, "w+b");
