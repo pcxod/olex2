@@ -58,7 +58,8 @@ public:
   virtual inline size_t Write(const wchar_t* bf, size_t size)   { return IDataOutputStream::Write( TUtf8::Encode(bf, size) );  }
   virtual inline size_t Writenl(const wchar_t* bf, size_t size) { return IDataOutputStream::Writenl( TUtf8::Encode(bf, size) );  }
 
-  static void ReadLines(IInputStream& io, TWStrList& list, bool CheckHeader=true)  {
+  template <class T>
+  static void ReadLines(IInputStream& io, TTStrList<WString,T>& list, bool CheckHeader=true)  {
     if( io.GetSize() >= 3 )  {
       uint32_t header = 0;
       io.Read(&header, 3);
@@ -72,17 +73,20 @@ public:
     int fl = io.GetSize() - io.GetPosition();
     char * bf = new char [fl+1];
     io.Read(bf, fl);
+    list.Clear();
     list.Strtok( TUtf8::Decode(bf, fl), '\n', false);
     delete [] bf;
     for(int i=0; i < list.Count(); i++ )
       if( list[i].EndsWith('\r') )  
         list[i].SetLength( list[i].Length() -1 );
   }
-  static void ReadLines(const olxstr& fn, TWStrList& list, bool CheckHeader=true)  {
+  template <class T>
+  static void ReadLines(const olxstr& fn, TTStrList<WString,T>& list, bool CheckHeader=true)  {
     TUtf8File file(fn, "rb", CheckHeader);
     int fl = file.Length() - file.GetPosition();
     char * bf = new char [fl+1];
     file.Read(bf, fl);
+    list.Clear();
     list.Strtok( TUtf8::Decode(bf, fl), '\n', false);
     delete [] bf;
     for(int i=0; i < list.Count(); i++ )
