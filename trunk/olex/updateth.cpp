@@ -7,7 +7,10 @@
 
 
 UpdateThread::UpdateThread(const olxstr& patch_dir) : time_out(0), PatchDir(patch_dir), 
-    srcFS(NULL), destFS(NULL), Index(NULL), _DoUpdate(false), UpdateSize(0)  { }
+    srcFS(NULL), destFS(NULL), Index(NULL), _DoUpdate(false), UpdateSize(0)  
+{ 
+	OnDownload = &Actions.NewQueue("ON_DOWNLOAD");
+}
 //....................................................................................
 void UpdateThread::DoInit()  {
   if( !TBasicApp::HasInstance() || Terminate ) 
@@ -19,6 +22,7 @@ void UpdateThread::DoInit()  {
     Index = new TFSIndex(*srcFS);
     destFS = new TOSFileSystem( TBasicApp::GetBaseDir() );
     uapi.EvaluateProperties(properties);
+    srcFS->OnProgress->Add( new DListenerProxy(*OnDownload) );
   }
   catch(const TExceptionBase& exc)  {
     if( TBasicApp::HasInstance() )
@@ -87,7 +91,6 @@ int UpdateThread::Run()  {
         return 0;
       }
     }
-    //Index->OnProgress->Add(new DListener);
     Index->Synchronise(*destFS, properties, skip ? NULL : &toSkip, &dfs, &cmds);
     // try to update the updater, should check the name of executable though!
     if( dfs.Exists(updater_file) )

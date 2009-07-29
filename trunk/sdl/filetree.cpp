@@ -119,6 +119,8 @@ void TFileTree::Folder::_ExpandNewFolder(DiffFolder& df, bool is_src) const {
 }
 //......................................................................................
 void TFileTree::Folder::CalcMergedTree(const Folder& f, DiffFolder& df) const {
+  df.Src = this;
+  df.Dest = &f;
   for( int i=0; i < Files.Count(); i++ )  {
     int ind = FindSortedIndexOf( f.Files, Files[i].GetName() );
     df.SrcFiles.Add(&Files[i]);

@@ -204,7 +204,8 @@ enum
   ID_gl2ps,
   
   ID_PictureExport,
-  ID_UpdateThreadTerminate
+  ID_UpdateThreadTerminate,
+  ID_UpdateThreadDownload
 };
 
 class TObjectVisibilityChange: public AActionHandler
@@ -1264,6 +1265,7 @@ separated values of Atom Type and radius, an entry a line" );
   if( FXApp->IsBaseDirWriteable() )  {
     _UpdateThread = new UpdateThread(FXApp->GetSharedDir() + "patch");
     _UpdateThread->OnTerminate->Add(this, ID_UpdateThreadTerminate);
+    _UpdateThread->OnDownload->Add(this, ID_UpdateThreadDownload);
     _UpdateThread->Start();
   }
 }
@@ -2000,6 +2002,18 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
   //}
   else if( MsgId == ID_UpdateThreadTerminate )
     _UpdateThread = NULL;
+  else if( MsgId == ID_UpdateThreadDownload )  {
+    if( MsgSubId == msiExecute && Data != NULL && EsdlInstanceOf(*Data, TOnProgress) )  {
+      TOnProgress& pg = *(TOnProgress*)Data;
+      StatusBar->SetStatusText( 
+        (olxstr("Downloading ") << pg.GetAction() << ' ' << 
+        olxstr::FormatFloat(2, pg.GetPos()*100/(pg.GetMax()+1)) << '%').u_str()
+      );
+      TBasicApp::Sleep(10);
+    }
+    else if( MsgSubId == msiExit )
+      StatusBar->SetStatusText( TBasicApp::GetBaseDir().u_str() );
+  }
   else if( MsgId == ID_TIMER )  {
     FTimer->OnTimer()->SetEnabled( false );
     // execute tasks ...

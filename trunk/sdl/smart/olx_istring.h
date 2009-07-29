@@ -207,6 +207,11 @@ public:
   inline TTSString& operator = (TC * const &str)  {  return AssignCharStr(str);  }
   inline TTSString& operator = (const TC * str)   {  return AssignCharStr(str);  }
   //............................................................................
+  inline TTSString& operator = (bool v) {
+    (*this) = (v ? TrueString : FalseString);
+    return *this;
+  }
+  //............................................................................
   TTSString& operator = (const TC& ch)  {
     T::_Start = 0;
     T::_Increment = 8;
@@ -1264,6 +1269,40 @@ public:
     rv.Insert(ch, 0, count);
     return rv;
   }
+  //............................................................................
+  // converts a wide char string into multibyte string properly (using curent locale)
+  static CString Convert(const wchar_t* wstr, size_t len=~0)  {
+    const size_t sz = (len == ~0 ? wcslen(wstr) : len);
+    if( sz == NULL )
+      return CEmptyString;
+    const int res = wcstombs(NULL, wstr, sz);
+    if( res == -1 )
+      TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "could not convert wcs to mbs");
+    CString str;
+    str._Length = res;
+    str.SData = new Buffer(str._Length+str._Increment);
+    wcstombs(str.SData->Data, wstr, sz);
+    return str;
+  }
+  static CString Convert(const WString& str)  {  return Convert(str.wc_str(), str.Length());  }
+  //............................................................................
+  // converts a multibyte string into wide char string properly
+  static WString Convert(const char* mbs, size_t len=~0)  {
+    const size_t sz = (len == ~0 ? strlen(mbs) : len);
+    if( sz == NULL )
+      return WEmptyString;
+    const int res = mbstowcs(NULL, mbs, sz);
+    if( res == -1 )
+      TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "could not convert mbs to wcs");
+    WString str;
+    str._Length = res;
+    str.SData = new Buffer(str._Length+str._Increment);
+    mbstowcs(str.SData->Data, mbs, sz);
+    return str;
+  }
+  static WString Convert(const CString& str)  {  return Convert(str.c_str(), str.Length());  }
+  //............................................................................
+  //............................................................................
   //............................................................................
   olxch Last() const {  
     if( T::_Length == 0 )

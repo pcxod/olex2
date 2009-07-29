@@ -113,7 +113,6 @@ public:
     setTypeValue( printFormat(v), v);
     TrimFloat();
   }
-  /* this is a simple conversion utility functions - no encoding is assumed */
   virtual ~TCString()  {}
   TCString& operator << (const CharW &v);
   template <typename T> inline TCString& operator << (const T &v) {

@@ -2,7 +2,7 @@ object dlgSync: TdlgSync
   Left = 478
   Top = 208
   Width = 414
-  Height = 483
+  Height = 479
   Caption = 'Synchronise'
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -16,8 +16,8 @@ object dlgSync: TdlgSync
   object tvFrom: TTreeView
     Left = 0
     Top = 29
-    Width = 406
-    Height = 401
+    Width = 398
+    Height = 397
     Align = alClient
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
@@ -38,7 +38,7 @@ object dlgSync: TdlgSync
   object ToolBar1: TToolBar
     Left = 0
     Top = 0
-    Width = 406
+    Width = 398
     Height = 29
     Caption = 'ToolBar1'
     TabOrder = 1
@@ -54,8 +54,8 @@ object dlgSync: TdlgSync
   end
   object sbBar: TStatusBar
     Left = 0
-    Top = 430
-    Width = 406
+    Top = 426
+    Width = 398
     Height = 19
     Panels = <
       item

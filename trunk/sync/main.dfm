@@ -2,7 +2,7 @@ object fMain: TfMain
   Left = 387
   Top = 182
   Width = 677
-  Height = 530
+  Height = 526
   Caption = 'Sync'
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -81,8 +81,8 @@ object fMain: TfMain
   end
   object sbSyncStatus: TStatusBar
     Left = 0
-    Top = 477
-    Width = 669
+    Top = 470
+    Width = 663
     Height = 19
     Panels = <
       item
