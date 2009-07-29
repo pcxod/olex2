@@ -1,5 +1,6 @@
 #include "olx_cstring.h"
 #include "olx_wstring.h"
+#include <locale.h>
 
 #include "../egc.h"
 

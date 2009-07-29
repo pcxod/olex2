@@ -31,20 +31,22 @@ class UpdateThread : public AOlxThread  {
   }
   void DoInit();
   virtual void OnSendTerminate();
-  class DListener : public AActionHandler  {
+  class DListenerProxy : public AActionHandler  {
+    TActionQueue& dest;
   public:
+    DListenerProxy(TActionQueue& _dest) : dest(_dest) {}
     virtual bool Enter(const IEObject* Sender, const IEObject* data)  {
-      return true;
+      return dest.Enter(Sender, data);
     }
     virtual bool Execute(const IEObject* Sender, const IEObject* data)  {
-      if( data == NULL || !EsdlInstanceOf(*data, TOnProgress) )  return false;
-      TBasicApp::GetLog().Info( olxstr("Downloading: ") << ((TOnProgress*)data)->GetAction() );
-      return true;
+      return dest.Execute(Sender, data);
+      //TBasicApp::GetLog().Info( olxstr("Downloading: ") << ((TOnProgress*)data)->GetAction() );
     }
     virtual bool Exit(const IEObject* Sender, const IEObject* data)  {
-      return true;
+      return dest.Exit(Sender, data);
     }
   };
+  TActionQList Actions;
 public:
   UpdateThread(const olxstr& patch_dir);
 
@@ -53,6 +55,8 @@ public:
   uint64_t GetUpdateSize() const {  return UpdateSize;  }
   void ResetUpdateSize() {  UpdateSize = 0;  }
   virtual int Run();
+
+  TActionQueue* OnDownload;
 };
 
 #endif

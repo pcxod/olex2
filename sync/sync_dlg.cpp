@@ -46,11 +46,9 @@ int TdlgSync::GetFileNodeState(TFileTree::DiffFolder& fn)  {
   else  {
     if( fn.Src == NULL )
       return iiUptoDate;
-    if( fn.Dest->Files.IsEmpty() && fn.Dest->Folders.IsEmpty() &&
-        !(fn.Src->Files.IsEmpty() && fn.Src->Folders.IsEmpty() ) )
+    if( fn.Dest->IsEmpty() && !fn.Src->IsEmpty() )
       return iiNew;
-    if( fn.Dest->Files.IsEmpty() && fn.Dest->Folders.IsEmpty() &&
-        fn.Src->Files.IsEmpty() && fn.Src->Folders.IsEmpty() )
+    if( fn.Dest->IsEmpty() && fn.Src->IsEmpty() )
       return iiUptoDate;
     for( int i=0; i < fn.SrcFiles.Count(); i++ )  {
       if( fn.SrcFiles[i] != NULL )  {
@@ -77,9 +75,9 @@ int TdlgSync::GetFileNodeState(TFileTree::DiffFolder& fn)  {
 //---------------------------------------------------------------------------
 void TdlgSync::FileNodeToTreeNode(TFileTree::DiffFolder& fn, TTreeView& tv, TTreeNode* tn)  {
   TTreeNode* this_node = (tn != NULL) ?
-   this_node = tv.Items->AddChild(tn, (fn.Src != NULL) ? fn.Src->Name.u_str() : fn.Dest->Name.u_str())
+   this_node = tv.Items->AddChild(tn, (fn.Src != NULL) ? fn.Src->GetName().u_str() : fn.Dest->GetName().u_str())
   :
-   this_node = tv.Items->Add(tn, (fn.Src != NULL) ? fn.Src->Name.u_str() : fn.Dest->Name.u_str());
+   this_node = tv.Items->Add(tn, (fn.Src != NULL) ? fn.Src->GetName().u_str() : fn.Dest->GetName().u_str());
   this_node->ImageIndex = GetFileNodeState(fn);
   this_node->SelectedIndex = this_node->ImageIndex;
   this_node->Data = new NodeData(fn, -1, this_node->ImageIndex);
@@ -119,8 +117,8 @@ void TdlgSync::ClearTree()  {
 //---------------------------------------------------------------------------
 void TdlgSync::Init(TFileTree& src, TFileTree& dest)  {
   ClearTree();
-  Root = new TFileTree::DiffFolder(&src.Root, &dest.Root);
-  src.Root.CalcMergedTree(dest.Root, *Root);
+  Root = new TFileTree::DiffFolder();
+  src.CalcMergedTree(dest, *Root);
   FileNodeToTreeNode(*Root, *tvFrom, NULL);
   CalcSize();
 }
@@ -130,7 +128,7 @@ void TdlgSync::CalcSize()  {
   for( int i=0; i < tvFrom->Items->Count; i++ )  {
     NodeData& nd = *(NodeData*)tvFrom->Items->Item[i]->Data;
     if( nd.index != -1 && (nd.action == iiNew || nd.action == iiUpdate) )
-      sz += nd.folder.Src->Files[nd.index].GetSize();
+      sz += nd.folder.Src->GetFile(nd.index).GetSize();
   }
   double sz_mb = sz/(1024*1024);
   sbBar->Panels->Items[0]->Text = AnsiString("Merge size: ") + AnsiString::FormatFloat("0.00", sz_mb) + " Mb";
@@ -225,7 +223,7 @@ void __fastcall TdlgSync::sbRunClick(TObject *Sender)  {
         nd.folder.Src = NULL;
     }
     else if( nd.action != iiUpdate )  {
-      nd.folder.Src->Files.NullItem(nd.index);
+      nd.folder.Src->NullFileEntry(nd.index);
     }
   }
   ModalResult = mrOk;

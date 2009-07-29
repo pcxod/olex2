@@ -11,11 +11,11 @@ public:
   typedef TPtrList<const TFileListItem> TFilePtrList;
 
   template <class FT> struct TDiffFolder  {
-    FT *Src, *Dest;
+    const FT *Src, *Dest;
     // the size is the same but some items might be missing
     TFilePtrList SrcFiles, DestFiles;
     TTypeList< TDiffFolder<FT> > Folders;
-    TDiffFolder(FT* src, FT* dest) : Src(src), Dest(dest)  {  }
+    TDiffFolder(const FT* src=NULL, const FT* dest=NULL) : Src(src), Dest(dest)  {  }
   };
 ///////////////////////////////////////////////////////////////////////////////////////
   class Folder  {
@@ -93,6 +93,10 @@ public:
     }
     const olxstr& GetName() const {  return Name;  }
     const olxstr& GetFullPath() const {  return FullPath;  }
+    int FileCount() const {  return Files.Count();  }
+    const TFileListItem& GetFile(int i) const {  return Files[i];  }
+    void NullFileEntry(int i) const {  Files.NullItem(i);  }
+    bool IsEmpty() const {  return Files.IsEmpty() && Folders.IsEmpty();  }
     // calculates total size of the tree
     uint64_t CalcSize() const;
     // returns total number of files in folders

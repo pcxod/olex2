@@ -40,8 +40,7 @@ void THttpFileSystem::GetAddress(struct sockaddr* Result)  {
   memset(&Address, 0, sizeof(Address));
 
   olxstr HostAdd = Url.HasProxy() ? Url.GetProxy().GetHost() : Url.GetHost();
-  CString cstr = HostAdd;
-  Host = gethostbyname( cstr.c_str() );
+  Host = gethostbyname( CString(HostAdd).c_str() );  // c_str() on unicode is not thread safe!
   if( Host != NULL )  {
     Address.sin_family  = AF_INET;
     Address.sin_port    = htons( (unsigned short)(Url.HasProxy() ? Url.GetProxy().GetPort() : Url.GetPort()) );
@@ -114,13 +113,13 @@ IInputStream* THttpFileSystem::_DoOpenFile(const olxstr& Source)  {
 
   bool FileAttached = false;
 
-  olxstr Tmp = Url.GetFullHost();
+  CString Tmp = Url.GetFullHost();
   Tmp << '/' << FileName;
 
   Tmp.Replace(' ', "%20");
   sprintf(Request, "GET %s HTTP/1.0\n\n", Tmp.c_str());
   if( Url.HasProxy() && !Url.GetProxy().GetUser().IsEmpty() && !Url.GetProxy().GetPassword().IsEmpty() )
-    sprintf(Request, "Authorization: %s\n\n", Url.GenerateHTTPAuthString().c_str());
+    sprintf(Request, "Authorization: %s\n\n", CString(Url.GenerateHTTPAuthString()).c_str());
 
   send(Socket, Request, strlen(Request), 0);
   while( ThisRead )  {
