@@ -76,7 +76,7 @@ extern const WString &WNullString;
 #endif
 
 template <class T, typename TC> class TTSString : public T  {
-  void InitFromCharStr( const TC* str, size_t len)  {
+  void InitFromCharStr(const TC* str, size_t len)  {
     T::_Start = 0;
     T::_Increment = 8;
     T::_Length = len;
@@ -93,7 +93,8 @@ template <class SC>
     T::_Length = str._Length;
     T::_Start = str._Start;
 #endif
-    if( T::SData != NULL )  T::SData->RefCnt++;
+    if( T::SData != NULL )  
+      T::SData->RefCnt++;
     T::_Increment = 8;
   }
   TTSString& AssignCharStr(const TC *str, size_t len=~0)  {
@@ -150,16 +151,11 @@ public:
   //............................................................................
   TTSString(const TTIString<TC>& str)  { InitFromString(str);  }
   //............................................................................
-  // creates a string from existing data
-  static TTSString Adopt(TC* data, size_t length)  {
-    TTSString<T,TC> rv;
-    rv.SData->Data = data;
-    rv.SData->RefCnt = 1;
-    rv.SData->Length = length;
-    rv._Length = length;
-    return rv;
-  }
-//  TTSString(const char *str) : T(str) {  }
+  // allocates requested size
+  void Allocate(size_t sz)  {
+    T::checkBufferForModification(sz);
+    T::_Length = sz;
+  } 
 
   template <class T1, typename TC1> TTSString(const TTSString<T1,TC1>& v) : T((const T1&)v)  {  }
   //............................................................................
@@ -1232,7 +1228,6 @@ public:
     return *this;
   }
   //............................................................................
-  
   void FromBinaryStream(IInputStream &ios)  {
     uint32_t code, len, charsize;
     ios.Read(&code, sizeof(uint32_t));
@@ -1270,86 +1265,30 @@ public:
     return rv;
   }
   //............................................................................
-  // converts a wide char string into multibyte string properly (using curent locale)
-  static CString Convert(const wchar_t* wstr, size_t len=~0)  {
-    const size_t sz = (len == ~0 ? wcslen(wstr) : len);
-    if( sz == NULL )
-      return CEmptyString;
-    const int res = wcstombs(NULL, wstr, sz);
-    if( res == -1 )
-      TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "could not convert wcs to mbs");
-    CString str;
-    str._Length = res;
-    str.SData = new Buffer(str._Length+str._Increment);
-    wcstombs(str.SData->Data, wstr, sz);
-    return str;
-  }
-  static CString Convert(const WString& str)  {  return Convert(str.wc_str(), str.Length());  }
-  //............................................................................
-  // converts a multibyte string into wide char string properly
-  static WString Convert(const char* mbs, size_t len=~0)  {
-    const size_t sz = (len == ~0 ? strlen(mbs) : len);
-    if( sz == NULL )
-      return WEmptyString;
-    const int res = mbstowcs(NULL, mbs, sz);
-    if( res == -1 )
-      TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "could not convert mbs to wcs");
-    WString str;
-    str._Length = res;
-    str.SData = new Buffer(str._Length+str._Increment);
-    mbstowcs(str.SData->Data, mbs, sz);
-    return str;
-  }
-  static WString Convert(const CString& str)  {  return Convert(str.c_str(), str.Length());  }
-  //............................................................................
-  //............................................................................
-  //............................................................................
   olxch Last() const {  
     if( T::_Length == 0 )
       TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "empty string");
     return T::SData->Data[T::_Start+T::_Length-1];
   }
   //............................................................................
+  // just checks if string contains any chars > 127
+  template <class AC> static bool o_needs_converting(const AC* data, size_t len) {
+    for( int i=0; i < len; i++ )
+      if( data[i] > 127 )
+        return true;
+    return false;
+  }
+  //............................................................................
+  bool NeedsConverting() const {  return o_needs_converting(T::Data(), T::_Length);  }
+  // converts a wide char string into multibyte string properly (using curent locale)
+  static CString WStr2CStr(const wchar_t* wstr, size_t len=~0);
+  static CString WStr2CStr(const WString& str);
+  // converts a multibyte string into wide char string properly
+  static WString CStr2WStr(const char* mbs, size_t len=~0);
+  static WString CStr2WStr(const CString& str);
+  //............................................................................
   virtual IEObject* Replicate() const {  return new TTSString<T,TC>(*this);  }
   //............................................................................
-/*
-  int Strtok(TArrayList< TTSString<T, TC> > &toks, const TTSString<T, TC> &sep) const {
-    int cnt = toks.Count();
-    if( sep.IsEmpty() )
-      toks.Add( *this );
-    else if( sep._Length == 1 )  {
-      size_t start = 0;
-      char ch = sep[0];
-      for( size_t i=0; i < _Length; i++ )  {
-        if( Data(i) == ch )  {
-          toks.Add( TTSString<T,TC>(*this, start, i-start) );
-          start = i+1;
-        }
-      }
-      if( start < _Length )
-        toks.Add( TTSString<T,TC>(*this, start, _Length-start) );
-    }
-    else  {
-      size_t start = 0;
-      for( size_t i=0; i < _Length; i++ )  {
-        if( i+sep._Length >= _Length )  break;
-        bool found = true;
-        for( size_t j=0;  j < sep._Length; j++ )
-        if( Data(i+j) != sep[j] )  {
-          found = false;
-          break;
-        }
-        if( found )  {
-          toks.Add( TTSString<T,TC>(*this, start, i-start) );
-          start = i+sep._Length;
-        }
-      }
-      if( start < _Length )
-        toks.Add( TTSString<T,TC>(*this, start, _Length-start) );
-    }
-    return toks.Count() - cnt;
-  }
-*/  
 };
 
 EndEsdlNamespace()

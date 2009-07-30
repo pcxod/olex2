@@ -38,5 +38,6 @@ public:
     return (CaseInsensetive) ? A.Comparei( B ): A.Compare( B );
   }
 };
+
 EndEsdlNamespace()
 #endif
