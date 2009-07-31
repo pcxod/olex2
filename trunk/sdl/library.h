@@ -55,6 +55,7 @@ public:
         unsigned int argc = Functions.GetObject(list[i])->GetArgStateMask();
         if( func->GetArgStateMask() & argc )  {
           if( replace )  {
+            delete Functions.GetObject(list[i]);
             Functions.Delete(list[i]);
             break;
           }
@@ -76,6 +77,7 @@ public:
         unsigned int argc = Macros.GetObject(list[i])->GetArgStateMask();
         if( macro->GetArgStateMask() & argc )  {
           if( replace )  {
+            delete Macros.GetObject(list[i]);
             Macros.Delete(list[i]);
             break;
           }
