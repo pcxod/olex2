@@ -2037,6 +2037,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
   //}
   else if( MsgId == ID_UpdateThreadTerminate )
     _UpdateThread = NULL;
+#ifdef __WIN32__  // GTK crashes here, need a workaround...
   else if( MsgId == ID_UpdateThreadDownload )  {
     if( MsgSubId == msiExecute && Data != NULL && EsdlInstanceOf(*Data, TOnProgress) )  {
       TOnProgress& pg = *(TOnProgress*)Data;
@@ -2049,6 +2050,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
     else if( MsgSubId == msiExit )
       StatusBar->SetStatusText( TBasicApp::GetBaseDir().u_str() );
   }
+#endif
   else if( MsgId == ID_TIMER )  {
     FTimer->OnTimer()->SetEnabled( false );
     // execute tasks ...
