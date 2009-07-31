@@ -583,6 +583,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\sdl\smart\olx_istring.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\sdl\smart\olx_wstring.cpp"
 				>
 			</File>

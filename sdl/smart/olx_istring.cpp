@@ -1,5 +1,8 @@
 #include "olx_istring.h"
 
+template TTSString<TCString, char>;
+template TTSString<TWString, wchar_t>;
+
 template <class T, typename TC>
 CString esdl::TTSString<T,TC>::WStr2CStr(const wchar_t* wstr, size_t len)  {
   const size_t sz = (len == ~0 ? wcslen(wstr) : len);

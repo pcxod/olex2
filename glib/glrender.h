@@ -55,7 +55,6 @@ class TGlRenderer : public IEObject  {
   TGlGroup* FSelection;  // list of selected objects
   class TTextureManager* TextureManager;
   bool FSceneComplete;
-  void SetBasis(bool Identity = false);
 
 //__________________ perspective related stuff
   bool FPerspective;
@@ -192,6 +191,7 @@ public:
   inline int GetHeight() const {  return FHeight;  }
   inline int GetLeft()   const {  return FLeft;  }
   inline int GetTop()    const {  return FTop;  }
+  void SetBasis(bool Identity = false);
   /*an "advanced" drawing procedure which draws an object on a static image
   . Used to implement faster drawing for such objects as text input controls and frames ...
   Be sure that the object is of "a modal" type, e.g. no significant drawing activity 
