@@ -8082,6 +8082,12 @@ void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options, TMa
       TBasicApp::GetLog() << res[i][j].GetFullLabel(FXApp->XFile().GetRM(), main_resi);
   }
   TBasicApp::GetLog() << '\n' << arl.GetExpression() << '\n';
+  CString str("ã·Ð ØÖðáÞ¦ðÆ ");
+  olxstr s1(str);
+  setlocale(LC_ALL, ".855");
+  olxstr s2 = olxstr::CStr2WStr(str);
+  str = TUtf8::Encode(s2);
+  s2 = TUtf8::Decode(str);
 }
 //..............................................................................
 double Main_FindClosestDistance(const smatd_list& ml, vec3d& o_from, const TCAtom& a_to) {
