@@ -1040,10 +1040,6 @@ void THtml::ClearSwitchStates()  {
 }
 //..............................................................................
 void THtml::OnMouseDown(wxMouseEvent& event)  {
-  if( this->m_tmpLastLink != NULL )  {
-    event.Skip();
-    return;
-  }
   this->SetFocusIgnoringChildren();
   if( FMovable )  {
     FMouseX = event.GetX();

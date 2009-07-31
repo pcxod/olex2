@@ -1988,17 +1988,18 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
   if( MsgId == ID_GLDRAW && !IsIconized() )  {
     if( !FBitmapDraw )  {
       //glLoadIdentity();
-      //glRasterPos3d(0,-0.5,-1.6);
+      //glRasterPos3d(-0.5,-0.5,-1.6);
       //wxMemoryDC dc;
-      //wxBitmap bmp(300, 400);
+      //const wxSize glsz = FGlCanvas->GetSize();
+      //wxBitmap bmp(glsz.GetWidth(), glsz.GetHeight());
       //dc.SelectObject(bmp);
       //dc.SetBrush(*wxBLACK_BRUSH);
       //dc.Clear();
       //dc.SetPen(*wxBLACK_PEN);
       //wxFont wxf(12, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_LIGHT, false, wxT(""), wxFONTENCODING_ISO8859_5);
       //dc.SetFont( wxf);
-      //wxSize tsz = dc.GetTextExtent(wxT("X"));
-      //int y=400-tsz.GetY();
+      //const wxSize tsz = dc.GetTextExtent(wxT("X"));
+      //int y=glsz.GetHeight()-tsz.GetY()*2;
       //for( int i=FGlConsole->Buffer().Count()-1; i >=0; i-- )  {
       //  dc.DrawText( FGlConsole->Buffer()[i].u_str(), 0, y);
       //  y -= tsz.GetY();
@@ -2006,19 +2007,19 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
       //}
       //dc.SelectObject(wxNullBitmap);
       //wxImage img = bmp.ConvertToImage();
-      //char* bf = new char[300*400*4];
+      //char* bf = new char[glsz.GetWidth()*glsz.GetHeight()*4];
       //const unsigned char* data = img.GetData();
-      //for( int i=0; i < 300; i++ )  {
-      //  for( int j=0; j < 400; j++ )  {
-      //    const int ind1 = (j*300+i)*3;
-      //    const int ind2 = ((399-j)*300+i)*4;
+      //for( int i=0; i < glsz.GetWidth(); i++ )  {
+      //  for( int j=0; j < glsz.GetHeight(); j++ )  {
+      //    const int ind1 = (j*glsz.GetWidth()+i)*3;
+      //    const int ind2 = ((glsz.GetHeight()-j-1)*glsz.GetWidth()+i)*4;
       //    bf[ind2+0] = data[ind1+0];
       //    bf[ind2+1] = data[ind1+1];
       //    bf[ind2+2] = data[ind1+2];
       //    bf[ind2+3] = (data[ind1+0] == 0xFF && data[ind1+1] == 0xFF && data[ind1+2] == 0xFF) ? 0 : 0xFF;
       //  }
       //}
-      //glDrawPixels(300, 400, GL_RGBA, GL_UNSIGNED_BYTE, bf);
+      //glDrawPixels(glsz.GetWidth(), glsz.GetHeight(), GL_RGBA, GL_UNSIGNED_BYTE, bf);
       //delete [] bf;
       FGlCanvas->SwapBuffers();
     }
