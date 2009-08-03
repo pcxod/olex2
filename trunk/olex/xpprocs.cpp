@@ -7960,7 +7960,7 @@ void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMa
   TSpaceGroup* sg = NULL;
   try  { sg = &FXApp->XFile().GetLastLoaderSG();  }
   catch(...)  {
-    E.ProcessingError(__OlxSrcInfo, "could not locate sapce group");
+    E.ProcessingError(__OlxSrcInfo, "could not locate space group");
     return;
   }
   TArrayList<SFUtil::StructureFactor> P1SF;
@@ -7991,8 +7991,9 @@ void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMa
   float*** XData = FXApp->XGrid().Data()->Data;
   for( int i=0; i < mapX; i++ )
     for( int j=0; j < mapY; j++ )
-      for( int k=0; k < mapZ; k++ )
+      for( int k=0; k < mapZ; k++ )  {
         XData[i][j][k] = map.Data[i][j][k]; 
+        }
   FXApp->XGrid().AdjustMap();
 
   TBasicApp::GetLog() << (olxstr("Map max val ") << olxstr::FormatFloat(3, mi.maxVal) << 

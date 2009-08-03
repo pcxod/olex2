@@ -426,9 +426,7 @@ void TSGTest::WeakRefTest(const TPtrList<TSpaceGroup>& sgList, TTypeList<TElemen
     for( int j=0; j < ref_cnt; j++ )  {
       if(  Refs[j].IsSymmetric(m)  )  {
         double len = Refs[j].PhaseShift(m);
-        int ilen = (int)len;
-        len = olx_abs(len - ilen);
-        if( len < 0.01 || len > 0.99 )  {
+        if( olx_abs(len - Round(len)) < 0.01 )  {
           for( int k=0; k < UniqMatrices[i].GetB().Count(); k++ )  {
             UniqMatrices[i].GetB()[k]->B().A() += Refs[j].GetI();
             UniqMatrices[i].GetB()[k]->B().B() += Refs[j].GetS();

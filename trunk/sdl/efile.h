@@ -64,7 +64,7 @@ public:
     olxstr mask;
     int toksEnd, toksStart;
   public:
-    TFileNameMask(const olxstr& msk)  { Build(mask);  }
+    TFileNameMask(const olxstr& msk)  { Build(msk);  }
     TFileNameMask() : toksEnd(-1), toksStart(-1)  {  }
     void Build(const olxstr& mask);
     bool DoesMatch(const olxstr& str)  const;

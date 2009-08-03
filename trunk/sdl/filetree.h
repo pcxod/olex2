@@ -149,7 +149,7 @@ public:
     OnDelete = &Actions.NewQueue("ON_DELETE");
     Break = false;
   }
-  
+  inline const Folder& GetRoot() const {  return Root;  }
   void DoBreak() {  Break = true;  }
   // copies files (platform dependent, uses win API to handle huge files)
   bool CopyFile(const olxstr& from, const olxstr& to) const;

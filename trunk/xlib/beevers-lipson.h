@@ -108,6 +108,8 @@ public:
             R += T[i-min[2]]*sin_cosZ[iz][i-minInd];
           }
           double val = R.Re()/vol;
+          // may be used in the future to calculate 'flatter' maps...
+          //val = (val < 0 ? -sqrt(-val) : sqrt(val));
           sum += ((val < 0) ? -val : val);
           sq_sum += val*val;
           //if( abs_map && val < 0 )  val = -val;
