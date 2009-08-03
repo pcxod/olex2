@@ -1,0 +1,51 @@
+#ifndef __olx_sha__H
+#define __olx_sha__H
+#include "hashing.h"
+/* SHA-1 message digest implementation, for reference look at:
+  
+  http://en.wikipedia.org/wiki/SHA_hash_functions
+  Simple tests are implemented in the testsuit.cpp
+
+  (c) O Dolomanov, 2009
+*/
+
+BeginEsdlNamespace()
+
+class SHA1Impl  {
+  unsigned char digest[20];
+  uint32_t state[5], bf[80];
+protected:
+  SHA1Impl();
+  void digest64(const uint32_t* msg);
+  CString formatDigest(); 
+};
+
+template <class Impl>
+class SHA2  {
+protected:
+  static uint32_t table[];
+  unsigned char digest[64];
+  uint32_t state[8], bf[64];
+  SHA2() {}
+protected:
+  void digest64(const uint32_t* msg);
+};
+
+class SHA256Impl : public SHA2<SHA256Impl> {
+protected:
+  SHA256Impl();
+  CString formatDigest(); 
+};
+
+class SHA224Impl : public SHA2<SHA224Impl> {
+protected:
+  SHA224Impl();
+  CString formatDigest(); 
+};
+
+typedef HashingBase<SHA1Impl, HashingUtilsBE> SHA1;
+typedef HashingBase<SHA256Impl, HashingUtilsBE> SHA256;
+typedef HashingBase<SHA224Impl, HashingUtilsBE> SHA224;
+
+EndEsdlNamespace()
+#endif
