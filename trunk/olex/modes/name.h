@@ -45,6 +45,9 @@ protected:
       // 2009.07.17 --
       if( xa.Atom().GetAtomInfo() != nd.GetAtomInfo() )
         continue;
+      // 2009.08.03 --
+      if( xa.Atom().CAtom().GetPart() != nd.CAtom().GetPart() )
+        continue;
       outgoing.Add( app.GetAtom(nd.GetTag()) );
     }
     if( outgoing.Count() == 1 )  {
