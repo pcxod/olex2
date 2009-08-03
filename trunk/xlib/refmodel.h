@@ -436,13 +436,8 @@ of components 1 ... m
     if( MERG != 0 )  {
       smatd_list ml;
       sg.GetMatrices(ml, mattAll^mattIdentity);
-      if( (MERG == 4 || MERG == 3) && !sg.IsCentrosymmetric() )  {  // merge all
-        const int mc = ml.Count();
-        for( int i=0; i < mc; i++ )
-          ml.AddNew( ml[i] ) *= -1;
-        ml.AddNew().I() *= -1;
-      }
-      stats = RefMerger::Merge<Merger>(ml, refs, out, Omits);
+      bool mergeFP = (MERG == 4 || MERG == 3) && !sg.IsCentrosymmetric();
+      stats = RefMerger::Merge<Merger>(ml, refs, out, Omits, mergeFP);
     }
     else
       stats = RefMerger::MergeInP1<Merger>(refs, out, Omits);
@@ -455,13 +450,7 @@ of components 1 ... m
     FilterHkl(refs, stats);
     smatd_list ml;
     sg.GetMatrices(ml, mattAll^mattIdentity);
-    if( !sg.IsCentrosymmetric() )  {  // merge all
-      const int mc = ml.Count();
-      for( int i=0; i < mc; i++ )
-        ml.AddNew( ml[i] ) *= -1;
-      ml.AddNew().I() *= -1;
-    }
-    stats = RefMerger::Merge<Merger>(ml, refs, out, Omits);
+    stats = RefMerger::Merge<Merger>(ml, refs, out, Omits, !sg.IsCentrosymmetric());
     return stats;
   }
   // P-1 merged, filtered
@@ -471,7 +460,7 @@ of components 1 ... m
     FilterHkl(refs, stats);
     smatd_list ml;
     ml.AddNew().I() *= -1;
-    stats = RefMerger::Merge<Merger>(ml, refs, out, Omits);
+    stats = RefMerger::Merge<Merger>(ml, refs, out, Omits, true);
     return stats;
   }
   // P1 merged, unfiltered

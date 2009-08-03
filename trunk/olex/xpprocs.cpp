@@ -6648,7 +6648,7 @@ void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     const vec3i_list empty_omits;
     smatd_list ml;
     FXApp->XFile().GetLastLoaderSG().GetMatrices(ml, mattAll);
-    MergeStats stat = RefMerger::Merge<RefMerger::ShelxMerger>(ml, fp, refs, empty_omits);
+    MergeStats stat = RefMerger::Merge<RefMerger::ShelxMerger>(ml, fp, refs, empty_omits, false);
     nrefs.SetCapacity(refs.Count());
     for( int i=0; i < refs.Count(); i++ ) 
       nrefs.AddNew(refs[i]).GetHkl() *= -1;

@@ -180,9 +180,8 @@ void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F)  {
     for( int j=0; j < a_cnt; j++ )  {
       compd l;
       for( int k=0; k < m_cnt; k++ )  {
-        // it must not be the transposed form here!!!
-        const vec3d hkl = ml[k].r*ref.GetHkl();
-        double tv =  T_PI*hkl.DotProd(ml[k].t + alist[j]->ccrd());  // scattering vector + phase shift
+        const vec3d hkl = ref.GetHkl()*ml[k].r;
+        double tv =  T_PI*(hkl.DotProd(alist[j]->ccrd()) + ml[k].t.DotProd(ref.GetHkl()));  // scattering vector + phase shift
         double ca, sa;
         SinCos(tv, &sa, &ca);
         if( alist[j]->GetEllipsoid() != NULL )  {
