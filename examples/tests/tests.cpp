@@ -42,11 +42,11 @@ int main(int argc, char* argv[])  {
     //TFileTree ft("E:/My Documents/Data");
     TFileTree ft("E:/Data");
     ft.OnExpand->Add(&listener);
-    ft.Root.Expand(pg);
+    ft.Expand();
     ft.OnExpand->Remove(&listener);
     XApp.GetLog() << '\n';
     TStrList files;
-    ft.Root.ListFiles(files, "*.ins");
+    ft.GetRoot().ListFiles(files, "*.ins");
     TMacroError me;
     TStrObjList cmds;
     TParamList params;

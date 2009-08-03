@@ -165,7 +165,7 @@ public:
       if( EqHkl(hklv) )  {  // symmetric reflection
         IncMultiplicity();
         if( !Absent )  {
-          double l = PhaseShift(ml[i]);
+          const double l = PhaseShift(ml[i]);
           Absent = (olx_abs( l - Round(l) ) > 0.01);
         }
       }
@@ -190,7 +190,8 @@ public:
     for( int i=0; i < ml.Count(); i++ )  {
       if( IsSymmetric(ml[i]) )  {
         double l = PhaseShift(ml[i]);
-        if( olx_abs( l - Round(l) ) > 0.01 )  return true;
+        if( olx_abs( l - Round(l) ) > 0.01 )  
+          return true;
       }
     }
     return false;

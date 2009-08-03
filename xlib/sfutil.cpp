@@ -28,7 +28,7 @@ void SFUtil::ExpandToP1(const TArrayList<vec3i>& hkl, const TArrayList<compd>& F
   //    out[ind].ps = ml[j].t.DotProd(hkl[i]);
   //    if( out[ind].ps != 0 )  {
   //      double ca=1, sa=0;
-  //      SinCos(T_PI*out[ind].ps, &sa, &ca);
+  //      SinCos(-T_PI*out[ind].ps, &sa, &ca);
   //      out[ind].val = F[i]*compd(ca,sa);
   //    }
   //    else
@@ -124,10 +124,10 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
     F.SetCount(refs.Count());
     //THklFile::SaveToFile("e:/1.tmp", refs);
     sw.start("Calculation structure factors");
-    xapp.CalcSF(refs, F);
+    //xapp.CalcSF(refs, F);
     //sw.start("Calculation structure factors A");
     //fastsymm version is just about 10% faster...
-    //CalcSF(xapp.XFile(), refs, F, !sg.IsCentrosymmetric() );
+    CalcSF(xapp.XFile(), refs, F, !sg.IsCentrosymmetric() );
     sw.start("Scaling structure factors");
     if( mapType != mapTypeCalc )  {
       // find a linear scale between F

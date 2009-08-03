@@ -502,51 +502,51 @@ int CodeGen(TSpaceGroup& sg, TStrList& out, olxstr& hs)  {
     if( m_str[0] == m_str[1] && m_str[0] == m_str[2] && !m_str[0].IsEmpty() )  {
       added = true;
       if( m_str[0].CharAt(0) == '-' )  
-        str <<  "-(res[#][0]+res[#][1]+res[#][2])*" << m_str[0].SubStringFrom(1);
+        str <<  "-(v[0]+v[1]+v[2])*" << m_str[0].SubStringFrom(1);
       else
-        str <<  "(res[#][0]+res[#][1]+res[#][2])*" << m_str[0];
+        str <<  "(v[0]+v[1]+v[2])*" << m_str[0];
     }
     else if( m_str[0] == m_str[1] && !m_str[0].IsEmpty() )  {
       added = true;
       if( m_str[0].CharAt(0) == '-' )  
-        str << "-(res[#][0]+res[#][1])*" << m_str[0].SubStringFrom(1);
+        str << "-(v[0]+v[1])*" << m_str[0].SubStringFrom(1);
       else
-        str << "(res[#][0]+res[#][1])*" << m_str[0];
+        str << "(v[0]+v[1])*" << m_str[0];
       if( !m_str[2].IsEmpty() )  {
         if( m_str[2].CharAt(0) == '-' )  
-          str <<  "-res[#][2]*" << m_str[2].SubStringFrom(1);
+          str <<  "-v[2]*" << m_str[2].SubStringFrom(1);
         else
-          str <<  "+res[#][2]*" << m_str[2];
+          str <<  "+v[2]*" << m_str[2];
       }
     }
     else if( m_str[0] == m_str[2] && !m_str[0].IsEmpty() )  {
       added = true;
       if( m_str[0].CharAt(0) == '-' )  
-        str << "-(res[#][0]+res[#][2])*" << m_str[0].SubStringFrom(1);
+        str << "-(v[0]+v[2])*" << m_str[0].SubStringFrom(1);
       else
-        str << "(res[#][0]+res[#][2])*" << m_str[0];
+        str << "(v[0]+v[2])*" << m_str[0];
       if( !m_str[1].IsEmpty() )  {
         if( m_str[1].CharAt(0) == '-' )  
-          str <<  "-res[#][1]*" << m_str[1].SubStringFrom(1);
+          str <<  "-v[1]*" << m_str[1].SubStringFrom(1);
         else
-          str <<  "+res[#][1]*" << m_str[1];
+          str <<  "+v[1]*" << m_str[1];
       }
     }
     else if( m_str[1] == m_str[2] && !m_str[1].IsEmpty() )  {
       added = true;
       if( !m_str[0].IsEmpty() )  {
         if( m_str[0].CharAt(0) == '-' )  
-          str <<  "-res[#][0]*" << m_str[0].SubStringFrom(1);
+          str <<  "-v[0]*" << m_str[0].SubStringFrom(1);
         else
-          str <<  "res[#][0]*" << m_str[0];
+          str <<  "v[0]*" << m_str[0];
       }
       if( m_str[1].CharAt(0) == '-' )  
-        str << "-(res[#][1]+res[#][2])*" << m_str[1].SubStringFrom(1);
+        str << "-(v[1]+v[2])*" << m_str[1].SubStringFrom(1);
       else  {
         if( m_str[0].IsEmpty() )  
-          str << "(res[#][1]+res[#][2])*" << m_str[1];
+          str << "(v[1]+v[2])*" << m_str[1];
         else  
-          str << "+(res[#][1]+res[#][2])*" << m_str[1];
+          str << "+(v[1]+v[2])*" << m_str[1];
       }
     }
     if( !added && (m.t[0] != 0 || m.t[1] != 0 || m.t[2] != 0) )  {  // generic case
@@ -559,14 +559,14 @@ int CodeGen(TSpaceGroup& sg, TStrList& out, olxstr& hs)  {
             base /= denom;
           }
           olxstr mult(v);  mult << "./"  << base;
-          str << ((m.t[j] > 0) ? (added ? (olxstr("+res[#][") << j << ']') : (olxstr("res[#][") << j << ']')) : (olxstr("-res[#][") << j << ']'));
+          str << ((m.t[j] > 0) ? (added ? (olxstr("+v[") << j << ']') : (olxstr("v[") << j << ']')) : (olxstr("-v[") << j << ']'));
           str << '*' << mult;
           added = true;
         }
       }
     }
     if( !added )  str << " 0";
-    else          str.Replace('#', olxstr(i));
+    //else          str.Replace('#', olxstr(i));
     str << ';';
   }
   out.Add("  }");

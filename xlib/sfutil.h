@@ -231,7 +231,7 @@ namespace SFUtil {
           out[ind].ps = ps[j];
           double ca = 1, sa = 0;
           if( ps[j] != 0 )  {
-            SinCos(SFUtil::T_PI*ps[j], &sa, &ca);
+            SinCos(-SFUtil::T_PI*ps[j], &sa, &ca);
             out[ind].val = F[i]*compd(ca, sa);
           }
           else
