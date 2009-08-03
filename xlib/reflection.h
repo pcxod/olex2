@@ -88,18 +88,64 @@ public:
   Also performs the reflection analysis, namely:
   Initialises Absent flag
   */
-  void Standardise(const smatd_list &ml)  {
+  void StandardiseFP(const smatd_list &ml)  {
     vec3i hklv;
-    for(int i=0; i < ml.Count(); i++ )  {
-      MulHkl(hklv, ml[i]);
-      if( (hklv[2] > hkl[2]) ||        // sdandardise then ...
+    Absent = false;
+    bool changes = true;
+    while( changes )  {
+      changes = false;
+      for(int i=0; i < ml.Count(); i++ )  {
+        MulHkl(hklv, ml[i]);
+        if( (hklv[2] > hkl[2]) ||        // standardise then ...
           ((hklv[2] == hkl[2]) && (hklv[1] > hkl[1])) ||
           ((hklv[2] == hkl[2]) && (hklv[1] == hkl[1]) && (hklv[0] > hkl[0])) )    {
-          hkl = hklv;
+            hkl = hklv;
+            changes = true;
+        }
+        else  {
+          hklv *= -1;          
+          if( (hklv[2] > hkl[2]) ||        // standardise then ...
+            ((hklv[2] == hkl[2]) && (hklv[1] > hkl[1])) ||
+            ((hklv[2] == hkl[2]) && (hklv[1] == hkl[1]) && (hklv[0] > hkl[0])) )    {
+              hkl = hklv;
+              changes = true;
+          }
+        }
       }
-      else if( !Absent && EqHkl(hklv) )  {  // only if there is no change
+    }
+    for(int i=0; i < ml.Count(); i++ )  {
+      MulHkl(hklv, ml[i]);
+      if( EqHkl(hklv) )  {  // only if there is no change
         const double ps = PhaseShift(ml[i]);
         Absent = (olx_abs( ps - Round(ps) ) > 0.01);
+        if( Absent )
+          break;
+      }
+    }
+  }
+  void Standardise(const smatd_list &ml)  {
+    vec3i hklv;
+    Absent = false;
+    bool changes = true;
+    while( changes )  {
+      changes = false;
+      for(int i=0; i < ml.Count(); i++ )  {
+        MulHkl(hklv, ml[i]);
+        if( (hklv[2] > hkl[2]) ||        // standardise then ...
+          ((hklv[2] == hkl[2]) && (hklv[1] > hkl[1])) ||
+          ((hklv[2] == hkl[2]) && (hklv[1] == hkl[1]) && (hklv[0] > hkl[0])) )    {
+            hkl = hklv;
+            changes = true;
+        }
+      }
+    }
+    for(int i=0; i < ml.Count(); i++ )  {
+      MulHkl(hklv, ml[i]);
+      if( EqHkl(hklv) )  {  // only if there is no change
+        const double ps = PhaseShift(ml[i]);
+        Absent = (olx_abs( ps - Round(ps) ) > 0.01);
+        if( Absent )
+          break;
       }
     }
   }

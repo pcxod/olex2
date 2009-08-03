@@ -7,6 +7,10 @@ template <class MC, class VC> class TSymmMat {
 public:
   TSymmMat() : Tag(-1) {  }
   // copy constructor
+  TSymmMat(const TSymmMat<MC,VC>& v) : 
+    r(v.r), 
+    t(v.t),
+    Tag(v.Tag) {  }
   template <typename AMC, typename AVC> 
   TSymmMat(const TSymmMat<AMC,AVC>& v) : 
     r(v.r), 

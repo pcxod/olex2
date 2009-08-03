@@ -49,7 +49,9 @@ struct MergeStats  {
 //..............................................................................
 class RefMerger {
   template <class RefListMerger> 
-  static MergeStats _DoMerge(smatd_list& ml, TRefPList& refs, const vec3i_list& omits, TRefList& output)  {
+  static MergeStats _DoMerge(smatd_list& ml, TRefPList& refs, const vec3i_list& omits, 
+    TRefList& output, bool mergeFP)  
+  {
     MergeStats stats;
     // search for the inversion matrix
     int inverseMatIndex = -1;
@@ -61,11 +63,17 @@ class RefMerger {
         break;
       }
     }
-    stats.FriedelOppositesMerged = (inverseMatIndex != -1);
+    stats.FriedelOppositesMerged = ((inverseMatIndex != -1) || mergeFP);
     // standartise reflection indexes according to provieded list of symmetry operators
     const int ref_cnt = refs.Count();
-    for( int i=0; i < ref_cnt; i++ )
-      refs[i]->Standardise(ml);
+    if( mergeFP )  {
+      for( int i=0; i < ref_cnt; i++ )
+        refs[i]->StandardiseFP(ml);
+    }
+    else  {
+      for( int i=0; i < ref_cnt; i++ )
+        refs[i]->Standardise(ml);
+    }
     // sort the list
     TReflection::SortPList(refs);
     output.SetCapacity( ref_cnt ); // better more that none :)
@@ -125,7 +133,7 @@ class RefMerger {
     return stats;
   }
   template <class RefListMerger> 
-  static MergeStats _DryMerge(smatd_list& ml, TRefPList& refs, const vec3i_list& omits)  {
+  static MergeStats _DryMerge(smatd_list& ml, TRefPList& refs, const vec3i_list& omits, bool mergeFP)  {
     MergeStats stats;
     // search for the inversion matrix
     int inverseMatIndex = -1;
@@ -137,11 +145,17 @@ class RefMerger {
         break;
       }
     }
-    stats.FriedelOppositesMerged = (inverseMatIndex != -1);
+    stats.FriedelOppositesMerged = ((inverseMatIndex != -1) || mergeFP);
     // standartise reflection indexes according to provieded list of symmetry operators
     const int ref_cnt = refs.Count();
-    for( int i=0; i < ref_cnt; i++ )
-      refs[i]->Standardise(ml);
+    if( mergeFP )  {
+      for( int i=0; i < ref_cnt; i++ )
+        refs[i]->StandardiseFP(ml);
+    }
+    else  {
+      for( int i=0; i < ref_cnt; i++ )
+        refs[i]->Standardise(ml);
+    }
     // sort the list
     TReflection::SortPList(refs);
     // merge reflections
@@ -305,18 +319,22 @@ public:
 /* Function merges provided reflections using provided list of matrices. 
    The reflections are standardised. The resulting reflections are stored in the output .
 */
-  template <class RefListMerger, class RefList> static MergeStats Merge(smatd_list& ml, RefList& Refs, TRefList& output, const vec3i_list& omits)  {
+  template <class RefListMerger, class RefList> 
+  static MergeStats Merge(smatd_list& ml, RefList& Refs, TRefList& output, 
+    const vec3i_list& omits, bool mergeFP)  
+  {
     TRefPList refs( Refs.Count() );  // list of replicated reflections
     for( int i=0; i < Refs.Count(); i++ )
       refs[i] = TReflection::RefP(Refs[i]);
-    return _DoMerge<RefListMerger>(ml, refs, omits, output);
+    return _DoMerge<RefListMerger>(ml, refs, omits, output, mergeFP);
   }
   /* Functions gets the statistic on the list of provided reflections (which get stantardised) */
-  template <class RefListMerger, class RefList> static MergeStats DryMerge(smatd_list& ml, RefList& Refs, const vec3i_list& omits)  {
+  template <class RefListMerger, class RefList> 
+  static MergeStats DryMerge(smatd_list& ml, RefList& Refs, const vec3i_list& omits, bool mergeFP)  {
     TRefPList refs( Refs.Count() );  // list of replicated reflections
     for( int i=0; i < Refs.Count(); i++ )
       refs[i] = TReflection::RefP(Refs[i]);
-    return _DryMerge<RefListMerger>(ml, refs, omits);
+    return _DryMerge<RefListMerger>(ml, refs, omits, mergeFP);
   }
   /* The function merges provided reflections in P1 and strores the result in the output */
   template <class RefListMerger, class RefList> static MergeStats MergeInP1(const RefList& Refs, TRefList& output, const vec3i_list& omits)  {

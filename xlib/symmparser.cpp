@@ -96,6 +96,19 @@ next_oper:
   if( res == false )
     throw TFunctionFailedException(__OlxSourceInfo,
          olxstr("Operation sign is missing or operation is incomplete while parsing \"") << S << '\"');
+  // normalise the translations...
+  for( int i=0; i < 3; i++ )  {
+    if( M.t[i] == 0 )  continue;
+    int v = olx_abs(Round(M.t[i]*12)), base = 12;
+    int denom = esdl::gcd(v, base);
+    if( denom != 1 )  {
+      v /= denom;
+      base /= denom;
+    }
+    M.t[i] = v;
+    if( base != 1 )
+      M.t[i] /= base;
+  }
   return true;
 }
 //..............................................................................
