@@ -140,6 +140,8 @@
 // FOR DEBUG only
 #include "egraph.h"
 #include "olxth.h"
+#include "md5.h"
+#include "sha.h"
 //#include "base_2d.h"
 //#include "gl2ps/gl2ps.c"
 
@@ -8088,6 +8090,16 @@ void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options, TMa
   olxstr s2 = olxstr::CStr2WStr(str);
   str = TUtf8::Encode(s2);
   s2 = TUtf8::Decode(str);
+  if( Cmds.Count() == 1 && TEFile::Exists(Cmds[0]) )  {
+    TEFile f(Cmds[0], "rb");
+    TBasicApp::GetLog() << "MD5: " << MD5::Digest(f) << '\n';
+    f.Seek(0,0);
+    TBasicApp::GetLog() << "SHA1: " << SHA1::Digest(f) << '\n';
+    f.Seek(0,0);
+    TBasicApp::GetLog() << "SHA224: " << SHA224::Digest(f) << '\n';
+    f.Seek(0,0);
+    TBasicApp::GetLog() << "SHA256: " << SHA256::Digest(f) << '\n';
+  }
 }
 //..............................................................................
 double Main_FindClosestDistance(const smatd_list& ml, vec3d& o_from, const TCAtom& a_to) {
