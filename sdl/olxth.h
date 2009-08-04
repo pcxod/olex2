@@ -7,6 +7,7 @@
 #undef Yield
 #else
   #include <pthread.h>
+  #include <errno.h>
 #endif
 #include "exception.h"
 #include "bapp.h"
@@ -169,11 +170,11 @@ public:
 #endif
   }
   //..................................................................................................
-  static int GetCurrentThreadId()  {
+  static unsigned long GetCurrentThreadId()  {
 #ifdef __WIN32__
     return ::GetCurrentThreadId();
 #else
-    return pthread_getthreadid_np();
+    return pthread_self();
 #endif
   }
 };
@@ -191,8 +192,11 @@ struct olx_critical_section  {
   void enter() {  EnterCriticalSection(&cs);  }
   void leave() {  LeaveCriticalSection(&cs);  }
 #else
-  static pthread_mutex_t cs;
-  olx_critical_section() : cs(PTHREAD_MUTEX_INITIALIZER)  {}
+  pthread_mutex_t cs;
+  olx_critical_section() {
+    pthread_mutex_init(&cs, NULL);
+  }
+
   ~olx_critical_section()  {
     pthread_mutex_destroy(&cs);
   }
