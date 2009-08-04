@@ -112,7 +112,7 @@ void SHA2Test(OlxTests& t)  {
 }
 //...................................................................................................
 class CriticalSectionTest {
-  static int i, j, k, l;
+  int i, j, k, l;
   bool use_cs;
   olx_critical_section cs;
   class TestTh : public AOlxThread  {
@@ -123,7 +123,7 @@ class CriticalSectionTest {
       for( int _i=0; _i < 100000; _i++ )  {
         if( inst.use_cs == true )
           inst.cs.enter();
-        i++; j++; k++; l++;
+        inst.i++; inst.j++; inst.k++; inst.l++;
         if( inst.use_cs == true )
           inst.cs.leave();
       }
@@ -131,7 +131,7 @@ class CriticalSectionTest {
     }
   };
 public:
-  CriticalSectionTest(bool _use_cs) : use_cs(_use_cs) {}
+  CriticalSectionTest(bool _use_cs) : use_cs(_use_cs), i(0), j(0), k(0), l(0) {}
   void DoTest(OlxTests& t)  {
     t.description << __FUNC__ << " using CS: " << use_cs;
     TestTh* ths[10];
@@ -148,13 +148,9 @@ public:
         throw TFunctionFailedException(__OlxSourceInfo, "crutical section test has failed");
     }
     else if( !use_cs )  
-      throw TFunctionFailedException(__OlxSourceInfo, "critical section test is ambiguous");
+      throw TFunctionFailedException(__OlxSourceInfo, "critical section test is ambiguous (it is possible)");
   }
 };
-int CriticalSectionTest::i = 0;
-int CriticalSectionTest::j = 0;
-int CriticalSectionTest::k = 0;
-int CriticalSectionTest::l = 0;
 //...................................................................................................
 //...................................................................................................
 //...................................................................................................

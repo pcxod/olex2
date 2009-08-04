@@ -21,8 +21,8 @@ template <class T> T SingletonBase<T>::Instance;
 /* Impl should be as above */
 template <class Impl> struct ThreadSingletonMainInstance  {
   Impl Instance;
-  olxdict<int, Impl*, TPrimitiveComparator> Instances;
-  int main_thread_id;
+  olxdict<unsigned long, Impl*, TPrimitiveComparator> Instances;
+  unsigned long main_thread_id;
   ThreadSingletonMainInstance() : main_thread_id(AOlxThread::GetCurrentThreadId())  {}
   ~ThreadSingletonMainInstance()  {
     for( int i=0; i < Instances.Count(); i++ )
@@ -48,8 +48,8 @@ public:
     }
   }
   static bool HasInstance()  {
-    int th_id = AOlxThread::GetCurrentThreadId();
-    if( th_id == main_thread_id )
+    unsigned long th_id = AOlxThread::GetCurrentThreadId();
+    if( th_id == Instance.main_thread_id )
       return true;
     else
       return Instance.Instances.HasKey(th_id);
