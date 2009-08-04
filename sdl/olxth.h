@@ -4,6 +4,7 @@
 // sort out the gheader files
 #ifdef __WIN32__
   #include <windows.h>
+#undef Yield
 #else
   #include <pthread.h>
 #endif
@@ -29,6 +30,7 @@ class AOlxThread : public IEObject {
 protected:
   int volatile RetVal;
   bool volatile Terminate, Detached, Running;
+  //..................................................................................................
 #ifdef __WIN32__
   struct HandleRemover  : public IEObject  {
     HANDLE handle;
@@ -38,7 +40,9 @@ protected:
         CloseHandle(handle);
     }
   };
+  //..................................................................................................
   HANDLE Handle;
+  //..................................................................................................
   static unsigned long _stdcall _Run(void* _instance) {
 #else
   pthread_t Handle;
@@ -50,13 +54,17 @@ protected:
     ((AOlxThread*)_instance)->Running = false;
     if( ((AOlxThread*)_instance)->Detached )
       delete (AOlxThread*)_instance;
-#ifndef __WIN32__
+#ifdef __WIN32__
+    ExitThread(0);
+#else
     pthread_exit(NULL);
 #endif
     return 0;
   }
 protected:  // do not allow to create externally
+  //..................................................................................................
   TActionQList Actions;
+  //..................................................................................................
   AOlxThread() : 
     Detached(true), 
     Terminate(false),
@@ -66,10 +74,12 @@ protected:  // do not allow to create externally
   {  
     OnTerminate = &Actions.NewQueue("ON_TERMINATE");  
   }
+  //..................................................................................................
   /* thread can do some extras here, as it will be called from SendTerminate 
   before the Terimate flag is set */
   virtual void OnSendTerminate() {}
 public:
+  //..................................................................................................
   virtual ~AOlxThread()  {
     OnTerminate->Execute(this, NULL);
     if( Running )  {  // prevent deleting
@@ -84,13 +94,13 @@ public:
 #else
 #endif
   }
-
+  //..................................................................................................
   TActionQueue* OnTerminate;
-
+  //..................................................................................................
   /* It is crutial to check if the terminate flag is set. In that case the function should
   return a value, or a deadlock situation may arise. */
   virtual int Run() = 0;
-
+  //..................................................................................................
   bool Start() {
 #ifdef __WIN32__
     unsigned long thread_id;
@@ -102,6 +112,7 @@ public:
 #endif
     return true;
   }
+  //..................................................................................................
   /* returns true if successful, the process calling Join is responsible for the
   memory deallocation... */
   bool Join(bool send_terminate = false)  {
@@ -112,8 +123,10 @@ public:
       SendTerminate();
 #ifdef __WIN32__
     unsigned long ec = STILL_ACTIVE, rv;
-    while( ec == STILL_ACTIVE && (rv=GetExitCodeThread(Handle, &ec)) != 0 )
-      TBasicApp::Sleep(50);
+    while( ec == STILL_ACTIVE && (rv=GetExitCodeThread(Handle, &ec)) != 0 )  {
+      if( SwitchToThread() == 0 )
+        TBasicApp::Sleep(50);
+    }
     return rv != 0;
 #else  
     if( pthread_join(Handle, NULL) != 0 )
@@ -121,12 +134,13 @@ public:
 #endif
     return true;
   }
+  //..................................................................................................
   // this only has effect if the main procedure of the thread checks for this flag...
   void SendTerminate()  {  
     OnSendTerminate(); 
     Terminate = true;  
   }
-
+  //..................................................................................................
   /* executes a simplest function thread, the function should not take any arguments
   the return value will be ignored. To be used for global detached threads such timers etc.
   Simplest example:
@@ -146,9 +160,47 @@ public:
 #endif
     return true;
   }
-
+  //..................................................................................................
+  static void Yield()  {
+#ifdef __WIN32__
+    SwitchToThread();
+#else
+    sched_yield();
+#endif
+  }
+  //..................................................................................................
+  static int GetCurrentThreadId()  {
+#ifdef __WIN32__
+    return ::GetCurrentThreadId();
+#else
+    return pthread_getthreadid_np();
+#endif
+  }
 };
-
+// http://en.wikipedia.org/wiki/Critical_section
+struct olx_critical_section  {
+#ifdef __WIN32__
+  CRITICAL_SECTION cs;
+  olx_critical_section()  {
+    InitializeCriticalSection(&cs);  
+  }
+  ~olx_critical_section()  {
+    DeleteCriticalSection(&cs);
+  }
+  bool tryEnter()  {  return TryEnterCriticalSection(&cs) != 0;  }
+  void enter() {  EnterCriticalSection(&cs);  }
+  void leave() {  LeaveCriticalSection(&cs);  }
+#else
+  static pthread_mutex_t cs;
+  olx_critical_section() : cs(PTHREAD_MUTEX_INITIALIZER)  {}
+  ~olx_critical_section()  {
+    pthread_mutex_destroy(&cs);
+  }
+  bool tryEnter()  {  return pthread_mutex_trylock(&cs) != EBUSY;  }
+  void enter() {  pthread_mutex_lock(&cs);  }
+  void leave() {  pthread_mutex_unlock(&cs);  }
+#endif
+};
 
 EndEsdlNamespace()
 #endif

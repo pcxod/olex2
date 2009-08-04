@@ -1274,7 +1274,7 @@ public:
   // just checks if string contains any chars > 127
   template <class AC> static bool o_needs_converting(const AC* data, size_t len) {
     for( int i=0; i < len; i++ )
-      if( data[i] > 127 )
+      if( data[i] > 127 || data[i] < 0 )
         return true;
     return false;
   }
