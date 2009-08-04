@@ -3,6 +3,7 @@
 #include "log.h"
 #include "md5.h"
 #include "sha.h"
+#include "olxth.h"
 
 //...................................................................................................
 void IsNumberTest(OlxTests& t)  {
@@ -110,6 +111,51 @@ void SHA2Test(OlxTests& t)  {
     throw TFunctionFailedException(__OlxSourceInfo, "Wrong digest message");
 }
 //...................................................................................................
+class CriticalSectionTest {
+  static int i, j, k, l;
+  bool use_cs;
+  olx_critical_section cs;
+  class TestTh : public AOlxThread  {
+    CriticalSectionTest& inst;
+  public:
+    TestTh(CriticalSectionTest& _inst) : inst(_inst)  {  Detached = false;  }
+    virtual int Run()  {
+      for( int _i=0; _i < 100000; _i++ )  {
+        if( inst.use_cs == true )
+          inst.cs.enter();
+        i++; j++; k++; l++;
+        if( inst.use_cs == true )
+          inst.cs.leave();
+      }
+      return 0;
+    }
+  };
+public:
+  CriticalSectionTest(bool _use_cs) : use_cs(_use_cs) {}
+  void DoTest(OlxTests& t)  {
+    t.description << __FUNC__ << " using CS: " << use_cs;
+    TestTh* ths[10];
+    for( int _i=0; _i < 10; _i++ )  {
+      ths[_i] = new TestTh(*this);
+      ths[_i]->Start();
+    }
+    for( int _i=0; _i < 10; _i++ )  {
+      ths[_i]->Join();
+      delete ths[_i];
+    }
+    if( i != 1000000 || j != 1000000 || k != 1000000 || l != 1000000 )  {
+      if( use_cs )
+        throw TFunctionFailedException(__OlxSourceInfo, "crutical section test has failed");
+    }
+    else if( !use_cs )  
+      throw TFunctionFailedException(__OlxSourceInfo, "critical section test is ambiguous");
+  }
+};
+int CriticalSectionTest::i = 0;
+int CriticalSectionTest::j = 0;
+int CriticalSectionTest::k = 0;
+int CriticalSectionTest::l = 0;
+//...................................................................................................
 //...................................................................................................
 //...................................................................................................
 OlxTests::OlxTests() {
@@ -119,6 +165,8 @@ OlxTests::OlxTests() {
   Add(&MD5Test);
   Add(&SHA1Test);
   Add(&SHA2Test);
+  Add(new CriticalSectionTest(true), &CriticalSectionTest::DoTest);  // the instance gets deleted
+  Add(new CriticalSectionTest(false), &CriticalSectionTest::DoTest);  // the instance gets deleted
 }
 //...................................................................................................
 void OlxTests::run()  {

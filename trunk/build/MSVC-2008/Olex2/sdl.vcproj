@@ -905,6 +905,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\sdl\singleton.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\sdl\sls.h"
 				>
 			</File>
