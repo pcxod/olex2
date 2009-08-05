@@ -103,6 +103,11 @@
 
 #include "msgbox.h"
 
+#ifdef __WIN32__  // netbios...
+  #include <Lm.h>
+  //#include <Lmwksta.h>
+#endif
+
 #ifndef __BORLANDC__
   #include "ebtree.h"
 #endif
@@ -8893,5 +8898,49 @@ void TMainForm::macRESI(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       if( atoms[i]->Atom().CAtom().GetTag() == i )
         resi.Add( atoms[i]->Atom().CAtom() );
   }
+}
+//..............................................................................
+//http://www.codeguru.com/cpp/i-n/network/networkinformation/article.php/c5451
+void TMainForm::funGetMAC(const TStrObjList& Params, TMacroError &E)  {
+#ifdef __WIN32__
+  WKSTA_TRANSPORT_INFO_0 *pwkti; // Allocate data structure for NetBIOS
+  DWORD dwEntriesRead;
+  DWORD dwTotalEntries;
+  BYTE *pbBuffer;
+
+  // Get MAC address via NetBIOS's enumerate function
+  NET_API_STATUS dwStatus = NetWkstaTransportEnum(
+   NULL,                 // [in]  server name
+   0,                    // [in]  data structure to return
+   &pbBuffer,            // [out] pointer to buffer
+   MAX_PREFERRED_LENGTH, // [in]  maximum length
+   &dwEntriesRead,       // [out] counter of elements
+                         //       actually enumerated
+   &dwTotalEntries,      // [out] total number of elements
+                         //       that could be enumerated
+   NULL);                // [in/out] resume handle
+  if( dwStatus != NERR_Success )  {
+    E.SetRetVal<olxstr>("n/a");
+    return;
+  }
+  pwkti = (WKSTA_TRANSPORT_INFO_0 *)pbBuffer; // type cast the buffer
+  olxstr rv(EmptyString, 256);
+  for( int i=1; i< dwEntriesRead; i++ )  {  // first address is 00000000, skip it
+    const size_t len = olxstr::o_strlen(pwkti[i].wkti0_transport_address);
+    if( (len%2) == 0 )  {
+      for( size_t j=0; j < len; j+=2 )  {
+        rv << pwkti[i].wkti0_transport_address[j];
+        rv << pwkti[i].wkti0_transport_address[j+1];
+        if( (j+2) < len )
+          rv << '-';
+      }
+    }
+    if( (i+1) < dwEntriesRead )
+      rv << ';';
+  }
+  E.SetRetVal(rv);
+  // Release pbBuffer allocated by above function
+  NetApiBufferFree(pbBuffer);
+#endif
 }
 //..............................................................................

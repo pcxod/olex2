@@ -531,6 +531,7 @@ private:
   DefFunc(CheckState)
   DefFunc(GlTooltip)
   DefFunc(CurrentLanguage)
+  DefFunc(GetMAC)
 
   TUndoStack *FUndoStack;
 //..............................................................................

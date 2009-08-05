@@ -33,6 +33,7 @@ template <class Impl> struct ThreadSingletonMainInstance  {
 template <class Impl> class ThreadSingletonBase {
 protected:
   static ThreadSingletonMainInstance<Impl> Instance;
+  static olx_critical_section cs;
   ThreadSingletonBase() : Impl() {}
   virtual ~ThreadSingletonBase()  {}
 public:
@@ -40,11 +41,20 @@ public:
     if( Instance.main_thread_id == AOlxThread::GetCurrentThreadId() )
       return Instance.Instance.GetInstance();
     else  {
-      int th_id = AOlxThread::GetCurrentThreadId();
-      if( Instance.Instances.HasKey(th_id) )
-        return Instance.Instances[th_id]->GetInstance();
-      else 
-        return Instance.Instances.Add(th_id, new Impl)->GetInstance();
+      unsigned long th_id = AOlxThread::GetCurrentThreadId();
+      cs.enter();
+      Impl* rv = NULL;
+      try  {
+        if( Instance.Instances.HasKey(th_id) )
+          rv = &Instance.Instances[th_id]->GetInstance();
+        else 
+          rv = &Instance.Instances.Add(th_id, new Impl)->GetInstance();
+      }
+      catch(...) {}
+      cs.leave();
+      if( rv == NULL )
+        throw TFunctionFailedException(__OlxSourceInfo, "could not acquire object instance");
+      return *rv;
     }
   }
   static bool HasInstance()  {
