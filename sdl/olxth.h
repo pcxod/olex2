@@ -174,7 +174,7 @@ public:
 #ifdef __WIN32__
     return ::GetCurrentThreadId();
 #else
-    return pthread_self();
+    return (unsigned long)pthread_self();
 #endif
   }
 };
