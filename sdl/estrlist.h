@@ -474,10 +474,10 @@ public:
       Add(S[i], S.GetObject(i));
   }
 
-  inline void Add(const SC& S)  {  PList::Strings.Add( new GC(S) );  }
-  inline void Add(const SC& S, const OC& Object)  {  PList::Strings.Add( new GC(S,Object) );  }
-  inline void Insert(int i, const SC& S)  {  PList::Strings.Insert(i, new GC(S) );  }
-  inline void Insert(int i, const SC& S, const OC& O)  {  PList::Strings.Insert(i, new GC(S,O) );  }
+  inline GC& Add(const SC& S)  {  return *PList::Strings.Add( new GC(S) );  }
+  inline GC& Add(const SC& S, const OC& Object)  {  return *PList::Strings.Add( new GC(S,Object) );  }
+  inline GC& Insert(int i, const SC& S)  {  return *PList::Strings.Insert(i, new GC(S) );  }
+  inline GC& Insert(int i, const SC& S, const OC& O)  {  return *PList::Strings.Insert(i, new GC(S,O) );  }
 
   inline OC& GetObject(int i) const { return PList::Strings[i]->Object;  }
 

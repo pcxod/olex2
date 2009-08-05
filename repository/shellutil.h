@@ -2,7 +2,8 @@
 #define shellutilH
 
 #include "ebase.h"
-//---------------------------------------------------------------------------
+#include "estrlist.h"
+#include "typelist.h"
 
 const short  fiDesktop       = 1,
              fiStartMenu     = 2,
@@ -25,6 +26,11 @@ public:
   static olxstr GetSpecialFolderLocation( short folderId );
   static olxstr PickFolder( const olxstr& Title, const olxstr& SelectedFolder,
      const olxstr& RootFolder );
-
+  // lists all interface names and related MAC addresses
+  typedef TTOStringList<olxstr, TArrayList<unsigned char>, TObjectStrListData<olxstr, TArrayList<unsigned char> > > MACInfo;
+protected:
+  static bool _MACFromArray(const unsigned char* bf, const char* name, MACInfo& mi, size_t len=6, bool accept_empty=false);
+public:
+  static void ListMACAddresses(MACInfo& rv);
 };
 #endif

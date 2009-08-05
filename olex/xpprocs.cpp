@@ -104,15 +104,7 @@
 
 #include "msgbox.h"
 
-#ifdef __WIN32__  // netbios...
-  #include <Lm.h>
-#elif __MAC__
-    #include <ifaddrs.h>
-    #include <net/if_dl.h>
-#else
-  #include <net/if.h>
-  #include <sys/ioctl.h>
-#endif
+#include "shellutil.h"
 
 #ifndef __BORLANDC__
   #include "ebtree.h"
@@ -8906,109 +8898,23 @@ void TMainForm::macRESI(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   }
 }
 //..............................................................................
-//http://www.codeguru.com/cpp/i-n/network/networkinformation/article.php/c5451 win
-//http://cboard.cprogramming.com/linux-programming/43261-ioctl-request-get-hw-address.html unix/linux
-//http://othermark.livejournal.com/3005.html mac/freebsd
-//http://lists.freebsd.org/pipermail/freebsd-hackers/2004-June/007415.html as above
 void TMainForm::funGetMAC(const TStrObjList& Params, TMacroError &E)  {
+  bool full = (Params.Count() == 1 && Params[0].Equalsi("full") );
   olxstr rv(EmptyString, 256);
-#ifdef __WIN32__
-  DWORD dwEntriesRead;
-  DWORD dwTotalEntries;
-  BYTE *pbBuffer;
-
-  NET_API_STATUS dwStatus = NetWkstaTransportEnum(
-    NULL,                 // [in]  server name
-    0,                    // [in]  data structure to return
-    &pbBuffer,            // [out] pointer to buffer
-    MAX_PREFERRED_LENGTH, // [in]  maximum length
-    &dwEntriesRead,       // [out] counter of elements actually enumerated
-    &dwTotalEntries,      // [out] total number of elements that could be enumerated
-    NULL                  // [in/out] resume handle
-  );
-  if( dwStatus != NERR_Success )  {
-    E.SetRetVal(NAString);
-    return;
-  }
-  WKSTA_TRANSPORT_INFO_0 *pwkti = (WKSTA_TRANSPORT_INFO_0*)pbBuffer; // type cast the buffer
-  for( int i=0; i< dwEntriesRead; i++ )  { 
-    const olxstr addr(pwkti[i].wkti0_transport_address);
-    if( addr.Equals("000000000000") || (addr.Length()%2) != 0 )  continue;
-    if( !rv.IsEmpty() )  rv << ';';
-    for( size_t j=0; j < addr.Length(); j+=2 )  {
-      rv << pwkti[i].wkti0_transport_address[j];
-      rv << pwkti[i].wkti0_transport_address[j+1];
-      if( (j+2) < addr.Length() )
-        rv << '-';
-    }
-  }
-  E.SetRetVal(rv.IsEmpty() ? NAString : rv);
-  NetApiBufferFree(pbBuffer);
-#elif SIOCGIFHWADDR // I thought this will be enough, but no - Mac is special...
-  struct ifconf ifc;
-  struct ifreq ifs[32];
   char bf[16];
-  int sckt = socket(AF_INET, SOCK_DGRAM, 0);
-  if( sckt == -1 )  {
-    E.SetRetVal(NAString);
-    return;
-  }
-  ifc.ifc_len = sizeof(ifs);
-  ifc.ifc_req = ifs;
-  if( ioctl(sckt, SIOCGIFCONF, &ifc) < 0 )  {
-    E.SetRetVal(NAString);
-    close(sckt);
-    return;
-  }
-  struct ifreq* ifend = ifs + (ifc.ifc_len / sizeof(struct ifreq));
-  for( struct ifreq* ifr = ifc.ifc_req; ifr < ifend; ifr++ )  {
-    if( ifr->ifr_addr.sa_family == AF_INET )  {
-      struct ifreq ifreq;
-      strncpy(ifreq.ifr_name, ifr->ifr_name,sizeof(ifreq.ifr_name));
-      if( ioctl (sckt, SIOCGIFHWADDR, &ifreq) < 0 )  {
-        E.SetRetVal(NAString);
-        return;
-      }
-      int cnt = 0;
-      for( int li=0; li < 6; li++ )
-        cnt += ((unsigned char *) &ifreq.ifr_hwaddr.sa_data)[li];
-      if( cnt == 0 )  continue;
-      if( !rv.IsEmpty() )  rv << ';';
-      for( int li=0; li < 6; li++ )  {
-        sprintf(bf, "%02X", ((unsigned char *) &ifreq.ifr_hwaddr.sa_data)[li] );
-        rv << bf;
-        if( li < 5 )  rv << '-';
-      }
+  TShellUtil::MACInfo MACsInfo;
+  TShellUtil::ListMACAddresses(MACsInfo);
+  for( int i=0; i < MACsInfo.Count(); i++ )  {
+    if( full )
+      rv << MACsInfo[i] << '=';
+    for( size_t j=0; j < MACsInfo.GetObject(i).Count(); j++ )  {
+      sprintf(bf, "%02X", MACsInfo.GetObject(i)[j] );
+      rv << bf;
+      if( j < 5 )  rv << '-';
     }
+    if( (i+1) < MACsInfo.Count() )  
+      rv << ';';
   }
-	close(sckt);
-#else
-  struct ifaddrs* ifaddrs, *tmpia;
-	char bf[16];
-	getifaddrs(&ifaddrs);
-	tmpia = ifaddrs;
-	while( tmpia != NULL )  {
-	  if( tmpia->ifa_addr->sa_family != AF_LINK)  {
-		  tmpia = tmpia->ifa_next;
-			continue;
-		}
-		struct sockaddr_dl* sck_dl = (struct sockaddr_dl*)tmpia->ifa_addr;
-	  if( sck_dl->sdl_alen != 6 )  {
-		  tmpia = tmpia->ifa_next;
-			continue;
-		}
-		unsigned char* ref = (unsigned char*)LLADDR(sck_dl);
-		if( !rv.IsEmpty() )  rv << ';';
-		for( int i=0; i < sck_dl->sdl_alen; i++ )  {
-		  sprintf(bf, "%02X", ref[i] );
-			rv << bf;
-			if( i < 5 )  rv << '-';
-		}
-	  tmpia = tmpia->ifa_next;
-	}
-	if( ifaddrs != NULL )
-	  freeifaddrs(ifaddrs);
-#endif	
   E.SetRetVal( rv.IsEmpty() ? NAString : rv );
 }
 //..............................................................................
