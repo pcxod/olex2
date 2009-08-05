@@ -109,7 +109,6 @@
 #else
   #include <stdio.h>
   #include <net/if.h>
-  #include <arpa/inet.h>
   #include <sys/ioctl.h>
 #endif
 
@@ -8906,56 +8905,58 @@ void TMainForm::macRESI(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 }
 //..............................................................................
 //http://www.codeguru.com/cpp/i-n/network/networkinformation/article.php/c5451
+//http://cboard.cprogramming.com/linux-programming/43261-ioctl-request-get-hw-address.html
 void TMainForm::funGetMAC(const TStrObjList& Params, TMacroError &E)  {
 #ifdef __WIN32__
-  WKSTA_TRANSPORT_INFO_0 *pwkti; // Allocate data structure for NetBIOS
   DWORD dwEntriesRead;
   DWORD dwTotalEntries;
   BYTE *pbBuffer;
 
   // Get MAC address via NetBIOS's enumerate function
   NET_API_STATUS dwStatus = NetWkstaTransportEnum(
-   NULL,                 // [in]  server name
-   0,                    // [in]  data structure to return
-   &pbBuffer,            // [out] pointer to buffer
-   MAX_PREFERRED_LENGTH, // [in]  maximum length
-   &dwEntriesRead,       // [out] counter of elements
-                         //       actually enumerated
-   &dwTotalEntries,      // [out] total number of elements
-                         //       that could be enumerated
-   NULL);                // [in/out] resume handle
+    NULL,                 // [in]  server name
+    0,                    // [in]  data structure to return
+    &pbBuffer,            // [out] pointer to buffer
+    MAX_PREFERRED_LENGTH, // [in]  maximum length
+    &dwEntriesRead,       // [out] counter of elements actually enumerated
+    &dwTotalEntries,      // [out] total number of elements that could be enumerated
+    NULL                  // [in/out] resume handle
+  );
   if( dwStatus != NERR_Success )  {
     E.SetRetVal<olxstr>("n/a");
     return;
   }
-  pwkti = (WKSTA_TRANSPORT_INFO_0 *)pbBuffer; // type cast the buffer
+  WKSTA_TRANSPORT_INFO_0 *pwkti = (WKSTA_TRANSPORT_INFO_0*)pbBuffer; // type cast the buffer
   olxstr rv(EmptyString, 256);
-  for( int i=1; i< dwEntriesRead; i++ )  {  // first address is 00000000, skip it
-    const size_t len = olxstr::o_strlen(pwkti[i].wkti0_transport_address);
-    if( (len%2) == 0 )  {
-      for( size_t j=0; j < len; j+=2 )  {
-        rv << pwkti[i].wkti0_transport_address[j];
-        rv << pwkti[i].wkti0_transport_address[j+1];
-        if( (j+2) < len )
-          rv << '-';
-      }
+  for( int i=0; i< dwEntriesRead; i++ )  { 
+    const olxstr addr(pwkti[i].wkti0_transport_address);
+    if( addr.Equals("000000000000") || (addr.Length()%2) != 0 )  continue;
+    if( !rv.IsEmpty() )  rv << ';';
+    for( size_t j=0; j < addr.Length(); j+=2 )  {
+      rv << pwkti[i].wkti0_transport_address[j];
+      rv << pwkti[i].wkti0_transport_address[j+1];
+      if( (j+2) < addr.Length() )
+        rv << '-';
     }
-    if( (i+1) < dwEntriesRead )
-      rv << ';';
   }
-  E.SetRetVal(rv);
+  E.SetRetVal(rv.IsEmpty() ? olxstr("n/a") : rv);
   // Release pbBuffer allocated by above function
   NetApiBufferFree(pbBuffer);
 #else
   struct ifconf ifc;
-  struct ifreq ifs[64];
+  struct ifreq ifs[32];
   char bf[16];
   olxstr rv;
-  int SockFD = socket(AF_INET, SOCK_DGRAM, 0);
+  int sckt = socket(AF_INET, SOCK_DGRAM, 0);
+  if( sckt == -1 )  {
+    E.SetRetVal<olxstr>("n/a");
+    return;
+  }
   ifc.ifc_len = sizeof(ifs);
   ifc.ifc_req = ifs;
-  if( ioctl(SockFD, SIOCGIFCONF, &ifc) < 0 )  {
-    E.SetRetVal<olxstr>("n/a1");
+  if( ioctl(sckt, SIOCGIFCONF, &ifc) < 0 )  {
+    E.SetRetVal<olxstr>("n/a");
+    close(sckt);
     return;
   }
   struct ifreq* ifend = ifs + (ifc.ifc_len / sizeof(struct ifreq));
@@ -8963,8 +8964,8 @@ void TMainForm::funGetMAC(const TStrObjList& Params, TMacroError &E)  {
     if( ifr->ifr_addr.sa_family == AF_INET )  {
       struct ifreq ifreq;
       strncpy(ifreq.ifr_name, ifr->ifr_name,sizeof(ifreq.ifr_name));
-      if( ioctl (SockFD, SIOCGIFHWADDR, &ifreq) < 0 )  {
-        E.SetRetVal<olxstr>("n/a2");
+      if( ioctl (sckt, SIOCGIFHWADDR, &ifreq) < 0 )  {
+        E.SetRetVal<olxstr>("n/a");
         return;
       }
       int cnt = 0;
@@ -8979,7 +8980,7 @@ void TMainForm::funGetMAC(const TStrObjList& Params, TMacroError &E)  {
       }
     }
   }
-  E.SetRetVal( rv.IsEmpty() ? olxstr("n/a3") : rv );
+  E.SetRetVal( rv.IsEmpty() ? olxstr("n/a") : rv );
 #endif
 }
 //..............................................................................
