@@ -205,6 +205,14 @@ struct olx_critical_section  {
   void leave() {  pthread_mutex_unlock(&cs);  }
 #endif
 };
+// 'scope critical section'
+struct olx_scope_cs  {
+protected:
+  olx_critical_section cs;
+public:
+  olx_scope_cs()  {  cs.enter();  }
+	~olx_scope_cs() {  cs.leave();  }
+};
 
 EndEsdlNamespace()
 #endif

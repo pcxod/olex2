@@ -37,19 +37,19 @@ class AActionHandler : public ACollectionItem  {
   bool  Enabled, // not executed if false
         ToDelete;  // default is true - the object will be deleted by the collection!!
 public:
-  AActionHandler();
-  virtual ~AActionHandler();
+  AActionHandler() : Enabled(true), ToDelete(true)  {}
+  virtual ~AActionHandler()  {}
   // handler before the event
-  virtual bool Enter(const IEObject *Sender, const IEObject *Data=NULL) {  return false; }
+  virtual bool Enter(const IEObject *Sender, const IEObject *Data=NULL)  {  return false; }
   // handler after the event
-  virtual bool Exit(const IEObject *Sender, const IEObject *Data=NULL)  {  return false; }
+  virtual bool Exit(const IEObject *Sender, const IEObject *Data=NULL)   {  return false; }
   /* handler during the event, does some operation when Obj is changed;
      the action depends on the type of queue
   */
-  virtual void UpdateData(const IEObject *Sender, const IEObject *Data=NULL) {  ;  }
-  virtual bool Execute(const IEObject *Sender, const IEObject *Data=NULL) {  return false; }
+  virtual void UpdateData(const IEObject *Sender, const IEObject *Data=NULL)  {}
+  virtual bool Execute(const IEObject *Sender, const IEObject *Data=NULL)  {  return false;  }
   // the function is called the object is removed from the queue
-  virtual void OnRemove()  { ;  }
+  virtual void OnRemove()  {}
   DefPropBIsSet(Enabled)
   /* beware that it is set to true by default, which means that the object will
     be automatically deleted by the parent queue
@@ -65,8 +65,8 @@ public:
 class AEventsDispatcher: public ACollectionItem  {
   bool Enabled;
 public:
-  AEventsDispatcher();
-  virtual ~AEventsDispatcher();
+  AEventsDispatcher() : Enabled(true)  {}
+  virtual ~AEventsDispatcher()  {}
   /* dispatch is called all time an event occures, MsgId is the Id passed when the
      object is registered in a queue, MsgSubId is one msiEnter, msiExecute, msiExit or
      msiUpdateData (see the discription of cirtain events). Sender is the object sending the message,
@@ -124,7 +124,7 @@ class TActionQList: public IEObject  {
 private:
   TCSTypeList<olxstr,TActionQueue*> Queues;
 public:
-  TActionQList()  {  }
+  TActionQList()  {}
   virtual ~TActionQList() {  Clear();  }
   /* is used to create a new named actions queue
     throws an exception if the queue already exists: use Exists to check
@@ -134,7 +134,7 @@ public:
   // executes a named queue
   bool Execute(const olxstr &Name, const IEObject *Sender, const IEObject *Data=NULL);
 
-  inline bool QueueExists(const olxstr &Name)  const {  return Queues.IndexOfComparable(Name) != -1;  }
+  inline bool QueueExists(const olxstr &Name) const {  return Queues.IndexOfComparable(Name) != -1;  }
   /* throws exception if the queue does not exist */
   inline TActionQueue* FindQueue(const olxstr &Name)  const {  return Queues[Name];  }
   // queue by index
@@ -145,17 +145,43 @@ public:
   void Clear();
 };
 
+// action proxy object, allows syncrinisation of two action queues
+class TActionProxy : public AActionHandler  {
+  TActionQueue& queue;
+public:
+  TActionProxy(TActionQueue& q) : queue(q) {}
+  virtual bool Enter(const IEObject *Sender, const IEObject *Data=NULL) {  
+	  return queue.Enter(Sender, Data);
+	}
+  virtual bool Exit(const IEObject *Sender, const IEObject *Data=NULL)  {
+	  return queue.Exit(Sender, Data);
+	}
+  virtual void UpdateData(const IEObject *Sender, const IEObject *Data=NULL)  {
+	  queue.UpdateData(Sender, Data);
+	}
+  virtual bool Execute(const IEObject *Sender, const IEObject *Data=NULL)  {
+	  return queue.Execute(Sender, Data);
+	} 
+};
+
 class TOnProgress: public IEObject {  // generic on progress data
   double Max, Pos;
   olxstr Action;
 public:
-  TOnProgress()  {  Max = Pos = 0; }
-  virtual ~TOnProgress()  {  ;  }
+  TOnProgress() : Max(0), Pos(0)  {}
+  virtual ~TOnProgress()  {}
   // set Max to a valid number before OnProgress is executed!
   DefPropP(double, Max)
   DefPropP(double, Pos)
-  inline void IncPos(double v)   {  Pos += v;  }
+  inline void IncPos(double v=1.0)   {  Pos += v;  }
   DefPropC(olxstr, Action)
+	
+	TOnProgress& operator = (const TOnProgress& pg)  {
+	  Max = pg.Max;
+		Pos = pg.Pos;
+		Action = pg.Action;
+		return *this;
+	}
 };
 
 EndEsdlNamespace()

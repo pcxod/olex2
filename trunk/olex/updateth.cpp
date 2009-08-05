@@ -22,7 +22,7 @@ void UpdateThread::DoInit()  {
     Index = new TFSIndex(*srcFS);
     destFS = new TOSFileSystem( TBasicApp::GetBaseDir() );
     uapi.EvaluateProperties(properties);
-    srcFS->OnProgress->Add( new DListenerProxy(*OnDownload) );
+    srcFS->OnProgress->Add( new TActionProxy(*OnDownload) );
   }
   catch(const TExceptionBase& exc)  {
     if( TBasicApp::HasInstance() )
