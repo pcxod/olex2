@@ -6,9 +6,6 @@
 #include "efile.h"
 #include "exception.h"
 
-//#undef __WIN32__
-
-
 #ifdef __WIN32__
   #include <windows.h>
   #include <objbase.h>
@@ -22,12 +19,14 @@
     #include <wx/dirdlg.h>
   #endif
   #ifdef __MAC__
+		#include <sys/types.h>
+    #include <sys/socket.h>
     #include <ifaddrs.h>
     #include <net/if_dl.h>
   #else
-    #include <net/if.h>
-    #include <sys/ioctl.h>
-  #endif
+	  #include <net/if.h>
+	  #include <sys/ioctl.h>
+	#endif
 #endif
 
 //#undef __WIN32__  // compilation test for wxWidgets
@@ -265,7 +264,7 @@ void TShellUtil::ListMACAddresses( TShellUtil::MACInfo& rv )  {
 		  tmpia = tmpia->ifa_next;
 			continue;
 		}
-    _MACFromArray( (unsigned char*)LLADDR(sck_dl), (char*)&(tmpia->afa_name[0]), rv, 6, false);
+    _MACFromArray( (unsigned char*)LLADDR(sck_dl), (char*)&(tmpia->ifa_name[0]), rv, 6, false);
 	  tmpia = tmpia->ifa_next;
 	}
 	if( ifaddrs != NULL )

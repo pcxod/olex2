@@ -716,10 +716,10 @@ void TFSIndex::ProcessActions(TFSItem& item)  {
 #endif
   if( actions.IndexOfi("extract") != -1 )  {
     ZipFS zp( DestFS->GetBase() + item.GetFullName() );
+    zp.OnProgress->Add( new TActionProxy(*OnProgress) );
     zp.ExtractAll( DestFS->GetBase() );
   }
   if( actions.IndexOfi("delete") != -1 )
       item.DelFile();
 }
 //..............................................................................
-

@@ -31,21 +31,6 @@ class UpdateThread : public AOlxThread  {
   }
   void DoInit();
   virtual void OnSendTerminate();
-  class DListenerProxy : public AActionHandler  {
-    TActionQueue& dest;
-  public:
-    DListenerProxy(TActionQueue& _dest) : dest(_dest) {}
-    virtual bool Enter(const IEObject* Sender, const IEObject* data)  {
-      return dest.Enter(Sender, data);
-    }
-    virtual bool Execute(const IEObject* Sender, const IEObject* data)  {
-      return dest.Execute(Sender, data);
-      //TBasicApp::GetLog().Info( olxstr("Downloading: ") << ((TOnProgress*)data)->GetAction() );
-    }
-    virtual bool Exit(const IEObject* Sender, const IEObject* data)  {
-      return dest.Exit(Sender, data);
-    }
-  };
   TActionQList Actions;
 public:
   UpdateThread(const olxstr& patch_dir);

@@ -334,6 +334,7 @@ TMainForm::TMainForm(TGlXApp *Parent):
 {
 //  _crtBreakAlloc = 5892;
   _UpdateThread = NULL;
+	UpdateProgress = NULL;
   SkipSizing = false;
   Destroying = false;
 #ifdef __WIN32__
@@ -439,6 +440,8 @@ TMainForm::~TMainForm()  {
     _UpdateThread->Join(true);
     delete _UpdateThread;
   }
+	if( UpdateProgress != NULL )
+	  delete UpdateProgress;
   delete Modes;
   for( int i=0; i < CallbackFuncs.Count(); i++ )
     delete CallbackFuncs.GetObject(i);
@@ -2038,25 +2041,28 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
   //  }
   //}
   else if( MsgId == ID_UpdateThreadTerminate )  {
-    olx_critical_section cs;
-    cs.enter();
+    olx_scope_cs();
     _UpdateThread = NULL;
-    cs.leave();
+		if( UpdateProgress != NULL )  {
+		  delete UpdateProgress;
+			UpdateProgress = NULL;
+		}
   }
-#ifdef __WIN32__  // GTK crashes here, need a workaround...
   else if( MsgId == ID_UpdateThreadDownload )  {
     if( MsgSubId == msiExecute && Data != NULL && EsdlInstanceOf(*Data, TOnProgress) )  {
       TOnProgress& pg = *(TOnProgress*)Data;
-      StatusBar->SetStatusText( 
-        (olxstr("Downloading ") << pg.GetAction() << ' ' << 
-        olxstr::FormatFloat(2, pg.GetPos()*100/(pg.GetMax()+1)) << '%').u_str()
-      );
-      TBasicApp::Sleep(10);
+      olx_scope_cs();
+	  	if( UpdateProgress != NULL )
+		    *UpdateProgress = pg;
     }
-    else if( MsgSubId == msiExit )
-      StatusBar->SetStatusText( TBasicApp::GetBaseDir().u_str() );
+    else if( MsgSubId == msiExit )  {
+      olx_scope_cs();
+	  	if( UpdateProgress != NULL )  {
+			  delete UpdateProgress;
+				UpdateProgress = NULL;
+			}
+    }
   }
-#endif
   else if( MsgId == ID_TIMER )  {
     FTimer->OnTimer()->SetEnabled( false );
     // execute tasks ...
@@ -2191,8 +2197,9 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
     if( Draw )  {
       TimePerFrame = FXApp->Draw();
     }
-    if( _UpdateThread != NULL && _UpdateThread->GetUpdateSize() != 0 )  {
-      FTimer->OnTimer()->SetEnabled( false );
+    olx_scope_cs(); // make sure the _UpdateThread does not get changed
+		if( _UpdateThread != NULL && _UpdateThread->GetUpdateSize() != 0 )  {
+			FTimer->OnTimer()->SetEnabled( false );
       DoUpdateFiles();
       FTimer->OnTimer()->SetEnabled( true );
     }
@@ -3559,7 +3566,8 @@ void TMainForm::OnInternalIdle()  {
   if( Destroying )  return;
   FParent->Yield();
 #if !defined(__WIN32__)  
-  if( !StartupInitialised )  StartupInit();
+  if( !StartupInitialised )  
+	  StartupInit();
 #endif
   TBasicApp::GetInstance().OnIdle->Execute((AEventsDispatcher*)this, NULL);
   // runonce business...
@@ -3593,6 +3601,22 @@ void TMainForm::OnInternalIdle()  {
       //TEFile::DelFile(rof.String(i));
     }
   }
+  // deal with updates
+	{
+    static bool UpdateExecuted = false;
+    olx_scope_cs();
+	  if( UpdateProgress != NULL )  {
+		  UpdateExecuted = true;
+      StatusBar->SetStatusText( 
+        (olxstr("Downloading ") << UpdateProgress->GetAction() << ' ' << 
+        olxstr::FormatFloat(2, UpdateProgress->GetPos()*100/(UpdateProgress->GetMax()+1)) << '%').u_str()
+      );
+    }
+		else if( UpdateExecuted )  {
+      StatusBar->SetStatusText( TBasicApp::GetBaseDir().u_str() );
+		  UpdateExecuted = false;
+		}
+	}
   wxFrame::OnInternalIdle();
 #ifdef __MAC__  // duno why otherwise it takes 100% of CPU time...
   wxMilliSleep(15);
@@ -4121,6 +4145,8 @@ void TMainForm::DoUpdateFiles()  {
       true);
     int res = msg_box->ShowModal();  
     if( res == wxID_YES )  {
+		  if( UpdateProgress == NULL )
+			  UpdateProgress = new TOnProgress;
       _UpdateThread->DoUpdate();
       if( msg_box->IsChecked() )  {
         sf.ask_for_update = false;
