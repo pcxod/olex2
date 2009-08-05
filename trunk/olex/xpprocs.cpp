@@ -1,3 +1,4 @@
+
 //----------------------------------------------------------------------------//
 // main frame of the application
 // (c) Oleg V. Dolomanov, 2004
@@ -105,7 +106,11 @@
 
 #ifdef __WIN32__  // netbios...
   #include <Lm.h>
-  //#include <Lmwksta.h>
+#else
+  #include <stdio.h>
+  #include <net/if.h>
+  #include <arpa/inet.h>
+  #include <sys/ioctl.h>
 #endif
 
 #ifndef __BORLANDC__
@@ -8090,7 +8095,7 @@ void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options, TMa
       TBasicApp::GetLog() << res[i][j].GetFullLabel(FXApp->XFile().GetRM(), main_resi);
   }
   TBasicApp::GetLog() << '\n' << arl.GetExpression() << '\n';
-  CString str("ã·Ð ØÖðáÞ¦ðÆ ");
+  CString str("ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Þ¦ï¿½Æ ");
   olxstr s1(str);
   setlocale(LC_ALL, ".855");
   olxstr s2 = olxstr::CStr2WStr(str);
@@ -8941,6 +8946,40 @@ void TMainForm::funGetMAC(const TStrObjList& Params, TMacroError &E)  {
   E.SetRetVal(rv);
   // Release pbBuffer allocated by above function
   NetApiBufferFree(pbBuffer);
+#else
+  struct ifconf ifc;
+  struct ifreq ifs[64];
+  char bf[16];
+  olxstr rv;
+  int SockFD = socket(AF_INET, SOCK_DGRAM, 0);
+  ifc.ifc_len = sizeof(ifs);
+  ifc.ifc_req = ifs;
+  if( ioctl(SockFD, SIOCGIFCONF, &ifc) < 0 )  {
+    E.SetRetVal<olxstr>("n/a1");
+    return;
+  }
+  struct ifreq* ifend = ifs + (ifc.ifc_len / sizeof(struct ifreq));
+  for( struct ifreq* ifr = ifc.ifc_req; ifr < ifend; ifr++ )  {
+    if( ifr->ifr_addr.sa_family == AF_INET )  {
+      struct ifreq ifreq;
+      strncpy(ifreq.ifr_name, ifr->ifr_name,sizeof(ifreq.ifr_name));
+      if( ioctl (SockFD, SIOCGIFHWADDR, &ifreq) < 0 )  {
+        E.SetRetVal<olxstr>("n/a2");
+        return;
+      }
+      int cnt = 0;
+      for( int li=0; li < 6; li++ )
+        cnt += ((unsigned char *) &ifreq.ifr_hwaddr.sa_data)[li];
+      if( cnt == 0 )  continue;
+      if( !rv.IsEmpty() )  rv << ';';
+      for( int li=0; li < 6; li++ )  {
+        sprintf(bf, "%02X", ((unsigned char *) &ifreq.ifr_hwaddr.sa_data)[li] );
+        rv << bf;
+        if( li < 5 )  rv << '-';
+      }
+    }
+  }
+  E.SetRetVal( rv.IsEmpty() ? olxstr("n/a3") : rv );
 #endif
 }
 //..............................................................................
