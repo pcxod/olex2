@@ -956,7 +956,8 @@ separated values of Atom Type and radius, an entry a line" );
   this_InitFuncD(GlTooltip, fpNone|fpOne, "Returns state of/sets OpenGL tooltip implementation for the main window\
                                           (some old platforms do not have proper implementation of tooltips)" );
   this_InitFuncD(CurrentLanguage, fpNone|fpOne, "Returns/sets current language" );
-  this_InitFuncD(GetMAC, fpNone, "Returns computers MAC (Windows only - empty string for other systems for now)" );
+  this_InitFuncD(GetMAC, fpNone|fpOne, "Returns simicolon separated list of computer MAC addresses.\
+ If 'full' is provided as argument, the adoptor names are also returned as adapter=MAC;.." );
 
   Library.AttachLibrary( TEFile::ExportLibrary() );
   //Library.AttachLibrary( olxstr::ExportLibrary("str") );
