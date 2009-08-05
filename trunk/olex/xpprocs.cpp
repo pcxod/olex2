@@ -106,8 +106,10 @@
 
 #ifdef __WIN32__  // netbios...
   #include <Lm.h>
+#elif __MAC__
+    #include <ifaddrs.h>
+    #include <net/if_dl.h>
 #else
-  #include <stdio.h>
   #include <net/if.h>
   #include <sys/ioctl.h>
 #endif
@@ -8904,15 +8906,17 @@ void TMainForm::macRESI(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   }
 }
 //..............................................................................
-//http://www.codeguru.com/cpp/i-n/network/networkinformation/article.php/c5451
-//http://cboard.cprogramming.com/linux-programming/43261-ioctl-request-get-hw-address.html
+//http://www.codeguru.com/cpp/i-n/network/networkinformation/article.php/c5451 win
+//http://cboard.cprogramming.com/linux-programming/43261-ioctl-request-get-hw-address.html unix/linux
+//http://othermark.livejournal.com/3005.html mac/freebsd
+//http://lists.freebsd.org/pipermail/freebsd-hackers/2004-June/007415.html as above
 void TMainForm::funGetMAC(const TStrObjList& Params, TMacroError &E)  {
+  olxstr rv(EmptyString, 256);
 #ifdef __WIN32__
   DWORD dwEntriesRead;
   DWORD dwTotalEntries;
   BYTE *pbBuffer;
 
-  // Get MAC address via NetBIOS's enumerate function
   NET_API_STATUS dwStatus = NetWkstaTransportEnum(
     NULL,                 // [in]  server name
     0,                    // [in]  data structure to return
@@ -8923,11 +8927,10 @@ void TMainForm::funGetMAC(const TStrObjList& Params, TMacroError &E)  {
     NULL                  // [in/out] resume handle
   );
   if( dwStatus != NERR_Success )  {
-    E.SetRetVal<olxstr>("n/a");
+    E.SetRetVal(NAString);
     return;
   }
   WKSTA_TRANSPORT_INFO_0 *pwkti = (WKSTA_TRANSPORT_INFO_0*)pbBuffer; // type cast the buffer
-  olxstr rv(EmptyString, 256);
   for( int i=0; i< dwEntriesRead; i++ )  { 
     const olxstr addr(pwkti[i].wkti0_transport_address);
     if( addr.Equals("000000000000") || (addr.Length()%2) != 0 )  continue;
@@ -8939,23 +8942,21 @@ void TMainForm::funGetMAC(const TStrObjList& Params, TMacroError &E)  {
         rv << '-';
     }
   }
-  E.SetRetVal(rv.IsEmpty() ? olxstr("n/a") : rv);
-  // Release pbBuffer allocated by above function
+  E.SetRetVal(rv.IsEmpty() ? NAString : rv);
   NetApiBufferFree(pbBuffer);
-#else
+#elif SIOCGIFHWADDR // I thought this will be enough, but no - Mac is special...
   struct ifconf ifc;
   struct ifreq ifs[32];
   char bf[16];
-  olxstr rv;
   int sckt = socket(AF_INET, SOCK_DGRAM, 0);
   if( sckt == -1 )  {
-    E.SetRetVal<olxstr>("n/a");
+    E.SetRetVal(NAString);
     return;
   }
   ifc.ifc_len = sizeof(ifs);
   ifc.ifc_req = ifs;
   if( ioctl(sckt, SIOCGIFCONF, &ifc) < 0 )  {
-    E.SetRetVal<olxstr>("n/a");
+    E.SetRetVal(NAString);
     close(sckt);
     return;
   }
@@ -8965,7 +8966,7 @@ void TMainForm::funGetMAC(const TStrObjList& Params, TMacroError &E)  {
       struct ifreq ifreq;
       strncpy(ifreq.ifr_name, ifr->ifr_name,sizeof(ifreq.ifr_name));
       if( ioctl (sckt, SIOCGIFHWADDR, &ifreq) < 0 )  {
-        E.SetRetVal<olxstr>("n/a");
+        E.SetRetVal(NAString);
         return;
       }
       int cnt = 0;
@@ -8980,7 +8981,34 @@ void TMainForm::funGetMAC(const TStrObjList& Params, TMacroError &E)  {
       }
     }
   }
-  E.SetRetVal( rv.IsEmpty() ? olxstr("n/a") : rv );
-#endif
+	close(sckt);
+#else
+  struct ifaddrs* ifaddrs, *tmpia;
+	char bf[16];
+	getifaddrs(&ifaddrs);
+	tmpia = ifaddrs;
+	while( tmpia != NULL )  {
+	  if( tmpia->ifa_addr->sa_family != AF_LINK)  {
+		  tmpia = tmpia->ifa_next;
+			continue;
+		}
+		struct sockaddr_dl* sck_dl = (struct sockaddr_dl*)tmpia->ifa_addr;
+	  if( sck_dl->sdl_alen != 6 )  {
+		  tmpia = tmpia->ifa_next;
+			continue;
+		}
+		unsigned char* ref = (unsigned char*)LLADDR(sck_dl);
+		if( !rv.IsEmpty() )  rv << ';';
+		for( int i=0; i < sck_dl->sdl_alen; i++ )  {
+		  sprintf(bf, "%02X", ref[i] );
+			rv << bf;
+			if( i < 5 )  rv << '-';
+		}
+	  tmpia = tmpia->ifa_next;
+	}
+	if( ifaddrs != NULL )
+	  freeifaddrs(ifaddrs);
+#endif	
+  E.SetRetVal( rv.IsEmpty() ? NAString : rv );
 }
 //..............................................................................
