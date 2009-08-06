@@ -33,16 +33,6 @@ void UpdateThread::DoInit()  {
 }
 //....................................................................................
 int UpdateThread::Run()  {
-  // wait for ~3 minutes
-  //while( time_out < 50*20*3*60 )  {
-  while( time_out < 50*20*1 )  {
-    olx_sleep(50);
-    if( Terminate )  {
-      CleanUp();
-      return 0;
-    }
-    time_out += 50;
-  }
   DoInit();
   if( !TBasicApp::HasInstance() || Terminate || 
     srcFS == NULL || destFS == NULL || Index == NULL )  

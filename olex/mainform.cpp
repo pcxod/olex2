@@ -1988,6 +1988,7 @@ void TMainForm::AquireTooltipValue()  {
 //..............................................................................
 bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, const IEObject *Data)  {
   bool res = true, Silent = (FMode & mSilent) != 0, Draw=false;
+  static bool actionEntered = false, downloadEntered=false;
   if( Destroying )  {
     FMode = 0;  // to release waitfor 
     return false;
@@ -2060,6 +2061,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
       TOnProgress& pg = *(TOnProgress*)Data;
       if( UpdateProgress != NULL )
         *UpdateProgress = pg;
+      downloadEntered = true;
       AOlxThread::Yield();
     }
     else if( MsgSubId == msiExit )  {
@@ -2079,6 +2081,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
       TOnProgress& pg = *(TOnProgress*)Data;
         if( ActionProgress != NULL )
           *ActionProgress = pg;
+      actionEntered = true;
       AOlxThread::Yield();
     }
     else if( MsgSubId == msiExit )  {
@@ -2238,16 +2241,19 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
     if( wxIsMainThread() )  {
       static bool UpdateExecuted = false;
       volatile olx_scope_cs cs( TBasicApp::GetCriticalSection());
-      if( ActionProgress != NULL )
+      if( actionEntered && ActionProgress != NULL )  {
         StatusBar->SetStatusText( (olxstr("Processing ") << ActionProgress->GetAction()).u_str() );
-      else if( UpdateProgress != NULL )  {
+        actionEntered = false;
+      }
+      if( downloadEntered && UpdateProgress != NULL )  {
+        downloadEntered = false;
         UpdateExecuted = true;
         StatusBar->SetStatusText( 
           (olxstr("Downloading ") << UpdateProgress->GetAction() << ' ' << 
           olxstr::FormatFloat(2, UpdateProgress->GetPos()*100/(UpdateProgress->GetMax()+1)) << '%').u_str()
         );
       }
-      else if( UpdateExecuted )  {
+      if( UpdateExecuted && _UpdateThread == NULL )  {
         StatusBar->SetStatusText( TBasicApp::GetBaseDir().u_str() );
         UpdateExecuted = false;
       }
