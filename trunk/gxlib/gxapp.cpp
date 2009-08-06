@@ -1743,7 +1743,7 @@ int XAtomLabelSort(const TXAtom* I1, const TXAtom* I2)  {
 void TGXApp::InfoList(const olxstr &Atoms, TStrList &Info, bool sort)  {
   if( !XFile().GetLattice().IsGenerated() )  {
     TCAtomPList AtomsList;
-    FindCAtoms(Atoms, AtomsList, false);
+    FindCAtoms(Atoms.IsEmpty() ? olxstr("sel") : Atoms, AtomsList, false);
     TTTable<TStrList> Table(AtomsList.Count(), 7);
     Table.ColName(0) = "Atom";
     Table.ColName(1) = "Type";

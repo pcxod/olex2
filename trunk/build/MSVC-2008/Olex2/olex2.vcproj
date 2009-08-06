@@ -747,9 +747,9 @@
 			<Tool
 				Name="VCLinkerTool"
 				UseUnicodeResponseFiles="true"
-				AdditionalDependencies="alglib.lib sdl.lib xlib.lib gllib.lib gxlib.lib wxexpat.lib wxjpeg.lib wxbase28u.lib wxbase28u_net.lib wxmsw28u_gl.lib wxmsw28u_richtext.lib wxmsw28u_html.lib wxmsw28u_core.lib wxmsw28u_adv.lib wxpng.lib wxregexu.lib wxtiff.lib wxzlib.lib mapi32.lib glu32.lib user32.lib opengl32.lib gdi32.lib ole32.lib advapi32.lib comdlg32.lib comctl32.lib shell32.lib rpcrt4.lib oleaut32.lib kernel32.lib wsock32.lib $(NOINHERIT)"
+				AdditionalDependencies="alglib.lib sdl.lib xlib.lib gllib.lib gxlib.lib wxexpat.lib wxjpeg.lib wxbase28u.lib wxbase28u_net.lib wxmsw28u_gl.lib wxmsw28u_richtext.lib wxmsw28u_html.lib wxmsw28u_core.lib wxmsw28u_adv.lib wxpng.lib wxregexu.lib wxtiff.lib wxzlib.lib mapi32.lib glu32.lib user32.lib opengl32.lib gdi32.lib ole32.lib advapi32.lib comdlg32.lib comctl32.lib shell32.lib rpcrt4.lib oleaut32.lib kernel32.lib wsock32.lib Iphlpapi.lib $(NOINHERIT)"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="$(PY_DIR)\libs;&quot;$(WX_DIR)\lib\vc_lib&quot;;&quot;$(SolutionDir)$(ConfigurationName)\lib&quot;;&quot;$(SolutionDir)\lib_u&quot;"
+				AdditionalLibraryDirectories="$(PY_DIR)\libs;&quot;$(WX_DIR)\lib\vc_lib&quot;;&quot;$(SolutionDir)$(ConfigurationName)\lib&quot;;&quot;$(SolutionDir)\lib_u-d&quot;"
 				GenerateManifest="true"
 				IgnoreAllDefaultLibraries="false"
 				IgnoreDefaultLibraryNames=""

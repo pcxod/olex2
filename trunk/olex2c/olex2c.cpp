@@ -120,7 +120,7 @@ class TOlex: public AEventsDispatcher, public olex::IOlexProcessor, public ASele
     while( true )  {
       if( !TBasicApp::HasInstance() )  return 0;
       TBasicApp::GetInstance().OnTimer->Execute(NULL);
-      TBasicApp::Sleep(50);
+      olx_sleep(50);
     }
     return 0;
   }
@@ -399,7 +399,7 @@ public:
       if( XApp.XFile().HasLastLoader() )  {
         olxstr sfn( TEFile::ExtractFilePath(XApp.XFile().GetFileName()) + "autochem.stop");
         if( TEFile::Exists(sfn) )  {
-          XApp.Sleep(100);
+          olx_sleep(100);
           TEFile::DelFile(sfn);
 //          TOlex::~TOlex();
           TerminateSignal = true;
@@ -541,7 +541,7 @@ public:
   void macWaitFor(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
     if( Cmds[0].Equalsi("process") )  {
       while( FProcess != NULL )  {
-        XApp.Sleep(50);
+        olx_sleep(50);
       }
     }
   }

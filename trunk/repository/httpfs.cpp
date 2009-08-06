@@ -188,7 +188,7 @@ IInputStream* THttpFileSystem::_DoOpenFile(const olxstr& Source)  {
 //..............................................................................
 bool THttpFileSystem::_DoesExist(const olxstr& f)  {  
   if( Index != NULL )
-    return Index->GetRoot().FindByFullName(f);
+    return Index->GetRoot().FindByFullName(f) != NULL;
   return false;  
 }
 //..............................................................................

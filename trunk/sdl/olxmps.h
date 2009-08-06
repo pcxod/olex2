@@ -150,7 +150,7 @@ template <class TaskClass>
         start_thread( item );
       }
       while( !IsCompleted() )
-        TBasicApp::GetInstance().Sleep(25);
+        olx_sleep(25);
     }
     virtual bool Execute(const IEObject *Sender, const IEObject *Data=NULL) {
       ((TArrayIterationItem<TaskClass>*)Sender)->OnCompletion->Remove(this);

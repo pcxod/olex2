@@ -234,7 +234,7 @@ void TOlexViewer::DrawStyle(short style)  {
 void TOlexViewer::LoadStyle(const olxstr& _styleFile)  {
   olxstr styleFile( TEFile::ChangeFileExt(_styleFile, "glds"));
   try  {
-    if( TEFile::eExists(styleFile) )  {
+    if( TEFile::Exists(styleFile) )  {
       TDataFile df;
       df.LoadFromXLFile(styleFile);
       GXApp->GetRender().GetStyles().FromDataItem(*df.Root().FindItem("style"));

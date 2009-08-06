@@ -23,7 +23,6 @@
     #define OLX_GETENV getenv
   #endif
 #else
-  #include <time.h>  //POSIX for nanosleep
   #define OLX_STR(a) (a).c_str()
   #define OLX_GETENV getenv
   #define OLX_CHAR char
@@ -31,6 +30,7 @@
 UseEsdlNamespace()
 
 TBasicApp* TBasicApp::Instance = NULL;
+olx_critical_section TBasicApp::app_cs;
 //----------------------------------------------------------------------------//
 //TBasicApp function bodies
 //----------------------------------------------------------------------------//
@@ -132,20 +132,3 @@ TActionQueue& TBasicApp::NewActionQueue(const olxstr &Name) {
   //TActionQueue* q = FActions->FindQueue(Name);
   //return (q!=NULL) ? *q : FActions->NewQueue(Name);
 }
-//..............................................................................
-void TBasicApp::Sleep(long msec)  {
-#ifdef __WIN32__
-  SleepEx(msec, TRUE);
-#else
-//#ifdef __WXWIDGETS__
-//    wxMilliSleep( msec );
-//  #else  // POSIX, <time.h>
-    timespec tm;
-    tm.tv_sec = msec/1000;
-    tm.tv_nsec = (msec%1000)*1000*1000;
-    nanosleep(&tm, NULL);
-//  #endif
-#endif
-}
-
-

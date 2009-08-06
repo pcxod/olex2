@@ -247,8 +247,10 @@ public:
   TFSIndex(AFileSystem& fs);
   virtual ~TFSIndex();
   
-  // this is to be used for the oevral progress monitorring
+  // this is to be used for the overal progress monitorring
   TActionQueue* OnProgress;
+  // this is to be used for when an action is being applied to a file (like extract)
+  TActionQueue* OnAction;
 
   void LoadIndex(const olxstr& IndexFile, const TFSItem::SkipOptions* toSkip=NULL);
   void SaveIndex(const olxstr& IndexFile);
