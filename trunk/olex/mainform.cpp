@@ -2045,41 +2045,47 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
   else if( MsgId == ID_UpdateThreadTerminate )  {
     volatile olx_scope_cs cs( TBasicApp::GetCriticalSection());
     _UpdateThread = NULL;
-		if( UpdateProgress != NULL )  {
-		  delete UpdateProgress;
-			UpdateProgress = NULL;
-		}
+     if( UpdateProgress != NULL )  {
+       delete UpdateProgress;
+       UpdateProgress = NULL;
+     }
   }
   else if( MsgId == ID_UpdateThreadDownload )  {
     volatile olx_scope_cs cs( TBasicApp::GetCriticalSection());
+    if( MsgSubId == msiEnter )  {
+      if( UpdateProgress == NULL )
+        UpdateProgress = new TOnProgress;
+    }
     if( MsgSubId == msiExecute && Data != NULL && EsdlInstanceOf(*Data, TOnProgress) )  {
       TOnProgress& pg = *(TOnProgress*)Data;
-	  	if( UpdateProgress != NULL )
-		    *UpdateProgress = pg;
+      if( UpdateProgress != NULL )
+        *UpdateProgress = pg;
+      AOlxThread::Yield();
     }
     else if( MsgSubId == msiExit )  {
-	  	if( UpdateProgress != NULL )  {
-			  delete UpdateProgress;
-				UpdateProgress = NULL;
-			}
+      if( UpdateProgress != NULL )  {
+        delete UpdateProgress;
+        UpdateProgress = NULL;
+      }
     }
   }
   else if( MsgId == ID_UpdateThreadAction )  {
     volatile olx_scope_cs cs( TBasicApp::GetCriticalSection());
     if( MsgSubId == msiEnter )  {
-	  	if( ActionProgress == NULL )
-		    ActionProgress = new TOnProgress;
+      if( ActionProgress == NULL )
+        ActionProgress = new TOnProgress;
     }
     else if( MsgSubId == msiExecute && Data != NULL && EsdlInstanceOf(*Data, TOnProgress) )  {
       TOnProgress& pg = *(TOnProgress*)Data;
-	  	if( ActionProgress != NULL )
-		    *ActionProgress = pg;
+        if( ActionProgress != NULL )
+          *ActionProgress = pg;
+      AOlxThread::Yield();
     }
     else if( MsgSubId == msiExit )  {
-	  	if( ActionProgress != NULL )  {
-			  delete ActionProgress;
-				ActionProgress = NULL;
-			}
+       if( ActionProgress != NULL )  {
+         delete ActionProgress;
+         ActionProgress = NULL;
+       }
     }
   }
   else if( MsgId == ID_TIMER )  {
@@ -2216,11 +2222,35 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
     if( Draw )  {
       TimePerFrame = FXApp->Draw();
     }
-    volatile olx_scope_cs cs(TBasicApp::GetCriticalSection());
-		if( _UpdateThread != NULL && _UpdateThread->GetUpdateSize() != 0 )  {
-			FTimer->OnTimer()->SetEnabled( false );
-      DoUpdateFiles();
-      FTimer->OnTimer()->SetEnabled( true );
+    // here it cannot be done with scope_cs - GTK would freese the main loop...
+    TBasicApp::EnterCriticalSection();
+    if( _UpdateThread != NULL && _UpdateThread->GetUpdateSize() != 0 )  {
+      TBasicApp::LeaveCriticalSection();
+      if( wxApp::IsMainLoopRunning() )  {
+        FTimer->OnTimer()->SetEnabled( false );
+        DoUpdateFiles();
+        FTimer->OnTimer()->SetEnabled( true );
+      }
+    }
+    else
+      TBasicApp::LeaveCriticalSection();
+  // deal with updates
+    if( wxIsMainThread() )  {
+      static bool UpdateExecuted = false;
+      volatile olx_scope_cs cs( TBasicApp::GetCriticalSection());
+      if( ActionProgress != NULL )
+        StatusBar->SetStatusText( (olxstr("Processing ") << ActionProgress->GetAction()).u_str() );
+      else if( UpdateProgress != NULL )  {
+        UpdateExecuted = true;
+        StatusBar->SetStatusText( 
+          (olxstr("Downloading ") << UpdateProgress->GetAction() << ' ' << 
+          olxstr::FormatFloat(2, UpdateProgress->GetPos()*100/(UpdateProgress->GetMax()+1)) << '%').u_str()
+        );
+      }
+      else if( UpdateExecuted )  {
+        StatusBar->SetStatusText( TBasicApp::GetBaseDir().u_str() );
+        UpdateExecuted = false;
+      }
     }
   }
   else if( MsgId == ID_XOBJECTSDESTROY )  {
@@ -3585,8 +3615,8 @@ void TMainForm::OnInternalIdle()  {
   if( Destroying )  return;
   FParent->Yield();
 #if !defined(__WIN32__)  
-  if( !StartupInitialised )  
-	  StartupInit();
+  if( !StartupInitialised )
+    StartupInit();
 #endif
   TBasicApp::GetInstance().OnIdle->Execute((AEventsDispatcher*)this, NULL);
   // runonce business...
@@ -3620,24 +3650,6 @@ void TMainForm::OnInternalIdle()  {
       //TEFile::DelFile(rof.String(i));
     }
   }
-  // deal with updates
-	{
-    static bool UpdateExecuted = false;
-    volatile olx_scope_cs cs( TBasicApp::GetCriticalSection());
-    if( ActionProgress != NULL )
-      StatusBar->SetStatusText( (olxstr("Processing ") << ActionProgress->GetAction()).u_str() );
-    else if( UpdateProgress != NULL )  {
-		  UpdateExecuted = true;
-      StatusBar->SetStatusText( 
-        (olxstr("Downloading ") << UpdateProgress->GetAction() << ' ' << 
-        olxstr::FormatFloat(2, UpdateProgress->GetPos()*100/(UpdateProgress->GetMax()+1)) << '%').u_str()
-      );
-    }
-		else if( UpdateExecuted )  {
-      StatusBar->SetStatusText( TBasicApp::GetBaseDir().u_str() );
-		  UpdateExecuted = false;
-		}
-	}
   wxFrame::OnInternalIdle();
 #ifdef __MAC__  // duno why otherwise it takes 100% of CPU time...
   wxMilliSleep(15);
@@ -4166,8 +4178,6 @@ void TMainForm::DoUpdateFiles()  {
       true);
     int res = msg_box->ShowModal();  
     if( res == wxID_YES )  {
-		  if( UpdateProgress == NULL )
-			  UpdateProgress = new TOnProgress;
       _UpdateThread->DoUpdate();
       if( msg_box->IsChecked() )  {
         sf.ask_for_update = false;
