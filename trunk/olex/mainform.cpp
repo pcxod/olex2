@@ -2816,16 +2816,10 @@ olxstr TMainForm::ExpandCommand(const olxstr &Cmd)  {
   TBasicFunctionPList bins;  // builins
   GetLibrary().FindSimilarMacros(Cmd, bins);
   GetLibrary().FindSimilarFunctions(Cmd, bins);
-  if( bins.Count() == 1 && libs.IsEmpty() )
-    FullCmd = bins[0]->GetQualifiedName();
-  else if( bins.IsEmpty() && libs.Count() == 1 )
-    FullCmd = libs[0]->GetQualifiedName();
-  else  {
-    for( int i=0; i < bins.Count(); i++ )
-      all_cmds.Add( bins[i]->GetQualifiedName() );
-    for( int i=0; i < libs.Count(); i++ )
-      all_cmds.Add( libs[i]->GetQualifiedName() );
-  }
+  for( int i=0; i < bins.Count(); i++ )
+    all_cmds.Add( bins[i]->GetQualifiedName() );
+  for( int i=0; i < libs.Count(); i++ )
+    all_cmds.Add( libs[i]->GetQualifiedName() );
   if( all_cmds.Count() > 1 )  {
     if( FHelpWindow->IsVisible() )  // console buffer is hidden then...
       FHelpWindow->Clear();

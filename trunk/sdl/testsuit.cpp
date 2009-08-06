@@ -145,7 +145,7 @@ public:
     }
     if( i != 1000000 || j != 1000000 || k != 1000000 || l != 1000000 )  {
       if( use_cs )
-        throw TFunctionFailedException(__OlxSourceInfo, "crutical section test has failed");
+        throw TFunctionFailedException(__OlxSourceInfo, "critical section test has failed");
     }
     else if( !use_cs )  
       throw TFunctionFailedException(__OlxSourceInfo, "critical section test is ambiguous (it is possible)");

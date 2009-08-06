@@ -1465,7 +1465,7 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPL
       else if( v < 120 || d1 < 1.3 || d2 < 1.3 )
         ;
       else  {
-        if( (d1+d2) > 2.73 )  {
+        if( (d1+d2) > 2.70 )  {
           TBasicApp::GetLog().Info( olxstr(atom.GetLabel()) << ": XYNH" );
           cg.FixAtom( AE, fgNH1, HAI, NULL, generated);
         }
