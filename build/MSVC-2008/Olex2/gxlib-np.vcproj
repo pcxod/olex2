@@ -364,7 +364,7 @@
 		</Configuration>
 		<Configuration
 			Name="Unicode-release-d|Win32"
-			OutputDirectory="$(SolutionDir)lib_u-d"
+			OutputDirectory="$(SolutionDir)\lib_u-d"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="4"
 			CharacterSet="1"

@@ -877,6 +877,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\sdl\os_util.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\sdl\smart\ostring.h"
 				>
 			</File>

@@ -1,16 +1,8 @@
 #ifndef __olx_thread_H
 #define __olx_thread_H
 
-// sort out the gheader files
-#ifdef __WIN32__
-  #include <windows.h>
-#undef Yield
-#else
-  #include <pthread.h>
-  #include <errno.h>
-#endif
 #include "exception.h"
-#include "bapp.h"
+#include "os_util.h"
 #include "actions.h"
 #include "egc.h"
 
@@ -87,8 +79,10 @@ public:
       Detached = false;
       Terminate = true;
     }
-    while( Running )
-      TBasicApp::Sleep(50);
+    while( Running )  {
+      Yield();
+      olx_sleep(5);
+    }
 #ifdef __WIN32__  // costed me may restarts...
     if( Handle != NULL )
       CloseHandle(Handle);
@@ -126,7 +120,7 @@ public:
     unsigned long ec = STILL_ACTIVE, rv;
     while( ec == STILL_ACTIVE && (rv=GetExitCodeThread(Handle, &ec)) != 0 )  {
       if( SwitchToThread() == 0 )
-        TBasicApp::Sleep(50);
+        olx_sleep(5);
     }
     return rv != 0;
 #else  
@@ -178,41 +172,5 @@ public:
 #endif
   }
 };
-// http://en.wikipedia.org/wiki/Critical_section
-struct olx_critical_section  {
-#ifdef __WIN32__
-  CRITICAL_SECTION cs;
-  olx_critical_section()  {
-    InitializeCriticalSection(&cs);  
-  }
-  ~olx_critical_section()  {
-    DeleteCriticalSection(&cs);
-  }
-  bool tryEnter()  {  return TryEnterCriticalSection(&cs) != 0;  }
-  void enter() {  EnterCriticalSection(&cs);  }
-  void leave() {  LeaveCriticalSection(&cs);  }
-#else
-  pthread_mutex_t cs;
-  olx_critical_section() {
-    pthread_mutex_init(&cs, NULL);
-  }
-
-  ~olx_critical_section()  {
-    pthread_mutex_destroy(&cs);
-  }
-  bool tryEnter()  {  return pthread_mutex_trylock(&cs) != EBUSY;  }
-  void enter() {  pthread_mutex_lock(&cs);  }
-  void leave() {  pthread_mutex_unlock(&cs);  }
-#endif
-};
-// 'scope critical section'
-struct olx_scope_cs  {
-protected:
-  olx_critical_section cs;
-public:
-  olx_scope_cs()  {  cs.enter();  }
-	~olx_scope_cs() {  cs.leave();  }
-};
-
 EndEsdlNamespace()
 #endif

@@ -5,6 +5,7 @@
 #ifndef bappH
 #define bappH
 #include "paramlist.h"
+#include "os_util.h"
 
 BeginEsdlNamespace()
 
@@ -16,6 +17,7 @@ protected:
   class TLog* Log;
   short MaxThreadCount;
   bool MainFormVisible, Profiling, BaseDirWriteable;
+  static olx_critical_section app_cs;
 public:
   TParamList ParamList;
   TStrObjList Arguments;
@@ -58,10 +60,13 @@ public:
   DefPropBIsSet(MainFormVisible)
   DefPropBIsSet(Profiling)
 
-  // default implementtaion is POSIX and windows
-  static void Sleep(long msec);
   // implementation might consider drawing scene, update GUI etc..
-  virtual void Update()  {  return;  }
+  virtual void Update()  {}
+
+  // application layer critical section
+  inline static void EnterCriticalSection()  {  app_cs.enter();  }
+  inline static void LeaveCriticalSection()  {  app_cs.leave();  }
+  inline static olx_critical_section& GetCriticalSection() {  return app_cs;  }
   DefPropP(short, MaxThreadCount)
   TActionQueue *OnProgress;
   TActionQueue *OnTimer;

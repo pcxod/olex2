@@ -205,7 +205,8 @@ enum
   
   ID_PictureExport,
   ID_UpdateThreadTerminate,
-  ID_UpdateThreadDownload
+  ID_UpdateThreadDownload,
+  ID_UpdateThreadAction
 };
 
 class TObjectVisibilityChange: public AActionHandler
@@ -334,7 +335,7 @@ TMainForm::TMainForm(TGlXApp *Parent):
 {
 //  _crtBreakAlloc = 5892;
   _UpdateThread = NULL;
-	UpdateProgress = NULL;
+	ActionProgress = UpdateProgress = NULL;
   SkipSizing = false;
   Destroying = false;
 #ifdef __WIN32__
@@ -1271,6 +1272,7 @@ separated values of Atom Type and radius, an entry a line" );
     _UpdateThread = new UpdateThread(FXApp->GetSharedDir() + "patch");
     _UpdateThread->OnTerminate->Add(this, ID_UpdateThreadTerminate);
     _UpdateThread->OnDownload->Add(this, ID_UpdateThreadDownload);
+    _UpdateThread->OnAction->Add(this, ID_UpdateThreadAction);
     _UpdateThread->Start();
   }
 }
@@ -2041,7 +2043,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
   //  }
   //}
   else if( MsgId == ID_UpdateThreadTerminate )  {
-    olx_scope_cs();
+    volatile olx_scope_cs cs( TBasicApp::GetCriticalSection());
     _UpdateThread = NULL;
 		if( UpdateProgress != NULL )  {
 		  delete UpdateProgress;
@@ -2049,17 +2051,34 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
 		}
   }
   else if( MsgId == ID_UpdateThreadDownload )  {
+    volatile olx_scope_cs cs( TBasicApp::GetCriticalSection());
     if( MsgSubId == msiExecute && Data != NULL && EsdlInstanceOf(*Data, TOnProgress) )  {
       TOnProgress& pg = *(TOnProgress*)Data;
-      olx_scope_cs();
 	  	if( UpdateProgress != NULL )
 		    *UpdateProgress = pg;
     }
     else if( MsgSubId == msiExit )  {
-      olx_scope_cs();
 	  	if( UpdateProgress != NULL )  {
 			  delete UpdateProgress;
 				UpdateProgress = NULL;
+			}
+    }
+  }
+  else if( MsgId == ID_UpdateThreadAction )  {
+    volatile olx_scope_cs cs( TBasicApp::GetCriticalSection());
+    if( MsgSubId == msiEnter )  {
+	  	if( ActionProgress == NULL )
+		    ActionProgress = new TOnProgress;
+    }
+    else if( MsgSubId == msiExecute && Data != NULL && EsdlInstanceOf(*Data, TOnProgress) )  {
+      TOnProgress& pg = *(TOnProgress*)Data;
+	  	if( ActionProgress != NULL )
+		    *ActionProgress = pg;
+    }
+    else if( MsgSubId == msiExit )  {
+	  	if( ActionProgress != NULL )  {
+			  delete ActionProgress;
+				ActionProgress = NULL;
 			}
     }
   }
@@ -2197,7 +2216,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
     if( Draw )  {
       TimePerFrame = FXApp->Draw();
     }
-    olx_scope_cs(); // make sure the _UpdateThread does not get changed
+    volatile olx_scope_cs cs(TBasicApp::GetCriticalSection());
 		if( _UpdateThread != NULL && _UpdateThread->GetUpdateSize() != 0 )  {
 			FTimer->OnTimer()->SetEnabled( false );
       DoUpdateFiles();
@@ -3604,8 +3623,10 @@ void TMainForm::OnInternalIdle()  {
   // deal with updates
 	{
     static bool UpdateExecuted = false;
-    olx_scope_cs();
-	  if( UpdateProgress != NULL )  {
+    volatile olx_scope_cs cs( TBasicApp::GetCriticalSection());
+    if( ActionProgress != NULL )
+      StatusBar->SetStatusText( (olxstr("Processing ") << ActionProgress->GetAction()).u_str() );
+    else if( UpdateProgress != NULL )  {
 		  UpdateExecuted = true;
       StatusBar->SetStatusText( 
         (olxstr("Downloading ") << UpdateProgress->GetAction() << ' ' << 

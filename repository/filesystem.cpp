@@ -561,6 +561,7 @@ void TFSItem::ClearEmptyFolders()  {
 TFSIndex::TFSIndex(AFileSystem& fs) : IndexFS(fs)  {
   Root = new TFSItem(*this, NULL, "ROOT");
   OnProgress = &Actions.NewQueue("ON_PROGRESS");
+  OnAction = &Actions.NewQueue("ON_ACTION");
   DestFS = NULL;
   IndexLoaded = false;
   Break = false;
@@ -627,6 +628,8 @@ double TFSIndex::Synchronise(AFileSystem& To, const TStrList& properties, const 
     LoadIndex(SrcInd, toSkip);
     if( To.Exists(DestInd) )
       DestI.LoadIndex(DestInd);
+    // proxy events ...
+    DestI.OnAction->Add( new TActionProxy(*OnAction) );
     double BytesTransfered = GetRoot().Synchronise(DestI.GetRoot(), properties, cmds);
     if( BytesTransfered != 0 )
       DestI.SaveIndex(DestInd);
@@ -716,7 +719,7 @@ void TFSIndex::ProcessActions(TFSItem& item)  {
 #endif
   if( actions.IndexOfi("extract") != -1 )  {
     ZipFS zp( DestFS->GetBase() + item.GetFullName() );
-    zp.OnProgress->Add( new TActionProxy(*OnProgress) );
+    zp.OnProgress->Add( new TActionProxy(*OnAction) );
     zp.ExtractAll( DestFS->GetBase() );
   }
   if( actions.IndexOfi("delete") != -1 )

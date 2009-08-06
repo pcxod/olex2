@@ -1559,7 +1559,7 @@ void TMainForm::macProcessCmd(TStrObjList &Cmds, const TParamList &Options, TMac
 }
 //..............................................................................
 void TMainForm::macWait(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  FXApp->Sleep(Cmds[0].ToInt());
+  olx_sleep(Cmds[0].ToInt());
 }
 //..............................................................................
 void TMainForm::macSwapBg(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)

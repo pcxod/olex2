@@ -10,6 +10,7 @@ UpdateThread::UpdateThread(const olxstr& patch_dir) : time_out(0), PatchDir(patc
     srcFS(NULL), destFS(NULL), Index(NULL), _DoUpdate(false), UpdateSize(0)  
 { 
 	OnDownload = &Actions.NewQueue("ON_DOWNLOAD");
+	OnAction = &Actions.NewQueue("ON_ACTION");
 }
 //....................................................................................
 void UpdateThread::DoInit()  {
@@ -23,6 +24,7 @@ void UpdateThread::DoInit()  {
     destFS = new TOSFileSystem( TBasicApp::GetBaseDir() );
     uapi.EvaluateProperties(properties);
     srcFS->OnProgress->Add( new TActionProxy(*OnDownload) );
+    Index->OnAction->Add( new TActionProxy(*OnAction) );
   }
   catch(const TExceptionBase& exc)  {
     if( TBasicApp::HasInstance() )
@@ -34,7 +36,7 @@ int UpdateThread::Run()  {
   // wait for ~3 minutes
   //while( time_out < 50*20*3*60 )  {
   while( time_out < 50*20*1 )  {
-    TBasicApp::Sleep(50);
+    olx_sleep(50);
     if( Terminate )  {
       CleanUp();
       return 0;
@@ -52,7 +54,7 @@ int UpdateThread::Run()  {
     return 0;
   // try to lock updateAPI
   while( !patcher::PatchAPI::LockUpdater() )  {
-    TBasicApp::Sleep(100);
+    olx_sleep(100);
     if( Terminate || !TBasicApp::HasInstance() )  {
       CleanUp();
       return 0;
@@ -72,7 +74,7 @@ int UpdateThread::Run()  {
         patcher::PatchAPI::UnlockUpdater(); // safe to call without app instance
         return 0;
       }
-      TBasicApp::Sleep(100);
+      olx_sleep(100);
     }
 #ifdef __WIN32__
     olxstr updater_file( dfs.GetBase() + "olex2.exe");
@@ -85,7 +87,7 @@ int UpdateThread::Run()  {
       return 0;
   // try to lock updateAPI for update
     while( !patcher::PatchAPI::LockUpdater() )  {
-      TBasicApp::Sleep(100);
+      olx_sleep(100);
       if( Terminate || !TBasicApp::HasInstance() )  {
         CleanUp();
         return 0;

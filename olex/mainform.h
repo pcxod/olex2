@@ -108,7 +108,7 @@ public:
 protected:
   bool Destroying;
   UpdateThread* _UpdateThread;
-	TOnProgress* UpdateProgress;
+	TOnProgress* UpdateProgress, *ActionProgress;
   TEFile* ActiveLogFile;
   static void PyInit();
   TActionQList FActionList;

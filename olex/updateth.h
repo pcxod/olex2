@@ -41,7 +41,7 @@ public:
   void ResetUpdateSize() {  UpdateSize = 0;  }
   virtual int Run();
 
-  TActionQueue* OnDownload;
+  TActionQueue* OnDownload, *OnAction;
 };
 
 #endif
