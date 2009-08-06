@@ -62,7 +62,7 @@ uint64_t TETime::msNow()  {
 #else
   struct timeval tv;
   gettimeofday(&tv, NULL);
-  rv += tv.tv_sec;
+  rv += tv.tv_sec*1000;
   rv += tv.tv_usec/1000;
 #endif
 return rv;
