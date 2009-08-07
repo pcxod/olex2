@@ -233,6 +233,7 @@ public:
     this_InitFuncD(Not, fpOne, "" );
     this_InitFuncD(HasGUI, fpNone, "" );
     this_InitFuncD(Sel, fpNone, "" );
+    this_InitFuncD(GetMAC, fpNone|fpOne, "" );
     
     olxstr pluginsFile( XApp.GetBaseDir() + "plugins.xld" );
     Plugins = NULL;
@@ -999,6 +1000,27 @@ public:
       atoms[i]->CAtom().SetDeleted(true);
     XApp.XFile().EndUpdate();
     UnifyAtomList(Selection);
+  }
+  //..............................................................................
+  // cannot stick it anywhere else, eh?
+  void funGetMAC(const TStrObjList& Params, TMacroError &E)  {
+    bool full = (Params.Count() == 1 && Params[0].Equalsi("full") );
+    olxstr rv(EmptyString, 256);
+    char bf[16];
+    TShellUtil::MACInfo MACsInfo;
+    TShellUtil::ListMACAddresses(MACsInfo);
+    for( int i=0; i < MACsInfo.Count(); i++ )  {
+      if( full )
+        rv << MACsInfo[i] << '=';
+      for( size_t j=0; j < MACsInfo.GetObject(i).Count(); j++ )  {
+        sprintf(bf, "%02X", MACsInfo.GetObject(i)[j] );
+        rv << bf;
+        if( j < 5 )  rv << '-';
+      }
+      if( (i+1) < MACsInfo.Count() )  
+        rv << ';';
+    }
+    E.SetRetVal( rv.IsEmpty() ? NAString : rv );
   }
   //..............................................................................
 //////////////////////////////////////////////////////////////////////////////////////////////////
