@@ -7559,49 +7559,40 @@ void TMainForm::macOnRefine(TStrObjList &Cmds, const TParamList &Options, TMacro
 }
 //..............................................................................
 //..............................................................................
-
-class TestListIteration {
-  TTypeList<olxstr>& List;
+class MTTestTh : public AOlxThread  {
+  olxstr msg;
 public:
-  TestListIteration( TTypeList<olxstr>& list ) : List(list)  {  }
-  void Run(long index)  {
-    for( long i=index+1; i < List.Count(); i++ )
-      List[index].Compare(List[i]);
-  }
-  inline TestListIteration* Replicate() const {  return new TestListIteration(List);  }
+  MTTestTh() {  Detached = false;  }
+	int Run()  {
+	  for( int i=0; i < 100000; i++ )
+		  msg = SHA256::Digest(msg);
+	  return 0;
+	}
+	DefPropC(olxstr, msg);
 };
 
 void TMainForm::macTestMT(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  const long listSize = 1024*8;
-  TTypeList< olxstr > testList;
-  testList.SetCapacity( listSize );
-  TestListIteration testListIteration(testList);
-  for( long i=0; i < listSize; i++ )
-    testList.AddCCopy( "Test string, lol" );
+  uint64_t times[8];
+	MTTestTh threads[8];
+	size_t max_th = 1;
+	memset(times, 0, sizeof(uint64_t)*8);
   TBasicApp::GetLog() << ("Testing multithreading compatibility...\n");
-  int64_t singleTT;
-  int pratio = 1;
-  for( int i=1; i <=4; i++ )  {
-    FXApp->SetMaxThreadCount(i);
-    int64_t st = TETime::msNow();
-    TListIteratorManager<TestListIteration> Test(testListIteration, listSize, tQuadraticTask, 0);
-    st = TETime::msNow() - st;
-    TBasicApp::GetLog() << ( olxstr(i) << " threads " << st << " ms\n");
-    if( i == 1 )  {
-      singleTT = st;
-    }
-    else  {
-      int pr = Round((double)singleTT/(double)st);
-      if( pr > pratio )  {
-        pratio = pr;
-      }
-      else  {
-        break;
-      }
-    }
-  }
-  TBasicApp::GetLog() << ( olxstr("Maximum number of threads is set to ") << pratio << '\n' );
-  FXApp->SetMaxThreadCount( pratio );
+  for( int i=1; i <= 8; i++ )  {
+	  uint64_t st = TETime::msNow();
+		for( int j=0; j < i; j++ )
+		  threads[j].Start();
+	  for( int j=0; j < i; j++ )
+		  threads[j].Join();
+		times[i-1] = TETime::msNow() - st;
+    TBasicApp::GetLog() << ( olxstr(i) << " threads " << times[i-1] << " ms\n");
+		TBasicApp::GetInstance().Update();
+		if( i > 1 && ((double)times[i-1]/times[0]) > 1.5 )  {
+		  max_th = i-1;
+			break;
+		}
+	}
+  TBasicApp::GetLog() << ( olxstr("Maximum number of threads is set to ") << max_th << '\n' );
+  FXApp->SetMaxThreadCount( max_th );
 
 }
 //..............................................................................
