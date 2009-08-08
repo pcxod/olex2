@@ -62,7 +62,7 @@ void MD5Impl::digest64(const uint32_t* msg)  {
 
 CString MD5Impl::formatDigest()  {
   HashingUtilsLE::hs_copy(state, digest, 4);
-  CString rv(CEmptyString, 128);
+  CString rv;
   char ch_bf[16];
   memset(ch_bf, 0, 16);
   for( int i=0; i < 16; i++ )  {

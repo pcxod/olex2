@@ -7560,15 +7560,15 @@ void TMainForm::macOnRefine(TStrObjList &Cmds, const TParamList &Options, TMacro
 //..............................................................................
 //..............................................................................
 class MTTestTh : public AOlxThread  {
-  olxstr msg;
+  CString msg;
 public:
   MTTestTh() {  Detached = false;  }
 	int Run()  {
-	  for( int i=0; i < 100000; i++ )
+	  for( int i=0; i < 500000; i++ )
 		  msg = SHA256::Digest(msg);
 	  return 0;
 	}
-	DefPropC(olxstr, msg);
+	DefPropC(CString, msg);
 };
 
 void TMainForm::macTestMT(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
@@ -7586,7 +7586,7 @@ void TMainForm::macTestMT(TStrObjList &Cmds, const TParamList &Options, TMacroEr
 		times[i-1] = TETime::msNow() - st;
     TBasicApp::GetLog() << ( olxstr(i) << " threads " << times[i-1] << " ms\n");
 		TBasicApp::GetInstance().Update();
-		if( i > 1 && ((double)times[i-1]/times[0]) > 1.5 )  {
+		if( i > 1 && ((double)times[i-1]/times[0]) > 1.4 )  {
 		  max_th = i-1;
 			break;
 		}

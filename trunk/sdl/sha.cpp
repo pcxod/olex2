@@ -1,4 +1,5 @@
 #include "sha.h"
+#include "bapp.h"
 
 SHA1Impl::SHA1Impl()  {
   state[0] = 0x67452301;
@@ -133,8 +134,9 @@ SHA256Impl::SHA256Impl()  {
 }
 
 CString SHA256Impl::formatDigest()  {
+  //volatile olx_scope_cs _cs( TBasicApp::GetCriticalSection() );
   HashingUtilsBE::hs_copy(state, digest, 8);
-  CString rv(CEmptyString, 256);
+  CString rv;  // (CEmptyString, 256) global data, like EmptyString MUST not be used in threads without semaphores!
   char ch_bf[16];
   memset(ch_bf, 0, 16);
   for( int i=0; i < 32; i++ )  {
@@ -159,7 +161,7 @@ SHA224Impl::SHA224Impl()  {
 
 CString SHA224Impl::formatDigest()  {
   HashingUtilsBE::hs_copy(state, digest, 7);
-  CString rv(CEmptyString, 256);
+  CString rv;
   char ch_bf[16];
   memset(ch_bf, 0, 16);
   for( int i=0; i < 28; i++ )  {
