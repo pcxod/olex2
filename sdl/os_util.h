@@ -4,6 +4,9 @@
 #include "ebase.h"
 #ifdef __WIN32__
   #include <windows.h>
+#ifdef __BORLANDC__  // time_t definition...
+  #include <time.h>
+#endif
 #undef Yield
 #undef GetAtom
 #undef AddAtom
@@ -54,7 +57,7 @@ protected:
   olx_critical_section& cs;
 public:
   olx_scope_cs(olx_critical_section& _cs) : cs(_cs)  {  cs.enter();  }
-	~olx_scope_cs() {  cs.leave();  }
+  ~olx_scope_cs() {  cs.leave();  }
 };
 
 static void olx_sleep(time_t msec)  {

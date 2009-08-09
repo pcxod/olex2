@@ -84,7 +84,7 @@ __fastcall TdlgMain::TdlgMain(TComponent* Owner)
 {
 
   new TBasicApp( TEFile::ExtractFilePath(ParamStr(0).c_str()));
-  TEGC::NewG<TSymmLib>( TBasicApp::GetInstance()->BaseDir() + "symmlib.xld" );
+  TEGC::NewG<TSymmLib>( TBasicApp::GetBaseDir() + "symmlib.xld" );
   LogListener& logListener = TEGC::NewG<LogListener>( this );
   TBasicApp::GetLog().OnException->Add(&logListener, ID_EXCEPTION);
   TBasicApp::GetLog().OnError->Add(&logListener, ID_ERROR);
@@ -290,7 +290,7 @@ __fastcall TdlgMain::~TdlgMain()
   delete Organiser;
   Organiser = NULL;
   delete Bitmap;
-  delete TBasicApp::GetInstance();
+  delete &TBasicApp::GetInstance();
 }
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------

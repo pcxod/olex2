@@ -1279,6 +1279,12 @@ public:
     return false;
   }
   //............................................................................
+#ifdef __BORLANDC__
+  typedef TTSString<TCString, char> CString;
+  typedef TTSString<TWString, wchar_t> WString;
+#endif
+  //............................................................................
+
   bool NeedsConverting() const {  return o_needs_converting(T::Data(), T::_Length);  }
   // converts a wide char string into multibyte string properly (using curent locale)
   static CString WStr2CStr(const wchar_t* wstr, size_t len=~0);

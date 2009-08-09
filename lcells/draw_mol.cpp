@@ -38,7 +38,7 @@ __fastcall TOrganiser::TOrganiser(Graphics::TBitmap *Bmp)  {
   MouseDown = false;
   FBitmap = Bmp;
 
-  FAtomsInfo = new TAtomsInfo( TBasicApp::GetInstance()->BaseDir() + "ptablex.dat" );
+  FAtomsInfo = new TAtomsInfo( TBasicApp::GetBaseDir() + "ptablex.dat" );
   FXFile = new TXFile();
   FXFile->RegisterFileFormat( new xlib::TCif, "cif");
   FXFile->RegisterFileFormat( new xlib::TMol, "mol");

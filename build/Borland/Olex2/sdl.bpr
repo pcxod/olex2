@@ -13,7 +13,7 @@
       build\paramlist.obj build\poly.obj build\settingsfile.obj build\undo.obj 
       build\egc.obj build\ipbase.obj build\outstream.obj build\olx_cstring.obj 
       build\olx_wstring.obj build\ostring.obj build\eutf8.obj build\istream.obj 
-      build\filetree.obj"/>
+      build\filetree.obj build\olx_istring.obj"/>
     <RESFILES value=""/>
     <DEFFILE value=""/>
     <RESDEPEN value="$(RESFILES)"/>
@@ -86,6 +86,7 @@
       <FILE FILENAME="..\..\..\sdl\eutf8.cpp" FORMNAME="" UNITNAME="eutf8" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\sdl\istream.cpp" FORMNAME="" UNITNAME="istream" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\sdl\filetree.cpp" FORMNAME="" UNITNAME="filetree" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\sdl\smart\olx_istring.cpp" FORMNAME="" UNITNAME="olx_istring" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
   </FILELIST>
   <BUILDTOOLS>
   </BUILDTOOLS>
