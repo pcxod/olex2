@@ -416,8 +416,16 @@ bool _fastcall TCifIndex::Update(bool Total, const olxstr& Dir, int MaxSize, TFo
       continue;
     }
     C = new TCifFile(NULL);
-    if( !InsFile->LoadFromCifFile(FFN) )  {
+    try  {
+      if( !InsFile->LoadFromCifFile(FFN) )  {
+        delete C;
+        continue;
+      }
+    }
+    catch( const TExceptionBase& e)  {
       delete C;
+      dlgMain->AddMessage( olxstr("Failed processing: ") << FFN );
+      dlgMain->AddMessage(e.GetException()->GetFullMessage());
       continue;
     }
     FInsFiles.AddACopy(C);

@@ -67,6 +67,7 @@ bool _fastcall TInsCellReader::LoadFromCifFile(const olxstr& FN)  {
   for( int i=0; i < S.Count(); i++ )  {
     if( S[i].IsEmpty() || S[i][0] != '_' )  continue;
     toks.Clear();
+    S[i].Replace('\t', ' ');
     toks.Strtok(S[i].LowerCase(), ' ');
     if( toks.Count() < 2 )  continue;
 

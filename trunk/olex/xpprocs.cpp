@@ -7572,7 +7572,7 @@ public:
 };
 
 void TMainForm::macTestMT(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  uint64_t times[8];
+  uint64_t times[8], min_t;
 	MTTestTh threads[8];
 	size_t max_th = 1;
 	memset(times, 0, sizeof(uint64_t)*8);
@@ -7584,9 +7584,13 @@ void TMainForm::macTestMT(TStrObjList &Cmds, const TParamList &Options, TMacroEr
 	  for( int j=0; j < i; j++ )
 		  threads[j].Join();
 		times[i-1] = TETime::msNow() - st;
+    if( i == 1 )
+      min_t = times[0];
+    else if( times[i-1] < min_t )
+      min_t = times[i-1];
     TBasicApp::GetLog() << ( olxstr(i) << " threads " << times[i-1] << " ms\n");
 		TBasicApp::GetInstance().Update();
-		if( i > 1 && ((double)times[i-1]/times[0]) > 1.4 )  {
+		if( i > 1 && ((double)times[i-1]/min_t) > 1.4 )  {
 		  max_th = i-1;
 			break;
 		}

@@ -19,7 +19,7 @@ object dlgMain: TdlgMain
   object Splitter1: TSplitter
     Left = 0
     Top = 137
-    Width = 701
+    Width = 693
     Height = 3
     Cursor = crVSplit
     Align = alTop
@@ -27,14 +27,14 @@ object dlgMain: TdlgMain
   object Panel1: TPanel
     Left = 0
     Top = 0
-    Width = 701
+    Width = 693
     Height = 137
     Align = alTop
     TabOrder = 0
     object lvList: TListView
       Left = 321
       Top = 1
-      Width = 379
+      Width = 371
       Height = 135
       Align = alClient
       Columns = <
@@ -224,7 +224,7 @@ object dlgMain: TdlgMain
   object Panel2: TPanel
     Left = 0
     Top = 140
-    Width = 701
+    Width = 693
     Height = 30
     Align = alTop
     ParentShowHint = False
@@ -331,7 +331,7 @@ object dlgMain: TdlgMain
   object Panel5: TPanel
     Left = 0
     Top = 170
-    Width = 701
+    Width = 693
     Height = 209
     Align = alClient
     Caption = 'Panel5'
@@ -339,7 +339,7 @@ object dlgMain: TdlgMain
     object Panel4: TPanel
       Left = 1
       Top = 1
-      Width = 699
+      Width = 691
       Height = 207
       Align = alClient
       TabOrder = 0
@@ -353,7 +353,7 @@ object dlgMain: TdlgMain
       object mMemo: TRichEdit
         Left = 228
         Top = 1
-        Width = 470
+        Width = 462
         Height = 205
         Align = alClient
         Font.Charset = RUSSIAN_CHARSET

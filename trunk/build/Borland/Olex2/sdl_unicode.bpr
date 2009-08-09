@@ -16,7 +16,7 @@
       build_unic\undo.obj build_unic\egc.obj build_unic\ipbase.obj 
       build_unic\outstream.obj build_unic\olx_cstring.obj 
       build_unic\olx_wstring.obj build_unic\ostring.obj build_unic\eutf8.obj 
-      build_unic\istream.obj build_unic\filetree.obj"/>
+      build_unic\istream.obj build_unic\filetree.obj build_unic\olx_istring.obj"/>
     <RESFILES value=""/>
     <DEFFILE value=""/>
     <RESDEPEN value="$(RESFILES)"/>
@@ -89,6 +89,7 @@
       <FILE FILENAME="..\..\..\sdl\eutf8.cpp" FORMNAME="" UNITNAME="eutf8" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\sdl\istream.cpp" FORMNAME="" UNITNAME="istream" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\sdl\filetree.cpp" FORMNAME="" UNITNAME="filetree" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="..\..\..\sdl\smart\olx_istring.cpp" FORMNAME="" UNITNAME="olx_istring" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
   </FILELIST>
   <BUILDTOOLS>
   </BUILDTOOLS>
