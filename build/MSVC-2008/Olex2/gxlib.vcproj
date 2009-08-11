@@ -706,6 +706,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\gxlib\xblob.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\gxlib\xbond.cpp"
 				>
 			</File>
@@ -866,6 +870,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\gxlib\xatom.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\gxlib\xblob.h"
 				>
 			</File>
 			<File

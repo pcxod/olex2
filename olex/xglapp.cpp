@@ -163,7 +163,7 @@ bool TGlXApp::OnInit()  {
 //      BaseDir = TEFile::ParentDir(BaseDir);
 //      BaseDir << "Resources/";
     #endif
-    XApp = new TGXApp( TBasicApp::GuessBaseDir(GetAppName().c_str(), "OLEX2_DIR") );
+    XApp = new TGXApp( TBasicApp::GuessBaseDir(argv[0], "OLEX2_DIR") );
 #ifdef __WIN32__
     XApp->SetSharedDir( TShellUtil::GetSpecialFolderLocation(fiAppData) << "Olex2u");
 #else

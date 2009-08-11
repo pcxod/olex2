@@ -170,23 +170,17 @@ protected:
         case 11: x++;  extra = 2;        break;  //(x+1,y,z) + 2
         default: return -1;         // Invalid edge no.
       }
-      uint32_t id = x;
-      id <<= 10;  // max grid size is 1024x1024x1022
-      id |= y;
-      id <<= 10;
-      id |= z;
-      id <<= 2;
-      id |= extra;
-      return id;  
+      // max grid size is 1024x1024x1022
+      return (uint32_t)extra     | 
+             (uint32_t)(x << 22) | 
+             (uint32_t)(y << 12) |
+             (uint32_t)(z << 2);
     }
     static inline void decode(uint32_t code, int& x, int& y, int& z, int& extra ) {
-      extra = (code & 0x0002);
-      code >>= 2;
-      z = (code & 0x03FF);
-      code >>= 10;
-      y = (code & 0x03FF);
-      code >>= 10;
-      x = (code & 0x03FF);
+      extra = (code & 0x00000002);
+      z =     ((code & 0x00000FFC) >> 2);
+      y =     ((code & 0x003FF000) >> 12);
+      x =     ((code & 0xFFC00000) >> 22);
     }
   };
 ///////////////////////////////////////////////////////////////////////////////////
