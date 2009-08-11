@@ -53,7 +53,7 @@ void SHA1Impl::digest64(const uint32_t* msg)  {
 
 CString SHA1Impl::formatDigest()  {
   HashingUtilsBE::hs_copy(state, digest, 5);
-  CString rv(CEmptyString, 128);
+  CString rv;
   char ch_bf[16];
   memset(ch_bf, 0, 16);
   for( int i=0; i < 20; i++ )  {
