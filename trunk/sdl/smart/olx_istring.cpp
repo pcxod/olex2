@@ -1,4 +1,4 @@
-#include "ebase.h"
+#include "../ebase.h"
 
 template <class T, typename TC>
 CString esdl::TTSString<T,TC>::WStr2CStr(const wchar_t* wstr, size_t len)  {
