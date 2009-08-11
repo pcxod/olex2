@@ -7982,7 +7982,8 @@ void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMa
 
   FXApp->XGrid().SetMaxHole( mi.sigma*1.4);
   FXApp->XGrid().SetMinHole(-mi.sigma*1.4);
-  FXApp->XGrid().SetScale( -mi.sigma*4 );
+  //FXApp->XGrid().SetScale( -mi.sigma*4 );
+  FXApp->XGrid().SetScale( -(mi.maxVal - mi.minVal)/2.5 );
   FXApp->XGrid().SetMinVal( mi.minVal );
   FXApp->XGrid().SetMaxVal( mi.maxVal );
   // copy map
@@ -7995,7 +7996,8 @@ void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMa
   FXApp->XGrid().AdjustMap();
 
   TBasicApp::GetLog() << (olxstr("Map max val ") << olxstr::FormatFloat(3, mi.maxVal) << 
-    " min val " << olxstr::FormatFloat(3, mi.minVal) << '\n');
+    " min val " << olxstr::FormatFloat(3, mi.minVal) << '\n' << 
+    "Map sigma " << olxstr::FormatFloat(3, mi.sigma) << '\n');
   // map integration
   if( Options.Contains('i') )  {
     TArrayList<MapUtil::peak> Peaks;

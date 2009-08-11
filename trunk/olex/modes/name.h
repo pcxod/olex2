@@ -5,6 +5,7 @@ class TNameMode : public AModeWithLabels  {
   int Index;
   olxstr Prefix, Suffix, Symbol;
   TUndoData* FirstUndo;
+  bool AuoComplete;
 protected:
   static TNameMode* Instance;
   class TNameModeUndo : public TUndoData {
@@ -70,6 +71,7 @@ public:
     Prefix = Options.FindValue('p');
     Suffix = Options.FindValue('s');
     Symbol = Options.FindValue('t');  // type
+    AuoComplete = Options.Contains('a');
     bool typeSet = false;
 
     if( Cmds.IsEmpty() && !Symbol.IsEmpty() )
@@ -101,7 +103,8 @@ public:
       TGlXApp::GetGXApp()->MarkLabel(XA, true);
       Index++;
       SetCursor();
-      Autocomplete(XA, undo);
+      if( AutoComplete )
+        Autocomplete(XA, undo);
       return true;
     }
     return false;

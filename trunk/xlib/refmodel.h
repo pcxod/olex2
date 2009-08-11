@@ -323,13 +323,13 @@ of components 1 ... m
   }
   
   void SetIterations( int v ) {  
-    if( LS.IsEmpty() == 0 ) 
+    if( LS.IsEmpty() ) 
       LS.Add(v);
     else
       LS[0] = v;  
   }
   void SetPlan(int v)        {  
-    if( PLAN.IsEmpty() == 0 )  
+    if( PLAN.IsEmpty() )  
       PLAN.Add(v);
     else
       PLAN[0] = v;  

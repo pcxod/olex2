@@ -696,12 +696,13 @@ Accepts atoms, bonds, hbonds or a name (like from LstGO). Example: 'mask hbonds 
   this_InitMacro(ShowQ, wheel, fpNone|fpOne|fpTwo|psFileLoaded );
 
   this_InitMacroD(Mode, 
-    "p-[name] prefix&;\
+"a-[name] autocomplete&;\
+p-[name] prefix&;\
 s-[grow] short interactions; [name] suffix&;\
 t-[name] type&;\
 c-[grow] covalent bonds; [move] copy fragments instead of moving&;\
 r-[split] a restraint/constraint for split atoms; [grow] show radial bonds between the same atoms&;\
-v-[grow] use user provided delta for connctivity analysis", 
+v-[grow] use user provided delta for connectivity analysis, default 2A", 
 (fpAny^fpNone)|psFileLoaded, 
     "Turns specified mode on. Valid mode: fixu, fixc, grow, himp, match, move, name, occu, pack, part, split");
 
