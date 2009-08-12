@@ -8006,7 +8006,6 @@ void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMa
     vec3d norm(1./mapX, 1./mapY, 1./mapZ);
     sg->GetMatrices(ml, mattAll^mattIdentity);
     MapUtil::Integrate<float>(map.Data, mapX, mapY, mapZ, (mi.maxVal - mi.minVal)/2.5, Peaks);
-    //MergedPeaks = Peaks;
     MapUtil::MergePeaks(ml, au.GetCellToCartesian(), norm, Peaks, MergedPeaks);
     MergedPeaks.QuickSorter.SortSF(MergedPeaks, MapUtil::PeakSortBySum);
     int PointCount = mapX*mapY*mapZ;
