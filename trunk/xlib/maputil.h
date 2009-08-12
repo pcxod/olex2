@@ -6,173 +6,107 @@
 
 #include "xbase.h"
 #include "arrays.h"
+#include "estack.h"
 
 BeginXlibNamespace()
 
 class MapUtil  {
 public:
   struct peak  { 
-    int x, y, z, count;  //center
+    int count;  //center
+    vec3i center;
     bool process;
     double summ;
     peak() : process(true), summ(0), count(0) {}
-    peak(int _x, int _y, int _z, double val) : process(true),  
-      summ(val), count(1), x(_x), y(_y), z(_z) {}
+    peak(int _x, int _y, int _z) : process(true),  
+      summ(0), count(0), center(_x, _y, _z) {}
   };
 protected:
-  struct level {
-    int x, y, z;
-    level(int _x, int _y, int _z) : x(_x), y(_y), z(_z) {}
-    bool operator == (const level& l) const {
-      if( x == l.x && y == l.y && z == l.z )  return true;
-      return false;
-    }
-  };
-  template <typename MapT> static void peak_search(MapT*** const data, int mapX, int mapY, int mapZ,
-    const TArray3D<bool>& Mask, const TPtrList< TTypeList<level> >& SphereMask, TArrayList<peak>& maxima)  {
-      bool*** const mask = Mask.Data;
-      int lev = 1;
-      bool done = false;
-      while( !done )  {
-        done = true;
-        const TTypeList<level>& il = *SphereMask[lev];
-        for( int i=0; i < maxima.Count(); i++ )  {
-          peak& peak = maxima[i];
-          if( !peak.process )  continue;
-          for( int j=0; j < il.Count(); j++ )  {
-            int x = peak.x + il[j].x;
-            if( x < 0 )     x += mapX;
-            if( x >= mapX ) x -= mapX; 
-            int y = peak.y + il[j].y;
-            if( y < 0 )     y += mapY;
-            if( y >= mapY ) y -= mapY; 
-            int z = peak.z + il[j].z;
-            if( z < 0 )     z += mapZ;
-            if( z >= mapZ ) z -= mapZ; 
-            if( mask[x][y][z] )  continue;
-            if( peak.summ > 0 && data[x][y][z] <= 0 )  {
-              peak.process = false;
-              break;
+  template <typename MapT> 
+  static void peak_search(MapT*** const data, int mapX, int mapY, int mapZ,
+    MapT pos_level, const TArray3D<bool>& Mask, TArrayList<peak>& maxima)  
+  {
+    TStack<vec3i> stack;
+    const vec3i dim(mapX, mapY, mapZ);
+    bool*** const mask = Mask.Data;
+    const MapT neg_level = -pos_level; 
+    for( int mc=0; mc < maxima.Count(); mc++ )  {
+      peak& peak = maxima[mc];
+      if( mask[peak.center[0]][peak.center[1]][peak.center[2]] )  continue;
+      stack.Push( peak.center );
+      const MapT& ref_val = data[peak.center[0]][peak.center[1]][peak.center[2]];
+      vec3d new_cent;
+      while( !stack.IsEmpty() )  {
+        vec3i cent = stack.Pop();
+        vec3i norm_cent = cent;
+        peak.count++;
+        new_cent += cent;
+        for( int i=0; i < 3; i++ )  {
+          while( norm_cent[i] < 0 )  
+            norm_cent[i] += dim[i];
+          while( norm_cent[i] >= dim[i] ) 
+            norm_cent[i] -= dim[i]; 
+        }
+        mask[norm_cent[0]][norm_cent[1]][norm_cent[2]] = true;
+        peak.summ += data[norm_cent[0]][norm_cent[1]][norm_cent[2]];
+        for( int i=-1; i <= 1; i++ )  {
+          int x = cent[0] + i;
+          while( x < 0 )     x += mapX;
+          while( x >= mapX ) x -= mapX; 
+          for( int j=-1; j <= 1; j++ )  {
+            int y = cent[1] + j;
+            while( y < 0 )     y += mapY;
+            while( y >= mapY ) y -= mapY;
+            for( int k=-1; k <=1; k++ )  {
+              int z = cent[2] + k;
+              while( z < 0 )     z += mapZ;
+              while( z >= mapZ ) z -= mapZ; 
+              if( mask[x][y][z] )  continue;
+              if( ref_val < 0 )  {
+                if( data[x][y][z] < neg_level )  {
+                  stack.Push( vec3i(cent[0]+i, cent[1]+j, cent[2]+k) );
+                  mask[x][y][z] = true;
+                }
+              }
+              else if( data[x][y][z] > pos_level )  {
+                stack.Push( vec3i(cent[0]+i, cent[1]+j, cent[2]+k) );
+                mask[x][y][z] = true;
+              }
             }
-            if( peak.summ < 0 && data[x][y][z] >= 0 )  {
-              peak.process = false;
-              break;
-            }
-            peak.count++;
-            peak.summ += data[x][y][z];
-            done = false;
-            mask[x][y][z] = true;
           }
         }
-        if( ++lev >= SphereMask.Count() )  break;
       }
+      new_cent /= peak.count;
+      peak.center[0] = Round(new_cent[0]);
+      peak.center[1] = Round(new_cent[1]);
+      peak.center[2] = Round(new_cent[2]);
+      for( int i=0; i < 3; i++ )  {
+        while( peak.center[i] < 0 )  
+          peak.center[i] += dim[i];
+        while( peak.center[i] >= dim[i] ) 
+          peak.center[i] -= dim[i]; 
+      }
+    }
   }
 
 public:
   // a simple map integration, considering the peaks and holes as spheres
-  template <typename MapT, typename FloatT> static void Integrate(MapT*** const map, int mapX, int mapY, int mapZ, 
-    FloatT mapMin, FloatT mapMax, FloatT mapSig, FloatT resolution, TArrayList<MapUtil::peak>& Peaks)  {
-    TPtrList< TTypeList<level> > SphereMask;
-    const int maxLevel = Round(2./resolution);
-    for( int l=0; l < maxLevel; l++ )
-      SphereMask.Add( new TTypeList<level> );
-
-    for( int x=-maxLevel+1; x < maxLevel; x++ )  {
-      for( int y=-maxLevel+1; y < maxLevel; y++ )  {
-        for( int z=-maxLevel+1; z < maxLevel; z++ )  {
-          int r = Round(sqrt((double)(x*x + y*y + z*z)));
-          if( r < maxLevel && r > 0 )  // skip 0
-            SphereMask[r]->AddNew(x,y,z);
-        }
-      }
-    }
-    // eliminate duplicate indexes
-    for( int i=0; i < maxLevel; i++ )  {
-      TTypeList<level>& l1 = *SphereMask[i];
-      for( int j= i+1; j < maxLevel; j++ )  {
-        TTypeList<level>& l2 = *SphereMask[j];
-        for( int k=0; k < l1.Count(); k++ )  {
-          if( l1.IsNull(k) )  continue;
-          for( int l=0; l < l2.Count(); l++ )  {
-            if( l2[l] == l1[k] )  {
-              l2.NullItem(l);
-              break;
-            }
-          }
-        }
-      }
-      l1.Pack();
-    }
-    const int s_level = 3;
+  template <typename MapT> static void Integrate(MapT*** const map, int mapX, int mapY, int mapZ, 
+    MapT pos_level, TArrayList<MapUtil::peak>& Peaks)  
+  {
     TArray3D<bool> Mask(0, mapX-1, 0, mapY-1, 0, mapZ-1);
-    bool*** const maskData = Mask.Data;
-//    double pos_level = 0.5*mapMax, neg_level = 0.8*mapMin; 
-    double pos_level = 3*mapSig, neg_level = -3*mapSig; 
+    const MapT neg_level = -pos_level; 
     for( int ix=0; ix < mapX; ix++ )  {
       for( int iy=0; iy < mapY; iy++ )  {
         for( int iz=0; iz < mapZ; iz++ )  {
-          if( !maskData[ix][iy][iz] && ((map[ix][iy][iz] > pos_level) ||
-            (map[ix][iy][iz] < neg_level)) )  {
-              const double refval = map[ix][iy][iz];
-              bool located = true;
-              if( refval > 0 )  {
-                for( int i=-s_level; i <= s_level; i++ )  {
-                  int x = ix+i;
-                  if( x < 0 )      x += mapX;
-                  if( x >= mapX )  x -= mapX;
-                  for( int j=-s_level; j <= s_level; j++ )  {
-                    int y = iy+j;
-                    if( y < 0 )      y += mapY;
-                    if( y >= mapY )  y -= mapY;
-                    for( int k=-s_level; k <= s_level; k++ )  {
-                      if( i==0 && j==0 && k == 0 )  continue;
-                      int z = iz+k;
-                      if( z < 0 )      z += mapZ;
-                      if( z >= mapZ )  z -= mapZ;
-                      if( map[x][y][z] > refval )  {
-                        located = false;
-                        break;
-                      }
-                    }
-                    if( !located )  break;
-                  }
-                  if( !located )  break;
-                }
-              }
-              else  {
-                for( int i=-s_level; i <= s_level; i++ )  {
-                  int x = ix+i;
-                  if( x < 0 )      x += mapX;
-                  if( x >= mapX )  x -= mapX;
-                  for( int j=-s_level; j <= s_level; j++ )  {
-                    int y = iy+j;
-                    if( y < 0 )      y += mapY;
-                    if( y >= mapY )  y -= mapY;
-                    for( int k=-s_level; k <= s_level; k++ )  {
-                      if( i==0 && j==0 && k == 0 )  continue;
-                      int z = iz+k;
-                      if( z < 0 )      z += mapZ;
-                      if( z >= mapZ )  z -= mapZ;
-                      if( map[x][y][z] < refval )  {
-                        located = false;
-                        break;
-                      }
-                    }
-                    if( !located )  break;
-                  }
-                  if( !located )  break;
-                }
-              }
-              if( located )
-                Peaks.Add( peak(ix, iy, iz, refval) );
-          }
+          const MapT& ref_val = map[ix][iy][iz];
+          if( ref_val > pos_level || ref_val < neg_level )
+            Peaks.Add( peak(ix, iy, iz) );
         }
       }
     }
     //int PointCount = mapX*mapY*mapZ;
-    peak_search(map, mapX, mapY, mapZ, Mask, SphereMask, Peaks);
-    for( int i=0; i < maxLevel; i++ )
-      delete SphereMask[i];
+    peak_search<MapT>(map, mapX, mapY, mapZ, pos_level, Mask, Peaks);
   }
   /* Calculates the deepest hole and its fractional coordinates, initialising the map with 'levels'
   expects a map with structure points marked as negative values and the rest - 0
@@ -242,27 +176,35 @@ protected:
   }
   static void StandardiseVec(vec3d& v, const smatd_list& ml)  {
     vec3d tmp;
-    for( int i=0; i < ml.Count(); i++ )  {
-      tmp = ml[i]*v;
-      for( int j=0; j < 3; j++ )  {
-        while( tmp[j] < 0 )  tmp[j] += 1.0;
-        while( tmp[j] > 1.0 )  tmp[j] -= 1.0;
-      }
-      if( (tmp[0] < v[0]) ||        // sdandardise then ...
+    bool changes = true;
+    while( changes )  {
+      changes = false;
+      for( int i=0; i < ml.Count(); i++ )  {
+        tmp = ml[i]*v;
+        for( int j=0; j < 3; j++ )  {
+          while( tmp[j] < 0 )  tmp[j] += 1.0;
+          while( tmp[j] >= 1.0 )  tmp[j] -= 1.0;
+        }
+        if( (tmp[0] < v[0]) ||        // sdandardise then ...
           ( olx_abs(tmp[0]-v[0]) < 1e-5 && (tmp[1] < v[1])) ||
-          (olx_abs(tmp[0]-v[0]) < 1e-5 && olx_abs(tmp[1]-v[1]) < 1e-5 && (tmp[2] < v[2])) )    {
+          (olx_abs(tmp[0]-v[0]) < 1e-5 && olx_abs(tmp[1]-v[1]) < 1e-5 && (tmp[2] < v[2])) )    
+        {
           v = tmp;
+          changes = true;
+        }
       }
     }
   }
 public:
-  static void MergePeaks(const smatd_list& ml, const mat3d& cell2cart, const vec3d& norm, TArrayList<MapUtil::peak>& Peaks, TTypeList<MapUtil::peak>& out)  {
+  static void MergePeaks(const smatd_list& ml, const mat3d& cell2cart, const vec3d& norm, 
+    TArrayList<MapUtil::peak>& Peaks, TTypeList<MapUtil::peak>& out)  
+  {
     const int cnt = Peaks.Count();
     TTypeList<vec3d> crds;
     mat3d cart2cell = cell2cart.Inverse();
     crds.SetCapacity(cnt);
     for( int i=0; i < cnt; i++ )  {
-      crds.AddNew(Peaks[i].x, Peaks[i].y, Peaks[i].z) *= norm;
+      crds.AddNew(Peaks[i].center) *= norm;
       Peaks[i].process = true;
     }
     
@@ -271,20 +213,16 @@ public:
       crds[i] *= cell2cart;
     }
     crds.QuickSorter.SyncSortSF(crds, Peaks, SortByDistance);
-    double* Distances = new double[ cnt + 1];
     TPtrList<MapUtil::peak> toMerge;
-    for( int i=0; i < cnt; i++ )
-      Distances[i] = crds[i].Length();
     for( int i=0; i < cnt; i++ )  {
       if( !Peaks[i].process )  continue;
       toMerge.Clear();
-      toMerge.Add( &Peaks[i] ); 
+      toMerge.Add( Peaks[i] ); 
       vec3d center(crds[i]);
       for( int j=i+1; j < cnt; j++ )  {
-        if( olx_abs(Distances[i]-Distances[j]) > 0.01 )  break;
         if( !Peaks[j].process )  continue;
-        if( crds[i].QDistanceTo(crds[j]) < 0.0001 )  {
-          toMerge.Add( &Peaks[j] );
+        if( crds[i].QDistanceTo(crds[j]) < 0.25 )  {
+          toMerge.Add( Peaks[j] );
           center += crds[j];
           Peaks[j].process = false;
         }
@@ -297,11 +235,15 @@ public:
       center /= toMerge.Count();
       center *= cart2cell;
       center[0] /= norm[0];  center[1] /= norm[1];  center[2] /= norm[2];
-      p.x = Round(center[0]);
-      p.y = Round(center[1]);
-      p.z = Round(center[2]);
+      p.center[0] = Round(center[0]);
+      p.center[1] = Round(center[1]);
+      p.center[2] = Round(center[2]);
     }
-    delete [] Distances;
+    for( int i=0; i < out.Count(); i++ )  {
+      if( out[i].count == 0 )
+        out.NullItem(i);
+    }
+    out.Pack();
   }
 };
 

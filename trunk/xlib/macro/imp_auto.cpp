@@ -684,7 +684,7 @@ void XLibMacros::funFATA(const TStrObjList &Cmds, TMacroError &E)  {
   // map integration
   TArrayList<MapUtil::peak> Peaks;
   sw.start("Integrating P1 map: ");
-  MapUtil::Integrate<float>(map.Data, mapX, mapY, mapZ, mi.minVal, mi.maxVal, mi.sigma, 1./resolution, Peaks);
+  MapUtil::Integrate<float>(map.Data, mapX, mapY, mapZ, mi.sigma*8, Peaks);
   sw.stop();
   int PointCount = mapX*mapY*mapZ;
   int minR = Round((3*1.5/(4*M_PI))*resolution);  // at least 1.5 A^3
@@ -699,10 +699,10 @@ void XLibMacros::funFATA(const TStrObjList &Cmds, TMacroError &E)  {
   for( int i=0; i < Peaks.Count(); i++ )  {
     const MapUtil::peak& peak = Peaks[i];
     if( peak.count >= minPointCount )  {
-      vec3d cnt((double)peak.x/mapX, (double)peak.y/mapY, (double)peak.z/mapZ); 
+      vec3d cnt((double)peak.center[0]/mapX, (double)peak.center[1]/mapY, (double)peak.center[2]/mapZ); 
       double pv = (double)peak.count*vol/PointCount;
       double ed = peak.summ/(pv*218);
-      TCAtom* oa = uc.FindOverlappingAtom(cnt, 0.1);
+      TCAtom* oa = uc.FindOverlappingAtom(cnt, 0.3);
       if( oa != NULL && oa->GetAtomInfo() != iQPeakIndex )  {
         atoms[oa->GetTag()].B() += ed;
         atoms[oa->GetTag()].C()++;

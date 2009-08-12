@@ -495,7 +495,7 @@ void PythonExt::funReset(TStrObjList& Cmds, const TParamList &Options, TMacroErr
 void PythonExt::funRun(TStrObjList& Cmds, const TParamList &Options, TMacroError& E) {
   olxstr fn = TEFile::OSPath( Cmds.Text(' ') );
   if( !TEFile::Exists(fn) )  {
-    E.ProcessingError(__OlxSrcInfo, "specified scrip file does not exist: ") << fn;
+    E.ProcessingError(__OlxSrcInfo, "specified script file does not exist: ") << fn;
     return;
   }
   olxstr cd = TEFile::CurrentDir();

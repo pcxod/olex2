@@ -8005,7 +8005,8 @@ void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMa
     smatd_list ml;
     vec3d norm(1./mapX, 1./mapY, 1./mapZ);
     sg->GetMatrices(ml, mattAll^mattIdentity);
-    MapUtil::Integrate<float>(map.Data, mapX, mapY, mapZ, mi.minVal, mi.maxVal, mi.sigma, 1./resolution, Peaks);
+    MapUtil::Integrate<float>(map.Data, mapX, mapY, mapZ, (mi.maxVal - mi.minVal)/2.5, Peaks);
+    //MergedPeaks = Peaks;
     MapUtil::MergePeaks(ml, au.GetCellToCartesian(), norm, Peaks, MergedPeaks);
     MergedPeaks.QuickSorter.SortSF(MergedPeaks, MapUtil::PeakSortBySum);
     int PointCount = mapX*mapY*mapZ;
@@ -8013,27 +8014,14 @@ void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMa
     int minPointCount = Round(SphereVol(minR));
     for( int i=0; i < MergedPeaks.Count(); i++ )  {
       const MapUtil::peak& peak = MergedPeaks[i];
-      if( peak.count >= minPointCount )  {
-        vec3d cnt((double)peak.x/mapX, (double)peak.y/mapY, (double)peak.z/mapZ); 
-        double pv = (double)peak.count*vol/PointCount;
-        double ed = peak.summ/(pv*218);
-        TCAtom* oa = uc.FindOverlappingAtom(cnt, 0.1);
-        if( oa != NULL )  {
-          if( oa->GetAtomInfo() != iQPeakIndex )  {
-            TBasicApp::GetLog() << (olxstr("Atom type under consideration ") << oa->GetLabel() << '\n');
-          }
-          else  {
-            oa->SetQPeak( oa->GetQPeak() + ed);
-          }
-          continue;
-        }
-        //au.CellToCartesian(cnt);
-        //TBasicApp::GetLog() << (olxstr("Peak ") << olxstr::FormatFloat(3, pv) << " at " << cnt.ToWStr() << '\n');
-        TCAtom& ca = au.NewAtom();
-        ca.SetLabel(olxstr("Q") << olxstr((100+i)));
-        ca.ccrd() = cnt;
-        ca.SetQPeak( ed );
-      }
+      if( peak.count == 0 )  continue;
+      vec3d cnt((double)peak.center[0]/mapX, (double)peak.center[1]/mapY, (double)peak.center[2]/mapZ); 
+      double pv = (double)peak.count*vol/PointCount;
+      double ed = peak.summ/(pv*218);
+      TCAtom& ca = au.NewAtom();
+      ca.SetLabel(olxstr("Q") << olxstr((100+i)));
+      ca.ccrd() = cnt;
+      ca.SetQPeak( ed );
     }
     au.InitData();
     FXApp->XFile().EndUpdate();
