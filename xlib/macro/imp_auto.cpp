@@ -682,9 +682,14 @@ void XLibMacros::funFATA(const TStrObjList &Cmds, TMacroError &E)  {
   sw.stop();
 //////////////////////////////////////////////////////////////////////////////////////////
   // map integration
-  TArrayList<MapUtil::peak> Peaks;
+  TArrayList<MapUtil::peak> _Peaks;
+  TTypeList<MapUtil::peak> Peaks;
   sw.start("Integrating P1 map: ");
-  MapUtil::Integrate<float>(map.Data, mapX, mapY, mapZ, mi.sigma*8, Peaks);
+  MapUtil::Integrate<float>(map.Data, mapX, mapY, mapZ, (mi.maxVal - mi.minVal)/2.5, _Peaks);
+  smatd_list ml;
+  vec3d norm(1./mapX, 1./mapY, 1./mapZ);
+  sg->GetMatrices(ml, mattAll^mattIdentity);
+  MapUtil::MergePeaks(ml, au.GetCellToCartesian(), norm, _Peaks, Peaks);
   sw.stop();
   int PointCount = mapX*mapY*mapZ;
   int minR = Round((3*1.5/(4*M_PI))*resolution);  // at least 1.5 A^3
