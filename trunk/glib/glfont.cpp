@@ -395,9 +395,9 @@ void TGlFont::CreateTextures(short Width, short Height)  {
           const int ind1 = (k*txt_w+j-cs->Left)*4;
           if( cs->Data[ind] != cs->Background && cs->Data[ind+1] != cs->Background && cs->Data[ind+2] != cs->Background )  {
             BmpData[ind1+3] = 255;
-            BmpData[ind1]   = (unsigned char)Round(255*FMaterial.AmbientF[0]);
-            BmpData[ind1+1] = (unsigned char)Round(255*FMaterial.AmbientF[1]);
-            BmpData[ind1+2] = (unsigned char)Round(255*FMaterial.AmbientF[2]);
+            BmpData[ind1]   = (unsigned char)olx_round(255*FMaterial.AmbientF[0]);
+            BmpData[ind1+1] = (unsigned char)olx_round(255*FMaterial.AmbientF[1]);
+            BmpData[ind1+2] = (unsigned char)olx_round(255*FMaterial.AmbientF[2]);
           }
         }
       }
@@ -478,9 +478,9 @@ void TGlFont::SetMaterial(const TGlMaterial& m)  {
     glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, BmpData);
     for( int j=0; j < TextureWidth*TextureHeight*4; j+=4 )  {
       if( BmpData[j+3] == 255 )  {
-        BmpData[j]   = (unsigned char)Round(255*m.AmbientF.Data()[0]);
-        BmpData[j+1] = (unsigned char)Round(255*m.AmbientF.Data()[1]);
-        BmpData[j+2] = (unsigned char)Round(255*m.AmbientF.Data()[2]);
+        BmpData[j]   = (unsigned char)olx_round(255*m.AmbientF.Data()[0]);
+        BmpData[j+1] = (unsigned char)olx_round(255*m.AmbientF.Data()[1]);
+        BmpData[j+2] = (unsigned char)olx_round(255*m.AmbientF.Data()[2]);
       }
     }
     glTexImage2D(GL_TEXTURE_2D, 0, 4, TextureWidth, TextureHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, BmpData);

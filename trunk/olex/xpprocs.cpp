@@ -1279,7 +1279,7 @@ void TMainForm::macPicta(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   if( res <= 0 )  
     res = 1;
   if( res > 1 && res < 100 )
-    res = Round(res);
+    res = olx_round(res);
 
   int ScrHeight = (int)(((double)orgHeight/(res*2)-1.0)*res*2),
       ScrWidth  = (int)(((double)orgWidth/(res*2)-1.0)*res*2);
@@ -1414,7 +1414,7 @@ void TMainForm::macGrow(TStrObjList &Cmds, const TParamList &Options, TMacroErro
             if( latt.GetMatrix(i).r == gm[j].r )  {
               vec3d df = latt.GetMatrix(i).t - gm[j].t;
               for( int k=0; k < 3; k++ )
-                df[k] -= Round(df[k]);
+                df[k] -= olx_round(df[k]);
               if( df.QLength() < 1e-6 )  {
                 grow_next = false;
                 break;
@@ -2795,7 +2795,7 @@ void TMainForm::macCalcMass(TStrObjList &Cmds, const TParamList &Options, TMacro
       Msg = point->X;
       Msg.Format(11, true, ' ');
       Msg << "|";
-      yVal = Round(point->Y/2);
+      yVal = olx_round(point->Y/2);
       for( int j=0; j < yVal; j++ )  Msg << '-';
       TBasicApp::GetLog() << (Msg << '\n');
     }
@@ -2824,7 +2824,7 @@ void TMainForm::macCalcMass(TStrObjList &Cmds, const TParamList &Options, TMacro
     Msg = point->X;
     Msg.Format(11, true, ' ');
     Msg << "|";
-    yVal = Round(point->Y/2);
+    yVal = olx_round(point->Y/2);
     for( int j=0; j < yVal; j++ )  Msg << '-';
     TBasicApp::GetLog() << (Msg << '\n');
   }
@@ -4324,7 +4324,7 @@ void TMainForm::macCalcVoid(TStrObjList &Cmds, const TParamList &Options, TMacro
   TBasicApp::GetLog() << ( olxstr(catoms.IsEmpty() ? "Structure occupies" : "Selected atoms occupy") << " (A^3) "
     << olxstr::FormatFloat(3, structureGridPoints*vol/mapVol) 
     << " (" << olxstr::FormatFloat(2, structureGridPoints*100/mapVol) << "%)\n");
-  const int minLevel = Round( pow( 6*mapVol*3/(4*M_PI*vol), 1./3) );
+  const int minLevel = olx_round( pow( 6*mapVol*3/(4*M_PI*vol), 1./3) );
   TBasicApp::GetLog() << ( olxstr("6A^3 level is ") << minLevel << '\n');
   TIntList levels(MaxLevel+ 2);
   for( int i=0; i < levels.Count(); i++ )
@@ -4565,7 +4565,7 @@ void TMainForm::macDirection(TStrObjList &Cmds, const TParamList &Options, TMacr
       if( H > 0.01 )  H = 1./H;
       if( K > 0.01 )  K = 1./K;
       if( L > 0.01 )  L = 1./L;
-      int iH = Round(H), iK = Round(K), iL = Round(L);
+      int iH = olx_round(H), iK = olx_round(K), iL = olx_round(L);
       double diff = olx_abs(H + K + L - iH - iK - iL)/3;
       if( diff < 0.15 )  {
         Tmp = "View along (";
@@ -6716,7 +6716,7 @@ void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroErro
             p1 = ml[l] * vec3d(d1,d2,d3);
             p1 *= dim;
             for( int k=0; k < 3; k++ )  {
-              ip[k] = Round(p1[k]);
+              ip[k] = olx_round(p1[k]);
               while( ip[k] < 0  )   ip[k] += dim;
               while( ip[k] >= dim ) ip[k] -= dim;
             }
@@ -7470,7 +7470,6 @@ void TMainForm::macAddObject(TStrObjList &Cmds, const TParamList &Options, TMacr
     smatd_list ml;
     sg->GetMatrices( ml, mattAll );
     vec3d_list p, allPoints;
-    vec3d v;
 
     if( Cmds[0].Equalsi("sphere") )  {
       if( (Cmds.Count()-3)%3 != 0 )  {
@@ -7480,12 +7479,11 @@ void TMainForm::macAddObject(TStrObjList &Cmds, const TParamList &Options, TMacr
       for( int i=3; i < Cmds.Count(); i+= 3 ) 
         p.AddNew(Cmds[i].ToDouble(), Cmds[i+1].ToDouble(), Cmds[i+2].ToDouble());
       main_GenerateCrd(p, ml, allPoints);
-      ematd& data = *(new ematd(3, allPoints.Count()));
-      for( int i=0; i < allPoints.Count(); i++ )  {
-        v = allPoints[i] * uc->GetCellToCartesian();
-        data[0][i] = v[0];  data[1][i] = v[1]; data[2][i] = v[2];
-      }
-      TDUserObj* uo = new TDUserObj(FXApp->GetRender(), sgloSphere, &data, Cmds[1]);
+      TArrayList<vec3f>& data = *(new TArrayList<vec3f>(allPoints.Count() ));
+      for( int i=0; i < allPoints.Count(); i++ )
+        data[i] = allPoints[i] * uc->GetCellToCartesian();
+      TDUserObj* uo = new TDUserObj(FXApp->GetRender(), sgloSphere, Cmds[1]);
+      uo->SetVertices(&data);
       FXApp->AddObjectToCreate( uo );
       uo->Create();
     }
@@ -7499,12 +7497,11 @@ void TMainForm::macAddObject(TStrObjList &Cmds, const TParamList &Options, TMacr
         p.AddNew(Cmds[i+3].ToDouble(), Cmds[i+4].ToDouble(), Cmds[i+5].ToDouble());
       }
       main_GenerateCrd(p, ml, allPoints);
-      ematd& data = *(new ematd(3, allPoints.Count() ));
-      for( int i=0; i < allPoints.Count(); i++ )  {
-        v = allPoints[i] * uc->GetCellToCartesian();
-        data[0][i] = v[0];  data[1][i] = v[1]; data[2][i] = v[2];
-      }
-      TDUserObj* uo = new TDUserObj(FXApp->GetRender(), sgloLines, &data, Cmds[1]);
+      TArrayList<vec3f>& data = *(new TArrayList<vec3f>(allPoints.Count() ));
+      for( int i=0; i < allPoints.Count(); i++ )
+        data[i] = allPoints[i] * uc->GetCellToCartesian();
+      TDUserObj* uo = new TDUserObj(FXApp->GetRender(), sgloLines, Cmds[1]);
+      uo->SetVertices(&data);
       FXApp->AddObjectToCreate( uo );
       uo->Create();
     }
@@ -7520,12 +7517,11 @@ void TMainForm::macAddObject(TStrObjList &Cmds, const TParamList &Options, TMacr
         p.AddNew(Cmds[i+9].ToDouble(), Cmds[i+10].ToDouble(), Cmds[i+11].ToDouble());
       }
       main_GenerateCrd(p, ml, allPoints);
-      ematd& data = *(new ematd(3, allPoints.Count() ));
-      for( int i=0; i < allPoints.Count(); i++ )  {
-        v = allPoints[i] * uc->GetCellToCartesian();
-        data[0][i] = v[0];  data[1][i] = v[1]; data[2][i] = v[2];
-      }
-      TDUserObj* uo = new TDUserObj(FXApp->GetRender(), sgloQuads, &data, "user_plane");
+      TArrayList<vec3f>& data = *(new TArrayList<vec3f>(allPoints.Count() ));
+      for( int i=0; i < allPoints.Count(); i++ )
+        data[i] = allPoints[i] * uc->GetCellToCartesian();
+      TDUserObj* uo = new TDUserObj(FXApp->GetRender(), sgloQuads, "user_plane");
+      uo->SetVertices(&data);
       FXApp->AddObjectToCreate( uo );
       uo->Create();
     }
@@ -8009,8 +8005,8 @@ void TMainForm::macCalcFourier(TStrObjList &Cmds, const TParamList &Options, TMa
     MapUtil::MergePeaks(ml, au.GetCellToCartesian(), norm, Peaks, MergedPeaks);
     MergedPeaks.QuickSorter.SortSF(MergedPeaks, MapUtil::PeakSortBySum);
     int PointCount = mapX*mapY*mapZ;
-    int minR = Round((3*1.5/(4*M_PI))*resolution);  // at least 1.5 A^3
-    int minPointCount = Round(SphereVol(minR));
+    int minR = olx_round((3*1.5/(4*M_PI))*resolution);  // at least 1.5 A^3
+    int minPointCount = olx_round(SphereVol(minR));
     for( int i=0; i < MergedPeaks.Count(); i++ )  {
       const MapUtil::peak& peak = MergedPeaks[i];
       if( peak.count == 0 )  continue;
@@ -8101,11 +8097,11 @@ double Main_FindClosestDistance(const smatd_list& ml, vec3d& o_from, const TCAto
     V1 = ml[i] * from;
     V2 = V1;
     V2 -=to;
-    int iv = Round(V2[0]);
+    int iv = olx_round(V2[0]);
     V2[0] -= iv;  V1[0] -= iv;  // find closest distance
-    iv = Round(V2[1]);
+    iv = olx_round(V2[1]);
     V2[1] -= iv;  V1[1] -= iv;
-    iv = Round(V2[2]);
+    iv = olx_round(V2[2]);
     V2[2] -= iv;  V1[2] -= iv;
     a_to.GetParent()->CellToCartesian(V2);
     double D = V2.QLength();
@@ -8156,7 +8152,7 @@ public:
         cc ++;
         if( a2.GetAtomInfo() == iHydrogenIndex )  continue;
         vec3d from(a1.ccrd()), to(a2.ccrd());
-        int d = Round(Main_FindClosestDistance(ml, from, a2)*100);
+        int d = olx_round(Main_FindClosestDistance(ml, from, a2)*100);
         if( d < 1 )  {  // symm eq
           a2.SetTag(-1);
           continue;
@@ -8168,42 +8164,42 @@ public:
         // XY
         diff[0] = from[0]-to[0];  diff[1] = from[1]-to[1]; diff[2] = 0;
         au.CellToCartesian(diff);
-        d = Round(diff.Length()*100);  // keep two numbers
+        d = olx_round(diff.Length()*100);  // keep two numbers
         ind = XY.IndexOfComparable(d);
         if( ind == -1 )  XY.Add(d, 1);
         else             XY.GetObject(ind)++;
         // XZ
         diff[0] = from[0]-to[0];  diff[2] = from[2]-to[2]; diff[1] = 0;
         au.CellToCartesian(diff);
-        d = Round(diff.Length()*100);  // keep two numbers
+        d = olx_round(diff.Length()*100);  // keep two numbers
         ind = XZ.IndexOfComparable(d);
         if( ind == -1 )  XZ.Add(d, 1);
         else             XZ.GetObject(ind)++;
         // YZ
         diff[1] = from[1]-to[1];  diff[2] = from[2]-to[2]; diff[0] = 0;
         au.CellToCartesian(diff);
-        d = Round(diff.Length()*100);  // keep two numbers
+        d = olx_round(diff.Length()*100);  // keep two numbers
         ind = YZ.IndexOfComparable(d);
         if( ind == -1 )  YZ.Add(d, 1);
         else             YZ.GetObject(ind)++;
         // XX
         diff[0] = from[0]-to[0];  diff[1] = 0; diff[2] = 0;
         au.CellToCartesian(diff);
-        d = Round(diff.Length()*100);  // keep two numbers
+        d = olx_round(diff.Length()*100);  // keep two numbers
         ind = XX.IndexOfComparable(d);
         if( ind == -1 )  XX.Add(d, 1);
         else             XX.GetObject(ind)++;
         // YY
         diff[1] = from[1]-to[1];  diff[0] = 0; diff[2] = 0;
         au.CellToCartesian(diff);
-        d = Round(diff.Length()*100);  // keep two numbers
+        d = olx_round(diff.Length()*100);  // keep two numbers
         ind = YY.IndexOfComparable(d);
         if( ind == -1 )  YY.Add(d, 1);
         else             YY.GetObject(ind)++;
         // ZZ
         diff[2] = from[2]-to[2];  diff[0] = 0; diff[1] = 0;
         au.CellToCartesian(diff);
-        d = Round(diff.Length()*100);  // keep two numbers
+        d = olx_round(diff.Length()*100);  // keep two numbers
         ind = ZZ.IndexOfComparable(d);
         if( ind == -1 )  ZZ.Add(d, 1);
         else             ZZ.GetObject(ind)++;
@@ -8256,7 +8252,7 @@ void TMainForm::macTestStat(TStrObjList &Cmds, const TParamList &Options, TMacro
         memset(tmp_data, 0, sizeof(double)*600);
         for( int l=0; l < ml.Count(); l++ )  {
           v1 = ml[l] * to - from;
-          v1[0] -= Round(v1[0]);  v1[1] -= Round(v1[1]);  v1[2] -= Round(v1[2]);
+          v1[0] -= olx_round(v1[0]);  v1[1] -= olx_round(v1[1]);  v1[2] -= olx_round(v1[2]);
           au.CellToCartesian(v1);
           double d = v1.Length();
           if( d <= 0.01 )  {
@@ -8264,7 +8260,7 @@ void TMainForm::macTestStat(TStrObjList &Cmds, const TParamList &Options, TMacro
             break;
           }
           if( d < 6 )
-            tmp_data[Round(d*100)] ++;
+            tmp_data[olx_round(d*100)] ++;
         }
         if( a2.GetTag() != -1 )  {
           for( int l=0; l < 600; l++ )
@@ -8317,7 +8313,7 @@ void TMainForm::macTestStat(TStrObjList &Cmds, const TParamList &Options, TMacro
         TBasicApp::GetLog() << (olxstr("could not parse '") << sl[i] << "\'\n");
         continue;
       }
-      ref_data.Add( Round(sl[i].SubStringTo(ind).ToDouble()*100), sl[i].SubStringFrom(ind+1).ToInt() );
+      ref_data.Add( olx_round(sl[i].SubStringTo(ind).ToDouble()*100), sl[i].SubStringFrom(ind+1).ToInt() );
     }
     double R = 0;
     for( int i=0; i < data.Count(); i++ )  {
@@ -8996,44 +8992,60 @@ void TMainForm::macWBox(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   vec3d pz = normals[2]*maxd1[2];
 
   vec3d faces[] = {
-    px + py + pz,
-    px + py + nz,
-    px + ny + nz,
+    px + py + pz,  // normals[0]
     px + ny + pz,
-
-    nx + py + pz,
-    nx + ny + pz,
-    nx + ny + nz,
-    nx + py + nz,
-
-    px + py + pz,
-    nx + py + pz,
-    nx + py + nz,
-    px + py + nz,
-
-    px + ny + nz,
-    nx + ny + nz,
-    nx + ny + pz,
-    px + ny + pz,
-
-    nx + py + pz,
-    px + py + pz,
-    px + ny + pz,
-    nx + ny + pz,
-
-    nx + py + nz,
-    nx + ny + nz,
     px + ny + nz,
     px + py + nz,
+
+    nx + py + pz, // -normals[0]
+    nx + py + nz,
+    nx + ny + nz,
+    nx + ny + pz,
+
+    px + py + pz, // normals[1]
+    px + py + nz,
+    nx + py + nz,
+    nx + py + pz,
+
+    px + ny + nz, // -normals[1]
+    px + ny + pz,
+    nx + ny + pz,
+    nx + ny + nz,
+
+    nx + py + pz, // normals[2]
+    nx + ny + pz,
+    px + ny + pz,
+    px + py + pz,
+
+    nx + py + nz, // -normals[2]
+    px + py + nz,
+    px + ny + nz,
+    nx + ny + nz
   };
 
-  ematd& poly_d = *(new ematd(3, 24));
-  for( int i=0; i < 24; i++ )  {
-    for( int j=0; j < 3; j++ )
-      poly_d[j][i] = center[j] + faces[i][j];
+  TArrayList<vec3f>& poly_d = *(new TArrayList<vec3f>(24));
+  TArrayList<vec3f>& poly_n = *(new TArrayList<vec3f>(6));
+  poly_n[0] = normals[0];  poly_n[1] = -normals[0];
+  poly_n[2] = normals[1];  poly_n[3] = -normals[1];
+  poly_n[4] = normals[2];  poly_n[5] = -normals[2];
+  for( int i=0; i < 6; i++ )  {
+    int ind = i*4;
+    vec3d n = (faces[ind+1]-faces[ind]).XProdVec(faces[ind+3]-faces[ind]).Normalise();
+    if( n.CAngle(poly_n[i]) < 0 )  {
+      for( int j=0; j < 4; j++ )
+        poly_d[ind+j] = center + faces[ind+3-j];
+    }
+    else  {
+      for( int j=0; j < 4; j++ )
+        poly_d[ind+j] = center + faces[ind+j];
+    }
   }
-  TDUserObj* uo = new TDUserObj(FXApp->GetRender(), sgloQuads, &poly_d, olxstr("wbox") << obj_cnt++);
+  
+  TDUserObj* uo = new TDUserObj(FXApp->GetRender(), sgloQuads, olxstr("wbox") << obj_cnt++);
+  uo->SetVertices(&poly_d);
+  uo->SetNormals( &poly_n );
   FXApp->AddObjectToCreate( uo );
+  uo->SetMaterial("1029;2566914048;2574743415");
   uo->Create();
   FXApp->GetLog() << "Please note that displayed and used atomic radii might be DIFFERENT\n";
 }

@@ -40,9 +40,9 @@ void TXPlane::Create(const olxstr& cName, const ACreationParams* cpar)  {
   GlM.DiffuseB = 0x7f3f3f3f;
   GlP.SetProperties(GlM);
   if( !FPlane->IsRegular() )  
-    GlP.Data.Resize(3, FPlane->CrdCount());
+    GlP.Vertices.SetCount(FPlane->CrdCount());
   else                 
-    GlP.Data.Resize(3, 5);
+    GlP.Vertices.SetCount(5);
 
   PlaneSort::Sorter sp( *FPlane );
   if( !FPlane->IsRegular() )  {
@@ -51,9 +51,7 @@ void TXPlane::Create(const olxstr& cName, const ACreationParams* cpar)  {
       double d = FPlane->DistanceTo(*crd);
       vec3d vec = *crd - FPlane->GetNormal()*d;
       vec -= FPlane->GetCenter();
-      GlP.Data[0][i] = vec[0];
-      GlP.Data[1][i] = vec[1];
-      GlP.Data[2][i] = vec[2];
+      GlP.Vertices[i] = vec;
     }
   }
   else  {
@@ -73,9 +71,7 @@ void TXPlane::Create(const olxstr& cName, const ACreationParams* cpar)  {
     mat3d rm;
     CreateRotationMatrix(rm, FPlane->GetNormal(), cos(M_PI*72.0/180) );
     for( int i=0; i < 5; i++ )  {
-      GlP.Data[0][i] = marv[0];    
-      GlP.Data[1][i] = marv[1];
-      GlP.Data[2][i] = marv[2];
+      GlP.Vertices[i] = marv;    
       marv *= rm;
     }
   }

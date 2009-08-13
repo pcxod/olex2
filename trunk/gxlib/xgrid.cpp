@@ -200,12 +200,13 @@ void TXGrid::Create(const olxstr& cName, const ACreationParams* cpar)  {
   TextIndex = -1;
   GlP.SetTextureId( -1 );
 
-  GlP.Data.Resize(5, 4);
+  GlP.Vertices.SetCount(4);
+  GlP.TextureCrds.SetCount(4);
   // texture coordinates
-  GlP.Data[3][0] = 0;  GlP.Data[4][0] = 0;
-  GlP.Data[3][1] = 1;  GlP.Data[4][1] = 0;
-  GlP.Data[3][2] = 1;  GlP.Data[4][2] = 1;
-  GlP.Data[3][3] = 0;  GlP.Data[4][3] = 1;
+  GlP.TextureCrds[0].s = 0;  GlP.TextureCrds[0].t = 0;
+  GlP.TextureCrds[1].s = 1;  GlP.TextureCrds[1].t = 0;
+  GlP.TextureCrds[2].s = 1;  GlP.TextureCrds[2].t = 1;
+  GlP.TextureCrds[3].s = 0;  GlP.TextureCrds[3].t = 1;
   Info->Create();
   // create dummy primitives
   glpP = &GPC.NewPrimitive("+Surface", sgloQuads);
@@ -339,9 +340,9 @@ bool TXGrid::Orient(TGlPrimitive& GlP)  {
       p = bm * p;
       p -= Parent.GetBasis().GetCenter();
       p *= c2c;
-      p[0] *= MaxX;  p[0] = Round(p[0]);
-      p[1] *= MaxY;  p[1] = Round(p[1]);
-      p[2] *= MaxZ;  p[2] = Round(p[2]);
+      p[0] *= MaxX;  p[0] = olx_round(p[0]);
+      p[1] *= MaxY;  p[1] = olx_round(p[1]);
+      p[2] *= MaxZ;  p[2] = olx_round(p[2]);
 
       while( p[0] < 0 )     p[0] += MaxX;
       while( p[0] >= MaxX )  p[0] -= MaxX;
@@ -374,21 +375,10 @@ bool TXGrid::Orient(TGlPrimitive& GlP)  {
       Replace2DTexture(*Parent.GetTextureManager().
       FindTexture(TextIndex), 0, MaxDim, MaxDim, 0, GL_RGB, TextData);
 
-  GlP.Data[0][0] = p1[0];
-  GlP.Data[1][0] = p1[1];
-  GlP.Data[2][0] = p1[2];
-
-  GlP.Data[0][1] = p2[0];
-  GlP.Data[1][1] = p2[1];
-  GlP.Data[2][1] = p2[2];
-
-  GlP.Data[0][2] = p3[0];
-  GlP.Data[1][2] = p3[1];
-  GlP.Data[2][2] = p3[2];
-
-  GlP.Data[0][3] = p4[0];
-  GlP.Data[1][3] = p4[1];
-  GlP.Data[2][3] = p4[2];
+  GlP.Vertices[0] = p1;
+  GlP.Vertices[1] = p2;
+  GlP.Vertices[2] = p3;
+  GlP.Vertices[3] = p4;
 
   GlP.SetTextureId( TextIndex );
 //  glNormal3d(bm[0][2], bm[1][2], bm[2][2]);

@@ -19,10 +19,14 @@
 #include "styles.h"
 
 
-TDUserObj::TDUserObj(TGlRenderer& R, short type, ematd* data, const olxstr& collectionName) :
-  TGlMouseListener(R, collectionName), Type(type), Data(data)
+TDUserObj::TDUserObj(TGlRenderer& R, short type, const olxstr& collectionName) :
+  TGlMouseListener(R, collectionName), Type(type), Vertices(NULL), Normals(NULL)
 {
   SetGroupable(false);
+  GlM.SetFlags(sglmAmbientF);
+  GlM.AmbientF = 0;
+  GlM.SetIdentityDraw(false);
+  GlM.SetTransparent(false);
 }
 //...........................................................................
 void TDUserObj::Create(const olxstr& cName, const ACreationParams* cpar)  {
@@ -37,11 +41,6 @@ void TDUserObj::Create(const olxstr& cName, const ACreationParams* cpar)  {
 
   TGraphicsStyle& GS = GPC->GetStyle();
   TGlPrimitive& GlP = GPC->NewPrimitive("Object", Type);
-  TGlMaterial GlM;
-  GlM.SetFlags(sglmAmbientF);
-  GlM.AmbientF = 0;
-  GlM.SetIdentityDraw(false);
-  GlM.SetTransparent(false);
   GlP.SetProperties( GS.GetMaterial("Object", GlM) );
 
 
@@ -50,16 +49,18 @@ void TDUserObj::Create(const olxstr& cName, const ACreationParams* cpar)  {
     GlP.Params[1] = 6;  
     GlP.Params[2] = 6;
   }
-  else if( Data )
-    GlP.Data = *Data;
-  else
-    ; // throw an exception
+  else  {
+    if( Vertices != NULL )
+      GlP.Vertices = *Vertices;
+    if( Normals != NULL )
+      GlP.Normals = *Normals;
+  }
 }
 bool TDUserObj::Orient(TGlPrimitive& P)  {
   Parent.GlTranslate( Basis.GetCenter() );
-  if( Type == sgloSphere && Data )  {
-    for( int i=0; i < Data->Elements(); i++ )  {
-      glTranslated( Data->Data(0)[i], Data->Data(1)[i], Data->Data(2)[i] );
+  if( Type == sgloSphere && Vertices != NULL )  {
+    for( int i=0; i < Vertices->Count(); i++ )  {
+      Parent.Translate( (*Vertices)[i] );
       P.Draw();
     }
     return true;

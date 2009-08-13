@@ -567,7 +567,7 @@ void XLibMacros::macHklStat(TStrObjList &Cmds, const TParamList &Options, TMacro
     bool fulfilled = true;
     const TReflection& ref = Refs[i];
     for( int j=0; j < Cmds.Count(); j ++ )  {
-      int v = Round(ref.GetH()*con[j][0] +
+      int v = olx_round(ref.GetH()*con[j][0] +
                     ref.GetK()*con[j][1] +
                     ref.GetL()*con[j][2] );
       if( con[j][3] == 0 )  {
@@ -1330,9 +1330,9 @@ void XLibMacros::ChangeCell(const mat3d& tm, const TSpaceGroup& new_sg)  {
     for( int i=0; i < hklf.RefCount(); i++ )  {
       vec3d hkl(hklf[i].GetH(), hklf[i].GetK(), hklf[i].GetL());
       hkl = tm_t * hkl;
-      hklf[i].SetH(Round(hkl[0]));
-      hklf[i].SetK(Round(hkl[1]));
-      hklf[i].SetL(Round(hkl[2]));
+      hklf[i].SetH(olx_round(hkl[0]));
+      hklf[i].SetK(olx_round(hkl[1]));
+      hklf[i].SetL(olx_round(hkl[2]));
     }
     olxstr new_hkl_fn( TEFile::ExtractFilePath(hkl_fn) );
     TEFile::AddTrailingBackslashI(new_hkl_fn) << "test.hkl";
@@ -1527,8 +1527,8 @@ void XLibMacros::macFixUnit(TStrObjList &Cmds, const TParamList &Options, TMacro
     else
       bai.SetSumm( bai.GetSumm() + ca.GetOccu() );
   }
-  int Z_est = Round(au.EstimateZ(nhc));
-  int Z = Round(Z_est*Zp);
+  int Z_est = olx_round(au.EstimateZ(nhc));
+  int Z = olx_round(Z_est*Zp);
   au.SetZ(Z);
   TBasicApp::GetLog() << (olxstr("for Z'=") << olxstr::FormatFloat(2, Zp).TrimFloat() <<
     " and " << nhc << " non hydrogen atoms Z is estimated to be " << Z << '\n');
@@ -2052,7 +2052,7 @@ void XLibMacros::funIns(const TStrObjList& Params, TMacroError &E)  {
   }
   else if( Params[0].Equalsi("plan") )  {
     for( int i=0; i < rm.PLAN.Count(); i++ )  {
-      tmp << ((i < 1) ? Round(rm.PLAN[i]) : rm.PLAN[i]);
+      tmp << ((i < 1) ? olx_round(rm.PLAN[i]) : rm.PLAN[i]);
       if( (i+1) < rm.PLAN.Count() )  tmp << ' ';
     }
     E.SetRetVal( rm.PLAN.Count() == 0 ? NAString : tmp );
@@ -2798,7 +2798,7 @@ void XLibMacros::macVoidE(TStrObjList &Cmds, const TParamList &Options, TMacroEr
   XApp.GetLog() << ( olxstr("Max level reached ") << MaxLevel << '\n');
   XApp.GetLog() << ( olxstr("Largest spherical void is (A^3) ") << olxstr::FormatFloat(3, MaxLevel*MaxLevel*MaxLevel*4*M_PI/(3*mapVol)*vol) << '\n');
   XApp.GetLog() << ( olxstr("Structure occupies (A^3) ") << olxstr::FormatFloat(3, structurePoints*vol/mapVol) << '\n');
-  int minLevel = Round( pow( 6*mapVol*3/(4*M_PI*vol), 1./3) );
+  int minLevel = olx_round( pow( 6*mapVol*3/(4*M_PI*vol), 1./3) );
   XApp.GetLog() << ( olxstr("6A^3 level is ") << minLevel << '\n');
   // calculate new structure factors
   double Re = 0, Te=0, F0 = 0;
@@ -2946,7 +2946,7 @@ void XLibMacros::macChangeSG(TStrObjList &Cmds, const TParamList &Options, TMacr
       for( int k=1; k < ml.Count(); k++ )  {
         v = ml[k] * list[i].GetA();
         v -= list[j].GetA();
-        v[0] -= Round(v[0]);  v[1] -= Round(v[1]);  v[2] -= Round(v[2]);
+        v[0] -= olx_round(v[0]);  v[1] -= olx_round(v[1]);  v[2] -= olx_round(v[2]);
         au.CellToCartesian(v);
         if( v.QLength() < 0.01 )  {
           list[i].C() ++;

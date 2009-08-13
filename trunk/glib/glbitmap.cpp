@@ -65,12 +65,13 @@ void TGlBitmap::Create(const olxstr& cName, const ACreationParams* cpar)  {
   TGlPrimitive& GlP = GPC.NewPrimitive("Plane", sgloQuads);  //
   GlP.SetTextureId( TextureId );
   GlP.SetProperties( GS.GetMaterial("Plane", GlM) );
-  GlP.Data.Resize(5, 4);
   // texture coordinates
-  GlP.Data[3][0] = 0;  GlP.Data[4][0] = 1;
-  GlP.Data[3][1] = 0;  GlP.Data[4][1] = 0;
-  GlP.Data[3][2] = 1;  GlP.Data[4][2] = 0;
-  GlP.Data[3][3] = 1;  GlP.Data[4][3] = 1;
+  GlP.TextureCrds.SetCount(4);
+  GlP.Vertices.SetCount(4);
+  GlP.TextureCrds[0].s = 0;  GlP.TextureCrds[0].t = 1;
+  GlP.TextureCrds[1].s = 0;  GlP.TextureCrds[1].t = 0;
+  GlP.TextureCrds[2].s = 1;  GlP.TextureCrds[2].t = 0;
+  GlP.TextureCrds[3].s = 1;  GlP.TextureCrds[3].t = 1;
 }
 
 TGlBitmap::~TGlBitmap()  {
@@ -88,14 +89,10 @@ bool TGlBitmap::Orient(TGlPrimitive& P)  {
   double xx = Basis.GetCenter()[0],
          xy = -Basis.GetCenter()[1],
          zm = Basis.GetZoom();
-  P.Data[0][0] = (Left+Width*zm)-hw + xx;  P.Data[1][0] = hh-(Top+Height*zm) - xy ;
-  P.Data[0][1] = P.Data[0][0];            P.Data[1][1] = hh-Top - xy;
-  P.Data[0][2] = Left-hw + xx;             P.Data[1][2] = P.Data[1][1];
-  P.Data[0][3] = P.Data[0][2];            P.Data[1][3] = P.Data[1][0];
-  P.Data[2][0] = Z;
-  P.Data[2][1] = Z;
-  P.Data[2][2] = Z;
-  P.Data[2][3] = Z;
+  P.Vertices[0] = vec3d((Left+Width*zm)-hw + xx, hh-(Top+Height*zm) - xy, Z);
+  P.Vertices[1] = vec3d(P.Vertices[0][0], hh-Top- xy, Z);
+  P.Vertices[2] = vec3d(Left-hw + xx, P.Vertices[1][1], Z);
+  P.Vertices[3] = vec3d(P.Vertices[2][0], P.Vertices[0][1], Z);
 
   Parent.GlScale( (float)(Parent.GetScale()*Parent.GetExtraZoom()) );
   return false;

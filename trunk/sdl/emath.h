@@ -21,7 +21,7 @@ extern double NewtonSolve( double (*f)(double), double (*df)(double), double poi
   // calculates factorila of a number
 double Factorial(int a);
 // rounds a floating point number
-template <typename float_t> inline long Round(const float_t a)  {
+template <typename float_t> inline long olx_round(const float_t a)  {
   long b = (long)a;  // |b| is always smaller than a
   return ((a < 0) ? (((b-a) >= .5) ? --b : b) : (((a-b) >= .5) ? ++b : b));
 }

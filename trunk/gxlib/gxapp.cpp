@@ -3243,8 +3243,8 @@ void TGXApp::CreateXGrowPoints()  {
   vec3d VFrom, VTo;
   vec3d MFrom(-1.5, -1.5, -1.5), MTo(2, 2, 2);
 
-  VTo[0] = Round(MTo[0]+1);     VTo[1] = Round(MTo[1]+1);     VTo[2] = Round(MTo[2]+1);
-  VFrom[0] = Round(MFrom[0]-1); VFrom[1] = Round(MFrom[1]-1); VFrom[2] = Round(MFrom[2]-1);
+  VTo[0] = olx_round(MTo[0]+1);     VTo[1] = olx_round(MTo[1]+1);     VTo[2] = olx_round(MTo[2]+1);
+  VFrom[0] = olx_round(MFrom[0]-1); VFrom[1] = olx_round(MFrom[1]-1); VFrom[2] = olx_round(MFrom[2]-1);
 
   XFile().GetLattice().GenerateMatrices(matrices, VFrom, VTo, MFrom, MTo);
 
@@ -3436,18 +3436,18 @@ struct TGXApp_CrdMap  {
   const int resolution;
   TGXApp_CrdMap() : resolution(5) {}
   void Add(const vec3d& pt)  {
-    YDict& yd = data.Add( Round(pt[0]*resolution) );
-    ZDict& zd = yd.Add( Round(pt[1]*resolution) );
-    zd.AddUnique( Round(pt[2]*resolution) );
+    YDict& yd = data.Add( olx_round(pt[0]*resolution) );
+    ZDict& zd = yd.Add( olx_round(pt[1]*resolution) );
+    zd.AddUnique( olx_round(pt[2]*resolution) );
   }
   bool Exists(const vec3d& pt) const  {
-    const int y_ind = data.IndexOf( Round(pt[0]*resolution) );
+    const int y_ind = data.IndexOf( olx_round(pt[0]*resolution) );
     if( y_ind == -1 )  return false;
     const YDict& yd = data.GetValue(y_ind);
-    const int z_ind = yd.IndexOf( Round(pt[1]*resolution) );
+    const int z_ind = yd.IndexOf( olx_round(pt[1]*resolution) );
     if( z_ind == -1 )  return false;
     const ZDict& zd = yd.GetValue( z_ind );
-    return zd.IndexOf( Round(pt[2]*resolution) ) == -1 ? false : true;
+    return zd.IndexOf( olx_round(pt[2]*resolution) ) == -1 ? false : true;
   }
 };
 void TGXApp::_CreateXGrowVLines()  {

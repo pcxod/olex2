@@ -42,7 +42,7 @@ public:
         }
         if( rv[j] == ref )  {
           refs[i]->IncMultiplicity();
-          if( !refs[i]->IsAbsent() && olx_abs( ps[j] - Round(ps[j]) ) > 0.01 )
+          if( !refs[i]->IsAbsent() && olx_abs( ps[j] - olx_round(ps[j]) ) > 0.01 )
             refs[i]->SetAbsent( true );
         }
         else if( !refs[i]->IsCentric() && rv[j] == neg_ref )  {
@@ -72,7 +72,7 @@ public:
         }
         if( rv[j] == ref )  {
           refs[i].IncMultiplicity();
-          if( !refs[i].IsAbsent() && olx_abs( ps[j] - Round(ps[j]) ) > 0.01 )
+          if( !refs[i].IsAbsent() && olx_abs( ps[j] - olx_round(ps[j]) ) > 0.01 )
             refs[i].SetAbsent( true );
         }
         else if( !refs[i].IsCentric() && rv[j] == neg_ref )  {

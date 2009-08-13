@@ -48,7 +48,7 @@ void TXGlLabel::Create(const olxstr& cName, const ACreationParams* cpar)  {
 
   TGlPrimitive& glpPlane = GPC.NewPrimitive("Plane", sgloQuads);  // a sphere at the basis of the object {0,0,0}
   glpPlane.SetProperties( GS.GetMaterial("Plane", GlM) );
-  glpPlane.Data.Resize(3, 4);
+  glpPlane.Vertices.SetCount(4);
 
   TGlPrimitive& glpText = GPC.NewPrimitive("Text", sgloText);
   glpText.SetProperties( GS.GetMaterial("Text", Font()->GetMaterial()) );
@@ -103,14 +103,10 @@ bool TXGlLabel::Orient(TGlPrimitive& P)  {
     T *= Parent.GetBasis().GetMatrix();
     T[2] += 4.8;
     Parent.GlTranslate(T);
-    P.Data[0][0] = -xinc;  P.Data[1][0] = yinc;
-    P.Data[0][1] = xinc;   P.Data[1][1] = yinc;
-    P.Data[0][2] = xinc;   P.Data[1][2] = -yinc;
-    P.Data[0][3] = -xinc;  P.Data[1][3] = -yinc;
-    P.Data[2][0] = -0.1;
-    P.Data[2][1] = -0.1;
-    P.Data[2][2] = -0.1;
-    P.Data[2][3] = -0.1;
+    P.Vertices[0] = vec3d(-xinc, yinc, -0.1);
+    P.Vertices[1] = vec3d(xinc, yinc, -0.1);
+    P.Vertices[2] = vec3d(xinc, -yinc, -0.1);
+    P.Vertices[4] = vec3d(-xinc, -yinc, -0.1);
   }
   return false;
 }

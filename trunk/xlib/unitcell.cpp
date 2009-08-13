@@ -205,9 +205,9 @@ void TUnitCell::TSearchSymmEqTask::Run(long ind)  {
     if( Atoms[i]->GetTag() == -1 )  continue;
     for( int j=0; j < Matrices.Count(); j++ )  {
       vec3d v = Atoms[ind]->ccrd() - Matrices[j] * Atoms[i]->ccrd();
-      int iLx = Round(v[0]);  v[0] -= iLx;
-      int iLy = Round(v[1]);  v[1] -= iLy;
-      int iLz = Round(v[2]);  v[2] -= iLz;
+      int iLx = olx_round(v[0]);  v[0] -= iLx;
+      int iLy = olx_round(v[1]);  v[1] -= iLy;
+      int iLz = olx_round(v[2]);  v[2] -= iLz;
       // skip I
       if( j == 0 && (iLx|iLy|iLz) == 0 )  {
         if( !Initialise || ind == i )  continue;
@@ -318,9 +318,9 @@ smatd* TUnitCell::GetClosest(const vec3d& to, const vec3d& from, bool ConsiderOr
     const smatd& matr = Matrices[i];
     V1 = matr * from;
     V1 -= to;
-    const int ix = Round(V1[0]);  V1[0] -= (ix);  // find closest distance
-    const int iy = Round(V1[1]);  V1[1] -= (iy);
-    const int iz = Round(V1[2]);  V1[2] -= (iz);
+    const int ix = olx_round(V1[0]);  V1[0] -= (ix);  // find closest distance
+    const int iy = olx_round(V1[1]);  V1[1] -= (iy);
+    const int iz = olx_round(V1[2]);  V1[2] -= (iz);
     // check for identity matrix
     if( i == 0 && (ix|iy|iz) == 0 )  continue;
     GetLattice().GetAsymmUnit().CellToCartesian(V1);
@@ -357,9 +357,9 @@ double TUnitCell::FindClosestDistance(const class TCAtom& a_from, const TCAtom& 
   for( int i=0; i < MatrixCount(); i++ )  {
     const smatd& matr = GetMatrix(i);
     V1 = matr * from - to;
-    V1[0] -= Round(V1[0]);  // find closest distance
-    V1[1] -= Round(V1[1]);
-    V1[2] -= Round(V1[2]);
+    V1[0] -= olx_round(V1[0]);  // find closest distance
+    V1[1] -= olx_round(V1[1]);
+    V1[2] -= olx_round(V1[2]);
     GetLattice().GetAsymmUnit().CellToCartesian(V1);
     double D = V1.QLength();
     if( D < minD )  
@@ -377,9 +377,9 @@ smatd_list* TUnitCell::GetBinding(const TCAtom& toA, const TCAtom& fromA,
   for( int i=0; i < MatrixCount(); i++ )  {
     const smatd& matr = GetMatrix(i);
     vec3d V1 = matr * from - to;
-    const int ix = Round(V1[0]);  V1[0] -= (ix);
-    const int iy = Round(V1[1]);  V1[1] -= (iy);
-    const int iz = Round(V1[2]);  V1[2] -= (iz);
+    const int ix = olx_round(V1[0]);  V1[0] -= (ix);
+    const int iy = olx_round(V1[1]);  V1[1] -= (iy);
+    const int iz = olx_round(V1[2]);  V1[2] -= (iz);
     // check for identity matrix
     if( !IncludeI && i == 0 &&  (ix|iy|iz) == 0 )  continue;
     GetLattice().GetAsymmUnit().CellToCartesian(V1);
@@ -436,9 +436,9 @@ smatd_list* TUnitCell::GetInRange(const vec3d& to, const vec3d& from, double R, 
     const smatd& matr = GetMatrix(i);
     vec3d V1 = matr * from;
     V1 -= to;
-    int ix = Round(V1[0]);  V1[0] -= ix;
-    int iy = Round(V1[1]);  V1[1] -= iy;
-    int iz = Round(V1[2]);  V1[2] -= iz;
+    int ix = olx_round(V1[0]);  V1[0] -= ix;
+    int iy = olx_round(V1[1]);  V1[1] -= iy;
+    int iz = olx_round(V1[2]);  V1[2] -= iz;
     // check for identity matrix
     if( !IncludeI && i == 0 && (ix|iy|iz) == 0 )  continue;
     GetLattice().GetAsymmUnit().CellToCartesian(V1);
@@ -476,9 +476,9 @@ smatd_list* TUnitCell::GetInRangeEx(const vec3d& to, const vec3d& from,
   for( int i=0; i < MatrixCount(); i++ )  {
     const smatd& matr = GetMatrix(i);
     vec3f V1 = matr * from - to;
-    const int ix = Round(V1[0]);  V1[0] -= ix;
-    const int iy = Round(V1[1]);  V1[1] -= iy;
-    const int iz = Round(V1[2]);  V1[2] -= iz;
+    const int ix = olx_round(V1[0]);  V1[0] -= ix;
+    const int iy = olx_round(V1[1]);  V1[1] -= iy;
+    const int iz = olx_round(V1[2]);  V1[2] -= iz;
     for( int ii=-1; ii <= 1; ii++ )  {
       for( int ij=-1; ij <= 1; ij++ )  {
         for( int ik=-1; ik <= 1; ik++ )  {
@@ -517,9 +517,9 @@ void TUnitCell::_FindInRange(const vec3d& to, double R,
     for( int j=0; j < MatrixCount(); j++ )  {
       const smatd& matr = GetMatrix(j);
       V1 = matr * a.ccrd() - to;
-      const int ix = Round(V1[0]);  V1[0] -= ix;  // find closest distance
-      const int iy = Round(V1[1]);  V1[1] -= iy;
-      const int iz = Round(V1[2]);  V1[2] -= iz;
+      const int ix = olx_round(V1[0]);  V1[0] -= ix;  // find closest distance
+      const int iy = olx_round(V1[1]);  V1[1] -= iy;
+      const int iz = olx_round(V1[2]);  V1[2] -= iz;
       au.CellToCartesian(V1);
       const double D = V1.QLength();
       //if( D < R && D != 0 )  {
@@ -880,7 +880,7 @@ void TUnitCell::BuildStructureMapEx( TArray3D<short>& map, double resolution, do
   //      r = radii->GetObject(b_i) + delta;
   //  }
   //  const double sr = r*r;
-  //  const int ard = Round(r/resolution)*3;
+  //  const int ard = olx_round(r/resolution)*3;
   //  TArray3D<bool>* spm = new TArray3D<bool>(-ard, ard, -ard, ard, -ard, ard);
   //  for( int x=-ard; x <= ard; x ++ )  {
   //    for( int y=-ard; y <= ard; y ++ )  {
@@ -902,7 +902,7 @@ void TUnitCell::BuildStructureMapEx( TArray3D<short>& map, double resolution, do
   //    for( int k = -ard; k < ard; k ++ )  {
   //      for( int l = -ard; l < ard; l ++ )  {
   //        if( !spm->Data[j+ard][k+ard][l+ard] )  continue;
-  //        vec3i crd( Round(center[0]+j), Round(center[1]+k), Round(center[2]+l));
+  //        vec3i crd( olx_round(center[0]+j), olx_round(center[1]+k), olx_round(center[2]+l));
   //        for( int m=0; m < 3; m++ )  {
   //          if( crd[m] < 0 )        crd[m] += dim[m];
   //          if( crd[m] >= dim[m] )  crd[m] -= dim[m];

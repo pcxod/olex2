@@ -122,7 +122,7 @@ bool TGlConsole::Orient(TGlPrimitive& P)  {
   TGlMaterial GlM = P.GetProperties();  // copy properties
 //  GlM.AmbientF[0] = 1-CC[0];  GlM.AmbientF[1] = 1-CC[1];  GlM.AmbientF[2] = 1-CC[2];
   Ambient = GlM.AmbientF;
-  if( ShowBuffer() )  {
+  if( ShowBuffer() && FLinesToShow != 0 )  {
     float Rk=1, Gk=1, Bk=1;
     lc = (int)(((float)Height-0.1)/(th*(FLineSpacing+1))); // calc the number of lines
     if( PromptVisible )  lc -= Cmds.Count();

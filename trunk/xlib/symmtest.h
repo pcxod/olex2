@@ -105,7 +105,7 @@ public:
       for( int j=i; j < Atoms.Count(); j++ )  {
         vec3d a = matr * Atoms[j].GetA() - Atoms[i].GetA();
         for( int k=0; k < 3; k++ )  {
-          a[k] -= Round(a[k]);
+          a[k] -= olx_round(a[k]);
           if( a[k] < 0 )  a[k] += 1;
         }
         tmpVecs.AddNew<vec3d,int,int>(a, i, j);
@@ -161,7 +161,7 @@ public:
         b = matr * b;
         a += b;
         for( int k=0; k < 3; k++ )  {
-          a[k] -= Round(a[k]);
+          a[k] -= olx_round(a[k]);
           if( a[k] < 0 )  a[k] += 1;
           if( a[k] < tol )  a[k] = 0;
           else if( (1-a[k]) < tol )  a[k] = 0;

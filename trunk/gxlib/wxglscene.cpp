@@ -381,8 +381,8 @@ TGlFont* TwxGlScene::ImportFont(const olxstr& Name, const olxstr& fntDesc, short
   if( Scale )  {
     TPtrList<wxImage> Images;
     int bit_cnt = 0;
-    uint16_t imgw = (uint16_t)(Round((double)maxw*mf.GetSize()/originalFntSize)), 
-      imgh = (uint16_t)(Round((double)maxh*mf.GetSize()/originalFntSize));
+    uint16_t imgw = (uint16_t)(olx_round((double)maxw*mf.GetSize()/originalFntSize)), 
+      imgh = (uint16_t)(olx_round((double)maxh*mf.GetSize()/originalFntSize));
     for( int i=0; i < 256; i++ )  {
       wxImage* img = new wxImage(maxw, maxh);
       unsigned char* idata = img->GetData();

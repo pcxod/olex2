@@ -3529,7 +3529,7 @@ bool TMainForm::OnMouseUp(int x, int y, short Flags, short Buttons)  {
     if( H > 0.07 )  H = 1./H;
     if( K > 0.07 )  K = 1./K;
     if( L > 0.07 )  L = 1./L;
-    int iH = Round(H), iK = Round(K), iL = Round(L);
+    int iH = olx_round(H), iK = olx_round(K), iL = olx_round(L);
     double diff = sqrt(olx_abs(H + K + L - iH - iK - iL)/(H + K + L));
     if( diff < 0.25 )  {
       cellM = au->GetHklToCartesian();
