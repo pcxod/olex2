@@ -101,25 +101,19 @@ public:
     Vecs.Clear();
     Vecs.SetCapacity( (Atoms.Count()*Atoms.Count()-1)/2+1 );
     tmpVecs.SetCapacity( (Atoms.Count()*Atoms.Count()-1)/2+1 );
-    vec3d a, b;
     for( int i=0; i < Atoms.Count(); i++ )  {
-      for( int j=i+1; j < Atoms.Count(); j++ )  {
-        a = Atoms[i].GetA();
-        b = Atoms[j].GetA();
-        b = matr * b;
-        a += b;
+      for( int j=i; j < Atoms.Count(); j++ )  {
+        vec3d a = matr * Atoms[j].GetA() - Atoms[i].GetA();
         for( int k=0; k < 3; k++ )  {
           a[k] -= Round(a[k]);
           if( a[k] < 0 )  a[k] += 1;
-          if( a[k] < tol )  a[k] = 0;
-          else if( (1-a[k]) < tol )  a[k] = 0;
         }
         tmpVecs.AddNew<vec3d,int,int>(a, i, j);
       }
     }
 
     // get the square, as we compare quadratic distances
-    double stol = 3*tol*tol, qval;  //!!
+    const double stol = 3*tol*tol;  //!!
 
     // optimisation technique
     tmpVecs.QuickSorter.SortSF(tmpVecs,VecsCmpByRadius);
@@ -132,26 +126,16 @@ public:
       if( tmpVecs.IsNull(i) )  continue;
       TSymmTestData* sd = new TSymmTestData( tmpVecs[i].GetA(), tmpVecs[i].GetB(), tmpVecs[i].GetC());
       Vecs.Add(*sd);
-      a = tmpVecs[i].GetA(); // "crawling" center
-      qval = radii[i];
+      double qval = radii[i];
       tmpVecs.NullItem(i);
       for( int j=i+1; j < tmpVecs.Count(); j++ )  {
         if( (radii[j] - qval) > stol )  break;
         if( tmpVecs.IsNull(j) )  continue;
-        if( olx_abs(tmpVecs[j].GetA()[0]-a[0])  < tol &&
-            olx_abs(tmpVecs[j].GetA()[1]-a[1])  < tol &&
-            olx_abs(tmpVecs[j].GetA()[2]-a[2])  < tol  )  {
-          sd->Atoms.AddNew<int,int>( tmpVecs[j].GetB(), tmpVecs[j].GetC() );
-          a *= 0.75;
-          a += tmpVecs[j].GetA()*0.25;  // implement "crawling"
-
-          qval *= 0.75;
-          qval += radii[j]*0.25;
-          //qval /= 2;
-          //a /= 2;
-          sd->Center += tmpVecs[j].GetA();  // accumulating center
-          tmpVecs.NullItem(j);
-        }
+        sd->Atoms.AddNew<int,int>( tmpVecs[j].GetB(), tmpVecs[j].GetC() );
+        qval *= 0.75;
+        qval += radii[j]*0.25;
+        sd->Center += tmpVecs[j].GetA();  // accumulating center
+        tmpVecs.NullItem(j);
       }
     }
     // do the averaging
