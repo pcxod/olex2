@@ -8902,11 +8902,6 @@ void TMainForm::funGetMAC(const TStrObjList& Params, TMacroError &E)  {
 //..............................................................................
 void TMainForm::macWBox(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   static int obj_cnt = 0;
-  TXAtomPList xatoms;
-  if( !FindXAtoms(Cmds, xatoms, true, true) || xatoms.Count() < 3 )  {
-    E.ProcessingError(__OlxSrcInfo, "no enough atoms provided");
-    return;
-  }
   TPSTypeList<TBasicAtomInfo*, double> radii;
   TAtomsInfo& ai = TAtomsInfo::GetInstance();
   radii.Add( &ai.GetAtomInfo(iHydrogenIndex), 1.2);
@@ -8935,6 +8930,11 @@ void TMainForm::macWBox(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       }
     }
     Cmds.Delete(0);
+  }
+  TXAtomPList xatoms;
+  if( !FindXAtoms(Cmds, xatoms, true, true) || xatoms.Count() < 3 )  {
+    E.ProcessingError(__OlxSrcInfo, "no enough atoms provided");
+    return;
   }
   TTypeList< AnAssociation2<vec3d, double> > crds;
   TArrayList<double> all_radii(xatoms.Count());
