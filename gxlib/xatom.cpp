@@ -734,13 +734,13 @@ void TXAtom::CreateStaticPrimitives()  {
   // create cross
   if( (GlP = FStaticObjects.FindObject("Cross")) == NULL )
     FStaticObjects.Add("Cross", GlP = &Parent.NewPrimitive(sgloLines));
-  GlP->Data.Resize(3, 6);
-  GlP->Data[0][0] = -1; 
-  GlP->Data[0][1] =  1; 
-  GlP->Data[1][2] = -1; 
-  GlP->Data[1][3] =  1; 
-  GlP->Data[2][4] = -1; 
-  GlP->Data[2][5] =  1; 
+  GlP->Vertices.SetCount(6);
+  GlP->Vertices[0][0] = -1; 
+  GlP->Vertices[1][0] =  1; 
+  GlP->Vertices[2][1] = -1; 
+  GlP->Vertices[3][1] =  1; 
+  GlP->Vertices[4][2] = -1; 
+  GlP->Vertices[5][2] =  1; 
   GlP->Params[0] = 1.0;
   GlP->Params.Resize(GlP->Params.Count()+1);
   GlP->Params.Last() = ddsDefSphere;
@@ -762,7 +762,7 @@ void TXAtom::CreateStaticPrimitives()  {
   TTypeList<vec3f> vecs;
   TTypeList<GlTriangle> triags;
   TArrayList<vec3f> norms;
-  gls.Generate(1, Round(log(SphereQ)+0.5), vecs, triags, norms);
+  gls.Generate(1, olx_round(log(SphereQ)+0.5), vecs, triags, norms);
   if( OrtepSpheres == -1 )
     OrtepSpheres = glGenLists(9);
   

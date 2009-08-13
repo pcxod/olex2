@@ -628,7 +628,7 @@ double TAsymmUnit::CalcCellVolume()  const  {
 }
 double TAsymmUnit::EstimateZ(int atomCount) const  {
   double auv = CalcCellVolume()/(TUnitCell::GetMatrixMultiplier(GetLatt())*(MatrixCount()+1));
-  int zp = Round(auv/(18.6*atomCount));
+  int zp = olx_round(auv/(18.6*atomCount));
   return olx_max((TUnitCell::GetMatrixMultiplier(GetLatt())*(MatrixCount()+1) * zp), 1);
 }
 //..............................................................................
@@ -1021,7 +1021,7 @@ void TAsymmUnit::LibGetZprime(const TStrObjList& Params, TMacroError& E)  {
 //..............................................................................
 void TAsymmUnit::LibSetZprime(const TStrObjList& Params, TMacroError& E)  {
   double zp = Params[0].ToDouble();
-  Z = (short)Round(TUnitCell::GetMatrixMultiplier(Latt)*MatrixCount()*zp);
+  Z = (short)olx_round(TUnitCell::GetMatrixMultiplier(Latt)*MatrixCount()*zp);
   if( Z <= 0 ) Z = 1;
 }
 //..............................................................................

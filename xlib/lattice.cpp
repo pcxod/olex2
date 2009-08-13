@@ -414,8 +414,8 @@ void TLattice::Generate(const vec3d& MFrom, const vec3d& MTo, TCAtomPList* Templ
   }
   vec3d VFrom, VTo;
 
-  VTo[0] = Round(MTo[0]+1);     VTo[1] = Round(MTo[1]+1);     VTo[2] = Round(MTo[2]+1);
-  VFrom[0] = Round(MFrom[0]-1); VFrom[1] = Round(MFrom[1]-1); VFrom[2] = Round(MFrom[2]-1);
+  VTo[0] = olx_round(MTo[0]+1);     VTo[1] = olx_round(MTo[1]+1);     VTo[2] = olx_round(MTo[2]+1);
+  VFrom[0] = olx_round(MFrom[0]-1); VFrom[1] = olx_round(MFrom[1]-1); VFrom[2] = olx_round(MFrom[2]-1);
 
   if( ClearCont )  {
     ClearAtoms();

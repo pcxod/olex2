@@ -256,23 +256,23 @@ bool TdlgMatProp::Execute(const IEObject *Sender, const IEObject *Data)  {
 void TdlgMatProp::Init( const TGlMaterial &Glm )  {
   cbAmbF->SetValue(Glm.HasAmbientF());
   cbAmbB->SetValue(Glm.HasAmbientB());
-  scAmbF->SetValue(Round(Glm.AmbientF.Data()[3]*100));
+  scAmbF->SetValue(olx_round(Glm.AmbientF.Data()[3]*100));
   scAmbB->SetValue( (int)Glm.AmbientB.Data()[3]*100);
 
   cbDiffF->SetValue(Glm.HasDiffuseF());
   cbDiffB->SetValue(Glm.HasDiffuseB());
-  scDiffF->SetValue(Round(Glm.DiffuseF.Data()[3]*100));
-  scDiffB->SetValue(Round(Glm.DiffuseB.Data()[3]*100));
+  scDiffF->SetValue(olx_round(Glm.DiffuseF.Data()[3]*100));
+  scDiffB->SetValue(olx_round(Glm.DiffuseB.Data()[3]*100));
 
   cbEmmF->SetValue(Glm.HasEmissionF());
   cbEmmB->SetValue(Glm.HasEmissionB());
-  scEmmF->SetValue(Round(Glm.EmissionF.Data()[3]*100));
-  scEmmB->SetValue(Round(Glm.EmissionB.Data()[3]*100));
+  scEmmF->SetValue(olx_round(Glm.EmissionF.Data()[3]*100));
+  scEmmB->SetValue(olx_round(Glm.EmissionB.Data()[3]*100));
 
   cbSpecF->SetValue(Glm.HasSpecularF());
   cbSpecB->SetValue(Glm.HasSpecularB());
-  scSpecF->SetValue(Round(Glm.SpecularF.Data()[3]*100));
-  scSpecB->SetValue(Round(Glm.SpecularB.Data()[3]*100));
+  scSpecF->SetValue(olx_round(Glm.SpecularF.Data()[3]*100));
+  scSpecB->SetValue(olx_round(Glm.SpecularB.Data()[3]*100));
 
   cbShnF->SetValue(Glm.HasShininessF());
   cbShnB->SetValue(Glm.HasShininessB());

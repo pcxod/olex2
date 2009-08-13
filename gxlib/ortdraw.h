@@ -209,7 +209,7 @@ public:
 
     if( app.LabelCount() != 0 )  {
       CString fnt("/Verdana findfont ");
-      fnt << Round(app.GetLabel(0).Font()->GetPointSize()/LinearScale) << " scalefont setfont";
+      fnt << olx_round(app.GetLabel(0).Font()->GetPointSize()/LinearScale) << " scalefont setfont";
       pw.custom(fnt.c_str());
     }
 

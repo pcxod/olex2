@@ -19,12 +19,10 @@ public:
   TVector3(const TVector3<T>& v) {  data[0] = v[0];  data[1] = v[1];  data[2] = v[2];  }
   template <class AT> TVector3(const TVector3<AT>& v) {  data[0] = (T)v[0];  data[1] = (T)v[1];  data[2] = (T)v[2];  }
 
-//  template <class AT> TVector3<T>(const TEVPoint<AT>& v)  {
-//    data[0] = v[0].GetV();  data[1] = v[1].GetV();  data[2] = v[2].GetV();  
-//  }
-
   inline T& operator [] (int i) {  return data[i];  }
   inline T const& operator [] (int i) const {  return data[i];  }
+  inline T* GetData() {  return &data[0];  }
+  inline const T* GetData() const {  return &data[0];  }
   inline T QLength()    const {  return (data[0]*data[0]+data[1]*data[1]+data[2]*data[2]);  }
   inline T Length()     const {  return sqrt(data[0]*data[0]+data[1]*data[1]+data[2]*data[2]);  }
   
@@ -87,6 +85,10 @@ public:
   // returns sum of absolute values of vector elements
   inline T AbsSum()  {
     return olx_abs(data[0])+olx_abs(data[1])+olx_abs(data[2]);
+  }
+  // rounds the vector elements
+  template <class AT> inline TVector3<AT> olx_round() const {
+    return TVector3<AT>(olx_round(data[0]), olx_round(data[1]), olx_round(data[2]));
   }
   template <class AT> inline T DotProd(const TVector3<AT>& v) const {
     return data[0]*v[0] + data[1]*v[1] + data[2]*v[2];

@@ -94,78 +94,36 @@ void TDUnitCell::SetReciprocal(bool v)  {
       Center = OldCenter;
   }
 
-  FGlP->Data[0][1] = M[0][0];  //000-A
-  FGlP->Data[1][1] = M[0][1];
-  FGlP->Data[2][1] = M[0][2];
-  FGlP->Data[0][3] = M[1][0];  //000-B
-  FGlP->Data[1][3] = M[1][1];
-  FGlP->Data[2][3] = M[1][2];
-  FGlP->Data[0][5] = M[2][0];  //000-C
-  FGlP->Data[1][5] = M[2][1];
-  FGlP->Data[2][5] = M[2][2];
+  FGlP->Vertices[1] = M[0];  //000-A
+  FGlP->Vertices[3] = M[1];  //000-B
+  FGlP->Vertices[5] = M[2];  //000-C
 
-  FGlP->Data[0][6] = M[0][0];  //A
-  FGlP->Data[1][6] = M[0][1];
-  FGlP->Data[2][6] = M[0][2];
-  FGlP->Data[0][7] = M[1][0]+M[0][0];  //AB
-  FGlP->Data[1][7] = M[1][1]+M[0][1];
-  FGlP->Data[2][7] = M[1][2]+M[0][2];
+  FGlP->Vertices[6] = M[0];  //A
+  FGlP->Vertices[7] = M[1]+M[0];  //AB
 
-  FGlP->Data[0][8] = M[0][0];  //A
-  FGlP->Data[1][8] = M[0][1];
-  FGlP->Data[2][8] = M[0][2];
-  FGlP->Data[0][9] = M[2][0]+M[0][0];  //AC
-  FGlP->Data[1][9] = M[2][1]+M[0][1];
-  FGlP->Data[2][9] = M[2][2]+M[0][2];
+  FGlP->Vertices[8] = M[0];  //A
+  FGlP->Vertices[9] = M[2]+M[0];  //AC
 
-  FGlP->Data[0][10] = M[1][0];  //B
-  FGlP->Data[1][10] = M[1][1];
-  FGlP->Data[2][10] = M[1][2];
-  FGlP->Data[0][11] = M[1][0]+M[0][0];  //AB
-  FGlP->Data[1][11] = M[1][1]+M[0][1];
-  FGlP->Data[2][11] = M[1][2]+M[0][2];
+  FGlP->Vertices[10] = M[1];  //B
+  FGlP->Vertices[11] = M[1]+M[0];  //AB
 
-  FGlP->Data[0][12] = M[1][0];  //B
-  FGlP->Data[1][12] = M[1][1];
-  FGlP->Data[2][12] = M[1][2];
-  FGlP->Data[0][13] = M[2][0]+M[1][0];  //BC
-  FGlP->Data[1][13] = M[2][1]+M[1][1];
-  FGlP->Data[2][13] = M[2][2]+M[1][2];
+  FGlP->Vertices[12] = M[1];  //B
+  FGlP->Vertices[13] = M[2]+M[1];  //BC
 
-  FGlP->Data[0][14] = M[2][0];  //C
-  FGlP->Data[1][14] = M[2][1];
-  FGlP->Data[2][14] = M[2][2];
-  FGlP->Data[0][15] = M[2][0]+M[0][0];  //AC
-  FGlP->Data[1][15] = M[2][1]+M[0][1];
-  FGlP->Data[2][15] = M[2][2]+M[0][2];
+  FGlP->Vertices[14] = M[2];  //C
+  FGlP->Vertices[15] = M[2]+M[0];  //AC
 
-  FGlP->Data[0][16] = M[2][0];  //C
-  FGlP->Data[1][16] = M[2][1];
-  FGlP->Data[2][16] = M[2][2];
-  FGlP->Data[0][17] = M[2][0]+M[1][0];  //BC
-  FGlP->Data[1][17] = M[2][1]+M[1][1];
-  FGlP->Data[2][17] = M[2][2]+M[1][2];
+  FGlP->Vertices[16] = M[2];  //C
+  FGlP->Vertices[17] = M[2]+M[1];  //BC
 
-  FGlP->Data[0][18] = M[1][0]+M[0][0];  //AB
-  FGlP->Data[1][18] = M[1][1]+M[0][1];
-  FGlP->Data[2][18] = M[1][2]+M[0][2];
-  FGlP->Data[0][19] = M[2][0]+M[0][0]+M[1][0] ;  //ABC
-  FGlP->Data[1][19] = M[2][1]+M[1][1]+M[0][1];
-  FGlP->Data[2][19] = M[2][2]+M[1][2]+M[0][2];
+  FGlP->Vertices[18] = M[1]+M[0];  //AB
+  FGlP->Vertices[19] = M[2]+M[0]+M[1] ;  //ABC
 
-  FGlP->Data[0][20] = M[2][0]+M[1][0];  //BC
-  FGlP->Data[1][20] = M[2][1]+M[1][1];
-  FGlP->Data[2][20] = M[2][2]+M[1][2];
-  FGlP->Data[0][21] = M[2][0]+M[1][0]+M[0][0] ;  //ABC
-  FGlP->Data[1][21] = M[2][1]+M[1][1]+M[0][1];
-  FGlP->Data[2][21] = M[2][2]+M[1][2]+M[0][2];
+  FGlP->Vertices[20] = M[2]+M[1];  //BC
+  FGlP->Vertices[21] = M[2]+M[1]+M[0] ;  //ABC
 
-  FGlP->Data[0][22] = M[2][0]+M[0][0];  //AC
-  FGlP->Data[1][22] = M[2][1]+M[0][1];
-  FGlP->Data[2][22] = M[2][2]+M[0][2];
-  FGlP->Data[0][23] = M[2][0]+M[1][0]+M[0][0];  //ABC
-  FGlP->Data[1][23] = M[2][1]+M[1][1]+M[0][1];
-  FGlP->Data[2][23] = M[2][2]+M[1][2]+M[0][2];
+  FGlP->Vertices[22] = M[2]+M[0];  //AC
+  FGlP->Vertices[23] = M[2]+M[1]+M[0];  //ABC
 
   Reciprocal = v;
 }
@@ -187,7 +145,7 @@ void TDUnitCell::Create(const olxstr& cName, const ACreationParams* cpar)  {
   GlM.AmbientF = 0;
   
   FGlP->SetProperties( GS.GetMaterial("Lines", GlM));
-  FGlP->Data.Resize(3, 24);
+  FGlP->Vertices.SetCount(24);
   SetReciprocal(Reciprocal);
 
   TGlPrimitive& glpLabel = GPC->NewPrimitive("Label", sgloText);  // labels
@@ -231,9 +189,7 @@ bool TDUnitCell::Orient(TGlPrimitive& P)  {
     Parent.DrawTextSafe(T, Str, fnt);
     for( int i=0; i < 3; i++ )  {
       const int ind = i*2+1;
-      T[0] = FGlP->Data[0][ind];  
-      T[1] = FGlP->Data[1][ind];  
-      T[2] = FGlP->Data[2][ind];
+      T = FGlP->Vertices[ind];  
       for( int j=0; j < 3; j++ )
         T[j] -= (j==i ? -tr : tr);
       T += cnt;

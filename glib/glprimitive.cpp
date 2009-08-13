@@ -196,9 +196,10 @@ void TGlPrimitive::Draw()  {
     glCallList(ListId);  
     return;  
   }
-
-  if( Basis != NULL )       glMultMatrixf( Basis->GetMData() );
-  if( ClipPlanes != NULL )  ClipPlanes->Enable(true);
+  if( Basis != NULL )
+    glMultMatrixf( Basis->GetMData() );
+  if( ClipPlanes != NULL )
+    ClipPlanes->Enable(true);
   TGlTexture* currentTexture = NULL;
   if( TextureId != -1 )  {
     TGlTexture* tex = Renderer.GetTextureManager().FindTexture( TextureId );
@@ -212,10 +213,9 @@ void TGlPrimitive::Draw()  {
     const int fontbase = Font->FontBase();
     /* each character of different colour */
     const int StrLen = String->Length();
-    if( Data.Elements() == StrLen )  {
+    if( Colors.Count() == StrLen )  {
       for( int i=0; i < StrLen; i++ )  {
-        const int Cl = (int)Data[0][i];
-        glColor4b(  GetRValue(Cl), GetGValue(Cl), GetBValue(Cl), GetAValue(Cl));
+        SetColor( Colors[i] );
         glCallList( fontbase + String->CharAt(i) );
       }
     }
@@ -226,25 +226,17 @@ void TGlPrimitive::Draw()  {
   }
   else if( Type == sgloPoints )  {
     glPointSize( (float)Params[0]);
-    if( Data.Vectors() == 3 )  {
+    if( Colors.IsEmpty() )  {
       glBegin(GL_POINTS);
-      for( int  i=0; i < Data.Elements(); i++ )
-        glVertex3d( Data[0][i], Data[1][i], Data[2][i] );
+      for( int  i=0; i < Vertices.Count(); i++ )
+        DrawVertex( Vertices[i] );
       glEnd();
     }
-    else if( Data.Vectors() == 4 )  {
-      glEnable(GL_COLOR_MATERIAL);
-      glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
-      glBegin(GL_POINTS);
-      for( int i=0; i < Data.Elements(); i++ )  {
-        glEnable(GL_COLOR_MATERIAL);
-        const int Cl = (int)Data[3][i];
-        glColor4d(  (double)GetRValue(Cl)/255, (double)GetGValue(Cl)/255, 
-          (double)GetBValue(Cl)/255, (double)GetAValue(Cl)/255);
-        glVertex3d( Data[0][i], Data[1][i], Data[2][i] );
-      }
-      glEnd();
-      glDisable(GL_COLOR_MATERIAL);
+    else if( Colors.Count() == Vertices.Count() )  {
+      PrepareColorRendering(GL_POINTS);
+      for( int i=0; i < Vertices.Count(); i++ )
+        DrawVertex(Vertices[i], Colors[i]);
+      EndColorRendering();
     }
   }
   else if( Type == sgloLines )  {
@@ -253,28 +245,25 @@ void TGlPrimitive::Draw()  {
       glGetFloatv(GL_LINE_WIDTH, &LW);
       glLineWidth( (float)(Params[0]*LW) );
     }
-    if( Data.Vectors() == 3 )  {
+    if( Colors.IsEmpty() )  {
       glBegin(GL_LINES);
-      for( int i=0; i < Data.Elements(); i++ )
-        glVertex3d(Data[0][i], Data[1][i], Data[2][i]);
+      for( int i=0; i < Vertices.Count(); i++ )
+        DrawVertex(Vertices[i]);
       glEnd();
     }
-    else if( Data.Vectors() == 4 )  {
-      glPushAttrib(GL_ALL_ATTRIB_BITS);
-      glDisable(GL_LIGHTING);
-      glEnable(GL_COLOR_MATERIAL);
-      glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
-      glBegin(GL_LINES);
-      for( int i=0; i < Data.Elements(); i++ )  {
-        if( !(i%2) )  {
-          int Cl = (int)Data[3][i];
-          glColor4d(  (double)GetRValue(Cl)/255, (double)GetGValue(Cl)/255, 
-            (double)GetBValue(Cl)/255, (double)GetAValue(Cl)/255);
-        }
-        glVertex3d(Data[0][i], Data[1][i], Data[2][i]);
+    else if( Colors.Count() == Vertices.Count() )  {
+      PrepareColorRendering(GL_LINES);
+      for( int i=0; i < Vertices.Count(); i++ )
+        DrawVertex(Vertices[i], Colors[i]);
+      EndColorRendering();
+    }
+    else if( Colors.Count()*2 == Vertices.Count() )  {
+      PrepareColorRendering(GL_LINES);
+      for( int i=0; i < Colors.Count(); i++ )  {
+        SetColor(Colors[i]);
+        DrawVertex2(i*2);
       }
-      glEnd();
-      glPopAttrib();
+      EndColorRendering();
     }
     if( LW != 0 ) glLineWidth( (float)LW );
   }
@@ -285,10 +274,11 @@ void TGlPrimitive::Draw()  {
       glLineWidth( (float)(Params[0]*LW) );
     }
     glBegin(GL_LINE_STRIP);
-    for( int i=0; i < Data.Elements(); i++ )
-      glVertex3d(Data[0][i], Data[1][i], Data[2][i]);
+    for( int i=0; i < Vertices.Count(); i++ )
+      DrawVertex(Vertices[i]);
     glEnd();
-    if( LW != 0 ) glLineWidth( (float)LW );
+    if( LW != 0 ) 
+      glLineWidth( (float)LW );
   }
   else if( Type == sgloLineLoop )  {
     float LW = 0;
@@ -296,130 +286,156 @@ void TGlPrimitive::Draw()  {
       glGetFloatv(GL_LINE_WIDTH, &LW);
       glLineWidth( (float)(Params[0]*LW) );
     }
-    if( Data.Vectors() == 3 )  {
+    if( Colors.IsEmpty() )  {
       glBegin(GL_LINE_LOOP);
-      for( int i=0; i < Data.Elements(); i++ )
-        glVertex3d(Data[0][i], Data[1][i], Data[2][i]);
+      for( int i=0; i < Vertices.Count(); i++ )
+        DrawVertex(Vertices[i]);
       glEnd();
     }
-    else if( Data.Vectors() == 4 )  {
-      glPushAttrib(GL_ALL_ATTRIB_BITS);
-      glDisable(GL_LIGHTING);
-      glEnable(GL_COLOR_MATERIAL);
-      glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
-      glBegin(GL_LINE_LOOP);
-      for( int i=0; i < Data.Elements(); i++ )  {
-        int Cl = (unsigned int)(Data[3][i]);
-        glColor4d(  (double)GetRValue(Cl)/255, (double)GetGValue(Cl)/255, 
-          (double)GetBValue(Cl)/255, (double)GetAValue(Cl)/255);
-        glVertex3d(Data[0][i], Data[1][i], Data[2][i]);
-      }
-      glEnd();
-      glPopAttrib();
+    else if( Colors.Count() == Vertices.Count() )  {
+      PrepareColorRendering(GL_LINE_LOOP);
+      for( int i=0; i < Vertices.Count(); i++ )
+        DrawVertex(Vertices[i], Colors[i]);
+      EndColorRendering();
     }
     if( LW != 0 ) glLineWidth( (float)LW );
   }
   else if( Type == sgloTriangles )  {
     glBegin(GL_TRIANGLES);
-    if( Data.Vectors() == 3 )  {
-      for( int i=0; i < Data.Elements(); i++ )
-        glVertex3d(Data[0][i], Data[1][i], Data[2][i]);
+    if( Normals.IsEmpty() )  {
+      for( int i=0; i < Vertices.Count(); i++ )
+        DrawVertex(Vertices[i]);
     }
-    else if( Data.Vectors() == 4 )  {  //+normal
-      for( int i=0; i < Data.Elements(); i++ )  {
-        if( (i%3) == 0 )  {
-          const int ni = i/3;
-          glNormal3d(Data[3][ni], Data[3][ni+1], Data[3][ni+2]);
-        }
-        glVertex3d(Data[0][i], Data[1][i], Data[2][i]);
+    else if( Normals.Count()*3 == Vertices.Count() )  {  //+normal
+      for( int i=0; i < Normals.Count(); i++ )  {
+        SetNormal(Normals[i]);
+        DrawVertex3(i*3);
       }
     }
     glEnd();
   }
   else if( Type == sgloQuads )  {
-    if( Data.Vectors() == 3 )  {
-      glBegin(GL_QUADS);
-      for( int i=0; i < Data.Elements(); i++ )
-        glVertex3d(Data[0][i], Data[1][i], Data[2][i]);
-      glEnd();
-    }
-    else  if( Data.Vectors() == 5 )  {
-      glBegin(GL_QUADS);
-      if( TextureId != -1 )  {
-        for( int i=0; i < Data.Elements(); i++ )  {
-          glTexCoord2d( Data[3][i], Data[4][i] );
-          glVertex3d(Data[0][i], Data[1][i], Data[2][i]);
+    if( TextureCrds.IsEmpty() || TextureId == -1 )  {
+      if( Colors.IsEmpty() )  {
+        if( Normals.IsEmpty() )  {
+          glBegin(GL_QUADS);
+          for( int i=0; i < Vertices.Count(); i++ )
+            DrawVertex(Vertices[i]);
+          glEnd();
+        }
+        else if( Normals.Count()*4 == Vertices.Count() ) {
+          glBegin(GL_QUADS);
+          for( int i=0; i < Normals.Count(); i++ )  {
+            SetNormal(Normals[i]);
+            DrawVertex4(i*4);
+          }
+          glEnd();
         }
       }
-      else  {
-        for( int i=0; i < Data.Elements(); i++ )
-          glVertex3d(Data[0][i], Data[1][i], Data[2][i]);
-      }
-      glEnd();
-    }
-    else  if( Data.Vectors() == 4 )  {
-      glPushAttrib(GL_ALL_ATTRIB_BITS);
-      glDisable(GL_LIGHTING);
-      glEnable(GL_COLOR_MATERIAL);
-      glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
-      glBegin(GL_QUADS);
-      for( int i=0; i < Data.Elements(); i++ )  {
-        int Cl = (int)(Data[3][i]);
-        glColor4d(  (double)GetRValue(Cl)/255, (double)GetGValue(Cl)/255, 
-          (double)GetBValue(Cl)/255, (double)GetAValue(Cl)/255);
-        glVertex3d(Data[0][i], Data[1][i], Data[2][i]);
-      }
-      glEnd();
-      glPopAttrib();
-    }
-    else  if( Data.Vectors() == 6 )  {
-      glPushAttrib(GL_ALL_ATTRIB_BITS);
-      glDisable(GL_LIGHTING);
-      glEnable(GL_COLOR_MATERIAL);
-      glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
-      glBegin(GL_QUADS);
-      if( TextureId != -1 )  {
-        for( int i=0; i < Data.Elements(); i++ )  {
-          int Cl = (int)(Data[3][i]);
-          glColor4d(  (double)GetRValue(Cl)/255, (double)GetGValue(Cl)/255, 
-            (double)GetBValue(Cl)/255, (double)GetAValue(Cl)/255);
-          glTexCoord2d( Data[4][i], Data[5][i] );
-          glVertex3d(Data[0][i], Data[1][i], Data[2][i]);
+      else if( Colors.Count() == Vertices.Count() )  {
+        if( Normals.IsEmpty() )  {
+          PrepareColorRendering(GL_QUADS);
+          for( int i=0; i < Vertices.Count(); i++ )
+            DrawVertex(Vertices[i], Colors[i]);
+          EndColorRendering();
+        }
+        else if( Normals.Count()*4 == Vertices.Count() )  {
+          PrepareColorRendering(GL_QUADS);
+          for( int i=0; i < Normals.Count(); i++ )  {
+            SetNormal(Normals[i]);
+            DrawVertex4c(i*4);
+          }
+          EndColorRendering();
         }
       }
-      else  {
-        for( int i=0; i < Data.Elements(); i++ )  {
-          int Cl = (int)(Data[3][i]);
-          glColor4d(  (double)GetRValue(Cl)/255, (double)GetGValue(Cl)/255, 
-            (double)GetBValue(Cl)/255, (double)GetAValue(Cl)/255);
-          glVertex3d(Data[0][i], Data[1][i], Data[2][i]);
+      else if( Colors.Count()*4 == Vertices.Count() )  {
+        if( Normals.IsEmpty() )  {
+          PrepareColorRendering(GL_QUADS);
+          for( int i=0; i < Colors.Count(); i++ )  {
+            SetColor(Colors[i]);
+            DrawVertex4(i*4);
+          }
+          EndColorRendering();
+        }
+        else if( Normals.Count()*4 == Vertices.Count() )  {
+          PrepareColorRendering(GL_QUADS);
+          for( int i=0; i < Normals.Count(); i++ )  {
+            SetNormal(Normals[i]);
+            SetColor(Colors[i]);
+            DrawVertex4(i*4);
+          }
+          EndColorRendering();
         }
       }
-      glEnd();
-      glPopAttrib();
+    }
+    else if( TextureCrds.Count() == Vertices.Count() ) {
+      if( Colors.IsEmpty() )  {
+        if( Normals.IsEmpty() )  {
+          glBegin(GL_QUADS);
+          for( int i=0; i < Vertices.Count(); i++ )
+            DrawVertex(Vertices[i], TextureCrds[i]);
+          glEnd();
+        }
+        else if( Normals.Count()*4 == Vertices.Count() ) {
+          glBegin(GL_QUADS);
+          for( int i=0; i < Normals.Count(); i++ )  {
+            SetNormal(Normals[i]);
+            DrawVertex4t(i*4);
+          }
+          glEnd();
+        }
+      }
+      else if( Colors.Count() == Vertices.Count() )  {
+        if( Normals.IsEmpty() )  {
+          PrepareColorRendering(GL_QUADS);
+          for( int i=0; i < Vertices.Count(); i++ )
+            DrawVertex(Vertices[i], Colors[i], TextureCrds[i]);
+          EndColorRendering();
+        }
+        else if( Normals.Count()*4 == Vertices.Count() )  {
+          PrepareColorRendering(GL_QUADS);
+          for( int i=0; i < Normals.Count(); i++ )  {
+            SetNormal(Normals[i]);
+            DrawVertex4ct(i*4);
+          }
+          EndColorRendering();
+        }
+      }
+      else if( Colors.Count()*4 == Vertices.Count() )  {
+        if( Normals.IsEmpty() )  {
+          PrepareColorRendering(GL_QUADS);
+          for( int i=0; i < Colors.Count(); i++ )  {
+            SetColor(Colors[i]);
+            DrawVertex4t(i*4);
+          }
+          EndColorRendering();
+        }
+        else if( Normals.Count()*4 == Vertices.Count() )  {
+          PrepareColorRendering(GL_QUADS);
+          for( int i=0; i < Normals.Count(); i++ )  {
+            SetNormal(Normals[i]);
+            SetColor(Colors[i]);
+            DrawVertex4t(i*4);
+          }
+          EndColorRendering();
+        }
+      }
     }
   }
   else if( Type == sgloPolygon )  {
     GLboolean v = glIsEnabled(GL_CULL_FACE);
     if( v )  glDisable(GL_CULL_FACE);
-    if( Data.Vectors() == 3 )  {
+    if( Colors.IsEmpty() )  {
       glBegin(GL_POLYGON);
-      for( int i=0; i < Data.Elements(); i++ )
-        glVertex3d(Data[0][i], Data[1][i], Data[2][i]);
+      for( int i=0; i < Vertices.Count(); i++ )
+        DrawVertex(Vertices[i]);
       glEnd();
     }
-    else if( Data.Vectors() == 4 )  {
-      glEnable(GL_COLOR_MATERIAL);
-      glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
-      glBegin(GL_POLYGON);
-      for( int i=0; i < Data.Elements(); i++ )  {
-        int Cl = (int)(Data[3][i]);
-        glColor4d(  (double)GetRValue(Cl)/255, (double)GetGValue(Cl)/255, 
-          (double)GetBValue(Cl)/255, (double)GetAValue(Cl)/255);
-        glVertex3d(Data[0][i], Data[1][i], Data[2][i]);
-      }
-      glDisable(GL_COLOR_MATERIAL);
-      glEnd();
+    else if( Colors.Count() == Vertices.Count() )  {
+      PrepareColorRendering(GL_POLYGON);
+      for( int i=0; i < Vertices.Count(); i++ )
+        DrawVertex(Vertices[i], Colors[i]);
+      EndColorRendering();
     }
     if( v )  glEnable(GL_CULL_FACE);
   }

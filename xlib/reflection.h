@@ -73,15 +73,15 @@ public:
   }
   // generates an equivalent using rounding on the resulting indexes
   template <class VC, class MC> void MulHklR(VC& res, const MC& mat) const {
-    res[0] = Round(hkl[0]*mat[0][0] + hkl[1]*mat[1][0] + hkl[2]*mat[2][0]);
-    res[1] = Round(hkl[0]*mat[0][1] + hkl[1]*mat[1][1] + hkl[2]*mat[2][1]);
-    res[2] = Round(hkl[0]*mat[0][2] + hkl[1]*mat[1][2] + hkl[2]*mat[2][2]);
+    res[0] = olx_round(hkl[0]*mat[0][0] + hkl[1]*mat[1][0] + hkl[2]*mat[2][0]);
+    res[1] = olx_round(hkl[0]*mat[0][1] + hkl[1]*mat[1][1] + hkl[2]*mat[2][1]);
+    res[2] = olx_round(hkl[0]*mat[0][2] + hkl[1]*mat[1][2] + hkl[2]*mat[2][2]);
   }
   // generates an equivalent using rounding on the resulting indexes
   template <class V> void MulHklR(V& res, const smatdd& mat) const {
-    res[0] = Round(hkl[0]*mat.r[0][0] + hkl[1]*mat.r[1][0] + hkl[2]*mat.r[2][0]);
-    res[1] = Round(hkl[0]*mat.r[0][1] + hkl[1]*mat.r[1][1] + hkl[2]*mat.r[2][1]);
-    res[2] = Round(hkl[0]*mat.r[0][2] + hkl[1]*mat.r[1][2] + hkl[2]*mat.r[2][2]);
+    res[0] = olx_round(hkl[0]*mat.r[0][0] + hkl[1]*mat.r[1][0] + hkl[2]*mat.r[2][0]);
+    res[1] = olx_round(hkl[0]*mat.r[0][1] + hkl[1]*mat.r[1][1] + hkl[2]*mat.r[2][1]);
+    res[2] = olx_round(hkl[0]*mat.r[0][2] + hkl[1]*mat.r[1][2] + hkl[2]*mat.r[2][2]);
   }
 //..............................................................................
   /* replaces hkl with standard hkl accroding to provided matrices. 
@@ -117,7 +117,7 @@ public:
       MulHkl(hklv, ml[i]);
       if( EqHkl(hklv) )  {  // only if there is no change
         const double ps = PhaseShift(ml[i]);
-        Absent = (olx_abs( ps - Round(ps) ) > 0.01);
+        Absent = (olx_abs( ps - olx_round(ps) ) > 0.01);
         if( Absent )
           break;
       }
@@ -143,7 +143,7 @@ public:
       MulHkl(hklv, ml[i]);
       if( EqHkl(hklv) )  {  // only if there is no change
         const double ps = PhaseShift(ml[i]);
-        Absent = (olx_abs( ps - Round(ps) ) > 0.01);
+        Absent = (olx_abs( ps - olx_round(ps) ) > 0.01);
         if( Absent )
           break;
       }
@@ -166,7 +166,7 @@ public:
         IncMultiplicity();
         if( !Absent )  {
           const double l = PhaseShift(ml[i]);
-          Absent = (olx_abs( l - Round(l) ) > 0.01);
+          Absent = (olx_abs( l - olx_round(l) ) > 0.01);
         }
       }
       else if( !Centric && EqNegHkl(hklv) )  // centric reflection
@@ -190,7 +190,7 @@ public:
     for( int i=0; i < ml.Count(); i++ )  {
       if( IsSymmetric(ml[i]) )  {
         double l = PhaseShift(ml[i]);
-        if( olx_abs( l - Round(l) ) > 0.01 )  
+        if( olx_abs( l - olx_round(l) ) > 0.01 )  
           return true;
       }
     }

@@ -60,7 +60,7 @@ void TGlTextBox::Create(const olxstr& cName, const ACreationParams* cpar)  {
 
   TGlPrimitive& glpPlane = GPC.NewPrimitive("Plane", sgloQuads);  // a sphere at the basis of the object {0,0,0}
   glpPlane.SetProperties(GS.GetMaterial("Plane", GlM) );
-  glpPlane.Data.Resize(3, 4);
+  glpPlane.Vertices.SetCount(4);
 
   TGlPrimitive& glpText = GPC.NewPrimitive("Text", sgloText);
   glpText.SetProperties( GS.GetMaterial("Text", Font()->GetMaterial()) );
@@ -103,14 +103,10 @@ bool TGlTextBox::Orient(TGlPrimitive& P)  {
     double hh = Parent.GetHeight()*Scale/2;
     Scale = Scale*Parent.GetExtraZoom()*Parent.GetViewZoom();
     double xx = Basis.GetCenter()[0], xy = -Basis.GetCenter()[1];
-    P.Data[0][0] = (Left+Width+xx)*Scale-hw;  P.Data[1][0] = hh-(Top+Height+xy)*Scale;
-    P.Data[0][1] = (Left+Width+xx)*Scale-hw;  P.Data[1][1] = hh-(Top+xy)*Scale;
-    P.Data[0][2] = (Left+xx)*Scale-hw;        P.Data[1][2] = hh-(Top+xy)*Scale;
-    P.Data[0][3] = (Left+xx)*Scale-hw;        P.Data[1][3] = hh-(Top+Height+xy)*Scale;
-    P.Data[2][0] = Z-1;
-    P.Data[2][1] = Z-1;
-    P.Data[2][2] = Z-1;
-    P.Data[2][3] = Z-1;
+    P.Vertices[0] = vec3d((Left+Width+xx)*Scale-hw, hh-(Top+Height+xy)*Scale, Z-1);
+    P.Vertices[1] = vec3d((Left+Width+xx)*Scale-hw, hh-(Top+xy)*Scale, Z-1);
+    P.Vertices[2] = vec3d((Left+xx)*Scale-hw, hh-(Top+xy)*Scale, Z-1);
+    P.Vertices[3] = vec3d((Left+xx)*Scale-hw, hh-(Top+Height+xy)*Scale, Z-1); 
     return false;
   }
 }

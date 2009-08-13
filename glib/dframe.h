@@ -17,7 +17,7 @@ public:
 class TDFrame: public AGDrawObject  {
 protected:
   class TGlPrimitive *FPrimitive;
-  vec3d Translation;
+  vec3f Translation;
   TActionQList *FActions;
 public:
   TDFrame(TGlRenderer& Render, const olxstr& collectionName);

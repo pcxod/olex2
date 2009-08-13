@@ -690,7 +690,7 @@ void TIns::SaveToRefine(const olxstr& FileName, const olxstr& sMethod, const olx
     sl.AddNew( cnt, bai );
     ac += cnt;
   }
-  //int newZ = Round(AsymmUnit.EstimateZ(ac/AsymmUnit.GetZ()));
+  //int newZ = olx_round(AsymmUnit.EstimateZ(ac/AsymmUnit.GetZ()));
   //Unit = EmptyString;
   //for( int i=0; i < sfac.Count(); i++ )  {
   //  int cnt = unit[i].ToInt();
@@ -1334,7 +1334,7 @@ void TIns::_SaveRefMethod(TStrList& SL)  {
     if( RefMod.PLAN.Count() != 0 )  {
       olxstr& pn = SL.Add("PLAN ");
       for( int i=0; i < RefMod.PLAN.Count(); i++ )
-        pn << ' ' << ((i < 1) ? Round(RefMod.PLAN[i]) : RefMod.PLAN[i]);
+        pn << ' ' << ((i < 1) ? olx_round(RefMod.PLAN[i]) : RefMod.PLAN[i]);
     }
   }
 }

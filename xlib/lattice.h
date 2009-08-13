@@ -23,7 +23,7 @@ private:
 private:
   /* generates matrices in volume {VFrom, VTo} and leaves only matrices, which
   transform the center of gravity of the asymmertic unit within {MFrom, MTo} volume
-  useually VFrom = Round(MFrom), VTo = Round(VFrom)
+  useually VFrom = olx_round(MFrom), VTo = olx_round(VFrom)
   */
   int GenerateMatrices(const vec3d& VFrom, const vec3d& VTo,
         const vec3d& MFrom, const vec3d& MTo);

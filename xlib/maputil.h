@@ -77,9 +77,9 @@ protected:
         }
       }
       new_cent /= peak.count;
-      peak.center[0] = Round(new_cent[0]);
-      peak.center[1] = Round(new_cent[1]);
-      peak.center[2] = Round(new_cent[2]);
+      peak.center[0] = olx_round(new_cent[0]);
+      peak.center[1] = olx_round(new_cent[1]);
+      peak.center[2] = olx_round(new_cent[2]);
       for( int i=0; i < 3; i++ )  {
         while( peak.center[i] < 0 )  
           peak.center[i] += dim[i];
@@ -235,9 +235,9 @@ public:
       center /= toMerge.Count();
       center *= cart2cell;
       center[0] /= norm[0];  center[1] /= norm[1];  center[2] /= norm[2];
-      p.center[0] = Round(center[0]);
-      p.center[1] = Round(center[1]);
-      p.center[2] = Round(center[2]);
+      p.center[0] = olx_round(center[0]);
+      p.center[1] = olx_round(center[1]);
+      p.center[2] = olx_round(center[2]);
     }
     for( int i=0; i < out.Count(); i++ )  {
       if( out[i].count == 0 )

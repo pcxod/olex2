@@ -25,6 +25,14 @@ const short sgloPoints    = 1,
             sgloText      = 13,
             sgloMacro     = 14,
             sgloCommandList = 15;
+// data format
+const short 
+  glpdVertexCrd    = 0x0001,
+  glpdVertexColor  = 0x0002,
+  glpdEdgeColor    = 0x0002,
+  glpdNormalCrd    = 0x0004,
+  glpdTextureCrd   = 0x0008;
+
 
 class TGlFont;
 class TGPCollection;
@@ -73,6 +81,79 @@ protected:
       QuadricNormals, 
       QuadricOrientation;
   void SetType(short T);
+
+  static inline void PrepareColorRendering(uint16_t _begin)  {
+    glPushAttrib(GL_LIGHTING_BIT);
+    glDisable(GL_LIGHTING);
+    glEnable(GL_COLOR_MATERIAL);
+    glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
+    glBegin(_begin);
+  }
+  static inline void EndColorRendering()  {
+    glEnd();
+    glPopAttrib();
+  }
+  // helper functions
+  inline void DrawVertex2(int i) const {
+    DrawVertex(Vertices[i]);
+    DrawVertex(Vertices[i+1]);
+  }
+  inline void DrawVertex2c(int i) const {
+    DrawVertex(Vertices[i], Colors[i]);
+    DrawVertex(Vertices[++i], Colors[i]);
+  }
+  inline void DrawVertex2t(int i) const {
+    DrawVertex(Vertices[i], TextureCrds[i]);
+    DrawVertex(Vertices[++i], TextureCrds[i]);
+  }
+  inline void DrawVertex2ct(int i) const {
+    DrawVertex(Vertices[i], Colors[i], TextureCrds[i]);
+    DrawVertex(Vertices[++i], Colors[i], TextureCrds[i]);
+  }
+  inline void DrawVertex3(int i) const {
+    DrawVertex(Vertices[i]);
+    DrawVertex(Vertices[i+1]);
+    DrawVertex(Vertices[i+2]);
+  }
+  inline void DrawVertex3c(int i) const {
+    DrawVertex(Vertices[i], Colors[i]);
+    DrawVertex(Vertices[++i], Colors[i]);
+    DrawVertex(Vertices[++i], Colors[i]);
+  }
+  inline void DrawVertex3t(int i) const {
+    DrawVertex(Vertices[i], TextureCrds[i]);
+    DrawVertex(Vertices[++i], TextureCrds[i]);
+    DrawVertex(Vertices[++i], TextureCrds[i]);
+  }
+  inline void DrawVertex3ct(int i) const {
+    DrawVertex(Vertices[i], Colors[i], TextureCrds[i]);
+    DrawVertex(Vertices[++i], Colors[i], TextureCrds[i]);
+    DrawVertex(Vertices[++i], Colors[i], TextureCrds[i]);
+  }
+  inline void DrawVertex4(int i) const {
+    DrawVertex(Vertices[i]);
+    DrawVertex(Vertices[i+1]);
+    DrawVertex(Vertices[i+2]);
+    DrawVertex(Vertices[i+3]);
+  }
+  inline void DrawVertex4c(int i) const {
+    DrawVertex(Vertices[i], Colors[i]);
+    DrawVertex(Vertices[++i], Colors[i]);
+    DrawVertex(Vertices[++i], Colors[i]);
+    DrawVertex(Vertices[++i], Colors[i]);
+  }
+  inline void DrawVertex4t(int i) const {
+    DrawVertex(Vertices[i], TextureCrds[i]);
+    DrawVertex(Vertices[++i], TextureCrds[i]);
+    DrawVertex(Vertices[++i], TextureCrds[i]);
+    DrawVertex(Vertices[++i], TextureCrds[i]);
+  }
+  inline void DrawVertex4ct(int i) const {
+    DrawVertex(Vertices[i], Colors[i], TextureCrds[i]);
+    DrawVertex(Vertices[++i], Colors[i], TextureCrds[i]);
+    DrawVertex(Vertices[++i], Colors[i], TextureCrds[i]);
+    DrawVertex(Vertices[++i], Colors[i], TextureCrds[i]);
+  }
 public:
   TGlPrimitive(TObjectGroup& ParentG, TGlRenderer& ParentR, short type);
   ~TGlPrimitive();
@@ -94,7 +175,7 @@ public:
   virtual void ListParams(TStrList& List);
 
   /* sets the type and expands Params vector*/
-  short GetType() const {  return Type;  }
+  inline short GetType() const {  return Type;  }
 
   DefPropP(TGlClipPlanes*, ClipPlanes)
   DefPropP(olxstr*, String)
@@ -124,8 +205,13 @@ public:
   inline bool IsCompiled() const {  return Compiled;  }
   inline bool IsList()     const {  return Type == sgloCommandList;  }
 
-  /* the data and parameters of the primitive */
-  ematd Data;
+  struct TextureCrd  {
+    float s, t, r, q;
+    TextureCrd() : s(0), r(0), t(0), q(1)  {}
+  };
+  TArrayList<vec3f> Vertices, Normals;
+  TArrayList<TextureCrd> TextureCrds;
+  TArrayList<uint32_t> Colors;
   /* Params:
    Disk: inner radius, outer radius, slices, loops
    DiskSlice: inner radius, outer radius, slices, loops, start angle, sweep angle
@@ -135,6 +221,33 @@ public:
    note that the String must be initialised with a pointer to a proper string
   */
   evecd Params;
+
+  static inline void SetColor(const uint32_t& cl)  {
+    glColor4f( (float)GetRValue(cl)/255, (float)GetGValue(cl)/255, (float)GetBValue(cl)/255, (float)GetAValue(cl)/255 );
+  }
+  static inline void SetNormal(const vec3d& v)   {  glNormal3dv(v.GetData());  }
+  static inline void SetNormal(const vec3f& v)   {  glNormal3fv(v.GetData());  }
+  static inline void SetTexCrd(const TextureCrd& c)  {  glTexCoord4d(c.s, c.t, c.r, c.q);  }
+
+  static inline void DrawVertex(const vec3d& v)  {  glVertex3dv(v.GetData());  }
+  static inline void DrawVertex(const vec3f& v)  {  glVertex3fv(v.GetData());  }
+
+  template <class vec_class> 
+  static inline void DrawVertex(const vec_class& v, const uint32_t& c)  {  
+    SetColor(c);
+    DrawVertex(v);
+  }
+  template <class vec_class> 
+  static inline void DrawVertex(const vec_class& v, const uint32_t& c, const TextureCrd& tc)  {  
+    SetColor(c);
+    SetTexCrd(tc);
+    DrawVertex(v);
+  }
+  template <class vec_class> 
+  static inline void DrawVertex(const vec_class& v, const TextureCrd& tc)  {  
+    SetTexCrd(tc);
+    DrawVertex(v);
+  }
 };
 
 // a structure to describe primitive parameters

@@ -508,7 +508,7 @@ void XLibMacros::funVSS(const TStrObjList &Cmds, TMacroError &Error)  {
     double auv = latt.GetUnitCell().CalcVolume()/latt.GetUnitCell().MatrixCount();
     double ratio = auv/(16*ac);
     for( int i=0; i < sl.Count(); i++ )
-      sl[i].A() = Round(ratio*sl[i].GetA());
+      sl[i].A() = olx_round(ratio*sl[i].GetA());
 
     TPSTypeList<double, TCAtom*> SortedQPeaks;
     for( int i=0; i < au.AtomCount(); i++ )  {
@@ -618,7 +618,7 @@ void XLibMacros::funVSS(const TStrObjList &Cmds, TMacroError &Error)  {
   }
   else if( trim && false )  {
     double auv = latt.GetUnitCell().CalcVolume()/latt.GetUnitCell().MatrixCount();
-    int ac = Round(auv/18.6);
+    int ac = olx_round(auv/18.6);
     int to_delete = au.AtomCount() - ac;
     if( to_delete > 0 )  {
       TPSTypeList<double, TCAtom*> SortedQPeaks;
@@ -692,8 +692,8 @@ void XLibMacros::funFATA(const TStrObjList &Cmds, TMacroError &E)  {
   MapUtil::MergePeaks(ml, au.GetCellToCartesian(), norm, _Peaks, Peaks);
   sw.stop();
   int PointCount = mapX*mapY*mapZ;
-  int minR = Round((3*1.5/(4*M_PI))*resolution);  // at least 1.5 A^3
-  int minPointCount = Round(4*M_PI*minR*minR*minR/3.0);
+  int minR = olx_round((3*1.5/(4*M_PI))*resolution);  // at least 1.5 A^3
+  int minPointCount = olx_round(4*M_PI*minR*minR*minR/3.0);
   TArrayList< AnAssociation3<TCAtom*,double, int> > atoms (au.AtomCount());
   for( int i=0; i < au.AtomCount(); i++ )  {
     atoms[i].A() = &au.GetAtom(i);

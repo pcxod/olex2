@@ -202,7 +202,7 @@ public:
     double po = 1;
     if( FE != 0 )  {
       while( olx_abs(FE*po) < 1 )  {  po *= 10;    pr ++;  }
-      iv = Round(FE*po);
+      iv = olx_round(FE*po);
       if( pr != 0 )  {
         if( iv == 10 && pr > 1 )  {
           iv = 1;
@@ -213,7 +213,7 @@ public:
       }
       else  {
         S = (int)FV;
-        S << '(' << (int)Round(FE) << ')';
+        S << '(' << (int)olx_round(FE) << ')';
       }
     }
     else

@@ -48,17 +48,18 @@ void TGlBackground::Create(const olxstr& cName, const ACreationParams* cpar) {
   FColors[1] = GS.GetParam("B", 0xffffffff, true).ToInt();
   FColors[2] = GS.GetParam("C", "0", true).ToInt();
   FColors[3] = GS.GetParam("D", "0", true).ToInt();
-
   TGlPrimitive& GlP = GPC.NewPrimitive("Plane", sgloQuads);
   GlP.SetProperties(GlM);
-  GlP.Data.Resize(6, 4);
-  // texture coordinates
-  GlP.Data[4][0] = 1;  GlP.Data[5][0] = 1;
-  GlP.Data[4][1] = 0;  GlP.Data[5][1] = 1;
-  GlP.Data[4][2] = 0;  GlP.Data[5][2] = 0;
-  GlP.Data[4][3] = 1;  GlP.Data[5][3] = 0;
-  if( Texture != NULL )
+  GlP.Vertices.SetCount(4);
+  GlP.Colors.SetCount(4);
+  if( Texture != NULL )  {
     GlP.SetTextureId( Texture->GetId() );
+    GlP.TextureCrds.SetCount(4);
+    GlP.TextureCrds[0].s = 1;  GlP.TextureCrds[0].t = 1;
+    GlP.TextureCrds[1].s = 0;  GlP.TextureCrds[1].t = 1;
+    GlP.TextureCrds[2].s = 0;  GlP.TextureCrds[2].t = 0;
+    GlP.TextureCrds[3].s = 1;  GlP.TextureCrds[3].t = 0;
+  }
   
   Orient(GlP);
 }
@@ -79,25 +80,14 @@ bool TGlBackground::Orient(TGlPrimitive& P)  {
 //  if( !MaxZ )  MaxZ = -0.0001;
   if( !FCeiling )  MaxZ = -MaxZ;
 
-  P.Data[0][0] = -HW;
-  P.Data[1][0] = -HH;
-  P.Data[2][0] = MaxZ;
-  P.Data[3][0] = FColors[0].GetRGB();
-
-  P.Data[0][1] = HW;
-  P.Data[1][1] = -HH;
-  P.Data[2][1] = MaxZ;
-  P.Data[3][1] = FColors[1].GetRGB();
-
-  P.Data[0][2] = HW;
-  P.Data[1][2] = HH;
-  P.Data[2][2] = MaxZ;
-  P.Data[3][2] = FColors[2].GetRGB();
-
-  P.Data[0][3] = -HW;
-  P.Data[1][3] = HH;
-  P.Data[2][3] = MaxZ;
-  P.Data[3][3] = FColors[3].GetRGB();
+  P.Vertices[0] = vec3d(-HW, -HH, MaxZ);
+  P.Colors[0] = FColors[0].GetRGB();
+  P.Vertices[1] = vec3d(HW, -HH, MaxZ);
+  P.Colors[1] = FColors[1].GetRGB();
+  P.Vertices[2] = vec3d(HW, HH, MaxZ);
+  P.Colors[2] = FColors[2].GetRGB();
+  P.Vertices[3] = vec3d(-HW, HH, MaxZ);
+  P.Colors[3] = FColors[3].GetRGB();
   return false;
 }
 //..............................................................................

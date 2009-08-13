@@ -12,19 +12,19 @@
 #define MAXSELECT 100
 //---------------------------------------------------------------------------
 #ifndef GetRValue
-  #define GetRValue(rgb)   ((uint8_t) (rgb))
+  #define GetRValue(rgb)   (uint8_t) (rgb)
 #endif
 //---------------------------------------------------------------------------
 #ifndef GetBValue
-  #define GetBValue(rgb)   ((uint8_t) ((rgb) >> 16))
+  #define GetBValue(rgb)   (uint8_t) ((rgb) >> 16)
 #endif
 //---------------------------------------------------------------------------
 #ifndef GetGValue
-  #define GetGValue(rgb)   ((uint8_t) (((uint16_t) (rgb)) >> 8))
+  #define GetGValue(rgb)   (uint8_t) ((rgb) >> 8)
 #endif
 //---------------------------------------------------------------------------
 #ifndef GetAValue
-  #define GetAValue(rgb)   GetGValue( rgb >> 16)
+  #define GetAValue(rgb)   (uint8_t) ((rgb) >> 24)
 #endif
 //---------------------------------------------------------------------------
 #ifndef RGB
