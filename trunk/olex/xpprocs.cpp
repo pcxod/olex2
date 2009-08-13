@@ -8904,3 +8904,137 @@ void TMainForm::funGetMAC(const TStrObjList& Params, TMacroError &E)  {
   E.SetRetVal( rv.IsEmpty() ? NAString : rv );
 }
 //..............................................................................
+void TMainForm::macWBox(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  static int obj_cnt = 0;
+  TXAtomPList xatoms;
+  if( !FindXAtoms(Cmds, xatoms, true, true) || xatoms.Count() < 3 )  {
+    E.ProcessingError(__OlxSrcInfo, "no enough atoms provided");
+    return;
+  }
+  TPSTypeList<TBasicAtomInfo*, double> radii;
+  TAtomsInfo& ai = TAtomsInfo::GetInstance();
+  radii.Add( &ai.GetAtomInfo(iHydrogenIndex), 1.2);
+  radii.Add( &ai.GetAtomInfo(iCarbonIndex), 1.7);
+  radii.Add( &ai.GetAtomInfo(iOxygenIndex), 1.52);
+  radii.Add( &ai.GetAtomInfo(iNitrogenIndex), 1.55);
+  if( !Cmds.IsEmpty() && TEFile::Exists(Cmds[0]) )  {
+    TBasicApp::GetLog() << "Using user defined radii for: \n";
+    TStrList sl, toks;
+    sl.LoadFromFile(Cmds[0]);
+    for( int i=0; i < sl.Count(); i++ )  {
+      toks.Clear();
+      toks.Strtok(sl[i], ' ');
+      if( toks.Count() == 2 )  {
+        TBasicAtomInfo* bai = ai.FindAtomInfoBySymbol( toks[0] );
+        if( bai == NULL )  {
+          TBasicApp::GetLog() << " invalid atom type: " << toks[0] << '\n';
+          continue;
+        }
+        TBasicApp::GetLog() << ' ' << toks[0] << '\t' << toks[1] << '\n';
+        int b_i = radii.IndexOfComparable( bai );
+        if( b_i == -1 )
+          radii.Add( bai, toks[1].ToDouble() );
+        else
+          radii.GetObject(b_i) = toks[1].ToDouble();
+      }
+    }
+    Cmds.Delete(0);
+  }
+  TTypeList< AnAssociation2<vec3d, double> > crds;
+  TArrayList<double> all_radii(xatoms.Count());
+  for( int i=0; i < xatoms.Count(); i++ )  {
+    //crds.AddNew( xatoms[i]->Atom().crd(), xatoms[i]->Atom().GetAtomInfo().GetMr() );
+    crds.AddNew( xatoms[i]->Atom().crd(), 1.0 );
+    const int ri = radii.IndexOfComparable( &xatoms[i]->Atom().GetAtomInfo() );
+    if( ri == -1 )
+      all_radii[i] = xatoms[i]->Atom().GetAtomInfo().GetRad2();
+    else
+      all_radii[i] = radii.GetObject(ri);
+  }
+  mat3d normals;
+  vec3d rms, center, Ds;
+  TSPlane::CalcPlanes(crds, normals, rms, center);  
+  vec3d mind, maxd, mind1, maxd1;
+  for( int i=0; i < 3; i++ )  {
+    Ds[i] = normals[i].DotProd(center)/normals[i].Length();
+    normals[i].Normalise();
+    for( int j=0; j < crds.Count(); j++ )  {
+      double d = crds[j].GetA().DotProd(normals[i]) - Ds[i];
+      if( d < 0 )  {
+        const double d1 = d - all_radii[j];
+        if( d1 < mind[i] )
+          mind[i] = d1;
+      }
+      else  {
+        const double d1 = d + all_radii[j];
+        if( d1 > maxd[i] )
+          maxd[i] = d1;
+      }
+      if( d < 0 )  {
+        const double d1 = d - xatoms[j]->Atom().GetAtomInfo().GetRad2();
+        if( d1 < mind1[i] )
+          mind1[i] = d1;
+      }
+      else  {
+        const double d1 = d + xatoms[j]->Atom().GetAtomInfo().GetRad2();
+        if( d1 > maxd1[i] )
+          maxd1[i] = d1;
+      }
+    }
+  }
+  TBasicApp::GetLog() << (olxstr("Wrapping box dimension: ") << 
+    olxstr::FormatFloat(3, maxd[0]-mind[0]) << " x "  <<
+    olxstr::FormatFloat(3, maxd[1]-mind[1]) << " x "  <<
+    olxstr::FormatFloat(3, maxd[2]-mind[2]) << " A\n");
+  TBasicApp::GetLog() << (olxstr("Wrapping box volume: ") << 
+    olxstr::FormatFloat(3, (maxd[0]-mind[0])*(maxd[1]-mind[1])*(maxd[2]-mind[2])) << " A^3\n");
+  vec3d nx = normals[0]*mind1[0];
+  vec3d px = normals[0]*maxd1[0];
+  vec3d ny = normals[1]*mind1[1];
+  vec3d py = normals[1]*maxd1[1];
+  vec3d nz = normals[2]*mind1[2];
+  vec3d pz = normals[2]*maxd1[2];
+
+  vec3d faces[] = {
+    px + py + pz,
+    px + py + nz,
+    px + ny + nz,
+    px + ny + pz,
+
+    nx + py + pz,
+    nx + ny + pz,
+    nx + ny + nz,
+    nx + py + nz,
+
+    px + py + pz,
+    nx + py + pz,
+    nx + py + nz,
+    px + py + nz,
+
+    px + ny + nz,
+    nx + ny + nz,
+    nx + ny + pz,
+    px + ny + pz,
+
+    nx + py + pz,
+    px + py + pz,
+    px + ny + pz,
+    nx + ny + pz,
+
+    nx + py + nz,
+    nx + ny + nz,
+    px + ny + nz,
+    px + py + nz,
+  };
+
+  ematd& poly_d = *(new ematd(3, 24));
+  for( int i=0; i < 24; i++ )  {
+    for( int j=0; j < 3; j++ )
+      poly_d[j][i] = center[j] + faces[i][j];
+  }
+  TDUserObj* uo = new TDUserObj(FXApp->GetRender(), sgloQuads, &poly_d, olxstr("wbox") << obj_cnt++);
+  FXApp->AddObjectToCreate( uo );
+  uo->Create();
+  FXApp->GetLog() << "Please note that displayed and used atomic radii might be DIFFERENT\n";
+}
+//..............................................................................
