@@ -57,26 +57,28 @@ void TXReflection::Create(const olxstr& cName, const ACreationParams* cpar) {
   GlP.SetProperties( GS.GetMaterial("Reflection", GlM) );
   double sz = 0.5;
   static const double c_30 = sqrt(3.0)/2, s_30 = 0.5;
-  TArrayList<vec3d> vecs;
-  vecs.Add( vec3d(0, 0, sz) );
-  vecs.Add( vec3d(0, sz, 0) );
-  vecs.Add( vec3d(sz*c_30, -sz*s_30, 0) );
-  vecs.Add( vec3d(-sz*c_30, -sz*s_30, 0) );
-
+  vec3d edges [] = {
+    vec3d(0, 0, sz),
+    vec3d(0, sz, 0),
+    vec3d(sz*c_30, -sz*s_30, 0),
+    vec3d(-sz*c_30, -sz*s_30, 0)
+  };
+  const vec3d cnt = (edges[0] + edges[1] + edges[2] + edges[3])/4;
+  vec3d faces[] = {
+    edges[0], edges[2], edges[1],
+    edges[0], edges[3], edges[2],
+    edges[0], edges[1], edges[3],
+    edges[1], edges[2], edges[3]
+  };
   GlP.Vertices.SetCount(12);  // four triangles + normals
   GlP.Normals.SetCount(4);
-
-  GlP.Vertices[0] = vecs[0];  GlP.Vertices[1] = vecs[2];  GlP.Vertices[2] = vecs[1];
-  GlP.Normals[0] = vec3d(vecs[2]-vecs[0]).XProdVec(vecs[1]-vecs[0]).Normalise();
-
-  GlP.Vertices[3] = vecs[0];  GlP.Vertices[4] = vecs[3];  GlP.Vertices[5] = vecs[2];
-  GlP.Normals[0] = vec3d(vecs[3]-vecs[0]).XProdVec(vecs[2]-vecs[0]).Normalise();
-
-  GlP.Vertices[6] = vecs[0];  GlP.Vertices[7] = vecs[1];  GlP.Vertices[8] = vecs[3];
-  GlP.Normals[0] = vec3d(vecs[1]-vecs[0]).XProdVec(vecs[3]-vecs[0]).Normalise();
-
-  GlP.Vertices[9] = vecs[1];  GlP.Vertices[10] = vecs[2];  GlP.Vertices[11] = vecs[3];
-  GlP.Normals[0] = vec3d(vecs[2]-vecs[1]).XProdVec(vecs[3]-vecs[1]).Normalise();
+  for( int i=0; i < 12; i++ )  {
+    if( (i%3) == 0 )  {
+      const int ind = i/3;
+      GlP.Normals[ind] = ((faces[ind]+faces[ind+1]+faces[ind+2])/3-cnt).Normalise();
+    }
+    GlP.Vertices[i] = faces[i];
+  }
 }
 //..............................................................................
 TXReflection::~TXReflection()  {  }
