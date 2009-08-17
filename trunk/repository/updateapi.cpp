@@ -420,6 +420,25 @@ void UpdateAPI::GetAvailableRepositories(TStrList& res) const {
     res.Insert( 0, inst_zip_fn );
 }
 //.............................................................................
+void UpdateAPI::GetAvailableTags(TStrList& res, olxstr& repo_name) const {
+  AFileSystem* fs = FindActiveRepositoryFS(&repo_name);
+  if( fs == NULL )  return;
+  IInputStream* is= NULL;
+  try  { is = fs->OpenFile(fs->GetBase() + GetTagsFileName());  }
+  catch( const TExceptionBase& exc )  {
+    log.Add( exc.GetException()->GetFullMessage() );
+    delete fs;
+    return;
+  }
+  if( is == NULL )  {
+    delete fs;
+    return;
+  }
+  res.LoadFromTextStream(*is);
+  delete is;
+  delete fs;
+}
+//.............................................................................
 olxstr UpdateAPI::ReadRepositoryTag()  {
   olxstr tag_fn = TBasicApp::GetBaseDir() + GetTagFileName();
   if( !TEFile::Exists(tag_fn) )

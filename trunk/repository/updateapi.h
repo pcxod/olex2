@@ -162,6 +162,8 @@ public:
   void GetAvailableRepositories(TStrList& res) const;
   // fills list with available repositories
   void GetAvailableMirrors(TStrList& res) const;
+  // fills list with available tags and initialises the chosen repository URL
+  void GetAvailableTags(TStrList& res, olxstr& repo_URL) const;
   //reads current repository tag, returns EmptyString in the case of error
   static olxstr ReadRepositoryTag();
   // returns platform-dependen instalaltion file name

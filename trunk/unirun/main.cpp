@@ -75,13 +75,14 @@ public:
   bool Enter(const IEObject *Sender, const IEObject *Data)  {
     if( Data == NULL )  {  return false;  }
     const TOnProgress *A = dynamic_cast<const TOnProgress*>(Data);
-    TBasicApp::GetLog() << (olxstr("Downloading ") << A->GetAction() << '\n');
+    TBasicApp::GetLog() << (olxstr("Downloading ") << A->GetAction() << "\n0%");
     return true;
   }
   bool Execute(const IEObject *Sender, const IEObject *Data)  {
     if( Data == NULL )  {  return false;  }
     const TOnProgress *A = dynamic_cast<const TOnProgress*>(Data);
     TBasicApp::GetLog() << (olxstr("\r") << (int)(100*A->GetPos()/A->GetMax()) << '%');
+		fflush(NULL);
     return true;
   }
 };
@@ -126,6 +127,18 @@ current folder will be updated\n";
       }
       bapp = new TBasicApp(TBasicApp::GuessBaseDir(argv[1]) );
     }
+		// parse out options
+		olxstr Tmp;
+    for( int i=1; i < argc; i++ )
+      Tmp << argv[i] <<  ' ';
+    TParamList::StrtokParams(Tmp, ' ', bapp->Arguments);
+    for( int i=0; i < bapp->Arguments.Count(); i++ )  {
+      if( bapp->Arguments[i].FirstIndexOf('=') != -1 )  {
+        bapp->ParamList.FromString(bapp->Arguments[i], '=');
+        bapp->Arguments.Delete(i);
+        i--;
+      }
+    }
     bapp->GetLog().AddStream( new TOutStream, true);
     //bapp->SetSharedDir( TShellUtil::GetSpecialFolderLocation(fiAppData) << "Olex2u/");
     DoRun();
@@ -155,35 +168,64 @@ void DoRun()  {
   if( updater::UpdateAPI::IsInstallRequired() )  {
     TStrList repos;
     updater::UpdateAPI api;
-    api.GetAvailableRepositories(repos);
-    if( repos.IsEmpty() )  {
-      TBasicApp::GetLog() << "Could not locate any installation repositories, aborting...\n";
-			return;
-		}
+		olxstr repo;
     TBasicApp::GetLog() << "Installation folder: "  << TBasicApp::GetBaseDir() << '\n';
-    olxstr repo = repos[0];
-    if( repos.Count() >= 1 )  {
-      TBasicApp::GetLog() << "Please choose the installation repository or Cancel:\n";
-      for( int i=0; i < repos.Count(); i++ )
-        TBasicApp::GetLog() << (i+1) << ": " << repos[i].c_str() << '\n';
-      TBasicApp::GetLog() << (repos.Count()+1) << ": Cancel\n";
-      int repo_ind = 0;
-      while( true )  {
-        TBasicApp::GetLog() << "Your choice: ";
-        cin >> repo_ind;
-        if( cin.fail() )  continue;
-        if( repo_ind == repos.Count()+1 )
-          return;
-        if( repo_ind > 0 && repo_ind <= repos.Count() )
-          break;
+		if( TBasicApp::GetInstance().ParamList.Contains("-tag") )  {
+		  olxstr tag = TBasicApp::GetInstance().ParamList["-tag"];
+			if( tag.Equalsi("max") )  {
+			  TStrList tags;
+				api.GetAvailableTags(tags, repo);
+				if( tags.IsEmpty() )  {
+          TBasicApp::GetLog() << "Could not locate any installation repositories/tags, aborting...\n";
+	  		  return;
+				}  
+				double max_tag = 0;
+				for( int i=0; i < tags.Count(); i++ )  {
+				  if( tags[i].IsNumber() && tags[i].ToDouble() > max_tag )
+					  max_tag = tags[i].ToDouble();
+				}
+				repo << olxstr::FormatFloat(1,max_tag);
+			}
+			else  {
+			  repo = api.FindActiveRepositoryUrl();
+				if( repo.IsEmpty() )  {
+          TBasicApp::GetLog() << "Could not locate any installation repositories, aborting...\n";
+	  		  return;
+				}
+				repo << tag;
+			}
+		}
+		else  {
+      api.GetAvailableRepositories(repos);
+      if( repos.IsEmpty() )  {
+        TBasicApp::GetLog() << "Could not locate any installation repositories, aborting...\n";
+			  return;
+		  }
+      repo = repos[0];
+      if( repos.Count() >= 1 )  {
+        TBasicApp::GetLog() << "Please choose the installation repository or Cancel:\n";
+        for( int i=0; i < repos.Count(); i++ )
+          TBasicApp::GetLog() << (i+1) << ": " << repos[i].c_str() << '\n';
+        TBasicApp::GetLog() << (repos.Count()+1) << ": Cancel\n";
+        int repo_ind = 0;
+        while( true )  {
+          TBasicApp::GetLog() << "Your choice: ";
+          cin >> repo_ind;
+          if( cin.fail() )  continue;
+          if( repo_ind == repos.Count()+1 )
+            return;
+          if( repo_ind > 0 && repo_ind <= repos.Count() )
+            break;
+        }
+        repo = repos[repo_ind-1];
       }
-      repo = repos[repo_ind-1];
-    }
-    short res = api.DoInstall(new TDProgress, new TEProgress, repo);
-    if( res != updater::uapi_OK && res != updater::uapi_UptoDate )  {
-      TBasicApp::GetLog() << "Installation has failed with error code: " << res << '\n';
-      TBasicApp::GetLog() << api.GetLog();
-    }
+		}
+		TBasicApp::GetLog() << (olxstr("Installing using: ") << repo << '\n');
+		short res = api.DoInstall(new TDProgress, new TEProgress, repo);
+		if( res != updater::uapi_OK && res != updater::uapi_UptoDate )  {
+			TBasicApp::GetLog() << "Installation has failed with error code: " << res << '\n';
+			TBasicApp::GetLog() << api.GetLog();
+		}
   }
   else  {
     short res = patcher::PatchAPI::DoPatch(NULL, new TUProgress);
