@@ -860,7 +860,8 @@ separated values of Atom Type and radius, an entry a line" );
  atoms provided) or two groups following one another" );
   this_InitMacroD(RESI, "a-alias", (fpAny^fpNone)|psFileLoaded, "Creates residue with given class name and optionally number and adds selected\
  or provided atoms into the residue. If provided residue class name is 'none', provided atoms are removed from their residues" );
-  this_InitMacroD(WBox, "w-use atomic weights instead of unit weights for atoms", (fpAny)|psFileLoaded, "Calculates wrapping box around provided box using the inertia tensor" );
+  this_InitMacroD(WBox, "w-use atomic weights instead of unit weights for atoms&;s-create separate boxes for fragments", 
+	(fpAny)|psFileLoaded, "Calculates wrapping box around provided box using the set of best, intermidiate and worst planes" );
   // FUNCTIONS _________________________________________________________________
 
   this_InitFunc(FileLast, fpNone|fpOne);
