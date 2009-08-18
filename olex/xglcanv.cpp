@@ -131,10 +131,15 @@ void TGlCanvas::OnMouseUp(wxMouseEvent& me)  {
   if( me.ButtonDown(3) )    Btn = smbRight;
 
   int left = 0, top = 0;
+#ifdef __MAC__  // a solution for MAC's single button
+  int os_mask = sssCtrl;
+#else
+  int os_mask = 0;
+#endif
   GetPosition(&left, &top);
 
   if( (abs(me.m_x-FMX) <= 4) && (abs(me.m_y-FMY) <= 4) &&
-    (FRightMouseDown) && !Fl )
+    (FRightMouseDown) && Fl == os_mask )
   {
 //    FMY += (wxSystemSettings::GetMetric(wxSYS_MENU_Y)*FParent->pmMenu->GetMenuItemCount());
     FXApp->ResetMouseState();  // reset mouse state
