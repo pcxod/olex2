@@ -2214,7 +2214,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
             y  = 0;
           GlTooltip->SetLeft(x); // put it off the mouse
           GlTooltip->SetTop(y);
-          GlTooltip->SetZ( FXApp->GetRender().GetMaxRasterZ() -0.1 );
+          GlTooltip->SetZ( FXApp->GetRender().GetMaxRasterZ() -0.05 );
           GlTooltip->SetVisible(true);
           Draw = true;
         }
