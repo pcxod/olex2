@@ -1744,7 +1744,7 @@ int XAtomLabelSort(const TXAtom* I1, const TXAtom* I2)  {
 void TGXApp::InfoList(const olxstr &Atoms, TStrList &Info, bool sort)  {
   if( !XFile().GetLattice().IsGenerated() )  {
     TCAtomPList AtomsList;
-    FindCAtoms(Atoms.IsEmpty() ? olxstr("sel") : Atoms, AtomsList, false);
+    FindCAtoms(Atoms, AtomsList, false);
     TTTable<TStrList> Table(AtomsList.Count(), 7);
     Table.ColName(0) = "Atom";
     Table.ColName(1) = "Type";
@@ -2185,6 +2185,8 @@ void TGXApp::ExpandSelection(TCAtomGroup& atoms)  {
 //..............................................................................
 void TGXApp::FindCAtoms(const olxstr &Atoms, TCAtomPList& List, bool ClearSelection)  {
   if( Atoms.IsEmpty() )  {
+    GetSelectedCAtoms(List, ClearSelection);
+    if( !List.IsEmpty() )  return;
     TAsymmUnit& AU = XFile().GetLattice().GetAsymmUnit();
     List.SetCapacity( List.Count() + AU.AtomCount() );
     for(int i=-1; i < AU.ResidueCount(); i++ )  {

@@ -299,7 +299,6 @@ private:
   DefMacro(IF)
   DefMacro(Basis)
   DefMacro(Lines)
-  DefMacro(LineWidth)
 
   DefMacro(Ceiling)
   DefMacro(Fade)

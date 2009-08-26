@@ -7055,12 +7055,6 @@ void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     TBasicApp::GetLog() << vals[i] << '\n';
 }
 //..............................................................................
-void TMainForm::macLineWidth(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  int lw = Cmds[0].ToInt();
-  if( lw > 10 && lw < 500 )
-    FGlConsole->SetLineWidth( lw );
-}
-//..............................................................................
 void TMainForm::macInv(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   bool Force = Options.Contains("f");  // forces inversion for sg without center of inversion
 

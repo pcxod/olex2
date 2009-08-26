@@ -27,9 +27,7 @@ class TGlConsole: public AGDrawObject,
       FTxtPos,
       FMaxLines,
       FLinesToShow,
-      FStringPos,
-      FLineWidth,
-      MaxLineWidth;
+      FStringPos;
   bool FShowBuffer, FScrollDirectionUp, Blend,
     SkipPosting;  // the next pot operation will pass
   short FontIndex;
@@ -96,9 +94,6 @@ public:
   inline void SetMaxLines(int V)     {  FMaxLines = V; };
   inline int  GetLinesToShow() const {  return FLinesToShow;  }
   void SetLinesToShow(int V);
-
-  inline int  GetLineWidth()   const {  return FLineWidth;  }
-  void SetLineWidth(int V);
 
   class TGlFont* Font()  const;
   DefPropP(short, FontIndex)
