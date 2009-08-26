@@ -66,8 +66,8 @@ BEGIN_EVENT_TABLE(TComboBox, wxComboBox)
 BEGIN_EVENT_TABLE(TComboBox, wxOwnerDrawnComboBox)
 #endif
 //  EVT_TEXT(-1, TComboBox::ChangeEvent)
-  EVT_COMBOBOX(101, TComboBox::ChangeEvent)
-  EVT_TEXT_ENTER(102, TComboBox::EnterPressedEvent)
+  EVT_COMBOBOX(-1, TComboBox::ChangeEvent)
+  EVT_TEXT_ENTER(-1, TComboBox::EnterPressedEvent)
   EVT_KILL_FOCUS(TComboBox::LeaveEvent)
   EVT_SET_FOCUS(TComboBox::EnterEvent)
 END_EVENT_TABLE()
@@ -489,7 +489,7 @@ void AButtonBase::ClickEvent(wxCommandEvent& event)  {
 }
 //..............................................................................
 BEGIN_EVENT_TABLE(TButton, wxButton)
-  EVT_BUTTON(101, TButton::ClickEvent)
+  EVT_BUTTON(-1, TButton::ClickEvent)
   EVT_ENTER_WINDOW(TButton::MouseEnterEvent)
   EVT_LEAVE_WINDOW(TButton::MouseLeaveEvent)
 END_EVENT_TABLE()
@@ -514,7 +514,7 @@ void TButton::MouseLeaveEvent(wxMouseEvent& event)  {
 }
 //..............................................................................
 BEGIN_EVENT_TABLE(TBmpButton, wxBitmapButton)
-  EVT_BUTTON(101, TBmpButton::ClickEvent)
+  EVT_BUTTON(-1, TBmpButton::ClickEvent)
   EVT_ENTER_WINDOW(TBmpButton::MouseEnterEvent)
   EVT_LEAVE_WINDOW(TBmpButton::MouseLeaveEvent)
 END_EVENT_TABLE()
@@ -539,7 +539,7 @@ void TBmpButton::MouseLeaveEvent(wxMouseEvent& event)  {
 // TCheckboximplementation
 //----------------------------------------------------------------------------//
 BEGIN_EVENT_TABLE(TCheckBox, wxCheckBox)
-  EVT_CHECKBOX(101, TCheckBox::ClickEvent)
+  EVT_CHECKBOX(-1, TCheckBox::ClickEvent)
   EVT_ENTER_WINDOW(TCheckBox::MouseEnterEvent)
 END_EVENT_TABLE()
 
@@ -599,7 +599,7 @@ void TCheckBox::ClickEvent(wxCommandEvent& event)  {
 // TLabel Implementation
 //----------------------------------------------------------------------------//
 BEGIN_EVENT_TABLE(TLabel, wxStaticText)
-  EVT_COMMAND(101, wxEVT_LEFT_DOWN, TLabel::ClickEvent)
+  EVT_COMMAND(-1, wxEVT_LEFT_DOWN, TLabel::ClickEvent)
 END_EVENT_TABLE()
 
 TLabel::TLabel(wxWindow *P):wxStaticText(P, -1, wxString()), WI(this)  {
@@ -623,11 +623,11 @@ void TLabel::ClickEvent(wxCommandEvent& event)  {
 //..............................................................................
 BEGIN_EVENT_TABLE(TTextEdit, wxTextCtrl)
   EVT_LEFT_DCLICK(TTextEdit::ClickEvent)
-  EVT_TEXT(101, TTextEdit::ChangeEvent)
+  EVT_TEXT(-1, TTextEdit::ChangeEvent)
   EVT_KEY_UP(TTextEdit::KeyUpEvent)
   EVT_CHAR(TTextEdit::CharEvent)
   EVT_KEY_DOWN(TTextEdit::KeyDownEvent)
-  EVT_TEXT_ENTER(102, TTextEdit::EnterPressedEvent)
+  EVT_TEXT_ENTER(-1, TTextEdit::EnterPressedEvent)
   EVT_KILL_FOCUS(TTextEdit::LeaveEvent)
   EVT_SET_FOCUS(TTextEdit::EnterEvent)
 END_EVENT_TABLE()
@@ -712,7 +712,7 @@ void TTextEdit::CharEvent(wxKeyEvent& event)  {
 //..............................................................................
 BEGIN_EVENT_TABLE(TListBox, wxListBox)
   EVT_LEFT_DCLICK(TListBox::ClickEvent)
-  EVT_LISTBOX(101, TListBox::ItemSelectEvent)
+  EVT_LISTBOX(-1, TListBox::ItemSelectEvent)
 END_EVENT_TABLE()
 //..............................................................................
 TListBox::TListBox(wxWindow *Parent): wxListBox(Parent, -1), WI(this)  {
@@ -817,8 +817,8 @@ void TSpinCtrl::EnterPressedEvent(wxCommandEvent& event)  {
 // TTreeView implementation
 //----------------------------------------------------------------------------//
 BEGIN_EVENT_TABLE(TTreeView, wxGenericTreeCtrl)
-  EVT_TREE_ITEM_ACTIVATED(101, TTreeView::ItemActivateEvent)
-  EVT_TREE_SEL_CHANGED(102, TTreeView::SelectionEvent)
+  EVT_TREE_ITEM_ACTIVATED(-1, TTreeView::ItemActivateEvent)
+  EVT_TREE_SEL_CHANGED(-1, TTreeView::SelectionEvent)
 END_EVENT_TABLE()
 
 TTreeView::TTreeView(wxWindow* Parent): wxGenericTreeCtrl(Parent), WI(this)  {
