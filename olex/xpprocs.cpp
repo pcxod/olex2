@@ -2701,7 +2701,7 @@ void TMainForm::macHtmlPanelWidth(TStrObjList &Cmds, const TParamList &Options, 
       else  {
         int w, h;
         GetClientSize(&w, &h);
-        if( width > w*0.75 )  width = w*0.75;
+        //if( width > w*0.75 )  width = w*0.75;
         FHtmlMinimized = false;
         FHtmlPanelWidth = width;
       }
