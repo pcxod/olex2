@@ -5447,10 +5447,7 @@ void TMainForm::macCreateBitmap(TStrObjList &Cmds, const TParamList &Options, TM
     E.ProcessingError(__OlxSrcInfo, "Invalid image file: ") << Cmds[1];
     return;
   }
-  bool resize = true;
-  for( int i=0; i < Options.Count(); i++ )  {
-    if( Options.GetName(i)[0] == 'r' )  resize = false;
-  }
+  bool resize = !Options.Contains('r');
 
   int owidth = img.GetWidth(), oheight = img.GetHeight();
   int l = CalcL( img.GetWidth() );
@@ -5483,10 +5480,9 @@ void TMainForm::macCreateBitmap(TStrObjList &Cmds, const TParamList &Options, TM
   TGlBitmap* glB = FXApp->CreateGlBitmap( Cmds[0], 0, 0, swidth, sheight, RGBData, bmpType);
   delete [] RGBData;
 
-  int Top = FInfoBox->GetTop() + FInfoBox->GetHeight();
+  int Top = FInfoBox->IsVisible() ? (FInfoBox->GetTop() + FInfoBox->GetHeight()) : 0;
   if( Created )  {
-    for( int i=0; i < FXApp->GlBitmapCount(); i++ )
-    {
+    for( int i=0; i < FXApp->GlBitmapCount(); i++ )  {
       TGlBitmap& b = FXApp->GlBitmap(i);
       if( &b == glB )  continue;
       Top += (b.GetHeight() + 2);
