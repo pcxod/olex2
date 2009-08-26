@@ -284,29 +284,34 @@ void UpdateAPI::EvaluateProperties(TStrList& props) const  {
 //.............................................................................
 AFileSystem* UpdateAPI::FSFromString(const olxstr& _repo, const olxstr& _proxy)  {
   if( _repo.IsEmpty() )  return NULL;
-  AFileSystem* FS = NULL;
-  olxstr repo = _repo;
-  if( TEFile::Exists(repo) )  {
-    if( TEFile::ExtractFileExt(repo).Equalsi("zip") )  {
-      if( !TEFile::IsAbsolutePath(repo) )
-        repo = TBasicApp::GetBaseDir() + repo;
-      FS = new ZipFS(repo, false);
+  try  {
+    AFileSystem* FS = NULL;
+    olxstr repo = _repo;
+    if( TEFile::Exists(repo) )  {
+      if( TEFile::ExtractFileExt(repo).Equalsi("zip") )  {
+        if( !TEFile::IsAbsolutePath(repo) )
+          repo = TBasicApp::GetBaseDir() + repo;
+        FS = new ZipFS(repo, false);
+      }
+      else if( TEFile::IsDir(repo) )
+        FS = new TOSFileSystem(repo);
     }
-    else if( TEFile::IsDir(repo) )
-      FS = new TOSFileSystem(repo);
-  }
-  else  {
-    TUrl url(_repo);
-    if( !_proxy.IsEmpty() )
-      url.SetProxy( _proxy );
-    if( url.GetProtocol() == "http" )
-      FS = new HttpFS(url);
+    else  {
+      TUrl url(_repo);
+      if( !_proxy.IsEmpty() )
+        url.SetProxy( _proxy );
+      if( url.GetProtocol() == "http" )
+        FS = new HttpFS(url);
 #ifdef __WXWIDGETS__
-    else if( url.GetProtocol() == "ftp" )
-      FS = new TwxFtpFileSystem(url);
+      else if( url.GetProtocol() == "ftp" )
+        FS = new TwxFtpFileSystem(url);
 #endif
-  }
-  return FS;
+    }
+    return FS;
+	}
+	catch(const TExceptionBase& )  {
+	  return NULL;
+	}
 }
 //.............................................................................
 AFileSystem* UpdateAPI::FindActiveUpdateRepositoryFS(short* res) const {

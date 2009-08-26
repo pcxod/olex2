@@ -186,6 +186,11 @@ void DoRun()  {
 				}
 				repo << olxstr::FormatFloat(1,max_tag);
 			}
+      else if( tag.Equalsi("zip") )  {
+			  olxstr zfn = TBasicApp::GetBaseDir() + api.GetInstallationFileName();
+				if( TEFile::Exists(zfn) )
+				  repo = zfn;
+			}
 			else  {
 			  repo = api.FindActiveRepositoryUrl();
 				if( repo.IsEmpty() )  {
