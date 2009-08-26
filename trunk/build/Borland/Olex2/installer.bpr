@@ -31,8 +31,8 @@
     <USERDEFINES value=""/>
     <SYSDEFINES value="NO_STRICT"/>
     <MAINSOURCE value="installer.cpp"/>
-    <INCLUDEPATH value="&quot;C:\Program Files\Borland\CBuilder6\Projects&quot;;..\..\..\repository;..\..\..\installer;..\..\..\sdl;$(BCB)\include;$(BCB)\include\vcl"/>
-    <LIBPATH value="&quot;C:\Program Files\Borland\CBuilder6\Projects&quot;;..\..\..\repository;..\..\..\..\repository;..\..\..\installer;..\..\repository;..\..;Test\olex_installer;$(BCB)\lib\obj;$(BCB)\lib"/>
+    <INCLUDEPATH value="&quot;C:\Program Files (x86)\Borland\CBuilder6\Projects&quot;;&quot;C:\Program Files\Borland\CBuilder6\Projects&quot;;..\..\..\repository;..\..\..\installer;..\..\..\sdl;$(BCB)\include;$(BCB)\include\vcl"/>
+    <LIBPATH value="&quot;C:\Program Files (x86)\Borland\CBuilder6\Projects&quot;;&quot;C:\Program Files\Borland\CBuilder6\Projects&quot;;..\..\..\repository;..\..\..\..\repository;..\..\..\installer;..\..\repository;..\..;Test\olex_installer;$(BCB)\lib\obj;$(BCB)\lib"/>
     <WARNINGS value="-w-par"/>
     <OTHERFILES value=""/>
   </MACROS>
@@ -100,25 +100,27 @@ ProductVersion=1.0.0.0
 Comments=
 
 [HistoryLists\hlIncludePath]
-Count=12
-Item0=C:\Program Files\Borland\CBuilder6\Projects;..\..\..\repository;..\..\..\installer;..\..\..\sdl;$(BCB)\include;$(BCB)\include\vcl
-Item1=C:\Program Files\Borland\CBuilder6\Projects;..\..\..\..\repository;..\..\..\repository;..\..\..\installer;..\..\..\sdl;$(BCB)\include;$(BCB)\include\vcl
-Item2=..\..\..\..\repository;..\..\..\repository;..\..\..\installer;..\..\..\sdl;$(BCB)\include;$(BCB)\include\vcl
-Item3=..\..\..\repository;..\..\..\installer;..\..\..\sdl;$(BCB)\include;$(BCB)\include\vcl
-Item4=..\..\..\repository;..\..\..\installer;..\sdl;..\..\..\..\repository;..\..\..\..\installer;$(BCB)\include;$(BCB)\include\vcl
-Item5=..\..\..\repository;..\..\..\installer;..\..\..\..\sdl;..\..\..\..\repository;..\..\..\..\installer;$(BCB)\include;$(BCB)\include\vcl
-Item6=..\..\..\..\sdl;..\..\..\..\repository;..\..\..\..\installer;$(BCB)\include;$(BCB)\include\vcl
-Item7=..\..\..\repository;..\..\..\..\repository;..\..\..\installer;..\..\repository;..\..;Test\olex_installer;$(BCB)\include;$(BCB)\include\vcl;C:\Program Files\Borland\CBuilder6\Projects\X-Net\sdl
-Item8=..\..\repository;..\..;Test\olex_installer;$(BCB)\include;$(BCB)\include\vcl;C:\Program Files\Borland\CBuilder6\Projects\X-Net\sdl
-Item9=..\..\repository;..\..;Test\olex_installer;$(BCB)\include;$(BCB)\include\vcl;C:\Program Files\Borland\CBuilder6\Projects\repository;C:\Program Files\Borland\CBuilder6\Projects\X-Net\sdl
-Item10=..\..;Test\olex_installer;$(BCB)\include;$(BCB)\include\vcl;C:\Program Files\Borland\CBuilder6\Projects\repository;C:\Program Files\Borland\CBuilder6\Projects\X-Net\sdl
-Item11=..\..\repository;..\..;Test\olex_installer;$(BCB)\include;$(BCB)\include\vcl
+Count=13
+Item0=C:\Program Files (x86)\Borland\CBuilder6\Projects;C:\Program Files\Borland\CBuilder6\Projects;..\..\..\repository;..\..\..\installer;..\..\..\sdl;$(BCB)\include;$(BCB)\include\vcl
+Item1=C:\Program Files\Borland\CBuilder6\Projects;..\..\..\repository;..\..\..\installer;..\..\..\sdl;$(BCB)\include;$(BCB)\include\vcl
+Item2=C:\Program Files\Borland\CBuilder6\Projects;..\..\..\..\repository;..\..\..\repository;..\..\..\installer;..\..\..\sdl;$(BCB)\include;$(BCB)\include\vcl
+Item3=..\..\..\..\repository;..\..\..\repository;..\..\..\installer;..\..\..\sdl;$(BCB)\include;$(BCB)\include\vcl
+Item4=..\..\..\repository;..\..\..\installer;..\..\..\sdl;$(BCB)\include;$(BCB)\include\vcl
+Item5=..\..\..\repository;..\..\..\installer;..\sdl;..\..\..\..\repository;..\..\..\..\installer;$(BCB)\include;$(BCB)\include\vcl
+Item6=..\..\..\repository;..\..\..\installer;..\..\..\..\sdl;..\..\..\..\repository;..\..\..\..\installer;$(BCB)\include;$(BCB)\include\vcl
+Item7=..\..\..\..\sdl;..\..\..\..\repository;..\..\..\..\installer;$(BCB)\include;$(BCB)\include\vcl
+Item8=..\..\..\repository;..\..\..\..\repository;..\..\..\installer;..\..\repository;..\..;Test\olex_installer;$(BCB)\include;$(BCB)\include\vcl;C:\Program Files\Borland\CBuilder6\Projects\X-Net\sdl
+Item9=..\..\repository;..\..;Test\olex_installer;$(BCB)\include;$(BCB)\include\vcl;C:\Program Files\Borland\CBuilder6\Projects\X-Net\sdl
+Item10=..\..\repository;..\..;Test\olex_installer;$(BCB)\include;$(BCB)\include\vcl;C:\Program Files\Borland\CBuilder6\Projects\repository;C:\Program Files\Borland\CBuilder6\Projects\X-Net\sdl
+Item11=..\..;Test\olex_installer;$(BCB)\include;$(BCB)\include\vcl;C:\Program Files\Borland\CBuilder6\Projects\repository;C:\Program Files\Borland\CBuilder6\Projects\X-Net\sdl
+Item12=..\..\repository;..\..;Test\olex_installer;$(BCB)\include;$(BCB)\include\vcl
 
 [HistoryLists\hlLibraryPath]
-Count=3
-Item0=C:\Program Files\Borland\CBuilder6\Projects;..\..\..\repository;..\..\..\..\repository;..\..\..\installer;..\..\repository;..\..;Test\olex_installer;$(BCB)\lib\obj;$(BCB)\lib
-Item1=..\..\..\repository;..\..\..\..\repository;..\..\..\installer;..\..\repository;..\..;Test\olex_installer;$(BCB)\lib\obj;$(BCB)\lib
-Item2=..\..\repository;..\..;Test\olex_installer;$(BCB)\lib\obj;$(BCB)\lib
+Count=4
+Item0=C:\Program Files (x86)\Borland\CBuilder6\Projects;C:\Program Files\Borland\CBuilder6\Projects;..\..\..\repository;..\..\..\..\repository;..\..\..\installer;..\..\repository;..\..;Test\olex_installer;$(BCB)\lib\obj;$(BCB)\lib
+Item1=C:\Program Files\Borland\CBuilder6\Projects;..\..\..\repository;..\..\..\..\repository;..\..\..\installer;..\..\repository;..\..;Test\olex_installer;$(BCB)\lib\obj;$(BCB)\lib
+Item2=..\..\..\repository;..\..\..\..\repository;..\..\..\installer;..\..\repository;..\..;Test\olex_installer;$(BCB)\lib\obj;$(BCB)\lib
+Item3=..\..\repository;..\..;Test\olex_installer;$(BCB)\lib\obj;$(BCB)\lib
 
 [HistoryLists\hlDebugSourcePath]
 Count=1

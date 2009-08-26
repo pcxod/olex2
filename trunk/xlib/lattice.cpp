@@ -1362,6 +1362,7 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPL
       }
     }
     else  if( AE.Count() == 2 )  {
+      const double db = 1.41;
       vec3d a = AE.GetCrd(0);
         a -= atom.crd();
       vec3d b = AE.GetCrd(1);
@@ -1370,12 +1371,12 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPL
       v = acos(v)*180/M_PI;
       double d1 = AE.GetCrd(0).DistanceTo( atom.crd() );
       double d2 = AE.GetCrd(1).DistanceTo( atom.crd() );
-      if(  d1 > 1.43 && d2 > 1.43 && v < 125 )  {
+      if(  d1 > db && d2 > db && v < 125 )  {
         TBasicApp::GetLog().Info( olxstr(atom.GetLabel()) << ": XYCH2" );
         cg.FixAtom( AE, fgCH2, HAI, NULL, generated);
       }
       else  {
-        if( (d1 < 1.43 || d2 < 1.43) && v < 160 )  {
+        if( (d1 < db || d2 < db) && v < 160 )  {
           TBasicApp::GetLog().Info( olxstr(atom.GetLabel()) << ": X(Y=C)H" );
           cg.FixAtom( AE, fgCH1, HAI, NULL, generated);
         }
