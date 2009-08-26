@@ -266,6 +266,5 @@ public:
     glEnd();
   }
 };
-
 EndGlNamespace()
 #endif

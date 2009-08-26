@@ -526,17 +526,20 @@ void __fastcall TfMain::FormShow(TObject *Sender)  {
     frMain->cbRepository->Text = repos[0].u_str();
   }
   catch(...)  {
-    Application->MessageBox( "Could not discover any Olex2 repositories, only offline installation will be available",
-      "Error",
-      MB_OK|MB_ICONERROR);
+    //Application->MessageBox( "Could not discover any Olex2 repositories, only offline installation will be available",
+    //  "Error",
+    //  MB_OK|MB_ICONERROR);
   }
-  olxstr zipfn( Bapp->GetBaseDir() + "olex2.zip" );
+  olxstr bd( CmdLine );
+
+  olxstr zipfn( TEFile::ExtractFilePath(bd) + "olex2.zip" );
   if( TEFile::Exists(zipfn) )  {
     if( !TEFile::IsAbsolutePath(zipfn) )  {
       zipfn = TEFile::CurrentDir();
       zipfn << "\\olex2.zip";
     }
     frMain->cbRepository->Text = zipfn.c_str();
+    frMain->cbRepository->Items->Add( zipfn.u_str());
   }
 }
 //---------------------------------------------------------------------------
