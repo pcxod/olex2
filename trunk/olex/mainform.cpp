@@ -637,7 +637,6 @@ Accepts atoms, bonds, hbonds or a name (like from LstGO). Example: 'mask hbonds 
   this_InitMacro(IF, , fpAny );
   this_InitMacro(Basis, , fpNone|fpOne );
   this_InitMacro(Lines, , fpOne );
-  this_InitMacro(LineWidth, , fpOne );
 
   this_InitMacro(Ceiling, , fpOne );
   this_InitMacro(Fade, , fpThree );
@@ -2619,12 +2618,7 @@ void TMainForm::OnChar( wxKeyEvent& m )  {
   if( !CmdLineVisible )
     Cmd = FGlConsole->GetCommand();
   else  {
-    if( FCmdLine->ProcessKey( m ) )  {
-      m.Skip(false);
-    }
-    else
-      m.Skip(true);
-
+      m.Skip( !FCmdLine->ProcessKey(m) );
     Cmd = FCmdLine->GetCommand();
     Cmd << (char)m.GetKeyCode();
   }
@@ -2691,7 +2685,7 @@ void TMainForm::OnKeyDown(wxKeyEvent& m)  {
     return;
   }
   olxstr Cmd = AccShortcuts.GetValue( Fl<<16 | m.m_keyCode );
-  if( Cmd.Length() )  {
+  if( !Cmd.IsEmpty() )  {
     ProcessXPMacro(Cmd, MacroError );
     TimePerFrame = FXApp->Draw();
     return;
@@ -2798,7 +2792,6 @@ void TMainForm::OnResize()  {
   FGlConsole->SetLeft(0);
   FGlConsole->SetWidth(w);
   FGlConsole->SetHeight(h - dheight );
-  FGlConsole->SetLineWidth(-1);
   FInfoBox->SetWidth(w);
   FInfoBox->SetLeft(0);
 }
@@ -3909,7 +3902,7 @@ bool TMainForm::OnMouseDblClick(int x, int y, short Flags, short Buttons)  {
   return true;
 }
 //..............................................................................
-bool TMainForm::Show( bool v )  {
+bool TMainForm::Show(bool v)  {
 #ifdef __WXGTK__
   bool res = wxWindow::Show(v);
   //OnResize();

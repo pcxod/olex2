@@ -55,7 +55,6 @@ TGlConsole::TGlConsole(TGlRenderer& R, const olxstr& collectionName) :
   FontIndex = -1;
   FTxtPos = -1;
   FMaxLines = 1000;
-  MaxLineWidth = FLineWidth = 80;
   FScrollDirectionUp = true;
   FLinesToShow = -1;
   FCmdPos = -1;
@@ -83,7 +82,6 @@ void TGlConsole::Create(const olxstr& cName, const ACreationParams* cpar)  {
 
   TGraphicsStyle& GS = GPC.GetStyle();
 
-  FLineWidth = GS.GetParam("LineWidth", FLineWidth, true).ToInt();
   FLinesToShow = GS.GetParam("LinesToShow", FLinesToShow, true).ToInt();
   FLineSpacing = GS.GetParam("LineSpacing", "0", true).ToDouble();
   InviteStr = GS.GetParam("Prompt", ">>", true);
@@ -109,6 +107,7 @@ bool TGlConsole::Orient(TGlPrimitive& P)  {
   double Scale = Parent.GetScale(),
          MaxY = ((double)Parent.GetHeight()/2-Top-th)*Scale;
   double MaxZ = -Parent.GetMaxRasterZ();
+  int MaxLineWidth = Fnt->MaxTextLength(Parent.GetWidth());
 
   MaxZ += 0.02;
   
@@ -364,7 +363,7 @@ void TGlConsole::PrintText(const olxstr &S, TGlMaterial *M, bool Hypernate)  {
   }
   if( Hypernate )  {
     TStrList Txt;
-    Txt.Hypernate(S, FLineWidth, true);
+    Txt.Hypernate(S, Font()->MaxTextLength(Parent.GetWidth()), true);
     if( Txt.Count() > 1 )  PrintText(Txt, M);
     else                   SingleLine = true;
   }
@@ -406,7 +405,7 @@ void TGlConsole::PrintText(const TStrList &SL, TGlMaterial *M, bool Hypernate)  
     }
     if( Hypernate )  {
       Txt.Clear();
-      Txt.Hypernate(Tmp, FLineWidth, true);
+      Txt.Hypernate(Tmp, Font()->MaxTextLength(Parent.GetWidth()), true);
       for( int j=0; j < Txt.Count(); j++ )  {
         TGlMaterial *GlM = NULL;
         if( M != NULL )  {  GlM = new TGlMaterial;  *GlM = *M;  }
@@ -480,7 +479,7 @@ void TGlConsole::UpdateCursorPosition(bool InitCmds)  {
   TGlFont* Fnt = Font();
   if( InitCmds )  {
     Cmds.Clear();
-    MaxLineWidth = Fnt->MaxTextLength(Parent.GetWidth());
+    int MaxLineWidth = Fnt->MaxTextLength(Parent.GetWidth());
     if( MaxLineWidth == 0 )  return;
     Cmds.Hypernate(FCommand, MaxLineWidth, true);
   }
@@ -556,15 +555,6 @@ void TGlConsole::SetLinesToShow(int V)  {
 void TGlConsole::SetLineSpacing(float v)  {
   FLineSpacing = olx_max(-0.9, v);
   GetPrimitives().GetStyle().SetParam("LineSpacing", FLineSpacing, true);
-}
-//..............................................................................
-void TGlConsole::SetLineWidth(int V)  {
-  if( V < 0 )
-    V = Font()->MaxTextLength(Parent.GetWidth() - 5);
-  if( V < 5 )
-    V = 80;
-  FLineWidth = V;
-  GetPrimitives().GetStyle().SetParam("LineWidth", FLineWidth, true);
 }
 //..............................................................................
 size_t TGlConsole::Write(const void *Data, size_t size)  {
