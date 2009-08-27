@@ -11,7 +11,7 @@
 
 //---------------------------------------------------------------------------
 TSOperation::TSOperation( TSOperation *P, TStrPObjList<olxstr, TSOperation*> *Vars,
-    TStrList *Funcs, double *IVars)  {
+    TStrList *Funcs, TDoubleList* IVars)  {
   ToCalc = NULL;
   Operation = fNone;
   P2 = P1 = 0;
@@ -49,12 +49,13 @@ int TSOperation::LoadFromExpression(const olxstr &Exp)  {
     ToCalc = Opr;
     for( int i=0; i < Exp.Length(); i++ )  {
       switch( Exp[i] )  {
-        case '-':    NewOperation = true;    op = fMinus;    goto new_Op;
-        case '+':    NewOperation = true;    op = fPlus;     goto new_Op;
+        case '-':    NewOperation = true;    op = fMinus;      goto new_Op;
+        case '+':    NewOperation = true;    op = fPlus;       goto new_Op;
         case ' ':    break;
-        case '*':    NewOperation = true;    op = fMultiply; goto new_Op;
-        case '/':    NewOperation = true;    op = fDivide;   goto new_Op;
-        case '^':    NewOperation = true;    op = fExt;      goto new_Op;
+        case '*':    NewOperation = true;    op = fMultiply;   goto new_Op;
+        case '/':    NewOperation = true;    op = fDivide;     goto new_Op;
+        case '^':    NewOperation = true;    op = fExt;        goto new_Op;
+        case '%':    NewOperation = true;    op = fRemainder;  goto new_Op;
         case '(':
         {
           if( NewOperation )  Opr->Operation = op;
@@ -133,16 +134,18 @@ new_Op:
       Opr = Opr->Right;
       continue;
     }
-    if( Opr->Param.IsNumber() )
-      Opr->P1 = Opr->Param.ToDouble();
-    else  {
-      int index = Variables->IndexOf(Opr->Param.UpperCase());
-      if( index == -1 )  {
-        Variables->Add(Opr->Param.UpperCase(), Opr);
-        Opr->VariableIndex = Variables->Count()-1;
+    if( !Opr->Param.IsEmpty() )  {
+      if( Opr->Param.IsNumber() )
+        Opr->P1 = Opr->Param.ToDouble();
+      else  {
+        int index = Variables->IndexOf(Opr->Param.UpperCase());
+        if( index == -1 )  {
+          Variables->Add(Opr->Param, Opr);
+          Opr->VariableIndex = Variables->Count()-1;
+        }
+        else
+          Opr->VariableIndex = index;
       }
-      else
-        Opr->VariableIndex = index;
     }
     Opr = Opr->Right;
   }
@@ -162,7 +165,7 @@ double TSOperation::Evaluate()  {
 void TSOperation::Calculate()  {
   TSOperation *S = this;
   double Val = 0;
-  while( S )  {
+  while( S != NULL )  {
     Val += S->Value;
     S = S->Right;
   }
@@ -175,8 +178,12 @@ void TSOperation::SSCalculate()  {
       Value = Left->Value+Value;
       Left->Value = 0;
     }
-    if( Operation == fMinus )  {
+    else if( Operation == fMinus )  {
       Value = Left->Value-Value;
+      Left->Value = 0;
+    }
+    else if( Operation == fRemainder )  {
+      Value = (int)Left->Value%(int)Value;
       Left->Value = 0;
     }
   }
@@ -187,8 +194,8 @@ void TSOperation::SSCalculate()  {
 /***************************************************************************/
 void TSOperation::MDCalculate()  {
   double V1;
-  if( VariableIndex >= 0 && IVariables)
-    P1 = IVariables[VariableIndex];
+  if( VariableIndex >= 0 && IVariables != NULL )
+    P1 = (*IVariables)[VariableIndex];
 //  else 
 //    TBasicApp::GetLog() << (olxstr("TSOperation:: undefined variable: ") << Param);
 

@@ -46,9 +46,10 @@
 				PreprocessorDefinitions="WIN32;"
 				StringPooling="true"
 				MinimalRebuild="true"
-				BasicRuntimeChecks="0"
+				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
-				EnableEnhancedInstructionSet="2"
+				EnableEnhancedInstructionSet="0"
+				FloatingPointModel="2"
 				UsePrecompiledHeader="0"
 				BrowseInformation="1"
 				WarningLevel="2"
@@ -65,6 +66,7 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
+				UseUnicodeResponseFiles="false"
 			/>
 			<Tool
 				Name="VCALinkTool"

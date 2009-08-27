@@ -745,7 +745,8 @@ v-[grow] use user provided delta for connectivity analysis, default 2A",
   this_InitMacro(Delta, , fpNone|fpOne );
   this_InitMacro(DeltaI, , fpNone|fpOne );
 
-  this_InitMacroA(Python, @py, , fpAny );
+  this_InitMacroAD(Python, @py, "i-shows a text input box&;l-loads a file into a text input box", fpAny,
+    "Runs provided python lines '\n' is used as new line separator or shows a text input window");
 
   this_InitMacro(CreateMenu, c&;s&;r&;m, fpOne|fpTwo|fpThree );
   this_InitMacro(DeleteMenu, , fpOne );

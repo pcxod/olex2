@@ -122,8 +122,8 @@ Global
 		{50F3AE9A-43C5-4643-91DD-5067B2BDE487}.Unicode-release-d|Win32.Build.0 = Unicode-release|Win32
 		{50F3AE9A-43C5-4643-91DD-5067B2BDE487}.Unicode-release-py26|Win32.ActiveCfg = Unicode-release|Win32
 		{50F3AE9A-43C5-4643-91DD-5067B2BDE487}.Unicode-release-py26|Win32.Build.0 = Unicode-release|Win32
-		{50F3AE9A-43C5-4643-91DD-5067B2BDE487}.Unicode-release-static|Win32.ActiveCfg = Release|Win32
-		{50F3AE9A-43C5-4643-91DD-5067B2BDE487}.Unicode-release-static|Win32.Build.0 = Release|Win32
+		{50F3AE9A-43C5-4643-91DD-5067B2BDE487}.Unicode-release-static|Win32.ActiveCfg = Unicode-release-static|Win32
+		{50F3AE9A-43C5-4643-91DD-5067B2BDE487}.Unicode-release-static|Win32.Build.0 = Unicode-release-static|Win32
 		{4952E16F-47DC-4BD2-BE93-36FC9CC3096B}.Debug|Win32.ActiveCfg = Debug|Win32
 		{4952E16F-47DC-4BD2-BE93-36FC9CC3096B}.Debug|Win32.Build.0 = Debug|Win32
 		{4952E16F-47DC-4BD2-BE93-36FC9CC3096B}.Release|Win32.ActiveCfg = Release|Win32
