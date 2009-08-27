@@ -41,14 +41,15 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				Optimization="2"
+				Optimization="0"
 				AdditionalIncludeDirectories="..\..\..\alglib;..\..\..\sdl;..\..\..\repository;..\..\..\xlib"
 				PreprocessorDefinitions="WIN32;_NO_PYTHON"
-				StringPooling="true"
-				MinimalRebuild="true"
-				BasicRuntimeChecks="0"
+				StringPooling="false"
+				MinimalRebuild="false"
+				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
-				EnableEnhancedInstructionSet="2"
+				EnableEnhancedInstructionSet="0"
+				FloatingPointModel="2"
 				UsePrecompiledHeader="0"
 				BrowseInformation="1"
 				WarningLevel="2"
@@ -65,6 +66,7 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
+				UseUnicodeResponseFiles="false"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -492,6 +494,16 @@
 			<File
 				RelativePath="..\..\..\xlib\chemdata.cpp"
 				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalOptions="/bigobj"
+						StringPooling="true"
+						BasicRuntimeChecks="0"
+					/>
+				</FileConfiguration>
 				<FileConfiguration
 					Name="Unicode-debug|Win32"
 					>

@@ -9,6 +9,7 @@ c 2004 Oleg V. Dolomanov
 #define evailnkH
 #include "eobjects.h"
 #include "estrlist.h"
+#include "talist.h"
 //---------------------------------------------------------------------------
 /*
 How to use:
@@ -26,7 +27,8 @@ const short fPlus      = 1,
             fMultiply  = 3,
             fDivide    = 4,
             fFunction  = 5,
-            fExt       = 6;
+            fExt       = 6,
+            fRemainder = 7;
 const short fNone = 0,
             fAbs  = 1,
             fCos  = 2,
@@ -49,11 +51,12 @@ protected:
   TSOperation *Parent;
   olxstr FExp;
 public:
-  double *IVariables;
+  TDoubleList* IVariables;
   TStrPObjList<olxstr,TSOperation*>* Variables;
   TStrList* Functions;
 
-  TSOperation(TSOperation *P, TStrPObjList<olxstr,TSOperation*> *Vars, TStrList *Funcs, double *IVariables);
+  TSOperation(TSOperation* P, TStrPObjList<olxstr,TSOperation*>* Vars, 
+    TStrList* Funcs, TDoubleList* IVariables);
   ~TSOperation();
   TEvaluate *Evaluator;
   bool Expandable;

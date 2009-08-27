@@ -5153,6 +5153,27 @@ void TMainForm::macDeltaI(TStrObjList &Cmds, const TParamList &Options, TMacroEr
 }
 //..............................................................................
 void TMainForm::macPython(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  if( Options.Contains('i') || Options.Contains('l') )  {
+    TdlgEdit *dlg = new TdlgEdit(TGlXApp::GetMainForm(), true);
+    dlg->SetTitle( wxT("Python script editor") );
+    if( Options.Contains('l') )  {
+      olxstr FN = PickFile("Open File",
+        olxstr("Python scripts (*.py)|*py")  <<
+        "|Text files (*.txt)|*.txt"  <<
+        "|All files (*.*)|*.*",
+        TBasicApp::GetBaseDir(), true);
+      if( !FN.IsEmpty() && TEFile::Exists(FN) )  {
+        TStrList sl;
+        sl.LoadFromFile(FN);
+        dlg->SetText( sl.Text('\n') );
+      }
+    }
+    else
+      dlg->SetText(wxT("import olex\n"));
+    if( dlg->ShowModal() == wxID_OK )
+      PythonExt::GetInstance()->RunPython( dlg->GetText(), false );
+    dlg->Destroy();
+  }
   olxstr tmp = Cmds.Text(' ');
   tmp.Replace("\\n", "\n");
   if( !tmp.EndsWith('\n') )  tmp << '\n';

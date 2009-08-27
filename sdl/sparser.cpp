@@ -22,9 +22,10 @@ TOperatorSignature TOperatorSignature::DefinedFunctions[] = {
                                           TOperatorSignature(aofAsin, "asin"),
                                           TOperatorSignature(aofAcos, "acos"),
                                           TOperatorSignature(aofAtan, "atan"),
-                                          TOperatorSignature(aofAbs,  "abs")
+                                          TOperatorSignature(aofAbs,  "abs"),
+                                          TOperatorSignature(aofAbs,  "%")
                                         };
-short TOperatorSignature::DefinedFunctionCount = 12;
+short TOperatorSignature::DefinedFunctionCount = 13;
 
 
 TSyntaxParser::TSyntaxParser(IEvaluatorFactory* FactoryInstance, const olxstr& Expression)  {
@@ -111,7 +112,7 @@ IEvaluable* TSyntaxParser::SimpleParse(const olxstr& Exp)  {
         }
         Char = Exp[i];
       }
-      if( ComplexExp.Length() )  {
+      if( !ComplexExp.IsEmpty() )  {
         if( loFactory )
           RightCondition = SimpleParse(ComplexExp);
         else
@@ -142,7 +143,7 @@ IEvaluable* TSyntaxParser::SimpleParse(const olxstr& Exp)  {
     // spaces are for readibility only
 //    if( Char == ' ' )  continue;
 
-    if( Char == '\'' || Char == '\"' )  {  // string begiining
+    if( Char == '\'' || Char == '\"' )  {  // string beginning
       StringWrappingChar = Char;
       while( true )  {
         if( ++i >= Exp.Length() )  {
@@ -167,7 +168,7 @@ IEvaluable* TSyntaxParser::SimpleParse(const olxstr& Exp)  {
       else                      Char = '\0';
     }
 
-    // procesing comparison operators
+    // processing comparison operators
     if( coFactory && (LeftExp.Length() || LeftStr.Length()) && (RightExp.Length() || RightStr.Length()) )  {
       IEvaluator *LeftEvaluator = NULL, *RightEvaluator = NULL;
       if( LeftExp.Length() )  {

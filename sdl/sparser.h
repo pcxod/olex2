@@ -16,7 +16,8 @@ const short aofAdd  = 1,
             aofAsin = 9,
             aofAcos = 10,
             aofAtan = 11,
-            aofAbs  = 12;
+            aofAbs  = 12,
+            aofRemainder = 13;
 
 template <class IC>
   class TObjectFactory  {
