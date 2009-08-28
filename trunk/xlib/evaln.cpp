@@ -140,7 +140,7 @@ new_Op:
       else  {
         int index = Variables->IndexOf(Opr->Param.UpperCase());
         if( index == -1 )  {
-          Variables->Add(Opr->Param, Opr);
+          Variables->Add(Opr->Param, NULL);
           Opr->VariableIndex = Variables->Count()-1;
         }
         else
@@ -194,10 +194,14 @@ void TSOperation::SSCalculate()  {
 /***************************************************************************/
 void TSOperation::MDCalculate()  {
   double V1;
-  if( VariableIndex >= 0 && IVariables != NULL )
-    P1 = (*IVariables)[VariableIndex];
-//  else 
-//    TBasicApp::GetLog() << (olxstr("TSOperation:: undefined variable: ") << Param);
+  if( VariableIndex >= 0 )  {
+    if( Variables->GetObject(VariableIndex) != NULL )
+      P1 = Variables->GetObject(VariableIndex)->Evaluate();
+    else if( IVariables != NULL )
+      P1 = (*IVariables)[VariableIndex];
+    else 
+      throw TInvalidArgumentException(__OlxSourceInfo, olxstr("Variable index: ") << VariableIndex );
+  }
 
   if( ToCalc )  {
     ToCalc->MDCalculate();

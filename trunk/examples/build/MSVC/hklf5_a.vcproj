@@ -144,7 +144,7 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="sdl.lib xlib-np.lib"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="$(SolutionDir)$(ConfigurationName)"
+				AdditionalLibraryDirectories="$(SolutionDir\lib"
 				GenerateDebugInformation="false"
 				SubSystem="1"
 				OptimizeReferences="2"

@@ -5820,7 +5820,7 @@ void TMainForm::macInstallPlugin(TStrObjList &Cmds, const TParamList &Options, T
           TBasicApp::GetLog() << ("\rInstallation complete\n");
         }
         else  {
-          TBasicApp::GetLog() << "Plugin installation failed...\n";
+          TBasicApp::GetLog() << (olxstr("Plugin installation failed with error code: ") << res);
           TBasicApp::GetLog() << api.GetLog();
         }
         FXApp->Draw();
