@@ -48,7 +48,7 @@ void TParamList::AddParam(const olxstr &Name, const olxstr &Val, bool Check)  {
 }
 //..............................................................................
 bool TParamList::ProcessStringParam(olxstr &Param)  {
-  if( !Param.Length() )  return false;
+  if( Param.IsEmpty() )  return false;
   if( Param.FirstIndexOf('\'') == -1 && Param.FirstIndexOf('"') == -1)  return false;
   int i=0;
   olxch Sep;
