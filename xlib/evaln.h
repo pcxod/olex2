@@ -67,4 +67,41 @@ public:
   double Evaluate();
   int LoadFromExpression(const olxstr &Exp);
 };
+
+template <typename Type, typename Left, typename Right> struct AddOperator  {
+  Left* left;
+  Right* right;
+public:
+  AddOperator(Left* _left, Right* _right) : left(_left), right(_right) {}
+  Type Evaluate() const {  return left->Evaluate() + right->Evaluate();  }
+};
+template <typename Type, typename Left, typename Right> struct SubOperator  {
+  Left* left;
+  Right* right;
+public:
+  SubOperator(Left* _left, Right* _right) : left(_left), right(_right) {}
+  Type Evaluate() const {  return left->Evaluate() + right->Evaluate();  }
+};
+template <typename Type, typename Left, typename Right> struct DivOperator  {
+  Left* left;
+  Right* right;
+public:
+  DivOperator(Left* _left, Right* _right) : left(_left), right(_right) {}
+  Type Evaluate() const {  return left->Evaluate()/right->Evaluate();  }
+};
+template <typename Type, typename Left, typename Right> struct MulOperator  {
+  Left* left;
+  Right* right;
+public:
+  MulOperator(Left* _left, Right* _right) : left(_left), right(_right) {}
+  Type Evaluate() const {  return left->Evaluate() * right->Evaluate();  }
+};
+template <typename Type, typename Right> struct ChSigOperator  {
+  Right* right;
+public:
+  ChSigOperator(Right* _right) : right(_right) {}
+  Type Evaluate() const {  return -right->Evaluate();  }
+};
+
+
 #endif
