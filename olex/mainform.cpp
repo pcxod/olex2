@@ -86,6 +86,7 @@
 #include "updateth.h"
 #include "msgbox.h"
 #include "updateapi.h"
+#include "hkl_py.h"
 
 
 #ifdef __GNUC__
@@ -351,6 +352,7 @@ TMainForm::TMainForm(TGlXApp *Parent):
   */
   PythonExt::Init(this).Register( &TMainForm::PyInit );
   PythonExt::GetInstance()->Register( &OlexPyCore::PyInit );
+  PythonExt::GetInstance()->Register( &hkl_py::PyInit );
   //TOlxVars::Init().OnVarChange->Add(this, ID_VarChange);
   FGlCanvas = NULL;
   FXApp = NULL;
