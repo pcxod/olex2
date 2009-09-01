@@ -261,12 +261,12 @@ bool THklFile::SaveToFile(const olxstr& FN, const TRefPList& refs, bool Append) 
     const int ref_str_len = NullRef.ToString().Length();
     char* ref_bf = new char[ref_str_len+1];
     for( int i=0; i < refs.Count(); i++ )  {
-      if( refs[i]->GetTag() > 0 )  
+      if( refs[i]->GetTag() > 0 )
         out.Writenl( refs[i]->ToCBuffer(ref_bf), ref_str_len );
     }
     out.Writenl( NullRef.ToCBuffer(ref_bf), ref_str_len );
     for( int i=0; i < refs.Count(); i++ )  {
-      if( refs[i]->GetTag() < 0 )  
+      if( refs[i]->GetTag() < 0 )
         out.Writenl( refs[i]->ToCBuffer(ref_bf), ref_str_len );
     }
     delete [] ref_bf;
@@ -283,12 +283,12 @@ bool THklFile::SaveToFile(const olxstr& FN, const TRefList& refs)  {
   const int ref_str_len = NullRef.ToString().Length();
   char* ref_bf = new char[ref_str_len+1];
   for( int i=0; i < refs.Count(); i++ )  {
-    if( refs[i].GetTag() > 0 )  
+    if( refs[i].GetTag() > 0 )
       out.Writenl( refs[i].ToCBuffer(ref_bf), ref_str_len );
   }
   out.Writenl( NullRef.ToCBuffer(ref_bf), ref_str_len );
   for( int i=0; i < refs.Count(); i++ )  {
-    if( refs[i].GetTag() < 0 )  
+    if( refs[i].GetTag() < 0 )
       out.Writenl( refs[i].ToCBuffer(ref_bf), ref_str_len );
   }
   delete [] ref_bf;

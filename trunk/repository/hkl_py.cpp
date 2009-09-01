@@ -64,22 +64,29 @@ PyObject* hkl_py::Write(PyObject* self, PyObject* args)  {
   }
   size_t sz = PyList_Size(in);
   TRefList rf;
-  int h, k, l, flags;
+  int h, k, l, flag, test_flag = -1;
   double I, S;
   for( size_t i=0; i < sz; i++ )  {
     PyObject* prf = PyList_GetItem(in, i);
-    size_t rsz = PyTuple_Size(prf);
     if( !PyTuple_CheckExact(prf) || PyTuple_Size(prf) < 6)  {
       PyErr_SetObject(PyExc_RuntimeError, PythonExt::BuildString("A tuple of 6 items is expected"));
       Py_INCREF(Py_None);
       return Py_None;
     }
-    if( !PyArg_ParseTuple(prf, "iiiddi", &h, &k, &l, &I, &S, &flags) )  {
+    if( !PyArg_ParseTuple(prf, "iiiddi", &h, &k, &l, &I, &S, &flag) )  {
       PyErr_SetObject(PyExc_RuntimeError, PythonExt::BuildString("Failed to parse the (iiiddi) tuple"));
       Py_INCREF(Py_None);
       return Py_None;
     }
-    rf.Add(new TReflection(h, k, l, I, S, flags)).SetTag(1);
+    if( test_flag == -1 )  
+       test_flag = flag;
+    else if( test_flag == NoFlagSet && flag != NoFlagSet )  {
+      PyErr_SetObject(PyExc_IOError, 
+        PythonExt::BuildString( "Error: reflections with and without batch numbers are provided") );
+      Py_INCREF(Py_None);
+      return Py_None;
+    }
+    rf.Add(new TReflection(h, k, l, I, S, flag)).SetTag(1);
   }
   bool res = false;
   olxstr error;
