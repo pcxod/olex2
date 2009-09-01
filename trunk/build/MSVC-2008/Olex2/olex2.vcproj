@@ -859,6 +859,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\repository\hkl_py.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\olex\htmlext.cpp"
 				>
 			</File>
@@ -1038,6 +1042,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\repository\fftn.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\repository\hkl_py.h"
 				>
 			</File>
 			<File

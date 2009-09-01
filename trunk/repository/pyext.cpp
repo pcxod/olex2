@@ -164,7 +164,7 @@ PyObject* runRegisterFunction(PyObject* self, PyObject* args)  {
   }
   if( PythonExt::GetInstance()->GetBindLibrary() == NULL )  {
     PyErr_SetObject(PyExc_RuntimeError, 
-      PythonExt::BuildString("olex binding python library is not initialised..."));
+      PythonExt::BuildString("Olex2 binding python library is not initialised..."));
     Py_INCREF(Py_None);
     return Py_None;
   }
