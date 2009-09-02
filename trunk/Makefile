@@ -29,7 +29,7 @@ find_files = $(wildcard *.cpp)
 VPATH = xlib:alglib:sdl:sdl/smart:xlib/macro:glib:gxlib
 OBJ := xlib alglib sdl sdl/smart xlib/macro glib gxlib
 NPY_CPP_REPO = filesystem.cpp shellutil.cpp httpex.cpp url.cpp wxhttpfs.cpp wxzipfs.cpp fsext.cpp pyext.cpp integration.cpp IsoSurface.cpp eprocess.cpp updateapi.cpp patchapi.cpp
-OBJ_CPP_REPO := olxvar.cpp py_core.cpp $(NPY_CPP_REPO)
+OBJ_CPP_REPO := hkl_py.cpp olxvar.cpp py_core.cpp $(NPY_CPP_REPO)
 NPY_OBJ_REPO := $(addprefix $(OBJ_DIR), $(NPY_CPP_REPO))
 OBJ_REPO := $(addprefix $(OBJ_DIR),$(OBJ_CPP_REPO))
 
@@ -59,7 +59,8 @@ CCFLAGS += $(CFLAGS)
 # All will compile and link all of olex takes about 10 minutes
 # Old way to create objs
 #.PHONY : obj
-#obj: $(obj_src_files:.cpp=.s)#$(obj_src_files:.cpp=.s): $(OBJ_DIR)
+#obj: $(obj_src_files:.cpp=.s)
+#$(obj_src_files:.cpp=.s): $(OBJ_DIR)
 #	cd $(OBJ_DIR); $(CC) $(SRC_DIR)$(@:.s=.cpp) $(OPTS) $(CFLAGS)
 	
 # obj will create the obj directory and compile the objects
@@ -282,7 +283,8 @@ help:
 	@echo	'R  all             - Build all targets marked with [*]'
 	@echo	'*  objs            - Build obj files'
 	@echo	'*  olex            - Build olex specific files'
-	@echo	'*  unirun          - Build unirun specific files'	@echo	'   install-root    - Install to /usr/local/ **REQUIRES ROOT**'
+	@echo	'*  unirun          - Build unirun specific files'
+	@echo	'   install-root    - Install to /usr/local/ **REQUIRES ROOT**'
 #	@echo	'   cctbx-local     - Will download, build and install cctbx to olex defaults'
 #	@echo	'   cctbx-root      - Will download, build and install central cctbx'
 	@echo	'   update          - Update the binaries of an existing install only'
