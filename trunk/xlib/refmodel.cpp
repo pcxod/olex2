@@ -942,12 +942,18 @@ PyObject* RefinementModel::PyExport(bool export_connectivity)  {
       HKLF_mat[2][0], HKLF_mat[2][1], HKLF_mat[2][2]));
   PyDict_SetItemString(main, "hklf", hklf );
 
-    
-  if( OMIT_set )  {
+  {
     PyObject* omit;
     PyDict_SetItemString(main, "omit", omit = PyDict_New() );
       PyDict_SetItemString(omit, "s", Py_BuildValue("d", OMIT_s));
       PyDict_SetItemString(omit, "2theta", Py_BuildValue("d", OMIT_2t));
+    if( !Omits.IsEmpty() )  {
+      PyObject* omits = PyTuple_New(Omits.Count());
+      for( int i=0; i < Omits.Count(); i++ )
+        PyTuple_SetItem(omits, i, Py_BuildValue("(iii)", Omits[i][0], Omits[i][1], Omits[i][2]) );
+
+      PyDict_SetItemString(omit, "hkl", omits);
+    }
   }
   if( TWIN_set )  {
     PyObject* twin = PyDict_New(), 

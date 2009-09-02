@@ -6210,7 +6210,7 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options, TMacroErr
         }
       }
       if( netA != netB )  {  // collect all atoms
-        for( int i=0; i < netA.NodeCount(); i++ )
+        for( int i=0; i < netB.NodeCount(); i++ )
           atomsToTransform.Add( &netB.Node(i) );
       }
       else  {

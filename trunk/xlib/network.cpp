@@ -1097,7 +1097,7 @@ void TNetwork::DoAlignAtoms(const TTypeList< AnAssociation2<TSAtom*,TSAtom*> >& 
   }
   else  {
     for( int i=0; i < atomsToTransform.Count(); i++ )
-      au2.CellToCartesian(atomsToTransform[i]->ccrd(), atomsToTransform[i]->crd());
+      au1.CellToCartesian(atomsToTransform[i]->ccrd(), atomsToTransform[i]->crd());
     for(int i=0; i < satomp.Count(); i++ )  {
       mcent += satomp[i].GetB()->crd()*satomp[i].GetB()->CAtom().GetOccu()*satomp[i].GetB()->GetAtomInfo().GetMr();
       sum += satomp[i].GetB()->CAtom().GetOccu()*satomp[i].GetB()->GetAtomInfo().GetMr();

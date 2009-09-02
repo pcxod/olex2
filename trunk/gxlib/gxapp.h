@@ -206,6 +206,10 @@ public:
   inline int OverlayedXFileCount()  const  {  return OverlayedXFiles.Count();  }
   TXFile& GetOverlayedXFile(int i)  {  return OverlayedXFiles[i];  }
   TXFile& NewOverlayedXFile();
+  // aligns overlayed structures on a 2D grid
+  void AlignOverlayedXFiles();
+  // calculates maximum radius and center of given lattice
+  void CalcLatticeRandCenter(const TLattice& latt, double& r, vec3d& cnt);
   void DeleteOverlayedXFile(int index);
 
   void Select(const vec3d& From, const vec3d& To);

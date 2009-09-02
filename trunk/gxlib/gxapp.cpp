@@ -220,6 +220,16 @@ public:
   }
 };
 //..............................................................................
+class xappXFileUniq : public AActionHandler  {
+public:
+  virtual bool Enter(const IEObject *Sender, const IEObject *Data)  {
+    TGXApp& app = TGXApp::GetInstance();
+    if( app.OverlayedXFileCount() != 0 )
+      app.AlignOverlayedXFiles();
+    return true;
+  }
+};
+//..............................................................................
 //----------------------------------------------------------------------------//
 //TGXApp function bodies
 //----------------------------------------------------------------------------//
@@ -267,6 +277,7 @@ TGXApp::TGXApp(const olxstr &FileName) : TXApp(FileName, this)  {
   xappXFileLoad *P = &TEGC::NewG<xappXFileLoad>(this);
   XFile().GetLattice().OnStructureGrow->Add(P);
   XFile().GetLattice().OnStructureUniq->Add(P);
+  XFile().GetLattice().OnStructureUniq->Add( new xappXFileUniq);
   XFile().OnFileLoad->Add(P);
 
   OnGraphicsVisible = &NewActionQueue("GRVISIBLE");
@@ -3594,8 +3605,90 @@ void TGXApp::DeleteGlBitmap(const olxstr& name)  {
 }
 //..............................................................................
 TXFile& TGXApp::NewOverlayedXFile() {
-  TXFile& f = OverlayedXFiles.Add( *(TXFile*)FXFile->Replicate() );
+  TXFile& f = OverlayedXFiles.Add( (TXFile*)FXFile->Replicate() );
   return f;
+}
+//..............................................................................
+void TGXApp::CalcLatticeRandCenter(const TLattice& latt, double& maxR, vec3d& cnt)  {
+  maxR = 0;
+  cnt.Null();
+  for( int i=0; i < latt.AtomCount(); i++ )
+    cnt += latt.GetAsymmUnit().CellToCartesian(latt.GetAtom(i).ccrd(), latt.GetAtom(i).crd());
+
+  if( latt.AtomCount() != 0 )
+    cnt /= latt.AtomCount();
+  for( int i=0; i < latt.AtomCount(); i++ )  {
+    const double r = cnt.QDistanceTo( latt.GetAtom(i).crd() );
+    if( r > maxR )
+      maxR = r;
+  }
+  maxR = sqrt(maxR);
+}
+//..............................................................................
+void TGXApp::AlignOverlayedXFiles() {
+  typedef AnAssociation3<double,vec3d,TLattice*> grid_type;
+  typedef TTypeList<grid_type> row_type;
+  TTypeList<row_type> grid;
+  int dim = olx_round( sqrt((double)OverlayedXFiles.Count()+1) );
+  if( (OverlayedXFiles.Count()+1) - dim*dim > 0 )
+    dim++;
+  vec3d cnt;
+  double maxR;
+  for( int i=0; i < dim; i++ )  {
+    row_type& row = grid.AddNew();
+    for( int j=0; j < dim; j++ )  {
+      const int ind = i*dim+j;
+      if( ind == 0 )  {
+        CalcLatticeRandCenter(XFile().GetLattice(), maxR, cnt);
+        row.Add( new grid_type(maxR, cnt, &XFile().GetLattice()) );
+      }
+      else if( ind-1 >= OverlayedXFiles.Count() )
+        break;
+      else  {
+        CalcLatticeRandCenter(OverlayedXFiles[ind-1].GetLattice(), maxR, cnt);
+        row.Add( new grid_type(maxR, cnt, &OverlayedXFiles[ind-1].GetLattice()) );
+      }
+    }
+  }
+  TDoubleList row_height(dim), col_width(dim);
+  for( int i=0; i < dim; i++ )
+    row_height[i] = col_width[0] = 0;
+  // calc widths and heights
+  for( int i=0; i < dim; i++ )  {
+    for( int j=0; j < dim; j++ )  {
+      if( j+1 > grid[i].Count() )  break;
+      if( grid[i][j].GetA() > row_height[i] )
+        row_height[i] = grid[i][j].GetA();
+      if( grid[i][j].GetA() > col_width[j] )
+        col_width[j] = grid[i][j].GetA();
+    }
+  }
+  // propagate widths and heights
+  // wee need a sequence ( r1, r1+r2, (r1+r2)+(r2+r3), (r1+r2)+(r2+r3)+(r3+r4)...)
+  for( int i=dim-1; i >= 1; i-- )  {
+    row_height[i] += row_height[i-1];
+    col_width[i] += col_width[i-1];
+  }
+  for( int i=1; i < dim-1; i++ )  {
+    row_height[i+1] += row_height[i];
+    col_width[i+1] += col_width[i];
+  }
+  col_width[0] = row_height[0] = 0;
+
+  const vec3d right_shift = FGlRender->GetBasis().GetMatrix()*vec3d(1, 0, 0);
+  const vec3d up_shift = FGlRender->GetBasis().GetMatrix()*vec3d(0, 1, 0);
+  for( int i=0; i < dim; i++ )  {
+    for( int j=0; j < dim; j++ )  {
+      if( (i|j) == 0 )  continue;
+      if( j+1 > grid[i].Count() )  break;
+      vec3d shift_vec = (grid[0][0].GetB()-grid[i][j].GetB());
+      shift_vec += up_shift*row_height[i];
+      shift_vec += right_shift*col_width[j];
+      TLattice& latt = *grid[i][j].GetC();
+      for( int k=0; k < latt.AtomCount(); k++ )
+        latt.GetAtom(k).crd() += shift_vec;
+    }
+  }
 }
 //..............................................................................
 void TGXApp::DeleteOverlayedXFile(int index) {
