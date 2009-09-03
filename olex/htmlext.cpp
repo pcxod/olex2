@@ -70,6 +70,51 @@ TAG_HANDLER_PROC(tag)
 }
 TAG_HANDLER_END(SWITCHINFOE)
 
+TAG_HANDLER_BEGIN(RECT, "ZRECT")
+TAG_HANDLER_PROC(tag)  {
+  if( tag.HasParam(wxT("COORDS")) )  {
+    if( m_WParser->GetContainer()->GetLastChild() != NULL && 
+      EsdlInstanceOf(*m_WParser->GetContainer()->GetLastChild(), THtmlImageCell) )  
+    {
+      THtmlImageCell* ic = (THtmlImageCell*)m_WParser->GetContainer()->GetLastChild();
+      TStrList toks( tag.GetParam(wxT("COORDS")).c_str(), ',');
+      if( toks.Count() == 4 )
+        ic->AddRect(
+          toks[0].ToInt(), 
+          toks[1].ToInt(),
+          toks[2].ToInt(),
+          toks[3].ToInt(),
+          tag.GetParam(wxT("HREF")),
+          tag.GetParam(wxT("TARGET"))
+        );
+    }
+  }
+  return false;
+}
+TAG_HANDLER_END(RECT)
+
+TAG_HANDLER_BEGIN(CIRCLE, "ZCIRCLE")
+TAG_HANDLER_PROC(tag)  {
+  if( tag.HasParam(wxT("COORDS")) )  {
+    if( m_WParser->GetContainer()->GetLastChild() != NULL && 
+      EsdlInstanceOf(*m_WParser->GetContainer()->GetLastChild(), THtmlImageCell) )  
+    {
+      THtmlImageCell* ic = (THtmlImageCell*)m_WParser->GetContainer()->GetLastChild();
+      TStrList toks( tag.GetParam(wxT("COORDS")).c_str(), ',');
+      if( toks.Count() == 3 )
+        ic->AddCircle(
+          toks[0].ToInt(), 
+          toks[1].ToInt(),
+          (float)toks[2].ToDouble(),
+          tag.GetParam(wxT("HREF")),
+          tag.GetParam(wxT("TARGET"))
+        );
+    }
+  }
+  return false;
+}
+TAG_HANDLER_END(CIRCLE)
+
 TAG_HANDLER_BEGIN(IMAGE, "ZIMG")
 TAG_HANDLER_PROC(tag)  {
   int ax=-1, ay=-1;
@@ -696,6 +741,8 @@ TAG_HANDLER_END(INPUT)
 TAGS_MODULE_BEGIN(Input)
     TAGS_MODULE_ADD(INPUT)
     TAGS_MODULE_ADD(IMAGE)
+    TAGS_MODULE_ADD(RECT)
+    TAGS_MODULE_ADD(CIRCLE)
     TAGS_MODULE_ADD(SWITCHINFOS)
     TAGS_MODULE_ADD(SWITCHINFOE)
 TAGS_MODULE_END(Input)
@@ -1626,9 +1673,8 @@ void THtmlImageCell::Layout( int w )  {
 //..............................................................................
 
 THtmlImageCell::~THtmlImageCell()  {
-    if( File != NULL )  {
+    if( File != NULL )
       delete File;
-    }
     delete m_bitmap;
 #if wxUSE_GIF && wxUSE_TIMER
     delete m_gifTimer;
@@ -1685,16 +1731,19 @@ void THtmlImageCell::Draw(wxDC& dc, int x, int y,
 }
 
 wxHtmlLinkInfo *THtmlImageCell::GetLink( int x, int y ) const {
-  wxHtmlContainerCell *p, *op;
-  op = p = GetParent();
+  for( int i=Shapes.Count()-1; i >=0; i-- )  {
+    if( Shapes[i].IsInside(x,y) )
+      return Shapes[i].link;
+  }
+  wxHtmlContainerCell *op = GetParent(), *p = op;
   while( p != NULL )  {
     op = p;
     p = p->GetParent();
   }
   p = op;
   wxHtmlCell *cell = (wxHtmlCell*)p->Find(wxHTML_COND_ISIMAGEMAP,
-                                              (const void*)(&m_mapName));
-  return (cell == NULL) ? wxHtmlCell::GetLink( x, y ) : cell->GetLink( x, y );
+    (const void*)(&m_mapName));
+  return (cell == NULL) ? wxHtmlCell::GetLink(x, y) : cell->GetLink(x, y);
 }
 //..............................................................................
 /*

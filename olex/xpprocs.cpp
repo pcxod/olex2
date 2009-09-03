@@ -2332,15 +2332,13 @@ void TMainForm::macSave(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 }
 //..............................................................................
 void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error) {
-  olxstr Tmp = Cmds[0];
-  Cmds.Delete(0);
-  olxstr FN = Cmds.Text(' ');
-  if( Tmp.Equalsi("style") )  {
+  if( Cmds[0].Equalsi("style") )  {
+    olxstr FN = Cmds.Text(' ', 1);
     if( FN.IsEmpty() )
       FN = PickFile("Load drawing style", "Drawing styles|*.glds", StylesDir, true);
     if( FN.IsEmpty() )
       return;
-    Tmp = TEFile::ExtractFilePath(FN);
+    olxstr Tmp = TEFile::ExtractFilePath(FN);
     if( !Tmp.IsEmpty() )  {
       if( !StylesDir.Equalsi(Tmp) )  {
         TBasicApp::GetLog().Info(olxstr("Styles folder is changed to: ") + Tmp);
@@ -2372,12 +2370,13 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
         TBasicApp::GetLog().Error(olxstr("Load::style: link file does not exist: ") << FN );
     }
   }
-  else if( Tmp == "scene" )  {
+  else if( Cmds[0].Equalsi("scene") )  {
+    olxstr FN = Cmds.Text(' ', 1);
     if( FN.IsEmpty() )
       FN = PickFile("Load scene parameters", "Scene parameters|*.glsp", SParamDir, true);
     if( FN.IsEmpty() )
       return;
-    Tmp = TEFile::ExtractFilePath(FN);
+    olxstr Tmp = TEFile::ExtractFilePath(FN);
     if( !Tmp.IsEmpty() )  {
       if( !SParamDir.Equalsi(Tmp) )  {
         TBasicApp::GetLog().Info(olxstr("Scene parameters folder is changed to: ") << Tmp);
@@ -2385,7 +2384,7 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       }
     }
     else  {
-      if( SParamDir.Length() )
+      if( !SParamDir.IsEmpty() )
         Tmp = SParamDir;
       else
         Tmp = FXApp->GetBaseDir();
@@ -2398,17 +2397,17 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     DF.LoadFromXLFile(FN, NULL);
     LoadScene( &DF.Root() );
   }
-  else if( Tmp == "view" )  {
+  else if( Cmds[0].Equalsi("view") )  {
+    olxstr FN = Cmds.Text(' ', 1);
     if( FXApp->XFile().HasLastLoader() )  {
-      if( Cmds.Count() == 1 )
-        Tmp = TEFile::ChangeFileExt(Cmds[0], "xlds");
+      if( !FN.IsEmpty() )
+        FN = TEFile::ChangeFileExt(FN, "xlds");
       else
-        Tmp = TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), "xlds");
+        FN = TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), "xlds");
     }
-    if( TEFile::Exists(Tmp) )  {
+    if( TEFile::Exists(FN) )  {
       TDataFile DF;
-      TStrList log;
-      DF.LoadFromXLFile(Tmp, &log);
+      DF.LoadFromXLFile(FN);
       TDataItem *style = DF.Root().FindItem("style");
       if( style == NULL )
         FXApp->GetRender().GetStyles().FromDataItem(*DF.Root().FindItem("DStyle"));
@@ -2421,15 +2420,52 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       FXApp->Draw();
     }
   }
-  else if( Tmp == "model" )  {
+  else if( Cmds[0].Equalsi("model") )  {
+    olxstr FN = Cmds.Text(' ', 1);
     if( FXApp->XFile().HasLastLoader() )  {
-      Tmp = (Cmds.Count() == 1) ? TEFile::ChangeFileExt(Cmds[0], "oxm") :
-                                  TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), "oxm");
-      if( TEFile::Exists(Tmp) )  {  
-        FXApp->LoadModel(Tmp);
+      FN = (!FN.IsEmpty() ? TEFile::ChangeFileExt(FN, "oxm") :
+                            TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), "oxm") );
+      if( TEFile::Exists(FN) )  {  
+        FXApp->LoadModel(FN);
         //TDataFile DF;
         //DF.LoadFromXLFile(Tmp);
         //FXApp->FromDataItem(DF.Root().FindRequiredItem("olex_model"));
+      }
+    }
+  }
+  else if ( Cmds[0].Equalsi("radii") )  {
+    if( Cmds.Count() > 1  )  {
+      olxstr fn = Cmds.Text(' ', 2);
+      if( fn.IsEmpty() )
+        fn = PickFile("Load atomic radii", "Text files|*.txt", EmptyString, true);
+      if( TEFile::Exists(fn) )  {
+        olxdict<olxstr,double,olxstrComparator<false> > radii;
+        TStrList sl, toks;
+        sl.LoadFromFile(fn);
+        // parse the file and fill the dictionary
+        TBasicApp::GetLog() << "Using user defined radii for: \n";
+        for( int i=0; i < sl.Count(); i++ )  {
+          toks.Clear();
+          toks.Strtok(sl[i], ' ');
+          if( toks.Count() == 2 )  {
+            TBasicApp::GetLog() << ' ' << toks[0] << '\t' << toks[1] << '\n';
+            radii(toks[0], toks[1].ToDouble());
+          }
+        }
+        // end the file parsing
+        TAtomsInfo& aif = TAtomsInfo::GetInstance();
+        if( Cmds[1].Equalsi("sfil") )  {
+          for( int i=0; i < radii.Count(); i++ )  {
+            cm_Element* cme = XElementLib::FindBySymbol(radii.GetKey(i));
+            if( cme != NULL )
+              cme->r_sfil = radii.GetValue(i);
+            TBasicAtomInfo* bai = aif.FindAtomInfoBySymbol(radii.GetKey(i));
+            if( bai != NULL )
+              bai->SetRad2( radii.GetValue(i) );
+          }
+        }
+        else
+          Error.ProcessingError(__OlxSrcInfo, "undefined radii name" );
       }
     }
   }
