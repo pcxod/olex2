@@ -362,8 +362,10 @@ void TGlConsole::PrintText(const olxstr &S, TGlMaterial *M, bool Hypernate)  {
     }
   }
   if( Hypernate )  {
+    const int sz = Font()->MaxTextLength(Parent.GetWidth());
+    if( sz <= 0 )  return;
     TStrList Txt;
-    Txt.Hypernate(S, Font()->MaxTextLength(Parent.GetWidth()), true);
+    Txt.Hypernate(S, sz, true);
     if( Txt.Count() > 1 )  PrintText(Txt, M);
     else                   SingleLine = true;
   }
@@ -392,6 +394,8 @@ void TGlConsole::PrintText(const TStrList &SL, TGlMaterial *M, bool Hypernate)  
     //SetSkipPosting(false);
     return;
   }
+  const int sz = Font()->MaxTextLength(Parent.GetWidth());
+  if( sz <= 0 )  return;
   TStrList Txt;
   olxstr Tmp;
   for( int i=0; i < SL.Count(); i++ )  {
@@ -405,7 +409,7 @@ void TGlConsole::PrintText(const TStrList &SL, TGlMaterial *M, bool Hypernate)  
     }
     if( Hypernate )  {
       Txt.Clear();
-      Txt.Hypernate(Tmp, Font()->MaxTextLength(Parent.GetWidth()), true);
+      Txt.Hypernate(Tmp, sz, true);
       for( int j=0; j < Txt.Count(); j++ )  {
         TGlMaterial *GlM = NULL;
         if( M != NULL )  {  GlM = new TGlMaterial;  *GlM = *M;  }
