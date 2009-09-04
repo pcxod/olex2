@@ -46,17 +46,19 @@ public:
     return (header == TUtf8::FileSignature);
   }
 
-  virtual inline size_t Write(const WString &S)    {  return IDataOutputStream::Write( TUtf8::Encode(S) );  }
-  virtual inline size_t Writenl(const WString &S)  {  return IDataOutputStream::Writenl( TUtf8::Encode(S) );  }
+  virtual inline size_t Write(const WString &S)    {  return TEFile::Write( TUtf8::Encode(S) );  }
+  virtual inline size_t Writenl(const WString &S)  {  return TEFile::Writenl( TUtf8::Encode(S) );  }
 
-  virtual inline size_t Write(const TTIString<wchar_t> &S)    {  return IDataOutputStream::Write( TUtf8::Encode(S) );  }
-  virtual inline size_t Writenl(const TTIString<wchar_t> &S)  {  return IDataOutputStream::Writenl( TUtf8::Encode(S) );  }
+  virtual inline size_t Write(const TTIString<wchar_t> &S)    {  return TEFile::Write( TUtf8::Encode(S) );  }
+  inline size_t Writenl(const TTIString<wchar_t> &S)  {  return TEFile::Writenl( TUtf8::Encode(S) );  }
 
-  virtual inline size_t Write(const wchar_t* bf)   { return IDataOutputStream::Write(TUtf8::Encode(bf));  }
-  virtual inline size_t Writenl(const wchar_t* bf) { return IDataOutputStream::Writenl(TUtf8::Encode(bf));  }
+  virtual inline size_t Write(const wchar_t* bf)   { return TEFile::Write(TUtf8::Encode(bf));  }
+  inline size_t Writenl(const wchar_t* bf) { return TEFile::Writenl(TUtf8::Encode(bf));  }
 
-  virtual inline size_t Write(const wchar_t* bf, size_t size)   { return IDataOutputStream::Write( TUtf8::Encode(bf, size) );  }
-  virtual inline size_t Writenl(const wchar_t* bf, size_t size) { return IDataOutputStream::Writenl( TUtf8::Encode(bf, size) );  }
+  virtual inline size_t Write(const wchar_t* bf, size_t size)   { return TEFile::Write( TUtf8::Encode(bf, size) );  }
+  virtual inline size_t Writenl(const wchar_t* bf, size_t size) { return TEFile::Writenl( TUtf8::Encode(bf, size) );  }
+  virtual inline size_t Write(const void* bf, size_t size) { return TEFile::Write(bf, size);  }
+  virtual inline size_t Writenl(const void* bf, size_t size) { return TEFile::Writenl(bf, size);  }
 
   template <class T>
   static void ReadLines(IInputStream& io, TTStrList<WString,T>& list, bool CheckHeader=true)  {

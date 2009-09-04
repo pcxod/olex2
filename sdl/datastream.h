@@ -5,6 +5,12 @@
 #ifndef __OLX_DATA_STREAM_H
 #define __OLX_DATA_STREAM_H
 #include "ebase.h"
+
+//disable 'partial virtual function override warning
+#ifdef __INTEL_COMPILER
+  #pragma warning( disable : 654 )
+#endif
+ 
 //#include "estrlist.h"
 //TODO: fix that header and then re-include it #include "edlist.h"
 //---------------------------------------------------------------------------

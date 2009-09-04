@@ -15,7 +15,7 @@ public:
   TCRSFile();
   virtual ~TCRSFile();
 
-  const double GetRadiation()  const  {  return Radiation;  }
+  const double& GetRadiation()  const  {  return Radiation;  }
 
   class TSpaceGroup* GetSG();
 

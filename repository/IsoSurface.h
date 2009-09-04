@@ -168,7 +168,7 @@ protected:
         case 9:  y++;  extra = 2;        break;  //(x,y+1,z) + 2;
         case 10: x++;  y++;  extra = 2;  break;  //(x+1,y+1,z) + 2;
         case 11: x++;  extra = 2;        break;  //(x+1,y,z) + 2
-        default: return -1;         // Invalid edge no.
+        default: return ~0;         // Invalid edge no.
       }
       // max grid size is 1024x1024x1022
       return (uint32_t)extra     | 
@@ -214,7 +214,7 @@ protected:
 
   // Lookup tables used in the construction of the isosurface.
   static const unsigned int m_edgeTable[256];
-  static const unsigned int m_triTable[256][16];
+  static const int m_triTable[256][16];
 };
 #endif // CISOSURFACE_H
 

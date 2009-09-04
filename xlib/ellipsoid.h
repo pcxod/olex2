@@ -20,7 +20,7 @@ public:
   TEllipsoid();
   TEllipsoid( const TEllipsoid& e)  {  this->operator = (e);  }
   template <class T> TEllipsoid(const T& Q)  {  Initialise(Q);  }
-  template <class T> TEllipsoid(const evecd& Q, const evecd& E)  { Initialise(Q, E);  }
+  template <class T> TEllipsoid(const T& Q, const T& E)  { Initialise(Q, E);  }
   virtual ~TEllipsoid()  {}
   void operator = (const TEllipsoid &E);
   // processes a symmetry matrix and updates object's data

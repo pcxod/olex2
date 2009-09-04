@@ -80,6 +80,7 @@ for file in gxlib:
 
 env = Environment(CCFLAGS = ['-D__WXWIDGETS__', '-D_UNICODE', '-DUNICODE'],
                   ENV = os.environ )
+#env.Tool('intelc')
 env.Append(CPPPATH = ['alglib', 'sdl', 'glib', 'gxlib', 
                       'repository', 'xlib'])
 unirun_env = None

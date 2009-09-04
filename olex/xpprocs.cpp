@@ -8119,19 +8119,19 @@ void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options, TMa
     TEFile f(Cmds[0], "rb");
     uint64_t st = TETime::msNow();
     TBasicApp::GetLog() << "MD5: " << MD5::Digest(f) << '\n';
-    TBasicApp::GetLog() << olxstr::FormatFloat(3, ((double)f.Length()/((olx_abs(TETime::msNow() - st) + 1)*1.024*1024))) << " Mb/s\n";
+    TBasicApp::GetLog() << olxstr::FormatFloat(3, ((double)f.Length()/(((TETime::msNow() - st) + 1)*1.024*1024))) << " Mb/s\n";
     f.Seek(0,0);
     st = TETime::msNow();
     TBasicApp::GetLog() << "SHA1: " << SHA1::Digest(f) << '\n';
-    TBasicApp::GetLog() << olxstr::FormatFloat(3, ((double)f.Length()/((olx_abs(TETime::msNow() - st) + 1)*1.024*1024))) << " Mb/s\n";
+    TBasicApp::GetLog() << olxstr::FormatFloat(3, ((double)f.Length()/(((TETime::msNow() - st) + 1)*1.024*1024))) << " Mb/s\n";
     f.Seek(0,0);
     st = TETime::msNow();
     TBasicApp::GetLog() << "SHA224: " << SHA224::Digest(f) << '\n';
-    TBasicApp::GetLog() << olxstr::FormatFloat(3, ((double)f.Length()/((olx_abs(TETime::msNow() - st) + 1)*1.024*1024))) << " Mb/s\n";
+    TBasicApp::GetLog() << olxstr::FormatFloat(3, ((double)f.Length()/(((TETime::msNow() - st) + 1)*1.024*1024))) << " Mb/s\n";
     f.Seek(0,0);
     st = TETime::msNow();
     TBasicApp::GetLog() << "SHA256: " << SHA256::Digest(f) << '\n';
-    TBasicApp::GetLog() << olxstr::FormatFloat(3, ((double)f.Length()/((olx_abs(TETime::msNow() - st) + 1)*1.024*1024))) << " Mb/s\n";
+    TBasicApp::GetLog() << olxstr::FormatFloat(3, ((double)f.Length()/(((TETime::msNow() - st) + 1)*1.024*1024))) << " Mb/s\n";
   }
 }
 //..............................................................................

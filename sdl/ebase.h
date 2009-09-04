@@ -72,7 +72,7 @@ BeginEsdlNamespace()
 // immutable string
 template <class T> class TTIString {
 public:
-  static const short CharSize;
+  static const unsigned short CharSize;
   struct Buffer  {
     T *Data;
     unsigned RefCnt;
@@ -162,7 +162,7 @@ public:
 #endif
 };
 
-  template <typename T> const short TTIString<T>::CharSize = sizeof(T);
+  template <typename T> const unsigned short TTIString<T>::CharSize = sizeof(T);
 
 typedef TTIString<olxch> TIString;
 // implementation of basic object, providing usefull information about a class

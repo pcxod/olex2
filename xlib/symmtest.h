@@ -49,7 +49,7 @@ public:
   inline const vec3d GetGravityCenter()  const  {  return GCenter;  }
   inline const  TTypeList< TSymmTestData >& GetResults() const  {  return Vecs;  }
 
-  inline const int AtomCount() const  {  return Atoms.Count();  }
+  inline int AtomCount() const  {  return Atoms.Count();  }
   void Push(const vec3d& t)  {
     for( int i=0; i < Atoms.Count(); i++ )
       Atoms[i].A() += t; 

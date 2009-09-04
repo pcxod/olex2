@@ -19,7 +19,6 @@
     #include "Python.h"
   #endif
 #endif
-
 //---------------------------------------------------------------------------
 using namespace olex;
 typedef void (*pyRegFunc)();
