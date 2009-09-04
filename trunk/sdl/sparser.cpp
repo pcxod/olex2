@@ -30,16 +30,16 @@ short TOperatorSignature::DefinedFunctionCount = 13;
 
 TSyntaxParser::TSyntaxParser(IEvaluatorFactory* FactoryInstance, const olxstr& Expression)  {
   EvaluatorFactory = FactoryInstance;
-  LogicalOperators.Add("&&", (TObjectFactory<IEvaluable>*const&)new TtaFactory<IEvaluable, TloAndOperator,IEvaluable>());
-  LogicalOperators.Add("||", (TObjectFactory<IEvaluable>*const&)new TtaFactory<IEvaluable, TloOrOperator, IEvaluable>());
-  LogicalOperators.Add("!", (TObjectFactory<IEvaluable>*const&)new TsaFactory<IEvaluable, TloNotOperator, IEvaluable>());
+  LogicalOperators.Add("&&", new TtaFactory<IEvaluable, TloAndOperator,IEvaluable>());
+  LogicalOperators.Add("||", new TtaFactory<IEvaluable, TloOrOperator, IEvaluable>());
+  LogicalOperators.Add("!", new TsaFactory<IEvaluable, TloNotOperator, IEvaluable>());
 
-  ComparisonOperators.Add("==", (TObjectFactory<IEvaluable>*const&)new TtaFactory<IEvaluable, TcoEOperator, IEvaluator>());
-  ComparisonOperators.Add("!=", (TObjectFactory<IEvaluable>*const&)new TtaFactory<IEvaluable, TcoNEOperator, IEvaluator>());
-  ComparisonOperators.Add("<=", (TObjectFactory<IEvaluable>*const&)new TtaFactory<IEvaluable, TcoLEOperator, IEvaluator>());
-  ComparisonOperators.Add(">=", (TObjectFactory<IEvaluable>*const&)new TtaFactory<IEvaluable, TcoGEOperator, IEvaluator>());
-  ComparisonOperators.Add("<", (TObjectFactory<IEvaluable>*const&)new TtaFactory<IEvaluable, TcoLOperator, IEvaluator>());
-  ComparisonOperators.Add(">", (TObjectFactory<IEvaluable>*const&)new TtaFactory<IEvaluable, TcoGOperator, IEvaluator>());
+  ComparisonOperators.Add("==", new TtaFactory<IEvaluable, TcoEOperator, IEvaluator>());
+  ComparisonOperators.Add("!=", new TtaFactory<IEvaluable, TcoNEOperator, IEvaluator>());
+  ComparisonOperators.Add("<=", new TtaFactory<IEvaluable, TcoLEOperator, IEvaluator>());
+  ComparisonOperators.Add(">=", new TtaFactory<IEvaluable, TcoGEOperator, IEvaluator>());
+  ComparisonOperators.Add("<", new TtaFactory<IEvaluable, TcoLOperator, IEvaluator>());
+  ComparisonOperators.Add(">", new TtaFactory<IEvaluable, TcoGOperator, IEvaluator>());
 
   Root = SimpleParse( olxstr::DeleteChars(Expression, ' ') );
 }

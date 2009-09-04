@@ -2221,9 +2221,11 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
           Draw = true;
         }
       }
-      if( DrawSceneTimer >= 0 && !Draw )  {
-        DrawSceneTimer -= FTimer->GetInterval();
-        if( DrawSceneTimer < 0 )  {  TimePerFrame = FXApp->Draw();  }
+      if( DrawSceneTimer > 0 && !Draw )  {
+        if( DrawSceneTimer < FTimer->GetInterval() )  
+          TimePerFrame = FXApp->Draw();
+        else
+          DrawSceneTimer -= FTimer->GetInterval();
       }
       MouseMoveTimeElapsed = 5000;
     }

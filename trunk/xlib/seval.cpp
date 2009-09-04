@@ -20,29 +20,29 @@ TTSAtom_EvaluatorFactory::TTSAtom_EvaluatorFactory(IEvaluatorFactory *factoryReg
 {
   FactoryRegister = factoryRegister;
   // register new instance of TSAtom_LabelEvaluator
-  Evaluators.Add("label", (IEvaluator*const&)new TSAtom_LabelEvaluator(this));
+  Evaluators.Add("label", new TSAtom_LabelEvaluator(this));
   // register new instance of TSAtom_TypeEvaluator
-  Evaluators.Add("type", (IEvaluator*const&)new TSAtom_TypeEvaluator(this));
+  Evaluators.Add("type", new TSAtom_TypeEvaluator(this));
   // register new instance of TSAtom_PartEvaluator
-  Evaluators.Add("part", (IEvaluator*const&)new TSAtom_PartEvaluator(this));
+  Evaluators.Add("part", new TSAtom_PartEvaluator(this));
   // register new instance of TSAtom_AfixEvaluator
-  Evaluators.Add("afix", (IEvaluator*const&)new TSAtom_AfixEvaluator(this));
+  Evaluators.Add("afix", new TSAtom_AfixEvaluator(this));
   // register new instance of TSAtom_UisoEvaluator
-  Evaluators.Add("uiso", (IEvaluator*const&)new TSAtom_UisoEvaluator(this));
+  Evaluators.Add("uiso", new TSAtom_UisoEvaluator(this));
   // register new instance of TSAtom_PeakEvaluator
-  Evaluators.Add("peak", (IEvaluator*const&)new TSAtom_PeakEvaluator(this));
+  Evaluators.Add("peak", new TSAtom_PeakEvaluator(this));
   // register new instance of TSAtom_BcEvaluator
-  Evaluators.Add("bc", (IEvaluator*const&)new TSAtom_BcEvaluator(this));
+  Evaluators.Add("bc", new TSAtom_BcEvaluator(this));
 }
 // constructor to create instaces of registered evaluators
 TTBasicAtomInfoEvaluatorFactory::TTBasicAtomInfoEvaluatorFactory(IEvaluatorFactory *factoryRegister)
 {
   FactoryRegister = factoryRegister;
   // register new instance of TBaiTypeEvaluator
-  Evaluators.Add("type", (IEvaluator*const&)new TBaiTypeEvaluator(this));
+  Evaluators.Add("type", new TBaiTypeEvaluator(this));
   // register new instance of TBaiNameEvaluator
-  Evaluators.Add("name", (IEvaluator*const&)new TBaiNameEvaluator(this));
+  Evaluators.Add("name", new TBaiNameEvaluator(this));
   // register new instance of TBaiMwEvaluator
-  Evaluators.Add("mw", (IEvaluator*const&)new TBaiMwEvaluator(this));
+  Evaluators.Add("mw", new TBaiMwEvaluator(this));
 }
 

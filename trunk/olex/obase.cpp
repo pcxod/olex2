@@ -65,19 +65,19 @@ AModeWithLabels::~AModeWithLabels()  {
 TModes::TModes() {
   if( Instance != NULL )  throw TFunctionFailedException(__OlxSourceInfo, "singleton");
   Instance = this;
-  Modes.Add( "name",   (AModeFactory* const &)(new TModeFactory<TNameMode>(Modes.Count()+1)));
-  Modes.Add( "match",  (AModeFactory* const &)(new TModeFactory<TMatchMode>(Modes.Count()+1)));
-  Modes.Add( "split",  (AModeFactory* const &)(new TModeFactory<TSplitMode>(Modes.Count()+1)));
-  Modes.Add( "himp",   (AModeFactory* const &)(new TModeFactory<THimpMode>(Modes.Count()+1)));
-  Modes.Add( "hfix",   (AModeFactory* const &)(new TModeFactory<THfixMode>(Modes.Count()+1)));
-  Modes.Add( "part",   (AModeFactory* const &)(new TModeFactory<TPartMode>(Modes.Count()+1)));
-  Modes.Add( "occu",   (AModeFactory* const &)(new TModeFactory<TOccuMode>(Modes.Count()+1)));
-  Modes.Add( "fixu",   (AModeFactory* const &)(new TModeFactory<TFixUMode>(Modes.Count()+1)));
-  Modes.Add( "fixxyz", (AModeFactory* const &)(new TModeFactory<TFixCMode>(Modes.Count()+1)));
-  Modes.Add( "grow",   (AModeFactory* const &)(new TModeFactory<TGrowMode>(Modes.Count()+1)));
-  Modes.Add( "pack",   (AModeFactory* const &)(new TModeFactory<TPackMode>(Modes.Count()+1)));
-  Modes.Add( "move",   (AModeFactory* const &)(new TModeFactory<TMoveMode>(Modes.Count()+1)));
-  Modes.Add( "fit",   (AModeFactory* const &)(new TModeFactory<TFitMode>(Modes.Count()+1)));
+  Modes.Add( "name",   new TModeFactory<TNameMode>(Modes.Count()+1));
+  Modes.Add( "match",  new TModeFactory<TMatchMode>(Modes.Count()+1));
+  Modes.Add( "split",  new TModeFactory<TSplitMode>(Modes.Count()+1));
+  Modes.Add( "himp",   new TModeFactory<THimpMode>(Modes.Count()+1));
+  Modes.Add( "hfix",   new TModeFactory<THfixMode>(Modes.Count()+1));
+  Modes.Add( "part",   new TModeFactory<TPartMode>(Modes.Count()+1));
+  Modes.Add( "occu",   new TModeFactory<TOccuMode>(Modes.Count()+1));
+  Modes.Add( "fixu",   new TModeFactory<TFixUMode>(Modes.Count()+1));
+  Modes.Add( "fixxyz", new TModeFactory<TFixCMode>(Modes.Count()+1));
+  Modes.Add( "grow",   new TModeFactory<TGrowMode>(Modes.Count()+1));
+  Modes.Add( "pack",   new TModeFactory<TPackMode>(Modes.Count()+1));
+  Modes.Add( "move",   new TModeFactory<TMoveMode>(Modes.Count()+1));
+  Modes.Add( "fit",   new TModeFactory<TFitMode>(Modes.Count()+1));
   CurrentMode = NULL;
 }
 //..............................................................................

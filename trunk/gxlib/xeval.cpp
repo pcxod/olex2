@@ -9,11 +9,11 @@
 TTXBond_EvaluatorFactory::TTXBond_EvaluatorFactory(IEvaluatorFactory *factoryRegister)  {
   FactoryRegister = factoryRegister;
   // register new instance of TXBond_LengthEvaluator
-  Evaluators.Add("length", (IEvaluator*const&)new TXBond_LengthEvaluator(this));
+  Evaluators.Add("length", new TXBond_LengthEvaluator(this));
   // register new instance of TXBond_TypeEvaluator
-  Evaluators.Add("type", (IEvaluator*const&)new TXBond_TypeEvaluator(this));
+  Evaluators.Add("type", new TXBond_TypeEvaluator(this));
   // register new instance of TXBond_DeletedEvaluator
-  Evaluators.Add("deleted", (IEvaluator*const&)new TXBond_DeletedEvaluator(this));
+  Evaluators.Add("deleted", new TXBond_DeletedEvaluator(this));
   // add new instance of data provider TXBond_AEvaluator
   TXBond_AEvaluator *tXBondAEvaluator = new TXBond_AEvaluator(this);
   DataProviders.Add("TXBond_AEvaluator", tXBondAEvaluator);
@@ -35,21 +35,21 @@ TTXBond_EvaluatorFactory::TTXBond_EvaluatorFactory(IEvaluatorFactory *factoryReg
 TTXAtom_EvaluatorFactory::TTXAtom_EvaluatorFactory(IEvaluatorFactory *factoryRegister)  {
   FactoryRegister = factoryRegister;
   // register new instance of TXAtomLabelEvaluator
-  Evaluators.Add("label", (IEvaluator*const&)new TXAtom_LabelEvaluator(this));
+  Evaluators.Add("label", new TXAtom_LabelEvaluator(this));
   // register new instance of TXAtomTypeEvaluator
-  Evaluators.Add("type", (IEvaluator*const&)new TXAtom_TypeEvaluator(this));
+  Evaluators.Add("type", new TXAtom_TypeEvaluator(this));
   // register new instance of TXAtomPartEvaluator
-  Evaluators.Add("part", (IEvaluator*const&)new TXAtom_PartEvaluator(this));
+  Evaluators.Add("part", new TXAtom_PartEvaluator(this));
   // register new instance of TXAtomAfixEvaluator
-  Evaluators.Add("afix", (IEvaluator*const&)new TXAtom_AfixEvaluator(this));
+  Evaluators.Add("afix", new TXAtom_AfixEvaluator(this));
   // register new instance of TXAtomUisoEvaluator
-  Evaluators.Add("uiso", (IEvaluator*const&)new TXAtom_UisoEvaluator(this));
+  Evaluators.Add("uiso", new TXAtom_UisoEvaluator(this));
   // register new instance of TXAtomPeakEvaluator
-  Evaluators.Add("peak", (IEvaluator*const&)new TXAtom_PeakEvaluator(this));
+  Evaluators.Add("peak", new TXAtom_PeakEvaluator(this));
   // register new instance of TXAtomBcEvaluator
-  Evaluators.Add("bc", (IEvaluator*const&)new TXAtom_BcEvaluator(this));
+  Evaluators.Add("bc", new TXAtom_BcEvaluator(this));
   // register new instance of TXAtomSelectedEvaluator
-  Evaluators.Add("selected", (IEvaluator*const&)new TXAtom_SelectedEvaluator(this));
+  Evaluators.Add("selected", new TXAtom_SelectedEvaluator(this));
   // add new instance of data provider TXAtomAtomEvaluator
   TXAtom_AtomEvaluator *tXAtomAtomEvaluator = new TXAtom_AtomEvaluator(this);
   DataProviders.Add("TXAtomAtomEvaluator", tXAtomAtomEvaluator);

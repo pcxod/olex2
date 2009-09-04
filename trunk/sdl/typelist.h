@@ -273,7 +273,7 @@ public:
   }
 //..............................................................................
   void Shrink(size_t newSize)  {
-    if( !(newSize >=0 && newSize < (size_t)List.Count()) )  return;
+    if( newSize >= (size_t)List.Count() )  return;
     for( int i=newSize; i < List.Count(); i++ )
       if( List[i] != NULL )
         delete (DestructCast*)List[i];

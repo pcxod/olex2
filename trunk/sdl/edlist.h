@@ -232,12 +232,12 @@ template <typename T>
     return *this;
   }
 
-  virtual TIString ToString()  {
+  virtual TIString ToString() const {
     olxstr s(EmptyString, Length);
     ToString(s);
     return s;
   }
-  void ToString(CString& cstr)  {
+  void ToString(CString& cstr) const {
     cstr.SetCapacity( cstr.Length() + Length);
     TDirectionalListEntry<T>* en = Head;
     if( en == NULL )  return;
@@ -246,7 +246,7 @@ template <typename T>
       en = en->GetNext();
     }
   }
-  void ToString(WString& wstr)  {
+  void ToString(WString& wstr) const {
     wstr.SetCapacity( wstr.Length() + Length);
     TDirectionalListEntry<T>* en = Head;
     if( en == NULL )  return;

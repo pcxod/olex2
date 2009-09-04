@@ -6,7 +6,7 @@
 
 #define CharSizeMask 0xE0000000
 #define LengthMask   ~0xE0000000
-#define CodeLength(CharSize, Length)   ((CharSize << 29) | (Length))
+#define CodeLength(CharSize, Length)   ((((size_t)CharSize) << 29) | (Length))
 #define ExtractCharSize(Code)   ((Code) >> 29)
 #define ExtractLength(Code)   (((Code) << 3) >> 3)
 
@@ -46,9 +46,6 @@
 BeginEsdlNamespace()
 #ifndef __BORLANDC__
 template <class,typename> class TTSString;
-
-using esdl::TCString;
-using esdl::TWString;
 
 typedef TTSString<TCString, char> CString;
 typedef TTSString<TWString, wchar_t> WString;
@@ -571,27 +568,27 @@ public:
 
   int FirstIndexOf(const TTSString& wht, size_t from = 0)  const {
     int i = o_strpos( &T::Data()[from], T::_Length-from, wht.Data(), wht._Length);
-    return ((i==-1) ? -1 : i + from);
+    return ((i==-1) ? -1 : (int)(i + from));
   }
   int FirstIndexOfi(const TTSString& wht, size_t from = 0) const {
     int i = o_strposi( &T::Data()[from], T::_Length-from, wht.Data(), wht._Length);
-    return ((i==-1) ? -1 : i + from);
+    return ((i==-1) ? -1 : (int)(i + from));
   }
   int FirstIndexOf(const TC *wht, size_t from = 0)         const {
     int i = o_strpos( &T::Data()[from], T::_Length-from, wht, o_strlen(wht));
-    return ((i==-1) ? -1 : i + from);
+    return ((i==-1) ? -1 : (int)(i + from));
   }
   int FirstIndexOfi(const TC *wht, size_t from = 0)        const {
     int i = o_strposi( &T::Data()[from], T::_Length-from, wht, o_strlen(wht));
-    return ((i==-1) ? -1 : i + from);
+    return ((i==-1) ? -1 : (int)(i + from));
   }
   int FirstIndexOf(TC wht, size_t from = 0)                const {
     int i = o_chrpos( &T::Data()[from], T::_Length-from, wht);
-    return ((i==-1) ? -1 : i + from);
+    return ((i==-1) ? -1 : (int)(i + from));
   }
   int FirstIndexOfi(TC wht, size_t from = 0)               const {
     int i = o_chrposi( &T::Data()[from], T::_Length-from, wht);
-    return ((i==-1) ? -1 : i + from);
+    return ((i==-1) ? -1 : (int)(i + from));
   }
 
   int LastIndexOf(const TTSString& wht, size_t from = ~0)  const {

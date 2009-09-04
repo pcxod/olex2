@@ -189,7 +189,7 @@ public:
       HKLF_wt = hklf[12].ToDouble();
     HKLF_set = true;
   }
-  const int GetHKLF()        const {  return HKLF;  }
+  int GetHKLF()        const {  return HKLF;  }
   void SetHKLF(int v)              {  HKLF = v;  HKLF_set = true;  }
   const mat3d& GetHKLF_mat() const {  return HKLF_mat;  }
   void SetHKLF_mat(const mat3d& v) {  HKLF_mat = v;  HKLF_set = true;  }
@@ -296,7 +296,7 @@ The TWIN matrix is applied m-1 times to generate components 2 ... m from the pri
 reflection (component 1); components m+1 ... 2m are then generated as the Friedel opposites
 of components 1 ... m  
 */
-  const int GetTWIN_n()       const {  return TWIN_n;  }
+  int GetTWIN_n()       const {  return TWIN_n;  }
   void SetTWIN_n(int v)             {  TWIN_n = v;  TWIN_set = true;  }
   bool HasTWIN()              const {  return TWIN_set;  }
 
