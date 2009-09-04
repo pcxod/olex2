@@ -14,8 +14,8 @@ namespace PlaneSort {
         vec3d vec = sp.GetAtom(i).crd() - sp.GetCenter();
         double ca = org.CAngle(vec);
         vec = org.XProdVec(vec);
-        // negative - vec is on the right, positive - on the left
-        double vo = vec.CAngle(sp.GetNormal());
+        // negative - vec is on the right, positive - on the left, if ca == 0, vec == (0,0,0)
+        double vo = (ca == -1 ? 0 : vec.CAngle(sp.GetNormal()));
         if( ca >= 0 )  { // -90 to 90
           if( vo < 0 )  // -90 to 0 3->4
             sortedPlane.Add( 3.0 + ca, &sp.GetAtom(i).crd() );
