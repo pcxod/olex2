@@ -20,7 +20,9 @@ protected:
       Atom.SetPart( Part );
     }
   };
-
+#ifdef __BORLANDC__
+  friend class TPartModeUndo;
+#endif
 public:
   TPartMode(int id) : AModeWithLabels(id)  {  HasInstance = true;  }
   bool Init(TStrObjList &Cmds, const TParamList &Options) {

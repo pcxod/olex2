@@ -20,10 +20,10 @@
     <PATHRC value=".;"/>
     <PATHASM value=".;"/>
     <LINKER value="TLib"/>
-    <USERDEFINES value="__WXWIDGETS__;_DEBUG"/>
+    <USERDEFINES value="__WXWIDGETS__;_DEBUG;_USE_OLD_RW_STL;HAVE_SNPRINTF_DECL"/>
     <SYSDEFINES value="NO_STRICT"/>
     <MAINSOURCE value="gxlib.bpf"/>
-    <INCLUDEPATH value="&quot;C:\Program Files\Borland\CBuilder6\Projects&quot;;..\..\..\gxlib;..\..\..\sdl;..\..\..\glib;..\..\..\xlib;$(BCB)\include;E:\wxWidgets-2.8.7\include;E:\wxWidgets-2.8.7\lib\bcc_lib\mswd;c:\python25\include;..\..\..\repository"/>
+    <INCLUDEPATH value="&quot;C:\Program Files\Borland\CBuilder6\Projects&quot;;..\..\..\gxlib;..\..\..\sdl;..\..\..\glib;..\..\..\xlib;$(BCB)\include;E:\wxWidgets-2.8.9\include;E:\wxWidgets-2.8.9\lib\bcc_lib\mswd;c:\python26\include;..\..\..\repository"/>
     <LIBPATH value="&quot;C:\Program Files\Borland\CBuilder6\Projects&quot;;..\..\..\gxlib;$(BCB)\lib\obj;$(BCB)\lib"/>
     <WARNINGS value="-w-par"/>
     <LISTFILE value=""/>
@@ -95,20 +95,21 @@ ProductVersion=1.0.0.0
 Comments=
 
 [HistoryLists\hlIncludePath]
-Count=13
-Item0=C:\Program Files\Borland\CBuilder6\Projects;..\..\..\gxlib;..\..\..\sdl;..\..\..\glib;..\..\..\xlib;$(BCB)\include;E:\wxWidgets-2.8.7\include;E:\wxWidgets-2.8.7\lib\bcc_lib\mswd;c:\python25\include;..\..\..\repository
-Item1=C:\Program Files\Borland\CBuilder6\Projects;..\..\..\gxlib;..\..\..\sdl;..\..\..\glib;..\..\..\xlib;$(BCB)\include;E:\wxWidgets-2.8.7\include;E:\wxWidgets-2.8.7\lib\bcc_lib\mswud;c:\python25\include;..\..\..\repository
-Item2=C:\Program Files\Borland\CBuilder6\Projects;..\..\..\gxlib;..\..\..\sdl;..\..\..\glib;..\..\..\xlib;$(BCB)\include;E:\wxWidgets-2.8.3\include;E:\wxWidgets-2.8.3\lib\bcc_lib\mswd;c:\python25\include;..\..\..\repository
-Item3=C:\Program Files\Borland\CBuilder6\Projects;..\..\..\gxlib;..\..\..\sdl;..\..\..\glib;..\..\..\xlib;$(BCB)\include;E:\wxWidgets-2.8.7\include;E:\wxWidgets-2.8.7\lib\bcc_lib\msw7d;c:\python25\include;..\..\..\repository
-Item4=C:\Program Files\Borland\CBuilder6\Projects;..\..\..\gxlib;..\..\..\sdl;..\..\..\glib;..\..\..\xlib;$(BCB)\include;E:\wxWidgets-2.8.4\include;E:\wxWidgets-2.8.4\lib\bcc_lib\mswd;c:\python25\include;..\..\..\repository
-Item5=C:\Program Files\Borland\CBuilder6\Projects;..\..\..\gxlib;..\..\..\sdl;..\..\..\glib;..\..\..\xlib;$(BCB)\include;E:\wxWidgets-2.8.3\include;E:\wxWidgets-2.8.3\lib\bcc_lib\mswd
-Item6=..\..\..\gxlib;..\..\..\sdl;..\..\..\glib;..\..\..\xlib;$(BCB)\include;E:\wxWidgets-2.8.3\include;E:\wxWidgets-2.8.3\lib\bcc_lib\mswd
-Item7=E:\wxWidgets-2.8.3\include;E:\wxWidgets-2.8.3\lib\bcc_lib\mswd;..\..\..\gxlib;..\..\..\xlib;$(BCB)\include;$(BCB)\include\vcl;..\..\..\sdl;..\..\..\glib
-Item8=..\..\..\gxlib;..\..\..\xlib;$(BCB)\include;$(BCB)\include\vcl;..\..\..\sdl;..\..\..\glib;E:\wxWidgets-2.8.3\include;E:\wxWidgets-2.8.3\lib\bcc_lib\mswd
-Item9=..\..\..\gxlib;..\..\..\xlib;$(BCB)\include;$(BCB)\include\vcl;..\..\..\sdl;..\..\..\glib;E:\wxWidgets-2.8.3\include;E:\wxWidgets-2.8.3\lib\bcc_lib
-Item10=..\..\..\gxlib;..\..\..\xlib;$(BCB)\include;$(BCB)\include\vcl;..\..\..\sdl;..\..\..\glib
-Item11=..\..\..\gxlib;$(BCB)\include;$(BCB)\include\vcl;..\..\..\sdl;..\..\..\xlib;..\..\..\glib
-Item12=..\..\..\gxlib;$(BCB)\include;$(BCB)\include\vcl
+Count=14
+Item0=C:\Program Files\Borland\CBuilder6\Projects;..\..\..\gxlib;..\..\..\sdl;..\..\..\glib;..\..\..\xlib;$(BCB)\include;E:\wxWidgets-2.8.9\include;E:\wxWidgets-2.8.9\lib\bcc_lib\mswd;c:\python26\include;..\..\..\repository
+Item1=C:\Program Files\Borland\CBuilder6\Projects;..\..\..\gxlib;..\..\..\sdl;..\..\..\glib;..\..\..\xlib;$(BCB)\include;E:\wxWidgets-2.8.7\include;E:\wxWidgets-2.8.7\lib\bcc_lib\mswd;c:\python25\include;..\..\..\repository
+Item2=C:\Program Files\Borland\CBuilder6\Projects;..\..\..\gxlib;..\..\..\sdl;..\..\..\glib;..\..\..\xlib;$(BCB)\include;E:\wxWidgets-2.8.7\include;E:\wxWidgets-2.8.7\lib\bcc_lib\mswud;c:\python25\include;..\..\..\repository
+Item3=C:\Program Files\Borland\CBuilder6\Projects;..\..\..\gxlib;..\..\..\sdl;..\..\..\glib;..\..\..\xlib;$(BCB)\include;E:\wxWidgets-2.8.3\include;E:\wxWidgets-2.8.3\lib\bcc_lib\mswd;c:\python25\include;..\..\..\repository
+Item4=C:\Program Files\Borland\CBuilder6\Projects;..\..\..\gxlib;..\..\..\sdl;..\..\..\glib;..\..\..\xlib;$(BCB)\include;E:\wxWidgets-2.8.7\include;E:\wxWidgets-2.8.7\lib\bcc_lib\msw7d;c:\python25\include;..\..\..\repository
+Item5=C:\Program Files\Borland\CBuilder6\Projects;..\..\..\gxlib;..\..\..\sdl;..\..\..\glib;..\..\..\xlib;$(BCB)\include;E:\wxWidgets-2.8.4\include;E:\wxWidgets-2.8.4\lib\bcc_lib\mswd;c:\python25\include;..\..\..\repository
+Item6=C:\Program Files\Borland\CBuilder6\Projects;..\..\..\gxlib;..\..\..\sdl;..\..\..\glib;..\..\..\xlib;$(BCB)\include;E:\wxWidgets-2.8.3\include;E:\wxWidgets-2.8.3\lib\bcc_lib\mswd
+Item7=..\..\..\gxlib;..\..\..\sdl;..\..\..\glib;..\..\..\xlib;$(BCB)\include;E:\wxWidgets-2.8.3\include;E:\wxWidgets-2.8.3\lib\bcc_lib\mswd
+Item8=E:\wxWidgets-2.8.3\include;E:\wxWidgets-2.8.3\lib\bcc_lib\mswd;..\..\..\gxlib;..\..\..\xlib;$(BCB)\include;$(BCB)\include\vcl;..\..\..\sdl;..\..\..\glib
+Item9=..\..\..\gxlib;..\..\..\xlib;$(BCB)\include;$(BCB)\include\vcl;..\..\..\sdl;..\..\..\glib;E:\wxWidgets-2.8.3\include;E:\wxWidgets-2.8.3\lib\bcc_lib\mswd
+Item10=..\..\..\gxlib;..\..\..\xlib;$(BCB)\include;$(BCB)\include\vcl;..\..\..\sdl;..\..\..\glib;E:\wxWidgets-2.8.3\include;E:\wxWidgets-2.8.3\lib\bcc_lib
+Item11=..\..\..\gxlib;..\..\..\xlib;$(BCB)\include;$(BCB)\include\vcl;..\..\..\sdl;..\..\..\glib
+Item12=..\..\..\gxlib;$(BCB)\include;$(BCB)\include\vcl;..\..\..\sdl;..\..\..\xlib;..\..\..\glib
+Item13=..\..\..\gxlib;$(BCB)\include;$(BCB)\include\vcl
 
 [HistoryLists\hlLibraryPath]
 Count=2
@@ -120,15 +121,17 @@ Count=1
 Item0=$(BCB)\source\vcl
 
 [HistoryLists\hlConditionals]
-Count=8
-Item0=__WXWIDGETS__;_DEBUG
-Item1=__WXWIDGETS__;__WXDEBUG__;_DEBUG
-Item2=__WXWIDGETS__;__WXDEBUG__;_DEBUG;_UNICODE;
-Item3=__WXWIDGETS__;__WXDEBUG__;_DEBUG;
-Item4=__WXWIDGETS__;__WXDEBUG__;_DEBUG;_UNICODE
-Item5=__WXWIDGETS__;__WXDEBUG__
-Item6=__WXWIDGETS__
-Item7=_DEBUG
+Count=10
+Item0=__WXWIDGETS__;_DEBUG;_USE_OLD_RW_STL;HAVE_SNPRINTF_DECL
+Item1=__WXWIDGETS__;_DEBUG;_USE_OLD_RW_STL
+Item2=__WXWIDGETS__;_DEBUG
+Item3=__WXWIDGETS__;__WXDEBUG__;_DEBUG
+Item4=__WXWIDGETS__;__WXDEBUG__;_DEBUG;_UNICODE;
+Item5=__WXWIDGETS__;__WXDEBUG__;_DEBUG;
+Item6=__WXWIDGETS__;__WXDEBUG__;_DEBUG;_UNICODE
+Item7=__WXWIDGETS__;__WXDEBUG__
+Item8=__WXWIDGETS__
+Item9=_DEBUG
 
 [HistoryLists\hlIntOutputDir]
 Count=1
@@ -164,5 +167,10 @@ RemoteDebug=0
 ShowInfoMsgs=0
 LinkDebugVcl=0
 LinkCGLIB=0
+
+[Language]
+ActiveLang=
+ProjectLang=
+RootDir=
   </IDEOPTIONS>
 </PROJECT>

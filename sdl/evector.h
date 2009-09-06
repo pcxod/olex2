@@ -160,20 +160,20 @@ public:
     return FData[Fn-1];
   }
 
-  TVector operator  + (VecType a ) const {
+  TVector operator  + (VecType a) const {
     return TVector(*this) += a;
   }
 
-  TVector operator  - (VecType a ) const {
+  TVector operator  - (VecType a) const {
     return TVector(*this) -= a;
   }
 
-  TVector operator  * (VecType a ) const {
+  TVector operator  * (VecType a) const {
     return TVector(*this) *= a;
   }
 
-  TVector operator  / (VecType a ) const {
-    return TVector(*this) /= a;
+  TVector operator  / (VecType a) const {
+    return TVector<VecType>(*this) /= a;
   }
 
   TVector& operator  += (VecType v)  {

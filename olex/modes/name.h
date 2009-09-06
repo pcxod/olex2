@@ -26,7 +26,9 @@ protected:
       }
     }
   };
-
+#ifdef __BORLANDC__
+  friend class TNameModeUndo;
+#endif
   void SetCursor()  {
     olxstr Labl( Symbol.IsEmpty() ? olxstr('$') : Symbol );
     TGlXApp::GetMainForm()->SetUserCursor(Labl << Prefix << Index << Suffix, "name");

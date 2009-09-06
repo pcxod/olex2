@@ -8133,6 +8133,24 @@ void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options, TMa
     TBasicApp::GetLog() << "SHA256: " << SHA256::Digest(f) << '\n';
     TBasicApp::GetLog() << olxstr::FormatFloat(3, ((double)f.Length()/(((TETime::msNow() - st) + 1)*1.024*1024))) << " Mb/s\n";
   }
+  SExpression sexp;
+  SExpression::IEvaluable* root = sexp.Build("3*2 -4");
+  double v = root->Evaluate();
+  delete root;
+  root = sexp.Build("1 < 2 && (3 > 4 || 2 < 4)");
+  v = root->Evaluate();
+  delete root;
+  root = sexp.Build("-4*2 + 7");
+  v = root->Evaluate();
+  delete root;
+  root = sexp.Build("(1+2)*3");
+  v = root->Evaluate();
+  delete root;
+  if( !Cmds.IsEmpty() )  {
+    root = sexp.Build(Cmds.Text(' '));
+    v = root->Evaluate();
+    delete root;
+  }
 }
 //..............................................................................
 double Main_FindClosestDistance(const smatd_list& ml, vec3d& o_from, const TCAtom& a_to) {

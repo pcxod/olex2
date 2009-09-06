@@ -1,7 +1,7 @@
 #ifndef sparesrH
 #define sparesrH
 #include "elist.h"
-#include "exception.h"
+#include "tptrlist.h"
 #include "estlist.h"
 #include "estrlist.h"
 // arithmetic operators/functions
@@ -602,8 +602,8 @@ template <class OC, class IC, class AC>
 class TSyntaxParser  {
   IEvaluable *Root;
   IEvaluatorFactory *EvaluatorFactory;
-  TEList Evaluables;
-  TEList Evaluators;
+  TPtrList<IEvaluable> Evaluables;
+  TPtrList<IEvaluator> Evaluators;
   TStrList FErrors;
   TSStrPObjList<olxstr,TObjectFactory<IEvaluable>*, false > LogicalOperators, ComparisonOperators, ArithmeticFunctions;
 protected:
