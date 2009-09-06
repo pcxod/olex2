@@ -9,15 +9,24 @@
     <RESFILES value="olex2v.res"/>
     <DEFFILE value=""/>
     <RESDEPEN value="$(RESFILES)"/>
-    <LIBFILES value="lib\xlib.lib lib\alglib.lib lib\gllib.lib lib\gxlib.lib lib\python25.lib 
-      lib\sdl.lib E:\wxWidgets-2.8.7\lib\bcc_lib\wxzlibd.lib 
-      E:\wxWidgets-2.8.7\lib\bcc_lib\wxexpatd.lib 
-      E:\wxWidgets-2.8.7\lib\bcc_lib\wxjpegd.lib 
-      E:\wxWidgets-2.8.7\lib\bcc_lib\wxmsw28d.lib 
-      E:\wxWidgets-2.8.7\lib\bcc_lib\wxmsw28d_gl.lib 
-      E:\wxWidgets-2.8.7\lib\bcc_lib\wxpngd.lib 
-      E:\wxWidgets-2.8.7\lib\bcc_lib\wxregexd.lib 
-      E:\wxWidgets-2.8.7\lib\bcc_lib\wxtiffd.lib"/>
+    <LIBFILES value="lib\xlib.lib lib\alglib.lib lib\gllib.lib lib\gxlib.lib lib\sdl.lib 
+      lib\python26.lib E:\wxWidgets-2.8.9\lib\bcc_lib\wxbase28d.lib 
+      E:\wxWidgets-2.8.9\lib\bcc_lib\wxbase28d_net.lib 
+      E:\wxWidgets-2.8.9\lib\bcc_lib\wxbase28d_xml.lib 
+      E:\wxWidgets-2.8.9\lib\bcc_lib\wxexpatd.lib 
+      E:\wxWidgets-2.8.9\lib\bcc_lib\wxjpegd.lib 
+      E:\wxWidgets-2.8.9\lib\bcc_lib\wxmsw28d_adv.lib 
+      E:\wxWidgets-2.8.9\lib\bcc_lib\wxmsw28d_aui.lib 
+      E:\wxWidgets-2.8.9\lib\bcc_lib\wxmsw28d_core.lib 
+      E:\wxWidgets-2.8.9\lib\bcc_lib\wxmsw28d_gl.lib 
+      E:\wxWidgets-2.8.9\lib\bcc_lib\wxmsw28d_html.lib 
+      E:\wxWidgets-2.8.9\lib\bcc_lib\wxmsw28d_media.lib 
+      E:\wxWidgets-2.8.9\lib\bcc_lib\wxmsw28d_richtext.lib 
+      E:\wxWidgets-2.8.9\lib\bcc_lib\wxmsw28d_xrc.lib 
+      E:\wxWidgets-2.8.9\lib\bcc_lib\wxpngd.lib 
+      E:\wxWidgets-2.8.9\lib\bcc_lib\wxregexd.lib 
+      E:\wxWidgets-2.8.9\lib\bcc_lib\wxtiffd.lib 
+      E:\wxWidgets-2.8.9\lib\bcc_lib\wxzlibd.lib"/>
     <LIBRARIES value=""/>
     <SPARELIBS value=""/>
     <PACKAGES value="vcl.bpi rtl.bpi vclx.bpi bcbsmp.bpi dbrtl.bpi adortl.bpi vcldb.bpi 
@@ -33,10 +42,10 @@
     <DEBUGLIBPATH value="$(BCB)\lib\debug"/>
     <RELEASELIBPATH value="$(BCB)\lib\release"/>
     <LINKER value="ilink32"/>
-    <USERDEFINES value="__WXWIDGETS__;DEBUG;"/>
+    <USERDEFINES value="__WXWIDGETS__;DEBUG;_USE_OLD_RW_STL;HAVE_SNPRINTF_DECL"/>
     <SYSDEFINES value="NO_STRICT;_NO_VCL"/>
     <MAINSOURCE value="olex2v.bpf"/>
-    <INCLUDEPATH value="..\..\..\sdl;..\..\..\olex2v;..\..\..\repository;..\..\..\glib;..\..\..\xlib;..\..\..\gxlib;..\..;$(BCB)\include;$(BCB)\include\vcl;E:\wxWidgets-2.8.7\include;E:\wxWidgets-2.8.7\lib\bcc_lib\mswd;C:\Python25\include;&quot;C:\Program Files\Java\jdk1.6.0_06\include&quot;"/>
+    <INCLUDEPATH value="..\..\..\sdl;..\..\..\olex2v;..\..\..\repository;..\..\..\glib;..\..\..\xlib;..\..\..\gxlib;..\..;$(BCB)\include;$(BCB)\include\vcl;E:\wxWidgets-2.8.9\include;E:\wxWidgets-2.8.9\lib\bcc_lib\mswd;C:\Python26\include;&quot;C:\Program Files (x86)\Java\jdk1.6.0_14\include&quot;"/>
     <LIBPATH value="..\..\..\repository;..\..\..\olex2v;$(BCB)\lib\obj;$(BCB)\lib"/>
     <WARNINGS value="-w-par"/>
     <OTHERFILES value=""/>
@@ -64,22 +73,31 @@
       <FILE FILENAME="lib\alglib.lib" FORMNAME="" UNITNAME="alglib.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="lib\gllib.lib" FORMNAME="" UNITNAME="gllib.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="lib\gxlib.lib" FORMNAME="" UNITNAME="gxlib.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
-      <FILE FILENAME="lib\python25.lib" FORMNAME="" UNITNAME="python25.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="lib\sdl.lib" FORMNAME="" UNITNAME="sdl.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\repository\fsext.cpp" FORMNAME="" UNITNAME="fsext.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\repository\integration.cpp" FORMNAME="" UNITNAME="integration.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\repository\olxvar.cpp" FORMNAME="" UNITNAME="olxvar.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\repository\pyext.cpp" FORMNAME="" UNITNAME="pyext.cpp" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\repository\IsoSurface.cpp" FORMNAME="" UNITNAME="IsoSurface" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
-      <FILE FILENAME="E:\wxWidgets-2.8.7\lib\bcc_lib\wxzlibd.lib" FORMNAME="" UNITNAME="wxzlibd.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
-      <FILE FILENAME="E:\wxWidgets-2.8.7\lib\bcc_lib\wxexpatd.lib" FORMNAME="" UNITNAME="wxexpatd.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
-      <FILE FILENAME="E:\wxWidgets-2.8.7\lib\bcc_lib\wxjpegd.lib" FORMNAME="" UNITNAME="wxjpegd.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
-      <FILE FILENAME="E:\wxWidgets-2.8.7\lib\bcc_lib\wxmsw28d.lib" FORMNAME="" UNITNAME="wxmsw28d.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
-      <FILE FILENAME="E:\wxWidgets-2.8.7\lib\bcc_lib\wxmsw28d_gl.lib" FORMNAME="" UNITNAME="wxmsw28d_gl.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
-      <FILE FILENAME="E:\wxWidgets-2.8.7\lib\bcc_lib\wxpngd.lib" FORMNAME="" UNITNAME="wxpngd.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
-      <FILE FILENAME="E:\wxWidgets-2.8.7\lib\bcc_lib\wxregexd.lib" FORMNAME="" UNITNAME="wxregexd.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
-      <FILE FILENAME="E:\wxWidgets-2.8.7\lib\bcc_lib\wxtiffd.lib" FORMNAME="" UNITNAME="wxtiffd.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="..\..\..\repository\wxzipfs.cpp" FORMNAME="" UNITNAME="wxzipfs" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="lib\python26.lib" FORMNAME="" UNITNAME="python26.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="E:\wxWidgets-2.8.9\lib\bcc_lib\wxbase28d.lib" FORMNAME="" UNITNAME="wxbase28d.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="E:\wxWidgets-2.8.9\lib\bcc_lib\wxbase28d_net.lib" FORMNAME="" UNITNAME="wxbase28d_net.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="E:\wxWidgets-2.8.9\lib\bcc_lib\wxbase28d_xml.lib" FORMNAME="" UNITNAME="wxbase28d_xml.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="E:\wxWidgets-2.8.9\lib\bcc_lib\wxexpatd.lib" FORMNAME="" UNITNAME="wxexpatd.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="E:\wxWidgets-2.8.9\lib\bcc_lib\wxjpegd.lib" FORMNAME="" UNITNAME="wxjpegd.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="E:\wxWidgets-2.8.9\lib\bcc_lib\wxmsw28d_adv.lib" FORMNAME="" UNITNAME="wxmsw28d_adv.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="E:\wxWidgets-2.8.9\lib\bcc_lib\wxmsw28d_aui.lib" FORMNAME="" UNITNAME="wxmsw28d_aui.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="E:\wxWidgets-2.8.9\lib\bcc_lib\wxmsw28d_core.lib" FORMNAME="" UNITNAME="wxmsw28d_core.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="E:\wxWidgets-2.8.9\lib\bcc_lib\wxmsw28d_gl.lib" FORMNAME="" UNITNAME="wxmsw28d_gl.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="E:\wxWidgets-2.8.9\lib\bcc_lib\wxmsw28d_html.lib" FORMNAME="" UNITNAME="wxmsw28d_html.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="E:\wxWidgets-2.8.9\lib\bcc_lib\wxmsw28d_media.lib" FORMNAME="" UNITNAME="wxmsw28d_media.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="E:\wxWidgets-2.8.9\lib\bcc_lib\wxmsw28d_richtext.lib" FORMNAME="" UNITNAME="wxmsw28d_richtext.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="E:\wxWidgets-2.8.9\lib\bcc_lib\wxmsw28d_xrc.lib" FORMNAME="" UNITNAME="wxmsw28d_xrc.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="E:\wxWidgets-2.8.9\lib\bcc_lib\wxpngd.lib" FORMNAME="" UNITNAME="wxpngd.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="E:\wxWidgets-2.8.9\lib\bcc_lib\wxregexd.lib" FORMNAME="" UNITNAME="wxregexd.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="E:\wxWidgets-2.8.9\lib\bcc_lib\wxtiffd.lib" FORMNAME="" UNITNAME="wxtiffd.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="E:\wxWidgets-2.8.9\lib\bcc_lib\wxzlibd.lib" FORMNAME="" UNITNAME="wxzlibd.lib" CONTAINERID="LibTool" DESIGNCLASS="" LOCALCOMMAND=""/>
   </FILELIST>
   <BUILDTOOLS>
   </BUILDTOOLS>
@@ -113,14 +131,15 @@ ProductVersion=1.0.0.0
 Comments=
 
 [HistoryLists\hlIncludePath]
-Count=7
-Item0=..\..\..\sdl;..\..\..\olex2v;..\..\..\repository;..\..\..\glib;..\..\..\xlib;..\..\..\gxlib;..\..;$(BCB)\include;$(BCB)\include\vcl;E:\wxWidgets-2.8.7\include;E:\wxWidgets-2.8.7\lib\bcc_lib\mswd;C:\Python25\include;C:\Program Files\Java\jdk1.6.0_06\include
-Item1=..\..\..\sdl;..\..\..\olex2v;..\..\..\repository;..\..\..\glib;..\..\..\xlib;..\..\..\gxlib;..\..;$(BCB)\include;$(BCB)\include\vcl;E:\wxWidgets-2.8.7\include;E:\wxWidgets-2.8.7\lib\bcc_lib\mswd;C:\Python25\include
-Item2=..\..\..\sdl;..\..\..\olex2v;..\..\..\repository;..\..\..\glib;..\..\..\xlib;..\..\..\gxlib;..\..;$(BCB)\include;$(BCB)\include\vcl;C:\Python25\include;E:\wxWidgets-2.8.7\include;E:\wxWidgets-2.8.7\lib\bcc_lib\mswd
-Item3=..\..\..\olex2v;..\..\..\repository;..\..\..\glib;..\..\..\xlib;..\..\..\gxlib;..\..;$(BCB)\include;$(BCB)\include\vcl;E:\wxWidgets-2.8.7\include;E:\wxWidgets-2.8.7\lib\bcc_lib\mswd;C:\Python25\include;..\..\..\sdl
-Item4=..\..\..\olex2v;..\..\..\olex2vFiles\Borland\CBuilder6\Projects;..\..\..\repository;..\..\..\glib;..\..\..\xlib;..\..\..\gxlib;..\..;$(BCB)\include;$(BCB)\include\vcl;E:\wxWidgets-2.8.7\include;E:\wxWidgets-2.8.7\lib\bcc_lib\mswd;C:\Python25\include
-Item5=..\..\..\olex2vFiles\Borland\CBuilder6\Projects;..\..\..\repository;..\..\..\glib;..\..\..\xlib;..\..\..\gxlib;..\..;$(BCB)\include;$(BCB)\include\vcl;E:\wxWidgets-2.8.7\include;E:\wxWidgets-2.8.7\lib\bcc_lib\mswd;C:\Python25\include
-Item6=..\..\..\olex2v;$(BCB)\include;$(BCB)\include\vcl
+Count=8
+Item0=..\..\..\sdl;..\..\..\olex2v;..\..\..\repository;..\..\..\glib;..\..\..\xlib;..\..\..\gxlib;..\..;$(BCB)\include;$(BCB)\include\vcl;E:\wxWidgets-2.8.9\include;E:\wxWidgets-2.8.9\lib\bcc_lib\mswd;C:\Python26\include;C:\Program Files (x86)\Java\jdk1.6.0_14\include
+Item1=..\..\..\sdl;..\..\..\olex2v;..\..\..\repository;..\..\..\glib;..\..\..\xlib;..\..\..\gxlib;..\..;$(BCB)\include;$(BCB)\include\vcl;E:\wxWidgets-2.8.7\include;E:\wxWidgets-2.8.7\lib\bcc_lib\mswd;C:\Python25\include;C:\Program Files\Java\jdk1.6.0_06\include
+Item2=..\..\..\sdl;..\..\..\olex2v;..\..\..\repository;..\..\..\glib;..\..\..\xlib;..\..\..\gxlib;..\..;$(BCB)\include;$(BCB)\include\vcl;E:\wxWidgets-2.8.7\include;E:\wxWidgets-2.8.7\lib\bcc_lib\mswd;C:\Python25\include
+Item3=..\..\..\sdl;..\..\..\olex2v;..\..\..\repository;..\..\..\glib;..\..\..\xlib;..\..\..\gxlib;..\..;$(BCB)\include;$(BCB)\include\vcl;C:\Python25\include;E:\wxWidgets-2.8.7\include;E:\wxWidgets-2.8.7\lib\bcc_lib\mswd
+Item4=..\..\..\olex2v;..\..\..\repository;..\..\..\glib;..\..\..\xlib;..\..\..\gxlib;..\..;$(BCB)\include;$(BCB)\include\vcl;E:\wxWidgets-2.8.7\include;E:\wxWidgets-2.8.7\lib\bcc_lib\mswd;C:\Python25\include;..\..\..\sdl
+Item5=..\..\..\olex2v;..\..\..\olex2vFiles\Borland\CBuilder6\Projects;..\..\..\repository;..\..\..\glib;..\..\..\xlib;..\..\..\gxlib;..\..;$(BCB)\include;$(BCB)\include\vcl;E:\wxWidgets-2.8.7\include;E:\wxWidgets-2.8.7\lib\bcc_lib\mswd;C:\Python25\include
+Item6=..\..\..\olex2vFiles\Borland\CBuilder6\Projects;..\..\..\repository;..\..\..\glib;..\..\..\xlib;..\..\..\gxlib;..\..;$(BCB)\include;$(BCB)\include\vcl;E:\wxWidgets-2.8.7\include;E:\wxWidgets-2.8.7\lib\bcc_lib\mswd;C:\Python25\include
+Item7=..\..\..\olex2v;$(BCB)\include;$(BCB)\include\vcl
 
 [HistoryLists\hlLibraryPath]
 Count=2
@@ -132,12 +151,14 @@ Count=1
 Item0=$(BCB)\source\vcl
 
 [HistoryLists\hlConditionals]
-Count=5
-Item0=__WXWIDGETS__;DEBUG;
-Item1=__WINDOWS__;__WXMSW__;__WXWIDGETS__;__WXDEBUG___DEBUG;
-Item2=_DEBUG;__WXWIDGETS__
-Item3=_DEBUG;wxUSE_GUI
-Item4=_DEBUG
+Count=7
+Item0=__WXWIDGETS__;DEBUG;_USE_OLD_RW_STL;HAVE_SNPRINTF_DECL
+Item1=__WXWIDGETS__;DEBUG;_USE_OLD_RW_STL
+Item2=__WXWIDGETS__;DEBUG;
+Item3=__WINDOWS__;__WXMSW__;__WXWIDGETS__;__WXDEBUG___DEBUG;
+Item4=_DEBUG;__WXWIDGETS__
+Item5=_DEBUG;wxUSE_GUI
+Item6=_DEBUG
 
 [HistoryLists\hlIntOutputDir]
 Count=2

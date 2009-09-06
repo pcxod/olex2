@@ -1119,6 +1119,14 @@ public:
     return SubString(start, end+1-start );
   }
   //............................................................................
+  TTSString TrimWhiteChars() const {
+    if( T::_Length == 0 )  return EmptyString;
+    size_t start = 0, end = T::_Length;
+    while( o_iswhitechar(TTIString<TC>::Data(start)) && ++start < end )  ;
+    while( --end > start && o_iswhitechar(TTIString<TC>::Data(start)) )  ;
+    return SubString(start, end+1-start );
+  }
+  //............................................................................
   inline TTSString& TrimFloat() {
     T::TrimFloat();
     return *this;
@@ -1270,7 +1278,7 @@ public:
   //............................................................................
   // just checks if string contains any chars > 127
   template <class AC> static bool o_needs_converting(const AC* data, size_t len) {
-    for( int i=0; i < len; i++ )
+    for( size_t i=0; i < len; i++ )
       if( data[i] > 127 || data[i] < 0 )
         return true;
     return false;

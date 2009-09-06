@@ -21,7 +21,9 @@ protected:
       Atom.GetParent()->GetRefMod()->Vars.SetParam(Atom, catom_var_name_Sof, Occu);
     }
   };
-
+#ifdef __BORLANDC__
+  friend class TOccuModeUndo;
+#endif
 public:
   TOccuMode(int id) : AModeWithLabels(id)  {  HasInstance = true;  }
   bool Init(TStrObjList &Cmds, const TParamList &Options) {

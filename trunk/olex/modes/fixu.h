@@ -37,7 +37,9 @@ protected:
       }
     }
   };
-
+#ifdef __BORLANDC__
+  friend class TFixUModeUndo;
+#endif
 public:
   TFixUMode(int id) : AModeWithLabels(id)  {  HasInstance = true;  }
   bool Init(TStrObjList &Cmds, const TParamList &Options) {

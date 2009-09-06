@@ -792,7 +792,7 @@ void THtmlSwitch::UpdateFileIndex()  {
 #ifdef _UNICODE
   TUtf8File::ReadLines(*is, FStrings, false);
 #else
-  FStrings.LoadFromtextStream(*is);
+  FStrings.LoadFromTextStream(*is);
 #endif
   delete is;
   for( int i=0; i < FStrings.Count(); i++ )  {
