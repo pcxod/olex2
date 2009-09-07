@@ -1,7 +1,7 @@
 #ifndef IpBaseH
 #define IpBaseH
 
-#ifndef __GNUC__ // it cannot compile this ..
+//#ifndef __GNUC__ // it cannot compile this ..
 
 #include "ebase.h"
 #include "typelist.h"
@@ -397,7 +397,7 @@ template <class RV, class BaseClass>
       Instance = instance;
     }
     virtual IEObject* Run(TPtrList<IEObject const>&params )  {
-      ValidateParameters( params );
+      AFunc<RV>::ValidateParameters( params );
       TPTWrapper<RV>* rv;
       rv = new TPTWrapper<RV>( (Instance->*func)() );
       return rv;
@@ -411,10 +411,10 @@ template <class RV, class A1>
   public:
     PFunc1(const olxstr& name, RV (*f)(A1) ) : AFunc<RV>(name) {
       this->func = f;
-      ArgTypes.Add( &typeid(TPTWrapper<A1>) );
+      AFunc<RV>::ArgTypes.Add( &typeid(TPTWrapper<A1>) );
     }
     virtual IEObject* Run(TPtrList<IEObject const>&params )  {
-      ValidateParameters( params );
+      AFunc<RV>::ValidateParameters( params );
       TPTWrapper<RV>* rv;
       rv = new TPTWrapper<RV>( this->func(  ((TPTWrapper<A1>*)params[0])->GetValue() ) );
       return rv;
@@ -429,10 +429,10 @@ template <class RV, class BaseClass, class A1>
     CPFunc1(const olxstr& name, BaseClass* instance, RV (BaseClass::*f)(A1) ) : AFunc<RV>(name) {
       this->func = f;
       Instance = instance;
-      ArgTypes.Add( &typeid(TPTWrapper<A1>) );
+      AFunc<RV>::ArgTypes.Add( &typeid(TPTWrapper<A1>) );
     }
     virtual IEObject* Run(TPtrList<IEObject const>&params )  {
-      ValidateParameters( params );
+      AFunc<RV>::ValidateParameters( params );
       TPTWrapper<RV>* rv;
       rv = new TPTWrapper<RV>( (Instance->*func)(  ((TPTWrapper<A1>*)params[0])->GetValue() ) );
       return rv;
@@ -446,11 +446,11 @@ template <class RV, class A1, class A2>
   public:
     PFunc2(const olxstr& name,  RV (*f)(A1,A2) ) : AFunc<RV>(name) {
       this->func = f;
-      ArgTypes.Add( &typeid(TPTWrapper<A1>) );
-      ArgTypes.Add( &typeid(TPTWrapper<A2>) );
+      AFunc<RV>::ArgTypes.Add( &typeid(TPTWrapper<A1>) );
+      AFunc<RV>::ArgTypes.Add( &typeid(TPTWrapper<A2>) );
     }
     virtual IEObject* Run(TPtrList<IEObject const>&params )  {
-      ValidateParameters( params );
+      AFunc<RV>::ValidateParameters( params );
       TPTWrapper<RV>* rv;
         rv = new TPTWrapper<RV>(
           this->func(  ((TPTWrapper<A1>*)params[0])->GetValue(),
@@ -468,11 +468,11 @@ template <class RV, class BaseClass, class A1, class A2>
         RV (BaseClass::*f)(A1, A2) ) : AFunc<RV>(name) {
       this->func = f;
       Instance = instance;
-      ArgTypes.Add( &typeid(TPTWrapper<A1>) );
-      ArgTypes.Add( &typeid(TPTWrapper<A2>) );
+      AFunc<RV>::ArgTypes.Add( &typeid(TPTWrapper<A1>) );
+      AFunc<RV>::ArgTypes.Add( &typeid(TPTWrapper<A2>) );
     }
     virtual IEObject* Run(TPtrList<IEObject const>&params )  {
-      ValidateParameters( params );
+      AFunc<RV>::ValidateParameters( params );
       TPTWrapper<RV>* rv;
       rv = new TPTWrapper<RV>( (Instance->*func)(  ((TPTWrapper<A1>*)params[0])->GetValue(),
                                                 ((TPTWrapper<A2>*)params[1])->GetValue() ) );
@@ -487,12 +487,12 @@ template <class RV, class A1, class A2, class A3>
   public:
     PFunc3(const olxstr& name,  RV (*f)(A1,A2,A3) ) : AFunc<RV>(name) {
       this->func = f;
-      ArgTypes.Add( &typeid(TPTWrapper<A1>) );
-      ArgTypes.Add( &typeid(TPTWrapper<A2>) );
-      ArgTypes.Add( &typeid(TPTWrapper<A3>) );
+      AFunc<RV>::ArgTypes.Add( &typeid(TPTWrapper<A1>) );
+      AFunc<RV>::ArgTypes.Add( &typeid(TPTWrapper<A2>) );
+      AFunc<RV>::ArgTypes.Add( &typeid(TPTWrapper<A3>) );
     }
     virtual IEObject* Run(TPtrList<IEObject const>&params )  {
-      ValidateParameters( params );
+      AFunc<RV>::ValidateParameters( params );
       TPTWrapper<RV>* rv;
         rv = new TPTWrapper<RV>(
           this->func(  ((TPTWrapper<A1>*)params[0])->GetValue(),
@@ -511,12 +511,12 @@ template <class RV, class BaseClass, class A1, class A2, class A3>
         RV (BaseClass::*f)(A1, A2, A3) ) : AFunc<RV>(name) {
       this->func = f;
       Instance = instance;
-      ArgTypes.Add( &typeid(TPTWrapper<A1>) );
-      ArgTypes.Add( &typeid(TPTWrapper<A2>) );
-      ArgTypes.Add( &typeid(TPTWrapper<A3>) );
+      AFunc<RV>::ArgTypes.Add( &typeid(TPTWrapper<A1>) );
+      AFunc<RV>::ArgTypes.Add( &typeid(TPTWrapper<A2>) );
+      AFunc<RV>::ArgTypes.Add( &typeid(TPTWrapper<A3>) );
     }
     virtual IEObject* Run(TPtrList<IEObject const>&params )  {
-      ValidateParameters( params );
+      AFunc<RV>::ValidateParameters( params );
       TPTWrapper<RV>* rv;
       rv = new TPTWrapper<RV>( (Instance->*func)(  ((TPTWrapper<A1>*)params[0])->GetValue(),
                                                    ((TPTWrapper<A2>*)params[1])->GetValue(),
@@ -532,13 +532,13 @@ template <class RV, class A1, class A2, class A3, class A4>
   public:
     PFunc4(const olxstr& name,  RV (*f)(A1,A2,A3,A4) ) : AFunc<RV>(name) {
       this->func = f;
-      ArgTypes.Add( &typeid(TPTWrapper<A1>) );
-      ArgTypes.Add( &typeid(TPTWrapper<A2>) );
-      ArgTypes.Add( &typeid(TPTWrapper<A3>) );
-      ArgTypes.Add( &typeid(TPTWrapper<A4>) );
+      AFunc<RV>::ArgTypes.Add( &typeid(TPTWrapper<A1>) );
+      AFunc<RV>::ArgTypes.Add( &typeid(TPTWrapper<A2>) );
+      AFunc<RV>::ArgTypes.Add( &typeid(TPTWrapper<A3>) );
+      AFunc<RV>::ArgTypes.Add( &typeid(TPTWrapper<A4>) );
     }
     virtual IEObject* Run(TPtrList<IEObject const>&params )  {
-      ValidateParameters( params );
+      AFunc<RV>::ValidateParameters( params );
       TPTWrapper<RV>* rv;
         rv = new TPTWrapper<RV>(
           this->func(  ((TPTWrapper<A1>*)params[0])->GetValue(),
@@ -558,13 +558,13 @@ template <class RV, class BaseClass, class A1, class A2, class A3, class A4>
         RV (BaseClass::*f)(A1, A2, A3, A4) ) : AFunc<RV>(name) {
       this->func = f;
       Instance = instance;
-      ArgTypes.Add( &typeid(TPTWrapper<A1>) );
-      ArgTypes.Add( &typeid(TPTWrapper<A2>) );
-      ArgTypes.Add( &typeid(TPTWrapper<A3>) );
-      ArgTypes.Add( &typeid(TPTWrapper<A4>) );
+      AFunc<RV>::ArgTypes.Add( &typeid(TPTWrapper<A1>) );
+      AFunc<RV>::ArgTypes.Add( &typeid(TPTWrapper<A2>) );
+      AFunc<RV>::ArgTypes.Add( &typeid(TPTWrapper<A3>) );
+      AFunc<RV>::ArgTypes.Add( &typeid(TPTWrapper<A4>) );
     }
     virtual IEObject* Run(TPtrList<IEObject const>&params )  {
-      ValidateParameters( params );
+      AFunc<RV>::ValidateParameters( params );
       TPTWrapper<RV>* rv;
       rv = new TPTWrapper<RV>( (Instance->*func)(  ((TPTWrapper<A1>*)params[0])->GetValue(),
                                                    ((TPTWrapper<A2>*)params[1])->GetValue(),
@@ -581,7 +581,8 @@ public:
     for( int i=0; i < funcs.Count(); i++ )
       delete funcs.GetObject(i);
   }
-  IFunc* FindFunction( const olxstr& name )  const  {
+  template <class T>
+  IFunc* FindFunction(const T& name)  const  {
     int ind = funcs.IndexOfComparable(name);
     return ind == -1 ? NULL : funcs.GetObject(ind);
   }
@@ -590,9 +591,9 @@ public:
     VFunc* gf = new VFunc( name, F);
     funcs.Add( name, gf);
   }
-  // void (BC::*F)()
-  template<class BC>
-    void Reg(const olxstr& name, BC* instance, void (BC::*F)(void) )  {  
+  // void (BC::*F)(), non standsrd - MSVC gets confused here with RV (BC::*F)()...
+  template<class BC, void (BC::*F)()>
+    void Reg(const olxstr& name, BC* instance)  {  
       CVFunc<BC>* gf = new CVFunc<BC>( name, instance, F);
       funcs.Add( name, gf);
     }
@@ -665,7 +666,7 @@ public:
   // RV (BC::*F)(A1)
   template< class RV, class BC, class A1 > 
     void Reg(const olxstr& name, BC* instance, RV (BC::*F)(A1) )  {  
-      CFunc1<RV,BC,A1>* gf = new CFunc1<RV,BC,A1>( name, instance, F);
+      CPFunc1<RV,BC,A1>* gf = new CPFunc1<RV,BC,A1>( name, instance, F);
       funcs.Add( name, gf);
     }
   // RV (*F)(A1, A2)
@@ -677,7 +678,7 @@ public:
   // RV (BC::*F)(A1,A2)
   template< class RV, class BC, class A1, class A2 > 
     void Reg(const olxstr& name, BC* instance, RV (BC::*F)(A1, A2) )  {  
-      CFunc2<RV,BC,A1>* gf = new CFunc2<RV,BC,A1,A2>( name, instance, F);
+      CPFunc2<RV,BC,A1,A2>* gf = new CPFunc2<RV,BC,A1,A2>( name, instance, F);
       funcs.Add( name, gf);
     }
   // RV (*F)(A1, A2, A3)
@@ -689,7 +690,7 @@ public:
   // RV (BC::*F)(A1,A2,A3)
   template< class RV, class BC, class A1, class A2, class A3>
     void Reg(const olxstr& name, BC* instance, RV (BC::*F)(A1, A2,A3) )  {
-      CFunc3<RV,BC,A1,A3>* gf = new CFunc3<RV,BC,A1,A2,A3>( name, instance, F);
+      CPFunc3<RV,BC,A1,A2,A3>* gf = new CPFunc3<RV,BC,A1,A2,A3>( name, instance, F);
       funcs.Add( name, gf);
     }
   // RV (*F)(A1, A2, A3,A4)
@@ -701,27 +702,27 @@ public:
   // RV (BC::*F)(A1,A2,A3,A4)
   template< class RV, class BC, class A1, class A2, class A3, class A4>
     void Reg(const olxstr& name, BC* instance, RV (BC::*F)(A1, A2,A3,A4) )  {
-      CFunc4<RV,BC,A1,A3,A4>* gf = new CFunc4<RV,BC,A1,A2,A3,A4>( name, instance, F);
+      CPFunc4<RV,BC,A1,A2,A3,A4>* gf = new CPFunc4<RV,BC,A1,A2,A3,A4>( name, instance, F);
       funcs.Add( name, gf);
     }
 
 
-  template <class RV>
-    RV CallFunction(const olxstr& name)  {
+  template <class T, class RV>
+    RV CallFunction(const T& name)  {
       TPtrList<IEObject const> args;
       TPTWrapper<RV> retVal( (TPTWrapper<RV>*)FindFunction(name)->Run(args));
       return retVal.GetValue();
     }
-  template <class RV, class A1>
-    RV CallFunction(const olxstr& name, A1 a1)  {
+  template <class T, class RV, class A1>
+    RV CallFunction(const T& name, A1 a1)  {
       TPtrList<IEObject const> args;
       TPTWrapper<A1> warg1(a1);
       args.Add( &warg1 );
       TPTWrapper<RV> retVal( (TPTWrapper<RV>*)FindFunction(name)->Run(args));
       return retVal.GetValue();
     }
-  template <class RV, class A1, class A2>
-    RV CallFunction(const olxstr& name, A1 a1, A2 a2)  {
+  template <class T, class RV, class A1, class A2>
+    RV CallFunction(const T& name, A1 a1, A2 a2)  {
       TPtrList<IEObject const> args;
       TPTWrapper<A1> warg1(a1);
       args.Add( &warg1 );
@@ -730,8 +731,8 @@ public:
       TPTWrapper<RV> retVal( (TPTWrapper<RV>*)FindFunction(name)->Run(args) );
       return retVal.GetValue();
     }
-  template <class RV, class A1, class A2, class A3>
-    RV CallFunction(const olxstr& name, A1 a1, A2 a2, A3 a3)  {
+  template <class T, class RV, class A1, class A2, class A3>
+    RV CallFunction(const T& name, A1 a1, A2 a2, A3 a3)  {
       TPtrList<IEObject const> args;
       TPTWrapper<A1> warg1(a1);
       args.Add( &warg1 );
@@ -742,8 +743,8 @@ public:
       TPTWrapper<RV> retVal( (TPTWrapper<RV>*)FindFunction(name)->Run(args) );
       return retVal.GetValue();
     }
-  template <class RV, class A1, class A2, class A3, class A4>
-    RV CallFunction(const olxstr& name, A1 a1, A2 a2, A3 a3, A4 a4)  {
+  template <class T, class RV, class A1, class A2, class A3, class A4>
+    RV CallFunction(const T& name, A1 a1, A2 a2, A3 a3, A4 a4)  {
       TPtrList<IEObject const> args;
       TPTWrapper<A1> warg1(a1);
       args.Add( &warg1 );
@@ -760,5 +761,5 @@ public:
 };
 
 EndEsdlNamespace()
-#endif // GNUC
+//#endif // GNUC
 #endif
