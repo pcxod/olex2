@@ -152,14 +152,41 @@ struct ExpParser  {
     }
     return false;
   }
+  static void SplitArgs(const olxstr& exp, TStrList& res)  {
+    int start = 0;
+    for( int i=0; i < exp.Length(); i++ )  {
+      const olxch ch = exp.CharAt(i);
+      if( ch == '(' )  {
+        int bc = 1;
+        while( ++i < exp.Length() && bc != 0 )  {
+          if( exp.CharAt(i) == '(' )  bc++;
+          else if( exp.CharAt(i) == ')' )  bc--;
+        }
+        i--;
+      }
+      else if( ch == '"' || ch == '\'' )  {  // skip strings
+        while( ++i < exp.Length() && exp.CharAt(i) != ch && exp.CharAt(i-1) != '\\' )
+          ;
+      }
+      else if( ch == ',' )  {
+        res.Add( exp.SubString(start, i-start) ).TrimWhiteChars();
+        start = i+1;
+      }
+    }
+    if( start < exp.Length() )
+      res.Add( exp.SubStringFrom(start) ).TrimWhiteChars();
+  }
   static inline bool IsBracket(const olxch& ch)  {
     return ch == '(' || ch == '[' || ch == '{';
   }
   template <class T> struct evaluator  {
     olxstr name;
-    T* arg;
-    evaluator(const olxstr& _name, T* _arg) : name(_name), arg(_arg) {}
-    ~evaluator()  {  delete arg;  }
+    TPtrList<T> args;
+    evaluator(const olxstr& _name) : name(_name) {}
+    ~evaluator()  {  
+      for( int i=0; i < args.Count(); i++ )
+        delete args[i];
+    }
   };
   struct exp_tree  {
     olxstr data;
@@ -191,24 +218,34 @@ struct ExpParser  {
           arg = arg.TrimWhiteChars();
           dt = dt.TrimWhiteChars();
           if( arg.IsEmpty() ) // empty arg list
-            evator = new evaluator<exp_tree>(dt, NULL);
+            evator = new evaluator<exp_tree>(dt);
           else  {
-            left = new exp_tree(this, arg);
-            left->expand();
-            if( !dt.IsEmpty() )  { // ()
-              evator = new evaluator<exp_tree>(dt, left);
-              left = NULL;
+            TStrList args;
+            SplitArgs(arg, args);
+            if( args.Count() == 1 )  {
+              left = new exp_tree(this, arg);
+              left->expand();
+              if( !dt.IsEmpty() )  { // ()
+                evator = new evaluator<exp_tree>(dt);
+                evator->args.Add(left);
+                left = NULL;
+              }
+              else if( i+1 >= data.Length() )  {  // nothing else? then move one level up...
+                exp_tree* eta = left;
+                left = eta->left;
+                right = eta->right;
+                evator = eta->evator;
+                data = eta->data;
+                eta->left = eta->right = NULL;
+                eta->evator = NULL;
+                delete eta;
+                priority = true;
+              }
             }
-            else if( i+1 >= data.Length() )  {  // nothing else? then move one level up...
-              exp_tree* eta = left;
-              left = eta->left;
-              right = eta->right;
-              evator = eta->evator;
-              data = eta->data;
-              eta->left = eta->right = NULL;
-              eta->evator = NULL;
-              delete eta;
-              priority = true;
+            else  {
+              evator = new evaluator<exp_tree>(dt);
+              for( int ai=0; ai < args.Count(); ai++ )
+                evator->args.Add(new exp_tree(this, args[ai]))->expand();
             }
           }
           dt.SetLength(0);
@@ -304,7 +341,11 @@ struct SExpression  {
       IEvaluable* arg;
       IConstFunc(IEvaluable* _arg) : arg(_arg) {}
       ~IConstFunc()  {  delete arg;  }
-      virtual double Evaluate() const = 0;
+    };
+    struct IConstFunc2 : public IEvaluable  {
+      IEvaluable* a, *b;
+      IConstFunc2(IEvaluable* _a, IEvaluable* _b) : a(_a), b(_b) {}
+      ~IConstFunc2()  {  delete a;  delete b;  }
     };
     struct AbsFunc : public IConstFunc  {
       AbsFunc(IEvaluable* arg) : IConstFunc(arg)  {}
@@ -322,102 +363,93 @@ struct SExpression  {
       TanFunc(IEvaluable* arg) : IConstFunc(arg)  {}
       virtual double Evaluate() const {  return tan(arg->Evaluate());  }
     };
-    struct IOperator2 : public IEvaluable {
-      IEvaluable *a, *b;
-      IOperator2(IEvaluable* _a, IEvaluable* _b) : a(_a), b(_b)  {}
-      ~IOperator2()  {
-        delete a;
-        delete b;
-      }
-    };
-    struct AddOperator : public IOperator2  {
-      AddOperator(IEvaluable* a, IEvaluable * b) : IOperator2(a,b)  {}
-      virtual double Evaluate() const {  return a->Evaluate() + b->Evaluate();  }
-    };
-    struct SubOperator : public IOperator2  {
-      SubOperator(IEvaluable* a, IEvaluable * b) : IOperator2(a,b)  {}
-      virtual double Evaluate() const {  return a->Evaluate() - b->Evaluate();  }
-    };
-    struct DivOperator : public IOperator2  {
-      DivOperator(IEvaluable* a, IEvaluable * b) : IOperator2(a,b)  {}
-      virtual double Evaluate() const {  return a->Evaluate() / b->Evaluate();  }
-    };
-    struct MulOperator : public IOperator2  {
-      MulOperator(IEvaluable* a, IEvaluable * b) : IOperator2(a,b)  {}
-      virtual double Evaluate() const {  return a->Evaluate() * b->Evaluate();  }
-    };
-    struct RemOperator : public IOperator2  {
-      RemOperator(IEvaluable* a, IEvaluable * b) : IOperator2(a,b)  {}
-      virtual double Evaluate() const {  return (int)a->Evaluate() % (int)b->Evaluate();  }
-    };
-    struct PowFunc : public IOperator2  {
-      PowFunc(IEvaluable* a, IEvaluable * b) : IOperator2(a,b)  {}
+    struct PowFunc : public IConstFunc2  {
+      PowFunc(IEvaluable* a, IEvaluable *b) : IConstFunc2(a, b)  {}
       virtual double Evaluate() const {  return pow(a->Evaluate(), b->Evaluate());  }
     };
-    struct ChsOperator : public IEvaluable  {
-      IEvaluable* arg;
-      ChsOperator(IEvaluable* _arg) : arg(_arg)  {}
-      ~ChsOperator()  {  delete arg;  }
+    struct MinFunc : public IConstFunc2  {
+      MinFunc(IEvaluable* a, IEvaluable *b) : IConstFunc2(a, b)  {}
+      virtual double Evaluate() const {  return olx_min(a->Evaluate(), b->Evaluate());  }
+    };
+    struct MaxFunc : public IConstFunc2  {
+      MaxFunc(IEvaluable* a, IEvaluable *b) : IConstFunc2(a, b)  {}
+      virtual double Evaluate() const {  return olx_max(a->Evaluate(), b->Evaluate());  }
+    };
+
+    struct AddOperator : public IConstFunc2  {
+      AddOperator(IEvaluable* a, IEvaluable *b) : IConstFunc2(a,b)  {}
+      virtual double Evaluate() const {  return a->Evaluate() + b->Evaluate();  }
+    };
+    struct SubOperator : public IConstFunc2  {
+      SubOperator(IEvaluable* a, IEvaluable *b) : IConstFunc2(a,b)  {}
+      virtual double Evaluate() const {  return a->Evaluate() - b->Evaluate();  }
+    };
+    struct DivOperator : public IConstFunc2  {
+      DivOperator(IEvaluable* a, IEvaluable *b) : IConstFunc2(a,b)  {}
+      virtual double Evaluate() const {  return a->Evaluate() / b->Evaluate();  }
+    };
+    struct MulOperator : public IConstFunc2  {
+      MulOperator(IEvaluable* a, IEvaluable *b) : IConstFunc2(a,b)  {}
+      virtual double Evaluate() const {  return a->Evaluate() * b->Evaluate();  }
+    };
+    struct RemOperator : public IConstFunc2  {
+      RemOperator(IEvaluable* a, IEvaluable *b) : IConstFunc2(a,b)  {}
+      virtual double Evaluate() const {  return (int)a->Evaluate() % (int)b->Evaluate();  }
+    };
+    struct ChsOperator : public IConstFunc  {
+      ChsOperator(IEvaluable* a) : IConstFunc(a)  {}
       virtual double Evaluate() const {  return -arg->Evaluate();  }
     };
-    struct PlusOperator : public IEvaluable  {
-      IEvaluable* arg;
-      PlusOperator(IEvaluable* _arg) : arg(_arg)  {}
-      ~PlusOperator()  {  delete arg;  }
+    struct PlusOperator : public IConstFunc  {
+      PlusOperator(IEvaluable* a) : IConstFunc(a)  {}
       virtual double Evaluate() const {  return arg->Evaluate();  }
     };
 
-    struct ICmpOperator2 : public IEvaluable {
-      IEvaluable *a, *b;
-      ICmpOperator2(IEvaluable* _a, IEvaluable* _b) : a(_a), b(_b)  {}
-      ~ICmpOperator2()  {
-        delete a;
-        delete b;
-      }
+    struct EOperator : public IConstFunc2  {
+      EOperator(IEvaluable* a, IEvaluable* b) : IConstFunc2(a, b) {}
+      virtual double Evaluate() const {  return a->Evaluate() == b->Evaluate();  }
     };
-    struct EOperator : public ICmpOperator2  {
-      EOperator(IEvaluable* a, IEvaluable* b) : ICmpOperator2(a, b) {}
-      virtual double Evaluate() const {  return olx_abs(a->Evaluate()-b->Evaluate()) < 1e-15;  }
+    struct NEOperator : public IConstFunc2  {
+      NEOperator(IEvaluable* a, IEvaluable* b) : IConstFunc2(a, b) {}
+      virtual double Evaluate() const {  return a->Evaluate() != b->Evaluate();  }
     };
-    struct NEOperator : public ICmpOperator2  {
-      NEOperator(IEvaluable* a, IEvaluable* b) : ICmpOperator2(a, b) {}
-      virtual double Evaluate() const {  return olx_abs(a->Evaluate()-b->Evaluate()) > 1e-15;  }
-    };
-    struct GOperator : public ICmpOperator2  {
-      GOperator(IEvaluable* a, IEvaluable* b) : ICmpOperator2(a, b) {}
+    struct GOperator : public IConstFunc2  {
+      GOperator(IEvaluable* a, IEvaluable* b) : IConstFunc2(a, b) {}
       virtual double Evaluate() const {  return a->Evaluate() > b->Evaluate();  }
     };
-    struct GEOperator : public ICmpOperator2  {
-      GEOperator(IEvaluable* a, IEvaluable* b) : ICmpOperator2(a, b) {}
+    struct GEOperator : public IConstFunc2  {
+      GEOperator(IEvaluable* a, IEvaluable* b) : IConstFunc2(a, b) {}
       virtual double Evaluate() const {  return a->Evaluate() >= b->Evaluate();  }
     };
-    struct LOperator : public ICmpOperator2  {
-      LOperator(IEvaluable* a, IEvaluable* b) : ICmpOperator2(a, b) {}
+    struct LOperator : public IConstFunc2  {
+      LOperator(IEvaluable* a, IEvaluable* b) : IConstFunc2(a, b) {}
       virtual double Evaluate() const {  return a->Evaluate() < b->Evaluate();  }
     };
-    struct LEOperator : public ICmpOperator2  {
-      LEOperator(IEvaluable* a, IEvaluable* b) : ICmpOperator2(a, b) {}
+    struct LEOperator : public IConstFunc2  {
+      LEOperator(IEvaluable* a, IEvaluable* b) : IConstFunc2(a, b) {}
       virtual double Evaluate() const {  return a->Evaluate() <= b->Evaluate();  }
     };
 
-    struct AndOperator : public IEvaluable  {
-      IEvaluable *a, *b;
-      AndOperator(IEvaluable* _a, IEvaluable* _b) : a(_a), b(_b)  {}
-      ~AndOperator()  {  delete a;  delete b;  }
+    struct AndOperator : public IConstFunc2  {
+      AndOperator(IEvaluable* a, IEvaluable* b) : IConstFunc2(a, b)  {}
       virtual double Evaluate() const {  return a->Evaluate() && b->Evaluate();  }
     };
-    struct OrOperator : public IEvaluable  {
-      IEvaluable *a, *b;
-      OrOperator(IEvaluable* _a, IEvaluable* _b) : a(_a), b(_b)  {}
-      ~OrOperator()  {  delete a;  delete b;  }
+    struct OrOperator : public IConstFunc2  {
+      OrOperator(IEvaluable* a, IEvaluable* b) : IConstFunc2(a, b)  {}
       virtual double Evaluate() const {  return a->Evaluate() || b->Evaluate();  }
     };
-    struct NotOperator : public IEvaluable  {
-      IEvaluable* arg;
-      NotOperator(IEvaluable* _arg) : arg(_arg)  {}
+    struct NotOperator : public IConstFunc  {
+      NotOperator(IEvaluable* a) : IConstFunc(a)  {}
       virtual double Evaluate() const {  return !arg->Evaluate();  }
     };
 
+    static IEvaluable* Create(const olxstr& name, TPtrList<IEvaluable>& args)  {
+      if( args.Count() == 1)
+        return Create(name, args[0]);
+      else if( args.Count() == 2 )
+        return Create(name, args[0], args[1]);
+      return NULL;
+    }
     static IEvaluable* Create(const olxstr& name, IEvaluable* a, IEvaluable* b=NULL)  {
       if( a == NULL && b == NULL )  {
         return NULL;
@@ -438,6 +470,8 @@ struct SExpression  {
         if( name == '*' )  return new MulOperator(a, b);
         if( name == '%' )  return new RemOperator(a, b);
         if( name == "pow" ) return new PowFunc(a, b);
+        if( name == "min" ) return new MinFunc(a, b);
+        if( name == "max" ) return new MaxFunc(a, b);
         if( name == "&&" )  return new AndOperator(a, b);
         if( name == "||" )  return new OrOperator(a, b);
         if( name == "==" )  return new EOperator(a, b);
@@ -522,18 +556,37 @@ struct SExpression  {
     }
     return root;
   }
-  IEvaluable* EvaluatorFromEvator(ExpParser::exp_tree* root)  {
-    IEvaluable *arg = CreateEvaluator(root->evator->arg);
-    if( arg == NULL )
-      throw TInvalidArgumentException(__OlxSourceInfo, "could not find appropriate evlauable");
-    IEvaluable *rv = BuiltInsFactory::Create(root->evator->name, arg);
-    // need to test if the function result cannot be changed
-
-    if( EsdlInstanceOf(*arg, ConstEvaluable) && dynamic_cast<BuiltInsFactory::IConstFunc*>(rv) != NULL )  {
-      IEvaluable* ce = new ConstEvaluable(rv->Evaluate());
-      delete rv;
-      return ce;
+  IEvaluable* ProcessConstFunc(IEvaluable* func, IEvaluable* left, IEvaluable* right=NULL)  {
+    if( (dynamic_cast<BuiltInsFactory::IConstFunc*>(func) != NULL || 
+       dynamic_cast<BuiltInsFactory::IConstFunc2*>(func) != NULL) )
+    {
+      if( left == NULL ||
+          (EsdlInstanceOf(*left, ConstEvaluable) && 
+          (right == NULL || EsdlInstanceOf(*right, ConstEvaluable))) )  
+      {
+        IEvaluable* ce = new ConstEvaluable(func->Evaluate());
+        delete func;
+        return ce;
+      }
     }
+    return func;
+  }
+  IEvaluable* EvaluatorFromEvator(ExpParser::exp_tree* root)  {
+    TPtrList<IEvaluable> args;
+    bool all_const = true;
+    for( int i=0; i < root->evator->args.Count(); i++ )  {
+      args.Add( CreateEvaluator(root->evator->args[i]) );
+      if( args.Last() == NULL )  {
+        for( int j=0; j < args.Count()-2; j++ )
+          delete args[j];
+        throw TInvalidArgumentException(__OlxSourceInfo, "could not find appropriate evluable");
+      }
+      if( !EsdlInstanceOf(*args.Last(), ConstEvaluable) )
+        all_const = false;
+    }
+    IEvaluable *rv = BuiltInsFactory::Create(root->evator->name, args);
+    // need to test if the function result cannot be changed
+    if( all_const )  return ProcessConstFunc(rv, NULL);
     return rv;
   }
   IEvaluable* CreateEvaluator(ExpParser::exp_tree* root)  {
@@ -563,21 +616,7 @@ struct SExpression  {
         if( right != NULL )  delete right;
         throw TFunctionFailedException(__OlxSourceInfo, olxstr("could not create specified evaluator: ") << root->data);
       }
-      if( left != NULL && right != NULL )  {
-        if( EsdlInstanceOf(*left, ConstEvaluable) && EsdlInstanceOf(*right, ConstEvaluable) )  {
-          IEvaluable* ce = new ConstEvaluable(rv->Evaluate());
-          delete rv;
-          return ce;
-        }
-      }
-      else if( left != NULL )  {
-        if( EsdlInstanceOf(*left, ConstEvaluable) )  {
-          IEvaluable* ce = new ConstEvaluable(rv->Evaluate());
-          delete rv;
-          return ce;
-        }
-      }
-      return rv;
+      return ProcessConstFunc(rv, left, right);
     }
     else  {
       if( root->evator != NULL )
