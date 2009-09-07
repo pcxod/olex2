@@ -3,7 +3,7 @@
 #endif
 
 #include "ipbase.h"
-#ifndef __GNUC__
+//#ifndef __GNUC__
 class TestClass {
 public:
   void vf(void)  {  return;  }
@@ -46,23 +46,23 @@ void TFuncRegistry::CompileTest()  {
   fr.Reg("f3", &f3);
   fr.Reg("f4", &f4);
 
-  //fr.Reg<TestClass>("vf", &tc, &TestClass::vf);
-  fr.Reg<TestClass,int>("vf1", &tc, &TestClass::vf1);
-  fr.Reg<TestClass,int,int>("vf2", &tc, &TestClass::vf2);
-  fr.Reg<TestClass,int,int,int>("vf3", &tc, &TestClass::vf3);
-  fr.Reg<TestClass,int,int,int,int>("vf4", &tc, &TestClass::vf4);
+  fr.Reg<TestClass, &TestClass::vf>("vf", &tc);
+  fr.Reg("vf1", &tc, &TestClass::vf1);
+  fr.Reg("vf2", &tc, &TestClass::vf2);
+  fr.Reg("vf3", &tc, &TestClass::vf3);
+  fr.Reg("vf4", &tc, &TestClass::vf4);
 
-  fr.CallFunction<void>("f");
-  fr.CallFunction<void, int>("f", 1);
-  fr.CallFunction<void, int, int>("f", 1, 1);
-  fr.CallFunction<void, int, int, int>("f", 1, 1, 1);
-  fr.CallFunction<void, int, int, int, int>("f", 1, 1, 1, 1);
+  fr.CallFunction<const char*, void>("f");
+  fr.CallFunction<const char*, void, int>("f", 1);
+  fr.CallFunction<const char*, void, int, int>("f", 1, 1);
+  fr.CallFunction<const char*, void, int, int, int>("f", 1, 1, 1);
+  fr.CallFunction<const char*, void, int, int, int, int>("f", 1, 1, 1, 1);
 
   bool v;
-  v = fr.CallFunction<bool>("f");
-  v = fr.CallFunction<bool, int>("f", 1);
-  v = fr.CallFunction<bool, int, int>("f", 1, 1);
-  v = fr.CallFunction<bool, int, int, int>("f", 1, 1, 1);
-  v = fr.CallFunction<bool, int, int, int, int>("f", 1, 1, 1, 1);
+  v = fr.CallFunction<const char*, bool>("f");
+  v = fr.CallFunction<const char*, bool, int>("f", 1);
+  v = fr.CallFunction<const char*, bool, int, int>("f", 1, 1);
+  v = fr.CallFunction<const char*, bool, int, int, int>("f", 1, 1, 1);
+  v = fr.CallFunction<const char*, bool, int, int, int, int>("f", 1, 1, 1, 1);
 }
-#endif
+//#endif
