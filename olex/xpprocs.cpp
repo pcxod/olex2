@@ -8137,6 +8137,9 @@ void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options, TMa
   SExpression::IEvaluable* root = sexp.Build("3*2 -4");
   double v = root->Evaluate();
   delete root;
+  root = sexp.Build("pow(2,max(3,4))");
+  v = root->Evaluate();
+  delete root;
   root = sexp.Build("1 < 2 && (3 > 4 || 2 < 4)");
   v = root->Evaluate();
   delete root;
@@ -8144,6 +8147,12 @@ void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options, TMa
   v = root->Evaluate();
   delete root;
   root = sexp.Build("(1+2)*3");
+  v = root->Evaluate();
+  delete root;
+  root = sexp.Build("3*(1+2)");
+  v = root->Evaluate();
+  delete root;
+  root = sexp.Build("1==1 || 2==3 || 4==5");
   v = root->Evaluate();
   delete root;
   if( !Cmds.IsEmpty() )  {
