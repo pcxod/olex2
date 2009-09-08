@@ -643,6 +643,11 @@ struct SExpression  {
       }
     }
   }
+//  struct XEvaluable  {
+//    void* (*cast_operator)(const XEvaluable& );
+//    olxdict<std::type_info const*, cast_operator, TPrimitivePtrComparator> cast_operators;   
+//    void AddCastOperator(
+//  };
 public:
   IEvaluable* Build(const olxstr& exp)  {
     // c == 3 || c == -1
