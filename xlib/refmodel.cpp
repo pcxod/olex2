@@ -417,14 +417,14 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
         throw TFunctionFailedException(__OlxSourceInfo, "unknown space group");
       TRefList refs;
       FilterHkl(refs, _HklStat);
+      smatd_list ml;
+      sg->GetMatrices(ml, mattAll^mattIdentity);
       if( MERG != 0 )  {
-        smatd_list ml;
-        sg->GetMatrices(ml, mattAll^mattIdentity);
         bool mergeFP = (MERG == 4 || MERG == 3) && !sg->IsCentrosymmetric();
         _HklStat = RefMerger::DryMerge<RefMerger::ShelxMerger>(ml, refs, Omits, mergeFP);
       }
       else
-        _HklStat = RefMerger::DryMergeInP1<RefMerger::ShelxMerger>(refs, Omits);
+        _HklStat = RefMerger::DrySGFilter(ml, refs, Omits);
     }
   }
   catch(TExceptionBase&)  {
@@ -954,6 +954,7 @@ PyObject* RefinementModel::PyExport(bool export_connectivity)  {
 
       PyDict_SetItemString(omit, "hkl", omits);
     }
+    PyDict_SetItemString(main, "merge", Py_BuildValue("i", MERG));
   }
   if( TWIN_set )  {
     PyObject* twin = PyDict_New(), 

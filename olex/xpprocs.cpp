@@ -145,6 +145,7 @@
 #include "olxth.h"
 #include "md5.h"
 #include "sha.h"
+#include "ipbase.h"
 //#include "base_2d.h"
 //#include "gl2ps/gl2ps.c"
 
@@ -8160,6 +8161,9 @@ void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options, TMa
     v = root->Evaluate();
     delete root;
   }
+#ifndef __GNUC__
+  //TFuncRegistry::CompileTest();
+#endif
 }
 //..............................................................................
 double Main_FindClosestDistance(const smatd_list& ml, vec3d& o_from, const TCAtom& a_to) {

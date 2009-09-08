@@ -564,6 +564,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\sdl\ipbase.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\sdl\istream.cpp"
 				>
 			</File>
