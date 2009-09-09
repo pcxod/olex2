@@ -301,14 +301,27 @@ struct ExpParser  {
 };
 ///////////////////////////////////////////////////////////////////////////////////////////
 struct SExpression  {
+  //union NumberVal  {
+  //  bool _bool;
+  //  char _char;
+  //  short _short;
+  //  unsigned short _ushort;
+  //  int _int;
+  //  unsigned int _uint;
+  //  long int _lint;
+  //  unsigned long int _luint;
+  //  long long int _llint;
+  //  unsigned long long int _ullint;
+  //  float _float;
+  //  double _double;
+  //};
   struct IEvaluable {
     virtual ~IEvaluable() {}
-    virtual double Evaluate() const = 0;
-    
+    virtual IEvaluable* _evaluate() const = 0;
     typedef void* (*cast_operator)(const IEvaluable*);
     typedef olxdict<std::type_info const*, cast_operator, TPointerPtrComparator> operator_dict;
     virtual cast_operator get_cast_operator(const std::type_info&) const = 0;
-
+    
     template <class T> T cast() const {
       const std::type_info& ti = typeid(T);
       try  {  
@@ -334,7 +347,9 @@ struct SExpression  {
   protected:
     static IEvaluable::operator_dict cast_operators;
     static const IEvaluable::operator_dict::Entry cast_operators_table[];
-    static void* bool_cast(const IEvaluable* i)  {  return new bool(IEvaluable::cast_helper<ANumberEvaluator>(i)->Evaluate() != 0);  }
+    static void* bool_cast(const IEvaluable* i)  {  
+      return new bool(IEvaluable::cast_helper<ANumberEvaluator>(i)->Evaluate() != 0);  
+    }
     static void* str_cast(const IEvaluable* i)  {  return new olxstr(IEvaluable::cast_helper<ANumberEvaluator>(i)->Evaluate());  }
     template<class T> static void* primitive_cast(const IEvaluable* i)  {  return new T((T)IEvaluable::cast_helper<ANumberEvaluator>(i)->Evaluate());  }
     template<class T> static void register_cast()  {  cast_operators.Add(&typeid(T), &ANumberEvaluator::primitive_cast<T>);  }
@@ -342,51 +357,53 @@ struct SExpression  {
       return IEvaluable::operator_dict::Entry(&typeid(T), &ANumberEvaluator::primitive_cast<T>);  
     }
     virtual cast_operator get_cast_operator(const std::type_info& ti) const {  return cast_operators[&ti];  } 
+    virtual double Evaluate() const {
+      IEvaluable* ev = _evaluate();
+      const double rv = ev->cast<double>();
+      return rv;
+    }
   public:
     ANumberEvaluator()  {}
   };
-  //template <class BC>
-  //struct TNumberEvaluator : public IEvaluable  {
-  //protected:
-  //  static IEvaluable::operator_dict cast_operators;
-  //  static const IEvaluable::operator_dict::Entry cast_operators_table[];
-  //  static void* bool_cast(const IEvaluable* i)  {  return new bool(BC::get_value() != 0);  }
-  //  static void* str_cast(const IEvaluable* i)  {  return new olxstr(BC::get_value());  }
-  //  template<class T> static void* primitive_cast(const IEvaluable* i)  {  return new T((T)BC::get_value());  }
-  //  template<class T> static IEvaluable::operator_dict::Entry create_operator_entry()  {  
-  //    return IEvaluable::operator_dict::Entry(&typeid(T), &ANumberEvaluator::primitive_cast<T>);  
-  //  }
-  //  virtual cast_operator get_cast_operator(const std::type_info& ti) const {  return cast_operators[&ti];  } 
-  //public:
-  //  TNumberEvaluator()  {}
-  //};
-  struct ConstEvaluable : public ANumberEvaluator  {
-  public:
-    double val;
-    ConstEvaluable(const double& _val) : val(_val)  {}
-    virtual double Evaluate() const {  return val;  }
+  template <class BC, typename Type>
+  struct TPrimitiveEvaluator : public ANumberEvaluator, public BC  {
+    TPrimitiveEvaluator(const Type& val) : BC(val)  {}
+    virtual double Evaluate() const {
+      return val;
+    }
+    virtual IEvaluable* _evaluate() const {  
+      throw 1;
+      //return const_cast<TPrimitiveEvaluator<BC,Type>*>(this);
+      //return new TPrimitiveEvaluator<BC,Type>(BC::get_value()); 
+    }
   };
-
-  //template <class T>
-  //struct NumberEvaluator : public TNumberEvaluator<NumberEvaluator<T> >  {
+  //struct ConstEvaluable : public ANumberEvaluator  {
   //public:
-  //  T val;
-  //  NumberEvaluator(const T& _val) : val(_val)  {}
-  //  const T& get_value() const {  return val;  }
-  //  virtual double Evaluate() const {  return val;  }
-  //  virtual IEvaluable* new_inst(const T& _val) const {  return new NumberEvaluator<T>(_val);  }
+  //  double val;
+  //  ConstEvaluable(const double& _val) : val(_val)  {}
+  //  virtual IEvaluable* _evaluate() const {  return new ConstEvaluable(val); }
   //};
+
+  template <class T>
+  struct TPrimitiveInstance  {
+  public:
+    T val;
+    TPrimitiveInstance(const T& _val) : val(_val)  {}
+    const T& get_value() const {  return val;  }
+  };
+  typedef TPrimitiveEvaluator<TPrimitiveInstance<bool>,bool> BoolValue;
+  typedef TPrimitiveEvaluator<TPrimitiveInstance<int>,int> IntValue;
+  typedef TPrimitiveEvaluator<TPrimitiveInstance<double>,double> DoubleValue;
 
   TDoubleList VarValues;
   TStrList VarNames;
   olxdict<olxstr, IEvaluable*, olxstrComparator<false> > UserFunctions;
 
-  struct Variable : public IEvaluable  {
+  struct Variable : public ANumberEvaluator  {
     size_t index;
     const SExpression& scope;
     Variable(const SExpression& _scope, size_t _index) : scope(_scope), index(_index) {}
-    double Evaluate() const {  return scope.VarValues[index];  }
-    virtual cast_operator get_cast_operator(const std::type_info& ti) const {  return NULL;  } 
+    virtual IEvaluable* _evaluate() const {  return new DoubleValue(scope.VarValues[index]); }
   };
   // user functions are re-used, where as a new instance of built-ins are created
   struct IUserFunction {
@@ -416,98 +433,144 @@ struct SExpression  {
     };
     struct AbsFunc : public IConstFunc  {
       AbsFunc(IEvaluable* arg) : IConstFunc(arg)  {}
-      virtual double Evaluate() const {  return olx_abs(arg->cast<double>());  }
+      virtual IEvaluable* _evaluate() const  {
+        return new DoubleValue(olx_abs(arg->cast<double>()));
+      }
     };
     struct CosFunc : public IConstFunc  {
       CosFunc(IEvaluable* arg) : IConstFunc(arg)  {}
-      virtual double Evaluate() const {  return cos(arg->cast<double>());  }
+      virtual IEvaluable* _evaluate() const  {
+        return new DoubleValue(cos(arg->cast<double>()));
+      }
     };
     struct SinFunc : public IConstFunc  {
       SinFunc(IEvaluable* arg) : IConstFunc(arg)  {}
-      virtual double Evaluate() const {  return sin(arg->cast<double>());  }
+      virtual IEvaluable* _evaluate() const  {
+        return new DoubleValue(sin(arg->cast<double>()));
+      }
     };
     struct TanFunc : public IConstFunc  {
       TanFunc(IEvaluable* arg) : IConstFunc(arg)  {}
-      virtual double Evaluate() const {  return tan(arg->cast<double>());  }
+      virtual IEvaluable* _evaluate() const  {
+        return new DoubleValue(tan(arg->cast<double>()));
+      }
     };
     struct PowFunc : public IConstFunc2  {
       PowFunc(IEvaluable* a, IEvaluable *b) : IConstFunc2(a, b)  {}
-      virtual double Evaluate() const {  return pow(a->cast<double>(), b->cast<double>());  }
+      virtual IEvaluable* _evaluate() const  {
+        return new DoubleValue(pow(a->cast<double>(), b->cast<double>()));
+      }
     };
     struct MinFunc : public IConstFunc2  {
       MinFunc(IEvaluable* a, IEvaluable *b) : IConstFunc2(a, b)  {}
-      virtual double Evaluate() const {  return olx_min(a->cast<double>(), b->cast<double>());  }
+      virtual IEvaluable* _evaluate() const  {
+        return new DoubleValue(olx_min(a->cast<double>(), b->cast<double>()));
+      }
     };
     struct MaxFunc : public IConstFunc2  {
       MaxFunc(IEvaluable* a, IEvaluable *b) : IConstFunc2(a, b)  {}
-      virtual double Evaluate() const {  return olx_max(a->cast<double>(), b->cast<double>());  }
+      virtual IEvaluable* _evaluate() const  {
+        return new DoubleValue(olx_max(a->cast<double>(), b->cast<double>()));
+      }
     };
 
     struct AddOperator : public IConstFunc2  {
       AddOperator(IEvaluable* a, IEvaluable *b) : IConstFunc2(a,b)  {}
-      virtual double Evaluate() const {  return a->cast<double>() + b->cast<double>();  }
+      virtual IEvaluable* _evaluate() const  {
+        return new DoubleValue(a->cast<double>() + b->cast<double>());
+      }
     };
     struct SubOperator : public IConstFunc2  {
       SubOperator(IEvaluable* a, IEvaluable *b) : IConstFunc2(a,b)  {}
-      virtual double Evaluate() const {  return a->cast<double>() - b->cast<double>();  }
+      virtual IEvaluable* _evaluate() const  {
+        return new DoubleValue(a->cast<double>() - b->cast<double>());
+      }
     };
     struct DivOperator : public IConstFunc2  {
       DivOperator(IEvaluable* a, IEvaluable *b) : IConstFunc2(a,b)  {}
-      virtual double Evaluate() const {  return a->cast<double>() / b->cast<double>();  }
+      virtual IEvaluable* _evaluate() const  {
+        return new DoubleValue(a->cast<double>() / b->cast<double>());
+      }
     };
     struct MulOperator : public IConstFunc2  {
       MulOperator(IEvaluable* a, IEvaluable *b) : IConstFunc2(a,b)  {}
-      virtual double Evaluate() const {  return a->cast<double>() * b->cast<double>();  }
+      virtual IEvaluable* _evaluate() const  {
+        return new DoubleValue(a->cast<double>() * b->cast<double>());
+      }
     };
     struct RemOperator : public IConstFunc2  {
       RemOperator(IEvaluable* a, IEvaluable *b) : IConstFunc2(a,b)  {}
-      virtual double Evaluate() const {  return a->cast<long>() % b->cast<long>();  }
+      virtual IEvaluable* _evaluate() const  {
+        return new IntValue(a->cast<int>() % b->cast<int>());
+      }
     };
     struct ChsOperator : public IConstFunc  {
       ChsOperator(IEvaluable* a) : IConstFunc(a)  {}
-      virtual double Evaluate() const {  return -arg->cast<double>();  }
+      virtual IEvaluable* _evaluate() const  {
+        return new DoubleValue(-arg->cast<double>());
+      }
     };
     struct PlusOperator : public IConstFunc  {
       PlusOperator(IEvaluable* a) : IConstFunc(a)  {}
-      virtual double Evaluate() const {  return arg->cast<double>();  }
+      virtual IEvaluable* _evaluate() const  {
+        return new DoubleValue(arg->cast<double>());
+      }
     };
 
     struct EOperator : public IConstFunc2  {
       EOperator(IEvaluable* a, IEvaluable* b) : IConstFunc2(a, b) {}
-      virtual double Evaluate() const {  return a->cast<double>() == b->cast<double>();  }
+      virtual IEvaluable* _evaluate() const  {
+        return new BoolValue(a->cast<double>() == b->cast<double>());
+      }
     };
     struct NEOperator : public IConstFunc2  {
       NEOperator(IEvaluable* a, IEvaluable* b) : IConstFunc2(a, b) {}
-      virtual double Evaluate() const {  return a->cast<double>() != b->cast<double>();  }
+      virtual IEvaluable* _evaluate() const  {
+        return new BoolValue(a->cast<double>() != b->cast<double>());
+      }
     };
     struct GOperator : public IConstFunc2  {
       GOperator(IEvaluable* a, IEvaluable* b) : IConstFunc2(a, b) {}
-      virtual double Evaluate() const {  return a->cast<double>() > b->cast<double>();  }
+      virtual IEvaluable* _evaluate() const  {
+        return new BoolValue(a->cast<double>() > b->cast<double>());
+      }
     };
     struct GEOperator : public IConstFunc2  {
       GEOperator(IEvaluable* a, IEvaluable* b) : IConstFunc2(a, b) {}
-      virtual double Evaluate() const {  return a->cast<double>() >= b->cast<double>();  }
+      virtual IEvaluable* _evaluate() const  {
+        return new BoolValue(a->cast<double>() >= b->cast<double>());
+      }
     };
     struct LOperator : public IConstFunc2  {
       LOperator(IEvaluable* a, IEvaluable* b) : IConstFunc2(a, b) {}
-      virtual double Evaluate() const {  return a->cast<double>() < b->cast<double>();  }
+      virtual IEvaluable* _evaluate() const  {
+        return new BoolValue(a->cast<double>() < b->cast<double>());
+      }
     };
     struct LEOperator : public IConstFunc2  {
       LEOperator(IEvaluable* a, IEvaluable* b) : IConstFunc2(a, b) {}
-      virtual double Evaluate() const {  return a->cast<double>() <= b->cast<double>();  }
+      virtual IEvaluable* _evaluate() const  {
+        return new BoolValue(a->cast<double>() <= b->cast<double>());
+      }
     };
 
     struct AndOperator : public IConstFunc2  {
       AndOperator(IEvaluable* a, IEvaluable* b) : IConstFunc2(a, b)  {}
-      virtual double Evaluate() const {  return a->cast<bool>() && b->cast<bool>();  }
+      virtual IEvaluable* _evaluate() const  {
+        return new BoolValue(a->cast<bool>() && b->cast<bool>());
+      }
     };
     struct OrOperator : public IConstFunc2  {
       OrOperator(IEvaluable* a, IEvaluable* b) : IConstFunc2(a, b)  {}
-      virtual double Evaluate() const {  return a->cast<bool>() || b->cast<bool>();  }
+      virtual IEvaluable* _evaluate() const  {
+        return new BoolValue(a->cast<bool>() || b->cast<bool>());
+      }
     };
     struct NotOperator : public IConstFunc  {
       NotOperator(IEvaluable* a) : IConstFunc(a)  {}
-      virtual double Evaluate() const {  return !arg->cast<bool>();  }
+      virtual IEvaluable* _evaluate() const  {
+        return new BoolValue(!arg->cast<bool>());
+      }
     };
 
     static IEvaluable* Create(const olxstr& name, TPtrList<IEvaluable>& args)  {
@@ -628,10 +691,10 @@ struct SExpression  {
        dynamic_cast<BuiltInsFactory::IConstFunc2*>(func) != NULL) )
     {
       if( left == NULL ||
-          (EsdlInstanceOf(*left, ConstEvaluable) && 
-          (right == NULL || EsdlInstanceOf(*right, ConstEvaluable))) )  
+          (dynamic_cast<ANumberEvaluator*>(left) != NULL && 
+          (right == NULL || dynamic_cast<ANumberEvaluator*>(right) != NULL)) )  
       {
-        IEvaluable* ce = new ConstEvaluable(func->Evaluate());
+        IEvaluable* ce = func->_evaluate();
         delete func;
         return ce;
       }
@@ -648,7 +711,7 @@ struct SExpression  {
           delete args[j];
         throw TInvalidArgumentException(__OlxSourceInfo, "could not find appropriate evluable");
       }
-      if( !EsdlInstanceOf(*args.Last(), ConstEvaluable) )
+      if( dynamic_cast<ANumberEvaluator*>(args.Last()) == NULL )
         all_const = false;
     }
     IEvaluable *rv = BuiltInsFactory::Create(root->evator->name, args);
@@ -689,15 +752,19 @@ struct SExpression  {
       if( root->evator != NULL )
         return EvaluatorFromEvator(root);
       else  {
-        if( root->data.IsNumber() )
-          return new ConstEvaluable(root->data.ToDouble());
+        if( root->data.IsNumber() )  {
+          if( root->data.IndexOf('.') != -1 )
+            return new DoubleValue(root->data.ToDouble());
+          else
+            return new IntValue(root->data.ToInt());
+        }
         else  {
           if( root->data.Equalsi("PI") )
-            return new ConstEvaluable(M_PI);
+            return new DoubleValue(M_PI);
           else if( root->data.Equalsi("true") )
-            return new ConstEvaluable(1.0);
+            return new BoolValue(true);
           else if( root->data.Equalsi("false") )
-            return new ConstEvaluable(0.0);
+            return new BoolValue(false);
 
           int ind = VarNames.IndexOf(root->data);
           if( ind == -1 )  {
@@ -710,11 +777,6 @@ struct SExpression  {
       }
     }
   }
-//  struct XEvaluable  {
-//    void* (*cast_operator)(const XEvaluable& );
-//    olxdict<std::type_info const*, cast_operator, TPrimitivePtrComparator> cast_operators;   
-//    void AddCastOperator(
-//  };
 public:
   IEvaluable* Build(const olxstr& exp)  {
     // c == 3 || c == -1
@@ -724,28 +786,5 @@ public:
     return CreateEvaluator(expp.root);
   }
 };
-//template <class BC>
-//const SExpression::IEvaluable::operator_dict::Entry SExpression::TNumberEvaluator<BC>::cast_operators_table[] = {
-//  SExpression::IEvaluable::operator_dict::Entry(&typeid(bool), &SExpression::TNumberEvaluator<BC>::bool_cast),
-//  SExpression::IEvaluable::operator_dict::Entry(&typeid(olxstr), &SExpression::TNumberEvaluator<BC>::str_cast),
-//  SExpression::TNumberEvaluator<BC>::create_operator_entry<char>(),
-//  SExpression::TNumberEvaluator<BC>::create_operator_entry<unsigned char>(),
-//  SExpression::TNumberEvaluator<BC>::create_operator_entry<short>(),
-//  SExpression::TNumberEvaluator<BC>::create_operator_entry<unsigned short>(),
-//  SExpression::TNumberEvaluator<BC>::create_operator_entry<int>(),
-//  SExpression::TNumberEvaluator<BC>::create_operator_entry<unsigned int>(),
-//  SExpression::TNumberEvaluator<BC>::create_operator_entry<long int>(),
-//  SExpression::TNumberEvaluator<BC>::create_operator_entry<unsigned long int>(),
-//  SExpression::TNumberEvaluator<BC>::create_operator_entry<long long int>(),
-//  SExpression::TNumberEvaluator<BC>::create_operator_entry<unsigned long long int>(),
-//  SExpression::TNumberEvaluator<BC>::create_operator_entry<float>(),
-//  SExpression::TNumberEvaluator<BC>::create_operator_entry<double>()
-//};
-//template <class BC>
-//olxdict<std::type_info const*, SExpression::IEvaluable::cast_operator, TPointerPtrComparator> 
-//  SExpression::TNumberEvaluator<BC>::cast_operators( 
-//    SExpression::TNumberEvaluator<BC>::cast_operators_table, 
-//    sizeof(SExpression::TNumberEvaluator<BC>::cast_operators_table)/sizeof(SExpression::TNumberEvaluator<BC>::cast_operators_table[0]) 
-//  );
 
 #endif
