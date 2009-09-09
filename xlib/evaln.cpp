@@ -282,6 +282,7 @@ const olxstr ExpParser::operators[] = {
 
 const SExpression::IEvaluable::operator_dict::Entry SExpression::ANumberEvaluator::cast_operators_table[] = {
   SExpression::IEvaluable::operator_dict::Entry(&typeid(bool), &SExpression::ANumberEvaluator::bool_cast),
+  SExpression::IEvaluable::operator_dict::Entry(&typeid(olxstr), &SExpression::ANumberEvaluator::str_cast),
   SExpression::ANumberEvaluator::create_operator_entry<char>(),
   SExpression::ANumberEvaluator::create_operator_entry<unsigned char>(),
   SExpression::ANumberEvaluator::create_operator_entry<short>(),
