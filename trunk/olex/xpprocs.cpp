@@ -8155,6 +8155,7 @@ void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options, TMa
   delete root;
   root = sexp.Build("1==1 || 2==3 || 4==5");
   v = root->Evaluate();
+  bool b_res = root->cast<bool>();
   delete root;
   if( !Cmds.IsEmpty() )  {
     root = sexp.Build(Cmds.Text(' '));
