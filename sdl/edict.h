@@ -28,7 +28,17 @@ protected SortedObjectList<DictEntry<KType,VType,Comparator>, TComparableCompara
   typedef SortedObjectList<EntryType, TComparableComparator> SortedL;
 public:
 
+  struct Entry  {
+    KType key;
+    VType value;
+    Entry(const KType& _key, const VType& _value) : key(_key), value(_value)  {}
+  };
+
   olxdict() {}
+  olxdict(const Entry _values[], size_t cnt) {
+    for( size_t i=0; i < cnt; i++ )
+      Add(_values[i].key, _values[i].value);
+  }
   olxdict(const olxdict& ad) : SortedL(ad) {  }
   olxdict& operator = (const olxdict& ad)  {
     SortedL::operator = (ad);

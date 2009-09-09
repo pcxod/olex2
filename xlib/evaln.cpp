@@ -280,3 +280,24 @@ const olxstr ExpParser::operators[] = {
   '=', "+=", "-=", "/=", "*=", "&=", "|=", "^=", "<<=" // assignment
 };
 
+const SExpression::IEvaluable::operator_dict::Entry SExpression::ANumberEvaluator::cast_operators_table[] = {
+  SExpression::IEvaluable::operator_dict::Entry(&typeid(bool), &SExpression::ANumberEvaluator::bool_cast),
+  SExpression::ANumberEvaluator::create_operator_entry<char>(),
+  SExpression::ANumberEvaluator::create_operator_entry<unsigned char>(),
+  SExpression::ANumberEvaluator::create_operator_entry<short>(),
+  SExpression::ANumberEvaluator::create_operator_entry<unsigned short>(),
+  SExpression::ANumberEvaluator::create_operator_entry<int>(),
+  SExpression::ANumberEvaluator::create_operator_entry<unsigned int>(),
+  SExpression::ANumberEvaluator::create_operator_entry<long int>(),
+  SExpression::ANumberEvaluator::create_operator_entry<unsigned long int>(),
+  SExpression::ANumberEvaluator::create_operator_entry<long long int>(),
+  SExpression::ANumberEvaluator::create_operator_entry<unsigned long long int>(),
+  SExpression::ANumberEvaluator::create_operator_entry<float>(),
+  SExpression::ANumberEvaluator::create_operator_entry<double>()
+};
+olxdict<std::type_info const*, SExpression::IEvaluable::cast_operator, TPointerPtrComparator> 
+  SExpression::ANumberEvaluator::cast_operators( 
+    SExpression::ANumberEvaluator::cast_operators_table, 
+    sizeof(SExpression::ANumberEvaluator::cast_operators_table)/sizeof(SExpression::ANumberEvaluator::cast_operators_table[0]) 
+  );
+
