@@ -8136,30 +8136,30 @@ void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options, TMa
   }
   SExpression sexp;
   SExpression::IEvaluable* root = sexp.Build("3*2 -4");
-  double v = root->Evaluate();
+  double v = root->cast<double>();
   delete root;
   root = sexp.Build("pow(2,max(3,4))");
-  v = root->Evaluate();
+  v = root->cast<double>();
   delete root;
   root = sexp.Build("1 < 2 && (3 > 4 || 2 < 4)");
-  v = root->Evaluate();
+  v = root->cast<double>();
   delete root;
   root = sexp.Build("-4*2 + 7");
-  v = root->Evaluate();
+  v = root->cast<double>();
   delete root;
   root = sexp.Build("(1+2)*3");
-  v = root->Evaluate();
+  v = root->cast<double>();
   delete root;
   root = sexp.Build("3*(1+2)");
-  v = root->Evaluate();
+  v = root->cast<double>();
   delete root;
   root = sexp.Build("1==1 || 2==3 || 4==5");
-  v = root->Evaluate();
+  v = root->cast<double>();
   bool b_res = root->cast<bool>();
   delete root;
   if( !Cmds.IsEmpty() )  {
     root = sexp.Build(Cmds.Text(' '));
-    v = root->Evaluate();
+    v = root->cast<double>();
     delete root;
   }
 #ifndef __GNUC__
