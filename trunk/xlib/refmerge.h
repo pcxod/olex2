@@ -365,7 +365,6 @@ class RefMerger {
   template <class RefListMerger>
   static MergeStats _DryMergeInP1(TPtrList<const TReflection>& refs, const vec3i_list& omits)  {
     MergeStats stats;
-    stats.InputReflections = refs.Count();
     // sort the list
     TReflection::SortPList(refs);
     // merge reflections

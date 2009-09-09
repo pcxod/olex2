@@ -329,11 +329,13 @@ struct SExpression  {
       return ci;
     }
   };
+
   struct ANumberEvaluator : public IEvaluable  {
   protected:
     static IEvaluable::operator_dict cast_operators;
     static const IEvaluable::operator_dict::Entry cast_operators_table[];
     static void* bool_cast(const IEvaluable* i)  {  return new bool(IEvaluable::cast_helper<ANumberEvaluator>(i)->Evaluate() != 0);  }
+    static void* str_cast(const IEvaluable* i)  {  return new olxstr(IEvaluable::cast_helper<ANumberEvaluator>(i)->Evaluate());  }
     template<class T> static void* primitive_cast(const IEvaluable* i)  {  return new T((T)IEvaluable::cast_helper<ANumberEvaluator>(i)->Evaluate());  }
     template<class T> static void register_cast()  {  cast_operators.Add(&typeid(T), &ANumberEvaluator::primitive_cast<T>);  }
     template<class T> static IEvaluable::operator_dict::Entry create_operator_entry()  {  
@@ -343,12 +345,37 @@ struct SExpression  {
   public:
     ANumberEvaluator()  {}
   };
+  //template <class BC>
+  //struct TNumberEvaluator : public IEvaluable  {
+  //protected:
+  //  static IEvaluable::operator_dict cast_operators;
+  //  static const IEvaluable::operator_dict::Entry cast_operators_table[];
+  //  static void* bool_cast(const IEvaluable* i)  {  return new bool(BC::get_value() != 0);  }
+  //  static void* str_cast(const IEvaluable* i)  {  return new olxstr(BC::get_value());  }
+  //  template<class T> static void* primitive_cast(const IEvaluable* i)  {  return new T((T)BC::get_value());  }
+  //  template<class T> static IEvaluable::operator_dict::Entry create_operator_entry()  {  
+  //    return IEvaluable::operator_dict::Entry(&typeid(T), &ANumberEvaluator::primitive_cast<T>);  
+  //  }
+  //  virtual cast_operator get_cast_operator(const std::type_info& ti) const {  return cast_operators[&ti];  } 
+  //public:
+  //  TNumberEvaluator()  {}
+  //};
   struct ConstEvaluable : public ANumberEvaluator  {
   public:
     double val;
     ConstEvaluable(const double& _val) : val(_val)  {}
     virtual double Evaluate() const {  return val;  }
   };
+
+  //template <class T>
+  //struct NumberEvaluator : public TNumberEvaluator<NumberEvaluator<T> >  {
+  //public:
+  //  T val;
+  //  NumberEvaluator(const T& _val) : val(_val)  {}
+  //  const T& get_value() const {  return val;  }
+  //  virtual double Evaluate() const {  return val;  }
+  //  virtual IEvaluable* new_inst(const T& _val) const {  return new NumberEvaluator<T>(_val);  }
+  //};
 
   TDoubleList VarValues;
   TStrList VarNames;
@@ -697,5 +724,28 @@ public:
     return CreateEvaluator(expp.root);
   }
 };
+//template <class BC>
+//const SExpression::IEvaluable::operator_dict::Entry SExpression::TNumberEvaluator<BC>::cast_operators_table[] = {
+//  SExpression::IEvaluable::operator_dict::Entry(&typeid(bool), &SExpression::TNumberEvaluator<BC>::bool_cast),
+//  SExpression::IEvaluable::operator_dict::Entry(&typeid(olxstr), &SExpression::TNumberEvaluator<BC>::str_cast),
+//  SExpression::TNumberEvaluator<BC>::create_operator_entry<char>(),
+//  SExpression::TNumberEvaluator<BC>::create_operator_entry<unsigned char>(),
+//  SExpression::TNumberEvaluator<BC>::create_operator_entry<short>(),
+//  SExpression::TNumberEvaluator<BC>::create_operator_entry<unsigned short>(),
+//  SExpression::TNumberEvaluator<BC>::create_operator_entry<int>(),
+//  SExpression::TNumberEvaluator<BC>::create_operator_entry<unsigned int>(),
+//  SExpression::TNumberEvaluator<BC>::create_operator_entry<long int>(),
+//  SExpression::TNumberEvaluator<BC>::create_operator_entry<unsigned long int>(),
+//  SExpression::TNumberEvaluator<BC>::create_operator_entry<long long int>(),
+//  SExpression::TNumberEvaluator<BC>::create_operator_entry<unsigned long long int>(),
+//  SExpression::TNumberEvaluator<BC>::create_operator_entry<float>(),
+//  SExpression::TNumberEvaluator<BC>::create_operator_entry<double>()
+//};
+//template <class BC>
+//olxdict<std::type_info const*, SExpression::IEvaluable::cast_operator, TPointerPtrComparator> 
+//  SExpression::TNumberEvaluator<BC>::cast_operators( 
+//    SExpression::TNumberEvaluator<BC>::cast_operators_table, 
+//    sizeof(SExpression::TNumberEvaluator<BC>::cast_operators_table)/sizeof(SExpression::TNumberEvaluator<BC>::cast_operators_table[0]) 
+//  );
 
 #endif
