@@ -145,7 +145,7 @@
 #include "olxth.h"
 #include "md5.h"
 #include "sha.h"
-#include "ipbase.h"
+//#include "ipbase.h"
 //#include "base_2d.h"
 //#include "gl2ps/gl2ps.c"
 
@@ -8134,34 +8134,34 @@ void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options, TMa
     TBasicApp::GetLog() << "SHA256: " << SHA256::Digest(f) << '\n';
     TBasicApp::GetLog() << olxstr::FormatFloat(3, ((double)f.Length()/(((TETime::msNow() - st) + 1)*1.024*1024))) << " Mb/s\n";
   }
-  SExpression sexp;
-  SExpression::IEvaluable* root = sexp.Build("3*2 -4");
-  double v = root->cast<double>();
-  delete root;
-  root = sexp.Build("pow(2,max(3,4))");
-  v = root->cast<double>();
-  delete root;
-  root = sexp.Build("1 < 2 && (3 > 4 || 2 < 4)");
-  v = root->cast<double>();
-  delete root;
-  root = sexp.Build("-4*2 + 7");
-  v = root->cast<double>();
-  delete root;
-  root = sexp.Build("(1+2)*3");
-  v = root->cast<double>();
-  delete root;
-  root = sexp.Build("3*(1+2)");
-  v = root->cast<double>();
-  delete root;
-  root = sexp.Build("1==1 || 2==3 || 4==5");
-  v = root->cast<double>();
-  bool b_res = root->cast<bool>();
-  delete root;
-  if( !Cmds.IsEmpty() )  {
-    root = sexp.Build(Cmds.Text(' '));
-    v = root->cast<double>();
-    delete root;
-  }
+  //SExpression sexp;
+  //SExpression::IEvaluable* root = sexp.Build("3*2 -4");
+  //double v = root->cast<double>();
+  //delete root;
+  //root = sexp.Build("pow(2,max(3,4))");
+  //v = root->cast<double>();
+  //delete root;
+  //root = sexp.Build("1 < 2 && (3 > 4 || 2 < 4)");
+  //v = root->cast<double>();
+  //delete root;
+  //root = sexp.Build("-4*2 + 7");
+  //v = root->cast<double>();
+  //delete root;
+  //root = sexp.Build("(1+2)*3");
+  //v = root->cast<double>();
+  //delete root;
+  //root = sexp.Build("3*(1+2)");
+  //v = root->cast<double>();
+  //delete root;
+  //root = sexp.Build("1==1 || 2==3 || 4==5");
+  //v = root->cast<double>();
+  //bool b_res = root->cast<bool>();
+  //delete root;
+  //if( !Cmds.IsEmpty() )  {
+  //  root = sexp.Build(Cmds.Text(' '));
+  //  v = root->cast<double>();
+  //  delete root;
+  //}
 #ifndef __GNUC__
   //TFuncRegistry::CompileTest();
 #endif

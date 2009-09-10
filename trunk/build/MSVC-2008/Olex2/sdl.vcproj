@@ -798,6 +798,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\sdl\exparse\evaluable.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\sdl\evalue.h"
 				>
 			</File>
@@ -979,6 +983,46 @@
 			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav"
 			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"
 			>
+		</Filter>
+		<Filter
+			Name="exparse"
+			>
+			<File
+				RelativePath="..\..\..\sdl\exparse\evaluable.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\sdl\exparse\expbuilder.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\sdl\exparse\exptree.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\sdl\exparse\funcwrap.cpp"
+				>
+			</File>
+			<Filter
+				Name="headers"
+				>
+				<File
+					RelativePath="..\..\..\sdl\exparse\builtins.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\sdl\exparse\expbuilder.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\sdl\exparse\exptree.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\sdl\exparse\funcwrap.h"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<File
 			RelativePath=".\ReadMe.txt"
