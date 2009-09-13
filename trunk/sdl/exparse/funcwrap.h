@@ -238,9 +238,12 @@ namespace exparse  {
       for( int i=0; i < funcs.Count(); i++ )
         delete funcs.GetValue(i);
     }
-    IStaticFunction* find(const olxstr& name, size_t argc)  const  {
+    inline IStaticFunction* find(const olxstr& name, size_t argc) const {
       int ind = funcs.IndexOf( olxstr(name) << '#' << argc);
       return ind == -1 ? NULL : funcs.GetValue(ind);
+    }
+    inline int index_of(const olxstr& name, size_t argc)  const  {
+      return funcs.IndexOf( olxstr(name) << '#' << argc);
     }
     void add(const olxstr& name, void (*f)(void))  {
       _add(name + "#0", new VoidFunction(name, f));
@@ -270,14 +273,25 @@ namespace exparse  {
       IStaticFunction* func;
       TPtrList<IEvaluable> args;
       const EvaluableFactory& factory;
-      FuncEvaluator(const EvaluableFactory& fc, IStaticFunction* f, const TPtrList<IEvaluable>& a) : factory(fc), func(f), args(a) {}
+      FuncEvaluator(const EvaluableFactory& fc, IStaticFunction* f, const TPtrList<IEvaluable>& a) : factory(fc), func(f), args(a) {
+        for( int i=0; i < args.Count(); i++ )
+          args[i]->inc_ref();
+      }
+      ~FuncEvaluator()  {
+        for( int i=0; i < args.Count(); i++ )
+          if( args[i]->dec_ref() == 0 )
+            delete args[i];
+      }
       virtual IEvaluable* _evaluate() const {  return func->run(factory, args);  }
     };
-    IEvaluable* create(const EvaluableFactory& factory, const olxstr& name, const TPtrList<IEvaluable>& args)  {
+    IEvaluable* create_from_name(const EvaluableFactory& factory, const olxstr& name, const TPtrList<IEvaluable>& args)  {
       IStaticFunction* gf = find(name, args.Count());
       if( gf == NULL )
         throw TInvalidArgumentException(__OlxSourceInfo, "could not locate specified function");
       return new FuncEvaluator(factory, gf, args);
+    }
+    IEvaluable* create_from_index(const EvaluableFactory& factory, size_t index, const TPtrList<IEvaluable>& args)  {
+      return new FuncEvaluator(factory, funcs.GetValue(index), args);
     }
     IEvaluable* call(const EvaluableFactory& factory, const olxstr& name, const TPtrList<IEvaluable>& args)  {
       IStaticFunction* gf = find(name, args.Count());
@@ -287,7 +301,15 @@ namespace exparse  {
     }
     static void CompileTest();
   };
-  template <class base_class> class ClassRegistry  {
+
+  struct IClassRegistry  {
+    virtual ~IClassRegistry() {}
+    virtual IEvaluable* create_from_name(const IEvaluable& owner, const EvaluableFactory& factory, 
+      void* self, const olxstr& name, const TPtrList<IEvaluable>& args) const = 0;
+    virtual IEvaluable* create_from_index(const IEvaluable& owner, const EvaluableFactory& factory, 
+      void* self, size_t index, const TPtrList<IEvaluable>& args) const = 0;
+  };
+  template <class base_class> class ClassRegistry : public IClassRegistry  {
     olxdict<olxstr, IMemberFunction*, olxstrComparator<false> > funcs;
     void _add(const olxstr& name, IMemberFunction* f)  {
       if( funcs.IndexOf(name) != -1 )  {
@@ -301,9 +323,12 @@ namespace exparse  {
       for( int i=0; i < funcs.Count(); i++ )
         delete funcs.GetValue(i);
     }
-    IMemberFunction* find(const olxstr& name, size_t argc)  const  {
+    inline IMemberFunction* find(const olxstr& name, size_t argc) const {
       int ind = funcs.IndexOf( olxstr(name) << '#' << argc);
       return ind == -1 ? NULL : funcs.GetValue(ind);
+    }
+    inline int index_of(const olxstr& name, size_t argc) const {
+      return funcs.IndexOf( olxstr(name) << '#' << argc);
     }
     void add(const olxstr& name, void (base_class::*f)(void))  {
       _add(name + "#0", new VoidMemberFunction<base_class>(name, f));
@@ -320,6 +345,10 @@ namespace exparse  {
     void add(const olxstr& name, rvt (base_class::*f)(void))  {
       _add(name + "#0", new MemberFunction<rvt,base_class>(name, f));
     }
+    template <class rvt>
+    void add(const olxstr& name, rvt (base_class::*f)(void) const)  {
+      _add(name + "#0", new MemberFunction<rvt,base_class>(name, (rvt (base_class::*)(void))f));
+    }
     template<class rvt, class argt_1>
     void add(const olxstr& name, rvt (base_class::*f)(argt_1) )  {  
       _add(name + "#1", new MemberFunction1<rvt,base_class,argt_1>(name, f));
@@ -328,21 +357,39 @@ namespace exparse  {
     void add(const olxstr& name, rvt (base_class::*f)(argt_1,argt_2) )  {  
       _add(name + "#2", new MemberFunction2<rvt,base_class,argt_1,argt_2>(name, f));
     }
+    template<class rvt, class argt_1, class argt_2>
+    void add(const olxstr& name, rvt (base_class::*f)(argt_1,argt_2) const)  {  
+      _add(name + "#2", new MemberFunction2<rvt,base_class,argt_1,argt_2>(name, (rvt (base_class::*)(argt_1,argt_2))f));
+    }
 
     struct FuncEvaluator : public IEvaluable  {
       IMemberFunction* func;
       base_class& self;
+      const IEvaluable& owner;
       const EvaluableFactory& factory;
       TPtrList<IEvaluable> args;
-      FuncEvaluator(const EvaluableFactory& fc, base_class& s, IMemberFunction* f, 
-        const TPtrList<IEvaluable>& a) : factory(fc), self(s), func(f), args(a) {}
-      virtual IEvaluable* _evaluate() const {  return func->run(factory, &self, args);  }
+      FuncEvaluator(const IEvaluable& ow, const EvaluableFactory& fc, base_class& s, IMemberFunction* f, 
+        const TPtrList<IEvaluable>& a) : owner(ow.inc_ref()), factory(fc), self(s), func(f), args(a) 
+      {
+        for( int i=0; i < args.Count(); i++ )
+          args[i]->inc_ref();
+      }
+      ~FuncEvaluator()  {  
+        owner.dec_ref();  
+        for( int i=0; i < args.Count(); i++ )
+          if( args[i]->dec_ref() == 0 )
+            delete args[i];
+      }
+      virtual IEvaluable* _evaluate() const {  return func->run(&self, factory, args);  }
     };
-    IEvaluable* create(const EvaluableFactory& factory, base_class& self, const olxstr& name, const TPtrList<IEvaluable>& args)  {
-      IStaticFunction* gf = find(name, args.Count());
+    virtual IEvaluable* create_from_name(const IEvaluable& owner, const EvaluableFactory& factory, void* self, const olxstr& name, const TPtrList<IEvaluable>& args) const {
+      IMemberFunction* gf = find(name, args.Count());
       if( gf == NULL )
         throw TInvalidArgumentException(__OlxSourceInfo, "could not locate specified function");
-      return new FuncEvaluator(factory, self, gf, args);
+      return new FuncEvaluator(owner, factory, *static_cast<base_class*>(self), gf, args);
+    }
+    virtual IEvaluable* create_from_index(const IEvaluable& owner, const EvaluableFactory& factory, void* self, size_t index, const TPtrList<IEvaluable>& args) const {
+      return new FuncEvaluator(owner, factory, *static_cast<base_class*>(self), funcs.GetValue(index), args);
     }
     IEvaluable* call(const EvaluableFactory& factory, base_class& self, const olxstr& name, const TPtrList<IEvaluable>& args)  {
       IMemberFunction* gf = find(name, args.Count());

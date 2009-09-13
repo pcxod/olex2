@@ -157,6 +157,19 @@ void expression_tree::expand()  {
     else  { 
       olxstr opr;
       if( parser_util::parse_control_chars(data, opr, i) )  {
+        if( opr == '.' )  {  // treat floating point values...
+          if( i == 1 || (i+1) >= data.Length() )  {  // .1 or 1.
+            dt << '.';
+            continue;
+          }
+          if( (i > 0 && olxstr::o_isdigit(data.CharAt(i-1))) ||
+              ((i+1) < data.Length() && olxstr::o_isdigit(data.CharAt(i+1))) )
+          {
+            dt << '.';
+            continue;
+          }
+        }
+
         if( !dt.IsEmpty() )  {
           if( left != NULL )
             throw TInvalidArgumentException(__OlxSourceInfo, "invalid expression");

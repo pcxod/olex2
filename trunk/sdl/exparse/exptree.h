@@ -7,8 +7,9 @@ BeginEsdlNamespace()
 
 namespace exparse  {
   namespace parser_util  {
-    static const olxstr control_chars("+-*/&^|:!?=%<>");
+    static const olxstr control_chars("+-*/&^|:!?=%<>.");
     static const olxstr operators[]= {
+      '.',
       '+', '-', '*', '/', '%',  // arithmetic
       '&', '^', '|', // bitwise
       "==", "!=", ">=", "<=", '<', '>', // comparison

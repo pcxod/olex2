@@ -9,13 +9,23 @@ namespace exparse  {
   struct BuiltInsFactory {
     struct IConstFunc : public ANumberEvaluator  {
       IEvaluable* arg;
-      IConstFunc(IEvaluable* _arg) : arg(_arg) {}
-      ~IConstFunc()  {  delete arg;  }
+      IConstFunc(IEvaluable* _arg) : arg(_arg) {
+        arg->inc_ref();
+      }
+      ~IConstFunc()  {  
+        if( arg->dec_ref() == 0 )  delete arg;  
+      }
     };
     struct IConstFunc2 : public ANumberEvaluator  {
       IEvaluable* a, *b;
-      IConstFunc2(IEvaluable* _a, IEvaluable* _b) : a(_a), b(_b) {}
-      ~IConstFunc2()  {  delete a;  delete b;  }
+      IConstFunc2(IEvaluable* _a, IEvaluable* _b) : a(_a), b(_b) {
+        a->inc_ref();
+        b->inc_ref();
+      }
+      ~IConstFunc2()  {  
+        if( a->dec_ref() == 0 )  delete a;  
+        if( b->dec_ref() == 0 )  delete b;  
+      }
     };
     struct AbsFunc : public IConstFunc  {
       AbsFunc(IEvaluable* arg) : IConstFunc(arg)  {}
@@ -210,6 +220,9 @@ namespace exparse  {
     }
     static bool has_arithmetic_priority(const olxstr& name) {  
       return name == '*' || name == '/';
+    }
+    static bool is_assignment(const olxstr& name) {  
+      return name == '=';
     }
   };
 };  // end exparse namespace
