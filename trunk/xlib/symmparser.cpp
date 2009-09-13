@@ -105,7 +105,7 @@ next_oper:
       v /= denom;
       base /= denom;
     }
-    M.t[i] = v;
+    M.t[i] = (M.t[i] < 0 ? -v : v);
     if( base != 1 )
       M.t[i] /= base;
   }
