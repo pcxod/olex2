@@ -23,10 +23,10 @@ namespace exparse  {
     virtual const type_info& get_RV_type() const = 0;
   };
   struct IMemberFunction : public IBasicFunction  {
-    virtual IEvaluable* run(void* self, const TPtrList<IEvaluable>& params) = 0;
+    virtual IEvaluable* run(void* self, const EvaluableFactory& factory, const TPtrList<IEvaluable>& params) = 0;
   };
   struct IStaticFunction : public IBasicFunction  {
-    virtual IEvaluable* run(const TPtrList<IEvaluable>& params) = 0;
+    virtual IEvaluable* run(const EvaluableFactory& factory, const TPtrList<IEvaluable>& params) = 0;
   };
 
   /* abstract function */
@@ -60,7 +60,7 @@ namespace exparse  {
     void (*func)();
   public:
     VoidFunction(const olxstr& name, void (*f)(void) ) : AFunction<IStaticFunction,void>(name), func(f) {}
-    virtual IEvaluable* run(const TPtrList<IEvaluable>& params)  {
+    virtual IEvaluable* run(const EvaluableFactory&, const TPtrList<IEvaluable>& params)  {
       this->func();
       return new VoidValue;
     }
@@ -71,7 +71,7 @@ namespace exparse  {
   public:
     VoidMemberFunction(const olxstr& name, void (base_class::*f)() ) : 
       AFunction<IMemberFunction,void>(name), func(f)  {}
-    virtual IEvaluable* run(void* self, const TPtrList<IEvaluable>& params )  {
+    virtual IEvaluable* run(void* self, const EvaluableFactory&, const TPtrList<IEvaluable>& params )  {
       (static_cast<base_class*>(self)->*func)();
       return new VoidValue;
     }
@@ -86,7 +86,7 @@ namespace exparse  {
     {
       arg_types.Add(typeid(argt_1));
     }
-    virtual IEvaluable* run(const TPtrList<IEvaluable>& params)  {
+    virtual IEvaluable* run(const EvaluableFactory&, const TPtrList<IEvaluable>& params)  {
       this->func(params[0]->cast<argt_1>());
       return new VoidValue;
     }
@@ -101,7 +101,7 @@ namespace exparse  {
     {
       arg_types.Add(typeid(argt_1));
     }
-    virtual IEvaluable* run(void* self, const TPtrList<IEvaluable>& params )  {
+    virtual IEvaluable* run(void* self, const EvaluableFactory&, const TPtrList<IEvaluable>& params )  {
       (static_cast<base_class*>(self)->*func)(params[0]->cast<argt_1>() );
       return new VoidValue;
     }
@@ -118,7 +118,7 @@ namespace exparse  {
       arg_types.Add(typeid(argt_1));
       arg_types.Add(typeid(argt_2));
     }
-    virtual IEvaluable* run(const TPtrList<IEvaluable>&params)  {
+    virtual IEvaluable* run(const EvaluableFactory&, const TPtrList<IEvaluable>&params)  {
       this->func(params[0]->cast<argt_1>(), params[1]->cast<argt_2>());
       return new VoidValue;
     }
@@ -134,7 +134,7 @@ namespace exparse  {
       arg_types.Add(typeid(argt_1));
       arg_types.Add(typeid(argt_2));
     }
-    virtual IEvaluable* run(void* self, const TPtrList<IEvaluable>&params )  {
+    virtual IEvaluable* run(void* self, const EvaluableFactory&, const TPtrList<IEvaluable>&params )  {
       (static_cast<base_class*>(self)->*func)(
         params[0]->cast<argt_1>(),
         params[1]->cast<argt_2>());
@@ -149,8 +149,8 @@ namespace exparse  {
     rvt (*func)();
   public:
     Function(const olxstr& name, rvt (*f)(void) ) : AFunction<IStaticFunction,rvt>(name), func(f) {}
-    virtual IEvaluable* run(const TPtrList<IEvaluable>& params)  {
-      return EvaluableFactory::create<rvt>(this->func());
+    virtual IEvaluable* run(const EvaluableFactory& factory, const TPtrList<IEvaluable>& params)  {
+      return factory.create<rvt>(this->func());
     }
   };
   // class member function
@@ -159,8 +159,8 @@ namespace exparse  {
   public:
     MemberFunction(const olxstr& name, rvt (base_class::*f)() ) : 
         AFunction<IMemberFunction,rvt>(name), func(f) {}
-    virtual IEvaluable* run(void* self, const TPtrList<IEvaluable>& params)  {
-      return EvaluableFactory::create<rvt>((static_cast<base_class*>(self)->*func)());
+    virtual IEvaluable* run(void* self, const EvaluableFactory& factory, const TPtrList<IEvaluable>& params)  {
+      return factory.create<rvt>((static_cast<base_class*>(self)->*func)());
     }
   };
   /////////////////////////////  SINGLE ARGUMENT FUNCTIONS RETURNING A VALUE  //////////////////////
@@ -173,8 +173,8 @@ namespace exparse  {
     {
       AFunction<IStaticFunction,rvt>::arg_types.Add(typeid(argt_1));
     }
-    virtual IEvaluable* run(const TPtrList<IEvaluable>&params)  {
-      return EvaluableFactory::create<argt_1>(this->func(params[0]->cast<argt_1>()));
+    virtual IEvaluable* run(const EvaluableFactory& factory, const TPtrList<IEvaluable>&params)  {
+      return factory.create<argt_1>(this->func(params[0]->cast<argt_1>()));
     }
   };
   //class member function
@@ -187,8 +187,8 @@ namespace exparse  {
     {
       AFunction<IMemberFunction,rvt>::arg_types.Add(typeid(argt_1));
     }
-    virtual IEvaluable* run(void* self, const TPtrList<IEvaluable>& params)  {
-      return EvaluableFactory::create<rvt>((static_cast<base_class*>(self)->*func)(params[0]->cast<argt_1>()));
+    virtual IEvaluable* run(void* self, const EvaluableFactory& factory, const TPtrList<IEvaluable>& params)  {
+      return factory.create<rvt>((static_cast<base_class*>(self)->*func)(params[0]->cast<argt_1>()));
     }
   };
   /////////////////////////////  TWO ARGUMENT FUNCTIONS RETURNING A VALUE  //////////////////////
@@ -203,9 +203,8 @@ namespace exparse  {
       AFunction<IStaticFunction,rvt>::arg_types.Add(typeid(argt_1));
       AFunction<IStaticFunction,rvt>::arg_types.Add(typeid(argt_2));
     }
-    virtual IEvaluable* run(const TPtrList<IEvaluable>&params )  {
-      return EvaluableFactory::create<rvt>(
-        this->func(params[0]->cast<argt_1>(), params[1]->cast<argt_2>()));
+    virtual IEvaluable* run(const EvaluableFactory& factory, const TPtrList<IEvaluable>&params )  {
+      return factory.create<rvt>(this->func(params[0]->cast<argt_1>(), params[1]->cast<argt_2>()));
     }
   };
   //class member function
@@ -219,9 +218,9 @@ namespace exparse  {
       AFunction<IMemberFunction,rvt>::arg_types.Add(typeid(argt_1));
       AFunction<IMemberFunction,rvt>::arg_types.Add(typeid(argt_2));
     }
-    virtual IEvaluable* run(void* self, const TPtrList<IEvaluable>& params)  {
-      return EvaluableFactory::create( (static_cast<base_class*>(self)->*func)(
-        params[0]->cast<argt_1>(), params[1]->cast<argt_2>()));
+    virtual IEvaluable* run(void* self, const EvaluableFactory& factory, const TPtrList<IEvaluable>& params)  {
+      return factory.create( 
+        (static_cast<base_class*>(self)->*func)(params[0]->cast<argt_1>(), params[1]->cast<argt_2>()));
     }
   };
   ////////////////////////////////////////////////////////////////////////////////
@@ -267,11 +266,24 @@ namespace exparse  {
       _add(name + "#2", new Function2<rvt,argt_1,argt_2>(name, f));
     }
 
-    IEvaluable* call(const olxstr& name, const TPtrList<IEvaluable>& args)  {
+    struct FuncEvaluator : public IEvaluable  {
+      IStaticFunction* func;
+      TPtrList<IEvaluable> args;
+      const EvaluableFactory& factory;
+      FuncEvaluator(const EvaluableFactory& fc, IStaticFunction* f, const TPtrList<IEvaluable>& a) : factory(fc), func(f), args(a) {}
+      virtual IEvaluable* _evaluate() const {  return func->run(factory, args);  }
+    };
+    IEvaluable* create(const EvaluableFactory& factory, const olxstr& name, const TPtrList<IEvaluable>& args)  {
       IStaticFunction* gf = find(name, args.Count());
       if( gf == NULL )
         throw TInvalidArgumentException(__OlxSourceInfo, "could not locate specified function");
-      return gf->run(args);
+      return new FuncEvaluator(factory, gf, args);
+    }
+    IEvaluable* call(const EvaluableFactory& factory, const olxstr& name, const TPtrList<IEvaluable>& args)  {
+      IStaticFunction* gf = find(name, args.Count());
+      if( gf == NULL )
+        throw TInvalidArgumentException(__OlxSourceInfo, "could not locate specified function");
+      return gf->run(factory, args);
     }
     static void CompileTest();
   };
@@ -317,11 +329,26 @@ namespace exparse  {
       _add(name + "#2", new MemberFunction2<rvt,base_class,argt_1,argt_2>(name, f));
     }
 
-    IEvaluable* call(base_class& self, const olxstr& name, const TPtrList<IEvaluable>& args)  {
+    struct FuncEvaluator : public IEvaluable  {
+      IMemberFunction* func;
+      base_class& self;
+      const EvaluableFactory& factory;
+      TPtrList<IEvaluable> args;
+      FuncEvaluator(const EvaluableFactory& fc, base_class& s, IMemberFunction* f, 
+        const TPtrList<IEvaluable>& a) : factory(fc), self(s), func(f), args(a) {}
+      virtual IEvaluable* _evaluate() const {  return func->run(factory, &self, args);  }
+    };
+    IEvaluable* create(const EvaluableFactory& factory, base_class& self, const olxstr& name, const TPtrList<IEvaluable>& args)  {
+      IStaticFunction* gf = find(name, args.Count());
+      if( gf == NULL )
+        throw TInvalidArgumentException(__OlxSourceInfo, "could not locate specified function");
+      return new FuncEvaluator(factory, self, gf, args);
+    }
+    IEvaluable* call(const EvaluableFactory& factory, base_class& self, const olxstr& name, const TPtrList<IEvaluable>& args)  {
       IMemberFunction* gf = find(name, args.Count());
       if( gf == NULL )
         throw TInvalidArgumentException(__OlxSourceInfo, "could not locate specified function");
-      return gf->run(&self, args);
+      return gf->run(&self, factory, args);
     }
     static void CompileTest();
   };

@@ -71,7 +71,7 @@ template <class PT>
 template <>
   class TPTWrapper<void> : public AReferencible  {
   public:
-    TPTWrapper( ) {  }
+    TPTWrapper(void) {  }
     TPTWrapper( const TPTWrapper& val )  {  }
     TPTWrapper( TPTWrapper* val )  {  }
     void Val()                    {   }
@@ -171,7 +171,6 @@ public:
       throw TFunctionFailedException( __OlxSourceInfo, reason);
     }
   }
-
 };
 
 /////////////////////////////  FUNCTIONS RETURNING VOID  //////////////////////
@@ -186,7 +185,7 @@ public:
   virtual IEObject* Run(TPtrList<IEObject const>& params )  {
     ValidateParameters( params );
     this->func();
-    return NULL;
+    return new TPTWrapper<void>();
   }
 };
 // class member function

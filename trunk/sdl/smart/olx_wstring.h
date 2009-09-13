@@ -98,6 +98,7 @@ protected:
   inline const wchar_t* printFormat(const unsigned long long int v) const {  return L"%Lu";  }
   inline const wchar_t* printFormat(const float v)                  const {  return L"%f";  }
   inline const wchar_t* printFormat(const double v)                 const {  return L"%lf";  }
+  inline const wchar_t* printFormat(const long double v)            const {  return L"%Lf";  }
 public:
   TWString();
   // simple convertion constructors

@@ -36,6 +36,7 @@ void exparse::LibraryRegistry::CompileTest()  {
   cr.add("test", &test_struct::test_2);
   TPtrList<IEvaluable> args;
   test_struct ts;
-  cr.call(ts, "test", args);
+  EvaluableFactory factory;
+  cr.call(factory, ts, "test", args);
 }
 

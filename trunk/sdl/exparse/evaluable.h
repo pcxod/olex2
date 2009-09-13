@@ -10,7 +10,7 @@ namespace exparse  {
     const std::type_info& type;
   public:
     TCastException(const olxstr& src, const std::type_info& ti) : type(ti),
-      TBasicException(src, olxstr("Invaild cast to ") << type.name()) {};
+      TBasicException(src, olxstr("Invalid cast to ") << ti.name()) {};
     TCastException(const TCastException& ce) : type(ce.type), TBasicException(ce) {}
     const std::type_info& GetTypeInfo() const {  return type;  }
     virtual IEObject* Replicate() const {  return new TCastException(*this);  }
@@ -21,10 +21,16 @@ namespace exparse  {
     virtual IEvaluable* _evaluate() const = 0;
     typedef void* (*cast_operator)(const IEvaluable*);
     typedef olxdict<std::type_info const*, cast_operator, TPointerPtrComparator> operator_dict;
-    virtual cast_operator get_cast_operator(const std::type_info&) const = 0;
-    virtual IEvaluable* create_new(const void*)  {
+    virtual cast_operator get_cast_operator(const std::type_info&) const {
       throw TNotImplementedException(__OlxSourceInfo);
     }
+    virtual IEvaluable* create_new(const void*) const {
+      throw TNotImplementedException(__OlxSourceInfo);
+    }
+    virtual IEvaluable* clone() const {
+      throw TNotImplementedException(__OlxSourceInfo);
+    }
+    virtual bool is_final() const {  return false;  }
     template <class T> T cast() const {
       const std::type_info& ti = typeid(T);
       try  {  
@@ -66,23 +72,35 @@ namespace exparse  {
       const double rv = ev->cast<double>();
       return rv;
     }
+    bool final;  // does represent a number?
   public:
-    ANumberEvaluator()  {}
+    ANumberEvaluator(bool _final=false) : final(_final)  {}
+    inline bool is_final() const {  return final;  }
   };
   template <class BC, typename Type>
   struct TPrimitiveEvaluator : public ANumberEvaluator, public BC  {
-    TPrimitiveEvaluator(const Type& val) : BC(val)  {}
+    static void* str_cast(const IEvaluable* i)  {  return new olxstr(IEvaluable::cast_helper<TPrimitiveEvaluator<BC,Type> >(i)->get_value());  }
+    virtual cast_operator get_cast_operator(const std::type_info& ti) const {  
+      if( typeid(olxstr) == ti )
+        return &str_cast;
+      return ANumberEvaluator::get_cast_operator(ti);  
+    } 
+    TPrimitiveEvaluator(const Type& val) : ANumberEvaluator(true), BC(val)  {}
     virtual double Evaluate() const {
       return (double)val;
     }
     virtual IEvaluable* _evaluate() const {  
       throw 1;
     }
+    virtual IEvaluable* create_new(const void* v) const {
+      return new TPrimitiveEvaluator<BC,Type>( *static_cast<const Type*>(v) );
+    }
+    virtual IEvaluable* clone() const {
+      return new TPrimitiveEvaluator<BC,Type>(val);
+    }
   };
 
-  template <class T>
-  struct TPrimitiveInstance  {
-  public:
+  template <class T> struct TPrimitiveInstance  {
     T val;
     TPrimitiveInstance(const T& _val) : val(_val)  {}
     const T& get_value() const {  return val;  }
@@ -104,9 +122,9 @@ namespace exparse  {
   
   };
   struct EvaluableFactory  {
-    static olxdict<std::type_info const*, IEvaluable*, TPointerPtrComparator> types;
+    olxdict<std::type_info const*, IEvaluable*, TPointerPtrComparator> types;
     template <class T> void add_ptype()  {
-      types.Add(&typeid(bool), new TPrimitiveEvaluator<TPrimitiveInstance<T>,T>(0));
+      types.Add(&typeid(T), new TPrimitiveEvaluator<TPrimitiveInstance<T>,T>(0));
     }
     EvaluableFactory()  {
       if( types.IsEmpty() )  {
@@ -126,7 +144,11 @@ namespace exparse  {
         add_ptype<long double>();
       }
     }
-    template <class T> static IEvaluable* create(const T& val)  {
+    ~EvaluableFactory()  {
+      for( int i=0; i < types.Count(); i++ )
+        delete types.GetValue(i);
+    }
+    template <class T> IEvaluable* create(const T& val) const {
       const std::type_info& ti = typeid(T);
       int i = types.IndexOf(&ti);
       if( i == -1 )

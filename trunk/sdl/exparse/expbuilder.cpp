@@ -68,9 +68,11 @@ IEvaluable* exp_builder::process_const_func(IEvaluable* func, IEvaluable* left, 
   if( (dynamic_cast<BuiltInsFactory::IConstFunc*>(func) != NULL || 
     dynamic_cast<BuiltInsFactory::IConstFunc2*>(func) != NULL) )
   {
+    ANumberEvaluator* left_na = (left == NULL ? NULL : dynamic_cast<ANumberEvaluator*>(left));
+    ANumberEvaluator* right_na = (right == NULL ? NULL : dynamic_cast<ANumberEvaluator*>(right));
     if( left == NULL ||
-      (dynamic_cast<ANumberEvaluator*>(left) != NULL && 
-      (right == NULL || dynamic_cast<ANumberEvaluator*>(right) != NULL)) )  
+      (left_na != NULL && left_na->is_final()) &&
+      (right == NULL || (right_na != NULL && right_na->is_final())) )  
     {
       IEvaluable* ce = func->_evaluate();
       delete func;
@@ -90,12 +92,18 @@ IEvaluable* exp_builder::evaluator_from_evator(expression_tree* root)  {
         delete args[j];
       throw TInvalidArgumentException(__OlxSourceInfo, "could not find appropriate evluable");
     }
-    if( dynamic_cast<ANumberEvaluator*>(args.Last()) == NULL )
+    ANumberEvaluator* ne = dynamic_cast<ANumberEvaluator*>(args.Last());
+    if( ne == NULL || !ne->is_final() )
       all_const = false;
   }
   IEvaluable *rv = BuiltInsFactory::create(root->evator->name, args);
+  if( rv == NULL )
+    rv = scope.functions.create(factory, root->evator->name, args);
+  if( rv == NULL )
+    throw TFunctionFailedException(__OlxSourceInfo, olxstr("undefined function: ") << root->evator->name);
   // need to test if the function result cannot be changed
-  if( all_const )  return process_const_func(rv, NULL);
+  if( all_const )
+    return process_const_func(rv, NULL);
   return rv;
 }
 //......................................................................................................
@@ -149,7 +157,7 @@ IEvaluable* exp_builder::create_evaluator(expression_tree* root)  {
         int ind = scope.VarNames.IndexOf(root->data);
         if( ind == -1 )  {
           scope.VarNames.Add( root->data );
-          scope.VarValues.Add(0);
+          scope.Vars.Add(NULL);
           ind = scope.VarNames.Count()-1;
         }
         return new Variable(scope, ind);
