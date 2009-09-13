@@ -38,15 +38,15 @@ namespace exparse  {
     AFunction(const olxstr& _name ) : name(_name)  {}
     virtual const olxstr& get_name() const {  return name;  }
     virtual olxstr get_signature() const {
-      olxstr rv = get_RV_type().name();
-      rv << ' ' << get_name() << '(';
+      olxstr retval = get_RV_type().name();
+      retval << ' ' << get_name() << '(';
       for( int i=0; i < arg_types.Count(); i++ )  {
-        rv << arg_types[i]->name();
+        retval << arg_types[i]->name();
         if( (i+1) < arg_types.Count() )
-          rv << ", ";
+          retval << ", ";
       }
-      rv << ')';
-      return rv;
+      retval << ')';
+      return retval;
     }
     virtual size_t get_argc() const  {  return arg_types.Count();  }
     virtual const type_info& get_arg_type(size_t i) const  {  return *arg_types[i];  }

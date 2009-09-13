@@ -17,6 +17,7 @@ SET(src "${CMAKE_CURRENT_SOURCE_DIR}")
 FILE(GLOB alglib_SRCS "${src}/alglib/*.cpp")
 FILE(GLOB sdl_SRCS "${src}/sdl/*.cpp")
 FILE(GLOB sdlsmart_SRCS "${src}/sdl/smart/*.cpp")
+FILE(GLOB sdlexp_SRCS "${src}/sdl/exparse/*.cpp")
 FILE(GLOB xlib_SRCS "${src}/xlib/*.cpp")
 FILE(GLOB xlibmacro_SRCS "${src}/xlib/macro/*.cpp")
 FILE(GLOB glib_SRCS "${src}/glib/*.cpp")
@@ -37,6 +38,7 @@ SET(all_SRCS
 	${alglib_SRCS}
 	${sdl_SRCS}
 	${sdlsmart_SRCS}
+	${sdlexp_SRCS}
 	${xlib_SRCS}
 	${xlibmacro_SRCS}
 	${glib_SRCS}

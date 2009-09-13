@@ -87,7 +87,7 @@ namespace exparse  {
     } 
     TPrimitiveEvaluator(const Type& val) : ANumberEvaluator(true), BC(val)  {}
     virtual double Evaluate() const {
-      return (double)val;
+      return (double)BC::val;
     }
     virtual IEvaluable* _evaluate() const {  
       throw 1;
@@ -96,7 +96,7 @@ namespace exparse  {
       return new TPrimitiveEvaluator<BC,Type>( *static_cast<const Type*>(v) );
     }
     virtual IEvaluable* clone() const {
-      return new TPrimitiveEvaluator<BC,Type>(val);
+      return new TPrimitiveEvaluator<BC,Type>(BC::val);
     }
   };
 
