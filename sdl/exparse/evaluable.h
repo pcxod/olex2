@@ -17,7 +17,12 @@ namespace exparse  {
   };
 
   struct IEvaluable {
-    virtual ~IEvaluable() {}
+    mutable int ref_cnt;
+    IEvaluable() : ref_cnt(0) {}
+    virtual ~IEvaluable() {
+      if( ref_cnt != 0 )
+        throw 1;
+    }
     virtual IEvaluable* _evaluate() const = 0;
     typedef void* (*cast_operator)(const IEvaluable*);
     typedef olxdict<std::type_info const*, cast_operator, TPointerPtrComparator> operator_dict;
@@ -27,10 +32,16 @@ namespace exparse  {
     virtual IEvaluable* create_new(const void*) const {
       throw TNotImplementedException(__OlxSourceInfo);
     }
-    virtual IEvaluable* clone() const {
+    virtual IEvaluable* find_property(const olxstr& name) {
       throw TNotImplementedException(__OlxSourceInfo);
     }
+    virtual IEvaluable* find_method(const olxstr& name, const struct EvaluableFactory&, const TPtrList<IEvaluable>& args) {
+      return NULL;
+    }
     virtual bool is_final() const {  return false;  }
+    inline const IEvaluable& inc_ref() const {  ref_cnt++;  return *this;  }
+    inline int dec_ref() const {  return --ref_cnt;  }
+
     template <class T> T cast() const {
       const std::type_info& ti = typeid(T);
       try  {  
@@ -80,8 +91,11 @@ namespace exparse  {
   template <class BC, typename Type>
   struct TPrimitiveEvaluator : public ANumberEvaluator, public BC  {
     static void* str_cast(const IEvaluable* i)  {  return new olxstr(IEvaluable::cast_helper<TPrimitiveEvaluator<BC,Type> >(i)->get_value());  }
+    static void* val_cast(const IEvaluable* i)  {  return new Type(IEvaluable::cast_helper<TPrimitiveEvaluator<BC,Type> >(i)->get_value());  }
     virtual cast_operator get_cast_operator(const std::type_info& ti) const {  
-      if( typeid(olxstr) == ti )
+      if( typeid(Type) == ti )
+        return &val_cast;
+      else if( typeid(olxstr) == ti )
         return &str_cast;
       return ANumberEvaluator::get_cast_operator(ti);  
     } 
@@ -94,9 +108,6 @@ namespace exparse  {
     }
     virtual IEvaluable* create_new(const void* v) const {
       return new TPrimitiveEvaluator<BC,Type>( *static_cast<const Type*>(v) );
-    }
-    virtual IEvaluable* clone() const {
-      return new TPrimitiveEvaluator<BC,Type>(BC::val);
     }
   };
 
@@ -118,9 +129,6 @@ namespace exparse  {
   typedef TPrimitiveEvaluator<TPrimitiveInstance<int>,int> IntValue;
   typedef TPrimitiveEvaluator<TPrimitiveInstance<double>,double> DoubleValue;
 
-  struct IEvaluableFactory  {
-  
-  };
   struct EvaluableFactory  {
     olxdict<std::type_info const*, IEvaluable*, TPointerPtrComparator> types;
     template <class T> void add_ptype()  {

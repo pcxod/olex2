@@ -8103,9 +8103,6 @@ void TMainForm::macProjSph(TStrObjList &Cmds, const TParamList &Options, TMacroE
     FXApp->GetBond(i).BondUpdated();
 }
 //..............................................................................
-bool main_form_test_func(bool a, bool b)  {
-  return a && b;
-}
 void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   OlxTests tests;
   tests.Add( &TSymmParser::Tests );
@@ -8141,22 +8138,18 @@ void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options, TMa
   using namespace esdl::exparse;
   EvaluableFactory evf;
   exp_builder _exp(evf);
-  _exp.scope.functions.add("test", &main_form_test_func);
-  IEvaluable* iv = _exp.build("test(true,false)");
-  //_exp.scope.Vars[_exp.scope.VarNames.IndexOf('b')] = new DoubleValue(-1);
-  //_exp.scope.Vars[_exp.scope.VarNames.IndexOf('c')] = new DoubleValue(0);
-  bool v;
-  if( iv->is_final() )  {
-    v = iv->cast<bool>();
-  }
-  else  {
+  IEvaluable* iv = _exp.build("a = 'ab c, de\\';()'");
+  iv = _exp.build("b = 'ab c'");
+  //_exp.scope.add_var("a", new StringValue("abcdef"));
+  //iv = _exp.build("a.sub(0,4).sub(1,3).len()");
+  iv = _exp.build("x = a.sub(0,4).len() + b.len()");
+  iv = _exp.build("c = a.sub(0,3) == b.sub(0,3)");
+  if( !iv->is_final() )  {
     IEvaluable* iv1 = iv->_evaluate();
-    v = iv1->cast<bool>();
     delete iv1;
   }
-  delete iv;
-  //delete _exp.scope.Vars[_exp.scope.VarNames.IndexOf('b')];
-  //delete _exp.scope.Vars[_exp.scope.VarNames.IndexOf('c')];
+  if( iv->ref_cnt == 0 )
+    delete iv;
 }
 //..............................................................................
 double Main_FindClosestDistance(const smatd_list& ml, vec3d& o_from, const TCAtom& a_to) {
