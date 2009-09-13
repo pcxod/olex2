@@ -145,7 +145,7 @@
 #include "olxth.h"
 #include "md5.h"
 #include "sha.h"
-//#include "ipbase.h"
+//#include "../sdl/exparse/expbuilder.h"
 //#include "base_2d.h"
 //#include "gl2ps/gl2ps.c"
 
@@ -8103,8 +8103,12 @@ void TMainForm::macProjSph(TStrObjList &Cmds, const TParamList &Options, TMacroE
     FXApp->GetBond(i).BondUpdated();
 }
 //..............................................................................
+bool main_form_test_func(bool a, bool b)  {
+  return a && b;
+}
 void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   OlxTests tests;
+  tests.Add( &TSymmParser::Tests );
   tests.run();
   AtomRefList arl(FXApp->XFile().GetRM(), Cmds.Text(' '), "suc");
   TTypeList<TAtomRefList> res;
@@ -8134,37 +8138,25 @@ void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options, TMa
     TBasicApp::GetLog() << "SHA256: " << SHA256::Digest(f) << '\n';
     TBasicApp::GetLog() << olxstr::FormatFloat(3, ((double)f.Length()/(((TETime::msNow() - st) + 1)*1.024*1024))) << " Mb/s\n";
   }
-  //SExpression sexp;
-  //SExpression::IEvaluable* root = sexp.Build("3*2 -4");
-  //double v = root->cast<double>();
-  //delete root;
-  //root = sexp.Build("pow(2,max(3,4))");
-  //v = root->cast<double>();
-  //delete root;
-  //root = sexp.Build("1 < 2 && (3 > 4 || 2 < 4)");
-  //v = root->cast<double>();
-  //delete root;
-  //root = sexp.Build("-4*2 + 7");
-  //v = root->cast<double>();
-  //delete root;
-  //root = sexp.Build("(1+2)*3");
-  //v = root->cast<double>();
-  //delete root;
-  //root = sexp.Build("3*(1+2)");
-  //v = root->cast<double>();
-  //delete root;
-  //root = sexp.Build("1==1 || 2==3 || 4==5");
-  //v = root->cast<double>();
-  //bool b_res = root->cast<bool>();
-  //delete root;
-  //if( !Cmds.IsEmpty() )  {
-  //  root = sexp.Build(Cmds.Text(' '));
-  //  v = root->cast<double>();
-  //  delete root;
+  //using namespace esdl::exparse;
+  //EvaluableFactory evf;
+  //exp_builder _exp(evf);
+  //_exp.scope.functions.add("test", &main_form_test_func);
+  //IEvaluable* iv = _exp.build("test(true,false)");
+  ////_exp.scope.Vars[_exp.scope.VarNames.IndexOf('b')] = new DoubleValue(-1);
+  ////_exp.scope.Vars[_exp.scope.VarNames.IndexOf('c')] = new DoubleValue(0);
+  //bool v;
+  //if( iv->is_final() )  {
+  //  v = iv->cast<bool>();
   //}
-#ifndef __GNUC__
-  //TFuncRegistry::CompileTest();
-#endif
+  //else  {
+  //  IEvaluable* iv1 = iv->_evaluate();
+  //  v = iv1->cast<bool>();
+  //  delete iv1;
+  //}
+  //delete iv;
+  ////delete _exp.scope.Vars[_exp.scope.VarNames.IndexOf('b')];
+  ////delete _exp.scope.Vars[_exp.scope.VarNames.IndexOf('c')];
 }
 //..............................................................................
 double Main_FindClosestDistance(const smatd_list& ml, vec3d& o_from, const TCAtom& a_to) {

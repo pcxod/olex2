@@ -3,20 +3,27 @@
 
 #include "builtins.h"
 #include "exptree.h"
+#include "funcwrap.h"
 
 BeginEsdlNamespace()
 
 namespace exparse  {
   struct context  {
-    TDoubleList VarValues;
+    TPtrList<IEvaluable> Vars;
     TStrList VarNames;
     olxdict<olxstr, IEvaluable*, olxstrComparator<false> > UserFunctions;
+    LibraryRegistry functions; 
+    //olxdict<olxstr, ClassRegistry*, olxstrComparator<false> > classes;
+    ~context()  {
+//      for( int i=0; i < classes.Count(); i++ )
+//        delete classes.GetValue(i);
+    }
   };
   struct Variable : public ANumberEvaluator  {
     size_t index;
     const context& scope;
     Variable(const context& _scope, size_t _index) : scope(_scope), index(_index) {}
-    virtual IEvaluable* _evaluate() const {  return new DoubleValue(scope.VarValues[index]); }
+    virtual IEvaluable* _evaluate() const {  return scope.Vars[index]; }
   };
 
   struct exp_builder  {
@@ -28,7 +35,9 @@ namespace exparse  {
     IEvaluable* create_evaluator(expression_tree* root);
   public:
     context scope;
-    IEvaluable* Build(const olxstr& exp)  {
+    EvaluableFactory& factory;
+    exp_builder(EvaluableFactory& _factory) : factory(_factory)  {}
+    IEvaluable* build(const olxstr& exp)  {
       expression_parser expp(exp);
       expp.expand();
       expp.root = sort_logical(expp.root);

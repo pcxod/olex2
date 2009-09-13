@@ -31,8 +31,8 @@ bool parser_util::parse_brackets(const olxstr& exp, olxstr& dest, int& ind)  {
     if( ch == cc )       bc--;
     else if( ch == oc )  bc++;
   }
-  ind--;
   if( bc == 0 )  {
+    ind--;
     dest = exp.SubString(start, ind-start);
     return true;
   }

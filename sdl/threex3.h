@@ -141,6 +141,9 @@ public:
   inline bool operator == (const TVector3<T>& v) const {
     return (data[0] == v[0] && data[1] == v[1] && data[2] == v[2]) ? true : false;  
   }
+  inline bool operator != (const TVector3<T>& v) const {
+    return (data[0] == v[0] && data[1] == v[1] && data[2] == v[2]) ? false : true;  
+  }
   inline TVector3<T>& operator = (const TVector3<T>& v)  {
     data[0] = v[0];  data[1] = v[1];  data[2] = v[2];  
     return *this;
@@ -401,9 +404,10 @@ public:
   }
 
   inline bool operator == (const TMatrix33<T>& v) const {
-    return (data[0][0] == v[0][0] && data[1][1] == v[1][1] && data[2][2] == v[2][2] && 
-        data[0][1] == v[0][1] && data[0][2] == v[0][2] && data[1][0] == v[1][0] &&
-        data[1][2] == v[1][2] && data[2][0] == v[2][0] && data[2][1] == v[2][1] ) ? true : false;
+    return (data[0] == v[0] && data[1] == v[1] && data[2] == v[2]) ? true : false;
+  }
+  inline bool operator != (const TMatrix33<T>& v) const {
+    return (data[0] == v[0] && data[1] == v[1] && data[2] == v[2]) ? false : true;
   }
 
   inline TMatrix33<T>& operator = (const TMatrix33<T>& v)  {

@@ -95,6 +95,7 @@ protected:
   inline const char* printFormat(const unsigned long long int v) const {  return "%Lu";  }
   inline const char* printFormat(const float v)                  const {  return "%f";  }
   inline const char* printFormat(const double v)                 const {  return "%lf";  }
+  inline const char* printFormat(const long double v)            const {  return "%Lf";  }
 public:
   TCString();
   TCString(const wchar_t *wstr );

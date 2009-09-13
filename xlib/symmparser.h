@@ -4,6 +4,7 @@
 #include "xbase.h"
 #include "symmat.h"
 #include "emath.h"
+#include "testsuit.h"
 
 BeginXlibNamespace()
 
@@ -140,6 +141,8 @@ public:
   // the length of translations; Matrix->Tag must be set to the index of the matrix in the Unit cell!!!
   static olxstr MatrixToSymmCode(const TUnitCell& UC, const smatd& M);
   static olxstr MatrixToSymmCode(const smatd_list& ml, const smatd& M);
+  // runs various tests...
+  static void Tests(OlxTests& t);
 };
 
 

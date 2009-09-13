@@ -45,9 +45,8 @@ void TFuncRegistry::CompileTest()  {
   fr.Reg("f2", &f2);
   fr.Reg("f3", &f3);
   fr.Reg("f4", &f4);
-
-  //fr.Reg<TestClass>("vf", &tc, &TestClass::vf);
-  //fr.Reg<TestClass>("vf1", &tc, &TestClass::vf1);
+  fr.Reg<TestClass,&TestClass::vf>("vf", &tc);
+  fr.Reg<TestClass>("vf1", &tc, &TestClass::vf1);
   //fr.Reg<TestClass>("vf2", &tc, &TestClass::vf2);
   //fr.Reg<TestClass>("vf3", &tc, &TestClass::vf3);
   //fr.Reg<TestClass>("vf4", &tc, &TestClass::vf4);

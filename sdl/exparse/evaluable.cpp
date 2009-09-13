@@ -24,4 +24,3 @@ olxdict<std::type_info const*, IEvaluable::cast_operator, TPointerPtrComparator>
     sizeof(ANumberEvaluator::cast_operators_table)/sizeof(ANumberEvaluator::cast_operators_table[0]) 
   );
 
-olxdict<std::type_info const*, IEvaluable*, TPointerPtrComparator> EvaluableFactory::types;
