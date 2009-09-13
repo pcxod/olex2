@@ -145,7 +145,7 @@
 #include "olxth.h"
 #include "md5.h"
 #include "sha.h"
-//#include "../sdl/exparse/expbuilder.h"
+#include "../sdl/exparse/expbuilder.h"
 //#include "base_2d.h"
 //#include "gl2ps/gl2ps.c"
 
@@ -8138,25 +8138,25 @@ void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options, TMa
     TBasicApp::GetLog() << "SHA256: " << SHA256::Digest(f) << '\n';
     TBasicApp::GetLog() << olxstr::FormatFloat(3, ((double)f.Length()/(((TETime::msNow() - st) + 1)*1.024*1024))) << " Mb/s\n";
   }
-  //using namespace esdl::exparse;
-  //EvaluableFactory evf;
-  //exp_builder _exp(evf);
-  //_exp.scope.functions.add("test", &main_form_test_func);
-  //IEvaluable* iv = _exp.build("test(true,false)");
-  ////_exp.scope.Vars[_exp.scope.VarNames.IndexOf('b')] = new DoubleValue(-1);
-  ////_exp.scope.Vars[_exp.scope.VarNames.IndexOf('c')] = new DoubleValue(0);
-  //bool v;
-  //if( iv->is_final() )  {
-  //  v = iv->cast<bool>();
-  //}
-  //else  {
-  //  IEvaluable* iv1 = iv->_evaluate();
-  //  v = iv1->cast<bool>();
-  //  delete iv1;
-  //}
-  //delete iv;
-  ////delete _exp.scope.Vars[_exp.scope.VarNames.IndexOf('b')];
-  ////delete _exp.scope.Vars[_exp.scope.VarNames.IndexOf('c')];
+  using namespace esdl::exparse;
+  EvaluableFactory evf;
+  exp_builder _exp(evf);
+  _exp.scope.functions.add("test", &main_form_test_func);
+  IEvaluable* iv = _exp.build("test(true,false)");
+  //_exp.scope.Vars[_exp.scope.VarNames.IndexOf('b')] = new DoubleValue(-1);
+  //_exp.scope.Vars[_exp.scope.VarNames.IndexOf('c')] = new DoubleValue(0);
+  bool v;
+  if( iv->is_final() )  {
+    v = iv->cast<bool>();
+  }
+  else  {
+    IEvaluable* iv1 = iv->_evaluate();
+    v = iv1->cast<bool>();
+    delete iv1;
+  }
+  delete iv;
+  //delete _exp.scope.Vars[_exp.scope.VarNames.IndexOf('b')];
+  //delete _exp.scope.Vars[_exp.scope.VarNames.IndexOf('c')];
 }
 //..............................................................................
 double Main_FindClosestDistance(const smatd_list& ml, vec3d& o_from, const TCAtom& a_to) {

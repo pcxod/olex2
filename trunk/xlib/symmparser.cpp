@@ -179,7 +179,7 @@ olxstr TSymmParser::MatrixToSymmCode(const smatd_list& ml, const smatd& M)  {
 }
 //..............................................................................
 void TSymmParser::Tests(OlxTests& t)  {
-  t.description = __FUNC__;
+  t.description = "TSymmParser::Tests";
   const mat3d mres1(-1,0,0,-1,0,-1), 
     mres2(-1,1,0,0,-1,1,-1,0,-1),
     mres3(-1,1,-1,1,-1,1,-1,1,-1);

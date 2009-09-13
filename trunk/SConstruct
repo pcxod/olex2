@@ -38,6 +38,7 @@ print 'Building location: ' + out_dir
 #get file lists
 alglib = Glob('./alglib/*.cpp')
 sdl = Glob('./sdl/*.cpp')
+sdl_exp = Glob('./sdl/exparse/*.cpp')
 sdl_smart = Glob('./sdl/smart/*.cpp')
 xlib = Glob('./xlib/*.cpp')
 xlib_macro = Glob('./xlib/macro/*.cpp')
@@ -149,7 +150,8 @@ else:
     print 'Please make sure that wxWidgets and Python config scripts are available'
     Exit(1)
 #sdl
-sdl_files = fileListToStringList('sdl', sdl) + fileListToStringList('sdl/smart', sdl_smart)
+sdl_files = fileListToStringList('sdl', sdl) + fileListToStringList('sdl/smart', sdl_smart) +\
+  fileListToStringList('sdl/exparse', sdl_exp)
 sdl_files = processFileNameList(sdl_files, env, out_dir + 'sdl')
 env.StaticLibrary(out_dir + 'lib/sdl', sdl_files)
 
