@@ -330,28 +330,43 @@ namespace exparse  {
     inline int index_of(const olxstr& name, size_t argc) const {
       return funcs.IndexOf( olxstr(name) << '#' << argc);
     }
-    void add(const olxstr& name, void (base_class::*f)(void))  {
+    void add(const olxstr& name, void (base_class::*f)())  {
       _add(name + "#0", new VoidMemberFunction<base_class>(name, f));
+    }
+    void add(const olxstr& name, void (base_class::*f)() const)  {
+      _add(name + "#0", new VoidMemberFunction<base_class>(name, (void (base_class::*)())f));
     }
     template<class argt_1>
     void add(const olxstr& name, void (base_class::*f)(argt_1) )  {  
       _add(name + "#1", new VoidMemberFunction1<base_class,argt_1>(name, f));
     }
+    template<class argt_1>
+    void add(const olxstr& name, void (base_class::*f)(argt_1) const)  {  
+      _add(name + "#1", new VoidMemberFunction1<base_class,argt_1>(name, (void (base_class::*)(argt_1))f));
+    }
     template<class argt_1, class argt_2>
     void add(const olxstr& name, void (base_class::*f)(argt_1,argt_2) )  {  
       _add(name + "#2", new VoidMemberFunction2<base_class,argt_1,argt_2>(name, f));
     }
+    template<class argt_1, class argt_2>
+    void add(const olxstr& name, void (base_class::*f)(argt_1,argt_2) const)  {  
+      _add(name + "#2", new VoidMemberFunction2<base_class,argt_1,argt_2>(name, (void (base_class::*)(argt_1,argt_2))f));
+    }
     template <class rvt>
-    void add(const olxstr& name, rvt (base_class::*f)(void))  {
+    void add(const olxstr& name, rvt (base_class::*f)())  {
       _add(name + "#0", new MemberFunction<rvt,base_class>(name, f));
     }
     template <class rvt>
-    void add(const olxstr& name, rvt (base_class::*f)(void) const)  {
-      _add(name + "#0", new MemberFunction<rvt,base_class>(name, (rvt (base_class::*)(void))f));
+    void add(const olxstr& name, rvt (base_class::*f)() const)  {
+      _add(name + "#0", new MemberFunction<rvt,base_class>(name, (rvt (base_class::*)())f));
     }
     template<class rvt, class argt_1>
     void add(const olxstr& name, rvt (base_class::*f)(argt_1) )  {  
       _add(name + "#1", new MemberFunction1<rvt,base_class,argt_1>(name, f));
+    }
+    template<class rvt, class argt_1>
+    void add(const olxstr& name, rvt (base_class::*f)(argt_1) const)  {  
+      _add(name + "#1", new MemberFunction1<rvt,base_class,argt_1>(name, (rvt (base_class::*)(argt_1))f));
     }
     template<class rvt, class argt_1, class argt_2>
     void add(const olxstr& name, rvt (base_class::*f)(argt_1,argt_2) )  {  
