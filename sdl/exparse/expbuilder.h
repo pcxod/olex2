@@ -83,7 +83,7 @@ namespace exparse  {
     static bool equalsi(olxstr a, olxstr b)  {  return a.Equalsi(b); }
     static void init_functions()  {
       functions.add("sub", &olxstr::SubString);
-      functions.add("len", &olxstr::Length);
+      functions.add<int>("len", &olxstr::Length);  // gcc...
       globals.add("+", &StringValue::add);
       globals.add("==", &StringValue::equals);
       globals.add("equals", &StringValue::equals);
