@@ -27,7 +27,7 @@ OLEX_INS := $(HOME)/olex
 OLEX_BIN := $(HOME)/bin
 find_files = $(wildcard *.cpp)
 VPATH = xlib:alglib:sdl:sdl/smart:sdl/exparse:xlib/macro:glib:gxlib
-OBJ := xlib alglib sdl sdl/smart xlib/macro glib gxlib
+OBJ := xlib alglib sdl sdl/smart sdl/exparse xlib/macro glib gxlib
 NPY_CPP_REPO = filesystem.cpp shellutil.cpp httpex.cpp url.cpp httpfs.cpp wxzipfs.cpp fsext.cpp pyext.cpp integration.cpp IsoSurface.cpp eprocess.cpp updateapi.cpp patchapi.cpp
 OBJ_CPP_REPO := hkl_py.cpp olxvar.cpp py_core.cpp $(NPY_CPP_REPO)
 NPY_OBJ_REPO := $(addprefix $(OBJ_DIR), $(NPY_CPP_REPO))
@@ -39,6 +39,7 @@ obj_xlib_files := $(addprefix $(OBJ_DIR),$(notdir $(wildcard xlib/*.cpp)))
 obj_alglib_files := $(addprefix $(OBJ_DIR),$(notdir $(wildcard alglib/*.cpp)))
 obj_sdl_files := $(addprefix $(OBJ_DIR),$(notdir $(wildcard sdl/*.cpp)))
 obj_sdl_smart_files := $(addprefix $(OBJ_DIR),$(notdir $(wildcard sdl/smart/*.cpp)))
+obj_sdl_exparse_files := $(addprefix $(OBJ_DIR),$(notdir $(wildcard sdl/exparse/*.cpp)))
 obj_xlib_macro_files := $(addprefix $(OBJ_DIR),$(notdir $(wildcard xlib/macro/*.cpp)))
 obj_glib_files := $(addprefix $(OBJ_DIR),$(notdir $(wildcard glib/*.cpp)))
 obj_gxlib_files := $(addprefix $(OBJ_DIR),$(notdir $(wildcard gxlib/*.cpp)))
@@ -71,7 +72,7 @@ all :
 	@echo "Type make install to install"
 
 .PHONY : objs
-objs: obj obj_xlib obj_alglib obj_sdl obj_sdl_smart obj_xlib_macro obj_glib obj_gxlib obj_repository
+objs: obj obj_xlib obj_alglib obj_sdl obj_sdl_smart obj_sdl_exparse obj_xlib_macro obj_glib obj_gxlib obj_repository
 
 obj:
 	@if test ! -d $(OBJ_DIR); then mkdir $(OBJ_DIR); else echo "obj directory already present"; fi;
@@ -99,6 +100,12 @@ obj_sdl_smart: obj $(obj_sdl_smart_files:.cpp=.s)
 
 $(obj_sdl_smart_files:.cpp=.s):
 	$(CC) $(SRC_DIR)sdl/smart/$(@F:.s=.cpp) -o $(OBJ_DIR)$(@F) $(OPTS) $(CFLAGS)
+		 
+.PHONY : obj_sdl_exparse
+obj_sdl_exparse: obj $(obj_sdl_exparse_files:.cpp=.s)
+
+$(obj_sdl_exparse_files:.cpp=.s):
+	$(CC) $(SRC_DIR)sdl/exparse/$(@F:.s=.cpp) -o $(OBJ_DIR)$(@F) $(OPTS) $(CFLAGS)
 		 
 .PHONY : obj_xlib_macro
 obj_xlib_macro: obj $(obj_xlib_macro_files:.cpp=.s)
@@ -145,8 +152,8 @@ $(OBJ_UNIRUN:.cpp=.s):
 	$(CC) $(SRC_DIR)unirun/$(@F:.s=.cpp) -o $(OBJ_DIR)unirun/$(@F) -O3 `wx-config --cxxflags --unicode --toolkit=gtk2` -I$(SRC_DIR)sdl -I$(SRC_DIR)xlib -I$(SRC_DIR)glib -I$(SRC_DIR)gxlib -I$(SRC_DIR)repository -I$(SRC_DIR)alglib -S -D__WXWIDGETS__ -D_UNICODE -DUNICODE -D_NO_PYTHON
 #$(addprefix $(SRC_DIR)repository/,$(NPY_CPP_REPO)) 
 
-$(EXE_DIR)unirun : bin $(OBJ_UNIRUN:.cpp=.s) $(obj_sdl_files:.cpp=.s) $(obj_sdl_smart_files:.cpp=.s) $(OBJ_REPO:.cpp=.s)
-	$(CC) $(obj_sdl_files:.cpp=.s) $(obj_sdl_smart_files:.cpp=.s) $(addprefix $(OBJ_DIR),$(NPY_CPP_REPO:.cpp=.s)) $(OBJ_UNIRUN:.cpp=.s) -o $(EXE_DIR)unirun $(LDFLAGS) -D_NO_PYTHON
+$(EXE_DIR)unirun : bin $(OBJ_UNIRUN:.cpp=.s) $(obj_sdl_files:.cpp=.s) $(obj_sdl_smart_files:.cpp=.s) $(obj_sdl_exparse_files:.cpp=.s) $(OBJ_REPO:.cpp=.s)
+	$(CC) $(obj_sdl_files:.cpp=.s) $(obj_sdl_smart_files:.cpp=.s) $(obj_sdl_exparse_files:.cpp=.s) $(addprefix $(OBJ_DIR),$(NPY_CPP_REPO:.cpp=.s)) $(OBJ_UNIRUN:.cpp=.s) -o $(EXE_DIR)unirun $(LDFLAGS) -D_NO_PYTHON
 
 .PHONY : olex
 olex : objs
