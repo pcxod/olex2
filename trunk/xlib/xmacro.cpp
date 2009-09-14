@@ -3058,19 +3058,24 @@ void XLibMacros::macASR(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   TXApp& xapp = TXApp::GetInstance();
   TSpaceGroup& sg = xapp.XFile().GetLastLoaderSG();
   if( sg.IsCentrosymmetric() )  {
-    E.ProcessingError(__OlxSrcInfo, "not applicable to a non-centrosymmetric space groups");
+    E.ProcessingError(__OlxSrcInfo, "not applicable to centrosymmetric space groups");
     return;
   }
   if( xapp.XFile().GetRM().GetHKLF() == 5 || xapp.XFile().GetRM().GetHKLF() == 6 )  {
     E.ProcessingError(__OlxSrcInfo, "not applicable to HKLF 5/6 data format");
     return;
   }
-  if( xapp.XFile().GetRM().GetBASF().IsEmpty() )
+  if( xapp.XFile().GetRM().GetBASF().IsEmpty() )  {
     xapp.XFile().GetRM().AddBASF(0.2);
-  if( !xapp.XFile().GetRM().HasTWIN() )
+    xapp.GetLog() << "BASF 0.2 is added\n";
+  }
+  if( !xapp.XFile().GetRM().HasTWIN() )  {
     xapp.XFile().GetRM().SetTWIN_n(2);
+    xapp.GetLog() << "TWIN set to 2 components\n";
+  }
   if( xapp.XFile().GetRM().HasMERG() && xapp.XFile().GetRM().GetMERG() == 4 )
     xapp.GetLog() << "Please note, that currently Friedel pairs are merged\n";
+  xapp.GetLog() << "Done\n";
 }
 //..............................................................................
 void XLibMacros::macDescribe(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
