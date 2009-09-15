@@ -165,6 +165,8 @@ olxstr TETime::FormatDateTime(const olxstr& format, time_t v )  {
 //..............................................................................
 olxstr TETime::FormatDateTime( time_t v )  {
   char * bf = ctime( &v );
+  if( bf == NULL )
+    return EmptyString;
   bf[24] = '\0';
   return bf;
 }
