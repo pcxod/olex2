@@ -1195,7 +1195,7 @@ separated values of Atom Type and radius, an entry a line" );
     DataDir << "Olex2/";
   #endif
 #endif
-
+  XApp->SetSharedDir(DataDir);
   DictionaryFile = XA->GetBaseDir() + "dictionary.txt";
   PluginFile =  XA->GetBaseDir() + "plugins.xld";
   FHtmlIndexFile = TutorialDir+"index.htm";
