@@ -327,7 +327,7 @@ AFileSystem* UpdateAPI::FindActiveUpdateRepositoryFS(short* res) const {
         return new ZipFS(repo, false);
     }
     else if( TEFile::IsDir(repo) )
-      return new TOSFileSystem(repo);
+      return new TOSFileSystem(AddTagPart(repo, true));
   }
   else  {
     bool update = false;
