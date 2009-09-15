@@ -300,8 +300,9 @@ void TXFile::ValidateTabs()  {
     if( RefMod.GetInfoTab(i).Count() != 2 )  // already invalid
       continue;
     TSAtom* sa = NULL;
+    InfoTab& it = RefMod.GetInfoTab(i);
     for( int j=0; j < Lattice.AtomCount(); j++ )  {
-      if( Lattice.GetAtom(j).CAtom().GetId() == RefMod.GetInfoTab(i).GetAtom(0).GetAtom()->GetId() )  {
+      if( Lattice.GetAtom(j).CAtom().GetId() == it.GetAtom(0).GetAtom()->GetId() )  {
         sa = &Lattice.GetAtom(j);
         break;
       }
@@ -312,13 +313,30 @@ void TXFile::ValidateTabs()  {
     }
     bool hasH = false;
     for( int j=0; j < sa->NodeCount(); j++ )  {
-      if( sa->Node(j).GetAtomInfo() == iHydrogenIndex || sa->Node(j).GetAtomInfo() == iDeuteriumIndex )  {
+      if( !sa->Node(j).IsDeleted() && 
+        (sa->Node(j).GetAtomInfo() == iHydrogenIndex || sa->Node(j).GetAtomInfo() == iDeuteriumIndex) )  
+      {
         hasH = true;
         break;
       }
     }
-    if( !hasH )  {
-      RefMod.DeleteInfoTab(i--);
+    if( !hasH )  {  
+      TBasicApp::GetLog() << (olxstr("Removing HTAB (donor has no H atoms): ") << it.InsStr() << '\n');
+      RefMod.DeleteInfoTab(i--);  
+      continue;  
+    }
+    // validate the distance makes sense
+    const TAsymmUnit& au = *it.GetAtom(0).GetAtom()->GetParent();
+    vec3d v1 = it.GetAtom(0).GetAtom()->ccrd();
+    if( it.GetAtom(0).GetMatrix() != NULL )
+      v1  = *it.GetAtom(0).GetMatrix()*v1;
+    vec3d v2 = it.GetAtom(1).GetAtom()->ccrd();
+    if( it.GetAtom(1).GetMatrix() != NULL )
+      v2  = *it.GetAtom(1).GetMatrix()*v2;
+    const double dis = au.CellToCartesian(v1).DistanceTo(au.CellToCartesian(v2));
+    if( dis > 5 )  {
+      TBasicApp::GetLog() << (olxstr("Removing HTAB (d > 5A): ") << it.InsStr() << '\n');
+      RefMod.DeleteInfoTab(i--);  
       continue;
     }
   }
