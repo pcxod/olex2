@@ -1519,8 +1519,7 @@ void TMainForm::OnAbout(wxCommandEvent& WXUNUSED(event))  {
 }
 //..............................................................................
 void TMainForm::OnFileOpen(wxCommandEvent& event)  {
-  if( event.GetId() >= ID_FILE0 && event.GetId() <= (ID_FILE0+9) )  {
-    wxMenuItem *mi = FRecentFiles.GetObject(event.GetId() - ID_FILE0);
+  if( event.GetId() >= ID_FILE0 && event.GetId() <= (ID_FILE0+FRecentFilesToShow) )  {
     ProcessXPMacro(olxstr("reap \'") << FRecentFiles[event.GetId() - ID_FILE0] << '\'', MacroError);
   }
 }
@@ -3056,7 +3055,6 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
   I = DF.Root().FindItem("Recent_files");
   if( I )  {
     MenuFile->AppendSeparator();
-    wxMenuItem *mi;
     int i=0;
     TStrList uniqNames;
     olxstr T = I->GetFieldValue( olxstr("file") << i);
@@ -3073,8 +3071,7 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
     for( int j=0; j < olx_min(uniqNames.Count(), FRecentFilesToShow); j++ )  {
       executeFunction(uniqNames[j], uniqNames[j]);
       MenuFile->AppendCheckItem(ID_FILE0+j, uniqNames[j].u_str());
-      mi = MenuFile->FindItemByPosition(MenuFile->GetMenuItemCount()-1);
-      FRecentFiles.Add(uniqNames[j], mi);
+      FRecentFiles.Add(uniqNames[j], MenuFile->FindItemByPosition(MenuFile->GetMenuItemCount()-1));
     }
   }
 
@@ -3226,10 +3223,8 @@ void TMainForm::SaveScene(TDataItem *Root, TGlLightModel *FLM)  {
 //..............................................................................
 void TMainForm::UpdateRecentFile(const olxstr& fn)  {
   if( fn.IsEmpty() )  {
-    for( int i=0; i < FRecentFiles.Count(); i++ )  {  // change item captions
-      wxMenuItem* mi = FRecentFiles.GetObject(i);
-      if( mi != NULL )  mi->Check(false);
-    }
+    for( int i=0; i < FRecentFiles.Count(); i++ )  // change item captions
+      FRecentFiles.GetObject(i)->Check(false);
     return;
   }
   TPtrList<wxMenuItem> Items;
@@ -3240,31 +3235,31 @@ void TMainForm::UpdateRecentFile(const olxstr& fn)  {
   wxMenuItem* mi=NULL;
   if( index == -1 )  {
     if( (FRecentFiles.Count()+1) < FRecentFilesToShow )  {
-      MenuFile->AppendCheckItem(ID_FILE0+FRecentFiles.Count(), wxT("tmp"));
-      mi = MenuFile->FindItemByPosition(MenuFile->GetMenuItemCount()-1);
+      for( int i=0; i < MenuFile->GetMenuItemCount(); i++ )  {
+        wxMenuItem* item = MenuFile->FindItemByPosition(i);
+          if( item->GetId() >= ID_FILE0 && item->GetId() <= (ID_FILE0+FRecentFilesToShow))
+            index = i;
+      }
+      if( index != -1 )
+        mi = MenuFile->InsertCheckItem(index + 1, ID_FILE0+FRecentFiles.Count(), wxT("tmp"));
+      else
+        mi = MenuFile->AppendCheckItem(ID_FILE0+FRecentFiles.Count(), wxT("tmp"));
+      FRecentFiles.Insert(0, FN, mi);
+    }  
+    else  {
+      FRecentFiles.Insert(0, FN, FRecentFiles.Last().Object);
+      FRecentFiles.Delete(FRecentFiles.Count()-1);
     }
-    FRecentFiles.Insert(0, FN);
-    FRecentFiles.GetObject(0) = mi;
   }
-  else  {
-    mi = FRecentFiles.GetObject(index);
-    FRecentFiles.Delete(index);
-    FRecentFiles.Insert(0, FN);
-    FRecentFiles.GetObject(0) = mi;
-  }
+  else
+    FRecentFiles.Move(index, 0);
+
   for( int i=0; i < FRecentFiles.Count(); i++ )
     Items.Add( FRecentFiles.GetObject(i) ); 
-  for( int i=0; i < FRecentFiles.Count(); i++ )  {  // put items in the right position
-    mi = Items[i];
-    if( mi != NULL )  
-      FRecentFiles.GetObject(mi->GetId()-ID_FILE0) = mi;
-  }
-  for( int i=0; i < FRecentFiles.Count(); i++ )  {  // change item captions
-    mi = FRecentFiles.GetObject(i);
-    if( mi != NULL )  {
-      mi->SetText( FRecentFiles[i].u_str() ) ;
-      mi->Check(false);
-    }
+  for( int i=0; i < FRecentFiles.Count(); i++ )  { // put items in the right position
+    FRecentFiles.GetObject(Items[i]->GetId()-ID_FILE0) = Items[i];
+    Items[i]->SetText( FRecentFiles[Items[i]->GetId()-ID_FILE0].u_str() ) ;
+    Items[i]->Check(false);
   }
   FRecentFiles.GetObject(0)->Check( true );
   if( FRecentFiles.Count() >= FRecentFilesToShow )

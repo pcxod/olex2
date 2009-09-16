@@ -706,17 +706,18 @@ void TUnitCell::GetAtomPossibleHBonds(const TAtomEnvi& ae, TAtomEnvi& envi)  {
     if( A.GetAtomInfo() == iQPeakIndex || A.IsDeleted() )  continue;
 
     bool considerI =  (A != ae.GetBase().CAtom());
-    // O and N for a while
+    // O and N and S for a while
     if( !(A.GetAtomInfo() == iOxygenIndex ||
-          A.GetAtomInfo() == iNitrogenIndex) )  continue;
+          A.GetAtomInfo() == iNitrogenIndex ||
+          A.GetAtomInfo() == iSulphurIndex) )  continue;
 
     smatd_list& ms = *GetInRange( ae.GetBase().ccrd(), A.ccrd(), 2.9, considerI );
 
     for( int j=0; j < ms.Count(); j++ )  {
       vec3d v = ms[j] * A.ccrd();
       au.CellToCartesian(v);
-      const double d = v.QDistanceTo( ae.GetBase().crd() );
-      if(  d < 2*2 || d > 2.9*2.9 )  continue;
+      const double qd = v.QDistanceTo( ae.GetBase().crd() );
+      if(  qd < 2*2 || qd > 2.9*2.9 )  continue;
       if( ae.Count() == 1 )  {
         vec3d v1 = ae.GetCrd(0) - ae.GetBase().crd();
         vec3d v2 = v - ae.GetBase().crd();

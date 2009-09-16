@@ -1634,8 +1634,13 @@ void TLattice::_ProcessRingHAdd(AConstraintGenerator& cg, const TPtrList<TBasicA
         AE.Clear();
         UnitCell->GetAtomEnviList(*rings[i][j], AE);
         if( AE.Count() == 3 )  {
-          double v = TetrahedronVolume( AE.GetBase().crd(), AE.GetCrd(0), AE.GetCrd(1), AE.GetCrd(2) );
-          if( v < 0.05 )  continue;  // coordination
+          const vec3d cnt = AE.GetBase().crd();
+          double v = TetrahedronVolume( 
+            cnt, 
+            (AE.GetCrd(0)-cnt).Normalise() + cnt, 
+            (AE.GetCrd(1)-cnt).Normalise() + cnt, 
+            (AE.GetCrd(2)-cnt).Normalise() + cnt);
+          if( v < 0.1 )  continue;  // coordination
         }
         for( int k=0; k < AE.Count(); k++ )  {
           vec3d v( AE.GetCrd(k) - rings[i][j]->crd());
@@ -1752,10 +1757,10 @@ void TLattice::RemoveNonHBonding(TAtomEnvi& Envi)  {
     TPSTypeList<double, TCAtom*> hits;
 
     for( int i=0; i < Envi.Count(); i++ )
-      hits.Add( Envi.GetBase().crd().DistanceTo( Envi.GetCrd(i) ), &Envi.GetCAtom(i) );
+      hits.Add( Envi.GetBase().crd().DistanceTo(Envi.GetCrd(i)), &Envi.GetCAtom(i) );
 
     while( hits.Count() > 1 &&
-      ((hits.GetComparable(hits.Count()-1) - hits.GetComparable(0)) > 0.1) )  {
+      ((hits.GetComparable(hits.Count()-1) - hits.GetComparable(0)) > 0.05) )  {
       Envi.Exclude( *hits.GetObject(hits.Count()-1) );
       hits.Remove(hits.Count()-1);
     }
