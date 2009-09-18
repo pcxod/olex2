@@ -62,6 +62,9 @@ class XLibMacros  {
   static DefMacro(Flush)
 
   static DefMacro(SGS)  // SG settings
+  static DefMacro(Inv)  
+  static DefMacro(Push)  
+  static DefMacro(Transform)  
 
   static void MergePublTableData(TCifLoopTable& to, TCifLoopTable& from); // helper function
   static olxstr CifResolve(const olxstr& func);
@@ -133,6 +136,87 @@ public:
     }
     va_end(argptr);
     return fc;
+  }
+  // finds numbers in the list and returns the number of found numbers
+  template <class list> static bool Parse(list& Cmds, const olxstr& format, bool remove, ...)  {
+    va_list argptr;
+    va_start(argptr, remove);
+    try  {
+      for( int i=0, j=0; i < format.Length(); i++, j++ )  {
+        if( format.CharAt(i) == 'v' )  {
+          if( format.Length() < (i+1) || Cmds.Count() < (j+3) )
+            throw TInvalidArgumentException(__OlxSourceInfo, "invalid format");
+          if( format.CharAt(++i) == 'i' )  {
+            vec3i* iv = va_arg(argptr, vec3i*);
+            for( int k=0; k < 3; k++ )
+              (*iv)[k] = Cmds[j+k].ToInt();
+            if( remove )  {
+              Cmds.DeleteRange(j, j+3);
+              j--;
+            }
+            else
+              j+=2;
+          }
+          else if( format.CharAt(i) == 'd' )  {
+            vec3d* dv = va_arg(argptr, vec3d*);
+            for( int k=0; k < 3; k++ )
+              (*dv)[k] = Cmds[j+k].ToDouble();
+            if( remove )  {
+              Cmds.DeleteRange(j, j+3);
+              j--;
+            }
+            else
+              j+=2;
+          }
+          else 
+            throw TInvalidArgumentException(__OlxSourceInfo, "undefined vector type");
+        }
+        else if( format.CharAt(i) == 'm' )  {
+          if( format.Length() < (i+1) || Cmds.Count() < (j+9) )
+            throw TInvalidArgumentException(__OlxSourceInfo, "invalid format");
+          if( format.CharAt(++i) == 'i' )  {
+            mat3i* im = va_arg(argptr, mat3i*);
+            for( int k=0; k < 3; k++ )
+              for( int l=0; l < 3; l++ )
+                (*im)[k][l] = Cmds[j+k*3+l].ToInt();
+            if( remove )  {
+              Cmds.DeleteRange(j, j+9);
+              j--;
+            }
+            else
+              j+=8;
+          }
+          else if( format.CharAt(i) == 'd' )  {
+            mat3d* dm = va_arg(argptr, mat3d*);
+            for( int k=0; k < 3; k++ )
+              for( int l=0; l < 3; l++ )
+                (*dm)[k][l] = Cmds[j+k*3+l].ToDouble();
+            if( remove )  {
+              Cmds.DeleteRange(j, j+9);
+              j--;
+            }
+            else
+              j+=8;
+          }
+          else 
+            throw TInvalidArgumentException(__OlxSourceInfo, "undefined matrix type");
+        }
+        else if( format.CharAt(i) == 'i' )  {
+          int* iv = va_arg(argptr, int*);
+          *iv = Cmds[j].ToInt();
+        }
+        else if( format.CharAt(i) == 'd' )  {
+          double *dv = va_arg(argptr, double*);
+          *dv = Cmds[j].ToDouble();
+        }
+      }
+    }
+    catch(...)  {
+      va_end(argptr);
+      return false;
+    }
+    va_end(argptr);
+    return true;
   }
   static void Export(class TLibrary& lib);
   static TActionQueue* OnDelIns;

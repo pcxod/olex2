@@ -797,10 +797,6 @@ i-try inversion&;u-unmatch&;esd-calculate esd (works for pairs only)", fpNone|fp
   this_InitMacroD(Tls, "", fpAny^(fpNone)|psFileLoaded, "James Haestier TLS test procedure" );
 
   this_InitMacro(Test, , fpAny );
-  // -f - force inversion even for nocentrosymmetric space group
-  this_InitMacro(Inv, f, fpAny|psFileLoaded );
-  this_InitMacro(Push, , (fpAny^(fpNone|fpOne|fpTwo))|psFileLoaded );
-  this_InitMacro(Transform, , fpAny|psFileLoaded );
 
   this_InitMacroD(LstRes, EmptyString, fpNone|psFileLoaded,
 "Prints all interpreted restrains for current structure" );

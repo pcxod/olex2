@@ -417,10 +417,6 @@ private:
   DefMacro(Tls)
   DefMacro(Test)
 
-  DefMacro(Inv)
-  DefMacro(Push)
-  DefMacro(Transform)
-
   DefMacro(LstRes)
   DefMacro(CalcVoid)
   DefMacro(Sgen)

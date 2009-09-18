@@ -457,9 +457,6 @@ public:     void CalcProbFactor(float Prob);
   inline bool IsGraphicsVisible( AGDrawObject *G ) const {  return G->IsVisible(); }
   TUndoData* SetGraphicsVisible( AGDrawObject *G, bool v );
   TUndoData* SetGraphicsVisible( TPtrList<AGDrawObject>& G, bool v );
-  void InvertFragments(const TXAtomPList& NetworkAtoms);
-  void MoveFragments(const TXAtomPList& NetworkAtoms, const vec3d& v);
-  void TransformFragments(const TXAtomPList& NetworkAtoms, const smatd& m);
 
   void FragmentsVisible(const TNetPList& Networks, bool V);
   int InvertFragmentsList(const TNetPList& SelectedFragments, TNetPList& Result);
