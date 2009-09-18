@@ -69,7 +69,7 @@ bool TXGlLabels::Orient(TGlPrimitive& P)  {
   for( int i=0; i < ac; i++ )  {
     const TXAtom& XA = app.GetAtom(i);
     if( XA.IsDeleted() || (!XA.IsVisible()))  continue;
-    if( !(Mode & lmHydr) && (XA.Atom().GetAtomInfo() == iHydrogenIndex ) )  continue;
+    if( !(Mode & lmHydr) && (XA.Atom().GetAtomInfo().GetMr() < 3.5 ) )  continue;
     if( !(Mode & lmQPeak) && (XA.Atom().GetAtomInfo() == iQPeakIndex ) )  continue;
     const TCAtom& ca = XA.Atom().CAtom();
     olxstr Tmp(EmptyString, 48);

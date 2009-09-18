@@ -80,8 +80,10 @@ public:
       Index = TGlXApp::GetGXApp()->GetNextAvailableLabel(Symbol);
 
     SetCursor();
-
-    TGlXApp::GetMainForm()->executeMacro("labels -l");
+    olxstr labels("labels -l");
+    if( Symbol.Equalsi('H') || Symbol.Equalsi('D') )
+      labels << " -h";
+    TGlXApp::GetMainForm()->executeMacro(labels);
     TGXApp& app = *TGlXApp::GetGXApp();
     for( int i=0; i < app.BondCount(); i++ )
       app.GetBond(i).SetGroupable(false);
