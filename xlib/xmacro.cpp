@@ -158,6 +158,10 @@ xlib_InitMacro(File, "s-sort the main residue of the asymmetric unit", fpNone|fp
   xlib_InitMacro(SGInfo, "c-include lattice centering matrices&;i-include inversion generated matrices if any", fpNone|fpOne, 
     "Prints space group information.");
   xlib_InitMacro(SAInfo, EmptyString, fpAny, "Finds and prints space groups which include any of the provided systematic absences in the form 'b~~', '~b~' or '~~b'");
+  xlib_InitMacro(Inv, "f-force inversion for non-centrosymmetric space groups", fpAny|psFileLoaded, "Inverts whole structure or provided fragments of the structure");
+  xlib_InitMacro(Push, EmptyString, (fpAny^(fpNone|fpOne|fpTwo))|psFileLoaded, "Shifts the sctructure (or provided fragments) by the provided translation");
+  xlib_InitMacro(Transform, EmptyString, fpAny|psFileLoaded, "Transforms the structure or provided fragments according to the given matrix\
+ (a11, a12, a13, a21, a22, a23, a31, a32, a33, t1, t2, t3)");
 //_________________________________________________________________________________________________________________________
 //_________________________________________________________________________________________________________________________
 
@@ -201,6 +205,57 @@ xlib_InitMacro(File, "s-sort the main residue of the asymmetric unit", fpNone|fp
 //_________________________________________________________________________________________________________________________
   xlib_InitFunc(Run, fpOne, "Same as the macro, executes provided commands (separated by >>) returns true if succeded");
 //_________________________________________________________________________________________________________________________
+}
+//..............................................................................
+void XLibMacros::macTransform(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+  smatd tm;
+  if( !Parse(Cmds, "mivd", true,&tm.r, &tm.t) )  {
+    Error.ProcessingError(__OlxSrcInfo, "invalid transformation matrix" );
+    return;
+  }
+  TXApp& xapp = TXApp::GetInstance();
+  TSAtomPList atoms;
+  xapp.FindSAtoms(Cmds.Text(' '), atoms, true);
+  xapp.XFile().GetLattice().TransformFragments(atoms, tm);
+}
+//..............................................................................
+void XLibMacros::macPush(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+  vec3d pnt;
+  int pc = 0;
+  if( ParseNumbers<double>(Cmds, 3, &pnt[0], &pnt[1], &pnt[2]) != 3 )  {
+    Error.ProcessingError(__OlxSrcInfo, "invalid translation" );
+    return;
+  }
+  TXApp& xapp = TXApp::GetInstance();
+  TSAtomPList atoms;
+  xapp.FindSAtoms(Cmds.Text(' '), atoms, true);
+  smatd tm;
+  tm.I();
+  tm.t = pnt;
+  xapp.XFile().GetLattice().TransformFragments(atoms, tm);
+}
+//..............................................................................
+void XLibMacros::macInv(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
+  bool Force = Options.Contains("f");  // forces inversion for sg without center of inversion
+  TXApp& xapp = TXApp::GetInstance();
+  TSpaceGroup* sg = NULL;
+  if( xapp.CheckFileType<TIns>() || xapp.CheckFileType<TCif>() )  {
+    try  { sg = &xapp.XFile().GetLastLoaderSG();  }
+    catch(...)  {
+      Error.ProcessingError(__OlxSrcInfo, "unknown file space group" );
+      return;
+    }
+    if( !sg->IsCentrosymmetric() &&  !Force )  {
+      Error.ProcessingError(__OlxSrcInfo, "non-centrosymmetric space group, use -f to force" );
+      return;
+    }
+  }
+  TSAtomPList atoms;
+  xapp.FindSAtoms(Cmds.Text(' '), atoms, true);
+  smatd tm;
+  tm.I() *= -1;
+  tm.t = sg->GetInversionCenter();
+  xapp.XFile().GetLattice().TransformFragments(atoms, tm);
 }
 //..............................................................................
 void XLibMacros::macSAInfo(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {

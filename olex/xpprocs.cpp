@@ -7117,48 +7117,6 @@ void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     TBasicApp::GetLog() << vals[i] << '\n';
 }
 //..............................................................................
-void TMainForm::macInv(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  bool Force = Options.Contains("f");  // forces inversion for sg without center of inversion
-
-  if( FXApp->CheckFileType<TIns>() || FXApp->CheckFileType<TCif>() )  {
-    TSpaceGroup* sg = NULL;
-    try  { sg = &FXApp->XFile().GetLastLoaderSG();  }
-    catch(...)  {
-      Error.ProcessingError(__OlxSrcInfo, "unknown file space group" );
-      return;
-    }
-    if( !sg->IsCentrosymmetric() &&  !Force )  {
-      Error.ProcessingError(__OlxSrcInfo, "noncentrosymmetric space group, use -f to force" );
-      return;
-    }
-  }
-  TXAtomPList xatoms;
-  FXApp->FindXAtoms(Cmds.Text(' '), xatoms, true);
-  FXApp->InvertFragments( xatoms );
-}
-//..............................................................................
-void TMainForm::macPush(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  vec3d pnt;
-  int pc = 0;
-  if( XLibMacros::ParseNumbers<double>(Cmds, 3, &pnt[0], &pnt[1], &pnt[2]) != 3 )  {
-    Error.ProcessingError(__OlxSrcInfo, "could not locate translation" );
-    return;
-  }
-  TXAtomPList xatoms;
-  if( !FindXAtoms(Cmds, xatoms, true, true) )  {
-    Error.ProcessingError(__OlxSrcInfo, "no atoms provided" );
-    return;
-  }
-  FXApp->MoveFragments( xatoms, pnt );
-}
-//..............................................................................
-void TMainForm::macTransform(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  throw TNotImplementedException(__OlxSourceInfo);
-  TXAtomPList xatoms;
-  FXApp->FindXAtoms(Cmds.Text(' '), xatoms, true);
-  FXApp->InvertFragments( xatoms );
-}
-//..............................................................................
 void TMainForm::macLstRes(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   TStrList output;
   olxstr Tmp, Tmp1;

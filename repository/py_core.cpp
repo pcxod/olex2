@@ -9,6 +9,7 @@
 #include "httpfs.h"
 #include "integration.h"
 #include "olxvar.h"
+#include "symmlib.h"
 
 using namespace olex;
 
@@ -200,6 +201,94 @@ PyObject* pyRefModel(PyObject* self, PyObject* args)  {
   return TXApp::GetInstance().XFile().GetRM().PyExport(calc_connectivity);
 }
 //..............................................................................
+PyObject* pySGInfo(PyObject* self, PyObject* args)  {
+  TSpaceGroup* sg = NULL;
+  if( PyTuple_Size(args) == 0 )  {
+    try  {  sg = &TXApp::GetInstance().XFile().GetLastLoaderSG();  }
+    catch(...)  {
+      Py_INCREF(Py_None);
+      return Py_None;
+    }
+  }
+  else  {
+    olxstr sg_name;
+    if( !PythonExt::ParseTuple(args, "w", &sg_name) )  {
+      Py_INCREF(Py_None);
+      return Py_None;
+    }
+    sg = TSymmLib::GetInstance()->FindGroup(sg_name);
+    if( sg == NULL )  {
+      Py_INCREF(Py_None);
+      return Py_None;
+    }
+  }
+  PyObject* out = PyDict_New();
+  PyDict_SetItemString(out, "Number", Py_BuildValue("i", sg->GetNumber()));
+  PyDict_SetItemString(out, "Centrosymmetric", Py_BuildValue("b", sg->IsCentrosymmetric()));
+  PyDict_SetItemString(out, "ShortName", PythonExt::BuildString(sg->GetName()));
+  PyDict_SetItemString(out, "FullName", PythonExt::BuildString(sg->GetFullName()));
+  PyDict_SetItemString(out, "System", PythonExt::BuildString(sg->GetBravaisLattice().GetName()));
+  PyDict_SetItemString(out, "Center", 
+    Py_BuildValue("(d,d,d)", sg->GetInversionCenter()[0], sg->GetInversionCenter()[1], sg->GetInversionCenter()[2]));
+  PyDict_SetItemString(out, "PointGroup", PythonExt::BuildString(sg->GetPointGroup().GetBareName()));
+  PyDict_SetItemString(out, "LaueClass", PythonExt::BuildString(sg->GetLaueClass().GetBareName()));
+  PyDict_SetItemString(out, "HallSymbol", PythonExt::BuildString(sg->GetHallSymbol()));
+    PyObject* latt_out;
+    PyDict_SetItemString(out, "Lattice", (latt_out=PyDict_New()));
+    TCLattice& latt = sg->GetLattice();
+    PyDict_SetItemString(latt_out, "Name", PythonExt::BuildString(latt.GetName()));
+    PyDict_SetItemString(latt_out, "Centering", PythonExt::BuildString(latt.GetSymbol()));
+    PyDict_SetItemString(latt_out, "InsCode", Py_BuildValue("i", latt.GetLatt()));
+    PyObject* latt_vec_out = PyTuple_New(latt.VectorCount());
+    for( int i=0; i < latt.VectorCount(); i++ ) 
+      PyTuple_SetItem(latt_vec_out, i, Py_BuildValue("(ddd)", latt.GetVector(i)[0], latt.GetVector(i)[1], latt.GetVector(i)[2]));
+    PyDict_SetItemString(latt_out, "Translations", latt_vec_out);
+    PyObject* matr_out = PyTuple_New(sg->MatrixCount());
+    for( int i=0; i < sg->MatrixCount(); i++ )  {
+      const smatd& m = sg->GetMatrix(i);
+      PyTuple_SetItem(matr_out, i, 
+        Py_BuildValue("(iiid)(iiid)(iiid)", 
+        m.r[0][0], m.r[0][1], m.r[0][2], m.t[0],
+        m.r[1][0], m.r[1][1], m.r[1][2], m.t[1],
+        m.r[2][0], m.r[2][1], m.r[2][2], m.t[2]
+      ));
+    }
+    PyDict_SetItemString(out, "Matrices", matr_out);
+    smatd_list ml;
+    sg->GetMatrices(ml, mattAll);
+    matr_out=PyTuple_New(ml.Count());
+    for( int i=0; i < ml.Count(); i++ )  {
+      const smatd& m = ml[i];
+      PyTuple_SetItem(matr_out, i, 
+        Py_BuildValue("(iiid)(iiid)(iiid)", 
+          m.r[0][0], m.r[0][1], m.r[0][2], m.t[0],
+          m.r[1][0], m.r[1][1], m.r[1][2], m.t[1],
+          m.r[2][0], m.r[2][1], m.r[2][2], m.t[2]
+      ));
+    }
+    PyDict_SetItemString(out, "MatricesAll", matr_out);
+
+    TPtrList<TSymmElement> ref, sg_elm;
+    for( int i=0; i < TSymmLib::GetInstance()->SymmElementCount(); i++ )
+      ref.Add( & TSymmLib::GetInstance()->GetSymmElement(i) );
+    sg->SplitIntoElements(ref, sg_elm);
+    PyObject* sysabs_out = PyTuple_New(sg_elm.Count());
+    for( int i=0; i < sg_elm.Count(); i++ )  {
+      matr_out = PyTuple_New(sg_elm[i]->MatrixCount());
+      for( int j=0; j < sg_elm[i]->MatrixCount(); j++ )  {
+        const smatd& m = sg_elm[i]->GetMatrix(j);
+        PyTuple_SetItem(matr_out, j, 
+          Py_BuildValue("((iiid)(iiid)(iiid)))",
+            m.r[0][0], m.r[0][1], m.r[0][2], m.t[0],
+            m.r[1][0], m.r[1][1], m.r[1][2], m.t[1],
+            m.r[2][0], m.r[2][1], m.r[2][2], m.t[2]));
+      }
+      PyTuple_SetItem(sysabs_out, i, Py_BuildValue("(OO)", PythonExt::BuildString(sg_elm[i]->GetName()), matr_out) );
+    }
+    PyDict_SetItemString(out, "SysAbs", sysabs_out);
+  return out;
+}
+//..............................................................................
 PyObject* pyHklStat(PyObject* self, PyObject* args)  {
   TXApp& xapp = TXApp::GetInstance();
   RefinementModel::HklStat hs = xapp.XFile().GetRM().GetMergeStat();
@@ -291,6 +380,7 @@ the index file name, destination folder (relative to the basedir)"},
   {"DescribeRefinement", pyDescRef, METH_VARARGS, "Returns a string describing current refinement model"},
   {"GetRefinementModel", pyRefModel, METH_VARARGS, "Returns refinement model as python object"},
   {"GetHklStat", pyHklStat, METH_VARARGS, "Returns HKL statistics"},
+  {"SGInfo", pySGInfo, METH_VARARGS, "Returns current/give space group information"},
   {NULL, NULL, 0, NULL}
    };
 

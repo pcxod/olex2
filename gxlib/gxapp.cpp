@@ -1003,26 +1003,6 @@ void TGXApp::ChangeAtomType( TXAtom *A, const olxstr &Element)  {
   Draw();*/
 }
 //..............................................................................
-void TGXApp::InvertFragments(const TXAtomPList& NetworkAtoms)  {
-  smatd m;
-  m.r.I();
-  m.r *= -1;
-  TransformFragments(NetworkAtoms, m);
-}
-//..............................................................................
-void TGXApp::MoveFragments(const TXAtomPList& NetworkAtoms, const vec3d& v)  {
-  smatd m;
-  m.r.I();
-  m.t = v;
-  TransformFragments(NetworkAtoms, m);
-}
-//..............................................................................
-void TGXApp::TransformFragments(const TXAtomPList& NetworkAtoms, const smatd& m)  {
-  TSAtomPList SAtoms;
-  TListCaster::POP(NetworkAtoms, SAtoms);
-  XFile().GetLattice().TransformFragments(SAtoms, m);
-}
-//..............................................................................
 void TGXApp::SelectFragmentsAtoms(const TNetPList& frags, bool v)  {
   TSAtomPList SA;
   TXAtomPList XA;
