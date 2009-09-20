@@ -267,6 +267,14 @@ public:
            (ch >= L'A' && ch <= L'F') ||
            (ch >= L'a' && ch <= L'f');  
   }
+  static inline bool o_isalphabetic(char ch)  {  
+    return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z');  
+  }
+  static inline bool o_isalphabetic(wchar_t ch)  {  
+    return (ch >= L'a' && ch <= L'z') || (ch >= L'A' && ch <= L'Z');  
+  }
+  static inline bool o_isalphanumeric(char ch)  {  return o_isdigit(ch) || o_isalpabetic(ch);  }
+  static inline bool o_isalphanumeric(wchar_t ch)  {  return o_isdigit(ch) || o_isalpabetic(ch);  }
   static inline bool o_iswhitechar(char ch)     {  return (ch == ' ' || ch == '\t');  }
   static inline bool o_iswhitechar(wchar_t ch)  {  return (ch == L' ' || ch == L'\t');  }
   static inline size_t o_strlen(const char *cstr)    {  return (cstr==NULL) ? 0 : strlen(cstr);  }

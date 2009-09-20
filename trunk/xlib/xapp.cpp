@@ -213,28 +213,27 @@ void TXApp::CalcSF(const TRefList& refs, TArrayList<TEComplex<double> >& F)  {
 //..............................................................................
 void TXApp::NameHydrogens(TSAtom& SA, TUndoData* ud, bool CheckLabel)  {
   TNameUndo* nu = static_cast<TNameUndo*>(ud);
-  int allH = 0, 
-      processedH = 0, // just a termination counter
-      lablInc = 0; 
+  int lablInc = 0; 
   olxdict<int,TSAtomPList,TPrimitiveComparator> parts;
-  olxstr Name( SA.GetLabel().StartsFromi(SA.GetAtomInfo().GetSymbol()) ? 
-    SA.GetLabel().SubStringFrom( SA.GetAtomInfo().GetSymbol().Length() )
+  olxstr Name( 
+    SA.GetLabel().StartsFromi(SA.GetAtomInfo().GetSymbol()) ? 
+      SA.GetLabel().SubStringFrom(SA.GetAtomInfo().GetSymbol().Length())
     :
-    EmptyString
+      EmptyString
   );
+  // trim chars
+//  while( Name.Length() > 0 && olxstr::o_isalpabetic(Name.Last()) ) 
+//    Name.SetLength(Name.Length()-1);
   for( int i=0; i < SA.NodeCount(); i++ )  {
     TSAtom& sa = SA.Node(i);
-    if( sa.GetAtomInfo() == iHydrogenIndex && sa.GetTag() == 1 )  {
-      allH ++;
-      TSAtomPList& al = parts.Add(sa.CAtom().GetPart());
-      al.Add(&sa);
-    }
+    if( (sa.GetAtomInfo() == iHydrogenIndex || sa.GetAtomInfo() == iDeuteriumIndex) && sa.GetTag() == -2 )
+      parts.Add(sa.CAtom().GetPart()).Add(&sa);
   }
   for( int i=0; i < parts.Count(); i++ )  {
     const TSAtomPList& al = parts.GetValue(i);
     for( int j=0; j < al.Count(); j++ )  {
       olxstr Labl = al[j]->GetAtomInfo().GetSymbol() + Name;
-      if( Labl.Length() >= 4 )  
+      if( Labl.Length() >= 4 )
         Labl.SetLength(3);
       else if( Labl.Length() < 3 && parts.Count() > 1 )
         Labl << (char)('a'+i);  // part ID
@@ -243,8 +242,8 @@ void TXApp::NameHydrogens(TSAtom& SA, TUndoData* ud, bool CheckLabel)  {
       if( CheckLabel )  {
         TCAtom* CA;
         while( (CA = XFile().GetAsymmUnit().FindCAtom(Labl)) != NULL )  {
-          if( CA == &al[j]->CAtom() || CA->IsDeleted() )  break;
-          Labl = al[j]->GetAtomInfo().GetSymbol()+Name;
+          if( CA == &al[j]->CAtom() || CA->IsDeleted() || CA->GetTag() < 0 )  break;
+          Labl = al[j]->GetAtomInfo().GetSymbol() + Name;
           if( Labl.Length() >= 4 )  
             Labl.SetLength(3);
           else if( Labl.Length() < 3 && parts.Count() > 1 )
@@ -261,9 +260,8 @@ void TXApp::NameHydrogens(TSAtom& SA, TUndoData* ud, bool CheckLabel)  {
           nu->AddAtom(al[j]->CAtom(), al[j]->GetLabel() );
         al[j]->CAtom().Label() = Labl;
       }
-      processedH++;
-      if( processedH >= allH )  
-        break;
+      al[j]->CAtom().SetTag(0);
+      al[j]->SetTag(0);
     }
   }
 }
@@ -284,6 +282,7 @@ void TXApp::undoName(TUndoData *data)  {
 //..............................................................................
 TUndoData* TXApp::FixHL()  {
   TNameUndo *undo = new TNameUndo( new TUndoActionImplMF<TXApp>(this, &TXApp::undoName));
+  olxdict<int,TSAtomPList,TPrimitiveComparator> frags;
   for( int i=0; i < XFile().GetLattice().AtomCount(); i++ )  {
     TSAtom& sa = XFile().GetLattice().GetAtom(i);
     if( sa.IsDeleted() || (sa.GetAtomInfo() == iQPeakIndex) )  {
@@ -291,16 +290,19 @@ TUndoData* TXApp::FixHL()  {
       continue;
     }
     bool au_atom = (sa.GetMatrix(0).GetTag() == 0 && sa.GetMatrix(0).t.QLength() < 1e-6);
-    sa.SetTag( au_atom ? 1 : -1 );
-    if( sa.GetAtomInfo() == iHydrogenIndex )
+    if( sa.GetAtomInfo() == iHydrogenIndex || sa.GetAtomInfo() == iDeuteriumIndex )  {
+      sa.SetTag(au_atom ? -2 : -1);  // mark as unpocessed or to skip
+      if( au_atom ) 
+        sa.CAtom().SetTag(-2);  // mark as unpocessed or to skip
       continue;
-    NameHydrogens(sa, undo, false);
+    }
+    if( au_atom )
+      frags.Add(sa.CAtom().GetFragmentId()).Add(sa);
   }
-  for( int i=0; i < XFile().GetLattice().AtomCount(); i++ )  {
-    TSAtom& sa = XFile().GetLattice().GetAtom(i);
-    if( sa.GetAtomInfo() == iHydrogenIndex || sa.GetTag() < 0 )  
-      continue;
-    NameHydrogens(sa, undo, true);
+  for( int i=0; i < frags.Count(); i++ )  {
+    TSAtomPList& al = frags.GetValue(i);
+    for( int j=0; j < al.Count(); j++ )
+      NameHydrogens(*al[j], undo, true);
   }
   return undo;
 }
