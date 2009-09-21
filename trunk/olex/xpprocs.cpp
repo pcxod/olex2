@@ -5203,7 +5203,7 @@ void TMainForm::macPython(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     dlg->SetTitle( wxT("Python script editor") );
     if( Options.Contains('l') )  {
       olxstr FN = PickFile("Open File",
-        olxstr("Python scripts (*.py)|*py")  <<
+        olxstr("Python scripts (*.py)|*.py")  <<
         "|Text files (*.txt)|*.txt"  <<
         "|All files (*.*)|*.*",
         TBasicApp::GetBaseDir(), true);
