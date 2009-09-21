@@ -63,7 +63,8 @@ IMPLEMENT_CLASS(TTimer, wxTimer)
 #ifndef __WIN32__
 BEGIN_EVENT_TABLE(TComboBox, wxComboBox)
 #else
-BEGIN_EVENT_TABLE(TComboBox, wxOwnerDrawnComboBox)
+BEGIN_EVENT_TABLE(TComboBox, wxComboCtrl)
+//BEGIN_EVENT_TABLE(TComboBox, wxOwnerDrawnComboBox)
 #endif
 //  EVT_TEXT(-1, TComboBox::ChangeEvent)
   EVT_COMBOBOX(-1, TComboBox::ChangeEvent)
@@ -85,6 +86,8 @@ TComboBox::TComboBox(wxWindow *Parent, bool ReadOnly, const wxSize& sz) :
   OnChange = &FActions->NewQueue("ONCHANGE");
   OnLeave = &FActions->NewQueue("ONLEAVE");
   OnEnter = &FActions->NewQueue("ONENTER");
+  if( GetTextCtrl() != NULL )
+    GetTextCtrl()->Connect(-1, wxEVT_KILL_FOCUS, wxFocusEventHandler(TComboBox::LeaveEvent), NULL, this);
 }
 TComboBox::~TComboBox()  {
   for( unsigned int i=0; i < GetCount(); i++ )  {
@@ -160,9 +163,12 @@ void TComboBox::LeaveEvent(wxFocusEvent& event)  {
 }
 //..............................................................................
 void TComboBox::EnterEvent(wxFocusEvent& event)  {
+  if( GetTextCtrl() != NULL )
+    GetTextCtrl()->SetFocus();
   StartEvtProcessing()
     OnEnter->Execute(this, &TEGC::New<olxstr>(GetOnEnterStr()));
   EndEvtProcessing()
+    event.StopPropagation();
 }
 //..............................................................................
 const IEObject* TComboBox::GetObject(int i)  {
