@@ -62,6 +62,8 @@ IMPLEMENT_CLASS(TTimer, wxTimer)
 //----------------------------------------------------------------------------//
 #ifndef __WIN32__
 BEGIN_EVENT_TABLE(TComboBox, wxComboBox)
+  EVT_KILL_FOCUS(TComboBox::LeaveEvent)
+  EVT_SET_FOCUS(TComboBox::EnterEvent)
 #else
 BEGIN_EVENT_TABLE(TComboBox, wxComboCtrl)
 //BEGIN_EVENT_TABLE(TComboBox, wxOwnerDrawnComboBox)
@@ -69,8 +71,6 @@ BEGIN_EVENT_TABLE(TComboBox, wxComboCtrl)
 //  EVT_TEXT(-1, TComboBox::ChangeEvent)
   EVT_COMBOBOX(-1, TComboBox::ChangeEvent)
   EVT_TEXT_ENTER(-1, TComboBox::EnterPressedEvent)
-  EVT_KILL_FOCUS(TComboBox::LeaveEvent)
-  EVT_SET_FOCUS(TComboBox::EnterEvent)
 END_EVENT_TABLE()
 //..............................................................................
 TComboBox::TComboBox(wxWindow *Parent, bool ReadOnly, const wxSize& sz) :
@@ -86,8 +86,10 @@ TComboBox::TComboBox(wxWindow *Parent, bool ReadOnly, const wxSize& sz) :
   OnChange = &FActions->NewQueue("ONCHANGE");
   OnLeave = &FActions->NewQueue("ONLEAVE");
   OnEnter = &FActions->NewQueue("ONENTER");
+#ifdef __WIN32__
   if( GetTextCtrl() != NULL )
     GetTextCtrl()->Connect(-1, wxEVT_KILL_FOCUS, wxFocusEventHandler(TComboBox::LeaveEvent), NULL, this);
+#endif
 }
 TComboBox::~TComboBox()  {
   for( unsigned int i=0; i < GetCount(); i++ )  {
@@ -163,8 +165,10 @@ void TComboBox::LeaveEvent(wxFocusEvent& event)  {
 }
 //..............................................................................
 void TComboBox::EnterEvent(wxFocusEvent& event)  {
+#ifdef __WIN32__
   if( GetTextCtrl() != NULL )
     GetTextCtrl()->SetFocus();
+#endif
   StartEvtProcessing()
     OnEnter->Execute(this, &TEGC::New<olxstr>(GetOnEnterStr()));
   EndEvtProcessing()
