@@ -1371,6 +1371,12 @@ bool THtml::UpdatePage()  {
     for( int i=0; i < FObjects.Count(); i++ )  {
       if( FObjects.GetObject(i).GetB() == focusedControl )  {
         focusedControlName = FObjects.GetComparable(i);
+        if( FObjects.GetObject(i).GetA() != NULL )  {
+          if( EsdlInstanceOf(*FObjects.GetObject(i).GetA(), TTextEdit) )
+            ((TTextEdit*)FObjects.GetObject(i).GetA())->SetOnLeaveStr(EmptyString);
+          else if( EsdlInstanceOf(*FObjects.GetObject(i).GetA(), TComboBox) )
+            ((TComboBox*)FObjects.GetObject(i).GetA())->SetOnLeaveStr(EmptyString);
+        }
         break;
       }
     }
