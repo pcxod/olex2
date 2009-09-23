@@ -1716,16 +1716,17 @@ void TMainForm::macTelpV(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 //..............................................................................
 void TMainForm::macLabels(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   short lmode = 0;
-  if( Options.Contains("p") )   lmode |= lmPart;
-  if( Options.Contains("l") )   lmode |= lmLabels;
-  if( Options.Contains("v") )   lmode |= lmOVar;
-  if( Options.Contains("o") )   lmode |= lmOccp;
+  if( Options.Contains('p') )   lmode |= lmPart;
+  if( Options.Contains('l') )   lmode |= lmLabels;
+  if( Options.Contains('v') )   lmode |= lmOVar;
+  if( Options.Contains('o') )   lmode |= lmOccp;
   if( Options.Contains("ao") )  lmode |= lmAOcc;
-  if( Options.Contains("u") )   lmode |= lmUiso;
-  if( Options.Contains("r") )   lmode |= lmUisR;
-  if( Options.Contains("a") )   lmode |= lmAfix;
-  if( Options.Contains("h") )   lmode |= lmHydr;
-  if( Options.Contains("f") )   lmode |= lmFixed;
+  if( Options.Contains('u') )   lmode |= lmUiso;
+  if( Options.Contains('r') )   lmode |= lmUisR;
+  if( Options.Contains('a') )   lmode |= lmAfix;
+  if( Options.Contains('h') )   lmode |= lmHydr;
+  if( Options.Contains('f') )   lmode |= lmFixed;
+  if( Options.Contains("qi") )   lmode |= lmQPeakI;
   if( lmode == 0 )  {
     lmode |= lmLabels;
     lmode |= lmQPeak;
