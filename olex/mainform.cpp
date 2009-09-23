@@ -2663,8 +2663,15 @@ void TMainForm::OnKeyUp(wxKeyEvent& m)  {
 //..............................................................................
 void TMainForm::OnKeyDown(wxKeyEvent& m)  {
   if( FindFocus() != FGlCanvas )  {
-    if( FHtml != 0 )
-      FHtml->OnKeyDown(m);
+    if( FHtml != 0 )  {
+      THtml* htw = FHtml;
+      wxWindow* wxw = FindFocus();
+      if( (wxw != NULL && EsdlInstanceOf(*wxw, THtml)) )
+        htw = (THtml*)wxw;
+      else if( wxw != NULL && wxw->GetParent() != NULL && EsdlInstanceOf(*wxw->GetParent(), THtml) )
+        htw = (THtml*)wxw->GetParent();
+      htw->OnKeyDown(m);
+    }
     return;
   }
   if( CmdLineVisible )  {

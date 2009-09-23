@@ -1175,7 +1175,7 @@ void THtml::GetTraversibleIndeces(int& current, int& another, bool forward) cons
   }
   else  {
     for( int i=0; i < Traversables.Count(); i++ )  {
-      if( Traversables[i].GetB() == w )  {
+      if( Traversables[i].GetB() == w || Traversables[i].GetB() == w->GetParent() )  {
         current = i;
         break;
       }
@@ -1221,8 +1221,11 @@ void THtml::DoNavigate(bool forward)  {
     Traversables[another].GetB()->SetFocus();
     for( int i=0; i < Objects.Count(); i++ )  {
       if( Objects.GetValue(i).GetB() == NULL )  continue;
-      if( Objects.GetValue(i).GetB() == Traversables[another].GetB() ||
-          Objects.GetValue(i).GetB() == Traversables[another].GetB()->GetParent() )  
+      if( Objects.GetValue(i).GetB() == Traversables[another].GetB()
+#ifdef __WIN32__
+          || Objects.GetValue(i).GetB() == Traversables[another].GetB()->GetParent()
+#endif
+				)  
       {
         FocusedControl = Objects.GetKey(i);
         break;
