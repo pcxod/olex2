@@ -280,14 +280,10 @@ void TMainForm::funGetEnv(const TStrObjList& Params, TMacroError &E)  {
 //..............................................................................
 void TMainForm::funFileSave(const TStrObjList& Params, TMacroError &E)  {
   E.SetRetVal( PickFile(Params[0], Params[1], Params[2], false) );
-  if( E.GetRetVal().IsEmpty() )
-    E.ProcessingError(__OlxSrcInfo, "operation canceled" );
 }
 //..............................................................................
 void TMainForm::funFileOpen(const TStrObjList& Params, TMacroError &E)  {
   E.SetRetVal( PickFile(Params[0], Params[1], Params[2], true) );
-  if( E.GetRetVal().IsEmpty() )
-    E.ProcessingError(__OlxSrcInfo, "operation canceled" );
 }
 //..............................................................................
 void TMainForm::funUnsetVar(const TStrObjList& Params, TMacroError &E)  {
@@ -305,10 +301,9 @@ void TMainForm::funGetVar(const TStrObjList& Params, TMacroError &E)  {
       E.SetRetVal( Params[1] );
     else  
       E.ProcessingError(__OlxSrcInfo, "Could not locate specified attribute: '") << Params[0] << '\'';
-    return;
   }
-  E.SetRetVal( TOlxVars::GetVarStr(ind) );
-  return;
+  else
+    E.SetRetVal( TOlxVars::GetVarStr(ind) );
 }
 //..............................................................................
 void TMainForm::funIsVar(const TStrObjList& Params, TMacroError &E)  {
@@ -2140,7 +2135,7 @@ void TMainForm::macKill(TStrObjList &Cmds, const TParamList &Options, TMacroErro
 }
 //..............................................................................
 void TMainForm::macHide(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
-  if( Cmds.Count() == 1 && Cmds[0].Equalsi("sel") )  {
+  if( Cmds.Count() == 0 || Cmds[0].Equalsi("sel") )  {
     TPtrList<AGDrawObject> Objects;
     TGlGroup& sel = FXApp->GetSelection();
     for( int i=0; i < sel.Count(); i++ )  
@@ -5127,9 +5122,7 @@ void TMainForm::macPopup(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     //pd->Dialog->SetTitle( title );
     THtml* ph = FHtml;
     FHtml = pd->Html;
-    try  {
-      pd->Html->LoadPage( Cmds[1].u_str() );
-    }
+    try  {  pd->Html->LoadPage( Cmds[1].u_str() );  }
     catch( ... )  {}
     FHtml = ph;
     pd->Html->SetHomePage(TutorialDir + Cmds[1]);
@@ -5141,6 +5134,7 @@ void TMainForm::macPopup(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   wxDialog *dlg = new wxDialog(this, -1, title.u_str(), wxPoint(x,y), wxSize(width, height),
     iBorder, wxT("htmlPopupWindow") );
   THtml *html1 = new THtml(dlg, FXApp);
+//  html1->WI.AddWindowStyle(wxTAB_TRAVERSAL);
   html1->WebFolder( TutorialDir );
   html1->SetHomePage( TutorialDir + Cmds[1] );
   html1->Movable(false);
@@ -5159,9 +5153,7 @@ void TMainForm::macPopup(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   FPopups.Add(Cmds[0], pd);
   THtml* ph = FHtml;
   FHtml = html1;
-  try  {
-    html1->LoadPage( Cmds[1].u_str() );
-  }
+  try  {  html1->LoadPage( Cmds[1].u_str() );  }
   catch( ... )  {}
   FHtml = ph;
   

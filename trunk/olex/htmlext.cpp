@@ -687,10 +687,11 @@ TAG_HANDLER_PROC(tag)  {
   }
 /******************* END OF CONTROLS ******************************************/
   if( LinkInfo != NULL )  delete LinkInfo;
-  if( CreatedObject != NULL && !ObjectName.IsEmpty() )  {
+  if( ObjectName.IsEmpty() )  {  }  // create random name?
+  if( CreatedObject != NULL )  {
     if( !TGlXApp::GetMainForm()->GetHtml()->AddObject(ObjectName, CreatedObject, CreatedWindow, tag.HasParam(wxT("MANAGE")) ) )
       TBasicApp::GetLog().Error(olxstr("HTML: duplicated object \'") << ObjectName << '\'');
-    if( CreatedWindow != NULL )  {
+    if( CreatedWindow != NULL && !ObjectName.IsEmpty() )  {
       CreatedWindow->Hide();
       olxstr bgc, fgc;
       if( tag.HasParam(wxT("BGCOLOR")) )  {
@@ -957,6 +958,7 @@ BEGIN_EVENT_TABLE(THtml, wxHtmlWindow)
   EVT_MOTION(THtml::OnMouseMotion)
   EVT_SCROLL(THtml::OnScroll)
 
+  EVT_KEY_DOWN(THtml::OnKeyDown)
   EVT_CHAR(THtml::OnChar)
 END_EVENT_TABLE()
 //..............................................................................
@@ -984,7 +986,7 @@ wxHtmlOpeningStatus THtml::OnOpeningURL(wxHtmlURLType type, const wxString& url,
 }
 //..............................................................................
 THtml::THtml(wxWindow *Parent, ALibraryContainer* LC): 
-     wxHtmlWindow(Parent, -1, wxDefaultPosition, wxDefaultSize, 4|wxTAB_TRAVERSAL), WI(this), ObjectsState(*this)  {
+     wxHtmlWindow(Parent, -1, wxDefaultPosition, wxDefaultSize, 4), WI(this), ObjectsState(*this)  {
   FActions = new TActionQList;
   FRoot = new THtmlSwitch(this, NULL);
   OnLink = &FActions->NewQueue("ONLINK");
@@ -1128,9 +1130,129 @@ void THtml::OnMouseDblClick(wxMouseEvent& event)  {
   OnDblClick->Execute(this, NULL);
 }
 //..............................................................................
-void THtml::OnChar(wxKeyEvent& event)  {
-  if( event.GetKeyCode() == WXK_TAB )
+void THtml::_FindNext(int from, int& dest, bool scroll) const {
+  if( Traversables.IsEmpty() )  {
+    dest = -1;
     return;
+  }
+  int i = from;
+  while( ++i < Traversables.Count() && Traversables[i].GetB() == NULL )
+    ;
+  dest = ((i >= Traversables.Count() || (Traversables[i].GetB() == NULL)) ? -1 : i);
+  if( dest == -1 && scroll )  {
+    i = -1;
+    while( ++i < from && Traversables[i].GetB() == NULL )
+      ;
+    dest = ((Traversables[i].GetB() == NULL) ? -1 : i);
+  }
+}
+//..............................................................................
+void THtml::_FindPrev(int from, int& dest, bool scroll) const {
+  if( Traversables.IsEmpty() )  {
+    dest = -1;
+    return;
+  }
+  if( from < 0 )  from = Traversables.Count();
+  int i = from;
+  while( --i >= 0 && Traversables[i].GetB() == NULL )
+    ;
+  dest = ((i < 0 || (Traversables[i].GetB() == NULL)) ? -1 : i);
+  if( dest == -1 && scroll )  {
+    i = Traversables.Count();
+    while( --i > from && Traversables[i].GetB() == NULL )
+      ;
+    dest = ((Traversables[i].GetB() == NULL) ? -1 : i);
+  }
+}
+//..............................................................................
+void THtml::GetTraversibleIndeces(int& current, int& another, bool forward) const {
+  wxWindow* w = FindFocus();
+  if( w == NULL || w == this )  {  // no focus? find the one at the edge
+    if( forward )
+      _FindNext(-1, another, false);
+    else
+      _FindPrev(Traversables.Count(), another, false);
+  }
+  else  {
+    for( int i=0; i < Traversables.Count(); i++ )  {
+      if( Traversables[i].GetB() == w )  {
+        current = i;
+        break;
+      }
+    }
+    if( forward )
+      _FindNext(current, another, true);
+    else
+      _FindPrev(current , another, true);
+  }
+}
+//..............................................................................
+void THtml::DoNavigate(bool forward)  {
+  FLockPageLoad = true;  // prevent pae re-loading and object deletion
+  int current=-1, another=-1;
+  GetTraversibleIndeces(current, another, forward);
+  if( current != -1 )  {
+    IEObject* cie = Traversables[current].GetA();
+    if( cie != NULL )  {
+      if( EsdlInstanceOf(*cie, TTextEdit) )  {
+        olxstr s = ((TTextEdit*)cie)->GetOnLeaveStr();
+        ((TTextEdit*)cie)->OnLeave->Execute(cie, &s);
+      }
+      else if( EsdlInstanceOf(*cie, TComboBox) )  {
+        olxstr s = ((TComboBox*)cie)->GetOnLeaveStr();
+        ((TComboBox*)cie)->OnLeave->Execute(cie, &s);
+      }
+    }
+  }
+  if( another != -1 )  {
+    IEObject* nie = Traversables[another].GetA();
+    if( nie != NULL )  {  // call on enter events queue
+      if( EsdlInstanceOf(*nie, TTextEdit) )  {
+        olxstr s = ((TTextEdit*)nie)->GetOnEnterStr();
+        ((TTextEdit*)nie)->OnEnter->Execute(nie, &s);
+        ((TTextEdit*)nie)->SetSelection(-1,-1);
+      }
+      else if( EsdlInstanceOf(*nie, TComboBox) )  {
+        olxstr s = ((TComboBox*)nie)->GetOnEnterStr();
+        ((TComboBox*)nie)->OnEnter->Execute(nie, &s);
+        ((TComboBox*)nie)->SetSelection(-1,-1);
+      }
+    }
+    Traversables[another].GetB()->SetFocus();
+    for( int i=0; i < Objects.Count(); i++ )  {
+      if( Objects.GetValue(i).GetB() == NULL )  continue;
+      if( Objects.GetValue(i).GetB() == Traversables[another].GetB() ||
+          Objects.GetValue(i).GetB() == Traversables[another].GetB()->GetParent() )  
+      {
+        FocusedControl = Objects.GetKey(i);
+        break;
+      }
+    }
+  }
+  FLockPageLoad = false;
+}
+//..............................................................................
+void THtml::OnKeyDown(wxKeyEvent& event)  {
+  if( event.GetKeyCode() == WXK_TAB )
+    DoNavigate( event.GetModifiers() != wxMOD_SHIFT );
+  else
+    event.Skip();
+}
+//..............................................................................
+void THtml::OnNavigation(wxNavigationKeyEvent& event)  {
+  if( event.IsFromTab() )
+    DoNavigate( event.GetDirection() );
+  else
+    event.Skip();
+}
+//..............................................................................
+void THtml::OnChar(wxKeyEvent& event)  {
+  wxWindow* parent = GetParent();
+  if( parent != NULL )  {
+    wxDialog* dlg = dynamic_cast<wxDialog*>(parent);
+    if( dlg != NULL )
+      return;
+  }
   TKeyEvent KE(event);
   OnKey->Execute(this, &KE);
 }
@@ -1300,7 +1422,8 @@ bool THtml::ReloadPage()  {
     FPageRequested = FFileName;
     return true;
   }
-  FObjects.Clear();
+  Objects.Clear();
+  Traversables.Clear();
   return  LoadPage( uiStr(FFileName) );
 }
 //..............................................................................
@@ -1364,24 +1487,6 @@ bool THtml::UpdatePage()  {
   else
     Path = FWebFolder;
 
-  // locate currently focused control
-  olxstr focusedControlName;
-  wxWindow* focusedControl = FindFocus();
-  if( focusedControl != NULL )  {
-    for( int i=0; i < FObjects.Count(); i++ )  {
-      if( FObjects.GetObject(i).GetB() == focusedControl )  {
-        focusedControlName = FObjects.GetComparable(i);
-        if( FObjects.GetObject(i).GetA() != NULL )  {
-          if( EsdlInstanceOf(*FObjects.GetObject(i).GetA(), TTextEdit) )
-            ((TTextEdit*)FObjects.GetObject(i).GetA())->SetOnLeaveStr(EmptyString);
-          else if( EsdlInstanceOf(*FObjects.GetObject(i).GetA(), TComboBox) )
-            ((TComboBox*)FObjects.GetObject(i).GetA())->SetOnLeaveStr(EmptyString);
-        }
-        break;
-      }
-    }
-  }
-
   olxstr oldPath( TEFile::CurrentDir() );
 
   TEFile::ChangeDir(FWebFolder);
@@ -1392,7 +1497,8 @@ bool THtml::UpdatePage()  {
   TStrList Res;
   FRoot->ToStrings(Res);
   ObjectsState.SaveState();
-  FObjects.Clear();
+  Objects.Clear();
+  Traversables.Clear();
   int xPos = -1, yPos = -1, xWnd=-1, yWnd = -1;
   wxHtmlWindow::GetViewStart(&xPos, &yPos);
 #ifdef __WIN32__
@@ -1411,12 +1517,12 @@ bool THtml::UpdatePage()  {
   Refresh();
   Update();
 #endif
-  for( int i=0; i < FObjects.Count(); i++ )  {
-    if( FObjects.GetObject(i).B() != NULL )  {
+  for( int i=0; i < Objects.Count(); i++ )  {
+    if( Objects.GetValue(i).B() != NULL )  {
 #ifndef __MAC__
-      FObjects.GetObject(i).B()->Move(16000, 0);
+      Objects.GetValue(i).B()->Move(16000, 0);
 #endif
-      FObjects.GetObject(i).B()->Show();
+      Objects.GetValue(i).B()->Show();
     }
   }
 //#endif
@@ -1430,23 +1536,21 @@ bool THtml::UpdatePage()  {
     if( w != TGlXApp::GetMainForm()->GetHtmlPanelWidth() ) // scrollbar appeared?
       TGlXApp::GetMainForm()->OnResize();
   }
-  if( FocusedControl.IsEmpty() )  
-    FocusedControl = focusedControlName;
   if( !FocusedControl.IsEmpty() )  {
-    int ind = FObjects.IndexOf( FocusedControl );
-    FocusedControl = EmptyString;
+    int ind = Objects.IndexOf( FocusedControl );
     if( ind != -1 )  {
-      wxWindow* wnd = FObjects.GetObject(ind).B();
+      wxWindow* wnd = Objects.GetValue(ind).B();
       if( EsdlInstanceOf(*wnd, TTextEdit) )
         ((TTextEdit*)wnd)->SetSelection(-1,-1);
       else if( EsdlInstanceOf(*wnd, TComboBox) )  {
         TComboBox* cb = (TComboBox*)wnd;
+        wnd = cb;
 #ifdef __WIN32__
         if( cb->GetTextCtrl() != NULL )  {
           cb->GetTextCtrl()->SetInsertionPoint(0);
+          wnd = cb->GetTextCtrl();
         }
 #endif
-        wnd = cb;
       }
       else if( EsdlInstanceOf(*wnd, TSpinCtrl) )  {
         TSpinCtrl* sc = (TSpinCtrl*)wnd;
@@ -1455,6 +1559,8 @@ bool THtml::UpdatePage()  {
       }
       wnd->SetFocus();
     }
+    else
+      FocusedControl = EmptyString;
   }
   return true;
 }
@@ -1480,9 +1586,20 @@ void THtml::ScrollWindow(int dx, int dy, const wxRect* rect)  {
 }
 //..............................................................................
 bool THtml::AddObject(const olxstr& Name, IEObject *Object, wxWindow* wxWin, bool Manage)  {
+#ifdef __WIN32__
+  wxWindow* ew = wxWin;
+  if( Object != NULL && EsdlInstanceOf(*Object, TComboBox) )  {
+    TComboBox* cb = (TComboBox*)Object;
+    if( cb->GetTextCtrl() != NULL )
+      ew = cb->GetTextCtrl();
+  }
+  Traversables.Add( new AnAssociation2<IEObject*,wxWindow*>(Object, ew) );
+#else
+  Traversables.Add( new AnAssociation2<IEObject*,wxWindow*>(Object,wxWin) );
+#endif
   if( Name.IsEmpty() )  return true;  // an anonymous object
-  if( FObjects.IndexOf(Name) != -1 )  return false;
-  FObjects.Add(Name, AnAssociation3<IEObject*, wxWindow*,bool>(Object, wxWin, Manage) );
+  if( Objects.IndexOf(Name) != -1 )  return false;
+  Objects.Add(Name, AnAssociation3<IEObject*, wxWindow*,bool>(Object, wxWin, Manage) );
   return true;
 }
 //..............................................................................
@@ -2386,11 +2503,11 @@ void THtml::funSetFocus(const TStrObjList &Params, TMacroError &E)  {
     E.ProcessingError(__OlxSrcInfo, "could not locate specified popup" );
     return;
   }
+  FocusedControl = objName;
   wxWindow *wnd = html->FindObjectWindow(objName);
-  if( wnd == NULL )  {
-    E.ProcessingError(__OlxSrcInfo, "wrong html object name: ") << objName;
+  if( wnd == NULL )  // not created yet?
     return;
-  }
+  
 
   if( EsdlInstanceOf(*wnd, TTextEdit) )
     ((TTextEdit*)wnd)->SetSelection(-1,-1);

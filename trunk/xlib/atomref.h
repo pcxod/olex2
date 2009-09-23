@@ -21,6 +21,7 @@ class ASelectionOwner {
 public:
   ASelectionOwner() : DoClearSelection(true) {}
   virtual void ExpandSelection(TCAtomGroup& catoms) = 0;
+  virtual void ExpandSelectionEx(TPtrList<class TSAtom>& satoms) = 0;
   DefPropP(bool, DoClearSelection)
 };
 class TAtomReference : public IEObject  {

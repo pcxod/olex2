@@ -544,6 +544,7 @@ public:
   void OnKeyUp(wxKeyEvent& event);
   void OnKeyDown(wxKeyEvent& event);
   void OnChar(wxKeyEvent& event);
+  void OnNavigation(wxNavigationKeyEvent& event);
 
   virtual bool ProcessEvent( wxEvent& evt );
   void OnResize();

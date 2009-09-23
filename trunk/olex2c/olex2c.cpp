@@ -136,8 +136,14 @@ class TOlex: public AEventsDispatcher, public olex::IOlexProcessor, public ASele
   }
   // slection owner interface
   virtual void ExpandSelection(TCAtomGroup& atoms)  {
+    atoms.SetCapacity(atoms.Count() + Selection.Count());
     for( int i=0; i < Selection.Count(); i++ )
-      atoms.AddNew( &Selection[i]->CAtom() );
+      atoms.AddNew( &Selection[i]->CAtom(), &Selection[i]->GetMatrix(0) );
+    if( GetDoClearSelection() )
+      Selection.Clear();
+  }
+  virtual void ExpandSelectionEx(TSAtomPList& atoms)  {
+    atoms.AddList(Selection);
     if( GetDoClearSelection() )
       Selection.Clear();
   }

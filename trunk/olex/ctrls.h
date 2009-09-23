@@ -51,8 +51,6 @@ class TComboBox: public wxOwnerDrawnComboBox, public IEObject  {
     bool Delete;
   };
   void ChangeEvent(wxCommandEvent& event);
-  void LeaveEvent(wxFocusEvent& event);
-  void EnterEvent(wxFocusEvent& event);
   void EnterPressedEvent(wxCommandEvent& event);
   TActionQList *FActions;
   olxstr Data, OnChangeStr, OnLeaveStr, OnEnterStr;
@@ -404,8 +402,6 @@ protected:
   void KeyUpEvent(wxKeyEvent& event);
   void CharEvent(wxKeyEvent& event);
   void EnterPressedEvent(wxCommandEvent& event);
-  void LeaveEvent(wxFocusEvent& event);
-  void EnterEvent(wxFocusEvent& event);
   olxstr OnChangeStr, Data, OnLeaveStr, OnEnterStr;
 public:
   TTextEdit(wxWindow *Parent, int style=0);

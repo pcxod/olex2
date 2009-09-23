@@ -11,6 +11,7 @@
 #include "wx/dynarray.h"
 
 #include "library.h"
+#include "edict.h"
 
 
 class THtmlFunc;
@@ -228,7 +229,6 @@ protected:
   void OnMouseUp(wxMouseEvent& event);
   void OnMouseMotion(wxMouseEvent& event);
   void OnCellMouseHover(wxHtmlCell *Cell, wxCoord x, wxCoord y);
-  void OnChar(wxKeyEvent& event);  
   /* on GTK scrolling makes mess out of the controls so will try to "fix it" here*/
   void OnScroll(wxScrollEvent& evt);
   virtual void ScrollWindow(int dx, int dy, const wxRect* rect = NULL);
@@ -238,7 +238,8 @@ protected:
   bool FMouseDown;
 
   THtmlSwitch* FRoot;
-  TSStrObjList<olxstr,AnAssociation3<IEObject*, wxWindow*, bool>, true> FObjects;
+  olxdict<olxstr, AnAssociation3<IEObject*,wxWindow*,bool>, olxstrComparator<true> > Objects;
+  TTypeList<AnAssociation2<IEObject*,wxWindow*> > Traversables;
   TSStrPObjList<olxstr,int, true> FSwitchStates;
   olxstr FocusedControl;
   class TObjectsState  {
@@ -310,11 +311,18 @@ protected:
   void SetObjectState(IEObject *Object, bool State);
   bool SetObjectImage(IEObject *Object, const olxstr& src);
   bool SetObjectItems(IEObject *Object, const olxstr& src);
-
+  void _FindNext(int from, int& dest, bool scroll) const;
+  void _FindPrev(int from, int& dest, bool scroll) const;
+  void GetTraversibleIndeces(int& current, int& another, bool forward) const;
+  void DoNavigate(bool forward);
   static TLibrary* Library;
 public:
   THtml(wxWindow *Parent, ALibraryContainer* LC);
   virtual ~THtml();
+
+  void OnKeyDown(wxKeyEvent& event);  
+  void OnChar(wxKeyEvent& event);  
+  void OnNavigation(wxNavigationKeyEvent& event);  
 
   void SetSwitchState(THtmlSwitch& sw, int state);
 
@@ -355,18 +363,18 @@ public:
   // object operations
   bool AddObject(const olxstr& Name, IEObject *Obj, wxWindow* wxObj, bool Manage = false);
   IEObject *FindObject(const olxstr& Name)  {
-    int ind = FObjects.IndexOf(Name);
-    return (ind == -1) ? NULL : FObjects.GetObject(ind).A();
+    int ind = Objects.IndexOf(Name);
+    return (ind == -1) ? NULL : Objects.GetValue(ind).A();
   }
   wxWindow *FindObjectWindow(const olxstr& Name)  {
-    int ind = FObjects.IndexOf(Name);
-    return (ind == -1) ? NULL : FObjects.GetObject(ind).B();
+    int ind = Objects.IndexOf(Name);
+    return (ind == -1) ? NULL : Objects.GetValue(ind).B();
   }
-  inline int ObjectCount()          const {  return FObjects.Count();  }
-  inline IEObject* GetObject(int i)       {  return FObjects.GetObject(i).A();  }
-  inline wxWindow* GetWindow(int i)       {  return FObjects.GetObject(i).B();  }
-  inline const olxstr& GetObjectName(int i) const {  return FObjects.GetString(i);  }
-  inline bool IsObjectManageble(int i) const      {  return FObjects.GetObject(i).GetC();  }
+  inline int ObjectCount()          const {  return Objects.Count();  }
+  inline IEObject* GetObject(int i)       {  return Objects.GetValue(i).A();  }
+  inline wxWindow* GetWindow(int i)       {  return Objects.GetValue(i).B();  }
+  inline const olxstr& GetObjectName(int i) const {  return Objects.GetKey(i);  }
+  inline bool IsObjectManageble(int i) const      {  return Objects.GetValue(i).GetC();  }
   //
   inline bool Movable() const {  return FMovable;  }
   inline void Movable(bool v) {  FMovable = v;  }

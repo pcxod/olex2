@@ -116,7 +116,10 @@ public:
 //----------------------------------------------------------------------------//
 //..............................................................................
 BEGIN_EVENT_TABLE(TGlXApp, wxApp)
-    EVT_IDLE(TGlXApp::OnIdle)
+  EVT_IDLE(TGlXApp::OnIdle)
+  EVT_CHAR(TGlXApp::OnChar)
+  EVT_KEY_DOWN(TGlXApp::OnKeyDown)
+  EVT_NAVIGATION_KEY(TGlXApp::OnNavigation)
 END_EVENT_TABLE()
 
 //..............................................................................
@@ -254,6 +257,19 @@ bool TGlXApp::Dispatch()  {
   //TBasicApp::GetInstance().OnTimer->Clear();
 //  return wxApp::MainLoop();
 //}
+//..............................................................................
+void TGlXApp::OnChar(wxKeyEvent& event)  {
+  //MainForm->OnChar(event);
+  event.Skip(); // pass it to the controls...
+}
+//..............................................................................
+void TGlXApp::OnKeyDown(wxKeyEvent& event)  {
+  MainForm->OnKeyDown(event);
+}
+//..............................................................................
+void TGlXApp::OnNavigation(wxNavigationKeyEvent& event)  {
+  MainForm->OnNavigation(event);
+}
 //..............................................................................
 void TGlXApp::OnIdle(wxIdleEvent& event)  {
   wxApp::OnIdle( event );
