@@ -1947,10 +1947,14 @@ void TGXApp::undoName(TUndoData *data)  {
 //..............................................................................
 TUndoData* TGXApp::DeleteXObjects(TPtrList<AGDrawObject>& L)  {
   TXAtomPList atoms;
+  atoms.SetCapacity(L.Count());
   for( int i=0; i < L.Count(); i++ )  {
-    AGDrawObject* GO = L[i];
-    if( EsdlInstanceOf(*GO, TXAtom) )  
-      atoms.Add( (TXAtom*)GO );
+    if( EsdlInstanceOf(*L[i], TXAtom) )  
+      atoms.Add( (TXAtom*)L[i] );
+    else if( EsdlInstanceOf(*L[i], TXPlane) )  {
+      TXPlane* xp = (TXPlane*)L[i];
+      xp->SetDeleted(true);
+    }
   }
   return DeleteXAtoms(atoms);
 }
@@ -1968,7 +1972,7 @@ TUndoData* TGXApp::DeleteXAtoms(TXAtomPList& L)  {
     for( int j=0; j < SA.NodeCount();j++ ) {
       TSAtom& SH = SA.Node(j);
       if( SH.IsDeleted() )  continue;
-      if( SA.GetAtomInfo() != iQPeakIndex && SH.GetAtomInfo() == iHydrogenIndex )  
+      if( SA.GetAtomInfo().GetMr() > 3.5 && SH.GetAtomInfo() == iHydrogenIndex )  
         SAL.Add(SH)->SetDeleted(true);
     }
     XA->SetDeleted(true);
@@ -2168,10 +2172,18 @@ void TGXApp::SelectAtoms(const olxstr &Names, bool Invert)  {
 }
 //..............................................................................
 void TGXApp::ExpandSelection(TCAtomGroup& atoms)  {
-  TCAtomPList catoms;
-  GetSelectedCAtoms(catoms, GetDoClearSelection());
-  for( int i=0; i < catoms.Count(); i++ )
-    atoms.AddNew( catoms[i] );
+  TXAtomPList xatoms;
+  GetSelectedXAtoms(xatoms, GetDoClearSelection());
+  for( int i=0; i < xatoms.Count(); i++ )
+    atoms.AddNew( &xatoms[i]->Atom().CAtom(), &xatoms[i]->Atom().GetMatrix(0) );
+}
+//..............................................................................
+void TGXApp::ExpandSelectionEx(TSAtomPList& atoms)  {
+  TXAtomPList xatoms;
+  GetSelectedXAtoms(xatoms, GetDoClearSelection());
+  atoms.SetCapacity(atoms.Count()+xatoms.Count());
+  for( int i=0; i < xatoms.Count(); i++ )
+    atoms.Add( xatoms[i]->Atom() );
 }
 //..............................................................................
 void TGXApp::FindCAtoms(const olxstr &Atoms, TCAtomPList& List, bool ClearSelection)  {

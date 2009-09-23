@@ -11,11 +11,14 @@ private:
   class TMainForm* MainForm;
   static TGlXApp* Instance;
   TEFile* pid_file;
+  void OnChar(wxKeyEvent& event);  
+  void OnKeyDown(wxKeyEvent& event);
+  void OnNavigation(wxNavigationKeyEvent& event);
+  void OnIdle(wxIdleEvent& event);
 public:
   TGlXApp() : pid_file(NULL)  {}
   bool Dispatch();
 //  int MainLoop();
-  void OnIdle(wxIdleEvent& event);
 
   static TGlXApp*  GetInstance()  {  return Instance;  }
   static TMainForm* GetMainForm() {  return GetInstance()->MainForm;  }

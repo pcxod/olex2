@@ -283,6 +283,14 @@ void TXApp::undoName(TUndoData *data)  {
 TUndoData* TXApp::FixHL()  {
   TNameUndo *undo = new TNameUndo( new TUndoActionImplMF<TXApp>(this, &TXApp::undoName));
   olxdict<int,TSAtomPList,TPrimitiveComparator> frags;
+  TIntList frag_id;
+  TSAtomPList satoms;
+  FindSAtoms(EmptyString, satoms, false, true);
+  if( !satoms.IsEmpty() )  {
+    for( int i=0; i < satoms.Count(); i++ )
+      if( frag_id.IndexOf(satoms[i]->CAtom().GetFragmentId()) == -1 )
+        frag_id.Add(satoms[i]->CAtom().GetFragmentId());
+  }
   for( int i=0; i < XFile().GetLattice().AtomCount(); i++ )  {
     TSAtom& sa = XFile().GetLattice().GetAtom(i);
     if( sa.IsDeleted() || (sa.GetAtomInfo() == iQPeakIndex) )  {
@@ -292,17 +300,28 @@ TUndoData* TXApp::FixHL()  {
     bool au_atom = (sa.GetMatrix(0).GetTag() == 0 && sa.GetMatrix(0).t.QLength() < 1e-6);
     if( sa.GetAtomInfo() == iHydrogenIndex || sa.GetAtomInfo() == iDeuteriumIndex )  {
       sa.SetTag(au_atom ? -2 : -1);  // mark as unpocessed or to skip
-      if( au_atom ) 
+      if( au_atom )  {
         sa.CAtom().SetTag(-2);  // mark as unpocessed or to skip
+        sa.CAtom().Label() = EmptyString;
+      }
       continue;
     }
-    if( au_atom )
+    if( au_atom && (frag_id.IsEmpty() || frag_id.IndexOf(sa.CAtom().GetFragmentId()) != -1) )
       frags.Add(sa.CAtom().GetFragmentId()).Add(sa);
   }
-  for( int i=0; i < frags.Count(); i++ )  {
-    TSAtomPList& al = frags.GetValue(i);
-    for( int j=0; j < al.Count(); j++ )
-      NameHydrogens(*al[j], undo, true);
+  if( frag_id.IsEmpty() )  {
+    for( int i=0; i < frags.Count(); i++ )  {
+      TSAtomPList& al = frags.GetValue(i);
+      for( int j=0; j < al.Count(); j++ )
+        NameHydrogens(*al[j], undo, true);
+    }
+  }
+  else  {
+    for( int i=0; i < frag_id.Count(); i++ )  {
+      TSAtomPList& al = frags[frag_id[i]];
+      for( int j=0; j < al.Count(); j++ )
+        NameHydrogens(*al[j], undo, true);
+    }
   }
   return undo;
 }
@@ -388,10 +407,10 @@ void TXApp::FindRings(const olxstr& Condition, TTypeList<TSAtomPList>& rings)  {
 bool TXApp::FindSAtoms(const olxstr& condition, TSAtomPList& res, bool ReturnAll, bool ClearSelection)  {
   if( SelectionOwner != NULL )
     SelectionOwner->SetDoClearSelection(ClearSelection);
-  TCAtomGroup ag;
+  TSAtomPList atoms;
   if( condition.IsEmpty() )  {  // try the selection first
     if( SelectionOwner != NULL )
-      SelectionOwner->ExpandSelection(ag);
+      SelectionOwner->ExpandSelectionEx(atoms);
   }
   if( !condition.IsEmpty() )  {
     TStrList toks(condition, ' ');
@@ -410,28 +429,41 @@ bool TXApp::FindSAtoms(const olxstr& condition, TSAtomPList& res, bool ReturnAll
         i--;
       }
     }
-    TAtomReference ar(toks.Text(' '), SelectionOwner);      
-    int atomAGroup;
-    ar.Expand(XFile().GetRM(), ag, EmptyString, atomAGroup);
-  }
-  else if( ag.IsEmpty() && ReturnAll ) {
-    res.SetCapacity( XFile().GetLattice().AtomCount() );
-    for( int i=0; i < XFile().GetLattice().AtomCount(); i++ )
-      res.Add( &XFile().GetLattice().GetAtom(i) );
-  }
-  if( !ag.IsEmpty() )  {
-    res.SetCapacity( ag.Count() );
-    for( int i=0; i < XFile().GetAsymmUnit().AtomCount(); i++ )
-      XFile().GetAsymmUnit().GetAtom(i).SetTag(0);
-    for( int i=0; i < ag.Count(); i++ )
-      ag[i].GetAtom()->SetTag(1);
-    for( int i=0; i < XFile().GetLattice().AtomCount(); i++ )  {
-      TSAtom* sa = &XFile().GetLattice().GetAtom(i);
-      if( sa->CAtom().GetTag() == 1 )
-        res.Add( sa );
+    olxstr new_c = toks.Text(' ');
+    if( !new_c.IsEmpty() )  {
+      TCAtomGroup ag;
+      TAtomReference ar(toks.Text(' '), SelectionOwner);      
+      int atomAGroup;
+      ar.Expand(XFile().GetRM(), ag, EmptyString, atomAGroup);
+      if( !ag.IsEmpty() )  {
+        atoms.SetCapacity( atoms.Count() + ag.Count() );
+        TAsymmUnit& au = XFile().GetAsymmUnit();
+        for( int i=0; i < au.AtomCount(); i++ )
+          au.GetAtom(i).SetTag(au.GetAtom(i).GetId());
+        TLattice& latt = XFile().GetLattice();
+        for( int i=0; i < ag.Count(); i++ )  {
+          if( ag[i].GetAtom()->GetTag() != ag[i].GetAtom()->GetId() )
+            continue;
+          for( int j=0; j < latt.AtomCount(); j++ )  {
+            TSAtom& sa = XFile().GetLattice().GetAtom(j);
+            if( sa.CAtom().GetTag() == ag[i].GetAtom()->GetTag() && 
+              sa.GetMatrix(0).GetTag() == ag[i].GetMatrix()->GetTag() &&
+              sa.GetMatrix(0).t == ag[i].GetMatrix()->t )
+            {
+              atoms.Add( sa );
+            }
+          }
+        }
+      }
     }
   }
-  return !res.IsEmpty();
+  else if( atoms.IsEmpty() && ReturnAll ) {
+    atoms.SetCapacity( XFile().GetLattice().AtomCount() );
+    for( int i=0; i < XFile().GetLattice().AtomCount(); i++ )
+      atoms.Add( &XFile().GetLattice().GetAtom(i) );
+  }
+  res.AddList(atoms);
+  return !atoms.IsEmpty();
 }
 //..............................................................................
 short TXApp::CalcVoid(TArray3D<short>& map, double extraR, short val, size_t* structurePoints, 

@@ -618,7 +618,7 @@ Accepts atoms, bonds, hbonds or a name (like from LstGO). Example: 'mask hbonds 
   this_InitMacroD(AZoom, EmptyString, fpAny^fpNone, "Modifies given atoms [all] radius. The first argument is the new radius in %");
   this_InitMacroD(BRad, EmptyString, fpAny^fpNone, "Sets provided [all] bonds radius to given number (first argument)" );
 
-  this_InitMacro(Hide, , fpAny^fpNone );
+  this_InitMacroD(Hide, EmptyString, fpAny, "Hides selected objects or provided atom names (no atom related objects as bonds are hidden automatically)" );
   this_InitMacroD(Kill, "h-kill hidden atoms", fpAny^fpNone, "deletes provided [selected] atoms" );
   this_InitMacroD(Omit, EmptyString, fpOne|fpThree|psCheckFileTypeIns, 
     "removes any particular reflection from the refinement list. If a single number is provided,\
@@ -2480,7 +2480,7 @@ void TMainForm::PreviewHelp(const olxstr& Cmd)  {
   }
 }
 //..............................................................................
-void TMainForm::OnChar( wxKeyEvent& m )  {
+void TMainForm::OnChar(wxKeyEvent& m)  {
   short Fl=0, inc=3;
   olxstr Cmd, FullCmd;
   if( m.m_altDown )      Fl |= sssAlt;
@@ -2662,6 +2662,11 @@ void TMainForm::OnKeyUp(wxKeyEvent& m)  {
 }
 //..............................................................................
 void TMainForm::OnKeyDown(wxKeyEvent& m)  {
+  if( FindFocus() != FGlCanvas )  {
+    if( FHtml != 0 )
+      FHtml->OnKeyDown(m);
+    return;
+  }
   if( CmdLineVisible )  {
     if( this->FindFocus() != (wxWindow*)FCmdLine )  {
       m.Skip(false);
@@ -2692,6 +2697,22 @@ void TMainForm::OnKeyDown(wxKeyEvent& m)  {
   }
 
   m.Skip();
+}
+//..............................................................................
+void TMainForm::OnNavigation(wxNavigationKeyEvent& event)  {
+  if( FindFocus() != FGlCanvas )  {
+    if( FHtml != 0 )  {
+      THtml* htw = FHtml;
+      wxWindow* wxw = FindFocus();
+      if( (wxw != NULL && EsdlInstanceOf(*wxw, THtml)) )
+        htw = (THtml*)wxw;
+      else if( wxw != NULL && wxw->GetParent() != NULL && EsdlInstanceOf(*wxw->GetParent(), THtml) )
+        htw = (THtml*)wxw->GetParent();
+      htw->OnNavigation(event);
+    }
+    return;
+  }
+  event.Skip();
 }
 //..............................................................................
 void TMainForm::OnSelection(wxCommandEvent& m)  {
@@ -4154,8 +4175,8 @@ bool TMainForm::IsControl(const olxstr& _cname) const {
 }
 //..............................................................................
 void TMainForm::DoUpdateFiles()  {
-  if( _UpdateThread == NULL )
-    return;
+  volatile olx_scope_cs cs( TBasicApp::GetCriticalSection());
+  if( _UpdateThread == NULL )  return;
   uint64_t sz = _UpdateThread->GetUpdateSize();
   _UpdateThread->ResetUpdateSize();
   updater::SettingsFile sf(updater::UpdateAPI::GetSettingsFileName());

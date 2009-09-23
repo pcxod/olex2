@@ -228,6 +228,7 @@ public:
   olxstr GetSelectionInfo();
   // ASelection Owner interface
   virtual void ExpandSelection(TCAtomGroup& atoms);
+  virtual void ExpandSelectionEx(TSAtomPList& atoms);
 
   TGlBitmap* CreateGlBitmap(const olxstr& name,
     int left, int top, int width, int height, unsigned char* RGBa, unsigned int format);
