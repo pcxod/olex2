@@ -139,7 +139,7 @@ void TGlCanvas::OnMouseUp(wxMouseEvent& me)  {
   GetPosition(&left, &top);
 
   if( (abs(me.m_x-FMX) <= 4) && (abs(me.m_y-FMY) <= 4) &&
-    (FRightMouseDown) && Fl == os_mask )
+    (FRightMouseDown) && (Fl == os_mask || Fl == 0) )
   {
 //    FMY += (wxSystemSettings::GetMetric(wxSYS_MENU_Y)*FParent->pmMenu->GetMenuItemCount());
     FXApp->ResetMouseState();  // reset mouse state
