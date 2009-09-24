@@ -5004,7 +5004,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       olxstr hkl_fn = TEFile::OSPath(FXApp->XFile().GetRM().GetHKLSource()); 
       olxstr src_fn = TEFile::OSPath(FXApp->XFile().LastLoader()->GetFileName()); 
       if( TEFile::ChangeFileExt(hkl_fn, EmptyString) != TEFile::ChangeFileExt(src_fn, EmptyString) )  {
-        TBasicApp::GetLog() << "Note that the associated HKL file differs from the locaded file name:\n";
+        TBasicApp::GetLog() << "Note that the associated HKL file differs from the loaded file name:\n";
         TBasicApp::GetLog() << (olxstr("SRC: ") << src_fn << '\n');
         TBasicApp::GetLog() << (olxstr("HKL: ") << hkl_fn << '\n');
       }
