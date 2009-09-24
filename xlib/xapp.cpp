@@ -446,11 +446,17 @@ bool TXApp::FindSAtoms(const olxstr& condition, TSAtomPList& res, bool ReturnAll
             continue;
           for( int j=0; j < latt.AtomCount(); j++ )  {
             TSAtom& sa = XFile().GetLattice().GetAtom(j);
-            if( sa.CAtom().GetTag() == ag[i].GetAtom()->GetTag() && 
-              sa.GetMatrix(0).GetTag() == ag[i].GetMatrix()->GetTag() &&
-              sa.GetMatrix(0).t == ag[i].GetMatrix()->t )
-            {
-              atoms.Add( sa );
+            if( sa.CAtom().GetTag() != ag[i].GetAtom()->GetTag() )  continue;
+            if( ag[i].GetMatrix() == 0 )  {  // get an atom from the asymm unit
+              if( sa.GetMatrix(0).GetTag() == 0 && sa.GetMatrix(0).t.QLength() < 1e-10  )
+                atoms.Add( sa );
+            }
+            else  {
+              if( sa.GetMatrix(0).GetTag() == ag[i].GetMatrix()->GetTag() &&
+                sa.GetMatrix(0).t.QDistanceTo(ag[i].GetMatrix()->t) < 1e-10 )
+              {
+                atoms.Add( sa );
+              }
             }
           }
         }
