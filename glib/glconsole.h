@@ -19,7 +19,7 @@ class TGlConsole: public AGDrawObject,
   double GlLeft, GlTop, LineInc;
   TStrPObjList<olxstr,TGlMaterial*> FBuffer;
   TStrList FCommands;   // the content
-  TStrList Cmds;        // hypernated commands
+  TStrList Cmds;        // hyphenated commands
   olxstr FCommand;    // the command
   olxstr InviteStr, PromptStr;   //
   TActionQList *FActions; // actions list
@@ -87,8 +87,8 @@ public:
   inline const olxstr& GetInviolxstr()  const { return InviteStr; }
   void SetInviteString(const olxstr &S);
 
-  void PrintText(const olxstr &S, TGlMaterial *M=NULL, bool Hypernate=true);
-  void PrintText(const TStrList &SL, TGlMaterial *M=NULL, bool Hypernate=true);
+  void PrintText(const olxstr &S, TGlMaterial *M=NULL, bool Hyphenate=true);
+  void PrintText(const TStrList &SL, TGlMaterial *M=NULL, bool Hyphenate=true);
   inline void NewLine()           {  FBuffer.Add(EmptyString); }
   int  MaxLines();
   inline void SetMaxLines(int V)     {  FMaxLines = V; };

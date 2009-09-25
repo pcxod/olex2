@@ -350,7 +350,7 @@ void XLibMacros::macSAInfo(TStrObjList &Cmds, const TParamList &Options, TMacroE
         sg_elm.Clear();
       }
     }
-    output.Hypernate(exact_match, 80);
+    output.Hyphenate(exact_match, 80);
     log << (output << '\n');
     log << "Space groups inclosed in [] have exact match to the provided elements\n";
   }
@@ -3138,7 +3138,7 @@ void XLibMacros::macDescribe(TStrObjList &Cmds, const TParamList &Options, TMacr
   TStrList lst, out;
   xapp.XFile().GetRM().Describe(lst);
   for( int i=0; i < lst.Count(); i++ )
-    out.Hypernate(lst[i], 80, true);
+    out.Hyphenate(lst[i], 80, true);
   xapp.GetLog() << out << '\n'; 
 }
 //..............................................................................

@@ -137,7 +137,7 @@ void TGlTextBox::PostText(const olxstr& S, TGlMaterial* M)  {
   }
   if( MaxStringLength && (Tmp.Length() > MaxStringLength) )  {
     TStrList Txt;
-    Txt.Hypernate(Tmp, MaxStringLength, true);
+    Txt.Hyphenate(Tmp, MaxStringLength, true);
     PostText(Txt, M);
     return;
   }

@@ -774,6 +774,8 @@ void RefinementModel::ProcessFrags()  {
 void RefinementModel::ToDataItem(TDataItem& item) {
   // fields
   item.AddField("RefOutArg", PersUtil::NumberListToStr(PLAN));
+  item.AddField("Weight", PersUtil::NumberListToStr(used_weight));
+  item.AddField("ProposedWeight", PersUtil::NumberListToStr(proposed_weight));
   item.AddField("HklSrc", HKLSource);
   item.AddField("RefMeth", RefinementMethod);
   item.AddField("SolMeth", SolutionMethod);
@@ -828,6 +830,8 @@ void RefinementModel::FromDataItem(TDataItem& item) {
   ClearAll();
 
   PersUtil::FloatNumberListFromStr(item.GetRequiredField("RefOutArg"), PLAN);
+  PersUtil::FloatNumberListFromStr(item.GetRequiredField("Weight"), used_weight);
+  PersUtil::FloatNumberListFromStr(item.GetRequiredField("ProposedWeight"), proposed_weight);
   HKLSource = item.GetRequiredField("HklSrc");
   RefinementMethod = item.GetRequiredField("RefMeth");
   SolutionMethod = item.GetRequiredField("SolMeth");
@@ -941,7 +945,16 @@ PyObject* RefinementModel::PyExport(bool export_connectivity)  {
       HKLF_mat[1][0], HKLF_mat[1][1], HKLF_mat[1][2],
       HKLF_mat[2][0], HKLF_mat[2][1], HKLF_mat[2][2]));
   PyDict_SetItemString(main, "hklf", hklf );
-
+  {
+    PyObject* uweight = PyTuple_New(used_weight.Count());
+    PyObject* pweight = PyTuple_New(proposed_weight.Count());
+    for( int i=0; i < used_weight.Count(); i++ )
+      PyTuple_SetItem(uweight, i, Py_BuildValue("d", used_weight[i]));
+    for( int i=0; i < proposed_weight.Count(); i++ )
+      PyTuple_SetItem(pweight, i, Py_BuildValue("d", proposed_weight[i]));
+    PyDict_SetItemString(main, "weight", uweight);
+    PyDict_SetItemString(main, "proposed_weight", pweight);
+  }
   {
     PyObject* omit;
     PyDict_SetItemString(main, "omit", omit = PyDict_New() );

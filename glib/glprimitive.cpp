@@ -209,13 +209,18 @@ void TGlPrimitive::Draw()  {
   }
 
   if( Type == sgloText )  {
-    if( String == NULL || Font == NULL )   return;
+    if( String == NULL || Font == NULL || String->IsEmpty() )   return;
     const int fontbase = Font->FontBase();
     /* each character of different colour */
     const int StrLen = String->Length();
     if( Colors.Count() == StrLen )  {
+      uint32_t prev_color = Colors[0];
+      SetColor(prev_color);
       for( int i=0; i < StrLen; i++ )  {
-        SetColor( Colors[i] );
+        if( prev_color != Colors[i] )  {
+          SetColor( Colors[i] );
+          prev_color = Colors[i];
+        }
         glCallList( fontbase + String->CharAt(i) );
       }
     }

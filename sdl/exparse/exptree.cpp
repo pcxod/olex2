@@ -21,7 +21,7 @@ bool parser_util::parse_string(const olxstr& exp, olxstr& dest, int& ind)  {
 //...........................................................................
 bool parser_util::parse_brackets(const olxstr& exp, olxstr& dest, int& ind)  {
   const olxch oc = exp.CharAt(ind), 
-    cc = (oc == '(' ? ')' : (oc == '[' ? ']' : (oc == '{' ? '}' : '#')));
+    cc = (oc == '(' ? ')' : (oc == '[' ? ']' : (oc == '{' ? '}' : (oc == '<' ? '>' : '#'))));
   if( cc == '#' )
     throw TInvalidArgumentException(__OlxSourceInfo, olxstr("Invalid bracket char: ") << oc );
   int bc = 1;

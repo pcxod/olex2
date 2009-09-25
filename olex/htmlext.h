@@ -218,6 +218,7 @@ private:
   bool FMovable, FPageLoadRequested, ShowTooltips;
   int FLockPageLoad;
   olxstr FPageRequested;
+  wxWindow* InFocus;
 protected:
   olxstr  FWebFolder, FFileName, HomePage;   // the base of all web files
   olxstr NormalFont, FixedFont;
@@ -229,6 +230,8 @@ protected:
   void OnMouseUp(wxMouseEvent& event);
   void OnMouseMotion(wxMouseEvent& event);
   void OnCellMouseHover(wxHtmlCell *Cell, wxCoord x, wxCoord y);
+  void OnChildFocus(wxChildFocusEvent& event);
+  void DoHandleFocusEvent(IEObject* prev, IEObject* next);
   /* on GTK scrolling makes mess out of the controls so will try to "fix it" here*/
   void OnScroll(wxScrollEvent& evt);
   virtual void ScrollWindow(int dx, int dy, const wxRect* rect = NULL);
