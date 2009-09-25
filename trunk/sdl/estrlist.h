@@ -356,7 +356,7 @@ public:
       Add(Tmp);
   }
 
-  void Hypernate(const SC& String, int Width, bool Force=true)  {
+  void Hyphenate(const SC& String, int Width, bool Force=true)  {
     if( Width <= 0 )
       throw TInvalidArgumentException(__OlxSourceInfo, "width");
     SC Str(String);

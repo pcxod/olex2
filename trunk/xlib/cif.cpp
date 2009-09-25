@@ -140,7 +140,7 @@ void TCifLoop::SaveToStrings( TStrList& Strings )  {
           Tmp = EmptyString;  break;
         }
       }
-      // according to the cif rules, the strings cannot be hypernated ...
+      // according to the cif rules, the strings cannot be hyphenated ...
       str = FTable[i][j];
       if( str.EndsWith("\\n") )  str.SetLength( str.Length()-2 );
       if( CLD->String )  {
@@ -154,7 +154,7 @@ void TCifLoop::SaveToStrings( TStrList& Strings )  {
           Strings.Add(';');
           for( int j=0; j < toks.Count(); j++ )  {
             htoks.Clear();
-            htoks.Hypernate(toks[j], 78);
+            htoks.Hyphenate(toks[j], 78);
             for( int k=0; k < htoks.Count(); k++ )  {
               if( htoks[k].Length() > 1 )  // not just a space char
                 Strings.Add(htoks[k]);
@@ -186,7 +186,7 @@ void TCifLoop::SaveToStrings( TStrList& Strings )  {
       Strings.Add(';');
       for( int j=0; j < toks.Count(); j++ )  {
         htoks.Clear();
-        htoks.Hypernate(toks[j], 78);
+        htoks.Hyphenate(toks[j], 78);
         for( int k=0; k < htoks.Count(); k++ )  {
           if( htoks[k].Length() > 1 )  // not just a space char
             Strings.Add(htoks[k]);
@@ -342,7 +342,7 @@ void TCif::Format()  {
         DL = D->Data->GetString(j).Length();
         if( DL != 0 )  {
           toks.Clear();
-          toks.Hypernate(D->Data->GetString(j), 78);
+          toks.Hyphenate(D->Data->GetString(j), 78);
           for( int k=0; k < toks.Count(); k++ )  {
             if( AddSpace )  Tmp = ' '; // if a space should be added at the beginning of line
             else            Tmp = EmptyString;

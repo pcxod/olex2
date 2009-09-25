@@ -103,7 +103,7 @@ bool TGlConsole::Orient(TGlPrimitive& P)  {
   //Fnt->DrawGlText( vec3d(0,0,0), "HELLW_O", true);
   P.SetFont(Fnt);
   if( Parent.GetWidth() < 100 )  return true;
-  int th = Fnt->TextHeight(EmptyString), lc, ii;
+  const int th = Fnt->TextHeight(EmptyString);
   double Scale = Parent.GetScale(),
          MaxY = ((double)Parent.GetHeight()/2-Top-th)*Scale;
   double MaxZ = -Parent.GetMaxRasterZ();
@@ -123,7 +123,7 @@ bool TGlConsole::Orient(TGlPrimitive& P)  {
   Ambient = GlM.AmbientF;
   if( ShowBuffer() && FLinesToShow != 0 )  {
     float Rk=1, Gk=1, Bk=1;
-    lc = (int)(((float)Height-0.1)/(th*(FLineSpacing+1))); // calc the number of lines
+    int lc = (int)(((float)Height-0.1)/(th*(FLineSpacing+1))); // calc the number of lines
     if( PromptVisible )  lc -= Cmds.Count();
     if( lc != 0 )  {
       Rk = (CC[0] - Ambient[0])/lc;
@@ -132,7 +132,7 @@ bool TGlConsole::Orient(TGlPrimitive& P)  {
     }
     for( int i=FTxtPos; i >= olx_max(0, FTxtPos-lc); i-- )  {
       if( FBuffer[i].IsEmpty() )  continue;
-      ii = (FTxtPos-i);
+      int ii = (FTxtPos-i);
       if( FLinesToShow >= 0 && ii > FLinesToShow )  continue;
       if( IsPromptVisible() )  ii += Cmds.Count();
 
@@ -178,8 +178,8 @@ bool TGlConsole::Orient(TGlPrimitive& P)  {
     }
     else  {
       for( int i=Cmds.Count()-1; i >= 0 ; i-- )  {
+        const int ii = Cmds.Count()-i-1;
         if( FLinesToShow >= 0 && ii > FLinesToShow )  continue;
-        ii = Cmds.Count()-i-1;
         T[0] = GlLeft;  T[1] = GlTop + ii*LineInc;
         T *= Scale;
         P.SetString(&Cmds[i]);
@@ -347,7 +347,7 @@ bool TGlConsole::ProcessKey( int Key , short ShiftState)  {
   return true;
 }
 //..............................................................................
-void TGlConsole::PrintText(const olxstr &S, TGlMaterial *M, bool Hypernate)  {
+void TGlConsole::PrintText(const olxstr &S, TGlMaterial *M, bool Hyphenate)  {
   if( IsSkipPosting() )  {
     //SetSkipPosting(false);
     return;
@@ -361,15 +361,15 @@ void TGlConsole::PrintText(const olxstr &S, TGlMaterial *M, bool Hypernate)  {
       if( count > 0 ) Tmp.Insert(' ', i, count);
     }
   }
-  if( Hypernate )  {
+  if( Hyphenate )  {
     const int sz = Font()->MaxTextLength(Parent.GetWidth());
     if( sz <= 0 )  return;
     TStrList Txt;
-    Txt.Hypernate(S, sz, true);
+    Txt.Hyphenate(S, sz, true);
     if( Txt.Count() > 1 )  PrintText(Txt, M);
     else                   SingleLine = true;
   }
-  if( !Hypernate || SingleLine )  {
+  if( !Hyphenate || SingleLine )  {
     TGlMaterial *GlM = NULL;
     if( M != NULL )  {  GlM = new TGlMaterial;  *GlM = *M;  }
     if( !FBuffer.IsEmpty() && FBuffer.LastStr().IsEmpty() )  {
@@ -389,7 +389,7 @@ void TGlConsole::PrintText(const olxstr &S, TGlMaterial *M, bool Hypernate)  {
   //FBuffer.Add(EmptyString);
 }
 //..............................................................................
-void TGlConsole::PrintText(const TStrList &SL, TGlMaterial *M, bool Hypernate)  {
+void TGlConsole::PrintText(const TStrList &SL, TGlMaterial *M, bool Hyphenate)  {
   if( IsSkipPosting() )  {
     //SetSkipPosting(false);
     return;
@@ -407,9 +407,9 @@ void TGlConsole::PrintText(const TStrList &SL, TGlMaterial *M, bool Hypernate)  
         if( count > 0 ) Tmp.Insert(' ', j, count);
       }
     }
-    if( Hypernate )  {
+    if( Hyphenate )  {
       Txt.Clear();
-      Txt.Hypernate(Tmp, sz, true);
+      Txt.Hyphenate(Tmp, sz, true);
       for( int j=0; j < Txt.Count(); j++ )  {
         TGlMaterial *GlM = NULL;
         if( M != NULL )  {  GlM = new TGlMaterial;  *GlM = *M;  }
@@ -485,7 +485,7 @@ void TGlConsole::UpdateCursorPosition(bool InitCmds)  {
     Cmds.Clear();
     int MaxLineWidth = Fnt->MaxTextLength(Parent.GetWidth());
     if( MaxLineWidth == 0 )  return;
-    Cmds.Hypernate(FCommand, MaxLineWidth, true);
+    Cmds.Hyphenate(FCommand, MaxLineWidth, true);
   }
   GlLeft = ((double)Left - (double)Parent.GetWidth()/2) + 0.1;
   GlTop = ((double)Parent.GetHeight()/2 - (Height+Top)) + 0.1;
@@ -573,20 +573,19 @@ size_t TGlConsole::Write(const olxstr& str)  {
     FBuffer.Add(EmptyString);
   FBuffer.Last().String.SetCapacity( FBuffer.Last().String.Length() + str.Length());
   for( int i=0; i < str.Length(); i++ )  {
-    if( str[i] == '\n' )  {
+    if( str.CharAt(i) == '\n' )
       FBuffer.Add(EmptyString);
-    }
-    else if( str[i] == '\r' )  {
+    else if( str.CharAt(i) == '\r' )  {
       if( !FBuffer.IsEmpty() )
       FBuffer.Last().String = EmptyString;
     }
-    else if( str[i] == '\t') {
+    else if( str.CharAt(i) == '\t') {
       int count = 8-FBuffer.Last().String.Length()%8;
       if( count > 0 )
         FBuffer.Last().String.Insert(' ', FBuffer.Last().String.Length(), count);
     }
     else
-      FBuffer.Last().String << str[i];
+      FBuffer.Last().String << str.CharAt(i);
   }
   KeepSize();
   FTxtPos = FBuffer.Count()-1;

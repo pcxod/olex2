@@ -594,7 +594,7 @@ bool TIns::AddIns(const TStrList& toks, RefinementModel& rm, bool CheckUniq)  {
   return true;
 }
 //..............................................................................
-void TIns::HypernateIns(const olxstr &InsName, const olxstr &Ins, TStrList &Res)  {
+void TIns::HyphenateIns(const olxstr &InsName, const olxstr &Ins, TStrList &Res)  {
   olxstr Tmp = Ins, Tmp1;
   int spindex;
   if( Tmp.Length() > 80 )  {
@@ -624,7 +624,7 @@ void TIns::HypernateIns(const olxstr &InsName, const olxstr &Ins, TStrList &Res)
   }
 }
 //..............................................................................
-void TIns::HypernateIns(const olxstr& Ins, TStrList& Res)  {
+void TIns::HyphenateIns(const olxstr& Ins, TStrList& Res)  {
   bool MultiLine = false, added = false;
   olxstr Tmp(Ins), Tmp1;
   while( Tmp.Length() > 79 )  {
@@ -736,7 +736,7 @@ void TIns::_SaveSfac(TStrList& list, int pos)  {
         tmp = "SFAC ";
         tmp << sd->ToInsString();
         lines.Clear();
-        HypernateIns(tmp, lines);
+        HyphenateIns(tmp, lines);
         for( int j=0; j < lines.Count(); j++ )
           list.Insert(pos++, lines[j] );
       }
@@ -763,7 +763,7 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
             << olxstr(sg.GetDependent(i).Esd13).TrimFloat();
         for( int j=0; j < sg.GetDependent(i).Count(); j++ )
           tmp << ' ' << sg.GetDependent(i)[j].GetResiLabel();
-        HypernateIns( tmp, sl );
+        HyphenateIns( tmp, sl );
       }
       for( int i=0; i < sg.Count(); i++ )
         _SaveAtom(rm, sg[i], part, afix, sfac, sl, index, false);
@@ -801,7 +801,7 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
     spindex = (sfac == NULL ? -2 : sfac->IndexOfi('c') );
   else
     spindex = (sfac == NULL ? -2 : sfac->IndexOfObject( &a.GetAtomInfo() ));
-  HypernateIns( _AtomToString(rm, a, spindex+1), sl );
+  HyphenateIns( _AtomToString(rm, a, spindex+1), sl );
   a.SetSaved(true);
   if( index != NULL )  index->Add(a.GetTag());
   for( int i=0; i < a.DependentHfixGroupCount(); i++ )  {
@@ -1135,7 +1135,7 @@ void TIns::SavePattSolution(const olxstr& FileName, const TTypeList<TPattAtom>& 
     if( Ins[i].StartsFrom("REM") )  continue;
     Tmp = EmptyString;
     if( L->Count() )  Tmp << L->Text(' ');
-    HypernateIns(Ins[i]+' ', Tmp, SL);
+    HyphenateIns(Ins[i]+' ', Tmp, SL);
   }
 
   _SaveHklInfo(SL, false);
@@ -1297,7 +1297,7 @@ olxstr TIns::_CellToString()  {
 void TIns::_SaveFVar(RefinementModel& rm, TStrList& SL)  {
   olxstr Tmp; // = "FVAR ";
   rm.Vars.Validate();
-  HypernateIns("FVAR ", rm.Vars.GetFVARStr(), SL);
+  HyphenateIns("FVAR ", rm.Vars.GetFVARStr(), SL);
 }
 //..............................................................................
 olxstr TIns::_ZerrToString()  {
@@ -1359,7 +1359,7 @@ void TIns::_SaveHklInfo(TStrList& SL, bool solution)  {
   if( !GetRM().GetHKLSource().IsEmpty() )  {  // update html source string
     olxstr Tmp( GetRM().GetHKLSource() );
     Tmp.Replace(' ', "%20");
-    HypernateIns("REM ", olxstr("<HKL>") << Tmp << "</HKL>", SL);
+    HyphenateIns("REM ", olxstr("<HKL>") << Tmp << "</HKL>", SL);
   }
 }
 //..............................................................................
@@ -1394,7 +1394,7 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
       Tmp << ' ' << sr.GetAtom(j).GetFullLabel(rm);
       StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), rm);
     }
-    HypernateIns(Tmp, SL);
+    HyphenateIns(Tmp, SL);
     if( processed != NULL )  
       processed->restraints.Add( &sr );
   }
@@ -1409,7 +1409,7 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
       Tmp << ' ' << sr.GetAtom(j).GetFullLabel(rm);
       StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), rm);
     }
-    HypernateIns(Tmp, SL);
+    HyphenateIns(Tmp, SL);
     if( processed != NULL )  
       processed->restraints.Add( &sr );
   }
@@ -1424,7 +1424,7 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
       Tmp << ' ' << sr.GetAtom(j).GetFullLabel(rm);
       StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), rm);
     }
-    HypernateIns(Tmp, SL);
+    HyphenateIns(Tmp, SL);
     if( processed != NULL )  
       processed->restraints.Add( &sr );
   }
@@ -1439,7 +1439,7 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
       Tmp << ' ' << sr.GetAtom(j).GetFullLabel(rm);
       StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), rm);
     }
-    HypernateIns(Tmp, SL);
+    HyphenateIns(Tmp, SL);
     if( processed != NULL )  
       processed->restraints.Add( &sr );
   }
@@ -1455,7 +1455,7 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
       Tmp << ' ' << sr.GetAtom(j).GetFullLabel(rm);
       StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), rm);
     }
-    HypernateIns(Tmp, SL);
+    HyphenateIns(Tmp, SL);
     if( processed != NULL )  
       processed->restraints.Add( &sr );
   }
@@ -1470,7 +1470,7 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
       Tmp << ' ' << sr.GetAtom(j).GetFullLabel(rm);
       StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), rm);
     }
-    HypernateIns(Tmp, SL);
+    HyphenateIns(Tmp, SL);
     if( processed != NULL )  
       processed->restraints.Add( &sr );
   }
@@ -1485,7 +1485,7 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
       Tmp << ' ' << sr.GetAtom(j).GetFullLabel(rm);
       StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), rm);
     }
-    HypernateIns(Tmp, SL);
+    HyphenateIns(Tmp, SL);
     if( processed != NULL )  
       processed->restraints.Add( &sr );
   }
@@ -1500,7 +1500,7 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
       Tmp << ' ' << sr.GetAtom(j).GetFullLabel(rm);
       StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), rm);
     }
-    HypernateIns(Tmp, SL);
+    HyphenateIns(Tmp, SL);
     if( processed != NULL )  
       processed->restraints.Add( &sr );
   }
@@ -1515,7 +1515,7 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
       Tmp << ' ' << sr.GetAtom(j).GetAtom()->GetLabel();
       StoreUsedSymIndex(usedSymm, sr.GetAtom(j).GetMatrix(), rm);
     }
-    HypernateIns(Tmp, SL);
+    HyphenateIns(Tmp, SL);
     if( processed != NULL )  
       processed->restraints.Add( &sr );
   }
@@ -1528,7 +1528,7 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
       if( sr[j].IsDeleted() )  continue;
       Tmp << ' ' << sr[j].GetLabel();
     }
-    HypernateIns(Tmp, SL);
+    HyphenateIns(Tmp, SL);
   }
   // store the rest of eqiv ...
   for( int i=0; i < rm.UsedSymmCount(); i++ )
@@ -1637,7 +1637,7 @@ void TIns::SaveHeader(TStrList& SL, bool ValidateRestraintNames)  {
     // skip rems and print them at the end
     //if( Ins[i].StartsFrom("REM") )  continue;
     olxstr tmp = L->IsEmpty() ? EmptyString : L->Text(' ');
-    HypernateIns(Ins[i]+' ', tmp , SL);
+    HyphenateIns(Ins[i]+' ', tmp , SL);
   }
   SL << Skipped;
 //  for( int i=0; i < Skipepd.Count(); i++ )

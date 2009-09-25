@@ -957,7 +957,7 @@ BEGIN_EVENT_TABLE(THtml, wxHtmlWindow)
   EVT_LEFT_UP(THtml::OnMouseUp)
   EVT_MOTION(THtml::OnMouseMotion)
   EVT_SCROLL(THtml::OnScroll)
-
+  EVT_CHILD_FOCUS(THtml::OnChildFocus)
   EVT_KEY_DOWN(THtml::OnKeyDown)
   EVT_CHAR(THtml::OnChar)
 END_EVENT_TABLE()
@@ -986,7 +986,9 @@ wxHtmlOpeningStatus THtml::OnOpeningURL(wxHtmlURLType type, const wxString& url,
 }
 //..............................................................................
 THtml::THtml(wxWindow *Parent, ALibraryContainer* LC): 
-     wxHtmlWindow(Parent, -1, wxDefaultPosition, wxDefaultSize, 4), WI(this), ObjectsState(*this)  {
+     wxHtmlWindow(Parent, -1, wxDefaultPosition, wxDefaultSize, 4), WI(this), ObjectsState(*this),
+     InFocus(NULL)
+{
   FActions = new TActionQList;
   FRoot = new THtmlSwitch(this, NULL);
   OnLink = &FActions->NewQueue("ONLINK");
@@ -1130,6 +1132,22 @@ void THtml::OnMouseDblClick(wxMouseEvent& event)  {
   OnDblClick->Execute(this, NULL);
 }
 //..............................................................................
+void THtml::OnChildFocus(wxChildFocusEvent& event)  {
+  wxWindow* wx_next = event.GetWindow();
+  IEObject* prev = NULL, *next = NULL;
+  for( int i=0; i < Traversables.Count(); i++ )  {
+    if( Traversables[i].GetB() == InFocus )
+      prev = Traversables[i].GetA();
+    if( Traversables[i].GetB() == wx_next )
+      next = Traversables[i].GetA();
+  }
+  if( prev != next || next == NULL || prev == NULL )  {
+    DoHandleFocusEvent(prev, next);
+    InFocus = wx_next;
+  }
+  event.Skip();
+}
+//..............................................................................
 void THtml::_FindNext(int from, int& dest, bool scroll) const {
   if( Traversables.IsEmpty() )  {
     dest = -1;
@@ -1187,37 +1205,41 @@ void THtml::GetTraversibleIndeces(int& current, int& another, bool forward) cons
   }
 }
 //..............................................................................
-void THtml::DoNavigate(bool forward)  {
+void THtml::DoHandleFocusEvent(IEObject* prev, IEObject* next)  {
   FLockPageLoad = true;  // prevent pae re-loading and object deletion
-  int current=-1, another=-1;
-  GetTraversibleIndeces(current, another, forward);
-  if( current != -1 )  {
-    IEObject* cie = Traversables[current].GetA();
-    if( cie != NULL )  {
-      if( EsdlInstanceOf(*cie, TTextEdit) )  {
-        olxstr s = ((TTextEdit*)cie)->GetOnLeaveStr();
-        ((TTextEdit*)cie)->OnLeave->Execute(cie, &s);
-      }
-      else if( EsdlInstanceOf(*cie, TComboBox) )  {
-        olxstr s = ((TComboBox*)cie)->GetOnLeaveStr();
-        ((TComboBox*)cie)->OnLeave->Execute(cie, &s);
-      }
+  if( prev != NULL )  {
+    if( EsdlInstanceOf(*prev, TTextEdit) )  {
+      olxstr s = ((TTextEdit*)prev)->GetOnLeaveStr();
+      ((TTextEdit*)prev)->OnLeave->Execute(prev, &s);
+    }
+    else if( EsdlInstanceOf(*prev, TComboBox) )  {
+      olxstr s = ((TComboBox*)prev)->GetOnLeaveStr();
+      ((TComboBox*)prev)->OnLeave->Execute(prev, &s);
     }
   }
-  if( another != -1 )  {
-    IEObject* nie = Traversables[another].GetA();
-    if( nie != NULL )  {  // call on enter events queue
-      if( EsdlInstanceOf(*nie, TTextEdit) )  {
-        olxstr s = ((TTextEdit*)nie)->GetOnEnterStr();
-        ((TTextEdit*)nie)->OnEnter->Execute(nie, &s);
-        ((TTextEdit*)nie)->SetSelection(-1,-1);
-      }
-      else if( EsdlInstanceOf(*nie, TComboBox) )  {
-        olxstr s = ((TComboBox*)nie)->GetOnEnterStr();
-        ((TComboBox*)nie)->OnEnter->Execute(nie, &s);
-        ((TComboBox*)nie)->SetSelection(-1,-1);
-      }
+  if( next != NULL )  {
+    if( EsdlInstanceOf(*next, TTextEdit) )  {
+      olxstr s = ((TTextEdit*)next)->GetOnEnterStr();
+      ((TTextEdit*)next)->OnEnter->Execute(next, &s);
+      ((TTextEdit*)next)->SetSelection(-1,-1);
     }
+    else if( EsdlInstanceOf(*next, TComboBox) )  {
+      olxstr s = ((TComboBox*)next)->GetOnEnterStr();
+      ((TComboBox*)next)->OnEnter->Execute(next, &s);
+      ((TComboBox*)next)->SetSelection(-1,-1);
+    }
+  }
+  FLockPageLoad = false;
+}
+//..............................................................................
+void THtml::DoNavigate(bool forward)  {
+  int current=-1, another=-1;
+  GetTraversibleIndeces(current, another, forward);
+  DoHandleFocusEvent( 
+    current == -1 ? NULL : Traversables[current].GetA(),
+    another == -1 ? NULL : Traversables[another].GetA());
+  if( another != -1 )  {
+    InFocus = Traversables[another].GetB();
     Traversables[another].GetB()->SetFocus();
     for( int i=0; i < Objects.Count(); i++ )  {
       if( Objects.GetValue(i).GetB() == NULL )  continue;
@@ -1232,7 +1254,6 @@ void THtml::DoNavigate(bool forward)  {
       }
     }
   }
-  FLockPageLoad = false;
 }
 //..............................................................................
 void THtml::OnKeyDown(wxKeyEvent& event)  {
@@ -1561,6 +1582,7 @@ bool THtml::UpdatePage()  {
         sc->SetSelection(sv.Length(),-1);
       }
       wnd->SetFocus();
+      InFocus = wnd;
     }
     else
       FocusedControl = EmptyString;
@@ -2507,22 +2529,22 @@ void THtml::funSetFocus(const TStrObjList &Params, TMacroError &E)  {
     return;
   }
   FocusedControl = objName;
-  wxWindow *wnd = html->FindObjectWindow(objName);
-  if( wnd == NULL )  // not created yet?
+  InFocus = html->FindObjectWindow(objName);
+  if( InFocus == NULL )  // not created yet?
     return;
   
 
-  if( EsdlInstanceOf(*wnd, TTextEdit) )
-    ((TTextEdit*)wnd)->SetSelection(-1,-1);
-  else if( EsdlInstanceOf(*wnd, TComboBox) )  {
-    TComboBox* cb = (TComboBox*)wnd;
+  if( EsdlInstanceOf(*InFocus, TTextEdit) )
+    ((TTextEdit*)InFocus)->SetSelection(-1,-1);
+  else if( EsdlInstanceOf(*InFocus, TComboBox) )  {
+    TComboBox* cb = (TComboBox*)InFocus;
     //cb->GetTextCtrl()->SetSelection(-1, -1);
 #ifdef __WIN32__
     cb->GetTextCtrl()->SetInsertionPoint(0);
-    wnd = cb->GetTextCtrl();
+    InFocus = cb->GetTextCtrl();
 #endif		
   }
-  wnd->SetFocus();
+  InFocus->SetFocus();
 }
 //..............................................................................
 void THtml::funSetState(const TStrObjList &Params, TMacroError &E)  {

@@ -68,7 +68,7 @@ protected:
   TGPCollection* ParentCollection;
   olxstr* String; // for text object, nut be initialised with a proper pointer
   TGlFont* Font;
-  /* if Basis is NULL, then the orientation od the primitive is default
+  /* if Basis is NULL, then the orientation of the primitive is default
    to use asign it a value Basis = new TEBasis; the object will free memory
    automatically
   */
