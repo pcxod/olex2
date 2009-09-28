@@ -1450,7 +1450,9 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPL
       double d1 = AE.GetCrd(0).DistanceTo( atom.crd() );
       double d2 = AE.GetCrd(1).DistanceTo( atom.crd() );
       if( d1 > 1.72 || d2 > 1.72 )  {  // coordination?
-        if( (d1 < 1.5 && d1 > 1.35) || (d2 < 1.5 && d2 > 1.35) )  {
+        if( v > 165 )  // skip ..
+          TBasicApp::GetLog().Info( olxstr(atom.GetLabel()) << ": RN->M" );
+        else if( (d1 < 1.5 && d1 > 1.35) || (d2 < 1.5 && d2 > 1.35) )  {
           TBasicApp::GetLog().Info( olxstr(atom.GetLabel()) << ": RNH(2)M" );
           cg.FixAtom( AE, fgNH2, HAI, NULL, generated);
         }
@@ -1473,7 +1475,7 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPL
       }
     }
     else if( AE.Count() == 3 )  {
-    // remove ccordination bond ...
+    // remove coordination bond ...
       vec3d a = AE.GetCrd(0);
         a -= atom.crd();
       vec3d b = AE.GetCrd(1);
@@ -1574,7 +1576,19 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPL
     }
   }
   else if( atom.GetAtomInfo() == iBoronIndex )  {  // boron
-    if( AE.Count() == 4 )  {
+    if( AE.Count() == 3 )  {
+      const vec3d cnt = AE.GetBase().crd();
+      const double v = TetrahedronVolume( 
+        cnt, 
+        (AE.GetCrd(0)-cnt).Normalise() + cnt, 
+        (AE.GetCrd(1)-cnt).Normalise() + cnt, 
+        (AE.GetCrd(2)-cnt).Normalise() + cnt);
+      if( v > 0.1 )  {
+        TBasicApp::GetLog().Info( olxstr(atom.GetLabel()) << ": XYZBH" );
+        cg.FixAtom( AE, fgBH1, HAI, NULL, generated);
+      }
+    }
+    else if( AE.Count() == 4 )  {
       vec3d a, b;
       double sumAng = 0;
       for( int i=0; i < AE.Count(); i++ )  {
@@ -1601,8 +1615,13 @@ bool TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom, TSAtomPL
   }
   else if( atom.GetAtomInfo() == iSiliconIndex )  {
     if( AE.Count() == 3 )  {
-      double v = TetrahedronVolume( atom.crd(), AE.GetCrd(0), AE.GetCrd(1), AE.GetCrd(2) );
-      if( v > 0.5 )  {
+      const vec3d cnt = AE.GetBase().crd();
+      const double v = TetrahedronVolume( 
+        cnt, 
+        (AE.GetCrd(0)-cnt).Normalise() + cnt, 
+        (AE.GetCrd(1)-cnt).Normalise() + cnt, 
+        (AE.GetCrd(2)-cnt).Normalise() + cnt);
+      if( v > 0.1 )  {
         TBasicApp::GetLog().Info( olxstr(atom.GetLabel()) << ": XYZSiH" );
         cg.FixAtom( AE, fgSiH1, HAI, NULL, generated);
       }

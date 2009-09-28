@@ -2922,10 +2922,10 @@ void TGXApp::StructureVisible(bool v)  {
     QPeaksVisible(FQPeaksVisible);
     HydrogensVisible(FHydrogensVisible);
     if( !FXGrid->IsEmpty() )
-      FXGrid->Visible(true);
+      FXGrid->SetVisible(true);
   } 
   else
-    FXGrid->Visible(false);
+    FXGrid->SetVisible(false);
 }
 //..............................................................................
 void TGXApp::LoadXFile(const olxstr& fn)  {
@@ -3027,7 +3027,7 @@ void TGXApp::SetGridDepth(const vec3d& crd)  {
 }
 //..............................................................................
 bool TGXApp::GridVisible()  const {  
-  return FXGrid->Visible();  
+  return FXGrid->IsVisible();  
 }
 //..............................................................................
 bool TGXApp::ShowGrid(bool v, const olxstr& FN)  {
@@ -3036,10 +3036,10 @@ bool TGXApp::ShowGrid(bool v, const olxstr& FN)  {
       Log->Error("Cannot display empty grid");
       return false;
     }
-    FXGrid->Visible(true);
+    FXGrid->SetVisible(true);
   }
   else
-    FXGrid->Visible(false);
+    FXGrid->SetVisible(false);
   return v;
 }
 //..............................................................................
