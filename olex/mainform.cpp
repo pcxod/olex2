@@ -855,7 +855,7 @@ separated values of Atom Type and radius, an entry a line" );
     "Experimental tex/pgf rendering" );
   this_InitMacroD(UpdateQPeakTable, EmptyString, fpNone|psFileLoaded, "Internal routine for synchronisation" );
   this_InitMacroD(SAME, "i-invert the graphs", fpAny|psFileLoaded, "Creates SAME for two fragments (two selected atoms or two\
- atoms provided) or two groups following one another" );
+ atoms provided) or number_of_groups and groups following each another (or selection)" );
   this_InitMacroD(RESI, "a-alias", (fpAny^fpNone)|psFileLoaded, "Creates residue with given class name and optionally number and adds selected\
  or provided atoms into the residue. If provided residue class name is 'none', provided atoms are removed from their residues" );
   this_InitMacroD(WBox, "w-use atomic weights instead of unit weights for atoms&;s-create separate boxes for fragments", 
