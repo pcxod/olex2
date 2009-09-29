@@ -8829,6 +8829,11 @@ void TMainForm::funCurrentLanguage(const TStrObjList& Params, TMacroError &E)  {
 void TMainForm::macSAME(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   TXAtomPList atoms;
   bool invert = Options.Contains("i");
+  int groups_count = -1;
+  if( !Cmds.IsEmpty() && Cmds[0].IsNumber() )  {
+    groups_count = Cmds[0].ToInt();
+    Cmds.Delete(0);
+  }
   FindXAtoms(Cmds, atoms, false, true);
   if( atoms.Count() == 2 )  {
     TTypeList< AnAssociation2<int, int> > res;
@@ -8866,6 +8871,22 @@ void TMainForm::macSAME(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       TBasicApp::GetLog() << netB.Node(res[i].GetB()).GetLabel() << ' ';
     }
     TBasicApp::GetLog() << '\n';
+  }
+  else if( groups_count != -1 && (atoms.Count()%groups_count) == 0 )  {
+    TPtrList<TSameGroup> deps;
+    TSameGroup& sg = FXApp->XFile().GetRM().rSAME.New();
+    for( int i=0; i < groups_count-1; i++ )
+      deps.Add( FXApp->XFile().GetRM().rSAME.NewDependent(sg) );
+    const int cnt = atoms.Count()/groups_count;
+    for( int i=0; i < cnt; i++ )  {
+      sg.Add(atoms[i]->Atom().CAtom());
+      for( int j=1; j < groups_count; j++ )
+        deps[j-1]->Add(atoms[cnt*j+i]->Atom().CAtom());
+    }
+    TBasicApp::GetLog() << "SAME instruction is added\n";
+  }
+  else  {
+    E.ProcessingError(__OlxSrcInfo, "inlvaid input arguments");
   }
 }
 //..............................................................................
