@@ -1133,7 +1133,13 @@ void THtml::OnMouseDblClick(wxMouseEvent& event)  {
 }
 //..............................................................................
 void THtml::OnChildFocus(wxChildFocusEvent& event)  {
-  wxWindow* wx_next = event.GetWindow();
+  wxWindow *wx_next = event.GetWindow(), 
+    *focused = FindFocus();
+  if( wx_next != focused )  {
+    if( InFocus != NULL )
+    InFocus->SetFocus();
+    return;
+  }
   IEObject* prev = NULL, *next = NULL;
   for( int i=0; i < Traversables.Count(); i++ )  {
     if( Traversables[i].GetB() == InFocus )
@@ -1240,12 +1246,13 @@ void THtml::DoNavigate(bool forward)  {
     another == -1 ? NULL : Traversables[another].GetA());
   if( another != -1 )  {
     InFocus = Traversables[another].GetB();
-    Traversables[another].GetB()->SetFocus();
+    InFocus->SetFocus();
+    InFocus = FindFocus();
     for( int i=0; i < Objects.Count(); i++ )  {
       if( Objects.GetValue(i).GetB() == NULL )  continue;
-      if( Objects.GetValue(i).GetB() == Traversables[another].GetB()
+      if( Objects.GetValue(i).GetB() == InFocus
 #ifdef __WIN32__
-          || Objects.GetValue(i).GetB() == Traversables[another].GetB()->GetParent()
+          || Objects.GetValue(i).GetB() == InFocus->GetParent()
 #endif
 				)  
       {
