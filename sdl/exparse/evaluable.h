@@ -23,8 +23,14 @@ namespace exparse  {
       if( ref_cnt != 0 )
         throw 1;
     }
+    struct cast_result  {
+      const void* value;
+      bool temporary;  // the value must be deleted
+      cast_result(const cast_result& cr) : value(cr.value), temporary(cr.temporary)  {}
+      cast_result(const void* val, bool tmp) : value(val), temporary(tmp) {} 
+    };
     virtual IEvaluable* _evaluate() const = 0;
-    typedef void* (*cast_operator)(const IEvaluable*);
+    typedef cast_result (*cast_operator)(const IEvaluable*);
     typedef olxdict<std::type_info const*, cast_operator, TPointerPtrComparator> operator_dict;
     virtual cast_operator get_cast_operator(const std::type_info&) const {
       throw TNotImplementedException(__OlxSourceInfo);
@@ -42,15 +48,49 @@ namespace exparse  {
     inline const IEvaluable& inc_ref() const {  ref_cnt++;  return *this;  }
     inline int dec_ref() const {  return --ref_cnt;  }
 
-    template <class T> T cast() const {
+    template <class T> struct val_wrapper  {
+      T* val;
+      mutable bool do_delete;
+      val_wrapper(const val_wrapper& v) : val(v.val), do_delete(v.do_delete)  {  v.do_delete = false;  }  
+      val_wrapper(const cast_result& cr) : val((T*)cr.value), do_delete(cr.temporary)  {}
+      ~val_wrapper()  {  
+        if( do_delete )
+          delete val;  
+      }
+      operator const T& ()  {  return *val;  }
+    };
+    template <class T> struct val_wrapper<const T&>  {
+      T* val;
+      mutable bool do_delete;
+      val_wrapper(const val_wrapper& v) : val(v.val), do_delete(v.do_delete)  {  v.do_delete = false;  }  
+      val_wrapper(const cast_result& cr) : val((T*)cr.value), do_delete(cr.temporary)  {}
+      ~val_wrapper()  {  
+        if( do_delete )
+          delete val;  
+      }
+      operator const T& ()  {  return *val;  }
+    };
+    template <class T> struct caster  {
+      cast_operator co;
+      caster(cast_operator _co) : co(_co){}
+      val_wrapper<T> cast(const IEvaluable* i) const {  return val_wrapper<T>((*co)(i));  }
+    };
+    template <class T> struct caster<const T&>  {
+      cast_operator co;
+      caster(cast_operator _co) : co(_co){}
+      val_wrapper<const T&> cast(const IEvaluable* i) const {  return val_wrapper<const T&>((*co)(i));  }
+    };
+
+    template <typename T> val_wrapper<T> cast() const {
       const std::type_info& ti = typeid(T);
       try  {  
         cast_operator co = get_cast_operator(ti);
         if( co != NULL )  {
-          T* cast_result = (T*)(*co)(this);
-          T result(*cast_result);
-          delete cast_result;
-          return result;
+          return caster<T>(co).cast(this);
+          //T* cast_result = (T*)(*co)(this);
+          //T result(*cast_result);
+          //delete cast_result;
+          //return result;
         }
       }
       catch(...)  {}
@@ -68,11 +108,15 @@ namespace exparse  {
   protected:
     static IEvaluable::operator_dict cast_operators;
     static const IEvaluable::operator_dict::Entry cast_operators_table[];
-    static void* bool_cast(const IEvaluable* i)  {  
-      return new bool(IEvaluable::cast_helper<ANumberEvaluator>(i)->Evaluate() != 0);  
+    static cast_result bool_cast(const IEvaluable* i)  {  
+      return cast_result(new bool(IEvaluable::cast_helper<ANumberEvaluator>(i)->Evaluate() != 0), true);  
     }
-    static void* str_cast(const IEvaluable* i)  {  return new olxstr(IEvaluable::cast_helper<ANumberEvaluator>(i)->Evaluate());  }
-    template<class T> static void* primitive_cast(const IEvaluable* i)  {  return new T((T)IEvaluable::cast_helper<ANumberEvaluator>(i)->Evaluate());  }
+    static cast_result str_cast(const IEvaluable* i)  {  
+      return cast_result(new olxstr(IEvaluable::cast_helper<ANumberEvaluator>(i)->Evaluate()), true);
+    }
+    template<class T> static IEvaluable::cast_result primitive_cast(const IEvaluable* i)  {  
+      return cast_result(new T((T)IEvaluable::cast_helper<ANumberEvaluator>(i)->Evaluate()), true);  
+    }
     template<class T> static void register_cast()  {  cast_operators.Add(&typeid(T), &ANumberEvaluator::primitive_cast<T>);  }
     template<class T> static IEvaluable::operator_dict::Entry create_operator_entry()  {  
       return IEvaluable::operator_dict::Entry(&typeid(T), &ANumberEvaluator::primitive_cast<T>);  
@@ -90,8 +134,12 @@ namespace exparse  {
   };
   template <class BC, typename Type>
   struct TPrimitiveEvaluator : public ANumberEvaluator, public BC  {
-    static void* str_cast(const IEvaluable* i)  {  return new olxstr(IEvaluable::cast_helper<TPrimitiveEvaluator<BC,Type> >(i)->get_value());  }
-    static void* val_cast(const IEvaluable* i)  {  return new Type(IEvaluable::cast_helper<TPrimitiveEvaluator<BC,Type> >(i)->get_value());  }
+    static cast_result str_cast(const IEvaluable* i)  {  
+      return cast_result(new olxstr(IEvaluable::cast_helper<TPrimitiveEvaluator<BC,Type> >(i)->get_value()), true);
+    }
+    static cast_result val_cast(const IEvaluable* i)  {  
+      return cast_result(new Type(IEvaluable::cast_helper<TPrimitiveEvaluator<BC,Type> >(i)->get_value()), true);
+    }
     virtual cast_operator get_cast_operator(const std::type_info& ti) const {  
       if( typeid(Type) == ti )
         return &val_cast;
