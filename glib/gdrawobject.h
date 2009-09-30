@@ -75,7 +75,11 @@ public:
   // to be used in groups only
   virtual void Draw() const {  return;  }
 
-  DefPropBFIsSet(Visible, Flags, sgdoVisible)
+  // need a virtual setter!
+  //DefPropBFIsSet(Visible, Flags, sgdoVisible)
+  virtual void SetVisible(bool v)  {  SetBit(v, Flags, sgdoVisible);  }
+  inline bool IsVisible() const {  return (Flags&sgdoVisible) != 0;  }
+
   DefPropBFIsSet(Selected, Flags, sgdoSelected)
   DefPropBFIsSet(Groupable, Flags, sgdoGroupable)
   DefPropBFIsSet(Grouped, Flags, sgdoGrouped)
