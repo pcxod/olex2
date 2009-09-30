@@ -69,7 +69,9 @@ namespace exparse  {
       }
       return functions.create_from_index(*this, ef, &val, i, args);
     }
-    static void* str_cast(const IEvaluable* i)  {  return new olxstr(IEvaluable::cast_helper<StringValue>(i)->val);  }
+    static cast_result str_cast(const IEvaluable* i)  {  
+      return cast_result(&(IEvaluable::cast_helper<StringValue>(i))->val, false);  
+    }
     virtual cast_operator get_cast_operator(const std::type_info& ti) const {  
       if( typeid(olxstr) == ti )
         return &str_cast;
@@ -78,9 +80,9 @@ namespace exparse  {
     virtual IEvaluable* create_new(const void* data) const {  return new StringValue(*(olxstr*)data);  }
     virtual bool is_final() const {  return true;  }
     // globals section
-    static olxstr add(olxstr a, olxstr b)  {  return a+b; }
-    static bool equals(olxstr a, olxstr b)  {  return a.Equals(b); }
-    static bool equalsi(olxstr a, olxstr b)  {  return a.Equalsi(b); }
+    static olxstr add(const olxstr& a, const olxstr& b)  {  return a+b; }
+    static bool equals(const olxstr& a, const olxstr& b)  {  return a.Equals(b); }
+    static bool equalsi(const olxstr& a, const olxstr& b)  {  return a.Equalsi(b); }
     static void init_functions()  {
       functions.add("sub", &olxstr::SubString);
       functions.add<int>("len", &olxstr::Length);  // gcc...

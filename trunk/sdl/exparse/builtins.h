@@ -30,7 +30,7 @@ namespace exparse  {
     struct AbsFunc : public IConstFunc  {
       AbsFunc(IEvaluable* arg) : IConstFunc(arg)  {}
       virtual IEvaluable* _evaluate() const  {
-        return new DoubleValue(olx_abs(arg->cast<double>()));
+        return new DoubleValue(olx_abs<double>(arg->cast<double>()));
       }
     };
     struct CosFunc : public IConstFunc  {
