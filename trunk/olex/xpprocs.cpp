@@ -2422,12 +2422,7 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     if( FXApp->XFile().HasLastLoader() )  {
       FN = (!FN.IsEmpty() ? TEFile::ChangeFileExt(FN, "oxm") :
                             TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), "oxm") );
-      if( TEFile::Exists(FN) )  {  
-        FXApp->LoadModel(FN);
-        //TDataFile DF;
-        //DF.LoadFromXLFile(Tmp);
-        //FXApp->FromDataItem(DF.Root().FindRequiredItem("olex_model"));
-      }
+      FXApp->XFile().LoadFromFile(FN);
     }
   }
   else if ( Cmds[0].Equalsi("radii") )  {

@@ -206,6 +206,7 @@ wxCoord TComboBox::OnMeasureItemWidth( size_t item ) const {
 }
 //..............................................................................
 void TComboBox::OnDrawBg(wxDC& dc, const wxRect& rect, int item, int flags) const {
+  wxOwnerDrawnComboBox::OnDrawBackground(dc, rect, item, flags);
   return;
 }
 #endif
@@ -528,7 +529,9 @@ BEGIN_EVENT_TABLE(TCheckBox, wxCheckBox)
   EVT_ENTER_WINDOW(TCheckBox::MouseEnterEvent)
 END_EVENT_TABLE()
 
-TCheckBox::TCheckBox(wxWindow *P):wxCheckBox(P, -1, wxString()), WI(this)  {
+TCheckBox::TCheckBox(wxWindow *P, long style):
+  wxCheckBox(P, -1, wxString(), wxDefaultPosition, wxDefaultSize, style), WI(this)  
+{
   FActions = new TActionQList;
   OnClick = &FActions->NewQueue("ONCLICK");
   OnCheck = &FActions->NewQueue("ONCHECK");

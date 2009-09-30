@@ -35,11 +35,8 @@
 */
 
 TLibrary* THtml::Library = NULL;
-/*____________________________________________________________________________*/
-// unfortunately the global variables are required ....
-    olxstr SwitchSource;
-    str_stack SwitchSources;
-/*____________________________________________________________________________*/
+olxstr THtml::SwitchSource;
+str_stack THtml::SwitchSources;
 
 //..............................................................................
 //..............................................................................
@@ -56,8 +53,8 @@ TLibrary* THtml::Library = NULL;
 
 TAG_HANDLER_BEGIN(SWITCHINFOS, "SWITCHINFOS")
 TAG_HANDLER_PROC(tag)  {
-  SwitchSources.Push( SwitchSource );
-  SwitchSource = tag.GetParam(wxT("SRC")).c_str();
+  THtml::SwitchSources.Push( THtml::SwitchSource );
+  THtml::SwitchSource = tag.GetParam(wxT("SRC")).c_str();
   return true;
 }
 TAG_HANDLER_END(SWITCHINFOS)
@@ -65,7 +62,7 @@ TAG_HANDLER_END(SWITCHINFOS)
 TAG_HANDLER_BEGIN(SWITCHINFOE, "SWITCHINFOE")
 TAG_HANDLER_PROC(tag)
 {
-  SwitchSource = SwitchSources.Pop();
+  THtml::SwitchSource = THtml::SwitchSources.Pop();
   return true;
 }
 TAG_HANDLER_END(SWITCHINFOE)
@@ -162,8 +159,8 @@ TAG_HANDLER_PROC(tag)  {
 
   TGlXApp::GetMainForm()->ProcessMacroFunc( src );
 
-  if( TZipWrapper::IsZipFile(SwitchSource) && !TZipWrapper::IsZipFile(src) )
-    src = TZipWrapper::ComposeFileName(SwitchSource, src);
+  if( TZipWrapper::IsZipFile(THtml::SwitchSource) && !TZipWrapper::IsZipFile(src) )
+    src = TZipWrapper::ComposeFileName(THtml::SwitchSource, src);
 
   wxFSFile *fsFile = TFileHandlerManager::GetFSFileHandler( src );
   if( fsFile == NULL )
@@ -200,9 +197,9 @@ TAG_HANDLER_BEGIN(INPUT, "INPUT")
 TAG_HANDLER_PROC(tag)  {
   olxch Bf[80];
   tag.ScanParam(wxT("TYPE"), _StrFormat_, Bf);
-  olxstr TagName(Bf), ObjectName, Value, Data, strValign, Tmp, Label;
+  olxstr TagName(Bf), ObjectName, Value, Data, Tmp, Label;
   ObjectName = tag.GetParam(wxT("NAME")).c_str();
-  int valign = wxHTML_ALIGN_CENTER, 
+  int valign = -1, halign = -1, 
     fl=0,
     ax=100, ay=20;
   IEObject* CreatedObject = NULL;
@@ -237,15 +234,31 @@ TAG_HANDLER_PROC(tag)  {
   if( ax == 0 )  ax = 30;
   if( ay == 0 )  ay = 20;
  
-  if( tag.HasParam(wxT("FLOAT")) ) 
+  if( tag.HasParam(wxT("FLOAT")) )  
     fl = ax;
+
+  {  // parse h alignment
+    wxString ha;
+    if( tag.HasParam(wxT("ALIGN")) )
+      ha = tag.GetParam(wxT("ALIGN"));
+    else if( tag.HasParam(wxT("HALIGN")) )
+      ha = tag.GetParam(wxT("HALIGN"));
+    if( !ha.IsEmpty() )  {
+      if( ha.CmpNoCase(wxT("left")) == 0 )
+        halign = wxHTML_ALIGN_LEFT;
+      else if( ha.CmpNoCase(wxT("center")) == 0 || ha.CmpNoCase(wxT("middle")) == 0 )
+        halign = wxHTML_ALIGN_CENTER;
+      else if( ha.CmpNoCase(wxT("right")) == 0 )
+        halign = wxHTML_ALIGN_RIGHT;
+    }
+  }
   if( tag.HasParam(wxT("VALIGN")) ){
-    strValign = tag.GetParam(wxT("VALIGN")).c_str();
-    if( strValign.Equalsi("top") )
+    wxString va = tag.GetParam(wxT("VALIGN"));
+    if( va.CmpNoCase(wxT("top")) == 0 )
       valign = wxHTML_ALIGN_TOP;
-    else if( strValign.Equalsi("center") )
+    else if( va.CmpNoCase(wxT("center")) == 0 || va.CmpNoCase(wxT("middle")) == 0 )
       valign = wxHTML_ALIGN_CENTER;
-    else if( strValign.Equalsi("bottom") )
+    else if( va.CmpNoCase(wxT("bottom")) == 0 )
       valign = wxHTML_ALIGN_BOTTOM;
   }
   Label = tag.GetParam(wxT("LABEL")).c_str();
@@ -279,7 +292,8 @@ TAG_HANDLER_PROC(tag)  {
           wc->SetDescent(0);
           contC->InsertCell( wc );
           contC->InsertCell(new wxHtmlWidgetCell(wnd, fl));
-          contC->SetAlignVer(valign);
+          if( valign != -1 )  contC->SetAlignVer(valign);
+          if( halign != -1 )  contC->SetAlignHor(halign);
         }
         else
           m_WParser->GetContainer()->InsertCell(new wxHtmlWidgetCell(wnd, fl));
@@ -311,7 +325,8 @@ TAG_HANDLER_PROC(tag)  {
       wc->SetDescent(0);
       contC->InsertCell( wc );
       contC->InsertCell(new wxHtmlWidgetCell(Text, fl));
-      contC->SetAlignVer(valign);
+      if( valign != -1 )  contC->SetAlignVer(valign);
+      if( halign != -1 )  contC->SetAlignHor(halign);
     }
     else
       m_WParser->GetContainer()->InsertCell(new wxHtmlWidgetCell(Text, fl));
@@ -477,7 +492,8 @@ TAG_HANDLER_PROC(tag)  {
       wc->SetDescent(0);
       contC->InsertCell( wc );
       contC->InsertCell(new wxHtmlWidgetCell(Box, fl));
-      contC->SetAlignVer(valign);
+      if( valign != -1 )  contC->SetAlignVer(valign);
+      if( halign != -1 )  contC->SetAlignHor(halign);
     }
     else
       m_WParser->GetContainer()->InsertCell(new wxHtmlWidgetCell(Box, fl));
@@ -512,7 +528,8 @@ TAG_HANDLER_PROC(tag)  {
       wc->SetDescent(0);
       contC->InsertCell( wc );
       contC->InsertCell(new wxHtmlWidgetCell(Spin, fl));
-      contC->SetAlignVer(valign);
+      if( valign != -1 )  contC->SetAlignVer(valign);
+      if( halign != -1 )  contC->SetAlignHor(halign);
     }
     else
       m_WParser->GetContainer()->InsertCell(new wxHtmlWidgetCell(Spin, fl));
@@ -551,16 +568,20 @@ TAG_HANDLER_PROC(tag)  {
       wc->SetDescent(0);
       contC->InsertCell( wc );
       contC->InsertCell(new wxHtmlWidgetCell(Track, fl));
-      contC->SetAlignVer(valign);
+      if( valign != -1 )  contC->SetAlignVer(valign);
+      if( halign != -1 )  contC->SetAlignHor(halign);
     }
     else
       m_WParser->GetContainer()->InsertCell(new wxHtmlWidgetCell(Track, fl));
   }
 /******************* CHECKBOX *************************************************/
   else if( TagName.Equalsi("checkbox") )  {
-    TCheckBox *Box = new TCheckBox( m_WParser->GetWindowInterface()->GetHTMLWindow() );
-    Box->SetFont( m_WParser->GetDC()->GetFont() );
-
+    TCheckBox *Box = new TCheckBox( 
+      m_WParser->GetWindowInterface()->GetHTMLWindow(), tag.HasParam(wxT("RIGHT")) ? wxALIGN_RIGHT : 0);
+    Box->SetFont( m_WParser->GetDC()->GetFont());
+    wxLayoutConstraints* wxa = new wxLayoutConstraints;
+    wxa->centreX.AsIs();
+    Box->SetConstraints(wxa);
     CreatedObject = Box;
     CreatedWindow = Box;
     Box->WI.SetWidth(ax);
@@ -688,6 +709,32 @@ TAG_HANDLER_PROC(tag)  {
 /******************* END OF CONTROLS ******************************************/
   if( LinkInfo != NULL )  delete LinkInfo;
   if( ObjectName.IsEmpty() )  {  }  // create random name?
+  if( CreatedWindow != NULL )  {  // set default colors
+#ifdef __WIN32__
+    if( EsdlInstanceOf(*CreatedWindow, TComboBox) )  {
+      TComboBox* Box = (TComboBox*)CreatedWindow;
+      if( Box->GetTextCtrl() != NULL )  {
+        if( m_WParser->GetContainer()->GetBackgroundColour().IsOk() )
+          Box->GetTextCtrl()->SetBackgroundColour( m_WParser->GetContainer()->GetBackgroundColour() );
+        if( m_WParser->GetActualColor().IsOk() )
+          Box->GetTextCtrl()->SetForegroundColour( m_WParser->GetActualColor() );
+      }
+      if( Box->GetPopupControl() != NULL && Box->GetPopupControl()->GetControl() != NULL )  {
+        if( m_WParser->GetContainer()->GetBackgroundColour().IsOk() )
+          Box->GetPopupControl()->GetControl()->SetBackgroundColour( 
+            m_WParser->GetContainer()->GetBackgroundColour() );
+        if( m_WParser->GetActualColor().IsOk() )  {
+          Box->GetPopupControl()->GetControl()->SetForegroundColour( 
+            m_WParser->GetActualColor() );
+        }
+      }
+    }
+#endif
+    if( m_WParser->GetActualColor().IsOk() )
+      CreatedWindow->SetForegroundColour( m_WParser->GetActualColor() );
+    if( m_WParser->GetContainer()->GetBackgroundColour().IsOk() )
+      CreatedWindow->SetBackgroundColour( m_WParser->GetContainer()->GetBackgroundColour() );
+  }
   if( CreatedObject != NULL )  {
     if( !TGlXApp::GetMainForm()->GetHtml()->AddObject(ObjectName, CreatedObject, CreatedWindow, tag.HasParam(wxT("MANAGE")) ) )
       TBasicApp::GetLog().Error(olxstr("HTML: duplicated object \'") << ObjectName << '\'');

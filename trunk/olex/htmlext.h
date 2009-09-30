@@ -390,6 +390,10 @@ public:
   TActionQueue *OnCmd;
 
   TWindowInterface WI;
+  // global data for the HTML parsing....
+  static olxstr SwitchSource;
+  static str_stack SwitchSources;
+
   DECLARE_EVENT_TABLE()
 };
 #endif
