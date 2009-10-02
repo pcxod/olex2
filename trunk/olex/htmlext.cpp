@@ -580,7 +580,7 @@ TAG_HANDLER_PROC(tag)  {
       m_WParser->GetWindowInterface()->GetHTMLWindow(), tag.HasParam(wxT("RIGHT")) ? wxALIGN_RIGHT : 0);
     Box->SetFont( m_WParser->GetDC()->GetFont());
     wxLayoutConstraints* wxa = new wxLayoutConstraints;
-    wxa->centreX.AsIs();
+    wxa->centreX.Absolute(0);
     Box->SetConstraints(wxa);
     CreatedObject = Box;
     CreatedWindow = Box;
