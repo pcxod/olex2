@@ -1086,6 +1086,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\xlib\srestraint.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\xlib\symmat.h"
 				>
 			</File>

@@ -160,12 +160,14 @@ void expression_tree::expand()  {
         if( opr == '.' )  {  // treat floating point values...
           if( i == 1 || (i+1) >= data.Length() )  {  // .1 or 1.
             dt << '.';
+            i--;
             continue;
           }
-          if( (i > 0 && olxstr::o_isdigit(data.CharAt(i-1))) ||
-              ((i+1) < data.Length() && olxstr::o_isdigit(data.CharAt(i+1))) )
+          if( (i > 1 && olxstr::o_isdigit(data.CharAt(i-2))) ||
+              (i < data.Length() && olxstr::o_isdigit(data.CharAt(i))) )
           {
             dt << '.';
+            i--;
             continue;
           }
         }

@@ -138,7 +138,7 @@ namespace exparse  {
       return cast_result(new olxstr(IEvaluable::cast_helper<TPrimitiveEvaluator<BC,Type> >(i)->get_value()), true);
     }
     static cast_result val_cast(const IEvaluable* i)  {  
-      return cast_result(new Type(IEvaluable::cast_helper<TPrimitiveEvaluator<BC,Type> >(i)->get_value()), true);
+      return cast_result(&Type(IEvaluable::cast_helper<TPrimitiveEvaluator<BC,Type> >(i)->get_value()), false);
     }
     virtual cast_operator get_cast_operator(const std::type_info& ti) const {  
       if( typeid(Type) == ti )

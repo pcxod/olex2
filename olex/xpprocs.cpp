@@ -8098,6 +8098,8 @@ void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options, TMa
   //iv = _exp.build("a.sub(0,4).sub(1,3).len()");
   iv = _exp.build("x = a.sub(0,4).len() + b.len()");
   iv = _exp.build("c = a.sub(0,3) == b.sub(0,3)");
+  iv = _exp.build("c = b.sub(0,3) + 'dfg'");
+  iv = _exp.build("c = 1.2 + 1.1 - .05");
   if( !iv->is_final() )  {
     IEvaluable* iv1 = iv->_evaluate();
     delete iv1;

@@ -152,7 +152,7 @@ public:
   virtual int GetReferencerId(const IXVarReferencer& vr) const {
     int ind = Restraints.IndexOf((TSimpleRestraint&)vr);
     if( ind == -1 )
-      throw TInvalidArgumentException(__OlxSourceInfo, "var rereferencer");
+      throw TInvalidArgumentException(__OlxSourceInfo, "var referencer");
     return ind;
   }
   // note - possibly unsafe, range is unchecked
