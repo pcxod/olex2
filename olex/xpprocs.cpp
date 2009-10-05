@@ -140,6 +140,7 @@
 #include "testsuit.h"
 #include "catomlist.h"
 #include "updateapi.h"
+#include "planesort.h"
 // FOR DEBUG only
 #include "egraph.h"
 #include "olxth.h"
@@ -8638,17 +8639,69 @@ void TMainForm::macEsd(TStrObjList &Cmds, const TParamList &Options, TMacroError
       }
     }
     else if( sel.Count() == 7 )  {
-      TSAtomPList atoms;
+      TSAtomPList atoms, sorted_atoms, face_atoms;
       for( int i=0; i < sel.Count(); i++ )  {
         if( EsdlInstanceOf(sel[i], TXAtom) )
           atoms.Add( ((TXAtom&)sel[i]).Atom() );
       }
       if( atoms.Count() != 7 )
         return;
-      TBasicApp::GetLog() << "Octahedral distortion is (BL): " << 
+      TBasicApp::GetLog() << "Octahedral distortion is (using best line, for the selection): " << 
         vcovc.CalcOHDistortionBL(atoms).ToString() << '\n';
-      TBasicApp::GetLog() << "Octahedral distortion is (BP): " << 
+      TBasicApp::GetLog() << "Octahedral distortion is (using best plane, for the selection): " << 
         vcovc.CalcOHDistortionBP(atoms).ToString() << '\n';
+      TSAtom* central_atom = atoms[0];
+      atoms.Delete(0);
+      olxdict<int, vec3d, TPrimitiveComparator> transforms;
+      int face_cnt = 0;
+      double total_val_bp = 0, total_esd_bp = 0;//, total_val_bl = 0, total_esd_bl=0;
+      for( int i=0; i < 6; i++ )  {
+        for( int j=i+1; j < 6; j++ )  {
+          for( int k=j+1; k < 6; k++ )  {
+            const double thv = TetrahedronVolume( 
+              central_atom->crd(),
+              (atoms[i]->crd()-central_atom->crd()).Normalise() + central_atom->crd(),
+              (atoms[j]->crd()-central_atom->crd()).Normalise() + central_atom->crd(),
+              (atoms[k]->crd()-central_atom->crd()).Normalise() + central_atom->crd());
+            if( thv < 0.1 )  continue;
+            sorted_atoms.Clear();
+            transforms.Clear();
+            for( int l=0; l < atoms.Count(); l++ )
+              atoms[l]->SetTag(0);
+            atoms[i]->SetTag(1);  atoms[j]->SetTag(1);  atoms[k]->SetTag(1);
+            const vec3d face_center = (atoms[i]->crd()+atoms[j]->crd()+atoms[k]->crd())/3;
+            const vec3d normal = (face_center - central_atom->crd()).Normalise();
+            transforms.Add(1, central_atom->crd() - face_center);
+            vec3d face1_center;
+            for( int l=0; l < atoms.Count(); l++ )
+              if( atoms[l]->GetTag() == 0 )
+                face1_center += atoms[l]->crd();
+            face1_center /= 3;
+            transforms.Add(0, central_atom->crd() - face1_center);
+            PlaneSort::Sorter::DoSort(atoms, transforms, central_atom->crd(), normal, sorted_atoms);
+            TBasicApp::GetLog() << (olxstr("Face ") << ++face_cnt << ": ") ;
+            for( int l=0; l < sorted_atoms.Count(); l++ )
+              TBasicApp::GetLog() << sorted_atoms[l]->GetLabel() << ' ';
+            sorted_atoms.Insert(0, central_atom);
+            TEValue<double> rv = vcovc.CalcOHDistortionBP(sorted_atoms);
+            total_val_bp += olx_abs(180.0 - rv.GetV() * 3);
+            total_esd_bp += sqr(rv.GetE()); 
+            TBasicApp::GetLog() << rv.ToString() << '\n';
+            //TBasicApp::GetLog() << "BP: " << rv.ToString();
+            //rv = vcovc.CalcOHDistortionBL(sorted_atoms);
+            //total_val_bl += olx_abs(180.0 - rv.GetV() * 3);
+            //total_esd_bl += sqr(rv.GetE()); 
+            //TBasicApp::GetLog() << " BL: " << rv.ToString() << '\n';
+          }
+        }
+      }
+      if( face_cnt == 8 )  {
+        TBasicApp::GetLog() << (olxstr("Combined distortion (best plane): ") << TEValue<double>(total_val_bp, 3*sqrt(total_esd_bp)).ToString() << '\n');
+        //TBasicApp::GetLog() << (olxstr("Combined distortion (best line): ") << TEValue<double>(total_val_bl, 3*sqrt(total_esd_bl)).ToString() << '\n');
+      }
+      else  {
+        TBasicApp::GetLog() << "Could not locate required 8 octahedron faces\n";
+      }
     }
   }
 }
