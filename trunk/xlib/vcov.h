@@ -345,12 +345,11 @@ protected:
     vec3d_alist p1(3);
     p1[0] = c1;  p1[1] = points[0];  p1[2] = c2;
     const double rms = _calcPlane<0,2>(p1);
-    const double d = plane_param[0].DotProd(plane_center[0])/plane_param[0].Length();
     plane_param[0].Normalise();
     double sum = 0;
     for( int i=0; i < 3; i++ )  {
-      vec3d v1 = (points[i*2+1] - points[0]).Normalise();
-      vec3d v2 = (points[i*2+2] - points[0]).Normalise();
+      vec3d v1 = points[i*2+1] - points[0];
+      vec3d v2 = points[i*2+2] - points[0];
       v1 = v1 - plane_param[0]*v1.DotProd(plane_param[0]);
       v2 = v2 - plane_param[0]*v2.DotProd(plane_param[0]);
       sum += acos(v1.CAngle(v2));
@@ -360,9 +359,9 @@ protected:
   // octahedral distortion (in degrees), using best plane approach
   double _calcOHDistortionBP(const vec3d_alist& points)  {
     // translation for first face
-    vec3d c1 = (points[1] + points[3] + points[5])/3 - points[0];
+    vec3d c1 = (points[1] + points[3] + points[5])/3;
     // translation for second face
-    vec3d c2 = (points[2] + points[4] + points[6])/3 - points[0];
+    vec3d c2 = (points[2] + points[4] + points[6])/3;
     weights[0].SetCount(6);
     vec3d_alist p1(6);
     for( int i=0; i < 3; i++ )  {
