@@ -42,6 +42,7 @@ namespace SFUtil {
   // interface description...
   class ISF_Util {
   public:
+    virtual ~ISF_Util()  {}
     // expands indexes to P1
     virtual void Expand(const TArrayList<vec3i>& hkl, const TArrayList<compd>& F, TArrayList<StructureFactor>& out) const = 0;
     /* atoms[i]->Tag() must be index of the corresponding scatterer. U has 6 elements of Ucif or Uiso for each 
@@ -125,12 +126,12 @@ namespace SFUtil {
   template <class sg> class SF_Util : public ISF_Util {
 #else
   struct SG_Impl  {
-    const size_t size;
+    const int size;
     smatd_list matrices;
     SG_Impl(const smatd_list& ml) : size(ml.Count()), matrices(ml)  {}
     void GenHkl(const vec3i& hkl, TArrayList<vec3i>& out, TArrayList<double>& ps) const {
       for( int i=0; i < size; i++ )  {
-        out[i] = matrices[i].r * hkl;
+        out[i] = hkl*matrices[i].r;
         ps[i] = matrices[i].t.DotProd(hkl);
       }
     }
