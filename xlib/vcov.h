@@ -348,11 +348,11 @@ protected:
     plane_param[0].Normalise();
     double sum = 0;
     for( int i=0; i < 3; i++ )  {
-      vec3d v1 = points[i*2+1] - points[0];
-      vec3d v2 = points[i*2+2] - points[0];
+      vec3d v1 = points[i*2+1] - plane_center[0];
+      vec3d v2 = points[i*2+2] - plane_center[0];
       v1 = v1 - plane_param[0]*v1.DotProd(plane_param[0]);
       v2 = v2 - plane_param[0]*v2.DotProd(plane_param[0]);
-      sum += acos(v1.CAngle(v2));
+      sum += olx_abs(M_PI/3-acos(v1.CAngle(v2)));
     }
     return (sum*180/3)/M_PI;
   }
@@ -376,7 +376,7 @@ protected:
     for( int i=0; i < 3; i++ )  {
       vec3d v1 = p1[i*2] - plane_param[0]*p1[i*2].DotProd(plane_param[0]);
       vec3d v2 = p1[i*2+1] - plane_param[0]*p1[i*2+1].DotProd(plane_param[0]);
-      sum += acos(v1.CAngle(v2));
+      sum += olx_abs(M_PI/3-acos(v1.CAngle(v2)));
     }
     return (sum*180/3)/M_PI;
   }

@@ -8684,7 +8684,7 @@ void TMainForm::macEsd(TStrObjList &Cmds, const TParamList &Options, TMacroError
               TBasicApp::GetLog() << sorted_atoms[l]->GetLabel() << ' ';
             sorted_atoms.Insert(0, central_atom);
             TEValue<double> rv = vcovc.CalcOHDistortionBP(sorted_atoms);
-            total_val_bp += olx_abs(180.0 - rv.GetV() * 3);
+            total_val_bp += rv.GetV()*3;
             total_esd_bp += sqr(rv.GetE()); 
             TBasicApp::GetLog() << rv.ToString() << '\n';
             //TBasicApp::GetLog() << "BP: " << rv.ToString();
