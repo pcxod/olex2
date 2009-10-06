@@ -1,17 +1,33 @@
+//#define __OLX_USE_FASTSYMM
+
 #include "sfutil.h"
 #include "cif.h"
 #include "hkl.h"
 #include "estopwatch.h"
 
-DefineFSFactory(ISF_Util, SF_Util)
+using namespace SFUtil;
 
+#ifdef __OLX_USE_FASTSYMM
+  DefineFSFactory(ISF_Util, SF_Util)
+#endif
+//...........................................................................................
+ISF_Util* SFUtil::GetSF_Util_Instance(const TSpaceGroup& sg)  {
+#ifdef __OLX_USE_FASTSYMM
+  ISF_Util* sf_util = fs_factory_ISF_Util(sg.GetName());
+  if( sf_util == NULL )
+    throw TFunctionFailedException(__OlxSourceInfo, "invalid space group");
+  return sf_util;
+#else
+  smatd_list ml;
+  sg.GetMatrices(ml, mattAll);
+  return new SF_Util<SG_Impl>(ml);
+#endif
+}
 //...........................................................................................
 void SFUtil::ExpandToP1(const TArrayList<vec3i>& hkl, const TArrayList<compd>& F, const TSpaceGroup& sg, TArrayList<StructureFactor>& out)  {
   if( hkl.Count() != F.Count() )
     throw TInvalidArgumentException(__OlxSourceInfo, "hkl array and structure factors dimentions must be equal");
-  ISF_Util* sf_util = fs_factory_ISF_Util(sg.GetName());
-  if( sf_util == NULL )
-    throw TFunctionFailedException(__OlxSourceInfo, "invalid space group");
+  ISF_Util* sf_util = GetSF_Util_Instance(sg);
   out.SetCount( sf_util->GetSGOrder()* hkl.Count() );
   sf_util->Expand(hkl, F, out);
   delete sf_util;
@@ -219,7 +235,7 @@ void SFUtil::CalcSF(const TXFile& xfile, const TRefList& refs, TArrayList<TEComp
   catch(...)  {
     throw TFunctionFailedException(__OlxSourceInfo, "unknown space group");
   }
-  ISF_Util* sf_util = fs_factory_ISF_Util(sg->GetName());
+  ISF_Util* sf_util = GetSF_Util_Instance(*sg);
   if( sf_util == NULL )
     throw TFunctionFailedException(__OlxSourceInfo, "invalid space group");
   TAsymmUnit& au = xfile.GetAsymmUnit();
@@ -247,7 +263,7 @@ void SFUtil::CalcSF(const TXFile& xfile, const TRefPList& refs, TArrayList<TECom
   catch(...)  {
     throw TFunctionFailedException(__OlxSourceInfo, "unknown space group");
   }
-  ISF_Util* sf_util = fs_factory_ISF_Util(sg->GetName());
+  ISF_Util* sf_util = GetSF_Util_Instance(*sg);
   if( sf_util == NULL )
     throw TFunctionFailedException(__OlxSourceInfo, "invalid space group");
   TAsymmUnit& au = xfile.GetAsymmUnit();
