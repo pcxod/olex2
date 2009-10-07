@@ -35,11 +35,8 @@
 */
 
 TLibrary* THtml::Library = NULL;
-/*____________________________________________________________________________*/
-// unfortunately the global variables are required ....
-    olxstr SwitchSource;
-    str_stack SwitchSources;
-/*____________________________________________________________________________*/
+olxstr THtml::SwitchSource;
+str_stack THtml::SwitchSources;
 
 //..............................................................................
 //..............................................................................
@@ -56,8 +53,8 @@ TLibrary* THtml::Library = NULL;
 
 TAG_HANDLER_BEGIN(SWITCHINFOS, "SWITCHINFOS")
 TAG_HANDLER_PROC(tag)  {
-  SwitchSources.Push( SwitchSource );
-  SwitchSource = tag.GetParam(wxT("SRC")).c_str();
+  THtml::SwitchSources.Push( THtml::SwitchSource );
+  THtml::SwitchSource = tag.GetParam(wxT("SRC")).c_str();
   return true;
 }
 TAG_HANDLER_END(SWITCHINFOS)
@@ -65,7 +62,7 @@ TAG_HANDLER_END(SWITCHINFOS)
 TAG_HANDLER_BEGIN(SWITCHINFOE, "SWITCHINFOE")
 TAG_HANDLER_PROC(tag)
 {
-  SwitchSource = SwitchSources.Pop();
+  THtml::SwitchSource = THtml::SwitchSources.Pop();
   return true;
 }
 TAG_HANDLER_END(SWITCHINFOE)
@@ -162,8 +159,8 @@ TAG_HANDLER_PROC(tag)  {
 
   TGlXApp::GetMainForm()->ProcessMacroFunc( src );
 
-  if( TZipWrapper::IsZipFile(SwitchSource) && !TZipWrapper::IsZipFile(src) )
-    src = TZipWrapper::ComposeFileName(SwitchSource, src);
+  if( TZipWrapper::IsZipFile(THtml::SwitchSource) && !TZipWrapper::IsZipFile(src) )
+    src = TZipWrapper::ComposeFileName(THtml::SwitchSource, src);
 
   wxFSFile *fsFile = TFileHandlerManager::GetFSFileHandler( src );
   if( fsFile == NULL )
@@ -200,9 +197,9 @@ TAG_HANDLER_BEGIN(INPUT, "INPUT")
 TAG_HANDLER_PROC(tag)  {
   olxch Bf[80];
   tag.ScanParam(wxT("TYPE"), _StrFormat_, Bf);
-  olxstr TagName(Bf), ObjectName, Value, Data, strValign, Tmp, Label;
+  olxstr TagName(Bf), ObjectName, Value, Data, Tmp, Label;
   ObjectName = tag.GetParam(wxT("NAME")).c_str();
-  int valign = wxHTML_ALIGN_CENTER, 
+  int valign = -1, halign = -1, 
     fl=0,
     ax=100, ay=20;
   IEObject* CreatedObject = NULL;
@@ -237,15 +234,31 @@ TAG_HANDLER_PROC(tag)  {
   if( ax == 0 )  ax = 30;
   if( ay == 0 )  ay = 20;
  
-  if( tag.HasParam(wxT("FLOAT")) ) 
+  if( tag.HasParam(wxT("FLOAT")) )  
     fl = ax;
+
+  {  // parse h alignment
+    wxString ha;
+    if( tag.HasParam(wxT("ALIGN")) )
+      ha = tag.GetParam(wxT("ALIGN"));
+    else if( tag.HasParam(wxT("HALIGN")) )
+      ha = tag.GetParam(wxT("HALIGN"));
+    if( !ha.IsEmpty() )  {
+      if( ha.CmpNoCase(wxT("left")) == 0 )
+        halign = wxHTML_ALIGN_LEFT;
+      else if( ha.CmpNoCase(wxT("center")) == 0 || ha.CmpNoCase(wxT("middle")) == 0 )
+        halign = wxHTML_ALIGN_CENTER;
+      else if( ha.CmpNoCase(wxT("right")) == 0 )
+        halign = wxHTML_ALIGN_RIGHT;
+    }
+  }
   if( tag.HasParam(wxT("VALIGN")) ){
-    strValign = tag.GetParam(wxT("VALIGN")).c_str();
-    if( strValign.Equalsi("top") )
+    wxString va = tag.GetParam(wxT("VALIGN"));
+    if( va.CmpNoCase(wxT("top")) == 0 )
       valign = wxHTML_ALIGN_TOP;
-    else if( strValign.Equalsi("center") )
+    else if( va.CmpNoCase(wxT("center")) == 0 || va.CmpNoCase(wxT("middle")) == 0 )
       valign = wxHTML_ALIGN_CENTER;
-    else if( strValign.Equalsi("bottom") )
+    else if( va.CmpNoCase(wxT("bottom")) == 0 )
       valign = wxHTML_ALIGN_BOTTOM;
   }
   Label = tag.GetParam(wxT("LABEL")).c_str();
@@ -279,7 +292,8 @@ TAG_HANDLER_PROC(tag)  {
           wc->SetDescent(0);
           contC->InsertCell( wc );
           contC->InsertCell(new wxHtmlWidgetCell(wnd, fl));
-          contC->SetAlignVer(valign);
+          if( valign != -1 )  contC->SetAlignVer(valign);
+          if( halign != -1 )  contC->SetAlignHor(halign);
         }
         else
           m_WParser->GetContainer()->InsertCell(new wxHtmlWidgetCell(wnd, fl));
@@ -311,7 +325,8 @@ TAG_HANDLER_PROC(tag)  {
       wc->SetDescent(0);
       contC->InsertCell( wc );
       contC->InsertCell(new wxHtmlWidgetCell(Text, fl));
-      contC->SetAlignVer(valign);
+      if( valign != -1 )  contC->SetAlignVer(valign);
+      if( halign != -1 )  contC->SetAlignHor(halign);
     }
     else
       m_WParser->GetContainer()->InsertCell(new wxHtmlWidgetCell(Text, fl));
@@ -477,7 +492,8 @@ TAG_HANDLER_PROC(tag)  {
       wc->SetDescent(0);
       contC->InsertCell( wc );
       contC->InsertCell(new wxHtmlWidgetCell(Box, fl));
-      contC->SetAlignVer(valign);
+      if( valign != -1 )  contC->SetAlignVer(valign);
+      if( halign != -1 )  contC->SetAlignHor(halign);
     }
     else
       m_WParser->GetContainer()->InsertCell(new wxHtmlWidgetCell(Box, fl));
@@ -512,7 +528,8 @@ TAG_HANDLER_PROC(tag)  {
       wc->SetDescent(0);
       contC->InsertCell( wc );
       contC->InsertCell(new wxHtmlWidgetCell(Spin, fl));
-      contC->SetAlignVer(valign);
+      if( valign != -1 )  contC->SetAlignVer(valign);
+      if( halign != -1 )  contC->SetAlignHor(halign);
     }
     else
       m_WParser->GetContainer()->InsertCell(new wxHtmlWidgetCell(Spin, fl));
@@ -551,16 +568,20 @@ TAG_HANDLER_PROC(tag)  {
       wc->SetDescent(0);
       contC->InsertCell( wc );
       contC->InsertCell(new wxHtmlWidgetCell(Track, fl));
-      contC->SetAlignVer(valign);
+      if( valign != -1 )  contC->SetAlignVer(valign);
+      if( halign != -1 )  contC->SetAlignHor(halign);
     }
     else
       m_WParser->GetContainer()->InsertCell(new wxHtmlWidgetCell(Track, fl));
   }
 /******************* CHECKBOX *************************************************/
   else if( TagName.Equalsi("checkbox") )  {
-    TCheckBox *Box = new TCheckBox( m_WParser->GetWindowInterface()->GetHTMLWindow() );
-    Box->SetFont( m_WParser->GetDC()->GetFont() );
-
+    TCheckBox *Box = new TCheckBox( 
+      m_WParser->GetWindowInterface()->GetHTMLWindow(), tag.HasParam(wxT("RIGHT")) ? wxALIGN_RIGHT : 0);
+    Box->SetFont( m_WParser->GetDC()->GetFont());
+    wxLayoutConstraints* wxa = new wxLayoutConstraints;
+    wxa->centreX.Absolute(0);
+    Box->SetConstraints(wxa);
     CreatedObject = Box;
     CreatedWindow = Box;
     Box->WI.SetWidth(ax);
@@ -688,6 +709,32 @@ TAG_HANDLER_PROC(tag)  {
 /******************* END OF CONTROLS ******************************************/
   if( LinkInfo != NULL )  delete LinkInfo;
   if( ObjectName.IsEmpty() )  {  }  // create random name?
+  if( CreatedWindow != NULL )  {  // set default colors
+#ifdef __WIN32__
+    if( EsdlInstanceOf(*CreatedWindow, TComboBox) )  {
+      TComboBox* Box = (TComboBox*)CreatedWindow;
+      if( Box->GetTextCtrl() != NULL )  {
+        if( m_WParser->GetContainer()->GetBackgroundColour().IsOk() )
+          Box->GetTextCtrl()->SetBackgroundColour( m_WParser->GetContainer()->GetBackgroundColour() );
+        if( m_WParser->GetActualColor().IsOk() )
+          Box->GetTextCtrl()->SetForegroundColour( m_WParser->GetActualColor() );
+      }
+      if( Box->GetPopupControl() != NULL && Box->GetPopupControl()->GetControl() != NULL )  {
+        if( m_WParser->GetContainer()->GetBackgroundColour().IsOk() )
+          Box->GetPopupControl()->GetControl()->SetBackgroundColour( 
+            m_WParser->GetContainer()->GetBackgroundColour() );
+        if( m_WParser->GetActualColor().IsOk() )  {
+          Box->GetPopupControl()->GetControl()->SetForegroundColour( 
+            m_WParser->GetActualColor() );
+        }
+      }
+    }
+#endif
+    if( m_WParser->GetActualColor().IsOk() )
+      CreatedWindow->SetForegroundColour( m_WParser->GetActualColor() );
+    if( m_WParser->GetContainer()->GetBackgroundColour().IsOk() )
+      CreatedWindow->SetBackgroundColour( m_WParser->GetContainer()->GetBackgroundColour() );
+  }
   if( CreatedObject != NULL )  {
     if( !TGlXApp::GetMainForm()->GetHtml()->AddObject(ObjectName, CreatedObject, CreatedWindow, tag.HasParam(wxT("MANAGE")) ) )
       TBasicApp::GetLog().Error(olxstr("HTML: duplicated object \'") << ObjectName << '\'');
@@ -957,7 +1004,7 @@ BEGIN_EVENT_TABLE(THtml, wxHtmlWindow)
   EVT_LEFT_UP(THtml::OnMouseUp)
   EVT_MOTION(THtml::OnMouseMotion)
   EVT_SCROLL(THtml::OnScroll)
-
+  EVT_CHILD_FOCUS(THtml::OnChildFocus)
   EVT_KEY_DOWN(THtml::OnKeyDown)
   EVT_CHAR(THtml::OnChar)
 END_EVENT_TABLE()
@@ -986,7 +1033,9 @@ wxHtmlOpeningStatus THtml::OnOpeningURL(wxHtmlURLType type, const wxString& url,
 }
 //..............................................................................
 THtml::THtml(wxWindow *Parent, ALibraryContainer* LC): 
-     wxHtmlWindow(Parent, -1, wxDefaultPosition, wxDefaultSize, 4), WI(this), ObjectsState(*this)  {
+     wxHtmlWindow(Parent, -1, wxDefaultPosition, wxDefaultSize, 4), WI(this), ObjectsState(*this),
+     InFocus(NULL)
+{
   FActions = new TActionQList;
   FRoot = new THtmlSwitch(this, NULL);
   OnLink = &FActions->NewQueue("ONLINK");
@@ -1130,6 +1179,28 @@ void THtml::OnMouseDblClick(wxMouseEvent& event)  {
   OnDblClick->Execute(this, NULL);
 }
 //..............................................................................
+void THtml::OnChildFocus(wxChildFocusEvent& event)  {
+  wxWindow *wx_next = event.GetWindow(), 
+    *focused = FindFocus();
+  if( wx_next != focused )  {
+    if( InFocus != NULL )
+    InFocus->SetFocus();
+    return;
+  }
+  IEObject* prev = NULL, *next = NULL;
+  for( int i=0; i < Traversables.Count(); i++ )  {
+    if( Traversables[i].GetB() == InFocus )
+      prev = Traversables[i].GetA();
+    if( Traversables[i].GetB() == wx_next )
+      next = Traversables[i].GetA();
+  }
+  if( prev != next || next == NULL || prev == NULL )  {
+    DoHandleFocusEvent(prev, next);
+    InFocus = wx_next;
+  }
+  event.Skip();
+}
+//..............................................................................
 void THtml::_FindNext(int from, int& dest, bool scroll) const {
   if( Traversables.IsEmpty() )  {
     dest = -1;
@@ -1187,43 +1258,48 @@ void THtml::GetTraversibleIndeces(int& current, int& another, bool forward) cons
   }
 }
 //..............................................................................
-void THtml::DoNavigate(bool forward)  {
+void THtml::DoHandleFocusEvent(IEObject* prev, IEObject* next)  {
   FLockPageLoad = true;  // prevent pae re-loading and object deletion
-  int current=-1, another=-1;
-  GetTraversibleIndeces(current, another, forward);
-  if( current != -1 )  {
-    IEObject* cie = Traversables[current].GetA();
-    if( cie != NULL )  {
-      if( EsdlInstanceOf(*cie, TTextEdit) )  {
-        olxstr s = ((TTextEdit*)cie)->GetOnLeaveStr();
-        ((TTextEdit*)cie)->OnLeave->Execute(cie, &s);
-      }
-      else if( EsdlInstanceOf(*cie, TComboBox) )  {
-        olxstr s = ((TComboBox*)cie)->GetOnLeaveStr();
-        ((TComboBox*)cie)->OnLeave->Execute(cie, &s);
-      }
+  if( prev != NULL )  {
+    if( EsdlInstanceOf(*prev, TTextEdit) )  {
+      olxstr s = ((TTextEdit*)prev)->GetOnLeaveStr();
+      ((TTextEdit*)prev)->OnLeave->Execute(prev, &s);
+    }
+    else if( EsdlInstanceOf(*prev, TComboBox) )  {
+      olxstr s = ((TComboBox*)prev)->GetOnLeaveStr();
+      ((TComboBox*)prev)->OnLeave->Execute(prev, &s);
     }
   }
-  if( another != -1 )  {
-    IEObject* nie = Traversables[another].GetA();
-    if( nie != NULL )  {  // call on enter events queue
-      if( EsdlInstanceOf(*nie, TTextEdit) )  {
-        olxstr s = ((TTextEdit*)nie)->GetOnEnterStr();
-        ((TTextEdit*)nie)->OnEnter->Execute(nie, &s);
-        ((TTextEdit*)nie)->SetSelection(-1,-1);
-      }
-      else if( EsdlInstanceOf(*nie, TComboBox) )  {
-        olxstr s = ((TComboBox*)nie)->GetOnEnterStr();
-        ((TComboBox*)nie)->OnEnter->Execute(nie, &s);
-        ((TComboBox*)nie)->SetSelection(-1,-1);
-      }
+  if( next != NULL )  {
+    if( EsdlInstanceOf(*next, TTextEdit) )  {
+      olxstr s = ((TTextEdit*)next)->GetOnEnterStr();
+      ((TTextEdit*)next)->OnEnter->Execute(next, &s);
+      ((TTextEdit*)next)->SetSelection(-1,-1);
     }
-    Traversables[another].GetB()->SetFocus();
+    else if( EsdlInstanceOf(*next, TComboBox) )  {
+      olxstr s = ((TComboBox*)next)->GetOnEnterStr();
+      ((TComboBox*)next)->OnEnter->Execute(next, &s);
+      ((TComboBox*)next)->SetSelection(-1,-1);
+    }
+  }
+  FLockPageLoad = false;
+}
+//..............................................................................
+void THtml::DoNavigate(bool forward)  {
+  int current=-1, another=-1;
+  GetTraversibleIndeces(current, another, forward);
+  DoHandleFocusEvent( 
+    current == -1 ? NULL : Traversables[current].GetA(),
+    another == -1 ? NULL : Traversables[another].GetA());
+  if( another != -1 )  {
+    InFocus = Traversables[another].GetB();
+    InFocus->SetFocus();
+    InFocus = FindFocus();
     for( int i=0; i < Objects.Count(); i++ )  {
       if( Objects.GetValue(i).GetB() == NULL )  continue;
-      if( Objects.GetValue(i).GetB() == Traversables[another].GetB()
+      if( Objects.GetValue(i).GetB() == InFocus
 #ifdef __WIN32__
-          || Objects.GetValue(i).GetB() == Traversables[another].GetB()->GetParent()
+          || Objects.GetValue(i).GetB() == InFocus->GetParent()
 #endif
 				)  
       {
@@ -1232,7 +1308,6 @@ void THtml::DoNavigate(bool forward)  {
       }
     }
   }
-  FLockPageLoad = false;
 }
 //..............................................................................
 void THtml::OnKeyDown(wxKeyEvent& event)  {
@@ -1561,6 +1636,7 @@ bool THtml::UpdatePage()  {
         sc->SetSelection(sv.Length(),-1);
       }
       wnd->SetFocus();
+      InFocus = wnd;
     }
     else
       FocusedControl = EmptyString;
@@ -2507,22 +2583,22 @@ void THtml::funSetFocus(const TStrObjList &Params, TMacroError &E)  {
     return;
   }
   FocusedControl = objName;
-  wxWindow *wnd = html->FindObjectWindow(objName);
-  if( wnd == NULL )  // not created yet?
+  InFocus = html->FindObjectWindow(objName);
+  if( InFocus == NULL )  // not created yet?
     return;
   
 
-  if( EsdlInstanceOf(*wnd, TTextEdit) )
-    ((TTextEdit*)wnd)->SetSelection(-1,-1);
-  else if( EsdlInstanceOf(*wnd, TComboBox) )  {
-    TComboBox* cb = (TComboBox*)wnd;
+  if( EsdlInstanceOf(*InFocus, TTextEdit) )
+    ((TTextEdit*)InFocus)->SetSelection(-1,-1);
+  else if( EsdlInstanceOf(*InFocus, TComboBox) )  {
+    TComboBox* cb = (TComboBox*)InFocus;
     //cb->GetTextCtrl()->SetSelection(-1, -1);
 #ifdef __WIN32__
     cb->GetTextCtrl()->SetInsertionPoint(0);
-    wnd = cb->GetTextCtrl();
+    InFocus = cb->GetTextCtrl();
 #endif		
   }
-  wnd->SetFocus();
+  InFocus->SetFocus();
 }
 //..............................................................................
 void THtml::funSetState(const TStrObjList &Params, TMacroError &E)  {

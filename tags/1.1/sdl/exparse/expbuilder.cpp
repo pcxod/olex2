@@ -150,10 +150,7 @@ IEvaluable* exp_builder::create_evaluator(expression_tree* root)  {
     }
     if( root->right != NULL )  {  // anything more left?
       IEvaluable* right = create_evaluator(root->right);
-      IEvaluable* func = locate_function(root->data, rv, right);
-      if( right->ref_cnt == 0 )  delete right;
-      if( rv->ref_cnt == 0 )  delete rv;
-      return func;
+      return locate_function(root->data, rv, right);
     }
     return rv;
   }

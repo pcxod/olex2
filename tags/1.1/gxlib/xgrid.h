@@ -107,8 +107,7 @@ public:
 
   inline bool IsEmpty()  const  {  return ED == NULL;  }
 
-  inline bool Visible()   const {  return (Flags & sgdoVisible) == sgdoVisible; }
-  inline virtual void Visible(bool On) {  
+  inline virtual void SetVisible(bool On) {  
     AGDrawObject::SetVisible(On);  
     Info->SetVisible(On);
     if( !On )

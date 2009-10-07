@@ -34,12 +34,27 @@ namespace SFUtil {
   static inline double GetReflectionF2(const TReflection& r) {  return r.GetI();  }
   static inline double GetReflectionF2(const double& r) {  return r;  }
 
-
   struct StructureFactor  {
     vec3i hkl;  // hkl indexes
     double ps;  // phase shift
     compd val; // value
   };
+  // interface description...
+  class ISF_Util {
+  public:
+    virtual ~ISF_Util()  {}
+    // expands indexes to P1
+    virtual void Expand(const TArrayList<vec3i>& hkl, const TArrayList<compd>& F, TArrayList<StructureFactor>& out) const = 0;
+    /* atoms[i]->Tag() must be index of the corresponding scatterer. U has 6 elements of Ucif or Uiso for each 
+    atom  */
+    virtual void Calculate(double eV, const TRefList& refs, const mat3d& hkl2c, TArrayList<compd>& F, 
+      const TPtrList<cm_Element>& scatterers, const TCAtomPList& atoms, const double* U, bool useFpFdp) const = 0;
+    virtual void Calculate(double eV, const TRefPList& refs, const mat3d& hkl2c, TArrayList<compd>& F, 
+      const TPtrList<cm_Element>& scatterers, const TCAtomPList& atoms, const double* U, bool useFpFdp) const = 0;
+    virtual int GetSGOrder() const = 0;
+  };
+
+
   // for internal use
   void PrepareCalcSF(const TAsymmUnit& au, double* U, TPtrList<cm_Element>& scatterers, TCAtomPList& alist); 
   /* calculates the scale sum(Fc)/sum(Fo) Fc = k*Fo. Can accept a list of doubles (Fo) */
@@ -104,28 +119,30 @@ namespace SFUtil {
   void CalcSF(const TXFile& xfile, const TRefList& refs, TArrayList<compd>& F, bool useFpFdp);
   // calculates the structure factors for given reflections
   void CalcSF(const TXFile& xfile, const TRefPList& refs, TArrayList<compd>& F, bool useFpFdp);
+  // returns an instance according to __OLX_USE_FASTSYMM, must be deleted with delete
+  ISF_Util* GetSF_Util_Instance(const TSpaceGroup& sg);
 
-}; // SFUtil namespace
-
-  class ISF_Util {
-  public:
-    // expands indexes to P1
-    virtual void Expand(const TArrayList<vec3i>& hkl, const TArrayList<compd>& F, TArrayList<SFUtil::StructureFactor>& out) const = 0;
-    /* atoms[i]->Tag() must be index of the corresponding scatterer. U has 6 elements of Ucif or Uiso for each 
-    atom  */
-    virtual void Calculate(double eV, const TRefList& refs, const mat3d& hkl2c, TArrayList<compd>& F, 
-      const TPtrList<cm_Element>& scatterers, const TCAtomPList& atoms, const double* U, bool useFpFdp) const = 0;
-    virtual void Calculate(double eV, const TRefPList& refs, const mat3d& hkl2c, TArrayList<compd>& F, 
-      const TPtrList<cm_Element>& scatterers, const TCAtomPList& atoms, const double* U, bool useFpFdp) const = 0;
-    virtual int GetSGOrder() const = 0;
-  };
-
+#ifdef __OLX_USE_FASTSYMM
   template <class sg> class SF_Util : public ISF_Util {
+#else
+  struct SG_Impl  {
+    const int size;
+    smatd_list matrices;
+    SG_Impl(const smatd_list& ml) : size(ml.Count()), matrices(ml)  {}
+    void GenHkl(const vec3i& hkl, TArrayList<vec3i>& out, TArrayList<double>& ps) const {
+      for( int i=0; i < size; i++ )  {
+        out[i] = hkl*matrices[i].r;
+        ps[i] = matrices[i].t.DotProd(hkl);
+      }
+    }
+  };
+  template <class sg> class SF_Util : public ISF_Util, public sg {
+#endif
   protected:
     template <class RefList>
-    static void CalculateWithFpFdp( double eV, const RefList& refs, const mat3d& hkl2c, TArrayList<compd>& F, 
-                                    const TPtrList<cm_Element>& scatterers, const TCAtomPList& atoms, 
-                                    const double* U)
+    void CalculateWithFpFdp(double eV, const RefList& refs, const mat3d& hkl2c, TArrayList<compd>& F, 
+                            const TPtrList<cm_Element>& scatterers, const TCAtomPList& atoms, 
+                            const double* U) const
     {
       TArrayList<vec3i> rv(sg::size);
       TArrayList<double> ps(sg::size);
@@ -173,9 +190,9 @@ namespace SFUtil {
       }
     }
     template <class RefList>
-    static void CalculateWithoutFpFdp(const RefList& refs, const mat3d& hkl2c, TArrayList<compd>& F, 
-                                      const TPtrList<cm_Element>& scatterers, const TCAtomPList& atoms, 
-                                      const double* U) 
+    void CalculateWithoutFpFdp(const RefList& refs, const mat3d& hkl2c, TArrayList<compd>& F, 
+                               const TPtrList<cm_Element>& scatterers, const TCAtomPList& atoms, 
+                               const double* U) const 
     {
       TArrayList<vec3i> rv(sg::size);
       TArrayList<double> ps(sg::size);
@@ -218,6 +235,9 @@ namespace SFUtil {
       }
     }
   public:
+#ifndef __OLX_USE_FASTSYMM
+    SF_Util(const smatd_list& ml) : sg(ml)  {}
+#endif
     virtual void Expand(const TArrayList<vec3i>& hkl, const TArrayList<compd>& F, TArrayList<SFUtil::StructureFactor>& out) const {
       TArrayList<vec3i> rv(sg::size);
       TArrayList<double> ps(sg::size);
@@ -259,6 +279,8 @@ namespace SFUtil {
     }
     virtual int GetSGOrder() const {  return sg::size;  }
   };
+
+}; // SFUtil namespace
 
 EndXlibNamespace()
 #endif

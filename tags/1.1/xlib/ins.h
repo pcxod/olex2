@@ -52,8 +52,8 @@ private:
   TStrPObjList< olxstr, TInsList* > Ins;  // instructions
   TStrList Skipped,
            Disp;  // this should be treated specially as their position is after SFAC and between UNIT
-  void HypernateIns(const olxstr &InsName, const olxstr &Ins, TStrList &Res);
-  void HypernateIns(const olxstr &Ins, TStrList &Res);
+  void HyphenateIns(const olxstr &InsName, const olxstr &Ins, TStrList &Res);
+  void HyphenateIns(const olxstr &Ins, TStrList &Res);
   double   R1;    // mean error of cell parameters. Can be used for estimation of other lengths
   bool     LoadQPeaks;// true if Q-peaks should be loaded
   olxstr Sfac, Unit;

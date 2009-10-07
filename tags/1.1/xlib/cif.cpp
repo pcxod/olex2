@@ -140,7 +140,7 @@ void TCifLoop::SaveToStrings( TStrList& Strings )  {
           Tmp = EmptyString;  break;
         }
       }
-      // according to the cif rules, the strings cannot be hypernated ...
+      // according to the cif rules, the strings cannot be hyphenated ...
       str = FTable[i][j];
       if( str.EndsWith("\\n") )  str.SetLength( str.Length()-2 );
       if( CLD->String )  {
@@ -154,7 +154,7 @@ void TCifLoop::SaveToStrings( TStrList& Strings )  {
           Strings.Add(';');
           for( int j=0; j < toks.Count(); j++ )  {
             htoks.Clear();
-            htoks.Hypernate(toks[j], 78);
+            htoks.Hyphenate(toks[j], 78);
             for( int k=0; k < htoks.Count(); k++ )  {
               if( htoks[k].Length() > 1 )  // not just a space char
                 Strings.Add(htoks[k]);
@@ -186,7 +186,7 @@ void TCifLoop::SaveToStrings( TStrList& Strings )  {
       Strings.Add(';');
       for( int j=0; j < toks.Count(); j++ )  {
         htoks.Clear();
-        htoks.Hypernate(toks[j], 78);
+        htoks.Hyphenate(toks[j], 78);
         for( int k=0; k < htoks.Count(); k++ )  {
           if( htoks[k].Length() > 1 )  // not just a space char
             Strings.Add(htoks[k]);
@@ -342,7 +342,7 @@ void TCif::Format()  {
         DL = D->Data->GetString(j).Length();
         if( DL != 0 )  {
           toks.Clear();
-          toks.Hypernate(D->Data->GetString(j), 78);
+          toks.Hyphenate(D->Data->GetString(j), 78);
           for( int k=0; k < toks.Count(); k++ )  {
             if( AddSpace )  Tmp = ' '; // if a space should be added at the beginning of line
             else            Tmp = EmptyString;
@@ -1572,8 +1572,6 @@ bool TCif::CreateTable(TDataItem *TD, TTTable<TStrList> &Table, smatd_list& Symm
   TCifLoop *Loop;
   int defcnt, RowDeleted=0, ColDeleted=0;
   olxstr Tmp, Val;
-  TCifLoopTable* LT;
-  TDataItem *DI;
   bool AddRow;
   TStrList Toks;
   smatd_list AllSymmList;
@@ -1595,6 +1593,7 @@ bool TCif::CreateTable(TDataItem *TD, TTTable<TStrList> &Table, smatd_list& Symm
 
   SymmList.Clear();
 
+  TCifLoopTable* LT = NULL;
   for( int i=0; i < Loops.Count(); i++ )  {
     Loop = Loops.GetObject(i);
     LT = &Loop->Table();
@@ -1616,7 +1615,7 @@ bool TCif::CreateTable(TDataItem *TD, TTTable<TStrList> &Table, smatd_list& Symm
   for( int i=0; i < LT->RowCount(); i++ )  {
     AddRow = true;
     for( int j=0; j < LT->ColCount(); j++ )  {
-      DI = TD->FindItemi( LT->ColName(j) );
+      TDataItem *DI = TD->FindItemi( LT->ColName(j) );
 
       if( sindex >=0 && LT->ColName(j).StartsFrom("_geom_") && LT->ColName(j).IndexOf("site_symmetry") != -1)  {
         // 1_555
@@ -1688,7 +1687,7 @@ bool TCif::CreateTable(TDataItem *TD, TTTable<TStrList> &Table, smatd_list& Symm
   }
   // process columns
   for( int i=0; i < LT->ColCount(); i++ )  {
-    DI = TD->FindItemi( LT->ColName(i) );
+    TDataItem *DI = TD->FindItemi( LT->ColName(i) );
     if( DI != NULL )  {
       Table.ColName(i-ColDeleted) = DI->GetFieldValueCI("caption");
       if( !DI->GetFieldValueCI("visible", FalseString).ToBool() )  {

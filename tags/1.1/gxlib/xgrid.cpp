@@ -807,7 +807,7 @@ void TXGrid::FromDataItem(const TDataItem& item, wxInputStream& zis) {
   bool empty = item.GetRequiredField("empty").ToBool();
   if( empty )  return;
   //Visible( item.GetRequiredField("visible").ToBool() );
-  Visible(true);
+  SetVisible(true);
   Mode3D = item.GetRequiredField("3D").ToBool();
   PolygonMode = item.GetRequiredField("draw_mode").ToInt();
   MaxVal = item.GetRequiredField("max_val").ToDouble();
@@ -874,7 +874,7 @@ PyObject* pySetVisible(PyObject* self, PyObject* args)  {
   bool v;
   if( !PyArg_ParseTuple(args, "b", &v) )
     return NULL;
-  TXGrid::GetInstance()->Visible(v);
+  TXGrid::GetInstance()->SetVisible(v);
   Py_INCREF(Py_None);
   return Py_None;
 }
@@ -889,7 +889,7 @@ PyObject* pyInitSurface(PyObject* self, PyObject* args)  {
 }
 //..............................................................................
 PyObject* pyIsVisible(PyObject* self, PyObject* args)  {
-  return Py_BuildValue("b", TXGrid::GetInstance()->Visible() );
+  return Py_BuildValue("b", TXGrid::GetInstance()->IsVisible() );
 }
 //..............................................................................
 //..............................................................................

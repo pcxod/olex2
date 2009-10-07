@@ -40,6 +40,7 @@
 #include "gpcollection.h"
 #include "estopwatch.h"
 #include "pers_util.h"
+#include "planesort.h"
 
 #ifdef __WXWIDGETS__
   #include "wxglscene.h"
@@ -944,31 +945,82 @@ olxstr TGXApp::GetSelectionInfo()  {
       }
     }
     else if( Sel.Count() == 7 )  {
-      vec3d_list points;
+      TSAtomPList atoms;
       for( int i=0; i < Sel.Count(); i++ )  {
         if( EsdlInstanceOf(Sel[i], TXAtom) )
-          points.AddCCopy( ((TXAtom&)Sel[i]).Atom().crd() );
+          atoms.Add( ((TXAtom&)Sel[i]).Atom() );
       }
-      if( points.Count() == 7 )  {
-        vec3d c1 = (points[1] + points[3] + points[5])/3;
-        // centroid for second face
-        vec3d c2 = (points[2] + points[4] + points[6])/3;
-        vec3d plane_params, plane_center;
-        TTypeList<AnAssociation2<vec3d, double> > p1;
-        p1.AddNew( c1, 1.0 );  
-        p1.AddNew( points[0], 1 );
-        p1.AddNew( c2, 1.0 );
-        TSPlane::CalcPlane(p1, plane_params, plane_center, plane_worst);
-        plane_params.Normalise();
-        double sum = 0;
-        for( int i=0; i < 3; i++ )  {
-          vec3d v1 = (points[i*2+1] - points[0]).Normalise();
-          vec3d v2 = (points[i*2+2] - points[0]).Normalise();
-          v1 = v1 - plane_params*v1.DotProd(plane_params);
-          v2 = v2 - plane_params*v2.DotProd(plane_params);
-          sum += acos(v1.CAngle(v2));
+      if( atoms.Count() == 7 )  {
+        TSAtom* central_atom = atoms[0];
+        atoms.Delete(0);
+        int face_cnt = 0;
+        double total_val_bp = 0, test_val=0;
+        for( int i=0; i < 6; i++ )  {
+          for( int j=i+1; j < 6; j++ )  {
+            for( int k=j+1; k < 6; k++ )  {
+              const double thv = TetrahedronVolume( 
+                central_atom->crd(),
+                (atoms[i]->crd()-central_atom->crd()).Normalise() + central_atom->crd(),
+                (atoms[j]->crd()-central_atom->crd()).Normalise() + central_atom->crd(),
+                (atoms[k]->crd()-central_atom->crd()).Normalise() + central_atom->crd());
+              if( thv < 0.1 )  continue;
+              face_cnt++;
+              TSAtomPList sorted_atoms;
+              olxdict<int, vec3d, TPrimitiveComparator> transforms;
+              for( int l=0; l < atoms.Count(); l++ )
+                atoms[l]->SetTag(0);
+              atoms[i]->SetTag(1);  atoms[j]->SetTag(1);  atoms[k]->SetTag(1);
+              const vec3d face_center = (atoms[i]->crd()+atoms[j]->crd()+atoms[k]->crd())/3;
+              const vec3d normal = (face_center - central_atom->crd()).Normalise();
+
+              vec3d face1_center, new_normal, new_center;
+              for( int l=0; l < atoms.Count(); l++ )
+                if( atoms[l]->GetTag() == 0 )
+                  face1_center += atoms[l]->crd();
+              face1_center /= 3;
+              
+              transforms.Add(1, central_atom->crd()-face_center);
+              transforms.Add(0, central_atom->crd()-face1_center);
+              PlaneSort::Sorter::DoSort(atoms, transforms, central_atom->crd(), normal, sorted_atoms);
+              
+              TTypeList<AnAssociation2<vec3d, double> > p1;
+              for( int l=0; l < sorted_atoms.Count(); l++ )  {
+                if( sorted_atoms[l]->GetTag() == 0 )
+                  p1.AddNew(sorted_atoms[l]->crd() - face1_center, 1.0);
+                else
+                  p1.AddNew(sorted_atoms[l]->crd() - face_center, 1.0);
+              }
+              TSPlane::CalcPlane(p1, new_normal, new_center, plane_best);
+              new_normal.Normalise();
+              for( int l=0; l < 3; l++ )  {
+                vec3d v1 = p1[l*2].GetA() - new_normal*p1[l*2].GetA().DotProd(new_normal);
+                vec3d v2 = p1[l*2+1].GetA() - new_normal*p1[l*2+1].GetA().DotProd(new_normal);
+                total_val_bp += olx_abs(M_PI/3-acos(v1.CAngle(v2)));
+              }
+            }
+          }
         }
-        Tmp << "Octahedral distortion is: " << olxstr::FormatFloat(3, (sum*180/3)/M_PI);
+        if( face_cnt == 8 )
+          Tmp << "Combined distortion: " << olxstr::FormatFloat(2, total_val_bp*180/M_PI);
+        else  {  // calculate just for the selection
+          // centroids
+          vec3d c1 = (atoms[0]->crd() + atoms[2]->crd() + atoms[4]->crd())/3;
+          vec3d c2 = (atoms[1]->crd() + atoms[3]->crd() + atoms[5]->crd())/3;
+          TTypeList<AnAssociation2<vec3d, double> > p1;
+          for( int i=0; i < atoms.Count(); i++ )
+            p1.AddNew(atoms[i]->crd() - ((i%2)==0 ? c1 : c2), 1.0);
+          vec3d normal, center;
+          TSPlane::CalcPlane(p1, normal, center, plane_best);
+          normal.Normalise();
+          double sum = 0;
+          for( int i=0; i < 3; i++ )  {
+            vec3d v1 = p1[i*2].GetA() - normal*p1[i*2].GetA().DotProd(normal);
+            vec3d v2 = p1[i*2+1].GetA() - normal*p1[i*2+1].GetA().DotProd(normal);
+            sum += olx_abs(M_PI/3 - acos(v1.CAngle(v2)));
+          }
+          Tmp << "Octahedral distortion (for the selection): " << olxstr::FormatFloat(2, (sum*180/3)/M_PI);
+        }
+///
       }
     }
   }
@@ -2922,10 +2974,10 @@ void TGXApp::StructureVisible(bool v)  {
     QPeaksVisible(FQPeaksVisible);
     HydrogensVisible(FHydrogensVisible);
     if( !FXGrid->IsEmpty() )
-      FXGrid->Visible(true);
+      FXGrid->SetVisible(true);
   } 
   else
-    FXGrid->Visible(false);
+    FXGrid->SetVisible(false);
 }
 //..............................................................................
 void TGXApp::LoadXFile(const olxstr& fn)  {
@@ -3027,7 +3079,7 @@ void TGXApp::SetGridDepth(const vec3d& crd)  {
 }
 //..............................................................................
 bool TGXApp::GridVisible()  const {  
-  return FXGrid->Visible();  
+  return FXGrid->IsVisible();  
 }
 //..............................................................................
 bool TGXApp::ShowGrid(bool v, const olxstr& FN)  {
@@ -3036,10 +3088,10 @@ bool TGXApp::ShowGrid(bool v, const olxstr& FN)  {
       Log->Error("Cannot display empty grid");
       return false;
     }
-    FXGrid->Visible(true);
+    FXGrid->SetVisible(true);
   }
   else
-    FXGrid->Visible(false);
+    FXGrid->SetVisible(false);
   return v;
 }
 //..............................................................................

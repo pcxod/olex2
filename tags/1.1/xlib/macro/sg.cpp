@@ -462,7 +462,7 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options, TMacroError
       if( !amb_sg.IsEmpty() )  {
         XApp.GetLog() << "Ambiguous space groups (statistics incomplete to determine):\n";
         Output.Clear();
-        Output.Hypernate(amb_sg, 80);
+        Output.Hyphenate(amb_sg, 80);
         XApp.GetLog() << Output << '\n';
       }
     }

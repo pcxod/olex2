@@ -140,6 +140,7 @@
 #include "testsuit.h"
 #include "catomlist.h"
 #include "updateapi.h"
+#include "planesort.h"
 // FOR DEBUG only
 #include "egraph.h"
 #include "olxth.h"
@@ -2422,12 +2423,7 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     if( FXApp->XFile().HasLastLoader() )  {
       FN = (!FN.IsEmpty() ? TEFile::ChangeFileExt(FN, "oxm") :
                             TEFile::ChangeFileExt(FXApp->XFile().GetFileName(), "oxm") );
-      if( TEFile::Exists(FN) )  {  
-        FXApp->LoadModel(FN);
-        //TDataFile DF;
-        //DF.LoadFromXLFile(Tmp);
-        //FXApp->FromDataItem(DF.Root().FindRequiredItem("olex_model"));
-      }
+      FXApp->XFile().LoadFromFile(FN);
     }
   }
   else if ( Cmds[0].Equalsi("radii") )  {
@@ -8103,6 +8099,8 @@ void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options, TMa
   //iv = _exp.build("a.sub(0,4).sub(1,3).len()");
   iv = _exp.build("x = a.sub(0,4).len() + b.len()");
   iv = _exp.build("c = a.sub(0,3) == b.sub(0,3)");
+  iv = _exp.build("c = b.sub(0,3) + 'dfg'");
+  iv = _exp.build("c = 1.2 + 1.1 - .05");
   if( !iv->is_final() )  {
     IEvaluable* iv1 = iv->_evaluate();
     delete iv1;
@@ -8641,17 +8639,69 @@ void TMainForm::macEsd(TStrObjList &Cmds, const TParamList &Options, TMacroError
       }
     }
     else if( sel.Count() == 7 )  {
-      TSAtomPList atoms;
+      TSAtomPList atoms, sorted_atoms, face_atoms;
       for( int i=0; i < sel.Count(); i++ )  {
         if( EsdlInstanceOf(sel[i], TXAtom) )
           atoms.Add( ((TXAtom&)sel[i]).Atom() );
       }
       if( atoms.Count() != 7 )
         return;
-      TBasicApp::GetLog() << "Octahedral distortion is (BL): " << 
+      TBasicApp::GetLog() << "Octahedral distortion is (using best line, for the selection): " << 
         vcovc.CalcOHDistortionBL(atoms).ToString() << '\n';
-      TBasicApp::GetLog() << "Octahedral distortion is (BP): " << 
+      TBasicApp::GetLog() << "Octahedral distortion is (using best plane, for the selection): " << 
         vcovc.CalcOHDistortionBP(atoms).ToString() << '\n';
+      TSAtom* central_atom = atoms[0];
+      atoms.Delete(0);
+      olxdict<int, vec3d, TPrimitiveComparator> transforms;
+      int face_cnt = 0;
+      double total_val_bp = 0, total_esd_bp = 0;//, total_val_bl = 0, total_esd_bl=0;
+      for( int i=0; i < 6; i++ )  {
+        for( int j=i+1; j < 6; j++ )  {
+          for( int k=j+1; k < 6; k++ )  {
+            const double thv = TetrahedronVolume( 
+              central_atom->crd(),
+              (atoms[i]->crd()-central_atom->crd()).Normalise() + central_atom->crd(),
+              (atoms[j]->crd()-central_atom->crd()).Normalise() + central_atom->crd(),
+              (atoms[k]->crd()-central_atom->crd()).Normalise() + central_atom->crd());
+            if( thv < 0.1 )  continue;
+            sorted_atoms.Clear();
+            transforms.Clear();
+            for( int l=0; l < atoms.Count(); l++ )
+              atoms[l]->SetTag(0);
+            atoms[i]->SetTag(1);  atoms[j]->SetTag(1);  atoms[k]->SetTag(1);
+            const vec3d face_center = (atoms[i]->crd()+atoms[j]->crd()+atoms[k]->crd())/3;
+            const vec3d normal = (face_center - central_atom->crd()).Normalise();
+            transforms.Add(1, central_atom->crd() - face_center);
+            vec3d face1_center;
+            for( int l=0; l < atoms.Count(); l++ )
+              if( atoms[l]->GetTag() == 0 )
+                face1_center += atoms[l]->crd();
+            face1_center /= 3;
+            transforms.Add(0, central_atom->crd() - face1_center);
+            PlaneSort::Sorter::DoSort(atoms, transforms, central_atom->crd(), normal, sorted_atoms);
+            TBasicApp::GetLog() << (olxstr("Face ") << ++face_cnt << ": ") ;
+            for( int l=0; l < sorted_atoms.Count(); l++ )
+              TBasicApp::GetLog() << sorted_atoms[l]->GetLabel() << ' ';
+            sorted_atoms.Insert(0, central_atom);
+            TEValue<double> rv = vcovc.CalcOHDistortionBP(sorted_atoms);
+            total_val_bp += rv.GetV()*3;
+            total_esd_bp += sqr(rv.GetE()); 
+            TBasicApp::GetLog() << rv.ToString() << '\n';
+            //TBasicApp::GetLog() << "BP: " << rv.ToString();
+            //rv = vcovc.CalcOHDistortionBL(sorted_atoms);
+            //total_val_bl += olx_abs(180.0 - rv.GetV() * 3);
+            //total_esd_bl += sqr(rv.GetE()); 
+            //TBasicApp::GetLog() << " BL: " << rv.ToString() << '\n';
+          }
+        }
+      }
+      if( face_cnt == 8 )  {
+        TBasicApp::GetLog() << (olxstr("Combined distortion (best plane): ") << TEValue<double>(total_val_bp, 3*sqrt(total_esd_bp)).ToString() << '\n');
+        //TBasicApp::GetLog() << (olxstr("Combined distortion (best line): ") << TEValue<double>(total_val_bl, 3*sqrt(total_esd_bl)).ToString() << '\n');
+      }
+      else  {
+        TBasicApp::GetLog() << "Could not locate required 8 octahedron faces\n";
+      }
     }
   }
 }
@@ -8829,6 +8879,11 @@ void TMainForm::funCurrentLanguage(const TStrObjList& Params, TMacroError &E)  {
 void TMainForm::macSAME(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   TXAtomPList atoms;
   bool invert = Options.Contains("i");
+  int groups_count = -1;
+  if( !Cmds.IsEmpty() && Cmds[0].IsNumber() )  {
+    groups_count = Cmds[0].ToInt();
+    Cmds.Delete(0);
+  }
   FindXAtoms(Cmds, atoms, false, true);
   if( atoms.Count() == 2 )  {
     TTypeList< AnAssociation2<int, int> > res;
@@ -8866,6 +8921,22 @@ void TMainForm::macSAME(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       TBasicApp::GetLog() << netB.Node(res[i].GetB()).GetLabel() << ' ';
     }
     TBasicApp::GetLog() << '\n';
+  }
+  else if( groups_count != -1 && (atoms.Count()%groups_count) == 0 )  {
+    TPtrList<TSameGroup> deps;
+    TSameGroup& sg = FXApp->XFile().GetRM().rSAME.New();
+    for( int i=0; i < groups_count-1; i++ )
+      deps.Add( FXApp->XFile().GetRM().rSAME.NewDependent(sg) );
+    const int cnt = atoms.Count()/groups_count;
+    for( int i=0; i < cnt; i++ )  {
+      sg.Add(atoms[i]->Atom().CAtom());
+      for( int j=1; j < groups_count; j++ )
+        deps[j-1]->Add(atoms[cnt*j+i]->Atom().CAtom());
+    }
+    TBasicApp::GetLog() << "SAME instruction is added\n";
+  }
+  else  {
+    E.ProcessingError(__OlxSrcInfo, "inlvaid input arguments");
   }
 }
 //..............................................................................

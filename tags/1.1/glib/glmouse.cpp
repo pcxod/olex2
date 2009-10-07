@@ -20,12 +20,14 @@ TGlMouse::TGlMouse(TGlRenderer *Parent, TDFrame *Frame)  {
   FSX = FSY = 0;
   FDblClick = FButtonDown = false;
   FParent = Parent;
-  SetHandler( smbLeft, 0, meRotateXY);
-  SetHandler( smbLeft, sssCtrl, meRotateZ);
+  SetHandler(smbLeft, 0, meRotateXY);
+  SetHandler(smbLeft, sssCtrl, meRotateZ);
   //SetHandler( smbLeft, sssShift, meMoveXY);
   //SetHandler( smbLeft, sssAlt, meMoveZ);
 
-  SetHandler( smbRight, 0, meZoom);
+  SetHandler(smbRight, 0, meZoom);
+  // an alternative for MAC...
+  SetHandler(smbLeft, sssAlt, meZoom);
   Handler = NULL;
   MData = new TMouseData;
   FDFrame = Frame;

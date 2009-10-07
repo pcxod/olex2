@@ -344,7 +344,18 @@ void AConstraintGenerator::GenerateAtom( TCAtomPList& created, TAtomEnvi& envi,
       }
       break;
     case fgBH1:
-      if( envi.Count() == 4 ||  envi.Count() == 5 )  {
+      if( envi.Count() == 3 )  {
+        Vec1 = (envi.GetCrd(0)-envi.GetBase().crd()).Normalise();
+        Vec2 = (envi.GetCrd(1)-envi.GetBase().crd()).Normalise();
+        Vec3 = (envi.GetCrd(2)-envi.GetBase().crd()).Normalise();
+        crds.AddNew( (Vec1+Vec2+Vec3).Normalise() );
+        Vec1 -= Vec2;
+        Vec3 -= Vec2;
+        Vec3 = Vec1.XProdVec(Vec3);
+        Vec3.NormaliseTo( crds[0].CAngle(Vec3) < 0 ? 1.084 : -1.084);
+        crds[0] = (Vec3 += envi.GetBase().crd());
+      }
+      else if( envi.Count() == 4 ||  envi.Count() == 5 )  {
         bool create = true;
         for( int i=0; i < envi.Count(); i++ )  {
           Vec1 += (envi.GetCrd(i)-envi.GetBase().crd()).Normalise();

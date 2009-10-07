@@ -114,7 +114,9 @@ bool TXlConGen::FixAtom(TAtomEnvi& envi, const short Group, const TBasicAtomInfo
           afix = 43;
         break;
       case fgBH1:
-        if( envi.Count() == 4 ||  envi.Count() == 5 )
+        if( envi.Count() == 3 )
+          afix = 13;
+        else if( envi.Count() == 4 ||  envi.Count() == 5 )
           afix = 153;
         break;
     }

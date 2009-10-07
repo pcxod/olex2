@@ -225,7 +225,7 @@ class TCheckBox: public wxCheckBox, public AActionHandler  {
   olxstr OnCheckStr, OnUncheckStr, OnClickStr, Data, FDependMode;
   TActionQueue *FActionQueue;
 public:
-  TCheckBox(wxWindow *Parent);
+  TCheckBox(wxWindow *Parent, long style=0);
   virtual ~TCheckBox();
 
   void ActionQueue(TActionQueue* q, const olxstr& dependMode);
