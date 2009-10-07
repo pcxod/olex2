@@ -2941,7 +2941,12 @@ void TMainForm::macShowH(TStrObjList &Cmds, const TParamList &Options, TMacroErr
 //..............................................................................
 void TMainForm::macFvar(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   RefinementModel& rm = FXApp->XFile().GetRM();
-  if( Cmds.IsEmpty() )  {
+  TXAtomPList xatoms;
+  for( int i=0; i < FXApp->GetSelection().Count(); i++ )  {
+    if( EsdlInstanceOf(FXApp->GetSelection()[i], TXAtom) )
+      xatoms.Add( (TXAtom&)FXApp->GetSelection()[i] );
+  }
+  if( Cmds.IsEmpty() && xatoms.IsEmpty() )  {
     olxstr tmp = "Free variables: ";
     rm.Vars.Validate();
     TBasicApp::GetLog() << (rm.Vars.GetFVARStr() << '\n');
@@ -2949,8 +2954,8 @@ void TMainForm::macFvar(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   }
   double fvar = -1101;
   XLibMacros::ParseNumbers<double>(Cmds, 1, &fvar);
-  TXAtomPList xatoms;
-  FindXAtoms(Cmds, xatoms, true, !Options.Contains("cs"));
+  if( xatoms.IsEmpty() )
+    FindXAtoms(Cmds, xatoms, true, !Options.Contains("cs"));
   if( fvar == 0 )  {
     for(int i=0; i < xatoms.Count(); i++ )
       rm.Vars.FreeParam(xatoms[i]->Atom().CAtom(), catom_var_name_Sof);

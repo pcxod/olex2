@@ -661,7 +661,7 @@ Accepts atoms, bonds, hbonds or a name (like from LstGO). Example: 'mask hbonds 
   as close to the cell center as possible" );
 
   this_InitMacro(ShowH, , fpNone|fpTwo|psFileLoaded );
-  this_InitMacro(Fvar, , (fpAny^fpNone)|psCheckFileTypeIns );
+  this_InitMacro(Fvar, , (fpAny)|psCheckFileTypeIns );
   this_InitMacro(Sump, , (fpAny^fpNone)|psCheckFileTypeIns );
   this_InitMacro(Part, p&;lo, (fpAny^fpNone)|psFileLoaded );
   this_InitMacroD(Afix,"n-to accept N atoms in the rings for afix 66" , 
