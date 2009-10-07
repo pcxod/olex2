@@ -8764,7 +8764,9 @@ void TMainForm::macExportFrag(TStrObjList &Cmds, const TParamList &Options, TMac
 void TMainForm::macConn(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   try  {  
     TStrList lst(Cmds);
-    if( Cmds.Count() == 1 && Cmds[0].IsNumber() )  {
+    if( (Cmds.Count() == 1 && Cmds[0].IsNumber()) || 
+        (Cmds.Count() == 2 && Cmds[0].IsNumber() && Cmds[1].IsNumber()) )  
+    {
       TCAtomPList atoms;
       FXApp->FindCAtoms("sel", atoms, false);
       if( atoms.IsEmpty() )  return;
