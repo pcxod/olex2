@@ -68,6 +68,8 @@ public:
     olxstr new_shared_dir = shared_dir;
 #ifdef __WIN32__
     new_shared_dir << "Olex2Data/";
+#else
+    TEFile::RemoveTrailingBackslashI(new_shared_dir) << "data/";
 #endif
     return TEFile::AddTrailingBackslashI( 
       new_shared_dir << MD5::Digest(CString( 
