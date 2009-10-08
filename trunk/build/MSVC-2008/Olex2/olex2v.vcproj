@@ -134,7 +134,7 @@
 				EnableEnhancedInstructionSet="2"
 				FloatingPointModel="2"
 				WarningLevel="2"
-				Detect64BitPortabilityProblems="true"
+				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="0"
 			/>
 			<Tool
@@ -443,6 +443,10 @@
 						ObjectFile="$(IntDir)\olxvar_np.obj"
 					/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\..\repository\patchapi.cpp"
+				>
 			</File>
 			<File
 				RelativePath="..\..\..\repository\shellutil.cpp"

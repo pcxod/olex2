@@ -89,6 +89,7 @@
 #include "patchapi.h"
 #include "hkl_py.h"
 #include "filetree.h"
+#include "md5.h"
 
 #ifdef __GNUC__
   #undef Bool
@@ -1184,34 +1185,31 @@ separated values of Atom Type and radius, an entry a line" );
   }
   if( DataDir.IsEmpty() )
     DataDir = TShellUtil::GetSpecialFolderLocation(fiAppData);
-#ifdef __WIN32__
-  #ifdef _UNICODE
-  DataDir << "Olex2u";
-  #else
-  DataDir << "Olex2";
-  #endif
-#endif
-  olxstr new_data_dir = 
-  TEFile::AddTrailingBackslash(
-      TEFile::RemoveTrailingBackslash(DataDir) << '_' << updater::UpdateAPI::ReadRepositoryTag()
-  );
+  olxstr new_data_dir = patcher::PatchAPI::ComposeNewSharedDir(DataDir);
+  DataDir = patcher::PatchAPI::ComposeOldSharedDir(DataDir);
   // migration code...
   if( !TEFile::Exists(DataDir) )  {  // do not worry then - create the new one
     DataDir = new_data_dir;
-    if( !TEFile::MakeDir(DataDir) )
+    if( !TEFile::MakeDirs(DataDir) )
       TBasicApp::GetLog().Error("Could not create data folder!");
   }
   else  {
     if( !TEFile::Exists(new_data_dir) )  {  // need to copy the old settings then...
       // check if we have full access to all files in the dir...
-      while( patcher::PatchAPI::GetNumberOfOlex2Running() > 1 )  {
-        wxMessageBox(
-          wxT("Another instance of Olex2 is running... Please close it and press OK"),
-          wxT("Error"), wxOK|wxICON_ERROR);
-      }
-      if( !TEFile::MakeDir(new_data_dir) )
-        TBasicApp::GetLog().Error("Could not create data folder!");
+      bool copy_old = !updater::UpdateAPI::IsNewInstallation();
+      if( !copy_old )
+        updater::UpdateAPI::TagInstallationAsOld();
       else  {
+        while( patcher::PatchAPI::GetNumberOfOlex2Running() > 1 )  {
+          wxMessageBox(
+            wxT("Another instance of Olex2 is running... Please close it and press OK"),
+            wxT("Error"), wxOK|wxICON_ERROR);
+        }
+      }
+      if( !TEFile::MakeDirs(new_data_dir) )
+        TBasicApp::GetLog().Error("Could not create data folder!");
+      else if( copy_old ) {
+        patcher::PatchAPI::SaveLocationInfo(new_data_dir);
         TFileTree ft(DataDir);
         try  {  
           ft.Expand();
@@ -3285,7 +3283,7 @@ void TMainForm::UpdateRecentFile(const olxstr& fn)  {
   wxMenuItem* mi=NULL;
   if( index == -1 )  {
     if( (FRecentFiles.Count()+1) < FRecentFilesToShow )  {
-      for( int i=0; i < MenuFile->GetMenuItemCount(); i++ )  {
+      for( size_t i=0; i < MenuFile->GetMenuItemCount(); i++ )  {
         wxMenuItem* item = MenuFile->FindItemByPosition(i);
           if( item->GetId() >= ID_FILE0 && item->GetId() <= (ID_FILE0+FRecentFilesToShow))
             index = i;

@@ -41,6 +41,7 @@ using namespace std;
 #include "py_core.h"
 #include "olxth.h"
 #include "egc.h"
+#include "patchapi.h"
 
 #ifndef __WIN32__
   #include <readline/readline.h>
@@ -153,7 +154,7 @@ class TOlex: public AEventsDispatcher, public olex::IOlexProcessor, public ASele
     return !atoms.IsEmpty();
   }
 public:
-  TOlex( const olxstr& basedir) : XApp(basedir, this), Macros(*this) {
+  TOlex(const olxstr& basedir) : XApp(basedir, this), Macros(*this) {
     XApp.SetCifTemplatesDir( XApp.GetBaseDir() + "etc/CIF/" );
     OlexInstance = this;
     Silent = true;
@@ -172,16 +173,16 @@ public:
     Library.AttachLibrary( XApp.XFile().ExportLibrary() );
     Library.AttachLibrary( TFileHandlerManager::ExportLibrary() );
 
-    DataDir = TShellUtil::GetSpecialFolderLocation(fiAppData);
-		cout << DataDir.c_str() << '\n';
+    DataDir = patcher::PatchAPI::ComposeNewSharedDir(TShellUtil::GetSpecialFolderLocation(fiAppData));
+    if( !TEFile::Exists(DataDir) )  {
+      if( !TEFile::MakeDirs(DataDir) )  {
+        cout << "Could not create data directory: " << DataDir.c_str() << '\n';
+        cout << "Aborting...\n";
+        exit(1);
+      }
+    }
+    cout << DataDir.c_str() << '\n';
     AOlxThread::RunThread(&TOlex::TimerThreadFunction);
-#ifdef __WIN32__
-  #ifdef _UNICODE
-    DataDir << "Olex2u/";
-  #else
-    DataDir << "Olex2/";
-  #endif
-#endif
     XApp.GetLog().AddStream( TUtf8File::Create(DataDir + "olex2c.log"), true );
     FMacroItem = NULL;
     FProcess = NULL;

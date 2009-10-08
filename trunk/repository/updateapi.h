@@ -40,10 +40,43 @@ struct SettingsFile  {
   TStrList extensions_to_skip, files_to_skip;
   time_t last_updated;
   //...................................................................
-  SettingsFile(const olxstr& file_name);
-  bool IsValid() const {  return TEFile::Exists(source_file);  }
+  SettingsFile::SettingsFile(const olxstr& file_name) : source_file(file_name)  {
+    if( !TEFile::Exists(file_name) )
+      return;
+    const TSettingsFile settings(file_name);
+    proxy = settings["proxy"];
+    repository = settings["repository"];
+    update_interval = settings["update"];
+    const olxstr& last_update_str = settings.GetParam("lastupdate", "0");
+    if( last_update_str.IsEmpty() )
+      last_updated = 0;
+    else
+      last_updated = last_update_str.RadInt<int64_t>();
+    extensions_to_skip.Strtok(settings["exceptions"], ';');
+    dest_repository = settings["dest_repository"];
+    src_for_dest = settings["src_for_dest"];
+    files_to_skip.Strtok(settings["skip"], ';');
+    olex2_port = settings["olex-port"];
+    ask_for_update = settings.GetParam("ask_update", TrueString).ToBool();
+  }
   // save will change repo/update/ to repo...
-  bool Save();
+  bool Save() {
+    TSettingsFile settings;
+    settings["proxy"] = proxy;
+    settings["repository"] = repository;
+    settings["update"] = update_interval;
+    settings["lastupdate"] = last_updated;
+    settings["exceptions"] = extensions_to_skip.Text(';');
+    settings["dest_repository"] = dest_repository;
+    settings["src_for_dest"] = src_for_dest;
+    settings["skip"] = files_to_skip.Text(';');
+    settings["olex-port"] = olex2_port;
+    settings["ask_update"] = ask_for_update;
+    try  {  settings.SaveSettings(source_file);  }
+    catch(...)  {  return false;  }
+    return true;
+  }
+  bool IsValid() const {  return TEFile::Exists(source_file);  }
 };
 
 // Olex2 updater/installer API
@@ -106,11 +139,9 @@ class UpdateAPI  {
   //.................................................................................................
   SettingsFile settings;
   olxstr Tag;
+  static const olxstr new_installation_fn;
 public:
-  UpdateAPI() : f_lsnr(NULL), p_lsnr(NULL), 
-    settings(GetSettingsFileName()),
-    Tag( ReadRepositoryTag() )
-  {  }
+  UpdateAPI();
   ~UpdateAPI()  {  CleanUp();  }
   /* calls IsInstallRequired and if required, checks for GetInstallationFileName in the basedir, 
   fetches (using default or provided repository or zip file) GetInstallationFileName 
@@ -138,9 +169,10 @@ public:
   static olxstr GetSettingsFileName()  {  return TBasicApp::GetBaseDir() + "usettings.dat";  }
   static olxstr GetIndexFileName()  {  return TBasicApp::GetBaseDir() + "index.ind";  }
   static olxstr GetMirrorsFileName()  {  return TBasicApp::GetBaseDir() + "mirrors.txt";  }
-
+  static bool IsNewInstallation()  {  return TEFile::Exists(TBasicApp::GetBaseDir() + new_installation_fn);  } 
+  static void TagInstallationAsNew()  {  TEFile(TBasicApp::GetBaseDir() + new_installation_fn, "w+");  }
+  static void TagInstallationAsOld()  {  TEFile::DelFile(TBasicApp::GetBaseDir() + new_installation_fn);  }
   static const char* GetTagsFileName()  {  return "tags.txt";  }
-  static const char* GetTagFileName()  {  return "olex2.tag";  }
   // transforms /olex2-distro/tag or /olex2-distro/tag/update to /olex2-distro
   olxstr TrimTagPart(const olxstr& path) const;
   // transforms /olex2-distro to to /olex2/distro/tag or /olex2/distro/tag/update
@@ -164,8 +196,6 @@ public:
   void GetAvailableMirrors(TStrList& res) const;
   // fills list with available tags and initialises the chosen repository URL
   void GetAvailableTags(TStrList& res, olxstr& repo_URL) const;
-  //reads current repository tag, returns EmptyString in the case of error
-  static olxstr ReadRepositoryTag();
   // returns platform-dependen instalaltion file name
   static olxstr GetInstallationFileName()  {
 #ifdef __WIN32__

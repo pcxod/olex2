@@ -143,3 +143,12 @@ bool PatchAPI::UnlockUpdater() {
   return true;
 }
 //.........................................................................
+olxstr PatchAPI::ReadRepositoryTag()  {
+  olxstr tag_fn = TBasicApp::GetBaseDir() + GetTagFileName();
+  if( !TEFile::Exists(tag_fn) )
+    return EmptyString;
+  TStrList sl;
+  sl.LoadFromFile(tag_fn);
+  return sl.Count() == 1 ? sl[0] : EmptyString;
+}
+//.............................................................................

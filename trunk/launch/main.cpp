@@ -6,6 +6,7 @@
 #include "main.h"
 #include "splash.h"
 #include "patchapi.h"
+#include "updateapi.h"
 
 #include "log.h"
 #include "egc.h"
@@ -57,18 +58,15 @@ public:
   }
 };
 //---------------------------------------------------------------------------
-__fastcall TdlgMain::TdlgMain(TComponent* Owner)
-  : TForm(Owner)
-{
+__fastcall TdlgMain::TdlgMain(TComponent* Owner) : TForm(Owner)  {
   olxstr BaseDir;
   TEGC::Initialise();
-  //FBApp = new TBasicApp(TBasicApp::GuessBaseDir(CmdLine, "OLEX2_DIR") );
   FBApp = new TBasicApp( TBasicApp::GuessBaseDir(CmdLine, NULL) );
-  FBApp->SetSharedDir( TShellUtil::GetSpecialFolderLocation(fiAppData) + "Olex2u");
+  FBApp->SetSharedDir( patcher::PatchAPI::ComposeNewSharedDir(TShellUtil::GetSpecialFolderLocation(fiAppData)) );
   dlgSplash = new TdlgSplash(this);
 
   olxstr vfn = (TBasicApp::GetBaseDir()+ "version.txt");
-  olxstr tfn = (TBasicApp::GetBaseDir()+ "olex2.tag");
+  olxstr tfn = (TBasicApp::GetBaseDir()+ patcher::PatchAPI::GetTagFileName());
   // check updates ...
   //asm {  int 3  }
   // reading version info

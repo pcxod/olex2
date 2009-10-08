@@ -347,6 +347,7 @@ olxstr TEFile::ParentDir(const olxstr& name) {
 }
 //..............................................................................
 olxstr TEFile::ExtractFileExt(const olxstr& F)  {
+  if( F.IsEmpty() || IsDir(F) )  return EmptyString;
   olxstr fn = OLX_OS_PATH(F);
   int i = fn.LastIndexOf('.');
   if( i > 0 )  {
@@ -358,6 +359,7 @@ olxstr TEFile::ExtractFileExt(const olxstr& F)  {
 }
 //..............................................................................
 olxstr TEFile::ExtractFileName(const olxstr& F)  {
+  if( F.IsEmpty() || IsDir(F) )  return EmptyString;
   olxstr fn = OLX_OS_PATH(F);
   int i=fn.LastIndexOf(OLX_PATH_DEL);
   if( i > 0 )  return fn.SubStringFrom(i+1);
@@ -375,7 +377,7 @@ olxstr TEFile::ExtractFileDrive(const olxstr& F)  {
 }
 //..............................................................................
 olxstr TEFile::ChangeFileExt(const olxstr &F, const olxstr &Ext)  {
-  if( F.IsEmpty() )  return F;
+  if( F.IsEmpty() || IsDir(F) )  return EmptyString;
   olxstr fn = OLX_OS_PATH(F);
   int i = fn.LastIndexOf('.');
   if( i > 0 && fn.LastIndexOf(OLX_PATH_DEL) < i )  {
@@ -413,6 +415,7 @@ bool TEFile::RmDir(const olxstr& F)  {
 }
 //..............................................................................
 bool TEFile::IsDir(const olxstr& F)  {
+  if( F.IsEmpty() )  return false;
   struct STAT_STR the_stat;
   olxstr fn = OLX_OS_PATH(F);
   if( fn.EndsWith(OLX_PATH_DEL) )
