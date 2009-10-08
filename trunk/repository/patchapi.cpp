@@ -108,7 +108,7 @@ short PatchAPI::DoPatch(AActionHandler* OnFileCopy, AActionHandler* OnOverallCop
   return res;
 }
 //.........................................................................
-bool PatchAPI::IsOlex2Running()  {
+int PatchAPI::GetNumberOfOlex2Running()  {
   TStrList pid_files;
   TEFile::ListDir(TBasicApp::GetBaseDir(), pid_files, olxstr("*.") << GetOlex2PIDFileExt(), sefAll);
   for( int i=0; i < pid_files.Count(); i++ )  {
@@ -116,7 +116,7 @@ bool PatchAPI::IsOlex2Running()  {
       pid_files[i].SetLength(0);
   }
   pid_files.Pack();
-  return !pid_files.IsEmpty();
+  return pid_files.Count();
 }
 //.........................................................................
 bool PatchAPI::LockUpdater() {

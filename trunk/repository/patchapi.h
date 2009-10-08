@@ -53,7 +53,8 @@ public:
   static olxstr GetUpdaterPIDFileName()  {  return TBasicApp::GetBaseDir() + "pid.update";  }
   static const char* GetUpdaterCmdFileName()  {  return "__cmds.update";  }
   static const char* GetOlex2PIDFileExt()  {  return "olex2_pid";  }
-  static bool IsOlex2Running();
+  static bool IsOlex2Running() {  return GetNumberOfOlex2Running() != 0;  }
+  static int GetNumberOfOlex2Running();
   static bool LockUpdater();
   static bool UnlockUpdater();
 };
