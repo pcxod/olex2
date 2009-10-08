@@ -40,7 +40,7 @@ struct SettingsFile  {
   TStrList extensions_to_skip, files_to_skip;
   time_t last_updated;
   //...................................................................
-  SettingsFile::SettingsFile(const olxstr& file_name) : source_file(file_name)  {
+  SettingsFile(const olxstr& file_name) : source_file(file_name)  {
     if( !TEFile::Exists(file_name) )
       return;
     const TSettingsFile settings(file_name);

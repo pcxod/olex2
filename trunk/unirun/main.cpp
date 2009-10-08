@@ -230,6 +230,9 @@ void DoRun()  {
 			TBasicApp::GetLog() << "Installation has failed with error code: " << res << '\n';
 			TBasicApp::GetLog() << api.GetLog();
 		}
+		else  {
+		  updater::UpdateAPI::TagInstallationAsNew();
+		}
   }
   else  {
     short res = patcher::PatchAPI::DoPatch(NULL, new TUProgress);
