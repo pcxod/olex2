@@ -134,7 +134,7 @@
 				EnableEnhancedInstructionSet="2"
 				FloatingPointModel="2"
 				WarningLevel="2"
-				Detect64BitPortabilityProblems="true"
+				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="0"
 			/>
 			<Tool
@@ -411,6 +411,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\repository\olxvar.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\repository\patchapi.cpp"
 				>
 			</File>
 		</Filter>

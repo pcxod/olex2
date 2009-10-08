@@ -140,7 +140,6 @@ current folder will be updated\n";
       }
     }
     bapp->GetLog().AddStream( new TOutStream, true);
-    //bapp->SetSharedDir( TShellUtil::GetSpecialFolderLocation(fiAppData) << "Olex2u/");
     DoRun();
   }
   catch(const TExceptionBase& exc)  {

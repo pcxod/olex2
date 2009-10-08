@@ -5,6 +5,8 @@
 #include "exception.h"
 #include "estrlist.h"
 #include "bapp.h"
+#include "md5.h"
+#include "utf8file.h"
 namespace patcher  {
 const short
   papi_OK            = 0,
@@ -57,6 +59,38 @@ public:
   static int GetNumberOfOlex2Running();
   static bool LockUpdater();
   static bool UnlockUpdater();
+
+  static const char* GetTagFileName()  {  return "olex2.tag";  }
+  //reads current repository tag, returns EmptyString in the case of error
+  static olxstr ReadRepositoryTag();
+  // composes new shared dir and saves its info
+  static olxstr ComposeNewSharedDir(const olxstr& shared_dir, const olxstr& base_dir=EmptyString)  {
+    olxstr new_shared_dir = shared_dir;
+#ifdef __WIN32__
+    new_shared_dir << "Olex2Data/";
+#endif
+    return TEFile::AddTrailingBackslashI( 
+      new_shared_dir << MD5::Digest(CString( 
+        TEFile::AddTrailingBackslash((base_dir.IsEmpty() ? TBasicApp::GetBaseDir() : base_dir)) + ReadRepositoryTag())) );
+  }
+  static void SaveLocationInfo(const olxstr& shared_dir, const olxstr& base_dir=EmptyString)  {
+    TCStrList location_file_content;
+    location_file_content.Add(TEFile::AddTrailingBackslash((base_dir.IsEmpty() ? TBasicApp::GetBaseDir() : base_dir))) 
+      << patcher::PatchAPI::ReadRepositoryTag();
+    location_file_content.SaveToFile( shared_dir + "folder.info" );
+  }
+  static olxstr ComposeOldSharedDir(const olxstr& shared_dir)  {
+    olxstr new_shared_dir = shared_dir;
+#ifdef __WIN32__
+  #ifdef _UNICODE
+    new_shared_dir << "Olex2u";
+  #else
+    new_shared_dir << "Olex2";
+  #endif
+#endif
+    return TEFile::AddTrailingBackslashI(new_shared_dir);
+  }
+
 };
 
 };

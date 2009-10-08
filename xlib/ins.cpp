@@ -69,8 +69,10 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
   InsFile.CombineLines('=');
   TBasicAtomInfo& baiQPeak = atomsInfo.GetAtomInfo(iQPeakIndex);
   cx.Resi = &GetAsymmUnit().GetResidue(-1);
-  for( int i=0; i < InsFile.Count(); i++ )
+  for( int i=0; i < InsFile.Count(); i++ )  {
+    InsFile[i].Replace('\t', ' ');
     InsFile[i] = olxstr::DeleteSequencesOf<char>(InsFile[i], ' ');
+  }
   for( int i=0; i < InsFile.Count(); i++ )  {
     if( InsFile[i].IsEmpty() )      continue;
 

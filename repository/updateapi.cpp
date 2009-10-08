@@ -30,7 +30,10 @@ typedef THttpFileSystem HttpFS;
 
 using namespace updater;
 using namespace patcher;
-
+const olxstr UpdateAPI::new_installation_fn("new_installation");
+//..............................................................................
+UpdateAPI::UpdateAPI() : f_lsnr(NULL), p_lsnr(NULL), 
+  settings(GetSettingsFileName()), Tag( patcher::PatchAPI::ReadRepositoryTag() )  {  }
 //..............................................................................
 short UpdateAPI::DoUpdate(AActionHandler* _f_lsnr, AActionHandler* _p_lsnr)  {
   CleanUp(_f_lsnr, _p_lsnr); 
@@ -84,7 +87,7 @@ short UpdateAPI::DoInstall(AActionHandler* download_lsnr, AActionHandler* extrac
         zfs.OnProgress->Add(p_lsnr);
         p_lsnr = NULL;
       }
-      if( !zfs.Exists(GetTagFileName()) )
+      if( !zfs.Exists(patcher::PatchAPI::GetTagFileName()) )
         return updater::uapi_InvaildRepository;
       zfs.ExtractAll(TBasicApp::GetBaseDir());
       settings.repository = GetDefaultRepository();
@@ -444,15 +447,6 @@ void UpdateAPI::GetAvailableTags(TStrList& res, olxstr& repo_name) const {
   delete fs;
 }
 //.............................................................................
-olxstr UpdateAPI::ReadRepositoryTag()  {
-  olxstr tag_fn = TBasicApp::GetBaseDir() + GetTagFileName();
-  if( !TEFile::Exists(tag_fn) )
-    return EmptyString;
-  TStrList sl;
-  sl.LoadFromFile(tag_fn);
-  return sl.Count() == 1 ? sl[0] : EmptyString;
-}
-//.............................................................................
 olxstr UpdateAPI::TrimTagPart(const olxstr& path) const {
   if( Tag.IsEmpty() )  return path;
   olxstr rv = TEFile::UnixPath(path);
@@ -473,43 +467,3 @@ olxstr UpdateAPI::AddTagPart(const olxstr& path, bool Update) const {
   return rv;
 }
 //.............................................................................
-/////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////
-SettingsFile::SettingsFile(const olxstr& file_name) : source_file(file_name)  {
-  if( !TEFile::Exists(file_name) )
-    return;
-  const TSettingsFile settings(file_name);
-  proxy = settings["proxy"];
-  repository = settings["repository"];
-  update_interval = settings["update"];
-  const olxstr& last_update_str = settings.GetParam("lastupdate", "0");
-  if( last_update_str.IsEmpty() )
-    last_updated = 0;
-  else
-    last_updated = last_update_str.RadInt<int64_t>();
-  extensions_to_skip.Strtok(settings["exceptions"], ';');
-  dest_repository = settings["dest_repository"];
-  src_for_dest = settings["src_for_dest"];
-  files_to_skip.Strtok(settings["skip"], ';');
-  olex2_port = settings["olex-port"];
-  ask_for_update = settings.GetParam("ask_update", TrueString).ToBool();
-}
-//.......................................................................
-bool SettingsFile::Save() {
-  TSettingsFile settings;
-  settings["proxy"] = proxy;
-  settings["repository"] = repository;
-  settings["update"] = update_interval;
-  settings["lastupdate"] = last_updated;
-  settings["exceptions"] = extensions_to_skip.Text(';');
-  settings["dest_repository"] = dest_repository;
-  settings["src_for_dest"] = src_for_dest;
-  settings["skip"] = files_to_skip.Text(';');
-  settings["olex-port"] = olex2_port;
-  settings["ask_update"] = ask_for_update;
-  try  {  settings.SaveSettings(source_file);  }
-  catch(...)  {  return false;  }
-  return true;
-}
-//.......................................................................

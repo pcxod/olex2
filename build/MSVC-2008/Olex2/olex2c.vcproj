@@ -215,7 +215,7 @@
 				FloatingPointModel="2"
 				UsePrecompiledHeader="0"
 				WarningLevel="2"
-				Detect64BitPortabilityProblems="true"
+				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="0"
 				UndefinePreprocessorDefinitions="__WXWIDGETS__"
 			/>
@@ -924,6 +924,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\repository\patchapi.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\repository\py_core.cpp"
 				>
 				<FileConfiguration
@@ -1065,6 +1069,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\repository\unzip.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\repository\updateapi.cpp"
 				>
 			</File>
 			<File
