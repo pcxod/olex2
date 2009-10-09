@@ -1186,19 +1186,15 @@ separated values of Atom Type and radius, an entry a line" );
   if( DataDir.IsEmpty() )
     DataDir = TShellUtil::GetSpecialFolderLocation(fiAppData);
   olxstr new_data_dir = patcher::PatchAPI::ComposeNewSharedDir(DataDir);
-  wxMessageBox(new_data_dir.u_str());
   DataDir = patcher::PatchAPI::ComposeOldSharedDir(DataDir);
   // migration code...
   if( !TEFile::Exists(DataDir) )  {  // do not worry then - create the new one
-    wxMessageBox(wxT("1"));
     DataDir = new_data_dir;
     if( !TEFile::MakeDirs(DataDir) )
       TBasicApp::GetLog().Error("Could not create data folder!");
   }
   else  {
-    wxMessageBox(wxT("2"));
     if( !TEFile::Exists(new_data_dir) )  {  // need to copy the old settings then...
-      wxMessageBox(wxT("3"));
       // check if we have full access to all files in the dir...
       bool copy_old = !updater::UpdateAPI::IsNewInstallation();
       if( !TEFile::MakeDirs(new_data_dir) )
