@@ -616,6 +616,18 @@ Please run currently installed Olex2 to apply the updates and then exit Olex2 an
         olxstr ip = TEFile::AddTrailingBackslash(frMain->eInstallationPath->Text.c_str());
         olxstr rp = TEFile::AddTrailingBackslash(
           TEFile::RemoveTrailingBackslash(Bapp->GetBaseDir()) << '-' << dlgUninstall->eAppend->Text.c_str());
+        // this has to go first as otherwise the tag gets lost...
+        if( (rename_status & rename_status_DataDir) == 0 )  {
+          olxstr new_data_dir = patcher::PatchAPI::ComposeNewSharedDir(TShellUtil::GetSpecialFolderLocation(fiAppData), rp);
+          if( TEFile::Exists(OlexDataDir) )  {
+            if( !TEFile::Rename(OlexDataDir, new_data_dir, true) )  {
+              Application->MessageBoxA("Failed to rename previous data folder", "Error", MB_OK|MB_ICONERROR);
+              return false;
+            }
+            patcher::PatchAPI::SaveLocationInfo(new_data_dir, rp);
+          }
+          rename_status |= rename_status_DataDir;
+        }
         if( (rename_status & rename_status_BaseDir) == 0 )  {  // has to be done if failed on the second rename
           if( ip.Equalsi(rp) )  {
             Application->MessageBoxA("The renamed and installation paths should differ", "Error", MB_OK|MB_ICONERROR);
@@ -631,18 +643,6 @@ Please run currently installed Olex2 to apply the updates and then exit Olex2 an
           }
           rename_status |= rename_status_BaseDir;
         }
-        if( (rename_status & rename_status_DataDir) == 0 )  {
-          olxstr new_data_dir = patcher::PatchAPI::ComposeNewSharedDir(TShellUtil::GetSpecialFolderLocation(fiAppData), rp);
-          if( TEFile::Exists(OlexDataDir) )  {
-            if( !TEFile::Rename(OlexDataDir, new_data_dir, true) )  {
-              Application->MessageBoxA("Failed to rename previous data folder", "Error", MB_OK|MB_ICONERROR);
-              return false;
-            }
-            patcher::PatchAPI::SaveLocationInfo(new_data_dir, rp);
-          }
-          rename_status |= rename_status_DataDir;
-        }
-
         CleanRegistryAndShortcuts(false);
         bool menu_sc = false, desktop_sc = false;
         olxstr m_sc_fn = TShellUtil::GetSpecialFolderLocation(fiCommonStartMenu) + "Olex2.lnk";
