@@ -600,9 +600,8 @@ bool TfMain::DoUninstall()  {
       }
       Cursor = crArrow;
       if( dlgUninstall->cbRemoveUserSettings->Checked )  {
-        olxstr DataDir = patcher::PatchAPI::ComposeNewSharedDir(TShellUtil::GetSpecialFolderLocation(fiAppData), OlexInstalledPath);
-        if( TEFile::Exists(DataDir) )
-          TEFile::DeleteDir(DataDir);
+        if( TEFile::Exists(OlexDataDir) )
+          TEFile::DeleteDir(OlexDataDir);
       }
       CleanRegistryX();  // cleanup msvcrt installation flag - just in case...
       return CleanRegistryAndShortcuts(true);
