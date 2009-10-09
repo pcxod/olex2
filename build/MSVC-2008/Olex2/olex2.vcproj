@@ -995,6 +995,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\repository\wxgltctrl.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\repository\wxzipfs.cpp"
 				>
 			</File>

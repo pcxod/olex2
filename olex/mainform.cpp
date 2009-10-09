@@ -1197,9 +1197,7 @@ separated values of Atom Type and radius, an entry a line" );
     if( !TEFile::Exists(new_data_dir) )  {  // need to copy the old settings then...
       // check if we have full access to all files in the dir...
       bool copy_old = !updater::UpdateAPI::IsNewInstallation();
-      if( !copy_old )
-        updater::UpdateAPI::TagInstallationAsOld();
-      else  {
+      if( copy_old )  {
         while( patcher::PatchAPI::GetNumberOfOlex2Running() > 1 )  {
           wxMessageBox(
             wxT("Another instance of Olex2 is running... Please close it and press OK"),
@@ -1208,17 +1206,11 @@ separated values of Atom Type and radius, an entry a line" );
       }
       if( !TEFile::MakeDirs(new_data_dir) )
         TBasicApp::GetLog().Error("Could not create data folder!");
-      else if( copy_old ) {
-        patcher::PatchAPI::SaveLocationInfo(new_data_dir);
-        TFileTree ft(DataDir);
-        try  {  
-          ft.Expand();
-          ft.CopyTo(new_data_dir);  
-        }
-        catch( const TExceptionBase& e)  {
-          TBasicApp::GetLog() << e.GetException()->GetFullMessage();
-        }
-      }
+      else if( copy_old )
+        TFileTree::Copy(DataDir, new_data_dir, false);
+      if( !copy_old )
+        updater::UpdateAPI::TagInstallationAsOld();
+      patcher::PatchAPI::SaveLocationInfo(new_data_dir);
     }
     DataDir = new_data_dir;
   }

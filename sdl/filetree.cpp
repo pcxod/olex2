@@ -183,33 +183,49 @@ void TFileTree::Folder::Merge(const DiffFolder& df, TOnProgress& onSync, const o
   }
 }
 //......................................................................................
-void TFileTree::Folder::CopyTo(const olxstr& _dest,
+bool TFileTree::Folder::CopyTo(const olxstr& _dest,
             TOnProgress& OnSync,
+            bool do_throw,
             void (*AfterCopy)(const olxstr& src, const olxstr& dest)
             ) const
 {
-  if( FileTree.Break )  return;
+  if( FileTree.Break )  return false;
   olxstr dest = TEFile::AddTrailingBackslash(_dest + (Parent == NULL ? EmptyString : Name));
   if( !TEFile::Exists(dest) )  {
-    if( !TEFile::MakeDir(dest) || !TEFile::MakeDirs(dest) )
-      throw TFunctionFailedException(__OlxSourceInfo, olxstr("Could not create folder: ") << dest);
+    if( !TEFile::MakeDir(dest) || !TEFile::MakeDirs(dest) )  {
+      if( do_throw )
+        throw TFunctionFailedException(__OlxSourceInfo, olxstr("Could not create folder: ") << dest);
+      return false;
+    }
   }
+  bool final_res = true;
   for( int i=0; i < Files.Count(); i++ )  {
-    if( FileTree.Break )  return;
+    if( FileTree.Break )  return false;
     olxstr src_fn(FullPath + Files[i].GetName());
     olxstr dest_fn(dest + Files[i].GetName());
-    FileTree.CopyFile(src_fn, dest_fn);
-    OnSync.SetAction(dest_fn);
-    OnSync.IncPos( (double)Files[i].GetSize() );
-    FileTree.OnSynchronise->Execute(NULL, &OnSync);
-    bool res = TEFile::SetFileTimes(dest_fn, Files[i].GetLastAccessTime(), Files[i].GetModificationTime());
-    if( !res )
-      throw TFunctionFailedException(__OlxSourceInfo, "settime");
+    try  {
+      FileTree.CopyFile(src_fn, dest_fn);
+      OnSync.SetAction(dest_fn);
+      OnSync.IncPos( (double)Files[i].GetSize() );
+      FileTree.OnSynchronise->Execute(NULL, &OnSync);
+      bool res = TEFile::SetFileTimes(dest_fn, Files[i].GetLastAccessTime(), Files[i].GetModificationTime());
+      if( !res )
+        throw TFunctionFailedException(__OlxSourceInfo, "settime");
+    }
+    catch( const TExceptionBase& e)  {
+      if( do_throw )
+        throw TFunctionFailedException(__OlxSourceInfo, e);
+      final_res = false;
+      continue;
+    }
     if( AfterCopy != NULL )
       (*AfterCopy)(src_fn, dest_fn);
   }
-  for( int i=0; i < Folders.Count(); i++ )
-    Folders[i].CopyTo(dest, OnSync, AfterCopy);
+  for( int i=0; i < Folders.Count(); i++ )  {
+    if( !Folders[i].CopyTo(dest, OnSync, do_throw, AfterCopy) )
+      final_res = false;
+  }
+  return final_res;
 }
 //......................................................................................
 void TFileTree::Folder::Synchronise(TFileTree::Folder& f, TOnProgress& onSync) {

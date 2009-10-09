@@ -156,6 +156,9 @@ void TdlgMain::Launch()  {
   SetEnvironmentVariable("PATH", path.c_str());
   olxstr py_path = TBasicApp::GetBaseDir() + "Python26";
   SetEnvironmentVariable("PYTHONHOME", py_path.c_str());
+  // remove all OLEX2_DATADIR and OLEX2_DIR variables
+  SetEnvironmentVariable("OLEX2_DIR", NULL);
+  SetEnvironmentVariable("OLEX2_DATADIR", NULL);
 
   STARTUPINFO si;
   PROCESS_INFORMATION ProcessInfo;
