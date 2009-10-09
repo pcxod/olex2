@@ -76,13 +76,6 @@ TOlexViewer::TOlexViewer(HDC windowDC, int w, int h) : WindowDC(windowDC) {
   
   DataDir = TShellUtil::GetSpecialFolderLocation(fiAppData);
   DataDir = patcher::PatchAPI::ComposeNewSharedDir(DataDir);
-#ifdef __WIN32__
-  #ifdef _UNICODE
-    DataDir << "Olex2u/";
-  #else
-    DataDir << "Olex2/";
-  #endif
-#endif
 
   if( TEFile::Exists(DataDir + "default.glsp") )
     LoadScene(DataDir + "default.glsp");

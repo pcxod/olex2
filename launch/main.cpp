@@ -62,7 +62,6 @@ __fastcall TdlgMain::TdlgMain(TComponent* Owner) : TForm(Owner)  {
   olxstr BaseDir;
   TEGC::Initialise();
   FBApp = new TBasicApp( TBasicApp::GuessBaseDir(CmdLine, NULL) );
-  FBApp->SetSharedDir( patcher::PatchAPI::ComposeNewSharedDir(TShellUtil::GetSpecialFolderLocation(fiAppData)) );
   dlgSplash = new TdlgSplash(this);
 
   olxstr vfn = (TBasicApp::GetBaseDir()+ "version.txt");
