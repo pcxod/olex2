@@ -112,8 +112,9 @@ public:
     // merges the difference tree, possibly into a different location
     void Merge(const DiffFolder& df, TOnProgress& onSync, const olxstr& _dest_n = EmptyString) const;
     // copies and overwrites existing files and timestamp
-    void CopyTo(const olxstr& _dest,
+    bool CopyTo(const olxstr& _dest,
                 TOnProgress& OnSync,
+                bool do_throw,
                 void (*AfterCopy)(const olxstr& src, const olxstr& dest) = NULL
                 ) const;
     // syncronises two folders - only updates files, does not delete anything (yet)
@@ -168,13 +169,31 @@ public:
     OnSynchronise->Exit(NULL, &onSync);
   }
   //............................................................................
-  void CopyTo(const olxstr& _dest, void (*AfterCopy)(const olxstr& src, const olxstr& dest)=NULL)  {
+  /* if do_throw is true, the processes will be terminated on the first error else all what is
+  possible will be copied */
+  bool CopyTo(const olxstr& _dest, 
+    void (*AfterCopy)(const olxstr& src, const olxstr& dest)=NULL, 
+    bool do_throw=true)  
+  {
     TOnProgress OnSync;
     OnSync.SetMax( (double)Root.CalcSize() );
     OnSynchronise->Enter(NULL, &OnSync);
-    Root.CopyTo(_dest, OnSync, AfterCopy);
+    bool res = Root.CopyTo(_dest, OnSync, do_throw, AfterCopy);
     OnSync.SetMax( OnSync.GetMax() );
     OnSynchronise->Exit(NULL, &OnSync);
+    return res;
+  }
+  //............................................................................
+  // if do_throw is false no exceptions will be throws, also see above
+  static bool Copy(const olxstr& src, const olxstr& dest, bool do_throw)  {
+    try  {
+      TFileTree ft(src);
+      ft.Expand();
+      return ft.CopyTo(dest, NULL, do_throw);
+    }
+    catch(const TExceptionBase&)  {
+      return false;
+    }
   }
   //............................................................................
   void Expand()  {

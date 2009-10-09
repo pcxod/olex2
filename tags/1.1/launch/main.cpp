@@ -6,6 +6,7 @@
 #include "main.h"
 #include "splash.h"
 #include "patchapi.h"
+#include "updateapi.h"
 
 #include "log.h"
 #include "egc.h"
@@ -57,18 +58,14 @@ public:
   }
 };
 //---------------------------------------------------------------------------
-__fastcall TdlgMain::TdlgMain(TComponent* Owner)
-  : TForm(Owner)
-{
+__fastcall TdlgMain::TdlgMain(TComponent* Owner) : TForm(Owner)  {
   olxstr BaseDir;
   TEGC::Initialise();
-  //FBApp = new TBasicApp(TBasicApp::GuessBaseDir(CmdLine, "OLEX2_DIR") );
   FBApp = new TBasicApp( TBasicApp::GuessBaseDir(CmdLine, NULL) );
-  FBApp->SetSharedDir( TShellUtil::GetSpecialFolderLocation(fiAppData) + "Olex2u");
   dlgSplash = new TdlgSplash(this);
 
   olxstr vfn = (TBasicApp::GetBaseDir()+ "version.txt");
-  olxstr tfn = (TBasicApp::GetBaseDir()+ "olex2.tag");
+  olxstr tfn = (TBasicApp::GetBaseDir()+ patcher::PatchAPI::GetTagFileName());
   // check updates ...
   //asm {  int 3  }
   // reading version info
@@ -158,6 +155,9 @@ void TdlgMain::Launch()  {
   SetEnvironmentVariable("PATH", path.c_str());
   olxstr py_path = TBasicApp::GetBaseDir() + "Python26";
   SetEnvironmentVariable("PYTHONHOME", py_path.c_str());
+  // remove all OLEX2_DATADIR and OLEX2_DIR variables
+  SetEnvironmentVariable("OLEX2_DIR", NULL);
+  SetEnvironmentVariable("OLEX2_DATADIR", NULL);
 
   STARTUPINFO si;
   PROCESS_INFORMATION ProcessInfo;

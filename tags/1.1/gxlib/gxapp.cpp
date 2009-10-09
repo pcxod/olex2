@@ -3333,18 +3333,16 @@ void TGXApp::SetXGrowLinesVisible(bool v)  {
 }
 //..............................................................................
 void TGXApp::SetGrowMode(short v, const olxstr& atoms)  {
-  if( atoms.Length() )  {
-    TXAtomPList xatoms;
+  TXAtomPList xatoms;
+  if( atoms.IsEmpty() )
+    FindXAtoms("sel", xatoms);
+  else
     FindXAtoms(atoms, xatoms);
-    // have to preprocess instructions like 'sel'
-    olxstr ats;
-    for( int i=0; i < xatoms.Count(); i++ )
-      ats << xatoms[i]->Atom().GetLabel() << ' ';
-    AtomsToGrow = ats;
-  }
-  else  {
-    AtomsToGrow = EmptyString;
-  }
+  // have to preprocess instructions like 'sel'
+  olxstr ats;
+  for( int i=0; i < xatoms.Count(); i++ )
+    ats << xatoms[i]->Atom().GetLabel() << ' ';
+  AtomsToGrow = ats;
   FGrowMode = v;
   UsedTransforms.Clear();
 }
@@ -3387,12 +3385,13 @@ void TGXApp::CreateXGrowLines()  {
     TListCaster::POP( xatoms, AtomsToProcess );
   }
   else  {
-    const int ac = FXFile->GetLattice().AtomCount();
-    for( int i=0; i < ac; i++ )  {
-      TSAtom& A = FXFile->GetLattice().GetAtom(i);
-      if( A.IsDeleted() )  continue;
-      AtomsToProcess.Add( &A );
-    }
+    ;  // it creates a mess overwise...
+    //const int ac = FXFile->GetLattice().AtomCount();
+    //for( int i=0; i < ac; i++ )  {
+    //  TSAtom& A = FXFile->GetLattice().GetAtom(i);
+    //  if( A.IsDeleted() )  continue;
+    //  AtomsToProcess.Add( &A );
+    //}
   }
   TPtrList<TCAtom> AttachedAtoms;
   TTypeList<TGXApp_Transform1> tr_list;

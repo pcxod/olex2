@@ -86,8 +86,10 @@
 #include "updateth.h"
 #include "msgbox.h"
 #include "updateapi.h"
+#include "patchapi.h"
 #include "hkl_py.h"
-
+#include "filetree.h"
+#include "md5.h"
 
 #ifdef __GNUC__
   #undef Bool
@@ -661,7 +663,7 @@ Accepts atoms, bonds, hbonds or a name (like from LstGO). Example: 'mask hbonds 
   as close to the cell center as possible" );
 
   this_InitMacro(ShowH, , fpNone|fpTwo|psFileLoaded );
-  this_InitMacro(Fvar, , (fpAny^fpNone)|psCheckFileTypeIns );
+  this_InitMacro(Fvar, , (fpAny)|psCheckFileTypeIns );
   this_InitMacro(Sump, , (fpAny^fpNone)|psCheckFileTypeIns );
   this_InitMacro(Part, p&;lo, (fpAny^fpNone)|psFileLoaded );
   this_InitMacroD(Afix,"n-to accept N atoms in the rings for afix 66" , 
@@ -1178,19 +1180,33 @@ separated values of Atom Type and radius, an entry a line" );
 //  DataDir = TutorialDir + "Olex_Data\\";
   wxString data_dir; // we cannot use any TEFile functions, working eith c_str, as the TEGC is not initialised yet...
   if( wxGetEnv( wxT("OLEX2_DATADIR"), &data_dir) )  {
-    if( wxDirExists(data_dir) )  {
+    if( wxDirExists(data_dir) )
       DataDir = TEFile::AddTrailingBackslash(data_dir.c_str());
-    }
   }
   if( DataDir.IsEmpty() )
     DataDir = TShellUtil::GetSpecialFolderLocation(fiAppData);
-#ifdef __WIN32__
-  #ifdef _UNICODE
-    DataDir << "Olex2u/";
-  #else
-    DataDir << "Olex2/";
-  #endif
-#endif
+  olxstr new_data_dir = patcher::PatchAPI::ComposeNewSharedDir(DataDir);
+  DataDir = patcher::PatchAPI::ComposeOldSharedDir(DataDir);
+  // migration code...
+  if( !TEFile::Exists(DataDir) )  {  // do not worry then - create the new one
+    DataDir = new_data_dir;
+    if( !TEFile::MakeDirs(DataDir) )
+      TBasicApp::GetLog().Error("Could not create data folder!");
+  }
+  else  {
+    if( !TEFile::Exists(new_data_dir) )  {  // need to copy the old settings then...
+      // check if we have full access to all files in the dir...
+      bool copy_old = !updater::UpdateAPI::IsNewInstallation();
+      if( !TEFile::MakeDirs(new_data_dir) )
+        wxMessageBox( (olxstr("Failed to create: ") << new_data_dir).u_str(), wxT("ERROR"), wxOK|wxICON_ERROR);
+      else if( copy_old )
+        TFileTree::Copy(DataDir, new_data_dir, false);
+      if( !copy_old )
+        updater::UpdateAPI::TagInstallationAsOld();
+      patcher::PatchAPI::SaveLocationInfo(new_data_dir);
+    }
+    DataDir = new_data_dir;
+  }
   FXApp->SetSharedDir(DataDir);
   DictionaryFile = XA->GetBaseDir() + "dictionary.txt";
   PluginFile =  XA->GetBaseDir() + "plugins.xld";
@@ -1201,10 +1217,6 @@ separated values of Atom Type and radius, an entry a line" );
 
   SetStatusText( XA->GetBaseDir().u_str() );
 
-  if( !TEFile::Exists(DataDir) )  {
-    if( !TEFile::MakeDir(DataDir) )
-      TBasicApp::GetLog().Error("Could not create data folder!");
-  }
   // put log file to the user data folder
   try  {
     TBasicApp::GetLog().AddStream( TUtf8File::Create(DataDir + "olex2.log"), true );
@@ -2740,21 +2752,18 @@ void TMainForm::OnSelection(wxCommandEvent& m)  {
   }
 }
 //..............................................................................
-void TMainForm::OnGraphicsStyle(wxCommandEvent& event)
-{
-  if( event.GetId() == ID_GStyleSave )
-  {
+void TMainForm::OnGraphicsStyle(wxCommandEvent& event)  {
+  if( event.GetId() == ID_GStyleSave )  {
     olxstr FN = PickFile("Drawing style",
     "Drawing styles|*.glds", StylesDir, false);
-    if( FN.Length() )
-    { ProcessXPMacro(olxstr("save style ") << FN, MacroError);  }
+    if( !FN.IsEmpty() )
+      ProcessXPMacro(olxstr("save style ") << FN, MacroError);
   }
-  if( event.GetId() == ID_GStyleOpen )
-  {
+  if( event.GetId() == ID_GStyleOpen )  {
     olxstr FN = PickFile("Drawing style",
     "Drawing styles|*.glds", StylesDir, true);
-    if( FN.Length() )
-    { ProcessXPMacro(olxstr("load style ") << FN, MacroError);  }
+    if( !FN.IsEmpty() )
+      ProcessXPMacro(olxstr("load style ") << FN, MacroError);
   }
 }
 //..............................................................................
@@ -3259,7 +3268,7 @@ void TMainForm::UpdateRecentFile(const olxstr& fn)  {
   wxMenuItem* mi=NULL;
   if( index == -1 )  {
     if( (FRecentFiles.Count()+1) < FRecentFilesToShow )  {
-      for( int i=0; i < MenuFile->GetMenuItemCount(); i++ )  {
+      for( size_t i=0; i < MenuFile->GetMenuItemCount(); i++ )  {
         wxMenuItem* item = MenuFile->FindItemByPosition(i);
           if( item->GetId() >= ID_FILE0 && item->GetId() <= (ID_FILE0+FRecentFilesToShow))
             index = i;

@@ -14,11 +14,12 @@
 #include "xbond.h"
 #include "gllabels.h"
 #include "shellutil.h"
+#include "patchapi.h"
 
 TOlexViewer* TOlexViewer::Instance = NULL;
 
 TOlexViewer::TOlexViewer(HDC windowDC, int w, int h) : WindowDC(windowDC) {
-  GXApp = new TGXApp(EmptyString); 
+  GXApp = new TGXApp(TBasicApp::GuessBaseDir( wxApp::GetInstance()->argv[0], "OLEX2_DIR")); 
   Instance = this;
   int PixelFormat;
   PIXELFORMATDESCRIPTOR pfd = {
@@ -74,13 +75,7 @@ TOlexViewer::TOlexViewer(HDC windowDC, int w, int h) : WindowDC(windowDC) {
   DefDS = olxv_DrawStyleTelp;
   
   DataDir = TShellUtil::GetSpecialFolderLocation(fiAppData);
-#ifdef __WIN32__
-  #ifdef _UNICODE
-    DataDir << "Olex2u/";
-  #else
-    DataDir << "Olex2/";
-  #endif
-#endif
+  DataDir = patcher::PatchAPI::ComposeNewSharedDir(DataDir);
 
   if( TEFile::Exists(DataDir + "default.glsp") )
     LoadScene(DataDir + "default.glsp");

@@ -140,7 +140,6 @@ current folder will be updated\n";
       }
     }
     bapp->GetLog().AddStream( new TOutStream, true);
-    //bapp->SetSharedDir( TShellUtil::GetSpecialFolderLocation(fiAppData) << "Olex2u/");
     DoRun();
   }
   catch(const TExceptionBase& exc)  {
@@ -230,6 +229,9 @@ void DoRun()  {
 		if( res != updater::uapi_OK && res != updater::uapi_UptoDate )  {
 			TBasicApp::GetLog() << "Installation has failed with error code: " << res << '\n';
 			TBasicApp::GetLog() << api.GetLog();
+		}
+		else  {
+		  updater::UpdateAPI::TagInstallationAsNew();
 		}
   }
   else  {

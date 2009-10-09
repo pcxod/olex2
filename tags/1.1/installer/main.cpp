@@ -58,6 +58,7 @@ __fastcall TfMain::TfMain(TComponent* Owner) :TForm(Owner)  {
   dlgUninstall = new TdlgUninstall(this);
   MouseDown = Dragging = false;
   Expanded = false;
+  rename_status = 0;
   // init admin mode for shortcuts if required
   OSVERSIONINFO veri;
   memset(&veri, 0, sizeof(veri));
@@ -86,6 +87,8 @@ __fastcall TfMain::TfMain(TComponent* Owner) :TForm(Owner)  {
       if( updateInd != -1 )
         frMain->rgAutoUpdate->ItemIndex = updateInd;
     }
+    OlexDataDir = patcher::PatchAPI::ComposeNewSharedDir(TShellUtil::GetSpecialFolderLocation(fiAppData), OlexInstalledPath);
+    OlexTag = patcher::PatchAPI::ReadRepositoryTag();
     SetAction(actionReinstall);
   }
   else
@@ -183,6 +186,8 @@ bool TfMain::_DoInstall(const olxstr& zipFile, const olxstr& installPath)  {
   }
   if( !res )
     Application->MessageBoxA("Invalid installation archive.", "Installation failed", MB_OK|MB_ICONERROR);
+  else
+    updater::UpdateAPI::TagInstallationAsNew();
   return res;
 }
 //---------------------------------------------------------------------------
@@ -434,25 +439,6 @@ bool TfMain::CleanRegistry()  {
   return res;
 }
 //---------------------------------------------------------------------------
-bool TfMain::CleanInstallationFolder(TFSItem& item)  {
-  if( !item.IsFolder() && item.GetParent() != NULL )  return false;
-  for( int i=0; i < item.Count(); i++ )  {
-    if( item.Item(i).IsFolder() )
-      CleanInstallationFolder( item.Item(i) );
-    else
-      TEFile::DelFile( OlexInstalledPath + item.Item(i).GetFullName() );
-  }
-  if( (item.GetParent() != NULL) && TEFile::ChangeDir( OlexInstalledPath + item.GetFullName() ) )  {
-    TStrList leftItems;
-    TEFile::ListCurrentDir(leftItems, "*.*", sefAll);
-    if( !leftItems.Count() )  {
-      TEFile::ChangeDir( OlexInstalledPath );
-      TEFile::RmDir( item.GetFullName() );
-    }
-  }
-  return true;
-}
-//---------------------------------------------------------------------------
 bool TfMain::LaunchFile( const olxstr& fileName, bool do_exit )  {
   STARTUPINFO si;
   PROCESS_INFORMATION ProcessInfo;
@@ -593,47 +579,69 @@ bool TfMain::DoUninstall()  {
     return false;
   }
   // init the append string
-  olxstr tag = updater::UpdateAPI::ReadRepositoryTag();
-  if( tag.IsEmpty() )
-    tag = TETime::FormatDateTime("yyyy-MM-dd", TETime::Now());
-  dlgUninstall->eAppend->Text = tag.u_str();
+  if( rename_status == 0 )  {
+    olxstr tag = OlexTag;
+    if( tag.IsEmpty() )
+      tag = TETime::FormatDateTime("yyyy-MM-dd", TETime::Now());
+    dlgUninstall->eAppend->Text = tag.u_str();
+  }
+  else if( rename_status & rename_status_BaseDir )  {
+    dlgUninstall->eAppend->Enabled = false;
+  }
 
   if( dlgUninstall->ShowModal() == mrOk )  {
     action = dlgUninstall->cbInstall->Checked ? actionInstall : actionExit;
     if( dlgUninstall->rgRemove->Checked )  {
+      Cursor = crHourGlass;
       if( !TEFile::DeleteDir(OlexInstalledPath) )  {
+        Cursor = crArrow;
         Application->MessageBoxA("Could not remove Olex2 installation folder...", "Error", MB_OK|MB_ICONERROR);
         return false;
       }
+      Cursor = crArrow;
       if( dlgUninstall->cbRemoveUserSettings->Checked )  {
-        olxstr DataDir = TShellUtil::GetSpecialFolderLocation(fiAppData);
-        TStrList dirs;
-        dirs.Add( DataDir + "Olex2u");
-        dirs.Add( DataDir + "Olex2");
-        for( int i=0; i < dirs.Count(); i++ )  {
-          if( TEFile::Exists(dirs[i]) )
-          TEFile::DeleteDir(dirs[i]);
-        }
+        if( TEFile::Exists(OlexDataDir) )
+          TEFile::DeleteDir(OlexDataDir);
       }
       CleanRegistryX();  // cleanup msvcrt installation flag - just in case...
       return CleanRegistryAndShortcuts(true);
     }
     else  {
       if( dlgUninstall->rgRename->Checked )  {
+        if( TEFile::Exists( patcher::PatchAPI::GetUpdateLocationFileName()) )  {
+          Application->MessageBoxA("The update for current installation is incomplete.\n\
+Please run currently installed Olex2 to apply the updates and then exit Olex2 and press OK ", "Error", MB_OK|MB_ICONERROR);
+          return false;
+        }
         olxstr ip = TEFile::AddTrailingBackslash(frMain->eInstallationPath->Text.c_str());
         olxstr rp = TEFile::AddTrailingBackslash(
           TEFile::RemoveTrailingBackslash(Bapp->GetBaseDir()) << '-' << dlgUninstall->eAppend->Text.c_str());
-        if( ip.Equalsi(rp) )  {
-          Application->MessageBoxA("The renamed and installation paths should differ", "Error", MB_OK|MB_ICONERROR);
-          return false;
+        // this has to go first as otherwise the tag gets lost...
+        if( (rename_status & rename_status_DataDir) == 0 )  {
+          olxstr new_data_dir = patcher::PatchAPI::ComposeNewSharedDir(TShellUtil::GetSpecialFolderLocation(fiAppData), rp);
+          if( TEFile::Exists(OlexDataDir) )  {
+            if( !TEFile::Rename(OlexDataDir, new_data_dir, true) )  {
+              Application->MessageBoxA("Failed to rename previous data folder", "Error", MB_OK|MB_ICONERROR);
+              return false;
+            }
+            patcher::PatchAPI::SaveLocationInfo(new_data_dir, rp);
+          }
+          rename_status |= rename_status_DataDir;
         }
-        if( TEFile::Exists(rp) )  {
-          Application->MessageBoxA("The renamed path already exists", "Error", MB_OK|MB_ICONERROR);
-          return false;
-        }
-        if( !TEFile::Rename(Bapp->GetBaseDir(), rp, true) )  {
-          Application->MessageBoxA("Failed to rename previous installation folder", "Error", MB_OK|MB_ICONERROR);
-          return false;
+        if( (rename_status & rename_status_BaseDir) == 0 )  {  // has to be done if failed on the second rename
+          if( ip.Equalsi(rp) )  {
+            Application->MessageBoxA("The renamed and installation paths should differ", "Error", MB_OK|MB_ICONERROR);
+            return false;
+          }
+          if( TEFile::Exists(rp) )  {
+            Application->MessageBoxA("The renamed path already exists", "Error", MB_OK|MB_ICONERROR);
+            return false;
+          }
+          if( !TEFile::Rename(Bapp->GetBaseDir(), rp, true) )  {
+            Application->MessageBoxA("Failed to rename previous installation folder", "Error", MB_OK|MB_ICONERROR);
+            return false;
+          }
+          rename_status |= rename_status_BaseDir;
         }
         CleanRegistryAndShortcuts(false);
         bool menu_sc = false, desktop_sc = false;

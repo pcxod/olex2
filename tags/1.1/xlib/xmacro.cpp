@@ -93,8 +93,8 @@ void XLibMacros::Export(TLibrary& lib)  {
   xlib_InitMacro(Flush, EmptyString, fpNone|fpOne, "Flushes log streams" );
 //_________________________________________________________________________________________________________________________
   xlib_InitMacro(EXYZ, "eadp-sets the equivalent anisotropic parameter constraints for the shared sites\
-&;lo-links occupancies of all elements sharing the site", (fpAny^(fpNone|fpOne))|psCheckFileTypeIns,
-"Adds a new element to the give site. Takes the site identifier as the first parameter and element types\
+&;lo-links occupancies of all elements sharing the site", (fpAny^fpNone)|psCheckFileTypeIns,
+"Adds a new element to the give site. Takes the site as selected atom and element types\
  as any subsequent argument" );
 //_________________________________________________________________________________________________________________________
   xlib_InitMacro(EADP, "", fpAny|psCheckFileTypeIns,
@@ -1612,9 +1612,9 @@ void XLibMacros::macFixUnit(TStrObjList &Cmds, const TParamList &Options, TMacro
 void XLibMacros::macEXYZ(TStrObjList &Cmds, const TParamList &Options, TMacroError &E) {
   TSAtomPList atoms;
   TXApp& xapp = TXApp::GetInstance();
-  xapp.FindSAtoms(Cmds[0], atoms, false, true);
+  xapp.FindSAtoms(EmptyString, atoms, false, true);
   if( atoms.Count() != 1 )  {
-    E.ProcessingError(__OlxSrcInfo, "please provide one atom exactly" );
+    E.ProcessingError(__OlxSrcInfo, "please select one atom exactly" );
     return;
   }
   bool set_eadp = Options.Contains("eadp");
@@ -1631,7 +1631,7 @@ void XLibMacros::macEXYZ(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   }
   TAtomsInfo& AtomsInfo = TAtomsInfo::GetInstance();
   RefinementModel& rm = xapp.XFile().GetRM();
-  for( int i=1; i < Cmds.Count(); i++ )  {
+  for( int i=0; i < Cmds.Count(); i++ )  {
     bool uniq = true;
     TBasicAtomInfo* bai = AtomsInfo.FindAtomInfoBySymbol(Cmds[i]);
     if( bai == NULL )  {

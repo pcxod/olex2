@@ -1,5 +1,3 @@
-//---------------------------------------------------------------------------
-
 #ifndef mainH
 #define mainH
 //---------------------------------------------------------------------------
@@ -22,6 +20,9 @@ enum {
   actionReinstall,
   actionExit
 };
+const short
+  rename_status_BaseDir = 0x0001,
+  rename_status_DataDir = 0x0002;
 //---------------------------------------------------------------------------
 class TfMain : public TForm
 {
@@ -50,8 +51,9 @@ private:	// User declarations
   TBasicApp* Bapp;
   class TProgress* Progress;
   bool OlexInstalled, SetRunAs, RedistInstalled;
-  olxstr OlexInstalledPath;
+  olxstr OlexInstalledPath, OlexDataDir, OlexTag;
   int action;
+  short rename_status;
   void SetAction(int a);
 protected:
   void DisableInterface(bool v);
@@ -59,7 +61,6 @@ protected:
   bool CleanRegistry();
   bool CleanRegistryAndShortcuts(bool sc);
   bool CleanRegistryX();
-  bool CleanInstallationFolder(class TFSItem& item);
   bool CheckOlexInstalled(olxstr& installPath);
 
   //the return value is the licence acceptance ...
