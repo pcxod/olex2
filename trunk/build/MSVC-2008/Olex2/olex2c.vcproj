@@ -128,7 +128,7 @@
 				UsePrecompiledHeader="0"
 				BrowseInformation="1"
 				WarningLevel="2"
-				Detect64BitPortabilityProblems="true"
+				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="3"
 				UndefinePreprocessorDefinitions="__WXWIDGETS__"
 			/>
@@ -912,10 +912,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\repository\integration.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\olex2c\olex2c.cpp"
 				>
 			</File>
@@ -1069,10 +1065,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\repository\unzip.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\repository\updateapi.cpp"
 				>
 			</File>
 			<File

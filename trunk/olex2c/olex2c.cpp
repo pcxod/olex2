@@ -280,9 +280,7 @@ public:
     OlexInstance = NULL;
   }
   virtual bool executeMacroEx(const olxstr& cmdLine, TMacroError& er)  {
-    str_stack stack;
-    er.SetStack( stack );
-    Macros.ProcessMacro( cmdLine, er, false );
+    Macros.ProcessMacro(cmdLine, er);
     AnalyseError(er);
     return er.IsSuccessful();
   }
@@ -311,7 +309,7 @@ public:
   virtual bool executeFunction(const olxstr& function, olxstr& retVal)  {
     retVal = function;
     TMacroError ME;
-    Macros.ProcessMacroFunc( retVal, ME );
+    Macros.ProcessFunction(retVal, ME);
     AnalyseError(ME);
     return ME.IsSuccessful();
   }
@@ -454,10 +452,8 @@ public:
   ///////////////////////////////////////////////////////////////////////////////////////////////////
   void AnalyseError( TMacroError& error )  {
     if( !error.IsSuccessful() )  {
-      if( error.GetStack() != NULL )  {
-        while( !error.GetStack()->IsEmpty() )  {
-          TBasicApp::GetLog() << error.GetStack()->Pop() << '\n';
-        }
+      while( !error.GetStack().IsEmpty() )  {
+        TBasicApp::GetLog() << error.GetStack().Pop() << '\n';
       }
       if( error.IsProcessingException() )  {
         print(olxstr(error.GetLocation()) << ": " <<  error.GetInfo(), olex::mtException);
@@ -675,7 +671,7 @@ public:
       return;
     }
     olxstr Condition = Cmds[0];
-    if( !Macros.ProcessMacroFunc(Condition, E) )  {
+    if( !Macros.ProcessFunction(Condition, E) )  {
       return;
     }
     if( Condition.ToBool() )  {
@@ -825,7 +821,7 @@ public:
     TMacroError ME;
     for(int i=0; i < Params.Count(); i++ )  {
       tmp = Params[i];
-      if( !Macros.ProcessMacroFunc(tmp, ME) )  {
+      if( !Macros.ProcessFunction(tmp, ME) )  {
         E.ProcessingError(__OlxSrcInfo, "could not process: ") << tmp;
         return;
       }
@@ -842,7 +838,7 @@ public:
     TMacroError ME;
     for(int i=0; i < Params.Count(); i++ )  {
       tmp = Params[i];
-      if( !Macros.ProcessMacroFunc(tmp, ME) )  {
+      if( !Macros.ProcessFunction(tmp, ME) )  {
         E.ProcessingError(__OlxSrcInfo, "could not process: ") << tmp;
         return;
       }
@@ -857,7 +853,7 @@ public:
   void funNot(const TStrObjList& Params, TMacroError &E) {
     olxstr tmp = Params[0];
     TMacroError ME;
-    if( !Macros.ProcessMacroFunc(tmp, ME) )  {
+    if( !Macros.ProcessFunction(tmp, ME) )  {
       E.ProcessingError(__OlxSrcInfo, "could not process: ") << tmp;
       return;
     }

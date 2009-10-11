@@ -24,11 +24,12 @@ class TMacroError: public IEObject  {
   bool DeleteObject;
   olxstr ErrorInfo, Location;
   IEObject* RetValue;
-  str_stack* Stack;
+  str_stack Stack;
 public:
   TMacroError();
   virtual ~TMacroError()  {
-    if( DeleteObject )  delete RetValue;
+    if( DeleteObject )  
+      delete RetValue;
   }
   
   void operator = (const TMacroError& ME);
@@ -41,11 +42,13 @@ public:
   void Reset()  {
     ProcessError = 0;
     ErrorInfo = EmptyString;
+    Location = EmptyString;
     if( DeleteObject )  delete RetValue;
     DeleteObject = false;
     RetValue = (IEObject*)NULL;
-    Stack = NULL;
+    Stack.Clear();
   }
+  void ClearErrorFlag()  {  ProcessError = 0;  }
 
   void ProcessingException(const ABasicFunction& caller, const TExceptionBase& exc);
 
@@ -58,14 +61,14 @@ public:
   inline bool IsIllegalState()         const {  return (ProcessError&peIllegalState) != 0;  }
 
   inline const olxstr& GetInfo()     const {  return ErrorInfo;  }
-  inline const olxstr& GetLocation() const {  return Location;  }
+  DefPropC(olxstr, Location)
+
   olxstr GetRetVal()  const;
 
   inline bool HasRetVal()     const {  return RetValue != NULL;  }
   inline IEObject* RetObj()  const  {  return RetValue;  }
   
-  str_stack* GetStack() const {  return Stack;  }
-  void SetStack(str_stack& stack)  {  Stack = &stack;  }
+  str_stack& GetStack() {  return Stack;  }
 
   // the type is validated
   template <class EObj>

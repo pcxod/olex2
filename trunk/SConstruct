@@ -12,6 +12,26 @@ AddOption('--olx_debug',
           help='Builds debug version')
 debug = (GetOption('olx_debug').lower() == 'true')
 
+AddOption('--olx_sse',
+          dest='olx_sse',
+          type='string',
+          nargs=1,
+          action='store',
+          metavar='OLX_SSE',
+          default='SSE2',
+          help='Only for optimised version, inserts given SSE, SSE2 or none instructions')
+if debug or sys.platform[:3] != 'win':
+  sse = None
+else:
+  sse = GetOption('olx_sse').upper()
+  if sse == 'NONE' or not sse:
+    sse = None
+  elif sse not in ['SSE', 'SSE2']:
+    print 'Invalid SSE instruction: \'' + sse + '\', aborting...'
+    sys.exit(1)
+  else:
+    print 'Using ' + sse
+
 AddOption('--olx_profile',
           dest='olx_profile',
           type='string',
@@ -30,10 +50,12 @@ if debug:
   out_dir += 'debug'
 else:
   out_dir += 'release'
-out_dir += '-py' + sys.version[:3] + '/'
-
+out_dir += '-py' + sys.version[:3]
+if sse:
+  out_dir += '-' + sse
+out_dir += '/'
 full_out_dir = os.getcwd() + '/' + out_dir
-
+  
 print 'Building location: ' + out_dir
 #get file lists
 alglib = Glob('./alglib/*.cpp')
@@ -50,9 +72,8 @@ olex2c = Split("""./olex2c/olex2c.cpp""")
 
 np_repository = Split("""./repository/filesystem.cpp   ./repository/shellutil.cpp 
                          ./repository/httpex.cpp       ./repository/url.cpp 
-                         ./repository/wxzipfs.cpp 
-                         ./repository/fsext.cpp        ./repository/httpfs.cpp 
-                         ./repository/integration.cpp  ./repository/IsoSurface.cpp 
+                         ./repository/wxzipfs.cpp      ./repository/httpfs.cpp 
+                         ./repository/IsoSurface.cpp   ./repository/fsext.cpp
                          ./repository/eprocess.cpp     ./repository/olxvar.cpp 
                          """)
 repository = np_repository + Split("""./repository/pyext.cpp 
@@ -86,6 +107,10 @@ env.Append(CPPPATH = ['alglib', 'sdl', 'glib', 'gxlib',
                       'repository', 'xlib'])
 unirun_env = None
 if sys.platform[:3] == 'win':
+  #http://www.scons.org/wiki/EmbedManifestIntoTarget
+  #embedd manifest...
+  env['LINKCOM'] = [env['LINKCOM'], 'mt.exe -nologo -manifest ${TARGET}.manifest -outputresource:$TARGET;1']
+  env['SHLINKCOM'] = [env['SHLINKCOM'], 'mt.exe -nologo -manifest ${TARGET}.manifest -outputresource:$TARGET;2']
   AddOption('--wxdir',
             dest='wxFolder',
             type='string',
@@ -104,8 +129,11 @@ if sys.platform[:3] == 'win':
     wxFolder += '/'
   pyFolder = os.path.split(sys.executable)[0] + '\\'
   if not debug:
-    env.Append(CCFLAGS = ['/EHsc', '/O2', '/Ob2', '/Oi', '/GL', '/MD', 
-                          '/bigobj', '/fp:fast', '/GF', '/arch:SSE2']) 
+    cc_flags = ['/EHsc', '/O2', '/Ob2', '/Oi', '/GL', '/MD', 
+                          '/bigobj', '/fp:fast', '/GF']
+    if sse:
+      cc_flags.append( '/arch:'+sse)
+    env.Append(CCFLAGS = cc_flags) 
     env.Append(LIBS = Split("""wxbase28u         wxbase28u_net  wxmsw28u_gl   
                                wxmsw28u_richtext wxmsw28u_html wxmsw28u_core 
                                wxmsw28u_adv wxregexu"""))
@@ -116,16 +144,20 @@ if sys.platform[:3] == 'win':
     env.Append(LIBS = Split("""wxbase28ud         wxbase28ud_net  wxmsw28ud_gl   
                                wxmsw28ud_richtext wxmsw28ud_html wxmsw28ud_core 
                                wxmsw28ud_adv wxregexud"""))
+    env.Append(LINKFLAGS=['/DEBUG', '/ASSEMBLYDEBUG'])
     #env.Append(LINKFLAGS=['NODEFAULTLIB:'])
-  env.Append(CPPPATH=[wxFolder+'include', 
-                      wxFolder+'lib/vc_lib/mswud',
-                      pyFolder+'include'])
-  env.Append(LIBPATH = [pyFolder+'libs', wxFolder+'lib/vc_lib'])
+  # generic libs
   env.Append(LIBS = Split("""wxexpat wxjpeg wxpng wxtiff
                              wxzlib mapi32 glu32 user32 opengl32 gdi32 ole32 
                              advapi32 comdlg32 comctl32 shell32 rpcrt4 oleaut32
-                             kernel32 wsock32"""))
-  env.Append(LINKFLAGS=['/MANIFEST', '/MACHINE:X86', '/DEBUG', '/ASSEMBLYDEBUG'])
+                             kernel32 wsock32 Iphlpapi.lib"""))
+  env.Append(LINKFLAGS=['/MACHINE:X86'])
+  unirun_env = env.Clone()
+  env.Append(CPPPATH=[wxFolder+'include', wxFolder+'lib/vc_lib/mswud', pyFolder+'include'])
+  env.Append(LIBPATH = [pyFolder+'libs', wxFolder+'lib/vc_lib'])
+  unirun_env.Append(CPPPATH=[wxFolder+'include', wxFolder+'lib/vc_lib/mswud'])
+  unirun_env.Append(LIBPATH = [wxFolder+'lib/vc_lib'])
+
 else:
   env.Append(CCFLAGS = ['-exceptions']) 
   if debug:
@@ -193,15 +225,15 @@ unirun_env.Program(out_dir+'exe/unirun', unirun_files)
 
 # make olex2c?
 
-if sys.platform[:3] != 'win':
-  olex2c_env.Append(LIBS=['readline'])
-
 olex2c_files = processFileNameList(olex2c, olex2c_env, out_dir+'olex2c')
 if sys.platform[:3] == 'win':
   res_file = out_dir + 'olex2c/app.res'
   olex2c_files = olex2c_files + olex2c_env.RES(res_file, 'olex2c/app.rc')
   olex2c_env.Append(RCFLAGS=['/l 0x809'])
   olex2c_env.Append(LINKFLAGS=['/PDB:' + out_dir + 'exe/olex2c.pdb'])
+else:
+  olex2c_env.Append(LIBS=['readline'])
+
 olex2c_env.Program(out_dir+'exe/olex2c', generic_files + olex2c_files)
 
 try:

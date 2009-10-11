@@ -238,6 +238,7 @@ namespace exparse  {
       for( int i=0; i < funcs.Count(); i++ )
         delete funcs.GetValue(i);
     }
+    inline bool is_empty() const {  return funcs.IsEmpty();  }
     inline IStaticFunction* find(const olxstr& name, size_t argc) const {
       int ind = funcs.IndexOf( olxstr(name) << '#' << argc);
       return ind == -1 ? NULL : funcs.GetValue(ind);
@@ -308,6 +309,7 @@ namespace exparse  {
       void* self, const olxstr& name, const TPtrList<IEvaluable>& args) const = 0;
     virtual IEvaluable* create_from_index(const IEvaluable& owner, const EvaluableFactory& factory, 
       void* self, size_t index, const TPtrList<IEvaluable>& args) const = 0;
+    virtual bool is_empty() const = 0;
   };
   template <class base_class> class ClassRegistry : public IClassRegistry  {
     olxdict<olxstr, IMemberFunction*, olxstrComparator<false> > funcs;
@@ -323,6 +325,7 @@ namespace exparse  {
       for( int i=0; i < funcs.Count(); i++ )
         delete funcs.GetValue(i);
     }
+    virtual inline bool is_empty() const {  return funcs.IsEmpty();  }
     inline IMemberFunction* find(const olxstr& name, size_t argc) const {
       int ind = funcs.IndexOf( olxstr(name) << '#' << argc);
       return ind == -1 ? NULL : funcs.GetValue(ind);

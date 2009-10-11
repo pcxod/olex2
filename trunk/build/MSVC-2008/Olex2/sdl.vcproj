@@ -564,6 +564,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\sdl\integration.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\sdl\ipbase.cpp"
 				>
 			</File>
@@ -581,6 +585,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\sdl\macroerror.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\sdl\macrolib.cpp"
 				>
 			</File>
 			<File
@@ -842,6 +850,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\sdl\integration.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\sdl\istream.h"
 				>
 			</File>
@@ -1011,7 +1023,19 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\..\sdl\exparse\context.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\..\sdl\exparse\expbuilder.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\sdl\exparse\explib.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\sdl\exparse\expsyn.h"
 					>
 				</File>
 				<File

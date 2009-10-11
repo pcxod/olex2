@@ -506,7 +506,6 @@ void XLibMacros::macRun(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       break;
     }
   }
-  Error.Reset(); // to avoide duplicate messages
 }
 //..............................................................................
 void XLibMacros::macHklStat(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
@@ -2073,7 +2072,6 @@ void XLibMacros::funRun(const TStrObjList& Params, TMacroError &E) {
       break;
     }
   }
-  E.Reset(); // to avoide duplicate messages
   E.SetRetVal(E.IsSuccessful());
 }
 //..............................................................................

@@ -212,8 +212,7 @@ enum
   ID_UpdateThreadAction
 };
 
-class TObjectVisibilityChange: public AActionHandler
-{
+class TObjectVisibilityChange: public AActionHandler  {
   TMainForm *FParent;
 public:
   TObjectVisibilityChange(TMainForm *Parent){  FParent = Parent; }
@@ -225,9 +224,9 @@ public:
     else if( EsdlInstanceOf(*Obj, TDUnitCell) )
       FParent->CellVChange();
     else  if( Obj == FParent->FInfoBox )
-      FParent->ProcessXPMacro( olxstr("showwindow info false"), FParent->MacroError );
+      FParent->ProcessMacro("showwindow info false");
     else  if( Obj == FParent->FHelpWindow )
-      FParent->ProcessXPMacro( olxstr("showwindow help false"), FParent->MacroError );
+      FParent->ProcessMacro("showwindow help false");
     return true;
   }
 };
@@ -334,7 +333,7 @@ BEGIN_EVENT_TABLE(TMainForm, wxFrame)  // basic interface
 END_EVENT_TABLE()
 //..............................................................................
 TMainForm::TMainForm(TGlXApp *Parent):
-  TMainFrame(wxT("Olex2"), wxPoint(0,0), wxDefaultSize, wxT("MainForm"))
+  TMainFrame(wxT("Olex2"), wxPoint(0,0), wxDefaultSize, wxT("MainForm")), Macros(*this)
 {
 //  _crtBreakAlloc = 5892;
   _UpdateThread = NULL;
@@ -394,7 +393,7 @@ TMainForm::TMainForm(TGlXApp *Parent):
 
   FParent = Parent;
   ObjectUnderMouse(NULL);
-  FMacroItem = FHelpItem = NULL;
+  FHelpItem = NULL;
   FProcess = NULL;
 
   // FIOExt = new TIOExt();
@@ -431,7 +430,7 @@ bool TMainForm::Destroy()  {
     SaveVFS(plStructure);  
 
     FXApp->OnObjectsDestroy->Remove( this );
-    ProcessXPMacro("onexit", MacroError);
+    ProcessMacro("onexit");
     SaveSettings(DataDir + FLastSettingsFile);
     ClearPopups();
   }
@@ -1344,16 +1343,16 @@ void TMainForm::StartupInit()  {
 
   FXApp->Init(); // initialise the gl after styles reloaded
   if( !GradientPicture.IsEmpty() )  // need to call it after all objects are created
-    ProcessXPMacro(olxstr("grad ") << " -p=\'" << GradientPicture << '\'', MacroError);
+    ProcessMacro(olxstr("grad ") << " -p=\'" << GradientPicture << '\'');
 
   FInfoBox->SetHeight(FXApp->GetRender().GetScene().GetFont(2)->TextHeight(EmptyString));
   
-  ProcessXPMacro(olxstr("showwindow help ") << HelpWindowVisible, MacroError);
-  ProcessXPMacro(olxstr("showwindow info ") << InfoWindowVisible, MacroError);
-  ProcessXPMacro(olxstr("showwindow cmdline ") << CmdLineVisible, MacroError);
+  ProcessMacro(olxstr("showwindow help ") << HelpWindowVisible);
+  ProcessMacro(olxstr("showwindow info ") << InfoWindowVisible);
+  ProcessMacro(olxstr("showwindow cmdline ") << CmdLineVisible);
   FGlConsole->ShowBuffer( true );  // this should be on :)
-  ProcessXPMacro("reload macro", MacroError);
-  ProcessXPMacro("reload help", MacroError);
+  ProcessMacro("reload macro");
+  ProcessMacro("reload help");
 
   FTimer->Start(15);
   if( FGlCanvas != NULL )  FGlCanvas->XApp(FXApp);
@@ -1369,7 +1368,7 @@ void TMainForm::StartupInit()  {
         TDataItem& item = sh->GetItem(i);
         AccShortcuts.AddAccell( TranslateShortcut( item.GetFieldValue("key")), item.GetFieldValue("macro") );
         // cannot execute it through a macro - functions get evaluated...
-        //ProcessXPMacro(cmd, MacroError);
+        //Macros.ProcessMacro(cmd, MacroError);
         }
       }
       catch( TExceptionBase& exc )  {
@@ -1378,42 +1377,39 @@ void TMainForm::StartupInit()  {
     }
     sh = settings.Root().FindItemi("menus");
     if( sh != NULL )  {
-    try  {
-      olxstr cmd;
-      for( int i=0; i < sh->ItemCount(); i++ )  {
-      TDataItem& item = sh->GetItem(i);
-      cmd = "createmenu \'";
-      cmd << item.GetFieldValue("title") << "\' \'" <<
-          item.GetFieldValue("macro") << '\'';
+      try  {
+        olxstr cmd;
+        for( int i=0; i < sh->ItemCount(); i++ )  {
+          TDataItem& item = sh->GetItem(i);
+          cmd = "createmenu \'";
+          cmd << item.GetFieldValue("title") << "\' \'" <<
+            item.GetFieldValue("macro") << '\'';
 
-      olxstr before = item.GetFieldValue("before");
-      if( before.Length() )  {
-        cmd << " \'" << before <<'\'';
+          olxstr before = item.GetFieldValue("before");
+          if( !before.IsEmpty() )
+            cmd << " \'" << before <<'\'';
+          cmd << ' ';
+
+          olxstr modeDep = item.GetFieldValue("modedependent");
+          if( !modeDep.IsEmpty() )
+            cmd << " -m=\'" << modeDep << '\'';
+          cmd << ' ';
+
+          olxstr stateDep = item.GetFieldValue("statedependent");
+          if( !stateDep.IsEmpty() )
+            cmd << " -s=\'" << stateDep << '\'';
+          cmd << ' ';
+
+          if( item.GetName().Equalsi("radio") )  cmd << "-r ";
+          if( item.GetName().Equalsi("sep") )    cmd << "-# ";
+          if( item.GetName().Equalsi("check") )  cmd << "-c ";
+
+          ProcessMacro(cmd);
+        }
       }
-      cmd << ' ';
-
-      olxstr modeDep = item.GetFieldValue("modedependent");
-      if( modeDep.Length() )  {
-        cmd << " -m=\'" << modeDep << '\'';
+      catch( TExceptionBase& exc )  {
+        TBasicApp::GetLog().Exception( exc.GetException()->GetFullMessage() );
       }
-      cmd << ' ';
-
-      olxstr stateDep = item.GetFieldValue("statedependent");
-      if( stateDep.Length() )  {
-        cmd << " -s=\'" << stateDep << '\'';
-      }
-      cmd << ' ';
-
-      if( item.GetName().Equalsi("radio") )  cmd << "-r ";
-      if( item.GetName().Equalsi("sep") )    cmd << "-# ";
-      if( item.GetName().Equalsi("check") )  cmd << "-c ";
-
-      ProcessXPMacro(cmd, MacroError);
-      }
-    }
-    catch( TExceptionBase& exc )  {
-      TBasicApp::GetLog().Exception( exc.GetException()->GetFullMessage() );
-    }
     }
   }
 
@@ -1427,15 +1423,14 @@ void TMainForm::StartupInit()  {
       OnStateChange->Execute((AEventsDispatcher*)this, &sc);
     }
   }
-  else  {
+  else
     FPluginItem = &FPluginFile.Root().AddItem("Plugin");
-  }
 
+  // set the variables
   for( int i=0; i < StoredParams.Count(); i++ )  {
-    // ser the variables
-    ProcessXPMacro(olxstr("setvar(") << StoredParams.GetComparable(i)
+    ProcessMacro(olxstr("setvar(") << StoredParams.GetComparable(i)
                     << ",\'" << StoredParams.GetObject(i)
-                    << "\')", MacroError);
+                    << "\')");
 
   }
 
@@ -1444,19 +1439,16 @@ void TMainForm::StartupInit()  {
     catch(...) {}
   }
 
-  ProcessXPMacro("onstartup", MacroError);
-  ProcessXPMacro("user_onstartup", MacroError);
+  ProcessMacro("onstartup");
+  ProcessMacro("user_onstartup");
 
   // load html in last cal - it might call some destructive functions on uninitialised data
 
   FHtml->LoadPage( uiStr(FHtmlIndexFile));
   FHtml->SetHomePage( FHtmlIndexFile );
 
-  if( FXApp->Arguments.Count() == 1 )  {
-    olxstr openCmd = "reap \'";
-    openCmd << FXApp->Arguments[0] << '\'';
-    ProcessXPMacro(openCmd, MacroError);
-  }
+  if( FXApp->Arguments.Count() == 1 )
+    ProcessMacro(olxstr("reap \'") << FXApp->Arguments[0] << '\'');
 }
 //..............................................................................
 void TMainForm::SetProcess( AProcess *Process )  {
@@ -1477,9 +1469,8 @@ void TMainForm::SetProcess( AProcess *Process )  {
     while( FProcess->OnTerminateCmds().Count() ) {
       Cmd = FProcess->OnTerminateCmds()[0];
       FProcess->OnTerminateCmds().Delete(0);
-      ProcessXPMacro(Cmd, err);
+      ProcessMacro(Cmd, olxstr("OnTerminate of: ") << FProcess->GetCmdLine());
       if( !err.IsSuccessful() )  {
-        AnalyseError( err );
         FProcess->OnTerminateCmds().Clear();
         break;
       }
@@ -1504,8 +1495,8 @@ void TMainForm::SetProcess( AProcess *Process )  {
 //..............................................................................
 // view menu
 void TMainForm::OnHtmlPanel(wxCommandEvent& event)  {
-  ProcessXPMacro("htmlpanelvisible", MacroError);
-  ProcessXPMacro("html.updatehtml", MacroError);
+  ProcessMacro("htmlpanelvisible");
+  ProcessMacro("html.updatehtml");
 }
 //..............................................................................
 void TMainForm::OnGenerate(wxCommandEvent& WXUNUSED(event))  {
@@ -1516,7 +1507,7 @@ void TMainForm::OnGenerate(wxCommandEvent& WXUNUSED(event))  {
     T << olxstr::FormatFloat(1, G->AFrom()) << ' ' << olxstr::FormatFloat(1, G->ATo()) << ' ';
     T << olxstr::FormatFloat(1, G->BFrom()) << ' ' << olxstr::FormatFloat(1, G->BTo()) << ' ';
     T << olxstr::FormatFloat(1, G->CFrom()) << ' ' << olxstr::FormatFloat(1, G->CTo()) << ' ';
-    ProcessXPMacro(T, MacroError);
+    ProcessMacro(T);
   }
   G->Destroy();
 }
@@ -1527,18 +1518,17 @@ void TMainForm::OnAbout(wxCommandEvent& WXUNUSED(event))  {
 }
 //..............................................................................
 void TMainForm::OnFileOpen(wxCommandEvent& event)  {
-  if( event.GetId() >= ID_FILE0 && event.GetId() <= (ID_FILE0+FRecentFilesToShow) )  {
-    ProcessXPMacro(olxstr("reap \'") << FRecentFiles[event.GetId() - ID_FILE0] << '\'', MacroError);
-  }
+  if( event.GetId() >= ID_FILE0 && event.GetId() <= (ID_FILE0+FRecentFilesToShow) )
+    ProcessMacro(olxstr("reap \'") << FRecentFiles[event.GetId() - ID_FILE0] << '\'');
 }
 //..............................................................................
 void TMainForm::OnDrawStyleChange(wxCommandEvent& event)  {
   switch( event.GetId() )  {
-    case ID_DSBS: ProcessXPMacro("pers", MacroError);  break;
-    case ID_DSES: ProcessXPMacro("telp", MacroError);  break;
-    case ID_DSSP: ProcessXPMacro("sfil", MacroError);  break;
-    case ID_DSWF: ProcessXPMacro("proj", MacroError);  break;
-    case ID_DSST: ProcessXPMacro("tubes                                                                                                  ", MacroError);  break;
+    case ID_DSBS: ProcessMacro("pers");  break;
+    case ID_DSES: ProcessMacro("telp");  break;
+    case ID_DSSP: ProcessMacro("sfil");  break;
+    case ID_DSWF: ProcessMacro("proj");  break;
+    case ID_DSST: ProcessMacro("tubes");  break;
     case ID_SceneProps:
       TdlgSceneProps *Dlg = new TdlgSceneProps(this, FXApp);
       if( Dlg->ShowModal() == wxID_OK )  {
@@ -1551,13 +1541,13 @@ void TMainForm::OnDrawStyleChange(wxCommandEvent& event)  {
 }
 void TMainForm::OnViewAlong(wxCommandEvent& event) {
   switch( event.GetId() )  {
-    case ID_View100:  ProcessXPMacro("matr 1", MacroError);  break;
-    case ID_View010:  ProcessXPMacro("matr 2", MacroError);  break;
-    case ID_View001:  ProcessXPMacro("matr 3", MacroError);  break;
-    case ID_View110:  ProcessXPMacro("matr 110", MacroError);  break;
-    case ID_View101:  ProcessXPMacro("matr 101", MacroError);  break;
-    case ID_View011:  ProcessXPMacro("matr 011", MacroError);  break;
-    case ID_View111:  ProcessXPMacro("matr 111", MacroError);  break;
+    case ID_View100:  ProcessMacro("matr 1");  break;
+    case ID_View010:  ProcessMacro("matr 2");  break;
+    case ID_View001:  ProcessMacro("matr 3");  break;
+    case ID_View110:  ProcessMacro("matr 110");  break;
+    case ID_View101:  ProcessMacro("matr 101");  break;
+    case ID_View011:  ProcessMacro("matr 011");  break;
+    case ID_View111:  ProcessMacro("matr 111");  break;
   }
 }
 //..............................................................................
@@ -1580,7 +1570,7 @@ void TMainForm::OnAtomOccuChange(wxCommandEvent& event)  {
     Tmp << " sel";
   else                  
     Tmp << " #c" << XA->Atom().CAtom().GetId();
-  ProcessXPMacro(Tmp, MacroError);
+  ProcessMacro(Tmp);
 }
 //..............................................................................
 void TMainForm::OnAtomConnChange(wxCommandEvent& event)  {
@@ -1598,7 +1588,7 @@ void TMainForm::OnAtomConnChange(wxCommandEvent& event)  {
   }
   if( !XA->IsSelected() )
     Tmp << " #c" << XA->Atom().CAtom().GetId();
-  ProcessXPMacro(Tmp, MacroError);
+  ProcessMacro(Tmp);
   TimePerFrame = FXApp->Draw();
 }
 //..............................................................................
@@ -1617,9 +1607,9 @@ void TMainForm::OnAtomPolyChange(wxCommandEvent& event)  {
 //..............................................................................
 void TMainForm::OnDrawQChange(wxCommandEvent& event)  {
   switch( event.GetId() )  {
-    case ID_DQH:  ProcessXPMacro("qual -h", MacroError);     break;
-    case ID_DQM:  ProcessXPMacro("qual -m", MacroError);     break;
-    case ID_DQL:  ProcessXPMacro("qual -l", MacroError);     break;
+    case ID_DQH:  ProcessMacro("qual -h");     break;
+    case ID_DQM:  ProcessMacro("qual -m");     break;
+    case ID_DQL:  ProcessMacro("qual -l");     break;
   }
 }
 //..............................................................................
@@ -1648,14 +1638,14 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
 
   if( event.GetId() == ID_GraphicsHide )  {
     if( FObjectUnderMouse->IsSelected() )
-      ProcessXPMacro("hide sel", MacroError);
+      ProcessMacro("hide sel");
     else
       FUndoStack->Push( FXApp->SetGraphicsVisible(FObjectUnderMouse, false) );
     TimePerFrame = FXApp->Draw();
   }
   else if( event.GetId() == ID_GraphicsKill )  {
     if( FObjectUnderMouse->IsSelected() )
-      ProcessXPMacro("kill sel", MacroError);
+      ProcessMacro("kill sel");
     else  {
       TPtrList<AGDrawObject> l;
       l.Add(FObjectUnderMouse);
@@ -1667,7 +1657,7 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
     if( LabelToEdit != NULL )  {
       olxstr Tmp = "getuserinput(1, \'Please, enter new label\', \'";
       Tmp << LabelToEdit->GetLabel() << "\')";
-      ProcessMacroFunc(Tmp);
+      ProcessFunction(Tmp);
       if( !Tmp.IsEmpty() ) {
         LabelToEdit->SetLabel(Tmp);
         FXApp->Draw();
@@ -1712,7 +1702,7 @@ void TMainForm::OnGraphics(wxCommandEvent& event)  {
       else  {
         olxstr TmpStr = "mask ";
         TmpStr << FObjectUnderMouse->GetPrimitives().GetName() << ' ' << Primitives->Mask;
-        ProcessXPMacro(TmpStr, MacroError);
+        ProcessMacro(TmpStr);
       }
     }
     Primitives->Destroy();
@@ -1848,7 +1838,7 @@ void TMainForm::OnAtomTypeChange(wxCommandEvent& event)  {
       break;
   }
   Tmp << XA->Atom().GetLabel().SubStringFrom( XA->Atom().GetAtomInfo().GetSymbol().Length() );
-  ProcessXPMacro(Tmp, MacroError);
+  ProcessMacro(Tmp);
   TimePerFrame = FXApp->Draw();
 }
 //..............................................................................
@@ -1865,7 +1855,7 @@ void TMainForm::OnAtomTypePTable(wxCommandEvent& event)  {
   if( Dlg->ShowModal() == wxID_OK )  {
     Tmp << Dlg->Selected()->GetSymbol();
     Tmp << XA->Atom().GetLabel().SubStringFrom( XA->Atom().GetAtomInfo().GetSymbol().Length() );
-    ProcessXPMacro(Tmp, MacroError);
+    ProcessMacro(Tmp);
   }
   Dlg->Destroy();
   TimePerFrame = FXApp->Draw();
@@ -1940,7 +1930,7 @@ void TMainForm::OnFragmentSelectAll(wxCommandEvent& event)  {
 }
 //..............................................................................
 void TMainForm::OnShowAll(wxCommandEvent& event)  {
-  ProcessXPMacro("fmol", MacroError);
+  ProcessMacro("fmol");
 }
 //..............................................................................
 void TMainForm::OnModelCenter(wxCommandEvent& event)  {
@@ -2115,8 +2105,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
         }
         else
           Tasks[i].LastCalled = TETime::Now();
-        ProcessXPMacro(tmp, MacroError);
-        AnalyseError( MacroError );
+        ProcessMacro(tmp, "Scheduled task");
       }
     }
     // end tasks ...
@@ -2138,13 +2127,14 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
       time_t FileT = wxFileModificationTime( uiStr(FListenFile));
       if( FileMT != FileT )  {
         FObjectUnderMouse = NULL;
-        ProcessXPMacro((olxstr("@reap -b -r \'") << FListenFile)+'\'', MacroError);
+        ProcessMacro((olxstr("@reap -b -r \'") << FListenFile)+'\'', "OnListen");
         for( int i=0; i < FOnListenCmds.Count(); i++ )  {
-          ProcessXPMacro(FOnListenCmds[i], MacroError);
-          if( !MacroError.IsSuccessful() )  break;
+          if( ProcessMacro(FOnListenCmds[i], "OnListen") )            
+            break;
         }
         FileMT = FileT;
-        if( FOnListenCmds.Count() )  Draw = true;
+        if( !FOnListenCmds.IsEmpty() )  
+          Draw = true;
       }
     }
     if( (FMode & mRota) != 0  )  {
@@ -2315,11 +2305,8 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
       in case if a modal window appears and the timer event can be called */
       FTimer->OnTimer()->SetEnabled( false );
       for( int i=0; i < Toks.Count(); i++ )  {
-        ProcessXPMacro(olxstr::DeleteSequencesOf<char>(Toks[i], ' '), MacroError);
-        if( !MacroError.IsSuccessful() )  {
-          //AnalyseError( MacroError );  // it is already done in the ProcessMacro
+        if( !ProcessMacro(olxstr::DeleteSequencesOf<char>(Toks[i], ' '), "OnLink") )
           break;
-        }
       }
       TimePerFrame = FXApp->Draw();
       // enabling the timer back
@@ -2346,7 +2333,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
   else if( MsgId == ID_HTMLCMD )  {
     if( Data != NULL )  {
       FMode |= mSilent;
-      res = ProcessMacroFunc(*(olxstr*)Data);
+      res = ProcessFunction(*(olxstr*)Data);
       if( !Silent )  FMode ^= mSilent;
     }
   }
@@ -2363,7 +2350,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
     bool processed = false;
     if( pd != NULL && (dynamic_cast<const THtml*>(Sender) == (void*)pd->Html) )  {
       if( !pd->OnDblClick.IsEmpty() )  {
-        ProcessXPMacro(pd->OnDblClick, MacroError);
+        ProcessMacro(pd->OnDblClick, "OnDblClick");
         processed = true;
       }
     }
@@ -2394,7 +2381,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
       else  {
         FHelpWindow->SetVisible(false);
         olxstr FullCmd(tmp);
-        ProcessXPMacro(FullCmd, MacroError);
+        ProcessMacro(FullCmd, "Console");
         // this is done in faivor of SetCmd macro, which supposed to modify the command ...
         if( !CmdLineVisible )
           if( FGlConsole->GetCommand() == tmp )
@@ -2422,11 +2409,11 @@ void TMainForm::OnAtom(wxCommandEvent& event)  {
   switch( event.GetId() )  {
     case ID_AtomGrowShells:
       Tmp = "grow -s #x"; Tmp << XA->GetXAppId();
-      ProcessXPMacro(Tmp, MacroError);
+      ProcessMacro(Tmp);
       break;
     case ID_AtomGrowFrags:
       Tmp = "grow #x";   Tmp << XA->GetXAppId();
-      ProcessXPMacro(Tmp, MacroError);
+      ProcessMacro(Tmp);
       break;
   }
 }
@@ -2436,48 +2423,40 @@ void TMainForm::OnPlane(wxCommandEvent& event)  {
   if( !XP )  return;
   switch( event.GetId() )  {
     case ID_PlaneActivate:
-    ProcessXPMacro(olxstr("activate ") << XP->GetPrimitives().GetName(), MacroError);
+    ProcessMacro(olxstr("activate ") << XP->GetPrimitives().GetName());
     break;
   }
 }
 //..............................................................................
 void TMainForm::PreviewHelp(const olxstr& Cmd)  {
-  if( !HelpWindowVisible )
-    return;
-  olxstr Tmp;
-  if( !Cmd.IsEmpty() && (FHelpItem != NULL))  {
-    TPtrList<TDataItem> SL;
-    TDataItem *Item, *Cat;
-    FHelpItem->FindSimilarItems(Cmd, SL);
-    if( FMacroItem != NULL )
-      FMacroItem->FindSimilarItems(Cmd, SL);
-    if( !SL.IsEmpty() )  {
-      FHelpWindow->SetVisible( HelpWindowVisible );
+  if( !HelpWindowVisible )  return;
+  if( !Cmd.IsEmpty() )  {
+    TPtrList<TEMacro> macros;
+    Macros.FindSimilar(Cmd, macros);
+    if( !macros.IsEmpty() )  {
       FHelpWindow->Clear();
+      FHelpWindow->SetVisible( HelpWindowVisible );
       FGlConsole->ShowBuffer( !HelpWindowVisible );
       FHelpWindow->SetTop( InfoWindowVisible ? FInfoBox->GetTop() + FInfoBox->GetHeight() + 5 : 1 );
       FHelpWindow->SetMaxStringLength( FHelpWindow->Font()->MaxTextLength(FXApp->GetRender().GetWidth()) );
       FHelpWindow->SetZ( FXApp->GetRender().GetMaxRasterZ()-0.1);
-      for( int i=0; i < SL.Count(); i++ )  {
-        Item = SL[i];
-        Tmp = Item->GetName();
-        FHelpWindow->PostText(Tmp, &HelpFontColorCmd);
-        Tmp = Item->GetFieldValueCI("help");
-        if( !Tmp.IsEmpty() )  {
-          FHelpWindow->PostText(Tmp, &HelpFontColorTxt);
-          Cat = Item->FindItem("category");
-          if( Cat != NULL  )  {
-            olxstr Categories;
-            for( int j=0; j < Cat->ItemCount(); j++ )  {
-              Categories << Cat->GetItem(j).GetName();
-              if( (j+1) < Cat->ItemCount() )  Categories << ", ";
-            }
-            if( !Categories.IsEmpty() )  {
-              Categories.Insert("\t", 0);
-              FHelpWindow->PostText("\tCategory", &HelpFontColorCmd);
-              FHelpWindow->PostText(Categories, &HelpFontColorTxt);
-            }
-          }
+      for( int i=0; i < macros.Count(); i++ )  {
+        FHelpWindow->PostText(macros[i]->GetName(), &HelpFontColorCmd);
+        if( !macros[i]->GetDescription().IsEmpty() )  {
+          FHelpWindow->PostText(macros[i]->GetDescription(), &HelpFontColorTxt);
+          //Cat = Item->FindItem("category");
+          //if( Cat != NULL  )  {
+          //  olxstr Categories;
+          //  for( int j=0; j < Cat->ItemCount(); j++ )  {
+          //    Categories << Cat->GetItem(j).GetName();
+          //    if( (j+1) < Cat->ItemCount() )  Categories << ", ";
+          //  }
+          //  if( !Categories.IsEmpty() )  {
+          //    Categories.Insert("\t", 0);
+          //    FHelpWindow->PostText("\tCategory", &HelpFontColorCmd);
+          //    FHelpWindow->PostText(Categories, &HelpFontColorTxt);
+          //  }
+          //}
         }
       }
     }
@@ -2561,7 +2540,7 @@ void TMainForm::OnChar(wxKeyEvent& m)  {
     return;
   }
   if( (Fl&sssCtrl) && m.GetKeyCode() == 'z'-'a'+1 )  {  // Ctrl+Z
-    ProcessXPMacro("undo", MacroError);
+    ProcessMacro("undo");
     TimePerFrame = FXApp->Draw();
     return;
   }
@@ -2590,9 +2569,9 @@ void TMainForm::OnChar(wxKeyEvent& m)  {
       if( Modes->GetCurrent()->OnKey( m.GetKeyCode(), Fl) )
         return;
       else
-        ProcessXPMacro("mode off", MacroError);
+        ProcessMacro("mode off");
     }
-    ProcessXPMacro("sel -u", MacroError);
+    ProcessMacro("sel -u");
     TimePerFrame = FXApp->Draw();
 //    return;
   }
@@ -2630,7 +2609,7 @@ void TMainForm::OnChar(wxKeyEvent& m)  {
   if( !CmdLineVisible )
     Cmd = FGlConsole->GetCommand();
   else  {
-      m.Skip( !FCmdLine->ProcessKey(m) );
+    m.Skip( !FCmdLine->ProcessKey(m) );
     Cmd = FCmdLine->GetCommand();
     Cmd << (char)m.GetKeyCode();
   }
@@ -2667,6 +2646,7 @@ void TMainForm::OnChar(wxKeyEvent& m)  {
 //    else
     {  DrawSceneTimer = TimePerFrame;  }
   }
+  m.Skip();
 }
 //..............................................................................
 void TMainForm::OnKeyUp(wxKeyEvent& m)  {
@@ -2710,7 +2690,7 @@ void TMainForm::OnKeyDown(wxKeyEvent& m)  {
   }
   olxstr Cmd = AccShortcuts.GetValue( Fl<<16 | m.m_keyCode );
   if( !Cmd.IsEmpty() )  {
-    ProcessXPMacro(Cmd, MacroError );
+    ProcessMacro(Cmd);
     TimePerFrame = FXApp->Draw();
     return;
   }
@@ -2740,7 +2720,7 @@ void TMainForm::OnSelection(wxCommandEvent& m)  {
     GlR = (TGlGroup*)FObjectUnderMouse;
   switch( m.GetId() )  {
     case ID_SelGroup:
-      ProcessXPMacro("group sel", MacroError);
+      ProcessMacro("group sel");
 //      FXApp->GroupSelection();
       break;
     case ID_SelUnGroup:
@@ -2757,13 +2737,13 @@ void TMainForm::OnGraphicsStyle(wxCommandEvent& event)  {
     olxstr FN = PickFile("Drawing style",
     "Drawing styles|*.glds", StylesDir, false);
     if( !FN.IsEmpty() )
-      ProcessXPMacro(olxstr("save style ") << FN, MacroError);
+      ProcessMacro(olxstr("save style ") << FN);
   }
   if( event.GetId() == ID_GStyleOpen )  {
     olxstr FN = PickFile("Drawing style",
     "Drawing styles|*.glds", StylesDir, true);
     if( !FN.IsEmpty() )
-      ProcessXPMacro(olxstr("load style ") << FN, MacroError);
+      ProcessMacro(olxstr("load style ") << FN);
   }
 }
 //..............................................................................
@@ -2838,12 +2818,8 @@ olxstr TMainForm::ExpandCommand(const olxstr &Cmd)  {
     return Cmd;
   olxstr FullCmd(Cmd.ToLowerCase());
   TStrList all_cmds;
-  if( !Cmd.IsEmpty() && FMacroItem != NULL )  {
-    TPtrList<TDataItem> SL;
-    FMacroItem->FindSimilarItems(Cmd, SL);
-    for( int i=0; i < SL.Count(); i++ )
-      all_cmds.Add(SL[i]->GetName());
-  }
+  if( !Cmd.IsEmpty() )
+    Macros.FindSimilarNames(Cmd, all_cmds);
   TBasicLibraryPList libs;
   GetLibrary().FindSimilarLibraries(Cmd, libs);
   TBasicFunctionPList bins;  // builins
@@ -2907,37 +2883,10 @@ void TMainForm::PostCmdHelp(const olxstr &Cmd, bool Full)  {
     FGlConsole->PrintText(olxstr(" Description: ") << MF->GetDescription());
   }
   
-  if( !Cmd.IsEmpty() && FHelpItem != NULL )  {
-    TDataItem *Item;
-    olxstr Tmp, FV;
-    Item = FHelpItem->FindItem(Cmd);
-    if( Item == NULL && FMacroItem != NULL )
-      Item = FMacroItem->FindItem(Cmd);
-    if( Item == NULL )  return;
-    if( !Full)
-      FGlConsole->PrintText(Item->GetFieldValue("help"));
-    else  {
-      int helpIndex = Item->FieldIndexi("help");
-      if( helpIndex == -1 )  return;
-      TDataItem *Cat = Item->FindItemi("category");
-      FGlConsole->PrintText(Item->GetField(helpIndex), &HelpFontColorTxt);
-      FGlConsole->PrintText("Options:", &HelpFontColorCmd);
-      for( int i=0; i < Item->FieldCount(); i++ )  {
-        if( i == helpIndex )  continue;
-        FGlConsole->PrintText((Item->FieldName(i) + ": ") + Item->GetField(i));
-      }
-      if( Cat != NULL )  {
-        olxstr Cats;
-        for( int i=0; i < Cat->ItemCount(); i++ )  {
-          Cats << Cat->GetItem(i).GetName();
-          if( (i+1) < Cat->ItemCount() )
-            Cats << ", ";
-        }
-        if( !Cats.IsEmpty() )
-          FGlConsole->PrintText(olxstr("Macro category: ") << Cats, &HelpFontColorCmd );
-        else
-          FGlConsole->PrintText("Macro category is not assigned..", &HelpFontColorCmd);
-      }
+  if( !Cmd.IsEmpty() )  {
+    TEMacro* macro = Macros.FindMacro(Cmd);
+    if( macro != NULL )  {
+      FGlConsole->PrintText(macro->GetDescription(), &HelpFontColorTxt);
     }
   }
 }
@@ -3172,15 +3121,15 @@ void TMainForm::LoadSettings(const olxstr &FN)  {
   T = I->GetFieldValue("Gradient", EmptyString);
   GradientPicture = I->GetFieldValue("GradientPicture", EmptyString);
   if( !T.IsEmpty() ) 
-    ProcessXPMacro(olxstr("grad ") << T, MacroError);
+    ProcessMacro(olxstr("grad ") << T);
 
   I = DF.Root().FindItem("Stored_params");
   if( I )  {
     for( int i=0; i < I->ItemCount(); i++ )  {
       TDataItem& pd = I->GetItem(i);
-      ProcessXPMacro( olxstr("storeparam ") << pd.GetName() << ' '
-                        << '\'' << pd.GetFieldValue("value") << '\'' << ' '
-                        << pd.GetFieldValue("process", EmptyString), MacroError );
+      ProcessMacro( olxstr("storeparam ") << pd.GetName() << ' '
+                      << '\'' << pd.GetFieldValue("value") << '\'' << ' '
+                      << pd.GetFieldValue("process", EmptyString));
     }
   }
 }
@@ -3493,7 +3442,7 @@ void TMainForm::OnMouseWheel(int x, int y, double delta)  {
   if( step.IsNumber() )
     delta *= step.ToDouble();
   cmd << delta;
-  ProcessXPMacro(cmd, MacroError);
+  ProcessMacro(cmd);
 }
 //..............................................................................
 void TMainForm::OnMouseMove(int x, int y)  {
@@ -3724,9 +3673,7 @@ void TMainForm::SetUserCursor( const olxstr& param, const olxstr& mode )  {
 }
 //..............................................................................
 bool TMainForm::executeMacroEx(const olxstr& cmdLine, TMacroError& er)  {
-  str_stack stack;
-  er.SetStack( stack );
-  ProcessXPMacro( cmdLine, er, false, false );
+  Macros.ProcessMacro(cmdLine, er);
   AnalyseError(er);
   return er.IsSuccessful();
 }
@@ -3748,7 +3695,7 @@ void TMainForm::print(const olxstr& output, const short MessageType)  {
 //..............................................................................
 bool TMainForm::executeFunction(const olxstr& function, olxstr& retVal)  {
   retVal = function;
-  return ProcessMacroFunc( retVal );
+  return ProcessFunction( retVal );
 }
 //..............................................................................
 IEObject* TMainForm::executeFunction(const olxstr& function)  {
@@ -3791,22 +3738,14 @@ TPopupData* TMainForm::FindHtmlEx(const olxstr& popupName) const {
   return FPopups[popupName];
 }
 //..............................................................................
-void TMainForm::AnalyseError( TMacroError& error )  {
+void TMainForm::AnalyseError(TMacroError& error)  {
   if( !error.IsSuccessful() )  {
-    if( error.IsProcessingException() )  {
+    if( error.IsProcessingException() )
       TBasicApp::GetLog().Exception(olxstr(error.GetLocation()) << ": " <<  error.GetInfo());
-    }
-    else if( error.IsProcessingError() && !error.GetInfo().IsEmpty() )  {
+    else if( !error.GetInfo().IsEmpty() )
       TBasicApp::GetLog().Error(olxstr(error.GetLocation()) << ": " <<  error.GetInfo());
-    }
-    else if( error.IsInvalidOption() )
-      TBasicApp::GetLog().Error(error.GetInfo());
-    else if( error.IsInvalidArguments() )
-      TBasicApp::GetLog().Error(error.GetInfo());
-    else if( error.IsIllegalState() )
-      TBasicApp::GetLog().Error(error.GetInfo());
-    else if( !error.DoesFunctionExist() && !(FMode&mSilent) )
-      TBasicApp::GetLog().Warning(error.GetInfo());
+    while( !error.GetStack().IsEmpty() )
+      TBasicApp::GetLog() << (olxstr('\t') << error.GetStack().Pop().TrimWhiteChars() ) << '\n';
   }
 }
 //..............................................................................
@@ -3819,11 +3758,8 @@ bool TMainForm::ProcessEvent( wxEvent& evt )  {
       bool checked = AccMenus.GetValue(evt.GetId())->IsChecked();
       sl.Strtok( macro, ">>");
       for( int i=0; i < sl.Count(); i++ )  {
-        ProcessXPMacro( sl[i], MacroError );
-        if( !MacroError.IsSuccessful() )  {
-          AnalyseError(MacroError);
+        if( !ProcessMacro(sl[i]) )
           break;
-        }
       }
       // restore state if failed
       if( AccMenus.GetValue(evt.GetId())->IsCheckable() )
@@ -3833,6 +3769,7 @@ bool TMainForm::ProcessEvent( wxEvent& evt )  {
       return true;
     }
   }
+  evt.Skip();
   return wxFrame::ProcessEvent(evt);
 }
 //..............................................................................
@@ -3927,7 +3864,7 @@ bool TMainForm::OnMouseDblClick(int x, int y, short Flags, short Buttons)  {
   else if( EsdlInstanceOf(*G, TXGlLabel) )  {
     olxstr label = "getuserinput(1, \'Atom label\', \'";
     label << ((TXGlLabel*)G)->GetLabel() << "\')";
-    if( ProcessMacroFunc(label) && !label.IsEmpty() )
+    if( ProcessFunction(label) && !label.IsEmpty() )
       ((TXGlLabel*)G)->SetLabel(label);
 
   }
