@@ -3218,18 +3218,18 @@ void TMainForm::macMode(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   static bool ChangingMode = false;
   if( ChangingMode )  return;
   AMode* md = Modes->SetMode( Cmds[0] );
-  if( md != NULL || Cmds[0].Equalsi("off") )  {
-    olxstr cmds = Cmds.Text(' ');
-    for( int i=0; i < Options.Count(); i++ )
-      cmds << " -" << Options.GetName(i) << '=' << Options.GetValue(i);
-    CallbackFunc(OnModeChangeCBName, cmds);
-  }
   if( md != NULL )  {
     Cmds.Delete(0);
     try  {  md->Init(Cmds, Options);  }
     catch(const TExceptionBase& e)  {  
       throw TFunctionFailedException(__OlxSrcInfo, e);  
     }
+  }
+  if( md != NULL || Cmds[0].Equalsi("off") )  {
+    olxstr cmds = Cmds.Text(' ');
+    for( int i=0; i < Options.Count(); i++ )
+      cmds << " -" << Options.GetName(i) << '=' << Options.GetValue(i);
+    CallbackFunc(OnModeChangeCBName, cmds);
   }
   ChangingMode = false;
 }
