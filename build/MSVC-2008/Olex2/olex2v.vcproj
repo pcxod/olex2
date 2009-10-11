@@ -393,10 +393,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\repository\integration.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\repository\IsoSurface.cpp"
 				>
 				<FileConfiguration

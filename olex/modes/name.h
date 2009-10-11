@@ -75,7 +75,9 @@ public:
     Symbol = Options.FindValue('t');  // type
     AutoComplete = Options.Contains('a');
     bool typeSet = false;
-
+    // validate if type is correct
+    if( !Symbol.IsEmpty() && TAtomsInfo::GetInstance().FindAtomInfoBySymbol(Symbol) == NULL )
+      throw TInvalidArgumentException(__OlxSourceInfo, "element type");
     if( Cmds.IsEmpty() && !Symbol.IsEmpty() )
       Index = TGlXApp::GetGXApp()->GetNextAvailableLabel(Symbol);
 

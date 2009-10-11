@@ -157,7 +157,7 @@ TAG_HANDLER_PROC(tag)  {
   }
   olxstr src = tag.GetParam(wxT("SRC")).c_str();
 
-  TGlXApp::GetMainForm()->ProcessMacroFunc( src );
+  TGlXApp::GetMainForm()->ProcessFunction(src);
 
   if( TZipWrapper::IsZipFile(THtml::SwitchSource) && !TZipWrapper::IsZipFile(src) )
     src = TZipWrapper::ComposeFileName(THtml::SwitchSource, src);
@@ -303,7 +303,7 @@ TAG_HANDLER_PROC(tag)  {
   }
 
   Value = tag.GetParam(wxT("VALUE")).c_str();
-  TGlXApp::GetMainForm()->ProcessMacroFunc( Value );
+  TGlXApp::GetMainForm()->ProcessFunction(Value);
   Data = tag.GetParam(wxT("DATA")).c_str();
 /******************* TEXT CONTROL *********************************************/
   if( TagName.Equalsi("text") )  {
@@ -460,7 +460,7 @@ TAG_HANDLER_PROC(tag)  {
 #endif    
     if( tag.HasParam(wxT("ITEMS")) )  {
       olxstr Items = tag.GetParam(wxT("ITEMS")).c_str();
-      TGlXApp::GetMainForm()->ProcessMacroFunc( Items );
+      TGlXApp::GetMainForm()->ProcessFunction(Items);
       TStrList SL(Items, ';');
       if( SL.IsEmpty() )
         Box->AddObject(EmptyString);  // fix the bug in wxWidgets (if Up pressed, crass occurs)
@@ -618,8 +618,8 @@ TAG_HANDLER_PROC(tag)  {
 /******************* TREE CONTROL *********************************************/
   else if( TagName.Equalsi("tree") )  {
     olxstr src = tag.GetParam(wxT("SRC")).c_str();
-    TGlXApp::GetMainForm()->ProcessMacroFunc( src );
-    IInputStream* ios = TFileHandlerManager::GetInputStream( src );
+    TGlXApp::GetMainForm()->ProcessFunction(src);
+    IInputStream* ios = TFileHandlerManager::GetInputStream(src);
     TTreeView *Tree = new TTreeView(m_WParser->GetWindowInterface()->GetHTMLWindow());
     Tree->SetFont( m_WParser->GetDC()->GetFont() );
 
@@ -666,8 +666,8 @@ TAG_HANDLER_PROC(tag)  {
       TBasicApp::GetLog().Error( "THTML: list can have only src or items");
     else if( srcTag ) {
       olxstr src = tag.GetParam(wxT("SRC")).c_str();
-      TGlXApp::GetMainForm()->ProcessMacroFunc( src );
-      IInputStream* ios = TFileHandlerManager::GetInputStream( src );
+      TGlXApp::GetMainForm()->ProcessFunction(src);
+      IInputStream* ios = TFileHandlerManager::GetInputStream(src);
       if( ios == NULL )
         TBasicApp::GetLog().Error(olxstr("THTML: could not locate list source: \'") << src <<  '\'');
       else  {
@@ -681,8 +681,8 @@ TAG_HANDLER_PROC(tag)  {
     }
     else if( itemsTag )  {
       olxstr items = tag.GetParam(wxT("ITEMS")).c_str();
-      TGlXApp::GetMainForm()->ProcessMacroFunc( items );
-      itemsList.Strtok( items, ';');
+      TGlXApp::GetMainForm()->ProcessFunction(items);
+      itemsList.Strtok(items, ';');
     }
     TListBox *List = new TListBox( m_WParser->GetWindowInterface()->GetHTMLWindow() );
     List->SetFont( m_WParser->GetDC()->GetFont() );
@@ -743,11 +743,11 @@ TAG_HANDLER_PROC(tag)  {
       olxstr bgc, fgc;
       if( tag.HasParam(wxT("BGCOLOR")) )  {
         bgc = tag.GetParam( wxT("BGCOLOR") ).c_str();
-        TGlXApp::GetMainForm()->ProcessMacroFunc(bgc);
+        TGlXApp::GetMainForm()->ProcessFunction(bgc);
       }
       if( tag.HasParam(wxT("FGCOLOR")) )  {
         fgc = tag.GetParam( wxT("FGCOLOR") ).c_str();
-        TGlXApp::GetMainForm()->ProcessMacroFunc(fgc);
+        TGlXApp::GetMainForm()->ProcessFunction(fgc);
       }
 
       if( EsdlInstanceOf(*CreatedWindow, TComboBox) )  {
@@ -1368,7 +1368,7 @@ void THtml::CheckForSwitches(THtmlSwitch &Sender, bool izZip)  {
     // TRANSLATION START
     Lst[i] = TGlXApp::GetMainForm()->TranslateString( Lst[i] );
     if( Lst[i].IndexOf("$") >= 0 )
-      TGlXApp::GetMainForm()->ProcessMacroFunc( Lst[i] );
+      TGlXApp::GetMainForm()->ProcessFunction(Lst[i], olxstr(Sender.CurrentFile()) << '#' << (i+1));
     // TRANSLATIOn END
     if( Lst[i].StartsFrom(Tag) || Lst[i].StartsFrom(Tag4) )  {
       if( Lst[i].StartsFrom(Tag4) )
@@ -1384,7 +1384,7 @@ void THtml::CheckForSwitches(THtmlSwitch &Sender, bool izZip)  {
       }
       if( Lst[i].StartsFrom(Tag4) )  {
         Tmp = Toks[0];
-        if( TGlXApp::GetMainForm()->ProcessMacroFunc( Tmp ) )  {
+        if( TGlXApp::GetMainForm()->ProcessFunction(Tmp) )  {
           if( !Tmp.ToBool() )  continue;
         }
         else  continue;
@@ -1414,7 +1414,7 @@ void THtml::CheckForSwitches(THtmlSwitch &Sender, bool izZip)  {
           else
             Tmp = Toks[j];
 
-          TGlXApp::GetMainForm()->ProcessMacroFunc( Tmp );
+          TGlXApp::GetMainForm()->ProcessFunction(Tmp);
           Sw->AddFile(Tmp);
         }
         else  {
@@ -2910,8 +2910,8 @@ void THtml::TObjectsState::RestoreState()  {
     // restoring the control colours, it is generic 
     if( win != NULL && false )  {
       olxstr bg(props["bg"]), fg(props["fg"]);
-      TGlXApp::GetMainForm()->ProcessMacroFunc( bg );
-      TGlXApp::GetMainForm()->ProcessMacroFunc( fg );
+      TGlXApp::GetMainForm()->ProcessFunction(bg);
+      TGlXApp::GetMainForm()->ProcessFunction(fg);
       if( EsdlInstanceOf(*win, TComboBox) )  {
         TComboBox* Box = (TComboBox*)win;
         if( !fg.IsEmpty() )  {

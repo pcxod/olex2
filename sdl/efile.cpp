@@ -347,7 +347,8 @@ olxstr TEFile::ParentDir(const olxstr& name) {
 }
 //..............................................................................
 olxstr TEFile::ExtractFileExt(const olxstr& F)  {
-  if( F.IsEmpty() || IsDir(F) )  return EmptyString;
+  //if( F.IsEmpty() || IsDir(F) )  return EmptyString;
+  if( F.IsEmpty() )  return EmptyString;
   olxstr fn = OLX_OS_PATH(F);
   int i = fn.LastIndexOf('.');
   if( i > 0 )  {
@@ -377,7 +378,8 @@ olxstr TEFile::ExtractFileDrive(const olxstr& F)  {
 }
 //..............................................................................
 olxstr TEFile::ChangeFileExt(const olxstr &F, const olxstr &Ext)  {
-  if( F.IsEmpty() || IsDir(F) )  return EmptyString;
+  //if( F.IsEmpty() || IsDir(F) )  return EmptyString;
+  if( F.IsEmpty() )  return EmptyString;
   olxstr fn = OLX_OS_PATH(F);
   int i = fn.LastIndexOf('.');
   if( i > 0 && fn.LastIndexOf(OLX_PATH_DEL) < i )  {

@@ -26,6 +26,8 @@
 #include "estlist.h"
 #include "langdict.h"
 #include "updateth.h"
+#include "macrolib.h"
+#include "exparse/exptree.h"
 
 #define  ID_FILE0 100
 
@@ -122,7 +124,9 @@ protected:
   class TGlCanvas *FGlCanvas;
   TGXApp *FXApp;
   TDataFile FHelpFile, FMacroFile, FPluginFile;
-  TDataItem *FHelpItem, *FMacroItem, *FPluginItem;
+  TDataItem *FHelpItem, *FPluginItem;
+  
+  TEMacroLib Macros;
 
   olxstr DictionaryFile, GradientPicture;
   TLangDict Dictionary;
@@ -140,12 +144,6 @@ protected:
   void ClearPopups();
   TPopupData* GetPopup(const olxstr& name);
 
-  void ProcessXPMacro(const olxstr &Cmd, TMacroError &Error, bool ProcessFunctions=true, bool ClearMacroError = true);
-  // decodes Cmd and creates a puts the list of commands to Cmds and also to
-  //FOnTerminateCmds and FOnListenCmds
-  void DecodeParams(TStrObjList &Cmds, const olxstr &Cmd);
-  // substitutes arguments with values, also fields like $filename$ are substituted
-  void SubstituteArguments(olxstr &Cmd, TStrList &PName, TStrList &PVal);
   void PreviewHelp(const olxstr& Cmd);
   olxstr ExpandCommand(const olxstr &Cmd);
   int MouseMoveTimeElapsed, MousePositionX, MousePositionY;
@@ -165,7 +163,20 @@ protected:
 
   TLst Lst;
 public:
-  bool ProcessMacroFunc(olxstr &Cmd);
+  bool ProcessFunction(olxstr &cmd, const olxstr& location=EmptyString) {  
+    TMacroError err;
+    err.SetLocation(location);
+    //cmd = exparse::parser_util::unescape(cmd);
+    const bool rv = Macros.ProcessFunction(cmd, err);  
+    AnalyseError(err);
+    return rv;
+  }
+  bool ProcessMacro(const olxstr& cmd, const olxstr& location=EmptyString)  {
+    TMacroError err;
+    err.SetLocation(location);
+    Macros.ProcessTopMacro(cmd, err, *this, &TMainForm::AnalyseError);
+    return err.IsSuccessful();
+  }
   void OnMouseMove(int x, int y);
   void OnMouseWheel(int x, int y, double delta);
   bool OnMouseDown(int x, int y, short Flags, short Buttons);

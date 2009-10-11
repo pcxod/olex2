@@ -11,7 +11,6 @@ TMacroError::TMacroError()  {
   DeleteObject = false;
   ProcessError = 0;
   RetValue = NULL;
-  Stack = NULL;
 }
 //..............................................................................
 void TMacroError::operator = (const TMacroError& ME)  {

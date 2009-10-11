@@ -146,7 +146,7 @@
 #include "olxth.h"
 #include "md5.h"
 #include "sha.h"
-#include "../sdl/exparse/expbuilder.h"
+#include "exparse/expbuilder.h"
 //#include "base_2d.h"
 //#include "gl2ps/gl2ps.c"
 
@@ -189,7 +189,7 @@ void TMainForm::funCell(const TStrObjList& Params, TMacroError &E)  {
     au.InitMatrices();
     for( int i=0; i < au.AtomCount(); i++ )
       au.CartesianToCell(au.GetAtom(i).ccrd());
-    ProcessXPMacro("fuse", E);
+    Macros.ProcessMacro("fuse", E);
   }
   else  {
     if( Params[0].Equalsi('a') )
@@ -589,430 +589,6 @@ void TMainForm::funLoadDll(const TStrObjList &Cmds, TMacroError &E)  {
 }
 #endif // __WIN32__
 //..............................................................................
-bool TMainForm::ProcessMacroFunc(olxstr& Cmd)  {
-  if( Cmd.IndexOf('(') == -1 )  return true;
-
-  int specialFunctionIndex = Cmd.IndexOf('$');
-  if( specialFunctionIndex != -1 )  {
-    olxstr spFunction;
-    int i=specialFunctionIndex, bc = 0;
-    bool funcStarted = false;
-    while( i++ < Cmd.Length() )  {
-      if( Cmd.CharAt(i) == '(' )  {  bc++;  funcStarted = true;  }
-      if( Cmd.CharAt(i) == ')' )  bc--;
-      if( bc == 0 && funcStarted )  {
-        spFunction << ')';
-        if( ProcessMacroFunc( spFunction ) )  {
-          Cmd.Delete( specialFunctionIndex, i - specialFunctionIndex + 1 );
-          Cmd.Insert( spFunction, specialFunctionIndex );
-        }
-        else  {
-          Cmd.Delete( specialFunctionIndex, i - specialFunctionIndex + 1 );
-        }
-        specialFunctionIndex = Cmd.IndexOf('$');
-        if( specialFunctionIndex == -1 )  return true;
-        i = specialFunctionIndex;
-        spFunction = EmptyString;
-        funcStarted = false;
-        continue;
-      }
-      spFunction << Cmd[i];
-    }
-    return false;
-  }
-
-  int bc=0, fstart=0, fend, astart = 0, aend = 0;
-  olxstr Func, ArgV;
-  TStrObjList Params;
-  TMacroError E;
-  ABasicFunction *Function;
-  for( int i=0; i < Cmd.Length(); i++ )  {
-    if( Cmd.CharAt(i) == '(' && !Func.IsEmpty())  {
-      if( Func.EndsWith('.') )  {  Func = EmptyString;  continue;  }
-      bc++;
-      i++;
-      fend = -1;
-      astart = aend = i;
-      while( i < Cmd.Length() )  {
-        if( Cmd.CharAt(i) == '(' )  bc++;
-        if( Cmd.CharAt(i) == ')' )  {
-          bc--;
-          if( bc == 0 )  {  fend = i+1;  break; }
-        }
-        ArgV << Cmd.CharAt(i);
-        i++;
-        aend++;
-      }
-      if( ArgV.Length() != 0 )  { // arecursive call to all inner functions
-        Params.Clear();
-        TParamList::StrtokParams(ArgV, ',', Params);
-        // evaluation will be called from within the functions
-        if( !Func.Equalsi("or") && !Func.Equalsi("and") )  {
-          olxstr localArg;
-          for( int j=0; j < Params.Count(); j++ )  {
-            if( !ProcessMacroFunc(Params[j]) )  {
-              if( Func.Equalsi("eval") ) // put the function back
-                Params[j] = ArgV;
-              else  return false;
-            }
-          }
-        }
-        if( Params.Count() )
-          ArgV = Params[0];
-      }
-      if( fend == -1 )  {
-        TBasicApp::GetLog().Error(olxstr("Number of brackets do not match: ") << Cmd);
-        return false;
-      }
-      if( Func.IsEmpty() )  {  // in case arithmetic ()
-        Cmd.Delete(fstart+1, fend-fstart-2);  // have to leave ()
-        Cmd.Insert(ArgV, fstart+1);
-        return true;
-      }
-      E.Reset();
-      Function = GetLibrary().FindFunction(Func);//, Params.Count() );
-      //TODO: proper function management is needed ...
-      if( Function == NULL )  {
-        if( !Func.IsEmpty() )  {
-          E.NonexitingMacroError( Func );
-          AnalyseError( E );
-        }
-        return true;
-      }
-      Cmd.Delete(fstart, fend-fstart);
-      Function->Run(Params, E);
-      AnalyseError( E );
-      if( (FMode & mSilent) == 0 )  {
-        if( !E.IsSuccessful() )  {
-          TBasicApp::GetLog() << ( olxstr("Last function call: '")  << Function->GetRuntimeSignature() << '\'' << '\n');
-          return false;
-        }
-        else
-          TBasicApp::GetLog().Info(Function->GetRuntimeSignature());
-      }
-      Cmd.Insert(E.GetRetVal(), fstart);
-      i = fstart + E.GetRetVal().Length();
-    }
-    if( i >= Cmd.Length() )  return true;
-    olxch ch = Cmd.CharAt(i);
-    if( ch == ' ' || ch == '+' || ch == '-' || ch == '/' ||
-        ch == '*' || ch == '~' || ch == '&' || ch == '\'' ||
-        ch == '\\' || ch == '|' || ch == '!' || ch == '"' ||
-        ch == '$' || ch == '%' || ch == '^' || ch == '#'  ||
-        ch == '=' || ch == '[' || ch == ']' || ch == '{' ||
-        ch == '}' || ch == ':' || ch == ';' || ch == '?' ||
-        ch == '(' || ch == ')')
-    {
-      Func = EmptyString;
-      fstart = i+1;
-      Params.Clear();
-      ArgV = EmptyString;
-      continue;
-    }
-    Func << ch;
-  }
-  return true;
-}
-//..............................................................................
-void TMainForm::SubstituteArguments(olxstr &Cmd, TStrList &PName, TStrList &PVal)  {
-  int index, iindex, pindex;
-  olxstr ArgS, ArgV, CmdName, Tmp;
-  index = Cmd.FirstIndexOf('%');  // argument by index
-  while( index >= 0 && index < (Cmd.Length()-1) )  {
-    ArgS = EmptyString;
-    iindex = index;
-    while( olxstr::o_isdigit(Cmd.CharAt(iindex+1)) )  {  // extract argument number
-      ArgS << Cmd.CharAt(iindex+1);
-      iindex ++;
-      if( iindex >= (Cmd.Length()-1) )  break;
-    }
-    if( !ArgS.IsEmpty() )  {
-      pindex = ArgS.ToInt()-1;  // index of the parameter
-      if( pindex < PVal.Count() && pindex >= 0 )  {  // check if valid argument index
-        Cmd.Delete(index, ArgS.Length()+1); // delete %xx value
-        ArgV = PVal[pindex];
-        Cmd.Insert(ArgV, index);  // insert value parameter
-      }
-      else  {
-        TBasicApp::GetLog().Error(olxstr("Wrong argument index: ") << (pindex+1) << '\n');
-      }
-    }
-    if( index++ < Cmd.Length() )
-      index = Cmd.FirstIndexOf('%', index);  // next argument by index
-    else
-      index = -1;
-  }
-}
-//..............................................................................
-void TMainForm::DecodeParams(TStrObjList &Cmds, const olxstr &Cmd)  {
-  if( !Cmd.Length() || !FMacroItem )  return;
-  int index;
-  TStrList Toks, Args, ArgP, Toks1;
-  olxstr Tmp, ArgS, ArgV;
-  TParamList::StrtokParams(Cmd, ' ' , Toks);
-  if( !Toks.Count() )  return;
-  TDataItem *DI = FMacroItem->FindItem(Toks[0]), *ArgsI, *CmdI, *TmpI;
-  if( DI == NULL )  {
-    TBasicApp::GetLog().Error(olxstr("Undefined macro: ") << Toks[0]);
-    return;
-  }
-  DI = DI->FindItem("body");
-  if( DI == NULL )  {
-    TBasicApp::GetLog().Error(olxstr("Macro body is not defined: ") << Toks[0]);
-    return;
-  }
-  CmdI = DI->FindItem("cmd");
-  if( CmdI == NULL )  {
-    TBasicApp::GetLog().Warning(olxstr("Empty macro: ") << Toks[0]);
-    return;
-  }
-  ArgsI = DI->FindItem("args");
-  if( ArgsI != NULL )  {
-    if( ArgsI->ItemCount() < (Toks.Count()-1) )  {
-      TBasicApp::GetLog().Error(olxstr("Macro has too many parameters: ") << Toks[0]);
-      return;
-    }
-  }
-  else   {  // if no arguments defined, then nothing to do with this function
-    for( int i=0; i < CmdI->ItemCount(); i++ )  {
-      TmpI = &CmdI->GetItem(i);
-      Tmp = TmpI->GetValue();
-      if( Tmp.IsEmpty() )
-        Tmp = TmpI->GetFieldValue("cmd", EmptyString);
-      if( Tmp.IsEmpty() )
-        TBasicApp::GetLog().Warning(olxstr("Command has no body: ") << TmpI->GetName());
-      else
-        Cmds.Add(Tmp);
-    }
-    return;
-  }
-  Args.SetCount(ArgsI->ItemCount());
-  ArgP.SetCount(ArgsI->ItemCount());
-  for( int i=0; i < ArgsI->ItemCount(); i++ )  {
-    TmpI = &ArgsI->GetItem(i);
-    Tmp = TmpI->GetFieldValue("name", EmptyString); // name of the argument
-    if( Tmp.IsEmpty() )
-      TBasicApp::GetLog().Error(olxstr("Unnamed argument: ") << TmpI->GetName());
-    else
-      Args[i] = Tmp;
-    Tmp = TmpI->GetFieldValue("def");    // defualt value
-    if( !Tmp.IsEmpty() )  {
-      ProcessMacroFunc(Tmp);
-      ArgP[i] = Tmp;
-    }
-  }
-  for( int i=1; i < Toks.Count(); i++ )  {
-    if( Toks[i].FirstIndexOf('=') != -1 )  {  // argument with name and value
-      Toks1.Clear();
-      Toks1.Strtok(Toks[i], '=');
-      if( Toks1.Count() < 2 )  {
-        TBasicApp::GetLog().Error(olxstr("Parameter value missing for: ") << Toks1[0]);
-        continue;
-      }
-      index = Args.IndexOf(Toks1[0]);
-      if( index == -1 )
-        TBasicApp::GetLog().Error(olxstr("Wrong parameter name: ") << Toks1[0]);
-      else
-        ArgP[index] = Toks1[1];
-    }
-    else  // argument by position
-      ArgP[i-1] = Toks[i];
-  }
-  for( int i=0; i < CmdI->ItemCount(); i++ )  {
-    TmpI = &CmdI->GetItem(i);
-    Tmp = TmpI->GetValue();
-    if( Tmp.IsEmpty() )
-      Tmp = TmpI->GetFieldValue("cmd", EmptyString);
-    if( Tmp.IsEmpty() )  {
-      TBasicApp::GetLog().Warning(olxstr("Command has no body: ") << TmpI->GetName());
-      continue;
-    }
-    SubstituteArguments(Tmp, Args, ArgP);
-    Cmds.Add(Tmp);
-  }
-  CmdI = DI->FindItem("onterminate");
-  if( CmdI != NULL )  {
-    FOnTerminateMacroCmds.Clear();
-    for( int i=0; i < CmdI->ItemCount(); i++ )  {
-      TmpI = &CmdI->GetItem(i);
-      Tmp = TmpI->GetValue();
-      if( Tmp.IsEmpty() )
-        Tmp = TmpI->GetFieldValue("cmd", EmptyString);
-      if( Tmp.IsEmpty() )  {
-        TBasicApp::GetLog().Warning(olxstr("Command has no body: ") << TmpI->GetName());
-        continue;
-      }
-      SubstituteArguments(Tmp, Args, ArgP);
-      FOnTerminateMacroCmds.Add(Tmp);
-    }
-  }
-  CmdI = DI->FindItem("onlisten");
-  FOnListenCmds.Clear();
-  if( CmdI != NULL )  {
-    for( int i=0; i < CmdI->ItemCount(); i++ )  {
-      TmpI = &CmdI->GetItem(i);
-      Tmp = TmpI->GetValue();
-      if( Tmp.IsEmpty() )
-        Tmp = TmpI->GetFieldValue("cmd", EmptyString);
-      if( Tmp.IsEmpty() )  {
-        TBasicApp::GetLog().Warning(olxstr("Command has no body: ") << TmpI->GetName());
-        continue;
-      }
-      SubstituteArguments(Tmp, Args, ArgP);
-      FOnListenCmds.Add(Tmp);
-    }
-  }
-  CmdI = DI->FindItem("onabort");
-  FOnAbortCmds.Clear();
-  if( CmdI != NULL )  {
-    for( int i=0; i < CmdI->ItemCount(); i++ )  {
-      TmpI = &CmdI->GetItem(i);
-      Tmp = TmpI->GetValue();
-      if( Tmp.IsEmpty() )
-        Tmp = TmpI->GetFieldValue("cmd", EmptyString);
-      if( Tmp.IsEmpty() )  {
-        TBasicApp::GetLog().Warning(olxstr("Command has no body: ") << TmpI->GetName());
-        continue;
-      }
-      SubstituteArguments(Tmp, Args, ArgP);
-      FOnAbortCmds.Add(Tmp);
-    }
-  }
-}
-//..............................................................................
-void TMainForm::ProcessXPMacro(const olxstr &Cmd, TMacroError &Error, bool ProcessFunctions, bool ClearMacroError)  {
-  if( ClearMacroError )  Error.Reset();
-/*
-  the Cmd string is constructed in the following way:
-  command parameter1 parameter2 ...  -option1=option_value -option2=option_value ...
-  the Cmd string is splitinto the lists: Cmds, Options and OptionParams
-  Options and OptionParams always contain the same number of items
-*/
-  if( Cmd.IsEmpty() )  return;
-
-  if( (FMode & mSilent) == 0 )  {
-    if( (!Cmd.StartsFromi("echo") && !Cmd.StartsFromi("post")) )
-      TBasicApp::GetLog() << Cmd << '\n';
-  }
-  else
-    TBasicApp::GetLog().Info(Cmd);
-
-  TStrObjList Cmds;
-  TStrList Output;
-  TParamList Options;
-  olxstr Tmp, 
-         Command(Cmd.Trim(' ')), 
-         EnvName;
-  if( Command.IsEmpty() )  return;
-  // processing environment variables
-  wxString EnvVal;
-  int ind = Command.FirstIndexOf('|'), ind1;
-  while( ind >= 0 )  {
-    if( ind+1 >= Command.Length() )  break;
-    ind1 = Command.FirstIndexOf('|', ind+1);
-    if( ind1 == -1 )  break;
-    if( ind1 == ind+1 )  { // %%
-      Command.Delete(ind1, 1);
-      ind = Command.FirstIndexOf('|', ind1);
-      continue;
-    }
-    EnvName = Command.SubString(ind+1, ind1-ind-1);
-    if( wxGetEnv( wxString(EnvName.raw_str(), EnvName.Length()), &EnvVal) )  {
-      Command.Delete( ind, ind1-ind+1);
-      Command.Insert(EnvVal.c_str(), ind );
-      ind1 = ind + EnvVal.Length();
-    }
-    else  // variable is not found - leave as it is
-      ind1 = ind + EnvName.Length();
-
-    if( ind1+1 >= Command.Length() )  break;
-    ind = Command.FirstIndexOf('|', ind1+1);
-  }
-  // end processing environment variables
-  // special treatment of pyhton commands
-  TParamList::StrtokParams(Command, ' ', Cmds);
-//  CommandCS = Cmds[0];
-//  Command = CommandCS.LowerCase();
-  Command = Cmds[0];
-  Cmds.Delete(0);
-  for( int i = 0; i < Cmds.Count(); i++ )  {
-    if( Cmds[i].IsEmpty() )  continue;
-
-    if( Cmds[i].CharAt(0) == '-' && !Cmds[i].IsNumber() )  {  // an option
-      if( Cmds[i].Length() > 1 &&
-          ((Cmds[i].CharAt(1) >= '0' && Cmds[i].CharAt(1) <= '9') || Cmds[i].CharAt(1) == '-') )  // cannot start from number
-        continue;
-      if( Cmds[i].Length() > 1 )  {
-        Options.FromString(Cmds[i].SubStringFrom(1), '=');
-        // 18.04.07 added - !!!
-        ProcessMacroFunc( Options.Value(Options.Count()-1) );
-      }
-      Cmds.Delete(i);  
-      i--;
-      continue;
-    }
-    else if( Cmds[i].Length() > 1 && Cmds[i].CharAt(0) == '\\' && Cmds[i].CharAt(1) == '-' )
-      Cmds[i] = Cmds[i].SubStringFrom(1);
-  }
-  ABasicFunction *MF = GetLibrary().FindMacro(Command);//, Cmds.Count());
-  if( MF != NULL )  {
-    if( Command.Equalsi("if") )  {
-      MF->Run(Cmds, Options, Error);
-      if( ProcessFunctions )  
-        AnalyseError( Error );
-      return;
-    }
-    for( int i=0; i < Cmds.Count(); i++ )  {
-      if( !ProcessMacroFunc(Cmds[i]) )
-        return;
-    }
-    MF->Run(Cmds, Options, Error);
-    AnalyseError( Error );
-    return;
-  }
-  //..............................................................................
-  // macro processing
-  if( FMacroItem && FMacroItem->FindItem(Command) == NULL )  {  // macro does not exist
-    if( Command.FirstIndexOf('(') != -1 )  {
-      if( !ProcessMacroFunc(Command) )
-        return;
-    }
-    else  {
-      //Error.NonexitingMacroError( Command );
-      //AnalyseError( Error );
-      //2009.02.03 - just a warning added instead of the error, related to non-existent custom macros...
-      FXApp->GetLog().Warning(olxstr("Macro does not exist: ") << Command);
-      return;
-    }
-    return;
-  }
-  for( int i=0; i < Cmds.Count(); i++ )  {
-    Command << ' ' << '\"' << Cmds[i] << '\"';
-  }
-  Cmds.Clear();
-  TStrList OldOnAbort;
-  OldOnAbort.Assign(FOnAbortCmds);
-  FOnAbortCmds.Clear();
-  DecodeParams(Cmds, Command);
-
-  if( !Cmds.Count() )  {
-    Error.ProcessingError(__OlxSrcInfo, "empty macro: ") << Command;
-    if( ProcessFunctions )  AnalyseError( Error );
-    FOnAbortCmds.Assign(OldOnAbort);
-    return;
-  }
-  for( int i=0; i < Cmds.Count(); i++ )  {
-    Command = Cmds[i];
-    if( !Command.Length() )  continue;
-    ProcessXPMacro(Command, Error);
-    if( !Error.IsSuccessful() )  {
-      for( int j=0; j < FOnAbortCmds.Count(); j++ )
-        ProcessXPMacro(FOnAbortCmds[j], Error);
-      break;
-    }
-  }
-  FOnAbortCmds.Assign(OldOnAbort);
-}
 //..............................................................................
 void TMainForm::macIF(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   if( Cmds.Count() < 2 || !Cmds[1].Equalsi("then"))  {
@@ -1020,7 +596,7 @@ void TMainForm::macIF(TStrObjList &Cmds, const TParamList &Options, TMacroError 
     return;
   }
   olxstr Condition = Cmds[0];
-  if( !ProcessMacroFunc(Condition) )  {
+  if( !ProcessFunction(Condition, __OlxSrcInfo) )  {
     E.ProcessingError(__OlxSrcInfo, "error processing condition" );
     return;
   }
@@ -1029,18 +605,13 @@ void TMainForm::macIF(TStrObjList &Cmds, const TParamList &Options, TMacroError 
       if( Cmds[2].IndexOf(">>") != -1 )  {
         TStrList toks(Cmds[2], ">>");
         for( int i=0; i < toks.Count(); i++ )  {
-          ProcessXPMacro(toks[i], E);
-          if( !E.IsSuccessful() )  {
-            AnalyseError(E);
-            return;
-          }
+          Macros.ProcessMacro(toks[i], E);
+          if( !E.IsSuccessful() )  return;
         }
       }
-      else  {
-        ProcessXPMacro(Cmds[2], E);
-      }
+      else
+        Macros.ProcessMacro(Cmds[2], E);
     }
-    return;
   }
   else  {
     if( Cmds.Count() == 5 )  {
@@ -1049,18 +620,13 @@ void TMainForm::macIF(TStrObjList &Cmds, const TParamList &Options, TMacroError 
           if( Cmds[4].IndexOf(">>") != -1 )  {
             TStrList toks(Cmds[4], ">>");
             for( int i=0; i < toks.Count(); i++ )  {
-              ProcessXPMacro(toks[i], E);
-              if( !E.IsSuccessful() )  {
-                AnalyseError(E);
-                return;
-              }
+              Macros.ProcessMacro(toks[i], E);
+              if( !E.IsSuccessful() )  return;
             }
           }
-          else  {
-            ProcessXPMacro(Cmds[4], E);
-          }
+          else
+            Macros.ProcessMacro(Cmds[4], E);
         }
-        return;
       }
       else  {
         E.ProcessingError(__OlxSrcInfo, "no keyword 'else' found" );
@@ -2238,9 +1804,9 @@ void TMainForm::macShell(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     ShellExecute((HWND)this->GetHWND(), wxT("open"), uiStr(Cmds[0]), NULL, uiStr(TEFile::CurrentDir()), SW_SHOWNORMAL);
 #else
     if( Cmds[0].StartsFrom("http") || Cmds[0].StartsFrom("https") || Cmds[0].EndsWith(".htm") || Cmds[0].EndsWith(".html") || Cmds[0].EndsWith(".php") || Cmds[0].EndsWith(".asp") )
-      ProcessXPMacro( olxstr("exec -o getvar(defbrowser) '") << Cmds[0] << '\'', Error);
+      Macros.ProcessMacro( olxstr("exec -o getvar(defbrowser) '") << Cmds[0] << '\'', Error);
     else
-      ProcessXPMacro( olxstr("exec -o getvar(defexplorer) '") << Cmds[0] << '\'', Error);
+      Macros.ProcessMacro( olxstr("exec -o getvar(defexplorer) '") << Cmds[0] << '\'', Error);
     //wxShell( Cmds[0].u_str() );
 #endif
   }
@@ -3651,7 +3217,7 @@ void TMainForm::macMode(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   // this variable is set when the mode is changed from within this function
   static bool ChangingMode = false;
   if( ChangingMode )  return;
-  AMode *md = Modes->SetMode( Cmds[0] );
+  AMode* md = Modes->SetMode( Cmds[0] );
   if( md != NULL || Cmds[0].Equalsi("off") )  {
     olxstr cmds = Cmds.Text(' ');
     for( int i=0; i < Options.Count(); i++ )
@@ -3660,7 +3226,10 @@ void TMainForm::macMode(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   }
   if( md != NULL )  {
     Cmds.Delete(0);
-    md->Init(Cmds, Options);
+    try  {  md->Init(Cmds, Options);  }
+    catch(const TExceptionBase& e)  {  
+      throw TFunctionFailedException(__OlxSrcInfo, e);  
+    }
   }
   ChangingMode = false;
 }
@@ -3698,7 +3267,7 @@ void TMainForm::macReset(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   if( !content.IsEmpty() )  Ins->SetSfacUnit( content );
   if( Ins->GetSfac().Length() == 0)  {
     content = "getuserinput(1, \'Please, enter structure composition\', \'C1\')";
-    ProcessMacroFunc(content);
+    ProcessFunction(content);
     Ins->SetSfacUnit( content );
     if( Ins->GetSfac().Length() == 0 )  {
       E.ProcessingError(__OlxSrcInfo, "empty SFAC instruction, please use -c=Content to specify" );
@@ -3729,14 +3298,14 @@ void TMainForm::macReset(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     lstTmpFN << ".tmp";
     wxRenameFile( uiStr(lstFN), uiStr(lstTmpFN) );
   }
-  ProcessXPMacro( olxstr("@reap \'") << FN << '\'', E);
-  ProcessXPMacro("htmlreload", E);
+  Macros.ProcessMacro( olxstr("@reap \'") << FN << '\'', E);
+  Macros.ProcessMacro("htmlreload", E);
 }
 //..............................................................................
 void TMainForm::macText(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
   olxstr FN = DataDir + "output.txt";
   TUtf8File::WriteLines( FN, FGlConsole->Buffer());
-  ProcessXPMacro( olxstr("exec getvar('defeditor') -o \"") << FN << '\"' , E);
+  Macros.ProcessMacro( olxstr("exec getvar('defeditor') -o \"") << FN << '\"' , E);
 }
 //..............................................................................
 void TMainForm::macShowStr(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
@@ -4849,14 +4418,14 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     if( OverlayXFile )  {
       TXFile& xf = FXApp->NewOverlayedXFile();
       xf.LoadFromFile( FN );
-      ProcessXPMacro("fuse", Error);
+      Macros.ProcessMacro("fuse", Error);
       return;
     }
     if( Modes->GetCurrent() != NULL )
-      ProcessXPMacro("mode off", Error);
+      Macros.ProcessMacro("mode off", Error);
     Tmp = TEFile::ChangeFileExt(FN, "xlds");
     if( TEFile::Exists(Tmp) )  {
-      ProcessXPMacro(olxstr("load view '") << TEFile::ChangeFileExt(FN, EmptyString) << '\'', Error);
+      Macros.ProcessMacro(olxstr("load view '") << TEFile::ChangeFileExt(FN, EmptyString) << '\'', Error);
     }
     else  {
       if( TEFile::Exists(DefStyle) && ReadStyle )
@@ -4889,12 +4458,12 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
           ins->Clear();
           FXApp->XFile().GetRM().SetHKLSource(FN);  // make sure tha SGE finds the related HKL
           TMacroError er;
-          ProcessXPMacro(olxstr("SGE '") << TEFile::ChangeFileExt(FN, "ins") << '\'', er);
+          Macros.ProcessMacro(olxstr("SGE '") << TEFile::ChangeFileExt(FN, "ins") << '\'', er);
           if( !er.HasRetVal() || !er.GetRetObj< TEPType<bool> >()->GetValue()  )  {
             olxstr s_inp("getuserinput(1, \'Please, enter the spacegroup\', \'')"), s_sg(s_inp);
             TSpaceGroup* sg = NULL;
             while( sg == NULL )  {
-              ProcessMacroFunc(s_sg);
+              ProcessFunction(s_sg);
               sg = TSymmLib::GetInstance()->FindGroup(s_sg);
               if( sg != NULL ) break;
               s_sg = s_inp;
@@ -4902,7 +4471,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
             ins->GetAsymmUnit().ChangeSpaceGroup(*sg);
             if( ins->GetSfac().IsEmpty() )  {
               s_inp = "getuserinput(1, \'Please, enter cell content\', \'C1')";
-              ProcessMacroFunc(s_inp);
+              ProcessFunction(s_inp);
               ins->SetSfacUnit(s_inp);
             }
             else  {
@@ -4914,8 +4483,8 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
               ins->GetAsymmUnit().SetZ( (sg->MatrixCount()+1)*(sg->GetLattice().VectorCount()+1));
             }
             ins->SaveToRefine( TEFile::ChangeFileExt(FN, "ins"), EmptyString, EmptyString );
-            ProcessXPMacro( olxstr("reap '") << TEFile::ChangeFileExt(FN, "ins") << '\'', Error);
-            ProcessXPMacro("solve", Error);
+            Macros.ProcessMacro( olxstr("reap '") << TEFile::ChangeFileExt(FN, "ins") << '\'', Error);
+            Macros.ProcessMacro("solve", Error);
           }  // sge, if succeseded will run reap and solve
           return;
         }
@@ -4963,9 +4532,9 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
       if( FXApp->CheckFileType<TP4PFile>() || FXApp->CheckFileType<TCRSFile>() )  {
         TMacroError er;
         if( TEFile::Exists( TEFile::ChangeFileExt(FN, "ins") ) )
-          ProcessXPMacro("SG", er);
+          Macros.ProcessMacro("SG", er);
         else
-          ProcessXPMacro("SGE", er);
+          Macros.ProcessMacro("SGE", er);
       }
     // automatic export for kappa cif
       if( FXApp->CheckFileType<TCif>() )  {
@@ -4978,17 +4547,17 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
           TCif& C = FXApp->XFile().GetLastLoader<TCif>();
           if( C.FindLoop("_refln") != NULL )  {
             er.SetRetVal(&C);
-            ProcessXPMacro( olxstr("export ") << TEFile::ExtractFileName(hklFileName), er, false, false);
+            Macros.ProcessMacro( olxstr("export ") << TEFile::ExtractFileName(hklFileName), er);
             if( !er.IsProcessingError() )  {
               if( !TEFile::Exists(insFileName) )  {
                 TIns ins;
                 ins.Adopt( &FXApp->XFile() );
                 ins.GetRM().SetHKLSource(hklFileName);
                 ins.SaveToFile( insFileName );
-                ProcessXPMacro( olxstr("@reap \'") << insFileName << '\'', er);
+                Macros.ProcessMacro( olxstr("@reap \'") << insFileName << '\'', er);
                 if( !er.IsProcessingError() )  {
                   TBasicApp::GetLog() << ("End importing cif ...\n");
-                  ProcessXPMacro("reset", er);
+                  Macros.ProcessMacro("reset", er);
                 }
                 FXApp->Draw();
                 return;
@@ -5172,7 +4741,7 @@ void TMainForm::macDelta(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     float delta = Cmds[0].ToDouble();
     if( delta < 0.1 || delta > 0.9 )  delta = 0.5;
     FXApp->XFile().GetLattice().SetDelta( delta );
-    ProcessXPMacro("fuse", E);
+    Macros.ProcessMacro("fuse", E);
     return;
   }
   TBasicApp::GetLog() << ( olxstr("Current delta (covalent bonds) is: ") << FXApp->XFile().GetLattice().GetDelta() << '\n' );
@@ -5462,9 +5031,10 @@ void TMainForm::macReload(TStrObjList &Cmds, const TParamList &Options, TMacroEr
     if( TEFile::Exists(FXApp->GetBaseDir() + "macro.xld") )  {
       TStrList SL;
       FMacroFile.LoadFromXLFile(FXApp->GetBaseDir() + "macro.xld", &SL);
-      FMacroItem = FMacroFile.Root().FindItem("xl_macro");
+      TDataItem* root = FMacroFile.Root().FindItem("xl_macro");
       FMacroFile.Include(&SL);
       TBasicApp::GetLog() << (SL);
+      Macros.Load(*root);
     }
   }
   else if( Cmds[0].Equalsi("help") )  {
@@ -5636,7 +5206,7 @@ void TMainForm::macTref(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     TIns& Ins = FXApp->XFile().GetLastLoader<TIns>();
     Ins.SaveToRefine( cinsFN, olxstr("TREF -") << Solutions[i], EmptyString);
     FXApp->LoadXFile( cinsFN );
-    ProcessXPMacro( "solve", E );
+    Macros.ProcessMacro( "solve", E );
     while( FProcess )  {
       FParent->Dispatch();
       //FTimer->OnTimer->Execute((AActionHandler*)this, NULL);
@@ -5645,7 +5215,7 @@ void TMainForm::macTref(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     TEFile::Copy( clstFN, olxstr(SolutionFolder) <<  Solutions[i] << ".lst" );
   }
   ChangeSolution(0);
-//  ProcessXPMacro( olxstr("reap \'") << currentFile << '\'', E);
+//  Macros.ProcessMacro( olxstr("reap \'") << currentFile << '\'', E);
 }
 //..............................................................................
 void TMainForm::macPatt(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
@@ -5874,7 +5444,7 @@ void TMainForm::macInstallPlugin(TStrObjList &Cmds, const TParamList &Options, T
     if( di != NULL )  {
       TStateChange sc(prsPluginInstalled, false, Cmds[0]);
       OnStateChange->Execute((AEventsDispatcher*)this, &sc);
-      ProcessXPMacro( olxstr("uninstallplugin ") << Cmds[0], E );
+      Macros.ProcessMacro( olxstr("uninstallplugin ") << Cmds[0], E );
     }
     else  {
       TBasicApp::GetLog() << ( olxstr("Specified plugin does not exist: ") << Cmds[0] << '\n' );
@@ -6107,7 +5677,7 @@ void TMainForm::macMatch(TStrObjList &Cmds, const TParamList &Options, TMacroErr
     return;
   }
   // no comments...
-  ProcessXPMacro("kill $q", E);
+  Macros.ProcessMacro("kill $q", E);
   CallbackFunc(StartMatchCBName, EmptyString);
   // ivertion test
   bool TryInvert = Options.Contains("i");
@@ -6389,7 +5959,7 @@ void TMainForm::funGetCompilationInfo(const TStrObjList& Params, TMacroError &E)
 //..............................................................................
 void TMainForm::macDelOFile(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   if( FXApp->OverlayedXFileCount() == 0 )  {
-    ProcessXPMacro("fuse", Error);
+    Macros.ProcessMacro("fuse", Error);
     return;
   }
   int ind = Cmds[0].ToInt();
@@ -6542,7 +6112,7 @@ void TMainForm::funAnd(const TStrObjList& Params, TMacroError &E) {
   olxstr tmp;
   for(int i=0; i < Params.Count(); i++ )  {
     tmp = Params[i];
-    if( !ProcessMacroFunc( tmp ) )  {
+    if( !ProcessFunction( tmp ) )  {
       E.ProcessingError(__OlxSrcInfo, "could not process: ") << tmp;
       return;
     }
@@ -6558,7 +6128,7 @@ void TMainForm::funOr(const TStrObjList& Params, TMacroError &E) {
   olxstr tmp;
   for(int i=0; i < Params.Count(); i++ )  {
     tmp = Params[i];
-    if( !ProcessMacroFunc( tmp ) )  {
+    if( !ProcessFunction(tmp) )  {
       E.ProcessingError(__OlxSrcInfo, "could not process: ") << tmp;
       return;
     }
@@ -6572,8 +6142,7 @@ void TMainForm::funOr(const TStrObjList& Params, TMacroError &E) {
 //..............................................................................
 void TMainForm::funNot(const TStrObjList& Params, TMacroError &E) {
   olxstr tmp = Params[0];
-
-  if( !ProcessMacroFunc( tmp ) )  {
+  if( !ProcessFunction(tmp) )  {
     E.ProcessingError(__OlxSrcInfo, "could not process: ") << tmp;
     return;
   }
@@ -6816,7 +6385,7 @@ void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   
   olxstr fn( FXApp->XFile().GetFileName() );
   for( int i=0; i < 250; i++ )  {
-    ProcessXPMacro(olxstr("@reap '") << fn << '\'', Error);
+    Macros.ProcessMacro(olxstr("@reap '") << fn << '\'', Error);
     Dispatch(ID_TIMER, msiEnter, (AEventsDispatcher*)this, NULL);
     FHtml->Update();
     FXApp->Draw();
@@ -7553,7 +7122,7 @@ void TMainForm::macTextm(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   TStrList sl;
   sl.LoadFromFile( Cmds[0] );
   for( int i=0; i < sl.Count(); i++ )  {
-    ProcessXPMacro(sl[i], Error);
+    Macros.ProcessMacro(sl[i], Error);
     if( !Error.IsSuccessful() )  break;
   }
 }
@@ -8097,15 +7666,21 @@ void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options, TMa
   }
   using namespace esdl::exparse;
   EvaluableFactory evf;
-  exp_builder _exp(evf);
+  context cx;
+  context::init_global(cx);
+  evf.types.Add(&typeid(olxstr), new StringValue(""));
+  StringValue::init_library();
+
+  exp_builder _exp(evf, cx);
   IEvaluable* iv = _exp.build("a = 'ab c, de\\';()'");
   iv = _exp.build("b = 'ab c'");
   //_exp.scope.add_var("a", new StringValue("abcdef"));
   //iv = _exp.build("a.sub(0,4).sub(1,3).len()");
-  iv = _exp.build("x = a.sub(0,4).len() + b.len()");
+  iv = _exp.build("x = a.sub (0,4).len() + b.len()");
   iv = _exp.build("c = a.sub(0,3) == b.sub(0,3)");
   iv = _exp.build("c = b.sub(0,3) + 'dfg'");
   iv = _exp.build("c = 1.2 + 1.1 - .05");
+  iv = _exp.build("if(a){ a = a.sub(0,3); }else{ a = a.sub(0,4); }");
   if( !iv->is_final() )  {
     IEvaluable* iv1 = iv->_evaluate();
     delete iv1;
@@ -8726,7 +8301,7 @@ void TMainForm::macImportFrag(TStrObjList &Cmds, const TParamList &Options, TMac
     for( int i=0; i < xatoms.Count(); i++ )
       xatoms[i]->Atom().CAtom().SetPart(part);
   }
-  ProcessXPMacro("mode fit", E);
+  Macros.ProcessMacro("mode fit", E);
   AMode *md = Modes->GetCurrent();
   if( md != NULL  )
     md->AddAtoms(xatoms);

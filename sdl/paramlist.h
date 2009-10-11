@@ -5,8 +5,7 @@
 #define paramlistH
 //---------------------------------------------------------------------------
 #include "ebase.h"
-#include "string.h"
-#include "estrlist.h"
+#include "exparse/exptree.h"
 #undef GetObject
 BeginEsdlNamespace()
 
@@ -16,9 +15,9 @@ public:
   TParamList();
   TParamList(const TParamList& v);
   virtual ~TParamList();
-  inline void Clear()                              {  TStrStrList::Clear(); }
-  inline int Count()                      const {  return TStrStrList::Count();  };
-  inline bool IsEmpty()                      const {  return TStrStrList::IsEmpty();  }
+  inline void Clear()                            {  TStrStrList::Clear(); }
+  inline int Count()                       const {  return TStrStrList::Count();  };
+  inline bool IsEmpty()                    const {  return TStrStrList::IsEmpty();  }
   inline const olxstr& GetValue(int index) const {  return GetObject(index);  }
   inline olxstr& Value(int index)                {  return GetObject(index);  }
   inline const olxstr& GetName(int index)  const {  return GetString(index);  }
@@ -33,50 +32,55 @@ public:
    }
   template <class T>
   const olxstr& operator [] (const T& Name) const {  return FindValue(Name);  }
-  // these functions consider the folowing situation '"'
-  template <class SC, class T>
-    static int StrtokParams(const olxstr& Cmd, char Separator, TTStrList<SC,T>& Params)  {
-      if( Separator == '\'' || Separator == '"' )
+  // these functions considers the folowing situations: '"', '('')' and '\''
+  template <class StrLst>
+    static int StrtokParams(const olxstr& exp, olxch sep, StrLst& out, bool do_unquote=true)  {
+      using namespace exparse::parser_util;
+      if( is_quote(sep) )
         throw TInvalidArgumentException(__OlxSourceInfo, "separator");
-      int bc=0, pc=0, sc=0;
-      olxch Sep='#';
-      olxstr Param;
-      for( int i=0; i < Cmd.Length(); i++ )  {
-        if( (Cmd[i] == '\'' || Cmd[i] == '\"') && (Sep == '#') ) // identify separator
-          Sep = Cmd[i];
-        if( Cmd[i] == Sep && Sep !='#' )  sc++;  //count separators
-        if( Cmd[i] == '(' )  bc++;  //count brackets
-        if( Cmd[i] == ')' )  bc--;
-        // check it is not between (,) or ',' or ","
-        if( Cmd[i] == Separator && !bc && (sc%2) == 0 && Param.Length() != 0 )  { 
-          ProcessStringParam(Param);  // skip double quotes '' or ""
-          if( !Param.IsEmpty() )  {
-            Params.Add(Param);
-            pc++;
-            Param = EmptyString;
+      const int pc = out.Count();
+      int start = 0;
+      for( int i=0; i < exp.Length(); i++ )  {
+        const olxch ch = exp.CharAt(i);
+        if( is_quote(ch) && !is_escaped(exp, ch) )  {
+          if( !skip_string(exp, i) )  {
+            out.Add( exp.SubStringFrom(start).TrimWhiteChars() );
+            start = exp.Length();
+            break;
           }
-          Sep = '#';  // reset quotation character
-          continue;
         }
-        if( Cmd[i] == Separator )  {
-          if( (sc%2) != 0 || bc != 0 )
-            Param << Cmd[i];
-          continue;
+        else if( is_bracket(ch) )  {
+          if( !skip_brackets(exp, i) )  {
+            out.Add( exp.SubStringFrom(start).TrimWhiteChars() );
+            start = exp.Length();
+            break;
+          }
         }
-        Param << Cmd[i];
+        else if( ch == sep )  {
+          if( sep == ' ' && start == i )  { // white spaces cannot define empty args
+            start = i+1;
+            continue;
+          }
+          if( do_unquote )
+            out.Add( unquote(exp.SubString(start, i-start).TrimWhiteChars()) );
+          else 
+            out.Add( exp.SubString(start, i-start).TrimWhiteChars() );
+          start = i+1;
+        }
       }
-      if( !Param.IsEmpty() )  {
-        ProcessStringParam(Param);
-        pc++;
-        Params.Add(Param);
+      if( start < exp.Length() )  {
+        if( do_unquote )
+          out.Add( unquote(exp.SubStringFrom(start).TrimWhiteChars()) );
+        else 
+          out.Add( exp.SubStringFrom(start).TrimWhiteChars() );
       }
-      return pc;
+      return out.Count() - pc;
     }
   //this function removes the wrapping around the string 'str""'
-  static bool ProcessStringParam(olxstr& Param);
+  //static olxstr ProcessStringParam(const olxstr& Param);
   /* if the quation char is the same at the end and beginning of the string
      function returns true and initilises the Char argument */
-  static bool GetQuotationChar( const olxstr& Param, olxch& Char );
+  //static bool GetQuotationChar(const olxstr& Param, olxch* Char);
 };
 
 EndEsdlNamespace()
