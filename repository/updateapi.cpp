@@ -262,7 +262,7 @@ short UpdateAPI::DoSynch(AActionHandler* _f_lsnr, AActionHandler* _p_lsnr)  {
 //.............................................................................
 void UpdateAPI::EvaluateProperties(TStrList& props) const  {
   props.Add("olex-update");
-#if defined(__WIN32__) && !defined(_DEBUG)
+#if defined(__WIN32__) && !defined(_DEBUG)  // disable updates by the debug version 
   #if _M_IX86_FP == 0
     props.Add("port-win32-nosse");
 #elif _M_IX86_FP == 1
@@ -474,3 +474,24 @@ olxstr UpdateAPI::AddTagPart(const olxstr& path, bool Update) const {
   return rv;
 }
 //.............................................................................
+//http://www.jorgon.freeserve.co.uk/TestbugHelp/XMMfpins2.htm
+olxstr UpdateAPI::GetInstallationFileName()  {
+#ifdef __WIN32__
+  unsigned int cpu_features = 0;
+  _asm  {
+    push EAX
+      mov EAX, 1
+      cpuid
+      mov [cpu_features], EDX
+      pop EAX
+  }
+  bool has_sse2 = (cpu_features & (0x1 << 26)) != 0;
+  bool has_sse = (cpu_features & (0x1 << 25)) != 0;
+  if( has_sse2 ) return "olex2.zip";
+  else if( has_sse )  return "olex2-sse.zip";
+  else  return "olex2-nosse.zip";
+#else
+  return "portable-gui.zip";
+#endif
+}
+
