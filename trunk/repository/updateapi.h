@@ -197,14 +197,7 @@ public:
   // fills list with available tags and initialises the chosen repository URL
   void GetAvailableTags(TStrList& res, olxstr& repo_URL) const;
   // returns platform-dependen instalaltion file name
-  static olxstr GetInstallationFileName()  {
-#ifdef __WIN32__
-    return "olex2.zip";
-#else
-    return "portable-gui.zip";
-#endif
-  }
-  //static 
+  static olxstr GetInstallationFileName();
 };
 
 };

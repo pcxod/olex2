@@ -254,10 +254,15 @@ bool TfMain::DoInstall()  {
         url.SetProxy(proxyPath);
       THttpFileSystem repos(url);
       repos.OnProgress->Add( new TProgress );
-      TEFile* zipf = repos.OpenFileAsFile( url.GetPath() + "olex2.zip");
+      TEFile* zipf = repos.OpenFileAsFile( url.GetPath() + updater::UpdateAPI::GetInstallationFileName());
       if( zipf == NULL )  {
         frMain->stAction->Caption = "Failed...";
-        Application->MessageBoxA("Could not locate the Olex2 archive.\nPlease try another repository.", "Zip file fetching error", MB_OK|MB_ICONERROR);
+        Application->MessageBoxA(
+          (AnsiString("Could not locate the Olex2 archive: ") +
+          updater::UpdateAPI::GetInstallationFileName().c_str() +
+          + "\nPlease try another repository.").c_str(),
+          "Zip file fetching error",
+          MB_OK|MB_ICONERROR);
         frMain->bbInstall->Enabled = true;
         return false;
       }
@@ -518,7 +523,7 @@ void __fastcall TfMain::FormShow(TObject *Sender)  {
   }
   olxstr bd( CmdLine );
 
-  olxstr zipfn( TEFile::ExtractFilePath(bd) + "olex2.zip" );
+  olxstr zipfn( TEFile::ExtractFilePath(bd) + updater::UpdateAPI::GetInstallationFileName() );
   if( TEFile::Exists(zipfn) )  {
     if( !TEFile::IsAbsolutePath(zipfn) )  {
       zipfn = TEFile::CurrentDir();
