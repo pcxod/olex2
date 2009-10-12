@@ -262,8 +262,15 @@ short UpdateAPI::DoSynch(AActionHandler* _f_lsnr, AActionHandler* _p_lsnr)  {
 //.............................................................................
 void UpdateAPI::EvaluateProperties(TStrList& props) const  {
   props.Add("olex-update");
-#ifdef __WIN32__
-  props.Add("port-win32");
+#if defined(__WIN32__) && !defined(_DEBUG)
+  #if _M_IX86_FP == 0
+    props.Add("port-win32-nosse");
+#elif _M_IX86_FP == 1
+    props.Add("port-win32-sse");
+  #elif _M_IX86_FP == 2  // cannot change it! olex2 does not get upadted and this is it...
+    props.Add("port-win32");
+  #endif
+  props.Add("port-win32-portable");  // but can change this ...
 #else
   if( !settings.olex2_port.IsEmpty() )  {
     props.Add(settings.olex2_port);
