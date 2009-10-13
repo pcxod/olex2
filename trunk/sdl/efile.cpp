@@ -763,25 +763,19 @@ olxstr& TEFile::OSPathI(olxstr &F)  {
 }
 //..............................................................................
 olxstr TEFile::WinPath(const olxstr &F)  {
-  olxstr T(F);
-  T.Replace('/', '\\');
-  return T;
+  return olxstr(F).Replace('/', '\\');
 }
 //..............................................................................
 olxstr TEFile::UnixPath(const olxstr& F) {
-  olxstr T(F);
-  T.Replace('\\', '/');
-  return T;
+  return olxstr(F).Replace('\\', '/');
 }
 //..............................................................................
 olxstr& TEFile::WinPathI( olxstr& F )  {
-  F.Replace('/', '\\');
-  return F;
+  return F.Replace('/', '\\');
 }
 //..............................................................................
 olxstr& TEFile::UnixPathI( olxstr& F )  {
-  F.Replace('\\', '/');
-  return F;
+  return F.Replace('\\', '/');
 }
 //..............................................................................
 olxstr TEFile::AddTrailingBackslash( const olxstr& Path )  {

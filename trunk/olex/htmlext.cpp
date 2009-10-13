@@ -849,8 +849,8 @@ void THtmlSwitch::UpdateFileIndex()  {
       // "key word parameter"
       FStrings[i].Replace( "#switch_name", FName );
       if( FParent != NULL )  {
-        FStrings[i].Replace( "#parent_name", FParent->Name() );
-        FStrings[i].Replace( "#parent_file", FParent->CurrentFile() );
+        FStrings[i].Replace("#parent_name", FParent->Name()).\
+                    Replace( "#parent_file", FParent->CurrentFile() );
       }
 
       for( int j=0; j < FParams.Count(); j++ )
@@ -1359,30 +1359,33 @@ void THtml::CheckForSwitches(THtmlSwitch &Sender, bool izZip)  {
   TStrList Toks;
   int ind;
   static const olxstr Tag  = "<!-- #include ",
-           Tag1 = "<!-- #itemstate ",
-           Tag2 = "<!-- #cmd ",
-           Tag3 = "<!-- #link ",
-           Tag4 = "<!-- #includeif ";
+           Tag1 = "<!-- #includeif ",
+           Tag2 = "<!--", Tag3 = "-->";
   olxstr Tmp;
   for( int i=0; i < Lst.Count(); i++ )  {
+    if( Lst[i].TrimWhiteChars() == Tag2 )  {
+      while( ++i < Lst.Count() && Lst[i].TrimWhiteChars() != Tag3 ) 
+        ;
+      continue;
+    }
     // TRANSLATION START
     Lst[i] = TGlXApp::GetMainForm()->TranslateString( Lst[i] );
     if( Lst[i].IndexOf("$") >= 0 )
       TGlXApp::GetMainForm()->ProcessFunction(Lst[i], olxstr(Sender.CurrentFile()) << '#' << (i+1));
-    // TRANSLATIOn END
-    if( Lst[i].StartsFrom(Tag) || Lst[i].StartsFrom(Tag4) )  {
-      if( Lst[i].StartsFrom(Tag4) )
-        Tmp = Lst[i].SubStringFrom(Tag4.Length());
+    // TRANSLATION END
+    if( Lst[i].StartsFrom(Tag) || Lst[i].StartsFrom(Tag1) )  {
+      if( Lst[i].StartsFrom(Tag1) )
+        Tmp = Lst[i].SubStringFrom(Tag1.Length());
       else
         Tmp = Lst[i].SubStringFrom(Tag.Length());
       Toks.Clear();
       Toks.Strtok(Tmp, ' '); // extract item name
-      if( (Lst[i].StartsFrom(Tag4) && Toks.Count() < 4) ||
+      if( (Lst[i].StartsFrom(Tag1) && Toks.Count() < 4) ||
           (Lst[i].StartsFrom(Tag) && Toks.Count() < 3) )  {
         TBasicApp::GetLog().Error(olxstr("Wrong #include[if] syntax: ") << Lst[i]);
         continue;
       }
-      if( Lst[i].StartsFrom(Tag4) )  {
+      if( Lst[i].StartsFrom(Tag1) )  {
         Tmp = Toks[0];
         if( TGlXApp::GetMainForm()->ProcessFunction(Tmp) )  {
           if( !Tmp.ToBool() )  continue;
@@ -1443,41 +1446,6 @@ void THtml::CheckForSwitches(THtmlSwitch &Sender, bool izZip)  {
         ind = switchState;
       }
       Sw->FileIndex(ind);
-    }
-    else if( Lst[i].StartsFrom(Tag1) )  {
-      Toks.Clear();  
-      Tmp = Lst[i].SubStringFrom(Tag1.Length());
-      Toks.Strtok(Tmp, ' '); // extract item name
-      if( Toks.Count() < 3 )  continue;
-      THtmlSwitch* Sw = FRoot->FindSwitch(Toks[0]);
-      if( Sw == NULL )  {
-        TBasicApp::GetLog().Error(olxstr("THtml::CheckForSwitches: Unresolved: ") << Toks[0]);
-        continue;
-      }
-      Sw->FileIndex(Toks[1].ToInt()-1);
-    }
-    if( Lst[i].StartsFrom(Tag2) )  {
-      Toks.Clear();  
-      Tmp = Lst[i].SubStringFrom(Tag2.Length());
-      Toks.Strtok(Tmp, ' '); // extract item name
-      if( Toks.Count() < 2 )  continue;
-      THtmlFunc* Fn = &Sender.NewFunc();
-      Lst.GetObject(i) = Fn;
-      Fn->Func(Toks[0]);
-//      if( OnCmd->Execute(this, &(Toks.String(0))) )
-//      { Lst[i] = Toks.String(0); }
-    }
-    else if( Lst[i].StartsFrom(Tag3) )   { // html link
-      Toks.Clear();  
-      Tmp = Lst[i].SubStringFrom(Tag3.Length());
-      Toks.Strtok(Tmp, ' '); // extract file name
-      if( Toks.Count() < 2 )  continue;
-      Toks.Delete(Toks.Count()-1);  // delete --!>
-      THtmlLink* Lk = &Sender.NewLink();
-      Lst.GetObject(i) = Lk;
-      Lk->FileName(Toks.Text(' '));
-//      if( OnCmd->Execute(this, &(Toks.String(0))) )
-//      { Lst[i] = Toks.String(0); }
     }
   }
 }
@@ -1704,8 +1672,7 @@ void THtml::OnCellMouseHover(wxHtmlCell *Cell, wxCoord x, wxCoord y)  {
     }
     if( ShowTooltips )  {
       wxToolTip *tt = GetToolTip();
-      Href.Replace("#href", Link->GetHref().c_str() );
-      wxString wxs( Href.u_str() );
+      wxString wxs( Href.Replace("#href", Link->GetHref().c_str()).u_str() );
       if( !tt || tt->GetTip() != wxs )  {
         SetToolTip( wxs );
       }

@@ -542,8 +542,7 @@ void TGlConsole::SetPromptVisible(bool v)  {
 //..............................................................................
 void TGlConsole::SetInviteString(const olxstr &S)  {
   InviteStr = S;
-  InviteStr.Replace("\\(", '(');
-  GetPrimitives().GetStyle().SetParam("Prompt", InviteStr, true);
+  GetPrimitives().GetStyle().SetParam("Prompt", InviteStr.Replace("\\(", '('), true);
   olxstr cmd = GetCommand();
   olex::IOlexProcessor::GetInstance()->executeFunction(InviteStr, PromptStr);
   FCommand = PromptStr;

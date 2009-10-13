@@ -69,10 +69,8 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
   InsFile.CombineLines('=');
   TBasicAtomInfo& baiQPeak = atomsInfo.GetAtomInfo(iQPeakIndex);
   cx.Resi = &GetAsymmUnit().GetResidue(-1);
-  for( int i=0; i < InsFile.Count(); i++ )  {
-    InsFile[i].Replace('\t', ' ');
-    InsFile[i] = olxstr::DeleteSequencesOf<char>(InsFile[i], ' ');
-  }
+  for( int i=0; i < InsFile.Count(); i++ )
+    InsFile[i] = olxstr::DeleteSequencesOf<char>(InsFile[i].Replace('\t', ' '), ' ');
   for( int i=0; i < InsFile.Count(); i++ )  {
     if( InsFile[i].IsEmpty() )      continue;
 
@@ -514,10 +512,8 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks, ParseContext& cx,
             if( iv != -1 )  break;
           }
         }
-        if( iv != -1 )  {
-          hklsrc = hklsrc.SubString(index+1, iv-index-1);
-          hklsrc.Replace("%20", ' ');
-        }
+        if( iv != -1 )
+          hklsrc = hklsrc.SubString(index+1, iv-index-1).Replace("%20", ' ');
         else
           hklsrc = EmptyString;
         cx.rm.SetHKLSource(hklsrc);
@@ -1358,11 +1354,8 @@ void TIns::_SaveHklInfo(TStrList& SL, bool solution)  {
     const vec3i& r = GetRM().GetOmitted(i);
     SL.Add("OMIT ") << r[0] << ' ' << r[1] << ' ' << r[2];
   }
-  if( !GetRM().GetHKLSource().IsEmpty() )  {  // update html source string
-    olxstr Tmp( GetRM().GetHKLSource() );
-    Tmp.Replace(' ', "%20");
-    HyphenateIns("REM ", olxstr("<HKL>") << Tmp << "</HKL>", SL);
-  }
+  if( !GetRM().GetHKLSource().IsEmpty() )  // update html source string
+    HyphenateIns("REM ", olxstr("<HKL>") << olxstr(GetRM().GetHKLSource()).Replace(' ', "%20")<< "</HKL>", SL);
 }
 //..............................................................................
 bool Ins_ProcessRestraint(const TCAtomPList* atoms, TSimpleRestraint& sr)  {

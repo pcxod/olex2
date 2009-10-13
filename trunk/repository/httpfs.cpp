@@ -116,8 +116,7 @@ IInputStream* THttpFileSystem::_DoOpenFile(const olxstr& Source)  {
   CString Tmp = Url.GetFullHost();
   Tmp << '/' << FileName;
 
-  Tmp.Replace(' ', "%20");
-  sprintf(Request, "GET %s HTTP/1.0\n\n", Tmp.c_str());
+  sprintf(Request, "GET %s HTTP/1.0\n\n", Tmp.Replace(' ', "%20").c_str());
   if( Url.HasProxy() && !Url.GetProxy().GetUser().IsEmpty() && !Url.GetProxy().GetPassword().IsEmpty() )
     sprintf(Request, "Authorization: %s\n\n", CString(Url.GenerateHTTPAuthString()).c_str());
 

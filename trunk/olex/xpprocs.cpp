@@ -7134,11 +7134,22 @@ void TMainForm::macOnRefine(TStrObjList &Cmds, const TParamList &Options, TMacro
 //..............................................................................
 class MTTestTh : public AOlxThread  {
   CString msg;
+  compd cd_res;
+  compf cf_res;
 public:
   MTTestTh() {  Detached = false;  }
 	int Run()  {
-	  for( int i=0; i < 500000; i++ )
-		  msg = SHA256::Digest(msg);
+    for( int i=0; i < 250000; i++ )  {
+      msg = SHA256::Digest(MD5::Digest(msg));
+      for( int j=0; j < 1000; j++ )  {
+        cd_res = (cd_res + compd(1.2, 1.4))*compd(1.00000001, 0.9999999);
+        cd_res /= compd(1.001, 0.999);
+        cd_res -= 1;
+        cf_res = (cf_res + compf(1.2, 1.4))*compf(1.00000001, 0.9999999);
+        cf_res /= compf(1.001, 0.999);
+        cf_res -= 1;
+      }
+    }
 	  return 0;
 	}
 	DefPropC(CString, msg);

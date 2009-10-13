@@ -292,9 +292,7 @@ void XLibMacros::macSAInfo(TStrObjList &Cmds, const TParamList &Options, TMacroE
   else  {
     TPSTypeList<int, TSpaceGroup*> hits, bl_hits;
     for( int i=0; i < Cmds.Count(); i++ )  {
-      olxstr se_name(Cmds[i]);
-      se_name.Replace('~', '-');
-      TSymmElement* se = sl.FindSymmElement( se_name );
+      TSymmElement* se = sl.FindSymmElement( olxstr(Cmds[i]).Replace('~', '-') );
       if( se == NULL )  {
         E.ProcessingError(__OlxSrcInfo, olxstr("Unknown symmetry element: ") << Cmds[i]);
         return;
@@ -2195,11 +2193,11 @@ void XLibMacros::funSG(const TStrObjList &Cmds, TMacroError &E)  {
     }
     else  {
       Tmp = Cmds[0];
-      Tmp.Replace("%#", olxstr(sg->GetNumber()) );
-      Tmp.Replace("%n", sg->GetName());
-      Tmp.Replace("%N", sg->GetFullName());
-      Tmp.Replace("%HS", sg->GetHallSymbol());
-      Tmp.Replace("%s", sg->GetBravaisLattice().GetName());
+      Tmp.Replace("%#", olxstr(sg->GetNumber()) ).\
+        Replace("%n", sg->GetName()).\
+        Replace("%N", sg->GetFullName()).\
+        Replace("%HS", sg->GetHallSymbol()).\
+        Replace("%s", sg->GetBravaisLattice().GetName());
       if( Tmp.IndexOf("%H") != -1 )
         Tmp.Replace("%H", XLibMacros_funSGNameToHtmlX(sg->GetFullName()));
       if( Tmp.IndexOf("%h") != -1 )
