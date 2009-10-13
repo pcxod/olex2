@@ -457,8 +457,7 @@ void ExportLib(const CString& fullName, TEFile& file, const TLibrary& Lib)  {
     ABasicFunction* fun = Lib.GetFunctionByIndex(i);
     olxName = fun->GetQualifiedName();
     pyName = fun->GetName();
-    pyName.Replace('.', "");
-    pyName.Replace('@', "At");
+    pyName.Replace('.', "").Replace('@', "At");
     file.Writenl( PyFuncBody(olxName, fullName + pyName, ',') );
   }
 
@@ -466,8 +465,7 @@ void ExportLib(const CString& fullName, TEFile& file, const TLibrary& Lib)  {
     ABasicFunction* fun = Lib.GetMacroByIndex(i);
     olxName = fun->GetQualifiedName();
     pyName = fun->GetName();
-    pyName.Replace('.', "");
-    pyName.Replace('@', "At");
+    pyName.Replace('.', "").Replace('@', "At");
     file.Writenl( PyFuncBody(olxName, fullName + pyName, ' ') );
   }
 

@@ -43,11 +43,11 @@ protected:
   TEStrBuffer& writeFullName(TEStrBuffer& bf) const;
 public:
   TDataItem(TDataItem *Parent, const olxstr& Name, const olxstr& value=EmptyString);
-  virtual ~TDataItem();
+  virtual ~TDataItem() {  Clear();  }
   void Clear();
   void Sort();  // sorts fields and items - improve the access by name performance
   void ResolveFields(TStrList* Log); // resolves referenced fields
-  int LoadFromString( int start, olxstr &Data, TStrList* Log);
+  int LoadFromString(int start, const olxstr &Data, TStrList* Log);
   void SaveToStrBuffer(TEStrBuffer &Data) const;
 
   TDataItem& AddItem(const olxstr& Name, const olxstr& value=EmptyString);
@@ -69,12 +69,12 @@ public:
     return *Items.GetObject(i);  
   }
 
-  TDataItem& GetItem(int index)                {  return *Items.GetObject(index); }
-  const TDataItem& GetItem(int index)    const {  return *Items.GetObject(index); }
+  TDataItem& GetItem(int index) {  return *Items.GetObject(index); }
+  const TDataItem& GetItem(int index) const {  return *Items.GetObject(index); }
   void FindSimilarItems(const olxstr& StartsFrom, TPtrList<TDataItem>& List);
-  inline int ItemCount() const                  {  return Items.Count(); }
-  bool ItemExists(const olxstr &Name);
-  int IndexOf(TDataItem *I) const               {  return Items.IndexOfObject(I); };
+  inline int ItemCount() const {  return Items.Count(); }
+  template <class T> bool ItemExists(const T &Name) const {  return Items.IndexOf(Name) != -1;  }
+  int IndexOf(TDataItem *I) const {  return Items.IndexOfObject(I); };
 
   TDataItem& AddField(const olxstr& Name, const olxstr& Data)  {
     Fields.Add(Name, Data);

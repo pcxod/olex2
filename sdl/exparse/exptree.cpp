@@ -17,9 +17,24 @@ bool parser_util::skip_string(const olxstr& exp, int& ind)  {
 bool parser_util::parse_string(const olxstr& exp, olxstr& dest, int& ind)  {
   const olxch qc = exp.CharAt(ind);
   bool end_found = false;
-  const int start = ind;
+  const int start = ind+1;
   while( ++ind < exp.Length() )  {
     if( exp.CharAt(ind) == qc && !is_escaped(exp, ind) )  {
+      end_found = true;
+      break;
+    }
+  }
+  if( end_found )
+    dest = exp.SubString(start, ind - start);
+  return end_found;
+}
+//...........................................................................
+bool parser_util::parse_escaped_string(const olxstr& exp, olxstr& dest, int& ind)  {
+  const olxch qc = exp.CharAt(ind);
+  bool end_found = false;
+  const int start = ind+1;
+  while( ++ind < exp.Length() )  {
+    if( exp.CharAt(ind) == qc )  {
       end_found = true;
       break;
     }

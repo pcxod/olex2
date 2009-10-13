@@ -748,22 +748,23 @@ public:
     if( newLen < T::_Length )  DecLength( T::_Length - newLen );
   }
   //............................................................................
-  void Delete(size_t from, size_t count)  {
+  TTSString& Delete(size_t from, size_t count)  {
     register size_t dv = from+count;
     if( dv > T::_Length )  
       TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "invalid size to delete");
     else  {
       if( dv == T::_Length )  { 
-        if( from != 0 ) {  T::_Length -= count;  return;  }  // substring to
-        else            {  T::_Length = 0;      return;  }  // empty string ...
+        if( from != 0 ) {  T::_Length -= count;  return *this;  }  // substring to
+        else            {  T::_Length = 0;      return *this;  }  // empty string ...
       }
     }
     // delete from start - just substring from
-    if( from == 0 )  {  T::_Start += count;  T::_Length -= count;  return;  }
+    if( from == 0 )  {  T::_Start += count;  T::_Length -= count;  return *this;  }
     
     T::checkBufferForModification(T::_Length);
     memmove( &T::Data()[from], &T::Data()[from+count], (T::_Length-from-count)*T::CharSize);
     T::DecLength(count);
+    return *this;
   }
   //............................................................................
   //replaces sequences of chars with a single char
@@ -779,18 +780,12 @@ public:
     return whr_len - ni;
   }
   //............................................................................
-  void DeleteSequencesOf(char wht, bool removeTrailing = true)  {
+  template <typename OC> TTSString& DeleteSequencesOf(OC wht, bool removeTrailing = true)  {
     T::checkBufferForModification(T::_Length);
     DecLength( o_strdcs(T::Data(), T::_Length, wht) );
     if( removeTrailing && T::_Length != 0 && TTIString<TC>::Data(T::_Length-1) == wht )
       T::DecLength(1);
-  }
-  //............................................................................
-  void DeleteSequencesOf(wchar_t wht, bool removeTrailing = true)  {
-    T::checkBufferForModification(T::_Length);
-    DecLength( o_strdcs(T::Data(), T::_Length, wht) );
-    if( removeTrailing && T::_Length != 0 && TTIString<TC>::Data(T::_Length-1) == wht )
-      T::DecLength(1);
+    return *this;
   }
   //............................................................................
   template <typename AC> static TTSString DeleteSequencesOf(const TTSString& str, AC wht, bool removeTrailing=true)  {
@@ -813,9 +808,35 @@ public:
     return rn;
   }
   //............................................................................
-  template <typename AC> void DeleteChars(AC wht)  {
+  //removes a set of chars from string and return the number of removed chars
+  template <typename AC> static size_t o_strdchs(TC *whr, size_t whr_len, const AC* wht, size_t wht_len)  {
+    size_t rn = 0;
+    for( size_t i=0; i < whr_len; i++ )  {
+      bool found = false;
+      for( size_t j=0; j < wht_len; j++ )  {
+        if( whr[i] == wht[j] )  {
+          rn++;
+          found = true;
+          break;
+        }
+      }
+      if( !found )
+        whr[i-rn] = whr[i];
+    }
+    return rn;
+  }
+  //............................................................................
+  template <typename AC> TTSString& DeleteChars(AC wht)  {
     T::checkBufferForModification(T::_Length);
     T::DecLength( o_strdch(T::Data(), T::_Length, wht) );
+    return *this;
+  }
+  //............................................................................
+  // deletes a set of chars
+  TTSString& DeleteChars(const TTSString &wht)  {
+    T::checkBufferForModification(T::_Length);
+    T::DecLength( o_strdchs(T::Data(), T::_Length, wht.raw_str(), wht.Length()) );
+    return *this;
   }
   //............................................................................
   template <typename AC> static TTSString DeleteChars(const TTSString& str, AC wht)  {
@@ -842,26 +863,29 @@ public:
     return amount;
   }
   //............................................................................
-  void Insert(const TTSString& wht, size_t whr, size_t amount=1)  {
+  TTSString& Insert(const TTSString& wht, size_t whr, size_t amount=1)  {
     if( whr > T::_Length )  
       TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "index out of range");
     T::checkBufferForModification(T::_Length + wht._Length*amount);
     T::IncLength( o_strins(wht.Data(), wht._Length, T::Data(), T::_Length, whr, amount) );
+    return *this;
   }
   //............................................................................
-  void Insert(const TC *wht, size_t whr, size_t amount=1)  {
+  TTSString& Insert(const TC *wht, size_t whr, size_t amount=1)  {
     if( whr > T::_Length )  
       TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "index out of range");
     size_t wht_len = o_strlen(wht);
     T::checkBufferForModification(T::_Length + wht_len*amount);
     T::IncLength( o_strins(wht, wht_len, T::Data(), T::_Length, whr, amount) );
+    return *this;
   }
   //............................................................................
-  void Insert(TC wht, size_t whr, size_t amount=1)  {
+  TTSString& Insert(TC wht, size_t whr, size_t amount=1)  {
     if( whr > T::_Length )  
       TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "index out of range");
     T::checkBufferForModification(T::_Length + amount);
     T::IncLength( o_chrins(wht, T::Data(), T::_Length, whr, amount) );
+    return *this;
   }
   //............................................................................
   // counts number of occurences of chars
@@ -983,140 +1007,97 @@ public:
     return cnt;
   }
   //............................................................................
-  size_t Replace(const TTSString &wht, const TTSString &with)  {
+  TTSString& Replace(const TTSString &wht, const TTSString &with)  {
     size_t extra_len = 0;
     if( wht._Length < with._Length )  {
       extra_len = (with._Length - wht._Length) * o_strcnt(wht.Data(), wht._Length, T::Data(), T::_Length);
-      if( extra_len == 0 )  return 0;
+      if( extra_len == 0 )  return *this;
     }
     T::checkBufferForModification(T::_Length+extra_len);
     size_t rv = o_strrplstr(wht.Data(), wht._Length, with.raw_str(), with._Length, T::Data(), T::_Length);
     T::_Length -= (wht._Length - with._Length)*rv;
-    return rv;
+    return *this;
   }
   //............................................................................
-  template <typename AC> size_t Replace(const TTSString &wht, const AC *with)  {
+  template <typename AC> TTSString& Replace(const TTSString &wht, const AC *with)  {
     size_t extra_len = 0, with_len = o_length(with);
     if( wht._Length < with_len )  {
       extra_len = (with_len - wht._Length) * o_strcnt(wht.Data(), wht._Length, T::Data(), T::_Length);
-      if( extra_len == 0 )  return 0;
+      if( extra_len == 0 )  return *this;
     }
     T::checkBufferForModification(T::_Length+extra_len);
     size_t rv = o_strrplstr(wht.Data(), wht._Length, with, o_length(with), T::Data(), T::_Length);
     T::_Length -= (wht._Length - with_len)*rv;
-    return rv;
+    return *this;
   }
   //............................................................................
-  size_t Replace(const TTSString &wht, wchar_t with)  {
+  template <typename AC> TTSString& Replace(const TTSString &wht, AC with)  {
     T::checkBufferForModification(T::_Length);
     size_t rv = o_strrplch(wht.Data(), wht._Length, with, T::Data(), T::_Length);
     T::_Length -= (wht._Length - 1)*rv;
-    return rv;
+    return *this;
   }
   //............................................................................
-  size_t Replace(const TTSString &wht, char with)  {
-    T::checkBufferForModification(T::_Length);
-    size_t rv = o_strrplch(wht.Data(), wht._Length, with, T::Data(), T::_Length);
-    T::_Length -= (wht._Length - 1)*rv;
-    return rv;
-  }
-  //............................................................................
-  template <typename AC> size_t Replace(const AC *wht, const TTSString &with)  {
-    size_t extra_len = 0, wht_len = o_strlen(wht);
-    if( wht_len < with._Length )  {
-      extra_len = (with._Length - wht_len) * o_strcnt(wht, wht_len, T::Data(), T::_Length);
-      if( extra_len == 0 )  return 0;
-    }
-    T::checkBufferForModification(T::_Length+extra_len);
-    size_t rv = o_strrplstr(wht, o_strlen(wht), with.Data(), with._Length, T::Data(), T::_Length);
-    T::_Length -= (wht_len - with._Length)*rv;
-    return rv;
-  }
-  //............................................................................
-  template <typename OC, typename AC> size_t Replace(const OC *wht, const AC *with)  {
+  template <typename OC, typename AC> TTSString& Replace(const OC *wht, const AC *with)  {
     size_t extra_len = 0, with_len = o_strlen(with), wht_len = o_strlen(wht);
     if( wht_len < with_len )  {
       extra_len = (with_len - wht_len) * o_strcnt(wht, wht_len, T::Data(), T::_Length);
-      if( extra_len == 0 )  return 0;
+      if( extra_len == 0 )  return *this;
     }
     T::checkBufferForModification(T::_Length+extra_len);
     size_t rv = o_strrplstr(wht, o_strlen(wht), with, o_strlen(with), T::Data(), T::_Length);
     T::_Length -= (wht_len - with_len)*rv;
-    return rv;
+    return *this;
   }
   //............................................................................
-  size_t Replace(const wchar_t *wht, wchar_t with)  {
+  template <typename OC, typename AC> TTSString& Replace(const OC *wht, AC with)  {
     size_t wht_len = o_strlen(wht);
     T::checkBufferForModification(T::_Length);
     size_t rv = o_strrplch(wht, wht_len, with, T::Data(), T::_Length);
     T::_Length -= (wht_len - 1)*rv;
-    return rv;
+    return *this;
   }
   //............................................................................
-  size_t Replace(const char *wht, char with)  {
-    size_t wht_len = o_strlen(wht);
-    T::checkBufferForModification(T::_Length);
-    size_t rv = o_strrplch(wht, wht_len, with, T::Data(), T::_Length);
-    T::_Length -= (wht_len - 1)*rv;
-    return rv;
+  template <typename OC> TTSString& Replace(const OC *wht, const TTSString& with)  {
+    size_t extra_len = 0, wht_len = o_strlen(wht);
+    if( wht_len < with._Length )  {
+      extra_len = (with._Length - wht_len) * o_strcnt(wht, wht_len, T::Data(), T::_Length);
+      if( extra_len == 0 )  return *this;
+    }
+    T::checkBufferForModification(T::_Length+extra_len);
+    size_t rv = o_strrplstr(wht, o_strlen(wht), with.raw_str(), with._Length, T::Data(), T::_Length);
+    T::_Length -= (wht_len - with._Length)*rv;
+    return *this;
   }
   //............................................................................
-  size_t Replace(char wht, const TTSString &with)  {
+  template <typename OC> TTSString& Replace(OC wht, const TTSString &with)  {
     size_t extra_len = 0;
     if( with._Length > 1 )  {
       extra_len = (with._Length - 1) * o_chrcnt(wht, T::Data(), T::_Length);
-      if( extra_len == 0 )  return 0;
+      if( extra_len == 0 )  return *this;
     }
     T::checkBufferForModification(T::_Length+extra_len);
     size_t rv = o_chrplstr(wht, with.Data(), with._Length, T::Data(), T::_Length);
     T::_Length -= (1 - with._Length)*rv;
-    return rv;
+    return *this;
   }
   //............................................................................
-  size_t Replace(wchar_t wht, const TTSString &with)  {
-    size_t extra_len = 0;
-    if( with._Length > 1 )  {
-      extra_len = (with._Length - 1) * o_chrcnt(wht, T::Data(), T::_Length);
-      if( extra_len == 0 )  return 0;
-    }
-    T::checkBufferForModification(T::_Length+extra_len);
-    size_t rv = o_chrplstr(wht, with.Data(), with._Length, T::Data(), T::_Length);
-    T::_Length -= (1 - with._Length)*rv;
-    return rv;
-  }
-  //............................................................................
-  size_t Replace(char wht, const char *with)  {
+  template <typename OC, typename AC> TTSString& Replace(OC wht, const AC *with)  {
     size_t extra_len = 0, with_len = o_strlen(with);
     if( with_len > 1 )  {
       extra_len = (with_len - 1) * o_chrcnt(wht, T::Data(), T::_Length);
-      if( extra_len == 0 )  return 0;
+      if( extra_len == 0 )  return *this;
     }
     T::checkBufferForModification(T::_Length+extra_len);
     size_t rv = o_chrplstr(wht, with, o_strlen(with), T::Data(), T::_Length);
     T::_Length -= (1 - with_len)*rv;
-    return rv;
+    return *this;
   }
   //............................................................................
-  size_t Replace(wchar_t wht, const wchar_t *with)  {
-    size_t extra_len = 0, with_len = o_strlen(with);
-    if( with_len > 1 )  {
-      extra_len = (with_len - 1) * o_chrcnt(wht, T::Data(), T::_Length);
-      if( extra_len == 0 )  return 0;
-    }
-    T::checkBufferForModification(T::_Length+extra_len);
-    size_t rv = o_chrplstr(wht, with, o_strlen(with), T::Data(), T::_Length);
-    T::_Length -= (1 - with_len)*rv;
-    return rv;
-  }
-  //............................................................................
-  size_t Replace(char wht, char with)  {
+  template <typename OC, typename AC> TTSString& Replace(OC wht, AC with)  {
     T::checkBufferForModification(T::_Length);
-    return o_chrplch(wht, with, T::Data(), T::_Length);
-  }
-  //............................................................................
-  size_t Replace(wchar_t wht, wchar_t with)  {
-    T::checkBufferForModification(T::_Length);
-    return o_chrplch(wht, with, T::Data(), T::_Length);
+    o_chrplch(wht, with, T::Data(), T::_Length);
+    return *this;
   }
   //............................................................................
   template <typename AC> TTSString Trim(AC wht) const {
@@ -1241,7 +1222,7 @@ public:
     return *this;
   }
   //............................................................................
-  void FromBinaryStream(IInputStream &ios)  {
+  TTSString& FromBinaryStream(IInputStream &ios)  {
     uint32_t code, len, charsize;
     ios.Read(&code, sizeof(uint32_t));
     charsize = ExtractCharSize(code);
@@ -1264,6 +1245,7 @@ public:
     }
     if( T::SData == NULL )  T::SData = new struct T::Buffer(T::_Length);
     ios.Read((void*)T::SData->Data, T::_Length*T::CharSize);
+    return *this;
   }
   //............................................................................
   void ToBinaryStream(IOutputStream& os) const {

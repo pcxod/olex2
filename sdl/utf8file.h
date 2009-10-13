@@ -82,6 +82,25 @@ public:
       if( list[i].EndsWith('\r') )  
         list[i].SetLength( list[i].Length() -1 );
   }
+  // returns one long string
+  static WString ReadAsString(IInputStream& io, bool CheckHeader=true)  {
+    if( io.GetSize() >= 3 )  {
+      uint32_t header = 0;
+      io.Read(&header, 3);
+      if( header != TUtf8::FileSignature )  {
+        if( CheckHeader )
+          throw TFunctionFailedException(__OlxSourceInfo, "invalid UTF8 stream");
+        else
+          io.SetPosition(0);
+      }
+    }
+    int fl = io.GetSize() - io.GetPosition();
+    char * bf = new char [fl+1];
+    io.Read(bf, fl);
+    WString rv = TUtf8::Decode(bf, fl);
+    delete [] bf;
+    return rv;
+  }
   template <class T>
   static void ReadLines(const olxstr& fn, TTStrList<WString,T>& list, bool CheckHeader=true)  {
     TUtf8File file(fn, "rb", CheckHeader);
@@ -94,6 +113,16 @@ public:
     for(int i=0; i < list.Count(); i++ )
       if( list[i].EndsWith('\r') )  
         list[i].SetLength( list[i].Length() -1 );
+  }
+  // returns one long string
+  static WString ReadAsString(const olxstr& fn, bool CheckHeader=true)  {
+    TUtf8File file(fn, "rb", CheckHeader);
+    int fl = file.Length() - file.GetPosition();
+    char * bf = new char [fl+1];
+    file.Read(bf, fl);
+    WString rv = TUtf8::Decode(bf, fl);
+    delete [] bf;
+    return rv;
   }
   template <class T>
   static void WriteLines(const olxstr& fn, const TTStrList<WString,T>& list, bool WriteHeader=true)  {

@@ -21,7 +21,10 @@ namespace exparse  {
     bool skip_string(const olxstr& exp, int& ind);
     // leave the ind on the closing bracket char or does not change it if there is none
     bool skip_brackets(const olxstr& exp, int& ind);
+    // does check if the closing quote is escaped
     bool parse_string(const olxstr& exp, olxstr& dest, int& ind);
+    // does not check for escaped quotes
+    bool parse_escaped_string(const olxstr& exp, olxstr& dest, int& ind);
     bool parse_brackets(const olxstr& exp, olxstr& dest, int& ind);
     bool is_operator(const olxstr& exp);
     bool parse_control_chars(const olxstr& exp, olxstr& dest, int& ind);
@@ -72,6 +75,12 @@ namespace exparse  {
       if( is_quote(ch) && (exp.Last() == ch) && !is_escaped(exp, exp.Length()-1) )
         return exp.SubStringFrom(1, 1);
       return exp;
+    }
+    // checks if the string is quoted
+    static inline bool is_quoted(const olxstr& exp)  {
+      if( exp.Length() < 2 )  return false;
+      const olxch ch = exp.CharAt(0);
+      return (is_quote(ch) && (exp.Last() == ch) && !is_escaped(exp, exp.Length()-1));
     }
     // replaces \t, \n, \r, \\, \", \' with corresponding values
     olxstr unescape(const olxstr& exp);

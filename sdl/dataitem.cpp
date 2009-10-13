@@ -8,10 +8,12 @@
 
 #include "dataitem.h"
 #include "estrbuffer.h"
+#include "exparse/exptree.h"
 
   static olxstr DoubleQuoteCode("&2E;");
 
 UseEsdlNamespace()
+using namespace exparse::parser_util;
 
 //..............................................................................
 TDataItem::TDataItem(TDataItem* Prnt, const olxstr& nm, const olxstr& val) : Name(nm), Value(val)  {
@@ -27,10 +29,6 @@ TDataItem::TDataItem(TDataItem* Prnt, const olxstr& nm, const olxstr& val) : Nam
   Data = NULL;
 }
 //..............................................................................
-TDataItem::~TDataItem()  {
-  Clear();
-}
-//..............................................................................
 void TDataItem::Clear()  {
   Fields.Clear();
   for( int i=0; i < Items.Count(); i++ )  {
@@ -43,10 +41,6 @@ void TDataItem::Clear()  {
     }
   }
   Items.Clear();
-}
-//..............................................................................
-bool TDataItem::ItemExists(const olxstr &Name)  {
-  return (Items.IndexOf(Name) == -1) ? false : true;
 }
 //..............................................................................
 TDataItem& TDataItem::Root()  {
@@ -94,7 +88,8 @@ TDataItem *TDataItem::DotItem(const olxstr &DotName, TStrList* Log)  {
   for( int i=0; i < SL.Count(); i++ )  {
     root = root->FindItem( SL[i] );
     if( root == NULL )  {
-      if( Log != NULL )  Log->Add(olxstr("Unresolved reference: ") << DotName);
+      if( Log != NULL )  
+        Log->Add(olxstr("Unresolved reference: ") << DotName);
       break;
     }
   }
@@ -189,89 +184,76 @@ TDataItem& TDataItem::AddItem(const olxstr& name, const olxstr& val)  {
   return *DI;
 }
 //..............................................................................
-int TDataItem::LoadFromString( int start, olxstr &Data, TStrList* Log)  {
+int TDataItem::LoadFromString(int start, const olxstr &Data, TStrList* Log)  {
   int sl = Data.Length();
-  TDataItem *DI;
-  Value = EmptyString;
-  olxstr ItemName, FieldName, FieldValue, *RefField, RefFieldName;
-  olxch CloseChar;
   for( int i=start; i < sl; i++ )  {
-    if( Data.CharAt(i) == '<' )  {
-      ItemName = EmptyString;
-      while( i < sl )  {
-        i++;
-        if( Data.CharAt(i) == ' ' || Data.CharAt(i) == '\"' )  break;
-        ItemName << Data.CharAt(i);
+    olxch ch = Data.CharAt(i);
+    if( ch == '<' )  {
+      const int name_start_i = i+1;
+      while( ++i < sl )  {
+        ch = Data.CharAt(i);
+        if( ch == ' ' || ch == '<' || ch == '>' || ch == '\"' )  break;
       }
+      olxstr ItemName = Data.SubString(name_start_i, i-name_start_i);
       if( ItemName.IsEmpty() && Log != NULL )
         Log->Add((this->GetName() + ':') << " empty item name!");
-      DI = NULL;
+      TDataItem* DI = NULL;
       try {  DI = &AddItem(ItemName);  }
       catch(...) {
         if( Log != NULL )
           Log->Add((this->GetName() + ':') << " cannot add item");
       }
       if( DI != NULL )  {
-//        BasicApp->Log->CriticalInfo(((olxstr("Loading: ") += this->Name()) += '.') += ItemName);
         i = DI->LoadFromString(i, Data, Log);
         continue;
       }
     }
 
-    if( Data.CharAt(i) == '>' )  return i;
-    if( Data.CharAt(i) == '/' )  continue;
-    if( Data.CharAt(i) == '\\' ) continue;
-    if( Data.CharAt(i) != ' ')   {
-      FieldName = EmptyString;
-      FieldValue = EmptyString;
-      if( Data.CharAt(i) == '\'' || Data.CharAt(i) == '\"' )  {  // item value
-        CloseChar = Data.CharAt(i);  // find closing character: space ' or "
-        i++;
-        while( i < sl )  {
-          if( (Data.CharAt(i) == CloseChar) && (Data.CharAt(i-1) != '^') ){  i++; break; }
-          Value << Data.CharAt(i);
-          i++;
-        }
+    if( ch == '>' )  return i;
+    if( ch == '/' )  continue;
+    if( ch == '\\' ) continue;
+    if( ch != ' ')   {
+      olxstr FieldName = EmptyString;
+      olxstr FieldValue = EmptyString;
+      if( is_quote(ch) )  {  // item value
+        parse_escaped_string(Data, Value, i);
         if( i < sl && (Data.CharAt(i) == '>') )  {  return i;  }
         continue;
       }
       if( (i+1) >= sl ) return sl+1;
+      const int fn_start = i;
       while( i < sl )  {  // extract field name
-        if( (Data.CharAt(i) == ' ') || (Data.CharAt(i) == '=') ||
-            (Data.CharAt(i) == '>') || (Data.CharAt(i) == '\"') ||
-            (Data.CharAt(i) == '\''))  break;
-        FieldName << Data.CharAt(i);
+        ch = Data.CharAt(i);
+        if( ch == ' ' || ch == '=' || ch == '>' || 
+            ch == '\"' || ch == '\'' || ch == '<')  break;
         i++;
       }
+      FieldName = Data.SubString(fn_start, i - fn_start);
       if( (i+1) >= sl ) return sl+1;
-      while( i < sl )  {  // skip spaces
-        if( Data.CharAt(i) != ' ' )  break;
-        i++;
-      }
+      if( Data.CharAt(i) == ' ' )  i++;  // skip space
       if( (i+1) >= sl ) return sl+1;
       if( Data.CharAt(i) == '=' )  {  // extract field value
         i++;
-        while( i < sl )  {  // skip spaces
-          if( Data.CharAt(i) != ' ' )  break;
-          i++;
-        }
+        if( Data.CharAt(i) == ' '  )  i++;  // skip space
         if( (i+1) >= sl ) return sl+1;
-        CloseChar = ' ';  // find closing character: space ' or "
-        if( Data.CharAt(i) == '\'' ){  CloseChar = '\''; i++; }
-        if( Data.CharAt(i) == '\"' ){  CloseChar = '\"'; i++; }
+        olxch CloseChar = ' ';  // find closing character: space ' or "
+        if( Data.CharAt(i) == '\'' )  {  CloseChar = '\''; i++; }
+        else if( Data.CharAt(i) == '\"' )  {  CloseChar = '\"'; i++; }
+        const int fv_start = i;
         while( i < sl )  {
-          if( (Data.CharAt(i) == CloseChar) && (Data[i-1] != '^') ){  i++; break; }
-//          if( (Data.CharAt(i) == CloseChar) || (Data.CharAt(i) == '>') ){  i++; break; }
-          FieldValue << Data.CharAt(i);
+          if( Data.CharAt(i) == CloseChar || (CloseChar == ' ' && Data.CharAt(i) == '>') )  break;
           i++;
         }
+        FieldValue = Data.SubString(fv_start, i-fv_start);
       }
       else i--; // the spaces can separate just two field names
-      if( FieldName.IndexOf('.') >= 0 )  {  // a reference to an item
-        DI = DotItem(FieldName, Log);
-        if( DI != NULL )  AddItem(*DI); // unresolved so far if !DI
-        else  {
-          RefField = DotField(FieldName, RefFieldName);
+      if( FieldName.IndexOf('.') != -1 )  {  // a reference to an item
+        TDataItem* DI = DotItem(FieldName, Log);
+        if( DI != NULL )  
+          AddItem(*DI);
+        else  {  // unresolved so far if !DI
+          olxstr RefFieldName;
+          olxstr *RefField = DotField(FieldName, RefFieldName);
           if( RefField == NULL )
             _AddField(FieldName, FieldValue); 
           else
