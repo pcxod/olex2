@@ -84,6 +84,33 @@ namespace exparse  {
     }
     // replaces \t, \n, \r, \\, \", \' with corresponding values
     olxstr unescape(const olxstr& exp);
+    // if find open_tag, initialises start_char_ind with position next after
+    struct tag_parse_info  {
+      int start_char_ind, end_string_ind, end_char_ind;
+      tag_parse_info() : start_char_ind(-1), end_string_ind(-1), end_char_ind(-1) {}
+    };
+    template <class Lst> static tag_parse_info skip_tag(const Lst& list, const olxstr& open_tag, 
+      const olxstr& close_tag, int str_ind, int char_ind)  
+    {
+      int oti = list[str_ind].FirstIndexOf(open_tag, char_ind);
+      tag_parse_info rv;
+      if( oti == -1 )  return rv;
+      rv.start_char_ind = oti+open_tag.Length();
+      int otc = 1;
+      while( otc != 0 )  {
+        const olxstr& line = list[str_ind]; 
+        for( int i=0; i < line.Length(); i++ )  {
+          if( line.IsSubStringAt(open_tag, i) )  otc++;
+          else if( line.IsSubStringAt(close_tag, i) && --otc == 0)  {
+            rv.end_string_ind = str_ind;
+            rv.start_char_ind = i+close_tag.Length();
+            return rv;
+          }
+        }
+        if( ++str_ind >= list.Count() )  return rv;
+      }
+      return rv;
+    }
   };
 
   template <class T> struct evaluator  {

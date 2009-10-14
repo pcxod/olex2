@@ -328,7 +328,7 @@ bool TEFile::Access(const olxstr& F, const short Flags)  {
 //..............................................................................
 olxstr TEFile::ExtractFilePath(const olxstr &F)  {
   olxstr fn = OLX_OS_PATH(F);
-  if( TEFile::IsAbsolutePath( F ) )  {
+  if( TEFile::IsAbsolutePath(fn) )  {
     int i = fn.LastIndexOf( OLX_PATH_DEL );
     if( i > 0 ) return fn.SubStringTo(i+1);
     return EmptyString;
@@ -734,13 +734,20 @@ olxstr TEFile::CurrentDir()  {
 }
 //..............................................................................
 bool TEFile::MakeDirs(const olxstr& Name)  {
-  TStrList toks(OLX_OS_PATH(Name), OLX_PATH_DEL);
+  const olxstr dn = OLX_OS_PATH(Name);
+  if( Exists(dn) )  return true;
+  TStrList toks(dn, OLX_PATH_DEL);
   olxstr toCreate;
   toCreate.SetCapacity( Name.Length() + 5 );
   if( Name.StartsFrom('/') ) // !!!! linux
     toCreate << '/';
-  else if( Name.StartsFrom("\\\\") ) // server name
+  else if( Name.StartsFrom("\\\\") ) {  // server name
     toCreate << "\\\\";
+    if( !toks.IsEmpty() )  {  // put the server name back
+      toCreate << toks[0] << OLX_PATH_DEL;
+      toks.Delete(0);
+    }
+  }
   for( int i=0; i < toks.Count(); i++ )  {
     toCreate << toks[i] << OLX_PATH_DEL;
     if( !Exists( toCreate ) )

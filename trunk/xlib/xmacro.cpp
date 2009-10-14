@@ -209,7 +209,7 @@ xlib_InitMacro(File, "s-sort the main residue of the asymmetric unit", fpNone|fp
 //..............................................................................
 void XLibMacros::macTransform(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   smatd tm;
-  if( !Parse(Cmds, "mivd", true,&tm.r, &tm.t) )  {
+  if( !Parse<TStrObjList>(Cmds, "mivd", true,&tm.r, &tm.t) )  {
     Error.ProcessingError(__OlxSrcInfo, "invalid transformation matrix" );
     return;
   }
@@ -222,7 +222,7 @@ void XLibMacros::macTransform(TStrObjList &Cmds, const TParamList &Options, TMac
 void XLibMacros::macPush(TStrObjList &Cmds, const TParamList &Options, TMacroError &Error)  {
   vec3d pnt;
   int pc = 0;
-  if( ParseNumbers<double>(Cmds, 3, &pnt[0], &pnt[1], &pnt[2]) != 3 )  {
+  if( !Parse<TStrObjList>(Cmds, "vd", true, &pnt) )  {
     Error.ProcessingError(__OlxSrcInfo, "invalid translation" );
     return;
   }
@@ -3145,4 +3145,5 @@ void XLibMacros::macDescribe(TStrObjList &Cmds, const TParamList &Options, TMacr
 #ifdef __BORLANC__
   #pragma package(smart_init)
 #endif
+
 

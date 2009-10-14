@@ -685,7 +685,7 @@ void XLibMacros::funFATA(const TStrObjList &Cmds, TMacroError &E)  {
   TArrayList<MapUtil::peak> _Peaks;
   TTypeList<MapUtil::peak> Peaks;
   sw.start("Integrating P1 map: ");
-  MapUtil::Integrate<float>(map.Data, mapX, mapY, mapZ, (mi.maxVal - mi.minVal)/2.5, _Peaks);
+  MapUtil::Integrate<float>(map.Data, mapX, mapY, mapZ, (float)((mi.maxVal - mi.minVal)/2.5), _Peaks);
   smatd_list ml;
   vec3d norm(1./mapX, 1./mapY, 1./mapZ);
   sg->GetMatrices(ml, mattAll^mattIdentity);

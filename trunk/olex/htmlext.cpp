@@ -21,6 +21,7 @@
 #include "obase.h"
 #include "utf8file.h"
 #include "wxzipfs.h"
+#include "exparse/exptree.h"
 
 #define this_InitFunc(funcName, argc) \
   (*THtml::Library).RegisterFunction( new TFunction<THtml>(this, &THtml::fun##funcName, #funcName, argc));\
@@ -1238,7 +1239,7 @@ void THtml::_FindPrev(int from, int& dest, bool scroll) const {
 //..............................................................................
 void THtml::GetTraversibleIndeces(int& current, int& another, bool forward) const {
   wxWindow* w = FindFocus();
-  if( w == NULL || w == this )  {  // no focus? find the one at the edge
+  if( w == NULL || w == static_cast<const wxWindow*>(this) )  {  // no focus? find the one at the edge
     if( forward )
       _FindNext(-1, another, false);
     else
@@ -1357,38 +1358,48 @@ void THtml::UpdateSwitchState(THtmlSwitch &Switch, olxstr &String)  {
 void THtml::CheckForSwitches(THtmlSwitch &Sender, bool izZip)  {
   TStrPObjList<olxstr,AHtmlObject*>& Lst = Sender.Strings();
   TStrList Toks;
-  int ind;
+  using namespace exparse::parser_util;
   static const olxstr Tag  = "<!-- #include ",
            Tag1 = "<!-- #includeif ",
-           Tag2 = "<!--", Tag3 = "-->";
-  olxstr Tmp;
+           Tag2 = "<!-- #include",
+           comment_open = "<!--", comment_close = "-->";
   for( int i=0; i < Lst.Count(); i++ )  {
-    if( Lst[i].TrimWhiteChars() == Tag2 )  {
-      while( ++i < Lst.Count() && Lst[i].TrimWhiteChars() != Tag3 ) 
-        ;
-      continue;
+    olxstr tmp = olxstr(Lst[i]).TrimWhiteChars();
+    if( tmp.StartsFrom(comment_open) && !tmp.StartsFrom(Tag2) )  {  // skip comments
+      //tag_parse_info tpi = skip_tag(Lst, Tag2, Tag3, i, 0);
+      if( tmp.EndsWith(comment_close) )  continue;
+      bool tag_found = false;
+      while( ++i < Lst.Count() )  {
+        if( olxstr(Lst[i]).TrimWhiteChars().EndsWith(comment_close) )  {
+          tag_found = true;
+          break;
+        }
+      }
+      if( tag_found )  continue;
+      else  
+        break;
     }
+
     // TRANSLATION START
-    Lst[i] = TGlXApp::GetMainForm()->TranslateString( Lst[i] );
+    Lst[i] = TGlXApp::GetMainForm()->TranslateString(Lst[i]);
     if( Lst[i].IndexOf("$") >= 0 )
       TGlXApp::GetMainForm()->ProcessFunction(Lst[i], olxstr(Sender.CurrentFile()) << '#' << (i+1));
     // TRANSLATION END
-    if( Lst[i].StartsFrom(Tag) || Lst[i].StartsFrom(Tag1) )  {
-      if( Lst[i].StartsFrom(Tag1) )
-        Tmp = Lst[i].SubStringFrom(Tag1.Length());
-      else
-        Tmp = Lst[i].SubStringFrom(Tag.Length());
+    int stm = (Lst[i].StartsFrom(Tag1) ? 1 : 0);
+    if( stm == 0 )  stm = (Lst[i].StartsFrom(Tag) ? 2 : 0);
+    if( stm != 0 )  {
+      tmp = Lst[i].SubStringFrom(stm == 1 ? Tag1.Length() : Tag.Length());
       Toks.Clear();
-      Toks.Strtok(Tmp, ' '); // extract item name
-      if( (Lst[i].StartsFrom(Tag1) && Toks.Count() < 4) ||
-          (Lst[i].StartsFrom(Tag) && Toks.Count() < 3) )  {
-        TBasicApp::GetLog().Error(olxstr("Wrong #include[if] syntax: ") << Lst[i]);
+      Toks.Strtok(tmp, ' '); // extract item name
+      if( (stm == 1 && Toks.Count() < 4) ||
+          (stm == 2 && Toks.Count() < 3) )  {
+        TBasicApp::GetLog().Error(olxstr("Wrong #include[if] syntax: ") << tmp);
         continue;
       }
-      if( Lst[i].StartsFrom(Tag1) )  {
-        Tmp = Toks[0];
-        if( TGlXApp::GetMainForm()->ProcessFunction(Tmp) )  {
-          if( !Tmp.ToBool() )  continue;
+      if( stm == 1 )  {
+        tmp = Toks[0];
+        if( TGlXApp::GetMainForm()->ProcessFunction(tmp) )  {
+          if( !tmp.ToBool() )  continue;
         }
         else  continue;
         Toks.Delete(0);
@@ -1396,11 +1407,9 @@ void THtml::CheckForSwitches(THtmlSwitch &Sender, bool izZip)  {
       THtmlSwitch* Sw = &Sender.NewSwitch();
       Lst.GetObject(i) = Sw;
       Sw->Name(Toks[0]);
-      Toks.Delete(0);
-      Toks.Delete(Toks.Count()-1);
-      Tmp = Toks.Text(' ');
+      tmp = Toks.Text(' ', 1, Toks.Count()-1);
       Toks.Clear();
-      TParamList::StrtokParams(Tmp, ';', Toks); // extract arguments
+      TParamList::StrtokParams(tmp, ';', Toks); // extract arguments
       if( Toks.Count() < 2 )  { // must be at least 2 for filename and status
         TBasicApp::GetLog().Error( olxstr("Wrong defined switch (not enough data)") << Sw->Name());
         continue;
@@ -1410,42 +1419,43 @@ void THtml::CheckForSwitches(THtmlSwitch &Sender, bool izZip)  {
         if( Toks[j].FirstIndexOf('=') == -1 )  {
           if( izZip && !TZipWrapper::IsZipFile(Toks[j]) )  {
             if( Toks[j].StartsFrom('\\') || Toks[j].StartsFrom('/') )
-              Tmp = Toks[j].SubStringFrom(1);
+              tmp = Toks[j].SubStringFrom(1);
             else
-              Tmp = TZipWrapper::ComposeFileName(Sender.File(Sender.FileIndex()), Toks[j]);
+              tmp = TZipWrapper::ComposeFileName(Sender.File(Sender.FileIndex()), Toks[j]);
           }
           else
-            Tmp = Toks[j];
+            tmp = Toks[j];
 
-          TGlXApp::GetMainForm()->ProcessFunction(Tmp);
-          Sw->AddFile(Tmp);
+          TGlXApp::GetMainForm()->ProcessFunction(tmp);
+          Sw->AddFile(tmp);
         }
         else  {
           // check for parameters
           if( Toks[j].IndexOf('#') != -1 )  {
-            olxstr Tmp = Toks[j], Tmp1;
+            olxstr tmp1;
+            tmp = Toks[j];
             for( int k=0; k < Sender.Params().Count(); k++ )  {
-              Tmp1 = '#';  
-              Tmp1 << Sender.Params().GetName(k);
-              Tmp.Replace( Tmp1, Sender.Params().GetValue(k) );
+              tmp1 = '#';  
+              tmp1 << Sender.Params().GetName(k);
+              tmp.Replace(tmp1, Sender.Params().GetValue(k) );
             }
-            Sw->AddParam(Tmp);
+            Sw->AddParam(tmp);
           }
           else
             Sw->AddParam(Toks[j]);
         }
       }
 
-      int switchState = GetSwitchState( Sw->Name() );
+      int switchState = GetSwitchState(Sw->Name()), index = -1;;
       if( switchState == UnknownSwitchState )  {
-        ind = Toks.LastStr().ToInt();
-        if( ind < 0 )  Sw->UpdateSwitch(false);
-        ind = abs(ind)-1;
+        index = Toks.LastStr().ToInt();
+        if( index < 0 )
+          Sw->UpdateSwitch(false);
+        index = abs(index)-1;
       }
-      else  {
-        ind = switchState;
-      }
-      Sw->FileIndex(ind);
+      else
+        index = switchState;
+      Sw->FileIndex(index);
     }
   }
 }
@@ -2349,6 +2359,7 @@ bool THtml::SetObjectImage(IEObject* Obj, const olxstr& src)  {
     return false;
   }
   wxImage image(*(fsFile->GetStream()), wxBITMAP_TYPE_ANY);
+  delete fsFile;
   if ( !image.Ok() )  {
     TBasicApp::GetLog().Error( olxstr("Setimage: could not read specified file: ") << src );
     return false;

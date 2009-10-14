@@ -3218,7 +3218,9 @@ void TMainForm::macMode(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   static bool ChangingMode = false;
   if( ChangingMode )  return;
   AMode* md = Modes->SetMode( Cmds[0] );
+  olxstr tmp = EmptyString;
   if( md != NULL )  {
+    tmp << Cmds[0];
     Cmds.Delete(0);
     try  {  md->Init(Cmds, Options);  }
     catch(const TExceptionBase& e)  {  
@@ -3226,10 +3228,10 @@ void TMainForm::macMode(TStrObjList &Cmds, const TParamList &Options, TMacroErro
     }
   }
   if( md != NULL || Cmds[0].Equalsi("off") )  {
-    olxstr cmds = Cmds.Text(' ');
+    tmp << Cmds.Text(' ');
     for( int i=0; i < Options.Count(); i++ )
-      cmds << " -" << Options.GetName(i) << '=' << Options.GetValue(i);
-    CallbackFunc(OnModeChangeCBName, cmds);
+      tmp << " -" << Options.GetName(i) << '=' << Options.GetValue(i);
+    CallbackFunc(OnModeChangeCBName, tmp);
   }
   ChangingMode = false;
 }
@@ -7644,6 +7646,15 @@ void TMainForm::macProjSph(TStrObjList &Cmds, const TParamList &Options, TMacroE
 }
 //..............................................................................
 void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
+  unsigned int cpu_features = 0;
+  _asm  {
+    push EAX
+      mov EAX, 0x80000008
+      cpuid
+      mov [cpu_features], ECX
+    pop EAX
+  }
+  int number_of_cores = (cpu_features & 0x7f); 
   OlxTests tests;
   tests.Add( &TSymmParser::Tests );
   tests.run();
@@ -7691,7 +7702,8 @@ void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options, TMa
   iv = _exp.build("c = a.sub(0,3) == b.sub(0,3)");
   iv = _exp.build("c = b.sub(0,3) + 'dfg'");
   iv = _exp.build("c = 1.2 + 1.1 - .05");
-  iv = _exp.build("if(a){ a = a.sub(0,3); }else{ a = a.sub(0,4); }");
+  iv = _exp.build("return 1.2 + 1.1 - .05");
+  //iv = _exp.build("if(a){ a = a.sub(0,3); }else{ a = a.sub(0,4); }");
   if( !iv->is_final() )  {
     IEvaluable* iv1 = iv->_evaluate();
     delete iv1;
