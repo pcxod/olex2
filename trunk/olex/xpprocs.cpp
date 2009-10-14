@@ -7646,15 +7646,6 @@ void TMainForm::macProjSph(TStrObjList &Cmds, const TParamList &Options, TMacroE
 }
 //..............................................................................
 void TMainForm::macTestBinding(TStrObjList &Cmds, const TParamList &Options, TMacroError &E)  {
-  unsigned int cpu_features = 0;
-  _asm  {
-    push EAX
-      mov EAX, 0x80000008
-      cpuid
-      mov [cpu_features], ECX
-    pop EAX
-  }
-  int number_of_cores = (cpu_features & 0x7f); 
   OlxTests tests;
   tests.Add( &TSymmParser::Tests );
   tests.run();
