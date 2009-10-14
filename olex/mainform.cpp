@@ -3742,8 +3742,15 @@ void TMainForm::AnalyseError(TMacroError& error)  {
   if( !error.IsSuccessful() )  {
     if( error.IsProcessingException() )
       TBasicApp::GetLog().Exception(olxstr(error.GetLocation()) << ": " <<  error.GetInfo());
-    else if( !error.GetInfo().IsEmpty() )
+    else if( !error.GetInfo().IsEmpty() )  {
+      if( !error.DoesFunctionExist() && (FMode&mSilent) != 0 )  {
+        TBasicApp::GetLog().Info(olxstr(error.GetLocation()) << ": " <<  error.GetInfo());
+        while( !error.GetStack().IsEmpty() )
+          TBasicApp::GetLog().Info(  (olxstr('\t') << error.GetStack().Pop().TrimWhiteChars()) );
+        return;
+      }
       TBasicApp::GetLog().Error(olxstr(error.GetLocation()) << ": " <<  error.GetInfo());
+    }
     while( !error.GetStack().IsEmpty() )
       TBasicApp::GetLog() << (olxstr('\t') << error.GetStack().Pop().TrimWhiteChars() ) << '\n';
   }

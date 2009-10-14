@@ -485,6 +485,15 @@ public:
   }
   //............................................................................
   template <typename OC, typename AC>
+  static bool o_issubstr(const OC *whr, size_t whr_len, size_t pos, const AC *wht, size_t wht_len) {
+    if( pos + wht_len >= whr_len )  return false;
+    for( size_t i=0; i < wht_len; i++ )
+      if( whr[pos+i] != wht[i] )
+        return false;
+    return true;
+  }
+  //............................................................................
+  template <typename OC, typename AC>
   static int o_chrpos(const OC *whr, size_t whr_len, AC wht) {
     for( size_t i=0; i < whr_len; i++ )
       if( whr[i] == wht )
@@ -505,6 +514,15 @@ public:
       if( found ) return i;
     }
     return -1;
+  }
+  //............................................................................
+  template <typename OC, typename AC>
+  static bool o_issubstri(const OC *whr, size_t whr_len, size_t pos, const AC *wht, size_t wht_len) {
+    if( pos + wht_len >= whr_len )  return false;
+    for( size_t i=0; i < wht_len; i++ )
+      if( o_toupper(whr[pos+i]) != o_toupper(wht[i]) )
+        return false;
+    return true;
   }
   //............................................................................
   template <typename OC, typename AC>
@@ -569,55 +587,112 @@ public:
   //............................................................................
   int IndexOf(const TTSString& wht)  const { return o_strpos( T::Data(), T::_Length, wht.Data(), wht._Length);  }
   int IndexOfi(const TTSString& wht) const { return o_strposi( T::Data(), T::_Length, wht.Data(), wht._Length);  }
-  int IndexOf(const TC *wht)         const { return o_strpos( T::Data(), T::_Length, wht, o_strlen(wht));  }
-  int IndexOfi(const TC *wht)        const { return o_strposi( T::Data(), T::_Length, wht, o_strlen(wht));  }
-  int IndexOf(TC wht)                const { return o_chrpos( T::Data(), T::_Length, wht);  }
-  int IndexOfi(TC wht)               const { return o_chrposi( T::Data(), T::_Length, wht);  }
-
-  int FirstIndexOf(const TTSString& wht, size_t from = 0)  const {
+  int FirstIndexOf(const TTSString &wht, size_t from = 0) const {
     int i = o_strpos( &T::Data()[from], T::_Length-from, wht.Data(), wht._Length);
     return ((i==-1) ? -1 : (int)(i + from));
   }
-  int FirstIndexOfi(const TTSString& wht, size_t from = 0) const {
+  int FirstIndexOfi(const TTSString &wht, size_t from = 0) const {
     int i = o_strposi( &T::Data()[from], T::_Length-from, wht.Data(), wht._Length);
     return ((i==-1) ? -1 : (int)(i + from));
   }
-  int FirstIndexOf(const TC *wht, size_t from = 0)         const {
+  int IsSubStringAt(const TTSString &wht, size_t pos)   const {
+    return o_issubstr( T::Data(), T::_Length, pos, wht.Data(), wht._Length);
+  }
+  int IsSubStringAti(const TTSString &wht, size_t pos)   const {
+    return o_issubstri( T::Data(), T::_Length, pos, wht.Data(), wht._Length);
+  }
+  int LastIndexOf(const TTSString &wht, size_t from = ~0)  const {
+    return o_strposr( T::Data(), olx_min(from, T::_Length), wht.Data(), wht._Length);
+  }
+  int LastIndexOfi(const TTSString &wht, size_t from = ~0) const {
+    return o_strposri( T::Data(), olx_min(from, T::_Length), wht.Data(), wht._Length);
+  }
+#ifdef __BORLANDC__
+  int IndexOf(const TC *wht) const {  return o_strpos( T::Data(), T::_Length, wht, o_strlen(wht));  }
+  int IndexOfi(const TC *wht) const {  return o_strposi( T::Data(), T::_Length, wht, o_strlen(wht));  }
+  int IndexOf(TC wht) const { return o_chrpos( T::Data(), T::_Length, wht);  }
+  int IndexOfi(TC wht) const { return o_chrposi( T::Data(), T::_Length, wht);  }
+  int FirstIndexOf(const TC *wht, size_t from = 0) const {
     int i = o_strpos( &T::Data()[from], T::_Length-from, wht, o_strlen(wht));
     return ((i==-1) ? -1 : (int)(i + from));
   }
-  int FirstIndexOfi(const TC *wht, size_t from = 0)        const {
+  int FirstIndexOfi(const TC *wht, size_t from = 0) const {
     int i = o_strposi( &T::Data()[from], T::_Length-from, wht, o_strlen(wht));
     return ((i==-1) ? -1 : (int)(i + from));
   }
-  int FirstIndexOf(TC wht, size_t from = 0)                const {
+  int FirstIndexOf(TC wht, size_t from = 0) const {
     int i = o_chrpos( &T::Data()[from], T::_Length-from, wht);
     return ((i==-1) ? -1 : (int)(i + from));
   }
-  int FirstIndexOfi(TC wht, size_t from = 0)               const {
+  int FirstIndexOfi(TC wht, size_t from = 0) const {
+    int i = o_chrposi( &T::Data()[from], T::_Length-from, wht);
+    return ((i==-1) ? -1 : (int)(i + from));
+  }
+  int IsSubStringAt(const TC* wht, size_t pos) const {
+    return o_issubstr( T::Data(), T::_Length, pos, wht, o_strlen(wht) );
+  }
+  int IsSubStringAti(const TC* wht, size_t pos) const {
+    return o_issubstri( T::Data(), T::_Length, pos, wht, o_strlen(wht) );
+  }
+  int LastIndexOf(const TC *wht, size_t from = ~0) const {
+    return o_strposr( T::Data(), olx_min(from, T::_Length), wht, o_strlen(wht));
+  }
+  int LastIndexOfi(const TC *wht, size_t from = ~0) const {
+    return o_strposri( T::Data(), olx_min(from, T::_Length), wht, o_strlen(wht));
+  }
+  int LastIndexOf(TC wht, size_t from = ~0) const {
+    return o_chrposr( T::Data(), olx_min(from, T::_Length), wht);
+  }
+  int LastIndexOfi(TC wht, size_t from = ~0) const {
+    return o_chrposri( T::Data(), olx_min(from, T::_Length), wht);
+  }
+#else
+  template <typename AC> int IndexOf(const AC *wht) const {
+    return o_strpos( T::Data(), T::_Length, wht, o_strlen(wht));
+  }
+  template <typename AC> int IndexOfi(const AC *wht) const {
+    return o_strposi( T::Data(), T::_Length, wht, o_strlen(wht));
+  }
+  template <typename AC> int IndexOf(AC wht) const { return o_chrpos( T::Data(), T::_Length, wht);  }
+  template <typename AC> int IndexOfi(AC wht) const { return o_chrposi( T::Data(), T::_Length, wht);  }
+
+  template <typename AC> int FirstIndexOf(const AC *wht, size_t from = 0) const {
+    int i = o_strpos( &T::Data()[from], T::_Length-from, wht, o_strlen(wht));
+    return ((i==-1) ? -1 : (int)(i + from));
+  }
+  template <typename AC> int FirstIndexOfi(const AC *wht, size_t from = 0) const {
+    int i = o_strposi( &T::Data()[from], T::_Length-from, wht, o_strlen(wht));
+    return ((i==-1) ? -1 : (int)(i + from));
+  }
+  template <typename AC> int FirstIndexOf(AC wht, size_t from = 0) const {
+    int i = o_chrpos( &T::Data()[from], T::_Length-from, wht);
+    return ((i==-1) ? -1 : (int)(i + from));
+  }
+  template <typename AC> int FirstIndexOfi(AC wht, size_t from = 0) const {
     int i = o_chrposi( &T::Data()[from], T::_Length-from, wht);
     return ((i==-1) ? -1 : (int)(i + from));
   }
 
-  int LastIndexOf(const TTSString& wht, size_t from = ~0)  const {
-    return o_strposr( T::Data(), olx_min(from, T::_Length), wht.Data(), wht._Length);
+  template <typename AC> int IsSubStringAt(const AC* wht, size_t pos)   const {
+    return o_issubstr( T::Data(), T::_Length, pos, wht, o_strlen(wht) );
   }
-  int LastIndexOfi(const TTSString& wht, size_t from = ~0) const {
-    return o_strposri( T::Data(), olx_min(from, T::_Length), wht.Data(), wht._Length);
-  }
-  int LastIndexOf(const TC *wht, size_t from = ~0)         const {
-    return o_strposr( T::Data(), olx_min(from, T::_Length), wht, o_strlen(wht));
-  }
-  int LastIndexOfi(const TC *wht, size_t from = ~0)        const {
-    return o_strposri( T::Data(), olx_min(from, T::_Length), wht, o_strlen(wht));
-  }
-  int LastIndexOf(TC wht, size_t from = ~0)          const {
-    return o_chrposr( T::Data(), olx_min(from, T::_Length), wht);
-  }
-  int LastIndexOfi(TC wht, size_t from = ~0)               const {
-    return o_chrposri( T::Data(), olx_min(from, T::_Length), wht);
+  template <typename AC> int IsSubStringAti(const AC* wht, size_t pos)   const {
+    return o_issubstri( T::Data(), T::_Length, pos, wht, o_strlen(wht) );
   }
 
+  template <typename AC> int LastIndexOf(const AC *wht, size_t from = ~0) const {
+    return o_strposr( T::Data(), olx_min(from, T::_Length), wht, o_strlen(wht));
+  }
+  template <typename AC> int LastIndexOfi(const AC *wht, size_t from = ~0) const {
+    return o_strposri( T::Data(), olx_min(from, T::_Length), wht, o_strlen(wht));
+  }
+  template <typename AC> int LastIndexOf(AC wht, size_t from = ~0) const {
+    return o_chrposr( T::Data(), olx_min(from, T::_Length), wht);
+  }
+  template <typename AC> int LastIndexOfi(AC wht, size_t from = ~0) const {
+    return o_chrposri( T::Data(), olx_min(from, T::_Length), wht);
+  }
+#endif // __BORLANDC__
   //............................................................................
   // function checks for preceding radix encoding
   template <typename IT> static IT o_atois(const TC *data, size_t len, unsigned short Rad=10) {
@@ -780,18 +855,14 @@ public:
     return whr_len - ni;
   }
   //............................................................................
-  template <typename OC> TTSString& DeleteSequencesOf(OC wht, bool removeTrailing = true)  {
+  template <typename OC> TTSString& DeleteSequencesOf(OC wht)  {
     T::checkBufferForModification(T::_Length);
     DecLength( o_strdcs(T::Data(), T::_Length, wht) );
-    if( removeTrailing && T::_Length != 0 && TTIString<TC>::Data(T::_Length-1) == wht )
-      T::DecLength(1);
     return *this;
   }
   //............................................................................
-  template <typename AC> static TTSString DeleteSequencesOf(const TTSString& str, AC wht, bool removeTrailing=true)  {
-    TTSString<T,TC> rv(str);
-    rv.DeleteSequencesOf(wht, removeTrailing);
-    return rv;
+  template <typename AC> static TTSString DeleteSequencesOf(const TTSString& str, AC wht)  {
+    return TTSString<T,TC>(str).DeleteSequencesOf(wht);
   }
   //............................................................................
   //removes chars from string and return the number of removed chars
@@ -833,16 +904,18 @@ public:
   }
   //............................................................................
   // deletes a set of chars
-  TTSString& DeleteChars(const TTSString &wht)  {
+  TTSString& DeleteCharSet(const TTSString &wht)  {
     T::checkBufferForModification(T::_Length);
     T::DecLength( o_strdchs(T::Data(), T::_Length, wht.raw_str(), wht.Length()) );
     return *this;
   }
   //............................................................................
-  template <typename AC> static TTSString DeleteChars(const TTSString& str, AC wht)  {
-    TTSString<T,TC> rv(str);
-    rv.DeleteChars(wht);
-    return rv;
+  template <typename AC> static TTSString DeleteChars(const TTSString &str, AC wht)  {
+    return TTSString<T,TC>(str).DeleteChars(wht);
+  }
+  //............................................................................
+  template <typename AC> static TTSString DeleteCharSet(const TTSString &str, const TTSString &wht)  {
+    return TTSString<T,TC>(str).DeleteCharSet(wht);
   }
   //............................................................................
   static size_t o_strins(const TC *wht, size_t wht_len, TC *to, size_t to_len, size_t at, size_t amount=1)  {
@@ -1018,6 +1091,7 @@ public:
     T::_Length -= (wht._Length - with._Length)*rv;
     return *this;
   }
+#ifndef __BORLANDC__ // what use of templates when this does not get them???
   //............................................................................
   template <typename AC> TTSString& Replace(const TTSString &wht, const AC *with)  {
     size_t extra_len = 0, with_len = o_length(with);
@@ -1099,6 +1173,32 @@ public:
     o_chrplch(wht, with, T::Data(), T::_Length);
     return *this;
   }
+#else  // what else to do... dummy compiler, just 4 functions will do (str,str), (ch,str), (str,ch) and (ch,ch)
+  TTSString& Replace(olxch wht, const TTSString &with)  {
+    size_t extra_len = 0;
+    if( with._Length > 1 )  {
+      extra_len = (with._Length - 1) * o_chrcnt(wht, T::Data(), T::_Length);
+      if( extra_len == 0 )  return *this;
+    }
+    T::checkBufferForModification(T::_Length+extra_len);
+    size_t rv = o_chrplstr(wht, with.Data(), with._Length, T::Data(), T::_Length);
+    T::_Length -= (1 - with._Length)*rv;
+    return *this;
+  }
+  //............................................................................
+  TTSString& Replace(const TTSString &wht, olxch with)  {
+    T::checkBufferForModification(T::_Length);
+    size_t rv = o_strrplch(wht.Data(), wht._Length, with, T::Data(), T::_Length);
+    T::_Length -= (wht._Length - 1)*rv;
+    return *this;
+  }
+  //............................................................................
+  TTSString& Replace(olxch wht, olxch with)  {
+    T::checkBufferForModification(T::_Length);
+    o_chrplch(wht, with, T::Data(), T::_Length);
+    return *this;
+  }
+#endif // __BORLANDC__
   //............................................................................
   template <typename AC> TTSString Trim(AC wht) const {
     if( T::_Length == 0 )  return EmptyString;

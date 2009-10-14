@@ -157,7 +157,7 @@ void TdlgMain::Launch()  {
   SetEnvironmentVariable("PYTHONHOME", py_path.c_str());
   // remove all OLEX2_DATADIR and OLEX2_DIR variables
   SetEnvironmentVariable("OLEX2_DIR", NULL);
-  SetEnvironmentVariable("OLEX2_DATADIR", NULL);
+  //SetEnvironmentVariable("OLEX2_DATADIR", NULL);
 
   STARTUPINFO si;
   PROCESS_INFORMATION ProcessInfo;

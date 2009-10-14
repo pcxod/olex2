@@ -480,10 +480,16 @@ olxstr UpdateAPI::GetInstallationFileName()  {
   unsigned int cpu_features = 0;
   _asm  {
     push EAX
+    push EBX
+    push ECX
+    push EDX
       mov EAX, 1
       cpuid
       mov [cpu_features], EDX
-      pop EAX
+    pop EDX
+    pop ECX
+    pop EBX
+    pop EAX
   }
   bool has_sse2 = (cpu_features & (0x1 << 26)) != 0;
   bool has_sse = (cpu_features & (0x1 << 25)) != 0;

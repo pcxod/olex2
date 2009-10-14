@@ -42,7 +42,7 @@ public:
       int start = 0;
       for( int i=0; i < exp.Length(); i++ )  {
         const olxch ch = exp.CharAt(i);
-        if( is_quote(ch) && !is_escaped(exp, ch) )  {
+        if( is_quote(ch) && !is_escaped(exp, i) )  {
           if( !skip_string(exp, i) )  {
             out.Add( exp.SubStringFrom(start).TrimWhiteChars() );
             start = exp.Length();

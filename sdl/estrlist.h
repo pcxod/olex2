@@ -212,7 +212,7 @@ public:
     SC E(EmptyString, tc);
     for( int i=start; i < end; i++ )  {
       E << Strings[i]->String;
-      if( i < Count()-1 ) // skip for the last line
+      if( i < end-1 ) // skip for the last line
         E << Sep;
     }
     return E;

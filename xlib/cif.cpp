@@ -323,7 +323,7 @@ void TCif::Format()  {
             D->String = true;
           }
         }
-        D->Data->GetString(j) = olxstr::DeleteSequencesOf(D->Data->GetString(j), ' ').Trim(' ');
+        D->Data->GetString(j).DeleteSequencesOf(' ').Trim(' ');
         if( !D->Data->GetString(j).IsEmpty() )  
           li++;
       }
