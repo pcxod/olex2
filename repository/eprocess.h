@@ -12,7 +12,6 @@
 #endif
 
 #ifdef __WIN32__
-  #include <windows.h>
   #include <winuser.h>
 #endif
 

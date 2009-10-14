@@ -1,7 +1,7 @@
 #ifndef  _olx_viewer
 #define _olx_viewer
 
-#include <windows.h>
+#include "ebase.h"
 
 #ifdef _MSC_VER
   #define DllImport   __declspec( dllimport )

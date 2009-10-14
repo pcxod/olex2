@@ -11,13 +11,9 @@
 #include <string.h>
 #include <sys/stat.h>
 #include "efile.h"
-#ifdef __WIN32__
-#include <windows.h>
-#endif
 #include "filetree.h"
 
 #ifdef __WIN32__
-
   #include <malloc.h>
   #include <io.h>
   #include <direct.h>
@@ -62,7 +58,6 @@
     #define UTIMBUF utimbuf
   #endif
   //this is only for UNC file names under windows
-  #include <windows.h>
   #include <mapiutil.h>
 
   #define OLX_PATH_DEL '\\'

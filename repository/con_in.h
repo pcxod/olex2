@@ -1,7 +1,9 @@
 #ifndef __olx_console_interface_H
 #define __olx_console_interface_H
+
+#include "estack.h"
+
 #ifdef __WIN32__ 
-#include <windows.h>
 const int 
   fgcReset  = 0,
   fgcRed   = FOREGROUND_RED,
@@ -27,7 +29,6 @@ const int
   bgcIntensity = 1;
 #endif
 
-#include "estack.h"
 /*
 class IConsoleInterface  {
 public:

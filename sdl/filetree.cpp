@@ -1,7 +1,4 @@
 #include "filetree.h"
-#ifdef __WIN32__
-  #include <windows.h>
-#endif
 #undef CopyFile
 
 #include "bapp.h"

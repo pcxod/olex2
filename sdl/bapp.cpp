@@ -14,7 +14,6 @@
 #include "egc.h"
 
 #ifdef __WIN32__
-  #include <windows.h>
   #define OLX_STR(a) (a).u_str()
   #define OLX_CHAR olxch
   #ifdef _UNICODE

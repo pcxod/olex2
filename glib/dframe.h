@@ -1,7 +1,6 @@
-//---------------------------------------------------------------------------
-
 #ifndef dfameH
 #define dfameH
+
 #include "glbase.h"
 #include "gdrawobject.h"
 #include "actions.h"

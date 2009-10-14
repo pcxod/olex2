@@ -7,7 +7,6 @@
 #include "exception.h"
 
 #ifdef __WIN32__
-  #include <windows.h>
   #include <objbase.h>
   #include <shlguid.h>
   #include <shobjidl.h>

@@ -1,7 +1,4 @@
-#ifdef __BORLANC__
-#pragma hdrstop
-#endif
-#include <windows.h>
+#include "ebase.h"
 #include <GL/gl.h>
 #include <GL/glu.h>
 

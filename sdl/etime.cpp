@@ -12,9 +12,7 @@
 #include "library.h"
 #include "estrlist.h"
 
-#ifdef __WIN32__
-  #include <windows.h>
-#else
+#ifndef __WIN32__
   #include <sys/time.h>
 #endif
 

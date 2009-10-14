@@ -12,7 +12,6 @@
 #include "etime.h"
 
 #ifdef __WIN32__
-  #include <windows.h>
   #include <process.h>
 #else
   #include <pthread.h>

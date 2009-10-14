@@ -170,7 +170,7 @@ template <class List> void GeneratePermutation(List& out, int perm)  {
 }
 
 static void SinCos(const double ang, double *sina, double *cosa)  {
-#ifdef __WIN32__
+#if defined(__WIN32__) && !defined(_WIN64)
   _asm  {
     FLD  ang
     FSINCOS

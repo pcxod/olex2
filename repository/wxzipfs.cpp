@@ -1,6 +1,5 @@
 #ifdef __BORLANDC__
   #pragma hdrstop
-  #include <windows.h>
   #include <winbase.h>
 #endif
 

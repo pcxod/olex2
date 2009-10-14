@@ -263,13 +263,17 @@ short UpdateAPI::DoSynch(AActionHandler* _f_lsnr, AActionHandler* _p_lsnr)  {
 void UpdateAPI::EvaluateProperties(TStrList& props) const  {
   props.Add("olex-update");
 #if defined(__WIN32__) && !defined(_DEBUG)  // disable updates by the debug version 
-  #if _M_IX86_FP == 0
-    props.Add("port-win32-nosse");
-#elif _M_IX86_FP == 1
-    props.Add("port-win32-sse");
-  #elif _M_IX86_FP == 2  // cannot change it! olex2 does not get upadted and this is it...
-    props.Add("port-win32");
-  #endif
+  props.Add("port-win32");
+#  ifndef _WIN64
+#    if _M_IX86_FP == 0
+  props.Add("port-win32-nosse");
+#    elif _M_IX86_FP == 1
+  props.Add("port-win32-sse");
+#    elif _M_IX86_FP == 2  // cannot change it! olex2 does not get upadted and this is it...
+#    endif
+#  else
+  props.Add("port-win64");
+#endif
   props.Add("port-win32-portable");  // but can change this ...
 #else
   if( !settings.olex2_port.IsEmpty() )  {
@@ -477,6 +481,7 @@ olxstr UpdateAPI::AddTagPart(const olxstr& path, bool Update) const {
 //http://www.jorgon.freeserve.co.uk/TestbugHelp/XMMfpins2.htm
 olxstr UpdateAPI::GetInstallationFileName()  {
 #ifdef __WIN32__
+#ifndef _WIN64
   unsigned int cpu_features = 0;
   _asm  {
     push EAX
@@ -496,6 +501,9 @@ olxstr UpdateAPI::GetInstallationFileName()  {
   if( has_sse2 ) return "olex2.zip";
   else if( has_sse )  return "olex2-sse.zip";
   else  return "olex2-nosse.zip";
+#else
+  return "olex2-x64.zip";
+#endif
 #else
   return "portable-gui.zip";
 #endif
