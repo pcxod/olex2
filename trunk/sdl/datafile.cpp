@@ -44,8 +44,13 @@ bool TDataFile::LoadFromTextStream(IInputStream& io, TStrList* Log)  {
 }
 //..............................................................................
 bool TDataFile::LoadFromXLFile(const olxstr &DataFile, TStrList* Log)  {
-  TEFile in(DataFile, "rb");
-  return LoadFromTextStream(in, Log);
+  try  {
+    TEFile in(DataFile, "rb");
+    bool res = LoadFromTextStream(in, Log);
+    FileName = DataFile;
+    return res;
+  }
+  catch(const TExceptionBase& e)  {  throw TFunctionFailedException(__OlxSourceInfo, e);  }
 }
 //..............................................................................
 void TDataFile::Include(TStrList* Log)  {
