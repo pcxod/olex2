@@ -10,6 +10,7 @@
 #undef AddAtom
 #undef GetObject
 #ifndef __WIN32__
+  #include <pthread.h>
   #include <time.h>
   #include <errno.h>
 #endif
