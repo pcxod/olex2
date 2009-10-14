@@ -4,7 +4,6 @@
 #include "gxapp.h"
 #include "integration.h"
 #include "exception.h"
-#include <windows.h>
 
 #ifdef _MSC_VER
   #define DllImport   __declspec( dllimport )

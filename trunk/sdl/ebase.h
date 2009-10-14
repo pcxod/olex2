@@ -61,6 +61,12 @@ public:\
 
 #include "defs.h"
 
+#ifdef __WIN32__
+  #ifndef _WIN32_WINNT
+    #define _WIN32_WINNT 0x400
+  #endif
+  #include <windows.h>
+#endif
 // there is a mistery how it manages to disapper!!!!
 #ifdef __BORLANDC__
   #if !defined(__MT__)

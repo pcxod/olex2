@@ -8,9 +8,6 @@
 #include "log.h"
 #include "utf8file.h"
 #include "egc.h"
-#ifdef __WIN32__
-  #include <windows.h>
-#endif
 #include "filetree.h"
 #include "updateapi.h"
 

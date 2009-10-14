@@ -1,9 +1,3 @@
-#ifdef __BORLANDC__
-  #pragma hdrstop
-  #include <windows.h>
-  #include <winbase.h>
-#endif
-
 #ifdef __WXWIDGETS__
   #include "wx/wx.h"
   #include "wx/thread.h"

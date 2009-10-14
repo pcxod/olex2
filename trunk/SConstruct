@@ -1,6 +1,7 @@
 import sys
 import os
 import string
+import platform
 
 AddOption('--olx_debug',
           dest='olx_debug',
@@ -32,6 +33,10 @@ else:
   else:
     print 'Using ' + sse
 
+architecture = platform.architecture()[0]
+if not architecture:
+  architecture = 'unknown'
+print 'Build architecture: ' + architecture
 AddOption('--olx_profile',
           dest='olx_profile',
           type='string',
@@ -50,6 +55,7 @@ if debug:
   out_dir += 'debug'
 else:
   out_dir += 'release'
+out_dir += '-' + architecture
 out_dir += '-py' + sys.version[:3]
 if sse:
   out_dir += '-' + sse
@@ -130,7 +136,9 @@ if sys.platform[:3] == 'win':
     wxFolder += '/'
   pyFolder = os.path.split(sys.executable)[0] + '\\'
   if not debug:
-    cc_flags = ['/EHsc', '/O2', '/Ob2', '/Oi', '/GL', '/MD', 
+#    cc_flags = ['/EHsc', '/O2', '/Ob2', '/Oi', '/GL', '/MD', 
+#                          '/bigobj', '/fp:fast', '/GF']
+    cc_flags = ['/EHsc', '/O2', '/Ob2', '/Oi', '/MD', 
                           '/bigobj', '/fp:fast', '/GF']
     if sse:
       cc_flags.append( '/arch:'+sse)
@@ -138,7 +146,7 @@ if sys.platform[:3] == 'win':
     env.Append(LIBS = Split("""wxbase28u         wxbase28u_net  wxmsw28u_gl   
                                wxmsw28u_richtext wxmsw28u_html wxmsw28u_core 
                                wxmsw28u_adv wxregexu"""))
-    env.Append(LINKFLAGS=['/LTCG'])
+    #env.Append(LINKFLAGS=['/LTCG'])
   else:
     env.Append(CCFLAGS = ['/EHsc', '/RTC1', '/ZI', '-D_DUBUG', '/Od', '/MDd', 
                           '/bigobj', '/fp:fast']) 
@@ -152,7 +160,10 @@ if sys.platform[:3] == 'win':
                              wxzlib mapi32 glu32 user32 opengl32 gdi32 ole32 
                              advapi32 comdlg32 comctl32 shell32 rpcrt4 oleaut32
                              kernel32 wsock32 Iphlpapi.lib"""))
-  env.Append(LINKFLAGS=['/MACHINE:X86'])
+  if architecture == '64bit':
+    env.Append(LINKFLAGS=['/MACHINE:X64'])
+  else:
+    env.Append(LINKFLAGS=['/MACHINE:X86'])
   unirun_env = env.Clone()
   env.Append(CPPPATH=[wxFolder+'include', wxFolder+'lib/vc_lib/mswud', pyFolder+'include'])
   env.Append(LIBPATH = [pyFolder+'libs', wxFolder+'lib/vc_lib'])

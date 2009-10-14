@@ -1,5 +1,4 @@
 //---------------------------------------------------------------------------
-
 #ifndef wglsceneH
 #define wglsceneH
 #include "glscene.h" 
@@ -7,10 +6,7 @@
 // system dependent staff
 //__________________________________________
 #if defined(__WIN32__)
-#include <windows.h>
-
-class TWGlScene:public AGlScene
-{
+class TWGlScene:public AGlScene  {
 private:
   HGLRC FGlContext;
   HDC   FWContext;

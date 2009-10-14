@@ -8,7 +8,6 @@
 
 // for InterlockedIncrement in
 #if defined __WIN32__ && __BORLANDC__
-  #include <windows.h>
   #include <winbase.h>
 #endif
 
