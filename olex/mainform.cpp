@@ -1360,6 +1360,7 @@ void TMainForm::StartupInit()  {
   if( TEFile::Exists(FXApp->GetBaseDir() + "settings.xld") )  {
     TDataFile settings;
     settings.LoadFromXLFile( FXApp->GetBaseDir() + "settings.xld", NULL );
+    settings.Include(NULL);
     TDataItem* sh = settings.Root().FindItemi("shortcuts");
     if( sh != NULL )  {
       try  {

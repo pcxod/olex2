@@ -51,7 +51,8 @@ public:
   void SaveToStrBuffer(TEStrBuffer &Data) const;
 
   TDataItem& AddItem(const olxstr& Name, const olxstr& value=EmptyString);
-  void AddContent(TDataItem& DI);
+  // if extend is true the item's content is extended instead of being overwritten
+  void AddContent(TDataItem& DI, bool extend=false);
   // implementation of the include instruction object.item
   TDataItem& AddItem(const olxstr &Name, TDataItem *Reference);
   void DeleteItem(TDataItem *Item);

@@ -134,13 +134,18 @@ TDataItem *TDataItem::GetAnyItemCI(const olxstr &Name) const {
   return DI;
 }
 //..............................................................................
-void TDataItem::AddContent(TDataItem& DI)  {
+void TDataItem::AddContent(TDataItem& DI, bool extend)  {
   TDataItem *di;
   for( int i=0; i < DI.ItemCount(); i++ )  {
     di = FindItem( DI.GetItem(i).GetName() );
-    if( di != NULL )
-      DeleteItem(di);
-    AddItem( DI.GetItem(i) );
+    if( di != NULL )  {
+      if( extend )
+        di->AddContent(DI.GetItem(i));
+      else
+        DeleteItem(di);
+    }
+    if( !extend )
+      AddItem( DI.GetItem(i) );
   }
 }
 //..............................................................................

@@ -76,7 +76,9 @@ void TDataFile::Include(TStrList* Log)  {
     }
     DF.LoadFromXLFile(Tmp, Log);
     DF.Include(Log);
-    Inc->GetParent()->AddContent( DF.Root() );
+    const olxstr& extend_str = Inc->GetFieldValue("extend");
+    bool extend = extend_str.IsEmpty() ? false : extend_str.ToBool();
+    Inc->GetParent()->AddContent(DF.Root(), extend);
 
     FRoot->DeleteItem(Inc);
     Inc = FRoot->GetAnyItem("#include");
