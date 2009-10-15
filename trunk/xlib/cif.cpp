@@ -359,20 +359,16 @@ void TCif::Format()  {
 }
 //..............................................................................
 void TCif::LoadFromStrings(const TStrList& Strings)  {
-  olxstr Tmp, Val, Param, Tmp1, Tmp2;
+  olxstr Tmp;
   olxch Char;
-  bool String;
-  TCifLoop *Loop;
-  int spindex;
-  TCifData *D;
   TStrList LoopData;
 
   Clear();
   Lines.Assign(Strings);
   for( int i=0; i < Lines.Count(); i++ )  {
-    Lines[i] = Lines[i].Trim(' ');
+    Lines[i].DeleteSequencesOf<char>(' ').Trim(' ');
     if( Lines[i].IsEmpty() )  continue;
-    spindex = Tmp.FirstIndexOf('#');  // a comment char
+    int spindex = Lines[i].FirstIndexOf('#');  // a comment char
     if( spindex != -1 )  {
       if( spindex != 0 )  {
         Tmp = Lines[i];
@@ -383,15 +379,12 @@ void TCif::LoadFromStrings(const TStrList& Strings)  {
     }
   }
   for( int i=0; i < Lines.Count(); i++ )  {
-    Tmp = olxstr::DeleteSequencesOf<char>(Lines[i], ' ');
-    if( Tmp.IsEmpty() )  {
-      Lines[i] = EmptyString;
-      continue;
-    }
+    Tmp = Lines[i];
+    if( Tmp.IsEmpty() )  continue;
     if( Tmp.CharAt(0) == '#')  continue;
 next_loop:
     if( Tmp.Equalsi("loop_") )  {  // parse a loop
-      Loop = new TCifLoop();
+      TCifLoop *Loop = new TCifLoop();
       LoopData.Clear();
       Loops.Add(EmptyString, Loop);
       Char = '_';
@@ -402,12 +395,13 @@ next_loop:
           Loops[Loops.Count()-1] = Loop->GetLoopName();
           goto exit;
         }
-        Tmp = olxstr::DeleteSequencesOf<char>( Lines[i], ' ' );
+        Tmp = Lines[i];
         if( Tmp.IsEmpty() )  continue;
-        else                 Char = Tmp.CharAt(0);
+        else  
+          Char = Tmp.CharAt(0);
         if( Char == '_' )  {
           if( Loop->Table().ColCount() )  {
-            // chceck that the itm is actualli belongs to the loop
+            // check that the itm is actualli belongs to the loop
             // happens in the case of empty loops
             if( olxstr::CommonString(Tmp, Loop->Table().ColName(0)).Length() == 1 )  {
               goto finalize_loop;
@@ -428,10 +422,11 @@ next_loop:
           Loops.Last().String = Loop->GetLoopName();
           goto exit;
         }
-        Tmp = olxstr::DeleteSequencesOf<char>(Lines[i], ' ');
+        Tmp = Lines[i];
         if( Tmp == "loop_" )  goto finalize_loop;   // a new loop started
         if( Tmp.IsEmpty() )   continue;
-        else                  Char = Tmp.CharAt(0);
+        else  
+          Char = Tmp.CharAt(0);
       }
 finalize_loop:
       Loop->Format(LoopData);
@@ -440,8 +435,9 @@ finalize_loop:
         goto next_loop;
     }
     if( Tmp.CharAt(0) == '_' )  {  // parameter
-      String = false;
-      spindex = Tmp.FirstIndexOf(' ');
+      bool String = false;
+      olxstr Val(EmptyString), Param(EmptyString);
+      int spindex = Tmp.FirstIndexOf(' ');
       if( spindex >=0 )  {
         Param = Tmp.SubStringTo(spindex);
         Val = Tmp.SubStringFrom(spindex+1); // to remove the space
@@ -451,7 +447,7 @@ finalize_loop:
         Val = EmptyString;
       }
       Lines[i] = Param;
-      D = new TCifData;
+      TCifData *D = new TCifData;
       D->Data = new TStrList;
       D->String = false;
       Lines.GetObject(i) = D;
@@ -460,21 +456,22 @@ finalize_loop:
         D->Data->Add(Val);
       int j = i + 1;
       if( j < Lines.Count() )  {  // initialise 'Char'
-        Tmp1 = olxstr::DeleteSequencesOf<char>(Lines[j], ' ');
-        if( !Tmp1.IsEmpty() )  Char = Tmp1.CharAt(0);
-        else Char = 'a';  // whil initialte the while cycle bolow
+        if( !Lines[j].IsEmpty() )
+          Char = Lines[j].CharAt(0);
+        else    // will initiate the while loop below
+          Char = 'a';
       }
       while( Char != '_' && (j < Lines.Count()) )  {
-        Tmp1 = olxstr::DeleteSequencesOf<char>(Lines[j], ' ');
-        if( Tmp1.Length() )  {
-          Char = Tmp1[0];
+        olxstr Tmp1 = Lines[j];
+        if( !Lines[j].IsEmpty() )  {
+          Char = Lines[j].CharAt(0);
           if( Char == '#' )  {  j++;  continue;  }
-          if( Tmp1.Length() > 4 )  {  // check for special data items
-            Tmp2 = Tmp1.SubString(0,4);
-            if( Tmp2.Equalsi("data") || Tmp2.Equalsi("loop") )  break;
+          if( Lines[j].Length() > 4 )  {  // check for special data items
+            olxstr tmp = Lines[j].SubString(0,4);
+            if( tmp.Equalsi("data") || tmp.Equalsi("loop") )  break;
           }
           if( Char != '_' )  {
-            D->Data->Add(Tmp1);
+            D->Data->Add(Lines[j]);
             Lines.Delete(j);
             j--;
           }
@@ -488,16 +485,14 @@ finalize_loop:
     }
     else  {
       if( !FDataName.Length() )  {
-        Tmp1 = Tmp.SubStringTo(4);
-        if( Tmp1 == "data" )  {
+        olxstr tmp = Tmp.SubStringTo(4);
+        if( tmp == "data" )  {
           if( FDataNameUpperCase )
             FDataName = Tmp.SubStringFrom(5).UpperCase();
           else
             FDataName = Tmp.SubStringFrom(5);
           FDataName.DeleteSequencesOf(' ');
-          Tmp1 << '_';
-          Tmp1 << FDataName;
-          Lines[i] = Tmp1;
+          Lines[i] = (tmp << '_' << FDataName);
         }
       }
     }
@@ -506,7 +501,7 @@ exit:
   Format();
   /******************************************************************/
   /*search fo the weigting sceme*************************************/
-  D = FindParam( "_refine_ls_weighting_details");
+  TCifData *D = FindParam( "_refine_ls_weighting_details");
   if( D != NULL)  {
     if( D->Data->Count() == 1 )  {
       const olxstr& tmp = D->Data->GetString(0);

@@ -84,7 +84,6 @@ void TDataFile::Include(TStrList* Log)  {
     Inc = FRoot->GetAnyItem("#include");
   }
   FRoot->ResolveFields(Log);
-  SaveToXLFile("e:/1.xld");
 }
 //..............................................................................
 void TDataFile::SaveToXLFile(const olxstr &DataFile)  {

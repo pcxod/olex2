@@ -508,27 +508,39 @@ void TXAtom::GetDefSphereMaterial(const TSAtom& Atom, TGlMaterial& M)  {
   Cl = (int)Atom.GetAtomInfo().GetDefColor();
 ///////////
   if( Atom.GetAtomInfo() == iQPeakIndex )  {
-    double peak = Atom.CAtom().GetQPeak();
-    if( peak > 0 )  {
+    const double peak = Atom.CAtom().GetQPeak();
+    // this is to tackle the shelxs86 output...
+    if( olx_abs(Atom.CAtom().GetParent()->GetMaxQPeak() - Atom.CAtom().GetParent()->GetMinQPeak()) < 0.001 )  {
       M.SetFlags(sglmAmbientF|sglmDiffuseF|sglmSpecularF|sglmShininessF|sglmTransparent);
       M.DiffuseF = 0x00007f;
       M.AmbientF = 0x007f7f;
       M.SpecularF = 0xffffff;
       M.ShininessF = 36;
-      M.AmbientF[3] = (float)(atan(QPeakScale()*peak/Atom.CAtom().GetParent()->GetMaxQPeak())*2/M_PI);
+      M.AmbientF[3] = 0.5;
       M.DiffuseF[3] = M.AmbientF[3];
     }
     else  {
-      M.SetFlags(sglmAmbientF|sglmDiffuseF|sglmSpecularF|sglmShininessF|sglmTransparent);
-      M.DiffuseF = 0x00007f;
-      M.AmbientF = 0x7f007f;
-      M.SpecularF = 0xffffff;
-      M.ShininessF = 36;
-      if( Atom.CAtom().GetParent()->GetMaxQPeak() < 0 )
-        M.AmbientF[3] = (float)(atan(QPeakScale()*peak/Atom.CAtom().GetParent()->GetMinQPeak())*2/M_PI);
-      else
-        M.AmbientF[3] = (float)(atan(-QPeakScale()*peak/Atom.CAtom().GetParent()->GetMaxQPeak())*2/M_PI);
-      M.DiffuseF[3] = M.AmbientF[3];
+      if( peak > 0 )  {
+        M.SetFlags(sglmAmbientF|sglmDiffuseF|sglmSpecularF|sglmShininessF|sglmTransparent);
+        M.DiffuseF = 0x00007f;
+        M.AmbientF = 0x007f7f;
+        M.SpecularF = 0xffffff;
+        M.ShininessF = 36;
+        M.AmbientF[3] = (float)(atan(QPeakScale()*peak/Atom.CAtom().GetParent()->GetMaxQPeak())*2/M_PI);
+        M.DiffuseF[3] = M.AmbientF[3];
+      }
+      else  {
+        M.SetFlags(sglmAmbientF|sglmDiffuseF|sglmSpecularF|sglmShininessF|sglmTransparent);
+        M.DiffuseF = 0x00007f;
+        M.AmbientF = 0x7f007f;
+        M.SpecularF = 0xffffff;
+        M.ShininessF = 36;
+        if( Atom.CAtom().GetParent()->GetMaxQPeak() < 0 )
+          M.AmbientF[3] = (float)(atan(QPeakScale()*peak/Atom.CAtom().GetParent()->GetMinQPeak())*2/M_PI);
+        else
+          M.AmbientF[3] = (float)(atan(-QPeakScale()*peak/Atom.CAtom().GetParent()->GetMaxQPeak())*2/M_PI);
+        M.DiffuseF[3] = M.AmbientF[3];
+      }
     }
     return;
   }

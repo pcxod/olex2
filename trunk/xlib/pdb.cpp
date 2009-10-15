@@ -26,10 +26,6 @@ void TPdb::LoadFromStrings(const TStrList& Strings)  {
   Clear();
 
   evecd QE(6);
-  vec3d crd;
-
-  olxstr Tmp1, Tmp, Msg;
-  vec3d StrCenter;
   TStrList toks;
   TIntList CrystF;
   CrystF.Add(6);
@@ -84,9 +80,8 @@ void TPdb::LoadFromStrings(const TStrList& Strings)  {
   for(int i=0; i < Strings.Count(); i++ )  {
     int spi = Strings[i].FirstIndexOf(' ');
     if( spi <=0 )  continue;
-    Tmp = Strings[i].SubStringTo(spi).UpperCase();
-    if( Tmp == "CRYST1" )  {
-      toks.Clear();
+    olxstr line = Strings[i].SubStringTo(spi).UpperCase();
+    if( line == "CRYST1" )  {
       toks.StrtokF( Strings[i], CrystF);
       if( toks.Count() < 7 )  
         throw TFunctionFailedException(__OlxSourceInfo, "parsing failed");
@@ -98,19 +93,16 @@ void TPdb::LoadFromStrings(const TStrList& Strings)  {
       GetAsymmUnit().Angles()[2] = toks[6].ToDouble();
       GetAsymmUnit().InitMatrices();
     }
-    else if( Tmp == "ATOM" )  {
+    else if( line == "ATOM" )  {
       toks.Clear();
       toks.StrtokF( Strings[i], AtomF);
       if( toks.Count() < 13 )  
         throw TFunctionFailedException(__OlxSourceInfo, "parsing failed");
       TCAtom& CA = GetAsymmUnit().NewAtom();
-      crd[0] = toks[10].ToDouble();
-      crd[1] = toks[11].ToDouble();
-      crd[2] = toks[12].ToDouble();
-
+      vec3d crd(toks[10].ToDouble(), toks[11].ToDouble(), toks[12].ToDouble());
       GetAsymmUnit().CartesianToCell(crd);
       CA.ccrd() = crd;
-      Tmp = toks[3].Trim(' ');
+      olxstr Tmp = toks[3].Trim(' ');
       if( Tmp == "CA" )
         Tmp = "C";
       else  if( Tmp == "CD" )
@@ -119,11 +111,10 @@ void TPdb::LoadFromStrings(const TStrList& Strings)  {
         Tmp = "C";
       else  if( Tmp == "W" )
         Tmp = "O";
-
       Tmp << '_' << toks[5].Trim(' ') << '_' << toks[8].Trim(' ');
       CA.SetLabel( Tmp );
     }
-    else if( Tmp == "ANISOU" )  {
+    else if( line == "ANISOU" )  {
       toks.Clear();
       toks.StrtokF( Strings[i], AnisF);
       if( toks.Count() < 16 )  

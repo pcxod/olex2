@@ -128,7 +128,7 @@ void TEMacroLib::ProcessMacro(const olxstr& Cmd, TMacroError& Error)  {
   TStrObjList Cmds;
   TStrList MCmds;
   TParamList Options;
-  olxstr Command(Cmd.Trim(' '));
+  olxstr Command = olxstr(Cmd).Trim(' ');
   if( Command.IsEmpty() )  return;
   // processing environment variables
   int ind = Command.FirstIndexOf('|'), ind1;
@@ -219,6 +219,7 @@ void TEMacroLib::ProcessMacro(const olxstr& Cmd, TMacroError& Error)  {
     if( !Error.DoesFunctionExist() )
       return;
     if( !Error.IsSuccessful() && !onAbort.IsEmpty() )  {
+      TBasicApp::GetLog().Info( olxstr("OnAbort at ") << Error.GetLocation() << ": " << Error.GetInfo() );
       Error.ClearErrorFlag();
       for( int j=0; j < onAbort.Count(); j++ )  {
         ProcessMacro(onAbort[j], Error);

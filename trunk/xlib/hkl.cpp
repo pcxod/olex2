@@ -104,11 +104,10 @@ bool THklFile::LoadFromFile(const olxstr& FN, TIns* ins, bool* ins_initialised) 
 			if( ins == NULL )  break;
       ins->Clear();
       ins->SetTitle( TEFile::ChangeFileExt(TEFile::ExtractFileName(FN), EmptyString) << " imported from HKL file" );
-      olxstr line;
       bool cell_found = false, sfac_found = false;
       ins->SetSfac(EmptyString);
       for( int j=i; j < SL.Count(); j++ )  {
-        line = SL[j].Trim(' ');
+        olxstr line = SL[j].Trim(' ');
         if( line.IsEmpty() )  continue;
         Toks.Clear();
         if( line.StartFromi("CELL") )  {

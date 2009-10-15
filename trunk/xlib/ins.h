@@ -101,7 +101,7 @@ public:
 
   /* updates all instructions */
   void UpdateParams();
-  void SaveToRefine(const olxstr& FileName, const olxstr& Method, const olxstr& comments);
+  void SaveForSolution(const olxstr& FileName, const olxstr& Method, const olxstr& comments, bool rems=true);
   void SavePattSolution( const olxstr& FileName, const TTypeList<class TPattAtom>& atoms,
                          const olxstr& comments );
   /* reads a file containing just lines of atoms and updates the to the

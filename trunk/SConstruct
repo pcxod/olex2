@@ -36,6 +36,8 @@ else:
 architecture = platform.architecture()[0]
 if not architecture:
   architecture = 'unknown'
+if architecture == '64bit':
+  sse = None
 print 'Build architecture: ' + architecture
 AddOption('--olx_profile',
           dest='olx_profile',

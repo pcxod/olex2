@@ -694,7 +694,8 @@ Accepts atoms, bonds, hbonds or a name (like from LstGO). Example: 'mask hbonds 
   // not implemented
   this_InitMacro(AddExyz, , fpAny );
 
-  this_InitMacro(Reset, s&;c&;f, fpAny|psFileLoaded );
+  this_InitMacroD(Reset, "s-space group&;c-content&;f-alternative file name&;rem-exclude remarks", 
+    fpAny|psFileLoaded, "Resets current structure for the solution with ShelX");
   this_InitMacro(ShowQ, wheel, fpNone|fpOne|fpTwo|psFileLoaded );
 
   this_InitMacroD(Mode, 
