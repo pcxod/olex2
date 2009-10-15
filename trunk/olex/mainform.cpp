@@ -1351,8 +1351,8 @@ void TMainForm::StartupInit()  {
   ProcessMacro(olxstr("showwindow info ") << InfoWindowVisible);
   ProcessMacro(olxstr("showwindow cmdline ") << CmdLineVisible);
   FGlConsole->ShowBuffer( true );  // this should be on :)
-  ProcessMacro("reload macro");
-  ProcessMacro("reload help");
+  ProcessMacro("reload macro", __OlxSrcInfo);
+  ProcessMacro("reload help", __OlxSrcInfo);
 
   FTimer->Start(15);
   if( FGlCanvas != NULL )  FGlCanvas->XApp(FXApp);
@@ -1405,7 +1405,7 @@ void TMainForm::StartupInit()  {
           if( item.GetName().Equalsi("sep") )    cmd << "-# ";
           if( item.GetName().Equalsi("check") )  cmd << "-c ";
 
-          ProcessMacro(cmd);
+          ProcessMacro(cmd, __OlxSrcInfo);
         }
       }
       catch( TExceptionBase& exc )  {
@@ -1440,8 +1440,8 @@ void TMainForm::StartupInit()  {
     catch(...) {}
   }
 
-  ProcessMacro("onstartup");
-  ProcessMacro("user_onstartup");
+  ProcessMacro("onstartup", __OlxSrcInfo);
+  ProcessMacro("user_onstartup", __OlxSrcInfo);
 
   // load html in last cal - it might call some destructive functions on uninitialised data
 
@@ -1449,7 +1449,7 @@ void TMainForm::StartupInit()  {
   FHtml->SetHomePage( FHtmlIndexFile );
 
   if( FXApp->Arguments.Count() == 1 )
-    ProcessMacro(olxstr("reap \'") << FXApp->Arguments[0] << '\'');
+    ProcessMacro(olxstr("reap \'") << FXApp->Arguments[0] << '\'', __OlxSrcInfo);
 }
 //..............................................................................
 void TMainForm::SetProcess( AProcess *Process )  {
@@ -1525,11 +1525,11 @@ void TMainForm::OnFileOpen(wxCommandEvent& event)  {
 //..............................................................................
 void TMainForm::OnDrawStyleChange(wxCommandEvent& event)  {
   switch( event.GetId() )  {
-    case ID_DSBS: ProcessMacro("pers");  break;
-    case ID_DSES: ProcessMacro("telp");  break;
-    case ID_DSSP: ProcessMacro("sfil");  break;
-    case ID_DSWF: ProcessMacro("proj");  break;
-    case ID_DSST: ProcessMacro("tubes");  break;
+    case ID_DSBS: ProcessMacro("pers", __OlxSrcInfo);  break;
+    case ID_DSES: ProcessMacro("telp", __OlxSrcInfo);  break;
+    case ID_DSSP: ProcessMacro("sfil", __OlxSrcInfo);  break;
+    case ID_DSWF: ProcessMacro("proj", __OlxSrcInfo);  break;
+    case ID_DSST: ProcessMacro("tubes", __OlxSrcInfo);  break;
     case ID_SceneProps:
       TdlgSceneProps *Dlg = new TdlgSceneProps(this, FXApp);
       if( Dlg->ShowModal() == wxID_OK )  {
@@ -2691,7 +2691,7 @@ void TMainForm::OnKeyDown(wxKeyEvent& m)  {
   }
   olxstr Cmd = AccShortcuts.GetValue( Fl<<16 | m.m_keyCode );
   if( !Cmd.IsEmpty() )  {
-    ProcessMacro(Cmd);
+    ProcessMacro(Cmd, __OlxSrcInfo);
     TimePerFrame = FXApp->Draw();
     return;
   }
@@ -3744,12 +3744,12 @@ void TMainForm::AnalyseError(TMacroError& error)  {
     if( error.IsProcessingException() )
       TBasicApp::GetLog().Exception(olxstr(error.GetLocation()) << ": " <<  error.GetInfo());
     else if( !error.GetInfo().IsEmpty() )  {
-      if( !error.DoesFunctionExist() && (FMode&mSilent) != 0 )  {
-        TBasicApp::GetLog().Info(olxstr(error.GetLocation()) << ": " <<  error.GetInfo());
-        while( !error.GetStack().IsEmpty() )
-          TBasicApp::GetLog().Info(  (olxstr('\t') << error.GetStack().Pop().TrimWhiteChars()) );
-        return;
-      }
+      //if( !error.DoesFunctionExist() && (FMode&mSilent) != 0 )  {
+      //  TBasicApp::GetLog().Info(olxstr(error.GetLocation()) << ": " <<  error.GetInfo());
+      //  while( !error.GetStack().IsEmpty() )
+      //    TBasicApp::GetLog().Info(  (olxstr('\t') << error.GetStack().Pop().TrimWhiteChars()) );
+      //  return;
+      //}
       TBasicApp::GetLog().Error(olxstr(error.GetLocation()) << ": " <<  error.GetInfo());
     }
     while( !error.GetStack().IsEmpty() )
@@ -3758,7 +3758,6 @@ void TMainForm::AnalyseError(TMacroError& error)  {
 }
 //..............................................................................
 bool TMainForm::ProcessEvent( wxEvent& evt )  {
-//  if( evt.GetId() ==
   if( evt.GetEventType() == wxEVT_COMMAND_MENU_SELECTED && AccMenus.ValueExists( evt.GetId() )  )  {
     olxstr macro( AccMenus.GetValue(evt.GetId())->GetCommand() );
     if( !macro.IsEmpty() )  {
@@ -3782,7 +3781,7 @@ bool TMainForm::ProcessEvent( wxEvent& evt )  {
 }
 //..............................................................................
 int TMainForm::TranslateShortcut(const olxstr& sk)  {
-  if( !sk.Length() )  return -1;
+  if( sk.IsEmpty() )  return -1;
   TStrList toks(sk, '+');
   if( !toks.Count() )  return -1;
   short Shift=0, Char = 0;

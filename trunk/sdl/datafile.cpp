@@ -55,7 +55,6 @@ bool TDataFile::LoadFromXLFile(const olxstr &DataFile, TStrList* Log)  {
 //..............................................................................
 void TDataFile::Include(TStrList* Log)  {
   TDataItem *Inc;
-  TDataFile DF;
   olxstr Tmp;
   Inc = FRoot->GetAnyItem("#include");
   while( Inc != NULL )  {
@@ -74,6 +73,7 @@ void TDataFile::Include(TStrList* Log)  {
       Inc = FRoot->GetAnyItem("#include");
       continue;
     }
+    TDataFile DF;
     DF.LoadFromXLFile(Tmp, Log);
     DF.Include(Log);
     const olxstr& extend_str = Inc->GetFieldValue("extend");
@@ -84,6 +84,7 @@ void TDataFile::Include(TStrList* Log)  {
     Inc = FRoot->GetAnyItem("#include");
   }
   FRoot->ResolveFields(Log);
+  SaveToXLFile("e:/1.xld");
 }
 //..............................................................................
 void TDataFile::SaveToXLFile(const olxstr &DataFile)  {

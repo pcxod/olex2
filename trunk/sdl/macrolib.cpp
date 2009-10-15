@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include "macrolib.h"
 
-bool TEMacroLib::ProcessFunction(olxstr& Cmd, TMacroError& E)  {
+bool TEMacroLib::ProcessFunction(olxstr& Cmd, TMacroError& E, bool has_owner)  {
   if( Cmd.IndexOf('(') == -1 )  return true;
   E.GetStack().Push(Cmd);
   int specialFunctionIndex = Cmd.IndexOf('$');
@@ -10,15 +10,26 @@ bool TEMacroLib::ProcessFunction(olxstr& Cmd, TMacroError& E)  {
     bool funcStarted = false;
     while( i++ < Cmd.Length() )  {
       if( Cmd.CharAt(i) == '(' )  {  bc++;  funcStarted = true;  }
-      if( Cmd.CharAt(i) == ')' )  bc--;
+      else if( Cmd.CharAt(i) == ')' )  bc--;
+      else if( !funcStarted && !is_allowed_in_name(Cmd.CharAt(i)) )  {
+        if( i+1 >= Cmd.Length() )  {
+          E.GetStack().Pop();
+          return true;
+        }
+        specialFunctionIndex = Cmd.FirstIndexOf('$', i+1);
+        if( specialFunctionIndex == -1 )  {
+          E.GetStack().Pop();
+          return true;
+        }
+      }
       if( bc == 0 && funcStarted )  {
         olxstr spFunction = Cmd.SubString(specialFunctionIndex+1, i-specialFunctionIndex);
-        if( ProcessFunction( spFunction, E ) )  {
-          Cmd.Delete( specialFunctionIndex, i - specialFunctionIndex + 1 );
-          Cmd.Insert( spFunction, specialFunctionIndex );
+        if( ProcessFunction(spFunction, E, false) )  {
+          Cmd.Delete(specialFunctionIndex, i - specialFunctionIndex + 1);
+          Cmd.Insert(spFunction, specialFunctionIndex);
         }
         else  {
-          Cmd.Delete( specialFunctionIndex, i - specialFunctionIndex + 1 );
+          Cmd.Delete(specialFunctionIndex, i - specialFunctionIndex + 1);
         }
         specialFunctionIndex = Cmd.IndexOf('$');
         if( specialFunctionIndex == -1 )  {
@@ -60,7 +71,7 @@ bool TEMacroLib::ProcessFunction(olxstr& Cmd, TMacroError& E)  {
         if( func_name.Comparei("or") != 0 && func_name.Comparei("and") != 0 )  {
           olxstr localArg;
           for( int j=0; j < Params.Count(); j++ )  {
-            if( !ProcessFunction(Params[j], E) )  {
+            if( !ProcessFunction(Params[j], E, true) )  {
               if( func_name.Equalsi("eval") ) // put the function back
                 Params[j] = ArgV;
               else  return false;
@@ -82,9 +93,9 @@ bool TEMacroLib::ProcessFunction(olxstr& Cmd, TMacroError& E)  {
       }
       ABasicFunction *Function = OlexProcessor.GetLibrary().FindFunction(func_name);//, Params.Count() );
       if( Function == NULL )  {
-        if( !func_name.IsEmpty() )  {
+        if( !func_name.IsEmpty() && !has_owner )  {
           E.NonexitingMacroError( func_name );
-          return true;
+          return false;
         }
         E.GetStack().Pop();
         return true;
@@ -92,7 +103,7 @@ bool TEMacroLib::ProcessFunction(olxstr& Cmd, TMacroError& E)  {
       Cmd.Delete(fstart, fend-fstart);
       //TBasicApp::GetLog().Info( Function->GetRuntimeSignature() );
       Function->Run(Params, E);
-      if( !E.IsSuccessful() && E.DoesFunctionExist() )  
+      if( !E.IsSuccessful() ) //&& E.DoesFunctionExist() )  
         return false;
       Cmd.Insert(E.GetRetVal(), fstart);
       i = fstart + E.GetRetVal().Length();
@@ -101,15 +112,7 @@ bool TEMacroLib::ProcessFunction(olxstr& Cmd, TMacroError& E)  {
       E.GetStack().Pop();
       return true;
     }
-    const olxch ch = Cmd.CharAt(i);
-    if( ch == ' ' || ch == '+' || ch == '-' || ch == '/' ||
-      ch == '*' || ch == '~' || ch == '&' || ch == '\'' ||
-      ch == '\\' || ch == '|' || ch == '!' || ch == '"' ||
-      ch == '$' || ch == '%' || ch == '^' || ch == '#'  ||
-      ch == '=' || ch == '[' || ch == ']' || ch == '{' ||
-      ch == '}' || ch == ':' || ch == ';' || ch == '?' ||
-      ch == '(' || ch == ')')
-    {
+    if( !is_allowed_in_name(Cmd.CharAt(i)) )  {
       fstart = i+1;
       continue;
     }
@@ -167,7 +170,7 @@ void TEMacroLib::ProcessMacro(const olxstr& Cmd, TMacroError& Error)  {
       if( Cmds[i].Length() > 1 )  {
         Options.FromString(Cmds[i].SubStringFrom(1), '=');
         // 18.04.07 added - !!!
-        if( !ProcessFunction( Options.Value(Options.Count()-1), Error ) )
+        if( !ProcessFunction(Options.Value(Options.Count()-1), Error, true) )
           return;
       }
       Cmds.Delete(i);  
@@ -186,7 +189,7 @@ void TEMacroLib::ProcessMacro(const olxstr& Cmd, TMacroError& Error)  {
       return;
     }
     for( int i=0; i < Cmds.Count(); i++ )  {
-      if( !ProcessFunction(Cmds[i], Error) )
+      if( !ProcessFunction(Cmds[i], Error, true) )
         return;
     }
     MF->Run(Cmds, Options, Error);
@@ -198,8 +201,10 @@ void TEMacroLib::ProcessMacro(const olxstr& Cmd, TMacroError& Error)  {
   TEMacro* macro = FindMacro( Command );
   if( macro == NULL )  {  // macro does not exist
     if( Command.FirstIndexOf('(') != -1 )  {
-      if( !ProcessFunction(Command, Error) )
+      if( !ProcessFunction(Command, Error, false) )
         return;
+      else
+        Error.GetStack().Pop();
     }
     else
       Error.NonexitingMacroError( Command );
@@ -210,6 +215,9 @@ void TEMacroLib::ProcessMacro(const olxstr& Cmd, TMacroError& Error)  {
   for( int i=0; i < MCmds.Count(); i++ )  {
     if( MCmds[i].IsEmpty() ) continue;
     ProcessMacro(MCmds[i], Error);
+    // if something does not exist - do not hide it by the on_abort block
+    if( !Error.DoesFunctionExist() )
+      return;
     if( !Error.IsSuccessful() && !onAbort.IsEmpty() )  {
       Error.ClearErrorFlag();
       for( int j=0; j < onAbort.Count(); j++ )  {

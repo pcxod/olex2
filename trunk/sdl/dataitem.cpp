@@ -135,17 +135,24 @@ TDataItem *TDataItem::GetAnyItemCI(const olxstr &Name) const {
 }
 //..............................................................................
 void TDataItem::AddContent(TDataItem& DI, bool extend)  {
-  TDataItem *di;
-  for( int i=0; i < DI.ItemCount(); i++ )  {
-    di = FindItem( DI.GetItem(i).GetName() );
-    if( di != NULL )  {
-      if( extend )
-        di->AddContent(DI.GetItem(i));
+  if( extend )  {
+    for( int i=0; i < DI.ItemCount(); i++ )  {
+      TDataItem *di = FindItem( DI.GetItem(i).GetName() );
+      if( di != NULL )  {
+        for( int j=0; j < DI.GetItem(i).ItemCount(); j++ )
+          di->AddItem(DI.GetItem(i).GetItem(j)).SetParent(di);
+      }
       else
-        DeleteItem(di);
+        AddItem(DI.GetItem(i)).SetParent(this);
     }
-    if( !extend )
-      AddItem( DI.GetItem(i) );
+  }
+  else  {
+    for( int i=0; i < DI.ItemCount(); i++ )  {
+      TDataItem *di = FindItem( DI.GetItem(i).GetName() );
+      if( di != NULL )
+        DeleteItem(di);
+      AddItem(DI.GetItem(i)).SetParent(this);
+    }
   }
 }
 //..............................................................................
@@ -174,7 +181,7 @@ TDataItem& TDataItem::AddItem(const olxstr &Name, TDataItem *Reference)  {
 TDataItem& TDataItem::AddItem(TDataItem& Item)  {
   Items.Add(Item.GetName(), &Item);
   if( Item.GetParent() == NULL)
-      Item.SetParent(this);
+    Item.SetParent(this);
   Item.IncRef();
   return Item;
 }
@@ -276,25 +283,25 @@ int TDataItem::LoadFromString(int start, const olxstr &Data, TStrList* Log)  {
 }
 //..............................................................................
 void TDataItem::ResolveFields(TStrList* Log)  {  // resolves referenced fields
-  olxstr *RefFieldValue, RefFieldName;
-  TDataItem *DI;
   for( int i=0; i < FieldCount(); i++ )  {
     const olxstr& Tmp = Fields[i];
     if( Tmp.IndexOf('.') >= 0 )  {  // a reference to an item
-      DI = DotItem(Tmp, Log);
+      TDataItem *DI = DotItem(Tmp, Log);
       if( DI != NULL )  {
         AddItem(*DI);
-        if( Log != NULL )  Log->Add( olxstr("Resolved: ") << Tmp);
+        if( Log != NULL )
+          Log->Add( olxstr("Resolved: ") << Tmp);
         Fields.Delete(i);  // might be very slow !!!
         i--;
       }
       else  {
-        RefFieldValue = DotField(Tmp, RefFieldName);
+        olxstr RefFieldName(EmptyString);
+        olxstr *RefFieldValue = DotField(Tmp, RefFieldName);
         if( RefFieldValue == NULL )  {
-          if( Log != NULL )  Log->Add(olxstr("UNRESOLVED: ") << Tmp);
+          if( Log != NULL )
+            Log->Add(olxstr("UNRESOLVED: ") << Tmp);
         }
-        else
-        {
+        else  {
           if( Log)  Log->Add(olxstr("Resolved field: ") << Tmp);
           Fields[i] = RefFieldName;
           Fields.GetObject(i) = *RefFieldValue;
@@ -309,7 +316,6 @@ void TDataItem::ResolveFields(TStrList* Log)  {  // resolves referenced fields
 }
 //..............................................................................
 void TDataItem::SaveToStrBuffer(TEStrBuffer &Data) const {
-  int fc, ic;
   bool itemsadded = false;
   if( GetParent() != NULL )  {
     if( Data.Length() != 0 )
@@ -320,19 +326,19 @@ void TDataItem::SaveToStrBuffer(TEStrBuffer &Data) const {
       Data << '\"' << Value << "\" ";
     }
   }
-  fc = FieldCount();
-  ic = ItemCount();
+  const int fc = FieldCount();
   for( int i=0; i < fc; i++ )  {
     Data << Fields.GetString(i) << '=';
     Data << '\"' << CodeString(Fields.GetObject(i)) << '\"' << ' ';
   }
+  const int ic = ItemCount();
   for( int i=0; i < ic; i++ )  {
-    if( GetItem(i).GetParent() != this )  {  // dot operator
+    if( GetItem(i).GetParent() != this && GetItem(i).GetParent() != NULL )  {  // dot operator
       GetItem(i).writeFullName(Data) << ' ';
     }
   }
   for( int i=0; i < ic; i++ )  {
-    if( GetItem(i).GetParent() == this )  {
+    if( GetItem(i).GetParent() == this || GetItem(i).GetParent() == NULL )  {
       GetItem(i).SaveToStrBuffer(Data);
       if( !itemsadded ) itemsadded = true;
     }
