@@ -1095,7 +1095,7 @@ void XLibMacros::macFile(TStrObjList &Cmds, const TParamList &Options, TMacroErr
           sa.SetDeleted(true);
           removedSAtoms.SetTrue(i);
         }
-        if( !sa.IsDeleted() )  {
+        if( !sa.CAtom().IsDeleted() )  {
           sa.CAtom().SetDeleted(true);
           removedCAtoms.SetTrue(i);
         }
@@ -1116,7 +1116,7 @@ void XLibMacros::macFile(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   else  if( !Sort )  {
     Sort = true;  // forse reading the file
   }
-  if( removedSAtoms.Count() != 0 )  {  // need to restore, abit of mess here...
+  if( !removedSAtoms.IsEmpty() )  {  // need to restore, abit of mess here...
     TLattice& latt = XApp.XFile().GetLattice();
     for( int i=0; i < latt.AtomCount(); i++ )  {
       TSAtom& sa = latt.GetAtom(i);

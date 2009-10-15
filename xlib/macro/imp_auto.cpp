@@ -633,6 +633,8 @@ void XLibMacros::funVSS(const TStrObjList &Cmds, TMacroError &Error)  {
     }
     xapp.XFile().EndUpdate();
   }
+  for( int i=0; i < au.AtomCount(); i++ )
+    au.GetAtom(i).Label() = au.CheckLabel(NULL, au.GetAtom(i).GetLabel());
 //  TAutoDB::AnalysisStat stat;
 //  TAutoDB::GetInstance()->AnalyseStructure( xapp.XFile().GetFileName(), latt, 
 //    NULL, stat, NULL);

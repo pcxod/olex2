@@ -105,6 +105,9 @@ public:
 class TEMacroLib {
   TSStrPObjList<olxstr, TEMacro*, true> Macros;
   olex::IOlexProcessor& OlexProcessor;
+  static bool is_allowed_in_name(olxch ch) {
+    return (olxstr::o_isalphanumeric(ch) || ch == '_' || ch == '.');
+  }
 protected:
 /////////////////////////////////////////////////////////////////////////////////////////
   bool ExtractItemVal(const TDataItem& tdi, olxstr& val)  {  // helper function
@@ -156,7 +159,8 @@ public:
     }
     return out.Count() - cnt;
   }
-  bool ProcessFunction(olxstr& Cmd, TMacroError& E);
+  // if has_owner is true, then in th case the function does not exist no flags are set in E
+  bool ProcessFunction(olxstr& Cmd, TMacroError& E, bool has_owner);
   //..............................................................................
   template <class Base> void ProcessTopMacro(const olxstr& Cmd, TMacroError& Error, 
     Base& base_instance, void (Base::*ErrorAnalyser)(TMacroError& error))  

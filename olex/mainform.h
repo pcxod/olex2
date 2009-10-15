@@ -167,7 +167,7 @@ public:
     TMacroError err;
     err.SetLocation(location);
     //cmd = exparse::parser_util::unescape(cmd);
-    const bool rv = Macros.ProcessFunction(cmd, err);  
+    const bool rv = Macros.ProcessFunction(cmd, err, false);  
     AnalyseError(err);
     return rv;
   }

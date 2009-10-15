@@ -173,11 +173,11 @@ template <class Base>
       RunSignature = GetName();
       RunSignature << '(';
       int argC = Params.Count();
-      if( !(ArgStateMask & (0x0001 << argC) ) )  {
+      if( (ArgStateMask & fpAny) == 0 && (ArgStateMask & (0x0001 << argC)) == 0)  {
         E.WrongArgCount(*this, argC);
         return;
       }
-      // the special checks are in the high dword
+      // the special checks are in the high word
       if( (ArgStateMask&0xFFFF0000) && !GetParentLibrary()->CheckProgramState( ArgStateMask ) )  {
         E.WrongState( *this );
         return;
@@ -230,11 +230,11 @@ template <class Base>
       RunSignature = GetName();
       RunSignature << '(';
       int argC = Params.Count();
-      if( !(ArgStateMask & (0x0001 << argC) ) )  {
+      if( (ArgStateMask & fpAny) == 0 && (ArgStateMask & (0x0001 << argC)) == 0)  {
         E.WrongArgCount(*this, argC);
         return;
       }
-      if( (ArgStateMask&0xFFFF0000) && !GetParentLibrary()->CheckProgramState( ArgStateMask ) )  {
+      if( (ArgStateMask&0xFFFF0000) != 0 && !GetParentLibrary()->CheckProgramState(ArgStateMask) )  {
         E.WrongState( *this );
         return;
       }
@@ -293,7 +293,7 @@ template <class Base>
       RunSignature = GetName();
       RunSignature << ' ';
       int argC = Params.Count();
-      if( !(ArgStateMask & (0x0001 << argC) ) )  {
+      if( (ArgStateMask & fpAny) == 0 && (ArgStateMask & (0x0001 << argC)) == 0)  {
         E.WrongArgCount(*this, argC);
         return;
       }
@@ -303,7 +303,7 @@ template <class Base>
           return;
         }
       }
-      if( (ArgStateMask&0xFFFF0000) && !GetParentLibrary()->CheckProgramState( ArgStateMask ) )  {
+      if( (ArgStateMask & 0xFFFF0000) != 0 && !GetParentLibrary()->CheckProgramState(ArgStateMask) )  {
         E.WrongState( *this );
         return;
       }
@@ -373,7 +373,7 @@ template <class Base>
       RunSignature = GetName();
       RunSignature << ' ';
       int argC = Params.Count();
-      if( !(ArgStateMask & (0x0001 << argC) ) )  {
+      if( (ArgStateMask & fpAny) == 0 && (ArgStateMask & (0x0001 << argC)) == 0)  {
         E.WrongArgCount(*this, argC);
         return;
       }
@@ -383,7 +383,7 @@ template <class Base>
           return;
         }
       }
-      if( (ArgStateMask&0xFFFF0000) && !GetParentLibrary()->CheckProgramState( ArgStateMask ) )  {
+      if( (ArgStateMask & 0xFFFF0000) != 0 && !GetParentLibrary()->CheckProgramState(ArgStateMask) )  {
         E.WrongState( *this );
         return;
       }
