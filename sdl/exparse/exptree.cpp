@@ -142,7 +142,7 @@ olxstr parser_util::unescape(const olxstr& exp)  {
 //...........................................................................
 //...........................................................................
 void expression_tree::expand()  {
-  data = data.TrimWhiteChars();
+  data.TrimWhiteChars();
   if( !parser_util::is_expandable(data) )  return;
   olxstr dt;
   for( int i=0; i < data.Length(); i++ )  {
@@ -152,8 +152,8 @@ void expression_tree::expand()  {
       olxstr arg;
       if( !parser_util::parse_brackets(data, arg, i) ) 
         throw TInvalidArgumentException(__OlxSourceInfo, "problem with brackets");
-      arg = arg.TrimWhiteChars();
-      dt = dt.TrimWhiteChars();
+      arg.TrimWhiteChars();
+      dt.TrimWhiteChars();
       if( arg.IsEmpty() ) // empty arg list
         evator = new evaluator<expression_tree>(dt);
       else  {

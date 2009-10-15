@@ -64,13 +64,16 @@ void TIns::LoadFromStrings(const TStrList& FileContent)  {
   ParseContext cx(GetRM());
   TAtomsInfo& atomsInfo = TAtomsInfo::GetInstance();
   TStrList Toks, InsFile(FileContent);
-  for( int i=0; i < InsFile.Count(); i++ )  // heh found it
-    InsFile[i] = InsFile[i].Trim(' ').Trim('\0');
+  for( int i=0; i < InsFile.Count(); i++ )  {
+    InsFile[i].Trim(' ').\
+      Trim('\0').\
+      Replace('\t', ' ').
+      DeleteSequencesOf(' ').\
+      Trim(' ');
+  }
   InsFile.CombineLines('=');
   TBasicAtomInfo& baiQPeak = atomsInfo.GetAtomInfo(iQPeakIndex);
   cx.Resi = &GetAsymmUnit().GetResidue(-1);
-  for( int i=0; i < InsFile.Count(); i++ )
-    InsFile[i] = olxstr::DeleteSequencesOf<char>(InsFile[i].Replace('\t', ' '), ' ');
   for( int i=0; i < InsFile.Count(); i++ )  {
     if( InsFile[i].IsEmpty() )      continue;
 
@@ -652,7 +655,7 @@ void TIns::HyphenateIns(const olxstr& Ins, TStrList& Res)  {
   }
 }
 //..............................................................................
-void TIns::SaveToRefine(const olxstr& FileName, const olxstr& sMethod, const olxstr& comments)  {
+void TIns::SaveForSolution(const olxstr& FileName, const olxstr& sMethod, const olxstr& comments, bool rems)  {
   TStrList SL, mtoks;
   if( sMethod.IsEmpty() )
     mtoks.Add("TREF");
@@ -671,7 +674,7 @@ void TIns::SaveToRefine(const olxstr& FileName, const olxstr& sMethod, const olx
   UpdateParams();
   SL.Add("TITL ") << GetTitle();
 
-  if( !comments.IsEmpty() ) 
+  if( !comments.IsEmpty() && rems ) 
     SL.Add("REM ") << comments;
 // try to estimate Z'
   TTypeList< AnAssociation2<int,TBasicAtomInfo*> > sl;
@@ -688,17 +691,6 @@ void TIns::SaveToRefine(const olxstr& FileName, const olxstr& sMethod, const olx
     sl.AddNew( cnt, bai );
     ac += cnt;
   }
-  //int newZ = olx_round(AsymmUnit.EstimateZ(ac/AsymmUnit.GetZ()));
-  //Unit = EmptyString;
-  //for( int i=0; i < sfac.Count(); i++ )  {
-  //  int cnt = unit[i].ToInt();
-  //  Unit << (double)cnt*newZ/AsymmUnit.GetZ();
-  //  if( (i+1) < sfac.Count() )
-  //    Unit << ' ';
-  //}
-  //AsymmUnit.SetZ( newZ );
-//
-
   SL.Add( _CellToString() );
   SL.Add( _ZerrToString() );
   _SaveSymm(SL);
@@ -706,8 +698,9 @@ void TIns::SaveToRefine(const olxstr& FileName, const olxstr& sMethod, const olx
   UnitIndex = SL.Count();  SL.Add(EmptyString);
 
   _SaveSizeTemp(SL);
-  _SaveHklInfo(SL, true);
-  _SaveFVar(RefMod, SL);
+  if( rems )
+    _SaveHklInfo(SL, true);
+  //_SaveFVar(RefMod, SL);
 
   SL.AddList(mtoks);
   SL.Add(EmptyString);

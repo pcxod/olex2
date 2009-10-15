@@ -84,9 +84,6 @@ void TMol::SaveToStrings(TStrList& Strings)  {
 //..............................................................................
 void TMol::LoadFromStrings(const TStrList& Strings)  {
   Clear();
-
-  olxstr Tmp1, Tmp, Msg;
-  vec3d StrCenter;
   Title = "OLEX: imported from MDL MOL";
   TAtomsInfo& AtomsInfo = TAtomsInfo::GetInstance();
   GetAsymmUnit().Axes()[0] = 1;
@@ -97,23 +94,17 @@ void TMol::LoadFromStrings(const TStrList& Strings)  {
   GetAsymmUnit().Angles()[2] = 90;
   GetAsymmUnit().InitMatrices();
   bool AtomsCycle = false, BondsCycle = false;
-  int AC=0, BC=0, ai1, ai2;
-  TMolBond *MB;
-  double Ax, Ay, Az;
+  int AC=0, BC=0;
   for( int i=0; i < Strings.Count(); i++ )  {
-    Tmp = Strings[i].UpperCase();
-    if( !Tmp.Length() )  continue;
-    if( AtomsCycle && (Tmp.Length() > 33) )  {
-      Ax = Tmp.SubString(0, 9).ToDouble();
-      Ay = Tmp.SubString(10, 10).ToDouble();
-      Az = Tmp.SubString(20, 10).ToDouble();
-      Tmp1 = Tmp.SubString(31, 3).Trim(' ');
-      if( AtomsInfo.IsAtom(Tmp1) )  {
+    olxstr line = Strings[i].UpperCase();
+    if( line.IsEmpty() )  continue;
+    if( AtomsCycle && (line.Length() > 33) )  {
+      vec3d crd(line.SubString(0, 9).ToDouble(), line.SubString(10, 10).ToDouble(), line.SubString(20, 10).ToDouble());
+      olxstr atom_name = line.SubString(31, 3).Trim(' ');
+      if( AtomsInfo.IsAtom(atom_name) )  {
         TCAtom& CA = GetAsymmUnit().NewAtom();
-        CA.ccrd()[0] = Ax;
-        CA.ccrd()[1] = Ay;
-        CA.ccrd()[2] = Az;
-        CA.SetLabel( (Tmp1 + GetAsymmUnit().AtomCount()+1) );
+        CA.ccrd() = crd;
+        CA.SetLabel( (atom_name + GetAsymmUnit().AtomCount()+1) );
       }
       AC--;
       if( AC <= 0 )  {
@@ -122,17 +113,17 @@ void TMol::LoadFromStrings(const TStrList& Strings)  {
       }
       continue;
     }
-    if( BondsCycle && Tmp.Length() >= 9)  {
-      ai1  =  Tmp.SubString(0, 3).ToInt()-1;
-      ai2  =  Tmp.SubString(3, 3).ToInt()-1;
+    if( BondsCycle && line.Length() >= 9)  {
+      const int ai1  =  line.SubString(0, 3).ToInt()-1;
+      const int ai2  =  line.SubString(3, 3).ToInt()-1;
       if( (ai1 >= GetAsymmUnit().AtomCount() || ai2 >= GetAsymmUnit().AtomCount()) ||
           ai1 < 0 || ai2 < 0 )  {
         throw TFunctionFailedException(__OlxSourceInfo, olxstr("TMol:: wrong atom indexes: ") << ai1 << ' ' << ai2);
       }
-      MB = new TMolBond;
+      TMolBond* MB = new TMolBond;
       MB->AtomA = ai1;
       MB->AtomB = ai2;
-      MB->BondType = Tmp.SubString(6, 3).ToInt();   // bond type
+      MB->BondType = line.SubString(6, 3).ToInt();   // bond type
       Bonds.Add(*MB);
       BC--;
       if( BC <= 0 )
@@ -140,10 +131,9 @@ void TMol::LoadFromStrings(const TStrList& Strings)  {
       continue;
     }
     
-    if( (Tmp.FirstIndexOf("V2000") != -1) || (Tmp.FirstIndexOf("V3000") != -1) ) // count line
-    {
-      AC = Tmp.SubString(0, 3).ToInt();
-      BC = Tmp.SubString(3, 3).ToInt();
+    if( (line.FirstIndexOf("V2000") != -1) || (line.FirstIndexOf("V3000") != -1) ) {  // count line
+      AC = line.SubString(0, 3).ToInt();
+      BC = line.SubString(3, 3).ToInt();
       AtomsCycle = true;
       continue;
     }

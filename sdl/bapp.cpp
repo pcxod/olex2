@@ -58,7 +58,7 @@ TBasicApp::~TBasicApp()  {
 }
 //..............................................................................
 olxstr TBasicApp::GuessBaseDir(const olxstr& _path, const olxstr& var_name)  {
-  olxstr path = _path.Trim(' ').Trim('"').Trim('\'');
+  olxstr path = olxstr(_path).Trim(' ').Trim('"').Trim('\'');
   olxstr bd;
   if( !var_name.IsEmpty() )  {
     OLX_CHAR* var_val = OLX_GETENV(OLX_STR(var_name));

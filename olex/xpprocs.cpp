@@ -3294,11 +3294,11 @@ void TMainForm::macReset(TStrObjList &Cmds, const TParamList &Options, TMacroErr
   olxstr FN( TEFile::ChangeFileExt(fileName, "ins") );
   olxstr lstFN( TEFile::ChangeFileExt(fileName, "lst") );
 
-  Ins->SaveToRefine(FN, Cmds.Text(' '), newSg);
+  Ins->SaveForSolution(FN, Cmds.Text(' '), newSg, Options.Contains("rem"));
   if( TEFile::Exists(lstFN) )  {
     olxstr lstTmpFN( lstFN );
     lstTmpFN << ".tmp";
-    wxRenameFile( uiStr(lstFN), uiStr(lstTmpFN) );
+    TEFile::Rename(lstFN, lstTmpFN);
   }
   Macros.ProcessMacro( olxstr("@reap \'") << FN << '\'', E);
   Macros.ProcessMacro("htmlreload", E);
@@ -4484,7 +4484,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options, TMacroErro
               ins->SetUnit(unit);
               ins->GetAsymmUnit().SetZ( (sg->MatrixCount()+1)*(sg->GetLattice().VectorCount()+1));
             }
-            ins->SaveToRefine( TEFile::ChangeFileExt(FN, "ins"), EmptyString, EmptyString );
+            ins->SaveForSolution(TEFile::ChangeFileExt(FN, "ins"), EmptyString, EmptyString, false);
             Macros.ProcessMacro( olxstr("reap '") << TEFile::ChangeFileExt(FN, "ins") << '\'', Error);
             Macros.ProcessMacro("solve", Error);
           }  // sge, if succeseded will run reap and solve
@@ -5206,9 +5206,9 @@ void TMainForm::macTref(TStrObjList &Cmds, const TParamList &Options, TMacroErro
   olxstr clstFN = TEFile::ChangeFileExt( FXApp->XFile().GetFileName(), "lst" );
   for( int i=0; i < Solutions.Count(); i++ )  {
     TIns& Ins = FXApp->XFile().GetLastLoader<TIns>();
-    Ins.SaveToRefine( cinsFN, olxstr("TREF -") << Solutions[i], EmptyString);
-    FXApp->LoadXFile( cinsFN );
-    Macros.ProcessMacro( "solve", E );
+    Ins.SaveForSolution(cinsFN, olxstr("TREF -") << Solutions[i], EmptyString);
+    FXApp->LoadXFile(cinsFN);
+    Macros.ProcessMacro("solve", E);
     while( FProcess )  {
       FParent->Dispatch();
       //FTimer->OnTimer->Execute((AActionHandler*)this, NULL);

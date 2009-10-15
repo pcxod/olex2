@@ -309,7 +309,7 @@ public:
   virtual bool executeFunction(const olxstr& function, olxstr& retVal)  {
     retVal = function;
     TMacroError ME;
-    Macros.ProcessFunction(retVal, ME);
+    Macros.ProcessFunction(retVal, ME, false);
     AnalyseError(ME);
     return ME.IsSuccessful();
   }
@@ -616,7 +616,7 @@ public:
     olxstr FN( TEFile::ChangeFileExt(fileName, "ins") );
     olxstr lstFN( TEFile::ChangeFileExt(fileName, "lst") );
 
-    Ins->SaveToRefine(FN, Cmds.Text(' '), newSg);
+    Ins->SaveForSolution(FN, Cmds.Text(' '), newSg, false);
     if( TEFile::Exists(lstFN) )  {
       olxstr lstTmpFN( lstFN );
       lstTmpFN << ".tmp";
@@ -671,7 +671,7 @@ public:
       return;
     }
     olxstr Condition = Cmds[0];
-    if( !Macros.ProcessFunction(Condition, E) )  {
+    if( !Macros.ProcessFunction(Condition, E, false) )  {
       return;
     }
     if( Condition.ToBool() )  {
@@ -821,7 +821,7 @@ public:
     TMacroError ME;
     for(int i=0; i < Params.Count(); i++ )  {
       tmp = Params[i];
-      if( !Macros.ProcessFunction(tmp, ME) )  {
+      if( !Macros.ProcessFunction(tmp, ME, false) )  {
         E.ProcessingError(__OlxSrcInfo, "could not process: ") << tmp;
         return;
       }
@@ -838,7 +838,7 @@ public:
     TMacroError ME;
     for(int i=0; i < Params.Count(); i++ )  {
       tmp = Params[i];
-      if( !Macros.ProcessFunction(tmp, ME) )  {
+      if( !Macros.ProcessFunction(tmp, ME, false) )  {
         E.ProcessingError(__OlxSrcInfo, "could not process: ") << tmp;
         return;
       }
@@ -853,7 +853,7 @@ public:
   void funNot(const TStrObjList& Params, TMacroError &E) {
     olxstr tmp = Params[0];
     TMacroError ME;
-    if( !Macros.ProcessFunction(tmp, ME) )  {
+    if( !Macros.ProcessFunction(tmp, ME, false) )  {
       E.ProcessingError(__OlxSrcInfo, "could not process: ") << tmp;
       return;
     }

@@ -74,9 +74,6 @@ void TMol2::SaveToStrings(TStrList& Strings)  {
 //..............................................................................
 void TMol2::LoadFromStrings(const TStrList& Strings)  {
   Clear();
-
-  olxstr Tmp1, Tmp, Msg;
-  vec3d StrCenter;
   Title = "OLEX: imported from MDL MOL";
   TAtomsInfo& AtomsInfo = TAtomsInfo::GetInstance();
   GetAsymmUnit().Axes()[0] = 1;
@@ -89,38 +86,31 @@ void TMol2::LoadFromStrings(const TStrList& Strings)  {
   bool AtomsCycle = false, BondsCycle = false;
   olxdict<int, TCAtom*, TPrimitiveComparator> atoms;
   for( int i=0; i < Strings.Count(); i++ )  {
-    Tmp = Strings[i].UpperCase();
-    Tmp.Replace('\t', ' ');
-    Tmp = Tmp.Trim(' ');
-    if( Tmp.IsEmpty() )  continue;
+    olxstr line = Strings[i].UpperCase().Replace('\t', ' ').Trim(' ');
+    if( line.IsEmpty() )  continue;
     if( AtomsCycle )  {
-      if( Tmp.Compare("@<TRIPOS>BOND") == 0 )  {
+      if( line.Compare("@<TRIPOS>BOND") == 0 )  {
         BondsCycle = true;
         AtomsCycle = false;
         continue;
       }
-      TStrList toks(Tmp, ' ');
-      if( toks.Count() < 6 )
-        continue;
-      double Ax = toks[2].ToDouble();
-      double Ay = toks[3].ToDouble();
-      double Az = toks[4].ToDouble();
+      TStrList toks(line, ' ');
+      if( toks.Count() < 6 )  continue;
+      vec3d crd(toks[2].ToDouble(), toks[3].ToDouble(), toks[4].ToDouble());
       if( AtomsInfo.IsElement(toks[5]) )  {
         TCAtom& CA = GetAsymmUnit().NewAtom();
-        CA.ccrd()[0] = Ax;
-        CA.ccrd()[1] = Ay;
-        CA.ccrd()[2] = Az;
+        CA.ccrd() = crd;
         CA.SetLabel( (toks[5] << GetAsymmUnit().AtomCount()+1) );
         atoms(toks[0].ToInt(), &CA); 
       }
       continue;
     }
     if( BondsCycle )  {
-      if( Tmp.CharAt(0) == '@' )  {
+      if( line.CharAt(0) == '@' )  {
         BondsCycle = false;
         break;
       }
-      TStrList toks( Tmp, ' ');
+      TStrList toks(line, ' ');
       if( toks.Count() < 4 )
         continue;
       TMol2Bond* MB = new TMol2Bond(Bonds.Count());
@@ -130,7 +120,7 @@ void TMol2::LoadFromStrings(const TStrList& Strings)  {
       Bonds.Add(*MB);
       continue;
     }
-    if( Tmp.Compare("@<TRIPOS>ATOM") == 0 )  {
+    if( line.Equals("@<TRIPOS>ATOM") )  {
       AtomsCycle = true;
       continue;
     }

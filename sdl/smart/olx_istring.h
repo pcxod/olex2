@@ -1200,20 +1200,24 @@ public:
   }
 #endif // __BORLANDC__
   //............................................................................
-  template <typename AC> TTSString Trim(AC wht) const {
-    if( T::_Length == 0 )  return EmptyString;
+  template <typename AC> TTSString& Trim(AC wht)  {
+    if( T::_Length == 0 )  return *this;
     size_t start = 0, end = T::_Length;
     while( TTIString<TC>::Data(start) == wht && ++start < end )  ;
     while( --end > start && TTIString<TC>::Data(end) == wht )  ;
-    return SubString(start, end+1-start );
+    T::_Start += start;
+    T::_Length = (end + 1 - start);
+    return *this;
   }
   //............................................................................
-  TTSString TrimWhiteChars() const {
-    if( T::_Length == 0 )  return EmptyString;
+  TTSString& TrimWhiteChars()  {
+    if( T::_Length == 0 )  return *this;
     size_t start = 0, end = T::_Length;
     while( o_iswhitechar(TTIString<TC>::Data(start)) && ++start < end )  ;
     while( --end > start && o_iswhitechar(TTIString<TC>::Data(start)) )  ;
-    return SubString(start, end+1-start );
+    T::_Start += start;
+    T::_Length = (end + 1 - start);
+    return *this;
   }
   //............................................................................
   inline TTSString& TrimFloat() {
