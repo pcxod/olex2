@@ -302,6 +302,10 @@ TAG_HANDLER_PROC(tag)  {
       Text->SetOnEnterStr( tag.GetParam(wxT("ONENTER")).c_str() );
       Text->OnEnter->Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
     }
+    if( tag.HasParam(wxT("ONRETURN")) )  {
+      Text->SetOnReturnStr( tag.GetParam(wxT("ONRETURN")).c_str() );
+      Text->OnReturn->Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
+    }
   }
 /******************* LABEL ***************************************************/
   else if( TagName.Equalsi("label") )  {
@@ -443,6 +447,10 @@ TAG_HANDLER_PROC(tag)  {
     if( tag.HasParam(wxT("ONENTER")) )  {
       Box->SetOnEnterStr( tag.GetParam(wxT("ONENTER")).c_str() );
       Box->OnEnter->Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
+    }
+    if( tag.HasParam(wxT("ONRETURN")) )  {
+      Box->SetOnReturnStr( tag.GetParam(wxT("ONRETURN")).c_str() );
+      Box->OnReturn->Add((AEventsDispatcher*)(TGlXApp::GetMainForm()), ID_ONLINK);
     }
     if( !Label.IsEmpty() )  {
       wxHtmlContainerCell* contC = new wxHtmlContainerCell(m_WParser->GetContainer());

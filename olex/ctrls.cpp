@@ -140,6 +140,7 @@ void TComboBox::EnterPressedEvent(wxCommandEvent& event)  {
   if( !Data.IsEmpty() )  TOlxVars::SetVar(Data, GetText());
   StartEvtProcessing()
     OnChange->Execute(this, &TEGC::New<olxstr>(GetOnChangeStr()) );
+    OnReturn->Execute(this, &TEGC::New<olxstr>(GetOnReturnStr()) );
   EndEvtProcessing()
 }
 //..............................................................................
@@ -612,7 +613,6 @@ void TLabel::ClickEvent(wxCommandEvent& event)  {
 BEGIN_EVENT_TABLE(TTextEdit, wxTextCtrl)
   EVT_LEFT_DCLICK(TTextEdit::ClickEvent)
   EVT_TEXT(-1, TTextEdit::ChangeEvent)
-  EVT_KEY_UP(TTextEdit::KeyUpEvent)
   EVT_CHAR(TTextEdit::CharEvent)
   EVT_KEY_DOWN(TTextEdit::KeyDownEvent)
   EVT_TEXT_ENTER(-1, TTextEdit::EnterPressedEvent)
@@ -622,12 +622,12 @@ TTextEdit::TTextEdit(wxWindow *Parent, int style):
     wxTextCtrl(Parent, -1, wxString(), wxDefaultPosition, wxDefaultSize, style), WI(this)  {
   FActions = new TActionQList;
   OnChange = &FActions->NewQueue("ONCHANGE");
-  OnClick = &FActions->NewQueue("ONCLICK");
   OnLeave = &FActions->NewQueue("ONLEAVE");
   OnEnter = &FActions->NewQueue("ONENTER");
-  OnKeyUp = &FActions->NewQueue("ONKEYUP");
+  OnReturn = &FActions->NewQueue("ONRETURN");
+  OnClick = &FActions->NewQueue("ONCLICK");
   OnChar = &FActions->NewQueue("ONCHAR");
-  OnKeyDown = &FActions->NewQueue("ONKEYDOWN");
+  OnKeyDown =   &FActions->NewQueue("ONKEYDOWN");
 }
 //..............................................................................
 TTextEdit::~TTextEdit()  {
@@ -652,6 +652,7 @@ void TTextEdit::EnterPressedEvent(wxCommandEvent& event)  {
   if( !Data.IsEmpty() )  TOlxVars::SetVar(Data, GetText());
   StartEvtProcessing()
     OnChange->Execute(this, &TEGC::New<olxstr>(GetOnChangeStr()));
+    OnReturn->Execute(this, &TEGC::New<olxstr>(GetOnReturnStr()));
   EndEvtProcessing()
 }
 //..............................................................................
@@ -660,14 +661,6 @@ void TTextEdit::KeyDownEvent(wxKeyEvent& event)  {
   event.Skip();
   StartEvtProcessing()
     OnKeyDown->Execute(this, &evt);
-  EndEvtProcessing()
-}
-//..............................................................................
-void TTextEdit::KeyUpEvent(wxKeyEvent& event)  {
-  TKeyEvent evt(event);
-  event.Skip();
-  StartEvtProcessing()
-    OnKeyUp->Execute(this, &evt);
   EndEvtProcessing()
 }
 //..............................................................................
