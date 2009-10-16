@@ -2111,7 +2111,7 @@ bool TMainForm::Dispatch( int MsgId, short MsgSubId, const IEObject *Sender, con
       }
     }
     // end tasks ...
-    if( GetHtml()->PageLoadRequested() && !GetHtml()->IsPageLocked() )
+    if( GetHtml()->IsPageLoadRequested() && !GetHtml()->IsPageLocked() )
       GetHtml()->ProcessPageLoadRequest();
     FTimer->OnTimer()->SetEnabled( true );
     if( FProcess != NULL )  {

@@ -867,6 +867,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\olex\htmlswitch.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\olex\htmltags.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\repository\httpex.cpp"
 				>
 			</File>
@@ -876,6 +884,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\olex\imagep.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\olex\imgcellext.cpp"
 				>
 			</File>
 			<File
@@ -1053,7 +1065,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\olex\htmlswitch.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\olex\imagep.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\olex\imgcellext.h"
 				>
 			</File>
 			<File
