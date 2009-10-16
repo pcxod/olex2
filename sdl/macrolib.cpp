@@ -124,12 +124,14 @@ bool TEMacroLib::ProcessFunction(olxstr& Cmd, TMacroError& E, bool has_owner)  {
 void TEMacroLib::ProcessMacro(const olxstr& Cmd, TMacroError& Error)  {
   if( Cmd.IsEmpty() )  return;
   TBasicApp::GetLog().Info(Cmd);
-  Error.GetStack().Push(Cmd);
   TStrObjList Cmds;
   TStrList MCmds;
   TParamList Options;
-  olxstr Command = olxstr(Cmd).Trim(' ');
-  if( Command.IsEmpty() )  return;
+  olxstr Command = olxstr(Cmd).TrimWhiteChars();
+  if( Command.IsEmpty() )  
+    return;
+
+  Error.GetStack().Push(Cmd);
   // processing environment variables
   int ind = Command.FirstIndexOf('|'), ind1;
   while( ind >= 0 )  {

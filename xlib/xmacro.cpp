@@ -2070,7 +2070,9 @@ void XLibMacros::funRun(const TStrObjList& Params, TMacroError &E) {
       break;
     }
   }
-  E.SetRetVal(E.IsSuccessful());
+  //E.SetRetVal(E.IsSuccessful());
+  // we do not care about result, but nothing should be printed on the html...
+  E.SetRetVal(EmptyString);
 }
 //..............................................................................
 void XLibMacros::funIns(const TStrObjList& Params, TMacroError &E)  {
