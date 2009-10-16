@@ -53,7 +53,7 @@ class TComboBox: public wxOwnerDrawnComboBox, public IEObject  {
   void ChangeEvent(wxCommandEvent& event);
   void EnterPressedEvent(wxCommandEvent& event);
   TActionQList *FActions;
-  olxstr Data, OnChangeStr, OnLeaveStr, OnEnterStr;
+  olxstr Data, OnChangeStr, OnLeaveStr, OnEnterStr, OnReturnStr;
 protected:
   void _AddObject( const olxstr &Item, IEObject* Data, bool Delete);
 #ifdef __WIN32__
@@ -67,7 +67,7 @@ public:
   virtual ~TComboBox();
 
   void Clear();
-  void AddObject( const olxstr &Item, IEObject* Data = NULL);
+  void AddObject( const olxstr &Item, IEObject *Data = NULL);
 
   olxstr GetItem(int i)  const  {  return GetString(i).c_str();  }
   const IEObject* GetObject(int i);
@@ -76,17 +76,18 @@ public:
    item, though, once this item is selected, the value of Text() function will be
    the valu part of the item
   */
-  void AddItems(const TStrList& EL);
+  void AddItems(const TStrList &items);
 
   olxstr ItemsToString(const olxstr &separator);
 
   olxstr GetText() const;
-  void SetText(const olxstr& T);
+  void SetText(const olxstr &text);
 
   DefPropC(olxstr, OnChangeStr) // this is passed to the OnChange Event
   DefPropC(olxstr, Data)
   DefPropC(olxstr, OnLeaveStr) // this is passed to the OnChange event
-  DefPropC(olxstr, OnEnterStr) // this is passed when the control becomes focuesd
+  DefPropC(olxstr, OnEnterStr) // this is passed when the control becomes focused
+  DefPropC(olxstr, OnReturnStr) // this is passed when return is pressed
 
   inline bool IsReadOnly()  {   return WI.HasWindowStyle(wxCB_READONLY);  }
   void ReadOnly(bool v)   {  
@@ -96,7 +97,7 @@ public:
       WI.DelWindowStyle(wxCB_READONLY);  
   }
 
-  TActionQueue *OnChange, *OnLeave, *OnEnter;
+  TActionQueue *OnChange, *OnLeave, *OnEnter, *OnReturn;
   TWindowInterface WI;
 
   DECLARE_CLASS(TComboBox)
@@ -399,16 +400,15 @@ protected:
   void ClickEvent(wxMouseEvent& event);
   void ChangeEvent(wxCommandEvent& event);
   void KeyDownEvent(wxKeyEvent& event);
-  void KeyUpEvent(wxKeyEvent& event);
   void CharEvent(wxKeyEvent& event);
   void EnterPressedEvent(wxCommandEvent& event);
-  olxstr OnChangeStr, Data, OnLeaveStr, OnEnterStr;
+  olxstr OnChangeStr, Data, OnLeaveStr, OnEnterStr, OnReturnStr;
 public:
   TTextEdit(wxWindow *Parent, int style=0);
   virtual ~TTextEdit();
 
-  olxstr GetText()          const {  return wxTextCtrl::GetValue().c_str(); }
-  void SetText(const olxstr &T)   {  wxTextCtrl::SetValue( uiStr(T) ); }
+  olxstr GetText()         const {  return wxTextCtrl::GetValue().c_str(); }
+  void SetText(const olxstr &T)  {  wxTextCtrl::SetValue( uiStr(T) ); }
 
   inline bool IsReadOnly()    const {   return WI.HasWindowStyle(wxTE_READONLY);  }
   inline void SetReadOnly( bool v)  {  WI.AddWindowStyle(wxTE_READONLY);  }
@@ -417,9 +417,11 @@ public:
   DefPropC(olxstr, OnChangeStr) // this is passed to the OnChange event
   DefPropC(olxstr, OnLeaveStr) // this is passed to the OnChange event
   DefPropC(olxstr, OnEnterStr) // this is passed when the control becomes focuesd
+  DefPropC(olxstr, OnReturnStr) // this is passed when return key is perssed
 
-  TActionQueue *OnClick, *OnChange, *OnLeave, *OnEnter;
-  TActionQueue *OnKeyUp, *OnKeyDown, *OnChar;
+  TActionQueue *OnChange, *OnReturn, *OnLeave, *OnEnter, 
+    *OnClick, *OnChar, *OnKeyDown;
+
   TWindowInterface WI;
 
   DECLARE_CLASS(TTextEdit)
